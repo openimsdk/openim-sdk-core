@@ -1,25 +1,10 @@
 package main
 
 import (
-
 	"fmt"
 	"open_im_sdk/open_im_sdk"
-
 	"time"
 )
-
-//import (
-//	"fmt"
-//	_ "github.com/mattn/go-sqlite3"
-//	"net/http"
-//)
-
-//	OnConnecting()
-//	OnConnectSuccess()
-//	OnConnectFailed(ErrCode int, ErrMsg string)
-//	OnKickedOffline()
-//	OnUserTokenExpired()
-//	OnSelfInfoUpdated(info userInfo)
 
 type InitSdk struct{}
 
@@ -37,76 +22,50 @@ type Base interface {
 	OnSuccess(data string)
 }
 
-type X struct {
-
-
-}
-func (X)OnError(errCode int, errMsg string) {
-	fmt.Println("OnError", errCode, errMsg)
-}
-func (X)OnSuccess(data string){
-	fmt.Println("OnSuccess, ", data)
-}
-
-type SendMsgCallBack interface {
-	Base
-	OnProgress(progress int)
-}
-
-func (i InitSdk) OnProgress(progress int) {
-	fmt.Printf("上传 %d / 100 \n", progress)
-}
-
-type groupApplication struct {
-	GroupId          string `json:"groupID"`
-	FromUser         string `json:"fromUserID"`
-	FromUserNickName string `json:"fromUserNickName"`
-	FromUserFaceUrl  string `json:"fromUserFaceUrl"`
-	ToUser           string `json:"toUserID"`
-	AddTime          int    `json:"addTime"`
-	RequestMsg       string `json:"requestMsg"`
-	HandledMsg       string `json:"handledMsg"`
-	Type             int    `json:"type"`
-	HandleStatus     int    `json:"handleStatus"`
-	HandleResult     int    `json:"handleResult"`
-}
-
-
 func main() {
 
-	var tk = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI4MDFkMDk5NmE5MTUwNTJhIiwiUGxhdGZvcm0iOiJJT1MiLCJleHAiOjE2MjU0ODc1MzcsImlhdCI6MTYyNDg4MjczNywibmJmIjoxNjI0ODgyNzM3fQ.NTSI74nQDPrvkL8F8uhTpqtxLHCuCQpDHBbkjoe_cLQ"
-	var uid = "801d0996a915052a1"
+	var tk = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3M2IwYzYzYmY2ZWZiYjkxIiwiUGxhdGZvcm0iOiJJT1MiLCJleHAiOjE2Mjc0NzU2MTYsImlhdCI6MTYyNjg3MDgxNiwibmJmIjoxNjI2ODcwODE2fQ.oVD0-_qjNckPMdBSfNcsDBLyPlLSnyqaz1T_jU91Pxw"
+	var uid = "73b0c63bf6efbb91"
 
-	open_im_sdk.Friend_uid = "c45baae51ab4a5d5"
-
-	//open_im_sdk.DoTest(uid, tk)
-	//open_im_sdk.DoTestDeleteFromFriendList()
+	//open_im_sdk.Friend_uid = ""
 
 	///func CreateVideoMessageFromFullPath(videoFullPath string, videoType string, duration int64, snapshotFullPath string) string {
 	open_im_sdk.DoTest(uid, tk)
-//	open_im_sdk.DoTestaddFriend()
+	//	s := open_im_sdk.CreateSoundMessageFromFullPath("D:\\1.wav", 1)
+	//	fmt.Println("ssss", s)
+//	open_im_sdk.DoTestSendMsg("adaa5e370d7208b2")
+	open_im_sdk.ForceReConn()
+	//	open_im_sdk.DotestKickGroupMember()
+	//	open_im_sdk.DoJoinGroup()
+	//	open_im_sdk.DoTestCreateGroup()
+	//	open_im_sdk.DotestGetJoinedGroupList()
+	//open_im_sdk.DoJoinGroup()
+	//	open_im_sdk.DotesttestInviteUserToGroup()
 
-//	open_im_sdk.DoTestSendMsg(open_im_sdk.Friend_uid)
-	var xxx X
-	open_im_sdk.Logout(xxx)
+	//	open_im_sdk.DotestGetGroupMemberList()
+	//	open_im_sdk.DotestGetGroupMembersInfo()
+
+	//s := open_im_sdk.CreateImageMessageFromFullPath("C:\\xyz.jpg")
+	//open_im_sdk.SendMessage(xx, s, open_im_sdk.Friend_uid, "", false )
+
+	//
 	//s := open_im_sdk.CreateVideoMessageFromFullPath("D:\\22.mp4", "mp4", 58, "D:\\11.jpeg")
 
-//	s  := open_im_sdk.CreateImageMessageFromFullPath(".//11.jpeg")
-//	s := open_im_sdk.DoTestCreateImageMessage("11.jpeg")
+	//	s  := open_im_sdk.CreateImageMessageFromFullPath(".//11.jpeg")
+	//	s := open_im_sdk.DoTestCreateImageMessage("11.jpeg")
 
-//	time.Sleep(time.Duration(30) * time.Second)
+	//	time.Sleep(time.Duration(30) * time.Second)
 	//open_im_sdk.DoTestSendMsg(s)
-//open_im_sdk.CreateImageMessage("11.jpeg")
+	//open_im_sdk.CreateImageMessage("11.jpeg")
 
-
-//	open_im_sdk.DoJoinGroup()
-//	open_im_sdk.DoTestSendMsg(open_im_sdk.Friend_uid)
+	//	open_im_sdk.DoJoinGroup()
+	//	open_im_sdk.DoTestSendMsg(open_im_sdk.Friend_uid)
 	//open_im_sdk.DoTestAcceptFriendApplicationdApplication()
 
 	//	open_im_sdk.DoTestDeleteFromFriendList()
-//	open_im_sdk.DoTestRefuseFriendApplication()
+	//	open_im_sdk.DoTestRefuseFriendApplication()
 	//	open_im_sdk.DoTestAcceptFriendApplicationdApplication()
-//	open_im_sdk.DoTestDeleteFromFriendList()
+	//	open_im_sdk.DoTestDeleteFromFriendList()
 	//open_im_sdk.DoTestDeleteFromFriendList()
 	//open_im_sdk.DoTestSendMsg(open_im_sdk.Friend_uid)
 	//open_im_sdk.DoTestMarkC2CMessageAsRead()
@@ -167,7 +126,12 @@ func main() {
 	//open_im_sdk.DoTest(uid, tk)
 	//open_im_sdk.DotestSetSelfInfo()
 	//open_im_sdk.DoTestGetUsersInfo()
+
+	time.Sleep(time.Duration(5) * time.Second)
+	open_im_sdk.ForceReConn()
+
 	for true {
+
 		//	open_im_sdk.DoTestaddFriend()
 		//	open_im_sdk.DoTestGetFriendList()
 		//	open_im_sdk.DoTestDeleteFromFriendList()
@@ -182,8 +146,14 @@ func main() {
 		//	open_im_sdk.DotestGetFriendApplicationList()
 		//
 
+		//	open_im_sdk.DoTestDeleteFromFriendList()
+		//	var xxx X
+		//	open_im_sdk.Logout(xxx)
+		//	fmt.Println("logouttttttttttttttttttttttt")
+		//	open_im_sdk.Login(uid, tk, open_im_sdk.XtestLogin)
 		fmt.Println("running.................")
-		time.Sleep(time.Duration(30) * time.Second)
+		//		open_im_sdk.DotestGetJoinedGroupList()
 
+		time.Sleep(time.Duration(30) * time.Second)
 	}
 }
