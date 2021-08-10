@@ -5,11 +5,12 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+
 	"io"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"os"
+	"path"
 
 	sLog "log"
 	"math/rand"
@@ -20,11 +21,11 @@ import (
 )
 
 func operationIDGenerator() string {
-	return strconv.FormatInt(time.Now().Unix(), 10)
+	return strconv.FormatInt(time.Now().UnixNano()+int64(rand.Uint32()), 10)
 }
 func getMsgID(sendID string) string {
-	t := time.Now().Format("2006-01-02 15:04:05") + "client"
-	return Md5(t + "-" + sendID + "-" + strconv.Itoa(rand.Int()))
+	t := int64ToString(getCurrentTimestampByNano())
+	return Md5(t + sendID + int64ToString(rand.Int63n(getCurrentTimestampByNano())))
 }
 func Md5(s string) string {
 	h := md5.New()
@@ -37,6 +38,16 @@ func Md5(s string) string {
 
 func getCurrentTimestampBySecond() int64 {
 	return time.Now().Unix()
+}
+
+//Get the current timestamp by Mill
+func GetCurrentTimestampByMill() int64 {
+	return time.Now().UnixNano() / 1e6
+}
+
+//Get the current timestamp by Nano
+func getCurrentTimestampByNano() int64 {
+	return time.Now().UnixNano()
 }
 
 func structToJsonString(param interface{}) string {
@@ -130,9 +141,32 @@ func (ap applyUserInfo) Key() string {
 	return ap.Uid
 }
 
+func (g groupInfo) Key() string {
+	return g.GroupId
+}
+
+func (g groupInfo) Value() interface{} {
+	return g
+}
 func (ap applyUserInfo) Value() interface{} {
 	return ap
 }
+
+func (g groupMemberFullInfo) Key() string {
+	return g.UserId
+}
+
+func (g groupMemberFullInfo) Value() interface{} {
+	return g
+}
+func (g GroupReqListInfo) Key() string {
+	return g.GroupID + g.FromUserID + g.ToUserID
+}
+
+func (g GroupReqListInfo) Value() interface{} {
+	return g
+}
+
 func GetConversationIDBySessionType(sourceID string, sessionType int) string {
 	switch sessionType {
 	case SingleChatType:
@@ -203,21 +237,20 @@ func post2Api(url string, data interface{}, token string) (content []byte, err e
 		sdkLog("newRequest failed, url: ", url, "req: ", string(jsonStr), err.Error())
 		return nil, err
 	}
+	req.Close = true
 	req.Header.Add("content-type", "application/json")
 	req.Header.Add("token", token)
-	defer req.Body.Close()
 
 	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		sdkLog("newRequest failed, url: ", url, "req: ", string(jsonStr), err.Error())
+		sdkLog("client.Do failed, url: ", url, "req: ", string(jsonStr), err.Error())
 		return nil, err
 	}
 	defer resp.Body.Close()
-
 	result, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		sdkLog("newRequest failed, url: ", url, "req: ", string(jsonStr), err.Error())
+		sdkLog("ioutil.ReadAll failed, url: ", url, "req: ", string(jsonStr), err.Error())
 		return nil, err
 	}
 	return result, nil
@@ -245,7 +278,12 @@ func copyFile(srcName string, dstName string) (written int64, err error) {
 }
 
 func fileTmpPath(fullPath string) string {
-	return SvrConf.DbDir + Md5(fullPath) //a->b
+	suffix := path.Ext(fullPath)
+	if len(suffix) == 0 {
+		sdkLog("suffix  err:")
+	}
+
+	return SvrConf.DbDir + Md5(fullPath) + suffix //a->b
 }
 
 func fileExist(filename string) bool {
@@ -253,29 +291,15 @@ func fileExist(filename string) bool {
 	return err == nil || os.IsExist(err)
 }
 
-var MyIP = ""
+//judge a string whether in the  string list
+func isContain(target string, List []string) bool {
 
-func getMyIp() string {
-	//fixme In the configuration file, ip takes precedence, if not, get the valid network card ip of the machine
+	for _, element := range List {
 
-	//fixme Get the ip of the local network card
-	netInterfaces, err := net.Interfaces()
-	if err != nil {
-		panic(err)
-	}
-	for i := 0; i < len(netInterfaces); i++ {
-		//Exclude useless network cards by judging the net.flag Up flag
-		if (netInterfaces[i].Flags & net.FlagUp) != 0 {
-			address, _ := netInterfaces[i].Addrs()
-			for _, addr := range address {
-				if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
-					if ipNet.IP.To4() != nil {
-						MyIP = ipNet.IP.String()
-						return MyIP
-					}
-				}
-			}
+		if target == element {
+			return true
 		}
 	}
-	return MyIP
+	return false
+
 }

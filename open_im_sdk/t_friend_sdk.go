@@ -17,7 +17,6 @@ func init() {
 
 func TestuploadImage(filePath string, back SendMsgCallBack) (string, string, error) {
 	return uploadImage(filePath, back)
-
 }
 
 type TestSendImg struct {
@@ -42,7 +41,7 @@ func TestLog(v ...interface{}) {
 	X.Println(a, b, c, d)
 }
 
-var Friend_uid = "b0b78ea02712692a6b4e46fb173c9243"
+var Friend_uid = "ad626bcae08c9bf2"
 
 ///////////////////////////////////////////////////////////
 
@@ -103,7 +102,7 @@ func (testGetUsersInfo) OnError(code int, msg string) {
 func DoTestGetUsersInfo() {
 	var test testGetUsersInfo
 	test.UidList = append(test.UidList, Friend_uid)
-	jsontest, _ := json.Marshal(test)
+	jsontest, _ := json.Marshal(test.UidList)
 	fmt.Println("testGetUsersInfo, input: ", string(jsontest))
 	GetUsersInfo(string(jsontest), test)
 }
@@ -146,14 +145,14 @@ func (testAddToBlackList) OnError(code int, msg string) {
 func DoTestAddToBlackList() {
 	var test testAddToBlackList
 	test.Uid = Friend_uid
-	jsontest, _ := json.Marshal(test)
+	jsontest, _ := json.Marshal(test.Uid)
 	fmt.Println("AddToBlackList, input: ", string(jsontest))
 	AddToBlackList(test, string(jsontest))
 }
 
 ///////////////////////////////////////////////////////
 type testDeleteFromBlackList struct {
-	delUid
+	delUid string
 }
 
 func (testDeleteFromBlackList) OnSuccess(string) {
@@ -164,10 +163,10 @@ func (testDeleteFromBlackList) OnError(code int, msg string) {
 	fmt.Println("testDeleteFromBlackList, OnError, ", code, msg)
 }
 
-func doTestDeleteFromBlackList() {
+func DoTestDeleteFromBlackList() {
 	var test testDeleteFromBlackList
-	test.Uid = Friend_uid
-	jsontest, _ := json.Marshal(test)
+	test.delUid = Friend_uid
+	jsontest, _ := json.Marshal(test.delUid)
 	fmt.Println("DeleteFromBlackList, input: ", string(jsontest))
 	DeleteFromBlackList(test, string(jsontest))
 }
@@ -244,7 +243,7 @@ func (TestDeleteFromFriendList) OnError(code int, msg string) {
 func DoTestDeleteFromFriendList() {
 	var test TestDeleteFromFriendList
 	test.Uid = Friend_uid
-	jsontest, err := json.Marshal(test)
+	jsontest, err := json.Marshal(test.Uid)
 	fmt.Println("DeleteFromFriendList, input:              sdafasf ", string(jsontest), err)
 	DeleteFromFriendList(string(jsontest), test)
 }
@@ -303,11 +302,11 @@ func (testAcceptFriendApplication) OnError(code int, msg string) {
 	fmt.Println("testAcceptFriendApplication, OnError, ", code, msg)
 }
 
-func DoTestAcceptFriendApplicationdApplication() {
+func DoTestAcceptFriendApplication() {
 	var testAcceptFriendApplication testAcceptFriendApplication
 	testAcceptFriendApplication.UID = Friend_uid
 
-	jsontestAcceptFriendappclicatrion, _ := json.Marshal(testAcceptFriendApplication)
+	jsontestAcceptFriendappclicatrion, _ := json.Marshal(testAcceptFriendApplication.UID)
 	AcceptFriendApplication(testAcceptFriendApplication, string(jsontestAcceptFriendappclicatrion))
 	fmt.Println("AcceptFriendApplication, input: ", string(jsontestAcceptFriendappclicatrion))
 }
@@ -354,7 +353,7 @@ func DoTestRefuseFriendApplication() {
 	var testRefuseFriendApplication testRefuseFriendApplication
 	testRefuseFriendApplication.UID = Friend_uid
 
-	jsontestfusetFriendappclicatrion, _ := json.Marshal(testRefuseFriendApplication)
+	jsontestfusetFriendappclicatrion, _ := json.Marshal(testRefuseFriendApplication.UID)
 	RefuseFriendApplication(testRefuseFriendApplication, string(jsontestfusetFriendappclicatrion))
 	fmt.Println("RefuseFriendApplication, input: ", string(jsontestfusetFriendappclicatrion))
 }
@@ -408,13 +407,13 @@ func YYdb(ServerMsgID string) (err error) {
 	return nil
 }
 
-var xtestLogin testLogin
+var XtestLogin testLogin
 
 func DoTest(uid, tk string) {
 	var cf IMConfig
 	cf.IpApiAddr = "https://open-im.rentsoft.cn"
+	//	cf.IpWsAddr = "wss://open-im.rentsoft.cn/wss"
 	cf.IpWsAddr = "wss://open-im.rentsoft.cn/wss"
-	//cf.IpWsAddr = "47.112.160.66:17778"
 	cf.Platform = 1
 	cf.DbDir = "./"
 
@@ -425,7 +424,7 @@ func DoTest(uid, tk string) {
 	var testinit testInitLister
 	InitSDK(s, testinit)
 
-	Login(uid, tk, xtestLogin)
+	Login(uid, tk, XtestLogin)
 	//Logout(xtestLogin)
 	//	open_im_sdk.SdkInitManager.UnInitSDK()
 	var testConversation conversationCallBack
@@ -464,12 +463,15 @@ func DoTestSendMsg(receiverID string) {
 	for true {
 		i++
 
-		s := CreateTextMessage(intToString(i))
+		s := CreateSoundMessageFromFullPath("D:\\1.wav", 1)
+		fmt.Println("ssss", s)
+
 		var testSendMsg TestSendMsgCallBack
 		_ = SendMessage(testSendMsg, s, receiverID, "", false)
 
 		fmt.Println("running.................")
-		time.Sleep(time.Duration(1) * time.Second)
+		time.Sleep(time.Duration(1000) * time.Millisecond)
+		break
 	}
 }
 func DoTestGetHistoryMessage(userID string) {
@@ -478,6 +480,37 @@ func DoTestGetHistoryMessage(userID string) {
 		UserID: userID,
 		Count:  50,
 	}))
+}
+func DoTestDeleteConversation(conversationID string) {
+	var testDeleteConversation DeleteConversationCallBack
+	DeleteConversation(conversationID, testDeleteConversation)
+
+}
+
+type DeleteConversationCallBack struct {
+}
+
+func (d DeleteConversationCallBack) OnError(errCode int, errMsg string) {
+	fmt.Printf("DeleteConversationCallBack , errCode:%v,errMsg:%v\n", errCode, errMsg)
+}
+
+func (d DeleteConversationCallBack) OnSuccess(data string) {
+	fmt.Printf("DeleteConversationCallBack , success,data:%v\n", data)
+}
+func DoTestDeleteMessageFromLocalStorage(message string) {
+	var testDeleteMessageFromLocalStorage DeleteMessageFromLocalStorageCallBack
+	DeleteMessageFromLocalStorage(testDeleteMessageFromLocalStorage, message)
+}
+
+type DeleteMessageFromLocalStorageCallBack struct {
+}
+
+func (d DeleteMessageFromLocalStorageCallBack) OnError(errCode int, errMsg string) {
+	fmt.Printf("DeleteMessageFromLocalStorageCallBack , errCode:%v,errMsg:%v\n", errCode, errMsg)
+}
+
+func (d DeleteMessageFromLocalStorageCallBack) OnSuccess(data string) {
+	fmt.Printf("DeleteMessageFromLocalStorageCallBack , success,data:%v\n", data)
 }
 
 type TestGetAllConversationListCallBack struct {
@@ -507,10 +540,11 @@ func (t TestGetOneConversationCallBack) OnSuccess(data string) {
 	fmt.Printf("TestGetOneConversationCallBack , success,data:%v\n", data)
 }
 
-func DoTestGetOneConversation() {
+func DoTestGetOneConversation(sourceID string, sessionType int) {
 	var test TestGetOneConversationCallBack
-	cId := GetConversationIDBySessionType(Friend_uid, SingleChatType)
-	GetOneConversation(cId, test)
+	//GetOneConversation(Friend_uid, SingleChatType, test)
+	GetOneConversation(sourceID, sessionType, test)
+
 }
 func DoTestCreateImageMessage(path string) string {
 	return CreateImageMessage(path)
@@ -536,7 +570,7 @@ type GetHistoryCallBack struct {
 }
 
 func (g GetHistoryCallBack) OnError(errCode int, errMsg string) {
-	panic("implement me")
+	fmt.Printf("GetHistoryCallBack , errCode:%v,errMsg:%v\n", errCode, errMsg)
 }
 
 func (g GetHistoryCallBack) OnSuccess(data string) {
@@ -694,5 +728,4 @@ func DoTestMarkC2CMessageAsRead() {
 	xlist = append(xlist, readid)
 	jsonid, _ := json.Marshal(xlist)
 	MarkC2CMessageAsRead(test, Friend_uid, string(jsonid))
-
 }

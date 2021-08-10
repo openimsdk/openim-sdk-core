@@ -1,15 +1,12 @@
 package open_im_sdk
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
 	_ "github.com/mattn/go-sqlite3"
-	"math/rand"
-	"sync"
-	"sync/atomic"
+
 	"time"
 )
 
@@ -17,14 +14,6 @@ func closeListenerCh() {
 	if ConversationCh != nil {
 		close(ConversationCh)
 		ConversationCh = nil
-	}
-	if InitCh != nil {
-		close(InitCh)
-		InitCh = nil
-	}
-	if groupCh != nil {
-		close(groupCh)
-		groupCh = nil
 	}
 }
 
@@ -35,12 +24,11 @@ func (im *IMManager) initSDK(config string, cb IMSDKListener) bool {
 	}
 
 	im.cb = cb
-
 	initListenerCh()
 	initAddr()
 
-	sdkLog("init linsten channel, init addr success, ", config)
-	go im.run()
+	sdkLog("init success, ", config)
+
 	go doListener(&ConListener)
 	return true
 }
@@ -58,44 +46,76 @@ func (im *IMManager) getServerTime() int64 {
 	return 0
 }
 
+func (im *IMManager) logout(cb Base) {
+	stateMutex.Lock()
+	defer stateMutex.Unlock()
+	im.LoginState = LogoutCmd
+
+	err := im.closeConn()
+	if err != nil {
+		cb.OnError(ErrCodeInitLogin, err.Error())
+		return
+	}
+	sdkLog("close conn ok")
+
+	err = closeDB()
+	if err != nil {
+		cb.OnError(ErrCodeInitLogin, err.Error())
+		return
+	}
+	sdkLog("close db ok")
+
+	LoginUid = ""
+	token = ""
+	cb.OnSuccess("")
+}
+
 func (im *IMManager) login(uid, tk string, cb Base) {
 	token = tk
 	LoginUid = uid
 
 	err := initDBX(LoginUid)
 	if err != nil {
+		token = ""
+		LoginUid = ""
 		cb.OnError(ErrCodeInitLogin, err.Error())
 		return
 	}
+	sdkLog("init db ok, uid: ", LoginUid)
 
-	_, err = getUserNewestSeq()
+	err = im.syncSeq2Msg()
 	if err != nil {
+		token = ""
+		LoginUid = ""
 		cb.OnError(ErrCodeInitLogin, err.Error())
 		return
 	}
+	sdkLog("login sync msg ok")
 
-	err = triggerCmdReLogin()
+	im.conn, err = im.reConn(im.conn)
 	if err != nil {
+		token = ""
+		LoginUid = ""
 		cb.OnError(ErrCodeInitLogin, err.Error())
 		return
 	}
-	im.forcedSynchronization()
+	sdkLog("login ws conn ok")
+	go im.forcedSynchronization() //todo:coroutine
+	go im.run()
+	sdkLog("ws coroutine run")
+	sdkLog("login ok, ", uid, tk)
 	cb.OnSuccess("")
-	sdkLog("login ok", uid, tk)
 }
 
-func (im *IMManager) logout(cb Base) {
-
-	atomic.SwapInt32(&WsState, 100)
+func (im *IMManager) closeConn() error {
 	if im.conn != nil {
-		im.conn.Close()
-		im.conn = nil
+		err := im.conn.Close()
+		if err != nil {
+			sdkLog("close conn failed, ", err.Error())
+			return err
+		}
 	}
-	closeDB()
-	LoginUid = ""
-	token = ""
-
-	cb.OnSuccess("")
+	return nil
 }
 
 func (im *IMManager) getLoginUser() string {
@@ -114,92 +134,85 @@ func (im *IMManager) forcedSynchronization() {
 	ForceSyncFriend()
 	ForceSyncBlackList()
 	ForceSyncFriendApplication()
-	ForceSyncMsg()
 	ForceSyncLoginUerInfo()
+
+	ForceSyncMsg()
+
+	ForceSyncJoinedGroup()
+	ForceSyncGroupRequest()
+	ForceSyncJoinedGroupMember()
+	ForceSyncApplyGroupRequest()
+	sdkLog("sync friend blacklist friendapplication userinfo  msg ok")
 }
 
 func (im *IMManager) doMsg(message []byte) {
-	sdkLog("do Msg: ", string(message))
+	sdkLog("ws recv msg, do Msg: ", string(message))
 	var msg Msg
 	if err := json.Unmarshal(message, &msg); err != nil {
 		sdkLog("Unmarshal failed, err: ", err.Error())
 		return
 	}
 	if msg.ErrCode != 0 {
-		sdkLog("msg errcode: ", msg.ErrCode, " errmsg: ", msg.ErrMsg)
+		sdkLog("errcode: ", msg.ErrCode, " errmsg: ", msg.ErrMsg)
 		return
 	}
 
 	//local
-	maxSeq, err := getLocalMaxSeq(msg.Data.RecvID)
+	maxSeq, err := getLocalMaxSeq()
 	if err != nil {
 		sdkLog("getLocalMaxSeq failed, ", err.Error())
 		return
 	}
-	if maxSeq >= msg.Data.Seq {
-		sdkLog("seq error, ", maxSeq, msg.Data.Seq)
+	sdkLog("getLocalMaxSeq ok, max seq: ", maxSeq)
+
+	if maxSeq > msg.Data.Seq { // typing special handle
+		sdkLog("warning seq ignore, do nothing", maxSeq, msg.Data.Seq)
+	}
+
+	if maxSeq == msg.Data.Seq {
+		sdkLog("seq ignore, do nothing", maxSeq, msg.Data.Seq)
 		return
 	}
 
 	//svr  17    15
 	if msg.Data.Seq-maxSeq > 1 {
-		sdkLog("pull msg: ", maxSeq+1, msg.Data.Seq-1)
 		pullOldMsgAndMergeNewMsg(maxSeq+1, msg.Data.Seq-1)
-	}
-	arrMsg := ArrMsg{}
-	arrMsg.Data = append(arrMsg.Data, msg.Data)
-	triggerCmdNewMsgCome(arrMsg)
-
-	if msg.Data.ContentType == TransferGroupOwnerTip ||
-		msg.Data.ContentType == CreateGroupTip ||
-		msg.Data.ContentType == GroupApplicationResponseTip ||
-		msg.Data.ContentType == JoinGroupTip ||
-		msg.Data.ContentType == QuitGroupTip ||
-		msg.Data.ContentType == SetGroupInfoTip ||
-		msg.Data.ContentType == AcceptGroupApplicationTip ||
-		msg.Data.ContentType == RefuseGroupApplicationTip ||
-		msg.Data.ContentType == KickGroupMemberTip ||
-		msg.Data.ContentType == InviteUserToGroupTip {
-		groupManager.doGroupMsg(msg.Data)
+		sdkLog("pull msg: ", maxSeq+1, msg.Data.Seq-1)
 	}
 
 	if msg.Data.SessionType == SingleChatType {
-		if msg.Data.ContentType == AddFriendTip {
-			im.doFriendMsg(msg.Data)
-			//	triggerCmdFriendApplication()
-		} else if msg.Data.ContentType == AcceptFriendApplicationTip {
-			//	triggerCmdAcceptFriend(msg.Data.SendID)
-			//	triggerCmdFriend()
-			im.doFriendMsg(msg.Data)
-		} else if msg.Data.ContentType == RefuseFriendApplicationTip {
-			//	triggerCmdRefuseFriend(msg.Data.SendID)
-			im.doFriendMsg(msg.Data)
-		} else if msg.Data.ContentType == KickOnlineTip {
-			triggerCmdReLogin()
-		} else if msg.Data.ContentType == SetSelfInfoTip {
-			im.doFriendMsg(msg.Data)
-		}
-	} else if msg.Data.SessionType == GroupChatType {
-		if msg.Data.ContentType == TransferGroupOwnerTip ||
-			msg.Data.ContentType == CreateGroupTip ||
-			msg.Data.ContentType == GroupApplicationResponseTip ||
-			msg.Data.ContentType == JoinGroupTip ||
-			msg.Data.ContentType == QuitGroupTip ||
-			msg.Data.ContentType == SetGroupInfoTip ||
-			msg.Data.ContentType == AcceptGroupApplicationTip ||
-			msg.Data.ContentType == RefuseGroupApplicationTip ||
-			msg.Data.ContentType == KickGroupMemberTip ||
-			msg.Data.ContentType == InviteUserToGroupTip {
-			//		groupManager.doGroupMsg(msg.Data)
-		}
-		// group
+		arrMsg := ArrMsg{}
+		arrMsg.SingleData = append(arrMsg.SingleData, msg.Data)
+		triggerCmdNewMsgCome(arrMsg)
 
+		if msg.Data.ContentType > SingleTipBegin && msg.Data.ContentType < SingleTipEnd {
+			im.doFriendMsg(msg.Data)
+			sdkLog("doFriendMsg, ", msg.Data)
+		} else if msg.Data.ContentType > GroupTipBegin && msg.Data.ContentType < GroupTipEnd {
+			groupManager.doGroupMsg(msg.Data)
+			sdkLog("doGroupMsg, SingleChat ", msg.Data)
+		} else {
+			sdkLog("type failed, ", msg.Data)
+		}
+
+	} else if msg.Data.SessionType == GroupChatType {
+		arrMsg := ArrMsg{}
+		arrMsg.GroupData = append(arrMsg.GroupData, msg.Data)
+		triggerCmdNewMsgCome(arrMsg)
+		if msg.Data.ContentType > GroupTipBegin && msg.Data.ContentType < GroupTipEnd {
+			groupManager.doGroupMsg(msg.Data)
+			sdkLog("doGroupMsg, ", msg.Data)
+		} else {
+			sdkLog("type failed, ", msg.Data)
+		}
+	} else {
+		sdkLog("type failed, ", msg.Data)
 	}
 }
 
 func (im *IMManager) syncSeq2Msg() error {
 	//local
-	maxSeq, err := getLocalMaxSeq(LoginUid)
+	maxSeq, err := getLocalMaxSeq()
 	if err != nil {
 		return err
 	}
@@ -211,11 +224,12 @@ func (im *IMManager) syncSeq2Msg() error {
 	}
 
 	if maxSeq >= newestSeq {
-		log(fmt.Sprintf("SyncSeq2Msg maxSeq[%d] >= msg.Data.Seq[%d] ", maxSeq, newestSeq))
+		sdkLog("SyncSeq2Msg LocalmaxSeq >= NewestSeq ", maxSeq, newestSeq)
 		return nil
 	}
 
 	if newestSeq > maxSeq {
+		sdkLog("syncSeq2Msg", maxSeq+1, newestSeq)
 		pullOldMsgAndMergeNewMsg(maxSeq+1, newestSeq)
 	}
 	return nil
@@ -228,11 +242,11 @@ func (im *IMManager) syncLoginUserInfo() error {
 	}
 	sdkLog("getServerUserInfo ok, user: ", *userSvr)
 
-	userLocal, err := getUserInfoFromLocal()
+	userLocal, err := getLoginUserInfoFromLocal()
 	if err != nil {
 		return err
 	}
-	sdkLog("getUserInfoFromLocal ok, user: ", userLocal)
+	sdkLog("getLoginUserInfoFromLocal ok, user: ", userLocal)
 
 	if userSvr.Uid != userLocal.Uid ||
 		userSvr.Name != userLocal.Name ||
@@ -255,25 +269,7 @@ func (im *IMManager) syncLoginUserInfo() error {
 	return nil
 }
 
-func getUserInfoFromLocal() (userInfo, error) {
-	mRWMutex.RLock()
-	defer mRWMutex.RUnlock()
-	var u userInfo
-	rows, err := initDB.Query("select * from user limit 1 ")
-	if err == nil {
-		for rows.Next() {
-			err = rows.Scan(&u.Uid, &u.Name, &u.Icon, &u.Gender, &u.Mobile, &u.Birth, &u.Email, &u.Ex)
-			if err != nil {
-				sdkLog("rows.Scan failed, ", err.Error())
-				continue
-			}
-		}
-		return u, nil
-	} else {
-		sdkLog("db Query faile, ", err.Error())
-		return u, err
-	}
-}
+/*
 
 func (im *IMManager) doWsCmd(cmd cmd2Value) {
 	switch cmd.Cmd {
@@ -283,30 +279,37 @@ func (im *IMManager) doWsCmd(cmd cmd2Value) {
 		if im.conn != nil {
 			im.conn.Close()
 		}
-		im.syncSeq2Msg()
+	//	im.syncSeq2Msg()
 	}
 }
+*/
 
-func (im *IMManager) reConn(conn *websocket.Conn) *websocket.Conn {
+func (im *IMManager) reConn(conn *websocket.Conn) (*websocket.Conn, error) {
 	if conn != nil {
 		conn.Close()
+		conn = nil
 	}
+	stateMutex.Lock()
+	im.LoginState = Logining
+	stateMutex.Unlock()
 	SdkInitManager.cb.OnConnecting()
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", SvrConf.IpWsAddr, LoginUid, token, SvrConf.Platform)
 	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
-		im.LoginState = LoginFailed
+		//	im.LoginState = LoginFailed
 		SdkInitManager.cb.OnConnectFailed(ErrCodeInitLogin, err.Error())
 		sdkLog("websocket dial failed, ", SvrConf.IpWsAddr, LoginUid, token, SvrConf.Platform, err.Error())
-		return nil
+		return nil, err
 	}
-	im.syncSeq2Msg()
 	SdkInitManager.cb.OnConnectSuccess()
+	stateMutex.Lock()
 	im.LoginState = LoginSuccess
-	sdkLog("conn to ws ok, my ip: ", getMyIp())
-	return conn
+	stateMutex.Unlock()
+
+	return conn, nil
 }
 
+/*
 func (im *IMManager) runCmd() {
 	for {
 		select {
@@ -325,54 +328,80 @@ func (im *IMManager) runCmd() {
 		}
 	}
 }
+*/
 
 func (im *IMManager) run() {
-	go im.runCmd()
+
 	for {
-		if token == "" {
-			sdkLog("waiting login... ")
-			time.Sleep(time.Duration(2) * time.Second)
-			continue
+		if im.conn == nil {
+			re, err := im.reConn(nil)
+			im.conn = re
+
+			sdkLog("ws reconn ", err)
 		}
 
-		if im.conn == nil {
-			im.conn = im.reConn(nil)
-		}
 		if im.conn != nil {
-			//im.syncSeq2Msg()
-			sdkLog("conn ws ok, start readmessage")
+			sdkLog("conn ws ok, start read message")
+			im.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+			sdkLog("current read message conn:", im.conn)
 			msgType, message, err := im.conn.ReadMessage()
-			tvalue := atomic.LoadInt32(&WsState)
-			if tvalue == 100 {
-				atomic.CompareAndSwapInt32(&WsState, 100, 0)
-				sdkLog("ws stop, return...")
-				return
-			}
+			sdkLog("read one message")
 			if err != nil {
-				sdkLog("readmesage failed, reconn to ws, ", err.Error())
-				im.conn = im.reConn(im.conn)
+				stateMutex.Lock()
+				if im.LoginState == LogoutCmd {
+					sdkLog("logout, ws close, return ", LogoutCmd, err)
+					im.conn = nil
+					stateMutex.Unlock()
+					return
+				}
+				sdkLog("ws read message failed ", err.Error())
+				/*
+					if netErr, ok := err.(net.Error); ok {
+						if netErr.Timeout() {
+
+							sdkLog("ws read message failed ", err.Error())
+							stateMutex.Unlock()
+							continue
+						}
+					}
+				*/
+				stateMutex.Unlock()
+				time.Sleep(time.Duration(2) * time.Second)
+				im.conn, err = im.reConn(im.conn)
+				sdkLog("ws reconn, ", err)
+
+				err = im.syncSeq2Msg()
+				sdkLog("sync newest msg, ", err)
+
 			} else {
 				if msgType == websocket.CloseMessage {
-					sdkLog("recv closemessage, reconn to ws, ")
-					im.conn = im.reConn(im.conn)
+					sdkLog("websocket.CloseMessage, reconn to ws ")
+					im.conn, _ = im.reConn(im.conn)
 				} else if msgType == websocket.TextMessage {
-					sdkLog("recv textmessage, domsg")
+					sdkLog("recv text message, domsg ", string(message))
 					im.doMsg(message)
+				} else {
+					sdkLog("recv msg: type ", msgType)
 				}
 			}
 		} else {
+			sdkLog("ws failed, sleep 2s, reconn... ")
 			time.Sleep(time.Duration(2) * time.Second)
 		}
 	}
 }
 
 func pullOldMsgAndMergeNewMsg(beginSeq int64, endSeq int64) (err error) {
+	sdkLog("pullOldMsgAndMergeNewMsg", beginSeq, endSeq)
 	data := paramsPullUserMsgDataReq{SeqBegin: beginSeq, SeqEnd: endSeq}
-	resp, err := post2Api(pullUserMsgRouter, paramsPullUserMsg{ReqIdentifier: 1002, OperationID: operationIDGenerator(), SendID: LoginUid, MsgIncr: rand.Int(), Data: data}, token)
+
+	resp, err := post2Api(pullUserMsgRouter, paramsPullUserMsg{ReqIdentifier: 1002, OperationID: operationIDGenerator(), SendID: LoginUid, Data: data}, token)
 	if err != nil {
 		sdkLog("post2Api failed, ", pullUserMsgRouter, LoginUid, beginSeq, endSeq, err.Error())
 		return err
 	}
+	sdkLog("pull ok begin end:", beginSeq, endSeq)
+
 	var pullMsg PullUserMsgResp
 	err = json.Unmarshal(resp, &pullMsg)
 	if err != nil {
@@ -380,12 +409,11 @@ func pullOldMsgAndMergeNewMsg(beginSeq int64, endSeq int64) (err error) {
 		return err
 	}
 
-	triggerCmd := make(map[int32]struct{})
-
 	if pullMsg.ErrCode == 0 {
 		arrMsg := ArrMsg{}
 		for i := 0; i < len(pullMsg.Data.Single); i++ {
 			for j := 0; j < len(pullMsg.Data.Single[i].List); j++ {
+				sdkLog("pull msg: ", pullMsg.Data.Single[i].List[j])
 				singleMsg := MsgData{
 					SendID:           pullMsg.Data.Single[i].List[j].SendID,
 					RecvID:           pullMsg.Data.Single[i].List[j].RecvID,
@@ -396,23 +424,22 @@ func pullOldMsgAndMergeNewMsg(beginSeq int64, endSeq int64) (err error) {
 					Content:          pullMsg.Data.Single[i].List[j].Content,
 					SendTime:         pullMsg.Data.Single[i].List[j].SendTime,
 					Seq:              pullMsg.Data.Single[i].List[j].Seq,
-					IsEmphasize:      true,
+					SenderNickName:   pullMsg.Data.Single[i].List[j].SenderNickName,
+					SenderFaceURL:    pullMsg.Data.Single[i].List[j].SenderFaceURL,
+					ClientMsgID:      pullMsg.Data.Single[i].List[j].ClientMsgID,
 					SenderPlatformID: pullMsg.Data.Single[i].List[j].SenderPlatformID,
 				}
-				arrMsg.Data = append(arrMsg.Data, singleMsg)
-				if pullMsg.Data.Single[i].List[j].ContentType == AddFriendTip ||
-					pullMsg.Data.Single[i].List[j].ContentType == AcceptFriendApplicationTip ||
-					pullMsg.Data.Single[i].List[j].ContentType == RefuseFriendApplicationTip ||
-					pullMsg.Data.Single[i].List[j].ContentType == SetSelfInfoTip {
+				arrMsg.SingleData = append(arrMsg.SingleData, singleMsg)
+				if pullMsg.Data.Single[i].List[j].ContentType > SingleTipBegin &&
+					pullMsg.Data.Single[i].List[j].ContentType < SingleTipEnd {
 					var msgRecv MsgData
 					msgRecv.ContentType = pullMsg.Data.Single[i].List[j].ContentType
 					msgRecv.Content = pullMsg.Data.Single[i].List[j].Content
 					msgRecv.SendID = pullMsg.Data.Single[i].List[j].SendID
 					msgRecv.RecvID = pullMsg.Data.Single[i].List[j].RecvID
+					sdkLog("doFriendMsg ", msgRecv)
 					SdkInitManager.doFriendMsg(msgRecv)
 				}
-
-				triggerCmd[pullMsg.Data.Single[i].List[j].ContentType] = struct{}{}
 			}
 		}
 
@@ -428,53 +455,28 @@ func pullOldMsgAndMergeNewMsg(beginSeq int64, endSeq int64) (err error) {
 					Content:          pullMsg.Data.Group[i].List[j].Content,
 					SendTime:         pullMsg.Data.Group[i].List[j].SendTime,
 					Seq:              pullMsg.Data.Group[i].List[j].Seq,
-					IsEmphasize:      true,
-					SenderPlatformID: pullMsg.Data.Group[i].List[j].SenderPlatformID}
+					SenderNickName:   pullMsg.Data.Group[i].List[j].SenderNickName,
+					SenderFaceURL:    pullMsg.Data.Group[i].List[j].SenderFaceURL,
+					ClientMsgID:      pullMsg.Data.Group[i].List[j].ClientMsgID,
+					SenderPlatformID: pullMsg.Data.Group[i].List[j].SenderPlatformID,
+				}
+				arrMsg.GroupData = append(arrMsg.GroupData, groupMsg)
 
 				ctype := pullMsg.Data.Group[i].List[j].ContentType
-				if ctype == TransferGroupOwnerTip ||
-					ctype == CreateGroupTip ||
-					ctype == GroupApplicationResponseTip ||
-					ctype == JoinGroupTip ||
-					ctype == QuitGroupTip ||
-					ctype == SetGroupInfoTip ||
-					ctype == AcceptGroupApplicationTip ||
-					ctype == RefuseGroupApplicationTip ||
-					ctype == KickGroupMemberTip ||
-					ctype == InviteUserToGroupTip {
+				if ctype > GroupTipBegin && ctype < GroupTipEnd {
 					groupManager.doGroupMsg(groupMsg)
+					sdkLog("doGroupMsg ", groupMsg)
 				}
 			}
 		}
 
-		for i := 0; i < len(pullMsg.Data.Group); i++ {
-			// 整理群消息
-		}
-
+		sdkLog("triggerCmdNewMsgCome len: ", len(arrMsg.SingleData))
 		err = triggerCmdNewMsgCome(arrMsg)
 		if err != nil {
 			sdkLog("triggerCmdNewMsgCome failed, ", err.Error())
 		}
-
-		for k := range triggerCmd {
-			if k == AddFriendTip {
-				//	err := triggerCmdFriendApplication()
-				if err != nil {
-					sdkLog("triggerCmdFriendApplication failed, ", err.Error())
-				}
-			} else if k == AcceptFriendApplicationTip {
-				//	err := triggerCmdFriend()
-				if err != nil {
-					sdkLog("triggerCmdFriend failed, ", err.Error())
-				}
-			} else if k == KickOnlineTip {
-				//do nothing
-			} else if k == SetSelfInfoTip {
-				//FriendObj.doFriendList()
-			} else if k == TransferGroupOwnerTip {
-			} else if k == GroupApplicationResponseTip {
-			}
-		}
+	} else {
+		sdkLog("pull failed, code, msg: ", pullMsg.ErrCode, pullMsg.ErrMsg)
 	}
 	return nil
 }
@@ -526,6 +528,22 @@ func getServerUserInfo() (*userInfo, error) {
 	}
 	return &userResp.Data[0], nil
 }
+func getUserNameAndFaceUrlByUid(uid string) (faceUrl, name string, err error) {
+	friendInfo, err := getFriendInfoByFriendUid(uid)
+	if err != nil {
+		return "", "", err
+	}
+	if friendInfo.UID == "" {
+		userInfo, err := getUserInfoByUid(uid)
+		if err != nil {
+			return "", "", err
+		} else {
+			return userInfo.Icon, userInfo.Name, nil
+		}
+	} else {
+		return friendInfo.Icon, friendInfo.Name, nil
+	}
+}
 func getUserInfoByUid(uid string) (*userInfo, error) {
 	var uidList []string
 	uidList = append(uidList, uid)
@@ -534,6 +552,7 @@ func getUserInfoByUid(uid string) (*userInfo, error) {
 		sdkLog("post2Api failed, ", getUserInfoRouter, uidList, err.Error())
 		return nil, err
 	}
+	sdkLog("post api: ", getUserInfoRouter, paramsGetUserInfo{OperationID: operationIDGenerator(), UidList: uidList}, "uid ", uid)
 	var userResp getUserInfoResp
 	err = json.Unmarshal(resp, &userResp)
 	if err != nil {
@@ -553,226 +572,12 @@ func getUserInfoByUid(uid string) (*userInfo, error) {
 	return &userResp.Data[0], nil
 }
 
-var initDB *sql.DB
-var mRWMutex *sync.RWMutex
-
-func closeDB() error {
-	if initDB != nil {
-		if err := initDB.Close(); err != nil {
-			return err
-		}
-		initDB = nil
-	}
-	return nil
-}
-func initDBX(uid string) error {
-	if mRWMutex == nil {
-		mRWMutex = new(sync.RWMutex)
-	}
-	if uid == "" {
-		return errors.New("no uid")
-	}
-	if initDB != nil {
-		return errors.New("db already opened")
-	}
-	db, err := sql.Open("sqlite3", SvrConf.DbDir+"OpenIM_"+uid+".db")
-	sdkLog("open db:", SvrConf.DbDir+"OpenIM_"+uid+".db")
-	if err != nil {
-		sdkLog("failed open db:", SvrConf.DbDir+"OpenIM_"+uid+".db", err.Error())
-		return err
-	}
-	initDB = db
-	//(&u.Uid, &u.Name, &u.Icon, &u.Gender, &u.Mobile, &u.Birth, u.Email, &u.Ex)
-	table := "CREATE TABLE if not exists `user` " +
-		"(`uid` varchar(64) NOT NULL , " +
-		"`name` varchar(64) DEFAULT NULL , " +
-		"`icon` varchar(1024) DEFAULT NULL , " +
-		"`gender` int(11) DEFAULT NULL , " +
-		"`mobile` varchar(32) DEFAULT NULL , " +
-		"`birth` varchar(16) DEFAULT NULL , " +
-		"`email` varchar(64) DEFAULT NULL , " +
-		"`ex` varchar(1024) DEFAULT NULL,  " +
-		" PRIMARY KEY (uid) " +
-		")"
-	_, err = db.Exec(table)
-	if err != nil {
-		log(fmt.Sprintf("table user err = %s", err.Error()))
-		return err
-	}
-
-	table = `create table if not exists  black_list (
-   	 	uid VARCHAR (64) PRIMARY KEY  NOT NULL,
-    	name VARCHAR(64) NULL ,
-     	icon varchar(1024) DEFAULT NULL , 
-     	gender int(11) DEFAULT NULL , 
-     	mobile varchar(32) DEFAULT NULL ,
-    	birth varchar(16) DEFAULT NULL , 
-  	 	email varchar(64) DEFAULT NULL , 
-  	 	ex varchar(1024) DEFAULT NULL
-        )`
-	_, err = db.Exec(table)
-	if err != nil {
-		log(fmt.Sprintf("table black_list err = %s", err.Error()))
-		return err
-	}
-
-	table = `
-      create table if not exists friend_request (
-    	uid VARCHAR (64) PRIMARY KEY  NOT NULL,
-    	name VARCHAR(64) NULL ,
-     	icon varchar(1024) DEFAULT NULL , 
-     	gender int(11) DEFAULT NULL , 
-     	mobile varchar(32) DEFAULT NULL ,
-    	birth varchar(16) DEFAULT NULL , 
-  	 	email varchar(64) DEFAULT NULL , 
-  	 	ex varchar(1024) DEFAULT NULL,
-      	flag int(11) NOT NULL DEFAULT 0,
-      	req_message varchar(255) DEFAULT NULL,
-     	create_time  varchar(255) NOT NULL
-      )`
-	_, err = db.Exec(table)
-	if err != nil {
-		log(fmt.Sprintf("table friend_request err = %s", err.Error()))
-		return err
-	}
-
-	//Apply by yourself to add other people's friends form
-	table = `
-      create table if not exists self_apply_to_other_request (
-    	uid VARCHAR (64) PRIMARY KEY  NOT NULL,
-    	name VARCHAR(64) NULL ,
-     	icon varchar(1024) DEFAULT NULL , 
-     	gender int(11) DEFAULT NULL , 
-     	mobile varchar(32) DEFAULT NULL ,
-    	birth varchar(16) DEFAULT NULL , 
-  	 	email varchar(64) DEFAULT NULL , 
-  	 	ex varchar(1024) DEFAULT NULL,
-      	flag int(11) NOT NULL DEFAULT 0,
-      	req_message varchar(255) DEFAULT NULL,
-     	create_time  varchar(255) NOT NULL
-      )`
-	_, err = db.Exec(table)
-	if err != nil {
-		log(fmt.Sprintf("table friend_request err = %s", err.Error()))
-		return err
-	}
-
-	table = ` CREATE TABLE IF NOT EXISTS friend_info(
-     uid VARCHAR (64) PRIMARY KEY  NOT NULL,
-     name VARCHAR(64) NULL ,
-     comment varchar(255) DEFAULT NULL,
-     icon varchar(1024) DEFAULT NULL , 
-     gender int(11) DEFAULT NULL , 
-     mobile varchar(32) DEFAULT NULL ,
-     birth varchar(16) DEFAULT NULL , 
-  	 email varchar(64) DEFAULT NULL , 
-  	 ex varchar(1024) DEFAULT NULL
- 	)`
-	_, err = db.Exec(table)
-	if err != nil {
-		log(fmt.Sprintf("table friend_info err = %s", err.Error()))
-		return err
-	}
-
-	table = `create table if not exists  chat_log (
-      msg_id varchar(128)   NOT NULL,
-	  send_id varchar(255)   NOT NULL ,
-	  is_read int(255) NOT NULL ,
-	  seq int(255) DEFAULT NULL ,
-	  status int(11) NOT NULL ,
-	  session_type int(11) NOT NULL ,
-	  recv_id varchar(255)   NOT NULL ,
-	  content_type int(11) NOT NULL ,
-	  msg_from int(11) NOT NULL ,
-	  content varchar(1000)   NOT NULL ,
-	  remark varchar(100)    DEFAULT NULL ,
-	  sender_platform_id int(11) NOT NULL ,
-	  send_time INTEGER(255) DEFAULT NULL ,
-	  create_time INTEGER (255) DEFAULT NULL,
-	  PRIMARY KEY (msg_id) 
-	)`
-	_, err = db.Exec(table)
-	if err != nil {
-		log(fmt.Sprintf("table chat_log err = %s", err.Error()))
-		return err
-	}
-
-	table = `create table if not exists  conversation (
-	   conversation_id varchar(128) NOT NULL,
-	  conversation_type int(11) NOT NULL,
-	  user_id varchar(128)  DEFAULT NULL,
-	  group_id varchar(128)  DEFAULT NULL,
-	  show_name varchar(128)  NOT NULL,
-	  face_url varchar(128)  NOT NULL,
-	  recv_msg_opt int(11) NOT NULL ,
-	  unread_count int(11) NOT NULL ,
-	  latest_msg varchar(255)  NOT NULL ,
-      latest_msg_send_time INTEGER(255)  NOT NULL ,
-	  draft_text varchar(255)  DEFAULT NULL ,
-	  draft_timestamp INTEGER(255)  DEFAULT NULL ,
-	  is_pinned int(10) NOT NULL ,
-	  PRIMARY KEY (conversation_id)
-	)`
-
-	_, err = db.Exec(table)
-	if err != nil {
-		log(fmt.Sprintf("table conversation err = %s", err.Error()))
-		return err
-	}
-
-	return nil
-}
-
-func getLocalMaxSeq(uid string) (int64, error) {
-	type MaxSeq struct {
-		Seq int64
-	}
-
-	mRWMutex.Lock()
-	defer mRWMutex.Unlock()
-
-	var maxSeq MaxSeq
-
-	rows, err := initDB.Query(fmt.Sprintf("select IFNULL(max(seq), 0) from chat_log where send_id = '%s' or recv_id = '%s'", uid, uid))
-	defer rows.Close()
-	if err != nil {
-		log(fmt.Sprintf("1111 getLocalMaxSeq err = %s", err.Error()))
-		return 0, nil
-	}
-
-	for rows.Next() {
-		err = rows.Scan(&maxSeq.Seq)
-		if err != nil {
-			sdkLog(fmt.Sprintf("getLocalMaxSeq rows.Scan err = %s", err.Error()))
-			continue
-		}
-	}
-
-	return maxSeq.Seq, nil
-}
-
-func replaceIntoUser(info *userInfo) error {
-	mRWMutex.Lock()
-	defer mRWMutex.Unlock()
-	stmt, err := initDB.Prepare("replace into `user`(uid, `name`, icon, gender, mobile, birth, email, ex) values(?, ?, ?, ?, ?, ?, ?, ?)")
-	if err != nil {
-		sdkLog("db prepare failed, ", err.Error())
-		return err
-	}
-
-	_, err = stmt.Exec(info.Uid, info.Name, info.Icon, info.Gender, info.Mobile, info.Birth, info.Email, info.Ex)
-	if err != nil {
-		sdkLog("db exec failed, ", err.Error())
-		return err
-	}
-	return nil
-}
-
 func (im *IMManager) doFriendMsg(msg MsgData) {
 	if im.cb == nil || FriendObj.friendListener == nil {
 		sdkLog("listener is null")
 		return
 	}
+
 	go func() {
 		switch msg.ContentType {
 		case AddFriendTip:
@@ -783,6 +588,10 @@ func (im *IMManager) doFriendMsg(msg MsgData) {
 			im.refuseFriendApplication(&msg)
 		case SetSelfInfoTip:
 			im.setSelfInfo(&msg)
+		case KickOnlineTip:
+			im.kickOnline(&msg)
+		default:
+			sdkLog("type failed, ", msg)
 		}
 	}()
 }
@@ -832,6 +641,7 @@ func (im *IMManager) refuseFriendApplication(msg *MsgData) {
 }
 
 func (im *IMManager) addFriend(msg *MsgData) {
+	sdkLog("addFriend start ")
 	FriendObj.syncFriendApplication()
 
 	var ui2GetUserInfo ui2ClientCommonReq
@@ -872,6 +682,10 @@ func (im *IMManager) addFriend(msg *MsgData) {
 		return
 	}
 	FriendObj.friendListener.OnFriendApplicationListAdded(string(jsonInfo))
+}
+
+func (im *IMManager) kickOnline(msg *MsgData) {
+	im.cb.OnKickedOffline()
 }
 
 func (im *IMManager) setSelfInfo(msg *MsgData) {

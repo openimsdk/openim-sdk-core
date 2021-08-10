@@ -1,5 +1,10 @@
 package open_im_sdk
 
+import (
+	"database/sql"
+	"sync"
+)
+
 func initAddr() {
 	ginAddress = SvrConf.IpApiAddr
 
@@ -22,75 +27,85 @@ func initAddr() {
 	setFriendComment = ginAddress + "/friend/set_friend_comment"
 	tencentCloudStorageCredentialRouter = ginAddress + "/third/tencent_cloud_storage_credential"
 
+	//group
+	createGroupRouter = ginAddress + "/group/create_group"
+	setGroupInfoRouter = ginAddress + "/group/set_group_info"
+	joinGroupRouter = ginAddress + "/group/join_group"
+	quitGroupRouter = ginAddress + "/group/quit_group"
+	getGroupsInfoRouter = ginAddress + "/group/get_groups_info"
 	getGroupMemberListRouter = ginAddress + "/group/get_group_member_list"
+	getGroupAllMemberListRouter = ginAddress + "/group/get_group_all_member_list"
 	getGroupMembersInfoRouter = ginAddress + "/group/get_group_members_info"
 	inviteUserToGroupRouter = ginAddress + "/group/invite_user_to_group"
 	getJoinedGroupListRouter = ginAddress + "/group/get_joined_group_list"
 	kickGroupMemberRouter = ginAddress + "/group/kick_group"
+	transferGroupRouter = ginAddress + "/group/transfer_group"
+	getGroupApplicationListRouter = ginAddress + "/group/get_group_applicationList"
+	acceptGroupApplicationRouter = ginAddress + "/group/group_application_response"
+	refuseGroupApplicationRouter = ginAddress + "/group/group_application_response"
 }
 
 var (
-	ginAddress = "http://47.112.160.66:10000"
+	ginAddress = ""
 
-	getUserInfoRouter              = ginAddress + "/user/get_user_info"
-	updateUserInfoRouter           = ginAddress + "/user/update_user_info"
-	addFriendRouter                = ginAddress + "/friend/add_friend"
-	getFriendInfoRouter            = ginAddress + "/friend/get_friends_info"
-	getFriendApplicationListRouter = ginAddress + "/friend/get_friend_apply_list"
-	getSelfApplicationListRouter   = ginAddress + "/friend/get_self_apply_list"
-	deleteFriendRouter             = ginAddress + "/friend/delete_friend"
-	getFriendListRouter            = ginAddress + "/friend/get_friend_list"
-	sendMsgRouter                  = ginAddress + "/chat/send_msg"
-	getBlackListRouter             = ginAddress + "/friend/get_blacklist"
-	addFriendResponse              = ginAddress + "/friend/add_friend_response"
-	addBlackListRouter             = ginAddress + "/friend/add_blacklist"
-	removeBlackListRouter          = ginAddress + "/friend/remove_blacklist"
+	getUserInfoRouter              = ""
+	updateUserInfoRouter           = ""
+	addFriendRouter                = ""
+	getFriendInfoRouter            = ""
+	getFriendApplicationListRouter = ""
+	getSelfApplicationListRouter   = ""
+	deleteFriendRouter             = ""
+	getFriendListRouter            = ""
+	sendMsgRouter                  = ""
+	getBlackListRouter             = ""
+	addFriendResponse              = ""
+	addBlackListRouter             = ""
+	removeBlackListRouter          = ""
 	//	getFriendApplyListRouter            = ginAddress + "/friend/get_friend_apply_list"
-	setFriendComment                    = ginAddress + "/friend/set_friend_comment"
-	pullUserMsgRouter                   = ginAddress + "/chat/pull_msg"
-	newestSeqRouter                     = ginAddress + "/chat/newest_seq"
-	tencentCloudStorageCredentialRouter = ginAddress + "/third/tencent_cloud_storage_credential"
+	setFriendComment                    = " "
+	pullUserMsgRouter                   = ""
+	newestSeqRouter                     = ""
+	tencentCloudStorageCredentialRouter = ""
 
 	//group
-	createGroupRouter             = ginAddress + "/group/create_group"
-	setGroupInfoRouter            = ginAddress + "/group/set_group_info"
-	joinGroupRouter               = ginAddress + "/group/join_group"
-	quitGroupRouter               = ginAddress + "/group/quit_group"
-	getGroupsInfoRouter           = ginAddress + "/group/get_groups_info"
-	getGroupMemberListRouter      = ginAddress + ""
-	getGroupMembersInfoRouter     = ginAddress + ""
-	inviteUserToGroupRouter       = ginAddress + ""
-	getJoinedGroupListRouter      = ginAddress + ""
-	kickGroupMemberRouter         = ginAddress + ""
-	transferGroupRouter           = ginAddress + "/group/transfer_group"
-	getGroupApplicationListRouter = ginAddress + "/group/get_group_applicationList"
-	acceptGroupApplicationRouter  = ginAddress + "/group/group_application_response"
-	refuseGroupApplicationRouter  = ginAddress + "/group/group_application_response"
+	createGroupRouter             = ""
+	setGroupInfoRouter            = ""
+	joinGroupRouter               = ""
+	quitGroupRouter               = ""
+	getGroupsInfoRouter           = ""
+	getGroupMemberListRouter      = ""
+	getGroupAllMemberListRouter   = ""
+	getGroupMembersInfoRouter     = ""
+	inviteUserToGroupRouter       = ""
+	getJoinedGroupListRouter      = ""
+	kickGroupMemberRouter         = ""
+	transferGroupRouter           = ""
+	getGroupApplicationListRouter = ""
+	acceptGroupApplicationRouter  = ""
+	refuseGroupApplicationRouter  = ""
 )
 
 func initListenerCh() {
 	ConversationCh = make(chan cmd2Value, 100)
-	InitCh = make(chan cmd2Value, 50)
-
 	ConListener.ch = ConversationCh
-	SdkInitManager.ch = InitCh
 }
 
 var (
-	//       chan cmd2Value //cmd：
 	ConversationCh chan cmd2Value //cmd：
-	InitCh         chan cmd2Value //cmd：
-	groupCh        chan cmd2Value //group channel
 
 	SvrConf  IMConfig
-	WsState  int32 //100 stop，  0 init
 	token    string
 	LoginUid string
 
 	SdkInitManager IMManager
 	FriendObj      Friend
 	ConListener    ConversationListener
-	groupManager groupListener
+	groupManager   groupListener
+
+	initDB   *sql.DB
+	mRWMutex *sync.RWMutex
+
+	stateMutex sync.Mutex
 )
 
 const (
@@ -119,35 +134,41 @@ const (
 )
 const (
 	//ContentType
-	Text    = 101
-	Picture = 102
-	Sound   = 103
-	Video   = 104
-	File    = 105
-	Merger  = 106
-
-	SyncSenderMsg              = 110
+	Text           = 101
+	Picture        = 102
+	Sound          = 103
+	Video          = 104
+	File           = 105
+	AtText         = 106
+	Merger         = 107
+	Forward        = 108
+	Location       = 109
+	Custom         = 110
+	Revoke         = 111
+	HasReadReceipt = 112
+	Typing         = 113
+	//////////////////////////////////////////
+	SingleTipBegin             = 200
 	AcceptFriendApplicationTip = 201
 	AddFriendTip               = 202
 	RefuseFriendApplicationTip = 203
 	SetSelfInfoTip             = 204
-	RevokeMessageTip           = 205
-	C2CMessageAsRead           = 206
+	KickOnlineTip              = 303
 
-	KickOnlineTip = 303
+	SingleTipEnd = 399
+	/////////////////////////////////////////
+	GroupTipBegin             = 500
+	TransferGroupOwnerTip     = 501
+	CreateGroupTip            = 502
+	JoinGroupTip              = 504
+	QuitGroupTip              = 505
+	SetGroupInfoTip           = 506
+	AcceptGroupApplicationTip = 507
+	RefuseGroupApplicationTip = 508
+	KickGroupMemberTip        = 509
+	InviteUserToGroupTip      = 510
 
-	TransferGroupOwnerTip           = 501
-	CreateGroupTip                  = 502
-	GroupApplicationResponseTip     = 503
-	JoinGroupTip                    = 504
-	QuitGroupTip                    = 505
-	SetGroupInfoTip                 = 506
-	AcceptGroupApplicationTip       = 507
-	RefuseGroupApplicationTip       = 508
-	KickGroupMemberTip              = 509
-	InviteUserToGroupTip            = 510
-	AcceptGroupApplicationResultTip = 511
-	RefuseGroupApplicationResultTip = 512
+	GroupTipEnd = 599
 	////////////////////////////////////////
 	//MsgFrom
 	UserMsgType = 100
@@ -163,6 +184,7 @@ const (
 	MsgStatusSendSuccess = 2
 	MsgStatusSendFailed  = 3
 	MsgStatusHasDeleted  = 4
+	MsgStatusRevoked     = 5
 )
 
 const (
@@ -186,6 +208,8 @@ const (
 	LoginSuccess = 101
 	Logining     = 102
 	LoginFailed  = 103
+
+	LogoutCmd = 201
 )
 
 const (
@@ -193,11 +217,13 @@ const (
 )
 
 const (
-	ConAndUnreadChange = 1
-	AddConOrUpLatMsg   = 2
-	UnreadCountSetZero = 3
-	ConChange          = 4
-	IncrUnread         = 5
+	ConAndUnreadChange        = 1
+	AddConOrUpLatMsg          = 2
+	UnreadCountSetZero        = 3
+	ConChange                 = 4
+	IncrUnread                = 5
+	TotalUnreadMessageChanged = 6
+	UpdateFaceUrlAndNickName  = 7
 
 	HasRead = 1
 	NotRead = 0
@@ -215,3 +241,9 @@ const (
 	GroupActionRefuseGroupApplication = 9
 )
 const ZoomScale = "200"
+
+const (
+	FriendAcceptTip  = "You have successfully become friends, so start chatting"
+	TransferGroupTip = "The owner of the group is transferred!"
+	AcceptGroupTip   = "%s join the group"
+)

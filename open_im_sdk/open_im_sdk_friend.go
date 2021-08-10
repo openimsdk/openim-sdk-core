@@ -86,7 +86,7 @@ func GetFriendApplicationList(callback Base) {
 func AcceptFriendApplication(callback Base, uid string) {
 	//FriendApplication(callback, info, 1)
 	go func() {
-		var uid2Accept ui2AcceptFriend
+		var uid2Accept string
 		err := json.Unmarshal([]byte(uid), &uid2Accept)
 		if err != nil {
 			sdkLog("unmarshal failed, ", err.Error())
@@ -100,7 +100,15 @@ func AcceptFriendApplication(callback Base, uid string) {
 			return
 		}
 
-		fInfo, err := getFriendInfoByFriendUid(uid2Accept.UID)
+		fInfo, err := getFriendInfoByFriendUid(uid2Accept)
+
+		blackUser, err := getBlackUsInfoByUid(uid2Accept)
+		if err != nil {
+			sdkLog(err.Error())
+		}
+		if blackUser.Uid != "" {
+			fInfo.IsInBlackList = 1
+		}
 		if err == nil && fInfo.UID != "" {
 			jsonInfo, err := json.Marshal(fInfo)
 			if err == nil {
@@ -114,15 +122,15 @@ func AcceptFriendApplication(callback Base, uid string) {
 func RefuseFriendApplication(callback Base, uid string) {
 	//	FriendApplication(callback, uid, -1)
 	go func() {
-		var uid2Accept ui2AcceptFriend
-		err := json.Unmarshal([]byte(uid), &uid2Accept)
+		var uid2Refuse string
+		err := json.Unmarshal([]byte(uid), &uid2Refuse)
 		if err != nil {
 			sdkLog("unmarshal failed, ", err.Error())
 			callback.OnError(ErrCodeFriend, err.Error())
 			return
 		}
 
-		err = FriendObj.refuseFriendApplication(uid2Accept)
+		err = FriendObj.refuseFriendApplication(uid2Refuse)
 		if err != nil {
 			callback.OnError(ErrCodeFriend, err.Error())
 			return
@@ -139,7 +147,7 @@ func CheckFriend(callback Base, uidList string) {
 			log(fmt.Sprintf("CheckFriend ErrCodeFriend err = %s", err.Error()))
 			return
 		}
-		var ui2UidList ui2ClientCommonReq
+		var ui2UidList []string
 		e := json.Unmarshal([]byte(uidList), &ui2UidList)
 		if e != nil {
 			callback.OnError(ErrCodeFriend, e.Error())
@@ -154,7 +162,7 @@ func CheckFriend(callback Base, uidList string) {
 		}
 
 		result := make([]Uid2Flag, 0)
-		for _, v := range ui2UidList.UidList {
+		for _, v := range ui2UidList {
 			result = append(result, Uid2Flag{Uid: v, Flag: mapFriend[v]})
 		}
 
@@ -170,8 +178,7 @@ func CheckFriend(callback Base, uidList string) {
 
 func DeleteFromFriendList(deleteUid string, callback Base) {
 	go func() {
-
-		var dUid delUid
+		var dUid string
 		er := json.Unmarshal([]byte(deleteUid), &dUid)
 		if er != nil {
 			callback.OnError(ErrCodeFriend, er.Error())
@@ -181,7 +188,7 @@ func DeleteFromFriendList(deleteUid string, callback Base) {
 			return
 		}
 
-		resp, err := post2Api(deleteFriendRouter, paramsDeleteFriend{Uid: dUid.Uid, OperationID: operationIDGenerator()}, token)
+		resp, err := post2Api(deleteFriendRouter, paramsDeleteFriend{Uid: dUid, OperationID: operationIDGenerator()}, token)
 		if err != nil {
 			callback.OnError(http.StatusInternalServerError, err.Error())
 
@@ -201,7 +208,7 @@ func DeleteFromFriendList(deleteUid string, callback Base) {
 		//_ = triggerCmdFriend()
 
 		FriendObj.syncFriendList()
-		u, err := getUserInfoByUid(dUid.Uid)
+		u, err := getUserInfoByUid(dUid)
 		if err != nil {
 			callback.OnError(ErrCodeFriend, err.Error())
 			log(fmt.Sprintf("getUserInfoByUid  err = %s", err.Error()))
@@ -218,7 +225,7 @@ func DeleteFromFriendList(deleteUid string, callback Base) {
 			Ex:     u.Ex,
 		}
 		FriendObj.friendListener.OnFriendListDeleted(structToJsonString(f))
-		_ = triggerCmdDeleteConversationAndMessage(dUid.Uid, GetConversationIDBySessionType(dUid.Uid, SingleChatType))
+		_ = triggerCmdDeleteConversationAndMessage(dUid, GetConversationIDBySessionType(dUid, SingleChatType), SingleChatType)
 		callback.OnSuccess("")
 	}()
 }
@@ -325,10 +332,10 @@ func SetFriendInfo(comment string, callback Base) {
 	}()
 }
 
-func AddToBlackList(callback Base, deleteUid string) {
+func AddToBlackList(callback Base, blackUid string) {
 	go func() {
-		var dUid delUid
-		er := json.Unmarshal([]byte(deleteUid), &dUid)
+		var uid string
+		er := json.Unmarshal([]byte(blackUid), &uid)
 		if er != nil {
 			callback.OnError(ErrCodeFriend, er.Error())
 
@@ -336,7 +343,7 @@ func AddToBlackList(callback Base, deleteUid string) {
 
 			return
 		}
-		resp, err := post2Api(addBlackListRouter, paramsAddBlackList{UID: dUid.Uid, OperationID: operationIDGenerator()}, token)
+		resp, err := post2Api(addBlackListRouter, paramsAddBlackList{UID: uid, OperationID: operationIDGenerator()}, token)
 		if err != nil {
 			callback.OnError(http.StatusInternalServerError, err.Error())
 
@@ -359,7 +366,7 @@ func AddToBlackList(callback Base, deleteUid string) {
 			callback.OnError(addToBlackListResp.ErrCode, addToBlackListResp.ErrMsg)
 		}
 
-		user, err := getUserInfoByUid(dUid.Uid)
+		user, err := getUserInfoByUid(uid)
 		if err != nil {
 			callback.OnError(ErrCodeFriend, err.Error())
 			log(fmt.Sprintf("getUserInfoByUid err = %s", err.Error()))
@@ -410,7 +417,7 @@ func GetBlackList(callback Base) {
 
 func DeleteFromBlackList(callback Base, deleteUid string) {
 	go func() {
-		var duid delUid
+		var duid string
 		er := json.Unmarshal([]byte(deleteUid), &duid)
 		if er != nil {
 			callback.OnError(ErrCodeFriend, er.Error())
@@ -419,7 +426,7 @@ func DeleteFromBlackList(callback Base, deleteUid string) {
 
 			return
 		}
-		resp, err := post2Api(removeBlackListRouter, paramsRemoveBlackList{UID: duid.Uid, OperationID: operationIDGenerator()}, token)
+		resp, err := post2Api(removeBlackListRouter, paramsRemoveBlackList{UID: duid, OperationID: operationIDGenerator()}, token)
 		if err != nil {
 			callback.OnError(http.StatusInternalServerError, err.Error())
 			log(fmt.Sprintf("DeleteFromBlackList StatusInternalServerError err = %s", err.Error()))
@@ -436,7 +443,7 @@ func DeleteFromBlackList(callback Base, deleteUid string) {
 			callback.OnError(removeToBlackList.ErrCode, removeToBlackList.ErrMsg)
 		}
 
-		user, err := getUserInfoByUid(duid.Uid)
+		user, err := getUserInfoByUid(duid)
 		if err != nil {
 			callback.OnError(ErrCodeFriend, err.Error())
 			log(fmt.Sprintf("getUserInfoByUid err = %s", err.Error()))

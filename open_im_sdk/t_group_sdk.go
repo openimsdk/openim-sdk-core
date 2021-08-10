@@ -5,6 +5,24 @@ import (
 	"fmt"
 )
 
+
+
+type XBase struct {
+}
+
+func (XBase) OnError(errCode int, errMsg string) {
+	fmt.Println("get groupmenberinfo OnError", errCode, errMsg)
+}
+func (XBase) OnSuccess(data string) {
+	fmt.Println("get groupmenberinfo OnSuccess, ", data)
+}
+
+func (XBase) OnProgress(progress int) {
+	fmt.Println("OnProgress, ", progress)
+}
+
+
+
 type testGroupListener struct {
 }
 
@@ -47,28 +65,30 @@ type testCreateGroup struct {
 }
 
 func (testCreateGroup) OnSuccess(data string) {
-	fmt.Println("testCreateGroup,onSuccess")
+	fmt.Println("testCreateGroup,onSuccess", data)
+	var uidList []string
+	uidList = append(uidList, "307edc814bb0d04a")
+	var xb XBase
+	j, _ :=	json.Marshal(uidList)
+	GetGroupMembersInfo(data, string(j), xb)
 }
 
 func (testCreateGroup) OnError(errCode int, errMsg string) {
-	fmt.Println("testCreateGroup,onError")
+	fmt.Println("testCreateGroup,onError", errCode, errMsg)
 }
 
-func DoCreateGroup() {
+func DoTestCreateGroup() {
 	var test testCreateGroup
 	test.groupInfo.GroupName = "chat group1"
 	test.groupInfo.FaceUrl = "url address"
-	test.groupInfo.Introduction = "简介"
-	test.groupInfo.Notification = "公告"
+	test.groupInfo.Introduction = "xxxxx"
+	test.groupInfo.Notification = "zzzzzzzz"
 	test.members = append(test.members, createGroupMemberInfo{
-		Uid:     "fea5bc2bf77813c4",
+		Uid:     "8a97893c744db83e",
 		SetRole: 0,
 	})
 
-	test.members = append(test.members, createGroupMemberInfo{
-		Uid:     "ce8e840e8a28df31",
-		SetRole: 2,
-	})
+
 	groupInfo, _ := json.Marshal(test.groupInfo)
 	members, _ := json.Marshal(test.members)
 	fmt.Println("create groupInfo input:", string(groupInfo), string(members))
@@ -89,7 +109,7 @@ func (testSetGroupInfo) OnError(errCode int, errMsg string) {
 
 func DoSetGroupInfo() {
 	var test testSetGroupInfo
-	test.groupInfo.GroupId = "d81a54e757fa824be04abd1451ac8c64"
+	test.groupInfo.GroupId = "a411065eedf8bc1830ce544ff51394fe"
 	test.GroupName = "测试群"
 	test.Introduction = "这是测试群简介"
 	test.Notification = "这是测试群公告"
@@ -113,7 +133,7 @@ func (testGetGroupsInfo) OnError(errCode int, errMsg string) {
 
 func DoGetGroupsInfo() {
 	var test testGetGroupsInfo
-	groupIDList := []string{"15db7d7cfa97a90113265e77a8fce984", "e13148505c158d0d4b3642942300dbf4"}
+	groupIDList := []string{"a411065eedf8bc1830ce544ff51394fe"}
 	test.getGroupsInfoReq.GroupIDList = groupIDList
 	groupsIDList, _ := json.Marshal(test.GroupIDList)
 	fmt.Println("test getGroupsInfo input", string(groupsIDList))
@@ -134,12 +154,11 @@ func (testJoinGroup) OnError(errCode int, errMsg string) {
 
 func DoJoinGroup() {
 	var test testJoinGroup
-	test.joinGroupReq.GroupID = "d81a54e757fa824be04abd1451ac8c64"
-	test.joinGroupReq.Message = "小果子"
-	groupID, _ := json.Marshal(test.GroupID)
-	message, _ := json.Marshal(test.Message)
-	fmt.Println("test join group input", string(groupID), string(message))
-	JoinGroup(string(groupID), string(message), test)
+	test.joinGroupReq.GroupID = "7149948c2fb143f9ee97e3e9b406b5ec"
+	test.joinGroupReq.Message = "jin lai "
+
+	fmt.Println("test join group input", test.GroupID, test.Message)
+	JoinGroup(test.GroupID, test.Message, test)
 }
 
 type testQuitGroup struct {
@@ -156,11 +175,10 @@ func (testQuitGroup) OnError(errCode int, errMsg string) {
 
 func DoQuitGroup() {
 	var test testQuitGroup
-	test.quitGroupReq.GroupID = "bade7d67f2375e36f902a57aa797e588"
-	groupID, _ := json.Marshal(test.GroupID)
+	test.quitGroupReq.GroupID = "723f87cdcde389f610191a41814791d5"
 
-	fmt.Println("test quit group input", string(groupID))
-	QuitGroup(string(groupID), test)
+	fmt.Println("test quit group input", test.GroupID)
+	QuitGroup(test.GroupID, test)
 }
 
 type testGetJoinedGroupList struct {
@@ -196,8 +214,8 @@ func (testGetGroupMemberList) OnSuccess(data string) {
 
 func DotestGetGroupMemberList() {
 	var test testGetGroupMemberList
-
-	GetGroupMemberList("05dc84b52829e82242a710ecf999c72c", 0, 0, test)
+	var groupId string = ""
+	GetGroupMemberList(groupId, 0, 0, test)
 }
 
 type testGetGroupMembersInfo struct {
@@ -214,8 +232,8 @@ func (testGetGroupMembersInfo) OnSuccess(data string) {
 func DotestGetGroupMembersInfo() {
 	var test testGetGroupMembersInfo
 	var memlist []string
-	memlist = append(memlist, "e7b437c8b05a1fb8875e7196c636f327")
-	memlist = append(memlist, "ded01dfe543700402608e19d4e2f839e")
+	memlist = append(memlist, "307edc814bb0d04a")
+	//memlist = append(memlist, "ded01dfe543700402608e19d4e2f839e")
 	jlist, _ := json.Marshal(memlist)
 	fmt.Println("GetGroupMembersInfo input : ", string(jlist))
 	GetGroupMembersInfo("7ff61d8f9d4a8a0d6d70a14e2683aad5", string(jlist), test)
@@ -236,12 +254,12 @@ func (testKickGroupMember) OnSuccess(data string) {
 func DotestKickGroupMember() {
 	var test testKickGroupMember
 	var memlist []string
-	memlist = append(memlist, "e7b437c8b05a1fb8875e7196c636f327")
-	memlist = append(memlist, "ded01dfe543700402608e19d4e2f839e")
+	//memlist = append(memlist, "e7b437c8b05a1fb8875e7196c636f327")
+	memlist = append(memlist, "307edc814bb0d04a")
 	jlist, _ := json.Marshal(memlist)
 
 	fmt.Println("KickGroupMember input", string(jlist))
-	KickGroupMember("7ff61d8f9d4a8a0d6d70a14e2683aad5", string(jlist), "kkkkkkk", test)
+	KickGroupMember("f4cc5c9b556221b92992538f7e6ac26e", "kkkkkkk",  string(jlist), test)
 }
 
 type testInviteUserToGroup struct {
@@ -258,9 +276,96 @@ func (testInviteUserToGroup) OnSuccess(data string) {
 func DotesttestInviteUserToGroup() {
 	var test testInviteUserToGroup
 	var memlist []string
-	memlist = append(memlist, "fea5bc2bf77813c4")
+	memlist = append(memlist, "307edc814bb0d04a")
 	//memlist = append(memlist, "ded01dfe543700402608e19d4e2f839e")
 	jlist, _ := json.Marshal(memlist)
 	fmt.Println("DotesttestInviteUserToGroup, input: ", string(jlist))
-	InviteUserToGroup("d81a54e757fa824be04abd1451ac8c64", "friend", string(jlist), test)
+	InviteUserToGroup("f4cc5c9b556221b92992538f7e6ac26e", "friend", string(jlist), test)
+}
+
+type testGroupX struct {
+}
+
+func (testGroupX) OnSuccess(data string) {
+	fmt.Println("testGroupX,onSuccess", data)
+}
+
+func (testGroupX) OnError(errCode int, errMsg string) {
+	fmt.Println("testGroupX,onError", errMsg)
+}
+func (testGroupX) OnProgress(progress int) {
+	fmt.Println("testGroupX  ", progress)
+}
+
+func DoGetGroupApplicationList() string {
+	var test testGroupX
+	fmt.Println("test DoGetGroupApplicationList....")
+	str := TsetGetGroupApplicationList(test)
+	return str
+}
+func DoGroupApplicationList() {
+	var test testGroupX
+	fmt.Println("test DoGetGroupApplicationList....")
+	GetGroupApplicationList(test)
+}
+func DoTransferGroupOwner(groupid, userid string) {
+	var test testGroupX
+	fmt.Println("test DoTransferGroupOwner....")
+	TransferGroupOwner(groupid, userid, test)
+}
+func DoAcceptGroupApplication(uid string) {
+
+	str := DoGetGroupApplicationList()
+	var ret groupApplicationResult
+	err := json.Unmarshal([]byte(str), &ret)
+	if err != nil {
+		return
+	}
+	var app GroupReqListInfo
+	for i := 0; i < len(ret.GroupApplicationList); i++ {
+		if ret.GroupApplicationList[i].FromUserID == uid {
+			app = ret.GroupApplicationList[i]
+			break
+		}
+	}
+
+	v, err := json.Marshal(app)
+	if err != nil {
+		return
+	}
+
+	var test testGroupX
+	fmt.Println("同意", string(v))
+	AcceptGroupApplication(string(v), "同意", test)
+}
+func DoRefuseGroupApplication(uid string) {
+	str := DoGetGroupApplicationList()
+	var ret groupApplicationResult
+	err := json.Unmarshal([]byte(str), &ret)
+	if err != nil {
+		return
+	}
+	var app GroupReqListInfo
+	for i := 0; i < len(ret.GroupApplicationList); i++ {
+		if ret.GroupApplicationList[i].FromUserID == uid {
+			app = ret.GroupApplicationList[i]
+			break
+		}
+	}
+
+	v, err := json.Marshal(app)
+	if err != nil {
+		return
+	}
+
+	fmt.Println(string(v))
+
+	var test testGroupX
+	fmt.Println("拒绝", string(v))
+	RefuseGroupApplication(string(v), "拒絕", test)
+}
+
+func TestUploadVideo(videoPath string) {
+	var test testGroupX
+	uploadVideo(videoPath, "", test)
 }

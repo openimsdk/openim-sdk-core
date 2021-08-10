@@ -29,6 +29,12 @@ func Login(uid, tk string, callback Base) {
 	}()
 }
 
+func ForceReConn() {
+	if SdkInitManager.conn != nil {
+		SdkInitManager.conn.Close()
+	}
+}
+
 func Logout(callback Base) {
 	SdkInitManager.logout(callback)
 }

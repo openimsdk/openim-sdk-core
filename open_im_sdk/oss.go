@@ -186,9 +186,10 @@ func uploadFile(filePath string, back SendMsgCallBack) (string, string, error) {
 }
 
 func uploadVideo(videoPath, snapshotPath string, back SendMsgCallBack) (string, string, string, string, error) {
+	sdkLog("input args:", videoPath, snapshotPath)
 	ossResp, err := tencentOssCredentials()
 	if err != nil {
-		sdkLog(err.Error())
+		sdkLog("tencentOssCredentials err:", err.Error())
 		return "", "", "", "", err
 	}
 
@@ -209,6 +210,7 @@ func uploadVideo(videoPath, snapshotPath string, back SendMsgCallBack) (string, 
 			//-----first------
 			suffix := path.Ext(snapshotPath)
 			if len(suffix) == 0 {
+				sdkLog("suffix =0 Snapshot err:")
 				return "", "", "", "", errors.New("file fail")
 			}
 			newNameSnapshot := fmt.Sprintf("%d-%d%s", time.Now().UnixNano(), rand.Int(), suffix)
@@ -222,10 +224,9 @@ func uploadVideo(videoPath, snapshotPath string, back SendMsgCallBack) (string, 
 
 			_, err := client.Object.PutFromFile(context.Background(), newNameSnapshot, snapshotPath, opt1)
 			if err != nil {
-				sdkLog(err.Error())
+				sdkLog("PutFromFile Snapshot err:", err.Error())
 				return "", "", "", "", err
 			}
-
 			targetSnapshot = dir + "/" + newNameSnapshot
 		}
 
@@ -235,6 +236,7 @@ func uploadVideo(videoPath, snapshotPath string, back SendMsgCallBack) (string, 
 
 		suffix := path.Ext(videoPath)
 		if len(suffix) == 0 {
+			sdkLog("suffix =0  Video err:")
 			return "", "", "", "", errors.New("file fail")
 		}
 		newNameVideo := fmt.Sprintf("%d-%d%s", time.Now().UnixNano(), rand.Int(), suffix)
@@ -249,14 +251,17 @@ func uploadVideo(videoPath, snapshotPath string, back SendMsgCallBack) (string, 
 
 		_, err = client.Object.PutFromFile(context.Background(), newNameVideo, videoPath, opt2)
 		if err != nil {
-			sdkLog(err.Error())
+			sdkLog("PutFromFile Video err:", err.Error())
 			return "", "", "", "", err
 		}
 
 		targetVideo := dir + "/" + newNameVideo
+
+		sdkLog("ok", videoPath, snapshotPath, targetSnapshot, targetVideo)
+
 		return targetSnapshot, newNameSnapshot, targetVideo, newNameVideo, nil
 	}
-
+	sdkLog("client == nil")
 	return "", "", "", "", errors.New("client == nil")
 }
 
@@ -275,6 +280,6 @@ func (l *selfListener) ProgressChangedCallback(event *cos.ProgressEvent) {
 		log(fmt.Sprintf("\r[ConsumedBytes/TotalBytes: %d/%d, %d%%]", event.ConsumedBytes, event.TotalBytes, event.ConsumedBytes*100/event.TotalBytes))
 
 	case cos.ProgressFailedEvent:
-		log(fmt.Sprintf("\nTransfer Failed: %v", event.Err))
+		sdkLog(fmt.Sprintf("\nTransfer Failed: %v", event.Err))
 	}
 }

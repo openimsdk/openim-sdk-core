@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 )
 
-func GetUsersInfo(info string, cb Base) {
+func GetUsersInfo(uIDList string, cb Base) {
 	go func() {
-		var ui2GetUserInfo ui2ClientCommonReq
-		err := json.Unmarshal([]byte(info), &ui2GetUserInfo)
+		var uidList []string
+		err := json.Unmarshal([]byte(uIDList), &uidList)
 		if err != nil {
 			cb.OnError(ErrCodeUserInfo, err.Error())
 			return
 		}
-		resp, err := post2Api(getUserInfoRouter, paramsGetUserInfo{UidList: ui2GetUserInfo.UidList, OperationID: operationIDGenerator()}, token)
+		resp, err := post2Api(getUserInfoRouter, paramsGetUserInfo{UidList: uidList, OperationID: operationIDGenerator()}, token)
 		if err != nil {
 			cb.OnError(ErrCodeUserInfo, err.Error())
 			return

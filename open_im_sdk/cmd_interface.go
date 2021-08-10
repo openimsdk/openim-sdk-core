@@ -4,9 +4,6 @@ func triggerCmdFriend() error {
 	return nil
 
 }
-func triggerCmdReLogin() error {
-	return sendCmd(SdkInitManager.ch, cmd2Value{Cmd: CmdReLogin}, 2)
-}
 
 func triggerCmdBlackList() error {
 	return nil
@@ -21,23 +18,26 @@ func triggerCmdFriendApplication() error {
 type deleteConNode struct {
 	SourceID       string
 	ConversationID string
+	SessionType    int
 }
 
-func triggerCmdDeleteConversationAndMessage(sourceID, conversationID string) error {
+func triggerCmdDeleteConversationAndMessage(sourceID, conversationID string, sessionType int) error {
 	c2v := cmd2Value{
 		Cmd:   CmdDeleteConversation,
-		Value: deleteConNode{SourceID: sourceID, ConversationID: conversationID},
+		Value: deleteConNode{SourceID: sourceID, ConversationID: conversationID, SessionType: sessionType},
 	}
 
 	return sendCmd(ConversationCh, c2v, 1)
 }
 
+/*
 func triggerCmdGetLoginUserInfo() error {
 	c2v := cmd2Value{
 		Cmd: CmdGeyLoginUserInfo,
 	}
 	return sendCmd(InitCh, c2v, 1)
 }
+*/
 
 type updateConNode struct {
 	ConId  string
@@ -74,11 +74,8 @@ func triggerCmdUpdateConversation(node updateConNode) error {
 
 func unInitAll() {
 	c2v := cmd2Value{Cmd: CmdUnInit}
-	_ = sendCmd(InitCh, c2v, 1)
 	_ = sendCmd(ConversationCh, c2v, 1)
 }
-
-
 
 type goroutine interface {
 	work(cmd cmd2Value)

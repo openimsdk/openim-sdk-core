@@ -178,7 +178,7 @@ type Uid2Flag struct {
 
 type MessageReceipt struct {
 	UserID      string   `json:"uid"`
-	MsgIdList   []string `json:"MsgIDList"`
+	MsgIdList   []string `json:"msgIDList"`
 	ReadTime    int64    `json:"readTime"`
 	MsgFrom     int32    `json:"msgFrom"`
 	ContentType int32    `json:"contentType"`
@@ -195,8 +195,10 @@ type MsgData struct {
 	Content          string
 	SendTime         int64
 	Seq              int64
-	IsEmphasize      bool
 	SenderPlatformID int32
+	SenderNickName   string
+	SenderFaceURL    string
+	ClientMsgID      string
 }
 
 type Msg struct {
@@ -207,7 +209,8 @@ type Msg struct {
 }
 
 type ArrMsg struct {
-	Data []MsgData
+	SingleData []MsgData
+	GroupData  []MsgData
 }
 
 type IMConfig struct {
@@ -218,15 +221,10 @@ type IMConfig struct {
 }
 
 type IMManager struct {
-	//token    string
 	conn *websocket.Conn
 	cb   IMSDKListener
-	//config   IMConfig
-	//userInfo IMUserInfo
-	ch chan cmd2Value
 
 	LoginState int
-	//mutex sync.Mutex
 }
 
 type paramsPullUserMsgDataReq struct {
@@ -238,7 +236,6 @@ type paramsPullUserMsg struct {
 	ReqIdentifier int                      `json:"reqIdentifier"`
 	OperationID   string                   `json:"operationID"`
 	SendID        string                   `json:"sendID"`
-	MsgIncr       int                      `json:"msgIncr"`
 	Data          paramsPullUserMsgDataReq `json:"data"`
 }
 
@@ -255,6 +252,9 @@ type paramsPullUserSingleList struct {
 	Seq              int64  `json:"seq"`
 	ServerMsgID      string `json:"serverMsgID"`
 	SenderPlatformID int32  `json:"senderPlatformID"`
+	SenderNickName   string `json:"senderNickName"`
+	SenderFaceURL    string `json:"senderFaceUrl"`
+	ClientMsgID      string `json:"clientMsgID"`
 }
 
 type paramsPullUserSingleMsgDataResp struct {
@@ -335,12 +335,13 @@ type SendMsgRespFromServer struct {
 	}
 }
 type paramsUserSendMsg struct {
-	ReqIdentifier int32  `json:"reqIdentifier" binding:"required"`
-	PlatformID    int32  `json:"platformID" binding:"required"`
-	SendID        string `json:"sendID" binding:"required"`
-	OperationID   string `json:"operationID" binding:"required"`
-	MsgIncr       int32  `json:"msgIncr" binding:"required"`
-	Data          struct {
+	ReqIdentifier  int32  `json:"reqIdentifier" binding:"required"`
+	PlatformID     int32  `json:"platformID" binding:"required"`
+	SendID         string `json:"sendID" binding:"required"`
+	SenderNickName string `json:"senderNickName" binding:"required"`
+	SenderFaceURL  string `json:"senderFaceUrl" binding:"required"`
+	OperationID    string `json:"operationID" binding:"required"`
+	Data           struct {
 		SessionType int32                  `json:"sessionType" binding:"required"`
 		MsgFrom     int32                  `json:"msgFrom" binding:"required"`
 		ContentType int32                  `json:"contentType" binding:"required"`
@@ -426,24 +427,35 @@ type MsgStruct struct {
 		AbstractList []string     `json:"abstractList"`
 		MultiMessage []*MsgStruct `json:"multiMessage"`
 	} `json:"mergeElem"`
-	RevokeMessage struct {
-		ServerMsgID    string `json:"serverMsgID"`
-		SendID         string `json:"sendID"`
-		SenderNickname string `json:"senderNickname"`
-		RecvID         string `json:"recvID"`
-		GroupID        string `json:"groupID"`
-		ContentType    int32  `json:"contentType"`
-		SendTime       int64  `json:"sendTime"`
-	}
+	AtElem struct {
+		Text       string   `json:"text"`
+		AtUserList []string `json:"atUserList"`
+		IsAtSelf   bool     `json:"isAtSelf"`
+	} `json:"atElem"`
+	//RevokeMessage struct {
+	//	ServerMsgID    string `json:"serverMsgID"`
+	//	SendID         string `json:"sendID"`
+	//	SenderNickname string `json:"senderNickname"`
+	//	RecvID         string `json:"recvID"`
+	//	GroupID        string `json:"groupID"`
+	//	ContentType    int32  `json:"contentType"`
+	//	SendTime       int64  `json:"sendTime"`
+	//}
 }
 
 ////////////////////////// group/////////////////////////
+
+type changeGroupInfo struct {
+	data       groupInfo `json:"data"`
+	changeType int32     `json:"changeType"`
+}
 type groupInfo struct {
 	GroupId      string `json:"groupID"`
 	GroupName    string `json:"groupName"`
 	Notification string `json:"notification"`
 	Introduction string `json:"introduction"`
 	FaceUrl      string `json:"faceUrl"`
+	Ex           string `json:"ex"`
 	OwnerId      string `json:"ownerId"`
 	CreateTime   uint64 `json:"createTime"`
 	MemberCount  uint32 `json:"memberCount"`
@@ -499,7 +511,7 @@ type groupMemberOperationResult struct {
 
 type groupApplicationResult struct {
 	UnReadCount          int                `json:"count"`
-	GroupApplicationList []groupApplication `json:"user"`
+	GroupApplicationList []GroupReqListInfo `json:"user"`
 }
 
 type updateGroupNode struct {
@@ -607,10 +619,9 @@ type getGroupMemberListReq struct {
 	OperationID string `json:"operationID"`
 }
 
-type getGroupMemberListResp struct {
-	commonResp
-	NextSeq int32                 `json:"nextSeq"`
-	Data    []groupMemberFullInfo `json:"data"`
+type getGroupAllMemberReq struct {
+	GroupID     string `json:"groupID"`
+	OperationID string `json:"operationID"`
 }
 
 type getGroupMembersInfoReq struct {
@@ -628,6 +639,7 @@ type inviteUserToGroupReq struct {
 	UidList     []string `json:"uidList"`
 	Reason      string   `json:"reason"`
 	OperationID string   `json:"operationID"`
+	string
 }
 
 type inviteUserToGroupResp struct {
@@ -644,14 +656,14 @@ type getJoinedGroupListResp struct {
 	Data []groupInfo `json:"data"`
 }
 
-type kickGroupMemberReq struct {
-	GroupID     string   `json:"groupID"`
-	UidList     []string `json:"uidList"`
-	Reason      string   `json:"reason"`
-	OperationID string   `json:"operationID"`
+type kickGroupMemberApiReq struct {
+	GroupID     string                `json:"groupID"`
+	UidListInfo []groupMemberFullInfo `json:"uidListInfo"`
+	Reason      string                `json:"reason"`
+	OperationID string                `json:"operationID"`
 }
 
-type kickGroupMemberResp struct {
+type kickGroupMemberApiResp struct {
 	commonResp
 	Data []idResult `json:"data"`
 }
@@ -675,13 +687,15 @@ type accessOrRefuseGroupApplicationReq struct {
 	FromUser         string `json:"fromUserID"`
 	FromUserNickName string `json:"fromUserNickName"`
 	FromUserFaceUrl  string `json:"fromUserFaceUrl"`
+	ToUserNickname   string `json:"toUserNickName"`
+	ToUserFaceUrl    string `json:"toUserFaceURL"`
 	ToUser           string `json:"toUserID"`
-	AddTime          int    `json:"addTime"`
+	AddTime          int64  `json:"addTime"`
 	RequestMsg       string `json:"requestMsg"`
 	HandledMsg       string `json:"handledMsg"`
-	Type             int    `json:"type"`
-	HandleStatus     int    `json:"handleStatus"`
-	HandleResult     int    `json:"handleResult"`
+	Type             int32  `json:"type"`
+	HandleStatus     int32  `json:"handleStatus"`
+	HandleResult     int32  `json:"handleResult"`
 }
 
 type SoundElem struct {
@@ -700,19 +714,21 @@ UidList              []string `protobuf:"bytes,5,rep,name=uidList,proto3" json:"
 
 */
 
+/*
 type InviteUserToGroupReq struct {
 	Op      string   `json:"op"`
 	GroupID string   `json:"groupID"`
 	Reason  string   `json:"reason"`
 	UidList []string `json:"uidList"`
-}
+}*/
 
+/*
 type KickGroupMemberReq struct {
 	Op      string   `json:"op"`
 	GroupID string   `json:"groupID"`
 	Reason  string   `json:"reason"`
 	UidList []string `json:"uidList"`
-}
+}*/
 
 type TransferGroupOwnerReq struct {
 	GroupID     string
@@ -745,4 +761,37 @@ type AgreeOrRejectGroupMember struct {
 	NickName string `json:"nickName"`
 	FaceUrl  string `json:"faceUrl"`
 	Reason   string `json:"reason"`
+}
+
+type GroupReqListInfo struct {
+	ID               string `json:"id"`
+	GroupID          string `json:"groupID"`
+	FromUserID       string `json:"fromUserID"`
+	ToUserID         string `json:"toUserID"`
+	Flag             int32  `json:"flag"`
+	RequestMsg       string `json:"reqMsg"`
+	HandledMsg       string `json:"handledMsg"`
+	AddTime          int64  `json:"createTime"`
+	FromUserNickname string `json:"fromUserNickName"`
+	ToUserNickname   string `json:"toUserNickName"`
+	FromUserFaceUrl  string `json:"fromUserFaceURL"`
+	ToUserFaceUrl    string `json:"toUserFaceURL"`
+	HandledUser      string `json:"handledUser"`
+	Type             int32  `json:"type"`
+	HandleStatus     int32  `json:"handleStatus"`
+	HandleResult     int32  `json:"handleResult"`
+	//IsRead           int32  `json:"is_read"`
+}
+
+type NotificationContent struct {
+	IsDisplay   int32  `json:"isDisplay"`
+	DefaultTips string `json:"defaultTips"`
+	Detail      string `json:"detail"`
+}
+
+type GroupApplicationInfo struct {
+	Info         accessOrRefuseGroupApplicationReq `json:"info"`
+	HandUserID   string                            `json:"handUserID"`
+	HandUserName string                            `json:"handUserName"`
+	HandUserIcon string                            `json:"handUserIcon"`
 }

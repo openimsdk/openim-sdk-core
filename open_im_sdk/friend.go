@@ -8,12 +8,15 @@ import (
 
 type Friend struct {
 	friendListener OnFriendshipListener
-	ch             chan cmd2Value
+	//ch             chan cmd2Value
 }
 
+/*
 func (fr *Friend) getCh() chan cmd2Value {
 	return fr.ch
 }
+*/
+/*
 func (fr *Friend) work(c2v cmd2Value) {
 	switch c2v.Cmd {
 	case CmdFriend:
@@ -57,6 +60,7 @@ func (fr *Friend) work(c2v cmd2Value) {
 
 	}
 }
+*/
 
 func sendCmd(ch chan cmd2Value, value cmd2Value, timeout int64) error {
 	var flag = 0
@@ -115,7 +119,7 @@ func (fr *Friend) doFriendList() {
 			}
 			jsonFriendInfo, _ := json.Marshal(friendsInfoOnLocal[index])
 			fr.friendListener.OnFriendListDeleted(string(jsonFriendInfo))
-			_ = triggerCmdDeleteConversationAndMessage(friendsInfoOnLocalInterface[index].Key(), GetConversationIDBySessionType(friendsInfoOnLocalInterface[index].Key(), SingleChatType))
+			_ = triggerCmdDeleteConversationAndMessage(friendsInfoOnLocalInterface[index].Key(), GetConversationIDBySessionType(friendsInfoOnLocalInterface[index].Key(), SingleChatType), SingleChatType)
 		}
 	}
 
@@ -134,7 +138,22 @@ func (fr *Friend) doFriendList() {
 	}
 }
 func (fr *Friend) getLocalFriendList() ([]friendInfo, error) {
-	return getLocalFriendList()
+	//Take out the friend list and judge whether it is in the blacklist again to prevent nested locks
+	localFriendList, err := getLocalFriendList()
+	if err != nil {
+		return nil, err
+	}
+	for index, v := range localFriendList {
+		//check friend is in blacklist
+		blackUser, err := getBlackUsInfoByUid(v.UID)
+		if err != nil {
+			sdkLog(err.Error())
+		}
+		if blackUser.Uid != "" {
+			localFriendList[index].IsInBlackList = 1
+		}
+	}
+	return localFriendList, nil
 }
 
 func (fr *Friend) getServerFriendList() ([]friendInfo, error) {
@@ -389,9 +408,9 @@ func (fr *Friend) doAcceptOrRefuseApplicationCall(sendUid string, flag int32) {
 	}
 }
 
-func (fr *Friend) refuseFriendApplication(uid2Accept ui2AcceptFriend) error {
+func (fr *Friend) refuseFriendApplication(uid2Refuse string) error {
 	flag := -1
-	resp, err := post2Api(addFriendResponse, paramsAddFriendResponse{Uid: uid2Accept.UID, OperationID: operationIDGenerator(), Flag: flag}, token)
+	resp, err := post2Api(addFriendResponse, paramsAddFriendResponse{Uid: uid2Refuse, OperationID: operationIDGenerator(), Flag: flag}, token)
 	if err != nil {
 		return err
 	}
@@ -411,9 +430,9 @@ func (fr *Friend) refuseFriendApplication(uid2Accept ui2AcceptFriend) error {
 	return nil
 }
 
-func (fr *Friend) acceptFriendApplication(uid2Accept ui2AcceptFriend) error {
+func (fr *Friend) acceptFriendApplication(uid string) error {
 	flag := 1
-	resp, err := post2Api(addFriendResponse, paramsAddFriendResponse{Uid: uid2Accept.UID, OperationID: operationIDGenerator(), Flag: flag}, token)
+	resp, err := post2Api(addFriendResponse, paramsAddFriendResponse{Uid: uid, OperationID: operationIDGenerator(), Flag: flag}, token)
 	if err != nil {
 		return err
 	}
@@ -430,6 +449,8 @@ func (fr *Friend) acceptFriendApplication(uid2Accept ui2AcceptFriend) error {
 
 	fr.syncFriendApplication()
 	fr.syncFriendList()
+	n := NotificationContent{1, FriendAcceptTip, ""}
+	autoSendMsg(createTextSystemMessage(n, AcceptFriendApplicationTip), uid, "", false, true, true)
 	return nil
 }
 
@@ -517,6 +538,7 @@ func (fr *Friend) syncFriendList() {
 	if len(aInBNot) > 0 {
 		for _, index := range aInBNot {
 			if friendInfoStruct, ok := friendsInfoOnServerInterface[index].Value().(friendInfo); ok {
+				sdkLog("insertIntoTheFriendToFriendInfo")
 				err = insertIntoTheFriendToFriendInfo(friendInfoStruct.UID, friendInfoStruct.Name, friendInfoStruct.Comment, friendInfoStruct.Icon, friendInfoStruct.Gender, friendInfoStruct.Mobile, friendInfoStruct.Birth, friendInfoStruct.Email, friendInfoStruct.Ex)
 				if err != nil {
 					return
@@ -528,6 +550,7 @@ func (fr *Friend) syncFriendList() {
 
 	if len(bInANot) > 0 {
 		for _, index := range bInANot {
+			sdkLog("delTheFriendFromFriendInfo")
 			err = delTheFriendFromFriendInfo(friendsInfoOnLocalInterface[index].Key())
 			if err != nil {
 				log(err.Error())
@@ -540,6 +563,7 @@ func (fr *Friend) syncFriendList() {
 	if len(sameA) > 0 {
 		for _, index := range sameA {
 			if friendInfoStruct, ok := friendsInfoOnServerInterface[index].Value().(friendInfo); ok {
+				sdkLog("updateTheFriendInfo")
 				err = updateTheFriendInfo(friendInfoStruct.UID, friendInfoStruct.Name, friendInfoStruct.Comment, friendInfoStruct.Icon, friendInfoStruct.Gender, friendInfoStruct.Mobile, friendInfoStruct.Birth, friendInfoStruct.Email, friendInfoStruct.Ex)
 				if err != nil {
 					log(err.Error())
