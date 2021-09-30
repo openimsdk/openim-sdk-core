@@ -216,9 +216,27 @@ func get(url string) (response []byte, err error) {
 	}
 	return body, nil
 }
+func retry(url string, data interface{}, token string, attempts int, sleep time.Duration, fn func(string, interface{}, string) ([]byte, error)) ([]byte, error) {
+	b, err := fn(url, data, token)
+	if err != nil {
+		if attempts--; attempts > 0 {
+			time.Sleep(sleep)
+			return retry(url, data, token, attempts, 2*sleep, fn)
+		}
+		return nil, err
+	}
+	return b, nil
+}
 
 //application/json; charset=utf-8
 func post2Api(url string, data interface{}, token string) (content []byte, err error) {
+	if url != sendMsgRouter {
+		return retry(url, data, token, 5, 2*time.Millisecond, postLogic)
+	} else {
+		return postLogic(url, data, token)
+	}
+}
+func postLogic(url string, data interface{}, token string) (content []byte, err error) {
 	jsonStr, err := json.Marshal(data)
 	if err != nil {
 		sdkLog("marshal failed, url: ", url, "req: ", string(jsonStr))
