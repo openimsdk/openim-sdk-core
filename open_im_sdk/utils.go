@@ -230,7 +230,7 @@ func retry(url string, data interface{}, token string, attempts int, sleep time.
 
 //application/json; charset=utf-8
 func post2Api(url string, data interface{}, token string) (content []byte, err error) {
-	if url != sendMsgRouter {
+	if url == sendMsgRouter {
 		return retry(url, data, token, 5, 2*time.Millisecond, postLogic)
 	} else {
 		return postLogic(url, data, token)
