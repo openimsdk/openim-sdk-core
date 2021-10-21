@@ -7,7 +7,8 @@ import (
 )
 
 func (u *UserRelated) GetFriendsInfo(callback Base, uidList string) {
-	if callback == nil {
+	if callback == nil || uidList == "" {
+		sdkLog("uidList or callback is nil")
 		return
 	}
 	go func() {
@@ -21,7 +22,7 @@ func (u *UserRelated) GetFriendsInfo(callback Base, uidList string) {
 		e := json.Unmarshal([]byte(uidList), &sList)
 		if e != nil {
 			callback.OnError(ErrCodeFriend, e.Error())
-			log(fmt.Sprintf("GetFriendsInfo err = %s", e.Error()))
+			sdkLog("Unmarshal failed, ", e.Error())
 			return
 		}
 		mapFriend := make(map[string]friendInfo)
@@ -40,7 +41,7 @@ func (u *UserRelated) GetFriendsInfo(callback Base, uidList string) {
 		sr, ee := json.Marshal(result)
 		if ee != nil {
 			callback.OnError(ErrCodeFriend, ee.Error())
-			log(fmt.Sprintf("GetFriendsInfo err = %s", ee.Error()))
+			sdkLog("Marshal failed, ", ee.Error())
 			return
 		}
 		callback.OnSuccess(string(sr))
@@ -70,13 +71,13 @@ func (u *UserRelated) GetFriendApplicationList(callback Base) {
 		list, err := u.getLocalFriendApplication()
 		if err != nil {
 			callback.OnError(ErrCodeFriend, err.Error())
-			log(fmt.Sprintf("GetFriendApplicationList ErrCodeFriend err = %s", err.Error()))
+			sdkLog("getLocalFriendApplication failed ", err.Error())
 			return
 		}
 		slist, err := json.Marshal(list)
 		if err != nil {
 			callback.OnError(ErrCodeFriend, err.Error())
-			log(fmt.Sprintf("GetFriendApplicationList ErrCodeFriend err = %s", err.Error()))
+			sdkLog("Marshal failed ", err.Error())
 			return
 		}
 		callback.OnSuccess(string(slist))
@@ -182,18 +183,14 @@ func (ur *UserRelated) DeleteFromFriendList(deleteUid string, callback Base) {
 		er := json.Unmarshal([]byte(deleteUid), &dUid)
 		if er != nil {
 			callback.OnError(ErrCodeFriend, er.Error())
-
-			log(fmt.Sprintf("DeleteFromFriendList Unmarshal err = %s", er.Error()))
-
+			sdkLog("Unmarshal failed, ", er.Error(), deleteUid)
 			return
 		}
 
 		resp, err := post2Api(deleteFriendRouter, paramsDeleteFriend{Uid: dUid, OperationID: operationIDGenerator()}, ur.token)
 		if err != nil {
 			callback.OnError(http.StatusInternalServerError, err.Error())
-
-			log(fmt.Sprintf("DeleteFromFriendList StatusInternalServerError err = %s", er.Error()))
-
+			sdkLog("post2Api failed, ", err.Error())
 			return
 		}
 		var deleteFriendResp commonResp

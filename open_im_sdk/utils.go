@@ -5,6 +5,9 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
+
+	"github.com/gorilla/websocket"
 
 	"io"
 	"io/ioutil"
@@ -50,6 +53,90 @@ func getCurrentTimestampByNano() int64 {
 	return time.Now().UnixNano()
 }
 
+//wsNotification map[string]chan GeneralWsResp
+
+func (u *UserRelated) AddCh() (string, chan GeneralWsResp) {
+	u.wsMutex.Lock()
+	defer u.wsMutex.Unlock()
+	msgIncr := u.GenMsgIncr()
+	sdkLog("msgIncr: ", msgIncr)
+	ch := make(chan GeneralWsResp, 1)
+	_, ok := u.wsNotification[msgIncr]
+	if ok {
+		sdkLog("AddCh exist")
+	}
+	u.wsNotification[msgIncr] = ch
+	return msgIncr, ch
+}
+
+func (u *UserRelated) GetCh(msgIncr string) chan GeneralWsResp {
+	u.wsMutex.RLock()
+	defer u.wsMutex.RUnlock()
+	ch, ok := u.wsNotification[msgIncr]
+	if ok {
+		sdkLog("GetCh ok")
+		return ch
+	}
+	sdkLog("GetCh nil")
+	return nil
+}
+
+func (u *UserRelated) DelCh(msgIncr string) {
+	u.wsMutex.Lock()
+	defer u.wsMutex.Unlock()
+	ch, ok := u.wsNotification[msgIncr]
+	if ok {
+		close(ch)
+		delete(u.wsNotification, msgIncr)
+	}
+}
+
+func (u *UserRelated) WriteMsg(msg GeneralWsReq) error {
+	u.stateMutex.Lock()
+	defer u.stateMutex.Unlock()
+	bMsg, _ := json.Marshal(msg)
+	sdkLog("msg size: ", len(bMsg))
+	u.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+
+	return u.conn.WriteMessage(websocket.TextMessage, bMsg)
+}
+
+func notifyCh(ch chan GeneralWsResp, value GeneralWsResp, timeout int64) error {
+	var flag = 0
+	select {
+	case ch <- value:
+		flag = 1
+	case <-time.After(time.Second * time.Duration(timeout)):
+		flag = 2
+	}
+	if flag == 1 {
+		return nil
+	} else {
+		sdkLog("send cmd timeout, ", timeout, value)
+		return errors.New("send cmd timeout")
+	}
+}
+
+func sendCmd(ch chan cmd2Value, value cmd2Value, timeout int64) error {
+	var flag = 0
+	select {
+	case ch <- value:
+		flag = 1
+	case <-time.After(time.Second * time.Duration(timeout)):
+		flag = 2
+	}
+	if flag == 1 {
+		return nil
+	} else {
+		sdkLog("send cmd timeout, ", timeout, value)
+		return errors.New("send cmd timeout")
+	}
+}
+
+func (u *UserRelated) GenMsgIncr() string {
+	return u.LoginUid + "_" + int64ToString(getCurrentTimestampByNano())
+}
+
 func structToJsonString(param interface{}) string {
 	dataType, _ := json.Marshal(param)
 	dataString := string(dataType)
@@ -76,6 +163,11 @@ func int32ToString(i int32) string {
 func int64ToString(i int64) string {
 	return strconv.FormatInt(i, 10)
 }
+func StringToInt64(i string) int64 {
+	j, _ := strconv.ParseInt(i, 10, 64)
+	return j
+}
+
 func stringToInt(i string) int {
 	j, _ := strconv.Atoi(i)
 	return j
@@ -205,20 +297,48 @@ func get(url string) (response []byte, err error) {
 	client := http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Get(url)
 	if err != nil {
-		log(err.Error())
+		sdkLog(err.Error())
 		return nil, err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log(err.Error())
+		sdkLog(err.Error())
 		return nil, err
 	}
 	return body, nil
 }
+func retry(url string, data interface{}, token string, attempts int, sleep time.Duration, fn func(string, interface{}, string) ([]byte, error)) ([]byte, error) {
+	b, err := fn(url, data, token)
+	if err != nil {
+		if attempts--; attempts > 0 {
+			time.Sleep(sleep)
+			return retry(url, data, token, attempts, 2*sleep, fn)
+		}
+		return nil, err
+	}
+	return b, nil
+}
+
+//application/json; charset=utf-8
+func Post2Api(url string, data interface{}, token string) (content []byte, err error) {
+	if url == sendMsgRouter {
+		return retry(url, data, token, 5, 1000*time.Millisecond, postLogic)
+	} else {
+		return postLogic(url, data, token)
+	}
+}
 
 //application/json; charset=utf-8
 func post2Api(url string, data interface{}, token string) (content []byte, err error) {
+	sdkLog("call post2Api: ", url)
+	if url == sendMsgRouter {
+		return retry(url, data, token, 5, 1000*time.Millisecond, postLogic)
+	} else {
+		return postLogic(url, data, token)
+	}
+}
+func postLogic(url string, data interface{}, token string) (content []byte, err error) {
 	jsonStr, err := json.Marshal(data)
 	if err != nil {
 		sdkLog("marshal failed, url: ", url, "req: ", string(jsonStr))

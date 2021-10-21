@@ -3,28 +3,11 @@ package open_im_sdk
 import (
 	"encoding/json"
 	"errors"
-	"time"
 )
 
 type Friend struct {
 	friendListener OnFriendshipListener
 	//ch             chan cmd2Value
-}
-
-func sendCmd(ch chan cmd2Value, value cmd2Value, timeout int64) error {
-	var flag = 0
-	select {
-	case ch <- value:
-		flag = 1
-	case <-time.After(time.Second * time.Duration(timeout)):
-		flag = 2
-	}
-	if flag == 1 {
-		return nil
-	} else {
-		sdkLog("send cmd timeout, ", timeout, value)
-		return errors.New("send cmd timeout")
-	}
 }
 
 func (u *UserRelated) doFriendList() {
@@ -50,7 +33,7 @@ func (u *UserRelated) doFriendList() {
 			if friendInfoStruct, ok := friendsInfoOnServerInterface[index].Value().(friendInfo); ok {
 				err = u.insertIntoTheFriendToFriendInfo(friendInfoStruct.UID, friendInfoStruct.Name, friendInfoStruct.Comment, friendInfoStruct.Icon, friendInfoStruct.Gender, friendInfoStruct.Mobile, friendInfoStruct.Birth, friendInfoStruct.Email, friendInfoStruct.Ex)
 				if err != nil {
-					log(err.Error())
+					sdkLog(err.Error())
 					return
 				}
 				jsonFriendInfo, _ := json.Marshal(friendInfoStruct)
@@ -63,7 +46,7 @@ func (u *UserRelated) doFriendList() {
 		for _, index := range bInANot {
 			err = u.delTheFriendFromFriendInfo(friendsInfoOnLocalInterface[index].Key())
 			if err != nil {
-				log(err.Error())
+				sdkLog(err.Error())
 				return
 			}
 			jsonFriendInfo, _ := json.Marshal(friendsInfoOnLocal[index])
@@ -77,7 +60,7 @@ func (u *UserRelated) doFriendList() {
 			if friendInfoStruct, ok := friendsInfoOnServerInterface[index].Value().(friendInfo); ok {
 				err = u.updateTheFriendInfo(friendInfoStruct.UID, friendInfoStruct.Name, friendInfoStruct.Comment, friendInfoStruct.Icon, friendInfoStruct.Gender, friendInfoStruct.Mobile, friendInfoStruct.Birth, friendInfoStruct.Email, friendInfoStruct.Ex)
 				if err != nil {
-					log(err.Error())
+					sdkLog(err.Error())
 					return
 				}
 				jsonFriendInfo, _ := json.Marshal(friendInfoStruct)
@@ -148,7 +131,7 @@ func (u *UserRelated) doBlackList() {
 		for _, index := range aInBNot {
 			err = u.insertIntoTheUserToBlackList(blackListOnServer[index])
 			if err != nil {
-				log(err.Error())
+				sdkLog(err.Error())
 				return
 			}
 			jsonAddBlackUserInfo, _ := json.Marshal(blackListOnServerInterface[index])
@@ -160,7 +143,7 @@ func (u *UserRelated) doBlackList() {
 		for _, index := range bInANot {
 			err = u.delTheUserFromBlackList(blackListOnLocalInterface[index].Key())
 			if err != nil {
-				log(err.Error())
+				sdkLog(err.Error())
 				return
 			}
 			jsonDelBlackUserInfo, _ := json.Marshal(blackListOnLocal[index])
@@ -372,7 +355,7 @@ func (u *UserRelated) syncFriendApplication() {
 			if applicationListStruct, ok := applicationListOnServerInterface[index].Value().(applyUserInfo); ok {
 				err = u.updateApplicationList(applicationListStruct)
 				if err != nil {
-					log(err.Error())
+					sdkLog(err.Error())
 					return
 				}
 				jsonApplicationUserInfo, _ := json.Marshal(applicationListStruct)
@@ -424,7 +407,7 @@ func (u *UserRelated) syncFriendList() {
 			sdkLog("delTheFriendFromFriendInfo")
 			err = u.delTheFriendFromFriendInfo(friendsInfoOnLocalInterface[index].Key())
 			if err != nil {
-				log(err.Error())
+				sdkLog(err.Error())
 				return
 			}
 
@@ -437,7 +420,7 @@ func (u *UserRelated) syncFriendList() {
 				sdkLog("updateTheFriendInfo")
 				err = u.updateTheFriendInfo(friendInfoStruct.UID, friendInfoStruct.Name, friendInfoStruct.Comment, friendInfoStruct.Icon, friendInfoStruct.Gender, friendInfoStruct.Mobile, friendInfoStruct.Birth, friendInfoStruct.Email, friendInfoStruct.Ex)
 				if err != nil {
-					log(err.Error())
+					sdkLog(err.Error())
 					return
 				}
 			}
@@ -471,7 +454,7 @@ func (u *UserRelated) syncBlackList() {
 		for _, index := range aInBNot {
 			err = u.insertIntoTheUserToBlackList(blackListOnServer[index])
 			if err != nil {
-				log(err.Error())
+				sdkLog(err.Error())
 				return
 			}
 
@@ -482,7 +465,7 @@ func (u *UserRelated) syncBlackList() {
 		for _, index := range bInANot {
 			err = u.delTheUserFromBlackList(blackListOnLocalInterface[index].Key())
 			if err != nil {
-				log(err.Error())
+				sdkLog(err.Error())
 				return
 			}
 

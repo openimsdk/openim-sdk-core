@@ -79,7 +79,8 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 		//De-analyze data
 		err := u.msgHandleByContentType(msg)
 		if err != nil {
-			fmt.Println("Parsing data error:", err.Error(), msg)
+			sdkLog("Parsing data error:", err.Error(), msg)
+			return
 		}
 		switch v.SessionType {
 		case SingleChatType:
@@ -92,10 +93,13 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 			if u.judgeMessageIfExists(msg) { //if  sent through  this terminal
 				err := u.updateMessageSeq(msg)
 				if err != nil {
-					fmt.Println("err", err.Error())
+					sdkLog("updateMessageSeq err", err.Error(), msg)
 				}
 			} else { //同步消息       send through  other terminal
-				_ = u.insertPushMessageToChatLog(msg)
+				err = u.insertPushMessageToChatLog(msg)
+				if err != nil {
+					sdkLog(" sync insertPushMessageToChatLog err", err.Error(), msg)
+				}
 				c := ConversationStruct{
 					//ConversationID:    conversationID,
 					ConversationType: int(v.SessionType),
@@ -139,7 +143,10 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 						LatestMsg:         structToJsonString(msg),
 						LatestMsgSendTime: msg.SendTime,
 					}
-					_ = u.insertPushMessageToChatLog(msg)
+					err = u.insertPushMessageToChatLog(msg)
+					if err != nil {
+						sdkLog("insertPushMessageToChatLog err", err.Error(), msg)
+					}
 					switch v.SessionType {
 					case SingleChatType:
 						c.ConversationID = GetConversationIDBySessionType(v.SendID, SingleChatType)
@@ -184,6 +191,8 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 						msgReadList = append(msgReadList, msg)
 					}
 				}
+			} else {
+				sdkLog("repeat message err", msg)
 			}
 		}
 	}
@@ -216,6 +225,7 @@ func (u *UserRelated) revokeMessage(msgRevokeList []*MsgStruct) {
 func (con *ConversationListener) newMessage(newMessagesList []*MsgStruct) {
 	for _, v := range con.MsgListenerList {
 		for _, w := range newMessagesList {
+			sdkLog("newMessage: ", w.ClientMsgID)
 			if v != nil {
 				fmt.Println("msgListener,OnRecvNewMessage")
 				v.OnRecvNewMessage(structToJsonString(w))

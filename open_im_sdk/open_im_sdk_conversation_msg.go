@@ -79,8 +79,7 @@ func (u *UserRelated) GetMultipleConversation(conversationIDList string, callbac
 		err := json.Unmarshal([]byte(conversationIDList), &c)
 		if err != nil {
 			callback.OnError(200, err.Error())
-			fmt.Println("json PARSING ERROR", 111)
-			log("json ")
+			sdkLog("Unmarshal failed", err.Error())
 		}
 		err, list := u.getMultipleConversationModel(c)
 		if err != nil {
@@ -171,6 +170,10 @@ type OnConversationListener interface {
 }
 
 func (u *UserRelated) SetConversationListener(listener OnConversationListener) {
+	if u.ConversationListenerx != nil {
+		sdkLog("only one ")
+		return
+	}
 	u.ConversationListenerx = listener
 }
 
@@ -182,14 +185,22 @@ type OnAdvancedMsgListener interface {
 
 func (u *UserRelated) AddAdvancedMsgListener(listener OnAdvancedMsgListener) {
 	if listener == nil {
-		fmt.Println("AddAdvancedMsgListener listener is null")
+		sdkLog("AddAdvancedMsgListener listener is null")
+		return
+	}
+	if len(u.ConversationListener.MsgListenerList) == 1 {
+		sdkLog("u.ConversationListener.MsgListenerList == 1")
 		return
 	}
 	u.ConversationListener.MsgListenerList = append(u.ConversationListener.MsgListenerList, listener)
 }
 
-func (u *UserRelated) ForceSyncMsg() {
-	u.syncSeq2Msg()
+func (u *UserRelated) ForceSyncMsg() bool {
+	if u.syncSeq2Msg() == nil {
+		return true
+	} else {
+		return false
+	}
 }
 
 func (u *UserRelated) ForceSyncJoinedGroup() {
@@ -325,6 +336,32 @@ func (u *UserRelated) CreateVideoMessageFromFullPath(videoFullPath string, video
 	s.Content = structToJsonString(s.VideoElem)
 	return structToJsonString(s)
 }
+func (u *UserRelated) CreateFileMessageFromFullPath(fileFullPath string, fileName string) string {
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		dstFile := fileTmpPath(fileFullPath)
+		_, err := copyFile(fileFullPath, dstFile)
+		sdkLog("copy file, ", fileFullPath, dstFile)
+		if err != nil {
+			sdkLog("open file failed: ", err, fileFullPath)
+
+		}
+		wg.Done()
+	}()
+	s := MsgStruct{}
+	u.initBasicInfo(&s, UserMsgType, File)
+	s.FileElem.FilePath = fileFullPath
+	fi, err := os.Stat(fileFullPath)
+	if err != nil {
+		sdkLog("get file info err:", err.Error())
+		return ""
+	}
+	s.FileElem.FileSize = fi.Size()
+	s.FileElem.FileName = fileName
+	s.AtElem.AtUserList = []string{}
+	return structToJsonString(s)
+}
 func (u *UserRelated) CreateImageMessageFromFullPath(imageFullPath string) string {
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -424,6 +461,7 @@ func (u *UserRelated) CreateImageMessageByURL(sourcePicture, bigPicture, snapsho
 	s.Content = structToJsonString(s.PictureElem)
 	return structToJsonString(s)
 }
+
 func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool) string {
 	var conversationID string
 	r := SendMsgRespFromServer{}
@@ -436,6 +474,7 @@ func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, recei
 		sdkLog("json unmarshal err:", err.Error())
 		return ""
 	}
+
 	go func() {
 		c := ConversationStruct{
 			ConversationType:  int(s.SessionType),
@@ -662,12 +701,16 @@ func (u *UserRelated) CreateMergerMessage(messageList, title, summaryList string
 	var messages []*MsgStruct
 	var summaries []string
 	s := MsgStruct{}
-	_ = json.Unmarshal([]byte(messageList), messages)
+	err := json.Unmarshal([]byte(messageList), &messages)
+	if err != nil {
+		fmt.Println("CreateMergerMessage err:", err.Error())
+	}
 	_ = json.Unmarshal([]byte(summaryList), &summaries)
 	u.initBasicInfo(&s, UserMsgType, Merger)
 	s.MergeElem.AbstractList = summaries
 	s.MergeElem.Title = title
 	s.MergeElem.MultiMessage = messages
+	s.AtElem.AtUserList = []string{}
 	s.Content = structToJsonString(s.MergeElem)
 	return structToJsonString(s)
 }
@@ -690,7 +733,7 @@ func (u *UserRelated) CreateForwardMessage(m string) string {
 
 func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool) string {
 	var conversationID string
-	r := SendMsgRespFromServer{}
+	//r := SendMsgRespFromServer{}
 	a := paramsUserSendMsg{}
 	s := MsgStruct{}
 	m := make(map[string]interface{})
@@ -894,7 +937,6 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 		a.OperationID = operationIDGenerator()
 		a.Data.SessionType = s.SessionType
 		a.Data.MsgFrom = s.MsgFrom
-		a.Data.ForceList = []string{}
 		a.Data.ContentType = s.ContentType
 		a.Data.RecvID = s.RecvID
 		a.Data.ForceList = s.ForceList
@@ -907,14 +949,61 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 			a.Data.Options = m
 		}
 		a.Data.OffLineInfo = m
-		bMsg, err := post2Api(sendMsgRouter, a, u.token)
-		if err != nil {
+
+		wsMsgData := WsMsgData{
+			PlatformID:  s.PlatformID,
+			SessionType: s.SessionType,
+			MsgFrom:     s.MsgFrom,
+			ContentType: s.ContentType,
+			RecvID:      s.RecvID,
+			ForceList:   s.ForceList,
+			Content:     s.Content,
+			ClientMsgID: s.ClientMsgID,
+			OfflineInfo: m,
+		}
+		sdkLog("AddCh start")
+		msgIncr, ch := u.AddCh()
+		sdkLog("AddCh end")
+		var wsReq GeneralWsReq
+		wsReq.ReqIdentifier = WSSendMsg
+		wsReq.OperationID = operationIDGenerator()
+		wsReq.SendID = s.SendID
+		wsReq.Token = u.token
+		wsReq.MsgIncr = msgIncr
+		if onlineUserOnly {
+			wsMsgData.Options["history"] = 0
+			wsMsgData.Options["persistent"] = 0
+		} else {
+			wsMsgData.Options = m
+
+		}
+
+		SendFlag := false
+		wsReq.Data = wsMsgData
+		for tr := 0; tr < 3; tr++ {
+			err = u.WriteMsg(wsReq)
+			sdkLog("ws send: ", wsReq)
+			if err != nil {
+				sdkLog("ws writeMsg  err:,", wsReq.OperationID, err.Error(), tr)
+				time.Sleep(time.Duration(5) * time.Second)
+			} else {
+				sdkLog("writeMsg  retry ok", wsReq.OperationID, tr)
+				SendFlag = true
+				break
+			}
+		}
+
+		if SendFlag == false {
+			u.DelCh(msgIncr)
 			callback.OnError(http.StatusInternalServerError, err.Error())
 			u.sendMessageFailedHandle(&s, &c, conversationID)
-		} else if err = json.Unmarshal(bMsg, &r); err != nil {
-			callback.OnError(200, err.Error()+"  "+string(bMsg))
-			u.sendMessageFailedHandle(&s, &c, conversationID)
-		} else {
+			return
+		}
+
+		//timeout := 60
+		select {
+		case r := <-ch:
+			sdkLog("ws  ch recvMsg success:,", wsReq.OperationID)
 			if r.ErrCode != 0 {
 				callback.OnError(r.ErrCode, r.ErrMsg)
 				u.sendMessageFailedHandle(&s, &c, conversationID)
@@ -929,9 +1018,9 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 					}
 					sdkLog("remove file: ", v)
 				}
-				_ = u.updateMessageTimeAndMsgIDStatus(r.Data.ClientMsgID, r.Data.SendTime, MsgStatusSendSuccess)
-				s.ServerMsgID = r.Data.ServerMsgID
-				s.SendTime = r.Data.SendTime
+				_ = u.updateMessageTimeAndMsgIDStatus(r.Data["clientMsgID"].(string), StringToInt64(r.Data["sendTime"].(string)), MsgStatusSendSuccess)
+				s.ServerMsgID = r.Data["serverMsgID"].(string)
+				s.SendTime = StringToInt64(r.Data["sendTime"].(string))
 				s.Status = MsgStatusSendSuccess
 				c.LatestMsg = structToJsonString(s)
 				c.LatestMsgSendTime = s.SendTime
@@ -939,10 +1028,53 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 					c})
 				_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 			}
+
+			//case <-time.After(time.Second * time.Duration(timeout)):
+			//	sdkLog("ws ch recvMsg err:,", wsReq.OperationID)
+			//	callback.OnError(http.StatusRequestTimeout, http.StatusText(http.StatusRequestTimeout))
+			//	u.sendMessageFailedHandle(&s, &c, conversationID)
 		}
+		sdkLog("DelCh start")
+		u.DelCh(msgIncr)
+		sdkLog("DelCh end")
+
+		//bMsg, err := post2Api(sendMsgRouter, a, u.token)
+		//if err != nil {
+		//	callback.OnError(http.StatusInternalServerError, err.Error())
+		//	u.sendMessageFailedHandle(&s, &c, conversationID)
+		//} else if err = json.Unmarshal(bMsg, &r); err != nil {
+		//	callback.OnError(200, err.Error()+"  "+string(bMsg))
+		//	u.sendMessageFailedHandle(&s, &c, conversationID)
+		//} else {
+		//	if r.ErrCode != 0 {
+		//		callback.OnError(r.ErrCode, r.ErrMsg)
+		//		u.sendMessageFailedHandle(&s, &c, conversationID)
+		//	} else {
+		//		callback.OnSuccess("")
+		//		callback.OnProgress(100)
+		//
+		//		for _, v := range delFile {
+		//			err := os.Remove(v)
+		//			if err != nil {
+		//				sdkLog("remove failed,", err.Error(), v)
+		//			}
+		//			sdkLog("remove file: ", v)
+		//		}
+		//		_ = u.updateMessageTimeAndMsgIDStatus(r.Data.ClientMsgID, r.Data.SendTime, MsgStatusSendSuccess)
+		//		s.ServerMsgID = r.Data.ServerMsgID
+		//		s.SendTime = r.Data.SendTime
+		//		s.Status = MsgStatusSendSuccess
+		//		c.LatestMsg = structToJsonString(s)
+		//		c.LatestMsgSendTime = s.SendTime
+		//		_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, AddConOrUpLatMsg,
+		//			c})
+		//		_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
+		//	}
+		//}
 	}()
 	return s.ClientMsgID
 }
+
 func (u *UserRelated) GetHistoryMessageList(callback Base, getMessageOptions string) {
 	go func() {
 		fmt.Println("GetHistoryMessageList", getMessageOptions)
@@ -1192,8 +1324,8 @@ func (u *UserRelated) FindMessages(callback Base, messageIDList string) {
 		err := json.Unmarshal([]byte(messageIDList), &c)
 		if err != nil {
 			callback.OnError(200, err.Error())
-			fmt.Println("json PARSING ERROR", 111)
-			log("json ")
+			sdkLog("Unmarshal failed, ", err.Error())
+
 		}
 		err, list := u.getMultipleMessageModel(c)
 		if err != nil {

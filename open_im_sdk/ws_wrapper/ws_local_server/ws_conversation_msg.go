@@ -15,7 +15,7 @@ func (wsRouter *WsFuncRouter) CreateTextMessage(input string, operationID string
 type SendCallback struct {
 	BaseSuccFailed
 	clientMsgID string
-	uid         string
+	//uid         string
 }
 
 func (s *SendCallback) OnProgress(progress int) {

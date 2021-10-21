@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -250,7 +251,59 @@ func (u *UserRelated) initDBX(uid string) error {
 		return err
 	}
 
+	table = `create table if not exists  my_local_data (
+		user_id varchar(128)  DEFAULT NULL,
+		seq int(10) NOT NULL DEFAULT '1',
+		primary key (user_id)
+	)`
+
+	_, err = db.Exec(table)
+	if err != nil {
+		sdkLog(err.Error())
+		return err
+	}
+
 	return nil
+}
+
+func (u *UserRelated) setLocalMaxConSeq(seq int) (err error) {
+	sdkLog("set seq args: ", seq)
+	u.mRWMutex.Lock()
+	defer u.mRWMutex.Unlock()
+
+	stmt, err := u.initDB.Prepare("replace into my_local_data(user_id, seq) values (?,?)")
+	if err != nil {
+		sdkLog("set failed", err.Error())
+		return err
+	}
+
+	_, err = stmt.Exec(u.LoginUid, seq)
+	if err != nil {
+		sdkLog("stmt failed,", err.Error())
+		return err
+	}
+	return nil
+}
+
+func (u *UserRelated) getLocalMaxConSeq() (int64, error) {
+
+	u.mRWMutex.RLock()
+	defer u.mRWMutex.RUnlock()
+	rows, err := u.initDB.Query("SELECT seq FROM my_local_data where  user_id=?", u.LoginUid)
+	if err != nil {
+		sdkLog("Query failed ", err.Error())
+		return 0, err
+	}
+	var seq int
+	for rows.Next() {
+		err = rows.Scan(&seq)
+		if err != nil {
+			sdkLog("Scan ,err:", err.Error())
+			continue
+		}
+	}
+	sdkLog("get return seq: ", seq)
+	return int64(seq), nil
 }
 
 func (u *UserRelated) replaceIntoUser(info *userInfo) error {
@@ -322,6 +375,7 @@ func (u *UserRelated) getConversationLatestMsgModel(conversationID string) (err 
 	}
 	return nil, s
 }
+
 func (u *UserRelated) setConversationLatestMsgModel(c *ConversationStruct, conversationID string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -1225,14 +1279,14 @@ func (u *UserRelated) insertMessageToLocalOrUpdateContent(message *MsgStruct) (e
 		" seq,status, session_type, recv_id, content_type, sender_face_url,sender_nick_name,msg_from, content, remark,sender_platform_id, send_time,create_time) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)" +
 		"ON CONFLICT(msg_id) DO UPDATE SET content = ?")
 	if err != nil {
-		sdkLog(err.Error())
+		sdkLog("failed, ", err.Error())
 		return err
 	}
 	_, err = stmt.Exec(message.ClientMsgID, message.SendID,
 		getIsRead(message.IsRead), message.Seq, message.Status, message.SessionType, message.RecvID, message.ContentType, message.SenderFaceURL, message.SenderNickName,
 		message.MsgFrom, message.Content, message.Remark, message.PlatformID, message.SendTime, message.CreateTime, message.Content)
 	if err != nil {
-		sdkLog(err.Error())
+		sdkLog("failed ", err.Error())
 		return err
 	}
 	return nil
@@ -1257,6 +1311,7 @@ func (u *UserRelated) insertPushMessageToChatLog(message *MsgStruct) (err error)
 	}
 	return nil
 }
+
 func (u *UserRelated) updateMessageSeq(message *MsgStruct) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -1284,7 +1339,7 @@ func (u *UserRelated) judgeMessageIfExists(message *MsgStruct) bool {
 	for rows.Next() {
 		err = rows.Scan(&count)
 		if err != nil {
-			sdkLog(err.Error())
+			sdkLog("failed ", err.Error())
 			continue
 		}
 	}
@@ -1300,7 +1355,7 @@ func (u *UserRelated) getOneMessage(msgID string) (m *MsgStruct, err error) {
 	// query
 	rows, err := u.initDB.Query("SELECT * FROM chat_log where msg_id = ?", msgID)
 	if err != nil {
-		sdkLog("getOneMessage err:", err.Error(), msgID)
+		sdkLog("getOneMessage failed", err.Error(), msgID)
 		return nil, err
 	}
 	temp := new(MsgStruct)
@@ -1309,7 +1364,7 @@ func (u *UserRelated) getOneMessage(msgID string) (m *MsgStruct, err error) {
 			&temp.Seq, &temp.Status, &temp.SessionType, &temp.RecvID, &temp.ContentType, &temp.SenderFaceURL, &temp.SenderNickName,
 			&temp.MsgFrom, &temp.Content, &temp.Remark, &temp.PlatformID, &temp.SendTime, &temp.CreateTime)
 		if err != nil {
-			sdkLog("getOneMessage,err:", err.Error())
+			sdkLog("getOneMessage,failed", err.Error())
 			continue
 		}
 	}
@@ -1423,7 +1478,7 @@ func (u *UserRelated) deleteMessageByConversationModel(sourceConversationID stri
 	}
 	_, err = stmt.Exec(sourceConversationID, sourceConversationID)
 	if err != nil {
-		sdkLog(err.Error())
+		sdkLog("failed ", err.Error())
 		return err
 	}
 	return nil
@@ -1479,22 +1534,69 @@ func (u *UserRelated) getMultipleMessageModel(messageIDList []string) (err error
 	}
 	return nil, list
 }
-func (u *UserRelated) getLocalMaxSeq() (seq int64, err error) {
+
+func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	rows, err := u.initDB.Query("SELECT IFNULL(MAX(seq), 0) FROM chat_log")
-	if err != nil {
-		sdkLog("getLocalMaxSeqModel,Query err:", err.Error())
-		return seq, err
-	}
-	for rows.Next() {
-		err = rows.Scan(&seq)
+
+	old := atomic.LoadInt64(&u.minSeqSvr)
+	var rSeq int64
+	var rows *sql.Rows
+	if old == 0 {
+
+		rows, err = u.initDB.Query("SELECT seq FROM chat_log where seq>? order by seq", old)
 		if err != nil {
-			sdkLog("getLocalMaxSeqModel ,err:", err.Error())
-			continue
+			sdkLog("getLocalMaxSeqModel,Query err:", err.Error())
+			return old, err
 		}
+		var idx int64 = 0
+		for rows.Next() {
+			err = rows.Scan(&seq)
+			if err != nil {
+				sdkLog("getLocalMaxSeqModel ,err:", err.Error())
+				continue
+			} else {
+				idx++
+				if seq == old+idx {
+					rSeq = seq
+					sdkLog("seq == old+idx", seq, old, idx)
+				} else {
+					sdkLog("not consequent ", old, idx, seq)
+					u.SetMinSeqSvr(rSeq)
+					rows.Close()
+					break
+				}
+			}
+		}
+		return rSeq, nil
+	} else {
+		rows, err = u.initDB.Query("SELECT seq FROM chat_log where seq>=? order by seq", old)
+		if err != nil {
+			sdkLog("getLocalMaxSeqModel,Query err:", err.Error())
+			return old, err
+		}
+		var idx int64 = 0
+		for rows.Next() {
+			err = rows.Scan(&seq)
+			if err != nil {
+				sdkLog("getLocalMaxSeqModel ,err:", err.Error())
+				continue
+			} else {
+				if seq == old+idx {
+					rSeq = seq
+					idx++
+					sdkLog("seq == old+idx", seq, old, idx)
+				} else {
+					sdkLog("not consequent ", old, idx, seq)
+					u.SetMinSeqSvr(rSeq)
+					rows.Close()
+					break
+				}
+			}
+		}
+		return rSeq, nil
 	}
-	return seq, err
+
 }
 
 func (ur *UserRelated) getLoginUserInfoFromLocal() (userInfo, error) {

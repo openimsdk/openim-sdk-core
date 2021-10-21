@@ -41,10 +41,6 @@ func Login(uid, tk string, callback Base) {
 	userForSDK.Login(uid, tk, callback)
 }
 
-func ForceReConn() {
-	userForSDK.ForceReConn()
-}
-
 func Logout(callback Base) {
 	userForSDK.logout(callback)
 }
@@ -58,11 +54,11 @@ func GetLoginUser() string {
 }
 
 func ForceSyncLoginUerInfo() {
-	userForSDK.ForceSyncLoginUerInfo()
+	userForSDK.ForceSyncLoginUserInfo()
 }
 
-func TencentOssCredentials(cb Base) {
-	userForSDK.TencentOssCredentials(cb)
+func ForceSyncMsg() bool {
+	return userForSDK.ForceSyncMsg()
 }
 
 func SetGroupListener(callback OnGroupListener) {
@@ -117,10 +113,6 @@ func GetGroupApplicationList(callback Base) {
 	userForSDK.GetGroupApplicationList(callback)
 }
 
-func TsetGetGroupApplicationList(callback Base) string {
-	return userForSDK.TsetGetGroupApplicationList(callback)
-}
-
 func AcceptGroupApplication(application, reason string, callback Base) {
 	userForSDK.AcceptGroupApplication(application, reason, callback)
 }
@@ -128,6 +120,8 @@ func AcceptGroupApplication(application, reason string, callback Base) {
 func RefuseGroupApplication(application, reason string, callback Base) {
 	userForSDK.RefuseGroupApplication(application, reason, callback)
 }
+
+/////////////////////////////////////////////////////////////////
 
 func GetFriendsInfo(callback Base, uidList string) {
 	userForSDK.GetFriendsInfo(callback, uidList)
@@ -181,17 +175,7 @@ func SetFriendListener(listener OnFriendshipListener) bool {
 	return userForSDK.SetFriendListener(listener)
 }
 
-func ForceSyncFriendApplication() {
-	userForSDK.ForceSyncFriendApplication()
-}
-
-func ForceSyncFriend() {
-	userForSDK.ForceSyncFriend()
-}
-
-func ForceSyncBlackList() {
-	userForSDK.ForceSyncBlackList()
-}
+///////////////////////////////////////////////////////////
 
 func GetAllConversationList(callback Base) {
 	userForSDK.GetAllConversationList(callback)
@@ -210,7 +194,6 @@ func SetConversationDraft(conversationID, draftText string, callback Base) {
 }
 func PinConversation(conversationID string, isPinned bool, callback Base) {
 	userForSDK.PinConversation(conversationID, isPinned, callback)
-
 }
 func GetTotalUnreadMsgCount(callback Base) {
 	userForSDK.GetTotalUnreadMsgCount(callback)
@@ -222,29 +205,6 @@ func SetConversationListener(listener OnConversationListener) {
 
 func AddAdvancedMsgListener(listener OnAdvancedMsgListener) {
 	userForSDK.AddAdvancedMsgListener(listener)
-}
-
-func ForceSyncMsg() {
-	userForSDK.ForceSyncMsg()
-
-}
-
-func ForceSyncJoinedGroup() {
-	userForSDK.ForceSyncJoinedGroup()
-
-}
-
-func ForceSyncJoinedGroupMember() {
-	userForSDK.ForceSyncJoinedGroupMember()
-
-}
-
-func ForceSyncGroupRequest() {
-	userForSDK.ForceSyncGroupRequest()
-}
-
-func ForceSyncApplyGroupRequest() {
-	userForSDK.ForceSyncApplyGroupRequest()
 }
 
 func CreateTextMessage(text string) string {

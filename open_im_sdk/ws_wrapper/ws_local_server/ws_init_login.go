@@ -74,12 +74,29 @@ func (wsRouter *WsFuncRouter) UnInitSDK() {
 	userWorker.UnInitSDK()
 }
 
+func (wsRouter *WsFuncRouter) checkKeysIn(input, operationID, funcName string, m map[string]interface{}, keys ...string) bool {
+	for _, k := range keys {
+		_, ok := m[k]
+		if !ok {
+			wrapSdkLog("key not in", keys, input, operationID, funcName)
+			wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(funcName), 1001, "key not in", "", operationID})
+			return false
+		}
+	}
+	return true
+}
+
 func (wsRouter *WsFuncRouter) Login(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
 		wrapSdkLog("unmarshal failed", err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
+		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "uid", "token") {
+		return
+	}
 	userWorker.Login(m["uid"].(string), m["token"].(string), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
 }
 

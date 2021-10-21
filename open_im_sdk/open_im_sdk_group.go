@@ -374,6 +374,7 @@ func (u *UserRelated) GetGroupApplicationList(callback Base) {
 	}()
 }
 
+/*
 func (u *UserRelated) TsetGetGroupApplicationList(callback Base) string {
 	if callback == nil {
 		return ""
@@ -394,7 +395,7 @@ func (u *UserRelated) TsetGetGroupApplicationList(callback Base) string {
 	callback.OnSuccess(string(jsonResult))
 	return string(jsonResult)
 
-}
+}*/
 
 func (u *UserRelated) AcceptGroupApplication(application, reason string, callback Base) {
 	if callback == nil {

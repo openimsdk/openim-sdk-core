@@ -293,10 +293,10 @@ func (testGroupX) OnProgress(progress int) {
 }
 
 func DoGetGroupApplicationList() string {
-	var test testGroupX
+	//	var test testGroupX
 	fmt.Println("test DoGetGroupApplicationList....")
-	str := TsetGetGroupApplicationList(test)
-	return str
+
+	return ""
 }
 func DoGroupApplicationList() {
 	var test testGroupX

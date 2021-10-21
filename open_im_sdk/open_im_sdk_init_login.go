@@ -1,9 +1,5 @@
 package open_im_sdk
 
-import (
-	"encoding/json"
-)
-
 type IMSDKListener interface {
 	OnConnecting()
 	OnConnectSuccess()
@@ -69,27 +65,13 @@ func (u *UserRelated) GetLoginUser() string {
 	return u.LoginUid
 }
 
-func (u *UserRelated) ForceSyncLoginUerInfo() {
+func (u *UserRelated) ForceSyncLoginUserInfo() {
 	u.syncLoginUserInfo()
 }
 
 type Base interface {
 	OnError(errCode int, errMsg string)
 	OnSuccess(data string)
-}
-
-func (u *UserRelated) TencentOssCredentials(cb Base) {
-	resp, err := u.tencentOssCredentials()
-	if err != nil {
-		cb.OnError(-1, err.Error())
-		return
-	}
-	bResp, err := json.Marshal(resp)
-	if err != nil {
-		cb.OnError(-1, err.Error())
-		return
-	}
-	cb.OnSuccess(string(bResp))
 }
 
 func initUserRouter() {

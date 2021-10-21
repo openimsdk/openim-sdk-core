@@ -200,6 +200,42 @@ type MsgData struct {
 	SenderFaceURL    string
 	ClientMsgID      string
 }
+type WsMsgData struct {
+	PlatformID  int32                  `mapstructure:"platformID" validate:"required"`
+	SessionType int32                  `mapstructure:"sessionType" validate:"required"`
+	MsgFrom     int32                  `mapstructure:"msgFrom" validate:"required"`
+	ContentType int32                  `mapstructure:"contentType" validate:"required"`
+	RecvID      string                 `mapstructure:"recvID" validate:"required"`
+	ForceList   []string               `mapstructure:"forceList" validate:"required"`
+	Content     string                 `mapstructure:"content" validate:"required"`
+	Options     map[string]interface{} `mapstructure:"options" validate:"required"`
+	ClientMsgID string                 `mapstructure:"clientMsgID" validate:"required"`
+	OfflineInfo map[string]interface{} `mapstructure:"offlineInfo" validate:"required"`
+	Ext         map[string]interface{} `mapstructure:"ext"`
+}
+type WsSubMsg struct {
+	SendTime    int64  `json:"sendTime"`
+	ServerMsgID string `json:"serverMsgID"`
+	ClientMsgID string `json:"clientMsgID"`
+}
+
+type GeneralWsResp struct {
+	ReqIdentifier int                    `json:"reqIdentifier"`
+	ErrCode       int                    `json:"errCode"`
+	ErrMsg        string                 `json:"errMsg"`
+	MsgIncr       string                 `json:"msgIncr"`
+	OperationID   string                 `json:"operationID"`
+	Data          map[string]interface{} `json:"data"`
+}
+
+type GeneralWsReq struct {
+	ReqIdentifier int32       `json:"reqIdentifier"`
+	Token         string      `json:"token"`
+	SendID        string      `json:"sendID"`
+	OperationID   string      `json:"operationID"`
+	MsgIncr       string      `json:"msgIncr"`
+	Data          interface{} `json:"data"`
+}
 
 type Msg struct {
 	ReqIdentifier int
@@ -237,6 +273,13 @@ type paramsPullUserMsg struct {
 	OperationID   string                   `json:"operationID"`
 	SendID        string                   `json:"sendID"`
 	Data          paramsPullUserMsgDataReq `json:"data"`
+}
+
+type paramsPullUserMsgBySeq struct {
+	ReqIdentifier int     `json:"reqIdentifier"`
+	OperationID   string  `json:"operationID"`
+	SendID        string  `json:"sendID"`
+	SeqList       []int64 `json:"seqList" binding:"required"`
 }
 
 type paramsPullUserGroupMsgDataResp struct {
@@ -318,6 +361,13 @@ type paramsTencentOssCredentialResp struct {
 }
 
 ////////////////////////// message/////////////////////////
+
+type WsSendMsgResp struct {
+	ServerMsgID string `json:"serverMsgID"`
+	ClientMsgID string `json:"clientMsgID"`
+	SendTime    int64  `json:"sendTime"`
+}
+
 type PullMsgReq struct {
 	UserID   string     `json:"userID"`
 	GroupID  string     `json:"groupID"`
