@@ -3,6 +3,7 @@ package open_im_sdk
 import (
 	"bytes"
 	"crypto/md5"
+	"encoding/gob"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -91,14 +92,51 @@ func (u *UserRelated) DelCh(msgIncr string) {
 	}
 }
 
+func (u *UserRelated) writeBinaryMsg(msg GeneralWsReq) error {
+	var buff bytes.Buffer
+	enc := gob.NewEncoder(&buff)
+	err := enc.Encode(msg)
+	if err != nil {
+		sdkLog("Encode failed", err.Error())
+		return err
+	}
+
+	u.stateMutex.Lock()
+	defer u.stateMutex.Unlock()
+
+	if u.conn != nil {
+		u.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+		return u.conn.WriteMessage(websocket.BinaryMessage, buff.Bytes())
+	} else {
+		return errors.New("conn==nil")
+	}
+}
+
+func (u *UserRelated) decodeBinaryWs(message []byte) (*GeneralWsResp, error) {
+	buff := bytes.NewBuffer(message)
+	dec := gob.NewDecoder(buff)
+	var data GeneralWsResp
+	err := dec.Decode(&data)
+	if err != nil {
+		sdkLog("Decode failed ", err.Error())
+		return nil, err
+	}
+	return &data, nil
+}
+
 func (u *UserRelated) WriteMsg(msg GeneralWsReq) error {
+	return u.writeBinaryMsg(msg)
+
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
 	bMsg, _ := json.Marshal(msg)
 	sdkLog("msg size: ", len(bMsg))
-	u.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-
-	return u.conn.WriteMessage(websocket.TextMessage, bMsg)
+	if u.conn != nil {
+		u.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+		return u.conn.WriteMessage(websocket.TextMessage, bMsg)
+	} else {
+		return errors.New("conn==nil")
+	}
 }
 
 func notifyCh(ch chan GeneralWsResp, value GeneralWsResp, timeout int64) error {

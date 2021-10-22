@@ -887,3 +887,9 @@ type GroupApplicationInfo struct {
 	HandUserName string                            `json:"handUserName"`
 	HandUserIcon string                            `json:"handUserIcon"`
 }
+
+type SliceMock struct {
+	addr uintptr
+	len  int
+	cap  int
+}
