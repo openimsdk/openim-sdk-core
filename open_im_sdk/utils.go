@@ -72,14 +72,17 @@ func (u *UserRelated) AddCh() (string, chan GeneralWsResp) {
 }
 
 func (u *UserRelated) GetCh(msgIncr string) chan GeneralWsResp {
+	LogBegin(msgIncr)
 	u.wsMutex.RLock()
 	defer u.wsMutex.RUnlock()
 	ch, ok := u.wsNotification[msgIncr]
 	if ok {
 		sdkLog("GetCh ok")
+		LogSReturn(ch)
 		return ch
 	}
 	sdkLog("GetCh nil")
+	LogFReturn(nil)
 	return nil
 }
 
@@ -96,7 +99,7 @@ func (u *UserRelated) DelCh(msgIncr string) {
 }
 
 func (u *UserRelated) writeBinaryMsg(msg GeneralWsReq) error {
-	LogBegin(msg)
+	LogBegin(msg.OperationID)
 	var buff bytes.Buffer
 	enc := gob.NewEncoder(&buff)
 	err := enc.Encode(msg)

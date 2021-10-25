@@ -85,6 +85,14 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 	}
 	sdkLog("initDBX ok ", uid)
 
+	u.conn, err = u.reConn(nil)
+	if err != nil {
+		u.token = ""
+		u.LoginUid = ""
+		cb.OnError(ErrCodeInitLogin, err.Error())
+		sdkLog("reConn failed ", err.Error())
+		return
+	}
 	seq, err := u.getLocalMaxConSeqFromDB()
 	if err != nil {
 		sdkLog("getLocalMaxConSeqFromDB failed ", err.Error())
@@ -104,14 +112,6 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 	}
 	sdkLog("syncSeq2Msg ok ", uid, tk)
 
-	u.conn, err = u.reConn(nil)
-	if err != nil {
-		u.token = ""
-		u.LoginUid = ""
-		cb.OnError(ErrCodeInitLogin, err.Error())
-		sdkLog("reConn failed ", err.Error())
-		return
-	}
 	sdkLog("ws conn ok ")
 	sdkLog("ws, forcedSynchronization heartbeat coroutine run ...")
 	go u.forcedSynchronization()
@@ -192,7 +192,7 @@ func (u *UserRelated) notifyResp(wsResp GeneralWsResp) {
 	LogBegin(wsResp.OperationID)
 	ch := u.GetCh(wsResp.MsgIncr)
 	if ch == nil {
-		sdkLog("failed, no chan ")
+		sdkLog("failed, no chan ", wsResp.MsgIncr)
 		return
 	}
 	sdkLog("GetCh end, ", ch)
@@ -426,7 +426,7 @@ func (u *UserRelated) heartbeat() {
 		wsReq.SendID = u.LoginUid
 		wsReq.Token = u.token
 		wsReq.MsgIncr = msgIncr
-
+		sdkLog("WriteMsg ", wsReq.OperationID, wsReq.ReqIdentifier, wsReq.MsgIncr)
 		err := u.WriteMsg(wsReq)
 		if err != nil {
 			sdkLog("WriteMsg failed ", err.Error(), msgIncr, wsReq.OperationID)
@@ -514,12 +514,14 @@ func (u *UserRelated) pullBySplit(beginSeq int64, endSeq int64) error {
 		LogFReturn("beginSeq > endSeq")
 		return nil
 	}
-	var SPLIT int64 = 1000
+	var SPLIT int64 = 10
 	var bSeq, eSeq int64
 	if endSeq-beginSeq > SPLIT {
 		bSeq = beginSeq
+		//1 110  1 11
 		for i := 0; int64(i) < (endSeq-beginSeq)/SPLIT; i++ {
-			eSeq = (int64(i)+1)*SPLIT + bSeq
+			eSeq = bSeq + SPLIT
+			sdkLog("pull args: ", i, eSeq, bSeq, (endSeq-beginSeq)/SPLIT)
 			err := u.pullOldMsgAndMergeNewMsg(bSeq, eSeq)
 			if err != nil {
 				LogFReturn(err.Error())
