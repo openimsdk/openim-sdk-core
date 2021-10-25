@@ -1,8 +1,8 @@
 package open_im_sdk
 
 import (
-	"bytes"
-	"encoding/gob"
+	//"bytes"
+	//"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"github.com/golang/protobuf/proto"
@@ -990,18 +990,19 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 
 		SendFlag := false
 
-		var buff bytes.Buffer
-		enc := gob.NewEncoder(&buff)
-		err = enc.Encode(wsMsgData)
-		if err != nil {
-			sdkLog("Encode failed", err.Error())
-			LogFReturn(nil)
-			callback.OnError(http.StatusInternalServerError, err.Error())
-			u.sendMessageFailedHandle(&s, &c, conversationID)
-			return
-		}
-
-		wsReq.Data = buff.Bytes()
+		/*
+			var buff bytes.Buffer
+			enc := gob.NewEncoder(&buff)
+			err = enc.Encode(wsMsgData)
+			if err != nil {
+				sdkLog("Encode failed", err.Error())
+				LogFReturn(nil)
+				callback.OnError(http.StatusInternalServerError, err.Error())
+				u.sendMessageFailedHandle(&s, &c, conversationID)
+				return
+			}
+		*/
+		//	wsReq.Data = buff.Bytes()
 
 		for tr := 0; tr < 3; tr++ {
 			err = u.WriteMsg(wsReq)

@@ -180,7 +180,7 @@ func (u *UserRelated) doWsMsg(message []byte) {
 	case WSSendMsg:
 		u.doWSSendMsg(*wsResp)
 	default:
-		LogFReturn()
+		LogFReturn("type failed, ", wsResp.ReqIdentifier)
 		return
 	}
 
@@ -188,8 +188,8 @@ func (u *UserRelated) doWsMsg(message []byte) {
 	return
 }
 
-func (u *UserRelated) doWSGetNewestSeq(wsResp GeneralWsResp) {
-	sdkLog("doWSGetNewestSeq", wsResp.OperationID)
+func (u *UserRelated) notifyResp(wsResp GeneralWsResp) {
+	LogBegin(wsResp.OperationID)
 	ch := u.GetCh(wsResp.MsgIncr)
 	if ch == nil {
 		sdkLog("failed, no chan ")
@@ -204,47 +204,31 @@ func (u *UserRelated) doWSGetNewestSeq(wsResp GeneralWsResp) {
 		sdkLog("notifyCh failed, ", err.Error(), ch, wsResp)
 	}
 	sdkLog("notify ch end", wsResp.OperationID)
+	LogSReturn(nil)
+}
+
+func (u *UserRelated) doWSGetNewestSeq(wsResp GeneralWsResp) {
+	LogBegin(wsResp.OperationID)
+	u.notifyResp(wsResp)
+	LogSReturn(wsResp.OperationID)
 }
 
 func (u *UserRelated) doWSPullMsg(wsResp GeneralWsResp) {
-	sdkLog("doWSPullMsg ", wsResp.OperationID)
-	ch := u.GetCh(wsResp.MsgIncr)
-	if ch == nil {
-		sdkLog("failed, no chan ")
-		return
-	}
-	sdkLog("GetCh end, ", ch)
-
-	sdkLog("notify ch start", wsResp.OperationID)
-
-	err := notifyCh(ch, wsResp, 1)
-	if err != nil {
-		sdkLog("notifyCh failed, ", err.Error(), ch, wsResp)
-	}
-	sdkLog("notify ch end", wsResp.OperationID)
+	LogBegin(wsResp.OperationID)
+	u.notifyResp(wsResp)
+	LogSReturn(wsResp.OperationID)
 }
 
 func (u *UserRelated) doWSSendMsg(wsResp GeneralWsResp) {
-	sdkLog("doWSSendMsg ", wsResp.OperationID)
-	ch := u.GetCh(wsResp.MsgIncr)
-	if ch == nil {
-		sdkLog("failed, no chan ")
-		return
-	}
-	sdkLog("GetCh end, ", ch)
-
-	sdkLog("notify ch start", wsResp.OperationID)
-
-	err := notifyCh(ch, wsResp, 1)
-	if err != nil {
-		sdkLog("notifyCh failed, ", err.Error(), ch, wsResp)
-	}
-	sdkLog("notify ch end", wsResp.OperationID)
+	LogBegin(wsResp.OperationID)
+	u.notifyResp(wsResp)
+	LogSReturn(wsResp.OperationID)
 }
 
 func (u *UserRelated) doWSPushMsg(message []byte) {
-	sdkLog("openim ws  recv push msg")
+	LogBegin()
 	u.doMsg(message)
+	LogSReturn()
 }
 
 func (u *UserRelated) delSeqMsg(beginSeq, endSeq int64) {
@@ -450,14 +434,14 @@ func (u *UserRelated) heartbeat() {
 			u.DelCh(msgIncr)
 			continue
 		}
-		sdkLog("WriteMsg, ", wsReq.OperationID)
+		sdkLog("WriteMsg, ", wsReq.OperationID, wsReq.MsgIncr, wsReq.ReqIdentifier)
 
 		timeout := 5
 		select {
 		case r := <-ch:
 			sdkLog("ws ch recvMsg success: ", wsReq.OperationID)
 			if r.ErrCode != 0 {
-				sdkLog("heartbeat response faield ", r.ErrCode, r.ErrMsg, wsReq.OperationID)
+				sdkLog("heartbeat response faield ", r.ErrCode, r.ErrMsg, wsReq.OperationID, wsReq.MsgIncr, wsReq.ReqIdentifier)
 				u.closeConn()
 				u.DelCh(msgIncr)
 				continue
@@ -467,6 +451,9 @@ func (u *UserRelated) heartbeat() {
 				err = proto.Unmarshal(r.Data, &wsSeqResp)
 				if err != nil {
 					sdkLog("Unmarshal failed, ", err.Error())
+					u.closeConn()
+					u.DelCh(msgIncr)
+					continue
 				} else {
 					serverMaxSeq := wsSeqResp.Seq
 					u.syncMsg2ServerMaxSeq(serverMaxSeq)
