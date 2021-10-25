@@ -101,6 +101,7 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 	}
 	u.SetMinSeqSvr(seq)
 	sdkLog("getLocalMaxConSeqFromDB SetMinSeqSvr ok ", seq)
+	go u.run()
 
 	err = u.syncSeq2Msg()
 	if err != nil {
@@ -115,7 +116,7 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 	sdkLog("ws conn ok ")
 	sdkLog("ws, forcedSynchronization heartbeat coroutine run ...")
 	go u.forcedSynchronization()
-	go u.run()
+
 	go u.heartbeat()
 	cb.OnSuccess("")
 	sdkLog("login end, ", uid, tk)
@@ -164,7 +165,9 @@ func (u *UserRelated) forcedSynchronization() {
 
 func (u *UserRelated) doWsMsg(message []byte) {
 	LogBegin()
+	LogBegin("decodeBinaryWs")
 	wsResp, err := u.decodeBinaryWs(message)
+	LogEnd("decodeBinaryWs")
 	if err != nil {
 		LogFReturn()
 		return
@@ -173,7 +176,7 @@ func (u *UserRelated) doWsMsg(message []byte) {
 	switch wsResp.ReqIdentifier {
 	case WSGetNewestSeq:
 		u.doWSGetNewestSeq(*wsResp)
-	case WSPullMsg:
+	case WSPullMsgBySeqList:
 		u.doWSPullMsg(*wsResp)
 	case WSPushMsg:
 		u.doWSPushMsg(message)
@@ -411,14 +414,14 @@ func (u *UserRelated) reConn(conn *websocket.Conn) (*websocket.Conn, error) {
 	u.stateMutex.Lock()
 	u.LoginState = LoginSuccess
 	u.stateMutex.Unlock()
-
+	LogSReturn(conn, nil)
 	return conn, nil
 }
 
 func (u *UserRelated) heartbeat() {
 	for {
+		time.Sleep(time.Duration(500) * time.Second)
 		LogBegin()
-		time.Sleep(time.Duration(5) * time.Second)
 		msgIncr, ch := u.AddCh()
 		var wsReq GeneralWsReq
 		wsReq.ReqIdentifier = WSGetNewestSeq
@@ -426,8 +429,10 @@ func (u *UserRelated) heartbeat() {
 		wsReq.SendID = u.LoginUid
 		wsReq.Token = u.token
 		wsReq.MsgIncr = msgIncr
-		sdkLog("WriteMsg ", wsReq.OperationID, wsReq.ReqIdentifier, wsReq.MsgIncr)
+		sdkLog("heartbeat WriteMsg ", wsReq.OperationID, wsReq.ReqIdentifier, wsReq.MsgIncr)
+		LogBegin("WriteMsg", wsReq.OperationID)
 		err := u.WriteMsg(wsReq)
+		LogEnd("WriteMsg", wsReq.OperationID)
 		if err != nil {
 			sdkLog("WriteMsg failed ", err.Error(), msgIncr, wsReq.OperationID)
 			u.closeConn()
@@ -464,6 +469,7 @@ func (u *UserRelated) heartbeat() {
 			u.closeConn()
 		}
 		u.DelCh(msgIncr)
+
 	}
 }
 
@@ -471,12 +477,14 @@ func (u *UserRelated) run() {
 	for {
 		LogBegin()
 		if u.conn == nil {
+			LogBegin("reConn", nil)
 			re, _ := u.reConn(nil)
+			LogEnd("reConn", re)
 			u.conn = re
 		}
 		if u.conn != nil {
 			msgType, message, err := u.conn.ReadMessage()
-			sdkLog("ReadMessage message ", msgType, string(message), err)
+			sdkLog("ReadMessage message ", msgType, err)
 			if err != nil {
 				u.stateMutex.Lock()
 				sdkLog("ws read message failed ", err.Error(), u.LoginState)
@@ -489,7 +497,9 @@ func (u *UserRelated) run() {
 				u.stateMutex.Unlock()
 				time.Sleep(time.Duration(2) * time.Second)
 				sdkLog("ws  ReadMessage failed, sleep 2s, reconn, ", err)
+				LogBegin("reConn", u.conn)
 				u.conn, err = u.reConn(u.conn)
+				LogEnd("reConn", u.conn)
 			} else {
 				if msgType == websocket.CloseMessage {
 					u.conn, _ = u.reConn(u.conn)
@@ -567,10 +577,12 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 		LogSReturn(nil)
 		return nil
 	}
-
+	LogBegin("AddCh")
 	msgIncr, ch := u.AddCh()
+	LogEnd("AddCh")
+
 	var wsReq GeneralWsReq
-	wsReq.ReqIdentifier = WSGetNewestSeq
+	wsReq.ReqIdentifier = WSPullMsgBySeqList
 	wsReq.OperationID = operationIDGenerator()
 	wsReq.SendID = u.LoginUid
 	wsReq.Token = u.token
@@ -585,13 +597,14 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 		return err
 	}
 	err = u.WriteMsg(wsReq)
+	sdkLog("pullOldMsgAndMergeNewMsgByWs msg: ", wsReq.OperationID, wsReq.ReqIdentifier)
 	if err != nil {
 		sdkLog("close conn, WriteMsg failed ", err.Error())
 		u.DelCh(msgIncr)
 		return err
 	}
 
-	timeout := 5
+	timeout := 30000
 	select {
 	case r := <-ch:
 		sdkLog("ws ch recvMsg success: ", wsReq.OperationID)
@@ -620,6 +633,7 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 			u.seqMsgMutex.Lock()
 
 			arrMsg := ArrMsg{}
+			sdkLog("pullmsg data: ", pullMsgResp.SingleUserMsg, pullMsg.Data.Single)
 			for i := 0; i < len(pullMsg.Data.Single); i++ {
 				for j := 0; j < len(pullMsg.Data.Single[i].List); j++ {
 					sdkLog("open_im pull one msg: |", pullMsg.Data.Single[i].List[j].ClientMsgID, "|")

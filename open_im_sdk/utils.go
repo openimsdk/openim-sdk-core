@@ -57,6 +57,7 @@ func getCurrentTimestampByNano() int64 {
 //wsNotification map[string]chan GeneralWsResp
 
 func (u *UserRelated) AddCh() (string, chan GeneralWsResp) {
+	LogBegin()
 	u.wsMutex.Lock()
 	defer u.wsMutex.Unlock()
 	msgIncr := u.GenMsgIncr()
@@ -68,6 +69,7 @@ func (u *UserRelated) AddCh() (string, chan GeneralWsResp) {
 	}
 	u.wsNotification[msgIncr] = ch
 	LogSReturn(msgIncr, ch)
+	LogBegin(msgIncr, ch)
 	return msgIncr, ch
 }
 
@@ -137,11 +139,13 @@ func (u *UserRelated) decodeBinaryWs(message []byte) (*GeneralWsResp, error) {
 		LogFReturn(nil, err.Error())
 		return nil, err
 	}
-	LogSReturn(data, nil)
+	LogSReturn(&data, nil)
 	return &data, nil
 }
 
 func (u *UserRelated) WriteMsg(msg GeneralWsReq) error {
+	LogBegin(msg.OperationID)
+	LogSReturn(msg.OperationID)
 	return u.writeBinaryMsg(msg)
 
 	u.stateMutex.Lock()
@@ -349,7 +353,18 @@ func LogBegin(v ...interface{}) {
 	fname := runtime.FuncForPC(pc).Name()
 	i := strings.LastIndex(b, "/")
 	if i != -1 {
+		//	sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "begin, args: ", v)
 		sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "begin, args: ", v)
+	}
+}
+
+func LogEnd(v ...interface{}) {
+	pc, b, c, _ := runtime.Caller(1)
+	fname := runtime.FuncForPC(pc).Name()
+	i := strings.LastIndex(b, "/")
+	if i != -1 {
+		//	sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "begin, args: ", v)
+		sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "end, args: ", v)
 	}
 }
 
