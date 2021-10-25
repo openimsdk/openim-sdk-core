@@ -266,15 +266,15 @@ func runGetToken(strMyUid string) string {
 func main() {
 
 	open_im_sdk.LogBegin("")
-	myUid1 := 1
+	myUid1 := 0
 	strMyUid1 := GenUid(myUid1)
 
 	runRigister(strMyUid1)
 	token1 := runGetToken(strMyUid1)
 	open_im_sdk.DoTest(strMyUid1, token1)
-	//	recvId1 := GenUid(1)
+	recvId1 := GenUid(1)
 
-	//	open_im_sdk.DoTestSendMsg(strMyUid1, recvId1, "test data 0->1")
+	open_im_sdk.DoTestSendMsg(strMyUid1, recvId1, "test data 0->1")
 	for true {
 		time.Sleep(time.Duration(60) * time.Second)
 		fmt.Println("waiting")
