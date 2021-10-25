@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"github.com/golang/protobuf/proto"
 	"net/http"
 	"os"
 	"sort"
@@ -952,32 +953,39 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 		}
 		a.Data.OffLineInfo = m
 
-		wsMsgData := WsMsgData{
-			PlatformID:  s.PlatformID,
-			SessionType: s.SessionType,
-			MsgFrom:     s.MsgFrom,
-			ContentType: s.ContentType,
-			RecvID:      s.RecvID,
-			ForceList:   s.ForceList,
-			Content:     s.Content,
-			ClientMsgID: s.ClientMsgID,
-			OfflineInfo: m,
+		optionsFlag := make(map[string]int32, 2)
+		if onlineUserOnly {
+			optionsFlag["history"] = 0
+			optionsFlag["persistent"] = 0
+		} else {
 		}
-		sdkLog("AddCh start")
+		wsMsgData := UserSendMsgReq{
+
+			Options:        optionsFlag,
+			SenderNickName: s.SenderNickName,
+			PlatformID:     s.PlatformID,
+			SessionType:    s.SessionType,
+			MsgFrom:        s.MsgFrom,
+			ContentType:    s.ContentType,
+			RecvID:         s.RecvID,
+			ForceList:      s.ForceList,
+			Content:        s.Content,
+			ClientMsgID:    s.ClientMsgID,
+		}
 		msgIncr, ch := u.AddCh()
-		sdkLog("AddCh end")
 		var wsReq GeneralWsReq
 		wsReq.ReqIdentifier = WSSendMsg
 		wsReq.OperationID = operationIDGenerator()
 		wsReq.SendID = s.SendID
 		wsReq.Token = u.token
 		wsReq.MsgIncr = msgIncr
-		if onlineUserOnly {
-			wsMsgData.Options["history"] = 0
-			wsMsgData.Options["persistent"] = 0
-		} else {
-			wsMsgData.Options = m
-
+		wsReq.Data, err = proto.Marshal(&wsMsgData)
+		if err != nil {
+			sdkLog("Marshal failed ", err.Error())
+			LogFReturn(nil)
+			callback.OnError(http.StatusInternalServerError, err.Error())
+			u.sendMessageFailedHandle(&s, &c, conversationID)
+			return
 		}
 
 		SendFlag := false
@@ -987,6 +995,9 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 		err = enc.Encode(wsMsgData)
 		if err != nil {
 			sdkLog("Encode failed", err.Error())
+			LogFReturn(nil)
+			callback.OnError(http.StatusInternalServerError, err.Error())
+			u.sendMessageFailedHandle(&s, &c, conversationID)
 			return
 		}
 
@@ -1030,9 +1041,19 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 					}
 					sdkLog("remove file: ", v)
 				}
-				_ = u.updateMessageTimeAndMsgIDStatus(r.Data["clientMsgID"].(string), StringToInt64(r.Data["sendTime"].(string)), MsgStatusSendSuccess)
-				s.ServerMsgID = r.Data["serverMsgID"].(string)
-				s.SendTime = StringToInt64(r.Data["sendTime"].(string))
+				var sendMsgResp UserSendMsgResp
+				err = proto.Unmarshal(r.Data, &sendMsgResp)
+				if err != nil {
+					sdkLog("Unmarshal failed ", err.Error())
+					LogFReturn(nil)
+					callback.OnError(http.StatusInternalServerError, err.Error())
+					u.sendMessageFailedHandle(&s, &c, conversationID)
+					return
+				}
+				_ = u.updateMessageTimeAndMsgIDStatus(sendMsgResp.ClientMsgID, sendMsgResp.SendTime, MsgStatusSendSuccess)
+
+				s.ServerMsgID = sendMsgResp.ServerMsgID
+				s.SendTime = sendMsgResp.SendTime
 				s.Status = MsgStatusSendSuccess
 				c.LatestMsg = structToJsonString(s)
 				c.LatestMsgSendTime = s.SendTime

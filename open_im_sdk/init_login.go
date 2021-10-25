@@ -1,11 +1,10 @@
 package open_im_sdk
 
 import (
-	"bytes"
-	"encoding/gob"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/golang/protobuf/proto"
 	"sync/atomic"
 
 	"github.com/gorilla/websocket"
@@ -164,7 +163,7 @@ func (u *UserRelated) forcedSynchronization() {
 }
 
 func (u *UserRelated) doWsMsg(message []byte) {
-	LogBegin(string(message))
+	LogBegin()
 	wsResp, err := u.decodeBinaryWs(message)
 	if err != nil {
 		LogFReturn()
@@ -451,7 +450,7 @@ func (u *UserRelated) heartbeat() {
 			u.DelCh(msgIncr)
 			continue
 		}
-		sdkLog("WriteMsg, ", wsReq)
+		sdkLog("WriteMsg, ", wsReq.OperationID)
 
 		timeout := 5
 		select {
@@ -464,8 +463,14 @@ func (u *UserRelated) heartbeat() {
 				continue
 			} else {
 				sdkLog("heartbeat response success ", wsReq.OperationID)
-				serverMaxSeq := r.Data["seq"].(int64)
-				u.syncMsg2ServerMaxSeq(serverMaxSeq)
+				var wsSeqResp GetNewSeqResp
+				err = proto.Unmarshal(r.Data, &wsSeqResp)
+				if err != nil {
+					sdkLog("Unmarshal failed, ", err.Error())
+				} else {
+					serverMaxSeq := wsSeqResp.Seq
+					u.syncMsg2ServerMaxSeq(serverMaxSeq)
+				}
 			}
 		case <-time.After(time.Second * time.Duration(timeout)):
 			sdkLog("ws ch recvMsg timeout 5s ", wsReq.OperationID)
@@ -574,8 +579,6 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 		return nil
 	}
 
-	var seqList SeqListData
-	seqList.SeqList = u.getNoInSeq(beginSeq, endSeq)
 	msgIncr, ch := u.AddCh()
 	var wsReq GeneralWsReq
 	wsReq.ReqIdentifier = WSGetNewestSeq
@@ -584,15 +587,14 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 	wsReq.Token = u.token
 	wsReq.MsgIncr = msgIncr
 
-	var buff bytes.Buffer
-	enc := gob.NewEncoder(&buff)
-	err = enc.Encode(seqList)
+	var pullMsgReq PullMessageBySeqListReq
+	pullMsgReq.SeqList = u.getNoInSeq(beginSeq, endSeq)
+	wsReq.Data, err = proto.Marshal(&pullMsgReq)
 	if err != nil {
-		sdkLog("Encode failed", err.Error())
+		sdkLog("Marshl failed")
+		LogFReturn(err.Error())
 		return err
 	}
-
-	wsReq.Data = buff.Bytes()
 	err = u.WriteMsg(wsReq)
 	if err != nil {
 		sdkLog("close conn, WriteMsg failed ", err.Error())
@@ -613,10 +615,19 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 			var pullMsg PullUserMsgResp
 
 			pullMsg.ErrCode = 0
-			pullMsg.Data.Group = r.Data["group"].([]paramsPullUserGroupMsgDataResp)
-			pullMsg.Data.Single = r.Data["single"].([]paramsPullUserSingleMsgDataResp)
-			pullMsg.Data.MaxSeq = r.Data["maxSeq"].(int64)
-			pullMsg.Data.MinSeq = r.Data["minSeq"].(int64)
+
+			var pullMsgResp PullMessageBySeqListResp
+			err := proto.Unmarshal(r.Data, &pullMsgResp)
+			if err != nil {
+				sdkLog("Unmarshal failed ", err.Error())
+				LogFReturn(err.Error())
+				return err
+			}
+			pullMsg.Data.Group = pullMsgResp.GroupUserMsg
+			pullMsg.Data.Single = pullMsgResp.SingleUserMsg
+			pullMsg.Data.MaxSeq = pullMsgResp.MaxSeq
+			pullMsg.Data.MinSeq = pullMsgResp.MinSeq
+
 			u.seqMsgMutex.Lock()
 
 			arrMsg := ArrMsg{}
@@ -708,125 +719,7 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 }
 
 func (u *UserRelated) pullOldMsgAndMergeNewMsg(beginSeq int64, endSeq int64) (err error) {
-
 	return u.pullOldMsgAndMergeNewMsgByWs(beginSeq, endSeq)
-
-	if beginSeq > endSeq {
-		return nil
-	}
-	sdkLog("pullOldMsgAndMergeNewMsg", beginSeq, endSeq)
-
-	seqList := u.getNoInSeq(beginSeq, endSeq)
-
-	//todo
-
-	sdkLog("seq list: ", seqList)
-	//data := paramsPullUserMsgDataReq{SeqBegin: beginSeq, SeqEnd: endSeq}
-
-	//	resp, err := post2Api(pullUserMsgRouter, paramsPullUserMsg{ReqIdentifier: 1002, OperationID: operationIDGenerator(), SendID: u.LoginUid, Data: data}, u.token)
-	resp, err := post2Api(pullUserMsgBySeqRouter, paramsPullUserMsgBySeq{ReqIdentifier: 1002, OperationID: operationIDGenerator(), SendID: u.LoginUid, SeqList: seqList}, u.token)
-
-	if err != nil {
-		sdkLog("post2Api failed, ", pullUserMsgRouter, u.LoginUid, beginSeq, endSeq, err.Error())
-		return err
-	}
-	sdkLog("pull ok begin end:", beginSeq, endSeq, string(resp))
-
-	var pullMsg PullUserMsgResp
-	err = json.Unmarshal(resp, &pullMsg)
-	if err != nil {
-		sdkLog("unmarshal failed, ", err.Error())
-		return err
-	}
-
-	if pullMsg.ErrCode == 0 {
-		u.seqMsgMutex.Lock()
-
-		arrMsg := ArrMsg{}
-		for i := 0; i < len(pullMsg.Data.Single); i++ {
-			for j := 0; j < len(pullMsg.Data.Single[i].List); j++ {
-				sdkLog("open_im pull one msg: |", pullMsg.Data.Single[i].List[j].ClientMsgID, "|")
-				singleMsg := MsgData{
-					SendID:           pullMsg.Data.Single[i].List[j].SendID,
-					RecvID:           pullMsg.Data.Single[i].List[j].RecvID,
-					SessionType:      SingleChatType,
-					MsgFrom:          pullMsg.Data.Single[i].List[j].MsgFrom,
-					ContentType:      pullMsg.Data.Single[i].List[j].ContentType,
-					ServerMsgID:      pullMsg.Data.Single[i].List[j].ServerMsgID,
-					Content:          pullMsg.Data.Single[i].List[j].Content,
-					SendTime:         pullMsg.Data.Single[i].List[j].SendTime,
-					Seq:              pullMsg.Data.Single[i].List[j].Seq,
-					SenderNickName:   pullMsg.Data.Single[i].List[j].SenderNickName,
-					SenderFaceURL:    pullMsg.Data.Single[i].List[j].SenderFaceURL,
-					ClientMsgID:      pullMsg.Data.Single[i].List[j].ClientMsgID,
-					SenderPlatformID: pullMsg.Data.Single[i].List[j].SenderPlatformID,
-				}
-
-				u.seqMsg[pullMsg.Data.Single[i].List[j].Seq] = singleMsg
-				sdkLog("into map, seq: ", pullMsg.Data.Single[i].List[j].Seq)
-				//	arrMsg.SingleData = append(arrMsg.SingleData, singleMsg)
-				if pullMsg.Data.Single[i].List[j].ContentType > SingleTipBegin &&
-					pullMsg.Data.Single[i].List[j].ContentType < SingleTipEnd {
-					var msgRecv MsgData
-					msgRecv.ContentType = pullMsg.Data.Single[i].List[j].ContentType
-					msgRecv.Content = pullMsg.Data.Single[i].List[j].Content
-					msgRecv.SendID = pullMsg.Data.Single[i].List[j].SendID
-					msgRecv.RecvID = pullMsg.Data.Single[i].List[j].RecvID
-					sdkLog("doFriendMsg ", msgRecv)
-					u.doFriendMsg(msgRecv)
-				}
-			}
-		}
-
-		u.seqMsgMutex.Unlock()
-
-		u.seqMsgMutex.RLock()
-		for i := beginSeq; i <= endSeq; i++ {
-			v, ok := u.seqMsg[i]
-			if ok {
-				arrMsg.SingleData = append(arrMsg.SingleData, v)
-			} else {
-				sdkLog("seq no in map, error, seq: ", i, u.LoginUid)
-			}
-		}
-		u.seqMsgMutex.RUnlock()
-
-		for i := 0; i < len(pullMsg.Data.Group); i++ {
-			for j := 0; j < len(pullMsg.Data.Group[i].List); j++ {
-				groupMsg := MsgData{
-					SendID:           pullMsg.Data.Group[i].List[j].SendID,
-					RecvID:           pullMsg.Data.Group[i].List[j].RecvID,
-					SessionType:      GroupChatType,
-					MsgFrom:          pullMsg.Data.Group[i].List[j].MsgFrom,
-					ContentType:      pullMsg.Data.Group[i].List[j].ContentType,
-					ServerMsgID:      pullMsg.Data.Group[i].List[j].ServerMsgID,
-					Content:          pullMsg.Data.Group[i].List[j].Content,
-					SendTime:         pullMsg.Data.Group[i].List[j].SendTime,
-					Seq:              pullMsg.Data.Group[i].List[j].Seq,
-					SenderNickName:   pullMsg.Data.Group[i].List[j].SenderNickName,
-					SenderFaceURL:    pullMsg.Data.Group[i].List[j].SenderFaceURL,
-					ClientMsgID:      pullMsg.Data.Group[i].List[j].ClientMsgID,
-					SenderPlatformID: pullMsg.Data.Group[i].List[j].SenderPlatformID,
-				}
-				arrMsg.GroupData = append(arrMsg.GroupData, groupMsg)
-
-				ctype := pullMsg.Data.Group[i].List[j].ContentType
-				if ctype > GroupTipBegin && ctype < GroupTipEnd {
-					u.doGroupMsg(groupMsg)
-					sdkLog("doGroupMsg ", groupMsg)
-				}
-			}
-		}
-
-		sdkLog("triggerCmdNewMsgCome len: ", len(arrMsg.SingleData))
-		err = u.triggerCmdNewMsgCome(arrMsg)
-		if err != nil {
-			sdkLog("triggerCmdNewMsgCome failed, ", err.Error())
-		}
-	} else {
-		sdkLog("pull failed, code, msg: ", pullMsg.ErrCode, pullMsg.ErrMsg)
-	}
-	return nil
 }
 
 func (u *UserRelated) getUserNewestSeq() (int64, error) {

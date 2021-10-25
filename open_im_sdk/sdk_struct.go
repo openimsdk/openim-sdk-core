@@ -220,12 +220,12 @@ type WsSubMsg struct {
 }
 
 type GeneralWsResp struct {
-	ReqIdentifier int                    `json:"reqIdentifier"`
-	ErrCode       int                    `json:"errCode"`
-	ErrMsg        string                 `json:"errMsg"`
-	MsgIncr       string                 `json:"msgIncr"`
-	OperationID   string                 `json:"operationID"`
-	Data          map[string]interface{} `json:"data"`
+	ReqIdentifier int    `json:"reqIdentifier"`
+	ErrCode       int    `json:"errCode"`
+	ErrMsg        string `json:"errMsg"`
+	MsgIncr       string `json:"msgIncr"`
+	OperationID   string `json:"operationID"`
+	Data          []byte `json:"data"`
 }
 
 type GeneralWsReq struct {
@@ -234,8 +234,7 @@ type GeneralWsReq struct {
 	SendID        string `json:"sendID"`
 	OperationID   string `json:"operationID"`
 	MsgIncr       string `json:"msgIncr"`
-	//	Data          interface{} `json:"data"`
-	Data []byte
+	Data          []byte `json:"data"`
 }
 
 type Msg struct {
@@ -307,10 +306,10 @@ type paramsPullUserSingleMsgDataResp struct {
 }
 
 type paramsPullUserMsgDataResp struct {
-	Group  []paramsPullUserGroupMsgDataResp  `json:"group"`
-	MaxSeq int64                             `json:"maxSeq"`
-	MinSeq int64                             `json:"minSeq"`
-	Single []paramsPullUserSingleMsgDataResp `json:"single"`
+	Group  []*GatherFormat `json:"group"`
+	MaxSeq int64           `json:"maxSeq"`
+	MinSeq int64           `json:"minSeq"`
+	Single []*GatherFormat `json:"single"`
 }
 
 type PullUserMsgResp struct {
@@ -893,8 +892,4 @@ type SliceMock struct {
 	addr uintptr
 	len  int
 	cap  int
-}
-
-type SeqListData struct {
-	SeqList []int64
 }
