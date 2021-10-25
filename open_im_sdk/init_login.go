@@ -1,6 +1,8 @@
 package open_im_sdk
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,6 +22,10 @@ func (u *UserRelated) closeListenerCh() {
 }
 
 func (u *UserRelated) initSDK(config string, cb IMSDKListener) bool {
+	if cb == nil {
+		sdkLog("callback == nil")
+		return false
+	}
 	u.cb = cb
 	u.initListenerCh()
 	sdkLog("init success, ", config)
@@ -51,7 +57,7 @@ func (u *UserRelated) logout(cb Base) {
 		cb.OnError(ErrCodeInitLogin, err.Error())
 		return
 	}
-	sdkLog("close conn ok")
+	sdkLog("closeConn ok")
 
 	err = u.closeDB()
 	if err != nil {
@@ -66,6 +72,7 @@ func (u *UserRelated) logout(cb Base) {
 }
 
 func (u *UserRelated) login(uid, tk string, cb Base) {
+	sdkLog("login start, ", uid, tk)
 	u.token = tk
 	u.LoginUid = uid
 
@@ -74,20 +81,19 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 		u.token = ""
 		u.LoginUid = ""
 		cb.OnError(ErrCodeInitLogin, err.Error())
+		sdkLog("initDBX failed, ", err.Error())
 		return
 	}
+	sdkLog("initDBX ok ", uid)
 
-	//read from db
-	seq, err := u.getLocalMaxConSeq()
+	seq, err := u.getLocalMaxConSeqFromDB()
 	if err != nil {
-		sdkLog("GetLocalMaxConSeq failed ", err.Error())
+		sdkLog("getLocalMaxConSeqFromDB failed ", err.Error())
 		cb.OnError(ErrCodeInitLogin, err.Error())
 		return
 	}
 	u.SetMinSeqSvr(seq)
-	sdkLog("getLocalMaxConSeq ", seq)
-
-	sdkLog("init db ok, uid: ", u.LoginUid, seq)
+	sdkLog("getLocalMaxConSeqFromDB SetMinSeqSvr ok ", seq)
 
 	err = u.syncSeq2Msg()
 	if err != nil {
@@ -97,32 +103,35 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 		cb.OnError(ErrCodeInitLogin, err.Error())
 		return
 	}
-	sdkLog("login sync msg ok")
+	sdkLog("syncSeq2Msg ok ", uid, tk)
 
-	u.conn, err = u.reConn(u.conn)
+	u.conn, err = u.reConn(nil)
 	if err != nil {
 		u.token = ""
 		u.LoginUid = ""
 		cb.OnError(ErrCodeInitLogin, err.Error())
+		sdkLog("reConn failed ", err.Error())
 		return
 	}
-	sdkLog("login ws conn ok")
-	go u.forcedSynchronization() //todo:coroutine
+	sdkLog("ws conn ok ")
+	sdkLog("ws, forcedSynchronization heartbeat coroutine run ...")
+	go u.forcedSynchronization()
 	go u.run()
 	go u.heartbeat()
-	sdkLog("ws coroutine run")
-	sdkLog("login ok, ", uid, tk)
 	cb.OnSuccess("")
+	sdkLog("login end, ", uid, tk)
 }
 
 func (u *UserRelated) closeConn() error {
+	LogBegin()
 	if u.conn != nil {
 		err := u.conn.Close()
 		if err != nil {
-			sdkLog("close conn failed, ", err.Error())
+			LogFReturn(err.Error())
 			return err
 		}
 	}
+	LogSReturn(nil)
 	return nil
 }
 
@@ -139,6 +148,7 @@ func (im *IMManager) getLoginStatus() int {
 }
 
 func (u *UserRelated) forcedSynchronization() {
+	LogBegin()
 	u.ForceSyncFriend()
 	u.ForceSyncBlackList()
 	u.ForceSyncFriendApplication()
@@ -150,15 +160,14 @@ func (u *UserRelated) forcedSynchronization() {
 	u.ForceSyncGroupRequest()
 	u.ForceSyncJoinedGroupMember()
 	u.ForceSyncApplyGroupRequest()
-	sdkLog("sync friend blacklist friendapplication userinfo  msg ok")
+	LogSReturn()
 }
 
 func (u *UserRelated) doWsMsg(message []byte) {
-	sdkLog("doWsMsg Msg: ", string(message))
-
+	LogBegin(string(message))
 	wsResp, err := u.decodeBinaryWs(message)
 	if err != nil {
-		sdkLog("decodeBinaryWs failed ", err.Error())
+		LogFReturn()
 		return
 	}
 
@@ -172,9 +181,12 @@ func (u *UserRelated) doWsMsg(message []byte) {
 	case WSSendMsg:
 		u.doWSSendMsg(*wsResp)
 	default:
-		sdkLog("err ReqIdentifier ", wsResp.ReqIdentifier)
+		LogFReturn()
+		return
 	}
 
+	LogSReturn()
+	return
 }
 
 func (u *UserRelated) doWSGetNewestSeq(wsResp GeneralWsResp) {
@@ -237,27 +249,28 @@ func (u *UserRelated) doWSPushMsg(message []byte) {
 }
 
 func (u *UserRelated) delSeqMsg(beginSeq, endSeq int64) {
+	sdkLog("delSeqMsg, seq begin: ", beginSeq, " end: ", endSeq)
 	u.seqMsgMutex.Lock()
 	defer u.seqMsgMutex.Unlock()
 	for i := beginSeq; i <= endSeq; i++ {
-		sdkLog("del seqMsg, seq: ", i)
 		delete(u.seqMsg, i)
 	}
 }
 
 func (u *UserRelated) doMsg(message []byte) {
-	sdkLog("openim ws  recv msg, do Msg: ", string(message))
+	LogBegin(string(message))
 	var msg Msg
 	if err := json.Unmarshal(message, &msg); err != nil {
-		sdkLog("Unmarshal failed, err: ", err.Error())
+		sdkLog("Unmarshal failed  ", err.Error())
+		LogFReturn()
 		return
 	}
 	if msg.ErrCode != 0 {
 		sdkLog("errcode: ", msg.ErrCode, " errmsg: ", msg.ErrMsg)
+		LogFReturn()
 		return
 	}
 
-	sdkLog("getConsequentLocalMaxSeq start")
 	//local
 	/*
 		maxSeq, err := u.getConsequentLocalMaxSeq()
@@ -325,61 +338,38 @@ func (u *UserRelated) SetMinSeqSvr(minSeqSvr int64) {
 }
 
 func (u *UserRelated) syncMsg2ServerMaxSeq(serverMaxSeq int64) error {
-	maxSeq, err := u.getConsequentLocalMaxSeq()
-	if err != nil {
-		return err
-	}
-	sdkLog("getConsequentLocalMaxSeq ,local consequent max: ", maxSeq)
-
-	u.delSeqMsg(atomic.LoadInt64(&u.minSeqSvr), maxSeq)
-	u.setLocalMaxConSeq(int(maxSeq))
-	u.SetMinSeqSvr(int64(maxSeq))
-	sdkLog("setLocalMaxConSeq ", maxSeq)
-	//svr
-	newestSeq := serverMaxSeq
-
-	if maxSeq >= newestSeq {
-		sdkLog("no sync syncMsg2ServerMaxSeq LocalmaxSeq >= NewestSeq ", maxSeq, newestSeq)
-		return nil
-	}
-
-	if newestSeq > maxSeq {
-		sdkLog("need sync syncMsg2ServerMaxSeq ", maxSeq+1, newestSeq)
-		return u.pullBySplit(maxSeq+1, newestSeq) //u.pullOldMsgAndMergeNewMsg(maxSeq+1, newestSeq)
-	}
-	return nil
-}
-
-func (u *UserRelated) syncSeq2Msg() error {
 	//local
-	sdkLog("getConsequentLocalMaxSeq start")
+	sdkLog("syncMsg2ServerMaxSeq start ", serverMaxSeq)
 	maxSeq, err := u.getConsequentLocalMaxSeq()
 	if err != nil {
-		return err
+		sdkLog("getConsequentLocalMaxSeq failed", err.Error())
 	}
 	sdkLog("getConsequentLocalMaxSeq ,max", maxSeq)
 
 	u.delSeqMsg(atomic.LoadInt64(&u.minSeqSvr), maxSeq)
+	sdkLog("delSeqMsg ", atomic.LoadInt64(&u.minSeqSvr), maxSeq)
 	u.setLocalMaxConSeq(int(maxSeq))
 	u.SetMinSeqSvr(int64(maxSeq))
-	sdkLog("setLocalMaxConSeq ", maxSeq)
-	//svr
-	newestSeq, err := u.getUserNewestSeq()
+	sdkLog("setLocalMaxConSeq , SetMinSeqSvr seq: ", maxSeq)
+
+	sdkLog("svr max seq: ", serverMaxSeq, ", local max seq: ", maxSeq)
+	if maxSeq >= serverMaxSeq {
+		sdkLog("don't sync,  LocalmaxSeq >= NewestSeq ", maxSeq, serverMaxSeq)
+		return nil
+	}
+
+	sdkLog("pullBySplit ", maxSeq+1, serverMaxSeq)
+	return u.pullBySplit(maxSeq+1, serverMaxSeq)
+
+}
+
+func (u *UserRelated) syncSeq2Msg() error {
+	svrMaxSeq, err := u.getUserNewestSeq()
 	if err != nil {
 		sdkLog("getUserNewestSeq failed ", err.Error())
 		return err
 	}
-	sdkLog("svr seq: ", newestSeq, ", local seq: ", maxSeq)
-	if maxSeq >= newestSeq {
-		sdkLog("SyncSeq2Msg LocalmaxSeq >= NewestSeq ", maxSeq, newestSeq)
-		return nil
-	}
-
-	if newestSeq > maxSeq {
-		sdkLog("syncSeq2Msg ", maxSeq+1, newestSeq)
-		return u.pullBySplit(maxSeq+1, newestSeq) //u.pullOldMsgAndMergeNewMsg(maxSeq+1, newestSeq)
-	}
-	return nil
+	return u.syncMsg2ServerMaxSeq(svrMaxSeq)
 }
 
 func (u *UserRelated) syncLoginUserInfo() error {
@@ -417,6 +407,7 @@ func (u *UserRelated) syncLoginUserInfo() error {
 }
 
 func (u *UserRelated) reConn(conn *websocket.Conn) (*websocket.Conn, error) {
+	LogBegin(conn)
 	if conn != nil {
 		conn.Close()
 		conn = nil
@@ -428,13 +419,11 @@ func (u *UserRelated) reConn(conn *websocket.Conn) (*websocket.Conn, error) {
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", SvrConf.IpWsAddr, u.LoginUid, u.token, SvrConf.Platform)
 	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
-		//	im.LoginState = LoginFailed
 		u.cb.OnConnectFailed(ErrCodeInitLogin, err.Error())
-		sdkLog("websocket dial failed, ", SvrConf.IpWsAddr, u.LoginUid, u.token, SvrConf.Platform, err.Error())
+		LogFReturn(nil, err.Error(), url)
 		return nil, err
 	}
-	conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-
+	sdkLog("ws connect ok, ", url)
 	u.cb.OnConnectSuccess()
 	u.stateMutex.Lock()
 	u.LoginState = LoginSuccess
@@ -445,6 +434,7 @@ func (u *UserRelated) reConn(conn *websocket.Conn) (*websocket.Conn, error) {
 
 func (u *UserRelated) heartbeat() {
 	for {
+		LogBegin()
 		time.Sleep(time.Duration(5) * time.Second)
 		msgIncr, ch := u.AddCh()
 		var wsReq GeneralWsReq
@@ -453,20 +443,22 @@ func (u *UserRelated) heartbeat() {
 		wsReq.SendID = u.LoginUid
 		wsReq.Token = u.token
 		wsReq.MsgIncr = msgIncr
+
 		err := u.WriteMsg(wsReq)
 		if err != nil {
-			sdkLog("close conn, WriteMsg failed ", err.Error())
+			sdkLog("WriteMsg failed ", err.Error(), msgIncr, wsReq.OperationID)
 			u.closeConn()
 			u.DelCh(msgIncr)
 			continue
 		}
+		sdkLog("WriteMsg, ", wsReq)
 
 		timeout := 5
 		select {
 		case r := <-ch:
 			sdkLog("ws ch recvMsg success: ", wsReq.OperationID)
 			if r.ErrCode != 0 {
-				sdkLog("close conn, heartbeat response faield ", r.ErrCode, r.ErrMsg, wsReq.OperationID)
+				sdkLog("heartbeat response faield ", r.ErrCode, r.ErrMsg, wsReq.OperationID)
 				u.closeConn()
 				u.DelCh(msgIncr)
 				continue
@@ -476,7 +468,7 @@ func (u *UserRelated) heartbeat() {
 				u.syncMsg2ServerMaxSeq(serverMaxSeq)
 			}
 		case <-time.After(time.Second * time.Duration(timeout)):
-			sdkLog("close conn, ws ch recvMsg timeout,", wsReq.OperationID)
+			sdkLog("ws ch recvMsg timeout 5s ", wsReq.OperationID)
 			u.closeConn()
 		}
 		u.DelCh(msgIncr)
@@ -485,37 +477,29 @@ func (u *UserRelated) heartbeat() {
 
 func (u *UserRelated) run() {
 	for {
+		LogBegin()
 		if u.conn == nil {
-			re, err := u.reConn(nil)
+			re, _ := u.reConn(nil)
 			u.conn = re
-
-			sdkLog("ws reconn ", err)
 		}
-
 		if u.conn != nil {
 			msgType, message, err := u.conn.ReadMessage()
-			sdkLog("read one message ", msgType, string(message), err)
+			sdkLog("ReadMessage message ", msgType, string(message), err)
 			if err != nil {
 				u.stateMutex.Lock()
+				sdkLog("ws read message failed ", err.Error(), u.LoginState)
 				if u.LoginState == LogoutCmd {
 					sdkLog("logout, ws close, return ", LogoutCmd, err)
 					u.conn = nil
 					u.stateMutex.Unlock()
 					return
 				}
-				sdkLog("ws read message failed ", err.Error(), u.LoginState)
-
 				u.stateMutex.Unlock()
 				time.Sleep(time.Duration(2) * time.Second)
+				sdkLog("ws  ReadMessage failed, sleep 2s, reconn, ", err)
 				u.conn, err = u.reConn(u.conn)
-				sdkLog("ws reconn, ", err)
-
-				err = u.syncSeq2Msg()
-				sdkLog("sync newest msg, ", err)
-
 			} else {
 				if msgType == websocket.CloseMessage {
-					sdkLog("websocket.CloseMessage, reconn to ws ")
 					u.conn, _ = u.reConn(u.conn)
 				} else if msgType == websocket.TextMessage {
 					sdkLog("type failed, recv websocket.TextMessage ", string(message))
@@ -533,49 +517,43 @@ func (u *UserRelated) run() {
 }
 
 func (u *UserRelated) pullBySplit(beginSeq int64, endSeq int64) error {
+	LogBegin(beginSeq, endSeq)
 	if beginSeq > endSeq {
+		LogFReturn("beginSeq > endSeq")
 		return nil
 	}
-	sdkLog("pullBySplit: begin ,end ", beginSeq, endSeq)
 	var SPLIT int64 = 1000
 	var bSeq, eSeq int64
 	if endSeq-beginSeq > SPLIT {
 		bSeq = beginSeq
 		for i := 0; int64(i) < (endSeq-beginSeq)/SPLIT; i++ {
 			eSeq = (int64(i)+1)*SPLIT + bSeq
-			sdkLog("pull args: ", bSeq, eSeq, (int64(i)+1)*SPLIT)
 			err := u.pullOldMsgAndMergeNewMsg(bSeq, eSeq)
 			if err != nil {
-				sdkLog("pullOldMsgAndMergeNewMsg failed ", bSeq, eSeq, err.Error())
+				LogFReturn(err.Error())
 				return err
 			}
-
 			bSeq = eSeq + 1
 		}
 		if bSeq <= endSeq {
-			sdkLog("pull args: ", bSeq, endSeq)
 			err := u.pullOldMsgAndMergeNewMsg(bSeq, endSeq)
 			if err != nil {
-				sdkLog("pullOldMsgAndMergeNewMsg failed ", bSeq, endSeq, err.Error())
+				LogFReturn(err.Error())
 				return err
 			}
-
 		}
-
 	} else {
-		sdkLog("pull args: ", beginSeq, endSeq)
 		err := u.pullOldMsgAndMergeNewMsg(beginSeq, endSeq)
 		if err != nil {
-			sdkLog("pullOldMsgAndMergeNewMsg failed ", beginSeq, endSeq, err.Error())
-
+			LogFReturn(err.Error())
 			return err
 		}
-
 	}
 	return nil
 }
 
 func (u *UserRelated) getNoInSeq(beginSeq int64, endSeq int64) (seqList []int64) {
+	LogBegin(beginSeq, endSeq)
 	u.seqMsgMutex.RLock()
 	defer u.seqMsgMutex.RUnlock()
 
@@ -585,17 +563,19 @@ func (u *UserRelated) getNoInSeq(beginSeq int64, endSeq int64) (seqList []int64)
 			seqList = append(seqList, i)
 		}
 	}
+	LogSReturn(seqList)
 	return seqList
 }
 
 func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64) (err error) {
+	LogBegin(beginSeq, endSeq)
 	if beginSeq > endSeq {
+		LogSReturn(nil)
 		return nil
 	}
-	sdkLog("pullOldMsgAndMergeNewMsgByWs", beginSeq, endSeq)
-	seqList := u.getNoInSeq(beginSeq, endSeq)
-	sdkLog("get seq list: ", seqList)
 
+	var seqList SeqListData
+	seqList.SeqList = u.getNoInSeq(beginSeq, endSeq)
 	msgIncr, ch := u.AddCh()
 	var wsReq GeneralWsReq
 	wsReq.ReqIdentifier = WSGetNewestSeq
@@ -603,6 +583,16 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 	wsReq.SendID = u.LoginUid
 	wsReq.Token = u.token
 	wsReq.MsgIncr = msgIncr
+
+	var buff bytes.Buffer
+	enc := gob.NewEncoder(&buff)
+	err = enc.Encode(seqList)
+	if err != nil {
+		sdkLog("Encode failed", err.Error())
+		return err
+	}
+
+	wsReq.Data = buff.Bytes()
 	err = u.WriteMsg(wsReq)
 	if err != nil {
 		sdkLog("close conn, WriteMsg failed ", err.Error())
@@ -840,23 +830,26 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsg(beginSeq int64, endSeq int64) (er
 }
 
 func (u *UserRelated) getUserNewestSeq() (int64, error) {
+	LogBegin()
 	resp, err := post2Api(newestSeqRouter, paramsNewestSeqReq{ReqIdentifier: 1001, OperationID: operationIDGenerator(), SendID: u.LoginUid, MsgIncr: 1}, u.token)
 	if err != nil {
-		sdkLog("post2Api failed, ", newestSeqRouter, u.LoginUid, err.Error())
+		LogFReturn(0, err.Error())
 		return 0, err
 	}
 	var seqResp paramsNewestSeqResp
 	err = json.Unmarshal(resp, &seqResp)
 	if err != nil {
 		sdkLog("UnMarshal failed, ", err.Error())
+		LogFReturn(0, err.Error())
 		return 0, err
 	}
 
 	if seqResp.ErrCode != 0 {
 		sdkLog("errcode: ", seqResp.ErrCode, "errmsg: ", seqResp.ErrMsg)
+		LogFReturn(0, seqResp.ErrMsg)
 		return 0, errors.New(seqResp.ErrMsg)
 	}
-
+	LogSReturn(seqResp.Data.Seq, nil)
 	return seqResp.Data.Seq, nil
 }
 

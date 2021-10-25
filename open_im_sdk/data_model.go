@@ -267,7 +267,7 @@ func (u *UserRelated) initDBX(uid string) error {
 }
 
 func (u *UserRelated) setLocalMaxConSeq(seq int) (err error) {
-	sdkLog("set seq args: ", seq)
+	sdkLog("setLocalMaxConSeq start ", seq)
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 
@@ -285,8 +285,8 @@ func (u *UserRelated) setLocalMaxConSeq(seq int) (err error) {
 	return nil
 }
 
-func (u *UserRelated) getLocalMaxConSeq() (int64, error) {
-
+func (u *UserRelated) getLocalMaxConSeqFromDB() (int64, error) {
+	sdkLog("getLocalMaxConSeqFromDB start")
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
 	rows, err := u.initDB.Query("SELECT seq FROM my_local_data where  user_id=?", u.LoginUid)
@@ -298,11 +298,11 @@ func (u *UserRelated) getLocalMaxConSeq() (int64, error) {
 	for rows.Next() {
 		err = rows.Scan(&seq)
 		if err != nil {
-			sdkLog("Scan ,err:", err.Error())
+			sdkLog("Scan, failed:", err.Error())
 			continue
 		}
 	}
-	sdkLog("get return seq: ", seq)
+	sdkLog("getLocalMaxConSeqFromDB, seq: ", seq)
 	return int64(seq), nil
 }
 
@@ -1536,6 +1536,7 @@ func (u *UserRelated) getMultipleMessageModel(messageIDList []string) (err error
 }
 
 func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
+	sdkLog("getConsequentLocalMaxSeq start")
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
 
@@ -1543,10 +1544,10 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 	var rSeq int64
 	var rows *sql.Rows
 	if old == 0 {
-
 		rows, err = u.initDB.Query("SELECT seq FROM chat_log where seq>? order by seq", old)
 		if err != nil {
 			sdkLog("getLocalMaxSeqModel,Query err:", err.Error())
+			sdkLog("getConsequentLocalMaxSeq, seq: ", old)
 			return old, err
 		}
 		var idx int64 = 0
@@ -1573,6 +1574,7 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 		rows, err = u.initDB.Query("SELECT seq FROM chat_log where seq>=? order by seq", old)
 		if err != nil {
 			sdkLog("getLocalMaxSeqModel,Query err:", err.Error())
+			sdkLog("getConsequentLocalMaxSeq, seq: ", old)
 			return old, err
 		}
 		var idx int64 = 0
@@ -1594,9 +1596,9 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 				}
 			}
 		}
+		sdkLog("getConsequentLocalMaxSeq, seq: ", rSeq)
 		return rSeq, nil
 	}
-
 }
 
 func (ur *UserRelated) getLoginUserInfoFromLocal() (userInfo, error) {

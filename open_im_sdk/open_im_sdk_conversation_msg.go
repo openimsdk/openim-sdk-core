@@ -1,6 +1,8 @@
 package open_im_sdk
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -979,7 +981,17 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 		}
 
 		SendFlag := false
-		wsReq.Data = wsMsgData
+
+		var buff bytes.Buffer
+		enc := gob.NewEncoder(&buff)
+		err = enc.Encode(wsMsgData)
+		if err != nil {
+			sdkLog("Encode failed", err.Error())
+			return
+		}
+
+		wsReq.Data = buff.Bytes()
+
 		for tr := 0; tr < 3; tr++ {
 			err = u.WriteMsg(wsReq)
 			sdkLog("ws send: ", wsReq)

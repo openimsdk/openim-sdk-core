@@ -183,8 +183,24 @@ func getToken(uid string) string {
 
 }
 
+type zx struct {
+}
+
+func (z zx) txexfc(uid int) int {
+	open_im_sdk.LogBegin(uid)
+	if uid == 0 {
+		return -1
+		open_im_sdk.LogFReturn(-1)
+	}
+	open_im_sdk.LogSReturn(1)
+	return 1
+
+}
 func GenUid(uid int) string {
+	open_im_sdk.LogBegin(uid)
+
 	UidPrefix := "open_im_test_uid_"
+	open_im_sdk.LogSReturn(UidPrefix + strconv.FormatInt(int64(uid), 10))
 	return UidPrefix + strconv.FormatInt(int64(uid), 10)
 }
 
@@ -242,21 +258,39 @@ func runGetToken(strMyUid string) string {
 			break
 		}
 	}
+
 	return token
 }
 
 // myuid,  maxuid,  msgnum
 func main() {
+
+	open_im_sdk.LogBegin("")
+	myUid1 := 0
+	strMyUid1 := GenUid(myUid1)
+
+	runRigister(strMyUid1)
+	token1 := runGetToken(strMyUid1)
+	open_im_sdk.DoTest(strMyUid1, token1)
+	recvId1 := GenUid(1)
+
+	open_im_sdk.DoTestSendMsg(strMyUid1, recvId1, "test data 0->1")
+	for true {
+		time.Sleep(time.Duration(60) * time.Second)
+		fmt.Println("waiting")
+	}
+
 	cmdfile := "./cmd.txt"
-	uid := flag.Int("uid", 0, "RpcToken default listen port 10800")
+	uid := flag.Int("uid", 1, "RpcToken default listen port 10800")
 	uidCount := flag.Int("uid_count", 2, "RpcToken default listen port 10800")
-	messageCount := flag.Int("message_count", 1000, "RpcToken default listen port 10800")
+	messageCount := flag.Int("message_count", 1, "RpcToken default listen port 10800")
 	flag.Parse()
 	var myUid int = *uid
 	var uidNum int = *uidCount
 	var msgnum int = *messageCount
 	fmt.Println("args is ", myUid, uidNum, msgnum)
 	var strMyUid string
+	open_im_sdk.LogBegin()
 	strMyUid = GenUid(myUid)
 
 	runRigister(strMyUid)

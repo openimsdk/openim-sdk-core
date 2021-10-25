@@ -28,6 +28,7 @@ func InitSDK(config string, cb IMSDKListener) bool {
 		sdkLog("initSDK failed, config: ", sc, err.Error())
 		return false
 	}
+	sdkLog("InitSDK, config ", config)
 	InitOnce(&sc)
 
 	return userForSDK.InitSDK(config, cb)

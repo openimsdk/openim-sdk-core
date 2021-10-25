@@ -377,16 +377,9 @@ func (b *BaseSuccFailed) OnSuccess(data string) {
 	fmt.Println("test_openim: ", "login success")
 }
 
-func runFuncName() string {
-	pc := make([]uintptr, 1)
-	runtime.Callers(2, pc)
-	f := runtime.FuncForPC(pc[0])
-	return f.Name()
-}
-
 func lllogin(uid, tk string) bool {
 	var callback BaseSuccFailed
-	callback.funcName = runFuncName()
+	callback.funcName = RunFuncName()
 	Login(uid, tk, &callback)
 
 	for true {
@@ -411,7 +404,7 @@ func DoTest(uid, tk string) {
 	//	cf.IpWsAddr = "wss://open-im.rentsoft.cn/wss"
 	cf.IpWsAddr = "ws://120.24.45.199:17778"
 	cf.Platform = 1
-	cf.DbDir = "/tmp/"
+	cf.DbDir = "./"
 
 	var s string
 	b, _ := json.Marshal(cf)

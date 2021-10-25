@@ -67,6 +67,7 @@ func (u *UserRelated) AddCh() (string, chan GeneralWsResp) {
 		sdkLog("AddCh exist")
 	}
 	u.wsNotification[msgIncr] = ch
+	LogSReturn(msgIncr, ch)
 	return msgIncr, ch
 }
 
@@ -83,6 +84,7 @@ func (u *UserRelated) GetCh(msgIncr string) chan GeneralWsResp {
 }
 
 func (u *UserRelated) DelCh(msgIncr string) {
+	LogBegin(msgIncr)
 	u.wsMutex.Lock()
 	defer u.wsMutex.Unlock()
 	ch, ok := u.wsNotification[msgIncr]
@@ -90,14 +92,16 @@ func (u *UserRelated) DelCh(msgIncr string) {
 		close(ch)
 		delete(u.wsNotification, msgIncr)
 	}
+	LogSReturn()
 }
 
 func (u *UserRelated) writeBinaryMsg(msg GeneralWsReq) error {
+	LogBegin(msg)
 	var buff bytes.Buffer
 	enc := gob.NewEncoder(&buff)
 	err := enc.Encode(msg)
 	if err != nil {
-		sdkLog("Encode failed", err.Error())
+		LogFReturn(err.Error())
 		return err
 	}
 
@@ -106,21 +110,31 @@ func (u *UserRelated) writeBinaryMsg(msg GeneralWsReq) error {
 
 	if u.conn != nil {
 		u.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-		return u.conn.WriteMessage(websocket.BinaryMessage, buff.Bytes())
+		err = u.conn.WriteMessage(websocket.BinaryMessage, buff.Bytes())
+		sdkLog("send ws BinaryMessage len: ", len(buff.Bytes()))
+		if err != nil {
+			LogFReturn(err.Error())
+		} else {
+			LogSReturn(nil)
+		}
+		return err
 	} else {
+		LogFReturn("conn==nil")
 		return errors.New("conn==nil")
 	}
 }
 
 func (u *UserRelated) decodeBinaryWs(message []byte) (*GeneralWsResp, error) {
+	LogBegin()
 	buff := bytes.NewBuffer(message)
 	dec := gob.NewDecoder(buff)
 	var data GeneralWsResp
 	err := dec.Decode(&data)
 	if err != nil {
-		sdkLog("Decode failed ", err.Error())
+		LogFReturn(nil, err.Error())
 		return nil, err
 	}
+	LogSReturn(data, nil)
 	return &data, nil
 }
 
@@ -314,6 +328,46 @@ func getIsRead(b bool) int {
 	}
 }
 
+func RunFuncName() string {
+	pc, _, _, _ := runtime.Caller(2)
+	return runtime.FuncForPC(pc).Name()
+}
+
+func cleanUpfuncName(funcName string) string {
+	end := strings.LastIndex(funcName, ".")
+	if end == -1 {
+		return ""
+	}
+	return funcName[end+1:]
+}
+
+func LogBegin(v ...interface{}) {
+	pc, b, c, _ := runtime.Caller(1)
+	fname := runtime.FuncForPC(pc).Name()
+	i := strings.LastIndex(b, "/")
+	if i != -1 {
+		sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "begin, args: ", v)
+	}
+}
+
+func LogFReturn(v ...interface{}) {
+	pc, b, c, _ := runtime.Caller(1)
+	fname := runtime.FuncForPC(pc).Name()
+	i := strings.LastIndex(b, "/")
+	if i != -1 {
+		sLog.Println("[", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "failed return args(info): ", v)
+	}
+}
+
+func LogSReturn(v ...interface{}) {
+	pc, b, c, _ := runtime.Caller(1)
+	fname := runtime.FuncForPC(pc).Name()
+	i := strings.LastIndex(b, "/")
+	if i != -1 {
+		sLog.Println("[", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "success return args(info): ", v)
+	}
+}
+
 func sdkLog(v ...interface{}) {
 	_, b, c, _ := runtime.Caller(1)
 	i := strings.LastIndex(b, "/")
@@ -370,6 +424,7 @@ func Post2Api(url string, data interface{}, token string) (content []byte, err e
 //application/json; charset=utf-8
 func post2Api(url string, data interface{}, token string) (content []byte, err error) {
 	sdkLog("call post2Api: ", url)
+
 	if url == sendMsgRouter {
 		return retry(url, data, token, 5, 1000*time.Millisecond, postLogic)
 	} else {

@@ -229,12 +229,13 @@ type GeneralWsResp struct {
 }
 
 type GeneralWsReq struct {
-	ReqIdentifier int32       `json:"reqIdentifier"`
-	Token         string      `json:"token"`
-	SendID        string      `json:"sendID"`
-	OperationID   string      `json:"operationID"`
-	MsgIncr       string      `json:"msgIncr"`
-	Data          interface{} `json:"data"`
+	ReqIdentifier int32  `json:"reqIdentifier"`
+	Token         string `json:"token"`
+	SendID        string `json:"sendID"`
+	OperationID   string `json:"operationID"`
+	MsgIncr       string `json:"msgIncr"`
+	//	Data          interface{} `json:"data"`
+	Data []byte
 }
 
 type Msg struct {
@@ -892,4 +893,8 @@ type SliceMock struct {
 	addr uintptr
 	len  int
 	cap  int
+}
+
+type SeqListData struct {
+	SeqList []int64
 }
