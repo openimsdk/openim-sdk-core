@@ -192,7 +192,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 					}
 				}
 			} else {
-				sdkLog("repeat message err", msg)
+				sdkLog("repeat message err", msg.ClientMsgID, msg.Seq, msg.ServerMsgID)
 			}
 		}
 	}

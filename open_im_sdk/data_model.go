@@ -1536,7 +1536,7 @@ func (u *UserRelated) getMultipleMessageModel(messageIDList []string) (err error
 }
 
 func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
-	sdkLog("getConsequentLocalMaxSeq start")
+	LogStart()
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
 
@@ -1546,21 +1546,21 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 	if old == 0 {
 		rows, err = u.initDB.Query("SELECT seq FROM chat_log where seq>? order by seq", old)
 		if err != nil {
-			sdkLog("getLocalMaxSeqModel,Query err:", err.Error())
-			sdkLog("getConsequentLocalMaxSeq, seq: ", old)
+			sdkLog("getLocalMaxSeqModel,Query  failed", err.Error(), old)
+			LogFReturn(old, err)
 			return old, err
 		}
 		var idx int64 = 0
+		rSeq = old
 		for rows.Next() {
 			err = rows.Scan(&seq)
 			if err != nil {
-				sdkLog("getLocalMaxSeqModel ,err:", err.Error())
+				sdkLog("getLocalMaxSeqModel ,failed ", err.Error())
 				continue
 			} else {
 				idx++
 				if seq == old+idx {
 					rSeq = seq
-					sdkLog("seq == old+idx", seq, old, idx)
 				} else {
 					sdkLog("not consequent ", old, idx, seq)
 					u.SetMinSeqSvr(rSeq)
@@ -1569,15 +1569,18 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 				}
 			}
 		}
+		LogSReturn(rSeq, nil)
 		return rSeq, nil
 	} else {
 		rows, err = u.initDB.Query("SELECT seq FROM chat_log where seq>=? order by seq", old)
 		if err != nil {
-			sdkLog("getLocalMaxSeqModel,Query err:", err.Error())
-			sdkLog("getConsequentLocalMaxSeq, seq: ", old)
+			sdkLog("getLocalMaxSeqModel,Query err:", err.Error(), old)
+			LogFReturn(old, err)
 			return old, err
 		}
+		rows.Columns()
 		var idx int64 = 0
+		rSeq = old
 		for rows.Next() {
 			err = rows.Scan(&seq)
 			if err != nil {
@@ -1587,7 +1590,6 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 				if seq == old+idx {
 					rSeq = seq
 					idx++
-					sdkLog("seq == old+idx", seq, old, idx)
 				} else {
 					sdkLog("not consequent ", old, idx, seq)
 					u.SetMinSeqSvr(rSeq)
@@ -1596,7 +1598,7 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 				}
 			}
 		}
-		sdkLog("getConsequentLocalMaxSeq, seq: ", rSeq)
+		LogSReturn(rSeq, nil)
 		return rSeq, nil
 	}
 }

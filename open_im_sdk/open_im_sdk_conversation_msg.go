@@ -977,7 +977,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 		wsReq.ReqIdentifier = WSSendMsg
 		wsReq.OperationID = operationIDGenerator()
 		wsReq.SendID = s.SendID
-		wsReq.Token = u.token
+		//wsReq.Token = u.token
 		wsReq.MsgIncr = msgIncr
 		wsReq.Data, err = proto.Marshal(&wsMsgData)
 		if err != nil {
@@ -990,23 +990,10 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 
 		SendFlag := false
 
-		/*
-			var buff bytes.Buffer
-			enc := gob.NewEncoder(&buff)
-			err = enc.Encode(wsMsgData)
-			if err != nil {
-				sdkLog("Encode failed", err.Error())
-				LogFReturn(nil)
-				callback.OnError(http.StatusInternalServerError, err.Error())
-				u.sendMessageFailedHandle(&s, &c, conversationID)
-				return
-			}
-		*/
-		//	wsReq.Data = buff.Bytes()
-
 		for tr := 0; tr < 3; tr++ {
+			LogBegin("WriteMsg", wsReq.OperationID)
 			err = u.WriteMsg(wsReq)
-			sdkLog("ws send: ", wsReq)
+			LogEnd("WriteMsg", wsReq.OperationID)
 			if err != nil {
 				sdkLog("ws writeMsg  err:,", wsReq.OperationID, err.Error(), tr)
 				time.Sleep(time.Duration(5) * time.Second)

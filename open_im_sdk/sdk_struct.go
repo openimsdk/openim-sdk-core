@@ -185,21 +185,22 @@ type MessageReceipt struct {
 	SessionType int32    `json:"sessionType"`
 }
 
-type MsgData struct {
-	SendID           string
-	RecvID           string
-	SessionType      int32
-	MsgFrom          int32
-	ContentType      int32
-	ServerMsgID      string
-	Content          string
-	SendTime         int64
-	Seq              int64
-	SenderPlatformID int32
-	SenderNickName   string
-	SenderFaceURL    string
-	ClientMsgID      string
-}
+//type MsgData struct {
+//	SendID           string
+//	RecvID           string
+//	SessionType      int32
+//	MsgFrom          int32
+//	ContentType      int32
+//	ServerMsgID      string
+//	Content          string
+//	SendTime         int64
+//	Seq              int64
+//	SenderPlatformID int32
+//	SenderNickName   string
+//	SenderFaceURL    string
+//	ClientMsgID      string
+//}
+
 type WsMsgData struct {
 	PlatformID  int32                  `mapstructure:"platformID" validate:"required"`
 	SessionType int32                  `mapstructure:"sessionType" validate:"required"`
@@ -237,12 +238,12 @@ type GeneralWsReq struct {
 	Data          []byte `json:"data"`
 }
 
-type Msg struct {
-	ReqIdentifier int
-	ErrCode       int
-	ErrMsg        string
-	Data          MsgData
-}
+//type Msg struct {
+//	ReqIdentifier int
+//	ErrCode       int
+//	ErrMsg        string
+//	Data          MsgData
+//}
 
 type ArrMsg struct {
 	SingleData []MsgData

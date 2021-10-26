@@ -101,7 +101,7 @@ func (u *UserRelated) DelCh(msgIncr string) {
 }
 
 func (u *UserRelated) writeBinaryMsg(msg GeneralWsReq) error {
-	LogBegin(msg.OperationID)
+	LogStart(msg.OperationID)
 	var buff bytes.Buffer
 	enc := gob.NewEncoder(&buff)
 	err := enc.Encode(msg)
@@ -117,6 +117,10 @@ func (u *UserRelated) writeBinaryMsg(msg GeneralWsReq) error {
 		u.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 		err = u.conn.WriteMessage(websocket.BinaryMessage, buff.Bytes())
 		sdkLog("send ws BinaryMessage len: ", len(buff.Bytes()))
+		if len(buff.Bytes()) > MaxTotalMsgLen {
+			LogFReturn("msg too long", len(buff.Bytes()), MaxTotalMsgLen)
+			return errors.New("msg too long")
+		}
 		if err != nil {
 			LogFReturn(err.Error())
 		} else {
@@ -130,7 +134,7 @@ func (u *UserRelated) writeBinaryMsg(msg GeneralWsReq) error {
 }
 
 func (u *UserRelated) decodeBinaryWs(message []byte) (*GeneralWsResp, error) {
-	LogBegin()
+	LogStart()
 	buff := bytes.NewBuffer(message)
 	dec := gob.NewDecoder(buff)
 	var data GeneralWsResp
@@ -144,7 +148,7 @@ func (u *UserRelated) decodeBinaryWs(message []byte) (*GeneralWsResp, error) {
 }
 
 func (u *UserRelated) WriteMsg(msg GeneralWsReq) error {
-	LogBegin(msg.OperationID)
+	LogStart(msg.OperationID)
 	LogSReturn(msg.OperationID)
 	return u.writeBinaryMsg(msg)
 
@@ -353,8 +357,7 @@ func LogBegin(v ...interface{}) {
 	fname := runtime.FuncForPC(pc).Name()
 	i := strings.LastIndex(b, "/")
 	if i != -1 {
-		//	sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "begin, args: ", v)
-		sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "begin, args: ", v)
+		sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "call func begin, args: ", v)
 	}
 }
 
@@ -363,8 +366,16 @@ func LogEnd(v ...interface{}) {
 	fname := runtime.FuncForPC(pc).Name()
 	i := strings.LastIndex(b, "/")
 	if i != -1 {
-		//	sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "begin, args: ", v)
-		sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "end, args: ", v)
+		sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "call func end, args: ", v)
+	}
+}
+
+func LogStart(v ...interface{}) {
+	pc, b, c, _ := runtime.Caller(1)
+	fname := runtime.FuncForPC(pc).Name()
+	i := strings.LastIndex(b, "/")
+	if i != -1 {
+		sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "func start, args: ", v)
 	}
 }
 

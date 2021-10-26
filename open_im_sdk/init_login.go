@@ -93,6 +93,8 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 		sdkLog("reConn failed ", err.Error())
 		return
 	}
+	sdkLog("ws conn ok ")
+
 	seq, err := u.getLocalMaxConSeqFromDB()
 	if err != nil {
 		sdkLog("getLocalMaxConSeqFromDB failed ", err.Error())
@@ -103,17 +105,16 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 	sdkLog("getLocalMaxConSeqFromDB SetMinSeqSvr ok ", seq)
 	go u.run()
 
-	err = u.syncSeq2Msg()
-	if err != nil {
-		sdkLog("syncSeq2Msg failed ", err.Error(), uid, tk)
-		u.token = ""
-		u.LoginUid = ""
-		cb.OnError(ErrCodeInitLogin, err.Error())
-		return
-	}
-	sdkLog("syncSeq2Msg ok ", uid, tk)
+	//err = u.syncSeq2Msg()
+	//if err != nil {
+	//	sdkLog("syncSeq2Msg failed ", err.Error(), uid, tk)
+	//	u.token = ""
+	//	u.LoginUid = ""
+	//	cb.OnError(ErrCodeInitLogin, err.Error())
+	//	return
+	//}
+	//sdkLog("syncSeq2Msg ok ", uid, tk)
 
-	sdkLog("ws conn ok ")
 	sdkLog("ws, forcedSynchronization heartbeat coroutine run ...")
 	go u.forcedSynchronization()
 
@@ -154,7 +155,7 @@ func (u *UserRelated) forcedSynchronization() {
 	u.ForceSyncFriendApplication()
 	u.ForceSyncLoginUserInfo()
 
-	u.ForceSyncMsg()
+	//u.ForceSyncMsg()
 
 	u.ForceSyncJoinedGroup()
 	u.ForceSyncGroupRequest()
@@ -179,7 +180,7 @@ func (u *UserRelated) doWsMsg(message []byte) {
 	case WSPullMsgBySeqList:
 		u.doWSPullMsg(*wsResp)
 	case WSPushMsg:
-		u.doWSPushMsg(message)
+		u.doWSPushMsg(*wsResp)
 	case WSSendMsg:
 		u.doWSSendMsg(*wsResp)
 	default:
@@ -228,9 +229,9 @@ func (u *UserRelated) doWSSendMsg(wsResp GeneralWsResp) {
 	LogSReturn(wsResp.OperationID)
 }
 
-func (u *UserRelated) doWSPushMsg(message []byte) {
+func (u *UserRelated) doWSPushMsg(wsResp GeneralWsResp) {
 	LogBegin()
-	u.doMsg(message)
+	u.doMsg(wsResp)
 	LogSReturn()
 }
 
@@ -243,18 +244,52 @@ func (u *UserRelated) delSeqMsg(beginSeq, endSeq int64) {
 	}
 }
 
-func (u *UserRelated) doMsg(message []byte) {
-	LogBegin(string(message))
-	var msg Msg
-	if err := json.Unmarshal(message, &msg); err != nil {
-		sdkLog("Unmarshal failed  ", err.Error())
+func (u *UserRelated) doMsg(wsResp GeneralWsResp) {
+	LogBegin(wsResp.OperationID)
+	var msg MsgData
+
+	if wsResp.ErrCode != 0 {
+		sdkLog("errcode: ", wsResp.ErrCode, " errmsg: ", wsResp.ErrMsg)
 		LogFReturn()
 		return
 	}
-	if msg.ErrCode != 0 {
-		sdkLog("errcode: ", msg.ErrCode, " errmsg: ", msg.ErrMsg)
+
+	err := proto.Unmarshal(wsResp.Data, &msg)
+	if err != nil {
+		sdkLog("Unmarshal failed", err.Error())
 		LogFReturn()
 		return
+	}
+
+	if msg.SessionType == SingleChatType {
+		arrMsg := ArrMsg{}
+		arrMsg.SingleData = append(arrMsg.SingleData, msg)
+
+		err := u.triggerCmdNewMsgCome(arrMsg)
+		sdkLog("recv push msg, trigger cmd |", msg.ClientMsgID, "|", err)
+
+		if msg.ContentType > SingleTipBegin && msg.ContentType < SingleTipEnd {
+			u.doFriendMsg(msg)
+			sdkLog("doFriendMsg, ", msg)
+		} else if msg.ContentType > GroupTipBegin && msg.ContentType < GroupTipEnd {
+			u.doGroupMsg(msg)
+			sdkLog("doGroupMsg, SingleChat ", msg)
+		} else {
+			sdkLog("type no process, ", msg)
+		}
+
+	} else if msg.SessionType == GroupChatType {
+		arrMsg := ArrMsg{}
+		arrMsg.GroupData = append(arrMsg.GroupData, msg)
+		u.triggerCmdNewMsgCome(arrMsg)
+		if msg.ContentType > GroupTipBegin && msg.ContentType < GroupTipEnd {
+			u.doGroupMsg(msg)
+			sdkLog("doGroupMsg, ", msg)
+		} else {
+			sdkLog("type failed, ", msg)
+		}
+	} else {
+		sdkLog("type failed, ", msg)
 	}
 
 	//local
@@ -284,36 +319,7 @@ func (u *UserRelated) doMsg(message []byte) {
 			sdkLog("pull msg: ", maxSeq+1, msg.Data.Seq-1)
 		}
 	*/
-	if msg.Data.SessionType == SingleChatType {
-		arrMsg := ArrMsg{}
-		arrMsg.SingleData = append(arrMsg.SingleData, msg.Data)
 
-		err := u.triggerCmdNewMsgCome(arrMsg)
-		sdkLog("recv push msg, trigger cmd |", msg.Data.ClientMsgID, "|", err)
-
-		if msg.Data.ContentType > SingleTipBegin && msg.Data.ContentType < SingleTipEnd {
-			u.doFriendMsg(msg.Data)
-			sdkLog("doFriendMsg, ", msg.Data)
-		} else if msg.Data.ContentType > GroupTipBegin && msg.Data.ContentType < GroupTipEnd {
-			u.doGroupMsg(msg.Data)
-			sdkLog("doGroupMsg, SingleChat ", msg.Data)
-		} else {
-			sdkLog("type no process, ", msg.Data)
-		}
-
-	} else if msg.Data.SessionType == GroupChatType {
-		arrMsg := ArrMsg{}
-		arrMsg.GroupData = append(arrMsg.GroupData, msg.Data)
-		u.triggerCmdNewMsgCome(arrMsg)
-		if msg.Data.ContentType > GroupTipBegin && msg.Data.ContentType < GroupTipEnd {
-			u.doGroupMsg(msg.Data)
-			sdkLog("doGroupMsg, ", msg.Data)
-		} else {
-			sdkLog("type failed, ", msg.Data)
-		}
-	} else {
-		sdkLog("type failed, ", msg.Data)
-	}
 }
 
 func (u *UserRelated) SetMinSeqSvr(minSeqSvr int64) {
@@ -324,28 +330,34 @@ func (u *UserRelated) SetMinSeqSvr(minSeqSvr int64) {
 }
 
 func (u *UserRelated) syncMsg2ServerMaxSeq(serverMaxSeq int64) error {
-	//local
-	sdkLog("syncMsg2ServerMaxSeq start ", serverMaxSeq)
-	maxSeq, err := u.getConsequentLocalMaxSeq()
+	LogBegin(serverMaxSeq)
+	LogBegin("getConsequentLocalMaxSeq")
+	maxSeq, err := u.getConsequentLocalMaxSeq() //local
+	LogEnd("getConsequentLocalMaxSeq", maxSeq, err)
 	if err != nil {
 		sdkLog("getConsequentLocalMaxSeq failed", err.Error())
+		LogFReturn(err.Error())
+		return err
 	}
-	sdkLog("getConsequentLocalMaxSeq ,max", maxSeq)
 
+	LogBegin("delSeqMsg setLocalMaxConSeq SetMinSeqSvr", atomic.LoadInt64(&u.minSeqSvr), maxSeq)
 	u.delSeqMsg(atomic.LoadInt64(&u.minSeqSvr), maxSeq)
-	sdkLog("delSeqMsg ", atomic.LoadInt64(&u.minSeqSvr), maxSeq)
 	u.setLocalMaxConSeq(int(maxSeq))
 	u.SetMinSeqSvr(int64(maxSeq))
-	sdkLog("setLocalMaxConSeq , SetMinSeqSvr seq: ", maxSeq)
+	LogEnd("elSeqMsg setLocalMaxConSeq SetMinSeqSvr")
 
-	sdkLog("svr max seq: ", serverMaxSeq, ", local max seq: ", maxSeq)
 	if maxSeq >= serverMaxSeq {
 		sdkLog("don't sync,  LocalmaxSeq >= NewestSeq ", maxSeq, serverMaxSeq)
+		LogSReturn(nil)
 		return nil
 	}
 
-	sdkLog("pullBySplit ", maxSeq+1, serverMaxSeq)
-	return u.pullBySplit(maxSeq+1, serverMaxSeq)
+	err = u.pullBySplit(maxSeq+1, serverMaxSeq)
+
+	//{
+
+	//	}
+	return err
 
 }
 
@@ -420,62 +432,78 @@ func (u *UserRelated) reConn(conn *websocket.Conn) (*websocket.Conn, error) {
 
 func (u *UserRelated) heartbeat() {
 	for {
-		time.Sleep(time.Duration(500) * time.Second)
 		LogBegin()
+		time.Sleep(time.Duration(5) * time.Second)
+		LogBegin("AddCh")
 		msgIncr, ch := u.AddCh()
+		LogEnd("AddCh")
+
 		var wsReq GeneralWsReq
 		wsReq.ReqIdentifier = WSGetNewestSeq
 		wsReq.OperationID = operationIDGenerator()
 		wsReq.SendID = u.LoginUid
-		wsReq.Token = u.token
 		wsReq.MsgIncr = msgIncr
-		sdkLog("heartbeat WriteMsg ", wsReq.OperationID, wsReq.ReqIdentifier, wsReq.MsgIncr)
-		LogBegin("WriteMsg", wsReq.OperationID)
+		LogBegin("WriteMsg", wsReq.OperationID, wsReq.MsgIncr)
 		err := u.WriteMsg(wsReq)
-		LogEnd("WriteMsg", wsReq.OperationID)
+		LogEnd("WriteMsg", wsReq.OperationID, wsReq.MsgIncr)
 		if err != nil {
 			sdkLog("WriteMsg failed ", err.Error(), msgIncr, wsReq.OperationID)
+			LogBegin("closeConn DelCh", msgIncr, wsReq.OperationID)
 			u.closeConn()
 			u.DelCh(msgIncr)
+			LogEnd("closeConn DelCh continue", wsReq.OperationID)
 			continue
 		}
-		sdkLog("WriteMsg, ", wsReq.OperationID, wsReq.MsgIncr, wsReq.ReqIdentifier)
 
 		timeout := 5
 		select {
 		case r := <-ch:
 			sdkLog("ws ch recvMsg success: ", wsReq.OperationID)
 			if r.ErrCode != 0 {
-				sdkLog("heartbeat response faield ", r.ErrCode, r.ErrMsg, wsReq.OperationID, wsReq.MsgIncr, wsReq.ReqIdentifier)
+				sdkLog("heartbeat response faield ", r.ErrCode, r.ErrMsg, wsReq.OperationID)
+				LogBegin("closeConn DelCh", msgIncr, wsReq.OperationID)
 				u.closeConn()
 				u.DelCh(msgIncr)
+				LogEnd("closeConn DelCh continue", wsReq.OperationID)
 				continue
 			} else {
 				sdkLog("heartbeat response success ", wsReq.OperationID)
-				var wsSeqResp GetNewSeqResp
+				var wsSeqResp GetMaxAndMinSeqResp
 				err = proto.Unmarshal(r.Data, &wsSeqResp)
 				if err != nil {
-					sdkLog("Unmarshal failed, ", err.Error())
+					sdkLog("Unmarshal failed, ", err.Error(), wsReq.OperationID)
+					LogBegin("closeConn DelCh", msgIncr, wsReq.OperationID)
 					u.closeConn()
 					u.DelCh(msgIncr)
+					LogEnd("closeConn DelCh continue")
 					continue
 				} else {
-					serverMaxSeq := wsSeqResp.Seq
-					u.syncMsg2ServerMaxSeq(serverMaxSeq)
+					if wsSeqResp.MinSeq > atomic.LoadInt64(&u.minSeqSvr) {
+						LogBegin("setLocalMaxConSeq SetMinSeqSvr ", wsSeqResp.MinSeq, atomic.LoadInt64(&u.minSeqSvr))
+						u.setLocalMaxConSeq(int(wsSeqResp.MinSeq))
+						u.SetMinSeqSvr(wsSeqResp.MinSeq)
+						LogEnd("setLocalMaxConSeq SetMinSeqSvr ")
+					}
+					LogBegin("syncMsg2ServerMaxSeq", wsSeqResp.MaxSeq, wsSeqResp.MinSeq, wsReq.OperationID)
+					u.syncMsg2ServerMaxSeq(wsSeqResp.MaxSeq)
+					LogEnd("syncMsg2ServerMaxSeq")
 				}
 			}
 		case <-time.After(time.Second * time.Duration(timeout)):
-			sdkLog("ws ch recvMsg timeout 5s ", wsReq.OperationID)
+			sdkLog("ws ch recvMsg timeout ", timeout, "s ", wsReq.OperationID)
+			LogBegin("closeConn", wsReq.OperationID)
 			u.closeConn()
+			LogEnd("closeConn", wsReq.OperationID)
 		}
+		LogBegin("DelCh", msgIncr, wsReq.OperationID)
 		u.DelCh(msgIncr)
-
+		LogEnd("DelCh", wsReq.OperationID)
 	}
 }
 
 func (u *UserRelated) run() {
 	for {
-		LogBegin()
+		LogStart()
 		if u.conn == nil {
 			LogBegin("reConn", nil)
 			re, _ := u.reConn(nil)
@@ -495,8 +523,8 @@ func (u *UserRelated) run() {
 					return
 				}
 				u.stateMutex.Unlock()
-				time.Sleep(time.Duration(2) * time.Second)
-				sdkLog("ws  ReadMessage failed, sleep 2s, reconn, ", err)
+				time.Sleep(time.Duration(5) * time.Second)
+				sdkLog("ws  ReadMessage failed, sleep 5s, reconn, ", err)
 				LogBegin("reConn", u.conn)
 				u.conn, err = u.reConn(u.conn)
 				LogEnd("reConn", u.conn)
@@ -512,8 +540,8 @@ func (u *UserRelated) run() {
 				}
 			}
 		} else {
-			sdkLog("ws failed, sleep 2s, reconn... ")
-			time.Sleep(time.Duration(2) * time.Second)
+			sdkLog("ws failed, sleep 5s, reconn... ")
+			time.Sleep(time.Duration(5) * time.Second)
 		}
 	}
 }
@@ -528,9 +556,9 @@ func (u *UserRelated) pullBySplit(beginSeq int64, endSeq int64) error {
 	var bSeq, eSeq int64
 	if endSeq-beginSeq > SPLIT {
 		bSeq = beginSeq
-		//1 110  1 11
+		//1, 118 117/10 = 11  i: 0- 10  1-> 11 12->22 23->33  34->44   111->121
 		for i := 0; int64(i) < (endSeq-beginSeq)/SPLIT; i++ {
-			eSeq = bSeq + SPLIT
+			eSeq = bSeq + SPLIT - 1
 			sdkLog("pull args: ", i, eSeq, bSeq, (endSeq-beginSeq)/SPLIT)
 			err := u.pullOldMsgAndMergeNewMsg(bSeq, eSeq)
 			if err != nil {
@@ -585,19 +613,23 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 	wsReq.ReqIdentifier = WSPullMsgBySeqList
 	wsReq.OperationID = operationIDGenerator()
 	wsReq.SendID = u.LoginUid
-	wsReq.Token = u.token
+	//wsReq.Token = u.token
 	wsReq.MsgIncr = msgIncr
 
 	var pullMsgReq PullMessageBySeqListReq
+	LogBegin("getNoInSeq ", beginSeq, endSeq)
 	pullMsgReq.SeqList = u.getNoInSeq(beginSeq, endSeq)
+	LogEnd("getNoInSeq ", pullMsgReq.SeqList)
+
 	wsReq.Data, err = proto.Marshal(&pullMsgReq)
 	if err != nil {
 		sdkLog("Marshl failed")
 		LogFReturn(err.Error())
 		return err
 	}
+	LogBegin("WriteMsg ", wsReq.OperationID)
 	err = u.WriteMsg(wsReq)
-	sdkLog("pullOldMsgAndMergeNewMsgByWs msg: ", wsReq.OperationID, wsReq.ReqIdentifier)
+	LogEnd("WriteMsg ", wsReq.OperationID, err)
 	if err != nil {
 		sdkLog("close conn, WriteMsg failed ", err.Error())
 		u.DelCh(msgIncr)
