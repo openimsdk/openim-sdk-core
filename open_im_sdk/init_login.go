@@ -639,7 +639,7 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 		return err
 	}
 
-	timeout := 30000
+	timeout := 10
 	select {
 	case r := <-ch:
 		sdkLog("ws ch recvMsg success: ", wsReq.OperationID)
@@ -668,7 +668,7 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 			u.seqMsgMutex.Lock()
 
 			arrMsg := ArrMsg{}
-			sdkLog("pullmsg data: ", pullMsgResp.SingleUserMsg, pullMsg.Data.Single)
+			//	sdkLog("pullmsg data: ", pullMsgResp.SingleUserMsg, pullMsg.Data.Single)
 			for i := 0; i < len(pullMsg.Data.Single); i++ {
 				for j := 0; j < len(pullMsg.Data.Single[i].List); j++ {
 					sdkLog("open_im pull one msg: |", pullMsg.Data.Single[i].List[j].ClientMsgID, "|")

@@ -238,13 +238,6 @@ type GeneralWsReq struct {
 	Data          []byte `json:"data"`
 }
 
-//type Msg struct {
-//	ReqIdentifier int
-//	ErrCode       int
-//	ErrMsg        string
-//	Data          MsgData
-//}
-
 type ArrMsg struct {
 	SingleData []MsgData
 	GroupData  []MsgData
