@@ -146,11 +146,11 @@ type ResToken struct {
 }
 
 func register(uid string) error {
-	url := "http://120.24.45.199:10000/auth/user_register"
+	url := REGISTERADDR
 	var req RegisterReq
 	req.Platform = 1
 	req.Uid = uid
-	req.Secret = "tuoyun"
+	req.Secret = SECRET
 	req.Name = uid
 	r, err := open_im_sdk.Post2Api(url, req, "")
 	if err != nil {
@@ -162,11 +162,11 @@ func register(uid string) error {
 
 }
 func getToken(uid string) string {
-	url := "http://120.24.45.199:10000/auth/user_token"
+	url := TOKENADDR
 	var req GetTokenReq
 	req.Platform = 1
 	req.Uid = uid
-	req.Secret = "tuoyun"
+	req.Secret = SECRET
 	r, err := open_im_sdk.Post2Api(url, req, "")
 	if err != nil {
 		fmt.Println(r, err)
@@ -262,6 +262,15 @@ func runGetToken(strMyUid string) string {
 	return token
 }
 
+var (
+	APIADDR      = "http://120.24.45.199:10000"
+	WSADDR       = "ws://120.24.45.199:17778"
+	REGISTERADDR = "http://120.24.45.199:10000/auth/user_register"
+	TOKENADDR    = "http://120.24.45.199:10000/auth/user_token"
+	SECRET       = "tuoyun"
+	SENDINTERVAL = 100
+)
+
 // myuid,  maxuid,  msgnum
 func main() {
 
@@ -271,7 +280,7 @@ func main() {
 
 	runRigister(strMyUid1)
 	token1 := runGetToken(strMyUid1)
-	open_im_sdk.DoTest(strMyUid1, token1)
+	open_im_sdk.DoTest(strMyUid1, token1, WSADDR, APIADDR)
 	//recvId1 := GenUid(1)
 
 	//	open_im_sdk.DoTestSendMsg(strMyUid1, recvId1, "test data 0->1")
@@ -306,17 +315,17 @@ func main() {
 	case 5:
 		fmt.Println("wait 2 mins, then login")
 		time.Sleep(time.Duration(2*60) * time.Second)
-		open_im_sdk.DoTest(strMyUid, token)
+		open_im_sdk.DoTest(strMyUid, token, WSADDR, APIADDR)
 		fmt.Println("login do test, only login")
 	case 6:
 		fmt.Println("wait 4 mins, then login")
 		time.Sleep(time.Duration(4*60) * time.Second)
-		open_im_sdk.DoTest(strMyUid, token)
+		open_im_sdk.DoTest(strMyUid, token, WSADDR, APIADDR)
 		fmt.Println("login do test, only login")
 	case 3:
 		fmt.Println("wait 2 mins, then login and send")
 		time.Sleep(time.Duration(2*60) * time.Second)
-		open_im_sdk.DoTest(strMyUid, token)
+		open_im_sdk.DoTest(strMyUid, token, WSADDR, APIADDR)
 		fmt.Println("login do test, login and send")
 
 		var recvId string
@@ -327,7 +336,7 @@ func main() {
 			for i := 0; i < msgnum; i++ {
 				var r int
 				for true {
-					time.Sleep(time.Duration(2000) * time.Millisecond)
+					time.Sleep(time.Duration(SENDINTERVAL) * time.Millisecond)
 
 					r = rand.Intn(uidNum) + 1
 					fmt.Println("test rand ", myUid, uidNum, r)
@@ -347,7 +356,7 @@ func main() {
 	case 4:
 		fmt.Println("wait 4 mins, then login and send")
 		time.Sleep(time.Duration(4*60) * time.Second)
-		open_im_sdk.DoTest(strMyUid, token)
+		open_im_sdk.DoTest(strMyUid, token, WSADDR, APIADDR)
 		fmt.Println("login do test, login and send")
 
 		var recvId string
@@ -358,7 +367,7 @@ func main() {
 			for i := 0; i < msgnum; i++ {
 				var r int
 				for true {
-					time.Sleep(time.Duration(2000) * time.Millisecond)
+					time.Sleep(time.Duration(SENDINTERVAL) * time.Millisecond)
 
 					r = rand.Intn(uidNum) + 1
 					fmt.Println("test rand ", myUid, uidNum, r)
@@ -377,11 +386,11 @@ func main() {
 
 	case 1:
 		fmt.Println("only login")
-		open_im_sdk.DoTest(strMyUid, token)
+		open_im_sdk.DoTest(strMyUid, token, WSADDR, APIADDR)
 		fmt.Println("login do test, only login...")
 	case 2:
 		fmt.Println("login send")
-		open_im_sdk.DoTest(strMyUid, token)
+		open_im_sdk.DoTest(strMyUid, token, WSADDR, APIADDR)
 		fmt.Println("login do test, login and send")
 
 		var recvId string
@@ -392,7 +401,7 @@ func main() {
 			for i := 0; i < msgnum; i++ {
 				var r int
 				for true {
-					time.Sleep(time.Duration(2000) * time.Millisecond)
+					time.Sleep(time.Duration(SENDINTERVAL) * time.Millisecond)
 
 					r = rand.Intn(uidNum) + 1
 					fmt.Println("test rand ", myUid, uidNum, r)

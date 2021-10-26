@@ -398,11 +398,11 @@ func lllogin(uid, tk string) bool {
 	return true
 }
 
-func DoTest(uid, tk string) {
+func DoTest(uid, tk, ws, api string) {
 	var cf IMConfig
-	cf.IpApiAddr = "http://120.24.45.199:10000"
+	cf.IpApiAddr = api // "http://120.24.45.199:10000"
 	//	cf.IpWsAddr = "wss://open-im.rentsoft.cn/wss"
-	cf.IpWsAddr = "ws://120.24.45.199:17778"
+	cf.IpWsAddr = ws //"ws://120.24.45.199:17778"
 	cf.Platform = 1
 	cf.DbDir = "./"
 
