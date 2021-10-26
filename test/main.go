@@ -318,11 +318,13 @@ func main() {
 		time.Sleep(time.Duration(1*60) * time.Second)
 		open_im_sdk.DoTest(strMyUid, token, WSADDR, APIADDR)
 		fmt.Println("login do test, only login")
+		fmt.Println("testmypid: ", os.Getpid())
 	case 6:
 		fmt.Println("wait 4 mins, then login")
 		time.Sleep(time.Duration(2*60) * time.Second)
 		open_im_sdk.DoTest(strMyUid, token, WSADDR, APIADDR)
 		fmt.Println("login do test, only login")
+		fmt.Println("testmypid: ", os.Getpid())
 	case 3:
 		fmt.Println("wait 2 mins, then login and send")
 		time.Sleep(time.Duration(1*60) * time.Second)
@@ -393,6 +395,7 @@ func main() {
 		fmt.Println("only login")
 		open_im_sdk.DoTest(strMyUid, token, WSADDR, APIADDR)
 		fmt.Println("login do test, only login...")
+		fmt.Println("testmypid: ", os.Getpid())
 	case 2:
 		fmt.Println("login send")
 		open_im_sdk.DoTest(strMyUid, token, WSADDR, APIADDR)
