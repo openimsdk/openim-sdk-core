@@ -335,7 +335,6 @@ func (u *UserRelated) syncMsg2ServerMaxSeq(serverMaxSeq int64) error {
 	maxSeq, err := u.getConsequentLocalMaxSeq() //local
 	LogEnd("getConsequentLocalMaxSeq", maxSeq, err)
 	if err != nil {
-		sdkLog("getConsequentLocalMaxSeq failed", err.Error())
 		LogFReturn(err.Error())
 		return err
 	}
@@ -352,13 +351,16 @@ func (u *UserRelated) syncMsg2ServerMaxSeq(serverMaxSeq int64) error {
 		return nil
 	}
 
+	LogBegin("pullBySplit", maxSeq+1, serverMaxSeq)
 	err = u.pullBySplit(maxSeq+1, serverMaxSeq)
-
-	//{
-
-	//	}
-	return err
-
+	LogEnd("pullBySplit", maxSeq+1, serverMaxSeq)
+	if err != nil {
+		LogFReturn(err.Error())
+		return err
+	} else {
+		LogSReturn(nil)
+		return nil
+	}
 }
 
 func (u *UserRelated) syncSeq2Msg() error {
@@ -559,7 +561,7 @@ func (u *UserRelated) pullBySplit(beginSeq int64, endSeq int64) error {
 		//1, 118 117/10 = 11  i: 0- 10  1-> 11 12->22 23->33  34->44   111->121
 		for i := 0; int64(i) < (endSeq-beginSeq)/SPLIT; i++ {
 			eSeq = bSeq + SPLIT - 1
-			sdkLog("pull args: ", i, eSeq, bSeq, (endSeq-beginSeq)/SPLIT)
+			sdkLog("pull args: ", i, bSeq, eSeq, (endSeq-beginSeq)/SPLIT)
 			err := u.pullOldMsgAndMergeNewMsg(bSeq, eSeq)
 			if err != nil {
 				LogFReturn(err.Error())
@@ -568,6 +570,7 @@ func (u *UserRelated) pullBySplit(beginSeq int64, endSeq int64) error {
 			bSeq = eSeq + 1
 		}
 		if bSeq <= endSeq {
+			sdkLog("pull remainder args: ", bSeq, endSeq)
 			err := u.pullOldMsgAndMergeNewMsg(bSeq, endSeq)
 			if err != nil {
 				LogFReturn(err.Error())
@@ -686,7 +689,7 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 					}
 
 					u.seqMsg[pullMsg.Data.Single[i].List[j].Seq] = singleMsg
-					sdkLog("into map, seq: ", pullMsg.Data.Single[i].List[j].Seq)
+					sdkLog("into map, seq: ", pullMsg.Data.Single[i].List[j].Seq, pullMsg.Data.Single[i].List[j].ClientMsgID, pullMsg.Data.Single[i].List[j].ServerMsgID)
 					if pullMsg.Data.Single[i].List[j].ContentType > SingleTipBegin &&
 						pullMsg.Data.Single[i].List[j].ContentType < SingleTipEnd {
 						var msgRecv MsgData
