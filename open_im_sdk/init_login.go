@@ -194,6 +194,9 @@ func (u *UserRelated) doWsMsg(message []byte) {
 
 func (u *UserRelated) notifyResp(wsResp GeneralWsResp) {
 	LogBegin(wsResp.OperationID)
+	u.wsMutex.Lock()
+	defer u.wsMutex.Unlock()
+
 	ch := u.GetCh(wsResp.MsgIncr)
 	if ch == nil {
 		sdkLog("failed, no chan ", wsResp.MsgIncr)

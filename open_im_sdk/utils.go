@@ -75,8 +75,8 @@ func (u *UserRelated) AddCh() (string, chan GeneralWsResp) {
 
 func (u *UserRelated) GetCh(msgIncr string) chan GeneralWsResp {
 	LogBegin(msgIncr)
-	u.wsMutex.RLock()
-	defer u.wsMutex.RUnlock()
+	//u.wsMutex.RLock()
+	//	defer u.wsMutex.RUnlock()
 	ch, ok := u.wsNotification[msgIncr]
 	if ok {
 		sdkLog("GetCh ok")
