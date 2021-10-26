@@ -690,9 +690,10 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 						ClientMsgID:      pullMsg.Data.Single[i].List[j].ClientMsgID,
 						SenderPlatformID: pullMsg.Data.Single[i].List[j].SenderPlatformID,
 					}
-
+					arrMsg.SingleData = append(arrMsg.SingleData, singleMsg)
 					u.seqMsg[pullMsg.Data.Single[i].List[j].Seq] = singleMsg
 					sdkLog("into map, seq: ", pullMsg.Data.Single[i].List[j].Seq, pullMsg.Data.Single[i].List[j].ClientMsgID, pullMsg.Data.Single[i].List[j].ServerMsgID)
+
 					if pullMsg.Data.Single[i].List[j].ContentType > SingleTipBegin &&
 						pullMsg.Data.Single[i].List[j].ContentType < SingleTipEnd {
 						var msgRecv MsgData
@@ -707,16 +708,18 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 			}
 			u.seqMsgMutex.Unlock()
 
-			u.seqMsgMutex.RLock()
-			for i := beginSeq; i <= endSeq; i++ {
-				v, ok := u.seqMsg[i]
-				if ok {
-					arrMsg.SingleData = append(arrMsg.SingleData, v)
-				} else {
-					sdkLog("seq no in map, error, seq: ", i, u.LoginUid)
-				}
-			}
-			u.seqMsgMutex.RUnlock()
+			//u.seqMsgMutex.RLock()
+			//for i := beginSeq; i <= endSeq; i++ {
+			//	v, ok := u.seqMsg[i]
+			//	if ok {
+			//		arrMsg.SingleData = append(arrMsg.SingleData, v)
+			//	} else {
+			//		sdkLog("seq no in map, error, seq: ", i, u.LoginUid)
+			//	}
+			//}
+			//u.seqMsgMutex.RUnlock()
+
+			u.seqMsgMutex.Lock()
 
 			for i := 0; i < len(pullMsg.Data.Group); i++ {
 				for j := 0; j < len(pullMsg.Data.Group[i].List); j++ {
@@ -737,6 +740,9 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 					}
 					arrMsg.GroupData = append(arrMsg.GroupData, groupMsg)
 
+					u.seqMsg[pullMsg.Data.Group[i].List[j].Seq] = groupMsg
+					sdkLog("into map, seq: ", pullMsg.Data.Group[i].List[j].Seq, pullMsg.Data.Group[i].List[j].ClientMsgID, pullMsg.Data.Group[i].List[j].ServerMsgID)
+
 					ctype := pullMsg.Data.Group[i].List[j].ContentType
 					if ctype > GroupTipBegin && ctype < GroupTipEnd {
 						u.doGroupMsg(groupMsg)
@@ -744,8 +750,9 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 					}
 				}
 			}
+			u.seqMsgMutex.RUnlock()
 
-			sdkLog("triggerCmdNewMsgCome len: ", len(arrMsg.SingleData))
+			sdkLog("triggerCmdNewMsgCome len: ", len(arrMsg.SingleData), len(arrMsg.GroupData))
 			err = u.triggerCmdNewMsgCome(arrMsg)
 			if err != nil {
 				sdkLog("triggerCmdNewMsgCome failed, ", err.Error())
