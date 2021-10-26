@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 killall -9 open_im_test_client
-uidCount=1310
-messageCount=1000
+uidCount=7
+messageCount=100
 
-cmd1num=10
-cmd2num=500
-cmd3num=500
-cmd4num=100
-cmd5num=100
-cmd6num=100
+cmd1num=1
+cmd2num=1
+cmd3num=1
+cmd4num=1
+cmd5num=1
+cmd6num=1
+cmd7num=1
 
 
 for ((i = 1; i <= ${cmd1num}; i++)); do
@@ -38,6 +39,10 @@ done
 
 for ((i = 1; i <= ${cmd6num}; i++)); do
 echo 6 >> cmd.txt
+done
+
+for ((i = 1; i <= ${cmd7num}; i++)); do
+echo 7 >> cmd.txt
 done
 
 

@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"open_im_sdk/open_im_sdk"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -332,6 +333,8 @@ func main() {
 		var idx string
 		rand.Seed(time.Now().UnixNano())
 		if msgnum == 0 {
+			fmt.Println("dont send,  exit")
+			os.Exit(0)
 		} else {
 			for i := 0; i < msgnum; i++ {
 				var r int
@@ -363,6 +366,8 @@ func main() {
 		var idx string
 		rand.Seed(time.Now().UnixNano())
 		if msgnum == 0 {
+			fmt.Println("dont send,  exit")
+			os.Exit(0)
 		} else {
 			for i := 0; i < msgnum; i++ {
 				var r int
@@ -397,6 +402,8 @@ func main() {
 		var idx string
 		rand.Seed(time.Now().UnixNano())
 		if msgnum == 0 {
+			fmt.Println("dont send,  exit")
+			os.Exit(0)
 		} else {
 			for i := 0; i < msgnum; i++ {
 				var r int
@@ -417,6 +424,37 @@ func main() {
 				open_im_sdk.DoTestSendMsg(strMyUid, recvId, idx)
 			}
 		}
+	case 7:
+		fmt.Println("random sleep and send")
+		open_im_sdk.DoTest(strMyUid, token, WSADDR, APIADDR)
+
+		var recvId string
+		var idx string
+		rand.Seed(time.Now().UnixNano())
+		maxSleep := 60
+		if msgnum == 0 {
+			fmt.Println("dont send,  exit")
+			os.Exit(0)
+		} else {
+			for i := 0; i < msgnum; i++ {
+				var r int
+				for true {
+					time.Sleep(time.Duration(rand.Intn(maxSleep)+1) * time.Second)
+					r = rand.Intn(uidNum) + 1
+					fmt.Println("test rand ", myUid, uidNum, r)
+					if r == myUid {
+						continue
+					} else {
+						break
+					}
+				}
+				recvId = GenUid(r)
+				idx = strconv.FormatInt(int64(i), 10)
+
+				open_im_sdk.DoTestSendMsg(strMyUid, recvId, idx)
+			}
+		}
+
 	}
 
 	for true {

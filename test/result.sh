@@ -17,6 +17,9 @@ grep "login do test, only login" openIM.log* | wc -l
 echo -e "login&send&recv  client num: \c"
 grep "login do test, login and send" openIM.log* | wc -l
 
+echo -e "login&send&recv&random sleep  client num: \c"
+grep "random sleep and send" openIM.log* | wc -l
+
 echo -e "send num: \c"
 grep "func send" openIM.log* | wc -l
 
