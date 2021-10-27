@@ -1025,7 +1025,6 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 				} else {
 					callback.OnSuccess("")
 					callback.OnProgress(100)
-
 					for _, v := range delFile {
 						err := os.Remove(v)
 						if err != nil {
@@ -1037,11 +1036,9 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 					err = proto.Unmarshal(r.Data, &sendMsgResp)
 					if err != nil {
 						sdkLog("Unmarshal failed ", err.Error())
-						LogFReturn(nil)
-						callback.OnError(http.StatusInternalServerError, err.Error())
-						u.sendMessageFailedHandle(&s, &c, conversationID)
-						u.DelCh(msgIncr)
-						return
+						//	callback.OnError(http.StatusInternalServerError, err.Error())
+						//	u.sendMessageFailedHandle(&s, &c, conversationID)
+						//	u.DelCh(msgIncr)
 					}
 					_ = u.updateMessageTimeAndMsgIDStatus(sendMsgResp.ClientMsgID, sendMsgResp.SendTime, MsgStatusSendSuccess)
 
@@ -1054,7 +1051,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 						c})
 					_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 				}
-
+				break
 			case <-time.After(time.Second * time.Duration(timeout)):
 				var flag bool
 				sdkLog("ws ch recvMsg err: ", wsReq.OperationID)
