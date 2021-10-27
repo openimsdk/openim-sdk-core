@@ -19,19 +19,22 @@ import (
 func main() {
 	var sdkWsPort, openIMApiPort, openIMWsPort *int
 	var openIMWsAddress, openIMApiAddress *string
+	//
+	//openIMTerminalType := flag.String("terminal_type", "web", "different terminal types")
+	//sdkWsPort = flag.Int("sdk_ws_port", 7799, "openIMSDK ws listening port")
+	//switch *openIMTerminalType {
+	//case "pc":
+	//	openIMWsAddress = flag.String("openIM_ws_address", "web", "different terminal types")
+	//	openIMApiAddress = flag.String("openIM_api_address", "web", "different terminal types")
+	//	flag.Parse()
+	//case "web":
+	//	openIMApiPort = flag.Int("openIM_api_port", 0, "openIM api listening port")
+	//	openIMWsPort = flag.Int("openIM_ws_port", 0, "openIM ws listening port")
+	//	flag.Parse()
+	//}
+	APIADDR := "http://120.24.45.199:10000"
+	WSADDR := "ws://120.24.45.199:17778"
 
-	openIMTerminalType := flag.String("terminal_type", "web", "different terminal types")
-	sdkWsPort = flag.Int("sdk_ws_port", 7799, "openIMSDK ws listening port")
-	switch *openIMTerminalType {
-	case "pc":
-		openIMWsAddress = flag.String("openIM_ws_address", "web", "different terminal types")
-		openIMApiAddress = flag.String("openIM_api_address", "web", "different terminal types")
-		flag.Parse()
-	case "web":
-		openIMApiPort = flag.Int("openIM_api_port", 0, "openIM api listening port")
-		openIMWsPort = flag.Int("openIM_ws_port", 0, "openIM ws listening port")
-		flag.Parse()
-	}
 	sysType := runtime.GOOS
 	switch sysType {
 	case "darwin":
@@ -45,8 +48,8 @@ func main() {
 	case "windows":
 		sdkWsPort = flag.Int("sdk_ws_port", 7799, "openIM ws listening port")
 		flag.Parse()
-		ws_local_server.InitServer(&open_im_sdk.IMConfig{IpApiAddr: "https://open-im.rentsoft.cn",
-			IpWsAddr: "wss://open-im.rentsoft.cn/wss", Platform: utils.WebPlatformID, DbDir: "./"})
+		ws_local_server.InitServer(&open_im_sdk.IMConfig{IpApiAddr: APIADDR,
+			IpWsAddr: WSADDR, Platform: utils.WebPlatformID, DbDir: "./"})
 	default:
 		fmt.Println("this os not support", sysType)
 
