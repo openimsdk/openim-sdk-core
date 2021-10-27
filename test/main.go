@@ -276,7 +276,7 @@ var (
 func main() {
 
 	open_im_sdk.LogBegin("")
-	myUid1 := 1
+	myUid1 := 4
 	strMyUid1 := GenUid(myUid1)
 
 	runRigister(strMyUid1)

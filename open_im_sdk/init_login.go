@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang/protobuf/proto"
+
 	"sync/atomic"
 
 	"github.com/gorilla/websocket"
@@ -168,9 +169,9 @@ func (u *UserRelated) doWsMsg(message []byte) {
 	LogBegin()
 	LogBegin("decodeBinaryWs")
 	wsResp, err := u.decodeBinaryWs(message)
-	LogEnd("decodeBinaryWs")
+	LogEnd("decodeBinaryWs ", wsResp.OperationID, wsResp.ReqIdentifier)
 	if err != nil {
-		LogFReturn()
+		LogFReturn(err.Error())
 		return
 	}
 
@@ -184,7 +185,7 @@ func (u *UserRelated) doWsMsg(message []byte) {
 	case WSSendMsg:
 		u.doWSSendMsg(*wsResp)
 	default:
-		LogFReturn("type failed, ", wsResp.ReqIdentifier)
+		LogFReturn("type failed, ", wsResp.ReqIdentifier, wsResp.OperationID)
 		return
 	}
 
@@ -448,8 +449,9 @@ func (u *UserRelated) heartbeat() {
 		wsReq.OperationID = operationIDGenerator()
 		wsReq.SendID = u.LoginUid
 		wsReq.MsgIncr = msgIncr
+		var connSend *websocket.Conn
 		LogBegin("WriteMsg", wsReq.OperationID, wsReq.MsgIncr)
-		err := u.WriteMsg(wsReq)
+		err, connSend := u.WriteMsg(wsReq)
 		LogEnd("WriteMsg", wsReq.OperationID, wsReq.MsgIncr)
 		if err != nil {
 			sdkLog("WriteMsg failed ", err.Error(), msgIncr, wsReq.OperationID)
@@ -461,45 +463,73 @@ func (u *UserRelated) heartbeat() {
 		}
 
 		timeout := 5
-		select {
-		case r := <-ch:
-			sdkLog("ws ch recvMsg success: ", wsReq.OperationID)
-			if r.ErrCode != 0 {
-				sdkLog("heartbeat response faield ", r.ErrCode, r.ErrMsg, wsReq.OperationID)
-				LogBegin("closeConn DelCh", msgIncr, wsReq.OperationID)
-				u.closeConn()
-				u.DelCh(msgIncr)
-				LogEnd("closeConn DelCh continue", wsReq.OperationID)
-				continue
-			} else {
-				sdkLog("heartbeat response success ", wsReq.OperationID)
-				var wsSeqResp GetMaxAndMinSeqResp
-				err = proto.Unmarshal(r.Data, &wsSeqResp)
-				if err != nil {
-					sdkLog("Unmarshal failed, ", err.Error(), wsReq.OperationID)
+		for {
+			select {
+			case r := <-ch:
+				sdkLog("ws ch recvMsg success: ", wsReq.OperationID)
+				if r.ErrCode != 0 {
+					sdkLog("heartbeat response faield ", r.ErrCode, r.ErrMsg, wsReq.OperationID)
 					LogBegin("closeConn DelCh", msgIncr, wsReq.OperationID)
 					u.closeConn()
 					u.DelCh(msgIncr)
-					LogEnd("closeConn DelCh continue")
+					LogEnd("closeConn DelCh continue", wsReq.OperationID)
 					continue
 				} else {
-					if wsSeqResp.MinSeq > atomic.LoadInt64(&u.minSeqSvr) {
-						LogBegin("setLocalMaxConSeq SetMinSeqSvr ", wsSeqResp.MinSeq, atomic.LoadInt64(&u.minSeqSvr))
-						u.setLocalMaxConSeq(int(wsSeqResp.MinSeq))
-						u.SetMinSeqSvr(wsSeqResp.MinSeq)
-						LogEnd("setLocalMaxConSeq SetMinSeqSvr ")
+					sdkLog("heartbeat response success ", wsReq.OperationID)
+					var wsSeqResp GetMaxAndMinSeqResp
+					err = proto.Unmarshal(r.Data, &wsSeqResp)
+					if err != nil {
+						sdkLog("Unmarshal failed, ", err.Error(), wsReq.OperationID)
+						LogBegin("closeConn DelCh", msgIncr, wsReq.OperationID)
+						u.closeConn()
+						u.DelCh(msgIncr)
+						LogEnd("closeConn DelCh continue")
+						continue
+					} else {
+						if wsSeqResp.MinSeq > atomic.LoadInt64(&u.minSeqSvr) {
+							LogBegin("setLocalMaxConSeq SetMinSeqSvr ", wsSeqResp.MinSeq, atomic.LoadInt64(&u.minSeqSvr))
+							u.setLocalMaxConSeq(int(wsSeqResp.MinSeq))
+							u.SetMinSeqSvr(wsSeqResp.MinSeq)
+							LogEnd("setLocalMaxConSeq SetMinSeqSvr ")
+						}
+						LogBegin("syncMsg2ServerMaxSeq", wsSeqResp.MaxSeq, wsSeqResp.MinSeq, wsReq.OperationID)
+						u.syncMsg2ServerMaxSeq(wsSeqResp.MaxSeq)
+						LogEnd("syncMsg2ServerMaxSeq")
 					}
-					LogBegin("syncMsg2ServerMaxSeq", wsSeqResp.MaxSeq, wsSeqResp.MinSeq, wsReq.OperationID)
-					u.syncMsg2ServerMaxSeq(wsSeqResp.MaxSeq)
-					LogEnd("syncMsg2ServerMaxSeq")
+				}
+
+			case <-time.After(time.Second * time.Duration(timeout)):
+				var flag bool
+				sdkLog("ws ch recvMsg err: ", wsReq.OperationID)
+				if connSend != u.conn {
+					sdkLog("old conn != current conn  ", connSend, u.conn)
+					flag = false // error
+				} else {
+					flag = false //error
+					for tr := 0; tr < 3; tr++ {
+						err = u.sendPingMsg()
+						if err != nil {
+							sdkLog("sendPingMsg failed ", wsReq.OperationID, err.Error(), tr)
+							time.Sleep(time.Duration(5) * time.Second)
+						} else {
+							flag = true //wait continue
+							break
+						}
+					}
+				}
+				if flag == false {
+					sdkLog("ws ch recvMsg timeout ", timeout, "s ", wsReq.OperationID)
+					LogBegin("closeConn", wsReq.OperationID)
+					u.closeConn()
+					LogEnd("closeConn", wsReq.OperationID)
+					break
+				} else {
+					sdkLog("wait resp continue", wsReq.OperationID)
+					continue
 				}
 			}
-		case <-time.After(time.Second * time.Duration(timeout)):
-			sdkLog("ws ch recvMsg timeout ", timeout, "s ", wsReq.OperationID)
-			LogBegin("closeConn", wsReq.OperationID)
-			u.closeConn()
-			LogEnd("closeConn", wsReq.OperationID)
 		}
+
 		LogBegin("DelCh", msgIncr, wsReq.OperationID)
 		u.DelCh(msgIncr)
 		LogEnd("DelCh", wsReq.OperationID)
@@ -541,7 +571,7 @@ func (u *UserRelated) run() {
 				} else if msgType == websocket.BinaryMessage {
 					go u.doWsMsg(message)
 				} else {
-					sdkLog("recv msg: type ", msgType)
+					sdkLog("recv other msg: type ", msgType)
 				}
 			}
 		} else {
@@ -634,7 +664,7 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 		return err
 	}
 	LogBegin("WriteMsg ", wsReq.OperationID)
-	err = u.WriteMsg(wsReq)
+	err, _ = u.WriteMsg(wsReq)
 	LogEnd("WriteMsg ", wsReq.OperationID, err)
 	if err != nil {
 		sdkLog("close conn, WriteMsg failed ", err.Error())
@@ -750,7 +780,7 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 					}
 				}
 			}
-			u.seqMsgMutex.RUnlock()
+			u.seqMsgMutex.Unlock()
 
 			sdkLog("triggerCmdNewMsgCome len: ", len(arrMsg.SingleData), len(arrMsg.GroupData))
 			err = u.triggerCmdNewMsgCome(arrMsg)

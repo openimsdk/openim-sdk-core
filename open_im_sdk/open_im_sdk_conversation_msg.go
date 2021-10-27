@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	"github.com/gorilla/websocket"
 	"net/http"
 	"os"
 	"sort"
@@ -989,11 +990,11 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 		}
 
 		SendFlag := false
-
+		var connSend *websocket.Conn
 		for tr := 0; tr < 3; tr++ {
 			LogBegin("WriteMsg", wsReq.OperationID)
-			err = u.WriteMsg(wsReq)
-			LogEnd("WriteMsg", wsReq.OperationID)
+			err, connSend = u.WriteMsg(wsReq)
+			LogEnd("WriteMsg ", wsReq.OperationID, connSend)
 			if err != nil {
 				sdkLog("ws writeMsg  err:,", wsReq.OperationID, err.Error(), tr)
 				time.Sleep(time.Duration(5) * time.Second)
@@ -1011,53 +1012,79 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 			return
 		}
 
-		//timeout := 60
-		select {
-		case r := <-ch:
-			sdkLog("ws  ch recvMsg success:,", wsReq.OperationID)
-			if r.ErrCode != 0 {
-				callback.OnError(r.ErrCode, r.ErrMsg)
-				u.sendMessageFailedHandle(&s, &c, conversationID)
-			} else {
-				callback.OnSuccess("")
-				callback.OnProgress(100)
-
-				for _, v := range delFile {
-					err := os.Remove(v)
-					if err != nil {
-						sdkLog("remove failed,", err.Error(), v)
-					}
-					sdkLog("remove file: ", v)
-				}
-				var sendMsgResp UserSendMsgResp
-				err = proto.Unmarshal(r.Data, &sendMsgResp)
-				if err != nil {
-					sdkLog("Unmarshal failed ", err.Error())
-					LogFReturn(nil)
-					callback.OnError(http.StatusInternalServerError, err.Error())
+		timeout := 60
+		for {
+			select {
+			case r := <-ch:
+				sdkLog("ws  ch recvMsg success:,", wsReq.OperationID)
+				if r.ErrCode != 0 {
+					callback.OnError(r.ErrCode, r.ErrMsg)
 					u.sendMessageFailedHandle(&s, &c, conversationID)
-					return
+				} else {
+					callback.OnSuccess("")
+					callback.OnProgress(100)
+
+					for _, v := range delFile {
+						err := os.Remove(v)
+						if err != nil {
+							sdkLog("remove failed,", err.Error(), v)
+						}
+						sdkLog("remove file: ", v)
+					}
+					var sendMsgResp UserSendMsgResp
+					err = proto.Unmarshal(r.Data, &sendMsgResp)
+					if err != nil {
+						sdkLog("Unmarshal failed ", err.Error())
+						LogFReturn(nil)
+						callback.OnError(http.StatusInternalServerError, err.Error())
+						u.sendMessageFailedHandle(&s, &c, conversationID)
+						u.DelCh(msgIncr)
+						return
+					}
+					_ = u.updateMessageTimeAndMsgIDStatus(sendMsgResp.ClientMsgID, sendMsgResp.SendTime, MsgStatusSendSuccess)
+
+					s.ServerMsgID = sendMsgResp.ServerMsgID
+					s.SendTime = sendMsgResp.SendTime
+					s.Status = MsgStatusSendSuccess
+					c.LatestMsg = structToJsonString(s)
+					c.LatestMsgSendTime = s.SendTime
+					_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, AddConOrUpLatMsg,
+						c})
+					_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 				}
-				_ = u.updateMessageTimeAndMsgIDStatus(sendMsgResp.ClientMsgID, sendMsgResp.SendTime, MsgStatusSendSuccess)
 
-				s.ServerMsgID = sendMsgResp.ServerMsgID
-				s.SendTime = sendMsgResp.SendTime
-				s.Status = MsgStatusSendSuccess
-				c.LatestMsg = structToJsonString(s)
-				c.LatestMsgSendTime = s.SendTime
-				_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, AddConOrUpLatMsg,
-					c})
-				_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
+			case <-time.After(time.Second * time.Duration(timeout)):
+				var flag bool
+				sdkLog("ws ch recvMsg err: ", wsReq.OperationID)
+				if connSend != u.conn {
+					sdkLog("old conn != current conn  ", connSend, u.conn)
+					flag = false // error
+				} else {
+					flag = false //error
+					for tr := 0; tr < 3; tr++ {
+						err = u.sendPingMsg()
+						if err != nil {
+							sdkLog("sendPingMsg failed ", wsReq.OperationID, err.Error(), tr)
+							time.Sleep(time.Duration(5) * time.Second)
+						} else {
+							flag = true //wait continue
+							break
+						}
+					}
+				}
+				if flag == false {
+					callback.OnError(http.StatusRequestTimeout, http.StatusText(http.StatusRequestTimeout))
+					u.sendMessageFailedHandle(&s, &c, conversationID)
+					sdkLog("onError callback ", wsReq.OperationID)
+					break
+				} else {
+					sdkLog("wait resp continue", wsReq.OperationID)
+					continue
+				}
 			}
-
-			//case <-time.After(time.Second * time.Duration(timeout)):
-			//	sdkLog("ws ch recvMsg err:,", wsReq.OperationID)
-			//	callback.OnError(http.StatusRequestTimeout, http.StatusText(http.StatusRequestTimeout))
-			//	u.sendMessageFailedHandle(&s, &c, conversationID)
 		}
-		sdkLog("DelCh start")
+
 		u.DelCh(msgIncr)
-		sdkLog("DelCh end")
 
 		//bMsg, err := post2Api(sendMsgRouter, a, u.token)
 		//if err != nil {

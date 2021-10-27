@@ -100,36 +100,46 @@ func (u *UserRelated) DelCh(msgIncr string) {
 	LogSReturn()
 }
 
-func (u *UserRelated) writeBinaryMsg(msg GeneralWsReq) error {
+func (u *UserRelated) sendPingMsg() error {
+	u.stateMutex.Lock()
+	defer u.stateMutex.Unlock()
+	var ping string = "try ping"
+	u.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+	return u.conn.WriteMessage(websocket.PingMessage, []byte(ping))
+}
+
+func (u *UserRelated) writeBinaryMsg(msg GeneralWsReq) (error, *websocket.Conn) {
 	LogStart(msg.OperationID)
 	var buff bytes.Buffer
 	enc := gob.NewEncoder(&buff)
 	err := enc.Encode(msg)
 	if err != nil {
 		LogFReturn(err.Error())
-		return err
+		return err, nil
 	}
 
+	var connSended *websocket.Conn
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
 
 	if u.conn != nil {
+		connSended = u.conn
 		u.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 		err = u.conn.WriteMessage(websocket.BinaryMessage, buff.Bytes())
 		sdkLog("send ws BinaryMessage len: ", len(buff.Bytes()))
 		if len(buff.Bytes()) > MaxTotalMsgLen {
 			LogFReturn("msg too long", len(buff.Bytes()), MaxTotalMsgLen)
-			return errors.New("msg too long")
+			return errors.New("msg too long"), connSended
 		}
 		if err != nil {
 			LogFReturn(err.Error())
 		} else {
 			LogSReturn(nil)
 		}
-		return err
+		return err, connSended
 	} else {
 		LogFReturn("conn==nil")
-		return errors.New("conn==nil")
+		return errors.New("conn==nil"), connSended
 	}
 }
 
@@ -147,21 +157,10 @@ func (u *UserRelated) decodeBinaryWs(message []byte) (*GeneralWsResp, error) {
 	return &data, nil
 }
 
-func (u *UserRelated) WriteMsg(msg GeneralWsReq) error {
+func (u *UserRelated) WriteMsg(msg GeneralWsReq) (error, *websocket.Conn) {
 	LogStart(msg.OperationID)
 	LogSReturn(msg.OperationID)
 	return u.writeBinaryMsg(msg)
-
-	u.stateMutex.Lock()
-	defer u.stateMutex.Unlock()
-	bMsg, _ := json.Marshal(msg)
-	sdkLog("msg size: ", len(bMsg))
-	if u.conn != nil {
-		u.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-		return u.conn.WriteMessage(websocket.TextMessage, bMsg)
-	} else {
-		return errors.New("conn==nil")
-	}
 }
 
 func notifyCh(ch chan GeneralWsResp, value GeneralWsResp, timeout int64) error {
