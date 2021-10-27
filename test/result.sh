@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+source ./common.sh
+
 
 
 
@@ -8,8 +10,12 @@ do
  time3=$(date "+%Y-%m-%d %H:%M:%S")
  echo $time3
 
+
+
+
 echo -e "test client num: \c"
 ps -ef |grep open_im_test_client | grep -v grep | wc -l
+
 
 echo -e "login&recv client num: \c"
 grep "login do test, only login" openIM.log* | wc -l
@@ -19,6 +25,10 @@ grep "login do test, login and send" openIM.log* | wc -l
 
 echo -e "login&send&recv&random sleep  client num: \c"
 grep "random sleep and send" openIM.log* | wc -l
+
+echo -e "expect send num:\n"
+let var=`expr ${messageCount}*${cmd2num}+${messageCount}*${cmd3num}+${messageCount}*${cmd4num}+10`
+echo $var
 
 echo -e "send num: \c"
 grep "func send" openIM.log* | wc -l

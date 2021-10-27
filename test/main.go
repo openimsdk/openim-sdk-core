@@ -274,21 +274,22 @@ var (
 
 // myuid,  maxuid,  msgnum
 func main() {
+	/*
+		open_im_sdk.LogBegin("")
+		myUid1 := 4
+		strMyUid1 := GenUid(myUid1)
 
-	open_im_sdk.LogBegin("")
-	myUid1 := 4
-	strMyUid1 := GenUid(myUid1)
+		runRigister(strMyUid1)
+		token1 := runGetToken(strMyUid1)
+		open_im_sdk.DoTest(strMyUid1, token1, WSADDR, APIADDR)
+		//recvId1 := GenUid(1)
 
-	runRigister(strMyUid1)
-	token1 := runGetToken(strMyUid1)
-	open_im_sdk.DoTest(strMyUid1, token1, WSADDR, APIADDR)
-	//recvId1 := GenUid(1)
-
-	//	open_im_sdk.DoTestSendMsg(strMyUid1, recvId1, "test data 0->1")
-	for true {
-		time.Sleep(time.Duration(60) * time.Second)
-		fmt.Println("waiting")
-	}
+		//	open_im_sdk.DoTestSendMsg(strMyUid1, recvId1, "test data 0->1")
+		for true {
+			time.Sleep(time.Duration(60) * time.Second)
+			fmt.Println("waiting")
+		}
+	*/
 
 	cmdfile := "./cmd.txt"
 	uid := flag.Int("uid", 1, "RpcToken default listen port 10800")
@@ -435,6 +436,7 @@ func main() {
 		var idx string
 		rand.Seed(time.Now().UnixNano())
 		maxSleep := 60
+		msgnum = 10
 		if msgnum == 0 {
 			fmt.Println("dont send,  exit")
 			os.Exit(0)
