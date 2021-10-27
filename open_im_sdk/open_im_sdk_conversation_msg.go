@@ -798,6 +798,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 			s.RecvID = receiver
 			conversationID = GetConversationIDBySessionType(receiver, SingleChatType)
 			c.UserID = receiver
+
 			faceUrl, name, err := u.getUserNameAndFaceUrlByUid(receiver)
 			if err != nil {
 				sdkLog("getUserNameAndFaceUrlByUid err:", err)
@@ -806,6 +807,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 			}
 			c.FaceURL = faceUrl
 			c.ShowName = name
+
 		}
 		userInfo, err := u.getLoginUserInfoFromLocal()
 		if err != nil {
