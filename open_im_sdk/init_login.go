@@ -512,6 +512,7 @@ func (u *UserRelated) heartbeat() {
 							sdkLog("sendPingMsg failed ", wsReq.OperationID, err.Error(), tr)
 							time.Sleep(time.Duration(5) * time.Second)
 						} else {
+							sdkLog("sendPingMsg ok ", wsReq.OperationID)
 							flag = true //wait continue
 							break
 						}
