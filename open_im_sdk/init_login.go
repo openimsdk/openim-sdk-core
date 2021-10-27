@@ -462,7 +462,7 @@ func (u *UserRelated) heartbeat() {
 			continue
 		}
 
-		timeout := 5
+		timeout := 30
 		for {
 			select {
 			case r := <-ch:
@@ -471,9 +471,8 @@ func (u *UserRelated) heartbeat() {
 					sdkLog("heartbeat response faield ", r.ErrCode, r.ErrMsg, wsReq.OperationID)
 					LogBegin("closeConn DelCh", msgIncr, wsReq.OperationID)
 					u.closeConn()
-					u.DelCh(msgIncr)
+					//u.DelCh(msgIncr)
 					LogEnd("closeConn DelCh continue", wsReq.OperationID)
-					continue
 				} else {
 					sdkLog("heartbeat response success ", wsReq.OperationID)
 					var wsSeqResp GetMaxAndMinSeqResp
@@ -482,9 +481,8 @@ func (u *UserRelated) heartbeat() {
 						sdkLog("Unmarshal failed, ", err.Error(), wsReq.OperationID)
 						LogBegin("closeConn DelCh", msgIncr, wsReq.OperationID)
 						u.closeConn()
-						u.DelCh(msgIncr)
+						//	u.DelCh(msgIncr)
 						LogEnd("closeConn DelCh continue")
-						continue
 					} else {
 						if wsSeqResp.MinSeq > atomic.LoadInt64(&u.minSeqSvr) {
 							LogBegin("setLocalMaxConSeq SetMinSeqSvr ", wsSeqResp.MinSeq, atomic.LoadInt64(&u.minSeqSvr))
@@ -497,6 +495,7 @@ func (u *UserRelated) heartbeat() {
 						LogEnd("syncMsg2ServerMaxSeq")
 					}
 				}
+				break
 
 			case <-time.After(time.Second * time.Duration(timeout)):
 				var flag bool
@@ -531,7 +530,6 @@ func (u *UserRelated) heartbeat() {
 			}
 		}
 
-		LogBegin("DelCh", msgIncr, wsReq.OperationID)
 		u.DelCh(msgIncr)
 		LogEnd("DelCh", wsReq.OperationID)
 	}
