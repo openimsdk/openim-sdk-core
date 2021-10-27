@@ -26,7 +26,7 @@ grep "login do test, login and send" openIM.log* | wc -l
 echo -e "login&send&recv&random sleep  client num: \c"
 grep "random sleep and send" openIM.log* | wc -l
 
-echo -e "expect send num:\n"
+echo -e "expect send num:\c"
 let var=`expr ${messageCount}*${cmd2num}+${messageCount}*${cmd3num}+${messageCount}*${cmd4num}+10`
 echo $var
 

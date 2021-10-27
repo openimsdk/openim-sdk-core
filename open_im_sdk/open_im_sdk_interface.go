@@ -22,6 +22,10 @@ func init(){
 }
 */
 
+func SdkVersion() string {
+	return "Open-IM-SDK-Core-1.0.0"
+}
+
 func InitSDK(config string, cb IMSDKListener) bool {
 	var sc IMConfig
 	if err := json.Unmarshal([]byte(config), &sc); err != nil {
