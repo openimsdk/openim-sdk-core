@@ -438,6 +438,16 @@ func (u *UserRelated) reConn(conn *websocket.Conn) (*websocket.Conn, error) {
 
 func (u *UserRelated) heartbeat() {
 	for {
+		u.stateMutex.Lock()
+		sdkLog("ws read message failed ", err.Error(), u.LoginState)
+		if u.LoginState == LogoutCmd {
+			sdkLog("logout, ws close, heartbeat return ", LogoutCmd, err)
+			u.conn = nil
+			u.stateMutex.Unlock()
+			return
+		}
+		u.stateMutex.Unlock()
+
 		LogBegin()
 		time.Sleep(time.Duration(5) * time.Second)
 		LogBegin("AddCh")
