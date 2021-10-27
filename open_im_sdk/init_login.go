@@ -463,7 +463,12 @@ func (u *UserRelated) heartbeat() {
 		}
 
 		timeout := 30
+		breakFlag := 0
 		for {
+			if breakFlag == 1 {
+				sdkLog("break ", wsReq.OperationID)
+				break
+			}
 			select {
 			case r := <-ch:
 				sdkLog("ws ch recvMsg success: ", wsReq.OperationID)
@@ -473,6 +478,7 @@ func (u *UserRelated) heartbeat() {
 					u.closeConn()
 					//u.DelCh(msgIncr)
 					LogEnd("closeConn DelCh continue", wsReq.OperationID)
+
 				} else {
 					sdkLog("heartbeat response success ", wsReq.OperationID)
 					var wsSeqResp GetMaxAndMinSeqResp
@@ -495,7 +501,7 @@ func (u *UserRelated) heartbeat() {
 						LogEnd("syncMsg2ServerMaxSeq")
 					}
 				}
-				break
+				breakFlag = 1
 
 			case <-time.After(time.Second * time.Duration(timeout)):
 				var flag bool
@@ -522,9 +528,11 @@ func (u *UserRelated) heartbeat() {
 					LogBegin("closeConn", wsReq.OperationID)
 					u.closeConn()
 					LogEnd("closeConn", wsReq.OperationID)
+					breakFlag = 1
 					break
 				} else {
 					sdkLog("wait resp continue", wsReq.OperationID)
+					breakFlag = 0
 					continue
 				}
 			}

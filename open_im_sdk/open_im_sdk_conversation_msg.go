@@ -1015,7 +1015,12 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 		}
 
 		timeout := 300
+		breakFlag := 0
 		for {
+			if breakFlag == 1 {
+				sdkLog("break ", wsReq.OperationID)
+				break
+			}
 			select {
 			case r := <-ch:
 				sdkLog("ws  ch recvMsg success:,", wsReq.OperationID)
@@ -1051,7 +1056,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 						c})
 					_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 				}
-				break
+				breakFlag = 1
 			case <-time.After(time.Second * time.Duration(timeout)):
 				var flag bool
 				sdkLog("ws ch recvMsg err: ", wsReq.OperationID)
@@ -1076,9 +1081,11 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 					callback.OnError(http.StatusRequestTimeout, http.StatusText(http.StatusRequestTimeout))
 					u.sendMessageFailedHandle(&s, &c, conversationID)
 					sdkLog("onError callback ", wsReq.OperationID)
+					breakFlag = 1
 					break
 				} else {
 					sdkLog("wait resp continue", wsReq.OperationID)
+					breakFlag = 0
 					continue
 				}
 			}

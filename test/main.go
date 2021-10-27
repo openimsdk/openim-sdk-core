@@ -274,6 +274,20 @@ var (
 
 // myuid,  maxuid,  msgnum
 func main() {
+
+	timeout := 5
+	for {
+
+		select {
+
+		case <-time.After(time.Second * time.Duration(timeout)):
+			fmt.Println("sleep.............")
+			break
+		}
+	}
+
+	fmt.Println("break.............")
+
 	/*
 		open_im_sdk.LogBegin("")
 		myUid1 := 4
