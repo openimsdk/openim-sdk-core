@@ -236,6 +236,9 @@ func CreateImageMessageFromFullPath(imageFullPath string) string {
 func CreateSoundMessageFromFullPath(soundPath string, duration int64) string {
 	return userForSDK.CreateSoundMessageFromFullPath(soundPath, duration)
 }
+func CreateFileMessageFromFullPath(fileFullPath, fileName string) string {
+	return userForSDK.CreateFileMessageFromFullPath(fileFullPath, fileName)
+}
 func CreateImageMessage(imagePath string) string {
 	return userForSDK.CreateImageMessage(imagePath)
 }
