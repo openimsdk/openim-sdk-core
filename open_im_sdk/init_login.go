@@ -519,7 +519,6 @@ func (u *UserRelated) heartbeat() {
 							//	minSeqSvr := u.GetMinSeqSvr()
 							//	if wsSeqResp.MinSeq > minSeqSvr {
 							LogBegin("setLocalMaxConSeq SetMinSeqSvr ", wsSeqResp.MinSeq, atomic.LoadInt64(&u.minSeqSvr))
-							u.setLocalMaxConSeq(int(wsSeqResp.MinSeq))
 							u.SetMinSeqSvr(wsSeqResp.MinSeq)
 							LogEnd("setLocalMaxConSeq SetMinSeqSvr ")
 						}
