@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	"sync/atomic"
 
 	"github.com/gorilla/websocket"
 	_ "github.com/mattn/go-sqlite3"
@@ -332,17 +333,19 @@ func (u *UserRelated) GetMinSeqSvr() int64 {
 }
 
 func (u *UserRelated) SetMinSeqSvr(minSeqSvr int64) {
-	u.minSeqSvrRWMutex.Lock()
-	if minSeqSvr > u.minSeqSvr {
-		u.minSeqSvr = minSeqSvr
-	}
-	u.minSeqSvrRWMutex.Unlock()
 	/*
-		old := atomic.LoadInt64(&u.minSeqSvr)
-		if minSeqSvr > old {
-			atomic.StoreInt64(&u.minSeqSvr, minSeqSvr)
+		u.minSeqSvrRWMutex.Lock()
+		if minSeqSvr > u.minSeqSvr {
+			u.minSeqSvr = minSeqSvr
 		}
+		u.minSeqSvrRWMutex.Unlock()
 	*/
+
+	old := atomic.LoadInt64(&u.minSeqSvr)
+	if minSeqSvr > old {
+		atomic.StoreInt64(&u.minSeqSvr, minSeqSvr)
+	}
+
 }
 
 func (u *UserRelated) syncMsg2ServerMaxSeq(serverMaxSeq int64) error {
@@ -354,10 +357,10 @@ func (u *UserRelated) syncMsg2ServerMaxSeq(serverMaxSeq int64) error {
 		LogFReturn(err.Error())
 		return err
 	}
-	minSeqSvr := u.GetMinSeqSvr()
-	LogBegin("delSeqMsg setLocalMaxConSeq SetMinSeqSvr", minSeqSvr, maxSeq)
-	//	u.delSeqMsg(atomic.LoadInt64(&u.minSeqSvr), maxSeq)
-	u.delSeqMsg(minSeqSvr, maxSeq)
+	//	minSeqSvr := u.GetMinSeqSvr()
+	LogBegin("delSeqMsg setLocalMaxConSeq SetMinSeqSvr", atomic.LoadInt64(&u.minSeqSvr), maxSeq)
+	u.delSeqMsg(atomic.LoadInt64(&u.minSeqSvr), maxSeq)
+	//	u.delSeqMsg(minSeqSvr, maxSeq)
 	u.setLocalMaxConSeq(int(maxSeq))
 	u.SetMinSeqSvr(int64(maxSeq))
 	LogEnd("elSeqMsg setLocalMaxConSeq SetMinSeqSvr")
@@ -512,10 +515,10 @@ func (u *UserRelated) heartbeat() {
 						//	u.DelCh(msgIncr)
 						LogEnd("closeConn DelCh continue")
 					} else {
-						//	if wsSeqResp.MinSeq > atomic.LoadInt64(&u.minSeqSvr) {
-						minSeqSvr := u.GetMinSeqSvr()
-						if wsSeqResp.MinSeq > minSeqSvr {
-							LogBegin("setLocalMaxConSeq SetMinSeqSvr ", wsSeqResp.MinSeq, minSeqSvr)
+						if wsSeqResp.MinSeq > atomic.LoadInt64(&u.minSeqSvr) {
+							//	minSeqSvr := u.GetMinSeqSvr()
+							//	if wsSeqResp.MinSeq > minSeqSvr {
+							LogBegin("setLocalMaxConSeq SetMinSeqSvr ", wsSeqResp.MinSeq, atomic.LoadInt64(&u.minSeqSvr))
 							u.setLocalMaxConSeq(int(wsSeqResp.MinSeq))
 							u.SetMinSeqSvr(wsSeqResp.MinSeq)
 							LogEnd("setLocalMaxConSeq SetMinSeqSvr ")
