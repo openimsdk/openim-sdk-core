@@ -22,6 +22,9 @@ func main() {
 	//
 	//openIMTerminalType := flag.String("terminal_type", "web", "different terminal types")
 	sdkWsPort = flag.Int("sdk_ws_port", 7799, "openIMSDK ws listening port")
+	openIMApiPort = flag.Int("openIM_api_port", 0, "openIM api listening port")
+	openIMWsPort = flag.Int("openIM_ws_port", 0, "openIM ws listening port")
+	flag.Parse()
 	//switch *openIMTerminalType {
 	//case "pc":
 	//	openIMWsAddress = flag.String("openIM_ws_address", "web", "different terminal types")
@@ -41,8 +44,7 @@ func main() {
 		ws_local_server.InitServer(&open_im_sdk.IMConfig{IpApiAddr: *openIMApiAddress,
 			IpWsAddr: *openIMWsAddress, Platform: utils.OSXPlatformID, DbDir: "./"})
 	case "linux":
-		openIMApiPort = flag.Int("openIM_api_port", 0, "openIM api listening port")
-		openIMWsPort = flag.Int("openIM_ws_port", 0, "openIM ws listening port")
+
 		//sdkDBDir:= flag.String("sdk_db_dir","","openIMSDK initialization path")
 		ws_local_server.InitServer(&open_im_sdk.IMConfig{IpApiAddr: "http://" + utils.ServerIP + ":" + utils.IntToString(*openIMApiPort),
 			IpWsAddr: "ws://" + utils.ServerIP + ":" + utils.IntToString(*openIMWsPort), Platform: utils.WebPlatformID, DbDir: "../db/sdk/"})
