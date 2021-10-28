@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"sync/atomic"
+
 	"time"
 )
 
@@ -1540,8 +1540,8 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
 
-	old := atomic.LoadInt64(&u.minSeqSvr)
-	//old := u.GetMinSeqSvr()
+	//old := atomic.LoadInt64(&u.minSeqSvr)
+	old := u.GetMinSeqSvr()
 	var rSeq int64
 	var rows *sql.Rows
 	if old == 0 {
@@ -1579,7 +1579,6 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 			LogFReturn(old, err)
 			return old, err
 		}
-		rows.Columns()
 		var idx int64 = 0
 		rSeq = old
 		for rows.Next() {
