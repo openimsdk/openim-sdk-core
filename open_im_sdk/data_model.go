@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+
 	"time"
 )
 
@@ -1578,7 +1579,6 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 			LogFReturn(old, err)
 			return old, err
 		}
-		rows.Columns()
 		var idx int64 = 0
 		rSeq = old
 		for rows.Next() {

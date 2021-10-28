@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	"sync/atomic"
 
 	"github.com/gorilla/websocket"
 	_ "github.com/mattn/go-sqlite3"
@@ -332,11 +333,13 @@ func (u *UserRelated) GetMinSeqSvr() int64 {
 }
 
 func (u *UserRelated) SetMinSeqSvr(minSeqSvr int64) {
+
 	u.minSeqSvrRWMutex.Lock()
 	if minSeqSvr > u.minSeqSvr {
 		u.minSeqSvr = minSeqSvr
 	}
 	u.minSeqSvrRWMutex.Unlock()
+
 	/*
 		old := atomic.LoadInt64(&u.minSeqSvr)
 		if minSeqSvr > old {
@@ -355,8 +358,9 @@ func (u *UserRelated) syncMsg2ServerMaxSeq(serverMaxSeq int64) error {
 		return err
 	}
 	minSeqSvr := u.GetMinSeqSvr()
+	//	LogBegin("delSeqMsg setLocalMaxConSeq SetMinSeqSvr", atomic.LoadInt64(&u.minSeqSvr), maxSeq)
 	LogBegin("delSeqMsg setLocalMaxConSeq SetMinSeqSvr", minSeqSvr, maxSeq)
-	//	u.delSeqMsg(atomic.LoadInt64(&u.minSeqSvr), maxSeq)
+	//u.delSeqMsg(atomic.LoadInt64(&u.minSeqSvr), maxSeq)
 	u.delSeqMsg(minSeqSvr, maxSeq)
 	u.setLocalMaxConSeq(int(maxSeq))
 	u.SetMinSeqSvr(int64(maxSeq))
@@ -512,11 +516,10 @@ func (u *UserRelated) heartbeat() {
 						//	u.DelCh(msgIncr)
 						LogEnd("closeConn DelCh continue")
 					} else {
-						//	if wsSeqResp.MinSeq > atomic.LoadInt64(&u.minSeqSvr) {
-						minSeqSvr := u.GetMinSeqSvr()
-						if wsSeqResp.MinSeq > minSeqSvr {
-							LogBegin("setLocalMaxConSeq SetMinSeqSvr ", wsSeqResp.MinSeq, minSeqSvr)
-							u.setLocalMaxConSeq(int(wsSeqResp.MinSeq))
+						if wsSeqResp.MinSeq > atomic.LoadInt64(&u.minSeqSvr) {
+							//	minSeqSvr := u.GetMinSeqSvr()
+							//	if wsSeqResp.MinSeq > minSeqSvr {
+							LogBegin("setLocalMaxConSeq SetMinSeqSvr ", wsSeqResp.MinSeq, atomic.LoadInt64(&u.minSeqSvr))
 							u.SetMinSeqSvr(wsSeqResp.MinSeq)
 							LogEnd("setLocalMaxConSeq SetMinSeqSvr ")
 						}
@@ -751,36 +754,36 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 						ClientMsgID:      pullMsg.Data.Single[i].List[j].ClientMsgID,
 						SenderPlatformID: pullMsg.Data.Single[i].List[j].SenderPlatformID,
 					}
-					arrMsg.SingleData = append(arrMsg.SingleData, singleMsg)
+					//	arrMsg.SingleData = append(arrMsg.SingleData, singleMsg)
 					u.seqMsg[pullMsg.Data.Single[i].List[j].Seq] = singleMsg
 					sdkLog("into map, seq: ", pullMsg.Data.Single[i].List[j].Seq, pullMsg.Data.Single[i].List[j].ClientMsgID, pullMsg.Data.Single[i].List[j].ServerMsgID)
-
-					if pullMsg.Data.Single[i].List[j].ContentType > SingleTipBegin &&
-						pullMsg.Data.Single[i].List[j].ContentType < SingleTipEnd {
-						var msgRecv MsgData
-						msgRecv.ContentType = pullMsg.Data.Single[i].List[j].ContentType
-						msgRecv.Content = pullMsg.Data.Single[i].List[j].Content
-						msgRecv.SendID = pullMsg.Data.Single[i].List[j].SendID
-						msgRecv.RecvID = pullMsg.Data.Single[i].List[j].RecvID
-						sdkLog("doFriendMsg ", msgRecv)
-						u.doFriendMsg(msgRecv)
-					}
+					/*
+						if pullMsg.Data.Single[i].List[j].ContentType > SingleTipBegin &&
+							pullMsg.Data.Single[i].List[j].ContentType < SingleTipEnd {
+							var msgRecv MsgData
+							msgRecv.ContentType = pullMsg.Data.Single[i].List[j].ContentType
+							msgRecv.Content = pullMsg.Data.Single[i].List[j].Content
+							msgRecv.SendID = pullMsg.Data.Single[i].List[j].SendID
+							msgRecv.RecvID = pullMsg.Data.Single[i].List[j].RecvID
+							sdkLog("doFriendMsg ", msgRecv)
+							u.doFriendMsg(msgRecv)
+						}
+					*/
 				}
 			}
-			u.seqMsgMutex.Unlock()
 
-			//u.seqMsgMutex.RLock()
-			//for i := beginSeq; i <= endSeq; i++ {
-			//	v, ok := u.seqMsg[i]
-			//	if ok {
-			//		arrMsg.SingleData = append(arrMsg.SingleData, v)
-			//	} else {
-			//		sdkLog("seq no in map, error, seq: ", i, u.LoginUid)
-			//	}
-			//}
-			//u.seqMsgMutex.RUnlock()
-
-			u.seqMsgMutex.Lock()
+			/*
+				u.seqMsgMutex.RLock()
+				for i := beginSeq; i <= endSeq; i++ {
+					v, ok := u.seqMsg[i]
+					if ok {
+						arrMsg.SingleData = append(arrMsg.SingleData, v)
+					} else {
+						sdkLog("seq no in map, error, seq: ", i, u.LoginUid)
+					}
+				}
+				u.seqMsgMutex.RUnlock()
+			*/
 
 			for i := 0; i < len(pullMsg.Data.Group); i++ {
 				for j := 0; j < len(pullMsg.Data.Group[i].List); j++ {
@@ -799,19 +802,52 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 						ClientMsgID:      pullMsg.Data.Group[i].List[j].ClientMsgID,
 						SenderPlatformID: pullMsg.Data.Group[i].List[j].SenderPlatformID,
 					}
-					arrMsg.GroupData = append(arrMsg.GroupData, groupMsg)
-
+					//	arrMsg.GroupData = append(arrMsg.GroupData, groupMsg)
 					u.seqMsg[pullMsg.Data.Group[i].List[j].Seq] = groupMsg
 					sdkLog("into map, seq: ", pullMsg.Data.Group[i].List[j].Seq, pullMsg.Data.Group[i].List[j].ClientMsgID, pullMsg.Data.Group[i].List[j].ServerMsgID)
 
-					ctype := pullMsg.Data.Group[i].List[j].ContentType
-					if ctype > GroupTipBegin && ctype < GroupTipEnd {
-						u.doGroupMsg(groupMsg)
-						sdkLog("doGroupMsg ", groupMsg)
-					}
+					/*
+						ctype := pullMsg.Data.Group[i].List[j].ContentType
+						if ctype > GroupTipBegin && ctype < GroupTipEnd {
+							u.doGroupMsg(groupMsg)
+							sdkLog("doGroupMsg ", groupMsg)
+						}
+					*/
 				}
 			}
 			u.seqMsgMutex.Unlock()
+
+			u.seqMsgMutex.RLock()
+			for i := beginSeq; i <= endSeq; i++ {
+				v, ok := u.seqMsg[i]
+				if ok {
+					if v.SessionType == SingleChatType {
+						arrMsg.SingleData = append(arrMsg.SingleData, v)
+						if v.ContentType > SingleTipBegin && v.ContentType < SingleTipEnd {
+							var msgRecv MsgData
+							msgRecv.ContentType = v.ContentType
+							msgRecv.Content = v.Content
+							msgRecv.SendID = v.SendID
+							msgRecv.RecvID = v.RecvID
+							LogBegin("doFriendMsg ", msgRecv)
+							u.doFriendMsg(msgRecv)
+							LogEnd("doFriendMsg ", msgRecv)
+						}
+					} else if v.SessionType == GroupChatType {
+						arrMsg.GroupData = append(arrMsg.GroupData, v)
+						if v.ContentType > GroupTipBegin && v.ContentType < GroupTipEnd {
+							LogBegin("doGroupMsg ", v)
+							u.doGroupMsg(v)
+							LogEnd("doGroupMsg ", v)
+						}
+					} else {
+						sdkLog("type failed, ", v.SessionType, v)
+					}
+				} else {
+					sdkLog("seq no in map, failed, seq: ", i)
+				}
+			}
+			u.seqMsgMutex.RUnlock()
 
 			sdkLog("triggerCmdNewMsgCome len: ", len(arrMsg.SingleData), len(arrMsg.GroupData))
 			err = u.triggerCmdNewMsgCome(arrMsg)
