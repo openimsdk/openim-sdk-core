@@ -1618,7 +1618,7 @@ func (ur *UserRelated) getLoginUserInfoFromLocal() (userInfo, error) {
 		}
 		return u, nil
 	} else {
-		sdkLog("db Query faile, ", err.Error())
+		sdkLog("db Query failed, ", err.Error())
 		return u, err
 	}
 }

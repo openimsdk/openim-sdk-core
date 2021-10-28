@@ -121,6 +121,7 @@ type UserRelated struct {
 var UserSDKRwLock sync.RWMutex
 var UserRouterMap map[string]*UserRelated
 var SvrConf IMConfig
+var SdkLogFlag int32
 
 var userForSDK UserRelated
 

@@ -38,6 +38,11 @@ func InitSDK(config string, cb IMSDKListener) bool {
 	return userForSDK.InitSDK(config, cb)
 }
 
+//1 no print
+func SetSdkLog(flag int32) {
+	SdkLogFlag = flag
+}
+
 func UnInitSDK() {
 	userForSDK.unInitSDK()
 }
