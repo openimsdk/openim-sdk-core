@@ -738,9 +738,9 @@ func (u *UserRelated) CreateForwardMessage(m string) string {
 func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool) string {
 	var conversationID string
 	//r := SendMsgRespFromServer{}
-	a := paramsUserSendMsg{}
+	//a := paramsUserSendMsg{}
 	s := MsgStruct{}
-	m := make(map[string]interface{})
+	//m := make(map[string]interface{})
 	err := json.Unmarshal([]byte(message), &s)
 	if err != nil {
 		callback.OnError(2038, err.Error())
@@ -935,26 +935,26 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 			return
 		}
 		//Protocol conversion
-		a.ReqIdentifier = 1003
-		a.PlatformID = s.PlatformID
-		a.SendID = s.SendID
-		a.SenderFaceURL = s.SenderFaceURL
-		a.SenderNickName = s.SenderNickName
-		a.OperationID = operationIDGenerator()
-		a.Data.SessionType = s.SessionType
-		a.Data.MsgFrom = s.MsgFrom
-		a.Data.ContentType = s.ContentType
-		a.Data.RecvID = s.RecvID
-		a.Data.ForceList = s.ForceList
-		a.Data.Content = s.Content
-		a.Data.ClientMsgID = s.ClientMsgID
-		if onlineUserOnly {
-			a.Data.Options["history"] = 0
-			a.Data.Options["persistent"] = 0
-		} else {
-			a.Data.Options = m
-		}
-		a.Data.OffLineInfo = m
+		//a.ReqIdentifier = 1003
+		//a.PlatformID = s.PlatformID
+		//a.SendID = s.SendID
+		//a.SenderFaceURL = s.SenderFaceURL
+		//a.SenderNickName = s.SenderNickName
+		//a.OperationID = operationIDGenerator()
+		//a.Data.SessionType = s.SessionType
+		//a.Data.MsgFrom = s.MsgFrom
+		//a.Data.ContentType = s.ContentType
+		//a.Data.RecvID = s.RecvID
+		//a.Data.ForceList = s.ForceList
+		//a.Data.Content = s.Content
+		//a.Data.ClientMsgID = s.ClientMsgID
+		//if onlineUserOnly {
+		//	a.Data.Options["history"] = 0
+		//	a.Data.Options["persistent"] = 0
+		//} else {
+		//	a.Data.Options = m
+		//}
+		//a.Data.OffLineInfo = m
 
 		optionsFlag := make(map[string]int32, 2)
 		if onlineUserOnly {
@@ -963,9 +963,9 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 		} else {
 		}
 		wsMsgData := UserSendMsgReq{
-
 			Options:        optionsFlag,
 			SenderNickName: s.SenderNickName,
+			SenderFaceURL:  s.SenderFaceURL,
 			PlatformID:     s.PlatformID,
 			SessionType:    s.SessionType,
 			MsgFrom:        s.MsgFrom,
