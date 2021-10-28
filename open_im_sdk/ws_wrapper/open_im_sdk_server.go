@@ -41,6 +41,8 @@ func main() {
 		ws_local_server.InitServer(&open_im_sdk.IMConfig{IpApiAddr: *openIMApiAddress,
 			IpWsAddr: *openIMWsAddress, Platform: utils.OSXPlatformID, DbDir: "./"})
 	case "linux":
+		openIMApiPort = flag.Int("openIM_api_port", 0, "openIM api listening port")
+		openIMWsPort = flag.Int("openIM_ws_port", 0, "openIM ws listening port")
 		//sdkDBDir:= flag.String("sdk_db_dir","","openIMSDK initialization path")
 		ws_local_server.InitServer(&open_im_sdk.IMConfig{IpApiAddr: "http://" + utils.ServerIP + ":" + utils.IntToString(*openIMApiPort),
 			IpWsAddr: "ws://" + utils.ServerIP + ":" + utils.IntToString(*openIMWsPort), Platform: utils.WebPlatformID, DbDir: "../db/sdk/"})
