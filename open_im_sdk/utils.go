@@ -428,7 +428,7 @@ type LogInfo struct {
 
 func log(info string) error {
 	if SdkLogFlag == 1 {
-		nil
+		return nil
 	}
 	sdkLog(info)
 	return nil
