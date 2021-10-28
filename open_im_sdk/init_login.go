@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
 
-	"sync/atomic"
-
 	"github.com/gorilla/websocket"
 	_ "github.com/mattn/go-sqlite3"
 
@@ -326,11 +324,25 @@ func (u *UserRelated) doMsg(wsResp GeneralWsResp) {
 
 }
 
+func (u *UserRelated) GetMinSeqSvr() int64 {
+	u.minSeqSvrRWMutex.RLock()
+	min := u.minSeqSvr
+	u.minSeqSvrRWMutex.RUnlock()
+	return min
+}
+
 func (u *UserRelated) SetMinSeqSvr(minSeqSvr int64) {
-	old := atomic.LoadInt64(&u.minSeqSvr)
-	if minSeqSvr > old {
-		atomic.StoreInt64(&u.minSeqSvr, minSeqSvr)
+	u.minSeqSvrRWMutex.Lock()
+	if minSeqSvr > u.minSeqSvr {
+		u.minSeqSvr = minSeqSvr
 	}
+	u.minSeqSvrRWMutex.Unlock()
+	/*
+		old := atomic.LoadInt64(&u.minSeqSvr)
+		if minSeqSvr > old {
+			atomic.StoreInt64(&u.minSeqSvr, minSeqSvr)
+		}
+	*/
 }
 
 func (u *UserRelated) syncMsg2ServerMaxSeq(serverMaxSeq int64) error {
@@ -342,9 +354,10 @@ func (u *UserRelated) syncMsg2ServerMaxSeq(serverMaxSeq int64) error {
 		LogFReturn(err.Error())
 		return err
 	}
-
-	LogBegin("delSeqMsg setLocalMaxConSeq SetMinSeqSvr", atomic.LoadInt64(&u.minSeqSvr), maxSeq)
-	u.delSeqMsg(atomic.LoadInt64(&u.minSeqSvr), maxSeq)
+	minSeqSvr := u.GetMinSeqSvr()
+	LogBegin("delSeqMsg setLocalMaxConSeq SetMinSeqSvr", minSeqSvr, maxSeq)
+	//	u.delSeqMsg(atomic.LoadInt64(&u.minSeqSvr), maxSeq)
+	u.delSeqMsg(minSeqSvr, maxSeq)
 	u.setLocalMaxConSeq(int(maxSeq))
 	u.SetMinSeqSvr(int64(maxSeq))
 	LogEnd("elSeqMsg setLocalMaxConSeq SetMinSeqSvr")
@@ -439,9 +452,8 @@ func (u *UserRelated) reConn(conn *websocket.Conn) (*websocket.Conn, error) {
 func (u *UserRelated) heartbeat() {
 	for {
 		u.stateMutex.Lock()
-		sdkLog("ws read message failed ", err.Error(), u.LoginState)
 		if u.LoginState == LogoutCmd {
-			sdkLog("logout, ws close, heartbeat return ", LogoutCmd, err)
+			sdkLog("logout, ws close, heartbeat return ", LogoutCmd)
 			u.conn = nil
 			u.stateMutex.Unlock()
 			return
@@ -500,8 +512,10 @@ func (u *UserRelated) heartbeat() {
 						//	u.DelCh(msgIncr)
 						LogEnd("closeConn DelCh continue")
 					} else {
-						if wsSeqResp.MinSeq > atomic.LoadInt64(&u.minSeqSvr) {
-							LogBegin("setLocalMaxConSeq SetMinSeqSvr ", wsSeqResp.MinSeq, atomic.LoadInt64(&u.minSeqSvr))
+						//	if wsSeqResp.MinSeq > atomic.LoadInt64(&u.minSeqSvr) {
+						minSeqSvr := u.GetMinSeqSvr()
+						if wsSeqResp.MinSeq > minSeqSvr {
+							LogBegin("setLocalMaxConSeq SetMinSeqSvr ", wsSeqResp.MinSeq, minSeqSvr)
 							u.setLocalMaxConSeq(int(wsSeqResp.MinSeq))
 							u.SetMinSeqSvr(wsSeqResp.MinSeq)
 							LogEnd("setLocalMaxConSeq SetMinSeqSvr ")
@@ -604,7 +618,7 @@ func (u *UserRelated) pullBySplit(beginSeq int64, endSeq int64) error {
 		LogFReturn("beginSeq > endSeq")
 		return nil
 	}
-	var SPLIT int64 = 10
+	var SPLIT int64 = 1000
 	var bSeq, eSeq int64
 	if endSeq-beginSeq > SPLIT {
 		bSeq = beginSeq

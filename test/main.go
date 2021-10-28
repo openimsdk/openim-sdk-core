@@ -275,35 +275,27 @@ var (
 // myuid,  maxuid,  msgnum
 func main() {
 
-	timeout := 5
-	for {
+	open_im_sdk.LogBegin("")
+	myUid1 := 0
+	strMyUid1 := GenUid(myUid1)
 
-		select {
-
-		case <-time.After(time.Second * time.Duration(timeout)):
-			fmt.Println("sleep.............")
-			break
-		}
+	runRigister(strMyUid1)
+	token1 := runGetToken(strMyUid1)
+	open_im_sdk.DoTest(strMyUid1, token1, WSADDR, APIADDR)
+	//	recvId1 := GenUid(1)
+	recvId1 := "18349115126"
+	var i int64
+	for i = 0; i < 10000; i++ {
+		time.Sleep(time.Duration(1) * time.Millisecond)
+		cont := "test data: 0->gordon idx:" + strconv.FormatInt(i, 10)
+		open_im_sdk.DoTestSendMsg(strMyUid1, recvId1, cont)
+		fmt.Println("~~~~~~~~~~~~~~~~~~~~~~~", i, "~~~~~~~~~~~~~~~~~~~~")
 	}
 
-	fmt.Println("break.............")
-
-	/*
-		open_im_sdk.LogBegin("")
-		myUid1 := 4
-		strMyUid1 := GenUid(myUid1)
-
-		runRigister(strMyUid1)
-		token1 := runGetToken(strMyUid1)
-		open_im_sdk.DoTest(strMyUid1, token1, WSADDR, APIADDR)
-		//recvId1 := GenUid(1)
-
-		//	open_im_sdk.DoTestSendMsg(strMyUid1, recvId1, "test data 0->1")
-		for true {
-			time.Sleep(time.Duration(60) * time.Second)
-			fmt.Println("waiting")
-		}
-	*/
+	for true {
+		time.Sleep(time.Duration(60) * time.Second)
+		fmt.Println("waiting")
+	}
 
 	cmdfile := "./cmd.txt"
 	uid := flag.Int("uid", 1, "RpcToken default listen port 10800")

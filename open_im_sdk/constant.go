@@ -111,7 +111,8 @@ type UserRelated struct {
 	mRWMutex   *sync.RWMutex
 	stateMutex sync.Mutex
 
-	minSeqSvr int64
+	minSeqSvr        int64
+	minSeqSvrRWMutex *sync.RWMutex
 
 	seqMsg      map[int64]MsgData
 	seqMsgMutex sync.RWMutex
