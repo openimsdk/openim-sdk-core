@@ -391,12 +391,17 @@ func (u *UserRelated) work(c2v cmd2Value) {
 
 	switch c2v.Cmd {
 	case CmdDeleteConversation:
+		sdkLog("CmdDeleteConversation start ..", c2v)
 		u.doDeleteConversation(c2v)
-
+		sdkLog("CmdDeleteConversation end..", c2v)
 	case CmdNewMsgCome:
+		sdkLog("doMsgNew start..", c2v)
 		u.doMsgNew(c2v)
+		sdkLog("doMsgNew end..", c2v)
 	case CmdUpdateConversation:
+		sdkLog("doUpdateConversation start ..", c2v)
 		u.doUpdateConversation(c2v)
+		sdkLog("doUpdateConversation end..", c2v)
 	}
 }
 
