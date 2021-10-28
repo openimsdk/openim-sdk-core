@@ -198,7 +198,7 @@ func (u *UserRelated) notifyResp(wsResp GeneralWsResp) {
 
 	ch := u.GetCh(wsResp.MsgIncr)
 	if ch == nil {
-		sdkLog("failed, no chan ", wsResp.MsgIncr)
+		sdkLog("failed, no chan ", wsResp.MsgIncr, wsResp.OperationID)
 		return
 	}
 	sdkLog("GetCh end, ", ch)
@@ -618,7 +618,7 @@ func (u *UserRelated) pullBySplit(beginSeq int64, endSeq int64) error {
 		LogFReturn("beginSeq > endSeq")
 		return nil
 	}
-	var SPLIT int64 = 1000
+	var SPLIT int64 = 100
 	var bSeq, eSeq int64
 	if endSeq-beginSeq > SPLIT {
 		bSeq = beginSeq
@@ -926,27 +926,33 @@ func (u *UserRelated) getUserInfoByUid(uid string) (*userInfo, error) {
 }
 
 func (u *UserRelated) doFriendMsg(msg MsgData) {
+	sdkLog("doFriendMsg ", msg)
 	if u.cb == nil || u.friendListener == nil {
 		sdkLog("listener is null")
 		return
 	}
 
 	if msg.SendID == u.LoginUid && msg.SenderPlatformID == u.SvrConf.Platform {
-		sdkLog("sync msg ", msg)
+		sdkLog("sync msg ", msg.ContentType)
 		return
 	}
 
 	go func() {
 		switch msg.ContentType {
 		case AddFriendTip:
+			sdkLog("addFriendNew ", msg)
 			u.addFriendNew(&msg) //
 		case AcceptFriendApplicationTip:
+			sdkLog("acceptFriendApplicationNew ", msg)
 			u.acceptFriendApplicationNew(&msg)
 		case RefuseFriendApplicationTip:
+			sdkLog("refuseFriendApplicationNew ", msg)
 			u.refuseFriendApplicationNew(&msg)
 		case SetSelfInfoTip:
+			sdkLog("setSelfInfo ", msg)
 			u.setSelfInfo(&msg)
 		case KickOnlineTip:
+			sdkLog("kickOnline ", msg)
 			u.kickOnline(&msg)
 		default:
 			sdkLog("type failed, ", msg)
@@ -955,9 +961,10 @@ func (u *UserRelated) doFriendMsg(msg MsgData) {
 }
 
 func (u *UserRelated) acceptFriendApplicationNew(msg *MsgData) {
+	LogBegin(msg.ContentType, msg.ServerMsgID, msg.ClientMsgID)
 	u.syncFriendList()
 	sdkLog(msg.SendID, msg.RecvID)
-	fmt.Println("sendID: ", msg.SendID, msg)
+	sdkLog("acceptFriendApplicationNew", msg.ServerMsgID, msg)
 
 	fInfoList, err := u.getServerFriendList()
 	if err != nil {

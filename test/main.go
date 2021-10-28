@@ -274,7 +274,6 @@ var (
 
 // myuid,  maxuid,  msgnum
 func main() {
-
 	open_im_sdk.LogBegin("")
 	myUid1 := 0
 	strMyUid1 := GenUid(myUid1)
@@ -283,11 +282,11 @@ func main() {
 	token1 := runGetToken(strMyUid1)
 	open_im_sdk.DoTest(strMyUid1, token1, WSADDR, APIADDR)
 	//	recvId1 := GenUid(1)
-	recvId1 := "18349115126"
+	recvId1 := "18666662412"
 	var i int64
-	for i = 0; i < 10000; i++ {
+	for i = 0; i < 1; i++ {
 		time.Sleep(time.Duration(1) * time.Millisecond)
-		cont := "test data: 0->gordon idx:" + strconv.FormatInt(i, 10)
+		cont := "test data: 0->skkkkkkkkkkkkkkkkkk idx:" + strconv.FormatInt(i, 10)
 		open_im_sdk.DoTestSendMsg(strMyUid1, recvId1, cont)
 		fmt.Println("~~~~~~~~~~~~~~~~~~~~~~~", i, "~~~~~~~~~~~~~~~~~~~~")
 	}
