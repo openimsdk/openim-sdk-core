@@ -465,7 +465,6 @@ func (u *UserRelated) heartbeat() {
 		u.stateMutex.Unlock()
 
 		LogBegin()
-		time.Sleep(time.Duration(5) * time.Second)
 		LogBegin("AddCh")
 		msgIncr, ch := u.AddCh()
 		LogEnd("AddCh")
@@ -516,10 +515,10 @@ func (u *UserRelated) heartbeat() {
 						//	u.DelCh(msgIncr)
 						LogEnd("closeConn DelCh continue")
 					} else {
-						if wsSeqResp.MinSeq > atomic.LoadInt64(&u.minSeqSvr) {
-							//	minSeqSvr := u.GetMinSeqSvr()
-							//	if wsSeqResp.MinSeq > minSeqSvr {
-							LogBegin("setLocalMaxConSeq SetMinSeqSvr ", wsSeqResp.MinSeq, atomic.LoadInt64(&u.minSeqSvr))
+						//if wsSeqResp.MinSeq > atomic.LoadInt64(&u.minSeqSvr) {
+						minSeqSvr := u.GetMinSeqSvr()
+						if wsSeqResp.MinSeq > minSeqSvr {
+							LogBegin("setLocalMaxConSeq SetMinSeqSvr ", wsSeqResp.MinSeq, minSeqSvr)
 							u.SetMinSeqSvr(wsSeqResp.MinSeq)
 							LogEnd("setLocalMaxConSeq SetMinSeqSvr ")
 						}
@@ -567,6 +566,7 @@ func (u *UserRelated) heartbeat() {
 
 		u.DelCh(msgIncr)
 		LogEnd("DelCh", wsReq.OperationID)
+		time.Sleep(time.Duration(5) * time.Second)
 	}
 }
 
