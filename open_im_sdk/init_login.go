@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	"sync/atomic"
 
 	"github.com/gorilla/websocket"
 	_ "github.com/mattn/go-sqlite3"
