@@ -318,9 +318,12 @@ func (u *UserRelated) doUpdateConversation(c2v cmd2Value) {
 	case AddConOrUpLatMsg:
 		c := node.Args.(ConversationStruct)
 		if u.judgeConversationIfExists(node.ConId) {
-			err := u.setConversationLatestMsgModel(&c, node.ConId)
-			if err != nil {
-				sdkLog("setConversationLatestMsgModel err: ", err)
+			_, o := u.getOneConversationModel(node.ConId)
+			if c.LatestMsgSendTime > o.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
+				err := u.setConversationLatestMsgModel(&c, node.ConId)
+				if err != nil {
+					sdkLog("setConversationLatestMsgModel err: ", err)
+				}
 			}
 		} else {
 			_ = u.addConversationOrUpdateLatestMsg(&c, node.ConId)
