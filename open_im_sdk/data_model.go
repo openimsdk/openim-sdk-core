@@ -327,7 +327,7 @@ func (u *UserRelated) Query(query string, args ...interface{}) (*sql.Rows, error
 			return nil, err
 		}
 	}
-	return u.db.Query(query, args)
+	return u.db.Query(query, args...)
 }
 
 func (u *UserRelated) getLocalMaxConSeqFromDB() (int64, error) {
