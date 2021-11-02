@@ -132,7 +132,7 @@ func (u *UserRelated) writeBinaryMsg(msg GeneralWsReq) (error, *websocket.Conn) 
 			return errors.New("msg too long"), connSended
 		}
 		if err != nil {
-			LogFReturn(err.Error())
+			LogFReturn(err.Error(), msg.OperationID)
 		} else {
 			LogSReturn(nil)
 		}

@@ -40,6 +40,6 @@ done
 
 
 for ((i = 1; i <= ${uidCount}; i++)); do
-    nohup ./open_im_test_client -uid $i -uid_count ${uidCount} -message_count ${messageCount} >>./openIM.log.$i 2>&1 &
+    nohup ./open_im_test_client -uid $i -uid_count ${uidCount} -message_count ${messageCount} -api_addr ${APIADDR} -ws_addr ${WSADDR} -register_addr ${REGISTERADDR} -token_addr ${TOKENADDR} >>./openIM.log.$i 2>&1 &
 done
 

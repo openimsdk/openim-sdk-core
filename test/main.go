@@ -121,7 +121,30 @@ import (
 //open_im_sdk.DoTestGetUsersInfo()
 
 //	time.Sleep(time.Duration(5) * time.Second)
-//open_im_sdk.ForceReConn()
+//open_im_sdk.ForceReConn()open_im_sdk.LogBegin("")
+//	myUid1 := 1
+//	strMyUid1 := GenUid(myUid1)
+//
+//	runRigister(strMyUid1)
+//	token1 := runGetToken(strMyUid1)
+//	open_im_sdk.DoTest(strMyUid1, token1, WSADDR, APIADDR)
+//	//recvId1 := GenUid(1)
+//	//recvId1 := "18666662412"
+//	/*
+//		var i int64
+//		for i = 0; i < 1; i++ {
+//			time.Sleep(time.Duration(1) * time.Millisecond)
+//			cont := "test data: 0->skkkkkkkkkkkkkkkkkk idx:" + strconv.FormatInt(i, 10)
+//			open_im_sdk.DoTestSendMsg(strMyUid1, recvId1, cont)
+//			fmt.Println("~~~~~~~~~~~~~~~~~~~~~~~", i, "~~~~~~~~~~~~~~~~~~~~")
+//		}
+//	*/
+//
+//	//open_im_sdk.DoTestaddFriend()
+//	for true {
+//		time.Sleep(time.Duration(60) * time.Second)
+//		fmt.Println("waiting")
+//	}
 
 type GetTokenReq struct {
 	Secret   string `json:"secret"`
@@ -264,9 +287,9 @@ func runGetToken(strMyUid string) string {
 }
 
 var (
-	APIADDR      = "http://47.112.160.66:10000"
-	WSADDR       = "ws://47.112.160.66:17778"
-	REGISTERADDR = "http://47.112.160.66:10000/auth/user_register"
+	APIADDR      = ""
+	WSADDR       = ""
+	REGISTERADDR = ""
 	TOKENADDR    = "http://47.112.160.66:10000/auth/user_token"
 	SECRET       = "tuoyun"
 	SENDINTERVAL = 20
@@ -275,35 +298,15 @@ var (
 // myuid,  maxuid,  msgnum
 func main() {
 
-	open_im_sdk.LogBegin("")
-	myUid1 := 1
-	strMyUid1 := GenUid(myUid1)
-
-	runRigister(strMyUid1)
-	token1 := runGetToken(strMyUid1)
-	open_im_sdk.DoTest(strMyUid1, token1, WSADDR, APIADDR)
-	//recvId1 := GenUid(1)
-	//recvId1 := "18666662412"
-	/*
-		var i int64
-		for i = 0; i < 1; i++ {
-			time.Sleep(time.Duration(1) * time.Millisecond)
-			cont := "test data: 0->skkkkkkkkkkkkkkkkkk idx:" + strconv.FormatInt(i, 10)
-			open_im_sdk.DoTestSendMsg(strMyUid1, recvId1, cont)
-			fmt.Println("~~~~~~~~~~~~~~~~~~~~~~~", i, "~~~~~~~~~~~~~~~~~~~~")
-		}
-	*/
-
-	//open_im_sdk.DoTestaddFriend()
-	for true {
-		time.Sleep(time.Duration(60) * time.Second)
-		fmt.Println("waiting")
-	}
-
 	cmdfile := "./cmd.txt"
 	uid := flag.Int("uid", 1, "RpcToken default listen port 10800")
 	uidCount := flag.Int("uid_count", 2, "RpcToken default listen port 10800")
 	messageCount := flag.Int("message_count", 1, "RpcToken default listen port 10800")
+	APIADDR = *flag.String("api_addr ", "http://127.0.0.1:10000", "api addr")
+	WSADDR = *flag.String("ws_addr ", "http://127.0.0.1:17778", "ws addr")
+	REGISTERADDR = *flag.String("register_addr ", "http://127.0.0.1:10000/auth/user_register", "register addr")
+	TOKENADDR = *flag.String("token_addr ", "http://127.0.0.1:10000/auth/user_token", "token addr")
+
 	flag.Parse()
 	var myUid int = *uid
 	var uidNum int = *uidCount
