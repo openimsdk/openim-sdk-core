@@ -292,7 +292,6 @@ func (u *UserRelated) doKickGroupMember(msg *MsgData) {
 	//	g.syncGroupMember()
 	u.syncJoinedGroupInfo()
 	u.syncGroupMemberByGroupId(kickReq.GroupID)
-	u.OnMemberKicked(kickReq.GroupID, opList[0], kickReq.UidListInfo)
 	u.syncJoinedGroupInfo()
 	u.syncGroupMemberByGroupId(kickReq.GroupID)
 	if len(opList) > 0 {
