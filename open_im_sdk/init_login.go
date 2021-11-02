@@ -522,7 +522,7 @@ func (u *UserRelated) heartbeat() {
 					LogEnd("closeConn DelCh continue", wsReq.OperationID)
 
 				} else {
-					sdkLog("heartbeat response success ", wsReq.OperationID)
+					sdkLog("heartbeat response success ", wsReq.OperationID, "seq cache map size: ", len(u.seqMsg))
 					var wsSeqResp GetMaxAndMinSeqResp
 					err = proto.Unmarshal(r.Data, &wsSeqResp)
 					if err != nil {
