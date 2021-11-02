@@ -21,10 +21,13 @@ func main() {
 	var openIMWsAddress, openIMApiAddress *string
 	//
 	//openIMTerminalType := flag.String("terminal_type", "web", "different terminal types")
-	sdkWsPort = flag.Int("sdk_ws_port", 7799, "openIMSDK ws listening port")
-	openIMApiPort = flag.Int("openIM_api_port", 0, "openIM api listening port")
-	openIMWsPort = flag.Int("openIM_ws_port", 0, "openIM ws listening port")
-	flag.Parse()
+	/*
+		sdkWsPort = flag.Int("sdk_ws_port", 7799, "openIMSDK ws listening port")
+		openIMApiPort = flag.Int("openIM_api_port", 0, "openIM api listening port")
+		openIMWsPort = flag.Int("openIM_ws_port", 0, "openIM ws listening port")
+		flag.Parse()
+	*/
+
 	//switch *openIMTerminalType {
 	//case "pc":
 	//	openIMWsAddress = flag.String("openIM_ws_address", "web", "different terminal types")
@@ -35,8 +38,8 @@ func main() {
 	//	openIMWsPort = flag.Int("openIM_ws_port", 0, "openIM ws listening port")
 	//	flag.Parse()
 	//}
-	APIADDR := "http://120.24.45.199:10000"
-	WSADDR := "ws://120.24.45.199:17778"
+	APIADDR := "http://1.14.194.38:10000"
+	WSADDR := "ws://1.14.194.38:17778"
 
 	sysType := runtime.GOOS
 	switch sysType {

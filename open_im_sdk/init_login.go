@@ -114,12 +114,31 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 	//}
 	//sdkLog("syncSeq2Msg ok ", uid, tk)
 
-	sdkLog("ws, forcedSynchronization heartbeat coroutine run ...")
+	sdkLog("ws, forcedSynchronization heartbeat coroutine timedCloseDB run ...")
 	go u.forcedSynchronization()
-
 	go u.heartbeat()
+	go u.timedCloseDB()
 	cb.OnSuccess("")
 	sdkLog("login end, ", uid, tk)
+}
+
+func (u *UserRelated) timedCloseDB() {
+	timeout := 30
+	timeTicker := time.NewTicker(time.Second * timeout)
+	for {
+		<-timeTicker.C
+		sdkLog("closeDBSetNil begin")
+		u.closeDBSetNil()
+		sdkLog("closeDBSetNil end")
+
+		u.stateMutex.Lock()
+		if u.LoginState == LogoutCmd {
+			sdkLog("logout timedCloseDB return", LogoutCmd)
+			u.stateMutex.Unlock()
+			return
+		}
+		u.stateMutex.Unlock()
+	}
 }
 
 func (u *UserRelated) closeConn() error {

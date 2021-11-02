@@ -5,19 +5,42 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-
 	"time"
 )
 
 func (u *UserRelated) closeDB() error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	if u.initDB != nil {
-		if err := u.initDB.Close(); err != nil {
+	if u.db != nil {
+		if err := u.db.Close(); err != nil {
 			sdkLog("close db failed, ", err.Error())
 			return err
 		}
 	}
+	return nil
+}
+
+func (u *UserRelated) closeDBSetNil() error {
+	u.mRWMutex.Lock()
+	defer u.mRWMutex.Unlock()
+	if u.db != nil {
+		if err := u.db.Close(); err != nil {
+			sdkLog("close db failed, ", err.Error())
+			return err
+		}
+	}
+	u.db = nil
+	return nil
+}
+
+func (u *UserRelated) reOpenDB(uid string) error {
+	db, err := sql.Open("sqlite3", SvrConf.DbDir+"OpenIM_"+uid+".db")
+	sdkLog("open db:", SvrConf.DbDir+"OpenIM_"+uid+".db")
+	if err != nil {
+		sdkLog("failed open db:", SvrConf.DbDir+"OpenIM_"+uid+".db", err.Error())
+		return err
+	}
+	u.db = db
 	return nil
 }
 
@@ -30,8 +53,8 @@ func (u *UserRelated) initDBX(uid string) error {
 	}
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	if u.initDB != nil {
-		u.initDB.Close()
+	if u.db != nil {
+		u.db.Close()
 	}
 	db, err := sql.Open("sqlite3", SvrConf.DbDir+"OpenIM_"+uid+".db")
 	sdkLog("open db:", SvrConf.DbDir+"OpenIM_"+uid+".db")
@@ -39,7 +62,7 @@ func (u *UserRelated) initDBX(uid string) error {
 		sdkLog("failed open db:", SvrConf.DbDir+"OpenIM_"+uid+".db", err.Error())
 		return err
 	}
-	u.initDB = db
+	u.db = db
 	//(&u.Uid, &u.Name, &u.Icon, &u.Gender, &u.Mobile, &u.Birth, u.Email, &u.Ex)
 	table := "CREATE TABLE if not exists `user` " +
 		"(`uid` varchar(64) NOT NULL , " +
@@ -266,12 +289,23 @@ func (u *UserRelated) initDBX(uid string) error {
 	return nil
 }
 
+func (u *UserRelated) Prepare(query string) (*sql.Stmt, error) {
+	if u.db == nil {
+		err := u.reOpenDB(u.LoginUid)
+		if err != nil {
+			sdkLog("reOpenDB failed ", u.LoginUid)
+			return nil, err
+		}
+	}
+	return u.db.Prepare(query)
+}
+
 func (u *UserRelated) setLocalMaxConSeq(seq int) (err error) {
 	sdkLog("setLocalMaxConSeq start ", seq)
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 
-	stmt, err := u.initDB.Prepare("replace into my_local_data(user_id, seq) values (?,?)")
+	stmt, err := u.Prepare("replace into my_local_data(user_id, seq) values (?,?)")
 	if err != nil {
 		sdkLog("set failed", err.Error())
 		return err
@@ -285,11 +319,22 @@ func (u *UserRelated) setLocalMaxConSeq(seq int) (err error) {
 	return nil
 }
 
+func (u *UserRelated) Query(query string, args ...interface{}) (*sql.Rows, error) {
+	if u.db == nil {
+		err := u.reOpenDB(u.LoginUid)
+		if err != nil {
+			sdkLog("reOpenDB failed ", u.LoginUid)
+			return nil, err
+		}
+	}
+	return u.db.Query(query, args)
+}
+
 func (u *UserRelated) getLocalMaxConSeqFromDB() (int64, error) {
 	sdkLog("getLocalMaxConSeqFromDB start")
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	rows, err := u.initDB.Query("SELECT seq FROM my_local_data where  user_id=?", u.LoginUid)
+	rows, err := u.Query("SELECT seq FROM my_local_data where  user_id=?", u.LoginUid)
 	if err != nil {
 		sdkLog("Query failed ", err.Error())
 		return 0, err
@@ -309,7 +354,7 @@ func (u *UserRelated) getLocalMaxConSeqFromDB() (int64, error) {
 func (u *UserRelated) replaceIntoUser(info *userInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("replace into `user`(uid, `name`, icon, gender, mobile, birth, email, ex) values(?, ?, ?, ?, ?, ?, ?, ?)")
+	stmt, err := u.Prepare("replace into `user`(uid, `name`, icon, gender, mobile, birth, email, ex) values(?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		sdkLog("db prepare failed, ", err.Error())
 		return err
@@ -326,7 +371,7 @@ func (u *UserRelated) replaceIntoUser(info *userInfo) error {
 func (u *UserRelated) getAllConversationListModel() (err error, list []*ConversationStruct) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	rows, err := u.initDB.Query("SELECT * FROM conversation where latest_msg_send_time!=0 order by  case when is_pinned=1 then 0 else 1 end,latest_msg_send_time DESC")
+	rows, err := u.Query("SELECT * FROM conversation where latest_msg_send_time!=0 order by  case when is_pinned=1 then 0 else 1 end,latest_msg_send_time DESC")
 	for rows.Next() {
 		c := new(ConversationStruct)
 		err = rows.Scan(&c.ConversationID, &c.ConversationType, &c.UserID, &c.GroupID, &c.ShowName,
@@ -344,7 +389,7 @@ func (u *UserRelated) getAllConversationListModel() (err error, list []*Conversa
 func (u *UserRelated) insertConversationModel(c *ConversationStruct) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("INSERT INTO conversation(conversation_id, conversation_type, " +
+	stmt, err := u.Prepare("INSERT INTO conversation(conversation_id, conversation_type, " +
 		"user_id,group_id,show_name,face_url,recv_msg_opt,unread_count,latest_msg,latest_msg_send_time,draft_text,draft_timestamp,is_pinned) values(?,?,?,?,?,?,?,?,?,?,?,?,?)")
 	if err != nil {
 		sdkLog(err.Error())
@@ -361,7 +406,7 @@ func (u *UserRelated) getConversationLatestMsgModel(conversationID string) (err 
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
 	var s string
-	rows, err := u.initDB.Query("SELECT latest_msg FROM conversation where  conversation_id=?", conversationID)
+	rows, err := u.Query("SELECT latest_msg FROM conversation where  conversation_id=?", conversationID)
 	if err != nil {
 		sdkLog("SELECT latest_msg FROM conversation where  conversation_id=", err.Error())
 		return err, ""
@@ -379,7 +424,7 @@ func (u *UserRelated) getConversationLatestMsgModel(conversationID string) (err 
 func (u *UserRelated) setConversationLatestMsgModel(c *ConversationStruct, conversationID string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("update conversation set latest_msg=?,latest_msg_send_time=? where conversation_id=?")
+	stmt, err := u.Prepare("update conversation set latest_msg=?,latest_msg_send_time=? where conversation_id=?")
 	if err != nil {
 		sdkLog(err.Error())
 		return err
@@ -396,7 +441,7 @@ func (u *UserRelated) setConversationLatestMsgModel(c *ConversationStruct, conve
 func (u *UserRelated) setConversationFaceUrlAndNickName(c *ConversationStruct, conversationID string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("update conversation set show_name=?,face_url=? where conversation_id=?")
+	stmt, err := u.Prepare("update conversation set show_name=?,face_url=? where conversation_id=?")
 	if err != nil {
 		sdkLog(err.Error())
 		return err
@@ -414,7 +459,7 @@ func (u *UserRelated) judgeConversationIfExists(conversationID string) bool {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	var count int
-	rows, err := u.initDB.Query("select count(*) from conversation where  conversation_id=?", conversationID)
+	rows, err := u.Query("select count(*) from conversation where  conversation_id=?", conversationID)
 	if err != nil {
 		fmt.Println("judge err")
 		sdkLog(err.Error())
@@ -437,7 +482,7 @@ func (u *UserRelated) judgeConversationIfExists(conversationID string) bool {
 func (u *UserRelated) addConversationOrUpdateLatestMsg(c *ConversationStruct, conversationID string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("INSERT INTO conversation(conversation_id, conversation_type, user_id,group_id,show_name,face_url,recv_msg_opt,unread_count,latest_msg,latest_msg_send_time,draft_text,draft_timestamp,is_pinned)" +
+	stmt, err := u.Prepare("INSERT INTO conversation(conversation_id, conversation_type, user_id,group_id,show_name,face_url,recv_msg_opt,unread_count,latest_msg,latest_msg_send_time,draft_text,draft_timestamp,is_pinned)" +
 		" values(?,?,?,?,?,?,?,?,?,?,?,?,?)" +
 		"ON CONFLICT(conversation_id) DO UPDATE SET latest_msg = ?,latest_msg_send_time=?")
 	if err != nil {
@@ -456,7 +501,7 @@ func (u *UserRelated) addConversationOrUpdateLatestMsg(c *ConversationStruct, co
 func (u *UserRelated) getOneConversationModel(conversationID string) (err error, c ConversationStruct) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	rows, err := u.initDB.Query("SELECT * FROM conversation where  conversation_id=?", conversationID)
+	rows, err := u.Query("SELECT * FROM conversation where  conversation_id=?", conversationID)
 	if err != nil {
 		sdkLog("getOneConversationModel ,err:", err.Error())
 		sdkLog(err.Error())
@@ -476,7 +521,7 @@ func (u *UserRelated) getOneConversationModel(conversationID string) (err error,
 func (u *UserRelated) deleteConversationModel(conversationID string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("delete from conversation where conversation_id=?")
+	stmt, err := u.Prepare("delete from conversation where conversation_id=?")
 	if err != nil {
 		return err
 	}
@@ -490,7 +535,7 @@ func (u *UserRelated) deleteConversationModel(conversationID string) (err error)
 func (u *UserRelated) ResetConversation(conversationID string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("update  conversation set unread_count=?,latest_msg=?,latest_msg_send_time=?," +
+	stmt, err := u.Prepare("update  conversation set unread_count=?,latest_msg=?,latest_msg_send_time=?," +
 		"draft_text=?,draft_timestamp=?,is_pinned=? where conversation_id=?")
 	if err != nil {
 		sdkLog("ResetConversation", err.Error())
@@ -507,7 +552,7 @@ func (u *UserRelated) ResetConversation(conversationID string) (err error) {
 func (u *UserRelated) setConversationDraftModel(conversationID, draftText string, DraftTimestamp int64) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("update conversation set draft_text=?,latest_msg_send_time=?,draft_timestamp=?where conversation_id=?")
+	stmt, err := u.Prepare("update conversation set draft_text=?,latest_msg_send_time=?,draft_timestamp=?where conversation_id=?")
 	if err != nil {
 		sdkLog("setConversationDraftModel err:", err.Error())
 		return err
@@ -524,7 +569,7 @@ func (u *UserRelated) setConversationDraftModel(conversationID, draftText string
 func (u *UserRelated) pinConversationModel(conversationID string, isPinned int) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("update conversation set is_pinned=? where conversation_id=?")
+	stmt, err := u.Prepare("update conversation set is_pinned=? where conversation_id=?")
 	if err != nil {
 		sdkLog(err.Error())
 		return err
@@ -541,7 +586,7 @@ func (u *UserRelated) pinConversationModel(conversationID string, isPinned int) 
 func (u *UserRelated) setConversationUnreadCount(unreadCount int, conversationID string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("update conversation set unread_count=? where conversation_id=?")
+	stmt, err := u.Prepare("update conversation set unread_count=? where conversation_id=?")
 	if err != nil {
 		return err
 	}
@@ -556,7 +601,7 @@ func (u *UserRelated) setConversationUnreadCount(unreadCount int, conversationID
 func (u *UserRelated) incrConversationUnreadCount(conversationID string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("update conversation set unread_count = unread_count+1 where conversation_id=?")
+	stmt, err := u.Prepare("update conversation set unread_count = unread_count+1 where conversation_id=?")
 	if err != nil {
 		return err
 	}
@@ -571,7 +616,7 @@ func (u *UserRelated) incrConversationUnreadCount(conversationID string) (err er
 func (u *UserRelated) getTotalUnreadMsgCountModel() (totalUnreadCount int32, err error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	rows, err := u.initDB.Query("SELECT IFNULL(SUM(unread_count), 0) FROM conversation")
+	rows, err := u.Query("SELECT IFNULL(SUM(unread_count), 0) FROM conversation")
 	if err != nil {
 		sdkLog(err.Error())
 		return totalUnreadCount, err
@@ -589,7 +634,7 @@ func (u *UserRelated) getTotalUnreadMsgCountModel() (totalUnreadCount int32, err
 func (u *UserRelated) getMultipleConversationModel(conversationIDList []string) (err error, list []*ConversationStruct) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	rows, err := u.initDB.Query("SELECT * FROM conversation where conversation_id in (" + sqlStringHandle(conversationIDList) + ")")
+	rows, err := u.Query("SELECT * FROM conversation where conversation_id in (" + sqlStringHandle(conversationIDList) + ")")
 	fmt.Println("SELECT * FROM conversation where conversation_id in (" + sqlStringHandle(conversationIDList) + ")")
 	for rows.Next() {
 		temp := new(ConversationStruct)
@@ -617,7 +662,7 @@ func sqlStringHandle(ss []string) (s string) {
 func (u *UserRelated) insertIntoTheFriendToFriendInfo(uid, name, comment, icon string, gender int32, mobile, birth, email, ex string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("insert into friend_info(uid,name,comment,icon,gender,mobile,birth,email,ex) values (?,?,?,?,?,?,?,?,?)")
+	stmt, err := u.Prepare("insert into friend_info(uid,name,comment,icon,gender,mobile,birth,email,ex) values (?,?,?,?,?,?,?,?,?)")
 	if err != nil {
 		sdkLog(err.Error())
 		return err
@@ -633,7 +678,7 @@ func (u *UserRelated) insertIntoTheFriendToFriendInfo(uid, name, comment, icon s
 func (u *UserRelated) delTheFriendFromFriendInfo(uid string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("delete from friend_info where uid=?")
+	stmt, err := u.Prepare("delete from friend_info where uid=?")
 	if err != nil {
 		sdkLog(err.Error())
 		return err
@@ -648,7 +693,7 @@ func (u *UserRelated) delTheFriendFromFriendInfo(uid string) error {
 func (u *UserRelated) updateTheFriendInfo(uid, name, comment, icon string, gender int32, mobile, birth, email, ex string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("replace into friend_info(uid,name,comment,icon,gender,mobile,birth,email,ex) values (?,?,?,?,?,?,?,?,?)")
+	stmt, err := u.Prepare("replace into friend_info(uid,name,comment,icon,gender,mobile,birth,email,ex) values (?,?,?,?,?,?,?,?,?)")
 	if err != nil {
 		sdkLog(err.Error())
 		return err
@@ -664,7 +709,7 @@ func (u *UserRelated) updateTheFriendInfo(uid, name, comment, icon string, gende
 func (u *UserRelated) updateFriendInfo(uid, name, icon string, gender int32, mobile, birth, email, ex string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("update friend_info set `name` = ?, icon = ?, gender = ?, mobile = ?, birth = ?, email = ?, ex = ? where uid = ?")
+	stmt, err := u.Prepare("update friend_info set `name` = ?, icon = ?, gender = ?, mobile = ?, birth = ?, email = ?, ex = ? where uid = ?")
 	if err != nil {
 		sdkLog(err.Error())
 		return err
@@ -680,7 +725,7 @@ func (u *UserRelated) updateFriendInfo(uid, name, icon string, gender int32, mob
 func (u *UserRelated) insertIntoTheUserToBlackList(info userInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("insert into black_list(uid,name,icon,gender,mobile,birth,email,ex) values (?,?,?,?,?,?,?,?)")
+	stmt, err := u.Prepare("insert into black_list(uid,name,icon,gender,mobile,birth,email,ex) values (?,?,?,?,?,?,?,?)")
 	if err != nil {
 		sdkLog(err.Error())
 		return err
@@ -696,7 +741,7 @@ func (u *UserRelated) insertIntoTheUserToBlackList(info userInfo) error {
 func (u *UserRelated) updateBlackList(info userInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("replace into black_list(uid,name,icon,gender,mobile,birth,email,ex) values (?,?,?,?,?,?,?,?)")
+	stmt, err := u.Prepare("replace into black_list(uid,name,icon,gender,mobile,birth,email,ex) values (?,?,?,?,?,?,?,?)")
 	if err != nil {
 		sdkLog(err.Error())
 		return err
@@ -713,7 +758,7 @@ func (u *UserRelated) updateBlackList(info userInfo) error {
 func (u *UserRelated) delTheUserFromBlackList(uid string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("delete from black_list where uid=?")
+	stmt, err := u.Prepare("delete from black_list where uid=?")
 	if err != nil {
 		fmt.Println(err)
 		sdkLog(err.Error())
@@ -731,7 +776,7 @@ func (u *UserRelated) delTheUserFromBlackList(uid string) error {
 func (u *UserRelated) insertIntoTheUserToApplicationList(appUserInfo applyUserInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("insert into friend_request(uid,name,icon,gender,mobile,birth,email,ex,flag,req_message,create_time) values (?,?,?,?,?,?,?,?,?,?,?)")
+	stmt, err := u.Prepare("insert into friend_request(uid,name,icon,gender,mobile,birth,email,ex,flag,req_message,create_time) values (?,?,?,?,?,?,?,?,?,?,?)")
 	if err != nil {
 		sdkLog("Prepare failed ", err.Error())
 		return err
@@ -747,7 +792,7 @@ func (u *UserRelated) insertIntoTheUserToApplicationList(appUserInfo applyUserIn
 func (u *UserRelated) delTheUserFromApplicationList(uid string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("delete from friend_request where uid=?")
+	stmt, err := u.Prepare("delete from friend_request where uid=?")
 	if err != nil {
 		sdkLog(err.Error())
 		return err
@@ -763,7 +808,7 @@ func (u *UserRelated) delTheUserFromApplicationList(uid string) error {
 func (u *UserRelated) updateApplicationList(info applyUserInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("replace into friend_request(uid,name,icon,gender,mobile,birth,email,ex,flag,req_message,create_time) values (?,?,?,?,?,?,?,?,?,?,?)")
+	stmt, err := u.Prepare("replace into friend_request(uid,name,icon,gender,mobile,birth,email,ex,flag,req_message,create_time) values (?,?,?,?,?,?,?,?,?,?,?)")
 	if err != nil {
 		fmt.Println(err.Error())
 		return err
@@ -779,7 +824,7 @@ func (u *UserRelated) updateApplicationList(info applyUserInfo) error {
 func (u *UserRelated) getFriendInfoByFriendUid(friendUid string) (*friendInfo, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	stmt, err := u.initDB.Query("select * from friend_info  where uid=? ", friendUid)
+	stmt, err := u.Query("select * from friend_info  where uid=? ", friendUid)
 	if err != nil {
 		sdkLog("query failed, ", err.Error())
 		return nil, err
@@ -810,7 +855,7 @@ func (u *UserRelated) getFriendInfoByFriendUid(friendUid string) (*friendInfo, e
 func (u *UserRelated) getLocalFriendList22() ([]friendInfo, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	stmt, err := u.initDB.Query("select * from friend_info")
+	stmt, err := u.Query("select * from friend_info")
 	if err != nil {
 		return nil, err
 	}
@@ -842,7 +887,7 @@ func (u *UserRelated) getLocalFriendList22() ([]friendInfo, error) {
 func (u *UserRelated) getLocalFriendApplication() ([]applyUserInfo, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	stmt, err := u.initDB.Query("select * from friend_request order by create_time desc")
+	stmt, err := u.Query("select * from friend_request order by create_time desc")
 	if err != nil {
 		println(err.Error())
 		return nil, err
@@ -875,7 +920,7 @@ func (u *UserRelated) getLocalFriendApplication() ([]applyUserInfo, error) {
 func (u *UserRelated) getLocalBlackList() ([]userInfo, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	stmt, err := u.initDB.Query("select * from black_list")
+	stmt, err := u.Query("select * from black_list")
 	if err != nil {
 		return nil, err
 	}
@@ -904,7 +949,7 @@ func (u *UserRelated) getLocalBlackList() ([]userInfo, error) {
 func (u *UserRelated) getBlackUsInfoByUid(blackUid string) (*userInfo, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	stmt, err := u.initDB.Query("select * from black_list where uid=?", blackUid)
+	stmt, err := u.Query("select * from black_list where uid=?", blackUid)
 	if err != nil {
 		return nil, err
 	}
@@ -934,7 +979,7 @@ func (u *UserRelated) updateLocalTransferGroupOwner(transfer *TransferGroupOwner
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 
-	stmt, err := u.initDB.Prepare("update group_member set administrator_level = ? where group_id = ? and uid = ?")
+	stmt, err := u.Prepare("update group_member set administrator_level = ? where group_id = ? and uid = ?")
 	if err != nil {
 		sdkLog(err.Error())
 		return err
@@ -945,7 +990,7 @@ func (u *UserRelated) updateLocalTransferGroupOwner(transfer *TransferGroupOwner
 		return err
 	}
 
-	stmt, err = u.initDB.Prepare("update group_member set administrator_level = ? where group_id = ? and uid = ?")
+	stmt, err = u.Prepare("update group_member set administrator_level = ? where group_id = ? and uid = ?")
 	if err != nil {
 		sdkLog(err.Error())
 		return err
@@ -962,7 +1007,7 @@ func (u *UserRelated) updateLocalTransferGroupOwner(transfer *TransferGroupOwner
 func (u *UserRelated) insertLocalAcceptGroupApplication(addMem *groupMemberFullInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("insert into group_member(group_id,uid,nickname,user_group_face_url,administrator_level,join_time) values (?,?,?,?,?,?)")
+	stmt, err := u.Prepare("insert into group_member(group_id,uid,nickname,user_group_face_url,administrator_level,join_time) values (?,?,?,?,?,?)")
 	if err != nil {
 		sdkLog(err.Error())
 		return err
@@ -977,7 +1022,7 @@ func (u *UserRelated) insertLocalAcceptGroupApplication(addMem *groupMemberFullI
 func (u *UserRelated) insertIntoLocalGroupInfo(info groupInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("insert into group_info(group_id,name,introduction,notification,face_url,create_time,ex) values (?,?,?,?,?,?,?)")
+	stmt, err := u.Prepare("insert into group_info(group_id,name,introduction,notification,face_url,create_time,ex) values (?,?,?,?,?,?,?)")
 	if err != nil {
 		return err
 	}
@@ -990,7 +1035,7 @@ func (u *UserRelated) insertIntoLocalGroupInfo(info groupInfo) error {
 func (u *UserRelated) delLocalGroupInfo(groupId string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("delete from group_info where group_id=?")
+	stmt, err := u.Prepare("delete from group_info where group_id=?")
 	if err != nil {
 		sdkLog(err.Error())
 		return err
@@ -1005,7 +1050,7 @@ func (u *UserRelated) delLocalGroupInfo(groupId string) error {
 func (u *UserRelated) replaceLocalGroupInfo(info groupInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("replace into group_info(group_id,name,introduction,notification,face_url,create_time,ex) values (?,?,?,?,?,?,?)")
+	stmt, err := u.Prepare("replace into group_info(group_id,name,introduction,notification,face_url,create_time,ex) values (?,?,?,?,?,?,?)")
 	if err != nil {
 		return err
 	}
@@ -1020,7 +1065,7 @@ func (u *UserRelated) replaceLocalGroupInfo(info groupInfo) error {
 func (u *UserRelated) updateLocalGroupInfo(info groupInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("update group_info set name=?,introduction=?,notification=?,face_url=? where group_id=?")
+	stmt, err := u.Prepare("update group_info set name=?,introduction=?,notification=?,face_url=? where group_id=?")
 	if err != nil {
 		return err
 	}
@@ -1035,7 +1080,7 @@ func (u *UserRelated) updateLocalGroupInfo(info groupInfo) error {
 func (u *UserRelated) getLocalGroupsInfo() ([]groupInfo, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	stmt, err := u.initDB.Query("select * from group_info")
+	stmt, err := u.Query("select * from group_info")
 
 	if err != nil {
 		return nil, err
@@ -1064,7 +1109,7 @@ func (u *UserRelated) getLocalGroupsInfo() ([]groupInfo, error) {
 func (u *UserRelated) getLocalGroupsInfoByGroupID(groupID string) (*groupInfo, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	stmt, err := u.initDB.Query("select * from group_info where group_id=?", groupID)
+	stmt, err := u.Query("select * from group_info where group_id=?", groupID)
 	if err != nil {
 		return nil, err
 	}
@@ -1097,7 +1142,7 @@ func (u *UserRelated) getLocalGroupsInfoByGroupID(groupID string) (*groupInfo, e
 func (u *UserRelated) findLocalGroupOwnerByGroupId(groupId string) (uid string, err error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	stmt, err := u.initDB.Query("select uid from group_member where group_id=? and administrator_level=?", groupId, 1)
+	stmt, err := u.Query("select uid from group_member where group_id=? and administrator_level=?", groupId, 1)
 	if err != nil {
 		return "", err
 	}
@@ -1115,7 +1160,7 @@ func (u *UserRelated) findLocalGroupOwnerByGroupId(groupId string) (uid string, 
 func (u *UserRelated) getLocalGroupMemberNumByGroupId(groupId string) (num int, err error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	stmt, err := u.initDB.Query("select count(*) from group_member where group_id=?", groupId)
+	stmt, err := u.Query("select count(*) from group_member where group_id=?", groupId)
 	if err != nil {
 		return 0, err
 	}
@@ -1132,7 +1177,7 @@ func (u *UserRelated) getLocalGroupMemberNumByGroupId(groupId string) (num int, 
 func (u *UserRelated) getLocalGroupMemberInfoByGroupIdUserId(groupId string, uid string) (*groupMemberFullInfo, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	stmt, err := u.initDB.Query("select * from group_member where group_id=? and uid=?", groupId, uid)
+	stmt, err := u.Query("select * from group_member where group_id=? and uid=?", groupId, uid)
 	if err != nil {
 		sdkLog("query failed, ", err.Error())
 		return nil, err
@@ -1151,7 +1196,7 @@ func (u *UserRelated) getLocalGroupMemberInfoByGroupIdUserId(groupId string, uid
 func (u *UserRelated) getLocalGroupMemberList() ([]groupMemberFullInfo, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	stmt, err := u.initDB.Query("select * from group_member")
+	stmt, err := u.Query("select * from group_member")
 
 	if err != nil {
 		return nil, err
@@ -1179,7 +1224,7 @@ func (u *UserRelated) getLocalGroupMemberList() ([]groupMemberFullInfo, error) {
 func (u *UserRelated) getLocalGroupMemberListByGroupID(groupId string) ([]groupMemberFullInfo, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	stmt, err := u.initDB.Query("select * from group_member where group_id=?", groupId)
+	stmt, err := u.Query("select * from group_member where group_id=?", groupId)
 	if err != nil {
 		return nil, err
 	}
@@ -1206,7 +1251,7 @@ func (u *UserRelated) getLocalGroupMemberListByGroupID(groupId string) ([]groupM
 func (u *UserRelated) insertIntoLocalGroupMember(info groupMemberFullInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("insert into group_member(group_id, uid, nickname,user_group_face_url,administrator_level, join_time) values (?,?,?,?,?,?)")
+	stmt, err := u.Prepare("insert into group_member(group_id, uid, nickname,user_group_face_url,administrator_level, join_time) values (?,?,?,?,?,?)")
 	if err != nil {
 		return err
 	}
@@ -1220,7 +1265,7 @@ func (u *UserRelated) insertIntoLocalGroupMember(info groupMemberFullInfo) error
 func (u *UserRelated) delLocalGroupMember(info groupMemberFullInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("delete from group_member where group_id=? and uid=?")
+	stmt, err := u.Prepare("delete from group_member where group_id=? and uid=?")
 	if err != nil {
 		return err
 	}
@@ -1233,7 +1278,7 @@ func (u *UserRelated) delLocalGroupMember(info groupMemberFullInfo) error {
 func (u *UserRelated) replaceLocalGroupMemberInfo(info groupMemberFullInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("replace into group_member(group_id,uid,nickname,user_group_face_url,administrator_level, join_time) values (?,?,?,?,?,?)")
+	stmt, err := u.Prepare("replace into group_member(group_id,uid,nickname,user_group_face_url,administrator_level, join_time) values (?,?,?,?,?,?)")
 	if err != nil {
 		return err
 	}
@@ -1247,7 +1292,7 @@ func (u *UserRelated) replaceLocalGroupMemberInfo(info groupMemberFullInfo) erro
 func (u *UserRelated) updateLocalGroupMemberInfo(info groupMemberFullInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("update group_member set nickname=?,user_group_face_url=? where group_id=? and uid=?")
+	stmt, err := u.Prepare("update group_member set nickname=?,user_group_face_url=? where group_id=? and uid=?")
 	if err != nil {
 		return err
 	}
@@ -1261,7 +1306,7 @@ func (u *UserRelated) updateLocalGroupMemberInfo(info groupMemberFullInfo) error
 func (u *UserRelated) insertIntoSelfApplyToGroupRequest(groupId, message string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("replace into self_apply_to_group_request(group_id,flag,req_msg,create_time) values (?,?,?,?)")
+	stmt, err := u.Prepare("replace into self_apply_to_group_request(group_id,flag,req_msg,create_time) values (?,?,?,?)")
 	if err != nil {
 		return err
 	}
@@ -1275,7 +1320,7 @@ func (u *UserRelated) insertIntoSelfApplyToGroupRequest(groupId, message string)
 func (u *UserRelated) insertMessageToLocalOrUpdateContent(message *MsgStruct) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("INSERT INTO chat_log(msg_id, send_id, is_read," +
+	stmt, err := u.Prepare("INSERT INTO chat_log(msg_id, send_id, is_read," +
 		" seq,status, session_type, recv_id, content_type, sender_face_url,sender_nick_name,msg_from, content, remark,sender_platform_id, send_time,create_time) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)" +
 		"ON CONFLICT(msg_id) DO UPDATE SET content = ?")
 	if err != nil {
@@ -1295,7 +1340,7 @@ func (u *UserRelated) insertMessageToLocalOrUpdateContent(message *MsgStruct) (e
 func (u *UserRelated) insertPushMessageToChatLog(message *MsgStruct) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("INSERT INTO chat_log(msg_id, send_id, is_read," +
+	stmt, err := u.Prepare("INSERT INTO chat_log(msg_id, send_id, is_read," +
 		" seq,status, session_type, recv_id, content_type, sender_face_url,sender_nick_name,msg_from, content, remark,sender_platform_id, send_time,create_time) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)" +
 		"ON CONFLICT(msg_id) DO UPDATE SET seq = ?")
 	if err != nil {
@@ -1315,7 +1360,7 @@ func (u *UserRelated) insertPushMessageToChatLog(message *MsgStruct) (err error)
 func (u *UserRelated) updateMessageSeq(message *MsgStruct) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("update chat_log set seq=? where msg_id=?")
+	stmt, err := u.Prepare("update chat_log set seq=? where msg_id=?")
 	if err != nil {
 		sdkLog("Prepare failed, ", err.Error())
 		return err
@@ -1331,7 +1376,7 @@ func (u *UserRelated) judgeMessageIfExists(message *MsgStruct) bool {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	var count int
-	rows, err := u.initDB.Query("select count(*) from chat_log where  msg_id=?", message.ClientMsgID)
+	rows, err := u.Query("select count(*) from chat_log where  msg_id=?", message.ClientMsgID)
 	if err != nil {
 		sdkLog("Query failed, ", err.Error())
 		return false
@@ -1353,7 +1398,7 @@ func (u *UserRelated) getOneMessage(msgID string) (m *MsgStruct, err error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
 	// query
-	rows, err := u.initDB.Query("SELECT * FROM chat_log where msg_id = ?", msgID)
+	rows, err := u.Query("SELECT * FROM chat_log where msg_id = ?", msgID)
 	if err != nil {
 		sdkLog("getOneMessage failed", err.Error(), msgID)
 		return nil, err
@@ -1374,7 +1419,7 @@ func (u *UserRelated) getOneMessage(msgID string) (m *MsgStruct, err error) {
 func (u *UserRelated) setSingleMessageHasRead(sendID string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("update chat_log set is_read=? where send_id=?And is_read=?AND session_type=?")
+	stmt, err := u.Prepare("update chat_log set is_read=? where send_id=?And is_read=?AND session_type=?")
 	if err != nil {
 		return err
 	}
@@ -1389,7 +1434,7 @@ func (u *UserRelated) setSingleMessageHasRead(sendID string) (err error) {
 func (u *UserRelated) setGroupMessageHasRead(groupID string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("update chat_log set is_read=? where recv_id=?And is_read=?AND session_type=?")
+	stmt, err := u.Prepare("update chat_log set is_read=? where recv_id=?And is_read=?AND session_type=?")
 	if err != nil {
 		return err
 	}
@@ -1403,7 +1448,7 @@ func (u *UserRelated) setGroupMessageHasRead(groupID string) (err error) {
 func (u *UserRelated) setMessageStatus(msgID string, status int) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("update chat_log set status=? where msg_id=?")
+	stmt, err := u.Prepare("update chat_log set status=? where msg_id=?")
 	if err != nil {
 		sdkLog("setMessageStatus prepare failed, err: ", err.Error())
 		return err
@@ -1418,7 +1463,7 @@ func (u *UserRelated) setMessageStatus(msgID string, status int) (err error) {
 func (u *UserRelated) setMessageStatusBySourceID(sourceID string, status, sessionType int) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("update chat_log set status=? where (send_id=? or recv_id=?)AND session_type=?")
+	stmt, err := u.Prepare("update chat_log set status=? where (send_id=? or recv_id=?)AND session_type=?")
 	if err != nil {
 		sdkLog("prepare failed, err: ", err.Error())
 		return err
@@ -1434,7 +1479,7 @@ func (u *UserRelated) setMessageStatusBySourceID(sourceID string, status, sessio
 func (u *UserRelated) setMessageHasReadByMsgID(msgID string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("update chat_log set is_read=? where msg_id=?And is_read=?")
+	stmt, err := u.Prepare("update chat_log set is_read=? where msg_id=?And is_read=?")
 	if err != nil {
 		return err
 	}
@@ -1449,7 +1494,7 @@ func (u *UserRelated) setMessageHasReadByMsgID(msgID string) (err error) {
 func (u *UserRelated) getHistoryMessage(sourceConversationID string, startTime int64, count int, sessionType int) (err error, list MsgFormats) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	rows, err := u.initDB.Query("select * from chat_log WHERE (send_id = ? OR recv_id =? )AND (content_type<=? and content_type not in (?)or (content_type >=? and content_type <=?  and content_type not in(?,?)  ))AND status not in(?,?)AND session_type=?AND send_time<?  order by send_time DESC  LIMIT ? OFFSET 0 ",
+	rows, err := u.Query("select * from chat_log WHERE (send_id = ? OR recv_id =? )AND (content_type<=? and content_type not in (?)or (content_type >=? and content_type <=?  and content_type not in(?,?)  ))AND status not in(?,?)AND session_type=?AND send_time<?  order by send_time DESC  LIMIT ? OFFSET 0 ",
 		sourceConversationID, sourceConversationID, AcceptFriendApplicationTip, HasReadReceipt, GroupTipBegin, GroupTipEnd, SetGroupInfoTip, JoinGroupTip, MsgStatusHasDeleted, MsgStatusRevoked, sessionType, startTime, count)
 	for rows.Next() {
 		temp := new(MsgStruct)
@@ -1472,7 +1517,7 @@ func (u *UserRelated) getHistoryMessage(sourceConversationID string, startTime i
 func (u *UserRelated) deleteMessageByConversationModel(sourceConversationID string, maxSeq int64) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("delete from chat_log  where send_id=? or recv_id=?")
+	stmt, err := u.Prepare("delete from chat_log  where send_id=? or recv_id=?")
 	if err != nil {
 		return err
 	}
@@ -1486,7 +1531,7 @@ func (u *UserRelated) deleteMessageByConversationModel(sourceConversationID stri
 func (u *UserRelated) deleteMessageByMsgID(msgID string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("delete from chat_log  where msg_id=?")
+	stmt, err := u.Prepare("delete from chat_log  where msg_id=?")
 	if err != nil {
 		return err
 	}
@@ -1500,7 +1545,7 @@ func (u *UserRelated) deleteMessageByMsgID(msgID string) (err error) {
 func (u *UserRelated) updateMessageTimeAndMsgIDStatus(ClientMsgID string, sendTime int64, status int) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("update chat_log set send_time=?, status=? where msg_id=?")
+	stmt, err := u.Prepare("update chat_log set send_time=?, status=? where msg_id=?")
 	if err != nil {
 		return err
 	}
@@ -1513,7 +1558,7 @@ func (u *UserRelated) updateMessageTimeAndMsgIDStatus(ClientMsgID string, sendTi
 func (u *UserRelated) getMultipleMessageModel(messageIDList []string) (err error, list []*MsgStruct) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	rows, err := u.initDB.Query("SELECT * FROM chat_log where msg_id in (" + sqlStringHandle(messageIDList) + ")")
+	rows, err := u.Query("SELECT * FROM chat_log where msg_id in (" + sqlStringHandle(messageIDList) + ")")
 	fmt.Println("SELECT * FROM conversation where conversation_id in (" + sqlStringHandle(messageIDList) + ")")
 	defer rows.Close()
 	for rows.Next() {
@@ -1545,7 +1590,7 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 	var rSeq int64
 	var rows *sql.Rows
 	if old == 0 {
-		rows, err = u.initDB.Query("SELECT seq FROM chat_log where seq>? order by seq", old)
+		rows, err = u.Query("SELECT seq FROM chat_log where seq>? order by seq", old)
 		if err != nil {
 			sdkLog("getLocalMaxSeqModel,Query  failed", err.Error(), old)
 			LogFReturn(old, err)
@@ -1573,7 +1618,7 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 		LogSReturn(rSeq, nil)
 		return rSeq, nil
 	} else {
-		rows, err = u.initDB.Query("SELECT seq FROM chat_log where seq>=? order by seq", old)
+		rows, err = u.Query("SELECT seq FROM chat_log where seq>=? order by seq", old)
 		if err != nil {
 			sdkLog("getLocalMaxSeqModel,Query err:", err.Error(), old)
 			LogFReturn(old, err)
@@ -1607,7 +1652,7 @@ func (ur *UserRelated) getLoginUserInfoFromLocal() (userInfo, error) {
 	ur.mRWMutex.RLock()
 	defer ur.mRWMutex.RUnlock()
 	var u userInfo
-	rows, err := ur.initDB.Query("select * from user limit 1 ")
+	rows, err := ur.Query("select * from user limit 1 ")
 	if err == nil {
 		for rows.Next() {
 			err = rows.Scan(&u.Uid, &u.Name, &u.Icon, &u.Gender, &u.Mobile, &u.Birth, &u.Email, &u.Ex)
@@ -1634,7 +1679,7 @@ func (u *UserRelated) getOwnLocalGroupApplicationList(groupId string) (*groupApp
 		sql = fmt.Sprintf("%s where group_id = %s", sql, groupId)
 	}
 
-	rows, err := u.initDB.Query(sql)
+	rows, err := u.Query(sql)
 	if err != nil {
 		sdkLog("db Query getOwnLocalGroupApplicationList faild, ", err.Error())
 		return nil, err
@@ -1680,7 +1725,7 @@ func (u *UserRelated) getOwnLocalGroupApplicationList(groupId string) (*groupApp
 func (u *UserRelated) insertIntoRequestToGroupRequest(info GroupReqListInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("insert into group_request(id, group_id, from_user_id, to_user_id,flag,req_msg,handled_msg, create_time,from_user_nickname,to_user_nickname,from_user_face_url,to_user_face_url,handled_user) values (?,?,?,?,?,?,?,?,?,?,?,?,?)")
+	stmt, err := u.Prepare("insert into group_request(id, group_id, from_user_id, to_user_id,flag,req_msg,handled_msg, create_time,from_user_nickname,to_user_nickname,from_user_face_url,to_user_face_url,handled_user) values (?,?,?,?,?,?,?,?,?,?,?,?,?)")
 	if err != nil {
 		return err
 	}
@@ -1694,7 +1739,7 @@ func (u *UserRelated) insertIntoRequestToGroupRequest(info GroupReqListInfo) err
 func (u *UserRelated) delRequestFromGroupRequest(info GroupReqListInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("delete from group_request where id=?")
+	stmt, err := u.Prepare("delete from group_request where id=?")
 	if err != nil {
 		return err
 	}
@@ -1708,7 +1753,7 @@ func (u *UserRelated) delRequestFromGroupRequest(info GroupReqListInfo) error {
 func (u *UserRelated) replaceIntoRequestToGroupRequest(info GroupReqListInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.initDB.Prepare("replace into group_request(id,group_id, from_user_id, to_user_id,flag,req_msg,handled_msg, create_time,from_user_nickname,to_user_nickname,from_user_face_url,to_user_face_url,handled_user) values (?,?,?,?,?,?,?,?,?,?,?,?,?)")
+	stmt, err := u.Prepare("replace into group_request(id,group_id, from_user_id, to_user_id,flag,req_msg,handled_msg, create_time,from_user_nickname,to_user_nickname,from_user_face_url,to_user_face_url,handled_user) values (?,?,?,?,?,?,?,?,?,?,?,?,?)")
 	if err != nil {
 		return err
 	}

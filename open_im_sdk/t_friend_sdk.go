@@ -37,7 +37,7 @@ func TestLog(v ...interface{}) {
 	X.Println(a, b, c, d)
 }
 
-var Friend_uid = "7798cfa9135fe134"
+var Friend_uid = "09fd93dfbf"
 
 ///////////////////////////////////////////////////////////
 
@@ -596,11 +596,11 @@ func (c conversationCallBack) OnSyncServerFailed() {
 }
 
 func (c conversationCallBack) OnNewConversation(conversationList string) {
-	//fmt.Printf("OnNewConversation returnList is %s\n", conversationList)
+	fmt.Printf("OnNewConversation returnList is %s\n", conversationList)
 }
 
 func (c conversationCallBack) OnConversationChanged(conversationList string) {
-	//	fmt.Printf("OnConversationChanged returnList is %s\n", conversationList)
+	fmt.Printf("OnConversationChanged returnList is %s\n", conversationList)
 }
 
 func (c conversationCallBack) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {

@@ -107,7 +107,8 @@ type UserRelated struct {
 	ConversationListener
 	groupListener
 
-	initDB     *sql.DB
+	//initDB     *sql.DB
+	db         *sql.DB
 	mRWMutex   *sync.RWMutex
 	stateMutex sync.Mutex
 
