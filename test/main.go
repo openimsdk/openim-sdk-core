@@ -290,7 +290,7 @@ var (
 	APIADDR      = ""
 	WSADDR       = ""
 	REGISTERADDR = ""
-	TOKENADDR    = "http://47.112.160.66:10000/auth/user_token"
+	TOKENADDR    = ""
 	SECRET       = "tuoyun"
 	SENDINTERVAL = 20
 )
