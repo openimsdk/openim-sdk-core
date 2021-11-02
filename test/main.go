@@ -302,10 +302,14 @@ func main() {
 	uid := flag.Int("uid", 1, "RpcToken default listen port 10800")
 	uidCount := flag.Int("uid_count", 2, "RpcToken default listen port 10800")
 	messageCount := flag.Int("message_count", 1, "RpcToken default listen port 10800")
-	APIADDR = *flag.String("api_addr ", "http://127.0.0.1:10000", "api addr")
-	WSADDR = *flag.String("ws_addr ", "http://127.0.0.1:17778", "ws addr")
-	REGISTERADDR = *flag.String("register_addr ", "http://127.0.0.1:10000/auth/user_register", "register addr")
-	TOKENADDR = *flag.String("token_addr ", "http://127.0.0.1:10000/auth/user_token", "token addr")
+	APIADDR1 := *flag.String("api_addr ", "http://127.0.0.1:10000", "api addr")
+	WSADDR1 := *flag.String("ws_addr ", "http://127.0.0.1:17778", "ws addr")
+	REGISTERADDR1 := *flag.String("register_addr ", "http://127.0.0.1:10000/auth/user_register", "register addr")
+	TOKENADDR1 := *flag.String("token_addr ", "http://127.0.0.1:10000/auth/user_token", "token addr")
+	APIADDR = APIADDR1
+	WSADDR = WSADDR1
+	REGISTERADDR = REGISTERADDR1
+	TOKENADDR = TOKENADDR1
 
 	flag.Parse()
 	var myUid int = *uid
