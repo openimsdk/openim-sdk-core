@@ -501,6 +501,7 @@ func (u *UserRelated) heartbeat() {
 			u.closeConn()
 			u.DelCh(msgIncr)
 			LogEnd("closeConn DelCh continue", wsReq.OperationID)
+			time.Sleep(time.Duration(5) * time.Second)
 			continue
 		}
 
@@ -874,7 +875,7 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 			u.DelCh(msgIncr)
 		}
 	case <-time.After(time.Second * time.Duration(timeout)):
-		sdkLog("close conn, ws ch recvMsg timeout,", wsReq.OperationID)
+		sdkLog("ws ch recvMsg timeout,", wsReq.OperationID)
 		u.DelCh(msgIncr)
 	}
 	return nil
