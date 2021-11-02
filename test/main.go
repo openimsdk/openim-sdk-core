@@ -264,10 +264,10 @@ func runGetToken(strMyUid string) string {
 }
 
 var (
-	APIADDR      = "http://120.24.45.199:10000"
-	WSADDR       = "ws://120.24.45.199:17778"
-	REGISTERADDR = "http://120.24.45.199:10000/auth/user_register"
-	TOKENADDR    = "http://120.24.45.199:10000/auth/user_token"
+	APIADDR      = "http://47.112.160.66:10000"
+	WSADDR       = "ws://47.112.160.66:17778"
+	REGISTERADDR = "http://47.112.160.66:10000/auth/user_register"
+	TOKENADDR    = "http://47.112.160.66:10000/auth/user_token"
 	SECRET       = "tuoyun"
 	SENDINTERVAL = 20
 )
@@ -276,7 +276,7 @@ var (
 func main() {
 
 	open_im_sdk.LogBegin("")
-	myUid1 := 0
+	myUid1 := 1
 	strMyUid1 := GenUid(myUid1)
 
 	runRigister(strMyUid1)
@@ -294,7 +294,7 @@ func main() {
 		}
 	*/
 
-	open_im_sdk.DoTestaddFriend()
+	//open_im_sdk.DoTestaddFriend()
 	for true {
 		time.Sleep(time.Duration(60) * time.Second)
 		fmt.Println("waiting")

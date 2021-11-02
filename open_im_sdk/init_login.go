@@ -513,7 +513,7 @@ func (u *UserRelated) heartbeat() {
 			}
 			select {
 			case r := <-ch:
-				sdkLog("ws ch recvMsg success: ", wsReq.OperationID)
+				sdkLog("ws ch recvMsg success: ", wsReq.OperationID, "seq cache map size: ", len(u.seqMsg))
 				if r.ErrCode != 0 {
 					sdkLog("heartbeat response faield ", r.ErrCode, r.ErrMsg, wsReq.OperationID)
 					LogBegin("closeConn DelCh", msgIncr, wsReq.OperationID)
@@ -522,7 +522,7 @@ func (u *UserRelated) heartbeat() {
 					LogEnd("closeConn DelCh continue", wsReq.OperationID)
 
 				} else {
-					sdkLog("heartbeat response success ", wsReq.OperationID, "seq cache map size: ", len(u.seqMsg))
+					sdkLog("heartbeat response success ", wsReq.OperationID)
 					var wsSeqResp GetMaxAndMinSeqResp
 					err = proto.Unmarshal(r.Data, &wsSeqResp)
 					if err != nil {
