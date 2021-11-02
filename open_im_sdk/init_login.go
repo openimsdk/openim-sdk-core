@@ -123,8 +123,7 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 }
 
 func (u *UserRelated) timedCloseDB() {
-	timeout := 30
-	timeTicker := time.NewTicker(time.Second * timeout)
+	timeTicker := time.NewTicker(time.Second * 30)
 	for {
 		<-timeTicker.C
 		sdkLog("closeDBSetNil begin")
