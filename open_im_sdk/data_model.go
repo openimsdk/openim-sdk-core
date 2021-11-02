@@ -1609,7 +1609,7 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 					rSeq = seq
 				} else {
 					sdkLog("not consequent ", old, idx, seq)
-					u.SetMinSeqSvr(rSeq)
+
 					rows.Close()
 					break
 				}
@@ -1637,7 +1637,6 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 					idx++
 				} else {
 					sdkLog("not consequent ", old, idx, seq)
-					u.SetMinSeqSvr(rSeq)
 					rows.Close()
 					break
 				}
