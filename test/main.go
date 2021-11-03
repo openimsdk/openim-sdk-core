@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"net"
 	"open_im_sdk/open_im_sdk"
 	"os"
 	"strconv"
@@ -223,7 +224,11 @@ func (z zx) txexfc(uid int) int {
 func GenUid(uid int) string {
 	open_im_sdk.LogBegin(uid)
 
-	UidPrefix := "open_im_test_uid_"
+	if getMyIP() == "" {
+		fmt.Println("getMyIP() failed")
+		os.Exit(1)
+	}
+	UidPrefix := getMyIP() + "open_im_test_uid_"
 	open_im_sdk.LogSReturn(UidPrefix + strconv.FormatInt(int64(uid), 10))
 	return UidPrefix + strconv.FormatInt(int64(uid), 10)
 }
@@ -284,6 +289,27 @@ func runGetToken(strMyUid string) string {
 	}
 
 	return token
+}
+func getMyIP() string {
+	addrs, err := net.InterfaceAddrs()
+
+	if err != nil {
+		fmt.Println(err)
+
+		os.Exit(1)
+		return ""
+	}
+	for _, address := range addrs {
+
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				fmt.Println(ipnet.IP.String())
+				return ipnet.IP.String()
+			}
+
+		}
+	}
+	return ""
 }
 
 var (
