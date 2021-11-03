@@ -568,6 +568,10 @@ func (u *UserRelated) heartbeat() {
 						}
 					}
 				}
+				if breakFlag == 1 {
+					sdkLog("don't wait ", wsReq.OperationID)
+					break
+				}
 				if flag == false {
 					sdkLog("ws ch recvMsg timeout ", timeout, "s ", wsReq.OperationID)
 					LogBegin("closeConn", wsReq.OperationID)
