@@ -324,7 +324,7 @@ var (
 // myuid,  maxuid,  msgnum
 func main() {
 
-	cmdfile := "./cmd.txt"
+	//cmdfile := "./cmd.txt"
 	uid := flag.Int("uid", 1, "RpcToken default listen port 10800")
 	uidCount := flag.Int("uid_count", 2, "RpcToken default listen port 10800")
 	messageCount := flag.Int("message_count", 1, "RpcToken default listen port 10800")
@@ -350,7 +350,8 @@ func main() {
 	runRigister(strMyUid)
 	token := runGetToken(strMyUid)
 
-	cmd := GetCmd(myUid, cmdfile)
+	//cmd := GetCmd(myUid, cmdfile)
+	cmd := 2
 
 	fmt.Println("getcmd value ", cmd)
 	switch cmd {
