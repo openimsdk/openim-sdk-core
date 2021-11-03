@@ -559,13 +559,18 @@ func (u *UserRelated) heartbeat() {
 						err = u.sendPingMsg()
 						if err != nil {
 							sdkLog("sendPingMsg failed ", wsReq.OperationID, err.Error(), tr)
-							time.Sleep(time.Duration(5) * time.Second)
+							time.Sleep(time.Duration(30) * time.Second)
 						} else {
-							sdkLog("sendPingMsg ok ", wsReq.OperationID)
+							sdkLog("sendPingMsg ok, break", wsReq.OperationID)
 							flag = true //wait continue
+							breakFlag = 1
 							break
 						}
 					}
+				}
+				if breakFlag == 1 {
+					sdkLog("don't wait ", wsReq.OperationID)
+					break
 				}
 				if flag == false {
 					sdkLog("ws ch recvMsg timeout ", timeout, "s ", wsReq.OperationID)
@@ -757,6 +762,8 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 			for i := 0; i < len(pullMsg.Data.Single); i++ {
 				for j := 0; j < len(pullMsg.Data.Single[i].List); j++ {
 					sdkLog("open_im pull one msg: |", pullMsg.Data.Single[i].List[j].ClientMsgID, "|")
+					sdkLog("pull all: |", pullMsg.Data.Single[i].List[j].Seq, pullMsg.Data.Single[i].List[j])
+
 					singleMsg := MsgData{
 						SendID:           pullMsg.Data.Single[i].List[j].SendID,
 						RecvID:           pullMsg.Data.Single[i].List[j].RecvID,
@@ -823,7 +830,7 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 					//	arrMsg.GroupData = append(arrMsg.GroupData, groupMsg)
 					u.seqMsg[pullMsg.Data.Group[i].List[j].Seq] = groupMsg
 					sdkLog("into map, seq: ", pullMsg.Data.Group[i].List[j].Seq, pullMsg.Data.Group[i].List[j].ClientMsgID, pullMsg.Data.Group[i].List[j].ServerMsgID)
-
+					sdkLog("pull all: |", pullMsg.Data.Group[i].List[j].Seq, pullMsg.Data.Group[i].List[j])
 					/*
 						ctype := pullMsg.Data.Group[i].List[j].ContentType
 						if ctype > GroupTipBegin && ctype < GroupTipEnd {

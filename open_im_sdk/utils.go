@@ -104,7 +104,11 @@ func (u *UserRelated) sendPingMsg() error {
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
 	var ping string = "try ping"
-	u.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+
+	err := u.conn.SetWriteDeadline(time.Now().Add(8 * time.Second))
+	if err != nil {
+		sdkLog("SetWriteDeadline failed ", err.Error())
+	}
 	return u.conn.WriteMessage(websocket.PingMessage, []byte(ping))
 }
 
@@ -124,7 +128,11 @@ func (u *UserRelated) writeBinaryMsg(msg GeneralWsReq) (error, *websocket.Conn) 
 
 	if u.conn != nil {
 		connSended = u.conn
-		u.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+		err = u.conn.SetWriteDeadline(time.Now().Add(8 * time.Second))
+		if err != nil {
+			sdkLog("SetWriteDeadline failed ", err.Error())
+		}
+
 		err = u.conn.WriteMessage(websocket.BinaryMessage, buff.Bytes())
 		sdkLog("send ws BinaryMessage len: ", len(buff.Bytes()))
 		if len(buff.Bytes()) > MaxTotalMsgLen {

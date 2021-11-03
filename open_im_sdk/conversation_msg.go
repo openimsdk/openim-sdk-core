@@ -50,7 +50,7 @@ func (con *ConversationListener) getCh() chan cmd2Value {
 
 func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 	if u.MsgListenerList == nil {
-		fmt.Println("not set c MsgListenerList", len(u.MsgListenerList))
+		sdkLog("not set c MsgListenerList", len(u.MsgListenerList))
 		return
 	}
 	var newMessages, msgReadList, msgRevokeList []*MsgStruct
@@ -227,17 +227,17 @@ func (con *ConversationListener) newMessage(newMessagesList []*MsgStruct) {
 		for _, w := range newMessagesList {
 			sdkLog("newMessage: ", w.ClientMsgID)
 			if v != nil {
-				fmt.Println("msgListener,OnRecvNewMessage")
+				sdkLog("msgListener,OnRecvNewMessage")
 				v.OnRecvNewMessage(structToJsonString(w))
 			} else {
-				fmt.Println("set msgListener is err ")
+				sdkLog("set msgListener is err ")
 			}
 		}
 	}
 }
 func (u *UserRelated) doDeleteConversation(c2v cmd2Value) {
 	if u.ConversationListenerx == nil {
-		fmt.Println("not set conversationListener")
+		sdkLog("not set conversationListener")
 		return
 	}
 	node := c2v.Value.(deleteConNode)
@@ -296,7 +296,7 @@ func (u *UserRelated) doMsgReadState(msgReadList []*MsgStruct) {
 
 func (u *UserRelated) doUpdateConversation(c2v cmd2Value) {
 	if u.ConversationListenerx == nil {
-		fmt.Println("not set conversationListener")
+		sdkLog("not set conversationListener")
 		return
 	}
 	node := c2v.Value.(updateConNode)
@@ -390,21 +390,21 @@ func (u *UserRelated) doUpdateConversation(c2v cmd2Value) {
 
 func (u *UserRelated) work(c2v cmd2Value) {
 
-	sdkLog("doListener work..", c2v)
+	sdkLog("doListener work..", c2v.Cmd)
 
 	switch c2v.Cmd {
 	case CmdDeleteConversation:
-		sdkLog("CmdDeleteConversation start ..", c2v)
+		sdkLog("CmdDeleteConversation start ..", c2v.Cmd)
 		u.doDeleteConversation(c2v)
-		sdkLog("CmdDeleteConversation end..", c2v)
+		sdkLog("CmdDeleteConversation end..", c2v.Cmd)
 	case CmdNewMsgCome:
-		sdkLog("doMsgNew start..", c2v)
+		sdkLog("doMsgNew start..", c2v.Cmd)
 		u.doMsgNew(c2v)
-		sdkLog("doMsgNew end..", c2v)
+		sdkLog("doMsgNew end..", c2v.Cmd)
 	case CmdUpdateConversation:
-		sdkLog("doUpdateConversation start ..", c2v)
+		sdkLog("doUpdateConversation start ..", c2v.Cmd)
 		u.doUpdateConversation(c2v)
-		sdkLog("doUpdateConversation end..", c2v)
+		sdkLog("doUpdateConversation end..", c2v.Cmd)
 	}
 }
 
