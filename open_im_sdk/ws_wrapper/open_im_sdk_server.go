@@ -21,12 +21,11 @@ func main() {
 	var openIMWsAddress, openIMApiAddress *string
 	//
 	//openIMTerminalType := flag.String("terminal_type", "web", "different terminal types")
-	/*
-		sdkWsPort = flag.Int("sdk_ws_port", 7799, "openIMSDK ws listening port")
-		openIMApiPort = flag.Int("openIM_api_port", 0, "openIM api listening port")
-		openIMWsPort = flag.Int("openIM_ws_port", 0, "openIM ws listening port")
-		flag.Parse()
-	*/
+
+	sdkWsPort = flag.Int("sdk_ws_port", 30000, "openIMSDK ws listening port")
+	openIMApiPort = flag.Int("openIM_api_port", 10000, "openIM api listening port")
+	openIMWsPort = flag.Int("openIM_ws_port", 17778, "openIM ws listening port")
+	flag.Parse()
 
 	//switch *openIMTerminalType {
 	//case "pc":
