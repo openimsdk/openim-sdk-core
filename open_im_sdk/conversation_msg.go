@@ -122,7 +122,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 					c.ConversationID = GetConversationIDBySessionType(c.GroupID, GroupChatType)
 				}
 
-				if msg.ContentType <= AcceptFriendApplicationTip {
+				if msg.ContentType <= AcceptFriendApplicationTip && msg.ContentType != HasReadReceipt {
 					newMessages = append(newMessages, msg)
 					u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, AddConOrUpLatMsg,
 						c}})
@@ -186,7 +186,10 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 						newMessages = append(newMessages, msg)
 
 					} else {
-						_ = u.insertPushMessageToChatLog(msg)
+						err = u.insertPushMessageToChatLog(msg)
+						if err != nil {
+							sdkLog("insert HasReadReceipt err:", err)
+						}
 						//update read state
 						msgReadList = append(msgReadList, msg)
 					}
