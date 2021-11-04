@@ -714,7 +714,6 @@ func (u *UserRelated) CreateMergerMessage(messageList, title, summaryList string
 	s.MergeElem.AbstractList = summaries
 	s.MergeElem.Title = title
 	s.MergeElem.MultiMessage = messages
-	s.AtElem.AtUserList = []string{}
 	s.Content = structToJsonString(s.MergeElem)
 	return structToJsonString(s)
 }
@@ -731,7 +730,8 @@ func (u *UserRelated) CreateForwardMessage(m string) string {
 	}
 
 	u.initBasicInfo(&s, UserMsgType, s.ContentType)
-	s.AtElem.AtUserList = []string{}
+	//Forward message seq is set to 0
+	s.Seq = 0
 	return structToJsonString(s)
 }
 
