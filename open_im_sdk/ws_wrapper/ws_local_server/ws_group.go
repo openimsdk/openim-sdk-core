@@ -108,18 +108,9 @@ func (wsRouter *WsFuncRouter) JoinGroup(input, operationID string) {
 	userWorker.JoinGroup(m["groupId"].(string), m["message"].(string), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
 }
 
-func (wsRouter *WsFuncRouter) QuitGroup(input, operationID string) {
-	m := make(map[string]interface{})
-	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog("unmarshal failed")
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
-		return
-	}
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupId") {
-		return
-	}
+func (wsRouter *WsFuncRouter) QuitGroup(groupId, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.QuitGroup(m["groupId"].(string), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker.QuitGroup(groupId, &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
 }
 
 func (wsRouter *WsFuncRouter) GetJoinedGroupList(input, operationID string) {
@@ -226,12 +217,6 @@ func (wsRouter *WsFuncRouter) InviteUserToGroup(input, operationID string) { //(
 }
 
 func (wsRouter *WsFuncRouter) GetGroupApplicationList(input, operationID string) { //(callback Base) {
-	m := make(map[string]interface{})
-	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog("unmarshal failed")
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
-		return
-	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	userWorker.GetGroupApplicationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
 
