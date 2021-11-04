@@ -166,7 +166,7 @@ func (wsRouter *WsFuncRouter) GetGroupMemberList(input, operationID string) { //
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.GetGroupMemberList(m["groupId"].(string), m["filter"].(int32), m["next"].(int32), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker.GetGroupMemberList(m["groupId"].(string), int32(m["filter"].(float64)), int32(m["next"].(float64)), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
 }
 
 func (wsRouter *WsFuncRouter) GetGroupMembersInfo(input, operationID string) { //(groupId string, userList string, callback Base) {
