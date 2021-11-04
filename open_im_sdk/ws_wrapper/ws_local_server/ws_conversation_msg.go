@@ -140,7 +140,7 @@ func (wsRouter *WsFuncRouter) GetOneConversation(input string, operationID strin
 	}
 
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.GetOneConversation(m["sourceID"].(string), m["sessionType"].(int), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker.GetOneConversation(m["sourceID"].(string), int(m["sessionType"].(float64)), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
 }
 
 func (wsRouter *WsFuncRouter) GetMultipleConversation(conversationIDList string, operationID string) {
@@ -228,16 +228,19 @@ func CreateCustomMessage(data, extension []byte, description string) string {
 */
 
 func (wsRouter *WsFuncRouter) CreateQuoteMessage(input string, operationID string) {
+	wrapSdkLog("CreateQuoteMessage", input, operationID)
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog("unmarshal failed")
+		wrapSdkLog("unmarshal failed", operationID)
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "text", "message") {
+		wrapSdkLog("key not in, failed", operationID)
 		return
 	}
+	wrapSdkLog("GlobalSendMessage", operationID)
 	msg := userWorker.CreateQuoteMessage(m["text"].(string), m["message"].(string))
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }
@@ -253,7 +256,7 @@ func (wsRouter *WsFuncRouter) CreateVideoMessageFromFullPath(input string, opera
 	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "videoFullPath", "videoType", "duration", "snapshotFullPath") {
 		return
 	}
-	msg := userWorker.CreateVideoMessageFromFullPath(m["videoFullPath"].(string), m["videoType"].(string), m["duration"].(int64), m["snapshotFullPath"].(string))
+	msg := userWorker.CreateVideoMessageFromFullPath(m["videoFullPath"].(string), m["videoType"].(string), int64(m["duration"].(float64)), m["snapshotFullPath"].(string))
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }
 
@@ -283,7 +286,7 @@ func (wsRouter *WsFuncRouter) CreateSoundMessageFromFullPath(input string, opera
 	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "soundPath", "duration") {
 		return
 	}
-	msg := userWorker.CreateSoundMessageFromFullPath(m["soundPath"].(string), m["duration"].(int64))
+	msg := userWorker.CreateSoundMessageFromFullPath(m["soundPath"].(string), int64(m["duration"].(float64)))
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }
 

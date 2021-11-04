@@ -108,18 +108,9 @@ func (wsRouter *WsFuncRouter) JoinGroup(input, operationID string) {
 	userWorker.JoinGroup(m["groupId"].(string), m["message"].(string), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
 }
 
-func (wsRouter *WsFuncRouter) QuitGroup(input, operationID string) {
-	m := make(map[string]interface{})
-	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog("unmarshal failed")
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
-		return
-	}
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupId") {
-		return
-	}
+func (wsRouter *WsFuncRouter) QuitGroup(groupId, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.QuitGroup(m["groupId"].(string), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker.QuitGroup(groupId, &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
 }
 
 func (wsRouter *WsFuncRouter) GetJoinedGroupList(input, operationID string) {
@@ -166,7 +157,7 @@ func (wsRouter *WsFuncRouter) GetGroupMemberList(input, operationID string) { //
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.GetGroupMemberList(m["groupId"].(string), m["filter"].(int32), m["next"].(int32), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker.GetGroupMemberList(m["groupId"].(string), int32(m["filter"].(float64)), int32(m["next"].(float64)), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
 }
 
 func (wsRouter *WsFuncRouter) GetGroupMembersInfo(input, operationID string) { //(groupId string, userList string, callback Base) {
@@ -226,12 +217,6 @@ func (wsRouter *WsFuncRouter) InviteUserToGroup(input, operationID string) { //(
 }
 
 func (wsRouter *WsFuncRouter) GetGroupApplicationList(input, operationID string) { //(callback Base) {
-	m := make(map[string]interface{})
-	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog("unmarshal failed")
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
-		return
-	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	userWorker.GetGroupApplicationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
 
