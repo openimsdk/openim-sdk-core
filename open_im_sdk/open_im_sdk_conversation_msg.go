@@ -1373,6 +1373,28 @@ func (u *UserRelated) InsertSingleMessageToLocalStorage(callback Base, message, 
 	return s.ClientMsgID
 }
 
+func (u *UserRelated) InsertGroupMessageToLocalStorage(callback Base, message, groupID, sender string) string {
+	s := MsgStruct{}
+	err := json.Unmarshal([]byte(message), &s)
+	if err != nil {
+		callback.OnError(200, err.Error())
+		return ""
+	}
+	s.SendID = sender
+	s.RecvID = groupID
+	//Generate client message primary key
+	s.ClientMsgID = getMsgID(s.SendID)
+	s.SendTime = getCurrentTimestampByNano()
+	go func() {
+		if err = u.insertMessageToLocalOrUpdateContent(&s); err != nil {
+			callback.OnError(201, err.Error())
+		} else {
+			callback.OnSuccess("")
+		}
+	}()
+	return s.ClientMsgID
+}
+
 func (u *UserRelated) FindMessages(callback Base, messageIDList string) {
 	go func() {
 		var c []string

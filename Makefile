@@ -23,4 +23,4 @@ reset_remote_branch:
 ios: reset_remote_branch
 	go get golang.org/x/mobile
 	rm -rf build/ open_im_sdk/t_friend_sdk.go
-	GOARCH=arm64 gomobile bind -v -trimpath -ldflags "-s -w" -o build/OpenIMCore.framework -target=ios ./open_im_sdk/
+	GOARCH=arm64 gomobile bind -v -trimpath -ldflags "-s -w" -o build/OpenIMCore.xcframework -target=ios ./open_im_sdk/
