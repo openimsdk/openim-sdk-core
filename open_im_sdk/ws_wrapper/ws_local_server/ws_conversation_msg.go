@@ -228,16 +228,19 @@ func CreateCustomMessage(data, extension []byte, description string) string {
 */
 
 func (wsRouter *WsFuncRouter) CreateQuoteMessage(input string, operationID string) {
+	wrapSdkLog("CreateQuoteMessage", input, operationID)
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog("unmarshal failed")
+		wrapSdkLog("unmarshal failed", operationID)
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "text", "message") {
+		wrapSdkLog("key not in, failed", operationID)
 		return
 	}
+	wrapSdkLog("GlobalSendMessage", operationID)
 	msg := userWorker.CreateQuoteMessage(m["text"].(string), m["message"].(string))
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }

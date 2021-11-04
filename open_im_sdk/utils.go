@@ -132,13 +132,12 @@ func (u *UserRelated) writeBinaryMsg(msg GeneralWsReq) (error, *websocket.Conn) 
 		if err != nil {
 			sdkLog("SetWriteDeadline failed ", err.Error())
 		}
-
-		err = u.conn.WriteMessage(websocket.BinaryMessage, buff.Bytes())
 		sdkLog("send ws BinaryMessage len: ", len(buff.Bytes()))
 		if len(buff.Bytes()) > MaxTotalMsgLen {
 			LogFReturn("msg too long", len(buff.Bytes()), MaxTotalMsgLen)
 			return errors.New("msg too long"), connSended
 		}
+		err = u.conn.WriteMessage(websocket.BinaryMessage, buff.Bytes())
 		if err != nil {
 			LogFReturn(err.Error(), msg.OperationID)
 		} else {

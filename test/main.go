@@ -324,8 +324,25 @@ var (
 	SENDINTERVAL = 20
 )
 
+func int64ToString(i int64) string {
+	return strconv.FormatInt(i, 10)
+}
+
+func getCurrentTimestampByNano() int64 {
+	return time.Now().UnixNano()
+}
+
+func getMsgID(sendID string) string {
+	t := int64ToString(getCurrentTimestampByNano())
+	return open_im_sdk.Md5(t + sendID + int64ToString(rand.Int63n(getCurrentTimestampByNano())))
+}
+
 // myuid,  maxuid,  msgnum
 func main() {
+
+	for {
+		fmt.Println("id: ", getMsgID("xyz"))
+	}
 
 	/*
 		myUid1 := 17396220460

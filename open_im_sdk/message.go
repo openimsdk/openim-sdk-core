@@ -279,7 +279,6 @@ func (u *UserRelated) initBasicInfo(message *MsgStruct, msgFrom, contentType int
 	userInfo, _ := u.getLoginUserInfoFromLocal()
 	message.SenderFaceURL = userInfo.Icon
 	message.SenderNickName = userInfo.Name
-	//Generate client message primary key
 	ClientMsgID := getMsgID(message.SendID)
 	message.ClientMsgID = ClientMsgID
 	message.MsgFrom = msgFrom

@@ -699,6 +699,8 @@ func (u *UserRelated) CreateFileMessage(filePath string, fileName string) string
 	}
 	s.FileElem.FileSize = fi.Size()
 	s.AtElem.AtUserList = []string{}
+
+	sdkLog("CreateForwardMessage new input: ", structToJsonString(s))
 	return structToJsonString(s)
 }
 func (u *UserRelated) CreateMergerMessage(messageList, title, summaryList string) string {
@@ -707,7 +709,8 @@ func (u *UserRelated) CreateMergerMessage(messageList, title, summaryList string
 	s := MsgStruct{}
 	err := json.Unmarshal([]byte(messageList), &messages)
 	if err != nil {
-		fmt.Println("CreateMergerMessage err:", err.Error())
+		sdkLog("CreateMergerMessage err:", err.Error())
+		return ""
 	}
 	_ = json.Unmarshal([]byte(summaryList), &summaries)
 	u.initBasicInfo(&s, UserMsgType, Merger)
@@ -718,6 +721,7 @@ func (u *UserRelated) CreateMergerMessage(messageList, title, summaryList string
 	return structToJsonString(s)
 }
 func (u *UserRelated) CreateForwardMessage(m string) string {
+	sdkLog("CreateForwardMessage input: ", m)
 	s := MsgStruct{}
 	err := json.Unmarshal([]byte(m), &s)
 	if err != nil {
