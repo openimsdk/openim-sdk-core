@@ -316,50 +316,17 @@ func getMyIP() string {
 }
 
 var (
-	APIADDR      = "http://47.112.160.66:10000"
-	WSADDR       = "ws://47.112.160.66:17778"
-	REGISTERADDR = "http://47.112.160.66:10000/auth/user_register"
-	TOKENADDR    = "http://47.112.160.66:10000/auth/user_token"
+	APIADDR      = "http://147.112.160.66:10000"
+	WSADDR       = "ws://147.112.160.66:17778"
+	REGISTERADDR = "http://147.112.160.66:10000/auth/user_register"
+	TOKENADDR    = "http://147.112.160.66:10000/auth/user_token"
 	SECRET       = "tuoyun"
 	SENDINTERVAL = 20
 )
 
-func int64ToString(i int64) string {
-	return strconv.FormatInt(i, 10)
-}
-
-func getCurrentTimestampByNano() int64 {
-	return time.Now().UnixNano()
-}
-
-func getMsgID(sendID string) string {
-	t := int64ToString(getCurrentTimestampByNano())
-	return open_im_sdk.Md5(t + sendID + int64ToString(rand.Int63n(getCurrentTimestampByNano())))
-}
-
 // myuid,  maxuid,  msgnum
 func main() {
-
-	for {
-		fmt.Println("id: ", getMsgID("xyz"))
-	}
-
-	/*
-		myUid1 := 17396220460
-		strMyUid1 := GenUid(myUid1)
-
-		runRigister(strMyUid1)
-		token1 := runGetToken(strMyUid1)
-		open_im_sdk.DoTest(strMyUid1, token1, WSADDR, APIADDR)
-
-
-		for true {
-			time.Sleep(time.Duration(60) * time.Second)
-			fmt.Println("waiting")
-		}
-	*/
-
-	//cmdfile := "./cmd.txt"
+	cmdfile := "./cmd.txt"
 	uid := flag.Int("uid", 1, "RpcToken default listen port 10800")
 	uidCount := flag.Int("uid_count", 2, "RpcToken default listen port 10800")
 	messageCount := flag.Int("message_count", 1, "RpcToken default listen port 10800")
@@ -385,8 +352,7 @@ func main() {
 	runRigister(strMyUid)
 	token := runGetToken(strMyUid)
 
-	//cmd := GetCmd(myUid, cmdfile)
-	cmd := 2
+	cmd := GetCmd(myUid, cmdfile)
 
 	fmt.Println("getcmd value ", cmd)
 	switch cmd {
