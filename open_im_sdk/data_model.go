@@ -1354,15 +1354,15 @@ func (u *UserRelated) insertPushMessageToChatLog(message *MsgStruct) (err error)
 	return nil
 }
 
-func (u *UserRelated) updateMessageSeq(message *MsgStruct) (err error) {
+func (u *UserRelated) updateMessageSeq(message *MsgStruct, status int) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.Prepare("update chat_log set seq=? where msg_id=?")
+	stmt, err := u.Prepare("update chat_log set seq=?,status=? where msg_id=?")
 	if err != nil {
 		sdkLog("Prepare failed, ", err.Error())
 		return err
 	}
-	_, err = stmt.Exec(message.Seq, message.ClientMsgID)
+	_, err = stmt.Exec(message.Seq, status, message.ClientMsgID)
 	if err != nil {
 		sdkLog("Exec failed ", err.Error())
 		return err

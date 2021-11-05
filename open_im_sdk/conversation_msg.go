@@ -90,7 +90,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 		}
 		if v.SendID == u.LoginUid { //seq對齊消息 Messages sent by myself
 			if u.judgeMessageIfExists(msg) { //if  sent through  this terminal
-				err := u.updateMessageSeq(msg)
+				err := u.updateMessageSeq(msg, MsgStatusSendSuccess)
 				if err != nil {
 					sdkLog("updateMessageSeq err", err.Error(), msg)
 				}
@@ -121,7 +121,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 					c.ConversationID = GetConversationIDBySessionType(c.GroupID, GroupChatType)
 				}
 
-				if msg.ContentType <= AcceptFriendApplicationTip {
+				if msg.ContentType <= AcceptFriendApplicationTip && msg.ContentType != HasReadReceipt {
 					newMessages = append(newMessages, msg)
 					u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, AddConOrUpLatMsg,
 						c}})
@@ -185,7 +185,10 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 						newMessages = append(newMessages, msg)
 
 					} else {
-						_ = u.insertPushMessageToChatLog(msg)
+						err = u.insertPushMessageToChatLog(msg)
+						if err != nil {
+							sdkLog("insert HasReadReceipt err:", err)
+						}
 						//update read state
 						msgReadList = append(msgReadList, msg)
 					}
