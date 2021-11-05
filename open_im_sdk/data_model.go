@@ -461,7 +461,7 @@ func (u *UserRelated) judgeConversationIfExists(conversationID string) bool {
 	var count int
 	rows, err := u.Query("select count(*) from conversation where  conversation_id=?", conversationID)
 	if err != nil {
-		fmt.Println("judge err")
+		sdkLog("judge err")
 		sdkLog(err.Error())
 		return false
 	}
@@ -635,7 +635,7 @@ func (u *UserRelated) getMultipleConversationModel(conversationIDList []string) 
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
 	rows, err := u.Query("SELECT * FROM conversation where conversation_id in (" + sqlStringHandle(conversationIDList) + ")")
-	fmt.Println("SELECT * FROM conversation where conversation_id in (" + sqlStringHandle(conversationIDList) + ")")
+	sdkLog("SELECT * FROM conversation where conversation_id in (" + sqlStringHandle(conversationIDList) + ")")
 	for rows.Next() {
 		temp := new(ConversationStruct)
 		err = rows.Scan(&temp.ConversationID, &temp.ConversationType, &temp.UserID, &temp.GroupID, &temp.ShowName,
@@ -748,7 +748,6 @@ func (u *UserRelated) updateBlackList(info userInfo) error {
 	}
 	_, err = stmt.Exec(info.Uid, info.Name, info.Icon, info.Gender, info.Mobile, info.Birth, info.Email, info.Ex)
 	if err != nil {
-		fmt.Println(err)
 		sdkLog(err.Error())
 		return err
 	}
@@ -760,13 +759,11 @@ func (u *UserRelated) delTheUserFromBlackList(uid string) error {
 	defer u.mRWMutex.Unlock()
 	stmt, err := u.Prepare("delete from black_list where uid=?")
 	if err != nil {
-		fmt.Println(err)
 		sdkLog(err.Error())
 		return err
 	}
 	_, err = stmt.Exec(uid)
 	if err != nil {
-		fmt.Println(err)
 		sdkLog(err.Error())
 		return err
 	}
@@ -810,12 +807,12 @@ func (u *UserRelated) updateApplicationList(info applyUserInfo) error {
 	defer u.mRWMutex.Unlock()
 	stmt, err := u.Prepare("replace into friend_request(uid,name,icon,gender,mobile,birth,email,ex,flag,req_message,create_time) values (?,?,?,?,?,?,?,?,?,?,?)")
 	if err != nil {
-		fmt.Println(err.Error())
+		sdkLog(err.Error())
 		return err
 	}
 	_, err = stmt.Exec(info.Uid, info.Name, info.Icon, info.Gender, info.Mobile, info.Birth, info.Email, info.Ex, info.Flag, info.ReqMessage, info.ApplyTime)
 	if err != nil {
-		fmt.Println(err.Error())
+		sdkLog(err.Error())
 		return err
 	}
 	return nil

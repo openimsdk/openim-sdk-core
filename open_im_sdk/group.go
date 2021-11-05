@@ -3,7 +3,6 @@ package open_im_sdk
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strings"
 )
 
@@ -548,14 +547,14 @@ func (u *UserRelated) getJoinedGroupListFromSvr() ([]groupInfo, error) {
 	sdkLog("getJoinedGroupListRouter ", getJoinedGroupListRouter, req, u.token)
 	resp, err := post2Api(getJoinedGroupListRouter, req, u.token)
 	if err != nil {
-		fmt.Println("post api:", err)
+		sdkLog("post api:", err)
 		return nil, err
 	}
 
 	var stcResp getJoinedGroupListResp
 	err = json.Unmarshal(resp, &stcResp)
 	if err != nil {
-		fmt.Println("unmarshal, ", err)
+		sdkLog("unmarshal, ", err)
 		return nil, err
 	}
 

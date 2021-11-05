@@ -542,7 +542,7 @@ func (u *UserRelated) heartbeat() {
 						}
 						LogBegin("syncMsg2ServerMaxSeq", wsSeqResp.MaxSeq, wsSeqResp.MinSeq, wsReq.OperationID)
 						u.syncMsg2ServerMaxSeq(wsSeqResp.MaxSeq)
-						LogEnd("syncMsg2ServerMaxSeq")
+						LogEnd("syncMsg2ServerMaxSeq", wsSeqResp.MaxSeq, wsSeqResp.MinSeq, wsReq.OperationID)
 					}
 				}
 				breakFlag = 1

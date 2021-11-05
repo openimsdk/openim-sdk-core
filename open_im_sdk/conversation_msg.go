@@ -3,7 +3,6 @@ package open_im_sdk
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"strings"
 )
 
@@ -201,7 +200,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 	u.newMessage(newMessages)
 	u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, ""}})
 	u.doUpdateConversation(cmd2Value{Value: updateConNode{"", TotalUnreadMessageChanged, ""}})
-	fmt.Println("length msgListenerList", u.MsgListenerList, "length message", len(newMessages), "msgListenerLen", len(u.MsgListenerList))
+	sdkLog("length msgListenerList", u.MsgListenerList, "length message", len(newMessages), "msgListenerLen", len(u.MsgListenerList))
 
 }
 

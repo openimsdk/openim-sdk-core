@@ -4,7 +4,6 @@ import (
 	//"bytes"
 	//"encoding/gob"
 	"encoding/json"
-	"fmt"
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 	"net/http"
@@ -877,7 +876,6 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 			soundURL, uuid, err := u.uploadSound(sourcePath, callback)
 			if err != nil {
 				callback.OnError(301, err.Error())
-				fmt.Println("oss Sound upload err", 111)
 				sdkLog("uploadSound err:", err.Error())
 				u.sendMessageFailedHandle(&s, &c, conversationID)
 				return
@@ -1136,7 +1134,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 
 func (u *UserRelated) GetHistoryMessageList(callback Base, getMessageOptions string) {
 	go func() {
-		fmt.Println("GetHistoryMessageList", getMessageOptions)
+		sdkLog("GetHistoryMessageList", getMessageOptions)
 		var sourceID string
 		var conversationID string
 		var startTime int64
@@ -1168,7 +1166,7 @@ func (u *UserRelated) GetHistoryMessageList(callback Base, getMessageOptions str
 			} else {
 				err := json.Unmarshal([]byte(m), &latestMsg)
 				if err != nil {
-					fmt.Println("get history err :", err)
+					sdkLog("get history err :", err)
 					callback.OnError(200, err.Error())
 					return
 				}
@@ -1178,7 +1176,7 @@ func (u *UserRelated) GetHistoryMessageList(callback Base, getMessageOptions str
 		} else {
 			startTime = p.StartMsg.SendTime
 		}
-		fmt.Println("sourceID:", sourceID, "startTime:", startTime, "count:", p.Count)
+		sdkLog("sourceID:", sourceID, "startTime:", startTime, "count:", p.Count)
 		err, list := u.getHistoryMessage(sourceID, startTime, p.Count, sessionType)
 		sort.Sort(list)
 		if err != nil {
@@ -1324,7 +1322,7 @@ func (u *UserRelated) DeleteMessageFromLocalStorage(callback Base, message strin
 		if m != "" {
 			err := json.Unmarshal([]byte(m), &latestMsg)
 			if err != nil {
-				fmt.Println("DeleteMessage err :", err)
+				sdkLog("DeleteMessage err :", err)
 				callback.OnError(200, err.Error())
 				return
 			}
