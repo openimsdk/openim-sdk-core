@@ -1670,16 +1670,15 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 func (u *UserRelated) setErrorMessageToErrorChatLog(message *MsgStruct) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.Prepare("INSERT INTO error_chat_log(msg_id, send_id, is_read," +
-		" seq,status, session_type, recv_id, content_type, sender_face_url,sender_nick_name,msg_from, content, remark,sender_platform_id, send_time,create_time) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)" +
-		"ON CONFLICT(msg_id) DO UPDATE SET seq = ?")
+	stmt, err := u.Prepare("INSERT INTO error_chat_log(seq,msg_id, send_id, is_read," +
+		" status, session_type, recv_id, content_type, sender_face_url,sender_nick_name,msg_from, content, remark,sender_platform_id, send_time,create_time) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 	if err != nil {
 		sdkLog("Prepare failed, ", err.Error())
 		return err
 	}
-	_, err = stmt.Exec(message.ClientMsgID, message.SendID,
-		getIsRead(message.IsRead), message.Seq, message.Status, message.SessionType, message.RecvID, message.ContentType, message.SenderFaceURL, message.SenderNickName,
-		message.MsgFrom, message.Content, message.Remark, message.PlatformID, message.SendTime, message.CreateTime, message.Seq)
+	_, err = stmt.Exec(message.Seq, message.ClientMsgID, message.SendID,
+		getIsRead(message.IsRead), message.Status, message.SessionType, message.RecvID, message.ContentType, message.SenderFaceURL, message.SenderNickName,
+		message.MsgFrom, message.Content, message.Remark, message.PlatformID, message.SendTime, message.CreateTime)
 	if err != nil {
 		sdkLog("Exec failed, ", err.Error())
 		return err
