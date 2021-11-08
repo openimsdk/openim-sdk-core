@@ -180,7 +180,7 @@ func (u *UserRelated) initDBX(uid string) error {
 		return err
 	}
 	table = `create table if not exists  error_chat_log (
-      seq int(255) DEFAULT NULL ,
+      seq int(255) NOT NULL ,
       msg_id varchar(128)   NOT NULL,
 	  send_id varchar(255)   NOT NULL ,
 	  is_read int(255) NOT NULL ,

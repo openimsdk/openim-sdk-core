@@ -91,6 +91,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 		if v.SendID == u.LoginUid { //seq對齊消息 Messages sent by myself  //if  sent through  this terminal
 			m, err := u.getOneMessage(msg.ClientMsgID)
 			if err == nil && m != nil {
+				sdkLog("have message", msg, msg.Seq)
 				if m.Seq == 0 {
 					err := u.updateMessageSeq(msg, MsgStatusSendSuccess)
 					if err != nil {
