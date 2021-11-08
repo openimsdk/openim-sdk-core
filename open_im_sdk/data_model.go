@@ -1670,7 +1670,7 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 func (u *UserRelated) setErrorMessageToErrorChatLog(message *MsgStruct) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.Prepare("INSERT INTO chat_log(msg_id, send_id, is_read," +
+	stmt, err := u.Prepare("INSERT INTO error_chat_log(msg_id, send_id, is_read," +
 		" seq,status, session_type, recv_id, content_type, sender_face_url,sender_nick_name,msg_from, content, remark,sender_platform_id, send_time,create_time) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)" +
 		"ON CONFLICT(msg_id) DO UPDATE SET seq = ?")
 	if err != nil {
