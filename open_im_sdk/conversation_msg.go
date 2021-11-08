@@ -91,7 +91,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 		if v.SendID == u.LoginUid { //seq對齊消息 Messages sent by myself  //if  sent through  this terminal
 			m, err := u.getOneMessage(msg.ClientMsgID)
 			if err == nil && m != nil {
-				sdkLog("have message", msg, msg.Seq)
+				sdkLog("have message", *msg, msg.Seq)
 				if m.Seq == 0 {
 					err := u.updateMessageSeq(msg, MsgStatusSendSuccess)
 					if err != nil {
@@ -100,7 +100,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 				} else {
 					err := u.setErrorMessageToErrorChatLog(msg)
 					if err != nil {
-						sdkLog("repeat msg err", err.Error(), msg)
+						sdkLog("setErrorMessage  err", err.Error(), msg)
 					}
 				}
 			} else { //同步消息       send through  other terminal
@@ -109,7 +109,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 					sdkLog(" sync insertPushMessageToChatLog err", err.Error(), msg)
 					err := u.setErrorMessageToErrorChatLog(msg)
 					if err != nil {
-						sdkLog("repeat msg err", err.Error(), msg)
+						sdkLog("setErrorMessage err", err.Error(), *msg)
 					}
 				}
 				c := ConversationStruct{
@@ -209,9 +209,10 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 			} else {
 				err := u.setErrorMessageToErrorChatLog(msg)
 				if err != nil {
-					sdkLog("repeat msg err", err.Error(), msg)
+					sdkLog("setErrorMessage  err", err.Error(), msg)
+				} else {
+					sdkLog("repeat message err", msg.ClientMsgID, msg.Seq, msg.ServerMsgID)
 				}
-				sdkLog("repeat message err", msg.ClientMsgID, msg.Seq, msg.ServerMsgID)
 			}
 		}
 	}
