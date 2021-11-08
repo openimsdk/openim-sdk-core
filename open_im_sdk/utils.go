@@ -471,7 +471,7 @@ func retry(url string, data interface{}, token string, attempts int, sleep time.
 //application/json; charset=utf-8
 func Post2Api(url string, data interface{}, token string) (content []byte, err error) {
 	if url == sendMsgRouter {
-		return retry(url, data, token, 5, 1000*time.Millisecond, postLogic)
+		return retry(url, data, token, 1, 10*time.Second, postLogic)
 	} else {
 		return postLogic(url, data, token)
 	}
@@ -482,7 +482,7 @@ func post2Api(url string, data interface{}, token string) (content []byte, err e
 	sdkLog("call post2Api: ", url)
 
 	if url == sendMsgRouter {
-		return retry(url, data, token, 5, 1000*time.Millisecond, postLogic)
+		return retry(url, data, token, 1, 10*time.Second, postLogic)
 	} else {
 		return postLogic(url, data, token)
 	}

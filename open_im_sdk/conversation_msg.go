@@ -88,16 +88,28 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 			msg.RecvID = strings.Split(v.RecvID, " ")[1]
 			msg.GroupID = msg.RecvID
 		}
-		if v.SendID == u.LoginUid { //seq對齊消息 Messages sent by myself
-			if u.judgeMessageIfExists(msg) { //if  sent through  this terminal
-				err := u.updateMessageSeq(msg, MsgStatusSendSuccess)
-				if err != nil {
-					sdkLog("updateMessageSeq err", err.Error(), msg)
+		if v.SendID == u.LoginUid { //seq對齊消息 Messages sent by myself  //if  sent through  this terminal
+			m, err := u.getOneMessage(msg.ClientMsgID)
+			if err == nil && m != nil {
+				if m.Seq == 0 {
+					err := u.updateMessageSeq(msg, MsgStatusSendSuccess)
+					if err != nil {
+						sdkLog("updateMessageSeq err", err.Error(), msg)
+					}
+				} else {
+					err := u.setErrorMessageToErrorChatLog(msg)
+					if err != nil {
+						sdkLog("repeat msg err", err.Error(), msg)
+					}
 				}
 			} else { //同步消息       send through  other terminal
 				err = u.insertPushMessageToChatLog(msg)
 				if err != nil {
 					sdkLog(" sync insertPushMessageToChatLog err", err.Error(), msg)
+					err := u.setErrorMessageToErrorChatLog(msg)
+					if err != nil {
+						sdkLog("repeat msg err", err.Error(), msg)
+					}
 				}
 				c := ConversationStruct{
 					//ConversationID:    conversationID,
@@ -194,6 +206,10 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 					}
 				}
 			} else {
+				err := u.setErrorMessageToErrorChatLog(msg)
+				if err != nil {
+					sdkLog("repeat msg err", err.Error(), msg)
+				}
 				sdkLog("repeat message err", msg.ClientMsgID, msg.Seq, msg.ServerMsgID)
 			}
 		}
