@@ -1358,7 +1358,7 @@ func (u *UserRelated) insertMessageToLocalOrUpdateContent(message *MsgStruct) (e
 	return nil
 }
 
-func (u *UserRelated) insertPushMessageToChatLog(message *MsgStruct) (err error) {
+func (u *UserRelated) insertMessageToChatLog(message *MsgStruct) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	stmt, err := u.Prepare("INSERT INTO chat_log(msg_id, send_id, is_read," +
@@ -1398,6 +1398,28 @@ func (u *UserRelated) judgeMessageIfExists(message *MsgStruct) bool {
 	defer u.mRWMutex.Unlock()
 	var count int
 	rows, err := u.Query("select count(*) from chat_log where  msg_id=?", message.ClientMsgID)
+	if err != nil {
+		sdkLog("Query failed, ", err.Error())
+		return false
+	}
+	for rows.Next() {
+		err = rows.Scan(&count)
+		if err != nil {
+			sdkLog("failed ", err.Error())
+			continue
+		}
+	}
+	if count == 1 {
+		return true
+	} else {
+		return false
+	}
+}
+func (u *UserRelated) judgeMessageIfExistsBySeq(seq int64) bool {
+	u.mRWMutex.Lock()
+	defer u.mRWMutex.Unlock()
+	var count int
+	rows, err := u.Query("select count(*) from chat_log where  seq=?", seq)
 	if err != nil {
 		sdkLog("Query failed, ", err.Error())
 		return false
@@ -1729,6 +1751,29 @@ func (u *UserRelated) setErrorMessageToErrorChatLog(message *MsgStruct) (err err
 	}
 	return nil
 }
+func (u *UserRelated) isExistsInErrChatLogBySeq(seq int64) bool {
+	u.mRWMutex.Lock()
+	defer u.mRWMutex.Unlock()
+	var count int
+	rows, err := u.Query("select count(*) from error_chat_log where  seq=?", seq)
+	if err != nil {
+		sdkLog("Query failed, ", err.Error())
+		return false
+	}
+	for rows.Next() {
+		err = rows.Scan(&count)
+		if err != nil {
+			sdkLog("failed ", err.Error())
+			continue
+		}
+	}
+	if count == 1 {
+		return true
+	} else {
+		return false
+	}
+}
+
 func (ur *UserRelated) getLoginUserInfoFromLocal() (userInfo, error) {
 	ur.mRWMutex.RLock()
 	defer ur.mRWMutex.RUnlock()

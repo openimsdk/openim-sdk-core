@@ -204,7 +204,6 @@ func (u *UserRelated) doWsMsg(message []byte) {
 		LogFReturn("type failed, ", wsResp.ReqIdentifier, wsResp.OperationID)
 		return
 	}
-
 	LogSReturn()
 	return
 }

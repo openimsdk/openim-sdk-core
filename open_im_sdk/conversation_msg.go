@@ -53,12 +53,15 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 		return
 	}
 	var newMessages, msgReadList, msgRevokeList []*MsgStruct
-	MsgList := c2v.Value.(ArrMsg)
-	for _, v := range MsgList.GroupData {
-		MsgList.SingleData = append(MsgList.SingleData, v)
-	}
-	sdkLog("do Msg come here,len:", len(MsgList.SingleData))
-	for _, v := range MsgList.SingleData {
+	var isCallbackUI bool
+	//MsgList := c2v.Value.(ArrMsg)
+	//for _, v := range MsgList.GroupData {
+	//	MsgList.SingleData = append(MsgList.SingleData, v)
+	//}
+	//sdkLog("do Msg come here,len:", len(MsgList.SingleData))
+	u.seqMsgMutex.Lock()
+	for k, v := range u.seqMsg {
+		isCallbackUI = true
 		msg := &MsgStruct{
 			SendID:         v.SendID,
 			SessionType:    v.SessionType,
@@ -97,6 +100,9 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 					err := u.updateMessageSeq(msg, MsgStatusSendSuccess)
 					if err != nil {
 						sdkLog("updateMessageSeq err", err.Error(), msg)
+					} else {
+						//remove cache
+						delete(u.seqMsg, k)
 					}
 				} else {
 					err := u.setErrorMessageToErrorChatLog(msg)
@@ -105,14 +111,16 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 					}
 				}
 			} else { //同步消息       send through  other terminal
-				err = u.insertPushMessageToChatLog(msg)
-				sdkLog("insertPushMessageToChatLog seq ", msg.Seq)
+				err = u.insertMessageToChatLog(msg)
 				if err != nil {
-					sdkLog(" sync insertPushMessageToChatLog err", err.Error(), msg)
+					sdkLog(" sync insertMessageToChatLog err", err.Error(), msg)
 					err := u.setErrorMessageToErrorChatLog(msg)
 					if err != nil {
 						sdkLog("setErrorMessage err", err.Error(), *msg)
 					}
+				} else {
+					//remove cache
+					delete(u.seqMsg, k)
 				}
 				c := ConversationStruct{
 					//ConversationID:    conversationID,
@@ -157,9 +165,12 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 						LatestMsg:         structToJsonString(msg),
 						LatestMsgSendTime: msg.SendTime,
 					}
-					err = u.insertPushMessageToChatLog(msg)
+					err = u.insertMessageToChatLog(msg)
 					if err != nil {
-						sdkLog("insertPushMessageToChatLog err", err.Error(), msg)
+						sdkLog("insertMessageToChatLog err", err.Error(), msg)
+					} else {
+						//remove cache
+						delete(u.seqMsg, k)
 					}
 					switch v.SessionType {
 					case SingleChatType:
@@ -200,12 +211,15 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 						newMessages = append(newMessages, msg)
 
 					} else {
-						err = u.insertPushMessageToChatLog(msg)
+						err = u.insertMessageToChatLog(msg)
 						if err != nil {
 							sdkLog("insert HasReadReceipt err:", err)
+						} else {
+							//remove cache
+							delete(u.seqMsg, k)
+							//update read state
+							msgReadList = append(msgReadList, msg)
 						}
-						//update read state
-						msgReadList = append(msgReadList, msg)
 					}
 				}
 			} else {
@@ -218,12 +232,15 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 			}
 		}
 	}
-	u.doMsgReadState(msgReadList)
-	u.revokeMessage(msgRevokeList)
-	u.newMessage(newMessages)
-	u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, ""}})
-	u.doUpdateConversation(cmd2Value{Value: updateConNode{"", TotalUnreadMessageChanged, ""}})
-	sdkLog("length msgListenerList", u.MsgListenerList, "length message", len(newMessages), "msgListenerLen", len(u.MsgListenerList))
+	u.seqMsgMutex.Unlock()
+	if isCallbackUI {
+		u.doMsgReadState(msgReadList)
+		u.revokeMessage(msgRevokeList)
+		u.newMessage(newMessages)
+		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, ""}})
+		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", TotalUnreadMessageChanged, ""}})
+	}
+	//sdkLog("length msgListenerList", u.MsgListenerList, "length message", len(newMessages), "msgListenerLen", len(u.MsgListenerList))
 
 }
 
@@ -421,6 +438,7 @@ func (u *UserRelated) work(c2v cmd2Value) {
 		sdkLog("CmdDeleteConversation end..", c2v.Cmd)
 	case CmdNewMsgCome:
 		sdkLog("doMsgNew start..", c2v.Cmd)
+
 		u.doMsgNew(c2v)
 		sdkLog("doMsgNew end..", c2v.Cmd)
 	case CmdUpdateConversation:
