@@ -480,7 +480,6 @@ func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, recei
 
 	go func() {
 		c := ConversationStruct{
-			ConversationType:  int(s.SessionType),
 			RecvMsgOpt:        1,
 			LatestMsgSendTime: s.CreateTime,
 		}
@@ -493,6 +492,7 @@ func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, recei
 			s.GroupID = groupID
 			conversationID = GetConversationIDBySessionType(groupID, GroupChatType)
 			c.GroupID = groupID
+			c.ConversationType = GroupChatType
 			faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(groupID)
 			if err != nil {
 				sdkLog("getGroupNameAndFaceUrlByUid err:", err)
@@ -529,6 +529,7 @@ func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, recei
 			s.RecvID = receiver
 			conversationID = GetConversationIDBySessionType(receiver, SingleChatType)
 			c.UserID = receiver
+			c.ConversationType = SingleChatType
 			faceUrl, name, err := u.getUserNameAndFaceUrlByUid(receiver)
 			if err != nil {
 				sdkLog("getUserNameAndFaceUrlByUid err:", err)
@@ -752,7 +753,6 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 	}
 	go func() {
 		c := ConversationStruct{
-			ConversationType:  int(s.SessionType),
 			RecvMsgOpt:        1,
 			LatestMsgSendTime: s.CreateTime,
 		}
@@ -765,6 +765,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 			s.GroupID = groupID
 			conversationID = GetConversationIDBySessionType(groupID, GroupChatType)
 			c.GroupID = groupID
+			c.ConversationType = GroupChatType
 			faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(groupID)
 			if err != nil {
 				sdkLog("getGroupNameAndFaceUrlByUid err:", err)
@@ -801,7 +802,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 			s.RecvID = receiver
 			conversationID = GetConversationIDBySessionType(receiver, SingleChatType)
 			c.UserID = receiver
-
+			c.ConversationType = SingleChatType
 			faceUrl, name, err := u.getUserNameAndFaceUrlByUid(receiver)
 			if err != nil {
 				sdkLog("getUserNameAndFaceUrlByUid err:", err)
