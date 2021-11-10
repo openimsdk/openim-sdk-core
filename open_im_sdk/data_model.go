@@ -324,6 +324,7 @@ func (u *UserRelated) Prepare(query string) (*sql.Stmt, error) {
 	return u.db.Prepare(query)
 }
 
+/*
 func (u *UserRelated) setLocalMaxConSeq(seq int) (err error) {
 	sdkLog("setLocalMaxConSeq start ", seq)
 	u.mRWMutex.Lock()
@@ -342,6 +343,7 @@ func (u *UserRelated) setLocalMaxConSeq(seq int) (err error) {
 	}
 	return nil
 }
+*/
 
 func (u *UserRelated) Query(query string, args ...interface{}) (*sql.Rows, error) {
 	if u.db == nil {
@@ -354,6 +356,7 @@ func (u *UserRelated) Query(query string, args ...interface{}) (*sql.Rows, error
 	return u.db.Query(query, args...)
 }
 
+/*
 func (u *UserRelated) getLocalMaxConSeqFromDB() (int64, error) {
 	sdkLog("getLocalMaxConSeqFromDB start")
 	u.mRWMutex.RLock()
@@ -374,6 +377,8 @@ func (u *UserRelated) getLocalMaxConSeqFromDB() (int64, error) {
 	sdkLog("getLocalMaxConSeqFromDB, seq: ", seq)
 	return int64(seq), nil
 }
+
+*/
 
 func (u *UserRelated) replaceIntoUser(info *userInfo) error {
 	u.mRWMutex.Lock()
@@ -1621,6 +1626,54 @@ func (u *UserRelated) getMultipleMessageModel(messageIDList []string) (err error
 		}
 	}
 	return nil, list
+}
+
+func (u *UserRelated) getErrorChatLogSeq(startSeq int32) map[int32]interface{} {
+	u.mRWMutex.RLock()
+	defer u.mRWMutex.RUnlock()
+
+	errSeq := make(map[int32]interface{}, 0)
+	var seq int64
+	rows, err := u.Query("SELECT seq FROM error_chat_log where seq>=? order by seq", startSeq)
+	if err == nil {
+		for rows.Next() {
+			err = rows.Scan(&seq)
+			if err != nil {
+				sdkLog("Scan ,failed ", err.Error())
+				continue
+			} else {
+				errSeq[int32(seq)] = nil
+			}
+		}
+	} else {
+		sdkLog("Query failed ", err.Error())
+	}
+	LogEnd()
+	return errSeq
+}
+
+func (u *UserRelated) getNormalChatLogSeq(startSeq int32) map[int32]interface{} {
+	u.mRWMutex.RLock()
+	defer u.mRWMutex.RUnlock()
+
+	errSeq := make(map[int32]interface{}, 0)
+	var seq int64
+	rows, err := u.Query("SELECT seq FROM chat_log where seq>=? order by seq", startSeq)
+	if err == nil {
+		for rows.Next() {
+			err = rows.Scan(&seq)
+			if err != nil {
+				sdkLog("Scan ,failed ", err.Error())
+				continue
+			} else {
+				errSeq[int32(seq)] = nil
+			}
+		}
+	} else {
+		sdkLog("Query failed ", err.Error())
+	}
+	LogEnd()
+	return errSeq
 }
 
 func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {

@@ -322,7 +322,8 @@ type paramsNewestSeqReq struct {
 }
 
 type paramsNewestSeqDataResp struct {
-	Seq int64 `json:"seq"`
+	Seq    int64 `json:"seq"`
+	MinSeq int64 `json:"minSeq"`
 }
 type paramsNewestSeqResp struct {
 	ErrCode       int                     `json:"errCode"`

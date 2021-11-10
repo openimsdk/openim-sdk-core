@@ -91,7 +91,7 @@ func (u *UserRelated) initListenerCh() {
 	u.ConversationCh = u.ch
 
 	u.wsNotification = make(map[string]chan GeneralWsResp, 1)
-	u.seqMsg = make(map[int32]MsgData, 100)
+	u.seqMsg = make(map[int32]MsgData, 1000)
 }
 
 type UserRelated struct {
