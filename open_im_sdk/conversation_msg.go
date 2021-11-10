@@ -87,11 +87,21 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 		switch v.SessionType {
 		case SingleChatType:
 			msg.RecvID = v.RecvID
+			if v.ContentType > SingleTipBegin && v.ContentType < SingleTipEnd {
+				u.doFriendMsg(v)
+				sdkLog("doFriendMsg, ", v)
+			} else if v.ContentType > GroupTipBegin && v.ContentType < GroupTipEnd {
+				u.doGroupMsg(v)
+				sdkLog("doGroupMsg, SingleChat ", v)
+			}
 		case GroupChatType:
 			msg.RecvID = strings.Split(v.RecvID, " ")[1]
 			msg.GroupID = msg.RecvID
+			if v.ContentType > GroupTipBegin && v.ContentType < GroupTipEnd {
+				u.doGroupMsg(v)
+				sdkLog("doGroupMsg, ", v)
+			}
 		}
-
 		if v.SendID == u.LoginUid { //seq對齊消息 Messages sent by myself  //if  sent through  this terminal
 			m, err := u.getOneMessage(msg.ClientMsgID)
 			if err == nil && m != nil {
