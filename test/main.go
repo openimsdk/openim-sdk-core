@@ -125,7 +125,7 @@ import (
 //open_im_sdk.ForceReConn()open_im_sdk.LogBegin("")
 //	myUid1 := 1
 //	strMyUid1 := GenUid(myUid1)
-//
+
 //	runRigister(strMyUid1)
 //	token1 := runGetToken(strMyUid1)
 //	open_im_sdk.DoTest(strMyUid1, token1, WSADDR, APIADDR)
@@ -223,7 +223,7 @@ func (z zx) txexfc(uid int) int {
 }
 func GenUid(uid int) string {
 	if uid > 1000 {
-		return "17396220460"
+		return "18666662412"
 	}
 	open_im_sdk.LogBegin(uid)
 
@@ -316,16 +316,29 @@ func getMyIP() string {
 }
 
 var (
-	APIADDR      = "http://147.112.160.66:10000"
-	WSADDR       = "ws://147.112.160.66:17778"
-	REGISTERADDR = "http://147.112.160.66:10000/auth/user_register"
-	TOKENADDR    = "http://147.112.160.66:10000/auth/user_token"
+	APIADDR      = "http://1.14.194.38:10000"
+	WSADDR       = "ws://1.14.194.38:17778"
+	REGISTERADDR = "http://1.14.194.38:10000/auth/user_register"
+	TOKENADDR    = "http://1.14.194.38:10000/auth/user_token"
 	SECRET       = "tuoyun"
 	SENDINTERVAL = 20
 )
 
 // myuid,  maxuid,  msgnum
 func main() {
+
+	myUid1 := 18666662412
+	strMyUid1 := GenUid(myUid1)
+
+	runRigister(strMyUid1)
+	token1 := runGetToken(strMyUid1)
+	open_im_sdk.DoTest(strMyUid1, token1, WSADDR, APIADDR)
+
+	for true {
+		time.Sleep(time.Duration(60) * time.Second)
+		fmt.Println("waiting")
+	}
+
 	cmdfile := "./cmd.txt"
 	uid := flag.Int("uid", 1, "RpcToken default listen port 10800")
 	uidCount := flag.Int("uid_count", 2, "RpcToken default listen port 10800")

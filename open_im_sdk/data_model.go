@@ -1606,11 +1606,28 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
 
-	//old := atomic.LoadInt64(&u.minSeqSvr)
+	errSeq := make(map[int64]interface{}, 1)
+
 	old := u.GetMinSeqSvr()
 	var rSeq int64
 	var rows *sql.Rows
 	if old == 0 {
+		rows, err = u.Query("SELECT seq FROM error_chat_log where seq>? order by seq", old)
+		if err == nil {
+			for rows.Next() {
+				err = rows.Scan(&seq)
+				if err != nil {
+					sdkLog("Scan ,failed ", err.Error())
+					continue
+				} else {
+					sdkLog("err seq in map: ", seq)
+					errSeq[seq] = nil
+				}
+			}
+		} else {
+			sdkLog("Query failed ", err.Error())
+		}
+
 		rows, err = u.Query("SELECT seq FROM chat_log where seq>? order by seq", old)
 		if err != nil {
 			sdkLog("getLocalMaxSeqModel,Query  failed", err.Error(), old)
@@ -1629,16 +1646,36 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 				if seq == old+idx {
 					rSeq = seq
 				} else {
-					sdkLog("not consequent ", old, idx, seq)
-
-					rows.Close()
-					break
+					_, ok := errSeq[old+idx]
+					if ok {
+						rSeq = old + idx
+						sdkLog("seq in err map ", old+idx)
+					} else {
+						sdkLog("not consequent ", old, idx, seq)
+						rows.Close()
+						break
+					}
 				}
 			}
 		}
 		LogSReturn(rSeq, nil)
 		return rSeq, nil
 	} else {
+		rows, err = u.Query("SELECT seq FROM error_chat_log where seq>=? order by seq", old)
+		if err == nil {
+			for rows.Next() {
+				err = rows.Scan(&seq)
+				if err != nil {
+					sdkLog("Scan ,failed ", err.Error())
+					continue
+				} else {
+					errSeq[seq] = nil
+				}
+			}
+		} else {
+			sdkLog("Query failed ", err.Error())
+		}
+
 		rows, err = u.Query("SELECT seq FROM chat_log where seq>=? order by seq", old)
 		if err != nil {
 			sdkLog("getLocalMaxSeqModel,Query err:", err.Error(), old)
@@ -1657,9 +1694,16 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 					rSeq = seq
 					idx++
 				} else {
-					sdkLog("not consequent ", old, idx, seq)
-					rows.Close()
-					break
+					_, ok := errSeq[old+idx]
+					if ok {
+						rSeq = old + idx
+						sdkLog("seq in err map ", old+idx)
+						idx++
+					} else {
+						sdkLog("not consequent ", old, idx, seq)
+						rows.Close()
+						break
+					}
 				}
 			}
 		}

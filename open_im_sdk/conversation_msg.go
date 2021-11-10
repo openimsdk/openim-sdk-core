@@ -88,6 +88,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 			msg.RecvID = strings.Split(v.RecvID, " ")[1]
 			msg.GroupID = msg.RecvID
 		}
+
 		if v.SendID == u.LoginUid { //seq對齊消息 Messages sent by myself  //if  sent through  this terminal
 			m, err := u.getOneMessage(msg.ClientMsgID)
 			if err == nil && m != nil {
@@ -105,6 +106,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 				}
 			} else { //同步消息       send through  other terminal
 				err = u.insertPushMessageToChatLog(msg)
+				sdkLog("insertPushMessageToChatLog seq ", msg.Seq)
 				if err != nil {
 					sdkLog(" sync insertPushMessageToChatLog err", err.Error(), msg)
 					err := u.setErrorMessageToErrorChatLog(msg)
