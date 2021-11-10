@@ -185,27 +185,57 @@ type MessageReceipt struct {
 	SessionType int32    `json:"sessionType"`
 }
 
-type MsgData struct {
-	SendID           string
-	RecvID           string
-	SessionType      int32
-	MsgFrom          int32
-	ContentType      int32
-	ServerMsgID      string
-	Content          string
-	SendTime         int64
-	Seq              int64
-	SenderPlatformID int32
-	SenderNickName   string
-	SenderFaceURL    string
-	ClientMsgID      string
+//type MsgData struct {
+//	SendID           string
+//	RecvID           string
+//	SessionType      int32
+//	MsgFrom          int32
+//	ContentType      int32
+//	ServerMsgID      string
+//	Content          string
+//	SendTime         int64
+//	Seq              int64
+//	SenderPlatformID int32
+//	SenderNickName   string
+//	SenderFaceURL    string
+//	ClientMsgID      string
+//}
+
+type WsMsgData struct {
+	PlatformID  int32                  `mapstructure:"platformID" validate:"required"`
+	SessionType int32                  `mapstructure:"sessionType" validate:"required"`
+	MsgFrom     int32                  `mapstructure:"msgFrom" validate:"required"`
+	ContentType int32                  `mapstructure:"contentType" validate:"required"`
+	RecvID      string                 `mapstructure:"recvID" validate:"required"`
+	ForceList   []string               `mapstructure:"forceList" validate:"required"`
+	Content     string                 `mapstructure:"content" validate:"required"`
+	Options     map[string]interface{} `mapstructure:"options" validate:"required"`
+	ClientMsgID string                 `mapstructure:"clientMsgID" validate:"required"`
+	OfflineInfo map[string]interface{} `mapstructure:"offlineInfo" validate:"required"`
+	Ext         map[string]interface{} `mapstructure:"ext"`
+}
+type WsSubMsg struct {
+	SendTime    int64  `json:"sendTime"`
+	ServerMsgID string `json:"serverMsgID"`
+	ClientMsgID string `json:"clientMsgID"`
 }
 
-type Msg struct {
-	ReqIdentifier int
-	ErrCode       int
-	ErrMsg        string
-	Data          MsgData
+type GeneralWsResp struct {
+	ReqIdentifier int    `json:"reqIdentifier"`
+	ErrCode       int    `json:"errCode"`
+	ErrMsg        string `json:"errMsg"`
+	MsgIncr       string `json:"msgIncr"`
+	OperationID   string `json:"operationID"`
+	Data          []byte `json:"data"`
+}
+
+type GeneralWsReq struct {
+	ReqIdentifier int32  `json:"reqIdentifier"`
+	Token         string `json:"token"`
+	SendID        string `json:"sendID"`
+	OperationID   string `json:"operationID"`
+	MsgIncr       string `json:"msgIncr"`
+	Data          []byte `json:"data"`
 }
 
 type ArrMsg struct {
@@ -239,6 +269,13 @@ type paramsPullUserMsg struct {
 	Data          paramsPullUserMsgDataReq `json:"data"`
 }
 
+type paramsPullUserMsgBySeq struct {
+	ReqIdentifier int     `json:"reqIdentifier"`
+	OperationID   string  `json:"operationID"`
+	SendID        string  `json:"sendID"`
+	SeqList       []int64 `json:"seqList" binding:"required"`
+}
+
 type paramsPullUserGroupMsgDataResp struct {
 	paramsPullUserSingleMsgDataResp
 }
@@ -263,10 +300,10 @@ type paramsPullUserSingleMsgDataResp struct {
 }
 
 type paramsPullUserMsgDataResp struct {
-	Group  []paramsPullUserGroupMsgDataResp  `json:"group"`
-	MaxSeq int64                             `json:"maxSeq"`
-	MinSeq int64                             `json:"minSeq"`
-	Single []paramsPullUserSingleMsgDataResp `json:"single"`
+	Group  []*GatherFormat `json:"group"`
+	MaxSeq int64           `json:"maxSeq"`
+	MinSeq int64           `json:"minSeq"`
+	Single []*GatherFormat `json:"single"`
 }
 
 type PullUserMsgResp struct {
@@ -285,7 +322,8 @@ type paramsNewestSeqReq struct {
 }
 
 type paramsNewestSeqDataResp struct {
-	Seq int64 `json:"seq"`
+	Seq    int64 `json:"seq"`
+	MinSeq int64 `json:"minSeq"`
 }
 type paramsNewestSeqResp struct {
 	ErrCode       int                     `json:"errCode"`
@@ -318,6 +356,13 @@ type paramsTencentOssCredentialResp struct {
 }
 
 ////////////////////////// message/////////////////////////
+
+type WsSendMsgResp struct {
+	ServerMsgID string `json:"serverMsgID"`
+	ClientMsgID string `json:"clientMsgID"`
+	SendTime    int64  `json:"sendTime"`
+}
+
 type PullMsgReq struct {
 	UserID   string     `json:"userID"`
 	GroupID  string     `json:"groupID"`
@@ -836,4 +881,10 @@ type GroupApplicationInfo struct {
 	HandUserID   string                            `json:"handUserID"`
 	HandUserName string                            `json:"handUserName"`
 	HandUserIcon string                            `json:"handUserIcon"`
+}
+
+type SliceMock struct {
+	addr uintptr
+	len  int
+	cap  int
 }

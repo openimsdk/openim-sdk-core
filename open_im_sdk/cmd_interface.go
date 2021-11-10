@@ -84,7 +84,6 @@ type goroutine interface {
 }
 
 func doListener(Li goroutine) {
-
 	sdkLog("doListener start.", Li.getCh())
 	for {
 		sdkLog("doListener for.")

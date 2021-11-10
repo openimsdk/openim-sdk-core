@@ -97,6 +97,7 @@ func GenUserRouter(uid string) *map[string]reflect.Value {
 	wsRouter1.AddAdvancedMsgListener()
 	wsRouter1.SetConversationListener()
 	wsRouter1.SetFriendListener()
+	wsRouter1.SetGroupListener()
 	vf := reflect.ValueOf(&wsRouter1)
 	vft := vf.Type()
 

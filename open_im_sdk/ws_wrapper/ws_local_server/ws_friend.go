@@ -9,7 +9,6 @@ type FriendCallback struct {
 }
 
 func (f *FriendCallback) OnFriendApplicationListAdded(applyUserInfo string) {
-	wrapSdkLog("OnFriendApplicationListAdded call ", applyUserInfo)
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", applyUserInfo, "0"}, f.uid)
 }
 func (f *FriendCallback) OnFriendApplicationListDeleted(applyUserInfo string) {

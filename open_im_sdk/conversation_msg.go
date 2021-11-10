@@ -3,7 +3,6 @@ package open_im_sdk
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"strings"
 )
 
@@ -50,16 +49,19 @@ func (con *ConversationListener) getCh() chan cmd2Value {
 
 func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 	if u.MsgListenerList == nil {
-		fmt.Println("not set c MsgListenerList", len(u.MsgListenerList))
+		sdkLog("not set c MsgListenerList", len(u.MsgListenerList))
 		return
 	}
 	var newMessages, msgReadList, msgRevokeList []*MsgStruct
-	MsgList := c2v.Value.(ArrMsg)
-	for _, v := range MsgList.GroupData {
-		MsgList.SingleData = append(MsgList.SingleData, v)
-	}
-	sdkLog("do Msg come here,len:", len(MsgList.SingleData))
-	for _, v := range MsgList.SingleData {
+	var isCallbackUI bool
+	//MsgList := c2v.Value.(ArrMsg)
+	//for _, v := range MsgList.GroupData {
+	//	MsgList.SingleData = append(MsgList.SingleData, v)
+	//}
+	sdkLog("do Msg come here")
+	u.seqMsgMutex.Lock()
+	for k, v := range u.seqMsg {
+		isCallbackUI = true
 		msg := &MsgStruct{
 			SendID:         v.SendID,
 			SessionType:    v.SessionType,
@@ -79,23 +81,57 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 		//De-analyze data
 		err := u.msgHandleByContentType(msg)
 		if err != nil {
-			fmt.Println("Parsing data error:", err.Error(), msg)
+			sdkLog("Parsing data error:", err.Error(), msg)
+			return
 		}
 		switch v.SessionType {
 		case SingleChatType:
 			msg.RecvID = v.RecvID
+			if v.ContentType > SingleTipBegin && v.ContentType < SingleTipEnd {
+				u.doFriendMsg(v)
+				sdkLog("doFriendMsg, ", v)
+			} else if v.ContentType > GroupTipBegin && v.ContentType < GroupTipEnd {
+				u.doGroupMsg(v)
+				sdkLog("doGroupMsg, SingleChat ", v)
+			}
 		case GroupChatType:
 			msg.RecvID = strings.Split(v.RecvID, " ")[1]
 			msg.GroupID = msg.RecvID
+			if v.ContentType > GroupTipBegin && v.ContentType < GroupTipEnd {
+				u.doGroupMsg(v)
+				sdkLog("doGroupMsg, ", v)
+			}
 		}
-		if v.SendID == u.LoginUid { //seq對齊消息 Messages sent by myself
-			if u.judgeMessageIfExists(msg) { //if  sent through  this terminal
-				err := u.updateMessageSeq(msg)
-				if err != nil {
-					fmt.Println("err", err.Error())
+		if v.SendID == u.LoginUid { //seq對齊消息 Messages sent by myself  //if  sent through  this terminal
+			m, err := u.getOneMessage(msg.ClientMsgID)
+			if err == nil && m != nil {
+				sdkLog("have message", *msg, msg.Seq)
+				if m.Seq == 0 {
+					err := u.updateMessageSeq(msg, MsgStatusSendSuccess)
+					if err != nil {
+						sdkLog("updateMessageSeq err", err.Error(), msg)
+					} else {
+						//remove cache
+						delete(u.seqMsg, k)
+					}
+				} else {
+					err := u.setErrorMessageToErrorChatLog(msg)
+					if err != nil {
+						sdkLog("setErrorMessage  err", err.Error(), msg)
+					}
 				}
 			} else { //同步消息       send through  other terminal
-				_ = u.insertPushMessageToChatLog(msg)
+				err = u.insertMessageToChatLog(msg)
+				if err != nil {
+					sdkLog(" sync insertMessageToChatLog err", err.Error(), msg)
+					err := u.setErrorMessageToErrorChatLog(msg)
+					if err != nil {
+						sdkLog("setErrorMessage err", err.Error(), *msg)
+					}
+				} else {
+					//remove cache
+					delete(u.seqMsg, k)
+				}
 				c := ConversationStruct{
 					//ConversationID:    conversationID,
 					ConversationType: int(v.SessionType),
@@ -118,7 +154,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 					c.ConversationID = GetConversationIDBySessionType(c.GroupID, GroupChatType)
 				}
 
-				if msg.ContentType <= AcceptFriendApplicationTip {
+				if msg.ContentType <= AcceptFriendApplicationTip && msg.ContentType != HasReadReceipt {
 					newMessages = append(newMessages, msg)
 					u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, AddConOrUpLatMsg,
 						c}})
@@ -139,7 +175,13 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 						LatestMsg:         structToJsonString(msg),
 						LatestMsgSendTime: msg.SendTime,
 					}
-					_ = u.insertPushMessageToChatLog(msg)
+					err = u.insertMessageToChatLog(msg)
+					if err != nil {
+						sdkLog("insertMessageToChatLog err", err.Error(), msg)
+					} else {
+						//remove cache
+						delete(u.seqMsg, k)
+					}
 					switch v.SessionType {
 					case SingleChatType:
 						c.ConversationID = GetConversationIDBySessionType(v.SendID, SingleChatType)
@@ -179,20 +221,36 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 						newMessages = append(newMessages, msg)
 
 					} else {
-						_ = u.insertPushMessageToChatLog(msg)
-						//update read state
-						msgReadList = append(msgReadList, msg)
+						err = u.insertMessageToChatLog(msg)
+						if err != nil {
+							sdkLog("insert HasReadReceipt err:", err)
+						} else {
+							//remove cache
+							delete(u.seqMsg, k)
+							//update read state
+							msgReadList = append(msgReadList, msg)
+						}
 					}
+				}
+			} else {
+				err := u.setErrorMessageToErrorChatLog(msg)
+				if err != nil {
+					sdkLog("setErrorMessage  err", err.Error(), msg)
+				} else {
+					sdkLog("repeat message err", msg.ClientMsgID, msg.Seq, msg.ServerMsgID)
 				}
 			}
 		}
 	}
-	u.doMsgReadState(msgReadList)
-	u.revokeMessage(msgRevokeList)
-	u.newMessage(newMessages)
-	u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, ""}})
-	u.doUpdateConversation(cmd2Value{Value: updateConNode{"", TotalUnreadMessageChanged, ""}})
-	fmt.Println("length msgListenerList", u.MsgListenerList, "length message", len(newMessages), "msgListenerLen", len(u.MsgListenerList))
+	u.seqMsgMutex.Unlock()
+	if isCallbackUI {
+		u.doMsgReadState(msgReadList)
+		u.revokeMessage(msgRevokeList)
+		u.newMessage(newMessages)
+		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, ""}})
+		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", TotalUnreadMessageChanged, ""}})
+	}
+	//sdkLog("length msgListenerList", u.MsgListenerList, "length message", len(newMessages), "msgListenerLen", len(u.MsgListenerList))
 
 }
 
@@ -216,18 +274,19 @@ func (u *UserRelated) revokeMessage(msgRevokeList []*MsgStruct) {
 func (con *ConversationListener) newMessage(newMessagesList []*MsgStruct) {
 	for _, v := range con.MsgListenerList {
 		for _, w := range newMessagesList {
+			sdkLog("newMessage: ", w.ClientMsgID)
 			if v != nil {
-				fmt.Println("msgListener,OnRecvNewMessage")
+				sdkLog("msgListener,OnRecvNewMessage")
 				v.OnRecvNewMessage(structToJsonString(w))
 			} else {
-				fmt.Println("set msgListener is err ")
+				sdkLog("set msgListener is err ")
 			}
 		}
 	}
 }
 func (u *UserRelated) doDeleteConversation(c2v cmd2Value) {
 	if u.ConversationListenerx == nil {
-		fmt.Println("not set conversationListener")
+		sdkLog("not set conversationListener")
 		return
 	}
 	node := c2v.Value.(deleteConNode)
@@ -286,7 +345,7 @@ func (u *UserRelated) doMsgReadState(msgReadList []*MsgStruct) {
 
 func (u *UserRelated) doUpdateConversation(c2v cmd2Value) {
 	if u.ConversationListenerx == nil {
-		fmt.Println("not set conversationListener")
+		sdkLog("not set conversationListener")
 		return
 	}
 	node := c2v.Value.(updateConNode)
@@ -308,9 +367,12 @@ func (u *UserRelated) doUpdateConversation(c2v cmd2Value) {
 	case AddConOrUpLatMsg:
 		c := node.Args.(ConversationStruct)
 		if u.judgeConversationIfExists(node.ConId) {
-			err := u.setConversationLatestMsgModel(&c, node.ConId)
-			if err != nil {
-				sdkLog("setConversationLatestMsgModel err: ", err)
+			_, o := u.getOneConversationModel(node.ConId)
+			if c.LatestMsgSendTime > o.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
+				err := u.setConversationLatestMsgModel(&c, node.ConId)
+				if err != nil {
+					sdkLog("setConversationLatestMsgModel err: ", err)
+				}
 			}
 		} else {
 			_ = u.addConversationOrUpdateLatestMsg(&c, node.ConId)
@@ -377,16 +439,22 @@ func (u *UserRelated) doUpdateConversation(c2v cmd2Value) {
 
 func (u *UserRelated) work(c2v cmd2Value) {
 
-	sdkLog("doListener work..", c2v)
+	sdkLog("doListener work..", c2v.Cmd)
 
 	switch c2v.Cmd {
 	case CmdDeleteConversation:
+		sdkLog("CmdDeleteConversation start ..", c2v.Cmd)
 		u.doDeleteConversation(c2v)
-
+		sdkLog("CmdDeleteConversation end..", c2v.Cmd)
 	case CmdNewMsgCome:
+		sdkLog("doMsgNew start..", c2v.Cmd)
+
 		u.doMsgNew(c2v)
+		sdkLog("doMsgNew end..", c2v.Cmd)
 	case CmdUpdateConversation:
+		sdkLog("doUpdateConversation start ..", c2v.Cmd)
 		u.doUpdateConversation(c2v)
+		sdkLog("doUpdateConversation end..", c2v.Cmd)
 	}
 }
 

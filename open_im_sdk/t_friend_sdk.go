@@ -37,7 +37,7 @@ func TestLog(v ...interface{}) {
 	X.Println(a, b, c, d)
 }
 
-var Friend_uid = "7798cfa9135fe134"
+var Friend_uid = "09fd93dfbf"
 
 ///////////////////////////////////////////////////////////
 
@@ -364,37 +364,45 @@ type BaseSuccFailed struct {
 }
 
 func (b *BaseSuccFailed) OnError(errCode int, errMsg string) {
-	b.errCode = errCode
+	b.errCode = -1
 	b.errMsg = errMsg
 	fmt.Println("onError ", b.funcName)
-	// event: b.funcname;
-	// data: errcode, errmsg;
+	fmt.Println("test_openim: ", "login failed ", errCode, errMsg)
 
 }
 
 func (b *BaseSuccFailed) OnSuccess(data string) {
-	b.errCode = 0
+	b.errCode = 1
 	b.successData = data
+	fmt.Println("test_openim: ", "login success")
 }
 
-func runFuncName() string {
-	pc := make([]uintptr, 1)
-	runtime.Callers(2, pc)
-	f := runtime.FuncForPC(pc[0])
-	return f.Name()
-}
-
-func lllogin(uid, tk string) {
+func lllogin(uid, tk string) bool {
 	var callback BaseSuccFailed
-	callback.funcName = runFuncName()
+	callback.funcName = RunFuncName()
 	Login(uid, tk, &callback)
+
+	for true {
+		if callback.errCode == 1 {
+			fmt.Println("success code 1")
+			return true
+		} else if callback.errCode == -1 {
+			fmt.Println("failed code -1")
+			return false
+		} else {
+			fmt.Println("code sleep")
+			time.Sleep(1 * time.Second)
+			continue
+		}
+	}
+	return true
 }
 
-func DoTest(uid, tk string) {
+func DoTest(uid, tk, ws, api string) {
 	var cf IMConfig
-	cf.IpApiAddr = "https://open-im.rentsoft.cn"
+	cf.IpApiAddr = api // "http://120.24.45.199:10000"
 	//	cf.IpWsAddr = "wss://open-im.rentsoft.cn/wss"
-	cf.IpWsAddr = "wss://open-im.rentsoft.cn/wss"
+	cf.IpWsAddr = ws //"ws://120.24.45.199:17778"
 	cf.Platform = 1
 	cf.DbDir = "./"
 
@@ -405,9 +413,6 @@ func DoTest(uid, tk string) {
 	var testinit testInitLister
 	InitSDK(s, testinit)
 
-	lllogin(uid, tk)
-	//Logout(xtestLogin)
-	//	open_im_sdk.SdkInitManager.UnInitSDK()
 	var testConversation conversationCallBack
 	SetConversationListener(testConversation)
 
@@ -422,39 +427,39 @@ func DoTest(uid, tk string) {
 
 	time.Sleep(1 * time.Second)
 
+	for !lllogin(uid, tk) {
+		fmt.Println("lllogin, failed, login...")
+		time.Sleep(1 * time.Second)
+	}
+
 }
 
 ////////////////////////////////////////////////////////////////////
 type TestSendMsgCallBack struct {
+	msg string
 }
 
-func (t TestSendMsgCallBack) OnError(errCode int, errMsg string) {
-	fmt.Printf("msg_send , errCode:%v,errMsg:%v\n", errCode, errMsg)
+func (t *TestSendMsgCallBack) OnError(errCode int, errMsg string) {
+	fmt.Println("test_openim: send msg failed: ", errCode, errMsg, "|", t.msg, "|")
 }
 
-func (t TestSendMsgCallBack) OnSuccess(data string) {
-	fmt.Printf("msg_send , success,data:%v\n", data)
+func (t *TestSendMsgCallBack) OnSuccess(data string) {
+	fmt.Println("test_openim: send msg success: |", t.msg, "|")
 }
 
-func (t TestSendMsgCallBack) OnProgress(progress int) {
-	fmt.Printf("msg_send , onProgress %d\n", progress)
+func (t *TestSendMsgCallBack) OnProgress(progress int) {
+	//	fmt.Printf("msg_send , onProgress %d\n", progress)
 }
-func DoTestSendMsg(receiverID string) {
-	i := 0
-	for true {
-		i++
 
-		s := CreateSoundMessageFromFullPath("D:\\1.wav", 1)
-		fmt.Println("ssss", s)
-
-		var testSendMsg TestSendMsgCallBack
-		_ = SendMessage(testSendMsg, s, receiverID, "", false)
-
-		fmt.Println("running.................")
-		time.Sleep(time.Duration(1000) * time.Millisecond)
-		break
-	}
+func DoTestSendMsg(sendId, receiverID string, idx string) {
+	m := "test:" + sendId + ":" + receiverID + ":" + idx
+	s := CreateTextMessage(m)
+	var testSendMsg TestSendMsgCallBack
+	testSendMsg.msg = SendMessage(&testSendMsg, s, receiverID, "", false)
+	fmt.Println("func send ", m, testSendMsg.msg)
+	fmt.Println("test to recv : ", receiverID)
 }
+
 func DoTestGetHistoryMessage(userID string) {
 	var testGetHistoryCallBack GetHistoryCallBack
 	GetHistoryMessageList(testGetHistoryCallBack, structToJsonString(&PullMsgReq{
@@ -558,7 +563,14 @@ type MsgListenerCallBak struct {
 }
 
 func (m MsgListenerCallBak) OnRecvNewMessage(msg string) {
-	fmt.Printf("msg_Listener , onRecvNewMessage %v\n", msg)
+	var mm MsgStruct
+	err := json.Unmarshal([]byte(msg), &mm)
+	if err != nil {
+		fmt.Println("Unmarshal failed")
+	} else {
+		fmt.Println("test_openim: ", "recv time: ", time.Now().UnixNano(), "send time: ", mm.SendTime, " msgid: ", mm.ClientMsgID)
+	}
+
 }
 func (m MsgListenerCallBak) OnRecvC2CReadReceipt(data string) {
 	fmt.Println("OnRecvC2CReadReceipt , ", data)

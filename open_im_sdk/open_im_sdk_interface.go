@@ -22,15 +22,25 @@ func init(){
 }
 */
 
+func SdkVersion() string {
+	return "Open-IM-SDK-Core-1.0.0"
+}
+
 func InitSDK(config string, cb IMSDKListener) bool {
 	var sc IMConfig
 	if err := json.Unmarshal([]byte(config), &sc); err != nil {
 		sdkLog("initSDK failed, config: ", sc, err.Error())
 		return false
 	}
+	sdkLog("InitSDK, config ", config)
 	InitOnce(&sc)
 
 	return userForSDK.InitSDK(config, cb)
+}
+
+//1 no print
+func SetSdkLog(flag int32) {
+	SdkLogFlag = flag
 }
 
 func UnInitSDK() {
@@ -39,10 +49,6 @@ func UnInitSDK() {
 
 func Login(uid, tk string, callback Base) {
 	userForSDK.Login(uid, tk, callback)
-}
-
-func ForceReConn() {
-	userForSDK.ForceReConn()
 }
 
 func Logout(callback Base) {
@@ -58,11 +64,11 @@ func GetLoginUser() string {
 }
 
 func ForceSyncLoginUerInfo() {
-	userForSDK.ForceSyncLoginUerInfo()
+	userForSDK.ForceSyncLoginUserInfo()
 }
 
-func TencentOssCredentials(cb Base) {
-	userForSDK.TencentOssCredentials(cb)
+func ForceSyncMsg() bool {
+	return userForSDK.ForceSyncMsg()
 }
 
 func SetGroupListener(callback OnGroupListener) {
@@ -117,10 +123,6 @@ func GetGroupApplicationList(callback Base) {
 	userForSDK.GetGroupApplicationList(callback)
 }
 
-func TsetGetGroupApplicationList(callback Base) string {
-	return userForSDK.TsetGetGroupApplicationList(callback)
-}
-
 func AcceptGroupApplication(application, reason string, callback Base) {
 	userForSDK.AcceptGroupApplication(application, reason, callback)
 }
@@ -128,6 +130,8 @@ func AcceptGroupApplication(application, reason string, callback Base) {
 func RefuseGroupApplication(application, reason string, callback Base) {
 	userForSDK.RefuseGroupApplication(application, reason, callback)
 }
+
+/////////////////////////////////////////////////////////////////
 
 func GetFriendsInfo(callback Base, uidList string) {
 	userForSDK.GetFriendsInfo(callback, uidList)
@@ -181,17 +185,7 @@ func SetFriendListener(listener OnFriendshipListener) bool {
 	return userForSDK.SetFriendListener(listener)
 }
 
-func ForceSyncFriendApplication() {
-	userForSDK.ForceSyncFriendApplication()
-}
-
-func ForceSyncFriend() {
-	userForSDK.ForceSyncFriend()
-}
-
-func ForceSyncBlackList() {
-	userForSDK.ForceSyncBlackList()
-}
+///////////////////////////////////////////////////////////
 
 func GetAllConversationList(callback Base) {
 	userForSDK.GetAllConversationList(callback)
@@ -210,7 +204,6 @@ func SetConversationDraft(conversationID, draftText string, callback Base) {
 }
 func PinConversation(conversationID string, isPinned bool, callback Base) {
 	userForSDK.PinConversation(conversationID, isPinned, callback)
-
 }
 func GetTotalUnreadMsgCount(callback Base) {
 	userForSDK.GetTotalUnreadMsgCount(callback)
@@ -222,29 +215,6 @@ func SetConversationListener(listener OnConversationListener) {
 
 func AddAdvancedMsgListener(listener OnAdvancedMsgListener) {
 	userForSDK.AddAdvancedMsgListener(listener)
-}
-
-func ForceSyncMsg() {
-	userForSDK.ForceSyncMsg()
-
-}
-
-func ForceSyncJoinedGroup() {
-	userForSDK.ForceSyncJoinedGroup()
-
-}
-
-func ForceSyncJoinedGroupMember() {
-	userForSDK.ForceSyncJoinedGroupMember()
-
-}
-
-func ForceSyncGroupRequest() {
-	userForSDK.ForceSyncGroupRequest()
-}
-
-func ForceSyncApplyGroupRequest() {
-	userForSDK.ForceSyncApplyGroupRequest()
 }
 
 func CreateTextMessage(text string) string {
@@ -274,6 +244,9 @@ func CreateImageMessageFromFullPath(imageFullPath string) string {
 }
 func CreateSoundMessageFromFullPath(soundPath string, duration int64) string {
 	return userForSDK.CreateSoundMessageFromFullPath(soundPath, duration)
+}
+func CreateFileMessageFromFullPath(fileFullPath, fileName string) string {
+	return userForSDK.CreateFileMessageFromFullPath(fileFullPath, fileName)
 }
 func CreateImageMessage(imagePath string) string {
 	return userForSDK.CreateImageMessage(imagePath)

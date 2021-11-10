@@ -5,10 +5,6 @@ import (
 	"sync"
 )
 
-func InitAddr() {
-	initAddr()
-}
-
 func initAddr() {
 	ginAddress = SvrConf.IpApiAddr
 	getUserInfoRouter = ginAddress + "/user/get_user_info"
@@ -26,6 +22,8 @@ func initAddr() {
 	removeBlackListRouter = ginAddress + "/friend/remove_blacklist"
 	//getFriendApplyListRouter = ginAddress + "/friend/get_friend_apply_list"
 	pullUserMsgRouter = ginAddress + "/chat/pull_msg"
+	pullUserMsgBySeqRouter = ginAddress + "/chat/pull_msg_by_seq"
+
 	newestSeqRouter = ginAddress + "/chat/newest_seq"
 	setFriendComment = ginAddress + "/friend/set_friend_comment"
 	tencentCloudStorageCredentialRouter = ginAddress + "/third/tencent_cloud_storage_credential"
@@ -67,6 +65,7 @@ var (
 	//	getFriendApplyListRouter            = ginAddress + "/friend/get_friend_apply_list"
 	setFriendComment                    = " "
 	pullUserMsgRouter                   = ""
+	pullUserMsgBySeqRouter              = ""
 	newestSeqRouter                     = ""
 	tencentCloudStorageCredentialRouter = ""
 	//group
@@ -88,31 +87,42 @@ var (
 )
 
 func (u *UserRelated) initListenerCh() {
-	u.ch = make(chan cmd2Value, 100)
+	u.ch = make(chan cmd2Value, 1000)
 	u.ConversationCh = u.ch
+
+	u.wsNotification = make(map[string]chan GeneralWsResp, 1)
+	u.seqMsg = make(map[int32]MsgData, 1000)
 }
 
 type UserRelated struct {
 	ConversationCh chan cmd2Value //cmd：
 
-	SvrConf  IMConfig
-	token    string
-	LoginUid string
-
+	SvrConf        IMConfig
+	token          string
+	LoginUid       string
+	wsNotification map[string]chan GeneralWsResp
+	wsMutex        sync.RWMutex
 	IMManager
 	Friend
 	ConversationListener
 	groupListener
 
-	initDB   *sql.DB
-	mRWMutex *sync.RWMutex
-
+	//initDB     *sql.DB
+	db         *sql.DB
+	mRWMutex   *sync.RWMutex
 	stateMutex sync.Mutex
+
+	minSeqSvr        int64
+	minSeqSvrRWMutex sync.RWMutex
+
+	seqMsg      map[int32]MsgData
+	seqMsgMutex sync.RWMutex
 }
 
 var UserSDKRwLock sync.RWMutex
 var UserRouterMap map[string]*UserRelated
 var SvrConf IMConfig
+var SdkLogFlag int32
 
 var userForSDK UserRelated
 
@@ -250,9 +260,18 @@ const (
 	GroupActionRefuseGroupApplication = 9
 )
 const ZoomScale = "200"
-
+const MaxTotalMsgLen = 2048
 const (
 	FriendAcceptTip  = "You have successfully become friends, so start chatting"
 	TransferGroupTip = "The owner of the group is transferred!"
 	AcceptGroupTip   = "%s join the group"
+)
+
+const (
+	WSGetNewestSeq     = 1001
+	WSPullMsg          = 1002
+	WSSendMsg          = 1003
+	WSPullMsgBySeqList = 1004
+	WSPushMsg          = 2001
+	WSDataError        = 3001
 )
