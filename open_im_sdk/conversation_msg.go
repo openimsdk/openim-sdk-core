@@ -58,7 +58,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 	//for _, v := range MsgList.GroupData {
 	//	MsgList.SingleData = append(MsgList.SingleData, v)
 	//}
-	//sdkLog("do Msg come here,len:", len(MsgList.SingleData))
+	sdkLog("do Msg come here")
 	u.seqMsgMutex.Lock()
 	for k, v := range u.seqMsg {
 		isCallbackUI = true
