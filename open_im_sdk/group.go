@@ -1176,7 +1176,7 @@ func (u *UserRelated) syncGroupMemberByGroupId(groupId string) {
 	for _, index := range aInBNot {
 		err = u.insertIntoLocalGroupMember(groupMemberOnServer[index])
 		if err != nil {
-			sdkLog("insertIntoLocalGroupMember failed", err.Error())
+			sdkLog("insertIntoLocalGroupMember failed", err.Error(), "index", index, groupMemberOnServer[index])
 			continue
 		}
 	}

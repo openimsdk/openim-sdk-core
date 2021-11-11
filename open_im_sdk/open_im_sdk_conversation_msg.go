@@ -803,6 +803,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 			conversationID = GetConversationIDBySessionType(receiver, SingleChatType)
 			c.UserID = receiver
 			c.ConversationType = SingleChatType
+
 			faceUrl, name, err := u.getUserNameAndFaceUrlByUid(receiver)
 			if err != nil {
 				sdkLog("getUserNameAndFaceUrlByUid err:", err)

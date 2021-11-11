@@ -51,8 +51,8 @@ func main() {
 			IpWsAddr: "ws://" + utils.ServerIP + ":" + utils.IntToString(*openIMWsPort), Platform: utils.WebPlatformID, DbDir: "../db/sdk/"})
 
 	case "windows":
-		sdkWsPort = flag.Int("sdk_ws_port", 7799, "openIM ws listening port")
-		flag.Parse()
+		//	sdkWsPort = flag.Int("sdk_ws_port", 7799, "openIM ws listening port")
+		//flag.Parse()
 		ws_local_server.InitServer(&open_im_sdk.IMConfig{IpApiAddr: APIADDR,
 			IpWsAddr: WSADDR, Platform: utils.WebPlatformID, DbDir: "./"})
 	default:

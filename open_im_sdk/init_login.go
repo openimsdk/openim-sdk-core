@@ -251,15 +251,16 @@ func (u *UserRelated) doMsg(wsResp GeneralWsResp) {
 		return
 	}
 
+	sdkLog("openim ws  recv push msg do push seq in : ", msg.Seq)
+	u.seqMsgMutex.Lock()
 	b1 := u.isExistsInErrChatLogBySeq(msg.Seq)
 	b2 := u.judgeMessageIfExistsBySeq(msg.Seq)
-	b3 := u.isSeqInCache(int32(msg.Seq))
-	if b1 || b2 || b3 {
-		sdkLog("is seq in : ", b1, b2, b3)
+	_, ok := u.seqMsg[int32(msg.Seq)]
+	if b1 || b2 || ok {
+		sdkLog("seq in : ", msg.Seq, b1, b2, ok)
+		u.seqMsgMutex.Unlock()
 		return
 	}
-
-	u.seqMsgMutex.Lock()
 	u.seqMsg[int32(msg.Seq)] = msg
 	u.seqMsgMutex.Unlock()
 
@@ -274,17 +275,6 @@ func (u *UserRelated) GetMinSeqSvr() int64 {
 	return min
 }
 
-func (u *UserRelated) isSeqInCache(seq int32) bool {
-	u.seqMsgMutex.RLock()
-	defer u.seqMsgMutex.RUnlock()
-	_, ok := u.seqMsg[seq]
-	if ok {
-		return true
-	} else {
-		return false
-	}
-
-}
 func (u *UserRelated) SetMinSeqSvr(minSeqSvr int64) {
 
 	u.minSeqSvrRWMutex.Lock()
@@ -341,6 +331,7 @@ func (u *UserRelated) syncSeq2Msg() error {
 	}
 
 	needSyncSeq := u.getNeedSyncSeq(int32(svrMinSeq), int32(svrMaxSeq))
+
 	err = u.syncMsgFromServer(needSyncSeq)
 	return err
 }
@@ -445,18 +436,12 @@ func (u *UserRelated) getNeedSyncSeq(svrMinSeq, svrMaxSeq int32) []int32 {
 			firstSeq = startSeq
 		}
 	}
+	sdkLog("seq start: ", maxConsequentSeq, firstSeq, localMinSeq)
 	if firstSeq > localMinSeq {
 		u.setNeedSyncLocalMinSeq(firstSeq)
 	}
 
 	return seqList
-}
-
-func (u *UserRelated) getNeedSyncLocalMinSeq() int32 {
-	return 0
-}
-
-func (u *UserRelated) setNeedSyncLocalMinSeq(seq int32) {
 }
 
 func (u *UserRelated) heartbeat() {
@@ -521,6 +506,7 @@ func (u *UserRelated) heartbeat() {
 						LogEnd("closeConn DelCh continue")
 					} else {
 						needSyncSeq := u.getNeedSyncSeq(int32(wsSeqResp.MinSeq), int32(wsSeqResp.MaxSeq))
+						sdkLog("needSyncSeq ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, needSyncSeq)
 						u.syncMsgFromServer(needSyncSeq)
 					}
 				}
@@ -699,10 +685,17 @@ func (u *UserRelated) syncMsgFromServerSplit(needSyncSeqList []int64) (err error
 						ClientMsgID:      pullMsg.Data.Single[i].List[j].ClientMsgID,
 						SenderPlatformID: pullMsg.Data.Single[i].List[j].SenderPlatformID,
 					}
-					u.seqMsg[int32(pullMsg.Data.Single[i].List[j].Seq)] = singleMsg
-					isInmap = true
-					sdkLog("into map, seq: ", pullMsg.Data.Single[i].List[j].Seq, pullMsg.Data.Single[i].List[j].ClientMsgID, pullMsg.Data.Single[i].List[j].ServerMsgID)
 
+					b1 := u.isExistsInErrChatLogBySeq(pullMsg.Data.Single[i].List[j].Seq)
+					b2 := u.judgeMessageIfExistsBySeq(pullMsg.Data.Single[i].List[j].Seq)
+					_, ok := u.seqMsg[int32(pullMsg.Data.Single[i].List[j].Seq)]
+					if b1 || b2 || ok {
+						sdkLog("seq in : ", pullMsg.Data.Single[i].List[j].Seq, b1, b2, ok)
+					} else {
+						isInmap = true
+						u.seqMsg[int32(pullMsg.Data.Single[i].List[j].Seq)] = singleMsg
+						sdkLog("into map, seq: ", pullMsg.Data.Single[i].List[j].Seq, pullMsg.Data.Single[i].List[j].ClientMsgID, pullMsg.Data.Single[i].List[j].ServerMsgID)
+					}
 				}
 			}
 
@@ -723,11 +716,19 @@ func (u *UserRelated) syncMsgFromServerSplit(needSyncSeqList []int64) (err error
 						ClientMsgID:      pullMsg.Data.Group[i].List[j].ClientMsgID,
 						SenderPlatformID: pullMsg.Data.Group[i].List[j].SenderPlatformID,
 					}
-					u.seqMsg[int32(pullMsg.Data.Group[i].List[j].Seq)] = groupMsg
-					isInmap = true
-					sdkLog("into map, seq: ", pullMsg.Data.Group[i].List[j].Seq, pullMsg.Data.Group[i].List[j].ClientMsgID, pullMsg.Data.Group[i].List[j].ServerMsgID)
-					sdkLog("pull all: |", pullMsg.Data.Group[i].List[j].Seq, pullMsg.Data.Group[i].List[j])
 
+					b1 := u.isExistsInErrChatLogBySeq(pullMsg.Data.Group[i].List[j].Seq)
+					b2 := u.judgeMessageIfExistsBySeq(pullMsg.Data.Group[i].List[j].Seq)
+					_, ok := u.seqMsg[int32(pullMsg.Data.Group[i].List[j].Seq)]
+					if b1 || b2 || ok {
+						sdkLog("seq in : ", pullMsg.Data.Group[i].List[j].Seq, b1, b2, ok)
+					} else {
+						isInmap = true
+						u.seqMsg[int32(pullMsg.Data.Group[i].List[j].Seq)] = groupMsg
+						sdkLog("into map, seq: ", pullMsg.Data.Group[i].List[j].Seq, pullMsg.Data.Group[i].List[j].ClientMsgID, pullMsg.Data.Group[i].List[j].ServerMsgID)
+						sdkLog("pull all: |", pullMsg.Data.Group[i].List[j].Seq, pullMsg.Data.Group[i].List[j])
+
+					}
 				}
 			}
 			u.seqMsgMutex.Unlock()
@@ -753,6 +754,7 @@ func (u *UserRelated) syncMsgFromServer(needSyncSeqList []int32) (err error) {
 		sdkLog("notInCache is null, don't sync from svr")
 		return nil
 	}
+	sdkLog("notInCache ", notInCache)
 	var SPLIT int = 100
 	for i := 0; i < len(notInCache)/SPLIT; i++ {
 		//0-99 100-199

@@ -380,6 +380,43 @@ func (u *UserRelated) getLocalMaxConSeqFromDB() (int64, error) {
 
 */
 
+func (u *UserRelated) getNeedSyncLocalMinSeq() int32 {
+	sdkLog("getLocalMaxConSeqFromDB start")
+	u.mRWMutex.RLock()
+	defer u.mRWMutex.RUnlock()
+	rows, err := u.Query("SELECT seq FROM my_local_data where  user_id=?", u.LoginUid)
+	if err != nil {
+		sdkLog("Query failed ", err.Error())
+		return 0
+	}
+	var seq int32
+	for rows.Next() {
+		err = rows.Scan(&seq)
+		if err != nil {
+			sdkLog("Scan, failed:", err.Error())
+			continue
+		}
+	}
+	sdkLog("getLocalMaxConSeqFromDB, seq: ", seq)
+	return seq
+}
+
+func (u *UserRelated) setNeedSyncLocalMinSeq(seq int32) {
+	sdkLog("setLocalMaxConSeq start ", seq)
+	u.mRWMutex.Lock()
+	defer u.mRWMutex.Unlock()
+
+	stmt, err := u.Prepare("replace into my_local_data(user_id, seq) values (?,?)")
+	if err != nil {
+		sdkLog("set failed", err.Error())
+
+	}
+	_, err = stmt.Exec(u.LoginUid, seq)
+	if err != nil {
+		sdkLog("stmt failed,", err.Error())
+	}
+}
+
 func (u *UserRelated) replaceIntoUser(info *userInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -1642,6 +1679,7 @@ func (u *UserRelated) getErrorChatLogSeq(startSeq int32) map[int32]interface{} {
 				sdkLog("Scan ,failed ", err.Error())
 				continue
 			} else {
+				sdkLog("getErrorChatLogSeq", seq)
 				errSeq[int32(seq)] = nil
 			}
 		}
@@ -1666,6 +1704,7 @@ func (u *UserRelated) getNormalChatLogSeq(startSeq int32) map[int32]interface{} 
 				sdkLog("Scan ,failed ", err.Error())
 				continue
 			} else {
+				sdkLog("getNormalChatLogSeq", seq)
 				errSeq[int32(seq)] = nil
 			}
 		}
