@@ -422,7 +422,9 @@ func (u *UserRelated) getNeedSyncSeq(svrMinSeq, svrMaxSeq int32) []int32 {
 			continue
 		} else {
 			isBreakFlag = true
-			seqList = append(seqList, seq)
+			if seq != 0 {
+				seqList = append(seqList, seq)
+			}
 		}
 	}
 
