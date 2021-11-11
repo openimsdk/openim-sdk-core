@@ -1202,7 +1202,7 @@ func (u *UserRelated) RevokeMessage(callback Base, message string) {
 			return
 		}
 		s, err := u.getOneMessage(c.ClientMsgID)
-		if err != nil {
+		if err != nil || s == nil {
 			callback.OnError(201, "getOneMessage err")
 			return
 		}

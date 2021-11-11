@@ -1498,7 +1498,11 @@ func (u *UserRelated) getOneMessage(msgID string) (m *MsgStruct, err error) {
 			continue
 		}
 	}
-	return temp, nil
+	if temp.ClientMsgID != "" {
+		return temp, nil
+	} else {
+		return nil, nil
+	}
 }
 
 func (u *UserRelated) setSingleMessageHasRead(sendID string) (err error) {
