@@ -218,6 +218,8 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 					}
 				} else {
 					if msg.ContentType == Typing {
+						//remove cache
+						delete(u.seqMsg, k)
 						newMessages = append(newMessages, msg)
 
 					} else {
