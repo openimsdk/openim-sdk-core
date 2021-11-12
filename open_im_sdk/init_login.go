@@ -261,6 +261,7 @@ func (u *UserRelated) doMsg(wsResp GeneralWsResp) {
 		u.seqMsgMutex.Unlock()
 		return
 	}
+
 	u.seqMsg[int32(msg.Seq)] = msg
 	u.seqMsgMutex.Unlock()
 
@@ -696,7 +697,7 @@ func (u *UserRelated) syncMsgFromServerSplit(needSyncSeqList []int64) (err error
 					} else {
 						isInmap = true
 						u.seqMsg[int32(pullMsg.Data.Single[i].List[j].Seq)] = singleMsg
-						sdkLog("into map, seq: ", pullMsg.Data.Single[i].List[j].Seq, pullMsg.Data.Single[i].List[j].ClientMsgID, pullMsg.Data.Single[i].List[j].ServerMsgID)
+						sdkLog("into map, seq: ", pullMsg.Data.Single[i].List[j].Seq, pullMsg.Data.Single[i].List[j].ClientMsgID, pullMsg.Data.Single[i].List[j].ServerMsgID, pullMsg.Data.Single[i].List[j])
 					}
 				}
 			}

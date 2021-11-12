@@ -78,6 +78,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 			Status:         MsgStatusSendSuccess,
 			IsRead:         false,
 		}
+		sdkLog("new msg, seq, ServerMsgID, ClientMsgID", msg.Seq, msg.ServerMsgID, msg.ClientMsgID)
 		//De-analyze data
 		err := u.msgHandleByContentType(msg)
 		if err != nil {
@@ -102,10 +103,10 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 				sdkLog("doGroupMsg, ", v)
 			}
 		}
-		if v.SendID == u.LoginUid { //seq對齊消息 Messages sent by myself  //if  sent through  this terminal
+		if v.SendID == u.LoginUid { //seq  Messages sent by myself  //if  sent through  this terminal
 			m, err := u.getOneMessage(msg.ClientMsgID)
 			if err == nil && m != nil {
-				sdkLog("have message", *msg, msg.Seq)
+				sdkLog("have message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
 				if m.Seq == 0 {
 					err := u.updateMessageSeq(msg, MsgStatusSendSuccess)
 					if err != nil {
@@ -120,7 +121,8 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 						sdkLog("setErrorMessage  err", err.Error(), msg)
 					}
 				}
-			} else { //同步消息       send through  other terminal
+			} else { //      send through  other terminal
+				sdkLog("sync message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
 				err = u.insertMessageToChatLog(msg)
 				if err != nil {
 					sdkLog(" sync insertMessageToChatLog err", err.Error(), msg)
@@ -220,6 +222,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 					if msg.ContentType == Typing {
 						//remove cache
 						delete(u.seqMsg, k)
+						sdkLog("Typing ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg, k)
 						newMessages = append(newMessages, msg)
 
 					} else {
@@ -230,6 +233,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 							//remove cache
 							delete(u.seqMsg, k)
 							//update read state
+							sdkLog("append msgReadList ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg)
 							msgReadList = append(msgReadList, msg)
 						}
 					}
