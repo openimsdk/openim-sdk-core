@@ -1634,11 +1634,11 @@ func (u *UserRelated) deleteMessageByMsgID(msgID string) (err error) {
 func (u *UserRelated) updateMessageTimeAndMsgIDStatus(ClientMsgID string, sendTime int64, status int) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.Prepare("update chat_log set send_time=?, status=? where msg_id=?")
+	stmt, err := u.Prepare("update chat_log set send_time=?, status=? where msg_id=? and seq=?")
 	if err != nil {
 		return err
 	}
-	_, err = stmt.Exec(sendTime, status, ClientMsgID)
+	_, err = stmt.Exec(sendTime, status, ClientMsgID, 0)
 	if err != nil {
 		return err
 	}
