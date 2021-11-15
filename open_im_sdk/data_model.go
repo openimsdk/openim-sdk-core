@@ -1435,11 +1435,11 @@ func (u *UserRelated) updateMessageSeq(message *MsgStruct, status int) (err erro
 	}
 	return nil
 }
-func (u *UserRelated) judgeMessageIfExists(message *MsgStruct) bool {
+func (u *UserRelated) judgeMessageIfExists(msgID string) bool {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	var count int
-	rows, err := u.Query("select count(*) from chat_log where  msg_id=?", message.ClientMsgID)
+	rows, err := u.Query("select count(*) from chat_log where  msg_id=?", msgID)
 	if err != nil {
 		sdkLog("Query failed, ", err.Error())
 		return false

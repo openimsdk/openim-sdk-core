@@ -164,7 +164,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 				//}
 			}
 		} else { //他人發的
-			if !u.judgeMessageIfExists(msg) { //去重操作
+			if !u.judgeMessageIfExists(msg.ClientMsgID) { //去重操作
 				if msg.ContentType != Typing && msg.ContentType != HasReadReceipt {
 					c := ConversationStruct{
 						//ConversationID:    conversationID,

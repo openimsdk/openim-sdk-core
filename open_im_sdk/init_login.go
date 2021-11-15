@@ -254,7 +254,7 @@ func (u *UserRelated) doMsg(wsResp GeneralWsResp) {
 	sdkLog("openim ws  recv push msg do push seq in : ", msg.Seq)
 	u.seqMsgMutex.Lock()
 	b1 := u.isExistsInErrChatLogBySeq(msg.Seq)
-	b2 := u.judgeMessageIfExistsBySeq(msg.Seq)
+	b2 := u.judgeMessageIfExists(msg.ClientMsgID)
 	_, ok := u.seqMsg[int32(msg.Seq)]
 	if b1 || b2 || ok {
 		sdkLog("seq in : ", msg.Seq, b1, b2, ok)
