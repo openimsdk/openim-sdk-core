@@ -964,7 +964,6 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 		if onlineUserOnly {
 			optionsFlag["history"] = 0
 			optionsFlag["persistent"] = 0
-		} else {
 		}
 		wsMsgData := UserSendMsgReq{
 			Options:        optionsFlag,
