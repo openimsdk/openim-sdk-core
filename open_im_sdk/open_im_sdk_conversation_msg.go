@@ -410,7 +410,7 @@ func (u *UserRelated) CreateSoundMessageFromFullPath(soundPath string, duration 
 	}()
 	sdkLog("init base info ")
 	s := MsgStruct{}
-	u.initBasicInfo(&s, UserMsgType, Sound)
+	u.initBasicInfo(&s, UserMsgType, Voice)
 	s.SoundElem.SoundPath = soundPath
 	s.SoundElem.Duration = duration
 	fi, err := os.Stat(s.SoundElem.SoundPath)
@@ -613,7 +613,7 @@ func (u *UserRelated) CreateSoundMessageByURL(soundBaseInfo string) string {
 	var soundElem SoundBaseInfo
 	_ = json.Unmarshal([]byte(soundBaseInfo), &soundElem)
 	s.SoundElem = soundElem
-	u.initBasicInfo(&s, UserMsgType, Sound)
+	u.initBasicInfo(&s, UserMsgType, Voice)
 	s.AtElem.AtUserList = []string{}
 	s.Content = structToJsonString(s.SoundElem)
 	return structToJsonString(s)
@@ -621,7 +621,7 @@ func (u *UserRelated) CreateSoundMessageByURL(soundBaseInfo string) string {
 
 func (u *UserRelated) CreateSoundMessage(soundPath string, duration int64) string {
 	s := MsgStruct{}
-	u.initBasicInfo(&s, UserMsgType, Sound)
+	u.initBasicInfo(&s, UserMsgType, Voice)
 	s.SoundElem.SoundPath = SvrConf.DbDir + soundPath
 	s.SoundElem.Duration = duration
 	fi, err := os.Stat(s.SoundElem.SoundPath)
@@ -865,7 +865,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 				s.PictureElem.SnapshotPicture.Height = int32(stringToInt(ZoomScale))
 				s.Content = structToJsonString(s.PictureElem)
 			}
-		case Sound:
+		case Voice:
 			var sourcePath string
 			if fileExist(s.SoundElem.SoundPath) {
 				sourcePath = s.SoundElem.SoundPath

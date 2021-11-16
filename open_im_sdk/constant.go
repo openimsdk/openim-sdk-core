@@ -153,7 +153,7 @@ const (
 	//ContentType
 	Text           = 101
 	Picture        = 102
-	Sound          = 103
+	Voice          = 103
 	Video          = 104
 	File           = 105
 	AtText         = 106

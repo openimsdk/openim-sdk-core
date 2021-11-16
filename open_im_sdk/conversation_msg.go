@@ -469,7 +469,7 @@ func (u *UserRelated) msgHandleByContentType(msg *MsgStruct) (err error) {
 	case Text:
 	case Picture:
 		err = jsonStringToStruct(msg.Content, &msg.PictureElem)
-	case Sound:
+	case Voice:
 		err = jsonStringToStruct(msg.Content, &msg.SoundElem)
 	case Video:
 		err = jsonStringToStruct(msg.Content, &msg.VideoElem)
