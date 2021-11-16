@@ -167,11 +167,11 @@ func (u *UserRelated) doWsMsg(message []byte) {
 	LogBegin()
 	LogBegin("decodeBinaryWs")
 	wsResp, err := u.decodeBinaryWs(message)
-	LogEnd("decodeBinaryWs ", wsResp.OperationID, wsResp.ReqIdentifier)
 	if err != nil {
 		LogFReturn(err.Error())
 		return
 	}
+	LogEnd("decodeBinaryWs ", wsResp.OperationID, wsResp.ReqIdentifier)
 
 	switch wsResp.ReqIdentifier {
 	case WSGetNewestSeq:
