@@ -307,7 +307,12 @@ func MarkGroupMessageHasRead(callback Base, groupID string) {
 func DeleteMessageFromLocalStorage(callback Base, message string) {
 	userForSDK.DeleteMessageFromLocalStorage(callback, message)
 }
-
+func ClearC2CHistoryMessage(callback Base, userID string) {
+	userForSDK.ClearC2CHistoryMessage(callback, userID)
+}
+func ClearGroupHistoryMessage(callback Base, groupID string) {
+	userForSDK.ClearGroupHistoryMessage(callback, groupID)
+}
 func InsertSingleMessageToLocalStorage(callback Base, message, userID, sender string) string {
 	return userForSDK.InsertSingleMessageToLocalStorage(callback, message, userID, sender)
 }

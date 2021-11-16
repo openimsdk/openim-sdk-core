@@ -1353,7 +1353,7 @@ func (u *UserRelated) DeleteMessageFromLocalStorage(callback Base, message strin
 		}
 	}()
 }
-func (u *UserRelated) clearC2CHistoryMessage(callback Base, userID string) {
+func (u *UserRelated) ClearC2CHistoryMessage(callback Base, userID string) {
 	go func() {
 		conversationID := GetConversationIDBySessionType(userID, SingleChatType)
 		err := u.setMessageStatusBySourceID(userID, MsgStatusHasDeleted, SingleChatType)
@@ -1373,7 +1373,7 @@ func (u *UserRelated) clearC2CHistoryMessage(callback Base, userID string) {
 	}()
 
 }
-func (u *UserRelated) clearGroupHistoryMessage(callback Base, groupID string) {
+func (u *UserRelated) ClearGroupHistoryMessage(callback Base, groupID string) {
 	go func() {
 		conversationID := GetConversationIDBySessionType(groupID, GroupChatType)
 		err := u.setMessageStatusBySourceID(groupID, MsgStatusHasDeleted, GroupChatType)
