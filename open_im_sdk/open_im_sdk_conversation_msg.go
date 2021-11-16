@@ -1354,6 +1354,46 @@ func (u *UserRelated) DeleteMessageFromLocalStorage(callback Base, message strin
 		}
 	}()
 }
+func (u *UserRelated) clearC2CHistoryMessage(callback Base, userID string) {
+	go func() {
+		conversationID := GetConversationIDBySessionType(userID, SingleChatType)
+		err := u.setMessageStatusBySourceID(userID, MsgStatusHasDeleted, SingleChatType)
+		if err != nil {
+			callback.OnError(202, err.Error())
+			return
+		}
+		err = u.clearConversation(conversationID)
+		if err != nil {
+			callback.OnError(203, err.Error())
+			return
+		} else {
+			callback.OnSuccess("")
+			_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
+		}
+
+	}()
+
+}
+func (u *UserRelated) clearGroupHistoryMessage(callback Base, groupID string) {
+	go func() {
+		conversationID := GetConversationIDBySessionType(groupID, GroupChatType)
+		err := u.setMessageStatusBySourceID(groupID, MsgStatusHasDeleted, GroupChatType)
+		if err != nil {
+			callback.OnError(202, err.Error())
+			return
+		}
+		err = u.clearConversation(conversationID)
+		if err != nil {
+			callback.OnError(203, err.Error())
+			return
+		} else {
+			callback.OnSuccess("")
+			_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
+		}
+
+	}()
+
+}
 
 func (u *UserRelated) InsertSingleMessageToLocalStorage(callback Base, message, userID, sender string) string {
 	s := MsgStruct{}

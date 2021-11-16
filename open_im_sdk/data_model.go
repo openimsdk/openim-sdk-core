@@ -615,6 +615,23 @@ func (u *UserRelated) ResetConversation(conversationID string) (err error) {
 	return nil
 
 }
+func (u *UserRelated) clearConversation(conversationID string) (err error) {
+	u.mRWMutex.Lock()
+	defer u.mRWMutex.Unlock()
+	stmt, err := u.Prepare("update  conversation set unread_count=?,latest_msg=?," +
+		"draft_text=?,draft_timestamp=? where conversation_id=?")
+	if err != nil {
+		sdkLog("ResetConversation", err.Error())
+		return err
+	}
+	_, err = stmt.Exec(0, "", "", 0, conversationID)
+	if err != nil {
+		sdkLog("ResetConversation err:", err.Error())
+		return err
+	}
+	return nil
+
+}
 func (u *UserRelated) setConversationDraftModel(conversationID, draftText string, DraftTimestamp int64) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
