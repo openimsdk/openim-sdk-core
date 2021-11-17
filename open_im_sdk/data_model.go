@@ -458,9 +458,9 @@ func (u *UserRelated) getAllConversationListModel() (err error, list []*Conversa
 		for j := 0; j < len(list); j++ {
 			if draft[i].DraftTimestamp > list[j].LatestMsgSendTime {
 				if draft[i].IsPinned == list[j].IsPinned {
-					list = append(list, draft[i]) // 切片扩展1个空间
-					copy(list[j+1:], list[j:])    // a[i:]向后移动1个位置
-					list[j] = draft[i]            // 设置新添加的元素
+					list = append(list, draft[i])
+					copy(list[j+1:], list[j:])
+					list[j] = draft[i]
 					break
 				}
 
@@ -663,23 +663,6 @@ func (u *UserRelated) setConversationDraftModel(conversationID, draftText string
 	_, err = stmt.Exec(draftText, DraftTimestamp, conversationID)
 	if err != nil {
 		sdkLog("setConversationDraftModel err:", err.Error())
-		return err
-	}
-	return nil
-
-}
-func (u *UserRelated) clearConversationDraftModel(conversationID string) (err error) {
-	u.mRWMutex.Lock()
-	defer u.mRWMutex.Unlock()
-	stmt, err := u.Prepare("update conversation set draft_text=?,draft_timestamp=?where conversation_id=?")
-	if err != nil {
-		sdkLog("clearConversationDraftModel err:", err.Error())
-		return err
-	}
-
-	_, err = stmt.Exec("", 0, conversationID)
-	if err != nil {
-		sdkLog("clearConversationDraftModel err:", err.Error())
 		return err
 	}
 	return nil

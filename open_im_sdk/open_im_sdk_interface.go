@@ -202,9 +202,6 @@ func DeleteConversation(conversationID string, callback Base) {
 func SetConversationDraft(conversationID, draftText string, callback Base) {
 	userForSDK.SetConversationDraft(conversationID, draftText, callback)
 }
-func ClearConversationDraft(conversationID string, callback Base) {
-	userForSDK.ClearConversationDraft(conversationID, callback)
-}
 func PinConversation(conversationID string, isPinned bool, callback Base) {
 	userForSDK.PinConversation(conversationID, isPinned, callback)
 }

@@ -129,16 +129,13 @@ func (u *UserRelated) DeleteConversation(conversationID string, callback Base) {
 	}()
 }
 func (u *UserRelated) SetConversationDraft(conversationID, draftText string, callback Base) {
-	err := u.setConversationDraftModel(conversationID, draftText, getCurrentTimestampByNano())
-	if err != nil {
-		callback.OnError(203, err.Error())
+	var time int64
+	if draftText == "" {
+		time = getCurrentTimestampByNano()
 	} else {
-		callback.OnSuccess("")
-		_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
+		time = 0
 	}
-}
-func (u *UserRelated) ClearConversationDraft(conversationID string, callback Base) {
-	err := u.clearConversationDraftModel(conversationID)
+	err := u.setConversationDraftModel(conversationID, draftText, time)
 	if err != nil {
 		callback.OnError(203, err.Error())
 	} else {
