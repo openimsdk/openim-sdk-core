@@ -1259,6 +1259,12 @@ func (u *UserRelated) TypingStatusUpdate(receiver, msgTip string) {
 }
 func (u *UserRelated) MarkC2CMessageAsRead(callback Base, receiver string, msgIDList string) {
 	go func() {
+		conversationID := GetConversationIDBySessionType(receiver, SingleChatType)
+		_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
+		if len(msgIDList) != 0 {
+			callback.OnSuccess("")
+			return
+		}
 		s := MsgStruct{}
 		u.initBasicInfo(&s, UserMsgType, HasReadReceipt)
 		s.Content = msgIDList
@@ -1269,18 +1275,25 @@ func (u *UserRelated) MarkC2CMessageAsRead(callback Base, receiver string, msgID
 			callback.OnError(300, err.Error())
 		} else {
 			callback.OnSuccess("")
+			var msgIDs []string
+			_ = json.Unmarshal([]byte(msgIDList), &msgIDs)
+			if err := u.setSingleMessageHasReadByMsgIDList(receiver, msgIDs); err != nil {
+				callback.OnError(201, err.Error())
+			}
 		}
 	}()
 }
+
+//Deprecated
 func (u *UserRelated) MarkSingleMessageHasRead(callback Base, userID string) {
 	go func() {
-		conversationID := GetConversationIDBySessionType(userID, SingleChatType)
-		if err := u.setSingleMessageHasRead(userID); err != nil {
-			callback.OnError(201, err.Error())
-		} else {
-			callback.OnSuccess("")
-			u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
-		}
+		//conversationID := GetConversationIDBySessionType(userID, SingleChatType)
+		//if err := u.setSingleMessageHasRead(userID); err != nil {
+		//	callback.OnError(201, err.Error())
+		//} else {
+		//	callback.OnSuccess("")
+		//	u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
+		//}
 	}()
 }
 func (u *UserRelated) MarkGroupMessageHasRead(callback Base, groupID string) {

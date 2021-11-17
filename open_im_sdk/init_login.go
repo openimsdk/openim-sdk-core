@@ -168,7 +168,7 @@ func (u *UserRelated) doWsMsg(message []byte) {
 	LogBegin("decodeBinaryWs")
 	wsResp, err := u.decodeBinaryWs(message)
 	if err != nil {
-		LogFReturn(err.Error())
+		LogFReturn("decodeBinaryWs err", err.Error())
 		return
 	}
 	LogEnd("decodeBinaryWs ", wsResp.OperationID, wsResp.ReqIdentifier)

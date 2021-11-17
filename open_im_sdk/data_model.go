@@ -1556,6 +1556,21 @@ func (u *UserRelated) setSingleMessageHasRead(sendID string) (err error) {
 	return nil
 
 }
+func (u *UserRelated) setSingleMessageHasReadByMsgIDList(sendID string, msgIDList []string) (err error) {
+	u.mRWMutex.Lock()
+	defer u.mRWMutex.Unlock()
+	stmt, err := u.Prepare("update chat_log set is_read=? where send_id=?And is_read=?AND session_type=?AND msgID in?")
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(HasRead, sendID, NotRead, SingleChatType, msgIDList)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
 func (u *UserRelated) setGroupMessageHasRead(groupID string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()

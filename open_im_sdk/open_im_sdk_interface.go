@@ -298,6 +298,8 @@ func TypingStatusUpdate(receiver, msgTip string) {
 func MarkC2CMessageAsRead(callback Base, receiver string, msgIDList string) {
 	userForSDK.MarkC2CMessageAsRead(callback, receiver, msgIDList)
 }
+
+//Deprecated
 func MarkSingleMessageHasRead(callback Base, userID string) {
 	userForSDK.MarkSingleMessageHasRead(callback, userID)
 }
