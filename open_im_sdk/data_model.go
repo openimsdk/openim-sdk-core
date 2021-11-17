@@ -448,7 +448,7 @@ func (u *UserRelated) getAllConversationListModel() (err error, list []*Conversa
 			continue
 		} else {
 			if c.DraftTimestamp != 0 {
-				draft = append(list, c)
+				draft = append(draft, c)
 			} else {
 				list = append(list, c)
 			}
@@ -1559,12 +1559,21 @@ func (u *UserRelated) setSingleMessageHasRead(sendID string) (err error) {
 func (u *UserRelated) setSingleMessageHasReadByMsgIDList(sendID string, msgIDList []string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.Prepare("update chat_log set is_read=? where send_id=?And is_read=?AND session_type=?AND msgID in?")
+	stmt, err := u.Prepare("update chat_log set is_read=? where send_id=?And is_read=?AND session_type=?AND msgID in(?)")
 	if err != nil {
 		return err
 	}
-
-	_, err = stmt.Exec(HasRead, sendID, NotRead, SingleChatType, msgIDList)
+	msgIDString := func(msgIDList []string) (s string) {
+		for i := 0; i < len(msgIDList); i++ {
+			if i == len(msgIDList)-1 {
+				s = s + "'" + msgIDList[i] + "'"
+			} else {
+				s = s + "'" + msgIDList[i] + "'" + ","
+			}
+		}
+		return s
+	}(msgIDList)
+	_, err = stmt.Exec(HasRead, sendID, NotRead, SingleChatType, msgIDString)
 	if err != nil {
 		return err
 	}
