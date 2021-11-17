@@ -131,9 +131,9 @@ func (u *UserRelated) DeleteConversation(conversationID string, callback Base) {
 func (u *UserRelated) SetConversationDraft(conversationID, draftText string, callback Base) {
 	var time int64
 	if draftText == "" {
-		time = getCurrentTimestampByNano()
-	} else {
 		time = 0
+	} else {
+		time = getCurrentTimestampByNano()
 	}
 	err := u.setConversationDraftModel(conversationID, draftText, time)
 	if err != nil {

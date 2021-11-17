@@ -434,10 +434,10 @@ func (u *UserRelated) replaceIntoUser(info *userInfo) error {
 	return nil
 }
 
-func (u *UserRelated) getAllConversationListModel() (err error, list []*ConversationStruct) {
+func (u *UserRelated) getAllConversationListModel() (err error, list []ConversationStruct) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	var draft []*ConversationStruct
+	var draft []ConversationStruct
 	rows, err := u.Query("SELECT * FROM conversation where latest_msg_send_time!=0 order by  case when is_pinned=1 then 0 else 1 end,latest_msg_send_time DESC")
 	for rows.Next() {
 		c := new(ConversationStruct)
@@ -448,12 +448,14 @@ func (u *UserRelated) getAllConversationListModel() (err error, list []*Conversa
 			continue
 		} else {
 			if c.DraftTimestamp != 0 {
-				draft = append(draft, c)
+				draft = append(draft, *c)
 			} else {
-				list = append(list, c)
+				list = append(list, *c)
 			}
 		}
 	}
+	sdkLog("draft is ", draft)
+	sdkLog("list is ", list)
 	for i := 0; i < len(draft); i++ {
 		for j := 0; j < len(list); j++ {
 			if draft[i].DraftTimestamp > list[j].LatestMsgSendTime {
@@ -463,11 +465,10 @@ func (u *UserRelated) getAllConversationListModel() (err error, list []*Conversa
 					list[j] = draft[i]
 					break
 				}
-
 			}
-
 		}
 	}
+	sdkLog("all list is ", list)
 	return nil, list
 }
 
