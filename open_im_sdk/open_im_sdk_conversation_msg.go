@@ -1277,9 +1277,7 @@ func (u *UserRelated) MarkC2CMessageAsRead(callback Base, receiver string, msgID
 			callback.OnSuccess("")
 			var msgIDs []string
 			_ = json.Unmarshal([]byte(msgIDList), &msgIDs)
-			if err := u.setSingleMessageHasReadByMsgIDList(receiver, msgIDs); err != nil {
-				callback.OnError(201, err.Error())
-			}
+			_ = u.setSingleMessageHasReadByMsgIDList(receiver, msgIDs)
 		}
 	}()
 }
