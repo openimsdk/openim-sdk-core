@@ -137,6 +137,15 @@ func (u *UserRelated) SetConversationDraft(conversationID, draftText string, cal
 		_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
 	}
 }
+func (u *UserRelated) ClearConversationDraft(conversationID string, callback Base) {
+	err := u.clearConversationDraftModel(conversationID)
+	if err != nil {
+		callback.OnError(203, err.Error())
+	} else {
+		callback.OnSuccess("")
+		_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
+	}
+}
 func (u *UserRelated) PinConversation(conversationID string, isPinned bool, callback Base) {
 	var i int
 	if isPinned {

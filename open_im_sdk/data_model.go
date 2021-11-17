@@ -409,7 +409,7 @@ func (u *UserRelated) setNeedSyncLocalMinSeq(seq int32) {
 	stmt, err := u.Prepare("replace into my_local_data(user_id, seq) values (?,?)")
 	if err != nil {
 		sdkLog("set failed", err.Error())
-
+		return
 	}
 	_, err = stmt.Exec(u.LoginUid, seq)
 	if err != nil {
@@ -437,6 +437,7 @@ func (u *UserRelated) replaceIntoUser(info *userInfo) error {
 func (u *UserRelated) getAllConversationListModel() (err error, list []*ConversationStruct) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
+	var draft []*ConversationStruct
 	rows, err := u.Query("SELECT * FROM conversation where latest_msg_send_time!=0 order by  case when is_pinned=1 then 0 else 1 end,latest_msg_send_time DESC")
 	for rows.Next() {
 		c := new(ConversationStruct)
@@ -446,7 +447,25 @@ func (u *UserRelated) getAllConversationListModel() (err error, list []*Conversa
 			sdkLog("getAllConversationListModel ,err:", err.Error())
 			continue
 		} else {
-			list = append(list, c)
+			if c.DraftTimestamp != 0 {
+				draft = append(list, c)
+			} else {
+				list = append(list, c)
+			}
+		}
+	}
+	for i := 0; i < len(draft); i++ {
+		for j := 0; j < len(list); j++ {
+			if draft[i].DraftTimestamp > list[j].LatestMsgSendTime {
+				if draft[i].IsPinned == list[j].IsPinned {
+					list = append(list, draft[i]) // 切片扩展1个空间
+					copy(list[j+1:], list[j:])    // a[i:]向后移动1个位置
+					list[j] = draft[i]            // 设置新添加的元素
+					break
+				}
+
+			}
+
 		}
 	}
 	return nil, list
@@ -635,15 +654,32 @@ func (u *UserRelated) clearConversation(conversationID string) (err error) {
 func (u *UserRelated) setConversationDraftModel(conversationID, draftText string, DraftTimestamp int64) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.Prepare("update conversation set draft_text=?,latest_msg_send_time=?,draft_timestamp=?where conversation_id=?")
+	stmt, err := u.Prepare("update conversation set draft_text=?,draft_timestamp=?where conversation_id=?")
 	if err != nil {
 		sdkLog("setConversationDraftModel err:", err.Error())
 		return err
 	}
 
-	_, err = stmt.Exec(draftText, DraftTimestamp, DraftTimestamp, conversationID)
+	_, err = stmt.Exec(draftText, DraftTimestamp, conversationID)
 	if err != nil {
 		sdkLog("setConversationDraftModel err:", err.Error())
+		return err
+	}
+	return nil
+
+}
+func (u *UserRelated) clearConversationDraftModel(conversationID string) (err error) {
+	u.mRWMutex.Lock()
+	defer u.mRWMutex.Unlock()
+	stmt, err := u.Prepare("update conversation set draft_text=?,draft_timestamp=?where conversation_id=?")
+	if err != nil {
+		sdkLog("clearConversationDraftModel err:", err.Error())
+		return err
+	}
+
+	_, err = stmt.Exec("", 0, conversationID)
+	if err != nil {
+		sdkLog("clearConversationDraftModel err:", err.Error())
 		return err
 	}
 	return nil
