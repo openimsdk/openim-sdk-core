@@ -434,11 +434,11 @@ func (u *UserRelated) replaceIntoUser(info *userInfo) error {
 	return nil
 }
 
-func (u *UserRelated) getAllConversationListModel() (err error, list []ConversationStruct) {
+func (u *UserRelated) getAllConversationListModel() (err error, list []*ConversationStruct) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	var draft []ConversationStruct
-	rows, err := u.Query("SELECT * FROM conversation where latest_msg_send_time!=0 order by  case when is_pinned=1 then 0 else 1 end,latest_msg_send_time DESC")
+
+	rows, err := u.Query("SELECT * FROM conversation where latest_msg_send_time!=0 order by  case when is_pinned=1 then 0 else 1 end,max(latest_msg_send_time,draft_timestamp) DESC")
 	for rows.Next() {
 		c := new(ConversationStruct)
 		err = rows.Scan(&c.ConversationID, &c.ConversationType, &c.UserID, &c.GroupID, &c.ShowName,
@@ -447,45 +447,11 @@ func (u *UserRelated) getAllConversationListModel() (err error, list []Conversat
 			sdkLog("getAllConversationListModel ,err:", err.Error())
 			continue
 		} else {
-			if c.DraftTimestamp != 0 {
-				draft = append(draft, *c)
-			} else {
-				list = append(list, *c)
-			}
+			list = append(list, c)
 		}
-	}
-	sdkLog("   ，会话ID", "是否置顶", "草稿", "最新时间")
-	for _, v := range draft {
-		sdkLog("draft", v.ConversationID, v.IsPinned, convert(v.DraftTimestamp), convert(v.LatestMsgSendTime))
-	}
-	for _, v := range list {
-		sdkLog("list", v.ConversationID, v.IsPinned, convert(v.DraftTimestamp), convert(v.LatestMsgSendTime))
-	}
-	for i := 0; i < len(draft); i++ {
-		for j := 0; j < len(list); j++ {
-			if draft[i].DraftTimestamp > list[j].LatestMsgSendTime {
-				if draft[i].IsPinned == list[j].IsPinned || draft[i].IsPinned == 1 {
-					list = append(list, draft[i])
-					copy(list[j+1:], list[j:])
-					list[j] = draft[i]
-					break
-				}
-			} else {
-				if j+1 == len(list) {
-					list = append(list, draft[i])
-				}
-			}
-		}
-	}
-	for _, v := range list {
-		sdkLog("all list", v.ConversationID, v.IsPinned, convert(v.DraftTimestamp), convert(v.LatestMsgSendTime))
-	}
-	if len(list) == 0 {
-		return nil, draft
-	} else {
-		return nil, list
 	}
 
+	return nil, list
 }
 func convert(nanoSecond int64) string {
 	if nanoSecond == 0 {
