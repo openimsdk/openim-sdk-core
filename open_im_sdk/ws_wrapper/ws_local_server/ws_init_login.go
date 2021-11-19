@@ -125,37 +125,42 @@ func InitServer(config *open_im_sdk.IMConfig) {
 }
 
 func (wsRouter *WsFuncRouter) GlobalSendMessage(data interface{}) {
-	conn := WS.getUserConn(wsRouter.uId + " " + "Web")
-	if conn == nil {
+	conns := WS.getUserConn(wsRouter.uId + " " + "Web")
+	if conns == nil {
 		wrapSdkLog("uid no conn ", wsRouter.uId)
 	}
 	bMsg, _ := json.Marshal(data)
-	if conn != nil {
-		err := WS.writeMsg(conn, websocket.TextMessage, bMsg)
-		wrapSdkLog("sendmsg:", string(bMsg))
-		if err != nil {
-			wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", data)
+	for _, conn := range conns {
+		if conn != nil {
+			err := WS.writeMsg(conn, websocket.TextMessage, bMsg)
+			wrapSdkLog("sendmsg:", string(bMsg))
+			if err != nil {
+				wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", data)
+			}
+		} else {
+			wrapSdkLog("Conn is nil", "data", data)
 		}
-	} else {
-		wrapSdkLog("Conn is nil", "data", data)
 	}
 
 }
 
 func SendOneUserMessage(data interface{}, uid string) {
-	conn := WS.getUserConn(uid + " " + "Web")
-	if conn == nil {
+	conns := WS.getUserConn(uid + " " + "Web")
+	if conns == nil {
 		wrapSdkLog("uid no conn ", uid)
 	}
 	bMsg, _ := json.Marshal(data)
-	if conn != nil {
-		err := WS.writeMsg(conn, websocket.TextMessage, bMsg)
-		wrapSdkLog("sendmsg:", string(bMsg), uid)
-		if err != nil {
-			wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", data)
+	for _, conn := range conns {
+
+		if conn != nil {
+			err := WS.writeMsg(conn, websocket.TextMessage, bMsg)
+			wrapSdkLog("sendmsg:", string(bMsg), uid)
+			if err != nil {
+				wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", data)
+			}
+		} else {
+			wrapSdkLog("Conn is nil", "data", data, uid)
 		}
-	} else {
-		wrapSdkLog("Conn is nil", "data", data, uid)
 	}
 
 }
