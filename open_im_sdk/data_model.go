@@ -470,13 +470,22 @@ func (u *UserRelated) getAllConversationListModel() (err error, list []Conversat
 					list[j] = draft[i]
 					break
 				}
+			} else {
+				if j+1 == len(list) {
+					list = append(list, draft[i])
+				}
 			}
 		}
 	}
 	for _, v := range list {
 		sdkLog("all list", v.ConversationID, v.IsPinned, convert(v.DraftTimestamp), convert(v.LatestMsgSendTime))
 	}
-	return nil, list
+	if len(list) == 0 {
+		return nil, draft
+	} else {
+		return nil, list
+	}
+
 }
 func convert(nanoSecond int64) string {
 	if nanoSecond == 0 {
