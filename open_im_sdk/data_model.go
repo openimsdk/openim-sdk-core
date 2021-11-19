@@ -454,12 +454,17 @@ func (u *UserRelated) getAllConversationListModel() (err error, list []Conversat
 			}
 		}
 	}
-	sdkLog("draft is ", draft)
-	sdkLog("list is ", list)
+	sdkLog("   ，会话ID", "是否置顶", "草稿", "最新时间")
+	for _, v := range draft {
+		sdkLog("draft", v.ConversationID, v.IsPinned, convert(v.DraftTimestamp), convert(v.LatestMsgSendTime))
+	}
+	for _, v := range list {
+		sdkLog("list", v.ConversationID, v.IsPinned, convert(v.DraftTimestamp), convert(v.LatestMsgSendTime))
+	}
 	for i := 0; i < len(draft); i++ {
 		for j := 0; j < len(list); j++ {
 			if draft[i].DraftTimestamp > list[j].LatestMsgSendTime {
-				if draft[i].IsPinned == list[j].IsPinned {
+				if draft[i].IsPinned == list[j].IsPinned || draft[i].IsPinned == 1 {
 					list = append(list, draft[i])
 					copy(list[j+1:], list[j:])
 					list[j] = draft[i]
@@ -468,8 +473,16 @@ func (u *UserRelated) getAllConversationListModel() (err error, list []Conversat
 			}
 		}
 	}
-	sdkLog("all list is ", list)
+	for _, v := range list {
+		sdkLog("all list", v.ConversationID, v.IsPinned, convert(v.DraftTimestamp), convert(v.LatestMsgSendTime))
+	}
 	return nil, list
+}
+func convert(nanoSecond int64) string {
+	if nanoSecond == 0 {
+		return ""
+	}
+	return time.Unix(0, nanoSecond).Format("2006-01-02_15-04-05")
 }
 
 func (u *UserRelated) insertConversationModel(c *ConversationStruct) (err error) {
