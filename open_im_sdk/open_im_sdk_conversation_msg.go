@@ -1261,8 +1261,8 @@ func (u *UserRelated) MarkC2CMessageAsRead(callback Base, receiver string, msgID
 	go func() {
 		conversationID := GetConversationIDBySessionType(receiver, SingleChatType)
 		_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
-		if len(msgIDList) != 0 {
-			callback.OnSuccess("")
+		if len(msgIDList) == 0 {
+			callback.OnError(200, "msg list is null")
 			return
 		}
 		s := MsgStruct{}
@@ -1278,6 +1278,8 @@ func (u *UserRelated) MarkC2CMessageAsRead(callback Base, receiver string, msgID
 			var msgIDs []string
 			_ = json.Unmarshal([]byte(msgIDList), &msgIDs)
 			_ = u.setSingleMessageHasReadByMsgIDList(receiver, msgIDs)
+			u.doUpdateConversation(cmd2Value{Value: updateConNode{conversationID, UpdateLatestMessageChange, ""}})
+			_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 		}
 	}()
 }
@@ -1302,6 +1304,7 @@ func (u *UserRelated) MarkGroupMessageHasRead(callback Base, groupID string) {
 		} else {
 			callback.OnSuccess("")
 			u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
+			_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 		}
 	}()
 }

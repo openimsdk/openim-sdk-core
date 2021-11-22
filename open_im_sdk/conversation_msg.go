@@ -375,7 +375,7 @@ func (u *UserRelated) doUpdateConversation(c2v cmd2Value) {
 		if u.judgeConversationIfExists(node.ConId) {
 			_, o := u.getOneConversationModel(node.ConId)
 			if c.LatestMsgSendTime > o.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
-				err := u.setConversationLatestMsgModel(&c, node.ConId)
+				err := u.setConversationLatestMsgModel(c.LatestMsgSendTime, c.LatestMsg, node.ConId)
 				if err != nil {
 					sdkLog("setConversationLatestMsgModel err: ", err)
 				}
@@ -390,20 +390,13 @@ func (u *UserRelated) doUpdateConversation(c2v cmd2Value) {
 	case UnreadCountSetZero:
 		if err := u.setConversationUnreadCount(0, node.ConId); err != nil {
 		} else {
-			err, list := u.getAllConversationListModel()
+			totalUnreadCount, err := u.getTotalUnreadMsgCountModel()
 			if err == nil {
-				if list == nil {
-					u.ConversationListenerx.OnConversationChanged(structToJsonString([]ConversationStruct{}))
-				} else {
-					u.ConversationListenerx.OnConversationChanged(structToJsonString(list))
-
-				}
-				totalUnreadCount, err := u.getTotalUnreadMsgCountModel()
-				if err == nil {
-					u.ConversationListenerx.OnTotalUnreadMessageCountChanged(totalUnreadCount)
-				}
-
+				u.ConversationListenerx.OnTotalUnreadMessageCountChanged(totalUnreadCount)
+			} else {
+				sdkLog("getTotalUnreadMsgCountModel err", err.Error())
 			}
+
 		}
 	case ConChange:
 		err, list := u.getAllConversationListModel()
@@ -439,8 +432,28 @@ func (u *UserRelated) doUpdateConversation(c2v cmd2Value) {
 				return
 			}
 		}
-	}
 
+	case UpdateLatestMessageChange:
+		conversationID := node.ConId
+		var latestMsg MsgStruct
+		err, l := u.getConversationLatestMsgModel(conversationID)
+		if err != nil {
+			sdkLog("getConversationLatestMsgModel err", err.Error())
+		} else {
+			err := json.Unmarshal([]byte(l), &latestMsg)
+			if err != nil {
+				sdkLog("latestMsg,Unmarshal err :", err.Error())
+			} else {
+				latestMsg.IsRead = true
+				newLatestMessage := structToJsonString(latestMsg)
+				err = u.setConversationLatestMsgModel(latestMsg.SendTime, newLatestMessage, conversationID)
+				if err != nil {
+					sdkLog("setConversationLatestMsgModel err :", err.Error())
+				}
+			}
+		}
+
+	}
 }
 
 func (u *UserRelated) work(c2v cmd2Value) {

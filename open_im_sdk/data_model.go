@@ -495,7 +495,7 @@ func (u *UserRelated) getConversationLatestMsgModel(conversationID string) (err 
 	return nil, s
 }
 
-func (u *UserRelated) setConversationLatestMsgModel(c *ConversationStruct, conversationID string) (err error) {
+func (u *UserRelated) setConversationLatestMsgModel(latestMsgSendTime int64, latestMsg, conversationID string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	stmt, err := u.Prepare("update conversation set latest_msg=?,latest_msg_send_time=? where conversation_id=?")
@@ -504,7 +504,7 @@ func (u *UserRelated) setConversationLatestMsgModel(c *ConversationStruct, conve
 		return err
 	}
 
-	_, err = stmt.Exec(c.LatestMsg, c.LatestMsgSendTime, conversationID)
+	_, err = stmt.Exec(latestMsg, latestMsgSendTime, conversationID)
 	if err != nil {
 		sdkLog(err.Error())
 		return err
