@@ -1287,13 +1287,13 @@ func (u *UserRelated) MarkC2CMessageAsRead(callback Base, receiver string, msgID
 //Deprecated
 func (u *UserRelated) MarkSingleMessageHasRead(callback Base, userID string) {
 	go func() {
-		//conversationID := GetConversationIDBySessionType(userID, SingleChatType)
-		//if err := u.setSingleMessageHasRead(userID); err != nil {
-		//	callback.OnError(201, err.Error())
-		//} else {
-		//	callback.OnSuccess("")
-		//	u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
-		//}
+		conversationID := GetConversationIDBySessionType(userID, SingleChatType)
+		if err := u.setSingleMessageHasRead(userID); err != nil {
+			callback.OnError(201, err.Error())
+		} else {
+			callback.OnSuccess("")
+			u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
+		}
 	}()
 }
 func (u *UserRelated) MarkGroupMessageHasRead(callback Base, groupID string) {

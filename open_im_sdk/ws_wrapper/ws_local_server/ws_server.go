@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 	sLog "log"
 	"net/http"
+	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/open_im_sdk/ws_wrapper/utils"
 	"runtime"
 	"strings"
@@ -17,7 +18,7 @@ import (
 	"time"
 )
 
-const POINTNUM = 5
+const POINTNUM = 1
 
 var (
 	rwLock *sync.RWMutex
@@ -72,20 +73,17 @@ func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ws *WServer) readMsg(conn *websocket.Conn) {
-	wrapSdkLog("readMs: ")
 	for {
 		msgType, msg, err := conn.ReadMessage()
 		if err != nil {
-			wrapSdkLog("WS ReadMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn), "error", err)
+			wrapSdkLog("ReadMessage error", "", "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn), "error", err)
 			ws.delUserConn(conn)
 			return
 		} else {
-			wrapSdkLog("test", "", "msgType", msgType, "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn))
+			wrapSdkLog("ReadMessage ok ", "", "msgType", msgType, "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn))
 		}
 		ws.msgParse(conn, msg)
-		//ws.writeMsg(conn, 1, chat)
 	}
-
 }
 
 func (ws *WServer) writeMsg(conn *websocket.Conn, a int, msg []byte) error {
@@ -103,6 +101,7 @@ func (ws *WServer) addUserConn(uid string, conn *websocket.Conn) {
 		flag = 1
 		oldConnMap[conn.RemoteAddr().String()] = conn
 		ws.wsUserToConn[uid] = oldConnMap
+		wrapSdkLog("this user is not first login", "", "uid", uid)
 		//err := oldConn.Close()
 		//delete(ws.wsConnToUser, oldConn)
 		//if err != nil {
@@ -117,6 +116,7 @@ func (ws *WServer) addUserConn(uid string, conn *websocket.Conn) {
 	if oldStringMap, ok := ws.wsConnToUser[conn]; ok {
 		oldStringMap[conn.RemoteAddr().String()] = uid
 		ws.wsConnToUser[conn] = oldStringMap
+		wrapSdkLog("this user is not first login", "", "uid", uid)
 		//err := oldConn.Close()
 		//delete(ws.wsConnToUser, oldConn)
 		//if err != nil {
@@ -132,7 +132,7 @@ func (ws *WServer) addUserConn(uid string, conn *websocket.Conn) {
 	rwLock.Unlock()
 
 	if flag == 1 {
-		DelUserRouter(uid)
+		//	DelUserRouter(uid)
 	}
 
 }
@@ -149,7 +149,7 @@ func (ws *WServer) getConnNum(uid string) int {
 
 func (ws *WServer) delUserConn(conn *websocket.Conn) {
 	rwLock.Lock()
-
+	flag := 0
 	var uidPlatform string
 	if oldStringMap, ok := ws.wsConnToUser[conn]; ok {
 		uidPlatform = oldStringMap[conn.RemoteAddr().String()]
@@ -157,18 +157,28 @@ func (ws *WServer) delUserConn(conn *websocket.Conn) {
 			delete(oldConnMap, conn.RemoteAddr().String())
 			ws.wsUserToConn[uidPlatform] = oldConnMap
 			wrapSdkLog("WS delete operation", "", "wsUser deleted", ws.wsUserToConn, "uid", uidPlatform, "online_num", len(ws.wsUserToConn))
+			if len(oldConnMap) == 0 {
+				wrapSdkLog("no conn delete user router ", uidPlatform)
+				flag = 1
+				delete(ws.wsUserToConn, uidPlatform)
+			}
 		} else {
 			wrapSdkLog("uid not exist", "", "wsUser deleted", ws.wsUserToConn, "uid", uidPlatform, "online_num", len(ws.wsUserToConn))
 		}
 		delete(ws.wsConnToUser, conn)
+
 	}
 	err := conn.Close()
 	if err != nil {
 		wrapSdkLog("close err", "", "uid", uidPlatform, "conn", conn)
 	}
-	rwLock.Unlock()
-	DelUserRouter(uidPlatform)
 
+	rwLock.Unlock()
+
+	if flag == 1 {
+		wrapSdkLog("DelUserRouter ", uidPlatform)
+		DelUserRouter(uidPlatform)
+	}
 }
 
 func (ws *WServer) getUserConn(uid string) (w []*websocket.Conn) {
@@ -191,6 +201,7 @@ func (ws *WServer) getUserUid(conn *websocket.Conn) string {
 	}
 	return ""
 }
+
 func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request) bool {
 	status := http.StatusUnauthorized
 	query := r.URL.Query()
@@ -202,7 +213,17 @@ func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request) bool {
 			return false
 		}
 		if utils.StringToInt(query["platformID"][0]) != utils.WebPlatformID {
-
+			wrapSdkLog("check platform id failed", query["sendID"][0], query["platformID"][0])
+			w.Header().Set("Sec-Websocket-Version", "13")
+			http.Error(w, http.StatusText(status), StatusBadRequest)
+			return false
+		}
+		checkFlag := open_im_sdk.CheckToken(query["sendID"][0], query["token"][0])
+		if checkFlag != 0 {
+			wrapSdkLog("check token failed", query["sendID"][0], query["token"][0])
+			w.Header().Set("Sec-Websocket-Version", "13")
+			http.Error(w, http.StatusText(status), status)
+			return false
 		}
 		wrapSdkLog("Connection Authentication Success", "", "token", query["token"][0], "userID", query["sendID"][0], "platformID", query["platformID"][0])
 		return true
@@ -210,11 +231,11 @@ func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request) bool {
 	} else {
 		wrapSdkLog("Args err", "", "query", query)
 		w.Header().Set("Sec-Websocket-Version", "13")
-		http.Error(w, http.StatusText(status), status)
+		http.Error(w, http.StatusText(status), StatusBadRequest)
 		return false
 	}
-
 }
+
 func wrapSdkLog(v ...interface{}) {
 	_, b, c, _ := runtime.Caller(1)
 	i := strings.LastIndex(b, "/")

@@ -332,7 +332,13 @@ func main() {
 
 	runRigister(strMyUid1)
 	token1 := runGetToken(strMyUid1)
-	open_im_sdk.DoTest(strMyUid1, token1, WSADDR, APIADDR)
+	open_im_sdk.InOutDoTest(strMyUid1, token1, WSADDR, APIADDR)
+	time.Sleep(time.Duration(5) * time.Second)
+	open_im_sdk.InOutDoTestSendMsg(strMyUid1, "18666662412")
+	//open_im_sdk.InOutDoTest(strMyUid1, token1, WSADDR, APIADDR)
+	open_im_sdk.InOutLogou()
+
+	open_im_sdk.InOutDoTest(strMyUid1, token1, WSADDR, APIADDR)
 
 	for true {
 		time.Sleep(time.Duration(60) * time.Second)

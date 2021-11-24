@@ -19,27 +19,60 @@ type Req struct {
 	UId         string `json:"uid"`
 }
 
-func (ws *WServer) msgParse(conn *websocket.Conn, jsonMsg []byte) {
-	m := Req{}
-	if err := json.Unmarshal(jsonMsg, &m); err != nil {
-		//GlobalSendMessage(EventData{m.ReqFuncName, -1, "ws json Unmarshal err ", "", "0"})
-		return
-	}
-	if m.OperationID == "" {
-		//	GlobalSendMessage(EventData{m.ReqFuncName, -2, "no OperationID", "", "0"})
-		return
-	}
-	wrapSdkLog("Basic Info Authentication Success", "reqFuncName ", m.ReqFuncName, "data ", m.Data, "recv jsonMsg: ", string(jsonMsg))
-
-	if m.ReqFuncName == "Login" {
-		wrapSdkLog("login ", m.UId)
-		GenUserRouter(m.UId)
-	}
+func (ws *WServer) DoLogin(m Req, conn *websocket.Conn) {
 	UserRouteRwLock.RLock()
 	defer UserRouteRwLock.RUnlock()
 	urm, ok := UserRouteMap[m.UId]
 	if !ok {
-		wrapSdkLog("user not login error: ", m.UId)
+		wrapSdkLog("user first login: ", m)
+		refR := GenUserRouterNoLock(m.UId)
+		params := []reflect.Value{reflect.ValueOf(m.Data), reflect.ValueOf(m.OperationID)}
+		vf, ok := (*refR.refName)[m.ReqFuncName]
+		if ok {
+			vf.Call(params)
+		} else {
+			wrapSdkLog("no func name: ", m.ReqFuncName, m)
+			SendOneConnMessage(EventData{m.ReqFuncName, StatusBadParameter, StatusText(StatusBadParameter), "", m.OperationID}, conn)
+		}
+
+	} else {
+		if urm.wsRouter.getMyLoginStatus() == 101 {
+			//send ok
+			SendOneConnMessage(EventData{"Login", 0, "ok", "", m.OperationID}, conn)
+		} else {
+			wrapSdkLog("login status pending, try after 5 second ", urm.wsRouter.getMyLoginStatus(), m.UId)
+			SendOneConnMessage(EventData{"Login", StatusLoginPending, StatusText(StatusLoginPending), "", m.OperationID}, conn)
+		}
+	}
+}
+
+func (ws *WServer) msgParse(conn *websocket.Conn, jsonMsg []byte) {
+	m := Req{}
+	if err := json.Unmarshal(jsonMsg, &m); err != nil {
+		SendOneConnMessage(EventData{"error", 100, "Unmarshal failed", "", ""}, conn)
+		return
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			SendOneConnMessage(EventData{m.ReqFuncName, StatusBadParameter, StatusText(StatusBadParameter), "", m.OperationID}, conn)
+			wrapSdkLog("bad request, panic is ", r)
+		}
+	}()
+
+	wrapSdkLog("Basic Info", "reqFuncName ", m.ReqFuncName, "data ", m.Data, "recv jsonMsg: ", string(jsonMsg))
+
+	if m.ReqFuncName == "Login" {
+		ws.DoLogin(m, conn)
+		wrapSdkLog("login ", m)
+		return
+	}
+
+	UserRouteRwLock.RLock()
+	defer UserRouteRwLock.RUnlock()
+	urm, ok := UserRouteMap[m.UId]
+	if !ok {
+		wrapSdkLog("user not login failed, must login first: ", m.UId)
+		SendOneConnMessage(EventData{"Login", StatusNoLogin, StatusText(StatusNoLogin), "", m.OperationID}, conn)
 		return
 	}
 	parms := []reflect.Value{reflect.ValueOf(m.Data), reflect.ValueOf(m.OperationID)}
@@ -47,14 +80,10 @@ func (ws *WServer) msgParse(conn *websocket.Conn, jsonMsg []byte) {
 	if ok {
 		vf.Call(parms)
 	} else {
-		//	GlobalSendMessage(EventData{m.ReqFuncName, -1, "no func ", "", m.OperationID})
+		wrapSdkLog("no func ", m.ReqFuncName)
+		SendOneConnMessage(EventData{m.ReqFuncName, StatusBadParameter, StatusText(StatusBadParameter), "", m.OperationID}, conn)
 	}
-	defer func() {
-		if r := recover(); r != nil {
-			wrapSdkLog("panic is ", r)
-			//	GlobalSendMessage(EventData{m.ReqFuncName, -3, "panic ", "", "0"})
-		}
-	}()
+
 }
 
 func (ws *WServer) sendMsg(conn *websocket.Conn, mReply map[string]interface{}) {

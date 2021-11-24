@@ -79,7 +79,7 @@ func (wsRouter *WsFuncRouter) checkKeysIn(input, operationID, funcName string, m
 		_, ok := m[k]
 		if !ok {
 			wrapSdkLog("key not in", keys, input, operationID, funcName)
-			wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(funcName), 1001, "key not in", "", operationID})
+			wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(funcName), StatusBadParameter, "key not in", "", operationID})
 			return false
 		}
 	}
@@ -90,7 +90,7 @@ func (wsRouter *WsFuncRouter) Login(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
 		wrapSdkLog("unmarshal failed", err.Error())
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
@@ -105,10 +105,15 @@ func (wsRouter *WsFuncRouter) Logout(input string, operationID string) {
 	userWorker.Logout(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
 }
 
-//1
 func (wsRouter *WsFuncRouter) GetLoginStatus(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", int32ToString(int32(userWorker.GetLoginStatus())), operationID})
+}
+
+//1
+func (wsRouter *WsFuncRouter) getMyLoginStatus() int {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	return userWorker.GetLoginStatus()
 }
 
 //1
@@ -141,7 +146,6 @@ func (wsRouter *WsFuncRouter) GlobalSendMessage(data interface{}) {
 			wrapSdkLog("Conn is nil", "data", data)
 		}
 	}
-
 }
 
 func SendOneUserMessage(data interface{}, uid string) {
@@ -161,6 +165,17 @@ func SendOneUserMessage(data interface{}, uid string) {
 		} else {
 			wrapSdkLog("Conn is nil", "data", data, uid)
 		}
+	}
+}
+
+func SendOneConnMessage(data interface{}, conn *websocket.Conn) {
+	bMsg, _ := json.Marshal(data)
+	err := WS.writeMsg(conn, websocket.TextMessage, bMsg)
+	wrapSdkLog("sendmsg:", string(bMsg))
+	if err != nil {
+		wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", data)
+	} else {
+		wrapSdkLog("Conn is nil", "data", data)
 	}
 
 }

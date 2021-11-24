@@ -83,6 +83,36 @@ func DelUserRouter(uid string) {
 	delete(UserRouteMap, uid)
 }
 
+func GenUserRouterNoLock(uid string) *RefRouter {
+	_, ok := UserRouteMap[uid]
+	if ok {
+		return nil
+	}
+	RouteMap1 := make(map[string]reflect.Value, 0)
+	var wsRouter1 WsFuncRouter
+	wsRouter1.uId = uid
+	wsRouter1.AddAdvancedMsgListener()
+	wsRouter1.SetConversationListener()
+	wsRouter1.SetFriendListener()
+	wsRouter1.SetGroupListener()
+	vf := reflect.ValueOf(&wsRouter1)
+	vft := vf.Type()
+
+	mNum := vf.NumMethod()
+	for i := 0; i < mNum; i++ {
+		mName := vft.Method(i).Name
+		wrapSdkLog("index:", i, " MethodName:", mName)
+		RouteMap1[mName] = vf.Method(i)
+	}
+	wsRouter1.InitSDK(ConfigSvr, "0")
+	var rr RefRouter
+	rr.refName = &RouteMap1
+	rr.wsRouter = &wsRouter1
+	UserRouteMap[uid] = rr
+	wrapSdkLog("insert UserRouteMap: ", uid)
+	return &rr
+}
+
 func GenUserRouter(uid string) *map[string]reflect.Value {
 	UserRouteRwLock.Lock()
 	defer UserRouteRwLock.Unlock()

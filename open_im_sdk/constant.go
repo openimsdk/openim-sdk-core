@@ -108,7 +108,7 @@ type UserRelated struct {
 	groupListener
 
 	db         *sql.DB
-	mRWMutex   *sync.RWMutex
+	mRWMutex   sync.RWMutex
 	stateMutex sync.Mutex
 
 	minSeqSvr        int64
@@ -171,7 +171,7 @@ const (
 	AddFriendTip               = 202
 	RefuseFriendApplicationTip = 203
 	SetSelfInfoTip             = 204
-	KickOnlineTip              = 303
+	//KickOnlineTip              = 303
 
 	SingleTipEnd = 399
 	/////////////////////////////////////////
@@ -223,11 +223,16 @@ const (
 )
 
 const (
+	LoginInit    = 0
 	LoginSuccess = 101
 	Logining     = 102
 	LoginFailed  = 103
 
 	LogoutCmd = 201
+
+	TokenFailedExpired       = 701
+	TokenFailedInvalid       = 702
+	TokenFailedKickedOffline = 703
 )
 
 const (
@@ -273,5 +278,6 @@ const (
 	WSSendMsg          = 1003
 	WSPullMsgBySeqList = 1004
 	WSPushMsg          = 2001
+	WSKickOnlineMsg    = 2002
 	WSDataError        = 3001
 )

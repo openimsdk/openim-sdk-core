@@ -84,7 +84,7 @@ func (wsRouter *WsFuncRouter) CreateGroup(input, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
 		wrapSdkLog("unmarshal failed")
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
 	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "gInfo", "memberList") {
@@ -98,7 +98,7 @@ func (wsRouter *WsFuncRouter) JoinGroup(input, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
 		wrapSdkLog("unmarshal failed")
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
 	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupId", "message") {
@@ -122,7 +122,7 @@ func (wsRouter *WsFuncRouter) GetGroupsInfo(input, operationID string) { //(grou
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
 		wrapSdkLog("unmarshal failed")
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
 	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupIdList") {
@@ -136,7 +136,7 @@ func (wsRouter *WsFuncRouter) SetGroupInfo(input, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
 		wrapSdkLog("unmarshal failed")
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
 	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupInfo") {
@@ -150,7 +150,7 @@ func (wsRouter *WsFuncRouter) GetGroupMemberList(input, operationID string) { //
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
 		wrapSdkLog("unmarshal failed")
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
 	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupId", "filter", "next") {
@@ -164,7 +164,7 @@ func (wsRouter *WsFuncRouter) GetGroupMembersInfo(input, operationID string) { /
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
 		wrapSdkLog("unmarshal failed")
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
 	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupId", "userList") {
@@ -178,7 +178,7 @@ func (wsRouter *WsFuncRouter) KickGroupMember(input, operationID string) { //(gr
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
 		wrapSdkLog("unmarshal failed")
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
 	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupId", "reason", "userList") {
@@ -192,7 +192,7 @@ func (wsRouter *WsFuncRouter) TransferGroupOwner(input, operationID string) { //
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
 		wrapSdkLog("unmarshal failed")
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
 	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupId", "userId") {
@@ -206,7 +206,7 @@ func (wsRouter *WsFuncRouter) InviteUserToGroup(input, operationID string) { //(
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
 		wrapSdkLog("unmarshal failed")
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
 	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupId", "reason", "userList") {
@@ -226,7 +226,7 @@ func (wsRouter *WsFuncRouter) AcceptGroupApplication(input, operationID string) 
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
 		wrapSdkLog("unmarshal failed")
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
 	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "application", "reason") {
@@ -241,7 +241,7 @@ func (wsRouter *WsFuncRouter) RefuseGroupApplication(input, operationID string) 
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
 		wrapSdkLog("unmarshal failed")
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
 	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "application", "reason") {

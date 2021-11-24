@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	"net/http"
 
 	"github.com/gorilla/websocket"
 	_ "github.com/mattn/go-sqlite3"
@@ -48,29 +49,45 @@ func (im *IMManager) getServerTime() int64 {
 func (u *UserRelated) logout(cb Base) {
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
+
 	u.LoginState = LogoutCmd
+	sdkLog("set LoginState ", u.LoginState)
 
 	err := u.closeConn()
 	if err != nil {
-		cb.OnError(ErrCodeInitLogin, err.Error())
+		if cb != nil {
+			cb.OnError(ErrCodeInitLogin, err.Error())
+		}
 		return
 	}
 	sdkLog("closeConn ok")
 
 	err = u.closeDB()
 	if err != nil {
-		cb.OnError(ErrCodeInitLogin, err.Error())
+		if cb != nil {
+			cb.OnError(ErrCodeInitLogin, err.Error())
+		}
 		return
 	}
 	sdkLog("close db ok")
 
 	u.LoginUid = ""
 	u.token = ""
-	cb.OnSuccess("")
+	time.Sleep(time.Duration(6) * time.Second)
+	if cb != nil {
+		cb.OnSuccess("")
+	}
+
+	sdkLog("logout return")
 }
 
 func (u *UserRelated) login(uid, tk string, cb Base) {
 	sdkLog("login start, ", uid, tk)
+	if u.LoginState == Logining || u.LoginState == LoginSuccess {
+		cb.OnError(ErrCodeInitLogin, "Logining or LoginSuccess")
+		return
+	}
+	u.LoginState = Logining
 	u.token = tk
 	u.LoginUid = uid
 
@@ -80,20 +97,31 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 		u.LoginUid = ""
 		cb.OnError(ErrCodeInitLogin, err.Error())
 		sdkLog("initDBX failed, ", err.Error())
+		u.LoginState = LoginFailed
 		return
 	}
 	sdkLog("initDBX ok ", uid)
 
-	u.conn, err = u.reConn(nil)
+	c, httpResp, err := u.firstConn(nil)
+	u.conn = c
 	if err != nil {
 		u.token = ""
 		u.LoginUid = ""
 		cb.OnError(ErrCodeInitLogin, err.Error())
-		sdkLog("reConn failed ", err.Error())
+		sdkLog("firstConn failed ", err.Error())
+		u.LoginState = LoginFailed
+		if httpResp != nil {
+			if httpResp.StatusCode == TokenFailedKickedOffline || httpResp.StatusCode == TokenFailedExpired || httpResp.StatusCode == TokenFailedInvalid {
+				u.LoginState = httpResp.StatusCode
+			}
+		}
+
+		u.closeDB()
 		return
 	}
-	sdkLog("ws conn ok ")
-
+	sdkLog("ws conn ok ", uid)
+	u.LoginState = LoginSuccess
+	sdkLog("ws conn ok ", uid, u.LoginState)
 	go u.run()
 
 	sdkLog("ws, forcedSynchronization heartbeat coroutine timedCloseDB run ...")
@@ -105,13 +133,10 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 }
 
 func (u *UserRelated) timedCloseDB() {
-	timeTicker := time.NewTicker(time.Second * 300)
+	timeTicker := time.NewTicker(time.Second * 5)
+	num := 0
 	for {
 		<-timeTicker.C
-		sdkLog("closeDBSetNil begin")
-		u.closeDBSetNil()
-		sdkLog("closeDBSetNil end")
-
 		u.stateMutex.Lock()
 		if u.LoginState == LogoutCmd {
 			sdkLog("logout timedCloseDB return", LogoutCmd)
@@ -119,6 +144,12 @@ func (u *UserRelated) timedCloseDB() {
 			return
 		}
 		u.stateMutex.Unlock()
+		num++
+		if num%60 == 0 {
+			sdkLog("closeDBSetNil begin")
+			u.closeDBSetNil()
+			sdkLog("closeDBSetNil end")
+		}
 	}
 }
 
@@ -182,8 +213,10 @@ func (u *UserRelated) doWsMsg(message []byte) {
 		u.doWSPushMsg(*wsResp)
 	case WSSendMsg:
 		u.doWSSendMsg(*wsResp)
+	case WSKickOnlineMsg:
+		u.kickOnline(*wsResp)
 	default:
-		LogFReturn("type failed, ", wsResp.ReqIdentifier, wsResp.OperationID)
+		LogFReturn("type failed, ", wsResp.ReqIdentifier, wsResp.OperationID, wsResp.ErrCode, wsResp.ErrMsg)
 		return
 	}
 	LogSReturn()
@@ -286,44 +319,6 @@ func (u *UserRelated) SetMinSeqSvr(minSeqSvr int64) {
 
 }
 
-/*
-func (u *UserRelated) syncMsg2ServerMaxSeq(serverMaxSeq int64) error {
-	LogBegin(serverMaxSeq)
-	LogBegin("getConsequentLocalMaxSeq")
-	maxSeq, err := u.getConsequentLocalMaxSeq() //local
-	LogEnd("getConsequentLocalMaxSeq", maxSeq, err)
-	if err != nil {
-		LogFReturn(err.Error())
-		return err
-	}
-	minSeqSvr := u.GetMinSeqSvr()
-	//	LogBegin("delSeqMsg setLocalMaxConSeq SetMinSeqSvr", atomic.LoadInt64(&u.minSeqSvr), maxSeq)
-	LogBegin("delSeqMsg setLocalMaxConSeq SetMinSeqSvr", minSeqSvr, maxSeq)
-	//u.delSeqMsg(atomic.LoadInt64(&u.minSeqSvr), maxSeq)
-	u.delSeqMsg(minSeqSvr, maxSeq)
-	u.setLocalMaxConSeq(int(maxSeq))
-	u.SetMinSeqSvr(int64(maxSeq))
-	LogEnd("elSeqMsg setLocalMaxConSeq SetMinSeqSvr")
-
-	if maxSeq >= serverMaxSeq {
-		sdkLog("don't sync,  LocalmaxSeq >= NewestSeq ", maxSeq, serverMaxSeq)
-		LogSReturn(nil)
-		return nil
-	}
-
-	LogBegin("pullBySplit", maxSeq+1, serverMaxSeq)
-	err = u.pullBySplit(maxSeq+1, serverMaxSeq)
-	LogEnd("pullBySplit", maxSeq+1, serverMaxSeq)
-	if err != nil {
-		LogFReturn(err.Error())
-		return err
-	} else {
-		LogSReturn(nil)
-		return nil
-	}
-}
-*/
-
 func (u *UserRelated) syncSeq2Msg() error {
 	svrMaxSeq, svrMinSeq, err := u.getUserNewestSeq()
 	if err != nil {
@@ -371,30 +366,59 @@ func (u *UserRelated) syncLoginUserInfo() error {
 	return nil
 }
 
-func (u *UserRelated) reConn(conn *websocket.Conn) (*websocket.Conn, error) {
+func (u *UserRelated) firstConn(conn *websocket.Conn) (*websocket.Conn, *http.Response, error) {
 	LogBegin(conn)
 	if conn != nil {
 		conn.Close()
 		conn = nil
 	}
-	u.stateMutex.Lock()
-	u.LoginState = Logining
-	u.stateMutex.Unlock()
+
 	u.IMManager.cb.OnConnecting()
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", SvrConf.IpWsAddr, u.LoginUid, u.token, SvrConf.Platform)
-	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
+	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
-		u.cb.OnConnectFailed(ErrCodeInitLogin, err.Error())
+		u.cb.OnConnectFailed(httpResp.StatusCode, err.Error())
 		LogFReturn(nil, err.Error(), url)
-		return nil, err
+		return nil, httpResp, err
 	}
-	sdkLog("ws connect ok, ", url)
 	u.cb.OnConnectSuccess()
 	u.stateMutex.Lock()
 	u.LoginState = LoginSuccess
 	u.stateMutex.Unlock()
+	sdkLog("ws connect ok, ", u.LoginState)
 	LogSReturn(conn, nil)
-	return conn, nil
+	return conn, httpResp, nil
+}
+
+func (u *UserRelated) reConn(conn *websocket.Conn) (*websocket.Conn, *http.Response, error) {
+	LogBegin(conn)
+	if conn != nil {
+		conn.Close()
+		conn = nil
+	}
+
+	u.stateMutex.Lock()
+	defer u.stateMutex.Unlock()
+	if u.LoginState == TokenFailedKickedOffline || u.LoginState == TokenFailedExpired || u.LoginState == TokenFailedInvalid {
+		sdkLog("don't reconn, must login, state ", u.LoginState)
+		return nil, nil, errors.New("don't reconn")
+	}
+
+	u.IMManager.cb.OnConnecting()
+	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", SvrConf.IpWsAddr, u.LoginUid, u.token, SvrConf.Platform)
+	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
+	if err != nil {
+		u.cb.OnConnectFailed(httpResp.StatusCode, err.Error())
+		LogFReturn(nil, err.Error(), url)
+		return nil, httpResp, err
+	}
+	u.cb.OnConnectSuccess()
+	u.stateMutex.Lock()
+	u.LoginState = LoginSuccess
+	u.stateMutex.Unlock()
+	sdkLog("ws connect ok, ", u.LoginState)
+	LogSReturn(conn, nil)
+	return conn, httpResp, nil
 }
 
 func (u *UserRelated) getNeedSyncSeq(svrMinSeq, svrMaxSeq int32) []int32 {
@@ -450,6 +474,7 @@ func (u *UserRelated) getNeedSyncSeq(svrMinSeq, svrMaxSeq int32) []int32 {
 func (u *UserRelated) heartbeat() {
 	for {
 		u.stateMutex.Lock()
+		sdkLog("heart check state ", u.LoginState)
 		if u.LoginState == LogoutCmd {
 			sdkLog("logout, ws close, heartbeat return ", LogoutCmd)
 			u.stateMutex.Unlock()
@@ -566,7 +591,7 @@ func (u *UserRelated) run() {
 		LogStart()
 		if u.conn == nil {
 			LogBegin("reConn", nil)
-			re, _ := u.reConn(nil)
+			re, _, _ := u.reConn(nil)
 			LogEnd("reConn", re)
 			u.conn = re
 		}
@@ -586,11 +611,11 @@ func (u *UserRelated) run() {
 				time.Sleep(time.Duration(5) * time.Second)
 				sdkLog("ws  ReadMessage failed, sleep 5s, reconn, ", err)
 				LogBegin("reConn", u.conn)
-				u.conn, err = u.reConn(u.conn)
+				u.conn, _, err = u.reConn(u.conn)
 				LogEnd("reConn", u.conn)
 			} else {
 				if msgType == websocket.CloseMessage {
-					u.conn, _ = u.reConn(u.conn)
+					u.conn, _, _ = u.reConn(u.conn)
 				} else if msgType == websocket.TextMessage {
 					sdkLog("type failed, recv websocket.TextMessage ", string(message))
 				} else if msgType == websocket.BinaryMessage {
@@ -998,6 +1023,13 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 }
 
 */
+func CheckToken(uId, token string) int {
+	_, err := post2Api(newestSeqRouter, paramsNewestSeqReq{ReqIdentifier: 1001, OperationID: operationIDGenerator(), SendID: uId, MsgIncr: 1}, token)
+	if err != nil {
+		return -1
+	}
+	return 0
+}
 
 func (u *UserRelated) getUserNewestSeq() (int64, int64, error) {
 	LogBegin()
@@ -1119,9 +1151,9 @@ func (u *UserRelated) doFriendMsg(msg MsgData) {
 		case SetSelfInfoTip:
 			sdkLog("setSelfInfo ", msg)
 			u.setSelfInfo(&msg)
-		case KickOnlineTip:
-			sdkLog("kickOnline ", msg)
-			u.kickOnline(&msg)
+			//	case KickOnlineTip:
+			//		sdkLog("kickOnline ", msg)
+			//		u.kickOnline(&msg)
 		default:
 			sdkLog("type failed, ", msg)
 		}
@@ -1217,8 +1249,10 @@ func (u *UserRelated) addFriendNew(msg *MsgData) {
 	u.friendListener.OnFriendApplicationListAdded(string(jsonInfo))
 }
 
-func (im *IMManager) kickOnline(msg *MsgData) {
-	im.cb.OnKickedOffline()
+func (u *UserRelated) kickOnline(msg GeneralWsResp) {
+	sdkLog("kickOnline ", msg.ReqIdentifier, msg.ErrCode, msg.ErrMsg)
+	u.logout(nil)
+	u.cb.OnKickedOffline()
 }
 
 func (u *UserRelated) setSelfInfo(msg *MsgData) {

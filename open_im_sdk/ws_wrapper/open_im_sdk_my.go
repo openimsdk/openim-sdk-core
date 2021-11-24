@@ -19,8 +19,8 @@ import (
 func main() {
 	var sdkWsPort, openIMApiPort, openIMWsPort *int
 	var openIMWsAddress, openIMApiAddress *string
-	APIADDR := "http://47.112.160.66:10000"
-	WSADDR := "ws://47.112.160.66:17778"
+	APIADDR := "http://121.37.25.71:10000"
+	WSADDR := "ws://121.37.25.71:17778"
 
 	sysType := runtime.GOOS
 	switch sysType {
@@ -34,7 +34,7 @@ func main() {
 			IpWsAddr: "ws://" + utils.ServerIP + ":" + utils.IntToString(*openIMWsPort), Platform: utils.WebPlatformID, DbDir: "../db/sdk/"})
 
 	case "windows":
-		sdkWsPort = flag.Int("sdk_ws_port", 7799, "openIM ws listening port")
+		sdkWsPort = flag.Int("sdk_ws_port", 30000, "openIM ws listening port")
 		flag.Parse()
 		ws_local_server.InitServer(&open_im_sdk.IMConfig{IpApiAddr: APIADDR,
 			IpWsAddr: WSADDR, Platform: utils.WebPlatformID, DbDir: "./"})

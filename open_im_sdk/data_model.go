@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 )
 
@@ -45,9 +44,9 @@ func (u *UserRelated) reOpenDB(uid string) error {
 }
 
 func (u *UserRelated) initDBX(uid string) error {
-	if u.mRWMutex == nil {
-		u.mRWMutex = new(sync.RWMutex)
-	}
+	//if u.mRWMutex == nil {
+	//	u.mRWMutex = new(sync.RWMutex)
+	//}
 	if uid == "" {
 		return errors.New("no uid")
 	}
