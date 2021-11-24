@@ -19,7 +19,7 @@ type Req struct {
 	UId         string `json:"uid"`
 }
 
-func (ws *WServer) DoLogin(m Req, conn *websocket.Conn) {
+func (ws *WServer) DoLogin(m Req, conn *UserConn) {
 	UserRouteRwLock.RLock()
 	defer UserRouteRwLock.RUnlock()
 	urm, ok := UserRouteMap[m.UId]
@@ -46,7 +46,7 @@ func (ws *WServer) DoLogin(m Req, conn *websocket.Conn) {
 	}
 }
 
-func (ws *WServer) msgParse(conn *websocket.Conn, jsonMsg []byte) {
+func (ws *WServer) msgParse(conn *UserConn, jsonMsg []byte) {
 	m := Req{}
 	if err := json.Unmarshal(jsonMsg, &m); err != nil {
 		SendOneConnMessage(EventData{"error", 100, "Unmarshal failed", "", ""}, conn)
@@ -86,7 +86,7 @@ func (ws *WServer) msgParse(conn *websocket.Conn, jsonMsg []byte) {
 
 }
 
-func (ws *WServer) sendMsg(conn *websocket.Conn, mReply map[string]interface{}) {
+func (ws *WServer) sendMsg(conn *UserConn, mReply map[string]interface{}) {
 	bMsg, _ := json.Marshal(mReply)
 	err := ws.writeMsg(conn, websocket.TextMessage, bMsg)
 	if err != nil {
@@ -94,7 +94,7 @@ func (ws *WServer) sendMsg(conn *websocket.Conn, mReply map[string]interface{}) 
 	}
 }
 
-func (ws *WServer) sendErrMsg(conn *websocket.Conn, errCode int32, errMsg string) {
+func (ws *WServer) sendErrMsg(conn *UserConn, errCode int32, errMsg string) {
 	mReply := make(map[string]interface{})
 	mReply["errCode"] = errCode
 	mReply["errMsg"] = errMsg

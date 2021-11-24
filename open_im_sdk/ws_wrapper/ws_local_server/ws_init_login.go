@@ -105,6 +105,11 @@ func (wsRouter *WsFuncRouter) Logout(input string, operationID string) {
 	userWorker.Logout(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
 }
 
+func (wsRouter *WsFuncRouter) LogoutNoCallback(input string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Logout(nil)
+}
+
 func (wsRouter *WsFuncRouter) GetLoginStatus(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", int32ToString(int32(userWorker.GetLoginStatus())), operationID})
@@ -168,7 +173,7 @@ func SendOneUserMessage(data interface{}, uid string) {
 	}
 }
 
-func SendOneConnMessage(data interface{}, conn *websocket.Conn) {
+func SendOneConnMessage(data interface{}, conn *UserConn) {
 	bMsg, _ := json.Marshal(data)
 	err := WS.writeMsg(conn, websocket.TextMessage, bMsg)
 	wrapSdkLog("sendmsg:", string(bMsg))

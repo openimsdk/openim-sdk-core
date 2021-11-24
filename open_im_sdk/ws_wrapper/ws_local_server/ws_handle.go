@@ -74,7 +74,7 @@ func DelUserRouter(uid string) {
 	urm, ok := UserRouteMap[uid]
 	if ok {
 		wrapSdkLog("DelUserRouter logout, uninitsdk", uid)
-		urm.wsRouter.Logout(uid, "0")
+		urm.wsRouter.LogoutNoCallback(uid, "0")
 		urm.wsRouter.UnInitSDK()
 	} else {
 		wrapSdkLog("no found UserRouteMap: ", uid)

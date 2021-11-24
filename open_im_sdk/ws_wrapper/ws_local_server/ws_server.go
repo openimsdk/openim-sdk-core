@@ -25,20 +25,25 @@ var (
 	WS     WServer
 )
 
+type UserConn struct {
+	*websocket.Conn
+	w *sync.Mutex
+}
+
 type WServer struct {
 	wsAddr       string
 	wsMaxConnNum int
 	wsUpGrader   *websocket.Upgrader
-	wsConnToUser map[*websocket.Conn]map[string]string
-	wsUserToConn map[string]map[string]*websocket.Conn
+	wsConnToUser map[*UserConn]map[string]string
+	wsUserToConn map[string]map[string]*UserConn
 }
 
 func (ws *WServer) OnInit(wsPort int) {
 	ip := utils.ServerIP
 	ws.wsAddr = ip + ":" + utils.IntToString(wsPort)
 	ws.wsMaxConnNum = 10000
-	ws.wsConnToUser = make(map[*websocket.Conn]map[string]string)
-	ws.wsUserToConn = make(map[string]map[string]*websocket.Conn)
+	ws.wsConnToUser = make(map[*UserConn]map[string]string)
+	ws.wsUserToConn = make(map[string]map[string]*UserConn)
 	rwLock = new(sync.RWMutex)
 	ws.wsUpGrader = &websocket.Upgrader{
 		HandshakeTimeout: 10 * time.Second,
@@ -56,6 +61,7 @@ func (ws *WServer) Run() {
 }
 
 func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
+	wrapSdkLog("wsHandler ", r.URL.Query())
 	if ws.headerCheck(w, r) {
 		query := r.URL.Query()
 		conn, err := ws.wsUpGrader.Upgrade(w, r, nil) //Conn is obtained through the upgraded escalator
@@ -66,13 +72,14 @@ func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 			//Connection mapping relationship,
 			//userID+" "+platformID->conn
 			SendID := query["sendID"][0] + " " + utils.PlatformIDToName(int32(utils.StringToInt64(query["platformID"][0])))
-			ws.addUserConn(SendID, conn)
-			go ws.readMsg(conn)
+			newConn := &UserConn{conn, new(sync.Mutex)}
+			ws.addUserConn(SendID, newConn)
+			go ws.readMsg(newConn)
 		}
 	}
 }
 
-func (ws *WServer) readMsg(conn *websocket.Conn) {
+func (ws *WServer) readMsg(conn *UserConn) {
 	for {
 		msgType, msg, err := conn.ReadMessage()
 		if err != nil {
@@ -86,13 +93,13 @@ func (ws *WServer) readMsg(conn *websocket.Conn) {
 	}
 }
 
-func (ws *WServer) writeMsg(conn *websocket.Conn, a int, msg []byte) error {
-	rwLock.Lock()
-	defer rwLock.Unlock()
+func (ws *WServer) writeMsg(conn *UserConn, a int, msg []byte) error {
+	conn.w.Lock()
+	defer conn.w.Unlock()
 	return conn.WriteMessage(a, msg)
 
 }
-func (ws *WServer) addUserConn(uid string, conn *websocket.Conn) {
+func (ws *WServer) addUserConn(uid string, conn *UserConn) {
 	wrapSdkLog("addUserConn", uid)
 	rwLock.Lock()
 	wrapSdkLog("addUserConn lock", uid)
@@ -108,7 +115,7 @@ func (ws *WServer) addUserConn(uid string, conn *websocket.Conn) {
 		//	wrapSdkLog("close err", "", "uid", uid, "conn", conn)
 		//}
 	} else {
-		i := make(map[string]*websocket.Conn)
+		i := make(map[string]*UserConn)
 		i[conn.RemoteAddr().String()] = conn
 		ws.wsUserToConn[uid] = i
 		wrapSdkLog("this user is first login", "", "uid", uid)
@@ -147,9 +154,9 @@ func (ws *WServer) getConnNum(uid string) int {
 
 }
 
-func (ws *WServer) delUserConn(conn *websocket.Conn) {
+func (ws *WServer) delUserConn(conn *UserConn) {
 	rwLock.Lock()
-	flag := 0
+
 	var uidPlatform string
 	if oldStringMap, ok := ws.wsConnToUser[conn]; ok {
 		uidPlatform = oldStringMap[conn.RemoteAddr().String()]
@@ -159,7 +166,8 @@ func (ws *WServer) delUserConn(conn *websocket.Conn) {
 			wrapSdkLog("WS delete operation", "", "wsUser deleted", ws.wsUserToConn, "uid", uidPlatform, "online_num", len(ws.wsUserToConn))
 			if len(oldConnMap) == 0 {
 				wrapSdkLog("no conn delete user router ", uidPlatform)
-				flag = 1
+				wrapSdkLog("DelUserRouter ", uidPlatform)
+				DelUserRouter(uidPlatform)
 				delete(ws.wsUserToConn, uidPlatform)
 			}
 		} else {
@@ -174,14 +182,9 @@ func (ws *WServer) delUserConn(conn *websocket.Conn) {
 	}
 
 	rwLock.Unlock()
-
-	if flag == 1 {
-		wrapSdkLog("DelUserRouter ", uidPlatform)
-		DelUserRouter(uidPlatform)
-	}
 }
 
-func (ws *WServer) getUserConn(uid string) (w []*websocket.Conn) {
+func (ws *WServer) getUserConn(uid string) (w []*UserConn) {
 	rwLock.RLock()
 	defer rwLock.RUnlock()
 	if connMap, ok := ws.wsUserToConn[uid]; ok {
@@ -192,7 +195,8 @@ func (ws *WServer) getUserConn(uid string) (w []*websocket.Conn) {
 	}
 	return nil
 }
-func (ws *WServer) getUserUid(conn *websocket.Conn) string {
+
+func (ws *WServer) getUserUid(conn *UserConn) string {
 	rwLock.RLock()
 	defer rwLock.RUnlock()
 
@@ -203,8 +207,10 @@ func (ws *WServer) getUserUid(conn *websocket.Conn) string {
 }
 
 func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request) bool {
+
 	status := http.StatusUnauthorized
 	query := r.URL.Query()
+	wrapSdkLog("headerCheck: ", query["token"], query["platformID"], query["sendID"])
 	if len(query["token"]) != 0 && len(query["sendID"]) != 0 && len(query["platformID"]) != 0 {
 		SendID := query["sendID"][0] + " " + utils.PlatformIDToName(int32(utils.StringToInt64(query["platformID"][0])))
 		if ws.getConnNum(SendID) >= POINTNUM {
