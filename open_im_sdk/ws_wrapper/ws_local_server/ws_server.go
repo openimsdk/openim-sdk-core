@@ -71,17 +71,17 @@ func (ws *WServer) getMsgAndSend() {
 		case r := <-ws.ch:
 			conns := ws.getUserConn(r.uid + " " + "Web")
 			if conns == nil {
-				wrapSdkLog("uid no conn ", r.uid)
+				wrapSdkLog("uid no conn, failed ", r.uid)
 			}
 			for _, conn := range conns {
 				if conn != nil {
 					err := WS.writeMsg(conn, websocket.TextMessage, r.data)
-					wrapSdkLog("sendmsg:", string(r.data))
+					wrapSdkLog("send response to web: ", string(r.data))
 					if err != nil {
-						wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", string(r.data))
+						wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", r.uid, "error", err, "data", string(r.data))
 					}
 				} else {
-					wrapSdkLog("Conn is nil", "data", string(r.data))
+					wrapSdkLog("Conn is nil, failed", "data", string(r.data))
 				}
 			}
 		}
@@ -132,8 +132,8 @@ func (ws *WServer) addUserConn(uid string, conn *UserConn) {
 	wrapSdkLog("addUserConn", uid)
 	rwLock.Lock()
 	wrapSdkLog("addUserConn lock", uid)
-	wrapSdkLog("before add, wsConnToUser map ", ws.wsConnToUser)
-	wrapSdkLog("before add, wsUserToConn  map ", ws.wsUserToConn)
+	//	wrapSdkLog("before add, wsConnToUser map ", ws.wsConnToUser)
+	//wrapSdkLog("before add, wsUserToConn  map ", ws.wsUserToConn)
 
 	var flag int32
 	if oldConnMap, ok := ws.wsUserToConn[uid]; ok {
@@ -170,8 +170,8 @@ func (ws *WServer) addUserConn(uid string, conn *UserConn) {
 	wrapSdkLog("WS Add operation", "", "wsUser added", ws.wsUserToConn, "uid", uid, "online_num", len(ws.wsUserToConn))
 	rwLock.Unlock()
 
-	wrapSdkLog("after add, wsConnToUser map ", ws.wsConnToUser)
-	wrapSdkLog("after add, wsUserToConn  map ", ws.wsUserToConn)
+	//wrapSdkLog("after add, wsConnToUser map ", ws.wsConnToUser)
+	//	wrapSdkLog("after add, wsUserToConn  map ", ws.wsUserToConn)
 
 	if flag == 1 {
 		//	DelUserRouter(uid)
@@ -194,8 +194,8 @@ func (ws *WServer) getConnNum(uid string) int {
 func (ws *WServer) delUserConn(conn *UserConn) {
 	rwLock.Lock()
 	var uidPlatform string
-	wrapSdkLog("before del, wsConnToUser map ", ws.wsConnToUser)
-	wrapSdkLog("before del, wsUserToConn  map ", ws.wsUserToConn)
+	//	wrapSdkLog("before del, wsConnToUser map ", ws.wsConnToUser)
+	//	wrapSdkLog("before del, wsUserToConn  map ", ws.wsUserToConn)
 	if oldStringMap, ok := ws.wsConnToUser[conn]; ok {
 		uidPlatform = oldStringMap[conn.RemoteAddr().String()]
 		if oldConnMap, ok := ws.wsUserToConn[uidPlatform]; ok {
@@ -221,8 +221,8 @@ func (ws *WServer) delUserConn(conn *UserConn) {
 	if err != nil {
 		wrapSdkLog("close err", "", "uid", uidPlatform, "conn", conn)
 	}
-	wrapSdkLog("after del, wsConnToUser map ", ws.wsConnToUser)
-	wrapSdkLog("after del, wsUserToConn  map ", ws.wsUserToConn)
+	//	wrapSdkLog("after del, wsConnToUser map ", ws.wsConnToUser)
+	//	wrapSdkLog("after del, wsUserToConn  map ", ws.wsUserToConn)
 
 	rwLock.Unlock()
 }

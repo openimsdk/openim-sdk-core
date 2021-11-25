@@ -138,13 +138,13 @@ func SendOneUserMessage(data interface{}, uid string) {
 		wrapSdkLog("send2ch failed, ", err, string(bMsg), uid)
 		return
 	}
-	wrapSdkLog("sendmsg to web: ", string(bMsg))
+	wrapSdkLog("send response to web: ", string(bMsg))
 }
 
 func SendOneConnMessage(data interface{}, conn *UserConn) {
 	bMsg, _ := json.Marshal(data)
 	err := WS.writeMsg(conn, websocket.TextMessage, bMsg)
-	wrapSdkLog("sendmsg to web: ", string(bMsg))
+	wrapSdkLog("send response to web: ", string(bMsg))
 	if err != nil {
 		wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", data)
 	} else {
