@@ -123,7 +123,7 @@ func (ws *WServer) addUserConn(uid string, conn *UserConn) {
 	if oldStringMap, ok := ws.wsConnToUser[conn]; ok {
 		oldStringMap[conn.RemoteAddr().String()] = uid
 		ws.wsConnToUser[conn] = oldStringMap
-		wrapSdkLog("this user is not first login", "", "uid", uid)
+		wrapSdkLog("find failed", "", "uid", uid)
 		//err := oldConn.Close()
 		//delete(ws.wsConnToUser, oldConn)
 		//if err != nil {
@@ -147,6 +147,7 @@ func (ws *WServer) getConnNum(uid string) int {
 	rwLock.Lock()
 	defer rwLock.Unlock()
 	if connMap, ok := ws.wsUserToConn[uid]; ok {
+		wrapSdkLog("uid->conn ", connMap)
 		return len(connMap)
 	} else {
 		return 0
@@ -161,7 +162,10 @@ func (ws *WServer) delUserConn(conn *UserConn) {
 	if oldStringMap, ok := ws.wsConnToUser[conn]; ok {
 		uidPlatform = oldStringMap[conn.RemoteAddr().String()]
 		if oldConnMap, ok := ws.wsUserToConn[uidPlatform]; ok {
+
+			wrapSdkLog("old map : ", oldConnMap, "conn: ", conn.RemoteAddr().String())
 			delete(oldConnMap, conn.RemoteAddr().String())
+
 			ws.wsUserToConn[uidPlatform] = oldConnMap
 			wrapSdkLog("WS delete operation", "", "wsUser deleted", ws.wsUserToConn, "uid", uidPlatform, "online_num", len(ws.wsUserToConn))
 			if len(oldConnMap) == 0 {
@@ -197,13 +201,7 @@ func (ws *WServer) getUserConn(uid string) (w []*UserConn) {
 }
 
 func (ws *WServer) getUserUid(conn *UserConn) string {
-	rwLock.RLock()
-	defer rwLock.RUnlock()
-
-	if uid, ok := ws.wsConnToUser[conn]; ok {
-		return uid[conn.RemoteAddr().String()]
-	}
-	return ""
+	return "getUserUid"
 }
 
 func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request) bool {
@@ -214,6 +212,7 @@ func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request) bool {
 	if len(query["token"]) != 0 && len(query["sendID"]) != 0 && len(query["platformID"]) != 0 {
 		SendID := query["sendID"][0] + " " + utils.PlatformIDToName(int32(utils.StringToInt64(query["platformID"][0])))
 		if ws.getConnNum(SendID) >= POINTNUM {
+			wrapSdkLog("Over quantity failed", query, ws.getConnNum(SendID))
 			w.Header().Set("Sec-Websocket-Version", "13")
 			http.Error(w, "Over quantity", status)
 			return false

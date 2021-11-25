@@ -8,7 +8,6 @@ package ws_local_server
 
 import (
 	"encoding/json"
-	"github.com/gorilla/websocket"
 	"reflect"
 )
 
@@ -86,17 +85,17 @@ func (ws *WServer) msgParse(conn *UserConn, jsonMsg []byte) {
 
 }
 
-func (ws *WServer) sendMsg(conn *UserConn, mReply map[string]interface{}) {
-	bMsg, _ := json.Marshal(mReply)
-	err := ws.writeMsg(conn, websocket.TextMessage, bMsg)
-	if err != nil {
-		wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn), "error", err, "mReply", mReply)
-	}
-}
-
-func (ws *WServer) sendErrMsg(conn *UserConn, errCode int32, errMsg string) {
-	mReply := make(map[string]interface{})
-	mReply["errCode"] = errCode
-	mReply["errMsg"] = errMsg
-	ws.sendMsg(conn, mReply)
-}
+//func (ws *WServer) sendMsg(conn *UserConn, mReply map[string]interface{}) {
+//	bMsg, _ := json.Marshal(mReply)
+//	err := ws.writeMsg(conn, websocket.TextMessage, bMsg)
+//	if err != nil {
+//		wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn), "error", err, "mReply", mReply)
+//	}
+//}
+//
+//func (ws *WServer) sendErrMsg(conn *UserConn, errCode int32, errMsg string) {
+//	mReply := make(map[string]interface{})
+//	mReply["errCode"] = errCode
+//	mReply["errMsg"] = errMsg
+//	ws.sendMsg(conn, mReply)
+//}
