@@ -58,11 +58,35 @@ func (ws *WServer) OnInit(wsPort int) {
 }
 
 func (ws *WServer) Run() {
+	go ws.getMsgAndSend()
 	http.HandleFunc("/", ws.wsHandler)         //Get request from client to handle by wsHandler
 	err := http.ListenAndServe(ws.wsAddr, nil) //Start listening
 	if err != nil {
 		wrapSdkLog("Ws listening err", "", "err", err.Error())
 	}
+}
+func (ws *WServer) getMsgAndSend() {
+	for {
+		select {
+		case r := <-ws.ch:
+			conns := ws.getUserConn(r.uid + " " + "Web")
+			if conns == nil {
+				wrapSdkLog("uid no conn ", r.uid)
+			}
+			for _, conn := range conns {
+				if conn != nil {
+					err := WS.writeMsg(conn, websocket.TextMessage, r.data)
+					wrapSdkLog("sendmsg:", string(r.data))
+					if err != nil {
+						wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", string(r.data))
+					}
+				} else {
+					wrapSdkLog("Conn is nil", "data", string(r.data))
+				}
+			}
+		}
+	}
+
 }
 
 func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
@@ -194,8 +218,8 @@ func (ws *WServer) delUserConn(conn *UserConn) {
 }
 
 func (ws *WServer) getUserConn(uid string) (w []*UserConn) {
-	//	rwLock.RLock()
-	//	defer rwLock.RUnlock()
+	rwLock.RLock()
+	defer rwLock.RUnlock()
 	t := ws.wsUserToConn
 
 	if connMap, ok := t[uid]; ok {
