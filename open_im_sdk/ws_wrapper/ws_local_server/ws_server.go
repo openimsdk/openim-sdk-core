@@ -18,7 +18,7 @@ import (
 	"time"
 )
 
-const POINTNUM = 5
+const POINTNUM = 10
 
 var (
 	rwLock *sync.RWMutex
