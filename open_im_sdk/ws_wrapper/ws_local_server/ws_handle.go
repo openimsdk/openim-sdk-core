@@ -2,11 +2,13 @@ package ws_local_server
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/gorilla/websocket"
 	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type EventData struct {
@@ -86,7 +88,7 @@ func DelUserRouter(uid string) {
 	delete(UserRouteMap, uid)
 }
 
-func GenUserRouterNoLock(uid string) *RefRouter {
+func GenUserRouterNoLock(uid string, conn *UserConn) *RefRouter {
 	_, ok := UserRouteMap[uid]
 	if ok {
 		return nil
@@ -94,6 +96,7 @@ func GenUserRouterNoLock(uid string) *RefRouter {
 	RouteMap1 := make(map[string]reflect.Value, 0)
 	var wsRouter1 WsFuncRouter
 	wsRouter1.uId = uid
+	wsRouter1.conn = conn
 	wsRouter1.AddAdvancedMsgListener()
 	wsRouter1.SetConversationListener()
 	wsRouter1.SetFriendListener()
@@ -117,53 +120,50 @@ func GenUserRouterNoLock(uid string) *RefRouter {
 }
 
 func (wsRouter *WsFuncRouter) GlobalSendMessage(data interface{}) {
-	conns := WS.getUserConn(wsRouter.uId + " " + "Web")
-	if conns == nil {
-		wrapSdkLog("uid no conn ", wsRouter.uId)
+	if wsRouter.conn == nil {
+		wrapSdkLog("conn == nil, failed ", wsRouter)
+		return
 	}
-	bMsg, _ := json.Marshal(data)
-	for _, conn := range conns {
-		if conn != nil {
-			err := WS.writeMsg(conn, websocket.TextMessage, bMsg)
-			wrapSdkLog("sendmsg:", string(bMsg))
-			if err != nil {
-				wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", data)
-			}
-		} else {
-			wrapSdkLog("Conn is nil", "data", data)
-		}
-	}
+	SendOneConnMessage(data, wsRouter.conn)
 }
 
 //listener
 func SendOneUserMessage(data interface{}, uid string) {
-	conns := WS.getUserConn(uid + " " + "Web")
-	if conns == nil {
-		wrapSdkLog("uid no conn ", uid)
-	}
 	bMsg, _ := json.Marshal(data)
-	for _, conn := range conns {
-
-		if conn != nil {
-			err := WS.writeMsg(conn, websocket.TextMessage, bMsg)
-			wrapSdkLog("sendmsg:", string(bMsg), uid)
-			if err != nil {
-				wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", data)
-			}
-		} else {
-			wrapSdkLog("Conn is nil", "data", data, uid)
-		}
+	var chMsg ChanMsg
+	chMsg.data = bMsg
+	chMsg.uid = uid
+	err := send2Ch(WS.ch, chMsg, 2)
+	if err != nil {
+		wrapSdkLog("send2ch failed, ", err, string(bMsg), uid)
+		return
 	}
+	wrapSdkLog("sendmsg to web: ", string(bMsg))
 }
 
 func SendOneConnMessage(data interface{}, conn *UserConn) {
 	bMsg, _ := json.Marshal(data)
 	err := WS.writeMsg(conn, websocket.TextMessage, bMsg)
-	wrapSdkLog("sendmsg:", string(bMsg))
+	wrapSdkLog("sendmsg to web: ", string(bMsg))
 	if err != nil {
 		wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", data)
 	} else {
 		wrapSdkLog("Conn is nil", "data", data)
 	}
+}
 
+func send2Ch(ch chan ChanMsg, value ChanMsg, timeout int64) error {
+	var flag = 0
+	select {
+	case ch <- value:
+		flag = 1
+	case <-time.After(time.Second * time.Duration(timeout)):
+		flag = 2
+	}
+	if flag == 1 {
+		return nil
+	} else {
+		wrapSdkLog("send cmd timeout, ", timeout, value)
+		return errors.New("send cmd timeout")
+	}
 }
