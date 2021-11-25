@@ -82,6 +82,7 @@ func (u *UserRelated) logout(cb Base) {
 }
 
 func (u *UserRelated) login(uid, tk string, cb Base) {
+	if cb
 	sdkLog("login start, ", uid, tk)
 	if u.LoginState == Logining || u.LoginState == LoginSuccess {
 		cb.OnError(ErrCodeInitLogin, "Logining or LoginSuccess")
