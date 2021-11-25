@@ -48,7 +48,7 @@ func (ws *WServer) OnInit(wsPort int) {
 	ws.wsMaxConnNum = 10000
 	ws.wsConnToUser = make(map[*UserConn]map[string]string)
 	ws.wsUserToConn = make(map[string]map[string]*UserConn)
-	ws.ch = make(chan ChanMsg, 1000)
+	ws.ch = make(chan ChanMsg, 100000)
 	rwLock = new(sync.RWMutex)
 	ws.wsUpGrader = &websocket.Upgrader{
 		HandshakeTimeout: 10 * time.Second,
