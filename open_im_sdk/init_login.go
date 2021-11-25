@@ -82,7 +82,11 @@ func (u *UserRelated) logout(cb Base) {
 }
 
 func (u *UserRelated) login(uid, tk string, cb Base) {
-	if cb
+	if cb == nil || u.listener == nil || u.friendListener == nil ||
+		u.ConversationListenerx == nil || len(u.MsgListenerList) == 0 {
+		sdkLog("listener is nil, failed ", uid, tk)
+		return
+	}
 	sdkLog("login start, ", uid, tk)
 	if u.LoginState == Logining || u.LoginState == LoginSuccess {
 		cb.OnError(ErrCodeInitLogin, "Logining or LoginSuccess")
