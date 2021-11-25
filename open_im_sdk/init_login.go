@@ -47,38 +47,39 @@ func (im *IMManager) getServerTime() int64 {
 }
 
 func (u *UserRelated) logout(cb Base) {
-	u.stateMutex.Lock()
-	defer u.stateMutex.Unlock()
+	go func() {
+		u.stateMutex.Lock()
+		defer u.stateMutex.Unlock()
 
-	u.LoginState = LogoutCmd
-	sdkLog("set LoginState ", u.LoginState)
+		u.LoginState = LogoutCmd
+		sdkLog("set LoginState ", u.LoginState)
 
-	err := u.closeConn()
-	if err != nil {
-		if cb != nil {
-			cb.OnError(ErrCodeInitLogin, err.Error())
+		err := u.closeConn()
+		if err != nil {
+			if cb != nil {
+				cb.OnError(ErrCodeInitLogin, err.Error())
+			}
+			return
 		}
-		return
-	}
-	sdkLog("closeConn ok")
+		sdkLog("closeConn ok")
 
-	err = u.closeDB()
-	if err != nil {
-		if cb != nil {
-			cb.OnError(ErrCodeInitLogin, err.Error())
+		err = u.closeDB()
+		if err != nil {
+			if cb != nil {
+				cb.OnError(ErrCodeInitLogin, err.Error())
+			}
+			return
 		}
-		return
-	}
-	sdkLog("close db ok")
+		sdkLog("close db ok")
 
-	u.LoginUid = ""
-	u.token = ""
-	time.Sleep(time.Duration(6) * time.Second)
-	if cb != nil {
-		cb.OnSuccess("")
-	}
-
-	sdkLog("logout return")
+		u.LoginUid = ""
+		u.token = ""
+		time.Sleep(time.Duration(6) * time.Second)
+		if cb != nil {
+			cb.OnSuccess("")
+		}
+		sdkLog("logout return")
+	}()
 }
 
 func (u *UserRelated) login(uid, tk string, cb Base) {
