@@ -377,7 +377,12 @@ func (u *UserRelated) firstConn(conn *websocket.Conn) (*websocket.Conn, *http.Re
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", SvrConf.IpWsAddr, u.LoginUid, u.token, SvrConf.Platform)
 	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
-		u.cb.OnConnectFailed(httpResp.StatusCode, err.Error())
+		if httpResp != nil {
+			u.cb.OnConnectFailed(httpResp.StatusCode, err.Error())
+		} else {
+			u.cb.OnConnectFailed(1001, err.Error())
+		}
+
 		LogFReturn(nil, err.Error(), url)
 		return nil, httpResp, err
 	}
@@ -408,7 +413,12 @@ func (u *UserRelated) reConn(conn *websocket.Conn) (*websocket.Conn, *http.Respo
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", SvrConf.IpWsAddr, u.LoginUid, u.token, SvrConf.Platform)
 	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
-		u.cb.OnConnectFailed(httpResp.StatusCode, err.Error())
+		if httpResp != nil {
+			u.cb.OnConnectFailed(httpResp.StatusCode, err.Error())
+		} else {
+			u.cb.OnConnectFailed(1001, err.Error())
+		}
+
 		LogFReturn(nil, err.Error(), url)
 		return nil, httpResp, err
 	}
