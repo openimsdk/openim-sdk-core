@@ -88,10 +88,7 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 		return
 	}
 	sdkLog("login start, ", uid, tk)
-	if u.LoginState == Logining || u.LoginState == LoginSuccess {
-		cb.OnError(ErrCodeInitLogin, "Logining or LoginSuccess")
-		return
-	}
+
 	u.LoginState = Logining
 	u.token = tk
 	u.LoginUid = uid
