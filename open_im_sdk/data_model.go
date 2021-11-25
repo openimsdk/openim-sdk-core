@@ -438,6 +438,10 @@ func (u *UserRelated) getAllConversationListModel() (err error, list []*Conversa
 	defer u.mRWMutex.RUnlock()
 
 	rows, err := u.Query("SELECT * FROM conversation where latest_msg_send_time!=0 order by  case when is_pinned=1 then 0 else 1 end,max(latest_msg_send_time,draft_timestamp) DESC")
+	if err != nil {
+		sdkLog("Query failed ", err.Error())
+		return err, nil
+	}
 	for rows.Next() {
 		c := new(ConversationStruct)
 		err = rows.Scan(&c.ConversationID, &c.ConversationType, &c.UserID, &c.GroupID, &c.ShowName,

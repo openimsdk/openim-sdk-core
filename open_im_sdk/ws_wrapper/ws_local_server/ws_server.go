@@ -18,7 +18,7 @@ import (
 	"time"
 )
 
-const POINTNUM = 1
+const POINTNUM = 5
 
 var (
 	rwLock *sync.RWMutex
@@ -132,6 +132,9 @@ func (ws *WServer) addUserConn(uid string, conn *UserConn) {
 	wrapSdkLog("addUserConn", uid)
 	rwLock.Lock()
 	wrapSdkLog("addUserConn lock", uid)
+	wrapSdkLog("before add, wsConnToUser map ", ws.wsConnToUser)
+	wrapSdkLog("before add, wsUserToConn  map ", ws.wsUserToConn)
+
 	var flag int32
 	if oldConnMap, ok := ws.wsUserToConn[uid]; ok {
 		flag = 1
@@ -167,6 +170,9 @@ func (ws *WServer) addUserConn(uid string, conn *UserConn) {
 	wrapSdkLog("WS Add operation", "", "wsUser added", ws.wsUserToConn, "uid", uid, "online_num", len(ws.wsUserToConn))
 	rwLock.Unlock()
 
+	wrapSdkLog("after add, wsConnToUser map ", ws.wsConnToUser)
+	wrapSdkLog("after add, wsUserToConn  map ", ws.wsUserToConn)
+
 	if flag == 1 {
 		//	DelUserRouter(uid)
 	}
@@ -175,6 +181,7 @@ func (ws *WServer) addUserConn(uid string, conn *UserConn) {
 func (ws *WServer) getConnNum(uid string) int {
 	rwLock.Lock()
 	defer rwLock.Unlock()
+	wrapSdkLog("getConnNum uid: ", uid)
 	if connMap, ok := ws.wsUserToConn[uid]; ok {
 		wrapSdkLog("uid->conn ", connMap)
 		return len(connMap)
@@ -186,8 +193,9 @@ func (ws *WServer) getConnNum(uid string) int {
 
 func (ws *WServer) delUserConn(conn *UserConn) {
 	rwLock.Lock()
-
 	var uidPlatform string
+	wrapSdkLog("before del, wsConnToUser map ", ws.wsConnToUser)
+	wrapSdkLog("before del, wsUserToConn  map ", ws.wsUserToConn)
 	if oldStringMap, ok := ws.wsConnToUser[conn]; ok {
 		uidPlatform = oldStringMap[conn.RemoteAddr().String()]
 		if oldConnMap, ok := ws.wsUserToConn[uidPlatform]; ok {
@@ -213,6 +221,8 @@ func (ws *WServer) delUserConn(conn *UserConn) {
 	if err != nil {
 		wrapSdkLog("close err", "", "uid", uidPlatform, "conn", conn)
 	}
+	wrapSdkLog("after del, wsConnToUser map ", ws.wsConnToUser)
+	wrapSdkLog("after del, wsUserToConn  map ", ws.wsUserToConn)
 
 	rwLock.Unlock()
 }
@@ -243,7 +253,7 @@ func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request) bool {
 	if len(query["token"]) != 0 && len(query["sendID"]) != 0 && len(query["platformID"]) != 0 {
 		SendID := query["sendID"][0] + " " + utils.PlatformIDToName(int32(utils.StringToInt64(query["platformID"][0])))
 		if ws.getConnNum(SendID) >= POINTNUM {
-			wrapSdkLog("Over quantity failed", query, ws.getConnNum(SendID))
+			wrapSdkLog("Over quantity failed", query, ws.getConnNum(SendID), SendID)
 			w.Header().Set("Sec-Websocket-Version", "13")
 			http.Error(w, "Over quantity", status)
 			return false
