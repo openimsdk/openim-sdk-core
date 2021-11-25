@@ -1760,7 +1760,7 @@ func (u *UserRelated) getNormalChatLogSeq(startSeq int32) map[int32]interface{} 
 				sdkLog("Scan ,failed ", err.Error())
 				continue
 			} else {
-				sdkLog("getNormalChatLogSeq", seq)
+				//				sdkLog("getNormalChatLogSeq", seq)
 				errSeq[int32(seq)] = nil
 			}
 		}

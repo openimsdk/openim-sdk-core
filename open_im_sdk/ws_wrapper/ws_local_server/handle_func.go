@@ -24,7 +24,7 @@ func (ws *WServer) DoLogin(m Req, conn *UserConn) {
 	urm, ok := UserRouteMap[m.UId]
 	if !ok {
 		wrapSdkLog("user first login: ", m)
-		refR := GenUserRouterNoLock(m.UId, conn)
+		refR := GenUserRouterNoLock(m.UId)
 		params := []reflect.Value{reflect.ValueOf(m.Data), reflect.ValueOf(m.OperationID)}
 		vf, ok := (*refR.refName)[m.ReqFuncName]
 		if ok {

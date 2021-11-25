@@ -59,8 +59,8 @@ func int32ToString(i int32) string {
 //uid->funcname->func
 
 type WsFuncRouter struct {
-	uId  string
-	conn *UserConn
+	uId string
+	//conn *UserConn
 }
 
 func DelUserRouter(uid string) {
@@ -88,7 +88,7 @@ func DelUserRouter(uid string) {
 	delete(UserRouteMap, uid)
 }
 
-func GenUserRouterNoLock(uid string, conn *UserConn) *RefRouter {
+func GenUserRouterNoLock(uid string) *RefRouter {
 	_, ok := UserRouteMap[uid]
 	if ok {
 		return nil
@@ -96,7 +96,7 @@ func GenUserRouterNoLock(uid string, conn *UserConn) *RefRouter {
 	RouteMap1 := make(map[string]reflect.Value, 0)
 	var wsRouter1 WsFuncRouter
 	wsRouter1.uId = uid
-	wsRouter1.conn = conn
+	//	wsRouter1.conn = conn
 	wsRouter1.AddAdvancedMsgListener()
 	wsRouter1.SetConversationListener()
 	wsRouter1.SetFriendListener()
@@ -120,11 +120,7 @@ func GenUserRouterNoLock(uid string, conn *UserConn) *RefRouter {
 }
 
 func (wsRouter *WsFuncRouter) GlobalSendMessage(data interface{}) {
-	if wsRouter.conn == nil {
-		wrapSdkLog("conn == nil, failed ", wsRouter)
-		return
-	}
-	SendOneConnMessage(data, wsRouter.conn)
+	SendOneUserMessage(data, wsRouter.uId)
 }
 
 //listener

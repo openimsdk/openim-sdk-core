@@ -107,7 +107,7 @@ func (wsRouter *WsFuncRouter) Logout(input string, operationID string) {
 	//userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	//userWorker.Logout(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
 	//todo just send response
-	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", "", "0"})
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", "", operationID})
 }
 
 func (wsRouter *WsFuncRouter) LogoutNoCallback(input string, operationID string) {
