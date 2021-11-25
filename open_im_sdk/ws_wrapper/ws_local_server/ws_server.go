@@ -29,13 +29,17 @@ type UserConn struct {
 	*websocket.Conn
 	w *sync.Mutex
 }
-
+type ChanMsg struct {
+	data []byte
+	uid  string
+}
 type WServer struct {
 	wsAddr       string
 	wsMaxConnNum int
 	wsUpGrader   *websocket.Upgrader
 	wsConnToUser map[*UserConn]map[string]string
 	wsUserToConn map[string]map[string]*UserConn
+	ch           chan ChanMsg
 }
 
 func (ws *WServer) OnInit(wsPort int) {
@@ -44,6 +48,7 @@ func (ws *WServer) OnInit(wsPort int) {
 	ws.wsMaxConnNum = 10000
 	ws.wsConnToUser = make(map[*UserConn]map[string]string)
 	ws.wsUserToConn = make(map[string]map[string]*UserConn)
+	ws.ch = make(chan ChanMsg, 1000)
 	rwLock = new(sync.RWMutex)
 	ws.wsUpGrader = &websocket.Upgrader{
 		HandshakeTimeout: 10 * time.Second,
