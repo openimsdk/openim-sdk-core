@@ -189,9 +189,11 @@ func (ws *WServer) delUserConn(conn *UserConn) {
 }
 
 func (ws *WServer) getUserConn(uid string) (w []*UserConn) {
-	rwLock.RLock()
-	defer rwLock.RUnlock()
-	if connMap, ok := ws.wsUserToConn[uid]; ok {
+	//	rwLock.RLock()
+	//	defer rwLock.RUnlock()
+	t := ws.wsUserToConn
+
+	if connMap, ok := t[uid]; ok {
 		for _, v := range connMap {
 			w = append(w, v)
 		}

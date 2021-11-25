@@ -2,7 +2,6 @@ package ws_local_server
 
 import (
 	"encoding/json"
-	"github.com/gorilla/websocket"
 	"open_im_sdk/open_im_sdk"
 )
 
@@ -72,6 +71,10 @@ func (wsRouter *WsFuncRouter) UnInitSDK() {
 	wrapSdkLog("UnInitSDK uid: ", wsRouter.uId)
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	userWorker.UnInitSDK()
+	open_im_sdk.UserSDKRwLock.Lock()
+	delete(open_im_sdk.UserRouterMap, wsRouter.uId)
+	wrapSdkLog("delete UnInitSDK uid: ", wsRouter.uId)
+	open_im_sdk.UserSDKRwLock.Unlock()
 }
 
 func (wsRouter *WsFuncRouter) checkKeysIn(input, operationID, funcName string, m map[string]interface{}, keys ...string) bool {
@@ -132,55 +135,4 @@ func InitServer(config *open_im_sdk.IMConfig) {
 	ConfigSvr = string(data)
 	UserRouteMap = make(map[string]RefRouter, 0)
 	open_im_sdk.InitOnce(config)
-}
-
-func (wsRouter *WsFuncRouter) GlobalSendMessage(data interface{}) {
-	conns := WS.getUserConn(wsRouter.uId + " " + "Web")
-	if conns == nil {
-		wrapSdkLog("uid no conn ", wsRouter.uId)
-	}
-	bMsg, _ := json.Marshal(data)
-	for _, conn := range conns {
-		if conn != nil {
-			err := WS.writeMsg(conn, websocket.TextMessage, bMsg)
-			wrapSdkLog("sendmsg:", string(bMsg))
-			if err != nil {
-				wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", data)
-			}
-		} else {
-			wrapSdkLog("Conn is nil", "data", data)
-		}
-	}
-}
-
-func SendOneUserMessage(data interface{}, uid string) {
-	conns := WS.getUserConn(uid + " " + "Web")
-	if conns == nil {
-		wrapSdkLog("uid no conn ", uid)
-	}
-	bMsg, _ := json.Marshal(data)
-	for _, conn := range conns {
-
-		if conn != nil {
-			err := WS.writeMsg(conn, websocket.TextMessage, bMsg)
-			wrapSdkLog("sendmsg:", string(bMsg), uid)
-			if err != nil {
-				wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", data)
-			}
-		} else {
-			wrapSdkLog("Conn is nil", "data", data, uid)
-		}
-	}
-}
-
-func SendOneConnMessage(data interface{}, conn *UserConn) {
-	bMsg, _ := json.Marshal(data)
-	err := WS.writeMsg(conn, websocket.TextMessage, bMsg)
-	wrapSdkLog("sendmsg:", string(bMsg))
-	if err != nil {
-		wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", data)
-	} else {
-		wrapSdkLog("Conn is nil", "data", data)
-	}
-
 }

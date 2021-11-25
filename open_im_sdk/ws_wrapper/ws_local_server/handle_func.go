@@ -61,13 +61,17 @@ func (ws *WServer) msgParse(conn *UserConn, jsonMsg []byte) {
 	wrapSdkLog("Basic Info", "reqFuncName ", m.ReqFuncName, "data ", m.Data, "recv jsonMsg: ", string(jsonMsg))
 
 	if m.ReqFuncName == "Login" {
+		//	rwLock.Lock()
 		ws.DoLogin(m, conn)
 		wrapSdkLog("login ", m)
+		//	rwLock.Unlock()
 		return
 	}
 
 	UserRouteRwLock.RLock()
 	defer UserRouteRwLock.RUnlock()
+	//	rwLock.RLock()
+	//	defer rwLock.RUnlock()
 	urm, ok := UserRouteMap[m.UId]
 	if !ok {
 		wrapSdkLog("user not login failed, must login first: ", m.UId)
