@@ -26,10 +26,7 @@ func (u *UserRelated) initSDK(config string, cb IMSDKListener) bool {
 		return false
 	}
 
-	u.stateMutex.Lock()
-	u.LoginState = SdkInit
 	sdkLog("initSDK LoginState", u.LoginState)
-	u.stateMutex.Unlock()
 
 	u.cb = cb
 	u.initListenerCh()
@@ -57,9 +54,8 @@ func (u *UserRelated) logout(cb Base) {
 		u.stateMutex.Lock()
 		defer u.stateMutex.Unlock()
 
-		u.stateMutex.Lock()
 		u.LoginState = LogoutCmd
-		u.stateMutex.Unlock()
+
 		sdkLog("set LoginState ", u.LoginState)
 
 		err := u.closeConn()
