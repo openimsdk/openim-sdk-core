@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 )
 
@@ -45,9 +44,9 @@ func (u *UserRelated) reOpenDB(uid string) error {
 }
 
 func (u *UserRelated) initDBX(uid string) error {
-	if u.mRWMutex == nil {
-		u.mRWMutex = new(sync.RWMutex)
-	}
+	//if u.mRWMutex == nil {
+	//	u.mRWMutex = new(sync.RWMutex)
+	//}
 	if uid == "" {
 		return errors.New("no uid")
 	}
@@ -380,6 +379,43 @@ func (u *UserRelated) getLocalMaxConSeqFromDB() (int64, error) {
 
 */
 
+func (u *UserRelated) getNeedSyncLocalMinSeq() int32 {
+	sdkLog("getLocalMaxConSeqFromDB start")
+	u.mRWMutex.RLock()
+	defer u.mRWMutex.RUnlock()
+	rows, err := u.Query("SELECT seq FROM my_local_data where  user_id=?", u.LoginUid)
+	if err != nil {
+		sdkLog("Query failed ", err.Error())
+		return 0
+	}
+	var seq int32
+	for rows.Next() {
+		err = rows.Scan(&seq)
+		if err != nil {
+			sdkLog("Scan, failed:", err.Error())
+			continue
+		}
+	}
+	sdkLog("getLocalMaxConSeqFromDB, seq: ", seq)
+	return seq
+}
+
+func (u *UserRelated) setNeedSyncLocalMinSeq(seq int32) {
+	sdkLog("setLocalMaxConSeq start ", seq)
+	u.mRWMutex.Lock()
+	defer u.mRWMutex.Unlock()
+
+	stmt, err := u.Prepare("replace into my_local_data(user_id, seq) values (?,?)")
+	if err != nil {
+		sdkLog("set failed", err.Error())
+		return
+	}
+	_, err = stmt.Exec(u.LoginUid, seq)
+	if err != nil {
+		sdkLog("stmt failed,", err.Error())
+	}
+}
+
 func (u *UserRelated) replaceIntoUser(info *userInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -400,7 +436,12 @@ func (u *UserRelated) replaceIntoUser(info *userInfo) error {
 func (u *UserRelated) getAllConversationListModel() (err error, list []*ConversationStruct) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	rows, err := u.Query("SELECT * FROM conversation where latest_msg_send_time!=0 order by  case when is_pinned=1 then 0 else 1 end,latest_msg_send_time DESC")
+
+	rows, err := u.Query("SELECT * FROM conversation where latest_msg_send_time!=0 order by  case when is_pinned=1 then 0 else 1 end,max(latest_msg_send_time,draft_timestamp) DESC")
+	if err != nil {
+		sdkLog("Query failed ", err.Error())
+		return err, nil
+	}
 	for rows.Next() {
 		c := new(ConversationStruct)
 		err = rows.Scan(&c.ConversationID, &c.ConversationType, &c.UserID, &c.GroupID, &c.ShowName,
@@ -412,7 +453,14 @@ func (u *UserRelated) getAllConversationListModel() (err error, list []*Conversa
 			list = append(list, c)
 		}
 	}
+
 	return nil, list
+}
+func convert(nanoSecond int64) string {
+	if nanoSecond == 0 {
+		return ""
+	}
+	return time.Unix(0, nanoSecond).Format("2006-01-02_15-04-05")
 }
 
 func (u *UserRelated) insertConversationModel(c *ConversationStruct) (err error) {
@@ -450,7 +498,7 @@ func (u *UserRelated) getConversationLatestMsgModel(conversationID string) (err 
 	return nil, s
 }
 
-func (u *UserRelated) setConversationLatestMsgModel(c *ConversationStruct, conversationID string) (err error) {
+func (u *UserRelated) setConversationLatestMsgModel(latestMsgSendTime int64, latestMsg, conversationID string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	stmt, err := u.Prepare("update conversation set latest_msg=?,latest_msg_send_time=? where conversation_id=?")
@@ -459,7 +507,7 @@ func (u *UserRelated) setConversationLatestMsgModel(c *ConversationStruct, conve
 		return err
 	}
 
-	_, err = stmt.Exec(c.LatestMsg, c.LatestMsgSendTime, conversationID)
+	_, err = stmt.Exec(latestMsg, latestMsgSendTime, conversationID)
 	if err != nil {
 		sdkLog(err.Error())
 		return err
@@ -578,16 +626,33 @@ func (u *UserRelated) ResetConversation(conversationID string) (err error) {
 	return nil
 
 }
+func (u *UserRelated) clearConversation(conversationID string) (err error) {
+	u.mRWMutex.Lock()
+	defer u.mRWMutex.Unlock()
+	stmt, err := u.Prepare("update  conversation set unread_count=?,latest_msg=?," +
+		"draft_text=?,draft_timestamp=? where conversation_id=?")
+	if err != nil {
+		sdkLog("ResetConversation", err.Error())
+		return err
+	}
+	_, err = stmt.Exec(0, "", "", 0, conversationID)
+	if err != nil {
+		sdkLog("ResetConversation err:", err.Error())
+		return err
+	}
+	return nil
+
+}
 func (u *UserRelated) setConversationDraftModel(conversationID, draftText string, DraftTimestamp int64) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.Prepare("update conversation set draft_text=?,latest_msg_send_time=?,draft_timestamp=?where conversation_id=?")
+	stmt, err := u.Prepare("update conversation set draft_text=?,draft_timestamp=?where conversation_id=?")
 	if err != nil {
 		sdkLog("setConversationDraftModel err:", err.Error())
 		return err
 	}
 
-	_, err = stmt.Exec(draftText, DraftTimestamp, DraftTimestamp, conversationID)
+	_, err = stmt.Exec(draftText, DraftTimestamp, conversationID)
 	if err != nil {
 		sdkLog("setConversationDraftModel err:", err.Error())
 		return err
@@ -1398,11 +1463,11 @@ func (u *UserRelated) updateMessageSeq(message *MsgStruct, status int) (err erro
 	}
 	return nil
 }
-func (u *UserRelated) judgeMessageIfExists(message *MsgStruct) bool {
+func (u *UserRelated) judgeMessageIfExists(msgID string) bool {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	var count int
-	rows, err := u.Query("select count(*) from chat_log where  msg_id=?", message.ClientMsgID)
+	rows, err := u.Query("select count(*) from chat_log where  msg_id=?", msgID)
 	if err != nil {
 		sdkLog("Query failed, ", err.Error())
 		return false
@@ -1461,7 +1526,11 @@ func (u *UserRelated) getOneMessage(msgID string) (m *MsgStruct, err error) {
 			continue
 		}
 	}
-	return temp, nil
+	if temp.ClientMsgID != "" {
+		return temp, nil
+	} else {
+		return nil, nil
+	}
 }
 
 func (u *UserRelated) setSingleMessageHasRead(sendID string) (err error) {
@@ -1473,6 +1542,30 @@ func (u *UserRelated) setSingleMessageHasRead(sendID string) (err error) {
 	}
 
 	_, err = stmt.Exec(HasRead, sendID, NotRead, SingleChatType)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+func (u *UserRelated) setSingleMessageHasReadByMsgIDList(sendID string, msgIDList []string) (err error) {
+	u.mRWMutex.Lock()
+	defer u.mRWMutex.Unlock()
+	stmt, err := u.Prepare("update chat_log set is_read=? where send_id=?And is_read=?AND session_type=?AND msgID in(?)")
+	if err != nil {
+		return err
+	}
+	msgIDString := func(msgIDList []string) (s string) {
+		for i := 0; i < len(msgIDList); i++ {
+			if i == len(msgIDList)-1 {
+				s = s + "'" + msgIDList[i] + "'"
+			} else {
+				s = s + "'" + msgIDList[i] + "'" + ","
+			}
+		}
+		return s
+	}(msgIDList)
+	_, err = stmt.Exec(HasRead, sendID, NotRead, SingleChatType, msgIDString)
 	if err != nil {
 		return err
 	}
@@ -1593,11 +1686,11 @@ func (u *UserRelated) deleteMessageByMsgID(msgID string) (err error) {
 func (u *UserRelated) updateMessageTimeAndMsgIDStatus(ClientMsgID string, sendTime int64, status int) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.Prepare("update chat_log set send_time=?, status=? where msg_id=?")
+	stmt, err := u.Prepare("update chat_log set send_time=?, status=? where msg_id=? and seq=?")
 	if err != nil {
 		return err
 	}
-	_, err = stmt.Exec(sendTime, status, ClientMsgID)
+	_, err = stmt.Exec(sendTime, status, ClientMsgID, 0)
 	if err != nil {
 		return err
 	}
@@ -1642,6 +1735,7 @@ func (u *UserRelated) getErrorChatLogSeq(startSeq int32) map[int32]interface{} {
 				sdkLog("Scan ,failed ", err.Error())
 				continue
 			} else {
+				sdkLog("getErrorChatLogSeq", seq)
 				errSeq[int32(seq)] = nil
 			}
 		}
@@ -1666,6 +1760,7 @@ func (u *UserRelated) getNormalChatLogSeq(startSeq int32) map[int32]interface{} 
 				sdkLog("Scan ,failed ", err.Error())
 				continue
 			} else {
+				//				sdkLog("getNormalChatLogSeq", seq)
 				errSeq[int32(seq)] = nil
 			}
 		}

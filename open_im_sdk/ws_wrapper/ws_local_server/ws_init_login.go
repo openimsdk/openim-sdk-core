@@ -2,7 +2,6 @@ package ws_local_server
 
 import (
 	"encoding/json"
-	"github.com/gorilla/websocket"
 	"open_im_sdk/open_im_sdk"
 )
 
@@ -72,6 +71,10 @@ func (wsRouter *WsFuncRouter) UnInitSDK() {
 	wrapSdkLog("UnInitSDK uid: ", wsRouter.uId)
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	userWorker.UnInitSDK()
+	open_im_sdk.UserSDKRwLock.Lock()
+	delete(open_im_sdk.UserRouterMap, wsRouter.uId)
+	wrapSdkLog("delete UnInitSDK uid: ", wsRouter.uId)
+	open_im_sdk.UserSDKRwLock.Unlock()
 }
 
 func (wsRouter *WsFuncRouter) checkKeysIn(input, operationID, funcName string, m map[string]interface{}, keys ...string) bool {
@@ -79,7 +82,7 @@ func (wsRouter *WsFuncRouter) checkKeysIn(input, operationID, funcName string, m
 		_, ok := m[k]
 		if !ok {
 			wrapSdkLog("key not in", keys, input, operationID, funcName)
-			wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(funcName), 1001, "key not in", "", operationID})
+			wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(funcName), StatusBadParameter, "key not in", "", operationID})
 			return false
 		}
 	}
@@ -90,7 +93,7 @@ func (wsRouter *WsFuncRouter) Login(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
 		wrapSdkLog("unmarshal failed", err.Error())
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 1001, "unmarshal failed", "", operationID})
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
@@ -101,14 +104,26 @@ func (wsRouter *WsFuncRouter) Login(input string, operationID string) {
 }
 
 func (wsRouter *WsFuncRouter) Logout(input string, operationID string) {
-	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.Logout(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	//userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	//userWorker.Logout(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	//todo just send response
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", "", operationID})
 }
 
-//1
+func (wsRouter *WsFuncRouter) LogoutNoCallback(input string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Logout(nil)
+}
+
 func (wsRouter *WsFuncRouter) GetLoginStatus(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", int32ToString(int32(userWorker.GetLoginStatus())), operationID})
+}
+
+//1
+func (wsRouter *WsFuncRouter) getMyLoginStatus() int {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	return userWorker.GetLoginStatus()
 }
 
 //1
@@ -122,40 +137,4 @@ func InitServer(config *open_im_sdk.IMConfig) {
 	ConfigSvr = string(data)
 	UserRouteMap = make(map[string]RefRouter, 0)
 	open_im_sdk.InitOnce(config)
-}
-
-func (wsRouter *WsFuncRouter) GlobalSendMessage(data interface{}) {
-	conn := WS.getUserConn(wsRouter.uId + " " + "Web")
-	if conn == nil {
-		wrapSdkLog("uid no conn ", wsRouter.uId)
-	}
-	bMsg, _ := json.Marshal(data)
-	if conn != nil {
-		err := WS.writeMsg(conn, websocket.TextMessage, bMsg)
-		wrapSdkLog("sendmsg:", string(bMsg))
-		if err != nil {
-			wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", data)
-		}
-	} else {
-		wrapSdkLog("Conn is nil", "data", data)
-	}
-
-}
-
-func SendOneUserMessage(data interface{}, uid string) {
-	conn := WS.getUserConn(uid + " " + "Web")
-	if conn == nil {
-		wrapSdkLog("uid no conn ", uid)
-	}
-	bMsg, _ := json.Marshal(data)
-	if conn != nil {
-		err := WS.writeMsg(conn, websocket.TextMessage, bMsg)
-		wrapSdkLog("sendmsg:", string(bMsg), uid)
-		if err != nil {
-			wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", data)
-		}
-	} else {
-		wrapSdkLog("Conn is nil", "data", data, uid)
-	}
-
 }

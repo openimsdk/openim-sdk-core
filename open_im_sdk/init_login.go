@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	"net/http"
 
 	"github.com/gorilla/websocket"
 	_ "github.com/mattn/go-sqlite3"
@@ -24,6 +25,12 @@ func (u *UserRelated) initSDK(config string, cb IMSDKListener) bool {
 		sdkLog("callback == nil")
 		return false
 	}
+
+	u.stateMutex.Lock()
+	u.LoginState = SdkInit
+	sdkLog("initSDK LoginState", u.LoginState)
+	u.stateMutex.Unlock()
+
 	u.cb = cb
 	u.initListenerCh()
 	sdkLog("init success, ", config)
@@ -38,7 +45,7 @@ func (u *UserRelated) unInitSDK() {
 }
 
 func (im *IMManager) getVersion() string {
-	return "v-1.0"
+	return "v1.0.5"
 }
 
 func (im *IMManager) getServerTime() int64 {
@@ -46,31 +53,52 @@ func (im *IMManager) getServerTime() int64 {
 }
 
 func (u *UserRelated) logout(cb Base) {
-	u.stateMutex.Lock()
-	defer u.stateMutex.Unlock()
-	u.LoginState = LogoutCmd
+	go func() {
+		u.stateMutex.Lock()
+		defer u.stateMutex.Unlock()
 
-	err := u.closeConn()
-	if err != nil {
-		cb.OnError(ErrCodeInitLogin, err.Error())
-		return
-	}
-	sdkLog("closeConn ok")
+		u.stateMutex.Lock()
+		u.LoginState = LogoutCmd
+		u.stateMutex.Unlock()
+		sdkLog("set LoginState ", u.LoginState)
 
-	err = u.closeDB()
-	if err != nil {
-		cb.OnError(ErrCodeInitLogin, err.Error())
-		return
-	}
-	sdkLog("close db ok")
+		err := u.closeConn()
+		if err != nil {
+			if cb != nil {
+				cb.OnError(ErrCodeInitLogin, err.Error())
+			}
+			return
+		}
+		sdkLog("closeConn ok")
 
-	u.LoginUid = ""
-	u.token = ""
-	cb.OnSuccess("")
+		err = u.closeDB()
+		if err != nil {
+			if cb != nil {
+				cb.OnError(ErrCodeInitLogin, err.Error())
+			}
+			return
+		}
+		sdkLog("close db ok")
+
+		u.LoginUid = ""
+		u.token = ""
+		time.Sleep(time.Duration(6) * time.Second)
+		if cb != nil {
+			cb.OnSuccess("")
+		}
+		sdkLog("logout return")
+	}()
 }
 
 func (u *UserRelated) login(uid, tk string, cb Base) {
+	if cb == nil || u.listener == nil || u.friendListener == nil ||
+		u.ConversationListenerx == nil || len(u.MsgListenerList) == 0 {
+		sdkLog("listener is nil, failed ", uid, tk)
+		return
+	}
 	sdkLog("login start, ", uid, tk)
+
+	u.LoginState = Logining
 	u.token = tk
 	u.LoginUid = uid
 
@@ -80,20 +108,31 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 		u.LoginUid = ""
 		cb.OnError(ErrCodeInitLogin, err.Error())
 		sdkLog("initDBX failed, ", err.Error())
+		u.LoginState = LoginFailed
 		return
 	}
 	sdkLog("initDBX ok ", uid)
 
-	u.conn, err = u.reConn(nil)
+	c, httpResp, err := u.firstConn(nil)
+	u.conn = c
 	if err != nil {
 		u.token = ""
 		u.LoginUid = ""
 		cb.OnError(ErrCodeInitLogin, err.Error())
-		sdkLog("reConn failed ", err.Error())
+		sdkLog("firstConn failed ", err.Error())
+		u.LoginState = LoginFailed
+		if httpResp != nil {
+			if httpResp.StatusCode == TokenFailedKickedOffline || httpResp.StatusCode == TokenFailedExpired || httpResp.StatusCode == TokenFailedInvalid {
+				u.LoginState = httpResp.StatusCode
+			}
+		}
+
+		u.closeDB()
 		return
 	}
-	sdkLog("ws conn ok ")
-
+	sdkLog("ws conn ok ", uid)
+	u.LoginState = LoginSuccess
+	sdkLog("ws conn ok ", uid, u.LoginState)
 	go u.run()
 
 	sdkLog("ws, forcedSynchronization heartbeat coroutine timedCloseDB run ...")
@@ -105,13 +144,10 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 }
 
 func (u *UserRelated) timedCloseDB() {
-	timeTicker := time.NewTicker(time.Second * 300)
+	timeTicker := time.NewTicker(time.Second * 5)
+	num := 0
 	for {
 		<-timeTicker.C
-		sdkLog("closeDBSetNil begin")
-		u.closeDBSetNil()
-		sdkLog("closeDBSetNil end")
-
 		u.stateMutex.Lock()
 		if u.LoginState == LogoutCmd {
 			sdkLog("logout timedCloseDB return", LogoutCmd)
@@ -119,6 +155,12 @@ func (u *UserRelated) timedCloseDB() {
 			return
 		}
 		u.stateMutex.Unlock()
+		num++
+		if num%60 == 0 {
+			sdkLog("closeDBSetNil begin")
+			u.closeDBSetNil()
+			sdkLog("closeDBSetNil end")
+		}
 	}
 }
 
@@ -167,11 +209,11 @@ func (u *UserRelated) doWsMsg(message []byte) {
 	LogBegin()
 	LogBegin("decodeBinaryWs")
 	wsResp, err := u.decodeBinaryWs(message)
-	LogEnd("decodeBinaryWs ", wsResp.OperationID, wsResp.ReqIdentifier)
 	if err != nil {
-		LogFReturn(err.Error())
+		LogFReturn("decodeBinaryWs err", err.Error())
 		return
 	}
+	LogEnd("decodeBinaryWs ", wsResp.OperationID, wsResp.ReqIdentifier)
 
 	switch wsResp.ReqIdentifier {
 	case WSGetNewestSeq:
@@ -182,8 +224,10 @@ func (u *UserRelated) doWsMsg(message []byte) {
 		u.doWSPushMsg(*wsResp)
 	case WSSendMsg:
 		u.doWSSendMsg(*wsResp)
+	case WSKickOnlineMsg:
+		u.kickOnline(*wsResp)
 	default:
-		LogFReturn("type failed, ", wsResp.ReqIdentifier, wsResp.OperationID)
+		LogFReturn("type failed, ", wsResp.ReqIdentifier, wsResp.OperationID, wsResp.ErrCode, wsResp.ErrMsg)
 		return
 	}
 	LogSReturn()
@@ -251,15 +295,17 @@ func (u *UserRelated) doMsg(wsResp GeneralWsResp) {
 		return
 	}
 
+	sdkLog("openim ws  recv push msg do push seq in : ", msg.Seq)
+	u.seqMsgMutex.Lock()
 	b1 := u.isExistsInErrChatLogBySeq(msg.Seq)
-	b2 := u.judgeMessageIfExistsBySeq(msg.Seq)
-	b3 := u.isSeqInCache(int32(msg.Seq))
-	if b1 || b2 || b3 {
-		sdkLog("is seq in : ", b1, b2, b3)
+	b2 := u.judgeMessageIfExists(msg.ClientMsgID)
+	_, ok := u.seqMsg[int32(msg.Seq)]
+	if b1 || b2 || ok {
+		sdkLog("seq in : ", msg.Seq, b1, b2, ok)
+		u.seqMsgMutex.Unlock()
 		return
 	}
 
-	u.seqMsgMutex.Lock()
 	u.seqMsg[int32(msg.Seq)] = msg
 	u.seqMsgMutex.Unlock()
 
@@ -274,17 +320,6 @@ func (u *UserRelated) GetMinSeqSvr() int64 {
 	return min
 }
 
-func (u *UserRelated) isSeqInCache(seq int32) bool {
-	u.seqMsgMutex.RLock()
-	defer u.seqMsgMutex.RUnlock()
-	_, ok := u.seqMsg[seq]
-	if ok {
-		return true
-	} else {
-		return false
-	}
-
-}
 func (u *UserRelated) SetMinSeqSvr(minSeqSvr int64) {
 
 	u.minSeqSvrRWMutex.Lock()
@@ -295,44 +330,6 @@ func (u *UserRelated) SetMinSeqSvr(minSeqSvr int64) {
 
 }
 
-/*
-func (u *UserRelated) syncMsg2ServerMaxSeq(serverMaxSeq int64) error {
-	LogBegin(serverMaxSeq)
-	LogBegin("getConsequentLocalMaxSeq")
-	maxSeq, err := u.getConsequentLocalMaxSeq() //local
-	LogEnd("getConsequentLocalMaxSeq", maxSeq, err)
-	if err != nil {
-		LogFReturn(err.Error())
-		return err
-	}
-	minSeqSvr := u.GetMinSeqSvr()
-	//	LogBegin("delSeqMsg setLocalMaxConSeq SetMinSeqSvr", atomic.LoadInt64(&u.minSeqSvr), maxSeq)
-	LogBegin("delSeqMsg setLocalMaxConSeq SetMinSeqSvr", minSeqSvr, maxSeq)
-	//u.delSeqMsg(atomic.LoadInt64(&u.minSeqSvr), maxSeq)
-	u.delSeqMsg(minSeqSvr, maxSeq)
-	u.setLocalMaxConSeq(int(maxSeq))
-	u.SetMinSeqSvr(int64(maxSeq))
-	LogEnd("elSeqMsg setLocalMaxConSeq SetMinSeqSvr")
-
-	if maxSeq >= serverMaxSeq {
-		sdkLog("don't sync,  LocalmaxSeq >= NewestSeq ", maxSeq, serverMaxSeq)
-		LogSReturn(nil)
-		return nil
-	}
-
-	LogBegin("pullBySplit", maxSeq+1, serverMaxSeq)
-	err = u.pullBySplit(maxSeq+1, serverMaxSeq)
-	LogEnd("pullBySplit", maxSeq+1, serverMaxSeq)
-	if err != nil {
-		LogFReturn(err.Error())
-		return err
-	} else {
-		LogSReturn(nil)
-		return nil
-	}
-}
-*/
-
 func (u *UserRelated) syncSeq2Msg() error {
 	svrMaxSeq, svrMinSeq, err := u.getUserNewestSeq()
 	if err != nil {
@@ -341,6 +338,7 @@ func (u *UserRelated) syncSeq2Msg() error {
 	}
 
 	needSyncSeq := u.getNeedSyncSeq(int32(svrMinSeq), int32(svrMaxSeq))
+
 	err = u.syncMsgFromServer(needSyncSeq)
 	return err
 }
@@ -379,30 +377,69 @@ func (u *UserRelated) syncLoginUserInfo() error {
 	return nil
 }
 
-func (u *UserRelated) reConn(conn *websocket.Conn) (*websocket.Conn, error) {
+func (u *UserRelated) firstConn(conn *websocket.Conn) (*websocket.Conn, *http.Response, error) {
 	LogBegin(conn)
 	if conn != nil {
 		conn.Close()
 		conn = nil
 	}
-	u.stateMutex.Lock()
-	u.LoginState = Logining
-	u.stateMutex.Unlock()
+
 	u.IMManager.cb.OnConnecting()
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", SvrConf.IpWsAddr, u.LoginUid, u.token, SvrConf.Platform)
-	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
+	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
-		u.cb.OnConnectFailed(ErrCodeInitLogin, err.Error())
+		if httpResp != nil {
+			u.cb.OnConnectFailed(httpResp.StatusCode, err.Error())
+		} else {
+			u.cb.OnConnectFailed(1001, err.Error())
+		}
+
 		LogFReturn(nil, err.Error(), url)
-		return nil, err
+		return nil, httpResp, err
 	}
-	sdkLog("ws connect ok, ", url)
 	u.cb.OnConnectSuccess()
 	u.stateMutex.Lock()
 	u.LoginState = LoginSuccess
 	u.stateMutex.Unlock()
+	sdkLog("ws connect ok, ", u.LoginState)
 	LogSReturn(conn, nil)
-	return conn, nil
+	return conn, httpResp, nil
+}
+
+func (u *UserRelated) reConn(conn *websocket.Conn) (*websocket.Conn, *http.Response, error) {
+	LogBegin(conn)
+	if conn != nil {
+		conn.Close()
+		conn = nil
+	}
+
+	u.stateMutex.Lock()
+	defer u.stateMutex.Unlock()
+	if u.LoginState == TokenFailedKickedOffline || u.LoginState == TokenFailedExpired || u.LoginState == TokenFailedInvalid {
+		sdkLog("don't reconn, must login, state ", u.LoginState)
+		return nil, nil, errors.New("don't reconn")
+	}
+
+	u.IMManager.cb.OnConnecting()
+	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", SvrConf.IpWsAddr, u.LoginUid, u.token, SvrConf.Platform)
+	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
+	if err != nil {
+		if httpResp != nil {
+			u.cb.OnConnectFailed(httpResp.StatusCode, err.Error())
+		} else {
+			u.cb.OnConnectFailed(1001, err.Error())
+		}
+
+		LogFReturn(nil, err.Error(), url)
+		return nil, httpResp, err
+	}
+	u.cb.OnConnectSuccess()
+	u.stateMutex.Lock()
+	u.LoginState = LoginSuccess
+	u.stateMutex.Unlock()
+	sdkLog("ws connect ok, ", u.LoginState)
+	LogSReturn(conn, nil)
+	return conn, httpResp, nil
 }
 
 func (u *UserRelated) getNeedSyncSeq(svrMinSeq, svrMaxSeq int32) []int32 {
@@ -431,7 +468,9 @@ func (u *UserRelated) getNeedSyncSeq(svrMinSeq, svrMaxSeq int32) []int32 {
 			continue
 		} else {
 			isBreakFlag = true
-			seqList = append(seqList, seq)
+			if seq != 0 {
+				seqList = append(seqList, seq)
+			}
 		}
 	}
 
@@ -445,6 +484,7 @@ func (u *UserRelated) getNeedSyncSeq(svrMinSeq, svrMaxSeq int32) []int32 {
 			firstSeq = startSeq
 		}
 	}
+	sdkLog("seq start: ", maxConsequentSeq, firstSeq, localMinSeq)
 	if firstSeq > localMinSeq {
 		u.setNeedSyncLocalMinSeq(firstSeq)
 	}
@@ -452,16 +492,10 @@ func (u *UserRelated) getNeedSyncSeq(svrMinSeq, svrMaxSeq int32) []int32 {
 	return seqList
 }
 
-func (u *UserRelated) getNeedSyncLocalMinSeq() int32 {
-	return 0
-}
-
-func (u *UserRelated) setNeedSyncLocalMinSeq(seq int32) {
-}
-
 func (u *UserRelated) heartbeat() {
 	for {
 		u.stateMutex.Lock()
+		sdkLog("heart check state ", u.LoginState)
 		if u.LoginState == LogoutCmd {
 			sdkLog("logout, ws close, heartbeat return ", LogoutCmd)
 			u.stateMutex.Unlock()
@@ -521,6 +555,7 @@ func (u *UserRelated) heartbeat() {
 						LogEnd("closeConn DelCh continue")
 					} else {
 						needSyncSeq := u.getNeedSyncSeq(int32(wsSeqResp.MinSeq), int32(wsSeqResp.MaxSeq))
+						sdkLog("needSyncSeq ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, needSyncSeq)
 						u.syncMsgFromServer(needSyncSeq)
 					}
 				}
@@ -577,7 +612,7 @@ func (u *UserRelated) run() {
 		LogStart()
 		if u.conn == nil {
 			LogBegin("reConn", nil)
-			re, _ := u.reConn(nil)
+			re, _, _ := u.reConn(nil)
 			LogEnd("reConn", re)
 			u.conn = re
 		}
@@ -597,11 +632,11 @@ func (u *UserRelated) run() {
 				time.Sleep(time.Duration(5) * time.Second)
 				sdkLog("ws  ReadMessage failed, sleep 5s, reconn, ", err)
 				LogBegin("reConn", u.conn)
-				u.conn, err = u.reConn(u.conn)
+				u.conn, _, err = u.reConn(u.conn)
 				LogEnd("reConn", u.conn)
 			} else {
 				if msgType == websocket.CloseMessage {
-					u.conn, _ = u.reConn(u.conn)
+					u.conn, _, _ = u.reConn(u.conn)
 				} else if msgType == websocket.TextMessage {
 					sdkLog("type failed, recv websocket.TextMessage ", string(message))
 				} else if msgType == websocket.BinaryMessage {
@@ -611,6 +646,13 @@ func (u *UserRelated) run() {
 				}
 			}
 		} else {
+			u.stateMutex.Lock()
+			if u.LoginState == LogoutCmd {
+				sdkLog("logout, ws close, return ", LogoutCmd)
+				u.stateMutex.Unlock()
+				return
+			}
+			u.stateMutex.Unlock()
 			sdkLog("ws failed, sleep 5s, reconn... ")
 			time.Sleep(time.Duration(5) * time.Second)
 		}
@@ -699,10 +741,17 @@ func (u *UserRelated) syncMsgFromServerSplit(needSyncSeqList []int64) (err error
 						ClientMsgID:      pullMsg.Data.Single[i].List[j].ClientMsgID,
 						SenderPlatformID: pullMsg.Data.Single[i].List[j].SenderPlatformID,
 					}
-					u.seqMsg[int32(pullMsg.Data.Single[i].List[j].Seq)] = singleMsg
-					isInmap = true
-					sdkLog("into map, seq: ", pullMsg.Data.Single[i].List[j].Seq, pullMsg.Data.Single[i].List[j].ClientMsgID, pullMsg.Data.Single[i].List[j].ServerMsgID)
 
+					b1 := u.isExistsInErrChatLogBySeq(pullMsg.Data.Single[i].List[j].Seq)
+					b2 := u.judgeMessageIfExistsBySeq(pullMsg.Data.Single[i].List[j].Seq)
+					_, ok := u.seqMsg[int32(pullMsg.Data.Single[i].List[j].Seq)]
+					if b1 || b2 || ok {
+						sdkLog("seq in : ", pullMsg.Data.Single[i].List[j].Seq, b1, b2, ok)
+					} else {
+						isInmap = true
+						u.seqMsg[int32(pullMsg.Data.Single[i].List[j].Seq)] = singleMsg
+						sdkLog("into map, seq: ", pullMsg.Data.Single[i].List[j].Seq, pullMsg.Data.Single[i].List[j].ClientMsgID, pullMsg.Data.Single[i].List[j].ServerMsgID, pullMsg.Data.Single[i].List[j])
+					}
 				}
 			}
 
@@ -723,11 +772,19 @@ func (u *UserRelated) syncMsgFromServerSplit(needSyncSeqList []int64) (err error
 						ClientMsgID:      pullMsg.Data.Group[i].List[j].ClientMsgID,
 						SenderPlatformID: pullMsg.Data.Group[i].List[j].SenderPlatformID,
 					}
-					u.seqMsg[int32(pullMsg.Data.Group[i].List[j].Seq)] = groupMsg
-					isInmap = true
-					sdkLog("into map, seq: ", pullMsg.Data.Group[i].List[j].Seq, pullMsg.Data.Group[i].List[j].ClientMsgID, pullMsg.Data.Group[i].List[j].ServerMsgID)
-					sdkLog("pull all: |", pullMsg.Data.Group[i].List[j].Seq, pullMsg.Data.Group[i].List[j])
 
+					b1 := u.isExistsInErrChatLogBySeq(pullMsg.Data.Group[i].List[j].Seq)
+					b2 := u.judgeMessageIfExistsBySeq(pullMsg.Data.Group[i].List[j].Seq)
+					_, ok := u.seqMsg[int32(pullMsg.Data.Group[i].List[j].Seq)]
+					if b1 || b2 || ok {
+						sdkLog("seq in : ", pullMsg.Data.Group[i].List[j].Seq, b1, b2, ok)
+					} else {
+						isInmap = true
+						u.seqMsg[int32(pullMsg.Data.Group[i].List[j].Seq)] = groupMsg
+						sdkLog("into map, seq: ", pullMsg.Data.Group[i].List[j].Seq, pullMsg.Data.Group[i].List[j].ClientMsgID, pullMsg.Data.Group[i].List[j].ServerMsgID)
+						sdkLog("pull all: |", pullMsg.Data.Group[i].List[j].Seq, pullMsg.Data.Group[i].List[j])
+
+					}
 				}
 			}
 			u.seqMsgMutex.Unlock()
@@ -753,6 +810,7 @@ func (u *UserRelated) syncMsgFromServer(needSyncSeqList []int32) (err error) {
 		sdkLog("notInCache is null, don't sync from svr")
 		return nil
 	}
+	sdkLog("notInCache ", notInCache)
 	var SPLIT int = 100
 	for i := 0; i < len(notInCache)/SPLIT; i++ {
 		//0-99 100-199
@@ -993,6 +1051,13 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 }
 
 */
+func CheckToken(uId, token string) int {
+	_, err := post2Api(newestSeqRouter, paramsNewestSeqReq{ReqIdentifier: 1001, OperationID: operationIDGenerator(), SendID: uId, MsgIncr: 1}, token)
+	if err != nil {
+		return -1
+	}
+	return 0
+}
 
 func (u *UserRelated) getUserNewestSeq() (int64, int64, error) {
 	LogBegin()
@@ -1114,9 +1179,9 @@ func (u *UserRelated) doFriendMsg(msg MsgData) {
 		case SetSelfInfoTip:
 			sdkLog("setSelfInfo ", msg)
 			u.setSelfInfo(&msg)
-		case KickOnlineTip:
-			sdkLog("kickOnline ", msg)
-			u.kickOnline(&msg)
+			//	case KickOnlineTip:
+			//		sdkLog("kickOnline ", msg)
+			//		u.kickOnline(&msg)
 		default:
 			sdkLog("type failed, ", msg)
 		}
@@ -1212,8 +1277,10 @@ func (u *UserRelated) addFriendNew(msg *MsgData) {
 	u.friendListener.OnFriendApplicationListAdded(string(jsonInfo))
 }
 
-func (im *IMManager) kickOnline(msg *MsgData) {
-	im.cb.OnKickedOffline()
+func (u *UserRelated) kickOnline(msg GeneralWsResp) {
+	sdkLog("kickOnline ", msg.ReqIdentifier, msg.ErrCode, msg.ErrMsg)
+	u.logout(nil)
+	u.cb.OnKickedOffline()
 }
 
 func (u *UserRelated) setSelfInfo(msg *MsgData) {

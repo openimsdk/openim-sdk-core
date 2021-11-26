@@ -43,7 +43,7 @@ echo -e "recv msg: \c"
 grep "test_openim: " openIM.log*  |grep "recv time" | wc -l
 
 echo -e "openim ws  recv push msg: \c"
-grep "recv push msg, trigger cmd" openIM.log* | wc -l
+grep "openim ws  recv push msg" openIM.log* | wc -l
 
 echo -e "pull msg num: \c"
 grep "open_im pull one msg:" openIM.log* | wc -l

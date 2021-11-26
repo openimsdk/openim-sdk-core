@@ -1,10 +1,14 @@
 package ws_local_server
 
 import (
+	"encoding/json"
+	"errors"
+	"github.com/gorilla/websocket"
 	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type EventData struct {
@@ -56,6 +60,7 @@ func int32ToString(i int32) string {
 
 type WsFuncRouter struct {
 	uId string
+	//conn *UserConn
 }
 
 func DelUserRouter(uid string) {
@@ -74,7 +79,7 @@ func DelUserRouter(uid string) {
 	urm, ok := UserRouteMap[uid]
 	if ok {
 		wrapSdkLog("DelUserRouter logout, uninitsdk", uid)
-		urm.wsRouter.Logout(uid, "0")
+		urm.wsRouter.LogoutNoCallback(uid, "0")
 		urm.wsRouter.UnInitSDK()
 	} else {
 		wrapSdkLog("no found UserRouteMap: ", uid)
@@ -83,10 +88,7 @@ func DelUserRouter(uid string) {
 	delete(UserRouteMap, uid)
 }
 
-func GenUserRouter(uid string) *map[string]reflect.Value {
-	UserRouteRwLock.Lock()
-	defer UserRouteRwLock.Unlock()
-
+func GenUserRouterNoLock(uid string) *RefRouter {
 	_, ok := UserRouteMap[uid]
 	if ok {
 		return nil
@@ -94,6 +96,7 @@ func GenUserRouter(uid string) *map[string]reflect.Value {
 	RouteMap1 := make(map[string]reflect.Value, 0)
 	var wsRouter1 WsFuncRouter
 	wsRouter1.uId = uid
+	//	wsRouter1.conn = conn
 	wsRouter1.AddAdvancedMsgListener()
 	wsRouter1.SetConversationListener()
 	wsRouter1.SetFriendListener()
@@ -113,5 +116,50 @@ func GenUserRouter(uid string) *map[string]reflect.Value {
 	rr.wsRouter = &wsRouter1
 	UserRouteMap[uid] = rr
 	wrapSdkLog("insert UserRouteMap: ", uid)
-	return &RouteMap1
+	return &rr
+}
+
+func (wsRouter *WsFuncRouter) GlobalSendMessage(data interface{}) {
+	SendOneUserMessage(data, wsRouter.uId)
+}
+
+//listener
+func SendOneUserMessage(data interface{}, uid string) {
+	bMsg, _ := json.Marshal(data)
+	var chMsg ChanMsg
+	chMsg.data = bMsg
+	chMsg.uid = uid
+	err := send2Ch(WS.ch, chMsg, 2)
+	if err != nil {
+		wrapSdkLog("send2ch failed, ", err, string(bMsg), uid)
+		return
+	}
+	wrapSdkLog("send response to web: ", string(bMsg))
+}
+
+func SendOneConnMessage(data interface{}, conn *UserConn) {
+	bMsg, _ := json.Marshal(data)
+	err := WS.writeMsg(conn, websocket.TextMessage, bMsg)
+	wrapSdkLog("send response to web: ", string(bMsg))
+	if err != nil {
+		wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", data)
+	} else {
+		wrapSdkLog("Conn is nil", "data", data)
+	}
+}
+
+func send2Ch(ch chan ChanMsg, value ChanMsg, timeout int64) error {
+	var flag = 0
+	select {
+	case ch <- value:
+		flag = 1
+	case <-time.After(time.Second * time.Duration(timeout)):
+		flag = 2
+	}
+	if flag == 1 {
+		return nil
+	} else {
+		wrapSdkLog("send cmd timeout, ", timeout, value)
+		return errors.New("send cmd timeout")
+	}
 }

@@ -78,6 +78,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 			Status:         MsgStatusSendSuccess,
 			IsRead:         false,
 		}
+		sdkLog("new msg, seq, ServerMsgID, ClientMsgID", msg.Seq, msg.ServerMsgID, msg.ClientMsgID)
 		//De-analyze data
 		err := u.msgHandleByContentType(msg)
 		if err != nil {
@@ -102,10 +103,10 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 				sdkLog("doGroupMsg, ", v)
 			}
 		}
-		if v.SendID == u.LoginUid { //seq對齊消息 Messages sent by myself  //if  sent through  this terminal
+		if v.SendID == u.LoginUid { //seq  Messages sent by myself  //if  sent through  this terminal
 			m, err := u.getOneMessage(msg.ClientMsgID)
 			if err == nil && m != nil {
-				sdkLog("have message", *msg, msg.Seq)
+				sdkLog("have message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
 				if m.Seq == 0 {
 					err := u.updateMessageSeq(msg, MsgStatusSendSuccess)
 					if err != nil {
@@ -120,7 +121,8 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 						sdkLog("setErrorMessage  err", err.Error(), msg)
 					}
 				}
-			} else { //同步消息       send through  other terminal
+			} else { //      send through  other terminal
+				sdkLog("sync message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
 				err = u.insertMessageToChatLog(msg)
 				if err != nil {
 					sdkLog(" sync insertMessageToChatLog err", err.Error(), msg)
@@ -162,7 +164,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 				//}
 			}
 		} else { //他人發的
-			if !u.judgeMessageIfExists(msg) { //去重操作
+			if !u.judgeMessageIfExists(msg.ClientMsgID) { //去重操作
 				if msg.ContentType != Typing && msg.ContentType != HasReadReceipt {
 					c := ConversationStruct{
 						//ConversationID:    conversationID,
@@ -218,6 +220,9 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 					}
 				} else {
 					if msg.ContentType == Typing {
+						//remove cache
+						delete(u.seqMsg, k)
+						sdkLog("Typing ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg, k)
 						newMessages = append(newMessages, msg)
 
 					} else {
@@ -228,6 +233,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 							//remove cache
 							delete(u.seqMsg, k)
 							//update read state
+							sdkLog("append msgReadList ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg)
 							msgReadList = append(msgReadList, msg)
 						}
 					}
@@ -369,7 +375,7 @@ func (u *UserRelated) doUpdateConversation(c2v cmd2Value) {
 		if u.judgeConversationIfExists(node.ConId) {
 			_, o := u.getOneConversationModel(node.ConId)
 			if c.LatestMsgSendTime > o.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
-				err := u.setConversationLatestMsgModel(&c, node.ConId)
+				err := u.setConversationLatestMsgModel(c.LatestMsgSendTime, c.LatestMsg, node.ConId)
 				if err != nil {
 					sdkLog("setConversationLatestMsgModel err: ", err)
 				}
@@ -384,20 +390,13 @@ func (u *UserRelated) doUpdateConversation(c2v cmd2Value) {
 	case UnreadCountSetZero:
 		if err := u.setConversationUnreadCount(0, node.ConId); err != nil {
 		} else {
-			err, list := u.getAllConversationListModel()
+			totalUnreadCount, err := u.getTotalUnreadMsgCountModel()
 			if err == nil {
-				if list == nil {
-					u.ConversationListenerx.OnConversationChanged(structToJsonString([]ConversationStruct{}))
-				} else {
-					u.ConversationListenerx.OnConversationChanged(structToJsonString(list))
-
-				}
-				totalUnreadCount, err := u.getTotalUnreadMsgCountModel()
-				if err == nil {
-					u.ConversationListenerx.OnTotalUnreadMessageCountChanged(totalUnreadCount)
-				}
-
+				u.ConversationListenerx.OnTotalUnreadMessageCountChanged(totalUnreadCount)
+			} else {
+				sdkLog("getTotalUnreadMsgCountModel err", err.Error())
 			}
+
 		}
 	case ConChange:
 		err, list := u.getAllConversationListModel()
@@ -433,8 +432,28 @@ func (u *UserRelated) doUpdateConversation(c2v cmd2Value) {
 				return
 			}
 		}
-	}
 
+	case UpdateLatestMessageChange:
+		conversationID := node.ConId
+		var latestMsg MsgStruct
+		err, l := u.getConversationLatestMsgModel(conversationID)
+		if err != nil {
+			sdkLog("getConversationLatestMsgModel err", err.Error())
+		} else {
+			err := json.Unmarshal([]byte(l), &latestMsg)
+			if err != nil {
+				sdkLog("latestMsg,Unmarshal err :", err.Error())
+			} else {
+				latestMsg.IsRead = true
+				newLatestMessage := structToJsonString(latestMsg)
+				err = u.setConversationLatestMsgModel(latestMsg.SendTime, newLatestMessage, conversationID)
+				if err != nil {
+					sdkLog("setConversationLatestMsgModel err :", err.Error())
+				}
+			}
+		}
+
+	}
 }
 
 func (u *UserRelated) work(c2v cmd2Value) {
@@ -463,7 +482,7 @@ func (u *UserRelated) msgHandleByContentType(msg *MsgStruct) (err error) {
 	case Text:
 	case Picture:
 		err = jsonStringToStruct(msg.Content, &msg.PictureElem)
-	case Sound:
+	case Voice:
 		err = jsonStringToStruct(msg.Content, &msg.SoundElem)
 	case Video:
 		err = jsonStringToStruct(msg.Content, &msg.VideoElem)

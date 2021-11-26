@@ -223,7 +223,7 @@ func (z zx) txexfc(uid int) int {
 }
 func GenUid(uid int) string {
 	if uid > 1000 {
-		return "18666662412"
+		return strconv.FormatInt(int64(uid), 10)
 	}
 	open_im_sdk.LogBegin(uid)
 
@@ -287,6 +287,7 @@ func runGetToken(strMyUid string) string {
 			time.Sleep(time.Duration(30) * time.Second)
 			continue
 		} else {
+			fmt.Println("get token: ", strMyUid, token)
 			break
 		}
 	}
@@ -316,10 +317,10 @@ func getMyIP() string {
 }
 
 var (
-	APIADDR      = "http://1.14.194.38:10000"
-	WSADDR       = "ws://1.14.194.38:17778"
-	REGISTERADDR = "http://1.14.194.38:10000/auth/user_register"
-	TOKENADDR    = "http://1.14.194.38:10000/auth/user_token"
+	APIADDR      = "http://121.37.25.71:10000"
+	WSADDR       = "ws://121.37.25.71:17778"
+	REGISTERADDR = "http://121.37.25.71:10000/auth/user_register"
+	TOKENADDR    = "http://121.37.25.71:10000/auth/user_token"
 	SECRET       = "tuoyun"
 	SENDINTERVAL = 20
 )
@@ -327,12 +328,21 @@ var (
 // myuid,  maxuid,  msgnum
 func main() {
 
-	myUid1 := 18666662412
-	strMyUid1 := GenUid(myUid1)
+	for i := 0; i < 10; i++ {
+		myUid1 := 13333333333
+		strMyUid1 := GenUid(myUid1)
 
-	runRigister(strMyUid1)
-	token1 := runGetToken(strMyUid1)
-	open_im_sdk.DoTest(strMyUid1, token1, WSADDR, APIADDR)
+		runRigister(strMyUid1)
+		token1 := runGetToken(strMyUid1)
+		open_im_sdk.InOutDoTest(strMyUid1, token1, WSADDR, APIADDR)
+		time.Sleep(time.Duration(5) * time.Second)
+		open_im_sdk.InOutDoTestSendMsg(strMyUid1, "18666662412")
+	}
+
+	//open_im_sdk.InOutDoTest(strMyUid1, token1, WSADDR, APIADDR)
+	//	open_im_sdk.InOutLogou()
+
+	//	open_im_sdk.InOutDoTest(strMyUid1, token1, WSADDR, APIADDR)
 
 	for true {
 		time.Sleep(time.Duration(60) * time.Second)

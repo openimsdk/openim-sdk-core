@@ -107,9 +107,8 @@ type UserRelated struct {
 	ConversationListener
 	groupListener
 
-	//initDB     *sql.DB
 	db         *sql.DB
-	mRWMutex   *sync.RWMutex
+	mRWMutex   sync.RWMutex
 	stateMutex sync.Mutex
 
 	minSeqSvr        int64
@@ -117,6 +116,8 @@ type UserRelated struct {
 
 	seqMsg      map[int32]MsgData
 	seqMsgMutex sync.RWMutex
+
+	process int
 }
 
 var UserSDKRwLock sync.RWMutex
@@ -124,7 +125,7 @@ var UserRouterMap map[string]*UserRelated
 var SvrConf IMConfig
 var SdkLogFlag int32
 
-var userForSDK UserRelated
+var userForSDK *UserRelated
 
 const (
 	CmdFriend                     = "001"
@@ -154,7 +155,7 @@ const (
 	//ContentType
 	Text           = 101
 	Picture        = 102
-	Sound          = 103
+	Voice          = 103
 	Video          = 104
 	File           = 105
 	AtText         = 106
@@ -172,7 +173,7 @@ const (
 	AddFriendTip               = 202
 	RefuseFriendApplicationTip = 203
 	SetSelfInfoTip             = 204
-	KickOnlineTip              = 303
+	//KickOnlineTip              = 303
 
 	SingleTipEnd = 399
 	/////////////////////////////////////////
@@ -224,11 +225,16 @@ const (
 )
 
 const (
+	SdkInit      = 0
 	LoginSuccess = 101
 	Logining     = 102
 	LoginFailed  = 103
 
 	LogoutCmd = 201
+
+	TokenFailedExpired       = 701
+	TokenFailedInvalid       = 702
+	TokenFailedKickedOffline = 703
 )
 
 const (
@@ -243,6 +249,7 @@ const (
 	IncrUnread                = 5
 	TotalUnreadMessageChanged = 6
 	UpdateFaceUrlAndNickName  = 7
+	UpdateLatestMessageChange = 8
 
 	HasRead = 1
 	NotRead = 0
@@ -273,5 +280,6 @@ const (
 	WSSendMsg          = 1003
 	WSPullMsgBySeqList = 1004
 	WSPushMsg          = 2001
+	WSKickOnlineMsg    = 2002
 	WSDataError        = 3001
 )

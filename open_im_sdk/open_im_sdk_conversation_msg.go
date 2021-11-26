@@ -129,7 +129,13 @@ func (u *UserRelated) DeleteConversation(conversationID string, callback Base) {
 	}()
 }
 func (u *UserRelated) SetConversationDraft(conversationID, draftText string, callback Base) {
-	err := u.setConversationDraftModel(conversationID, draftText, getCurrentTimestampByNano())
+	var time int64
+	if draftText == "" {
+		time = 0
+	} else {
+		time = getCurrentTimestampByNano()
+	}
+	err := u.setConversationDraftModel(conversationID, draftText, time)
 	if err != nil {
 		callback.OnError(203, err.Error())
 	} else {
@@ -410,7 +416,7 @@ func (u *UserRelated) CreateSoundMessageFromFullPath(soundPath string, duration 
 	}()
 	sdkLog("init base info ")
 	s := MsgStruct{}
-	u.initBasicInfo(&s, UserMsgType, Sound)
+	u.initBasicInfo(&s, UserMsgType, Voice)
 	s.SoundElem.SoundPath = soundPath
 	s.SoundElem.Duration = duration
 	fi, err := os.Stat(s.SoundElem.SoundPath)
@@ -613,7 +619,7 @@ func (u *UserRelated) CreateSoundMessageByURL(soundBaseInfo string) string {
 	var soundElem SoundBaseInfo
 	_ = json.Unmarshal([]byte(soundBaseInfo), &soundElem)
 	s.SoundElem = soundElem
-	u.initBasicInfo(&s, UserMsgType, Sound)
+	u.initBasicInfo(&s, UserMsgType, Voice)
 	s.AtElem.AtUserList = []string{}
 	s.Content = structToJsonString(s.SoundElem)
 	return structToJsonString(s)
@@ -621,7 +627,7 @@ func (u *UserRelated) CreateSoundMessageByURL(soundBaseInfo string) string {
 
 func (u *UserRelated) CreateSoundMessage(soundPath string, duration int64) string {
 	s := MsgStruct{}
-	u.initBasicInfo(&s, UserMsgType, Sound)
+	u.initBasicInfo(&s, UserMsgType, Voice)
 	s.SoundElem.SoundPath = SvrConf.DbDir + soundPath
 	s.SoundElem.Duration = duration
 	fi, err := os.Stat(s.SoundElem.SoundPath)
@@ -803,6 +809,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 			conversationID = GetConversationIDBySessionType(receiver, SingleChatType)
 			c.UserID = receiver
 			c.ConversationType = SingleChatType
+
 			faceUrl, name, err := u.getUserNameAndFaceUrlByUid(receiver)
 			if err != nil {
 				sdkLog("getUserNameAndFaceUrlByUid err:", err)
@@ -864,7 +871,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 				s.PictureElem.SnapshotPicture.Height = int32(stringToInt(ZoomScale))
 				s.Content = structToJsonString(s.PictureElem)
 			}
-		case Sound:
+		case Voice:
 			var sourcePath string
 			if fileExist(s.SoundElem.SoundPath) {
 				sourcePath = s.SoundElem.SoundPath
@@ -963,7 +970,6 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 		if onlineUserOnly {
 			optionsFlag["history"] = 0
 			optionsFlag["persistent"] = 0
-		} else {
 		}
 		wsMsgData := UserSendMsgReq{
 			Options:        optionsFlag,
@@ -1201,7 +1207,7 @@ func (u *UserRelated) RevokeMessage(callback Base, message string) {
 			return
 		}
 		s, err := u.getOneMessage(c.ClientMsgID)
-		if err != nil {
+		if err != nil || s == nil {
 			callback.OnError(201, "getOneMessage err")
 			return
 		}
@@ -1253,6 +1259,12 @@ func (u *UserRelated) TypingStatusUpdate(receiver, msgTip string) {
 }
 func (u *UserRelated) MarkC2CMessageAsRead(callback Base, receiver string, msgIDList string) {
 	go func() {
+		conversationID := GetConversationIDBySessionType(receiver, SingleChatType)
+		_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
+		if len(msgIDList) == 0 {
+			callback.OnError(200, "msg list is null")
+			return
+		}
 		s := MsgStruct{}
 		u.initBasicInfo(&s, UserMsgType, HasReadReceipt)
 		s.Content = msgIDList
@@ -1263,9 +1275,16 @@ func (u *UserRelated) MarkC2CMessageAsRead(callback Base, receiver string, msgID
 			callback.OnError(300, err.Error())
 		} else {
 			callback.OnSuccess("")
+			var msgIDs []string
+			_ = json.Unmarshal([]byte(msgIDList), &msgIDs)
+			_ = u.setSingleMessageHasReadByMsgIDList(receiver, msgIDs)
+			u.doUpdateConversation(cmd2Value{Value: updateConNode{conversationID, UpdateLatestMessageChange, ""}})
+			_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 		}
 	}()
 }
+
+//Deprecated
 func (u *UserRelated) MarkSingleMessageHasRead(callback Base, userID string) {
 	go func() {
 		conversationID := GetConversationIDBySessionType(userID, SingleChatType)
@@ -1274,6 +1293,7 @@ func (u *UserRelated) MarkSingleMessageHasRead(callback Base, userID string) {
 		} else {
 			callback.OnSuccess("")
 			u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
+			_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 		}
 	}()
 }
@@ -1285,6 +1305,7 @@ func (u *UserRelated) MarkGroupMessageHasRead(callback Base, groupID string) {
 		} else {
 			callback.OnSuccess("")
 			u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
+			_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 		}
 	}()
 }
@@ -1352,6 +1373,46 @@ func (u *UserRelated) DeleteMessageFromLocalStorage(callback Base, message strin
 
 		}
 	}()
+}
+func (u *UserRelated) ClearC2CHistoryMessage(callback Base, userID string) {
+	go func() {
+		conversationID := GetConversationIDBySessionType(userID, SingleChatType)
+		err := u.setMessageStatusBySourceID(userID, MsgStatusHasDeleted, SingleChatType)
+		if err != nil {
+			callback.OnError(202, err.Error())
+			return
+		}
+		err = u.clearConversation(conversationID)
+		if err != nil {
+			callback.OnError(203, err.Error())
+			return
+		} else {
+			callback.OnSuccess("")
+			_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
+		}
+
+	}()
+
+}
+func (u *UserRelated) ClearGroupHistoryMessage(callback Base, groupID string) {
+	go func() {
+		conversationID := GetConversationIDBySessionType(groupID, GroupChatType)
+		err := u.setMessageStatusBySourceID(groupID, MsgStatusHasDeleted, GroupChatType)
+		if err != nil {
+			callback.OnError(202, err.Error())
+			return
+		}
+		err = u.clearConversation(conversationID)
+		if err != nil {
+			callback.OnError(203, err.Error())
+			return
+		} else {
+			callback.OnSuccess("")
+			_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
+		}
+
+	}()
+
 }
 
 func (u *UserRelated) InsertSingleMessageToLocalStorage(callback Base, message, userID, sender string) string {

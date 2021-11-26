@@ -262,6 +262,7 @@ func checkDiff(a []diff, b []diff) (aInBNot, bInANot, sameA, sameB []int) {
 	for i, v := range a {
 		ia, ok := mapB[v.Key()]
 		if !ok {
+			//	sdkLog("aInBNot", i)
 			aInBNot = append(aInBNot, i)
 		} else {
 			if ia.Value() != v.Value() {
@@ -274,6 +275,7 @@ func checkDiff(a []diff, b []diff) (aInBNot, bInANot, sameA, sameB []int) {
 	for i, v := range b {
 		ib, ok := mapA[v.Key()]
 		if !ok {
+			//	sdkLog("bInANot", i)
 			bInANot = append(bInANot, i)
 		} else {
 			if ib.Value() != v.Value() {

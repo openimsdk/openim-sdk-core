@@ -23,7 +23,7 @@ func init(){
 */
 
 func SdkVersion() string {
-	return "Open-IM-SDK-Core-1.0.0"
+	return "Open-IM-SDK-Core-v1.0.5"
 }
 
 func InitSDK(config string, cb IMSDKListener) bool {
@@ -33,6 +33,8 @@ func InitSDK(config string, cb IMSDKListener) bool {
 		return false
 	}
 	sdkLog("InitSDK, config ", config)
+	userForSDK = new(UserRelated)
+
 	InitOnce(&sc)
 
 	return userForSDK.InitSDK(config, cb)
@@ -298,6 +300,8 @@ func TypingStatusUpdate(receiver, msgTip string) {
 func MarkC2CMessageAsRead(callback Base, receiver string, msgIDList string) {
 	userForSDK.MarkC2CMessageAsRead(callback, receiver, msgIDList)
 }
+
+//Deprecated
 func MarkSingleMessageHasRead(callback Base, userID string) {
 	userForSDK.MarkSingleMessageHasRead(callback, userID)
 }
@@ -307,7 +311,12 @@ func MarkGroupMessageHasRead(callback Base, groupID string) {
 func DeleteMessageFromLocalStorage(callback Base, message string) {
 	userForSDK.DeleteMessageFromLocalStorage(callback, message)
 }
-
+func ClearC2CHistoryMessage(callback Base, userID string) {
+	userForSDK.ClearC2CHistoryMessage(callback, userID)
+}
+func ClearGroupHistoryMessage(callback Base, groupID string) {
+	userForSDK.ClearGroupHistoryMessage(callback, groupID)
+}
 func InsertSingleMessageToLocalStorage(callback Base, message, userID, sender string) string {
 	return userForSDK.InsertSingleMessageToLocalStorage(callback, message, userID, sender)
 }

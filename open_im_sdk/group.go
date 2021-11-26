@@ -86,7 +86,9 @@ func (u *UserRelated) doQuitGroup(msg *MsgData) {
 		return
 	}
 
+	sdkLog("syncJoinedGroupInfo start")
 	u.syncJoinedGroupInfo()
+	sdkLog("syncJoinedGroupInfo end")
 	u.syncGroupMemberByGroupId(n.Detail)
 	sdkLog("syncJoinedGroupInfo finish")
 	sdkLog("syncGroupMemberByGroupId finish")
@@ -291,8 +293,8 @@ func (u *UserRelated) doKickGroupMember(msg *MsgData) {
 	//	g.syncGroupMember()
 	u.syncJoinedGroupInfo()
 	u.syncGroupMemberByGroupId(kickReq.GroupID)
-	u.syncJoinedGroupInfo()
-	u.syncGroupMemberByGroupId(kickReq.GroupID)
+	//u.syncJoinedGroupInfo()
+	//u.syncGroupMemberByGroupId(kickReq.GroupID)
 	if len(opList) > 0 {
 		u.OnMemberKicked(kickReq.GroupID, opList[0], kickReq.UidListInfo)
 	} else {
@@ -529,7 +531,7 @@ func (u *UserRelated) quitGroup(groupId string) error {
 	n2Group := NotificationContent{
 		IsDisplay:   1,
 		DefaultTips: "User: " + userInfo.Name + " have quit group chat",
-		Detail:      "",
+		Detail:      groupId,
 	}
 	msg2Group := u.createTextSystemMessage(n2Group, QuitGroupTip)
 	err = u.autoSendMsg(msg2Group, "", groupId, false, true, false)
@@ -1176,7 +1178,7 @@ func (u *UserRelated) syncGroupMemberByGroupId(groupId string) {
 	for _, index := range aInBNot {
 		err = u.insertIntoLocalGroupMember(groupMemberOnServer[index])
 		if err != nil {
-			sdkLog("insertIntoLocalGroupMember failed", err.Error())
+			sdkLog("insertIntoLocalGroupMember failed", err.Error(), "index", index, groupMemberOnServer[index])
 			continue
 		}
 	}

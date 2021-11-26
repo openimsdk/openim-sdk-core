@@ -37,7 +37,7 @@ func TestLog(v ...interface{}) {
 	X.Println(a, b, c, d)
 }
 
-var Friend_uid = "09fd93dfbf"
+var Friend_uid = "18666662412"
 
 ///////////////////////////////////////////////////////////
 
@@ -377,6 +377,48 @@ func (b *BaseSuccFailed) OnSuccess(data string) {
 	fmt.Println("test_openim: ", "login success")
 }
 
+func InOutlllogin(uid, tk string) {
+	var callback BaseSuccFailed
+	callback.funcName = RunFuncName()
+	Login(uid, tk, &callback)
+}
+
+func InOutLogou() {
+	var callback BaseSuccFailed
+	callback.funcName = RunFuncName()
+	Logout(&callback)
+}
+
+func InOutDoTest(uid, tk, ws, api string) {
+	var cf IMConfig
+	cf.IpApiAddr = api
+
+	cf.IpWsAddr = ws
+	cf.Platform = 1
+	cf.DbDir = "./"
+
+	var s string
+	b, _ := json.Marshal(cf)
+	s = string(b)
+	fmt.Println(s)
+	var testinit testInitLister
+	InitSDK(s, testinit)
+
+	var testConversation conversationCallBack
+	SetConversationListener(testConversation)
+
+	var msgCallBack MsgListenerCallBak
+	AddAdvancedMsgListener(msgCallBack)
+
+	var friendListener testFriendListener
+	SetFriendListener(friendListener)
+
+	var groupListener testGroupListener
+	SetGroupListener(groupListener)
+
+	InOutlllogin(uid, tk)
+}
+
 func lllogin(uid, tk string) bool {
 	var callback BaseSuccFailed
 	callback.funcName = RunFuncName()
@@ -449,6 +491,15 @@ func (t *TestSendMsgCallBack) OnSuccess(data string) {
 
 func (t *TestSendMsgCallBack) OnProgress(progress int) {
 	//	fmt.Printf("msg_send , onProgress %d\n", progress)
+}
+
+func InOutDoTestSendMsg(sendId, receiverID string) {
+	m := "test:" + sendId + ":" + receiverID + ":"
+	s := CreateTextMessage(m)
+	var testSendMsg TestSendMsgCallBack
+	testSendMsg.msg = SendMessage(&testSendMsg, s, receiverID, "", false)
+	fmt.Println("func send ", m, testSendMsg.msg)
+	fmt.Println("test to recv : ", receiverID)
 }
 
 func DoTestSendMsg(sendId, receiverID string, idx string) {

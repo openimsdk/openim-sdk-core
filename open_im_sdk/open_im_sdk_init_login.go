@@ -42,9 +42,9 @@ func (u *UserRelated) Login(uid, tk string, callback Base) {
 		sdkLog("callback is null")
 		return
 	}
-	go func() {
-		u.login(uid, tk, callback)
-	}()
+	//	go func() {
+	u.login(uid, tk, callback)
+	//	}()
 }
 
 func (u *UserRelated) ForceReConn() {
