@@ -531,7 +531,7 @@ func (u *UserRelated) quitGroup(groupId string) error {
 	n2Group := NotificationContent{
 		IsDisplay:   1,
 		DefaultTips: "User: " + userInfo.Name + " have quit group chat",
-		Detail:      "",
+		Detail:      groupId,
 	}
 	msg2Group := u.createTextSystemMessage(n2Group, QuitGroupTip)
 	err = u.autoSendMsg(msg2Group, "", groupId, false, true, false)

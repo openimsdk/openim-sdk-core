@@ -1293,6 +1293,7 @@ func (u *UserRelated) MarkSingleMessageHasRead(callback Base, userID string) {
 		} else {
 			callback.OnSuccess("")
 			u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
+			_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 		}
 	}()
 }
