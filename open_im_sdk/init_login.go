@@ -638,6 +638,13 @@ func (u *UserRelated) run() {
 				}
 			}
 		} else {
+			u.stateMutex.Lock()
+			if u.LoginState == LogoutCmd {
+				sdkLog("logout, ws close, return ", LogoutCmd)
+				u.stateMutex.Unlock()
+				return
+			}
+			u.stateMutex.Unlock()
 			sdkLog("ws failed, sleep 5s, reconn... ")
 			time.Sleep(time.Duration(5) * time.Second)
 		}
