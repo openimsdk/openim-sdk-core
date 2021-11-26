@@ -86,7 +86,9 @@ func (u *UserRelated) doQuitGroup(msg *MsgData) {
 		return
 	}
 
+	sdkLog("syncJoinedGroupInfo start")
 	u.syncJoinedGroupInfo()
+	sdkLog("syncJoinedGroupInfo end")
 	u.syncGroupMemberByGroupId(n.Detail)
 	sdkLog("syncJoinedGroupInfo finish")
 	sdkLog("syncGroupMemberByGroupId finish")

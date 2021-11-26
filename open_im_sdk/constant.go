@@ -116,6 +116,8 @@ type UserRelated struct {
 
 	seqMsg      map[int32]MsgData
 	seqMsgMutex sync.RWMutex
+
+	process int
 }
 
 var UserSDKRwLock sync.RWMutex
@@ -123,7 +125,7 @@ var UserRouterMap map[string]*UserRelated
 var SvrConf IMConfig
 var SdkLogFlag int32
 
-var userForSDK UserRelated
+var userForSDK *UserRelated
 
 const (
 	CmdFriend                     = "001"
@@ -223,7 +225,7 @@ const (
 )
 
 const (
-	LoginInit    = 0
+	SdkInit      = 0
 	LoginSuccess = 101
 	Logining     = 102
 	LoginFailed  = 103
