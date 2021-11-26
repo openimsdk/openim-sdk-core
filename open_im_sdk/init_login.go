@@ -39,7 +39,7 @@ func (u *UserRelated) unInitSDK() {
 }
 
 func (im *IMManager) getVersion() string {
-	return "v-1.0"
+	return "v1.0.5"
 }
 
 func (im *IMManager) getServerTime() int64 {
