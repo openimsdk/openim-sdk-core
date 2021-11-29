@@ -89,7 +89,7 @@ func (u *UserRelated) logout(cb Base) {
 func (u *UserRelated) login(uid, tk string, cb Base) {
 	if cb == nil || u.listener == nil || u.friendListener == nil ||
 		u.ConversationListenerx == nil || len(u.MsgListenerList) == 0 {
-		sdkLog("listener is nil, failed ", uid, tk)
+		sdkLog("listener is nil, failed ,please check callback,groupListener,friendListener,ConversationListenerx,MsgListenerList is set", uid, tk)
 		return
 	}
 	sdkLog("login start, ", uid, tk)
