@@ -336,6 +336,7 @@ func main() {
 		token1 := runGetToken(strMyUid1)
 		open_im_sdk.InOutDoTest(strMyUid1, token1, WSADDR, APIADDR)
 		time.Sleep(time.Duration(5) * time.Second)
+		open_im_sdk.Logout(nil)
 		open_im_sdk.InOutDoTestSendMsg(strMyUid1, "18666662412")
 	}
 
