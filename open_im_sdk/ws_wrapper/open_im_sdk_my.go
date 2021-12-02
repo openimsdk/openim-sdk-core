@@ -19,8 +19,8 @@ import (
 func main() {
 	var sdkWsPort, openIMApiPort, openIMWsPort *int
 	var openIMWsAddress, openIMApiAddress *string
-	APIADDR := "http://121.37.25.71:10000"
-	WSADDR := "ws://121.37.25.71:17778"
+	APIADDR := "http://43.128.5.63:10000"
+	WSADDR := "ws://43.128.5.63:17778"
 
 	sysType := runtime.GOOS
 	switch sysType {

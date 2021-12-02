@@ -430,9 +430,7 @@ func (u *UserRelated) reConn(conn *websocket.Conn) (*websocket.Conn, *http.Respo
 		return nil, httpResp, err
 	}
 	u.cb.OnConnectSuccess()
-	u.stateMutex.Lock()
 	u.LoginState = LoginSuccess
-	u.stateMutex.Unlock()
 	sdkLog("ws connect ok, ", u.LoginState)
 	LogSReturn(conn, nil)
 	return conn, httpResp, nil

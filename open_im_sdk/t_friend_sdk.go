@@ -37,7 +37,7 @@ func TestLog(v ...interface{}) {
 	X.Println(a, b, c, d)
 }
 
-var Friend_uid = "18666662412"
+var Friend_uid = "18349115126"
 
 ///////////////////////////////////////////////////////////
 
@@ -177,7 +177,7 @@ func (testGetBlackList) OnSuccess(data string) {
 func (testGetBlackList) OnError(code int, msg string) {
 	fmt.Println("testGetBlackList, OnError, ", code, msg)
 }
-func doTestGetBlackList() {
+func DoTestGetBlackList() {
 	var test testGetBlackList
 	GetBlackList(test)
 }

@@ -328,18 +328,25 @@ var (
 // myuid,  maxuid,  msgnum
 func main() {
 
-	for i := 0; i < 10; i++ {
-		myUid1 := 13333333333
+	for i := 0; i < 1; i++ {
+		myUid1 := 18666662412
 		strMyUid1 := GenUid(myUid1)
 
 		runRigister(strMyUid1)
 		token1 := runGetToken(strMyUid1)
 		open_im_sdk.InOutDoTest(strMyUid1, token1, WSADDR, APIADDR)
 		time.Sleep(time.Duration(5) * time.Second)
-		open_im_sdk.Logout(nil)
-		open_im_sdk.InOutDoTestSendMsg(strMyUid1, "18666662412")
+		//	open_im_sdk.Logout(nil)
+		//	open_im_sdk.InOutDoTestSendMsg(strMyUid1, "18666662412")
 	}
+	open_im_sdk.DoTestGetFriendList()
+	open_im_sdk.DoTestAddToBlackList()
+	time.Sleep(time.Duration(5) * time.Second)
+	open_im_sdk.DoTestGetFriendList()
+	open_im_sdk.DoTestGetBlackList()
 
+	open_im_sdk.DoTestGetFriendsInfo()
+	open_im_sdk.DoTestGetUsersInfo()
 	//open_im_sdk.InOutDoTest(strMyUid1, token1, WSADDR, APIADDR)
 	//	open_im_sdk.InOutLogou()
 
