@@ -25,6 +25,12 @@ type Logger struct {
 func NewPrivateLog(moduleName string) {
 	logger = loggerInit(moduleName)
 }
+func IsNil() bool {
+	if logger != nil {
+		return false
+	}
+	return true
+}
 
 func loggerInit(moduleName string) *Logger {
 	var logger = logrus.New()
