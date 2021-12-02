@@ -61,6 +61,7 @@ func main() {
 	}
 	var wg sync.WaitGroup
 	wg.Add(1)
+	open_im_sdk.NewPrivateLog("sdk")
 	fmt.Println("ws server is starting")
 	ws_local_server.WS.OnInit(*sdkWsPort)
 	ws_local_server.WS.Run()

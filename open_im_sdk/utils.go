@@ -364,6 +364,10 @@ func LogBegin(v ...interface{}) {
 	if SdkLogFlag == 1 {
 		return
 	}
+	if logger != nil {
+		NewInfo("", v...)
+		return
+	}
 	pc, b, c, _ := runtime.Caller(1)
 	fname := runtime.FuncForPC(pc).Name()
 	i := strings.LastIndex(b, "/")
@@ -374,6 +378,10 @@ func LogBegin(v ...interface{}) {
 
 func LogEnd(v ...interface{}) {
 	if SdkLogFlag == 1 {
+		return
+	}
+	if logger != nil {
+		NewInfo("", v...)
 		return
 	}
 	pc, b, c, _ := runtime.Caller(1)
@@ -388,6 +396,10 @@ func LogStart(v ...interface{}) {
 	if SdkLogFlag == 1 {
 		return
 	}
+	if logger != nil {
+		NewInfo("", v...)
+		return
+	}
 	pc, b, c, _ := runtime.Caller(1)
 	fname := runtime.FuncForPC(pc).Name()
 	i := strings.LastIndex(b, "/")
@@ -398,6 +410,10 @@ func LogStart(v ...interface{}) {
 
 func LogFReturn(v ...interface{}) {
 	if SdkLogFlag == 1 {
+		return
+	}
+	if logger != nil {
+		NewInfo("", v...)
 		return
 	}
 	pc, b, c, _ := runtime.Caller(1)
@@ -412,16 +428,25 @@ func LogSReturn(v ...interface{}) {
 	if SdkLogFlag == 1 {
 		return
 	}
+	if logger != nil {
+		NewInfo("", v...)
+		return
+	}
 	pc, b, c, _ := runtime.Caller(1)
 	fname := runtime.FuncForPC(pc).Name()
 	i := strings.LastIndex(b, "/")
 	if i != -1 {
 		sLog.Println("[", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "success return args(info): ", v)
 	}
+
 }
 
 func sdkLog(v ...interface{}) {
 	if SdkLogFlag == 1 {
+		return
+	}
+	if logger != nil {
+		NewInfo("", v...)
 		return
 	}
 	_, b, c, _ := runtime.Caller(1)
@@ -429,6 +454,7 @@ func sdkLog(v ...interface{}) {
 	if i != -1 {
 		sLog.Println("[", b[i+1:len(b)], ":", c, "]", v)
 	}
+
 }
 
 type LogInfo struct {
