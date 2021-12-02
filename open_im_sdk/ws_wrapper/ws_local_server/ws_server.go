@@ -284,6 +284,10 @@ func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func wrapSdkLog(v ...interface{}) {
+	if !open_im_sdk.IsNil() {
+		open_im_sdk.NewInfo("", v...)
+		return
+	}
 	_, b, c, _ := runtime.Caller(1)
 	i := strings.LastIndex(b, "/")
 	if i != -1 {
