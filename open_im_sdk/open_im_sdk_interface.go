@@ -23,7 +23,7 @@ func init(){
 */
 
 func SdkVersion() string {
-	return "Open-IM-SDK-Core-v1.0.5"
+	return "Open-IM-SDK-Core-v1.0.6"
 }
 
 func InitSDK(config string, cb IMSDKListener) bool {
@@ -32,7 +32,7 @@ func InitSDK(config string, cb IMSDKListener) bool {
 		sdkLog("initSDK failed, config: ", sc, err.Error())
 		return false
 	}
-	sdkLog("InitSDK, config ", config)
+	sdkLog("InitSDK, config ", config, "version: ", SdkVersion())
 	userForSDK = new(UserRelated)
 
 	InitOnce(&sc)
