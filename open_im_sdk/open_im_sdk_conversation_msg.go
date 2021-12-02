@@ -1008,7 +1008,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 			LogEnd("WriteMsg ", wsReq.OperationID, connSend)
 			if err != nil {
 				sdkLog("ws writeMsg  err:,", wsReq.OperationID, err.Error(), tr)
-				time.Sleep(time.Duration(5) * time.Second)
+				time.Sleep(time.Duration(30) * time.Second)
 			} else {
 				sdkLog("writeMsg  retry ok", wsReq.OperationID, tr)
 				SendFlag = true
