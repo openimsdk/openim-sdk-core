@@ -1002,13 +1002,13 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 
 		SendFlag := false
 		var connSend *websocket.Conn
-		for tr := 0; tr < 3; tr++ {
+		for tr := 0; tr < 30; tr++ {
 			LogBegin("WriteMsg", wsReq.OperationID)
 			err, connSend = u.WriteMsg(wsReq)
 			LogEnd("WriteMsg ", wsReq.OperationID, connSend)
 			if err != nil {
 				sdkLog("ws writeMsg  err:,", wsReq.OperationID, err.Error(), tr)
-				time.Sleep(time.Duration(30) * time.Second)
+				time.Sleep(time.Duration(5) * time.Second)
 			} else {
 				sdkLog("writeMsg  retry ok", wsReq.OperationID, tr)
 				SendFlag = true
