@@ -150,12 +150,18 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 					faceUrl, name, _ := u.getUserNameAndFaceUrlByUid(c.UserID)
 					c.FaceURL = faceUrl
 					c.ShowName = name
-					u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, UpdateFaceUrlAndNickName, c}})
 				case GroupChatType:
 					c.GroupID = strings.Split(v.RecvID, " ")[1]
 					c.ConversationID = GetConversationIDBySessionType(c.GroupID, GroupChatType)
+					faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
+					if err != nil {
+						sdkLog("getGroupNameAndFaceUrlByUid err:", err)
+					} else {
+						c.ShowName = name
+						c.FaceURL = faceUrl
+					}
 				}
-
+				u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, UpdateFaceUrlAndNickName, c}})
 				if msg.ContentType <= AcceptFriendApplicationTip && msg.ContentType != HasReadReceipt {
 					newMessages = append(newMessages, msg)
 					u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, AddConOrUpLatMsg,
