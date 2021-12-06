@@ -51,7 +51,7 @@ func (u *UserRelated) doFriendList() {
 			}
 			jsonFriendInfo, _ := json.Marshal(friendsInfoOnLocal[index])
 			u.friendListener.OnFriendListDeleted(string(jsonFriendInfo))
-			_ = u.triggerCmdDeleteConversationAndMessage(friendsInfoOnLocalInterface[index].Key(), GetConversationIDBySessionType(friendsInfoOnLocalInterface[index].Key(), SingleChatType), SingleChatType)
+			//_ = u.triggerCmdDeleteConversationAndMessage(friendsInfoOnLocalInterface[index].Key(), GetConversationIDBySessionType(friendsInfoOnLocalInterface[index].Key(), SingleChatType), SingleChatType)
 		}
 	}
 
