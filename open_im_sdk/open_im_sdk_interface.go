@@ -33,6 +33,12 @@ func InitSDK(config string, cb IMSDKListener) bool {
 		return false
 	}
 	sdkLog("InitSDK, config ", config, "version: ", SdkVersion())
+	if userForSDK != nil {
+		sdkLog("Logout first ")
+		userForSDK.Logout(nil)
+		sdkLog("unInit first ")
+		userForSDK.UnInitSDK()
+	}
 	userForSDK = new(UserRelated)
 
 	InitOnce(&sc)
@@ -46,14 +52,32 @@ func SetSdkLog(flag int32) {
 }
 
 func UnInitSDK() {
+	if userForSDK == nil {
+		sdkLog("userForSDK nil")
+		return
+	}
 	userForSDK.unInitSDK()
 }
 
 func Login(uid, tk string, callback Base) {
+	if userForSDK == nil {
+		sdkLog("userForSDK nil")
+		if callback != nil {
+			callback.OnError(ErrCodeInitLogin, "userForSDK nil, initSdk first ")
+		}
+		return
+	}
 	userForSDK.Login(uid, tk, callback)
 }
 
 func Logout(callback Base) {
+	if userForSDK == nil {
+		sdkLog("userForSDK nil")
+		if callback != nil {
+			callback.OnError(ErrCodeInitLogin, "userForSDK nil, initSdk first ")
+		}
+		return
+	}
 	userForSDK.logout(callback)
 }
 

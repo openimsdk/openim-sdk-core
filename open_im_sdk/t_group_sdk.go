@@ -170,7 +170,7 @@ func (testQuitGroup) OnError(errCode int, errMsg string) {
 
 func DoQuitGroup() {
 	var test testQuitGroup
-	test.quitGroupReq.GroupID = "723f87cdcde389f610191a41814791d5"
+	test.quitGroupReq.GroupID = "77215e1b13b75f3ab00cb6570e3d9618"
 
 	fmt.Println("test quit group input", test.GroupID)
 	QuitGroup(test.GroupID, test)
