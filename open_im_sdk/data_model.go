@@ -710,7 +710,7 @@ func (u *UserRelated) incrConversationUnreadCount(conversationID string) (err er
 func (u *UserRelated) getTotalUnreadMsgCountModel() (totalUnreadCount int32, err error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	rows, err := u.Query("SELECT IFNULL(SUM(unread_count), 0) FROM conversation")
+	rows, err := u.Query("SELECT IFNULL(SUM(unread_count), 0) FROM conversation where recv_msg_opt!=?", ReceiveNotNotifyMessage)
 	if err != nil {
 		sdkLog(err.Error())
 		return totalUnreadCount, err

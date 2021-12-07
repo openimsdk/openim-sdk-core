@@ -139,7 +139,6 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 					ConversationType: int(v.SessionType),
 					//UserID:            userID,
 					//GroupID:           groupID,
-					RecvMsgOpt:        1,
 					LatestMsg:         structToJsonString(msg),
 					LatestMsgSendTime: msg.SendTime,
 				}
@@ -150,21 +149,27 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 					faceUrl, name, _ := u.getUserNameAndFaceUrlByUid(c.UserID)
 					c.FaceURL = faceUrl
 					c.ShowName = name
-					u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, UpdateFaceUrlAndNickName, c}})
 				case GroupChatType:
 					c.GroupID = strings.Split(v.RecvID, " ")[1]
 					c.ConversationID = GetConversationIDBySessionType(c.GroupID, GroupChatType)
+					faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
+					if err != nil {
+						sdkLog("getGroupNameAndFaceUrlByUid err:", err)
+					} else {
+						c.ShowName = name
+						c.FaceURL = faceUrl
+					}
 				}
-
-				if msg.ContentType <= AcceptFriendApplicationTip && msg.ContentType != HasReadReceipt {
+				u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, UpdateFaceUrlAndNickName, c}})
+				if msg.ContentType <= AcceptFriendApplicationTip && msg.ContentType != HasReadReceipt || msg.ContentType == CreateGroupTip {
 					newMessages = append(newMessages, msg)
 					u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, AddConOrUpLatMsg,
 						c}})
 				}
 				//}
 			}
-		} else { //他人發的
-			if !u.judgeMessageIfExists(msg.ClientMsgID) { //去重操作
+		} else { //Sent by others
+			if !u.judgeMessageIfExists(msg.ClientMsgID) { //Deduplication operation
 				if msg.ContentType != Typing && msg.ContentType != HasReadReceipt {
 					c := ConversationStruct{
 						//ConversationID:    conversationID,
@@ -173,7 +178,6 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 						//FaceURL:           msg.SenderFaceURL,
 						//UserID:            userID,
 						//GroupID:           groupID,
-						RecvMsgOpt:        1,
 						LatestMsg:         structToJsonString(msg),
 						LatestMsgSendTime: msg.SendTime,
 					}
@@ -296,13 +300,13 @@ func (u *UserRelated) doDeleteConversation(c2v cmd2Value) {
 		return
 	}
 	node := c2v.Value.(deleteConNode)
-	//标记删除与此会话相关的消息
+	//Mark messages related to this conversation for deletion
 	err := u.setMessageStatusBySourceID(node.SourceID, MsgStatusHasDeleted, node.SessionType)
 	if err != nil {
 		sdkLog("setMessageStatusBySourceID err:", err.Error())
 		return
 	}
-	//重置该会话信息，空会话
+	//Reset the session information, empty session
 	err = u.ResetConversation(node.ConversationID)
 	if err != nil {
 		sdkLog("ResetConversation err:", err.Error())

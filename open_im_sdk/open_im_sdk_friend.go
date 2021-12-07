@@ -222,7 +222,7 @@ func (ur *UserRelated) DeleteFromFriendList(deleteUid string, callback Base) {
 			Ex:     u.Ex,
 		}
 		ur.friendListener.OnFriendListDeleted(structToJsonString(f))
-		_ = ur.triggerCmdDeleteConversationAndMessage(dUid, GetConversationIDBySessionType(dUid, SingleChatType), SingleChatType)
+		//_ = ur.triggerCmdDeleteConversationAndMessage(dUid, GetConversationIDBySessionType(dUid, SingleChatType), SingleChatType)
 		callback.OnSuccess("")
 	}()
 }

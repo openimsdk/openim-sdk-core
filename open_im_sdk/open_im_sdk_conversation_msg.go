@@ -111,13 +111,13 @@ func (u *UserRelated) DeleteConversation(conversationID string, callback Base) {
 		case GroupChatType:
 			sourceID = c.GroupID
 		}
-		//标记删除与此会话相关的消息
+		//Mark messages related to this conversation for deletion
 		err = u.setMessageStatusBySourceID(sourceID, MsgStatusHasDeleted, c.ConversationType)
 		if err != nil {
 			callback.OnError(202, err.Error())
 			return
 		}
-		//重置该会话信息，空会话
+		//Reset the session information, empty session
 		err = u.ResetConversation(conversationID)
 		if err != nil {
 			callback.OnError(203, err.Error())

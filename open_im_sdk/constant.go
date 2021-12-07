@@ -283,3 +283,10 @@ const (
 	WSKickOnlineMsg    = 2002
 	WSDataError        = 3001
 )
+
+const (
+	//MsgReceiveOpt
+	ReceiveMessage          = 0
+	NotReceiveMessage       = 1
+	ReceiveNotNotifyMessage = 2
+)
