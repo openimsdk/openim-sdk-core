@@ -44,6 +44,11 @@ func initAddr() {
 	getGroupApplicationListRouter = ginAddress + "/group/get_group_applicationList"
 	acceptGroupApplicationRouter = ginAddress + "/group/group_application_response"
 	refuseGroupApplicationRouter = ginAddress + "/group/group_application_response"
+	//conversation
+	setReceiveMessageOptRouter = ginAddress + "/conversation/set_receive_message_opt"
+	getReceiveMessageOptRouter = ginAddress + "/conversation/get_receive_message_opt"
+	getAllConversationMessageOptRouter = ginAddress + "/conversation/get_all_conversation_message_opt"
+
 }
 
 var (
@@ -69,21 +74,24 @@ var (
 	newestSeqRouter                     = ""
 	tencentCloudStorageCredentialRouter = ""
 	//group
-	createGroupRouter             = ""
-	setGroupInfoRouter            = ""
-	joinGroupRouter               = ""
-	quitGroupRouter               = ""
-	getGroupsInfoRouter           = ""
-	getGroupMemberListRouter      = ""
-	getGroupAllMemberListRouter   = ""
-	getGroupMembersInfoRouter     = ""
-	inviteUserToGroupRouter       = ""
-	getJoinedGroupListRouter      = ""
-	kickGroupMemberRouter         = ""
-	transferGroupRouter           = ""
-	getGroupApplicationListRouter = ""
-	acceptGroupApplicationRouter  = ""
-	refuseGroupApplicationRouter  = ""
+	createGroupRouter                  = ""
+	setGroupInfoRouter                 = ""
+	joinGroupRouter                    = ""
+	quitGroupRouter                    = ""
+	getGroupsInfoRouter                = ""
+	getGroupMemberListRouter           = ""
+	getGroupAllMemberListRouter        = ""
+	getGroupMembersInfoRouter          = ""
+	inviteUserToGroupRouter            = ""
+	getJoinedGroupListRouter           = ""
+	kickGroupMemberRouter              = ""
+	transferGroupRouter                = ""
+	getGroupApplicationListRouter      = ""
+	acceptGroupApplicationRouter       = ""
+	refuseGroupApplicationRouter       = ""
+	setReceiveMessageOptRouter         = ""
+	getReceiveMessageOptRouter         = ""
+	getAllConversationMessageOptRouter = ""
 )
 
 func (u *UserRelated) initListenerCh() {
