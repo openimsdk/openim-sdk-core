@@ -328,7 +328,7 @@ var (
 // myuid,  maxuid,  msgnum
 func main() {
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 1; i++ {
 		myUid1 := 18666662412
 		strMyUid1 := GenUid(myUid1)
 

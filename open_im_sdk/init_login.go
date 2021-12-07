@@ -203,6 +203,7 @@ func (u *UserRelated) forycedSyncReceiveMessageOpt() {
 		return
 	}
 
+	sdkLog("get receive opt ", v)
 	for _, v := range v.Data {
 		if v.Result == 0 {
 			u.receiveMessageOpt.Store(v.ConversationId, v.Result)
