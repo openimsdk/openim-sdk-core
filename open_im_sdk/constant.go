@@ -125,7 +125,7 @@ type UserRelated struct {
 	seqMsg      map[int32]MsgData
 	seqMsgMutex sync.RWMutex
 
-	process int
+	receiveMessageOpt sync.Map
 }
 
 var UserSDKRwLock sync.RWMutex

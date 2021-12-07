@@ -185,6 +185,29 @@ func (im *IMManager) getLoginStatus() int {
 	return im.LoginState
 }
 
+func (u *UserRelated) forycedSyncReceiveMessageOpt() {
+	OperationID := operationIDGenerator()
+	resp, err := post2Api(getAllConversationMessageOptRouter, paramGetAllConversationMessageOpt{OperationID: OperationID}, u.token)
+	if err != nil {
+		sdkLog("post2Api failed, ", getAllConversationMessageOptRouter, OperationID)
+		return
+	}
+	var v getReceiveMessageOptResp
+	err = json.Unmarshal(resp, &v)
+	if err != nil {
+		sdkLog("Unmarshal failed ", resp, OperationID)
+		return
+	}
+	if v.ErrCode != 0 {
+		sdkLog("errCode failed, ", v.ErrCode, resp, OperationID)
+		return
+	}
+
+	for _, v := range v.Data {
+
+	}
+}
+
 func (u *UserRelated) forcedSynchronization() {
 	LogBegin()
 	u.ForceSyncFriend()

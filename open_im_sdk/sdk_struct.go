@@ -893,3 +893,18 @@ type paramsSetReceiveMessageOpt struct {
 	Option             int32    `json:"option" binding:"required"`
 	ConversationIdList []string `json:"conversationIdList" binding:"required"`
 }
+
+type paramGetAllConversationMessageOpt struct {
+	OperationID string `json:"operationID" binding:"required"`
+}
+
+type optResult struct {
+	ConversationId string `json:"conversationId" binding:"required"`
+	Result         int32  `json:"result" binding:"required"`
+}
+
+type getReceiveMessageOptResp struct {
+	ErrCode int32       `json:"errCode"`
+	ErrMsg  string      `json:"errMsg"`
+	Data    []optResult `json:"data"`
+}
