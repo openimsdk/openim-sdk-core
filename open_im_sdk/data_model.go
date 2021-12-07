@@ -424,7 +424,6 @@ func (u *UserRelated) replaceIntoUser(info *userInfo) error {
 		sdkLog("db prepare failed, ", err.Error())
 		return err
 	}
-
 	_, err = stmt.Exec(info.Uid, info.Name, info.Icon, info.Gender, info.Mobile, info.Birth, info.Email, info.Ex)
 	if err != nil {
 		sdkLog("db exec failed, ", err.Error())
@@ -686,6 +685,20 @@ func (u *UserRelated) setConversationUnreadCount(unreadCount int, conversationID
 	}
 
 	_, err = stmt.Exec(unreadCount, conversationID)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+func (u *UserRelated) setConversationRecvMsgOpt(conversationID string, opt int) (err error) {
+	u.mRWMutex.Lock()
+	defer u.mRWMutex.Unlock()
+	stmt, err := u.Prepare("update conversation set recv_msg_opt=? where conversation_id=?")
+	if err != nil {
+		return err
+	}
+	_, err = stmt.Exec(opt, conversationID)
 	if err != nil {
 		return err
 	}
