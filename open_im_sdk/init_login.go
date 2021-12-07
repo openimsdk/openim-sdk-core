@@ -187,7 +187,7 @@ func (im *IMManager) getLoginStatus() int {
 
 func (u *UserRelated) forycedSyncReceiveMessageOpt() {
 	OperationID := operationIDGenerator()
-	resp, err := post2Api(getAllConversationMessageOptRouter, paramGetAllConversationMessageOpt{OperationID: OperationID}, u.token)
+	resp, err := post2ApiForRead(getAllConversationMessageOptRouter, paramGetAllConversationMessageOpt{OperationID: OperationID}, u.token)
 	if err != nil {
 		sdkLog("post2Api failed, ", getAllConversationMessageOptRouter, OperationID)
 		return
@@ -204,7 +204,9 @@ func (u *UserRelated) forycedSyncReceiveMessageOpt() {
 	}
 
 	for _, v := range v.Data {
-
+		if v.Result == 0 {
+			u.receiveMessageOpt.Store(v.ConversationId, v.Result)
+		}
 	}
 }
 
@@ -215,6 +217,7 @@ func (u *UserRelated) forcedSynchronization() {
 	u.ForceSyncFriendApplication()
 	u.ForceSyncLoginUserInfo()
 
+	u.forycedSyncReceiveMessageOpt()
 	//u.ForceSyncMsg()
 
 	u.ForceSyncJoinedGroup()

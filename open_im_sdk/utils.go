@@ -515,6 +515,17 @@ func post2Api(url string, data interface{}, token string) (content []byte, err e
 		return postLogic(url, data, token)
 	}
 }
+
+func post2ApiForRead(url string, data interface{}, token string) (content []byte, err error) {
+	sdkLog("call post2Api: ", url)
+
+	if url == sendMsgRouter {
+		return retry(url, data, token, 3, 10*time.Second, postLogic)
+	} else {
+		return postLogic(url, data, token)
+	}
+}
+
 func postLogic(url string, data interface{}, token string) (content []byte, err error) {
 	jsonStr, err := json.Marshal(data)
 	if err != nil {
