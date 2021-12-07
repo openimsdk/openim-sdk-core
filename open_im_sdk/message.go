@@ -149,7 +149,6 @@ func (u *UserRelated) autoSendMsg(s *MsgStruct, receiver, groupID string, online
 	}
 	c := ConversationStruct{
 		ConversationType:  int(s.SessionType),
-		RecvMsgOpt:        1,
 		LatestMsgSendTime: s.CreateTime,
 	}
 	if receiver == "" && groupID == "" {

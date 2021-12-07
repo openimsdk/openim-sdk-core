@@ -683,13 +683,11 @@ func (u *UserRelated) setConversationUnreadCount(unreadCount int, conversationID
 	if err != nil {
 		return err
 	}
-
 	_, err = stmt.Exec(unreadCount, conversationID)
 	if err != nil {
 		return err
 	}
 	return nil
-
 }
 func (u *UserRelated) setConversationRecvMsgOpt(conversationID string, opt int) (err error) {
 	u.mRWMutex.Lock()

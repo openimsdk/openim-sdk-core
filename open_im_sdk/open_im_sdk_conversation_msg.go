@@ -36,11 +36,8 @@ func (u *UserRelated) GetOneConversation(sourceID string, sessionType int, callb
 		} else {
 			//
 			if c.ConversationID == "" {
-
 				c.ConversationID = conversationID
 				c.ConversationType = sessionType
-				c.RecvMsgOpt = 1
-
 				switch sessionType {
 				case SingleChatType:
 					c.UserID = sourceID
@@ -486,7 +483,6 @@ func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, recei
 
 	go func() {
 		c := ConversationStruct{
-			RecvMsgOpt:        1,
 			LatestMsgSendTime: s.CreateTime,
 		}
 		if receiver == "" && groupID == "" {
@@ -759,7 +755,6 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 	}
 	go func() {
 		c := ConversationStruct{
-			RecvMsgOpt:        1,
 			LatestMsgSendTime: s.CreateTime,
 		}
 		if receiver == "" && groupID == "" {
