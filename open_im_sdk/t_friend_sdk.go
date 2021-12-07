@@ -445,7 +445,7 @@ func DoTest(uid, tk, ws, api string) {
 	cf.IpApiAddr = api // "http://120.24.45.199:10000"
 	//	cf.IpWsAddr = "wss://open-im.rentsoft.cn/wss"
 	cf.IpWsAddr = ws //"ws://120.24.45.199:17778"
-	cf.Platform = 1
+	cf.Platform = 2
 	cf.DbDir = "./"
 
 	var s string
@@ -491,6 +491,43 @@ func (t *TestSendMsgCallBack) OnSuccess(data string) {
 
 func (t *TestSendMsgCallBack) OnProgress(progress int) {
 	//	fmt.Printf("msg_send , onProgress %d\n", progress)
+}
+
+type BaseSuccFailedTest struct {
+	successData string
+	errCode     int
+	errMsg      string
+	funcName    string
+}
+
+func (b *BaseSuccFailedTest) OnError(errCode int, errMsg string) {
+	b.errCode = -1
+	b.errMsg = errMsg
+	fmt.Println("22onError ", b.funcName, errCode, errMsg)
+}
+
+func (b *BaseSuccFailedTest) OnSuccess(data string) {
+	b.errCode = 1
+	b.successData = data
+	fmt.Println("22OnSuccess: ", b.funcName, data)
+}
+
+func DotestSetConversationRecvMessageOpt() {
+	var callback BaseSuccFailedTest
+	callback.funcName = RunFuncName()
+	var idList []string
+	idList = append(idList, "18567155635")
+	jsontest, _ := json.Marshal(idList)
+	SetConversationRecvMessageOpt(&callback, string(jsontest), 2)
+}
+
+func DoTestGetConversationRecvMessageOpt() {
+	var callback BaseSuccFailedTest
+	callback.funcName = RunFuncName()
+	var idList []string
+	idList = append(idList, "18567155635")
+	jsontest, _ := json.Marshal(idList)
+	GetConversationRecvMessageOpt(&callback, string(jsontest))
 }
 
 func InOutDoTestSendMsg(sendId, receiverID string) {

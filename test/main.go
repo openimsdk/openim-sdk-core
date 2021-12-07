@@ -189,7 +189,7 @@ func register(uid string) error {
 func getToken(uid string) string {
 	url := TOKENADDR
 	var req GetTokenReq
-	req.Platform = 1
+	req.Platform = 2
 	req.Uid = uid
 	req.Secret = SECRET
 	r, err := open_im_sdk.Post2Api(url, req, "")
@@ -317,10 +317,10 @@ func getMyIP() string {
 }
 
 var (
-	APIADDR      = "http://43.128.5.63:10000"
-	WSADDR       = "ws://43.128.5.63:17778"
-	REGISTERADDR = "http://43.128.5.63:10000/auth/user_register"
-	TOKENADDR    = "http://43.128.5.63:10000/auth/user_token"
+	APIADDR      = "http://121.37.25.71:10000"
+	WSADDR       = "ws://121.37.25.71:17778"
+	REGISTERADDR = "http://121.37.25.71:10000/auth/user_register"
+	TOKENADDR    = "http://121.37.25.71:10000/auth/user_token"
 	SECRET       = "tuoyun"
 	SENDINTERVAL = 20
 )
@@ -329,19 +329,19 @@ var (
 func main() {
 
 	for i := 0; i < 1; i++ {
-		myUid1 := 18666662412
+		myUid1 := 18349115126
 		strMyUid1 := GenUid(myUid1)
 
 		runRigister(strMyUid1)
 		token1 := runGetToken(strMyUid1)
 		open_im_sdk.DoTest(strMyUid1, token1, WSADDR, APIADDR)
-		time.Sleep(time.Duration(5) * time.Second)
-		//	open_im_sdk.Logout(nil)
-		//	open_im_sdk.InOutDoTestSendMsg(strMyUid1, "18666662412")
+		time.Sleep(time.Duration(1) * time.Second)
 	}
-	open_im_sdk.DoQuitGroup()
+	open_im_sdk.DotestSetConversationRecvMessageOpt()
+	open_im_sdk.DoTestGetConversationRecvMessageOpt()
+	open_im_sdk.DoTestGetAllConversationList()
 	//	open_im_sdk.DoTestAddToBlackList()
-	time.Sleep(time.Duration(5) * time.Second)
+	time.Sleep(time.Duration(1) * time.Second)
 	//	open_im_sdk.DoTestGetFriendList()
 	//	open_im_sdk.DoTestGetBlackList()
 
