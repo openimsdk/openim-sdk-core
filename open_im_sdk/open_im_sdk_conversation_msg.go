@@ -27,6 +27,40 @@ func (u *UserRelated) GetAllConversationList(callback Base) {
 		}
 	}()
 }
+func (u *UserRelated) SetConversationRecvMessageOpt(callback Base, conversationIDList string, opt int) {
+	go func() {
+		var list []string
+		err := json.Unmarshal([]byte(conversationIDList), &list)
+		if err != nil {
+			sdkLog("unmarshal failed, ", err.Error())
+			callback.OnError(201, err.Error())
+			return
+		}
+		resp, err := post2Api(setReceiveMessageOptRouter, paramsSetReceiveMessageOpt{OperationID: operationIDGenerator(), Option: int32(opt), ConversationIdList: list}, u.token)
+		if err != nil {
+			sdkLog("post failed, ", err.Error())
+			callback.OnError(202, err.Error())
+			return
+		}
+		var g getReceiveMessageOptResp
+		err = json.Unmarshal(resp, &g)
+		if err != nil {
+			sdkLog("unmarshal failed, ", err.Error())
+			callback.OnError(201, err.Error())
+			return
+		}
+		if g.ErrCode != 0 {
+			sdkLog("errcode: ", g.ErrCode, g.ErrMsg)
+			callback.OnError(int(g.ErrCode), g.ErrMsg)
+			return
+		}
+		for _, v := range list {
+			u.receiveMessageOpt.Store(v, int32(opt))
+		}
+		callback.OnSuccess("")
+	}()
+
+}
 func (u *UserRelated) GetOneConversation(sourceID string, sessionType int, callback Base) {
 	go func() {
 		conversationID := GetConversationIDBySessionType(sourceID, sessionType)

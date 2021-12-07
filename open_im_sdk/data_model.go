@@ -449,6 +449,9 @@ func (u *UserRelated) getAllConversationListModel() (err error, list []*Conversa
 			sdkLog("getAllConversationListModel ,err:", err.Error())
 			continue
 		} else {
+			if v, ok := u.receiveMessageOpt.Load(c.ConversationID); ok {
+				c.RecvMsgOpt = v.(int)
+			}
 			list = append(list, c)
 		}
 	}
