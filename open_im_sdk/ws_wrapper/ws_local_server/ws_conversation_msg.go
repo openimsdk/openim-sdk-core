@@ -129,6 +129,32 @@ func (wsRouter *WsFuncRouter) GetAllConversationList(input string, operationID s
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	userWorker.GetAllConversationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
 }
+func (wsRouter *WsFuncRouter) SetConversationRecvMessageOpt(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "conversationIDList", "opt") {
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.SetConversationRecvMessageOpt(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationIDList"].(string), m["opt"].(int))
+}
+func (wsRouter *WsFuncRouter) GetConversationRecvMessageOpt(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "conversationIDList") {
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.GetConversationRecvMessageOpt(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationIDList"].(string))
+}
 
 func (wsRouter *WsFuncRouter) GetOneConversation(input string, operationID string) {
 	m := make(map[string]interface{})
