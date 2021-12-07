@@ -219,6 +219,10 @@ func GetAllConversationList(callback Base) {
 func SetConversationRecvMessageOpt(callback Base, conversationIDList string, opt int) {
 	userForSDK.SetConversationRecvMessageOpt(callback, conversationIDList, opt)
 }
+
+func GetConversationRecvMessageOpt(callback Base, conversationIDList string) {
+	userForSDK.GetConversationRecvMessageOpt(callback, conversationIDList)
+}
 func GetOneConversation(sourceID string, sessionType int, callback Base) {
 	userForSDK.GetOneConversation(sourceID, sessionType, callback)
 }
