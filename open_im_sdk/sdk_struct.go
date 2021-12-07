@@ -893,7 +893,18 @@ type paramsSetReceiveMessageOpt struct {
 	Option             int32    `json:"option" binding:"required"`
 	ConversationIdList []string `json:"conversationIdList" binding:"required"`
 }
+type paramGetReceiveMessageOpt struct {
+	ConversationIdList []string `json:"conversationIdList" binding:"required"`
+	OperationID        string   `json:"operationID" binding:"required"`
+}
 
+//m:=make(map[string]interface)
+//map["operationID"] = "3434"
+//map["option"] = 1
+//{
+//	"operationID":"3434",
+//	"option":1
+//}
 type paramGetAllConversationMessageOpt struct {
 	OperationID string `json:"operationID" binding:"required"`
 }

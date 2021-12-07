@@ -59,7 +59,36 @@ func (u *UserRelated) SetConversationRecvMessageOpt(callback Base, conversationI
 		}
 		callback.OnSuccess("")
 	}()
-
+}
+func (u *UserRelated) GetConversationRecvMessageOpt(callback Base, conversationIDList string) {
+	go func() {
+		var list []string
+		err := json.Unmarshal([]byte(conversationIDList), &list)
+		if err != nil {
+			sdkLog("unmarshal failed, ", err.Error())
+			callback.OnError(201, err.Error())
+			return
+		}
+		resp, err := post2Api(getReceiveMessageOptRouter, paramGetReceiveMessageOpt{OperationID: operationIDGenerator(), ConversationIdList: list}, u.token)
+		if err != nil {
+			sdkLog("post failed, ", err.Error())
+			callback.OnError(202, err.Error())
+			return
+		}
+		var g getReceiveMessageOptResp
+		err = json.Unmarshal(resp, &g)
+		if err != nil {
+			sdkLog("unmarshal failed, ", err.Error())
+			callback.OnError(201, err.Error())
+			return
+		}
+		if g.ErrCode != 0 {
+			sdkLog("errcode: ", g.ErrCode, g.ErrMsg)
+			callback.OnError(int(g.ErrCode), g.ErrMsg)
+			return
+		}
+		callback.OnSuccess(structToJsonString(g.Data))
+	}()
 }
 func (u *UserRelated) GetOneConversation(sourceID string, sessionType int, callback Base) {
 	go func() {
@@ -155,7 +184,7 @@ func (u *UserRelated) DeleteConversation(conversationID string, callback Base) {
 			return
 		} else {
 			callback.OnSuccess("")
-			_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
+			_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: TotalUnreadMessageChanged})
 		}
 	}()
 }
@@ -171,7 +200,7 @@ func (u *UserRelated) SetConversationDraft(conversationID, draftText string, cal
 		callback.OnError(203, err.Error())
 	} else {
 		callback.OnSuccess("")
-		_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
+		//_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
 	}
 }
 func (u *UserRelated) PinConversation(conversationID string, isPinned bool, callback Base) {
@@ -186,7 +215,7 @@ func (u *UserRelated) PinConversation(conversationID string, isPinned bool, call
 		callback.OnError(203, err.Error())
 	} else {
 		callback.OnSuccess("")
-		_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
+		//_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
 	}
 
 }
