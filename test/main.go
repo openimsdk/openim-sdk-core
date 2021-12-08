@@ -317,10 +317,10 @@ func getMyIP() string {
 }
 
 var (
-	APIADDR      = "http://121.37.25.71:10000"
-	WSADDR       = "ws://121.37.25.71:17778"
-	REGISTERADDR = "http://121.37.25.71:10000/auth/user_register"
-	TOKENADDR    = "http://121.37.25.71:10000/auth/user_token"
+	APIADDR      = "http://43.128.5.63:10000"
+	WSADDR       = "ws://43.128.5.63:17778"
+	REGISTERADDR = "http://43.128.5.63:10000/auth/user_register"
+	TOKENADDR    = "http://43.128.5.63:10000/auth/user_token"
 	SECRET       = "tuoyun"
 	SENDINTERVAL = 20
 )
@@ -329,7 +329,7 @@ var (
 func main() {
 
 	for i := 0; i < 1; i++ {
-		myUid1 := 18349115126
+		myUid1 := 18666662412
 		strMyUid1 := GenUid(myUid1)
 
 		runRigister(strMyUid1)

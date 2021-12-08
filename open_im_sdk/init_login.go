@@ -135,6 +135,8 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 	go u.forcedSynchronization()
 	go u.heartbeat()
 	go u.timedCloseDB()
+	u.forycedSyncReceiveMessageOpt()
+	sdkLog("forycedSyncReceiveMessageOpt ok")
 	cb.OnSuccess("")
 	sdkLog("login end, ", uid, tk)
 }
@@ -218,7 +220,6 @@ func (u *UserRelated) forcedSynchronization() {
 	u.ForceSyncFriendApplication()
 	u.ForceSyncLoginUserInfo()
 
-	u.forycedSyncReceiveMessageOpt()
 	//u.ForceSyncMsg()
 
 	u.ForceSyncJoinedGroup()
