@@ -58,6 +58,7 @@ func (u *UserRelated) SetConversationRecvMessageOpt(callback Base, conversationI
 			u.receiveMessageOpt.Store(v, int32(opt))
 		}
 		callback.OnSuccess("")
+		_ = u.triggerCmdUpdateConversation(updateConNode{Action: ConChange})
 	}()
 }
 func (u *UserRelated) GetConversationRecvMessageOpt(callback Base, conversationIDList string) {
