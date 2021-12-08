@@ -441,6 +441,7 @@ func (u *UserRelated) getAllConversationListModel() (err error, list []*Conversa
 		sdkLog("Query failed ", err.Error())
 		return err, nil
 	}
+	u.receiveMessageOptMutex.RLock()
 	for rows.Next() {
 		c := new(ConversationStruct)
 		err = rows.Scan(&c.ConversationID, &c.ConversationType, &c.UserID, &c.GroupID, &c.ShowName,
@@ -449,13 +450,13 @@ func (u *UserRelated) getAllConversationListModel() (err error, list []*Conversa
 			sdkLog("getAllConversationListModel ,err:", err.Error())
 			continue
 		} else {
-			if v, ok := u.receiveMessageOpt.Load(c.ConversationID); ok {
-				c.RecvMsgOpt = v.(int)
+			if v, ok := u.receiveMessageOpt[c.ConversationID]; ok {
+				c.RecvMsgOpt = int(v)
 			}
 			list = append(list, c)
 		}
 	}
-
+	u.receiveMessageOptMutex.RUnlock()
 	return nil, list
 }
 func convert(nanoSecond int64) string {

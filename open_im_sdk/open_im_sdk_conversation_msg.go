@@ -54,9 +54,11 @@ func (u *UserRelated) SetConversationRecvMessageOpt(callback Base, conversationI
 			callback.OnError(int(g.ErrCode), g.ErrMsg)
 			return
 		}
+		u.receiveMessageOptMutex.RLock()
 		for _, v := range list {
-			u.receiveMessageOpt.Store(v, int32(opt))
+			u.receiveMessageOpt[v] = int32(opt)
 		}
+		u.receiveMessageOptMutex.RUnlock()
 		callback.OnSuccess("")
 		_ = u.triggerCmdUpdateConversation(updateConNode{Action: ConChange})
 	}()
