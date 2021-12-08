@@ -206,11 +206,13 @@ func (u *UserRelated) forycedSyncReceiveMessageOpt() {
 	}
 
 	sdkLog("get receive opt ", v)
+	u.receiveMessageOptMutex.Lock()
 	for _, v := range v.Data {
-		if v.Result == 0 {
-			u.receiveMessageOpt.Store(v.ConversationId, v.Result)
+		if v.Result != 0 {
+			u.receiveMessageOpt[v.ConversationId] = v.Result
 		}
 	}
+	u.receiveMessageOptMutex.Lock()
 }
 
 func (u *UserRelated) forcedSynchronization() {
