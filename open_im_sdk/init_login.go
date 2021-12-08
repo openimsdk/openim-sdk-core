@@ -212,7 +212,7 @@ func (u *UserRelated) forycedSyncReceiveMessageOpt() {
 			u.receiveMessageOpt[v.ConversationId] = v.Result
 		}
 	}
-	u.receiveMessageOptMutex.Lock()
+	u.receiveMessageOptMutex.Unlock()
 }
 
 func (u *UserRelated) forcedSynchronization() {
@@ -1146,7 +1146,11 @@ func (u *UserRelated) getUserNameAndFaceUrlByUid(uid string) (faceUrl, name stri
 			return userInfo.Icon, userInfo.Name, nil
 		}
 	} else {
-		return friendInfo.Icon, friendInfo.Name, nil
+		if friendInfo.Comment != "" {
+			return friendInfo.Icon, friendInfo.Comment, nil
+		} else {
+			return friendInfo.Icon, friendInfo.Name, nil
+		}
 	}
 }
 func (u *UserRelated) getUserInfoByUid(uid string) (*userInfo, error) {
