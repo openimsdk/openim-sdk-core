@@ -54,11 +54,11 @@ func (u *UserRelated) SetConversationRecvMessageOpt(callback Base, conversationI
 			callback.OnError(int(g.ErrCode), g.ErrMsg)
 			return
 		}
-		u.receiveMessageOptMutex.RLock()
+		u.receiveMessageOptMutex.Lock()
 		for _, v := range list {
 			u.receiveMessageOpt[v] = int32(opt)
 		}
-		u.receiveMessageOptMutex.RUnlock()
+		u.receiveMessageOptMutex.Unlock()
 		callback.OnSuccess("")
 		_ = u.triggerCmdUpdateConversation(updateConNode{Action: ConChange})
 	}()
@@ -218,7 +218,7 @@ func (u *UserRelated) PinConversation(conversationID string, isPinned bool, call
 		callback.OnError(203, err.Error())
 	} else {
 		callback.OnSuccess("")
-		//_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
+		_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConChange})
 	}
 
 }
