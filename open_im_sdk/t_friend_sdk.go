@@ -519,6 +519,7 @@ func DotestSetConversationRecvMessageOpt() {
 	idList = append(idList, "18567155635")
 	jsontest, _ := json.Marshal(idList)
 	SetConversationRecvMessageOpt(&callback, string(jsontest), 2)
+	fmt.Println("SetConversationRecvMessageOpt", string(jsontest))
 }
 
 func DoTestGetConversationRecvMessageOpt() {
@@ -528,6 +529,7 @@ func DoTestGetConversationRecvMessageOpt() {
 	idList = append(idList, "18567155635")
 	jsontest, _ := json.Marshal(idList)
 	GetConversationRecvMessageOpt(&callback, string(jsontest))
+	fmt.Println("GetConversationRecvMessageOpt", string(jsontest))
 }
 
 func InOutDoTestSendMsg(sendId, receiverID string) {

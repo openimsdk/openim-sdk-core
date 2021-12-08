@@ -100,6 +100,8 @@ func (u *UserRelated) initListenerCh() {
 
 	u.wsNotification = make(map[string]chan GeneralWsResp, 1)
 	u.seqMsg = make(map[int32]MsgData, 1000)
+
+	u.receiveMessageOpt = make(map[string]int32, 1000)
 }
 
 type UserRelated struct {
@@ -125,7 +127,10 @@ type UserRelated struct {
 	seqMsg      map[int32]MsgData
 	seqMsgMutex sync.RWMutex
 
-	receiveMessageOpt sync.Map
+	//	receiveMessageOpt sync.Map
+
+	receiveMessageOpt      map[string]int32
+	receiveMessageOptMutex sync.RWMutex
 }
 
 var UserSDKRwLock sync.RWMutex
