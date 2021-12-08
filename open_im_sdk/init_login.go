@@ -212,7 +212,7 @@ func (u *UserRelated) forycedSyncReceiveMessageOpt() {
 			u.receiveMessageOpt[v.ConversationId] = v.Result
 		}
 	}
-	u.receiveMessageOptMutex.Lock()
+	u.receiveMessageOptMutex.Unlock()
 }
 
 func (u *UserRelated) forcedSynchronization() {
