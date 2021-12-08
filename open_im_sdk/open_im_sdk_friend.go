@@ -278,6 +278,19 @@ func (u *UserRelated) SetFriendInfo(comment string, callback Base) {
 		}
 		u.syncFriendList()
 		callback.OnSuccess("")
+		c := ConversationStruct{
+			ConversationID: GetConversationIDBySessionType(uid2comm.Uid, SingleChatType),
+		}
+		faceUrl, name, err := u.getUserNameAndFaceUrlByUid(uid2comm.Uid)
+		if err != nil {
+			sdkLog("getUserNameAndFaceUrlByUid err:", err)
+			return
+		}
+		c.FaceURL = faceUrl
+		c.ShowName = name
+		u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, UpdateFaceUrlAndNickName, c}})
+		_ = u.triggerCmdUpdateConversation(updateConNode{c.ConversationID, ConChange, ""})
+
 		//FriendObj.friendListener.OnFriendInfoChanged(structToJsonString(friendResp.Data))
 		//_ = triggerCmdFriend()
 	}()
@@ -297,9 +310,7 @@ func (u *UserRelated) AddToBlackList(callback Base, blackUid string) {
 		resp, err := post2Api(addBlackListRouter, paramsAddBlackList{UID: uid, OperationID: operationIDGenerator()}, u.token)
 		if err != nil {
 			callback.OnError(http.StatusInternalServerError, err.Error())
-
 			log(fmt.Sprintf("AddToBlackList StatusInternalServerError err = %s", er.Error()))
-
 			return
 		}
 

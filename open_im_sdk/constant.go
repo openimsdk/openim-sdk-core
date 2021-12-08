@@ -186,7 +186,6 @@ const (
 	AddFriendTip               = 202
 	RefuseFriendApplicationTip = 203
 	SetSelfInfoTip             = 204
-	//KickOnlineTip              = 303
 
 	SingleTipEnd = 399
 	/////////////////////////////////////////
