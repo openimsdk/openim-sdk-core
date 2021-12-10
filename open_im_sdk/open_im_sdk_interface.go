@@ -52,7 +52,7 @@ func SetSdkLog(flag int32) {
 }
 
 func SetHearbeatInterval(interval int32) {
-	HearbeatInterval = interval
+	hearbeatInterval = interval
 }
 
 func UnInitSDK() {

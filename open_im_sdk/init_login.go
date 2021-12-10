@@ -627,7 +627,7 @@ func (u *UserRelated) heartbeat() {
 
 		u.DelCh(msgIncr)
 		LogEnd("DelCh", wsReq.OperationID)
-		time.Sleep(time.Duration(HearbeatInterval) * time.Second)
+		time.Sleep(time.Duration(hearbeatInterval) * time.Second)
 	}
 }
 
