@@ -317,19 +317,20 @@ func getMyIP() string {
 }
 
 var (
-	APIADDR      = "http://43.128.5.63:10000"
-	WSADDR       = "ws://43.128.5.63:17778"
-	REGISTERADDR = "http://43.128.5.63:10000/auth/user_register"
-	TOKENADDR    = "http://43.128.5.63:10000/auth/user_token"
+	TESTIP       = "43.128.5.63"
+	APIADDR      = "http://" + TESTIP + ":10000"
+	WSADDR       = "ws://" + TESTIP + ":17778"
+	REGISTERADDR = APIADDR + "/user_register"
+	TOKENADDR    = APIADDR + "/auth/user_token"
 	SECRET       = "tuoyun"
 	SENDINTERVAL = 20
 )
 
 // myuid,  maxuid,  msgnum
 func main() {
-
+	open_im_sdk.SetHearbeatInterval(300)
 	for i := 0; i < 1; i++ {
-		myUid1 := 18666662412
+		myUid1 := 17712341234
 		strMyUid1 := GenUid(myUid1)
 
 		runRigister(strMyUid1)

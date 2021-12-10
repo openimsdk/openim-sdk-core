@@ -51,6 +51,10 @@ func SetSdkLog(flag int32) {
 	SdkLogFlag = flag
 }
 
+func SetHearbeatInterval(interval int32) {
+	HearbeatInterval = interval
+}
+
 func UnInitSDK() {
 	if userForSDK == nil {
 		sdkLog("userForSDK nil")
