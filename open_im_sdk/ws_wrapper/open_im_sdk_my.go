@@ -21,7 +21,7 @@ func main() {
 	var openIMWsAddress, openIMApiAddress *string
 	APIADDR := "http://121.37.25.71:10000"
 	WSADDR := "ws://121.37.25.71:17778"
-
+	open_im_sdk.SetHearbeatInterval(300)
 	sysType := runtime.GOOS
 	switch sysType {
 	case "darwin":

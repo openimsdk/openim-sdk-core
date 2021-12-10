@@ -137,7 +137,7 @@ var UserSDKRwLock sync.RWMutex
 var UserRouterMap map[string]*UserRelated
 var SvrConf IMConfig
 var SdkLogFlag int32
-
+var HearbeatInterval int32 = 5
 var userForSDK *UserRelated
 
 const (

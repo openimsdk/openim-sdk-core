@@ -26,7 +26,7 @@ func main() {
 	openIMApiPort = flag.Int("openIM_api_port", 10000, "openIM api listening port")
 	openIMWsPort = flag.Int("openIM_ws_port", 17778, "openIM ws listening port")
 	flag.Parse()
-
+	open_im_sdk.SetHearbeatInterval(300)
 	//switch *openIMTerminalType {
 	//case "pc":
 	//	openIMWsAddress = flag.String("openIM_ws_address", "web", "different terminal types")
@@ -42,6 +42,7 @@ func main() {
 
 	sysType := runtime.GOOS
 	switch sysType {
+
 	case "darwin":
 		ws_local_server.InitServer(&open_im_sdk.IMConfig{IpApiAddr: *openIMApiAddress,
 			IpWsAddr: *openIMWsAddress, Platform: utils.OSXPlatformID, DbDir: "./"})
