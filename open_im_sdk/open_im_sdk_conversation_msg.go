@@ -870,7 +870,6 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 			conversationID = GetConversationIDBySessionType(receiver, SingleChatType)
 			c.UserID = receiver
 			c.ConversationType = SingleChatType
-
 			faceUrl, name, err := u.getUserNameAndFaceUrlByUid(receiver)
 			if err != nil {
 				sdkLog("getUserNameAndFaceUrlByUid err:", err)
@@ -1321,8 +1320,13 @@ func (u *UserRelated) TypingStatusUpdate(receiver, msgTip string) {
 func (u *UserRelated) MarkC2CMessageAsRead(callback Base, receiver string, msgIDList string) {
 	go func() {
 		conversationID := GetConversationIDBySessionType(receiver, SingleChatType)
-		_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
-		if len(msgIDList) == 0 {
+		var list []string
+		err := json.Unmarshal([]byte(msgIDList), &list)
+		if err != nil {
+			callback.OnError(201, "json unmarshal err")
+			return
+		}
+		if len(list) == 0 {
 			callback.OnError(200, "msg list is null")
 			return
 		}
@@ -1330,7 +1334,7 @@ func (u *UserRelated) MarkC2CMessageAsRead(callback Base, receiver string, msgID
 		u.initBasicInfo(&s, UserMsgType, HasReadReceipt)
 		s.Content = msgIDList
 		sdkLog("MarkC2CMessageAsRead: send Message")
-		err := u.autoSendMsg(&s, receiver, "", false, false, false)
+		err = u.autoSendMsg(&s, receiver, "", false, false, false)
 		if err != nil {
 			sdkLog("MarkC2CMessageAsRead  err:", err.Error())
 			callback.OnError(300, err.Error())
@@ -1349,13 +1353,13 @@ func (u *UserRelated) MarkC2CMessageAsRead(callback Base, receiver string, msgID
 func (u *UserRelated) MarkSingleMessageHasRead(callback Base, userID string) {
 	go func() {
 		conversationID := GetConversationIDBySessionType(userID, SingleChatType)
-		if err := u.setSingleMessageHasRead(userID); err != nil {
-			callback.OnError(201, err.Error())
-		} else {
-			callback.OnSuccess("")
-			u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
-			_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
-		}
+		//if err := u.setSingleMessageHasRead(userID); err != nil {
+		//	callback.OnError(201, err.Error())
+		//} else {
+		callback.OnSuccess("")
+		u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
+		_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
+		//}
 	}()
 }
 func (u *UserRelated) MarkGroupMessageHasRead(callback Base, groupID string) {
@@ -1451,9 +1455,7 @@ func (u *UserRelated) ClearC2CHistoryMessage(callback Base, userID string) {
 			callback.OnSuccess("")
 			_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
 		}
-
 	}()
-
 }
 func (u *UserRelated) ClearGroupHistoryMessage(callback Base, groupID string) {
 	go func() {
@@ -1471,9 +1473,7 @@ func (u *UserRelated) ClearGroupHistoryMessage(callback Base, groupID string) {
 			callback.OnSuccess("")
 			_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
 		}
-
 	}()
-
 }
 
 func (u *UserRelated) InsertSingleMessageToLocalStorage(callback Base, message, userID, sender string) string {
