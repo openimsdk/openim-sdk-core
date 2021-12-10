@@ -519,7 +519,7 @@ func (u *UserRelated) getNeedSyncSeq(svrMinSeq, svrMaxSeq int32) []int32 {
 func (u *UserRelated) heartbeat() {
 	for {
 		u.stateMutex.Lock()
-		sdkLog("heart check state ", u.LoginState)
+		//	sdkLog("heart check state ", u.LoginState)
 		if u.LoginState == LogoutCmd {
 			sdkLog("logout, ws close, heartbeat return ", LogoutCmd)
 			u.stateMutex.Unlock()
@@ -527,9 +527,9 @@ func (u *UserRelated) heartbeat() {
 		}
 		u.stateMutex.Unlock()
 
-		LogBegin("AddCh")
+		//	LogBegin("AddCh")
 		msgIncr, ch := u.AddCh()
-		LogEnd("AddCh")
+		//	LogEnd("AddCh")
 
 		var wsReq GeneralWsReq
 		wsReq.ReqIdentifier = WSGetNewestSeq
@@ -537,9 +537,9 @@ func (u *UserRelated) heartbeat() {
 		wsReq.SendID = u.LoginUid
 		wsReq.MsgIncr = msgIncr
 		var connSend *websocket.Conn
-		LogBegin("WriteMsg", wsReq.OperationID, wsReq.MsgIncr)
+		//	LogBegin("WriteMsg", wsReq.OperationID, wsReq.MsgIncr)
 		err, connSend := u.WriteMsg(wsReq)
-		LogEnd("WriteMsg", wsReq.OperationID, wsReq.MsgIncr)
+		//	LogEnd("WriteMsg", wsReq.OperationID, wsReq.MsgIncr)
 		if err != nil {
 			sdkLog("WriteMsg failed ", err.Error(), msgIncr, wsReq.OperationID)
 			LogBegin("closeConn DelCh", msgIncr, wsReq.OperationID)
@@ -568,7 +568,7 @@ func (u *UserRelated) heartbeat() {
 					LogEnd("closeConn DelCh continue", wsReq.OperationID)
 
 				} else {
-					sdkLog("heartbeat response success ", wsReq.OperationID)
+					//		sdkLog("heartbeat response success ", wsReq.OperationID)
 					var wsSeqResp GetMaxAndMinSeqResp
 					err = proto.Unmarshal(r.Data, &wsSeqResp)
 					if err != nil {
@@ -626,7 +626,7 @@ func (u *UserRelated) heartbeat() {
 		}
 
 		u.DelCh(msgIncr)
-		LogEnd("DelCh", wsReq.OperationID)
+		//	LogEnd("DelCh", wsReq.OperationID)
 		time.Sleep(time.Duration(hearbeatInterval) * time.Second)
 	}
 }

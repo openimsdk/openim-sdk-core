@@ -89,7 +89,7 @@ func (u *UserRelated) GetCh(msgIncr string) chan GeneralWsResp {
 }
 
 func (u *UserRelated) DelCh(msgIncr string) {
-	LogBegin(msgIncr)
+	//	LogBegin(msgIncr)
 	u.wsMutex.Lock()
 	defer u.wsMutex.Unlock()
 	ch, ok := u.wsNotification[msgIncr]
@@ -97,7 +97,7 @@ func (u *UserRelated) DelCh(msgIncr string) {
 		close(ch)
 		delete(u.wsNotification, msgIncr)
 	}
-	LogSReturn()
+	//	LogSReturn()
 }
 
 func (u *UserRelated) sendPingMsg() error {

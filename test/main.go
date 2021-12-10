@@ -328,7 +328,7 @@ var (
 
 // myuid,  maxuid,  msgnum
 func main() {
-	open_im_sdk.SetHearbeatInterval(300)
+	open_im_sdk.SetHearbeatInterval(5)
 	for i := 0; i < 1; i++ {
 		myUid1 := 17712341234
 		strMyUid1 := GenUid(myUid1)
