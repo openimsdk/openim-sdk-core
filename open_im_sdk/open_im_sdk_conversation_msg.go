@@ -1317,6 +1317,7 @@ func (u *UserRelated) TypingStatusUpdate(receiver, msgTip string) {
 		}
 	}()
 }
+
 func (u *UserRelated) MarkC2CMessageAsRead(callback Base, receiver string, msgIDList string) {
 	go func() {
 		conversationID := GetConversationIDBySessionType(receiver, SingleChatType)
