@@ -27,6 +27,20 @@ func (u *UserRelated) GetAllConversationList(callback Base) {
 		}
 	}()
 }
+func (u *UserRelated) GetConversationListSplit(callback Base, offset, count int) {
+	go func() {
+		err, list := u.getConversationListSplitModel(offset, count)
+		if err != nil {
+			callback.OnError(203, err.Error())
+		} else {
+			if list != nil {
+				callback.OnSuccess(structToJsonString(list))
+			} else {
+				callback.OnSuccess(structToJsonString([]ConversationStruct{}))
+			}
+		}
+	}()
+}
 func (u *UserRelated) SetConversationRecvMessageOpt(callback Base, conversationIDList string, opt int) {
 	go func() {
 		var list []string

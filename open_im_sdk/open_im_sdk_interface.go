@@ -220,6 +220,9 @@ func SetFriendListener(listener OnFriendshipListener) bool {
 func GetAllConversationList(callback Base) {
 	userForSDK.GetAllConversationList(callback)
 }
+func GetConversationListSplit(callback Base, offset, count int) {
+	userForSDK.GetConversationListSplit(callback, offset, count)
+}
 func SetConversationRecvMessageOpt(callback Base, conversationIDList string, opt int) {
 	userForSDK.SetConversationRecvMessageOpt(callback, conversationIDList, opt)
 }

@@ -435,8 +435,33 @@ func (u *UserRelated) replaceIntoUser(info *userInfo) error {
 func (u *UserRelated) getAllConversationListModel() (err error, list []*ConversationStruct) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-
 	rows, err := u.Query("SELECT * FROM conversation where latest_msg_send_time!=0 order by  case when is_pinned=1 then 0 else 1 end,max(latest_msg_send_time,draft_timestamp) DESC")
+	if err != nil {
+		sdkLog("Query failed ", err.Error())
+		return err, nil
+	}
+	u.receiveMessageOptMutex.RLock()
+	for rows.Next() {
+		c := new(ConversationStruct)
+		err = rows.Scan(&c.ConversationID, &c.ConversationType, &c.UserID, &c.GroupID, &c.ShowName,
+			&c.FaceURL, &c.RecvMsgOpt, &c.UnreadCount, &c.LatestMsg, &c.LatestMsgSendTime, &c.DraftText, &c.DraftTimestamp, &c.IsPinned)
+		if err != nil {
+			sdkLog("getAllConversationListModel ,err:", err.Error())
+			continue
+		} else {
+			if v, ok := u.receiveMessageOpt[c.ConversationID]; ok {
+				c.RecvMsgOpt = int(v)
+			}
+			list = append(list, c)
+		}
+	}
+	u.receiveMessageOptMutex.RUnlock()
+	return nil, list
+}
+func (u *UserRelated) getConversationListSplitModel(offset, count int) (err error, list []*ConversationStruct) {
+	u.mRWMutex.RLock()
+	defer u.mRWMutex.RUnlock()
+	rows, err := u.Query("SELECT * FROM conversation where latest_msg_send_time!=0 order by  case when is_pinned=1 then 0 else 1 end,max(latest_msg_send_time,draft_timestamp) DESC LIMIT ? OFFSET ?", count, offset)
 	if err != nil {
 		sdkLog("Query failed ", err.Error())
 		return err, nil
@@ -725,7 +750,15 @@ func (u *UserRelated) incrConversationUnreadCount(conversationID string) (err er
 func (u *UserRelated) getTotalUnreadMsgCountModel() (totalUnreadCount int32, err error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	rows, err := u.Query("SELECT IFNULL(SUM(unread_count), 0) FROM conversation where recv_msg_opt!=?", ReceiveNotNotifyMessage)
+	u.receiveMessageOptMutex.RLock()
+	var uidList []string
+	for key, v := range u.receiveMessageOpt {
+		if v == ReceiveNotNotifyMessage {
+			uidList = append(uidList, key)
+		}
+	}
+	u.receiveMessageOptMutex.RUnlock()
+	rows, err := u.Query("SELECT IFNULL(SUM(unread_count), 0) FROM conversation where recv_msg_opt!=? And conversation_id not in (?)", ReceiveNotNotifyMessage, sqlStringHandle(uidList))
 	if err != nil {
 		sdkLog(err.Error())
 		return totalUnreadCount, err
@@ -758,7 +791,7 @@ func (u *UserRelated) setMultipleConversationRecvMsgOpt(conversationIDList []str
 func (u *UserRelated) getMultipleConversationModel(conversationIDList []string) (err error, list []*ConversationStruct) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	rows, err := u.Query("SELECT * FROM conversation where conversation_id in (" + sqlStringHandle(conversationIDList) + ")")
+	rows, err := u.Query("SELECT * FROM conversation where conversation_id in (?)", sqlStringHandle(conversationIDList))
 	sdkLog("SELECT * FROM conversation where conversation_id in (" + sqlStringHandle(conversationIDList) + ")")
 	for rows.Next() {
 		temp := new(ConversationStruct)
@@ -1729,7 +1762,7 @@ func (u *UserRelated) updateMessageTimeAndMsgIDStatus(ClientMsgID string, sendTi
 func (u *UserRelated) getMultipleMessageModel(messageIDList []string) (err error, list []*MsgStruct) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	rows, err := u.Query("SELECT * FROM chat_log where msg_id in (" + sqlStringHandle(messageIDList) + ")")
+	rows, err := u.Query("SELECT * FROM chat_log where msg_id in (?)", sqlStringHandle(messageIDList))
 	fmt.Println("SELECT * FROM conversation where conversation_id in (" + sqlStringHandle(messageIDList) + ")")
 	defer rows.Close()
 	for rows.Next() {

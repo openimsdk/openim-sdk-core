@@ -129,6 +129,19 @@ func (wsRouter *WsFuncRouter) GetAllConversationList(input string, operationID s
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	userWorker.GetAllConversationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
 }
+func (wsRouter *WsFuncRouter) GetConversationListSplit(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "offset", "count") {
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.GetConversationListSplit(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["offset"].(int), m["count"].(int))
+}
 func (wsRouter *WsFuncRouter) SetConversationRecvMessageOpt(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
