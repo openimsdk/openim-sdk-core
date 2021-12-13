@@ -254,10 +254,8 @@ const (
 )
 
 const (
-	ConAndUnreadChange        = 1
 	AddConOrUpLatMsg          = 2
 	UnreadCountSetZero        = 3
-	ConChange                 = 4
 	IncrUnread                = 5
 	TotalUnreadMessageChanged = 6
 	UpdateFaceUrlAndNickName  = 7

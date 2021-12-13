@@ -62,7 +62,7 @@ func (u *UserRelated) SetConversationRecvMessageOpt(callback Base, conversationI
 		_ = u.setMultipleConversationRecvMsgOpt(list, opt)
 		callback.OnSuccess("")
 		//_ = u.triggerCmdUpdateConversation(updateConNode{Action: ConChange})
-		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, list}})
+
 	}()
 }
 func (u *UserRelated) GetConversationRecvMessageOpt(callback Base, conversationIDList string) {
@@ -206,6 +206,7 @@ func (u *UserRelated) SetConversationDraft(conversationID, draftText string, cal
 	} else {
 		callback.OnSuccess("")
 		//_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
+		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 	}
 }
 func (u *UserRelated) PinConversation(conversationID string, isPinned bool, callback Base) {
@@ -626,6 +627,7 @@ func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, recei
 		}
 		_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, AddConOrUpLatMsg,
 			c})
+		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		//_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 
 		//Protocol conversion
@@ -899,6 +901,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 		}
 		_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, AddConOrUpLatMsg,
 			c})
+		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		//_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 		var delFile []string
 		switch s.ContentType {
@@ -1313,7 +1316,7 @@ func (u *UserRelated) MarkC2CMessageAsRead(callback Base, receiver string, msgID
 			_ = json.Unmarshal([]byte(msgIDList), &msgIDs)
 			_ = u.setSingleMessageHasReadByMsgIDList(receiver, msgIDs)
 			u.doUpdateConversation(cmd2Value{Value: updateConNode{conversationID, UpdateLatestMessageChange, ""}})
-			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
+			//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		}
 	}()
 }
@@ -1327,7 +1330,7 @@ func (u *UserRelated) MarkSingleMessageHasRead(callback Base, userID string) {
 		//} else {
 		callback.OnSuccess("")
 		u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
-		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
+		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		//}
 	}()
 }
@@ -1339,7 +1342,7 @@ func (u *UserRelated) MarkGroupMessageHasRead(callback Base, groupID string) {
 		} else {
 			callback.OnSuccess("")
 			u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
-			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
+			//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		}
 	}()
 }
@@ -1403,7 +1406,7 @@ func (u *UserRelated) DeleteMessageFromLocalStorage(callback Base, message strin
 			if err != nil {
 				sdkLog("DeleteMessageFromLocalStorage triggerCmdUpdateConversation err:", err.Error())
 			}
-			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
+			//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 
 		}
 	}()
@@ -1422,7 +1425,7 @@ func (u *UserRelated) ClearC2CHistoryMessage(callback Base, userID string) {
 			return
 		} else {
 			callback.OnSuccess("")
-			_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
+			//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		}
 	}()
 }
@@ -1440,7 +1443,7 @@ func (u *UserRelated) ClearGroupHistoryMessage(callback Base, groupID string) {
 			return
 		} else {
 			callback.OnSuccess("")
-			_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
+			//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		}
 	}()
 }

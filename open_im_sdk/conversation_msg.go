@@ -314,10 +314,7 @@ func (u *UserRelated) doDeleteConversation(c2v cmd2Value) {
 	if err != nil {
 		sdkLog("ResetConversation err:", err.Error())
 	}
-	u.doUpdateConversation(cmd2Value{
-		Cmd:   CmdUpdateConversation,
-		Value: updateConNode{ConId: node.ConversationID, Action: ConAndUnreadChange},
-	})
+	u.doUpdateConversation(cmd2Value{Value: updateConNode{"", TotalUnreadMessageChanged, ""}})
 }
 func (u *UserRelated) doMsgReadState(msgReadList []*MsgStruct) {
 	var messageReceiptResp []*MessageReceipt
@@ -363,20 +360,6 @@ func (u *UserRelated) doUpdateConversation(c2v cmd2Value) {
 	}
 	node := c2v.Value.(updateConNode)
 	switch node.Action {
-	case ConAndUnreadChange:
-		err, list := u.getAllConversationListModel()
-		if err == nil {
-			if list == nil {
-				u.ConversationListenerx.OnConversationChanged(structToJsonString([]ConversationStruct{}))
-			} else {
-				u.ConversationListenerx.OnConversationChanged(structToJsonString(list))
-
-			}
-			totalUnreadCount, err := u.getTotalUnreadMsgCountModel()
-			if err == nil {
-				u.ConversationListenerx.OnTotalUnreadMessageCountChanged(totalUnreadCount)
-			}
-		}
 	case AddConOrUpLatMsg:
 		c := node.Args.(ConversationStruct)
 		if u.judgeConversationIfExists(node.ConId) {
@@ -405,18 +388,18 @@ func (u *UserRelated) doUpdateConversation(c2v cmd2Value) {
 			}
 
 		}
-	case ConChange:
-		err, list := u.getAllConversationListModel()
-		if err != nil {
-			sdkLog("getAllConversationListModel database err:", err.Error())
-		} else {
-			if list == nil {
-				u.ConversationListenerx.OnConversationChanged(structToJsonString([]ConversationStruct{}))
-			} else {
-				u.ConversationListenerx.OnConversationChanged(structToJsonString(list))
-
-			}
-		}
+	//case ConChange:
+	//	err, list := u.getAllConversationListModel()
+	//	if err != nil {
+	//		sdkLog("getAllConversationListModel database err:", err.Error())
+	//	} else {
+	//		if list == nil {
+	//			u.ConversationListenerx.OnConversationChanged(structToJsonString([]ConversationStruct{}))
+	//		} else {
+	//			u.ConversationListenerx.OnConversationChanged(structToJsonString(list))
+	//
+	//		}
+	//	}
 	case IncrUnread:
 		err := u.incrConversationUnreadCount(node.ConId)
 		if err != nil {

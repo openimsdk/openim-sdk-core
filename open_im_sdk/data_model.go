@@ -745,7 +745,7 @@ func (u *UserRelated) setMultipleConversationRecvMsgOpt(conversationIDList []str
 	defer u.mRWMutex.Unlock()
 	stmt, err := u.Prepare("update conversation set recv_msg_opt=? where conversation_id in (?)")
 	if err != nil {
-		sdkLog("setMultipleConversationRecvMsgOpt err:", err.Error(), opt, conversationIDList)
+		sdkLog("setMultipleConversationRecvMsgOpt err:", err.Error(), opt, sqlStringHandle(conversationIDList))
 		return err
 	}
 	_, err = stmt.Exec(opt, conversationIDList)
