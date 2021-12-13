@@ -42,6 +42,7 @@ type ConversationListener struct {
 	MsgListenerList       []OnAdvancedMsgListener
 	ch                    chan cmd2Value
 }
+type void struct{}
 
 func (con *ConversationListener) getCh() chan cmd2Value {
 	return con.ch
@@ -54,6 +55,8 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 	}
 	var newMessages, msgReadList, msgRevokeList []*MsgStruct
 	var isCallbackUI bool
+	conversationChangSet := make(map[string]void)
+	newConversationSet := make(map[string]void)
 	//MsgList := c2v.Value.(ArrMsg)
 	//for _, v := range MsgList.GroupData {
 	//	MsgList.SingleData = append(MsgList.SingleData, v)
@@ -163,8 +166,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 				u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, UpdateFaceUrlAndNickName, c}})
 				if msg.ContentType <= AcceptFriendApplicationTip && msg.ContentType != HasReadReceipt || msg.ContentType == CreateGroupTip {
 					newMessages = append(newMessages, msg)
-					u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, AddConOrUpLatMsg,
-						c}})
+					u.updateConversation(&c, conversationChangSet, newConversationSet)
 				}
 				//}
 			}
@@ -206,8 +208,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 						}
 					}
 					if msg.ContentType <= AcceptFriendApplicationTip || (msg.ContentType >= GroupTipBegin && msg.ContentType <= GroupTipEnd && msg.ContentType != SetGroupInfoTip && msg.ContentType != JoinGroupTip) {
-						u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, AddConOrUpLatMsg,
-							c}})
+						u.updateConversation(&c, conversationChangSet, newConversationSet)
 						if msg.ContentType != Revoke {
 							u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, IncrUnread, ""}})
 						}
@@ -257,7 +258,9 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 		u.doMsgReadState(msgReadList)
 		u.revokeMessage(msgRevokeList)
 		u.newMessage(newMessages)
-		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, ""}})
+		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, ""}})
+		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, mapKeyToStringList(conversationChangSet)}})
+		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewCon, mapKeyToStringList(newConversationSet)}})
 		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", TotalUnreadMessageChanged, ""}})
 	}
 	//sdkLog("length msgListenerList", u.MsgListenerList, "length message", len(newMessages), "msgListenerLen", len(u.MsgListenerList))
@@ -456,7 +459,26 @@ func (u *UserRelated) doUpdateConversation(c2v cmd2Value) {
 				}
 			}
 		}
-
+	case NewConChange:
+		cidList := node.Args.([]string)
+		err, cList := u.getMultipleConversationModel(cidList)
+		if err != nil {
+			sdkLog("getMultipleConversationModel err :", err.Error())
+		} else {
+			if cList != nil {
+				u.ConversationListenerx.OnConversationChanged(structToJsonString(cList))
+			}
+		}
+	case NewCon:
+		cidList := node.Args.([]string)
+		err, cList := u.getMultipleConversationModel(cidList)
+		if err != nil {
+			sdkLog("getMultipleConversationModel err :", err.Error())
+		} else {
+			if cList != nil {
+				u.ConversationListenerx.OnNewConversation(structToJsonString(cList))
+			}
+		}
 	}
 }
 
@@ -525,4 +547,33 @@ func (u *UserRelated) getGroupNameAndFaceUrlByUid(groupID string) (faceUrl, name
 	} else {
 		return groupInfo.FaceUrl, groupInfo.GroupName, nil
 	}
+}
+func (u *UserRelated) updateConversation(c *ConversationStruct, cc, nc map[string]void) {
+	if u.judgeConversationIfExists(c.ConversationID) {
+		_, o := u.getOneConversationModel(c.ConversationID)
+		if c.LatestMsgSendTime > o.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
+			err := u.setConversationLatestMsgModel(c.LatestMsgSendTime, c.LatestMsg, c.ConversationID)
+			if err != nil {
+				sdkLog("setConversationLatestMsgModel err: ", err)
+			} else {
+				cc[c.ConversationID] = void{}
+			}
+		}
+	} else {
+		err := u.addConversationOrUpdateLatestMsg(c, c.ConversationID)
+		if err != nil {
+			sdkLog("addConversationOrUpdateLatestMsg err: ", err.Error())
+		} else {
+			nc[c.ConversationID] = void{}
+		}
+		//var list []*ConversationStruct
+		//list = append(list, c)
+		//u.ConversationListenerx.OnNewConversation(structToJsonString(list))
+	}
+}
+func mapKeyToStringList(m map[string]void) (s []string) {
+	for k, _ := range m {
+		s = append(s, k)
+	}
+	return s
 }

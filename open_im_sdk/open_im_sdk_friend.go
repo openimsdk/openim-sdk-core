@@ -289,7 +289,7 @@ func (u *UserRelated) SetFriendInfo(comment string, callback Base) {
 		c.FaceURL = faceUrl
 		c.ShowName = name
 		u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, UpdateFaceUrlAndNickName, c}})
-		_ = u.triggerCmdUpdateConversation(updateConNode{c.ConversationID, ConChange, ""})
+		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{c.ConversationID}}})
 
 		//FriendObj.friendListener.OnFriendInfoChanged(structToJsonString(friendResp.Data))
 		//_ = triggerCmdFriend()

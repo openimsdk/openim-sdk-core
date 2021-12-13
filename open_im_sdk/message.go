@@ -252,7 +252,7 @@ func (u *UserRelated) autoSendMsg(s *MsgStruct, receiver, groupID string, online
 
 				}
 				if isUpdateConversationInfo || isUpdateConversationLatestMsg {
-					_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
+					u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 					_ = u.triggerCmdUpdateConversation(updateConNode{"", TotalUnreadMessageChanged, ""})
 				}
 			}
@@ -291,7 +291,7 @@ func (u *UserRelated) sendMessageFailedHandle(s *MsgStruct, c *ConversationStruc
 	c.LatestMsg = structToJsonString(s)
 	_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, AddConOrUpLatMsg,
 		*c})
-	_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
+	u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 }
 
 type MsgFormats []*MsgStruct

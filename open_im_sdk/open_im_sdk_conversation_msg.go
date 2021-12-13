@@ -59,8 +59,10 @@ func (u *UserRelated) SetConversationRecvMessageOpt(callback Base, conversationI
 			u.receiveMessageOpt[v] = int32(opt)
 		}
 		u.receiveMessageOptMutex.Unlock()
+		_ = u.setMultipleConversationRecvMsgOpt(list, opt)
 		callback.OnSuccess("")
-		_ = u.triggerCmdUpdateConversation(updateConNode{Action: ConChange})
+		//_ = u.triggerCmdUpdateConversation(updateConNode{Action: ConChange})
+		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, list}})
 	}()
 }
 func (u *UserRelated) GetConversationRecvMessageOpt(callback Base, conversationIDList string) {
@@ -218,7 +220,7 @@ func (u *UserRelated) PinConversation(conversationID string, isPinned bool, call
 		callback.OnError(203, err.Error())
 	} else {
 		callback.OnSuccess("")
-		_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConChange})
+		//_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConChange})
 	}
 
 }
@@ -624,7 +626,7 @@ func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, recei
 		}
 		_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, AddConOrUpLatMsg,
 			c})
-		_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
+		//_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 
 		//Protocol conversion
 		a.ReqIdentifier = 1003
@@ -670,7 +672,7 @@ func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, recei
 				c.LatestMsgSendTime = s.SendTime
 				_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, AddConOrUpLatMsg,
 					c})
-				_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
+				u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 			}
 		}
 	}()
@@ -897,7 +899,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 		}
 		_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, AddConOrUpLatMsg,
 			c})
-		_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
+		//_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 		var delFile []string
 		switch s.ContentType {
 		case Text:
@@ -1123,7 +1125,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 					c.LatestMsgSendTime = s.SendTime
 					_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, AddConOrUpLatMsg,
 						c})
-					_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
+					u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 				}
 				breakFlag = 1
 			case <-time.After(time.Second * time.Duration(timeout)):
@@ -1161,40 +1163,6 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 		}
 
 		u.DelCh(msgIncr)
-
-		//bMsg, err := post2Api(sendMsgRouter, a, u.token)
-		//if err != nil {
-		//	callback.OnError(http.StatusInternalServerError, err.Error())
-		//	u.sendMessageFailedHandle(&s, &c, conversationID)
-		//} else if err = json.Unmarshal(bMsg, &r); err != nil {
-		//	callback.OnError(200, err.Error()+"  "+string(bMsg))
-		//	u.sendMessageFailedHandle(&s, &c, conversationID)
-		//} else {
-		//	if r.ErrCode != 0 {
-		//		callback.OnError(r.ErrCode, r.ErrMsg)
-		//		u.sendMessageFailedHandle(&s, &c, conversationID)
-		//	} else {
-		//		callback.OnSuccess("")
-		//		callback.OnProgress(100)
-		//
-		//		for _, v := range delFile {
-		//			err := os.Remove(v)
-		//			if err != nil {
-		//				sdkLog("remove failed,", err.Error(), v)
-		//			}
-		//			sdkLog("remove file: ", v)
-		//		}
-		//		_ = u.updateMessageTimeAndMsgIDStatus(r.Data.ClientMsgID, r.Data.SendTime, MsgStatusSendSuccess)
-		//		s.ServerMsgID = r.Data.ServerMsgID
-		//		s.SendTime = r.Data.SendTime
-		//		s.Status = MsgStatusSendSuccess
-		//		c.LatestMsg = structToJsonString(s)
-		//		c.LatestMsgSendTime = s.SendTime
-		//		_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, AddConOrUpLatMsg,
-		//			c})
-		//		_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
-		//	}
-		//}
 	}()
 	return s.ClientMsgID
 }
@@ -1345,7 +1313,7 @@ func (u *UserRelated) MarkC2CMessageAsRead(callback Base, receiver string, msgID
 			_ = json.Unmarshal([]byte(msgIDList), &msgIDs)
 			_ = u.setSingleMessageHasReadByMsgIDList(receiver, msgIDs)
 			u.doUpdateConversation(cmd2Value{Value: updateConNode{conversationID, UpdateLatestMessageChange, ""}})
-			_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
+			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		}
 	}()
 }
@@ -1359,7 +1327,7 @@ func (u *UserRelated) MarkSingleMessageHasRead(callback Base, userID string) {
 		//} else {
 		callback.OnSuccess("")
 		u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
-		_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
+		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		//}
 	}()
 }
@@ -1371,7 +1339,7 @@ func (u *UserRelated) MarkGroupMessageHasRead(callback Base, groupID string) {
 		} else {
 			callback.OnSuccess("")
 			u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
-			_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
+			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		}
 	}()
 }
@@ -1435,7 +1403,7 @@ func (u *UserRelated) DeleteMessageFromLocalStorage(callback Base, message strin
 			if err != nil {
 				sdkLog("DeleteMessageFromLocalStorage triggerCmdUpdateConversation err:", err.Error())
 			}
-			_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
+			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 
 		}
 	}()

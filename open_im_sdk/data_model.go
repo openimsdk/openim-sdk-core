@@ -740,6 +740,21 @@ func (u *UserRelated) getTotalUnreadMsgCountModel() (totalUnreadCount int32, err
 	return totalUnreadCount, err
 
 }
+func (u *UserRelated) setMultipleConversationRecvMsgOpt(conversationIDList []string, opt int) (err error) {
+	u.mRWMutex.Lock()
+	defer u.mRWMutex.Unlock()
+	stmt, err := u.Prepare("update conversation set recv_msg_opt=? where conversation_id in (?)")
+	if err != nil {
+		sdkLog("setMultipleConversationRecvMsgOpt err:", err.Error(), opt, conversationIDList)
+		return err
+	}
+	_, err = stmt.Exec(opt, conversationIDList)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
 func (u *UserRelated) getMultipleConversationModel(conversationIDList []string) (err error, list []*ConversationStruct) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
