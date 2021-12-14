@@ -224,18 +224,22 @@ func (u *UserRelated) SetConversationDraft(conversationID, draftText string, cal
 	}
 }
 func (u *UserRelated) PinConversation(conversationID string, isPinned bool, callback Base) {
-	var i int
 	if isPinned {
-		i = 1
+		err := u.pinConversationModel(conversationID, Pinned)
+		if err != nil {
+			callback.OnError(203, err.Error())
+		} else {
+			callback.OnSuccess("")
+			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
+		}
 	} else {
-		i = 0
-	}
-	err := u.pinConversationModel(conversationID, i)
-	if err != nil {
-		callback.OnError(203, err.Error())
-	} else {
-		callback.OnSuccess("")
-		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
+		err := u.unPinConversationModel(conversationID, NotPinned)
+		if err != nil {
+			callback.OnError(203, err.Error())
+		} else {
+			callback.OnSuccess("")
+			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
+		}
 	}
 
 }
@@ -913,8 +917,8 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 			callback.OnError(202, err.Error())
 			return
 		}
-		_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, AddConOrUpLatMsg,
-			c})
+		u.doUpdateConversation(cmd2Value{Value: updateConNode{conversationID, AddConOrUpLatMsg,
+			c}})
 		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		//_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 		var delFile []string
@@ -1343,7 +1347,7 @@ func (u *UserRelated) MarkSingleMessageHasRead(callback Base, userID string) {
 		//	callback.OnError(201, err.Error())
 		//} else {
 		callback.OnSuccess("")
-		u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
+		u.doUpdateConversation(cmd2Value{Value: updateConNode{ConId: conversationID, Action: UnreadCountSetZero}})
 		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		//}
 	}()
@@ -1355,7 +1359,7 @@ func (u *UserRelated) MarkGroupMessageHasRead(callback Base, groupID string) {
 			callback.OnError(201, err.Error())
 		} else {
 			callback.OnSuccess("")
-			u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
+			u.doUpdateConversation(cmd2Value{Value: updateConNode{ConId: conversationID, Action: UnreadCountSetZero}})
 			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		}
 	}()

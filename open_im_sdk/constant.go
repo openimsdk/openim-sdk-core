@@ -265,6 +265,9 @@ const (
 
 	HasRead = 1
 	NotRead = 0
+
+	Pinned    = 1
+	NotPinned = 0
 )
 
 const (

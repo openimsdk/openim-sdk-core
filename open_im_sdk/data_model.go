@@ -620,6 +620,9 @@ func (u *UserRelated) getOneConversationModel(conversationID string) (err error,
 			continue
 		}
 	}
+	if v, ok := u.receiveMessageOpt[c.ConversationID]; ok {
+		c.RecvMsgOpt = int(v)
+	}
 	return nil, c
 
 }
@@ -705,6 +708,22 @@ func (u *UserRelated) pinConversationModel(conversationID string, isPinned int) 
 	return nil
 
 }
+func (u *UserRelated) unPinConversationModel(conversationID string, isPinned int) (err error) {
+	u.mRWMutex.Lock()
+	defer u.mRWMutex.Unlock()
+	stmt, err := u.Prepare("update conversation set is_pinned=?,draft_timestamp=case when draft_text='' then ? else draft_timestamp  end where conversation_id=?")
+	if err != nil {
+		sdkLog(err.Error())
+		return err
+	}
+	_, err = stmt.Exec(isPinned, 0, conversationID)
+	if err != nil {
+		sdkLog(err.Error())
+		return err
+	}
+	return nil
+
+}
 func (u *UserRelated) setConversationUnreadCount(unreadCount int, conversationID string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -776,12 +795,12 @@ func (u *UserRelated) getTotalUnreadMsgCountModel() (totalUnreadCount int32, err
 func (u *UserRelated) setMultipleConversationRecvMsgOpt(conversationIDList []string, opt int) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.Prepare("update conversation set recv_msg_opt=? where conversation_id in (?)")
+	stmt, err := u.Prepare("update conversation set recv_msg_opt=? where conversation_id in (" + sqlStringHandle(conversationIDList) + ")")
 	if err != nil {
 		sdkLog("setMultipleConversationRecvMsgOpt err:", err.Error(), opt, sqlStringHandle(conversationIDList))
 		return err
 	}
-	_, err = stmt.Exec(opt, sqlStringHandle(conversationIDList))
+	_, err = stmt.Exec(opt)
 	if err != nil {
 		return err
 	}
@@ -805,6 +824,9 @@ func (u *UserRelated) getMultipleConversationModel(conversationIDList []string) 
 			sdkLog("getMultipleConversationModel err:", err.Error())
 			return err, nil
 		} else {
+			if v, ok := u.receiveMessageOpt[temp.ConversationID]; ok {
+				temp.RecvMsgOpt = int(v)
+			}
 			list = append(list, temp)
 		}
 	}
