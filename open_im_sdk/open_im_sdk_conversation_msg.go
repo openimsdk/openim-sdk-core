@@ -75,7 +75,7 @@ func (u *UserRelated) SetConversationRecvMessageOpt(callback Base, conversationI
 		u.receiveMessageOptMutex.Unlock()
 		_ = u.setMultipleConversationRecvMsgOpt(list, opt)
 		callback.OnSuccess("")
-		//_ = u.triggerCmdUpdateConversation(updateConNode{Action: ConChange})
+		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, list}})
 
 	}()
 }
@@ -235,7 +235,7 @@ func (u *UserRelated) PinConversation(conversationID string, isPinned bool, call
 		callback.OnError(203, err.Error())
 	} else {
 		callback.OnSuccess("")
-		//_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConChange})
+		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 	}
 
 }
@@ -1330,7 +1330,7 @@ func (u *UserRelated) MarkC2CMessageAsRead(callback Base, receiver string, msgID
 			_ = json.Unmarshal([]byte(msgIDList), &msgIDs)
 			_ = u.setSingleMessageHasReadByMsgIDList(receiver, msgIDs)
 			u.doUpdateConversation(cmd2Value{Value: updateConNode{conversationID, UpdateLatestMessageChange, ""}})
-			//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
+			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		}
 	}()
 }
@@ -1344,7 +1344,7 @@ func (u *UserRelated) MarkSingleMessageHasRead(callback Base, userID string) {
 		//} else {
 		callback.OnSuccess("")
 		u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
-		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
+		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		//}
 	}()
 }
@@ -1356,7 +1356,7 @@ func (u *UserRelated) MarkGroupMessageHasRead(callback Base, groupID string) {
 		} else {
 			callback.OnSuccess("")
 			u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: UnreadCountSetZero})
-			//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
+			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		}
 	}()
 }
@@ -1420,7 +1420,7 @@ func (u *UserRelated) DeleteMessageFromLocalStorage(callback Base, message strin
 			if err != nil {
 				sdkLog("DeleteMessageFromLocalStorage triggerCmdUpdateConversation err:", err.Error())
 			}
-			//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
+			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 
 		}
 	}()
@@ -1439,7 +1439,7 @@ func (u *UserRelated) ClearC2CHistoryMessage(callback Base, userID string) {
 			return
 		} else {
 			callback.OnSuccess("")
-			//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
+			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		}
 	}()
 }
@@ -1457,7 +1457,7 @@ func (u *UserRelated) ClearGroupHistoryMessage(callback Base, groupID string) {
 			return
 		} else {
 			callback.OnSuccess("")
-			//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
+			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		}
 	}()
 }

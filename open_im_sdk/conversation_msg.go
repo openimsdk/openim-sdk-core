@@ -259,8 +259,9 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 		u.revokeMessage(msgRevokeList)
 		u.newMessage(newMessages)
 		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, ""}})
-		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, mapKeyToStringList(conversationChangSet)}})
+		sdkLog("trigger map is :", newConversationSet, conversationChangSet)
 		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewCon, mapKeyToStringList(newConversationSet)}})
+		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, mapKeyToStringList(conversationChangSet)}})
 		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", TotalUnreadMessageChanged, ""}})
 	}
 	//sdkLog("length msgListenerList", u.MsgListenerList, "length message", len(newMessages), "msgListenerLen", len(u.MsgListenerList))
@@ -449,6 +450,7 @@ func (u *UserRelated) doUpdateConversation(c2v cmd2Value) {
 			sdkLog("getMultipleConversationModel err :", err.Error())
 		} else {
 			if cList != nil {
+				sdkLog("getMultipleConversationModel success :", cList)
 				u.ConversationListenerx.OnConversationChanged(structToJsonString(cList))
 			}
 		}
@@ -459,6 +461,7 @@ func (u *UserRelated) doUpdateConversation(c2v cmd2Value) {
 			sdkLog("getMultipleConversationModel err :", err.Error())
 		} else {
 			if cList != nil {
+				sdkLog("getMultipleConversationModel success :", cList)
 				u.ConversationListenerx.OnNewConversation(structToJsonString(cList))
 			}
 		}
