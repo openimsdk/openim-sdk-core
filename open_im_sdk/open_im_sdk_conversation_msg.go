@@ -651,7 +651,7 @@ func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, recei
 		}
 		_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, AddConOrUpLatMsg,
 			c})
-		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
+		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		//_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 
 		//Protocol conversion
@@ -925,7 +925,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 		}
 		u.doUpdateConversation(cmd2Value{Value: updateConNode{conversationID, AddConOrUpLatMsg,
 			c}})
-		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
+		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		//_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 		var delFile []string
 		switch s.ContentType {
