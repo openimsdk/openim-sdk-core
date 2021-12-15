@@ -208,20 +208,26 @@ func (u *UserRelated) DeleteConversation(conversationID string, callback Base) {
 	}()
 }
 func (u *UserRelated) SetConversationDraft(conversationID, draftText string, callback Base) {
-	var time int64
-	if draftText == "" {
-		time = 0
+	if draftText != "" {
+		err := u.setConversationDraftModel(conversationID, draftText)
+		if err != nil {
+			callback.OnError(203, err.Error())
+		} else {
+			callback.OnSuccess("")
+			//_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
+			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
+		}
 	} else {
-		time = getCurrentTimestampByNano()
+		err := u.removeConversationDraftModel(conversationID, draftText)
+		if err != nil {
+			callback.OnError(203, err.Error())
+		} else {
+			callback.OnSuccess("")
+			//_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
+			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
+		}
 	}
-	err := u.setConversationDraftModel(conversationID, draftText, time)
-	if err != nil {
-		callback.OnError(203, err.Error())
-	} else {
-		callback.OnSuccess("")
-		//_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
-		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
-	}
+
 }
 func (u *UserRelated) PinConversation(conversationID string, isPinned bool, callback Base) {
 	if isPinned {
@@ -682,8 +688,8 @@ func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, recei
 				callback.OnError(r.ErrCode, r.ErrMsg)
 				u.sendMessageFailedHandle(&s, &c, conversationID)
 			} else {
-				callback.OnSuccess("")
 				callback.OnProgress(100)
+				callback.OnSuccess("")
 				_ = u.updateMessageTimeAndMsgIDStatus(r.Data.ClientMsgID, r.Data.SendTime, MsgStatusSendSuccess)
 				s.ServerMsgID = r.Data.ServerMsgID
 				s.SendTime = r.Data.SendTime
@@ -1120,8 +1126,8 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 					callback.OnError(r.ErrCode, r.ErrMsg)
 					u.sendMessageFailedHandle(&s, &c, conversationID)
 				} else {
-					callback.OnSuccess("")
 					callback.OnProgress(100)
+					callback.OnSuccess("")
 					for _, v := range delFile {
 						err := os.Remove(v)
 						if err != nil {

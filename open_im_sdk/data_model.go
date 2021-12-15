@@ -674,7 +674,24 @@ func (u *UserRelated) clearConversation(conversationID string) (err error) {
 	return nil
 
 }
-func (u *UserRelated) setConversationDraftModel(conversationID, draftText string, DraftTimestamp int64) (err error) {
+func (u *UserRelated) setConversationDraftModel(conversationID, draftText string) (err error) {
+	u.mRWMutex.Lock()
+	defer u.mRWMutex.Unlock()
+	stmt, err := u.Prepare("update conversation set draft_text=?,draft_timestamp=?,latest_msg_send_time=case when latest_msg_send_time=0 then ? else latest_msg_send_time  end where conversation_id=?")
+	if err != nil {
+		sdkLog("setConversationDraftModel err:", err.Error())
+		return err
+	}
+
+	_, err = stmt.Exec(draftText, getCurrentTimestampByNano(), getCurrentTimestampByNano(), conversationID)
+	if err != nil {
+		sdkLog("setConversationDraftModel err:", err.Error())
+		return err
+	}
+	return nil
+
+}
+func (u *UserRelated) removeConversationDraftModel(conversationID, draftText string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	stmt, err := u.Prepare("update conversation set draft_text=?,draft_timestamp=?where conversation_id=?")
@@ -683,7 +700,7 @@ func (u *UserRelated) setConversationDraftModel(conversationID, draftText string
 		return err
 	}
 
-	_, err = stmt.Exec(draftText, DraftTimestamp, conversationID)
+	_, err = stmt.Exec(draftText, 0, conversationID)
 	if err != nil {
 		sdkLog("setConversationDraftModel err:", err.Error())
 		return err
