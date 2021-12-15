@@ -243,17 +243,16 @@ func (u *UserRelated) autoSendMsg(s *MsgStruct, receiver, groupID string, online
 				c.LatestMsg = structToJsonString(s)
 				c.LatestMsgSendTime = s.SendTime
 				if isUpdateConversationLatestMsg {
-					_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, AddConOrUpLatMsg,
-						c})
-					_ = u.triggerCmdUpdateConversation(updateConNode{c.ConversationID, IncrUnread, ""})
+					u.doUpdateConversation(cmd2Value{Value: updateConNode{conversationID, AddConOrUpLatMsg, c}})
+					u.doUpdateConversation(cmd2Value{Value: updateConNode{conversationID, IncrUnread, ""}})
 				}
 				if isUpdateConversationInfo {
-					_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, UpdateFaceUrlAndNickName, c})
+					u.doUpdateConversation(cmd2Value{Value: updateConNode{conversationID, UpdateFaceUrlAndNickName, c}})
 
 				}
 				if isUpdateConversationInfo || isUpdateConversationLatestMsg {
 					u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
-					_ = u.triggerCmdUpdateConversation(updateConNode{"", TotalUnreadMessageChanged, ""})
+					u.doUpdateConversation(cmd2Value{Value: updateConNode{conversationID, TotalUnreadMessageChanged, ""}})
 				}
 			}
 		}
