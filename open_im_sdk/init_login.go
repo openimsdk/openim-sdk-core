@@ -652,6 +652,7 @@ func (u *UserRelated) run() {
 					u.stateMutex.Unlock()
 					return
 				}
+
 				u.stateMutex.Unlock()
 				time.Sleep(time.Duration(5) * time.Second)
 				sdkLog("ws  ReadMessage failed, sleep 5s, reconn, ", err)

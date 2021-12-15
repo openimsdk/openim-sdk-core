@@ -229,7 +229,6 @@ func (u *UserRelated) GetTotalUnreadMsgCount(callback Base) {
 	} else {
 		callback.OnSuccess(int32ToString(count))
 	}
-
 }
 
 type OnConversationListener interface {
