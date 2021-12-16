@@ -1335,9 +1335,10 @@ func (u *UserRelated) MarkC2CMessageAsRead(callback Base, receiver string, msgID
 			callback.OnError(300, err.Error())
 		} else {
 			callback.OnSuccess("")
-			var msgIDs []string
-			_ = json.Unmarshal([]byte(msgIDList), &msgIDs)
-			_ = u.setSingleMessageHasReadByMsgIDList(receiver, msgIDs)
+			err = u.setSingleMessageHasReadByMsgIDList(receiver, list)
+			if err != nil {
+				sdkLog("setSingleMessageHasReadByMsgIDList  err:", err.Error())
+			}
 			u.doUpdateConversation(cmd2Value{Value: updateConNode{conversationID, UpdateLatestMessageChange, ""}})
 			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		}

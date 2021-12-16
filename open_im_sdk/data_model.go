@@ -1659,7 +1659,7 @@ func (u *UserRelated) setSingleMessageHasRead(sendID string) (err error) {
 func (u *UserRelated) setSingleMessageHasReadByMsgIDList(sendID string, msgIDList []string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.Prepare("update chat_log set is_read=? where send_id=?And is_read=?AND session_type=?AND msgID in(" + sqlStringHandle(msgIDList) + ")")
+	stmt, err := u.Prepare("update chat_log set is_read=? where send_id=?And is_read=?AND session_type=?AND msg_id in(" + sqlStringHandle(msgIDList) + ")")
 	if err != nil {
 		return err
 	}
