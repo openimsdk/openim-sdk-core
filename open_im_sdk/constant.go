@@ -161,10 +161,6 @@ const (
 )
 
 const (
-	MessageHasNotRead = 0
-	MessageHasRead    = 1
-)
-const (
 	//ContentType
 	Text           = 101
 	Picture        = 102

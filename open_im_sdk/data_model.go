@@ -1614,6 +1614,7 @@ func (u *UserRelated) judgeMessageIfExistsBySeq(seq int64) bool {
 	}
 }
 func (u *UserRelated) getOneMessage(msgID string) (m *MsgStruct, err error) {
+	var isRead int
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
 	// query
@@ -1624,7 +1625,7 @@ func (u *UserRelated) getOneMessage(msgID string) (m *MsgStruct, err error) {
 	}
 	temp := new(MsgStruct)
 	for rows.Next() {
-		err = rows.Scan(&temp.ClientMsgID, &temp.SendID, &temp.IsRead,
+		err = rows.Scan(&temp.ClientMsgID, &temp.SendID, &isRead,
 			&temp.Seq, &temp.Status, &temp.SessionType, &temp.RecvID, &temp.ContentType, &temp.SenderFaceURL, &temp.SenderNickName,
 			&temp.MsgFrom, &temp.Content, &temp.Remark, &temp.PlatformID, &temp.SendTime, &temp.CreateTime)
 		if err != nil {
@@ -1633,6 +1634,7 @@ func (u *UserRelated) getOneMessage(msgID string) (m *MsgStruct, err error) {
 		}
 	}
 	if temp.ClientMsgID != "" {
+		temp.IsRead = getIsReadB(isRead)
 		return temp, nil
 	} else {
 		return nil, nil
@@ -1657,21 +1659,11 @@ func (u *UserRelated) setSingleMessageHasRead(sendID string) (err error) {
 func (u *UserRelated) setSingleMessageHasReadByMsgIDList(sendID string, msgIDList []string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.Prepare("update chat_log set is_read=? where send_id=?And is_read=?AND session_type=?AND msgID in(?)")
+	stmt, err := u.Prepare("update chat_log set is_read=? where send_id=?And is_read=?AND session_type=?AND msgID in(" + sqlStringHandle(msgIDList) + ")")
 	if err != nil {
 		return err
 	}
-	msgIDString := func(msgIDList []string) (s string) {
-		for i := 0; i < len(msgIDList); i++ {
-			if i == len(msgIDList)-1 {
-				s = s + "'" + msgIDList[i] + "'"
-			} else {
-				s = s + "'" + msgIDList[i] + "'" + ","
-			}
-		}
-		return s
-	}(msgIDList)
-	_, err = stmt.Exec(HasRead, sendID, NotRead, SingleChatType, msgIDString)
+	_, err = stmt.Exec(HasRead, sendID, NotRead, SingleChatType)
 	if err != nil {
 		return err
 	}
@@ -1739,13 +1731,14 @@ func (u *UserRelated) setMessageHasReadByMsgID(msgID string) (err error) {
 
 }
 func (u *UserRelated) getHistoryMessage(sourceConversationID string, startTime int64, count int, sessionType int) (err error, list MsgFormats) {
+	var isRead int
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
 	rows, err := u.Query("select * from chat_log WHERE (send_id = ? OR recv_id =? )AND (content_type<=? and content_type not in (?)or (content_type >=? and content_type <=?  and content_type not in(?,?)  ))AND status not in(?,?)AND session_type=?AND send_time<?  order by send_time DESC  LIMIT ? OFFSET 0 ",
 		sourceConversationID, sourceConversationID, AcceptFriendApplicationTip, HasReadReceipt, GroupTipBegin, GroupTipEnd, SetGroupInfoTip, JoinGroupTip, MsgStatusHasDeleted, MsgStatusRevoked, sessionType, startTime, count)
 	for rows.Next() {
 		temp := new(MsgStruct)
-		err = rows.Scan(&temp.ClientMsgID, &temp.SendID, &temp.IsRead, &temp.Seq, &temp.Status, &temp.SessionType,
+		err = rows.Scan(&temp.ClientMsgID, &temp.SendID, &isRead, &temp.Seq, &temp.Status, &temp.SessionType,
 			&temp.RecvID, &temp.ContentType, &temp.SenderFaceURL, &temp.SenderNickName, &temp.MsgFrom, &temp.Content, &temp.Remark, &temp.PlatformID, &temp.SendTime, &temp.CreateTime)
 		if err != nil {
 			sdkLog("getHistoryMessage,err:", err.Error())
@@ -1756,6 +1749,7 @@ func (u *UserRelated) getHistoryMessage(sourceConversationID string, startTime i
 				sdkLog("getHistoryMessage,err:", err.Error())
 				continue
 			}
+			temp.IsRead = getIsReadB(isRead)
 			list = append(list, temp)
 		}
 	}
@@ -1803,6 +1797,7 @@ func (u *UserRelated) updateMessageTimeAndMsgIDStatus(ClientMsgID string, sendTi
 	return nil
 }
 func (u *UserRelated) getMultipleMessageModel(messageIDList []string) (err error, list []*MsgStruct) {
+	var isRead int
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
 	rows, err := u.Query("SELECT * FROM chat_log where msg_id in (" + sqlStringHandle(messageIDList) + ")")
@@ -1810,7 +1805,7 @@ func (u *UserRelated) getMultipleMessageModel(messageIDList []string) (err error
 	defer rows.Close()
 	for rows.Next() {
 		temp := new(MsgStruct)
-		err = rows.Scan(&temp.ClientMsgID, &temp.SendID, &temp.IsRead, &temp.Seq, &temp.Status, &temp.SessionType,
+		err = rows.Scan(&temp.ClientMsgID, &temp.SendID, &isRead, &temp.Seq, &temp.Status, &temp.SessionType,
 			&temp.RecvID, &temp.ContentType, &temp.SenderFaceURL, &temp.SenderNickName, &temp.MsgFrom, &temp.Content, &temp.Remark, &temp.PlatformID, &temp.SendTime, &temp.CreateTime)
 		if err != nil {
 			sdkLog("getMultipleMessageModel,err:", err.Error())
@@ -1821,6 +1816,7 @@ func (u *UserRelated) getMultipleMessageModel(messageIDList []string) (err error
 				sdkLog("getMultipleMessageModel,err:", err.Error())
 				continue
 			}
+			temp.IsRead = getIsReadB(isRead)
 			list = append(list, temp)
 		}
 	}

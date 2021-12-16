@@ -227,7 +227,6 @@ func (u *UserRelated) SetConversationDraft(conversationID, draftText string, cal
 			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		}
 	}
-
 }
 func (u *UserRelated) PinConversation(conversationID string, isPinned bool, callback Base) {
 	if isPinned {

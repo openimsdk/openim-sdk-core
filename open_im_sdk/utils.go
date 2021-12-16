@@ -341,10 +341,18 @@ func GetConversationIDBySessionType(sourceID string, sessionType int) string {
 }
 func getIsRead(b bool) int {
 	if b {
-		return MessageHasRead
+		return HasRead
 	} else {
-		return MessageHasNotRead
+		return NotRead
 	}
+}
+func getIsReadB(i int) bool {
+	if i == HasRead {
+		return true
+	} else {
+		return false
+	}
+
 }
 
 func RunFuncName() string {
