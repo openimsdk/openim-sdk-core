@@ -55,7 +55,6 @@ func (ws *WServer) OnInit(wsPort int) {
 		ReadBufferSize:   4096,
 		CheckOrigin:      func(r *http.Request) bool { return true },
 	}
-
 }
 
 func (ws *WServer) Run() {

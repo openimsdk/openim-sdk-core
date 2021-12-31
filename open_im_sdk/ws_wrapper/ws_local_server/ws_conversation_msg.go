@@ -41,10 +41,10 @@ func (wsRouter *WsFuncRouter) SendMessage(input string, operationID string) {
 	sc.funcName = runFuncName()
 	sc.operationID = operationID
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "message", "recvID", "groupID", "onlineUserOnly") {
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "message", "recvID", "groupID", "onlineUserOnly", "offlinePushInfo") {
 		return
 	}
-	clientMsgID := userWorker.SendMessage(&sc, m["message"].(string), m["recvID"].(string), m["groupID"].(string), m["onlineUserOnly"].(bool))
+	clientMsgID := userWorker.SendMessage(&sc, m["message"].(string), m["recvID"].(string), m["groupID"].(string), m["onlineUserOnly"].(bool), m["offlinePushInfo"].(string))
 	sc.clientMsgID = clientMsgID
 
 }
@@ -522,9 +522,22 @@ func (wsRouter *WsFuncRouter) SendMessageNotOss(input string, operationID string
 	sc.funcName = runFuncName()
 	sc.operationID = operationID
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "message", "receiver", "groupID", "onlineUserOnly") {
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "message", "receiver", "groupID", "onlineUserOnly", "offlinePushInfo") {
 		return
 	}
-	clientMsgID := userWorker.SendMessageNotOss(&sc, m["message"].(string), m["receiver"].(string), m["groupID"].(string), m["onlineUserOnly"].(bool))
+	clientMsgID := userWorker.SendMessageNotOss(&sc, m["message"].(string), m["receiver"].(string), m["groupID"].(string), m["onlineUserOnly"].(bool), m["offlinePushInfo"].(string))
 	sc.clientMsgID = clientMsgID
+}
+func (wsRouter *WsFuncRouter) SetSdkLog(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "flag") {
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.SetSdkLog(m["flag"].(int32))
 }

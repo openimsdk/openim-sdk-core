@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func (u *UserRelated) doGroupMsg(msg MsgData) {
+func (u *UserRelated) doGroupMsg(msg *MsgData) {
 	if u.listener == nil {
 		sdkLog("group listener is null")
 		return
@@ -19,23 +19,23 @@ func (u *UserRelated) doGroupMsg(msg MsgData) {
 	go func() {
 		switch msg.ContentType {
 		case TransferGroupOwnerTip:
-			u.doTransferGroupOwner(&msg)
+			u.doTransferGroupOwner(msg)
 		case CreateGroupTip:
-			u.doCreateGroup(&msg)
+			u.doCreateGroup(msg)
 		case JoinGroupTip:
-			u.doJoinGroup(&msg)
+			u.doJoinGroup(msg)
 		case QuitGroupTip:
-			u.doQuitGroup(&msg)
+			u.doQuitGroup(msg)
 		case SetGroupInfoTip:
-			u.doSetGroupInfo(&msg)
+			u.doSetGroupInfo(msg)
 		case AcceptGroupApplicationTip:
-			u.doAcceptGroupApplication(&msg)
+			u.doAcceptGroupApplication(msg)
 		case RefuseGroupApplicationTip:
-			u.doRefuseGroupApplication(&msg)
+			u.doRefuseGroupApplication(msg)
 		case KickGroupMemberTip:
-			u.doKickGroupMember(&msg)
+			u.doKickGroupMember(msg)
 		case InviteUserToGroupTip:
-			u.doInviteUserToGroup(&msg)
+			u.doInviteUserToGroup(msg)
 		default:
 			sdkLog("ContentType tip failed, ", msg.ContentType)
 		}
@@ -440,15 +440,6 @@ func (u *UserRelated) createGroup(group groupInfo, memberList []createGroupMembe
 	sdkLog("syncJoinedGroupInfo ok")
 	u.syncGroupMemberByGroupId(createGroupResp.Data.GroupId)
 	sdkLog("syncGroupMemberByGroupId ok")
-
-	n := NotificationContent{
-		IsDisplay:   1,
-		DefaultTips: "You have joined the group chat:" + createGroupResp.Data.GroupName,
-		Detail:      createGroupResp.Data.GroupId,
-	}
-	msg := u.createTextSystemMessage(n, CreateGroupTip)
-	u.autoSendMsg(msg, "", createGroupResp.Data.GroupId, false, true, true)
-	sdkLog("sendMsg, groupId: ", createGroupResp.Data.GroupId)
 	return &createGroupResp, nil
 }
 
@@ -473,11 +464,6 @@ func (u *UserRelated) joinGroup(groupId, message string) error {
 	u.syncApplyGroupRequest()
 	sdkLog("syncApplyGroupRequest ok")
 
-	n := NotificationContent{
-		IsDisplay:   1,
-		DefaultTips: "User：" + u.LoginUid + " application to join your group",
-		Detail:      groupId + "," + message,
-	}
 	memberList, err := u.getGroupAllMemberListByGroupIdFromSvr(groupId)
 	if err != nil {
 		sdkLog("getGroupAllMemberListByGroupIdFromSvr failed", err.Error())
@@ -492,10 +478,6 @@ func (u *UserRelated) joinGroup(groupId, message string) error {
 		}
 	}
 	sdkLog("get admin from svr ok ", groupId, groupAdminUser)
-
-	msg := u.createTextSystemMessage(n, JoinGroupTip)
-	err = u.autoSendMsg(msg, groupAdminUser, "", false, false, false)
-	sdkLog("sendMsg ", n, groupAdminUser, err)
 	return nil
 }
 
@@ -522,20 +504,6 @@ func (u *UserRelated) quitGroup(groupId string) error {
 	sdkLog("syncJoinedGroupInfo ok")
 	u.syncGroupMemberByGroupId(groupId) //todo
 	sdkLog("syncGroupMemberByGroupId ok ", groupId)
-
-	userInfo, err := u.getLoginUserInfoFromLocal()
-	if err != nil {
-		sdkLog("getLoginUserInfoFromLocal failed", err.Error())
-		return err
-	}
-	n2Group := NotificationContent{
-		IsDisplay:   1,
-		DefaultTips: "User: " + userInfo.Name + " have quit group chat",
-		Detail:      groupId,
-	}
-	msg2Group := u.createTextSystemMessage(n2Group, QuitGroupTip)
-	err = u.autoSendMsg(msg2Group, "", groupId, false, true, false)
-	sdkLog("sendMsg, ", n2Group, groupId, err)
 	return nil
 }
 
@@ -611,26 +579,6 @@ func (u *UserRelated) setGroupInfo(newGroupInfo setGroupInfoReq) error {
 
 	u.syncJoinedGroupInfo()
 	sdkLog("syncJoinedGroupInfo ok")
-
-	groupInfo, err := u.getLocalGroupInfoByGroupId1(newGroupInfo.GroupId)
-	if err != nil {
-		sdkLog("getLocalGroupInfoByGroupId", err.Error())
-		return err
-	}
-	jsonInfo, err := json.Marshal(groupInfo)
-	if err != nil {
-		sdkLog("marshal failed", err.Error())
-		return err
-	}
-
-	n := NotificationContent{
-		IsDisplay:   1,
-		DefaultTips: "Group Info has been changed",
-		Detail:      string(jsonInfo),
-	}
-	msg := u.createTextSystemMessage(n, SetGroupInfoTip)
-	err = u.autoSendMsg(msg, "", newGroupInfo.GroupId, false, false, true)
-	sdkLog("sendMsg: ", n, string(jsonInfo), err)
 	return nil
 }
 
@@ -748,7 +696,6 @@ func (u *UserRelated) kickGroupMember(groupId string, memberList []string, reaso
 		sdkLog("resp failed, ", sctResp.ErrCode, sctResp.ErrMsg)
 		return nil, errors.New(sctResp.ErrMsg)
 	}
-	err = u.autoSendKickGroupMemberTip(&req)
 	sdkLog("kickGroupMember, ", groupId, memberList, reason, req)
 	return sctResp.Data, nil
 }
@@ -795,7 +742,6 @@ func (u *UserRelated) inviteUserToGroup(groupId string, reason string, userList 
 		return nil, errors.New(stcResp.ErrMsg)
 	}
 
-	err = u.autoSendInviteUserToGroupTip(req)
 	sdkLog("inviteUserToGroup, autoSendInviteUserToGroupTip", groupId, reason, userList, req, err)
 	return stcResp.Data, nil
 }

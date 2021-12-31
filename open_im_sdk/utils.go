@@ -346,6 +346,13 @@ func getIsRead(b bool) int {
 		return NotRead
 	}
 }
+func getIsFilter(b bool) int {
+	if b {
+		return IsFilter
+	} else {
+		return NotFilter
+	}
+}
 func getIsReadB(i int) bool {
 	if i == HasRead {
 		return true
@@ -611,4 +618,14 @@ func isContain(target string, List []string) bool {
 	}
 	return false
 
+}
+
+func GetSwitchFromOptions(Options map[string]bool, key string) (result bool) {
+	if flag, ok := Options[key]; !ok || flag {
+		return true
+	}
+	return false
+}
+func SetSwitchFromOptions(Options map[string]bool, key string, value bool) {
+	Options[key] = value
 }

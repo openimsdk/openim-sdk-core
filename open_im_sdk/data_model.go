@@ -63,17 +63,16 @@ func (u *UserRelated) initDBX(uid string) error {
 	}
 	u.db = db
 	//(&u.Uid, &u.Name, &u.Icon, &u.Gender, &u.Mobile, &u.Birth, u.Email, &u.Ex)
-	table := "CREATE TABLE if not exists `user` " +
-		"(`uid` varchar(64) NOT NULL , " +
-		"`name` varchar(64) DEFAULT NULL , " +
-		"`icon` varchar(1024) DEFAULT NULL , " +
-		"`gender` int(11) DEFAULT NULL , " +
-		"`mobile` varchar(32) DEFAULT NULL , " +
-		"`birth` varchar(16) DEFAULT NULL , " +
-		"`email` varchar(64) DEFAULT NULL , " +
-		"`ex` varchar(1024) DEFAULT NULL,  " +
-		" PRIMARY KEY (uid) " +
-		")"
+	table := `CREATE TABLE if not exists user(
+        user_id char(64) PRIMARY KEY NOT NULL , 
+		name varchar(64) DEFAULT NULL , 
+		face_url varchar(100) DEFAULT NULL , 
+		gender int(11) DEFAULT NULL , 
+		phone_number varchar(32) DEFAULT NULL , 
+		birth INTEGER DEFAULT NULL , 
+		email varchar(64) DEFAULT NULL , 
+		ex varchar(1024) DEFAULT NULL, 
+         )`
 	_, err = db.Exec(table)
 	if err != nil {
 		sdkLog(err.Error())
@@ -157,7 +156,7 @@ func (u *UserRelated) initDBX(uid string) error {
 	table = `create table if not exists  chat_log (
       msg_id varchar(128)   NOT NULL,
 	  send_id varchar(255)   NOT NULL ,
-	  is_read int(255) NOT NULL ,
+	  is_read int(10) NOT NULL ,
 	  seq int(255) DEFAULT NULL ,
 	  status int(11) NOT NULL ,
 	  session_type int(11) NOT NULL ,
@@ -171,6 +170,7 @@ func (u *UserRelated) initDBX(uid string) error {
 	  sender_platform_id int(11) NOT NULL ,
 	  send_time INTEGER(255) DEFAULT NULL ,
 	  create_time INTEGER (255) DEFAULT NULL,
+      is_filter int(10) NOT NULL,
 	  PRIMARY KEY (msg_id) 
 	)`
 	_, err = db.Exec(table)
@@ -491,19 +491,31 @@ func convert(nanoSecond int64) string {
 	return time.Unix(0, nanoSecond).Format("2006-01-02_15-04-05")
 }
 
-func (u *UserRelated) insertConversationModel(c *ConversationStruct) (err error) {
+func (u *UserRelated) batchInsertConversationModel(conversations []*ConversationStruct) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
+	tx, err := u.db.Begin()
+	if err != nil {
+		sdkLog("start transaction err:", err.Error())
+		return err
+	}
 	stmt, err := u.Prepare("INSERT INTO conversation(conversation_id, conversation_type, " +
 		"user_id,group_id,show_name,face_url,recv_msg_opt,unread_count,latest_msg,latest_msg_send_time,draft_text,draft_timestamp,is_pinned) values(?,?,?,?,?,?,?,?,?,?,?,?,?)")
 	if err != nil {
 		sdkLog(err.Error())
 		return err
 	}
-	_, err = stmt.Exec(c.ConversationID, c.ConversationType, c.UserID, c.GroupID, c.ShowName, c.FaceURL, c.RecvMsgOpt, c.UnreadCount, c.LatestMsg, c.LatestMsgSendTime, c.DraftText, c.DraftTimestamp, c.IsPinned)
+	defer stmt.Close()
+	for _, c := range conversations {
+		_, err = stmt.Exec(c.ConversationID, c.ConversationType, c.UserID, c.GroupID, c.ShowName, c.FaceURL, c.RecvMsgOpt, c.UnreadCount, c.LatestMsg, c.LatestMsgSendTime, c.DraftText, c.DraftTimestamp, c.IsPinned)
+		if err != nil {
+			sdkLog("Exec failed", err.Error(), c)
+			continue
+		}
+	}
+	err = tx.Commit()
 	if err != nil {
-		sdkLog(err.Error())
-		return err
+		sdkLog("transaction commit failed", err.Error())
 	}
 	return nil
 }
@@ -526,7 +538,7 @@ func (u *UserRelated) getConversationLatestMsgModel(conversationID string) (err 
 	return nil, s
 }
 
-func (u *UserRelated) setConversationLatestMsgModel(latestMsgSendTime int64, latestMsg, conversationID string) (err error) {
+func (u *UserRelated) updateConversationLatestMsgModel(latestMsgSendTime int64, latestMsg, conversationID string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	stmt, err := u.Prepare("update conversation set latest_msg=?,latest_msg_send_time=? where conversation_id=?")
@@ -538,6 +550,35 @@ func (u *UserRelated) setConversationLatestMsgModel(latestMsgSendTime int64, lat
 	_, err = stmt.Exec(latestMsg, latestMsgSendTime, conversationID)
 	if err != nil {
 		sdkLog(err.Error())
+		return err
+	}
+	return nil
+
+}
+func (u *UserRelated) batchUpdateConversationLatestMsgModel(conversations []*ConversationStruct) (err error) {
+	u.mRWMutex.Lock()
+	defer u.mRWMutex.Unlock()
+	tx, err := u.db.Begin()
+	if err != nil {
+		sdkLog("start transaction err:", err.Error())
+		return err
+	}
+	stmt, err := u.Prepare("update conversation set latest_msg=?,latest_msg_send_time=?,unread_count = unread_count+? where conversation_id=?")
+	if err != nil {
+		sdkLog(err.Error())
+		return err
+	}
+	defer stmt.Close()
+	for _, c := range conversations {
+		_, err = stmt.Exec(c.LatestMsg, c.LatestMsgSendTime, c.UnreadCount, c.ConversationID)
+		if err != nil {
+			sdkLog(err.Error())
+			return err
+		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		sdkLog("transaction commit failed, ", err.Error())
 		return err
 	}
 	return nil
@@ -584,7 +625,7 @@ func (u *UserRelated) judgeConversationIfExists(conversationID string) bool {
 	}
 
 }
-func (u *UserRelated) addConversationOrUpdateLatestMsg(c *ConversationStruct, conversationID string) (err error) {
+func (u *UserRelated) insertConOrUpdateLatestMsg(c *ConversationStruct, conversationID string) (err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	stmt, err := u.Prepare("INSERT INTO conversation(conversation_id, conversation_type, user_id,group_id,show_name,face_url,recv_msg_opt,unread_count,latest_msg,latest_msg_send_time,draft_text,draft_timestamp,is_pinned)" +
@@ -1526,7 +1567,7 @@ func (u *UserRelated) insertMessageToLocalOrUpdateContent(message *MsgStruct) (e
 	}
 	_, err = stmt.Exec(message.ClientMsgID, message.SendID,
 		getIsRead(message.IsRead), message.Seq, message.Status, message.SessionType, message.RecvID, message.ContentType, message.SenderFaceURL, message.SenderNickName,
-		message.MsgFrom, message.Content, message.Remark, message.PlatformID, message.SendTime, message.CreateTime, message.Content)
+		message.MsgFrom, message.Content, message.Remark, message.SenderPlatformID, message.SendTime, message.CreateTime, message.Content)
 	if err != nil {
 		sdkLog("failed ", err.Error())
 		return err
@@ -1546,29 +1587,94 @@ func (u *UserRelated) insertMessageToChatLog(message *MsgStruct) (err error) {
 	}
 	_, err = stmt.Exec(message.ClientMsgID, message.SendID,
 		getIsRead(message.IsRead), message.Seq, message.Status, message.SessionType, message.RecvID, message.ContentType, message.SenderFaceURL, message.SenderNickName,
-		message.MsgFrom, message.Content, message.Remark, message.PlatformID, message.SendTime, message.CreateTime, message.Seq)
+		message.MsgFrom, message.Content, message.Remark, message.SenderPlatformID, message.SendTime, message.CreateTime, message.Seq)
 	if err != nil {
 		sdkLog("Exec failed, ", err.Error())
 		return err
 	}
 	return nil
 }
-
-func (u *UserRelated) updateMessageSeq(message *MsgStruct, status int) (err error) {
+func (u *UserRelated) batchInsertMessageToChatLog(messages []*InsertMsg) (err error, errMsg []*MsgStruct) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	stmt, err := u.Prepare("update chat_log set seq=?,status=? where msg_id=?")
+	tx, err := u.db.Begin()
+	if err != nil {
+		sdkLog("start transaction err:", err.Error())
+		return err, nil
+	}
+	stmt, err := u.Prepare("INSERT INTO chat_log(msg_id, send_id, is_read," +
+		" seq,status, session_type, recv_id, content_type, sender_face_url,sender_nick_name,msg_from, content, remark,sender_platform_id, send_time,create_time,is_filter) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)" +
+		"ON CONFLICT(msg_id) DO UPDATE SET seq = ?")
 	if err != nil {
 		sdkLog("Prepare failed, ", err.Error())
-		return err
+		return err, nil
 	}
-	_, err = stmt.Exec(message.Seq, status, message.ClientMsgID)
+	defer stmt.Close()
+	for _, message := range messages {
+		_, err = stmt.Exec(message.ClientMsgID, message.SendID,
+			getIsRead(message.IsRead), message.Seq, message.Status, message.SessionType, message.RecvID, message.ContentType, message.SenderFaceURL, message.SenderNickName,
+			message.MsgFrom, message.Content, message.Remark, message.SenderPlatformID, message.SendTime, message.CreateTime, getIsFilter(message.isFilter), message.Seq)
+		if err != nil {
+			sdkLog("Exec failed, ", err.Error(), message)
+			errMsg = append(errMsg, message.MsgStruct)
+			continue
+		}
+	}
+	err = tx.Commit()
 	if err != nil {
-		sdkLog("Exec failed ", err.Error())
-		return err
+		sdkLog("transaction commit failed, ", err.Error())
+		return err, nil
 	}
-	return nil
+	return nil, errMsg
 }
+func (u *UserRelated) batchInsertErrorMessageToErrorChatLog(messages []*MsgStruct) (err error, errMsg []*MsgStruct) {
+	u.mRWMutex.Lock()
+	defer u.mRWMutex.Unlock()
+	tx, err := u.db.Begin()
+	if err != nil {
+		sdkLog("start transaction err:", err.Error())
+		return err, nil
+	}
+	stmt, err := u.Prepare("INSERT INTO error_chat_log(seq,msg_id, send_id, is_read," +
+		" status, session_type, recv_id, content_type, sender_face_url,sender_nick_name,msg_from, content, remark,sender_platform_id, send_time,create_time) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+	if err != nil {
+		sdkLog("Prepare failed, ", err.Error())
+		return err, nil
+	}
+	defer stmt.Close()
+	for _, message := range messages {
+		_, err = stmt.Exec(message.Seq, message.ClientMsgID, message.SendID,
+			getIsRead(message.IsRead), message.Status, message.SessionType, message.RecvID, message.ContentType, message.SenderFaceURL, message.SenderNickName,
+			message.MsgFrom, message.Content, message.Remark, message.SenderPlatformID, message.SendTime, message.CreateTime)
+		if err != nil {
+			sdkLog("Exec failed, ", err.Error())
+			errMsg = append(errMsg, message)
+			continue
+		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		sdkLog("transaction commit failed, ", err.Error())
+		return err, nil
+	}
+	return nil, errMsg
+}
+
+//func (u *UserRelated) updateMessageSeq(message *MsgStruct) (err error) {
+//	u.mRWMutex.Lock()
+//	defer u.mRWMutex.Unlock()
+//	stmt, err := u.Prepare("update chat_log set seq=?,status=? where msg_id=?")
+//	if err != nil {
+//		sdkLog("Prepare failed, ", err.Error())
+//		return err
+//	}
+//	_, err = stmt.Exec(message.Seq, message.Status, message.ClientMsgID)
+//	if err != nil {
+//		sdkLog("Exec failed ", err.Error())
+//		return err
+//	}
+//	return nil
+//}
 func (u *UserRelated) judgeMessageIfExists(msgID string) bool {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -1627,7 +1733,7 @@ func (u *UserRelated) getOneMessage(msgID string) (m *MsgStruct, err error) {
 	for rows.Next() {
 		err = rows.Scan(&temp.ClientMsgID, &temp.SendID, &isRead,
 			&temp.Seq, &temp.Status, &temp.SessionType, &temp.RecvID, &temp.ContentType, &temp.SenderFaceURL, &temp.SenderNickName,
-			&temp.MsgFrom, &temp.Content, &temp.Remark, &temp.PlatformID, &temp.SendTime, &temp.CreateTime)
+			&temp.MsgFrom, &temp.Content, &temp.Remark, &temp.SenderPlatformID, &temp.SendTime, &temp.CreateTime)
 		if err != nil {
 			sdkLog("getOneMessage,failed", err.Error())
 			continue
@@ -1736,10 +1842,13 @@ func (u *UserRelated) getHistoryMessage(sourceConversationID string, startTime i
 	defer u.mRWMutex.RUnlock()
 	rows, err := u.Query("select * from chat_log WHERE (send_id = ? OR recv_id =? )AND (content_type<=? and content_type not in (?)or (content_type >=? and content_type <=?  and content_type not in(?,?)  ))AND status not in(?,?)AND session_type=?AND send_time<?  order by send_time DESC  LIMIT ? OFFSET 0 ",
 		sourceConversationID, sourceConversationID, AcceptFriendApplicationTip, HasReadReceipt, GroupTipBegin, GroupTipEnd, SetGroupInfoTip, JoinGroupTip, MsgStatusHasDeleted, MsgStatusRevoked, sessionType, startTime, count)
+	if err != nil {
+		return err, nil
+	}
 	for rows.Next() {
 		temp := new(MsgStruct)
 		err = rows.Scan(&temp.ClientMsgID, &temp.SendID, &isRead, &temp.Seq, &temp.Status, &temp.SessionType,
-			&temp.RecvID, &temp.ContentType, &temp.SenderFaceURL, &temp.SenderNickName, &temp.MsgFrom, &temp.Content, &temp.Remark, &temp.PlatformID, &temp.SendTime, &temp.CreateTime)
+			&temp.RecvID, &temp.ContentType, &temp.SenderFaceURL, &temp.SenderNickName, &temp.MsgFrom, &temp.Content, &temp.Remark, &temp.SenderPlatformID, &temp.SendTime, &temp.CreateTime)
 		if err != nil {
 			sdkLog("getHistoryMessage,err:", err.Error())
 			continue
@@ -1802,11 +1911,14 @@ func (u *UserRelated) getMultipleMessageModel(messageIDList []string) (err error
 	defer u.mRWMutex.RUnlock()
 	rows, err := u.Query("SELECT * FROM chat_log where msg_id in (" + sqlStringHandle(messageIDList) + ")")
 	fmt.Println("SELECT * FROM conversation where conversation_id in (" + sqlStringHandle(messageIDList) + ")")
+	if err != nil {
+		return err, nil
+	}
 	defer rows.Close()
 	for rows.Next() {
 		temp := new(MsgStruct)
 		err = rows.Scan(&temp.ClientMsgID, &temp.SendID, &isRead, &temp.Seq, &temp.Status, &temp.SessionType,
-			&temp.RecvID, &temp.ContentType, &temp.SenderFaceURL, &temp.SenderNickName, &temp.MsgFrom, &temp.Content, &temp.Remark, &temp.PlatformID, &temp.SendTime, &temp.CreateTime)
+			&temp.RecvID, &temp.ContentType, &temp.SenderFaceURL, &temp.SenderNickName, &temp.MsgFrom, &temp.Content, &temp.Remark, &temp.SenderPlatformID, &temp.SendTime, &temp.CreateTime)
 		if err != nil {
 			sdkLog("getMultipleMessageModel,err:", err.Error())
 			continue
@@ -1983,24 +2095,7 @@ func (u *UserRelated) getConsequentLocalMaxSeq() (seq int64, err error) {
 		return rSeq, nil
 	}
 }
-func (u *UserRelated) setErrorMessageToErrorChatLog(message *MsgStruct) (err error) {
-	u.mRWMutex.Lock()
-	defer u.mRWMutex.Unlock()
-	stmt, err := u.Prepare("INSERT INTO error_chat_log(seq,msg_id, send_id, is_read," +
-		" status, session_type, recv_id, content_type, sender_face_url,sender_nick_name,msg_from, content, remark,sender_platform_id, send_time,create_time) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
-	if err != nil {
-		sdkLog("Prepare failed, ", err.Error())
-		return err
-	}
-	_, err = stmt.Exec(message.Seq, message.ClientMsgID, message.SendID,
-		getIsRead(message.IsRead), message.Status, message.SessionType, message.RecvID, message.ContentType, message.SenderFaceURL, message.SenderNickName,
-		message.MsgFrom, message.Content, message.Remark, message.PlatformID, message.SendTime, message.CreateTime)
-	if err != nil {
-		sdkLog("Exec failed, ", err.Error())
-		return err
-	}
-	return nil
-}
+
 func (u *UserRelated) isExistsInErrChatLogBySeq(seq int64) bool {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()

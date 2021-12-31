@@ -99,7 +99,7 @@ func (u *UserRelated) initListenerCh() {
 	u.ConversationCh = u.ch
 
 	u.wsNotification = make(map[string]chan GeneralWsResp, 1)
-	u.seqMsg = make(map[int32]MsgData, 1000)
+	u.seqMsg = make(map[int32]*MsgData, 1000)
 
 	u.receiveMessageOpt = make(map[string]int32, 1000)
 }
@@ -121,14 +121,15 @@ type UserRelated struct {
 	mRWMutex   sync.RWMutex
 	stateMutex sync.Mutex
 
+	//Global minimum seq lock
 	minSeqSvr        int64
 	minSeqSvrRWMutex sync.RWMutex
-
-	seqMsg      map[int32]MsgData
+	//Global cache seq map lock
+	seqMsg      map[int32]*MsgData
 	seqMsgMutex sync.RWMutex
 
 	//	receiveMessageOpt sync.Map
-
+	//Global message not disturb cache lock
 	receiveMessageOpt      map[string]int32
 	receiveMessageOptMutex sync.RWMutex
 }
@@ -213,6 +214,12 @@ const (
 	MsgStatusSendFailed  = 3
 	MsgStatusHasDeleted  = 4
 	MsgStatusRevoked     = 5
+
+	//OptionsKey
+	IsHistory            = "history"
+	IsPersistent         = "persistent"
+	IsUnreadCount        = "unreadCount"
+	IsConversationUpdate = "conversationUpdate"
 )
 
 const (
@@ -261,6 +268,9 @@ const (
 
 	HasRead = 1
 	NotRead = 0
+
+	IsFilter  = 1
+	NotFilter = 0
 
 	Pinned    = 1
 	NotPinned = 0

@@ -3,13 +3,13 @@ package open_im_sdk
 import (
 	"database/sql"
 	"encoding/json"
-	"strings"
 )
 
 type ChatLog struct {
 	MsgId            string
 	SendID           string
 	IsRead           int32
+	IsFilter         int32
 	Seq              int64
 	Status           int32
 	SessionType      int32
@@ -31,6 +31,7 @@ type ConversationStruct struct {
 	FaceURL           string `json:"faceUrl"`
 	RecvMsgOpt        int    `json:"recvMsgOpt"`
 	UnreadCount       int    `json:"unreadCount"`
+	GroupAtType       int    `json:"groupAtType"`
 	LatestMsg         string `json:"latestMsg"`
 	LatestMsgSendTime int64  `json:"latestMsgSendTime"`
 	DraftText         string `json:"draftText"`
@@ -42,7 +43,10 @@ type ConversationListener struct {
 	MsgListenerList       []OnAdvancedMsgListener
 	ch                    chan cmd2Value
 }
-type void struct{}
+type InsertMsg struct {
+	*MsgStruct
+	isFilter bool
+}
 
 func (con *ConversationListener) getCh() chan cmd2Value {
 	return con.ch
@@ -53,44 +57,52 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 		sdkLog("not set c MsgListenerList", len(u.MsgListenerList))
 		return
 	}
-	var newMessages, msgReadList, msgRevokeList []*MsgStruct
+	var insertMsg []*InsertMsg
+	var errMsg, newMessages, msgReadList, msgRevokeList []*MsgStruct
+	var isUnreadCount, isConversationUpdate bool
 	var isCallbackUI bool
-	conversationChangSet := make(map[string]void)
-	newConversationSet := make(map[string]void)
+	conversationChangedSet := make(map[string]ConversationStruct)
+	newConversationSet := make(map[string]ConversationStruct)
 	//MsgList := c2v.Value.(ArrMsg)
 	//for _, v := range MsgList.GroupData {
 	//	MsgList.SingleData = append(MsgList.SingleData, v)
 	//}
 	sdkLog("do Msg come here")
 	u.seqMsgMutex.Lock()
-	for k, v := range u.seqMsg {
+	for _, v := range u.seqMsg {
+		//isHistory = GetSwitchFromOptions(v.Options, IsHistory)
+		isUnreadCount = GetSwitchFromOptions(v.Options, IsUnreadCount)
+		isConversationUpdate = GetSwitchFromOptions(v.Options, IsConversationUpdate)
 		isCallbackUI = true
 		msg := &MsgStruct{
-			SendID:         v.SendID,
-			SessionType:    v.SessionType,
-			MsgFrom:        v.MsgFrom,
-			ContentType:    v.ContentType,
-			ServerMsgID:    v.ServerMsgID,
-			ClientMsgID:    v.ClientMsgID,
-			Content:        v.Content,
-			SendTime:       v.SendTime,
-			SenderFaceURL:  v.SenderFaceURL,
-			SenderNickName: v.SenderNickName,
-			Seq:            v.Seq,
-			PlatformID:     v.SenderPlatformID,
-			Status:         MsgStatusSendSuccess,
-			IsRead:         false,
+			SendID:           v.SendID,
+			SessionType:      v.SessionType,
+			MsgFrom:          v.MsgFrom,
+			ContentType:      v.ContentType,
+			ServerMsgID:      v.ServerMsgID,
+			ClientMsgID:      v.ClientMsgID,
+			Content:          string(v.Content),
+			SendTime:         v.SendTime,
+			CreateTime:       v.CreateTime,
+			RecvID:           v.RecvID,
+			SenderFaceURL:    v.SenderFaceURL,
+			SenderNickName:   v.SenderNickName,
+			Seq:              v.Seq,
+			SenderPlatformID: v.SenderPlatformID,
+			ForceList:        v.ForceList,
+			GroupID:          v.GroupID,
+			Status:           MsgStatusSendSuccess,
+			IsRead:           false,
 		}
 		sdkLog("new msg, seq, ServerMsgID, ClientMsgID", msg.Seq, msg.ServerMsgID, msg.ClientMsgID)
 		//De-analyze data
 		err := u.msgHandleByContentType(msg)
 		if err != nil {
 			sdkLog("Parsing data error:", err.Error(), msg)
-			return
+			continue
 		}
 		switch v.SessionType {
 		case SingleChatType:
-			msg.RecvID = v.RecvID
 			if v.ContentType > SingleTipBegin && v.ContentType < SingleTipEnd {
 				u.doFriendMsg(v)
 				sdkLog("doFriendMsg, ", v)
@@ -99,8 +111,6 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 				sdkLog("doGroupMsg, SingleChat ", v)
 			}
 		case GroupChatType:
-			msg.RecvID = strings.Split(v.RecvID, " ")[1]
-			msg.GroupID = msg.RecvID
 			if v.ContentType > GroupTipBegin && v.ContentType < GroupTipEnd {
 				u.doGroupMsg(v)
 				sdkLog("doGroupMsg, ", v)
@@ -111,37 +121,15 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 			if err == nil && m != nil {
 				sdkLog("have message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
 				if m.Seq == 0 {
-					err := u.updateMessageSeq(msg, MsgStatusSendSuccess)
-					if err != nil {
-						sdkLog("updateMessageSeq err", err.Error(), msg)
-					} else {
-						//remove cache
-						delete(u.seqMsg, k)
-					}
+					insertMsg = append(insertMsg, &InsertMsg{MsgStruct: msg})
 				} else {
-					err := u.setErrorMessageToErrorChatLog(msg)
-					if err != nil {
-						sdkLog("setErrorMessage  err", err.Error(), msg)
-					}
+					errMsg = append(errMsg, msg)
+
 				}
 			} else { //      send through  other terminal
 				sdkLog("sync message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
-				err = u.insertMessageToChatLog(msg)
-				if err != nil {
-					sdkLog(" sync insertMessageToChatLog err", err.Error(), msg)
-					err := u.setErrorMessageToErrorChatLog(msg)
-					if err != nil {
-						sdkLog("setErrorMessage err", err.Error(), *msg)
-					}
-				} else {
-					//remove cache
-					delete(u.seqMsg, k)
-				}
 				c := ConversationStruct{
-					//ConversationID:    conversationID,
-					ConversationType: int(v.SessionType),
-					//UserID:            userID,
-					//GroupID:           groupID,
+					ConversationType:  int(v.SessionType),
 					LatestMsg:         structToJsonString(msg),
 					LatestMsgSendTime: msg.SendTime,
 				}
@@ -153,7 +141,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 					c.FaceURL = faceUrl
 					c.ShowName = name
 				case GroupChatType:
-					c.GroupID = strings.Split(v.RecvID, " ")[1]
+					c.GroupID = v.GroupID
 					c.ConversationID = GetConversationIDBySessionType(c.GroupID, GroupChatType)
 					faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
 					if err != nil {
@@ -163,105 +151,101 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 						c.FaceURL = faceUrl
 					}
 				}
-				u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, UpdateFaceUrlAndNickName, c}})
-				if msg.ContentType <= AcceptFriendApplicationTip && msg.ContentType != HasReadReceipt || msg.ContentType == CreateGroupTip {
-					newMessages = append(newMessages, msg)
-					u.updateConversation(&c, conversationChangSet, newConversationSet)
+				if isUnreadCount {
+					c.UnreadCount = 1
 				}
-				//}
+				if isConversationUpdate {
+					u.updateConversation(&c, conversationChangedSet, newConversationSet)
+					insertMsg = append(insertMsg, &InsertMsg{MsgStruct: msg})
+				} else {
+					insertMsg = append(insertMsg, &InsertMsg{MsgStruct: msg, isFilter: true})
+				}
+				newMessages = append(newMessages, msg)
+
 			}
 		} else { //Sent by others
 			if !u.judgeMessageIfExists(msg.ClientMsgID) { //Deduplication operation
-				if msg.ContentType != Typing && msg.ContentType != HasReadReceipt {
-					c := ConversationStruct{
-						//ConversationID:    conversationID,
-						ConversationType: int(v.SessionType),
-						//ShowName:          msg.SenderNickName,
-						//FaceURL:           msg.SenderFaceURL,
-						//UserID:            userID,
-						//GroupID:           groupID,
-						LatestMsg:         structToJsonString(msg),
-						LatestMsgSendTime: msg.SendTime,
-					}
-					err = u.insertMessageToChatLog(msg)
+				c := ConversationStruct{
+					ConversationType:  int(v.SessionType),
+					LatestMsg:         structToJsonString(msg),
+					LatestMsgSendTime: msg.SendTime,
+				}
+
+				switch v.SessionType {
+				case SingleChatType:
+					c.ConversationID = GetConversationIDBySessionType(v.SendID, SingleChatType)
+					c.UserID = v.SendID
+					c.ShowName = msg.SenderNickName
+					c.FaceURL = msg.SenderFaceURL
+				case GroupChatType:
+					c.GroupID = v.GroupID
+					c.ConversationID = GetConversationIDBySessionType(c.GroupID, GroupChatType)
+					faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
 					if err != nil {
-						sdkLog("insertMessageToChatLog err", err.Error(), msg)
+						sdkLog("getGroupNameAndFaceUrlByUid err:", err)
 					} else {
-						//remove cache
-						delete(u.seqMsg, k)
+						c.ShowName = name
+						c.FaceURL = faceUrl
 					}
-					switch v.SessionType {
-					case SingleChatType:
-						c.ConversationID = GetConversationIDBySessionType(v.SendID, SingleChatType)
-						c.UserID = v.SendID
-						c.ShowName = msg.SenderNickName
-						c.FaceURL = msg.SenderFaceURL
-					case GroupChatType:
-						c.GroupID = strings.Split(v.RecvID, " ")[1]
-						c.ConversationID = GetConversationIDBySessionType(c.GroupID, GroupChatType)
-						faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
-						if err != nil {
-							sdkLog("getGroupNameAndFaceUrlByUid err:", err)
-						} else {
-							c.ShowName = name
-							c.FaceURL = faceUrl
-						}
-					}
-					if msg.ContentType <= AcceptFriendApplicationTip || (msg.ContentType >= GroupTipBegin && msg.ContentType <= GroupTipEnd && msg.ContentType != SetGroupInfoTip && msg.ContentType != JoinGroupTip) {
-						u.updateConversation(&c, conversationChangSet, newConversationSet)
-						if msg.ContentType != Revoke {
-							u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, IncrUnread, ""}})
-						}
-						u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, UpdateFaceUrlAndNickName, c}})
-						newMessages = append(newMessages, msg)
-					}
-					if msg.ContentType == SetGroupInfoTip || msg.ContentType == SetSelfInfoTip {
-						u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, UpdateFaceUrlAndNickName, c}})
-						newMessages = append(newMessages, msg)
+				}
+				if isUnreadCount {
+					c.UnreadCount = 1
+				}
+				//u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, UpdateFaceUrlAndNickName, c}})
+				if isConversationUpdate {
+					insertMsg = append(insertMsg, &InsertMsg{MsgStruct: msg})
+					u.updateConversation(&c, conversationChangedSet, newConversationSet)
+					newMessages = append(newMessages, msg)
 
-					}
-					if msg.ContentType == Revoke {
-						msgRevokeList = append(msgRevokeList, msg)
-					}
 				} else {
-					if msg.ContentType == Typing {
-						//remove cache
-						delete(u.seqMsg, k)
-						sdkLog("Typing ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg, k)
-						newMessages = append(newMessages, msg)
+					insertMsg = append(insertMsg, &InsertMsg{MsgStruct: msg, isFilter: true})
 
-					} else {
-						err = u.insertMessageToChatLog(msg)
-						if err != nil {
-							sdkLog("insert HasReadReceipt err:", err)
-						} else {
-							//remove cache
-							delete(u.seqMsg, k)
-							//update read state
-							sdkLog("append msgReadList ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg)
-							msgReadList = append(msgReadList, msg)
-						}
-					}
+				}
+				if msg.ContentType == Revoke {
+					msgRevokeList = append(msgRevokeList, msg)
 				}
 			} else {
-				err := u.setErrorMessageToErrorChatLog(msg)
-				if err != nil {
-					sdkLog("setErrorMessage  err", err.Error(), msg)
-				} else {
-					sdkLog("repeat message err", msg.ClientMsgID, msg.Seq, msg.ServerMsgID)
-				}
+				errMsg = append(errMsg, msg)
 			}
 		}
 	}
+	//Normal message storage
+	err1, emsg1 := u.batchInsertMessageToChatLog(insertMsg)
+	if err1 != nil {
+		sdkLog("insert normal message err  :", err1.Error(), emsg1)
+	}
+	//Exception message storage
+	err2, emsg2 := u.batchInsertErrorMessageToErrorChatLog(errMsg)
+	if err2 != nil {
+		sdkLog("insert err message err  :", err2.Error(), emsg2)
+	}
+	//Changed conversation storage
+	err3 := u.batchUpdateConversationLatestMsgModel(mapConversationToList(conversationChangedSet))
+	if err3 != nil {
+		sdkLog("insert changed conversation err :", err3.Error())
+	}
+	//New conversation storage
+	err4 := u.batchInsertConversationModel(mapConversationToList(newConversationSet))
+	if err4 != nil {
+		sdkLog("insert new conversation err:", err4.Error())
+	}
+	//clear cache
+	func(m map[int32]*MsgData) {
+		for k := range m {
+			delete(m, k)
+		}
+	}(u.seqMsg)
 	u.seqMsgMutex.Unlock()
 	if isCallbackUI {
 		u.doMsgReadState(msgReadList)
 		u.revokeMessage(msgRevokeList)
 		u.newMessage(newMessages)
 		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, ""}})
-		sdkLog("trigger map is :", newConversationSet, conversationChangSet)
-		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewCon, mapKeyToStringList(newConversationSet)}})
-		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, mapKeyToStringList(conversationChangSet)}})
+		sdkLog("trigger map is :", newConversationSet, conversationChangedSet)
+		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewCon, mapKeyToStringList(newConversationSet)}})
+		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, mapKeyToStringList(conversationChangSet)}})
+		u.ConversationListenerx.OnConversationChanged(structToJsonString(mapConversationToList(conversationChangedSet)))
+		u.ConversationListenerx.OnNewConversation(structToJsonString(mapConversationToList(newConversationSet)))
 		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", TotalUnreadMessageChanged, ""}})
 	}
 	//sdkLog("length msgListenerList", u.MsgListenerList, "length message", len(newMessages), "msgListenerLen", len(u.MsgListenerList))
@@ -366,13 +350,13 @@ func (u *UserRelated) doUpdateConversation(c2v cmd2Value) {
 		if u.judgeConversationIfExists(node.ConId) {
 			_, o := u.getOneConversationModel(node.ConId)
 			if c.LatestMsgSendTime > o.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
-				err := u.setConversationLatestMsgModel(c.LatestMsgSendTime, c.LatestMsg, node.ConId)
+				err := u.updateConversationLatestMsgModel(c.LatestMsgSendTime, c.LatestMsg, node.ConId)
 				if err != nil {
-					sdkLog("setConversationLatestMsgModel err: ", err)
+					sdkLog("updateConversationLatestMsgModel err: ", err)
 				}
 			}
 		} else {
-			_ = u.addConversationOrUpdateLatestMsg(&c, node.ConId)
+			_ = u.insertConOrUpdateLatestMsg(&c, node.ConId)
 			var list []*ConversationStruct
 			list = append(list, &c)
 			u.ConversationListenerx.OnNewConversation(structToJsonString(list))
@@ -437,9 +421,9 @@ func (u *UserRelated) doUpdateConversation(c2v cmd2Value) {
 			} else {
 				latestMsg.IsRead = true
 				newLatestMessage := structToJsonString(latestMsg)
-				err = u.setConversationLatestMsgModel(latestMsg.SendTime, newLatestMessage, conversationID)
+				err = u.updateConversationLatestMsgModel(latestMsg.SendTime, newLatestMessage, conversationID)
 				if err != nil {
-					sdkLog("setConversationLatestMsgModel err :", err.Error())
+					sdkLog("updateConversationLatestMsgModel err :", err.Error())
 				}
 			}
 		}
@@ -534,32 +518,68 @@ func (u *UserRelated) getGroupNameAndFaceUrlByUid(groupID string) (faceUrl, name
 		return groupInfo.FaceUrl, groupInfo.GroupName, nil
 	}
 }
-func (u *UserRelated) updateConversation(c *ConversationStruct, cc, nc map[string]void) {
+func (u *UserRelated) updateConversation(c *ConversationStruct, cc, nc map[string]ConversationStruct) {
 	if u.judgeConversationIfExists(c.ConversationID) {
-		_, o := u.getOneConversationModel(c.ConversationID)
-		if c.LatestMsgSendTime > o.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
-			err := u.setConversationLatestMsgModel(c.LatestMsgSendTime, c.LatestMsg, c.ConversationID)
-			if err != nil {
-				sdkLog("setConversationLatestMsgModel err: ", err)
+		//_, o := u.getOneConversationModel(c.ConversationID)
+		//if c.LatestMsgSendTime > o.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
+		//	err := u.updateConversationLatestMsgModel(c.LatestMsgSendTime, c.LatestMsg, c.ConversationID)
+		//	if err != nil {
+		//		sdkLog("updateConversationLatestMsgModel err: ", err)
+		//	} else {
+		//		cc[c.ConversationID] = void{}
+		//	}
+		//}
+		if oldC, ok := cc[c.ConversationID]; ok {
+			if c.LatestMsgSendTime > oldC.LatestMsgSendTime {
+				c.UnreadCount = c.UnreadCount + oldC.UnreadCount
+				cc[c.ConversationID] = *c
 			} else {
-				cc[c.ConversationID] = void{}
+				oldC.UnreadCount = oldC.UnreadCount + c.UnreadCount
+				cc[c.ConversationID] = oldC
 			}
-		}
-	} else {
-		err := u.addConversationOrUpdateLatestMsg(c, c.ConversationID)
-		if err != nil {
-			sdkLog("addConversationOrUpdateLatestMsg err: ", err.Error())
 		} else {
-			nc[c.ConversationID] = void{}
+			cc[c.ConversationID] = *c
 		}
-		//var list []*ConversationStruct
-		//list = append(list, c)
-		//u.ConversationListenerx.OnNewConversation(structToJsonString(list))
+
+	} else {
+		if oldC, ok := nc[c.ConversationID]; ok {
+			if c.LatestMsgSendTime > oldC.LatestMsgSendTime {
+				c.UnreadCount = c.UnreadCount + oldC.UnreadCount
+				nc[c.ConversationID] = *c
+			} else {
+				oldC.UnreadCount = oldC.UnreadCount + c.UnreadCount
+				cc[c.ConversationID] = oldC
+			}
+		} else {
+			nc[c.ConversationID] = *c
+		}
 	}
+
+	//if u.judgeConversationIfExists(c.ConversationID) {
+	//	_, o := u.getOneConversationModel(c.ConversationID)
+	//	if c.LatestMsgSendTime > o.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
+	//		err := u.updateConversationLatestMsgModel(c.LatestMsgSendTime, c.LatestMsg, c.ConversationID)
+	//		if err != nil {
+	//			sdkLog("updateConversationLatestMsgModel err: ", err)
+	//		} else {
+	//			cc[c.ConversationID] = void{}
+	//		}
+	//	}
+	//} else {
+	//	err := u.insertConOrUpdateLatestMsg(c, c.ConversationID)
+	//	if err != nil {
+	//		sdkLog("insertConOrUpdateLatestMsg err: ", err.Error())
+	//	} else {
+	//		nc[c.ConversationID] = void{}
+	//	}
+	//	//var list []*ConversationStruct
+	//	//list = append(list, c)
+	//	//u.ConversationListenerx.OnNewConversation(structToJsonString(list))
+	//}
 }
-func mapKeyToStringList(m map[string]void) (s []string) {
-	for k, _ := range m {
-		s = append(s, k)
+func mapConversationToList(m map[string]ConversationStruct) (cs []*ConversationStruct) {
+	for _, v := range m {
+		cs = append(cs, &v)
 	}
-	return s
+	return cs
 }
