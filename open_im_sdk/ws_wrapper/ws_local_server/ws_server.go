@@ -263,12 +263,12 @@ func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request) bool {
 			http.Error(w, "Over quantity", status)
 			return false
 		}
-		if utils.StringToInt(query["platformID"][0]) != utils.WebPlatformID {
-			wrapSdkLog("check platform id failed", query["sendID"][0], query["platformID"][0])
-			w.Header().Set("Sec-Websocket-Version", "13")
-			http.Error(w, http.StatusText(status), StatusBadRequest)
-			return false
-		}
+		//if utils.StringToInt(query["platformID"][0]) != utils.WebPlatformID {
+		//	wrapSdkLog("check platform id failed", query["sendID"][0], query["platformID"][0])
+		//	w.Header().Set("Sec-Websocket-Version", "13")
+		//	http.Error(w, http.StatusText(status), StatusBadRequest)
+		//	return false
+		//}
 		checkFlag := open_im_sdk.CheckToken(query["sendID"][0], query["token"][0])
 		if checkFlag != 0 {
 			wrapSdkLog("check token failed", query["sendID"][0], query["token"][0])

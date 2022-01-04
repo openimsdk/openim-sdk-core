@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/pkg/errors"
+
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -326,9 +328,74 @@ var (
 	SENDINTERVAL = 20
 )
 
+func authenticate(a int) error {
+	if a == 0 {
+		return errors.New("test error")
+	}
+	return nil
+}
+
+// Annotate error
+func AuthenticateRequest(a int) error {
+	err := authenticate(a)
+	if err != nil {
+		var v GetTokenReq
+		v.Platform = 100
+		//	return fmt.Errorf("authenticate failed: %v", err, v)
+		return fmt.Errorf("open file error: %w", err)
+	}
+	return nil
+}
+
+// Better
+func f3() error {
+	return open_im_sdk.Wrap(errors.New("first error"), " wrap")
+
+}
+
+func f2() error {
+	err := f3()
+	if err != nil {
+		return open_im_sdk.WithMessage(err, "f3 err")
+	}
+	return nil
+}
+
+func f1() error {
+	err := f2()
+	if err != nil {
+		return open_im_sdk.WithMessage(err, "f2 err")
+	}
+	return nil
+}
+
+//
+//func Wrap(err error, message string) error {
+//	return errors.Wrap(err, "==> "+printCallerNameAndLine()+message)
+//}
+//
+//func WithMessage(err error, message string) error {
+//	return errors.WithMessage(err, "==> "+printCallerNameAndLine()+message)
+//}
+//
+//func printCallerNameAndLine() string {
+//	pc, _, line, _ := runtime.Caller(2)
+//	return runtime.FuncForPC(pc).Name() + "()@" + strconv.Itoa(line) + ": "
+//}
+
 // myuid,  maxuid,  msgnum
 func main() {
-	open_im_sdk.SetHearbeatInterval(5)
+	if err := f1(); err != nil {
+		fmt.Printf("f1 err1111111111111: %v", err)
+	}
+
+	return
+
+	err := AuthenticateRequest(0)
+	fmt.Printf("err: %+v", err)
+	return
+
+	open_im_sdk.SetHearbeatInterval(300)
 	for i := 0; i < 1; i++ {
 		myUid1 := 17712341234
 		strMyUid1 := GenUid(myUid1)
