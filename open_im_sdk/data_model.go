@@ -951,6 +951,7 @@ func (u *UserRelated) updateTheFriendInfo(uid, name, comment, icon string, gende
 	return nil
 }
 
+//1
 func (u *UserRelated) updateFriendInfo(uid, name, icon string, gender int32, mobile, birth, email, ex string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -1063,6 +1064,7 @@ func (u *UserRelated) updateApplicationList(info applyUserInfo) error {
 	return nil
 }
 
+//
 func (u *UserRelated) getFriendInfoByFriendUid(friendUid string) (*friendInfo, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()

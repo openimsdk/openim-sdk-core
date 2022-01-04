@@ -6,27 +6,20 @@ import (
 	"gorm.io/gorm"
 )
 
-var imdb *gorm.DB
-
-func InitDBX(uid string) error {
-	//if u.mRWMutex == nil {
-	//	u.mRWMutex = new(sync.RWMutex)
-	//}
-	if uid == "" {
+func (u *UserRelated) InitDB() error {
+	if u.LoginUid == "" {
 		return errors.New("no uid")
 	}
-	//u.mRWMutex.Lock()
-	//defer u.mRWMutex.Unlock()
-	//if u.db != nil {
-	//	u.db.Close()
-	//}
-	db, err := gorm.Open(sqlite.Open(SvrConf.DbDir+"OpenIM_"+uid+".db"), &gorm.Config{})
-	sdkLog("open db:", SvrConf.DbDir+"OpenIM_"+uid+".db")
+	u.mRWMutex.Lock()
+	defer u.mRWMutex.Unlock()
+
+	db, err := gorm.Open(sqlite.Open(SvrConf.DbDir+"OpenIM_"+u.LoginUid+".db"), &gorm.Config{})
+	sdkLog("open db:", SvrConf.DbDir+"OpenIM_"+u.LoginUid+".db")
 	if err != nil {
 		panic("failed to connect database" + err.Error())
 		return err
 	}
-	imdb = db
+	u.imdb = db
 	//db, err := sql.Open("sqlite3", SvrConf.DbDir+"OpenIM_"+uid+".db")
 	//sdkLog("open db:", SvrConf.DbDir+"OpenIM_"+uid+".db")
 	//if err != nil {
@@ -77,5 +70,4 @@ func InitDBX(uid string) error {
 		db.Migrator().CreateTable(&Black{})
 	}
 	return nil
-
 }

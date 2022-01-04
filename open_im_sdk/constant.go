@@ -2,6 +2,7 @@ package open_im_sdk
 
 import (
 	"database/sql"
+	"gorm.io/gorm"
 	"sync"
 )
 
@@ -109,7 +110,7 @@ type UserRelated struct {
 
 	SvrConf        IMConfig
 	token          string
-	LoginUid       string
+	LoginUserID    string
 	wsNotification map[string]chan GeneralWsResp
 	wsMutex        sync.RWMutex
 	IMManager
@@ -117,7 +118,10 @@ type UserRelated struct {
 	ConversationListener
 	groupListener
 
-	db         *sql.DB
+	db *sql.DB
+
+	imdb *gorm.DB
+
 	mRWMutex   sync.RWMutex
 	stateMutex sync.Mutex
 
