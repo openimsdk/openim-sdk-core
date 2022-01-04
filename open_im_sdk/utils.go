@@ -620,11 +620,11 @@ func isContain(target string, List []string) bool {
 
 }
 
-func Wrap(err error, message string) error {
+func wrap(err error, message string) error {
 	return errors.Wrap(err, "==> "+printCallerNameAndLine()+message)
 }
 
-func WithMessage(err error, message string) error {
+func withMessage(err error, message string) error {
 	return errors.WithMessage(err, "==> "+printCallerNameAndLine()+message)
 }
 
@@ -641,4 +641,12 @@ func GetSwitchFromOptions(Options map[string]bool, key string) (result bool) {
 }
 func SetSwitchFromOptions(Options map[string]bool, key string, value bool) {
 	Options[key] = value
+}
+
+func Wrap(err error, message string) error {
+	return errors.Wrap(err, "==> "+printCallerNameAndLine()+message)
+}
+
+func WithMessage(err error, message string) error {
+	return errors.WithMessage(err, "==> "+printCallerNameAndLine()+message)
 }

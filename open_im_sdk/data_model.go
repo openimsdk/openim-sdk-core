@@ -900,6 +900,7 @@ func sqlStringHandle(ss []string) (s string) {
 	return s
 }
 
+//1
 func (u *UserRelated) insertIntoTheFriendToFriendInfo(uid, name, comment, icon string, gender int32, mobile, birth, email, ex string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -916,6 +917,7 @@ func (u *UserRelated) insertIntoTheFriendToFriendInfo(uid, name, comment, icon s
 	return nil
 }
 
+//1
 func (u *UserRelated) delTheFriendFromFriendInfo(uid string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -931,6 +933,8 @@ func (u *UserRelated) delTheFriendFromFriendInfo(uid string) error {
 	}
 	return nil
 }
+
+//1
 func (u *UserRelated) updateTheFriendInfo(uid, name, comment, icon string, gender int32, mobile, birth, email, ex string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()

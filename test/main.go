@@ -386,12 +386,13 @@ func f1() error {
 // myuid,  maxuid,  msgnum
 func main() {
 	open_im_sdk.InitDBX("test")
-	frd := open_im_sdk.Friend{OwnerUserID: "11121", FriendUserID: "5678"}
-	err1 := open_im_sdk.InsertIntoTheFriendToFriendInfo(&frd)
+	frd := open_im_sdk.Friend{OwnerUserID: "1dddasdfasdfasfd121", FriendUserID: "5678"}
+	err1 := open_im_sdk.InsertFriendItem(&frd)
 	if err1 != nil {
 		fmt.Printf("f1 err1111111111111: %v", err1)
 	}
 
+	fmt.Printf("f1 222222222222: %v", err1)
 	return
 	if err := f1(); err != nil {
 		fmt.Printf("f1 err1111111111111: %v", err)
