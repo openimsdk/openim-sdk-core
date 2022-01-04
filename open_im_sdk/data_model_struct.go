@@ -207,6 +207,9 @@ type User struct {
 type Black struct {
 	OwnerUserID    string    `gorm:"column:owner_user_id;primary_key;size:64"`
 	BlockUserID    string    `gorm:"column:block_user_id;primary_key;size:64"`
+	Nickname       string    `gorm:"column:nick_name;size:255"`
+	FaceUrl        string    `gorm:"column:face_url;size:255"`
+	Gender         int32     `gorm:"column:gender"`
 	CreateTime     time.Time `gorm:"column:create_time"`
 	AddSource      int32     `gorm:"column:add_source"`
 	OperatorUserID string    `gorm:"column:operator_user_id;size:64"`
