@@ -534,18 +534,18 @@ func DoTestGetConversationRecvMessageOpt() {
 
 func InOutDoTestSendMsg(sendId, receiverID string) {
 	m := "test:" + sendId + ":" + receiverID + ":"
-	s := CreateTextMessage(m)
+	//s := CreateTextMessage(m)
 	var testSendMsg TestSendMsgCallBack
-	testSendMsg.msg = SendMessage(&testSendMsg, s, receiverID, "", false)
+	//	testSendMsg.msg = SendMessage(&testSendMsg, s, receiverID, "", false)
 	fmt.Println("func send ", m, testSendMsg.msg)
 	fmt.Println("test to recv : ", receiverID)
 }
 
 func DoTestSendMsg(sendId, receiverID string, idx string) {
 	m := "test:" + sendId + ":" + receiverID + ":" + idx
-	s := CreateTextMessage(m)
+	//s := CreateTextMessage(m)
 	var testSendMsg TestSendMsgCallBack
-	testSendMsg.msg = SendMessage(&testSendMsg, s, receiverID, "", false)
+	//	testSendMsg.msg = SendMessage(&testSendMsg, s, receiverID, "", false)
 	fmt.Println("func send ", m, testSendMsg.msg)
 	fmt.Println("test to recv : ", receiverID)
 }

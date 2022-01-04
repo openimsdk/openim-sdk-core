@@ -6,7 +6,7 @@ import (
 	"encoding/gob"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
+	"github.com/pkg/errors"
 
 	"github.com/gorilla/websocket"
 
