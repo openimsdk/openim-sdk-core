@@ -113,7 +113,7 @@ type UserRelated struct {
 	wsNotification map[string]chan GeneralWsResp
 	wsMutex        sync.RWMutex
 	IMManager
-	Friend
+	FriendListener
 	ConversationListener
 	groupListener
 

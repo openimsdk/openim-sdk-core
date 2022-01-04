@@ -5,7 +5,7 @@ import (
 	"errors"
 )
 
-type Friend struct {
+type FriendListener struct {
 	friendListener OnFriendshipListener
 	//ch             chan cmd2Value
 }
