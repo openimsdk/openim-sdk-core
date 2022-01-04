@@ -13,6 +13,23 @@ import "time"
 //string Ex = 7;
 //}
 //open_im_sdk.FriendInfo(FriendUser) != imdb.Friend(FriendUserID)
+//	table = ` CREATE TABLE IF NOT EXISTS friends(
+//     owner_user_id CHAR (64) NOT NULL,
+//     friend_user_id CHAR (64) NOT NULL ,
+//     name varchar(64) DEFAULT NULL ,
+//	 face_url varchar(100) DEFAULT NULL ,
+//     remark varchar(255) DEFAULT NULL,
+//     gender int DEFAULT NULL ,
+//   	 phone_number varchar(32) DEFAULT NULL ,
+//	 birth INTEGER DEFAULT NULL ,
+//	 email varchar(64) DEFAULT NULL ,
+//	 create_time INTEGER DEFAULT NULL ,
+//	 add_source int DEFAULT NULL ,
+//	 operator_user_id CHAR(64) DEFAULT NULL,
+//  	 ex varchar(1024) DEFAULT NULL,
+//  	 PRIMARY KEY (owner_user_id,friend_user_id)
+// 	)`
+
 type Friend struct {
 	OwnerUserID    string    `gorm:"column:owner_user_id;primary_key;size:64"`
 	FriendUserID   string    `gorm:"column:friend_user_id;primary_key;size:64"`
@@ -20,6 +37,12 @@ type Friend struct {
 	CreateTime     time.Time `gorm:"column:create_time"`
 	AddSource      int32     `gorm:"column:add_source"`
 	OperatorUserID string    `gorm:"column:operator_user_id;size:64"`
+	Nickname       string    `gorm:"column:name;size:255"`
+	FaceUrl        string    `gorm:"column:face_url;size:255"`
+	Gender         int32     `gorm:"column:gender"`
+	PhoneNumber    string    `gorm:"column:phone_number;size:32"`
+	Birth          time.Time `gorm:"column:birth"`
+	Email          string    `gorm:"column:email;size:64"`
 	Ex             string    `gorm:"column:ex;size:1024"`
 }
 
@@ -62,6 +85,19 @@ type FriendRequest struct {
 //  int32 GroupType = 12;
 //}
 //  open_im_sdk.GroupInfo (OwnerUserID ,  MemberCount )> imdb.Group
+//    	group_id char(64) NOT NULL,
+//		name varchar(64) DEFAULT NULL ,
+//    	introduction varchar(255) DEFAULT NULL,
+//    	notification varchar(255) DEFAULT NULL,
+//    	face_url varchar(100) DEFAULT NULL,
+//    	group_type int DEFAULT NULL,
+//    	status int DEFAULT NULL,
+//    	creator_user_id char(64) DEFAULT NULL,
+//    	create_time INTEGER DEFAULT NULL,
+//    	ex varchar(1024) DEFAULT NULL,
+//    	PRIMARY KEY (group_id)
+//	)`
+
 type Group struct {
 	//`json:"operationID" binding:"required"`
 	//`protobuf:"bytes,1,opt,name=GroupID" json:"GroupID,omitempty"` `json:"operationID" binding:"required"`
@@ -71,10 +107,12 @@ type Group struct {
 	Introduction  string    `gorm:"column:introduction;size:255" json:"introduction"`
 	FaceUrl       string    `gorm:"column:face_url;size:255" json:"faceUrl"`
 	CreateTime    time.Time `gorm:"column:create_time"`
-	Ex            string    `gorm:"column:ex" json:"ex;size:1024"`
 	Status        int32     `gorm:"column:status"`
 	CreatorUserID string    `gorm:"column:creator_user_id;size:64"`
 	GroupType     int32     `gorm:"column:group_type"`
+	OwnerUserID   string    `gorm:"column:owner_user_id;size:64"`
+	MemberCount   int32     `gorm:"column:member_count"`
+	Ex            string    `gorm:"column:ex" json:"ex;size:1024"`
 }
 
 //message GroupMemberFullInfo {
@@ -89,6 +127,15 @@ type Group struct {
 //string Ex = 10;
 //int32 AppMangerLevel = 7; //if >0
 //}  open_im_sdk.GroupMemberFullInfo(AppMangerLevel) > imdb.GroupMember
+//  group_id char(64) NOT NULL,
+//   user_id char(64) NOT NULL,
+//   nickname varchar(64) DEFAULT NULL,
+//   user_group_face_url varchar(64) DEFAULT NULL,
+//   role_level int DEFAULT NULL,
+//   join_time INTEGER DEFAULT NULL,
+//   join_source int DEFAULT NULL,
+//   operator_user_id char(64) NOT NULL,
+
 type GroupMember struct {
 	GroupID        string    `gorm:"column:group_id;primary_key;size:64"`
 	UserID         string    `gorm:"column:user_id;primary_key;size:64"`
