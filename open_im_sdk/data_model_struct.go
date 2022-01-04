@@ -160,8 +160,8 @@ type GroupMember struct {
 //string Ex = 9;
 //}open_im_sdk.GroupRequest == imdb.GroupRequest
 type GroupRequest struct {
-	UserID       string    `gorm:"column:user_id;primary_key;size:64"`
 	GroupID      string    `gorm:"column:group_id;primary_key;size:64"`
+	UserID       string    `gorm:"column:user_id;primary_key;size:64"`
 	HandleResult int32     `gorm:"column:handle_result"`
 	ReqMsg       string    `gorm:"column:req_msg;size:255"`
 	HandledMsg   string    `gorm:"column:handle_msg;size:255"`
@@ -190,9 +190,9 @@ type User struct {
 	PhoneNumber    string    `gorm:"column:phone_number;size:32"`
 	Birth          time.Time `gorm:"column:birth"`
 	Email          string    `gorm:"column:email;size:64"`
-	Ex             string    `gorm:"column:ex;size:1024"`
 	CreateTime     time.Time `gorm:"column:create_time"`
 	AppMangerLevel int32     `gorm:"column:app_manger_level"`
+	Ex             string    `gorm:"column:ex;size:1024"`
 }
 
 //message BlackInfo{
