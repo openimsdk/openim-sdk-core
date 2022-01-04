@@ -34,7 +34,7 @@ func (u *UserRelated) InitDB() error {
 		&GroupMember{},
 		&GroupRequest{},
 		&User{},
-		&Black{})
+		&Black{}, &LocalData{})
 	if !db.Migrator().HasTable(&Friend{}) {
 		//log.NewInfo("CreateTable Friend")
 		db.Migrator().CreateTable(&Friend{})
@@ -69,5 +69,9 @@ func (u *UserRelated) InitDB() error {
 		//log.NewInfo("CreateTable Black")
 		db.Migrator().CreateTable(&Black{})
 	}
+	if !db.Migrator().HasTable(&LocalData{}) {
+		db.Migrator().CreateTable(&LocalData{})
+	}
 	return nil
+
 }

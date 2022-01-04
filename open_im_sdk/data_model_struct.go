@@ -215,3 +215,7 @@ type Black struct {
 	OperatorUserID string    `gorm:"column:operator_user_id;size:64"`
 	Ex             string    `gorm:"column:ex;size:1024"`
 }
+type LocalData struct {
+	UserID string `gorm:"column:user_id;primary_key;size:64"`
+	Seq    int32  `gorm:"column:seq;default: '1'"`
+}
