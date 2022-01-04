@@ -21,6 +21,9 @@ func main() {
 	var openIMWsAddress, openIMApiAddress *string
 	APIADDR := "http://121.37.25.71:10000"
 	WSADDR := "ws://121.37.25.71:17778"
+	openIMApiAddress = flag.String("openIMApiAddress", "", "openIM api listening port")
+	openIMWsAddress = flag.String("openIMWsAddress", "", "openIM ws listening port")
+	flag.Parse()
 	open_im_sdk.SetHearbeatInterval(5)
 	sysType := runtime.GOOS
 	switch sysType {

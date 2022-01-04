@@ -303,8 +303,6 @@ func (u *UserRelated) acceptFriendApplication(uid string) error {
 
 	u.syncFriendApplication()
 	u.syncFriendList()
-	n := NotificationContent{1, FriendAcceptTip, ""}
-	u.autoSendMsg(u.createTextSystemMessage(n, AcceptFriendApplicationTip), uid, "", false, true, true)
 	return nil
 }
 

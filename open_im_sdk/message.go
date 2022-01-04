@@ -7,8 +7,6 @@
 package open_im_sdk
 
 import (
-	"encoding/json"
-	"errors"
 	imgtype "github.com/shamsher31/goimgtype"
 	"image"
 	"os"
@@ -43,223 +41,91 @@ func autoSendTransferGroupOwnerTip(groupId string, oldOwner, newOwner string) er
 	return autoSendMsg(s, "", groupId, false)
 }*/
 
-func (u *UserRelated) autoSendKickGroupMemberTip(req *kickGroupMemberApiReq) error {
-	s := MsgStruct{}
-	u.initBasicInfo(&s, UserMsgType, KickGroupMemberTip)
-	jsonReq, err := json.Marshal(req)
-	if err != nil {
-		sdkLog("marshal failed ", err.Error())
-		return err
-	}
-
-	var nicknameList string
-	for _, v := range req.UidListInfo {
-		nicknameList = nicknameList + v.NickName + " "
-	}
-
-	var notification NotificationContent
-	notification.IsDisplay = 1
-	notification.Detail = string(jsonReq)
-	notification.DefaultTips = nicknameList + " kicked out of group chat by administrator"
-	jsonContentReq, err := json.Marshal(notification)
-	if err != nil {
-		sdkLog("marshal failed, ", err.Error())
-		return err
-	}
-	s.Content = string(jsonContentReq)
-	s.AtElem.AtUserList = []string{}
-	u.autoSendMsg(&s, "", req.GroupID, false, true, false)
-	sdkLog("sendmsg, group ", s, req.GroupID)
-
-	/*
-		for _, v := range req.UidList {
-			notification.DefaultTips = "You are kicked out of group chat by administrator"
-			jsonContentReq, err := json.Marshal(notification)
-			if err != nil {
-				sdkLog("marshal failed, ", err.Error())
-				return err
-			}
-			s.Content = string(jsonContentReq)
-			autoSendMsg(&s, v, "", false, false)
-			sdkLog("sendmsg, single ", s, v)
-		}*/
-
-	return nil
-}
-
-func (u *UserRelated) autoSendInviteUserToGroupTip(req inviteUserToGroupReq) error {
-	s := MsgStruct{}
-	u.initBasicInfo(&s, UserMsgType, InviteUserToGroupTip)
-
-	jsonReq, err := json.Marshal(req)
-	if err != nil {
-		sdkLog("marshal failed ", err.Error())
-		return err
-	}
-
-	var nicknameList string
-	for _, v := range req.UidList {
-		member, err := u.getLocalGroupMemberInfoByGroupIdUserId(req.GroupID, v)
-		if err != nil || member.GroupId == "" {
-			sdkLog("getLocalGroupMemberInfoByGroupIdUserId failed ", err, member.GroupId)
-			continue
-		}
-		nicknameList = nicknameList + member.NickName + " "
-	}
-
-	op, err := u.getLocalGroupMemberInfoByGroupIdUserId(req.GroupID, u.LoginUid)
-	if err != nil {
-		sdkLog("nul member, ", req.GroupID, u.LoginUid)
-		return err
-	}
-
-	var notification NotificationContent
-	notification.IsDisplay = 1
-	notification.Detail = string(jsonReq)
-	notification.DefaultTips = nicknameList + "  invited into the group chat by " + op.NickName
-	jsonContentReq, err := json.Marshal(notification)
-	if err != nil {
-		sdkLog("marshal failed, ", err.Error())
-		return err
-	}
-	s.Content = string(jsonContentReq)
-
-	u.autoSendMsg(&s, "", req.GroupID, false, true, false)
-	sdkLog("send msg, groupid: ", req.GroupID)
-	return nil
-}
-
+//func (u *UserRelated) autoSendKickGroupMemberTip(req *kickGroupMemberApiReq) error {
+//	s := MsgStruct{}
+//	u.initBasicInfo(&s, UserMsgType, KickGroupMemberTip)
+//	jsonReq, err := json.Marshal(req)
+//	if err != nil {
+//		sdkLog("marshal failed ", err.Error())
+//		return err
+//	}
 //
-func (u *UserRelated) autoSendMsg(s *MsgStruct, receiver, groupID string, onlineUserOnly, isUpdateConversationLatestMsg, isUpdateConversationInfo bool) error {
-	sdkLog("autoSendMsg input args:", *s, receiver, groupID, onlineUserOnly, isUpdateConversationLatestMsg, isUpdateConversationInfo)
-	var conversationID string
-	r := SendMsgRespFromServer{}
-	a := paramsUserSendMsg{}
-	op := make(map[string]interface{})
-	of := make(map[string]interface{})
-	if receiver == "" {
-		s.SessionType = GroupChatType
-		s.RecvID = groupID
-	} else if groupID == "" {
-		s.SessionType = SingleChatType
-		s.RecvID = receiver
-	} else {
-		sdkLog("args err: ", receiver, groupID)
-		return errors.New("args null")
-	}
-	c := ConversationStruct{
-		ConversationType:  int(s.SessionType),
-		LatestMsgSendTime: s.CreateTime,
-	}
-	if receiver == "" && groupID == "" {
-		return errors.New("args error")
-	} else if receiver == "" {
-		s.SessionType = GroupChatType
-		s.RecvID = groupID
-		s.GroupID = groupID
-		conversationID = GetConversationIDBySessionType(groupID, GroupChatType)
-		c.GroupID = groupID
-		faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(groupID)
-		if err != nil {
-			sdkLog("getGroupNameAndFaceUrlByUid err:", err)
-			return err
-		}
-		c.ShowName = name
-		c.FaceURL = faceUrl
-	} else {
-		s.SessionType = SingleChatType
-		s.RecvID = receiver
-		conversationID = GetConversationIDBySessionType(receiver, SingleChatType)
-		c.UserID = receiver
-		faceUrl, name, err := u.getUserNameAndFaceUrlByUid(receiver)
-		if err != nil {
-			sdkLog("getUserNameAndFaceUrlByUid err:", err)
-			return err
-		}
-		c.FaceURL = faceUrl
-		c.ShowName = name
-	}
-	userInfo, err := u.getLoginUserInfoFromLocal()
-	if err != nil {
-		sdkLog("getLoginUserInfoFromLocal err:", err)
-		return err
-	}
-	s.SenderFaceURL = userInfo.Icon
-	s.SenderNickName = userInfo.Name
-	c.ConversationID = conversationID
-	c.LatestMsg = structToJsonString(s)
-	if !onlineUserOnly {
-		err = u.insertMessageToLocalOrUpdateContent(s)
-		if err != nil {
-			sdkLog("insertMessageToLocalOrUpdateContent err:", err)
-			return err
-		}
-	}
+//	var nicknameList string
+//	for _, v := range req.UidListInfo {
+//		nicknameList = nicknameList + v.NickName + " "
+//	}
+//
+//	var notification NotificationContent
+//	notification.IsDisplay = 1
+//	notification.Detail = string(jsonReq)
+//	notification.DefaultTips = nicknameList + " kicked out of group chat by administrator"
+//	jsonContentReq, err := json.Marshal(notification)
+//	if err != nil {
+//		sdkLog("marshal failed, ", err.Error())
+//		return err
+//	}
+//	s.Content = string(jsonContentReq)
+//	s.AtElem.AtUserList = []string{}
+//	u.autoSendMsg(&s, "", req.GroupID, false, true, false)
+//	sdkLog("sendmsg, group ", s, req.GroupID)
+//
+//	/*
+//		for _, v := range req.UidList {
+//			notification.DefaultTips = "You are kicked out of group chat by administrator"
+//			jsonContentReq, err := json.Marshal(notification)
+//			if err != nil {
+//				sdkLog("marshal failed, ", err.Error())
+//				return err
+//			}
+//			s.Content = string(jsonContentReq)
+//			autoSendMsg(&s, v, "", false, false)
+//			sdkLog("sendmsg, single ", s, v)
+//		}*/
+//
+//	return nil
+//}
 
-	//Protocol conversion
-	a.ReqIdentifier = 1003
-	a.PlatformID = s.PlatformID
-	a.SendID = s.SendID
-	a.OperationID = operationIDGenerator()
-	a.Data.SessionType = s.SessionType
-	a.SenderNickName = s.SenderNickName
-	a.SenderFaceURL = s.SenderFaceURL
-	a.Data.MsgFrom = s.MsgFrom
-	a.Data.ForceList = []string{}
-	a.Data.ContentType = s.ContentType
-	a.Data.RecvID = s.RecvID
-	a.Data.ForceList = s.ForceList
-	a.Data.Content = s.Content
-	a.Data.ClientMsgID = s.ClientMsgID
-	if onlineUserOnly {
-		op["history"] = 0
-		op["persistent"] = 0
-	}
-	a.Data.Options = op
-	a.Data.OffLineInfo = of
-	bMsg, err := post2Api(sendMsgRouter, a, u.token)
-	if err != nil {
-		sdkLog("sendMsgRouter access err:", err.Error())
-		u.updateMessageFailedStatus(s, &c, onlineUserOnly)
-		return err
-	} else {
-		err = json.Unmarshal(bMsg, &r)
-		if err != nil {
-			sdkLog("unmarshal failed, ", err.Error())
-			u.updateMessageFailedStatus(s, &c, onlineUserOnly)
-			return err
-		} else {
-			if r.ErrCode != 0 {
-				sdkLog("errcode, errmsg: ", r.ErrCode, r.ErrMsg)
-				u.updateMessageFailedStatus(s, &c, onlineUserOnly)
-				return err
-			} else {
-				if !onlineUserOnly {
-					_ = u.updateMessageTimeAndMsgIDStatus(r.Data.ClientMsgID, r.Data.SendTime, MsgStatusSendSuccess)
-				}
-				s.ServerMsgID = r.Data.ServerMsgID
-				s.SendTime = r.Data.SendTime
-				s.Status = MsgStatusSendSuccess
-				c.LatestMsg = structToJsonString(s)
-				c.LatestMsgSendTime = s.SendTime
-				if isUpdateConversationLatestMsg {
-					_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, AddConOrUpLatMsg,
-						c})
-					_ = u.triggerCmdUpdateConversation(updateConNode{c.ConversationID, IncrUnread, ""})
-				}
-				if isUpdateConversationInfo {
-					_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, UpdateFaceUrlAndNickName, c})
-
-				}
-				if isUpdateConversationInfo || isUpdateConversationLatestMsg {
-					_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
-					_ = u.triggerCmdUpdateConversation(updateConNode{"", TotalUnreadMessageChanged, ""})
-				}
-			}
-		}
-	}
-	return nil
-}
+//func (u *UserRelated) autoSendInviteUserToGroupTip(req inviteUserToGroupReq) error {
+//	s := MsgStruct{}
+//	u.initBasicInfo(&s, UserMsgType, InviteUserToGroupTip)
+//
+//	jsonReq, err := json.Marshal(req)
+//	if err != nil {
+//		sdkLog("marshal failed ", err.Error())
+//		return err
+//	}
+//
+//	var nicknameList string
+//	for _, v := range req.UidList {
+//		member, err := u.getLocalGroupMemberInfoByGroupIdUserId(req.GroupID, v)
+//		if err != nil || member.GroupId == "" {
+//			sdkLog("getLocalGroupMemberInfoByGroupIdUserId failed ", err, member.GroupId)
+//			continue
+//		}
+//		nicknameList = nicknameList + member.NickName + " "
+//	}
+//
+//	op, err := u.getLocalGroupMemberInfoByGroupIdUserId(req.GroupID, u.LoginUid)
+//	if err != nil {
+//		sdkLog("nul member, ", req.GroupID, u.LoginUid)
+//		return err
+//	}
+//
+//	var notification NotificationContent
+//	notification.IsDisplay = 1
+//	notification.Detail = string(jsonReq)
+//	notification.DefaultTips = nicknameList + "  invited into the group chat by " + op.NickName
+//	jsonContentReq, err := json.Marshal(notification)
+//	if err != nil {
+//		sdkLog("marshal failed, ", err.Error())
+//		return err
+//	}
+//	s.Content = string(jsonContentReq)
+//
+//	u.autoSendMsg(&s, "", req.GroupID, false, true, false)
+//	sdkLog("send msg, groupid: ", req.GroupID)
+//	return nil
+//}
 
 func (u *UserRelated) updateMessageFailedStatus(s *MsgStruct, c *ConversationStruct, onlineUserOnly bool) {
 	if !onlineUserOnly {
@@ -282,7 +148,8 @@ func (u *UserRelated) initBasicInfo(message *MsgStruct, msgFrom, contentType int
 	message.ClientMsgID = ClientMsgID
 	message.MsgFrom = msgFrom
 	message.ContentType = contentType
-	message.PlatformID = SvrConf.Platform
+	message.SenderPlatformID = SvrConf.Platform
+
 }
 func (u *UserRelated) sendMessageFailedHandle(s *MsgStruct, c *ConversationStruct, conversationID string) {
 	_ = u.updateMessageTimeAndMsgIDStatus(s.ClientMsgID, s.CreateTime, MsgStatusSendFailed)
@@ -291,7 +158,7 @@ func (u *UserRelated) sendMessageFailedHandle(s *MsgStruct, c *ConversationStruc
 	c.LatestMsg = structToJsonString(s)
 	_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, AddConOrUpLatMsg,
 		*c})
-	_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
+	u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 }
 
 type MsgFormats []*MsgStruct

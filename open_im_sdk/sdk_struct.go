@@ -380,23 +380,23 @@ type SendMsgRespFromServer struct {
 	}
 }
 type paramsUserSendMsg struct {
-	ReqIdentifier  int32  `json:"reqIdentifier" binding:"required"`
-	PlatformID     int32  `json:"platformID" binding:"required"`
-	SendID         string `json:"sendID" binding:"required"`
-	SenderNickName string `json:"senderNickName" binding:"required"`
-	SenderFaceURL  string `json:"senderFaceUrl" binding:"required"`
-	OperationID    string `json:"operationID" binding:"required"`
-	Data           struct {
-		SessionType int32                  `json:"sessionType" binding:"required"`
-		MsgFrom     int32                  `json:"msgFrom" binding:"required"`
-		ContentType int32                  `json:"contentType" binding:"required"`
-		RecvID      string                 `json:"recvID" binding:"required"`
-		ForceList   []string               `json:"forceList" binding:"required"`
-		Content     string                 `json:"content" binding:"required"`
-		Options     map[string]interface{} `json:"options" binding:"required"`
-		ClientMsgID string                 `json:"clientMsgID" binding:"required"`
-		OffLineInfo map[string]interface{} `json:"offlineInfo" binding:"required"`
-		Ex          map[string]interface{} `json:"ext"`
+	SenderPlatformID int32  `json:"senderPlatformID" binding:"required"`
+	SendID           string `json:"sendID" binding:"required"`
+	SenderNickName   string `json:"senderNickName"`
+	SenderFaceURL    string `json:"senderFaceUrl"`
+	OperationID      string `json:"operationID" binding:"required"`
+	Data             struct {
+		SessionType int32           `json:"sessionType" binding:"required"`
+		MsgFrom     int32           `json:"msgFrom" binding:"required"`
+		ContentType int32           `json:"contentType" binding:"required"`
+		RecvID      string          `json:"recvID" `
+		GroupID     string          `json:"groupID" `
+		ForceList   []string        `json:"forceList"`
+		Content     []byte          `json:"content" binding:"required"`
+		Options     map[string]bool `json:"options" `
+		ClientMsgID string          `json:"clientMsgID" binding:"required"`
+		CreateTime  int64           `json:"createTime" binding:"required"`
+		OffLineInfo OfflinePushInfo `json:"offlineInfo" `
 	}
 }
 type imageInfo struct {
@@ -442,26 +442,27 @@ type FileBaseInfo struct {
 	FileSize  int64  `json:"fileSize"`
 }
 type MsgStruct struct {
-	ClientMsgID    string   `json:"clientMsgID"`
-	ServerMsgID    string   `json:"serverMsgID"`
-	CreateTime     int64    `json:"createTime"`
-	SendTime       int64    `json:"sendTime"`
-	SessionType    int32    `json:"sessionType"`
-	SendID         string   `json:"sendID"`
-	RecvID         string   `json:"recvID"`
-	MsgFrom        int32    `json:"msgFrom"`
-	ContentType    int32    `json:"contentType"`
-	PlatformID     int32    `json:"platformID"`
-	ForceList      []string `json:"forceList"`
-	SenderNickName string   `json:"senderNickName"`
-	SenderFaceURL  string   `json:"senderFaceUrl"`
-	GroupID        string   `json:"groupID"`
-	Content        string   `json:"content"`
-	Seq            int64    `json:"seq"`
-	IsRead         bool     `json:"isRead"`
-	Status         int32    `json:"status"`
-	Remark         string   `json:"remark"`
-	PictureElem    struct {
+	ClientMsgID      string          `json:"clientMsgID"`
+	ServerMsgID      string          `json:"serverMsgID"`
+	CreateTime       int64           `json:"createTime"`
+	SendTime         int64           `json:"sendTime"`
+	SessionType      int32           `json:"sessionType"`
+	SendID           string          `json:"sendID"`
+	RecvID           string          `json:"recvID"`
+	MsgFrom          int32           `json:"msgFrom"`
+	ContentType      int32           `json:"contentType"`
+	SenderPlatformID int32           `json:"platformID"`
+	ForceList        []string        `json:"forceList"`
+	SenderNickName   string          `json:"senderNickName"`
+	SenderFaceURL    string          `json:"senderFaceUrl"`
+	GroupID          string          `json:"groupID"`
+	Content          string          `json:"content"`
+	Seq              int64           `json:"seq"`
+	IsRead           bool            `json:"isRead"`
+	Status           int32           `json:"status"`
+	Remark           string          `json:"remark"`
+	OfflinePush      OfflinePushInfo `json:"offlinePush"`
+	PictureElem      struct {
 		SourcePath      string          `json:"sourcePath"`
 		SourcePicture   PictureBaseInfo `json:"sourcePicture"`
 		BigPicture      PictureBaseInfo `json:"bigPicture"`

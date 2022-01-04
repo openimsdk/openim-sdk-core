@@ -6,9 +6,9 @@ import (
 	"encoding/gob"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 
 	"github.com/gorilla/websocket"
-	"github.com/pkg/errors"
 
 	"io"
 	"io/ioutil"
@@ -341,10 +341,25 @@ func GetConversationIDBySessionType(sourceID string, sessionType int) string {
 }
 func getIsRead(b bool) int {
 	if b {
-		return MessageHasRead
+		return HasRead
 	} else {
-		return MessageHasNotRead
+		return NotRead
 	}
+}
+func getIsFilter(b bool) int {
+	if b {
+		return IsFilter
+	} else {
+		return NotFilter
+	}
+}
+func getIsReadB(i int) bool {
+	if i == HasRead {
+		return true
+	} else {
+		return false
+	}
+
 }
 
 func RunFuncName() string {
@@ -616,4 +631,14 @@ func WithMessage(err error, message string) error {
 func printCallerNameAndLine() string {
 	pc, _, line, _ := runtime.Caller(2)
 	return runtime.FuncForPC(pc).Name() + "()@" + strconv.Itoa(line) + ": "
+}
+
+func GetSwitchFromOptions(Options map[string]bool, key string) (result bool) {
+	if flag, ok := Options[key]; !ok || flag {
+		return true
+	}
+	return false
+}
+func SetSwitchFromOptions(Options map[string]bool, key string, value bool) {
+	Options[key] = value
 }

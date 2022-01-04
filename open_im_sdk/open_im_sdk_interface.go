@@ -50,7 +50,9 @@ func InitSDK(config string, cb IMSDKListener) bool {
 func SetSdkLog(flag int32) {
 	SdkLogFlag = flag
 }
-
+func (u *UserRelated) SetSdkLog(flag int32) {
+	SdkLogFlag = flag
+}
 func SetHearbeatInterval(interval int32) {
 	hearbeatInterval = interval
 }
@@ -220,6 +222,9 @@ func SetFriendListener(listener OnFriendshipListener) bool {
 func GetAllConversationList(callback Base) {
 	userForSDK.GetAllConversationList(callback)
 }
+func GetConversationListSplit(callback Base, offset, count int) {
+	userForSDK.GetConversationListSplit(callback, offset, count)
+}
 func SetConversationRecvMessageOpt(callback Base, conversationIDList string, opt int) {
 	userForSDK.SetConversationRecvMessageOpt(callback, conversationIDList, opt)
 }
@@ -291,8 +296,8 @@ func CreateImageMessage(imagePath string) string {
 func CreateImageMessageByURL(sourcePicture, bigPicture, snapshotPicture string) string {
 	return userForSDK.CreateImageMessageByURL(sourcePicture, bigPicture, snapshotPicture)
 }
-func SendMessageNotOss(callback SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool) string {
-	return userForSDK.SendMessageNotOss(callback, message, receiver, groupID, onlineUserOnly)
+func SendMessageNotOss(callback SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool, offlinePushInfo string) string {
+	return userForSDK.SendMessageNotOss(callback, message, receiver, groupID, onlineUserOnly, offlinePushInfo)
 }
 func CreateSoundMessageByURL(soundBaseInfo string) string {
 	return userForSDK.CreateSoundMessageByURL(soundBaseInfo)
@@ -320,8 +325,8 @@ func CreateForwardMessage(m string) string {
 	return userForSDK.CreateForwardMessage(m)
 }
 
-func SendMessage(callback SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool) string {
-	return userForSDK.SendMessage(callback, message, receiver, groupID, onlineUserOnly)
+func SendMessage(callback SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool, offlinePushInfo string) string {
+	return userForSDK.SendMessage(callback, message, receiver, groupID, onlineUserOnly, offlinePushInfo)
 }
 func GetHistoryMessageList(callback Base, getMessageOptions string) {
 	userForSDK.GetHistoryMessageList(callback, getMessageOptions)

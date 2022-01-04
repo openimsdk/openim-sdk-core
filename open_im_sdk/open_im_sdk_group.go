@@ -2,7 +2,6 @@ package open_im_sdk
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 type OnGroupListener interface {
@@ -299,22 +298,6 @@ func (u *UserRelated) TransferGroupOwner(groupId, userId string, callback Base) 
 		u.syncGroupRequest()
 		u.syncGroupMemberByGroupId(groupId)
 		callback.OnSuccess(DeFaultSuccessMsg)
-
-		transfer := TransferGroupOwnerReq{
-			GroupID:     groupId,
-			OldOwner:    u.LoginUid,
-			NewOwner:    userId,
-			OperationID: operationIDGenerator(),
-		}
-		bTransfer, err := json.Marshal(transfer)
-		if err != nil {
-			sdkLog("TransferGroupOwner", err.Error())
-			return
-		}
-
-		n := NotificationContent{1, TransferGroupTip, string(bTransfer)}
-		u.autoSendMsg(u.createTextSystemMessage(n, TransferGroupOwnerTip), "", groupId, false, false, false)
-
 	}()
 }
 
@@ -435,34 +418,6 @@ func (u *UserRelated) AcceptGroupApplication(application, reason string, callbac
 		u.syncGroupRequest()
 		u.syncGroupMemberByGroupId(sctApplication.GroupID)
 		callback.OnSuccess(DeFaultSuccessMsg)
-
-		user, err := u.getLoginUserInfoFromLocal()
-		if err != nil {
-			sdkLog("AcceptGroupApplication  getLoginUserInfoFromLocal err! ", err.Error())
-			return
-		}
-		info := GroupApplicationInfo{
-			Info:         access,
-			HandUserID:   u.LoginUid,
-			HandUserName: user.Name,
-			HandUserIcon: user.Icon,
-		}
-		bInfo, err := json.Marshal(info)
-		if err != nil {
-			sdkLog("AcceptGroupApplication  json.Marshal err! ", err.Error())
-			return
-		}
-
-		var name string
-		if access.ToUser == "0" {
-			name = access.FromUserNickName
-		} else {
-			name = access.ToUserNickname
-		}
-		defaultTip := fmt.Sprintf(AcceptGroupTip, name)
-		n := NotificationContent{1, defaultTip, string(bInfo)}
-		u.autoSendMsg(u.createTextSystemMessage(n, AcceptGroupApplicationTip), "", info.Info.GroupId, false, true, false)
-
 	}()
 }
 
@@ -503,33 +458,6 @@ func (u *UserRelated) RefuseGroupApplication(application, reason string, callbac
 		}
 		u.syncGroupRequest()
 		callback.OnSuccess(DeFaultSuccessMsg)
-
-		user, err := u.getLoginUserInfoFromLocal()
-		if err != nil {
-			sdkLog("RefuseGroupApplication  getLoginUserInfoFromLocal err! ", err.Error())
-			return
-		}
-		info := GroupApplicationInfo{
-			Info:         access,
-			HandUserID:   u.LoginUid,
-			HandUserName: user.Name,
-			HandUserIcon: user.Icon,
-		}
-		bInfo, err := json.Marshal(info)
-		if err != nil {
-			sdkLog("RefuseGroupApplication  json.Marshal err! ", err.Error())
-			return
-		}
-
-		recvID := ""
-		if access.ToUser != "0" {
-			recvID = access.ToUser
-		} else {
-			recvID = access.FromUser
-		}
-
-		n := NotificationContent{1, "", string(bInfo)}
-		u.autoSendMsg(u.createTextSystemMessage(n, RefuseGroupApplicationTip), recvID, "", false, false, false)
 	}()
 
 }

@@ -332,7 +332,7 @@ func (u *UserRelated) doMsg(wsResp GeneralWsResp) {
 		return
 	}
 
-	u.seqMsg[int32(msg.Seq)] = msg
+	u.seqMsg[int32(msg.Seq)] = &msg
 	u.seqMsgMutex.Unlock()
 
 	arrMsg := ArrMsg{}
@@ -725,9 +725,9 @@ func (u *UserRelated) syncMsgFromServerSplit(needSyncSeqList []int64) (err error
 			return errors.New(r.ErrMsg)
 		} else {
 			sdkLog("pull msg success ", wsReq.OperationID)
-			var pullMsg PullUserMsgResp
+			//var pullMsg PullUserMsgResp
 
-			pullMsg.ErrCode = 0
+			//pullMsg.ErrCode = 0
 
 			var pullMsgResp PullMessageBySeqListResp
 			err := proto.Unmarshal(r.Data, &pullMsgResp)
@@ -736,77 +736,45 @@ func (u *UserRelated) syncMsgFromServerSplit(needSyncSeqList []int64) (err error
 				LogFReturn(err.Error())
 				return err
 			}
-			pullMsg.Data.Group = pullMsgResp.GroupUserMsg
-			pullMsg.Data.Single = pullMsgResp.SingleUserMsg
-			pullMsg.Data.MaxSeq = pullMsgResp.MaxSeq
-			pullMsg.Data.MinSeq = pullMsgResp.MinSeq
+			//pullMsg.Data.Group = pullMsgResp.GroupUserMsg
+			//pullMsg.Data.Single = pullMsgResp.SingleUserMsg
+			//pullMsg.Data.MaxSeq = pullMsgResp.MaxSeq
+			//pullMsg.Data.MinSeq = pullMsgResp.MinSeq
 
 			u.seqMsgMutex.Lock()
 			isInmap := false
 			arrMsg := ArrMsg{}
 			//	sdkLog("pullmsg data: ", pullMsgResp.SingleUserMsg, pullMsg.Data.Single)
-			for i := 0; i < len(pullMsg.Data.Single); i++ {
-				for j := 0; j < len(pullMsg.Data.Single[i].List); j++ {
-					sdkLog("open_im pull one msg: |", pullMsg.Data.Single[i].List[j].ClientMsgID, "|")
-					sdkLog("pull all: |", pullMsg.Data.Single[i].List[j].Seq, pullMsg.Data.Single[i].List[j])
-
-					singleMsg := MsgData{
-						SendID:           pullMsg.Data.Single[i].List[j].SendID,
-						RecvID:           pullMsg.Data.Single[i].List[j].RecvID,
-						SessionType:      SingleChatType,
-						MsgFrom:          pullMsg.Data.Single[i].List[j].MsgFrom,
-						ContentType:      pullMsg.Data.Single[i].List[j].ContentType,
-						ServerMsgID:      pullMsg.Data.Single[i].List[j].ServerMsgID,
-						Content:          pullMsg.Data.Single[i].List[j].Content,
-						SendTime:         pullMsg.Data.Single[i].List[j].SendTime,
-						Seq:              pullMsg.Data.Single[i].List[j].Seq,
-						SenderNickName:   pullMsg.Data.Single[i].List[j].SenderNickName,
-						SenderFaceURL:    pullMsg.Data.Single[i].List[j].SenderFaceURL,
-						ClientMsgID:      pullMsg.Data.Single[i].List[j].ClientMsgID,
-						SenderPlatformID: pullMsg.Data.Single[i].List[j].SenderPlatformID,
-					}
-
-					b1 := u.isExistsInErrChatLogBySeq(pullMsg.Data.Single[i].List[j].Seq)
-					b2 := u.judgeMessageIfExistsBySeq(pullMsg.Data.Single[i].List[j].Seq)
-					_, ok := u.seqMsg[int32(pullMsg.Data.Single[i].List[j].Seq)]
+			for i := 0; i < len(pullMsgResp.SingleUserMsg); i++ {
+				for j := 0; j < len(pullMsgResp.SingleUserMsg[i].List); j++ {
+					sdkLog("open_im pull one msg: |", pullMsgResp.SingleUserMsg[i].List[j].ClientMsgID, "|")
+					sdkLog("pull all: |", pullMsgResp.SingleUserMsg[i].List[j].Seq, pullMsgResp.SingleUserMsg[i].List[j])
+					b1 := u.isExistsInErrChatLogBySeq(pullMsgResp.SingleUserMsg[i].List[j].Seq)
+					b2 := u.judgeMessageIfExistsBySeq(pullMsgResp.SingleUserMsg[i].List[j].Seq)
+					_, ok := u.seqMsg[int32(pullMsgResp.SingleUserMsg[i].List[j].Seq)]
 					if b1 || b2 || ok {
-						sdkLog("seq in : ", pullMsg.Data.Single[i].List[j].Seq, b1, b2, ok)
+						sdkLog("seq in : ", pullMsgResp.SingleUserMsg[i].List[j].Seq, b1, b2, ok)
 					} else {
 						isInmap = true
-						u.seqMsg[int32(pullMsg.Data.Single[i].List[j].Seq)] = singleMsg
-						sdkLog("into map, seq: ", pullMsg.Data.Single[i].List[j].Seq, pullMsg.Data.Single[i].List[j].ClientMsgID, pullMsg.Data.Single[i].List[j].ServerMsgID, pullMsg.Data.Single[i].List[j])
+						u.seqMsg[int32(pullMsgResp.SingleUserMsg[i].List[j].Seq)] = pullMsgResp.SingleUserMsg[i].List[j]
+						sdkLog("into map, seq: ", pullMsgResp.SingleUserMsg[i].List[j].Seq, pullMsgResp.SingleUserMsg[i].List[j].ClientMsgID, pullMsgResp.SingleUserMsg[i].List[j].ServerMsgID, pullMsgResp.SingleUserMsg[i].List[j])
 					}
 				}
 			}
 
-			for i := 0; i < len(pullMsg.Data.Group); i++ {
-				for j := 0; j < len(pullMsg.Data.Group[i].List); j++ {
-					groupMsg := MsgData{
-						SendID:           pullMsg.Data.Group[i].List[j].SendID,
-						RecvID:           pullMsg.Data.Group[i].List[j].RecvID,
-						SessionType:      GroupChatType,
-						MsgFrom:          pullMsg.Data.Group[i].List[j].MsgFrom,
-						ContentType:      pullMsg.Data.Group[i].List[j].ContentType,
-						ServerMsgID:      pullMsg.Data.Group[i].List[j].ServerMsgID,
-						Content:          pullMsg.Data.Group[i].List[j].Content,
-						SendTime:         pullMsg.Data.Group[i].List[j].SendTime,
-						Seq:              pullMsg.Data.Group[i].List[j].Seq,
-						SenderNickName:   pullMsg.Data.Group[i].List[j].SenderNickName,
-						SenderFaceURL:    pullMsg.Data.Group[i].List[j].SenderFaceURL,
-						ClientMsgID:      pullMsg.Data.Group[i].List[j].ClientMsgID,
-						SenderPlatformID: pullMsg.Data.Group[i].List[j].SenderPlatformID,
-					}
+			for i := 0; i < len(pullMsgResp.GroupUserMsg); i++ {
+				for j := 0; j < len(pullMsgResp.GroupUserMsg[i].List); j++ {
 
-					b1 := u.isExistsInErrChatLogBySeq(pullMsg.Data.Group[i].List[j].Seq)
-					b2 := u.judgeMessageIfExistsBySeq(pullMsg.Data.Group[i].List[j].Seq)
-					_, ok := u.seqMsg[int32(pullMsg.Data.Group[i].List[j].Seq)]
+					b1 := u.isExistsInErrChatLogBySeq(pullMsgResp.GroupUserMsg[i].List[j].Seq)
+					b2 := u.judgeMessageIfExistsBySeq(pullMsgResp.GroupUserMsg[i].List[j].Seq)
+					_, ok := u.seqMsg[int32(pullMsgResp.GroupUserMsg[i].List[j].Seq)]
 					if b1 || b2 || ok {
-						sdkLog("seq in : ", pullMsg.Data.Group[i].List[j].Seq, b1, b2, ok)
+						sdkLog("seq in : ", pullMsgResp.GroupUserMsg[i].List[j].Seq, b1, b2, ok)
 					} else {
 						isInmap = true
-						u.seqMsg[int32(pullMsg.Data.Group[i].List[j].Seq)] = groupMsg
-						sdkLog("into map, seq: ", pullMsg.Data.Group[i].List[j].Seq, pullMsg.Data.Group[i].List[j].ClientMsgID, pullMsg.Data.Group[i].List[j].ServerMsgID)
-						sdkLog("pull all: |", pullMsg.Data.Group[i].List[j].Seq, pullMsg.Data.Group[i].List[j])
+						u.seqMsg[int32(pullMsgResp.GroupUserMsg[i].List[j].Seq)] = pullMsgResp.GroupUserMsg[i].List[j]
+						sdkLog("into map, seq: ", pullMsgResp.GroupUserMsg[i].List[j].Seq, pullMsgResp.GroupUserMsg[i].List[j].ClientMsgID, pullMsgResp.GroupUserMsg[i].List[j].ServerMsgID)
+						sdkLog("pull all: |", pullMsgResp.GroupUserMsg[i].List[j].Seq, pullMsgResp.GroupUserMsg[i].List[j])
 
 					}
 				}
@@ -1181,7 +1149,7 @@ func (u *UserRelated) getUserInfoByUid(uid string) (*userInfo, error) {
 	return &userResp.Data[0], nil
 }
 
-func (u *UserRelated) doFriendMsg(msg MsgData) {
+func (u *UserRelated) doFriendMsg(msg *MsgData) {
 	sdkLog("doFriendMsg ", msg)
 	if u.cb == nil || u.friendListener == nil {
 		sdkLog("listener is null")
@@ -1197,16 +1165,16 @@ func (u *UserRelated) doFriendMsg(msg MsgData) {
 		switch msg.ContentType {
 		case AddFriendTip:
 			sdkLog("addFriendNew ", msg)
-			u.addFriendNew(&msg) //
+			u.addFriendNew(msg) //
 		case AcceptFriendApplicationTip:
 			sdkLog("acceptFriendApplicationNew ", msg)
-			u.acceptFriendApplicationNew(&msg)
+			u.acceptFriendApplicationNew(msg)
 		case RefuseFriendApplicationTip:
 			sdkLog("refuseFriendApplicationNew ", msg)
-			u.refuseFriendApplicationNew(&msg)
+			u.refuseFriendApplicationNew(msg)
 		case SetSelfInfoTip:
 			sdkLog("setSelfInfo ", msg)
-			u.setSelfInfo(&msg)
+			u.setSelfInfo(msg)
 			//	case KickOnlineTip:
 			//		sdkLog("kickOnline ", msg)
 			//		u.kickOnline(&msg)
