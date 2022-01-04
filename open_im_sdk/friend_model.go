@@ -6,8 +6,8 @@ func (u *UserRelated) InsertFriendItem(friend *Friend) error {
 	return wrap(u.imdb.Create(friend).Error, "insertFriendItem failed")
 }
 
-func (u *UserRelated) delFriendItem(ownerUserID, friendUserID string) error {
-	friend := Friend{OwnerUserID: ownerUserID, FriendUserID: friendUserID}
+func (u *UserRelated) delFriendItem(friendUserID string) error {
+	friend := Friend{OwnerUserID: u.loginUserID, FriendUserID: friendUserID}
 	return wrap(u.imdb.Delete(&friend).Error, "delFriendItem failed")
 }
 
@@ -21,5 +21,12 @@ func (u *UserRelated) updateFriendItem(friend *Friend) error {
 
 func (u *UserRelated) getFriendList() ([]Friend, error) {
 	var friendList []Friend
-	return friendList, wrap(u.imdb.Where("owner_user_id = ?", u.LoginUid).Find(&friendList).Error, "getFriendListByUserID failed")
+	return friendList, wrap(u.imdb.Where("owner_user_id = ?", u.loginUserID).Find(&friendList).Error,
+		"getFriendList failed")
+}
+
+func (u *UserRelated) getFriendInfoByFriendUserID(FriendUserID string) (*Friend, error) {
+	var friend Friend
+	return &friend, wrap(u.imdb.Where("owner_user_id = ? AND friend_user_id = ?",
+		u.loginUserID, FriendUserID).Error, "getFriendInfoByFriendUserID failed")
 }
