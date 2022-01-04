@@ -110,7 +110,7 @@ type UserRelated struct {
 
 	SvrConf        IMConfig
 	token          string
-	LoginUserID    string
+	loginUserID    string
 	wsNotification map[string]chan GeneralWsResp
 	wsMutex        sync.RWMutex
 	IMManager
