@@ -220,3 +220,7 @@ type SeqData struct {
 	UserID string `gorm:"column:user_id;primary_key;type:varchar(64)"`
 	Seq    int32  `gorm:"column:seq; default:1"`
 }
+type LocalData struct {
+	UserID string `gorm:"column:user_id;primary_key;size:64"`
+	Seq    int32  `gorm:"column:seq;default: '1'"`
+}
