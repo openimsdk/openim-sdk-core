@@ -13,7 +13,7 @@ import (
 
 type EventData struct {
 	Event       string `json:"event"`
-	ErrCode     int    `json:"errCode"`
+	ErrCode     int32  `json:"errCode"`
 	ErrMsg      string `json:"errMsg"`
 	Data        string `json:"data"`
 	OperationID string `json:"operationID"`
@@ -35,7 +35,7 @@ func cleanUpfuncName(funcName string) string {
 	return funcName[end+1:]
 }
 
-func (b *BaseSuccFailed) OnError(errCode int, errMsg string) {
+func (b *BaseSuccFailed) OnError(errCode int32, errMsg string) {
 	wrapSdkLog("!!!!!!!OnError ", b.uid, b.operationID, b.funcName)
 	SendOneUserMessage(EventData{cleanUpfuncName(b.funcName), errCode, errMsg, "", b.operationID}, b.uid)
 }
