@@ -48,7 +48,7 @@ func (u *UserRelated) getRecvFriendApplicationList(callback Base, operationID st
 	return friendApplicationList
 }
 
-func (u *UserRelated) getSendFriendApplicationList(callback Base, operationID string) {
+func (u *UserRelated) getSendFriendApplicationList(callback Base, operationID string) GetSendFriendApplicationListCallback {
 }
 
 func (u *UserRelated) processFriendApplication(callback Base, params ProcessFriendApplicationParams, handleResult int32, operationID string) *base_info.CommDataResp {
