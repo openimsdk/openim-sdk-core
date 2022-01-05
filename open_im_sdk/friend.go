@@ -10,9 +10,9 @@ type FriendListener struct {
 	//ch             chan cmd2Value
 }
 
-func (u *UserRelated) getDesignatedFriendsInfo() ([]LocalFriend, error) {
+func (u *UserRelated) getDesignatedFriendsInfo(callback Base, friendUserIDList []string) ([]LocalFriend, error) {
 	//Take out the friend list and judge whether it is in the blacklist again to prevent nested locks
-	localFriendList, err := u.getLocalFriendList22()
+	localFriendList, err := u._getFriendInfoListByFriendUserID(friendUserIDList)
 	if err != nil {
 		return nil, err
 	}

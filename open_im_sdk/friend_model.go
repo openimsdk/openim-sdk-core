@@ -40,3 +40,10 @@ func (u *UserRelated) _getFriendInfoByFriendUserID(FriendUserID string) (*LocalF
 	return &friend, wrap(u.imdb.Where("owner_user_id = ? AND friend_user_id = ?",
 		u.loginUserID, FriendUserID).Error, "_getFriendInfoByFriendUserID failed")
 }
+
+func (u *UserRelated) _getFriendInfoListByFriendUserID(FriendUserIDList []string) ([]LocalFriend, error) {
+	u.mRWMutex.Lock()
+	defer u.mRWMutex.Unlock()
+	var friendList []LocalFriend
+	return friendList, wrap(u.imdb.Where("friend_user_id in ?", FriendUserIDList).Error, "_getFriendInfoListByFriendUserID failed")
+}

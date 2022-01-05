@@ -11,8 +11,9 @@ func (u *UserRelated) GetFriendsInfo(callback Base, uidList string) {
 		sdkLog("uidList or callback is nil")
 		return
 	}
+
 	go func() {
-		fList, err := u.getLocalFriendList()
+		fList, err := u.getDesignatedFriendsInfo()
 		if err != nil {
 			sdkLog("getLocalFriendList failed, ", err.Error())
 			callback.OnError(ErrCodeFriend, err.Error())
