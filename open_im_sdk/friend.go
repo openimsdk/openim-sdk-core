@@ -47,7 +47,9 @@ func (u *UserRelated) addFriend(callback Base, addFriendParams AddFriendParams, 
 }
 
 func (u *UserRelated) getRecvFriendApplicationList(callback Base, operationID string) {
-
+	friendApplicationList, err := u._getRecvFriendApplication()
+	checkErr(callback, err)
+	callback.OnSuccess(structToJsonString(friendApplicationList))
 }
 
 func (u *UserRelated) doFriendList() {
