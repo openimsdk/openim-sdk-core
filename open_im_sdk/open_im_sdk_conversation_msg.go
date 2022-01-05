@@ -1018,7 +1018,7 @@ func (u *UserRelated) autoSendMsg(s *MsgStruct, receiver, groupID string, online
 		return err
 	}
 	s.SenderFaceURL = userInfo.Icon
-	s.SenderNickName = userInfo.Name
+	s.SenderNickname = userInfo.Name
 	c.ConversationID = conversationID
 	c.LatestMsg = structToJsonString(s)
 	if !onlineUserOnly {
@@ -1037,7 +1037,7 @@ func (u *UserRelated) autoSendMsg(s *MsgStruct, receiver, groupID string, online
 	//Protocol conversion
 	a.SenderPlatformID = s.SenderPlatformID
 	a.SendID = s.SendID
-	a.SenderNickName = s.SenderNickName
+	a.SenderNickName = s.SenderNickname
 	a.SenderFaceURL = s.SenderFaceURL
 	a.OperationID = operationIDGenerator()
 	a.Data.SessionType = s.SessionType
@@ -1227,7 +1227,7 @@ func sendMessageToServer(onlineUserOnly *bool, s *MsgStruct, u *UserRelated, cal
 		ClientMsgID:      s.ClientMsgID,
 		ServerMsgID:      s.ServerMsgID,
 		SenderPlatformID: s.SenderPlatformID,
-		SenderNickname:   s.SenderNickName,
+		SenderNickname:   s.SenderNickname,
 		SenderFaceURL:    s.SenderFaceURL,
 		SessionType:      s.SessionType,
 		MsgFrom:          s.MsgFrom,

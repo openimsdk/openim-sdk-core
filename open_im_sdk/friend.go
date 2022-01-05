@@ -341,7 +341,7 @@ func (u *UserRelated) getServerSelfApplication() ([]applyUserInfo, error) {
 	return vgetFriendApplyListResp.Data, nil
 }
 func (u *UserRelated) addBlack(callback Base, blackUid, operationID string) *CommDataResp {
-	apiReq := base_info.AddBlacklistReq{}
+	apiReq := AddBlacklistReq{}
 	apiReq.ToUserID = blackUid
 	apiReq.FromUserID = u.loginUserID
 	apiReq.OperationID = operationID

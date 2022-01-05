@@ -138,27 +138,27 @@ func (u *UserRelated) doTransferGroupOwner(msg *MsgData) {
 	u.onTransferGroupOwner(&transfer)
 }
 func (u *UserRelated) onTransferGroupOwner(transfer *TransferGroupOwnerReq) {
-	if u.loginUserID == transfer.NewOwner || u.loginUserID == transfer.OldOwner {
-		u.syncGroupRequest()
-	}
-	u.syncGroupMemberByGroupId(transfer.GroupID)
-
-	gInfo, err := u.getLocalGroupsInfoByGroupID(transfer.GroupID)
-	if err != nil {
-		sdkLog("onTransferGroupOwner, err ", err.Error(), transfer.GroupID, transfer.OldOwner, transfer.NewOwner, transfer.OldOwner)
-		return
-	}
-	changeInfo := changeGroupInfo{
-		data:       *gInfo,
-		changeType: 5,
-	}
-	bChangeInfo, err := json.Marshal(changeInfo)
-	if err != nil {
-		sdkLog("updateTransferGroupOwner, ", err.Error())
-		return
-	}
-	u.listener.OnGroupInfoChanged(transfer.GroupID, string(bChangeInfo))
-	sdkLog("onTransferGroupOwner success")
+	//if u.loginUserID == transfer.NewOwner || u.loginUserID == transfer.OldOwner {
+	//	u.syncGroupRequest()
+	//}
+	//u.syncGroupMemberByGroupId(transfer.GroupID)
+	//
+	//gInfo, err := u.getLocalGroupsInfoByGroupID(transfer.GroupID)
+	//if err != nil {
+	//	sdkLog("onTransferGroupOwner, err ", err.Error(), transfer.GroupID, transfer.OldOwner, transfer.NewOwner, transfer.OldOwner)
+	//	return
+	//}
+	//changeInfo := changeGroupInfo{
+	//	data:       *gInfo,
+	//	changeType: 5,
+	//}
+	//bChangeInfo, err := json.Marshal(changeInfo)
+	//if err != nil {
+	//	sdkLog("updateTransferGroupOwner, ", err.Error())
+	//	return
+	//}
+	//u.listener.OnGroupInfoChanged(transfer.GroupID, string(bChangeInfo))
+	//sdkLog("onTransferGroupOwner success")
 }
 
 func (u *UserRelated) doAcceptGroupApplication(msg *MsgData) {

@@ -135,7 +135,7 @@ type getFriendResp struct {
 
 type getBlackListResp struct {
 	Data    []userInfo `json:"data"`
-	ErrCode int        `json:"errCode"`
+	ErrCode int32      `json:"errCode"`
 	ErrMsg  string     `json:"errMsg"`
 }
 type getFriendApplyListResp struct {

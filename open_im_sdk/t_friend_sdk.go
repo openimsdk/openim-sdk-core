@@ -50,13 +50,13 @@ func (testGetFriendApplicationList) OnSuccess(data string) {
 	fmt.Println("testGetFriendApplicationList, OnSuccess, output:", data)
 }
 
-func (testGetFriendApplicationList) OnError(code int, msg string) {
+func (testGetFriendApplicationList) OnError(code int32, msg string) {
 	fmt.Println("testGetFriendApplicationList, OnError, ", code, msg)
 }
 
 func DoTestGetFriendApplicationList() {
 	var test testGetFriendApplicationList
-	GetFriendApplicationList(test)
+	GetRecvFriendApplicationList(test, "")
 
 }
 
@@ -69,7 +69,7 @@ func (testSetSelfInfo) OnSuccess(string) {
 	fmt.Println("testSetSelfInfo, OnSuccess")
 }
 
-func (testSetSelfInfo) OnError(code int, msg string) {
+func (testSetSelfInfo) OnError(code int32, msg string) {
 	fmt.Println("testSetSelfInfo, OnError, ", code, msg)
 }
 
@@ -91,7 +91,7 @@ func (testGetUsersInfo) OnSuccess(data string) {
 	fmt.Println("testGetUsersInfo, OnSuccess, output: ", data)
 }
 
-func (testGetUsersInfo) OnError(code int, msg string) {
+func (testGetUsersInfo) OnError(code int32, msg string) {
 	fmt.Println("testGetUsersInfo, OnError, ", code, msg)
 }
 
@@ -112,7 +112,7 @@ func (testGetFriendsInfo) OnSuccess(data string) {
 	fmt.Println("testGetFriendsInfo, OnSuccess, output: ", data)
 }
 
-func (testGetFriendsInfo) OnError(code int, msg string) {
+func (testGetFriendsInfo) OnError(code int32, msg string) {
 	fmt.Println("testGetFriendsInfo, OnError, ", code, msg)
 }
 
@@ -121,7 +121,7 @@ func DoTestGetFriendsInfo() {
 	test.uid = append(test.uid, Friend_uid)
 	jsontest, _ := json.Marshal(test.uid)
 	fmt.Println("testGetFriendsInfo, input: ", string(jsontest))
-	GetFriendsInfo(test, string(jsontest))
+	GetFriendsInfo(test, string(jsontest), "")
 }
 
 ///////////////////////////////////////////////////////
@@ -143,7 +143,7 @@ func DoTestAddToBlackList() {
 	test.Uid = Friend_uid
 	jsontest, _ := json.Marshal(test.Uid)
 	fmt.Println("AddToBlackList, input: ", string(jsontest))
-	AddToBlackList(test, string(jsontest))
+	AddToBlackList(test, string(jsontest), "")
 }
 
 ///////////////////////////////////////////////////////
@@ -164,7 +164,7 @@ func DoTestDeleteFromBlackList() {
 	test.delUid = Friend_uid
 	jsontest, _ := json.Marshal(test.delUid)
 	fmt.Println("DeleteFromBlackList, input: ", string(jsontest))
-	DeleteFromBlackList(test, string(jsontest))
+	DeleteBlack(test, string(jsontest), "")
 }
 
 //////////////////////////////////////////////////////
@@ -218,7 +218,7 @@ func DoTestSetFriendInfo() {
 	test.Comment = "MM"
 	jsontest, _ := json.Marshal(test)
 	fmt.Println("SetFriendInfo, input: ", string(jsontest))
-	SetFriendInfo(string(jsontest), test)
+	SetFriendInfo(string(jsontest), test, "")
 }
 
 /////////////////////
@@ -241,7 +241,7 @@ func DoTestDeleteFromFriendList() {
 	test.Uid = Friend_uid
 	jsontest, err := json.Marshal(test.Uid)
 	fmt.Println("DeleteFromFriendList, input:              sdafasf ", string(jsontest), err)
-	DeleteFromFriendList(string(jsontest), test)
+	DeleteFromFriendList(string(jsontest), test.Uid, "")
 }
 
 ///////////////////////////////////////////////////////
@@ -254,7 +254,7 @@ type testaddFriend struct {
 func (testaddFriend) OnSuccess(data string) {
 	fmt.Println("testaddFriend, OnSuccess", data)
 }
-func (testaddFriend) OnError(code int, msg string) {
+func (testaddFriend) OnError(code int32, msg string) {
 	fmt.Println("testaddFriend, OnError", code, msg)
 }
 
@@ -266,7 +266,7 @@ func DoTestaddFriend() {
 
 	jsontestaddFriend, _ := json.Marshal(testaddFriend)
 	fmt.Println("addFriend input:", string(jsontestaddFriend))
-	AddFriend(testaddFriend, string(jsontestaddFriend))
+	AddFriend(testaddFriend, string(jsontestaddFriend), "")
 }
 
 /////////////////////////////////////////////////////////////////////

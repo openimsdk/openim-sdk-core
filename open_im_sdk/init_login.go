@@ -366,36 +366,39 @@ func (u *UserRelated) syncSeq2Msg() error {
 }
 
 func (u *UserRelated) syncLoginUserInfo() error {
-	userSvr, err := u.getServerUserInfo()
-	if err != nil {
-		return err
-	}
-	sdkLog("getServerUserInfo ok, user: ", *userSvr)
-
-	userLocal, err := u.getLoginUserInfoFromLocal()
-	if err != nil {
-		return err
-	}
-	sdkLog("getLoginUserInfoFromLocal ok, user: ", userLocal)
-
-	if userSvr.Uid != userLocal.Uid ||
-		userSvr.Name != userLocal.Name ||
-		userSvr.Icon != userLocal.Icon ||
-		userSvr.Gender != userLocal.Gender ||
-		userSvr.Mobile != userLocal.Mobile ||
-		userSvr.Birth != userLocal.Birth ||
-		userSvr.Email != userLocal.Email ||
-		userSvr.Ex != userLocal.Ex {
-		bUserInfo, err := json.Marshal(userSvr)
-		if err != nil {
-			sdkLog("marshal failed, ", err.Error())
-			return err
-		}
-		err = u._updateLoginUser(userSvr)
-		if err != nil {
-			u.cb.OnSelfInfoUpdated(string(bUserInfo))
-		}
-	}
+	//userSvr, err := u.getServerUserInfo()
+	//if err != nil {
+	//	return err
+	//}
+	//sdkLog("getServerUserInfo ok, user: ", *userSvr)
+	//
+	//userLocal, err := u.getLoginUserInfoFromLocal()
+	//userLocal, err := u._getLoginUser()
+	//if err != nil {
+	//	return err
+	//}
+	//sdkLog("getLoginUserInfoFromLocal ok, user: ", userLocal)
+	//
+	//if userSvr.Uid != userLocal.Uid ||
+	//	userSvr.Name != userLocal.Name ||
+	//	userSvr.Icon != userLocal.Icon ||
+	//	userSvr.Gender != userLocal.Gender ||
+	//	userSvr.Mobile != userLocal.Mobile ||
+	//	userSvr.Birth != userLocal.Birth ||
+	//	userSvr.Email != userLocal.Email ||
+	//	userSvr.Ex != userLocal.Ex {
+	//	bUserInfo, err := json.Marshal(userSvr)
+	//	if err != nil {
+	//		sdkLog("marshal failed, ", err.Error())
+	//		return err
+	//	}
+	//
+	//	copier.Copy(a, b)
+	//	err = u._updateLoginUser(userSvr)
+	//	if err != nil {
+	//		u.cb.OnSelfInfoUpdated(string(bUserInfo))
+	//	}
+	//}
 	return nil
 }
 
@@ -1071,31 +1074,36 @@ func (u *UserRelated) getUserNewestSeq() (int64, int64, error) {
 	return seqResp.Data.Seq, seqResp.Data.MinSeq, nil
 }
 
-func (u *UserRelated) getServerUserInfo() (*userInfo, error) {
-	var uidList []string
-	uidList = append(uidList, u.loginUserID)
-	resp, err := post2Api(getUserInfoRouter, paramsGetUserInfo{OperationID: operationIDGenerator(), UidList: uidList}, u.token)
-	if err != nil {
-		sdkLog("post2Api failed, ", getUserInfoRouter, uidList, err.Error())
-		return nil, err
-	}
-	var userResp getUserInfoResp
-	err = json.Unmarshal(resp, &userResp)
-	if err != nil {
-		sdkLog("Unmarshal failed, ", resp, err.Error())
-		return nil, err
-	}
+func (u *UserRelated) getServerUserInfo() (*UserInfo, error) {
 
-	if userResp.ErrCode != 0 {
-		sdkLog("errcode: ", userResp.ErrCode, "errmsg:", userResp.ErrMsg)
-		return nil, errors.New(userResp.ErrMsg)
-	}
-
-	if len(userResp.Data) == 0 {
-		sdkLog("failed, no user : ", u.loginUserID)
-		return nil, errors.New("no user")
-	}
-	return &userResp.Data[0], nil
+	return nil, nil
+	//
+	//var uidList []string
+	//uidList = append(uidList, u.loginUserID)
+	//
+	//
+	//resp, err := post2Api(getUserInfoRouter, paramsGetUserInfo{OperationID: operationIDGenerator(), UidList: uidList}, u.token)
+	//if err != nil {
+	//	sdkLog("post2Api failed, ", getUserInfoRouter, uidList, err.Error())
+	//	return nil, err
+	//}
+	//var userResp getUserInfoResp
+	//err = json.Unmarshal(resp, &userResp)
+	//if err != nil {
+	//	sdkLog("Unmarshal failed, ", resp, err.Error())
+	//	return nil, err
+	//}
+	//
+	//if userResp.ErrCode != 0 {
+	//	sdkLog("errcode: ", userResp.ErrCode, "errmsg:", userResp.ErrMsg)
+	//	return nil, errors.New(userResp.ErrMsg)
+	//}
+	//
+	//if len(userResp.Data) == 0 {
+	//	sdkLog("failed, no user : ", u.loginUserID)
+	//	return nil, errors.New("no user")
+	//}
+	//return &userResp.Data[0], nil
 }
 func (u *UserRelated) getUserNameAndFaceUrlByUid(uid string) (faceUrl, name string, err error) {
 	friendInfo, err := u._getFriendInfoByFriendUserID(uid)
