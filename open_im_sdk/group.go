@@ -11,7 +11,7 @@ func (u *UserRelated) doGroupMsg(msg *MsgData) {
 		sdkLog("group listener is null")
 		return
 	}
-	if msg.SendID == u.LoginUid && msg.SenderPlatformID == u.SvrConf.Platform {
+	if msg.SendID == u.loginUserID && msg.SenderPlatformID == u.SvrConf.Platform {
 		sdkLog("sync msg ", msg)
 		return
 	}
@@ -138,7 +138,7 @@ func (u *UserRelated) doTransferGroupOwner(msg *MsgData) {
 	u.onTransferGroupOwner(&transfer)
 }
 func (u *UserRelated) onTransferGroupOwner(transfer *TransferGroupOwnerReq) {
-	if u.LoginUid == transfer.NewOwner || u.LoginUid == transfer.OldOwner {
+	if u.loginUserID == transfer.NewOwner || u.loginUserID == transfer.OldOwner {
 		u.syncGroupRequest()
 	}
 	u.syncGroupMemberByGroupId(transfer.GroupID)
@@ -207,7 +207,7 @@ func (u *UserRelated) onAcceptGroupApplication(groupMember *GroupApplicationInfo
 		sdkLog("onAcceptGroupApplication", err.Error())
 		return
 	}
-	if u.LoginUid == member.UserId {
+	if u.loginUserID == member.UserId {
 		u.syncJoinedGroupInfo()
 		u.listener.OnApplicationProcessed(groupMember.Info.GroupId, string(bOp), 1, groupMember.Info.HandledMsg)
 	}
@@ -259,7 +259,7 @@ func (u *UserRelated) onRefuseGroupApplication(groupMember *GroupApplicationInfo
 		return
 	}
 
-	if u.LoginUid == member.UserId {
+	if u.loginUserID == member.UserId {
 		u.listener.OnApplicationProcessed(groupMember.Info.GroupId, string(bOp), -1, groupMember.Info.HandledMsg)
 	}
 
@@ -352,7 +352,7 @@ func (u *UserRelated) doInviteUserToGroup(msg *MsgData) {
 		return
 	}
 	for _, v := range inviteReq.UidList {
-		if u.LoginUid == v {
+		if u.loginUserID == v {
 
 			u.syncJoinedGroupInfo()
 			sdkLog("syncJoinedGroupInfo, ", v)
@@ -549,16 +549,16 @@ func (u *UserRelated) getGroupsInfo(groupIdList []string) ([]groupInfo, error) {
 }
 
 func (u *UserRelated) setGroupInfo(newGroupInfo setGroupInfoReq) error {
-	uid, err := u.findLocalGroupOwnerByGroupId(newGroupInfo.GroupId)
+	g, err := u._getGroupInfoByGroupID(newGroupInfo.GroupId)
 	if err != nil {
 		sdkLog("findLocalGroupOwnerByGroupId failed, ", newGroupInfo.GroupId, err.Error())
 		return err
 	}
-	if u.LoginUid != uid {
-		sdkLog("no permission, ", u.LoginUid, uid)
+	if u.loginUserID != g.OwnerUserID {
+		sdkLog("no permission, ", u.loginUserID, g.OwnerUserID)
 		return errors.New("no permission")
 	}
-	sdkLog("findLocalGroupOwnerByGroupId ok ", newGroupInfo.GroupId, uid)
+	sdkLog("findLocalGroupOwnerByGroupId ok ", newGroupInfo.GroupId, g.OwnerUserID)
 
 	req := setGroupInfoReq{newGroupInfo.GroupId, newGroupInfo.GroupName, newGroupInfo.Notification, newGroupInfo.Introduction, newGroupInfo.FaceUrl, operationIDGenerator()}
 	resp, err := post2Api(setGroupInfoRouter, req, u.token)
@@ -928,7 +928,7 @@ func (u *UserRelated) GroupApplicationProcessedCallback(node updateGroupNode, pr
 	var flag = 0
 	var idx = 0
 	for i, v := range processed.applyList {
-		if v.member.UserId == u.LoginUid {
+		if v.member.UserId == u.loginUserID {
 			flag = 1
 			idx = i
 			break

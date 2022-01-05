@@ -67,7 +67,7 @@ func (u *UserRelated) logout(cb Base) {
 		}
 		sdkLog("closeConn ok")
 
-		err = u.closeDB()
+		//err = u.closeDB()
 		if err != nil {
 			if cb != nil {
 				cb.OnError(ErrCodeInitLogin, err.Error())
@@ -123,7 +123,7 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 			}
 		}
 
-		u.closeDB()
+		//u.closeDB()
 		return
 	}
 	sdkLog("ws conn ok ", uid)
@@ -156,7 +156,7 @@ func (u *UserRelated) timedCloseDB() {
 		num++
 		if num%60 == 0 {
 			sdkLog("closeDBSetNil begin")
-			u.closeDBSetNil()
+			//u.closeDBSetNil()
 			sdkLog("closeDBSetNil end")
 		}
 	}
@@ -391,7 +391,7 @@ func (u *UserRelated) syncLoginUserInfo() error {
 			sdkLog("marshal failed, ", err.Error())
 			return err
 		}
-		err = u.replaceIntoUser(userSvr)
+		err = u._updateLoginUser(userSvr)
 		if err != nil {
 			u.cb.OnSelfInfoUpdated(string(bUserInfo))
 		}
@@ -1049,7 +1049,7 @@ func CheckToken(uId, token string) int {
 
 func (u *UserRelated) getUserNewestSeq() (int64, int64, error) {
 	LogBegin()
-	resp, err := post2Api(newestSeqRouter, paramsNewestSeqReq{ReqIdentifier: 1001, OperationID: operationIDGenerator(), SendID: u.LoginUid, MsgIncr: 1}, u.token)
+	resp, err := post2Api(newestSeqRouter, paramsNewestSeqReq{ReqIdentifier: 1001, OperationID: operationIDGenerator(), SendID: u.loginUserID, MsgIncr: 1}, u.token)
 	if err != nil {
 		LogFReturn(0, err.Error())
 		return 0, 0, err
@@ -1098,11 +1098,11 @@ func (u *UserRelated) getServerUserInfo() (*userInfo, error) {
 	return &userResp.Data[0], nil
 }
 func (u *UserRelated) getUserNameAndFaceUrlByUid(uid string) (faceUrl, name string, err error) {
-	friendInfo, err := u.getFriendInfoByFriendUid(uid)
+	friendInfo, err := u._getFriendInfoByFriendUserID(uid)
 	if err != nil {
 		return "", "", err
 	}
-	if friendInfo.UID == "" {
+	if friendInfo.FriendUserID == "" {
 		userInfo, err := u.getUserInfoByUid(uid)
 		if err != nil {
 			return "", "", err
@@ -1110,10 +1110,10 @@ func (u *UserRelated) getUserNameAndFaceUrlByUid(uid string) (faceUrl, name stri
 			return userInfo.Icon, userInfo.Name, nil
 		}
 	} else {
-		if friendInfo.Comment != "" {
-			return friendInfo.Icon, friendInfo.Comment, nil
+		if friendInfo.Remark != "" {
+			return friendInfo.FaceUrl, friendInfo.Remark, nil
 		} else {
-			return friendInfo.Icon, friendInfo.Name, nil
+			return friendInfo.FaceUrl, friendInfo.Nickname, nil
 		}
 	}
 }
