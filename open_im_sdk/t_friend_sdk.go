@@ -282,7 +282,7 @@ func (testGetFriendList) OnError(code int, msg string) {
 }
 func DoTestGetFriendList() {
 	var testGetFriendList testGetFriendList
-	GetFriendList(testGetFriendList)
+	GetFriendList(testGetFriendList, "")
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -303,7 +303,7 @@ func DoTestAcceptFriendApplication() {
 	testAcceptFriendApplication.UID = Friend_uid
 
 	jsontestAcceptFriendappclicatrion, _ := json.Marshal(testAcceptFriendApplication.UID)
-	AcceptFriendApplication(testAcceptFriendApplication, string(jsontestAcceptFriendappclicatrion))
+	AcceptFriendApplication(testAcceptFriendApplication, string(jsontestAcceptFriendappclicatrion), "")
 	fmt.Println("AcceptFriendApplication, input: ", string(jsontestAcceptFriendappclicatrion))
 }
 
@@ -350,7 +350,7 @@ func DoTestRefuseFriendApplication() {
 	testRefuseFriendApplication.UID = Friend_uid
 
 	jsontestfusetFriendappclicatrion, _ := json.Marshal(testRefuseFriendApplication.UID)
-	RefuseFriendApplication(testRefuseFriendApplication, string(jsontestfusetFriendappclicatrion))
+	RefuseFriendApplication(testRefuseFriendApplication, string(jsontestfusetFriendappclicatrion), "")
 	fmt.Println("RefuseFriendApplication, input: ", string(jsontestfusetFriendappclicatrion))
 }
 
