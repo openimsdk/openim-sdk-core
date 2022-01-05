@@ -3,6 +3,7 @@ package open_im_sdk
 import (
 	"encoding/json"
 	"errors"
+	"runtime"
 )
 
 type FriendListener struct {
@@ -14,7 +15,12 @@ func (u *UserRelated) getDesignatedFriendsInfo(callback Base, friendUserIDList [
 	//Take out the friend list and judge whether it is in the blacklist again to prevent nested locks
 	localFriendList, err := u._getFriendInfoListByFriendUserID(friendUserIDList)
 	if err != nil {
-		return nil, err
+		if callback != nil {
+			sdkErrLog(err, "_getFriendInfoListByFriendUserID failed ", friendUserIDList)
+			callback.OnError()
+			runtime.Goexit()
+		}
+		return nil, wrap(err, "_getFriendInfoListByFriendUserID failed")
 	}
 	for index, v := range localFriendList {
 		//check friend is in blacklist

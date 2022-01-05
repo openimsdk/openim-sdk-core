@@ -2,6 +2,7 @@ package open_im_sdk
 
 import (
 	"database/sql"
+	"errors"
 	"gorm.io/gorm"
 	"sync"
 )
@@ -313,3 +314,46 @@ const (
 	NotReceiveMessage       = 1
 	ReceiveNotNotifyMessage = 2
 )
+
+// key = errCode, string = errMsg
+type ErrInfo struct {
+	ErrCode int32
+	ErrMsg  string
+}
+
+var (
+	OK = ErrInfo{0, ""}
+
+	ErrParseToken = ErrInfo{200, ParseTokenMsg.Error()}
+
+	ErrTencentCredential = ErrInfo{400, ThirdPartyMsg.Error()}
+
+	ErrTokenExpired     = ErrInfo{701, TokenExpiredMsg.Error()}
+	ErrTokenInvalid     = ErrInfo{702, TokenInvalidMsg.Error()}
+	ErrTokenMalformed   = ErrInfo{703, TokenMalformedMsg.Error()}
+	ErrTokenNotValidYet = ErrInfo{704, TokenNotValidYetMsg.Error()}
+	ErrTokenUnknown     = ErrInfo{705, TokenUnknownMsg.Error()}
+
+	ErrAccess = ErrInfo{ErrCode: 801, ErrMsg: AccessMsg.Error()}
+	ErrDB     = ErrInfo{ErrCode: 802, ErrMsg: DBMsg.Error()}
+	ErrArgs   = ErrInfo{ErrCode: 8003, ErrMsg: ArgsMsg.Error()}
+)
+
+var (
+	ParseTokenMsg       = errors.New("parse token failed")
+	TokenExpiredMsg     = errors.New("token is timed out, please log in again")
+	TokenInvalidMsg     = errors.New("token has been invalidated")
+	TokenNotValidYetMsg = errors.New("token not active yet")
+	TokenMalformedMsg   = errors.New("that's not even a token")
+	TokenUnknownMsg     = errors.New("couldn't handle this token")
+
+	AccessMsg = errors.New("no permission")
+	DBMsg     = errors.New("db failed")
+	ArgsMsg   = errors.New("args failed")
+
+	ThirdPartyMsg = errors.New("third party error")
+)
+
+func (e *ErrInfo) Error() string {
+	return e.ErrMsg
+}
