@@ -677,13 +677,13 @@ func checkErr(callback Base, err error, operationID string) {
 	}
 }
 
-func checkErrAndResp(callback Base, err error, resp []byte, operationID string) *base_info.CommDataResp {
+func checkErrAndResp(callback Base, err error, resp []byte, operationID string) *CommDataResp {
 	checkErr(callback, err, operationID)
 	return checkResp(callback, resp, operationID)
 }
 
-func checkResp(callback Base, resp []byte, operationID string) *base_info.CommDataResp {
-	var c base_info.CommDataResp
+func checkResp(callback Base, resp []byte, operationID string) *CommDataResp {
+	var c CommDataResp
 	err := json.Unmarshal(resp, &c)
 	if err != nil {
 		if callback != nil {
