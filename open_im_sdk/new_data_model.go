@@ -2,6 +2,7 @@ package open_im_sdk
 
 import (
 	"errors"
+	"github.com/go-playground/validator/v10"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -19,6 +20,7 @@ func (u *UserRelated) initDB() error {
 		panic("failed to connect database" + err.Error())
 		return err
 	}
+	u.validate = validator.New()
 	u.imdb = db
 	//db, err := sql.Open("sqlite3", SvrConf.DbDir+"OpenIM_"+uid+".db")
 	//sdkLog("open db:", SvrConf.DbDir+"OpenIM_"+uid+".db")
@@ -28,50 +30,50 @@ func (u *UserRelated) initDB() error {
 	//}
 	//u.db = db
 
-	db.AutoMigrate(&Friend{},
-		&FriendRequest{},
-		&Group{},
-		&GroupMember{},
-		&GroupRequest{},
-		&User{},
-		&Black{})
-	if !db.Migrator().HasTable(&Friend{}) {
+	db.AutoMigrate(&LocalFriend{},
+		&LocalFriendRequest{},
+		&LocalGroup{},
+		&LocalGroupMember{},
+		&LocalGroupRequest{},
+		&LocalUser{},
+		&LocalBlack{}, &LocalSeqData{})
+	if !db.Migrator().HasTable(&LocalFriend{}) {
 		//log.NewInfo("CreateTable Friend")
-		db.Migrator().CreateTable(&Friend{})
+		db.Migrator().CreateTable(&LocalFriend{})
 	}
 
-	if !db.Migrator().HasTable(&FriendRequest{}) {
+	if !db.Migrator().HasTable(&LocalFriendRequest{}) {
 		//log.NewInfo("CreateTable FriendRequest")
-		db.Migrator().CreateTable(&FriendRequest{})
+		db.Migrator().CreateTable(&LocalFriendRequest{})
 	}
 
-	if !db.Migrator().HasTable(&Group{}) {
+	if !db.Migrator().HasTable(&LocalGroup{}) {
 		//log.NewInfo("CreateTable Group")
-		db.Migrator().CreateTable(&Group{})
+		db.Migrator().CreateTable(&LocalGroup{})
 	}
 
-	if !db.Migrator().HasTable(&GroupMember{}) {
+	if !db.Migrator().HasTable(&LocalGroupMember{}) {
 		//log.NewInfo("CreateTable GroupMember")
-		db.Migrator().CreateTable(&GroupMember{})
+		db.Migrator().CreateTable(&LocalGroupMember{})
 	}
 
-	if !db.Migrator().HasTable(&GroupRequest{}) {
+	if !db.Migrator().HasTable(&LocalGroupRequest{}) {
 		//log.NewInfo("CreateTable GroupRequest")
-		db.Migrator().CreateTable(&GroupRequest{})
+		db.Migrator().CreateTable(&LocalGroupRequest{})
 	}
 
-	if !db.Migrator().HasTable(&User{}) {
+	if !db.Migrator().HasTable(&LocalUser{}) {
 		//log.NewInfo("CreateTable User")
-		db.Migrator().CreateTable(&User{})
+		db.Migrator().CreateTable(&LocalUser{})
 	}
 
-	if !db.Migrator().HasTable(&Black{}) {
+	if !db.Migrator().HasTable(&LocalBlack{}) {
 		//log.NewInfo("CreateTable Black")
-		db.Migrator().CreateTable(&Black{})
+		db.Migrator().CreateTable(&LocalBlack{})
 	}
 
-	if !db.Migrator().HasTable(&SeqData{}) {
-		db.Migrator().CreateTable(&SeqData{})
+	if !db.Migrator().HasTable(&LocalSeqData{}) {
+		db.Migrator().CreateTable(&LocalSeqData{})
 	}
 	return nil
 }
