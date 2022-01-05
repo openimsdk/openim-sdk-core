@@ -1,10 +1,5 @@
 package base_info
 
-import (
-	pbRelay "Open_IM/pkg/proto/relay"
-	pbUser "Open_IM/pkg/proto/user"
-)
-
 type DeleteUsersReq struct {
 	OperationID      string   `json:"operationID" binding:"required"`
 	DeleteUserIDList []string `json:"deleteUserIDList" binding:"required"`
@@ -26,7 +21,7 @@ type GetUsersOnlineStatusReq struct {
 }
 type GetUsersOnlineStatusResp struct {
 	CommResp
-	SuccessResult []*pbRelay.GetUsersOnlineStatusResp_SuccessResult `json:"data"`
+	SuccessResult []GetusersonlinestatusrespSuccessresult `json:"data"`
 }
 type AccountCheckReq struct {
 	OperationID     string   `json:"operationID" binding:"required"`
@@ -34,5 +29,27 @@ type AccountCheckReq struct {
 }
 type AccountCheckResp struct {
 	CommResp
-	ResultList []*pbUser.AccountCheckResp_SingleUserStatus `json:"data"`
+	ResultList AccountcheckrespSingleuserstatus `json:"data"`
+}
+type GetusersonlinestatusrespSuccessdetail struct {
+	Platform             string   `protobuf:"bytes,1,opt,name=platform" json:"platform,omitempty"`
+	Status               string   `protobuf:"bytes,2,opt,name=status" json:"status,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+type GetusersonlinestatusrespSuccessresult struct {
+	UserID               string                                   `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
+	Status               string                                   `protobuf:"bytes,2,opt,name=status" json:"status,omitempty"`
+	DetailPlatformStatus []*GetusersonlinestatusrespSuccessdetail `protobuf:"bytes,3,rep,name=detailPlatformStatus" json:"detailPlatformStatus,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                                 `json:"-"`
+	XXX_unrecognized     []byte                                   `json:"-"`
+	XXX_sizecache        int32                                    `json:"-"`
+}
+type AccountcheckrespSingleuserstatus struct {
+	UserID               string   `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
+	AccountStatus        string   `protobuf:"bytes,2,opt,name=accountStatus" json:"accountStatus,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
