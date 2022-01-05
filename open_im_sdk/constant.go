@@ -2,6 +2,7 @@ package open_im_sdk
 
 import (
 	"database/sql"
+	"github.com/go-playground/validator/v10"
 	"errors"
 	"gorm.io/gorm"
 	"sync"
@@ -119,7 +120,8 @@ type UserRelated struct {
 
 	db *sql.DB
 
-	imdb *gorm.DB
+	imdb     *gorm.DB
+	validate *validator.Validate
 
 	mRWMutex   sync.RWMutex
 	stateMutex sync.Mutex
@@ -217,6 +219,7 @@ const (
 	MsgStatusSendFailed  = 3
 	MsgStatusHasDeleted  = 4
 	MsgStatusRevoked     = 5
+	MsgStatusFiltered    = 6
 
 	//OptionsKey
 	IsHistory            = "history"

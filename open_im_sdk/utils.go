@@ -6,10 +6,8 @@ import (
 	"encoding/gob"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/pkg/errors"
-
-	e "errors"
 	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -203,7 +201,7 @@ func sendCmd(ch chan cmd2Value, value cmd2Value, timeout int64) error {
 }
 
 func (u *UserRelated) GenMsgIncr() string {
-	return u.LoginUid + "_" + int64ToString(getCurrentTimestampByNano())
+	return u.loginUserID + "_" + int64ToString(getCurrentTimestampByNano())
 }
 
 func structToJsonString(param interface{}) string {
@@ -214,8 +212,7 @@ func structToJsonString(param interface{}) string {
 
 //The incoming parameter must be a pointer
 func jsonStringToStruct(s string, args interface{}) error {
-	err := json.Unmarshal([]byte(s), args)
-	return err
+	return wrap(json.Unmarshal([]byte(s), args), "json Unmarshal failed")
 }
 
 //Convert timestamp to time.Time type
