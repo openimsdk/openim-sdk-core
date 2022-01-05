@@ -342,7 +342,7 @@ type testRefuseFriendApplication struct {
 func (testRefuseFriendApplication) OnSuccess(info string) {
 	fmt.Println("testRefuseFriendApplication OnSuccess", info)
 }
-func (testRefuseFriendApplication) OnError(code int, msg string) {
+func (testRefuseFriendApplication) OnError(code int32, msg string) {
 	fmt.Println("testRefuseFriendApplication, OnError, ", code, msg)
 }
 func DoTestRefuseFriendApplication() {
