@@ -566,7 +566,7 @@ func DoTestDeleteConversation(conversationID string) {
 type DeleteConversationCallBack struct {
 }
 
-func (d DeleteConversationCallBack) OnError(errCode int, errMsg string) {
+func (d DeleteConversationCallBack) OnError(errCode int32, errMsg string) {
 	fmt.Printf("DeleteConversationCallBack , errCode:%v,errMsg:%v\n", errCode, errMsg)
 }
 
