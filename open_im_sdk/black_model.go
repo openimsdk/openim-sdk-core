@@ -17,6 +17,13 @@ func (u *UserRelated) _getBlackInfoByBlockUserID(blockUserID string) (*LocalBlac
 		u.loginUserID, blockUserID).Find(&black).Error, "_getBlackInfoByBlockUserID failed")
 }
 
+func (u *UserRelated) _getBlackInfoList(blockUserIDList []string) (*LocalBlack, error) {
+	u.mRWMutex.RLock()
+	defer u.mRWMutex.RUnlock()
+	var black LocalBlack
+	return &black, wrap(u.imdb.Where("block_user_id IN ? ", blockUserIDList).Find(&black).Error, "_getBlackInfoList failed")
+}
+
 func (u *UserRelated) _insertBlack(black *LocalBlack) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()

@@ -70,7 +70,7 @@ func (u *UserRelated) ForceSyncLoginUserInfo() {
 }
 
 type Base interface {
-	OnError(errCode int, errMsg string)
+	OnError(errCode int32, errMsg string)
 	OnSuccess(data string)
 }
 
