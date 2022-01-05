@@ -1760,7 +1760,7 @@ func (u *UserRelated) getOneMessage(msgID string) (m *MsgStruct, err error) {
 	temp := new(MsgStruct)
 	for rows.Next() {
 		err = rows.Scan(&temp.ClientMsgID, &temp.SendID, &isRead,
-			&temp.Seq, &temp.Status, &temp.SessionType, &temp.RecvID, &temp.ContentType, &temp.SenderFaceURL, &temp.SendernickName,
+			&temp.Seq, &temp.Status, &temp.SessionType, &temp.RecvID, &temp.ContentType, &temp.SenderFaceURL, &temp.SenderNickname,
 			&temp.MsgFrom, &temp.Content, &temp.Remark, &temp.SenderPlatformID, &temp.SendTime, &temp.CreateTime)
 		if err != nil {
 			sdkLog("getOneMessage,failed", err.Error())
@@ -1876,7 +1876,7 @@ func (u *UserRelated) getHistoryMessage(sourceConversationID string, startTime i
 	for rows.Next() {
 		temp := new(MsgStruct)
 		err = rows.Scan(&temp.ClientMsgID, &temp.SendID, &isRead, &temp.Seq, &temp.Status, &temp.SessionType,
-			&temp.RecvID, &temp.ContentType, &temp.SenderFaceURL, &temp.SenderNickName, &temp.MsgFrom, &temp.Content, &temp.Remark, &temp.SenderPlatformID, &temp.SendTime, &temp.CreateTime)
+			&temp.RecvID, &temp.ContentType, &temp.SenderFaceURL, &temp.SenderNickname, &temp.MsgFrom, &temp.Content, &temp.Remark, &temp.SenderPlatformID, &temp.SendTime, &temp.CreateTime)
 		if err != nil {
 			sdkLog("getHistoryMessage,err:", err.Error())
 			continue
@@ -1946,7 +1946,7 @@ func (u *UserRelated) getMultipleMessageModel(messageIDList []string) (err error
 	for rows.Next() {
 		temp := new(MsgStruct)
 		err = rows.Scan(&temp.ClientMsgID, &temp.SendID, &isRead, &temp.Seq, &temp.Status, &temp.SessionType,
-			&temp.RecvID, &temp.ContentType, &temp.SenderFaceURL, &temp.SenderNickName, &temp.MsgFrom, &temp.Content, &temp.Remark, &temp.SenderPlatformID, &temp.SendTime, &temp.CreateTime)
+			&temp.RecvID, &temp.ContentType, &temp.SenderFaceURL, &temp.SenderNickname, &temp.MsgFrom, &temp.Content, &temp.Remark, &temp.SenderPlatformID, &temp.SendTime, &temp.CreateTime)
 		if err != nil {
 			sdkLog("getMultipleMessageModel,err:", err.Error())
 			continue

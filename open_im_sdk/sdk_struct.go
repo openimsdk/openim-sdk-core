@@ -54,7 +54,7 @@ type acceptOrRefuseFriendMsgCallback struct {
 //fixme---------------user struct--------------
 type getUserInfoResp struct {
 	Data    []userInfo `json:"data"`
-	ErrCode int        `json:"errCode"`
+	ErrCode int32      `json:"errCode"`
 	ErrMsg  string     `json:"errMsg"`
 }
 type userInfo struct {
@@ -119,7 +119,7 @@ type paramsRemoveBlackList struct {
 }
 
 type commonResp struct {
-	ErrCode int    `json:"errCode"`
+	ErrCode int32  `json:"errCode"`
 	ErrMsg  string `json:"errMsg"`
 }
 type getFriendListResp struct {

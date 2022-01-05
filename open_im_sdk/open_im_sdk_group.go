@@ -111,20 +111,15 @@ func (u *UserRelated) GetJoinedGroupList(callback Base) {
 		sdkLog("getJoinedGroupListFromLocal, ", groupInfoList)
 
 		for i, v := range groupInfoList {
-			ownerId, err := u.findLocalGroupOwnerByGroupId(v.GroupId)
+			g, err := u._getGroupInfoByGroupID(v.GroupId)
 			if err != nil {
 				sdkLog("findLocalGroupOwnerByGroupId failed,  ", err.Error(), v.GroupId)
 				continue
 			}
-			sdkLog("findLocalGroupOwnerByGroupId ", v.GroupId, ownerId)
-			v.OwnerId = ownerId
-			number, err := u.getLocalGroupMemberNumByGroupId(v.GroupId)
-			if err != nil {
-				sdkLog("getLocalGroupMemberNumByGroupId failed, ", err.Error(), v.GroupId)
-				continue
-			}
-			sdkLog("getLocalGroupMemberNumByGroupId ", v.GroupId, number)
-			v.MemberCount = uint32(number)
+			sdkLog("findLocalGroupOwnerByGroupId ", v.GroupId, g.OwnerUserID)
+			v.OwnerId = g.OwnerUserID
+			sdkLog("getLocalGroupMemberNumByGroupId ", v.GroupId, g.MemberCount)
+			v.MemberCount = uint32(g.MemberCount)
 			groupInfoList[i] = v
 		}
 
