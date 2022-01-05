@@ -1,9 +1,5 @@
 package open_im_sdk
 
-import (
-	"open_im_sdk/open_im_sdk/base_info"
-)
-
 type GetDesignatedFriendsInfoParams []string
 type GetDesignatedFriendsInfoCallback []LocalFriend
 
@@ -27,7 +23,7 @@ type ProcessFriendApplicationParams struct {
 type ProcessFriendApplicationCallback struct{}
 
 type CheckFriendParams []string
-type CheckFriendCallback []base_info.UserIDResult
+type CheckFriendCallback []UserIDResult
 
 type DeleteFriendParams string
 type DeleteFriendCallback struct{}

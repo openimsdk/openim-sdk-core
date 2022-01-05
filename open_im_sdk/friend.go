@@ -3,7 +3,6 @@ package open_im_sdk
 import (
 	"encoding/json"
 	"errors"
-	"open_im_sdk/open_im_sdk/base_info"
 )
 
 type FriendListener struct {
@@ -33,8 +32,8 @@ func (u *UserRelated) getDesignatedFriendsInfo(callback Base, friendUserIDList G
 	return localFriendList
 }
 
-func (u *UserRelated) addFriend(callback Base, addFriendParams AddFriendParams, operationID string) *base_info.CommDataResp {
-	apiReq := base_info.AddFriendReq{}
+func (u *UserRelated) addFriend(callback Base, addFriendParams AddFriendParams, operationID string) *CommDataResp {
+	apiReq := AddFriendReq{}
 	apiReq.ToUserID = addFriendParams.ToUserID
 	apiReq.FromUserID = u.loginUserID
 	apiReq.ReqMsg = addFriendParams.ReqMsg
@@ -51,8 +50,8 @@ func (u *UserRelated) getRecvFriendApplicationList(callback Base, operationID st
 func (u *UserRelated) getSendFriendApplicationList(callback Base, operationID string) GetSendFriendApplicationListCallback {
 }
 
-func (u *UserRelated) processFriendApplication(callback Base, params ProcessFriendApplicationParams, handleResult int32, operationID string) *base_info.CommDataResp {
-	apiReq := base_info.AddFriendResponseReq{}
+func (u *UserRelated) processFriendApplication(callback Base, params ProcessFriendApplicationParams, handleResult int32, operationID string) *CommDataResp {
+	apiReq := AddFriendResponseReq{}
 	apiReq.FromUserID = u.loginUserID
 	apiReq.ToUserID = params.ToUserID
 	apiReq.Flag = handleResult
@@ -71,7 +70,7 @@ func (u *UserRelated) checkFriend(callback Base, userIDList CheckFriendParams, o
 	checkErr(callback, err, operationID)
 	var checkFriendCallback CheckFriendCallback
 	for _, v := range userIDList {
-		var r base_info.UserIDResult
+		var r UserIDResult
 		isBlack := false
 		isFriend := false
 		for _, b := range blackList {
@@ -97,8 +96,8 @@ func (u *UserRelated) checkFriend(callback Base, userIDList CheckFriendParams, o
 	return checkFriendCallback
 }
 
-func (u *UserRelated) deleteFriend(FriendUserID string, callback Base, operationID string) *base_info.CommDataResp {
-	apiReq := base_info.DeleteFriendReq{}
+func (u *UserRelated) deleteFriend(FriendUserID string, callback Base, operationID string) *CommDataResp {
+	apiReq := DeleteFriendReq{}
 	apiReq.ToUserID = FriendUserID
 	apiReq.FromUserID = u.loginUserID
 	resp, err := post2Api(deleteFriendRouter, apiReq, u.token)
@@ -107,8 +106,8 @@ func (u *UserRelated) deleteFriend(FriendUserID string, callback Base, operation
 	return result
 }
 
-func (u *UserRelated) setFriendRemark(params SetFriendRemarkParams, callback Base, operationID string) *base_info.CommDataResp {
-	apiReq := base_info.SetFriendRemarkReq{}
+func (u *UserRelated) setFriendRemark(params SetFriendRemarkParams, callback Base, operationID string) *CommDataResp {
+	apiReq := SetFriendRemarkReq{}
 	apiReq.OperationID = operationID
 	apiReq.ToUserID = params.ToUserID
 	apiReq.FromUserID = u.loginUserID
@@ -340,7 +339,7 @@ func (u *UserRelated) getServerSelfApplication() ([]applyUserInfo, error) {
 	}
 	return vgetFriendApplyListResp.Data, nil
 }
-func (u *UserRelated) addBlack(callback Base, blackUid, operationID string) *base_info.CommDataResp {
+func (u *UserRelated) addBlack(callback Base, blackUid, operationID string) *CommDataResp {
 	apiReq := base_info.AddBlacklistReq{}
 	apiReq.ToUserID = blackUid
 	apiReq.FromUserID = u.loginUserID
@@ -351,8 +350,8 @@ func (u *UserRelated) addBlack(callback Base, blackUid, operationID string) *bas
 	return r
 
 }
-func (u *UserRelated) removeBlack(callback Base, deleteUid, operationID string) *base_info.CommDataResp {
-	apiReq := base_info.RemoveBlackListReq{}
+func (u *UserRelated) removeBlack(callback Base, deleteUid, operationID string) *CommDataResp {
+	apiReq := RemoveBlackListReq{}
 	apiReq.ToUserID = deleteUid
 	apiReq.FromUserID = u.loginUserID
 	apiReq.OperationID = operationID
