@@ -12,7 +12,7 @@ type FriendListener struct {
 }
 
 func (u *UserRelated) getDesignatedFriendsInfo(callback Base, friendUserIDList []string, operationID string) ([]LocalFriend, error) {
-	localFriendList, err := u._getFriendInfoListByFriendUserID(friendUserIDList)
+	localFriendList, err := u._getFriendInfoList(friendUserIDList)
 	if err != nil {
 		if callback != nil {
 			sdkErrLog(err, "_getFriendInfoListByFriendUserID failed ", friendUserIDList, operationID)
@@ -22,12 +22,26 @@ func (u *UserRelated) getDesignatedFriendsInfo(callback Base, friendUserIDList [
 		return nil, wrap(err, "_getFriendInfoListByFriendUserID failed")
 	}
 
-	for index, v := range localFriendList {
-		//check friend is in blacklist
-		blackUser, err := u.getBlackUsInfoByUid(v.UID)
-		if err != nil {
-			sdkLog(err.Error())
+
+	blackList, err := u._getBlackInfoList(friendUserIDList)
+	if err != nil {
+
+	}
+
+	var pureFriendUserIDList []string
+
+	for i, v := range friendUserIDList{
+		for _, k := range blackList{
+			if v
 		}
+		a = append(a[:i], a[i+1:]...) // 删除中间1个元素
+
+	}
+
+
+	for index, v := range localFriendList {
+		blackUser, err := u.getBlackUsInfoByUid(v.UID)
+
 		if blackUser.Uid != "" {
 			localFriendList[index].IsInBlackList = 1
 		}
