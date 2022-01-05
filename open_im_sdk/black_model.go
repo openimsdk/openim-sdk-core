@@ -8,6 +8,11 @@ func (u *UserRelated) _getBlackList() ([]LocalBlack, error) {
 	var blackList []LocalBlack
 	return blackList, wrap(u.imdb.Find(&blackList).Error, "_getBlackList failed")
 }
+func (u *UserRelated) _getBlackListUid() (blackListUid []string, err error) {
+	u.mRWMutex.RLock()
+	defer u.mRWMutex.RUnlock()
+	return blackListUid, wrap(u.imdb.Select("block_user_id").Find(&blackListUid).Error, "_getBlackList failed")
+}
 
 func (u *UserRelated) _getBlackInfoByBlockUserID(blockUserID string) (*LocalBlack, error) {
 	u.mRWMutex.RLock()

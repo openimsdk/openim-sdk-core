@@ -341,6 +341,28 @@ func (u *UserRelated) getServerSelfApplication() ([]applyUserInfo, error) {
 	}
 	return vgetFriendApplyListResp.Data, nil
 }
+func (u *UserRelated) addBlack(callback Base, blackUid, operationID string) *base_info.CommDataResp {
+	apiReq := base_info.AddBlacklistReq{}
+	apiReq.ToUserID = blackUid
+	apiReq.FromUserID = u.loginUserID
+	apiReq.OperationID = operationID
+	resp, err := post2Api(addBlackListRouter, apiReq, u.token)
+	r := checkErrAndResp(callback, err, resp, operationID)
+	u.syncBlackList()
+	return r
+
+}
+func (u *UserRelated) removeBlack(callback Base, deleteUid, operationID string) *base_info.CommDataResp {
+	apiReq := base_info.RemoveBlackListReq{}
+	apiReq.ToUserID = deleteUid
+	apiReq.FromUserID = u.loginUserID
+	apiReq.OperationID = operationID
+	resp, err := post2Api(removeBlackListRouter, apiReq, u.token)
+	r := checkErrAndResp(callback, err, resp, operationID)
+	u.syncBlackList()
+	return r
+
+}
 
 func (u *UserRelated) doAcceptOrRefuseApplicationCall(sendUid string, flag int32) {
 	sdkLog("doAcceptOrRefuseApplicationCall", sendUid, flag)

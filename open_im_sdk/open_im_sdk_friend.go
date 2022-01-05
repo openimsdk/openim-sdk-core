@@ -1,11 +1,5 @@
 package open_im_sdk
 
-import (
-	"encoding/json"
-	"fmt"
-	"net/http"
-)
-
 func (u *UserRelated) GetFriendsInfo(callback Base, friendUserIDList string, operationID string) {
 	if callback == nil || friendUserIDList == "" {
 		sdkLog("uidList or callback is nil")
@@ -74,19 +68,19 @@ func (u *UserRelated) DeleteFromFriendList(callback Base, friendUserID string, o
 	}()
 }
 
-func (u *UserRelated) GetFriendList(callback Base) {
+func (u *UserRelated) GetFriendList(callback Base, operationID string) {
 	go func() {
-		list, err := u.getLocalFriendList()
-		if err != nil {
-			callback.OnError(ErrCodeFriend, err.Error())
-		} else {
-			jlist, e := json.Marshal(list)
-			if e != nil {
-				callback.OnError(ErrCodeFriend, e.Error())
-			} else {
-				callback.OnSuccess(string(jlist))
+		var filterLocalFriendList []LocalFriend
+		localFriendList, err := u._getAllFriendList()
+		checkErr(callback, err, operationID)
+		localBlackUidList, err := u._getBlackListUid()
+		checkErr(callback, err, operationID)
+		for _, v := range localFriendList {
+			if !isContain(v.FriendUserID, localBlackUidList) {
+				filterLocalFriendList = append(filterLocalFriendList, v)
 			}
 		}
+		callback.OnSuccess(structToJsonString(filterLocalFriendList))
 	}()
 }
 
@@ -99,134 +93,24 @@ func (u *UserRelated) SetFriendRemark(params string, callback Base, operationID 
 	}()
 }
 
-func (u *UserRelated) AddToBlackList(callback Base, blackUid string) {
+func (u *UserRelated) AddToBlackList(callback Base, blackUid, operationID string) {
 	go func() {
-		var uid string
-		er := json.Unmarshal([]byte(blackUid), &uid)
-		if er != nil {
-			callback.OnError(ErrCodeFriend, er.Error())
-
-			log(fmt.Sprintf("AddToBlackList ErrCodeFriend err = %s", er.Error()))
-
-			return
-		}
-		resp, err := post2Api(addBlackListRouter, paramsAddBlackList{UID: uid, OperationID: operationIDGenerator()}, u.token)
-		if err != nil {
-			callback.OnError(http.StatusInternalServerError, err.Error())
-			log(fmt.Sprintf("AddToBlackList StatusInternalServerError err = %s", er.Error()))
-			return
-		}
-
-		var addToBlackListResp commonResp
-		err = json.Unmarshal(resp, &addToBlackListResp)
-		if err != nil {
-			callback.OnError(ErrCodeFriend, err.Error())
-
-			log(fmt.Sprintf("AddToBlackList ErrCodeFriend err = %s", err.Error()))
-
-			return
-		}
-
-		if addToBlackListResp.ErrCode != 0 {
-			callback.OnError(addToBlackListResp.ErrCode, addToBlackListResp.ErrMsg)
-		}
-
-		user, err := u.getUserInfoByUid(uid)
-		if err != nil {
-			callback.OnError(ErrCodeFriend, err.Error())
-			log(fmt.Sprintf("getUserInfoByUid err = %s", err.Error()))
-			return
-		}
-
-		u.syncBlackList()
-
-		bUser, err := json.Marshal(user)
-		if err != nil {
-			callback.OnError(ErrCodeFriend, err.Error())
-
-			log(fmt.Sprintf("AddToBlackList ErrCodeFriend err = %s", err.Error()))
-
-			return
-		}
-
-		u.friendListener.OnBlackListAdd(string(bUser))
+		u.addBlack(callback, blackUid, operationID)
 		callback.OnSuccess("")
 	}()
 }
 
-func (u *UserRelated) GetBlackList(callback Base) {
+func (u *UserRelated) GetBlackList(callback Base, operationID string) {
 	go func() {
-		list, err := u.getServerBlackList()
-		if err == nil {
-			jlist, e := json.Marshal(list)
-			if e == nil {
-				callback.OnSuccess(string(jlist))
-				return
-			}
-		}
-
-		list, err = u.getLocalBlackList()
-		if err != nil {
-			callback.OnError(ErrCodeFriend, err.Error())
-			log(fmt.Sprintf("getBlackList ErrCodeFriend err = %s", err.Error()))
-		} else {
-			jlist, e := json.Marshal(list)
-			if e != nil {
-				callback.OnError(ErrCodeFriend, e.Error())
-			} else {
-				callback.OnSuccess(string(jlist))
-			}
-		}
+		localBlackList, err := u._getBlackList()
+		checkErr(callback, err, operationID)
+		callback.OnSuccess(structToJsonString(localBlackList))
 	}()
 }
 
-func (u *UserRelated) DeleteFromBlackList(callback Base, deleteUid string) {
+func (u *UserRelated) RemoveFromBlackList(callback Base, removeUid, operationID string) {
 	go func() {
-		var duid string
-		er := json.Unmarshal([]byte(deleteUid), &duid)
-		if er != nil {
-			callback.OnError(ErrCodeFriend, er.Error())
-
-			log(fmt.Sprintf("DeleteFromBlackList ErrCodeFriend err = %s", er.Error()))
-
-			return
-		}
-		resp, err := post2Api(removeBlackListRouter, paramsRemoveBlackList{UID: duid, OperationID: operationIDGenerator()}, u.token)
-		if err != nil {
-			callback.OnError(http.StatusInternalServerError, err.Error())
-			log(fmt.Sprintf("DeleteFromBlackList StatusInternalServerError err = %s", err.Error()))
-			return
-		}
-		var removeToBlackList commonResp
-		err = json.Unmarshal(resp, &removeToBlackList)
-		if err != nil {
-			callback.OnError(ErrCodeFriend, err.Error())
-			log(fmt.Sprintf("DeleteFromBlackList ErrCodeFriend err = %s", err.Error()))
-			return
-		}
-		if removeToBlackList.ErrCode != 0 {
-			callback.OnError(removeToBlackList.ErrCode, removeToBlackList.ErrMsg)
-		}
-
-		user, err := u.getUserInfoByUid(duid)
-		if err != nil {
-			callback.OnError(ErrCodeFriend, err.Error())
-			log(fmt.Sprintf("getUserInfoByUid err = %s", err.Error()))
-			return
-		}
-
-		u.syncBlackList()
-
-		bUser, err := json.Marshal(user)
-		if err != nil {
-			callback.OnError(ErrCodeFriend, err.Error())
-
-			log(fmt.Sprintf("AddToBlackList ErrCodeFriend err = %s", err.Error()))
-
-			return
-		}
-
-		u.friendListener.OnBlackListDeleted(string(bUser))
+		u.removeBlack(callback, removeUid, operationID)
 		callback.OnSuccess("")
 	}()
 }
