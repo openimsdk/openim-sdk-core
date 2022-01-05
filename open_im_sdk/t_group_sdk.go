@@ -193,13 +193,13 @@ func (testGetJoinedGroupList) OnSuccess(data string) {
 
 func DotestGetJoinedGroupList() {
 	var test testGetJoinedGroupList
-	GetJoinedGroupList(test)
+	GetJoinedGroupList(test, "")
 }
 
 type testGetGroupMemberList struct {
 }
 
-func (testGetGroupMemberList) OnError(errCode int, errMsg string) {
+func (testGetGroupMemberList) OnError(errCode int32, errMsg string) {
 	fmt.Println("testGetGroupMemberList OnError", errCode, errMsg)
 }
 
@@ -260,7 +260,7 @@ func DotestKickGroupMember() {
 type testInviteUserToGroup struct {
 }
 
-func (testInviteUserToGroup) OnError(errCode int, errMsg string) {
+func (testInviteUserToGroup) OnError(errCode int32, errMsg string) {
 	fmt.Println("testInviteUserToGroup OnError", errCode, errMsg)
 }
 
@@ -285,7 +285,7 @@ func (testGroupX) OnSuccess(data string) {
 	fmt.Println("testGroupX,onSuccess", data)
 }
 
-func (testGroupX) OnError(errCode int, errMsg string) {
+func (testGroupX) OnError(errCode int32, errMsg string) {
 	fmt.Println("testGroupX,onError", errMsg)
 }
 func (testGroupX) OnProgress(progress int) {
