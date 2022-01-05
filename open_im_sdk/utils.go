@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"open_im_sdk/open_im_sdk/base_info"
 	"os"
 	"path"
 
@@ -543,6 +544,7 @@ func post2Api(url string, data interface{}, token string) (content []byte, err e
 	} else {
 		return postLogic(url, data, token)
 	}
+
 }
 
 func post2ApiForRead(url string, data interface{}, token string) (content []byte, err error) {
@@ -663,4 +665,42 @@ func Wrap(err error, message string) error {
 
 func WithMessage(err error, message string) error {
 	return errors.WithMessage(err, "==> "+printCallerNameAndLine()+message)
+}
+
+func checkErr(callback Base, err error) error {
+	if err != nil {
+		if callback != nil {
+			callback.OnError(ErrDB.ErrCode, ErrDB.ErrMsg)
+			runtime.Goexit()
+		}
+		return wrap(err, "")
+	} else {
+		return nil
+	}
+}
+
+func checkErrAndResp(callback Base, err error, resp []byte) {
+	checkErr(callback, err)
+	checkResp(callback, resp)
+}
+
+func checkResp(callback Base, resp []byte) error {
+	var c base_info.CommDataResp
+	err := json.Unmarshal(resp, &c)
+	if err != nil {
+		if callback != nil {
+			callback.OnError(ErrDB.ErrCode, ErrDB.ErrMsg)
+			runtime.Goexit()
+		}
+		return wrap(err, "")
+	}
+
+	if c.ErrCode != 0 {
+		if err != nil {
+			callback.OnError(c.ErrCode, c.ErrMsg)
+			runtime.Goexit()
+		}
+		return wrap(errors.New(c.ErrMsg), c.ErrMsg)
+	}
+	return nil
 }

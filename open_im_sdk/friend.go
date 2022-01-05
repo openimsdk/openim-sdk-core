@@ -3,6 +3,7 @@ package open_im_sdk
 import (
 	"encoding/json"
 	"errors"
+	"open_im_sdk/open_im_sdk/base_info"
 	"runtime"
 )
 
@@ -11,42 +12,37 @@ type FriendListener struct {
 	//ch             chan cmd2Value
 }
 
-func (u *UserRelated) getDesignatedFriendsInfo(callback Base, friendUserIDList []string, operationID string) ([]LocalFriend, error) {
-	localFriendList, err := u._getFriendInfoList(friendUserIDList)
-	if err != nil {
-		if callback != nil {
-			sdkErrLog(err, "_getFriendInfoListByFriendUserID failed ", friendUserIDList, operationID)
-			callback.OnError(ErrDB.ErrCode, ErrDB.ErrMsg)
-			runtime.Goexit()
-		}
-		return nil, wrap(err, "_getFriendInfoListByFriendUserID failed")
-	}
-
-
+func (u *UserRelated) getDesignatedFriendsInfo(callback Base, friendUserIDList []string, operationID string) {
 	blackList, err := u._getBlackInfoList(friendUserIDList)
-	if err != nil {
-
-	}
+	checkErr(callback, err)
 
 	var pureFriendUserIDList []string
-
-	for i, v := range friendUserIDList{
-		for _, k := range blackList{
-			if v
+	for _, v := range friendUserIDList {
+		flag := 0
+		for _, k := range blackList {
+			if v == k.BlockUserID {
+				flag = 1
+				break
+			}
 		}
-		a = append(a[:i], a[i+1:]...) // 删除中间1个元素
-
-	}
-
-
-	for index, v := range localFriendList {
-		blackUser, err := u.getBlackUsInfoByUid(v.UID)
-
-		if blackUser.Uid != "" {
-			localFriendList[index].IsInBlackList = 1
+		if flag == 0 {
+			pureFriendUserIDList = append(pureFriendUserIDList, v)
 		}
 	}
-	return localFriendList, nil
+
+	localFriendList, err := u._getFriendInfoList(pureFriendUserIDList)
+	checkErr(callback, err)
+	callback.OnSuccess(structToJsonString(localFriendList))
+	runtime.Goexit()
+}
+
+func (u *UserRelated) addFriend(callback Base, addFriendParams AddFriendParams, operationID string) {
+	apiReq := base_info.AddFriendReq{}
+	apiReq.ToUserID = addFriendParams.ToUserID
+	apiReq.FromUserID = u.loginUserID
+	apiReq.ReqMsg = addFriendParams.ReqMsg
+	resp, err := post2Api(addFriendRouter, apiReq, u.token)
+	checkErrAndResp(callback, err, resp)
 }
 
 func (u *UserRelated) doFriendList() {
@@ -520,21 +516,4 @@ func (u *UserRelated) syncBlackList() {
 			}
 		}
 	}
-}
-
-func (u *UserRelated) addFriend(uiFriend paramsUiAddFriend) error {
-	resp, err := post2Api(addFriendRouter, paramsAddFriend{UID: uiFriend.UID, OperationID: operationIDGenerator(), ReqMessage: uiFriend.ReqMessage}, u.token)
-	if err != nil {
-		return err
-	}
-	var cmResp commonResp
-	err = json.Unmarshal(resp, &cmResp)
-	if err != nil {
-		sdkLog("unmarshal failed, ", err.Error(), resp)
-		return err
-	}
-	if cmResp.ErrCode != 0 {
-		return errors.New(cmResp.ErrMsg)
-	}
-	return nil
 }

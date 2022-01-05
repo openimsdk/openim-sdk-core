@@ -6,64 +6,23 @@ import (
 	"net/http"
 )
 
-func (u *UserRelated) GetFriendsInfo(callback Base, uidList string) {
-	if callback == nil || uidList == "" {
+func (u *UserRelated) GetFriendsInfo(callback Base, friendUserIDList string, operationID string) {
+	if callback == nil || friendUserIDList == "" {
 		sdkLog("uidList or callback is nil")
 		return
 	}
-
 	go func() {
-		fList, err := u.getDesignatedFriendsInfo()
-		if err != nil {
-			sdkLog("getLocalFriendList failed, ", err.Error())
-			callback.OnError(ErrCodeFriend, err.Error())
-			return
-		}
-		var sList []string
-		e := json.Unmarshal([]byte(uidList), &sList)
-		if e != nil {
-			callback.OnError(ErrCodeFriend, e.Error())
-			sdkLog("Unmarshal failed, ", e.Error())
-			return
-		}
-		mapFriend := make(map[string]friendInfo)
-		for _, v := range fList {
-			mapFriend[v.UID] = v
-		}
-
-		result := make([]friendInfo, 0)
-		for _, v := range sList {
-			k, ok := mapFriend[v]
-			if ok {
-				result = append(result, k)
-			}
-		}
-
-		sr, ee := json.Marshal(result)
-		if ee != nil {
-			callback.OnError(ErrCodeFriend, ee.Error())
-			sdkLog("Marshal failed, ", ee.Error())
-			return
-		}
-		callback.OnSuccess(string(sr))
+		var unmarshalList GetDesignatedFriendsInfoParams
+		u.jsonUnmarshalAndArgsValidate(friendUserIDList, &unmarshalList, callback)
+		u.getDesignatedFriendsInfo(callback, unmarshalList, operationID)
 	}()
 }
 
-func (u *UserRelated) AddFriend(callback Base, paramsReq string) {
+func (u *UserRelated) AddFriend(callback Base, paramsReq string, operationID string) {
 	go func() {
-		var uiFriend paramsUiAddFriend
-		err := json.Unmarshal([]byte(paramsReq), &uiFriend)
-		if err != nil {
-			callback.OnError(ErrCodeFriend, err.Error())
-			sdkLog("unmarshal failed, ", err.Error(), paramsReq)
-			return
-		}
-		err = u.addFriend(uiFriend)
-		if err != nil {
-			callback.OnError(ErrCodeFriend, err.Error())
-			return
-		}
-		callback.OnSuccess("")
+		var unmarshalAddFriendParams AddFriendParams
+		u.jsonUnmarshalAndArgsValidate(paramsReq, &unmarshalAddFriendParams, callback)
+		u.addFriend(callback, unmarshalAddFriendParams, operationID)
 	}()
 }
 
