@@ -164,7 +164,7 @@ func DoTestDeleteFromBlackList() {
 	test.delUid = Friend_uid
 	jsontest, _ := json.Marshal(test.delUid)
 	fmt.Println("DeleteFromBlackList, input: ", string(jsontest))
-	DeleteBlack(test, string(jsontest), "")
+	RemoveFromBlackList(test, string(jsontest), "")
 }
 
 //////////////////////////////////////////////////////
@@ -174,12 +174,12 @@ type testGetBlackList struct {
 func (testGetBlackList) OnSuccess(data string) {
 	fmt.Println("testGetBlackList, OnSuccess, output: ", data)
 }
-func (testGetBlackList) OnError(code int, msg string) {
+func (testGetBlackList) OnError(code int32, msg string) {
 	fmt.Println("testGetBlackList, OnError, ", code, msg)
 }
 func DoTestGetBlackList() {
 	var test testGetBlackList
-	GetBlackList(test)
+	GetBlackList(test, "")
 }
 
 //////////////////////////////////////////////////////
@@ -294,7 +294,7 @@ type testAcceptFriendApplication struct {
 func (testAcceptFriendApplication) OnSuccess(info string) {
 	fmt.Println("testAcceptFriendApplication OnSuccess", info)
 }
-func (testAcceptFriendApplication) OnError(code int, msg string) {
+func (testAcceptFriendApplication) OnError(code int32, msg string) {
 	fmt.Println("testAcceptFriendApplication, OnError, ", code, msg)
 }
 
