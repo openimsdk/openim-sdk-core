@@ -209,7 +209,7 @@ type testSetFriendInfo struct {
 func (testSetFriendInfo) OnSuccess(string) {
 	fmt.Println("testSetFriendInfo, OnSucess")
 }
-func (testSetFriendInfo) OnError(code int, msg string) {
+func (testSetFriendInfo) OnError(code int32, msg string) {
 	fmt.Println("testSetFriendInfo, OnError, ", code, msg)
 }
 func DoTestSetFriendInfo() {
@@ -232,7 +232,7 @@ func (TestDeleteFromFriendList) OnSuccess(string) {
 	fmt.Println("testDeleteFromFriendList,  OnSuccess")
 }
 
-func (TestDeleteFromFriendList) OnError(code int, msg string) {
+func (TestDeleteFromFriendList) OnError(code int32, msg string) {
 	fmt.Println("testDeleteFromFriendList, OnError, ", code, msg)
 }
 
@@ -277,7 +277,7 @@ type testGetFriendList struct {
 func (testGetFriendList) OnSuccess(list string) {
 	fmt.Println("testGetFriendList OnSuccess output: ", list)
 }
-func (testGetFriendList) OnError(code int, msg string) {
+func (testGetFriendList) OnError(code int32, msg string) {
 	fmt.Println("testGetFriendList, OnError, ", code, msg)
 }
 func DoTestGetFriendList() {
@@ -363,7 +363,7 @@ type BaseSuccFailed struct {
 	funcName    string
 }
 
-func (b *BaseSuccFailed) OnError(errCode int, errMsg string) {
+func (b *BaseSuccFailed) OnError(errCode int32, errMsg string) {
 	b.errCode = -1
 	b.errMsg = errMsg
 	fmt.Println("onError ", b.funcName)
@@ -481,7 +481,7 @@ type TestSendMsgCallBack struct {
 	msg string
 }
 
-func (t *TestSendMsgCallBack) OnError(errCode int, errMsg string) {
+func (t *TestSendMsgCallBack) OnError(errCode int32, errMsg string) {
 	fmt.Println("test_openim: send msg failed: ", errCode, errMsg, "|", t.msg, "|")
 }
 
@@ -500,7 +500,7 @@ type BaseSuccFailedTest struct {
 	funcName    string
 }
 
-func (b *BaseSuccFailedTest) OnError(errCode int, errMsg string) {
+func (b *BaseSuccFailedTest) OnError(errCode int32, errMsg string) {
 	b.errCode = -1
 	b.errMsg = errMsg
 	fmt.Println("22onError ", b.funcName, errCode, errMsg)
@@ -577,7 +577,7 @@ func (d DeleteConversationCallBack) OnSuccess(data string) {
 type DeleteMessageFromLocalStorageCallBack struct {
 }
 
-func (d DeleteMessageFromLocalStorageCallBack) OnError(errCode int, errMsg string) {
+func (d DeleteMessageFromLocalStorageCallBack) OnError(errCode int32, errMsg string) {
 	fmt.Printf("DeleteMessageFromLocalStorageCallBack , errCode:%v,errMsg:%v\n", errCode, errMsg)
 }
 
@@ -588,7 +588,7 @@ func (d DeleteMessageFromLocalStorageCallBack) OnSuccess(data string) {
 type TestGetAllConversationListCallBack struct {
 }
 
-func (t TestGetAllConversationListCallBack) OnError(errCode int, errMsg string) {
+func (t TestGetAllConversationListCallBack) OnError(errCode int32, errMsg string) {
 	fmt.Printf("TestGetAllConversationListCallBack , errCode:%v,errMsg:%v\n", errCode, errMsg)
 }
 
@@ -604,7 +604,7 @@ func DoTestGetAllConversationList() {
 type TestGetOneConversationCallBack struct {
 }
 
-func (t TestGetOneConversationCallBack) OnError(errCode int, errMsg string) {
+func (t TestGetOneConversationCallBack) OnError(errCode int32, errMsg string) {
 	fmt.Printf("TestGetOneConversationCallBack , errCode:%v,errMsg:%v\n", errCode, errMsg)
 }
 
@@ -630,7 +630,7 @@ func DoTestSetConversationDraft() {
 type TestSetConversationDraft struct {
 }
 
-func (t TestSetConversationDraft) OnError(errCode int, errMsg string) {
+func (t TestSetConversationDraft) OnError(errCode int32, errMsg string) {
 	fmt.Printf("SetConversationDraft , OnError %v\n", errMsg)
 }
 
@@ -641,7 +641,7 @@ func (t TestSetConversationDraft) OnSuccess(data string) {
 type GetHistoryCallBack struct {
 }
 
-func (g GetHistoryCallBack) OnError(errCode int, errMsg string) {
+func (g GetHistoryCallBack) OnError(errCode int32, errMsg string) {
 	fmt.Printf("GetHistoryCallBack , errCode:%v,errMsg:%v\n", errCode, errMsg)
 }
 
@@ -712,7 +712,7 @@ func (testInitLister) OnConnectSuccess() {
 	fmt.Println("testInitLister, OnConnectSuccess")
 }
 
-func (testInitLister) OnConnectFailed(ErrCode int, ErrMsg string) {
+func (testInitLister) OnConnectFailed(ErrCode int32, ErrMsg string) {
 	fmt.Println("testInitLister, OnConnectFailed", ErrCode, ErrMsg)
 }
 
@@ -728,7 +728,7 @@ func (testInitLister) OnSucess() {
 	fmt.Println("testInitLister, OnSucess")
 }
 
-func (testInitLister) OnError(code int, msg string) {
+func (testInitLister) OnError(code int32, msg string) {
 	fmt.Println("testInitLister, OnError", code, msg)
 }
 
@@ -739,7 +739,7 @@ func (testLogin) OnSuccess(string) {
 	fmt.Println("testLogin OnSuccess")
 }
 
-func (testLogin) OnError(code int, msg string) {
+func (testLogin) OnError(code int32, msg string) {
 	fmt.Println("testLogin, OnError", code, msg)
 }
 
