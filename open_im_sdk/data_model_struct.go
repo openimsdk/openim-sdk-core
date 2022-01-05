@@ -32,18 +32,18 @@ import "time"
 
 type Friend struct {
 	OwnerUserID    string    `gorm:"column:owner_user_id;primary_key;type:varchar(64)"`
-	FriendUserID   string    `gorm:"column:friend_user_id;primary_key;type:varchar;size:64"`
-	Remark         string    `gorm:"column:remark;type:varchar;size:255"`
+	FriendUserID   string    `gorm:"column:friend_user_id;primary_key;type:type:varchar(64)"`
+	Remark         string    `gorm:"column:remark;type:varchar(255)"`
 	CreateTime     time.Time `gorm:"column:create_time"`
 	AddSource      int32     `gorm:"column:add_source"`
-	OperatorUserID string    `gorm:"column:operator_user_id;type:varchar;size:64"`
-	Nickname       string    `gorm:"column:name;type:varchar;size:255"`
-	FaceUrl        string    `gorm:"column:face_url;type:varchar;size:255"`
+	OperatorUserID string    `gorm:"column:operator_user_id;type:varchar(64)"`
+	Nickname       string    `gorm:"column:name;type:varchar;type:varchar(255)"`
+	FaceUrl        string    `gorm:"column:face_url;type:varchar;type:varchar(255)"`
 	Gender         int32     `gorm:"column:gender"`
-	PhoneNumber    string    `gorm:"column:phone_number;type:varchar;size:32"`
+	PhoneNumber    string    `gorm:"column:phone_number;type:varchar(32)"`
 	Birth          time.Time `gorm:"column:birth"`
-	Email          string    `gorm:"column:email;size:64"`
-	Ex             string    `gorm:"column:ex;size:1024"`
+	Email          string    `gorm:"column:email;type:varchar(64)"`
+	Ex             string    `gorm:"column:ex;type:varchar(1024)"`
 }
 
 //message FriendRequest{
@@ -59,15 +59,15 @@ type Friend struct {
 //}
 //open_im_sdk.FriendRequest == imdb.FriendRequest
 type FriendRequest struct {
-	FromUserID    string    `gorm:"column:from_user_id;primary_key;size:64"`
-	ToUserID      string    `gorm:"column:to_user_id;primary_key;size:64"`
+	FromUserID    string    `gorm:"column:from_user_id;primary_key;type:varchar(64)"`
+	ToUserID      string    `gorm:"column:to_user_id;primary_key;type:varchar(64)"`
 	HandleResult  int32     `gorm:"column:handle_result"`
-	ReqMsg        string    `gorm:"column:req_msg;size:255"`
+	ReqMsg        string    `gorm:"column:req_msg;type:varchar(255)"`
 	CreateTime    time.Time `gorm:"column:create_time"`
-	HandlerUserID string    `gorm:"column:handler_user_id;size:64"`
-	HandleMsg     string    `gorm:"column:handle_msg;size:255"`
+	HandlerUserID string    `gorm:"column:handler_user_id;type:varchar(64)"`
+	HandleMsg     string    `gorm:"column:handle_msg;type:varchar(255)"`
 	HandleTime    time.Time `gorm:"column:handle_time"`
-	Ex            string    `gorm:"column:ex;size:1024"`
+	Ex            string    `gorm:"column:ex;type:varchar(1024)"`
 }
 
 //message GroupInfo{
@@ -101,18 +101,18 @@ type FriendRequest struct {
 type Group struct {
 	//`json:"operationID" binding:"required"`
 	//`protobuf:"bytes,1,opt,name=GroupID" json:"GroupID,omitempty"` `json:"operationID" binding:"required"`
-	GroupID       string    `gorm:"column:group_id;primary_key;size:64" json:"groupID" binding:"required"`
+	GroupID       string    `gorm:"column:group_id;primary_key;type:varchar(64)" json:"groupID" binding:"required"`
 	GroupName     string    `gorm:"column:name;size:255" json:"groupName"`
-	Notification  string    `gorm:"column:notification;size:255" json:"notification"`
-	Introduction  string    `gorm:"column:introduction;size:255" json:"introduction"`
-	FaceUrl       string    `gorm:"column:face_url;size:255" json:"faceUrl"`
+	Notification  string    `gorm:"column:notification;type:varchar(255)" json:"notification"`
+	Introduction  string    `gorm:"column:introduction;type:varchar(255)" json:"introduction"`
+	FaceUrl       string    `gorm:"column:face_url;type:varchar(255)" json:"faceUrl"`
 	CreateTime    time.Time `gorm:"column:create_time"`
 	Status        int32     `gorm:"column:status"`
-	CreatorUserID string    `gorm:"column:creator_user_id;size:64"`
+	CreatorUserID string    `gorm:"column:creator_user_id;type:varchar(64)"`
 	GroupType     int32     `gorm:"column:group_type"`
-	OwnerUserID   string    `gorm:"column:owner_user_id;size:64"`
+	OwnerUserID   string    `gorm:"column:owner_user_id;type:varchar(64)"`
 	MemberCount   int32     `gorm:"column:member_count"`
-	Ex            string    `gorm:"column:ex" json:"ex;size:1024"`
+	Ex            string    `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 
 //message GroupMemberFullInfo {
@@ -137,15 +137,15 @@ type Group struct {
 //   operator_user_id char(64) NOT NULL,
 
 type GroupMember struct {
-	GroupID        string    `gorm:"column:group_id;primary_key;size:64"`
-	UserID         string    `gorm:"column:user_id;primary_key;size:64"`
-	Nickname       string    `gorm:"column:nickname;size:255"`
-	FaceUrl        string    `gorm:"column:user_group_face_url;size:255"`
+	GroupID        string    `gorm:"column:group_id;primary_key;type:varchar(64)"`
+	UserID         string    `gorm:"column:user_id;primary_key;type:varchar(64)"`
+	Nickname       string    `gorm:"column:nickname;type:varchar(255)"`
+	FaceUrl        string    `gorm:"column:user_group_face_url;type:varchar(255)"`
 	RoleLevel      int32     `gorm:"column:role_level"`
 	JoinTime       time.Time `gorm:"column:join_time"`
 	JoinSource     int32     `gorm:"column:join_source"`
-	OperatorUserID string    `gorm:"column:operator_user_id;size:64"`
-	Ex             string    `gorm:"column:ex;size:1024"`
+	OperatorUserID string    `gorm:"column:operator_user_id;type:varchar(64)"`
+	Ex             string    `gorm:"column:ex;type:varchar(1024)"`
 }
 
 //message GroupRequest{
@@ -160,15 +160,15 @@ type GroupMember struct {
 //string Ex = 9;
 //}open_im_sdk.GroupRequest == imdb.GroupRequest
 type GroupRequest struct {
-	GroupID      string    `gorm:"column:group_id;primary_key;size:64"`
-	UserID       string    `gorm:"column:user_id;primary_key;size:64"`
+	GroupID      string    `gorm:"column:group_id;primary_key;type:varchar(64)"`
+	UserID       string    `gorm:"column:user_id;primary_key;type:varchar(64)"`
 	HandleResult int32     `gorm:"column:handle_result"`
-	ReqMsg       string    `gorm:"column:req_msg;size:255"`
-	HandledMsg   string    `gorm:"column:handle_msg;size:255"`
+	ReqMsg       string    `gorm:"column:req_msg;type:varchar(255)"`
+	HandledMsg   string    `gorm:"column:handle_msg;type:varchar(255)"`
 	ReqTime      time.Time `gorm:"column:req_time"`
-	HandleUserID string    `gorm:"column:handle_user_id;size:64"`
+	HandleUserID string    `gorm:"column:handle_user_id;type:varchar(64)"`
 	HandledTime  time.Time `gorm:"column:handle_time"`
-	Ex           string    `gorm:"column:ex;size:1024"`
+	Ex           string    `gorm:"column:ex;type:varchar(1024)"`
 }
 
 //string UserID = 1;
@@ -183,16 +183,16 @@ type GroupRequest struct {
 //int32 AppMangerLevel = 10;
 //open_im_sdk.User == imdb.User
 type User struct {
-	UserID         string    `gorm:"column:user_id;primary_key;size:64"`
-	Nickname       string    `gorm:"column:name;size:255"`
-	FaceUrl        string    `gorm:"column:face_url;size:255"`
+	UserID         string    `gorm:"column:user_id;primary_key;type:varchar(64)"`
+	Nickname       string    `gorm:"column:name;type:varchar(255)"`
+	FaceUrl        string    `gorm:"column:face_url;type:varchar(255)"`
 	Gender         int32     `gorm:"column:gender"`
-	PhoneNumber    string    `gorm:"column:phone_number;size:32"`
+	PhoneNumber    string    `gorm:"column:phone_number;type:varchar(32)"`
 	Birth          time.Time `gorm:"column:birth"`
-	Email          string    `gorm:"column:email;size:64"`
+	Email          string    `gorm:"column:email;type:varchar(64)"`
 	CreateTime     time.Time `gorm:"column:create_time"`
 	AppMangerLevel int32     `gorm:"column:app_manger_level"`
-	Ex             string    `gorm:"column:ex;size:1024"`
+	Ex             string    `gorm:"column:ex;type:varchar(1024)"`
 }
 
 //message BlackInfo{
@@ -205,13 +205,18 @@ type User struct {
 //}
 // open_im_sdk.BlackInfo(BlackUserInfo) != imdb.Black (BlockUserID)
 type Black struct {
-	OwnerUserID    string    `gorm:"column:owner_user_id;primary_key;size:64"`
-	BlockUserID    string    `gorm:"column:block_user_id;primary_key;size:64"`
-	Nickname       string    `gorm:"column:nick_name;size:255"`
-	FaceUrl        string    `gorm:"column:face_url;size:255"`
+	OwnerUserID    string    `gorm:"column:owner_user_id;primary_key;type:varchar(64)"`
+	BlockUserID    string    `gorm:"column:block_user_id;primary_key;type:varchar(64)"`
+	Nickname       string    `gorm:"column:nick_name;type:varchar(255)"`
+	FaceUrl        string    `gorm:"column:face_url;type:varchar(255)"`
 	Gender         int32     `gorm:"column:gender"`
 	CreateTime     time.Time `gorm:"column:create_time"`
 	AddSource      int32     `gorm:"column:add_source"`
-	OperatorUserID string    `gorm:"column:operator_user_id;size:64"`
-	Ex             string    `gorm:"column:ex;size:1024"`
+	OperatorUserID string    `gorm:"column:operator_user_id;type:varchar(64)"`
+	Ex             string    `gorm:"column:ex;type:varchar(1024)"`
+}
+
+type SeqData struct {
+	UserID string `gorm:"column:user_id;primary_key;type:varchar(64)"`
+	Seq    int32  `gorm:"column:seq; default:1"`
 }

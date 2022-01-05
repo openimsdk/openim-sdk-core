@@ -378,7 +378,7 @@ func (u *UserRelated) getLocalMaxConSeqFromDB() (int64, error) {
 }
 
 */
-
+//1
 func (u *UserRelated) getNeedSyncLocalMinSeq() int32 {
 	sdkLog("getLocalMaxConSeqFromDB start")
 	u.mRWMutex.RLock()
@@ -400,6 +400,7 @@ func (u *UserRelated) getNeedSyncLocalMinSeq() int32 {
 	return seq
 }
 
+//1
 func (u *UserRelated) setNeedSyncLocalMinSeq(seq int32) {
 	sdkLog("setLocalMaxConSeq start ", seq)
 	u.mRWMutex.Lock()
@@ -416,6 +417,7 @@ func (u *UserRelated) setNeedSyncLocalMinSeq(seq int32) {
 	}
 }
 
+//1
 func (u *UserRelated) replaceIntoUser(info *userInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -2136,6 +2138,7 @@ func (u *UserRelated) isExistsInErrChatLogBySeq(seq int64) bool {
 	}
 }
 
+//1
 func (ur *UserRelated) getLoginUserInfoFromLocal() (userInfo, error) {
 	ur.mRWMutex.RLock()
 	defer ur.mRWMutex.RUnlock()

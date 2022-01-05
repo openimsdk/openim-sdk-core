@@ -7,14 +7,14 @@ import (
 )
 
 func (u *UserRelated) InitDB() error {
-	if u.LoginUid == "" {
+	if u.loginUserID == "" {
 		return errors.New("no uid")
 	}
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 
-	db, err := gorm.Open(sqlite.Open(SvrConf.DbDir+"OpenIM_"+u.LoginUid+".db"), &gorm.Config{})
-	sdkLog("open db:", SvrConf.DbDir+"OpenIM_"+u.LoginUid+".db")
+	db, err := gorm.Open(sqlite.Open(SvrConf.DbDir+"OpenIM_"+u.loginUserID+".db"), &gorm.Config{})
+	sdkLog("open db:", SvrConf.DbDir+"OpenIM_"+u.loginUserID+".db")
 	if err != nil {
 		panic("failed to connect database" + err.Error())
 		return err
@@ -68,6 +68,10 @@ func (u *UserRelated) InitDB() error {
 	if !db.Migrator().HasTable(&Black{}) {
 		//log.NewInfo("CreateTable Black")
 		db.Migrator().CreateTable(&Black{})
+	}
+
+	if !db.Migrator().HasTable(&SeqData{}) {
+		db.Migrator().CreateTable(&SeqData{})
 	}
 	return nil
 }
