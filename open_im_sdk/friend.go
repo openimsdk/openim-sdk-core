@@ -52,6 +52,9 @@ func (u *UserRelated) getRecvFriendApplicationList(callback Base, operationID st
 	callback.OnSuccess(structToJsonString(friendApplicationList))
 }
 
+func (u *UserRelated) getSendFriendApplicationList(callback Base, operationID string) {
+}
+
 func (u *UserRelated) doFriendList() {
 	friendsInfoOnServer, err := u.getServerFriendList()
 	if err != nil {

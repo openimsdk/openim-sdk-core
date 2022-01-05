@@ -32,6 +32,12 @@ func (u *UserRelated) GetRecvFriendApplicationList(callback Base, operationID st
 	}()
 }
 
+func (u *UserRelated) GetSendFriendApplicationList(callback Base, operationID string) {
+	go func() {
+		u.getSendFriendApplicationList(callback, operationID)
+	}()
+}
+
 func (u *UserRelated) AcceptFriendApplication(callback Base, uid string) {
 	//FriendApplication(callback, info, 1)
 	go func() {
