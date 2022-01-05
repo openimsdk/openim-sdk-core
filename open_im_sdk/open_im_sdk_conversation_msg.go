@@ -66,7 +66,7 @@ func (u *UserRelated) SetConversationRecvMessageOpt(callback Base, conversationI
 		}
 		if g.ErrCode != 0 {
 			sdkLog("errcode: ", g.ErrCode, g.ErrMsg)
-			callback.OnError(int(g.ErrCode), g.ErrMsg)
+			callback.OnError(g.ErrCode, g.ErrMsg)
 			return
 		}
 		u.receiveMessageOptMutex.Lock()
@@ -104,7 +104,7 @@ func (u *UserRelated) GetConversationRecvMessageOpt(callback Base, conversationI
 		}
 		if g.ErrCode != 0 {
 			sdkLog("errcode: ", g.ErrCode, g.ErrMsg)
-			callback.OnError(int(g.ErrCode), g.ErrMsg)
+			callback.OnError(g.ErrCode, g.ErrMsg)
 			return
 		}
 		callback.OnSuccess(structToJsonString(g.Data))
@@ -1227,7 +1227,7 @@ func sendMessageToServer(onlineUserOnly *bool, s *MsgStruct, u *UserRelated, cal
 		ClientMsgID:      s.ClientMsgID,
 		ServerMsgID:      s.ServerMsgID,
 		SenderPlatformID: s.SenderPlatformID,
-		SenderNickName:   s.SenderNickName,
+		SenderNickname:   s.SenderNickName,
 		SenderFaceURL:    s.SenderFaceURL,
 		SessionType:      s.SessionType,
 		MsgFrom:          s.MsgFrom,
@@ -1296,7 +1296,7 @@ func sendMessageToServer(onlineUserOnly *bool, s *MsgStruct, u *UserRelated, cal
 		case r := <-ch:
 			sdkLog("ws  ch recvMsg success:,", wsReq.OperationID)
 			if r.ErrCode != 0 {
-				callback.OnError(r.ErrCode, r.ErrMsg)
+				callback.OnError(int32(r.ErrCode), r.ErrMsg)
 				u.sendMessageFailedHandle(s, c, conversationID)
 			} else {
 				callback.OnProgress(100)
@@ -1578,7 +1578,7 @@ func (u *UserRelated) DeleteMessageFromLocalStorage(callback Base, message strin
 			sourceID = s.RecvID
 
 		} else if s.SessionType == SingleChatType {
-			if s.SendID != u.LoginUid {
+			if s.SendID != u.loginUserID {
 				conversationID = GetConversationIDBySessionType(s.SendID, SingleChatType)
 				sourceID = s.SendID
 			} else {

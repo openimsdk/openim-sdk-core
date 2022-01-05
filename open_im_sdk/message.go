@@ -140,7 +140,7 @@ func (u *UserRelated) initBasicInfo(message *MsgStruct, msgFrom, contentType int
 	message.SendTime = message.CreateTime
 	message.IsRead = false
 	message.Status = MsgStatusSending
-	message.SendID = u.LoginUid
+	message.SendID = u.loginUserID
 	userInfo, _ := u.getLoginUserInfoFromLocal()
 	message.SenderFaceURL = userInfo.Icon
 	message.SenderNickName = userInfo.Name

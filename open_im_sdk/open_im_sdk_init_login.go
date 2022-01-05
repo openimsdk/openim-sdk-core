@@ -62,7 +62,7 @@ func (u *UserRelated) GetLoginStatus() int {
 }
 
 func (u *UserRelated) GetLoginUser() string {
-	return u.LoginUid
+	return u.loginUserID
 }
 
 func (u *UserRelated) ForceSyncLoginUserInfo() {

@@ -18,10 +18,10 @@ type Logger struct {
 	Pid int
 }
 
-//func init() {
-//	logger = loggerInit("")
-//
-//}
+func init() {
+	logger = loggerInit("")
+
+}
 func NewPrivateLog(moduleName string) {
 	logger = loggerInit(moduleName)
 }
@@ -36,13 +36,16 @@ func loggerInit(moduleName string) *Logger {
 	var logger = logrus.New()
 	//All logs will be printed
 	logger.SetLevel(logrus.Level(6))
-	//Close std console output
-	src, err := os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-	if err != nil {
-		panic(err.Error())
+	//Close std console output when running on the server
+	if moduleName != "" {
+		src, err := os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+		if err != nil {
+			panic(err.Error())
+		}
+		writer := bufio.NewWriter(src)
+		logger.SetOutput(writer)
 	}
-	writer := bufio.NewWriter(src)
-	logger.SetOutput(writer)
+
 	//Log Console Print Style Setting
 	logger.SetFormatter(&nested.Formatter{
 		TimestampFormat: "2006-01-02 15:04:05.000",
@@ -52,9 +55,11 @@ func loggerInit(moduleName string) *Logger {
 	//File name and line number display hook
 	logger.AddHook(newFileHook())
 
-	//Log file segmentation hook
-	hook := NewLfsHook(time.Duration(24)*time.Hour, 5, moduleName)
-	logger.AddHook(hook)
+	//Log file segmentation hook when running on the server
+	if moduleName != "" {
+		hook := NewLfsHook(time.Duration(24)*time.Hour, 3, moduleName)
+		logger.AddHook(hook)
+	}
 	return &Logger{
 		logger,
 		os.Getpid(),
