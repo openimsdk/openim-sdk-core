@@ -86,7 +86,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 			CreateTime:       v.CreateTime,
 			RecvID:           v.RecvID,
 			SenderFaceURL:    v.SenderFaceURL,
-			SenderNickName:   v.SenderNickName,
+			SenderNickName:   v.SenderNickname,
 			Seq:              v.Seq,
 			SenderPlatformID: v.SenderPlatformID,
 			ForceList:        v.ForceList,

@@ -11,7 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"open_im_sdk/open_im_sdk/base_info"
+
 	"os"
 	"path"
 
