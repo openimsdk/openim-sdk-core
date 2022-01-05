@@ -667,24 +667,21 @@ func WithMessage(err error, message string) error {
 	return errors.WithMessage(err, "==> "+printCallerNameAndLine()+message)
 }
 
-func checkErr(callback Base, err error) error {
+func checkErr(callback Base, err error, operationID string) {
 	if err != nil {
 		if callback != nil {
 			callback.OnError(ErrDB.ErrCode, ErrDB.ErrMsg)
 			runtime.Goexit()
 		}
-		return wrap(err, "")
-	} else {
-		return nil
 	}
 }
 
-func checkErrAndResp(callback Base, err error, resp []byte) {
-	checkErr(callback, err)
-	checkResp(callback, resp)
+func checkErrAndResp(callback Base, err error, resp []byte, operationID string) *base_info.CommDataResp {
+	checkErr(callback, err, operationID)
+	return checkResp(callback, resp, operationID)
 }
 
-func checkResp(callback Base, resp []byte) error {
+func checkResp(callback Base, resp []byte, operationID string) *base_info.CommDataResp {
 	var c base_info.CommDataResp
 	err := json.Unmarshal(resp, &c)
 	if err != nil {
@@ -692,7 +689,7 @@ func checkResp(callback Base, resp []byte) error {
 			callback.OnError(ErrDB.ErrCode, ErrDB.ErrMsg)
 			runtime.Goexit()
 		}
-		return wrap(err, "")
+		return nil
 	}
 
 	if c.ErrCode != 0 {
@@ -700,7 +697,7 @@ func checkResp(callback Base, resp []byte) error {
 			callback.OnError(c.ErrCode, c.ErrMsg)
 			runtime.Goexit()
 		}
-		return wrap(errors.New(c.ErrMsg), c.ErrMsg)
+		return nil
 	}
-	return nil
+	return &c
 }

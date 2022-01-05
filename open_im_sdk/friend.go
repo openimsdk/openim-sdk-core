@@ -3,7 +3,9 @@ package open_im_sdk
 import (
 	"encoding/json"
 	"errors"
+	"gorm.io/gorm/callbacks"
 	"open_im_sdk/open_im_sdk/base_info"
+	"os"
 	"runtime"
 )
 
@@ -12,9 +14,9 @@ type FriendListener struct {
 	//ch             chan cmd2Value
 }
 
-func (u *UserRelated) getDesignatedFriendsInfo(callback Base, friendUserIDList []string, operationID string) {
+func (u *UserRelated) getDesignatedFriendsInfo(callback Base, friendUserIDList GetDesignatedFriendsInfoParams, operationID string) GetDesignatedFriendsInfoCallback {
 	blackList, err := u._getBlackInfoList(friendUserIDList)
-	checkErr(callback, err)
+	checkErr(callback, err, operationID)
 
 	var pureFriendUserIDList []string
 	for _, v := range friendUserIDList {
@@ -29,30 +31,74 @@ func (u *UserRelated) getDesignatedFriendsInfo(callback Base, friendUserIDList [
 			pureFriendUserIDList = append(pureFriendUserIDList, v)
 		}
 	}
-
 	localFriendList, err := u._getFriendInfoList(pureFriendUserIDList)
-	checkErr(callback, err)
-	callback.OnSuccess(structToJsonString(localFriendList))
-	runtime.Goexit()
+	checkErr(callback, err, operationID)
+
+	return localFriendList
 }
 
-func (u *UserRelated) addFriend(callback Base, addFriendParams AddFriendParams, operationID string) {
+func (u *UserRelated) addFriend(callback Base, addFriendParams AddFriendParams, operationID string) *base_info.CommDataResp {
 	apiReq := base_info.AddFriendReq{}
 	apiReq.ToUserID = addFriendParams.ToUserID
 	apiReq.FromUserID = u.loginUserID
 	apiReq.ReqMsg = addFriendParams.ReqMsg
 	resp, err := post2Api(addFriendRouter, apiReq, u.token)
-	checkErrAndResp(callback, err, resp)
-	callback.OnSuccess("")
+	return checkErrAndResp(callback, err, resp, operationID)
+
 }
 
-func (u *UserRelated) getRecvFriendApplicationList(callback Base, operationID string) {
+func (u *UserRelated) getRecvFriendApplicationList(callback Base, operationID string) GetRecvFriendApplicationListCallback {
 	friendApplicationList, err := u._getRecvFriendApplication()
-	checkErr(callback, err)
-	callback.OnSuccess(structToJsonString(friendApplicationList))
+	checkErr(callback, err, operationID)
+	return friendApplicationList
 }
 
 func (u *UserRelated) getSendFriendApplicationList(callback Base, operationID string) {
+}
+
+func (u *UserRelated) processFriendApplication(callback Base, params ProcessFriendApplicationParams, handleResult int32, operationID string) *base_info.CommDataResp {
+	apiReq := base_info.AddFriendResponseReq{}
+	apiReq.FromUserID = u.loginUserID
+	apiReq.ToUserID = params.ToUserID
+	apiReq.Flag = handleResult
+	apiReq.OperationID = operationID
+	apiReq.HandleMsg = params.HandleMsg
+	resp, err := post2Api(addFriendResponse, apiReq, u.token)
+	r := checkErrAndResp(callback, err, resp, operationID)
+	u.syncFriendApplication()
+	return r
+}
+
+func (u *UserRelated) checkFriend(callback Base, userIDList CheckFriendParams, operationID string) CheckFriendCallback {
+	friendList, err := u._getFriendInfoList(userIDList)
+	checkErr(callback, err, operationID)
+	blackList, err := u._getBlackInfoList(userIDList)
+	checkErr(callback, err, operationID)
+
+	for _, v := range userIDList {
+		var r base_info.UserIDResult
+		isBlack := false
+		isFriend := false
+		for _, b := range blackList {
+			if v == b.BlockUserID {
+				isBlack = true
+				break
+			}
+		}
+		for _, f := range friendList {
+			if v == f.FriendUserID {
+				isFriend = true
+				break
+			}
+		}
+		r.UserID = v
+		if isFriend && !isBlack {
+			r.Result = 1
+		} else {
+			r.Result = -1
+		}
+	}
+
 }
 
 func (u *UserRelated) doFriendList() {
@@ -307,49 +353,6 @@ func (u *UserRelated) doAcceptOrRefuseApplicationCall(sendUid string, flag int32
 	}
 }
 
-func (u *UserRelated) refuseFriendApplication(uid2Refuse string) error {
-	flag := -1
-	resp, err := post2Api(addFriendResponse, paramsAddFriendResponse{Uid: uid2Refuse, OperationID: operationIDGenerator(), Flag: flag}, u.token)
-	if err != nil {
-		return err
-	}
-	var addFriendResp commonResp
-	err = json.Unmarshal(resp, &addFriendResp)
-	if err != nil {
-		sdkLog("unmarshal failed, ", err.Error())
-		return err
-	}
-
-	if addFriendResp.ErrCode != 0 {
-		return errors.New(addFriendResp.ErrMsg)
-	}
-
-	u.syncFriendApplication()
-
-	return nil
-}
-
-func (u *UserRelated) acceptFriendApplication(uid string) error {
-	flag := 1
-	resp, err := post2Api(addFriendResponse, paramsAddFriendResponse{Uid: uid, OperationID: operationIDGenerator(), Flag: flag}, u.token)
-	if err != nil {
-		return err
-	}
-	var addFriendResp commonResp
-	err = json.Unmarshal(resp, &addFriendResp)
-	if err != nil {
-		sdkLog("unmarshal failed, ", err.Error())
-		return err
-	}
-	if addFriendResp.ErrCode != 0 {
-		sdkLog("errcode: ", addFriendResp.ErrCode, addFriendResp.ErrMsg)
-		return errors.New(addFriendResp.ErrMsg)
-	}
-
-	u.syncFriendApplication()
-	u.syncFriendList()
-	return nil
-}
 func (u *UserRelated) syncSelfFriendApplication() {
 
 }

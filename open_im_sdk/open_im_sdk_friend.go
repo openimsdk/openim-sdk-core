@@ -14,7 +14,8 @@ func (u *UserRelated) GetFriendsInfo(callback Base, friendUserIDList string, ope
 	go func() {
 		var unmarshalList GetDesignatedFriendsInfoParams
 		u.jsonUnmarshalAndArgsValidate(friendUserIDList, &unmarshalList, callback)
-		u.getDesignatedFriendsInfo(callback, unmarshalList, operationID)
+		result := u.getDesignatedFriendsInfo(callback, unmarshalList, operationID)
+		callback.OnSuccess(structToJsonString(result))
 	}()
 }
 
@@ -23,6 +24,7 @@ func (u *UserRelated) AddFriend(callback Base, paramsReq string, operationID str
 		var unmarshalAddFriendParams AddFriendParams
 		u.jsonUnmarshalAndArgsValidate(paramsReq, &unmarshalAddFriendParams, callback)
 		u.addFriend(callback, unmarshalAddFriendParams, operationID)
+		callback.OnSuccess(structToJsonString(AddFriendCallback{}))
 	}()
 }
 
@@ -38,59 +40,21 @@ func (u *UserRelated) GetSendFriendApplicationList(callback Base, operationID st
 	}()
 }
 
-func (u *UserRelated) AcceptFriendApplication(callback Base, uid string) {
-	//FriendApplication(callback, info, 1)
+func (u *UserRelated) AcceptFriendApplication(callback Base, params string, operationID string) {
 	go func() {
-		var uid2Accept string
-		err := json.Unmarshal([]byte(uid), &uid2Accept)
-		if err != nil {
-			sdkLog("unmarshal failed, ", err.Error())
-			callback.OnError(ErrCodeFriend, err.Error())
-			return
-		}
-
-		err = u.acceptFriendApplication(uid2Accept)
-		if err != nil {
-			callback.OnError(ErrCodeFriend, err.Error())
-			return
-		}
-
-		fInfo, err := u.getFriendInfoByFriendUid(uid2Accept)
-
-		blackUser, err := u.getBlackUsInfoByUid(uid2Accept)
-		if err != nil {
-			sdkLog(err.Error())
-		}
-		if blackUser.Uid != "" {
-			fInfo.IsInBlackList = 1
-		}
-		if err == nil && fInfo.UID != "" {
-			jsonInfo, err := json.Marshal(fInfo)
-			if err == nil {
-				u.friendListener.OnFriendListAdded(string(jsonInfo))
-			}
-		}
-		callback.OnSuccess("")
+		var unmarshalParams ProcessFriendApplicationParams
+		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback)
+		u.processFriendApplication(callback, unmarshalParams, 1, operationID)
+		callback.OnSuccess(structToJsonString(ProcessFriendApplicationCallback{}))
 	}()
 }
 
-func (u *UserRelated) RefuseFriendApplication(callback Base, uid string) {
-	//	FriendApplication(callback, uid, -1)
+func (u *UserRelated) RefuseFriendApplication(callback Base, params string, operationID string) {
 	go func() {
-		var uid2Refuse string
-		err := json.Unmarshal([]byte(uid), &uid2Refuse)
-		if err != nil {
-			sdkLog("unmarshal failed, ", err.Error())
-			callback.OnError(ErrCodeFriend, err.Error())
-			return
-		}
-
-		err = u.refuseFriendApplication(uid2Refuse)
-		if err != nil {
-			callback.OnError(ErrCodeFriend, err.Error())
-			return
-		}
-		callback.OnSuccess("")
+		var unmarshalParams ProcessFriendApplicationParams
+		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback)
+		u.processFriendApplication(callback, unmarshalParams, -1, operationID)
+		callback.OnSuccess(structToJsonString(ProcessFriendApplicationCallback{}))
 	}()
 }
 

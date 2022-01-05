@@ -20,9 +20,9 @@ type GetSendFriendApplicationListParams struct{}
 type GetSendFriendApplicationListCallback []LocalFriendRequest
 
 type ProcessFriendApplicationParams struct {
-	ToUserID     string `json:"toUserID" validate:"required"`
-	HandleMsg    string `json:"handleMsg"`
-	HandleResult int32  `json:"handleResult" validate:oneof=-1 1`
+	ToUserID  string `json:"toUserID" validate:"required"`
+	HandleMsg string `json:"handleMsg"`
+	//HandleResult int32  `json:"handleResult" validate:oneof=-1 1`
 }
 type ProcessFriendApplicationCallback struct{}
 
