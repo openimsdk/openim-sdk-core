@@ -452,6 +452,10 @@ func (u *UserRelated) ForceSyncFriendApplication() {
 	u.syncFriendApplication()
 }
 
+func (u *UserRelated) ForceSyncSelfFriendApplication() {
+	u.syncSelfFriendApplication()
+}
+
 func (u *UserRelated) ForceSyncFriend() {
 	u.syncFriendList()
 }

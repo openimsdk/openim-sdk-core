@@ -315,8 +315,8 @@ func (u *UserRelated) ForceSyncGroupRequest() {
 	u.syncGroupRequest()
 }
 
-func (u *UserRelated) ForceSyncApplyGroupRequest() {
-	u.syncApplyGroupRequest()
+func (u *UserRelated) ForceSyncSelfGroupRequest() {
+	u.syncSelfGroupRequest()
 }
 
 type SendMsgCallBack interface {

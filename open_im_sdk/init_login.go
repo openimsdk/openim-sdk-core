@@ -219,11 +219,12 @@ func (u *UserRelated) forcedSynchronization() {
 	u.ForceSyncFriend()
 	u.ForceSyncBlackList()
 	u.ForceSyncFriendApplication()
+	u.ForceSyncSelfFriendApplication()
 	u.ForceSyncLoginUserInfo()
 	u.ForceSyncJoinedGroup()
 	u.ForceSyncGroupRequest()
+	u.ForceSyncSelfGroupRequest()
 	u.ForceSyncJoinedGroupMember()
-	u.ForceSyncApplyGroupRequest()
 }
 
 func (u *UserRelated) doWsMsg(message []byte) {

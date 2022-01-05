@@ -305,6 +305,9 @@ func (u *UserRelated) acceptFriendApplication(uid string) error {
 	u.syncFriendList()
 	return nil
 }
+func (u *UserRelated) syncSelfFriendApplication() {
+
+}
 
 func (u *UserRelated) syncFriendApplication() {
 	applicationListOnServer, err := u.getServerFriendApplication()

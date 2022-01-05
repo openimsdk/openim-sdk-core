@@ -2,7 +2,7 @@ package open_im_sdk
 
 import "errors"
 
-func (u *UserRelated) _insertFriend(friend *Friend) error {
+func (u *UserRelated) _insertFriend(friend *LocalFriend) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	return wrap(u.imdb.Create(friend).Error, "_insertFriend failed")
@@ -11,11 +11,11 @@ func (u *UserRelated) _insertFriend(friend *Friend) error {
 func (u *UserRelated) _deleteFriend(friendUserID string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	friend := Friend{OwnerUserID: u.loginUserID, FriendUserID: friendUserID}
+	friend := LocalFriend{OwnerUserID: u.loginUserID, FriendUserID: friendUserID}
 	return wrap(u.imdb.Delete(&friend).Error, "_deleteFriend failed")
 }
 
-func (u *UserRelated) _updateFriend(friend *Friend) error {
+func (u *UserRelated) _updateFriend(friend *LocalFriend) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	t := u.imdb.Updates(friend)
@@ -25,18 +25,18 @@ func (u *UserRelated) _updateFriend(friend *Friend) error {
 	return wrap(t.Error, "_updateFriend failed")
 }
 
-func (u *UserRelated) _getFriendList() ([]Friend, error) {
+func (u *UserRelated) _getFriendList() ([]LocalFriend, error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	var friendList []Friend
+	var friendList []LocalFriend
 	return friendList, wrap(u.imdb.Where("owner_user_id = ?", u.loginUserID).Find(&friendList).Error,
 		"_getFriendList failed")
 }
 
-func (u *UserRelated) _getFriendInfoByFriendUserID(FriendUserID string) (*Friend, error) {
+func (u *UserRelated) _getFriendInfoByFriendUserID(FriendUserID string) (*LocalFriend, error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	var friend Friend
+	var friend LocalFriend
 	return &friend, wrap(u.imdb.Where("owner_user_id = ? AND friend_user_id = ?",
 		u.loginUserID, FriendUserID).Error, "_getFriendInfoByFriendUserID failed")
 }

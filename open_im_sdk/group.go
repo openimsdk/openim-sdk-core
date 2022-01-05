@@ -960,6 +960,10 @@ func (u *UserRelated) refuseGroupApplicationCallback(node updateGroupNode) {
 	u.GroupApplicationProcessedCallback(node, -1)
 }
 
+func (u *UserRelated) syncSelfGroupRequest() {
+
+}
+
 func (u *UserRelated) syncGroupRequest() {
 	groupRequestOnServerResp, err := u.getGroupApplicationList()
 	if err != nil {

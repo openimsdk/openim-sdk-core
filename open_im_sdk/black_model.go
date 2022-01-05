@@ -2,28 +2,28 @@ package open_im_sdk
 
 import "errors"
 
-func (u *UserRelated) _getBlackList() ([]Black, error) {
+func (u *UserRelated) _getBlackList() ([]LocalBlack, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	var blackList []Black
+	var blackList []LocalBlack
 	return blackList, wrap(u.imdb.Find(&blackList).Error, "_getBlackList failed")
 }
 
-func (u *UserRelated) _getBlackInfoByBlockUserID(blockUserID string) (*Black, error) {
+func (u *UserRelated) _getBlackInfoByBlockUserID(blockUserID string) (*LocalBlack, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	var black Black
+	var black LocalBlack
 	return &black, wrap(u.imdb.Where("owner_user_id = ? AND block_user_id = ? ",
 		u.loginUserID, blockUserID).Find(&black).Error, "_getBlackInfoByBlockUserID failed")
 }
 
-func (u *UserRelated) _insertBlack(black *Black) error {
+func (u *UserRelated) _insertBlack(black *LocalBlack) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	return wrap(u.imdb.Create(black).Error, "_insertBlack failed")
 }
 
-func (u *UserRelated) _updateBlack(black *Black) error {
+func (u *UserRelated) _updateBlack(black *LocalBlack) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	t := u.imdb.Updates(black)
@@ -36,6 +36,6 @@ func (u *UserRelated) _updateBlack(black *Black) error {
 func (u *UserRelated) _delBlack(blockUserID string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	black := Black{OwnerUserID: u.loginUserID, BlockUserID: blockUserID}
+	black := LocalBlack{OwnerUserID: u.loginUserID, BlockUserID: blockUserID}
 	return wrap(u.imdb.Delete(&black).Error, "_delBlack failed")
 }

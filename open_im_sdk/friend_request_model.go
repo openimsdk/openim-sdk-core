@@ -2,20 +2,20 @@ package open_im_sdk
 
 import "errors"
 
-func (u *UserRelated) _insertFriendRequestData(friendRequest *FriendRequest) error {
+func (u *UserRelated) _insertFriendRequest(friendRequest *LocalFriendRequest) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	return wrap(u.imdb.Create(friendRequest).Error, "insertFriendRequestData failed")
+	return wrap(u.imdb.Create(friendRequest).Error, "_insertFriendRequest failed")
 }
 
 func (u *UserRelated) _deleteFriendRequestBothUserID(fromUserID, toUserID string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	friendRequest := FriendRequest{FromUserID: fromUserID, ToUserID: toUserID}
+	friendRequest := LocalFriendRequest{FromUserID: fromUserID, ToUserID: toUserID}
 	return wrap(u.imdb.Delete(&friendRequest).Error, "deleteFriendRequest failed")
 }
 
-func (u *UserRelated) _updateFriendRequest(friendRequest *FriendRequest) error {
+func (u *UserRelated) _updateFriendRequest(friendRequest *LocalFriendRequest) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	t := u.imdb.Updates(friendRequest)
@@ -25,16 +25,16 @@ func (u *UserRelated) _updateFriendRequest(friendRequest *FriendRequest) error {
 	return wrap(t.Error, "updateFriendRequest failed")
 }
 
-func (u *UserRelated) _getRecvFriendApplication() ([]FriendRequest, error) {
+func (u *UserRelated) _getRecvFriendApplication() ([]LocalFriendRequest, error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	var friendRequestList []FriendRequest
+	var friendRequestList []LocalFriendRequest
 	return friendRequestList, wrap(u.imdb.Where("to_user_id = ?", u.loginUserID).Find(&friendRequestList).Error, "_getLocalFriendApplication failed")
 }
 
-func (u *UserRelated) _getSendFriendApplication() ([]FriendRequest, error) {
+func (u *UserRelated) _getSendFriendApplication() ([]LocalFriendRequest, error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	var friendRequestList []FriendRequest
+	var friendRequestList []LocalFriendRequest
 	return friendRequestList, wrap(u.imdb.Where("from_user_id = ?", u.loginUserID).Find(&friendRequestList).Error, "_getLocalFriendApplication failed")
 }

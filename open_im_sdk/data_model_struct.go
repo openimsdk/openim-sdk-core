@@ -30,7 +30,7 @@ import "time"
 //  	 PRIMARY KEY (owner_user_id,friend_user_id)
 // 	)`
 
-type Friend struct {
+type LocalFriend struct {
 	OwnerUserID    string    `gorm:"column:owner_user_id;primary_key;type:varchar(64)"`
 	FriendUserID   string    `gorm:"column:friend_user_id;primary_key;type:type:varchar(64)"`
 	Remark         string    `gorm:"column:remark;type:varchar(255)"`
@@ -58,7 +58,7 @@ type Friend struct {
 //string Ex = 9;
 //}
 //open_im_sdk.FriendRequest == imdb.FriendRequest
-type FriendRequest struct {
+type LocalFriendRequest struct {
 	FromUserID    string    `gorm:"column:from_user_id;primary_key;type:varchar(64)"`
 	ToUserID      string    `gorm:"column:to_user_id;primary_key;type:varchar(64)"`
 	HandleResult  int32     `gorm:"column:handle_result"`
@@ -98,7 +98,7 @@ type FriendRequest struct {
 //    	PRIMARY KEY (group_id)
 //	)`
 
-type Group struct {
+type LocalGroup struct {
 	//`json:"operationID" binding:"required"`
 	//`protobuf:"bytes,1,opt,name=GroupID" json:"GroupID,omitempty"` `json:"operationID" binding:"required"`
 	GroupID       string    `gorm:"column:group_id;primary_key;type:varchar(64)" json:"groupID" binding:"required"`
@@ -136,7 +136,7 @@ type Group struct {
 //   join_source int DEFAULT NULL,
 //   operator_user_id char(64) NOT NULL,
 
-type GroupMember struct {
+type LocalGroupMember struct {
 	GroupID        string    `gorm:"column:group_id;primary_key;type:varchar(64)"`
 	UserID         string    `gorm:"column:user_id;primary_key;type:varchar(64)"`
 	Nickname       string    `gorm:"column:nickname;type:varchar(255)"`
@@ -159,7 +159,7 @@ type GroupMember struct {
 //int64 HandleTime = 8;
 //string Ex = 9;
 //}open_im_sdk.GroupRequest == imdb.GroupRequest
-type GroupRequest struct {
+type LocalGroupRequest struct {
 	GroupID      string    `gorm:"column:group_id;primary_key;type:varchar(64)"`
 	UserID       string    `gorm:"column:user_id;primary_key;type:varchar(64)"`
 	HandleResult int32     `gorm:"column:handle_result"`
@@ -182,7 +182,7 @@ type GroupRequest struct {
 //int64 CreateTime = 9;
 //int32 AppMangerLevel = 10;
 //open_im_sdk.User == imdb.User
-type User struct {
+type LocalUser struct {
 	UserID         string    `gorm:"column:user_id;primary_key;type:varchar(64)"`
 	Nickname       string    `gorm:"column:name;type:varchar(255)"`
 	FaceUrl        string    `gorm:"column:face_url;type:varchar(255)"`
@@ -204,7 +204,7 @@ type User struct {
 //string Ex = 7;
 //}
 // open_im_sdk.BlackInfo(BlackUserInfo) != imdb.Black (BlockUserID)
-type Black struct {
+type LocalBlack struct {
 	OwnerUserID    string    `gorm:"column:owner_user_id;primary_key;type:varchar(64)"`
 	BlockUserID    string    `gorm:"column:block_user_id;primary_key;type:varchar(64)"`
 	Nickname       string    `gorm:"column:nick_name;type:varchar(255)"`
@@ -216,11 +216,7 @@ type Black struct {
 	Ex             string    `gorm:"column:ex;type:varchar(1024)"`
 }
 
-type SeqData struct {
+type LocalSeqData struct {
 	UserID string `gorm:"column:user_id;primary_key;type:varchar(64)"`
 	Seq    int32  `gorm:"column:seq; default:1"`
-}
-type LocalData struct {
-	UserID string `gorm:"column:user_id;primary_key;size:64"`
-	Seq    int32  `gorm:"column:seq;default: '1'"`
 }
