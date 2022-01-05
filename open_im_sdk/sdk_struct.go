@@ -453,7 +453,7 @@ type MsgStruct struct {
 	ContentType      int32           `json:"contentType"`
 	SenderPlatformID int32           `json:"platformID"`
 	ForceList        []string        `json:"forceList"`
-	SenderNickName   string          `json:"senderNickName"`
+	SenderNickname   string          `json:"senderNickname"`
 	SenderFaceURL    string          `json:"senderFaceUrl"`
 	GroupID          string          `json:"groupID"`
 	Content          string          `json:"content"`
