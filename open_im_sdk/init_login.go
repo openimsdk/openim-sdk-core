@@ -450,7 +450,7 @@ func (u *UserRelated) reConn(conn *websocket.Conn) (*websocket.Conn, *http.Respo
 	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		if httpResp != nil {
-			u.cb.OnConnectFailed(httpResp.StatusCode, err.Error())
+			u.cb.OnConnectFailed(int32(httpResp.StatusCode), err.Error())
 		} else {
 			u.cb.OnConnectFailed(1001, err.Error())
 		}
