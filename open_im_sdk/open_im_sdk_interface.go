@@ -165,52 +165,55 @@ func RefuseGroupApplication(application, reason string, callback Base) {
 
 /////////////////////////////////////////////////////////////////
 
-func GetFriendsInfo(callback Base, uidList string) {
-	userForSDK.GetFriendsInfo(callback, uidList)
+func GetFriendsInfo(callback Base, uidList, operationID string) {
+	userForSDK.GetDesignatedFriendsInfo(callback, uidList, operationID)
 }
 
-func AddFriend(callback Base, paramsReq string) {
-	userForSDK.AddFriend(callback, paramsReq)
+func AddFriend(callback Base, paramsReq, operationID string) {
+	userForSDK.AddFriend(callback, paramsReq, operationID)
 }
 
-func GetFriendApplicationList(callback Base) {
-	userForSDK.GetFriendApplicationList(callback)
+func GetRecvFriendApplicationList(callback Base, operationID string) {
+	userForSDK.GetRecvFriendApplicationList(callback, operationID)
+}
+func GetSendFriendApplicationList(callback Base, operationID string) {
+	userForSDK.GetSendFriendApplicationList(callback, operationID)
 }
 
-func AcceptFriendApplication(callback Base, uid string) {
-	userForSDK.AcceptFriendApplication(callback, uid)
+func AcceptFriendApplication(callback Base, params string, operationID string) {
+	userForSDK.AcceptFriendApplication(callback, params, operationID)
 }
 
-func RefuseFriendApplication(callback Base, uid string) {
-	userForSDK.RefuseFriendApplication(callback, uid)
+func RefuseFriendApplication(callback Base, params, operationID string) {
+	userForSDK.RefuseFriendApplication(callback, params, operationID)
 }
 
-func CheckFriend(callback Base, uidList string) {
-	userForSDK.CheckFriend(callback, uidList)
+func CheckFriend(callback Base, uidList, operationID string) {
+	userForSDK.CheckFriend(callback, uidList, operationID)
 }
 
-func DeleteFromFriendList(deleteUid string, callback Base) {
-	userForSDK.DeleteFromFriendList(deleteUid, callback)
+func DeleteFromFriendList(callback Base, friendUserID, operationID string) {
+	userForSDK.DeleteFriend(callback, friendUserID, operationID)
 }
 
-func GetFriendList(callback Base) {
-	userForSDK.GetFriendList(callback)
+func GetFriendList(callback Base, operationID string) {
+	userForSDK.GetFriendList(callback, operationID)
 }
 
-func SetFriendInfo(comment string, callback Base) {
-	userForSDK.SetFriendInfo(comment, callback)
+func SetFriendInfo(callback Base, params, operationID string) {
+	userForSDK.SetFriendRemark(callback, params, operationID)
 }
 
-func AddToBlackList(callback Base, blackUid string) {
-	userForSDK.AddToBlackList(callback, blackUid)
+func AddToBlackList(callback Base, blackUserID, operationID string) {
+	userForSDK.AddToBlackList(callback, blackUserID, operationID)
 }
 
-func GetBlackList(callback Base) {
-	userForSDK.GetBlackList(callback)
+func GetBlackList(callback Base, operationID string) {
+	userForSDK.GetBlackList(callback, operationID)
 }
 
-func DeleteFromBlackList(callback Base, deleteUid string) {
-	userForSDK.DeleteFromBlackList(callback, deleteUid)
+func RemoveFromBlackList(callback Base, removeUserID, operationID string) {
+	userForSDK.RemoveBlack(callback, removeUserID, operationID)
 }
 
 func SetFriendListener(listener OnFriendshipListener) bool {

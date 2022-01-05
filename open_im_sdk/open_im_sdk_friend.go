@@ -127,7 +127,7 @@ func (u *UserRelated) GetFriendList(callback Base, operationID string) {
 	}()
 }
 
-func (u *UserRelated) SetFriendRemark(params string, callback Base, operationID string) {
+func (u *UserRelated) SetFriendRemark(callback Base, params string, operationID string) {
 	if callback == nil {
 		return
 	}
