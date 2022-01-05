@@ -46,68 +46,77 @@ func (wsRouter *WsFuncRouter) SetFriendListener() bool {
 //1
 func (wsRouter *WsFuncRouter) GetFriendsInfo(uidList string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.GetFriendsInfo(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, uidList)
+	userWorker.GetDesignatedFriendsInfo(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, uidList, operationID)
 }
 
 //1
 func (wsRouter *WsFuncRouter) AddFriend(paramsReq string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.AddFriend(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, paramsReq)
+	userWorker.AddFriend(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, paramsReq, operationID)
 }
 
 //1
-func (wsRouter *WsFuncRouter) GetFriendApplicationList(input string, operationID string) {
+//func (wsRouter *WsFuncRouter) GetFriendApplicationList(input string, operationID string) {
+//	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+//	userWorker.GetFriendApplicationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+//}
+
+func (wsRouter *WsFuncRouter) GetRecvFriendApplicationList(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.GetFriendApplicationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker.GetRecvFriendApplicationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
+}
+func (wsRouter *WsFuncRouter) GetSendFriendApplicationList(input string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.GetSendFriendApplicationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
 //1
-func (wsRouter *WsFuncRouter) AcceptFriendApplication(uid string, operationID string) {
+func (wsRouter *WsFuncRouter) AcceptFriendApplication(params string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.AcceptFriendApplication(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, uid)
+	userWorker.AcceptFriendApplication(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, params, operationID)
 }
 
 //1
-func (wsRouter *WsFuncRouter) RefuseFriendApplication(uid string, operationID string) {
+func (wsRouter *WsFuncRouter) RefuseFriendApplication(params string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.RefuseFriendApplication(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, uid)
+	userWorker.RefuseFriendApplication(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, params, operationID)
 }
 
 //1
 func (wsRouter *WsFuncRouter) CheckFriend(uidList string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.CheckFriend(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, uidList)
+	userWorker.CheckFriend(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, uidList, operationID)
 }
 
 //1
-func (wsRouter *WsFuncRouter) DeleteFromFriendList(deleteUid string, operationID string) {
+func (wsRouter *WsFuncRouter) DeleteFromFriendList(friendUserID string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.DeleteFromFriendList(deleteUid, &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker.DeleteFriend(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, friendUserID, operationID)
 }
 
 //1
 func (wsRouter *WsFuncRouter) GetFriendList(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.GetFriendList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker.GetFriendList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
 //1
 func (wsRouter *WsFuncRouter) SetFriendInfo(comment string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.SetFriendInfo(comment, &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker.SetFriendRemark(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, comment, operationID)
 }
 
 func (wsRouter *WsFuncRouter) AddToBlackList(blackUid string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.AddToBlackList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, blackUid)
+	userWorker.AddToBlackList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, blackUid, operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetBlackList(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.GetBlackList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker.GetBlackList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
-func (wsRouter *WsFuncRouter) DeleteFromBlackList(deleteUid string, operationID string) {
+func (wsRouter *WsFuncRouter) RemoveFromBlackList(removeUserID string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.DeleteFromBlackList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, deleteUid)
+	userWorker.RemoveBlack(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, removeUserID, operationID)
 }
