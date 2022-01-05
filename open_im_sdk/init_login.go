@@ -76,7 +76,7 @@ func (u *UserRelated) logout(cb Base) {
 		}
 		sdkLog("close db ok")
 
-		u.LoginUid = ""
+		u.loginUserID = ""
 		u.token = ""
 		time.Sleep(time.Duration(6) * time.Second)
 		if cb != nil {
@@ -96,12 +96,12 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 
 	u.LoginState = Logining
 	u.token = tk
-	u.LoginUid = uid
+	u.loginUserID = uid
 
-	err := u.initDBX(u.LoginUid)
+	err := u.initDB()
 	if err != nil {
 		u.token = ""
-		u.LoginUid = ""
+		u.loginUserID = ""
 		cb.OnError(ErrCodeInitLogin, err.Error())
 		sdkLog("initDBX failed, ", err.Error())
 		u.LoginState = LoginFailed
@@ -113,7 +113,7 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 	u.conn = c
 	if err != nil {
 		u.token = ""
-		u.LoginUid = ""
+		u.loginUserID = ""
 		cb.OnError(ErrCodeInitLogin, err.Error())
 		sdkLog("firstConn failed ", err.Error())
 		u.LoginState = LoginFailed
@@ -177,7 +177,7 @@ func (u *UserRelated) closeConn() error {
 
 func (u *UserRelated) getLoginUser() string {
 	if u.LoginState == LoginSuccess {
-		return u.LoginUid
+		return u.loginUserID
 	} else {
 		return ""
 	}
@@ -411,7 +411,7 @@ func (u *UserRelated) firstConn(conn *websocket.Conn) (*websocket.Conn, *http.Re
 	}
 
 	u.IMManager.cb.OnConnecting()
-	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", SvrConf.IpWsAddr, u.LoginUid, u.token, SvrConf.Platform)
+	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", SvrConf.IpWsAddr, u.loginUserID, u.token, SvrConf.Platform)
 	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		if httpResp != nil {
@@ -447,7 +447,7 @@ func (u *UserRelated) reConn(conn *websocket.Conn) (*websocket.Conn, *http.Respo
 	}
 
 	u.IMManager.cb.OnConnecting()
-	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", SvrConf.IpWsAddr, u.LoginUid, u.token, SvrConf.Platform)
+	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", SvrConf.IpWsAddr, u.loginUserID, u.token, SvrConf.Platform)
 	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		if httpResp != nil {
@@ -534,7 +534,7 @@ func (u *UserRelated) heartbeat() {
 		var wsReq GeneralWsReq
 		wsReq.ReqIdentifier = WSGetNewestSeq
 		wsReq.OperationID = operationIDGenerator()
-		wsReq.SendID = u.LoginUid
+		wsReq.SendID = u.loginUserID
 		wsReq.MsgIncr = msgIncr
 		var connSend *websocket.Conn
 		//	LogBegin("WriteMsg", wsReq.OperationID, wsReq.MsgIncr)
@@ -694,7 +694,7 @@ func (u *UserRelated) syncMsgFromServerSplit(needSyncSeqList []int64) (err error
 	var wsReq GeneralWsReq
 	wsReq.ReqIdentifier = WSPullMsgBySeqList
 	wsReq.OperationID = operationIDGenerator()
-	wsReq.SendID = u.LoginUid
+	wsReq.SendID = u.loginUserID
 	wsReq.MsgIncr = msgIncr
 
 	var pullMsgReq PullMessageBySeqListReq
@@ -1077,7 +1077,7 @@ func (u *UserRelated) getUserNewestSeq() (int64, int64, error) {
 
 func (u *UserRelated) getServerUserInfo() (*userInfo, error) {
 	var uidList []string
-	uidList = append(uidList, u.LoginUid)
+	uidList = append(uidList, u.loginUserID)
 	resp, err := post2Api(getUserInfoRouter, paramsGetUserInfo{OperationID: operationIDGenerator(), UidList: uidList}, u.token)
 	if err != nil {
 		sdkLog("post2Api failed, ", getUserInfoRouter, uidList, err.Error())
@@ -1096,7 +1096,7 @@ func (u *UserRelated) getServerUserInfo() (*userInfo, error) {
 	}
 
 	if len(userResp.Data) == 0 {
-		sdkLog("failed, no user : ", u.LoginUid)
+		sdkLog("failed, no user : ", u.loginUserID)
 		return nil, errors.New("no user")
 	}
 	return &userResp.Data[0], nil
@@ -1156,7 +1156,7 @@ func (u *UserRelated) doFriendMsg(msg *MsgData) {
 		return
 	}
 
-	if msg.SendID == u.LoginUid && msg.SenderPlatformID == u.SvrConf.Platform {
+	if msg.SendID == u.loginUserID && msg.SenderPlatformID == u.SvrConf.Platform {
 		sdkLog("sync msg ", msg.ContentType)
 		return
 	}
@@ -1300,7 +1300,7 @@ func (u *UserRelated) setSelfInfo(msg *MsgData) {
 	}
 
 	if len(userResp.Data) == 0 {
-		sdkLog("failed, no user : ", u.LoginUid)
+		sdkLog("failed, no user : ", u.loginUserID)
 		return
 	}
 

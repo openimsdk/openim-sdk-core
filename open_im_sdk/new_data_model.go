@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (u *UserRelated) InitDB() error {
+func (u *UserRelated) initDB() error {
 	if u.loginUserID == "" {
 		return errors.New("no uid")
 	}

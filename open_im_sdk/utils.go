@@ -8,8 +8,8 @@ import (
 	"encoding/json"
 	"github.com/pkg/errors"
 
+	e "errors"
 	"github.com/gorilla/websocket"
-
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -468,6 +468,23 @@ func sdkLog(v ...interface{}) {
 	i := strings.LastIndex(b, "/")
 	if i != -1 {
 		sLog.Println("[", b[i+1:len(b)], ":", c, "]", v)
+	}
+
+}
+
+func sdkErrLog(err error, v ...interface{}) {
+	if SdkLogFlag == 1 {
+		return
+	}
+	if logger != nil {
+		NewInfo("", v...)
+		return
+	}
+	_, b, c, _ := runtime.Caller(1)
+	i := strings.LastIndex(b, "/")
+	if i != -1 {
+		sLog.Println("[", b[i+1:len(b)], ":", c, "]", v)
+		sLog.Print("%v", err)
 	}
 
 }
