@@ -122,7 +122,7 @@ func (testGetGroupsInfo) OnSuccess(data string) {
 	fmt.Println("testGetGroupsInfo,onSuccess", data)
 }
 
-func (testGetGroupsInfo) OnError(errCode int, errMsg string) {
+func (testGetGroupsInfo) OnError(errCode int32, errMsg string) {
 	fmt.Println("testGetGroupsInfo,onError", errMsg)
 }
 
@@ -143,7 +143,7 @@ func (testJoinGroup) OnSuccess(data string) {
 	fmt.Println("testJoinGroup,onSuccess", data)
 }
 
-func (testJoinGroup) OnError(errCode int, errMsg string) {
+func (testJoinGroup) OnError(errCode int32, errMsg string) {
 	fmt.Println("testJoinGroup,onError", errMsg)
 }
 
@@ -164,7 +164,7 @@ func (testQuitGroup) OnSuccess(data string) {
 	fmt.Println("testQuitGroup,onSuccess", data)
 }
 
-func (testQuitGroup) OnError(errCode int, errMsg string) {
+func (testQuitGroup) OnError(errCode int32, errMsg string) {
 	fmt.Println("testQuitGroup,onError", errMsg)
 }
 
@@ -183,7 +183,7 @@ type testGetJoinedGroupList struct {
 	OnError(errCode int, errMsg string)
 	OnSuccess(data string)
 */
-func (testGetJoinedGroupList) OnError(errCode int, errMsg string) {
+func (testGetJoinedGroupList) OnError(errCode int32, errMsg string) {
 	fmt.Println("testGetJoinedGroupList OnError", errCode, errMsg)
 }
 
@@ -216,7 +216,7 @@ func DotestGetGroupMemberList() {
 type testGetGroupMembersInfo struct {
 }
 
-func (testGetGroupMembersInfo) OnError(errCode int, errMsg string) {
+func (testGetGroupMembersInfo) OnError(errCode int32, errMsg string) {
 	fmt.Println("testGetGroupMembersInfo OnError", errCode, errMsg)
 }
 
@@ -238,7 +238,7 @@ func DotestGetGroupMembersInfo() {
 type testKickGroupMember struct {
 }
 
-func (testKickGroupMember) OnError(errCode int, errMsg string) {
+func (testKickGroupMember) OnError(errCode int32, errMsg string) {
 	fmt.Println("testKickGroupMember OnError", errCode, errMsg)
 }
 
