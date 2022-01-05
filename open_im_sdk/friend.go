@@ -8,7 +8,6 @@ import (
 
 type FriendListener struct {
 	friendListener OnFriendshipListener
-	//ch             chan cmd2Value
 }
 
 func (u *UserRelated) getDesignatedFriendsInfo(callback Base, friendUserIDList GetDesignatedFriendsInfoParams, operationID string) GetDesignatedFriendsInfoCallback {
@@ -364,49 +363,50 @@ func (u *UserRelated) removeBlack(callback Base, deleteUid, operationID string) 
 
 }
 
-func (u *UserRelated) doAcceptOrRefuseApplicationCall(sendUid string, flag int32) {
-	sdkLog("doAcceptOrRefuseApplicationCall", sendUid, flag)
-
-	var ui2GetUserInfo ui2ClientCommonReq
-	ui2GetUserInfo.UidList = append(ui2GetUserInfo.UidList, sendUid)
-	resp, err := post2Api(getUserInfoRouter, paramsGetUserInfo{UidList: ui2GetUserInfo.UidList, OperationID: operationIDGenerator()}, u.token)
-	if err != nil {
-		sdkLog("getUserInfo failed", err)
-		return
-	}
-	var vgetUserInfoResp getUserInfoResp
-	err = json.Unmarshal(resp, &vgetUserInfoResp)
-	if err != nil {
-
-	}
-	if vgetUserInfoResp.ErrCode != 0 {
-		sdkLog(vgetUserInfoResp.ErrCode, vgetUserInfoResp.ErrMsg)
-		return
-	}
-	var appUserNode applyUserInfo
-	appUserNode.Uid = vgetUserInfoResp.Data[0].Uid
-	appUserNode.Name = vgetUserInfoResp.Data[0].Name
-	appUserNode.Icon = vgetUserInfoResp.Data[0].Icon
-	appUserNode.Gender = vgetUserInfoResp.Data[0].Gender
-	appUserNode.Mobile = vgetUserInfoResp.Data[0].Mobile
-	appUserNode.Birth = vgetUserInfoResp.Data[0].Birth
-	appUserNode.Email = vgetUserInfoResp.Data[0].Email
-	appUserNode.Ex = vgetUserInfoResp.Data[0].Ex
-	appUserNode.Flag = flag
-
-	jsonInfo, err := json.Marshal(appUserNode)
-	if err != nil {
-		sdkLog("doAcceptOrRefuseApplication json marshal failed")
-		return
-	}
-	sdkLog(flag)
-	if flag == 1 {
-		u.friendListener.OnFriendApplicationListAccept(string(jsonInfo))
-	}
-	if flag == -1 {
-		u.friendListener.OnFriendApplicationListReject(string(jsonInfo))
-	}
-}
+//
+//func (u *UserRelated) doAcceptOrRefuseApplicationCall(sendUid string, flag int32) {
+//	sdkLog("doAcceptOrRefuseApplicationCall", sendUid, flag)
+//
+//	var ui2GetUserInfo ui2ClientCommonReq
+//	ui2GetUserInfo.UidList = append(ui2GetUserInfo.UidList, sendUid)
+//	resp, err := post2Api(getUserInfoRouter, paramsGetUserInfo{UidList: ui2GetUserInfo.UidList, OperationID: operationIDGenerator()}, u.token)
+//	if err != nil {
+//		sdkLog("getUserInfo failed", err)
+//		return
+//	}
+//	var vgetUserInfoResp getUserInfoResp
+//	err = json.Unmarshal(resp, &vgetUserInfoResp)
+//	if err != nil {
+//
+//	}
+//	if vgetUserInfoResp.ErrCode != 0 {
+//		sdkLog(vgetUserInfoResp.ErrCode, vgetUserInfoResp.ErrMsg)
+//		return
+//	}
+//	var appUserNode applyUserInfo
+//	appUserNode.Uid = vgetUserInfoResp.Data[0].Uid
+//	appUserNode.Name = vgetUserInfoResp.Data[0].Name
+//	appUserNode.Icon = vgetUserInfoResp.Data[0].Icon
+//	appUserNode.Gender = vgetUserInfoResp.Data[0].Gender
+//	appUserNode.Mobile = vgetUserInfoResp.Data[0].Mobile
+//	appUserNode.Birth = vgetUserInfoResp.Data[0].Birth
+//	appUserNode.Email = vgetUserInfoResp.Data[0].Email
+//	appUserNode.Ex = vgetUserInfoResp.Data[0].Ex
+//	appUserNode.Flag = flag
+//
+//	jsonInfo, err := json.Marshal(appUserNode)
+//	if err != nil {
+//		sdkLog("doAcceptOrRefuseApplication json marshal failed")
+//		return
+//	}
+//	sdkLog(flag)
+//	if flag == 1 {
+//		u.friendListener.OnFriendApplicationListAccept(string(jsonInfo))
+//	}
+//	if flag == -1 {
+//		u.friendListener.OnFriendApplicationListReject(string(jsonInfo))
+//	}
+//}
 
 func (u *UserRelated) syncSelfFriendApplication() {
 

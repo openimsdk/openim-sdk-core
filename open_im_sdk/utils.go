@@ -670,6 +670,7 @@ func WithMessage(err error, message string) error {
 func checkErr(callback Base, err error, operationID string) {
 	if err != nil {
 		if callback != nil {
+			NewError(operationID, "checkErr ", err)
 			callback.OnError(ErrDB.ErrCode, ErrDB.ErrMsg)
 			runtime.Goexit()
 		}
@@ -686,7 +687,8 @@ func checkResp(callback Base, resp []byte, operationID string) *base_info.CommDa
 	err := json.Unmarshal(resp, &c)
 	if err != nil {
 		if callback != nil {
-			callback.OnError(ErrDB.ErrCode, ErrDB.ErrMsg)
+			NewError(operationID, "Unmarshal ", err)
+			callback.OnError(ErrArgs.ErrCode, ErrArgs.ErrMsg)
 			runtime.Goexit()
 		}
 		return nil
@@ -694,6 +696,7 @@ func checkResp(callback Base, resp []byte, operationID string) *base_info.CommDa
 
 	if c.ErrCode != 0 {
 		if err != nil {
+			NewError(operationID, "errCode ", c.ErrCode, "errMsg ", c.ErrMsg)
 			callback.OnError(c.ErrCode, c.ErrMsg)
 			runtime.Goexit()
 		}

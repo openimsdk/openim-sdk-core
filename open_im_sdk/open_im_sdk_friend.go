@@ -1,8 +1,7 @@
 package open_im_sdk
 
 func (u *UserRelated) GetFriendsInfo(callback Base, friendUserIDList string, operationID string) {
-	if callback == nil || friendUserIDList == "" {
-		sdkLog("uidList or callback is nil")
+	if callback == nil {
 		return
 	}
 	go func() {
@@ -14,6 +13,9 @@ func (u *UserRelated) GetFriendsInfo(callback Base, friendUserIDList string, ope
 }
 
 func (u *UserRelated) AddFriend(callback Base, paramsReq string, operationID string) {
+	if callback == nil {
+		return
+	}
 	go func() {
 		var unmarshalAddFriendParams AddFriendParams
 		u.jsonUnmarshalAndArgsValidate(paramsReq, &unmarshalAddFriendParams, callback)
@@ -23,18 +25,27 @@ func (u *UserRelated) AddFriend(callback Base, paramsReq string, operationID str
 }
 
 func (u *UserRelated) GetRecvFriendApplicationList(callback Base, operationID string) {
+	if callback == nil {
+		return
+	}
 	go func() {
 		u.getRecvFriendApplicationList(callback, operationID)
 	}()
 }
 
 func (u *UserRelated) GetSendFriendApplicationList(callback Base, operationID string) {
+	if callback == nil {
+		return
+	}
 	go func() {
 		u.getSendFriendApplicationList(callback, operationID)
 	}()
 }
 
 func (u *UserRelated) AcceptFriendApplication(callback Base, params string, operationID string) {
+	if callback == nil {
+		return
+	}
 	go func() {
 		var unmarshalParams ProcessFriendApplicationParams
 		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback)
@@ -44,6 +55,9 @@ func (u *UserRelated) AcceptFriendApplication(callback Base, params string, oper
 }
 
 func (u *UserRelated) RefuseFriendApplication(callback Base, params string, operationID string) {
+	if callback == nil {
+		return
+	}
 	go func() {
 		var unmarshalParams ProcessFriendApplicationParams
 		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback)
@@ -53,6 +67,9 @@ func (u *UserRelated) RefuseFriendApplication(callback Base, params string, oper
 }
 
 func (u *UserRelated) CheckFriend(callback Base, params string, operationID string) {
+	if callback == nil {
+		return
+	}
 	go func() {
 		var unmarshalParams CheckFriendParams
 		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback)
@@ -62,6 +79,9 @@ func (u *UserRelated) CheckFriend(callback Base, params string, operationID stri
 }
 
 func (u *UserRelated) DeleteFromFriendList(callback Base, friendUserID string, operationID string) {
+	if callback == nil {
+		return
+	}
 	go func() {
 		u.deleteFriend(friendUserID, callback, operationID)
 		callback.OnSuccess(structToJsonString(DeleteFriendCallback{}))
@@ -69,6 +89,9 @@ func (u *UserRelated) DeleteFromFriendList(callback Base, friendUserID string, o
 }
 
 func (u *UserRelated) GetFriendList(callback Base, operationID string) {
+	if callback == nil {
+		return
+	}
 	go func() {
 		var filterLocalFriendList []LocalFriend
 		localFriendList, err := u._getAllFriendList()
@@ -85,6 +108,9 @@ func (u *UserRelated) GetFriendList(callback Base, operationID string) {
 }
 
 func (u *UserRelated) SetFriendRemark(params string, callback Base, operationID string) {
+	if callback == nil {
+		return
+	}
 	go func() {
 		var unmarshalParams SetFriendRemarkParams
 		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback)
