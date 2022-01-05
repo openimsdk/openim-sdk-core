@@ -198,7 +198,7 @@ func DoTestCheckFriend() {
 	test.UidList = append(test.UidList, Friend_uid)
 	jsontest, _ := json.Marshal(test.UidList)
 	fmt.Println("CheckFriend, input: ", string(jsontest))
-	CheckFriend(test, string(jsontest))
+	CheckFriend(test, string(jsontest), "")
 }
 
 /////////////////////////////////////////////////////////
@@ -218,7 +218,7 @@ func DoTestSetFriendInfo() {
 	test.Comment = "MM"
 	jsontest, _ := json.Marshal(test)
 	fmt.Println("SetFriendInfo, input: ", string(jsontest))
-	SetFriendInfo(string(jsontest), test, "")
+	SetFriendInfo(test, string(jsontest), "")
 }
 
 /////////////////////
@@ -241,7 +241,7 @@ func DoTestDeleteFromFriendList() {
 	test.Uid = Friend_uid
 	jsontest, err := json.Marshal(test.Uid)
 	fmt.Println("DeleteFromFriendList, input:              sdafasf ", string(jsontest), err)
-	DeleteFromFriendList(string(jsontest), test.Uid, "")
+	DeleteFromFriendList(test, test.Uid, "")
 }
 
 ///////////////////////////////////////////////////////
@@ -785,7 +785,7 @@ func (testFriendListener) OnSuccess() {
 	fmt.Println("testLogin OnSuccess")
 }
 
-func (testFriendListener) OnError(code int, msg string) {
+func (testFriendListener) OnError(code int32, msg string) {
 	fmt.Println("testLogin, OnError", code, msg)
 }
 
@@ -796,7 +796,7 @@ func (testMarkC2CMessageAsRead) OnSuccess(data string) {
 	fmt.Println(" testMarkC2CMessageAsRead  OnSuccess", data)
 }
 
-func (testMarkC2CMessageAsRead) OnError(code int, msg string) {
+func (testMarkC2CMessageAsRead) OnError(code int32, msg string) {
 	fmt.Println("testMarkC2CMessageAsRead, OnError", code, msg)
 }
 

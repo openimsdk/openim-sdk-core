@@ -8,7 +8,7 @@ import (
 type XBase struct {
 }
 
-func (XBase) OnError(errCode int, errMsg string) {
+func (XBase) OnError(errCode int32, errMsg string) {
 	fmt.Println("get groupmenberinfo OnError", errCode, errMsg)
 }
 func (XBase) OnSuccess(data string) {
@@ -69,7 +69,7 @@ func (testCreateGroup) OnSuccess(data string) {
 	GetGroupMembersInfo(data, string(j), xb)
 }
 
-func (testCreateGroup) OnError(errCode int, errMsg string) {
+func (testCreateGroup) OnError(errCode int32, errMsg string) {
 	fmt.Println("testCreateGroup,onError", errCode, errMsg)
 }
 
@@ -98,7 +98,7 @@ func (testSetGroupInfo) OnSuccess(data string) {
 	fmt.Println("testSetGroupInfo,onSuccess")
 }
 
-func (testSetGroupInfo) OnError(errCode int, errMsg string) {
+func (testSetGroupInfo) OnError(errCode int32, errMsg string) {
 	fmt.Println("testSetGroupInfo,onError")
 }
 
