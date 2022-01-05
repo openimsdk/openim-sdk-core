@@ -134,7 +134,7 @@ func (testAddToBlackList) OnSuccess(string) {
 	fmt.Println("testAddToBlackList, OnSuccess")
 }
 
-func (testAddToBlackList) OnError(code int, msg string) {
+func (testAddToBlackList) OnError(code int32, msg string) {
 	fmt.Println("testAddToBlackList, OnError, ", code, msg)
 }
 
@@ -155,7 +155,7 @@ func (testDeleteFromBlackList) OnSuccess(string) {
 	fmt.Println("testDeleteFromBlackList, OnSuccess")
 }
 
-func (testDeleteFromBlackList) OnError(code int, msg string) {
+func (testDeleteFromBlackList) OnError(code int32, msg string) {
 	fmt.Println("testDeleteFromBlackList, OnError, ", code, msg)
 }
 
@@ -190,7 +190,7 @@ type testCheckFriend struct {
 func (testCheckFriend) OnSuccess(data string) {
 	fmt.Println("testCheckFriend, OnSuccess, output: ", data)
 }
-func (testCheckFriend) OnError(code int, msg string) {
+func (testCheckFriend) OnError(code int32, msg string) {
 	fmt.Println("testCheckFriend, OnError, ", code, msg)
 }
 func DoTestCheckFriend() {
