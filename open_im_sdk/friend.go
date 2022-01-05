@@ -10,6 +10,25 @@ type FriendListener struct {
 	//ch             chan cmd2Value
 }
 
+func (u *UserRelated) getDesignatedFriendsInfo() ([]LocalFriend, error) {
+	//Take out the friend list and judge whether it is in the blacklist again to prevent nested locks
+	localFriendList, err := u.getLocalFriendList22()
+	if err != nil {
+		return nil, err
+	}
+	for index, v := range localFriendList {
+		//check friend is in blacklist
+		blackUser, err := u.getBlackUsInfoByUid(v.UID)
+		if err != nil {
+			sdkLog(err.Error())
+		}
+		if blackUser.Uid != "" {
+			localFriendList[index].IsInBlackList = 1
+		}
+	}
+	return localFriendList, nil
+}
+
 func (u *UserRelated) doFriendList() {
 	friendsInfoOnServer, err := u.getServerFriendList()
 	if err != nil {

@@ -549,6 +549,7 @@ func (u *UserRelated) CreateImageMessageByURL(sourcePicture, bigPicture, snapsho
 	s.Content = structToJsonString(s.PictureElem)
 	return structToJsonString(s)
 }
+
 func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool, offlinePushInfo string) string {
 	s := MsgStruct{}
 	p := OfflinePushInfo{}

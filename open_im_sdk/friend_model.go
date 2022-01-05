@@ -25,7 +25,7 @@ func (u *UserRelated) _updateFriend(friend *LocalFriend) error {
 	return wrap(t.Error, "_updateFriend failed")
 }
 
-func (u *UserRelated) _getFriendList() ([]LocalFriend, error) {
+func (u *UserRelated) _getAllFriendList() ([]LocalFriend, error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	var friendList []LocalFriend
