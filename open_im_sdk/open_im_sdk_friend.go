@@ -26,21 +26,9 @@ func (u *UserRelated) AddFriend(callback Base, paramsReq string, operationID str
 	}()
 }
 
-func (u *UserRelated) GetFriendApplicationList(callback Base) {
+func (u *UserRelated) GetRecvFriendApplicationList(callback Base, operationID string) {
 	go func() {
-		list, err := u.getLocalFriendApplication()
-		if err != nil {
-			callback.OnError(ErrCodeFriend, err.Error())
-			sdkLog("getLocalFriendApplication failed ", err.Error())
-			return
-		}
-		slist, err := json.Marshal(list)
-		if err != nil {
-			callback.OnError(ErrCodeFriend, err.Error())
-			sdkLog("Marshal failed ", err.Error())
-			return
-		}
-		callback.OnSuccess(string(slist))
+		u.getRecvFriendApplicationList(callback, operationID)
 	}()
 }
 

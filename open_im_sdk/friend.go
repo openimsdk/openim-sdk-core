@@ -43,6 +43,11 @@ func (u *UserRelated) addFriend(callback Base, addFriendParams AddFriendParams, 
 	apiReq.ReqMsg = addFriendParams.ReqMsg
 	resp, err := post2Api(addFriendRouter, apiReq, u.token)
 	checkErrAndResp(callback, err, resp)
+	callback.OnSuccess("")
+}
+
+func (u *UserRelated) getRecvFriendApplicationList(callback Base, operationID string) {
+
 }
 
 func (u *UserRelated) doFriendList() {
