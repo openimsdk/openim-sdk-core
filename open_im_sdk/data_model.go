@@ -1396,41 +1396,43 @@ func (u *UserRelated) getLocalGroupsInfoByGroupID(groupID string) (*groupInfo, e
 	return &gInfo, nil
 }
 
-func (u *UserRelated) findLocalGroupOwnerByGroupId(groupId string) (uid string, err error) {
-	u.mRWMutex.RLock()
-	defer u.mRWMutex.RUnlock()
-	stmt, err := u.Query("select uid from group_member where group_id=? and administrator_level=?", groupId, 1)
-	if err != nil {
-		return "", err
-	}
-	for stmt.Next() {
-		err = stmt.Scan(&uid)
-		if err != nil {
-			sdkLog(err.Error())
-			continue
-		}
-	}
+//
+//func (u *UserRelated) findLocalGroupOwnerByGroupId(groupId string) (uid string, err error) {
+//	u.mRWMutex.RLock()
+//	defer u.mRWMutex.RUnlock()
+//	stmt, err := u.Query("select uid from group_member where group_id=? and administrator_level=?", groupId, 1)
+//	if err != nil {
+//		return "", err
+//	}
+//	for stmt.Next() {
+//		err = stmt.Scan(&uid)
+//		if err != nil {
+//			sdkLog(err.Error())
+//			continue
+//		}
+//	}
+//
+//	return uid, nil
+//}
+//
+//func (u *UserRelated) getLocalGroupMemberNumByGroupId(groupId string) (num int, err error) {
+//	u.mRWMutex.RLock()
+//	defer u.mRWMutex.RUnlock()
+//	stmt, err := u.Query("select count(*) from group_member where group_id=?", groupId)
+//	if err != nil {
+//		return 0, err
+//	}
+//	for stmt.Next() {
+//		err = stmt.Scan(&num)
+//		if err != nil {
+//			sdkLog("getLocalGroupMemberNumByGroupId query failed, err", err.Error())
+//			continue
+//		}
+//	}
+//	return num, err
+//}
 
-	return uid, nil
-}
-
-func (u *UserRelated) getLocalGroupMemberNumByGroupId(groupId string) (num int, err error) {
-	u.mRWMutex.RLock()
-	defer u.mRWMutex.RUnlock()
-	stmt, err := u.Query("select count(*) from group_member where group_id=?", groupId)
-	if err != nil {
-		return 0, err
-	}
-	for stmt.Next() {
-		err = stmt.Scan(&num)
-		if err != nil {
-			sdkLog("getLocalGroupMemberNumByGroupId query failed, err", err.Error())
-			continue
-		}
-	}
-	return num, err
-}
-
+//1
 func (u *UserRelated) getLocalGroupMemberInfoByGroupIdUserId(groupId string, uid string) (*groupMemberFullInfo, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
@@ -1450,6 +1452,7 @@ func (u *UserRelated) getLocalGroupMemberInfoByGroupIdUserId(groupId string, uid
 	return &member, nil
 }
 
+//1
 func (u *UserRelated) getLocalGroupMemberList() ([]groupMemberFullInfo, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
@@ -1478,6 +1481,7 @@ func (u *UserRelated) getLocalGroupMemberList() ([]groupMemberFullInfo, error) {
 	return groupMemberList, nil
 }
 
+//1
 func (u *UserRelated) getLocalGroupMemberListByGroupID(groupId string) ([]groupMemberFullInfo, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
@@ -1505,6 +1509,7 @@ func (u *UserRelated) getLocalGroupMemberListByGroupID(groupId string) ([]groupM
 	return groupMemberList, nil
 }
 
+//1
 func (u *UserRelated) insertIntoLocalGroupMember(info groupMemberFullInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -1519,6 +1524,7 @@ func (u *UserRelated) insertIntoLocalGroupMember(info groupMemberFullInfo) error
 	return nil
 }
 
+//1
 func (u *UserRelated) delLocalGroupMember(info groupMemberFullInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -1532,6 +1538,8 @@ func (u *UserRelated) delLocalGroupMember(info groupMemberFullInfo) error {
 	}
 	return nil
 }
+
+//1
 func (u *UserRelated) replaceLocalGroupMemberInfo(info groupMemberFullInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -1546,19 +1554,20 @@ func (u *UserRelated) replaceLocalGroupMemberInfo(info groupMemberFullInfo) erro
 	return nil
 }
 
-func (u *UserRelated) updateLocalGroupMemberInfo(info groupMemberFullInfo) error {
-	u.mRWMutex.Lock()
-	defer u.mRWMutex.Unlock()
-	stmt, err := u.Prepare("update group_member set nickname=?,user_group_face_url=? where group_id=? and uid=?")
-	if err != nil {
-		return err
-	}
-	_, err = stmt.Exec(info.NickName, info.FaceUrl, info.GroupId, info.UserId)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+//
+//func (u *UserRelated) updateLocalGroupMemberInfo(info groupMemberFullInfo) error {
+//	u.mRWMutex.Lock()
+//	defer u.mRWMutex.Unlock()
+//	stmt, err := u.Prepare("update group_member set nickname=?,user_group_face_url=? where group_id=? and uid=?")
+//	if err != nil {
+//		return err
+//	}
+//	_, err = stmt.Exec(info.NickName, info.FaceUrl, info.GroupId, info.UserId)
+//	if err != nil {
+//		return err
+//	}
+//	return nil
+//}
 
 func (u *UserRelated) insertIntoSelfApplyToGroupRequest(groupId, message string) error {
 	u.mRWMutex.Lock()
