@@ -41,7 +41,6 @@ func (u *UserRelated) addFriend(callback Base, addFriendParams AddFriendParams, 
 	apiReq.ReqMsg = addFriendParams.ReqMsg
 	resp, err := post2Api(addFriendRouter, apiReq, u.token)
 	return checkErrAndResp(callback, err, resp, operationID)
-
 }
 
 func (u *UserRelated) getRecvFriendApplicationList(callback Base, operationID string) GetRecvFriendApplicationListCallback {
@@ -97,6 +96,16 @@ func (u *UserRelated) checkFriend(callback Base, userIDList CheckFriendParams, o
 		checkFriendCallback = append(checkFriendCallback, r)
 	}
 	return checkFriendCallback
+}
+
+func (u *UserRelated) deleteFriend(FriendUserID string, callback Base, operationID string) *base_info.CommDataResp {
+	apiReq := base_info.DeleteFriendReq{}
+	apiReq.ToUserID = FriendUserID
+	apiReq.FromUserID = u.loginUserID
+	resp, err := post2Api(deleteFriendRouter, apiReq, u.token)
+	result := checkErrAndResp(callback, err, resp, operationID)
+	u.syncFriendList()
+	return result
 }
 
 func (u *UserRelated) doFriendList() {
