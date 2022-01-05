@@ -58,40 +58,12 @@ func (u *UserRelated) RefuseFriendApplication(callback Base, params string, oper
 	}()
 }
 
-func (u *UserRelated) CheckFriend(callback Base, uidList string) {
+func (u *UserRelated) CheckFriend(callback Base, params string, operationID string) {
 	go func() {
-		fList, err := u.getLocalFriendList()
-		if err != nil {
-			callback.OnError(ErrCodeFriend, err.Error())
-			log(fmt.Sprintf("CheckFriend ErrCodeFriend err = %s", err.Error()))
-			return
-		}
-		var ui2UidList []string
-		e := json.Unmarshal([]byte(uidList), &ui2UidList)
-		if e != nil {
-			callback.OnError(ErrCodeFriend, e.Error())
-
-			log(fmt.Sprintf("CheckFriend Unmarshal err = %s", e.Error()))
-
-			return
-		}
-		mapFriend := make(map[string]int32)
-		for _, v := range fList {
-			mapFriend[v.UID] = 1
-		}
-
-		result := make([]Uid2Flag, 0)
-		for _, v := range ui2UidList {
-			result = append(result, Uid2Flag{Uid: v, Flag: mapFriend[v]})
-		}
-
-		sr, ee := json.Marshal(result)
-		if ee != nil {
-			callback.OnError(ErrCodeFriend, ee.Error())
-			log(fmt.Sprintf("CheckFriend Marshal err = %s", ee.Error()))
-			return
-		}
-		callback.OnSuccess(string(sr))
+		var unmarshalParams CheckFriendParams
+		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback)
+		result := u.checkFriend(callback, unmarshalParams, operationID)
+		callback.OnSuccess(structToJsonString(result))
 	}()
 }
 

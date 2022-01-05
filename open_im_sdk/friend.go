@@ -3,10 +3,7 @@ package open_im_sdk
 import (
 	"encoding/json"
 	"errors"
-	"gorm.io/gorm/callbacks"
 	"open_im_sdk/open_im_sdk/base_info"
-	"os"
-	"runtime"
 )
 
 type FriendListener struct {
@@ -74,7 +71,7 @@ func (u *UserRelated) checkFriend(callback Base, userIDList CheckFriendParams, o
 	checkErr(callback, err, operationID)
 	blackList, err := u._getBlackInfoList(userIDList)
 	checkErr(callback, err, operationID)
-
+	var checkFriendCallback CheckFriendCallback
 	for _, v := range userIDList {
 		var r base_info.UserIDResult
 		isBlack := false
@@ -95,10 +92,11 @@ func (u *UserRelated) checkFriend(callback Base, userIDList CheckFriendParams, o
 		if isFriend && !isBlack {
 			r.Result = 1
 		} else {
-			r.Result = -1
+			r.Result = 0
 		}
+		checkFriendCallback = append(checkFriendCallback, r)
 	}
-
+	return checkFriendCallback
 }
 
 func (u *UserRelated) doFriendList() {
