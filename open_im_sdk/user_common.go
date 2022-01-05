@@ -9,18 +9,18 @@ func (u *UserRelated) jsonUnmarshalAndArgsValidate(s string, args interface{}, c
 	err := json.Unmarshal([]byte(s), args)
 	if err != nil {
 		if callback != nil {
-			callback.OnError(ErrCodeConversation, wrap(err, "json Unmarshal failed").Error())
+			callback.OnError(ErrCodeConversation, err.Error())
 			runtime.Goexit()
 		} else {
-			return err
+			return wrap(err, "json Unmarshal failed")
 		}
 	}
 	err = u.validate.Struct(args)
 	if err != nil {
 		if callback != nil {
-			callback.OnError(ErrCodeConversation, wrap(err, "args check failed").Error())
+			callback.OnError(ErrCodeConversation, err.Error())
 			runtime.Goexit()
 		}
 	}
-	return err
+	return wrap(err, "args check failed")
 }
