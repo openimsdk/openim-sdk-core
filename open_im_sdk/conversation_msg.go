@@ -86,7 +86,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 			CreateTime:       v.CreateTime,
 			RecvID:           v.RecvID,
 			SenderFaceURL:    v.SenderFaceURL,
-			SenderNickName:   v.SenderNickName,
+			SenderNickname:   v.SenderNickname,
 			Seq:              v.Seq,
 			SenderPlatformID: v.SenderPlatformID,
 			ForceList:        v.ForceList,
@@ -116,7 +116,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 				sdkLog("doGroupMsg, ", v)
 			}
 		}
-		if v.SendID == u.LoginUid { //seq  Messages sent by myself  //if  sent through  this terminal
+		if v.SendID == u.loginUserID { //seq  Messages sent by myself  //if  sent through  this terminal
 			m, err := u.getOneMessage(msg.ClientMsgID)
 			if err == nil && m != nil {
 				sdkLog("have message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
@@ -175,7 +175,7 @@ func (u *UserRelated) doMsgNew(c2v cmd2Value) {
 				case SingleChatType:
 					c.ConversationID = GetConversationIDBySessionType(v.SendID, SingleChatType)
 					c.UserID = v.SendID
-					c.ShowName = msg.SenderNickName
+					c.ShowName = msg.SenderNickname
 					c.FaceURL = msg.SenderFaceURL
 				case GroupChatType:
 					c.GroupID = v.GroupID
@@ -487,7 +487,7 @@ func (u *UserRelated) msgHandleByContentType(msg *MsgStruct) (err error) {
 	case AtText:
 		err = jsonStringToStruct(msg.Content, &msg.AtElem)
 		if err == nil {
-			if isContain(u.LoginUid, msg.AtElem.AtUserList) {
+			if isContain(u.loginUserID, msg.AtElem.AtUserList) {
 				msg.AtElem.IsAtSelf = true
 			}
 		}
