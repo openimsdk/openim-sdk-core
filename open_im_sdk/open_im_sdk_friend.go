@@ -67,53 +67,10 @@ func (u *UserRelated) CheckFriend(callback Base, params string, operationID stri
 	}()
 }
 
-func (ur *UserRelated) DeleteFromFriendList(deleteUid string, callback Base) {
+func (u *UserRelated) DeleteFromFriendList(callback Base, friendUserID string, operationID string) {
 	go func() {
-		var dUid string
-		er := json.Unmarshal([]byte(deleteUid), &dUid)
-		if er != nil {
-			callback.OnError(ErrCodeFriend, er.Error())
-			sdkLog("Unmarshal failed, ", er.Error(), deleteUid)
-			return
-		}
-
-		resp, err := post2Api(deleteFriendRouter, paramsDeleteFriend{Uid: dUid, OperationID: operationIDGenerator()}, ur.token)
-		if err != nil {
-			callback.OnError(http.StatusInternalServerError, err.Error())
-			sdkLog("post2Api failed, ", err.Error())
-			return
-		}
-		var deleteFriendResp commonResp
-		_ = json.Unmarshal(resp, &deleteFriendResp)
-		if deleteFriendResp.ErrCode != 0 {
-			callback.OnError(deleteFriendResp.ErrCode, deleteFriendResp.ErrMsg)
-
-			log(fmt.Sprintf("DeleteFromFriendList Unmarshal errcode = %d", deleteFriendResp.ErrCode))
-
-			return
-		}
-		//_ = triggerCmdFriend()
-
-		ur.syncFriendList()
-		u, err := ur.getUserInfoByUid(dUid)
-		if err != nil {
-			callback.OnError(ErrCodeFriend, err.Error())
-			log(fmt.Sprintf("getUserInfoByUid  err = %s", err.Error()))
-			return
-		}
-		f := friendInfo{
-			UID:    u.Uid,
-			Name:   u.Name,
-			Icon:   u.Icon,
-			Gender: u.Gender,
-			Mobile: u.Mobile,
-			Birth:  u.Birth,
-			Email:  u.Email,
-			Ex:     u.Ex,
-		}
-		ur.friendListener.OnFriendListDeleted(structToJsonString(f))
-		//_ = ur.triggerCmdDeleteConversationAndMessage(dUid, GetConversationIDBySessionType(dUid, SingleChatType), SingleChatType)
-		callback.OnSuccess("")
+		u.deleteFriend(friendUserID, callback, operationID)
+		callback.OnSuccess(structToJsonString(DeleteFriendCallback{}))
 	}()
 }
 
@@ -133,56 +90,12 @@ func (u *UserRelated) GetFriendList(callback Base) {
 	}()
 }
 
-func (u *UserRelated) SetFriendInfo(comment string, callback Base) {
+func (u *UserRelated) SetFriendRemark(params string, callback Base, operationID string) {
 	go func() {
-		var uid2comm uid2Comment
-		er := json.Unmarshal([]byte(comment), &uid2comm)
-		if er != nil {
-			callback.OnError(ErrCodeFriend, er.Error())
-
-			log(fmt.Sprintf("SetFriendInfo ErrCodeFriend err = %s", er.Error()))
-
-			return
-		}
-		resp, err := post2Api(setFriendComment, paramsSetFriendInfo{Uid: uid2comm.Uid, OperationID: operationIDGenerator(), Comment: uid2comm.Comment}, u.token)
-		if err != nil {
-			callback.OnError(http.StatusInternalServerError, err.Error())
-
-			log(fmt.Sprintf("SetFriendInfo StatusInternalServerError err = %s", er.Error()))
-
-			return
-		}
-		var cResp commonResp
-		err = json.Unmarshal(resp, &cResp)
-		if err != nil {
-			callback.OnError(ErrCodeFriend, err.Error())
-
-			log(fmt.Sprintf("SetFriendInfo Unmarshal err = %s", er.Error()))
-
-			return
-		}
-		if cResp.ErrCode != 0 {
-			callback.OnError(ErrCodeFriend, cResp.ErrMsg)
-
-			return
-		}
-		u.syncFriendList()
-		callback.OnSuccess("")
-		c := ConversationStruct{
-			ConversationID: GetConversationIDBySessionType(uid2comm.Uid, SingleChatType),
-		}
-		faceUrl, name, err := u.getUserNameAndFaceUrlByUid(uid2comm.Uid)
-		if err != nil {
-			sdkLog("getUserNameAndFaceUrlByUid err:", err)
-			return
-		}
-		c.FaceURL = faceUrl
-		c.ShowName = name
-		u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, UpdateFaceUrlAndNickName, c}})
-		u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{c.ConversationID}}})
-
-		//FriendObj.friendListener.OnFriendInfoChanged(structToJsonString(friendResp.Data))
-		//_ = triggerCmdFriend()
+		var unmarshalParams SetFriendRemarkParams
+		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback)
+		u.setFriendRemark(unmarshalParams, callback, operationID)
+		callback.OnSuccess(structToJsonString(SetFriendRemarkCallback{}))
 	}()
 }
 

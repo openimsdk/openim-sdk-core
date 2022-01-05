@@ -108,65 +108,91 @@ func (u *UserRelated) deleteFriend(FriendUserID string, callback Base, operation
 	return result
 }
 
-func (u *UserRelated) doFriendList() {
-	friendsInfoOnServer, err := u.getServerFriendList()
-	if err != nil {
-		return
-	}
-	friendsInfoOnServerInterface := make([]diff, 0)
-	for _, v := range friendsInfoOnServer {
-		friendsInfoOnServerInterface = append(friendsInfoOnServerInterface, v)
-	}
-	friendsInfoOnLocal, err := u.getLocalFriendList()
-	if err != nil {
-		return
-	}
-	friendsInfoOnLocalInterface := make([]diff, 0)
-	for _, v := range friendsInfoOnLocal {
-		friendsInfoOnLocalInterface = append(friendsInfoOnLocalInterface, v)
-	}
-	aInBNot, bInANot, sameA, _ := checkDiff(friendsInfoOnServerInterface, friendsInfoOnLocalInterface)
-	if len(aInBNot) > 0 {
-		for _, index := range aInBNot {
-			if friendInfoStruct, ok := friendsInfoOnServerInterface[index].Value().(friendInfo); ok {
-				err = u.insertIntoTheFriendToFriendInfo(friendInfoStruct.UID, friendInfoStruct.Name, friendInfoStruct.Comment, friendInfoStruct.Icon, friendInfoStruct.Gender, friendInfoStruct.Mobile, friendInfoStruct.Birth, friendInfoStruct.Email, friendInfoStruct.Ex)
-				if err != nil {
-					sdkLog(err.Error())
-					return
-				}
-				jsonFriendInfo, _ := json.Marshal(friendInfoStruct)
-				u.friendListener.OnFriendListAdded(string(jsonFriendInfo))
-			}
-		}
-	}
-
-	if len(bInANot) > 0 {
-		for _, index := range bInANot {
-			err = u.delTheFriendFromFriendInfo(friendsInfoOnLocalInterface[index].Key())
-			if err != nil {
-				sdkLog(err.Error())
-				return
-			}
-			jsonFriendInfo, _ := json.Marshal(friendsInfoOnLocal[index])
-			u.friendListener.OnFriendListDeleted(string(jsonFriendInfo))
-			//_ = u.triggerCmdDeleteConversationAndMessage(friendsInfoOnLocalInterface[index].Key(), GetConversationIDBySessionType(friendsInfoOnLocalInterface[index].Key(), SingleChatType), SingleChatType)
-		}
-	}
-
-	if len(sameA) > 0 {
-		for _, index := range sameA {
-			if friendInfoStruct, ok := friendsInfoOnServerInterface[index].Value().(friendInfo); ok {
-				err = u.updateTheFriendInfo(friendInfoStruct.UID, friendInfoStruct.Name, friendInfoStruct.Comment, friendInfoStruct.Icon, friendInfoStruct.Gender, friendInfoStruct.Mobile, friendInfoStruct.Birth, friendInfoStruct.Email, friendInfoStruct.Ex)
-				if err != nil {
-					sdkLog(err.Error())
-					return
-				}
-				jsonFriendInfo, _ := json.Marshal(friendInfoStruct)
-				u.friendListener.OnFriendInfoChanged(string(jsonFriendInfo))
-			}
-		}
-	}
+func (u *UserRelated) setFriendRemark(params SetFriendRemarkParams, callback Base, operationID string) *base_info.CommDataResp {
+	apiReq := base_info.SetFriendRemarkReq{}
+	apiReq.OperationID = operationID
+	apiReq.ToUserID = params.ToUserID
+	apiReq.FromUserID = u.loginUserID
+	resp, err := post2Api(setFriendComment, apiReq, u.token)
+	result := checkErrAndResp(callback, err, resp, operationID)
+	u.syncFriendList()
+	return result
+	//
+	//c := ConversationStruct{
+	//	ConversationID: GetConversationIDBySessionType(uid2comm.Uid, SingleChatType),
+	//}
+	//faceUrl, name, err := u.getUserNameAndFaceUrlByUid(uid2comm.Uid)
+	//if err != nil {
+	//	sdkLog("getUserNameAndFaceUrlByUid err:", err)
+	//	return
+	//}
+	//c.FaceURL = faceUrl
+	//c.ShowName = name
+	//u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, UpdateFaceUrlAndNickName, c}})
+	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{c.ConversationID}}})
 }
+
+//
+//func (u *UserRelated) doFriendList() {
+//	friendsInfoOnServer, err := u.getServerFriendList()
+//	if err != nil {
+//		return
+//	}
+//	friendsInfoOnServerInterface := make([]diff, 0)
+//	for _, v := range friendsInfoOnServer {
+//		friendsInfoOnServerInterface = append(friendsInfoOnServerInterface, v)
+//	}
+//	friendsInfoOnLocal, err := u.getLocalFriendList()
+//	if err != nil {
+//		return
+//	}
+//	friendsInfoOnLocalInterface := make([]diff, 0)
+//	for _, v := range friendsInfoOnLocal {
+//		friendsInfoOnLocalInterface = append(friendsInfoOnLocalInterface, v)
+//	}
+//	aInBNot, bInANot, sameA, _ := checkDiff(friendsInfoOnServerInterface, friendsInfoOnLocalInterface)
+//	if len(aInBNot) > 0 {
+//		for _, index := range aInBNot {
+//			if friendInfoStruct, ok := friendsInfoOnServerInterface[index].Value().(friendInfo); ok {
+//				err = u.insertIntoTheFriendToFriendInfo(friendInfoStruct.UID, friendInfoStruct.Name, friendInfoStruct.Comment, friendInfoStruct.Icon, friendInfoStruct.Gender, friendInfoStruct.Mobile, friendInfoStruct.Birth, friendInfoStruct.Email, friendInfoStruct.Ex)
+//				if err != nil {
+//					sdkLog(err.Error())
+//					return
+//				}
+//				jsonFriendInfo, _ := json.Marshal(friendInfoStruct)
+//				u.friendListener.OnFriendListAdded(string(jsonFriendInfo))
+//			}
+//		}
+//	}
+//
+//	if len(bInANot) > 0 {
+//		for _, index := range bInANot {
+//			err = u.delTheFriendFromFriendInfo(friendsInfoOnLocalInterface[index].Key())
+//			if err != nil {
+//				sdkLog(err.Error())
+//				return
+//			}
+//			jsonFriendInfo, _ := json.Marshal(friendsInfoOnLocal[index])
+//			u.friendListener.OnFriendListDeleted(string(jsonFriendInfo))
+//			//_ = u.triggerCmdDeleteConversationAndMessage(friendsInfoOnLocalInterface[index].Key(), GetConversationIDBySessionType(friendsInfoOnLocalInterface[index].Key(), SingleChatType), SingleChatType)
+//		}
+//	}
+//
+//	if len(sameA) > 0 {
+//		for _, index := range sameA {
+//			if friendInfoStruct, ok := friendsInfoOnServerInterface[index].Value().(friendInfo); ok {
+//				err = u.updateTheFriendInfo(friendInfoStruct.UID, friendInfoStruct.Name, friendInfoStruct.Comment, friendInfoStruct.Icon, friendInfoStruct.Gender, friendInfoStruct.Mobile, friendInfoStruct.Birth, friendInfoStruct.Email, friendInfoStruct.Ex)
+//				if err != nil {
+//					sdkLog(err.Error())
+//					return
+//				}
+//				jsonFriendInfo, _ := json.Marshal(friendInfoStruct)
+//				u.friendListener.OnFriendInfoChanged(string(jsonFriendInfo))
+//			}
+//		}
+//	}
+//}
+
 func (u *UserRelated) getLocalFriendList() ([]friendInfo, error) {
 	//Take out the friend list and judge whether it is in the blacklist again to prevent nested locks
 	localFriendList, err := u.getLocalFriendList22()

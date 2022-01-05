@@ -35,7 +35,10 @@ type DeleteFriendCallback struct{}
 type GetFriendListParams struct{}
 type GetFriendListCallback []LocalFriend
 
-type SetFriendRemarkParams string
+type SetFriendRemarkParams struct {
+	ToUserID string `json:"toUserID" validate:"required"`
+	Remark   string `json:"remark"`
+}
 type SetFriendRemarkCallback struct{}
 
 type AddBlackParams string
