@@ -414,7 +414,7 @@ func (u *UserRelated) firstConn(conn *websocket.Conn) (*websocket.Conn, *http.Re
 	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		if httpResp != nil {
-			u.cb.OnConnectFailed(httpResp.StatusCode, err.Error())
+			u.cb.OnConnectFailed(int32(httpResp.StatusCode), err.Error())
 		} else {
 			u.cb.OnConnectFailed(1001, err.Error())
 		}

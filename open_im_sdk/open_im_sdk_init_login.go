@@ -3,7 +3,7 @@ package open_im_sdk
 type IMSDKListener interface {
 	OnConnecting()
 	OnConnectSuccess()
-	OnConnectFailed(ErrCode int, ErrMsg string)
+	OnConnectFailed(ErrCode int32, ErrMsg string)
 	OnKickedOffline()
 	OnUserTokenExpired()
 	OnSelfInfoUpdated(userInfo string)
