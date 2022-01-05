@@ -968,6 +968,7 @@ func (u *UserRelated) updateFriendInfo(uid, name, icon string, gender int32, mob
 	return nil
 }
 
+//1
 func (u *UserRelated) insertIntoTheUserToBlackList(info userInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -984,6 +985,7 @@ func (u *UserRelated) insertIntoTheUserToBlackList(info userInfo) error {
 	return nil
 }
 
+//1
 func (u *UserRelated) updateBlackList(info userInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -1000,6 +1002,7 @@ func (u *UserRelated) updateBlackList(info userInfo) error {
 	return nil
 }
 
+//1
 func (u *UserRelated) delTheUserFromBlackList(uid string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -1016,6 +1019,7 @@ func (u *UserRelated) delTheUserFromBlackList(uid string) error {
 	return nil
 }
 
+//1
 func (u *UserRelated) insertIntoTheUserToApplicationList(appUserInfo applyUserInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -1032,6 +1036,7 @@ func (u *UserRelated) insertIntoTheUserToApplicationList(appUserInfo applyUserIn
 	return nil
 }
 
+//1
 func (u *UserRelated) delTheUserFromApplicationList(uid string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -1048,6 +1053,7 @@ func (u *UserRelated) delTheUserFromApplicationList(uid string) error {
 	return nil
 }
 
+//1
 func (u *UserRelated) updateApplicationList(info applyUserInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -1064,7 +1070,7 @@ func (u *UserRelated) updateApplicationList(info applyUserInfo) error {
 	return nil
 }
 
-//
+//1
 func (u *UserRelated) getFriendInfoByFriendUid(friendUid string) (*friendInfo, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
@@ -1096,6 +1102,7 @@ func (u *UserRelated) getFriendInfoByFriendUid(friendUid string) (*friendInfo, e
 	return &friendInfo{uid, name, icon, gender, mobile, birth, email, ex, comment, isInBlackList}, nil
 }
 
+//1
 func (u *UserRelated) getLocalFriendList22() ([]friendInfo, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
@@ -1128,6 +1135,7 @@ func (u *UserRelated) getLocalFriendList22() ([]friendInfo, error) {
 	return friends, nil
 }
 
+//1
 func (u *UserRelated) getLocalFriendApplication() ([]applyUserInfo, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
@@ -1161,6 +1169,7 @@ func (u *UserRelated) getLocalFriendApplication() ([]applyUserInfo, error) {
 	return applyUsersInfo, nil
 }
 
+//1
 func (u *UserRelated) getLocalBlackList() ([]userInfo, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
@@ -1190,6 +1199,7 @@ func (u *UserRelated) getLocalBlackList() ([]userInfo, error) {
 	return usersInfo, nil
 }
 
+//1
 func (u *UserRelated) getBlackUsInfoByUid(blackUid string) (*userInfo, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
@@ -1219,50 +1229,51 @@ func (u *UserRelated) getBlackUsInfoByUid(blackUid string) (*userInfo, error) {
 	return &userInfo{uid, name, icon, gender, mobile, birth, email, ex}, nil
 }
 
-func (u *UserRelated) updateLocalTransferGroupOwner(transfer *TransferGroupOwnerReq) error {
-	u.mRWMutex.Lock()
-	defer u.mRWMutex.Unlock()
-
-	stmt, err := u.Prepare("update group_member set administrator_level = ? where group_id = ? and uid = ?")
-	if err != nil {
-		sdkLog(err.Error())
-		return err
-	}
-	_, err = stmt.Exec(0, transfer.GroupID, transfer.OldOwner)
-	if err != nil {
-		sdkLog(err.Error())
-		return err
-	}
-
-	stmt, err = u.Prepare("update group_member set administrator_level = ? where group_id = ? and uid = ?")
-	if err != nil {
-		sdkLog(err.Error())
-		return err
-	}
-	_, err = stmt.Exec(1, transfer.GroupID, transfer.NewOwner)
-	if err != nil {
-		sdkLog(err.Error())
-		return err
-	}
-
-	return nil
-}
-
-func (u *UserRelated) insertLocalAcceptGroupApplication(addMem *groupMemberFullInfo) error {
-	u.mRWMutex.Lock()
-	defer u.mRWMutex.Unlock()
-	stmt, err := u.Prepare("insert into group_member(group_id,uid,nickname,user_group_face_url,administrator_level,join_time) values (?,?,?,?,?,?)")
-	if err != nil {
-		sdkLog(err.Error())
-		return err
-	}
-	_, err = stmt.Exec(addMem.GroupId, addMem.UserId, addMem.NickName, addMem.FaceUrl, addMem.Role, addMem.JoinTime)
-	if err != nil {
-		sdkLog(err.Error())
-		return err
-	}
-	return nil
-}
+//
+//func (u *UserRelated) updateLocalTransferGroupOwner(transfer *TransferGroupOwnerReq) error {
+//	u.mRWMutex.Lock()
+//	defer u.mRWMutex.Unlock()
+//
+//	stmt, err := u.Prepare("update group_member set administrator_level = ? where group_id = ? and uid = ?")
+//	if err != nil {
+//		sdkLog(err.Error())
+//		return err
+//	}
+//	_, err = stmt.Exec(0, transfer.GroupID, transfer.OldOwner)
+//	if err != nil {
+//		sdkLog(err.Error())
+//		return err
+//	}
+//
+//	stmt, err = u.Prepare("update group_member set administrator_level = ? where group_id = ? and uid = ?")
+//	if err != nil {
+//		sdkLog(err.Error())
+//		return err
+//	}
+//	_, err = stmt.Exec(1, transfer.GroupID, transfer.NewOwner)
+//	if err != nil {
+//		sdkLog(err.Error())
+//		return err
+//	}
+//
+//	return nil
+//}
+//
+//func (u *UserRelated) insertLocalAcceptGroupApplication(addMem *groupMemberFullInfo) error {
+//	u.mRWMutex.Lock()
+//	defer u.mRWMutex.Unlock()
+//	stmt, err := u.Prepare("insert into group_member(group_id,uid,nickname,user_group_face_url,administrator_level,join_time) values (?,?,?,?,?,?)")
+//	if err != nil {
+//		sdkLog(err.Error())
+//		return err
+//	}
+//	_, err = stmt.Exec(addMem.GroupId, addMem.UserId, addMem.NickName, addMem.FaceUrl, addMem.Role, addMem.JoinTime)
+//	if err != nil {
+//		sdkLog(err.Error())
+//		return err
+//	}
+//	return nil
+//}
 func (u *UserRelated) insertIntoLocalGroupInfo(info groupInfo) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
@@ -1306,20 +1317,20 @@ func (u *UserRelated) replaceLocalGroupInfo(info groupInfo) error {
 	return nil
 }
 
-func (u *UserRelated) updateLocalGroupInfo(info groupInfo) error {
-	u.mRWMutex.Lock()
-	defer u.mRWMutex.Unlock()
-	stmt, err := u.Prepare("update group_info set name=?,introduction=?,notification=?,face_url=? where group_id=?")
-	if err != nil {
-		return err
-	}
-	_, err = stmt.Exec(info.GroupName, info.Introduction, info.Notification, info.FaceUrl, info.GroupId)
-	if err != nil {
-		sdkLog(err.Error())
-		return err
-	}
-	return nil
-}
+//func (u *UserRelated) updateLocalGroupInfo(info groupInfo) error {
+//	u.mRWMutex.Lock()
+//	defer u.mRWMutex.Unlock()
+//	stmt, err := u.Prepare("update group_info set name=?,introduction=?,notification=?,face_url=? where group_id=?")
+//	if err != nil {
+//		return err
+//	}
+//	_, err = stmt.Exec(info.GroupName, info.Introduction, info.Notification, info.FaceUrl, info.GroupId)
+//	if err != nil {
+//		sdkLog(err.Error())
+//		return err
+//	}
+//	return nil
+//}
 
 func (u *UserRelated) getLocalGroupsInfo() ([]groupInfo, error) {
 	u.mRWMutex.RLock()
