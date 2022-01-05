@@ -818,12 +818,12 @@ type KickGroupMemberReq struct {
 	UidList []string `json:"uidList"`
 }*/
 
-type TransferGroupOwnerReq struct {
-	GroupID     string
-	OldOwner    string
-	NewOwner    string
-	OperationID string
-}
+//type TransferGroupOwnerReq struct {
+//	GroupID     string
+//	OldOwner    string
+//	NewOwner    string
+//	OperationID string
+//}
 type GroupApplicationResponseReq struct {
 	OperationID      string
 	OwnerID          string
