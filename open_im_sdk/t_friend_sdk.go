@@ -141,9 +141,10 @@ func (testAddToBlackList) OnError(code int32, msg string) {
 func DoTestAddToBlackList() {
 	var test testAddToBlackList
 	test.Uid = Friend_uid
-	jsontest, _ := json.Marshal(test.Uid)
-	fmt.Println("AddToBlackList, input: ", string(jsontest))
-	AddToBlackList(test, string(jsontest), "")
+
+	fmt.Println("AddToBlackList, input: ", Friend_uid)
+
+	AddToBlackList(test, Friend_uid, "asdfasvacdxds")
 }
 
 ///////////////////////////////////////////////////////
@@ -164,7 +165,7 @@ func DoTestDeleteFromBlackList() {
 	test.delUid = Friend_uid
 	jsontest, _ := json.Marshal(test.delUid)
 	fmt.Println("DeleteFromBlackList, input: ", string(jsontest))
-	RemoveFromBlackList(test, string(jsontest), "")
+	RemoveFromBlackList(test, string(jsontest), "11111111111111asdf11112134dfsa")
 }
 
 //////////////////////////////////////////////////////
@@ -179,7 +180,7 @@ func (testGetBlackList) OnError(code int32, msg string) {
 }
 func DoTestGetBlackList() {
 	var test testGetBlackList
-	GetBlackList(test, "")
+	GetBlackList(test, "asdfadsvasdv3")
 }
 
 //////////////////////////////////////////////////////
@@ -240,8 +241,8 @@ func DoTestDeleteFromFriendList() {
 	var test TestDeleteFromFriendList
 	test.Uid = Friend_uid
 	jsontest, err := json.Marshal(test.Uid)
-	fmt.Println("DeleteFromFriendList, input:              sdafasf ", string(jsontest), err)
-	DeleteFromFriendList(test, test.Uid, "")
+	fmt.Println("DeleteFromFriendList, input:", string(jsontest), err)
+	DeleteFromFriendList(test, test.Uid, "asdfasfdsfdsdfa1111")
 }
 
 ///////////////////////////////////////////////////////

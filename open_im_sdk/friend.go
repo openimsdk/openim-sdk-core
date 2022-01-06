@@ -103,6 +103,7 @@ func (u *UserRelated) deleteFriend(FriendUserID string, callback Base, operation
 	apiReq := DeleteFriendReq{}
 	apiReq.ToUserID = FriendUserID
 	apiReq.FromUserID = u.loginUserID
+	apiReq.OperationID = operationID
 	resp, err := post2Api(deleteFriendRouter, apiReq, u.token)
 	result := checkErrAndResp(callback, err, resp, operationID)
 	u.syncFriendList()
