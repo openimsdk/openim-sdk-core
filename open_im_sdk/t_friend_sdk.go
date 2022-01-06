@@ -281,7 +281,7 @@ func (testGetFriendList) OnError(code int32, msg string) {
 }
 func DoTestGetFriendList() {
 	var testGetFriendList testGetFriendList
-	GetFriendList(testGetFriendList, "")
+	GetFriendList(testGetFriendList, "asdfsdfaafsd")
 }
 
 /////////////////////////////////////////////////////////////////////

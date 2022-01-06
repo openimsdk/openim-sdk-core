@@ -372,7 +372,7 @@ func (u *UserRelated) syncSeq2Msg() error {
 func (u *UserRelated) syncLoginUserInfo() error {
 	userSvr, err := u.getServerUserInfo()
 	if err != nil {
-		NewError("0", "getServerUserInfo failed , user: ", *userSvr)
+		NewError("0", "getServerUserInfo failed , user: ", err.Error())
 		return err
 	}
 

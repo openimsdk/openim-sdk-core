@@ -222,7 +222,11 @@ func (u *UserRelated) getServerFriendList() ([]*FriendInfo, error) {
 	}
 
 	realData := GetFriendListResp{}
-	mapstructure.Decode(commData.Data, &realData.FriendInfoList)
+	err = mapstructure.Decode(commData.Data, &realData.FriendInfoList)
+	if err != nil {
+		return nil, wrap(err, apiReq.OperationID)
+	}
+
 	return realData.FriendInfoList, nil
 }
 
@@ -451,13 +455,14 @@ func (u *UserRelated) syncFriendList() {
 		NewError("0", "getServerFriendList failed ", err.Error())
 		return
 	}
+	NewInfo("0", "svrList", svrList)
 	friendsInfoOnServer := transferToLocalFriend(svrList)
 	friendsInfoOnLocal, err := u._getAllFriendList()
 	if err != nil {
 		NewError("0", "_getAllFriendList failed ", err.Error())
 		return
 	}
-	NewInfo("0", "svrList", svrList)
+
 	NewInfo("0", "friendsInfoOnServer", friendsInfoOnServer)
 	NewInfo("0", "friendsInfoOnLocal", friendsInfoOnLocal)
 	aInBNot, bInANot, sameA, _ := checkFriendListDiff(friendsInfoOnServer, friendsInfoOnLocal)
