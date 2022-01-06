@@ -459,7 +459,8 @@ func (u *UserRelated) syncFriendList() {
 
 	NewInfo("0", "friendsInfoOnServer", friendsInfoOnServer)
 	NewInfo("0", "friendsInfoOnLocal", friendsInfoOnLocal)
-	aInBNot, bInANot, sameA, _ := checkFriendListDiff(friendsInfoOnServer, friendsInfoOnLocal)
+	aInBNot, bInANot, sameA, sameB := checkFriendListDiff(friendsInfoOnServer, friendsInfoOnLocal)
+	NewInfo("0", "checkFriendListDiff", aInBNot, bInANot, sameA, sameB)
 	for _, index := range aInBNot {
 		err := u._insertFriend(friendsInfoOnServer[index])
 		if err != nil {

@@ -277,11 +277,11 @@ func (testGetFriendList) OnSuccess(list string) {
 	fmt.Println("testGetFriendList OnSuccess output: ", list)
 }
 func (testGetFriendList) OnError(code int32, msg string) {
-	fmt.Println("testGetFriendList, OnError, ", code, msg)
+	fmt.Println("testGetFriendList OnError, ", code, msg)
 }
 func DoTestGetFriendList() {
 	var testGetFriendList testGetFriendList
-	GetFriendList(testGetFriendList, "asdfsdfaafsd")
+	GetFriendList(testGetFriendList, "asdf33333sdfaafsd")
 }
 
 /////////////////////////////////////////////////////////////////////

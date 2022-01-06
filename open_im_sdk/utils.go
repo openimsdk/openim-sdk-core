@@ -266,7 +266,7 @@ func checkFriendListDiff(a []*LocalFriend, b []*LocalFriend) (aInBNot, bInANot, 
 			//in a, but not in b
 			aInBNot = append(aInBNot, i)
 		} else {
-			if v == ia {
+			if v != ia {
 				// key of a and b is equal, but value different
 				sameA = append(sameA, i)
 			}
@@ -309,7 +309,7 @@ func checkFriendRequestDiff(a []*LocalFriendRequest, b []*LocalFriendRequest) (a
 			//in a, but not in b
 			aInBNot = append(aInBNot, i)
 		} else {
-			if v == ia {
+			if v != ia {
 				// key of a and b is equal, but value different
 				sameA = append(sameA, i)
 			}
@@ -800,7 +800,7 @@ func WithMessage(err error, message string) error {
 func checkErr(callback Base, err error, operationID string) {
 	if err != nil {
 		if callback != nil {
-			NewError(operationID, "checkErr ", err)
+			NewError(operationID, "checkErr ", err, ErrDB.ErrCode, ErrDB.ErrMsg)
 			callback.OnError(ErrDB.ErrCode, ErrDB.ErrMsg)
 			runtime.Goexit()
 		}
@@ -911,6 +911,48 @@ func transferToLocalFriend(apiFriendList []*FriendInfo) []*LocalFriend {
 		localFriendList = append(localFriendList, &localFriend)
 	}
 	return localFriendList
+}
+
+func checkListDiff(a []diff, b []diff) (aInBNot, bInANot, sameA, sameB []int) {
+	//to map, friendid_>friendinfo
+	mapA := make(map[string]interface{})
+	for _, v := range a {
+		mapA[v.Key()] = v
+	}
+	mapB := make(map[string]interface{})
+	for _, v := range b {
+		mapB[v.Key()] = v
+	}
+
+	aInBNot = make([]int, 0)
+	bInANot = make([]int, 0)
+	sameA = make([]int, 0)
+	sameB = make([]int, 0)
+
+	//for a
+	for i, v := range a {
+		ia, ok := mapB[v.Key()]
+		if !ok {
+			//in a, but not in b
+			aInBNot = append(aInBNot, i)
+		} else {
+			if v != ia {
+				sameA = append(sameA, i)
+			}
+		}
+	}
+	//for b
+	for i, v := range b {
+		ib, ok := mapA[v.Key()]
+		if !ok {
+			bInANot = append(bInANot, i)
+		} else {
+			if ib != v {
+				sameB = append(sameB, i)
+			}
+		}
+	}
+	return aInBNot, bInANot, sameA, sameB
 }
 
 func transferToLocalFriendRequest(apiFriendList []*FriendRequest) []*LocalFriendRequest {
