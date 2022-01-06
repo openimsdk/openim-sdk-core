@@ -37,7 +37,9 @@ func (u *UserRelated) addFriend(callback Base, addFriendParams AddFriendParams, 
 	apiReq.ToUserID = addFriendParams.ToUserID
 	apiReq.FromUserID = u.loginUserID
 	apiReq.ReqMsg = addFriendParams.ReqMsg
+	apiReq.OperationID = operationID
 	resp, err := post2Api(addFriendRouter, apiReq, u.token)
+	NewInfo(apiReq.OperationID, "post2Api ", addFriendRouter, apiReq)
 	return checkErrAndResp(callback, err, resp, operationID)
 }
 

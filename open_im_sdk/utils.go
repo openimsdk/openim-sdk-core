@@ -774,20 +774,16 @@ func checkResp(callback Base, resp []byte, operationID string) *CommDataResp {
 	var c CommDataResp
 	err := json.Unmarshal(resp, &c)
 	if err != nil {
-		if callback != nil {
-			NewError(operationID, "Unmarshal ", err)
-			callback.OnError(ErrArgs.ErrCode, ErrArgs.ErrMsg)
-			runtime.Goexit()
-		}
+		NewError(operationID, "Unmarshal ", err)
+		callback.OnError(ErrArgs.ErrCode, ErrArgs.ErrMsg)
+		runtime.Goexit()
 		return nil
 	}
 
 	if c.ErrCode != 0 {
-		if err != nil {
-			NewError(operationID, "errCode ", c.ErrCode, "errMsg ", c.ErrMsg)
-			callback.OnError(c.ErrCode, c.ErrMsg)
-			runtime.Goexit()
-		}
+		NewError(operationID, "errCode ", c.ErrCode, "errMsg ", c.ErrMsg)
+		callback.OnError(c.ErrCode, c.ErrMsg)
+		runtime.Goexit()
 		return nil
 	}
 	return &c
