@@ -379,9 +379,10 @@ func (u *UserRelated) syncLoginUserInfo() error {
 	NewInfo("0", "getServerUserInfo ", userSvr)
 
 	userLocal, err := u._getLoginUser()
+	needInsert := 0
 	if err != nil {
 		NewError("0", "_getLoginUser failed  ", err.Error())
-		return err
+		needInsert = 1
 	}
 
 	if CompFields(&userLocal, &userSvr) {
@@ -390,7 +391,20 @@ func (u *UserRelated) syncLoginUserInfo() error {
 
 	var updateLocalUser LocalUser
 	copier.Copy(&updateLocalUser, userSvr)
-	return u._updateLoginUser(&updateLocalUser)
+	NewInfo("0", "copy: ", updateLocalUser)
+	if needInsert == 1 {
+		err = u._insertLoginUser(&updateLocalUser)
+		if err != nil {
+			NewError("0 ", "_insertLoginUser failed ", err.Error())
+		}
+		return err
+	}
+	err = u._updateLoginUser(&updateLocalUser)
+	if err != nil {
+		NewError("0 ", "_updateLoginUser failed ", err.Error())
+	}
+	return err
+
 	//if err != nil {
 	//	return err
 	//}
@@ -1105,8 +1119,12 @@ func (u *UserRelated) getServerUserInfo() (*UserInfo, error) {
 		return nil, wrap(err, apiReq.OperationID)
 	}
 	realData := GetUserInfoResp{}
-	mapstructure.Decode(commData.Data, &realData.UserInfoList)
-	NewInfo(apiReq.OperationID, "realData.UserInfoList", realData.UserInfoList, *commData)
+	err = mapstructure.Decode(commData.Data, &realData.UserInfoList)
+	if err != nil {
+		NewError(apiReq.OperationID, "Decode failed ", err.Error())
+		return nil, err
+	}
+	NewInfo(apiReq.OperationID, "realData.UserInfoList", realData.UserInfoList, commData.Data)
 	if len(realData.UserInfoList) == 0 {
 		NewInfo(apiReq.OperationID, "failed, no user : ", u.loginUserID)
 		return nil, errors.New("no login user")
