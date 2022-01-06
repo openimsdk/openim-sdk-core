@@ -401,6 +401,7 @@ func main() {
 	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0wMDEiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTY0MjA1NDcyOSwibmJmIjoxNjQxNDQ5OTI5LCJpYXQiOjE2NDE0NDk5Mjl9.wUQDrgAGLuPa-EViFOnsfW1YCcq_IXZqJJedK618QlU"
 	open_im_sdk.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	open_im_sdk.DoTestaddFriend()
+	open_im_sdk.DoTestGetFriendList()
 	for true {
 		time.Sleep(time.Duration(60) * time.Second)
 		fmt.Println("waiting")

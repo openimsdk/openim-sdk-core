@@ -847,6 +847,7 @@ func CompFields(a interface{}, b interface{}, fields ...string) bool {
 func friendCopyToLocal(localFriend *LocalFriend, apiFriend *FriendInfo) {
 	copier.Copy(localFriend, apiFriend)
 	copier.Copy(localFriend, apiFriend.FriendUser)
+	localFriend.FriendUserID = apiFriend.FriendUser.UserID
 }
 
 func friendRequestCopyToLocal(localFriendRequest *LocalFriendRequest, apiFriendRequest *FriendRequest) {
