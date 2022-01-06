@@ -55,6 +55,5 @@ func (u *UserRelated) _updateBlack(black *LocalBlack) error {
 func (u *UserRelated) _deleteBlack(blockUserID string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	black := LocalBlack{OwnerUserID: u.loginUserID, BlockUserID: blockUserID}
-	return wrap(u.imdb.Delete(&black).Error, "_delBlack failed")
+	return wrap(u.imdb.Where("owner_user_id=? and block_user_id=?", u.loginUserID, blockUserID).Delete(&LocalBlack{}).Error, "_delBlack failed")
 }
