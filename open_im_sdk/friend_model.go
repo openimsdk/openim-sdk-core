@@ -28,9 +28,14 @@ func (u *UserRelated) _updateFriend(friend *LocalFriend) error {
 func (u *UserRelated) _getAllFriendList() ([]*LocalFriend, error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	var friendList []*LocalFriend
-	return friendList, wrap(u.imdb.Where("owner_user_id = ?", u.loginUserID).Find(&friendList).Error,
+	var friendList []LocalFriend
+	err := wrap(u.imdb.Where("owner_user_id = ?", u.loginUserID).Find(&friendList).Error,
 		"_getFriendList failed")
+	var transfer []*LocalFriend
+	for _, v := range friendList {
+		transfer = append(transfer, &v)
+	}
+	return transfer, err
 }
 
 func (u *UserRelated) _getFriendInfoByFriendUserID(FriendUserID string) (*LocalFriend, error) {

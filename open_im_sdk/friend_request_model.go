@@ -28,13 +28,27 @@ func (u *UserRelated) _updateFriendRequest(friendRequest *LocalFriendRequest) er
 func (u *UserRelated) _getRecvFriendApplication() ([]*LocalFriendRequest, error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	var friendRequestList []*LocalFriendRequest
-	return friendRequestList, wrap(u.imdb.Where("to_user_id = ?", u.loginUserID).Find(&friendRequestList).Error, "_getLocalFriendApplication failed")
+	var friendRequestList []LocalFriendRequest
+	err := wrap(u.imdb.Where("to_user_id = ?", u.loginUserID).Find(&friendRequestList).Error, "_getLocalFriendApplication failed")
+
+	var transfer []*LocalFriendRequest
+	for _, v := range friendRequestList {
+		transfer = append(transfer, &v)
+	}
+	return transfer, err
+
 }
 
 func (u *UserRelated) _getSendFriendApplication() ([]*LocalFriendRequest, error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	var friendRequestList []*LocalFriendRequest
-	return friendRequestList, wrap(u.imdb.Where("from_user_id = ?", u.loginUserID).Find(&friendRequestList).Error, "_getLocalFriendApplication failed")
+	var friendRequestList []LocalFriendRequest
+	err := wrap(u.imdb.Where("from_user_id = ?", u.loginUserID).Find(&friendRequestList).Error, "_getLocalFriendApplication failed")
+
+	var transfer []*LocalFriendRequest
+	for _, v := range friendRequestList {
+		transfer = append(transfer, &v)
+	}
+	return transfer, err
+
 }
