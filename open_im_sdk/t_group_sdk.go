@@ -193,7 +193,7 @@ func (testGetJoinedGroupList) OnSuccess(data string) {
 
 func DotestGetJoinedGroupList() {
 	var test testGetJoinedGroupList
-	GetJoinedGroupList(test, "")
+	GetJoinedGroupList(test)
 }
 
 type testGetGroupMemberList struct {
