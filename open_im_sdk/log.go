@@ -54,7 +54,6 @@ func loggerInit(moduleName string) *Logger {
 	})
 	//File name and line number display hook
 	logger.AddHook(newFileHook())
-
 	//Log file segmentation hook when running on the server
 	if moduleName != "" {
 		hook := NewLfsHook(time.Duration(24)*time.Hour, 3, moduleName)
