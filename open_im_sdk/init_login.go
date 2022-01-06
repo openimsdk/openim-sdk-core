@@ -139,7 +139,7 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 	go u.forcedSynchronization()
 	//	go u.heartbeat()
 	//	go u.timedCloseDB()
-	u.forycedSyncReceiveMessageOpt()
+	//	u.forycedSyncReceiveMessageOpt()
 	sdkLog("forycedSyncReceiveMessageOpt ok")
 	cb.OnSuccess("")
 	sdkLog("login end, ", uid, tk)
@@ -205,7 +205,7 @@ func (u *UserRelated) forycedSyncReceiveMessageOpt() {
 		return
 	}
 	if v.ErrCode != 0 {
-		sdkLog("errCode failed, ", v.ErrCode, resp, OperationID)
+		sdkLog("errCode failed, ", v.ErrCode, v.ErrMsg, string(resp), OperationID)
 		return
 	}
 
@@ -376,9 +376,11 @@ func (u *UserRelated) syncLoginUserInfo() error {
 		return err
 	}
 
+	NewInfo("0", "getServerUserInfo ", userSvr)
+
 	userLocal, err := u._getLoginUser()
 	if err != nil {
-		NewError("0", "_getLoginUser failed , user: ", *userSvr)
+		NewError("0", "_getLoginUser failed  ", err.Error())
 		return err
 	}
 
@@ -1104,10 +1106,12 @@ func (u *UserRelated) getServerUserInfo() (*UserInfo, error) {
 	}
 	realData := GetUserInfoResp{}
 	mapstructure.Decode(commData.Data, &realData.UserInfoList)
+	NewInfo(apiReq.OperationID, "realData.UserInfoList", realData.UserInfoList, *commData)
 	if len(realData.UserInfoList) == 0 {
-		sdkLog("failed, no user : ", u.loginUserID)
+		NewInfo(apiReq.OperationID, "failed, no user : ", u.loginUserID)
 		return nil, errors.New("no login user")
 	}
+	NewInfo(apiReq.OperationID, "realData.UserInfoList[0]", realData.UserInfoList[0])
 	return realData.UserInfoList[0], nil
 }
 
