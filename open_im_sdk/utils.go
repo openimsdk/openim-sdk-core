@@ -328,6 +328,48 @@ func checkFriendRequestDiff(a []*LocalFriendRequest, b []*LocalFriendRequest) (a
 	}
 	return aInBNot, bInANot, sameA, sameB
 }
+func checkBlackListDiff(a []*LocalBlack, b []*LocalBlack) (aInBNot, bInANot, sameA, sameB []int) {
+	//to map, friendid_>friendinfo
+	mapA := make(map[string]*LocalBlack)
+	for _, v := range a {
+		mapA[v.BlockUserID] = v
+	}
+	mapB := make(map[string]*LocalBlack)
+	for _, v := range b {
+		mapB[v.BlockUserID] = v
+	}
+
+	aInBNot = make([]int, 0)
+	bInANot = make([]int, 0)
+	sameA = make([]int, 0)
+	sameB = make([]int, 0)
+
+	//for a
+	for i, v := range a {
+		ia, ok := mapB[v.BlockUserID]
+		if !ok {
+			//in a, but not in b
+			aInBNot = append(aInBNot, i)
+		} else {
+			if v == ia {
+				// key of a and b is equal, but value different
+				sameA = append(sameA, i)
+			}
+		}
+	}
+	//for b
+	for i, v := range b {
+		ib, ok := mapA[v.BlockUserID]
+		if !ok {
+			bInANot = append(bInANot, i)
+		} else {
+			if ib != v {
+				sameB = append(sameB, i)
+			}
+		}
+	}
+	return aInBNot, bInANot, sameA, sameB
+}
 
 func checkDiff(a []diff, b []diff) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map
@@ -855,6 +897,12 @@ func friendRequestCopyToLocal(localFriendRequest *LocalFriendRequest, apiFriendR
 
 }
 
+func blackCopyToLocal(localBlack *LocalBlack, apiBlack *PublicUserInfo, ownerUserID string) {
+	copier.Copy(localBlack, apiBlack)
+	localBlack.OwnerUserID = ownerUserID
+	localBlack.BlockUserID = apiBlack.UserID
+}
+
 func transferToLocalFriend(apiFriendList []*FriendInfo) []*LocalFriend {
 	localFriendList := make([]*LocalFriend, 0)
 	for _, v := range apiFriendList {
@@ -876,4 +924,14 @@ func transferToLocalFriendRequest(apiFriendList []*FriendRequest) []*LocalFriend
 	}
 	NewDebug("0", "local test local all ", localFriendList)
 	return localFriendList
+}
+func transferToLocalBlack(apiBlackList []*PublicUserInfo, ownerUserID string) []*LocalBlack {
+	localBlackList := make([]*LocalBlack, 0)
+	for _, v := range apiBlackList {
+		var localBlack LocalBlack
+		blackCopyToLocal(&localBlack, v, ownerUserID)
+		localBlackList = append(localBlackList, &localBlack)
+	}
+
+	return localBlackList
 }

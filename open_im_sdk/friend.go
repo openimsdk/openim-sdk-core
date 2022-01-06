@@ -484,56 +484,42 @@ func (u *UserRelated) syncFriendList() {
 }
 
 func (u *UserRelated) syncBlackList() {
-	//blackListOnServer, err := u.getServerBlackList()
-	//if err != nil {
-	//	NewError("0", "getServerBlackList failed ", err.Error())
-	//	return
-	//}
-	////blackList
-	//blackListOnServerInterface := make([]diff, 0)
-	//for _, blackUser := range blackListOnServer {
-	//	blackListOnServerInterface = append(blackListOnServerInterface, blackUser)
-	//}
-	//
-	//blackListOnLocal, err := u.getLocalBlackList()
-	//if err != nil {
-	//	return
-	//}
-	//blackListOnLocalInterface := make([]diff, 0)
-	//for _, blackUser := range blackListOnLocal {
-	//	blackListOnLocalInterface = append(blackListOnLocalInterface, blackUser)
-	//}
-	//
-	//aInBNot, bInANot, sameA, _ := checkDiff(blackListOnServerInterface, blackListOnLocalInterface)
-	//
-	//if len(aInBNot) > 0 {
-	//	for _, index := range aInBNot {
-	//		err = u.insertIntoTheUserToBlackList(blackListOnServer[index])
-	//		if err != nil {
-	//			sdkLog(err.Error())
-	//			return
-	//		}
-	//
-	//	}
-	//}
-	//
-	//if len(bInANot) > 0 {
-	//	for _, index := range bInANot {
-	//		err = u.delTheUserFromBlackList(blackListOnLocalInterface[index].Key())
-	//		if err != nil {
-	//			sdkLog(err.Error())
-	//			return
-	//		}
-	//
-	//	}
-	//}
-	//
-	//if len(sameA) > 0 {
-	//	for _, index := range sameA {
-	//		//interface--->struct
-	//		if blackListStruct, ok := blackListOnServerInterface[index].Value().(userInfo); ok {
-	//			_ = u.updateBlackList(blackListStruct)
-	//		}
-	//	}
-	//}
+	svrList, err := u.getServerBlackList()
+	if err != nil {
+		NewError("0", "getServerBlackList failed ", err.Error())
+		return
+	}
+	NewInfo("0", "svrList", svrList)
+	blackListOnServer := transferToLocalBlack(svrList, u.loginUserID)
+	blackListOnLocal, err := u._getBlackList()
+	if err != nil {
+		NewError("0", "_getBlackList failed ", err.Error())
+		return
+	}
+
+	NewInfo("0", "blackListOnServer", blackListOnServer)
+	NewInfo("0", "blackListOnlocal", blackListOnLocal)
+	aInBNot, bInANot, sameA, _ := checkBlackListDiff(blackListOnServer, blackListOnLocal)
+	for _, index := range aInBNot {
+		err := u._insertBlack(blackListOnServer[index])
+		if err != nil {
+			NewError("0", "_insertFriend failed ", err.Error())
+			continue
+		}
+	}
+	for _, index := range sameA {
+		err := u._updateBlack(blackListOnServer[index])
+		if err != nil {
+			NewError("0", "_updateFriend failed ", err.Error())
+			continue
+		}
+	}
+	for _, index := range bInANot {
+		err := u._deleteBlack(blackListOnLocal[index].BlockUserID)
+		if err != nil {
+			NewError("0", "_deleteFriend failed ", err.Error())
+			continue
+		}
+	}
+
 }

@@ -2,11 +2,18 @@ package open_im_sdk
 
 import "errors"
 
-func (u *UserRelated) _getBlackList() ([]LocalBlack, error) {
+func (u *UserRelated) _getBlackList() ([]*LocalBlack, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
 	var blackList []LocalBlack
-	return blackList, wrap(u.imdb.Find(&blackList).Error, "_getBlackList failed")
+
+	err := u.imdb.Find(&blackList).Error
+	var transfer []*LocalBlack
+	for _, v := range blackList {
+		transfer = append(transfer, &v)
+	}
+	return transfer, err
+
 }
 func (u *UserRelated) _getBlackListUid() (blackListUid []string, err error) {
 	u.mRWMutex.RLock()
@@ -45,7 +52,7 @@ func (u *UserRelated) _updateBlack(black *LocalBlack) error {
 	return wrap(t.Error, "_updateBlack failed")
 }
 
-func (u *UserRelated) _delBlack(blockUserID string) error {
+func (u *UserRelated) _deleteBlack(blockUserID string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	black := LocalBlack{OwnerUserID: u.loginUserID, BlockUserID: blockUserID}
