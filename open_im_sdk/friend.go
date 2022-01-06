@@ -412,7 +412,7 @@ func (u *UserRelated) syncFriendApplication() {
 		return
 	}
 	onServer := transferToLocalFriendRequest(svrList)
-	onLocal, err := u._getSendFriendApplication()
+	onLocal, err := u._getRecvFriendApplication()
 	if err != nil {
 		NewError("0", "_getAllFriendList failed ", err.Error())
 		return
