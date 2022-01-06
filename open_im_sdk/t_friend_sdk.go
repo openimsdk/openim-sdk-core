@@ -522,6 +522,17 @@ func DotestSetConversationRecvMessageOpt() {
 	fmt.Println("SetConversationRecvMessageOpt", string(jsontest))
 }
 
+func DoTestGetMultipleConversation() {
+	var callback BaseSuccFailedTest
+	callback.funcName = RunFuncName()
+	var idList []string
+	fmt.Println("DoTestGetMultipleConversation come here")
+	idList = append(idList, "single_13977954313", "group_77215e1b13b75f3ab00cb6570e3d9618")
+	jsontest, _ := json.Marshal(idList)
+	GetMultipleConversation(string(jsontest), &callback)
+	fmt.Println("GetMultipleConversation", string(jsontest))
+}
+
 func DoTestGetConversationRecvMessageOpt() {
 	var callback BaseSuccFailedTest
 	callback.funcName = RunFuncName()

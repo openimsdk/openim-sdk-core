@@ -1,6 +1,8 @@
 package open_im_sdk
 
-import "time"
+import (
+	"time"
+)
 
 //
 //message FriendInfo{
@@ -219,4 +221,77 @@ type LocalBlack struct {
 type LocalSeqData struct {
 	UserID string `gorm:"column:user_id;primary_key;type:varchar(64)"`
 	Seq    int32  `gorm:"column:seq; default:1"`
+}
+
+//`create table if not exists  chat_log (
+//      client_msg_id char(64)   NOT NULL,
+//      server_msg_id char(64)   DEFAULT NULL,
+//	  send_id char(64)   NOT NULL ,
+//	  is_read int NOT NULL ,
+//	  seq INTEGER DEFAULT NULL ,
+//	  status int NOT NULL ,
+//	  session_type int NOT NULL ,
+//	  recv_id char(64)   NOT NULL ,
+//	  content_type int NOT NULL ,
+//      sender_face_url varchar(100) DEFAULT NULL,
+//      sender_nick_name varchar(64) DEFAULT NULL,
+//	  msg_from int NOT NULL ,
+//	  content varchar(1000)   NOT NULL ,
+//	  sender_platform_id int NOT NULL ,
+//	  send_time INTEGER DEFAULT NULL ,
+//	  create_time INTEGER  DEFAULT NULL,
+//      ex varchar(1024) DEFAULT NULL,
+//	  PRIMARY KEY (client_msg_id)
+//	)`
+type LocalChatLog struct {
+	ClientMsgID      string    `gorm:"column:client_msg_id;primary_key;type:char(64)"`
+	ServerMsgID      string    `gorm:"column:server_msg_id;type:char(64)"`
+	SendID           string    `gorm:"column:send_id;type:char(64)"`
+	RecvID           string    `gorm:"column:recv_id;type:char(64)"`
+	SenderPlatformID int32     `gorm:"column:sender_platform_id"`
+	SenderNickname   string    `gorm:"column:sender_nick_name;type:varchar(255)"`
+	SenderFaceURL    string    `gorm:"column:sender_face_url;type:varchar(255)"`
+	SessionType      int32     `gorm:"column:session_type"`
+	MsgFrom          int32     `gorm:"column:msg_from"`
+	ContentType      int32     `gorm:"column:content_type"`
+	Content          string    `gorm:"column:content;type:varchar(1000)"`
+	IsRead           int32     `gorm:"column:is_read"`
+	Status           int32     `gorm:"column:status"`
+	Seq              int64     `gorm:"column:seq"`
+	SendTime         time.Time `gorm:"column:send_time"`
+	CreateTime       time.Time `gorm:"column:create_time"`
+	Ex               string    `gorm:"column:ex;type:varchar(1024)"`
+}
+
+//`create table if not exists  conversation (
+//  conversation_id char(128) NOT NULL,
+//  conversation_type int(11) NOT NULL,
+//  user_id varchar(128)  DEFAULT NULL,
+//  group_id varchar(128)  DEFAULT NULL,
+//  show_name varchar(128)  NOT NULL,
+//  face_url varchar(128)  NOT NULL,
+//  recv_msg_opt int(11) NOT NULL ,
+//  unread_count int(11) NOT NULL ,
+//  latest_msg varchar(255)  NOT NULL ,
+//  latest_msg_send_time INTEGER(255)  NOT NULL ,
+//  draft_text varchar(255)  DEFAULT NULL ,
+//  draft_timestamp INTEGER(255)  DEFAULT NULL ,
+//  is_pinned int(10) NOT NULL ,
+//  PRIMARY KEY (conversation_id)
+//)
+type LocalConversation struct {
+	ConversationID    string    `gorm:"column:conversation_id;primary_key;type:char(128)"`
+	ConversationType  int32     `gorm:"column:conversation_type"`
+	UserID            string    `gorm:"column:user_id;type:char(64)"`
+	GroupID           string    `gorm:"column:group_id;type:char(128)"`
+	ShowName          string    `gorm:"column:show_name;type:varchar(255)"`
+	FaceURL           string    `gorm:"column:face_url;type:varchar(255)"`
+	RecvMsgOpt        int32     `gorm:"column:recv_msg_opt"`
+	UnreadCount       int32     `gorm:"column:unread_count"`
+	GroupAtType       int32     `gorm:"column:group_at_type"`
+	LatestMsg         string    `gorm:"column:latest_msg;type:varchar(1000)"`
+	LatestMsgSendTime time.Time `gorm:"column:latest_msg_send_time"`
+	DraftText         string    `gorm:"column:draft_text"`
+	DraftTextTime     time.Time `gorm:"column:draft_text_time"`
+	IsPinned          int32     `gorm:"column:is_pinned"`
 }
