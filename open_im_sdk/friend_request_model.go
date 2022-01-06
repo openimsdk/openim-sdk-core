@@ -11,8 +11,7 @@ func (u *UserRelated) _insertFriendRequest(friendRequest *LocalFriendRequest) er
 func (u *UserRelated) _deleteFriendRequestBothUserID(fromUserID, toUserID string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	friendRequest := LocalFriendRequest{FromUserID: fromUserID, ToUserID: toUserID}
-	return wrap(u.imdb.Delete(&friendRequest).Error, "deleteFriendRequest failed")
+	return wrap(u.imdb.Where("from_user_id=? and to_user_id=?", fromUserID, toUserID).Delete(&LocalFriendRequest{}).Error, "deleteFriendRequest failed")
 }
 
 func (u *UserRelated) _updateFriendRequest(friendRequest *LocalFriendRequest) error {
