@@ -12,7 +12,7 @@ func (u *UserRelated) _deleteFriend(friendUserID string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	friend := LocalFriend{OwnerUserID: u.loginUserID, FriendUserID: friendUserID}
-	return wrap(u.imdb.Delete(&friend).Error, "_deleteFriend failed")
+	return wrap(u.imdb.Delete(friend).Where("owner_user_id=? and friend_user_id=?", u.loginUserID, friendUserID).Error, "_deleteFriend failed")
 }
 
 func (u *UserRelated) _updateFriend(friend *LocalFriend) error {
