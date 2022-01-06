@@ -247,8 +247,7 @@ func DoTestDeleteFromFriendList() {
 ///////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 type testaddFriend struct {
-	UID        string `json:"uid" binding:"required"`
-	ReqMessage string `json:"reqMessage"`
+	AddFriendParams
 }
 
 func (testaddFriend) OnSuccess(data string) {
@@ -261,12 +260,12 @@ func (testaddFriend) OnError(code int32, msg string) {
 func DoTestaddFriend() {
 	var testaddFriend testaddFriend
 
-	testaddFriend.UID = Friend_uid
-	testaddFriend.ReqMessage = "hello"
+	testaddFriend.ToUserID = Friend_uid
+	testaddFriend.ReqMsg = "hello"
 
 	jsontestaddFriend, _ := json.Marshal(testaddFriend)
 	fmt.Println("addFriend input:", string(jsontestaddFriend))
-	AddFriend(testaddFriend, string(jsontestaddFriend), "")
+	AddFriend(testaddFriend, string(jsontestaddFriend), "1ef1345regqdfgv")
 }
 
 /////////////////////////////////////////////////////////////////////
