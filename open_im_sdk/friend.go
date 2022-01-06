@@ -227,80 +227,74 @@ func (u *UserRelated) getServerFriendList() ([]*FriendInfo, error) {
 }
 
 func (u *UserRelated) doBlackList() {
-
-	blackListOnServer, err := u.getServerBlackList()
-	if err != nil {
-		return
-	}
-	blackListOnServerInterface := make([]diff, 0)
-	for _, blackUser := range blackListOnServer {
-		blackListOnServerInterface = append(blackListOnServerInterface, blackUser)
-	}
-
-	blackListOnLocal, err := u.getLocalBlackList()
-	if err != nil {
-		return
-	}
-	blackListOnLocalInterface := make([]diff, 0)
-	for _, blackUser := range blackListOnLocal {
-		blackListOnLocalInterface = append(blackListOnLocalInterface, blackUser)
-	}
-
-	aInBNot, bInANot, sameA, _ := checkDiff(blackListOnServerInterface, blackListOnLocalInterface)
-
-	if len(aInBNot) > 0 {
-		for _, index := range aInBNot {
-			err = u.insertIntoTheUserToBlackList(blackListOnServer[index])
-			if err != nil {
-				sdkLog(err.Error())
-				return
-			}
-			jsonAddBlackUserInfo, _ := json.Marshal(blackListOnServerInterface[index])
-			u.friendListener.OnBlackListAdd(string(jsonAddBlackUserInfo))
-		}
-	}
-
-	if len(bInANot) > 0 {
-		for _, index := range bInANot {
-			err = u.delTheUserFromBlackList(blackListOnLocalInterface[index].Key())
-			if err != nil {
-				sdkLog(err.Error())
-				return
-			}
-			jsonDelBlackUserInfo, _ := json.Marshal(blackListOnLocal[index])
-			u.friendListener.OnBlackListDeleted(string(jsonDelBlackUserInfo))
-		}
-	}
-	if len(bInANot) > 0 || len(aInBNot) > 0 {
-		_ = triggerCmdFriend()
-	}
-
-	if len(sameA) > 0 {
-		for _, index := range sameA {
-			//interface--->struct
-			if blackListStruct, ok := blackListOnServerInterface[index].Value().(userInfo); ok {
-				_ = u.updateBlackList(blackListStruct)
-			}
-		}
-	}
+	//
+	//blackListOnServer, err := u.getServerBlackList()
+	//if err != nil {
+	//	return
+	//}
+	//blackListOnServerInterface := make([]diff, 0)
+	//for _, blackUser := range blackListOnServer {
+	//	//blackListOnServerInterface = append(blackListOnServerInterface, blackUser)
+	//}
+	//
+	//blackListOnLocal, err := u.getLocalBlackList()
+	//if err != nil {
+	//	return
+	//}
+	//blackListOnLocalInterface := make([]diff, 0)
+	//for _, blackUser := range blackListOnLocal {z
+	//	blackListOnLocalInterface = append(blackListOnLocalInterface, blackUser)
+	//}
+	//
+	//aInBNot, bInANot, sameA, _ := checkDiff(blackListOnServerInterface, blackListOnLocalInterface)
+	//
+	//if len(aInBNot) > 0 {
+	//	for _, index := range aInBNot {
+	//		err = u.insertIntoTheUserToBlackList(blackListOnServer[index])
+	//		if err != nil {
+	//			sdkLog(err.Error())
+	//			return
+	//		}
+	//		jsonAddBlackUserInfo, _ := json.Marshal(blackListOnServerInterface[index])
+	//		u.friendListener.OnBlackListAdd(string(jsonAddBlackUserInfo))
+	//	}
+	//}
+	//
+	//if len(bInANot) > 0 {
+	//	for _, index := range bInANot {
+	//		err = u.delTheUserFromBlackList(blackListOnLocalInterface[index].Key())
+	//		if err != nil {
+	//			sdkLog(err.Error())
+	//			return
+	//		}
+	//		jsonDelBlackUserInfo, _ := json.Marshal(blackListOnLocal[index])
+	//		u.friendListener.OnBlackListDeleted(string(jsonDelBlackUserInfo))
+	//	}
+	//}
+	//if len(bInANot) > 0 || len(aInBNot) > 0 {
+	//	_ = triggerCmdFriend()
+	//}
+	//
+	//if len(sameA) > 0 {
+	//	for _, index := range sameA {
+	//		//interface--->struct
+	//		if blackListStruct, ok := blackListOnServerInterface[index].Value().(userInfo); ok {
+	//			_ = u.updateBlackList(blackListStruct)
+	//		}
+	//	}
+	//}
 }
 
-func (u *UserRelated) getServerBlackList() ([]userInfo, error) {
-	resp, err := post2Api(getBlackListRouter, paramsCommonReq{OperationID: operationIDGenerator()}, u.token)
+func (u *UserRelated) getServerBlackList() ([]*PublicUserInfo, error) {
+	apiReq := GetBlackListReq{OperationID: operationIDGenerator(), FromUserID: u.loginUserID}
+	resp, err := post2Api(getBlackListRouter, apiReq, u.token)
+	commData, err := checkErrAndRespReturn(err, resp, apiReq.OperationID)
 	if err != nil {
-		return nil, err
+		return nil, wrap(err, apiReq.OperationID)
 	}
-	var vgetBlackListResp getBlackListResp
-	err = json.Unmarshal(resp, &vgetBlackListResp)
-	if err != nil {
-		sdkLog("unmarshal failed, ", err.Error())
-		return nil, err
-	}
-	if vgetBlackListResp.ErrCode != 0 {
-		sdkLog("errcode: ", vgetBlackListResp.ErrCode, "errmsg: ", vgetBlackListResp.ErrMsg)
-		return nil, err
-	}
-	return vgetBlackListResp.Data, nil
+	realData := GetBlackListResp{}
+	mapstructure.Decode(commData.Data, &realData.BlackUserInfoList)
+	return realData.BlackUserInfoList, nil
 }
 
 func (u *UserRelated) getServerFriendApplication() ([]*FriendRequest, error) {
@@ -412,7 +406,7 @@ func (u *UserRelated) syncFriendApplication() {
 		return
 	}
 	onServer := transferToLocalFriendRequest(svrList)
-	onLocal, err := u._getSendFriendApplication()
+	onLocal, err := u._getRecvFriendApplication()
 	if err != nil {
 		NewError("0", "_getAllFriendList failed ", err.Error())
 		return
@@ -451,13 +445,13 @@ func (u *UserRelated) syncFriendList() {
 		NewError("0", "getServerFriendList failed ", err.Error())
 		return
 	}
+	NewInfo("0", "svrList", svrList)
 	friendsInfoOnServer := transferToLocalFriend(svrList)
 	friendsInfoOnLocal, err := u._getAllFriendList()
 	if err != nil {
 		NewError("0", "_getAllFriendList failed ", err.Error())
 		return
 	}
-	NewInfo("0", "svrList", svrList)
 	NewInfo("0", "friendsInfoOnServer", friendsInfoOnServer)
 	NewInfo("0", "friendsInfoOnLocal", friendsInfoOnLocal)
 	aInBNot, bInANot, sameA, _ := checkFriendListDiff(friendsInfoOnServer, friendsInfoOnLocal)
@@ -485,55 +479,56 @@ func (u *UserRelated) syncFriendList() {
 }
 
 func (u *UserRelated) syncBlackList() {
-
-	blackListOnServer, err := u.getServerBlackList()
-	if err != nil {
-		return
-	}
-	blackListOnServerInterface := make([]diff, 0)
-	for _, blackUser := range blackListOnServer {
-		blackListOnServerInterface = append(blackListOnServerInterface, blackUser)
-	}
-
-	blackListOnLocal, err := u.getLocalBlackList()
-	if err != nil {
-		return
-	}
-	blackListOnLocalInterface := make([]diff, 0)
-	for _, blackUser := range blackListOnLocal {
-		blackListOnLocalInterface = append(blackListOnLocalInterface, blackUser)
-	}
-
-	aInBNot, bInANot, sameA, _ := checkDiff(blackListOnServerInterface, blackListOnLocalInterface)
-
-	if len(aInBNot) > 0 {
-		for _, index := range aInBNot {
-			err = u.insertIntoTheUserToBlackList(blackListOnServer[index])
-			if err != nil {
-				sdkLog(err.Error())
-				return
-			}
-
-		}
-	}
-
-	if len(bInANot) > 0 {
-		for _, index := range bInANot {
-			err = u.delTheUserFromBlackList(blackListOnLocalInterface[index].Key())
-			if err != nil {
-				sdkLog(err.Error())
-				return
-			}
-
-		}
-	}
-
-	if len(sameA) > 0 {
-		for _, index := range sameA {
-			//interface--->struct
-			if blackListStruct, ok := blackListOnServerInterface[index].Value().(userInfo); ok {
-				_ = u.updateBlackList(blackListStruct)
-			}
-		}
-	}
+	//blackListOnServer, err := u.getServerBlackList()
+	//if err != nil {
+	//	NewError("0", "getServerBlackList failed ", err.Error())
+	//	return
+	//}
+	////blackList
+	//blackListOnServerInterface := make([]diff, 0)
+	//for _, blackUser := range blackListOnServer {
+	//	blackListOnServerInterface = append(blackListOnServerInterface, blackUser)
+	//}
+	//
+	//blackListOnLocal, err := u.getLocalBlackList()
+	//if err != nil {
+	//	return
+	//}
+	//blackListOnLocalInterface := make([]diff, 0)
+	//for _, blackUser := range blackListOnLocal {
+	//	blackListOnLocalInterface = append(blackListOnLocalInterface, blackUser)
+	//}
+	//
+	//aInBNot, bInANot, sameA, _ := checkDiff(blackListOnServerInterface, blackListOnLocalInterface)
+	//
+	//if len(aInBNot) > 0 {
+	//	for _, index := range aInBNot {
+	//		err = u.insertIntoTheUserToBlackList(blackListOnServer[index])
+	//		if err != nil {
+	//			sdkLog(err.Error())
+	//			return
+	//		}
+	//
+	//	}
+	//}
+	//
+	//if len(bInANot) > 0 {
+	//	for _, index := range bInANot {
+	//		err = u.delTheUserFromBlackList(blackListOnLocalInterface[index].Key())
+	//		if err != nil {
+	//			sdkLog(err.Error())
+	//			return
+	//		}
+	//
+	//	}
+	//}
+	//
+	//if len(sameA) > 0 {
+	//	for _, index := range sameA {
+	//		//interface--->struct
+	//		if blackListStruct, ok := blackListOnServerInterface[index].Value().(userInfo); ok {
+	//			_ = u.updateBlackList(blackListStruct)
+	//		}
+	//	}
+	//}
 }

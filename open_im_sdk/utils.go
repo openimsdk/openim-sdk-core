@@ -855,7 +855,7 @@ func friendRequestCopyToLocal(localFriendRequest *LocalFriendRequest, apiFriendR
 }
 
 func transferToLocalFriend(apiFriendList []*FriendInfo) []*LocalFriend {
-	localFriendList := make([]*LocalFriend, len(apiFriendList))
+	localFriendList := make([]*LocalFriend, 0)
 	for _, v := range apiFriendList {
 		var localFriend LocalFriend
 		friendCopyToLocal(&localFriend, v)
@@ -865,11 +865,14 @@ func transferToLocalFriend(apiFriendList []*FriendInfo) []*LocalFriend {
 }
 
 func transferToLocalFriendRequest(apiFriendList []*FriendRequest) []*LocalFriendRequest {
-	localFriendList := make([]*LocalFriendRequest, len(apiFriendList))
+	localFriendList := make([]*LocalFriendRequest, 0)
 	for _, v := range apiFriendList {
 		var localFriendRequest LocalFriendRequest
+		NewDebug("0", "local test api ", v)
 		friendRequestCopyToLocal(&localFriendRequest, v)
+		NewDebug("0", "local test local  ", localFriendRequest)
 		localFriendList = append(localFriendList, &localFriendRequest)
 	}
+	NewDebug("0", "local test local all ", localFriendList)
 	return localFriendList
 }
