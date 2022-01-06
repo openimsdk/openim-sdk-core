@@ -11,10 +11,7 @@ func (u *UserRelated) _insertGroupRequest(groupRequest *LocalGroupRequest) error
 func (u *UserRelated) _deleteGroupRequest(groupID, userID string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	//	err := u.imdb.Model(&LocalFriend{}).Where("owner_user_id=? and friend_user_id=?", u.loginUserID, friendUserID).Delete(&LocalFriend{}).Error
-	err := u.imdb.Model(&LocalGroupRequest{}).Where("group_id=? and user_id=?").Delete(&LocalFriend{}).Error
-
-	return Wrap(u.imdb.Delete(groupRequest).Error, "_deleteGroupRequest failed")
+	return Wrap(u.imdb.Where("group_id=? and user_id=?", groupID, userID).Delete(&LocalGroupRequest{}).Error, "_deleteGroupRequest failed")
 }
 func (u *UserRelated) _updateGroupRequest(groupRequest *LocalGroupRequest) error {
 	u.mRWMutex.Lock()

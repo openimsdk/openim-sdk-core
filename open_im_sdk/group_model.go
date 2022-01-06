@@ -7,10 +7,10 @@ func (u *UserRelated) _insertGroup(groupInfo *LocalGroup) error {
 	defer u.mRWMutex.Unlock()
 	return Wrap(u.imdb.Create(groupInfo).Error, "_insertGroup failed")
 }
-func (u *UserRelated) _deleteGroup(groupInfo *LocalGroup) error {
+func (u *UserRelated) _deleteGroup(groupID string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	return Wrap(u.imdb.Delete(&groupInfo).Error, "_deleteGroup failed")
+	return Wrap(u.imdb.Where("group_id=?", groupID).Delete(&LocalGroup{}).Error, "_deleteGroup failed")
 }
 func (u *UserRelated) _updateGroup(groupInfo *LocalGroup) error {
 	u.mRWMutex.Lock()

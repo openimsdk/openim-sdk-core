@@ -34,7 +34,7 @@ func (u *UserRelated) _deleteGroupMember(groupID, userID string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	groupMember := LocalGroupMember{GroupID: groupID, UserID: userID}
-	return u.imdb.Delete(&groupMember).Error
+	return u.imdb.Where("group_id=? and user_id=?", groupID, userID).Delete(&groupMember).Error
 }
 
 func (u *UserRelated) _updateGroupMember(groupMember *LocalGroupMember) error {
