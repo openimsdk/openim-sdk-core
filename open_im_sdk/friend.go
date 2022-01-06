@@ -214,7 +214,7 @@ func (u *UserRelated) getLocalFriendList() ([]friendInfo, error) {
 func (u *UserRelated) getServerFriendList() ([]*FriendInfo, error) {
 	apiReq := GetFriendListReq{OperationID: operationIDGenerator(), FromUserID: u.loginUserID}
 	resp, err := post2Api(getFriendListRouter, apiReq, u.token)
-	commData, err := checkErrAndRespReturn(err, resp)
+	commData, err := checkErrAndRespReturn(err, resp, apiReq.OperationID)
 	if err != nil {
 		return nil, wrap(err, apiReq.OperationID)
 	}

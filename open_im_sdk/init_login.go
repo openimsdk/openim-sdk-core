@@ -1098,7 +1098,7 @@ func (u *UserRelated) getUserNewestSeq() (int64, int64, error) {
 func (u *UserRelated) getServerUserInfo() (*UserInfo, error) {
 	apiReq := GetUserInfoReq{OperationID: operationIDGenerator(), UserIDList: []string{u.loginUserID}}
 	resp, err := post2Api(getUserInfoRouter, apiReq, u.token)
-	commData, err := checkErrAndRespReturn(err, resp)
+	commData, err := checkErrAndRespReturn(err, resp, apiReq.OperationID)
 	if err != nil {
 		return nil, wrap(err, apiReq.OperationID)
 	}

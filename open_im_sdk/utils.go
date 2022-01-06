@@ -750,8 +750,23 @@ func checkResp(callback Base, resp []byte, operationID string) *CommDataResp {
 	return &c
 }
 
-func checkErrAndRespReturn(err error, resp []byte) (*CommDataResp, error) {
-	return nil, nil
+func checkErrAndRespReturn(err error, resp []byte, operationID string) (*CommDataResp, error) {
+	if err != nil {
+		NewError(operationID, "checkErr ", err)
+		return nil, err
+	}
+	var c CommDataResp
+	err = json.Unmarshal(resp, &c)
+	if err != nil {
+		NewError(operationID, "Unmarshal ", err)
+		return nil, err
+	}
+
+	if c.ErrCode != 0 {
+		NewError(operationID, "errCode ", c.ErrCode, "errMsg ", c.ErrMsg)
+		return nil, errors.New(c.ErrMsg)
+	}
+	return &c, nil
 }
 
 func CompFields(a interface{}, b interface{}, fields ...string) bool {
