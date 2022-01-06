@@ -2,7 +2,7 @@ package open_im_sdk
 
 import (
 	"encoding/json"
-	"errors"
+	"github.com/mitchellh/mapstructure"
 )
 
 type FriendListener struct {
@@ -211,23 +211,19 @@ func (u *UserRelated) getLocalFriendList() ([]friendInfo, error) {
 	return localFriendList, nil
 }
 
-func (u *UserRelated) getServerFriendList() ([]friendInfo, error) {
-	resp, err := post2Api(getFriendListRouter, paramsCommonReq{OperationID: operationIDGenerator()}, u.token)
+func (u *UserRelated) getServerFriendList() ([]*FriendInfo, error) {
+	apiReq := GetFriendListReq{OperationID: operationIDGenerator(), FromUserID: u.loginUserID}
+	resp, err := post2Api(getFriendListRouter, apiReq, u.token)
+	commData, err := checkErrAndRespReturn(err, resp)
 	if err != nil {
-		return nil, err
+		return nil, wrap(err, apiReq.OperationID)
 	}
-	var vgetFriendListResp getFriendListResp
-	err = json.Unmarshal(resp, &vgetFriendListResp)
-	if err != nil {
-		sdkLog("unmarshal failed, ", err.Error())
-		return nil, err
-	}
-	if vgetFriendListResp.ErrCode != 0 {
-		sdkLog("errcode: ", vgetFriendListResp.ErrCode, "errmsg: ", vgetFriendListResp.ErrMsg)
-		return nil, errors.New(vgetFriendListResp.ErrMsg)
-	}
-	return vgetFriendListResp.Data, nil
+
+	realData := GetFriendListResp{}
+	mapstructure.Decode(commData.Data, &realData.FriendInfoList)
+	return realData.FriendInfoList, nil
 }
+
 func (u *UserRelated) doBlackList() {
 
 	blackListOnServer, err := u.getServerBlackList()
@@ -476,58 +472,40 @@ func (u *UserRelated) syncFriendApplication() {
 }
 
 func (u *UserRelated) syncFriendList() {
-	friendsInfoOnServer, err := u.getServerFriendList()
+	svrList, err := u.getServerFriendList()
 	if err != nil {
+		NewError("0", "getServerFriendList failed ", err.Error())
 		return
 	}
-	friendsInfoOnServerInterface := make([]diff, 0)
-	for _, v := range friendsInfoOnServer {
-		friendsInfoOnServerInterface = append(friendsInfoOnServerInterface, v)
-	}
-	friendsInfoOnLocal, err := u.getLocalFriendList()
+	friendsInfoOnServer := transferToLocal(svrList)
+	friendsInfoOnLocal, err := u._getAllFriendList()
 	if err != nil {
+		NewError("0", "_getAllFriendList failed ", err.Error())
 		return
 	}
-	friendsInfoOnLocalInterface := make([]diff, 0)
-	for _, v := range friendsInfoOnLocal {
-		friendsInfoOnLocalInterface = append(friendsInfoOnLocalInterface, v)
-	}
-	aInBNot, bInANot, sameA, _ := checkDiff(friendsInfoOnServerInterface, friendsInfoOnLocalInterface)
-	if len(aInBNot) > 0 {
-		for _, index := range aInBNot {
-			if friendInfoStruct, ok := friendsInfoOnServerInterface[index].Value().(friendInfo); ok {
-				sdkLog("insertIntoTheFriendToFriendInfo")
-				err = u.insertIntoTheFriendToFriendInfo(friendInfoStruct.UID, friendInfoStruct.Name, friendInfoStruct.Comment, friendInfoStruct.Icon, friendInfoStruct.Gender, friendInfoStruct.Mobile, friendInfoStruct.Birth, friendInfoStruct.Email, friendInfoStruct.Ex)
-				if err != nil {
-					return
-				}
-
-			}
+	NewInfo("0", "svrList", svrList)
+	NewInfo("0", "friendsInfoOnServer", friendsInfoOnServer)
+	NewInfo("0", "friendsInfoOnLocal", friendsInfoOnLocal)
+	aInBNot, bInANot, sameA, _ := checkFriendListDiff(friendsInfoOnServer, friendsInfoOnLocal)
+	for _, index := range aInBNot {
+		err := u._insertFriend(friendsInfoOnServer[index])
+		if err != nil {
+			NewError("0", "_insertFriend failed ", err.Error())
+			continue
 		}
 	}
-
-	if len(bInANot) > 0 {
-		for _, index := range bInANot {
-			sdkLog("delTheFriendFromFriendInfo")
-			err = u.delTheFriendFromFriendInfo(friendsInfoOnLocalInterface[index].Key())
-			if err != nil {
-				sdkLog(err.Error())
-				return
-			}
-
+	for _, index := range sameA {
+		err := u._updateFriend(friendsInfoOnServer[index])
+		if err != nil {
+			NewError("0", "_updateFriend failed ", err.Error())
+			continue
 		}
 	}
-
-	if len(sameA) > 0 {
-		for _, index := range sameA {
-			if friendInfoStruct, ok := friendsInfoOnServerInterface[index].Value().(friendInfo); ok {
-				sdkLog("updateTheFriendInfo")
-				err = u.updateTheFriendInfo(friendInfoStruct.UID, friendInfoStruct.Name, friendInfoStruct.Comment, friendInfoStruct.Icon, friendInfoStruct.Gender, friendInfoStruct.Mobile, friendInfoStruct.Birth, friendInfoStruct.Email, friendInfoStruct.Ex)
-				if err != nil {
-					sdkLog(err.Error())
-					return
-				}
-			}
+	for _, index := range bInANot {
+		err := u._deleteFriend(friendsInfoOnLocal[index].FriendUserID)
+		if err != nil {
+			NewError("0", "_deleteFriend failed ", err.Error())
+			continue
 		}
 	}
 }

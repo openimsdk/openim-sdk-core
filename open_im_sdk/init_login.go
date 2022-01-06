@@ -11,6 +11,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"time"
+
+	"github.com/mitchellh/mapstructure"
+
+	"github.com/jinzhu/copier"
 )
 
 func (u *UserRelated) closeListenerCh() {
@@ -129,12 +133,12 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 	sdkLog("ws conn ok ", uid)
 	u.LoginState = LoginSuccess
 	sdkLog("ws conn ok ", uid, u.LoginState)
-	go u.run()
+	//go u.run()
 
 	sdkLog("ws, forcedSynchronization heartbeat coroutine timedCloseDB run ...")
 	go u.forcedSynchronization()
-	go u.heartbeat()
-	go u.timedCloseDB()
+	//	go u.heartbeat()
+	//	go u.timedCloseDB()
 	u.forycedSyncReceiveMessageOpt()
 	sdkLog("forycedSyncReceiveMessageOpt ok")
 	cb.OnSuccess("")
@@ -219,12 +223,12 @@ func (u *UserRelated) forcedSynchronization() {
 	u.ForceSyncFriend()
 	u.ForceSyncBlackList()
 	u.ForceSyncFriendApplication()
-	u.ForceSyncSelfFriendApplication()
+	//	u.ForceSyncSelfFriendApplication()
 	u.ForceSyncLoginUserInfo()
-	u.ForceSyncJoinedGroup()
-	u.ForceSyncGroupRequest()
-	u.ForceSyncSelfGroupRequest()
-	u.ForceSyncJoinedGroupMember()
+	//	u.ForceSyncJoinedGroup()
+	//	u.ForceSyncGroupRequest()
+	//	u.ForceSyncSelfGroupRequest()
+	//	u.ForceSyncJoinedGroupMember()
 }
 
 func (u *UserRelated) doWsMsg(message []byte) {
@@ -366,7 +370,25 @@ func (u *UserRelated) syncSeq2Msg() error {
 }
 
 func (u *UserRelated) syncLoginUserInfo() error {
-	//userSvr, err := u.getServerUserInfo()
+	userSvr, err := u.getServerUserInfo()
+	if err != nil {
+		NewError("0", "getServerUserInfo failed , user: ", *userSvr)
+		return err
+	}
+
+	userLocal, err := u._getLoginUser()
+	if err != nil {
+		NewError("0", "_getLoginUser failed , user: ", *userSvr)
+		return err
+	}
+
+	if CompFields(&userLocal, &userSvr) {
+		return nil
+	}
+
+	var updateLocalUser LocalUser
+	copier.Copy(&updateLocalUser, userSvr)
+	return u._updateLoginUser(&updateLocalUser)
 	//if err != nil {
 	//	return err
 	//}
@@ -399,7 +421,6 @@ func (u *UserRelated) syncLoginUserInfo() error {
 	//		u.cb.OnSelfInfoUpdated(string(bUserInfo))
 	//	}
 	//}
-	return nil
 }
 
 func (u *UserRelated) firstConn(conn *websocket.Conn) (*websocket.Conn, *http.Response, error) {
@@ -1075,36 +1096,21 @@ func (u *UserRelated) getUserNewestSeq() (int64, int64, error) {
 }
 
 func (u *UserRelated) getServerUserInfo() (*UserInfo, error) {
-
-	return nil, nil
-	//
-	//var uidList []string
-	//uidList = append(uidList, u.loginUserID)
-	//
-	//
-	//resp, err := post2Api(getUserInfoRouter, paramsGetUserInfo{OperationID: operationIDGenerator(), UidList: uidList}, u.token)
-	//if err != nil {
-	//	sdkLog("post2Api failed, ", getUserInfoRouter, uidList, err.Error())
-	//	return nil, err
-	//}
-	//var userResp getUserInfoResp
-	//err = json.Unmarshal(resp, &userResp)
-	//if err != nil {
-	//	sdkLog("Unmarshal failed, ", resp, err.Error())
-	//	return nil, err
-	//}
-	//
-	//if userResp.ErrCode != 0 {
-	//	sdkLog("errcode: ", userResp.ErrCode, "errmsg:", userResp.ErrMsg)
-	//	return nil, errors.New(userResp.ErrMsg)
-	//}
-	//
-	//if len(userResp.Data) == 0 {
-	//	sdkLog("failed, no user : ", u.loginUserID)
-	//	return nil, errors.New("no user")
-	//}
-	//return &userResp.Data[0], nil
+	apiReq := GetUserInfoReq{OperationID: operationIDGenerator(), UserIDList: []string{u.loginUserID}}
+	resp, err := post2Api(getUserInfoRouter, apiReq, u.token)
+	commData, err := checkErrAndRespReturn(err, resp)
+	if err != nil {
+		return nil, wrap(err, apiReq.OperationID)
+	}
+	realData := GetUserInfoResp{}
+	mapstructure.Decode(commData.Data, &realData.UserInfoList)
+	if len(realData.UserInfoList) == 0 {
+		sdkLog("failed, no user : ", u.loginUserID)
+		return nil, errors.New("no login user")
+	}
+	return realData.UserInfoList[0], nil
 }
+
 func (u *UserRelated) getUserNameAndFaceUrlByUid(uid string) (faceUrl, name string, err error) {
 	friendInfo, err := u._getFriendInfoByFriendUserID(uid)
 	if err != nil {
@@ -1198,18 +1204,20 @@ func (u *UserRelated) acceptFriendApplicationNew(msg *MsgData) {
 	if err != nil {
 		return
 	}
-	for _, fInfo := range fInfoList {
-		if fInfo.UID == msg.SendID {
-			jData, err := json.Marshal(fInfo)
-			if err != nil {
-				sdkLog("err: ", err.Error())
-				return
-			}
-			u.friendListener.OnFriendListAdded(string(jData))
-			u.friendListener.OnFriendApplicationListAccept(string(jData))
-			return
-		}
-	}
+	sdkLog("fInfoList", fInfoList)
+
+	//for _, fInfo := range fInfoList {
+	//	if fInfo.UID == msg.SendID {
+	//		jData, err := json.Marshal(fInfo)
+	//		if err != nil {
+	//			sdkLog("err: ", err.Error())
+	//			return
+	//		}
+	//		u.friendListener.OnFriendListAdded(string(jData))
+	//		u.friendListener.OnFriendApplicationListAccept(string(jData))
+	//		return
+	//	}
+	//}
 }
 
 func (u *UserRelated) refuseFriendApplicationNew(msg *MsgData) {

@@ -6,11 +6,14 @@ import (
 	"encoding/gob"
 	"encoding/hex"
 	"encoding/json"
+
 	"github.com/gorilla/websocket"
+	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 
 	"os"
 	"path"
@@ -240,6 +243,49 @@ func stringToInt(i string) int {
 	return j
 }
 
+func checkFriendListDiff(a []*LocalFriend, b []*LocalFriend) (aInBNot, bInANot, sameA, sameB []int) {
+	//to map, friendid_>friendinfo
+	mapA := make(map[string]*LocalFriend)
+	for _, v := range a {
+		mapA[v.FriendUserID] = v
+	}
+	mapB := make(map[string]*LocalFriend)
+	for _, v := range b {
+		mapB[v.FriendUserID] = v
+	}
+
+	aInBNot = make([]int, 0)
+	bInANot = make([]int, 0)
+	sameA = make([]int, 0)
+	sameB = make([]int, 0)
+
+	//for a
+	for i, v := range a {
+		ia, ok := mapB[v.FriendUserID]
+		if !ok {
+			//in a, but not in b
+			aInBNot = append(aInBNot, i)
+		} else {
+			if v == ia {
+				// key of a and b is equal, but value different
+				sameA = append(sameA, i)
+			}
+		}
+	}
+	//for b
+	for i, v := range b {
+		ib, ok := mapA[v.FriendUserID]
+		if !ok {
+			bInANot = append(bInANot, i)
+		} else {
+			if ib != v {
+				sameB = append(sameB, i)
+			}
+		}
+	}
+	return aInBNot, bInANot, sameA, sameB
+}
+
 func checkDiff(a []diff, b []diff) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map
 	mapA := make(map[string]diff)
@@ -260,7 +306,6 @@ func checkDiff(a []diff, b []diff) (aInBNot, bInANot, sameA, sameB []int) {
 	for i, v := range a {
 		ia, ok := mapB[v.Key()]
 		if !ok {
-			//	sdkLog("aInBNot", i)
 			aInBNot = append(aInBNot, i)
 		} else {
 			if ia.Value() != v.Value() {
@@ -273,7 +318,6 @@ func checkDiff(a []diff, b []diff) (aInBNot, bInANot, sameA, sameB []int) {
 	for i, v := range b {
 		ib, ok := mapA[v.Key()]
 		if !ok {
-			//	sdkLog("bInANot", i)
 			bInANot = append(bInANot, i)
 		} else {
 			if ib.Value() != v.Value() {
@@ -284,11 +328,12 @@ func checkDiff(a []diff, b []diff) (aInBNot, bInANot, sameA, sameB []int) {
 	return aInBNot, bInANot, sameA, sameB
 }
 
-func (fr friendInfo) Key() string {
-	return fr.UID
+func (fr *FriendInfo) Key() string {
+	return fr.FriendUser.UserID
 }
-func (fr friendInfo) Value() interface{} {
-	return fr
+func (fr *FriendInfo) Value() string {
+	return fr.OwnerUserID + fr.Remark + fr.Ex + fr.OperatorUserID +
+		fr.FriendUser.UserID + fr.FriendUser.Nickname + fr.FriendUser.FaceUrl + fr.FriendUser.Email + fr.FriendUser.Ex
 }
 
 func (us userInfo) Key() string {
@@ -703,4 +748,59 @@ func checkResp(callback Base, resp []byte, operationID string) *CommDataResp {
 		return nil
 	}
 	return &c
+}
+
+func checkErrAndRespReturn(err error, resp []byte) (*CommDataResp, error) {
+	return nil, nil
+}
+
+func CompFields(a interface{}, b interface{}, fields ...string) bool {
+	return false
+	//	at := reflect.TypeOf(a)
+	av := reflect.ValueOf(a)
+	bt := reflect.TypeOf(b)
+	bv := reflect.ValueOf(b)
+
+	av = reflect.ValueOf(av.Interface())
+
+	_fields := make([]string, 0)
+	if len(fields) > 0 {
+		_fields = fields
+	} else {
+		for i := 0; i < bv.NumField(); i++ {
+			_fields = append(_fields, bt.Field(i).Name)
+		}
+	}
+
+	if len(_fields) == 0 {
+		return false
+	}
+
+	for i := 0; i < len(_fields); i++ {
+		name := _fields[i]
+		f := av.Elem().FieldByName(name)
+		bValue := bv.FieldByName(name)
+
+		if f.IsValid() && f.Kind() == bValue.Kind() {
+			f.Set(bValue)
+		} else {
+
+		}
+	}
+	return false
+}
+
+func friendCopyToLocal(localFriend *LocalFriend, apiFriend *FriendInfo) {
+	copier.Copy(localFriend, apiFriend)
+	copier.Copy(localFriend, apiFriend.FriendUser)
+}
+
+func transferToLocal(apiFriendList []*FriendInfo) []*LocalFriend {
+	localFriendList := make([]*LocalFriend, len(apiFriendList))
+	for _, v := range apiFriendList {
+		var localFriend LocalFriend
+		friendCopyToLocal(&localFriend, v)
+		localFriendList = append(localFriendList, &localFriend)
+	}
+	return localFriendList
 }

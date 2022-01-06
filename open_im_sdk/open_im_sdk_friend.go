@@ -112,7 +112,7 @@ func (u *UserRelated) GetFriendList(callback Base, operationID string) {
 	}
 	go func() {
 		NewInfo(operationID, "GetFriendList args: ")
-		var filterLocalFriendList []LocalFriend
+		var filterLocalFriendList []*LocalFriend
 		localFriendList, err := u._getAllFriendList()
 		checkErr(callback, err, operationID)
 		localBlackUidList, err := u._getBlackListUid()

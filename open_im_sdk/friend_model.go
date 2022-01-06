@@ -25,10 +25,10 @@ func (u *UserRelated) _updateFriend(friend *LocalFriend) error {
 	return wrap(t.Error, "_updateFriend failed")
 }
 
-func (u *UserRelated) _getAllFriendList() ([]LocalFriend, error) {
+func (u *UserRelated) _getAllFriendList() ([]*LocalFriend, error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	var friendList []LocalFriend
+	var friendList []*LocalFriend
 	return friendList, wrap(u.imdb.Where("owner_user_id = ?", u.loginUserID).Find(&friendList).Error,
 		"_getFriendList failed")
 }
