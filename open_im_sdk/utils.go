@@ -286,6 +286,49 @@ func checkFriendListDiff(a []*LocalFriend, b []*LocalFriend) (aInBNot, bInANot, 
 	return aInBNot, bInANot, sameA, sameB
 }
 
+func checkFriendRequestDiff(a []*LocalFriendRequest, b []*LocalFriendRequest) (aInBNot, bInANot, sameA, sameB []int) {
+	//to map, friendid_>friendinfo
+	mapA := make(map[string]*LocalFriendRequest)
+	for _, v := range a {
+		mapA[v.ToUserID] = v
+	}
+	mapB := make(map[string]*LocalFriendRequest)
+	for _, v := range b {
+		mapB[v.ToUserID] = v
+	}
+
+	aInBNot = make([]int, 0)
+	bInANot = make([]int, 0)
+	sameA = make([]int, 0)
+	sameB = make([]int, 0)
+
+	//for a
+	for i, v := range a {
+		ia, ok := mapB[v.ToUserID]
+		if !ok {
+			//in a, but not in b
+			aInBNot = append(aInBNot, i)
+		} else {
+			if v == ia {
+				// key of a and b is equal, but value different
+				sameA = append(sameA, i)
+			}
+		}
+	}
+	//for b
+	for i, v := range b {
+		ib, ok := mapA[v.ToUserID]
+		if !ok {
+			bInANot = append(bInANot, i)
+		} else {
+			if ib != v {
+				sameB = append(sameB, i)
+			}
+		}
+	}
+	return aInBNot, bInANot, sameA, sameB
+}
+
 func checkDiff(a []diff, b []diff) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map
 	mapA := make(map[string]diff)
@@ -810,12 +853,27 @@ func friendCopyToLocal(localFriend *LocalFriend, apiFriend *FriendInfo) {
 	copier.Copy(localFriend, apiFriend.FriendUser)
 }
 
-func transferToLocal(apiFriendList []*FriendInfo) []*LocalFriend {
+func friendRequestCopyToLocal(localFriendRequest *LocalFriendRequest, apiFriendRequest *FriendRequest) {
+	copier.Copy(localFriendRequest, apiFriendRequest)
+
+}
+
+func transferToLocalFriend(apiFriendList []*FriendInfo) []*LocalFriend {
 	localFriendList := make([]*LocalFriend, len(apiFriendList))
 	for _, v := range apiFriendList {
 		var localFriend LocalFriend
 		friendCopyToLocal(&localFriend, v)
 		localFriendList = append(localFriendList, &localFriend)
+	}
+	return localFriendList
+}
+
+func transferToLocalFriendRequest(apiFriendList []*FriendRequest) []*LocalFriendRequest {
+	localFriendList := make([]*LocalFriendRequest, len(apiFriendList))
+	for _, v := range apiFriendList {
+		var localFriendRequest LocalFriendRequest
+		friendRequestCopyToLocal(&localFriendRequest, v)
+		localFriendList = append(localFriendList, &localFriendRequest)
 	}
 	return localFriendList
 }

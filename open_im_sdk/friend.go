@@ -301,22 +301,17 @@ func (u *UserRelated) getServerBlackList() ([]userInfo, error) {
 	return vgetBlackListResp.Data, nil
 }
 
-func (u *UserRelated) getServerFriendApplication() ([]applyUserInfo, error) {
-	resp, err := post2Api(getFriendApplicationListRouter, paramsCommonReq{OperationID: operationIDGenerator()}, u.token)
+func (u *UserRelated) getServerFriendApplication() ([]*FriendRequest, error) {
+	apiReq := GetFriendApplyListReq{OperationID: operationIDGenerator(), FromUserID: u.loginUserID}
+	resp, err := post2Api(getFriendApplicationListRouter, apiReq, u.token)
+	commData, err := checkErrAndRespReturn(err, resp, apiReq.OperationID)
 	if err != nil {
-		return nil, err
+		return nil, wrap(err, apiReq.OperationID)
 	}
-	var vgetFriendApplyListResp getFriendApplyListResp
-	err = json.Unmarshal(resp, &vgetFriendApplyListResp)
-	if err != nil {
-		sdkLog("unmarshal failed, ", err.Error())
-		return nil, err
-	}
-	if vgetFriendApplyListResp.ErrCode != 0 {
-		sdkLog("errcode: ", vgetFriendApplyListResp.ErrCode, "errmsg: ", vgetFriendApplyListResp.ErrMsg)
-		return nil, err
-	}
-	return vgetFriendApplyListResp.Data, nil
+
+	realData := GetFriendApplyListResp{}
+	mapstructure.Decode(commData.Data, &realData.FriendRequestList)
+	return realData.FriendRequestList, nil
 }
 
 func (u *UserRelated) getServerSelfApplication() ([]applyUserInfo, error) {
@@ -409,64 +404,41 @@ func (u *UserRelated) syncSelfFriendApplication() {
 }
 
 func (u *UserRelated) syncFriendApplication() {
-	applicationListOnServer, err := u.getServerFriendApplication()
+	svrList, err := u.getServerFriendApplication()
 	if err != nil {
+		NewError("0", "getServerFriendList failed ", err.Error())
 		return
 	}
-	applicationListOnServerInterface := make([]diff, 0)
-	for _, v := range applicationListOnServer {
-		applicationListOnServerInterface = append(applicationListOnServerInterface, v)
-	}
-	applicationListOnLocal, err := u.getLocalFriendApplication()
+	onServer := transferToLocalFriendRequest(svrList)
+	onLocal, err := u._getSendFriendApplication()
 	if err != nil {
+		NewError("0", "_getAllFriendList failed ", err.Error())
 		return
 	}
-	applicationListOnLocalInterface := make([]diff, 0)
-	for _, v := range applicationListOnLocal {
-		applicationListOnLocalInterface = append(applicationListOnLocalInterface, v)
-	}
+	NewInfo("0", "svrList", svrList)
+	NewInfo("0", "onServer", onServer)
+	NewInfo("0", "onLocal", onLocal)
 
-	aInBNot, bInANot, sameA, _ := checkDiff(applicationListOnServerInterface, applicationListOnLocalInterface)
-
-	if len(aInBNot) > 0 {
-		for _, index := range aInBNot {
-			if applicationListStruct, ok := applicationListOnServerInterface[index].Value().(applyUserInfo); ok {
-				err = u.insertIntoTheUserToApplicationList(applicationListStruct)
-				if err != nil {
-					return
-				}
-			}
+	aInBNot, bInANot, sameA, _ := checkFriendRequestDiff(onServer, onLocal)
+	for _, index := range aInBNot {
+		err := u._insertFriendRequest(onServer[index])
+		if err != nil {
+			NewError("0", "_insertFriendRequest failed ", err.Error())
+			continue
 		}
 	}
-
-	if len(bInANot) > 0 {
-		for _, index := range bInANot {
-			err = u.delTheUserFromApplicationList(applicationListOnLocalInterface[index].Key())
-			if err != nil {
-				return
-			}
-
+	for _, index := range sameA {
+		err := u._updateFriendRequest(onServer[index])
+		if err != nil {
+			NewError("0", "_updateFriend failed ", err.Error())
+			continue
 		}
 	}
-
-	if len(sameA) > 0 {
-		for _, index := range sameA {
-			//interface--->struct
-			if applicationListStruct, ok := applicationListOnServerInterface[index].Value().(applyUserInfo); ok {
-				err = u.updateApplicationList(applicationListStruct)
-				if err != nil {
-					sdkLog(err.Error())
-					return
-				}
-				jsonApplicationUserInfo, _ := json.Marshal(applicationListStruct)
-				if applicationListStruct.Flag == 1 {
-					_ = triggerCmdFriend()
-					u.friendListener.OnFriendApplicationListAccept(string(jsonApplicationUserInfo))
-				}
-				if applicationListStruct.Flag == -1 {
-					u.friendListener.OnFriendApplicationListReject(string(jsonApplicationUserInfo))
-				}
-			}
+	for _, index := range bInANot {
+		err := u._deleteFriendRequestBothUserID(onServer[index].FromUserID, onServer[index].ToUserID)
+		if err != nil {
+			NewError("0", "_deleteFriendRequestBothUserID failed ", err.Error())
+			continue
 		}
 	}
 }
@@ -477,7 +449,7 @@ func (u *UserRelated) syncFriendList() {
 		NewError("0", "getServerFriendList failed ", err.Error())
 		return
 	}
-	friendsInfoOnServer := transferToLocal(svrList)
+	friendsInfoOnServer := transferToLocalFriend(svrList)
 	friendsInfoOnLocal, err := u._getAllFriendList()
 	if err != nil {
 		NewError("0", "_getAllFriendList failed ", err.Error())

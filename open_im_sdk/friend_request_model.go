@@ -25,16 +25,16 @@ func (u *UserRelated) _updateFriendRequest(friendRequest *LocalFriendRequest) er
 	return wrap(t.Error, "updateFriendRequest failed")
 }
 
-func (u *UserRelated) _getRecvFriendApplication() ([]LocalFriendRequest, error) {
+func (u *UserRelated) _getRecvFriendApplication() ([]*LocalFriendRequest, error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	var friendRequestList []LocalFriendRequest
+	var friendRequestList []*LocalFriendRequest
 	return friendRequestList, wrap(u.imdb.Where("to_user_id = ?", u.loginUserID).Find(&friendRequestList).Error, "_getLocalFriendApplication failed")
 }
 
-func (u *UserRelated) _getSendFriendApplication() ([]LocalFriendRequest, error) {
+func (u *UserRelated) _getSendFriendApplication() ([]*LocalFriendRequest, error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	var friendRequestList []LocalFriendRequest
+	var friendRequestList []*LocalFriendRequest
 	return friendRequestList, wrap(u.imdb.Where("from_user_id = ?", u.loginUserID).Find(&friendRequestList).Error, "_getLocalFriendApplication failed")
 }

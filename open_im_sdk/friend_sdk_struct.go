@@ -10,7 +10,7 @@ type AddFriendParams struct {
 type AddFriendCallback struct{}
 
 type GetRecvFriendApplicationListParams struct{}
-type GetRecvFriendApplicationListCallback []LocalFriendRequest
+type GetRecvFriendApplicationListCallback []*LocalFriendRequest
 
 type GetSendFriendApplicationListParams struct{}
 type GetSendFriendApplicationListCallback []LocalFriendRequest
