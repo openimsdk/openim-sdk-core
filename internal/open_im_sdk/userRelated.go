@@ -16,10 +16,9 @@ import (
 type UserRelated struct {
 	ConversationCh chan utils.cmd2Value //cmd：
 
-	token          string
-	loginUserID    string
-	wsNotification map[string]chan utils.GeneralWsResp
-	wsMutex        sync.RWMutex
+	token       string
+	loginUserID string
+
 	utils.IMManager
 	friend.Friend
 	conversation_msg.ConversationListener

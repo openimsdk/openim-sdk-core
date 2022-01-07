@@ -266,28 +266,6 @@ func (u *open_im_sdk.UserRelated) doWsMsg(message []byte) {
 	return
 }
 
-func (u *open_im_sdk.UserRelated) notifyResp(wsResp utils.GeneralWsResp) {
-	utils.LogBegin(wsResp.OperationID)
-	u.wsMutex.Lock()
-	defer u.wsMutex.Unlock()
-
-	ch := u.GetCh(wsResp.MsgIncr)
-	if ch == nil {
-		utils.sdkLog("failed, no chan ", wsResp.MsgIncr, wsResp.OperationID)
-		return
-	}
-	utils.sdkLog("GetCh end, ", ch)
-
-	utils.sdkLog("notify ch start", wsResp.OperationID)
-
-	err := utils.notifyCh(ch, wsResp, 1)
-	if err != nil {
-		utils.sdkLog("notifyCh failed, ", err.Error(), ch, wsResp)
-	}
-	utils.sdkLog("notify ch end", wsResp.OperationID)
-	utils.LogSReturn(nil)
-}
-
 func (u *open_im_sdk.UserRelated) doWSGetNewestSeq(wsResp utils.GeneralWsResp) {
 	utils.LogBegin(wsResp.OperationID)
 	u.notifyResp(wsResp)

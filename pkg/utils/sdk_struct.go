@@ -212,14 +212,14 @@ type WsSubMsg struct {
 	ClientMsgID string `json:"clientMsgID"`
 }
 
-type GeneralWsResp struct {
-	ReqIdentifier int    `json:"reqIdentifier"`
-	ErrCode       int    `json:"errCode"`
-	ErrMsg        string `json:"errMsg"`
-	MsgIncr       string `json:"msgIncr"`
-	OperationID   string `json:"operationID"`
-	Data          []byte `json:"data"`
-}
+//type GeneralWsResp struct {
+//	ReqIdentifier int    `json:"reqIdentifier"`
+//	ErrCode       int    `json:"errCode"`
+//	ErrMsg        string `json:"errMsg"`
+//	MsgIncr       string `json:"msgIncr"`
+//	OperationID   string `json:"operationID"`
+//	Data          []byte `json:"data"`
+//}
 
 type GeneralWsReq struct {
 	ReqIdentifier int32  `json:"reqIdentifier"`

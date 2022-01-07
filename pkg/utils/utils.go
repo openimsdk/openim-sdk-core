@@ -57,54 +57,8 @@ func GetCurrentTimestampByMill() int64 {
 }
 
 //Get the current timestamp by Nano
-func getCurrentTimestampByNano() int64 {
+func GetCurrentTimestampByNano() int64 {
 	return time.Now().UnixNano()
-}
-
-//wsNotification map[string]chan GeneralWsResp
-
-func (u *open_im_sdk.UserRelated) AddCh() (string, chan open_im_sdk.GeneralWsResp) {
-	LogBegin()
-	u.wsMutex.Lock()
-	defer u.wsMutex.Unlock()
-	msgIncr := u.GenMsgIncr()
-	sdkLog("msgIncr: ", msgIncr)
-	ch := make(chan GeneralWsResp, 1)
-	_, ok := u.wsNotification[msgIncr]
-	if ok {
-		sdkLog("AddCh exist")
-	}
-	u.wsNotification[msgIncr] = ch
-	LogSReturn(msgIncr, ch)
-	LogBegin(msgIncr, ch)
-	return msgIncr, ch
-}
-
-func (u *open_im_sdk.UserRelated) GetCh(msgIncr string) chan open_im_sdk.GeneralWsResp {
-	LogBegin(msgIncr)
-	//u.wsMutex.RLock()
-	//	defer u.wsMutex.RUnlock()
-	ch, ok := u.wsNotification[msgIncr]
-	if ok {
-		sdkLog("GetCh ok")
-		LogSReturn(ch)
-		return ch
-	}
-	sdkLog("GetCh nil")
-	LogFReturn(nil)
-	return nil
-}
-
-func (u *open_im_sdk.UserRelated) DelCh(msgIncr string) {
-	//	LogBegin(msgIncr)
-	u.wsMutex.Lock()
-	defer u.wsMutex.Unlock()
-	ch, ok := u.wsNotification[msgIncr]
-	if ok {
-		close(ch)
-		delete(u.wsNotification, msgIncr)
-	}
-	//	LogSReturn()
 }
 
 func (u *open_im_sdk.UserRelated) sendPingMsg() error {
@@ -177,22 +131,6 @@ func (u *open_im_sdk.UserRelated) WriteMsg(msg open_im_sdk.GeneralWsReq) (error,
 	return u.writeBinaryMsg(msg)
 }
 
-func notifyCh(ch chan open_im_sdk.GeneralWsResp, value open_im_sdk.GeneralWsResp, timeout int64) error {
-	var flag = 0
-	select {
-	case ch <- value:
-		flag = 1
-	case <-time.After(time.Second * time.Duration(timeout)):
-		flag = 2
-	}
-	if flag == 1 {
-		return nil
-	} else {
-		sdkLog("send cmd timeout, ", timeout, value)
-		return errors.New("send cmd timeout")
-	}
-}
-
 func sendCmd(ch chan open_im_sdk.cmd2Value, value open_im_sdk.cmd2Value, timeout int64) error {
 	var flag = 0
 	select {
@@ -207,10 +145,6 @@ func sendCmd(ch chan open_im_sdk.cmd2Value, value open_im_sdk.cmd2Value, timeout
 		sdkLog("send cmd timeout, ", timeout, value)
 		return errors.New("send cmd timeout")
 	}
-}
-
-func GenMsgIncr(userID string) string {
-	return userID + "_" + int64ToString(getCurrentTimestampByNano())
 }
 
 func structToJsonString(param interface{}) string {
@@ -239,10 +173,10 @@ func UnixSecondToTime(second int64) time.Time {
 func IntToString(i int) string {
 	return strconv.FormatInt(int64(i), 10)
 }
-func int32ToString(i int32) string {
+func Int32ToString(i int32) string {
 	return strconv.FormatInt(int64(i), 10)
 }
-func int64ToString(i int64) string {
+func Int64ToString(i int64) string {
 	return strconv.FormatInt(i, 10)
 }
 func StringToInt64(i string) int64 {
@@ -250,7 +184,7 @@ func StringToInt64(i string) int64 {
 	return j
 }
 
-func stringToInt(i string) int {
+func StringToInt(i string) int {
 	j, _ := strconv.Atoi(i)
 	return j
 }
