@@ -110,46 +110,6 @@ func (u *UserRelated) initListenerCh() {
 	u.receiveMessageOpt = make(map[string]int32, 1000)
 }
 
-type UserRelated struct {
-	ConversationCh chan utils.cmd2Value //cmd：
-
-	SvrConf        utils.IMConfig
-	token          string
-	loginUserID    string
-	wsNotification map[string]chan utils.GeneralWsResp
-	wsMutex        sync.RWMutex
-	utils.IMManager
-	friend.FriendListener
-	conversation_msg.ConversationListener
-	group.groupListener
-
-	db       *sql.DB
-	imdb     *gorm.DB
-	validate *validator.Validate
-
-	mRWMutex   sync.RWMutex
-	stateMutex sync.Mutex
-
-	//Global minimum seq lock
-	minSeqSvr        int64
-	minSeqSvrRWMutex sync.RWMutex
-	//Global cache seq map lock
-	seqMsg      map[int32]*server_api_params.MsgData
-	seqMsgMutex sync.RWMutex
-
-	//	receiveMessageOpt sync.Map
-	//Global message not disturb cache lock
-	receiveMessageOpt      map[string]int32
-	receiveMessageOptMutex sync.RWMutex
-}
-
-var UserSDKRwLock sync.RWMutex
-var UserRouterMap map[string]*UserRelated
-var SvrConf utils.IMConfig
-var SdkLogFlag int32
-var hearbeatInterval int32 = 5
-var userForSDK *UserRelated
-
 const (
 	CmdFriend                     = "001"
 	CmdBlackList                  = "002"
@@ -366,3 +326,10 @@ func (e *ErrInfo) Error() string {
 }
 
 const SuccessCallbackDefault = ""
+
+var UserSDKRwLock sync.RWMutex
+var UserRouterMap map[string]*UserRelated
+var SvrConf utils.IMConfig
+var SdkLogFlag int32
+var hearbeatInterval int32 = 5
+var userForSDK *UserRelated

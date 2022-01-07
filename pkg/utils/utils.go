@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"open_im_sdk/internal/controller/init"
+	"open_im_sdk/internal/open_im_sdk"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
 	log2 "open_im_sdk/pkg/log"
@@ -23,7 +24,6 @@ import (
 	"os"
 	"path"
 
-	sLog "log"
 	"math/rand"
 	"runtime"
 	"strconv"
@@ -209,8 +209,8 @@ func sendCmd(ch chan open_im_sdk.cmd2Value, value open_im_sdk.cmd2Value, timeout
 	}
 }
 
-func (u *open_im_sdk.UserRelated) GenMsgIncr() string {
-	return u.loginUserID + "_" + int64ToString(getCurrentTimestampByNano())
+func GenMsgIncr(userID string) string {
+	return userID + "_" + int64ToString(getCurrentTimestampByNano())
 }
 
 func structToJsonString(param interface{}) string {
@@ -253,93 +253,6 @@ func StringToInt64(i string) int64 {
 func stringToInt(i string) int {
 	j, _ := strconv.Atoi(i)
 	return j
-}
-
-func checkDiff(a []open_im_sdk.diff, b []open_im_sdk.diff) (aInBNot, bInANot, sameA, sameB []int) {
-	//to map
-	mapA := make(map[string]open_im_sdk.diff)
-	for _, v := range a {
-		mapA[v.Key()] = v
-	}
-	mapB := make(map[string]open_im_sdk.diff)
-	for _, v := range b {
-		mapB[v.Key()] = v
-	}
-
-	aInBNot = make([]int, 0)
-	bInANot = make([]int, 0)
-	sameA = make([]int, 0)
-	sameB = make([]int, 0)
-
-	//for a
-	for i, v := range a {
-		ia, ok := mapB[v.Key()]
-		if !ok {
-			aInBNot = append(aInBNot, i)
-		} else {
-			if ia.Value() != v.Value() {
-				sameA = append(sameA, i)
-			}
-		}
-	}
-
-	//for b
-	for i, v := range b {
-		ib, ok := mapA[v.Key()]
-		if !ok {
-			bInANot = append(bInANot, i)
-		} else {
-			if ib.Value() != v.Value() {
-				sameB = append(sameB, i)
-			}
-		}
-	}
-	return aInBNot, bInANot, sameA, sameB
-}
-
-func (fr *open_im_sdk.FriendInfo) Key() string {
-	return fr.FriendUser.UserID
-}
-func (fr *open_im_sdk.FriendInfo) Value() string {
-	return fr.OwnerUserID + fr.Remark + fr.Ex + fr.OperatorUserID +
-		fr.FriendUser.UserID + fr.FriendUser.Nickname + fr.FriendUser.FaceUrl + fr.FriendUser.Email + fr.FriendUser.Ex
-}
-
-func (us open_im_sdk.userInfo) Key() string {
-	return us.Uid
-}
-func (us open_im_sdk.userInfo) Value() interface{} {
-	return us
-}
-
-func (ap open_im_sdk.applyUserInfo) Key() string {
-	return ap.Uid
-}
-
-func (g open_im_sdk.groupInfo) Key() string {
-	return g.GroupId
-}
-
-func (g open_im_sdk.groupInfo) Value() interface{} {
-	return g
-}
-func (ap open_im_sdk.applyUserInfo) Value() interface{} {
-	return ap
-}
-
-func (g open_im_sdk.groupMemberFullInfo) Key() string {
-	return g.UserId
-}
-
-func (g open_im_sdk.groupMemberFullInfo) Value() interface{} {
-	return g
-}
-func (g open_im_sdk.GroupReqListInfo) Key() string {
-	return g.GroupID + g.FromUserID + g.ToUserID
-}
-
-func (g open_im_sdk.GroupReqListInfo) Value() interface{} {
-	return g
 }
 
 func GetConversationIDBySessionType(sourceID string, sessionType int) string {
@@ -486,14 +399,6 @@ func sdkLog(v ...interface{}) {
 
 type LogInfo struct {
 	Info string `json:"info"`
-}
-
-func log(info string) error {
-	if constant.SdkLogFlag == 1 {
-		return nil
-	}
-	sdkLog(info)
-	return nil
 }
 
 func copyFile(srcName string, dstName string) (written int64, err error) {

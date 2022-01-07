@@ -6,16 +6,6 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 )
 
-type cmd2Value struct {
-	Cmd   string
-	Value interface{}
-}
-
-type diff interface {
-	Key() string
-	Value() interface{}
-}
-
 //fixme---------------UiParam-->client---------------
 
 type paramsUiAddFriend struct {

@@ -6,7 +6,6 @@ import (
 	"open_im_sdk/internal/controller/friend"
 	"open_im_sdk/internal/controller/group"
 	"open_im_sdk/internal/controller/init"
-	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 )
