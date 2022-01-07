@@ -4,22 +4,22 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func (u *DataBase) _getMinSeq() (int32, error) {
-	u.mRWMutex.RLock()
-	defer u.mRWMutex.RUnlock()
+func (d *DataBase) GetMinSeq() (int32, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var seqData LocalSeqData
-	return seqData.Seq, utils.Wrap(u.conn.First(&seqData).Error, "_getMinSeq failed")
+	return seqData.Seq, utils.Wrap(d.conn.First(&seqData).Error, "GetMinSeq failed")
 }
 
-func (u *DataBase) _setMinSeq(seq int32) error {
-	u.mRWMutex.Lock()
-	defer u.mRWMutex.Unlock()
+func (d *DataBase) SetMinSeq(seq int32) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 
-	seqData := LocalSeqData{UserID: u.loginUserID, Seq: seq}
-	t := u.conn.Updates(&seqData)
+	seqData := LocalSeqData{UserID: d.loginUserID, Seq: seq}
+	t := d.conn.Updates(&seqData)
 	if t.RowsAffected == 0 {
-		return utils.Wrap(u.conn.Create(seqData).Error, "_setMinSeq failed")
+		return utils.Wrap(d.conn.Create(seqData).Error, "_setMinSeq failed")
 	} else {
-		return utils.Wrap(t.Error, "_updateLoginUser failed")
+		return utils.Wrap(t.Error, "UpdateLoginUser failed")
 	}
 }

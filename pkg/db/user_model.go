@@ -5,25 +5,25 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func (u *open_im_sdk.UserRelated) _getLoginUser() (*LocalUser, error) {
-	u.mRWMutex.RLock()
-	defer u.mRWMutex.RUnlock()
+func (d *DataBase) GetLoginUser() (*LocalUser, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var user LocalUser
-	return &user, utils.wrap(u.imdb.First(&user).Error, "_getLoginUserInfo failed")
+	return &user, utils.Wrap(d.conn.First(&user).Error, "GetLoginUserInfo failed")
 }
 
-func (u *open_im_sdk.UserRelated) _updateLoginUser(user *LocalUser) error {
-	u.mRWMutex.Lock()
-	defer u.mRWMutex.Unlock()
-	t := u.imdb.Updates(user)
+func (d *DataBase) UpdateLoginUser(user *LocalUser) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	t := d.conn.Updates(user)
 	if t.RowsAffected == 0 {
-		return utils.wrap(errors.New("RowsAffected == 0"), "no update")
+		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
-	return utils.wrap(t.Error, "_updateLoginUser failed")
+	return utils.Wrap(t.Error, "UpdateLoginUser failed")
 }
 
-func (u *open_im_sdk.UserRelated) _insertLoginUser(user *LocalUser) error {
-	u.mRWMutex.Lock()
-	defer u.mRWMutex.Unlock()
-	return utils.wrap(u.imdb.Create(user).Error, "_insertLoginUser failed")
+func (d *DataBase) InsertLoginUser(user *LocalUser) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.Create(user).Error, "InsertLoginUser failed")
 }
