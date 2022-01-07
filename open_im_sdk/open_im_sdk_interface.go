@@ -2,6 +2,7 @@ package open_im_sdk
 
 import (
 	"encoding/json"
+	"open_im_sdk/open_im_sdk/utils"
 )
 
 /*
@@ -29,14 +30,14 @@ func SdkVersion() string {
 func InitSDK(config string, cb IMSDKListener) bool {
 	var sc IMConfig
 	if err := json.Unmarshal([]byte(config), &sc); err != nil {
-		sdkLog("initSDK failed, config: ", sc, err.Error())
+		utils.sdkLog("initSDK failed, config: ", sc, err.Error())
 		return false
 	}
-	sdkLog("InitSDK, config ", config, "version: ", SdkVersion())
+	utils.sdkLog("InitSDK, config ", config, "version: ", SdkVersion())
 	if userForSDK != nil {
-		sdkLog("Logout first ")
+		utils.sdkLog("Logout first ")
 		userForSDK.Logout(nil)
-		sdkLog("unInit first ")
+		utils.sdkLog("unInit first ")
 		userForSDK.UnInitSDK()
 	}
 	userForSDK = new(UserRelated)
@@ -59,7 +60,7 @@ func SetHearbeatInterval(interval int32) {
 
 func UnInitSDK() {
 	if userForSDK == nil {
-		sdkLog("userForSDK nil")
+		utils.sdkLog("userForSDK nil")
 		return
 	}
 	userForSDK.unInitSDK()
@@ -67,7 +68,7 @@ func UnInitSDK() {
 
 func Login(uid, tk string, callback Base) {
 	if userForSDK == nil {
-		sdkLog("userForSDK nil")
+		utils.sdkLog("userForSDK nil")
 		if callback != nil {
 			callback.OnError(ErrCodeInitLogin, "userForSDK nil, initSdk first ")
 		}
@@ -78,7 +79,7 @@ func Login(uid, tk string, callback Base) {
 
 func Logout(callback Base) {
 	if userForSDK == nil {
-		sdkLog("userForSDK nil")
+		utils.sdkLog("userForSDK nil")
 		if callback != nil {
 			callback.OnError(ErrCodeInitLogin, "userForSDK nil, initSdk first ")
 		}

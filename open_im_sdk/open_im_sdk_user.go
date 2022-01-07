@@ -2,6 +2,7 @@ package open_im_sdk
 
 import (
 	"encoding/json"
+	"open_im_sdk/open_im_sdk/utils"
 )
 
 func (u *UserRelated) GetUsersInfo(uIDList string, cb Base) {
@@ -12,7 +13,7 @@ func (u *UserRelated) GetUsersInfo(uIDList string, cb Base) {
 			cb.OnError(ErrCodeUserInfo, err.Error())
 			return
 		}
-		resp, err := post2Api(getUserInfoRouter, paramsGetUserInfo{UidList: uidList, OperationID: operationIDGenerator()}, u.token)
+		resp, err := utils.post2Api(getUserInfoRouter, paramsGetUserInfo{UidList: uidList, OperationID: utils.operationIDGenerator()}, u.token)
 		if err != nil {
 			cb.OnError(ErrCodeUserInfo, err.Error())
 			return
