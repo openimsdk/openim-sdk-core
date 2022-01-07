@@ -7,6 +7,7 @@ import (
 	"open_im_sdk/internal/controller/conversation_msg"
 	"open_im_sdk/internal/controller/friend"
 	"open_im_sdk/internal/controller/group"
+	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"sync"
@@ -22,10 +23,9 @@ type UserRelated struct {
 	utils.IMManager
 	friend.Friend
 	conversation_msg.ConversationListener
-	group.groupListener
+	group.Group
 
-	db       *sql.DB
-	imdb     *gorm.DB
+	imdb     *db.DataBase
 	validate *validator.Validate
 
 	mRWMutex   sync.RWMutex

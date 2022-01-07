@@ -833,7 +833,7 @@ func (u *open_im_sdk.UserRelated) getGroupInfoByGroupId(groupId string) (open_im
 
 }
 
-type groupListener struct {
+type Group struct {
 	listener open_im_sdk.OnGroupListener
 }
 
