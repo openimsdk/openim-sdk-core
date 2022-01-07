@@ -35,7 +35,7 @@ func operationIDGenerator() string {
 	return strconv.FormatInt(time.Now().UnixNano()+int64(rand.Uint32()), 10)
 }
 func getMsgID(sendID string) string {
-	t := Int64ToString(getCurrentTimestampByNano())
+	t := Int64ToString(GetCurrentTimestampByNano())
 	return Md5(t + sendID + Int64ToString(rand.Int63n(GetCurrentTimestampByNano())))
 }
 func Md5(s string) string {
@@ -59,22 +59,6 @@ func GetCurrentTimestampByMill() int64 {
 //Get the current timestamp by Nano
 func GetCurrentTimestampByNano() int64 {
 	return time.Now().UnixNano()
-}
-
-func sendCmd(ch chan open_im_sdk.cmd2Value, value open_im_sdk.cmd2Value, timeout int64) error {
-	var flag = 0
-	select {
-	case ch <- value:
-		flag = 1
-	case <-time.After(time.Second * time.Duration(timeout)):
-		flag = 2
-	}
-	if flag == 1 {
-		return nil
-	} else {
-		sdkLog("send cmd timeout, ", timeout, value)
-		return errors.New("send cmd timeout")
-	}
 }
 
 func structToJsonString(param interface{}) string {

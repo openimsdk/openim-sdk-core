@@ -3,6 +3,7 @@ package conversation_msg
 import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
+	"time"
 )
 
 func triggerCmdFriend() error {
@@ -101,5 +102,21 @@ func doListener(Li goroutine) {
 			utils.sdkLog("doListener work.")
 			Li.work(cmd)
 		}
+	}
+}
+
+func sendCmd(ch chan open_im_sdk.cmd2Value, value open_im_sdk.cmd2Value, timeout int64) error {
+	var flag = 0
+	select {
+	case ch <- value:
+		flag = 1
+	case <-time.After(time.Second * time.Duration(timeout)):
+		flag = 2
+	}
+	if flag == 1 {
+		return nil
+	} else {
+		sdkLog("send cmd timeout, ", timeout, value)
+		return errors.New("send cmd timeout")
 	}
 }
