@@ -3,39 +3,46 @@ package commom
 import (
 	"encoding/json"
 	"errors"
+	"github.com/go-playground/validator/v10"
 	"open_im_sdk/pkg/constant"
-	log2 "open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
+	"open_im_sdk/pkg/utils"
 	"runtime"
 )
 
+var validate *validator.Validate
+
+func init() {
+	validate = validator.New()
+}
 func CheckErr(callback Base, err error, operationID string) {
 	if err != nil {
 		if callback != nil {
-			log2.NewError(operationID, "checkErr ", err, constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
+			log.NewError(operationID, "checkErr ", err, constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
 			callback.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
 			runtime.Goexit()
 		}
 	}
 }
 
-func checkErrAndResp(callback Base, err error, resp []byte, operationID string) *server_api_params.CommDataResp {
+func CheckErrAndResp(callback Base, err error, resp []byte, operationID string) *server_api_params.CommDataResp {
 	CheckErr(callback, err, operationID)
-	return checkResp(callback, resp, operationID)
+	return CheckResp(callback, resp, operationID)
 }
 
-func checkResp(callback Base, resp []byte, operationID string) *server_api_params.CommDataResp {
+func CheckResp(callback Base, resp []byte, operationID string) *server_api_params.CommDataResp {
 	var c server_api_params.CommDataResp
 	err := json.Unmarshal(resp, &c)
 	if err != nil {
-		log2.NewError(operationID, "Unmarshal ", err)
+		log.NewError(operationID, "Unmarshal ", err)
 		callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
 		runtime.Goexit()
 		return nil
 	}
 
 	if c.ErrCode != 0 {
-		log2.NewError(operationID, "errCode ", c.ErrCode, "errMsg ", c.ErrMsg)
+		log.NewError(operationID, "errCode ", c.ErrCode, "errMsg ", c.ErrMsg)
 		callback.OnError(c.ErrCode, c.ErrMsg)
 		runtime.Goexit()
 		return nil
@@ -43,21 +50,56 @@ func checkResp(callback Base, resp []byte, operationID string) *server_api_param
 	return &c
 }
 
-func checkErrAndRespReturn(err error, resp []byte, operationID string) (*server_api_params.CommDataResp, error) {
+func CheckErrAndRespReturn(err error, resp []byte, operationID string) (*server_api_params.CommDataResp, error) {
 	if err != nil {
-		log2.NewError(operationID, "checkErr ", err)
+		log.NewError(operationID, "checkErr ", err)
 		return nil, err
 	}
 	var c server_api_params.CommDataResp
 	err = json.Unmarshal(resp, &c)
 	if err != nil {
-		log2.NewError(operationID, "Unmarshal ", err)
+		log.NewError(operationID, "Unmarshal ", err)
 		return nil, err
 	}
 
 	if c.ErrCode != 0 {
-		log2.NewError(operationID, "errCode ", c.ErrCode, "errMsg ", c.ErrMsg)
+		log.NewError(operationID, "errCode ", c.ErrCode, "errMsg ", c.ErrMsg)
 		return nil, errors.New(c.ErrMsg)
 	}
 	return &c, nil
+}
+func JsonUnmarshalAndArgsValidate(s string, args interface{}, callback Base, operationID string) error {
+	err := json.Unmarshal([]byte(s), args)
+	if err != nil {
+		if callback != nil {
+			log.NewError(operationID, "Unmarshal failed ", err.Error(), s)
+			callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
+			runtime.Goexit()
+		} else {
+			return utils.Wrap(err, "json Unmarshal failed")
+		}
+	}
+	err = validate.Struct(args)
+	if err != nil {
+		if callback != nil {
+			log.NewError(operationID, "validate failed ", err.Error(), s)
+			callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
+			runtime.Goexit()
+		}
+	}
+	return utils.Wrap(err, "args check failed")
+}
+
+func JsonUnmarshal(s string, args interface{}, callback Base, operationID string) error {
+	err := json.Unmarshal([]byte(s), args)
+	if err != nil {
+		if callback != nil {
+			log.NewError(operationID, "Unmarshal failed ", err.Error(), s)
+			callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
+			runtime.Goexit()
+		} else {
+			return utils.Wrap(err, "json Unmarshal failed")
+		}
+	}
+	return nil
 }
