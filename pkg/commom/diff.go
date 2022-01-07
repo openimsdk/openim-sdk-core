@@ -4,6 +4,7 @@ import (
 	"github.com/jinzhu/copier"
 	"open_im_sdk/pkg/db"
 	log2 "open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/server_api_params"
 	"reflect"
 )
 
@@ -43,24 +44,24 @@ func CompFields(a interface{}, b interface{}, fields ...string) bool {
 	return false
 }
 
-func friendCopyToLocal(localFriend *open_im_sdk.LocalFriend, apiFriend *open_im_sdk.FriendInfo) {
+func friendCopyToLocal(localFriend *db.LocalFriend, apiFriend *server_api_params.FriendInfo) {
 	copier.Copy(localFriend, apiFriend)
 	copier.Copy(localFriend, apiFriend.FriendUser)
 	localFriend.FriendUserID = apiFriend.FriendUser.UserID
 }
 
-func friendRequestCopyToLocal(localFriendRequest *open_im_sdk.LocalFriendRequest, apiFriendRequest *open_im_sdk.FriendRequest) {
+func friendRequestCopyToLocal(localFriendRequest *db.LocalFriendRequest, apiFriendRequest *server_api_params.FriendRequest) {
 	copier.Copy(localFriendRequest, apiFriendRequest)
 
 }
 
-func blackCopyToLocal(localBlack *open_im_sdk.LocalBlack, apiBlack *open_im_sdk.PublicUserInfo, ownerUserID string) {
+func blackCopyToLocal(localBlack *db.LocalBlack, apiBlack *server_api_params.PublicUserInfo, ownerUserID string) {
 	copier.Copy(localBlack, apiBlack)
 	localBlack.OwnerUserID = ownerUserID
 	localBlack.BlockUserID = apiBlack.UserID
 }
 
-func transferToLocalFriend(apiFriendList []*open_im_sdk.FriendInfo) []*open_im_sdk.LocalFriend {
+func transferToLocalFriend(apiFriendList []*server_api_params.FriendInfo) []*db.LocalFriend {
 	localFriendList := make([]*db.LocalFriend, 0)
 	for _, v := range apiFriendList {
 		var localFriend db.LocalFriend
@@ -112,7 +113,7 @@ func checkListDiff(a []open_im_sdk.diff, b []open_im_sdk.diff) (aInBNot, bInANot
 	return aInBNot, bInANot, sameA, sameB
 }
 
-func transferToLocalFriendRequest(apiFriendList []*open_im_sdk.FriendRequest) []*open_im_sdk.LocalFriendRequest {
+func transferToLocalFriendRequest(apiFriendList []*server_api_params.FriendRequest) []*db.LocalFriendRequest {
 	localFriendList := make([]*db.LocalFriendRequest, 0)
 	for _, v := range apiFriendList {
 		var localFriendRequest db.LocalFriendRequest
@@ -125,7 +126,7 @@ func transferToLocalFriendRequest(apiFriendList []*open_im_sdk.FriendRequest) []
 	return localFriendList
 }
 
-func transferToLocalBlack(apiBlackList []*open_im_sdk.PublicUserInfo, ownerUserID string) []*open_im_sdk.LocalBlack {
+func transferToLocalBlack(apiBlackList []*server_api_params.PublicUserInfo, ownerUserID string) []*db.LocalBlack {
 	localBlackList := make([]*db.LocalBlack, 0)
 	for _, v := range apiBlackList {
 		var localBlack db.LocalBlack
