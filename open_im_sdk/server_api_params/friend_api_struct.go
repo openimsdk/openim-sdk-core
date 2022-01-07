@@ -1,4 +1,6 @@
-package open_im_sdk
+package server_api_params
+
+import "open_im_sdk/open_im_sdk"
 
 type ParamsCommFriend struct {
 	OperationID string `json:"operationID" binding:"required"`
@@ -57,7 +59,7 @@ type GetBlackListReq struct {
 }
 type GetBlackListResp struct {
 	CommResp
-	BlackUserInfoList []*PublicUserInfo
+	BlackUserInfoList []*open_im_sdk.PublicUserInfo
 	Data              []map[string]interface{} `json:"data"`
 }
 
@@ -99,7 +101,7 @@ type GetFriendsInfoReq struct {
 }
 type GetFriendsInfoResp struct {
 	CommResp
-	FriendInfoList []*FriendInfo
+	FriendInfoList []*open_im_sdk.FriendInfo
 	Data           []map[string]interface{} `json:"data"`
 }
 
@@ -109,7 +111,7 @@ type GetFriendListReq struct {
 }
 type GetFriendListResp struct {
 	CommResp
-	FriendInfoList []*FriendInfo
+	FriendInfoList []*open_im_sdk.FriendInfo
 	Data           []map[string]interface{} `json:"data"`
 }
 
@@ -119,7 +121,7 @@ type GetFriendApplyListReq struct {
 }
 type GetFriendApplyListResp struct {
 	CommResp
-	FriendRequestList []*FriendRequest
+	FriendRequestList []*open_im_sdk.FriendRequest
 	Data              []map[string]interface{} `json:"data"`
 }
 
@@ -129,6 +131,6 @@ type GetSelfApplyListReq struct {
 }
 type GetSelfApplyListResp struct {
 	CommResp
-	FriendRequestList []*FriendRequest
+	FriendRequestList []*open_im_sdk.FriendRequest
 	Data              []map[string]interface{} `json:"data"`
 }

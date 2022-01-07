@@ -7,6 +7,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"net/http"
 	"open_im_sdk/open_im_sdk/log"
+	"open_im_sdk/open_im_sdk/server_api_params"
 	"open_im_sdk/open_im_sdk/utils"
 
 	"github.com/gorilla/websocket"
@@ -1114,13 +1115,13 @@ func (u *UserRelated) getUserNewestSeq() (int64, int64, error) {
 }
 
 func (u *UserRelated) getServerUserInfo() (*UserInfo, error) {
-	apiReq := GetUserInfoReq{OperationID: utils.operationIDGenerator(), UserIDList: []string{u.loginUserID}}
+	apiReq := server_api_params.GetUserInfoReq{OperationID: utils.operationIDGenerator(), UserIDList: []string{u.loginUserID}}
 	resp, err := utils.post2Api(getUserInfoRouter, apiReq, u.token)
 	commData, err := utils.checkErrAndRespReturn(err, resp, apiReq.OperationID)
 	if err != nil {
 		return nil, utils.wrap(err, apiReq.OperationID)
 	}
-	realData := GetUserInfoResp{}
+	realData := server_api_params.GetUserInfoResp{}
 	err = mapstructure.Decode(commData.Data, &realData.UserInfoList)
 	if err != nil {
 		log.NewError(apiReq.OperationID, "Decode failed ", err.Error())

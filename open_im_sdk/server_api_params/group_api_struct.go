@@ -1,4 +1,6 @@
-package open_im_sdk
+package server_api_params
+
+import "open_im_sdk/open_im_sdk"
 
 type CommResp struct {
 	ErrCode int32  `json:"errCode"`
@@ -27,8 +29,8 @@ type GetGroupMembersInfoReq struct {
 }
 type GetGroupMembersInfoResp struct {
 	CommResp
-	MemberList []*GroupMemberFullInfo   `json:"-"`
-	Data       []map[string]interface{} `json:"data"`
+	MemberList []*open_im_sdk.GroupMemberFullInfo `json:"-"`
+	Data       []map[string]interface{}           `json:"data"`
 }
 
 type InviteUserToGroupReq struct {
@@ -48,7 +50,7 @@ type GetJoinedGroupListReq struct {
 }
 type GetJoinedGroupListResp struct {
 	CommResp
-	GroupInfoList []*GroupInfo
+	GroupInfoList []*open_im_sdk.GroupInfo
 	Data          []map[string]interface{} `json:"data"`
 }
 
@@ -61,7 +63,7 @@ type GetGroupMemberListReq struct {
 type GetGroupMemberListResp struct {
 	CommResp
 	NextSeq    int32 `json:"nextSeq"`
-	MemberList []*GroupMemberFullInfo
+	MemberList []*open_im_sdk.GroupMemberFullInfo
 	Data       []map[string]interface{} `json:"data"`
 }
 
@@ -71,8 +73,8 @@ type GetGroupAllMemberReq struct {
 }
 type GetGroupAllMemberResp struct {
 	CommResp
-	MemberList []*GroupMemberFullInfo   `json:"-"`
-	Data       []map[string]interface{} `json:"data"`
+	MemberList []*open_im_sdk.GroupMemberFullInfo `json:"-"`
+	Data       []map[string]interface{}           `json:"data"`
 }
 
 type CreateGroupReq struct {
@@ -84,7 +86,7 @@ type CreateGroupReq struct {
 }
 type CreateGroupResp struct {
 	CommResp
-	GroupInfo GroupInfo
+	GroupInfo open_im_sdk.GroupInfo
 	Data      map[string]interface{} `json:"data"`
 }
 
@@ -94,7 +96,7 @@ type GetGroupApplicationListReq struct {
 }
 type GetGroupApplicationListResp struct {
 	CommResp
-	GroupRequestList []*GroupRequest
+	GroupRequestList []*open_im_sdk.GroupRequest
 	Data             []map[string]interface{} `json:"data"`
 }
 
@@ -104,7 +106,7 @@ type GetGroupInfoReq struct {
 }
 type GetGroupInfoResp struct {
 	CommResp
-	GroupInfoList []*GroupInfo
+	GroupInfoList []*open_im_sdk.GroupInfo
 	Data          []map[string]interface{} `json:"data"`
 }
 
@@ -137,7 +139,7 @@ type QuitGroupResp struct {
 }
 
 type SetGroupInfoReq struct {
-	LocalGroup
+	open_im_sdk.LocalGroup
 	OperationID string `json:"operationID" binding:"required"`
 }
 type SetGroupInfoResp struct {

@@ -6,6 +6,7 @@ import (
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/open_im_sdk/log"
 	"open_im_sdk/open_im_sdk/sdk_params_callback"
+	"open_im_sdk/open_im_sdk/server_api_params"
 	"open_im_sdk/open_im_sdk/utils"
 )
 
@@ -36,9 +37,9 @@ func (u *open_im_sdk.UserRelated) getDesignatedFriendsInfo(callback open_im_sdk.
 	return localFriendList
 }
 
-func (u *open_im_sdk.UserRelated) addFriend(callback open_im_sdk.Base, addFriendParams sdk_params_callback.AddFriendParams, operationID string) *open_im_sdk.CommDataResp {
+func (u *open_im_sdk.UserRelated) addFriend(callback open_im_sdk.Base, addFriendParams sdk_params_callback.AddFriendParams, operationID string) *server_api_params.CommDataResp {
 	log.NewInfo(operationID, "addFriend args: ", addFriendParams)
-	apiReq := open_im_sdk.AddFriendReq{}
+	apiReq := server_api_params.AddFriendReq{}
 	apiReq.ToUserID = addFriendParams.ToUserID
 	apiReq.FromUserID = u.loginUserID
 	apiReq.ReqMsg = addFriendParams.ReqMsg
@@ -59,8 +60,8 @@ func (u *open_im_sdk.UserRelated) getSendFriendApplicationList(callback open_im_
 	return nil
 }
 
-func (u *open_im_sdk.UserRelated) processFriendApplication(callback open_im_sdk.Base, params sdk_params_callback.ProcessFriendApplicationParams, handleResult int32, operationID string) *open_im_sdk.CommDataResp {
-	apiReq := open_im_sdk.AddFriendResponseReq{}
+func (u *open_im_sdk.UserRelated) processFriendApplication(callback open_im_sdk.Base, params sdk_params_callback.ProcessFriendApplicationParams, handleResult int32, operationID string) *server_api_params.CommDataResp {
+	apiReq := server_api_params.AddFriendResponseReq{}
 	apiReq.FromUserID = u.loginUserID
 	apiReq.ToUserID = params.ToUserID
 	apiReq.Flag = handleResult
@@ -79,7 +80,7 @@ func (u *open_im_sdk.UserRelated) checkFriend(callback open_im_sdk.Base, userIDL
 	utils.checkErr(callback, err, operationID)
 	var checkFriendCallback sdk_params_callback.CheckFriendCallback
 	for _, v := range userIDList {
-		var r open_im_sdk.UserIDResult
+		var r server_api_params.UserIDResult
 		isBlack := false
 		isFriend := false
 		for _, b := range blackList {
@@ -105,8 +106,8 @@ func (u *open_im_sdk.UserRelated) checkFriend(callback open_im_sdk.Base, userIDL
 	return checkFriendCallback
 }
 
-func (u *open_im_sdk.UserRelated) deleteFriend(FriendUserID string, callback open_im_sdk.Base, operationID string) *open_im_sdk.CommDataResp {
-	apiReq := open_im_sdk.DeleteFriendReq{}
+func (u *open_im_sdk.UserRelated) deleteFriend(FriendUserID string, callback open_im_sdk.Base, operationID string) *server_api_params.CommDataResp {
+	apiReq := server_api_params.DeleteFriendReq{}
 	apiReq.ToUserID = FriendUserID
 	apiReq.FromUserID = u.loginUserID
 	apiReq.OperationID = operationID
@@ -116,8 +117,8 @@ func (u *open_im_sdk.UserRelated) deleteFriend(FriendUserID string, callback ope
 	return result
 }
 
-func (u *open_im_sdk.UserRelated) setFriendRemark(params sdk_params_callback.SetFriendRemarkParams, callback open_im_sdk.Base, operationID string) *open_im_sdk.CommDataResp {
-	apiReq := open_im_sdk.SetFriendRemarkReq{}
+func (u *open_im_sdk.UserRelated) setFriendRemark(params sdk_params_callback.SetFriendRemarkParams, callback open_im_sdk.Base, operationID string) *server_api_params.CommDataResp {
+	apiReq := server_api_params.SetFriendRemarkReq{}
 	apiReq.OperationID = operationID
 	apiReq.ToUserID = params.ToUserID
 	apiReq.FromUserID = u.loginUserID
@@ -221,14 +222,14 @@ func (u *open_im_sdk.UserRelated) getLocalFriendList() ([]open_im_sdk.friendInfo
 }
 
 func (u *open_im_sdk.UserRelated) getServerFriendList() ([]*open_im_sdk.FriendInfo, error) {
-	apiReq := open_im_sdk.GetFriendListReq{OperationID: utils.operationIDGenerator(), FromUserID: u.loginUserID}
+	apiReq := server_api_params.GetFriendListReq{OperationID: utils.operationIDGenerator(), FromUserID: u.loginUserID}
 	resp, err := utils.post2Api(open_im_sdk.getFriendListRouter, apiReq, u.token)
 	commData, err := utils.checkErrAndRespReturn(err, resp, apiReq.OperationID)
 	if err != nil {
 		return nil, utils.wrap(err, apiReq.OperationID)
 	}
 
-	realData := open_im_sdk.GetFriendListResp{}
+	realData := server_api_params.GetFriendListResp{}
 	err = mapstructure.Decode(commData.Data, &realData.FriendInfoList)
 	if err != nil {
 		return nil, utils.wrap(err, apiReq.OperationID)
@@ -297,26 +298,26 @@ func (u *open_im_sdk.UserRelated) doBlackList() {
 }
 
 func (u *open_im_sdk.UserRelated) getServerBlackList() ([]*open_im_sdk.PublicUserInfo, error) {
-	apiReq := open_im_sdk.GetBlackListReq{OperationID: utils.operationIDGenerator(), FromUserID: u.loginUserID}
+	apiReq := server_api_params.GetBlackListReq{OperationID: utils.operationIDGenerator(), FromUserID: u.loginUserID}
 	resp, err := utils.post2Api(open_im_sdk.getBlackListRouter, apiReq, u.token)
 	commData, err := utils.checkErrAndRespReturn(err, resp, apiReq.OperationID)
 	if err != nil {
 		return nil, utils.wrap(err, apiReq.OperationID)
 	}
-	realData := open_im_sdk.GetBlackListResp{}
+	realData := server_api_params.GetBlackListResp{}
 	mapstructure.Decode(commData.Data, &realData.BlackUserInfoList)
 	return realData.BlackUserInfoList, nil
 }
 
 func (u *open_im_sdk.UserRelated) getServerFriendApplication() ([]*open_im_sdk.FriendRequest, error) {
-	apiReq := open_im_sdk.GetFriendApplyListReq{OperationID: utils.operationIDGenerator(), FromUserID: u.loginUserID}
+	apiReq := server_api_params.GetFriendApplyListReq{OperationID: utils.operationIDGenerator(), FromUserID: u.loginUserID}
 	resp, err := utils.post2Api(open_im_sdk.getFriendApplicationListRouter, apiReq, u.token)
 	commData, err := utils.checkErrAndRespReturn(err, resp, apiReq.OperationID)
 	if err != nil {
 		return nil, utils.wrap(err, apiReq.OperationID)
 	}
 
-	realData := open_im_sdk.GetFriendApplyListResp{}
+	realData := server_api_params.GetFriendApplyListResp{}
 	mapstructure.Decode(commData.Data, &realData.FriendRequestList)
 	return realData.FriendRequestList, nil
 }
@@ -338,8 +339,8 @@ func (u *open_im_sdk.UserRelated) getServerSelfApplication() ([]open_im_sdk.appl
 	}
 	return vgetFriendApplyListResp.Data, nil
 }
-func (u *open_im_sdk.UserRelated) addBlack(callback open_im_sdk.Base, blackUid, operationID string) *open_im_sdk.CommDataResp {
-	apiReq := open_im_sdk.AddBlacklistReq{}
+func (u *open_im_sdk.UserRelated) addBlack(callback open_im_sdk.Base, blackUid, operationID string) *server_api_params.CommDataResp {
+	apiReq := server_api_params.AddBlacklistReq{}
 	apiReq.ToUserID = blackUid
 	apiReq.FromUserID = u.loginUserID
 	apiReq.OperationID = operationID
@@ -349,8 +350,8 @@ func (u *open_im_sdk.UserRelated) addBlack(callback open_im_sdk.Base, blackUid, 
 	return r
 
 }
-func (u *open_im_sdk.UserRelated) removeBlack(callback open_im_sdk.Base, deleteUid, operationID string) *open_im_sdk.CommDataResp {
-	apiReq := open_im_sdk.RemoveBlackListReq{}
+func (u *open_im_sdk.UserRelated) removeBlack(callback open_im_sdk.Base, deleteUid, operationID string) *server_api_params.CommDataResp {
+	apiReq := server_api_params.RemoveBlackListReq{}
 	apiReq.ToUserID = deleteUid
 	apiReq.FromUserID = u.loginUserID
 	apiReq.OperationID = operationID

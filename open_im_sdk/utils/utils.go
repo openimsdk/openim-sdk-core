@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"open_im_sdk/open_im_sdk"
 	log2 "open_im_sdk/open_im_sdk/log"
+	"open_im_sdk/open_im_sdk/server_api_params"
 
 	"github.com/gorilla/websocket"
 	"github.com/jinzhu/copier"
@@ -821,7 +822,7 @@ func checkErrAndResp(callback open_im_sdk.Base, err error, resp []byte, operatio
 }
 
 func checkResp(callback open_im_sdk.Base, resp []byte, operationID string) *open_im_sdk.CommDataResp {
-	var c open_im_sdk.CommDataResp
+	var c server_api_params.CommDataResp
 	err := json.Unmarshal(resp, &c)
 	if err != nil {
 		log2.NewError(operationID, "Unmarshal ", err)
@@ -844,7 +845,7 @@ func checkErrAndRespReturn(err error, resp []byte, operationID string) (*open_im
 		log2.NewError(operationID, "checkErr ", err)
 		return nil, err
 	}
-	var c open_im_sdk.CommDataResp
+	var c server_api_params.CommDataResp
 	err = json.Unmarshal(resp, &c)
 	if err != nil {
 		log2.NewError(operationID, "Unmarshal ", err)

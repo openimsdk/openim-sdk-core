@@ -1,4 +1,6 @@
-package open_im_sdk
+package server_api_params
+
+import "open_im_sdk/open_im_sdk"
 
 //UserID               string   `protobuf:"bytes,1,opt,name=UserID" json:"UserID,omitempty"`
 //	Nickname             string   `protobuf:"bytes,2,opt,name=Nickname" json:"Nickname,omitempty"`
@@ -12,7 +14,7 @@ package open_im_sdk
 type UserRegisterReq struct {
 	Secret   string `json:"secret" binding:"required,max=32"`
 	Platform int32  `json:"platform" binding:"required,min=1,max=7"`
-	UserInfo
+	open_im_sdk.UserInfo
 	OperationID string `json:"operationID" binding:"required"`
 }
 

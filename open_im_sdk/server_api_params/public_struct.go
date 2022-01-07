@@ -1,4 +1,4 @@
-package open_im_sdk
+package server_api_params
 
 type ApiUserInfo struct {
 	UserID      string `json:"userID" binding:"required,min=1,max=64"`

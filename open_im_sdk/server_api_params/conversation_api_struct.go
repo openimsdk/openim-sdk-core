@@ -1,4 +1,4 @@
-package open_im_sdk
+package server_api_params
 
 type OptResult struct {
 	ConversationID string `json:"conversationID"`

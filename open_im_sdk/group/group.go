@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/open_im_sdk/server_api_params"
 	"open_im_sdk/open_im_sdk/utils"
 	"strings"
 )
@@ -126,7 +127,7 @@ func (u *open_im_sdk.UserRelated) doSetGroupInfo(msg *open_im_sdk.MsgData) {
 
 func (u *open_im_sdk.UserRelated) doTransferGroupOwner(msg *open_im_sdk.MsgData) {
 	utils.sdkLog("doTransferGroupOwner start...")
-	var transfer open_im_sdk.TransferGroupOwnerReq
+	var transfer server_api_params.TransferGroupOwnerReq
 	var transferContent open_im_sdk.NotificationContent
 	err := json.Unmarshal([]byte(msg.Content), &transferContent)
 	if err != nil {

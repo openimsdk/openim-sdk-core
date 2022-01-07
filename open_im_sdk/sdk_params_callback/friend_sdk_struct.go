@@ -1,6 +1,9 @@
 package sdk_params_callback
 
-import "open_im_sdk/open_im_sdk"
+import (
+	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/open_im_sdk/server_api_params"
+)
 
 type GetDesignatedFriendsInfoParams []string
 type GetDesignatedFriendsInfoCallback []open_im_sdk.LocalFriend
@@ -27,7 +30,7 @@ type ProcessFriendApplicationParams struct {
 const ProcessFriendApplicationCallback = open_im_sdk.SuccessCallbackDefault
 
 type CheckFriendParams []string
-type CheckFriendCallback []open_im_sdk.UserIDResult
+type CheckFriendCallback []server_api_params.UserIDResult
 
 type DeleteFriendParams string
 

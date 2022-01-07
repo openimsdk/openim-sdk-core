@@ -1,4 +1,6 @@
-package open_im_sdk
+package server_api_params
+
+import "open_im_sdk/open_im_sdk"
 
 type GetUserInfoReq struct {
 	OperationID string   `json:"operationID" binding:"required"`
@@ -6,12 +8,12 @@ type GetUserInfoReq struct {
 }
 type GetUserInfoResp struct {
 	CommResp
-	UserInfoList []*UserInfo
+	UserInfoList []*open_im_sdk.UserInfo
 	Data         []map[string]interface{} `json:"data"`
 }
 
 type UpdateUserInfoReq struct {
-	UserInfo
+	open_im_sdk.UserInfo
 	OperationID string `json:"operationID" binding:"required"`
 }
 
