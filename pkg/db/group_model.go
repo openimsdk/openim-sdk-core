@@ -2,37 +2,36 @@ package db
 
 import (
 	"errors"
-	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/utils"
 )
 
-func (u *open_im_sdk.UserRelated) _insertGroup(groupInfo *open_im_sdk.LocalGroup) error {
+func (u *DataBase) InsertGroup(groupInfo *LocalGroup) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	return utils.Wrap(u.imdb.Create(groupInfo).Error, "_insertGroup failed")
+	return utils.Wrap(u.conn.Create(groupInfo).Error, "InsertGroup failed")
 }
-func (u *open_im_sdk.UserRelated) _deleteGroup(groupID string) error {
+func (u *DataBase) DeleteGroup(groupID string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	return utils.Wrap(u.imdb.Where("group_id=?", groupID).Delete(&LocalGroup{}).Error, "_deleteGroup failed")
+	return utils.Wrap(u.conn.Where("group_id=?", groupID).Delete(&LocalGroup{}).Error, "DeleteGroup failed")
 }
-func (u *open_im_sdk.UserRelated) _updateGroup(groupInfo *open_im_sdk.LocalGroup) error {
+func (u *DataBase) UpdateGroup(groupInfo *LocalGroup) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	t := u.imdb.Updates(groupInfo)
+	t := u.conn.Updates(groupInfo)
 	if t.RowsAffected == 0 {
-		return open_im_sdk.wrap(errors.New("RowsAffected == 0"), "no update")
+		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
-	return open_im_sdk.wrap(t.Error, "_updateGroup failed")
+	return utils.Wrap(t.Error, "UpdateGroup failed")
 }
-func (u *open_im_sdk.UserRelated) _getGroupList() ([]open_im_sdk.LocalGroup, error) {
+func (u *DataBase) GetGroupList() ([]LocalGroup, error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	var groupList []LocalGroup
-	return groupList, open_im_sdk.wrap(u.imdb.Find(&groupList).Error, "_getGroupList failed")
+	return groupList, utils.Wrap(u.conn.Find(&groupList).Error, "GetGroupList failed")
 }
-func (u *open_im_sdk.UserRelated) _getGroupInfoByGroupID(groupID string) (g *open_im_sdk.LocalGroup, err error) {
+func (u *DataBase) GetGroupInfoByGroupID(groupID string) (g *LocalGroup, err error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	return g, open_im_sdk.wrap(u.imdb.Where("group_id = ?", groupID).Find(g).Error, "_getGroupList failed")
+	return g, utils.Wrap(u.conn.Where("group_id = ?", groupID).Find(g).Error, "GetGroupList failed")
 }
