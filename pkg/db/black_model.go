@@ -5,7 +5,7 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func (d *DataBase) _getBlackList() ([]*LocalBlack, error) {
+func (d *DataBase) GetBlackList() ([]*LocalBlack, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var blackList []LocalBlack
@@ -18,45 +18,45 @@ func (d *DataBase) _getBlackList() ([]*LocalBlack, error) {
 	return transfer, err
 
 }
-func (d *DataBase) _getBlackListUid() (blackListUid []string, err error) {
+func (d *DataBase) GetBlackListUid() (blackListUid []string, err error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
-	return blackListUid, utils.Wrap(d.conn.Model(&LocalBlack{}).Select("block_user_id").Find(&blackListUid).Error, "_getBlackList failed")
+	return blackListUid, utils.Wrap(d.conn.Model(&LocalBlack{}).Select("block_user_id").Find(&blackListUid).Error, "GetBlackList failed")
 }
 
-func (d *DataBase) _getBlackInfoByBlockUserID(blockUserID string) (*LocalBlack, error) {
+func (d *DataBase) GetBlackInfoByBlockUserID(blockUserID string) (*LocalBlack, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var black LocalBlack
 	return &black, utils.Wrap(d.conn.Where("owner_user_id = ? AND block_user_id = ? ",
-		d.loginUserID, blockUserID).Find(&black).Error, "_getBlackInfoByBlockUserID failed")
+		d.loginUserID, blockUserID).Find(&black).Error, "GetBlackInfoByBlockUserID failed")
 }
 
-func (d *DataBase) _getBlackInfoList(blockUserIDList []string) ([]LocalBlack, error) {
+func (d *DataBase) GetBlackInfoList(blockUserIDList []string) ([]LocalBlack, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var black []LocalBlack
-	return black, utils.Wrap(d.conn.Where("block_user_id IN ? ", blockUserIDList).Find(&black).Error, "_getBlackInfoList failed")
+	return black, utils.Wrap(d.conn.Where("block_user_id IN ? ", blockUserIDList).Find(&black).Error, "GetBlackInfoList failed")
 }
 
-func (d *DataBase) _insertBlack(black *LocalBlack) error {
+func (d *DataBase) InsertBlack(black *LocalBlack) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.Create(black).Error, "_insertBlack failed")
+	return utils.Wrap(d.conn.Create(black).Error, "InsertBlack failed")
 }
 
-func (d *DataBase) _updateBlack(black *LocalBlack) error {
+func (d *DataBase) UpdateBlack(black *LocalBlack) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	t := d.conn.Updates(black)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
-	return utils.Wrap(t.Error, "_updateBlack failed")
+	return utils.Wrap(t.Error, "UpdateBlack failed")
 }
 
-func (d *DataBase) _deleteBlack(blockUserID string) error {
+func (d *DataBase) DeleteBlack(blockUserID string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.Where("owner_user_id=? and block_user_id=?", d.loginUserID, blockUserID).Delete(&LocalBlack{}).Error, "_delBlack failed")
+	return utils.Wrap(d.conn.Where("owner_user_id=? and block_user_id=?", d.loginUserID, blockUserID).Delete(&LocalBlack{}).Error, "DeleteBlack failed")
 }

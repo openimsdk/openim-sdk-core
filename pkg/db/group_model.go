@@ -5,33 +5,33 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func (u *DataBase) InsertGroup(groupInfo *LocalGroup) error {
-	u.mRWMutex.Lock()
-	defer u.mRWMutex.Unlock()
-	return utils.Wrap(u.conn.Create(groupInfo).Error, "InsertGroup failed")
+func (d *DataBase) InsertGroup(groupInfo *LocalGroup) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.Create(groupInfo).Error, "InsertGroup failed")
 }
-func (u *DataBase) DeleteGroup(groupID string) error {
-	u.mRWMutex.Lock()
-	defer u.mRWMutex.Unlock()
-	return utils.Wrap(u.conn.Where("group_id=?", groupID).Delete(&LocalGroup{}).Error, "DeleteGroup failed")
+func (d *DataBase) DeleteGroup(groupID string) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.Where("group_id=?", groupID).Delete(&LocalGroup{}).Error, "DeleteGroup failed")
 }
-func (u *DataBase) UpdateGroup(groupInfo *LocalGroup) error {
-	u.mRWMutex.Lock()
-	defer u.mRWMutex.Unlock()
-	t := u.conn.Updates(groupInfo)
+func (d *DataBase) UpdateGroup(groupInfo *LocalGroup) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	t := d.conn.Updates(groupInfo)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
 	return utils.Wrap(t.Error, "UpdateGroup failed")
 }
-func (u *DataBase) GetGroupList() ([]LocalGroup, error) {
-	u.mRWMutex.Lock()
-	defer u.mRWMutex.Unlock()
+func (d *DataBase) GetGroupList() ([]LocalGroup, error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	var groupList []LocalGroup
-	return groupList, utils.Wrap(u.conn.Find(&groupList).Error, "GetGroupList failed")
+	return groupList, utils.Wrap(d.conn.Find(&groupList).Error, "GetGroupList failed")
 }
-func (u *DataBase) GetGroupInfoByGroupID(groupID string) (g *LocalGroup, err error) {
-	u.mRWMutex.Lock()
-	defer u.mRWMutex.Unlock()
-	return g, utils.Wrap(u.conn.Where("group_id = ?", groupID).Find(g).Error, "GetGroupList failed")
+func (d *DataBase) GetGroupInfoByGroupID(groupID string) (g *LocalGroup, err error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return g, utils.Wrap(d.conn.Where("group_id = ?", groupID).Find(g).Error, "GetGroupList failed")
 }
