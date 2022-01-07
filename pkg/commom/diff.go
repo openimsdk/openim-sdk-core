@@ -8,6 +8,11 @@ import (
 	"reflect"
 )
 
+type diff interface {
+	Key() string
+	Value() interface{}
+}
+
 func CompFields(a interface{}, b interface{}, fields ...string) bool {
 	return false
 	//	at := reflect.TypeOf(a)
@@ -135,4 +140,132 @@ func transferToLocalBlack(apiBlackList []*server_api_params.PublicUserInfo, owne
 	}
 
 	return localBlackList
+}
+
+func checkFriendListDiff(a []*open_im_sdk.LocalFriend, b []*open_im_sdk.LocalFriend) (aInBNot, bInANot, sameA, sameB []int) {
+	//to map, friendid_>friendinfo
+	mapA := make(map[string]*db.LocalFriend)
+	for _, v := range a {
+		mapA[v.FriendUserID] = v
+	}
+	mapB := make(map[string]*db.LocalFriend)
+	for _, v := range b {
+		mapB[v.FriendUserID] = v
+	}
+
+	aInBNot = make([]int, 0)
+	bInANot = make([]int, 0)
+	sameA = make([]int, 0)
+	sameB = make([]int, 0)
+
+	//for a
+	for i, v := range a {
+		ia, ok := mapB[v.FriendUserID]
+		if !ok {
+			//in a, but not in b
+			aInBNot = append(aInBNot, i)
+		} else {
+			if v != ia {
+				// key of a and b is equal, but value different
+				sameA = append(sameA, i)
+			}
+		}
+	}
+	//for b
+	for i, v := range b {
+		ib, ok := mapA[v.FriendUserID]
+		if !ok {
+			bInANot = append(bInANot, i)
+		} else {
+			if ib != v {
+				sameB = append(sameB, i)
+			}
+		}
+	}
+	return aInBNot, bInANot, sameA, sameB
+}
+
+func checkFriendRequestDiff(a []*open_im_sdk.LocalFriendRequest, b []*open_im_sdk.LocalFriendRequest) (aInBNot, bInANot, sameA, sameB []int) {
+	//to map, friendid_>friendinfo
+	mapA := make(map[string]*db.LocalFriendRequest)
+	for _, v := range a {
+		mapA[v.ToUserID] = v
+	}
+	mapB := make(map[string]*db.LocalFriendRequest)
+	for _, v := range b {
+		mapB[v.ToUserID] = v
+	}
+
+	aInBNot = make([]int, 0)
+	bInANot = make([]int, 0)
+	sameA = make([]int, 0)
+	sameB = make([]int, 0)
+
+	//for a
+	for i, v := range a {
+		ia, ok := mapB[v.ToUserID]
+		if !ok {
+			//in a, but not in b
+			aInBNot = append(aInBNot, i)
+		} else {
+			if v != ia {
+				// key of a and b is equal, but value different
+				sameA = append(sameA, i)
+			}
+		}
+	}
+	//for b
+	for i, v := range b {
+		ib, ok := mapA[v.ToUserID]
+		if !ok {
+			bInANot = append(bInANot, i)
+		} else {
+			if ib != v {
+				sameB = append(sameB, i)
+			}
+		}
+	}
+	return aInBNot, bInANot, sameA, sameB
+}
+func checkBlackListDiff(a []*open_im_sdk.LocalBlack, b []*open_im_sdk.LocalBlack) (aInBNot, bInANot, sameA, sameB []int) {
+	//to map, friendid_>friendinfo
+	mapA := make(map[string]*db.LocalBlack)
+	for _, v := range a {
+		mapA[v.BlockUserID] = v
+	}
+	mapB := make(map[string]*db.LocalBlack)
+	for _, v := range b {
+		mapB[v.BlockUserID] = v
+	}
+
+	aInBNot = make([]int, 0)
+	bInANot = make([]int, 0)
+	sameA = make([]int, 0)
+	sameB = make([]int, 0)
+
+	//for a
+	for i, v := range a {
+		ia, ok := mapB[v.BlockUserID]
+		if !ok {
+			//in a, but not in b
+			aInBNot = append(aInBNot, i)
+		} else {
+			if v == ia {
+				// key of a and b is equal, but value different
+				sameA = append(sameA, i)
+			}
+		}
+	}
+	//for b
+	for i, v := range b {
+		ib, ok := mapA[v.BlockUserID]
+		if !ok {
+			bInANot = append(bInANot, i)
+		} else {
+			if ib != v {
+				sameB = append(sameB, i)
+			}
+		}
+	}
+	return aInBNot, bInANot, sameA, sameB
 }
