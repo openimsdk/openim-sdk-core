@@ -93,85 +93,6 @@ func initRotateLogs(rotationTime time.Duration, maxRemainNum uint, level string,
 	}
 }
 
-//Deprecated
-func Info(token, OperationID, format string, args ...interface{}) {
-	logger.WithFields(logrus.Fields{
-		"PID":         logger.Pid,
-		"OperationID": OperationID,
-	}).Infof(format, args...)
-
-}
-
-//Deprecated
-func Error(token, OperationID, format string, args ...interface{}) {
-
-	logger.WithFields(logrus.Fields{
-		"PID":         logger.Pid,
-		"OperationID": OperationID,
-	}).Errorf(format, args...)
-
-}
-
-//Deprecated
-func Debug(token, OperationID, format string, args ...interface{}) {
-
-	logger.WithFields(logrus.Fields{
-		"PID":         logger.Pid,
-		"OperationID": OperationID,
-	}).Debugf(format, args...)
-
-}
-
-//Deprecated
-func Warning(token, OperationID, format string, args ...interface{}) {
-	logger.WithFields(logrus.Fields{
-		"PID":         logger.Pid,
-		"OperationID": OperationID,
-	}).Warningf(format, args...)
-
-}
-
-//Deprecated
-func InfoByArgs(format string, args ...interface{}) {
-	logger.WithFields(logrus.Fields{}).Infof(format, args)
-}
-
-//Deprecated
-func ErrorByArgs(format string, args ...interface{}) {
-	logger.WithFields(logrus.Fields{}).Errorf(format, args...)
-}
-
-//Print log information in k, v format,
-//kv is best to appear in pairs. tipInfo is the log prompt information for printing,
-//and kv is the key and value for printing.
-//Deprecated
-func InfoByKv(tipInfo, OperationID string, args ...interface{}) {
-	fields := make(logrus.Fields)
-	argsHandle(OperationID, fields, args)
-	logger.WithFields(fields).Info(tipInfo)
-}
-
-//Deprecated
-func ErrorByKv(tipInfo, OperationID string, args ...interface{}) {
-	fields := make(logrus.Fields)
-	argsHandle(OperationID, fields, args)
-	logger.WithFields(fields).Error(tipInfo)
-}
-
-//Deprecated
-func DebugByKv(tipInfo, OperationID string, args ...interface{}) {
-	fields := make(logrus.Fields)
-	argsHandle(OperationID, fields, args)
-	logger.WithFields(fields).Debug(tipInfo)
-}
-
-//Deprecated
-func WarnByKv(tipInfo, OperationID string, args ...interface{}) {
-	fields := make(logrus.Fields)
-	argsHandle(OperationID, fields, args)
-	logger.WithFields(fields).Warn(tipInfo)
-}
-
 //internal method
 func argsHandle(OperationID string, fields logrus.Fields, args []interface{}) {
 	for i := 0; i < len(args); i += 2 {
@@ -184,12 +105,14 @@ func argsHandle(OperationID string, fields logrus.Fields, args []interface{}) {
 	fields["OperationID"] = OperationID
 	fields["PID"] = logger.Pid
 }
+
 func NewInfo(OperationID string, args ...interface{}) {
 	logger.WithFields(logrus.Fields{
 		"OperationID": OperationID,
 		"PID":         logger.Pid,
 	}).Infoln(args)
 }
+
 func NewError(OperationID string, args ...interface{}) {
 	logger.WithFields(logrus.Fields{
 		"OperationID": OperationID,
@@ -203,6 +126,32 @@ func NewDebug(OperationID string, args ...interface{}) {
 	}).Debugln(args)
 }
 func NewWarn(OperationID string, args ...interface{}) {
+	logger.WithFields(logrus.Fields{
+		"OperationID": OperationID,
+		"PID":         logger.Pid,
+	}).Warnln(args)
+}
+
+func Info(OperationID string, args ...interface{}) {
+	logger.WithFields(logrus.Fields{
+		"OperationID": OperationID,
+		"PID":         logger.Pid,
+	}).Infoln(args)
+}
+
+func Error(OperationID string, args ...interface{}) {
+	logger.WithFields(logrus.Fields{
+		"OperationID": OperationID,
+		"PID":         logger.Pid,
+	}).Errorln(args)
+}
+func Debug(OperationID string, args ...interface{}) {
+	logger.WithFields(logrus.Fields{
+		"OperationID": OperationID,
+		"PID":         logger.Pid,
+	}).Debugln(args)
+}
+func Warn(OperationID string, args ...interface{}) {
 	logger.WithFields(logrus.Fields{
 		"OperationID": OperationID,
 		"PID":         logger.Pid,

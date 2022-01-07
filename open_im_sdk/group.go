@@ -417,30 +417,31 @@ func (g *groupListener) OnMemberInvited(groupId string, op groupMemberFullInfo, 
 	g.listener.OnMemberInvited(groupId, string(jsonOp), string(jsonMemberList))
 }
 
-func (u *UserRelated) createGroup(group groupInfo, memberList []createGroupMemberInfo) (*createGroupResp, error) {
-	req := createGroupReq{memberList, group.GroupName, group.Introduction, group.Notification, group.FaceUrl, operationIDGenerator(), group.Ex}
-	resp, err := post2Api(createGroupRouter, req, u.token)
-	if err != nil {
-		sdkLog("post2Api failed, ", createGroupRouter, req)
-		return nil, err
-	}
-	var createGroupResp createGroupResp
-	if err = json.Unmarshal(resp, &createGroupResp); err != nil {
-		sdkLog("Unmarshal failed, ", err.Error())
-		return nil, err
-	}
-	sdkLog("post2Api ok ", createGroupRouter, req, createGroupResp)
-
-	if createGroupResp.ErrCode != 0 {
-		sdkLog("errcode errmsg: ", createGroupResp.ErrCode, createGroupResp.ErrMsg)
-		return nil, errors.New(createGroupResp.ErrMsg)
-	}
-
-	u.syncJoinedGroupInfo()
-	sdkLog("syncJoinedGroupInfo ok")
-	u.syncGroupMemberByGroupId(createGroupResp.Data.GroupId)
-	sdkLog("syncGroupMemberByGroupId ok")
-	return &createGroupResp, nil
+func (u *UserRelated) createGroup(group CreateGroupBaseInfoParam, memberList CreateGroupMemberRoleParam, operationID string) *CreateGroupResp {
+	return nil
+	//req := createGroupReq{memberList, group.GroupName, group.Introduction, group.Notification, group.FaceUrl, operationIDGenerator(), group.Ex}
+	//resp, err := post2Api(createGroupRouter, req, u.token)
+	//if err != nil {
+	//	sdkLog("post2Api failed, ", createGroupRouter, req)
+	//	return nil, err
+	//}
+	//var createGroupResp createGroupResp
+	//if err = json.Unmarshal(resp, &createGroupResp); err != nil {
+	//	sdkLog("Unmarshal failed, ", err.Error())
+	//	return nil, err
+	//}
+	//sdkLog("post2Api ok ", createGroupRouter, req, createGroupResp)
+	//
+	//if createGroupResp.ErrCode != 0 {
+	//	sdkLog("errcode errmsg: ", createGroupResp.ErrCode, createGroupResp.ErrMsg)
+	//	return nil, errors.New(createGroupResp.ErrMsg)
+	//}
+	//
+	//u.syncJoinedGroupInfo()
+	//sdkLog("syncJoinedGroupInfo ok")
+	//u.syncGroupMemberByGroupId(createGroupResp.Data.GroupId)
+	//sdkLog("syncGroupMemberByGroupId ok")
+	//return &createGroupResp, nil
 }
 
 func (u *UserRelated) joinGroup(groupId, message string) error {

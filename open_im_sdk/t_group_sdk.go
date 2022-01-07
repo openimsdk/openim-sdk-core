@@ -87,7 +87,7 @@ func DoTestCreateGroup() {
 	groupInfo, _ := json.Marshal(test.groupInfo)
 	members, _ := json.Marshal(test.members)
 	fmt.Println("create groupInfo input:", string(groupInfo), string(members))
-	CreateGroup(string(groupInfo), string(members), test)
+	CreateGroup(test, string(groupInfo), string(members), "asfdfasd")
 }
 
 type testSetGroupInfo struct {

@@ -7,7 +7,8 @@ type AddFriendParams struct {
 	ToUserID string `json:"toUserID" validate:"required"`
 	ReqMsg   string `json:"reqMsg"`
 }
-type AddFriendCallback struct{}
+
+const AddFriendCallback = SuccessCallbackDefault
 
 type GetRecvFriendApplicationListParams struct{}
 type GetRecvFriendApplicationListCallback []*LocalFriendRequest
@@ -18,30 +19,41 @@ type GetSendFriendApplicationListCallback []LocalFriendRequest
 type ProcessFriendApplicationParams struct {
 	ToUserID  string `json:"toUserID" validate:"required"`
 	HandleMsg string `json:"handleMsg"`
-	//HandleResult int32  `json:"handleResult" validate:oneof=-1 1`
 }
-type ProcessFriendApplicationCallback struct{}
+
+//type ProcessFriendApplicationCallback struct{}
+const ProcessFriendApplicationCallback = SuccessCallbackDefault
 
 type CheckFriendParams []string
 type CheckFriendCallback []UserIDResult
 
 type DeleteFriendParams string
-type DeleteFriendCallback struct{}
+
+//type DeleteFriendCallback struct{}
+const DeleteFriendCallback = SuccessCallbackDefault
 
 type GetFriendListParams struct{}
 type GetFriendListCallback []LocalFriend
 
 type SetFriendRemarkParams struct {
 	ToUserID string `json:"toUserID" validate:"required"`
-	Remark   string `json:"remark"`
+	Remark   string `json:"remark" validate:"required"`
 }
-type SetFriendRemarkCallback struct{}
+
+//type SetFriendRemarkCallback struct{}
+const SetFriendRemarkCallback = SuccessCallbackDefault
 
 type AddBlackParams string
-type AddBlackCallback struct{}
+
+//type AddBlackCallback struct{}
+const AddBlackCallback = SuccessCallbackDefault
 
 type GetBlackListParams struct{}
-type GetBlackListCallback []LocalBlack
+
+//type GetBlackListCallback []LocalBlack
+const GetBlackListCallback = SuccessCallbackDefault
 
 type DeleteBlackParams string
-type DeleteBlackCallback struct{}
+
+//type DeleteBlackCallback struct{}
+const DeleteBlackCallback = SuccessCallbackDefault

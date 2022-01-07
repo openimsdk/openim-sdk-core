@@ -405,7 +405,7 @@ func main() {
 	//	open_im_sdk.DoTestAddToBlackList()
 	//	open_im_sdk.DoTestGetBlackList()
 	//	open_im_sdk.DoTestDeleteFromBlackList()
-	open_im_sdk.DoTestDeleteFromFriendList()
+	open_im_sdk.DoTestGetDesignatedFriendsInfo()
 	for true {
 		time.Sleep(time.Duration(60) * time.Second)
 		fmt.Println("waiting")

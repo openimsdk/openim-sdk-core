@@ -91,7 +91,8 @@ func (wsRouter *WsFuncRouter) CreateGroup(input, operationID string) {
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.CreateGroup(m["gInfo"].(string), m["memberList"].(string), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker.CreateGroup(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId},
+		m["gInfo"].(string), m["memberList"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) JoinGroup(input, operationID string) {

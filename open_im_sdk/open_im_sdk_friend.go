@@ -1,34 +1,37 @@
 package open_im_sdk
 
 func (u *UserRelated) GetDesignatedFriendsInfo(callback Base, params string, operationID string) {
+	NewInfo(operationID, GetSelfFuncName(), params)
 	if callback == nil {
 		return
 	}
 	go func() {
 		NewInfo(operationID, "GetDesignatedFriendsInfo args: ", params)
 		var unmarshalList GetDesignatedFriendsInfoParams
-		u.jsonUnmarshalAndArgsValidate(params, &unmarshalList, callback)
+		u.jsonUnmarshal(params, &unmarshalList, callback, operationID)
 		result := u.getDesignatedFriendsInfo(callback, unmarshalList, operationID)
-		callback.OnSuccess(structToJsonString(result))
-		NewInfo(operationID, "GetDesignatedFriendsInfo callback: ", structToJsonString(result))
+		callback.OnSuccess(structToJsonStringDefault(result))
+		NewInfo(operationID, "GetDesignatedFriendsInfo callback: ", structToJsonString(result), result)
 	}()
 }
 
 func (u *UserRelated) AddFriend(callback Base, params string, operationID string) {
+	NewInfo(operationID, GetSelfFuncName(), params)
 	if callback == nil {
 		return
 	}
 	go func() {
 		NewInfo(operationID, "AddFriend args: ", params)
 		var unmarshalAddFriendParams AddFriendParams
-		u.jsonUnmarshalAndArgsValidate(params, &unmarshalAddFriendParams, callback)
+		u.jsonUnmarshalAndArgsValidate(params, &unmarshalAddFriendParams, callback, operationID)
 		u.addFriend(callback, unmarshalAddFriendParams, operationID)
-		callback.OnSuccess(structToJsonString(AddFriendCallback{}))
-		NewInfo(operationID, "AddFriend callback: ", structToJsonString(AddFriendCallback{}))
+		callback.OnSuccess(structToJsonString(AddFriendCallback))
+		NewInfo(operationID, "AddFriend callback: ", structToJsonString(AddFriendCallback))
 	}()
 }
 
 func (u *UserRelated) GetRecvFriendApplicationList(callback Base, operationID string) {
+	NewInfo(operationID, GetSelfFuncName())
 	if callback == nil {
 		return
 	}
@@ -41,6 +44,7 @@ func (u *UserRelated) GetRecvFriendApplicationList(callback Base, operationID st
 }
 
 func (u *UserRelated) GetSendFriendApplicationList(callback Base, operationID string) {
+	NewInfo(operationID, GetSelfFuncName())
 	if callback == nil {
 		return
 	}
@@ -53,41 +57,44 @@ func (u *UserRelated) GetSendFriendApplicationList(callback Base, operationID st
 }
 
 func (u *UserRelated) AcceptFriendApplication(callback Base, params string, operationID string) {
+	NewInfo(operationID, GetSelfFuncName(), params)
 	if callback == nil {
 		return
 	}
 	go func() {
 		NewInfo(operationID, "AcceptFriendApplication args: ", params)
 		var unmarshalParams ProcessFriendApplicationParams
-		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback)
+		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback, operationID)
 		u.processFriendApplication(callback, unmarshalParams, 1, operationID)
-		callback.OnSuccess(structToJsonString(ProcessFriendApplicationCallback{}))
-		NewInfo(operationID, "AcceptFriendApplication callback: ", structToJsonString(ProcessFriendApplicationCallback{}))
+		callback.OnSuccess(structToJsonString(ProcessFriendApplicationCallback))
+		NewInfo(operationID, "AcceptFriendApplication callback: ", structToJsonString(ProcessFriendApplicationCallback))
 	}()
 }
 
 func (u *UserRelated) RefuseFriendApplication(callback Base, params string, operationID string) {
+	NewInfo(operationID, GetSelfFuncName(), params)
 	if callback == nil {
 		return
 	}
 	go func() {
 		NewInfo(operationID, "RefuseFriendApplication args: ", params)
 		var unmarshalParams ProcessFriendApplicationParams
-		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback)
+		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback, operationID)
 		u.processFriendApplication(callback, unmarshalParams, -1, operationID)
-		callback.OnSuccess(structToJsonString(ProcessFriendApplicationCallback{}))
-		NewInfo(operationID, "RefuseFriendApplication callback: ", structToJsonString(ProcessFriendApplicationCallback{}))
+		callback.OnSuccess(structToJsonString(ProcessFriendApplicationCallback))
+		NewInfo(operationID, "RefuseFriendApplication callback: ", structToJsonString(ProcessFriendApplicationCallback))
 	}()
 }
 
 func (u *UserRelated) CheckFriend(callback Base, params string, operationID string) {
+	NewInfo(operationID, GetSelfFuncName(), params)
 	if callback == nil {
 		return
 	}
 	go func() {
 		NewInfo(operationID, "CheckFriend args: ", params)
 		var unmarshalParams CheckFriendParams
-		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback)
+		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback, operationID)
 		result := u.checkFriend(callback, unmarshalParams, operationID)
 		callback.OnSuccess(structToJsonString(result))
 		NewInfo(operationID, "CheckFriend callback: ", structToJsonString(result))
@@ -95,18 +102,20 @@ func (u *UserRelated) CheckFriend(callback Base, params string, operationID stri
 }
 
 func (u *UserRelated) DeleteFriend(callback Base, friendUserID string, operationID string) {
+	NewInfo(operationID, GetSelfFuncName(), friendUserID)
 	if callback == nil {
 		return
 	}
 	go func() {
 		NewInfo(operationID, "DeleteFriend args: ", friendUserID)
 		u.deleteFriend(friendUserID, callback, operationID)
-		callback.OnSuccess(structToJsonString(DeleteFriendCallback{}))
-		NewInfo(operationID, "DeleteFriend callback: ", structToJsonString(DeleteFriendCallback{}))
+		callback.OnSuccess(structToJsonString(DeleteFriendCallback))
+		NewInfo(operationID, "DeleteFriend callback: ", structToJsonString(DeleteFriendCallback))
 	}()
 }
 
 func (u *UserRelated) GetFriendList(callback Base, operationID string) {
+	NewInfo(operationID, GetSelfFuncName())
 	if callback == nil {
 		return
 	}
@@ -128,20 +137,22 @@ func (u *UserRelated) GetFriendList(callback Base, operationID string) {
 }
 
 func (u *UserRelated) SetFriendRemark(callback Base, params string, operationID string) {
+	NewInfo(operationID, GetSelfFuncName(), params)
 	if callback == nil {
 		return
 	}
 	go func() {
 		NewInfo(operationID, "SetFriendRemark args: ", params)
 		var unmarshalParams SetFriendRemarkParams
-		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback)
+		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback, operationID)
 		u.setFriendRemark(unmarshalParams, callback, operationID)
-		callback.OnSuccess(structToJsonString(SetFriendRemarkCallback{}))
-		NewInfo(operationID, "SetFriendRemark callback: ", structToJsonString(SetFriendRemarkCallback{}))
+		callback.OnSuccess(structToJsonString(SetFriendRemarkCallback))
+		NewInfo(operationID, "SetFriendRemark callback: ", structToJsonString(SetFriendRemarkCallback))
 	}()
 }
 
-func (u *UserRelated) AddToBlackList(callback Base, blackUserID, operationID string) {
+func (u *UserRelated) AddBlack(callback Base, blackUserID, operationID string) {
+	NewInfo(operationID, GetSelfFuncName(), blackUserID)
 	go func() {
 		NewInfo(operationID, "AddToBlackList args: ", blackUserID)
 		u.addBlack(callback, blackUserID, operationID)
@@ -151,6 +162,7 @@ func (u *UserRelated) AddToBlackList(callback Base, blackUserID, operationID str
 }
 
 func (u *UserRelated) GetBlackList(callback Base, operationID string) {
+	NewInfo(operationID, GetSelfFuncName())
 	go func() {
 		NewInfo(operationID, "GetBlackList args: ")
 		localBlackList, err := u._getBlackList()
@@ -161,11 +173,12 @@ func (u *UserRelated) GetBlackList(callback Base, operationID string) {
 }
 
 func (u *UserRelated) RemoveBlack(callback Base, removeUserID, operationID string) {
+	NewInfo(operationID, GetSelfFuncName(), removeUserID)
 	go func() {
 		NewInfo(operationID, "RemoveBlack args: ", removeUserID)
 		u.removeBlack(callback, removeUserID, operationID)
 		callback.OnSuccess("")
-		NewInfo(operationID, "RemoveBlack callback: ")
+		NewInfo(operationID, "RemoveBlack callback")
 	}()
 }
 

@@ -44,7 +44,7 @@ func (wsRouter *WsFuncRouter) SetFriendListener() bool {
 }
 
 //1
-func (wsRouter *WsFuncRouter) GetFriendsInfo(uidList string, operationID string) {
+func (wsRouter *WsFuncRouter) GetDesignatedFriendsInfo(uidList string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	userWorker.GetDesignatedFriendsInfo(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, uidList, operationID)
 }
@@ -55,16 +55,11 @@ func (wsRouter *WsFuncRouter) AddFriend(paramsReq string, operationID string) {
 	userWorker.AddFriend(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, paramsReq, operationID)
 }
 
-//1
-//func (wsRouter *WsFuncRouter) GetFriendApplicationList(input string, operationID string) {
-//	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-//	userWorker.GetFriendApplicationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
-//}
-
 func (wsRouter *WsFuncRouter) GetRecvFriendApplicationList(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	userWorker.GetRecvFriendApplicationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
+
 func (wsRouter *WsFuncRouter) GetSendFriendApplicationList(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	userWorker.GetSendFriendApplicationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
@@ -89,7 +84,7 @@ func (wsRouter *WsFuncRouter) CheckFriend(uidList string, operationID string) {
 }
 
 //1
-func (wsRouter *WsFuncRouter) DeleteFromFriendList(friendUserID string, operationID string) {
+func (wsRouter *WsFuncRouter) DeleteFriend(friendUserID string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	userWorker.DeleteFriend(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, friendUserID, operationID)
 }
@@ -101,14 +96,14 @@ func (wsRouter *WsFuncRouter) GetFriendList(input string, operationID string) {
 }
 
 //1
-func (wsRouter *WsFuncRouter) SetFriendInfo(comment string, operationID string) {
+func (wsRouter *WsFuncRouter) SetFriendRemark(comment string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	userWorker.SetFriendRemark(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, comment, operationID)
 }
 
-func (wsRouter *WsFuncRouter) AddToBlackList(blackUid string, operationID string) {
+func (wsRouter *WsFuncRouter) AddBlack(blackUid string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.AddToBlackList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, blackUid, operationID)
+	userWorker.AddBlack(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, blackUid, operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetBlackList(input string, operationID string) {
@@ -116,7 +111,7 @@ func (wsRouter *WsFuncRouter) GetBlackList(input string, operationID string) {
 	userWorker.GetBlackList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
-func (wsRouter *WsFuncRouter) RemoveFromBlackList(removeUserID string, operationID string) {
+func (wsRouter *WsFuncRouter) RemoveBlack(removeUserID string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	userWorker.RemoveBlack(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, removeUserID, operationID)
 }

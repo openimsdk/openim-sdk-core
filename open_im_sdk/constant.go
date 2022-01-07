@@ -2,8 +2,8 @@ package open_im_sdk
 
 import (
 	"database/sql"
-	"github.com/go-playground/validator/v10"
 	"errors"
+	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
 	"sync"
 )
@@ -360,3 +360,5 @@ var (
 func (e *ErrInfo) Error() string {
 	return e.ErrMsg
 }
+
+const SuccessCallbackDefault = ""

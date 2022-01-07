@@ -15,7 +15,7 @@ type Req struct {
 	ReqFuncName string `json:"reqFuncName" `
 	OperationID string `json:"operationID"`
 	Data        string `json:"data"`
-	UId         string `json:"uid"`
+	UId         string `json:"userID"`
 }
 
 func (ws *WServer) DoLogin(m Req, conn *UserConn) {

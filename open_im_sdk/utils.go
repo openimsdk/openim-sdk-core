@@ -214,6 +214,13 @@ func structToJsonString(param interface{}) string {
 	return dataString
 }
 
+func structToJsonStringDefault(param interface{}) string {
+	if reflect.TypeOf(param).Kind() == reflect.Slice && reflect.ValueOf(param).Len() == 0 {
+		return "[]"
+	}
+	return structToJsonString(param)
+}
+
 //The incoming parameter must be a pointer
 func jsonStringToStruct(s string, args interface{}) error {
 	return wrap(json.Unmarshal([]byte(s), args), "json Unmarshal failed")
@@ -667,7 +674,6 @@ func Post2Api(url string, data interface{}, token string) (content []byte, err e
 
 //application/json; charset=utf-8
 func post2Api(url string, data interface{}, token string) (content []byte, err error) {
-	sdkLog("call post2Api: ", url)
 
 	if url == sendMsgRouter {
 		return retry(url, data, token, 1, 10*time.Second, postLogic)
@@ -976,4 +982,9 @@ func transferToLocalBlack(apiBlackList []*PublicUserInfo, ownerUserID string) []
 	}
 
 	return localBlackList
+}
+
+func GetSelfFuncName() string {
+	pc, _, _, _ := runtime.Caller(1)
+	return runtime.FuncForPC(pc).Name()
 }

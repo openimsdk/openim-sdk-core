@@ -537,6 +537,7 @@ type changeGroupInfo struct {
 	data       groupInfo `json:"data"`
 	changeType int32     `json:"changeType"`
 }
+
 type groupInfo struct {
 	GroupId      string `json:"groupID"`
 	GroupName    string `json:"groupName"`

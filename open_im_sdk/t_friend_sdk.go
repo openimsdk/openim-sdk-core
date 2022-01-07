@@ -105,23 +105,24 @@ func DoTestGetUsersInfo() {
 
 /////////////////////////////////////////////////////////
 type testGetFriendsInfo struct {
-	uid []string `json:"uidList"`
+	uid []string //`json:"uidList"`
 }
 
 func (testGetFriendsInfo) OnSuccess(data string) {
-	fmt.Println("testGetFriendsInfo, OnSuccess, output: ", data)
+	fmt.Println("DoTestGetDesignatedFriendsInfo, OnSuccess, output: ", data)
 }
 
 func (testGetFriendsInfo) OnError(code int32, msg string) {
-	fmt.Println("testGetFriendsInfo, OnError, ", code, msg)
+	fmt.Println("DoTestGetDesignatedFriendsInfo, OnError, ", code, msg)
 }
 
-func DoTestGetFriendsInfo() {
+func DoTestGetDesignatedFriendsInfo() {
 	var test testGetFriendsInfo
 	test.uid = append(test.uid, Friend_uid)
+
 	jsontest, _ := json.Marshal(test.uid)
 	fmt.Println("testGetFriendsInfo, input: ", string(jsontest))
-	GetFriendsInfo(test, string(jsontest), "")
+	GetDesignatedFriendsInfo(test, string(jsontest), "asdffdsfasdfa")
 }
 
 ///////////////////////////////////////////////////////
@@ -144,7 +145,7 @@ func DoTestAddToBlackList() {
 
 	fmt.Println("AddToBlackList, input: ", Friend_uid)
 
-	AddToBlackList(test, Friend_uid, "asdfasvacdxds")
+	AddBlack(test, Friend_uid, "asdfasvacdxds")
 }
 
 ///////////////////////////////////////////////////////
@@ -165,7 +166,7 @@ func DoTestDeleteFromBlackList() {
 	test.delUid = Friend_uid
 	jsontest, _ := json.Marshal(test.delUid)
 	fmt.Println("DeleteFromBlackList, input: ", string(jsontest))
-	RemoveFromBlackList(test, string(jsontest), "11111111111111asdf11112134dfsa")
+	RemoveBlack(test, string(jsontest), "11111111111111asdf11112134dfsa")
 }
 
 //////////////////////////////////////////////////////
@@ -219,7 +220,7 @@ func DoTestSetFriendInfo() {
 	test.Comment = "MM"
 	jsontest, _ := json.Marshal(test)
 	fmt.Println("SetFriendInfo, input: ", string(jsontest))
-	SetFriendInfo(test, string(jsontest), "")
+	SetFriendRemark(test, string(jsontest), "")
 }
 
 /////////////////////
@@ -242,7 +243,7 @@ func DoTestDeleteFromFriendList() {
 	test.Uid = Friend_uid
 	jsontest, err := json.Marshal(test.Uid)
 	fmt.Println("DeleteFromFriendList, input:", string(jsontest), err)
-	DeleteFromFriendList(test, test.Uid, "asdfasfdsfdsdfa1111")
+	DeleteFriend(test, test.Uid, "asdfasfdsfdsdfa1111")
 }
 
 ///////////////////////////////////////////////////////

@@ -10,9 +10,9 @@ type FriendListener struct {
 }
 
 func (u *UserRelated) getDesignatedFriendsInfo(callback Base, friendUserIDList GetDesignatedFriendsInfoParams, operationID string) GetDesignatedFriendsInfoCallback {
+	NewInfo(operationID, GetSelfFuncName(), friendUserIDList)
 	blackList, err := u._getBlackInfoList(friendUserIDList)
 	checkErr(callback, err, operationID)
-
 	var pureFriendUserIDList []string
 	for _, v := range friendUserIDList {
 		flag := 0
@@ -28,22 +28,24 @@ func (u *UserRelated) getDesignatedFriendsInfo(callback Base, friendUserIDList G
 	}
 	localFriendList, err := u._getFriendInfoList(pureFriendUserIDList)
 	checkErr(callback, err, operationID)
-
+	NewInfo(operationID, "_getFriendInfoList ", pureFriendUserIDList, localFriendList)
 	return localFriendList
 }
 
 func (u *UserRelated) addFriend(callback Base, addFriendParams AddFriendParams, operationID string) *CommDataResp {
+	NewInfo(operationID, "addFriend args: ", addFriendParams)
 	apiReq := AddFriendReq{}
 	apiReq.ToUserID = addFriendParams.ToUserID
 	apiReq.FromUserID = u.loginUserID
 	apiReq.ReqMsg = addFriendParams.ReqMsg
 	apiReq.OperationID = operationID
 	resp, err := post2Api(addFriendRouter, apiReq, u.token)
-	NewInfo(apiReq.OperationID, "post2Api ", addFriendRouter, apiReq)
+	NewInfo(apiReq.OperationID, "post2Api ", addFriendRouter, apiReq, string(resp))
 	return checkErrAndResp(callback, err, resp, operationID)
 }
 
 func (u *UserRelated) getRecvFriendApplicationList(callback Base, operationID string) GetRecvFriendApplicationListCallback {
+	NewInfo(operationID, "getRecvFriendApplicationList args: ")
 	friendApplicationList, err := u._getRecvFriendApplication()
 	checkErr(callback, err, operationID)
 	return friendApplicationList

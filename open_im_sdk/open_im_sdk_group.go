@@ -24,40 +24,20 @@ func (u *UserRelated) SetGroupListener(callback OnGroupListener) {
 	sdkLog("SetGroupListener ", callback)
 }
 
-func (u *UserRelated) CreateGroup(gInfo string, memberList string, callback Base) {
-
+func (u *UserRelated) CreateGroup(callback Base, groupBaseInfo string, memberList string, operationID string) {
 	if callback == nil {
 		sdkLog("callback is nil")
 		return
 	}
 	go func() {
-		var sctGroupInfo groupInfo
-		err := json.Unmarshal([]byte(gInfo), &sctGroupInfo)
-		if err != nil {
-			sdkLog("unmarshal failed", gInfo, err.Error())
-			callback.OnError(ErrCodeGroup, err.Error())
-			return
-		}
-
-		var sctmemberList []createGroupMemberInfo
-		err = json.Unmarshal([]byte(memberList), &sctmemberList)
-		if err != nil {
-			sdkLog("unmarshal failed, ", memberList, err.Error())
-			callback.OnError(ErrCodeGroup, err.Error())
-			return
-		}
-
-		sdkLog("unmarshal ok  ", gInfo, memberList, callback)
-
-		resp, err := u.createGroup(sctGroupInfo, sctmemberList)
-		if err != nil {
-			sdkLog("createGroup failed, ", err.Error())
-			callback.OnError(ErrCodeGroup, err.Error())
-			return
-		}
-		sdkLog("createGroup ok, callback success", sctGroupInfo, sctmemberList, resp)
-
-		callback.OnSuccess(resp.Data.GroupId)
+		NewInfo(operationID, "CreateGroup args: ", groupBaseInfo, memberList)
+		var unmarshalCreateGroupBaseInfoParam CreateGroupBaseInfoParam
+		u.jsonUnmarshalAndArgsValidate(groupBaseInfo, &unmarshalCreateGroupBaseInfoParam, callback, operationID)
+		var unmarshalCreateGroupMemberRoleParam CreateGroupMemberRoleParam
+		u.jsonUnmarshalAndArgsValidate(memberList, &unmarshalCreateGroupMemberRoleParam, callback, operationID)
+		result := u.createGroup(unmarshalCreateGroupBaseInfoParam, unmarshalCreateGroupMemberRoleParam, operationID)
+		callback.OnSuccess(structToJsonString(result))
+		NewInfo(operationID, "CreateGroup callback: ", structToJsonString(result))
 	}()
 }
 

@@ -23,7 +23,7 @@ func (i *InitCallback) OnConnectSuccess() {
 	SendOneUserMessage(ed, i.uid)
 }
 
-func (i *InitCallback) OnConnectFailed(ErrCode int, ErrMsg string) {
+func (i *InitCallback) OnConnectFailed(ErrCode int32, ErrMsg string) {
 	var ed EventData
 	ed.Event = cleanUpfuncName(runFuncName())
 	ed.ErrCode = ErrCode
