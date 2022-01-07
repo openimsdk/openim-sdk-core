@@ -376,7 +376,7 @@ func getIsReadB(i int) bool {
 
 func RunFuncName() string {
 	pc, _, _, _ := runtime.Caller(2)
-	return runtime.FuncForPC(pc).Name()
+	return cleanUpfuncName(runtime.FuncForPC(pc).Name())
 }
 
 func cleanUpfuncName(funcName string) string {
@@ -388,99 +388,99 @@ func cleanUpfuncName(funcName string) string {
 }
 
 func LogBegin(v ...interface{}) {
-	if constant.SdkLogFlag == 1 {
-		return
-	}
-	if open_im_sdk.logger != nil {
-		log2.NewInfo("", v...)
-		return
-	}
-	pc, b, c, _ := runtime.Caller(1)
-	fname := runtime.FuncForPC(pc).Name()
-	i := strings.LastIndex(b, "/")
-	if i != -1 {
-		sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "call func begin, args: ", v)
-	}
+	//if constant.SdkLogFlag == 1 {
+	//	return
+	//}
+	//if open_im_sdk.logger != nil {
+	//	log2.NewInfo("", v...)
+	//	return
+	//}
+	//pc, b, c, _ := runtime.Caller(1)
+	//fname := runtime.FuncForPC(pc).Name()
+	//i := strings.LastIndex(b, "/")
+	//if i != -1 {
+	//	sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "call func begin, args: ", v)
+	//}
 }
 
 func LogEnd(v ...interface{}) {
-	if constant.SdkLogFlag == 1 {
-		return
-	}
-	if open_im_sdk.logger != nil {
-		log2.NewInfo("", v...)
-		return
-	}
-	pc, b, c, _ := runtime.Caller(1)
-	fname := runtime.FuncForPC(pc).Name()
-	i := strings.LastIndex(b, "/")
-	if i != -1 {
-		sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "call func end, args: ", v)
-	}
+	//if constant.SdkLogFlag == 1 {
+	//	return
+	//}
+	//if open_im_sdk.logger != nil {
+	//	log2.NewInfo("", v...)
+	//	return
+	//}
+	//pc, b, c, _ := runtime.Caller(1)
+	//fname := runtime.FuncForPC(pc).Name()
+	//i := strings.LastIndex(b, "/")
+	//if i != -1 {
+	//	sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "call func end, args: ", v)
+	//}
 }
 
 func LogStart(v ...interface{}) {
-	if constant.SdkLogFlag == 1 {
-		return
-	}
-	if open_im_sdk.logger != nil {
-		log2.NewInfo("", v...)
-		return
-	}
-	pc, b, c, _ := runtime.Caller(1)
-	fname := runtime.FuncForPC(pc).Name()
-	i := strings.LastIndex(b, "/")
-	if i != -1 {
-		sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "func start, args: ", v)
-	}
+	//if constant.SdkLogFlag == 1 {
+	//	return
+	//}
+	//if open_im_sdk.logger != nil {
+	//	log2.NewInfo("", v...)
+	//	return
+	//}
+	//pc, b, c, _ := runtime.Caller(1)
+	//fname := runtime.FuncForPC(pc).Name()
+	//i := strings.LastIndex(b, "/")
+	//if i != -1 {
+	//	sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "func start, args: ", v)
+	//}
 }
 
 func LogFReturn(v ...interface{}) {
-	if constant.SdkLogFlag == 1 {
-		return
-	}
-	if open_im_sdk.logger != nil {
-		log2.NewInfo("", v...)
-		return
-	}
-	pc, b, c, _ := runtime.Caller(1)
-	fname := runtime.FuncForPC(pc).Name()
-	i := strings.LastIndex(b, "/")
-	if i != -1 {
-		sLog.Println("[", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "failed return args(info): ", v)
-	}
+	//if constant.SdkLogFlag == 1 {
+	//	return
+	//}
+	//if open_im_sdk.logger != nil {
+	//	log2.NewInfo("", v...)
+	//	return
+	//}
+	//pc, b, c, _ := runtime.Caller(1)
+	//fname := runtime.FuncForPC(pc).Name()
+	//i := strings.LastIndex(b, "/")
+	//if i != -1 {
+	//	sLog.Println("[", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "failed return args(info): ", v)
+	//}
 }
 
 func LogSReturn(v ...interface{}) {
-	if constant.SdkLogFlag == 1 {
-		return
-	}
-	if open_im_sdk.logger != nil {
-		log2.NewInfo("", v...)
-		return
-	}
-	pc, b, c, _ := runtime.Caller(1)
-	fname := runtime.FuncForPC(pc).Name()
-	i := strings.LastIndex(b, "/")
-	if i != -1 {
-		sLog.Println("[", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "success return args(info): ", v)
-	}
+	//if constant.SdkLogFlag == 1 {
+	//	return
+	//}
+	//if open_im_sdk.logger != nil {
+	//	log2.NewInfo("", v...)
+	//	return
+	//}
+	//pc, b, c, _ := runtime.Caller(1)
+	//fname := runtime.FuncForPC(pc).Name()
+	//i := strings.LastIndex(b, "/")
+	//if i != -1 {
+	//	sLog.Println("[", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "success return args(info): ", v)
+	//}
 
 }
 
 func sdkLog(v ...interface{}) {
-	if constant.SdkLogFlag == 1 {
-		return
-	}
-	if open_im_sdk.logger != nil {
-		log2.NewInfo("", v...)
-		return
-	}
-	_, b, c, _ := runtime.Caller(1)
-	i := strings.LastIndex(b, "/")
-	if i != -1 {
-		sLog.Println("[", b[i+1:len(b)], ":", c, "]", v)
-	}
+	//if constant.SdkLogFlag == 1 {
+	//	return
+	//}
+	//if open_im_sdk.logger != nil {
+	//	log2.NewInfo("", v...)
+	//	return
+	//}
+	//_, b, c, _ := runtime.Caller(1)
+	//i := strings.LastIndex(b, "/")
+	//if i != -1 {
+	//	sLog.Println("[", b[i+1:len(b)], ":", c, "]", v)
+	//}
 
 }
 
@@ -653,4 +653,9 @@ func WithMessage(err error, message string) error {
 func GetSelfFuncName() string {
 	pc, _, _, _ := runtime.Caller(1)
 	return runtime.FuncForPC(pc).Name()
+}
+
+func printCallerNameAndLine() string {
+	pc, _, line, _ := runtime.Caller(2)
+	return runtime.FuncForPC(pc).Name() + "()@" + strconv.Itoa(line) + ": "
 }
