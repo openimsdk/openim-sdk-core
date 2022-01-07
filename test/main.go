@@ -3,15 +3,13 @@ package main
 import (
 	"encoding/json"
 	"github.com/pkg/errors"
-	"open_im_sdk/open_im_sdk/sdk_interface"
-	"open_im_sdk/open_im_sdk/utils"
+	"open_im_sdk/pkg/utils"
 
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"net"
-	"open_im_sdk/open_im_sdk"
 	"os"
 	"strconv"
 	"strings"
@@ -401,13 +399,13 @@ func main() {
 	//}
 	strMyUidx := "openIM001"
 	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0wMDEiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTY0MjA1NDcyOSwibmJmIjoxNjQxNDQ5OTI5LCJpYXQiOjE2NDE0NDk5Mjl9.wUQDrgAGLuPa-EViFOnsfW1YCcq_IXZqJJedK618QlU"
-	open_im_sdk.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+	InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	//open_im_sdk.DoTestaddFriend()
 	//	open_im_sdk.DoTestGetFriendList()
 	//	open_im_sdk.DoTestAddToBlackList()
 	//	open_im_sdk.DoTestGetBlackList()
 	//	open_im_sdk.DoTestDeleteFromBlackList()
-	open_im_sdk.DoTestGetDesignatedFriendsInfo()
+	DoTestGetDesignatedFriendsInfo()
 	for true {
 		time.Sleep(time.Duration(60) * time.Second)
 		fmt.Println("waiting")
@@ -426,12 +424,12 @@ func main() {
 
 		runRigister(strMyUid1)
 		token1 := runGetToken(strMyUid1)
-		open_im_sdk.DoTest(strMyUid1, token1, WSADDR, APIADDR)
+		DoTest(strMyUid1, token1, WSADDR, APIADDR)
 		time.Sleep(time.Duration(1) * time.Second)
 	}
-	open_im_sdk.DotestSetConversationRecvMessageOpt()
-	open_im_sdk.DoTestGetConversationRecvMessageOpt()
-	open_im_sdk.DoTestGetAllConversationList()
+	DotestSetConversationRecvMessageOpt()
+	DoTestGetConversationRecvMessageOpt()
+	DoTestGetAllConversationList()
 	//	open_im_sdk.DoTestAddToBlackList()
 	time.Sleep(time.Duration(1) * time.Second)
 	//	open_im_sdk.DoTestGetFriendList()
@@ -485,19 +483,19 @@ func main() {
 	case 5:
 		fmt.Println("wait 2 mins, then login")
 		time.Sleep(time.Duration(1*60) * time.Second)
-		open_im_sdk.DoTest(strMyUid, token, WSADDR, APIADDR)
+		DoTest(strMyUid, token, WSADDR, APIADDR)
 		fmt.Println("login do test, only login")
 		fmt.Println("testmypid: ", os.Getpid())
 	case 6:
 		fmt.Println("wait 4 mins, then login")
 		time.Sleep(time.Duration(2*60) * time.Second)
-		open_im_sdk.DoTest(strMyUid, token, WSADDR, APIADDR)
+		DoTest(strMyUid, token, WSADDR, APIADDR)
 		fmt.Println("login do test, only login")
 		fmt.Println("testmypid: ", os.Getpid())
 	case 3:
 		fmt.Println("wait 2 mins, then login and send")
 		time.Sleep(time.Duration(1*60) * time.Second)
-		open_im_sdk.DoTest(strMyUid, token, WSADDR, APIADDR)
+		DoTest(strMyUid, token, WSADDR, APIADDR)
 		fmt.Println("login do test, login and send")
 
 		var recvId string
@@ -523,14 +521,14 @@ func main() {
 				recvId = GenUid(r)
 				idx = strconv.FormatInt(int64(i), 10)
 
-				open_im_sdk.DoTestSendMsg(strMyUid, recvId, idx)
+				DoTestSendMsg(strMyUid, recvId, idx)
 			}
 		}
 
 	case 4:
 		fmt.Println("wait 4 mins, then login and send")
 		time.Sleep(time.Duration(2*60) * time.Second)
-		open_im_sdk.DoTest(strMyUid, token, WSADDR, APIADDR)
+		DoTest(strMyUid, token, WSADDR, APIADDR)
 		fmt.Println("login do test, login and send")
 
 		var recvId string
@@ -556,18 +554,18 @@ func main() {
 				recvId = GenUid(r)
 				idx = strconv.FormatInt(int64(i), 10)
 
-				open_im_sdk.DoTestSendMsg(strMyUid, recvId, idx)
+				DoTestSendMsg(strMyUid, recvId, idx)
 			}
 		}
 
 	case 1:
 		fmt.Println("only login")
-		open_im_sdk.DoTest(strMyUid, token, WSADDR, APIADDR)
+		DoTest(strMyUid, token, WSADDR, APIADDR)
 		fmt.Println("login do test, only login...")
 		fmt.Println("testmypid: ", os.Getpid())
 	case 2:
 		fmt.Println("login send")
-		open_im_sdk.DoTest(strMyUid, token, WSADDR, APIADDR)
+		DoTest(strMyUid, token, WSADDR, APIADDR)
 		fmt.Println("login do test, login and send")
 
 		var recvId string
@@ -593,12 +591,12 @@ func main() {
 				recvId = GenUid(r)
 				idx = strconv.FormatInt(int64(i), 10)
 
-				open_im_sdk.DoTestSendMsg(strMyUid, recvId, idx)
+				DoTestSendMsg(strMyUid, recvId, idx)
 			}
 		}
 	case 7:
 		fmt.Println("random sleep and send")
-		open_im_sdk.DoTest(strMyUid, token, WSADDR, APIADDR)
+		DoTest(strMyUid, token, WSADDR, APIADDR)
 
 		var recvId string
 		var idx string
@@ -624,7 +622,7 @@ func main() {
 				recvId = GenUid(r)
 				idx = strconv.FormatInt(int64(i), 10)
 
-				open_im_sdk.DoTestSendMsg(strMyUid, recvId, idx)
+				DoTestSendMsg(strMyUid, recvId, idx)
 			}
 		}
 
