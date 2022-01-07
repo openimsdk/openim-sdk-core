@@ -29,7 +29,7 @@ func (frd *Friend) SetListener(listener OnFriendshipListener) {
 
 func (frd *Friend) getDesignatedFriendsInfo(callback open_im_sdk.Base, friendUserIDList sdk_params_callback.GetDesignatedFriendsInfoParams, operationID string) sdk_params_callback.GetDesignatedFriendsInfoCallback {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), friendUserIDList)
-	blackList, err := u._getBlackInfoList(friendUserIDList)
+	blackList, err := f.db.GetBlackInfoList(friendUserIDList)
 	utils.CheckErr(callback, err, operationID)
 	var pureFriendUserIDList []string
 	for _, v := range friendUserIDList {
@@ -44,7 +44,7 @@ func (frd *Friend) getDesignatedFriendsInfo(callback open_im_sdk.Base, friendUse
 			pureFriendUserIDList = append(pureFriendUserIDList, v)
 		}
 	}
-	localFriendList, err := u._getFriendInfoList(pureFriendUserIDList)
+	localFriendList, err := f.db.GetFriendInfoList(pureFriendUserIDList)
 	utils.CheckErr(callback, err, operationID)
 	log.NewInfo(operationID, "_getFriendInfoList ", pureFriendUserIDList, localFriendList)
 	return localFriendList
