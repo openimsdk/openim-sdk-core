@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"encoding/gob"
 	"github.com/gorilla/websocket"
-	"open_im_sdk/internal/open_im_sdk"
+
+	"errors"
 	"open_im_sdk/pkg/constant"
 	"sync"
 )
@@ -55,22 +56,20 @@ func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (error, *websocket.Conn) {
 	}
 }
 
-func (u *WsConn) decodeBinaryWs(message []byte) (*open_im_sdk.GeneralWsResp, error) {
-	LogStart()
+func (u *WsConn) decodeBinaryWs(message []byte) (*GeneralWsResp, error) {
+
 	buff := bytes.NewBuffer(message)
 	dec := gob.NewDecoder(buff)
 	var data GeneralWsResp
 	err := dec.Decode(&data)
 	if err != nil {
-		LogFReturn(nil, err.Error())
+
 		return nil, err
 	}
-	LogSReturn(&data, nil)
+
 	return &data, nil
 }
 
-func (u *WsConn) WriteMsg(msg open_im_sdk.GeneralWsReq) (error, *websocket.Conn) {
-	LogStart(msg.OperationID)
-	LogSReturn(msg.OperationID)
+func (u *WsConn) WriteMsg(msg GeneralWsReq) (error, *websocket.Conn) {
 	return u.writeBinaryMsg(msg)
 }
