@@ -13,15 +13,17 @@ import (
 type Friend struct {
 	friendListener OnFriendshipListener
 	token          string
-	userID         string
+	loginUserID    string
 	db             *db.DataBase
 }
 
 func (frd *Friend) Init(token, userID string, db *db.DataBase) {
-
+	frd.token = token
+	frd.loginUserID = userID
+	db = db
 }
 
-func (frd *Friend) SetListener(listener *OnFriendshipListener) {
+func (frd *Friend) SetListener(listener OnFriendshipListener) {
 	frd.friendListener = listener
 }
 
