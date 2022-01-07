@@ -1,4 +1,4 @@
-package open_im_sdk
+package utils
 
 import (
 	"bytes"
@@ -6,6 +6,8 @@ import (
 	"encoding/gob"
 	"encoding/hex"
 	"encoding/json"
+	"open_im_sdk/open_im_sdk"
+	log2 "open_im_sdk/open_im_sdk/log"
 
 	"github.com/gorilla/websocket"
 	"github.com/jinzhu/copier"
@@ -58,13 +60,13 @@ func getCurrentTimestampByNano() int64 {
 
 //wsNotification map[string]chan GeneralWsResp
 
-func (u *UserRelated) AddCh() (string, chan GeneralWsResp) {
+func (u *open_im_sdk.UserRelated) AddCh() (string, chan open_im_sdk.GeneralWsResp) {
 	LogBegin()
 	u.wsMutex.Lock()
 	defer u.wsMutex.Unlock()
 	msgIncr := u.GenMsgIncr()
 	sdkLog("msgIncr: ", msgIncr)
-	ch := make(chan GeneralWsResp, 1)
+	ch := make(chan open_im_sdk.GeneralWsResp, 1)
 	_, ok := u.wsNotification[msgIncr]
 	if ok {
 		sdkLog("AddCh exist")
@@ -75,7 +77,7 @@ func (u *UserRelated) AddCh() (string, chan GeneralWsResp) {
 	return msgIncr, ch
 }
 
-func (u *UserRelated) GetCh(msgIncr string) chan GeneralWsResp {
+func (u *open_im_sdk.UserRelated) GetCh(msgIncr string) chan open_im_sdk.GeneralWsResp {
 	LogBegin(msgIncr)
 	//u.wsMutex.RLock()
 	//	defer u.wsMutex.RUnlock()
@@ -90,7 +92,7 @@ func (u *UserRelated) GetCh(msgIncr string) chan GeneralWsResp {
 	return nil
 }
 
-func (u *UserRelated) DelCh(msgIncr string) {
+func (u *open_im_sdk.UserRelated) DelCh(msgIncr string) {
 	//	LogBegin(msgIncr)
 	u.wsMutex.Lock()
 	defer u.wsMutex.Unlock()
@@ -102,7 +104,7 @@ func (u *UserRelated) DelCh(msgIncr string) {
 	//	LogSReturn()
 }
 
-func (u *UserRelated) sendPingMsg() error {
+func (u *open_im_sdk.UserRelated) sendPingMsg() error {
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
 	var ping string = "try ping"
@@ -114,7 +116,7 @@ func (u *UserRelated) sendPingMsg() error {
 	return u.conn.WriteMessage(websocket.PingMessage, []byte(ping))
 }
 
-func (u *UserRelated) writeBinaryMsg(msg GeneralWsReq) (error, *websocket.Conn) {
+func (u *open_im_sdk.UserRelated) writeBinaryMsg(msg open_im_sdk.GeneralWsReq) (error, *websocket.Conn) {
 	LogStart(msg.OperationID)
 	var buff bytes.Buffer
 	enc := gob.NewEncoder(&buff)
@@ -135,8 +137,8 @@ func (u *UserRelated) writeBinaryMsg(msg GeneralWsReq) (error, *websocket.Conn) 
 			sdkLog("SetWriteDeadline failed ", err.Error())
 		}
 		sdkLog("send ws BinaryMessage len: ", len(buff.Bytes()))
-		if len(buff.Bytes()) > MaxTotalMsgLen {
-			LogFReturn("msg too long", len(buff.Bytes()), MaxTotalMsgLen)
+		if len(buff.Bytes()) > open_im_sdk.MaxTotalMsgLen {
+			LogFReturn("msg too long", len(buff.Bytes()), open_im_sdk.MaxTotalMsgLen)
 			return errors.New("msg too long"), connSended
 		}
 		err = u.conn.WriteMessage(websocket.BinaryMessage, buff.Bytes())
@@ -152,11 +154,11 @@ func (u *UserRelated) writeBinaryMsg(msg GeneralWsReq) (error, *websocket.Conn) 
 	}
 }
 
-func (u *UserRelated) decodeBinaryWs(message []byte) (*GeneralWsResp, error) {
+func (u *open_im_sdk.UserRelated) decodeBinaryWs(message []byte) (*open_im_sdk.GeneralWsResp, error) {
 	LogStart()
 	buff := bytes.NewBuffer(message)
 	dec := gob.NewDecoder(buff)
-	var data GeneralWsResp
+	var data open_im_sdk.GeneralWsResp
 	err := dec.Decode(&data)
 	if err != nil {
 		LogFReturn(nil, err.Error())
@@ -166,13 +168,13 @@ func (u *UserRelated) decodeBinaryWs(message []byte) (*GeneralWsResp, error) {
 	return &data, nil
 }
 
-func (u *UserRelated) WriteMsg(msg GeneralWsReq) (error, *websocket.Conn) {
+func (u *open_im_sdk.UserRelated) WriteMsg(msg open_im_sdk.GeneralWsReq) (error, *websocket.Conn) {
 	LogStart(msg.OperationID)
 	LogSReturn(msg.OperationID)
 	return u.writeBinaryMsg(msg)
 }
 
-func notifyCh(ch chan GeneralWsResp, value GeneralWsResp, timeout int64) error {
+func notifyCh(ch chan open_im_sdk.GeneralWsResp, value open_im_sdk.GeneralWsResp, timeout int64) error {
 	var flag = 0
 	select {
 	case ch <- value:
@@ -188,7 +190,7 @@ func notifyCh(ch chan GeneralWsResp, value GeneralWsResp, timeout int64) error {
 	}
 }
 
-func sendCmd(ch chan cmd2Value, value cmd2Value, timeout int64) error {
+func sendCmd(ch chan open_im_sdk.cmd2Value, value open_im_sdk.cmd2Value, timeout int64) error {
 	var flag = 0
 	select {
 	case ch <- value:
@@ -204,7 +206,7 @@ func sendCmd(ch chan cmd2Value, value cmd2Value, timeout int64) error {
 	}
 }
 
-func (u *UserRelated) GenMsgIncr() string {
+func (u *open_im_sdk.UserRelated) GenMsgIncr() string {
 	return u.loginUserID + "_" + int64ToString(getCurrentTimestampByNano())
 }
 
@@ -250,13 +252,13 @@ func stringToInt(i string) int {
 	return j
 }
 
-func checkFriendListDiff(a []*LocalFriend, b []*LocalFriend) (aInBNot, bInANot, sameA, sameB []int) {
+func checkFriendListDiff(a []*open_im_sdk.LocalFriend, b []*open_im_sdk.LocalFriend) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
-	mapA := make(map[string]*LocalFriend)
+	mapA := make(map[string]*open_im_sdk.LocalFriend)
 	for _, v := range a {
 		mapA[v.FriendUserID] = v
 	}
-	mapB := make(map[string]*LocalFriend)
+	mapB := make(map[string]*open_im_sdk.LocalFriend)
 	for _, v := range b {
 		mapB[v.FriendUserID] = v
 	}
@@ -293,13 +295,13 @@ func checkFriendListDiff(a []*LocalFriend, b []*LocalFriend) (aInBNot, bInANot, 
 	return aInBNot, bInANot, sameA, sameB
 }
 
-func checkFriendRequestDiff(a []*LocalFriendRequest, b []*LocalFriendRequest) (aInBNot, bInANot, sameA, sameB []int) {
+func checkFriendRequestDiff(a []*open_im_sdk.LocalFriendRequest, b []*open_im_sdk.LocalFriendRequest) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
-	mapA := make(map[string]*LocalFriendRequest)
+	mapA := make(map[string]*open_im_sdk.LocalFriendRequest)
 	for _, v := range a {
 		mapA[v.ToUserID] = v
 	}
-	mapB := make(map[string]*LocalFriendRequest)
+	mapB := make(map[string]*open_im_sdk.LocalFriendRequest)
 	for _, v := range b {
 		mapB[v.ToUserID] = v
 	}
@@ -335,13 +337,13 @@ func checkFriendRequestDiff(a []*LocalFriendRequest, b []*LocalFriendRequest) (a
 	}
 	return aInBNot, bInANot, sameA, sameB
 }
-func checkBlackListDiff(a []*LocalBlack, b []*LocalBlack) (aInBNot, bInANot, sameA, sameB []int) {
+func checkBlackListDiff(a []*open_im_sdk.LocalBlack, b []*open_im_sdk.LocalBlack) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
-	mapA := make(map[string]*LocalBlack)
+	mapA := make(map[string]*open_im_sdk.LocalBlack)
 	for _, v := range a {
 		mapA[v.BlockUserID] = v
 	}
-	mapB := make(map[string]*LocalBlack)
+	mapB := make(map[string]*open_im_sdk.LocalBlack)
 	for _, v := range b {
 		mapB[v.BlockUserID] = v
 	}
@@ -378,13 +380,13 @@ func checkBlackListDiff(a []*LocalBlack, b []*LocalBlack) (aInBNot, bInANot, sam
 	return aInBNot, bInANot, sameA, sameB
 }
 
-func checkDiff(a []diff, b []diff) (aInBNot, bInANot, sameA, sameB []int) {
+func checkDiff(a []open_im_sdk.diff, b []open_im_sdk.diff) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map
-	mapA := make(map[string]diff)
+	mapA := make(map[string]open_im_sdk.diff)
 	for _, v := range a {
 		mapA[v.Key()] = v
 	}
-	mapB := make(map[string]diff)
+	mapB := make(map[string]open_im_sdk.diff)
 	for _, v := range b {
 		mapB[v.Key()] = v
 	}
@@ -420,76 +422,76 @@ func checkDiff(a []diff, b []diff) (aInBNot, bInANot, sameA, sameB []int) {
 	return aInBNot, bInANot, sameA, sameB
 }
 
-func (fr *FriendInfo) Key() string {
+func (fr *open_im_sdk.FriendInfo) Key() string {
 	return fr.FriendUser.UserID
 }
-func (fr *FriendInfo) Value() string {
+func (fr *open_im_sdk.FriendInfo) Value() string {
 	return fr.OwnerUserID + fr.Remark + fr.Ex + fr.OperatorUserID +
 		fr.FriendUser.UserID + fr.FriendUser.Nickname + fr.FriendUser.FaceUrl + fr.FriendUser.Email + fr.FriendUser.Ex
 }
 
-func (us userInfo) Key() string {
+func (us open_im_sdk.userInfo) Key() string {
 	return us.Uid
 }
-func (us userInfo) Value() interface{} {
+func (us open_im_sdk.userInfo) Value() interface{} {
 	return us
 }
 
-func (ap applyUserInfo) Key() string {
+func (ap open_im_sdk.applyUserInfo) Key() string {
 	return ap.Uid
 }
 
-func (g groupInfo) Key() string {
+func (g open_im_sdk.groupInfo) Key() string {
 	return g.GroupId
 }
 
-func (g groupInfo) Value() interface{} {
+func (g open_im_sdk.groupInfo) Value() interface{} {
 	return g
 }
-func (ap applyUserInfo) Value() interface{} {
+func (ap open_im_sdk.applyUserInfo) Value() interface{} {
 	return ap
 }
 
-func (g groupMemberFullInfo) Key() string {
+func (g open_im_sdk.groupMemberFullInfo) Key() string {
 	return g.UserId
 }
 
-func (g groupMemberFullInfo) Value() interface{} {
+func (g open_im_sdk.groupMemberFullInfo) Value() interface{} {
 	return g
 }
-func (g GroupReqListInfo) Key() string {
+func (g open_im_sdk.GroupReqListInfo) Key() string {
 	return g.GroupID + g.FromUserID + g.ToUserID
 }
 
-func (g GroupReqListInfo) Value() interface{} {
+func (g open_im_sdk.GroupReqListInfo) Value() interface{} {
 	return g
 }
 
 func GetConversationIDBySessionType(sourceID string, sessionType int) string {
 	switch sessionType {
-	case SingleChatType:
+	case open_im_sdk.SingleChatType:
 		return "single_" + sourceID
-	case GroupChatType:
+	case open_im_sdk.GroupChatType:
 		return "group_" + sourceID
 	}
 	return ""
 }
 func getIsRead(b bool) int {
 	if b {
-		return HasRead
+		return open_im_sdk.HasRead
 	} else {
-		return NotRead
+		return open_im_sdk.NotRead
 	}
 }
 func getIsFilter(b bool) int {
 	if b {
-		return IsFilter
+		return open_im_sdk.IsFilter
 	} else {
-		return NotFilter
+		return open_im_sdk.NotFilter
 	}
 }
 func getIsReadB(i int) bool {
-	if i == HasRead {
+	if i == open_im_sdk.HasRead {
 		return true
 	} else {
 		return false
@@ -511,11 +513,11 @@ func cleanUpfuncName(funcName string) string {
 }
 
 func LogBegin(v ...interface{}) {
-	if SdkLogFlag == 1 {
+	if open_im_sdk.SdkLogFlag == 1 {
 		return
 	}
-	if logger != nil {
-		NewInfo("", v...)
+	if open_im_sdk.logger != nil {
+		log2.NewInfo("", v...)
 		return
 	}
 	pc, b, c, _ := runtime.Caller(1)
@@ -527,11 +529,11 @@ func LogBegin(v ...interface{}) {
 }
 
 func LogEnd(v ...interface{}) {
-	if SdkLogFlag == 1 {
+	if open_im_sdk.SdkLogFlag == 1 {
 		return
 	}
-	if logger != nil {
-		NewInfo("", v...)
+	if open_im_sdk.logger != nil {
+		log2.NewInfo("", v...)
 		return
 	}
 	pc, b, c, _ := runtime.Caller(1)
@@ -543,11 +545,11 @@ func LogEnd(v ...interface{}) {
 }
 
 func LogStart(v ...interface{}) {
-	if SdkLogFlag == 1 {
+	if open_im_sdk.SdkLogFlag == 1 {
 		return
 	}
-	if logger != nil {
-		NewInfo("", v...)
+	if open_im_sdk.logger != nil {
+		log2.NewInfo("", v...)
 		return
 	}
 	pc, b, c, _ := runtime.Caller(1)
@@ -559,11 +561,11 @@ func LogStart(v ...interface{}) {
 }
 
 func LogFReturn(v ...interface{}) {
-	if SdkLogFlag == 1 {
+	if open_im_sdk.SdkLogFlag == 1 {
 		return
 	}
-	if logger != nil {
-		NewInfo("", v...)
+	if open_im_sdk.logger != nil {
+		log2.NewInfo("", v...)
 		return
 	}
 	pc, b, c, _ := runtime.Caller(1)
@@ -575,11 +577,11 @@ func LogFReturn(v ...interface{}) {
 }
 
 func LogSReturn(v ...interface{}) {
-	if SdkLogFlag == 1 {
+	if open_im_sdk.SdkLogFlag == 1 {
 		return
 	}
-	if logger != nil {
-		NewInfo("", v...)
+	if open_im_sdk.logger != nil {
+		log2.NewInfo("", v...)
 		return
 	}
 	pc, b, c, _ := runtime.Caller(1)
@@ -592,11 +594,11 @@ func LogSReturn(v ...interface{}) {
 }
 
 func sdkLog(v ...interface{}) {
-	if SdkLogFlag == 1 {
+	if open_im_sdk.SdkLogFlag == 1 {
 		return
 	}
-	if logger != nil {
-		NewInfo("", v...)
+	if open_im_sdk.logger != nil {
+		log2.NewInfo("", v...)
 		return
 	}
 	_, b, c, _ := runtime.Caller(1)
@@ -608,11 +610,11 @@ func sdkLog(v ...interface{}) {
 }
 
 func sdkErrLog(err error, v ...interface{}) {
-	if SdkLogFlag == 1 {
+	if open_im_sdk.SdkLogFlag == 1 {
 		return
 	}
-	if logger != nil {
-		NewInfo("", v...)
+	if open_im_sdk.logger != nil {
+		log2.NewInfo("", v...)
 		return
 	}
 	_, b, c, _ := runtime.Caller(1)
@@ -629,7 +631,7 @@ type LogInfo struct {
 }
 
 func log(info string) error {
-	if SdkLogFlag == 1 {
+	if open_im_sdk.SdkLogFlag == 1 {
 		return nil
 	}
 	sdkLog(info)
@@ -665,7 +667,7 @@ func retry(url string, data interface{}, token string, attempts int, sleep time.
 
 //application/json; charset=utf-8
 func Post2Api(url string, data interface{}, token string) (content []byte, err error) {
-	if url == sendMsgRouter {
+	if url == open_im_sdk.sendMsgRouter {
 		return retry(url, data, token, 1, 10*time.Second, postLogic)
 	} else {
 		return postLogic(url, data, token)
@@ -675,7 +677,7 @@ func Post2Api(url string, data interface{}, token string) (content []byte, err e
 //application/json; charset=utf-8
 func post2Api(url string, data interface{}, token string) (content []byte, err error) {
 
-	if url == sendMsgRouter {
+	if url == open_im_sdk.sendMsgRouter {
 		return retry(url, data, token, 1, 10*time.Second, postLogic)
 	} else {
 		return postLogic(url, data, token)
@@ -686,7 +688,7 @@ func post2Api(url string, data interface{}, token string) (content []byte, err e
 func post2ApiForRead(url string, data interface{}, token string) (content []byte, err error) {
 	sdkLog("call post2Api: ", url)
 
-	if url == sendMsgRouter {
+	if url == open_im_sdk.sendMsgRouter {
 		return retry(url, data, token, 3, 10*time.Second, postLogic)
 	} else {
 		return postLogic(url, data, token)
@@ -751,7 +753,7 @@ func fileTmpPath(fullPath string) string {
 		sdkLog("suffix  err:")
 	}
 
-	return SvrConf.DbDir + Md5(fullPath) + suffix //a->b
+	return open_im_sdk.SvrConf.DbDir + Md5(fullPath) + suffix //a->b
 }
 
 func fileExist(filename string) bool {
@@ -803,33 +805,33 @@ func WithMessage(err error, message string) error {
 	return errors.WithMessage(err, "==> "+printCallerNameAndLine()+message)
 }
 
-func checkErr(callback Base, err error, operationID string) {
+func checkErr(callback open_im_sdk.Base, err error, operationID string) {
 	if err != nil {
 		if callback != nil {
-			NewError(operationID, "checkErr ", err, ErrDB.ErrCode, ErrDB.ErrMsg)
-			callback.OnError(ErrDB.ErrCode, ErrDB.ErrMsg)
+			log2.NewError(operationID, "checkErr ", err, open_im_sdk.ErrDB.ErrCode, open_im_sdk.ErrDB.ErrMsg)
+			callback.OnError(open_im_sdk.ErrDB.ErrCode, open_im_sdk.ErrDB.ErrMsg)
 			runtime.Goexit()
 		}
 	}
 }
 
-func checkErrAndResp(callback Base, err error, resp []byte, operationID string) *CommDataResp {
+func checkErrAndResp(callback open_im_sdk.Base, err error, resp []byte, operationID string) *open_im_sdk.CommDataResp {
 	checkErr(callback, err, operationID)
 	return checkResp(callback, resp, operationID)
 }
 
-func checkResp(callback Base, resp []byte, operationID string) *CommDataResp {
-	var c CommDataResp
+func checkResp(callback open_im_sdk.Base, resp []byte, operationID string) *open_im_sdk.CommDataResp {
+	var c open_im_sdk.CommDataResp
 	err := json.Unmarshal(resp, &c)
 	if err != nil {
-		NewError(operationID, "Unmarshal ", err)
-		callback.OnError(ErrArgs.ErrCode, ErrArgs.ErrMsg)
+		log2.NewError(operationID, "Unmarshal ", err)
+		callback.OnError(open_im_sdk.ErrArgs.ErrCode, open_im_sdk.ErrArgs.ErrMsg)
 		runtime.Goexit()
 		return nil
 	}
 
 	if c.ErrCode != 0 {
-		NewError(operationID, "errCode ", c.ErrCode, "errMsg ", c.ErrMsg)
+		log2.NewError(operationID, "errCode ", c.ErrCode, "errMsg ", c.ErrMsg)
 		callback.OnError(c.ErrCode, c.ErrMsg)
 		runtime.Goexit()
 		return nil
@@ -837,20 +839,20 @@ func checkResp(callback Base, resp []byte, operationID string) *CommDataResp {
 	return &c
 }
 
-func checkErrAndRespReturn(err error, resp []byte, operationID string) (*CommDataResp, error) {
+func checkErrAndRespReturn(err error, resp []byte, operationID string) (*open_im_sdk.CommDataResp, error) {
 	if err != nil {
-		NewError(operationID, "checkErr ", err)
+		log2.NewError(operationID, "checkErr ", err)
 		return nil, err
 	}
-	var c CommDataResp
+	var c open_im_sdk.CommDataResp
 	err = json.Unmarshal(resp, &c)
 	if err != nil {
-		NewError(operationID, "Unmarshal ", err)
+		log2.NewError(operationID, "Unmarshal ", err)
 		return nil, err
 	}
 
 	if c.ErrCode != 0 {
-		NewError(operationID, "errCode ", c.ErrCode, "errMsg ", c.ErrMsg)
+		log2.NewError(operationID, "errCode ", c.ErrCode, "errMsg ", c.ErrMsg)
 		return nil, errors.New(c.ErrMsg)
 	}
 	return &c, nil
@@ -892,34 +894,34 @@ func CompFields(a interface{}, b interface{}, fields ...string) bool {
 	return false
 }
 
-func friendCopyToLocal(localFriend *LocalFriend, apiFriend *FriendInfo) {
+func friendCopyToLocal(localFriend *open_im_sdk.LocalFriend, apiFriend *open_im_sdk.FriendInfo) {
 	copier.Copy(localFriend, apiFriend)
 	copier.Copy(localFriend, apiFriend.FriendUser)
 	localFriend.FriendUserID = apiFriend.FriendUser.UserID
 }
 
-func friendRequestCopyToLocal(localFriendRequest *LocalFriendRequest, apiFriendRequest *FriendRequest) {
+func friendRequestCopyToLocal(localFriendRequest *open_im_sdk.LocalFriendRequest, apiFriendRequest *open_im_sdk.FriendRequest) {
 	copier.Copy(localFriendRequest, apiFriendRequest)
 
 }
 
-func blackCopyToLocal(localBlack *LocalBlack, apiBlack *PublicUserInfo, ownerUserID string) {
+func blackCopyToLocal(localBlack *open_im_sdk.LocalBlack, apiBlack *open_im_sdk.PublicUserInfo, ownerUserID string) {
 	copier.Copy(localBlack, apiBlack)
 	localBlack.OwnerUserID = ownerUserID
 	localBlack.BlockUserID = apiBlack.UserID
 }
 
-func transferToLocalFriend(apiFriendList []*FriendInfo) []*LocalFriend {
-	localFriendList := make([]*LocalFriend, 0)
+func transferToLocalFriend(apiFriendList []*open_im_sdk.FriendInfo) []*open_im_sdk.LocalFriend {
+	localFriendList := make([]*open_im_sdk.LocalFriend, 0)
 	for _, v := range apiFriendList {
-		var localFriend LocalFriend
+		var localFriend open_im_sdk.LocalFriend
 		friendCopyToLocal(&localFriend, v)
 		localFriendList = append(localFriendList, &localFriend)
 	}
 	return localFriendList
 }
 
-func checkListDiff(a []diff, b []diff) (aInBNot, bInANot, sameA, sameB []int) {
+func checkListDiff(a []open_im_sdk.diff, b []open_im_sdk.diff) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
 	mapA := make(map[string]interface{})
 	for _, v := range a {
@@ -961,22 +963,22 @@ func checkListDiff(a []diff, b []diff) (aInBNot, bInANot, sameA, sameB []int) {
 	return aInBNot, bInANot, sameA, sameB
 }
 
-func transferToLocalFriendRequest(apiFriendList []*FriendRequest) []*LocalFriendRequest {
-	localFriendList := make([]*LocalFriendRequest, 0)
+func transferToLocalFriendRequest(apiFriendList []*open_im_sdk.FriendRequest) []*open_im_sdk.LocalFriendRequest {
+	localFriendList := make([]*open_im_sdk.LocalFriendRequest, 0)
 	for _, v := range apiFriendList {
-		var localFriendRequest LocalFriendRequest
-		NewDebug("0", "local test api ", v)
+		var localFriendRequest open_im_sdk.LocalFriendRequest
+		log2.NewDebug("0", "local test api ", v)
 		friendRequestCopyToLocal(&localFriendRequest, v)
-		NewDebug("0", "local test local  ", localFriendRequest)
+		log2.NewDebug("0", "local test local  ", localFriendRequest)
 		localFriendList = append(localFriendList, &localFriendRequest)
 	}
-	NewDebug("0", "local test local all ", localFriendList)
+	log2.NewDebug("0", "local test local all ", localFriendList)
 	return localFriendList
 }
-func transferToLocalBlack(apiBlackList []*PublicUserInfo, ownerUserID string) []*LocalBlack {
-	localBlackList := make([]*LocalBlack, 0)
+func transferToLocalBlack(apiBlackList []*open_im_sdk.PublicUserInfo, ownerUserID string) []*open_im_sdk.LocalBlack {
+	localBlackList := make([]*open_im_sdk.LocalBlack, 0)
 	for _, v := range apiBlackList {
-		var localBlack LocalBlack
+		var localBlack open_im_sdk.LocalBlack
 		blackCopyToLocal(&localBlack, v, ownerUserID)
 		localBlackList = append(localBlackList, &localBlack)
 	}

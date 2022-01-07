@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	X "log"
+	"open_im_sdk/open_im_sdk/sdk_interface"
+	"open_im_sdk/open_im_sdk/sdk_params_callback"
+	"open_im_sdk/open_im_sdk/utils"
 	"os"
 	"runtime"
 	"time"
@@ -56,7 +59,7 @@ func (testGetFriendApplicationList) OnError(code int32, msg string) {
 
 func DoTestGetFriendApplicationList() {
 	var test testGetFriendApplicationList
-	GetRecvFriendApplicationList(test, "")
+	sdk_interface.GetRecvFriendApplicationList(test, "")
 
 }
 
@@ -79,7 +82,7 @@ func DoTestSetSelfInfo() {
 	test.Email = "3333333@qq.com"
 	jsontest, _ := json.Marshal(test)
 	fmt.Println("SetSelfInfo, input: ", string(jsontest))
-	SetSelfInfo(string(jsontest), test)
+	sdk_interface.SetSelfInfo(string(jsontest), test)
 }
 
 /////////////////////////////////////////////////////////
@@ -100,7 +103,7 @@ func DoTestGetUsersInfo() {
 	test.UidList = append(test.UidList, Friend_uid)
 	jsontest, _ := json.Marshal(test.UidList)
 	fmt.Println("testGetUsersInfo, input: ", string(jsontest))
-	GetUsersInfo(string(jsontest), test)
+	sdk_interface.GetUsersInfo(string(jsontest), test)
 }
 
 /////////////////////////////////////////////////////////
@@ -122,7 +125,7 @@ func DoTestGetDesignatedFriendsInfo() {
 
 	jsontest, _ := json.Marshal(test.uid)
 	fmt.Println("testGetFriendsInfo, input: ", string(jsontest))
-	GetDesignatedFriendsInfo(test, string(jsontest), "asdffdsfasdfa")
+	sdk_interface.GetDesignatedFriendsInfo(test, string(jsontest), "asdffdsfasdfa")
 }
 
 ///////////////////////////////////////////////////////
@@ -145,7 +148,7 @@ func DoTestAddToBlackList() {
 
 	fmt.Println("AddToBlackList, input: ", Friend_uid)
 
-	AddBlack(test, Friend_uid, "asdfasvacdxds")
+	sdk_interface.AddBlack(test, Friend_uid, "asdfasvacdxds")
 }
 
 ///////////////////////////////////////////////////////
@@ -166,7 +169,7 @@ func DoTestDeleteFromBlackList() {
 	test.delUid = Friend_uid
 	jsontest, _ := json.Marshal(test.delUid)
 	fmt.Println("DeleteFromBlackList, input: ", string(jsontest))
-	RemoveBlack(test, string(jsontest), "11111111111111asdf11112134dfsa")
+	sdk_interface.RemoveBlack(test, string(jsontest), "11111111111111asdf11112134dfsa")
 }
 
 //////////////////////////////////////////////////////
@@ -181,7 +184,7 @@ func (testGetBlackList) OnError(code int32, msg string) {
 }
 func DoTestGetBlackList() {
 	var test testGetBlackList
-	GetBlackList(test, "asdfadsvasdv3")
+	sdk_interface.GetBlackList(test, "asdfadsvasdv3")
 }
 
 //////////////////////////////////////////////////////
@@ -200,7 +203,7 @@ func DoTestCheckFriend() {
 	test.UidList = append(test.UidList, Friend_uid)
 	jsontest, _ := json.Marshal(test.UidList)
 	fmt.Println("CheckFriend, input: ", string(jsontest))
-	CheckFriend(test, string(jsontest), "")
+	sdk_interface.CheckFriend(test, string(jsontest), "")
 }
 
 /////////////////////////////////////////////////////////
@@ -220,7 +223,7 @@ func DoTestSetFriendInfo() {
 	test.Comment = "MM"
 	jsontest, _ := json.Marshal(test)
 	fmt.Println("SetFriendInfo, input: ", string(jsontest))
-	SetFriendRemark(test, string(jsontest), "")
+	sdk_interface.SetFriendRemark(test, string(jsontest), "")
 }
 
 /////////////////////
@@ -243,13 +246,13 @@ func DoTestDeleteFromFriendList() {
 	test.Uid = Friend_uid
 	jsontest, err := json.Marshal(test.Uid)
 	fmt.Println("DeleteFromFriendList, input:", string(jsontest), err)
-	DeleteFriend(test, test.Uid, "asdfasfdsfdsdfa1111")
+	sdk_interface.DeleteFriend(test, test.Uid, "asdfasfdsfdsdfa1111")
 }
 
 ///////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 type testaddFriend struct {
-	AddFriendParams
+	sdk_params_callback.AddFriendParams
 }
 
 func (testaddFriend) OnSuccess(data string) {
@@ -267,7 +270,7 @@ func DoTestaddFriend() {
 
 	jsontestaddFriend, _ := json.Marshal(testaddFriend)
 	fmt.Println("addFriend input:", string(jsontestaddFriend))
-	AddFriend(testaddFriend, string(jsontestaddFriend), "1ef1345regqdfgv")
+	sdk_interface.AddFriend(testaddFriend, string(jsontestaddFriend), "1ef1345regqdfgv")
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -283,7 +286,7 @@ func (testGetFriendList) OnError(code int32, msg string) {
 }
 func DoTestGetFriendList() {
 	var testGetFriendList testGetFriendList
-	GetFriendList(testGetFriendList, "asdf33333sdfaafsd")
+	sdk_interface.GetFriendList(testGetFriendList, "asdf33333sdfaafsd")
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -304,7 +307,7 @@ func DoTestAcceptFriendApplication() {
 	testAcceptFriendApplication.UID = Friend_uid
 
 	jsontestAcceptFriendappclicatrion, _ := json.Marshal(testAcceptFriendApplication.UID)
-	AcceptFriendApplication(testAcceptFriendApplication, string(jsontestAcceptFriendappclicatrion), "")
+	sdk_interface.AcceptFriendApplication(testAcceptFriendApplication, string(jsontestAcceptFriendappclicatrion), "")
 	fmt.Println("AcceptFriendApplication, input: ", string(jsontestAcceptFriendappclicatrion))
 }
 
@@ -351,7 +354,7 @@ func DoTestRefuseFriendApplication() {
 	testRefuseFriendApplication.UID = Friend_uid
 
 	jsontestfusetFriendappclicatrion, _ := json.Marshal(testRefuseFriendApplication.UID)
-	RefuseFriendApplication(testRefuseFriendApplication, string(jsontestfusetFriendappclicatrion), "")
+	sdk_interface.RefuseFriendApplication(testRefuseFriendApplication, string(jsontestfusetFriendappclicatrion), "")
 	fmt.Println("RefuseFriendApplication, input: ", string(jsontestfusetFriendappclicatrion))
 }
 
@@ -380,14 +383,14 @@ func (b *BaseSuccFailed) OnSuccess(data string) {
 
 func InOutlllogin(uid, tk string) {
 	var callback BaseSuccFailed
-	callback.funcName = RunFuncName()
-	Login(uid, tk, &callback)
+	callback.funcName = utils.RunFuncName()
+	sdk_interface.Login(uid, tk, &callback)
 }
 
 func InOutLogou() {
 	var callback BaseSuccFailed
-	callback.funcName = RunFuncName()
-	Logout(&callback)
+	callback.funcName = utils.RunFuncName()
+	sdk_interface.Logout(&callback)
 }
 
 func InOutDoTest(uid, tk, ws, api string) {
@@ -403,27 +406,27 @@ func InOutDoTest(uid, tk, ws, api string) {
 	s = string(b)
 	fmt.Println(s)
 	var testinit testInitLister
-	InitSDK(s, testinit)
+	sdk_interface.InitSDK(s, testinit)
 
 	var testConversation conversationCallBack
-	SetConversationListener(testConversation)
+	sdk_interface.SetConversationListener(testConversation)
 
 	var msgCallBack MsgListenerCallBak
-	AddAdvancedMsgListener(msgCallBack)
+	sdk_interface.AddAdvancedMsgListener(msgCallBack)
 
 	var friendListener testFriendListener
-	SetFriendListener(friendListener)
+	sdk_interface.SetFriendListener(friendListener)
 
 	var groupListener testGroupListener
-	SetGroupListener(groupListener)
+	sdk_interface.SetGroupListener(groupListener)
 
 	InOutlllogin(uid, tk)
 }
 
 func lllogin(uid, tk string) bool {
 	var callback BaseSuccFailed
-	callback.funcName = RunFuncName()
-	Login(uid, tk, &callback)
+	callback.funcName = utils.RunFuncName()
+	sdk_interface.Login(uid, tk, &callback)
 
 	for true {
 		if callback.errCode == 1 {
@@ -454,19 +457,19 @@ func DoTest(uid, tk, ws, api string) {
 	s = string(b)
 	fmt.Println(s)
 	var testinit testInitLister
-	InitSDK(s, testinit)
+	sdk_interface.InitSDK(s, testinit)
 
 	var testConversation conversationCallBack
-	SetConversationListener(testConversation)
+	sdk_interface.SetConversationListener(testConversation)
 
 	var msgCallBack MsgListenerCallBak
-	AddAdvancedMsgListener(msgCallBack)
+	sdk_interface.AddAdvancedMsgListener(msgCallBack)
 
 	var friendListener testFriendListener
-	SetFriendListener(friendListener)
+	sdk_interface.SetFriendListener(friendListener)
 
 	var groupListener testGroupListener
-	SetGroupListener(groupListener)
+	sdk_interface.SetGroupListener(groupListener)
 
 	time.Sleep(1 * time.Second)
 
@@ -515,32 +518,32 @@ func (b *BaseSuccFailedTest) OnSuccess(data string) {
 
 func DotestSetConversationRecvMessageOpt() {
 	var callback BaseSuccFailedTest
-	callback.funcName = RunFuncName()
+	callback.funcName = utils.RunFuncName()
 	var idList []string
 	idList = append(idList, "18567155635")
 	jsontest, _ := json.Marshal(idList)
-	SetConversationRecvMessageOpt(&callback, string(jsontest), 2)
+	sdk_interface.SetConversationRecvMessageOpt(&callback, string(jsontest), 2)
 	fmt.Println("SetConversationRecvMessageOpt", string(jsontest))
 }
 
 func DoTestGetMultipleConversation() {
 	var callback BaseSuccFailedTest
-	callback.funcName = RunFuncName()
+	callback.funcName = utils.RunFuncName()
 	var idList []string
 	fmt.Println("DoTestGetMultipleConversation come here")
 	idList = append(idList, "single_13977954313", "group_77215e1b13b75f3ab00cb6570e3d9618")
 	jsontest, _ := json.Marshal(idList)
-	GetMultipleConversation(string(jsontest), &callback)
+	sdk_interface.GetMultipleConversation(string(jsontest), &callback)
 	fmt.Println("GetMultipleConversation", string(jsontest))
 }
 
 func DoTestGetConversationRecvMessageOpt() {
 	var callback BaseSuccFailedTest
-	callback.funcName = RunFuncName()
+	callback.funcName = utils.RunFuncName()
 	var idList []string
 	idList = append(idList, "18567155635")
 	jsontest, _ := json.Marshal(idList)
-	GetConversationRecvMessageOpt(&callback, string(jsontest))
+	sdk_interface.GetConversationRecvMessageOpt(&callback, string(jsontest))
 	fmt.Println("GetConversationRecvMessageOpt", string(jsontest))
 }
 
@@ -564,14 +567,14 @@ func DoTestSendMsg(sendId, receiverID string, idx string) {
 
 func DoTestGetHistoryMessage(userID string) {
 	var testGetHistoryCallBack GetHistoryCallBack
-	GetHistoryMessageList(testGetHistoryCallBack, structToJsonString(&PullMsgReq{
+	sdk_interface.GetHistoryMessageList(testGetHistoryCallBack, utils.structToJsonString(&PullMsgReq{
 		UserID: userID,
 		Count:  50,
 	}))
 }
 func DoTestDeleteConversation(conversationID string) {
 	var testDeleteConversation DeleteConversationCallBack
-	DeleteConversation(conversationID, testDeleteConversation)
+	sdk_interface.DeleteConversation(conversationID, testDeleteConversation)
 
 }
 
@@ -610,7 +613,7 @@ func (t TestGetAllConversationListCallBack) OnSuccess(data string) {
 
 func DoTestGetAllConversationList() {
 	var test TestGetAllConversationListCallBack
-	GetAllConversationList(test)
+	sdk_interface.GetAllConversationList(test)
 }
 
 type TestGetOneConversationCallBack struct {
@@ -627,15 +630,15 @@ func (t TestGetOneConversationCallBack) OnSuccess(data string) {
 func DoTestGetOneConversation(sourceID string, sessionType int) {
 	var test TestGetOneConversationCallBack
 	//GetOneConversation(Friend_uid, SingleChatType, test)
-	GetOneConversation(sourceID, sessionType, test)
+	sdk_interface.GetOneConversation(sourceID, sessionType, test)
 
 }
 func DoTestCreateImageMessage(path string) string {
-	return CreateImageMessage(path)
+	return sdk_interface.CreateImageMessage(path)
 }
 func DoTestSetConversationDraft() {
 	var test TestSetConversationDraft
-	SetConversationDraft("single_c93bc8b171cce7b9d1befb389abfe52f", "hah", test)
+	sdk_interface.SetConversationDraft("single_c93bc8b171cce7b9d1befb389abfe52f", "hah", test)
 
 }
 
@@ -818,5 +821,5 @@ func DoTestMarkC2CMessageAsRead() {
 	var xlist []string
 	xlist = append(xlist, readid)
 	jsonid, _ := json.Marshal(xlist)
-	MarkC2CMessageAsRead(test, Friend_uid, string(jsonid))
+	sdk_interface.MarkC2CMessageAsRead(test, Friend_uid, string(jsonid))
 }

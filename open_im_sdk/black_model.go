@@ -1,6 +1,9 @@
 package open_im_sdk
 
-import "errors"
+import (
+	"errors"
+	"open_im_sdk/open_im_sdk/utils"
+)
 
 func (u *UserRelated) _getBlackList() ([]*LocalBlack, error) {
 	u.mRWMutex.RLock()
@@ -18,14 +21,14 @@ func (u *UserRelated) _getBlackList() ([]*LocalBlack, error) {
 func (u *UserRelated) _getBlackListUid() (blackListUid []string, err error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
-	return blackListUid, wrap(u.imdb.Model(&LocalBlack{}).Select("block_user_id").Find(&blackListUid).Error, "_getBlackList failed")
+	return blackListUid, utils.wrap(u.imdb.Model(&LocalBlack{}).Select("block_user_id").Find(&blackListUid).Error, "_getBlackList failed")
 }
 
 func (u *UserRelated) _getBlackInfoByBlockUserID(blockUserID string) (*LocalBlack, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
 	var black LocalBlack
-	return &black, wrap(u.imdb.Where("owner_user_id = ? AND block_user_id = ? ",
+	return &black, utils.wrap(u.imdb.Where("owner_user_id = ? AND block_user_id = ? ",
 		u.loginUserID, blockUserID).Find(&black).Error, "_getBlackInfoByBlockUserID failed")
 }
 
@@ -33,13 +36,13 @@ func (u *UserRelated) _getBlackInfoList(blockUserIDList []string) ([]LocalBlack,
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
 	var black []LocalBlack
-	return black, wrap(u.imdb.Where("block_user_id IN ? ", blockUserIDList).Find(&black).Error, "_getBlackInfoList failed")
+	return black, utils.wrap(u.imdb.Where("block_user_id IN ? ", blockUserIDList).Find(&black).Error, "_getBlackInfoList failed")
 }
 
 func (u *UserRelated) _insertBlack(black *LocalBlack) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	return wrap(u.imdb.Create(black).Error, "_insertBlack failed")
+	return utils.wrap(u.imdb.Create(black).Error, "_insertBlack failed")
 }
 
 func (u *UserRelated) _updateBlack(black *LocalBlack) error {
@@ -47,13 +50,13 @@ func (u *UserRelated) _updateBlack(black *LocalBlack) error {
 	defer u.mRWMutex.Unlock()
 	t := u.imdb.Updates(black)
 	if t.RowsAffected == 0 {
-		return wrap(errors.New("RowsAffected == 0"), "no update")
+		return utils.wrap(errors.New("RowsAffected == 0"), "no update")
 	}
-	return wrap(t.Error, "_updateBlack failed")
+	return utils.wrap(t.Error, "_updateBlack failed")
 }
 
 func (u *UserRelated) _deleteBlack(blockUserID string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	return wrap(u.imdb.Where("owner_user_id=? and block_user_id=?", u.loginUserID, blockUserID).Delete(&LocalBlack{}).Error, "_delBlack failed")
+	return utils.wrap(u.imdb.Where("owner_user_id=? and block_user_id=?", u.loginUserID, blockUserID).Delete(&LocalBlack{}).Error, "_delBlack failed")
 }

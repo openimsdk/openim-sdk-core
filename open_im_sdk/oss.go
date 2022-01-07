@@ -13,12 +13,13 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"open_im_sdk/open_im_sdk/utils"
 	"path"
 	"time"
 )
 
 func (u *UserRelated) tencentOssCredentials() (*paramsTencentOssCredentialResp, error) {
-	resp, err := post2Api(tencentCloudStorageCredentialRouter, paramsTencentOssCredentialReq{OperationID: operationIDGenerator()}, u.token)
+	resp, err := utils.post2Api(tencentCloudStorageCredentialRouter, paramsTencentOssCredentialReq{OperationID: utils.operationIDGenerator()}, u.token)
 	if err != nil {
 		return nil, err
 	}
@@ -47,13 +48,13 @@ func getMinClient() (*minio.Client, error) {
 	if err != nil {
 		exists, err := minioClient.BucketExists(bucketName)
 		if err == nil && exists {
-			sdkLog("We already own", bucketName)
+			utils.sdkLog("We already own", bucketName)
 		} else {
-			sdkLog("MakeBucket failed, ", err.Error())
+			utils.sdkLog("MakeBucket failed, ", err.Error())
 			return nil, err
 		}
 	}
-	sdkLog("created ok, ", bucketName)
+	utils.sdkLog("created ok, ", bucketName)
 
 	return minioClient, nil
 }
@@ -61,7 +62,7 @@ func getMinClient() (*minio.Client, error) {
 func getImgContentTypeSuffix(filePath string) (string, string, error) {
 	suffix := path.Ext(filePath)
 	if len(suffix) == 0 {
-		sdkLog("file name failed, ", filePath)
+		utils.sdkLog("file name failed, ", filePath)
 		return "", "", errors.New("file name failed")
 	}
 	contentType := "image/" + suffix[1:]
@@ -93,7 +94,7 @@ func uploadVideoMin(videoPath, snapshotPath string, back SendMsgCallBack) (strin
 func uploadObjectMin(filePath string, objectType string, callback SendMsgCallBack) (string, string, error) {
 	minioClient, err := getMinClient()
 	if err != nil {
-		sdkLog("getMinClient failed, ", err.Error())
+		utils.sdkLog("getMinClient failed, ", err.Error())
 		if callback != nil {
 			callback.OnError(ErrCodeConversation, err.Error())
 		}
@@ -102,7 +103,7 @@ func uploadObjectMin(filePath string, objectType string, callback SendMsgCallBac
 
 	contentType, suffix, err := getImgContentTypeSuffix(filePath)
 	if err != nil {
-		sdkLog("getImgContentTypeSuffix failed, ", err.Error())
+		utils.sdkLog("getImgContentTypeSuffix failed, ", err.Error())
 		if callback != nil {
 			callback.OnError(ErrCodeConversation, err.Error())
 		}
@@ -120,21 +121,21 @@ func uploadObjectMin(filePath string, objectType string, callback SendMsgCallBac
 		go func() {
 			n, err := minioClient.FPutObject(bucketName, objectName, filePath, minio.PutObjectOptions{ContentType: contentType})
 			if err != nil {
-				sdkLog("FPutObject failed ", bucketName, objectName, filePath, err.Error())
+				utils.sdkLog("FPutObject failed ", bucketName, objectName, filePath, err.Error())
 				callback.OnError(ErrCodeConversation, err.Error())
 				return
 			}
 			callback.OnProgress(100)
 			callback.OnSuccess("ok")
-			sdkLog("upload file: ", filePath, " size: ", n)
+			utils.sdkLog("upload file: ", filePath, " size: ", n)
 		}()
 	} else {
 		n, err := minioClient.FPutObject(bucketName, objectName, filePath, minio.PutObjectOptions{ContentType: contentType})
 		if err != nil {
-			sdkLog("FPutObject failed ", bucketName, objectName, filePath, err.Error())
+			utils.sdkLog("FPutObject failed ", bucketName, objectName, filePath, err.Error())
 			return "", "", err
 		}
-		sdkLog("upload file: ", filePath, " size: ", n)
+		utils.sdkLog("upload file: ", filePath, " size: ", n)
 	}
 
 	reqParams := make(url.Values)
@@ -142,7 +143,7 @@ func uploadObjectMin(filePath string, objectType string, callback SendMsgCallBac
 
 	presignedURL, err := minioClient.PresignedGetObject(bucketName, objectName, time.Second*24*60*60, reqParams)
 	if err != nil {
-		sdkLog("PresignedGetObject failed, ", err.Error())
+		utils.sdkLog("PresignedGetObject failed, ", err.Error())
 		if callback != nil {
 			callback.OnError(ErrCodeConversation, err.Error())
 		}
@@ -154,14 +155,14 @@ func uploadObjectMin(filePath string, objectType string, callback SendMsgCallBac
 func (ur *UserRelated) uploadImage(filePath string, back SendMsgCallBack) (string, string, error) {
 	ossResp, err := ur.tencentOssCredentials()
 	if err != nil {
-		sdkLog("tencentOssCredentials", err.Error())
+		utils.sdkLog("tencentOssCredentials", err.Error())
 		return "", "", err
 	}
 
 	dir := fmt.Sprintf("https://%s.cos.%s.myqcloud.com", ossResp.Bucket, ossResp.Region)
 	u, err := url.Parse(dir)
 	if err != nil {
-		sdkLog("Parse", err.Error())
+		utils.sdkLog("Parse", err.Error())
 		return "", "", err
 	}
 	b := &cos.BaseURL{BucketURL: u}
@@ -192,7 +193,7 @@ func (ur *UserRelated) uploadImage(filePath string, back SendMsgCallBack) (strin
 		}
 		_, err := client.Object.PutFromFile(context.Background(), newName, filePath, opt)
 		if err != nil {
-			sdkLog("file:", filePath, err.Error())
+			utils.sdkLog("file:", filePath, err.Error())
 			return "", "", err
 		}
 
@@ -206,7 +207,7 @@ func (ur *UserRelated) uploadImage(filePath string, back SendMsgCallBack) (strin
 func (ur *UserRelated) uploadSound(filePath string, back SendMsgCallBack) (string, string, error) {
 	ossResp, err := ur.tencentOssCredentials()
 	if err != nil {
-		sdkLog(err.Error())
+		utils.sdkLog(err.Error())
 		return "", "", err
 	}
 
@@ -242,21 +243,21 @@ func (ur *UserRelated) uploadSound(filePath string, back SendMsgCallBack) (strin
 
 		_, err := client.Object.PutFromFile(context.Background(), newName, filePath, opt)
 		if err != nil {
-			sdkLog("PutFromFile", err.Error())
+			utils.sdkLog("PutFromFile", err.Error())
 			return "", "", err
 		}
 
 		targetFile := dir + "/" + newName
 		return targetFile, newName, nil
 	}
-	sdkLog("client == nil")
+	utils.sdkLog("client == nil")
 	return "", "", errors.New("client == nil")
 }
 
 func (ur *UserRelated) uploadFile(filePath string, back SendMsgCallBack) (string, string, error) {
 	ossResp, err := ur.tencentOssCredentials()
 	if err != nil {
-		sdkLog(err.Error())
+		utils.sdkLog(err.Error())
 		return "", "", err
 	}
 
@@ -292,7 +293,7 @@ func (ur *UserRelated) uploadFile(filePath string, back SendMsgCallBack) (string
 
 		_, err := client.Object.PutFromFile(context.Background(), newName, filePath, opt)
 		if err != nil {
-			sdkLog(err.Error())
+			utils.sdkLog(err.Error())
 			return "", "", err
 		}
 
@@ -304,10 +305,10 @@ func (ur *UserRelated) uploadFile(filePath string, back SendMsgCallBack) (string
 }
 
 func (ur *UserRelated) uploadVideo(videoPath, snapshotPath string, back SendMsgCallBack) (string, string, string, string, error) {
-	sdkLog("input args:", videoPath, snapshotPath)
+	utils.sdkLog("input args:", videoPath, snapshotPath)
 	ossResp, err := ur.tencentOssCredentials()
 	if err != nil {
-		sdkLog("tencentOssCredentials err:", err.Error())
+		utils.sdkLog("tencentOssCredentials err:", err.Error())
 		return "", "", "", "", err
 	}
 
@@ -328,7 +329,7 @@ func (ur *UserRelated) uploadVideo(videoPath, snapshotPath string, back SendMsgC
 			//-----first------
 			suffix := path.Ext(snapshotPath)
 			if len(suffix) == 0 {
-				sdkLog("suffix =0 Snapshot err:")
+				utils.sdkLog("suffix =0 Snapshot err:")
 				return "", "", "", "", errors.New("file fail")
 			}
 			newNameSnapshot := fmt.Sprintf("%d-%d%s", time.Now().UnixNano(), rand.Int(), suffix)
@@ -342,7 +343,7 @@ func (ur *UserRelated) uploadVideo(videoPath, snapshotPath string, back SendMsgC
 
 			_, err := client.Object.PutFromFile(context.Background(), newNameSnapshot, snapshotPath, opt1)
 			if err != nil {
-				sdkLog("PutFromFile Snapshot err:", err.Error())
+				utils.sdkLog("PutFromFile Snapshot err:", err.Error())
 				return "", "", "", "", err
 			}
 			targetSnapshot = dir + "/" + newNameSnapshot
@@ -354,7 +355,7 @@ func (ur *UserRelated) uploadVideo(videoPath, snapshotPath string, back SendMsgC
 
 		suffix := path.Ext(videoPath)
 		if len(suffix) == 0 {
-			sdkLog("suffix =0  Video err:")
+			utils.sdkLog("suffix =0  Video err:")
 			return "", "", "", "", errors.New("file fail")
 		}
 		newNameVideo := fmt.Sprintf("%d-%d%s", time.Now().UnixNano(), rand.Int(), suffix)
@@ -369,17 +370,17 @@ func (ur *UserRelated) uploadVideo(videoPath, snapshotPath string, back SendMsgC
 
 		_, err = client.Object.PutFromFile(context.Background(), newNameVideo, videoPath, opt2)
 		if err != nil {
-			sdkLog("PutFromFile Video err:", err.Error())
+			utils.sdkLog("PutFromFile Video err:", err.Error())
 			return "", "", "", "", err
 		}
 
 		targetVideo := dir + "/" + newNameVideo
 
-		sdkLog("ok", videoPath, snapshotPath, targetSnapshot, targetVideo)
+		utils.sdkLog("ok", videoPath, snapshotPath, targetSnapshot, targetVideo)
 
 		return targetSnapshot, newNameSnapshot, targetVideo, newNameVideo, nil
 	}
-	sdkLog("client == nil")
+	utils.sdkLog("client == nil")
 	return "", "", "", "", errors.New("client == nil")
 }
 
@@ -395,9 +396,9 @@ func (l *selfListener) ProgressChangedCallback(event *cos.ProgressEvent) {
 		} else {
 			l.SendMsgCallBack.OnProgress(int(event.ConsumedBytes * 100 / event.TotalBytes))
 		}
-		log(fmt.Sprintf("\r[ConsumedBytes/TotalBytes: %d/%d, %d%%]", event.ConsumedBytes, event.TotalBytes, event.ConsumedBytes*100/event.TotalBytes))
+		utils.log(fmt.Sprintf("\r[ConsumedBytes/TotalBytes: %d/%d, %d%%]", event.ConsumedBytes, event.TotalBytes, event.ConsumedBytes*100/event.TotalBytes))
 
 	case cos.ProgressFailedEvent:
-		sdkLog(fmt.Sprintf("\nTransfer Failed: %v", event.Err))
+		utils.sdkLog(fmt.Sprintf("\nTransfer Failed: %v", event.Err))
 	}
 }

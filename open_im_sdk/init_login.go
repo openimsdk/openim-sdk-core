@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"net/http"
+	"open_im_sdk/open_im_sdk/log"
+	"open_im_sdk/open_im_sdk/utils"
 
 	"github.com/gorilla/websocket"
 	_ "github.com/mattn/go-sqlite3"
@@ -26,15 +28,15 @@ func (u *UserRelated) closeListenerCh() {
 
 func (u *UserRelated) initSDK(config string, cb IMSDKListener) bool {
 	if cb == nil {
-		sdkLog("callback == nil")
+		utils.sdkLog("callback == nil")
 		return false
 	}
 
-	sdkLog("initSDK LoginState", u.LoginState)
+	utils.sdkLog("initSDK LoginState", u.LoginState)
 
 	u.cb = cb
 	u.initListenerCh()
-	sdkLog("init success, ", config)
+	utils.sdkLog("init success, ", config)
 
 	go doListener(u)
 	return true
@@ -60,7 +62,7 @@ func (u *UserRelated) logout(cb Base) {
 
 		u.LoginState = LogoutCmd
 
-		sdkLog("set LoginState ", u.LoginState)
+		utils.sdkLog("set LoginState ", u.LoginState)
 
 		err := u.closeConn()
 		if err != nil {
@@ -69,7 +71,7 @@ func (u *UserRelated) logout(cb Base) {
 			}
 			return
 		}
-		sdkLog("closeConn ok")
+		utils.sdkLog("closeConn ok")
 
 		//err = u.closeDB()
 		if err != nil {
@@ -78,7 +80,7 @@ func (u *UserRelated) logout(cb Base) {
 			}
 			return
 		}
-		sdkLog("close db ok")
+		utils.sdkLog("close db ok")
 
 		u.loginUserID = ""
 		u.token = ""
@@ -86,17 +88,17 @@ func (u *UserRelated) logout(cb Base) {
 		if cb != nil {
 			cb.OnSuccess("")
 		}
-		sdkLog("logout return")
+		utils.sdkLog("logout return")
 	}()
 }
 
 func (u *UserRelated) login(uid, tk string, cb Base) {
 	if cb == nil || u.listener == nil || u.friendListener == nil ||
 		u.ConversationListenerx == nil || len(u.MsgListenerList) == 0 {
-		sdkLog("listener is nil, failed ,please check callback,groupListener,friendListener,ConversationListenerx,MsgListenerList is set", uid, tk)
+		utils.sdkLog("listener is nil, failed ,please check callback,groupListener,friendListener,ConversationListenerx,MsgListenerList is set", uid, tk)
 		return
 	}
-	sdkLog("login start, ", uid, tk)
+	utils.sdkLog("login start, ", uid, tk)
 
 	u.LoginState = Logining
 	u.token = tk
@@ -107,11 +109,11 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 		u.token = ""
 		u.loginUserID = ""
 		cb.OnError(ErrCodeInitLogin, err.Error())
-		sdkLog("initDBX failed, ", err.Error())
+		utils.sdkLog("initDBX failed, ", err.Error())
 		u.LoginState = LoginFailed
 		return
 	}
-	sdkLog("initDBX ok ", uid)
+	utils.sdkLog("initDBX ok ", uid)
 
 	c, httpResp, err := u.firstConn(nil)
 	u.conn = c
@@ -119,7 +121,7 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 		u.token = ""
 		u.loginUserID = ""
 		cb.OnError(ErrCodeInitLogin, err.Error())
-		sdkLog("firstConn failed ", err.Error())
+		utils.sdkLog("firstConn failed ", err.Error())
 		u.LoginState = LoginFailed
 		if httpResp != nil {
 			if httpResp.StatusCode == TokenFailedKickedOffline || httpResp.StatusCode == TokenFailedExpired || httpResp.StatusCode == TokenFailedInvalid {
@@ -130,19 +132,19 @@ func (u *UserRelated) login(uid, tk string, cb Base) {
 		//u.closeDB()
 		return
 	}
-	sdkLog("ws conn ok ", uid)
+	utils.sdkLog("ws conn ok ", uid)
 	u.LoginState = LoginSuccess
-	sdkLog("ws conn ok ", uid, u.LoginState)
+	utils.sdkLog("ws conn ok ", uid, u.LoginState)
 	//go u.run()
 
-	sdkLog("ws, forcedSynchronization heartbeat coroutine timedCloseDB run ...")
+	utils.sdkLog("ws, forcedSynchronization heartbeat coroutine timedCloseDB run ...")
 	go u.forcedSynchronization()
 	//	go u.heartbeat()
 	//	go u.timedCloseDB()
 	//	u.forycedSyncReceiveMessageOpt()
-	sdkLog("forycedSyncReceiveMessageOpt ok")
+	utils.sdkLog("forycedSyncReceiveMessageOpt ok")
 	cb.OnSuccess("")
-	sdkLog("login end, ", uid, tk)
+	utils.sdkLog("login end, ", uid, tk)
 }
 
 func (u *UserRelated) timedCloseDB() {
@@ -152,30 +154,30 @@ func (u *UserRelated) timedCloseDB() {
 		<-timeTicker.C
 		u.stateMutex.Lock()
 		if u.LoginState == LogoutCmd {
-			sdkLog("logout timedCloseDB return", LogoutCmd)
+			utils.sdkLog("logout timedCloseDB return", LogoutCmd)
 			u.stateMutex.Unlock()
 			return
 		}
 		u.stateMutex.Unlock()
 		num++
 		if num%60 == 0 {
-			sdkLog("closeDBSetNil begin")
+			utils.sdkLog("closeDBSetNil begin")
 			//u.closeDBSetNil()
-			sdkLog("closeDBSetNil end")
+			utils.sdkLog("closeDBSetNil end")
 		}
 	}
 }
 
 func (u *UserRelated) closeConn() error {
-	LogBegin()
+	utils.LogBegin()
 	if u.conn != nil {
 		err := u.conn.Close()
 		if err != nil {
-			LogFReturn(err.Error())
+			utils.LogFReturn(err.Error())
 			return err
 		}
 	}
-	LogSReturn(nil)
+	utils.LogSReturn(nil)
 	return nil
 }
 
@@ -192,24 +194,24 @@ func (im *IMManager) getLoginStatus() int {
 }
 
 func (u *UserRelated) forycedSyncReceiveMessageOpt() {
-	OperationID := operationIDGenerator()
-	resp, err := post2ApiForRead(getAllConversationMessageOptRouter, paramGetAllConversationMessageOpt{OperationID: OperationID}, u.token)
+	OperationID := utils.operationIDGenerator()
+	resp, err := utils.post2ApiForRead(getAllConversationMessageOptRouter, paramGetAllConversationMessageOpt{OperationID: OperationID}, u.token)
 	if err != nil {
-		sdkLog("post2Api failed, ", getAllConversationMessageOptRouter, OperationID)
+		utils.sdkLog("post2Api failed, ", getAllConversationMessageOptRouter, OperationID)
 		return
 	}
 	var v getReceiveMessageOptResp
 	err = json.Unmarshal(resp, &v)
 	if err != nil {
-		sdkLog("Unmarshal failed ", resp, OperationID)
+		utils.sdkLog("Unmarshal failed ", resp, OperationID)
 		return
 	}
 	if v.ErrCode != 0 {
-		sdkLog("errCode failed, ", v.ErrCode, v.ErrMsg, string(resp), OperationID)
+		utils.sdkLog("errCode failed, ", v.ErrCode, v.ErrMsg, string(resp), OperationID)
 		return
 	}
 
-	sdkLog("get receive opt ", v)
+	utils.sdkLog("get receive opt ", v)
 	u.receiveMessageOptMutex.Lock()
 	for _, v := range v.Data {
 		if v.Result != 0 {
@@ -232,14 +234,14 @@ func (u *UserRelated) forcedSynchronization() {
 }
 
 func (u *UserRelated) doWsMsg(message []byte) {
-	LogBegin()
-	LogBegin("decodeBinaryWs")
+	utils.LogBegin()
+	utils.LogBegin("decodeBinaryWs")
 	wsResp, err := u.decodeBinaryWs(message)
 	if err != nil {
-		LogFReturn("decodeBinaryWs err", err.Error())
+		utils.LogFReturn("decodeBinaryWs err", err.Error())
 		return
 	}
-	LogEnd("decodeBinaryWs ", wsResp.OperationID, wsResp.ReqIdentifier)
+	utils.LogEnd("decodeBinaryWs ", wsResp.OperationID, wsResp.ReqIdentifier)
 
 	switch wsResp.ReqIdentifier {
 	case WSGetNewestSeq:
@@ -253,81 +255,81 @@ func (u *UserRelated) doWsMsg(message []byte) {
 	case WSKickOnlineMsg:
 		u.kickOnline(*wsResp)
 	default:
-		LogFReturn("type failed, ", wsResp.ReqIdentifier, wsResp.OperationID, wsResp.ErrCode, wsResp.ErrMsg)
+		utils.LogFReturn("type failed, ", wsResp.ReqIdentifier, wsResp.OperationID, wsResp.ErrCode, wsResp.ErrMsg)
 		return
 	}
-	LogSReturn()
+	utils.LogSReturn()
 	return
 }
 
 func (u *UserRelated) notifyResp(wsResp GeneralWsResp) {
-	LogBegin(wsResp.OperationID)
+	utils.LogBegin(wsResp.OperationID)
 	u.wsMutex.Lock()
 	defer u.wsMutex.Unlock()
 
 	ch := u.GetCh(wsResp.MsgIncr)
 	if ch == nil {
-		sdkLog("failed, no chan ", wsResp.MsgIncr, wsResp.OperationID)
+		utils.sdkLog("failed, no chan ", wsResp.MsgIncr, wsResp.OperationID)
 		return
 	}
-	sdkLog("GetCh end, ", ch)
+	utils.sdkLog("GetCh end, ", ch)
 
-	sdkLog("notify ch start", wsResp.OperationID)
+	utils.sdkLog("notify ch start", wsResp.OperationID)
 
-	err := notifyCh(ch, wsResp, 1)
+	err := utils.notifyCh(ch, wsResp, 1)
 	if err != nil {
-		sdkLog("notifyCh failed, ", err.Error(), ch, wsResp)
+		utils.sdkLog("notifyCh failed, ", err.Error(), ch, wsResp)
 	}
-	sdkLog("notify ch end", wsResp.OperationID)
-	LogSReturn(nil)
+	utils.sdkLog("notify ch end", wsResp.OperationID)
+	utils.LogSReturn(nil)
 }
 
 func (u *UserRelated) doWSGetNewestSeq(wsResp GeneralWsResp) {
-	LogBegin(wsResp.OperationID)
+	utils.LogBegin(wsResp.OperationID)
 	u.notifyResp(wsResp)
-	LogSReturn(wsResp.OperationID)
+	utils.LogSReturn(wsResp.OperationID)
 }
 
 func (u *UserRelated) doWSPullMsg(wsResp GeneralWsResp) {
-	LogBegin(wsResp.OperationID)
+	utils.LogBegin(wsResp.OperationID)
 	u.notifyResp(wsResp)
-	LogSReturn(wsResp.OperationID)
+	utils.LogSReturn(wsResp.OperationID)
 }
 
 func (u *UserRelated) doWSSendMsg(wsResp GeneralWsResp) {
-	LogBegin(wsResp.OperationID)
+	utils.LogBegin(wsResp.OperationID)
 	u.notifyResp(wsResp)
-	LogSReturn(wsResp.OperationID)
+	utils.LogSReturn(wsResp.OperationID)
 }
 
 func (u *UserRelated) doWSPushMsg(wsResp GeneralWsResp) {
-	LogBegin()
+	utils.LogBegin()
 	u.doMsg(wsResp)
-	LogSReturn()
+	utils.LogSReturn()
 }
 
 func (u *UserRelated) doMsg(wsResp GeneralWsResp) {
-	LogBegin(wsResp.OperationID)
+	utils.LogBegin(wsResp.OperationID)
 	var msg MsgData
 	if wsResp.ErrCode != 0 {
-		sdkLog("errcode: ", wsResp.ErrCode, " errmsg: ", wsResp.ErrMsg)
-		LogFReturn()
+		utils.sdkLog("errcode: ", wsResp.ErrCode, " errmsg: ", wsResp.ErrMsg)
+		utils.LogFReturn()
 		return
 	}
 	err := proto.Unmarshal(wsResp.Data, &msg)
 	if err != nil {
-		sdkLog("Unmarshal failed", err.Error())
-		LogFReturn()
+		utils.sdkLog("Unmarshal failed", err.Error())
+		utils.LogFReturn()
 		return
 	}
 
-	sdkLog("openim ws  recv push msg do push seq in : ", msg.Seq)
+	utils.sdkLog("openim ws  recv push msg do push seq in : ", msg.Seq)
 	u.seqMsgMutex.Lock()
 	b1 := u.isExistsInErrChatLogBySeq(msg.Seq)
 	b2 := u.judgeMessageIfExists(msg.ClientMsgID)
 	_, ok := u.seqMsg[int32(msg.Seq)]
 	if b1 || b2 || ok {
-		sdkLog("seq in : ", msg.Seq, b1, b2, ok)
+		utils.sdkLog("seq in : ", msg.Seq, b1, b2, ok)
 		u.seqMsgMutex.Unlock()
 		return
 	}
@@ -359,7 +361,7 @@ func (u *UserRelated) SetMinSeqSvr(minSeqSvr int64) {
 func (u *UserRelated) syncSeq2Msg() error {
 	svrMaxSeq, svrMinSeq, err := u.getUserNewestSeq()
 	if err != nil {
-		sdkLog("getUserNewestSeq failed ", err.Error())
+		utils.sdkLog("getUserNewestSeq failed ", err.Error())
 		return err
 	}
 
@@ -372,36 +374,36 @@ func (u *UserRelated) syncSeq2Msg() error {
 func (u *UserRelated) syncLoginUserInfo() error {
 	userSvr, err := u.getServerUserInfo()
 	if err != nil {
-		NewError("0", "getServerUserInfo failed , user: ", err.Error())
+		log.NewError("0", "getServerUserInfo failed , user: ", err.Error())
 		return err
 	}
 
-	NewInfo("0", "getServerUserInfo ", userSvr)
+	log.NewInfo("0", "getServerUserInfo ", userSvr)
 
 	userLocal, err := u._getLoginUser()
 	needInsert := 0
 	if err != nil {
-		NewError("0", "_getLoginUser failed  ", err.Error())
+		log.NewError("0", "_getLoginUser failed  ", err.Error())
 		needInsert = 1
 	}
 
-	if CompFields(&userLocal, &userSvr) {
+	if utils.CompFields(&userLocal, &userSvr) {
 		return nil
 	}
 
 	var updateLocalUser LocalUser
 	copier.Copy(&updateLocalUser, userSvr)
-	NewInfo("0", "copy: ", updateLocalUser)
+	log.NewInfo("0", "copy: ", updateLocalUser)
 	if needInsert == 1 {
 		err = u._insertLoginUser(&updateLocalUser)
 		if err != nil {
-			NewError("0 ", "_insertLoginUser failed ", err.Error())
+			log.NewError("0 ", "_insertLoginUser failed ", err.Error())
 		}
 		return err
 	}
 	err = u._updateLoginUser(&updateLocalUser)
 	if err != nil {
-		NewError("0 ", "_updateLoginUser failed ", err.Error())
+		log.NewError("0 ", "_updateLoginUser failed ", err.Error())
 	}
 	return err
 
@@ -440,7 +442,7 @@ func (u *UserRelated) syncLoginUserInfo() error {
 }
 
 func (u *UserRelated) firstConn(conn *websocket.Conn) (*websocket.Conn, *http.Response, error) {
-	LogBegin(conn)
+	utils.LogBegin(conn)
 	if conn != nil {
 		conn.Close()
 		conn = nil
@@ -456,20 +458,20 @@ func (u *UserRelated) firstConn(conn *websocket.Conn) (*websocket.Conn, *http.Re
 			u.cb.OnConnectFailed(1001, err.Error())
 		}
 
-		LogFReturn(nil, err.Error(), url)
+		utils.LogFReturn(nil, err.Error(), url)
 		return nil, httpResp, err
 	}
 	u.cb.OnConnectSuccess()
 	u.stateMutex.Lock()
 	u.LoginState = LoginSuccess
 	u.stateMutex.Unlock()
-	sdkLog("ws connect ok, ", u.LoginState)
-	LogSReturn(conn, nil)
+	utils.sdkLog("ws connect ok, ", u.LoginState)
+	utils.LogSReturn(conn, nil)
 	return conn, httpResp, nil
 }
 
 func (u *UserRelated) reConn(conn *websocket.Conn) (*websocket.Conn, *http.Response, error) {
-	LogBegin(conn)
+	utils.LogBegin(conn)
 	if conn != nil {
 		conn.Close()
 		conn = nil
@@ -478,7 +480,7 @@ func (u *UserRelated) reConn(conn *websocket.Conn) (*websocket.Conn, *http.Respo
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
 	if u.LoginState == TokenFailedKickedOffline || u.LoginState == TokenFailedExpired || u.LoginState == TokenFailedInvalid {
-		sdkLog("don't reconn, must login, state ", u.LoginState)
+		utils.sdkLog("don't reconn, must login, state ", u.LoginState)
 		return nil, nil, errors.New("don't reconn")
 	}
 
@@ -492,18 +494,18 @@ func (u *UserRelated) reConn(conn *websocket.Conn) (*websocket.Conn, *http.Respo
 			u.cb.OnConnectFailed(1001, err.Error())
 		}
 
-		LogFReturn(nil, err.Error(), url)
+		utils.LogFReturn(nil, err.Error(), url)
 		return nil, httpResp, err
 	}
 	u.cb.OnConnectSuccess()
 	u.LoginState = LoginSuccess
-	sdkLog("ws connect ok, ", u.LoginState)
-	LogSReturn(conn, nil)
+	utils.sdkLog("ws connect ok, ", u.LoginState)
+	utils.LogSReturn(conn, nil)
 	return conn, httpResp, nil
 }
 
 func (u *UserRelated) getNeedSyncSeq(svrMinSeq, svrMaxSeq int32) []int32 {
-	sdkLog("getNeedSyncSeq ", svrMinSeq, svrMaxSeq)
+	utils.sdkLog("getNeedSyncSeq ", svrMinSeq, svrMaxSeq)
 	localMinSeq := u.getNeedSyncLocalMinSeq()
 	var startSeq int32
 	if localMinSeq > svrMinSeq {
@@ -544,7 +546,7 @@ func (u *UserRelated) getNeedSyncSeq(svrMinSeq, svrMaxSeq int32) []int32 {
 			firstSeq = startSeq
 		}
 	}
-	sdkLog("seq start: ", maxConsequentSeq, firstSeq, localMinSeq)
+	utils.sdkLog("seq start: ", maxConsequentSeq, firstSeq, localMinSeq)
 	if firstSeq > localMinSeq {
 		u.setNeedSyncLocalMinSeq(firstSeq)
 	}
@@ -557,7 +559,7 @@ func (u *UserRelated) heartbeat() {
 		u.stateMutex.Lock()
 		//	sdkLog("heart check state ", u.LoginState)
 		if u.LoginState == LogoutCmd {
-			sdkLog("logout, ws close, heartbeat return ", LogoutCmd)
+			utils.sdkLog("logout, ws close, heartbeat return ", LogoutCmd)
 			u.stateMutex.Unlock()
 			return
 		}
@@ -569,7 +571,7 @@ func (u *UserRelated) heartbeat() {
 
 		var wsReq GeneralWsReq
 		wsReq.ReqIdentifier = WSGetNewestSeq
-		wsReq.OperationID = operationIDGenerator()
+		wsReq.OperationID = utils.operationIDGenerator()
 		wsReq.SendID = u.loginUserID
 		wsReq.MsgIncr = msgIncr
 		var connSend *websocket.Conn
@@ -577,11 +579,11 @@ func (u *UserRelated) heartbeat() {
 		err, connSend := u.WriteMsg(wsReq)
 		//	LogEnd("WriteMsg", wsReq.OperationID, wsReq.MsgIncr)
 		if err != nil {
-			sdkLog("WriteMsg failed ", err.Error(), msgIncr, wsReq.OperationID)
-			LogBegin("closeConn DelCh", msgIncr, wsReq.OperationID)
+			utils.sdkLog("WriteMsg failed ", err.Error(), msgIncr, wsReq.OperationID)
+			utils.LogBegin("closeConn DelCh", msgIncr, wsReq.OperationID)
 			u.closeConn()
 			u.DelCh(msgIncr)
-			LogEnd("closeConn DelCh continue", wsReq.OperationID)
+			utils.LogEnd("closeConn DelCh continue", wsReq.OperationID)
 			time.Sleep(time.Duration(5) * time.Second)
 			continue
 		}
@@ -590,32 +592,32 @@ func (u *UserRelated) heartbeat() {
 		breakFlag := 0
 		for {
 			if breakFlag == 1 {
-				sdkLog("break ", wsReq.OperationID)
+				utils.sdkLog("break ", wsReq.OperationID)
 				break
 			}
 			select {
 			case r := <-ch:
-				sdkLog("ws ch recvMsg success: ", wsReq.OperationID, "seq cache map size: ", len(u.seqMsg))
+				utils.sdkLog("ws ch recvMsg success: ", wsReq.OperationID, "seq cache map size: ", len(u.seqMsg))
 				if r.ErrCode != 0 {
-					sdkLog("heartbeat response faield ", r.ErrCode, r.ErrMsg, wsReq.OperationID)
-					LogBegin("closeConn DelCh", msgIncr, wsReq.OperationID)
+					utils.sdkLog("heartbeat response faield ", r.ErrCode, r.ErrMsg, wsReq.OperationID)
+					utils.LogBegin("closeConn DelCh", msgIncr, wsReq.OperationID)
 					u.closeConn()
 					//u.DelCh(msgIncr)
-					LogEnd("closeConn DelCh continue", wsReq.OperationID)
+					utils.LogEnd("closeConn DelCh continue", wsReq.OperationID)
 
 				} else {
 					//		sdkLog("heartbeat response success ", wsReq.OperationID)
 					var wsSeqResp GetMaxAndMinSeqResp
 					err = proto.Unmarshal(r.Data, &wsSeqResp)
 					if err != nil {
-						sdkLog("Unmarshal failed, ", err.Error(), wsReq.OperationID)
-						LogBegin("closeConn DelCh", msgIncr, wsReq.OperationID)
+						utils.sdkLog("Unmarshal failed, ", err.Error(), wsReq.OperationID)
+						utils.LogBegin("closeConn DelCh", msgIncr, wsReq.OperationID)
 						u.closeConn()
 						//	u.DelCh(msgIncr)
-						LogEnd("closeConn DelCh continue")
+						utils.LogEnd("closeConn DelCh continue")
 					} else {
 						needSyncSeq := u.getNeedSyncSeq(int32(wsSeqResp.MinSeq), int32(wsSeqResp.MaxSeq))
-						sdkLog("needSyncSeq ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, needSyncSeq)
+						utils.sdkLog("needSyncSeq ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, needSyncSeq)
 						u.syncMsgFromServer(needSyncSeq)
 					}
 				}
@@ -623,19 +625,19 @@ func (u *UserRelated) heartbeat() {
 
 			case <-time.After(time.Second * time.Duration(timeout)):
 				var flag bool
-				sdkLog("ws ch recvMsg err: ", wsReq.OperationID)
+				utils.sdkLog("ws ch recvMsg err: ", wsReq.OperationID)
 				if connSend != u.conn {
-					sdkLog("old conn != current conn  ", connSend, u.conn)
+					utils.sdkLog("old conn != current conn  ", connSend, u.conn)
 					flag = false // error
 				} else {
 					flag = false //error
 					for tr := 0; tr < 3; tr++ {
 						err = u.sendPingMsg()
 						if err != nil {
-							sdkLog("sendPingMsg failed ", wsReq.OperationID, err.Error(), tr)
+							utils.sdkLog("sendPingMsg failed ", wsReq.OperationID, err.Error(), tr)
 							time.Sleep(time.Duration(30) * time.Second)
 						} else {
-							sdkLog("sendPingMsg ok, break", wsReq.OperationID)
+							utils.sdkLog("sendPingMsg ok, break", wsReq.OperationID)
 							flag = true //wait continue
 							breakFlag = 1
 							break
@@ -643,18 +645,18 @@ func (u *UserRelated) heartbeat() {
 					}
 				}
 				if breakFlag == 1 {
-					sdkLog("don't wait ", wsReq.OperationID)
+					utils.sdkLog("don't wait ", wsReq.OperationID)
 					break
 				}
 				if flag == false {
-					sdkLog("ws ch recvMsg timeout ", timeout, "s ", wsReq.OperationID)
-					LogBegin("closeConn", wsReq.OperationID)
+					utils.sdkLog("ws ch recvMsg timeout ", timeout, "s ", wsReq.OperationID)
+					utils.LogBegin("closeConn", wsReq.OperationID)
 					u.closeConn()
-					LogEnd("closeConn", wsReq.OperationID)
+					utils.LogEnd("closeConn", wsReq.OperationID)
 					breakFlag = 1
 					break
 				} else {
-					sdkLog("wait resp continue", wsReq.OperationID)
+					utils.sdkLog("wait resp continue", wsReq.OperationID)
 					breakFlag = 0
 					continue
 				}
@@ -669,51 +671,51 @@ func (u *UserRelated) heartbeat() {
 
 func (u *UserRelated) run() {
 	for {
-		LogStart()
+		utils.LogStart()
 		if u.conn == nil {
-			LogBegin("reConn", nil)
+			utils.LogBegin("reConn", nil)
 			re, _, _ := u.reConn(nil)
-			LogEnd("reConn", re)
+			utils.LogEnd("reConn", re)
 			u.conn = re
 		}
 		if u.conn != nil {
 			msgType, message, err := u.conn.ReadMessage()
-			sdkLog("ReadMessage message ", msgType, err)
+			utils.sdkLog("ReadMessage message ", msgType, err)
 			if err != nil {
 				u.stateMutex.Lock()
-				sdkLog("ws read message failed ", err.Error(), u.LoginState)
+				utils.sdkLog("ws read message failed ", err.Error(), u.LoginState)
 				if u.LoginState == LogoutCmd {
-					sdkLog("logout, ws close, return ", LogoutCmd, err)
+					utils.sdkLog("logout, ws close, return ", LogoutCmd, err)
 					u.conn = nil
 					u.stateMutex.Unlock()
 					return
 				}
 				u.stateMutex.Unlock()
 				time.Sleep(time.Duration(5) * time.Second)
-				sdkLog("ws  ReadMessage failed, sleep 5s, reconn, ", err)
-				LogBegin("reConn", u.conn)
+				utils.sdkLog("ws  ReadMessage failed, sleep 5s, reconn, ", err)
+				utils.LogBegin("reConn", u.conn)
 				u.conn, _, err = u.reConn(u.conn)
-				LogEnd("reConn", u.conn)
+				utils.LogEnd("reConn", u.conn)
 			} else {
 				if msgType == websocket.CloseMessage {
 					u.conn, _, _ = u.reConn(u.conn)
 				} else if msgType == websocket.TextMessage {
-					sdkLog("type failed, recv websocket.TextMessage ", string(message))
+					utils.sdkLog("type failed, recv websocket.TextMessage ", string(message))
 				} else if msgType == websocket.BinaryMessage {
 					go u.doWsMsg(message)
 				} else {
-					sdkLog("recv other msg: type ", msgType)
+					utils.sdkLog("recv other msg: type ", msgType)
 				}
 			}
 		} else {
 			u.stateMutex.Lock()
 			if u.LoginState == LogoutCmd {
-				sdkLog("logout, ws close, return ", LogoutCmd)
+				utils.sdkLog("logout, ws close, return ", LogoutCmd)
 				u.stateMutex.Unlock()
 				return
 			}
 			u.stateMutex.Unlock()
-			sdkLog("ws failed, sleep 5s, reconn... ")
+			utils.sdkLog("ws failed, sleep 5s, reconn... ")
 			time.Sleep(time.Duration(5) * time.Second)
 		}
 	}
@@ -721,15 +723,15 @@ func (u *UserRelated) run() {
 
 func (u *UserRelated) syncMsgFromServerSplit(needSyncSeqList []int64) (err error) {
 	if len(needSyncSeqList) == 0 {
-		sdkLog("len(needSyncSeqList) == 0  don't pull from svr")
+		utils.sdkLog("len(needSyncSeqList) == 0  don't pull from svr")
 		return nil
 	}
 	msgIncr, ch := u.AddCh()
-	LogEnd("AddCh")
+	utils.LogEnd("AddCh")
 
 	var wsReq GeneralWsReq
 	wsReq.ReqIdentifier = WSPullMsgBySeqList
-	wsReq.OperationID = operationIDGenerator()
+	wsReq.OperationID = utils.operationIDGenerator()
 	wsReq.SendID = u.loginUserID
 	wsReq.MsgIncr = msgIncr
 
@@ -738,15 +740,15 @@ func (u *UserRelated) syncMsgFromServerSplit(needSyncSeqList []int64) (err error
 
 	wsReq.Data, err = proto.Marshal(&pullMsgReq)
 	if err != nil {
-		sdkLog("Marshl failed")
-		LogFReturn(err.Error())
+		utils.sdkLog("Marshl failed")
+		utils.LogFReturn(err.Error())
 		return err
 	}
-	LogBegin("WriteMsg ", wsReq.OperationID)
+	utils.LogBegin("WriteMsg ", wsReq.OperationID)
 	err, _ = u.WriteMsg(wsReq)
-	LogEnd("WriteMsg ", wsReq.OperationID, err)
+	utils.LogEnd("WriteMsg ", wsReq.OperationID, err)
 	if err != nil {
-		sdkLog("close conn, WriteMsg failed ", err.Error())
+		utils.sdkLog("close conn, WriteMsg failed ", err.Error())
 		u.DelCh(msgIncr)
 		return err
 	}
@@ -754,13 +756,13 @@ func (u *UserRelated) syncMsgFromServerSplit(needSyncSeqList []int64) (err error
 	timeout := 10
 	select {
 	case r := <-ch:
-		sdkLog("ws ch recvMsg success: ", wsReq.OperationID)
+		utils.sdkLog("ws ch recvMsg success: ", wsReq.OperationID)
 		if r.ErrCode != 0 {
-			sdkLog("pull msg failed ", r.ErrCode, r.ErrMsg, wsReq.OperationID)
+			utils.sdkLog("pull msg failed ", r.ErrCode, r.ErrMsg, wsReq.OperationID)
 			u.DelCh(msgIncr)
 			return errors.New(r.ErrMsg)
 		} else {
-			sdkLog("pull msg success ", wsReq.OperationID)
+			utils.sdkLog("pull msg success ", wsReq.OperationID)
 			//var pullMsg PullUserMsgResp
 
 			//pullMsg.ErrCode = 0
@@ -768,8 +770,8 @@ func (u *UserRelated) syncMsgFromServerSplit(needSyncSeqList []int64) (err error
 			var pullMsgResp PullMessageBySeqListResp
 			err := proto.Unmarshal(r.Data, &pullMsgResp)
 			if err != nil {
-				sdkLog("Unmarshal failed ", err.Error())
-				LogFReturn(err.Error())
+				utils.sdkLog("Unmarshal failed ", err.Error())
+				utils.LogFReturn(err.Error())
 				return err
 			}
 			//pullMsg.Data.Group = pullMsgResp.GroupUserMsg
@@ -783,17 +785,17 @@ func (u *UserRelated) syncMsgFromServerSplit(needSyncSeqList []int64) (err error
 			//	sdkLog("pullmsg data: ", pullMsgResp.SingleUserMsg, pullMsg.Data.Single)
 			for i := 0; i < len(pullMsgResp.SingleUserMsg); i++ {
 				for j := 0; j < len(pullMsgResp.SingleUserMsg[i].List); j++ {
-					sdkLog("open_im pull one msg: |", pullMsgResp.SingleUserMsg[i].List[j].ClientMsgID, "|")
-					sdkLog("pull all: |", pullMsgResp.SingleUserMsg[i].List[j].Seq, pullMsgResp.SingleUserMsg[i].List[j])
+					utils.sdkLog("open_im pull one msg: |", pullMsgResp.SingleUserMsg[i].List[j].ClientMsgID, "|")
+					utils.sdkLog("pull all: |", pullMsgResp.SingleUserMsg[i].List[j].Seq, pullMsgResp.SingleUserMsg[i].List[j])
 					b1 := u.isExistsInErrChatLogBySeq(pullMsgResp.SingleUserMsg[i].List[j].Seq)
 					b2 := u.judgeMessageIfExistsBySeq(pullMsgResp.SingleUserMsg[i].List[j].Seq)
 					_, ok := u.seqMsg[int32(pullMsgResp.SingleUserMsg[i].List[j].Seq)]
 					if b1 || b2 || ok {
-						sdkLog("seq in : ", pullMsgResp.SingleUserMsg[i].List[j].Seq, b1, b2, ok)
+						utils.sdkLog("seq in : ", pullMsgResp.SingleUserMsg[i].List[j].Seq, b1, b2, ok)
 					} else {
 						isInmap = true
 						u.seqMsg[int32(pullMsgResp.SingleUserMsg[i].List[j].Seq)] = pullMsgResp.SingleUserMsg[i].List[j]
-						sdkLog("into map, seq: ", pullMsgResp.SingleUserMsg[i].List[j].Seq, pullMsgResp.SingleUserMsg[i].List[j].ClientMsgID, pullMsgResp.SingleUserMsg[i].List[j].ServerMsgID, pullMsgResp.SingleUserMsg[i].List[j])
+						utils.sdkLog("into map, seq: ", pullMsgResp.SingleUserMsg[i].List[j].Seq, pullMsgResp.SingleUserMsg[i].List[j].ClientMsgID, pullMsgResp.SingleUserMsg[i].List[j].ServerMsgID, pullMsgResp.SingleUserMsg[i].List[j])
 					}
 				}
 			}
@@ -805,12 +807,12 @@ func (u *UserRelated) syncMsgFromServerSplit(needSyncSeqList []int64) (err error
 					b2 := u.judgeMessageIfExistsBySeq(pullMsgResp.GroupUserMsg[i].List[j].Seq)
 					_, ok := u.seqMsg[int32(pullMsgResp.GroupUserMsg[i].List[j].Seq)]
 					if b1 || b2 || ok {
-						sdkLog("seq in : ", pullMsgResp.GroupUserMsg[i].List[j].Seq, b1, b2, ok)
+						utils.sdkLog("seq in : ", pullMsgResp.GroupUserMsg[i].List[j].Seq, b1, b2, ok)
 					} else {
 						isInmap = true
 						u.seqMsg[int32(pullMsgResp.GroupUserMsg[i].List[j].Seq)] = pullMsgResp.GroupUserMsg[i].List[j]
-						sdkLog("into map, seq: ", pullMsgResp.GroupUserMsg[i].List[j].Seq, pullMsgResp.GroupUserMsg[i].List[j].ClientMsgID, pullMsgResp.GroupUserMsg[i].List[j].ServerMsgID)
-						sdkLog("pull all: |", pullMsgResp.GroupUserMsg[i].List[j].Seq, pullMsgResp.GroupUserMsg[i].List[j])
+						utils.sdkLog("into map, seq: ", pullMsgResp.GroupUserMsg[i].List[j].Seq, pullMsgResp.GroupUserMsg[i].List[j].ClientMsgID, pullMsgResp.GroupUserMsg[i].List[j].ServerMsgID)
+						utils.sdkLog("pull all: |", pullMsgResp.GroupUserMsg[i].List[j].Seq, pullMsgResp.GroupUserMsg[i].List[j])
 
 					}
 				}
@@ -820,13 +822,13 @@ func (u *UserRelated) syncMsgFromServerSplit(needSyncSeqList []int64) (err error
 			if isInmap {
 				err = u.triggerCmdNewMsgCome(arrMsg)
 				if err != nil {
-					sdkLog("triggerCmdNewMsgCome failed, ", err.Error())
+					utils.sdkLog("triggerCmdNewMsgCome failed, ", err.Error())
 				}
 			}
 			u.DelCh(msgIncr)
 		}
 	case <-time.After(time.Second * time.Duration(timeout)):
-		sdkLog("ws ch recvMsg timeout,", wsReq.OperationID)
+		utils.sdkLog("ws ch recvMsg timeout,", wsReq.OperationID)
 		u.DelCh(msgIncr)
 	}
 	return nil
@@ -835,18 +837,18 @@ func (u *UserRelated) syncMsgFromServerSplit(needSyncSeqList []int64) (err error
 func (u *UserRelated) syncMsgFromServer(needSyncSeqList []int32) (err error) {
 	notInCache := u.getNotInSeq(needSyncSeqList)
 	if len(notInCache) == 0 {
-		sdkLog("notInCache is null, don't sync from svr")
+		utils.sdkLog("notInCache is null, don't sync from svr")
 		return nil
 	}
-	sdkLog("notInCache ", notInCache)
+	utils.sdkLog("notInCache ", notInCache)
 	var SPLIT int = 100
 	for i := 0; i < len(notInCache)/SPLIT; i++ {
 		//0-99 100-199
 		u.syncMsgFromServerSplit(notInCache[i*SPLIT : (i+1)*SPLIT])
-		sdkLog("syncMsgFromServerSplit idx: ", i*SPLIT, (i+1)*SPLIT)
+		utils.sdkLog("syncMsgFromServerSplit idx: ", i*SPLIT, (i+1)*SPLIT)
 	}
 	u.syncMsgFromServerSplit(notInCache[SPLIT*(len(notInCache)/SPLIT):])
-	sdkLog("syncMsgFromServerSplit idx: ", SPLIT*(len(notInCache)/SPLIT), len(notInCache))
+	utils.sdkLog("syncMsgFromServerSplit idx: ", SPLIT*(len(notInCache)/SPLIT), len(notInCache))
 	return nil
 }
 
@@ -902,7 +904,7 @@ func (u *UserRelated) getNotInSeq(needSyncSeqList []int32) (seqList []int64) {
 			seqList = append(seqList, int64(v))
 		}
 	}
-	LogSReturn(seqList)
+	utils.LogSReturn(seqList)
 	return seqList
 }
 
@@ -1080,7 +1082,7 @@ func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64)
 
 */
 func CheckToken(uId, token string) int {
-	_, err := post2Api(newestSeqRouter, paramsNewestSeqReq{ReqIdentifier: 1001, OperationID: operationIDGenerator(), SendID: uId, MsgIncr: 1}, token)
+	_, err := utils.post2Api(newestSeqRouter, paramsNewestSeqReq{ReqIdentifier: 1001, OperationID: utils.operationIDGenerator(), SendID: uId, MsgIncr: 1}, token)
 	if err != nil {
 		return -1
 	}
@@ -1088,48 +1090,48 @@ func CheckToken(uId, token string) int {
 }
 
 func (u *UserRelated) getUserNewestSeq() (int64, int64, error) {
-	LogBegin()
-	resp, err := post2Api(newestSeqRouter, paramsNewestSeqReq{ReqIdentifier: 1001, OperationID: operationIDGenerator(), SendID: u.loginUserID, MsgIncr: 1}, u.token)
+	utils.LogBegin()
+	resp, err := utils.post2Api(newestSeqRouter, paramsNewestSeqReq{ReqIdentifier: 1001, OperationID: utils.operationIDGenerator(), SendID: u.loginUserID, MsgIncr: 1}, u.token)
 	if err != nil {
-		LogFReturn(0, err.Error())
+		utils.LogFReturn(0, err.Error())
 		return 0, 0, err
 	}
 	var seqResp paramsNewestSeqResp
 	err = json.Unmarshal(resp, &seqResp)
 	if err != nil {
-		sdkLog("UnMarshal failed, ", err.Error())
-		LogFReturn(0, err.Error())
+		utils.sdkLog("UnMarshal failed, ", err.Error())
+		utils.LogFReturn(0, err.Error())
 		return 0, 0, err
 	}
 
 	if seqResp.ErrCode != 0 {
-		sdkLog("errcode: ", seqResp.ErrCode, "errmsg: ", seqResp.ErrMsg)
-		LogFReturn(0, seqResp.ErrMsg)
+		utils.sdkLog("errcode: ", seqResp.ErrCode, "errmsg: ", seqResp.ErrMsg)
+		utils.LogFReturn(0, seqResp.ErrMsg)
 		return 0, 0, errors.New(seqResp.ErrMsg)
 	}
-	LogSReturn(seqResp.Data.Seq, nil)
+	utils.LogSReturn(seqResp.Data.Seq, nil)
 	return seqResp.Data.Seq, seqResp.Data.MinSeq, nil
 }
 
 func (u *UserRelated) getServerUserInfo() (*UserInfo, error) {
-	apiReq := GetUserInfoReq{OperationID: operationIDGenerator(), UserIDList: []string{u.loginUserID}}
-	resp, err := post2Api(getUserInfoRouter, apiReq, u.token)
-	commData, err := checkErrAndRespReturn(err, resp, apiReq.OperationID)
+	apiReq := GetUserInfoReq{OperationID: utils.operationIDGenerator(), UserIDList: []string{u.loginUserID}}
+	resp, err := utils.post2Api(getUserInfoRouter, apiReq, u.token)
+	commData, err := utils.checkErrAndRespReturn(err, resp, apiReq.OperationID)
 	if err != nil {
-		return nil, wrap(err, apiReq.OperationID)
+		return nil, utils.wrap(err, apiReq.OperationID)
 	}
 	realData := GetUserInfoResp{}
 	err = mapstructure.Decode(commData.Data, &realData.UserInfoList)
 	if err != nil {
-		NewError(apiReq.OperationID, "Decode failed ", err.Error())
+		log.NewError(apiReq.OperationID, "Decode failed ", err.Error())
 		return nil, err
 	}
-	NewInfo(apiReq.OperationID, "realData.UserInfoList", realData.UserInfoList, commData.Data)
+	log.NewInfo(apiReq.OperationID, "realData.UserInfoList", realData.UserInfoList, commData.Data)
 	if len(realData.UserInfoList) == 0 {
-		NewInfo(apiReq.OperationID, "failed, no user : ", u.loginUserID)
+		log.NewInfo(apiReq.OperationID, "failed, no user : ", u.loginUserID)
 		return nil, errors.New("no login user")
 	}
-	NewInfo(apiReq.OperationID, "realData.UserInfoList[0]", realData.UserInfoList[0])
+	log.NewInfo(apiReq.OperationID, "realData.UserInfoList[0]", realData.UserInfoList[0])
 	return realData.UserInfoList[0], nil
 }
 
@@ -1156,77 +1158,77 @@ func (u *UserRelated) getUserNameAndFaceUrlByUid(uid string) (faceUrl, name stri
 func (u *UserRelated) getUserInfoByUid(uid string) (*userInfo, error) {
 	var uidList []string
 	uidList = append(uidList, uid)
-	resp, err := post2Api(getUserInfoRouter, paramsGetUserInfo{OperationID: operationIDGenerator(), UidList: uidList}, u.token)
+	resp, err := utils.post2Api(getUserInfoRouter, paramsGetUserInfo{OperationID: utils.operationIDGenerator(), UidList: uidList}, u.token)
 	if err != nil {
-		sdkLog("post2Api failed, ", getUserInfoRouter, uidList, err.Error())
+		utils.sdkLog("post2Api failed, ", getUserInfoRouter, uidList, err.Error())
 		return nil, err
 	}
-	sdkLog("post api: ", getUserInfoRouter, paramsGetUserInfo{OperationID: operationIDGenerator(), UidList: uidList}, "uid ", uid)
+	utils.sdkLog("post api: ", getUserInfoRouter, paramsGetUserInfo{OperationID: utils.operationIDGenerator(), UidList: uidList}, "uid ", uid)
 	var userResp getUserInfoResp
 	err = json.Unmarshal(resp, &userResp)
 	if err != nil {
-		sdkLog("Unmarshal failed, ", resp, err.Error())
+		utils.sdkLog("Unmarshal failed, ", resp, err.Error())
 		return nil, err
 	}
 
 	if userResp.ErrCode != 0 {
-		sdkLog("errcode: ", userResp.ErrCode, "errmsg:", userResp.ErrMsg)
+		utils.sdkLog("errcode: ", userResp.ErrCode, "errmsg:", userResp.ErrMsg)
 		return nil, errors.New(userResp.ErrMsg)
 	}
 
 	if len(userResp.Data) == 0 {
-		sdkLog("failed, no user :", uid)
+		utils.sdkLog("failed, no user :", uid)
 		return nil, errors.New("no user")
 	}
 	return &userResp.Data[0], nil
 }
 
 func (u *UserRelated) doFriendMsg(msg *MsgData) {
-	sdkLog("doFriendMsg ", msg)
+	utils.sdkLog("doFriendMsg ", msg)
 	if u.cb == nil || u.friendListener == nil {
-		sdkLog("listener is null")
+		utils.sdkLog("listener is null")
 		return
 	}
 
 	if msg.SendID == u.loginUserID && msg.SenderPlatformID == u.SvrConf.Platform {
-		sdkLog("sync msg ", msg.ContentType)
+		utils.sdkLog("sync msg ", msg.ContentType)
 		return
 	}
 
 	go func() {
 		switch msg.ContentType {
 		case AddFriendTip:
-			sdkLog("addFriendNew ", msg)
+			utils.sdkLog("addFriendNew ", msg)
 			u.addFriendNew(msg) //
 		case AcceptFriendApplicationTip:
-			sdkLog("acceptFriendApplicationNew ", msg)
+			utils.sdkLog("acceptFriendApplicationNew ", msg)
 			u.acceptFriendApplicationNew(msg)
 		case RefuseFriendApplicationTip:
-			sdkLog("refuseFriendApplicationNew ", msg)
+			utils.sdkLog("refuseFriendApplicationNew ", msg)
 			u.refuseFriendApplicationNew(msg)
 		case SetSelfInfoTip:
-			sdkLog("setSelfInfo ", msg)
+			utils.sdkLog("setSelfInfo ", msg)
 			u.setSelfInfo(msg)
 			//	case KickOnlineTip:
 			//		sdkLog("kickOnline ", msg)
 			//		u.kickOnline(&msg)
 		default:
-			sdkLog("type failed, ", msg)
+			utils.sdkLog("type failed, ", msg)
 		}
 	}()
 }
 
 func (u *UserRelated) acceptFriendApplicationNew(msg *MsgData) {
-	LogBegin(msg.ContentType, msg.ServerMsgID, msg.ClientMsgID)
+	utils.LogBegin(msg.ContentType, msg.ServerMsgID, msg.ClientMsgID)
 	u.syncFriendList()
-	sdkLog(msg.SendID, msg.RecvID)
-	sdkLog("acceptFriendApplicationNew", msg.ServerMsgID, msg)
+	utils.sdkLog(msg.SendID, msg.RecvID)
+	utils.sdkLog("acceptFriendApplicationNew", msg.ServerMsgID, msg)
 
 	fInfoList, err := u.getServerFriendList()
 	if err != nil {
 		return
 	}
-	sdkLog("fInfoList", fInfoList)
+	utils.sdkLog("fInfoList", fInfoList)
 
 	//for _, fInfo := range fInfoList {
 	//	if fInfo.UID == msg.SendID {
@@ -1243,7 +1245,7 @@ func (u *UserRelated) acceptFriendApplicationNew(msg *MsgData) {
 }
 
 func (u *UserRelated) refuseFriendApplicationNew(msg *MsgData) {
-	sdkLog(msg.SendID, msg.RecvID)
+	utils.sdkLog(msg.SendID, msg.RecvID)
 	applyList, err := u.getServerSelfApplication()
 
 	if err != nil {
@@ -1253,7 +1255,7 @@ func (u *UserRelated) refuseFriendApplicationNew(msg *MsgData) {
 		if v.Uid == msg.SendID {
 			jData, err := json.Marshal(v)
 			if err != nil {
-				sdkLog("err: ", err.Error())
+				utils.sdkLog("err: ", err.Error())
 				return
 			}
 			u.friendListener.OnFriendApplicationListReject(string(jData))
@@ -1264,28 +1266,28 @@ func (u *UserRelated) refuseFriendApplicationNew(msg *MsgData) {
 }
 
 func (u *UserRelated) addFriendNew(msg *MsgData) {
-	sdkLog("addFriend start ")
+	utils.sdkLog("addFriend start ")
 	u.syncFriendApplication()
 
 	var ui2GetUserInfo ui2ClientCommonReq
 	ui2GetUserInfo.UidList = append(ui2GetUserInfo.UidList, msg.SendID)
-	resp, err := post2Api(getUserInfoRouter, paramsGetUserInfo{UidList: ui2GetUserInfo.UidList, OperationID: operationIDGenerator()}, u.token)
+	resp, err := utils.post2Api(getUserInfoRouter, paramsGetUserInfo{UidList: ui2GetUserInfo.UidList, OperationID: utils.operationIDGenerator()}, u.token)
 	if err != nil {
-		sdkLog("getUserInfo failed", err)
+		utils.sdkLog("getUserInfo failed", err)
 		return
 	}
 	var vgetUserInfoResp getUserInfoResp
 	err = json.Unmarshal(resp, &vgetUserInfoResp)
 	if err != nil {
-		sdkLog("Unmarshal failed, ", err.Error())
+		utils.sdkLog("Unmarshal failed, ", err.Error())
 		return
 	}
 	if vgetUserInfoResp.ErrCode != 0 {
-		sdkLog(vgetUserInfoResp.ErrCode, vgetUserInfoResp.ErrMsg)
+		utils.sdkLog(vgetUserInfoResp.ErrCode, vgetUserInfoResp.ErrMsg)
 		return
 	}
 	if len(vgetUserInfoResp.Data) == 0 {
-		sdkLog(vgetUserInfoResp.ErrCode, vgetUserInfoResp.ErrMsg, msg)
+		utils.sdkLog(vgetUserInfoResp.ErrCode, vgetUserInfoResp.ErrMsg, msg)
 		return
 	}
 	var appUserNode applyUserInfo
@@ -1301,14 +1303,14 @@ func (u *UserRelated) addFriendNew(msg *MsgData) {
 
 	jsonInfo, err := json.Marshal(appUserNode)
 	if err != nil {
-		sdkLog("  marshal failed", err.Error())
+		utils.sdkLog("  marshal failed", err.Error())
 		return
 	}
 	u.friendListener.OnFriendApplicationListAdded(string(jsonInfo))
 }
 
 func (u *UserRelated) kickOnline(msg GeneralWsResp) {
-	sdkLog("kickOnline ", msg.ReqIdentifier, msg.ErrCode, msg.ErrMsg)
+	utils.sdkLog("kickOnline ", msg.ReqIdentifier, msg.ErrCode, msg.ErrMsg)
 	u.logout(nil)
 	u.cb.OnKickedOffline()
 }
@@ -1316,37 +1318,37 @@ func (u *UserRelated) kickOnline(msg GeneralWsResp) {
 func (u *UserRelated) setSelfInfo(msg *MsgData) {
 	var uidList []string
 	uidList = append(uidList, msg.SendID)
-	resp, err := post2Api(getUserInfoRouter, paramsGetUserInfo{OperationID: operationIDGenerator(), UidList: uidList}, u.token)
+	resp, err := utils.post2Api(getUserInfoRouter, paramsGetUserInfo{OperationID: utils.operationIDGenerator(), UidList: uidList}, u.token)
 	if err != nil {
-		sdkLog("post2Api failed, ", getUserInfoRouter, uidList, err.Error())
+		utils.sdkLog("post2Api failed, ", getUserInfoRouter, uidList, err.Error())
 		return
 	}
 	var userResp getUserInfoResp
 	err = json.Unmarshal(resp, &userResp)
 	if err != nil {
-		sdkLog("Unmarshal failed, ", resp, err.Error())
+		utils.sdkLog("Unmarshal failed, ", resp, err.Error())
 		return
 	}
 
 	if userResp.ErrCode != 0 {
-		sdkLog("errcode: ", userResp.ErrCode, "errmsg:", userResp.ErrMsg)
+		utils.sdkLog("errcode: ", userResp.ErrCode, "errmsg:", userResp.ErrMsg)
 		return
 	}
 
 	if len(userResp.Data) == 0 {
-		sdkLog("failed, no user : ", u.loginUserID)
+		utils.sdkLog("failed, no user : ", u.loginUserID)
 		return
 	}
 
 	err = u.updateFriendInfo(userResp.Data[0].Uid, userResp.Data[0].Name, userResp.Data[0].Icon, userResp.Data[0].Gender, userResp.Data[0].Mobile, userResp.Data[0].Birth, userResp.Data[0].Email, userResp.Data[0].Ex)
 	if err != nil {
-		sdkLog("  db change failed", err.Error())
+		utils.sdkLog("  db change failed", err.Error())
 		return
 	}
 
 	jsonInfo, err := json.Marshal(userResp.Data[0])
 	if err != nil {
-		sdkLog("  marshal failed", err.Error())
+		utils.sdkLog("  marshal failed", err.Error())
 		return
 	}
 

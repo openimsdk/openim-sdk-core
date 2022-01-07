@@ -3,6 +3,7 @@ package open_im_sdk
 import (
 	"encoding/json"
 	"fmt"
+	"open_im_sdk/open_im_sdk/sdk_interface"
 )
 
 type XBase struct {
@@ -66,7 +67,7 @@ func (testCreateGroup) OnSuccess(data string) {
 	uidList = append(uidList, "307edc814bb0d04a")
 	var xb XBase
 	j, _ := json.Marshal(uidList)
-	GetGroupMembersInfo(data, string(j), xb)
+	sdk_interface.GetGroupMembersInfo(data, string(j), xb)
 }
 
 func (testCreateGroup) OnError(errCode int32, errMsg string) {
@@ -87,7 +88,7 @@ func DoTestCreateGroup() {
 	groupInfo, _ := json.Marshal(test.groupInfo)
 	members, _ := json.Marshal(test.members)
 	fmt.Println("create groupInfo input:", string(groupInfo), string(members))
-	CreateGroup(test, string(groupInfo), string(members), "asfdfasd")
+	sdk_interface.CreateGroup(test, string(groupInfo), string(members), "asfdfasd")
 }
 
 type testSetGroupInfo struct {
@@ -111,7 +112,7 @@ func DoSetGroupInfo() {
 	test.FaceUrl = "this is a test face url"
 	setInfo, _ := json.Marshal(test.groupInfo)
 	fmt.Println("setGroupInfo input", string(setInfo))
-	SetGroupInfo(string(setInfo), test)
+	sdk_interface.SetGroupInfo(string(setInfo), test)
 }
 
 type testGetGroupsInfo struct {
@@ -132,7 +133,7 @@ func DoGetGroupsInfo() {
 	test.getGroupsInfoReq.GroupIDList = groupIDList
 	groupsIDList, _ := json.Marshal(test.GroupIDList)
 	fmt.Println("test getGroupsInfo input", string(groupsIDList))
-	GetGroupsInfo(string(groupsIDList), test)
+	sdk_interface.GetGroupsInfo(string(groupsIDList), test)
 }
 
 type testJoinGroup struct {
@@ -153,7 +154,7 @@ func DoJoinGroup() {
 	test.joinGroupReq.Message = "jin lai "
 
 	fmt.Println("test join group input", test.GroupID, test.Message)
-	JoinGroup(test.GroupID, test.Message, test)
+	sdk_interface.JoinGroup(test.GroupID, test.Message, test)
 }
 
 type testQuitGroup struct {
@@ -173,7 +174,7 @@ func DoQuitGroup() {
 	test.quitGroupReq.GroupID = "77215e1b13b75f3ab00cb6570e3d9618"
 
 	fmt.Println("test quit group input", test.GroupID)
-	QuitGroup(test.GroupID, test)
+	sdk_interface.QuitGroup(test.GroupID, test)
 }
 
 type testGetJoinedGroupList struct {
@@ -193,7 +194,7 @@ func (testGetJoinedGroupList) OnSuccess(data string) {
 
 func DotestGetJoinedGroupList() {
 	var test testGetJoinedGroupList
-	GetJoinedGroupList(test)
+	sdk_interface.GetJoinedGroupList(test)
 }
 
 type testGetGroupMemberList struct {
@@ -210,7 +211,7 @@ func (testGetGroupMemberList) OnSuccess(data string) {
 func DotestGetGroupMemberList() {
 	var test testGetGroupMemberList
 	var groupId string = ""
-	GetGroupMemberList(groupId, 0, 0, test)
+	sdk_interface.GetGroupMemberList(groupId, 0, 0, test)
 }
 
 type testGetGroupMembersInfo struct {
@@ -231,7 +232,7 @@ func DotestGetGroupMembersInfo() {
 	//memlist = append(memlist, "ded01dfe543700402608e19d4e2f839e")
 	jlist, _ := json.Marshal(memlist)
 	fmt.Println("GetGroupMembersInfo input : ", string(jlist))
-	GetGroupMembersInfo("7ff61d8f9d4a8a0d6d70a14e2683aad5", string(jlist), test)
+	sdk_interface.GetGroupMembersInfo("7ff61d8f9d4a8a0d6d70a14e2683aad5", string(jlist), test)
 	//GetGroupMemberList("05dc84b52829e82242a710ecf999c72c", 0, 0, test)
 }
 
@@ -254,7 +255,7 @@ func DotestKickGroupMember() {
 	jlist, _ := json.Marshal(memlist)
 
 	fmt.Println("KickGroupMember input", string(jlist))
-	KickGroupMember("f4cc5c9b556221b92992538f7e6ac26e", "kkkkkkk", string(jlist), test)
+	sdk_interface.KickGroupMember("f4cc5c9b556221b92992538f7e6ac26e", "kkkkkkk", string(jlist), test)
 }
 
 type testInviteUserToGroup struct {
@@ -275,7 +276,7 @@ func DotesttestInviteUserToGroup() {
 	//memlist = append(memlist, "ded01dfe543700402608e19d4e2f839e")
 	jlist, _ := json.Marshal(memlist)
 	fmt.Println("DotesttestInviteUserToGroup, input: ", string(jlist))
-	InviteUserToGroup("f4cc5c9b556221b92992538f7e6ac26e", "friend", string(jlist), test)
+	sdk_interface.InviteUserToGroup("f4cc5c9b556221b92992538f7e6ac26e", "friend", string(jlist), test)
 }
 
 type testGroupX struct {
@@ -301,12 +302,12 @@ func DoGetGroupApplicationList() string {
 func DoGroupApplicationList() {
 	var test testGroupX
 	fmt.Println("test DoGetGroupApplicationList....")
-	GetGroupApplicationList(test)
+	sdk_interface.GetGroupApplicationList(test)
 }
 func DoTransferGroupOwner(groupid, userid string) {
 	var test testGroupX
 	fmt.Println("test DoTransferGroupOwner....")
-	TransferGroupOwner(groupid, userid, test)
+	sdk_interface.TransferGroupOwner(groupid, userid, test)
 }
 func DoAcceptGroupApplication(uid string) {
 
@@ -331,7 +332,7 @@ func DoAcceptGroupApplication(uid string) {
 
 	var test testGroupX
 	fmt.Println("accept", string(v))
-	AcceptGroupApplication(string(v), "accept", test)
+	sdk_interface.AcceptGroupApplication(string(v), "accept", test)
 }
 func DoRefuseGroupApplication(uid string) {
 	str := DoGetGroupApplicationList()
@@ -357,5 +358,5 @@ func DoRefuseGroupApplication(uid string) {
 
 	var test testGroupX
 	fmt.Println("refuse", string(v))
-	RefuseGroupApplication(string(v), "refuse", test)
+	sdk_interface.RefuseGroupApplication(string(v), "refuse", test)
 }

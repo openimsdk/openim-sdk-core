@@ -1,20 +1,22 @@
-package open_im_sdk
+package sdk_params_callback
+
+import "open_im_sdk/open_im_sdk"
 
 type GetDesignatedFriendsInfoParams []string
-type GetDesignatedFriendsInfoCallback []LocalFriend
+type GetDesignatedFriendsInfoCallback []open_im_sdk.LocalFriend
 
 type AddFriendParams struct {
 	ToUserID string `json:"toUserID" validate:"required"`
 	ReqMsg   string `json:"reqMsg"`
 }
 
-const AddFriendCallback = SuccessCallbackDefault
+const AddFriendCallback = open_im_sdk.SuccessCallbackDefault
 
 type GetRecvFriendApplicationListParams struct{}
-type GetRecvFriendApplicationListCallback []*LocalFriendRequest
+type GetRecvFriendApplicationListCallback []*open_im_sdk.LocalFriendRequest
 
 type GetSendFriendApplicationListParams struct{}
-type GetSendFriendApplicationListCallback []LocalFriendRequest
+type GetSendFriendApplicationListCallback []open_im_sdk.LocalFriendRequest
 
 type ProcessFriendApplicationParams struct {
 	ToUserID  string `json:"toUserID" validate:"required"`
@@ -22,18 +24,18 @@ type ProcessFriendApplicationParams struct {
 }
 
 //type ProcessFriendApplicationCallback struct{}
-const ProcessFriendApplicationCallback = SuccessCallbackDefault
+const ProcessFriendApplicationCallback = open_im_sdk.SuccessCallbackDefault
 
 type CheckFriendParams []string
-type CheckFriendCallback []UserIDResult
+type CheckFriendCallback []open_im_sdk.UserIDResult
 
 type DeleteFriendParams string
 
 //type DeleteFriendCallback struct{}
-const DeleteFriendCallback = SuccessCallbackDefault
+const DeleteFriendCallback = open_im_sdk.SuccessCallbackDefault
 
 type GetFriendListParams struct{}
-type GetFriendListCallback []LocalFriend
+type GetFriendListCallback []open_im_sdk.LocalFriend
 
 type SetFriendRemarkParams struct {
 	ToUserID string `json:"toUserID" validate:"required"`
@@ -41,19 +43,19 @@ type SetFriendRemarkParams struct {
 }
 
 //type SetFriendRemarkCallback struct{}
-const SetFriendRemarkCallback = SuccessCallbackDefault
+const SetFriendRemarkCallback = open_im_sdk.SuccessCallbackDefault
 
 type AddBlackParams string
 
 //type AddBlackCallback struct{}
-const AddBlackCallback = SuccessCallbackDefault
+const AddBlackCallback = open_im_sdk.SuccessCallbackDefault
 
 type GetBlackListParams struct{}
 
 //type GetBlackListCallback []LocalBlack
-const GetBlackListCallback = SuccessCallbackDefault
+const GetBlackListCallback = open_im_sdk.SuccessCallbackDefault
 
 type DeleteBlackParams string
 
 //type DeleteBlackCallback struct{}
-const DeleteBlackCallback = SuccessCallbackDefault
+const DeleteBlackCallback = open_im_sdk.SuccessCallbackDefault

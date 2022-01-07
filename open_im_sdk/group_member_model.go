@@ -1,12 +1,15 @@
 package open_im_sdk
 
-import "errors"
+import (
+	"errors"
+	"open_im_sdk/open_im_sdk/utils"
+)
 
 func (u *UserRelated) _getGroupMemberInfoByGroupIDUserID(groupID, userID string) (*LocalGroupMember, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
 	var groupMember LocalGroupMember
-	return &groupMember, wrap(u.imdb.Where("group_id = ? AND user_id = ?",
+	return &groupMember, utils.wrap(u.imdb.Where("group_id = ? AND user_id = ?",
 		groupID, userID).Error, "_getGroupMemberInfoByGroupIDUserID failed")
 }
 
@@ -14,14 +17,14 @@ func (u *UserRelated) _getAllGroupMemberList() ([]LocalGroupMember, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
 	var groupMemberList []LocalGroupMember
-	return groupMemberList, wrap(u.imdb.Find(&groupMemberList).Error, "_getAllGroupMemberList failed")
+	return groupMemberList, utils.wrap(u.imdb.Find(&groupMemberList).Error, "_getAllGroupMemberList failed")
 }
 
 func (u *UserRelated) _getGroupMemberListByGroupID(groupID string) ([]LocalGroupMember, error) {
 	u.mRWMutex.RLock()
 	defer u.mRWMutex.RUnlock()
 	var groupMemberList []LocalGroupMember
-	return groupMemberList, wrap(u.imdb.Where("group_id = ? ", groupID).Find(&groupMemberList).Error, "_getGroupMemberListByGroupID failed")
+	return groupMemberList, utils.wrap(u.imdb.Where("group_id = ? ", groupID).Find(&groupMemberList).Error, "_getGroupMemberListByGroupID failed")
 }
 
 func (u *UserRelated) _insertGroupMember(groupMember *LocalGroupMember) error {
@@ -42,7 +45,7 @@ func (u *UserRelated) _updateGroupMember(groupMember *LocalGroupMember) error {
 	defer u.mRWMutex.Unlock()
 	t := u.imdb.Updates(groupMember)
 	if t.RowsAffected == 0 {
-		return wrap(errors.New("RowsAffected == 0"), "no update")
+		return utils.wrap(errors.New("RowsAffected == 0"), "no update")
 	}
 	return t.Error
 }

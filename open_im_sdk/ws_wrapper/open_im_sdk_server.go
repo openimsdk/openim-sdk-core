@@ -10,6 +10,8 @@ import (
 	"flag"
 	"fmt"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/open_im_sdk/log"
+	"open_im_sdk/open_im_sdk/sdk_interface"
 	"open_im_sdk/open_im_sdk/ws_wrapper/utils"
 	"open_im_sdk/open_im_sdk/ws_wrapper/ws_local_server"
 	"runtime"
@@ -26,7 +28,7 @@ func main() {
 	openIMApiPort = flag.Int("openIM_api_port", 10000, "openIM api listening port")
 	openIMWsPort = flag.Int("openIM_ws_port", 17778, "openIM ws listening port")
 	flag.Parse()
-	open_im_sdk.SetHearbeatInterval(5)
+	sdk_interface.SetHearbeatInterval(5)
 	//switch *openIMTerminalType {
 	//case "pc":
 	//	openIMWsAddress = flag.String("openIM_ws_address", "web", "different terminal types")
@@ -62,7 +64,7 @@ func main() {
 	}
 	var wg sync.WaitGroup
 	wg.Add(1)
-	open_im_sdk.NewPrivateLog("sdk")
+	log.NewPrivateLog("sdk")
 	fmt.Println("ws server is starting")
 	ws_local_server.WS.OnInit(*sdkWsPort)
 	ws_local_server.WS.Run()

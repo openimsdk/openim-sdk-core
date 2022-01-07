@@ -1,5 +1,7 @@
 package open_im_sdk
 
+import "open_im_sdk/open_im_sdk/utils"
+
 type IMSDKListener interface {
 	OnConnecting()
 	OnConnectSuccess()
@@ -13,7 +15,7 @@ func InitOnce(config *IMConfig) bool {
 	SvrConf = *config
 	initUserRouter()
 	initAddr()
-	sdkLog("InitOnce success, ", *config)
+	utils.sdkLog("InitOnce success, ", *config)
 	return true
 }
 
@@ -39,7 +41,7 @@ func (u *UserRelated) UnInitSDK() {
 
 func (u *UserRelated) Login(uid, tk string, callback Base) {
 	if callback == nil {
-		sdkLog("callback is null")
+		utils.sdkLog("callback is null")
 		return
 	}
 	//	go func() {

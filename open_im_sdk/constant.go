@@ -5,6 +5,9 @@ import (
 	"errors"
 	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
+	"open_im_sdk/open_im_sdk/conversation_msg"
+	"open_im_sdk/open_im_sdk/friend"
+	"open_im_sdk/open_im_sdk/group"
 	"sync"
 )
 
@@ -114,9 +117,9 @@ type UserRelated struct {
 	wsNotification map[string]chan GeneralWsResp
 	wsMutex        sync.RWMutex
 	IMManager
-	FriendListener
-	ConversationListener
-	groupListener
+	friend.FriendListener
+	conversation_msg.ConversationListener
+	group.groupListener
 
 	db *sql.DB
 

@@ -5,6 +5,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"open_im_sdk/open_im_sdk/utils"
 )
 
 func (u *UserRelated) initDB() error {
@@ -15,7 +16,7 @@ func (u *UserRelated) initDB() error {
 	defer u.mRWMutex.Unlock()
 
 	db, err := gorm.Open(sqlite.Open(SvrConf.DbDir+"OpenIM_"+u.loginUserID+".db"), &gorm.Config{})
-	sdkLog("open db:", SvrConf.DbDir+"OpenIM_"+u.loginUserID+".db")
+	utils.sdkLog("open db:", SvrConf.DbDir+"OpenIM_"+u.loginUserID+".db")
 	if err != nil {
 		panic("failed to connect database" + err.Error())
 		return err

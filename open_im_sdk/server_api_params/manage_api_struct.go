@@ -1,18 +1,20 @@
-package open_im_sdk
+package server_api_params
+
+import "open_im_sdk/open_im_sdk"
 
 type DeleteUsersReq struct {
 	OperationID      string   `json:"operationID" binding:"required"`
 	DeleteUserIDList []string `json:"deleteUserIDList" binding:"required"`
 }
 type DeleteUsersResp struct {
-	CommResp
+	open_im_sdk.CommResp
 	FailedUserIDList []string `json:"data"`
 }
 type GetAllUsersUidReq struct {
 	OperationID string `json:"operationID" binding:"required"`
 }
 type GetAllUsersUidResp struct {
-	CommResp
+	open_im_sdk.CommResp
 	UserIDList []string `json:"data"`
 }
 type GetUsersOnlineStatusReq struct {
@@ -20,7 +22,7 @@ type GetUsersOnlineStatusReq struct {
 	UserIDList  []string `json:"userIDList" binding:"required,lte=200"`
 }
 type GetUsersOnlineStatusResp struct {
-	CommResp
+	open_im_sdk.CommResp
 	SuccessResult []GetusersonlinestatusrespSuccessresult `json:"data"`
 }
 type AccountCheckReq struct {
@@ -28,7 +30,7 @@ type AccountCheckReq struct {
 	CheckUserIDList []string `json:"checkUserIDList" binding:"required,lte=100"`
 }
 type AccountCheckResp struct {
-	CommResp
+	open_im_sdk.CommResp
 	ResultList AccountcheckrespSingleuserstatus `json:"data"`
 }
 type GetusersonlinestatusrespSuccessdetail struct {

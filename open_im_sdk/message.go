@@ -9,6 +9,8 @@ package open_im_sdk
 import (
 	imgtype "github.com/shamsher31/goimgtype"
 	"image"
+	"open_im_sdk/open_im_sdk/conversation_msg"
+	"open_im_sdk/open_im_sdk/utils"
 	"os"
 )
 
@@ -21,7 +23,7 @@ func doNewMsgConversation() {
 func (u *UserRelated) createTextSystemMessage(n NotificationContent, textType int32) *MsgStruct {
 	s := MsgStruct{}
 	u.initBasicInfo(&s, UserMsgType, textType)
-	s.Content = structToJsonString(n)
+	s.Content = utils.structToJsonString(n)
 	s.AtElem.AtUserList = []string{}
 	return &s
 }
@@ -127,16 +129,16 @@ func autoSendTransferGroupOwnerTip(groupId string, oldOwner, newOwner string) er
 //	return nil
 //}
 
-func (u *UserRelated) updateMessageFailedStatus(s *MsgStruct, c *ConversationStruct, onlineUserOnly bool) {
+func (u *UserRelated) updateMessageFailedStatus(s *MsgStruct, c *conversation_msg.ConversationStruct, onlineUserOnly bool) {
 	if !onlineUserOnly {
 		_ = u.updateMessageTimeAndMsgIDStatus(s.ClientMsgID, s.CreateTime, MsgStatusSendFailed)
 	}
 	s.SendTime = s.CreateTime
 	s.Status = MsgStatusSendFailed
-	c.LatestMsg = structToJsonString(s)
+	c.LatestMsg = utils.structToJsonString(s)
 }
 func (u *UserRelated) initBasicInfo(message *MsgStruct, msgFrom, contentType int32) {
-	message.CreateTime = getCurrentTimestampByNano()
+	message.CreateTime = utils.getCurrentTimestampByNano()
 	message.SendTime = message.CreateTime
 	message.IsRead = false
 	message.Status = MsgStatusSending
@@ -144,18 +146,18 @@ func (u *UserRelated) initBasicInfo(message *MsgStruct, msgFrom, contentType int
 	userInfo, _ := u.getLoginUserInfoFromLocal()
 	message.SenderFaceURL = userInfo.Icon
 	message.SenderNickname = userInfo.Name
-	ClientMsgID := getMsgID(message.SendID)
+	ClientMsgID := utils.getMsgID(message.SendID)
 	message.ClientMsgID = ClientMsgID
 	message.MsgFrom = msgFrom
 	message.ContentType = contentType
 	message.SenderPlatformID = SvrConf.Platform
 
 }
-func (u *UserRelated) sendMessageFailedHandle(s *MsgStruct, c *ConversationStruct, conversationID string) {
+func (u *UserRelated) sendMessageFailedHandle(s *MsgStruct, c *conversation_msg.ConversationStruct, conversationID string) {
 	_ = u.updateMessageTimeAndMsgIDStatus(s.ClientMsgID, s.CreateTime, MsgStatusSendFailed)
 	s.SendTime = s.CreateTime
 	s.Status = MsgStatusSendFailed
-	c.LatestMsg = structToJsonString(s)
+	c.LatestMsg = utils.structToJsonString(s)
 	_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, AddConOrUpLatMsg,
 		*c})
 	u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
@@ -181,7 +183,7 @@ func (s MsgFormats) Swap(i, j int) {
 func getImageInfo(filePath string) (*imageInfo, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		sdkLog(err.Error())
+		utils.sdkLog(err.Error())
 		return nil, err
 	}
 
@@ -193,19 +195,19 @@ func getImageInfo(filePath string) (*imageInfo, error) {
 
 	img, _, err := image.Decode(file)
 	if err != nil {
-		sdkLog(err.Error())
+		utils.sdkLog(err.Error())
 		return nil, err
 	}
 
 	datatype, err := imgtype.Get(filePath)
 	if err != nil {
-		sdkLog(err.Error())
+		utils.sdkLog(err.Error())
 		return nil, err
 	}
 
 	fi, err := os.Stat(filePath)
 	if err != nil {
-		sdkLog(err.Error())
+		utils.sdkLog(err.Error())
 		return nil, err
 	}
 

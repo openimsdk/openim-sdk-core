@@ -10,6 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/open_im_sdk/sdk_interface"
 	"open_im_sdk/open_im_sdk/ws_wrapper/utils"
 	"open_im_sdk/open_im_sdk/ws_wrapper/ws_local_server"
 	"runtime"
@@ -24,7 +25,7 @@ func main() {
 	openIMApiAddress = flag.String("openIMApiAddress", "", "openIM api listening port")
 	openIMWsAddress = flag.String("openIMWsAddress", "", "openIM ws listening port")
 	flag.Parse()
-	open_im_sdk.SetHearbeatInterval(5)
+	sdk_interface.SetHearbeatInterval(5)
 	sysType := runtime.GOOS
 	switch sysType {
 	case "darwin":

@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"github.com/pkg/errors"
+	"open_im_sdk/open_im_sdk/sdk_interface"
+	"open_im_sdk/open_im_sdk/utils"
 
 	"flag"
 	"fmt"
@@ -179,7 +181,7 @@ func register(uid string) error {
 	req.Uid = uid
 	req.Secret = SECRET
 	req.Name = uid
-	r, err := open_im_sdk.Post2Api(url, req, "")
+	r, err := utils.Post2Api(url, req, "")
 	if err != nil {
 		fmt.Println(r, err)
 		return err
@@ -194,7 +196,7 @@ func getToken(uid string) string {
 	req.Platform = 2
 	req.Uid = uid
 	req.Secret = SECRET
-	r, err := open_im_sdk.Post2Api(url, req, "")
+	r, err := utils.Post2Api(url, req, "")
 	if err != nil {
 		fmt.Println(r, err)
 		return ""
@@ -214,12 +216,12 @@ type zx struct {
 }
 
 func (z zx) txexfc(uid int) int {
-	open_im_sdk.LogBegin(uid)
+	utils.LogBegin(uid)
 	if uid == 0 {
 		return -1
-		open_im_sdk.LogFReturn(-1)
+		utils.LogFReturn(-1)
 	}
-	open_im_sdk.LogSReturn(1)
+	utils.LogSReturn(1)
 	return 1
 
 }
@@ -227,14 +229,14 @@ func GenUid(uid int) string {
 	if uid > 1000 {
 		return strconv.FormatInt(int64(uid), 10)
 	}
-	open_im_sdk.LogBegin(uid)
+	utils.LogBegin(uid)
 
 	if getMyIP() == "" {
 		fmt.Println("getMyIP() failed")
 		os.Exit(1)
 	}
 	UidPrefix := getMyIP() + "open_im_test_uid_"
-	open_im_sdk.LogSReturn(UidPrefix + strconv.FormatInt(int64(uid), 10))
+	utils.LogSReturn(UidPrefix + strconv.FormatInt(int64(uid), 10))
 	return UidPrefix + strconv.FormatInt(int64(uid), 10)
 }
 
@@ -265,7 +267,7 @@ func GetCmd(myUid int, filename string) int {
 		fmt.Println("len failed")
 		return -1
 	}
-	return int(open_im_sdk.StringToInt64(cmd[myUid-1]))
+	return int(utils.StringToInt64(cmd[myUid-1]))
 }
 
 func runRigister(strMyUid string) {
@@ -349,14 +351,14 @@ func AuthenticateRequest(a int) error {
 
 // Better
 func f3() error {
-	return open_im_sdk.Wrap(errors.New("first error"), " wrap")
+	return utils.Wrap(errors.New("first error"), " wrap")
 
 }
 
 func f2() error {
 	err := f3()
 	if err != nil {
-		return open_im_sdk.WithMessage(err, "f3 err")
+		return utils.WithMessage(err, "f3 err")
 	}
 	return nil
 }
@@ -364,7 +366,7 @@ func f2() error {
 func f1() error {
 	err := f2()
 	if err != nil {
-		return open_im_sdk.WithMessage(err, "f2 err")
+		return utils.WithMessage(err, "f2 err")
 	}
 	return nil
 }
@@ -417,7 +419,7 @@ func main() {
 	fmt.Printf("err: %+v", err)
 	return
 
-	open_im_sdk.SetHearbeatInterval(300)
+	sdk_interface.SetHearbeatInterval(300)
 	for i := 0; i < 1; i++ {
 		myUid1 := 17712341234
 		strMyUid1 := GenUid(myUid1)
@@ -467,7 +469,7 @@ func main() {
 	var msgnum int = *messageCount
 	fmt.Println("args is ", myUid, uidNum, msgnum)
 	var strMyUid string
-	open_im_sdk.LogBegin()
+	utils.LogBegin()
 	strMyUid = GenUid(myUid)
 
 	runRigister(strMyUid)

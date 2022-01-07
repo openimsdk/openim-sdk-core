@@ -1,5 +1,7 @@
 package open_im_sdk
 
+import "open_im_sdk/open_im_sdk/utils"
+
 func triggerCmdFriend() error {
 	return nil
 
@@ -27,7 +29,7 @@ func (u *UserRelated) triggerCmdDeleteConversationAndMessage(sourceID, conversat
 		Value: deleteConNode{SourceID: sourceID, ConversationID: conversationID, SessionType: sessionType},
 	}
 
-	return sendCmd(u.ConversationCh, c2v, 1)
+	return utils.sendCmd(u.ConversationCh, c2v, 1)
 }
 
 /*
@@ -51,8 +53,8 @@ func (u *UserRelated) triggerCmdNewMsgCome(msg ArrMsg) error {
 		Cmd:   CmdNewMsgCome,
 		Value: msg,
 	}
-	sdkLog("send cmd: ", u.ConversationCh)
-	return sendCmd(u.ConversationCh, c2v, 1)
+	utils.sdkLog("send cmd: ", u.ConversationCh)
+	return utils.sendCmd(u.ConversationCh, c2v, 1)
 }
 
 func triggerCmdAcceptFriend(sendUid string) error {
@@ -70,12 +72,12 @@ func (u *UserRelated) triggerCmdUpdateConversation(node updateConNode) error {
 		Value: node,
 	}
 
-	return sendCmd(u.ConversationCh, c2v, 1)
+	return utils.sendCmd(u.ConversationCh, c2v, 1)
 }
 
 func (u *UserRelated) unInitAll() {
 	c2v := cmd2Value{Cmd: CmdUnInit}
-	_ = sendCmd(u.ConversationCh, c2v, 1)
+	_ = utils.sendCmd(u.ConversationCh, c2v, 1)
 }
 
 type goroutine interface {
@@ -84,16 +86,16 @@ type goroutine interface {
 }
 
 func doListener(Li goroutine) {
-	sdkLog("doListener start.", Li.getCh())
+	utils.sdkLog("doListener start.", Li.getCh())
 	for {
-		sdkLog("doListener for.")
+		utils.sdkLog("doListener for.")
 		select {
 		case cmd := <-Li.getCh():
 			if cmd.Cmd == CmdUnInit {
-				sdkLog("doListener goroutine.")
+				utils.sdkLog("doListener goroutine.")
 				return
 			}
-			sdkLog("doListener work.")
+			utils.sdkLog("doListener work.")
 			Li.work(cmd)
 		}
 	}

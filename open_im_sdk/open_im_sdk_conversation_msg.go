@@ -8,6 +8,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 	"net/http"
+	"open_im_sdk/open_im_sdk/conversation_msg"
+	"open_im_sdk/open_im_sdk/utils"
 	"os"
 	"sort"
 	"sync"
@@ -21,9 +23,9 @@ func (u *UserRelated) GetAllConversationList(callback Base) {
 			callback.OnError(203, err.Error())
 		} else {
 			if list != nil {
-				callback.OnSuccess(structToJsonString(list))
+				callback.OnSuccess(utils.structToJsonString(list))
 			} else {
-				callback.OnSuccess(structToJsonString([]ConversationStruct{}))
+				callback.OnSuccess(utils.structToJsonString([]conversation_msg.ConversationStruct{}))
 			}
 		}
 	}()
@@ -35,9 +37,9 @@ func (u *UserRelated) GetConversationListSplit(callback Base, offset, count int)
 			callback.OnError(203, err.Error())
 		} else {
 			if list != nil {
-				callback.OnSuccess(structToJsonString(list))
+				callback.OnSuccess(utils.structToJsonString(list))
 			} else {
-				callback.OnSuccess(structToJsonString([]ConversationStruct{}))
+				callback.OnSuccess(utils.structToJsonString([]conversation_msg.ConversationStruct{}))
 			}
 		}
 	}()
@@ -47,25 +49,25 @@ func (u *UserRelated) SetConversationRecvMessageOpt(callback Base, conversationI
 		var list []string
 		err := json.Unmarshal([]byte(conversationIDList), &list)
 		if err != nil {
-			sdkLog("unmarshal failed, ", err.Error())
+			utils.sdkLog("unmarshal failed, ", err.Error())
 			callback.OnError(201, err.Error())
 			return
 		}
-		resp, err := post2Api(setReceiveMessageOptRouter, paramsSetReceiveMessageOpt{OperationID: operationIDGenerator(), Option: int32(opt), ConversationIdList: list}, u.token)
+		resp, err := utils.post2Api(setReceiveMessageOptRouter, paramsSetReceiveMessageOpt{OperationID: utils.operationIDGenerator(), Option: int32(opt), ConversationIdList: list}, u.token)
 		if err != nil {
-			sdkLog("post failed, ", err.Error())
+			utils.sdkLog("post failed, ", err.Error())
 			callback.OnError(202, err.Error())
 			return
 		}
 		var g getReceiveMessageOptResp
 		err = json.Unmarshal(resp, &g)
 		if err != nil {
-			sdkLog("unmarshal failed, ", err.Error())
+			utils.sdkLog("unmarshal failed, ", err.Error())
 			callback.OnError(201, err.Error())
 			return
 		}
 		if g.ErrCode != 0 {
-			sdkLog("errcode: ", g.ErrCode, g.ErrMsg)
+			utils.sdkLog("errcode: ", g.ErrCode, g.ErrMsg)
 			callback.OnError(g.ErrCode, g.ErrMsg)
 			return
 		}
@@ -85,34 +87,34 @@ func (u *UserRelated) GetConversationRecvMessageOpt(callback Base, conversationI
 		var list []string
 		err := json.Unmarshal([]byte(conversationIDList), &list)
 		if err != nil {
-			sdkLog("unmarshal failed, ", err.Error())
+			utils.sdkLog("unmarshal failed, ", err.Error())
 			callback.OnError(201, err.Error())
 			return
 		}
-		resp, err := post2Api(getReceiveMessageOptRouter, paramGetReceiveMessageOpt{OperationID: operationIDGenerator(), ConversationIdList: list}, u.token)
+		resp, err := utils.post2Api(getReceiveMessageOptRouter, paramGetReceiveMessageOpt{OperationID: utils.operationIDGenerator(), ConversationIdList: list}, u.token)
 		if err != nil {
-			sdkLog("post failed, ", err.Error())
+			utils.sdkLog("post failed, ", err.Error())
 			callback.OnError(202, err.Error())
 			return
 		}
 		var g getReceiveMessageOptResp
 		err = json.Unmarshal(resp, &g)
 		if err != nil {
-			sdkLog("unmarshal failed, ", err.Error())
+			utils.sdkLog("unmarshal failed, ", err.Error())
 			callback.OnError(201, err.Error())
 			return
 		}
 		if g.ErrCode != 0 {
-			sdkLog("errcode: ", g.ErrCode, g.ErrMsg)
+			utils.sdkLog("errcode: ", g.ErrCode, g.ErrMsg)
 			callback.OnError(g.ErrCode, g.ErrMsg)
 			return
 		}
-		callback.OnSuccess(structToJsonString(g.Data))
+		callback.OnSuccess(utils.structToJsonString(g.Data))
 	}()
 }
 func (u *UserRelated) GetOneConversation(sourceID string, sessionType int, callback Base) {
 	go func() {
-		conversationID := GetConversationIDBySessionType(sourceID, sessionType)
+		conversationID := utils.GetConversationIDBySessionType(sourceID, sessionType)
 		err, c := u.getOneConversationModel(conversationID)
 		if err != nil {
 			callback.OnError(203, err.Error())
@@ -127,7 +129,7 @@ func (u *UserRelated) GetOneConversation(sourceID string, sessionType int, callb
 					faceUrl, name, err := u.getUserNameAndFaceUrlByUid(sourceID)
 					if err != nil {
 						callback.OnError(301, err.Error())
-						sdkLog("getUserNameAndFaceUrlByUid err:", err)
+						utils.sdkLog("getUserNameAndFaceUrlByUid err:", err)
 						return
 					}
 					c.ShowName = name
@@ -137,7 +139,7 @@ func (u *UserRelated) GetOneConversation(sourceID string, sessionType int, callb
 					faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(sourceID)
 					if err != nil {
 						callback.OnError(301, err.Error())
-						sdkLog("getGroupNameAndFaceUrlByUid err:", err)
+						utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
 					}
 					c.ShowName = name
 					c.FaceURL = faceUrl
@@ -148,10 +150,10 @@ func (u *UserRelated) GetOneConversation(sourceID string, sessionType int, callb
 					callback.OnError(301, err.Error())
 					return
 				}
-				callback.OnSuccess(structToJsonString(c))
+				callback.OnSuccess(utils.structToJsonString(c))
 
 			} else {
-				callback.OnSuccess(structToJsonString(c))
+				callback.OnSuccess(utils.structToJsonString(c))
 			}
 		}
 	}()
@@ -162,16 +164,16 @@ func (u *UserRelated) GetMultipleConversation(conversationIDList string, callbac
 		err := json.Unmarshal([]byte(conversationIDList), &c)
 		if err != nil {
 			callback.OnError(200, err.Error())
-			sdkLog("Unmarshal failed", err.Error())
+			utils.sdkLog("Unmarshal failed", err.Error())
 		}
 		err, list := u.getMultipleConversationModel(c)
 		if err != nil {
 			callback.OnError(203, err.Error())
 		} else {
 			if list != nil {
-				callback.OnSuccess(structToJsonString(list))
+				callback.OnSuccess(utils.structToJsonString(list))
 			} else {
-				callback.OnSuccess(structToJsonString([]ConversationStruct{}))
+				callback.OnSuccess(utils.structToJsonString([]conversation_msg.ConversationStruct{}))
 			}
 		}
 	}()
@@ -254,7 +256,7 @@ func (u *UserRelated) GetTotalUnreadMsgCount(callback Base) {
 	if err != nil {
 		callback.OnError(203, err.Error())
 	} else {
-		callback.OnSuccess(int32ToString(count))
+		callback.OnSuccess(utils.int32ToString(count))
 	}
 
 }
@@ -270,7 +272,7 @@ type OnConversationListener interface {
 
 func (u *UserRelated) SetConversationListener(listener OnConversationListener) {
 	if u.ConversationListenerx != nil {
-		sdkLog("only one ")
+		utils.sdkLog("only one ")
 		return
 	}
 	u.ConversationListenerx = listener
@@ -284,11 +286,11 @@ type OnAdvancedMsgListener interface {
 
 func (u *UserRelated) AddAdvancedMsgListener(listener OnAdvancedMsgListener) {
 	if listener == nil {
-		sdkLog("AddAdvancedMsgListener listener is null")
+		utils.sdkLog("AddAdvancedMsgListener listener is null")
 		return
 	}
 	if len(u.ConversationListener.MsgListenerList) == 1 {
-		sdkLog("u.ConversationListener.MsgListenerList == 1")
+		utils.sdkLog("u.ConversationListener.MsgListenerList == 1")
 		return
 	}
 	u.ConversationListener.MsgListenerList = append(u.ConversationListener.MsgListenerList, listener)
@@ -328,7 +330,7 @@ func (u *UserRelated) CreateTextMessage(text string) string {
 	s := MsgStruct{}
 	u.initBasicInfo(&s, UserMsgType, Text)
 	s.Content = text
-	return structToJsonString(s)
+	return utils.structToJsonString(s)
 }
 func (u *UserRelated) CreateTextAtMessage(text, atUserList string) string {
 	var users []string
@@ -338,8 +340,8 @@ func (u *UserRelated) CreateTextAtMessage(text, atUserList string) string {
 	s.ForceList = users
 	s.AtElem.Text = text
 	s.AtElem.AtUserList = users
-	s.Content = structToJsonString(s.AtElem)
-	return structToJsonString(s)
+	s.Content = utils.structToJsonString(s.AtElem)
+	return utils.structToJsonString(s)
 }
 func (u *UserRelated) CreateLocationMessage(description string, longitude, latitude float64) string {
 	s := MsgStruct{}
@@ -347,8 +349,8 @@ func (u *UserRelated) CreateLocationMessage(description string, longitude, latit
 	s.LocationElem.Description = description
 	s.LocationElem.Longitude = longitude
 	s.LocationElem.Latitude = latitude
-	s.Content = structToJsonString(s.LocationElem)
-	return structToJsonString(s)
+	s.Content = utils.structToJsonString(s.LocationElem)
+	return utils.structToJsonString(s)
 }
 func (u *UserRelated) CreateCustomMessage(data, extension string, description string) string {
 	s := MsgStruct{}
@@ -356,8 +358,8 @@ func (u *UserRelated) CreateCustomMessage(data, extension string, description st
 	s.CustomElem.Data = data
 	s.CustomElem.Extension = extension
 	s.CustomElem.Description = description
-	s.Content = structToJsonString(s.CustomElem)
-	return structToJsonString(s)
+	s.Content = utils.structToJsonString(s.CustomElem)
+	return utils.structToJsonString(s)
 }
 func (u *UserRelated) CreateQuoteMessage(text string, message string) string {
 	s, qs := MsgStruct{}, MsgStruct{}
@@ -370,32 +372,32 @@ func (u *UserRelated) CreateQuoteMessage(text string, message string) string {
 	}
 	s.QuoteElem.Text = text
 	s.QuoteElem.QuoteMessage = &qs
-	s.Content = structToJsonString(s.QuoteElem)
-	return structToJsonString(s)
+	s.Content = utils.structToJsonString(s.QuoteElem)
+	return utils.structToJsonString(s)
 }
 func (u *UserRelated) CreateCardMessage(cardInfo string) string {
 	s := MsgStruct{}
 	u.initBasicInfo(&s, UserMsgType, Card)
 	s.Content = cardInfo
-	return structToJsonString(s)
+	return utils.structToJsonString(s)
 
 }
 func (u *UserRelated) CreateVideoMessageFromFullPath(videoFullPath string, videoType string, duration int64, snapshotFullPath string) string {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		dstFile := fileTmpPath(videoFullPath) //a->b
-		s, err := copyFile(videoFullPath, dstFile)
+		dstFile := utils.fileTmpPath(videoFullPath) //a->b
+		s, err := utils.copyFile(videoFullPath, dstFile)
 		if err != nil {
-			sdkLog("open file failed: ", err, videoFullPath)
+			utils.sdkLog("open file failed: ", err, videoFullPath)
 		}
-		sdkLog("videoFullPath dstFile", videoFullPath, dstFile, s)
-		dstFile = fileTmpPath(snapshotFullPath) //a->b
-		s, err = copyFile(snapshotFullPath, dstFile)
+		utils.sdkLog("videoFullPath dstFile", videoFullPath, dstFile, s)
+		dstFile = utils.fileTmpPath(snapshotFullPath) //a->b
+		s, err = utils.copyFile(snapshotFullPath, dstFile)
 		if err != nil {
-			sdkLog("open file failed: ", err, snapshotFullPath)
+			utils.sdkLog("open file failed: ", err, snapshotFullPath)
 		}
-		sdkLog("snapshotFullPath dstFile", snapshotFullPath, dstFile, s)
+		utils.sdkLog("snapshotFullPath dstFile", snapshotFullPath, dstFile, s)
 		wg.Done()
 	}()
 
@@ -411,14 +413,14 @@ func (u *UserRelated) CreateVideoMessageFromFullPath(videoFullPath string, video
 	}
 	fi, err := os.Stat(s.VideoElem.VideoPath)
 	if err != nil {
-		sdkLog(err.Error())
+		utils.sdkLog(err.Error())
 		return ""
 	}
 	s.VideoElem.VideoSize = fi.Size()
 	if snapshotFullPath != "" {
 		imageInfo, err := getImageInfo(s.VideoElem.SnapshotPath)
 		if err != nil {
-			sdkLog("CreateVideoMessage err:", err.Error())
+			utils.sdkLog("CreateVideoMessage err:", err.Error())
 			return ""
 		}
 		s.VideoElem.SnapshotHeight = imageInfo.Height
@@ -426,18 +428,18 @@ func (u *UserRelated) CreateVideoMessageFromFullPath(videoFullPath string, video
 		s.VideoElem.SnapshotSize = imageInfo.Size
 	}
 	wg.Wait()
-	s.Content = structToJsonString(s.VideoElem)
-	return structToJsonString(s)
+	s.Content = utils.structToJsonString(s.VideoElem)
+	return utils.structToJsonString(s)
 }
 func (u *UserRelated) CreateFileMessageFromFullPath(fileFullPath string, fileName string) string {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		dstFile := fileTmpPath(fileFullPath)
-		_, err := copyFile(fileFullPath, dstFile)
-		sdkLog("copy file, ", fileFullPath, dstFile)
+		dstFile := utils.fileTmpPath(fileFullPath)
+		_, err := utils.copyFile(fileFullPath, dstFile)
+		utils.sdkLog("copy file, ", fileFullPath, dstFile)
 		if err != nil {
-			sdkLog("open file failed: ", err, fileFullPath)
+			utils.sdkLog("open file failed: ", err, fileFullPath)
 
 		}
 		wg.Done()
@@ -447,22 +449,22 @@ func (u *UserRelated) CreateFileMessageFromFullPath(fileFullPath string, fileNam
 	s.FileElem.FilePath = fileFullPath
 	fi, err := os.Stat(fileFullPath)
 	if err != nil {
-		sdkLog("get file info err:", err.Error())
+		utils.sdkLog("get file info err:", err.Error())
 		return ""
 	}
 	s.FileElem.FileSize = fi.Size()
 	s.FileElem.FileName = fileName
-	return structToJsonString(s)
+	return utils.structToJsonString(s)
 }
 func (u *UserRelated) CreateImageMessageFromFullPath(imageFullPath string) string {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		dstFile := fileTmpPath(imageFullPath) //a->b
-		_, err := copyFile(imageFullPath, dstFile)
-		sdkLog("copy file, ", imageFullPath, dstFile)
+		dstFile := utils.fileTmpPath(imageFullPath) //a->b
+		_, err := utils.copyFile(imageFullPath, dstFile)
+		utils.sdkLog("copy file, ", imageFullPath, dstFile)
 		if err != nil {
-			sdkLog("open file failed: ", err, imageFullPath)
+			utils.sdkLog("open file failed: ", err, imageFullPath)
 		}
 		wg.Done()
 	}()
@@ -470,10 +472,10 @@ func (u *UserRelated) CreateImageMessageFromFullPath(imageFullPath string) strin
 	s := MsgStruct{}
 	u.initBasicInfo(&s, UserMsgType, Picture)
 	s.PictureElem.SourcePath = imageFullPath
-	sdkLog("ImageMessage  path:", s.PictureElem.SourcePath)
+	utils.sdkLog("ImageMessage  path:", s.PictureElem.SourcePath)
 	imageInfo, err := getImageInfo(s.PictureElem.SourcePath)
 	if err != nil {
-		sdkLog("getImageInfo err:", err.Error())
+		utils.sdkLog("getImageInfo err:", err.Error())
 		return ""
 	}
 	s.PictureElem.SourcePicture.Width = imageInfo.Width
@@ -481,59 +483,59 @@ func (u *UserRelated) CreateImageMessageFromFullPath(imageFullPath string) strin
 	s.PictureElem.SourcePicture.Type = imageInfo.Type
 	s.PictureElem.SourcePicture.Size = imageInfo.Size
 	wg.Wait()
-	s.Content = structToJsonString(s.PictureElem)
-	return structToJsonString(s)
+	s.Content = utils.structToJsonString(s.PictureElem)
+	return utils.structToJsonString(s)
 }
 func (u *UserRelated) CreateSoundMessageFromFullPath(soundPath string, duration int64) string {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		dstFile := fileTmpPath(soundPath) //a->b
-		_, err := copyFile(soundPath, dstFile)
-		sdkLog("copy file, ", soundPath, dstFile)
+		dstFile := utils.fileTmpPath(soundPath) //a->b
+		_, err := utils.copyFile(soundPath, dstFile)
+		utils.sdkLog("copy file, ", soundPath, dstFile)
 		if err != nil {
-			sdkLog("open file failed: ", err, soundPath)
+			utils.sdkLog("open file failed: ", err, soundPath)
 		}
 		wg.Done()
 	}()
-	sdkLog("init base info ")
+	utils.sdkLog("init base info ")
 	s := MsgStruct{}
 	u.initBasicInfo(&s, UserMsgType, Voice)
 	s.SoundElem.SoundPath = soundPath
 	s.SoundElem.Duration = duration
 	fi, err := os.Stat(s.SoundElem.SoundPath)
 	if err != nil {
-		sdkLog(err.Error(), s.SoundElem.SoundPath)
+		utils.sdkLog(err.Error(), s.SoundElem.SoundPath)
 		return ""
 	}
 	s.SoundElem.DataSize = fi.Size()
 	wg.Wait()
-	s.Content = structToJsonString(s.SoundElem)
-	sdkLog("to string")
-	return structToJsonString(s)
+	s.Content = utils.structToJsonString(s.SoundElem)
+	utils.sdkLog("to string")
+	return utils.structToJsonString(s)
 }
 func (u *UserRelated) CreateImageMessage(imagePath string) string {
-	sdkLog("start1: ", time.Now())
+	utils.sdkLog("start1: ", time.Now())
 	s := MsgStruct{}
 	u.initBasicInfo(&s, UserMsgType, Picture)
 	s.PictureElem.SourcePath = SvrConf.DbDir + imagePath
-	sdkLog("ImageMessage  path:", s.PictureElem.SourcePath)
-	sdkLog("end1", time.Now())
+	utils.sdkLog("ImageMessage  path:", s.PictureElem.SourcePath)
+	utils.sdkLog("end1", time.Now())
 
-	sdkLog("start2 ", time.Now())
+	utils.sdkLog("start2 ", time.Now())
 	imageInfo, err := getImageInfo(s.PictureElem.SourcePath)
 	if err != nil {
-		sdkLog("CreateImageMessage err:", err.Error())
+		utils.sdkLog("CreateImageMessage err:", err.Error())
 		return ""
 	}
-	sdkLog("end2", time.Now())
+	utils.sdkLog("end2", time.Now())
 
 	s.PictureElem.SourcePicture.Width = imageInfo.Width
 	s.PictureElem.SourcePicture.Height = imageInfo.Height
 	s.PictureElem.SourcePicture.Type = imageInfo.Type
 	s.PictureElem.SourcePicture.Size = imageInfo.Size
-	s.Content = structToJsonString(s.PictureElem)
-	return structToJsonString(s)
+	s.Content = utils.structToJsonString(s.PictureElem)
+	return utils.structToJsonString(s)
 }
 
 func (u *UserRelated) CreateImageMessageByURL(sourcePicture, bigPicture, snapshotPicture string) string {
@@ -546,8 +548,8 @@ func (u *UserRelated) CreateImageMessageByURL(sourcePicture, bigPicture, snapsho
 	_ = json.Unmarshal([]byte(snapshotPicture), &p)
 	s.PictureElem.SnapshotPicture = p
 	u.initBasicInfo(&s, UserMsgType, Picture)
-	s.Content = structToJsonString(s.PictureElem)
-	return structToJsonString(s)
+	s.Content = utils.structToJsonString(s.PictureElem)
+	return utils.structToJsonString(s)
 }
 
 func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool, offlinePushInfo string) string {
@@ -556,20 +558,20 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 	err := json.Unmarshal([]byte(message), &s)
 	if err != nil {
 		callback.OnError(2038, err.Error())
-		sdkLog("json unmarshal err:", err.Error())
+		utils.sdkLog("json unmarshal err:", err.Error())
 		return ""
 	}
 	err = json.Unmarshal([]byte(offlinePushInfo), &p)
 	if err != nil {
 		callback.OnError(2038, err.Error())
-		sdkLog("json unmarshal err:", err.Error())
+		utils.sdkLog("json unmarshal err:", err.Error())
 		return ""
 	}
 	go func() {
 		var conversationID string
 		var options map[string]bool
 		isRetry := true
-		c := ConversationStruct{
+		c := conversation_msg.ConversationStruct{
 			LatestMsgSendTime: s.CreateTime,
 		}
 		if receiver == "" && groupID == "" {
@@ -579,12 +581,12 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 			s.SessionType = GroupChatType
 			s.RecvID = groupID
 			s.GroupID = groupID
-			conversationID = GetConversationIDBySessionType(groupID, GroupChatType)
+			conversationID = utils.GetConversationIDBySessionType(groupID, GroupChatType)
 			c.GroupID = groupID
 			c.ConversationType = GroupChatType
 			faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(groupID)
 			if err != nil {
-				sdkLog("getGroupNameAndFaceUrlByUid err:", err)
+				utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
 				callback.OnError(202, err.Error())
 				return
 			}
@@ -592,7 +594,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 			c.FaceURL = faceUrl
 			groupMemberList, err := u.getLocalGroupMemberListByGroupID(groupID)
 			if err != nil {
-				sdkLog("getLocalGroupMemberListByGroupID err:", err)
+				utils.sdkLog("getLocalGroupMemberListByGroupID err:", err)
 				callback.OnError(202, err.Error())
 				return
 			}
@@ -608,7 +610,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 
 			}(s.SendID, groupMemberList)
 			if !isExistInGroup {
-				sdkLog("SendGroupMessage err:", "not exist in this group")
+				utils.sdkLog("SendGroupMessage err:", "not exist in this group")
 				callback.OnError(208, "not exist in this group")
 				return
 			}
@@ -616,12 +618,12 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 		} else {
 			s.SessionType = SingleChatType
 			s.RecvID = receiver
-			conversationID = GetConversationIDBySessionType(receiver, SingleChatType)
+			conversationID = utils.GetConversationIDBySessionType(receiver, SingleChatType)
 			c.UserID = receiver
 			c.ConversationType = SingleChatType
 			faceUrl, name, err := u.getUserNameAndFaceUrlByUid(receiver)
 			if err != nil {
-				sdkLog("getUserNameAndFaceUrlByUid err:", err)
+				utils.sdkLog("getUserNameAndFaceUrlByUid err:", err)
 				callback.OnError(301, err.Error())
 				return
 			}
@@ -630,11 +632,11 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 
 		}
 		c.ConversationID = conversationID
-		c.LatestMsg = structToJsonString(s)
+		c.LatestMsg = utils.structToJsonString(s)
 		if !onlineUserOnly {
 			err = u.insertMessageToLocalOrUpdateContent(&s)
 			if err != nil {
-				sdkLog("insertMessageToLocalOrUpdateContent err:", err)
+				utils.sdkLog("insertMessageToLocalOrUpdateContent err:", err)
 				callback.OnError(202, err.Error())
 				return
 			}
@@ -654,17 +656,17 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 		switch s.ContentType {
 		case Picture:
 			var sourcePath string
-			if fileExist(s.PictureElem.SourcePath) {
+			if utils.fileExist(s.PictureElem.SourcePath) {
 				sourcePath = s.PictureElem.SourcePath
-				delFile = append(delFile, fileTmpPath(s.PictureElem.SourcePath))
+				delFile = append(delFile, utils.fileTmpPath(s.PictureElem.SourcePath))
 			} else {
-				sourcePath = fileTmpPath(s.PictureElem.SourcePath)
+				sourcePath = utils.fileTmpPath(s.PictureElem.SourcePath)
 				delFile = append(delFile, sourcePath)
 			}
-			sdkLog("file: ", sourcePath, delFile)
+			utils.sdkLog("file: ", sourcePath, delFile)
 			sourceUrl, uuid, err := u.uploadImage(sourcePath, callback)
 			if err != nil {
-				sdkLog("oss Picture upload err", err.Error())
+				utils.sdkLog("oss Picture upload err", err.Error())
 				callback.OnError(301, err.Error())
 				u.sendMessageFailedHandle(&s, &c, conversationID)
 				return
@@ -672,50 +674,50 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 				s.PictureElem.SourcePicture.Url = sourceUrl
 				s.PictureElem.SourcePicture.UUID = uuid
 				s.PictureElem.SnapshotPicture.Url = sourceUrl + "?imageView2/2/w/" + ZoomScale + "/h/" + ZoomScale
-				s.PictureElem.SnapshotPicture.Width = int32(stringToInt(ZoomScale))
-				s.PictureElem.SnapshotPicture.Height = int32(stringToInt(ZoomScale))
-				s.Content = structToJsonString(s.PictureElem)
+				s.PictureElem.SnapshotPicture.Width = int32(utils.stringToInt(ZoomScale))
+				s.PictureElem.SnapshotPicture.Height = int32(utils.stringToInt(ZoomScale))
+				s.Content = utils.structToJsonString(s.PictureElem)
 			}
 		case Voice:
 			var sourcePath string
-			if fileExist(s.SoundElem.SoundPath) {
+			if utils.fileExist(s.SoundElem.SoundPath) {
 				sourcePath = s.SoundElem.SoundPath
-				delFile = append(delFile, fileTmpPath(s.SoundElem.SoundPath))
+				delFile = append(delFile, utils.fileTmpPath(s.SoundElem.SoundPath))
 			} else {
-				sourcePath = fileTmpPath(s.SoundElem.SoundPath)
+				sourcePath = utils.fileTmpPath(s.SoundElem.SoundPath)
 				delFile = append(delFile, sourcePath)
 			}
-			sdkLog("file: ", sourcePath, delFile)
+			utils.sdkLog("file: ", sourcePath, delFile)
 			soundURL, uuid, err := u.uploadSound(sourcePath, callback)
 			if err != nil {
 				callback.OnError(301, err.Error())
-				sdkLog("uploadSound err:", err.Error())
+				utils.sdkLog("uploadSound err:", err.Error())
 				u.sendMessageFailedHandle(&s, &c, conversationID)
 				return
 			} else {
 				s.SoundElem.SourceURL = soundURL
 				s.SoundElem.UUID = uuid
-				s.Content = structToJsonString(s.SoundElem)
+				s.Content = utils.structToJsonString(s.SoundElem)
 			}
 		case Video:
 			var videoPath string
 			var snapPath string
-			if fileExist(s.VideoElem.VideoPath) {
+			if utils.fileExist(s.VideoElem.VideoPath) {
 				videoPath = s.VideoElem.VideoPath
 				snapPath = s.VideoElem.SnapshotPath
-				delFile = append(delFile, fileTmpPath(s.VideoElem.VideoPath))
-				delFile = append(delFile, fileTmpPath(s.VideoElem.SnapshotPath))
+				delFile = append(delFile, utils.fileTmpPath(s.VideoElem.VideoPath))
+				delFile = append(delFile, utils.fileTmpPath(s.VideoElem.SnapshotPath))
 			} else {
-				videoPath = fileTmpPath(s.VideoElem.VideoPath)
-				snapPath = fileTmpPath(s.VideoElem.SnapshotPath)
+				videoPath = utils.fileTmpPath(s.VideoElem.VideoPath)
+				snapPath = utils.fileTmpPath(s.VideoElem.SnapshotPath)
 				delFile = append(delFile, videoPath)
 				delFile = append(delFile, snapPath)
 			}
-			sdkLog("file: ", videoPath, snapPath, delFile)
+			utils.sdkLog("file: ", videoPath, snapPath, delFile)
 			snapshotURL, snapshotUUID, videoURL, videoUUID, err := u.uploadVideo(videoPath, snapPath, callback)
 			if err != nil {
 				callback.OnError(301, err.Error())
-				sdkLog("oss  Video upload err:", err.Error())
+				utils.sdkLog("oss  Video upload err:", err.Error())
 				u.sendMessageFailedHandle(&s, &c, conversationID)
 				return
 			} else {
@@ -723,20 +725,20 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 				s.VideoElem.SnapshotUUID = snapshotUUID
 				s.VideoElem.SnapshotURL = snapshotURL
 				s.VideoElem.VideoUUID = videoUUID
-				s.Content = structToJsonString(s.VideoElem)
+				s.Content = utils.structToJsonString(s.VideoElem)
 			}
 		case File:
 			fileURL, fileUUID, err := u.uploadFile(s.FileElem.FilePath, callback)
 			if err != nil {
 				callback.OnError(301, err.Error())
-				sdkLog("oss  File upload err:", err.Error())
+				utils.sdkLog("oss  File upload err:", err.Error())
 				u.sendMessageFailedHandle(&s, &c, conversationID)
 				return
 
 			} else {
 				s.FileElem.SourceURL = fileURL
 				s.FileElem.UUID = fileUUID
-				s.Content = structToJsonString(s.FileElem)
+				s.Content = utils.structToJsonString(s.FileElem)
 			}
 		case Text:
 		case AtText:
@@ -747,7 +749,7 @@ func (u *UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, g
 		case Card:
 		default:
 			callback.OnError(2038, "Not currently supported ")
-			sdkLog("Not currently supported ", s.ContentType)
+			utils.sdkLog("Not currently supported ", s.ContentType)
 			return
 		}
 		if !onlineUserOnly {
@@ -767,18 +769,18 @@ func (u *UserRelated) internalSendMessage(callback SendMsgCallBack, message, rec
 	p := OfflinePushInfo{}
 	err = json.Unmarshal([]byte(message), &s)
 	if err != nil {
-		sdkLog("json unmarshal err:", err.Error())
+		utils.sdkLog("json unmarshal err:", err.Error())
 		return err
 	}
 	err = json.Unmarshal([]byte(offlinePushInfo), &p)
 	if err != nil {
-		sdkLog("json unmarshal err:", err.Error())
+		utils.sdkLog("json unmarshal err:", err.Error())
 		return err
 	}
 
 	var conversationID string
 	isRetry := true
-	c := ConversationStruct{
+	c := conversation_msg.ConversationStruct{
 		LatestMsgSendTime: s.CreateTime,
 	}
 	if receiver == "" && groupID == "" {
@@ -787,19 +789,19 @@ func (u *UserRelated) internalSendMessage(callback SendMsgCallBack, message, rec
 		s.SessionType = GroupChatType
 		s.RecvID = groupID
 		s.GroupID = groupID
-		conversationID = GetConversationIDBySessionType(groupID, GroupChatType)
+		conversationID = utils.GetConversationIDBySessionType(groupID, GroupChatType)
 		c.GroupID = groupID
 		c.ConversationType = GroupChatType
 		faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(groupID)
 		if err != nil {
-			sdkLog("getGroupNameAndFaceUrlByUid err:", err)
+			utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
 			return errors.New("getGroupNameAndFaceUrlByUid err")
 		}
 		c.ShowName = name
 		c.FaceURL = faceUrl
 		groupMemberList, err := u.getLocalGroupMemberListByGroupID(groupID)
 		if err != nil {
-			sdkLog("getLocalGroupMemberListByGroupID err:", err)
+			utils.sdkLog("getLocalGroupMemberListByGroupID err:", err)
 			return errors.New("getLocalGroupMemberListByGroupID err")
 		}
 		isExistInGroup := func(target string, groupMemberList []groupMemberFullInfo) bool {
@@ -814,19 +816,19 @@ func (u *UserRelated) internalSendMessage(callback SendMsgCallBack, message, rec
 
 		}(s.SendID, groupMemberList)
 		if !isExistInGroup {
-			sdkLog("SendGroupMessage err:", "not exist in this group")
+			utils.sdkLog("SendGroupMessage err:", "not exist in this group")
 			return errors.New("not exist in this group")
 		}
 
 	} else {
 		s.SessionType = SingleChatType
 		s.RecvID = receiver
-		conversationID = GetConversationIDBySessionType(receiver, SingleChatType)
+		conversationID = utils.GetConversationIDBySessionType(receiver, SingleChatType)
 		c.UserID = receiver
 		c.ConversationType = SingleChatType
 		faceUrl, name, err := u.getUserNameAndFaceUrlByUid(receiver)
 		if err != nil {
-			sdkLog("getUserNameAndFaceUrlByUid err:", err)
+			utils.sdkLog("getUserNameAndFaceUrlByUid err:", err)
 			return errors.New("getUserNameAndFaceUrlByUid err")
 		}
 		c.FaceURL = faceUrl
@@ -834,11 +836,11 @@ func (u *UserRelated) internalSendMessage(callback SendMsgCallBack, message, rec
 
 	}
 	c.ConversationID = conversationID
-	c.LatestMsg = structToJsonString(s)
+	c.LatestMsg = utils.structToJsonString(s)
 	if !onlineUserOnly {
 		err = u.insertMessageToLocalOrUpdateContent(&s)
 		if err != nil {
-			sdkLog("insertMessageToLocalOrUpdateContent err:", err)
+			utils.sdkLog("insertMessageToLocalOrUpdateContent err:", err)
 			return errors.New("insertMessageToLocalOrUpdateContent err:")
 		}
 		u.doUpdateConversation(cmd2Value{Value: updateConNode{conversationID, AddConOrUpLatMsg,
@@ -861,13 +863,13 @@ func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, recei
 	err := json.Unmarshal([]byte(message), &s)
 	if err != nil {
 		callback.OnError(2038, err.Error())
-		sdkLog("json unmarshal err:", err.Error())
+		utils.sdkLog("json unmarshal err:", err.Error())
 		return ""
 	}
 	err = json.Unmarshal([]byte(offlinePushInfo), &p)
 	if err != nil {
 		callback.OnError(2038, err.Error())
-		sdkLog("json unmarshal err:", err.Error())
+		utils.sdkLog("json unmarshal err:", err.Error())
 		return ""
 	}
 
@@ -875,7 +877,7 @@ func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, recei
 		var conversationID string
 		var options map[string]bool
 		isRetry := true
-		c := ConversationStruct{
+		c := conversation_msg.ConversationStruct{
 			LatestMsgSendTime: s.CreateTime,
 		}
 		if receiver == "" && groupID == "" {
@@ -885,12 +887,12 @@ func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, recei
 			s.SessionType = GroupChatType
 			s.RecvID = groupID
 			s.GroupID = groupID
-			conversationID = GetConversationIDBySessionType(groupID, GroupChatType)
+			conversationID = utils.GetConversationIDBySessionType(groupID, GroupChatType)
 			c.GroupID = groupID
 			c.ConversationType = GroupChatType
 			faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(groupID)
 			if err != nil {
-				sdkLog("getGroupNameAndFaceUrlByUid err:", err)
+				utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
 				callback.OnError(202, err.Error())
 				return
 			}
@@ -898,7 +900,7 @@ func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, recei
 			c.FaceURL = faceUrl
 			groupMemberList, err := u.getLocalGroupMemberListByGroupID(groupID)
 			if err != nil {
-				sdkLog("getLocalGroupMemberListByGroupID err:", err)
+				utils.sdkLog("getLocalGroupMemberListByGroupID err:", err)
 				callback.OnError(202, err.Error())
 				return
 			}
@@ -914,7 +916,7 @@ func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, recei
 
 			}(s.SendID, groupMemberList)
 			if !isExistInGroup {
-				sdkLog("SendGroupMessage err:", "not exist in this group")
+				utils.sdkLog("SendGroupMessage err:", "not exist in this group")
 				callback.OnError(208, "not exist in this group")
 				return
 			}
@@ -922,12 +924,12 @@ func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, recei
 		} else {
 			s.SessionType = SingleChatType
 			s.RecvID = receiver
-			conversationID = GetConversationIDBySessionType(receiver, SingleChatType)
+			conversationID = utils.GetConversationIDBySessionType(receiver, SingleChatType)
 			c.UserID = receiver
 			c.ConversationType = SingleChatType
 			faceUrl, name, err := u.getUserNameAndFaceUrlByUid(receiver)
 			if err != nil {
-				sdkLog("getUserNameAndFaceUrlByUid err:", err)
+				utils.sdkLog("getUserNameAndFaceUrlByUid err:", err)
 				callback.OnError(301, err.Error())
 				return
 			}
@@ -935,12 +937,12 @@ func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, recei
 			c.ShowName = name
 		}
 		c.ConversationID = conversationID
-		c.LatestMsg = structToJsonString(s)
+		c.LatestMsg = utils.structToJsonString(s)
 
 		if !onlineUserOnly {
 			err = u.insertMessageToLocalOrUpdateContent(&s)
 			if err != nil {
-				sdkLog("insertMessageToLocalOrUpdateContent err:", err)
+				utils.sdkLog("insertMessageToLocalOrUpdateContent err:", err)
 				callback.OnError(202, err.Error())
 				return
 			}
@@ -960,12 +962,12 @@ func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, recei
 	return s.ClientMsgID
 }
 func (u *UserRelated) autoSendMsg(s *MsgStruct, receiver, groupID string, onlineUserOnly, isUpdateConversationLatestMsg, isUpdateConversationInfo bool, offlinePushInfo string) error {
-	sdkLog("autoSendMsg input args:", *s, receiver, groupID, onlineUserOnly, isUpdateConversationLatestMsg, isUpdateConversationInfo)
+	utils.sdkLog("autoSendMsg input args:", *s, receiver, groupID, onlineUserOnly, isUpdateConversationLatestMsg, isUpdateConversationInfo)
 	var conversationID string
 	p := OfflinePushInfo{}
 	err := json.Unmarshal([]byte(offlinePushInfo), &p)
 	if err != nil {
-		sdkLog("json unmarshal err:", err.Error())
+		utils.sdkLog("json unmarshal err:", err.Error())
 		return err
 	}
 	r := SendMsgRespFromServer{}
@@ -977,10 +979,10 @@ func (u *UserRelated) autoSendMsg(s *MsgStruct, receiver, groupID string, online
 		s.SessionType = SingleChatType
 		s.RecvID = receiver
 	} else {
-		sdkLog("args err: ", receiver, groupID)
+		utils.sdkLog("args err: ", receiver, groupID)
 		return errors.New("args null")
 	}
-	c := ConversationStruct{
+	c := conversation_msg.ConversationStruct{
 		ConversationType:  int(s.SessionType),
 		LatestMsgSendTime: s.CreateTime,
 	}
@@ -990,11 +992,11 @@ func (u *UserRelated) autoSendMsg(s *MsgStruct, receiver, groupID string, online
 		s.SessionType = GroupChatType
 		s.RecvID = groupID
 		s.GroupID = groupID
-		conversationID = GetConversationIDBySessionType(groupID, GroupChatType)
+		conversationID = utils.GetConversationIDBySessionType(groupID, GroupChatType)
 		c.GroupID = groupID
 		faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(groupID)
 		if err != nil {
-			sdkLog("getGroupNameAndFaceUrlByUid err:", err)
+			utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
 			return err
 		}
 		c.ShowName = name
@@ -1002,11 +1004,11 @@ func (u *UserRelated) autoSendMsg(s *MsgStruct, receiver, groupID string, online
 	} else {
 		s.SessionType = SingleChatType
 		s.RecvID = receiver
-		conversationID = GetConversationIDBySessionType(receiver, SingleChatType)
+		conversationID = utils.GetConversationIDBySessionType(receiver, SingleChatType)
 		c.UserID = receiver
 		faceUrl, name, err := u.getUserNameAndFaceUrlByUid(receiver)
 		if err != nil {
-			sdkLog("getUserNameAndFaceUrlByUid err:", err)
+			utils.sdkLog("getUserNameAndFaceUrlByUid err:", err)
 			return err
 		}
 		c.FaceURL = faceUrl
@@ -1014,17 +1016,17 @@ func (u *UserRelated) autoSendMsg(s *MsgStruct, receiver, groupID string, online
 	}
 	userInfo, err := u.getLoginUserInfoFromLocal()
 	if err != nil {
-		sdkLog("getLoginUserInfoFromLocal err:", err)
+		utils.sdkLog("getLoginUserInfoFromLocal err:", err)
 		return err
 	}
 	s.SenderFaceURL = userInfo.Icon
 	s.SenderNickname = userInfo.Name
 	c.ConversationID = conversationID
-	c.LatestMsg = structToJsonString(s)
+	c.LatestMsg = utils.structToJsonString(s)
 	if !onlineUserOnly {
 		err = u.insertMessageToLocalOrUpdateContent(s)
 		if err != nil {
-			sdkLog("insertMessageToLocalOrUpdateContent err:", err)
+			utils.sdkLog("insertMessageToLocalOrUpdateContent err:", err)
 			return err
 		}
 	}
@@ -1039,7 +1041,7 @@ func (u *UserRelated) autoSendMsg(s *MsgStruct, receiver, groupID string, online
 	a.SendID = s.SendID
 	a.SenderNickName = s.SenderNickname
 	a.SenderFaceURL = s.SenderFaceURL
-	a.OperationID = operationIDGenerator()
+	a.OperationID = utils.operationIDGenerator()
 	a.Data.SessionType = s.SessionType
 	a.Data.MsgFrom = s.MsgFrom
 	a.Data.ContentType = s.ContentType
@@ -1051,20 +1053,20 @@ func (u *UserRelated) autoSendMsg(s *MsgStruct, receiver, groupID string, online
 	a.Data.ClientMsgID = s.ClientMsgID
 	a.Data.CreateTime = s.CreateTime
 	a.Data.OffLineInfo = p
-	bMsg, err := post2Api(sendMsgRouter, a, u.token)
+	bMsg, err := utils.post2Api(sendMsgRouter, a, u.token)
 	if err != nil {
-		sdkLog("sendMsgRouter access err:", err.Error())
+		utils.sdkLog("sendMsgRouter access err:", err.Error())
 		u.updateMessageFailedStatus(s, &c, onlineUserOnly)
 		return err
 	} else {
 		err = json.Unmarshal(bMsg, &r)
 		if err != nil {
-			sdkLog("unmarshal failed, ", err.Error())
+			utils.sdkLog("unmarshal failed, ", err.Error())
 			u.updateMessageFailedStatus(s, &c, onlineUserOnly)
 			return err
 		} else {
 			if r.ErrCode != 0 {
-				sdkLog("errcode, errmsg: ", r.ErrCode, r.ErrMsg)
+				utils.sdkLog("errcode, errmsg: ", r.ErrCode, r.ErrMsg)
 				u.updateMessageFailedStatus(s, &c, onlineUserOnly)
 				return err
 			} else {
@@ -1074,7 +1076,7 @@ func (u *UserRelated) autoSendMsg(s *MsgStruct, receiver, groupID string, online
 				s.ServerMsgID = r.Data.ServerMsgID
 				s.SendTime = r.Data.SendTime
 				s.Status = MsgStatusSendSuccess
-				c.LatestMsg = structToJsonString(s)
+				c.LatestMsg = utils.structToJsonString(s)
 				c.LatestMsgSendTime = s.SendTime
 				if isUpdateConversationLatestMsg {
 					u.doUpdateConversation(cmd2Value{Value: updateConNode{conversationID, AddConOrUpLatMsg, c}})
@@ -1099,8 +1101,8 @@ func (u *UserRelated) CreateSoundMessageByURL(soundBaseInfo string) string {
 	_ = json.Unmarshal([]byte(soundBaseInfo), &soundElem)
 	s.SoundElem = soundElem
 	u.initBasicInfo(&s, UserMsgType, Voice)
-	s.Content = structToJsonString(s.SoundElem)
-	return structToJsonString(s)
+	s.Content = utils.structToJsonString(s.SoundElem)
+	return utils.structToJsonString(s)
 }
 
 func (u *UserRelated) CreateSoundMessage(soundPath string, duration int64) string {
@@ -1110,12 +1112,12 @@ func (u *UserRelated) CreateSoundMessage(soundPath string, duration int64) strin
 	s.SoundElem.Duration = duration
 	fi, err := os.Stat(s.SoundElem.SoundPath)
 	if err != nil {
-		sdkLog(err.Error())
+		utils.sdkLog(err.Error())
 		return ""
 	}
 	s.SoundElem.DataSize = fi.Size()
-	s.Content = structToJsonString(s.SoundElem)
-	return structToJsonString(s)
+	s.Content = utils.structToJsonString(s.SoundElem)
+	return utils.structToJsonString(s)
 }
 
 func (u *UserRelated) CreateVideoMessageByURL(videoBaseInfo string) string {
@@ -1124,8 +1126,8 @@ func (u *UserRelated) CreateVideoMessageByURL(videoBaseInfo string) string {
 	_ = json.Unmarshal([]byte(videoBaseInfo), &videoElem)
 	s.VideoElem = videoElem
 	u.initBasicInfo(&s, UserMsgType, Video)
-	s.Content = structToJsonString(s.VideoElem)
-	return structToJsonString(s)
+	s.Content = utils.structToJsonString(s.VideoElem)
+	return utils.structToJsonString(s)
 }
 
 func (u *UserRelated) CreateVideoMessage(videoPath string, videoType string, duration int64, snapshotPath string) string {
@@ -1141,22 +1143,22 @@ func (u *UserRelated) CreateVideoMessage(videoPath string, videoType string, dur
 	}
 	fi, err := os.Stat(s.VideoElem.VideoPath)
 	if err != nil {
-		sdkLog(err.Error())
+		utils.sdkLog(err.Error())
 		return ""
 	}
 	s.VideoElem.VideoSize = fi.Size()
 	if snapshotPath != "" {
 		imageInfo, err := getImageInfo(s.VideoElem.SnapshotPath)
 		if err != nil {
-			sdkLog("CreateVideoMessage err:", err.Error())
+			utils.sdkLog("CreateVideoMessage err:", err.Error())
 			return ""
 		}
 		s.VideoElem.SnapshotHeight = imageInfo.Height
 		s.VideoElem.SnapshotWidth = imageInfo.Width
 		s.VideoElem.SnapshotSize = imageInfo.Size
 	}
-	s.Content = structToJsonString(s.VideoElem)
-	return structToJsonString(s)
+	s.Content = utils.structToJsonString(s.VideoElem)
+	return utils.structToJsonString(s)
 }
 func (u *UserRelated) CreateFileMessageByURL(fileBaseInfo string) string {
 	s := MsgStruct{}
@@ -1164,8 +1166,8 @@ func (u *UserRelated) CreateFileMessageByURL(fileBaseInfo string) string {
 	_ = json.Unmarshal([]byte(fileBaseInfo), &fileElem)
 	s.FileElem = fileElem
 	u.initBasicInfo(&s, UserMsgType, File)
-	s.Content = structToJsonString(s.FileElem)
-	return structToJsonString(s)
+	s.Content = utils.structToJsonString(s.FileElem)
+	return utils.structToJsonString(s)
 }
 func (u *UserRelated) CreateFileMessage(filePath string, fileName string) string {
 	s := MsgStruct{}
@@ -1174,12 +1176,12 @@ func (u *UserRelated) CreateFileMessage(filePath string, fileName string) string
 	s.FileElem.FileName = fileName
 	fi, err := os.Stat(s.FileElem.FilePath)
 	if err != nil {
-		sdkLog(err.Error())
+		utils.sdkLog(err.Error())
 		return ""
 	}
 	s.FileElem.FileSize = fi.Size()
-	sdkLog("CreateForwardMessage new input: ", structToJsonString(s))
-	return structToJsonString(s)
+	utils.sdkLog("CreateForwardMessage new input: ", utils.structToJsonString(s))
+	return utils.structToJsonString(s)
 }
 func (u *UserRelated) CreateMergerMessage(messageList, title, summaryList string) string {
 	var messages []*MsgStruct
@@ -1187,7 +1189,7 @@ func (u *UserRelated) CreateMergerMessage(messageList, title, summaryList string
 	s := MsgStruct{}
 	err := json.Unmarshal([]byte(messageList), &messages)
 	if err != nil {
-		sdkLog("CreateMergerMessage err:", err.Error())
+		utils.sdkLog("CreateMergerMessage err:", err.Error())
 		return ""
 	}
 	_ = json.Unmarshal([]byte(summaryList), &summaries)
@@ -1195,30 +1197,30 @@ func (u *UserRelated) CreateMergerMessage(messageList, title, summaryList string
 	s.MergeElem.AbstractList = summaries
 	s.MergeElem.Title = title
 	s.MergeElem.MultiMessage = messages
-	s.Content = structToJsonString(s.MergeElem)
-	return structToJsonString(s)
+	s.Content = utils.structToJsonString(s.MergeElem)
+	return utils.structToJsonString(s)
 }
 func (u *UserRelated) CreateForwardMessage(m string) string {
-	sdkLog("CreateForwardMessage input: ", m)
+	utils.sdkLog("CreateForwardMessage input: ", m)
 	s := MsgStruct{}
 	err := json.Unmarshal([]byte(m), &s)
 	if err != nil {
-		sdkLog("json unmarshal err:", err.Error())
+		utils.sdkLog("json unmarshal err:", err.Error())
 		return ""
 	}
 	if s.Status != MsgStatusSendSuccess {
-		sdkLog("only send success message can be revoked")
+		utils.sdkLog("only send success message can be revoked")
 		return ""
 	}
 
 	u.initBasicInfo(&s, UserMsgType, s.ContentType)
 	//Forward message seq is set to 0
 	s.Seq = 0
-	return structToJsonString(s)
+	return utils.structToJsonString(s)
 }
 
 func sendMessageToServer(onlineUserOnly *bool, s *MsgStruct, u *UserRelated, callback SendMsgCallBack,
-	c *ConversationStruct, conversationID string, delFile []string, offlinePushInfo *OfflinePushInfo, isRetry bool, options map[string]bool) {
+	c *conversation_msg.ConversationStruct, conversationID string, delFile []string, offlinePushInfo *OfflinePushInfo, isRetry bool, options map[string]bool) {
 	//Protocol conversion
 	wsMsgData := MsgData{
 		SendID:           s.SendID,
@@ -1242,14 +1244,14 @@ func sendMessageToServer(onlineUserOnly *bool, s *MsgStruct, u *UserRelated, cal
 	var wsReq GeneralWsReq
 	var err error
 	wsReq.ReqIdentifier = WSSendMsg
-	wsReq.OperationID = operationIDGenerator()
+	wsReq.OperationID = utils.operationIDGenerator()
 	wsReq.SendID = s.SendID
 	//wsReq.Token = u.token
 	wsReq.MsgIncr = msgIncr
 	wsReq.Data, err = proto.Marshal(&wsMsgData)
 	if err != nil {
-		sdkLog("Marshal failed ", err.Error())
-		LogFReturn(nil)
+		utils.sdkLog("Marshal failed ", err.Error())
+		utils.LogFReturn(nil)
 		callback.OnError(http.StatusInternalServerError, err.Error())
 		u.sendMessageFailedHandle(s, c, conversationID)
 		return
@@ -1258,17 +1260,17 @@ func sendMessageToServer(onlineUserOnly *bool, s *MsgStruct, u *UserRelated, cal
 	SendFlag := false
 	var connSend *websocket.Conn
 	for tr := 0; tr < 30; tr++ {
-		LogBegin("WriteMsg", wsReq.OperationID)
+		utils.LogBegin("WriteMsg", wsReq.OperationID)
 		err, connSend = u.WriteMsg(wsReq)
-		LogEnd("WriteMsg ", wsReq.OperationID, connSend)
+		utils.LogEnd("WriteMsg ", wsReq.OperationID, connSend)
 		if err != nil {
 			if !isRetry {
 				break
 			}
-			sdkLog("ws writeMsg  err:,", wsReq.OperationID, err.Error(), tr)
+			utils.sdkLog("ws writeMsg  err:,", wsReq.OperationID, err.Error(), tr)
 			time.Sleep(time.Duration(5) * time.Second)
 		} else {
-			sdkLog("writeMsg  retry ok", wsReq.OperationID, tr)
+			utils.sdkLog("writeMsg  retry ok", wsReq.OperationID, tr)
 			SendFlag = true
 			break
 		}
@@ -1289,12 +1291,12 @@ func sendMessageToServer(onlineUserOnly *bool, s *MsgStruct, u *UserRelated, cal
 
 	for {
 		if breakFlag == 1 {
-			sdkLog("break ", wsReq.OperationID)
+			utils.sdkLog("break ", wsReq.OperationID)
 			break
 		}
 		select {
 		case r := <-ch:
-			sdkLog("ws  ch recvMsg success:,", wsReq.OperationID)
+			utils.sdkLog("ws  ch recvMsg success:,", wsReq.OperationID)
 			if r.ErrCode != 0 {
 				callback.OnError(int32(r.ErrCode), r.ErrMsg)
 				u.sendMessageFailedHandle(s, c, conversationID)
@@ -1305,14 +1307,14 @@ func sendMessageToServer(onlineUserOnly *bool, s *MsgStruct, u *UserRelated, cal
 				for _, v := range delFile {
 					err := os.Remove(v)
 					if err != nil {
-						sdkLog("remove failed,", err.Error(), v)
+						utils.sdkLog("remove failed,", err.Error(), v)
 					}
-					sdkLog("remove file: ", v)
+					utils.sdkLog("remove file: ", v)
 				}
 				var sendMsgResp UserSendMsgResp
 				err = proto.Unmarshal(r.Data, &sendMsgResp)
 				if err != nil {
-					sdkLog("Unmarshal failed ", err.Error())
+					utils.sdkLog("Unmarshal failed ", err.Error())
 					//	callback.OnError(http.StatusInternalServerError, err.Error())
 					//	u.sendMessageFailedHandle(&s, &c, conversationID)
 					//	u.DelCh(msgIncr)
@@ -1322,7 +1324,7 @@ func sendMessageToServer(onlineUserOnly *bool, s *MsgStruct, u *UserRelated, cal
 				s.ServerMsgID = sendMsgResp.ServerMsgID
 				s.SendTime = sendMsgResp.SendTime
 				s.Status = MsgStatusSendSuccess
-				c.LatestMsg = structToJsonString(s)
+				c.LatestMsg = utils.structToJsonString(s)
 				c.LatestMsgSendTime = s.SendTime
 				_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, AddConOrUpLatMsg,
 					c})
@@ -1331,19 +1333,19 @@ func sendMessageToServer(onlineUserOnly *bool, s *MsgStruct, u *UserRelated, cal
 			breakFlag = 1
 		case <-time.After(time.Second * time.Duration(timeout)):
 			var flag bool
-			sdkLog("ws ch recvMsg err: ", wsReq.OperationID)
+			utils.sdkLog("ws ch recvMsg err: ", wsReq.OperationID)
 			if connSend != u.conn {
-				sdkLog("old conn != current conn  ", connSend, u.conn)
+				utils.sdkLog("old conn != current conn  ", connSend, u.conn)
 				flag = false // error
 			} else {
 				flag = false //error
 				for tr := 0; tr < 3; tr++ {
 					err = u.sendPingMsg()
 					if err != nil {
-						sdkLog("sendPingMsg failed ", wsReq.OperationID, err.Error(), tr)
+						utils.sdkLog("sendPingMsg failed ", wsReq.OperationID, err.Error(), tr)
 						time.Sleep(time.Duration(30) * time.Second)
 					} else {
-						sdkLog("sendPingMsg ok ", wsReq.OperationID)
+						utils.sdkLog("sendPingMsg ok ", wsReq.OperationID)
 						flag = true //wait continue
 						break
 					}
@@ -1352,11 +1354,11 @@ func sendMessageToServer(onlineUserOnly *bool, s *MsgStruct, u *UserRelated, cal
 			if flag == false {
 				callback.OnError(http.StatusRequestTimeout, http.StatusText(http.StatusRequestTimeout))
 				u.sendMessageFailedHandle(s, c, conversationID)
-				sdkLog("onError callback ", wsReq.OperationID)
+				utils.sdkLog("onError callback ", wsReq.OperationID)
 				breakFlag = 1
 				break
 			} else {
-				sdkLog("wait resp continue", wsReq.OperationID)
+				utils.sdkLog("wait resp continue", wsReq.OperationID)
 				breakFlag = 0
 				continue
 			}
@@ -1368,7 +1370,7 @@ func sendMessageToServer(onlineUserOnly *bool, s *MsgStruct, u *UserRelated, cal
 
 func (u *UserRelated) GetHistoryMessageList(callback Base, getMessageOptions string) {
 	go func() {
-		sdkLog("GetHistoryMessageList", getMessageOptions)
+		utils.sdkLog("GetHistoryMessageList", getMessageOptions)
 		var sourceID string
 		var conversationID string
 		var startTime int64
@@ -1382,11 +1384,11 @@ func (u *UserRelated) GetHistoryMessageList(callback Base, getMessageOptions str
 		}
 		if p.UserID == "" {
 			sourceID = p.GroupID
-			conversationID = GetConversationIDBySessionType(sourceID, GroupChatType)
+			conversationID = utils.GetConversationIDBySessionType(sourceID, GroupChatType)
 			sessionType = GroupChatType
 		} else {
 			sourceID = p.UserID
-			conversationID = GetConversationIDBySessionType(sourceID, SingleChatType)
+			conversationID = utils.GetConversationIDBySessionType(sourceID, SingleChatType)
 			sessionType = SingleChatType
 		}
 		if p.StartMsg == nil {
@@ -1400,7 +1402,7 @@ func (u *UserRelated) GetHistoryMessageList(callback Base, getMessageOptions str
 			} else {
 				err := json.Unmarshal([]byte(m), &latestMsg)
 				if err != nil {
-					sdkLog("get history err :", err)
+					utils.sdkLog("get history err :", err)
 					callback.OnError(200, err.Error())
 					return
 				}
@@ -1410,16 +1412,16 @@ func (u *UserRelated) GetHistoryMessageList(callback Base, getMessageOptions str
 		} else {
 			startTime = p.StartMsg.SendTime
 		}
-		sdkLog("sourceID:", sourceID, "startTime:", startTime, "count:", p.Count)
+		utils.sdkLog("sourceID:", sourceID, "startTime:", startTime, "count:", p.Count)
 		err, list := u.getHistoryMessage(sourceID, startTime, p.Count, sessionType)
 		sort.Sort(list)
 		if err != nil {
 			callback.OnError(203, err.Error())
 		} else {
 			if list != nil {
-				callback.OnSuccess(structToJsonString(list))
+				callback.OnSuccess(utils.structToJsonString(list))
 			} else {
-				callback.OnSuccess(structToJsonString([]MsgStruct{}))
+				callback.OnSuccess(utils.structToJsonString([]MsgStruct{}))
 			}
 		}
 	}()
@@ -1442,7 +1444,7 @@ func (u *UserRelated) RevokeMessage(callback Base, message string) {
 			callback.OnError(201, "only send success message can be revoked")
 			return
 		}
-		sdkLog("test data", s)
+		utils.sdkLog("test data", s)
 		//Send message internally
 		switch s.SessionType {
 		case SingleChatType:
@@ -1453,17 +1455,17 @@ func (u *UserRelated) RevokeMessage(callback Base, message string) {
 			callback.OnError(200, "args err")
 		}
 		s.Content = s.ClientMsgID
-		s.ClientMsgID = getMsgID(s.SendID)
+		s.ClientMsgID = utils.getMsgID(s.SendID)
 		s.ContentType = Revoke
 		//err = u.autoSendMsg(s, receiver, groupID, false, true, false)
 		if err != nil {
-			sdkLog("autoSendMsg revokeMessage err:", err.Error())
+			utils.sdkLog("autoSendMsg revokeMessage err:", err.Error())
 			callback.OnError(300, err.Error())
 
 		} else {
 			err = u.setMessageStatus(s.Content, MsgStatusRevoked)
 			if err != nil {
-				sdkLog("setLocalMessageStatus revokeMessage err:", err.Error())
+				utils.sdkLog("setLocalMessageStatus revokeMessage err:", err.Error())
 				callback.OnError(300, err.Error())
 			} else {
 				callback.OnSuccess("")
@@ -1487,7 +1489,7 @@ func (u *UserRelated) TypingStatusUpdate(receiver, msgTip string) {
 
 func (u *UserRelated) MarkC2CMessageAsRead(callback Base, receiver string, msgIDList string) {
 	go func() {
-		conversationID := GetConversationIDBySessionType(receiver, SingleChatType)
+		conversationID := utils.GetConversationIDBySessionType(receiver, SingleChatType)
 		var list []string
 		err := json.Unmarshal([]byte(msgIDList), &list)
 		if err != nil {
@@ -1501,16 +1503,16 @@ func (u *UserRelated) MarkC2CMessageAsRead(callback Base, receiver string, msgID
 		s := MsgStruct{}
 		u.initBasicInfo(&s, UserMsgType, HasReadReceipt)
 		s.Content = msgIDList
-		sdkLog("MarkC2CMessageAsRead: send Message")
+		utils.sdkLog("MarkC2CMessageAsRead: send Message")
 		//err = u.autoSendMsg(&s, receiver, "", false, false, false)
 		if err != nil {
-			sdkLog("MarkC2CMessageAsRead  err:", err.Error())
+			utils.sdkLog("MarkC2CMessageAsRead  err:", err.Error())
 			callback.OnError(300, err.Error())
 		} else {
 			callback.OnSuccess("")
 			err = u.setSingleMessageHasReadByMsgIDList(receiver, list)
 			if err != nil {
-				sdkLog("setSingleMessageHasReadByMsgIDList  err:", err.Error())
+				utils.sdkLog("setSingleMessageHasReadByMsgIDList  err:", err.Error())
 			}
 			u.doUpdateConversation(cmd2Value{Value: updateConNode{conversationID, UpdateLatestMessageChange, ""}})
 			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
@@ -1521,7 +1523,7 @@ func (u *UserRelated) MarkC2CMessageAsRead(callback Base, receiver string, msgID
 //Deprecated
 func (u *UserRelated) MarkSingleMessageHasRead(callback Base, userID string) {
 	go func() {
-		conversationID := GetConversationIDBySessionType(userID, SingleChatType)
+		conversationID := utils.GetConversationIDBySessionType(userID, SingleChatType)
 		//if err := u.setSingleMessageHasRead(userID); err != nil {
 		//	callback.OnError(201, err.Error())
 		//} else {
@@ -1533,7 +1535,7 @@ func (u *UserRelated) MarkSingleMessageHasRead(callback Base, userID string) {
 }
 func (u *UserRelated) MarkAllConversationHasRead(callback Base, userID string) {
 	go func() {
-		conversationID := GetConversationIDBySessionType(userID, SingleChatType)
+		conversationID := utils.GetConversationIDBySessionType(userID, SingleChatType)
 		//if err := u.setSingleMessageHasRead(userID); err != nil {
 		//	callback.OnError(201, err.Error())
 		//} else {
@@ -1545,7 +1547,7 @@ func (u *UserRelated) MarkAllConversationHasRead(callback Base, userID string) {
 }
 func (u *UserRelated) MarkGroupMessageHasRead(callback Base, groupID string) {
 	go func() {
-		conversationID := GetConversationIDBySessionType(groupID, GroupChatType)
+		conversationID := utils.GetConversationIDBySessionType(groupID, GroupChatType)
 		if err := u.setGroupMessageHasRead(groupID); err != nil {
 			callback.OnError(201, err.Error())
 		} else {
@@ -1557,7 +1559,7 @@ func (u *UserRelated) MarkGroupMessageHasRead(callback Base, groupID string) {
 }
 func (u *UserRelated) DeleteMessageFromLocalStorage(callback Base, message string) {
 	go func() {
-		var conversation ConversationStruct
+		var conversation conversation_msg.ConversationStruct
 		var latestMsg MsgStruct
 		var conversationID string
 		var sourceID string
@@ -1574,15 +1576,15 @@ func (u *UserRelated) DeleteMessageFromLocalStorage(callback Base, message strin
 		}
 		callback.OnSuccess("")
 		if s.SessionType == GroupChatType {
-			conversationID = GetConversationIDBySessionType(s.RecvID, GroupChatType)
+			conversationID = utils.GetConversationIDBySessionType(s.RecvID, GroupChatType)
 			sourceID = s.RecvID
 
 		} else if s.SessionType == SingleChatType {
 			if s.SendID != u.loginUserID {
-				conversationID = GetConversationIDBySessionType(s.SendID, SingleChatType)
+				conversationID = utils.GetConversationIDBySessionType(s.SendID, SingleChatType)
 				sourceID = s.SendID
 			} else {
-				conversationID = GetConversationIDBySessionType(s.RecvID, SingleChatType)
+				conversationID = utils.GetConversationIDBySessionType(s.RecvID, SingleChatType)
 				sourceID = s.RecvID
 			}
 		}
@@ -1590,30 +1592,30 @@ func (u *UserRelated) DeleteMessageFromLocalStorage(callback Base, message strin
 		if m != "" {
 			err := json.Unmarshal([]byte(m), &latestMsg)
 			if err != nil {
-				sdkLog("DeleteMessage err :", err)
+				utils.sdkLog("DeleteMessage err :", err)
 				callback.OnError(200, err.Error())
 				return
 			}
 		} else {
-			sdkLog("err ,conversation has been deleted")
+			utils.sdkLog("err ,conversation has been deleted")
 		}
 
 		if s.ClientMsgID == latestMsg.ClientMsgID { //If the deleted message is the latest message of the conversation, update the latest message of the conversation
 			err, list := u.getHistoryMessage(sourceID, s.SendTime+TimeOffset, 1, int(s.SessionType))
 			if err != nil {
-				sdkLog("DeleteMessageFromLocalStorage database err:", err.Error())
+				utils.sdkLog("DeleteMessageFromLocalStorage database err:", err.Error())
 			}
 			conversation.ConversationID = conversationID
 			if list == nil {
 				conversation.LatestMsg = ""
-				conversation.LatestMsgSendTime = getCurrentTimestampByNano()
+				conversation.LatestMsgSendTime = utils.getCurrentTimestampByNano()
 			} else {
-				conversation.LatestMsg = structToJsonString(list[0])
+				conversation.LatestMsg = utils.structToJsonString(list[0])
 				conversation.LatestMsgSendTime = list[0].SendTime
 			}
 			err = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: AddConOrUpLatMsg, Args: conversation})
 			if err != nil {
-				sdkLog("DeleteMessageFromLocalStorage triggerCmdUpdateConversation err:", err.Error())
+				utils.sdkLog("DeleteMessageFromLocalStorage triggerCmdUpdateConversation err:", err.Error())
 			}
 			u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 
@@ -1622,7 +1624,7 @@ func (u *UserRelated) DeleteMessageFromLocalStorage(callback Base, message strin
 }
 func (u *UserRelated) ClearC2CHistoryMessage(callback Base, userID string) {
 	go func() {
-		conversationID := GetConversationIDBySessionType(userID, SingleChatType)
+		conversationID := utils.GetConversationIDBySessionType(userID, SingleChatType)
 		err := u.setMessageStatusBySourceID(userID, MsgStatusHasDeleted, SingleChatType)
 		if err != nil {
 			callback.OnError(202, err.Error())
@@ -1640,7 +1642,7 @@ func (u *UserRelated) ClearC2CHistoryMessage(callback Base, userID string) {
 }
 func (u *UserRelated) ClearGroupHistoryMessage(callback Base, groupID string) {
 	go func() {
-		conversationID := GetConversationIDBySessionType(groupID, GroupChatType)
+		conversationID := utils.GetConversationIDBySessionType(groupID, GroupChatType)
 		err := u.setMessageStatusBySourceID(groupID, MsgStatusHasDeleted, GroupChatType)
 		if err != nil {
 			callback.OnError(202, err.Error())
@@ -1667,8 +1669,8 @@ func (u *UserRelated) InsertSingleMessageToLocalStorage(callback Base, message, 
 	s.SendID = sender
 	s.RecvID = userID
 	//Generate client message primary key
-	s.ClientMsgID = getMsgID(s.SendID)
-	s.SendTime = getCurrentTimestampByNano()
+	s.ClientMsgID = utils.getMsgID(s.SendID)
+	s.SendTime = utils.getCurrentTimestampByNano()
 	go func() {
 		if err = u.insertMessageToLocalOrUpdateContent(&s); err != nil {
 			callback.OnError(201, err.Error())
@@ -1689,8 +1691,8 @@ func (u *UserRelated) InsertGroupMessageToLocalStorage(callback Base, message, g
 	s.SendID = sender
 	s.RecvID = groupID
 	//Generate client message primary key
-	s.ClientMsgID = getMsgID(s.SendID)
-	s.SendTime = getCurrentTimestampByNano()
+	s.ClientMsgID = utils.getMsgID(s.SendID)
+	s.SendTime = utils.getCurrentTimestampByNano()
 	go func() {
 		if err = u.insertMessageToLocalOrUpdateContent(&s); err != nil {
 			callback.OnError(201, err.Error())
@@ -1707,7 +1709,7 @@ func (u *UserRelated) FindMessages(callback Base, messageIDList string) {
 		err := json.Unmarshal([]byte(messageIDList), &c)
 		if err != nil {
 			callback.OnError(200, err.Error())
-			sdkLog("Unmarshal failed, ", err.Error())
+			utils.sdkLog("Unmarshal failed, ", err.Error())
 
 		}
 		err, list := u.getMultipleMessageModel(c)
@@ -1715,9 +1717,9 @@ func (u *UserRelated) FindMessages(callback Base, messageIDList string) {
 			callback.OnError(203, err.Error())
 		} else {
 			if list != nil {
-				callback.OnSuccess(structToJsonString(list))
+				callback.OnSuccess(utils.structToJsonString(list))
 			} else {
-				callback.OnSuccess(structToJsonString([]MsgStruct{}))
+				callback.OnSuccess(utils.structToJsonString([]MsgStruct{}))
 			}
 		}
 	}()

@@ -2,6 +2,8 @@ package open_im_sdk
 
 import (
 	"encoding/json"
+	"open_im_sdk/open_im_sdk/log"
+	"open_im_sdk/open_im_sdk/utils"
 )
 
 type OnGroupListener interface {
@@ -17,69 +19,69 @@ type OnGroupListener interface {
 
 func (u *UserRelated) SetGroupListener(callback OnGroupListener) {
 	if callback == nil {
-		sdkLog("callback null")
+		utils.sdkLog("callback null")
 		return
 	}
 	u.listener = callback
-	sdkLog("SetGroupListener ", callback)
+	utils.sdkLog("SetGroupListener ", callback)
 }
 
 func (u *UserRelated) CreateGroup(callback Base, groupBaseInfo string, memberList string, operationID string) {
 	if callback == nil {
-		sdkLog("callback is nil")
+		utils.sdkLog("callback is nil")
 		return
 	}
 	go func() {
-		NewInfo(operationID, "CreateGroup args: ", groupBaseInfo, memberList)
+		log.NewInfo(operationID, "CreateGroup args: ", groupBaseInfo, memberList)
 		var unmarshalCreateGroupBaseInfoParam CreateGroupBaseInfoParam
 		u.jsonUnmarshalAndArgsValidate(groupBaseInfo, &unmarshalCreateGroupBaseInfoParam, callback, operationID)
 		var unmarshalCreateGroupMemberRoleParam CreateGroupMemberRoleParam
 		u.jsonUnmarshalAndArgsValidate(memberList, &unmarshalCreateGroupMemberRoleParam, callback, operationID)
 		result := u.createGroup(unmarshalCreateGroupBaseInfoParam, unmarshalCreateGroupMemberRoleParam, operationID)
-		callback.OnSuccess(structToJsonString(result))
-		NewInfo(operationID, "CreateGroup callback: ", structToJsonString(result))
+		callback.OnSuccess(utils.structToJsonString(result))
+		log.NewInfo(operationID, "CreateGroup callback: ", utils.structToJsonString(result))
 	}()
 }
 
 func (u *UserRelated) JoinGroup(groupId, message string, callback Base) {
 	if callback == nil {
-		sdkLog("callback is nil")
+		utils.sdkLog("callback is nil")
 		return
 	}
 	go func() {
-		sdkLog(".................joinGroup begin ...............", groupId, message)
+		utils.sdkLog(".................joinGroup begin ...............", groupId, message)
 		err := u.joinGroup(groupId, message)
 		if err != nil {
-			sdkLog("............joinGroup failed............ ", groupId, message, err.Error())
+			utils.sdkLog("............joinGroup failed............ ", groupId, message, err.Error())
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
-		sdkLog("...........joinGroup end, callback............... ", groupId, message)
+		utils.sdkLog("...........joinGroup end, callback............... ", groupId, message)
 		callback.OnSuccess(DeFaultSuccessMsg)
 	}()
 }
 
 func (u *UserRelated) QuitGroup(groupId string, callback Base) {
 	if callback == nil {
-		sdkLog("callback is nil")
+		utils.sdkLog("callback is nil")
 		return
 	}
 	go func() {
-		sdkLog("............quitGroup begin...............")
+		utils.sdkLog("............quitGroup begin...............")
 		err := u.quitGroup(groupId)
 		if err != nil {
-			sdkLog(".........quitGroup failed.............", groupId, err.Error())
+			utils.sdkLog(".........quitGroup failed.............", groupId, err.Error())
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
-		sdkLog("..........quitGroup end callback...........", groupId)
+		utils.sdkLog("..........quitGroup end callback...........", groupId)
 		callback.OnSuccess(DeFaultSuccessMsg)
 	}()
 }
 
 func (u *UserRelated) GetJoinedGroupList(callback Base) {
 	if callback == nil {
-		sdkLog("Base callback is nil")
+		utils.sdkLog("Base callback is nil")
 		return
 	}
 	go func() {
@@ -88,35 +90,35 @@ func (u *UserRelated) GetJoinedGroupList(callback Base) {
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
-		sdkLog("getJoinedGroupListFromLocal, ", groupInfoList)
+		utils.sdkLog("getJoinedGroupListFromLocal, ", groupInfoList)
 
 		for i, v := range groupInfoList {
 			g, err := u._getGroupInfoByGroupID(v.GroupId)
 			if err != nil {
-				sdkLog("findLocalGroupOwnerByGroupId failed,  ", err.Error(), v.GroupId)
+				utils.sdkLog("findLocalGroupOwnerByGroupId failed,  ", err.Error(), v.GroupId)
 				continue
 			}
-			sdkLog("findLocalGroupOwnerByGroupId ", v.GroupId, g.OwnerUserID)
+			utils.sdkLog("findLocalGroupOwnerByGroupId ", v.GroupId, g.OwnerUserID)
 			v.OwnerId = g.OwnerUserID
-			sdkLog("getLocalGroupMemberNumByGroupId ", v.GroupId, g.MemberCount)
+			utils.sdkLog("getLocalGroupMemberNumByGroupId ", v.GroupId, g.MemberCount)
 			v.MemberCount = uint32(g.MemberCount)
 			groupInfoList[i] = v
 		}
 
 		jsonGroupInfoList, err := json.Marshal(groupInfoList)
 		if err != nil {
-			sdkLog("marshal failed, ", err.Error())
+			utils.sdkLog("marshal failed, ", err.Error())
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
-		sdkLog("jsonGroupInfoList, ", string(jsonGroupInfoList))
+		utils.sdkLog("jsonGroupInfoList, ", string(jsonGroupInfoList))
 		callback.OnSuccess(string(jsonGroupInfoList))
 	}()
 }
 
 func (u *UserRelated) GetGroupsInfo(groupIdList string, callback Base) {
 	if callback == nil {
-		sdkLog("Base callback is nil")
+		utils.sdkLog("Base callback is nil")
 		return
 	}
 	go func() {
@@ -144,32 +146,32 @@ func (u *UserRelated) GetGroupsInfo(groupIdList string, callback Base) {
 
 func (u *UserRelated) SetGroupInfo(jsonGroupInfo string, callback Base) {
 	if callback == nil {
-		sdkLog("callback is nil")
+		utils.sdkLog("callback is nil")
 		return
 	}
 	go func() {
-		sdkLog("............SetGroupInfo begin...................")
+		utils.sdkLog("............SetGroupInfo begin...................")
 		var newGroupInfo setGroupInfoReq
 		err := json.Unmarshal([]byte(jsonGroupInfo), &newGroupInfo)
 		if err != nil {
-			sdkLog("............Unmarshal failed................", err.Error())
+			utils.sdkLog("............Unmarshal failed................", err.Error())
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
 		err = u.setGroupInfo(newGroupInfo)
 		if err != nil {
-			sdkLog("..........setGroupInfo failed........... ", err.Error())
+			utils.sdkLog("..........setGroupInfo failed........... ", err.Error())
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
-		sdkLog(".........setGroupInfo end, callback...............", jsonGroupInfo)
+		utils.sdkLog(".........setGroupInfo end, callback...............", jsonGroupInfo)
 		callback.OnSuccess(DeFaultSuccessMsg)
 	}()
 }
 
 func (u *UserRelated) GetGroupMemberList(groupId string, filter int32, next int32, callback Base) {
 	if callback == nil {
-		sdkLog("Base callback is nil")
+		utils.sdkLog("Base callback is nil")
 		return
 	}
 	go func() {
@@ -178,7 +180,7 @@ func (u *UserRelated) GetGroupMemberList(groupId string, filter int32, next int3
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
-		sdkLog("getGroupMemberListFromLocal ", groupId, filter, next, groupMemberResult)
+		utils.sdkLog("getGroupMemberListFromLocal ", groupId, filter, next, groupMemberResult)
 
 		var result getGroupMemberListResult
 		if groupMemberResult == nil {
@@ -188,18 +190,18 @@ func (u *UserRelated) GetGroupMemberList(groupId string, filter int32, next int3
 		result.NextSeq = n
 		jsonGroupMemberResult, err := json.Marshal(result)
 		if err != nil {
-			sdkLog("marshal failed, ", err.Error())
+			utils.sdkLog("marshal failed, ", err.Error())
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
-		sdkLog("jsonGroupMemberResult ", string(jsonGroupMemberResult))
+		utils.sdkLog("jsonGroupMemberResult ", string(jsonGroupMemberResult))
 		callback.OnSuccess(string(jsonGroupMemberResult))
 	}()
 }
 
 func (u *UserRelated) GetGroupMembersInfo(groupId string, userList string, callback Base) {
 	if callback == nil {
-		sdkLog("Base callback is nil")
+		utils.sdkLog("Base callback is nil")
 		return
 	}
 	go func() {
@@ -209,36 +211,36 @@ func (u *UserRelated) GetGroupMembersInfo(groupId string, userList string, callb
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
-		sdkLog("GetGroupMembersInfo args: ", groupId, userList)
+		utils.sdkLog("GetGroupMembersInfo args: ", groupId, userList)
 		r, err := u.getGroupMembersInfoFromLocal(groupId, sctmemberList)
 		if err != nil {
-			sdkLog("getGroupMembersInfoFromLocal failed", groupId, err.Error())
+			utils.sdkLog("getGroupMembersInfoFromLocal failed", groupId, err.Error())
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
-		sdkLog("getGroupMembersInfoFromLocal, ", groupId, sctmemberList, r)
+		utils.sdkLog("getGroupMembersInfoFromLocal, ", groupId, sctmemberList, r)
 
 		jsonResult, err := json.Marshal(r)
 		if err != nil {
-			sdkLog("marshal failed, ", err.Error())
+			utils.sdkLog("marshal failed, ", err.Error())
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
-		sdkLog("jsonResult", string(jsonResult))
+		utils.sdkLog("jsonResult", string(jsonResult))
 		callback.OnSuccess(string(jsonResult))
 	}()
 }
 
 func (u *UserRelated) KickGroupMember(groupId string, reason string, userList string, callback Base) {
 	if callback == nil {
-		sdkLog("callback null")
+		utils.sdkLog("callback null")
 		return
 	}
 	go func() {
 		var sctMemberList []string
 		err := json.Unmarshal([]byte(userList), &sctMemberList)
 		if err != nil {
-			sdkLog("unmarshal failed, ", err.Error(), userList)
+			utils.sdkLog("unmarshal failed, ", err.Error(), userList)
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
@@ -247,15 +249,15 @@ func (u *UserRelated) KickGroupMember(groupId string, reason string, userList st
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
-		sdkLog("kickGroupMember, ", groupId, sctMemberList, reason)
+		utils.sdkLog("kickGroupMember, ", groupId, sctMemberList, reason)
 
 		jsonResult, err := json.Marshal(r)
 		if err != nil {
-			sdkLog("marshal failed, ", err.Error())
+			utils.sdkLog("marshal failed, ", err.Error())
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
-		sdkLog("KickGroupMember, req: ", groupId, userList, reason, "resp: ", string(jsonResult))
+		utils.sdkLog("KickGroupMember, req: ", groupId, userList, reason, "resp: ", string(jsonResult))
 		callback.OnSuccess(string(jsonResult))
 	}()
 }
@@ -278,14 +280,14 @@ func (u *UserRelated) TransferGroupOwner(groupId, userId string, callback Base) 
 
 func (u *UserRelated) InviteUserToGroup(groupId, reason string, userList string, callback Base) {
 	if callback == nil {
-		sdkLog("callbak null")
+		utils.sdkLog("callbak null")
 		return
 	}
 	go func() {
 		var sctUserList []string
 		err := json.Unmarshal([]byte(userList), &sctUserList)
 		if err != nil {
-			sdkLog("unmarshal failed, ", err.Error())
+			utils.sdkLog("unmarshal failed, ", err.Error())
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
@@ -295,15 +297,15 @@ func (u *UserRelated) InviteUserToGroup(groupId, reason string, userList string,
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
-		sdkLog("inviteUserToGroup, ", groupId, reason, sctUserList)
+		utils.sdkLog("inviteUserToGroup, ", groupId, reason, sctUserList)
 
 		jsonResult, err := json.Marshal(result)
 		if err != nil {
-			sdkLog("marshal failed, ", err.Error())
+			utils.sdkLog("marshal failed, ", err.Error())
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
-		sdkLog("InviteUserToGroup, req: ", groupId, reason, userList, "resp: ", string(jsonResult))
+		utils.sdkLog("InviteUserToGroup, req: ", groupId, reason, userList, "resp: ", string(jsonResult))
 
 		callback.OnSuccess(string(jsonResult))
 	}()
@@ -317,13 +319,13 @@ func (u *UserRelated) GetGroupApplicationList(callback Base) {
 	go func() {
 		r, err := u.getGroupApplicationList()
 		if err != nil {
-			sdkLog("getGroupApplicationList faild, ", err.Error())
+			utils.sdkLog("getGroupApplicationList faild, ", err.Error())
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
 		jsonResult, err := json.Marshal(r)
 		if err != nil {
-			sdkLog("getGroupApplicationList faild, ", err.Error())
+			utils.sdkLog("getGroupApplicationList faild, ", err.Error())
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
@@ -363,13 +365,13 @@ func (u *UserRelated) AcceptGroupApplication(application, reason string, callbac
 		var sctApplication GroupReqListInfo
 		err := json.Unmarshal([]byte(application), &sctApplication)
 		if err != nil {
-			sdkLog("Unmarshal, ", err.Error())
+			utils.sdkLog("Unmarshal, ", err.Error())
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
 
 		var access accessOrRefuseGroupApplicationReq
-		access.OperationID = operationIDGenerator()
+		access.OperationID = utils.operationIDGenerator()
 		access.GroupId = sctApplication.GroupID
 		access.FromUser = sctApplication.FromUserID
 		access.FromUserNickName = sctApplication.FromUserNickname
@@ -386,7 +388,7 @@ func (u *UserRelated) AcceptGroupApplication(application, reason string, callbac
 
 		err = u.acceptGroupApplication(&access)
 		if err != nil {
-			sdkLog("acceptGroupApplication, ", err.Error())
+			utils.sdkLog("acceptGroupApplication, ", err.Error())
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
@@ -404,13 +406,13 @@ func (u *UserRelated) RefuseGroupApplication(application, reason string, callbac
 		var sctApplication GroupReqListInfo
 		err := json.Unmarshal([]byte(application), &sctApplication)
 		if err != nil {
-			sdkLog("Unmarshal, ", err.Error())
+			utils.sdkLog("Unmarshal, ", err.Error())
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}
 
 		var access accessOrRefuseGroupApplicationReq
-		access.OperationID = operationIDGenerator()
+		access.OperationID = utils.operationIDGenerator()
 		access.GroupId = sctApplication.GroupID
 		access.FromUser = sctApplication.FromUserID
 		access.FromUserNickName = sctApplication.FromUserNickname
@@ -427,7 +429,7 @@ func (u *UserRelated) RefuseGroupApplication(application, reason string, callbac
 
 		err = u.refuseGroupApplication(&access)
 		if err != nil {
-			sdkLog("refuseGroupApplication, ", err.Error())
+			utils.sdkLog("refuseGroupApplication, ", err.Error())
 			callback.OnError(ErrCodeGroup, err.Error())
 			return
 		}

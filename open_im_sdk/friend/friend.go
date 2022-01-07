@@ -1,18 +1,22 @@
-package open_im_sdk
+package friend
 
 import (
 	"encoding/json"
 	"github.com/mitchellh/mapstructure"
+	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/open_im_sdk/log"
+	"open_im_sdk/open_im_sdk/sdk_params_callback"
+	"open_im_sdk/open_im_sdk/utils"
 )
 
 type FriendListener struct {
-	friendListener OnFriendshipListener
+	friendListener open_im_sdk.OnFriendshipListener
 }
 
-func (u *UserRelated) getDesignatedFriendsInfo(callback Base, friendUserIDList GetDesignatedFriendsInfoParams, operationID string) GetDesignatedFriendsInfoCallback {
-	NewInfo(operationID, GetSelfFuncName(), friendUserIDList)
+func (u *open_im_sdk.UserRelated) getDesignatedFriendsInfo(callback open_im_sdk.Base, friendUserIDList sdk_params_callback.GetDesignatedFriendsInfoParams, operationID string) sdk_params_callback.GetDesignatedFriendsInfoCallback {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), friendUserIDList)
 	blackList, err := u._getBlackInfoList(friendUserIDList)
-	checkErr(callback, err, operationID)
+	utils.checkErr(callback, err, operationID)
 	var pureFriendUserIDList []string
 	for _, v := range friendUserIDList {
 		flag := 0
@@ -27,55 +31,55 @@ func (u *UserRelated) getDesignatedFriendsInfo(callback Base, friendUserIDList G
 		}
 	}
 	localFriendList, err := u._getFriendInfoList(pureFriendUserIDList)
-	checkErr(callback, err, operationID)
-	NewInfo(operationID, "_getFriendInfoList ", pureFriendUserIDList, localFriendList)
+	utils.checkErr(callback, err, operationID)
+	log.NewInfo(operationID, "_getFriendInfoList ", pureFriendUserIDList, localFriendList)
 	return localFriendList
 }
 
-func (u *UserRelated) addFriend(callback Base, addFriendParams AddFriendParams, operationID string) *CommDataResp {
-	NewInfo(operationID, "addFriend args: ", addFriendParams)
-	apiReq := AddFriendReq{}
+func (u *open_im_sdk.UserRelated) addFriend(callback open_im_sdk.Base, addFriendParams sdk_params_callback.AddFriendParams, operationID string) *open_im_sdk.CommDataResp {
+	log.NewInfo(operationID, "addFriend args: ", addFriendParams)
+	apiReq := open_im_sdk.AddFriendReq{}
 	apiReq.ToUserID = addFriendParams.ToUserID
 	apiReq.FromUserID = u.loginUserID
 	apiReq.ReqMsg = addFriendParams.ReqMsg
 	apiReq.OperationID = operationID
-	resp, err := post2Api(addFriendRouter, apiReq, u.token)
-	NewInfo(apiReq.OperationID, "post2Api ", addFriendRouter, apiReq, string(resp))
-	return checkErrAndResp(callback, err, resp, operationID)
+	resp, err := utils.post2Api(open_im_sdk.addFriendRouter, apiReq, u.token)
+	log.NewInfo(apiReq.OperationID, "post2Api ", open_im_sdk.addFriendRouter, apiReq, string(resp))
+	return utils.checkErrAndResp(callback, err, resp, operationID)
 }
 
-func (u *UserRelated) getRecvFriendApplicationList(callback Base, operationID string) GetRecvFriendApplicationListCallback {
-	NewInfo(operationID, "getRecvFriendApplicationList args: ")
+func (u *open_im_sdk.UserRelated) getRecvFriendApplicationList(callback open_im_sdk.Base, operationID string) sdk_params_callback.GetRecvFriendApplicationListCallback {
+	log.NewInfo(operationID, "getRecvFriendApplicationList args: ")
 	friendApplicationList, err := u._getRecvFriendApplication()
-	checkErr(callback, err, operationID)
+	utils.checkErr(callback, err, operationID)
 	return friendApplicationList
 }
 
-func (u *UserRelated) getSendFriendApplicationList(callback Base, operationID string) GetSendFriendApplicationListCallback {
+func (u *open_im_sdk.UserRelated) getSendFriendApplicationList(callback open_im_sdk.Base, operationID string) sdk_params_callback.GetSendFriendApplicationListCallback {
 	return nil
 }
 
-func (u *UserRelated) processFriendApplication(callback Base, params ProcessFriendApplicationParams, handleResult int32, operationID string) *CommDataResp {
-	apiReq := AddFriendResponseReq{}
+func (u *open_im_sdk.UserRelated) processFriendApplication(callback open_im_sdk.Base, params sdk_params_callback.ProcessFriendApplicationParams, handleResult int32, operationID string) *open_im_sdk.CommDataResp {
+	apiReq := open_im_sdk.AddFriendResponseReq{}
 	apiReq.FromUserID = u.loginUserID
 	apiReq.ToUserID = params.ToUserID
 	apiReq.Flag = handleResult
 	apiReq.OperationID = operationID
 	apiReq.HandleMsg = params.HandleMsg
-	resp, err := post2Api(addFriendResponse, apiReq, u.token)
-	r := checkErrAndResp(callback, err, resp, operationID)
+	resp, err := utils.post2Api(open_im_sdk.addFriendResponse, apiReq, u.token)
+	r := utils.checkErrAndResp(callback, err, resp, operationID)
 	u.syncFriendApplication()
 	return r
 }
 
-func (u *UserRelated) checkFriend(callback Base, userIDList CheckFriendParams, operationID string) CheckFriendCallback {
+func (u *open_im_sdk.UserRelated) checkFriend(callback open_im_sdk.Base, userIDList sdk_params_callback.CheckFriendParams, operationID string) sdk_params_callback.CheckFriendCallback {
 	friendList, err := u._getFriendInfoList(userIDList)
-	checkErr(callback, err, operationID)
+	utils.checkErr(callback, err, operationID)
 	blackList, err := u._getBlackInfoList(userIDList)
-	checkErr(callback, err, operationID)
-	var checkFriendCallback CheckFriendCallback
+	utils.checkErr(callback, err, operationID)
+	var checkFriendCallback sdk_params_callback.CheckFriendCallback
 	for _, v := range userIDList {
-		var r UserIDResult
+		var r open_im_sdk.UserIDResult
 		isBlack := false
 		isFriend := false
 		for _, b := range blackList {
@@ -101,24 +105,24 @@ func (u *UserRelated) checkFriend(callback Base, userIDList CheckFriendParams, o
 	return checkFriendCallback
 }
 
-func (u *UserRelated) deleteFriend(FriendUserID string, callback Base, operationID string) *CommDataResp {
-	apiReq := DeleteFriendReq{}
+func (u *open_im_sdk.UserRelated) deleteFriend(FriendUserID string, callback open_im_sdk.Base, operationID string) *open_im_sdk.CommDataResp {
+	apiReq := open_im_sdk.DeleteFriendReq{}
 	apiReq.ToUserID = FriendUserID
 	apiReq.FromUserID = u.loginUserID
 	apiReq.OperationID = operationID
-	resp, err := post2Api(deleteFriendRouter, apiReq, u.token)
-	result := checkErrAndResp(callback, err, resp, operationID)
+	resp, err := utils.post2Api(open_im_sdk.deleteFriendRouter, apiReq, u.token)
+	result := utils.checkErrAndResp(callback, err, resp, operationID)
 	u.syncFriendList()
 	return result
 }
 
-func (u *UserRelated) setFriendRemark(params SetFriendRemarkParams, callback Base, operationID string) *CommDataResp {
-	apiReq := SetFriendRemarkReq{}
+func (u *open_im_sdk.UserRelated) setFriendRemark(params sdk_params_callback.SetFriendRemarkParams, callback open_im_sdk.Base, operationID string) *open_im_sdk.CommDataResp {
+	apiReq := open_im_sdk.SetFriendRemarkReq{}
 	apiReq.OperationID = operationID
 	apiReq.ToUserID = params.ToUserID
 	apiReq.FromUserID = u.loginUserID
-	resp, err := post2Api(setFriendComment, apiReq, u.token)
-	result := checkErrAndResp(callback, err, resp, operationID)
+	resp, err := utils.post2Api(open_im_sdk.setFriendComment, apiReq, u.token)
+	result := utils.checkErrAndResp(callback, err, resp, operationID)
 	u.syncFriendList()
 	return result
 	//
@@ -197,7 +201,7 @@ func (u *UserRelated) setFriendRemark(params SetFriendRemarkParams, callback Bas
 //	}
 //}
 
-func (u *UserRelated) getLocalFriendList() ([]friendInfo, error) {
+func (u *open_im_sdk.UserRelated) getLocalFriendList() ([]open_im_sdk.friendInfo, error) {
 	//Take out the friend list and judge whether it is in the blacklist again to prevent nested locks
 	localFriendList, err := u.getLocalFriendList22()
 	if err != nil {
@@ -207,7 +211,7 @@ func (u *UserRelated) getLocalFriendList() ([]friendInfo, error) {
 		//check friend is in blacklist
 		blackUser, err := u.getBlackUsInfoByUid(v.UID)
 		if err != nil {
-			sdkLog(err.Error())
+			utils.sdkLog(err.Error())
 		}
 		if blackUser.Uid != "" {
 			localFriendList[index].IsInBlackList = 1
@@ -216,24 +220,24 @@ func (u *UserRelated) getLocalFriendList() ([]friendInfo, error) {
 	return localFriendList, nil
 }
 
-func (u *UserRelated) getServerFriendList() ([]*FriendInfo, error) {
-	apiReq := GetFriendListReq{OperationID: operationIDGenerator(), FromUserID: u.loginUserID}
-	resp, err := post2Api(getFriendListRouter, apiReq, u.token)
-	commData, err := checkErrAndRespReturn(err, resp, apiReq.OperationID)
+func (u *open_im_sdk.UserRelated) getServerFriendList() ([]*open_im_sdk.FriendInfo, error) {
+	apiReq := open_im_sdk.GetFriendListReq{OperationID: utils.operationIDGenerator(), FromUserID: u.loginUserID}
+	resp, err := utils.post2Api(open_im_sdk.getFriendListRouter, apiReq, u.token)
+	commData, err := utils.checkErrAndRespReturn(err, resp, apiReq.OperationID)
 	if err != nil {
-		return nil, wrap(err, apiReq.OperationID)
+		return nil, utils.wrap(err, apiReq.OperationID)
 	}
 
-	realData := GetFriendListResp{}
+	realData := open_im_sdk.GetFriendListResp{}
 	err = mapstructure.Decode(commData.Data, &realData.FriendInfoList)
 	if err != nil {
-		return nil, wrap(err, apiReq.OperationID)
+		return nil, utils.wrap(err, apiReq.OperationID)
 	}
 
 	return realData.FriendInfoList, nil
 }
 
-func (u *UserRelated) doBlackList() {
+func (u *open_im_sdk.UserRelated) doBlackList() {
 	//
 	//blackListOnServer, err := u.getServerBlackList()
 	//if err != nil {
@@ -292,66 +296,66 @@ func (u *UserRelated) doBlackList() {
 	//}
 }
 
-func (u *UserRelated) getServerBlackList() ([]*PublicUserInfo, error) {
-	apiReq := GetBlackListReq{OperationID: operationIDGenerator(), FromUserID: u.loginUserID}
-	resp, err := post2Api(getBlackListRouter, apiReq, u.token)
-	commData, err := checkErrAndRespReturn(err, resp, apiReq.OperationID)
+func (u *open_im_sdk.UserRelated) getServerBlackList() ([]*open_im_sdk.PublicUserInfo, error) {
+	apiReq := open_im_sdk.GetBlackListReq{OperationID: utils.operationIDGenerator(), FromUserID: u.loginUserID}
+	resp, err := utils.post2Api(open_im_sdk.getBlackListRouter, apiReq, u.token)
+	commData, err := utils.checkErrAndRespReturn(err, resp, apiReq.OperationID)
 	if err != nil {
-		return nil, wrap(err, apiReq.OperationID)
+		return nil, utils.wrap(err, apiReq.OperationID)
 	}
-	realData := GetBlackListResp{}
+	realData := open_im_sdk.GetBlackListResp{}
 	mapstructure.Decode(commData.Data, &realData.BlackUserInfoList)
 	return realData.BlackUserInfoList, nil
 }
 
-func (u *UserRelated) getServerFriendApplication() ([]*FriendRequest, error) {
-	apiReq := GetFriendApplyListReq{OperationID: operationIDGenerator(), FromUserID: u.loginUserID}
-	resp, err := post2Api(getFriendApplicationListRouter, apiReq, u.token)
-	commData, err := checkErrAndRespReturn(err, resp, apiReq.OperationID)
+func (u *open_im_sdk.UserRelated) getServerFriendApplication() ([]*open_im_sdk.FriendRequest, error) {
+	apiReq := open_im_sdk.GetFriendApplyListReq{OperationID: utils.operationIDGenerator(), FromUserID: u.loginUserID}
+	resp, err := utils.post2Api(open_im_sdk.getFriendApplicationListRouter, apiReq, u.token)
+	commData, err := utils.checkErrAndRespReturn(err, resp, apiReq.OperationID)
 	if err != nil {
-		return nil, wrap(err, apiReq.OperationID)
+		return nil, utils.wrap(err, apiReq.OperationID)
 	}
 
-	realData := GetFriendApplyListResp{}
+	realData := open_im_sdk.GetFriendApplyListResp{}
 	mapstructure.Decode(commData.Data, &realData.FriendRequestList)
 	return realData.FriendRequestList, nil
 }
 
-func (u *UserRelated) getServerSelfApplication() ([]applyUserInfo, error) {
-	resp, err := post2Api(getSelfApplicationListRouter, paramsCommonReq{OperationID: operationIDGenerator()}, u.token)
+func (u *open_im_sdk.UserRelated) getServerSelfApplication() ([]open_im_sdk.applyUserInfo, error) {
+	resp, err := utils.post2Api(open_im_sdk.getSelfApplicationListRouter, open_im_sdk.paramsCommonReq{OperationID: utils.operationIDGenerator()}, u.token)
 	if err != nil {
 		return nil, err
 	}
-	var vgetFriendApplyListResp getFriendApplyListResp
+	var vgetFriendApplyListResp open_im_sdk.getFriendApplyListResp
 	err = json.Unmarshal(resp, &vgetFriendApplyListResp)
 	if err != nil {
-		sdkLog("unmarshal failed, ", err.Error())
+		utils.sdkLog("unmarshal failed, ", err.Error())
 		return nil, err
 	}
 	if vgetFriendApplyListResp.ErrCode != 0 {
-		sdkLog("errcode: ", vgetFriendApplyListResp.ErrCode, "errmsg: ", vgetFriendApplyListResp.ErrMsg)
+		utils.sdkLog("errcode: ", vgetFriendApplyListResp.ErrCode, "errmsg: ", vgetFriendApplyListResp.ErrMsg)
 		return nil, err
 	}
 	return vgetFriendApplyListResp.Data, nil
 }
-func (u *UserRelated) addBlack(callback Base, blackUid, operationID string) *CommDataResp {
-	apiReq := AddBlacklistReq{}
+func (u *open_im_sdk.UserRelated) addBlack(callback open_im_sdk.Base, blackUid, operationID string) *open_im_sdk.CommDataResp {
+	apiReq := open_im_sdk.AddBlacklistReq{}
 	apiReq.ToUserID = blackUid
 	apiReq.FromUserID = u.loginUserID
 	apiReq.OperationID = operationID
-	resp, err := post2Api(addBlackListRouter, apiReq, u.token)
-	r := checkErrAndResp(callback, err, resp, operationID)
+	resp, err := utils.post2Api(open_im_sdk.addBlackListRouter, apiReq, u.token)
+	r := utils.checkErrAndResp(callback, err, resp, operationID)
 	u.syncBlackList()
 	return r
 
 }
-func (u *UserRelated) removeBlack(callback Base, deleteUid, operationID string) *CommDataResp {
-	apiReq := RemoveBlackListReq{}
+func (u *open_im_sdk.UserRelated) removeBlack(callback open_im_sdk.Base, deleteUid, operationID string) *open_im_sdk.CommDataResp {
+	apiReq := open_im_sdk.RemoveBlackListReq{}
 	apiReq.ToUserID = deleteUid
 	apiReq.FromUserID = u.loginUserID
 	apiReq.OperationID = operationID
-	resp, err := post2Api(removeBlackListRouter, apiReq, u.token)
-	r := checkErrAndResp(callback, err, resp, operationID)
+	resp, err := utils.post2Api(open_im_sdk.removeBlackListRouter, apiReq, u.token)
+	r := utils.checkErrAndResp(callback, err, resp, operationID)
 	u.syncBlackList()
 	return r
 
@@ -402,126 +406,126 @@ func (u *UserRelated) removeBlack(callback Base, deleteUid, operationID string) 
 //	}
 //}
 
-func (u *UserRelated) syncSelfFriendApplication() {
+func (u *open_im_sdk.UserRelated) syncSelfFriendApplication() {
 
 }
 
-func (u *UserRelated) syncFriendApplication() {
+func (u *open_im_sdk.UserRelated) syncFriendApplication() {
 	svrList, err := u.getServerFriendApplication()
 	if err != nil {
-		NewError("0", "getServerFriendList failed ", err.Error())
+		log.NewError("0", "getServerFriendList failed ", err.Error())
 		return
 	}
-	onServer := transferToLocalFriendRequest(svrList)
+	onServer := utils.transferToLocalFriendRequest(svrList)
 	onLocal, err := u._getRecvFriendApplication()
 	if err != nil {
-		NewError("0", "_getAllFriendList failed ", err.Error())
+		log.NewError("0", "_getAllFriendList failed ", err.Error())
 		return
 	}
-	NewInfo("0", "svrList", svrList)
-	NewInfo("0", "onServer", onServer)
-	NewInfo("0", "onLocal", onLocal)
+	log.NewInfo("0", "svrList", svrList)
+	log.NewInfo("0", "onServer", onServer)
+	log.NewInfo("0", "onLocal", onLocal)
 
-	aInBNot, bInANot, sameA, _ := checkFriendRequestDiff(onServer, onLocal)
+	aInBNot, bInANot, sameA, _ := utils.checkFriendRequestDiff(onServer, onLocal)
 	for _, index := range aInBNot {
 		err := u._insertFriendRequest(onServer[index])
 		if err != nil {
-			NewError("0", "_insertFriendRequest failed ", err.Error())
+			log.NewError("0", "_insertFriendRequest failed ", err.Error())
 			continue
 		}
 	}
 	for _, index := range sameA {
 		err := u._updateFriendRequest(onServer[index])
 		if err != nil {
-			NewError("0", "_updateFriend failed ", err.Error())
+			log.NewError("0", "_updateFriend failed ", err.Error())
 			continue
 		}
 	}
 	for _, index := range bInANot {
 		err := u._deleteFriendRequestBothUserID(onServer[index].FromUserID, onServer[index].ToUserID)
 		if err != nil {
-			NewError("0", "_deleteFriendRequestBothUserID failed ", err.Error())
+			log.NewError("0", "_deleteFriendRequestBothUserID failed ", err.Error())
 			continue
 		}
 	}
 }
 
-func (u *UserRelated) syncFriendList() {
+func (u *open_im_sdk.UserRelated) syncFriendList() {
 	svrList, err := u.getServerFriendList()
 	if err != nil {
-		NewError("0", "getServerFriendList failed ", err.Error())
+		log.NewError("0", "getServerFriendList failed ", err.Error())
 		return
 	}
-	NewInfo("0", "svrList", svrList)
-	friendsInfoOnServer := transferToLocalFriend(svrList)
+	log.NewInfo("0", "svrList", svrList)
+	friendsInfoOnServer := utils.transferToLocalFriend(svrList)
 	friendsInfoOnLocal, err := u._getAllFriendList()
 	if err != nil {
-		NewError("0", "_getAllFriendList failed ", err.Error())
+		log.NewError("0", "_getAllFriendList failed ", err.Error())
 		return
 	}
 
-	NewInfo("0", "friendsInfoOnServer", friendsInfoOnServer)
-	NewInfo("0", "friendsInfoOnLocal", friendsInfoOnLocal)
-	aInBNot, bInANot, sameA, sameB := checkFriendListDiff(friendsInfoOnServer, friendsInfoOnLocal)
-	NewInfo("0", "checkFriendListDiff", aInBNot, bInANot, sameA, sameB)
+	log.NewInfo("0", "friendsInfoOnServer", friendsInfoOnServer)
+	log.NewInfo("0", "friendsInfoOnLocal", friendsInfoOnLocal)
+	aInBNot, bInANot, sameA, sameB := utils.checkFriendListDiff(friendsInfoOnServer, friendsInfoOnLocal)
+	log.NewInfo("0", "checkFriendListDiff", aInBNot, bInANot, sameA, sameB)
 	for _, index := range aInBNot {
 		err := u._insertFriend(friendsInfoOnServer[index])
 		if err != nil {
-			NewError("0", "_insertFriend failed ", err.Error())
+			log.NewError("0", "_insertFriend failed ", err.Error())
 			continue
 		}
 	}
 	for _, index := range sameA {
 		err := u._updateFriend(friendsInfoOnServer[index])
 		if err != nil {
-			NewError("0", "_updateFriend failed ", err.Error())
+			log.NewError("0", "_updateFriend failed ", err.Error())
 			continue
 		}
 	}
 	for _, index := range bInANot {
 		err := u._deleteFriend(friendsInfoOnLocal[index].FriendUserID)
 		if err != nil {
-			NewError("0", "_deleteFriend failed ", err.Error())
+			log.NewError("0", "_deleteFriend failed ", err.Error())
 			continue
 		}
 	}
 }
 
-func (u *UserRelated) syncBlackList() {
+func (u *open_im_sdk.UserRelated) syncBlackList() {
 	svrList, err := u.getServerBlackList()
 	if err != nil {
-		NewError("0", "getServerBlackList failed ", err.Error())
+		log.NewError("0", "getServerBlackList failed ", err.Error())
 		return
 	}
-	NewInfo("0", "svrList", svrList)
-	blackListOnServer := transferToLocalBlack(svrList, u.loginUserID)
+	log.NewInfo("0", "svrList", svrList)
+	blackListOnServer := utils.transferToLocalBlack(svrList, u.loginUserID)
 	blackListOnLocal, err := u._getBlackList()
 	if err != nil {
-		NewError("0", "_getBlackList failed ", err.Error())
+		log.NewError("0", "_getBlackList failed ", err.Error())
 		return
 	}
 
-	NewInfo("0", "blackListOnServer", blackListOnServer)
-	NewInfo("0", "blackListOnlocal", blackListOnLocal)
-	aInBNot, bInANot, sameA, _ := checkBlackListDiff(blackListOnServer, blackListOnLocal)
+	log.NewInfo("0", "blackListOnServer", blackListOnServer)
+	log.NewInfo("0", "blackListOnlocal", blackListOnLocal)
+	aInBNot, bInANot, sameA, _ := utils.checkBlackListDiff(blackListOnServer, blackListOnLocal)
 	for _, index := range aInBNot {
 		err := u._insertBlack(blackListOnServer[index])
 		if err != nil {
-			NewError("0", "_insertFriend failed ", err.Error())
+			log.NewError("0", "_insertFriend failed ", err.Error())
 			continue
 		}
 	}
 	for _, index := range sameA {
 		err := u._updateBlack(blackListOnServer[index])
 		if err != nil {
-			NewError("0", "_updateFriend failed ", err.Error())
+			log.NewError("0", "_updateFriend failed ", err.Error())
 			continue
 		}
 	}
 	for _, index := range bInANot {
 		err := u._deleteBlack(blackListOnLocal[index].BlockUserID)
 		if err != nil {
-			NewError("0", "_deleteFriend failed ", err.Error())
+			log.NewError("0", "_deleteFriend failed ", err.Error())
 			continue
 		}
 	}

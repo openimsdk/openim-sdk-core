@@ -4,10 +4,11 @@
 ** author("fg,Gordon@tuoyun.net").
 ** time(2021/3/16 11:26).
  */
-package open_im_sdk
+package log
 
 import (
 	"github.com/sirupsen/logrus"
+	"open_im_sdk/open_im_sdk/utils"
 	"runtime"
 	"strings"
 )
@@ -27,7 +28,7 @@ func (f *fileHook) Fire(entry *logrus.Entry) error {
 	_, b, c, _ := runtime.Caller(8)
 	i := strings.LastIndex(b, "/")
 	if i != -1 {
-		s = b[i+1:len(b)] + ":" + intToString(c)
+		s = b[i+1:len(b)] + ":" + utils.intToString(c)
 	}
 	entry.Data["FilePath"] = s
 	return nil
