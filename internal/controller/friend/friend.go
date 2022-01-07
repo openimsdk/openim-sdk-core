@@ -310,7 +310,7 @@ func (u *open_im_sdk.UserRelated) doBlackList() {
 	//}
 }
 
-func (u *open_im_sdk.UserRelated) getServerBlackList() ([]*open_im_sdk.PublicUserInfo, error) {
+func (u *Friend) getServerBlackList() ([]*open_im_sdk.PublicUserInfo, error) {
 	apiReq := server_api_params.GetBlackListReq{OperationID: utils.operationIDGenerator(), FromUserID: u.loginUserID}
 	resp, err := utils.post2Api(open_im_sdk.getBlackListRouter, apiReq, u.token)
 	commData, err := utils.checkErrAndRespReturn(err, resp, apiReq.OperationID)
@@ -505,8 +505,8 @@ func (u *open_im_sdk.UserRelated) syncFriendList() {
 	}
 }
 
-func (u *open_im_sdk.UserRelated) syncBlackList() {
-	svrList, err := u.getServerBlackList()
+func (frd *Friend) syncBlackList() {
+	svrList, err := frd.getServerBlackList()
 	if err != nil {
 		log.NewError("0", "getServerBlackList failed ", err.Error())
 		return
