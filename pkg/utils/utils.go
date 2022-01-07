@@ -778,18 +778,19 @@ func isContain(target string, List []string) bool {
 
 }
 
-func wrap(err error, message string) error {
-	return errors.Wrap(err, "==> "+printCallerNameAndLine()+message)
-}
-
-func withMessage(err error, message string) error {
-	return errors.WithMessage(err, "==> "+printCallerNameAndLine()+message)
-}
-
-func printCallerNameAndLine() string {
-	pc, _, line, _ := runtime.Caller(2)
-	return runtime.FuncForPC(pc).Name() + "()@" + strconv.Itoa(line) + ": "
-}
+//
+//func wrap(err error, message string) error {
+//	return errors.Wrap(err, "==> "+printCallerNameAndLine()+message)
+//}
+//
+//func withMessage(err error, message string) error {
+//	return errors.WithMessage(err, "==> "+printCallerNameAndLine()+message)
+//}
+//
+//func printCallerNameAndLine() string {
+//	pc, _, line, _ := runtime.Caller(2)
+//	return runtime.FuncForPC(pc).Name() + "()@" + strconv.Itoa(line) + ": "
+//}
 
 func GetSwitchFromOptions(Options map[string]bool, key string) (result bool) {
 	if flag, ok := Options[key]; !ok || flag {
@@ -809,7 +810,7 @@ func WithMessage(err error, message string) error {
 	return errors.WithMessage(err, "==> "+printCallerNameAndLine()+message)
 }
 
-func checkErr(callback init.Base, err error, operationID string) {
+func CheckErr(callback init.Base, err error, operationID string) {
 	if err != nil {
 		if callback != nil {
 			log2.NewError(operationID, "checkErr ", err, constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)

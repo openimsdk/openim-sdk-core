@@ -123,8 +123,7 @@ type UserRelated struct {
 	conversation_msg.ConversationListener
 	group.groupListener
 
-	db *sql.DB
-
+	db       *sql.DB
 	imdb     *gorm.DB
 	validate *validator.Validate
 

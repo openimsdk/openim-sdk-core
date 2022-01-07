@@ -3,21 +3,32 @@ package friend
 import (
 	"encoding/json"
 	"github.com/mitchellh/mapstructure"
-	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 )
 
-type FriendListener struct {
+type Friend struct {
 	friendListener OnFriendshipListener
+	token          string
+	userID         string
+	db             *db.DataBase
 }
 
-func (u *open_im_sdk.UserRelated) getDesignatedFriendsInfo(callback open_im_sdk.Base, friendUserIDList sdk_params_callback.GetDesignatedFriendsInfoParams, operationID string) sdk_params_callback.GetDesignatedFriendsInfoCallback {
+func (frd *Friend) Init(token, userID string, db *db.DataBase) {
+
+}
+
+func (frd *Friend) SetListener(listener *OnFriendshipListener) {
+	frd.friendListener = listener
+}
+
+func (frd *Friend) getDesignatedFriendsInfo(callback open_im_sdk.Base, friendUserIDList sdk_params_callback.GetDesignatedFriendsInfoParams, operationID string) sdk_params_callback.GetDesignatedFriendsInfoCallback {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), friendUserIDList)
 	blackList, err := u._getBlackInfoList(friendUserIDList)
-	utils.checkErr(callback, err, operationID)
+	utils.CheckErr(callback, err, operationID)
 	var pureFriendUserIDList []string
 	for _, v := range friendUserIDList {
 		flag := 0
@@ -32,7 +43,7 @@ func (u *open_im_sdk.UserRelated) getDesignatedFriendsInfo(callback open_im_sdk.
 		}
 	}
 	localFriendList, err := u._getFriendInfoList(pureFriendUserIDList)
-	utils.checkErr(callback, err, operationID)
+	utils.CheckErr(callback, err, operationID)
 	log.NewInfo(operationID, "_getFriendInfoList ", pureFriendUserIDList, localFriendList)
 	return localFriendList
 }

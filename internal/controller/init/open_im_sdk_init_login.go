@@ -75,11 +75,6 @@ func (u *constant.open_im_sdk) ForceSyncLoginUserInfo() {
 	u.syncLoginUserInfo()
 }
 
-type Base interface {
-	OnError(errCode int32, errMsg string)
-	OnSuccess(data string)
-}
-
 func initUserRouter() {
 	constant.UserSDKRwLock.Lock()
 	defer constant.UserSDKRwLock.Unlock()
