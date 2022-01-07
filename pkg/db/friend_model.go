@@ -6,34 +6,34 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func (d *DataBase) _insertFriend(friend *LocalFriend) error {
+func (d *DataBase) InsertFriend(friend *LocalFriend) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.Create(friend).Error, "_insertFriend failed")
+	return utils.Wrap(d.conn.Create(friend).Error, "InsertFriend failed")
 }
 
-func (d *DataBase) _deleteFriend(friendUserID string) error {
+func (d *DataBase) DeleteFriend(friendUserID string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.Where("owner_user_id=? and friend_user_id=?", d.loginUserID, friendUserID).Delete(&LocalFriend{}).Error, "_deleteFriend failed")
+	return utils.Wrap(d.conn.Where("owner_user_id=? and friend_user_id=?", d.loginUserID, friendUserID).Delete(&LocalFriend{}).Error, "DeleteFriend failed")
 }
 
-func (d *DataBase) _updateFriend(friend *LocalFriend) error {
+func (d *DataBase) UpdateFriend(friend *LocalFriend) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	t := d.conn.Updates(friend)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
-	return utils.Wrap(t.Error, "_updateFriend failed")
+	return utils.Wrap(t.Error, "UpdateFriend failed")
 }
 
-func (d *DataBase) _getAllFriendList() ([]*LocalFriend, error) {
+func (d *DataBase) GetAllFriendList() ([]*LocalFriend, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var friendList []LocalFriend
 	err := utils.Wrap(d.conn.Where("owner_user_id = ?", d.loginUserID).Find(&friendList).Error,
-		"_getFriendList failed")
+		"GetFriendList failed")
 	var transfer []*LocalFriend
 	for _, v := range friendList {
 		transfer = append(transfer, &v)
@@ -41,17 +41,17 @@ func (d *DataBase) _getAllFriendList() ([]*LocalFriend, error) {
 	return transfer, err
 }
 
-func (d *DataBase) _getFriendInfoByFriendUserID(FriendUserID string) (*LocalFriend, error) {
+func (d *DataBase) GetFriendInfoByFriendUserID(FriendUserID string) (*LocalFriend, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var friend LocalFriend
 	return &friend, utils.Wrap(d.conn.Where("owner_user_id = ? AND friend_user_id = ?",
-		d.loginUserID, FriendUserID).Error, "_getFriendInfoByFriendUserID failed")
+		d.loginUserID, FriendUserID).Error, "GetFriendInfoByFriendUserID failed")
 }
 
-func (d *DataBase) _getFriendInfoList(FriendUserIDList []string) ([]LocalFriend, error) {
+func (d *DataBase) GetFriendInfoList(FriendUserIDList []string) ([]LocalFriend, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var friendList []LocalFriend
-	return friendList, utils.Wrap(d.conn.Where("friend_user_id IN ?", FriendUserIDList).Error, "_getFriendInfoListByFriendUserID failed")
+	return friendList, utils.Wrap(d.conn.Where("friend_user_id IN ?", FriendUserIDList).Error, "GetFriendInfoListByFriendUserID failed")
 }
