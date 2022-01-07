@@ -1,24 +1,15 @@
 package utils
 
 import (
-	"bytes"
 	"crypto/md5"
-	"encoding/gob"
 	"encoding/hex"
 	"encoding/json"
-	"open_im_sdk/internal/controller/init"
-	"open_im_sdk/internal/open_im_sdk"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
-	log2 "open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/server_api_params"
 
-	"github.com/gorilla/websocket"
-	"github.com/jinzhu/copier"
+	"open_im_sdk/pkg/constant"
+
 	"github.com/pkg/errors"
 	"io"
-	"io/ioutil"
-	"net/http"
+
 	"reflect"
 
 	"os"
