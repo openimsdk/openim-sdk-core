@@ -2,28 +2,39 @@ package db
 
 import (
 	"errors"
-	"github.com/go-playground/validator/v10"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
+	"sync"
 )
 
-func (u *open_im_sdk.UserRelated) initDB() error {
-	if u.loginUserID == "" {
+type DataBase struct {
+	loginUserID string
+	conn        *gorm.DB
+	mRWMutex    sync.RWMutex
+}
+
+func NewDataBase(loginUserID string) (*DataBase, error) {
+	dataBase := &DataBase{loginUserID: loginUserID}
+	return dataBase, utils.Wrap(dataBase.initDB(), "db init error")
+}
+
+func (d *DataBase) initDB() error {
+	if d.loginUserID == "" {
 		return errors.New("no uid")
 	}
-	u.mRWMutex.Lock()
-	defer u.mRWMutex.Unlock()
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 
-	db, err := gorm.Open(sqlite.Open(constant.SvrConf.DbDir+"OpenIM_"+u.loginUserID+".db"), &gorm.Config{})
-	utils.sdkLog("open db:", constant.SvrConf.DbDir+"OpenIM_"+u.loginUserID+".db")
+	db, err := gorm.Open(sqlite.Open(constant.SvrConf.DbDir+"OpenIM_"+d.loginUserID+".db"), &gorm.Config{})
+	log.Info("open db:", constant.SvrConf.DbDir+"OpenIM_"+d.loginUserID+".db")
 	if err != nil {
 		panic("failed to connect database" + err.Error())
 		return err
 	}
-	u.validate = validator.New()
-	u.imdb = db
+	d.conn = db
 	//db, err := sql.Open("sqlite3", SvrConf.DbDir+"OpenIM_"+uid+".db")
 	//sdkLog("open db:", SvrConf.DbDir+"OpenIM_"+uid+".db")
 	//if err != nil {
