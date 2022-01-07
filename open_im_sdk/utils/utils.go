@@ -233,7 +233,7 @@ func jsonStringToStruct(s string, args interface{}) error {
 func UnixSecondToTime(second int64) time.Time {
 	return time.Unix(second, 0)
 }
-func intToString(i int) string {
+func IntToString(i int) string {
 	return strconv.FormatInt(int64(i), 10)
 }
 func int32ToString(i int32) string {

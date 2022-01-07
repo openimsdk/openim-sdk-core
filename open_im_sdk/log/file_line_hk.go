@@ -28,7 +28,7 @@ func (f *fileHook) Fire(entry *logrus.Entry) error {
 	_, b, c, _ := runtime.Caller(8)
 	i := strings.LastIndex(b, "/")
 	if i != -1 {
-		s = b[i+1:len(b)] + ":" + utils.intToString(c)
+		s = b[i+1:len(b)] + ":" + utils.IntToString(c)
 	}
 	entry.Data["FilePath"] = s
 	return nil

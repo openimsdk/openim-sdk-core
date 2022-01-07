@@ -1,23 +1,24 @@
-package open_im_sdk
+package db
 
 import (
 	"errors"
+	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/open_im_sdk/utils"
 )
 
-func (u *UserRelated) _insertFriendRequest(friendRequest *LocalFriendRequest) error {
+func (u *open_im_sdk.UserRelated) _insertFriendRequest(friendRequest *open_im_sdk.LocalFriendRequest) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	return utils.wrap(u.imdb.Create(friendRequest).Error, "_insertFriendRequest failed")
 }
 
-func (u *UserRelated) _deleteFriendRequestBothUserID(fromUserID, toUserID string) error {
+func (u *open_im_sdk.UserRelated) _deleteFriendRequestBothUserID(fromUserID, toUserID string) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	return utils.wrap(u.imdb.Where("from_user_id=? and to_user_id=?", fromUserID, toUserID).Delete(&LocalFriendRequest{}).Error, "deleteFriendRequest failed")
+	return utils.wrap(u.imdb.Where("from_user_id=? and to_user_id=?", fromUserID, toUserID).Delete(&open_im_sdk.LocalFriendRequest{}).Error, "deleteFriendRequest failed")
 }
 
-func (u *UserRelated) _updateFriendRequest(friendRequest *LocalFriendRequest) error {
+func (u *open_im_sdk.UserRelated) _updateFriendRequest(friendRequest *open_im_sdk.LocalFriendRequest) error {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
 	t := u.imdb.Updates(friendRequest)
@@ -27,13 +28,13 @@ func (u *UserRelated) _updateFriendRequest(friendRequest *LocalFriendRequest) er
 	return utils.wrap(t.Error, "updateFriendRequest failed")
 }
 
-func (u *UserRelated) _getRecvFriendApplication() ([]*LocalFriendRequest, error) {
+func (u *open_im_sdk.UserRelated) _getRecvFriendApplication() ([]*open_im_sdk.LocalFriendRequest, error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	var friendRequestList []LocalFriendRequest
+	var friendRequestList []open_im_sdk.LocalFriendRequest
 	err := utils.wrap(u.imdb.Where("to_user_id = ?", u.loginUserID).Find(&friendRequestList).Error, "_getLocalFriendApplication failed")
 
-	var transfer []*LocalFriendRequest
+	var transfer []*open_im_sdk.LocalFriendRequest
 	for _, v := range friendRequestList {
 		transfer = append(transfer, &v)
 	}
@@ -41,13 +42,13 @@ func (u *UserRelated) _getRecvFriendApplication() ([]*LocalFriendRequest, error)
 
 }
 
-func (u *UserRelated) _getSendFriendApplication() ([]*LocalFriendRequest, error) {
+func (u *open_im_sdk.UserRelated) _getSendFriendApplication() ([]*open_im_sdk.LocalFriendRequest, error) {
 	u.mRWMutex.Lock()
 	defer u.mRWMutex.Unlock()
-	var friendRequestList []LocalFriendRequest
+	var friendRequestList []open_im_sdk.LocalFriendRequest
 	err := utils.wrap(u.imdb.Where("from_user_id = ?", u.loginUserID).Find(&friendRequestList).Error, "_getLocalFriendApplication failed")
 
-	var transfer []*LocalFriendRequest
+	var transfer []*open_im_sdk.LocalFriendRequest
 	for _, v := range friendRequestList {
 		transfer = append(transfer, &v)
 	}
