@@ -11,7 +11,7 @@ import (
 )
 
 type FriendListener struct {
-	friendListener open_im_sdk.OnFriendshipListener
+	friendListener OnFriendshipListener
 }
 
 func (u *open_im_sdk.UserRelated) getDesignatedFriendsInfo(callback open_im_sdk.Base, friendUserIDList sdk_params_callback.GetDesignatedFriendsInfoParams, operationID string) sdk_params_callback.GetDesignatedFriendsInfoCallback {

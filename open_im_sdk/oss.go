@@ -13,6 +13,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"open_im_sdk/open_im_sdk/conversation_msg"
 	"open_im_sdk/open_im_sdk/utils"
 	"path"
 	"time"
@@ -69,19 +70,19 @@ func getImgContentTypeSuffix(filePath string) (string, string, error) {
 	return contentType, suffix, nil
 }
 
-func uploadImageMin(filePath string, callback SendMsgCallBack) (string, string, error) {
+func uploadImageMin(filePath string, callback conversation_msg.SendMsgCallBack) (string, string, error) {
 	return uploadObjectMin(filePath, "img", callback)
 }
 
-func uploadSoundMin(filePath string, back SendMsgCallBack) (string, string, error) {
+func uploadSoundMin(filePath string, back conversation_msg.SendMsgCallBack) (string, string, error) {
 	return uploadObjectMin(filePath, "", back)
 }
 
-func uploadFileMin(filePath string, back SendMsgCallBack) (string, string, error) {
+func uploadFileMin(filePath string, back conversation_msg.SendMsgCallBack) (string, string, error) {
 	return uploadObjectMin(filePath, "", back)
 }
 
-func uploadVideoMin(videoPath, snapshotPath string, back SendMsgCallBack) (string, string, string, string, error) {
+func uploadVideoMin(videoPath, snapshotPath string, back conversation_msg.SendMsgCallBack) (string, string, string, string, error) {
 	snapshotURL, snapshotUUID, err := uploadObjectMin(snapshotPath, "img", nil)
 	if err != nil {
 		back.OnError(ErrCodeConversation, err.Error())
@@ -91,7 +92,7 @@ func uploadVideoMin(videoPath, snapshotPath string, back SendMsgCallBack) (strin
 	return snapshotURL, snapshotUUID, videoURL, videoUUID, err
 }
 
-func uploadObjectMin(filePath string, objectType string, callback SendMsgCallBack) (string, string, error) {
+func uploadObjectMin(filePath string, objectType string, callback conversation_msg.SendMsgCallBack) (string, string, error) {
 	minioClient, err := getMinClient()
 	if err != nil {
 		utils.sdkLog("getMinClient failed, ", err.Error())
@@ -152,7 +153,7 @@ func uploadObjectMin(filePath string, objectType string, callback SendMsgCallBac
 	return presignedURL.String(), newName, nil
 }
 
-func (ur *UserRelated) uploadImage(filePath string, back SendMsgCallBack) (string, string, error) {
+func (ur *UserRelated) uploadImage(filePath string, back conversation_msg.SendMsgCallBack) (string, string, error) {
 	ossResp, err := ur.tencentOssCredentials()
 	if err != nil {
 		utils.sdkLog("tencentOssCredentials", err.Error())
@@ -204,7 +205,7 @@ func (ur *UserRelated) uploadImage(filePath string, back SendMsgCallBack) (strin
 	return "", "", errors.New("client == nil")
 }
 
-func (ur *UserRelated) uploadSound(filePath string, back SendMsgCallBack) (string, string, error) {
+func (ur *UserRelated) uploadSound(filePath string, back conversation_msg.SendMsgCallBack) (string, string, error) {
 	ossResp, err := ur.tencentOssCredentials()
 	if err != nil {
 		utils.sdkLog(err.Error())
@@ -254,7 +255,7 @@ func (ur *UserRelated) uploadSound(filePath string, back SendMsgCallBack) (strin
 	return "", "", errors.New("client == nil")
 }
 
-func (ur *UserRelated) uploadFile(filePath string, back SendMsgCallBack) (string, string, error) {
+func (ur *UserRelated) uploadFile(filePath string, back conversation_msg.SendMsgCallBack) (string, string, error) {
 	ossResp, err := ur.tencentOssCredentials()
 	if err != nil {
 		utils.sdkLog(err.Error())
@@ -304,7 +305,7 @@ func (ur *UserRelated) uploadFile(filePath string, back SendMsgCallBack) (string
 	return "", "", errors.New("client == nil")
 }
 
-func (ur *UserRelated) uploadVideo(videoPath, snapshotPath string, back SendMsgCallBack) (string, string, string, string, error) {
+func (ur *UserRelated) uploadVideo(videoPath, snapshotPath string, back conversation_msg.SendMsgCallBack) (string, string, string, string, error) {
 	utils.sdkLog("input args:", videoPath, snapshotPath)
 	ossResp, err := ur.tencentOssCredentials()
 	if err != nil {
@@ -385,7 +386,7 @@ func (ur *UserRelated) uploadVideo(videoPath, snapshotPath string, back SendMsgC
 }
 
 type selfListener struct {
-	SendMsgCallBack
+	conversation_msg.SendMsgCallBack
 }
 
 func (l *selfListener) ProgressChangedCallback(event *cos.ProgressEvent) {

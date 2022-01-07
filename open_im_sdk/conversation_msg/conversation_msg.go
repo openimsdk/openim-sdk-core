@@ -41,8 +41,8 @@ type ConversationStruct struct {
 	IsPinned          int    `json:"isPinned"`
 }
 type ConversationListener struct {
-	ConversationListenerx open_im_sdk.OnConversationListener
-	MsgListenerList       []open_im_sdk.OnAdvancedMsgListener
+	ConversationListenerx OnConversationListener
+	MsgListenerList       []OnAdvancedMsgListener
 	ch                    chan open_im_sdk.cmd2Value
 }
 type InsertMsg struct {

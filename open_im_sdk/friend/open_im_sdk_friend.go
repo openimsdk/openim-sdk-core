@@ -1,12 +1,13 @@
-package open_im_sdk
+package friend
 
 import (
+	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/open_im_sdk/log"
 	"open_im_sdk/open_im_sdk/sdk_params_callback"
 	"open_im_sdk/open_im_sdk/utils"
 )
 
-func (u *UserRelated) GetDesignatedFriendsInfo(callback Base, params string, operationID string) {
+func (u *open_im_sdk.UserRelated) GetDesignatedFriendsInfo(callback open_im_sdk.Base, params string, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), params)
 	if callback == nil {
 		return
@@ -21,7 +22,7 @@ func (u *UserRelated) GetDesignatedFriendsInfo(callback Base, params string, ope
 	}()
 }
 
-func (u *UserRelated) AddFriend(callback Base, params string, operationID string) {
+func (u *open_im_sdk.UserRelated) AddFriend(callback open_im_sdk.Base, params string, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), params)
 	if callback == nil {
 		return
@@ -36,7 +37,7 @@ func (u *UserRelated) AddFriend(callback Base, params string, operationID string
 	}()
 }
 
-func (u *UserRelated) GetRecvFriendApplicationList(callback Base, operationID string) {
+func (u *open_im_sdk.UserRelated) GetRecvFriendApplicationList(callback open_im_sdk.Base, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	if callback == nil {
 		return
@@ -49,7 +50,7 @@ func (u *UserRelated) GetRecvFriendApplicationList(callback Base, operationID st
 	}()
 }
 
-func (u *UserRelated) GetSendFriendApplicationList(callback Base, operationID string) {
+func (u *open_im_sdk.UserRelated) GetSendFriendApplicationList(callback open_im_sdk.Base, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	if callback == nil {
 		return
@@ -62,7 +63,7 @@ func (u *UserRelated) GetSendFriendApplicationList(callback Base, operationID st
 	}()
 }
 
-func (u *UserRelated) AcceptFriendApplication(callback Base, params string, operationID string) {
+func (u *open_im_sdk.UserRelated) AcceptFriendApplication(callback open_im_sdk.Base, params string, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), params)
 	if callback == nil {
 		return
@@ -77,7 +78,7 @@ func (u *UserRelated) AcceptFriendApplication(callback Base, params string, oper
 	}()
 }
 
-func (u *UserRelated) RefuseFriendApplication(callback Base, params string, operationID string) {
+func (u *open_im_sdk.UserRelated) RefuseFriendApplication(callback open_im_sdk.Base, params string, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), params)
 	if callback == nil {
 		return
@@ -92,7 +93,7 @@ func (u *UserRelated) RefuseFriendApplication(callback Base, params string, oper
 	}()
 }
 
-func (u *UserRelated) CheckFriend(callback Base, params string, operationID string) {
+func (u *open_im_sdk.UserRelated) CheckFriend(callback open_im_sdk.Base, params string, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), params)
 	if callback == nil {
 		return
@@ -107,7 +108,7 @@ func (u *UserRelated) CheckFriend(callback Base, params string, operationID stri
 	}()
 }
 
-func (u *UserRelated) DeleteFriend(callback Base, friendUserID string, operationID string) {
+func (u *open_im_sdk.UserRelated) DeleteFriend(callback open_im_sdk.Base, friendUserID string, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), friendUserID)
 	if callback == nil {
 		return
@@ -120,14 +121,14 @@ func (u *UserRelated) DeleteFriend(callback Base, friendUserID string, operation
 	}()
 }
 
-func (u *UserRelated) GetFriendList(callback Base, operationID string) {
+func (u *open_im_sdk.UserRelated) GetFriendList(callback open_im_sdk.Base, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	if callback == nil {
 		return
 	}
 	go func() {
 		log.NewInfo(operationID, "GetFriendList args: ")
-		var filterLocalFriendList []*LocalFriend
+		var filterLocalFriendList []*open_im_sdk.LocalFriend
 		localFriendList, err := u._getAllFriendList()
 		utils.checkErr(callback, err, operationID)
 		localBlackUidList, err := u._getBlackListUid()
@@ -142,7 +143,7 @@ func (u *UserRelated) GetFriendList(callback Base, operationID string) {
 	}()
 }
 
-func (u *UserRelated) SetFriendRemark(callback Base, params string, operationID string) {
+func (u *open_im_sdk.UserRelated) SetFriendRemark(callback open_im_sdk.Base, params string, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), params)
 	if callback == nil {
 		return
@@ -157,7 +158,7 @@ func (u *UserRelated) SetFriendRemark(callback Base, params string, operationID 
 	}()
 }
 
-func (u *UserRelated) AddBlack(callback Base, blackUserID, operationID string) {
+func (u *open_im_sdk.UserRelated) AddBlack(callback open_im_sdk.Base, blackUserID, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), blackUserID)
 	go func() {
 		log.NewInfo(operationID, "AddToBlackList args: ", blackUserID)
@@ -167,7 +168,7 @@ func (u *UserRelated) AddBlack(callback Base, blackUserID, operationID string) {
 	}()
 }
 
-func (u *UserRelated) GetBlackList(callback Base, operationID string) {
+func (u *open_im_sdk.UserRelated) GetBlackList(callback open_im_sdk.Base, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	go func() {
 		log.NewInfo(operationID, "GetBlackList args: ")
@@ -178,7 +179,7 @@ func (u *UserRelated) GetBlackList(callback Base, operationID string) {
 	}()
 }
 
-func (u *UserRelated) RemoveBlack(callback Base, removeUserID, operationID string) {
+func (u *open_im_sdk.UserRelated) RemoveBlack(callback open_im_sdk.Base, removeUserID, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), removeUserID)
 	go func() {
 		log.NewInfo(operationID, "RemoveBlack args: ", removeUserID)
@@ -200,7 +201,7 @@ type OnFriendshipListener interface {
 	OnFriendInfoChanged(friendInfo string)
 }
 
-func (u *UserRelated) SetFriendListener(listener OnFriendshipListener) bool {
+func (u *open_im_sdk.UserRelated) SetFriendListener(listener OnFriendshipListener) bool {
 	if listener == nil {
 		return false
 	}
@@ -208,18 +209,18 @@ func (u *UserRelated) SetFriendListener(listener OnFriendshipListener) bool {
 	return true
 }
 
-func (u *UserRelated) ForceSyncFriendApplication() {
+func (u *open_im_sdk.UserRelated) ForceSyncFriendApplication() {
 	u.syncFriendApplication()
 }
 
-func (u *UserRelated) ForceSyncSelfFriendApplication() {
+func (u *open_im_sdk.UserRelated) ForceSyncSelfFriendApplication() {
 	u.syncSelfFriendApplication()
 }
 
-func (u *UserRelated) ForceSyncFriend() {
+func (u *open_im_sdk.UserRelated) ForceSyncFriend() {
 	u.syncFriendList()
 }
 
-func (u *UserRelated) ForceSyncBlackList() {
+func (u *open_im_sdk.UserRelated) ForceSyncBlackList() {
 	u.syncBlackList()
 }

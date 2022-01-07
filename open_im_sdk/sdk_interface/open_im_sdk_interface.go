@@ -3,6 +3,9 @@ package sdk_interface
 import (
 	"encoding/json"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/open_im_sdk/conversation_msg"
+	"open_im_sdk/open_im_sdk/friend"
+	"open_im_sdk/open_im_sdk/group"
 	"open_im_sdk/open_im_sdk/utils"
 )
 
@@ -106,7 +109,7 @@ func ForceSyncMsg() bool {
 }
 
 ////////////////////////////////////////////////////////////////////
-func SetGroupListener(callback open_im_sdk.OnGroupListener) {
+func SetGroupListener(callback group.OnGroupListener) {
 	open_im_sdk.userForSDK.SetGroupListener(callback)
 }
 
@@ -219,7 +222,7 @@ func RemoveBlack(callback open_im_sdk.Base, removeUserID, operationID string) {
 	open_im_sdk.userForSDK.RemoveBlack(callback, removeUserID, operationID)
 }
 
-func SetFriendListener(listener open_im_sdk.OnFriendshipListener) bool {
+func SetFriendListener(listener friend.OnFriendshipListener) bool {
 	return open_im_sdk.userForSDK.SetFriendListener(listener)
 }
 
@@ -257,11 +260,11 @@ func GetTotalUnreadMsgCount(callback open_im_sdk.Base) {
 	open_im_sdk.userForSDK.GetTotalUnreadMsgCount(callback)
 }
 
-func SetConversationListener(listener open_im_sdk.OnConversationListener) {
+func SetConversationListener(listener conversation_msg.OnConversationListener) {
 	open_im_sdk.userForSDK.SetConversationListener(listener)
 }
 
-func AddAdvancedMsgListener(listener open_im_sdk.OnAdvancedMsgListener) {
+func AddAdvancedMsgListener(listener conversation_msg.OnAdvancedMsgListener) {
 	open_im_sdk.userForSDK.AddAdvancedMsgListener(listener)
 }
 
@@ -302,7 +305,7 @@ func CreateImageMessage(imagePath string) string {
 func CreateImageMessageByURL(sourcePicture, bigPicture, snapshotPicture string) string {
 	return open_im_sdk.userForSDK.CreateImageMessageByURL(sourcePicture, bigPicture, snapshotPicture)
 }
-func SendMessageNotOss(callback open_im_sdk.SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool, offlinePushInfo string) string {
+func SendMessageNotOss(callback conversation_msg.SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool, offlinePushInfo string) string {
 	return open_im_sdk.userForSDK.SendMessageNotOss(callback, message, receiver, groupID, onlineUserOnly, offlinePushInfo)
 }
 func CreateSoundMessageByURL(soundBaseInfo string) string {
@@ -331,7 +334,7 @@ func CreateForwardMessage(m string) string {
 	return open_im_sdk.userForSDK.CreateForwardMessage(m)
 }
 
-func SendMessage(callback open_im_sdk.SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool, offlinePushInfo string) string {
+func SendMessage(callback conversation_msg.SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool, offlinePushInfo string) string {
 	return open_im_sdk.userForSDK.SendMessage(callback, message, receiver, groupID, onlineUserOnly, offlinePushInfo)
 }
 func GetHistoryMessageList(callback open_im_sdk.Base, getMessageOptions string) {
