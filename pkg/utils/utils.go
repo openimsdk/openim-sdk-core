@@ -35,8 +35,8 @@ func operationIDGenerator() string {
 	return strconv.FormatInt(time.Now().UnixNano()+int64(rand.Uint32()), 10)
 }
 func getMsgID(sendID string) string {
-	t := int64ToString(getCurrentTimestampByNano())
-	return Md5(t + sendID + int64ToString(rand.Int63n(getCurrentTimestampByNano())))
+	t := Int64ToString(getCurrentTimestampByNano())
+	return Md5(t + sendID + Int64ToString(rand.Int63n(GetCurrentTimestampByNano())))
 }
 func Md5(s string) string {
 	h := md5.New()
@@ -47,7 +47,7 @@ func Md5(s string) string {
 
 //Get the current timestamp by Second
 
-func getCurrentTimestampBySecond() int64 {
+func GetCurrentTimestampBySecond() int64 {
 	return time.Now().Unix()
 }
 
@@ -59,76 +59,6 @@ func GetCurrentTimestampByMill() int64 {
 //Get the current timestamp by Nano
 func GetCurrentTimestampByNano() int64 {
 	return time.Now().UnixNano()
-}
-
-func (u *open_im_sdk.UserRelated) sendPingMsg() error {
-	u.stateMutex.Lock()
-	defer u.stateMutex.Unlock()
-	var ping string = "try ping"
-
-	err := u.conn.SetWriteDeadline(time.Now().Add(8 * time.Second))
-	if err != nil {
-		sdkLog("SetWriteDeadline failed ", err.Error())
-	}
-	return u.conn.WriteMessage(websocket.PingMessage, []byte(ping))
-}
-
-func (u *open_im_sdk.UserRelated) writeBinaryMsg(msg open_im_sdk.GeneralWsReq) (error, *websocket.Conn) {
-	LogStart(msg.OperationID)
-	var buff bytes.Buffer
-	enc := gob.NewEncoder(&buff)
-	err := enc.Encode(msg)
-	if err != nil {
-		LogFReturn(err.Error())
-		return err, nil
-	}
-
-	var connSended *websocket.Conn
-	u.stateMutex.Lock()
-	defer u.stateMutex.Unlock()
-
-	if u.conn != nil {
-		connSended = u.conn
-		err = u.conn.SetWriteDeadline(time.Now().Add(8 * time.Second))
-		if err != nil {
-			sdkLog("SetWriteDeadline failed ", err.Error())
-		}
-		sdkLog("send ws BinaryMessage len: ", len(buff.Bytes()))
-		if len(buff.Bytes()) > constant.MaxTotalMsgLen {
-			LogFReturn("msg too long", len(buff.Bytes()), constant.MaxTotalMsgLen)
-			return errors.New("msg too long"), connSended
-		}
-		err = u.conn.WriteMessage(websocket.BinaryMessage, buff.Bytes())
-		if err != nil {
-			LogFReturn(err.Error(), msg.OperationID)
-		} else {
-			LogSReturn(nil)
-		}
-		return err, connSended
-	} else {
-		LogFReturn("conn==nil")
-		return errors.New("conn==nil"), connSended
-	}
-}
-
-func (u *open_im_sdk.UserRelated) decodeBinaryWs(message []byte) (*open_im_sdk.GeneralWsResp, error) {
-	LogStart()
-	buff := bytes.NewBuffer(message)
-	dec := gob.NewDecoder(buff)
-	var data GeneralWsResp
-	err := dec.Decode(&data)
-	if err != nil {
-		LogFReturn(nil, err.Error())
-		return nil, err
-	}
-	LogSReturn(&data, nil)
-	return &data, nil
-}
-
-func (u *open_im_sdk.UserRelated) WriteMsg(msg open_im_sdk.GeneralWsReq) (error, *websocket.Conn) {
-	LogStart(msg.OperationID)
-	LogSReturn(msg.OperationID)
-	return u.writeBinaryMsg(msg)
 }
 
 func sendCmd(ch chan open_im_sdk.cmd2Value, value open_im_sdk.cmd2Value, timeout int64) error {

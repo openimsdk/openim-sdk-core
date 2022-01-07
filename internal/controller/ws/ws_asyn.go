@@ -1,4 +1,4 @@
-package asyn
+package ws
 
 import (
 	"errors"
@@ -14,6 +14,15 @@ type GeneralWsResp struct {
 	ErrMsg        string `json:"errMsg"`
 	MsgIncr       string `json:"msgIncr"`
 	OperationID   string `json:"operationID"`
+	Data          []byte `json:"data"`
+}
+
+type GeneralWsReq struct {
+	ReqIdentifier int32  `json:"reqIdentifier"`
+	Token         string `json:"token"`
+	SendID        string `json:"sendID"`
+	OperationID   string `json:"operationID"`
+	MsgIncr       string `json:"msgIncr"`
 	Data          []byte `json:"data"`
 }
 
