@@ -7,7 +7,10 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func (u *open_im_sdk.UserRelated) GetUsersInfo(uIDList string, cb open_im_sdk.Base) {
+type User struct {
+}
+
+func (u *User) GetUsersInfo(uIDList string, cb open_im_sdk.Base) {
 	go func() {
 		var uidList []string
 		err := json.Unmarshal([]byte(uIDList), &uidList)
@@ -31,7 +34,7 @@ func (u *open_im_sdk.UserRelated) GetUsersInfo(uIDList string, cb open_im_sdk.Ba
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) SetSelfInfo(info string, cb open_im_sdk.Base) {
+func (u *User) SetSelfInfo(info string, cb open_im_sdk.Base) {
 	go func() {
 		//var uiUpdateUserInfo ui2UpdateUserInfo
 		//err := json.Unmarshal([]byte(info), &uiUpdateUserInfo)

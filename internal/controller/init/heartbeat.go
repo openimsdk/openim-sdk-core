@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/golang/protobuf/proto"
 	ws "open_im_sdk/internal/controller/interaction"
-	"open_im_sdk/internal/open_im_sdk"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
@@ -13,13 +12,16 @@ import (
 
 type Heartbeat struct {
 	*ws.Ws
-	token       string
-	loginUserID string
-
 	*MsgSync
 }
 
+func NewHeartbeat(ws *ws.Ws, msgSync *MsgSync) *Heartbeat {
+	return &Heartbeat{Ws: ws, MsgSync: msgSync}
+}
+
 func (u *Heartbeat) heartbeat() {
+	hearbeatInterval := 5
+
 	for {
 		u.Lock()
 		if u.LoginState() == constant.LogoutCmd {
@@ -62,6 +64,6 @@ func (u *Heartbeat) heartbeat() {
 			log.Info("needSyncSeq ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, needSyncSeq)
 			u.syncMsgFromServer(needSyncSeq)
 		}
-		time.Sleep(time.Duration(open_im_sdk.hearbeatInterval) * time.Second)
+		time.Sleep(time.Duration(hearbeatInterval) * time.Second)
 	}
 }

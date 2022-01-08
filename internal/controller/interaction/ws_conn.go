@@ -27,14 +27,14 @@ type WsConn struct {
 	stateMutex  sync.Mutex
 	conn        *websocket.Conn
 	loginState  int32
-	listener    *ConnListener
+	listener    ConnListener
 	token       string
 	loginUserID string
 }
 
-func NewWsConn(listener *ConnListener, token string, loginUserID string) *WsConn {
+func NewWsConn(listener ConnListener, token string, loginUserID string) *WsConn {
 	p := WsConn{listener: listener, token: token, loginUserID: loginUserID}
-	p.conn, _, _ = p.FirstConn()
+	p.conn, _, _ = p.ReConn()
 	return &p
 }
 
@@ -153,27 +153,5 @@ func (u *WsConn) ReConn() (*websocket.Conn, *http.Response, error) {
 	u.listener.OnConnectSuccess()
 	u.loginState = constant.LoginSuccess
 
-	return conn, httpResp, nil
-}
-
-func (u *WsConn) FirstConn() (*websocket.Conn, *http.Response, error) {
-	u.stateMutex.Lock()
-	defer u.stateMutex.Unlock()
-
-	u.listener.OnConnecting()
-	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", constant.SvrConf.IpWsAddr, u.loginUserID, u.token, constant.SvrConf.Platform)
-	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
-	if err != nil {
-		if httpResp != nil {
-			u.listener.OnConnectFailed(int32(httpResp.StatusCode), err.Error())
-		} else {
-			u.listener.OnConnectFailed(1001, err.Error())
-		}
-
-		utils.LogFReturn(nil, err.Error(), url)
-		return nil, httpResp, err
-	}
-	u.listener.OnConnectSuccess()
-	u.loginState = constant.LoginSuccess
 	return conn, httpResp, nil
 }

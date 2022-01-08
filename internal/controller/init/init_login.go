@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"net/http"
-	"open_im_sdk/internal/controller/conversation_msg"
+	conv "open_im_sdk/internal/controller/conversation_msg"
 	"open_im_sdk/internal/controller/friend"
 	"open_im_sdk/internal/controller/group"
 	ws "open_im_sdk/internal/controller/interaction"
 	"open_im_sdk/internal/open_im_sdk"
+	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
@@ -22,38 +23,72 @@ import (
 
 	"time"
 
-	"github.com/mitchellh/mapstructure"
-
 	"github.com/jinzhu/copier"
-	"open_im_sdk/pkg/db"
+	"github.com/mitchellh/mapstructure"
+	"open_im_sdk/internal/controller/user"
 )
 
 type LoginMgr struct {
-	db     *db.DataBase
-	friend *friend.Friend
-	group  *group.Group
-	*conversation_msg
-	ws          *ws.Ws
-	msgSync     *MsgSync
+	friend       *friend.Friend
+	group        *group.Group
+	conversation *conv.Conversation
+	user         *user.User
+
+	db      *db.DataBase
+	ws      *ws.Ws
+	msgSync *MsgSync
+
+	hearbeat *Heartbeat
+
 	token       string
 	loginUserID string
-	listener    *ws.ConnListener
+	listener    ws.ConnListener
 }
 
-func (u *open_im_sdk.UserRelated) closeListenerCh() {
-	if u.ConversationCh != nil {
-		close(u.ConversationCh)
-		u.ConversationCh = nil
+func (u *LoginMgr) login(userID, token string, cb common.Base) {
+	if cb == nil {
+		return
 	}
+	log.Info("login start ", userID, token)
+	u.token = token
+	u.loginUserID = userID
+
+	db, err := db.NewDataBase(userID)
+	if err != nil {
+		cb.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
+		log.Error("", "NewDataBase failed ", err.Error())
+		return
+	}
+	u.db = db
+	u.ws = ws.NewWs(ws.NewWsRespAsyn(), ws.NewWsConn(u.listener, token, userID))
+	u.msgSync = NewMsgSync(db, u.ws, userID)
+
+	u.hearbeat = NewHeartbeat(u.ws, u.msgSync)
+
+	log.Info("ws, forcedSynchronization heartbeat coroutine run ...")
+	go u.forcedSynchronization()
+	go u.hearbeat.heartbeat()
+	go u.run()
+	//		go u.timedCloseDB()
+	u.forycedSyncReceiveMessageOpt()
+	cb.OnSuccess("")
+
 }
+
+//func (u *open_im_sdk.UserRelated) closeListenerCh() {
+//	if u.ConversationCh != nil {
+//		close(u.ConversationCh)
+//		u.ConversationCh = nil
+//	}
+//}
 
 func (u *LoginMgr) initSDK(config string, cb *ws.ConnListener) bool {
 	if cb == nil {
-		utils.sdkLog("callback == nil")
+		log.Error("callback == nil")
 		return false
 	}
 
-	utils.sdkLog("initSDK LoginState", u.LoginState)
+	log.Info("initSDK LoginState ")
 
 	u.listener = cb
 	u.initListenerCh()
@@ -111,70 +146,6 @@ func (u *open_im_sdk.UserRelated) logout(cb Base) {
 		}
 		utils.sdkLog("logout return")
 	}()
-}
-
-func (u *LoginMgr) login(uid, tk string, cb Base) {
-
-	if cb == nil || u.listener == nil || u.friendListener == nil ||
-		u.ConversationListenerx == nil || len(u.MsgListenerList) == 0 {
-		utils.sdkLog("listener is nil, failed ,please check callback,groupListener,friendListener,ConversationListenerx,MsgListenerList is set", uid, tk)
-		return
-	}
-	log.Info("login start, ", uid, tk)
-
-	u.LoginState = constant.Logining
-	u.token = tk
-	u.loginUserID = uid
-
-	db, err := db.NewDataBase(uid)
-	u.db = db
-
-	wsConn := ws.NewWsConn(u.listener, tk, uid)
-	wsRespAsyn := ws.NewWsRespAsyn()
-	u.ws = ws.NewWs(wsRespAsyn, wsConn)
-
-	u.msgSync = NewMsgSync(db, u.ws, uid)
-
-	if err != nil {
-		u.token = ""
-		u.loginUserID = ""
-		cb.OnError(constant.ErrCodeInitLogin, err.Error())
-		utils.sdkLog("initDBX failed, ", err.Error())
-		u.LoginState = constant.LoginFailed
-		return
-	}
-	utils.sdkLog("initDBX ok ", uid)
-
-	c, httpResp, err := u.firstConn(nil)
-	u.conn = c
-	if err != nil {
-		u.token = ""
-		u.loginUserID = ""
-		cb.OnError(constant.ErrCodeInitLogin, err.Error())
-		utils.sdkLog("firstConn failed ", err.Error())
-		u.LoginState = constant.LoginFailed
-		if httpResp != nil {
-			if httpResp.StatusCode == constant.TokenFailedKickedOffline || httpResp.StatusCode == constant.TokenFailedExpired || httpResp.StatusCode == constant.TokenFailedInvalid {
-				u.LoginState = httpResp.StatusCode
-			}
-		}
-
-		//u.closeDB()
-		return
-	}
-	utils.sdkLog("ws conn ok ", uid)
-	u.LoginState = constant.LoginSuccess
-	utils.sdkLog("ws conn ok ", uid, u.LoginState)
-	//go u.run()
-
-	utils.sdkLog("ws, forcedSynchronization heartbeat coroutine timedCloseDB run ...")
-	go u.forcedSynchronization()
-	//	go u.heartbeat()
-	//	go u.timedCloseDB()
-	//	u.forycedSyncReceiveMessageOpt()
-	utils.sdkLog("forycedSyncReceiveMessageOpt ok")
-	cb.OnSuccess("")
-	utils.sdkLog("login end, ", uid, tk)
 }
 
 //
@@ -450,57 +421,7 @@ func (u *open_im_sdk.UserRelated) syncLoginUserInfo() error {
 	//}
 }
 
-func (u *open_im_sdk.UserRelated) getNeedSyncSeq(svrMinSeq, svrMaxSeq int32) []int32 {
-	utils.sdkLog("getNeedSyncSeq ", svrMinSeq, svrMaxSeq)
-	localMinSeq := u.getNeedSyncLocalMinSeq()
-	var startSeq int32
-	if localMinSeq > svrMinSeq {
-		startSeq = localMinSeq
-	} else {
-		startSeq = svrMinSeq
-	}
-
-	seqList := make([]int32, 0)
-
-	var maxConsequentSeq int32
-	isBreakFlag := false
-	normalSeq := u.getNormalChatLogSeq(startSeq)
-	errorSeq := u.getErrorChatLogSeq(startSeq)
-	for seq := startSeq; seq <= svrMaxSeq; seq++ {
-		_, ok1 := normalSeq[seq]
-		_, ok2 := errorSeq[seq]
-		if ok1 || ok2 {
-			if !isBreakFlag {
-				maxConsequentSeq = seq
-			}
-			continue
-		} else {
-			isBreakFlag = true
-			if seq != 0 {
-				seqList = append(seqList, seq)
-			}
-		}
-	}
-
-	var firstSeq int32
-	if len(seqList) > 0 {
-		firstSeq = seqList[0]
-	} else {
-		if maxConsequentSeq > startSeq {
-			firstSeq = maxConsequentSeq
-		} else {
-			firstSeq = startSeq
-		}
-	}
-	utils.sdkLog("seq start: ", maxConsequentSeq, firstSeq, localMinSeq)
-	if firstSeq > localMinSeq {
-		u.setNeedSyncLocalMinSeq(firstSeq)
-	}
-
-	return seqList
-}
-
-func (u *open_im_sdk.UserRelated) run() {
+func (u *LoginMgr) run() {
 	for {
 		utils.LogStart()
 		if u.conn == nil {
@@ -552,137 +473,6 @@ func (u *open_im_sdk.UserRelated) run() {
 	}
 }
 
-func (u *open_im_sdk.UserRelated) syncMsgFromServerSplit(needSyncSeqList []int64) (err error) {
-	if len(needSyncSeqList) == 0 {
-		utils.sdkLog("len(needSyncSeqList) == 0  don't pull from svr")
-		return nil
-	}
-	msgIncr, ch := u.AddCh()
-	utils.LogEnd("AddCh")
-
-	var wsReq utils.GeneralWsReq
-	wsReq.ReqIdentifier = constant.WSPullMsgBySeqList
-	wsReq.OperationID = utils.operationIDGenerator()
-	wsReq.SendID = u.loginUserID
-	wsReq.MsgIncr = msgIncr
-
-	var pullMsgReq server_api_params.PullMessageBySeqListReq
-	pullMsgReq.SeqList = needSyncSeqList
-
-	wsReq.Data, err = proto.Marshal(&pullMsgReq)
-	if err != nil {
-		utils.sdkLog("Marshl failed")
-		utils.LogFReturn(err.Error())
-		return err
-	}
-	utils.LogBegin("WriteMsg ", wsReq.OperationID)
-	err, _ = u.WriteMsg(wsReq)
-	utils.LogEnd("WriteMsg ", wsReq.OperationID, err)
-	if err != nil {
-		utils.sdkLog("close conn, WriteMsg failed ", err.Error())
-		u.DelCh(msgIncr)
-		return err
-	}
-
-	timeout := 10
-	select {
-	case r := <-ch:
-		utils.sdkLog("ws ch recvMsg success: ", wsReq.OperationID)
-		if r.ErrCode != 0 {
-			utils.sdkLog("pull msg failed ", r.ErrCode, r.ErrMsg, wsReq.OperationID)
-			u.DelCh(msgIncr)
-			return errors.New(r.ErrMsg)
-		} else {
-			utils.sdkLog("pull msg success ", wsReq.OperationID)
-			//var pullMsg PullUserMsgResp
-
-			//pullMsg.ErrCode = 0
-
-			var pullMsgResp server_api_params.PullMessageBySeqListResp
-			err := proto.Unmarshal(r.Data, &pullMsgResp)
-			if err != nil {
-				utils.sdkLog("Unmarshal failed ", err.Error())
-				utils.LogFReturn(err.Error())
-				return err
-			}
-			//pullMsg.Data.Group = pullMsgResp.GroupUserMsg
-			//pullMsg.Data.Single = pullMsgResp.SingleUserMsg
-			//pullMsg.Data.MaxSeq = pullMsgResp.MaxSeq
-			//pullMsg.Data.MinSeq = pullMsgResp.MinSeq
-
-			u.seqMsgMutex.Lock()
-			isInmap := false
-			arrMsg := utils.ArrMsg{}
-			//	sdkLog("pullmsg data: ", pullMsgResp.SingleUserMsg, pullMsg.Data.Single)
-			for i := 0; i < len(pullMsgResp.SingleUserMsg); i++ {
-				for j := 0; j < len(pullMsgResp.SingleUserMsg[i].List); j++ {
-					utils.sdkLog("open_im pull one msg: |", pullMsgResp.SingleUserMsg[i].List[j].ClientMsgID, "|")
-					utils.sdkLog("pull all: |", pullMsgResp.SingleUserMsg[i].List[j].Seq, pullMsgResp.SingleUserMsg[i].List[j])
-					b1 := u.isExistsInErrChatLogBySeq(pullMsgResp.SingleUserMsg[i].List[j].Seq)
-					b2 := u.judgeMessageIfExistsBySeq(pullMsgResp.SingleUserMsg[i].List[j].Seq)
-					_, ok := u.seqMsg[int32(pullMsgResp.SingleUserMsg[i].List[j].Seq)]
-					if b1 || b2 || ok {
-						utils.sdkLog("seq in : ", pullMsgResp.SingleUserMsg[i].List[j].Seq, b1, b2, ok)
-					} else {
-						isInmap = true
-						u.seqMsg[int32(pullMsgResp.SingleUserMsg[i].List[j].Seq)] = pullMsgResp.SingleUserMsg[i].List[j]
-						utils.sdkLog("into map, seq: ", pullMsgResp.SingleUserMsg[i].List[j].Seq, pullMsgResp.SingleUserMsg[i].List[j].ClientMsgID, pullMsgResp.SingleUserMsg[i].List[j].ServerMsgID, pullMsgResp.SingleUserMsg[i].List[j])
-					}
-				}
-			}
-
-			for i := 0; i < len(pullMsgResp.GroupUserMsg); i++ {
-				for j := 0; j < len(pullMsgResp.GroupUserMsg[i].List); j++ {
-
-					b1 := u.isExistsInErrChatLogBySeq(pullMsgResp.GroupUserMsg[i].List[j].Seq)
-					b2 := u.judgeMessageIfExistsBySeq(pullMsgResp.GroupUserMsg[i].List[j].Seq)
-					_, ok := u.seqMsg[int32(pullMsgResp.GroupUserMsg[i].List[j].Seq)]
-					if b1 || b2 || ok {
-						utils.sdkLog("seq in : ", pullMsgResp.GroupUserMsg[i].List[j].Seq, b1, b2, ok)
-					} else {
-						isInmap = true
-						u.seqMsg[int32(pullMsgResp.GroupUserMsg[i].List[j].Seq)] = pullMsgResp.GroupUserMsg[i].List[j]
-						utils.sdkLog("into map, seq: ", pullMsgResp.GroupUserMsg[i].List[j].Seq, pullMsgResp.GroupUserMsg[i].List[j].ClientMsgID, pullMsgResp.GroupUserMsg[i].List[j].ServerMsgID)
-						utils.sdkLog("pull all: |", pullMsgResp.GroupUserMsg[i].List[j].Seq, pullMsgResp.GroupUserMsg[i].List[j])
-
-					}
-				}
-			}
-			u.seqMsgMutex.Unlock()
-
-			if isInmap {
-				err = u.triggerCmdNewMsgCome(arrMsg)
-				if err != nil {
-					utils.sdkLog("triggerCmdNewMsgCome failed, ", err.Error())
-				}
-			}
-			u.DelCh(msgIncr)
-		}
-	case <-time.After(time.Second * time.Duration(timeout)):
-		utils.sdkLog("ws ch recvMsg timeout,", wsReq.OperationID)
-		u.DelCh(msgIncr)
-	}
-	return nil
-}
-
-func (u *open_im_sdk.UserRelated) syncMsgFromServer(needSyncSeqList []int32) (err error) {
-	notInCache := u.getNotInSeq(needSyncSeqList)
-	if len(notInCache) == 0 {
-		utils.sdkLog("notInCache is null, don't sync from svr")
-		return nil
-	}
-	utils.sdkLog("notInCache ", notInCache)
-	var SPLIT int = 100
-	for i := 0; i < len(notInCache)/SPLIT; i++ {
-		//0-99 100-199
-		u.syncMsgFromServerSplit(notInCache[i*SPLIT : (i+1)*SPLIT])
-		utils.sdkLog("syncMsgFromServerSplit idx: ", i*SPLIT, (i+1)*SPLIT)
-	}
-	u.syncMsgFromServerSplit(notInCache[SPLIT*(len(notInCache)/SPLIT):])
-	utils.sdkLog("syncMsgFromServerSplit idx: ", SPLIT*(len(notInCache)/SPLIT), len(notInCache))
-	return nil
-}
-
 /*
 func (u *UserRelated) pullBySplit(beginSeq int64, endSeq int64) error {
 	LogBegin(beginSeq, endSeq)
@@ -724,26 +514,6 @@ func (u *UserRelated) pullBySplit(beginSeq int64, endSeq int64) error {
 }
 
 */
-
-func (u *open_im_sdk.UserRelated) getNotInSeq(needSyncSeqList []int32) (seqList []int64) {
-	u.seqMsgMutex.RLock()
-	defer u.seqMsgMutex.RUnlock()
-
-	for _, v := range needSyncSeqList {
-		_, ok := u.seqMsg[v]
-		if !ok {
-			seqList = append(seqList, int64(v))
-		}
-	}
-	utils.LogSReturn(seqList)
-	return seqList
-}
-
-func (u *open_im_sdk.UserRelated) delSeqFromCache(seq int32) {
-	u.seqMsgMutex.RLock()
-	defer u.seqMsgMutex.RUnlock()
-	delete(u.seqMsg, seq)
-}
 
 /*
 func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64) (err error) {
