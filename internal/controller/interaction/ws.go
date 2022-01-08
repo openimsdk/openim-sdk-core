@@ -39,7 +39,7 @@ func (ws *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, c
 
 	case <-time.After(time.Second * time.Duration(timeout)):
 		log.Error(operationID, "ws ch recvMsg err, timeout")
-		if connSend != ws.conn {
+		if connSend != ws.WsConn.conn {
 			return nil, constant.WsRecvConnDiff
 		} else {
 			return nil, constant.WsRecvConnSame
