@@ -42,7 +42,7 @@ type ConversationStruct struct {
 	DraftTimestamp    int64  `json:"draftTimestamp"`
 	IsPinned          int    `json:"isPinned"`
 }
-type ConversationListener struct {
+type Conversation struct {
 	ConversationListenerx OnConversationListener
 	MsgListenerList       []OnAdvancedMsgListener
 	ch                    chan open_im_sdk.cmd2Value

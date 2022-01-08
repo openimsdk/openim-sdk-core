@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"net/http"
+	"open_im_sdk/internal/controller/conversation_msg"
 	"open_im_sdk/internal/controller/friend"
+	"open_im_sdk/internal/controller/group"
 	ws "open_im_sdk/internal/controller/interaction"
 	"open_im_sdk/internal/open_im_sdk"
 	"open_im_sdk/pkg/constant"
@@ -27,8 +29,10 @@ import (
 )
 
 type LoginMgr struct {
-	db          *db.DataBase
-	friend      *friend.Friend
+	db     *db.DataBase
+	friend *friend.Friend
+	group  *group.Group
+	*conversation_msg
 	ws          *ws.Ws
 	msgSync     *MsgSync
 	token       string
