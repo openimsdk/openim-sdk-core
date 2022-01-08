@@ -1,4 +1,4 @@
-package ws
+package interaction
 
 import (
 	"bytes"
@@ -30,6 +30,29 @@ type WsConn struct {
 	listener    ConnListener
 	token       string
 	loginUserID string
+}
+
+func (u *WsConn) CloseConn() error {
+	u.Lock()
+	defer u.Unlock()
+	return u.conn.Close()
+
+}
+
+func (u *WsConn) LoginState() int32 {
+	return u.loginState
+}
+
+func (u *WsConn) SetLoginState(loginState int32) {
+	u.loginState = loginState
+}
+
+func (u *WsConn) Lock() {
+	u.stateMutex.Lock()
+}
+
+func (u *WsConn) Unlock() {
+	u.stateMutex.Unlock()
 }
 
 func (u *WsConn) sendPingMsg() error {

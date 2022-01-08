@@ -221,14 +221,14 @@ type WsSubMsg struct {
 //	Data          []byte `json:"data"`
 //}
 
-type GeneralWsReq struct {
-	ReqIdentifier int32  `json:"reqIdentifier"`
-	Token         string `json:"token"`
-	SendID        string `json:"sendID"`
-	OperationID   string `json:"operationID"`
-	MsgIncr       string `json:"msgIncr"`
-	Data          []byte `json:"data"`
-}
+//type GeneralWsReq struct {
+//	ReqIdentifier int32  `json:"reqIdentifier"`
+//	Token         string `json:"token"`
+//	SendID        string `json:"sendID"`
+//	OperationID   string `json:"operationID"`
+//	MsgIncr       string `json:"msgIncr"`
+//	Data          []byte `json:"data"`
+//}
 
 type ArrMsg struct {
 	SingleData []server_api_params.MsgData
