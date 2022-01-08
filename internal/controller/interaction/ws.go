@@ -1,15 +1,16 @@
 package interaction
 
 import (
-	"errors"
+	"open_im_sdk/pkg/common"
+	"open_im_sdk/pkg/utils"
 	"github.com/gorilla/websocket"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
-	"open_im_sdk/pkg/utils"
 	"sync"
 	"time"
+	"google.golang.org/protobuf/proto"
 )
 
 type Ws struct {
@@ -18,9 +19,10 @@ type Ws struct {
 	seqMsg      map[int32]server_api_params.MsgData
 	seqMsgMutex *sync.RWMutex
 	*db.DataBase
+	conversationCh chan common.Cmd2Value
 }
 
-func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, lock *sync.RWMutex) *Ws {
+func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, lock *sync.RWMutex, ch chan common.Cmd2Value) *Ws {
 	return &Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn}
 }
 
@@ -202,5 +204,5 @@ func (u *Ws) doMsg(wsResp GeneralWsResp) {
 	u.seqMsgMutex.Unlock()
 
 	arrMsg := utils.ArrMsg{}
-	u.triggerCmdNewMsgCome(arrMsg)
+	common.TriggerCmdNewMsgCome(arrMsg, u.conversationCh)
 }

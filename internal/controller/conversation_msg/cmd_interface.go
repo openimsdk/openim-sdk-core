@@ -21,10 +21,6 @@ func triggerCmdFriendApplication() error {
 
 }
 
-type Cmd2Value struct {
-	Cmd   string
-	Value interface{}
-}
 
 type deleteConNode struct {
 	SourceID       string
@@ -109,18 +105,3 @@ func doListener(Li goroutine) {
 	}
 }
 
-func sendCmd(ch chan open_im_sdk.cmd2Value, value open_im_sdk.cmd2Value, timeout int64) error {
-	var flag = 0
-	select {
-	case ch <- value:
-		flag = 1
-	case <-time.After(time.Second * time.Duration(timeout)):
-		flag = 2
-	}
-	if flag == 1 {
-		return nil
-	} else {
-		sdkLog("send cmd timeout, ", timeout, value)
-		return errors.New("send cmd timeout")
-	}
-}

@@ -27,3 +27,8 @@ func (d *DataBase) SetMinSeq(seq int32) error {
 func (d *DataBase) GetNeedSyncLocalMinSeq() int32 {
 	return 0
 }
+
+func (d *DataBase) SetNeedSyncLocalMinSeq(seq int32) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+}

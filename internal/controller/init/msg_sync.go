@@ -3,6 +3,7 @@ package init
 import (
 	"github.com/golang/protobuf/proto"
 	ws "open_im_sdk/internal/controller/interaction"
+	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
@@ -13,12 +14,12 @@ import (
 type MsgSync struct {
 	*db.DataBase
 	seqMsg      map[int32]server_api_params.MsgData
-	seqMsgMutex *sync.RWMutex
+	seqMsgMutex sync.RWMutex
 	*ws.Ws
 	loginUserID string
 }
 
-func NewMsgSync(dataBase *db.DataBase, ws *ws.Ws, loginUserID string) *MsgSync {
+func NewMsgSync(dataBase *db.DataBase, ws *ws.Ws, loginUserID string, ch chan common.Cmd2Value) *MsgSync {
 	return &MsgSync{DataBase: dataBase, seqMsg: make(map[int32]server_api_params.MsgData, 1000), Ws: ws, loginUserID: loginUserID}
 }
 
@@ -64,7 +65,7 @@ func (u *MsgSync) getNeedSyncSeq(svrMinSeq, svrMaxSeq int32) []int32 {
 		}
 	}
 	if firstSeq > localMinSeq {
-		u.setNeedSyncLocalMinSeq(firstSeq)
+		u.SetNeedSyncLocalMinSeq(firstSeq)
 	}
 
 	return seqList
@@ -220,7 +221,7 @@ func (u *MsgSync) syncMsgFromServerSplit(needSyncSeqList []int64) (err error) {
 	u.seqMsgMutex.Unlock()
 
 	if isInmap {
-		err = TriggerCmdNewMsgCome(arrMsg)
+		err = common.TriggerCmdNewMsgCome(arrMsg, )
 		if err != nil {
 		}
 	}
