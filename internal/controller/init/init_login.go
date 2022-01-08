@@ -3,13 +3,15 @@ package init
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/golang/protobuf/proto"
-	"net/http"
+	"github.com/gorilla/websocket"
+	"github.com/jinzhu/copier"
+	"github.com/mitchellh/mapstructure"
 	conv "open_im_sdk/internal/controller/conversation_msg"
 	"open_im_sdk/internal/controller/friend"
 	"open_im_sdk/internal/controller/group"
 	ws "open_im_sdk/internal/controller/interaction"
+	"open_im_sdk/internal/controller/user"
 	"open_im_sdk/internal/open_im_sdk"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -17,15 +19,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
-
-	"github.com/gorilla/websocket"
-	_ "github.com/mattn/go-sqlite3"
-
 	"time"
-
-	"github.com/jinzhu/copier"
-	"github.com/mitchellh/mapstructure"
-	"open_im_sdk/internal/controller/user"
 )
 
 type LoginMgr struct {
@@ -223,102 +217,16 @@ func (u *open_im_sdk.UserRelated) forycedSyncReceiveMessageOpt() {
 	u.receiveMessageOptMutex.Unlock()
 }
 
-func (u *open_im_sdk.UserRelated) forcedSynchronization() {
-	u.ForceSyncFriend()
-	u.ForceSyncBlackList()
-	u.ForceSyncFriendApplication()
+func (u *LoginMgr) forcedSynchronization() {
+	u.friend.ForceSyncFriend()
+	u.friend.ForceSyncBlackList()
+	u.friend.ForceSyncFriendApplication()
 	//	u.ForceSyncSelfFriendApplication()
-	u.ForceSyncLoginUserInfo()
+	u.user.ForceSyncLoginUserInfo()
 	//	u.ForceSyncJoinedGroup()
 	//	u.ForceSyncGroupRequest()
 	//	u.ForceSyncSelfGroupRequest()
 	//	u.ForceSyncJoinedGroupMember()
-}
-
-func (u *open_im_sdk.UserRelated) doWsMsg(message []byte) {
-	utils.LogBegin()
-	utils.LogBegin("decodeBinaryWs")
-	wsResp, err := u.decodeBinaryWs(message)
-	if err != nil {
-		utils.LogFReturn("decodeBinaryWs err", err.Error())
-		return
-	}
-	utils.LogEnd("decodeBinaryWs ", wsResp.OperationID, wsResp.ReqIdentifier)
-
-	switch wsResp.ReqIdentifier {
-	case constant.WSGetNewestSeq:
-		u.doWSGetNewestSeq(*wsResp)
-	case constant.WSPullMsgBySeqList:
-		u.doWSPullMsg(*wsResp)
-	case constant.WSPushMsg:
-		u.doWSPushMsg(*wsResp)
-	case constant.WSSendMsg:
-		u.doWSSendMsg(*wsResp)
-	case constant.WSKickOnlineMsg:
-		u.kickOnline(*wsResp)
-	default:
-		utils.LogFReturn("type failed, ", wsResp.ReqIdentifier, wsResp.OperationID, wsResp.ErrCode, wsResp.ErrMsg)
-		return
-	}
-	utils.LogSReturn()
-	return
-}
-
-func (u *open_im_sdk.UserRelated) doWSGetNewestSeq(wsResp utils.GeneralWsResp) {
-	utils.LogBegin(wsResp.OperationID)
-	u.notifyResp(wsResp)
-	utils.LogSReturn(wsResp.OperationID)
-}
-
-func (u *open_im_sdk.UserRelated) doWSPullMsg(wsResp utils.GeneralWsResp) {
-	utils.LogBegin(wsResp.OperationID)
-	u.notifyResp(wsResp)
-	utils.LogSReturn(wsResp.OperationID)
-}
-
-func (u *open_im_sdk.UserRelated) doWSSendMsg(wsResp utils.GeneralWsResp) {
-	utils.LogBegin(wsResp.OperationID)
-	u.notifyResp(wsResp)
-	utils.LogSReturn(wsResp.OperationID)
-}
-
-func (u *open_im_sdk.UserRelated) doWSPushMsg(wsResp utils.GeneralWsResp) {
-	utils.LogBegin()
-	u.doMsg(wsResp)
-	utils.LogSReturn()
-}
-
-func (u *open_im_sdk.UserRelated) doMsg(wsResp utils.GeneralWsResp) {
-	utils.LogBegin(wsResp.OperationID)
-	var msg server_api_params.MsgData
-	if wsResp.ErrCode != 0 {
-		utils.sdkLog("errcode: ", wsResp.ErrCode, " errmsg: ", wsResp.ErrMsg)
-		utils.LogFReturn()
-		return
-	}
-	err := proto.Unmarshal(wsResp.Data, &msg)
-	if err != nil {
-		utils.sdkLog("Unmarshal failed", err.Error())
-		utils.LogFReturn()
-		return
-	}
-
-	utils.sdkLog("openim ws  recv push msg do push seq in : ", msg.Seq)
-	u.seqMsgMutex.Lock()
-	b1 := u.isExistsInErrChatLogBySeq(msg.Seq)
-	b2 := u.judgeMessageIfExists(msg.ClientMsgID)
-	_, ok := u.seqMsg[int32(msg.Seq)]
-	if b1 || b2 || ok {
-		utils.sdkLog("seq in : ", msg.Seq, b1, b2, ok)
-		u.seqMsgMutex.Unlock()
-		return
-	}
-
-	u.seqMsg[int32(msg.Seq)] = &msg
-	u.seqMsgMutex.Unlock()
-
-	arrMsg := utils.ArrMsg{}
-	u.triggerCmdNewMsgCome(arrMsg)
 }
 
 func (u *open_im_sdk.UserRelated) GetMinSeqSvr() int64 {
@@ -349,128 +257,6 @@ func (u *open_im_sdk.UserRelated) syncSeq2Msg() error {
 
 	err = u.syncMsgFromServer(needSyncSeq)
 	return err
-}
-
-func (u *open_im_sdk.UserRelated) syncLoginUserInfo() error {
-	userSvr, err := u.getServerUserInfo()
-	if err != nil {
-		log.NewError("0", "getServerUserInfo failed , user: ", err.Error())
-		return err
-	}
-
-	log.NewInfo("0", "getServerUserInfo ", userSvr)
-
-	userLocal, err := u._getLoginUser()
-	needInsert := 0
-	if err != nil {
-		log.NewError("0", "_getLoginUser failed  ", err.Error())
-		needInsert = 1
-	}
-
-	if utils.CompFields(&userLocal, &userSvr) {
-		return nil
-	}
-
-	var updateLocalUser db.LocalUser
-	copier.Copy(&updateLocalUser, userSvr)
-	log.NewInfo("0", "copy: ", updateLocalUser)
-	if needInsert == 1 {
-		err = u._insertLoginUser(&updateLocalUser)
-		if err != nil {
-			log.NewError("0 ", "_insertLoginUser failed ", err.Error())
-		}
-		return err
-	}
-	err = u._updateLoginUser(&updateLocalUser)
-	if err != nil {
-		log.NewError("0 ", "_updateLoginUser failed ", err.Error())
-	}
-	return err
-
-	//if err != nil {
-	//	return err
-	//}
-	//sdkLog("getServerUserInfo ok, user: ", *userSvr)
-	//
-	//userLocal, err := u.getLoginUserInfoFromLocal()
-	//userLocal, err := u._getLoginUser()
-	//if err != nil {
-	//	return err
-	//}
-	//sdkLog("getLoginUserInfoFromLocal ok, user: ", userLocal)
-	//
-	//if userSvr.Uid != userLocal.Uid ||
-	//	userSvr.Name != userLocal.Name ||
-	//	userSvr.Icon != userLocal.Icon ||
-	//	userSvr.Gender != userLocal.Gender ||
-	//	userSvr.Mobile != userLocal.Mobile ||
-	//	userSvr.Birth != userLocal.Birth ||
-	//	userSvr.Email != userLocal.Email ||
-	//	userSvr.Ex != userLocal.Ex {
-	//	bUserInfo, err := json.Marshal(userSvr)
-	//	if err != nil {
-	//		sdkLog("marshal failed, ", err.Error())
-	//		return err
-	//	}
-	//
-	//	copier.Copy(a, b)
-	//	err = u._updateLoginUser(userSvr)
-	//	if err != nil {
-	//		u.cb.OnSelfInfoUpdated(string(bUserInfo))
-	//	}
-	//}
-}
-
-func (u *LoginMgr) run() {
-	for {
-		utils.LogStart()
-		if u.conn == nil {
-			utils.LogBegin("reConn", nil)
-			re, _, _ := u.reConn(nil)
-			utils.LogEnd("reConn", re)
-			u.conn = re
-		}
-		if u.conn != nil {
-			msgType, message, err := u.conn.ReadMessage()
-			utils.sdkLog("ReadMessage message ", msgType, err)
-			if err != nil {
-				u.stateMutex.Lock()
-				utils.sdkLog("ws read message failed ", err.Error(), u.LoginState)
-				if u.LoginState == constant.LogoutCmd {
-					utils.sdkLog("logout, ws close, return ", constant.LogoutCmd, err)
-					u.conn = nil
-					u.stateMutex.Unlock()
-					return
-				}
-				u.stateMutex.Unlock()
-				time.Sleep(time.Duration(5) * time.Second)
-				utils.sdkLog("ws  ReadMessage failed, sleep 5s, reconn, ", err)
-				utils.LogBegin("reConn", u.conn)
-				u.conn, _, err = u.reConn(u.conn)
-				utils.LogEnd("reConn", u.conn)
-			} else {
-				if msgType == websocket.CloseMessage {
-					u.conn, _, _ = u.reConn(u.conn)
-				} else if msgType == websocket.TextMessage {
-					utils.sdkLog("type failed, recv websocket.TextMessage ", string(message))
-				} else if msgType == websocket.BinaryMessage {
-					go u.doWsMsg(message)
-				} else {
-					utils.sdkLog("recv other msg: type ", msgType)
-				}
-			}
-		} else {
-			u.stateMutex.Lock()
-			if u.LoginState == constant.LogoutCmd {
-				utils.sdkLog("logout, ws close, return ", constant.LogoutCmd)
-				u.stateMutex.Unlock()
-				return
-			}
-			u.stateMutex.Unlock()
-			utils.sdkLog("ws failed, sleep 5s, reconn... ")
-			time.Sleep(time.Duration(5) * time.Second)
-		}
-	}
 }
 
 /*
@@ -714,244 +500,8 @@ func (u *open_im_sdk.UserRelated) getUserNewestSeq() (int64, int64, error) {
 	return seqResp.Data.Seq, seqResp.Data.MinSeq, nil
 }
 
-func (u *open_im_sdk.UserRelated) getServerUserInfo() (*server_api_params.UserInfo, error) {
-	apiReq := server_api_params.GetUserInfoReq{OperationID: utils.operationIDGenerator(), UserIDList: []string{u.loginUserID}}
-	resp, err := utils.post2Api(open_im_sdk.getUserInfoRouter, apiReq, u.token)
-	commData, err := utils.checkErrAndRespReturn(err, resp, apiReq.OperationID)
-	if err != nil {
-		return nil, utils.wrap(err, apiReq.OperationID)
-	}
-	realData := server_api_params.GetUserInfoResp{}
-	err = mapstructure.Decode(commData.Data, &realData.UserInfoList)
-	if err != nil {
-		log.NewError(apiReq.OperationID, "Decode failed ", err.Error())
-		return nil, err
-	}
-	log.NewInfo(apiReq.OperationID, "realData.UserInfoList", realData.UserInfoList, commData.Data)
-	if len(realData.UserInfoList) == 0 {
-		log.NewInfo(apiReq.OperationID, "failed, no user : ", u.loginUserID)
-		return nil, errors.New("no login user")
-	}
-	log.NewInfo(apiReq.OperationID, "realData.UserInfoList[0]", realData.UserInfoList[0])
-	return realData.UserInfoList[0], nil
-}
-
-func (u *open_im_sdk.UserRelated) getUserNameAndFaceUrlByUid(uid string) (faceUrl, name string, err error) {
-	friendInfo, err := u._getFriendInfoByFriendUserID(uid)
-	if err != nil {
-		return "", "", err
-	}
-	if friendInfo.FriendUserID == "" {
-		userInfo, err := u.getUserInfoByUid(uid)
-		if err != nil {
-			return "", "", err
-		} else {
-			return userInfo.Icon, userInfo.Name, nil
-		}
-	} else {
-		if friendInfo.Remark != "" {
-			return friendInfo.FaceUrl, friendInfo.Remark, nil
-		} else {
-			return friendInfo.FaceUrl, friendInfo.Nickname, nil
-		}
-	}
-}
-func (u *open_im_sdk.UserRelated) getUserInfoByUid(uid string) (*open_im_sdk.userInfo, error) {
-	var uidList []string
-	uidList = append(uidList, uid)
-	resp, err := utils.post2Api(open_im_sdk.getUserInfoRouter, open_im_sdk.paramsGetUserInfo{OperationID: utils.operationIDGenerator(), UidList: uidList}, u.token)
-	if err != nil {
-		utils.sdkLog("post2Api failed, ", open_im_sdk.getUserInfoRouter, uidList, err.Error())
-		return nil, err
-	}
-	utils.sdkLog("post api: ", open_im_sdk.getUserInfoRouter, open_im_sdk.paramsGetUserInfo{OperationID: utils.operationIDGenerator(), UidList: uidList}, "uid ", uid)
-	var userResp open_im_sdk.getUserInfoResp
-	err = json.Unmarshal(resp, &userResp)
-	if err != nil {
-		utils.sdkLog("Unmarshal failed, ", resp, err.Error())
-		return nil, err
-	}
-
-	if userResp.ErrCode != 0 {
-		utils.sdkLog("errcode: ", userResp.ErrCode, "errmsg:", userResp.ErrMsg)
-		return nil, errors.New(userResp.ErrMsg)
-	}
-
-	if len(userResp.Data) == 0 {
-		utils.sdkLog("failed, no user :", uid)
-		return nil, errors.New("no user")
-	}
-	return &userResp.Data[0], nil
-}
-
-func (u *open_im_sdk.UserRelated) doFriendMsg(msg *server_api_params.MsgData) {
-	utils.sdkLog("doFriendMsg ", msg)
-	if u.cb == nil || u.friendListener == nil {
-		utils.sdkLog("listener is null")
-		return
-	}
-
-	if msg.SendID == u.loginUserID && msg.SenderPlatformID == u.SvrConf.Platform {
-		utils.sdkLog("sync msg ", msg.ContentType)
-		return
-	}
-
-	go func() {
-		switch msg.ContentType {
-		case constant.AddFriendTip:
-			utils.sdkLog("addFriendNew ", msg)
-			u.addFriendNew(msg) //
-		case constant.AcceptFriendApplicationTip:
-			utils.sdkLog("acceptFriendApplicationNew ", msg)
-			u.acceptFriendApplicationNew(msg)
-		case constant.RefuseFriendApplicationTip:
-			utils.sdkLog("refuseFriendApplicationNew ", msg)
-			u.refuseFriendApplicationNew(msg)
-		case constant.SetSelfInfoTip:
-			utils.sdkLog("setSelfInfo ", msg)
-			u.setSelfInfo(msg)
-			//	case KickOnlineTip:
-			//		sdkLog("kickOnline ", msg)
-			//		u.kickOnline(&msg)
-		default:
-			utils.sdkLog("type failed, ", msg)
-		}
-	}()
-}
-
-func (u *open_im_sdk.UserRelated) acceptFriendApplicationNew(msg *server_api_params.MsgData) {
-	utils.LogBegin(msg.ContentType, msg.ServerMsgID, msg.ClientMsgID)
-	u.syncFriendList()
-	utils.sdkLog(msg.SendID, msg.RecvID)
-	utils.sdkLog("acceptFriendApplicationNew", msg.ServerMsgID, msg)
-
-	fInfoList, err := u.getServerFriendList()
-	if err != nil {
-		return
-	}
-	utils.sdkLog("fInfoList", fInfoList)
-
-	//for _, fInfo := range fInfoList {
-	//	if fInfo.UID == msg.SendID {
-	//		jData, err := json.Marshal(fInfo)
-	//		if err != nil {
-	//			sdkLog("err: ", err.Error())
-	//			return
-	//		}
-	//		u.friendListener.OnFriendListAdded(string(jData))
-	//		u.friendListener.OnFriendApplicationListAccept(string(jData))
-	//		return
-	//	}
-	//}
-}
-
-func (u *open_im_sdk.UserRelated) refuseFriendApplicationNew(msg *server_api_params.MsgData) {
-	utils.sdkLog(msg.SendID, msg.RecvID)
-	applyList, err := u.getServerSelfApplication()
-
-	if err != nil {
-		return
-	}
-	for _, v := range applyList {
-		if v.Uid == msg.SendID {
-			jData, err := json.Marshal(v)
-			if err != nil {
-				utils.sdkLog("err: ", err.Error())
-				return
-			}
-			u.friendListener.OnFriendApplicationListReject(string(jData))
-			return
-		}
-	}
-
-}
-
-func (u *open_im_sdk.UserRelated) addFriendNew(msg *server_api_params.MsgData) {
-	utils.sdkLog("addFriend start ")
-	u.syncFriendApplication()
-
-	var ui2GetUserInfo open_im_sdk.ui2ClientCommonReq
-	ui2GetUserInfo.UidList = append(ui2GetUserInfo.UidList, msg.SendID)
-	resp, err := utils.post2Api(open_im_sdk.getUserInfoRouter, open_im_sdk.paramsGetUserInfo{UidList: ui2GetUserInfo.UidList, OperationID: utils.operationIDGenerator()}, u.token)
-	if err != nil {
-		utils.sdkLog("getUserInfo failed", err)
-		return
-	}
-	var vgetUserInfoResp open_im_sdk.getUserInfoResp
-	err = json.Unmarshal(resp, &vgetUserInfoResp)
-	if err != nil {
-		utils.sdkLog("Unmarshal failed, ", err.Error())
-		return
-	}
-	if vgetUserInfoResp.ErrCode != 0 {
-		utils.sdkLog(vgetUserInfoResp.ErrCode, vgetUserInfoResp.ErrMsg)
-		return
-	}
-	if len(vgetUserInfoResp.Data) == 0 {
-		utils.sdkLog(vgetUserInfoResp.ErrCode, vgetUserInfoResp.ErrMsg, msg)
-		return
-	}
-	var appUserNode open_im_sdk.applyUserInfo
-	appUserNode.Uid = vgetUserInfoResp.Data[0].Uid
-	appUserNode.Name = vgetUserInfoResp.Data[0].Name
-	appUserNode.Icon = vgetUserInfoResp.Data[0].Icon
-	appUserNode.Gender = vgetUserInfoResp.Data[0].Gender
-	appUserNode.Mobile = vgetUserInfoResp.Data[0].Mobile
-	appUserNode.Birth = vgetUserInfoResp.Data[0].Birth
-	appUserNode.Email = vgetUserInfoResp.Data[0].Email
-	appUserNode.Ex = vgetUserInfoResp.Data[0].Ex
-	appUserNode.Flag = 0
-
-	jsonInfo, err := json.Marshal(appUserNode)
-	if err != nil {
-		utils.sdkLog("  marshal failed", err.Error())
-		return
-	}
-	u.friendListener.OnFriendApplicationListAdded(string(jsonInfo))
-}
-
 func (u *open_im_sdk.UserRelated) kickOnline(msg utils.GeneralWsResp) {
 	utils.sdkLog("kickOnline ", msg.ReqIdentifier, msg.ErrCode, msg.ErrMsg)
 	u.logout(nil)
 	u.cb.OnKickedOffline()
-}
-
-func (u *open_im_sdk.UserRelated) setSelfInfo(msg *server_api_params.MsgData) {
-	var uidList []string
-	uidList = append(uidList, msg.SendID)
-	resp, err := utils.post2Api(open_im_sdk.getUserInfoRouter, open_im_sdk.paramsGetUserInfo{OperationID: utils.operationIDGenerator(), UidList: uidList}, u.token)
-	if err != nil {
-		utils.sdkLog("post2Api failed, ", open_im_sdk.getUserInfoRouter, uidList, err.Error())
-		return
-	}
-	var userResp open_im_sdk.getUserInfoResp
-	err = json.Unmarshal(resp, &userResp)
-	if err != nil {
-		utils.sdkLog("Unmarshal failed, ", resp, err.Error())
-		return
-	}
-
-	if userResp.ErrCode != 0 {
-		utils.sdkLog("errcode: ", userResp.ErrCode, "errmsg:", userResp.ErrMsg)
-		return
-	}
-
-	if len(userResp.Data) == 0 {
-		utils.sdkLog("failed, no user : ", u.loginUserID)
-		return
-	}
-
-	err = u.updateFriendInfo(userResp.Data[0].Uid, userResp.Data[0].Name, userResp.Data[0].Icon, userResp.Data[0].Gender, userResp.Data[0].Mobile, userResp.Data[0].Birth, userResp.Data[0].Email, userResp.Data[0].Ex)
-	if err != nil {
-		utils.sdkLog("  db change failed", err.Error())
-		return
-	}
-
-	jsonInfo, err := json.Marshal(userResp.Data[0])
-	if err != nil {
-		utils.sdkLog("  marshal failed", err.Error())
-		return
-	}
-
-	u.friendListener.OnFriendInfoChanged(string(jsonInfo))
 }

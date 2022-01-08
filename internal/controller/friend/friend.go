@@ -1,8 +1,10 @@
 package friend
 
 import (
+	"encoding/json"
 	"github.com/mitchellh/mapstructure"
 	ws "open_im_sdk/internal/controller/interaction"
+	"open_im_sdk/internal/open_im_sdk"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
@@ -538,6 +540,132 @@ func (f *Friend) syncBlackList() {
 		if err != nil {
 			log.NewError("0", "_deleteFriend failed ", err.Error())
 			continue
+		}
+	}
+
+}
+
+func (u *open_im_sdk.UserRelated) addFriendNew(msg *server_api_params.MsgData) {
+	utils.sdkLog("addFriend start ")
+	u.syncFriendApplication()
+
+	var ui2GetUserInfo open_im_sdk.ui2ClientCommonReq
+	ui2GetUserInfo.UidList = append(ui2GetUserInfo.UidList, msg.SendID)
+	resp, err := utils.post2Api(open_im_sdk.getUserInfoRouter, open_im_sdk.paramsGetUserInfo{UidList: ui2GetUserInfo.UidList, OperationID: utils.operationIDGenerator()}, u.token)
+	if err != nil {
+		utils.sdkLog("getUserInfo failed", err)
+		return
+	}
+	var vgetUserInfoResp open_im_sdk.getUserInfoResp
+	err = json.Unmarshal(resp, &vgetUserInfoResp)
+	if err != nil {
+		utils.sdkLog("Unmarshal failed, ", err.Error())
+		return
+	}
+	if vgetUserInfoResp.ErrCode != 0 {
+		utils.sdkLog(vgetUserInfoResp.ErrCode, vgetUserInfoResp.ErrMsg)
+		return
+	}
+	if len(vgetUserInfoResp.Data) == 0 {
+		utils.sdkLog(vgetUserInfoResp.ErrCode, vgetUserInfoResp.ErrMsg, msg)
+		return
+	}
+	var appUserNode open_im_sdk.applyUserInfo
+	appUserNode.Uid = vgetUserInfoResp.Data[0].Uid
+	appUserNode.Name = vgetUserInfoResp.Data[0].Name
+	appUserNode.Icon = vgetUserInfoResp.Data[0].Icon
+	appUserNode.Gender = vgetUserInfoResp.Data[0].Gender
+	appUserNode.Mobile = vgetUserInfoResp.Data[0].Mobile
+	appUserNode.Birth = vgetUserInfoResp.Data[0].Birth
+	appUserNode.Email = vgetUserInfoResp.Data[0].Email
+	appUserNode.Ex = vgetUserInfoResp.Data[0].Ex
+	appUserNode.Flag = 0
+
+	jsonInfo, err := json.Marshal(appUserNode)
+	if err != nil {
+		utils.sdkLog("  marshal failed", err.Error())
+		return
+	}
+	u.friendListener.OnFriendApplicationListAdded(string(jsonInfo))
+}
+
+func (u *open_im_sdk.UserRelated) doFriendMsg(msg *server_api_params.MsgData) {
+	utils.sdkLog("doFriendMsg ", msg)
+	if u.cb == nil || u.friendListener == nil {
+		utils.sdkLog("listener is null")
+		return
+	}
+
+	if msg.SendID == u.loginUserID && msg.SenderPlatformID == u.SvrConf.Platform {
+		utils.sdkLog("sync msg ", msg.ContentType)
+		return
+	}
+
+	go func() {
+		switch msg.ContentType {
+		case constant.AddFriendTip:
+			utils.sdkLog("addFriendNew ", msg)
+			u.addFriendNew(msg) //
+		case constant.AcceptFriendApplicationTip:
+			utils.sdkLog("acceptFriendApplicationNew ", msg)
+			u.acceptFriendApplicationNew(msg)
+		case constant.RefuseFriendApplicationTip:
+			utils.sdkLog("refuseFriendApplicationNew ", msg)
+			u.refuseFriendApplicationNew(msg)
+		case constant.SetSelfInfoTip:
+			utils.sdkLog("setSelfInfo ", msg)
+			u.setSelfInfo(msg)
+			//	case KickOnlineTip:
+			//		sdkLog("kickOnline ", msg)
+			//		u.kickOnline(&msg)
+		default:
+			utils.sdkLog("type failed, ", msg)
+		}
+	}()
+}
+
+func (u *open_im_sdk.UserRelated) acceptFriendApplicationNew(msg *server_api_params.MsgData) {
+	utils.LogBegin(msg.ContentType, msg.ServerMsgID, msg.ClientMsgID)
+	u.syncFriendList()
+	utils.sdkLog(msg.SendID, msg.RecvID)
+	utils.sdkLog("acceptFriendApplicationNew", msg.ServerMsgID, msg)
+
+	fInfoList, err := u.getServerFriendList()
+	if err != nil {
+		return
+	}
+	utils.sdkLog("fInfoList", fInfoList)
+
+	//for _, fInfo := range fInfoList {
+	//	if fInfo.UID == msg.SendID {
+	//		jData, err := json.Marshal(fInfo)
+	//		if err != nil {
+	//			sdkLog("err: ", err.Error())
+	//			return
+	//		}
+	//		u.friendListener.OnFriendListAdded(string(jData))
+	//		u.friendListener.OnFriendApplicationListAccept(string(jData))
+	//		return
+	//	}
+	//}
+}
+
+func (u *open_im_sdk.UserRelated) refuseFriendApplicationNew(msg *server_api_params.MsgData) {
+	utils.sdkLog(msg.SendID, msg.RecvID)
+	applyList, err := u.getServerSelfApplication()
+
+	if err != nil {
+		return
+	}
+	for _, v := range applyList {
+		if v.Uid == msg.SendID {
+			jData, err := json.Marshal(v)
+			if err != nil {
+				utils.sdkLog("err: ", err.Error())
+				return
+			}
+			u.friendListener.OnFriendApplicationListReject(string(jData))
+			return
 		}
 	}
 

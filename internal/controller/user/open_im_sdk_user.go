@@ -2,12 +2,16 @@ package user
 
 import (
 	"encoding/json"
-	"open_im_sdk/open_im_sdk"
+	"github.com/jinzhu/copier"
+
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 )
 
 type User struct {
+	*db.DataBase
 }
 
 func (u *User) GetUsersInfo(uIDList string, cb open_im_sdk.Base) {

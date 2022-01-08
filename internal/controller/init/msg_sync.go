@@ -13,7 +13,7 @@ import (
 type MsgSync struct {
 	*db.DataBase
 	seqMsg      map[int32]server_api_params.MsgData
-	seqMsgMutex sync.RWMutex
+	seqMsgMutex *sync.RWMutex
 	*ws.Ws
 	loginUserID string
 }
