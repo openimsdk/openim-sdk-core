@@ -4,6 +4,7 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 	"time"
+	"errors"
 )
 
 func TriggerCmdNewMsgCome(msg utils.ArrMsg, conversationCh chan Cmd2Value) error {
