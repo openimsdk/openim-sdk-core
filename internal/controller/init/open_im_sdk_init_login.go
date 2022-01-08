@@ -6,14 +6,14 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-type IMSDKListener interface {
-	OnConnecting()
-	OnConnectSuccess()
-	OnConnectFailed(ErrCode int32, ErrMsg string)
-	OnKickedOffline()
-	OnUserTokenExpired()
-	OnSelfInfoUpdated(userInfo string)
-}
+//type IMSDKListener interface {
+//	OnConnecting()
+//	OnConnectSuccess()
+//	OnConnectFailed(ErrCode int32, ErrMsg string)
+//	OnKickedOffline()
+//	OnUserTokenExpired()
+//	OnSelfInfoUpdated(userInfo string)
+//}
 
 func InitOnce(config *utils.IMConfig) bool {
 	constant.SvrConf = *config

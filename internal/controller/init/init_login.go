@@ -30,8 +30,10 @@ type LoginMgr struct {
 	db          *db.DataBase
 	friend      *friend.Friend
 	ws          *ws.Ws
+	msgSync     *MsgSync
 	token       string
 	loginUserID string
+	listener    *ws.ConnListener
 }
 
 func (u *open_im_sdk.UserRelated) closeListenerCh() {
@@ -41,7 +43,7 @@ func (u *open_im_sdk.UserRelated) closeListenerCh() {
 	}
 }
 
-func (u *open_im_sdk.UserRelated) initSDK(config string, cb IMSDKListener) bool {
+func (u *LoginMgr) initSDK(config string, cb *ws.ConnListener) bool {
 	if cb == nil {
 		utils.sdkLog("callback == nil")
 		return false
@@ -49,7 +51,7 @@ func (u *open_im_sdk.UserRelated) initSDK(config string, cb IMSDKListener) bool 
 
 	utils.sdkLog("initSDK LoginState", u.LoginState)
 
-	u.cb = cb
+	u.listener = cb
 	u.initListenerCh()
 	utils.sdkLog("init success, ", config)
 
@@ -122,6 +124,12 @@ func (u *LoginMgr) login(uid, tk string, cb Base) {
 
 	db, err := db.NewDataBase(uid)
 	u.db = db
+
+	wsConn := ws.NewWsConn(u.listener, tk, uid)
+	wsRespAsyn := ws.NewWsRespAsyn()
+	u.ws = ws.NewWs(wsRespAsyn, wsConn)
+
+	u.msgSync = NewMsgSync(db, u.ws, uid)
 
 	if err != nil {
 		u.token = ""

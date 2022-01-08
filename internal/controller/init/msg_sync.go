@@ -18,6 +18,10 @@ type MsgSync struct {
 	loginUserID string
 }
 
+func NewMsgSync(dataBase *db.DataBase, ws *ws.Ws, loginUserID string) *MsgSync {
+	return &MsgSync{DataBase: dataBase, seqMsg: make(map[int32]server_api_params.MsgData, 1000), Ws: ws, loginUserID: loginUserID}
+}
+
 func (u *MsgSync) getNeedSyncSeq(svrMinSeq, svrMaxSeq int32) []int32 {
 	localMinSeq := u.GetNeedSyncLocalMinSeq()
 	var startSeq int32

@@ -14,6 +14,10 @@ type Ws struct {
 	*WsConn
 }
 
+func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn) *Ws {
+	return &Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn}
+}
+
 func (ws *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, connSend *websocket.Conn) (*GeneralWsResp, error) {
 	select {
 	case r := <-ch:

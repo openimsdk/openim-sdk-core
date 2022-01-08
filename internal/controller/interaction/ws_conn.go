@@ -27,13 +27,15 @@ type WsConn struct {
 	stateMutex  sync.Mutex
 	conn        *websocket.Conn
 	loginState  int32
-	listener    ConnListener
+	listener    *ConnListener
 	token       string
 	loginUserID string
 }
 
-func NewWsConn(listener ConnListener, token string, loginUserID string) *WsConn {
-	return &WsConn{listener: listener, token: token, loginUserID: loginUserID}
+func NewWsConn(listener *ConnListener, token string, loginUserID string) *WsConn {
+	p := WsConn{listener: listener, token: token, loginUserID: loginUserID}
+	p.conn, _, _ = p.FirstConn()
+	return &p
 }
 
 func (u *WsConn) CloseConn() error {
@@ -64,9 +66,13 @@ func (u *WsConn) Unlock() {
 func (u *WsConn) SendPingMsg() error {
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
+	if u.conn == nil {
+		return errors.New("conn == nil")
+	}
 	var ping string = "try ping"
 	err := u.conn.SetWriteDeadline(time.Now().Add(8 * time.Second))
 	if err != nil {
+
 	}
 	return u.conn.WriteMessage(websocket.PingMessage, []byte(ping))
 }
@@ -120,7 +126,7 @@ func (u *WsConn) WriteMsg(msg GeneralWsReq) (error, *websocket.Conn) {
 	return u.writeBinaryMsg(msg)
 }
 
-func (u *WsConn) reConn() (*websocket.Conn, *http.Response, error) {
+func (u *WsConn) ReConn() (*websocket.Conn, *http.Response, error) {
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
 	if u.conn != nil {
@@ -150,14 +156,9 @@ func (u *WsConn) reConn() (*websocket.Conn, *http.Response, error) {
 	return conn, httpResp, nil
 }
 
-func (u *WsConn) firstConn(conn *websocket.Conn) (*websocket.Conn, *http.Response, error) {
+func (u *WsConn) FirstConn() (*websocket.Conn, *http.Response, error) {
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
-
-	if conn != nil {
-		conn.Close()
-		conn = nil
-	}
 
 	u.listener.OnConnecting()
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", constant.SvrConf.IpWsAddr, u.loginUserID, u.token, constant.SvrConf.Platform)
