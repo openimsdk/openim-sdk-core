@@ -22,7 +22,7 @@ import (
 	"time"
 )
 
-func operationIDGenerator() string {
+func OperationIDGenerator() string {
 	return strconv.FormatInt(time.Now().UnixNano()+int64(rand.Uint32()), 10)
 }
 func getMsgID(sendID string) string {

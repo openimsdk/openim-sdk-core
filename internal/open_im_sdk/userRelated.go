@@ -4,6 +4,7 @@ import (
 	"open_im_sdk/internal/controller/conversation_msg"
 	"open_im_sdk/internal/controller/friend"
 	"open_im_sdk/internal/controller/group"
+	"open_im_sdk/internal/controller/interaction"
 	"open_im_sdk/internal/controller/ws"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/server_api_params"
@@ -25,7 +26,7 @@ type UserRelated struct {
 	imDB *db.DataBase
 	//validate *validator.Validate
 
-	wsRespAsyn *ws.WsRespAsyn
+	wsRespAsyn *interaction.WsRespAsyn
 	wsConn     *ws.WsConn
 	stateMutex sync.Mutex
 	//	mRWMutex   sync.RWMutex

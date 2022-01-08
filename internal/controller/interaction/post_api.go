@@ -1,4 +1,4 @@
-package ws
+package interaction
 
 import (
 	"open_im_sdk/pkg/commom"
