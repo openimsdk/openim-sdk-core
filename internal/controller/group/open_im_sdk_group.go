@@ -51,14 +51,13 @@ func (u *Group) JoinGroup(callback common.Base, groupID, reqMsg string, operatio
 		return
 	}
 	go func() {
-
 		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, reqMsg)
 		err := u.joinGroup(groupID, reqMsg, callback, operationID)
 		result := u.createGroup(groupID, reqMsg, callback, operationID)
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.JoinGroupCallback))
 		callback.OnSuccess(utils.StructToJsonString(result))
 		log.NewInfo(operationID, "CreateGroup callback: ", utils.StructToJsonString(result))
-		err := u.joinGroup(groupID, message, callback, operationID)
+		err := u.joinGroup(groupID, reqMsg, callback, operationID)
 		if err != nil {
 			callback.OnError(constant.ErrCodeGroup, err.Error())
 			return
