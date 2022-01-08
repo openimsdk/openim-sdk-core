@@ -57,7 +57,7 @@ type updateConNode struct {
 	Args interface{}
 }
 
-func triggerCmdNewMsgCome(msg utils.ArrMsg) error {
+func TriggerCmdNewMsgCome(msg utils.ArrMsg) error {
 	c2v := utils.cmd2Value{
 		Cmd:   constant.CmdNewMsgCome,
 		Value: msg,

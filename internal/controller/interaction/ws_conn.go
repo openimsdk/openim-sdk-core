@@ -24,7 +24,7 @@ type ConnListener interface {
 }
 
 type WsConn struct {
-	stateMutex  *sync.Mutex
+	stateMutex  sync.Mutex
 	conn        *websocket.Conn
 	loginState  int32
 	listener    ConnListener
@@ -32,11 +32,17 @@ type WsConn struct {
 	loginUserID string
 }
 
+func NewWsConn(listener ConnListener, token string, loginUserID string) *WsConn {
+	return &WsConn{listener: listener, token: token, loginUserID: loginUserID}
+}
+
 func (u *WsConn) CloseConn() error {
 	u.Lock()
 	defer u.Unlock()
-	return u.conn.Close()
-
+	if u.conn != nil {
+		return u.conn.Close()
+	}
+	return nil
 }
 
 func (u *WsConn) LoginState() int32 {
@@ -55,7 +61,7 @@ func (u *WsConn) Unlock() {
 	u.stateMutex.Unlock()
 }
 
-func (u *WsConn) sendPingMsg() error {
+func (u *WsConn) SendPingMsg() error {
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
 	var ping string = "try ping"

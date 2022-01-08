@@ -23,3 +23,7 @@ func (d *DataBase) SetMinSeq(seq int32) error {
 		return utils.Wrap(t.Error, "UpdateLoginUser failed")
 	}
 }
+
+func (d *DataBase) GetNeedSyncLocalMinSeq() int32 {
+	return 0
+}

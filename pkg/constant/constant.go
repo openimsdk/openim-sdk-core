@@ -305,6 +305,10 @@ var (
 	ErrDB     = ErrInfo{ErrCode: 802, ErrMsg: DBMsg.Error()}
 	ErrArgs   = ErrInfo{ErrCode: 803, ErrMsg: ArgsMsg.Error()}
 	ErrApi    = ErrInfo{ErrCode: 804, ErrMsg: ApiMsg.Error()}
+
+	ErrWsRecvConnDiff = ErrInfo{ErrCode: 901, ErrMsg: WsRecvConnDiff.Error()}
+	ErrWsRecvConnSame = ErrInfo{ErrCode: 902, ErrMsg: WsRecvConnSame.Error()}
+	ErrWsRecvCode     = ErrInfo{ErrCode: 903, ErrMsg: WsRecvCode.Error()}
 )
 
 var (
@@ -321,6 +325,10 @@ var (
 	ApiMsg    = errors.New("api failed")
 
 	ThirdPartyMsg = errors.New("third party error")
+
+	WsRecvConnDiff = errors.New("recv timeout, conn diff")
+	WsRecvConnSame = errors.New("recv timeout, conn same")
+	WsRecvCode     = errors.New("recv code err")
 )
 
 func (e *ErrInfo) Error() string {

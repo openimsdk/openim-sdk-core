@@ -30,6 +30,10 @@ type WsRespAsyn struct {
 	wsMutex        sync.RWMutex
 }
 
+func NewWsRespAsyn() *WsRespAsyn {
+	return &WsRespAsyn{wsNotification: make(map[string]chan GeneralWsResp, 1000)}
+}
+
 func GenMsgIncr(userID string) string {
 	return userID + "_" + utils.Int64ToString(utils.GetCurrentTimestampByNano())
 }

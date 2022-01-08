@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"net/http"
-	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/internal/controller/friend"
+	ws "open_im_sdk/internal/controller/interaction"
+	"open_im_sdk/internal/open_im_sdk"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
@@ -21,7 +23,16 @@ import (
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/jinzhu/copier"
+	"open_im_sdk/pkg/db"
 )
+
+type LoginMgr struct {
+	db          *db.DataBase
+	friend      *friend.Friend
+	ws          *ws.Ws
+	token       string
+	loginUserID string
+}
 
 func (u *open_im_sdk.UserRelated) closeListenerCh() {
 	if u.ConversationCh != nil {
@@ -96,19 +107,22 @@ func (u *open_im_sdk.UserRelated) logout(cb Base) {
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) login(uid, tk string, cb Base) {
+func (u *LoginMgr) login(uid, tk string, cb Base) {
+
 	if cb == nil || u.listener == nil || u.friendListener == nil ||
 		u.ConversationListenerx == nil || len(u.MsgListenerList) == 0 {
 		utils.sdkLog("listener is nil, failed ,please check callback,groupListener,friendListener,ConversationListenerx,MsgListenerList is set", uid, tk)
 		return
 	}
-	utils.sdkLog("login start, ", uid, tk)
+	log.Info("login start, ", uid, tk)
 
 	u.LoginState = constant.Logining
 	u.token = tk
 	u.loginUserID = uid
 
-	err := u.initDB()
+	db, err := db.NewDataBase(uid)
+	u.db = db
+
 	if err != nil {
 		u.token = ""
 		u.loginUserID = ""
@@ -151,39 +165,40 @@ func (u *open_im_sdk.UserRelated) login(uid, tk string, cb Base) {
 	utils.sdkLog("login end, ", uid, tk)
 }
 
-func (u *open_im_sdk.UserRelated) timedCloseDB() {
-	timeTicker := time.NewTicker(time.Second * 5)
-	num := 0
-	for {
-		<-timeTicker.C
-		u.stateMutex.Lock()
-		if u.LoginState == constant.LogoutCmd {
-			utils.sdkLog("logout timedCloseDB return", constant.LogoutCmd)
-			u.stateMutex.Unlock()
-			return
-		}
-		u.stateMutex.Unlock()
-		num++
-		if num%60 == 0 {
-			utils.sdkLog("closeDBSetNil begin")
-			//u.closeDBSetNil()
-			utils.sdkLog("closeDBSetNil end")
-		}
-	}
-}
-
-func (u *open_im_sdk.UserRelated) closeConn() error {
-	utils.LogBegin()
-	if u.conn != nil {
-		err := u.conn.Close()
-		if err != nil {
-			utils.LogFReturn(err.Error())
-			return err
-		}
-	}
-	utils.LogSReturn(nil)
-	return nil
-}
+//
+//func (u *open_im_sdk.UserRelated) timedCloseDB() {
+//	timeTicker := time.NewTicker(time.Second * 5)
+//	num := 0
+//	for {
+//		<-timeTicker.C
+//		u.stateMutex.Lock()
+//		if u.LoginState == constant.LogoutCmd {
+//			utils.sdkLog("logout timedCloseDB return", constant.LogoutCmd)
+//			u.stateMutex.Unlock()
+//			return
+//		}
+//		u.stateMutex.Unlock()
+//		num++
+//		if num%60 == 0 {
+//			utils.sdkLog("closeDBSetNil begin")
+//			//u.closeDBSetNil()
+//			utils.sdkLog("closeDBSetNil end")
+//		}
+//	}
+//}
+//
+//func (u *open_im_sdk.UserRelated) closeConn() error {
+//	utils.LogBegin()
+//	if u.conn != nil {
+//		err := u.conn.Close()
+//		if err != nil {
+//			utils.LogFReturn(err.Error())
+//			return err
+//		}
+//	}
+//	utils.LogSReturn(nil)
+//	return nil
+//}
 
 func (u *open_im_sdk.UserRelated) getLoginUser() string {
 	if u.LoginState == constant.LoginSuccess {
