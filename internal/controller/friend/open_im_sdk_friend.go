@@ -1,13 +1,14 @@
 package friend
 
 import (
+	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
 )
 
-func (u *open_im_sdk.UserRelated) GetDesignatedFriendsInfo(callback open_im_sdk.Base, params string, operationID string) {
+func (f *Friend) GetDesignatedFriendsInfo(callback common.Base, params string, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), params)
 	if callback == nil {
 		return
@@ -15,14 +16,14 @@ func (u *open_im_sdk.UserRelated) GetDesignatedFriendsInfo(callback open_im_sdk.
 	go func() {
 		log.NewInfo(operationID, "GetDesignatedFriendsInfo args: ", params)
 		var unmarshalList sdk_params_callback.GetDesignatedFriendsInfoParams
-		u.jsonUnmarshal(params, &unmarshalList, callback, operationID)
-		result := u.getDesignatedFriendsInfo(callback, unmarshalList, operationID)
-		callback.OnSuccess(utils.structToJsonStringDefault(result))
-		log.NewInfo(operationID, "GetDesignatedFriendsInfo callback: ", utils.structToJsonString(result), result)
+		common.JsonUnmarshal(params, &unmarshalList, callback, operationID)
+		result := f.getDesignatedFriendsInfo(callback, unmarshalList, operationID)
+		callback.OnSuccess(utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, "GetDesignatedFriendsInfo callback: ", utils.StructToJsonString(result), result)
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) AddFriend(callback open_im_sdk.Base, params string, operationID string) {
+func (f *Friend) AddFriend(callback common.Base, params string, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), params)
 	if callback == nil {
 		return
@@ -30,40 +31,40 @@ func (u *open_im_sdk.UserRelated) AddFriend(callback open_im_sdk.Base, params st
 	go func() {
 		log.NewInfo(operationID, "AddFriend args: ", params)
 		var unmarshalAddFriendParams sdk_params_callback.AddFriendParams
-		u.jsonUnmarshalAndArgsValidate(params, &unmarshalAddFriendParams, callback, operationID)
-		u.addFriend(callback, unmarshalAddFriendParams, operationID)
-		callback.OnSuccess(utils.structToJsonString(sdk_params_callback.AddFriendCallback))
-		log.NewInfo(operationID, "AddFriend callback: ", utils.structToJsonString(sdk_params_callback.AddFriendCallback))
+		common.JsonUnmarshalAndArgsValidate(params, &unmarshalAddFriendParams, callback, operationID)
+		f.addFriend(callback, unmarshalAddFriendParams, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.AddFriendCallback))
+		log.NewInfo(operationID, "AddFriend callback: ", utils.StructToJsonString(sdk_params_callback.AddFriendCallback))
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) GetRecvFriendApplicationList(callback open_im_sdk.Base, operationID string) {
+func (f *Friend) GetRecvFriendApplicationList(callback common.Base, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	if callback == nil {
 		return
 	}
 	go func() {
 		log.NewInfo(operationID, "GetRecvFriendApplicationList args: ")
-		result := u.getRecvFriendApplicationList(callback, operationID)
-		callback.OnSuccess(utils.structToJsonString(result))
-		log.NewInfo(operationID, "GetRecvFriendApplicationList callback: ", utils.structToJsonString(result))
+		result := f.getRecvFriendApplicationList(callback, operationID)
+		callback.OnSuccess(utils.StructToJsonString(result))
+		log.NewInfo(operationID, "GetRecvFriendApplicationList callback: ", utils.StructToJsonString(result))
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) GetSendFriendApplicationList(callback open_im_sdk.Base, operationID string) {
+func (f *Friend) GetSendFriendApplicationList(callback common.Base, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	if callback == nil {
 		return
 	}
 	go func() {
 		log.NewInfo(operationID, "GetSendFriendApplicationList args: ")
-		result := u.getSendFriendApplicationList(callback, operationID)
-		callback.OnSuccess(utils.structToJsonString(result))
-		log.NewInfo(operationID, "GetSendFriendApplicationList callback: ", utils.structToJsonString(result))
+		result := f.getSendFriendApplicationList(callback, operationID)
+		callback.OnSuccess(utils.StructToJsonString(result))
+		log.NewInfo(operationID, "GetSendFriendApplicationList callback: ", utils.StructToJsonString(result))
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) AcceptFriendApplication(callback open_im_sdk.Base, params string, operationID string) {
+func (f *Friend) AcceptFriendApplication(callback common.Base, params string, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), params)
 	if callback == nil {
 		return
@@ -71,14 +72,14 @@ func (u *open_im_sdk.UserRelated) AcceptFriendApplication(callback open_im_sdk.B
 	go func() {
 		log.NewInfo(operationID, "AcceptFriendApplication args: ", params)
 		var unmarshalParams sdk_params_callback.ProcessFriendApplicationParams
-		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback, operationID)
-		u.processFriendApplication(callback, unmarshalParams, 1, operationID)
-		callback.OnSuccess(utils.structToJsonString(sdk_params_callback.ProcessFriendApplicationCallback))
-		log.NewInfo(operationID, "AcceptFriendApplication callback: ", utils.structToJsonString(sdk_params_callback.ProcessFriendApplicationCallback))
+		common.JsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback, operationID)
+		f.processFriendApplication(callback, unmarshalParams, 1, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.ProcessFriendApplicationCallback))
+		log.NewInfo(operationID, "AcceptFriendApplication callback: ", utils.StructToJsonString(sdk_params_callback.ProcessFriendApplicationCallback))
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) RefuseFriendApplication(callback open_im_sdk.Base, params string, operationID string) {
+func (f *Friend) RefuseFriendApplication(callback common.Base, params string, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), params)
 	if callback == nil {
 		return
@@ -86,14 +87,14 @@ func (u *open_im_sdk.UserRelated) RefuseFriendApplication(callback open_im_sdk.B
 	go func() {
 		log.NewInfo(operationID, "RefuseFriendApplication args: ", params)
 		var unmarshalParams sdk_params_callback.ProcessFriendApplicationParams
-		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback, operationID)
-		u.processFriendApplication(callback, unmarshalParams, -1, operationID)
-		callback.OnSuccess(utils.structToJsonString(sdk_params_callback.ProcessFriendApplicationCallback))
-		log.NewInfo(operationID, "RefuseFriendApplication callback: ", utils.structToJsonString(sdk_params_callback.ProcessFriendApplicationCallback))
+		common.JsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback, operationID)
+		f.processFriendApplication(callback, unmarshalParams, -1, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.ProcessFriendApplicationCallback))
+		log.NewInfo(operationID, "RefuseFriendApplication callback: ", utils.StructToJsonString(sdk_params_callback.ProcessFriendApplicationCallback))
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) CheckFriend(callback open_im_sdk.Base, params string, operationID string) {
+func (f *Friend) CheckFriend(callback common.Base, params string, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), params)
 	if callback == nil {
 		return
@@ -101,27 +102,27 @@ func (u *open_im_sdk.UserRelated) CheckFriend(callback open_im_sdk.Base, params 
 	go func() {
 		log.NewInfo(operationID, "CheckFriend args: ", params)
 		var unmarshalParams sdk_params_callback.CheckFriendParams
-		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback, operationID)
-		result := u.checkFriend(callback, unmarshalParams, operationID)
-		callback.OnSuccess(utils.structToJsonString(result))
-		log.NewInfo(operationID, "CheckFriend callback: ", utils.structToJsonString(result))
+		common.JsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback, operationID)
+		result := f.checkFriend(callback, unmarshalParams, operationID)
+		callback.OnSuccess(utils.StructToJsonString(result))
+		log.NewInfo(operationID, "CheckFriend callback: ", utils.StructToJsonString(result))
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) DeleteFriend(callback open_im_sdk.Base, friendUserID string, operationID string) {
+func (f *Friend) DeleteFriend(callback common.Base, friendUserID string, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), friendUserID)
 	if callback == nil {
 		return
 	}
 	go func() {
 		log.NewInfo(operationID, "DeleteFriend args: ", friendUserID)
-		u.deleteFriend(friendUserID, callback, operationID)
-		callback.OnSuccess(utils.structToJsonString(sdk_params_callback.DeleteFriendCallback))
-		log.NewInfo(operationID, "DeleteFriend callback: ", utils.structToJsonString(sdk_params_callback.DeleteFriendCallback))
+		f.deleteFriend(friendUserID, callback, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.DeleteFriendCallback))
+		log.NewInfo(operationID, "DeleteFriend callback: ", utils.StructToJsonString(sdk_params_callback.DeleteFriendCallback))
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) GetFriendList(callback open_im_sdk.Base, operationID string) {
+func (f *Friend) GetFriendList(callback common.Base, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	if callback == nil {
 		return
@@ -129,21 +130,21 @@ func (u *open_im_sdk.UserRelated) GetFriendList(callback open_im_sdk.Base, opera
 	go func() {
 		log.NewInfo(operationID, "GetFriendList args: ")
 		var filterLocalFriendList []*db.LocalFriend
-		localFriendList, err := u._getAllFriendList()
-		utils.checkErr(callback, err, operationID)
-		localBlackUidList, err := u._getBlackListUid()
-		utils.checkErr(callback, err, operationID)
+		localFriendList, err := f.db.GetAllFriendList()
+		common.CheckErr(callback, err, operationID)
+		localBlackUidList, err := f.db.GetBlackListUid()
+		common.CheckErr(callback, err, operationID)
 		for _, v := range localFriendList {
-			if !utils.isContain(v.FriendUserID, localBlackUidList) {
+			if !utils.IsContain(v.FriendUserID, localBlackUidList) {
 				filterLocalFriendList = append(filterLocalFriendList, v)
 			}
 		}
-		callback.OnSuccess(utils.structToJsonString(filterLocalFriendList))
-		log.NewInfo(operationID, "GetFriendList callback: ", utils.structToJsonString(filterLocalFriendList))
+		callback.OnSuccess(utils.StructToJsonString(filterLocalFriendList))
+		log.NewInfo(operationID, "GetFriendList callback: ", utils.StructToJsonString(filterLocalFriendList))
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) SetFriendRemark(callback open_im_sdk.Base, params string, operationID string) {
+func (f *Friend) SetFriendRemark(callback common.Base, params string, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), params)
 	if callback == nil {
 		return
@@ -151,39 +152,39 @@ func (u *open_im_sdk.UserRelated) SetFriendRemark(callback open_im_sdk.Base, par
 	go func() {
 		log.NewInfo(operationID, "SetFriendRemark args: ", params)
 		var unmarshalParams sdk_params_callback.SetFriendRemarkParams
-		u.jsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback, operationID)
-		u.setFriendRemark(unmarshalParams, callback, operationID)
-		callback.OnSuccess(utils.structToJsonString(sdk_params_callback.SetFriendRemarkCallback))
-		log.NewInfo(operationID, "SetFriendRemark callback: ", utils.structToJsonString(sdk_params_callback.SetFriendRemarkCallback))
+		common.JsonUnmarshalAndArgsValidate(params, &unmarshalParams, callback, operationID)
+		f.setFriendRemark(unmarshalParams, callback, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.SetFriendRemarkCallback))
+		log.NewInfo(operationID, "SetFriendRemark callback: ", utils.StructToJsonString(sdk_params_callback.SetFriendRemarkCallback))
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) AddBlack(callback open_im_sdk.Base, blackUserID, operationID string) {
+func (f *Friend) AddBlack(callback common.Base, blackUserID, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), blackUserID)
 	go func() {
 		log.NewInfo(operationID, "AddToBlackList args: ", blackUserID)
-		u.addBlack(callback, blackUserID, operationID)
+		f.addBlack(callback, blackUserID, operationID)
 		callback.OnSuccess("")
 		log.NewInfo(operationID, "AddToBlackList callback: ")
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) GetBlackList(callback open_im_sdk.Base, operationID string) {
+func (f *Friend) GetBlackList(callback common.Base, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	go func() {
 		log.NewInfo(operationID, "GetBlackList args: ")
-		localBlackList, err := u._getBlackList()
-		utils.checkErr(callback, err, operationID)
-		callback.OnSuccess(utils.structToJsonString(localBlackList))
-		log.NewInfo(operationID, "GetBlackList callback: ", utils.structToJsonString(localBlackList))
+		localBlackList, err := f.db.GetBlackList()
+		common.CheckErr(callback, err, operationID)
+		callback.OnSuccess(utils.StructToJsonString(localBlackList))
+		log.NewInfo(operationID, "GetBlackList callback: ", utils.StructToJsonString(localBlackList))
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) RemoveBlack(callback open_im_sdk.Base, removeUserID, operationID string) {
+func (f *Friend) RemoveBlack(callback common.Base, removeUserID, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), removeUserID)
 	go func() {
 		log.NewInfo(operationID, "RemoveBlack args: ", removeUserID)
-		u.removeBlack(callback, removeUserID, operationID)
+		f.removeBlack(callback, removeUserID, operationID)
 		callback.OnSuccess("")
 		log.NewInfo(operationID, "RemoveBlack callback")
 	}()
@@ -201,26 +202,26 @@ type OnFriendshipListener interface {
 	OnFriendInfoChanged(friendInfo string)
 }
 
-func (u *open_im_sdk.UserRelated) SetFriendListener(listener OnFriendshipListener) bool {
+func (f *Friend) SetFriendListener(listener OnFriendshipListener) bool {
 	if listener == nil {
 		return false
 	}
-	u.friendListener = listener
+	f.friendListener = listener
 	return true
 }
 
-func (u *open_im_sdk.UserRelated) ForceSyncFriendApplication() {
-	u.syncFriendApplication()
+func (f *Friend) ForceSyncFriendApplication() {
+	f.syncFriendApplication()
 }
 
-func (u *open_im_sdk.UserRelated) ForceSyncSelfFriendApplication() {
-	u.syncSelfFriendApplication()
+func (f *Friend) ForceSyncSelfFriendApplication() {
+	f.syncSelfFriendApplication()
 }
 
-func (u *open_im_sdk.UserRelated) ForceSyncFriend() {
-	u.syncFriendList()
+func (f *Friend) ForceSyncFriend() {
+	f.syncFriendList()
 }
 
-func (u *open_im_sdk.UserRelated) ForceSyncBlackList() {
-	u.syncBlackList()
+func (f *Friend) ForceSyncBlackList() {
+	f.syncBlackList()
 }

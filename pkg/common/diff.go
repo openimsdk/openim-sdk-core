@@ -1,4 +1,4 @@
-package commom
+package common
 
 import (
 	"github.com/jinzhu/copier"
@@ -66,7 +66,7 @@ func blackCopyToLocal(localBlack *db.LocalBlack, apiBlack *server_api_params.Pub
 	localBlack.BlockUserID = apiBlack.UserID
 }
 
-func transferToLocalFriend(apiFriendList []*server_api_params.FriendInfo) []*db.LocalFriend {
+func TransferToLocalFriend(apiFriendList []*server_api_params.FriendInfo) []*db.LocalFriend {
 	localFriendList := make([]*db.LocalFriend, 0)
 	for _, v := range apiFriendList {
 		var localFriend db.LocalFriend
@@ -118,7 +118,7 @@ func checkListDiff(a []diff, b []diff) (aInBNot, bInANot, sameA, sameB []int) {
 	return aInBNot, bInANot, sameA, sameB
 }
 
-func transferToLocalFriendRequest(apiFriendList []*server_api_params.FriendRequest) []*db.LocalFriendRequest {
+func TransferToLocalFriendRequest(apiFriendList []*server_api_params.FriendRequest) []*db.LocalFriendRequest {
 	localFriendList := make([]*db.LocalFriendRequest, 0)
 	for _, v := range apiFriendList {
 		var localFriendRequest db.LocalFriendRequest
@@ -131,7 +131,7 @@ func transferToLocalFriendRequest(apiFriendList []*server_api_params.FriendReque
 	return localFriendList
 }
 
-func transferToLocalBlack(apiBlackList []*server_api_params.PublicUserInfo, ownerUserID string) []*db.LocalBlack {
+func TransferToLocalBlack(apiBlackList []*server_api_params.PublicUserInfo, ownerUserID string) []*db.LocalBlack {
 	localBlackList := make([]*db.LocalBlack, 0)
 	for _, v := range apiBlackList {
 		var localBlack db.LocalBlack
@@ -142,7 +142,7 @@ func transferToLocalBlack(apiBlackList []*server_api_params.PublicUserInfo, owne
 	return localBlackList
 }
 
-func checkFriendListDiff(a []*db.LocalFriend, b []*db.LocalFriend) (aInBNot, bInANot, sameA, sameB []int) {
+func CheckFriendListDiff(a []*db.LocalFriend, b []*db.LocalFriend) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
 	mapA := make(map[string]*db.LocalFriend)
 	for _, v := range a {
@@ -185,7 +185,7 @@ func checkFriendListDiff(a []*db.LocalFriend, b []*db.LocalFriend) (aInBNot, bIn
 	return aInBNot, bInANot, sameA, sameB
 }
 
-func checkFriendRequestDiff(a []*db.LocalFriendRequest, b []*db.LocalFriendRequest) (aInBNot, bInANot, sameA, sameB []int) {
+func CheckFriendRequestDiff(a []*db.LocalFriendRequest, b []*db.LocalFriendRequest) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
 	mapA := make(map[string]*db.LocalFriendRequest)
 	for _, v := range a {
@@ -227,7 +227,7 @@ func checkFriendRequestDiff(a []*db.LocalFriendRequest, b []*db.LocalFriendReque
 	}
 	return aInBNot, bInANot, sameA, sameB
 }
-func checkBlackListDiff(a []*db.LocalBlack, b []*db.LocalBlack) (aInBNot, bInANot, sameA, sameB []int) {
+func CheckBlackListDiff(a []*db.LocalBlack, b []*db.LocalBlack) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
 	mapA := make(map[string]*db.LocalBlack)
 	for _, v := range a {

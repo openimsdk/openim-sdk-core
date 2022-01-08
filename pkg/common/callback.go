@@ -1,4 +1,4 @@
-package commom
+package common
 
 type Base interface {
 	OnError(errCode int32, errMsg string)
