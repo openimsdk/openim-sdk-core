@@ -3,6 +3,7 @@ package group
 import (
 	"encoding/json"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
@@ -20,7 +21,7 @@ type OnGroupListener interface {
 	OnApplicationProcessed(groupId string, opUser string, AgreeOrReject int32, opReason string)
 }
 
-func (u *open_im_sdk.UserRelated) SetGroupListener(callback OnGroupListener) {
+func (u *Group) SetGroupListener(callback OnGroupListener) {
 	if callback == nil {
 		utils.sdkLog("callback null")
 		return
@@ -29,42 +30,44 @@ func (u *open_im_sdk.UserRelated) SetGroupListener(callback OnGroupListener) {
 	utils.sdkLog("SetGroupListener ", callback)
 }
 
-func (u *open_im_sdk.UserRelated) CreateGroup(callback open_im_sdk.Base, groupBaseInfo string, memberList string, operationID string) {
+func (u *Group) CreateGroup(callback common.Base, groupBaseInfo string, memberList string, operationID string) {
 	if callback == nil {
-		utils.sdkLog("callback is nil")
 		return
 	}
 	go func() {
 		log.NewInfo(operationID, "CreateGroup args: ", groupBaseInfo, memberList)
 		var unmarshalCreateGroupBaseInfoParam sdk_params_callback.CreateGroupBaseInfoParam
-		u.jsonUnmarshalAndArgsValidate(groupBaseInfo, &unmarshalCreateGroupBaseInfoParam, callback, operationID)
+		common.JsonUnmarshalAndArgsValidate(groupBaseInfo, &unmarshalCreateGroupBaseInfoParam, callback, operationID)
 		var unmarshalCreateGroupMemberRoleParam sdk_params_callback.CreateGroupMemberRoleParam
-		u.jsonUnmarshalAndArgsValidate(memberList, &unmarshalCreateGroupMemberRoleParam, callback, operationID)
+		common.JsonUnmarshalAndArgsValidate(memberList, &unmarshalCreateGroupMemberRoleParam, callback, operationID)
 		result := u.createGroup(unmarshalCreateGroupBaseInfoParam, unmarshalCreateGroupMemberRoleParam, operationID)
-		callback.OnSuccess(utils.structToJsonString(result))
-		log.NewInfo(operationID, "CreateGroup callback: ", utils.structToJsonString(result))
+		callback.OnSuccess(utils.StructToJsonString(result))
+		log.NewInfo(operationID, "CreateGroup callback: ", utils.StructToJsonString(result))
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) JoinGroup(groupId, message string, callback open_im_sdk.Base) {
+func (u *Group) JoinGroup(callback common.Base, groupID, reqMsg string, operationID string) {
 	if callback == nil {
-		utils.sdkLog("callback is nil")
 		return
 	}
 	go func() {
-		utils.sdkLog(".................joinGroup begin ...............", groupId, message)
-		err := u.joinGroup(groupId, message)
+
+		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, reqMsg)
+		err := u.joinGroup(groupID, reqMsg, callback, operationID)
+		result := u.createGroup(groupID, reqMsg, callback, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.JoinGroupCallback))
+		callback.OnSuccess(utils.StructToJsonString(result))
+		log.NewInfo(operationID, "CreateGroup callback: ", utils.StructToJsonString(result))
+		err := u.joinGroup(groupID, message, callback, operationID)
 		if err != nil {
-			utils.sdkLog("............joinGroup failed............ ", groupId, message, err.Error())
 			callback.OnError(constant.ErrCodeGroup, err.Error())
 			return
 		}
-		utils.sdkLog("...........joinGroup end, callback............... ", groupId, message)
 		callback.OnSuccess(constant.DeFaultSuccessMsg)
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) QuitGroup(groupId string, callback open_im_sdk.Base) {
+func (u *Group) QuitGroup(groupId string, callback open_im_sdk.Base, operationID string) {
 	if callback == nil {
 		utils.sdkLog("callback is nil")
 		return
@@ -82,7 +85,7 @@ func (u *open_im_sdk.UserRelated) QuitGroup(groupId string, callback open_im_sdk
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) GetJoinedGroupList(callback open_im_sdk.Base) {
+func (u *Group) GetJoinedGroupList(callback open_im_sdk.Base, operationID string) {
 	if callback == nil {
 		utils.sdkLog("Base callback is nil")
 		return
@@ -119,7 +122,7 @@ func (u *open_im_sdk.UserRelated) GetJoinedGroupList(callback open_im_sdk.Base) 
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) GetGroupsInfo(groupIdList string, callback open_im_sdk.Base) {
+func (u *Group) GetGroupsInfo(groupIdList string, callback open_im_sdk.Base, operationID string) {
 	if callback == nil {
 		utils.sdkLog("Base callback is nil")
 		return
@@ -147,7 +150,7 @@ func (u *open_im_sdk.UserRelated) GetGroupsInfo(groupIdList string, callback ope
 
 }
 
-func (u *open_im_sdk.UserRelated) SetGroupInfo(jsonGroupInfo string, callback open_im_sdk.Base) {
+func (u *Group) SetGroupInfo(jsonGroupInfo string, callback open_im_sdk.Base, operationID string) {
 	if callback == nil {
 		utils.sdkLog("callback is nil")
 		return
@@ -172,7 +175,7 @@ func (u *open_im_sdk.UserRelated) SetGroupInfo(jsonGroupInfo string, callback op
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) GetGroupMemberList(groupId string, filter int32, next int32, callback open_im_sdk.Base) {
+func (u *Group) GetGroupMemberList(groupId string, filter int32, next int32, callback open_im_sdk.Base, operationID string) {
 	if callback == nil {
 		utils.sdkLog("Base callback is nil")
 		return
@@ -202,7 +205,7 @@ func (u *open_im_sdk.UserRelated) GetGroupMemberList(groupId string, filter int3
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) GetGroupMembersInfo(groupId string, userList string, callback open_im_sdk.Base) {
+func (u *Group) GetGroupMembersInfo(groupId string, userList string, callback open_im_sdk.Base, operationID string) {
 	if callback == nil {
 		utils.sdkLog("Base callback is nil")
 		return
@@ -234,7 +237,7 @@ func (u *open_im_sdk.UserRelated) GetGroupMembersInfo(groupId string, userList s
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) KickGroupMember(groupId string, reason string, userList string, callback open_im_sdk.Base) {
+func (u *Group) KickGroupMember(groupId string, reason string, userList string, callback open_im_sdk.Base, operationID string) {
 	if callback == nil {
 		utils.sdkLog("callback null")
 		return
@@ -265,7 +268,7 @@ func (u *open_im_sdk.UserRelated) KickGroupMember(groupId string, reason string,
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) TransferGroupOwner(groupId, userId string, callback open_im_sdk.Base) {
+func (u *Group) TransferGroupOwner(groupId, userId string, callback open_im_sdk.Base, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -281,7 +284,7 @@ func (u *open_im_sdk.UserRelated) TransferGroupOwner(groupId, userId string, cal
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) InviteUserToGroup(groupId, reason string, userList string, callback open_im_sdk.Base) {
+func (u *Group) InviteUserToGroup(groupId, reason string, userList string, callback open_im_sdk.Base, operationID string) {
 	if callback == nil {
 		utils.sdkLog("callbak null")
 		return
@@ -315,7 +318,7 @@ func (u *open_im_sdk.UserRelated) InviteUserToGroup(groupId, reason string, user
 
 }
 
-func (u *open_im_sdk.UserRelated) GetGroupApplicationList(callback open_im_sdk.Base) {
+func (u *Group) GetGroupApplicationList(callback open_im_sdk.Base, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -360,7 +363,7 @@ func (u *UserRelated) TsetGetGroupApplicationList(callback Base) string {
 
 }*/
 
-func (u *open_im_sdk.UserRelated) AcceptGroupApplication(application, reason string, callback open_im_sdk.Base) {
+func (u *Group) AcceptGroupApplication(application, reason string, callback open_im_sdk.Base, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -401,7 +404,7 @@ func (u *open_im_sdk.UserRelated) AcceptGroupApplication(application, reason str
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) RefuseGroupApplication(application, reason string, callback open_im_sdk.Base) {
+func (u *Group) RefuseGroupApplication(application, reason string, callback open_im_sdk.Base, operationID string) {
 	if callback == nil {
 		return
 	}
