@@ -52,17 +52,17 @@ func GetCurrentTimestampByNano() int64 {
 	return time.Now().UnixNano()
 }
 
-func structToJsonString(param interface{}) string {
+func StructToJsonString(param interface{}) string {
 	dataType, _ := json.Marshal(param)
 	dataString := string(dataType)
 	return dataString
 }
 
-func structToJsonStringDefault(param interface{}) string {
+func StructToJsonStringDefault(param interface{}) string {
 	if reflect.TypeOf(param).Kind() == reflect.Slice && reflect.ValueOf(param).Len() == 0 {
 		return "[]"
 	}
-	return structToJsonString(param)
+	return StructToJsonString(param)
 }
 
 //The incoming parameter must be a pointer
@@ -276,7 +276,7 @@ func fileExist(filename string) bool {
 }
 
 //judge a string whether in the  string list
-func isContain(target string, List []string) bool {
+func IsContain(target string, List []string) bool {
 
 	for _, element := range List {
 

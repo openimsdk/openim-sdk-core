@@ -11,7 +11,7 @@ type PostApi struct {
 	apiAddress string
 }
 
-func (p *PostApi) PostFatalCallback(url string, data interface{}, callback common.Base, operationID string) *server_api_params.CommDataResp {
+func (p *PostApi) PostFatalCallback(callback common.Base, url string, data interface{}, operationID string) *server_api_params.CommDataResp {
 	content, err := network.Post2Api(p.apiAddress+url, data, p.token)
 	c := common.CheckErrAndResp(callback, err, content, operationID)
 	return c

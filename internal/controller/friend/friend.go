@@ -61,9 +61,8 @@ func (f *Friend) addFriend(callback common.Base, addFriendParams sdk_params_call
 	apiReq.FromUserID = f.loginUserID
 	apiReq.ReqMsg = addFriendParams.ReqMsg
 	apiReq.OperationID = operationID
-	resp, err := network.Post2Api(constant.AddFriendRouter, apiReq, f.token)
-	log.NewInfo(apiReq.OperationID, "post2Api ", constant.AddFriendRouter, apiReq, string(resp))
-	return common.CheckErrAndResp(callback, err, resp, operationID)
+	log.NewInfo(apiReq.OperationID, "post2Api ", constant.AddFriendRouter, apiReq)
+	return f.p.PostFatalCallback(callback, constant.AddFriendRouter, apiReq, f.token)
 }
 
 func (f *Friend) getRecvFriendApplicationList(callback common.Base, operationID string) sdk_params_callback.GetRecvFriendApplicationListCallback {
@@ -84,10 +83,9 @@ func (f *Friend) processFriendApplication(callback common.Base, params sdk_param
 	apiReq.Flag = handleResult
 	apiReq.OperationID = operationID
 	apiReq.HandleMsg = params.HandleMsg
-	resp, err := network.Post2Api(constant.AddFriendResponse, apiReq, f.token)
-	r := common.CheckErrAndResp(callback, err, resp, operationID)
+	result := f.p.PostFatalCallback(callback, constant.AddFriendResponse, apiReq, f.token)
 	f.syncFriendApplication()
-	return r
+	return result
 }
 
 func (f *Friend) checkFriend(callback common.Base, userIDList sdk_params_callback.CheckFriendParams, operationID string) sdk_params_callback.CheckFriendCallback {
@@ -128,8 +126,7 @@ func (f *Friend) deleteFriend(FriendUserID string, callback common.Base, operati
 	apiReq.ToUserID = FriendUserID
 	apiReq.FromUserID = f.loginUserID
 	apiReq.OperationID = operationID
-	resp, err := network.Post2Api(constant.DeleteFriendRouter, apiReq, f.token)
-	result := common.CheckErrAndResp(callback, err, resp, operationID)
+	result := f.p.PostFatalCallback(callback, constant.DeleteFriendRouter, apiReq, f.token)
 	f.syncFriendList()
 	return result
 }
@@ -139,8 +136,7 @@ func (f *Friend) setFriendRemark(params sdk_params_callback.SetFriendRemarkParam
 	apiReq.OperationID = operationID
 	apiReq.ToUserID = params.ToUserID
 	apiReq.FromUserID = f.loginUserID
-	resp, err := network.Post2Api(constant.SetFriendComment, apiReq, f.token)
-	result := common.CheckErrAndResp(callback, err, resp, operationID)
+	result := f.p.PostFatalCallback(callback, constant.SetFriendComment, apiReq, f.token)
 	f.syncFriendList()
 	return result
 	//
@@ -360,10 +356,9 @@ func (f *Friend) addBlack(callback common.Base, blackUid, operationID string) *s
 	apiReq.ToUserID = blackUid
 	apiReq.FromUserID = f.loginUserID
 	apiReq.OperationID = operationID
-	resp, err := network.Post2Api(constant.AddBlackListRouter, apiReq, f.token)
-	r := common.CheckErrAndResp(callback, err, resp, operationID)
+	result := f.p.PostFatalCallback(callback, constant.AddBlackListRouter, apiReq, f.token)
 	f.syncBlackList()
-	return r
+	return result
 
 }
 func (f *Friend) removeBlack(callback common.Base, deleteUid, operationID string) *server_api_params.CommDataResp {
@@ -371,10 +366,9 @@ func (f *Friend) removeBlack(callback common.Base, deleteUid, operationID string
 	apiReq.ToUserID = deleteUid
 	apiReq.FromUserID = f.loginUserID
 	apiReq.OperationID = operationID
-	resp, err := network.Post2Api(constant.RemoveBlackListRouter, apiReq, f.token)
-	r := common.CheckErrAndResp(callback, err, resp, operationID)
+	result := f.p.PostFatalCallback(callback, constant.RemoveBlackListRouter, apiReq, f.token)
 	f.syncBlackList()
-	return r
+	return result
 
 }
 
