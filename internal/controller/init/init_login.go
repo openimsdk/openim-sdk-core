@@ -423,69 +423,6 @@ func (u *open_im_sdk.UserRelated) syncLoginUserInfo() error {
 	//}
 }
 
-func (u *open_im_sdk.UserRelated) firstConn(conn *websocket.Conn) (*websocket.Conn, *http.Response, error) {
-	utils.LogBegin(conn)
-	if conn != nil {
-		conn.Close()
-		conn = nil
-	}
-
-	u.IMManager.cb.OnConnecting()
-	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", constant.SvrConf.IpWsAddr, u.loginUserID, u.token, constant.SvrConf.Platform)
-	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
-	if err != nil {
-		if httpResp != nil {
-			u.cb.OnConnectFailed(int32(httpResp.StatusCode), err.Error())
-		} else {
-			u.cb.OnConnectFailed(1001, err.Error())
-		}
-
-		utils.LogFReturn(nil, err.Error(), url)
-		return nil, httpResp, err
-	}
-	u.cb.OnConnectSuccess()
-	u.stateMutex.Lock()
-	u.LoginState = constant.LoginSuccess
-	u.stateMutex.Unlock()
-	utils.sdkLog("ws connect ok, ", u.LoginState)
-	utils.LogSReturn(conn, nil)
-	return conn, httpResp, nil
-}
-
-func (u *open_im_sdk.UserRelated) reConn(conn *websocket.Conn) (*websocket.Conn, *http.Response, error) {
-	utils.LogBegin(conn)
-	if conn != nil {
-		conn.Close()
-		conn = nil
-	}
-
-	u.stateMutex.Lock()
-	defer u.stateMutex.Unlock()
-	if u.LoginState == constant.TokenFailedKickedOffline || u.LoginState == constant.TokenFailedExpired || u.LoginState == constant.TokenFailedInvalid {
-		utils.sdkLog("don't reconn, must login, state ", u.LoginState)
-		return nil, nil, errors.New("don't reconn")
-	}
-
-	u.IMManager.cb.OnConnecting()
-	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", constant.SvrConf.IpWsAddr, u.loginUserID, u.token, constant.SvrConf.Platform)
-	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
-	if err != nil {
-		if httpResp != nil {
-			u.cb.OnConnectFailed(int32(httpResp.StatusCode), err.Error())
-		} else {
-			u.cb.OnConnectFailed(1001, err.Error())
-		}
-
-		utils.LogFReturn(nil, err.Error(), url)
-		return nil, httpResp, err
-	}
-	u.cb.OnConnectSuccess()
-	u.LoginState = constant.LoginSuccess
-	utils.sdkLog("ws connect ok, ", u.LoginState)
-	utils.LogSReturn(conn, nil)
-	return conn, httpResp, nil
-}
-
 func (u *open_im_sdk.UserRelated) getNeedSyncSeq(svrMinSeq, svrMaxSeq int32) []int32 {
 	utils.sdkLog("getNeedSyncSeq ", svrMinSeq, svrMaxSeq)
 	localMinSeq := u.getNeedSyncLocalMinSeq()

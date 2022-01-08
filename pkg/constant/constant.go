@@ -303,7 +303,8 @@ var (
 
 	ErrAccess = ErrInfo{ErrCode: 801, ErrMsg: AccessMsg.Error()}
 	ErrDB     = ErrInfo{ErrCode: 802, ErrMsg: DBMsg.Error()}
-	ErrArgs   = ErrInfo{ErrCode: 8003, ErrMsg: ArgsMsg.Error()}
+	ErrArgs   = ErrInfo{ErrCode: 803, ErrMsg: ArgsMsg.Error()}
+	ErrApi    = ErrInfo{ErrCode: 804, ErrMsg: ApiMsg.Error()}
 )
 
 var (
@@ -317,6 +318,7 @@ var (
 	AccessMsg = errors.New("no permission")
 	DBMsg     = errors.New("db failed")
 	ArgsMsg   = errors.New("args failed")
+	ApiMsg    = errors.New("api failed")
 
 	ThirdPartyMsg = errors.New("third party error")
 )
@@ -332,4 +334,3 @@ var UserRouterMap map[string]*UserRelated
 var SvrConf utils.IMConfig
 var SdkLogFlag int32
 var hearbeatInterval int32 = 5
-var userForSDK *UserRelated

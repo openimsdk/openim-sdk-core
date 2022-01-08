@@ -21,14 +21,19 @@ func triggerCmdFriendApplication() error {
 
 }
 
+type Cmd2Value struct {
+	Cmd   string
+	Value interface{}
+}
+
 type deleteConNode struct {
 	SourceID       string
 	ConversationID string
 	SessionType    int
 }
 
-func (u *constant.UserRelated) triggerCmdDeleteConversationAndMessage(sourceID, conversationID string, sessionType int) error {
-	c2v := utils.cmd2Value{
+func triggerCmdDeleteConversationAndMessage(sourceID, conversationID string, sessionType int) error {
+	c2v := Cmd2Value{
 		Cmd:   constant.CmdDeleteConversation,
 		Value: deleteConNode{SourceID: sourceID, ConversationID: conversationID, SessionType: sessionType},
 	}
@@ -52,12 +57,11 @@ type updateConNode struct {
 	Args interface{}
 }
 
-func (u *constant.UserRelated) triggerCmdNewMsgCome(msg utils.ArrMsg) error {
+func triggerCmdNewMsgCome(msg utils.ArrMsg) error {
 	c2v := utils.cmd2Value{
 		Cmd:   constant.CmdNewMsgCome,
 		Value: msg,
 	}
-	utils.sdkLog("send cmd: ", u.ConversationCh)
 	return utils.sendCmd(u.ConversationCh, c2v, 1)
 }
 

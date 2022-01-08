@@ -1,12 +1,10 @@
 package open_im_sdk
 
 import (
-	"database/sql"
-	"github.com/go-playground/validator/v10"
-	"gorm.io/gorm"
 	"open_im_sdk/internal/controller/conversation_msg"
 	"open_im_sdk/internal/controller/friend"
 	"open_im_sdk/internal/controller/group"
+	"open_im_sdk/internal/controller/ws"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
@@ -14,7 +12,7 @@ import (
 )
 
 type UserRelated struct {
-	ConversationCh chan utils.cmd2Value //cmd：
+	ConversationCh chan conversation_msg.Cmd2Value //cmd：
 
 	token       string
 	loginUserID string
@@ -24,15 +22,18 @@ type UserRelated struct {
 	conversation_msg.ConversationListener
 	group.Group
 
-	imdb     *db.DataBase
-	validate *validator.Validate
+	imDB *db.DataBase
+	//validate *validator.Validate
 
-	mRWMutex   sync.RWMutex
+	wsRespAsyn *ws.WsRespAsyn
+	wsConn     *ws.WsConn
 	stateMutex sync.Mutex
+	//	mRWMutex   sync.RWMutex
 
 	//Global minimum seq lock
 	minSeqSvr        int64
 	minSeqSvrRWMutex sync.RWMutex
+
 	//Global cache seq map lock
 	seqMsg      map[int32]*server_api_params.MsgData
 	seqMsgMutex sync.RWMutex
@@ -42,3 +43,5 @@ type UserRelated struct {
 	receiveMessageOpt      map[string]int32
 	receiveMessageOptMutex sync.RWMutex
 }
+
+var userForSDK *UserRelated
