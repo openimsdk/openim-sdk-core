@@ -43,7 +43,7 @@ type InviteUserToGroupReq struct {
 }
 type InviteUserToGroupResp struct {
 	CommResp
-	UserIDResultList []UserIDResult `json:"data"`
+	UserIDResultList []*UserIDResult `json:"data"`
 }
 
 type GetJoinedGroupListReq struct {

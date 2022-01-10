@@ -200,6 +200,7 @@ var (
 	ErrDB     = ErrInfo{ErrCode: 802, ErrMsg: DBMsg.Error()}
 	ErrArgs   = ErrInfo{ErrCode: 803, ErrMsg: ArgsMsg.Error()}
 	ErrApi    = ErrInfo{ErrCode: 804, ErrMsg: ApiMsg.Error()}
+	ErrData = ErrInfo{ErrCode: 805, ErrMsg: DataMsg.Error()}
 
 	ErrWsRecvConnDiff = ErrInfo{ErrCode: 901, ErrMsg: WsRecvConnDiff.Error()}
 	ErrWsRecvConnSame = ErrInfo{ErrCode: 902, ErrMsg: WsRecvConnSame.Error()}
@@ -218,6 +219,7 @@ var (
 	DBMsg     = errors.New("db failed")
 	ArgsMsg   = errors.New("args failed")
 	ApiMsg    = errors.New("api failed")
+	DataMsg = errors.new("data failed ")
 
 	ThirdPartyMsg = errors.New("third party error")
 
