@@ -49,7 +49,7 @@ func (d *DataBase) initDB() error {
 		&LocalGroupMember{},
 		&LocalGroupRequest{},
 		&LocalUser{},
-		&LocalBlack{}, &LocalSeqData{})
+		&LocalBlack{}, &LocalSeqData{}, &LocalConversation{}, &LocalChatLog{})
 	if !db.Migrator().HasTable(&LocalFriend{}) {
 		//log.NewInfo("CreateTable Friend")
 		db.Migrator().CreateTable(&LocalFriend{})
@@ -87,6 +87,12 @@ func (d *DataBase) initDB() error {
 
 	if !db.Migrator().HasTable(&LocalSeqData{}) {
 		db.Migrator().CreateTable(&LocalSeqData{})
+	}
+	if !db.Migrator().HasTable(&LocalConversation{}) {
+		db.Migrator().CreateTable(&LocalConversation{})
+	}
+	if !db.Migrator().HasTable(&LocalChatLog{}) {
+		db.Migrator().CreateTable(&LocalChatLog{})
 	}
 	return nil
 }

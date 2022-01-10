@@ -1,20 +1,9 @@
 package constant
 
 import (
-	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"sync"
 )
-
-func (u *UserRelated) initListenerCh() {
-	u.ch = make(chan utils.cmd2Value, 1000)
-	u.ConversationCh = u.ch
-
-	u.wsNotification = make(map[string]chan utils.GeneralWsResp, 1)
-	u.seqMsg = make(map[int32]*server_api_params.MsgData, 1000)
-
-	u.receiveMessageOpt = make(map[string]int32, 1000)
-}
 
 const (
 	CmdFriend                     = "001"

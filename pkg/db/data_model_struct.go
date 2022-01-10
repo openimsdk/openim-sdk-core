@@ -294,4 +294,5 @@ type LocalConversation struct {
 	DraftText         string    `gorm:"column:draft_text"`
 	DraftTextTime     time.Time `gorm:"column:draft_text_time"`
 	IsPinned          int32     `gorm:"column:is_pinned"`
+	Ex                string    `gorm:"column:ex;type:varchar(1024)"`
 }
