@@ -2,10 +2,8 @@ package group
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/mitchellh/mapstructure"
 	ws "open_im_sdk/internal/controller/interaction"
-	"open_im_sdk/internal/open_im_sdk"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
@@ -67,8 +65,7 @@ func (u *Group) doCreateGroup(msg *api.MsgData) {
 		return
 	}
 	u.syncJoinedGroupInfo()
-
-	u.syncGroupMemberByGroupId(n.Detail)
+	u.syncGroupMemberByGroupID(n.Detail)
 	u.onGroupCreated(n.Detail)
 }
 
@@ -191,45 +188,45 @@ func (u *Group) doAcceptGroupApplication(msg *api.MsgData) {
 	//
 	//u.onAcceptGroupApplication(&acceptInfo)
 }
-func (u *Group) onAcceptGroupApplication(groupMember *open_im_sdk.GroupApplicationInfo) {
-	//member := open_im_sdk.groupMemberFullInfo{
-	//	GroupId:  groupMember.Info.GroupId,
-	//	Role:     0,
-	//	JoinTime: uint64(groupMember.Info.AddTime),
-	//}
-	//if groupMember.Info.ToUser == "0" {
-	//	member.UserId = groupMember.Info.FromUser
-	//	member.NickName = groupMember.Info.FromUserNickName
-	//	member.FaceUrl = groupMember.Info.FromUserFaceUrl
-	//} else {
-	//	member.UserId = groupMember.Info.ToUser
-	//	member.NickName = groupMember.Info.ToUserNickname
-	//	member.FaceUrl = groupMember.Info.ToUserFaceUrl
-	//}
-	//
-	//bOp, err := json.Marshal(member)
-	//if err != nil {
-	//	utils.sdkLog("Marshal, ", err.Error())
-	//	return
-	//}
-	//
-	//var memberList []open_im_sdk.groupMemberFullInfo
-	//memberList = append(memberList, member)
-	//bMemberListr, err := json.Marshal(memberList)
-	//if err != nil {
-	//	utils.sdkLog("onAcceptGroupApplication", err.Error())
-	//	return
-	//}
-	//if u.loginUserID == member.UserId {
-	//	u.syncJoinedGroupInfo()
-	//	u.listener.OnApplicationProcessed(groupMember.Info.GroupId, string(bOp), 1, groupMember.Info.HandledMsg)
-	//}
-	////g.syncGroupRequest()
-	//u.syncGroupMemberByGroupId(groupMember.Info.GroupId)
-	//u.listener.OnMemberEnter(groupMember.Info.GroupId, string(bMemberListr))
-	//
-	//utils.sdkLog("onAcceptGroupApplication success")
-}
+//func (u *Group) onAcceptGroupApplication(groupMember *open_im_sdk.GroupApplicationInfo) {
+//	member := open_im_sdk.groupMemberFullInfo{
+//		GroupId:  groupMember.Info.GroupId,
+//		Role:     0,
+//		JoinTime: uint64(groupMember.Info.AddTime),
+//	}
+//	if groupMember.Info.ToUser == "0" {
+//		member.UserId = groupMember.Info.FromUser
+//		member.NickName = groupMember.Info.FromUserNickName
+//		member.FaceUrl = groupMember.Info.FromUserFaceUrl
+//	} else {
+//		member.UserId = groupMember.Info.ToUser
+//		member.NickName = groupMember.Info.ToUserNickname
+//		member.FaceUrl = groupMember.Info.ToUserFaceUrl
+//	}
+//
+//	bOp, err := json.Marshal(member)
+//	if err != nil {
+//		utils.sdkLog("Marshal, ", err.Error())
+//		return
+//	}
+//
+//	var memberList []open_im_sdk.groupMemberFullInfo
+//	memberList = append(memberList, member)
+//	bMemberListr, err := json.Marshal(memberList)
+//	if err != nil {
+//		utils.sdkLog("onAcceptGroupApplication", err.Error())
+//		return
+//	}
+//	if u.loginUserID == member.UserId {
+//		u.syncJoinedGroupInfo()
+//		u.listener.OnApplicationProcessed(groupMember.Info.GroupId, string(bOp), 1, groupMember.Info.HandledMsg)
+//	}
+//	//g.syncGroupRequest()
+//	u.syncGroupMemberByGroupId(groupMember.Info.GroupId)
+//	u.listener.OnMemberEnter(groupMember.Info.GroupId, string(bMemberListr))
+//
+//	utils.sdkLog("onAcceptGroupApplication success")
+//}
 
 func (u *Group) doRefuseGroupApplication(msg *api.MsgData) {
 	//// do nothing
@@ -249,35 +246,35 @@ func (u *Group) doRefuseGroupApplication(msg *api.MsgData) {
 	//
 	//u.onRefuseGroupApplication(&refuseInfo)
 }
-
-func (u *Group) onRefuseGroupApplication(groupMember *open_im_sdk.GroupApplicationInfo) {
-	//member := open_im_sdk.groupMemberFullInfo{
-	//	GroupId:  groupMember.Info.GroupId,
-	//	Role:     0,
-	//	JoinTime: uint64(groupMember.Info.AddTime),
-	//}
-	//if groupMember.Info.ToUser == "0" {
-	//	member.UserId = groupMember.Info.FromUser
-	//	member.NickName = groupMember.Info.FromUserNickName
-	//	member.FaceUrl = groupMember.Info.FromUserFaceUrl
-	//} else {
-	//	member.UserId = groupMember.Info.ToUser
-	//	member.NickName = groupMember.Info.ToUserNickname
-	//	member.FaceUrl = groupMember.Info.ToUserFaceUrl
-	//}
-	//
-	//bOp, err := json.Marshal(member)
-	//if err != nil {
-	//	utils.sdkLog("Marshal, ", err.Error())
-	//	return
-	//}
-	//
-	//if u.loginUserID == member.UserId {
-	//	u.listener.OnApplicationProcessed(groupMember.Info.GroupId, string(bOp), -1, groupMember.Info.HandledMsg)
-	//}
-	//
-	//utils.sdkLog("onRefuseGroupApplication success")
-}
+//
+//func (u *Group) onRefuseGroupApplication(groupMember *open_im_sdk.GroupApplicationInfo) {
+//	//member := open_im_sdk.groupMemberFullInfo{
+//	//	GroupId:  groupMember.Info.GroupId,
+//	//	Role:     0,
+//	//	JoinTime: uint64(groupMember.Info.AddTime),
+//	//}
+//	//if groupMember.Info.ToUser == "0" {
+//	//	member.UserId = groupMember.Info.FromUser
+//	//	member.NickName = groupMember.Info.FromUserNickName
+//	//	member.FaceUrl = groupMember.Info.FromUserFaceUrl
+//	//} else {
+//	//	member.UserId = groupMember.Info.ToUser
+//	//	member.NickName = groupMember.Info.ToUserNickname
+//	//	member.FaceUrl = groupMember.Info.ToUserFaceUrl
+//	//}
+//	//
+//	//bOp, err := json.Marshal(member)
+//	//if err != nil {
+//	//	utils.sdkLog("Marshal, ", err.Error())
+//	//	return
+//	//}
+//	//
+//	//if u.loginUserID == member.UserId {
+//	//	u.listener.OnApplicationProcessed(groupMember.Info.GroupId, string(bOp), -1, groupMember.Info.HandledMsg)
+//	//}
+//	//
+//	//utils.sdkLog("onRefuseGroupApplication success")
+//}
 
 func (u *Group) doKickGroupMember(msg *api.MsgData) {
 	//var notification utils.NotificationContent
@@ -317,23 +314,23 @@ func (u *Group) doKickGroupMember(msg *api.MsgData) {
 	//}
 
 }
+//
+//func (g *Group) OnMemberKicked(groupId string, op open_im_sdk.groupMemberFullInfo, memberList []open_im_sdk.groupMemberFullInfo) {
+//	//jsonOp, err := json.Marshal(op)
+//	//if err != nil {
+//	//	utils.sdkLog("marshal failed, ", err.Error(), op)
+//	//	return
+//	//}
+//	//
+//	//jsonMemberList, err := json.Marshal(memberList)
+//	//if err != nil {
+//	//	utils.sdkLog("marshal faile, ", err.Error(), memberList)
+//	//	return
+//	//}
+//	//g.listener.OnMemberKicked(groupId, string(jsonOp), string(jsonMemberList))
+//}
 
-func (g *Group) OnMemberKicked(groupId string, op open_im_sdk.groupMemberFullInfo, memberList []open_im_sdk.groupMemberFullInfo) {
-	//jsonOp, err := json.Marshal(op)
-	//if err != nil {
-	//	utils.sdkLog("marshal failed, ", err.Error(), op)
-	//	return
-	//}
-	//
-	//jsonMemberList, err := json.Marshal(memberList)
-	//if err != nil {
-	//	utils.sdkLog("marshal faile, ", err.Error(), memberList)
-	//	return
-	//}
-	//g.listener.OnMemberKicked(groupId, string(jsonOp), string(jsonMemberList))
-}
-
-func (u *Group) doInviteUserToGroup(msg *open_im_sdk.MsgData) {
+func (u *Group) doInviteUserToGroup(msg *api.MsgData) {
 	//var notification utils.NotificationContent
 	//err := json.Unmarshal([]byte(msg.Content), &notification)
 	//if err != nil {
@@ -381,54 +378,55 @@ func (u *Group) doInviteUserToGroup(msg *open_im_sdk.MsgData) {
 func (g *Group) onGroupCreated(groupID string) {
 	g.listener.OnGroupCreated(groupID)
 }
-func (g *Group) onMemberEnter(groupId string, memberList []open_im_sdk.groupMemberFullInfo) {
-	jsonMemberList, err := json.Marshal(memberList)
-	if err != nil {
-		utils.sdkLog("marshal failed, ", err.Error(), jsonMemberList)
-		return
-	}
-	g.listener.OnMemberEnter(groupId, string(jsonMemberList))
-}
-func (g *Group) onReceiveJoinApplication(groupAdminId string, member open_im_sdk.groupMemberFullInfo, opReason string) {
-	jsonMember, err := json.Marshal(member)
-	if err != nil {
-		utils.sdkLog("marshal failed, ", err.Error(), jsonMember)
-		return
-	}
-	g.listener.OnReceiveJoinApplication(groupAdminId, string(jsonMember), opReason)
-}
-func (g *Group) onMemberLeave(groupId string, member open_im_sdk.groupMemberFullInfo) {
-	jsonMember, err := json.Marshal(member)
-	if err != nil {
-		utils.sdkLog("marshal failed, ", err.Error(), jsonMember)
-		return
-	}
-	g.listener.OnMemberLeave(groupId, string(jsonMember))
-}
-
-func (g *Group) onGroupInfoChanged(groupId string, changeInfos open_im_sdk.setGroupInfoReq) {
-	jsonGroupInfo, err := json.Marshal(changeInfos)
-	if err != nil {
-		utils.sdkLog("marshal failed, ", err.Error(), jsonGroupInfo)
-		return
-	}
-	utils.sdkLog(string(jsonGroupInfo))
-	g.listener.OnGroupInfoChanged(groupId, string(jsonGroupInfo))
-}
-func (g *Group) OnMemberInvited(groupId string, op open_im_sdk.groupMemberFullInfo, memberList []open_im_sdk.groupMemberFullInfo) {
-	jsonOp, err := json.Marshal(op)
-	if err != nil {
-		utils.sdkLog("marshal failed, ", err.Error(), op)
-		return
-	}
-
-	jsonMemberList, err := json.Marshal(memberList)
-	if err != nil {
-		utils.sdkLog("marshal faile, ", err.Error(), memberList)
-		return
-	}
-	g.listener.OnMemberInvited(groupId, string(jsonOp), string(jsonMemberList))
-}
+//
+//func (g *Group) onMemberEnter(groupId string, memberList []open_im_sdk.groupMemberFullInfo) {
+//	jsonMemberList, err := json.Marshal(memberList)
+//	if err != nil {
+//		utils.sdkLog("marshal failed, ", err.Error(), jsonMemberList)
+//		return
+//	}
+//	g.listener.OnMemberEnter(groupId, string(jsonMemberList))
+//}
+//func (g *Group) onReceiveJoinApplication(groupAdminId string, member open_im_sdk.groupMemberFullInfo, opReason string) {
+//	jsonMember, err := json.Marshal(member)
+//	if err != nil {
+//		utils.sdkLog("marshal failed, ", err.Error(), jsonMember)
+//		return
+//	}
+//	g.listener.OnReceiveJoinApplication(groupAdminId, string(jsonMember), opReason)
+//}
+//func (g *Group) onMemberLeave(groupId string, member open_im_sdk.groupMemberFullInfo) {
+//	jsonMember, err := json.Marshal(member)
+//	if err != nil {
+//		utils.sdkLog("marshal failed, ", err.Error(), jsonMember)
+//		return
+//	}
+//	g.listener.OnMemberLeave(groupId, string(jsonMember))
+//}
+//
+//func (g *Group) onGroupInfoChanged(groupId string, changeInfos open_im_sdk.setGroupInfoReq) {
+//	jsonGroupInfo, err := json.Marshal(changeInfos)
+//	if err != nil {
+//		utils.sdkLog("marshal failed, ", err.Error(), jsonGroupInfo)
+//		return
+//	}
+//	utils.sdkLog(string(jsonGroupInfo))
+//	g.listener.OnGroupInfoChanged(groupId, string(jsonGroupInfo))
+//}
+//func (g *Group) OnMemberInvited(groupId string, op open_im_sdk.groupMemberFullInfo, memberList []open_im_sdk.groupMemberFullInfo) {
+//	jsonOp, err := json.Marshal(op)
+//	if err != nil {
+//		utils.sdkLog("marshal failed, ", err.Error(), op)
+//		return
+//	}
+//
+//	jsonMemberList, err := json.Marshal(memberList)
+//	if err != nil {
+//		utils.sdkLog("marshal faile, ", err.Error(), memberList)
+//		return
+//	}
+//	g.listener.OnMemberInvited(groupId, string(jsonOp), string(jsonMemberList))
+//}
 
 func (u *Group) createGroup(callback common.Base, group sdk.CreateGroupBaseInfoParam,
 	memberList sdk.CreateGroupMemberRoleParam, operationID string) *sdk.CreateGroupCallback {
@@ -446,7 +444,7 @@ func (u *Group) createGroup(callback common.Base, group sdk.CreateGroupBaseInfoP
 		return nil
 	}
 	u.syncJoinedGroupInfo()
-	u.syncGroupMemberByGroupId(realData.GroupInfo.GroupID)
+	u.syncGroupMemberByGroupID(realData.GroupInfo.GroupID)
 	return &sdk.CreateGroupCallback{GroupInfo:realData.GroupInfo}
 }
 
@@ -465,7 +463,7 @@ func (u *Group) quitGroup(groupID string, callback common.Base, operationID stri
 	apiReq.OperationID = operationID
 	apiReq.GroupID = groupID
 	commData := u.p.PostFatalCallback(callback, constant.QuitGroupRouter, apiReq, u.token)
-	u.syncGroupMemberByGroupId(groupID) //todo
+	u.syncGroupMemberByGroupID(groupID) //todo
 	u.syncApplyGroupRequest()
 	return commData
 }
@@ -549,7 +547,7 @@ func (u *Group) transferGroupOwner(callback common.Base, groupID, newOwnerUserID
 	apiReq.OldOwnerUserID = u.loginUserID
 	commData := u.p.PostFatalCallback(callback, constant.TransferGroupRouter, apiReq, u.token)
 	u.syncJoinedGroupMember()
-	u.syncGroupMemberByGroupId(groupID)
+	u.syncGroupMemberByGroupID(groupID)
 	return commData
 }
 
@@ -562,7 +560,7 @@ func (u *Group) inviteUserToGroup(callback common.Base, groupID, reason string, 
 	apiReq.OperationID = operationID
 	commData := u.p.PostFatalCallback(callback, constant.InviteUserToGroupRouter, apiReq, u.token)
 	u.syncJoinedGroupMember()
-	u.syncGroupMemberByGroupId(groupID)
+	u.syncGroupMemberByGroupID(groupID)
 	var realData sdk.InviteUserToGroupCallback
 	err := mapstructure.Decode(commData.Data, &realData)
 	common.CheckDataErr(callback, err, operationID)
@@ -607,12 +605,11 @@ func (u *Group) processGroupApplication(callback common.Base, groupID, fromUserI
 	var commData *api.CommDataResp
 	if handleResult == 1{
 		commData = u.p.PostFatalCallback(callback, constant.AcceptGroupApplicationRouter, apiReq, u.token)
-		u.syncGroupMemberByGroupId(groupID)
+		u.syncGroupMemberByGroupID(groupID)
 	} else if handleResult == -1 {
 		commData = u.p.PostFatalCallback(callback, constant.RefuseGroupApplicationRouter, apiReq, u.token)
 	}
 	u.syncGroupRequest()
-	u.syncGroupMemberByGroupId(groupID)
 	return commData
 }
 //
@@ -679,54 +676,46 @@ func (u *Group) getJoinedGroupListFromSvr() ([]*api.GroupInfo, error) {
 
 
 
+//
+//func (u *Group) getGroupMembersInfoFromLocal(groupId string, memberList []string) ([]open_im_sdk.groupMemberFullInfo, error) {
+//	var result []open_im_sdk.groupMemberFullInfo
+//	localMemberList, err := u.getLocalGroupMemberListByGroupID(groupId)
+//	if err != nil {
+//		return nil, err
+//	}
+//	for _, i := range localMemberList {
+//		for _, j := range memberList {
+//			if i.UserId == j {
+//				result = append(result, i)
+//			}
+//		}
+//	}
+//	return result, nil
+//}
+//
+//func (u *Group) getGroupMembersInfoTry2(groupId string, memberList []string) ([]open_im_sdk.groupMemberFullInfo, error) {
+//	result, err := u.getGroupMembersInfoFromLocal(groupId, memberList)
+//	if err != nil || len(result) == 0 {
+//		return u.getGroupMembersInfoFromSvr(groupId, memberList)
+//	} else {
+//		return result, err
+//	}
+//}
 
-func (u *Group) getGroupMembersInfoFromLocal(groupId string, memberList []string) ([]open_im_sdk.groupMemberFullInfo, error) {
-	var result []open_im_sdk.groupMemberFullInfo
-	localMemberList, err := u.getLocalGroupMemberListByGroupID(groupId)
+func (u *Group) getGroupMembersInfoFromSvr(groupID string, memberList []string) ([]*api.GroupMemberFullInfo, error) {
+	var apiReq api.GetGroupMembersInfoReq
+	apiReq.OperationID = utils.OperationIDGenerator()
+	apiReq.GroupID = groupID
+	apiReq.MemberList = memberList
+	commData, err := u.p.PostReturn(constant.GetGroupMembersInfoRouter, apiReq, apiReq.OperationID)
 	if err != nil {
-		return nil, err
+		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
-	for _, i := range localMemberList {
-		for _, j := range memberList {
-			if i.UserId == j {
-				result = append(result, i)
-			}
-		}
+	var realData []*api.GroupMemberFullInfo
+	err = mapstructure.Decode(commData.Data, &realData){
+		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
-	return result, nil
-}
-
-func (u *Group) getGroupMembersInfoTry2(groupId string, memberList []string) ([]open_im_sdk.groupMemberFullInfo, error) {
-	result, err := u.getGroupMembersInfoFromLocal(groupId, memberList)
-	if err != nil || len(result) == 0 {
-		return u.getGroupMembersInfoFromSvr(groupId, memberList)
-	} else {
-		return result, err
-	}
-}
-
-func (u *Group) getGroupMembersInfoFromSvr(groupId string, memberList []string) ([]open_im_sdk.groupMemberFullInfo, error) {
-	var req open_im_sdk.getGroupMembersInfoReq
-	req.GroupID = groupId
-	req.OperationID = utils.operationIDGenerator()
-	req.MemberList = memberList
-
-	resp, err := utils.post2Api(constant.GetGroupMembersInfoRouter, req, u.token)
-	if err != nil {
-		return nil, err
-	}
-	var sctResp open_im_sdk.getGroupMembersInfoResp
-	err = json.Unmarshal(resp, &sctResp)
-	if err != nil {
-		utils.sdkLog("unmarshal failed, ", err.Error())
-		return nil, err
-	}
-
-	if sctResp.ErrCode != 0 {
-		utils.sdkLog("errcode, errmsg: ", sctResp.ErrCode, sctResp.ErrMsg)
-		return nil, errors.New(sctResp.ErrMsg)
-	}
-	return sctResp.Data, nil
+	return realData, nil
 }
 
 
@@ -734,36 +723,12 @@ func (u *Group) getGroupMembersInfoFromSvr(groupId string, memberList []string) 
 
 
 
-func (u *Group) getLocalGroupApplicationList(groupId string) (*open_im_sdk.groupApplicationResult, error) {
-	reply, err := u.getOwnLocalGroupApplicationList(groupId)
-	if err != nil {
-		return nil, err
-	}
-	return reply, nil
-}
 
-func (u *Group) delGroupRequestFromGroupRequest(info open_im_sdk.GroupReqListInfo) error {
-	return u.delRequestFromGroupRequest(info)
-}
+//func (u *Group) delGroupRequestFromGroupRequest(info open_im_sdk.GroupReqListInfo) error {
+//	return u.delRequestFromGroupRequest(info)
+//}
 
 
-//1
-func (u *Group) acceptGroupApplication(access *open_im_sdk.accessOrRefuseGroupApplicationReq, callback common.Base, operationID string) error {
-	resp, err := utils.post2Api(open_im_sdk.acceptGroupApplicationRouter, access, u.token)
-	if err != nil {
-		return err
-	}
-
-	var ret open_im_sdk.commonResp
-	err = json.Unmarshal(resp, &ret)
-	if err != nil {
-		return err
-	}
-	if ret.ErrCode != 0 {
-		return errors.New(ret.ErrMsg)
-	}
-	return nil
-}
 
 //1
 //func (u *Group) refuseGroupApplication(access *open_im_sdk.accessOrRefuseGroupApplicationReq, callback common.Base, operationID string) error {
@@ -782,18 +747,6 @@ func (u *Group) acceptGroupApplication(access *open_im_sdk.accessOrRefuseGroupAp
 //	}
 //	return nil
 //}
-
-func (u *Group) getGroupInfoByGroupId(groupId string) (open_im_sdk.groupInfo, error) {
-	var gList []string
-	gList = append(gList, groupId)
-	rList, err := u.getGroupsInfo(gList)
-	if err == nil && len(rList) == 1 {
-		return rList[0], nil
-	} else {
-		return open_im_sdk.groupInfo{}, nil
-	}
-
-}
 
 
 func (u *Group) syncSelfGroupRequest() {
@@ -879,9 +832,9 @@ func (u *Group) syncJoinedGroupInfo() {
 }
 
 
-func (u *Group) getLocalGroupInfoByGroupId1(groupId string) (*Group.groupInfo, error) {
-	return u.getLocalGroupsInfoByGroupID(groupId)
-}
+//func (u *Group) getLocalGroupInfoByGroupId1(groupId string) (*Group.groupInfo, error) {
+//	return u.getLocalGroupsInfoByGroupID(groupId)
+//}
 
 func (u *Group) syncGroupMemberByGroupID(groupID string) {
 	svrList, err := u.getGroupAllMemberByGroupIDFromSvr(groupID)
