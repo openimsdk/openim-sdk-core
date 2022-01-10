@@ -54,14 +54,14 @@ type GetGroupMembersInfoCallback []*db.LocalGroupMember
 
 
 type KickGroupMemberParam []string
-type KickGroupMemberCallback []server_api_params.UserIDResult
+type KickGroupMemberCallback []*server_api_params.UserIDResult
 
 
 //type TransferGroupOwnerParam
 const TransferGroupOwnerCallback = constant.SuccessCallbackDefault
 
 type InviteUserToGroupParam []string
-type InviteUserToGroupCallback server_api_params.UserIDResult
+type InviteUserToGroupCallback []*server_api_params.UserIDResult
 
 //type GetGroupApplicationListParam
 type GetGroupApplicationList []*db.LocalGroupRequest

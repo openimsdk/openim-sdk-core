@@ -9,8 +9,8 @@ import (
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
-	"open_im_sdk/pkg/sdk_params_callback"
-	"open_im_sdk/pkg/server_api_params"
+	sdk "open_im_sdk/pkg/sdk_params_callback"
+	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"strings"
 )
@@ -433,16 +433,16 @@ func (g *Group) OnMemberInvited(groupId string, op open_im_sdk.groupMemberFullIn
 	g.listener.OnMemberInvited(groupId, string(jsonOp), string(jsonMemberList))
 }
 
-func (u *Group) createGroup(callback common.Base, group sdk_params_callback.CreateGroupBaseInfoParam,
-	memberList sdk_params_callback.CreateGroupMemberRoleParam, operationID string) *sdk_params_callback.CreateGroupCallback {
-	apiReq := server_api_params.CreateGroupReq{}
+func (u *Group) createGroup(callback common.Base, group sdk.CreateGroupBaseInfoParam,
+	memberList sdk.CreateGroupMemberRoleParam, operationID string) *sdk.CreateGroupCallback {
+	apiReq := api.CreateGroupReq{}
 	apiReq.OperationID = operationID
 	apiReq.OwnerUserID = u.loginUserID
 	apiReq.GroupName = group.GroupName
 	apiReq.GroupType = group.GroupType
 	apiReq.MemberList = memberList
 	commData := u.p.PostFatalCallback(callback, constant.CreateGroupRouter, apiReq, u.token)
-	realData := server_api_params.CreateGroupResp{}
+	realData := api.CreateGroupResp{}
 	err := mapstructure.Decode(commData.Data, &realData.GroupInfo)
 	if err != nil{
 		callback.OnError(constant.ErrData.ErrCode, constant.ErrData.ErrMsg)
@@ -450,76 +450,134 @@ func (u *Group) createGroup(callback common.Base, group sdk_params_callback.Crea
 	}
 	u.syncJoinedGroupInfo()
 	u.syncGroupMemberByGroupId(realData.GroupInfo.GroupID)
-	return &sdk_params_callback.CreateGroupCallback{realData.GroupInfo}
+	return &sdk.CreateGroupCallback{GroupInfo:realData.GroupInfo}
 }
 
-func (u *Group) joinGroup(groupId, message string, callback common.Base, operationID string) error {
-	req := open_im_sdk.joinGroupReq{groupId, message, utils.operationIDGenerator()}
-	resp, err := utils.post2Api(open_im_sdk.joinGroupRouter, req, u.token)
-	if err != nil {
-		utils.sdkLog("post2Api failed, ", err.Error(), open_im_sdk.joinGroupRouter, req)
-		return err
-	}
-	var commonResp open_im_sdk.commonResp
-	if err = json.Unmarshal(resp, &commonResp); err != nil {
-		utils.sdkLog("Unmarshal", err.Error())
-		return err
-	}
-	if commonResp.ErrCode != 0 {
-		utils.sdkLog("commonResp err", commonResp.ErrCode, commonResp.ErrMsg)
-		return errors.New(commonResp.ErrMsg)
-	}
-	utils.sdkLog("psot2api ok", open_im_sdk.joinGroupRouter, req, commonResp)
-
+func (u *Group) joinGroup(groupID, reqMsg string, callback common.Base, operationID string) *api.CommDataResp {
+	apiReq := api.JoinGroupReq{}
+	apiReq.OperationID = operationID
+	apiReq.ReqMessage = reqMsg
+	apiReq.GroupID = groupID
+	commData := u.p.PostFatalCallback(callback, constant.JoinGroupRouter, apiReq, u.token)
 	u.syncApplyGroupRequest()
-	utils.sdkLog("syncApplyGroupRequest ok")
+	return commData
+}
 
-	memberList, err := u.getGroupAllMemberListByGroupIdFromSvr(groupId)
-	if err != nil {
-		utils.sdkLog("getGroupAllMemberListByGroupIdFromSvr failed", err.Error())
-		return err
-	}
+func (u *Group) quitGroup(groupID string, callback common.Base, operationID string) *api.CommDataResp {
+	apiReq := api.QuitGroupReq{}
+	apiReq.OperationID = operationID
+	apiReq.GroupID = groupID
+	commData := u.p.PostFatalCallback(callback, constant.QuitGroupRouter, apiReq, u.token)
+	u.syncGroupMemberByGroupId(groupID) //todo
+	u.syncApplyGroupRequest()
+	return commData
+}
 
-	var groupAdminUser string
-	for _, v := range memberList {
-		if v.Role == 1 {
-			groupAdminUser = v.UserId
-			break
+
+func (u *Group) getJoinedGroupList(callback common.Base, operationID string) sdk.GetJoinedGroupListCallback {
+	groupList, err := u.db.GetGroupList()
+	common.CheckErr(callback, err, operationID)
+	return groupList
+}
+
+
+func (u *Group) getGroupsInfo(groupIdList sdk.GetGroupsInfoParam, callback common.Base, operationID string) sdk.GetGroupsInfoCallback {
+	groupList, err := u.db.GetGroupList()
+	common.CheckErr(callback, err, operationID)
+	var result sdk.GetGroupsInfoCallback
+	for _, v := range groupList{
+		in := false
+		for _, k := range groupIdList{
+			if v.GroupID == k{
+				in = true
+				break
+			}
+		}
+		if in {
+			result = append(result, v)
 		}
 	}
-	utils.sdkLog("get admin from svr ok ", groupId, groupAdminUser)
-	return nil
+	return result
 }
 
-func (u *Group) quitGroup(groupId string, callback common.Base, operationID string) error {
-	req := open_im_sdk.quitGroupReq{groupId, utils.operationIDGenerator()}
-	resp, err := utils.post2Api(open_im_sdk.quitGroupRouter, req, u.token)
-	if err != nil {
-		utils.sdkLog("post2Api failed, ", open_im_sdk.quitGroupRouter, req)
-		return err
-	}
-	var commonResp open_im_sdk.commonResp
-	err = json.Unmarshal(resp, &commonResp)
-	if err != nil {
-		utils.sdkLog("unmarshal", err.Error())
-		return err
-	}
-	if commonResp.ErrCode != 0 {
-		utils.sdkLog("errcode, errmsg", commonResp.ErrCode, commonResp.ErrMsg)
-		return errors.New(commonResp.ErrMsg)
-	}
-	utils.sdkLog("post2Api ok ", open_im_sdk.quitGroupRouter, req, commonResp)
 
+func (u *Group) setGroupInfo(callback common.Base, groupInfo sdk.SetGroupInfoParam, groupID, operationID string)  *api.CommDataResp{
+	apiReq := api.SetGroupInfoReq{}
+	apiReq.GroupName = groupInfo.GroupName
+	apiReq.FaceUrl = groupInfo.FaceUrl
+	apiReq.Notification = groupInfo.Notification
+	apiReq.Introduction = groupInfo.Introduction
+	apiReq.Ex = groupInfo.Ex
+	apiReq.OperationID = operationID
+	apiReq.GroupID = groupID
+	commData := u.p.PostFatalCallback(callback, constant.SetGroupInfoRouter, apiReq, u.token)
 	u.syncJoinedGroupInfo()
-	utils.sdkLog("syncJoinedGroupInfo ok")
-	u.syncGroupMemberByGroupId(groupId) //todo
-	utils.sdkLog("syncGroupMemberByGroupId ok ", groupId)
-	return nil
+	return commData
 }
+
+//todo
+func (u *Group) getGroupMemberList(callback common.Base, groupID string, filter int32, next int32,  operationID string) sdk.GetGroupMemberListCallback{
+	groupInfoList, err := u.db.GetGroupMemberListByGroupID(groupID)
+	common.CheckErr(callback, err, operationID)
+	return sdk.GetGroupMemberListCallback{MemberList: groupInfoList, NextSeq:0}
+}
+
+//todo
+func (u *Group) getGroupMembersInfo(callback common.Base, groupID string, userList sdk.GetGroupMembersInfoParam, operationID string) sdk.GetGroupMembersInfoCallback {
+	groupInfoList, err := u.db.GetGroupMemberListByGroupID(groupID)
+	common.CheckErr(callback, err, operationID)
+	return groupInfoList
+}
+
+func (u *Group) kickGroupMember(callback common.Base, groupID string, memberList sdk.KickGroupMemberParam, reason string,  operationID string) sdk.KickGroupMemberCallback {
+	apiReq := api.KickGroupMemberReq{}
+	apiReq.GroupID = groupID
+	apiReq.KickedUserIDList =  memberList
+	apiReq.Reason = reason
+	apiReq.OperationID = operationID
+	commData := u.p.PostFatalCallback(callback, constant.KickGroupMemberRouter, apiReq, u.token)
+	u.syncJoinedGroupInfo()
+	realData := api.KickGroupMemberResp{}
+	err := mapstructure.Decode(commData.Data, &realData.UserIDResultList)
+	common.CheckDataErr(callback, err, operationID)
+	return realData.UserIDResultList
+}
+
+//1
+func (u *Group) transferGroupOwner(callback common.Base, groupID, newOwnerUserID string,  operationID string) *api.CommDataResp {
+	apiReq := api.TransferGroupOwnerReq{}
+	apiReq.GroupID = groupID
+	apiReq.NewOwnerUserID = newOwnerUserID
+	apiReq.OperationID = operationID
+	apiReq.OldOwnerUserID = u.loginUserID
+	commData := u.p.PostFatalCallback(callback, constant.TransferGroupRouter, apiReq, u.token)
+	u.syncJoinedGroupMember()
+	u.syncGroupMemberByGroupId(groupID)
+	return commData
+}
+
+
+func (u *Group) inviteUserToGroup(callback common.Base, groupID, reason string, userList sdk.InviteUserToGroupParam,  operationID string) sdk.InviteUserToGroupCallback {
+	apiReq := api.InviteUserToGroupReq{}
+	apiReq.GroupID = groupID
+	apiReq.Reason = reason
+	apiReq.InvitedUserIDList = userList
+	apiReq.OperationID = operationID
+	commData := u.p.PostFatalCallback(callback, constant.InviteUserToGroupRouter, apiReq, u.token)
+	u.syncJoinedGroupMember()
+	u.syncGroupMemberByGroupId(groupID)
+	var realData sdk.InviteUserToGroupCallback
+	err := mapstructure.Decode(commData.Data, &realData)
+	common.CheckDataErr(callback, err, operationID)
+	return realData
+}
+
+
 
 func (u *Group) getJoinedGroupListFromLocal() ([]open_im_sdk.groupInfo, error) {
 	return u.getLocalGroupsInfo()
 }
+
 
 func (u *Group) getJoinedGroupListFromSvr() ([]open_im_sdk.groupInfo, error) {
 	var req open_im_sdk.getJoinedGroupListReq
@@ -544,53 +602,8 @@ func (u *Group) getJoinedGroupListFromSvr() ([]open_im_sdk.groupInfo, error) {
 	return stcResp.Data, nil
 }
 
-func (u *Group) getGroupsInfo(groupIdList []string, callback common.Base, operationID string) ([]open_im_sdk.groupInfo, error) {
-	req := open_im_sdk.getGroupsInfoReq{groupIdList, utils.operationIDGenerator()}
-	resp, err := utils.post2Api(open_im_sdk.getGroupsInfoRouter, req, u.token)
-	if err != nil {
-		return nil, err
-	}
-	var getGroupsInfoResp open_im_sdk.getGroupsInfoResp
-	err = json.Unmarshal(resp, &getGroupsInfoResp)
-	if err != nil {
-		return nil, err
-	}
-	return getGroupsInfoResp.Data, nil
-}
 
-func (u *Group) setGroupInfo(newGroupInfo open_im_sdk.setGroupInfoReq, callback common.Base, operationID string) error {
-	g, err := u._getGroupInfoByGroupID(newGroupInfo.GroupId)
-	if err != nil {
-		utils.sdkLog("findLocalGroupOwnerByGroupId failed, ", newGroupInfo.GroupId, err.Error())
-		return err
-	}
-	if u.loginUserID != g.OwnerUserID {
-		utils.sdkLog("no permission, ", u.loginUserID, g.OwnerUserID)
-		return errors.New("no permission")
-	}
-	utils.sdkLog("findLocalGroupOwnerByGroupId ok ", newGroupInfo.GroupId, g.OwnerUserID)
 
-	req := open_im_sdk.setGroupInfoReq{newGroupInfo.GroupId, newGroupInfo.GroupName, newGroupInfo.Notification, newGroupInfo.Introduction, newGroupInfo.FaceUrl, utils.operationIDGenerator()}
-	resp, err := utils.post2Api(open_im_sdk.setGroupInfoRouter, req, u.token)
-	if err != nil {
-		utils.sdkLog("post2Api failed, ", open_im_sdk.setGroupInfoRouter, req, err.Error())
-		return err
-	}
-	var commonResp open_im_sdk.commonResp
-	if err = json.Unmarshal(resp, &commonResp); err != nil {
-		utils.sdkLog("unmarshal failed, ", err.Error())
-		return err
-	}
-	if commonResp.ErrCode != 0 {
-		utils.sdkLog("errcode errmsg: ", commonResp.ErrCode, commonResp.ErrMsg)
-		return errors.New(commonResp.ErrMsg)
-	}
-	utils.sdkLog("post2Api ok, ", open_im_sdk.setGroupInfoRouter, req, commonResp)
-
-	u.syncJoinedGroupInfo()
-	utils.sdkLog("syncJoinedGroupInfo ok")
-	return nil
-}
 
 func (u *Group) getGroupMemberListFromSvr(groupId string, filter int32, next int32) (int32, []open_im_sdk.groupMemberFullInfo, error) {
 	var req open_im_sdk.getGroupMemberListReq
@@ -673,88 +686,10 @@ func (u *Group) getGroupMembersInfoFromSvr(groupId string, memberList []string) 
 	return sctResp.Data, nil
 }
 
-func (u *Group) kickGroupMember(groupId string, memberList []string, reason string, callback common.Base, operationID string) ([]open_im_sdk.idResult, error) {
-	var req open_im_sdk.kickGroupMemberApiReq
-	req.OperationID = utils.operationIDGenerator()
-	memberListInfo, err := u.getGroupMembersInfoFromLocal(groupId, memberList)
-	if err != nil {
-		utils.sdkLog("getGroupMembersInfoFromLocal, ", err.Error())
-		return nil, err
-	}
-	req.UidListInfo = memberListInfo
-	req.Reason = reason
-	req.GroupID = groupId
 
-	resp, err := utils.post2Api(open_im_sdk.kickGroupMemberRouter, req, u.token)
-	if err != nil {
-		utils.sdkLog("post2Api failed, ", open_im_sdk.kickGroupMemberRouter, req, err.Error())
-		return nil, err
-	}
-	utils.sdkLog("url: ", open_im_sdk.kickGroupMemberRouter, "req:", req, "resp: ", string(resp))
 
-	u.syncGroupMemberByGroupId(groupId)
-	utils.sdkLog("syncGroupMemberByGroupId: ", groupId)
 
-	var sctResp open_im_sdk.kickGroupMemberApiResp
-	err = json.Unmarshal(resp, &sctResp)
-	if err != nil {
-		utils.sdkLog("unmarshal failed, ", err.Error(), resp)
-		return nil, err
-	}
 
-	if sctResp.ErrCode != 0 {
-		utils.sdkLog("resp failed, ", sctResp.ErrCode, sctResp.ErrMsg)
-		return nil, errors.New(sctResp.ErrMsg)
-	}
-	utils.sdkLog("kickGroupMember, ", groupId, memberList, reason, req)
-	return sctResp.Data, nil
-}
-
-//1
-func (u *Group) transferGroupOwner(groupId, userId string, callback common.Base, operationID string) error {
-	resp, err := utils.post2Api(open_im_sdk.transferGroupRouter, open_im_sdk.transferGroupReq{GroupID: groupId, Uid: userId, OperationID: utils.operationIDGenerator()}, u.token)
-	if err != nil {
-		return err
-	}
-	var ret open_im_sdk.commonResp
-	err = json.Unmarshal(resp, &ret)
-	if err != nil {
-		return err
-	}
-	if ret.ErrCode != 0 {
-		return errors.New(ret.ErrMsg)
-	}
-
-	return nil
-}
-
-//1
-func (u *Group) inviteUserToGroup(groupId string, reason string, userList []string, callback common.Base, operationID string) ([]open_im_sdk.idResult, error) {
-	var req open_im_sdk.inviteUserToGroupReq
-	req.GroupID = groupId
-	req.OperationID = utils.operationIDGenerator()
-	req.Reason = reason
-	req.UidList = userList
-	resp, err := utils.post2Api(open_im_sdk.inviteUserToGroupRouter, req, u.token)
-	if err != nil {
-		return nil, err
-	}
-	u.syncGroupMemberByGroupId(groupId)
-	utils.sdkLog("syncGroupMemberByGroupId", groupId)
-	var stcResp open_im_sdk.inviteUserToGroupResp
-	err = json.Unmarshal(resp, &stcResp)
-	if err != nil {
-		utils.sdkLog("unmarshal failed, ", err.Error())
-		return nil, err
-	}
-	if stcResp.ErrCode != 0 {
-		utils.sdkLog("errcode, errmsg: ", stcResp.ErrCode, stcResp.ErrMsg)
-		return nil, errors.New(stcResp.ErrMsg)
-	}
-
-	utils.sdkLog("inviteUserToGroup, autoSendInviteUserToGroupTip", groupId, reason, userList, req, err)
-	return stcResp.Data, nil
-}
 
 func (u *Group) getLocalGroupApplicationList(groupId string) (*open_im_sdk.groupApplicationResult, error) {
 	reply, err := u.getOwnLocalGroupApplicationList(groupId)
@@ -1024,7 +959,7 @@ func (u *Group) syncGroupRequest() {
 
 }
 
-func (g *groupListener) syncApplyGroupRequest() {
+func (g *Group) syncApplyGroupRequest() {
 
 }
 

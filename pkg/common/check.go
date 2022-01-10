@@ -16,6 +16,30 @@ var validate *validator.Validate
 func init() {
 	validate = validator.New()
 }
+
+func CheckDBErr(callback Base, err error, operationID string) {
+	if err != nil {
+		if callback != nil {
+			log.NewError(operationID, "checkErr ", err, constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
+			callback.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
+			runtime.Goexit()
+		}
+	}
+}
+
+func CheckDataErr(callback Base, err error, operationID string) {
+	if err != nil {
+		if callback != nil {
+			log.NewError(operationID, "checkErr ", err, constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
+			callback.OnError(constant.ErrData.ErrCode, constant.ErrData.ErrMsg)
+			runtime.Goexit()
+		}
+	}
+}
+
+
+
+
 func CheckErr(callback Base, err error, operationID string) {
 	if err != nil {
 		if callback != nil {

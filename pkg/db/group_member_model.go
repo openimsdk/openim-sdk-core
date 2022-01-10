@@ -20,7 +20,7 @@ func (d *DataBase) GetAllGroupMemberList() ([]LocalGroupMember, error) {
 	return groupMemberList, utils.Wrap(d.conn.Find(&groupMemberList).Error, "GetAllGroupMemberList failed")
 }
 
-func (d *DataBase) GetGroupMemberListByGroupID(groupID string) ([]LocalGroupMember, error) {
+func (d *DataBase) GetGroupMemberListByGroupID(groupID string) ([]*LocalGroupMember, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var groupMemberList []LocalGroupMember
