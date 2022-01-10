@@ -2,7 +2,6 @@ package group
 
 import (
 	"encoding/json"
-	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
@@ -23,11 +22,9 @@ type OnGroupListener interface {
 
 func (u *Group) SetGroupListener(callback OnGroupListener) {
 	if callback == nil {
-		utils.sdkLog("callback null")
 		return
 	}
 	u.listener = callback
-	utils.sdkLog("SetGroupListener ", callback)
 }
 
 func (u *Group) CreateGroup(callback common.Base, groupBaseInfo string, memberList string, operationID string) {
@@ -40,7 +37,7 @@ func (u *Group) CreateGroup(callback common.Base, groupBaseInfo string, memberLi
 		common.JsonUnmarshalAndArgsValidate(groupBaseInfo, &unmarshalCreateGroupBaseInfoParam, callback, operationID)
 		var unmarshalCreateGroupMemberRoleParam sdk_params_callback.CreateGroupMemberRoleParam
 		common.JsonUnmarshalAndArgsValidate(memberList, &unmarshalCreateGroupMemberRoleParam, callback, operationID)
-		result := u.createGroup(unmarshalCreateGroupBaseInfoParam, unmarshalCreateGroupMemberRoleParam, operationID)
+		result := u.createGroup(callback, unmarshalCreateGroupBaseInfoParam, unmarshalCreateGroupMemberRoleParam, operationID)
 		callback.OnSuccess(utils.StructToJsonString(result))
 		log.NewInfo(operationID, "CreateGroup callback: ", utils.StructToJsonString(result))
 	}()

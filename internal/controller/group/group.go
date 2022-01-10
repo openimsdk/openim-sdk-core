@@ -3,11 +3,13 @@ package group
 import (
 	"encoding/json"
 	"errors"
+	"github.com/mitchellh/mapstructure"
 	ws "open_im_sdk/internal/controller/interaction"
 	"open_im_sdk/internal/open_im_sdk"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"strings"
@@ -431,31 +433,24 @@ func (g *Group) OnMemberInvited(groupId string, op open_im_sdk.groupMemberFullIn
 	g.listener.OnMemberInvited(groupId, string(jsonOp), string(jsonMemberList))
 }
 
-func (u *Group) createGroup(groupID, reqMsg string, callback common.Base, operationID string) *server_api_params.CreateGroupResp {
-	return nil
-	//req := createGroupReq{memberList, group.GroupName, group.Introduction, group.Notification, group.FaceUrl, operationIDGenerator(), group.Ex}
-	//resp, err := post2Api(createGroupRouter, req, u.token)
-	//if err != nil {
-	//	sdkLog("post2Api failed, ", createGroupRouter, req)
-	//	return nil, err
-	//}
-	//var createGroupResp createGroupResp
-	//if err = json.Unmarshal(resp, &createGroupResp); err != nil {
-	//	sdkLog("Unmarshal failed, ", err.Error())
-	//	return nil, err
-	//}
-	//sdkLog("post2Api ok ", createGroupRouter, req, createGroupResp)
-	//
-	//if createGroupResp.ErrCode != 0 {
-	//	sdkLog("errcode errmsg: ", createGroupResp.ErrCode, createGroupResp.ErrMsg)
-	//	return nil, errors.New(createGroupResp.ErrMsg)
-	//}
-	//
-	//u.syncJoinedGroupInfo()
-	//sdkLog("syncJoinedGroupInfo ok")
-	//u.syncGroupMemberByGroupId(createGroupResp.Data.GroupId)
-	//sdkLog("syncGroupMemberByGroupId ok")
-	//return &createGroupResp, nil
+func (u *Group) createGroup(callback common.Base, group sdk_params_callback.CreateGroupBaseInfoParam,
+	memberList sdk_params_callback.CreateGroupMemberRoleParam, operationID string) *sdk_params_callback.CreateGroupCallback {
+	apiReq := server_api_params.CreateGroupReq{}
+	apiReq.OperationID = operationID
+	apiReq.OwnerUserID = u.loginUserID
+	apiReq.GroupName = group.GroupName
+	apiReq.GroupType = group.GroupType
+	apiReq.MemberList = memberList
+	commData := u.p.PostFatalCallback(callback, constant.CreateGroupRouter, apiReq, u.token)
+	realData := server_api_params.CreateGroupResp{}
+	err := mapstructure.Decode(commData.Data, &realData.GroupInfo)
+	if err != nil{
+		callback.OnError(constant.ErrData.ErrCode, constant.ErrData.ErrMsg)
+		return nil
+	}
+	u.syncJoinedGroupInfo()
+	u.syncGroupMemberByGroupId(realData.GroupInfo.GroupID)
+	return &sdk_params_callback.CreateGroupCallback{realData.GroupInfo}
 }
 
 func (u *Group) joinGroup(groupId, message string, callback common.Base, operationID string) error {

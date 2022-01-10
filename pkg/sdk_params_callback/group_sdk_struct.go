@@ -7,20 +7,17 @@ import (
 )
 
 type CreateGroupBaseInfoParam struct {
-	GroupName    string `json:"groupName"`
-	Notification string `json:"notification"`
-	Introduction string `json:"introduction"`
-	FaceUrl      string `json:"faceUrl"`
-	Ex           string `json:"ex"`
+	GroupName   string                `json:"groupName"`
+	GroupType   int32                 `json:"groupType"`
 }
-type UserRole struct {
-	UserID    string `json:"userID"`
-	RoleLevel int32  `json:"RoleLevel"`
-}
-type CreateGroupMemberRoleParam []UserRole
+
+
+type CreateGroupMemberRoleParam []*server_api_params.GroupAddMemberInfo
 type CreateGroupCallback struct {
 	server_api_params.GroupInfo
 }
+
+
 
 //param groupID reqMsg
 const JoinGroupCallback = constant.SuccessCallbackDefault
