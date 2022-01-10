@@ -240,6 +240,7 @@ type IMConfig struct {
 	IpApiAddr string `json:"ipApi"`
 	IpWsAddr  string `json:"ipWs"`
 	DbDir     string `json:"dbDir"`
+	logLevel int32 `json:"log_level"`
 }
 
 type IMManager struct {

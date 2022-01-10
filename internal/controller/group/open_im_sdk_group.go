@@ -1,9 +1,7 @@
 package group
 
 import (
-	"encoding/json"
 	"open_im_sdk/pkg/common"
-	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
@@ -175,27 +173,42 @@ func (u *Group) InviteUserToGroup(callback common.Base, groupID, reason string, 
 	}()
 }
 
-func (u *Group) GetGroupApplicationList(callback open_im_sdk.Base, operationID string) {
+func (u *Group) GetGroupApplicationList(callback common.Base, operationID string) {
 	if callback == nil {
 		return
 	}
 	go func() {
-		r, err := u.getGroupApplicationList()
-		if err != nil {
-			utils.sdkLog("getGroupApplicationList faild, ", err.Error())
-			callback.OnError(constant.ErrCodeGroup, err.Error())
-			return
-		}
-		jsonResult, err := json.Marshal(r)
-		if err != nil {
-			utils.sdkLog("getGroupApplicationList faild, ", err.Error())
-			callback.OnError(constant.ErrCodeGroup, err.Error())
-			return
-		}
-		callback.OnSuccess(string(jsonResult))
-		return
+		log.NewInfo(operationID, utils.RunFuncName(), "args: ",)
+		result := u.getGroupApplicationList(callback, operationID)
+		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(result)))
+		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonString(result))
 	}()
 }
+
+func (u *Group) AcceptGroupApplication(callback common.Base, groupID, fromUserID,  handleMsg string, operationID string){
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, fromUserID,  handleMsg)
+		u.processGroupApplication(callback, groupID, fromUserID,  handleMsg, 1, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.AcceptGroupApplicationCallback))
+		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonString(sdk_params_callback.AcceptGroupApplicationCallback))
+	}()
+}
+
+func (u *Group) RefuseGroupApplication(callback common.Base, groupID, fromUserID,  handleMsg string, operationID string){
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, fromUserID,  handleMsg)
+		u.processGroupApplication(callback, groupID, fromUserID,  handleMsg, -1, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.RefuseGroupApplicationCallback))
+		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonString(sdk_params_callback.RefuseGroupApplicationCallback))
+	}()
+}
+
 
 /*
 func (u *UserRelated) TsetGetGroupApplicationList(callback Base) string {
@@ -219,85 +232,3 @@ func (u *UserRelated) TsetGetGroupApplicationList(callback Base) string {
 	return string(jsonResult)
 
 }*/
-
-func (u *Group) AcceptGroupApplication(application, reason string, callback open_im_sdk.Base, operationID string) {
-	if callback == nil {
-		return
-	}
-	go func() {
-		var sctApplication utils.GroupReqListInfo
-		err := json.Unmarshal([]byte(application), &sctApplication)
-		if err != nil {
-			utils.sdkLog("Unmarshal, ", err.Error())
-			callback.OnError(constant.ErrCodeGroup, err.Error())
-			return
-		}
-
-		var access open_im_sdk.accessOrRefuseGroupApplicationReq
-		access.OperationID = utils.operationIDGenerator()
-		access.GroupId = sctApplication.GroupID
-		access.FromUser = sctApplication.FromUserID
-		access.FromUserNickName = sctApplication.FromUserNickname
-		access.FromUserFaceUrl = sctApplication.FromUserFaceUrl
-		access.ToUser = sctApplication.ToUserID
-		access.ToUserNickname = sctApplication.ToUserNickname
-		access.ToUserFaceUrl = sctApplication.ToUserFaceUrl
-		access.AddTime = sctApplication.AddTime
-		access.RequestMsg = sctApplication.RequestMsg
-		access.HandledMsg = reason
-		access.Type = sctApplication.Type
-		access.HandleStatus = 2
-		access.HandleResult = 1
-
-		err = u.acceptGroupApplication(&access)
-		if err != nil {
-			utils.sdkLog("acceptGroupApplication, ", err.Error())
-			callback.OnError(constant.ErrCodeGroup, err.Error())
-			return
-		}
-		u.syncGroupRequest()
-		u.syncGroupMemberByGroupId(sctApplication.GroupID)
-		callback.OnSuccess(constant.DeFaultSuccessMsg)
-	}()
-}
-
-func (u *Group) RefuseGroupApplication(application, reason string, callback open_im_sdk.Base, operationID string) {
-	if callback == nil {
-		return
-	}
-	go func() {
-		var sctApplication utils.GroupReqListInfo
-		err := json.Unmarshal([]byte(application), &sctApplication)
-		if err != nil {
-			utils.sdkLog("Unmarshal, ", err.Error())
-			callback.OnError(constant.ErrCodeGroup, err.Error())
-			return
-		}
-
-		var access open_im_sdk.accessOrRefuseGroupApplicationReq
-		access.OperationID = utils.operationIDGenerator()
-		access.GroupId = sctApplication.GroupID
-		access.FromUser = sctApplication.FromUserID
-		access.FromUserNickName = sctApplication.FromUserNickname
-		access.FromUserFaceUrl = sctApplication.FromUserFaceUrl
-		access.ToUser = sctApplication.ToUserID
-		access.ToUserNickname = sctApplication.ToUserNickname
-		access.ToUserFaceUrl = sctApplication.ToUserFaceUrl
-		access.AddTime = sctApplication.AddTime
-		access.RequestMsg = sctApplication.RequestMsg
-		access.HandledMsg = reason
-		access.Type = sctApplication.Type
-		access.HandleStatus = 2
-		access.HandleResult = 0
-
-		err = u.refuseGroupApplication(&access)
-		if err != nil {
-			utils.sdkLog("refuseGroupApplication, ", err.Error())
-			callback.OnError(constant.ErrCodeGroup, err.Error())
-			return
-		}
-		u.syncGroupRequest()
-		callback.OnSuccess(constant.DeFaultSuccessMsg)
-	}()
-
-}

@@ -24,7 +24,7 @@ func (d *DataBase) UpdateGroup(groupInfo *LocalGroup) error {
 	}
 	return utils.Wrap(t.Error, "UpdateGroup failed")
 }
-func (d *DataBase) GetGroupList() ([]*LocalGroup, error) {
+func (d *DataBase) GetJoinedGroupList() ([]*LocalGroup, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var groupList []LocalGroup

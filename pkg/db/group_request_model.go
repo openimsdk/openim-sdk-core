@@ -25,7 +25,7 @@ func (d *DataBase) UpdateGroupRequest(groupRequest *LocalGroupRequest) error {
 	}
 	return utils.Wrap(t.Error, "_updateGroupRequest failed")
 }
-func (d *DataBase) GetRecvGroupApplication() ([]LocalGroupRequest, error) {
+func (d *DataBase) GetRecvGroupApplication() ([]*LocalGroupRequest, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var groupRequestList []LocalGroupRequest

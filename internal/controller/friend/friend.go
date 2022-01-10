@@ -422,6 +422,7 @@ func (f *Friend) syncSelfFriendApplication() {
 }
 
 func (f *Friend) syncFriendApplication() {
+
 	svrList, err := f.getServerFriendApplication("")
 	if err != nil {
 		log.NewError("0", "getServerFriendList failed ", err.Error())
