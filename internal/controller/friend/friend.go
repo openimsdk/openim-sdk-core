@@ -416,11 +416,11 @@ func (f *Friend) removeBlack(callback common.Base, deleteUid, operationID string
 //	}
 //}
 
-func (f *Friend) syncSelfFriendApplication() {
+func (f *Friend) SyncSelfFriendApplication() {
 
 }
 
-func (f *Friend) syncFriendApplication() {
+func (f *Friend) SyncFriendApplication() {
 
 	svrList, err := f.getServerFriendApplication("")
 	if err != nil {
@@ -461,7 +461,7 @@ func (f *Friend) syncFriendApplication() {
 	}
 }
 
-func (f *Friend) syncFriendList() {
+func (f *Friend) SyncFriendList() {
 	svrList, err := f.getServerFriendList("")
 	if err != nil {
 		log.NewError("0", "getServerFriendList failed ", err.Error())
@@ -502,7 +502,7 @@ func (f *Friend) syncFriendList() {
 	}
 }
 
-func (f *Friend) syncBlackList() {
+func (f *Friend) SyncBlackList() {
 	svrList, err := f.getServerBlackList("")
 	if err != nil {
 		log.NewError("0", "getServerBlackList failed ", err.Error())

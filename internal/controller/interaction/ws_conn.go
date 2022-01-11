@@ -163,7 +163,7 @@ func (u *WsConn) ReConn() (*websocket.Conn, *http.Response, error) {
 	}
 
 	u.listener.OnConnecting()
-	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", constant.SvrConf.IpWsAddr, u.loginUserID, u.token, constant.SvrConf.Platform)
+	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", constant.SvrConf.WsAddr, u.loginUserID, u.token, constant.SvrConf.Platform)
 	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		if httpResp != nil {

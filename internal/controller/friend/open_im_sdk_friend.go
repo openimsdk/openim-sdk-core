@@ -210,18 +210,18 @@ func (f *Friend) SetFriendListener(listener OnFriendshipListener) bool {
 	return true
 }
 
-func (f *Friend) ForceSyncFriendApplication() {
-	f.syncFriendApplication()
-}
+//func (f *Friend) ForceSyncFriendApplication() {
+//	f.syncFriendApplication()
+//}
 
-func (f *Friend) ForceSyncSelfFriendApplication() {
-	f.syncSelfFriendApplication()
-}
+//func (f *Friend) ForceSyncSelfFriendApplication() {
+//	f.syncSelfFriendApplication()
+//}
 
-func (f *Friend) ForceSyncFriend() {
-	f.syncFriendList()
-}
+//func (f *Friend) ForceSyncFriend() {
+//	f.syncFriendList()
+//}
 
-func (f *Friend) ForceSyncBlackList() {
-	f.syncBlackList()
-}
+//func (f *Friend) ForceSyncBlackList() {
+//	f.syncBlackList()
+//}

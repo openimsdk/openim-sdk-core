@@ -17,8 +17,10 @@ type User struct {
 	loginUserID    string
 }
 
+
+
 func (u *User) SyncLoginUserInfo() error {
-	svr, err := u._getSelfUserInfoFromSvr()
+	svr, err := u.GetSelfUserInfoFromSvr()
 	if err != nil {
 		return utils.Wrap(err, "_getSelfUserInfoFromSvr failed")
 	}
@@ -64,7 +66,7 @@ func (u *User) updateSelfUserInfo(callback common.Base, userInfo sdk.SetSelfUser
 }
 
 
-func (u *User) _getSelfUserInfoFromSvr() (*api.UserInfo, error){
+func (u *User) GetSelfUserInfoFromSvr() (*api.UserInfo, error){
 	apiReq := api.GetSelfUserInfoReq{}
 	apiReq.OperationID = utils.OperationIDGenerator()
 	apiReq.UserID = u.loginUserID

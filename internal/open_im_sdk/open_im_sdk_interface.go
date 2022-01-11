@@ -6,6 +6,7 @@ import (
 	"open_im_sdk/internal/controller/friend"
 	"open_im_sdk/internal/controller/group"
 	"open_im_sdk/internal/controller/init"
+	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 )
@@ -32,7 +33,7 @@ func SdkVersion() string {
 	return "Open-IM-SDK-Core-v1.0.6"
 }
 
-func InitSDK(config string, cb init.IMSDKListener) bool {
+func InitSDK(config string, cb init.IMloListener) bool {
 	var sc utils.IMConfig
 	if err := json.Unmarshal([]byte(config), &sc); err != nil {
 		utils.sdkLog("initSDK failed, config: ", sc, err.Error())
@@ -172,54 +173,54 @@ func RefuseGroupApplication(application, reason string, callback init.Base) {
 
 /////////////////////////////////////////////////////////////////
 
-func GetDesignatedFriendsInfo(callback init.Base, userIDList, operationID string) {
+func GetDesignatedFriendsInfo(callback common.Base, userIDList, operationID string) {
 	open_im_sdk.userForSDK.GetDesignatedFriendsInfo(callback, userIDList, operationID)
 }
 
-func GetFriendList(callback init.Base, operationID string) {
+func GetFriendList(callback common.Base, operationID string) {
 	open_im_sdk.userForSDK.GetFriendList(callback, operationID)
 }
 
-func CheckFriend(callback init.Base, userIDList, operationID string) {
+func CheckFriend(callback common.Base, userIDList, operationID string) {
 	open_im_sdk.userForSDK.CheckFriend(callback, userIDList, operationID)
 }
 
-func AddFriend(callback init.Base, paramsReq, operationID string) {
+func AddFriend(callback common.Base, paramsReq, operationID string) {
 	open_im_sdk.userForSDK.AddFriend(callback, paramsReq, operationID)
 }
 
-func SetFriendRemark(callback init.Base, params, operationID string) {
+func SetFriendRemark(callback common.Base, params, operationID string) {
 	open_im_sdk.userForSDK.SetFriendRemark(callback, params, operationID)
 }
-func DeleteFriend(callback init.Base, friendUserID, operationID string) {
+func DeleteFriend(callback common.Base, friendUserID, operationID string) {
 	open_im_sdk.userForSDK.DeleteFriend(callback, friendUserID, operationID)
 }
 
-func GetRecvFriendApplicationList(callback init.Base, operationID string) {
+func GetRecvFriendApplicationList(callback common.Base, operationID string) {
 	open_im_sdk.userForSDK.GetRecvFriendApplicationList(callback, operationID)
 }
 
-func GetSendFriendApplicationList(callback init.Base, operationID string) {
+func GetSendFriendApplicationList(callback common.Base, operationID string) {
 	open_im_sdk.userForSDK.GetSendFriendApplicationList(callback, operationID)
 }
 
-func AcceptFriendApplication(callback init.Base, params string, operationID string) {
+func AcceptFriendApplication(callback common.Base, params string, operationID string) {
 	open_im_sdk.userForSDK.AcceptFriendApplication(callback, params, operationID)
 }
 
-func RefuseFriendApplication(callback init.Base, params, operationID string) {
+func RefuseFriendApplication(callback common.Base, params, operationID string) {
 	open_im_sdk.userForSDK.RefuseFriendApplication(callback, params, operationID)
 }
 
-func AddBlack(callback init.Base, blackUserID, operationID string) {
+func AddBlack(callback common.Base, blackUserID, operationID string) {
 	open_im_sdk.userForSDK.AddBlack(callback, blackUserID, operationID)
 }
 
-func GetBlackList(callback init.Base, operationID string) {
+func GetBlackList(callback common.Base, operationID string) {
 	open_im_sdk.userForSDK.GetBlackList(callback, operationID)
 }
 
-func RemoveBlack(callback init.Base, removeUserID, operationID string) {
+func RemoveBlack(callback common.Base, removeUserID, operationID string) {
 	open_im_sdk.userForSDK.RemoveBlack(callback, removeUserID, operationID)
 }
 

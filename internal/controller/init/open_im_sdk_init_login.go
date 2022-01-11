@@ -34,13 +34,7 @@ func GetUserWorker(uid string) *constant.UserRelated {
 	return constant.UserRouterMap[uid]
 }
 
-func (u *constant.open_im_sdk) InitSDK(config string, cb IMSDKListener) bool {
-	return u.initSDK(config, cb)
-}
 
-func (u *constant.open_im_sdk) UnInitSDK() {
-	u.unInitSDK()
-}
 
 func (u *constant.open_im_sdk) Login(uid, tk string, callback Base) {
 	if callback == nil {
@@ -52,30 +46,37 @@ func (u *constant.open_im_sdk) Login(uid, tk string, callback Base) {
 	//	}()
 }
 
-func (u *constant.open_im_sdk) ForceReConn() {
-	if u.conn != nil {
-		u.conn.Close()
-	}
-}
 
-func (u *constant.open_im_sdk) Logout(callback Base) {
-	u.logout(callback)
-}
 
-func (u *constant.open_im_sdk) GetLoginStatus() int {
-	return u.getLoginStatus()
-}
 
-func (u *constant.open_im_sdk) GetLoginUser() string {
-	return u.loginUserID
-}
+//func (u *constant.open_im_sdk) InitSDK(config string, cb IMSDKListener) bool {
+//	return u.initSDK(config, cb)
+//}
 
-func (u *constant.open_im_sdk) ForceSyncLoginUserInfo() {
-	u.syncLoginUserInfo()
-}
+//func (u *constant.open_im_sdk) UnInitSDK() {
+//	u.unInitSDK()
+//}
 
-func initUserRouter() {
-	constant.UserSDKRwLock.Lock()
-	defer constant.UserSDKRwLock.Unlock()
-	constant.UserRouterMap = make(map[string]*constant.UserRelated, 0)
-}
+
+//func (u *constant.open_im_sdk) ForceReConn() {
+//	if u.conn != nil {
+//		u.conn.Close()
+//	}
+//}
+
+//func (u *constant.open_im_sdk) Logout(callback Base) {
+//	u.logout(callback)
+//}
+
+//func (u *constant.open_im_sdk) GetLoginStatus() int {
+//	return u.getLoginStatus()
+//}
+//
+//func (u *constant.open_im_sdk) GetLoginUser() string {
+//	return u.loginUserID
+//}
+
+//func (u *constant.open_im_sdk) ForceSyncLoginUserInfo() {
+//	u.syncLoginUserInfo()
+//}
+

@@ -12,7 +12,7 @@ func  GetGroupMemberListByGroupID(callback Base, operationID string,  db *db.Dat
 }
 
 func MapstructureDecode(input interface{}, output interface{}, callback Base, oprationID string){
-	err := mapstructure.Decode(commData.Data, apiResp)
+	err := mapstructure.Decode(input, output)
 	CheckDataErr(callback, err, oprationID)
 }
 

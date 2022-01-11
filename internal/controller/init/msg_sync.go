@@ -166,7 +166,7 @@ func (u *MsgSync) syncMsgFromServerSplit(needSyncSeqList []int64) (err error) {
 				log.Info(operationID, "seq in : ", pullMsg.Data.Group[i].List[j].Seq, b1, b2, ok)
 			} else {
 				isInmap = true
-				u.seqMsg[int32(pullMsg.Data.Group[i].List[j].Seq)] = groupMsg
+				u.seqMsg[int32(pullMsg.Data.Group[i].List[j].Seq)] = *groupMsg
 				log.Info(operationID, "into map, seq: ", pullMsg.Data.Group[i].List[j].Seq, pullMsg.Data.Group[i].List[j].ClientMsgID, pullMsg.Data.Group[i].List[j].ServerMsgID)
 				log.Info(operationID, "pull all: |", pullMsg.Data.Group[i].List[j].Seq, pullMsg.Data.Group[i].List[j])
 

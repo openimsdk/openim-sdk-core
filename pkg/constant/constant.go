@@ -1,9 +1,8 @@
 package constant
 
 import (
-	"open_im_sdk/pkg/utils"
-	"sync"
 	"errors"
+	"open_im_sdk/pkg/utils"
 )
 
 const (
@@ -239,8 +238,4 @@ func (e *ErrInfo) Error() string {
 
 const SuccessCallbackDefault = ""
 
-var UserSDKRwLock sync.RWMutex
-var UserRouterMap map[string]*UserRelated
 var SvrConf utils.IMConfig
-var SdkLogFlag int32
-var hearbeatInterval int32 = 5

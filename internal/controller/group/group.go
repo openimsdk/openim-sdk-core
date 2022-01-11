@@ -749,11 +749,11 @@ func (u *Group) getGroupMembersInfoFromSvr(groupID string, memberList []string) 
 //}
 
 
-func (u *Group) syncSelfGroupRequest() {
+func (u *Group) SyncSelfGroupRequest() {
 
 }
 
-func (u *Group) syncGroupRequest() {
+func (u *Group) SyncGroupRequest() {
 	svrList, err := u.getGroupApplicationListFromSvr()
 	if err != nil {
 		log.NewError("0", "getGroupApplicationListFromSvr failed ", err.Error())
@@ -790,11 +790,11 @@ func (u *Group) syncGroupRequest() {
 	}
 }
 
-func (g *Group) syncApplyGroupRequest() {
+func (g *Group) SyncApplyGroupRequest() {
 
 }
 
-func (u *Group) syncJoinedGroupInfo() {
+func (u *Group) SyncJoinedGroupInfo() {
 	svrList, err := u.getJoinedGroupListFromSvr()
 	if err != nil {
 		log.NewError("0", "getJoinedGroupListFromSvr failed ", err.Error())

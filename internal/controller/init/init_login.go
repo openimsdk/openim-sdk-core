@@ -1,8 +1,6 @@
 package init
 
 import (
-	"encoding/json"
-	"errors"
 	conv "open_im_sdk/internal/controller/conversation_msg"
 	"open_im_sdk/internal/controller/friend"
 	"open_im_sdk/internal/controller/group"
@@ -13,7 +11,6 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
-	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"time"
 )
@@ -46,7 +43,7 @@ func (u *LoginMgr) login(userID, token string, cb common.Base) {
 		cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
 		return
 	}
-	_, err := checkToken(userID, token)
+	err := u.checkToken(token)
 	if err != nil {
 		cb.OnError(constant.ErrTokenInvalid.ErrCode, constant.ErrTokenInvalid.ErrMsg)
 		return
@@ -80,7 +77,7 @@ func (u *LoginMgr) login(userID, token string, cb common.Base) {
 
 
 
-func (u *LoginMgr) initSDK(config string, cb *ws.ConnListener) bool {
+func (u *LoginMgr) InitSDK(config string, cb *ws.ConnListener) bool {
 	if cb == nil {
 		log.Error("callback == nil")
 		return false
@@ -96,23 +93,17 @@ func (u *LoginMgr) initSDK(config string, cb *ws.ConnListener) bool {
 	return true
 }
 
-func (u *open_im_sdk.UserRelated) unInitSDK() {
+func (u *LoginMgr) UnInitSDK() {
 	u.unInitAll()
 	u.closeListenerCh()
 }
 
-func (im *utils.open_im_sdk) getVersion() string {
+func (u *LoginMgr) GetVersion() string {
 	return "v1.0.5"
 }
 
-func (im *utils.open_im_sdk) getServerTime() int64 {
-	return 0
-}
 
-func (u *open_im_sdk.UserRelated) logout(cb Base) {
-	go func() {
-		u.stateMutex.Lock()
-		defer u.stateMutex.Unlock()
+func (u *LoginMgr) logout(cb Base) {
 
 		u.LoginState = constant.LogoutCmd
 
@@ -143,11 +134,10 @@ func (u *open_im_sdk.UserRelated) logout(cb Base) {
 			cb.OnSuccess("")
 		}
 		utils.sdkLog("logout return")
-	}()
 }
 
 
-func (u *open_im_sdk.UserRelated) getLoginUser() string {
+func (u *LoginMgr) GetLoginUser() string {
 	if u.LoginState == constant.LoginSuccess {
 		return u.loginUserID
 	} else {
@@ -155,114 +145,67 @@ func (u *open_im_sdk.UserRelated) getLoginUser() string {
 	}
 }
 
-func (im *utils.open_im_sdk) getLoginStatus() int {
+func (im *LoginMgr) GetLoginStatus() int {
 	return im.LoginState
 }
-
-func (u *open_im_sdk.UserRelated) forycedSyncReceiveMessageOpt() {
-	OperationID := utils.operationIDGenerator()
-	resp, err := utils.post2ApiForRead(open_im_sdk.getAllConversationMessageOptRouter, open_im_sdk.paramGetAllConversationMessageOpt{OperationID: OperationID}, u.token)
-	if err != nil {
-		utils.sdkLog("post2Api failed, ", open_im_sdk.getAllConversationMessageOptRouter, OperationID)
-		return
-	}
-	var v open_im_sdk.getReceiveMessageOptResp
-	err = json.Unmarshal(resp, &v)
-	if err != nil {
-		utils.sdkLog("Unmarshal failed ", resp, OperationID)
-		return
-	}
-	if v.ErrCode != 0 {
-		utils.sdkLog("errCode failed, ", v.ErrCode, v.ErrMsg, string(resp), OperationID)
-		return
-	}
-
-	utils.sdkLog("get receive opt ", v)
-	u.receiveMessageOptMutex.Lock()
-	for _, v := range v.Data {
-		if v.Result != 0 {
-			u.receiveMessageOpt[v.ConversationId] = v.Result
-		}
-	}
-	u.receiveMessageOptMutex.Unlock()
-}
+//
+//func (u *open_im_sdk.UserRelated) forycedSyncReceiveMessageOpt() {
+//	OperationID := utils.operationIDGenerator()
+//	resp, err := utils.post2ApiForRead(open_im_sdk.getAllConversationMessageOptRouter, open_im_sdk.paramGetAllConversationMessageOpt{OperationID: OperationID}, u.token)
+//	if err != nil {
+//		utils.sdkLog("post2Api failed, ", open_im_sdk.getAllConversationMessageOptRouter, OperationID)
+//		return
+//	}
+//	var v open_im_sdk.getReceiveMessageOptResp
+//	err = json.Unmarshal(resp, &v)
+//	if err != nil {
+//		utils.sdkLog("Unmarshal failed ", resp, OperationID)
+//		return
+//	}
+//	if v.ErrCode != 0 {
+//		utils.sdkLog("errCode failed, ", v.ErrCode, v.ErrMsg, string(resp), OperationID)
+//		return
+//	}
+//
+//	utils.sdkLog("get receive opt ", v)
+//	u.receiveMessageOptMutex.Lock()
+//	for _, v := range v.Data {
+//		if v.Result != 0 {
+//			u.receiveMessageOpt[v.ConversationId] = v.Result
+//		}
+//	}
+//	u.receiveMessageOptMutex.Unlock()
+//}
 
 func (u *LoginMgr) forcedSynchronization() {
-	u.friend.ForceSyncFriend()
-	u.friend.ForceSyncBlackList()
-	u.friend.ForceSyncFriendApplication()
-	//	u.ForceSyncSelfFriendApplication()
-	u.user.ForceSyncLoginUserInfo()
-	//	u.ForceSyncJoinedGroup()
-	//	u.ForceSyncGroupRequest()
-	//	u.ForceSyncSelfGroupRequest()
-	//	u.ForceSyncJoinedGroupMember()
+	u.friend.SyncFriendList()
+	u.friend.SyncBlackList()
+	u.friend.SyncFriendApplication()
+	u.friend.SyncSelfFriendApplication()
+	u.user.SyncLoginUserInfo()
+	u.group.SyncApplyGroupRequest()
+	u.group.SyncGroupRequest()
+	u.group.SyncJoinedGroupInfo()
+	u.group.SyncSelfGroupRequest()
 }
 
-func (u *open_im_sdk.UserRelated) GetMinSeqSvr() int64 {
-	u.minSeqSvrRWMutex.RLock()
-	min := u.minSeqSvr
-	u.minSeqSvrRWMutex.RUnlock()
-	return min
+func (u *LoginMgr) GetMinSeqSvr() int64 {
+	return u.GetMinSeqSvr()
 }
 
-func (u *open_im_sdk.UserRelated) SetMinSeqSvr(minSeqSvr int64) {
-
-	u.minSeqSvrRWMutex.Lock()
-	if minSeqSvr > u.minSeqSvr {
-		u.minSeqSvr = minSeqSvr
-	}
-	u.minSeqSvrRWMutex.Unlock()
-
+func (u *LoginMgr) SetMinSeqSvr(minSeqSvr int64) {
+	u.SetMinSeqSvr(minSeqSvr)
 }
 
-func (u *open_im_sdk.UserRelated) syncSeq2Msg() error {
-	svrMaxSeq, svrMinSeq, err := u.getUserNewestSeq()
-	if err != nil {
-		utils.sdkLog("getUserNewestSeq failed ", err.Error())
-		return err
-	}
-
-	needSyncSeq := u.getNeedSyncSeq(int32(svrMinSeq), int32(svrMaxSeq))
-
-	err = u.syncMsgFromServer(needSyncSeq)
-	return err
-}
-
-func checkToken(userID, token string) (*api.CommDataResp, error) {
+func (u *LoginMgr)checkToken(token string) error {
 	p := ws.NewPostApi(token, constant.SvrConf.ApiAddr)
-	apiReq := api.GetUserInfoReq{}
-	apiReq.OperationID = utils.OperationIDGenerator()
-	apiReq.UserIDList = []string{userID}
-	return 	p.PostReturn(constant.GetUserInfoRouter, apiReq, apiReq.OperationID)
+	_, err := u.user.GetSelfUserInfoFromSvr()
+	return utils.Wrap(err, "GetSelfUserInfoFromSvr failed")
 }
 
-func (u *open_im_sdk.UserRelated) getUserNewestSeq() (int64, int64, error) {
-	utils.LogBegin()
-	resp, err := utils.post2Api(open_im_sdk.newestSeqRouter, open_im_sdk.paramsNewestSeqReq{ReqIdentifier: 1001, OperationID: utils.operationIDGenerator(), SendID: u.loginUserID, MsgIncr: 1}, u.token)
-	if err != nil {
-		utils.LogFReturn(0, err.Error())
-		return 0, 0, err
-	}
-	var seqResp open_im_sdk.paramsNewestSeqResp
-	err = json.Unmarshal(resp, &seqResp)
-	if err != nil {
-		utils.sdkLog("UnMarshal failed, ", err.Error())
-		utils.LogFReturn(0, err.Error())
-		return 0, 0, err
-	}
 
-	if seqResp.ErrCode != 0 {
-		utils.sdkLog("errcode: ", seqResp.ErrCode, "errmsg: ", seqResp.ErrMsg)
-		utils.LogFReturn(0, seqResp.ErrMsg)
-		return 0, 0, errors.New(seqResp.ErrMsg)
-	}
-	utils.LogSReturn(seqResp.Data.Seq, nil)
-	return seqResp.Data.Seq, seqResp.Data.MinSeq, nil
-}
-
-func (u *open_im_sdk.UserRelated) kickOnline(msg utils.GeneralWsResp) {
-	utils.sdkLog("kickOnline ", msg.ReqIdentifier, msg.ErrCode, msg.ErrMsg)
-	u.logout(nil)
-	u.cb.OnKickedOffline()
-}
+//func (u *open_im_sdk.UserRelated) kickOnline(msg utils.GeneralWsResp) {
+//	utils.sdkLog("kickOnline ", msg.ReqIdentifier, msg.ErrCode, msg.ErrMsg)
+//	u.logout(nil)
+//	u.cb.OnKickedOffline()
+//}
