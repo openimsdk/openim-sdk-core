@@ -62,7 +62,7 @@ func (d *DataBase) ConversationIfExists(conversationID string) (bool, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var count int64
-	t := d.conn.Where("conversation_id = ?",
+	t := d.conn.Model(&LocalConversation{}).Where("conversation_id = ?",
 		conversationID).Count(&count)
 	if t.Error != nil {
 		return false, utils.Wrap(t.Error, "ConversationIfExists get failed")
