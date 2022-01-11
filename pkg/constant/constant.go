@@ -3,6 +3,7 @@ package constant
 import (
 	"open_im_sdk/pkg/utils"
 	"sync"
+	"errors"
 )
 
 const (
