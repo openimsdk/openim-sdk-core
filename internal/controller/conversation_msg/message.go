@@ -6,28 +6,19 @@
  */
 package conversation_msg
 
-import (
-	imgtype "github.com/shamsher31/goimgtype"
-	"image"
-	"open_im_sdk/open_im_sdk"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/utils"
-	"os"
-)
-
 const TimeOffset = 5
 
 func doNewMsgConversation() {
 
 }
 
-func (u *open_im_sdk.UserRelated) createTextSystemMessage(n open_im_sdk.NotificationContent, textType int32) *open_im_sdk.MsgStruct {
-	s := utils.MsgStruct{}
-	u.initBasicInfo(&s, constant.UserMsgType, textType)
-	s.Content = utils.structToJsonString(n)
-	s.AtElem.AtUserList = []string{}
-	return &s
-}
+//func (u *open_im_sdk.UserRelated) createTextSystemMessage(n open_im_sdk.NotificationContent, textType int32) *open_im_sdk.MsgStruct {
+//	s := utils.MsgStruct{}
+//	u.initBasicInfo(&s, constant.UserMsgType, textType)
+//	s.Content = utils.structToJsonString(n)
+//	s.AtElem.AtUserList = []string{}
+//	return &s
+//}
 
 /*
 func autoSendTransferGroupOwnerTip(groupId string, oldOwner, newOwner string) error{
@@ -130,90 +121,53 @@ func autoSendTransferGroupOwnerTip(groupId string, oldOwner, newOwner string) er
 //	return nil
 //}
 
-func (u *open_im_sdk.UserRelated) updateMessageFailedStatus(s *open_im_sdk.MsgStruct, c *ConversationStruct, onlineUserOnly bool) {
-	if !onlineUserOnly {
-		_ = u.updateMessageTimeAndMsgIDStatus(s.ClientMsgID, s.CreateTime, constant.MsgStatusSendFailed)
-	}
-	s.SendTime = s.CreateTime
-	s.Status = constant.MsgStatusSendFailed
-	c.LatestMsg = utils.structToJsonString(s)
-}
-func (u *open_im_sdk.UserRelated) initBasicInfo(message *open_im_sdk.MsgStruct, msgFrom, contentType int32) {
-	message.CreateTime = utils.getCurrentTimestampByNano()
-	message.SendTime = message.CreateTime
-	message.IsRead = false
-	message.Status = constant.MsgStatusSending
-	message.SendID = u.loginUserID
-	userInfo, _ := u.getLoginUserInfoFromLocal()
-	message.SenderFaceURL = userInfo.Icon
-	message.SenderNickname = userInfo.Name
-	ClientMsgID := utils.getMsgID(message.SendID)
-	message.ClientMsgID = ClientMsgID
-	message.MsgFrom = msgFrom
-	message.ContentType = contentType
-	message.SenderPlatformID = constant.SvrConf.Platform
-
-}
-func (u *open_im_sdk.UserRelated) sendMessageFailedHandle(s *open_im_sdk.MsgStruct, c *ConversationStruct, conversationID string) {
-	_ = u.updateMessageTimeAndMsgIDStatus(s.ClientMsgID, s.CreateTime, constant.MsgStatusSendFailed)
-	s.SendTime = s.CreateTime
-	s.Status = constant.MsgStatusSendFailed
-	c.LatestMsg = utils.structToJsonString(s)
-	_ = u.triggerCmdUpdateConversation(open_im_sdk.updateConNode{conversationID, constant.AddConOrUpLatMsg,
-		*c})
-	u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{"", constant.NewConChange, []string{conversationID}}})
-}
-
-type MsgFormats []*open_im_sdk.MsgStruct
-
-// Implement the sort.Interface interface to get the number of elements method
-func (s MsgFormats) Len() int {
-	return len(s)
-}
-
-//Implement the sort.Interface interface comparison element method
-func (s MsgFormats) Less(i, j int) bool {
-	return s[i].SendTime < s[j].SendTime
-}
-
-//Implement the sort.Interface interface exchange element method
-func (s MsgFormats) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-
-func getImageInfo(filePath string) (*open_im_sdk.imageInfo, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		utils.sdkLog(err.Error())
-		return nil, err
-	}
-
-	defer func() {
-		if file != nil {
-			file.Close()
-		}
-	}()
-
-	img, _, err := image.Decode(file)
-	if err != nil {
-		utils.sdkLog(err.Error())
-		return nil, err
-	}
-
-	datatype, err := imgtype.Get(filePath)
-	if err != nil {
-		utils.sdkLog(err.Error())
-		return nil, err
-	}
-
-	fi, err := os.Stat(filePath)
-	if err != nil {
-		utils.sdkLog(err.Error())
-		return nil, err
-	}
-
-	b := img.Bounds()
-
-	return &open_im_sdk.imageInfo{int32(b.Max.X), int32(b.Max.Y), datatype, fi.Size()}, nil
-
-}
+//func (u *open_im_sdk.UserRelated) updateMessageFailedStatus(s *open_im_sdk.MsgStruct, c *ConversationStruct, onlineUserOnly bool) {
+//	if !onlineUserOnly {
+//		_ = u.updateMessageTimeAndMsgIDStatus(s.ClientMsgID, s.CreateTime, constant.MsgStatusSendFailed)
+//	}
+//	s.SendTime = s.CreateTime
+//	s.Status = constant.MsgStatusSendFailed
+//	c.LatestMsg = utils.structToJsonString(s)
+//}
+//func (u *open_im_sdk.UserRelated) initBasicInfo(message *open_im_sdk.MsgStruct, msgFrom, contentType int32) {
+//	message.CreateTime = utils.getCurrentTimestampByNano()
+//	message.SendTime = message.CreateTime
+//	message.IsRead = false
+//	message.Status = constant.MsgStatusSending
+//	message.SendID = u.loginUserID
+//	userInfo, _ := u.getLoginUserInfoFromLocal()
+//	message.SenderFaceURL = userInfo.Icon
+//	message.SenderNickname = userInfo.Name
+//	ClientMsgID := utils.getMsgID(message.SendID)
+//	message.ClientMsgID = ClientMsgID
+//	message.MsgFrom = msgFrom
+//	message.ContentType = contentType
+//	message.SenderPlatformID = constant.SvrConf.Platform
+//
+//}
+//func (u *open_im_sdk.UserRelated) sendMessageFailedHandle(s *open_im_sdk.MsgStruct, c *ConversationStruct, conversationID string) {
+//	_ = u.updateMessageTimeAndMsgIDStatus(s.ClientMsgID, s.CreateTime, constant.MsgStatusSendFailed)
+//	s.SendTime = s.CreateTime
+//	s.Status = constant.MsgStatusSendFailed
+//	c.LatestMsg = utils.structToJsonString(s)
+//	_ = u.triggerCmdUpdateConversation(open_im_sdk.updateConNode{conversationID, constant.AddConOrUpLatMsg,
+//		*c})
+//	u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+//}
+//
+//type MsgFormats []*open_im_sdk.MsgStruct
+//
+//// Implement the sort.Interface interface to get the number of elements method
+//func (s MsgFormats) Len() int {
+//	return len(s)
+//}
+//
+////Implement the sort.Interface interface comparison element method
+//func (s MsgFormats) Less(i, j int) bool {
+//	return s[i].SendTime < s[j].SendTime
+//}
+//
+////Implement the sort.Interface interface exchange element method
+//func (s MsgFormats) Swap(i, j int) {
+//	s[i], s[j] = s[j], s[i]
+//}

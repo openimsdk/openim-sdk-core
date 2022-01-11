@@ -230,8 +230,6 @@ type WsSubMsg struct {
 //	Data          []byte `json:"data"`
 //}
 
-
-
 type PullUserMsgResp struct {
 	ErrCode       int                       `json:"errCode"`
 	ErrMsg        string                    `json:"errMsg"`
@@ -251,14 +249,12 @@ type ArrMsg struct {
 	GroupData  []server_api_params.MsgData
 }
 
-
-
 type IMConfig struct {
-	Platform  int32  `json:"platform"`
-	ApiAddr string `json:"api_addr"`
-	WsAddr  string `json:"ws_addr"`
-	DbDir     string `json:"db_dir"`
-	logLevel int32 `json:"log_level"`
+	Platform int32  `json:"platform"`
+	ApiAddr  string `json:"api_addr"`
+	WsAddr   string `json:"ws_addr"`
+	DbDir    string `json:"db_dir"`
+	logLevel int32  `json:"log_level"`
 }
 
 type IMManager struct {
@@ -410,7 +406,7 @@ type paramsUserSendMsg struct {
 		OffLineInfo server_api_params.OfflinePushInfo `json:"offlineInfo" `
 	}
 }
-type imageInfo struct {
+type ImageInfo struct {
 	Width  int32  `json:"x"`
 	Height int32  `json:"y"`
 	Type   string `json:"type"`

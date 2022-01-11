@@ -7,6 +7,8 @@ import (
 	"errors"
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
+	imgtype "github.com/shamsher31/goimgtype"
+	"image"
 	"net/http"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/constant"
@@ -1725,4 +1727,34 @@ func (u *open_im_sdk.UserRelated) FindMessages(callback open_im_sdk.Base, messag
 			}
 		}
 	}()
+}
+func getImageInfo(filePath string) (*utils.ImageInfo, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, utils.Wrap(err, "open file err")
+	}
+	defer func() {
+		if file != nil {
+			file.Close()
+		}
+	}()
+
+	img, _, err := image.Decode(file)
+	if err != nil {
+		return nil, utils.Wrap(err, "image file  Decode err")
+	}
+
+	datatype, err := imgtype.Get(filePath)
+	if err != nil {
+		return nil, utils.Wrap(err, "image file  get type err")
+	}
+	fi, err := os.Stat(filePath)
+	if err != nil {
+		return nil, utils.Wrap(err, "image file  Stat err")
+	}
+
+	b := img.Bounds()
+
+	return &utils.ImageInfo{int32(b.Max.X), int32(b.Max.Y), datatype, fi.Size()}, nil
+
 }
