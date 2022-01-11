@@ -17,6 +17,10 @@ type User struct {
 	loginUserID    string
 }
 
+func NewUser(dataBase *db.DataBase, p *ws.PostApi, loginUserID string) *User {
+	return &User{DataBase: dataBase, p: p, loginUserID: loginUserID}
+}
+
 
 
 func (u *User) SyncLoginUserInfo() error {

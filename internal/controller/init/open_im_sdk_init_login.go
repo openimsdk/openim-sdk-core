@@ -1,7 +1,9 @@
 package init
 
 import (
+	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -14,13 +16,12 @@ import (
 //	OnSelfInfoUpdated(userInfo string)
 //}
 
-func InitOnce(config *utils.IMConfig) bool {
-	constant.SvrConf = *config
-	initUserRouter()
-	open_im_sdk.initAddr()
-	utils.sdkLog("InitOnce success, ", *config)
-	return true
-}
+//func InitOnce(config *utils.IMConfig) bool {
+//	constant.SvrConf = *config
+//	initUserRouter()
+//	open_im_sdk.initAddr()
+//	return true
+//}
 
 func GetUserWorker(uid string) *constant.UserRelated {
 	constant.UserSDKRwLock.Lock()
@@ -36,17 +37,22 @@ func GetUserWorker(uid string) *constant.UserRelated {
 
 
 
-func (u *constant.open_im_sdk) Login(uid, tk string, callback Base) {
+func (u *LoginMgr) Login(userID, token string, callback common.Base) {
 	if callback == nil {
-		utils.sdkLog("callback is null")
+		log.Error("callback is null", userID, token)
 		return
 	}
-	//	go func() {
-	u.login(uid, tk, callback)
-	//	}()
+	go func() {
+		u.login(userID, token, callback)
+	}()
 }
 
 
+func (u *LoginMgr) Logout(callback common.Base){
+	go func(){
+		u.logout(callback)
+	}()
+}
 
 
 //func (u *constant.open_im_sdk) InitSDK(config string, cb IMSDKListener) bool {

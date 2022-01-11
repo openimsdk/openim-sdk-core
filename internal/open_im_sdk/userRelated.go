@@ -28,5 +28,5 @@ func initUserRouter() {
 var UserSDKRwLock sync.RWMutex
 var UserRouterMap map[string]*init.LoginMgr
 
-
+var userForSDK *init.LoginMgr
 

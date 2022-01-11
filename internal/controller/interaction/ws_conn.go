@@ -5,12 +5,8 @@ import (
 	"encoding/gob"
 	"fmt"
 	"github.com/gorilla/websocket"
-	"net/http"
-
 	"time"
-
 	"open_im_sdk/pkg/utils"
-
 	"errors"
 	"open_im_sdk/pkg/constant"
 	"sync"
@@ -25,6 +21,7 @@ type ConnListener interface {
 	OnSelfInfoUpdated(userInfo string)
 }
 
+const writeTimeoutSeconds = 5
 type WsConn struct {
 	stateMutex  sync.Mutex
 	conn        *websocket.Conn
@@ -36,7 +33,7 @@ type WsConn struct {
 
 func NewWsConn(listener ConnListener, token string, loginUserID string) *WsConn {
 	p := WsConn{listener: listener, token: token, loginUserID: loginUserID}
-	p.conn, _, _ = p.ReConn()
+	p.conn,  _ = p.ReConn()
 	return &p
 }
 
@@ -69,12 +66,12 @@ func (u *WsConn) SendPingMsg() error {
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
 	if u.conn == nil {
-		return errors.New("conn == nil")
+		return utils.Wrap(errors.New("conn == nil"), "")
 	}
 	var ping string = "try ping"
-	err := u.conn.SetWriteDeadline(time.Now().Add(8 * time.Second))
+	err := u.SetWriteTimeout(writeTimeoutSeconds)
 	if err != nil {
-
+		return utils.Wrap(err, "SetWriteDeadline failed")
 	}
 	return u.conn.WriteMessage(websocket.PingMessage, []byte(ping))
 }
@@ -103,40 +100,33 @@ func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (error, *websocket.Conn) {
 
 	if u.conn != nil {
 		connSended = u.conn
-
-		err := u.SetWriteTimeout(8)
+		err := u.SetWriteTimeout(writeTimeoutSeconds)
 		if err != nil {
 		}
 		if len(buff.Bytes()) > constant.MaxTotalMsgLen {
 			return errors.New("msg too long"), connSended
 		}
 		err = u.conn.WriteMessage(websocket.BinaryMessage, buff.Bytes())
-		if err != nil {
-		} else {
-		}
-		return err, connSended
+		return utils.Wrap(err, "WriteMessage failed"), connSended
 	} else {
 		return errors.New("conn==nil"), connSended
 	}
 }
 
 func (u *WsConn) decodeBinaryWs(message []byte) (*GeneralWsResp, error) {
-
 	buff := bytes.NewBuffer(message)
 	dec := gob.NewDecoder(buff)
 	var data GeneralWsResp
 	err := dec.Decode(&data)
 	if err != nil {
-
 		return nil, err
 	}
-
 	return &data, nil
 }
 
-func (u *WsConn) WriteMsg(msg GeneralWsReq) (error, *websocket.Conn) {
-	return u.writeBinaryMsg(msg)
-}
+//func (u *WsConn) WriteMsg(msg GeneralWsReq) (error, *websocket.Conn) {
+//	return u.writeBinaryMsg(msg)
+//}
 
 func (u *WsConn) IsReadTimeout() bool{
 	return false
@@ -151,32 +141,30 @@ func (u *WsConn) IsFatalError() bool{
 }
 
 
-func (u *WsConn) ReConn() (*websocket.Conn, *http.Response, error) {
+func (u *WsConn) ReConn() (*websocket.Conn, error) {
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
 	if u.conn != nil {
 		u.conn.Close()
 		u.conn = nil
 	}
-	if u.loginState == constant.TokenFailedKickedOffline || u.loginState == constant.TokenFailedExpired || u.loginState == constant.TokenFailedInvalid {
-		return nil, nil, errors.New("don't reconn")
+	if u.loginState == constant.TokenFailedKickedOffline  {
+		return nil, utils.Wrap(errors.New("don't re conn"), "TokenFailedKickedOffline")
 	}
 
 	u.listener.OnConnecting()
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", constant.SvrConf.WsAddr, u.loginUserID, u.token, constant.SvrConf.Platform)
 	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
+		u.loginState = constant.LoginFailed
 		if httpResp != nil {
 			u.listener.OnConnectFailed(int32(httpResp.StatusCode), err.Error())
 		} else {
 			u.listener.OnConnectFailed(1001, err.Error())
 		}
-
-		utils.LogFReturn(nil, err.Error(), url)
-		return nil, httpResp, err
+		return nil, err
 	}
 	u.listener.OnConnectSuccess()
 	u.loginState = constant.LoginSuccess
-
-	return conn, httpResp, nil
+	return conn, nil
 }

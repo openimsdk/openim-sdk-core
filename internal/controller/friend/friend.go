@@ -15,7 +15,6 @@ import (
 
 type Friend struct {
 	friendListener OnFriendshipListener
-//	token          string
 	loginUserID    string
 	db             *db.DataBase
 	p              *ws.PostApi
@@ -83,7 +82,7 @@ func (f *Friend) processFriendApplication(callback common.Base, params sdk_param
 	apiReq.OperationID = operationID
 	apiReq.HandleMsg = params.HandleMsg
 	result := f.p.PostFatalCallback(callback, constant.AddFriendResponse, apiReq, operationID)
-	f.syncFriendApplication()
+	f.SyncFriendApplication()
 	return result
 }
 
@@ -126,7 +125,7 @@ func (f *Friend) deleteFriend(FriendUserID string, callback common.Base, operati
 	apiReq.FromUserID = f.loginUserID
 	apiReq.OperationID = operationID
 	result := f.p.PostFatalCallback(callback, constant.DeleteFriendRouter, apiReq, operationID)
-	f.syncFriendList()
+	f.SyncFriendList()
 	return result
 }
 
@@ -136,7 +135,7 @@ func (f *Friend) setFriendRemark(params sdk_params_callback.SetFriendRemarkParam
 	apiReq.ToUserID = params.ToUserID
 	apiReq.FromUserID = f.loginUserID
 	result := f.p.PostFatalCallback(callback, constant.SetFriendComment, apiReq, operationID)
-	f.syncFriendList()
+	f.SyncFriendList()
 	return result
 	//
 	//c := ConversationStruct{
@@ -356,7 +355,7 @@ func (f *Friend) addBlack(callback common.Base, blackUid, operationID string) *s
 	apiReq.FromUserID = f.loginUserID
 	apiReq.OperationID = operationID
 	result := f.p.PostFatalCallback(callback, constant.AddBlackListRouter, apiReq, operationID)
-	f.syncBlackList()
+	f.SyncBlackList()
 	return result
 }
 
@@ -367,7 +366,7 @@ func (f *Friend) removeBlack(callback common.Base, deleteUid, operationID string
 	apiReq.FromUserID = f.loginUserID
 	apiReq.OperationID = operationID
 	result := f.p.PostFatalCallback(callback, constant.RemoveBlackListRouter, apiReq, operationID)
-	f.syncBlackList()
+	f.SyncBlackList()
 	return result
 }
 

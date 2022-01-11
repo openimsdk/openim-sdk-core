@@ -2,6 +2,7 @@ package interaction
 
 import (
 	"errors"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"sync"
 	"time"
@@ -81,7 +82,6 @@ func notifyCh(ch chan GeneralWsResp, value GeneralWsResp, timeout int64) error {
 	if flag == 1 {
 		return nil
 	} else {
-		//	sdkLog("send cmd timeout, ", timeout, value)
 		return errors.New("send cmd timeout")
 	}
 }
@@ -95,10 +95,8 @@ func (u *WsRespAsyn) notifyResp(wsResp GeneralWsResp) {
 	if ch == nil {
 		return
 	}
-
 	err := notifyCh(ch, wsResp, 1)
 	if err != nil {
-		//utils.sdkLog("notifyCh failed, ", err.Error(), ch, wsResp)
+		log.Debug("notifyCh failed ", err.Error(), wsResp)
 	}
-	//utils.sdkLog("notify ch end", wsResp.OperationID)
 }

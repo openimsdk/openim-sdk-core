@@ -6,8 +6,10 @@ import (
 	"open_im_sdk/internal/controller/friend"
 	"open_im_sdk/internal/controller/group"
 	"open_im_sdk/internal/controller/init"
+	ws "open_im_sdk/internal/controller/interaction"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -33,24 +35,26 @@ func SdkVersion() string {
 	return "Open-IM-SDK-Core-v1.0.6"
 }
 
-func InitSDK(config string, cb init.IMloListener) bool {
+func InitSDK(config string, listener ws.ConnListener) bool {
+	log.NewInfo("0", utils.GetSelfFuncName(), config)
 	var sc utils.IMConfig
 	if err := json.Unmarshal([]byte(config), &sc); err != nil {
-		utils.sdkLog("initSDK failed, config: ", sc, err.Error())
+		log.Error("initSDK failed, config: ", sc, err.Error())
 		return false
 	}
-	utils.sdkLog("InitSDK, config ", config, "version: ", SdkVersion())
-	if open_im_sdk.userForSDK != nil {
-		utils.sdkLog("Logout first ")
-		open_im_sdk.userForSDK.Logout(nil)
-		utils.sdkLog("unInit first ")
-		open_im_sdk.userForSDK.UnInitSDK()
+	log.NewInfo("0","InitSDK, config ", config, "version: ", SdkVersion())
+	if userForSDK != nil {
+		log.Error("0", "Logout first ")
+		userForSDK.Logout(nil)
+		userForSDK.UnInitSDK()
 	}
-	open_im_sdk.userForSDK = new(constant.UserRelated)
+	userForSDK = new(init.LoginMgr)
 
-	init.InitOnce(&sc)
 
-	return open_im_sdk.userForSDK.InitSDK(config, cb)
+
+	if !userForSDK.InitSDK(config, listener){
+		log.Error("0", "InitSDK failed ", config, listener)
+	}
 }
 
 //1 no print

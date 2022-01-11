@@ -53,7 +53,7 @@ type ConversationStruct struct {
 type Conversation struct {
 	*ws.Ws
 	*db.DataBase
-	ConversationListenerx OnConversationListener
+	ConversationListener OnConversationListener
 	MsgListenerList       []OnAdvancedMsgListener
 	ch                    chan common.Cmd2Value
 	loginUserID           string
@@ -62,8 +62,8 @@ type Conversation struct {
 	user                  *user.User
 }
 
-func NewConversation(conversationListenerx OnConversationListener, msgListenerList []OnAdvancedMsgListener, ch chan common.Cmd2Value, loginUserID string, ws *ws.Ws) *Conversation {
-	return &Conversation{ConversationListenerx: conversationListenerx, MsgListenerList: msgListenerList, ch: ch, loginUserID: loginUserID, Ws: ws}
+func NewConversation(ConversationListener OnConversationListener, msgListenerList []OnAdvancedMsgListener, ch chan common.Cmd2Value, loginUserID string, ws *ws.Ws) *Conversation {
+	return &Conversation{ConversationListener: ConversationListener, MsgListenerList: msgListenerList, ch: ch, loginUserID: loginUserID, Ws: ws}
 }
 
 func (c *Conversation) getCh() chan common.Cmd2Value {
@@ -295,7 +295,7 @@ func (c *Conversation) newMessage(newMessagesList []*utils.MsgStruct) {
 	}
 }
 func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
-	if c.ConversationListenerx == nil {
+	if c.ConversationListener == nil {
 		log.Error("internal", "not set conversationListener")
 		return
 	}
@@ -352,7 +352,7 @@ func (c *Conversation) doMsgReadState(msgReadList []*utils.MsgStruct) {
 }
 
 func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
-	if c.ConversationListenerx == nil {
+	if c.ConversationListener == nil {
 		log.Error("internal", "not set conversationListener")
 		return
 	}

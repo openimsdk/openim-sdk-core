@@ -37,6 +37,7 @@ type LoginMgr struct {
 func (u *LoginMgr) login(userID, token string, cb common.Base) {
 	log.Info("login start ", userID, token)
 	if cb == nil {
+		log.Info("cb == nil ", userID)
 		return
 	}
 	if u.justOnceFlag {
@@ -68,34 +69,25 @@ func (u *LoginMgr) login(userID, token string, cb common.Base) {
 	log.Info("ws, forcedSynchronization heartbeat coroutine run ...")
 	go u.forcedSynchronization()
 	go u.heartbeat.heartbeat()
-	go u.run()
+	go u.ws.ReadData()
 	//		go u.timedCloseDB()
-	u.forycedSyncReceiveMessageOpt()
+//	u.forycedSyncReceiveMessageOpt()
 	cb.OnSuccess("")
 
 }
 
 
 
-func (u *LoginMgr) InitSDK(config string, cb *ws.ConnListener) bool {
-	if cb == nil {
-		log.Error("callback == nil")
+func (u *LoginMgr) InitSDK(config string, listener ws.ConnListener) bool {
+	if listener == nil {
 		return false
 	}
-
-	log.Info("initSDK LoginState ")
-
-	u.listener = cb
-	u.initListenerCh()
-	utils.sdkLog("init success, ", config)
-
-	go open_im_sdk.doListener(u)
+	u.listener = listener
 	return true
 }
 
 func (u *LoginMgr) UnInitSDK() {
-	u.unInitAll()
-	u.closeListenerCh()
+
 }
 
 func (u *LoginMgr) GetVersion() string {
@@ -148,34 +140,7 @@ func (u *LoginMgr) GetLoginUser() string {
 func (im *LoginMgr) GetLoginStatus() int {
 	return im.LoginState
 }
-//
-//func (u *open_im_sdk.UserRelated) forycedSyncReceiveMessageOpt() {
-//	OperationID := utils.operationIDGenerator()
-//	resp, err := utils.post2ApiForRead(open_im_sdk.getAllConversationMessageOptRouter, open_im_sdk.paramGetAllConversationMessageOpt{OperationID: OperationID}, u.token)
-//	if err != nil {
-//		utils.sdkLog("post2Api failed, ", open_im_sdk.getAllConversationMessageOptRouter, OperationID)
-//		return
-//	}
-//	var v open_im_sdk.getReceiveMessageOptResp
-//	err = json.Unmarshal(resp, &v)
-//	if err != nil {
-//		utils.sdkLog("Unmarshal failed ", resp, OperationID)
-//		return
-//	}
-//	if v.ErrCode != 0 {
-//		utils.sdkLog("errCode failed, ", v.ErrCode, v.ErrMsg, string(resp), OperationID)
-//		return
-//	}
-//
-//	utils.sdkLog("get receive opt ", v)
-//	u.receiveMessageOptMutex.Lock()
-//	for _, v := range v.Data {
-//		if v.Result != 0 {
-//			u.receiveMessageOpt[v.ConversationId] = v.Result
-//		}
-//	}
-//	u.receiveMessageOptMutex.Unlock()
-//}
+
 
 func (u *LoginMgr) forcedSynchronization() {
 	u.friend.SyncFriendList()
@@ -209,3 +174,34 @@ func (u *LoginMgr)checkToken(token string) error {
 //	u.logout(nil)
 //	u.cb.OnKickedOffline()
 //}
+
+
+//
+//func (u *open_im_sdk.UserRelated) forycedSyncReceiveMessageOpt() {
+//	OperationID := utils.operationIDGenerator()
+//	resp, err := utils.post2ApiForRead(open_im_sdk.getAllConversationMessageOptRouter, open_im_sdk.paramGetAllConversationMessageOpt{OperationID: OperationID}, u.token)
+//	if err != nil {
+//		utils.sdkLog("post2Api failed, ", open_im_sdk.getAllConversationMessageOptRouter, OperationID)
+//		return
+//	}
+//	var v open_im_sdk.getReceiveMessageOptResp
+//	err = json.Unmarshal(resp, &v)
+//	if err != nil {
+//		utils.sdkLog("Unmarshal failed ", resp, OperationID)
+//		return
+//	}
+//	if v.ErrCode != 0 {
+//		utils.sdkLog("errCode failed, ", v.ErrCode, v.ErrMsg, string(resp), OperationID)
+//		return
+//	}
+//
+//	utils.sdkLog("get receive opt ", v)
+//	u.receiveMessageOptMutex.Lock()
+//	for _, v := range v.Data {
+//		if v.Result != 0 {
+//			u.receiveMessageOpt[v.ConversationId] = v.Result
+//		}
+//	}
+//	u.receiveMessageOptMutex.Unlock()
+//}
+

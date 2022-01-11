@@ -16,7 +16,6 @@ import (
 
 type Group struct {
 	listener OnGroupListener
-	token          string
 	loginUserID    string
 	db             *db.DataBase
 	p              *ws.PostApi
@@ -64,7 +63,7 @@ func (u *Group) doCreateGroup(msg *api.MsgData) {
 	if err != nil {
 		return
 	}
-	u.syncJoinedGroupInfo()
+	u.SyncJoinedGroupInfo()
 	u.syncGroupMemberByGroupID(n.Detail)
 	u.onGroupCreated(n.Detail)
 }
@@ -443,7 +442,7 @@ func (u *Group) createGroup(callback common.Base, group sdk.CreateGroupBaseInfoP
 		callback.OnError(constant.ErrData.ErrCode, constant.ErrData.ErrMsg)
 		return nil
 	}
-	u.syncJoinedGroupInfo()
+	u.SyncJoinedGroupInfo()
 	u.syncGroupMemberByGroupID(realData.GroupInfo.GroupID)
 	return &sdk.CreateGroupCallback{GroupInfo:realData.GroupInfo}
 }
@@ -454,7 +453,7 @@ func (u *Group) joinGroup(groupID, reqMsg string, callback common.Base, operatio
 	apiReq.ReqMessage = reqMsg
 	apiReq.GroupID = groupID
 	commData := u.p.PostFatalCallback(callback, constant.JoinGroupRouter, apiReq, u.token)
-	u.syncApplyGroupRequest()
+	u.SyncApplyGroupRequest()
 	return commData
 }
 
@@ -464,7 +463,7 @@ func (u *Group) quitGroup(groupID string, callback common.Base, operationID stri
 	apiReq.GroupID = groupID
 	commData := u.p.PostFatalCallback(callback, constant.QuitGroupRouter, apiReq, u.token)
 	u.syncGroupMemberByGroupID(groupID) //todo
-	u.syncApplyGroupRequest()
+	u.SyncApplyGroupRequest()
 	return commData
 }
 
@@ -506,7 +505,7 @@ func (u *Group) setGroupInfo(callback common.Base, groupInfo sdk.SetGroupInfoPar
 	apiReq.OperationID = operationID
 	apiReq.GroupID = groupID
 	commData := u.p.PostFatalCallback(callback, constant.SetGroupInfoRouter, apiReq, u.token)
-	u.syncJoinedGroupInfo()
+	u.SyncJoinedGroupInfo()
 	return commData
 }
 
@@ -531,7 +530,7 @@ func (u *Group) kickGroupMember(callback common.Base, groupID string, memberList
 	apiReq.Reason = reason
 	apiReq.OperationID = operationID
 	commData := u.p.PostFatalCallback(callback, constant.KickGroupMemberRouter, apiReq, u.token)
-	u.syncJoinedGroupInfo()
+	u.SyncJoinedGroupInfo()
 	realData := api.KickGroupMemberResp{}
 	err := mapstructure.Decode(commData.Data, &realData.UserIDResultList)
 	common.CheckDataErr(callback, err, operationID)
@@ -609,7 +608,7 @@ func (u *Group) processGroupApplication(callback common.Base, groupID, fromUserI
 	} else if handleResult == -1 {
 		commData = u.p.PostFatalCallback(callback, constant.RefuseGroupApplicationRouter, apiReq, u.token)
 	}
-	u.syncGroupRequest()
+	u.SyncGroupRequest()
 	return commData
 }
 //
@@ -894,7 +893,8 @@ func (u *Group) getGroupAllMemberByGroupIDFromSvr(groupID string) ([]*api.GroupM
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 	var realData []*api.GroupMemberFullInfo
-	err = mapstructure.Decode(commData.Data, &realData){
+	err = mapstructure.Decode(commData.Data, &realData)
+	if err != nil{
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 	return realData, nil

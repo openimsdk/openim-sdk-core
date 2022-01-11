@@ -9,6 +9,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -17,10 +18,14 @@ type Ws struct {
 	*WsRespAsyn
 	*WsConn
 	seqMsg      map[int32]server_api_params.MsgData
-	seqMsgMutex *sync.RWMutex
+	seqMsgMutex sync.RWMutex
 	*db.DataBase
 	conversationCh chan common.Cmd2Value
 	cmdCh          chan common.Cmd2Value
+}
+
+func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, conversationCh, cmdCh chan common.Cmd2Value, ) *Ws {
+	return &Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn, conversationCh: conversationCh, cmdCh: cmdCh}
 }
 
 func (ws *Ws) SeqMsg() map[int32]server_api_params.MsgData {
@@ -35,9 +40,6 @@ func (ws *Ws) SetSeqMsg(seqMsg map[int32]server_api_params.MsgData) {
 	ws.seqMsg = seqMsg
 }
 
-func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, lock *sync.RWMutex, ch chan common.Cmd2Value) *Ws {
-	return &Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn}
-}
 
 func (ws *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, connSend *websocket.Conn) (*GeneralWsResp, error) {
 	select {
@@ -79,7 +81,7 @@ func (ws *Ws) SendReqWaitResp(buff []byte, reqIdentifier int32, timeout int, Sen
 	return r1, r2, wsReq.OperationID
 }
 
-func (u *Ws) run() {
+func (u *Ws) ReadData() {
 	for {
 		isErrorOccurred := false
 		if u.WsConn.conn != nil {
@@ -100,13 +102,13 @@ func (u *Ws) run() {
 				} else if msgType == websocket.TextMessage {
 					log.Warn("recv websocket.TextMessage type", string(message))
 				} else if msgType == websocket.BinaryMessage {
-					go u.doWsMsg(message)
+					u.doWsMsg(message)
 				} else {
 					log.Warn("recv other type", string(message), msgType)
 				}
 			}
 		} else {
-			_, _, err := u.WsConn.ReConn()
+			_,  err := u.WsConn.ReConn()
 			if err != nil {
 				isErrorOccurred = true
 			}
@@ -128,26 +130,27 @@ func (u *Ws) run() {
 }
 
 func (u *Ws) doWsMsg(message []byte) {
-	utils.LogBegin()
-	utils.LogBegin("decodeBinaryWs")
 	wsResp, err := u.decodeBinaryWs(message)
 	if err != nil {
-		utils.LogFReturn("decodeBinaryWs err", err.Error())
+		log.Error("decodeBinaryWs err", err.Error())
 		return
 	}
 	switch wsResp.ReqIdentifier {
 	case constant.WSGetNewestSeq:
-		u.doWSGetNewestSeq(*wsResp)
+		go u.doWSGetNewestSeq(*wsResp)
 	case constant.WSPullMsgBySeqList:
-		u.doWSPullMsg(*wsResp)
+		go u.doWSPullMsg(*wsResp)
 	case constant.WSPushMsg:
-		u.doWSPushMsg(*wsResp)
+		go u.doWSPushMsg(*wsResp)
 	case constant.WSSendMsg:
-		u.doWSSendMsg(*wsResp)
+		go u.doWSSendMsg(*wsResp)
 	case constant.WSKickOnlineMsg:
-		u.kickOnline(*wsResp)
+		go u.kickOnline(*wsResp)
+	case constant.WsLogoutMsg:
+		log.Warn(wsResp.OperationID, "logout.. ")
+		runtime.Goexit()
 	default:
-		utils.LogFReturn("type failed, ", wsResp.ReqIdentifier, wsResp.OperationID, wsResp.ErrCode, wsResp.ErrMsg)
+		log.Error(wsResp.OperationID,"type failed, ", wsResp.ReqIdentifier, wsResp.OperationID)
 		return
 	}
 }
