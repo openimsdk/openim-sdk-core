@@ -269,7 +269,7 @@ type OnConversationListener interface {
 	OnSyncServerFailed()
 	OnNewConversation(conversationList string)
 	OnConversationChanged(conversationList string)
-	OnTotalUnreadMessageCountChanged(totalUnreadCount int32)
+	OnTotalUnreadMessageCountChanged(totalUnreadCount int64)
 }
 
 func (u *open_im_sdk.UserRelated) SetConversationListener(listener OnConversationListener) {
