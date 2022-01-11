@@ -1,7 +1,6 @@
 package conversation_msg
 
 import (
-	"database/sql"
 	"encoding/json"
 	"github.com/jinzhu/copier"
 	"open_im_sdk/internal/controller/friend"
@@ -16,42 +15,42 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-type ChatLog struct {
-	MsgId            string
-	SendID           string
-	IsRead           int32
-	IsFilter         int32
-	Seq              int64
-	Status           int32
-	SessionType      int32
-	RecvID           string
-	ContentType      int32
-	MsgFrom          int32
-	Content          string
-	Remark           sql.NullString
-	SenderPlatformID int32
-	SendTime         int64
-	CreateTime       int64
-}
-type ConversationStruct struct {
-	ConversationID    string `json:"conversationID"`
-	ConversationType  int    `json:"conversationType"`
-	UserID            string `json:"userID"`
-	GroupID           string `json:"groupID"`
-	ShowName          string `json:"showName"`
-	FaceURL           string `json:"faceUrl"`
-	RecvMsgOpt        int    `json:"recvMsgOpt"`
-	UnreadCount       int    `json:"unreadCount"`
-	GroupAtType       int    `json:"groupAtType"`
-	LatestMsg         string `json:"latestMsg"`
-	LatestMsgSendTime int64  `json:"latestMsgSendTime"`
-	DraftText         string `json:"draftText"`
-	DraftTimestamp    int64  `json:"draftTimestamp"`
-	IsPinned          int    `json:"isPinned"`
-}
+//type ChatLog struct {
+//	MsgId            string
+//	SendID           string
+//	IsRead           int32
+//	IsFilter         int32
+//	Seq              int64
+//	Status           int32
+//	SessionType      int32
+//	RecvID           string
+//	ContentType      int32
+//	MsgFrom          int32
+//	Content          string
+//	Remark           sql.NullString
+//	SenderPlatformID int32
+//	SendTime         int64
+//	CreateTime       int64
+//}
+//type ConversationStruct struct {
+//	ConversationID    string `json:"conversationID"`
+//	ConversationType  int    `json:"conversationType"`
+//	UserID            string `json:"userID"`
+//	GroupID           string `json:"groupID"`
+//	ShowName          string `json:"showName"`
+//	FaceURL           string `json:"faceUrl"`
+//	RecvMsgOpt        int    `json:"recvMsgOpt"`
+//	UnreadCount       int    `json:"unreadCount"`
+//	GroupAtType       int    `json:"groupAtType"`
+//	LatestMsg         string `json:"latestMsg"`
+//	LatestMsgSendTime int64  `json:"latestMsgSendTime"`
+//	DraftText         string `json:"draftText"`
+//	DraftTimestamp    int64  `json:"draftTimestamp"`
+//	IsPinned          int    `json:"isPinned"`
+//}
 type Conversation struct {
 	*ws.Ws
-	*db.DataBase
+	db                    *db.DataBase
 	ConversationListenerx OnConversationListener
 	MsgListenerList       []OnAdvancedMsgListener
 	ch                    chan common.Cmd2Value
@@ -61,11 +60,12 @@ type Conversation struct {
 	user                  *user.User
 }
 
-func NewConversation(conversationListenerx OnConversationListener, msgListenerList []OnAdvancedMsgListener, ch chan common.Cmd2Value, loginUserID string, ws *ws.Ws) *Conversation {
-	return &Conversation{ConversationListenerx: conversationListenerx, MsgListenerList: msgListenerList, ch: ch, loginUserID: loginUserID, Ws: ws}
+func NewConversation(ws *ws.Ws, db *db.DataBase, conversationListenerx OnConversationListener, msgListenerList []OnAdvancedMsgListener, ch chan common.Cmd2Value, loginUserID string, friend *friend.Friend, group *group.Group, user *user.User) *Conversation {
+	c := &Conversation{Ws: ws, db: db, ConversationListenerx: conversationListenerx, MsgListenerList: msgListenerList, ch: ch, loginUserID: loginUserID, friend: friend, group: group, user: user}
+	go common.DoListener(c)
+	return c
 }
-
-func (c *Conversation) getCh() chan common.Cmd2Value {
+func (c *Conversation) GetCh() chan common.Cmd2Value {
 	return c.ch
 }
 
@@ -383,7 +383,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 	case constant.UnreadCountSetZero:
 		if err := c.UpdateColumnsConversation(node.ConId, map[string]interface{}{"unread_count": 0}); err != nil {
 		} else {
-			totalUnreadCount, err := c.GetTotalUnreadMsgCount()
+			totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
 			if err == nil {
 				c.ConversationListenerx.OnTotalUnreadMessageCountChanged(totalUnreadCount)
 			} else {
@@ -410,7 +410,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			return
 		}
 	case constant.TotalUnreadMessageChanged:
-		totalUnreadCount, err := c.GetTotalUnreadMsgCount()
+		totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
 		if err != nil {
 			log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
 		} else {
@@ -448,7 +448,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 	case constant.NewConChange:
 		cidList := node.Args.([]string)
-		cLists, err := c.GetMultipleConversation(cidList)
+		cLists, err := c.db.GetMultipleConversation(cidList)
 		if err != nil {
 			log.Error("internal", "getMultipleConversationModel err :", err.Error())
 		} else {
@@ -459,7 +459,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 	case constant.NewCon:
 		cidList := node.Args.([]string)
-		cLists, err := c.GetMultipleConversation(cidList)
+		cLists, err := c.db.GetMultipleConversation(cidList)
 		if err != nil {
 			log.Error("internal", "getMultipleConversationModel err :", err.Error())
 		} else {
@@ -471,7 +471,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 	}
 }
 
-func (c *Conversation) work(c2v common.Cmd2Value) {
+func (c *Conversation) Work(c2v common.Cmd2Value) {
 
 	log.Info("internal", "doListener work..", c2v.Cmd)
 
