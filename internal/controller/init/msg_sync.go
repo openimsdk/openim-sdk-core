@@ -36,8 +36,8 @@ func (u *MsgSync) getNeedSyncSeq(svrMinSeq, svrMaxSeq int32) []int32 {
 
 	var maxConsequentSeq int32
 	isBreakFlag := false
-	normalSeq := u.getNormalChatLogSeq(startSeq)
-	errorSeq := u.getErrorChatLogSeq(startSeq)
+	normalSeq := u.GetNormalChatLogSeq(startSeq)
+	errorSeq := u.GetErrorChatLogSeq(startSeq)
 	for seq := startSeq; seq <= svrMaxSeq; seq++ {
 		_, ok1 := normalSeq[seq]
 		_, ok2 := errorSeq[seq]

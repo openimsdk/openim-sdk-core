@@ -23,6 +23,8 @@ const (
 	CmdAcceptFriend               = "015"
 	CmdRefuseFriend               = "016"
 	CmdAddFriend                  = "017"
+
+	CmdLogout = "Logout"
 )
 
 const (

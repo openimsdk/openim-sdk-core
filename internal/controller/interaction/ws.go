@@ -1,16 +1,16 @@
 package interaction
 
 import (
-	"open_im_sdk/pkg/common"
-	"open_im_sdk/pkg/utils"
 	"github.com/gorilla/websocket"
+	"google.golang.org/protobuf/proto"
+	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
+	"open_im_sdk/pkg/utils"
 	"sync"
 	"time"
-	"google.golang.org/protobuf/proto"
 )
 
 type Ws struct {
@@ -20,6 +20,7 @@ type Ws struct {
 	seqMsgMutex *sync.RWMutex
 	*db.DataBase
 	conversationCh chan common.Cmd2Value
+	cmdCh          chan common.Cmd2Value
 }
 
 func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, lock *sync.RWMutex, ch chan common.Cmd2Value) *Ws {
@@ -68,52 +69,48 @@ func (ws *Ws) SendReqWaitResp(buff []byte, reqIdentifier int32, timeout int, Sen
 
 func (u *Ws) run() {
 	for {
-		utils.LogStart()
-		if u.conn == nil {
-			utils.LogBegin("reConn", nil)
-			re, _, _ := u.ReConn(nil)
-			utils.LogEnd("reConn", re)
-			u.conn = re
-		}
-		if u.conn != nil {
-			msgType, message, err := u.conn.ReadMessage()
-			log.Error("ReadMessage message ", msgType, err)
+		isErrorOccurred := false
+		if u.WsConn.conn != nil {
+			timeout := 5
+			u.WsConn.SetReadTimeout(timeout)
+			msgType, message, err := u.WsConn.conn.ReadMessage()
 			if err != nil {
-				u.stateMutex.Lock()
-				utils.sdkLog("ws read message failed ", err.Error(), u.LoginState)
-				if u.LoginState == constant.LogoutCmd {
-					utils.sdkLog("logout, ws close, return ", constant.LogoutCmd, err)
-					u.conn = nil
-					u.stateMutex.Unlock()
-					return
+				isErrorOccurred = true
+				if u.WsConn.IsFatalError(){
+					log.Error("0", "fatal error, failed ", err.Error())
+					u.WsConn.ReConn()
+				}else {
+					log.Warn("0", "other err  ", err.Error())
 				}
-				u.stateMutex.Unlock()
-				time.Sleep(time.Duration(5) * time.Second)
-				utils.sdkLog("ws  ReadMessage failed, sleep 5s, reconn, ", err)
-				utils.LogBegin("reConn", u.conn)
-				u.conn, _, err = u.ReConn(u.conn)
-				utils.LogEnd("reConn", u.conn)
 			} else {
 				if msgType == websocket.CloseMessage {
-					u.conn, _, _ = u.ReConn(u.conn)
+					u.WsConn.ReConn()
 				} else if msgType == websocket.TextMessage {
-					utils.sdkLog("type failed, recv websocket.TextMessage ", string(message))
+					log.Warn("recv websocket.TextMessage type", string(message))
 				} else if msgType == websocket.BinaryMessage {
 					go u.doWsMsg(message)
 				} else {
-					utils.sdkLog("recv other msg: type ", msgType)
+					log.Warn("recv other type", string(message), msgType)
 				}
 			}
-		} else {
-			u.stateMutex.Lock()
-			if u.LoginState == constant.LogoutCmd {
-				utils.sdkLog("logout, ws close, return ", constant.LogoutCmd)
-				u.stateMutex.Unlock()
-				return
+		}else {
+			_, _, err := u.WsConn.ReConn()
+			if err != nil {
+				isErrorOccurred = true
 			}
-			u.stateMutex.Unlock()
-			utils.sdkLog("ws failed, sleep 5s, reconn... ")
-			time.Sleep(time.Duration(5) * time.Second)
+		}
+
+		if isErrorOccurred {
+			select {
+			case r := <-u.cmdCh:
+				if r.Cmd == constant.CmdLogout {
+					return
+				} else {
+					log.Warn("0", "other cmd ...", r.Cmd)
+				}
+			case <-time.After(time.Microsecond  * time.Duration(1000)):
+				log.Warn("0", "timeout... ", 1000)
+			}
 		}
 	}
 }
@@ -189,10 +186,10 @@ func (u *Ws) doMsg(wsResp GeneralWsResp) {
 		return
 	}
 
-	utils.sdkLog("openim ws  recv push msg do push seq in : ", msg.Seq)
+
 	u.seqMsgMutex.Lock()
-	b1 := u.isExistsInErrChatLogBySeq(msg.Seq)
-	b2 := u.judgeMessageIfExists(msg.ClientMsgID)
+	b1 := u.IsExistsInErrChatLogBySeq(msg.Seq)
+	b2 := u.JudgeMessageIfExists(msg.ClientMsgID)
 	_, ok := u.seqMsg[int32(msg.Seq)]
 	if b1 || b2 || ok {
 		utils.sdkLog("seq in : ", msg.Seq, b1, b2, ok)

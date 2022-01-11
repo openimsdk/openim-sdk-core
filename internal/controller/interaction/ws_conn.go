@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"net/http"
-	"open_im_sdk/internal/open_im_sdk"
-	"open_im_sdk/pkg/server_api_params"
+
 	"time"
 
 	"open_im_sdk/pkg/utils"
@@ -80,6 +79,16 @@ func (u *WsConn) SendPingMsg() error {
 	return u.conn.WriteMessage(websocket.PingMessage, []byte(ping))
 }
 
+func (u *WsConn) SetWriteTimeout(timeout uint32)error{
+	return u.conn.SetWriteDeadline(time.Now().Add(timeout * time.Second))
+}
+
+
+func (u *WsConn) SetReadTimeout(timeout int)error{
+	return u.conn.SetReadDeadline(time.Now().Add(timeout * time.Second))
+}
+
+
 func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (error, *websocket.Conn) {
 	var buff bytes.Buffer
 	enc := gob.NewEncoder(&buff)
@@ -94,7 +103,8 @@ func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (error, *websocket.Conn) {
 
 	if u.conn != nil {
 		connSended = u.conn
-		err = u.conn.SetWriteDeadline(time.Now().Add(8 * time.Second))
+
+		err := u.SetWriteTimeout(8)
 		if err != nil {
 		}
 		if len(buff.Bytes()) > constant.MaxTotalMsgLen {
@@ -128,6 +138,19 @@ func (u *WsConn) decodeBinaryWs(message []byte) (*GeneralWsResp, error) {
 func (u *WsConn) WriteMsg(msg GeneralWsReq) (error, *websocket.Conn) {
 	return u.writeBinaryMsg(msg)
 }
+
+func (u *WsConn) IsReadTimeout() bool{
+	return false
+}
+
+func (u *WsConn) IsWriteTimeout() bool{
+	return false
+}
+
+func (u *WsConn) IsFatalError() bool{
+	return false
+}
+
 
 func (u *WsConn) ReConn() (*websocket.Conn, *http.Response, error) {
 	u.stateMutex.Lock()
