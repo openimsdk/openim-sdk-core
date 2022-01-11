@@ -1,11 +1,18 @@
 package common
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"open_im_sdk/pkg/db"
 )
 
-func  GetGroupMemberListByGroupID(callback Base, OperationID string,  db *db.DataBase, groupID string) []*db.LocalGroupMember{
+func  GetGroupMemberListByGroupID(callback Base, operationID string,  db *db.DataBase, groupID string) []*db.LocalGroupMember{
 	memberList, err := db.GetGroupMemberListByGroupID(groupID)
-	CheckErr(callback, err, OperationID)
+	CheckErr(callback, err, operationID)
 	return memberList
 }
+
+func MapstructureDecode(input interface{}, output interface{}, callback Base, oprationID string){
+	err := mapstructure.Decode(commData.Data, apiResp)
+	CheckDataErr(callback, err, oprationID)
+}
+

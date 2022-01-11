@@ -116,7 +116,6 @@ func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (error, *websocket.Conn) {
 		}
 		return err, connSended
 	} else {
-
 		return errors.New("conn==nil"), connSended
 	}
 }

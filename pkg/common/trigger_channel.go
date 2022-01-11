@@ -59,14 +59,14 @@ type goroutine interface {
 func doListener(Li goroutine) {
 	log.Info("internal", "doListener start.", Li.getCh())
 	for {
-		utils.sdkLog("doListener for.")
+		log.Info("doListener for.")
 		select {
 		case cmd := <-Li.getCh():
 			if cmd.Cmd == constant.CmdUnInit {
-				utils.sdkLog("doListener goroutine.")
+				log.Info("doListener goroutine.")
 				return
 			}
-			utils.sdkLog("doListener work.")
+			log.Info("doListener work.")
 			Li.work(cmd)
 		}
 	}

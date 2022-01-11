@@ -1,8 +1,9 @@
 package constant
 
 const (
-	GetUserInfoRouter                   = "/user/get_user_info"
-	UpdateUserInfoRouter                = "/user/update_user_info"
+	GetSelfUserInfo = "/user/get_self_user_info" //todo
+	GetUsersInfoRouter                   = "/user/get_user_info"
+	UpdateSelfUserInfoRouter                = "/user/update_self_user_info" //todo
 	AddFriendRouter                     = "/friend/add_friend"
 	GetFriendInfoRouter                 = "/friend/get_friends_info"
 	GetFriendApplicationListRouter      = "/friend/get_friend_apply_list"

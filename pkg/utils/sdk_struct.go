@@ -230,16 +230,34 @@ type WsSubMsg struct {
 //	Data          []byte `json:"data"`
 //}
 
+
+
+type PullUserMsgResp struct {
+	ErrCode       int                       `json:"errCode"`
+	ErrMsg        string                    `json:"errMsg"`
+	ReqIdentifier int                       `json:"reqIdentifier"`
+	MsgIncr       int                       `json:"msgIncr"`
+	Data          paramsPullUserMsgDataResp `json:"data"`
+}
+type paramsPullUserMsgDataResp struct {
+	Group  []*server_api_params.GatherFormat `json:"group"`
+	MaxSeq int64                             `json:"maxSeq"`
+	MinSeq int64                             `json:"minSeq"`
+	Single []*server_api_params.GatherFormat `json:"single"`
+}
+
 type ArrMsg struct {
 	SingleData []server_api_params.MsgData
 	GroupData  []server_api_params.MsgData
 }
 
+
+
 type IMConfig struct {
 	Platform  int32  `json:"platform"`
-	IpApiAddr string `json:"ipApi"`
-	IpWsAddr  string `json:"ipWs"`
-	DbDir     string `json:"dbDir"`
+	ApiAddr string `json:"api_addr"`
+	WsAddr  string `json:"ws_addr"`
+	DbDir     string `json:"db_dir"`
 	logLevel int32 `json:"log_level"`
 }
 
@@ -292,20 +310,20 @@ type paramsPullUserSingleMsgDataResp struct {
 	List []paramsPullUserSingleList `json:"list"`
 }
 
-type paramsPullUserMsgDataResp struct {
-	Group  []*server_api_params.GatherFormat `json:"group"`
-	MaxSeq int64                             `json:"maxSeq"`
-	MinSeq int64                             `json:"minSeq"`
-	Single []*server_api_params.GatherFormat `json:"single"`
-}
-
-type PullUserMsgResp struct {
-	ErrCode       int                       `json:"errCode"`
-	ErrMsg        string                    `json:"errMsg"`
-	ReqIdentifier int                       `json:"reqIdentifier"`
-	MsgIncr       int                       `json:"msgIncr"`
-	Data          paramsPullUserMsgDataResp `json:"data"`
-}
+//type paramsPullUserMsgDataResp struct {
+//	Group  []*server_api_params.GatherFormat `json:"group"`
+//	MaxSeq int64                             `json:"maxSeq"`
+//	MinSeq int64                             `json:"minSeq"`
+//	Single []*server_api_params.GatherFormat `json:"single"`
+//}
+//
+//type PullUserMsgResp struct {
+//	ErrCode       int                       `json:"errCode"`
+//	ErrMsg        string                    `json:"errMsg"`
+//	ReqIdentifier int                       `json:"reqIdentifier"`
+//	MsgIncr       int                       `json:"msgIncr"`
+//	Data          paramsPullUserMsgDataResp `json:"data"`
+//}
 
 type paramsNewestSeqReq struct {
 	ReqIdentifier int    `json:"reqIdentifier"`
