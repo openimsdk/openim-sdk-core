@@ -59,22 +59,22 @@ func unInitAll(conversationCh chan Cmd2Value) {
 }
 
 type goroutine interface {
-	work(cmd Cmd2Value)
-	getCh() chan Cmd2Value
+	Work(cmd Cmd2Value)
+	GetCh() chan Cmd2Value
 }
 
-func doListener(Li goroutine) {
-	log.Info("internal", "doListener start.", Li.getCh())
+func DoListener(Li goroutine) {
+	log.Info("internal", "doListener start.", Li.GetCh())
 	for {
 		log.Info("doListener for.")
 		select {
-		case cmd := <-Li.getCh():
+		case cmd := <-Li.GetCh():
 			if cmd.Cmd == constant.CmdUnInit {
 				log.Info("doListener goroutine.")
 				return
 			}
 			log.Info("doListener work.")
-			Li.work(cmd)
+			Li.Work(cmd)
 		}
 	}
 }

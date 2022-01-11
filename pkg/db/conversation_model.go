@@ -36,6 +36,11 @@ func (d *DataBase) BatchInsertConversationList(conversationList []*LocalConversa
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Create(conversationList).Error, "BatchInsertConversationList failed")
 }
+func (d *DataBase) InsertConversation(conversationList *LocalConversation) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.Create(conversationList).Error, "InsertConversation failed")
+}
 func (d *DataBase) GetConversation(conversationID string) (*LocalConversation, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()

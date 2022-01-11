@@ -7,8 +7,11 @@ import (
 	"errors"
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
+	imgtype "github.com/shamsher31/goimgtype"
+	"image"
 	"net/http"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
@@ -18,7 +21,7 @@ import (
 	"time"
 )
 
-func (u *open_im_sdk.UserRelated) GetAllConversationList(callback open_im_sdk.Base) {
+func (c *Conversation) GetAllConversationList(callback common.Base) {
 	go func() {
 		err, list := u.getAllConversationListModel()
 		if err != nil {
@@ -32,7 +35,7 @@ func (u *open_im_sdk.UserRelated) GetAllConversationList(callback open_im_sdk.Ba
 		}
 	}()
 }
-func (u *open_im_sdk.UserRelated) GetConversationListSplit(callback open_im_sdk.Base, offset, count int) {
+func (c *Conversation) GetConversationListSplit(callback common.Base, offset, count int) {
 	go func() {
 		err, list := u.getConversationListSplitModel(offset, count)
 		if err != nil {
@@ -46,7 +49,7 @@ func (u *open_im_sdk.UserRelated) GetConversationListSplit(callback open_im_sdk.
 		}
 	}()
 }
-func (u *open_im_sdk.UserRelated) SetConversationRecvMessageOpt(callback open_im_sdk.Base, conversationIDList string, opt int) {
+func (c *Conversation) SetConversationRecvMessageOpt(callback common.Base, conversationIDList string, opt int) {
 	go func() {
 		var list []string
 		err := json.Unmarshal([]byte(conversationIDList), &list)
@@ -55,13 +58,13 @@ func (u *open_im_sdk.UserRelated) SetConversationRecvMessageOpt(callback open_im
 			callback.OnError(201, err.Error())
 			return
 		}
-		resp, err := utils.post2Api(open_im_sdk.setReceiveMessageOptRouter, open_im_sdk.paramsSetReceiveMessageOpt{OperationID: utils.operationIDGenerator(), Option: int32(opt), ConversationIdList: list}, u.token)
+		resp, err := utils.post2Api(common.setReceiveMessageOptRouter, common.paramsSetReceiveMessageOpt{OperationID: utils.operationIDGenerator(), Option: int32(opt), ConversationIdList: list}, u.token)
 		if err != nil {
 			utils.sdkLog("post failed, ", err.Error())
 			callback.OnError(202, err.Error())
 			return
 		}
-		var g open_im_sdk.getReceiveMessageOptResp
+		var g common.getReceiveMessageOptResp
 		err = json.Unmarshal(resp, &g)
 		if err != nil {
 			utils.sdkLog("unmarshal failed, ", err.Error())
@@ -80,11 +83,11 @@ func (u *open_im_sdk.UserRelated) SetConversationRecvMessageOpt(callback open_im
 		u.receiveMessageOptMutex.Unlock()
 		_ = u.setMultipleConversationRecvMsgOpt(list, opt)
 		callback.OnSuccess("")
-		u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{"", constant.NewConChange, list}})
+		u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, list}})
 
 	}()
 }
-func (u *open_im_sdk.UserRelated) GetConversationRecvMessageOpt(callback open_im_sdk.Base, conversationIDList string) {
+func (c *Conversation) GetConversationRecvMessageOpt(callback common.Base, conversationIDList string) {
 	go func() {
 		var list []string
 		err := json.Unmarshal([]byte(conversationIDList), &list)
@@ -93,13 +96,13 @@ func (u *open_im_sdk.UserRelated) GetConversationRecvMessageOpt(callback open_im
 			callback.OnError(201, err.Error())
 			return
 		}
-		resp, err := utils.post2Api(open_im_sdk.getReceiveMessageOptRouter, open_im_sdk.paramGetReceiveMessageOpt{OperationID: utils.operationIDGenerator(), ConversationIdList: list}, u.token)
+		resp, err := utils.post2Api(common.getReceiveMessageOptRouter, common.paramGetReceiveMessageOpt{OperationID: utils.operationIDGenerator(), ConversationIdList: list}, u.token)
 		if err != nil {
 			utils.sdkLog("post failed, ", err.Error())
 			callback.OnError(202, err.Error())
 			return
 		}
-		var g open_im_sdk.getReceiveMessageOptResp
+		var g common.getReceiveMessageOptResp
 		err = json.Unmarshal(resp, &g)
 		if err != nil {
 			utils.sdkLog("unmarshal failed, ", err.Error())
@@ -114,7 +117,7 @@ func (u *open_im_sdk.UserRelated) GetConversationRecvMessageOpt(callback open_im
 		callback.OnSuccess(utils.structToJsonString(g.Data))
 	}()
 }
-func (u *open_im_sdk.UserRelated) GetOneConversation(sourceID string, sessionType int, callback open_im_sdk.Base) {
+func (c *Conversation) GetOneConversation(sourceID string, sessionType int, callback common.Base) {
 	go func() {
 		conversationID := utils.GetConversationIDBySessionType(sourceID, sessionType)
 		err, c := u.getOneConversationModel(conversationID)
@@ -160,7 +163,7 @@ func (u *open_im_sdk.UserRelated) GetOneConversation(sourceID string, sessionTyp
 		}
 	}()
 }
-func (u *open_im_sdk.UserRelated) GetMultipleConversation(conversationIDList string, callback open_im_sdk.Base) {
+func (c *Conversation) GetMultipleConversation(conversationIDList string, callback common.Base) {
 	go func() {
 		var c []string
 		err := json.Unmarshal([]byte(conversationIDList), &c)
@@ -180,7 +183,7 @@ func (u *open_im_sdk.UserRelated) GetMultipleConversation(conversationIDList str
 		}
 	}()
 }
-func (u *open_im_sdk.UserRelated) DeleteConversation(conversationID string, callback open_im_sdk.Base) {
+func (c *Conversation) DeleteConversation(conversationID string, callback common.Base) {
 	go func() {
 		//Transaction operation required
 		var sourceID string
@@ -208,11 +211,11 @@ func (u *open_im_sdk.UserRelated) DeleteConversation(conversationID string, call
 			return
 		} else {
 			callback.OnSuccess("")
-			_ = u.triggerCmdUpdateConversation(open_im_sdk.updateConNode{ConId: conversationID, Action: constant.TotalUnreadMessageChanged})
+			_ = u.triggerCmdUpdateConversation(common.updateConNode{ConId: conversationID, Action: constant.TotalUnreadMessageChanged})
 		}
 	}()
 }
-func (u *open_im_sdk.UserRelated) SetConversationDraft(conversationID, draftText string, callback open_im_sdk.Base) {
+func (c *Conversation) SetConversationDraft(conversationID, draftText string, callback common.Base) {
 	if draftText != "" {
 		err := u.setConversationDraftModel(conversationID, draftText)
 		if err != nil {
@@ -220,7 +223,7 @@ func (u *open_im_sdk.UserRelated) SetConversationDraft(conversationID, draftText
 		} else {
 			callback.OnSuccess("")
 			//_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
-			u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 		}
 	} else {
 		err := u.removeConversationDraftModel(conversationID, draftText)
@@ -229,18 +232,18 @@ func (u *open_im_sdk.UserRelated) SetConversationDraft(conversationID, draftText
 		} else {
 			callback.OnSuccess("")
 			//_ = u.triggerCmdUpdateConversation(updateConNode{ConId: conversationID, Action: ConAndUnreadChange})
-			u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 		}
 	}
 }
-func (u *open_im_sdk.UserRelated) PinConversation(conversationID string, isPinned bool, callback open_im_sdk.Base) {
+func (c *Conversation) PinConversation(conversationID string, isPinned bool, callback common.Base) {
 	if isPinned {
 		err := u.pinConversationModel(conversationID, constant.Pinned)
 		if err != nil {
 			callback.OnError(203, err.Error())
 		} else {
 			callback.OnSuccess("")
-			u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 		}
 	} else {
 		err := u.unPinConversationModel(conversationID, constant.NotPinned)
@@ -248,12 +251,12 @@ func (u *open_im_sdk.UserRelated) PinConversation(conversationID string, isPinne
 			callback.OnError(203, err.Error())
 		} else {
 			callback.OnSuccess("")
-			u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 		}
 	}
 
 }
-func (u *open_im_sdk.UserRelated) GetTotalUnreadMsgCount(callback open_im_sdk.Base) {
+func (c *Conversation) GetTotalUnreadMsgCount(callback common.Base) {
 	count, err := u.getTotalUnreadMsgCountModel()
 	if err != nil {
 		callback.OnError(203, err.Error())
@@ -269,10 +272,10 @@ type OnConversationListener interface {
 	OnSyncServerFailed()
 	OnNewConversation(conversationList string)
 	OnConversationChanged(conversationList string)
-	OnTotalUnreadMessageCountChanged(totalUnreadCount int32)
+	OnTotalUnreadMessageCountChanged(totalUnreadCount int64)
 }
 
-func (u *open_im_sdk.UserRelated) SetConversationListener(listener OnConversationListener) {
+func (c *Conversation) SetConversationListener(listener OnConversationListener) {
 	if u.ConversationListenerx != nil {
 		utils.sdkLog("only one ")
 		return
@@ -286,7 +289,7 @@ type OnAdvancedMsgListener interface {
 	OnRecvMessageRevoked(msgId string)
 }
 
-func (u *open_im_sdk.UserRelated) AddAdvancedMsgListener(listener OnAdvancedMsgListener) {
+func (c *Conversation) AddAdvancedMsgListener(listener OnAdvancedMsgListener) {
 	if listener == nil {
 		utils.sdkLog("AddAdvancedMsgListener listener is null")
 		return
@@ -298,7 +301,7 @@ func (u *open_im_sdk.UserRelated) AddAdvancedMsgListener(listener OnAdvancedMsgL
 	u.ConversationListener.MsgListenerList = append(u.ConversationListener.MsgListenerList, listener)
 }
 
-func (u *open_im_sdk.UserRelated) ForceSyncMsg() bool {
+func (c *Conversation) ForceSyncMsg() bool {
 	if u.syncSeq2Msg() == nil {
 		return true
 	} else {
@@ -306,35 +309,35 @@ func (u *open_im_sdk.UserRelated) ForceSyncMsg() bool {
 	}
 }
 
-func (u *open_im_sdk.UserRelated) ForceSyncJoinedGroup() {
+func (c *Conversation) ForceSyncJoinedGroup() {
 	u.syncJoinedGroupInfo()
 }
 
-func (u *open_im_sdk.UserRelated) ForceSyncJoinedGroupMember() {
+func (c *Conversation) ForceSyncJoinedGroupMember() {
 
 	u.syncJoinedGroupMember()
 }
 
-func (u *open_im_sdk.UserRelated) ForceSyncGroupRequest() {
+func (c *Conversation) ForceSyncGroupRequest() {
 	u.syncGroupRequest()
 }
 
-func (u *open_im_sdk.UserRelated) ForceSyncSelfGroupRequest() {
+func (c *Conversation) ForceSyncSelfGroupRequest() {
 	u.syncSelfGroupRequest()
 }
 
 type SendMsgCallBack interface {
-	open_im_sdk.Base
+	common.Base
 	OnProgress(progress int)
 }
 
-func (u *open_im_sdk.UserRelated) CreateTextMessage(text string) string {
+func (c *Conversation) CreateTextMessage(text string) string {
 	s := utils.MsgStruct{}
 	u.initBasicInfo(&s, constant.UserMsgType, constant.Text)
 	s.Content = text
 	return utils.structToJsonString(s)
 }
-func (u *open_im_sdk.UserRelated) CreateTextAtMessage(text, atUserList string) string {
+func (c *Conversation) CreateTextAtMessage(text, atUserList string) string {
 	var users []string
 	_ = json.Unmarshal([]byte(atUserList), &users)
 	s := utils.MsgStruct{}
@@ -345,7 +348,7 @@ func (u *open_im_sdk.UserRelated) CreateTextAtMessage(text, atUserList string) s
 	s.Content = utils.structToJsonString(s.AtElem)
 	return utils.structToJsonString(s)
 }
-func (u *open_im_sdk.UserRelated) CreateLocationMessage(description string, longitude, latitude float64) string {
+func (c *Conversation) CreateLocationMessage(description string, longitude, latitude float64) string {
 	s := utils.MsgStruct{}
 	u.initBasicInfo(&s, constant.UserMsgType, constant.Location)
 	s.LocationElem.Description = description
@@ -354,7 +357,7 @@ func (u *open_im_sdk.UserRelated) CreateLocationMessage(description string, long
 	s.Content = utils.structToJsonString(s.LocationElem)
 	return utils.structToJsonString(s)
 }
-func (u *open_im_sdk.UserRelated) CreateCustomMessage(data, extension string, description string) string {
+func (c *Conversation) CreateCustomMessage(data, extension string, description string) string {
 	s := utils.MsgStruct{}
 	u.initBasicInfo(&s, constant.UserMsgType, constant.Custom)
 	s.CustomElem.Data = data
@@ -363,7 +366,7 @@ func (u *open_im_sdk.UserRelated) CreateCustomMessage(data, extension string, de
 	s.Content = utils.structToJsonString(s.CustomElem)
 	return utils.structToJsonString(s)
 }
-func (u *open_im_sdk.UserRelated) CreateQuoteMessage(text string, message string) string {
+func (c *Conversation) CreateQuoteMessage(text string, message string) string {
 	s, qs := utils.MsgStruct{}, utils.MsgStruct{}
 	_ = json.Unmarshal([]byte(message), &qs)
 	u.initBasicInfo(&s, constant.UserMsgType, constant.Quote)
@@ -377,14 +380,14 @@ func (u *open_im_sdk.UserRelated) CreateQuoteMessage(text string, message string
 	s.Content = utils.structToJsonString(s.QuoteElem)
 	return utils.structToJsonString(s)
 }
-func (u *open_im_sdk.UserRelated) CreateCardMessage(cardInfo string) string {
+func (c *Conversation) CreateCardMessage(cardInfo string) string {
 	s := utils.MsgStruct{}
 	u.initBasicInfo(&s, constant.UserMsgType, constant.Card)
 	s.Content = cardInfo
 	return utils.structToJsonString(s)
 
 }
-func (u *open_im_sdk.UserRelated) CreateVideoMessageFromFullPath(videoFullPath string, videoType string, duration int64, snapshotFullPath string) string {
+func (c *Conversation) CreateVideoMessageFromFullPath(videoFullPath string, videoType string, duration int64, snapshotFullPath string) string {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -420,7 +423,7 @@ func (u *open_im_sdk.UserRelated) CreateVideoMessageFromFullPath(videoFullPath s
 	}
 	s.VideoElem.VideoSize = fi.Size()
 	if snapshotFullPath != "" {
-		imageInfo, err := open_im_sdk.getImageInfo(s.VideoElem.SnapshotPath)
+		imageInfo, err := common.getImageInfo(s.VideoElem.SnapshotPath)
 		if err != nil {
 			utils.sdkLog("CreateVideoMessage err:", err.Error())
 			return ""
@@ -433,7 +436,7 @@ func (u *open_im_sdk.UserRelated) CreateVideoMessageFromFullPath(videoFullPath s
 	s.Content = utils.structToJsonString(s.VideoElem)
 	return utils.structToJsonString(s)
 }
-func (u *open_im_sdk.UserRelated) CreateFileMessageFromFullPath(fileFullPath string, fileName string) string {
+func (c *Conversation) CreateFileMessageFromFullPath(fileFullPath string, fileName string) string {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -458,7 +461,7 @@ func (u *open_im_sdk.UserRelated) CreateFileMessageFromFullPath(fileFullPath str
 	s.FileElem.FileName = fileName
 	return utils.structToJsonString(s)
 }
-func (u *open_im_sdk.UserRelated) CreateImageMessageFromFullPath(imageFullPath string) string {
+func (c *Conversation) CreateImageMessageFromFullPath(imageFullPath string) string {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -475,7 +478,7 @@ func (u *open_im_sdk.UserRelated) CreateImageMessageFromFullPath(imageFullPath s
 	u.initBasicInfo(&s, constant.UserMsgType, constant.Picture)
 	s.PictureElem.SourcePath = imageFullPath
 	utils.sdkLog("ImageMessage  path:", s.PictureElem.SourcePath)
-	imageInfo, err := open_im_sdk.getImageInfo(s.PictureElem.SourcePath)
+	imageInfo, err := common.getImageInfo(s.PictureElem.SourcePath)
 	if err != nil {
 		utils.sdkLog("getImageInfo err:", err.Error())
 		return ""
@@ -488,7 +491,7 @@ func (u *open_im_sdk.UserRelated) CreateImageMessageFromFullPath(imageFullPath s
 	s.Content = utils.structToJsonString(s.PictureElem)
 	return utils.structToJsonString(s)
 }
-func (u *open_im_sdk.UserRelated) CreateSoundMessageFromFullPath(soundPath string, duration int64) string {
+func (c *Conversation) CreateSoundMessageFromFullPath(soundPath string, duration int64) string {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -516,7 +519,7 @@ func (u *open_im_sdk.UserRelated) CreateSoundMessageFromFullPath(soundPath strin
 	utils.sdkLog("to string")
 	return utils.structToJsonString(s)
 }
-func (u *open_im_sdk.UserRelated) CreateImageMessage(imagePath string) string {
+func (c *Conversation) CreateImageMessage(imagePath string) string {
 	utils.sdkLog("start1: ", time.Now())
 	s := utils.MsgStruct{}
 	u.initBasicInfo(&s, constant.UserMsgType, constant.Picture)
@@ -525,7 +528,7 @@ func (u *open_im_sdk.UserRelated) CreateImageMessage(imagePath string) string {
 	utils.sdkLog("end1", time.Now())
 
 	utils.sdkLog("start2 ", time.Now())
-	imageInfo, err := open_im_sdk.getImageInfo(s.PictureElem.SourcePath)
+	imageInfo, err := common.getImageInfo(s.PictureElem.SourcePath)
 	if err != nil {
 		utils.sdkLog("CreateImageMessage err:", err.Error())
 		return ""
@@ -540,7 +543,7 @@ func (u *open_im_sdk.UserRelated) CreateImageMessage(imagePath string) string {
 	return utils.structToJsonString(s)
 }
 
-func (u *open_im_sdk.UserRelated) CreateImageMessageByURL(sourcePicture, bigPicture, snapshotPicture string) string {
+func (c *Conversation) CreateImageMessageByURL(sourcePicture, bigPicture, snapshotPicture string) string {
 	s := utils.MsgStruct{}
 	var p utils.PictureBaseInfo
 	_ = json.Unmarshal([]byte(sourcePicture), &p)
@@ -554,7 +557,7 @@ func (u *open_im_sdk.UserRelated) CreateImageMessageByURL(sourcePicture, bigPict
 	return utils.structToJsonString(s)
 }
 
-func (u *open_im_sdk.UserRelated) SendMessage(callback SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool, offlinePushInfo string) string {
+func (c *Conversation) SendMessage(callback SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool, offlinePushInfo string) string {
 	s := utils.MsgStruct{}
 	p := server_api_params.OfflinePushInfo{}
 	err := json.Unmarshal([]byte(message), &s)
@@ -600,7 +603,7 @@ func (u *open_im_sdk.UserRelated) SendMessage(callback SendMsgCallBack, message,
 				callback.OnError(202, err.Error())
 				return
 			}
-			isExistInGroup := func(target string, groupMemberList []open_im_sdk.groupMemberFullInfo) bool {
+			isExistInGroup := func(target string, groupMemberList []common.groupMemberFullInfo) bool {
 
 				for _, element := range groupMemberList {
 
@@ -642,7 +645,7 @@ func (u *open_im_sdk.UserRelated) SendMessage(callback SendMsgCallBack, message,
 				callback.OnError(202, err.Error())
 				return
 			}
-			u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{conversationID, constant.AddConOrUpLatMsg,
+			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.AddConOrUpLatMsg,
 				c}})
 			//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 			//_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
@@ -766,7 +769,7 @@ func (u *open_im_sdk.UserRelated) SendMessage(callback SendMsgCallBack, message,
 	}()
 	return s.ClientMsgID
 }
-func (u *open_im_sdk.UserRelated) internalSendMessage(callback SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool, offlinePushInfo string, options map[string]bool) (err error) {
+func (c *Conversation) internalSendMessage(callback SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool, offlinePushInfo string, options map[string]bool) (err error) {
 	s := utils.MsgStruct{}
 	p := server_api_params.OfflinePushInfo{}
 	err = json.Unmarshal([]byte(message), &s)
@@ -806,7 +809,7 @@ func (u *open_im_sdk.UserRelated) internalSendMessage(callback SendMsgCallBack, 
 			utils.sdkLog("getLocalGroupMemberListByGroupID err:", err)
 			return errors.New("getLocalGroupMemberListByGroupID err")
 		}
-		isExistInGroup := func(target string, groupMemberList []open_im_sdk.groupMemberFullInfo) bool {
+		isExistInGroup := func(target string, groupMemberList []common.groupMemberFullInfo) bool {
 
 			for _, element := range groupMemberList {
 
@@ -845,7 +848,7 @@ func (u *open_im_sdk.UserRelated) internalSendMessage(callback SendMsgCallBack, 
 			utils.sdkLog("insertMessageToLocalOrUpdateContent err:", err)
 			return errors.New("insertMessageToLocalOrUpdateContent err:")
 		}
-		u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{conversationID, constant.AddConOrUpLatMsg,
+		u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.AddConOrUpLatMsg,
 			c}})
 		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		//_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
@@ -859,7 +862,7 @@ func (u *open_im_sdk.UserRelated) internalSendMessage(callback SendMsgCallBack, 
 	return nil
 
 }
-func (u *open_im_sdk.UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool, offlinePushInfo string) string {
+func (c *Conversation) SendMessageNotOss(callback SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool, offlinePushInfo string) string {
 	s := utils.MsgStruct{}
 	p := server_api_params.OfflinePushInfo{}
 	err := json.Unmarshal([]byte(message), &s)
@@ -906,7 +909,7 @@ func (u *open_im_sdk.UserRelated) SendMessageNotOss(callback SendMsgCallBack, me
 				callback.OnError(202, err.Error())
 				return
 			}
-			isExistInGroup := func(target string, groupMemberList []open_im_sdk.groupMemberFullInfo) bool {
+			isExistInGroup := func(target string, groupMemberList []common.groupMemberFullInfo) bool {
 
 				for _, element := range groupMemberList {
 
@@ -948,7 +951,7 @@ func (u *open_im_sdk.UserRelated) SendMessageNotOss(callback SendMsgCallBack, me
 				callback.OnError(202, err.Error())
 				return
 			}
-			u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{conversationID, constant.AddConOrUpLatMsg,
+			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.AddConOrUpLatMsg,
 				c}})
 			//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 			//_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
@@ -963,7 +966,7 @@ func (u *open_im_sdk.UserRelated) SendMessageNotOss(callback SendMsgCallBack, me
 	}()
 	return s.ClientMsgID
 }
-func (u *open_im_sdk.UserRelated) autoSendMsg(s *open_im_sdk.MsgStruct, receiver, groupID string, onlineUserOnly, isUpdateConversationLatestMsg, isUpdateConversationInfo bool, offlinePushInfo string) error {
+func (c *Conversation) autoSendMsg(s *common.MsgStruct, receiver, groupID string, onlineUserOnly, isUpdateConversationLatestMsg, isUpdateConversationInfo bool, offlinePushInfo string) error {
 	utils.sdkLog("autoSendMsg input args:", *s, receiver, groupID, onlineUserOnly, isUpdateConversationLatestMsg, isUpdateConversationInfo)
 	var conversationID string
 	p := server_api_params.OfflinePushInfo{}
@@ -973,7 +976,7 @@ func (u *open_im_sdk.UserRelated) autoSendMsg(s *open_im_sdk.MsgStruct, receiver
 		return err
 	}
 	r := utils.SendMsgRespFromServer{}
-	a := open_im_sdk.paramsUserSendMsg{}
+	a := common.paramsUserSendMsg{}
 	if receiver == "" {
 		s.SessionType = constant.GroupChatType
 		s.RecvID = groupID
@@ -1055,7 +1058,7 @@ func (u *open_im_sdk.UserRelated) autoSendMsg(s *open_im_sdk.MsgStruct, receiver
 	a.Data.ClientMsgID = s.ClientMsgID
 	a.Data.CreateTime = s.CreateTime
 	a.Data.OffLineInfo = p
-	bMsg, err := utils.post2Api(open_im_sdk.sendMsgRouter, a, u.token)
+	bMsg, err := utils.post2Api(common.sendMsgRouter, a, u.token)
 	if err != nil {
 		utils.sdkLog("sendMsgRouter access err:", err.Error())
 		u.updateMessageFailedStatus(s, &c, onlineUserOnly)
@@ -1081,23 +1084,23 @@ func (u *open_im_sdk.UserRelated) autoSendMsg(s *open_im_sdk.MsgStruct, receiver
 				c.LatestMsg = utils.structToJsonString(s)
 				c.LatestMsgSendTime = s.SendTime
 				if isUpdateConversationLatestMsg {
-					u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{conversationID, constant.AddConOrUpLatMsg, c}})
-					u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{conversationID, constant.IncrUnread, ""}})
+					u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.AddConOrUpLatMsg, c}})
+					u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.IncrUnread, ""}})
 				}
 				if isUpdateConversationInfo {
-					u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{conversationID, constant.UpdateFaceUrlAndNickName, c}})
+					u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.UpdateFaceUrlAndNickName, c}})
 
 				}
 				if isUpdateConversationInfo || isUpdateConversationLatestMsg {
-					u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{"", constant.NewConChange, []string{conversationID}}})
-					u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{conversationID, constant.TotalUnreadMessageChanged, ""}})
+					u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+					u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.TotalUnreadMessageChanged, ""}})
 				}
 			}
 		}
 	}
 	return nil
 }
-func (u *open_im_sdk.UserRelated) CreateSoundMessageByURL(soundBaseInfo string) string {
+func (c *Conversation) CreateSoundMessageByURL(soundBaseInfo string) string {
 	s := utils.MsgStruct{}
 	var soundElem utils.SoundBaseInfo
 	_ = json.Unmarshal([]byte(soundBaseInfo), &soundElem)
@@ -1107,7 +1110,7 @@ func (u *open_im_sdk.UserRelated) CreateSoundMessageByURL(soundBaseInfo string) 
 	return utils.structToJsonString(s)
 }
 
-func (u *open_im_sdk.UserRelated) CreateSoundMessage(soundPath string, duration int64) string {
+func (c *Conversation) CreateSoundMessage(soundPath string, duration int64) string {
 	s := utils.MsgStruct{}
 	u.initBasicInfo(&s, constant.UserMsgType, constant.Voice)
 	s.SoundElem.SoundPath = constant.SvrConf.DbDir + soundPath
@@ -1122,7 +1125,7 @@ func (u *open_im_sdk.UserRelated) CreateSoundMessage(soundPath string, duration 
 	return utils.structToJsonString(s)
 }
 
-func (u *open_im_sdk.UserRelated) CreateVideoMessageByURL(videoBaseInfo string) string {
+func (c *Conversation) CreateVideoMessageByURL(videoBaseInfo string) string {
 	s := utils.MsgStruct{}
 	var videoElem utils.VideoBaseInfo
 	_ = json.Unmarshal([]byte(videoBaseInfo), &videoElem)
@@ -1132,7 +1135,7 @@ func (u *open_im_sdk.UserRelated) CreateVideoMessageByURL(videoBaseInfo string) 
 	return utils.structToJsonString(s)
 }
 
-func (u *open_im_sdk.UserRelated) CreateVideoMessage(videoPath string, videoType string, duration int64, snapshotPath string) string {
+func (c *Conversation) CreateVideoMessage(videoPath string, videoType string, duration int64, snapshotPath string) string {
 	s := utils.MsgStruct{}
 	u.initBasicInfo(&s, constant.UserMsgType, constant.Video)
 	s.VideoElem.VideoPath = constant.SvrConf.DbDir + videoPath
@@ -1150,7 +1153,7 @@ func (u *open_im_sdk.UserRelated) CreateVideoMessage(videoPath string, videoType
 	}
 	s.VideoElem.VideoSize = fi.Size()
 	if snapshotPath != "" {
-		imageInfo, err := open_im_sdk.getImageInfo(s.VideoElem.SnapshotPath)
+		imageInfo, err := common.getImageInfo(s.VideoElem.SnapshotPath)
 		if err != nil {
 			utils.sdkLog("CreateVideoMessage err:", err.Error())
 			return ""
@@ -1162,7 +1165,7 @@ func (u *open_im_sdk.UserRelated) CreateVideoMessage(videoPath string, videoType
 	s.Content = utils.structToJsonString(s.VideoElem)
 	return utils.structToJsonString(s)
 }
-func (u *open_im_sdk.UserRelated) CreateFileMessageByURL(fileBaseInfo string) string {
+func (c *Conversation) CreateFileMessageByURL(fileBaseInfo string) string {
 	s := utils.MsgStruct{}
 	var fileElem utils.FileBaseInfo
 	_ = json.Unmarshal([]byte(fileBaseInfo), &fileElem)
@@ -1171,7 +1174,7 @@ func (u *open_im_sdk.UserRelated) CreateFileMessageByURL(fileBaseInfo string) st
 	s.Content = utils.structToJsonString(s.FileElem)
 	return utils.structToJsonString(s)
 }
-func (u *open_im_sdk.UserRelated) CreateFileMessage(filePath string, fileName string) string {
+func (c *Conversation) CreateFileMessage(filePath string, fileName string) string {
 	s := utils.MsgStruct{}
 	u.initBasicInfo(&s, constant.UserMsgType, constant.File)
 	s.FileElem.FilePath = constant.SvrConf.DbDir + filePath
@@ -1185,7 +1188,7 @@ func (u *open_im_sdk.UserRelated) CreateFileMessage(filePath string, fileName st
 	utils.sdkLog("CreateForwardMessage new input: ", utils.structToJsonString(s))
 	return utils.structToJsonString(s)
 }
-func (u *open_im_sdk.UserRelated) CreateMergerMessage(messageList, title, summaryList string) string {
+func (c *Conversation) CreateMergerMessage(messageList, title, summaryList string) string {
 	var messages []*utils.MsgStruct
 	var summaries []string
 	s := utils.MsgStruct{}
@@ -1202,7 +1205,7 @@ func (u *open_im_sdk.UserRelated) CreateMergerMessage(messageList, title, summar
 	s.Content = utils.structToJsonString(s.MergeElem)
 	return utils.structToJsonString(s)
 }
-func (u *open_im_sdk.UserRelated) CreateForwardMessage(m string) string {
+func (c *Conversation) CreateForwardMessage(m string) string {
 	utils.sdkLog("CreateForwardMessage input: ", m)
 	s := utils.MsgStruct{}
 	err := json.Unmarshal([]byte(m), &s)
@@ -1221,7 +1224,7 @@ func (u *open_im_sdk.UserRelated) CreateForwardMessage(m string) string {
 	return utils.structToJsonString(s)
 }
 
-func sendMessageToServer(onlineUserOnly *bool, s *open_im_sdk.MsgStruct, u *open_im_sdk.UserRelated, callback SendMsgCallBack,
+func sendMessageToServer(onlineUserOnly *bool, s *common.MsgStruct, c *Conversation, callback SendMsgCallBack,
 	c *ConversationStruct, conversationID string, delFile []string, offlinePushInfo *server_api_params.OfflinePushInfo, isRetry bool, options map[string]bool) {
 	//Protocol conversion
 	wsMsgData := server_api_params.MsgData{
@@ -1328,9 +1331,9 @@ func sendMessageToServer(onlineUserOnly *bool, s *open_im_sdk.MsgStruct, u *open
 				s.Status = constant.MsgStatusSendSuccess
 				c.LatestMsg = utils.structToJsonString(s)
 				c.LatestMsgSendTime = s.SendTime
-				_ = u.triggerCmdUpdateConversation(open_im_sdk.updateConNode{conversationID, constant.AddConOrUpLatMsg,
+				_ = u.triggerCmdUpdateConversation(common.updateConNode{conversationID, constant.AddConOrUpLatMsg,
 					c})
-				u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+				u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 			}
 			breakFlag = 1
 		case <-time.After(time.Second * time.Duration(timeout)):
@@ -1370,7 +1373,7 @@ func sendMessageToServer(onlineUserOnly *bool, s *open_im_sdk.MsgStruct, u *open
 	u.DelCh(msgIncr)
 }
 
-func (u *open_im_sdk.UserRelated) GetHistoryMessageList(callback open_im_sdk.Base, getMessageOptions string) {
+func (c *Conversation) GetHistoryMessageList(callback common.Base, getMessageOptions string) {
 	go func() {
 		utils.sdkLog("GetHistoryMessageList", getMessageOptions)
 		var sourceID string
@@ -1428,7 +1431,7 @@ func (u *open_im_sdk.UserRelated) GetHistoryMessageList(callback open_im_sdk.Bas
 		}
 	}()
 }
-func (u *open_im_sdk.UserRelated) RevokeMessage(callback open_im_sdk.Base, message string) {
+func (c *Conversation) RevokeMessage(callback common.Base, message string) {
 	go func() {
 		//var receiver, groupID string
 		c := utils.MsgStruct{}
@@ -1475,7 +1478,7 @@ func (u *open_im_sdk.UserRelated) RevokeMessage(callback open_im_sdk.Base, messa
 		}
 	}()
 }
-func (u *open_im_sdk.UserRelated) TypingStatusUpdate(receiver, msgTip string) {
+func (c *Conversation) TypingStatusUpdate(receiver, msgTip string) {
 	go func() {
 		s := utils.MsgStruct{}
 		u.initBasicInfo(&s, constant.UserMsgType, constant.Typing)
@@ -1489,7 +1492,7 @@ func (u *open_im_sdk.UserRelated) TypingStatusUpdate(receiver, msgTip string) {
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) MarkC2CMessageAsRead(callback open_im_sdk.Base, receiver string, msgIDList string) {
+func (c *Conversation) MarkC2CMessageAsRead(callback common.Base, receiver string, msgIDList string) {
 	go func() {
 		conversationID := utils.GetConversationIDBySessionType(receiver, constant.SingleChatType)
 		var list []string
@@ -1516,50 +1519,50 @@ func (u *open_im_sdk.UserRelated) MarkC2CMessageAsRead(callback open_im_sdk.Base
 			if err != nil {
 				utils.sdkLog("setSingleMessageHasReadByMsgIDList  err:", err.Error())
 			}
-			u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{conversationID, constant.UpdateLatestMessageChange, ""}})
-			u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.UpdateLatestMessageChange, ""}})
+			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 		}
 	}()
 }
 
 //Deprecated
-func (u *open_im_sdk.UserRelated) MarkSingleMessageHasRead(callback open_im_sdk.Base, userID string) {
+func (c *Conversation) MarkSingleMessageHasRead(callback common.Base, userID string) {
 	go func() {
 		conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
 		//if err := u.setSingleMessageHasRead(userID); err != nil {
 		//	callback.OnError(201, err.Error())
 		//} else {
 		callback.OnSuccess("")
-		u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{ConId: conversationID, Action: constant.UnreadCountSetZero}})
-		u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+		u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConId: conversationID, Action: constant.UnreadCountSetZero}})
+		u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 		//}
 	}()
 }
-func (u *open_im_sdk.UserRelated) MarkAllConversationHasRead(callback open_im_sdk.Base, userID string) {
+func (c *Conversation) MarkAllConversationHasRead(callback common.Base, userID string) {
 	go func() {
 		conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
 		//if err := u.setSingleMessageHasRead(userID); err != nil {
 		//	callback.OnError(201, err.Error())
 		//} else {
 		callback.OnSuccess("")
-		u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{ConId: conversationID, Action: constant.UnreadCountSetZero}})
-		u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+		u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConId: conversationID, Action: constant.UnreadCountSetZero}})
+		u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 		//}
 	}()
 }
-func (u *open_im_sdk.UserRelated) MarkGroupMessageHasRead(callback open_im_sdk.Base, groupID string) {
+func (c *Conversation) MarkGroupMessageHasRead(callback common.Base, groupID string) {
 	go func() {
 		conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 		if err := u.setGroupMessageHasRead(groupID); err != nil {
 			callback.OnError(201, err.Error())
 		} else {
 			callback.OnSuccess("")
-			u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{ConId: conversationID, Action: constant.UnreadCountSetZero}})
-			u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConId: conversationID, Action: constant.UnreadCountSetZero}})
+			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 		}
 	}()
 }
-func (u *open_im_sdk.UserRelated) DeleteMessageFromLocalStorage(callback open_im_sdk.Base, message string) {
+func (c *Conversation) DeleteMessageFromLocalStorage(callback common.Base, message string) {
 	go func() {
 		var conversation ConversationStruct
 		var latestMsg utils.MsgStruct
@@ -1615,16 +1618,16 @@ func (u *open_im_sdk.UserRelated) DeleteMessageFromLocalStorage(callback open_im
 				conversation.LatestMsg = utils.structToJsonString(list[0])
 				conversation.LatestMsgSendTime = list[0].SendTime
 			}
-			err = u.triggerCmdUpdateConversation(open_im_sdk.updateConNode{ConId: conversationID, Action: constant.AddConOrUpLatMsg, Args: conversation})
+			err = u.triggerCmdUpdateConversation(common.updateConNode{ConId: conversationID, Action: constant.AddConOrUpLatMsg, Args: conversation})
 			if err != nil {
 				utils.sdkLog("DeleteMessageFromLocalStorage triggerCmdUpdateConversation err:", err.Error())
 			}
-			u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 
 		}
 	}()
 }
-func (u *open_im_sdk.UserRelated) ClearC2CHistoryMessage(callback open_im_sdk.Base, userID string) {
+func (c *Conversation) ClearC2CHistoryMessage(callback common.Base, userID string) {
 	go func() {
 		conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
 		err := u.setMessageStatusBySourceID(userID, constant.MsgStatusHasDeleted, constant.SingleChatType)
@@ -1638,11 +1641,11 @@ func (u *open_im_sdk.UserRelated) ClearC2CHistoryMessage(callback open_im_sdk.Ba
 			return
 		} else {
 			callback.OnSuccess("")
-			u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 		}
 	}()
 }
-func (u *open_im_sdk.UserRelated) ClearGroupHistoryMessage(callback open_im_sdk.Base, groupID string) {
+func (c *Conversation) ClearGroupHistoryMessage(callback common.Base, groupID string) {
 	go func() {
 		conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 		err := u.setMessageStatusBySourceID(groupID, constant.MsgStatusHasDeleted, constant.GroupChatType)
@@ -1656,12 +1659,12 @@ func (u *open_im_sdk.UserRelated) ClearGroupHistoryMessage(callback open_im_sdk.
 			return
 		} else {
 			callback.OnSuccess("")
-			u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 		}
 	}()
 }
 
-func (u *open_im_sdk.UserRelated) InsertSingleMessageToLocalStorage(callback open_im_sdk.Base, message, userID, sender string) string {
+func (c *Conversation) InsertSingleMessageToLocalStorage(callback common.Base, message, userID, sender string) string {
 	s := utils.MsgStruct{}
 	err := json.Unmarshal([]byte(message), &s)
 	if err != nil {
@@ -1683,7 +1686,7 @@ func (u *open_im_sdk.UserRelated) InsertSingleMessageToLocalStorage(callback ope
 	return s.ClientMsgID
 }
 
-func (u *open_im_sdk.UserRelated) InsertGroupMessageToLocalStorage(callback open_im_sdk.Base, message, groupID, sender string) string {
+func (c *Conversation) InsertGroupMessageToLocalStorage(callback common.Base, message, groupID, sender string) string {
 	s := utils.MsgStruct{}
 	err := json.Unmarshal([]byte(message), &s)
 	if err != nil {
@@ -1705,7 +1708,7 @@ func (u *open_im_sdk.UserRelated) InsertGroupMessageToLocalStorage(callback open
 	return s.ClientMsgID
 }
 
-func (u *open_im_sdk.UserRelated) FindMessages(callback open_im_sdk.Base, messageIDList string) {
+func (c *Conversation) FindMessages(callback common.Base, messageIDList string) {
 	go func() {
 		var c []string
 		err := json.Unmarshal([]byte(messageIDList), &c)
@@ -1725,4 +1728,34 @@ func (u *open_im_sdk.UserRelated) FindMessages(callback open_im_sdk.Base, messag
 			}
 		}
 	}()
+}
+func getImageInfo(filePath string) (*utils.ImageInfo, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, utils.Wrap(err, "open file err")
+	}
+	defer func() {
+		if file != nil {
+			file.Close()
+		}
+	}()
+
+	img, _, err := image.Decode(file)
+	if err != nil {
+		return nil, utils.Wrap(err, "image file  Decode err")
+	}
+
+	datatype, err := imgtype.Get(filePath)
+	if err != nil {
+		return nil, utils.Wrap(err, "image file  get type err")
+	}
+	fi, err := os.Stat(filePath)
+	if err != nil {
+		return nil, utils.Wrap(err, "image file  Stat err")
+	}
+
+	b := img.Bounds()
+
+	return &utils.ImageInfo{int32(b.Max.X), int32(b.Max.Y), datatype, fi.Size()}, nil
+
 }

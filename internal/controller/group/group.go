@@ -608,7 +608,7 @@ func (u *Group) processGroupApplication(callback common.Base, groupID, fromUserI
 	} else if handleResult == -1 {
 		commData = u.p.PostFatalCallback(callback, constant.RefuseGroupApplicationRouter, apiReq, u.token)
 	}
-	u.SyncGroupRequest()
+	u.syncGroupRequest()
 	return commData
 }
 //
@@ -655,11 +655,11 @@ func (u *Group) processGroupApplication(callback common.Base, groupID, fromUserI
 
 
 
-func (u *Group) getJoinedGroupListFromSvr() ([]*api.GroupInfo, error) {
+func (g *Group) getJoinedGroupListFromSvr() ([]*api.GroupInfo, error) {
 	apiReq := api.GetJoinedGroupListReq{}
 	apiReq.OperationID = utils.OperationIDGenerator()
-	apiReq.FromUserID = u.loginUserID
-	commData, err := u.p.PostReturn(constant.GetJoinedGroupListRouter, apiReq, u.token)
+	apiReq.FromUserID = g.loginUserID
+	commData, err := g.p.PostReturn(constant.GetJoinedGroupListRouter, apiReq, g.token)
 	if err != nil{
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
@@ -893,8 +893,7 @@ func (u *Group) getGroupAllMemberByGroupIDFromSvr(groupID string) ([]*api.GroupM
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 	var realData []*api.GroupMemberFullInfo
-	err = mapstructure.Decode(commData.Data, &realData)
-	if err != nil{
+	err = mapstructure.Decode(commData.Data, &realData){
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 	return realData, nil

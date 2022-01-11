@@ -66,3 +66,12 @@ func (d *DataBase) UpdateMessage(c *LocalChatLog) error {
 	}
 	return utils.Wrap(t.Error, "UpdateMessage failed")
 }
+func (d *DataBase) UpdateMessageStatusBySourceID(sourceID string, status, sessionType int32) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	t := d.conn.Model(LocalChatLog{}).Where("(send_id=? or recv_id=?)AND session_type=?", status, sourceID, sourceID, sessionType).Updates(LocalChatLog{Status: status})
+	if t.RowsAffected == 0 {
+		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	}
+	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
+}
