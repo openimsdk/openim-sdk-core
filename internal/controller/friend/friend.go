@@ -587,7 +587,7 @@ func (u *Friend) addFriendNew(msg *server_api_params.MsgData) {
 	//u.friendListener.OnFriendApplicationListAdded(string(jsonInfo))
 }
 
-func (u *Friend) doFriendMsg(msg *server_api_params.MsgData) {
+func (u *Friend) DoFriendMsg(msg *server_api_params.MsgData) {
 	//utils.sdkLog("doFriendMsg ", msg)
 	//if u.cb == nil || u.friendListener == nil {
 	//	utils.sdkLog("listener is null")
