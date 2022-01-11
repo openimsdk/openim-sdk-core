@@ -1,7 +1,6 @@
 package init
 
 import (
-	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 )

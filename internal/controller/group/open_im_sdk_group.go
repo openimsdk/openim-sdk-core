@@ -167,6 +167,7 @@ func (u *Group) InviteUserToGroup(callback common.Base, groupID, reason string, 
 	go func() {
 		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, reason, userList)
 		var unmarshalParam sdk_params_callback.InviteUserToGroupParam
+		common.JsonUnmarshalAndArgsValidate(userList, &unmarshalParam, callback, operationID)
 		result := u.inviteUserToGroup(callback,  groupID, reason, unmarshalParam, operationID)
 		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(result)))
 		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonString(result))

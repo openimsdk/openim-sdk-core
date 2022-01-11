@@ -8,6 +8,7 @@ import (
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
+	"open_im_sdk/pkg/utils"
 	"sync"
 )
 
@@ -17,6 +18,7 @@ type MsgSync struct {
 	seqMsgMutex sync.RWMutex
 	*ws.Ws
 	loginUserID string
+	conversationCh chan common.Cmd2Value
 }
 
 func NewMsgSync(dataBase *db.DataBase, ws *ws.Ws, loginUserID string, ch chan common.Cmd2Value) *MsgSync {
@@ -102,24 +104,6 @@ func (u *MsgSync) getNotInSeq(needSyncSeqList []int32) (seqList []int64) {
 	return seqList
 }
 
-type PullUserMsgResp struct {
-	ErrCode       int                       `json:"errCode"`
-	ErrMsg        string                    `json:"errMsg"`
-	ReqIdentifier int                       `json:"reqIdentifier"`
-	MsgIncr       int                       `json:"msgIncr"`
-	Data          paramsPullUserMsgDataResp `json:"data"`
-}
-type paramsPullUserMsgDataResp struct {
-	Group  []*server_api_params.GatherFormat `json:"group"`
-	MaxSeq int64                             `json:"maxSeq"`
-	MinSeq int64                             `json:"minSeq"`
-	Single []*server_api_params.GatherFormat `json:"single"`
-}
-
-type ArrMsg struct {
-	SingleData []server_api_params.MsgData
-	GroupData  []server_api_params.MsgData
-}
 
 func (u *MsgSync) syncMsgFromServerSplit(needSyncSeqList []int64) (err error) {
 	if len(needSyncSeqList) == 0 {
@@ -136,9 +120,9 @@ func (u *MsgSync) syncMsgFromServerSplit(needSyncSeqList []int64) (err error) {
 		return err
 	}
 
-	var pullMsg PullUserMsgResp
+	var pullMsg utils.PullUserMsgResp
 	var pullMsgResp server_api_params.PullMessageBySeqListResp
-	err := proto.Unmarshal(resp.Data, &pullMsgResp)
+	err = proto.Unmarshal(resp.Data, &pullMsgResp)
 	if err != nil {
 		log.Error(operationID, "Unmarshal failed ", err.Error())
 		return err
@@ -150,28 +134,14 @@ func (u *MsgSync) syncMsgFromServerSplit(needSyncSeqList []int64) (err error) {
 
 	u.seqMsgMutex.Lock()
 	isInmap := false
-	arrMsg := ArrMsg{}
+	arrMsg := utils.ArrMsg{}
 	//	sdkLog("pullmsg data: ", pullMsgResp.SingleUserMsg, pullMsg.Data.Single)
 	for i := 0; i < len(pullMsg.Data.Single); i++ {
 		for j := 0; j < len(pullMsg.Data.Single[i].List); j++ {
 			log.Info(operationID, "open_im pull one msg: |", pullMsg.Data.Single[i].List[j].ClientMsgID, "|")
 			log.Info(operationID, "pull all: |", pullMsg.Data.Single[i].List[j].Seq, pullMsg.Data.Single[i].List[j])
+			singleMsg := pullMsg.Data.Single[i].List[j]
 
-			singleMsg := server_api_params.MsgData{
-				SendID:           pullMsg.Data.Single[i].List[j].SendID,
-				RecvID:           pullMsg.Data.Single[i].List[j].RecvID,
-				SessionType:      constant.SingleChatType,
-				MsgFrom:          pullMsg.Data.Single[i].List[j].MsgFrom,
-				ContentType:      pullMsg.Data.Single[i].List[j].ContentType,
-				ServerMsgID:      pullMsg.Data.Single[i].List[j].ServerMsgID,
-				Content:          pullMsg.Data.Single[i].List[j].Content,
-				SendTime:         pullMsg.Data.Single[i].List[j].SendTime,
-				Seq:              pullMsg.Data.Single[i].List[j].Seq,
-				SenderNickname:   pullMsg.Data.Single[i].List[j].SenderNickname,
-				SenderFaceURL:    pullMsg.Data.Single[i].List[j].SenderFaceURL,
-				ClientMsgID:      pullMsg.Data.Single[i].List[j].ClientMsgID,
-				SenderPlatformID: pullMsg.Data.Single[i].List[j].SenderPlatformID,
-			}
 
 			b1 := u.isExistsInErrChatLogBySeq(pullMsg.Data.Single[i].List[j].Seq)
 			b2 := u.judgeMessageIfExistsBySeq(pullMsg.Data.Single[i].List[j].Seq)
@@ -180,7 +150,7 @@ func (u *MsgSync) syncMsgFromServerSplit(needSyncSeqList []int64) (err error) {
 				log.Info(operationID, "seq in : ", pullMsg.Data.Single[i].List[j].Seq, b1, b2, ok)
 			} else {
 				isInmap = true
-				u.seqMsg[int32(pullMsg.Data.Single[i].List[j].Seq)] = singleMsg
+				u.seqMsg[int32(pullMsg.Data.Single[i].List[j].Seq)] = *singleMsg
 				log.Info(operationID, "into map, seq: ", pullMsg.Data.Single[i].List[j].Seq, pullMsg.Data.Single[i].List[j].ClientMsgID, pullMsg.Data.Single[i].List[j].ServerMsgID, pullMsg.Data.Single[i].List[j])
 			}
 		}
@@ -188,22 +158,7 @@ func (u *MsgSync) syncMsgFromServerSplit(needSyncSeqList []int64) (err error) {
 
 	for i := 0; i < len(pullMsg.Data.Group); i++ {
 		for j := 0; j < len(pullMsg.Data.Group[i].List); j++ {
-			groupMsg := server_api_params.MsgData{
-				SendID:           pullMsg.Data.Group[i].List[j].SendID,
-				RecvID:           pullMsg.Data.Group[i].List[j].RecvID,
-				SessionType:      constant.GroupChatType,
-				MsgFrom:          pullMsg.Data.Group[i].List[j].MsgFrom,
-				ContentType:      pullMsg.Data.Group[i].List[j].ContentType,
-				ServerMsgID:      pullMsg.Data.Group[i].List[j].ServerMsgID,
-				Content:          pullMsg.Data.Group[i].List[j].Content,
-				SendTime:         pullMsg.Data.Group[i].List[j].SendTime,
-				Seq:              pullMsg.Data.Group[i].List[j].Seq,
-				SenderNickname:   pullMsg.Data.Group[i].List[j].SenderNickname,
-				SenderFaceURL:    pullMsg.Data.Group[i].List[j].SenderFaceURL,
-				ClientMsgID:      pullMsg.Data.Group[i].List[j].ClientMsgID,
-				SenderPlatformID: pullMsg.Data.Group[i].List[j].SenderPlatformID,
-			}
-
+			groupMsg := pullMsg.Data.Group[i].List[j]
 			b1 := u.isExistsInErrChatLogBySeq(pullMsg.Data.Group[i].List[j].Seq)
 			b2 := u.judgeMessageIfExistsBySeq(pullMsg.Data.Group[i].List[j].Seq)
 			_, ok := u.seqMsg[int32(pullMsg.Data.Group[i].List[j].Seq)]
@@ -221,7 +176,7 @@ func (u *MsgSync) syncMsgFromServerSplit(needSyncSeqList []int64) (err error) {
 	u.seqMsgMutex.Unlock()
 
 	if isInmap {
-		err = common.TriggerCmdNewMsgCome(arrMsg, )
+		err = common.TriggerCmdNewMsgCome(arrMsg, u.conversationCh)
 		if err != nil {
 		}
 	}

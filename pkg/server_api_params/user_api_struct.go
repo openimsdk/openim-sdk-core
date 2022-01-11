@@ -1,16 +1,26 @@
 package server_api_params
 
-type GetUserInfoReq struct {
+type GetUsersInfoReq struct {
 	OperationID string   `json:"operationID" binding:"required"`
 	UserIDList  []string `json:"userIDList" binding:"required"`
 }
-type GetUserInfoResp struct {
+type GetUsersInfoResp struct {
 	CommResp
-	UserInfoList []*UserInfo
+	UserInfoList []*PublicUserInfo        `json:"-"`
 	Data         []map[string]interface{} `json:"data"`
 }
 
-type UpdateUserInfoReq struct {
+type GetSelfUserInfoReq struct {
+	OperationID string `json:"operationID" binding:"required"`
+	UserID      string `json:"userID" binding:"required"`
+}
+type GetSelfUserInfoResp struct {
+	CommResp
+	UserInfoList *UserInfo                `json:"-"`
+	Data         []map[string]interface{} `json:"data"`
+}
+
+type UpdateSelfUserInfoReq struct {
 	UserInfo
 	OperationID string `json:"operationID" binding:"required"`
 }

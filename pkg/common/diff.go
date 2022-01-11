@@ -171,7 +171,30 @@ func TransferToLocalGroupRequest(apiData []*server_api_params.GroupRequest) []*d
 func GroupRequestCopyToLocal(dst *db.LocalGroupRequest, src *server_api_params.GroupRequest) {
 	copier.Copy(dst, src)
 }
+//
+//func TransferToLocalUserInfo(apiData []*server_api_params.UserInfo) []*db.LocalUser {
+//	localData := make([]*db.LocalUser, 0)
+//	for _, v := range apiData {
+//		var localNode db.LocalUser
+//		log2.NewDebug("0", "local test api ", v)
+//		UserInfoCopyToLocal(&localNode, v)
+//		log2.NewDebug("0", "local test local  ", localNode)
+//		localData = append(localData, &localNode)
+//	}
+//	log2.NewDebug("0", "local test local all ", localData)
+//	return localData
+//}
+//
+//func UserInfoCopyToLocal(dst *db.LocalUser, src *server_api_params.UserInfo) {
+//	copier.Copy(dst, src)
+//}
 
+
+func TransferToLocalUserInfo(apiData *server_api_params.UserInfo) *db.LocalUser{
+	var localNode db.LocalUser
+	copier.Copy(&localNode, apiData)
+	return &localNode
+}
 
 func TransferToLocalFriendRequest(apiFriendList []*server_api_params.FriendRequest) []*db.LocalFriendRequest {
 	localFriendList := make([]*db.LocalFriendRequest, 0)

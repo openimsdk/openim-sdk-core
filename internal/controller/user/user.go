@@ -1,193 +1,84 @@
 package user
 
 import (
-	"encoding/json"
-	"github.com/jinzhu/copier"
 	"github.com/mitchellh/mapstructure"
-	"open_im_sdk/internal/open_im_sdk"
+	ws "open_im_sdk/internal/controller/interaction"
+	"open_im_sdk/pkg/common"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/server_api_params"
+	api "open_im_sdk/pkg/server_api_params"
+	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
+
 )
+type User struct {
+	*db.DataBase
+	p              *ws.PostApi
+	loginUserID    string
+}
 
 func (u *User) SyncLoginUserInfo() error {
-	userSvr, err := u.getServerUserInfo()
+	svr, err := u._getSelfUserInfoFromSvr()
 	if err != nil {
-		log.NewError("0", "getServerUserInfo failed , user: ", err.Error())
-		return err
+		return utils.Wrap(err, "_getSelfUserInfoFromSvr failed")
 	}
-
-	log.NewInfo("0", "getServerUserInfo ", userSvr)
-
-	userLocal, err := u._getLoginUser()
-	needInsert := 0
+	onServer := common.TransferToLocalUserInfo(svr)
+	onLocal, err := u.GetLoginUser()
 	if err != nil {
-		log.NewError("0", "_getLoginUser failed  ", err.Error())
-		needInsert = 1
+		return utils.Wrap(err, "GetLoginUser failed")
 	}
-
-	if utils.CompFields(&userLocal, &userSvr) {
-		return nil
+	if onServer != onLocal {
+		u.UpdateLoginUser(onServer)
 	}
-
-	var updateLocalUser db.LocalUser
-	copier.Copy(&updateLocalUser, userSvr)
-	log.NewInfo("0", "copy: ", updateLocalUser)
-	if needInsert == 1 {
-		err = u._insertLoginUser(&updateLocalUser)
-		if err != nil {
-			log.NewError("0 ", "_insertLoginUser failed ", err.Error())
-		}
-		return err
-	}
-	err = u._updateLoginUser(&updateLocalUser)
-	if err != nil {
-		log.NewError("0 ", "_updateLoginUser failed ", err.Error())
-	}
-	return err
-
-	//if err != nil {
-	//	return err
-	//}
-	//sdkLog("getServerUserInfo ok, user: ", *userSvr)
-	//
-	//userLocal, err := u.getLoginUserInfoFromLocal()
-	//userLocal, err := u._getLoginUser()
-	//if err != nil {
-	//	return err
-	//}
-	//sdkLog("getLoginUserInfoFromLocal ok, user: ", userLocal)
-	//
-	//if userSvr.Uid != userLocal.Uid ||
-	//	userSvr.Name != userLocal.Name ||
-	//	userSvr.Icon != userLocal.Icon ||
-	//	userSvr.Gender != userLocal.Gender ||
-	//	userSvr.Mobile != userLocal.Mobile ||
-	//	userSvr.Birth != userLocal.Birth ||
-	//	userSvr.Email != userLocal.Email ||
-	//	userSvr.Ex != userLocal.Ex {
-	//	bUserInfo, err := json.Marshal(userSvr)
-	//	if err != nil {
-	//		sdkLog("marshal failed, ", err.Error())
-	//		return err
-	//	}
-	//
-	//	copier.Copy(a, b)
-	//	err = u._updateLoginUser(userSvr)
-	//	if err != nil {
-	//		u.cb.OnSelfInfoUpdated(string(bUserInfo))
-	//	}
-	//}
+	return nil
 }
 
-func (u *open_im_sdk.UserRelated) getServerUserInfo() (*server_api_params.UserInfo, error) {
-	apiReq := server_api_params.GetUserInfoReq{OperationID: utils.operationIDGenerator(), UserIDList: []string{u.loginUserID}}
-	resp, err := utils.post2Api(open_im_sdk.getUserInfoRouter, apiReq, u.token)
-	commData, err := utils.checkErrAndRespReturn(err, resp, apiReq.OperationID)
-	if err != nil {
-		return nil, utils.wrap(err, apiReq.OperationID)
-	}
-	realData := server_api_params.GetUserInfoResp{}
-	err = mapstructure.Decode(commData.Data, &realData.UserInfoList)
-	if err != nil {
-		log.NewError(apiReq.OperationID, "Decode failed ", err.Error())
-		return nil, err
-	}
-	log.NewInfo(apiReq.OperationID, "realData.UserInfoList", realData.UserInfoList, commData.Data)
-	if len(realData.UserInfoList) == 0 {
-		log.NewInfo(apiReq.OperationID, "failed, no user : ", u.loginUserID)
-		return nil, errors.New("no login user")
-	}
-	log.NewInfo(apiReq.OperationID, "realData.UserInfoList[0]", realData.UserInfoList[0])
-	return realData.UserInfoList[0], nil
+func (u *User) getUsersInfoFromSvr(callback common.Base, UserIDList sdk.GetUsersInfoParam, operationID string) sdk.GetUsersInfoCallback{
+	apiReq := api.GetUsersInfoReq{}
+	apiReq.OperationID = operationID
+	apiReq.UserIDList = UserIDList
+	commData := u.p.PostFatalCallback(callback,constant.GetUsersInfoRouter, apiReq, apiReq.OperationID)
+	apiResp :=  make([]*api.PublicUserInfo ,0)
+	common.MapstructureDecode(commData.Data, &apiResp, callback, apiReq.OperationID)
+	return apiResp
 }
 
-func (u *open_im_sdk.UserRelated) getUserNameAndFaceUrlByUid(uid string) (faceUrl, name string, err error) {
-	friendInfo, err := u._getFriendInfoByFriendUserID(uid)
-	if err != nil {
-		return "", "", err
+func (u *User) getSelfUserInfo(callback common.Base, operationID string) sdk.GetSelfUserInfoCallback{
+	userInfo, err := u.GetLoginUser()
+	if err != nil{
+		callback.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
 	}
-	if friendInfo.FriendUserID == "" {
-		userInfo, err := u.getUserInfoByUid(uid)
-		if err != nil {
-			return "", "", err
-		} else {
-			return userInfo.Icon, userInfo.Name, nil
-		}
-	} else {
-		if friendInfo.Remark != "" {
-			return friendInfo.FaceUrl, friendInfo.Remark, nil
-		} else {
-			return friendInfo.FaceUrl, friendInfo.Nickname, nil
-		}
-	}
+	return userInfo
 }
 
-func (u *open_im_sdk.UserRelated) getUserInfoByUid(uid string) (*open_im_sdk.userInfo, error) {
-	var uidList []string
-	uidList = append(uidList, uid)
-	resp, err := utils.post2Api(open_im_sdk.getUserInfoRouter, open_im_sdk.paramsGetUserInfo{OperationID: utils.operationIDGenerator(), UidList: uidList}, u.token)
-	if err != nil {
-		utils.sdkLog("post2Api failed, ", open_im_sdk.getUserInfoRouter, uidList, err.Error())
-		return nil, err
-	}
-	utils.sdkLog("post api: ", open_im_sdk.getUserInfoRouter, open_im_sdk.paramsGetUserInfo{OperationID: utils.operationIDGenerator(), UidList: uidList}, "uid ", uid)
-	var userResp open_im_sdk.getUserInfoResp
-	err = json.Unmarshal(resp, &userResp)
-	if err != nil {
-		utils.sdkLog("Unmarshal failed, ", resp, err.Error())
-		return nil, err
-	}
 
-	if userResp.ErrCode != 0 {
-		utils.sdkLog("errcode: ", userResp.ErrCode, "errmsg:", userResp.ErrMsg)
-		return nil, errors.New(userResp.ErrMsg)
-	}
-
-	if len(userResp.Data) == 0 {
-		utils.sdkLog("failed, no user :", uid)
-		return nil, errors.New("no user")
-	}
-	return &userResp.Data[0], nil
+func (u *User) updateSelfUserInfo(callback common.Base, userInfo sdk.SetSelfUserInfoParam,  operationID string) *api.CommDataResp  {
+	apiReq := api.UpdateSelfUserInfoReq{}
+	apiReq.OperationID = operationID
+	apiReq.UserInfo = api.UserInfo(userInfo)
+	apiReq.UserID = u.loginUserID
+	commData := u.p.PostFatalCallback(callback,constant.UpdateSelfUserInfoRouter, apiReq, apiReq.OperationID)
+	apiResp := api.CommDataResp{}
+	common.MapstructureDecode(commData.Data, &apiResp, callback, apiReq.OperationID)
+	return &apiResp
 }
 
-func (u *open_im_sdk.UserRelated) setSelfInfo(msg *server_api_params.MsgData) {
-	var uidList []string
-	uidList = append(uidList, msg.SendID)
-	resp, err := utils.post2Api(open_im_sdk.getUserInfoRouter, open_im_sdk.paramsGetUserInfo{OperationID: utils.operationIDGenerator(), UidList: uidList}, u.token)
+
+func (u *User) _getSelfUserInfoFromSvr() (*api.UserInfo, error){
+	apiReq := api.GetSelfUserInfoReq{}
+	apiReq.OperationID = utils.OperationIDGenerator()
+	apiReq.UserID = u.loginUserID
+	commData, err := u.p.PostReturn(constant.GetSelfUserInfo, apiReq, apiReq.OperationID)
 	if err != nil {
-		utils.sdkLog("post2Api failed, ", open_im_sdk.getUserInfoRouter, uidList, err.Error())
-		return
+		return nil, utils.Wrap(err, " apiReq.OperationID")
 	}
-	var userResp open_im_sdk.getUserInfoResp
-	err = json.Unmarshal(resp, &userResp)
+	apiResp :=  api.UserInfo{}
+	mapstructure.Decode(commData.Data, &apiResp)
 	if err != nil {
-		utils.sdkLog("Unmarshal failed, ", resp, err.Error())
-		return
+		return nil, utils.Wrap(err, " apiReq.OperationID")
 	}
-
-	if userResp.ErrCode != 0 {
-		utils.sdkLog("errcode: ", userResp.ErrCode, "errmsg:", userResp.ErrMsg)
-		return
-	}
-
-	if len(userResp.Data) == 0 {
-		utils.sdkLog("failed, no user : ", u.loginUserID)
-		return
-	}
-
-	err = u.updateFriendInfo(userResp.Data[0].Uid, userResp.Data[0].Name, userResp.Data[0].Icon, userResp.Data[0].Gender, userResp.Data[0].Mobile, userResp.Data[0].Birth, userResp.Data[0].Email, userResp.Data[0].Ex)
-	if err != nil {
-		utils.sdkLog("  db change failed", err.Error())
-		return
-	}
-
-	jsonInfo, err := json.Marshal(userResp.Data[0])
-	if err != nil {
-		utils.sdkLog("  marshal failed", err.Error())
-		return
-	}
-
-	u.friendListener.OnFriendInfoChanged(string(jsonInfo))
+	return &apiResp, nil
 }
+
+
+

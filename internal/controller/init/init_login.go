@@ -13,6 +13,7 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
+	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"time"
 )
@@ -27,18 +28,31 @@ type LoginMgr struct {
 	ws      *ws.Ws
 	msgSync *MsgSync
 
-	hearbeat *Heartbeat
+	heartbeat *Heartbeat
 
 	token       string
 	loginUserID string
 	listener    ws.ConnListener
+
+	justOnceFlag bool
 }
 
 func (u *LoginMgr) login(userID, token string, cb common.Base) {
+	log.Info("login start ", userID, token)
 	if cb == nil {
 		return
 	}
-	log.Info("login start ", userID, token)
+	if u.justOnceFlag {
+		cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
+		return
+	}
+	_, err := checkToken(userID, token)
+	if err != nil {
+		cb.OnError(constant.ErrTokenInvalid.ErrCode, constant.ErrTokenInvalid.ErrMsg)
+		return
+	}
+	u.justOnceFlag = true
+
 	u.token = token
 	u.loginUserID = userID
 
@@ -52,11 +66,11 @@ func (u *LoginMgr) login(userID, token string, cb common.Base) {
 	u.ws = ws.NewWs(ws.NewWsRespAsyn(), ws.NewWsConn(u.listener, token, userID))
 	u.msgSync = NewMsgSync(db, u.ws, userID)
 
-	u.hearbeat = NewHeartbeat(u.ws, u.msgSync)
+	u.heartbeat = NewHeartbeat(u.ws, u.msgSync)
 
 	log.Info("ws, forcedSynchronization heartbeat coroutine run ...")
 	go u.forcedSynchronization()
-	go u.hearbeat.heartbeat()
+	go u.heartbeat.heartbeat()
 	go u.run()
 	//		go u.timedCloseDB()
 	u.forycedSyncReceiveMessageOpt()
@@ -64,12 +78,7 @@ func (u *LoginMgr) login(userID, token string, cb common.Base) {
 
 }
 
-//func (u *open_im_sdk.UserRelated) closeListenerCh() {
-//	if u.ConversationCh != nil {
-//		close(u.ConversationCh)
-//		u.ConversationCh = nil
-//	}
-//}
+
 
 func (u *LoginMgr) initSDK(config string, cb *ws.ConnListener) bool {
 	if cb == nil {
@@ -137,40 +146,6 @@ func (u *open_im_sdk.UserRelated) logout(cb Base) {
 	}()
 }
 
-//
-//func (u *open_im_sdk.UserRelated) timedCloseDB() {
-//	timeTicker := time.NewTicker(time.Second * 5)
-//	num := 0
-//	for {
-//		<-timeTicker.C
-//		u.stateMutex.Lock()
-//		if u.LoginState == constant.LogoutCmd {
-//			utils.sdkLog("logout timedCloseDB return", constant.LogoutCmd)
-//			u.stateMutex.Unlock()
-//			return
-//		}
-//		u.stateMutex.Unlock()
-//		num++
-//		if num%60 == 0 {
-//			utils.sdkLog("closeDBSetNil begin")
-//			//u.closeDBSetNil()
-//			utils.sdkLog("closeDBSetNil end")
-//		}
-//	}
-//}
-//
-//func (u *open_im_sdk.UserRelated) closeConn() error {
-//	utils.LogBegin()
-//	if u.conn != nil {
-//		err := u.conn.Close()
-//		if err != nil {
-//			utils.LogFReturn(err.Error())
-//			return err
-//		}
-//	}
-//	utils.LogSReturn(nil)
-//	return nil
-//}
 
 func (u *open_im_sdk.UserRelated) getLoginUser() string {
 	if u.LoginState == constant.LoginSuccess {
@@ -254,221 +229,12 @@ func (u *open_im_sdk.UserRelated) syncSeq2Msg() error {
 	return err
 }
 
-/*
-func (u *UserRelated) pullBySplit(beginSeq int64, endSeq int64) error {
-	LogBegin(beginSeq, endSeq)
-	if beginSeq > endSeq {
-		LogFReturn("beginSeq > endSeq")
-		return nil
-	}
-	var SPLIT int64 = 100
-	var bSeq, eSeq int64
-	if endSeq-beginSeq > SPLIT {
-		bSeq = beginSeq
-		//1, 118 117/10 = 11  i: 0- 10  1-> 11 12->22 23->33  34->44   111->121
-		for i := 0; int64(i) < (endSeq-beginSeq)/SPLIT; i++ {
-			eSeq = bSeq + SPLIT - 1
-			sdkLog("pull args: ", i, bSeq, eSeq, (endSeq-beginSeq)/SPLIT)
-			err := u.pullOldMsgAndMergeNewMsg(bSeq, eSeq)
-			if err != nil {
-				LogFReturn(err.Error())
-				return err
-			}
-			bSeq = eSeq + 1
-		}
-		if bSeq <= endSeq {
-			sdkLog("pull remainder args: ", bSeq, endSeq)
-			err := u.pullOldMsgAndMergeNewMsg(bSeq, endSeq)
-			if err != nil {
-				LogFReturn(err.Error())
-				return err
-			}
-		}
-	} else {
-		err := u.pullOldMsgAndMergeNewMsg(beginSeq, endSeq)
-		if err != nil {
-			LogFReturn(err.Error())
-			return err
-		}
-	}
-	return nil
-}
-
-*/
-
-/*
-func (u *UserRelated) pullOldMsgAndMergeNewMsgByWs(beginSeq int64, endSeq int64) (err error) {
-	LogBegin(beginSeq, endSeq)
-	if beginSeq > endSeq {
-		LogSReturn(nil)
-		return nil
-	}
-	LogBegin("AddCh")
-	msgIncr, ch := u.AddCh()
-
-	var wsReq GeneralWsReq
-	wsReq.ReqIdentifier = WSPullMsgBySeqList
-	wsReq.OperationID = operationIDGenerator()
-	wsReq.SendID = u.LoginUid
-	//wsReq.Token = u.token
-	wsReq.MsgIncr = msgIncr
-
-	var pullMsgReq PullMessageBySeqListReq
-	LogBegin("getNoInSeq ", beginSeq, endSeq)
-	pullMsgReq.SeqList = u.getNotInSeq(beginSeq, endSeq)
-	LogEnd("getNoInSeq ", pullMsgReq.SeqList)
-
-	wsReq.Data, err = proto.Marshal(&pullMsgReq)
-	if err != nil {
-		sdkLog("Marshl failed ")
-		LogFReturn(err.Error())
-		u.DelCh(msgIncr)
-		return err
-	}
-	LogBegin("WriteMsg ", wsReq.OperationID)
-	err, _ = u.WriteMsg(wsReq)
-	LogEnd("WriteMsg ", wsReq.OperationID, err)
-	if err != nil {
-		sdkLog("close conn, WriteMsg failed ", err.Error())
-		u.DelCh(msgIncr)
-		return err
-	}
-
-	timeout := 10
-	select {
-	case r := <-ch:
-		sdkLog("ws ch recvMsg success: ", wsReq.OperationID)
-		if r.ErrCode != 0 {
-			sdkLog("pull msg failed ", r.ErrCode, r.ErrMsg, wsReq.OperationID)
-			u.DelCh(msgIncr)
-			return errors.New(r.ErrMsg)
-		} else {
-			sdkLog("pull msg success ", wsReq.OperationID)
-			var pullMsg PullUserMsgResp
-
-			pullMsg.ErrCode = 0
-
-			var pullMsgResp PullMessageBySeqListResp
-			err := proto.Unmarshal(r.Data, &pullMsgResp)
-			if err != nil {
-				sdkLog("Unmarshal failed ", err.Error())
-				LogFReturn(err.Error())
-				return err
-			}
-			pullMsg.Data.Group = pullMsgResp.GroupUserMsg
-			pullMsg.Data.Single = pullMsgResp.SingleUserMsg
-			pullMsg.Data.MaxSeq = pullMsgResp.MaxSeq
-			pullMsg.Data.MinSeq = pullMsgResp.MinSeq
-
-			u.seqMsgMutex.Lock()
-
-			arrMsg := ArrMsg{}
-			isInmap := false
-			for i := 0; i < len(pullMsg.Data.Single); i++ {
-				for j := 0; j < len(pullMsg.Data.Single[i].List); j++ {
-					sdkLog("open_im pull one msg: |", pullMsg.Data.Single[i].List[j].ClientMsgID, "|")
-					singleMsg := MsgData{
-						SendID:           pullMsg.Data.Single[i].List[j].SendID,
-						RecvID:           pullMsg.Data.Single[i].List[j].RecvID,
-						SessionType:      SingleChatType,
-						MsgFrom:          pullMsg.Data.Single[i].List[j].MsgFrom,
-						ContentType:      pullMsg.Data.Single[i].List[j].ContentType,
-						ServerMsgID:      pullMsg.Data.Single[i].List[j].ServerMsgID,
-						Content:          pullMsg.Data.Single[i].List[j].Content,
-						SendTime:         pullMsg.Data.Single[i].List[j].SendTime,
-						Seq:              pullMsg.Data.Single[i].List[j].Seq,
-						SenderNickName:   pullMsg.Data.Single[i].List[j].SenderNickName,
-						SenderFaceURL:    pullMsg.Data.Single[i].List[j].SenderFaceURL,
-						ClientMsgID:      pullMsg.Data.Single[i].List[j].ClientMsgID,
-						SenderPlatformID: pullMsg.Data.Single[i].List[j].SenderPlatformID,
-					}
-					//	arrMsg.SingleData = append(arrMsg.SingleData, singleMsg)
-					u.seqMsg[pullMsg.Data.Single[i].List[j].Seq] = singleMsg
-					sdkLog("into map, seq: ", pullMsg.Data.Single[i].List[j].Seq, pullMsg.Data.Single[i].List[j].ClientMsgID, pullMsg.Data.Single[i].List[j].ServerMsgID)
-				}
-			}
-
-
-
-			for i := 0; i < len(pullMsg.Data.Group); i++ {
-				for j := 0; j < len(pullMsg.Data.Group[i].List); j++ {
-					groupMsg := MsgData{
-						SendID:           pullMsg.Data.Group[i].List[j].SendID,
-						RecvID:           pullMsg.Data.Group[i].List[j].RecvID,
-						SessionType:      GroupChatType,
-						MsgFrom:          pullMsg.Data.Group[i].List[j].MsgFrom,
-						ContentType:      pullMsg.Data.Group[i].List[j].ContentType,
-						ServerMsgID:      pullMsg.Data.Group[i].List[j].ServerMsgID,
-						Content:          pullMsg.Data.Group[i].List[j].Content,
-						SendTime:         pullMsg.Data.Group[i].List[j].SendTime,
-						Seq:              pullMsg.Data.Group[i].List[j].Seq,
-						SenderNickName:   pullMsg.Data.Group[i].List[j].SenderNickName,
-						SenderFaceURL:    pullMsg.Data.Group[i].List[j].SenderFaceURL,
-						ClientMsgID:      pullMsg.Data.Group[i].List[j].ClientMsgID,
-						SenderPlatformID: pullMsg.Data.Group[i].List[j].SenderPlatformID,
-					}
-					//	arrMsg.GroupData = append(arrMsg.GroupData, groupMsg)
-					u.seqMsg[pullMsg.Data.Group[i].List[j].Seq] = groupMsg
-					sdkLog("into map, seq: ", pullMsg.Data.Group[i].List[j].Seq, pullMsg.Data.Group[i].List[j].ClientMsgID, pullMsg.Data.Group[i].List[j].ServerMsgID)
-				}
-			}
-			u.seqMsgMutex.Unlock()
-
-			u.seqMsgMutex.RLock()
-			for i := beginSeq; i <= endSeq; i++ {
-				v, ok := u.seqMsg[i]
-				if ok {
-					if v.SessionType == SingleChatType {
-						arrMsg.SingleData = append(arrMsg.SingleData, v)
-						sdkLog("pull seq: ", v.Seq, v)
-						if v.ContentType > SingleTipBegin && v.ContentType < SingleTipEnd {
-							var msgRecv MsgData
-							msgRecv.ContentType = v.ContentType
-							msgRecv.Content = v.Content
-							msgRecv.SendID = v.SendID
-							msgRecv.RecvID = v.RecvID
-							LogBegin("doFriendMsg ", msgRecv)
-							u.doFriendMsg(msgRecv)
-							LogEnd("doFriendMsg ", msgRecv)
-						}
-					} else if v.SessionType == GroupChatType {
-						sdkLog("pull seq: ", v.Seq, v)
-						arrMsg.GroupData = append(arrMsg.GroupData, v)
-						if v.ContentType > GroupTipBegin && v.ContentType < GroupTipEnd {
-							LogBegin("doGroupMsg ", v)
-							u.doGroupMsg(v)
-							LogEnd("doGroupMsg ", v)
-						}
-					} else {
-						sdkLog("type failed, ", v.SessionType, v)
-					}
-				} else {
-					sdkLog("seq no in map, failed, seq: ", i)
-				}
-			}
-			u.seqMsgMutex.RUnlock()
-
-			sdkLog("triggerCmdNewMsgCome len: ", len(arrMsg.SingleData), len(arrMsg.GroupData))
-			err = u.triggerCmdNewMsgCome(arrMsg)
-			if err != nil {
-				sdkLog("triggerCmdNewMsgCome failed, ", err.Error())
-			}
-			u.DelCh(msgIncr)
-		}
-	case <-time.After(time.Second * time.Duration(timeout)):
-		sdkLog("ws ch recvMsg timeout,", wsReq.OperationID)
-		u.DelCh(msgIncr)
-	}
-	return nil
-}
-
-*/
-func CheckToken(uId, token string) int {
-	_, err := utils.post2Api(open_im_sdk.newestSeqRouter, open_im_sdk.paramsNewestSeqReq{ReqIdentifier: 1001, OperationID: utils.operationIDGenerator(), SendID: uId, MsgIncr: 1}, token)
-	if err != nil {
-		return -1
-	}
-	return 0
+func checkToken(userID, token string) (*api.CommDataResp, error) {
+	p := ws.NewPostApi(token, constant.SvrConf.ApiAddr)
+	apiReq := api.GetUserInfoReq{}
+	apiReq.OperationID = utils.OperationIDGenerator()
+	apiReq.UserIDList = []string{userID}
+	return 	p.PostReturn(constant.GetUserInfoRouter, apiReq, apiReq.OperationID)
 }
 
 func (u *open_im_sdk.UserRelated) getUserNewestSeq() (int64, int64, error) {

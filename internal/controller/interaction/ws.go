@@ -135,8 +135,6 @@ func (u *Ws) doWsMsg(message []byte) {
 		utils.LogFReturn("decodeBinaryWs err", err.Error())
 		return
 	}
-	utils.LogEnd("decodeBinaryWs ", wsResp.OperationID, wsResp.ReqIdentifier)
-
 	switch wsResp.ReqIdentifier {
 	case constant.WSGetNewestSeq:
 		u.doWSGetNewestSeq(*wsResp)
@@ -152,8 +150,6 @@ func (u *Ws) doWsMsg(message []byte) {
 		utils.LogFReturn("type failed, ", wsResp.ReqIdentifier, wsResp.OperationID, wsResp.ErrCode, wsResp.ErrMsg)
 		return
 	}
-	utils.LogSReturn()
-	return
 }
 
 func (u *Ws) doWSGetNewestSeq(wsResp GeneralWsResp) {
@@ -203,7 +199,7 @@ func (u *Ws) doMsg(wsResp GeneralWsResp) {
 	b2 := u.JudgeMessageIfExists(msg.ClientMsgID)
 	_, ok := u.seqMsg[int32(msg.Seq)]
 	if b1 || b2 || ok {
-		utils.sdkLog("seq in : ", msg.Seq, b1, b2, ok)
+		log.Info("0", "seq in : ", msg.Seq, b1, b2, ok)
 		u.seqMsgMutex.Unlock()
 		return
 	}

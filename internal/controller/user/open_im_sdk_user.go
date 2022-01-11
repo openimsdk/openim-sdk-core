@@ -1,85 +1,43 @@
 package user
 
 import (
-	"encoding/json"
-	"github.com/jinzhu/copier"
-
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/common"
+	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
+
 )
 
-type User struct {
-	*db.DataBase
-}
 
-func (u *User) GetUsersInfo(uIDList string, cb open_im_sdk.Base) {
+func (u *User) GetUsersInfo(callback common.Base, userIDList string, operationID string) {
 	go func() {
-		var uidList []string
-		err := json.Unmarshal([]byte(uIDList), &uidList)
-		if err != nil {
-			cb.OnError(constant.ErrCodeUserInfo, err.Error())
-			return
-		}
-		resp, err := utils.post2Api(open_im_sdk.getUserInfoRouter, open_im_sdk.paramsGetUserInfo{UidList: uidList, OperationID: utils.operationIDGenerator()}, u.token)
-		if err != nil {
-			cb.OnError(constant.ErrCodeUserInfo, err.Error())
-			return
-		}
-		var vgetUserInfoResp open_im_sdk.getUserInfoResp
-		_ = json.Unmarshal(resp, &vgetUserInfoResp)
-		if vgetUserInfoResp.ErrCode != 0 {
-			cb.OnError(vgetUserInfoResp.ErrCode, vgetUserInfoResp.ErrMsg)
-			return
-		}
-		jsonResp2Ui, _ := json.Marshal(vgetUserInfoResp.Data)
-		cb.OnSuccess(string(jsonResp2Ui))
+		log.NewInfo(operationID, utils.RunFuncName(), "args: ", userIDList)
+		var unmarshalParam sdk_params_callback.GetUsersInfoParam
+		common.JsonUnmarshalAndArgsValidate(userIDList, &unmarshalParam, callback, operationID)
+		result := u.getUsersInfoFromSvr(callback,  unmarshalParam, operationID)
+		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(result)))
+		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonString(result))
 	}()
 }
 
-func (u *User) SetSelfInfo(info string, cb open_im_sdk.Base) {
+func (u *User) GetSelfUserInfo(callback common.Base, operationID string) {
 	go func() {
-		//var uiUpdateUserInfo ui2UpdateUserInfo
-		//err := json.Unmarshal([]byte(info), &uiUpdateUserInfo)
-		//if err != nil {
-		//	cb.OnError(ErrCodeUserInfo, err.Error())
-		//	return
-		//}
-		//resp, err := post2Api(updateUserInfoRouter, paramsUpdateUserInfo{
-		//	Name:        uiUpdateUserInfo.Name,
-		//	Icon:        uiUpdateUserInfo.Icon,
-		//	Gender:      uiUpdateUserInfo.Gender,
-		//	Mobile:      uiUpdateUserInfo.Mobile,
-		//	Birth:       uiUpdateUserInfo.Birth,
-		//	Email:       uiUpdateUserInfo.Email,
-		//	Ex:          uiUpdateUserInfo.Ex,
-		//	OperationID: operationIDGenerator(),
-		//}, u.token)
-		//if err != nil {
-		//	cb.OnError(ErrCodeUserInfo, err.Error())
-		//	return
-		//}
-		//var cmResp commonResp
-		//_ = json.Unmarshal(resp, &cmResp)
-		//if cmResp.ErrCode != 0 {
-		//	cb.OnError(cmResp.ErrCode, cmResp.ErrMsg)
-		//	return
-		//}
-		//
-		//user, err := u.getServerUserInfo()
-		//if err != nil {
-		//	cb.OnError(ErrCodeUserInfo, err.Error())
-		//	return
-		//}
-		//
-		//err = u.replaceIntoUser(user)
-		//if err != nil {
-		//	cb.OnError(ErrCodeUserInfo, err.Error())
-		//	return
-		//}
-		//
-		//cb.OnSuccess("")
-		//u.cb.OnSelfInfoUpdated(structToJsonString(user))
+		log.NewInfo(operationID, utils.RunFuncName(), "args: ")
+		result := u.getSelfUserInfo(callback, operationID)
+		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonString(result))
 	}()
 }
+
+
+func (u *User) SetSelfInfo(callback common.Base,  userInfo string,operationID string) {
+	go func() {
+		log.NewInfo(operationID, utils.RunFuncName(), "args: ", userInfo)
+		var unmarshalParam sdk_params_callback.SetSelfUserInfoParam
+		common.JsonUnmarshalAndArgsValidate(userInfo, &unmarshalParam, callback, operationID)
+		result := u.updateSelfUserInfo(callback, unmarshalParam, operationID)
+		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(sdk_params_callback.SetSelfUserInfoCallback)))
+		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonString(result))
+	}()
+}
+
+
