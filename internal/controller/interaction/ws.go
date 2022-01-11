@@ -23,6 +23,18 @@ type Ws struct {
 	cmdCh          chan common.Cmd2Value
 }
 
+func (ws *Ws) SeqMsg() map[int32]server_api_params.MsgData {
+	ws.seqMsgMutex.RLock()
+	defer ws.seqMsgMutex.RUnlock()
+	return ws.seqMsg
+}
+
+func (ws *Ws) SetSeqMsg(seqMsg map[int32]server_api_params.MsgData) {
+	ws.seqMsgMutex.Lock()
+	defer ws.seqMsgMutex.Unlock()
+	ws.seqMsg = seqMsg
+}
+
 func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, lock *sync.RWMutex, ch chan common.Cmd2Value) *Ws {
 	return &Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn}
 }
@@ -76,10 +88,10 @@ func (u *Ws) run() {
 			msgType, message, err := u.WsConn.conn.ReadMessage()
 			if err != nil {
 				isErrorOccurred = true
-				if u.WsConn.IsFatalError(){
+				if u.WsConn.IsFatalError() {
 					log.Error("0", "fatal error, failed ", err.Error())
 					u.WsConn.ReConn()
-				}else {
+				} else {
 					log.Warn("0", "other err  ", err.Error())
 				}
 			} else {
@@ -93,7 +105,7 @@ func (u *Ws) run() {
 					log.Warn("recv other type", string(message), msgType)
 				}
 			}
-		}else {
+		} else {
 			_, _, err := u.WsConn.ReConn()
 			if err != nil {
 				isErrorOccurred = true
@@ -108,7 +120,7 @@ func (u *Ws) run() {
 				} else {
 					log.Warn("0", "other cmd ...", r.Cmd)
 				}
-			case <-time.After(time.Microsecond  * time.Duration(1000)):
+			case <-time.After(time.Microsecond * time.Duration(1000)):
 				log.Warn("0", "timeout... ", 1000)
 			}
 		}
@@ -185,7 +197,6 @@ func (u *Ws) doMsg(wsResp GeneralWsResp) {
 		utils.LogFReturn()
 		return
 	}
-
 
 	u.seqMsgMutex.Lock()
 	b1 := u.IsExistsInErrChatLogBySeq(msg.Seq)

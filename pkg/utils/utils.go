@@ -47,6 +47,11 @@ func GetCurrentTimestampByMill() int64 {
 	return time.Now().UnixNano() / 1e6
 }
 
+//Convert nano timestamp to time.Time type
+func UnixNanoSecondToTime(nanoSecond int64) time.Time {
+	return time.Unix(0, nanoSecond)
+}
+
 //Get the current timestamp by Nano
 func GetCurrentTimestampByNano() int64 {
 	return time.Now().UnixNano()
@@ -66,7 +71,7 @@ func StructToJsonStringDefault(param interface{}) string {
 }
 
 //The incoming parameter must be a pointer
-func jsonStringToStruct(s string, args interface{}) error {
+func JsonStringToStruct(s string, args interface{}) error {
 	return Wrap(json.Unmarshal([]byte(s), args), "json Unmarshal failed")
 }
 

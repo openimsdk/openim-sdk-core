@@ -24,7 +24,7 @@ type Group struct {
 
 
 
-func (u *Group) doGroupMsg(msg * api.MsgData) {
+func (u *Group) DoGroupMsg(msg * api.MsgData) {
 	if u.listener == nil {
 		return
 	}

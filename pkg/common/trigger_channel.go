@@ -15,12 +15,12 @@ func TriggerCmdNewMsgCome(msg utils.ArrMsg, conversationCh chan Cmd2Value) error
 func TriggerCmdDeleteConversationAndMessage(sourceID, conversationID string, sessionType int, conversationCh chan Cmd2Value) error {
 	c2v := Cmd2Value{
 		Cmd:   constant.CmdDeleteConversation,
-		Value: deleteConNode{SourceID: sourceID, ConversationID: conversationID, SessionType: sessionType},
+		Value: DeleteConNode{SourceID: sourceID, ConversationID: conversationID, SessionType: sessionType},
 	}
 
 	return sendCmd(conversationCh, c2v, 1)
 }
-func TriggerCmdUpdateConversation(node updateConNode, conversationCh chan Cmd2Value) error {
+func TriggerCmdUpdateConversation(node UpdateConNode, conversationCh chan Cmd2Value) error {
 	c2v := Cmd2Value{
 		Cmd:   constant.CmdUpdateConversation,
 		Value: node,
@@ -29,12 +29,12 @@ func TriggerCmdUpdateConversation(node updateConNode, conversationCh chan Cmd2Va
 	return sendCmd(conversationCh, c2v, 1)
 }
 
-type deleteConNode struct {
+type DeleteConNode struct {
 	SourceID       string
 	ConversationID string
 	SessionType    int
 }
-type updateConNode struct {
+type UpdateConNode struct {
 	ConId  string
 	Action int //1 Delete the conversation; 2 Update the latest news in the conversation or add a conversation; 3 Put a conversation on the top;
 	// 4 Cancel a conversation on the top, 5 Messages are not read and set to 0, 6 New conversations
