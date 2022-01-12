@@ -2,8 +2,8 @@ package interaction
 
 import (
 	"errors"
+	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
-	"google.golang.org/protobuf/proto"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
@@ -42,7 +42,6 @@ func (ws *Ws) SetSeqMsg(seqMsg map[int32]server_api_params.MsgData) {
 	defer ws.seqMsgMutex.Unlock()
 	ws.seqMsg = seqMsg
 }
-
 
 func (ws *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, connSend *websocket.Conn) (*GeneralWsResp, error) {
 	select {
@@ -111,7 +110,7 @@ func (u *Ws) ReadData() {
 				}
 			}
 		} else {
-			_,  err := u.WsConn.ReConn()
+			_, err := u.WsConn.ReConn()
 			if err != nil {
 				isErrorOccurred = true
 			}
@@ -155,13 +154,13 @@ func (u *Ws) doWsMsg(message []byte) {
 		u.SetLoginState(constant.Logout)
 		runtime.Goexit()
 	default:
-		log.Error(wsResp.OperationID,"type failed, ", wsResp.ReqIdentifier, wsResp.OperationID)
+		log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier, wsResp.OperationID)
 		return
 	}
 }
 
 func (u *Ws) doWSGetNewestSeq(wsResp GeneralWsResp) error {
-	if err := u.notifyResp(wsResp) ; err != nil{
+	if err := u.notifyResp(wsResp); err != nil {
 		log.Error(wsResp.OperationID, "doWSGetNewestSeq failed ", err.Error())
 		return err
 	}
@@ -169,7 +168,7 @@ func (u *Ws) doWSGetNewestSeq(wsResp GeneralWsResp) error {
 }
 
 func (u *Ws) doWSPullMsg(wsResp GeneralWsResp) error {
-	if err := u.notifyResp(wsResp) ; err != nil{
+	if err := u.notifyResp(wsResp); err != nil {
 		log.Error(wsResp.OperationID, "doWSPullMsg failed ", err.Error())
 		return err
 	}
@@ -177,7 +176,7 @@ func (u *Ws) doWSPullMsg(wsResp GeneralWsResp) error {
 }
 
 func (u *Ws) doWSSendMsg(wsResp GeneralWsResp) error {
-	if err := u.notifyResp(wsResp) ; err != nil{
+	if err := u.notifyResp(wsResp); err != nil {
 		log.Error(wsResp.OperationID, "doWSSendMsg failed ", err.Error())
 		return err
 	}
@@ -185,7 +184,7 @@ func (u *Ws) doWSSendMsg(wsResp GeneralWsResp) error {
 }
 
 func (u *Ws) doWSPushMsg(wsResp GeneralWsResp) error {
-	if err := u.doSendMsg(wsResp) ; err != nil{
+	if err := u.doSendMsg(wsResp); err != nil {
 		log.Error(wsResp.OperationID, "doWSPushMsg failed ", err.Error())
 		return err
 	}
@@ -196,7 +195,7 @@ func (u *Ws) kickOnline(msg GeneralWsResp) {
 	u.listener.OnKickedOffline()
 }
 
-func (u *Ws) doSendMsg(wsResp GeneralWsResp)  error {
+func (u *Ws) doSendMsg(wsResp GeneralWsResp) error {
 	if wsResp.ErrCode != 0 {
 		return utils.Wrap(errors.New("errCode"), wsResp.ErrMsg)
 	}
