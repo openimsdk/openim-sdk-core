@@ -80,7 +80,7 @@ func (u *WsConn) SendPingMsg() error {
 	return nil
 }
 
-func (u *WsConn) SetWriteTimeout(timeout uint32) error {
+func (u *WsConn) SetWriteTimeout(timeout int) error {
 	return u.conn.SetWriteDeadline(time.Now().Add(timeout * time.Second))
 }
 
@@ -128,10 +128,6 @@ func (u *WsConn) decodeBinaryWs(message []byte) (*GeneralWsResp, error) {
 	return &data, nil
 }
 
-//func (u *WsConn) WriteMsg(msg GeneralWsReq) (error, *websocket.Conn) {
-//	return u.writeBinaryMsg(msg)
-//}
-
 func (u *WsConn) IsReadTimeout() bool{
 	return false
 }
@@ -143,7 +139,6 @@ func (u *WsConn) IsWriteTimeout() bool{
 func (u *WsConn) IsFatalError() bool{
 	return false
 }
-
 
 func (u *WsConn) ReConn() (*websocket.Conn, error) {
 	u.stateMutex.Lock()

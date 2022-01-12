@@ -24,10 +24,10 @@ func NewFriend(loginUserID string, db *db.DataBase, p *ws.PostApi) *Friend {
 	return &Friend{ loginUserID: loginUserID, db: db, p: p}
 }
 
-func (f *Friend) Init(userID string, db *db.DataBase) {
-	f.loginUserID = userID
-	f.db = db
-}
+//func (f *Friend) Init(userID string, db *db.DataBase) {
+//	f.loginUserID = userID
+//	f.db = db
+//}
 
 func (f *Friend) SetListener(listener OnFriendshipListener) {
 	f.friendListener = listener

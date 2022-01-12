@@ -3,7 +3,6 @@ package init
 import (
 	"errors"
 	"github.com/golang/protobuf/proto"
-	ws "open_im_sdk/internal/controller/interaction"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
@@ -11,12 +10,14 @@ import (
 )
 
 type Heartbeat struct {
-	*ws.Ws
+//	*ws.Ws
 	*MsgSync
 }
 
-func NewHeartbeat(ws *ws.Ws, msgSync *MsgSync) *Heartbeat {
-	return &Heartbeat{Ws: ws, MsgSync: msgSync}
+func NewHeartbeat(msgSync *MsgSync) *Heartbeat {
+	p := Heartbeat{ MsgSync: msgSync}
+	go p.Run()
+	return &p
 }
 
 func (u *Heartbeat) Run() {

@@ -26,7 +26,9 @@ type Ws struct {
 }
 
 func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, conversationCh, cmdCh chan common.Cmd2Value) *Ws {
-	return &Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn, conversationCh: conversationCh, cmdCh: cmdCh}
+	p := Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn, conversationCh: conversationCh, cmdCh: cmdCh}
+	go p.ReadData()
+	return &p
 }
 
 func (ws *Ws) SeqMsg() map[int32]server_api_params.MsgData {

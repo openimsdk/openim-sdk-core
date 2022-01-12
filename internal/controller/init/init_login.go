@@ -103,7 +103,7 @@ func (u *LoginMgr) login(userID, token string, cb common.Base) {
 	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.conversationCh, u.cmdCh)
 	u.msgSync = NewMsgSync(db, u.ws, userID, u.conversationCh)
 
-	u.heartbeat = NewHeartbeat(u.ws, u.msgSync)
+	u.heartbeat = NewHeartbeat(u.msgSync)
 
 	p := ws.NewPostApi(token, constant.SvrConf.ApiAddr)
 	u.user = user.NewUser(db, p, u.loginUserID)
@@ -117,10 +117,10 @@ func (u *LoginMgr) login(userID, token string, cb common.Base) {
 	u.conversation = conv.NewConversation(u.ws, u.db, u.conversationCh, u.loginUserID, u.friend, u.group, u.user)
 	u.conversation.SetConversationListener(u.conversationListener)
 
-	log.Info("ws, forcedSynchronization heartbeat ws coroutine run ...")
+	log.Info("forcedSynchronization run ...")
 	go u.forcedSynchronization()
-	go u.heartbeat.Run()
-	go u.ws.ReadData()
+//	go u.heartbeat.Run()
+//	go u.ws.ReadData()
 //	u.forycedSyncReceiveMessageOpt()
 	cb.OnSuccess("")
 

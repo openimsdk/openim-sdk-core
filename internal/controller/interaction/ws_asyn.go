@@ -2,7 +2,6 @@ package interaction
 
 import (
 	"errors"
-	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"sync"
 	"time"
@@ -86,13 +85,12 @@ func notifyCh(ch chan GeneralWsResp, value GeneralWsResp, timeout int64) error {
 }
 
 func (u *WsRespAsyn) notifyResp(wsResp GeneralWsResp) error {
-	utils.LogBegin(wsResp.OperationID)
 	u.wsMutex.Lock()
 	defer u.wsMutex.Unlock()
 
 	ch := u.GetCh(wsResp.MsgIncr)
 	if ch == nil {
-		return utils.Wrap(errors.New("no ch"), "Getch failed")
+		return utils.Wrap(errors.New("no ch"), "GetCh failed")
 	}
 	err := notifyCh(ch, wsResp, 1)
 	if err != nil {

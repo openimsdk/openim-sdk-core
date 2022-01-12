@@ -607,10 +607,10 @@ func (u *Group) processGroupApplication(callback common.Base, groupID, fromUserI
 	apiReq.HandledMsg = handleMsg
 	var commData *api.CommDataResp
 	if handleResult == 1{
-		commData = u.p.PostFatalCallback(callback, constant.AcceptGroupApplicationRouter, apiReq, u.token)
+		commData = u.p.PostFatalCallback(callback, constant.AcceptGroupApplicationRouter, apiReq, apiReq.OperationID)
 		u.syncGroupMemberByGroupID(groupID)
 	} else if handleResult == -1 {
-		commData = u.p.PostFatalCallback(callback, constant.RefuseGroupApplicationRouter, apiReq, u.token)
+		commData = u.p.PostFatalCallback(callback, constant.RefuseGroupApplicationRouter, apiReq,apiReq.OperationID)
 	}
 	u.SyncGroupRequest()
 	return commData
@@ -897,7 +897,7 @@ func (u *Group) getGroupAllMemberByGroupIDFromSvr(groupID string) ([]*api.GroupM
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 	var realData []*api.GroupMemberFullInfo
-	err = mapstructure.Decode(commData.Data, &realData){
+	if err = mapstructure.Decode(commData.Data, &realData); err != nil{
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 	return realData, nil
