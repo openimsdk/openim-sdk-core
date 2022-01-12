@@ -4,7 +4,7 @@ import (
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/utils"
+
 )
 
 //type IMSDKListener interface {

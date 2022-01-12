@@ -24,7 +24,7 @@ type Ws struct {
 	cmdCh          chan common.Cmd2Value
 }
 
-func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, conversationCh, cmdCh chan common.Cmd2Value, ) *Ws {
+func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, conversationCh, cmdCh chan common.Cmd2Value) *Ws {
 	return &Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn, conversationCh: conversationCh, cmdCh: cmdCh}
 }
 

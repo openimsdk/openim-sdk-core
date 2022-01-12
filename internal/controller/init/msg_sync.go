@@ -22,7 +22,8 @@ type MsgSync struct {
 }
 
 func NewMsgSync(dataBase *db.DataBase, ws *ws.Ws, loginUserID string, ch chan common.Cmd2Value) *MsgSync {
-	return &MsgSync{DataBase: dataBase, seqMsg: make(map[int32]server_api_params.MsgData, 1000), Ws: ws, loginUserID: loginUserID}
+	return &MsgSync{DataBase: dataBase, seqMsg: make(map[int32]server_api_params.MsgData, 1000),
+		Ws: ws, loginUserID: loginUserID,conversationCh: ch}
 }
 
 func (u *MsgSync) getNeedSyncSeq(svrMinSeq, svrMaxSeq int32) []int32 {

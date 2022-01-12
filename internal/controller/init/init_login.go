@@ -6,7 +6,6 @@ import (
 	"open_im_sdk/internal/controller/group"
 	ws "open_im_sdk/internal/controller/interaction"
 	"open_im_sdk/internal/controller/user"
-	"open_im_sdk/internal/open_im_sdk"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
@@ -21,11 +20,11 @@ type LoginMgr struct {
 	conversation *conv.Conversation
 	user         *user.User
 
-	db      *db.DataBase
-	ws      *ws.Ws
-	msgSync *MsgSync
+	db      *db.DataBase  //1
+	ws      *ws.Ws  //2
+	msgSync *MsgSync //3
 
-	heartbeat *Heartbeat
+	heartbeat *Heartbeat //4
 
 	token       string
 	loginUserID string
@@ -57,20 +56,26 @@ func (u *LoginMgr) login(userID, token string, cb common.Base) {
 	db, err := db.NewDataBase(userID)
 	if err != nil {
 		cb.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
-		log.Error("", "NewDataBase failed ", err.Error())
+		log.Error("0", "NewDataBase failed ", err.Error())
 		return
 	}
 	u.db = db
-	u.ws = ws.NewWs(ws.NewWsRespAsyn(), ws.NewWsConn(u.listener, token, userID))
-	u.msgSync = NewMsgSync(db, u.ws, userID)
+
+	wsRespAsyn := ws.NewWsRespAsyn()
+	wsConn := ws.NewWsConn(u.listener, token, userID)
+	conversationCh := make(chan common.Cmd2Value, 1000)
+	cmdCh := make(chan common.Cmd2Value, 10)
+
+
+	u.ws = ws.NewWs(wsRespAsyn, wsConn, conversationCh, cmdCh)
+	u.msgSync = NewMsgSync(db, u.ws, userID, conversationCh)
 
 	u.heartbeat = NewHeartbeat(u.ws, u.msgSync)
 
-	log.Info("ws, forcedSynchronization heartbeat coroutine run ...")
+	log.Info("ws, forcedSynchronization heartbeat ws coroutine run ...")
 	go u.forcedSynchronization()
-	go u.heartbeat.heartbeat()
+	go u.heartbeat.Run()
 	go u.ws.ReadData()
-	//		go u.timedCloseDB()
 //	u.forycedSyncReceiveMessageOpt()
 	cb.OnSuccess("")
 
@@ -163,7 +168,7 @@ func (u *LoginMgr) SetMinSeqSvr(minSeqSvr int64) {
 }
 
 func (u *LoginMgr)checkToken(token string) error {
-	p := ws.NewPostApi(token, constant.SvrConf.ApiAddr)
+//	p := ws.NewPostApi(token, constant.SvrConf.ApiAddr)
 	_, err := u.user.GetSelfUserInfoFromSvr()
 	return utils.Wrap(err, "GetSelfUserInfoFromSvr failed")
 }

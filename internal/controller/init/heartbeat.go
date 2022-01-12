@@ -19,7 +19,7 @@ func NewHeartbeat(ws *ws.Ws, msgSync *MsgSync) *Heartbeat {
 	return &Heartbeat{Ws: ws, MsgSync: msgSync}
 }
 
-func (u *Heartbeat) heartbeat() {
+func (u *Heartbeat) Run() {
 	hearbeatInterval := 5
 
 	for {

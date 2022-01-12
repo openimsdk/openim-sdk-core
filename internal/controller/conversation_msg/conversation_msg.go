@@ -51,7 +51,7 @@ import (
 type Conversation struct {
 	*ws.Ws
 	db                    *db.DataBase
-	ConversationListenerx OnConversationListener
+	ConversationListener OnConversationListener
 	MsgListenerList       []OnAdvancedMsgListener
 	ch                    chan common.Cmd2Value
 	loginUserID           string
@@ -60,11 +60,23 @@ type Conversation struct {
 	user                  *user.User
 }
 
-func NewConversation(ws *ws.Ws, db *db.DataBase, conversationListenerx OnConversationListener, msgListenerList []OnAdvancedMsgListener, ch chan common.Cmd2Value, loginUserID string, friend *friend.Friend, group *group.Group, user *user.User) *Conversation {
-	c := &Conversation{Ws: ws, db: db, ConversationListenerx: conversationListenerx, MsgListenerList: msgListenerList, ch: ch, loginUserID: loginUserID, friend: friend, group: group, user: user}
-	go common.DoListener(c)
-	return c
+func NewConversation() *Conversation {
+	return &Conversation{}
 }
+
+
+
+func (c *Conversation) Init(ws *ws.Ws, db *db.DataBase, ch chan common.Cmd2Value, loginUserID string, friend *friend.Friend, group *group.Group, user *user.User) {
+	c.Ws = ws
+	c.db = db
+	c.ch = ch
+	c.loginUserID = c.loginUserID
+	c.friend = friend
+	c.group = group
+	c.user = user
+	go common.DoListener(c)
+}
+
 func (c *Conversation) GetCh() chan common.Cmd2Value {
 	return c.ch
 }
@@ -245,8 +257,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		log.Info("internal", "trigger map is :", newConversationSet, conversationChangedSet)
 		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewCon, mapKeyToStringList(newConversationSet)}})
 		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, mapKeyToStringList(conversationChangSet)}})
-		c.ConversationListenerx.OnConversationChanged(utils.StructToJsonString(mapConversationToList(conversationChangedSet)))
-		c.ConversationListenerx.OnNewConversation(utils.StructToJsonString(mapConversationToList(newConversationSet)))
+		c.ConversationListener.OnConversationChanged(utils.StructToJsonString(mapConversationToList(conversationChangedSet)))
+		c.ConversationListener.OnNewConversation(utils.StructToJsonString(mapConversationToList(newConversationSet)))
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 	}
 	//sdkLog("length msgListenerList", u.MsgListenerList, "length message", len(newMessages), "msgListenerLen", len(u.MsgListenerList))
@@ -294,7 +306,7 @@ func (c *Conversation) newMessage(newMessagesList []*utils.MsgStruct) {
 	}
 }
 func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
-	if c.ConversationListenerx == nil {
+	if c.ConversationListener == nil {
 		log.Error("internal", "not set conversationListener")
 		return
 	}
@@ -353,7 +365,7 @@ func (c *Conversation) doMsgReadState(msgReadList []*utils.MsgStruct) {
 }
 
 func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
-	if c.ConversationListenerx == nil {
+	if c.ConversationListener == nil {
 		log.Error("internal", "not set conversationListener")
 		return
 	}
@@ -377,7 +389,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			}
 			var list []*db.LocalConversation
 			list = append(list, &lc)
-			c.ConversationListenerx.OnNewConversation(utils.StructToJsonString(list))
+			c.ConversationListener.OnNewConversation(utils.StructToJsonString(list))
 		}
 
 	case constant.UnreadCountSetZero:
@@ -385,7 +397,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		} else {
 			totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
 			if err == nil {
-				c.ConversationListenerx.OnTotalUnreadMessageCountChanged(totalUnreadCount)
+				c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
 			} else {
 				log.Error("internal", "getTotalUnreadMsgCountModel err", err.Error())
 			}
@@ -414,7 +426,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		if err != nil {
 			log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
 		} else {
-			c.ConversationListenerx.OnTotalUnreadMessageCountChanged(totalUnreadCount)
+			c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
 		}
 	case constant.UpdateFaceUrlAndNickName:
 		lc := node.Args.(db.LocalConversation)
@@ -454,7 +466,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		} else {
 			if cLists != nil {
 				log.Info("internal", "getMultipleConversationModel success :", cLists)
-				c.ConversationListenerx.OnConversationChanged(utils.StructToJsonString(cLists))
+				c.ConversationListener.OnConversationChanged(utils.StructToJsonString(cLists))
 			}
 		}
 	case constant.NewCon:
@@ -465,7 +477,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		} else {
 			if cLists != nil {
 				log.Info("internal", "getMultipleConversationModel success :", cLists)
-				c.ConversationListenerx.OnNewConversation(utils.StructToJsonString(cLists))
+				c.ConversationListener.OnNewConversation(utils.StructToJsonString(cLists))
 			}
 		}
 	}
