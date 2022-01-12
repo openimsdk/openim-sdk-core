@@ -230,13 +230,13 @@ type WsSubMsg struct {
 //	Data          []byte `json:"data"`
 //}
 
-type IMConfig struct {
-	Platform int32  `json:"platform"`
-	ApiAddr  string `json:"api_addr"`
-	WsAddr   string `json:"ws_addr"`
-	DbDir    string `json:"db_dir"`
-	LogLevel uint32 `json:"log_level"`
-}
+//type IMConfig struct {
+//	Platform int32  `json:"platform"`
+//	ApiAddr  string `json:"api_addr"`
+//	WsAddr   string `json:"ws_addr"`
+//	DbDir    string `json:"db_dir"`
+//	LogLevel uint32 `json:"log_level"`
+//}
 
 type paramsPullUserMsgDataReq struct {
 	SeqBegin int64 `json:"seqBegin"`
