@@ -25,26 +25,30 @@ func (p *PostApi) PostFatalCallback(callback common.Base, url string, data inter
 	return c
 }
 
-func (p *PostApi) OnError(errCode int32, errMsg string){
-	p.err = errors.New(errMsg)
+func (pe *postErr) OnError(errCode int32, errMsg string){
+	pe.err = errors.New(errMsg)
 }
 
-func (p *PostApi) OnSuccess(data string){
+func (pe *postErr) OnSuccess(data string){
 }
 
+type postErr struct {
+	err error
+}
 
 
 func (p *PostApi) PostReturn(url string, data interface{}, operationID string) (*server_api_params.CommDataResp, error) {
+	 pe := postErr{}
 	var wg sync.WaitGroup
 	wg.Add(1)
 	var commData *server_api_params.CommDataResp
 	go func() {
-		commData = p.PostFatalCallback(p, url , data , operationID)
+		commData = p.PostFatalCallback(&pe, url , data , operationID)
 		wg.Done()
 	}()
 
 	wg.Wait()
-	return commData, p.err
+	return commData, pe.err
 }
 
 

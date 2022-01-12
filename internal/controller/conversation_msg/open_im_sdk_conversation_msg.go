@@ -10,7 +10,7 @@ import (
 	imgtype "github.com/shamsher31/goimgtype"
 	"image"
 	"net/http"
-	"open_im_sdk/open_im_sdk"
+
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/server_api_params"

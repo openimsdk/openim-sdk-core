@@ -1,6 +1,7 @@
 package interaction
 
 import (
+	"errors"
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 	"open_im_sdk/pkg/common"
@@ -157,61 +158,63 @@ func (u *Ws) doWsMsg(message []byte) {
 	}
 }
 
-func (u *Ws) doWSGetNewestSeq(wsResp GeneralWsResp) {
-	utils.LogBegin(wsResp.OperationID)
-	u.notifyResp(wsResp)
-	utils.LogSReturn(wsResp.OperationID)
+func (u *Ws) doWSGetNewestSeq(wsResp GeneralWsResp) error {
+	if err := u.notifyResp(wsResp) ; err != nil{
+		log.Error(wsResp.OperationID, "doWSGetNewestSeq failed ", err.Error())
+		return err
+	}
+	return nil
 }
 
-func (u *Ws) doWSPullMsg(wsResp GeneralWsResp) {
-	utils.LogBegin(wsResp.OperationID)
-	u.notifyResp(wsResp)
-	utils.LogSReturn(wsResp.OperationID)
+func (u *Ws) doWSPullMsg(wsResp GeneralWsResp) error {
+	if err := u.notifyResp(wsResp) ; err != nil{
+		log.Error(wsResp.OperationID, "doWSPullMsg failed ", err.Error())
+		return err
+	}
+	return nil
 }
 
-func (u *Ws) doWSSendMsg(wsResp GeneralWsResp) {
-	utils.LogBegin(wsResp.OperationID)
-	u.notifyResp(wsResp)
-	utils.LogSReturn(wsResp.OperationID)
+func (u *Ws) doWSSendMsg(wsResp GeneralWsResp) error {
+	if err := u.notifyResp(wsResp) ; err != nil{
+		log.Error(wsResp.OperationID, "doWSSendMsg failed ", err.Error())
+		return err
+	}
+	return nil
 }
 
-func (u *Ws) doWSPushMsg(wsResp GeneralWsResp) {
-	utils.LogBegin()
-	u.doMsg(wsResp)
-	utils.LogSReturn()
+func (u *Ws) doWSPushMsg(wsResp GeneralWsResp) error {
+	if err := u.doSendMsg(wsResp) ; err != nil{
+		log.Error(wsResp.OperationID, "doWSPushMsg failed ", err.Error())
+		return err
+	}
+	return nil
 }
 
 func (u *Ws) kickOnline(msg GeneralWsResp) {
 	u.listener.OnKickedOffline()
 }
 
-func (u *Ws) doMsg(wsResp GeneralWsResp) {
-	var msg server_api_params.MsgData
+func (u *Ws) doSendMsg(wsResp GeneralWsResp)  error {
 	if wsResp.ErrCode != 0 {
-		utils.sdkLog("errcode: ", wsResp.ErrCode, " errmsg: ", wsResp.ErrMsg)
-		utils.LogFReturn()
-		return
+		return utils.Wrap(errors.New("errCode"), wsResp.ErrMsg)
 	}
+	var msg server_api_params.MsgData
 	err := proto.Unmarshal(wsResp.Data, &msg)
 	if err != nil {
-		utils.sdkLog("Unmarshal failed", err.Error())
-		utils.LogFReturn()
-		return
+		return utils.Wrap(err, "Unmarshal failed")
 	}
 
 	u.seqMsgMutex.Lock()
+	defer u.seqMsgMutex.Unlock()
 	b1 := u.IsExistsInErrChatLogBySeq(msg.Seq)
 	b2 := u.JudgeMessageIfExists(msg.ClientMsgID)
 	_, ok := u.seqMsg[int32(msg.Seq)]
 	if b1 || b2 || ok {
-		log.Info("0", "seq in : ", msg.Seq, b1, b2, ok)
-		u.seqMsgMutex.Unlock()
-		return
+		log.Debug("0", "seq in : ", msg.Seq, b1, b2, ok)
+		return nil
 	}
-
-	u.seqMsg[int32(msg.Seq)] = &msg
-	u.seqMsgMutex.Unlock()
-
+	u.seqMsg[int32(msg.Seq)] = msg
 	arrMsg := utils.ArrMsg{}
 	common.TriggerCmdNewMsgCome(arrMsg, u.conversationCh)
+	return nil
 }

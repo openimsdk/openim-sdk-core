@@ -57,7 +57,6 @@ func (u *WsRespAsyn) GetCh(msgIncr string) chan GeneralWsResp {
 	if ok {
 		return ch
 	}
-
 	return nil
 }
 
@@ -86,17 +85,18 @@ func notifyCh(ch chan GeneralWsResp, value GeneralWsResp, timeout int64) error {
 	}
 }
 
-func (u *WsRespAsyn) notifyResp(wsResp GeneralWsResp) {
+func (u *WsRespAsyn) notifyResp(wsResp GeneralWsResp) error {
 	utils.LogBegin(wsResp.OperationID)
 	u.wsMutex.Lock()
 	defer u.wsMutex.Unlock()
 
 	ch := u.GetCh(wsResp.MsgIncr)
 	if ch == nil {
-		return
+		return utils.Wrap(errors.New("no ch"), "Getch failed")
 	}
 	err := notifyCh(ch, wsResp, 1)
 	if err != nil {
-		log.Debug("notifyCh failed ", err.Error(), wsResp)
+		return utils.Wrap(err, "notifyCh failed")
 	}
+	return err
 }
