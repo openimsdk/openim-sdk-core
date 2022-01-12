@@ -93,7 +93,7 @@ func (u *Ws) ReadData() {
 			msgType, message, err := u.WsConn.conn.ReadMessage()
 			if err != nil {
 				isErrorOccurred = true
-				if u.WsConn.IsFatalError() {
+				if u.WsConn.IsFatalError(err) {
 					log.Error("0", "fatal error, failed ", err.Error())
 					u.WsConn.ReConn()
 				} else {

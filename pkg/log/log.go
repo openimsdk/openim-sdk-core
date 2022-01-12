@@ -18,12 +18,11 @@ type Logger struct {
 	Pid int
 }
 
-func init() {
-	logger = loggerInit("")
-
-}
-func NewPrivateLog(moduleName string) {
-	logger = loggerInit(moduleName)
+//func init() {
+//	logger = loggerInit("", )
+//}
+func NewPrivateLog(moduleName string, logLevel uint32) {
+	logger = loggerInit(moduleName, logLevel)
 }
 func IsNil() bool {
 	if logger != nil {
@@ -32,7 +31,7 @@ func IsNil() bool {
 	return true
 }
 
-func loggerInit(moduleName string) *Logger {
+func loggerInit(moduleName string, logLevel uint32) *Logger {
 	var logger = logrus.New()
 	//All logs will be printed
 	logger.SetLevel(logrus.Level(6))

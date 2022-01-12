@@ -1,6 +1,7 @@
 package open_im_sdk
 
 import (
+	"encoding/json"
 	"open_im_sdk/internal/controller/conversation_msg"
 	"open_im_sdk/internal/controller/friend"
 	"open_im_sdk/internal/controller/group"
@@ -35,7 +36,11 @@ func SdkVersion() string {
 }
 
 func InitSDK(config string, listener ws.ConnListener) bool {
-	log.NewInfo("0", utils.GetSelfFuncName(), config)
+	if err := json.Unmarshal([]byte(config), &constant.SvrConf); err != nil {
+		return false
+	}
+	log.NewPrivateLog("open_im_sdk", constant.SvrConf.LogLevel)
+	log.NewInfo("0", utils.GetSelfFuncName(), config, SdkVersion())
 	if listener == nil || config == ""{
 		log.Error("0", "listener or config is nil")
 		return false
@@ -43,21 +48,11 @@ func InitSDK(config string, listener ws.ConnListener) bool {
 	if userForSDK != nil {
 		log.Warn("0", "Initialize multiple times, call logout")
 		userForSDK.Logout(nil)
-		userForSDK.UnInitSDK()
 	}
 	userForSDK = new(init.LoginMgr)
-	return userForSDK.InitSDK(config, listener)
+	return userForSDK.InitSDK(constant.SvrConf, listener)
 }
 
-
-
-
-func UnInitSDK() {
-	if userForSDK == nil {
-		return
-	}
-	userForSDK.UnInitSDK()
-}
 
 func Login(userID, token string, callback common.Base) {
 	if callback == nil {
@@ -73,7 +68,7 @@ func Login(userID, token string, callback common.Base) {
 
 func Logout(callback common.Base) {
 	if callback == nil {
-		log.Error("callbck is nil")
+		log.Error("callback is nil")
 		return
 	}
 	if userForSDK == nil{

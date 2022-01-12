@@ -254,7 +254,7 @@ type IMConfig struct {
 	ApiAddr  string `json:"api_addr"`
 	WsAddr   string `json:"ws_addr"`
 	DbDir    string `json:"db_dir"`
-	logLevel int32  `json:"log_level"`
+	LogLevel uint32  `json:"log_level"`
 }
 
 type IMManager struct {

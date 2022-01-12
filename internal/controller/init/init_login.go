@@ -1,7 +1,6 @@
 package init
 
 import (
-	"encoding/json"
 	conv "open_im_sdk/internal/controller/conversation_msg"
 	"open_im_sdk/internal/controller/friend"
 	"open_im_sdk/internal/controller/group"
@@ -28,7 +27,7 @@ type LoginMgr struct {
 
 	token       string
 	loginUserID string
-	connnListener    ws.ConnListener
+	connListener    ws.ConnListener
 
 	justOnceFlag bool
 
@@ -95,7 +94,7 @@ func (u *LoginMgr) login(userID, token string, cb common.Base) {
 	u.db = db
 
 	wsRespAsyn := ws.NewWsRespAsyn()
-	wsConn := ws.NewWsConn(u.connnListener, token, userID)
+	wsConn := ws.NewWsConn(u.connListener, token, userID)
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
 	u.cmdCh = make(chan common.Cmd2Value, 10)
 
@@ -126,16 +125,12 @@ func (u *LoginMgr) login(userID, token string, cb common.Base) {
 
 
 
-func (u *LoginMgr) InitSDK(config string, listener ws.ConnListener) bool {
+func (u *LoginMgr) InitSDK(config utils.IMConfig, listener ws.ConnListener) bool {
 	log.NewInfo("0", utils.GetSelfFuncName(), config)
-	if err := json.Unmarshal([]byte(config), &constant.SvrConf ); err != nil {
-		log.Error("initSDK failed ", err.Error(), config)
-		return false
-	}
 	if listener == nil {
 		return false
 	}
-	u.connnListener = listener
+	u.connListener = listener
 	return true
 }
 

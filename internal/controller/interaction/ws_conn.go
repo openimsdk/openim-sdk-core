@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"strings"
 	"time"
 	"open_im_sdk/pkg/utils"
 	"errors"
@@ -106,14 +107,15 @@ func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (error, *websocket.Conn) {
 		connSended = u.conn
 		err := u.SetWriteTimeout(writeTimeoutSeconds)
 		if err != nil {
+			return utils.Wrap(err, "SetWriteTimeout"), nil
 		}
 		if len(buff.Bytes()) > constant.MaxTotalMsgLen {
-			return errors.New("msg too long"), connSended
+			return utils.Wrap(errors.New("msg too long"), ""), nil
 		}
 		err = u.conn.WriteMessage(websocket.BinaryMessage, buff.Bytes())
 		return utils.Wrap(err, "WriteMessage failed"), connSended
 	} else {
-		return errors.New("conn==nil"), connSended
+		return utils.Wrap(errors.New("conn==nil"), ""), connSended
 	}
 }
 
@@ -123,21 +125,30 @@ func (u *WsConn) decodeBinaryWs(message []byte) (*GeneralWsResp, error) {
 	var data GeneralWsResp
 	err := dec.Decode(&data)
 	if err != nil {
-		return nil, err
+		return nil, utils.Wrap(err, "")
 	}
 	return &data, nil
 }
 
-func (u *WsConn) IsReadTimeout() bool{
+func (u *WsConn) IsReadTimeout(err error) bool{
+	if strings.Contains(err.Error(), "timeout"){
+		return true
+	}
 	return false
 }
 
-func (u *WsConn) IsWriteTimeout() bool{
+func (u *WsConn) IsWriteTimeout(err error) bool{
+	if strings.Contains(err.Error(), "timeout"){
+		return true
+	}
 	return false
 }
 
-func (u *WsConn) IsFatalError() bool{
-	return false
+func (u *WsConn) IsFatalError(err error) bool{
+	if strings.Contains(err.Error(), "timeout"){
+		return false
+	}
+	return true
 }
 
 func (u *WsConn) ReConn() (*websocket.Conn, error) {
