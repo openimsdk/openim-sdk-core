@@ -5,7 +5,6 @@ import (
 	"fmt"
 	X "log"
 	"open_im_sdk/internal/open_im_sdk"
-	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
 	"os"
@@ -60,52 +59,52 @@ func (testGetFriendApplicationList) OnError(code int32, msg string) {
 
 func DoTestGetFriendApplicationList() {
 	var test testGetFriendApplicationList
-	sdk_interface.GetRecvFriendApplicationList(test, "")
+	open_im_sdk.GetRecvFriendApplicationList(test, "")
 
 }
 
 //////////////////////////////////////////////////////////
-type testSetSelfInfo struct {
-	open_im_sdk.ui2UpdateUserInfo
-}
-
-func (testSetSelfInfo) OnSuccess(string) {
-	fmt.Println("testSetSelfInfo, OnSuccess")
-}
-
-func (testSetSelfInfo) OnError(code int32, msg string) {
-	fmt.Println("testSetSelfInfo, OnError, ", code, msg)
-}
-
-func DoTestSetSelfInfo() {
-	var test testSetSelfInfo
-	test.Name = "skkkkkkkk"
-	test.Email = "3333333@qq.com"
-	jsontest, _ := json.Marshal(test)
-	fmt.Println("SetSelfInfo, input: ", string(jsontest))
-	sdk_interface.SetSelfInfo(string(jsontest), test)
-}
+//type testSetSelfInfo struct {
+//	open_im_sdk.ui2UpdateUserInfo
+//}
+//
+//func (testSetSelfInfo) OnSuccess(string) {
+//	fmt.Println("testSetSelfInfo, OnSuccess")
+//}
+//
+//func (testSetSelfInfo) OnError(code int32, msg string) {
+//	fmt.Println("testSetSelfInfo, OnError, ", code, msg)
+//}
+//
+//func DoTestSetSelfInfo() {
+//	var test testSetSelfInfo
+//	test.Name = "skkkkkkkk"
+//	test.Email = "3333333@qq.com"
+//	jsontest, _ := json.Marshal(test)
+//	fmt.Println("SetSelfInfo, input: ", string(jsontest))
+//	open_im_sdk.SetSelfInfo(string(jsontest), test)
+//}
 
 /////////////////////////////////////////////////////////
-type testGetUsersInfo struct {
-	open_im_sdk.ui2ClientCommonReq
-}
-
-func (testGetUsersInfo) OnSuccess(data string) {
-	fmt.Println("testGetUsersInfo, OnSuccess, output: ", data)
-}
-
-func (testGetUsersInfo) OnError(code int32, msg string) {
-	fmt.Println("testGetUsersInfo, OnError, ", code, msg)
-}
-
-func DoTestGetUsersInfo() {
-	var test testGetUsersInfo
-	test.UidList = append(test.UidList, Friend_uid)
-	jsontest, _ := json.Marshal(test.UidList)
-	fmt.Println("testGetUsersInfo, input: ", string(jsontest))
-	sdk_interface.GetUsersInfo(string(jsontest), test)
-}
+//type testGetUsersInfo struct {
+//	open_im_sdk.ui2ClientCommonReq
+//}
+//
+//func (testGetUsersInfo) OnSuccess(data string) {
+//	fmt.Println("testGetUsersInfo, OnSuccess, output: ", data)
+//}
+//
+//func (testGetUsersInfo) OnError(code int32, msg string) {
+//	fmt.Println("testGetUsersInfo, OnError, ", code, msg)
+//}
+//
+//func DoTestGetUsersInfo() {
+//	var test testGetUsersInfo
+//	test.UidList = append(test.UidList, Friend_uid)
+//	jsontest, _ := json.Marshal(test.UidList)
+//	fmt.Println("testGetUsersInfo, input: ", string(jsontest))
+//	open_im_sdk.GetUsersInfo(string(jsontest), test)
+//}
 
 /////////////////////////////////////////////////////////
 type testGetFriendsInfo struct {
@@ -126,31 +125,31 @@ func DoTestGetDesignatedFriendsInfo() {
 
 	jsontest, _ := json.Marshal(test.uid)
 	fmt.Println("testGetFriendsInfo, input: ", string(jsontest))
-	sdk_interface.GetDesignatedFriendsInfo(test, string(jsontest), "asdffdsfasdfa")
+	open_im_sdk.GetDesignatedFriendsInfo(test, string(jsontest), "asdffdsfasdfa")
 }
 
 ///////////////////////////////////////////////////////
-
-type testAddToBlackList struct {
-	open_im_sdk.delUid
-}
-
-func (testAddToBlackList) OnSuccess(string) {
-	fmt.Println("testAddToBlackList, OnSuccess")
-}
-
-func (testAddToBlackList) OnError(code int32, msg string) {
-	fmt.Println("testAddToBlackList, OnError, ", code, msg)
-}
-
-func DoTestAddToBlackList() {
-	var test testAddToBlackList
-	test.Uid = Friend_uid
-
-	fmt.Println("AddToBlackList, input: ", Friend_uid)
-
-	sdk_interface.AddBlack(test, Friend_uid, "asdfasvacdxds")
-}
+//
+//type testAddToBlackList struct {
+//	open_im_sdk.delUid
+//}
+//
+//func (testAddToBlackList) OnSuccess(string) {
+//	fmt.Println("testAddToBlackList, OnSuccess")
+//}
+//
+//func (testAddToBlackList) OnError(code int32, msg string) {
+//	fmt.Println("testAddToBlackList, OnError, ", code, msg)
+//}
+//
+//func DoTestAddToBlackList() {
+//	var test testAddToBlackList
+//	test.Uid = Friend_uid
+//
+//	fmt.Println("AddToBlackList, input: ", Friend_uid)
+//
+//	open_im_sdk.AddBlack(test, Friend_uid, "asdfasvacdxds")
+//}
 
 ///////////////////////////////////////////////////////
 type testDeleteFromBlackList struct {
@@ -170,7 +169,7 @@ func DoTestDeleteFromBlackList() {
 	test.delUid = Friend_uid
 	jsontest, _ := json.Marshal(test.delUid)
 	fmt.Println("DeleteFromBlackList, input: ", string(jsontest))
-	sdk_interface.RemoveBlack(test, string(jsontest), "11111111111111asdf11112134dfsa")
+	open_im_sdk.RemoveBlack(test, string(jsontest), "11111111111111asdf11112134dfsa")
 }
 
 //////////////////////////////////////////////////////
@@ -185,47 +184,48 @@ func (testGetBlackList) OnError(code int32, msg string) {
 }
 func DoTestGetBlackList() {
 	var test testGetBlackList
-	sdk_interface.GetBlackList(test, "asdfadsvasdv3")
+	open_im_sdk.GetBlackList(test, "asdfadsvasdv3")
 }
 
 //////////////////////////////////////////////////////
-type testCheckFriend struct {
-	open_im_sdk.ui2ClientCommonReq
-}
 
-func (testCheckFriend) OnSuccess(data string) {
-	fmt.Println("testCheckFriend, OnSuccess, output: ", data)
-}
-func (testCheckFriend) OnError(code int32, msg string) {
-	fmt.Println("testCheckFriend, OnError, ", code, msg)
-}
-func DoTestCheckFriend() {
-	var test testCheckFriend
-	test.UidList = append(test.UidList, Friend_uid)
-	jsontest, _ := json.Marshal(test.UidList)
-	fmt.Println("CheckFriend, input: ", string(jsontest))
-	sdk_interface.CheckFriend(test, string(jsontest), "")
-}
-
-/////////////////////////////////////////////////////////
-type testSetFriendInfo struct {
-	open_im_sdk.uid2Comment
-}
-
-func (testSetFriendInfo) OnSuccess(string) {
-	fmt.Println("testSetFriendInfo, OnSucess")
-}
-func (testSetFriendInfo) OnError(code int32, msg string) {
-	fmt.Println("testSetFriendInfo, OnError, ", code, msg)
-}
-func DoTestSetFriendInfo() {
-	var test testSetFriendInfo
-	test.Uid = Friend_uid
-	test.Comment = "MM"
-	jsontest, _ := json.Marshal(test)
-	fmt.Println("SetFriendInfo, input: ", string(jsontest))
-	sdk_interface.SetFriendRemark(test, string(jsontest), "")
-}
+//type testCheckFriend struct {
+//	open_im_sdk.ui2ClientCommonReq
+//}
+//
+//func (testCheckFriend) OnSuccess(data string) {
+//	fmt.Println("testCheckFriend, OnSuccess, output: ", data)
+//}
+//func (testCheckFriend) OnError(code int32, msg string) {
+//	fmt.Println("testCheckFriend, OnError, ", code, msg)
+//}
+//func DoTestCheckFriend() {
+//	var test testCheckFriend
+//	test.UidList = append(test.UidList, Friend_uid)
+//	jsontest, _ := json.Marshal(test.UidList)
+//	fmt.Println("CheckFriend, input: ", string(jsontest))
+//	open_im_sdk.CheckFriend(test, string(jsontest), "")
+//}
+//
+///////////////////////////////////////////////////////////
+//type testSetFriendInfo struct {
+//	open_im_sdk.uid2Comment
+//}
+//
+//func (testSetFriendInfo) OnSuccess(string) {
+//	fmt.Println("testSetFriendInfo, OnSucess")
+//}
+//func (testSetFriendInfo) OnError(code int32, msg string) {
+//	fmt.Println("testSetFriendInfo, OnError, ", code, msg)
+//}
+//func DoTestSetFriendInfo() {
+//	var test testSetFriendInfo
+//	test.Uid = Friend_uid
+//	test.Comment = "MM"
+//	jsontest, _ := json.Marshal(test)
+//	fmt.Println("SetFriendInfo, input: ", string(jsontest))
+//	open_im_sdk.SetFriendRemark(test, string(jsontest), "")
+//}
 
 /////////////////////
 ////////////////////////////////////////////////////////
@@ -247,7 +247,7 @@ func DoTestDeleteFromFriendList() {
 	test.Uid = Friend_uid
 	jsontest, err := json.Marshal(test.Uid)
 	fmt.Println("DeleteFromFriendList, input:", string(jsontest), err)
-	sdk_interface.DeleteFriend(test, test.Uid, "asdfasfdsfdsdfa1111")
+	open_im_sdk.DeleteFriend(test, test.Uid, "asdfasfdsfdsdfa1111")
 }
 
 ///////////////////////////////////////////////////////
@@ -271,7 +271,7 @@ func DoTestaddFriend() {
 
 	jsontestaddFriend, _ := json.Marshal(testaddFriend)
 	fmt.Println("addFriend input:", string(jsontestaddFriend))
-	sdk_interface.AddFriend(testaddFriend, string(jsontestaddFriend), "1ef1345regqdfgv")
+	open_im_sdk.AddFriend(testaddFriend, string(jsontestaddFriend), "1ef1345regqdfgv")
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -287,30 +287,30 @@ func (testGetFriendList) OnError(code int32, msg string) {
 }
 func DoTestGetFriendList() {
 	var testGetFriendList testGetFriendList
-	sdk_interface.GetFriendList(testGetFriendList, "asdf33333sdfaafsd")
+	open_im_sdk.GetFriendList(testGetFriendList, "asdf33333sdfaafsd")
 }
 
 /////////////////////////////////////////////////////////////////////
 
-type testAcceptFriendApplication struct {
-	open_im_sdk.ui2AcceptFriend
-}
+//type testAcceptFriendApplication struct {
+//	open_im_sdk.ui2AcceptFriend
+//}
+//
+//func (testAcceptFriendApplication) OnSuccess(info string) {
+//	fmt.Println("testAcceptFriendApplication OnSuccess", info)
+//}
+//func (testAcceptFriendApplication) OnError(code int32, msg string) {
+//	fmt.Println("testAcceptFriendApplication, OnError, ", code, msg)
+//}
 
-func (testAcceptFriendApplication) OnSuccess(info string) {
-	fmt.Println("testAcceptFriendApplication OnSuccess", info)
-}
-func (testAcceptFriendApplication) OnError(code int32, msg string) {
-	fmt.Println("testAcceptFriendApplication, OnError, ", code, msg)
-}
-
-func DoTestAcceptFriendApplication() {
-	var testAcceptFriendApplication testAcceptFriendApplication
-	testAcceptFriendApplication.UID = Friend_uid
-
-	jsontestAcceptFriendappclicatrion, _ := json.Marshal(testAcceptFriendApplication.UID)
-	sdk_interface.AcceptFriendApplication(testAcceptFriendApplication, string(jsontestAcceptFriendappclicatrion), "")
-	fmt.Println("AcceptFriendApplication, input: ", string(jsontestAcceptFriendappclicatrion))
-}
+//func DoTestAcceptFriendApplication() {
+//	var testAcceptFriendApplication testAcceptFriendApplication
+//	testAcceptFriendApplication.UID = Friend_uid
+//
+//	jsontestAcceptFriendappclicatrion, _ := json.Marshal(testAcceptFriendApplication.UID)
+//	open_im_sdk.AcceptFriendApplication(testAcceptFriendApplication, string(jsontestAcceptFriendappclicatrion), "")
+//	fmt.Println("AcceptFriendApplication, input: ", string(jsontestAcceptFriendappclicatrion))
+//}
 
 /*
 type testRefuseFriendApplication struct {
@@ -340,24 +340,24 @@ func DoTestRefuseFriendApplication() {
 
 /////////////////////////////////////////////////////////////////////
 
-type testRefuseFriendApplication struct {
-	open_im_sdk.ui2AcceptFriend
-}
-
-func (testRefuseFriendApplication) OnSuccess(info string) {
-	fmt.Println("testRefuseFriendApplication OnSuccess", info)
-}
-func (testRefuseFriendApplication) OnError(code int32, msg string) {
-	fmt.Println("testRefuseFriendApplication, OnError, ", code, msg)
-}
-func DoTestRefuseFriendApplication() {
-	var testRefuseFriendApplication testRefuseFriendApplication
-	testRefuseFriendApplication.UID = Friend_uid
-
-	jsontestfusetFriendappclicatrion, _ := json.Marshal(testRefuseFriendApplication.UID)
-	sdk_interface.RefuseFriendApplication(testRefuseFriendApplication, string(jsontestfusetFriendappclicatrion), "")
-	fmt.Println("RefuseFriendApplication, input: ", string(jsontestfusetFriendappclicatrion))
-}
+//type testRefuseFriendApplication struct {
+//	open_im_sdk.ui2AcceptFriend
+//}
+//
+//func (testRefuseFriendApplication) OnSuccess(info string) {
+//	fmt.Println("testRefuseFriendApplication OnSuccess", info)
+//}
+//func (testRefuseFriendApplication) OnError(code int32, msg string) {
+//	fmt.Println("testRefuseFriendApplication, OnError, ", code, msg)
+//}
+//func DoTestRefuseFriendApplication() {
+//	var testRefuseFriendApplication testRefuseFriendApplication
+//	testRefuseFriendApplication.ui2AcceptFriend = Friend_uid
+//
+//	jsontestfusetFriendappclicatrion, _ := json.Marshal(testRefuseFriendApplication.UID)
+//	open_im_sdk.RefuseFriendApplication(testRefuseFriendApplication, string(jsontestfusetFriendappclicatrion), "")
+//	fmt.Println("RefuseFriendApplication, input: ", string(jsontestfusetFriendappclicatrion))
+//}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -385,20 +385,20 @@ func (b *BaseSuccFailed) OnSuccess(data string) {
 func InOutlllogin(uid, tk string) {
 	var callback BaseSuccFailed
 	callback.funcName = utils.RunFuncName()
-	sdk_interface.Login(uid, tk, &callback)
+	open_im_sdk.Login(uid, tk, &callback)
 }
 
 func InOutLogou() {
 	var callback BaseSuccFailed
 	callback.funcName = utils.RunFuncName()
-	sdk_interface.Logout(&callback)
+	open_im_sdk.Logout(&callback)
 }
 
 func InOutDoTest(uid, tk, ws, api string) {
 	var cf utils.IMConfig
-	cf.IpApiAddr = api
+	cf.ApiAddr = api
 
-	cf.IpWsAddr = ws
+	cf.WsAddr = ws
 	cf.Platform = 1
 	cf.DbDir = "./"
 
@@ -407,19 +407,19 @@ func InOutDoTest(uid, tk, ws, api string) {
 	s = string(b)
 	fmt.Println(s)
 	var testinit testInitLister
-	sdk_interface.InitSDK(s, testinit)
+	open_im_sdk.InitSDK(s, testinit)
 
 	var testConversation conversationCallBack
-	sdk_interface.SetConversationListener(testConversation)
+	open_im_sdk.SetConversationListener(testConversation)
 
 	var msgCallBack MsgListenerCallBak
-	sdk_interface.AddAdvancedMsgListener(msgCallBack)
+	open_im_sdk.AddAdvancedMsgListener(msgCallBack)
 
 	var friendListener testFriendListener
-	sdk_interface.SetFriendListener(friendListener)
+	open_im_sdk.SetFriendListener(friendListener)
 
 	var groupListener testGroupListener
-	sdk_interface.SetGroupListener(groupListener)
+	open_im_sdk.SetGroupListener(groupListener)
 
 	InOutlllogin(uid, tk)
 }
@@ -427,7 +427,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 func lllogin(uid, tk string) bool {
 	var callback BaseSuccFailed
 	callback.funcName = utils.RunFuncName()
-	sdk_interface.Login(uid, tk, &callback)
+	open_im_sdk.Login(uid, tk, &callback)
 
 	for true {
 		if callback.errCode == 1 {
@@ -447,9 +447,9 @@ func lllogin(uid, tk string) bool {
 
 func DoTest(uid, tk, ws, api string) {
 	var cf utils.IMConfig
-	cf.IpApiAddr = api // "http://120.24.45.199:10000"
+	cf.ApiAddr = api // "http://120.24.45.199:10000"
 	//	cf.IpWsAddr = "wss://open-im.rentsoft.cn/wss"
-	cf.IpWsAddr = ws //"ws://120.24.45.199:17778"
+	cf.WsAddr = ws //"ws://120.24.45.199:17778"
 	cf.Platform = 2
 	cf.DbDir = "./"
 
@@ -458,19 +458,19 @@ func DoTest(uid, tk, ws, api string) {
 	s = string(b)
 	fmt.Println(s)
 	var testinit testInitLister
-	sdk_interface.InitSDK(s, testinit)
+	open_im_sdk.InitSDK(s, testinit)
 
 	var testConversation conversationCallBack
-	sdk_interface.SetConversationListener(testConversation)
+	open_im_sdk.SetConversationListener(testConversation)
 
 	var msgCallBack MsgListenerCallBak
-	sdk_interface.AddAdvancedMsgListener(msgCallBack)
+	open_im_sdk.AddAdvancedMsgListener(msgCallBack)
 
 	var friendListener testFriendListener
-	sdk_interface.SetFriendListener(friendListener)
+	open_im_sdk.SetFriendListener(friendListener)
 
 	var groupListener testGroupListener
-	sdk_interface.SetGroupListener(groupListener)
+	open_im_sdk.SetGroupListener(groupListener)
 
 	time.Sleep(1 * time.Second)
 
@@ -517,36 +517,36 @@ func (b *BaseSuccFailedTest) OnSuccess(data string) {
 	fmt.Println("22OnSuccess: ", b.funcName, data)
 }
 
-func DotestSetConversationRecvMessageOpt() {
-	var callback BaseSuccFailedTest
-	callback.funcName = utils.RunFuncName()
-	var idList []string
-	idList = append(idList, "18567155635")
-	jsontest, _ := json.Marshal(idList)
-	sdk_interface.SetConversationRecvMessageOpt(&callback, string(jsontest), 2)
-	fmt.Println("SetConversationRecvMessageOpt", string(jsontest))
-}
-
-func DoTestGetMultipleConversation() {
-	var callback BaseSuccFailedTest
-	callback.funcName = utils.RunFuncName()
-	var idList []string
-	fmt.Println("DoTestGetMultipleConversation come here")
-	idList = append(idList, "single_13977954313", "group_77215e1b13b75f3ab00cb6570e3d9618")
-	jsontest, _ := json.Marshal(idList)
-	sdk_interface.GetMultipleConversation(string(jsontest), &callback)
-	fmt.Println("GetMultipleConversation", string(jsontest))
-}
-
-func DoTestGetConversationRecvMessageOpt() {
-	var callback BaseSuccFailedTest
-	callback.funcName = utils.RunFuncName()
-	var idList []string
-	idList = append(idList, "18567155635")
-	jsontest, _ := json.Marshal(idList)
-	sdk_interface.GetConversationRecvMessageOpt(&callback, string(jsontest))
-	fmt.Println("GetConversationRecvMessageOpt", string(jsontest))
-}
+//func DotestSetConversationRecvMessageOpt() {
+//	var callback BaseSuccFailedTest
+//	callback.funcName = utils.RunFuncName()
+//	var idList []string
+//	idList = append(idList, "18567155635")
+//	jsontest, _ := json.Marshal(idList)
+//	open_im_sdk.SetConversationRecvMessageOpt(&callback, string(jsontest), 2)
+//	fmt.Println("SetConversationRecvMessageOpt", string(jsontest))
+//}
+//
+//func DoTestGetMultipleConversation() {
+//	var callback BaseSuccFailedTest
+//	callback.funcName = utils.RunFuncName()
+//	var idList []string
+//	fmt.Println("DoTestGetMultipleConversation come here")
+//	idList = append(idList, "single_13977954313", "group_77215e1b13b75f3ab00cb6570e3d9618")
+//	jsontest, _ := json.Marshal(idList)
+//	open_im_sdk.GetMultipleConversation(string(jsontest), &callback)
+//	fmt.Println("GetMultipleConversation", string(jsontest))
+//}
+//
+//func DoTestGetConversationRecvMessageOpt() {
+//	var callback BaseSuccFailedTest
+//	callback.funcName = utils.RunFuncName()
+//	var idList []string
+//	idList = append(idList, "18567155635")
+//	jsontest, _ := json.Marshal(idList)
+//	open_im_sdk.GetConversationRecvMessageOpt(&callback, string(jsontest))
+//	fmt.Println("GetConversationRecvMessageOpt", string(jsontest))
+//}
 
 func InOutDoTestSendMsg(sendId, receiverID string) {
 	m := "test:" + sendId + ":" + receiverID + ":"
@@ -566,18 +566,18 @@ func DoTestSendMsg(sendId, receiverID string, idx string) {
 	fmt.Println("test to recv : ", receiverID)
 }
 
-func DoTestGetHistoryMessage(userID string) {
-	var testGetHistoryCallBack GetHistoryCallBack
-	sdk_interface.GetHistoryMessageList(testGetHistoryCallBack, utils.structToJsonString(&utils.PullMsgReq{
-		UserID: userID,
-		Count:  50,
-	}))
-}
-func DoTestDeleteConversation(conversationID string) {
-	var testDeleteConversation DeleteConversationCallBack
-	sdk_interface.DeleteConversation(conversationID, testDeleteConversation)
-
-}
+//func DoTestGetHistoryMessage(userID string) {
+//	var testGetHistoryCallBack GetHistoryCallBack
+//	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, utils.structToJsonString(&utils.PullMsgReq{
+//		UserID: userID,
+//		Count:  50,
+//	}))
+//}
+//func DoTestDeleteConversation(conversationID string) {
+//	var testDeleteConversation DeleteConversationCallBack
+//	open_im_sdk.DeleteConversation(conversationID, testDeleteConversation)
+//
+//}
 
 type DeleteConversationCallBack struct {
 }
@@ -612,10 +612,10 @@ func (t TestGetAllConversationListCallBack) OnSuccess(data string) {
 	fmt.Printf("TestGetAllConversationListCallBack , success,data:%v\n", data)
 }
 
-func DoTestGetAllConversationList() {
-	var test TestGetAllConversationListCallBack
-	sdk_interface.GetAllConversationList(test)
-}
+//func DoTestGetAllConversationList() {
+//	var test TestGetAllConversationListCallBack
+//	open_im_sdk.GetAllConversationList(test)
+//}
 
 type TestGetOneConversationCallBack struct {
 }
@@ -628,20 +628,20 @@ func (t TestGetOneConversationCallBack) OnSuccess(data string) {
 	fmt.Printf("TestGetOneConversationCallBack , success,data:%v\n", data)
 }
 
-func DoTestGetOneConversation(sourceID string, sessionType int) {
-	var test TestGetOneConversationCallBack
-	//GetOneConversation(Friend_uid, SingleChatType, test)
-	sdk_interface.GetOneConversation(sourceID, sessionType, test)
-
-}
-func DoTestCreateImageMessage(path string) string {
-	return sdk_interface.CreateImageMessage(path)
-}
-func DoTestSetConversationDraft() {
-	var test TestSetConversationDraft
-	sdk_interface.SetConversationDraft("single_c93bc8b171cce7b9d1befb389abfe52f", "hah", test)
-
-}
+//func DoTestGetOneConversation(sourceID string, sessionType int) {
+//	var test TestGetOneConversationCallBack
+//	//GetOneConversation(Friend_uid, SingleChatType, test)
+//	open_im_sdk.GetOneConversation(sourceID, sessionType, test)
+//
+//}
+//func DoTestCreateImageMessage(path string) string {
+//	return open_im_sdk.CreateImageMessage(path)
+//}
+//func DoTestSetConversationDraft() {
+//	var test TestSetConversationDraft
+//	open_im_sdk.SetConversationDraft("single_c93bc8b171cce7b9d1befb389abfe52f", "hah", test)
+//
+//}
 
 type TestSetConversationDraft struct {
 }
@@ -816,11 +816,11 @@ func (testMarkC2CMessageAsRead) OnError(code int32, msg string) {
 	fmt.Println("testMarkC2CMessageAsRead, OnError", code, msg)
 }
 
-func DoTestMarkC2CMessageAsRead() {
-	var test testMarkC2CMessageAsRead
-	readid := "2021-06-23 12:25:36-7eefe8fc74afd7c6adae6d0bc76929e90074d5bc-8522589345510912161"
-	var xlist []string
-	xlist = append(xlist, readid)
-	jsonid, _ := json.Marshal(xlist)
-	sdk_interface.MarkC2CMessageAsRead(test, Friend_uid, string(jsonid))
-}
+//func DoTestMarkC2CMessageAsRead() {
+//	var test testMarkC2CMessageAsRead
+//	readid := "2021-06-23 12:25:36-7eefe8fc74afd7c6adae6d0bc76929e90074d5bc-8522589345510912161"
+//	var xlist []string
+//	xlist = append(xlist, readid)
+//	jsonid, _ := json.Marshal(xlist)
+//	open_im_sdk.MarkC2CMessageAsRead(test, Friend_uid, string(jsonid))
+//}
