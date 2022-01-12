@@ -50,14 +50,17 @@ import (
 //}
 type Conversation struct {
 	*ws.Ws
-	db                    *db.DataBase
+	db                   *db.DataBase
+	p                    *ws.PostApi
 	ConversationListener OnConversationListener
-	MsgListenerList       []OnAdvancedMsgListener
-	ch                    chan common.Cmd2Value
-	loginUserID           string
-	friend                *friend.Friend
-	group                 *group.Group
-	user                  *user.User
+	MsgListenerList      []OnAdvancedMsgListener
+	ch                   chan common.Cmd2Value
+	loginUserID          string
+	platformID           int32
+	DbDir                string
+	friend               *friend.Friend
+	group                *group.Group
+	user                 *user.User
 }
 
 func NewConversation(ws *ws.Ws, db *db.DataBase, ch chan common.Cmd2Value, loginUserID string, friend *friend.Friend, group *group.Group, user *user.User) *Conversation {
@@ -67,8 +70,6 @@ func NewConversation(ws *ws.Ws, db *db.DataBase, ch chan common.Cmd2Value, login
 //func NewConversation() *Conversation {
 //	return &Conversation{}
 //}
-
-
 
 func (c *Conversation) Init(ws *ws.Ws, db *db.DataBase, ch chan common.Cmd2Value, loginUserID string, friend *friend.Friend, group *group.Group, user *user.User) {
 	c.Ws = ws
