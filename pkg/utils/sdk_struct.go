@@ -1,8 +1,6 @@
 package utils
 
 import (
-	"github.com/gorilla/websocket"
-	"open_im_sdk/internal/controller/init"
 	"open_im_sdk/pkg/server_api_params"
 )
 
@@ -254,14 +252,7 @@ type IMConfig struct {
 	ApiAddr  string `json:"api_addr"`
 	WsAddr   string `json:"ws_addr"`
 	DbDir    string `json:"db_dir"`
-	LogLevel uint32  `json:"log_level"`
-}
-
-type IMManager struct {
-	conn *websocket.Conn
-	cb   init.IMSDKListener
-
-	LoginState int
+	LogLevel uint32 `json:"log_level"`
 }
 
 type paramsPullUserMsgDataReq struct {
