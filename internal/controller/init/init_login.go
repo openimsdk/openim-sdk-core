@@ -31,6 +31,23 @@ type LoginMgr struct {
 	listener    ws.ConnListener
 
 	justOnceFlag bool
+
+	groupListener group.OnGroupListener
+	friendListener friend.OnFriendshipListener
+	conversationListener conv.OnConversationListener
+	
+}
+
+func (u *LoginMgr) SetConversationListener(conversationListener conv.OnConversationListener) {
+	u.conversationListener = conversationListener
+}
+
+func (u *LoginMgr) SetFriendListener(friendListener friend.OnFriendshipListener) {
+	u.friendListener = friendListener
+}
+
+func (u *LoginMgr) SetGroupListener(groupListener group.OnGroupListener) {
+	u.groupListener = groupListener
 }
 
 func (u *LoginMgr) login(userID, token string, cb common.Base) {
@@ -209,4 +226,6 @@ func (u *LoginMgr)checkToken(token string) error {
 //	}
 //	u.receiveMessageOptMutex.Unlock()
 //}
+
+
 

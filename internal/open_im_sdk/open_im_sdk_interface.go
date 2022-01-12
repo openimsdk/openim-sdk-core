@@ -116,7 +116,7 @@ func ForceSyncMsg() bool {
 
 ////////////////////////////////////////////////////////////////////
 func SetGroupListener(callback group.OnGroupListener) {
-	open_im_sdk.userForSDK.SetGroupListener(callback)
+	userForSDK.SetGroupListener(callback)
 }
 
 func CreateGroup(callback init.Base, gInfo string, memberList string, operationID string) {
