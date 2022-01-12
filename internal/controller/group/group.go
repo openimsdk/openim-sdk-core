@@ -13,25 +13,22 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-
 type Group struct {
-	listener OnGroupListener
-	loginUserID    string
-	db             *db.DataBase
-	p              *ws.PostApi
+	listener    OnGroupListener
+	loginUserID string
+	db          *db.DataBase
+	p           *ws.PostApi
 }
 
 func NewGroup(loginUserID string, db *db.DataBase, p *ws.PostApi) *Group {
 	return &Group{loginUserID: loginUserID, db: db, p: p}
 }
 
-
-
-func (u *Group) DoGroupMsg(msg * api.MsgData) {
+func (u *Group) DoGroupMsg(msg *api.MsgData) {
 	if u.listener == nil {
 		return
 	}
-	if msg.SendID == u.loginUserID && msg.SenderPlatformID == constant.SvrConf.Platform {
+	if msg.SendID == u.loginUserID && msg.SenderPlatformID == db.SvrConf.Platform {
 		return
 	}
 
@@ -56,7 +53,7 @@ func (u *Group) DoGroupMsg(msg * api.MsgData) {
 		case constant.InviteUserToGroupTip:
 			u.doInviteUserToGroup(msg)
 		default:
-			log.Error("0","ContentType tip failed, ", msg.ContentType)
+			log.Error("0", "ContentType tip failed, ", msg.ContentType)
 		}
 	}()
 }
@@ -149,6 +146,7 @@ func (u *Group) doTransferGroupOwner(msg *api.MsgData) {
 	//}
 	//u.onTransferGroupOwner(&transfer)
 }
+
 //
 //func (u *Group) onTransferGroupOwner(transfer *open_im_sdk.TransferGroupOwnerReq) {
 //	//if u.loginUserID == transfer.NewOwner || u.loginUserID == transfer.OldOwner {
@@ -191,6 +189,7 @@ func (u *Group) doAcceptGroupApplication(msg *api.MsgData) {
 	//
 	//u.onAcceptGroupApplication(&acceptInfo)
 }
+
 //func (u *Group) onAcceptGroupApplication(groupMember *open_im_sdk.GroupApplicationInfo) {
 //	member := open_im_sdk.groupMemberFullInfo{
 //		GroupId:  groupMember.Info.GroupId,
@@ -249,6 +248,7 @@ func (u *Group) doRefuseGroupApplication(msg *api.MsgData) {
 	//
 	//u.onRefuseGroupApplication(&refuseInfo)
 }
+
 //
 //func (u *Group) onRefuseGroupApplication(groupMember *open_im_sdk.GroupApplicationInfo) {
 //	//member := open_im_sdk.groupMemberFullInfo{
@@ -317,6 +317,7 @@ func (u *Group) doKickGroupMember(msg *api.MsgData) {
 	//}
 
 }
+
 //
 //func (g *Group) OnMemberKicked(groupId string, op open_im_sdk.groupMemberFullInfo, memberList []open_im_sdk.groupMemberFullInfo) {
 //	//jsonOp, err := json.Marshal(op)
@@ -381,6 +382,7 @@ func (u *Group) doInviteUserToGroup(msg *api.MsgData) {
 func (g *Group) onGroupCreated(groupID string) {
 	g.listener.OnGroupCreated(groupID)
 }
+
 //
 //func (g *Group) onMemberEnter(groupId string, memberList []open_im_sdk.groupMemberFullInfo) {
 //	jsonMemberList, err := json.Marshal(memberList)
@@ -442,13 +444,13 @@ func (u *Group) createGroup(callback common.Base, group sdk.CreateGroupBaseInfoP
 	commData := u.p.PostFatalCallback(callback, constant.CreateGroupRouter, apiReq, apiReq.OperationID)
 	realData := api.CreateGroupResp{}
 	err := mapstructure.Decode(commData.Data, &realData.GroupInfo)
-	if err != nil{
+	if err != nil {
 		callback.OnError(constant.ErrData.ErrCode, constant.ErrData.ErrMsg)
 		return nil
 	}
 	u.SyncJoinedGroupInfo()
 	u.syncGroupMemberByGroupID(realData.GroupInfo.GroupID)
-	return &sdk.CreateGroupCallback{GroupInfo:realData.GroupInfo}
+	return &sdk.CreateGroupCallback{GroupInfo: realData.GroupInfo}
 }
 
 func (u *Group) joinGroup(groupID, reqMsg string, callback common.Base, operationID string) *api.CommDataResp {
@@ -471,22 +473,20 @@ func (u *Group) quitGroup(groupID string, callback common.Base, operationID stri
 	return commData
 }
 
-
 func (u *Group) getJoinedGroupList(callback common.Base, operationID string) sdk.GetJoinedGroupListCallback {
 	groupList, err := u.db.GetJoinedGroupList()
 	common.CheckErr(callback, err, operationID)
 	return groupList
 }
 
-
 func (u *Group) getGroupsInfo(groupIdList sdk.GetGroupsInfoParam, callback common.Base, operationID string) sdk.GetGroupsInfoCallback {
 	groupList, err := u.db.GetJoinedGroupList()
 	common.CheckErr(callback, err, operationID)
 	var result sdk.GetGroupsInfoCallback
-	for _, v := range groupList{
+	for _, v := range groupList {
 		in := false
-		for _, k := range groupIdList{
-			if v.GroupID == k{
+		for _, k := range groupIdList {
+			if v.GroupID == k {
 				in = true
 				break
 			}
@@ -498,8 +498,7 @@ func (u *Group) getGroupsInfo(groupIdList sdk.GetGroupsInfoParam, callback commo
 	return result
 }
 
-
-func (u *Group) setGroupInfo(callback common.Base, groupInfo sdk.SetGroupInfoParam, groupID, operationID string)  *api.CommDataResp{
+func (u *Group) setGroupInfo(callback common.Base, groupInfo sdk.SetGroupInfoParam, groupID, operationID string) *api.CommDataResp {
 	apiReq := api.SetGroupInfoReq{}
 	apiReq.GroupName = groupInfo.GroupName
 	apiReq.FaceUrl = groupInfo.FaceUrl
@@ -514,10 +513,10 @@ func (u *Group) setGroupInfo(callback common.Base, groupInfo sdk.SetGroupInfoPar
 }
 
 //todo
-func (u *Group) getGroupMemberList(callback common.Base, groupID string, filter int32, next int32,  operationID string) sdk.GetGroupMemberListCallback{
+func (u *Group) getGroupMemberList(callback common.Base, groupID string, filter int32, next int32, operationID string) sdk.GetGroupMemberListCallback {
 	groupInfoList, err := u.db.GetGroupMemberListByGroupID(groupID)
 	common.CheckErr(callback, err, operationID)
-	return sdk.GetGroupMemberListCallback{MemberList: groupInfoList, NextSeq:0}
+	return sdk.GetGroupMemberListCallback{MemberList: groupInfoList, NextSeq: 0}
 }
 
 //todo
@@ -527,10 +526,10 @@ func (u *Group) getGroupMembersInfo(callback common.Base, groupID string, userLi
 	return groupInfoList
 }
 
-func (u *Group) kickGroupMember(callback common.Base, groupID string, memberList sdk.KickGroupMemberParam, reason string,  operationID string) sdk.KickGroupMemberCallback {
+func (u *Group) kickGroupMember(callback common.Base, groupID string, memberList sdk.KickGroupMemberParam, reason string, operationID string) sdk.KickGroupMemberCallback {
 	apiReq := api.KickGroupMemberReq{}
 	apiReq.GroupID = groupID
-	apiReq.KickedUserIDList =  memberList
+	apiReq.KickedUserIDList = memberList
 	apiReq.Reason = reason
 	apiReq.OperationID = operationID
 	commData := u.p.PostFatalCallback(callback, constant.KickGroupMemberRouter, apiReq, apiReq.OperationID)
@@ -542,7 +541,7 @@ func (u *Group) kickGroupMember(callback common.Base, groupID string, memberList
 }
 
 //1
-func (u *Group) transferGroupOwner(callback common.Base, groupID, newOwnerUserID string,  operationID string) *api.CommDataResp {
+func (u *Group) transferGroupOwner(callback common.Base, groupID, newOwnerUserID string, operationID string) *api.CommDataResp {
 	apiReq := api.TransferGroupOwnerReq{}
 	apiReq.GroupID = groupID
 	apiReq.NewOwnerUserID = newOwnerUserID
@@ -554,8 +553,7 @@ func (u *Group) transferGroupOwner(callback common.Base, groupID, newOwnerUserID
 	return commData
 }
 
-
-func (u *Group) inviteUserToGroup(callback common.Base, groupID, reason string, userList sdk.InviteUserToGroupParam,  operationID string) sdk.InviteUserToGroupCallback {
+func (u *Group) inviteUserToGroup(callback common.Base, groupID, reason string, userList sdk.InviteUserToGroupParam, operationID string) sdk.InviteUserToGroupCallback {
 	apiReq := api.InviteUserToGroupReq{}
 	apiReq.GroupID = groupID
 	apiReq.Reason = reason
@@ -570,10 +568,9 @@ func (u *Group) inviteUserToGroup(callback common.Base, groupID, reason string, 
 	return realData
 }
 
-
 //1
 func (u *Group) getGroupApplicationList(callback common.Base, operationID string) sdk.GetGroupApplicationListCallback {
-	applicationList, err:= u.db.GetRecvGroupApplication()
+	applicationList, err := u.db.GetRecvGroupApplication()
 	common.CheckErr(callback, err, operationID)
 	return applicationList
 }
@@ -586,7 +583,7 @@ func (u *Group) getGroupApplicationListFromSvr() ([]*api.GroupRequest, error) {
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
-	var  realData []*api.GroupRequest
+	var realData []*api.GroupRequest
 	err = mapstructure.Decode(commData.Data, &realData)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
@@ -594,27 +591,24 @@ func (u *Group) getGroupApplicationListFromSvr() ([]*api.GroupRequest, error) {
 	return realData, nil
 }
 
-
-
-
-
-func (u *Group) processGroupApplication(callback common.Base, groupID, fromUserID,  handleMsg string,  handleResult int32, operationID string) *api.CommDataResp{
+func (u *Group) processGroupApplication(callback common.Base, groupID, fromUserID, handleMsg string, handleResult int32, operationID string) *api.CommDataResp {
 	apiReq := api.ApplicationGroupResponseReq{}
 	apiReq.GroupID = groupID
-	apiReq.OperationID= operationID
+	apiReq.OperationID = operationID
 	apiReq.FromUserID = fromUserID
 	apiReq.HandleResult = handleResult
 	apiReq.HandledMsg = handleMsg
 	var commData *api.CommDataResp
-	if handleResult == 1{
+	if handleResult == 1 {
 		commData = u.p.PostFatalCallback(callback, constant.AcceptGroupApplicationRouter, apiReq, apiReq.OperationID)
 		u.syncGroupMemberByGroupID(groupID)
 	} else if handleResult == -1 {
-		commData = u.p.PostFatalCallback(callback, constant.RefuseGroupApplicationRouter, apiReq,apiReq.OperationID)
+		commData = u.p.PostFatalCallback(callback, constant.RefuseGroupApplicationRouter, apiReq, apiReq.OperationID)
 	}
 	u.SyncGroupRequest()
 	return commData
 }
+
 //
 //func (u *Group) GroupApplicationProcessedCallback(node open_im_sdk.updateGroupNode, process int32) {
 //	args := node.Args.(open_im_sdk.applyGroupProcessedArgs)
@@ -655,29 +649,21 @@ func (u *Group) processGroupApplication(callback common.Base, groupID, fromUserI
 //	}
 //}
 
-
-
-
-
 func (g *Group) getJoinedGroupListFromSvr() ([]*api.GroupInfo, error) {
 	apiReq := api.GetJoinedGroupListReq{}
 	apiReq.OperationID = utils.OperationIDGenerator()
 	apiReq.FromUserID = g.loginUserID
 	commData, err := g.p.PostReturn(constant.GetJoinedGroupListRouter, apiReq, apiReq.OperationID)
-	if err != nil{
+	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 	var result []*api.GroupInfo
 	err = mapstructure.Decode(commData.Data, &result)
-	if err != nil{
+	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 	return result, nil
 }
-
-
-
-
 
 //
 //func (u *Group) getGroupMembersInfoFromLocal(groupId string, memberList []string) ([]open_im_sdk.groupMemberFullInfo, error) {
@@ -715,23 +701,15 @@ func (u *Group) getGroupMembersInfoFromSvr(groupID string, memberList []string) 
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 	var realData []*api.GroupMemberFullInfo
-	if err = mapstructure.Decode(commData.Data, &realData); err != nil{
+	if err = mapstructure.Decode(commData.Data, &realData); err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 	return realData, nil
 }
 
-
-
-
-
-
-
 //func (u *Group) delGroupRequestFromGroupRequest(info open_im_sdk.GroupReqListInfo) error {
 //	return u.delRequestFromGroupRequest(info)
 //}
-
-
 
 //1
 //func (u *Group) refuseGroupApplication(access *open_im_sdk.accessOrRefuseGroupApplicationReq, callback common.Base, operationID string) error {
@@ -750,7 +728,6 @@ func (u *Group) getGroupMembersInfoFromSvr(groupID string, memberList []string) 
 //	}
 //	return nil
 //}
-
 
 func (u *Group) SyncSelfGroupRequest() {
 
@@ -834,7 +811,6 @@ func (u *Group) SyncJoinedGroupInfo() {
 	}
 }
 
-
 //func (u *Group) getLocalGroupInfoByGroupId1(groupId string) (*Group.groupInfo, error) {
 //	return u.getLocalGroupsInfoByGroupID(groupId)
 //}
@@ -882,11 +858,10 @@ func (u *Group) syncJoinedGroupMember() {
 		log.Error("0", "getJoinedGroupListFromSvr failed ", err.Error())
 		return
 	}
-	for _, v := range groupListOnServer{
+	for _, v := range groupListOnServer {
 		u.syncGroupMemberByGroupID(v.GroupID)
 	}
 }
-
 
 func (u *Group) getGroupAllMemberByGroupIDFromSvr(groupID string) ([]*api.GroupMemberFullInfo, error) {
 	var apiReq api.GetGroupAllMemberReq
@@ -897,12 +872,11 @@ func (u *Group) getGroupAllMemberByGroupIDFromSvr(groupID string) ([]*api.GroupM
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 	var realData []*api.GroupMemberFullInfo
-	if err = mapstructure.Decode(commData.Data, &realData); err != nil{
+	if err = mapstructure.Decode(commData.Data, &realData); err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 	return realData, nil
 }
-
 
 //func (u *Group) getLocalGroupMemberListNew() ([]open_im_sdk.groupMemberFullInfo, error) {
 //	return u.getLocalGroupMemberList()
@@ -924,8 +898,6 @@ func (u *Group) getGroupAllMemberByGroupIDFromSvr(groupID string) ([]*api.GroupM
 //func (u *Group) insertIntoSelfApplyToGroupRequestNew(groupId, message string) error {
 //	return u.insertIntoSelfApplyToGroupRequest(groupId, message)
 //}
-
-
 
 /*
 func (u *UserRelated) getLocalGroupsInfo1() ([]groupInfo, error) {
@@ -956,10 +928,6 @@ func (u *UserRelated) getLocalGroupsInfo1() ([]groupInfo, error) {
 	return localGroupsInfo, nil
 }
 */
-
-
-
-
 
 //
 //func (u *Group) createGroupCallback(node open_im_sdk.updateGroupNode) {
@@ -1051,4 +1019,3 @@ func (u *UserRelated) getLocalGroupsInfo1() ([]groupInfo, error) {
 //func (u *Group) refuseGroupApplicationCallback(node open_im_sdk.updateGroupNode) {
 //	u.GroupApplicationProcessedCallback(node, -1)
 //}
-

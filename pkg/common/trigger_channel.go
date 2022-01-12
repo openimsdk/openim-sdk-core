@@ -4,20 +4,19 @@ import (
 	"errors"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/utils"
+	"open_im_sdk/pkg/server_api_params"
 	"time"
 )
 
-func TriggerCmdNewMsgCome(msg utils.ArrMsg, conversationCh chan Cmd2Value) error {
+func TriggerCmdNewMsgCome(msg server_api_params.ArrMsg, conversationCh chan Cmd2Value) error {
 	c2v := Cmd2Value{Cmd: constant.CmdNewMsgCome, Value: msg}
 	return sendCmd(conversationCh, c2v, 1)
 }
 
-func TriggerCmdLogout(msg utils.ArrMsg, conversationCh chan Cmd2Value) error {
+func TriggerCmdLogout(msg server_api_params.ArrMsg, conversationCh chan Cmd2Value) error {
 	c2v := Cmd2Value{Cmd: constant.CmdLogout, Value: msg}
 	return sendCmd(conversationCh, c2v, 1)
 }
-
 
 func TriggerCmdDeleteConversationAndMessage(sourceID, conversationID string, sessionType int, conversationCh chan Cmd2Value) error {
 	c2v := Cmd2Value{

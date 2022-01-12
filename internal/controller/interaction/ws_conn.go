@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/utils"
 	"strings"
 	"sync"
@@ -162,7 +163,7 @@ func (u *WsConn) ReConn() (*websocket.Conn, error) {
 	}
 
 	u.listener.OnConnecting()
-	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", constant.SvrConf.WsAddr, u.loginUserID, u.token, constant.SvrConf.Platform)
+	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", db.SvrConf.WsAddr, u.loginUserID, u.token, db.SvrConf.Platform)
 	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		u.loginState = constant.LoginFailed

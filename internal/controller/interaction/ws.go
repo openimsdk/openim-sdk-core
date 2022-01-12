@@ -215,7 +215,7 @@ func (u *Ws) doSendMsg(wsResp GeneralWsResp) error {
 		return nil
 	}
 	u.seqMsg[int32(msg.Seq)] = msg
-	arrMsg := utils.ArrMsg{}
+	arrMsg := server_api_params.ArrMsg{}
 	common.TriggerCmdNewMsgCome(arrMsg, u.conversationCh)
 	return nil
 }

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"sync"
@@ -38,8 +37,8 @@ func (d *DataBase) initDB() error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 
-	db, err := gorm.Open(sqlite.Open(common.SvrConf.DbDir+"OpenIM_"+d.loginUserID+".db"), &gorm.Config{})
-	log.Info("open db:", common.SvrConf.DbDir+"OpenIM_"+d.loginUserID+".db")
+	db, err := gorm.Open(sqlite.Open(SvrConf.DbDir+"OpenIM_"+d.loginUserID+".db"), &gorm.Config{})
+	log.Info("open db:", SvrConf.DbDir+"OpenIM_"+d.loginUserID+".db")
 	if err != nil {
 		panic("failed to connect database" + err.Error())
 		return err
