@@ -5,11 +5,10 @@ import (
 	"github.com/pkg/errors"
 	"open_im_sdk/pkg/network"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/test"
 
-	"flag"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"net"
 	"os"
 	"strconv"
@@ -180,7 +179,7 @@ func register(uid string) error {
 	req.Uid = uid
 	req.Secret = SECRET
 	req.Name = uid
-	r, err := utils.network(url, req, "")
+	r, err := network.Post2Api(url, req, "")
 	if err != nil {
 		fmt.Println(r, err)
 		return err
@@ -398,15 +397,15 @@ func main() {
 	//if err := f1(); err != nil {
 	//	fmt.Printf("f1 err1111111111111: %v", err)
 	//}
-	strMyUidx := "openIM001"
-	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0wMDEiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTY0MjA1NDcyOSwibmJmIjoxNjQxNDQ5OTI5LCJpYXQiOjE2NDE0NDk5Mjl9.wUQDrgAGLuPa-EViFOnsfW1YCcq_IXZqJJedK618QlU"
-	InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
-	//open_im_sdk.DoTestaddFriend()
+	//	strMyUidx := "openIM001"
+	//	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0wMDEiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTY0MjA1NDcyOSwibmJmIjoxNjQxNDQ5OTI5LCJpYXQiOjE2NDE0NDk5Mjl9.wUQDrgAGLuPa-EViFOnsfW1YCcq_IXZqJJedK618QlU"
+	//InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+	test.DoTestaddFriend()
 	//	open_im_sdk.DoTestGetFriendList()
 	//	open_im_sdk.DoTestAddToBlackList()
 	//	open_im_sdk.DoTestGetBlackList()
 	//	open_im_sdk.DoTestDeleteFromBlackList()
-	DoTestGetDesignatedFriendsInfo()
+	//DoTestGetDesignatedFriendsInfo()
 	for true {
 		time.Sleep(time.Duration(60) * time.Second)
 		fmt.Println("waiting")

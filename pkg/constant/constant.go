@@ -2,7 +2,6 @@ package constant
 
 import (
 	"errors"
-	"open_im_sdk/pkg/utils"
 )
 
 const (
@@ -169,9 +168,8 @@ const (
 	WSPullMsgBySeqList = 1004
 	WSPushMsg          = 2001
 	WSKickOnlineMsg    = 2002
-	WsLogoutMsg = 2003
+	WsLogoutMsg        = 2003
 	WSDataError        = 3001
-
 )
 
 const (
@@ -204,8 +202,8 @@ var (
 	ErrDB     = ErrInfo{ErrCode: 802, ErrMsg: DBMsg.Error()}
 	ErrArgs   = ErrInfo{ErrCode: 803, ErrMsg: ArgsMsg.Error()}
 	ErrApi    = ErrInfo{ErrCode: 804, ErrMsg: ApiMsg.Error()}
-	ErrData = ErrInfo{ErrCode: 805, ErrMsg: DataMsg.Error()}
-	ErrLogin = ErrInfo{ErrCode: 806, ErrMsg: LoginMsg.Error()}
+	ErrData   = ErrInfo{ErrCode: 805, ErrMsg: DataMsg.Error()}
+	ErrLogin  = ErrInfo{ErrCode: 806, ErrMsg: LoginMsg.Error()}
 
 	ErrWsRecvConnDiff = ErrInfo{ErrCode: 901, ErrMsg: WsRecvConnDiff.Error()}
 	ErrWsRecvConnSame = ErrInfo{ErrCode: 902, ErrMsg: WsRecvConnSame.Error()}
@@ -224,8 +222,8 @@ var (
 	DBMsg     = errors.New("db failed")
 	ArgsMsg   = errors.New("args failed")
 	ApiMsg    = errors.New("api failed")
-	DataMsg = errors.New("data failed ")
-	LoginMsg = errors.New("you can only login once")
+	DataMsg   = errors.New("data failed ")
+	LoginMsg  = errors.New("you can only login once")
 
 	ThirdPartyMsg = errors.New("third party error")
 
@@ -239,5 +237,3 @@ func (e *ErrInfo) Error() string {
 }
 
 const SuccessCallbackDefault = ""
-
-var SvrConf utils.IMConfig

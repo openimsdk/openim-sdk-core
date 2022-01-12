@@ -1,8 +1,10 @@
 package utils
 
-import (
-	"open_im_sdk/pkg/server_api_params"
-)
+//import "open_im_sdk/pkg/server_api_params"
+
+//import (
+//	"open_im_sdk/pkg/server_api_params"
+//)
 
 //fixme---------------UiParam-->client---------------
 
@@ -228,25 +230,6 @@ type WsSubMsg struct {
 //	Data          []byte `json:"data"`
 //}
 
-type PullUserMsgResp struct {
-	ErrCode       int                       `json:"errCode"`
-	ErrMsg        string                    `json:"errMsg"`
-	ReqIdentifier int                       `json:"reqIdentifier"`
-	MsgIncr       int                       `json:"msgIncr"`
-	Data          paramsPullUserMsgDataResp `json:"data"`
-}
-type paramsPullUserMsgDataResp struct {
-	Group  []*server_api_params.GatherFormat `json:"group"`
-	MaxSeq int64                             `json:"maxSeq"`
-	MinSeq int64                             `json:"minSeq"`
-	Single []*server_api_params.GatherFormat `json:"single"`
-}
-
-type ArrMsg struct {
-	SingleData []server_api_params.MsgData
-	GroupData  []server_api_params.MsgData
-}
-
 type IMConfig struct {
 	Platform int32  `json:"platform"`
 	ApiAddr  string `json:"api_addr"`
@@ -361,12 +344,12 @@ type WsSendMsgResp struct {
 	SendTime    int64  `json:"sendTime"`
 }
 
-type PullMsgReq struct {
-	UserID   string     `json:"userID"`
-	GroupID  string     `json:"groupID"`
-	StartMsg *MsgStruct `json:"startMsg"`
-	Count    int        `json:"count"`
-}
+//type PullMsgReq struct {
+//	UserID   string     `json:"userID"`
+//	GroupID  string     `json:"groupID"`
+//	StartMsg *MsgStruct `json:"startMsg"`
+//	Count    int        `json:"count"`
+//}
 type SendMsgRespFromServer struct {
 	ErrCode       int    `json:"errCode"`
 	ErrMsg        string `json:"errMsg"`
@@ -377,26 +360,28 @@ type SendMsgRespFromServer struct {
 		SendTime    int64  `json:"sendTime"`
 	}
 }
-type paramsUserSendMsg struct {
-	SenderPlatformID int32  `json:"senderPlatformID" binding:"required"`
-	SendID           string `json:"sendID" binding:"required"`
-	SenderNickName   string `json:"senderNickName"`
-	SenderFaceURL    string `json:"senderFaceUrl"`
-	OperationID      string `json:"operationID" binding:"required"`
-	Data             struct {
-		SessionType int32                             `json:"sessionType" binding:"required"`
-		MsgFrom     int32                             `json:"msgFrom" binding:"required"`
-		ContentType int32                             `json:"contentType" binding:"required"`
-		RecvID      string                            `json:"recvID" `
-		GroupID     string                            `json:"groupID" `
-		ForceList   []string                          `json:"forceList"`
-		Content     []byte                            `json:"content" binding:"required"`
-		Options     map[string]bool                   `json:"options" `
-		ClientMsgID string                            `json:"clientMsgID" binding:"required"`
-		CreateTime  int64                             `json:"createTime" binding:"required"`
-		OffLineInfo server_api_params.OfflinePushInfo `json:"offlineInfo" `
-	}
-}
+
+//
+//type paramsUserSendMsg struct {
+//	SenderPlatformID int32  `json:"senderPlatformID" binding:"required"`
+//	SendID           string `json:"sendID" binding:"required"`
+//	SenderNickName   string `json:"senderNickName"`
+//	SenderFaceURL    string `json:"senderFaceUrl"`
+//	OperationID      string `json:"operationID" binding:"required"`
+//	Data             struct {
+//		SessionType int32                             `json:"sessionType" binding:"required"`
+//		MsgFrom     int32                             `json:"msgFrom" binding:"required"`
+//		ContentType int32                             `json:"contentType" binding:"required"`
+//		RecvID      string                            `json:"recvID" `
+//		GroupID     string                            `json:"groupID" `
+//		ForceList   []string                          `json:"forceList"`
+//		Content     []byte                            `json:"content" binding:"required"`
+//		Options     map[string]bool                   `json:"options" `
+//		ClientMsgID string                            `json:"clientMsgID" binding:"required"`
+//		CreateTime  int64                             `json:"createTime" binding:"required"`
+//		OffLineInfo server_api_params.OfflinePushInfo `json:"offlineInfo" `
+//	}
+//}
 type ImageInfo struct {
 	Width  int32  `json:"x"`
 	Height int32  `json:"y"`
@@ -438,95 +423,6 @@ type FileBaseInfo struct {
 	SourceURL string `json:"sourceUrl"`
 	FileName  string `json:"fileName"`
 	FileSize  int64  `json:"fileSize"`
-}
-type MsgStruct struct {
-	ClientMsgID      string                            `json:"clientMsgID"`
-	ServerMsgID      string                            `json:"serverMsgID"`
-	CreateTime       int64                             `json:"createTime"`
-	SendTime         int64                             `json:"sendTime"`
-	SessionType      int32                             `json:"sessionType"`
-	SendID           string                            `json:"sendID"`
-	RecvID           string                            `json:"recvID"`
-	MsgFrom          int32                             `json:"msgFrom"`
-	ContentType      int32                             `json:"contentType"`
-	SenderPlatformID int32                             `json:"platformID"`
-	ForceList        []string                          `json:"forceList"`
-	SenderNickname   string                            `json:"senderNickname"`
-	SenderFaceURL    string                            `json:"senderFaceUrl"`
-	GroupID          string                            `json:"groupID"`
-	Content          string                            `json:"content"`
-	Seq              int64                             `json:"seq"`
-	IsRead           bool                              `json:"isRead"`
-	Status           int32                             `json:"status"`
-	Remark           string                            `json:"remark"`
-	OfflinePush      server_api_params.OfflinePushInfo `json:"offlinePush"`
-	PictureElem      struct {
-		SourcePath      string          `json:"sourcePath"`
-		SourcePicture   PictureBaseInfo `json:"sourcePicture"`
-		BigPicture      PictureBaseInfo `json:"bigPicture"`
-		SnapshotPicture PictureBaseInfo `json:"snapshotPicture"`
-	} `json:"pictureElem"`
-	SoundElem struct {
-		UUID      string `json:"uuid"`
-		SoundPath string `json:"soundPath"`
-		SourceURL string `json:"sourceUrl"`
-		DataSize  int64  `json:"dataSize"`
-		Duration  int64  `json:"duration"`
-	} `json:"soundElem"`
-	VideoElem struct {
-		VideoPath      string `json:"videoPath"`
-		VideoUUID      string `json:"videoUUID"`
-		VideoURL       string `json:"videoUrl"`
-		VideoType      string `json:"videoType"`
-		VideoSize      int64  `json:"videoSize"`
-		Duration       int64  `json:"duration"`
-		SnapshotPath   string `json:"snapshotPath"`
-		SnapshotUUID   string `json:"snapshotUUID"`
-		SnapshotSize   int64  `json:"snapshotSize"`
-		SnapshotURL    string `json:"snapshotUrl"`
-		SnapshotWidth  int32  `json:"snapshotWidth"`
-		SnapshotHeight int32  `json:"snapshotHeight"`
-	} `json:"videoElem"`
-	FileElem struct {
-		FilePath  string `json:"filePath"`
-		UUID      string `json:"uuid"`
-		SourceURL string `json:"sourceUrl"`
-		FileName  string `json:"fileName"`
-		FileSize  int64  `json:"fileSize"`
-	} `json:"fileElem"`
-	MergeElem struct {
-		Title        string       `json:"title"`
-		AbstractList []string     `json:"abstractList"`
-		MultiMessage []*MsgStruct `json:"multiMessage"`
-	} `json:"mergeElem"`
-	AtElem struct {
-		Text       string   `json:"text"`
-		AtUserList []string `json:"atUserList"`
-		IsAtSelf   bool     `json:"isAtSelf"`
-	} `json:"atElem"`
-	LocationElem struct {
-		Description string  `json:"description"`
-		Longitude   float64 `json:"longitude"`
-		Latitude    float64 `json:"latitude"`
-	} `json:"locationElem"`
-	CustomElem struct {
-		Data        string `json:"data"`
-		Description string `json:"description"`
-		Extension   string `json:"extension"`
-	} `json:"customElem"`
-	QuoteElem struct {
-		Text         string     `json:"text"`
-		QuoteMessage *MsgStruct `json:"quoteMessage"`
-	} `json:"quoteElem"`
-	//RevokeMessage struct {
-	//	ServerMsgID    string `json:"serverMsgID"`
-	//	SendID         string `json:"sendID"`
-	//	SenderNickname string `json:"senderNickname"`
-	//	RecvID         string `json:"recvID"`
-	//	GroupID        string `json:"groupID"`
-	//	ContentType    int32  `json:"contentType"`
-	//	SendTime       int64  `json:"sendTime"`
-	//}
 }
 
 ////////////////////////// group/////////////////////////

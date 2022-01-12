@@ -1,12 +1,10 @@
 package open_im_sdk
 
 import (
-
 	"open_im_sdk/internal/controller/init"
+	"open_im_sdk/pkg/utils"
 	"sync"
 )
-
-
 
 func init() {
 	UserSDKRwLock.Lock()
@@ -14,10 +12,9 @@ func init() {
 	UserRouterMap = make(map[string]*init.LoginMgr, 0)
 }
 
-
 var UserSDKRwLock sync.RWMutex
 var UserRouterMap map[string]*init.LoginMgr
-
+var SvrConf utils.IMConfig
 var userForSDK *init.LoginMgr
 
 func GetUserWorker(uid string) *init.LoginMgr {
@@ -31,5 +28,3 @@ func GetUserWorker(uid string) *init.LoginMgr {
 
 	return UserRouterMap[uid]
 }
-
-
