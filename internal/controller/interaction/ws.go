@@ -2,8 +2,8 @@ package interaction
 
 import (
 	"errors"
+	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
-	"google.golang.org/protobuf/proto"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"

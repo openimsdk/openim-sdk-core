@@ -3,14 +3,14 @@ package interaction
 import (
 	"bytes"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
-	"strings"
-	"time"
-	"open_im_sdk/pkg/utils"
-	"errors"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/utils"
+	"strings"
 	"sync"
+	"time"
 )
 
 type ConnListener interface {
@@ -23,6 +23,7 @@ type ConnListener interface {
 }
 
 const writeTimeoutSeconds = 5
+
 type WsConn struct {
 	stateMutex  sync.Mutex
 	conn        *websocket.Conn
@@ -34,7 +35,7 @@ type WsConn struct {
 
 func NewWsConn(listener ConnListener, token string, loginUserID string) *WsConn {
 	p := WsConn{listener: listener, token: token, loginUserID: loginUserID}
-	p.conn,  _ = p.ReConn()
+	p.conn, _ = p.ReConn()
 	return &p
 }
 
@@ -69,7 +70,7 @@ func (u *WsConn) SendPingMsg() error {
 	if u.conn == nil {
 		return utils.Wrap(errors.New("conn == nil"), "")
 	}
-	ping  := "try ping"
+	ping := "try ping"
 	err := u.SetWriteTimeout(writeTimeoutSeconds)
 	if err != nil {
 		return utils.Wrap(err, "SetWriteDeadline failed")
@@ -82,14 +83,12 @@ func (u *WsConn) SendPingMsg() error {
 }
 
 func (u *WsConn) SetWriteTimeout(timeout int) error {
-	return u.conn.SetWriteDeadline(time.Now().Add(timeout * time.Second))
+	return u.conn.SetWriteDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
 }
-
 
 func (u *WsConn) SetReadTimeout(timeout int) error {
-	return u.conn.SetReadDeadline(time.Now().Add(timeout * time.Second))
+	return u.conn.SetReadDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
 }
-
 
 func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (error, *websocket.Conn) {
 	var buff bytes.Buffer
@@ -130,22 +129,22 @@ func (u *WsConn) decodeBinaryWs(message []byte) (*GeneralWsResp, error) {
 	return &data, nil
 }
 
-func (u *WsConn) IsReadTimeout(err error) bool{
-	if strings.Contains(err.Error(), "timeout"){
+func (u *WsConn) IsReadTimeout(err error) bool {
+	if strings.Contains(err.Error(), "timeout") {
 		return true
 	}
 	return false
 }
 
-func (u *WsConn) IsWriteTimeout(err error) bool{
-	if strings.Contains(err.Error(), "timeout"){
+func (u *WsConn) IsWriteTimeout(err error) bool {
+	if strings.Contains(err.Error(), "timeout") {
 		return true
 	}
 	return false
 }
 
-func (u *WsConn) IsFatalError(err error) bool{
-	if strings.Contains(err.Error(), "timeout"){
+func (u *WsConn) IsFatalError(err error) bool {
+	if strings.Contains(err.Error(), "timeout") {
 		return false
 	}
 	return true
@@ -158,7 +157,7 @@ func (u *WsConn) ReConn() (*websocket.Conn, error) {
 		u.conn.Close()
 		u.conn = nil
 	}
-	if u.loginState == constant.TokenFailedKickedOffline  {
+	if u.loginState == constant.TokenFailedKickedOffline {
 		return nil, utils.Wrap(errors.New("don't re conn"), "TokenFailedKickedOffline")
 	}
 

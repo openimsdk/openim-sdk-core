@@ -1,5 +1,7 @@
 package conversation_msg
 
+import "open_im_sdk/pkg/log"
+
 //
 //import "C"
 //import (
@@ -150,40 +152,43 @@ package conversation_msg
 //	}()
 //}
 //
-//type OnConversationListener interface {
-//	OnSyncServerStart()
-//	OnSyncServerFinish()
-//	OnSyncServerFailed()
-//	OnNewConversation(conversationList string)
-//	OnConversationChanged(conversationList string)
-//	OnTotalUnreadMessageCountChanged(totalUnreadCount int64)
-//}
+type OnConversationListener interface {
+	OnSyncServerStart()
+	OnSyncServerFinish()
+	OnSyncServerFailed()
+	OnNewConversation(conversationList string)
+	OnConversationChanged(conversationList string)
+	OnTotalUnreadMessageCountChanged(totalUnreadCount int64)
+}
+
 //
-//func (c *Conversation) SetConversationListener(listener OnConversationListener) {
-//	if c.ConversationListener != nil {
-//		log.Error("internal","just only set on listener")
-//		return
-//	}
-//	c.ConversationListener = listener
-//}
+func (c *Conversation) SetConversationListener(listener OnConversationListener) {
+	if c.ConversationListener != nil {
+		log.Error("internal", "just only set on listener")
+		return
+	}
+	c.ConversationListener = listener
+}
+
+type OnAdvancedMsgListener interface {
+	OnRecvNewMessage(message string)
+	OnRecvC2CReadReceipt(msgReceiptList string)
+	OnRecvMessageRevoked(msgId string)
+}
+
 //
-//type OnAdvancedMsgListener interface {
-//	OnRecvNewMessage(message string)
-//	OnRecvC2CReadReceipt(msgReceiptList string)
-//	OnRecvMessageRevoked(msgId string)
-//}
-//
-//func (c *Conversation) AddAdvancedMsgListener(listener OnAdvancedMsgListener) {
-//	if listener == nil {
-//		log.Error("internal","AddAdvancedMsgListener listener is null")
-//		return
-//	}
-//	if len(c.MsgListenerList) == 1 {
-//		log.Error("internal","u.ConversationListener.MsgListenerList == 1")
-//		return
-//	}
-//	c.MsgListenerList = append(c.MsgListenerList, listener)
-//}
+func (c *Conversation) AddAdvancedMsgListener(listener OnAdvancedMsgListener) {
+	if listener == nil {
+		log.Error("internal", "AddAdvancedMsgListener listener is null")
+		return
+	}
+	if len(c.MsgListenerList) == 1 {
+		log.Error("internal", "u.ConversationListener.MsgListenerList == 1")
+		return
+	}
+	c.MsgListenerList = append(c.MsgListenerList, listener)
+}
+
 ////
 ////func (c *Conversation) ForceSyncMsg() bool {
 ////	if c.syncSeq2Msg() == nil {
