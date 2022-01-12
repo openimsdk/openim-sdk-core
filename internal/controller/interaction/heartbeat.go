@@ -1,4 +1,4 @@
-package init
+package interaction
 
 import (
 	"errors"
@@ -10,7 +10,7 @@ import (
 )
 
 type Heartbeat struct {
-//	*ws.Ws
+	//*Ws
 	*MsgSync
 }
 

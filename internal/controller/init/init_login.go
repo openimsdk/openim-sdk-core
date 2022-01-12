@@ -22,9 +22,9 @@ type LoginMgr struct {
 
 	db      *db.DataBase  //1
 	ws      *ws.Ws  //2
-	msgSync *MsgSync //3
+	msgSync *ws.MsgSync //3
 
-	heartbeat *Heartbeat //4
+	heartbeat *ws.Heartbeat //4
 
 	token       string
 	loginUserID string
@@ -101,9 +101,9 @@ func (u *LoginMgr) login(userID, token string, cb common.Base) {
 
 
 	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.conversationCh, u.cmdCh)
-	u.msgSync = NewMsgSync(db, u.ws, userID, u.conversationCh)
+	u.msgSync = ws.NewMsgSync(db, u.ws, userID, u.conversationCh)
 
-	u.heartbeat = NewHeartbeat(u.msgSync)
+	u.heartbeat = ws.NewHeartbeat(u.msgSync)
 
 	p := ws.NewPostApi(token, constant.SvrConf.ApiAddr)
 	u.user = user.NewUser(db, p, u.loginUserID)

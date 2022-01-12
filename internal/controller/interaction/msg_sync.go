@@ -1,8 +1,7 @@
-package init
+package interaction
 
 import (
 	"github.com/golang/protobuf/proto"
-	ws "open_im_sdk/internal/controller/interaction"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
@@ -16,12 +15,12 @@ type MsgSync struct {
 	*db.DataBase
 	seqMsg      map[int32]server_api_params.MsgData
 	seqMsgMutex sync.RWMutex
-	*ws.Ws
+	*Ws
 	loginUserID string
 	conversationCh chan common.Cmd2Value
 }
 
-func NewMsgSync(dataBase *db.DataBase, ws *ws.Ws, loginUserID string, ch chan common.Cmd2Value) *MsgSync {
+func NewMsgSync(dataBase *db.DataBase, ws *Ws, loginUserID string, ch chan common.Cmd2Value) *MsgSync {
 	return &MsgSync{DataBase: dataBase, seqMsg: make(map[int32]server_api_params.MsgData, 1000),
 		Ws: ws, loginUserID: loginUserID,conversationCh: ch}
 }
