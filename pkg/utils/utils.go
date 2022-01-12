@@ -5,8 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	"open_im_sdk/pkg/constant"
-
 	"github.com/pkg/errors"
 	"io"
 
@@ -97,38 +95,6 @@ func StringToInt64(i string) int64 {
 func StringToInt(i string) int {
 	j, _ := strconv.Atoi(i)
 	return j
-}
-
-func GetConversationIDBySessionType(sourceID string, sessionType int32) string {
-	switch sessionType {
-	case constant.SingleChatType:
-		return "single_" + sourceID
-	case constant.GroupChatType:
-		return "group_" + sourceID
-	}
-	return ""
-}
-func getIsRead(b bool) int {
-	if b {
-		return constant.HasRead
-	} else {
-		return constant.NotRead
-	}
-}
-func getIsFilter(b bool) int {
-	if b {
-		return constant.IsFilter
-	} else {
-		return constant.NotFilter
-	}
-}
-func getIsReadB(i int) bool {
-	if i == constant.HasRead {
-		return true
-	} else {
-		return false
-	}
-
 }
 
 func RunFuncName() string {
