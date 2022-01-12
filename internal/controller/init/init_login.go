@@ -11,7 +11,6 @@ import (
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
-	"time"
 )
 
 type LoginMgr struct {
@@ -35,7 +34,11 @@ type LoginMgr struct {
 	groupListener group.OnGroupListener
 	friendListener friend.OnFriendshipListener
 	conversationListener conv.OnConversationListener
-	
+	advancedMsgListener conv.OnAdvancedMsgListener
+
+
+	conversationCh chan common.Cmd2Value
+	cmdCh chan common.Cmd2Value
 }
 
 func (u *LoginMgr) SetConversationListener(conversationListener conv.OnConversationListener) {
@@ -80,14 +83,26 @@ func (u *LoginMgr) login(userID, token string, cb common.Base) {
 
 	wsRespAsyn := ws.NewWsRespAsyn()
 	wsConn := ws.NewWsConn(u.listener, token, userID)
-	conversationCh := make(chan common.Cmd2Value, 1000)
-	cmdCh := make(chan common.Cmd2Value, 10)
+	u.conversationCh = make(chan common.Cmd2Value, 1000)
+	u.cmdCh = make(chan common.Cmd2Value, 10)
 
 
-	u.ws = ws.NewWs(wsRespAsyn, wsConn, conversationCh, cmdCh)
-	u.msgSync = NewMsgSync(db, u.ws, userID, conversationCh)
+	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.conversationCh, u.cmdCh)
+	u.msgSync = NewMsgSync(db, u.ws, userID, u.conversationCh)
 
 	u.heartbeat = NewHeartbeat(u.ws, u.msgSync)
+
+	p := ws.NewPostApi(token, constant.SvrConf.ApiAddr)
+	u.user = user.NewUser(db, p, u.loginUserID)
+
+	u.friend = friend.NewFriend(u.loginUserID, u.db, p)
+	u.friend.SetFriendListener(u.friendListener)
+
+	u.group = group.NewGroup(u.loginUserID, u.db, p)
+	u.group.SetGroupListener(u.groupListener)
+
+	u.conversation = conv.NewConversation(u.ws, u.db, u.conversationCh, u.loginUserID, u.friend, u.group, u.user)
+	u.conversation.SetConversationListener(u.conversationListener)
 
 	log.Info("ws, forcedSynchronization heartbeat ws coroutine run ...")
 	go u.forcedSynchronization()
@@ -117,50 +132,23 @@ func (u *LoginMgr) GetVersion() string {
 }
 
 
-func (u *LoginMgr) logout(cb Base) {
-
-		u.LoginState = constant.LogoutCmd
-
-		utils.sdkLog("set LoginState ", u.LoginState)
-
-		err := u.closeConn()
-		if err != nil {
-			if cb != nil {
-				cb.OnError(constant.ErrCodeInitLogin, err.Error())
-			}
-			return
-		}
-		utils.sdkLog("closeConn ok")
-
-		//err = u.closeDB()
-		if err != nil {
-			if cb != nil {
-				cb.OnError(constant.ErrCodeInitLogin, err.Error())
-			}
-			return
-		}
-		utils.sdkLog("close db ok")
-
-		u.loginUserID = ""
-		u.token = ""
-		time.Sleep(time.Duration(6) * time.Second)
-		if cb != nil {
-			cb.OnSuccess("")
-		}
-		utils.sdkLog("logout return")
+func (u *LoginMgr) logout(callback common.Base) {
+	common.TriggerCmdLogout(utils.ArrMsg{}, u.cmdCh)
+	timeout := 5
+	resp, err, operationID := u.ws.SendReqWaitResp(nil, constant.WsLogoutMsg, timeout, u.loginUserID)
 }
 
 
 func (u *LoginMgr) GetLoginUser() string {
-	if u.LoginState == constant.LoginSuccess {
+	if u.GetLoginStatus() == constant.LoginSuccess {
 		return u.loginUserID
 	} else {
 		return ""
 	}
 }
 
-func (im *LoginMgr) GetLoginStatus() int {
-	return im.LoginState
+func (u *LoginMgr) GetLoginStatus() int {
+	return u.GetLoginStatus()
 }
 
 

@@ -112,7 +112,7 @@ const (
 	Logining     = 102
 	LoginFailed  = 103
 
-	LogoutCmd = 201
+	Logout = 201
 
 	TokenFailedExpired       = 701
 	TokenFailedInvalid       = 702

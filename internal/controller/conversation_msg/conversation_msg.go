@@ -60,9 +60,13 @@ type Conversation struct {
 	user                  *user.User
 }
 
-func NewConversation() *Conversation {
-	return &Conversation{}
+func NewConversation(ws *ws.Ws, db *db.DataBase, ch chan common.Cmd2Value, loginUserID string, friend *friend.Friend, group *group.Group, user *user.User) *Conversation {
+	return &Conversation{Ws: ws, db: db, ch: ch, loginUserID: loginUserID, friend: friend, group: group, user: user}
 }
+
+//func NewConversation() *Conversation {
+//	return &Conversation{}
+//}
 
 
 

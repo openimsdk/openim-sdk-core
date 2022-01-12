@@ -21,6 +21,10 @@ type Group struct {
 	p              *ws.PostApi
 }
 
+func NewGroup(loginUserID string, db *db.DataBase, p *ws.PostApi) *Group {
+	return &Group{loginUserID: loginUserID, db: db, p: p}
+}
+
 
 
 func (u *Group) DoGroupMsg(msg * api.MsgData) {

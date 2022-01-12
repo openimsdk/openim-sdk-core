@@ -118,6 +118,7 @@ func (u *Ws) ReadData() {
 			select {
 			case r := <-u.cmdCh:
 				if r.Cmd == constant.CmdLogout {
+					u.SetLoginState(constant.Logout)
 					return
 				} else {
 					log.Warn("0", "other cmd ...", r.Cmd)
@@ -148,6 +149,7 @@ func (u *Ws) doWsMsg(message []byte) {
 		go u.kickOnline(*wsResp)
 	case constant.WsLogoutMsg:
 		log.Warn(wsResp.OperationID, "logout.. ")
+		u.SetLoginState(constant.Logout)
 		runtime.Goexit()
 	default:
 		log.Error(wsResp.OperationID,"type failed, ", wsResp.ReqIdentifier, wsResp.OperationID)

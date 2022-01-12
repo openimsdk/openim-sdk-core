@@ -42,6 +42,7 @@ func InitSDK(config string, listener ws.ConnListener) bool {
 		log.Error("initSDK failed, config: ", sc, err.Error())
 		return false
 	}
+	constant.SvrConf = sc
 	log.NewInfo("0","InitSDK, config ", config, "version: ", SdkVersion())
 	if userForSDK != nil {
 		log.Error("0", "Logout first ")

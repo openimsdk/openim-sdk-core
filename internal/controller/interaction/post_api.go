@@ -12,7 +12,6 @@ import (
 type PostApi struct {
 	token      string
 	apiAddress string
-	err error
 }
 
 func NewPostApi(token string, apiAddress string) *PostApi {
