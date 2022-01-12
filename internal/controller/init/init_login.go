@@ -72,15 +72,11 @@ func (u *LoginMgr) SetGroupListener(groupListener group.OnGroupListener) {
 
 func (u *LoginMgr) login(userID, token string, cb common.Base) {
 	log.Info("login start ", userID, token)
-	if cb == nil {
-		log.Info("cb == nil ", userID)
-		return
-	}
 	if u.justOnceFlag {
 		cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
 		return
 	}
-	err := u.checkToken(token)
+	err := u.checkToken(userID, token)
 	if err != nil {
 		cb.OnError(constant.ErrTokenInvalid.ErrCode, constant.ErrTokenInvalid.ErrMsg)
 		return
@@ -99,7 +95,7 @@ func (u *LoginMgr) login(userID, token string, cb common.Base) {
 	u.db = db
 
 	wsRespAsyn := ws.NewWsRespAsyn()
-	wsConn := ws.NewWsConn(u.listener, token, userID)
+	wsConn := ws.NewWsConn(u.connnListener, token, userID)
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
 	u.cmdCh = make(chan common.Cmd2Value, 10)
 
@@ -149,9 +145,6 @@ func (u *LoginMgr) UnInitSDK() {
 
 }
 
-func (u *LoginMgr) GetVersion() string {
-	return "v1.0.5"
-}
 
 
 func (u *LoginMgr) logout(callback common.Base) {
@@ -160,9 +153,14 @@ func (u *LoginMgr) logout(callback common.Base) {
 	resp, err, operationID := u.ws.SendReqWaitResp(nil, constant.WsLogoutMsg, timeout, u.loginUserID)
 	if err != nil {
 		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
-		callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
+		if callback != nil{
+			callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
+		}
+
 	}
-	callback.OnSuccess("")
+	if callback != nil {
+		callback.OnSuccess("")
+	}
 }
 
 
@@ -174,8 +172,8 @@ func (u *LoginMgr) GetLoginUser() string {
 	}
 }
 
-func (u *LoginMgr) GetLoginStatus() int {
-	return u.GetLoginStatus()
+func (u *LoginMgr) GetLoginStatus() int32 {
+	return u.ws.LoginState()
 }
 
 
@@ -199,9 +197,8 @@ func (u *LoginMgr) SetMinSeqSvr(minSeqSvr int64) {
 	u.SetMinSeqSvr(minSeqSvr)
 }
 
-func (u *LoginMgr)checkToken(token string) error {
-//	p := ws.NewPostApi(token, constant.SvrConf.ApiAddr)
-	_, err := u.user.GetSelfUserInfoFromSvr()
+func (u *LoginMgr)checkToken(userID, token string) error {
+	_, err := user.NewUser(nil, ws.NewPostApi(token, constant.SvrConf.ApiAddr), userID).GetSelfUserInfoFromSvr()
 	return utils.Wrap(err, "GetSelfUserInfoFromSvr failed")
 }
 

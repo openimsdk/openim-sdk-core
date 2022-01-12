@@ -68,20 +68,24 @@ func (u *WsConn) SendPingMsg() error {
 	if u.conn == nil {
 		return utils.Wrap(errors.New("conn == nil"), "")
 	}
-	var ping string = "try ping"
+	ping  := "try ping"
 	err := u.SetWriteTimeout(writeTimeoutSeconds)
 	if err != nil {
 		return utils.Wrap(err, "SetWriteDeadline failed")
 	}
-	return u.conn.WriteMessage(websocket.PingMessage, []byte(ping))
+	err = u.conn.WriteMessage(websocket.PingMessage, []byte(ping))
+	if err != nil {
+		return utils.Wrap(err, "WriteMessage failed")
+	}
+	return nil
 }
 
-func (u *WsConn) SetWriteTimeout(timeout uint32)error{
+func (u *WsConn) SetWriteTimeout(timeout uint32) error {
 	return u.conn.SetWriteDeadline(time.Now().Add(timeout * time.Second))
 }
 
 
-func (u *WsConn) SetReadTimeout(timeout int)error{
+func (u *WsConn) SetReadTimeout(timeout int) error {
 	return u.conn.SetReadDeadline(time.Now().Add(timeout * time.Second))
 }
 
@@ -91,7 +95,7 @@ func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (error, *websocket.Conn) {
 	enc := gob.NewEncoder(&buff)
 	err := enc.Encode(msg)
 	if err != nil {
-		return err, nil
+		return utils.Wrap(err, ""), nil
 	}
 
 	var connSended *websocket.Conn

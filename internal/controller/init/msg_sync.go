@@ -117,16 +117,14 @@ func (u *MsgSync) syncMsgFromServerSplit(needSyncSeqList []int64) (err error) {
 	buff, err := proto.Marshal(&pullMsgReq)
 	resp, err, operationID := u.SendReqWaitResp(buff, constant.WSPullMsgBySeqList, 30, u.loginUserID)
 	if err != nil {
-		log.Error(operationID, "SendReqWaitResp failed ", err.Error())
-		return err
+		return utils.Wrap(err, "SendReqWaitResp failed ")
 	}
 
 	var pullMsg utils.PullUserMsgResp
 	var pullMsgResp server_api_params.PullMessageBySeqListResp
 	err = proto.Unmarshal(resp.Data, &pullMsgResp)
 	if err != nil {
-		log.Error(operationID, "Unmarshal failed ", err.Error())
-		return err
+		return utils.Wrap(err, "Unmarshal failed ")
 	}
 	pullMsg.Data.Group = pullMsgResp.GroupUserMsg
 	pullMsg.Data.Single = pullMsgResp.SingleUserMsg
@@ -142,8 +140,6 @@ func (u *MsgSync) syncMsgFromServerSplit(needSyncSeqList []int64) (err error) {
 			log.Info(operationID, "open_im pull one msg: |", pullMsg.Data.Single[i].List[j].ClientMsgID, "|")
 			log.Info(operationID, "pull all: |", pullMsg.Data.Single[i].List[j].Seq, pullMsg.Data.Single[i].List[j])
 			singleMsg := pullMsg.Data.Single[i].List[j]
-
-
 			b1 := u.isExistsInErrChatLogBySeq(pullMsg.Data.Single[i].List[j].Seq)
 			b2 := u.judgeMessageIfExistsBySeq(pullMsg.Data.Single[i].List[j].Seq)
 			_, ok := u.seqMsg[int32(pullMsg.Data.Single[i].List[j].Seq)]
@@ -170,7 +166,6 @@ func (u *MsgSync) syncMsgFromServerSplit(needSyncSeqList []int64) (err error) {
 				u.seqMsg[int32(pullMsg.Data.Group[i].List[j].Seq)] = *groupMsg
 				log.Info(operationID, "into map, seq: ", pullMsg.Data.Group[i].List[j].Seq, pullMsg.Data.Group[i].List[j].ClientMsgID, pullMsg.Data.Group[i].List[j].ServerMsgID)
 				log.Info(operationID, "pull all: |", pullMsg.Data.Group[i].List[j].Seq, pullMsg.Data.Group[i].List[j])
-
 			}
 		}
 	}
@@ -179,6 +174,7 @@ func (u *MsgSync) syncMsgFromServerSplit(needSyncSeqList []int64) (err error) {
 	if isInmap {
 		err = common.TriggerCmdNewMsgCome(arrMsg, u.conversationCh)
 		if err != nil {
+			return utils.Wrap(err, "TriggerCmdNewMsgCome failed")
 		}
 	}
 	return nil

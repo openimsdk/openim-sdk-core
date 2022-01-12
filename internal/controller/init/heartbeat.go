@@ -20,11 +20,10 @@ func NewHeartbeat(ws *ws.Ws, msgSync *MsgSync) *Heartbeat {
 }
 
 func (u *Heartbeat) Run() {
-	hearbeatInterval := 5
-
+	heartbeatInterval := 5
 	for {
 		u.Lock()
-		if u.LoginState() == constant.LogoutCmd {
+		if u.LoginState() == constant.Logout {
 			u.Unlock()
 			return
 		}
@@ -33,7 +32,7 @@ func (u *Heartbeat) Run() {
 		timeout := 30
 		resp, err, operationID := u.SendReqWaitResp(nil, constant.WSGetNewestSeq, timeout, u.loginUserID)
 		if err != nil {
-			log.Error(operationID, "failed ", err.Error())
+			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, timeout, u.loginUserID)
 			if errors.Is(err, constant.WsRecvCode) {
 				u.CloseConn()
 				continue
@@ -43,7 +42,7 @@ func (u *Heartbeat) Run() {
 					err = u.SendPingMsg()
 					if err != nil {
 						log.Error("sendPingMsg failed ", operationID, err.Error(), tr)
-						time.Sleep(time.Duration(30) * time.Second)
+						time.Sleep(time.Duration(timeout) * time.Second)
 					} else {
 						break
 					}
@@ -57,13 +56,13 @@ func (u *Heartbeat) Run() {
 		var wsSeqResp server_api_params.GetMaxAndMinSeqResp
 		err = proto.Unmarshal(resp.Data, &wsSeqResp)
 		if err != nil {
-			log.Error(operationID, "Unmarshal failed, ", err.Error())
+			log.Error(operationID, "Unmarshal failed ", err.Error())
 			u.CloseConn()
 		} else {
 			needSyncSeq := u.getNeedSyncSeq(int32(wsSeqResp.MinSeq), int32(wsSeqResp.MaxSeq))
 			log.Info("needSyncSeq ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, needSyncSeq)
 			u.syncMsgFromServer(needSyncSeq)
 		}
-		time.Sleep(time.Duration(hearbeatInterval) * time.Second)
+		time.Sleep(time.Duration(heartbeatInterval) * time.Second)
 	}
 }

@@ -29,13 +29,17 @@ func init(){
 
 }
 */
-
+const sdkVersion = "Open-IM-SDK-Core-v2.0.0"
 func SdkVersion() string {
-	return "Open-IM-SDK-Core-v1.0.6"
+	return sdkVersion
 }
 
 func InitSDK(config string, listener ws.ConnListener) bool {
 	log.NewInfo("0", utils.GetSelfFuncName(), config)
+	if listener == nil || config == ""{
+		log.Error("0", "listener or config is nil")
+		return false
+	}
 	if userForSDK != nil {
 		log.Warn("0", "Initialize multiple times, call logout")
 		userForSDK.Logout(nil)
@@ -43,7 +47,6 @@ func InitSDK(config string, listener ws.ConnListener) bool {
 	}
 	userForSDK = new(init.LoginMgr)
 	return userForSDK.InitSDK(config, listener)
-
 }
 
 
@@ -56,16 +59,16 @@ func UnInitSDK() {
 	userForSDK.UnInitSDK()
 }
 
-func Login(uid, tk string, callback common.Base) {
+func Login(userID, token string, callback common.Base) {
 	if callback == nil {
-		log.Error("callbck is nil")
+		log.Error("callback is nil")
 		return
 	}
 	if userForSDK == nil{
 		callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
 		return
 	}
-	userForSDK.Login(uid, tk, callback)
+	userForSDK.Login(callback, userID, token)
 }
 
 func Logout(callback common.Base) {
@@ -80,7 +83,7 @@ func Logout(callback common.Base) {
 	userForSDK.Logout(callback)
 }
 
-func GetLoginStatus() int {
+func GetLoginStatus() int32 {
 	return userForSDK.GetLoginStatus()
 }
 
@@ -102,7 +105,7 @@ func SetSelfInfo(callback common.Base, operationID string, info string) {
 //////////////////////////group//////////////////////////////////////////
 func SetGroupListener(callback group.OnGroupListener) {
 	if callback == nil {
-		log.Error("callbck is nil")
+		log.Error("callback is nil")
 		return
 	}
 	userForSDK.SetGroupListener(callback)
@@ -110,7 +113,7 @@ func SetGroupListener(callback group.OnGroupListener) {
 
 func CreateGroup(callback common.Base, operationID string, gInfo string, memberList string) {
 	if callback == nil {
-		log.Error("callbck is nil")
+		log.Error("callback is nil")
 		return
 	}
 	userForSDK.Group().CreateGroup(callback, gInfo, memberList, operationID)
@@ -118,7 +121,7 @@ func CreateGroup(callback common.Base, operationID string, gInfo string, memberL
 
 func JoinGroup(callback common.Base, operationID string, groupID, message string) {
 	if callback == nil {
-		log.Error("callbck is nil")
+		log.Error("callback is nil")
 		return
 	}
 	userForSDK.Group().JoinGroup(callback, groupID, message, operationID)
