@@ -119,8 +119,6 @@ func (u *LoginMgr) login(userID, token string, cb common.Base) {
 
 	log.Info("forcedSynchronization run ...")
 	go u.forcedSynchronization()
-//	go u.heartbeat.Run()
-//	go u.ws.ReadData()
 //	u.forycedSyncReceiveMessageOpt()
 	cb.OnSuccess("")
 
@@ -139,10 +137,6 @@ func (u *LoginMgr) InitSDK(config string, listener ws.ConnListener) bool {
 	}
 	u.connnListener = listener
 	return true
-}
-
-func (u *LoginMgr) UnInitSDK() {
-
 }
 
 
