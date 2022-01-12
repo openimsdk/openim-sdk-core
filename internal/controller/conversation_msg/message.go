@@ -6,6 +6,11 @@
  */
 package conversation_msg
 
+import (
+	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/utils"
+)
+
 const TimeOffset = 5
 
 func doNewMsgConversation() {
@@ -129,22 +134,23 @@ func autoSendTransferGroupOwnerTip(groupId string, oldOwner, newOwner string) er
 //	s.Status = constant.MsgStatusSendFailed
 //	c.LatestMsg = utils.structToJsonString(s)
 //}
-//func (u *open_im_sdk.UserRelated) initBasicInfo(message *open_im_sdk.MsgStruct, msgFrom, contentType int32) {
-//	message.CreateTime = utils.getCurrentTimestampByNano()
-//	message.SendTime = message.CreateTime
-//	message.IsRead = false
-//	message.Status = constant.MsgStatusSending
-//	message.SendID = u.loginUserID
-//	userInfo, _ := u.getLoginUserInfoFromLocal()
-//	message.SenderFaceURL = userInfo.Icon
-//	message.SenderNickname = userInfo.Name
-//	ClientMsgID := utils.getMsgID(message.SendID)
-//	message.ClientMsgID = ClientMsgID
-//	message.MsgFrom = msgFrom
-//	message.ContentType = contentType
-//	message.SenderPlatformID = constant.SvrConf.Platform
-//
-//}
+func (c *Conversation) initBasicInfo(message *utils.MsgStruct, msgFrom, contentType int32) {
+	message.CreateTime = utils.GetCurrentTimestampByNano()
+	message.SendTime = message.CreateTime
+	message.IsRead = false
+	message.Status = constant.MsgStatusSending
+	message.SendID = c.loginUserID
+	userInfo, _ := c.db.GetLoginUser()
+	message.SenderFaceURL = userInfo.FaceUrl
+	message.SenderNickname = userInfo.Nickname
+	ClientMsgID := utils.GetMsgID(message.SendID)
+	message.ClientMsgID = ClientMsgID
+	message.MsgFrom = msgFrom
+	message.ContentType = contentType
+	message.SenderPlatformID = c.platformID
+
+}
+
 //func (u *open_im_sdk.UserRelated) sendMessageFailedHandle(s *open_im_sdk.MsgStruct, c *ConversationStruct, conversationID string) {
 //	_ = u.updateMessageTimeAndMsgIDStatus(s.ClientMsgID, s.CreateTime, constant.MsgStatusSendFailed)
 //	s.SendTime = s.CreateTime

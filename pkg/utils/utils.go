@@ -22,11 +22,10 @@ import (
 	"time"
 )
 
-
 func OperationIDGenerator() string {
 	return strconv.FormatInt(time.Now().UnixNano()+int64(rand.Uint32()), 10)
 }
-func getMsgID(sendID string) string {
+func GetMsgID(sendID string) string {
 	t := Int64ToString(GetCurrentTimestampByNano())
 	return Md5(t + sendID + Int64ToString(rand.Int63n(GetCurrentTimestampByNano())))
 }
@@ -100,7 +99,7 @@ func StringToInt(i string) int {
 	return j
 }
 
-func GetConversationIDBySessionType(sourceID string, sessionType int) string {
+func GetConversationIDBySessionType(sourceID string, sessionType int32) string {
 	switch sessionType {
 	case constant.SingleChatType:
 		return "single_" + sourceID
@@ -246,7 +245,7 @@ type LogInfo struct {
 	Info string `json:"info"`
 }
 
-func copyFile(srcName string, dstName string) (written int64, err error) {
+func CopyFile(srcName string, dstName string) (written int64, err error) {
 	src, err := os.Open(srcName)
 	if err != nil {
 		return
@@ -267,16 +266,16 @@ func copyFile(srcName string, dstName string) (written int64, err error) {
 	return io.Copy(dst, src)
 }
 
-func fileTmpPath(fullPath string) string {
+func FileTmpPath(fullPath, dbPrefix string) string {
 	suffix := path.Ext(fullPath)
 	if len(suffix) == 0 {
 		sdkLog("suffix  err:")
 	}
 
-	return constant.SvrConf.DbDir + Md5(fullPath) + suffix //a->b
+	return dbPrefix + Md5(fullPath) + suffix //a->b
 }
 
-func fileExist(filename string) bool {
+func FileExist(filename string) bool {
 	_, err := os.Stat(filename)
 	return err == nil || os.IsExist(err)
 }
