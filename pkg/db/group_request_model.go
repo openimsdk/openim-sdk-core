@@ -29,7 +29,12 @@ func (d *DataBase) GetRecvGroupApplication() ([]*LocalGroupRequest, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var groupRequestList []LocalGroupRequest
-	return groupRequestList, utils.Wrap(d.conn.Where("to_user_id = ?", d.loginUserID).Find(&groupRequestList).Error, "GetRecvGroupApplication failed")
+	err := d.conn.Where("to_user_id = ?", d.loginUserID).Find(&groupRequestList).Error
+	var transfer []*LocalGroupRequest
+	for _, v := range groupRequestList {
+		transfer = append(transfer, &v)
+	}
+	return transfer, utils.Wrap(err, "GetRecvGroupApplication failed ")
 }
 
 func (d *DataBase) GetSendGroupApplication() ([]LocalGroupRequest, error) {

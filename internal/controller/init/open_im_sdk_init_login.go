@@ -1,6 +1,7 @@
 package init
 
 import (
+	"open_im_sdk/internal/open_im_sdk"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
@@ -23,17 +24,6 @@ import (
 //	return true
 //}
 
-func GetUserWorker(uid string) *constant.UserRelated {
-	constant.UserSDKRwLock.Lock()
-	defer constant.UserSDKRwLock.Unlock()
-	v, ok := constant.UserRouterMap[uid]
-	if ok {
-		return v
-	}
-	constant.UserRouterMap[uid] = new(constant.UserRelated)
-
-	return constant.UserRouterMap[uid]
-}
 
 
 

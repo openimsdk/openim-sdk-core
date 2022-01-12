@@ -28,7 +28,13 @@ func (d *DataBase) GetJoinedGroupList() ([]*LocalGroup, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var groupList []LocalGroup
-	return groupList, utils.Wrap(d.conn.Find(&groupList).Error, "GetGroupList failed")
+	err := d.conn.Find(&groupList).Error
+
+	var transfer []*LocalGroup
+	for _, v := range groupList {
+		transfer = append(transfer, &v)
+	}
+	return transfer, utils.Wrap(err, "GetJoinedGroupList failed ")
 }
 func (d *DataBase) GetGroupInfoByGroupID(groupID string) (g *LocalGroup, err error) {
 	d.mRWMutex.Lock()

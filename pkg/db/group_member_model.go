@@ -24,7 +24,12 @@ func (d *DataBase) GetGroupMemberListByGroupID(groupID string) ([]*LocalGroupMem
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var groupMemberList []LocalGroupMember
-	return groupMemberList, utils.Wrap(d.conn.Where("group_id = ? ", groupID).Find(&groupMemberList).Error, "GetGroupMemberListByGroupID failed")
+	err := d.conn.Where("group_id = ? ", groupID).Find(&groupMemberList).Error
+	var transfer []*LocalGroupMember
+	for _, v := range groupMemberList {
+		transfer = append(transfer, &v)
+	}
+	return transfer, utils.Wrap(err, "GetGroupMemberListByGroupID failed ")
 }
 
 func (d *DataBase) InsertGroupMember(groupMember *LocalGroupMember) error {

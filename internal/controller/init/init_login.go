@@ -1,6 +1,7 @@
 package init
 
 import (
+	"encoding/json"
 	conv "open_im_sdk/internal/controller/conversation_msg"
 	"open_im_sdk/internal/controller/friend"
 	"open_im_sdk/internal/controller/group"
@@ -27,7 +28,7 @@ type LoginMgr struct {
 
 	token       string
 	loginUserID string
-	listener    ws.ConnListener
+	connnListener    ws.ConnListener
 
 	justOnceFlag bool
 
@@ -39,6 +40,22 @@ type LoginMgr struct {
 
 	conversationCh chan common.Cmd2Value
 	cmdCh chan common.Cmd2Value
+}
+
+func (u *LoginMgr) Conversation() *conv.Conversation {
+	return u.conversation
+}
+
+func (u *LoginMgr) User() *user.User {
+	return u.user
+}
+
+func (u *LoginMgr) Group() *group.Group {
+	return u.group
+}
+
+func (u *LoginMgr) Friend() *friend.Friend {
+	return u.friend
 }
 
 func (u *LoginMgr) SetConversationListener(conversationListener conv.OnConversationListener) {
@@ -116,10 +133,15 @@ func (u *LoginMgr) login(userID, token string, cb common.Base) {
 
 
 func (u *LoginMgr) InitSDK(config string, listener ws.ConnListener) bool {
+	log.NewInfo("0", utils.GetSelfFuncName(), config)
+	if err := json.Unmarshal([]byte(config), &constant.SvrConf ); err != nil {
+		log.Error("initSDK failed ", err.Error(), config)
+		return false
+	}
 	if listener == nil {
 		return false
 	}
-	u.listener = listener
+	u.connnListener = listener
 	return true
 }
 
@@ -136,6 +158,11 @@ func (u *LoginMgr) logout(callback common.Base) {
 	common.TriggerCmdLogout(utils.ArrMsg{}, u.cmdCh)
 	timeout := 5
 	resp, err, operationID := u.ws.SendReqWaitResp(nil, constant.WsLogoutMsg, timeout, u.loginUserID)
+	if err != nil {
+		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
+		callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
+	}
+	callback.OnSuccess("")
 }
 
 
