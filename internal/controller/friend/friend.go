@@ -21,7 +21,7 @@ type Friend struct {
 }
 
 func NewFriend(loginUserID string, db *db.DataBase, p *ws.PostApi) *Friend {
-	return &Friend{ loginUserID: loginUserID, db: db, p: p}
+	return &Friend{loginUserID: loginUserID, db: db, p: p}
 }
 
 //func (f *Friend) Init(userID string, db *db.DataBase) {
@@ -314,8 +314,7 @@ func (f *Friend) doBlackList() {
 
 func (f *Friend) getServerBlackList(operationID string) ([]*server_api_params.PublicUserInfo, error) {
 	apiReq := server_api_params.GetBlackListReq{OperationID: operationID, FromUserID: f.loginUserID}
-	resp, err := network.Post2Api(constant.GetBlackListRouter, apiReq, operationID)
-	commData, err := common.CheckErrAndRespReturn(err, resp, apiReq.OperationID)
+	commData, err := f.p.PostReturn(constant.GetBlackListRouter, apiReq, operationID)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
@@ -362,7 +361,6 @@ func (f *Friend) addBlack(callback common.Base, blackUid, operationID string) *s
 	f.SyncBlackList()
 	return result
 }
-
 
 func (f *Friend) removeBlack(callback common.Base, deleteUid, operationID string) *server_api_params.CommDataResp {
 	apiReq := server_api_params.RemoveBlackListReq{}

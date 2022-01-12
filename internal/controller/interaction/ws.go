@@ -208,7 +208,7 @@ func (u *Ws) doSendMsg(wsResp GeneralWsResp) error {
 	u.seqMsgMutex.Lock()
 	defer u.seqMsgMutex.Unlock()
 	b1 := u.IsExistsInErrChatLogBySeq(msg.Seq)
-	b2 := u.JudgeMessageIfExists(msg.ClientMsgID)
+	b2, _ := u.MessageIfExists(msg.ClientMsgID)
 	_, ok := u.seqMsg[int32(msg.Seq)]
 	if b1 || b2 || ok {
 		log.Debug("0", "seq in : ", msg.Seq, b1, b2, ok)
