@@ -37,9 +37,6 @@ func CheckDataErr(callback Base, err error, operationID string) {
 	}
 }
 
-
-
-
 func CheckErr(callback Base, err error, operationID string) {
 	if err != nil {
 		if callback != nil {
@@ -64,7 +61,6 @@ func CheckResp(callback Base, resp []byte, operationID string) *server_api_param
 		runtime.Goexit()
 		return nil
 	}
-
 	if c.ErrCode != 0 {
 		log.NewError(operationID, "errCode ", c.ErrCode, "errMsg ", c.ErrMsg)
 		callback.OnError(c.ErrCode, c.ErrMsg)

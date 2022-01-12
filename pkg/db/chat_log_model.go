@@ -25,6 +25,9 @@ func (d *DataBase) MessageIfExists(ClientMsgID string) (bool, error) {
 		return true, nil
 	}
 }
+func (d *DataBase) IsExistsInErrChatLogBySeq(seq int64) bool {
+	return true
+}
 func (d *DataBase) MessageIfExistsBySeq(seq int64) (bool, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
