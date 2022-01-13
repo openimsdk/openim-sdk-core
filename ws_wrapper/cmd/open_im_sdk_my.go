@@ -39,7 +39,7 @@ func main() {
 		sdkWsPort = flag.Int("sdk_ws_port", 30000, "openIM ws listening port")
 		flag.Parse()
 		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: APIADDR,
-			WsAddr: WSADDR, Platform: utils.WebPlatformID, DbDir: "./"})
+			WsAddr: WSADDR, Platform: utils.WebPlatformID, DbDir: "./", LogLevel: 6})
 	default:
 		fmt.Println("this os not support", sysType)
 
