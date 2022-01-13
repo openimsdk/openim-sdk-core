@@ -2,6 +2,7 @@ package open_im_sdk
 
 import (
 	"encoding/json"
+	"fmt"
 	"open_im_sdk/internal/controller/conversation_msg"
 	"open_im_sdk/internal/controller/friend"
 	"open_im_sdk/internal/controller/group"
@@ -41,7 +42,8 @@ func InitSDK(config string, listener ws.ConnListener) bool {
 	if err := json.Unmarshal([]byte(config), &sdk_struct.SvrConf); err != nil {
 		return false
 	}
-	log.NewPrivateLog("open_im_sdk", sdk_struct.SvrConf.LogLevel)
+	fmt.Println("config ", config, sdk_struct.SvrConf)
+	log.NewPrivateLog("", sdk_struct.SvrConf.LogLevel)
 	log.NewInfo("0", utils.GetSelfFuncName(), config, SdkVersion())
 	if listener == nil || config == "" {
 		log.Error("0", "listener or config is nil")

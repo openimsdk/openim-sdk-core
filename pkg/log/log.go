@@ -34,7 +34,7 @@ func IsNil() bool {
 func loggerInit(moduleName string, logLevel uint32) *Logger {
 	var logger = logrus.New()
 	//All logs will be printed
-	logger.SetLevel(logrus.Level(6))
+	logger.SetLevel(logrus.Level(logLevel))
 	//Close std console output when running on the server
 	if moduleName != "" {
 		src, err := os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
