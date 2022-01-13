@@ -118,12 +118,12 @@ func (g *Group) GetGroupMemberList(callback common.Base, groupID string, filter 
 	}()
 }
 
-func (g *Group) GetGroupMembersInfo(callback common.Base, groupID string, userList string, operationID string) {
+func (g *Group) GetGroupMembersInfo(callback common.Base, groupID string, userIDList string, operationID string) {
 	if callback == nil {
 		return
 	}
 	go func() {
-		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, userList)
+		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, userIDList)
 		var unmarshalParam sdk_params_callback.GetGroupMembersInfoParam
 		groupMemberList := g.getGroupMembersInfo(callback, groupID, unmarshalParam, operationID)
 		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(groupMemberList)))
@@ -131,12 +131,12 @@ func (g *Group) GetGroupMembersInfo(callback common.Base, groupID string, userLi
 	}()
 }
 
-func (g *Group) KickGroupMember(callback common.Base, groupID string, reason string, userList string, operationID string) {
+func (g *Group) KickGroupMember(callback common.Base, groupID string, reason string, userIDList string, operationID string) {
 	if callback == nil {
 		return
 	}
 	go func() {
-		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, reason, userList)
+		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, reason, userIDList)
 		var unmarshalParam sdk_params_callback.KickGroupMemberParam
 		result := g.kickGroupMember(callback, groupID, unmarshalParam, reason, operationID)
 		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(result)))
@@ -154,14 +154,14 @@ func (g *Group) TransferGroupOwner(callback common.Base, groupID, newOwnerUserID
 	}()
 }
 
-func (g *Group) InviteUserToGroup(callback common.Base, groupID, reason string, userList string, operationID string) {
+func (g *Group) InviteUserToGroup(callback common.Base, groupID, reason string, userIDList string, operationID string) {
 	if callback == nil {
 		return
 	}
 	go func() {
-		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, reason, userList)
+		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, reason, userIDList)
 		var unmarshalParam sdk_params_callback.InviteUserToGroupParam
-		common.JsonUnmarshalAndArgsValidate(userList, &unmarshalParam, callback, operationID)
+		common.JsonUnmarshalAndArgsValidate(userIDList, &unmarshalParam, callback, operationID)
 		result := g.inviteUserToGroup(callback, groupID, reason, unmarshalParam, operationID)
 		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(result)))
 		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonString(result))

@@ -2,9 +2,10 @@ package ws_local_server
 
 import (
 	"encoding/json"
-	"open_im_sdk/internal/controller/init"
+	"open_im_sdk/internal/open_im_sdk"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/utils"
+	//	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 )
 
 type InitCallback struct {
@@ -61,7 +62,7 @@ func (wsRouter *WsFuncRouter) InitSDK(config string, operationID string) {
 	var initcb InitCallback
 	initcb.uid = wsRouter.uId
 	wrapSdkLog("Initsdk uid: ", initcb.uid)
-	userWorker := init.GetUserWorker(wsRouter.uId)
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if userWorker.InitSDK(config, &initcb) {
 		//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", "", operationID})
 	} else {
@@ -71,8 +72,8 @@ func (wsRouter *WsFuncRouter) InitSDK(config string, operationID string) {
 
 func (wsRouter *WsFuncRouter) UnInitSDK() {
 	wrapSdkLog("UnInitSDK uid: ", wsRouter.uId)
-	userWorker := init.GetUserWorker(wsRouter.uId)
-	userWorker.UnInitSDK()
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	//	userWorker.UnInitSDK()
 	constant.UserSDKRwLock.Lock()
 	delete(constant.UserRouterMap, wsRouter.uId)
 	wrapSdkLog("delete UnInitSDK uid: ", wsRouter.uId)
@@ -130,13 +131,13 @@ func (wsRouter *WsFuncRouter) getMyLoginStatus() int {
 
 //1
 func (wsRouter *WsFuncRouter) GetLoginUser(input string, operationID string) {
-	userWorker := init.GetUserWorker(wsRouter.uId)
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", userWorker.GetLoginUser(), operationID})
 }
 
-func InitServer(config *utils.IMConfig) {
+func InitServer(config *sdk_struct.IMConfig) {
 	data, _ := json.Marshal(config)
 	ConfigSvr = string(data)
 	UserRouteMap = make(map[string]RefRouter, 0)
-	init.InitOnce(config)
+	open_im_sdk.InitOnce(config)
 }

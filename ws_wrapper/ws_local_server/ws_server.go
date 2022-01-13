@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 	sLog "log"
 	"net/http"
-	"open_im_sdk/internal/controller/init"
+	"open_im_sdk/internal/open_im_sdk"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/ws_wrapper/utils"
 	"runtime"
@@ -269,7 +269,7 @@ func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request) bool {
 		//	http.Error(w, http.StatusText(status), StatusBadRequest)
 		//	return false
 		//}
-		checkFlag := init.CheckToken(query["sendID"][0], query["token"][0])
+		checkFlag := open_im_sdk.CheckToken(query["sendID"][0], query["token"][0])
 		if checkFlag != 0 {
 			wrapSdkLog("check token failed", query["sendID"][0], query["token"][0])
 			w.Header().Set("Sec-Websocket-Version", "13")

@@ -2,11 +2,11 @@ package ws_local_server
 
 import (
 	"encoding/json"
-	"open_im_sdk/internal/controller/init"
+	"open_im_sdk/internal/open_im_sdk"
 )
 
 func (wsRouter *WsFuncRouter) CreateTextMessage(input string, operationID string) {
-	userWorker := init.GetUserWorker(wsRouter.uId)
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	msg := userWorker.CreateTextMessage(input)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }

@@ -2,7 +2,7 @@ package ws_local_server
 
 import (
 	"encoding/json"
-	"open_im_sdk/internal/controller/init"
+	open_im_sdk "open_im_sdk/external"
 )
 
 type GroupCallback struct {
@@ -16,6 +16,7 @@ func (g *GroupCallback) OnMemberEnter(groupId string, memberList string) {
 	j, _ := json.Marshal(m)
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(j), "0"}, g.uid)
 }
+
 func (g *GroupCallback) OnMemberLeave(groupId string, memberList string) {
 	m := make(map[string]interface{}, 2)
 	m["groupId"] = groupId
@@ -76,7 +77,7 @@ func (g *GroupCallback) OnApplicationProcessed(groupId string, opUser string, Ag
 func (wsRouter *WsFuncRouter) SetGroupListener() {
 	var g GroupCallback
 	g.uid = wsRouter.uId
-	userWorker := init.GetUserWorker(wsRouter.uId)
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	userWorker.SetGroupListener(&g)
 }
 
@@ -90,8 +91,8 @@ func (wsRouter *WsFuncRouter) CreateGroup(input, operationID string) {
 	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "gInfo", "memberList") {
 		return
 	}
-	userWorker := init.GetUserWorker(wsRouter.uId)
-	userWorker.CreateGroup(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId},
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Group().CreateGroup(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId},
 		m["gInfo"].(string), m["memberList"].(string), operationID)
 }
 
@@ -105,18 +106,20 @@ func (wsRouter *WsFuncRouter) JoinGroup(input, operationID string) {
 	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupId", "message") {
 		return
 	}
-	userWorker := init.GetUserWorker(wsRouter.uId)
-	userWorker.JoinGroup(m["groupId"].(string), m["message"].(string), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Group().JoinGroup(m["groupId"].(string), m["message"].(string), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
 }
 
 func (wsRouter *WsFuncRouter) QuitGroup(groupId, operationID string) {
-	userWorker := init.GetUserWorker(wsRouter.uId)
-	userWorker.QuitGroup(groupId, &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	//callback common.Base, groupID string, operationID string
+	userWorker.Group().QuitGroup(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, groupID)
 }
 
 func (wsRouter *WsFuncRouter) GetJoinedGroupList(input, operationID string) {
-	userWorker := init.GetUserWorker(wsRouter.uId)
-	userWorker.GetJoinedGroupList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	//(callback common.Base, operationID string)
+	userWorker.Group().GetJoinedGroupList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetGroupsInfo(input, operationID string) { //(groupIdList string, callback Base) {
@@ -126,11 +129,13 @@ func (wsRouter *WsFuncRouter) GetGroupsInfo(input, operationID string) { //(grou
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupIdList") {
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupIDList") {
 		return
 	}
-	userWorker := init.GetUserWorker(wsRouter.uId)
-	userWorker.GetGroupsInfo(m["groupIdList"].(string), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	//callback common.Base, groupIDList string, operationID string
+	userWorker.Group().GetGroupsInfo(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId},
+		m["groupIDList"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) SetGroupInfo(input, operationID string) {
@@ -140,11 +145,13 @@ func (wsRouter *WsFuncRouter) SetGroupInfo(input, operationID string) {
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupInfo") {
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupInfo", "groupID") {
 		return
 	}
-	userWorker := init.GetUserWorker(wsRouter.uId)
-	userWorker.SetGroupInfo(m["groupInfo"].(string), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	//(callback common.Base, groupInfo string, groupID string, operationID string)
+	userWorker.Group().SetGroupInfo(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId},
+		m["groupInfo"].(string), m["groupID"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetGroupMemberList(input, operationID string) { //(groupId string, filter int32, next int32, callback Base) {
@@ -154,11 +161,13 @@ func (wsRouter *WsFuncRouter) GetGroupMemberList(input, operationID string) { //
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupId", "filter", "next") {
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupID", "filter", "next") {
 		return
 	}
-	userWorker := init.GetUserWorker(wsRouter.uId)
-	userWorker.GetGroupMemberList(m["groupId"].(string), int32(m["filter"].(float64)), int32(m["next"].(float64)), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	//callback common.Base, groupID string, filter int32, next int32, operationID string
+	userWorker.Group().GetGroupMemberList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId},
+		m["groupID"].(string), int32(m["filter"].(float64)), int32(m["next"].(float64)), operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetGroupMembersInfo(input, operationID string) { //(groupId string, userList string, callback Base) {
@@ -168,11 +177,13 @@ func (wsRouter *WsFuncRouter) GetGroupMembersInfo(input, operationID string) { /
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupId", "userList") {
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupID", "userIDList") {
 		return
 	}
-	userWorker := init.GetUserWorker(wsRouter.uId)
-	userWorker.GetGroupMembersInfo(m["groupId"].(string), m["userList"].(string), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	//callback common.Base, groupID string, userIDList string, operationID string
+	userWorker.Group().GetGroupMembersInfo(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId},
+		m["groupID"].(string), m["userIDList"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) KickGroupMember(input, operationID string) { //(groupId string, reason string, userList string, callback Base) {
@@ -182,11 +193,13 @@ func (wsRouter *WsFuncRouter) KickGroupMember(input, operationID string) { //(gr
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupId", "reason", "userList") {
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupID", "reason", "userIDList") {
 		return
 	}
-	userWorker := init.GetUserWorker(wsRouter.uId)
-	userWorker.KickGroupMember(m["groupId"].(string), m["reason"].(string), m["userList"].(string), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	//KickGroupMember(callback common.Base, groupID string, reason string, userIDList string, operationID string)
+	userWorker.Group().KickGroupMember(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId},
+		m["groupID"].(string), m["reason"].(string), m["userIDList"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) TransferGroupOwner(input, operationID string) { //(groupId, userId string, callback Base) {
@@ -196,11 +209,13 @@ func (wsRouter *WsFuncRouter) TransferGroupOwner(input, operationID string) { //
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupId", "userId") {
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupID", "newOwnerUserID") {
 		return
 	}
-	userWorker := init.GetUserWorker(wsRouter.uId)
-	userWorker.TransferGroupOwner(m["groupId"].(string), m["userId"].(string), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	//callback common.Base, groupID, newOwnerUserID string, operationID string
+	userWorker.Group().TransferGroupOwner(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId},
+		m["groupID"].(string), m["newOwnerUserID"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) InviteUserToGroup(input, operationID string) { //(groupId, reason string, userList string, callback Base) {
@@ -210,16 +225,18 @@ func (wsRouter *WsFuncRouter) InviteUserToGroup(input, operationID string) { //(
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupId", "reason", "userList") {
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupID", "reason", "userIDList") {
 		return
 	}
-	userWorker := init.GetUserWorker(wsRouter.uId)
-	userWorker.InviteUserToGroup(m["groupId"].(string), m["reason"].(string), m["userList"].(string), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Group().InviteUserToGroup(
+		&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId},
+		m["groupID"].(string), m["reason"].(string), m["userIDList"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetGroupApplicationList(input, operationID string) { //(callback Base) {
-	userWorker := init.GetUserWorker(wsRouter.uId)
-	userWorker.GetGroupApplicationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Group().GetGroupApplicationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 
 }
 
@@ -233,9 +250,9 @@ func (wsRouter *WsFuncRouter) AcceptGroupApplication(input, operationID string) 
 	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "application", "reason") {
 		return
 	}
-	userWorker := init.GetUserWorker(wsRouter.uId)
-	userWorker.AcceptGroupApplication(m["application"].(string), m["reason"].(string), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
-
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Group().AcceptGroupApplication(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId},
+		m["groupID"].(string), m["fromUserID"].(string), m["handleMsg"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) RefuseGroupApplication(input, operationID string) { //(application, reason string, callback Base) {
@@ -245,9 +262,10 @@ func (wsRouter *WsFuncRouter) RefuseGroupApplication(input, operationID string) 
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "application", "reason") {
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupID", "fromUserID", "handleMsg") {
 		return
 	}
-	userWorker := init.GetUserWorker(wsRouter.uId)
-	userWorker.RefuseGroupApplication(m["application"].(string), m["reason"].(string), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Group().RefuseGroupApplication(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId},
+		m["groupID"].(string), m["fromUserID"].(string), m["handleMsg"].(string), operationID)
 }
