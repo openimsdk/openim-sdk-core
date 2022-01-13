@@ -1,4 +1,4 @@
-package open_im_sdk
+package external
 
 import (
 	"open_im_sdk/internal/controller/login"
