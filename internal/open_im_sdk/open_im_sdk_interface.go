@@ -2,14 +2,16 @@ package open_im_sdk
 
 import (
 	"encoding/json"
+	"open_im_sdk/internal/controller/conversation_msg"
 	"open_im_sdk/internal/controller/friend"
 	"open_im_sdk/internal/controller/group"
-	"open_im_sdk/internal/controller/init"
 	ws "open_im_sdk/internal/controller/interaction"
+	"open_im_sdk/internal/controller/login"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 )
 
 /*
@@ -36,10 +38,10 @@ func SdkVersion() string {
 }
 
 func InitSDK(config string, listener ws.ConnListener) bool {
-	if err := json.Unmarshal([]byte(config), &constant.SvrConf); err != nil {
+	if err := json.Unmarshal([]byte(config), &sdk_struct.SvrConf); err != nil {
 		return false
 	}
-	log.NewPrivateLog("open_im_sdk", constant.SvrConf.LogLevel)
+	log.NewPrivateLog("open_im_sdk", sdk_struct.SvrConf.LogLevel)
 	log.NewInfo("0", utils.GetSelfFuncName(), config, SdkVersion())
 	if listener == nil || config == "" {
 		log.Error("0", "listener or config is nil")
@@ -49,8 +51,8 @@ func InitSDK(config string, listener ws.ConnListener) bool {
 		log.Warn("0", "Initialize multiple times, call logout")
 		userForSDK.Logout(nil)
 	}
-	userForSDK = new(init.LoginMgr)
-	return userForSDK.InitSDK(constant.SvrConf, listener)
+	userForSDK = new(login.LoginMgr)
+	return userForSDK.InitSDK(sdk_struct.SvrConf, listener)
 }
 
 func Login(userID, token string, callback common.Base) {
@@ -220,8 +222,8 @@ func RemoveBlack(callback common.Base, operationID string, removeUserID string) 
 	userForSDK.Friend().RemoveBlack(callback, removeUserID, operationID)
 }
 
-func SetFriendListener(listener friend.OnFriendshipListener) bool {
-	return userForSDK.Friend().SetFriendListener(listener)
+func SetFriendListener(listener friend.OnFriendshipListener) {
+	userForSDK.SetFriendListener(listener)
 }
 
 ///////////////////////conversation////////////////////////////////////
@@ -258,9 +260,10 @@ func SetFriendListener(listener friend.OnFriendshipListener) bool {
 //	userForSDK.Conversation().GetTotalUnreadMsgCount(callback)
 //}
 //
-//func SetConversationListener(listener conversation_msg.OnConversationListener) {
-//	userForSDK.SetConversationListener(listener)
-//}
+func SetConversationListener(listener conversation_msg.OnConversationListener) {
+	userForSDK.SetConversationListener(listener)
+}
+
 //
 //func AddAdvancedMsgListener(listener conversation_msg.OnAdvancedMsgListener) {
 //	userForSDK.Conversation().AddAdvancedMsgListener(listener)

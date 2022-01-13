@@ -11,22 +11,13 @@ import (
 
 type DataBase struct {
 	loginUserID string
+	dbDir       string
 	conn        *gorm.DB
 	mRWMutex    sync.RWMutex
 }
 
-type IMConfig struct {
-	Platform int32  `json:"platform"`
-	ApiAddr  string `json:"api_addr"`
-	WsAddr   string `json:"ws_addr"`
-	DbDir    string `json:"db_dir"`
-	LogLevel uint32 `json:"log_level"`
-}
-
-var SvrConf IMConfig
-
-func NewDataBase(loginUserID string) (*DataBase, error) {
-	dataBase := &DataBase{loginUserID: loginUserID}
+func NewDataBase(loginUserID string, dbDir string) (*DataBase, error) {
+	dataBase := &DataBase{loginUserID: loginUserID, dbDir: dbDir}
 	return dataBase, utils.Wrap(dataBase.initDB(), "db init error")
 }
 
@@ -37,8 +28,8 @@ func (d *DataBase) initDB() error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 
-	db, err := gorm.Open(sqlite.Open(SvrConf.DbDir+"OpenIM_"+d.loginUserID+".db"), &gorm.Config{})
-	log.Info("open db:", SvrConf.DbDir+"OpenIM_"+d.loginUserID+".db")
+	db, err := gorm.Open(sqlite.Open(d.dbDir+"OpenIM_"+d.loginUserID+".db"), &gorm.Config{})
+	log.Info("open db:", d.dbDir+"OpenIM_"+d.loginUserID+".db")
 	if err != nil {
 		panic("failed to connect database" + err.Error())
 		return err

@@ -1,29 +1,29 @@
 package open_im_sdk
 
 import (
-	"open_im_sdk/internal/controller/init"
+	"open_im_sdk/internal/controller/login"
 	"sync"
 )
 
 func init() {
 	UserSDKRwLock.Lock()
 	defer UserSDKRwLock.Unlock()
-	UserRouterMap = make(map[string]*init.LoginMgr, 0)
+	UserRouterMap = make(map[string]*login.LoginMgr, 0)
 }
 
 var UserSDKRwLock sync.RWMutex
-var UserRouterMap map[string]*init.LoginMgr
+var UserRouterMap map[string]*login.LoginMgr
 
-var userForSDK *init.LoginMgr
+var userForSDK *login.LoginMgr
 
-func GetUserWorker(uid string) *init.LoginMgr {
+func GetUserWorker(uid string) *login.LoginMgr {
 	UserSDKRwLock.Lock()
 	defer UserSDKRwLock.Unlock()
 	v, ok := UserRouterMap[uid]
 	if ok {
 		return v
 	}
-	UserRouterMap[uid] = new(init.LoginMgr)
+	UserRouterMap[uid] = new(login.LoginMgr)
 
 	return UserRouterMap[uid]
 }

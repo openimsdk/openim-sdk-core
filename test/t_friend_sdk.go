@@ -7,6 +7,7 @@ import (
 	"open_im_sdk/internal/open_im_sdk"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 	"os"
 	"runtime"
 	"time"
@@ -395,12 +396,13 @@ func InOutLogou() {
 }
 
 func InOutDoTest(uid, tk, ws, api string) {
-	var cf utils.IMConfig
+	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
 
 	cf.WsAddr = ws
 	cf.Platform = 1
 	cf.DbDir = "./"
+	cf.LogLevel = 6
 
 	var s string
 	b, _ := json.Marshal(cf)
@@ -412,8 +414,8 @@ func InOutDoTest(uid, tk, ws, api string) {
 	var testConversation conversationCallBack
 	open_im_sdk.SetConversationListener(testConversation)
 
-	var msgCallBack MsgListenerCallBak
-	open_im_sdk.AddAdvancedMsgListener(msgCallBack)
+	//var msgCallBack MsgListenerCallBak
+	//open_im_sdk.AddAdvancedMsgListener(msgCallBack)
 
 	var friendListener testFriendListener
 	open_im_sdk.SetFriendListener(friendListener)
@@ -446,7 +448,7 @@ func lllogin(uid, tk string) bool {
 }
 
 func DoTest(uid, tk, ws, api string) {
-	var cf utils.IMConfig
+	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api // "http://120.24.45.199:10000"
 	//	cf.IpWsAddr = "wss://open-im.rentsoft.cn/wss"
 	cf.WsAddr = ws //"ws://120.24.45.199:17778"
@@ -463,8 +465,8 @@ func DoTest(uid, tk, ws, api string) {
 	var testConversation conversationCallBack
 	open_im_sdk.SetConversationListener(testConversation)
 
-	var msgCallBack MsgListenerCallBak
-	open_im_sdk.AddAdvancedMsgListener(msgCallBack)
+	//var msgCallBack MsgListenerCallBak
+	//open_im_sdk.AddAdvancedMsgListener(msgCallBack)
 
 	var friendListener testFriendListener
 	open_im_sdk.SetFriendListener(friendListener)
@@ -669,7 +671,7 @@ type MsgListenerCallBak struct {
 }
 
 func (m MsgListenerCallBak) OnRecvNewMessage(msg string) {
-	var mm utils.MsgStruct
+	var mm sdk_struct.MsgStruct
 	err := json.Unmarshal([]byte(msg), &mm)
 	if err != nil {
 		fmt.Println("Unmarshal failed")
@@ -709,7 +711,7 @@ func (c conversationCallBack) OnConversationChanged(conversationList string) {
 	fmt.Printf("OnConversationChanged returnList is %s\n", conversationList)
 }
 
-func (c conversationCallBack) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
+func (c conversationCallBack) OnTotalUnreadMessageCountChanged(totalUnreadCount int64) {
 	fmt.Printf("OnTotalUnreadMessageCountChanged returnTotalUnreadCount is %d\n", totalUnreadCount)
 }
 

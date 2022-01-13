@@ -7,7 +7,6 @@ import (
 	"open_im_sdk/pkg/db"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
-	"open_im_sdk/pkg/utils"
 )
 
 func (c *Conversation) getAllConversationList(callback common.Base, operationID string) sdk.GetAllConversationListCallback {
@@ -44,7 +43,7 @@ func (c *Conversation) getConversationRecvMessageOpt(callback common.Base, conve
 	return realData
 }
 func (c *Conversation) getOneConversation(callback common.Base, sourceID string, sessionType int32, operationID string) *db.LocalConversation {
-	conversationID := utils.GetConversationIDBySessionType(sourceID, sessionType)
+	conversationID := GetConversationIDBySessionType(sourceID, sessionType)
 	lc, err := c.db.GetConversation(conversationID)
 	common.CheckErr(callback, err, operationID)
 	if lc != nil {

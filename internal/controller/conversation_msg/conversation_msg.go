@@ -13,6 +13,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 )
 
 //type ChatLog struct {
@@ -92,7 +93,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		return
 	}
 	var insertMsg []*db.LocalChatLog
-	var errMsg, newMessages, msgReadList, msgRevokeList []*utils.MsgStruct
+	var errMsg, newMessages, msgReadList, msgRevokeList []*sdk_struct.MsgStruct
 	var isUnreadCount, isConversationUpdate, isHistory bool
 	var isCallbackUI bool
 	conversationChangedSet := make(map[string]db.LocalConversation)
@@ -107,7 +108,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		isUnreadCount = utils.GetSwitchFromOptions(v.Options, constant.IsUnreadCount)
 		isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
 		isCallbackUI = true
-		msg := new(utils.MsgStruct)
+		msg := new(sdk_struct.MsgStruct)
 		copier.Copy(msg, v)
 		msg.Content = string(v.Content)
 		msg.Status = constant.MsgStatusSendSuccess
@@ -153,14 +154,14 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				}
 				switch v.SessionType {
 				case constant.SingleChatType:
-					lc.ConversationID = utils.GetConversationIDBySessionType(v.RecvID, constant.SingleChatType)
+					lc.ConversationID = GetConversationIDBySessionType(v.RecvID, constant.SingleChatType)
 					lc.UserID = v.RecvID
 					//localUserInfo,_ := c.user.GetLoginUser()
 					//c.FaceURL = localUserInfo.FaceUrl
 					//c.ShowName = localUserInfo.Nickname
 				case constant.GroupChatType:
 					lc.GroupID = v.GroupID
-					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
+					lc.ConversationID = GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
 					//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
 					//if err != nil {
 					//	utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
@@ -193,13 +194,13 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 
 				switch v.SessionType {
 				case constant.SingleChatType:
-					lc.ConversationID = utils.GetConversationIDBySessionType(v.SendID, constant.SingleChatType)
+					lc.ConversationID = GetConversationIDBySessionType(v.SendID, constant.SingleChatType)
 					lc.UserID = v.SendID
 					lc.ShowName = msg.SenderNickname
 					lc.FaceURL = msg.SenderFaceURL
 				case constant.GroupChatType:
 					lc.GroupID = v.GroupID
-					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
+					lc.ConversationID = GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
 					//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
 					//if err != nil {
 					//	utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
@@ -269,7 +270,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	//sdkLog("length msgListenerList", u.MsgListenerList, "length message", len(newMessages), "msgListenerLen", len(u.MsgListenerList))
 
 }
-func (c *Conversation) msgStructToLocalChatLog(m *utils.MsgStruct) *db.LocalChatLog {
+func (c *Conversation) msgStructToLocalChatLog(m *sdk_struct.MsgStruct) *db.LocalChatLog {
 	var lc db.LocalChatLog
 	copier.Copy(&lc, m)
 	lc.SendTime = utils.UnixNanoSecondToTime(m.SendTime)
@@ -277,7 +278,7 @@ func (c *Conversation) msgStructToLocalChatLog(m *utils.MsgStruct) *db.LocalChat
 	return &lc
 }
 
-func (c *Conversation) revokeMessage(msgRevokeList []*utils.MsgStruct) {
+func (c *Conversation) revokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 	for _, v := range c.MsgListenerList {
 		for _, w := range msgRevokeList {
 			if v != nil {
@@ -297,7 +298,7 @@ func (c *Conversation) revokeMessage(msgRevokeList []*utils.MsgStruct) {
 		}
 	}
 }
-func (c *Conversation) newMessage(newMessagesList []*utils.MsgStruct) {
+func (c *Conversation) newMessage(newMessagesList []*sdk_struct.MsgStruct) {
 	for _, v := range c.MsgListenerList {
 		for _, w := range newMessagesList {
 			log.Info("internal", "newMessage: ", w.ClientMsgID)
@@ -329,8 +330,8 @@ func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
 	}
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 }
-func (c *Conversation) doMsgReadState(msgReadList []*utils.MsgStruct) {
-	var messageReceiptResp []*utils.MessageReceipt
+func (c *Conversation) doMsgReadState(msgReadList []*sdk_struct.MsgStruct) {
+	var messageReceiptResp []*sdk_struct.MessageReceipt
 	var msgIdList []string
 	for _, rd := range msgReadList {
 		err := json.Unmarshal([]byte(rd.Content), &msgIdList)
@@ -351,7 +352,7 @@ func (c *Conversation) doMsgReadState(msgReadList []*utils.MsgStruct) {
 			msgIdListStatusOK = append(msgIdListStatusOK, v)
 		}
 		if len(msgIdListStatusOK) > 0 {
-			msgRt := new(utils.MessageReceipt)
+			msgRt := new(sdk_struct.MessageReceipt)
 			msgRt.ContentType = rd.ContentType
 			msgRt.MsgFrom = rd.MsgFrom
 			msgRt.ReadTime = rd.SendTime
@@ -446,7 +447,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 
 	case constant.UpdateLatestMessageChange:
 		conversationID := node.ConId
-		var latestMsg utils.MsgStruct
+		var latestMsg sdk_struct.MsgStruct
 		l, err := c.GetConversation(conversationID)
 		if err != nil {
 			log.Error("internal", "getConversationLatestMsgModel err", err.Error())
@@ -509,7 +510,7 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 	}
 }
 
-func (c *Conversation) msgHandleByContentType(msg *utils.MsgStruct) (err error) {
+func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err error) {
 	switch msg.ContentType {
 	case constant.Text:
 	case constant.Picture:

@@ -1,7 +1,6 @@
 package group
 
 import (
-	"encoding/json"
 	"github.com/mitchellh/mapstructure"
 	ws "open_im_sdk/internal/controller/interaction"
 	"open_im_sdk/pkg/common"
@@ -11,6 +10,7 @@ import (
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 )
 
 type Group struct {
@@ -28,7 +28,7 @@ func (u *Group) DoGroupMsg(msg *api.MsgData) {
 	if u.listener == nil {
 		return
 	}
-	if msg.SendID == u.loginUserID && msg.SenderPlatformID == db.SvrConf.Platform {
+	if msg.SendID == u.loginUserID && msg.SenderPlatformID == sdk_struct.SvrConf.Platform {
 		return
 	}
 
@@ -59,14 +59,14 @@ func (u *Group) DoGroupMsg(msg *api.MsgData) {
 }
 
 func (u *Group) doCreateGroup(msg *api.MsgData) {
-	var n utils.NotificationContent
-	err := json.Unmarshal([]byte(msg.Content), &n)
-	if err != nil {
-		return
-	}
-	u.SyncJoinedGroupInfo()
-	u.syncGroupMemberByGroupID(n.Detail)
-	u.onGroupCreated(n.Detail)
+	//var n utils.NotificationContent
+	//err := json.Unmarshal([]byte(msg.Content), &n)
+	//if err != nil {
+	//	return
+	//}
+	//u.SyncJoinedGroupInfo()
+	//u.syncGroupMemberByGroupID(n.Detail)
+	//u.onGroupCreated(n.Detail)
 }
 
 func (u *Group) doJoinGroup(msg *api.MsgData) {

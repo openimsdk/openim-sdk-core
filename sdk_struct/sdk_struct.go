@@ -1,4 +1,6 @@
-package utils
+package sdk_struct
+
+import "open_im_sdk/pkg/server_api_params"
 
 //import "open_im_sdk/pkg/server_api_params"
 
@@ -815,3 +817,103 @@ type getReceiveMessageOptResp struct {
 	ErrMsg  string      `json:"errMsg"`
 	Data    []optResult `json:"data"`
 }
+
+type MsgStruct struct {
+	ClientMsgID      string                            `json:"clientMsgID"`
+	ServerMsgID      string                            `json:"serverMsgID"`
+	CreateTime       int64                             `json:"createTime"`
+	SendTime         int64                             `json:"sendTime"`
+	SessionType      int32                             `json:"sessionType"`
+	SendID           string                            `json:"sendID"`
+	RecvID           string                            `json:"recvID"`
+	MsgFrom          int32                             `json:"msgFrom"`
+	ContentType      int32                             `json:"contentType"`
+	SenderPlatformID int32                             `json:"platformID"`
+	ForceList        []string                          `json:"forceList"`
+	SenderNickname   string                            `json:"senderNickname"`
+	SenderFaceURL    string                            `json:"senderFaceUrl"`
+	GroupID          string                            `json:"groupID"`
+	Content          string                            `json:"content"`
+	Seq              int64                             `json:"seq"`
+	IsRead           bool                              `json:"isRead"`
+	Status           int32                             `json:"status"`
+	Remark           string                            `json:"remark"`
+	OfflinePush      server_api_params.OfflinePushInfo `json:"offlinePush"`
+	PictureElem      struct {
+		SourcePath      string          `json:"sourcePath"`
+		SourcePicture   PictureBaseInfo `json:"sourcePicture"`
+		BigPicture      PictureBaseInfo `json:"bigPicture"`
+		SnapshotPicture PictureBaseInfo `json:"snapshotPicture"`
+	} `json:"pictureElem"`
+	SoundElem struct {
+		UUID      string `json:"uuid"`
+		SoundPath string `json:"soundPath"`
+		SourceURL string `json:"sourceUrl"`
+		DataSize  int64  `json:"dataSize"`
+		Duration  int64  `json:"duration"`
+	} `json:"soundElem"`
+	VideoElem struct {
+		VideoPath      string `json:"videoPath"`
+		VideoUUID      string `json:"videoUUID"`
+		VideoURL       string `json:"videoUrl"`
+		VideoType      string `json:"videoType"`
+		VideoSize      int64  `json:"videoSize"`
+		Duration       int64  `json:"duration"`
+		SnapshotPath   string `json:"snapshotPath"`
+		SnapshotUUID   string `json:"snapshotUUID"`
+		SnapshotSize   int64  `json:"snapshotSize"`
+		SnapshotURL    string `json:"snapshotUrl"`
+		SnapshotWidth  int32  `json:"snapshotWidth"`
+		SnapshotHeight int32  `json:"snapshotHeight"`
+	} `json:"videoElem"`
+	FileElem struct {
+		FilePath  string `json:"filePath"`
+		UUID      string `json:"uuid"`
+		SourceURL string `json:"sourceUrl"`
+		FileName  string `json:"fileName"`
+		FileSize  int64  `json:"fileSize"`
+	} `json:"fileElem"`
+	MergeElem struct {
+		Title        string       `json:"title"`
+		AbstractList []string     `json:"abstractList"`
+		MultiMessage []*MsgStruct `json:"multiMessage"`
+	} `json:"mergeElem"`
+	AtElem struct {
+		Text       string   `json:"text"`
+		AtUserList []string `json:"atUserList"`
+		IsAtSelf   bool     `json:"isAtSelf"`
+	} `json:"atElem"`
+	LocationElem struct {
+		Description string  `json:"description"`
+		Longitude   float64 `json:"longitude"`
+		Latitude    float64 `json:"latitude"`
+	} `json:"locationElem"`
+	CustomElem struct {
+		Data        string `json:"data"`
+		Description string `json:"description"`
+		Extension   string `json:"extension"`
+	} `json:"customElem"`
+	QuoteElem struct {
+		Text         string     `json:"text"`
+		QuoteMessage *MsgStruct `json:"quoteMessage"`
+	} `json:"quoteElem"`
+	//RevokeMessage struct {
+	//	ServerMsgID    string `json:"serverMsgID"`
+	//	SendID         string `json:"sendID"`
+	//	SenderNickname string `json:"senderNickname"`
+	//	RecvID         string `json:"recvID"`
+	//	GroupID        string `json:"groupID"`
+	//	ContentType    int32  `json:"contentType"`
+	//	SendTime       int64  `json:"sendTime"`
+	//}
+}
+
+type IMConfig struct {
+	Platform int32  `json:"platform"`
+	ApiAddr  string `json:"api_addr"`
+	WsAddr   string `json:"ws_addr"`
+	DbDir    string `json:"db_dir"`
+	LogLevel uint32 `json:"log_level"`
+}
+
+var SvrConf IMConfig
