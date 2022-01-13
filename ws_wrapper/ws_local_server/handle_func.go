@@ -9,6 +9,7 @@ package ws_local_server
 import (
 	"encoding/json"
 	"reflect"
+	"runtime"
 )
 
 type Req struct {
@@ -55,6 +56,8 @@ func (ws *WServer) msgParse(conn *UserConn, jsonMsg []byte) {
 		if r := recover(); r != nil {
 			SendOneConnMessage(EventData{m.ReqFuncName, StatusBadParameter, StatusText(StatusBadParameter), "", m.OperationID}, conn)
 			wrapSdkLog("bad request, panic is ", r)
+			buf := make([]byte, 1<<16)
+			runtime.Stack(buf, true)
 		}
 	}()
 
