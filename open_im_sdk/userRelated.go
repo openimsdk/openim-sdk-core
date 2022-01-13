@@ -1,7 +1,7 @@
-package external
+package open_im_sdk
 
 import (
-	"open_im_sdk/internal/controller/login"
+	"open_im_sdk/internal/login"
 	"sync"
 )
 
