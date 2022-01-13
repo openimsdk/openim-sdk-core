@@ -125,6 +125,7 @@ func (g *Group) GetGroupMembersInfo(callback common.Base, groupID string, userID
 	go func() {
 		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, userIDList)
 		var unmarshalParam sdk_params_callback.GetGroupMembersInfoParam
+		common.JsonUnmarshal(userIDList, &unmarshalParam, callback, operationID)
 		groupMemberList := g.getGroupMembersInfo(callback, groupID, unmarshalParam, operationID)
 		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(groupMemberList)))
 		log.NewInfo(operationID, "GetGroupMembersInfo callback: ", utils.StructToJsonString(groupMemberList))
@@ -138,6 +139,7 @@ func (g *Group) KickGroupMember(callback common.Base, groupID string, reason str
 	go func() {
 		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, reason, userIDList)
 		var unmarshalParam sdk_params_callback.KickGroupMemberParam
+		common.JsonUnmarshal(userIDList, &unmarshalParam, callback, operationID)
 		result := g.kickGroupMember(callback, groupID, unmarshalParam, reason, operationID)
 		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(result)))
 		log.NewInfo(operationID, "GetGroupMembersInfo callback: ", utils.StructToJsonString(result))

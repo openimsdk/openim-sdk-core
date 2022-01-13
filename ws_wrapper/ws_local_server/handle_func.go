@@ -15,16 +15,16 @@ type Req struct {
 	ReqFuncName string `json:"reqFuncName" `
 	OperationID string `json:"operationID"`
 	Data        string `json:"data"`
-	UId         string `json:"userID"`
+	UserID      string `json:"userID"`
 }
 
 func (ws *WServer) DoLogin(m Req, conn *UserConn) {
 	UserRouteRwLock.RLock()
 	defer UserRouteRwLock.RUnlock()
-	urm, ok := UserRouteMap[m.UId]
+	urm, ok := UserRouteMap[m.UserID]
 	if !ok {
 		wrapSdkLog("user first login: ", m)
-		refR := GenUserRouterNoLock(m.UId)
+		refR := GenUserRouterNoLock(m.UserID)
 		params := []reflect.Value{reflect.ValueOf(m.Data), reflect.ValueOf(m.OperationID)}
 		vf, ok := (*refR.refName)[m.ReqFuncName]
 		if ok {
@@ -39,7 +39,7 @@ func (ws *WServer) DoLogin(m Req, conn *UserConn) {
 			//send ok
 			SendOneConnMessage(EventData{"Login", 0, "ok", "", m.OperationID}, conn)
 		} else {
-			wrapSdkLog("login status pending, try after 5 second ", urm.wsRouter.getMyLoginStatus(), m.UId)
+			wrapSdkLog("login status pending, try after 5 second ", urm.wsRouter.getMyLoginStatus(), m.UserID)
 			SendOneConnMessage(EventData{"Login", StatusLoginPending, StatusText(StatusLoginPending), "", m.OperationID}, conn)
 		}
 	}
@@ -72,9 +72,9 @@ func (ws *WServer) msgParse(conn *UserConn, jsonMsg []byte) {
 	defer UserRouteRwLock.RUnlock()
 	//	rwLock.RLock()
 	//	defer rwLock.RUnlock()
-	urm, ok := UserRouteMap[m.UId]
+	urm, ok := UserRouteMap[m.UserID]
 	if !ok {
-		wrapSdkLog("user not login failed, must login first: ", m.UId)
+		wrapSdkLog("user not login failed, must login first: ", m.UserID)
 		SendOneConnMessage(EventData{"Login", StatusNoLogin, StatusText(StatusNoLogin), "", m.OperationID}, conn)
 		return
 	}

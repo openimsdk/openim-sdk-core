@@ -450,7 +450,9 @@ func (u *Group) createGroup(callback common.Base, group sdk.CreateGroupBaseInfoP
 	}
 	u.SyncJoinedGroupInfo()
 	u.syncGroupMemberByGroupID(realData.GroupInfo.GroupID)
-	return &sdk.CreateGroupCallback{GroupInfo: realData.GroupInfo}
+	var temp sdk.CreateGroupCallback
+	temp = sdk.CreateGroupCallback(realData.GroupInfo)
+	return &temp
 }
 
 func (u *Group) joinGroup(groupID, reqMsg string, callback common.Base, operationID string) *api.CommDataResp {
@@ -520,8 +522,8 @@ func (u *Group) getGroupMemberList(callback common.Base, groupID string, filter 
 }
 
 //todo
-func (u *Group) getGroupMembersInfo(callback common.Base, groupID string, userList sdk.GetGroupMembersInfoParam, operationID string) sdk.GetGroupMembersInfoCallback {
-	groupInfoList, err := u.db.GetGroupMemberListByGroupID(groupID)
+func (u *Group) getGroupMembersInfo(callback common.Base, groupID string, userIDList sdk.GetGroupMembersInfoParam, operationID string) sdk.GetGroupMembersInfoCallback {
+	groupInfoList, err := u.db.GetGroupSomeMemberInfo(groupID, userIDList)
 	common.CheckErr(callback, err, operationID)
 	return groupInfoList
 }
