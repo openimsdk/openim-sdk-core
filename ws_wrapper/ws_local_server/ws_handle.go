@@ -97,8 +97,8 @@ func GenUserRouterNoLock(uid string) *RefRouter {
 	var wsRouter1 WsFuncRouter
 	wsRouter1.uId = uid
 	//	wsRouter1.conn = conn
-	wsRouter1.AddAdvancedMsgListener()
-	wsRouter1.SetConversationListener()
+	//wsRouter1.AddAdvancedMsgListener()
+	//wsRouter1.SetConversationListener()
 	wsRouter1.SetFriendListener()
 	wsRouter1.SetGroupListener()
 	vf := reflect.ValueOf(&wsRouter1)

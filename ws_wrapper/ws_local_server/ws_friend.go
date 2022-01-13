@@ -1,7 +1,7 @@
 package ws_local_server
 
 import (
-	"open_im_sdk/internal/open_im_sdk"
+	"open_im_sdk/open_im_sdk"
 )
 
 type FriendCallback struct {

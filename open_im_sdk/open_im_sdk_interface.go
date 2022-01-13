@@ -376,3 +376,12 @@ func SetConversationListener(listener conversation_msg.OnConversationListener) {
 //func FindMessages(callback common.Base, operationID string, messageIDList string) {
 //	userForSDK.Conversation().FindMessages(callback, messageIDList)
 //}
+
+func InitOnce(config *sdk_struct.IMConfig) bool {
+	sdk_struct.SvrConf = *config
+	return true
+}
+
+func CheckToken(userID, token string) int {
+	return 0
+}

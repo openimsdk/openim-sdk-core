@@ -2,8 +2,8 @@ package ws_local_server
 
 import (
 	"encoding/json"
-	"open_im_sdk/internal/open_im_sdk"
-	"open_im_sdk/pkg/constant"
+	"open_im_sdk/open_im_sdk"
+	//	"open_im_sdk/pkg/constant"
 	//	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 )
@@ -62,8 +62,10 @@ func (wsRouter *WsFuncRouter) InitSDK(config string, operationID string) {
 	var initcb InitCallback
 	initcb.uid = wsRouter.uId
 	wrapSdkLog("Initsdk uid: ", initcb.uid)
+	c := sdk_struct.IMConfig{}
+	json.Unmarshal([]byte(config), &c)
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if userWorker.InitSDK(config, &initcb) {
+	if userWorker.InitSDK(c, &initcb) {
 		//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", "", operationID})
 	} else {
 		//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), open_im_sdk.ErrCodeInitLogin, "init config failed", "", operationID})
@@ -72,12 +74,12 @@ func (wsRouter *WsFuncRouter) InitSDK(config string, operationID string) {
 
 func (wsRouter *WsFuncRouter) UnInitSDK() {
 	wrapSdkLog("UnInitSDK uid: ", wsRouter.uId)
-	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	//	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	//	userWorker.UnInitSDK()
-	constant.UserSDKRwLock.Lock()
-	delete(constant.UserRouterMap, wsRouter.uId)
+	open_im_sdk.UserSDKRwLock.Lock()
+	delete(open_im_sdk.UserRouterMap, wsRouter.uId)
 	wrapSdkLog("delete UnInitSDK uid: ", wsRouter.uId)
-	constant.UserSDKRwLock.Unlock()
+	open_im_sdk.UserSDKRwLock.Unlock()
 }
 
 func (wsRouter *WsFuncRouter) checkKeysIn(input, operationID, funcName string, m map[string]interface{}, keys ...string) bool {
@@ -99,11 +101,11 @@ func (wsRouter *WsFuncRouter) Login(input string, operationID string) {
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
-	userWorker := init.GetUserWorker(wsRouter.uId)
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "uid", "token") {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "userID", "token") {
 		return
 	}
-	userWorker.Login(m["uid"].(string), m["token"].(string), &BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	userWorker.Login(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["userID"].(string), m["token"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) Logout(input string, operationID string) {
@@ -114,18 +116,18 @@ func (wsRouter *WsFuncRouter) Logout(input string, operationID string) {
 }
 
 func (wsRouter *WsFuncRouter) LogoutNoCallback(input string, operationID string) {
-	userWorker := init.GetUserWorker(wsRouter.uId)
-	userWorker.Logout(nil)
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Logout(nil, operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetLoginStatus(input string, operationID string) {
-	userWorker := init.GetUserWorker(wsRouter.uId)
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", int32ToString(int32(userWorker.GetLoginStatus())), operationID})
 }
 
 //1
-func (wsRouter *WsFuncRouter) getMyLoginStatus() int {
-	userWorker := init.GetUserWorker(wsRouter.uId)
+func (wsRouter *WsFuncRouter) getMyLoginStatus() int32 {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	return userWorker.GetLoginStatus()
 }
 
