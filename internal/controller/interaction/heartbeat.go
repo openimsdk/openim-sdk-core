@@ -15,7 +15,7 @@ type Heartbeat struct {
 }
 
 func NewHeartbeat(msgSync *MsgSync) *Heartbeat {
-	p := Heartbeat{ MsgSync: msgSync}
+	p := Heartbeat{MsgSync: msgSync}
 	go p.Run()
 	return &p
 }
@@ -35,7 +35,7 @@ func (u *Heartbeat) Run() {
 		resp, err, operationID := u.SendReqWaitResp(nil, constant.WSGetNewestSeq, reqTimeout, u.loginUserID)
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.loginUserID)
-			if  u.IsWriteTimeout(err)
+			//	if  u.IsWriteTimeout(err)
 			if errors.Is(err, constant.WsRecvCode) {
 				log.Error(operationID, "is WsRecvCode, CloseConn")
 				u.CloseConn()
