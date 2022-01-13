@@ -239,7 +239,7 @@ func (f *Friend) setFriendRemark(params sdk_params_callback.SetFriendRemarkParam
 func (f *Friend) getServerFriendList(operationID string) ([]*server_api_params.FriendInfo, error) {
 	apiReq := server_api_params.GetFriendListReq{OperationID: operationID, FromUserID: f.loginUserID}
 	resp, err := network.Post2Api(constant.GetFriendListRouter, apiReq, operationID)
-	commData, err := common.CheckErrAndRespReturn(err, resp, apiReq.OperationID)
+	commData, err := common.CheckErrAndRespReturn(err, resp)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
@@ -314,7 +314,7 @@ func (f *Friend) doBlackList() {
 
 func (f *Friend) getServerBlackList(operationID string) ([]*server_api_params.PublicUserInfo, error) {
 	apiReq := server_api_params.GetBlackListReq{OperationID: operationID, FromUserID: f.loginUserID}
-	commData, err := f.p.PostReturn(constant.GetBlackListRouter, apiReq, operationID)
+	commData, err := f.p.PostReturn(constant.GetBlackListRouter, apiReq)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
@@ -326,7 +326,7 @@ func (f *Friend) getServerBlackList(operationID string) ([]*server_api_params.Pu
 func (f *Friend) getServerFriendApplication(operationID string) ([]*server_api_params.FriendRequest, error) {
 	apiReq := server_api_params.GetFriendApplyListReq{OperationID: operationID, FromUserID: f.loginUserID}
 	resp, err := network.Post2Api(constant.GetFriendApplicationListRouter, apiReq, operationID)
-	commData, err := common.CheckErrAndRespReturn(err, resp, apiReq.OperationID)
+	commData, err := common.CheckErrAndRespReturn(err, resp)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}

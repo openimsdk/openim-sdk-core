@@ -579,7 +579,7 @@ func (u *Group) getGroupApplicationListFromSvr() ([]*api.GroupRequest, error) {
 	apiReq := api.GetGroupApplicationListReq{}
 	apiReq.FromUserID = u.loginUserID
 	apiReq.OperationID = utils.OperationIDGenerator()
-	commData, err := u.p.PostReturn(constant.GetGroupApplicationListRouter, apiReq, apiReq.OperationID)
+	commData, err := u.p.PostReturn(constant.GetGroupApplicationListRouter, apiReq)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
@@ -653,7 +653,7 @@ func (g *Group) getJoinedGroupListFromSvr() ([]*api.GroupInfo, error) {
 	apiReq := api.GetJoinedGroupListReq{}
 	apiReq.OperationID = utils.OperationIDGenerator()
 	apiReq.FromUserID = g.loginUserID
-	commData, err := g.p.PostReturn(constant.GetJoinedGroupListRouter, apiReq, apiReq.OperationID)
+	commData, err := g.p.PostReturn(constant.GetJoinedGroupListRouter, apiReq)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
@@ -696,7 +696,7 @@ func (u *Group) getGroupMembersInfoFromSvr(groupID string, memberList []string) 
 	apiReq.OperationID = utils.OperationIDGenerator()
 	apiReq.GroupID = groupID
 	apiReq.MemberList = memberList
-	commData, err := u.p.PostReturn(constant.GetGroupMembersInfoRouter, apiReq, apiReq.OperationID)
+	commData, err := u.p.PostReturn(constant.GetGroupMembersInfoRouter, apiReq)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
@@ -867,7 +867,7 @@ func (u *Group) getGroupAllMemberByGroupIDFromSvr(groupID string) ([]*api.GroupM
 	var apiReq api.GetGroupAllMemberReq
 	apiReq.OperationID = utils.OperationIDGenerator()
 	apiReq.GroupID = groupID
-	commData, err := u.p.PostReturn(constant.GetGroupAllMemberListRouter, apiReq, apiReq.OperationID)
+	commData, err := u.p.PostReturn(constant.GetGroupAllMemberListRouter, apiReq)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}

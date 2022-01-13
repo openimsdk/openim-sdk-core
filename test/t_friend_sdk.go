@@ -272,7 +272,7 @@ func DoTestaddFriend() {
 
 	jsontestaddFriend, _ := json.Marshal(testaddFriend)
 	fmt.Println("addFriend input:", string(jsontestaddFriend))
-	open_im_sdk.AddFriend(testaddFriend, string(jsontestaddFriend), "1ef1345regqdfgv")
+	open_im_sdk.AddFriend(testaddFriend, "1ef1345regqdfgv", string(jsontestaddFriend))
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -424,6 +424,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	open_im_sdk.SetGroupListener(groupListener)
 
 	InOutlllogin(uid, tk)
+	time.Sleep(30 * time.Second)
 }
 
 func lllogin(uid, tk string) bool {

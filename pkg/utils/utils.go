@@ -279,7 +279,7 @@ func WithMessage(err error, message string) error {
 
 func GetSelfFuncName() string {
 	pc, _, _, _ := runtime.Caller(1)
-	return runtime.FuncForPC(pc).Name()
+	return cleanUpfuncName(runtime.FuncForPC(pc).Name())
 }
 
 func printCallerNameAndLine() string {

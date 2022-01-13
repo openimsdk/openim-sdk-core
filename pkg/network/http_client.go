@@ -3,8 +3,10 @@ package network
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"time"
 )
@@ -36,13 +38,13 @@ func retry(url string, data interface{}, token string, attempts int, sleep time.
 
 //application/json; charset=utf-8
 func Post2Api(url string, data interface{}, token string) (content []byte, err error) {
+	c, err := postLogic(url, data, token)
+	return c, utils.Wrap(err, " post")
 	return retry(url, data, token, 1, 10*time.Second, postLogic)
 }
 
 func Post2ApiForRead(url string, data interface{}, token string) (content []byte, err error) {
-
 	return retry(url, data, token, 3, 10*time.Second, postLogic)
-
 }
 
 func postLogic(url string, data interface{}, token string) (content []byte, err error) {
@@ -63,6 +65,9 @@ func postLogic(url string, data interface{}, token string) (content []byte, err 
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, utils.Wrap(err, "client.Do failed, url")
+	}
+	if resp.StatusCode != 200 {
+		return nil, utils.Wrap(errors.New(resp.Status), "status code failed ")
 	}
 	defer resp.Body.Close()
 	result, err := ioutil.ReadAll(resp.Body)

@@ -70,24 +70,22 @@ func CheckResp(callback Base, resp []byte, operationID string) *server_api_param
 	return &c
 }
 
-func CheckErrAndRespReturn(err error, resp []byte, operationID string) (*server_api_params.CommDataResp, error) {
+func CheckErrAndRespReturn(err error, resp []byte) (*server_api_params.CommDataResp, error) {
 	if err != nil {
-		log.NewError(operationID, "checkErr ", err)
-		return nil, err
+		return nil, utils.Wrap(err, "resp failed")
 	}
 	var c server_api_params.CommDataResp
 	err = json.Unmarshal(resp, &c)
 	if err != nil {
-		log.NewError(operationID, "Unmarshal ", err)
-		return nil, err
+		return nil, utils.Wrap(err, "")
 	}
 
 	if c.ErrCode != 0 {
-		log.NewError(operationID, "errCode ", c.ErrCode, "errMsg ", c.ErrMsg)
-		return nil, errors.New(c.ErrMsg)
+		return nil, utils.Wrap(errors.New(c.ErrMsg), "")
 	}
 	return &c, nil
 }
+
 func JsonUnmarshalAndArgsValidate(s string, args interface{}, callback Base, operationID string) error {
 	err := json.Unmarshal([]byte(s), args)
 	if err != nil {
