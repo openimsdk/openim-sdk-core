@@ -46,11 +46,10 @@ func (ws *Ws) SetSeqMsg(seqMsg map[int32]server_api_params.MsgData) {
 func (ws *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, connSend *websocket.Conn) (*GeneralWsResp, error) {
 	select {
 	case r := <-ch:
-		log.Info(operationID, "ws ch recvMsg success: ")
+		log.Debug(operationID, "ws ch recvMsg success, code ", r.ErrCode, r.ErrMsg)
 		if r.ErrCode != 0 {
 			return nil, constant.WsRecvCode
 		} else {
-			log.Info(operationID, "ws ch recvMsg success")
 			return &r, nil
 		}
 
@@ -77,7 +76,7 @@ func (ws *Ws) SendReqWaitResp(buff []byte, reqIdentifier int32, timeout int, Sen
 	err, connSend := ws.writeBinaryMsg(wsReq)
 	if err != nil {
 		log.Error(wsReq.OperationID, "ws send err ", err.Error(), wsReq)
-		return nil, err, wsReq.OperationID
+		return nil, utils.Wrap(err, ""), wsReq.OperationID
 	}
 	r1, r2 := ws.WaitResp(ch, timeout, wsReq.OperationID, connSend)
 	return r1, r2, wsReq.OperationID
@@ -86,33 +85,37 @@ func (ws *Ws) SendReqWaitResp(buff []byte, reqIdentifier int32, timeout int, Sen
 func (u *Ws) ReadData() {
 	for {
 		isErrorOccurred := false
+		operationID := utils.OperationIDGenerator()
 		if u.WsConn.conn != nil {
-			timeout := 5
-			u.WsConn.SetReadTimeout(timeout)
+			//	timeout := 5
+			//	u.WsConn.SetReadTimeout(timeout)
 			msgType, message, err := u.WsConn.conn.ReadMessage()
 			if err != nil {
 				isErrorOccurred = true
 				if u.WsConn.IsFatalError(err) {
-					log.Error("0", "fatal error, failed ", err.Error())
+					log.Error(operationID, "IsFatalError ", err.Error(), "ReConn")
 					u.WsConn.ReConn()
 				} else {
-					log.Warn("0", "other err  ", err.Error())
+					log.Warn(operationID, "other err  ", err.Error())
 				}
 			} else {
 				if msgType == websocket.CloseMessage {
+					log.Error(operationID, "type websocket.CloseMessage, ReConn")
 					u.WsConn.ReConn()
 				} else if msgType == websocket.TextMessage {
-					log.Warn("recv websocket.TextMessage type", string(message))
+					log.Warn(operationID, "type websocket.TextMessage")
 				} else if msgType == websocket.BinaryMessage {
 					u.doWsMsg(message)
 				} else {
-					log.Warn("recv other type", string(message), msgType)
+					log.Warn(operationID, "recv other type ", msgType)
 				}
 			}
 		} else {
+			log.Error(operationID, "conn == nil, ReConn")
 			_, err := u.WsConn.ReConn()
 			if err != nil {
 				isErrorOccurred = true
+				log.Error(operationID, "ReConn failed ", err.Error())
 			}
 		}
 
@@ -123,10 +126,12 @@ func (u *Ws) ReadData() {
 					u.SetLoginState(constant.Logout)
 					return
 				} else {
-					log.Warn("0", "other cmd ...", r.Cmd)
+					log.Warn(operationID, "other cmd ...", r.Cmd)
+					break
 				}
 			case <-time.After(time.Microsecond * time.Duration(1000)):
-				log.Warn("0", "timeout... ", 1000)
+				log.Warn(operationID, "timeout... ", 1000)
+				break
 			}
 		}
 	}

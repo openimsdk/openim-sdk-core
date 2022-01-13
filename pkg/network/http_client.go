@@ -6,7 +6,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
-	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"time"
 )

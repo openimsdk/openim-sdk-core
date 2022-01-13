@@ -22,20 +22,26 @@ func NewUser(dataBase *db.DataBase, p *ws.PostApi, loginUserID string) *User {
 	return &User{DataBase: dataBase, p: p, loginUserID: loginUserID}
 }
 
-func (u *User) SyncLoginUserInfo() error {
-	svr, err := u.GetSelfUserInfoFromSvr()
+func (u *User) SyncLoginUserInfo() {
+	operationID := utils.OperationIDGenerator()
+	svr, err := u.GetSelfUserInfoFromSvr(operationID)
 	if err != nil {
-		return utils.Wrap(err, "_getSelfUserInfoFromSvr failed")
+		log.Error(operationID, "GetSelfUserInfoFromSvr failed")
+		return
 	}
 	onServer := common.TransferToLocalUserInfo(svr)
 	onLocal, err := u.GetLoginUser()
 	if err != nil {
-		return utils.Wrap(err, "GetLoginUser failed")
+		log.Error(operationID, "TransferToLocalUserInfo failed")
+		return
 	}
 	if onServer != onLocal {
 		u.UpdateLoginUser(onServer)
+		if err != nil {
+			log.Error(operationID, "UpdateLoginUser failed", onServer)
+			return
+		}
 	}
-	return nil
 }
 
 func (u *User) getUsersInfoFromSvr(callback common.Base, UserIDList sdk.GetUsersInfoParam, operationID string) sdk.GetUsersInfoCallback {
@@ -67,11 +73,10 @@ func (u *User) updateSelfUserInfo(callback common.Base, userInfo sdk.SetSelfUser
 	return &apiResp
 }
 
-func (u *User) GetSelfUserInfoFromSvr() (*api.UserInfo, error) {
-	log.Debug("0", utils.GetSelfFuncName())
-
+func (u *User) GetSelfUserInfoFromSvr(operationID string) (*api.UserInfo, error) {
+	log.Debug(operationID, utils.GetSelfFuncName())
 	apiReq := api.GetSelfUserInfoReq{}
-	apiReq.OperationID = utils.OperationIDGenerator()
+	apiReq.OperationID = operationID
 	apiReq.UserID = u.loginUserID
 	commData, err := u.p.PostReturn(constant.GetSelfUserInfo, apiReq)
 	if err != nil {

@@ -575,10 +575,10 @@ func (u *Group) getGroupApplicationList(callback common.Base, operationID string
 	return applicationList
 }
 
-func (u *Group) getGroupApplicationListFromSvr() ([]*api.GroupRequest, error) {
+func (u *Group) getGroupApplicationListFromSvr(operationID string) ([]*api.GroupRequest, error) {
 	apiReq := api.GetGroupApplicationListReq{}
 	apiReq.FromUserID = u.loginUserID
-	apiReq.OperationID = utils.OperationIDGenerator()
+	apiReq.OperationID = operationID
 	commData, err := u.p.PostReturn(constant.GetGroupApplicationListRouter, apiReq)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
@@ -649,9 +649,9 @@ func (u *Group) processGroupApplication(callback common.Base, groupID, fromUserI
 //	}
 //}
 
-func (g *Group) getJoinedGroupListFromSvr() ([]*api.GroupInfo, error) {
+func (g *Group) getJoinedGroupListFromSvr(operationID string) ([]*api.GroupInfo, error) {
 	apiReq := api.GetJoinedGroupListReq{}
-	apiReq.OperationID = utils.OperationIDGenerator()
+	apiReq.OperationID = operationID
 	apiReq.FromUserID = g.loginUserID
 	commData, err := g.p.PostReturn(constant.GetJoinedGroupListRouter, apiReq)
 	if err != nil {
@@ -734,37 +734,38 @@ func (u *Group) SyncSelfGroupRequest() {
 }
 
 func (u *Group) SyncGroupRequest() {
-	svrList, err := u.getGroupApplicationListFromSvr()
+	operationID := utils.OperationIDGenerator()
+	svrList, err := u.getGroupApplicationListFromSvr(operationID)
 	if err != nil {
-		log.NewError("0", "getGroupApplicationListFromSvr failed ", err.Error())
+		log.NewError(operationID, "getGroupApplicationListFromSvr failed ", err.Error())
 		return
 	}
 	onServer := common.TransferToLocalGroupRequest(svrList)
 	onLocal, err := u.db.GetRecvGroupApplication()
 	if err != nil {
-		log.NewError("0", "GetJoinedGroupList failed ", err.Error())
+		log.NewError(operationID, "GetJoinedGroupList failed ", err.Error())
 		return
 	}
-	log.NewInfo("0", "svrList onServer onLocal", svrList, onServer, onLocal)
+	log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
 	aInBNot, bInANot, sameA, _ := common.CheckGroupRequestDiff(onServer, onLocal)
 	for _, index := range aInBNot {
 		err := u.db.InsertGroupRequest(onServer[index])
 		if err != nil {
-			log.NewError("0", "InsertGroupRequest failed ", err.Error())
+			log.NewError(operationID, "InsertGroupRequest failed ", err.Error())
 			continue
 		}
 	}
 	for _, index := range sameA {
 		err := u.db.UpdateGroupRequest(onServer[index])
 		if err != nil {
-			log.NewError("0", "UpdateGroupRequest failed ", err.Error())
+			log.NewError(operationID, "UpdateGroupRequest failed ", err.Error())
 			continue
 		}
 	}
 	for _, index := range bInANot {
 		err := u.db.DeleteGroupRequest(onServer[index].GroupID, onServer[index].UserID)
 		if err != nil {
-			log.NewError("0", "DeleteGroupRequest failed ", err.Error())
+			log.NewError(operationID, "DeleteGroupRequest failed ", err.Error())
 			continue
 		}
 	}
@@ -775,37 +776,38 @@ func (g *Group) SyncApplyGroupRequest() {
 }
 
 func (u *Group) SyncJoinedGroupInfo() {
-	svrList, err := u.getJoinedGroupListFromSvr()
+	operationID := utils.OperationIDGenerator()
+	svrList, err := u.getJoinedGroupListFromSvr(operationID)
 	if err != nil {
-		log.NewError("0", "getJoinedGroupListFromSvr failed ", err.Error())
+		log.NewError(operationID, "getJoinedGroupListFromSvr failed ", err.Error())
 		return
 	}
 	onServer := common.TransferToLocalGroupInfo(svrList)
 	onLocal, err := u.db.GetJoinedGroupList()
 	if err != nil {
-		log.NewError("0", "GetRecvFriendApplication failed ", err.Error())
+		log.NewError(operationID, "GetRecvFriendApplication failed ", err.Error())
 		return
 	}
-	log.NewInfo("0", "svrList onServer onLocal", svrList, onServer, onLocal)
+	log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
 	aInBNot, bInANot, sameA, _ := common.CheckGroupInfoDiff(onServer, onLocal)
 	for _, index := range aInBNot {
 		err := u.db.InsertGroup(onServer[index])
 		if err != nil {
-			log.NewError("0", "InsertGroup failed ", err.Error())
+			log.NewError(operationID, "InsertGroup failed ", err.Error())
 			continue
 		}
 	}
 	for _, index := range sameA {
 		err := u.db.UpdateGroup(onServer[index])
 		if err != nil {
-			log.NewError("0", "UpdateGroup failed ", err.Error())
+			log.NewError(operationID, "UpdateGroup failed ", err.Error())
 			continue
 		}
 	}
 	for _, index := range bInANot {
 		err := u.db.DeleteGroup(onServer[index].GroupID)
 		if err != nil {
-			log.NewError("0", "DeleteGroup failed ", err.Error())
+			log.NewError(operationID, "DeleteGroup failed ", err.Error())
 			continue
 		}
 	}
@@ -816,46 +818,48 @@ func (u *Group) SyncJoinedGroupInfo() {
 //}
 
 func (u *Group) syncGroupMemberByGroupID(groupID string) {
-	svrList, err := u.getGroupAllMemberByGroupIDFromSvr(groupID)
+	operationID := utils.OperationIDGenerator()
+	svrList, err := u.getGroupAllMemberByGroupIDFromSvr(groupID, operationID)
 	if err != nil {
-		log.NewError("0", "getGroupAllMemberByGroupIDFromSvr failed ", err.Error())
+		log.NewError(operationID, "getGroupAllMemberByGroupIDFromSvr failed ", err.Error())
 		return
 	}
 	onServer := common.TransferToLocalGroupMember(svrList)
 	onLocal, err := u.db.GetGroupMemberListByGroupID(groupID)
 	if err != nil {
-		log.NewError("0", "GetGroupMemberListByGroupID failed ", err.Error())
+		log.NewError(operationID, "GetGroupMemberListByGroupID failed ", err.Error())
 		return
 	}
-	log.NewInfo("0", "svrList onServer onLocal", svrList, onServer, onLocal)
+	log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
 	aInBNot, bInANot, sameA, _ := common.CheckGroupMemberDiff(onServer, onLocal)
 	for _, index := range aInBNot {
 		err := u.db.InsertGroupMember(onServer[index])
 		if err != nil {
-			log.NewError("0", "InsertGroupMember failed ", err.Error())
+			log.NewError(operationID, "InsertGroupMember failed ", err.Error())
 			continue
 		}
 	}
 	for _, index := range sameA {
 		err := u.db.UpdateGroupMember(onServer[index])
 		if err != nil {
-			log.NewError("0", "UpdateGroupMember failed ", err.Error())
+			log.NewError(operationID, "UpdateGroupMember failed ", err.Error())
 			continue
 		}
 	}
 	for _, index := range bInANot {
 		err := u.db.DeleteGroupMember(onServer[index].GroupID, onServer[index].UserID)
 		if err != nil {
-			log.NewError("0", "DeleteGroupMember failed ", err.Error())
+			log.NewError(operationID, "DeleteGroupMember failed ", err.Error())
 			continue
 		}
 	}
 }
 
 func (u *Group) syncJoinedGroupMember() {
-	groupListOnServer, err := u.getJoinedGroupListFromSvr()
+	operationID := utils.OperationIDGenerator()
+	groupListOnServer, err := u.getJoinedGroupListFromSvr(operationID)
 	if err != nil {
-		log.Error("0", "getJoinedGroupListFromSvr failed ", err.Error())
+		log.Error(operationID, "getJoinedGroupListFromSvr failed ", err.Error())
 		return
 	}
 	for _, v := range groupListOnServer {
@@ -863,9 +867,9 @@ func (u *Group) syncJoinedGroupMember() {
 	}
 }
 
-func (u *Group) getGroupAllMemberByGroupIDFromSvr(groupID string) ([]*api.GroupMemberFullInfo, error) {
+func (u *Group) getGroupAllMemberByGroupIDFromSvr(groupID string, operationID string) ([]*api.GroupMemberFullInfo, error) {
 	var apiReq api.GetGroupAllMemberReq
-	apiReq.OperationID = utils.OperationIDGenerator()
+	apiReq.OperationID = operationID
 	apiReq.GroupID = groupID
 	commData, err := u.p.PostReturn(constant.GetGroupAllMemberListRouter, apiReq)
 	if err != nil {

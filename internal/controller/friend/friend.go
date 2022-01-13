@@ -7,10 +7,10 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/network"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+	"strings"
 )
 
 type Friend struct {
@@ -63,7 +63,6 @@ func (f *Friend) addFriend(callback common.Base, addFriendParams sdk_params_call
 	apiReq.FromUserID = f.loginUserID
 	apiReq.ReqMsg = addFriendParams.ReqMsg
 	apiReq.OperationID = operationID
-	log.NewInfo(apiReq.OperationID, "post2Api ", constant.AddFriendRouter, apiReq)
 	return f.p.PostFatalCallback(callback, constant.AddFriendRouter, apiReq, operationID)
 }
 
@@ -238,14 +237,14 @@ func (f *Friend) setFriendRemark(params sdk_params_callback.SetFriendRemarkParam
 
 func (f *Friend) getServerFriendList(operationID string) ([]*server_api_params.FriendInfo, error) {
 	apiReq := server_api_params.GetFriendListReq{OperationID: operationID, FromUserID: f.loginUserID}
-	resp, err := network.Post2Api(constant.GetFriendListRouter, apiReq, operationID)
-	commData, err := common.CheckErrAndRespReturn(err, resp)
+	resp, err := f.p.PostReturn(constant.GetFriendListRouter, apiReq)
+	//	commData, err := common.CheckErrAndRespReturn(err, resp)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 
 	realData := server_api_params.GetFriendListResp{}
-	err = mapstructure.Decode(commData.Data, &realData.FriendInfoList)
+	err = mapstructure.Decode(resp.Data, &realData.FriendInfoList)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
@@ -325,13 +324,12 @@ func (f *Friend) getServerBlackList(operationID string) ([]*server_api_params.Pu
 
 func (f *Friend) getServerFriendApplication(operationID string) ([]*server_api_params.FriendRequest, error) {
 	apiReq := server_api_params.GetFriendApplyListReq{OperationID: operationID, FromUserID: f.loginUserID}
-	resp, err := network.Post2Api(constant.GetFriendApplicationListRouter, apiReq, operationID)
-	commData, err := common.CheckErrAndRespReturn(err, resp)
+	resp, err := f.p.PostReturn(constant.GetFriendApplicationListRouter, apiReq)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 	realData := server_api_params.GetFriendApplyListResp{}
-	mapstructure.Decode(commData.Data, &realData.FriendRequestList)
+	mapstructure.Decode(resp.Data, &realData.FriendRequestList)
 	return realData.FriendRequestList, nil
 }
 
@@ -422,122 +420,127 @@ func (f *Friend) SyncSelfFriendApplication() {
 }
 
 func (f *Friend) SyncFriendApplication() {
-
-	svrList, err := f.getServerFriendApplication("")
+	operationID := utils.OperationIDGenerator()
+	svrList, err := f.getServerFriendApplication(operationID)
 	if err != nil {
-		log.NewError("0", "getServerFriendList failed ", err.Error())
+		log.NewError(operationID, "getServerFriendList failed ", err.Error())
 		return
 	}
 	onServer := common.TransferToLocalFriendRequest(svrList)
 	onLocal, err := f.db.GetRecvFriendApplication()
 	if err != nil {
-		log.NewError("0", "GetRecvFriendApplication failed ", err.Error())
+		log.NewError(operationID, "GetRecvFriendApplication failed ", err.Error())
 		return
 	}
-	log.NewInfo("0", "svrList", svrList)
-	log.NewInfo("0", "onServer", onServer)
-	log.NewInfo("0", "onLocal", onLocal)
+	log.NewInfo(operationID, "svrList", svrList)
+	log.NewInfo(operationID, "onServer", onServer)
+	log.NewInfo(operationID, "onLocal", onLocal)
 
-	aInBNot, bInANot, sameA, _ := common.CheckFriendRequestDiff(onServer, onLocal)
+	aInBNot, bInANot, sameA, sameB := common.CheckFriendRequestDiff(onServer, onLocal)
+	log.Debug(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
 	for _, index := range aInBNot {
 		err := f.db.InsertFriendRequest(onServer[index])
 		if err != nil {
-			log.NewError("0", "InsertFriendRequest failed ", err.Error())
+			log.NewError(operationID, "InsertFriendRequest failed ", err.Error())
 			continue
 		}
 	}
 	for _, index := range sameA {
 		err := f.db.UpdateFriendRequest(onServer[index])
 		if err != nil {
-			log.NewError("0", "UpdateFriendRequest failed ", err.Error())
+			if !strings.Contains(err.Error(), "RowsAffected == 0") {
+				log.NewError(operationID, "UpdateFriendRequest failed ", err.Error(), *onServer[index])
+			}
 			continue
 		}
 	}
 	for _, index := range bInANot {
 		err := f.db.DeleteFriendRequestBothUserID(onServer[index].FromUserID, onServer[index].ToUserID)
 		if err != nil {
-			log.NewError("0", "_deleteFriendRequestBothUserID failed ", err.Error())
+			log.NewError(operationID, "_deleteFriendRequestBothUserID failed ", err.Error())
 			continue
 		}
 	}
 }
 
 func (f *Friend) SyncFriendList() {
-	svrList, err := f.getServerFriendList("")
+	operationID := utils.OperationIDGenerator()
+	svrList, err := f.getServerFriendList(operationID)
 	if err != nil {
-		log.NewError("0", "getServerFriendList failed ", err.Error())
+		log.NewError(operationID, "getServerFriendList failed ", err.Error())
 		return
 	}
-	log.NewInfo("0", "svrList", svrList)
+	log.NewInfo(operationID, "svrList", svrList)
 	friendsInfoOnServer := common.TransferToLocalFriend(svrList)
 	friendsInfoOnLocal, err := f.db.GetAllFriendList()
 	if err != nil {
-		log.NewError("0", "_getAllFriendList failed ", err.Error())
+		log.NewError(operationID, "_getAllFriendList failed ", err.Error())
 		return
 	}
 
-	log.NewInfo("0", "friendsInfoOnServer", friendsInfoOnServer)
-	log.NewInfo("0", "friendsInfoOnLocal", friendsInfoOnLocal)
+	log.NewInfo(operationID, "friendsInfoOnServer", friendsInfoOnServer)
+	log.NewInfo(operationID, "friendsInfoOnLocal", friendsInfoOnLocal)
 	aInBNot, bInANot, sameA, sameB := common.CheckFriendListDiff(friendsInfoOnServer, friendsInfoOnLocal)
-	log.NewInfo("0", "checkFriendListDiff", aInBNot, bInANot, sameA, sameB)
+	log.NewInfo(operationID, "checkFriendListDiff", aInBNot, bInANot, sameA, sameB)
 	for _, index := range aInBNot {
 		err := f.db.InsertFriend(friendsInfoOnServer[index])
 		if err != nil {
-			log.NewError("0", "_insertFriend failed ", err.Error())
+			log.NewError(operationID, "_insertFriend failed ", err.Error())
 			continue
 		}
 	}
 	for _, index := range sameA {
 		err := f.db.UpdateFriend(friendsInfoOnServer[index])
 		if err != nil {
-			log.NewError("0", "_updateFriend failed ", err.Error())
+			log.NewError(operationID, "_updateFriend failed ", err.Error())
 			continue
 		}
 	}
 	for _, index := range bInANot {
 		err := f.db.DeleteFriend(friendsInfoOnLocal[index].FriendUserID)
 		if err != nil {
-			log.NewError("0", "_deleteFriend failed ", err.Error())
+			log.NewError(operationID, "_deleteFriend failed ", err.Error())
 			continue
 		}
 	}
 }
 
 func (f *Friend) SyncBlackList() {
-	svrList, err := f.getServerBlackList("")
+	operationID := utils.OperationIDGenerator()
+	svrList, err := f.getServerBlackList(operationID)
 	if err != nil {
-		log.NewError("0", "getServerBlackList failed ", err.Error())
+		log.NewError(operationID, "getServerBlackList failed ", err.Error())
 		return
 	}
-	log.NewInfo("0", "svrList", svrList)
+	log.NewInfo(operationID, "svrList", svrList)
 	blackListOnServer := common.TransferToLocalBlack(svrList, f.loginUserID)
 	blackListOnLocal, err := f.db.GetBlackList()
 	if err != nil {
-		log.NewError("0", "_getBlackList failed ", err.Error())
+		log.NewError(operationID, "_getBlackList failed ", err.Error())
 		return
 	}
 
-	log.NewInfo("0", "blackListOnServer", blackListOnServer)
-	log.NewInfo("0", "blackListOnlocal", blackListOnLocal)
+	log.NewInfo(operationID, "blackListOnServer", blackListOnServer)
+	log.NewInfo(operationID, "blackListOnlocal", blackListOnLocal)
 	aInBNot, bInANot, sameA, _ := common.CheckBlackListDiff(blackListOnServer, blackListOnLocal)
 	for _, index := range aInBNot {
 		err := f.db.InsertBlack(blackListOnServer[index])
 		if err != nil {
-			log.NewError("0", "_insertFriend failed ", err.Error())
+			log.NewError(operationID, "_insertFriend failed ", err.Error())
 			continue
 		}
 	}
 	for _, index := range sameA {
 		err := f.db.UpdateBlack(blackListOnServer[index])
 		if err != nil {
-			log.NewError("0", "_updateFriend failed ", err.Error())
+			log.NewError(operationID, "_updateFriend failed ", err.Error())
 			continue
 		}
 	}
 	for _, index := range bInANot {
 		err := f.db.DeleteBlack(blackListOnLocal[index].BlockUserID)
 		if err != nil {
-			log.NewError("0", "_deleteFriend failed ", err.Error())
+			log.NewError(operationID, "_deleteFriend failed ", err.Error())
 			continue
 		}
 	}

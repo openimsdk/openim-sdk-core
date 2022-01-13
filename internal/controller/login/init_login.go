@@ -70,15 +70,14 @@ func (u *LoginMgr) SetGroupListener(groupListener group.OnGroupListener) {
 	u.groupListener = groupListener
 }
 
-func (u *LoginMgr) login(userID, token string, cb common.Base) {
+func (u *LoginMgr) login(userID, token string, cb common.Base, operationID string) {
 	log.Info("login start ", userID, token)
 	if u.justOnceFlag {
 		cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
 		return
 	}
 	err := u.checkToken(userID, token)
-	log.Error("0", "checktoken ", err)
-	common.CheckErr(cb, err, "0")
+	common.CheckAnyErr(cb, 1111, err, operationID)
 	log.Info("0", "checkToken ok ", userID, token)
 	u.justOnceFlag = true
 
@@ -131,7 +130,7 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener ws.ConnListener)
 	return true
 }
 
-func (u *LoginMgr) logout(callback common.Base) {
+func (u *LoginMgr) logout(callback common.Base, operationID string) {
 	common.TriggerCmdLogout(server_api_params.ArrMsg{}, u.cmdCh)
 	timeout := 5
 	resp, err, operationID := u.ws.SendReqWaitResp(nil, constant.WsLogoutMsg, timeout, u.loginUserID)
@@ -182,8 +181,9 @@ func (u *LoginMgr) SetMinSeqSvr(minSeqSvr int64) {
 func (u *LoginMgr) checkToken(userID, token string) error {
 	log.Debug("0", utils.GetSelfFuncName(), userID, token)
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
-	_, err := user.NewUser(nil, p, userID).GetSelfUserInfoFromSvr()
-	return utils.Wrap(err, "GetSelfUserInfoFromSvr failed")
+	operationID := utils.OperationIDGenerator()
+	_, err := user.NewUser(nil, p, userID).GetSelfUserInfoFromSvr(operationID)
+	return utils.Wrap(err, "GetSelfUserInfoFromSvr failed"+operationID)
 }
 
 //func (u *open_im_sdk.UserRelated) kickOnline(msg utils.GeneralWsResp) {

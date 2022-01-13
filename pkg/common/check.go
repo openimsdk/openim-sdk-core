@@ -17,11 +17,23 @@ func init() {
 	validate = validator.New()
 }
 
+func CheckAnyErr(callback Base, errCode int32, err error, operationID string) {
+	if err != nil {
+		if callback != nil {
+			errInfo := "operationID[" + operationID + "], " + "info[" + err.Error() + "]"
+			log.NewError(operationID, "checkErr ", errInfo)
+			callback.OnError(errCode, errInfo)
+			runtime.Goexit()
+		}
+	}
+}
+
 func CheckDBErr(callback Base, err error, operationID string) {
 	if err != nil {
 		if callback != nil {
-			log.NewError(operationID, "checkErr ", err, constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
-			callback.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
+			errInfo := operationID + err.Error() + constant.ErrDB.ErrMsg
+			log.NewError(operationID, "checkErr ", errInfo)
+			callback.OnError(constant.ErrDB.ErrCode, errInfo)
 			runtime.Goexit()
 		}
 	}
@@ -30,7 +42,7 @@ func CheckDBErr(callback Base, err error, operationID string) {
 func CheckDataErr(callback Base, err error, operationID string) {
 	if err != nil {
 		if callback != nil {
-			log.NewError(operationID, "checkErr ", err, constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
+			log.NewError(operationID, "checkErr ", err, constant.ErrData.ErrCode, constant.ErrData.ErrMsg)
 			callback.OnError(constant.ErrData.ErrCode, constant.ErrData.ErrMsg)
 			runtime.Goexit()
 		}

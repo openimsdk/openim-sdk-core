@@ -6,17 +6,7 @@ type GetUsersInfoReq struct {
 }
 type GetUsersInfoResp struct {
 	CommResp
-	UserInfoList []*PublicUserInfo        `json:"-"`
-	Data         []map[string]interface{} `json:"data"`
-}
-
-type GetSelfUserInfoReq struct {
-	OperationID string `json:"operationID" binding:"required"`
-	UserID      string `json:"userID" binding:"required"`
-}
-type GetSelfUserInfoResp struct {
-	CommResp
-	UserInfoList *UserInfo                `json:"-"`
+	UserInfoList []*PublicUserInfo
 	Data         []map[string]interface{} `json:"data"`
 }
 
@@ -27,4 +17,14 @@ type UpdateSelfUserInfoReq struct {
 
 type UpdateUserInfoResp struct {
 	CommResp
+}
+
+type GetSelfUserInfoReq struct {
+	OperationID string `json:"operationID" binding:"required"`
+	UserID      string `json:"userID" binding:"required"`
+}
+type GetSelfUserInfoResp struct {
+	CommResp
+	UserInfoList *UserInfo                `json:"-"`
+	Data         []map[string]interface{} `json:"data"`
 }

@@ -4,15 +4,15 @@ import (
 	"open_im_sdk/pkg/common"
 )
 
-func (u *LoginMgr) Login(callback common.Base, userID, token string) {
+func (u *LoginMgr) Login(callback common.Base, userID, token string, operationID string) {
 	go func() {
-		u.login(userID, token, callback)
+		u.login(userID, token, callback, operationID)
 	}()
 }
 
-func (u *LoginMgr) Logout(callback common.Base) {
+func (u *LoginMgr) Logout(callback common.Base, operationID string) {
 	go func() {
-		u.logout(callback)
+		u.logout(callback, operationID)
 	}()
 }
 

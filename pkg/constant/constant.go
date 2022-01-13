@@ -208,6 +208,7 @@ var (
 	ErrWsRecvConnDiff = ErrInfo{ErrCode: 901, ErrMsg: WsRecvConnDiff.Error()}
 	ErrWsRecvConnSame = ErrInfo{ErrCode: 902, ErrMsg: WsRecvConnSame.Error()}
 	ErrWsRecvCode     = ErrInfo{ErrCode: 903, ErrMsg: WsRecvCode.Error()}
+	ErrWsSendTimeout  = ErrInfo{ErrCode: 904, ErrMsg: WsSendTimeout.Error()}
 )
 
 var (
@@ -230,6 +231,7 @@ var (
 	WsRecvConnDiff = errors.New("recv timeout, conn diff")
 	WsRecvConnSame = errors.New("recv timeout, conn same")
 	WsRecvCode     = errors.New("recv code err")
+	WsSendTimeout  = errors.New("send timeout")
 )
 
 func (e *ErrInfo) Error() string {

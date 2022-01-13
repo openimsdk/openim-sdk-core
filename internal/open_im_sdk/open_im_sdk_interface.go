@@ -38,7 +38,7 @@ func SdkVersion() string {
 	return sdkVersion
 }
 
-func InitSDK(config string, listener ws.ConnListener) bool {
+func InitSDK(config string, operationID string, listener ws.ConnListener) bool {
 	if err := json.Unmarshal([]byte(config), &sdk_struct.SvrConf); err != nil {
 		return false
 	}
@@ -51,13 +51,13 @@ func InitSDK(config string, listener ws.ConnListener) bool {
 	}
 	if userForSDK != nil {
 		log.Warn("0", "Initialize multiple times, call logout")
-		userForSDK.Logout(nil)
+		userForSDK.Logout(nil, utils.OperationIDGenerator())
 	}
 	userForSDK = new(login.LoginMgr)
 	return userForSDK.InitSDK(sdk_struct.SvrConf, listener)
 }
 
-func Login(userID, token string, callback common.Base) {
+func Login(userID, operationID string, token string, callback common.Base) {
 	if callback == nil {
 		log.Error("callback is nil")
 		return
@@ -66,10 +66,10 @@ func Login(userID, token string, callback common.Base) {
 		callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
 		return
 	}
-	userForSDK.Login(callback, userID, token)
+	userForSDK.Login(callback, userID, token, operationID)
 }
 
-func Logout(callback common.Base) {
+func Logout(callback common.Base, operationID string) {
 	if callback == nil {
 		log.Error("callback is nil")
 		return
@@ -78,7 +78,7 @@ func Logout(callback common.Base) {
 		callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
 		return
 	}
-	userForSDK.Logout(callback)
+	userForSDK.Logout(callback, operationID)
 }
 
 func GetLoginStatus() int32 {

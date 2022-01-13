@@ -3,7 +3,6 @@ package interaction
 import (
 	"errors"
 	"open_im_sdk/pkg/common"
-	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/network"
 	"open_im_sdk/pkg/server_api_params"
 )
@@ -36,17 +35,7 @@ type postErr struct {
 }
 
 func (p *PostApi) PostReturn(url string, data interface{}) (*server_api_params.CommDataResp, error) {
+	//log.Debug("000", utils.GetSelfFuncName(), p.apiAddress+url)
 	content, err := network.Post2Api(p.apiAddress+url, data, p.token)
-	log.Debug("asdf", p.apiAddress+url, content, err)
 	return common.CheckErrAndRespReturn(err, content)
-	// pe := postErr{}
-	//var wg sync.WaitGroup
-	//wg.Add(1)
-	//var commData *server_api_params.CommDataResp
-	//go func() {
-	//	commData = p.PostFatalCallback(&pe, url , data , operationID)
-	//	wg.Done()
-	//}()
-	//
-	//wg.Wait()
 }

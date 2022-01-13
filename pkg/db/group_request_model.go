@@ -29,7 +29,7 @@ func (d *DataBase) GetRecvGroupApplication() ([]*LocalGroupRequest, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var groupRequestList []LocalGroupRequest
-	err := d.conn.Where("to_user_id = ?", d.loginUserID).Find(&groupRequestList).Error
+	err := d.conn.Where("user_id = ?", d.loginUserID).Find(&groupRequestList).Error
 	var transfer []*LocalGroupRequest
 	for _, v := range groupRequestList {
 		transfer = append(transfer, &v)

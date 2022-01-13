@@ -386,13 +386,15 @@ func (b *BaseSuccFailed) OnSuccess(data string) {
 func InOutlllogin(uid, tk string) {
 	var callback BaseSuccFailed
 	callback.funcName = utils.RunFuncName()
-	open_im_sdk.Login(uid, tk, &callback)
+	operationID := utils.OperationIDGenerator()
+	open_im_sdk.Login(uid, operationID, tk, &callback)
 }
 
 func InOutLogou() {
 	var callback BaseSuccFailed
 	callback.funcName = utils.RunFuncName()
-	open_im_sdk.Logout(&callback)
+	opretaionID := utils.OperationIDGenerator()
+	open_im_sdk.Logout(&callback, opretaionID)
 }
 
 func InOutDoTest(uid, tk, ws, api string) {
@@ -409,7 +411,8 @@ func InOutDoTest(uid, tk, ws, api string) {
 	s = string(b)
 	fmt.Println(s)
 	var testinit testInitLister
-	open_im_sdk.InitSDK(s, testinit)
+	operationID := utils.OperationIDGenerator()
+	open_im_sdk.InitSDK(s, operationID, testinit)
 
 	var testConversation conversationCallBack
 	open_im_sdk.SetConversationListener(testConversation)
@@ -430,7 +433,8 @@ func InOutDoTest(uid, tk, ws, api string) {
 func lllogin(uid, tk string) bool {
 	var callback BaseSuccFailed
 	callback.funcName = utils.RunFuncName()
-	open_im_sdk.Login(uid, tk, &callback)
+	operationID := utils.OperationIDGenerator()
+	open_im_sdk.Login(uid, operationID, tk, &callback)
 
 	for true {
 		if callback.errCode == 1 {
@@ -461,7 +465,8 @@ func DoTest(uid, tk, ws, api string) {
 	s = string(b)
 	fmt.Println(s)
 	var testinit testInitLister
-	open_im_sdk.InitSDK(s, testinit)
+	operationID := utils.OperationIDGenerator()
+	open_im_sdk.InitSDK(s, operationID, testinit)
 
 	var testConversation conversationCallBack
 	open_im_sdk.SetConversationListener(testConversation)
