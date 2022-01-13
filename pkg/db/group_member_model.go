@@ -20,6 +20,17 @@ func (d *DataBase) GetAllGroupMemberList() ([]LocalGroupMember, error) {
 	return groupMemberList, utils.Wrap(d.conn.Find(&groupMemberList).Error, "GetAllGroupMemberList failed")
 }
 
+func (d *DataBase) GetGroupSomeMemberInfo(groupID string, userIDList []string) ([]*LocalGroupMember, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+	var groupMemberList []LocalGroupMember
+	err := d.conn.Where("group_id = ? And user_id IN ? ", groupID, userIDList).Find(&groupMemberList).Error
+	var transfer []*LocalGroupMember
+	for _, v := range groupMemberList {
+		transfer = append(transfer, &v)
+	}
+	return transfer, utils.Wrap(err, "GetGroupMemberListByGroupID failed ")
+}
 func (d *DataBase) GetGroupMemberListByGroupID(groupID string) ([]*LocalGroupMember, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()

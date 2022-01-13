@@ -522,8 +522,8 @@ func (u *Group) getGroupMemberList(callback common.Base, groupID string, filter 
 }
 
 //todo
-func (u *Group) getGroupMembersInfo(callback common.Base, groupID string, userList sdk.GetGroupMembersInfoParam, operationID string) sdk.GetGroupMembersInfoCallback {
-	groupInfoList, err := u.db.GetGroupMemberListByGroupID(groupID)
+func (u *Group) getGroupMembersInfo(callback common.Base, groupID string, userIDList sdk.GetGroupMembersInfoParam, operationID string) sdk.GetGroupMembersInfoCallback {
+	groupInfoList, err := u.db.GetGroupSomeMemberInfo(groupID, userIDList)
 	common.CheckErr(callback, err, operationID)
 	return groupInfoList
 }
