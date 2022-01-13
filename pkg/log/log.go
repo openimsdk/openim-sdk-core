@@ -18,9 +18,9 @@ type Logger struct {
 	Pid int
 }
 
-//func init() {
-//	logger = loggerInit("", )
-//}
+func init() {
+	logger = loggerInit("", 6)
+}
 func NewPrivateLog(moduleName string, logLevel uint32) {
 	logger = loggerInit(moduleName, logLevel)
 }

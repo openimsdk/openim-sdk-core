@@ -36,11 +36,11 @@ func (f *FriendCallback) OnFriendInfoChanged(friendInfo string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", friendInfo, "0"}, f.uid)
 }
 
-func (wsRouter *WsFuncRouter) SetFriendListener() bool {
+func (wsRouter *WsFuncRouter) SetFriendListener() {
 	var fr FriendCallback
 	fr.uid = wsRouter.uId
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	return userWorker.Friend().SetFriendListener(&fr)
+	userWorker.SetFriendListener(&fr)
 }
 
 //1

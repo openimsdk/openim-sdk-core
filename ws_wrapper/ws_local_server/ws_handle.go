@@ -97,10 +97,7 @@ func GenUserRouterNoLock(uid string) *RefRouter {
 	var wsRouter1 WsFuncRouter
 	wsRouter1.uId = uid
 	//	wsRouter1.conn = conn
-	//wsRouter1.AddAdvancedMsgListener()
-	//wsRouter1.SetConversationListener()
-	wsRouter1.SetFriendListener()
-	wsRouter1.SetGroupListener()
+
 	vf := reflect.ValueOf(&wsRouter1)
 	vft := vf.Type()
 
@@ -111,6 +108,12 @@ func GenUserRouterNoLock(uid string) *RefRouter {
 		RouteMap1[mName] = vf.Method(i)
 	}
 	wsRouter1.InitSDK(ConfigSvr, "0")
+	//wsRouter1.AddAdvancedMsgListener()
+	//wsRouter1.SetConversationListener()
+	wrapSdkLog("SetFriendListener() ", uid)
+	wsRouter1.SetFriendListener()
+	wrapSdkLog("SetGroupListener() ", uid)
+	wsRouter1.SetGroupListener()
 	var rr RefRouter
 	rr.refName = &RouteMap1
 	rr.wsRouter = &wsRouter1
