@@ -2,7 +2,7 @@ package friend
 
 import (
 	"github.com/mitchellh/mapstructure"
-	ws "open_im_sdk/internal/controller/interaction"
+	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"

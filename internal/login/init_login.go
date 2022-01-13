@@ -1,11 +1,11 @@
 package login
 
 import (
-	conv "open_im_sdk/internal/controller/conversation_msg"
-	"open_im_sdk/internal/controller/friend"
-	"open_im_sdk/internal/controller/group"
-	ws "open_im_sdk/internal/controller/interaction"
-	"open_im_sdk/internal/controller/user"
+	conv "open_im_sdk/internal/conversation_msg"
+	"open_im_sdk/internal/friend"
+	"open_im_sdk/internal/group"
+	ws "open_im_sdk/internal/interaction"
+	"open_im_sdk/internal/user"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
