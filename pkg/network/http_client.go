@@ -66,7 +66,7 @@ func postLogic(url string, data interface{}, token string) (content []byte, err 
 		return nil, utils.Wrap(err, "client.Do failed, url")
 	}
 	if resp.StatusCode != 200 {
-		return nil, utils.Wrap(errors.New(resp.Status), "status code failed ")
+		return nil, utils.Wrap(errors.New(resp.Status), "status code failed "+url)
 	}
 	defer resp.Body.Close()
 	result, err := ioutil.ReadAll(resp.Body)

@@ -10,7 +10,6 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 )
@@ -131,7 +130,7 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener ws.ConnListener)
 }
 
 func (u *LoginMgr) logout(callback common.Base, operationID string) {
-	common.TriggerCmdLogout(server_api_params.ArrMsg{}, u.cmdCh)
+	common.TriggerCmdLogout(sdk_struct.ArrMsg{}, u.cmdCh)
 	timeout := 5
 	retryTimes := 0
 	resp, err := u.ws.SendReqWaitResp(nil, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID, operationID)
