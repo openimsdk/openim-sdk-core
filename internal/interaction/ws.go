@@ -10,6 +10,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 	"runtime"
 	"sync"
 	"time"
@@ -94,14 +95,22 @@ func (u *Ws) ReadData() {
 				isErrorOccurred = true
 				if u.WsConn.IsFatalError(err) {
 					log.Error(operationID, "IsFatalError ", err.Error(), "ReConn")
-					u.WsConn.ReConn()
+					c, err := u.WsConn.ReConn()
+					if err != nil {
+						log.Error(operationID, "reconn failed ", c, err.Error())
+						time.Sleep(time.Duration(2) * time.Second)
+					}
 				} else {
 					log.Warn(operationID, "other err  ", err.Error())
 				}
 			} else {
 				if msgType == websocket.CloseMessage {
 					log.Error(operationID, "type websocket.CloseMessage, ReConn")
-					u.WsConn.ReConn()
+					c, err := u.WsConn.ReConn()
+					if err != nil {
+						log.Error(operationID, "reconn failed ", c, err.Error())
+						time.Sleep(time.Duration(2) * time.Second)
+					}
 				} else if msgType == websocket.TextMessage {
 					log.Warn(operationID, "type websocket.TextMessage")
 				} else if msgType == websocket.BinaryMessage {
@@ -220,7 +229,7 @@ func (u *Ws) doSendMsg(wsResp GeneralWsResp) error {
 		return nil
 	}
 	u.seqMsg[int32(msg.Seq)] = msg
-	arrMsg := server_api_params.ArrMsg{}
+	arrMsg := sdk_struct.ArrMsg{}
 	common.TriggerCmdNewMsgCome(arrMsg, u.conversationCh)
 	return nil
 }

@@ -65,6 +65,7 @@ func CheckErrAndResp(callback Base, err error, resp []byte, operationID string) 
 }
 
 func CheckResp(callback Base, resp []byte, operationID string) *server_api_params.CommDataResp {
+	log.Debug(operationID, utils.GetSelfFuncName(), "args: ", string(resp))
 	var c server_api_params.CommDataResp
 	err := json.Unmarshal(resp, &c)
 	if err != nil {
@@ -109,15 +110,16 @@ func JsonUnmarshalAndArgsValidate(s string, args interface{}, callback Base, ope
 			return utils.Wrap(err, "json Unmarshal failed")
 		}
 	}
-	err = validate.Struct(args)
-	if err != nil {
-		if callback != nil {
-			log.NewError(operationID, "validate failed ", err.Error(), s)
-			callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
-			runtime.Goexit()
-		}
-	}
-	return utils.Wrap(err, "args check failed")
+	//err = validate.Struct(args)
+	//if err != nil {
+	//	if callback != nil {
+	//		log.NewError(operationID, "validate failed ", err.Error(), s)
+	//		callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
+	//		runtime.Goexit()
+	//	}
+	//}
+	//return utils.Wrap(err, "args check failed")
+	return nil
 }
 
 func JsonUnmarshal(s string, args interface{}, callback Base, operationID string) error {

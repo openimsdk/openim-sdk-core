@@ -25,6 +25,7 @@ func (u *Heartbeat) Run() {
 	reqTimeout := 30
 	reTryInterval := 10
 	for {
+		time.Sleep(time.Duration(heartbeatInterval) * time.Second)
 		u.Lock()
 		if u.LoginState() == constant.Logout {
 			u.Unlock()
@@ -59,6 +60,7 @@ func (u *Heartbeat) Run() {
 			} else {
 				log.Error(operationID, "other err ", err.Error(), " closeConn")
 				u.CloseConn()
+				continue
 			}
 		}
 		var wsSeqResp server_api_params.GetMaxAndMinSeqResp
@@ -71,6 +73,5 @@ func (u *Heartbeat) Run() {
 			log.Info("needSyncSeq ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, needSyncSeq)
 			u.syncMsgFromServer(needSyncSeq)
 		}
-		time.Sleep(time.Duration(heartbeatInterval) * time.Second)
 	}
 }

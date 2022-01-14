@@ -916,4 +916,24 @@ type IMConfig struct {
 	LogLevel uint32 `json:"log_level"`
 }
 
+type PullUserMsgResp struct {
+	ErrCode       int                       `json:"errCode"`
+	ErrMsg        string                    `json:"errMsg"`
+	ReqIdentifier int                       `json:"reqIdentifier"`
+	MsgIncr       int                       `json:"msgIncr"`
+	Data          paramsPullUserMsgDataResp `json:"data"`
+}
+
+type paramsPullUserMsgDataResp struct {
+	Group  []*server_api_params.GatherFormat `json:"group"`
+	MaxSeq int64                             `json:"maxSeq"`
+	MinSeq int64                             `json:"minSeq"`
+	Single []*server_api_params.GatherFormat `json:"single"`
+}
+
+type ArrMsg struct {
+	SingleData []server_api_params.MsgData
+	GroupData  []server_api_params.MsgData
+}
+
 var SvrConf IMConfig
