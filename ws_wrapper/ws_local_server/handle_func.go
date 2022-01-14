@@ -58,6 +58,7 @@ func (ws *WServer) msgParse(conn *UserConn, jsonMsg []byte) {
 			wrapSdkLog("bad request, panic is ", r)
 			buf := make([]byte, 1<<16)
 			runtime.Stack(buf, true)
+			wrapSdkLog("call", string(buf))
 		}
 	}()
 
