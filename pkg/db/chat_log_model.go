@@ -10,6 +10,11 @@ func (d *DataBase) BatchInsertMessageList(MessageList []*LocalChatLog) error {
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Create(MessageList).Error, "BatchInsertMessageList failed")
 }
+func (d *DataBase) InsertMessage(Message *LocalChatLog) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.Create(Message).Error, "InsertMessage failed")
+}
 func (d *DataBase) MessageIfExists(ClientMsgID string) (bool, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
@@ -73,6 +78,15 @@ func (d *DataBase) UpdateMessageStatusBySourceID(sourceID string, status, sessio
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	t := d.conn.Model(LocalChatLog{}).Where("(send_id=? or recv_id=?)AND session_type=?", status, sourceID, sourceID, sessionType).Updates(LocalChatLog{Status: status})
+	if t.RowsAffected == 0 {
+		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	}
+	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
+}
+func (d *DataBase) UpdateMessageTimeAndStatus(ClientMsgID string, sendTime uint32, status int32) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	t := d.conn.Model(LocalChatLog{}).Where("client_msg_id=? And seq=?", ClientMsgID, 0).Updates(LocalChatLog{Status: status, SendTime: sendTime})
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}

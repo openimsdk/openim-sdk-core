@@ -43,7 +43,7 @@ func (c *Conversation) getConversationRecvMessageOpt(callback common.Base, conve
 	return realData
 }
 func (c *Conversation) getOneConversation(callback common.Base, sourceID string, sessionType int32, operationID string) *db.LocalConversation {
-	conversationID := GetConversationIDBySessionType(sourceID, sessionType)
+	conversationID := c.GetConversationIDBySessionType(sourceID, sessionType)
 	lc, err := c.db.GetConversation(conversationID)
 	common.CheckErr(callback, err, operationID)
 	if lc != nil {

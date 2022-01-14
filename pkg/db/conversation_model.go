@@ -84,7 +84,7 @@ func (d *DataBase) ConversationIfExists(conversationID string) (bool, error) {
 func (d *DataBase) ResetConversation(conversationID string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	c := LocalConversation{ConversationID: conversationID, UnreadCount: 0, LatestMsg: "", LatestMsgSendTime: UnixTime(time.Time{}), DraftText: "", DraftTextTime: UnixTime(time.Time{})}
+	c := LocalConversation{ConversationID: conversationID, UnreadCount: 0, LatestMsg: "", LatestMsgSendTime: 0, DraftText: "", DraftTextTime: 0}
 	t := d.conn.Select("unread_count", "latest_msg", "latest_msg_send_time", "draft_text", "draft_text_time").Updates(c)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
@@ -98,7 +98,7 @@ func (d *DataBase) ResetConversation(conversationID string) error {
 func (d *DataBase) ClearConversation(conversationID string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	c := LocalConversation{ConversationID: conversationID, UnreadCount: 0, LatestMsg: "", DraftText: "", DraftTextTime: UnixTime(time.Time{})}
+	c := LocalConversation{ConversationID: conversationID, UnreadCount: 0, LatestMsg: "", DraftText: "", DraftTextTime: 0}
 	t := d.conn.Select("unread_count", "latest_msg", "draft_text", "draft_text_time").Updates(c)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
@@ -118,7 +118,7 @@ func (d *DataBase) SetConversationDraft(conversationID, draftText string) error 
 func (d *DataBase) RemoveConversationDraft(conversationID, draftText string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	c := LocalConversation{ConversationID: conversationID, DraftText: draftText, DraftTextTime: UnixTime(time.Time{})}
+	c := LocalConversation{ConversationID: conversationID, DraftText: draftText, DraftTextTime: 0}
 	t := d.conn.Select("draft_text", "draft_text_time").Updates(c)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")

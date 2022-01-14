@@ -96,7 +96,7 @@ func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (error, *websocket.Conn) {
 	enc := gob.NewEncoder(&buff)
 	err := enc.Encode(msg)
 	if err != nil {
-		return utils.Wrap(err, ""), nil
+		return utils.Wrap(err, "Encode error"), nil
 	}
 
 	var connSended *websocket.Conn

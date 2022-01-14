@@ -86,7 +86,6 @@ const (
 	MsgStatusSendFailed  = 3
 	MsgStatusHasDeleted  = 4
 	MsgStatusRevoked     = 5
-	MsgStatusFiltered    = 6
 
 	//OptionsKey
 	IsHistory            = "history"

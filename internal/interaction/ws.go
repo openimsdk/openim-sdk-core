@@ -64,23 +64,37 @@ func (ws *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, c
 	}
 }
 
-func (ws *Ws) SendReqWaitResp(buff []byte, reqIdentifier int32, timeout int, SenderID string) (*GeneralWsResp, error, string) {
+func (ws *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retryTimes int, senderID, operationID string) (*GeneralWsResp, error) {
 	var wsReq GeneralWsReq
+	var connSend *websocket.Conn
+	var err error
 	wsReq.ReqIdentifier = reqIdentifier
-	wsReq.OperationID = utils.OperationIDGenerator()
-	ws.Lock()
-	msgIncr, ch := ws.AddCh(SenderID)
-	ws.Unlock()
-	wsReq.SendID = SenderID
+	wsReq.OperationID = operationID
+	msgIncr, ch := ws.AddCh(senderID)
+	defer ws.DelCh(msgIncr)
+	wsReq.SendID = senderID
 	wsReq.MsgIncr = msgIncr
-	wsReq.Data = buff
-	err, connSend := ws.writeBinaryMsg(wsReq)
+	wsReq.Data, err = proto.Marshal(m)
 	if err != nil {
-		log.Error(wsReq.OperationID, "ws send err ", err.Error(), wsReq)
-		return nil, utils.Wrap(err, ""), wsReq.OperationID
+		return nil, utils.Wrap(err, "proto marshal err")
+	}
+	for i := 0; i < retryTimes; i++ {
+		err, connSend = ws.writeBinaryMsg(wsReq)
+		if err != nil {
+			if !ws.IsWriteTimeout(err) {
+				newErr := connSend.Close()
+				log.Error(operationID, m, "ws write Timeout", newErr, err.Error())
+				time.Sleep(time.Duration(1) * time.Second)
+				continue
+			} else {
+				return nil, utils.Wrap(err, "writeBinaryMsg err")
+			}
+		} else {
+			break
+		}
 	}
 	r1, r2 := ws.WaitResp(ch, timeout, wsReq.OperationID, connSend)
-	return r1, r2, wsReq.OperationID
+	return r1, r2
 }
 
 func (u *Ws) ReadData() {

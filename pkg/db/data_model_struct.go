@@ -253,23 +253,23 @@ type LocalSeqData struct {
 //	  PRIMARY KEY (client_msg_id)
 //	)`
 type LocalChatLog struct {
-	ClientMsgID      string   `gorm:"column:client_msg_id;primary_key;type:char(64)" json:"clientMsgID"`
-	ServerMsgID      string   `gorm:"column:server_msg_id;type:char(64)" json:"serverMsgID"`
-	SendID           string   `gorm:"column:send_id;type:char(64)" json:"sendID"`
-	RecvID           string   `gorm:"column:recv_id;type:char(64)" json:"recvID"`
-	SenderPlatformID int32    `gorm:"column:sender_platform_id" json:"senderPlatformID"`
-	SenderNickname   string   `gorm:"column:sender_nick_name;type:varchar(255)" json:"senderNickname"`
-	SenderFaceURL    string   `gorm:"column:sender_face_url;type:varchar(255)" json:"senderFaceURL"`
-	SessionType      int32    `gorm:"column:session_type" json:"sessionType"`
-	MsgFrom          int32    `gorm:"column:msg_from" json:"msgFrom"`
-	ContentType      int32    `gorm:"column:content_type" json:"contentType"`
-	Content          string   `gorm:"column:content;type:varchar(1000)" json:"content"`
-	IsRead           int32    `gorm:"column:is_read" json:"isRead"`
-	Status           int32    `gorm:"column:status" json:"status"`
-	Seq              int64    `gorm:"column:seq" json:"seq"`
-	SendTime         UnixTime `gorm:"column:send_time" json:"sendTime"`
-	CreateTime       UnixTime `gorm:"column:create_time" json:"createTime"`
-	Ex               string   `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	ClientMsgID      string `gorm:"column:client_msg_id;primary_key;type:char(64)" json:"clientMsgID"`
+	ServerMsgID      string `gorm:"column:server_msg_id;type:char(64)" json:"serverMsgID"`
+	SendID           string `gorm:"column:send_id;type:char(64)" json:"sendID"`
+	RecvID           string `gorm:"column:recv_id;type:char(64)" json:"recvID"`
+	SenderPlatformID int32  `gorm:"column:sender_platform_id" json:"senderPlatformID"`
+	SenderNickname   string `gorm:"column:sender_nick_name;type:varchar(255)" json:"senderNickname"`
+	SenderFaceURL    string `gorm:"column:sender_face_url;type:varchar(255)" json:"senderFaceURL"`
+	SessionType      int32  `gorm:"column:session_type" json:"sessionType"`
+	MsgFrom          int32  `gorm:"column:msg_from" json:"msgFrom"`
+	ContentType      int32  `gorm:"column:content_type" json:"contentType"`
+	Content          string `gorm:"column:content;type:varchar(1000)" json:"content"`
+	IsRead           int32  `gorm:"column:is_read" json:"isRead"`
+	Status           int32  `gorm:"column:status" json:"status"`
+	Seq              int64  `gorm:"column:seq" json:"seq"`
+	SendTime         uint32 `gorm:"column:send_time" json:"sendTime"`
+	CreateTime       uint32 `gorm:"column:create_time" json:"createTime"`
+	Ex               string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 
 //`create table if not exists  conversation (
@@ -289,21 +289,21 @@ type LocalChatLog struct {
 //  PRIMARY KEY (conversation_id)
 //)
 type LocalConversation struct {
-	ConversationID    string   `gorm:"column:conversation_id;primary_key;type:char(128)" json:"conversationID"`
-	ConversationType  int32    `gorm:"column:conversation_type" json:"conversationType"`
-	UserID            string   `gorm:"column:user_id;type:char(64)" json:"userID"`
-	GroupID           string   `gorm:"column:group_id;type:char(128)" json:"groupID"`
-	ShowName          string   `gorm:"column:show_name;type:varchar(255)" json:"showName"`
-	FaceURL           string   `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
-	RecvMsgOpt        int32    `gorm:"column:recv_msg_opt" json:"recvMsgOpt"`
-	UnreadCount       int32    `gorm:"column:unread_count" json:"unreadCount"`
-	GroupAtType       int32    `gorm:"column:group_at_type" json:"groupAtType"`
-	LatestMsg         string   `gorm:"column:latest_msg;type:varchar(1000)" json:"latestMsg"`
-	LatestMsgSendTime UnixTime `gorm:"column:latest_msg_send_time" json:"latestMsgSendTime"`
-	DraftText         string   `gorm:"column:draft_text" json:"draftText"`
-	DraftTextTime     UnixTime `gorm:"column:draft_text_time" json:"draftTextTime"`
-	IsPinned          int32    `gorm:"column:is_pinned" json:"isPinned"`
-	Ex                string   `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	ConversationID    string `gorm:"column:conversation_id;primary_key;type:char(128)" json:"conversationID"`
+	ConversationType  int32  `gorm:"column:conversation_type" json:"conversationType"`
+	UserID            string `gorm:"column:user_id;type:char(64)" json:"userID"`
+	GroupID           string `gorm:"column:group_id;type:char(128)" json:"groupID"`
+	ShowName          string `gorm:"column:show_name;type:varchar(255)" json:"showName"`
+	FaceURL           string `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
+	RecvMsgOpt        int32  `gorm:"column:recv_msg_opt" json:"recvMsgOpt"`
+	UnreadCount       int32  `gorm:"column:unread_count" json:"unreadCount"`
+	GroupAtType       int32  `gorm:"column:group_at_type" json:"groupAtType"`
+	LatestMsg         string `gorm:"column:latest_msg;type:varchar(1000)" json:"latestMsg"`
+	LatestMsgSendTime uint32 `gorm:"column:latest_msg_send_time" json:"latestMsgSendTime"`
+	DraftText         string `gorm:"column:draft_text" json:"draftText"`
+	DraftTextTime     uint32 `gorm:"column:draft_text_time" json:"draftTextTime"`
+	IsPinned          int32  `gorm:"column:is_pinned" json:"isPinned"`
+	Ex                string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 
 type UnixTime time.Time
