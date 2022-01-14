@@ -44,7 +44,7 @@ func (u *User) SyncLoginUserInfo() {
 	}
 }
 
-func (u *User) getUsersInfoFromSvr(callback common.Base, UserIDList sdk.GetUsersInfoParam, operationID string) sdk.GetUsersInfoCallback {
+func (u *User) GetUsersInfoFromSvr(callback common.Base, UserIDList sdk.GetUsersInfoParam, operationID string) sdk.GetUsersInfoCallback {
 	apiReq := api.GetUsersInfoReq{}
 	apiReq.OperationID = operationID
 	apiReq.UserIDList = UserIDList

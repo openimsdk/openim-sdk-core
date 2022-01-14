@@ -42,6 +42,12 @@ func (d *DataBase) GetGroupMemberListByGroupID(groupID string) ([]*LocalGroupMem
 	}
 	return transfer, utils.Wrap(err, "GetGroupMemberListByGroupID failed ")
 }
+func (d *DataBase) GetGroupMemberUIDListByGroupID(groupID string) (result []string, err error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+	err = d.conn.Where("group_id = ? ", groupID).Pluck("user_id", &result).Error
+	return result, utils.Wrap(err, "GetGroupMemberListByGroupID failed ")
+}
 
 func (d *DataBase) InsertGroupMember(groupMember *LocalGroupMember) error {
 	d.mRWMutex.Lock()

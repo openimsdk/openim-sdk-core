@@ -6,6 +6,7 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
+	"open_im_sdk/pkg/utils"
 	"time"
 )
 
@@ -23,7 +24,9 @@ func NewHeartbeat(msgSync *MsgSync) *Heartbeat {
 func (u *Heartbeat) Run() {
 	heartbeatInterval := 5
 	reqTimeout := 30
+	retryTimes := 0
 	reTryInterval := 10
+	operationID := utils.OperationIDGenerator()
 	for {
 		u.Lock()
 		if u.LoginState() == constant.Logout {
@@ -32,7 +35,7 @@ func (u *Heartbeat) Run() {
 		}
 		u.Unlock()
 
-		resp, err, operationID := u.SendReqWaitResp(nil, constant.WSGetNewestSeq, reqTimeout, u.loginUserID)
+		resp, err := u.SendReqWaitResp(nil, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.loginUserID, operationID)
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.loginUserID)
 			//	if  u.IsWriteTimeout(err)

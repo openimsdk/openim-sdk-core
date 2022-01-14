@@ -8,6 +8,7 @@ package conversation_msg
 
 import (
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 )
@@ -152,15 +153,16 @@ func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, con
 
 }
 
-//func (u *open_im_sdk.UserRelated) sendMessageFailedHandle(s *open_im_sdk.MsgStruct, c *ConversationStruct, conversationID string) {
-//	_ = u.updateMessageTimeAndMsgIDStatus(s.ClientMsgID, s.CreateTime, constant.MsgStatusSendFailed)
-//	s.SendTime = s.CreateTime
-//	s.Status = constant.MsgStatusSendFailed
-//	c.LatestMsg = utils.structToJsonString(s)
-//	_ = u.triggerCmdUpdateConversation(open_im_sdk.updateConNode{conversationID, constant.AddConOrUpLatMsg,
-//		*c})
-//	u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{"", constant.NewConChange, []string{conversationID}}})
-//}
+func (c *Conversation) sendMessageFailedHandle(s *sdk_struct.MsgStruct, lc *db.LocalConversation, conversationID string) {
+	_ = c.updateMessageTimeAndMsgIDStatus(s.ClientMsgID, s.CreateTime, constant.MsgStatusSendFailed)
+	s.SendTime = s.CreateTime
+	s.Status = constant.MsgStatusSendFailed
+	lc.LatestMsg = utils.StructToJsonString(s)
+	_ = u.triggerCmdUpdateConversation(open_im_sdk.updateConNode{conversationID, constant.AddConOrUpLatMsg,
+		*c})
+	u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+}
+
 //
 //type MsgFormats []*open_im_sdk.MsgStruct
 //
@@ -179,15 +181,6 @@ func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, con
 //	s[i], s[j] = s[j], s[i]
 //}
 
-func GetConversationIDBySessionType(sourceID string, sessionType int32) string {
-	switch sessionType {
-	case constant.SingleChatType:
-		return "single_" + sourceID
-	case constant.GroupChatType:
-		return "group_" + sourceID
-	}
-	return ""
-}
 func getIsRead(b bool) int {
 	if b {
 		return constant.HasRead
@@ -209,4 +202,14 @@ func getIsReadB(i int) bool {
 		return false
 	}
 
+}
+
+func (c *Conversation) GetConversationIDBySessionType(sourceID string, sessionType int32) string {
+	switch sessionType {
+	case constant.SingleChatType:
+		return "single_" + sourceID
+	case constant.GroupChatType:
+		return "group_" + sourceID
+	}
+	return ""
 }

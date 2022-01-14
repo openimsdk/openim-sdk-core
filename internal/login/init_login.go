@@ -133,7 +133,8 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener ws.ConnListener)
 func (u *LoginMgr) logout(callback common.Base, operationID string) {
 	common.TriggerCmdLogout(server_api_params.ArrMsg{}, u.cmdCh)
 	timeout := 5
-	resp, err, operationID := u.ws.SendReqWaitResp(nil, constant.WsLogoutMsg, timeout, u.loginUserID)
+	retryTimes := 0
+	resp, err := u.ws.SendReqWaitResp(nil, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID, operationID)
 	if err != nil {
 		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
 		if callback != nil {

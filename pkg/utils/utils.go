@@ -6,12 +6,7 @@ import (
 	"encoding/json"
 
 	"github.com/pkg/errors"
-	"io"
-
 	"reflect"
-
-	"os"
-	"path"
 
 	"math/rand"
 	"runtime"
@@ -209,41 +204,6 @@ func sdkLog(v ...interface{}) {
 
 type LogInfo struct {
 	Info string `json:"info"`
-}
-
-func CopyFile(srcName string, dstName string) (written int64, err error) {
-	src, err := os.Open(srcName)
-	if err != nil {
-		return
-	}
-	dst, err := os.OpenFile(dstName, os.O_WRONLY|os.O_CREATE, 0644)
-	if err != nil {
-		return
-	}
-
-	defer func() {
-		if src != nil {
-			src.Close()
-		}
-		if dst != nil {
-			dst.Close()
-		}
-	}()
-	return io.Copy(dst, src)
-}
-
-func FileTmpPath(fullPath, dbPrefix string) string {
-	suffix := path.Ext(fullPath)
-	if len(suffix) == 0 {
-		sdkLog("suffix  err:")
-	}
-
-	return dbPrefix + Md5(fullPath) + suffix //a->b
-}
-
-func FileExist(filename string) bool {
-	_, err := os.Stat(filename)
-	return err == nil || os.IsExist(err)
 }
 
 //judge a string whether in the  string list

@@ -821,15 +821,14 @@ type getReceiveMessageOptResp struct {
 type MsgStruct struct {
 	ClientMsgID      string                            `json:"clientMsgID"`
 	ServerMsgID      string                            `json:"serverMsgID"`
-	CreateTime       int64                             `json:"createTime"`
-	SendTime         int64                             `json:"sendTime"`
+	CreateTime       uint32                            `json:"createTime"`
+	SendTime         uint32                            `json:"sendTime"`
 	SessionType      int32                             `json:"sessionType"`
 	SendID           string                            `json:"sendID"`
 	RecvID           string                            `json:"recvID"`
 	MsgFrom          int32                             `json:"msgFrom"`
 	ContentType      int32                             `json:"contentType"`
 	SenderPlatformID int32                             `json:"platformID"`
-	ForceList        []string                          `json:"forceList"`
 	SenderNickname   string                            `json:"senderNickname"`
 	SenderFaceURL    string                            `json:"senderFaceUrl"`
 	GroupID          string                            `json:"groupID"`
@@ -837,7 +836,6 @@ type MsgStruct struct {
 	Seq              int64                             `json:"seq"`
 	IsRead           bool                              `json:"isRead"`
 	Status           int32                             `json:"status"`
-	Remark           string                            `json:"remark"`
 	OfflinePush      server_api_params.OfflinePushInfo `json:"offlinePush"`
 	PictureElem      struct {
 		SourcePath      string          `json:"sourcePath"`
