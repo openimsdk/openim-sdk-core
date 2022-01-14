@@ -503,7 +503,7 @@ func (u *Group) getGroupsInfo(groupIdList sdk.GetGroupsInfoParam, callback commo
 func (u *Group) setGroupInfo(callback common.Base, groupInfo sdk.SetGroupInfoParam, groupID, operationID string) *api.CommDataResp {
 	apiReq := api.SetGroupInfoReq{}
 	apiReq.GroupName = groupInfo.GroupName
-	apiReq.FaceUrl = groupInfo.FaceUrl
+	apiReq.FaceURL = groupInfo.FaceUrl
 	apiReq.Notification = groupInfo.Notification
 	apiReq.Introduction = groupInfo.Introduction
 	apiReq.Ex = groupInfo.Ex

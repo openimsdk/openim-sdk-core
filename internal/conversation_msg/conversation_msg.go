@@ -14,6 +14,7 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"time"
 )
 
 //type ChatLog struct {
@@ -150,7 +151,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				lc := db.LocalConversation{
 					ConversationType:  v.SessionType,
 					LatestMsg:         utils.StructToJsonString(msg),
-					LatestMsgSendTime: utils.UnixNanoSecondToTime(msg.SendTime),
+					LatestMsgSendTime: db.UnixTime(utils.UnixNanoSecondToTime(msg.SendTime)),
 				}
 				switch v.SessionType {
 				case constant.SingleChatType:
@@ -189,7 +190,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				lc := db.LocalConversation{
 					ConversationType:  v.SessionType,
 					LatestMsg:         utils.StructToJsonString(msg),
-					LatestMsgSendTime: utils.UnixNanoSecondToTime(msg.SendTime),
+					LatestMsgSendTime: db.UnixTime(utils.UnixNanoSecondToTime(msg.SendTime)),
 				}
 
 				switch v.SessionType {
@@ -273,8 +274,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 func (c *Conversation) msgStructToLocalChatLog(m *sdk_struct.MsgStruct) *db.LocalChatLog {
 	var lc db.LocalChatLog
 	copier.Copy(&lc, m)
-	lc.SendTime = utils.UnixNanoSecondToTime(m.SendTime)
-	lc.CreateTime = utils.UnixNanoSecondToTime(m.CreateTime)
+	lc.SendTime = db.UnixTime(utils.UnixNanoSecondToTime(m.SendTime))
+	lc.CreateTime = db.UnixTime(utils.UnixNanoSecondToTime(m.CreateTime))
 	return &lc
 }
 
@@ -381,7 +382,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		lc := node.Args.(db.LocalConversation)
 		oc, err := c.GetConversation(node.ConId)
 		if err == nil && oc != nil {
-			if lc.LatestMsgSendTime.After(oc.LatestMsgSendTime) { //The session update of asynchronous messages is subject to the latest sending time
+			if time.Time(lc.LatestMsgSendTime).After(time.Time(oc.LatestMsgSendTime)) { //The session update of asynchronous messages is subject to the latest sending time
 				err := c.UpdateColumnsConversation(node.ConId, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
 				if err != nil {
 					log.Error("internal", "updateConversationLatestMsgModel err: ", err)
@@ -573,7 +574,7 @@ func (c *Conversation) updateConversation(lc *db.LocalConversation, cc, nc map[s
 		//	}
 		//}
 		if oldC, ok := cc[lc.ConversationID]; ok {
-			if oldC.LatestMsgSendTime.Before(lc.LatestMsgSendTime) {
+			if time.Time(oldC.LatestMsgSendTime).Before(time.Time(lc.LatestMsgSendTime)) {
 				lc.UnreadCount = lc.UnreadCount + oldC.UnreadCount
 				cc[lc.ConversationID] = *lc
 			} else {
@@ -586,7 +587,7 @@ func (c *Conversation) updateConversation(lc *db.LocalConversation, cc, nc map[s
 
 	} else {
 		if oldC, ok := nc[lc.ConversationID]; ok {
-			if oldC.LatestMsgSendTime.Before(lc.LatestMsgSendTime) {
+			if time.Time(oldC.LatestMsgSendTime).Before(time.Time(lc.LatestMsgSendTime)) {
 				lc.UnreadCount = lc.UnreadCount + oldC.UnreadCount
 				nc[lc.ConversationID] = *lc
 			} else {

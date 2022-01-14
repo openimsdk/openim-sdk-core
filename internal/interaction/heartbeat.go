@@ -57,8 +57,8 @@ func (u *Heartbeat) Run() {
 			if errors.Is(err, constant.WsRecvConnDiff) {
 				continue
 			} else {
-				log.Error(operationID, "other err ", err.Error())
-				panic("other ")
+				log.Error(operationID, "other err ", err.Error(), " closeConn")
+				u.CloseConn()
 			}
 		}
 		var wsSeqResp server_api_params.GetMaxAndMinSeqResp
