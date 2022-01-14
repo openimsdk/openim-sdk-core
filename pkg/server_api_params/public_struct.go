@@ -12,8 +12,8 @@ type ApiUserInfo struct {
 }
 
 type GroupAddMemberInfo struct {
-	UserID    string `json:"userID" binding:"required"`
-	RoleLevel int32  `json:"roleLevel" binding:"required"`
+	UserID    string `json:"userID" validate:"required"`
+	RoleLevel int32  `json:"roleLevel" validate:"required"`
 }
 
 //GroupName    string                `json:"groupName"`
