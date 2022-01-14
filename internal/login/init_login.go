@@ -179,11 +179,11 @@ func (u *LoginMgr) SetMinSeqSvr(minSeqSvr int64) {
 }
 
 func (u *LoginMgr) checkToken(userID, token string) error {
-	log.Debug("0", utils.GetSelfFuncName(), userID, token)
-	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
 	operationID := utils.OperationIDGenerator()
+	log.Debug(operationID, utils.GetSelfFuncName(), userID, token)
+	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
 	_, err := user.NewUser(nil, p, userID).GetSelfUserInfoFromSvr(operationID)
-	return utils.Wrap(err, "GetSelfUserInfoFromSvr failed"+operationID)
+	return utils.Wrap(err, "GetSelfUserInfoFromSvr failed "+operationID)
 }
 
 //func (u *open_im_sdk.UserRelated) kickOnline(msg utils.GeneralWsResp) {

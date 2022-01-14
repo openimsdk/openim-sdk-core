@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	X "log"
-	"open_im_sdk/internal/open_im_sdk"
+	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
