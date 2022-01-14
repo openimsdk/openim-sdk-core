@@ -11,7 +11,7 @@ import (
 	sLog "log"
 	"net/http"
 	"open_im_sdk/open_im_sdk"
-	"open_im_sdk/pkg/log"
+	//"open_im_sdk/pkg/log"
 	"open_im_sdk/ws_wrapper/utils"
 	"runtime"
 	"strings"
@@ -288,10 +288,10 @@ func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func wrapSdkLog(v ...interface{}) {
-	if !log.IsNil() {
-		log.NewInfo("", v...)
-		return
-	}
+	//if !log.IsNil() {
+	//	log.NewInfo("", v...)
+	//	return
+	//}
 	_, b, c, _ := runtime.Caller(1)
 	i := strings.LastIndex(b, "/")
 	if i != -1 {

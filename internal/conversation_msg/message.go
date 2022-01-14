@@ -142,7 +142,7 @@ func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, con
 	message.Status = constant.MsgStatusSending
 	message.SendID = c.loginUserID
 	userInfo, _ := c.db.GetLoginUser()
-	message.SenderFaceURL = userInfo.FaceUrl
+	message.SenderFaceURL = userInfo.FaceURL
 	message.SenderNickname = userInfo.Nickname
 	ClientMsgID := utils.GetMsgID(message.SendID)
 	message.ClientMsgID = ClientMsgID
