@@ -10,6 +10,7 @@ import (
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 	"strings"
 )
 
@@ -432,9 +433,7 @@ func (f *Friend) SyncFriendApplication() {
 		log.NewError(operationID, "GetRecvFriendApplication failed ", err.Error())
 		return
 	}
-	log.NewInfo(operationID, "svrList", svrList)
-	log.NewInfo(operationID, "onServer", onServer)
-	log.NewInfo(operationID, "onLocal", onLocal)
+	log.NewInfo(operationID, "list", svrList, onServer, onLocal)
 
 	aInBNot, bInANot, sameA, sameB := common.CheckFriendRequestDiff(onServer, onLocal)
 	log.Debug(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
@@ -444,14 +443,24 @@ func (f *Friend) SyncFriendApplication() {
 			log.NewError(operationID, "InsertFriendRequest failed ", err.Error())
 			continue
 		}
+		callbackData := common.FriendApplicationListAddedCallback(*onServer[index])
+		f.friendListener.OnFriendApplicationListAdded(utils.StructToJsonString(callbackData))
 	}
 	for _, index := range sameA {
 		err := f.db.UpdateFriendRequest(onServer[index])
 		if err != nil {
 			if !strings.Contains(err.Error(), "RowsAffected == 0") {
 				log.NewError(operationID, "UpdateFriendRequest failed ", err.Error(), *onServer[index])
+				continue
 			}
-			continue
+			if onServer[index].HandleResult == -1 {
+				callbackData := common.FriendApplicationListRejectCallback(*onServer[index])
+				f.friendListener.OnFriendApplicationListReject(utils.StructToJsonString(callbackData))
+
+			} else if onServer[index].HandleResult == -1 {
+				callbackData := common.FriendApplicationListAcceptCallback(*onServer[index])
+				f.friendListener.OnFriendApplicationListAccept(utils.StructToJsonString(callbackData))
+			}
 		}
 	}
 	for _, index := range bInANot {
@@ -592,38 +601,32 @@ func (u *Friend) addFriendNew(msg *server_api_params.MsgData) {
 }
 
 func (u *Friend) DoFriendMsg(msg *server_api_params.MsgData) {
-	//utils.sdkLog("doFriendMsg ", msg)
-	//if u.cb == nil || u.friendListener == nil {
-	//	utils.sdkLog("listener is null")
-	//	return
-	//}
-	//
-	//if msg.SendID == u.loginUserID && msg.SenderPlatformID == u.SvrConf.Platform {
-	//	utils.sdkLog("sync msg ", msg.ContentType)
-	//	return
-	//}
-	//
-	//go func() {
-	//	switch msg.ContentType {
-	//	case constant.AddFriendTip:
-	//		utils.sdkLog("addFriendNew ", msg)
-	//		u.addFriendNew(msg) //
-	//	case constant.AcceptFriendApplicationTip:
-	//		utils.sdkLog("acceptFriendApplicationNew ", msg)
-	//		u.acceptFriendApplicationNew(msg)
-	//	case constant.RefuseFriendApplicationTip:
-	//		utils.sdkLog("refuseFriendApplicationNew ", msg)
-	//		u.refuseFriendApplicationNew(msg)
-	//	case constant.SetSelfInfoTip:
-	//		utils.sdkLog("setSelfInfo ", msg)
-	//		u.setSelfInfo(msg)
-	//		//	case KickOnlineTip:
-	//		//		sdkLog("kickOnline ", msg)
-	//		//		u.kickOnline(&msg)
-	//	default:
-	//		utils.sdkLog("type failed, ", msg)
-	//	}
-	//}()
+	if u.friendListener == nil {
+		return
+	}
+
+	if msg.SendID == u.loginUserID && msg.SenderPlatformID == sdk_struct.SvrConf.Platform {
+		return
+	}
+
+	go func() {
+		switch msg.ContentType {
+		case constant.AddFriendTip:
+			u.addFriendNew(msg) //
+		case constant.AcceptFriendApplicationTip:
+			u.acceptFriendApplicationNew(msg)
+		case constant.RefuseFriendApplicationTip:
+			u.refuseFriendApplicationNew(msg)
+			//	case constant.SetSelfInfoTip:
+			//		u.setSelfInfo(msg)
+
+			//	case KickOnlineTip:
+			//		sdkLog("kickOnline ", msg)
+			//		u.kickOnline(&msg)
+		default:
+			utils.sdkLog("type failed, ", msg)
+		}
+	}()
 }
 
 func (u *Friend) acceptFriendApplicationNew(msg *server_api_params.MsgData) {

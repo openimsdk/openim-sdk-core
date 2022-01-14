@@ -62,8 +62,16 @@ type LocalFriend struct {
 //}
 //open_im_sdk.FriendRequest == imdb.FriendRequest
 type LocalFriendRequest struct {
-	FromUserID    string   `gorm:"column:from_user_id;primary_key;type:varchar(64)" json:"fromUserID"`
-	ToUserID      string   `gorm:"column:to_user_id;primary_key;type:varchar(64)" json:"toUserID"`
+	FromUserID   string `gorm:"column:from_user_id;primary_key;type:varchar(64)" json:"fromUserID"`
+	FromNickname string `gorm:"column:name;type:varchar;type:varchar(255)" json:"fromNickname"`
+	FromFaceURL  string `gorm:"column:face_url;type:varchar;type:varchar(255)" json:"fromFaceURL"`
+	FromGender   int32  `gorm:"column:gender" json:"fromGender"`
+
+	ToUserID   string `gorm:"column:to_user_id;primary_key;type:varchar(64)" json:"toUserID"`
+	ToNickname string `gorm:"column:name;type:varchar;type:varchar(255)" json:"toNickname"`
+	ToFaceURL  string `gorm:"column:face_url;type:varchar;type:varchar(255)" json:"toFaceURL"`
+	ToGender   int32  `gorm:"column:gender" json:"toGender"`
+
 	HandleResult  int32    `gorm:"column:handle_result" json:"handleResult"`
 	ReqMsg        string   `gorm:"column:req_msg;type:varchar(255)" json:"reqMsg"`
 	CreateTime    UnixTime `gorm:"column:create_time" json:"createTime"`

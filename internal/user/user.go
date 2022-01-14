@@ -10,6 +10,7 @@ import (
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 )
 
 type User struct {
@@ -88,4 +89,32 @@ func (u *User) GetSelfUserInfoFromSvr(operationID string) (*api.UserInfo, error)
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 	return &apiResp, nil
+}
+
+func (u *User) DoFriendMsg(msg *api.MsgData) {
+
+	if msg.SendID == u.loginUserID && msg.SenderPlatformID == sdk_struct.SvrConf.Platform {
+		return
+	}
+
+	go func() {
+		switch msg.ContentType {
+		case SetSelfInfoTip:
+			u.SetSelfInfo()
+		case constant.AddFriendTip:
+			u.addFriendNew(msg) //
+		case constant.AcceptFriendApplicationTip:
+			u.acceptFriendApplicationNew(msg)
+		case constant.RefuseFriendApplicationTip:
+			u.refuseFriendApplicationNew(msg)
+			//	case constant.SetSelfInfoTip:
+			//		u.setSelfInfo(msg)
+
+			//	case KickOnlineTip:
+			//		sdkLog("kickOnline ", msg)
+			//		u.kickOnline(&msg)
+		default:
+			utils.sdkLog("type failed, ", msg)
+		}
+	}()
 }

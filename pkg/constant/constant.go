@@ -43,11 +43,16 @@ const (
 	Typing         = 113
 	Quote          = 114
 	//////////////////////////////////////////
-	SingleTipBegin             = 200
-	AcceptFriendApplicationTip = 201
-	AddFriendTip               = 202
-	RefuseFriendApplicationTip = 203
-	SetSelfInfoTip             = 204
+
+	FriendApplicationProcessedNotification = 1201 //AcceptFriendApplicationTip = 201
+	FriendApplicationAddedNotification     = 1202 //AddFriendTip               = 202
+	FriendAddedNotification                = 1203
+	FriendDeletedNotification              = 1204
+	FriendInfoChangedNotification          = 1205
+	BlackAddedNotification                 = 1206
+	BlackDeletedNotification               = 1207
+
+	SetSelfInfoTip = 204
 
 	SingleTipEnd = 399
 	/////////////////////////////////////////
