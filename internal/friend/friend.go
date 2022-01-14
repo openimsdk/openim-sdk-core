@@ -610,21 +610,21 @@ func (u *Friend) DoFriendMsg(msg *server_api_params.MsgData) {
 	}
 
 	go func() {
-		switch msg.ContentType {
-		case constant.AddFriendTip:
-			u.addFriendNew(msg) //
-		case constant.AcceptFriendApplicationTip:
-			u.acceptFriendApplicationNew(msg)
-		case constant.RefuseFriendApplicationTip:
-			u.refuseFriendApplicationNew(msg)
-			//	case constant.SetSelfInfoTip:
-			//		u.setSelfInfo(msg)
-
-			//	case KickOnlineTip:
-			//		sdkLog("kickOnline ", msg)
-			//		u.kickOnline(&msg)
-		default:
-			utils.sdkLog("type failed, ", msg)
+		//switch msg.ContentType {
+		//case constant.AddFriendTip:
+		//	u.addFriendNew(msg) //
+		//case constant.AcceptFriendApplicationTip:
+		//	u.acceptFriendApplicationNew(msg)
+		//case constant.RefuseFriendApplicationTip:
+		//	u.refuseFriendApplicationNew(msg)
+		//	//	case constant.SetSelfInfoTip:
+		//	//		u.setSelfInfo(msg)
+		//
+		//	//	case KickOnlineTip:
+		//	//		sdkLog("kickOnline ", msg)
+		//	//		u.kickOnline(&msg)
+		//default:
+		//	utils.sdkLog("type failed, ", msg)
 		}
 	}()
 }
