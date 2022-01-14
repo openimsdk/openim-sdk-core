@@ -608,25 +608,25 @@ func (u *Friend) DoFriendMsg(msg *server_api_params.MsgData) {
 	if msg.SendID == u.loginUserID && msg.SenderPlatformID == sdk_struct.SvrConf.Platform {
 		return
 	}
-
-	go func() {
-		//switch msg.ContentType {
-		//case constant.AddFriendTip:
-		//	u.addFriendNew(msg) //
-		//case constant.AcceptFriendApplicationTip:
-		//	u.acceptFriendApplicationNew(msg)
-		//case constant.RefuseFriendApplicationTip:
-		//	u.refuseFriendApplicationNew(msg)
-		//	//	case constant.SetSelfInfoTip:
-		//	//		u.setSelfInfo(msg)
-		//
-		//	//	case KickOnlineTip:
-		//	//		sdkLog("kickOnline ", msg)
-		//	//		u.kickOnline(&msg)
-		//default:
-		//	utils.sdkLog("type failed, ", msg)
-		}
-	}()
+	//
+	//go func() {
+	//	switch msg.ContentType {
+	//	case constant.AddFriendTip:
+	//		u.addFriendNew(msg) //
+	//	case constant.AcceptFriendApplicationTip:
+	//		u.acceptFriendApplicationNew(msg)
+	//	case constant.RefuseFriendApplicationTip:
+	//		u.refuseFriendApplicationNew(msg)
+	//		//	case constant.SetSelfInfoTip:
+	//		//		u.setSelfInfo(msg)
+	//
+	//		//	case KickOnlineTip:
+	//		//		sdkLog("kickOnline ", msg)
+	//		//		u.kickOnline(&msg)
+	//	default:
+	//		utils.sdkLog("type failed, ", msg)
+	//	}
+	//}()
 }
 
 func (u *Friend) acceptFriendApplicationNew(msg *server_api_params.MsgData) {

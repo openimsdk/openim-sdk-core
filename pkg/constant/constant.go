@@ -44,6 +44,8 @@ const (
 	Quote          = 114
 	//////////////////////////////////////////
 
+	SingleTipBegin = 1200
+
 	FriendApplicationProcessedNotification = 1201 //AcceptFriendApplicationTip = 201
 	FriendApplicationAddedNotification     = 1202 //AddFriendTip               = 202
 	FriendAddedNotification                = 1203
@@ -54,7 +56,7 @@ const (
 
 	SetSelfInfoTip = 204
 
-	SingleTipEnd = 399
+	SingleTipEnd = 1399
 	/////////////////////////////////////////
 	GroupTipBegin             = 500
 	TransferGroupOwnerTip     = 501
