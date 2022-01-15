@@ -171,8 +171,23 @@ type LocalGroupMember struct {
 //string Ex = 9;
 //}open_im_sdk.GroupRequest == imdb.GroupRequest
 type LocalGroupRequest struct {
-	GroupID      string   `gorm:"column:group_id;primary_key;type:varchar(64)" json:"groupID"`
-	UserID       string   `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
+	GroupID       string   `gorm:"column:group_id;primary_key;type:varchar(64)" json:"groupID"`
+	GroupName     string   `gorm:"column:name;size:255" json:"groupName"`
+	Notification  string   `gorm:"column:notification;type:varchar(255)" json:"notification"`
+	Introduction  string   `gorm:"column:introduction;type:varchar(255)" json:"introduction"`
+	GroupFaceURL  string   `gorm:"column:face_url;type:varchar(255)" json:"groupFaceURL"`
+	CreateTime    UnixTime `gorm:"column:create_time" json:"createTime"`
+	Status        int32    `gorm:"column:status" json:"status"`
+	CreatorUserID string   `gorm:"column:creator_user_id;type:varchar(64)" json:"creatorUserID"`
+	GroupType     int32    `gorm:"column:group_type" json:"groupType"`
+	OwnerUserID   string   `gorm:"column:owner_user_id;type:varchar(64)" json:"ownerUserID"`
+	MemberCount   int32    `gorm:"column:member_count" json:"memberCount"`
+
+	UserID      string `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
+	Nickname    string `gorm:"column:name;type:varchar(255)" json:"nickname"`
+	UserFaceURL string `gorm:"column:face_url;type:varchar(255)" json:"userFaceURL"`
+	Gender      int32  `gorm:"column:gender" json:"gender"`
+
 	HandleResult int32    `gorm:"column:handle_result" json:"handleResult"`
 	ReqMsg       string   `gorm:"column:req_msg;type:varchar(255)" json:"reqMsg"`
 	HandledMsg   string   `gorm:"column:handle_msg;type:varchar(255)" json:"handledMsg"`

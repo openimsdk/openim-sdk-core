@@ -124,7 +124,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		switch v.SessionType {
 		case constant.SingleChatType:
 			if v.ContentType > constant.SingleTipBegin && v.ContentType < constant.SingleTipEnd {
-				c.friend.DoFriendMsg(&v)
+				c.friend.DoFriendNotification(&v)
 				log.Info("internal", "DoFriendMsg SingleChatType", v)
 			} else if v.ContentType > constant.GroupTipBegin && v.ContentType < constant.GroupTipEnd {
 				c.group.DoGroupMsg(&v)

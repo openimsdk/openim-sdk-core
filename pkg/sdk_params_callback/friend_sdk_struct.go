@@ -16,10 +16,10 @@ type AddFriendParams struct {
 
 const AddFriendCallback = constant.SuccessCallbackDefault
 
-type GetRecvFriendApplicationListParams struct{}
+//type GetRecvFriendApplicationListParams struct{}
 type GetRecvFriendApplicationListCallback []*db.LocalFriendRequest
 
-type GetSendFriendApplicationListParams struct{}
+//type GetSendFriendApplicationListParams struct{}
 type GetSendFriendApplicationListCallback []db.LocalFriendRequest
 
 type ProcessFriendApplicationParams struct {
@@ -38,7 +38,7 @@ type DeleteFriendParams string
 //type DeleteFriendCallback struct{}
 const DeleteFriendCallback = constant.SuccessCallbackDefault
 
-type GetFriendListParams struct{}
+//type GetFriendListParams struct{}
 type GetFriendListCallback []db.LocalFriend
 
 type SetFriendRemarkParams struct {
@@ -54,7 +54,7 @@ type AddBlackParams string
 //type AddBlackCallback struct{}
 const AddBlackCallback = constant.SuccessCallbackDefault
 
-type GetBlackListParams struct{}
+//type GetBlackListParams struct{}
 
 //type GetBlackListCallback []LocalBlack
 const GetBlackListCallback = constant.SuccessCallbackDefault

@@ -5,6 +5,7 @@ import (
 	"open_im_sdk/pkg/db"
 	log2 "open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
+	"open_im_sdk/pkg/utils"
 	"reflect"
 )
 
@@ -119,14 +120,15 @@ func checkListDiff(a []diff, b []diff) (aInBNot, bInANot, sameA, sameB []int) {
 
 func TransferToLocalGroupMember(apiData []*server_api_params.GroupMemberFullInfo) []*db.LocalGroupMember {
 	local := make([]*db.LocalGroupMember, 0)
+	operationID := utils.OperationIDGenerator()
 	for _, v := range apiData {
 		var node db.LocalGroupMember
-		log2.NewDebug("0", "local test api ", v)
+		log2.NewDebug(operationID, "local test api ", v)
 		GroupMemberCopyToLocal(&node, v)
-		log2.NewDebug("0", "local test local  ", node)
+		log2.NewDebug(operationID, "local test local  ", node)
 		local = append(local, &node)
 	}
-	log2.NewDebug("0", "local test local all ", local)
+	log2.NewDebug(operationID, "local test local all ", local)
 	return local
 }
 
@@ -134,18 +136,17 @@ func GroupMemberCopyToLocal(dst *db.LocalGroupMember, src *server_api_params.Gro
 	copier.Copy(dst, src)
 }
 
-
-
 func TransferToLocalGroupInfo(apiData []*server_api_params.GroupInfo) []*db.LocalGroup {
 	local := make([]*db.LocalGroup, 0)
+	operationID := utils.OperationIDGenerator()
 	for _, v := range apiData {
 		var node db.LocalGroup
-		log2.NewDebug("0", "local test api ", v)
+		log2.NewDebug(operationID, "local test api ", v)
 		GroupInfoCopyToLocal(&node, v)
-		log2.NewDebug("0", "local test local  ", node)
+		log2.NewDebug(operationID, "local test local  ", node)
 		local = append(local, &node)
 	}
-	log2.NewDebug("0", "local test local all ", local)
+	log2.NewDebug(operationID, "local test local all ", local)
 	return local
 }
 
@@ -153,24 +154,28 @@ func GroupInfoCopyToLocal(dst *db.LocalGroup, src *server_api_params.GroupInfo) 
 	copier.Copy(dst, src)
 }
 
-
-
 func TransferToLocalGroupRequest(apiData []*server_api_params.GroupRequest) []*db.LocalGroupRequest {
 	local := make([]*db.LocalGroupRequest, 0)
+	operationID := utils.OperationIDGenerator()
 	for _, v := range apiData {
 		var node db.LocalGroupRequest
-		log2.NewDebug("0", "local test api ", v)
+		log2.NewDebug(operationID, "local test api ", v)
 		GroupRequestCopyToLocal(&node, v)
-		log2.NewDebug("0", "local test local  ", node)
+		log2.NewDebug(operationID, "local test local  ", node)
 		local = append(local, &node)
 	}
-	log2.NewDebug("0", "local test local all ", local)
+	log2.NewDebug(operationID, "local test local all ", local)
 	return local
 }
 
 func GroupRequestCopyToLocal(dst *db.LocalGroupRequest, src *server_api_params.GroupRequest) {
 	copier.Copy(dst, src)
+	copier.Copy(dst, src.GroupInfo)
+	copier.Copy(dst, src.UserInfo)
+	dst.GroupFaceURL = src.GroupInfo.FaceURL
+	dst.UserFaceURL = src.UserInfo.FaceURL
 }
+
 //
 //func TransferToLocalUserInfo(apiData []*server_api_params.UserInfo) []*db.LocalUser {
 //	localData := make([]*db.LocalUser, 0)
@@ -189,8 +194,7 @@ func GroupRequestCopyToLocal(dst *db.LocalGroupRequest, src *server_api_params.G
 //	copier.Copy(dst, src)
 //}
 
-
-func TransferToLocalUserInfo(apiData *server_api_params.UserInfo) *db.LocalUser{
+func TransferToLocalUserInfo(apiData *server_api_params.UserInfo) *db.LocalUser {
 	var localNode db.LocalUser
 	copier.Copy(&localNode, apiData)
 	return &localNode
@@ -198,14 +202,15 @@ func TransferToLocalUserInfo(apiData *server_api_params.UserInfo) *db.LocalUser{
 
 func TransferToLocalFriendRequest(apiFriendList []*server_api_params.FriendRequest) []*db.LocalFriendRequest {
 	localFriendList := make([]*db.LocalFriendRequest, 0)
+	operationID := utils.OperationIDGenerator()
 	for _, v := range apiFriendList {
 		var localFriendRequest db.LocalFriendRequest
-		log2.NewDebug("0", "local test api ", v)
+		log2.NewDebug(operationID, "local test api ", v)
 		friendRequestCopyToLocal(&localFriendRequest, v)
-		log2.NewDebug("0", "local test local  ", localFriendRequest)
+		log2.NewDebug(operationID, "local test local  ", localFriendRequest)
 		localFriendList = append(localFriendList, &localFriendRequest)
 	}
-	log2.NewDebug("0", "local test local all ", localFriendList)
+	log2.NewDebug(operationID, "local test local all ", localFriendList)
 	return localFriendList
 }
 
@@ -348,8 +353,6 @@ func CheckBlackListDiff(a []*db.LocalBlack, b []*db.LocalBlack) (aInBNot, bInANo
 	return aInBNot, bInANot, sameA, sameB
 }
 
-
-
 func CheckGroupInfoDiff(a []*db.LocalGroup, b []*db.LocalGroup) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
 	mapA := make(map[string]*db.LocalGroup)
@@ -392,8 +395,6 @@ func CheckGroupInfoDiff(a []*db.LocalGroup, b []*db.LocalGroup) (aInBNot, bInANo
 	}
 	return aInBNot, bInANot, sameA, sameB
 }
-
-
 
 func CheckGroupMemberDiff(a []*db.LocalGroupMember, b []*db.LocalGroupMember) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
@@ -438,9 +439,6 @@ func CheckGroupMemberDiff(a []*db.LocalGroupMember, b []*db.LocalGroupMember) (a
 	return aInBNot, bInANot, sameA, sameB
 }
 
-
-
-
 func CheckGroupRequestDiff(a []*db.LocalGroupRequest, b []*db.LocalGroupRequest) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
 	mapA := make(map[string]*db.LocalGroupRequest)
@@ -483,5 +481,3 @@ func CheckGroupRequestDiff(a []*db.LocalGroupRequest, b []*db.LocalGroupRequest)
 	}
 	return aInBNot, bInANot, sameA, sameB
 }
-
-
