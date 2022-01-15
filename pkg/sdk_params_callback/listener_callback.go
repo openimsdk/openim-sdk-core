@@ -13,17 +13,14 @@ type FriendInfoChangedCallback db.LocalFriend
 type BlackAddCallback db.LocalBlack
 type BlackDeletedCallback db.LocalBlack
 
-
-
 ////////////////////////////////group////////////////////////////////////
 
-
-OnJoinedGroupAdded
-OnJoinedGroupDeleted
-OnMemberAdded
-OnMemberDeleted
-OnReceiveJoinApplication
-OnApplicationAccept
-OnApplicationReject
-OnGroupInfoChanged
-OnMemberInfoChanged
+type JoinedGroupAddedCallback db.LocalGroup
+type JoinedGroupDeletedCallback db.LocalGroup
+type GroupMemberAddedCallback db.LocalGroupMember
+type GroupMemberDeletedCallback db.LocalGroupMember
+type ReceiveJoinGroupApplicationCallback db.LocalGroupRequest
+type GroupApplicationAcceptCallback db.LocalGroupRequest
+type GroupApplicationRejectCallback db.LocalGroupRequest
+type GroupInfoChangedCallback db.LocalGroup
+type GroupMemberInfoChangedCallback db.LocalGroupMember

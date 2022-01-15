@@ -16,13 +16,13 @@ import (
 type OnGroupListener interface {
 	OnJoinedGroupAdded(groupInfo string)
 	OnJoinedGroupDeleted(groupInfo string)
-	OnMemberAdded(groupMemberInfo string)
-	OnMemberDeleted(groupMemberInfo string)
-	OnReceiveJoinApplication(groupApplication string)
-	OnApplicationAccept(groupApplication string)
-	OnApplicationReject(groupApplication string)
+	OnGroupMemberAdded(groupMemberInfo string)
+	OnGroupMemberDeleted(groupMemberInfo string)
+	OnReceiveJoinGroupApplication(groupApplication string)
+	OnGroupApplicationAccept(groupApplication string)
+	OnGroupApplicationReject(groupApplication string)
 	OnGroupInfoChanged(groupInfo string)
-	OnMemberInfoChanged(groupMemberInfo string)
+	OnGroupMemberInfoChanged(groupMemberInfo string)
 }
 
 type Group struct {
