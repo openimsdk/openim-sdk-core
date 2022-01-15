@@ -2,7 +2,6 @@ package open_im_sdk
 
 import (
 	"encoding/json"
-	"fmt"
 	"open_im_sdk/internal/conversation_msg"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/group"
@@ -40,21 +39,22 @@ func SdkVersion() string {
 
 func InitSDK(config string, operationID string, listener ws.ConnListener) bool {
 	if err := json.Unmarshal([]byte(config), &sdk_struct.SvrConf); err != nil {
+		log.Error(operationID, "Unmarshal failed ", err.Error(), config)
 		return false
 	}
-	fmt.Println("config ", config, sdk_struct.SvrConf)
+	log.Info(operationID, "config ", config, sdk_struct.SvrConf)
 	log.NewPrivateLog("", sdk_struct.SvrConf.LogLevel)
-	log.NewInfo("0", utils.GetSelfFuncName(), config, SdkVersion())
+	log.NewInfo(operationID, utils.GetSelfFuncName(), config, SdkVersion())
 	if listener == nil || config == "" {
-		log.Error("0", "listener or config is nil")
+		log.Error(operationID, "listener or config is nil")
 		return false
 	}
 	if userForSDK != nil {
-		log.Warn("0", "Initialize multiple times, call logout")
+		log.Warn(operationID, "Initialize multiple times, call logout")
 		userForSDK.Logout(nil, utils.OperationIDGenerator())
 	}
 	userForSDK = new(login.LoginMgr)
-	return userForSDK.InitSDK(sdk_struct.SvrConf, listener)
+	return userForSDK.InitSDK(sdk_struct.SvrConf, listener, operationID)
 }
 
 func Login(userID, operationID string, token string, callback common.Base) {

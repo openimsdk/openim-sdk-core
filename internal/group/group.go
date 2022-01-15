@@ -473,7 +473,7 @@ func (u *Group) joinGroup(groupID, reqMsg string, callback common.Base, operatio
 	apiReq.ReqMessage = reqMsg
 	apiReq.GroupID = groupID
 	commData := u.p.PostFatalCallback(callback, constant.JoinGroupRouter, apiReq, apiReq.OperationID)
-	u.SyncApplyGroupApplication()
+	u.SyncJoinedGroupInfo()
 	return commData
 }
 
@@ -483,7 +483,7 @@ func (u *Group) quitGroup(groupID string, callback common.Base, operationID stri
 	apiReq.GroupID = groupID
 	commData := u.p.PostFatalCallback(callback, constant.QuitGroupRouter, apiReq, apiReq.OperationID)
 	u.syncGroupMemberByGroupID(groupID) //todo
-	u.SyncApplyGroupApplication()
+	u.SyncJoinedGroupInfo()
 	return commData
 }
 
@@ -785,9 +785,9 @@ func (u *Group) SyncGroupApplication() {
 	}
 }
 
-func (g *Group) SyncApplyGroupApplication() {
-
-}
+//func (g *Group) SyncApplyGroupApplication() {
+//
+//}
 
 func (u *Group) SyncJoinedGroupInfo() {
 	operationID := utils.OperationIDGenerator()

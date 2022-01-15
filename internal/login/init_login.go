@@ -39,6 +39,8 @@ type LoginMgr struct {
 
 	conversationCh chan common.Cmd2Value
 	cmdCh          chan common.Cmd2Value
+
+	imConfig sdk_struct.IMConfig
 }
 
 func (u *LoginMgr) Conversation() *conv.Conversation {
@@ -120,8 +122,9 @@ func (u *LoginMgr) login(userID, token string, cb common.Base, operationID strin
 
 }
 
-func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener ws.ConnListener) bool {
-	log.NewInfo("0", utils.GetSelfFuncName(), config)
+func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener ws.ConnListener, operationID string) bool {
+	u.imConfig = config
+	log.NewInfo(operationID, utils.GetSelfFuncName(), config)
 	if listener == nil {
 		return false
 	}
@@ -163,11 +166,12 @@ func (u *LoginMgr) forcedSynchronization() {
 	u.friend.SyncBlackList()
 	u.friend.SyncFriendApplication()
 	u.friend.SyncSelfFriendApplication()
+
 	u.user.SyncLoginUserInfo()
-	u.group.SyncApplyGroupRequest()
-	u.group.SyncGroupRequest()
+
 	u.group.SyncJoinedGroupInfo()
-	u.group.SyncSelfGroupRequest()
+	u.group.SyncGroupApplication()
+	u.group.SyncSelfGroupApplication()
 }
 
 func (u *LoginMgr) GetMinSeqSvr() int64 {

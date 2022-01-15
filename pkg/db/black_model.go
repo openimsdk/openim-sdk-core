@@ -18,7 +18,7 @@ func (d *DataBase) GetBlackList() ([]*LocalBlack, error) {
 	return transfer, err
 
 }
-func (d *DataBase) GetBlackListUid() (blackListUid []string, err error) {
+func (d *DataBase) GetBlackListUserID() (blackListUid []string, err error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	return blackListUid, utils.Wrap(d.conn.Model(&LocalBlack{}).Select("block_user_id").Find(&blackListUid).Error, "GetBlackList failed")

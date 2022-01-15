@@ -79,7 +79,7 @@ func (u *User) GetSelfUserInfoFromSvr(operationID string) (*api.UserInfo, error)
 	apiReq := api.GetSelfUserInfoReq{}
 	apiReq.OperationID = operationID
 	apiReq.UserID = u.loginUserID
-	commData, err := u.p.PostReturn(constant.GetSelfUserInfo, apiReq)
+	commData, err := u.p.PostReturn(constant.GetSelfUserInfoRouter, apiReq)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}

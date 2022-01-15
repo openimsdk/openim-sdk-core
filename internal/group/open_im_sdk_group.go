@@ -1,9 +1,7 @@
 package group
 
 import (
-	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/pkg/common"
-	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"

@@ -1,25 +1,28 @@
 package constant
 
 const (
-	GetSelfUserInfo = "/user/get_self_user_info" //todo
-	GetUsersInfoRouter                   = "/user/get_user_info"
-	UpdateSelfUserInfoRouter                = "/user/update_self_user_info" //todo
-	AddFriendRouter                     = "/friend/add_friend"
-	GetFriendInfoRouter                 = "/friend/get_friends_info"
-	GetFriendApplicationListRouter      = "/friend/get_friend_apply_list"
-	GetSelfApplicationListRouter        = "/friend/get_self_apply_list"
-	DeleteFriendRouter                  = "/friend/delete_friend"
-	GetFriendListRouter                 = "/friend/get_friend_list"
-	GetBlackListRouter                  = "/friend/get_blacklist"
-	AddFriendResponse                   = "/friend/add_friend_response"
-	AddBlackListRouter                  = "/friend/add_blacklist"
-	RemoveBlackListRouter               = "/friend/remove_blacklist"
-	SetFriendComment                    = "/friend/set_friend_comment"
+	GetSelfUserInfoRouter    = "/user/get_self_user_info"
+	GetUsersInfoRouter       = "/user/get_users_info"
+	UpdateSelfUserInfoRouter = "/user/update_user_info"
+
+	AddFriendRouter                = "/friend/add_friend"
+	DeleteFriendRouter             = "/friend/delete_friend"
+	GetFriendApplicationListRouter = "/friend/get_friend_apply_list" //recv
+	GetSelfApplicationListRouter   = "/friend/get_self_apply_list"   //send
+	GetFriendListRouter            = "/friend/get_friend_list"
+	AddFriendResponse              = "/friend/add_friend_response"
+	SetFriendRemark                = "/friend/set_friend_remark"
+
+	AddBlackRouter     = "/friend/add_black"
+	RemoveBlackRouter  = "/friend/remove_black"
+	GetBlackListRouter = "/friend/get_black_list"
+
 	SendMsgRouter                       = "/chat/send_msg"
 	PullUserMsgRouter                   = "/chat/pull_msg"
 	PullUserMsgBySeqRouter              = "/chat/pull_msg_by_seq"
 	NewestSeqRouter                     = "/chat/newest_seq"
 	TencentCloudStorageCredentialRouter = "/third/tencent_cloud_storage_credential"
+
 	//group
 	CreateGroupRouter                  = "/group/create_group"
 	SetGroupInfoRouter                 = "/group/set_group_info"

@@ -65,7 +65,7 @@ func (wsRouter *WsFuncRouter) InitSDK(config string, operationID string) {
 	c := sdk_struct.IMConfig{}
 	json.Unmarshal([]byte(config), &c)
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if userWorker.InitSDK(c, &initcb) {
+	if userWorker.InitSDK(c, &initcb, operationID) {
 		//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", "", operationID})
 	} else {
 		//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), open_im_sdk.ErrCodeInitLogin, "init config failed", "", operationID})
