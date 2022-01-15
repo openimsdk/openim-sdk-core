@@ -2,7 +2,6 @@ package friend
 
 import (
 	"open_im_sdk/pkg/common"
-	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
@@ -116,7 +115,7 @@ func (f *Friend) DeleteFriend(callback common.Base, friendUserID string, operati
 	}
 	go func() {
 		log.NewInfo(operationID, "DeleteFriend args: ", friendUserID)
-		f.deleteFriend(friendUserID, callback, operationID)
+		f.deleteFriend(sdk_params_callback.DeleteFriendParams(friendUserID), callback, operationID)
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.DeleteFriendCallback))
 		log.NewInfo(operationID, "DeleteFriend callback: ", utils.StructToJsonString(sdk_params_callback.DeleteFriendCallback))
 	}()
@@ -129,7 +128,7 @@ func (f *Friend) GetFriendList(callback common.Base, operationID string) {
 	}
 	go func() {
 		log.NewInfo(operationID, "GetFriendList args: ")
-		var filterLocalFriendList []*db.LocalFriend
+		var filterLocalFriendList sdk_params_callback.GetFriendListCallback
 		localFriendList, err := f.db.GetAllFriendList()
 		common.CheckErr(callback, err, operationID)
 		localBlackUidList, err := f.db.GetBlackListUid()
@@ -163,8 +162,8 @@ func (f *Friend) AddBlack(callback common.Base, blackUserID, operationID string)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), blackUserID)
 	go func() {
 		log.NewInfo(operationID, "AddToBlackList args: ", blackUserID)
-		f.addBlack(callback, blackUserID, operationID)
-		callback.OnSuccess("")
+		f.addBlack(callback, sdk_params_callback.AddBlackParams(blackUserID), operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.AddBlackCallback))
 		log.NewInfo(operationID, "AddToBlackList callback: ")
 	}()
 }
@@ -184,9 +183,9 @@ func (f *Friend) RemoveBlack(callback common.Base, removeUserID, operationID str
 	log.NewInfo(operationID, utils.GetSelfFuncName(), removeUserID)
 	go func() {
 		log.NewInfo(operationID, "RemoveBlack args: ", removeUserID)
-		f.removeBlack(callback, removeUserID, operationID)
-		callback.OnSuccess("")
-		log.NewInfo(operationID, "RemoveBlack callback")
+		f.removeBlack(callback, sdk_params_callback.RemoveBlackParams(removeUserID), operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.RemoveBlackCallback))
+		log.NewInfo(operationID, "RemoveBlack callback: ", utils.StructToJsonString(sdk_params_callback.RemoveBlackCallback))
 	}()
 }
 

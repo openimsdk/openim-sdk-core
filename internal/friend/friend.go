@@ -131,9 +131,9 @@ func (f *Friend) checkFriend(callback common.Base, userIDList sdk_params_callbac
 	return checkFriendCallback
 }
 
-func (f *Friend) deleteFriend(FriendUserID string, callback common.Base, operationID string) *server_api_params.CommDataResp {
+func (f *Friend) deleteFriend(FriendUserID sdk_params_callback.DeleteFriendParams, callback common.Base, operationID string) *server_api_params.CommDataResp {
 	apiReq := server_api_params.DeleteFriendReq{}
-	apiReq.ToUserID = FriendUserID
+	apiReq.ToUserID = string(FriendUserID)
 	apiReq.FromUserID = f.loginUserID
 	apiReq.OperationID = operationID
 	result := f.p.PostFatalCallback(callback, constant.DeleteFriendRouter, apiReq, operationID)
@@ -239,9 +239,9 @@ func (f *Friend) getServerFriendApplication(operationID string) ([]*server_api_p
 //	}
 //	return vgetFriendApplyListResp.Data, nil
 //}
-func (f *Friend) addBlack(callback common.Base, blackUid, operationID string) *server_api_params.CommDataResp {
+func (f *Friend) addBlack(callback common.Base, blackUserID sdk_params_callback.AddBlackParams, operationID string) *server_api_params.CommDataResp {
 	apiReq := server_api_params.AddBlacklistReq{}
-	apiReq.ToUserID = blackUid
+	apiReq.ToUserID = string(blackUserID)
 	apiReq.FromUserID = f.loginUserID
 	apiReq.OperationID = operationID
 	result := f.p.PostFatalCallback(callback, constant.AddBlackListRouter, apiReq, operationID)
@@ -249,9 +249,9 @@ func (f *Friend) addBlack(callback common.Base, blackUid, operationID string) *s
 	return result
 }
 
-func (f *Friend) removeBlack(callback common.Base, deleteUid, operationID string) *server_api_params.CommDataResp {
+func (f *Friend) removeBlack(callback common.Base, blackUserID sdk_params_callback.RemoveBlackParams, operationID string) *server_api_params.CommDataResp {
 	apiReq := server_api_params.RemoveBlackListReq{}
-	apiReq.ToUserID = deleteUid
+	apiReq.ToUserID = string(blackUserID)
 	apiReq.FromUserID = f.loginUserID
 	apiReq.OperationID = operationID
 	result := f.p.PostFatalCallback(callback, constant.RemoveBlackListRouter, apiReq, operationID)

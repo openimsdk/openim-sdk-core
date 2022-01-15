@@ -10,6 +10,7 @@ import (
 type GetDesignatedFriendsInfoParams []string
 type GetDesignatedFriendsInfoCallback []*db.LocalFriend
 
+//1
 type AddFriendParams struct {
 	ToUserID string `json:"toUserID" validate:"required"`
 	ReqMsg   string `json:"reqMsg"`
@@ -17,31 +18,37 @@ type AddFriendParams struct {
 
 const AddFriendCallback = constant.SuccessCallbackDefault
 
+//1
 //type GetRecvFriendApplicationListParams struct{}
 type GetRecvFriendApplicationListCallback []*db.LocalFriendRequest
 
+//1
 //type GetSendFriendApplicationListParams struct{}
 type GetSendFriendApplicationListCallback []*db.LocalFriendRequest
 
+//1
 type ProcessFriendApplicationParams struct {
 	ToUserID  string `json:"toUserID" validate:"required"`
 	HandleMsg string `json:"handleMsg"`
 }
 
-//type ProcessFriendApplicationCallback struct{}
 const ProcessFriendApplicationCallback = constant.SuccessCallbackDefault
 
+//1
 type CheckFriendParams []string
 type CheckFriendCallback []server_api_params.UserIDResult
 
+//1
 type DeleteFriendParams string
 
 //type DeleteFriendCallback struct{}
 const DeleteFriendCallback = constant.SuccessCallbackDefault
 
+//1
 //type GetFriendListParams struct{}
-type GetFriendListCallback []db.LocalFriend
+type GetFriendListCallback []*db.LocalFriend
 
+//1
 type SetFriendRemarkParams struct {
 	ToUserID string `json:"toUserID" validate:"required"`
 	Remark   string `json:"remark" validate:"required"`
@@ -50,17 +57,18 @@ type SetFriendRemarkParams struct {
 //type SetFriendRemarkCallback struct{}
 const SetFriendRemarkCallback = constant.SuccessCallbackDefault
 
+//1
 type AddBlackParams string
 
 //type AddBlackCallback struct{}
 const AddBlackCallback = constant.SuccessCallbackDefault
 
+//1
 //type GetBlackListParams struct{}
+type GetBlackListCallback []*db.LocalBlack
 
-//type GetBlackListCallback []LocalBlack
-const GetBlackListCallback = constant.SuccessCallbackDefault
-
-type DeleteBlackParams string
+//1
+type RemoveBlackParams string
 
 //type DeleteBlackCallback struct{}
-const DeleteBlackCallback = constant.SuccessCallbackDefault
+const RemoveBlackCallback = constant.SuccessCallbackDefault
