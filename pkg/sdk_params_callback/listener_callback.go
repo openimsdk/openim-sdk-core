@@ -9,9 +9,10 @@ type FriendApplicationRejectCallback db.LocalFriendRequest
 type FriendApplicationDeletedCallback db.LocalFriendRequest
 type FriendAddedCallback db.LocalFriend
 type FriendDeletedCallback db.LocalFriend
+type FriendInfoChangedCallback db.LocalFriend
 type BlackAddCallback db.LocalBlack
 type BlackDeletedCallback db.LocalBlack
-type FriendInfoChangedCallback db.LocalFriend
+
 
 
 ////////////////////////////////group////////////////////////////////////

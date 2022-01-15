@@ -23,15 +23,15 @@ type Friend struct {
 }
 
 type OnFriendshipListener interface {
-	OnFriendApplicationAdded(applyUserInfo string)
-	OnFriendApplicationDeleted(applyUserInfo string)
-	OnFriendApplicationAccept(applyUserInfo string)
-	OnFriendApplicationReject(applyUserInfo string)
+	OnFriendApplicationAdded(friendApplication string)
+	OnFriendApplicationDeleted(friendApplication string)
+	OnFriendApplicationAccept(groupApplication string)
+	OnFriendApplicationReject(friendApplication string)
 	OnFriendAdded(friendInfo string)
 	OnFriendDeleted(friendInfo string)
-	OnBlackAdd(userInfo string)
-	OnBlackDeleted(userInfo string)
 	OnFriendInfoChanged(friendInfo string)
+	OnBlackAdd(blackInfo string)
+	OnBlackDeleted(blackInfo string)
 }
 
 func NewFriend(loginUserID string, db *db.DataBase, p *ws.PostApi) *Friend {
