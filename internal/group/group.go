@@ -13,6 +13,18 @@ import (
 	"open_im_sdk/sdk_struct"
 )
 
+type OnGroupListener interface {
+	OnJoinedGroupAdded(groupInfo string)
+	OnJoinedGroupDeleted(groupInfo string)
+	OnMemberAdded(groupMemberInfo string)
+	OnMemberDeleted(groupMemberInfo string)
+	OnReceiveJoinApplication(groupApplication string)
+	OnApplicationAccept(groupApplication string)
+	OnApplicationReject(groupApplication string)
+	OnGroupInfoChanged(groupInfo string)
+	OnMemberInfoChanged(groupMemberInfo string)
+}
+
 type Group struct {
 	listener    OnGroupListener
 	loginUserID string
@@ -71,7 +83,7 @@ func (u *Group) doCreateGroup(msg *api.MsgData) {
 
 func (u *Group) doJoinGroup(msg *api.MsgData) {
 	//
-	//u.syncGroupRequest()
+	//u.SyncGroupApplication()
 	//
 	//var n utils.NotificationContent
 	//err := json.Unmarshal([]byte(msg.Content), &n)
@@ -150,7 +162,7 @@ func (u *Group) doTransferGroupOwner(msg *api.MsgData) {
 //
 //func (u *Group) onTransferGroupOwner(transfer *open_im_sdk.TransferGroupOwnerReq) {
 //	//if u.loginUserID == transfer.NewOwner || u.loginUserID == transfer.OldOwner {
-//	//	u.syncGroupRequest()
+//	//	u.SyncGroupApplication()
 //	//}
 //	//u.syncGroupMemberByGroupId(transfer.GroupID)
 //	//
@@ -223,7 +235,7 @@ func (u *Group) doAcceptGroupApplication(msg *api.MsgData) {
 //		u.syncJoinedGroupInfo()
 //		u.listener.OnApplicationProcessed(groupMember.Info.GroupId, string(bOp), 1, groupMember.Info.HandledMsg)
 //	}
-//	//g.syncGroupRequest()
+//	//g.SyncGroupApplication()
 //	u.syncGroupMemberByGroupId(groupMember.Info.GroupId)
 //	u.listener.OnMemberEnter(groupMember.Info.GroupId, string(bMemberListr))
 //
@@ -461,7 +473,7 @@ func (u *Group) joinGroup(groupID, reqMsg string, callback common.Base, operatio
 	apiReq.ReqMessage = reqMsg
 	apiReq.GroupID = groupID
 	commData := u.p.PostFatalCallback(callback, constant.JoinGroupRouter, apiReq, apiReq.OperationID)
-	u.SyncApplyGroupRequest()
+	u.SyncApplyGroupApplication()
 	return commData
 }
 
@@ -471,7 +483,7 @@ func (u *Group) quitGroup(groupID string, callback common.Base, operationID stri
 	apiReq.GroupID = groupID
 	commData := u.p.PostFatalCallback(callback, constant.QuitGroupRouter, apiReq, apiReq.OperationID)
 	u.syncGroupMemberByGroupID(groupID) //todo
-	u.SyncApplyGroupRequest()
+	u.SyncApplyGroupApplication()
 	return commData
 }
 
@@ -607,7 +619,7 @@ func (u *Group) processGroupApplication(callback common.Base, groupID, fromUserI
 	} else if handleResult == -1 {
 		commData = u.p.PostFatalCallback(callback, constant.RefuseGroupApplicationRouter, apiReq, apiReq.OperationID)
 	}
-	u.SyncGroupRequest()
+	u.SyncGroupApplication()
 	return commData
 }
 
@@ -731,11 +743,11 @@ func (u *Group) getGroupMembersInfoFromSvr(groupID string, memberList []string) 
 //	return nil
 //}
 
-func (u *Group) SyncSelfGroupRequest() {
+func (u *Group) SyncSelfGroupApplication() {
 
 }
 
-func (u *Group) SyncGroupRequest() {
+func (u *Group) SyncGroupApplication() {
 	operationID := utils.OperationIDGenerator()
 	svrList, err := u.getGroupApplicationListFromSvr(operationID)
 	if err != nil {
@@ -773,7 +785,7 @@ func (u *Group) SyncGroupRequest() {
 	}
 }
 
-func (g *Group) SyncApplyGroupRequest() {
+func (g *Group) SyncApplyGroupApplication() {
 
 }
 

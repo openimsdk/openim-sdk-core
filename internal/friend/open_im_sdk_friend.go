@@ -190,18 +190,6 @@ func (f *Friend) RemoveBlack(callback common.Base, removeUserID, operationID str
 	}()
 }
 
-type OnFriendshipListener interface {
-	OnFriendApplicationListAdded(applyUserInfo string)
-	OnFriendApplicationListDeleted(applyUserInfo string)
-	OnFriendApplicationListAccept(applyUserInfo string)
-	OnFriendApplicationListReject(applyUserInfo string)
-	OnFriendListAdded(friendInfo string)
-	OnFriendListDeleted(friendInfo string)
-	OnBlackListAdd(userInfo string)
-	OnBlackListDeleted(userInfo string)
-	OnFriendInfoChanged(friendInfo string)
-}
-
 func (f *Friend) SetFriendListener(listener OnFriendshipListener) bool {
 	if listener == nil {
 		return false

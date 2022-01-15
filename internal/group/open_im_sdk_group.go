@@ -1,22 +1,13 @@
 package group
 
 import (
+	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/pkg/common"
+	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
 )
-
-type OnGroupListener interface {
-	OnMemberEnter(groupId string, memberList string)
-	OnMemberLeave(groupId string, member string)
-	OnMemberInvited(groupId string, opUser string, memberList string)
-	OnMemberKicked(groupId string, opUser string, memberList string)
-	OnGroupCreated(groupId string)
-	OnGroupInfoChanged(groupId string, groupInfo string)
-	OnReceiveJoinApplication(groupId string, member string, opReason string)
-	OnApplicationProcessed(groupId string, opUser string, AgreeOrReject int32, opReason string)
-}
 
 func (g *Group) SetGroupListener(callback OnGroupListener) {
 	if callback == nil {

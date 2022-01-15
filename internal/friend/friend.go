@@ -22,6 +22,18 @@ type Friend struct {
 	p              *ws.PostApi
 }
 
+type OnFriendshipListener interface {
+	OnFriendApplicationAdded(applyUserInfo string)
+	OnFriendApplicationDeleted(applyUserInfo string)
+	OnFriendApplicationAccept(applyUserInfo string)
+	OnFriendApplicationReject(applyUserInfo string)
+	OnFriendAdded(friendInfo string)
+	OnFriendDeleted(friendInfo string)
+	OnBlackAdd(userInfo string)
+	OnBlackDeleted(userInfo string)
+	OnFriendInfoChanged(friendInfo string)
+}
+
 func NewFriend(loginUserID string, db *db.DataBase, p *ws.PostApi) *Friend {
 	return &Friend{loginUserID: loginUserID, db: db, p: p}
 }
@@ -274,8 +286,8 @@ func (f *Friend) SyncFriendApplication() {
 			log.NewError(operationID, "InsertFriendRequest failed ", err.Error())
 			continue
 		}
-		callbackData := sdk_params_callback.FriendApplicationListAddedCallback(*onServer[index])
-		f.friendListener.OnFriendApplicationListAdded(utils.StructToJsonString(callbackData))
+		callbackData := sdk_params_callback.FriendApplicationAddedCallback(*onServer[index])
+		f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
 	}
 	for _, index := range sameA {
 		err := f.db.UpdateFriendRequest(onServer[index])
@@ -285,12 +297,12 @@ func (f *Friend) SyncFriendApplication() {
 				continue
 			}
 			if onServer[index].HandleResult == -1 {
-				callbackData := sdk_params_callback.FriendApplicationListRejectCallback(*onServer[index])
-				f.friendListener.OnFriendApplicationListReject(utils.StructToJsonString(callbackData))
+				callbackData := sdk_params_callback.FriendApplicationRejectCallback(*onServer[index])
+				f.friendListener.OnFriendApplicationReject(utils.StructToJsonString(callbackData))
 
 			} else if onServer[index].HandleResult == -1 {
-				callbackData := sdk_params_callback.FriendApplicationListAcceptCallback(*onServer[index])
-				f.friendListener.OnFriendApplicationListAccept(utils.StructToJsonString(callbackData))
+				callbackData := sdk_params_callback.FriendApplicationAcceptCallback(*onServer[index])
+				f.friendListener.OnFriendApplicationAccept(utils.StructToJsonString(callbackData))
 			}
 		}
 	}
@@ -300,8 +312,8 @@ func (f *Friend) SyncFriendApplication() {
 			log.NewError(operationID, "_deleteFriendRequestBothUserID failed ", err.Error(), onLocal[index].FromUserID, onLocal[index].ToUserID)
 			continue
 		}
-		callbackData := sdk_params_callback.FriendApplicationListAcceptCallback(*onLocal[index])
-		f.friendListener.OnFriendApplicationListDeleted(utils.StructToJsonString(callbackData))
+		callbackData := sdk_params_callback.FriendApplicationAcceptCallback(*onLocal[index])
+		f.friendListener.OnFriendApplicationDeleted(utils.StructToJsonString(callbackData))
 	}
 }
 
