@@ -6,8 +6,9 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 )
 
+//1
 type GetDesignatedFriendsInfoParams []string
-type GetDesignatedFriendsInfoCallback []db.LocalFriend
+type GetDesignatedFriendsInfoCallback []*db.LocalFriend
 
 type AddFriendParams struct {
 	ToUserID string `json:"toUserID" validate:"required"`
@@ -20,7 +21,7 @@ const AddFriendCallback = constant.SuccessCallbackDefault
 type GetRecvFriendApplicationListCallback []*db.LocalFriendRequest
 
 //type GetSendFriendApplicationListParams struct{}
-type GetSendFriendApplicationListCallback []db.LocalFriendRequest
+type GetSendFriendApplicationListCallback []*db.LocalFriendRequest
 
 type ProcessFriendApplicationParams struct {
 	ToUserID  string `json:"toUserID" validate:"required"`

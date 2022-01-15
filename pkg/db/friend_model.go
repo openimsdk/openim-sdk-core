@@ -49,9 +49,14 @@ func (d *DataBase) GetFriendInfoByFriendUserID(FriendUserID string) (*LocalFrien
 		d.loginUserID, FriendUserID).Find(&friend).Error, "GetFriendInfoByFriendUserID failed")
 }
 
-func (d *DataBase) GetFriendInfoList(friendUserIDList []string) ([]LocalFriend, error) {
+func (d *DataBase) GetFriendInfoList(friendUserIDList []string) ([]*LocalFriend, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var friendList []LocalFriend
-	return friendList, utils.Wrap(d.conn.Where("friend_user_id IN ?", friendUserIDList).Find(&friendList).Error, "GetFriendInfoListByFriendUserID failed")
+	err := utils.Wrap(d.conn.Where("friend_user_id IN ?", friendUserIDList).Find(&friendList).Error, "GetFriendInfoListByFriendUserID failed")
+	var transfer []*LocalFriend
+	for _, v := range friendList {
+		transfer = append(transfer, &v)
+	}
+	return transfer, err
 }
