@@ -807,7 +807,7 @@ func (u *Group) SyncJoinedGroupInfo() {
 		}
 	}
 	for _, index := range bInANot {
-		err := u.db.DeleteGroup(onServer[index].GroupID)
+		err := u.db.DeleteGroup(onLocal[index].GroupID)
 		if err != nil {
 			log.NewError(operationID, "DeleteGroup failed ", err.Error())
 			continue
@@ -849,7 +849,7 @@ func (u *Group) syncGroupMemberByGroupID(groupID string) {
 		}
 	}
 	for _, index := range bInANot {
-		err := u.db.DeleteGroupMember(onServer[index].GroupID, onServer[index].UserID)
+		err := u.db.DeleteGroupMember(onLocal[index].GroupID, onLocal[index].UserID)
 		if err != nil {
 			log.NewError(operationID, "DeleteGroupMember failed ", err.Error())
 			continue

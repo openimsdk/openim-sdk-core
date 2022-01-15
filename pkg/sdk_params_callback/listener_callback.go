@@ -1,0 +1,13 @@
+package sdk_params_callback
+
+import "open_im_sdk/pkg/db"
+
+type FriendApplicationListAddedCallback db.LocalFriendRequest
+type FriendApplicationListAcceptCallback db.LocalFriendRequest
+type FriendApplicationListRejectCallback db.LocalFriendRequest
+type FriendApplicationListDeletedCallback db.LocalFriendRequest
+type FriendListAddedCallback db.LocalFriend
+type FriendListDeletedCallback db.LocalFriend
+type BlackListAddCallback db.LocalBlack
+type BlackListDeletedCallback db.LocalBlack
+type FriendInfoChangedCallback db.LocalFriend

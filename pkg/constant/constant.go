@@ -54,7 +54,7 @@ const (
 	BlackAddedNotification                 = 1206
 	BlackDeletedNotification               = 1207
 
-	SetSelfInfoTip = 204
+	SetSelfInfoTip = 1208
 
 	SingleTipEnd = 1399
 	/////////////////////////////////////////

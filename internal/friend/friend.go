@@ -1,6 +1,7 @@
 package friend
 
 import (
+	"github.com/golang/protobuf/proto"
 	"github.com/mitchellh/mapstructure"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/pkg/common"
@@ -24,11 +25,6 @@ type Friend struct {
 func NewFriend(loginUserID string, db *db.DataBase, p *ws.PostApi) *Friend {
 	return &Friend{loginUserID: loginUserID, db: db, p: p}
 }
-
-//func (f *Friend) Init(userID string, db *db.DataBase) {
-//	f.loginUserID = userID
-//	f.db = db
-//}
 
 func (f *Friend) SetListener(listener OnFriendshipListener) {
 	f.friendListener = listener
@@ -156,67 +152,6 @@ func (f *Friend) setFriendRemark(params sdk_params_callback.SetFriendRemarkParam
 	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{c.ConversationID}}})
 }
 
-//
-//func (u *UserRelated) doFriendList() {
-//	friendsInfoOnServer, err := u.getServerFriendList()
-//	if err != nil {
-//		return
-//	}
-//	friendsInfoOnServerInterface := make([]diff, 0)
-//	for _, v := range friendsInfoOnServer {
-//		friendsInfoOnServerInterface = append(friendsInfoOnServerInterface, v)
-//	}
-//	friendsInfoOnLocal, err := u.getLocalFriendList()
-//	if err != nil {
-//		return
-//	}
-//	friendsInfoOnLocalInterface := make([]diff, 0)
-//	for _, v := range friendsInfoOnLocal {
-//		friendsInfoOnLocalInterface = append(friendsInfoOnLocalInterface, v)
-//	}
-//	aInBNot, bInANot, sameA, _ := checkDiff(friendsInfoOnServerInterface, friendsInfoOnLocalInterface)
-//	if len(aInBNot) > 0 {
-//		for _, index := range aInBNot {
-//			if friendInfoStruct, ok := friendsInfoOnServerInterface[index].Value().(friendInfo); ok {
-//				err = u.insertIntoTheFriendToFriendInfo(friendInfoStruct.UID, friendInfoStruct.Name, friendInfoStruct.Comment, friendInfoStruct.Icon, friendInfoStruct.Gender, friendInfoStruct.Mobile, friendInfoStruct.Birth, friendInfoStruct.Email, friendInfoStruct.Ex)
-//				if err != nil {
-//					sdkLog(err.Error())
-//					return
-//				}
-//				jsonFriendInfo, _ := json.Marshal(friendInfoStruct)
-//				u.friendListener.OnFriendListAdded(string(jsonFriendInfo))
-//			}
-//		}
-//	}
-//
-//	if len(bInANot) > 0 {
-//		for _, index := range bInANot {
-//			err = u.delTheFriendFromFriendInfo(friendsInfoOnLocalInterface[index].Key())
-//			if err != nil {
-//				sdkLog(err.Error())
-//				return
-//			}
-//			jsonFriendInfo, _ := json.Marshal(friendsInfoOnLocal[index])
-//			u.friendListener.OnFriendListDeleted(string(jsonFriendInfo))
-//			//_ = u.triggerCmdDeleteConversationAndMessage(friendsInfoOnLocalInterface[index].Key(), GetConversationIDBySessionType(friendsInfoOnLocalInterface[index].Key(), SingleChatType), SingleChatType)
-//		}
-//	}
-//
-//	if len(sameA) > 0 {
-//		for _, index := range sameA {
-//			if friendInfoStruct, ok := friendsInfoOnServerInterface[index].Value().(friendInfo); ok {
-//				err = u.updateTheFriendInfo(friendInfoStruct.UID, friendInfoStruct.Name, friendInfoStruct.Comment, friendInfoStruct.Icon, friendInfoStruct.Gender, friendInfoStruct.Mobile, friendInfoStruct.Birth, friendInfoStruct.Email, friendInfoStruct.Ex)
-//				if err != nil {
-//					sdkLog(err.Error())
-//					return
-//				}
-//				jsonFriendInfo, _ := json.Marshal(friendInfoStruct)
-//				u.friendListener.OnFriendInfoChanged(string(jsonFriendInfo))
-//			}
-//		}
-//	}
-//}
-
 //func (f *Friend) getLocalFriendList() ([]open_im_sdk.friendInfo, error) {
 //	//Take out the friend list and judge whether it is in the blacklist again to prevent nested locks
 //	localFriendList, err := u.getLocalFriendList22()
@@ -251,65 +186,6 @@ func (f *Friend) getServerFriendList(operationID string) ([]*server_api_params.F
 	}
 
 	return realData.FriendInfoList, nil
-}
-
-func (f *Friend) doBlackList() {
-	//
-	//blackListOnServer, err := u.getServerBlackList()
-	//if err != nil {
-	//	return
-	//}
-	//blackListOnServerInterface := make([]diff, 0)
-	//for _, blackUser := range blackListOnServer {
-	//	//blackListOnServerInterface = append(blackListOnServerInterface, blackUser)
-	//}
-	//
-	//blackListOnLocal, err := u.getLocalBlackList()
-	//if err != nil {
-	//	return
-	//}
-	//blackListOnLocalInterface := make([]diff, 0)
-	//for _, blackUser := range blackListOnLocal {z
-	//	blackListOnLocalInterface = append(blackListOnLocalInterface, blackUser)
-	//}
-	//
-	//aInBNot, bInANot, sameA, _ := checkDiff(blackListOnServerInterface, blackListOnLocalInterface)
-	//
-	//if len(aInBNot) > 0 {
-	//	for _, index := range aInBNot {
-	//		err = u.insertIntoTheUserToBlackList(blackListOnServer[index])
-	//		if err != nil {
-	//			sdkLog(err.Error())
-	//			return
-	//		}
-	//		jsonAddBlackUserInfo, _ := json.Marshal(blackListOnServerInterface[index])
-	//		u.friendListener.OnBlackListAdd(string(jsonAddBlackUserInfo))
-	//	}
-	//}
-	//
-	//if len(bInANot) > 0 {
-	//	for _, index := range bInANot {
-	//		err = u.delTheUserFromBlackList(blackListOnLocalInterface[index].Key())
-	//		if err != nil {
-	//			sdkLog(err.Error())
-	//			return
-	//		}
-	//		jsonDelBlackUserInfo, _ := json.Marshal(blackListOnLocal[index])
-	//		u.friendListener.OnBlackListDeleted(string(jsonDelBlackUserInfo))
-	//	}
-	//}
-	//if len(bInANot) > 0 || len(aInBNot) > 0 {
-	//	_ = triggerCmdFriend()
-	//}
-	//
-	//if len(sameA) > 0 {
-	//	for _, index := range sameA {
-	//		//interface--->struct
-	//		if blackListStruct, ok := blackListOnServerInterface[index].Value().(userInfo); ok {
-	//			_ = u.updateBlackList(blackListStruct)
-	//		}
-	//	}
-	//}
 }
 
 func (f *Friend) getServerBlackList(operationID string) ([]*server_api_params.PublicUserInfo, error) {
@@ -371,51 +247,6 @@ func (f *Friend) removeBlack(callback common.Base, deleteUid, operationID string
 	return result
 }
 
-//
-//func (u *UserRelated) doAcceptOrRefuseApplicationCall(sendUid string, flag int32) {
-//	sdkLog("doAcceptOrRefuseApplicationCall", sendUid, flag)
-//
-//	var ui2GetUserInfo ui2ClientCommonReq
-//	ui2GetUserInfo.UidList = append(ui2GetUserInfo.UidList, sendUid)
-//	resp, err := post2Api(getUserInfoRouter, paramsGetUserInfo{UidList: ui2GetUserInfo.UidList, OperationID: operationIDGenerator()}, u.token)
-//	if err != nil {
-//		sdkLog("getUserInfo failed", err)
-//		return
-//	}
-//	var vgetUserInfoResp getUserInfoResp
-//	err = json.Unmarshal(resp, &vgetUserInfoResp)
-//	if err != nil {
-//
-//	}
-//	if vgetUserInfoResp.ErrCode != 0 {
-//		sdkLog(vgetUserInfoResp.ErrCode, vgetUserInfoResp.ErrMsg)
-//		return
-//	}
-//	var appUserNode applyUserInfo
-//	appUserNode.Uid = vgetUserInfoResp.Data[0].Uid
-//	appUserNode.Name = vgetUserInfoResp.Data[0].Name
-//	appUserNode.Icon = vgetUserInfoResp.Data[0].Icon
-//	appUserNode.Gender = vgetUserInfoResp.Data[0].Gender
-//	appUserNode.Mobile = vgetUserInfoResp.Data[0].Mobile
-//	appUserNode.Birth = vgetUserInfoResp.Data[0].Birth
-//	appUserNode.Email = vgetUserInfoResp.Data[0].Email
-//	appUserNode.Ex = vgetUserInfoResp.Data[0].Ex
-//	appUserNode.Flag = flag
-//
-//	jsonInfo, err := json.Marshal(appUserNode)
-//	if err != nil {
-//		sdkLog("doAcceptOrRefuseApplication json marshal failed")
-//		return
-//	}
-//	sdkLog(flag)
-//	if flag == 1 {
-//		u.friendListener.OnFriendApplicationListAccept(string(jsonInfo))
-//	}
-//	if flag == -1 {
-//		u.friendListener.OnFriendApplicationListReject(string(jsonInfo))
-//	}
-//}
-
 func (f *Friend) SyncSelfFriendApplication() {
 
 }
@@ -443,7 +274,7 @@ func (f *Friend) SyncFriendApplication() {
 			log.NewError(operationID, "InsertFriendRequest failed ", err.Error())
 			continue
 		}
-		callbackData := common.FriendApplicationListAddedCallback(*onServer[index])
+		callbackData := sdk_params_callback.FriendApplicationListAddedCallback(*onServer[index])
 		f.friendListener.OnFriendApplicationListAdded(utils.StructToJsonString(callbackData))
 	}
 	for _, index := range sameA {
@@ -454,21 +285,23 @@ func (f *Friend) SyncFriendApplication() {
 				continue
 			}
 			if onServer[index].HandleResult == -1 {
-				callbackData := common.FriendApplicationListRejectCallback(*onServer[index])
+				callbackData := sdk_params_callback.FriendApplicationListRejectCallback(*onServer[index])
 				f.friendListener.OnFriendApplicationListReject(utils.StructToJsonString(callbackData))
 
 			} else if onServer[index].HandleResult == -1 {
-				callbackData := common.FriendApplicationListAcceptCallback(*onServer[index])
+				callbackData := sdk_params_callback.FriendApplicationListAcceptCallback(*onServer[index])
 				f.friendListener.OnFriendApplicationListAccept(utils.StructToJsonString(callbackData))
 			}
 		}
 	}
 	for _, index := range bInANot {
-		err := f.db.DeleteFriendRequestBothUserID(onServer[index].FromUserID, onServer[index].ToUserID)
+		err := f.db.DeleteFriendRequestBothUserID(onLocal[index].FromUserID, onLocal[index].ToUserID)
 		if err != nil {
-			log.NewError(operationID, "_deleteFriendRequestBothUserID failed ", err.Error())
+			log.NewError(operationID, "_deleteFriendRequestBothUserID failed ", err.Error(), onLocal[index].FromUserID, onLocal[index].ToUserID)
 			continue
 		}
+		callbackData := sdk_params_callback.FriendApplicationListAcceptCallback(*onLocal[index])
+		f.friendListener.OnFriendApplicationListDeleted(utils.StructToJsonString(callbackData))
 	}
 }
 
@@ -556,51 +389,7 @@ func (f *Friend) SyncBlackList() {
 
 }
 
-func (u *Friend) addFriendNew(msg *server_api_params.MsgData) {
-	//utils.sdkLog("addFriend start ")
-	//u.syncFriendApplication()
-	//
-	//var ui2GetUserInfo open_im_sdk.ui2ClientCommonReq
-	//ui2GetUserInfo.UidList = append(ui2GetUserInfo.UidList, msg.SendID)
-	//resp, err := utils.post2Api(open_im_sdk.getUserInfoRouter, open_im_sdk.paramsGetUserInfo{UidList: ui2GetUserInfo.UidList, OperationID: utils.operationIDGenerator()}, u.token)
-	//if err != nil {
-	//	utils.sdkLog("getUserInfo failed", err)
-	//	return
-	//}
-	//var vgetUserInfoResp open_im_sdk.getUserInfoResp
-	//err = json.Unmarshal(resp, &vgetUserInfoResp)
-	//if err != nil {
-	//	utils.sdkLog("Unmarshal failed, ", err.Error())
-	//	return
-	//}
-	//if vgetUserInfoResp.ErrCode != 0 {
-	//	utils.sdkLog(vgetUserInfoResp.ErrCode, vgetUserInfoResp.ErrMsg)
-	//	return
-	//}
-	//if len(vgetUserInfoResp.Data) == 0 {
-	//	utils.sdkLog(vgetUserInfoResp.ErrCode, vgetUserInfoResp.ErrMsg, msg)
-	//	return
-	//}
-	//var appUserNode open_im_sdk.applyUserInfo
-	//appUserNode.Uid = vgetUserInfoResp.Data[0].Uid
-	//appUserNode.Name = vgetUserInfoResp.Data[0].Name
-	//appUserNode.Icon = vgetUserInfoResp.Data[0].Icon
-	//appUserNode.Gender = vgetUserInfoResp.Data[0].Gender
-	//appUserNode.Mobile = vgetUserInfoResp.Data[0].Mobile
-	//appUserNode.Birth = vgetUserInfoResp.Data[0].Birth
-	//appUserNode.Email = vgetUserInfoResp.Data[0].Email
-	//appUserNode.Ex = vgetUserInfoResp.Data[0].Ex
-	//appUserNode.Flag = 0
-	//
-	//jsonInfo, err := json.Marshal(appUserNode)
-	//if err != nil {
-	//	utils.sdkLog("  marshal failed", err.Error())
-	//	return
-	//}
-	//u.friendListener.OnFriendApplicationListAdded(string(jsonInfo))
-}
-
-func (u *Friend) DoFriendMsg(msg *server_api_params.MsgData) {
+func (u *Friend) DoFriendNotification(msg *server_api_params.MsgData) {
 	if u.friendListener == nil {
 		return
 	}
@@ -608,68 +397,62 @@ func (u *Friend) DoFriendMsg(msg *server_api_params.MsgData) {
 	if msg.SendID == u.loginUserID && msg.SenderPlatformID == sdk_struct.SvrConf.Platform {
 		return
 	}
-	//
-	//go func() {
-	//	switch msg.ContentType {
-	//	case constant.AddFriendTip:
-	//		u.addFriendNew(msg) //
-	//	case constant.AcceptFriendApplicationTip:
-	//		u.acceptFriendApplicationNew(msg)
-	//	case constant.RefuseFriendApplicationTip:
-	//		u.refuseFriendApplicationNew(msg)
-	//		//	case constant.SetSelfInfoTip:
-	//		//		u.setSelfInfo(msg)
-	//
-	//		//	case KickOnlineTip:
-	//		//		sdkLog("kickOnline ", msg)
-	//		//		u.kickOnline(&msg)
-	//	default:
-	//		utils.sdkLog("type failed, ", msg)
-	//	}
-	//}()
+
+	go func() {
+		switch msg.ContentType {
+		case constant.FriendApplicationProcessedNotification:
+			u.friendApplicationProcessedNotification(msg)
+		case constant.FriendApplicationAddedNotification:
+			u.friendApplicationAddedNotification(msg)
+		case constant.FriendAddedNotification:
+			u.friendAddedNotification(msg)
+		case constant.FriendDeletedNotification:
+			u.friendDeletedNotification(msg)
+		case constant.FriendInfoChangedNotification:
+			u.friendInfoChangedNotification(msg)
+		case constant.BlackAddedNotification:
+			u.blackAddedNotification(msg)
+		case constant.BlackDeletedNotification:
+			u.blackDeletedNotification(msg)
+		default:
+			log.Error("", "type failed ", msg.ClientMsgID, msg.ServerMsgID, msg.ContentType)
+		}
+	}()
 }
 
-func (u *Friend) acceptFriendApplicationNew(msg *server_api_params.MsgData) {
-	//utils.LogBegin(msg.ContentType, msg.ServerMsgID, msg.ClientMsgID)
-	//u.syncFriendList()
-	//utils.sdkLog(msg.SendID, msg.RecvID)
-	//utils.sdkLog("acceptFriendApplicationNew", msg.ServerMsgID, msg)
-	//
-	//fInfoList, err := u.getServerFriendList()
-	//if err != nil {
-	//	return
-	//}
-	//utils.sdkLog("fInfoList", fInfoList)
-
-	//for _, fInfo := range fInfoList {
-	//	if fInfo.UID == msg.SendID {
-	//		jData, err := json.Marshal(fInfo)
-	//		if err != nil {
-	//			sdkLog("err: ", err.Error())
-	//			return
-	//		}
-	//		u.friendListener.OnFriendListAdded(string(jData))
-	//		u.friendListener.OnFriendApplicationListAccept(string(jData))
-	//		return
-	//	}
-	//}
+func (u *Friend) blackDeletedNotification(msg *server_api_params.MsgData) {
+	u.SyncBlackList()
 }
 
-func (u *Friend) refuseFriendApplicationNew(msg *server_api_params.MsgData) {
-	//applyList, err := u.getServerSelfApplication()
-	//
-	//if err != nil {
-	//	return
-	//}
-	//for _, v := range applyList {
-	//	if v.Uid == msg.SendID {
-	//		jData, err := json.Marshal(v)
-	//		if err != nil {
-	//			return
-	//		}
-	//		u.friendListener.OnFriendApplicationListReject(string(jData))
-	//		return
-	//	}
-	//}
+func (u *Friend) blackAddedNotification(msg *server_api_params.MsgData) {
+	u.SyncBlackList()
+}
 
+func (u *Friend) friendInfoChangedNotification(msg *server_api_params.MsgData) {
+	u.SyncFriendList()
+}
+
+func (u *Friend) friendDeletedNotification(msg *server_api_params.MsgData) {
+	u.SyncFriendList()
+}
+
+func (u *Friend) friendAddedNotification(msg *server_api_params.MsgData) {
+	u.SyncFriendList()
+}
+
+func (u *Friend) friendApplicationAddedNotification(msg *server_api_params.MsgData) {
+	u.SyncFriendApplication()
+	u.SyncSelfFriendApplication()
+}
+
+func (u *Friend) friendApplicationProcessedNotification(msg *server_api_params.MsgData) {
+	var tips server_api_params.TipsComm
+	proto.Unmarshal(msg.Content, &tips)
+
+	var detail server_api_params.FriendApplicationProcessedTips
+	proto.Unmarshal(tips.Detail, &detail)
+
+	u.SyncFriendList()
+	u.SyncFriendApplication()
+	u.SyncSelfFriendApplication()
 }
