@@ -514,7 +514,6 @@ func (c *Conversation) SendMessage(callback SendMsgCallBack, message, recvID, gr
 
 		err = u.insertMessageToLocalOrUpdateContent(&s)
 		if err != nil {
-			utils.sdkLog("insertMessageToLocalOrUpdateContent err:", err)
 			callback.OnError(202, err.Error())
 			return
 		}
@@ -1153,10 +1152,8 @@ func (c *Conversation) sendMessageToServer(onlineUserOnly bool, s *sdk_struct.Ms
 			if !isRetry {
 				break
 			}
-			utils.sdkLog("ws writeMsg  err:,", wsReq.OperationID, err.Error(), tr)
 			time.Sleep(time.Duration(5) * time.Second)
 		} else {
-			utils.sdkLog("writeMsg  retry ok", wsReq.OperationID, tr)
 			SendFlag = true
 			break
 		}

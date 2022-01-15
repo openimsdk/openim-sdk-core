@@ -12,7 +12,7 @@ func (u *User) GetUsersInfo(callback common.Base, userIDList string, operationID
 		log.NewInfo(operationID, utils.RunFuncName(), "args: ", userIDList)
 		var unmarshalParam sdk_params_callback.GetUsersInfoParam
 		common.JsonUnmarshalAndArgsValidate(userIDList, &unmarshalParam, callback, operationID)
-		result := u.getUsersInfoFromSvr(callback, unmarshalParam, operationID)
+		result := u.GetUsersInfoFromSvr(callback, unmarshalParam, operationID)
 		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(result)))
 		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonString(result))
 	}()
