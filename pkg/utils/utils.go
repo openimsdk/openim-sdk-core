@@ -97,14 +97,6 @@ func RunFuncName() string {
 	return cleanUpfuncName(runtime.FuncForPC(pc).Name())
 }
 
-func cleanUpfuncName(funcName string) string {
-	end := strings.LastIndex(funcName, ".")
-	if end == -1 {
-		return ""
-	}
-	return funcName[end+1:]
-}
-
 func LogBegin(v ...interface{}) {
 	//if constant.SdkLogFlag == 1 {
 	//	return
@@ -240,6 +232,13 @@ func WithMessage(err error, message string) error {
 func GetSelfFuncName() string {
 	pc, _, _, _ := runtime.Caller(1)
 	return cleanUpfuncName(runtime.FuncForPC(pc).Name())
+}
+func cleanUpfuncName(funcName string) string {
+	end := strings.LastIndex(funcName, ".")
+	if end == -1 {
+		return ""
+	}
+	return funcName[end+1:]
 }
 
 func printCallerNameAndLine() string {

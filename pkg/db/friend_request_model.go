@@ -52,3 +52,13 @@ func (d *DataBase) GetSendFriendApplication() ([]*LocalFriendRequest, error) {
 	}
 	return transfer, utils.Wrap(err, "GetSendFriendApplication failed")
 }
+
+func (d *DataBase) GetFriendApplicationByBothID(fromUserID, toUserID string) (*LocalFriendRequest, error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+
+	var friendRequest LocalFriendRequest
+	err := utils.Wrap(d.conn.Where("from_user_id = ? AND to_user_id = ?", fromUserID, toUserID).Find(&friendRequest).Error, "GetFriendApplicationByBothID failed")
+
+	return &friendRequest, utils.Wrap(err, "GetFriendApplicationByBothID failed")
+}

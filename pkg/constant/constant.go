@@ -46,28 +46,27 @@ const (
 
 	SingleTipBegin = 1200
 
-	FriendApplicationProcessedNotification = 1201 //AcceptFriendApplicationTip = 201
-	FriendApplicationAddedNotification     = 1202 //AddFriendTip               = 202
-	FriendAddedNotification                = 1203
-	FriendDeletedNotification              = 1204
-	FriendInfoChangedNotification          = 1205
-	BlackAddedNotification                 = 1206
-	BlackDeletedNotification               = 1207
+	FriendApplicationApprovedNotification = 1201 //add_friend_response approved
+	FriendApplicationRejectedNotification = 1202 //add_friend_response reject
+	FriendApplicationNotification         = 1203 //add_friend
+	FriendAddedNotification               = 1204
+	FriendDeletedNotification             = 1205 //delete_friend
+	FriendRemarkSetNotification           = 1206 //set_friend_remark?
+	BlackAddedNotification                = 1207 //add_black
+	BlackDeletedNotification              = 1208 //remove_black
 
-	SetSelfInfoTip = 1208
+	UserInfoUpdatedNotification = 1303 //SetSelfInfoTip             = 204
 
-	SingleTipEnd = 1399
-	/////////////////////////////////////////
-	GroupTipBegin             = 500
-	TransferGroupOwnerTip     = 501
-	CreateGroupTip            = 502
-	JoinGroupTip              = 504
-	QuitGroupTip              = 505
-	SetGroupInfoTip           = 506
-	AcceptGroupApplicationTip = 507
-	RefuseGroupApplicationTip = 508
-	KickGroupMemberTip        = 509
-	InviteUserToGroupTip      = 510
+	GroupCreatedNotification             = 1501
+	GroupInfoSetNotification             = 1502
+	JoinGroupApplicationNotification     = 1503
+	MemberQuitNotification               = 1504
+	GroupApplicationAcceptedNotification = 1505
+	GroupApplicationRejectedNotification = 1506
+	GroupOwnerTransferredNotification    = 1507
+	MemberKickedNotification             = 1508
+	MemberInvitedNotification            = 1509
+	MemberEnterNotification              = 1510
 
 	GroupTipEnd = 599
 	////////////////////////////////////////

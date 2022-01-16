@@ -123,11 +123,11 @@ type GetFriendApplyListResp struct {
 	Data              []map[string]interface{} `json:"data"`
 }
 
-type GetSelfApplyListReq struct {
+type GetSelfFriendApplyListReq struct {
 	OperationID string `json:"operationID" binding:"required"`
 	FromUserID  string `json:"fromUserID" binding:"required"`
 }
-type GetSelfApplyListResp struct {
+type GetSelfFriendApplyListResp struct {
 	CommResp
 	FriendRequestList []*FriendRequest
 	Data              []map[string]interface{} `json:"data"`
