@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/mitchellh/mapstructure"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"net/http"
 	"net/url"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/pkg/common"
+	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"path"
 )
@@ -17,26 +20,22 @@ type OSS struct {
 	p *ws.PostApi
 }
 
-type paramsTencentOssCredentialResp struct {
-	ErrCode int    `json:"errCode"`
-	ErrMsg  string `json:"errMsg"`
-	Bucket  string `json:"bucket"`
-	Region  string `json:"region"`
-	Data    struct {
-		ExpiredTime int64
-		Expiration  string
-		StartTime   int64
-		RequestId   string
-		Credentials struct {
-			TmpSecretId  string
-			TmpSecretKey string
-			Token        string
-		}
-	} `json:"data"`
+func NewOSS(p *ws.PostApi) *OSS {
+	return &OSS{p: p}
 }
 
-func (o *OSS) tencentOssCredentials() (*paramsTencentOssCredentialResp, error) {
-	return nil, nil
+func (o *OSS) tencentOssCredentials() (*server_api_params.TencentCloudStorageCredentialRespData, error) {
+	req := server_api_params.TencentCloudStorageCredentialReq{OperationID: utils.OperationIDGenerator()}
+	commData, err := o.p.PostReturn(constant.TencentCloudStorageCredentialRouter, req)
+	if err != nil {
+		return nil, utils.Wrap(err, "")
+	}
+	var resp server_api_params.TencentCloudStorageCredentialResp
+	err = mapstructure.Decode(commData.Data, resp.Data)
+	if err != nil {
+		return nil, utils.Wrap(err, "")
+	}
+	return &resp.Data, nil
 }
 
 func (o *OSS) UploadImage(filePath string, callback SendMsgCallBack, operationID string) (string, string) {
@@ -76,9 +75,9 @@ func (o *OSS) uploadObj(filePath string, fileType string, callback SendMsgCallBa
 
 	client := cos.NewClient(b, &http.Client{
 		Transport: &cos.AuthorizationTransport{
-			SecretID:     ossResp.Data.Credentials.TmpSecretId,
-			SecretKey:    ossResp.Data.Credentials.TmpSecretKey,
-			SessionToken: ossResp.Data.Credentials.Token,
+			SecretID:     ossResp.Credentials.TmpSecretID,
+			SecretKey:    ossResp.Credentials.TmpSecretKey,
+			SessionToken: ossResp.Credentials.SessionToken,
 		},
 	})
 	if client == nil {
