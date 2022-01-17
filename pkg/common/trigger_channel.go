@@ -4,21 +4,31 @@ import (
 	"errors"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"time"
 )
 
 func TriggerCmdNewMsgCome(msg sdk_struct.ArrMsg, conversationCh chan Cmd2Value) error {
+	if conversationCh == nil {
+		return utils.Wrap(errors.New("ch == nil"), "")
+	}
 	c2v := Cmd2Value{Cmd: constant.CmdNewMsgCome, Value: msg}
 	return sendCmd(conversationCh, c2v, 1)
 }
 
 func TriggerCmdLogout(msg sdk_struct.ArrMsg, conversationCh chan Cmd2Value) error {
+	if conversationCh == nil {
+		return utils.Wrap(errors.New("ch == nil"), "")
+	}
 	c2v := Cmd2Value{Cmd: constant.CmdLogout, Value: msg}
 	return sendCmd(conversationCh, c2v, 1)
 }
 
 func TriggerCmdDeleteConversationAndMessage(sourceID, conversationID string, sessionType int, conversationCh chan Cmd2Value) error {
+	if conversationCh == nil {
+		return utils.Wrap(errors.New("ch == nil"), "")
+	}
 	c2v := Cmd2Value{
 		Cmd:   constant.CmdDeleteConversation,
 		Value: DeleteConNode{SourceID: sourceID, ConversationID: conversationID, SessionType: sessionType},

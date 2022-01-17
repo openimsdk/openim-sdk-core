@@ -418,6 +418,9 @@ func InOutDoTest(uid, tk, ws, api string) {
 	var testConversation conversationCallBack
 	open_im_sdk.SetConversationListener(testConversation)
 
+	var testUser userCallback
+	open_im_sdk.SetUserListener(testUser)
+
 	//var msgCallBack MsgListenerCallBak
 	//open_im_sdk.AddAdvancedMsgListener(msgCallBack)
 
@@ -471,6 +474,9 @@ func DoTest(uid, tk, ws, api string) {
 
 	var testConversation conversationCallBack
 	open_im_sdk.SetConversationListener(testConversation)
+
+	var testUser userCallback
+	open_im_sdk.SetUserListener(testUser)
 
 	//var msgCallBack MsgListenerCallBak
 	//open_im_sdk.AddAdvancedMsgListener(msgCallBack)
@@ -693,6 +699,13 @@ func (m MsgListenerCallBak) OnRecvC2CReadReceipt(data string) {
 
 func (m MsgListenerCallBak) OnRecvMessageRevoked(msgId string) {
 	fmt.Println("OnRecvMessageRevoked ", msgId)
+}
+
+type userCallback struct {
+}
+
+func (userCallback) OnSelfInfoUpdated(callbackData string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackData)
 }
 
 type conversationCallBack struct {

@@ -267,7 +267,7 @@ func SetConversationListener(listener conversation_msg.OnConversationListener) {
 	userForSDK.SetConversationListener(listener)
 }
 
-func SetSetUserListener(listener user.OnUserListener) {
+func SetUserListener(listener user.OnUserListener) {
 	userForSDK.SetUserListener(listener)
 }
 
@@ -387,6 +387,6 @@ func InitOnce(config *sdk_struct.IMConfig) bool {
 	return true
 }
 
-func CheckToken(userID, token string) int {
-	return 0
+func CheckToken(userID, token string) error {
+	return login.CheckToken(userID, token)
 }

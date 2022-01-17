@@ -20,12 +20,39 @@ type User struct {
 	listener    OnUserListener
 }
 
-func NewUser(dataBase *db.DataBase, p *ws.PostApi, loginUserID string, listener OnUserListener) *User {
-	return &User{DataBase: dataBase, p: p, loginUserID: loginUserID, listener: listener}
+func (u *User) SetListener(listener OnUserListener) {
+	u.listener = listener
+}
+
+func NewUser(dataBase *db.DataBase, p *ws.PostApi, loginUserID string) *User {
+	return &User{DataBase: dataBase, p: p, loginUserID: loginUserID}
 }
 
 type OnUserListener interface {
 	OnSelfInfoUpdated(userInfo string)
+}
+
+func (u *User) DoNotification(msg *api.MsgData) {
+	operationID := utils.OperationIDGenerator()
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg)
+	if u.listener == nil {
+		log.Error(operationID, "listener == nil")
+		return
+	}
+
+	go func() {
+		switch msg.ContentType {
+		case constant.UserInfoUpdatedNotification:
+			u.userInfoUpdatedNotification(msg, operationID)
+
+		default:
+			log.Error(operationID, "type failed ", msg.ClientMsgID, msg.ServerMsgID, msg.ContentType)
+		}
+	}()
+}
+
+func (u *User) userInfoUpdatedNotification(msg *api.MsgData, operationID string) {
+	u.SyncLoginUserInfo(operationID)
 }
 
 func (u *User) SyncLoginUserInfo(operationID string) {
@@ -48,6 +75,10 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 			return
 		}
 		callbackData := sdk.SelfInfoUpdatedCallback(*onServer)
+		if u.listener == nil {
+			log.Error(operationID, "u.listener == nil")
+			return
+		}
 		u.listener.OnSelfInfoUpdated(utils.StructToJsonString(callbackData))
 	}
 }

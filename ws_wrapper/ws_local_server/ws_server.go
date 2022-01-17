@@ -270,7 +270,7 @@ func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request) bool {
 		//	return false
 		//}
 		checkFlag := open_im_sdk.CheckToken(query["sendID"][0], query["token"][0])
-		if checkFlag != 0 {
+		if checkFlag != nil {
 			wrapSdkLog("check token failed", query["sendID"][0], query["token"][0])
 			w.Header().Set("Sec-Websocket-Version", "13")
 			http.Error(w, http.StatusText(status), status)

@@ -44,10 +44,6 @@ type LoginMgr struct {
 	imConfig sdk_struct.IMConfig
 }
 
-func (u *LoginMgr) SetUserListener(userListener user.OnUserListener) {
-	u.userListener = userListener
-}
-
 func (u *LoginMgr) Conversation() *conv.Conversation {
 	return u.conversation
 }
@@ -76,13 +72,17 @@ func (u *LoginMgr) SetGroupListener(groupListener group.OnGroupListener) {
 	u.groupListener = groupListener
 }
 
+func (u *LoginMgr) SetUserListener(userListener user.OnUserListener) {
+	u.userListener = userListener
+}
+
 func (u *LoginMgr) login(userID, token string, cb common.Base, operationID string) {
 	log.Info("login start ", userID, token)
 	if u.justOnceFlag {
 		cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
 		return
 	}
-	err := u.checkToken(userID, token)
+	err := CheckToken(userID, token)
 	common.CheckAnyErr(cb, 1111, err, operationID)
 	log.Info("0", "checkToken ok ", userID, token)
 	u.justOnceFlag = true
@@ -110,6 +110,7 @@ func (u *LoginMgr) login(userID, token string, cb common.Base, operationID strin
 
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
 	u.user = user.NewUser(db, p, u.loginUserID)
+	u.SetUserListener(u.userListener)
 
 	u.friend = friend.NewFriend(u.loginUserID, u.db, p)
 	u.friend.SetFriendListener(u.friendListener)
@@ -138,7 +139,11 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener ws.ConnListener,
 }
 
 func (u *LoginMgr) logout(callback common.Base, operationID string) {
-	common.TriggerCmdLogout(sdk_struct.ArrMsg{}, u.cmdCh)
+	err := common.TriggerCmdLogout(sdk_struct.ArrMsg{}, u.cmdCh)
+	if err != nil {
+		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
+		return
+	}
 	timeout := 5
 	retryTimes := 0
 	resp, err := u.ws.SendReqWaitResp(nil, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID, operationID)
@@ -146,8 +151,9 @@ func (u *LoginMgr) logout(callback common.Base, operationID string) {
 		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
 		if callback != nil {
 			callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
+		} else {
+			return
 		}
-
 	}
 	if callback != nil {
 		callback.OnSuccess("")
@@ -188,7 +194,7 @@ func (u *LoginMgr) SetMinSeqSvr(minSeqSvr int64) {
 	u.SetMinSeqSvr(minSeqSvr)
 }
 
-func (u *LoginMgr) checkToken(userID, token string) error {
+func CheckToken(userID, token string) error {
 	operationID := utils.OperationIDGenerator()
 	log.Debug(operationID, utils.GetSelfFuncName(), userID, token)
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
