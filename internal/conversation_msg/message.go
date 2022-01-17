@@ -137,7 +137,7 @@ func autoSendTransferGroupOwnerTip(groupId string, oldOwner, newOwner string) er
 //	c.LatestMsg = utils.structToJsonString(s)
 //}
 func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, contentType int32) {
-	message.CreateTime = utils.GetCurrentTimestampByNano()
+	message.CreateTime = uint32(utils.GetCurrentTimestampByNano())
 	message.SendTime = message.CreateTime
 	message.IsRead = false
 	message.Status = constant.MsgStatusSending

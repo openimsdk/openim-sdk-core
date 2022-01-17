@@ -151,7 +151,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				lc := db.LocalConversation{
 					ConversationType:  v.SessionType,
 					LatestMsg:         utils.StructToJsonString(msg),
-					LatestMsgSendTime: db.UnixTime(utils.UnixNanoSecondToTime(msg.SendTime)),
+					LatestMsgSendTime: msg.SendTime,
 				}
 				switch v.SessionType {
 				case constant.SingleChatType:
@@ -274,8 +274,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 func (c *Conversation) msgStructToLocalChatLog(m *sdk_struct.MsgStruct) *db.LocalChatLog {
 	var lc db.LocalChatLog
 	copier.Copy(&lc, m)
-	lc.SendTime = db.UnixTime(utils.UnixNanoSecondToTime(m.SendTime))
-	lc.CreateTime = db.UnixTime(utils.UnixNanoSecondToTime(m.CreateTime))
 	return &lc
 }
 

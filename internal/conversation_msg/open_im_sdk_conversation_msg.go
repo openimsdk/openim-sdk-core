@@ -3,6 +3,7 @@ package conversation_msg
 import (
 	"encoding/json"
 	"errors"
+	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 	"github.com/jinzhu/copier"
 	"image"
@@ -511,17 +512,13 @@ func (c *Conversation) SendMessage(callback SendMsgCallBack, message, recvID, gr
 		}
 		lc.ConversationID = conversationID
 		lc.LatestMsg = utils.StructToJsonString(s)
-
-		err = u.insertMessageToLocalOrUpdateContent(&s)
-		if err != nil {
-			callback.OnError(202, err.Error())
-			return
-		}
-		u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.AddConOrUpLatMsg,
-			c}})
+		msgStructToLocalChatLog(&s, &localMessage)
+		err := c.db.InsertMessage(&localMessage)
+		common.CheckAnyErr(callback, 201, err, operationID)
+		//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.AddConOrUpLatMsg,
+		//c}})
 		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
 		//_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
-
 		options = make(map[string]bool, 2)
 		options[constant.IsHistory] = false
 		options[constant.IsPersistent] = false
@@ -604,9 +601,9 @@ func (c *Conversation) SendMessage(callback SendMsgCallBack, message, recvID, gr
 			common.CheckAnyErr(callback, 202, errors.New("contentType not currently supported"+utils.Int32ToString(s.ContentType)), operationID)
 		}
 		msgStructToLocalChatLog(&s, &localMessage)
-		err := c.db.UpdateMessage(&localMessage)
+		err = c.db.UpdateMessage(&localMessage)
 		common.CheckAnyErr(callback, 201, err, operationID)
-		sendMessageToServer(false, &s, &lc, callback, delFile, &p, isRetry, options, operationID)
+		c.sendMessageToServer(false, &s, &lc, callback, delFile, &p, isRetry, options, operationID)
 	}()
 }
 func msgStructToLocalChatLog(s *sdk_struct.MsgStruct, localMessage *db.LocalChatLog) {
@@ -615,17 +612,22 @@ func msgStructToLocalChatLog(s *sdk_struct.MsgStruct, localMessage *db.LocalChat
 func (c *Conversation) checkErrAndUpdateMessage(callback SendMsgCallBack, errCode int32, err error, s *sdk_struct.MsgStruct, lc *db.LocalConversation, operationID string) {
 	if err != nil {
 		if callback != nil {
-			_ = c.db.UpdateMessageTimeAndStatus(s.ClientMsgID, s.CreateTime, constant.MsgStatusSendFailed)
-			s.SendTime = s.CreateTime
-			s.Status = constant.MsgStatusSendFailed
-			lc.LatestMsg = utils.StructToJsonString(s)
-			//会话数据库操作，触发UI会话回调
+			c.updateMsgStatusAndTriggerConversation(s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc, operationID)
 			errInfo := "operationID[" + operationID + "], " + "info[" + err.Error() + "]"
 			log.NewError(operationID, "checkErr ", errInfo)
 			callback.OnError(errCode, errInfo)
 			runtime.Goexit()
 		}
 	}
+}
+func (c *Conversation) updateMsgStatusAndTriggerConversation(clientMsgID, serverMsgID string, sendTime uint32, status int32, s *sdk_struct.MsgStruct, lc *db.LocalConversation, operationID string) {
+	_ = c.db.UpdateMessageTimeAndStatus(clientMsgID, sendTime, status)
+	s.SendTime = sendTime
+	s.Status = status
+	s.ServerMsgID = serverMsgID
+	lc.LatestMsg = utils.StructToJsonString(s)
+	lc.LatestMsgSendTime = sendTime
+	//会话数据库操作，触发UI会话回调
 }
 func (c *Conversation) getUserNameAndFaceUrlByUid(callback SendMsgCallBack, friendUserID, operationID string) (faceUrl, name string, err error) {
 	friendInfo, _ := c.db.GetFriendInfoByFriendUserID(friendUserID)
@@ -842,205 +844,73 @@ func (c *Conversation) getUserNameAndFaceUrlByUid(callback SendMsgCallBack, frie
 //	}()
 //	return s.ClientMsgID
 //}
-//func (c *Conversation) autoSendMsg(s *common.MsgStruct, receiver, groupID string, onlineUserOnly, isUpdateConversationLatestMsg, isUpdateConversationInfo bool, offlinePushInfo string) error {
-//	utils.sdkLog("autoSendMsg input args:", *s, receiver, groupID, onlineUserOnly, isUpdateConversationLatestMsg, isUpdateConversationInfo)
-//	var conversationID string
-//	p := server_api_params.OfflinePushInfo{}
-//	err := json.Unmarshal([]byte(offlinePushInfo), &p)
-//	if err != nil {
-//		utils.sdkLog("json unmarshal err:", err.Error())
-//		return err
-//	}
-//	r := utils.SendMsgRespFromServer{}
-//	a := common.paramsUserSendMsg{}
-//	if receiver == "" {
-//		s.SessionType = constant.GroupChatType
-//		s.RecvID = groupID
-//	} else if groupID == "" {
-//		s.SessionType = constant.SingleChatType
-//		s.RecvID = receiver
-//	} else {
-//		utils.sdkLog("args err: ", receiver, groupID)
-//		return errors.New("args null")
-//	}
-//	c := ConversationStruct{
-//		ConversationType:  int(s.SessionType),
-//		LatestMsgSendTime: s.CreateTime,
-//	}
-//	if receiver == "" && groupID == "" {
-//		return errors.New("args error")
-//	} else if receiver == "" {
-//		s.SessionType = constant.GroupChatType
-//		s.RecvID = groupID
-//		s.GroupID = groupID
-//		conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
-//		c.GroupID = groupID
-//		faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(groupID)
-//		if err != nil {
-//			utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
-//			return err
-//		}
-//		c.ShowName = name
-//		c.FaceURL = faceUrl
-//	} else {
-//		s.SessionType = constant.SingleChatType
-//		s.RecvID = receiver
-//		conversationID = utils.GetConversationIDBySessionType(receiver, constant.SingleChatType)
-//		c.UserID = receiver
-//		faceUrl, name, err := u.getUserNameAndFaceUrlByUid(receiver)
-//		if err != nil {
-//			utils.sdkLog("getUserNameAndFaceUrlByUid err:", err)
-//			return err
-//		}
-//		c.FaceURL = faceUrl
-//		c.ShowName = name
-//	}
-//	userInfo, err := u.getLoginUserInfoFromLocal()
-//	if err != nil {
-//		utils.sdkLog("getLoginUserInfoFromLocal err:", err)
-//		return err
-//	}
-//	s.SenderFaceURL = userInfo.Icon
-//	s.SenderNickname = userInfo.Name
-//	c.ConversationID = conversationID
-//	c.LatestMsg = utils.structToJsonString(s)
-//	if !onlineUserOnly {
-//		err = u.insertMessageToLocalOrUpdateContent(s)
-//		if err != nil {
-//			utils.sdkLog("insertMessageToLocalOrUpdateContent err:", err)
-//			return err
-//		}
-//	}
-//	optionsFlag := make(map[string]bool, 2)
-//	if onlineUserOnly {
-//		optionsFlag[constant.IsHistory] = false
-//		optionsFlag[constant.IsPersistent] = false
-//	}
-//
-//	//Protocol conversion
-//	a.SenderPlatformID = s.SenderPlatformID
-//	a.SendID = s.SendID
-//	a.SenderNickName = s.SenderNickname
-//	a.SenderFaceURL = s.SenderFaceURL
-//	a.OperationID = utils.operationIDGenerator()
-//	a.Data.SessionType = s.SessionType
-//	a.Data.MsgFrom = s.MsgFrom
-//	a.Data.ContentType = s.ContentType
-//	a.Data.RecvID = s.RecvID
-//	a.Data.GroupID = s.GroupID
-//	a.Data.ForceList = s.ForceList
-//	a.Data.Content = []byte(s.Content)
-//	a.Data.Options = optionsFlag
-//	a.Data.ClientMsgID = s.ClientMsgID
-//	a.Data.CreateTime = s.CreateTime
-//	a.Data.OffLineInfo = p
-//	bMsg, err := utils.post2Api(common.sendMsgRouter, a, u.token)
-//	if err != nil {
-//		utils.sdkLog("sendMsgRouter access err:", err.Error())
-//		u.updateMessageFailedStatus(s, &c, onlineUserOnly)
-//		return err
-//	} else {
-//		err = json.Unmarshal(bMsg, &r)
-//		if err != nil {
-//			utils.sdkLog("unmarshal failed, ", err.Error())
-//			u.updateMessageFailedStatus(s, &c, onlineUserOnly)
-//			return err
-//		} else {
-//			if r.ErrCode != 0 {
-//				utils.sdkLog("errcode, errmsg: ", r.ErrCode, r.ErrMsg)
-//				u.updateMessageFailedStatus(s, &c, onlineUserOnly)
-//				return err
-//			} else {
-//				if !onlineUserOnly {
-//					_ = u.updateMessageTimeAndMsgIDStatus(r.Data.ClientMsgID, r.Data.SendTime, constant.MsgStatusSendSuccess)
-//				}
-//				s.ServerMsgID = r.Data.ServerMsgID
-//				s.SendTime = r.Data.SendTime
-//				s.Status = constant.MsgStatusSendSuccess
-//				c.LatestMsg = utils.structToJsonString(s)
-//				c.LatestMsgSendTime = s.SendTime
-//				if isUpdateConversationLatestMsg {
-//					u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.AddConOrUpLatMsg, c}})
-//					u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.IncrUnread, ""}})
-//				}
-//				if isUpdateConversationInfo {
-//					u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.UpdateFaceUrlAndNickName, c}})
-//
-//				}
-//				if isUpdateConversationInfo || isUpdateConversationLatestMsg {
-//					u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
-//					u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.TotalUnreadMessageChanged, ""}})
-//				}
-//			}
-//		}
-//	}
-//	return nil
-//}
-//func (c *Conversation) CreateSoundMessageByURL(soundBaseInfo string) string {
-//	s := utils.MsgStruct{}
-//	var soundElem utils.SoundBaseInfo
-//	_ = json.Unmarshal([]byte(soundBaseInfo), &soundElem)
-//	s.SoundElem = soundElem
-//	u.initBasicInfo(&s, constant.UserMsgType, constant.Voice)
-//	s.Content = utils.structToJsonString(s.SoundElem)
-//	return utils.structToJsonString(s)
-//}
-//
-//func (c *Conversation) CreateSoundMessage(soundPath string, duration int64) string {
-//	s := utils.MsgStruct{}
-//	u.initBasicInfo(&s, constant.UserMsgType, constant.Voice)
-//	s.SoundElem.SoundPath = constant.SvrConf.DbDir + soundPath
-//	s.SoundElem.Duration = duration
-//	fi, err := os.Stat(s.SoundElem.SoundPath)
-//	if err != nil {
-//		utils.sdkLog(err.Error())
-//		return ""
-//	}
-//	s.SoundElem.DataSize = fi.Size()
-//	s.Content = utils.structToJsonString(s.SoundElem)
-//	return utils.structToJsonString(s)
-//}
-//
-//func (c *Conversation) CreateVideoMessageByURL(videoBaseInfo string) string {
-//	s := utils.MsgStruct{}
-//	var videoElem utils.VideoBaseInfo
-//	_ = json.Unmarshal([]byte(videoBaseInfo), &videoElem)
-//	s.VideoElem = videoElem
-//	u.initBasicInfo(&s, constant.UserMsgType, constant.Video)
-//	s.Content = utils.structToJsonString(s.VideoElem)
-//	return utils.structToJsonString(s)
-//}
-//
-//func (c *Conversation) CreateVideoMessage(videoPath string, videoType string, duration int64, snapshotPath string) string {
-//	s := utils.MsgStruct{}
-//	u.initBasicInfo(&s, constant.UserMsgType, constant.Video)
-//	s.VideoElem.VideoPath = constant.SvrConf.DbDir + videoPath
-//	s.VideoElem.VideoType = videoType
-//	s.VideoElem.Duration = duration
-//	if snapshotPath == "" {
-//		s.VideoElem.SnapshotPath = ""
-//	} else {
-//		s.VideoElem.SnapshotPath = constant.SvrConf.DbDir + snapshotPath
-//	}
-//	fi, err := os.Stat(s.VideoElem.VideoPath)
-//	if err != nil {
-//		utils.sdkLog(err.Error())
-//		return ""
-//	}
-//	s.VideoElem.VideoSize = fi.Size()
-//	if snapshotPath != "" {
-//		imageInfo, err := common.getImageInfo(s.VideoElem.SnapshotPath)
-//		if err != nil {
-//			utils.sdkLog("CreateVideoMessage err:", err.Error())
-//			return ""
-//		}
-//		s.VideoElem.SnapshotHeight = imageInfo.Height
-//		s.VideoElem.SnapshotWidth = imageInfo.Width
-//		s.VideoElem.SnapshotSize = imageInfo.Size
-//	}
-//	s.Content = utils.structToJsonString(s.VideoElem)
-//	return utils.structToJsonString(s)
-//}
+
+func (c *Conversation) CreateSoundMessageByURL(soundBaseInfo string) string {
+	s := sdk_struct.MsgStruct{}
+	var soundElem sdk_struct.SoundBaseInfo
+	_ = json.Unmarshal([]byte(soundBaseInfo), &soundElem)
+	s.SoundElem = soundElem
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Voice)
+	s.Content = utils.StructToJsonString(s.SoundElem)
+	return utils.StructToJsonString(s)
+}
+
+func (c *Conversation) CreateSoundMessage(soundPath string, duration int64) string {
+	s := sdk_struct.MsgStruct{}
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Voice)
+	s.SoundElem.SoundPath = c.DbDir + soundPath
+	s.SoundElem.Duration = duration
+	fi, err := os.Stat(s.SoundElem.SoundPath)
+	if err != nil {
+		log.Error("internal", "get sound info err", err.Error())
+		return ""
+	}
+	s.SoundElem.DataSize = fi.Size()
+	s.Content = utils.StructToJsonString(s.SoundElem)
+	return utils.StructToJsonString(s)
+}
+
+func (c *Conversation) CreateVideoMessageByURL(videoBaseInfo string) string {
+	s := sdk_struct.MsgStruct{}
+	var videoElem sdk_struct.VideoBaseInfo
+	_ = json.Unmarshal([]byte(videoBaseInfo), &videoElem)
+	s.VideoElem = videoElem
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Video)
+	s.Content = utils.StructToJsonString(s.VideoElem)
+	return utils.StructToJsonString(s)
+}
+
+func (c *Conversation) CreateVideoMessage(videoPath string, videoType string, duration int64, snapshotPath string) string {
+	s := sdk_struct.MsgStruct{}
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Video)
+	s.VideoElem.VideoPath = c.DbDir + videoPath
+	s.VideoElem.VideoType = videoType
+	s.VideoElem.Duration = duration
+	if snapshotPath == "" {
+		s.VideoElem.SnapshotPath = ""
+	} else {
+		s.VideoElem.SnapshotPath = c.DbDir + snapshotPath
+	}
+	fi, err := os.Stat(s.VideoElem.VideoPath)
+	if err != nil {
+		log.Error("internal", "get video file error", err.Error())
+		return ""
+	}
+	s.VideoElem.VideoSize = fi.Size()
+	if snapshotPath != "" {
+		imageInfo, err := getImageInfo(s.VideoElem.SnapshotPath)
+		if err != nil {
+			log.Error("internal", "get snapshot info ", err.Error())
+			return ""
+		}
+		s.VideoElem.SnapshotHeight = imageInfo.Height
+		s.VideoElem.SnapshotWidth = imageInfo.Width
+		s.VideoElem.SnapshotSize = imageInfo.Size
+	}
+	s.Content = utils.StructToJsonString(s.VideoElem)
+	return utils.StructToJsonString(s)
+}
+
 //func (c *Conversation) CreateFileMessageByURL(fileBaseInfo string) string {
 //	s := utils.MsgStruct{}
 //	var fileElem utils.FileBaseInfo
@@ -1124,130 +994,26 @@ func (c *Conversation) sendMessageToServer(onlineUserOnly bool, s *sdk_struct.Ms
 	timeout := 300
 	retryTimes := 6
 
-	c.SendReqWaitResp(wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID, operationID)
-	msgIncr, ch := c.AddCh(c.loginUserID)
-	var wsReq utils.GeneralWsReq
-	var err error
-	wsReq.ReqIdentifier = constant.WSSendMsg
-	wsReq.OperationID = utils.operationIDGenerator()
-	wsReq.SendID = s.SendID
-	//wsReq.Token = u.token
-	wsReq.MsgIncr = msgIncr
-	wsReq.Data, err = proto.Marshal(&wsMsgData)
-	if err != nil {
-		utils.sdkLog("Marshal failed ", err.Error())
-		utils.LogFReturn(nil)
-		callback.OnError(http.StatusInternalServerError, err.Error())
-		u.sendMessageFailedHandle(s, c, conversationID)
-		return
-	}
-
-	SendFlag := false
-	var connSend *websocket.Conn
-	for tr := 0; tr < 30; tr++ {
-		utils.LogBegin("WriteMsg", wsReq.OperationID)
-		err, connSend = u.WriteMsg(wsReq)
-		utils.LogEnd("WriteMsg ", wsReq.OperationID, connSend)
-		if err != nil {
-			if !isRetry {
-				break
+	resp, err := c.SendReqWaitResp(wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID, operationID)
+	c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
+	if resp.ErrCode != 0 {
+		c.checkErrAndUpdateMessage(callback, int32(resp.ErrCode), errors.New(resp.ErrMsg), s, lc, operationID)
+	} else {
+		callback.OnProgress(100)
+		callback.OnSuccess("")
+		//remove media cache file
+		for _, v := range delFile {
+			err := os.Remove(v)
+			if err != nil {
+				log.Error(operationID, "remove failed,", err.Error(), v)
 			}
-			time.Sleep(time.Duration(5) * time.Second)
-		} else {
-			SendFlag = true
-			break
+			log.Debug(operationID, "remove file: ", v)
 		}
-	}
-	//onlineUserOnly end after send message to ws
-	if *onlineUserOnly {
-		return
-	}
-	if SendFlag == false {
-		u.DelCh(msgIncr)
-		callback.OnError(http.StatusInternalServerError, err.Error())
-		u.sendMessageFailedHandle(s, c, conversationID)
-		return
+		var sendMsgResp server_api_params.UserSendMsgResp
+		_ = proto.Unmarshal(resp.Data, &sendMsgResp)
+		c.updateMsgStatusAndTriggerConversation(sendMsgResp.ClientMsgID, sendMsgResp.ServerMsgID, uint32(sendMsgResp.SendTime), constant.MsgStatusSendSuccess, s, lc, operationID)
 	}
 
-	breakFlag := 0
-
-	for {
-		if breakFlag == 1 {
-			utils.sdkLog("break ", wsReq.OperationID)
-			break
-		}
-		select {
-		case r := <-ch:
-			utils.sdkLog("ws  ch recvMsg success:,", wsReq.OperationID)
-			if r.ErrCode != 0 {
-				callback.OnError(int32(r.ErrCode), r.ErrMsg)
-				u.sendMessageFailedHandle(s, c, conversationID)
-			} else {
-				callback.OnProgress(100)
-				callback.OnSuccess("")
-				//remove media cache file
-				for _, v := range delFile {
-					err := os.Remove(v)
-					if err != nil {
-						utils.sdkLog("remove failed,", err.Error(), v)
-					}
-					utils.sdkLog("remove file: ", v)
-				}
-				var sendMsgResp server_api_params.UserSendMsgResp
-				err = proto.Unmarshal(r.Data, &sendMsgResp)
-				if err != nil {
-					utils.sdkLog("Unmarshal failed ", err.Error())
-					//	callback.OnError(http.StatusInternalServerError, err.Error())
-					//	u.sendMessageFailedHandle(&s, &c, conversationID)
-					//	u.DelCh(msgIncr)
-				}
-				_ = u.updateMessageTimeAndMsgIDStatus(sendMsgResp.ClientMsgID, sendMsgResp.SendTime, constant.MsgStatusSendSuccess)
-
-				s.ServerMsgID = sendMsgResp.ServerMsgID
-				s.SendTime = sendMsgResp.SendTime
-				s.Status = constant.MsgStatusSendSuccess
-				c.LatestMsg = utils.structToJsonString(s)
-				c.LatestMsgSendTime = s.SendTime
-				_ = u.triggerCmdUpdateConversation(common.updateConNode{conversationID, constant.AddConOrUpLatMsg,
-					c})
-				u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
-			}
-			breakFlag = 1
-		case <-time.After(time.Second * time.Duration(timeout)):
-			var flag bool
-			utils.sdkLog("ws ch recvMsg err: ", wsReq.OperationID)
-			if connSend != u.conn {
-				utils.sdkLog("old conn != current conn  ", connSend, u.conn)
-				flag = false // error
-			} else {
-				flag = false //error
-				for tr := 0; tr < 3; tr++ {
-					err = u.sendPingMsg()
-					if err != nil {
-						utils.sdkLog("sendPingMsg failed ", wsReq.OperationID, err.Error(), tr)
-						time.Sleep(time.Duration(30) * time.Second)
-					} else {
-						utils.sdkLog("sendPingMsg ok ", wsReq.OperationID)
-						flag = true //wait continue
-						break
-					}
-				}
-			}
-			if flag == false {
-				callback.OnError(http.StatusRequestTimeout, http.StatusText(http.StatusRequestTimeout))
-				u.sendMessageFailedHandle(s, c, conversationID)
-				utils.sdkLog("onError callback ", wsReq.OperationID)
-				breakFlag = 1
-				break
-			} else {
-				utils.sdkLog("wait resp continue", wsReq.OperationID)
-				breakFlag = 0
-				continue
-			}
-		}
-	}
-
-	u.DelCh(msgIncr)
 }
 
 //
