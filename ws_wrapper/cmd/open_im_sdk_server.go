@@ -9,7 +9,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"open_im_sdk/internal/open_im_sdk"
+	//"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/log"
 	utils2 "open_im_sdk/pkg/utils"
 	"open_im_sdk/ws_wrapper/utils"

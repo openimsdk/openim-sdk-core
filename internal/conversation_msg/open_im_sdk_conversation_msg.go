@@ -235,10 +235,6 @@ func (c *Conversation) AddAdvancedMsgListener(listener OnAdvancedMsgListener) {
 ////	u.syncSelfGroupRequest()
 ////}
 //
-type SendMsgCallBack interface {
-	common.Base
-	OnProgress(progress int)
-}
 
 func (c *Conversation) CreateTextMessage(text string) string {
 	s := sdk_struct.MsgStruct{}
