@@ -984,142 +984,61 @@ func (c *Conversation) TypingStatusUpdate(callback common.Base, recvID, msgTip, 
 //		//}
 //	}()
 //}
-//func (c *Conversation) MarkGroupMessageHasRead(callback common.Base, groupID string) {
-//	go func() {
-//		conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
-//		if err := u.setGroupMessageHasRead(groupID); err != nil {
-//			callback.OnError(201, err.Error())
-//		} else {
-//			callback.OnSuccess("")
-//			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConId: conversationID, Action: constant.UnreadCountSetZero}})
-//			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
-//		}
-//	}()
-//}
-//func (c *Conversation) DeleteMessageFromLocalStorage(callback common.Base, message string) {
-//	go func() {
-//		var conversation ConversationStruct
-//		var latestMsg utils.MsgStruct
-//		var conversationID string
-//		var sourceID string
-//		s := utils.MsgStruct{}
-//		err := json.Unmarshal([]byte(message), &s)
-//		if err != nil {
-//			callback.OnError(200, err.Error())
-//			return
-//		}
-//		err = u.setMessageStatus(s.ClientMsgID, constant.MsgStatusHasDeleted)
-//		if err != nil {
-//			callback.OnError(202, err.Error())
-//			return
-//		}
-//		callback.OnSuccess("")
-//		if s.SessionType == constant.GroupChatType {
-//			conversationID = utils.GetConversationIDBySessionType(s.RecvID, constant.GroupChatType)
-//			sourceID = s.RecvID
-//
-//		} else if s.SessionType == constant.SingleChatType {
-//			if s.SendID != u.loginUserID {
-//				conversationID = utils.GetConversationIDBySessionType(s.SendID, constant.SingleChatType)
-//				sourceID = s.SendID
-//			} else {
-//				conversationID = utils.GetConversationIDBySessionType(s.RecvID, constant.SingleChatType)
-//				sourceID = s.RecvID
-//			}
-//		}
-//		_, m := u.getConversationLatestMsgModel(conversationID)
-//		if m != "" {
-//			err := json.Unmarshal([]byte(m), &latestMsg)
-//			if err != nil {
-//				utils.sdkLog("DeleteMessage err :", err)
-//				callback.OnError(200, err.Error())
-//				return
-//			}
-//		} else {
-//			utils.sdkLog("err ,conversation has been deleted")
-//		}
-//
-//		if s.ClientMsgID == latestMsg.ClientMsgID { //If the deleted message is the latest message of the conversation, update the latest message of the conversation
-//			err, list := u.getHistoryMessage(sourceID, s.SendTime+TimeOffset, 1, int(s.SessionType))
-//			if err != nil {
-//				utils.sdkLog("DeleteMessageFromLocalStorage database err:", err.Error())
-//			}
-//			conversation.ConversationID = conversationID
-//			if list == nil {
-//				conversation.LatestMsg = ""
-//				conversation.LatestMsgSendTime = utils.getCurrentTimestampByNano()
-//			} else {
-//				conversation.LatestMsg = utils.structToJsonString(list[0])
-//				conversation.LatestMsgSendTime = list[0].SendTime
-//			}
-//			err = u.triggerCmdUpdateConversation(common.updateConNode{ConId: conversationID, Action: constant.AddConOrUpLatMsg, Args: conversation})
-//			if err != nil {
-//				utils.sdkLog("DeleteMessageFromLocalStorage triggerCmdUpdateConversation err:", err.Error())
-//			}
-//			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
-//
-//		}
-//	}()
-//}
-//func (c *Conversation) ClearC2CHistoryMessage(callback common.Base, userID string) {
-//	go func() {
-//		conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
-//		err := u.setMessageStatusBySourceID(userID, constant.MsgStatusHasDeleted, constant.SingleChatType)
-//		if err != nil {
-//			callback.OnError(202, err.Error())
-//			return
-//		}
-//		err = u.clearConversation(conversationID)
-//		if err != nil {
-//			callback.OnError(203, err.Error())
-//			return
-//		} else {
-//			callback.OnSuccess("")
-//			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
-//		}
-//	}()
-//}
-//func (c *Conversation) ClearGroupHistoryMessage(callback common.Base, groupID string) {
-//	go func() {
-//		conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
-//		err := u.setMessageStatusBySourceID(groupID, constant.MsgStatusHasDeleted, constant.GroupChatType)
-//		if err != nil {
-//			callback.OnError(202, err.Error())
-//			return
-//		}
-//		err = u.clearConversation(conversationID)
-//		if err != nil {
-//			callback.OnError(203, err.Error())
-//			return
-//		} else {
-//			callback.OnSuccess("")
-//			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
-//		}
-//	}()
-//}
-//
-//func (c *Conversation) InsertSingleMessageToLocalStorage(callback common.Base, message, userID, sender string) string {
-//	s := utils.MsgStruct{}
-//	err := json.Unmarshal([]byte(message), &s)
-//	if err != nil {
-//		callback.OnError(200, err.Error())
-//		return ""
-//	}
-//	s.SendID = sender
-//	s.RecvID = userID
-//	//Generate client message primary key
-//	s.ClientMsgID = utils.getMsgID(s.SendID)
-//	s.SendTime = utils.getCurrentTimestampByNano()
-//	go func() {
-//		if err = u.insertMessageToLocalOrUpdateContent(&s); err != nil {
-//			callback.OnError(201, err.Error())
-//		} else {
-//			callback.OnSuccess("")
-//		}
-//	}()
-//	return s.ClientMsgID
-//}
-//
+
+func (c *Conversation) MarkGroupMessageHasRead(callback common.Base, groupID string, operationID string) {
+	go func() {
+		conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+		if err := u.setGroupMessageHasRead(groupID); err != nil {
+			callback.OnError(201, err.Error())
+		} else {
+			callback.OnSuccess("")
+			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConId: conversationID, Action: constant.UnreadCountSetZero}})
+			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+		}
+	}()
+}
+
+func (c *Conversation) DeleteMessageFromLocalStorage(callback common.Base, message string, operationID string) {
+	go func() {
+		s := sdk_struct.MsgStruct{}
+		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+		c.deleteMessageFromLocalStorage(callback, &s, operationID)
+		callback.OnSuccess("")
+	}()
+}
+
+func (c *Conversation) ClearC2CHistoryMessage(callback common.Base, userID string, operationID string) {
+	go func() {
+		c.clearC2CHistoryMessage(callback, userID, operationID)
+		callback.OnSuccess("")
+
+	}()
+}
+
+func (c *Conversation) ClearGroupHistoryMessage(callback common.Base, groupID string, operationID string) {
+	go func() {
+		c.clearGroupHistoryMessage(callback, groupID, operationID)
+		callback.OnSuccess("")
+
+	}()
+}
+
+func (c *Conversation) InsertSingleMessageToLocalStorage(callback common.Base, message, userID, sendID, operationID string) string {
+	s := sdk_struct.MsgStruct{}
+	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+	localMessage := db.LocalChatLog{}
+	msgStructToLocalChatLog(&localMessage, &s)
+	s.SendID = sendID
+	s.RecvID = userID
+	s.ClientMsgID = utils.GetMsgID(s.SendID)
+	s.SendTime = uint32(utils.GetCurrentTimestampByNano())
+
+	go func() {
+		clientMsgID := c.insertMessageToLocalStorage(callback, &localMessage, operationID)
+		callback.OnSuccess(clientMsgID)
+	}()
+	return s.ClientMsgID
+}
 
 func (c *Conversation) InsertGroupMessageToLocalStorage(callback common.Base, message, groupID, sendID, operationID string) string {
 	s := sdk_struct.MsgStruct{}
@@ -1132,7 +1051,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback common.Base, me
 	s.SendTime = uint32(utils.GetCurrentTimestampByNano())
 
 	go func() {
-		clientMsgID := c.insertGroupMessageToLocalStorage(callback, &localMessage, operationID)
+		clientMsgID := c.insertMessageToLocalStorage(callback, &localMessage, operationID)
 		callback.OnSuccess(clientMsgID)
 	}()
 	return s.ClientMsgID
