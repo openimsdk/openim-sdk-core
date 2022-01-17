@@ -1,7 +1,7 @@
 package conversation_msg
 
 import (
-	"encoding/json"
+	"errors"
 	"github.com/mitchellh/mapstructure"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -9,6 +9,7 @@ import (
 	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
+	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 )
 
@@ -128,12 +129,10 @@ func (c *Conversation) pinConversation(callback common.Base, conversationID stri
 	}
 }
 
-func (c *Conversation) getHistoryMessageList(callback common.Base, req sdk.GetHistoryMessageListParams, operationID string) {
-
+func (c *Conversation) getHistoryMessageList(callback common.Base, req sdk.GetHistoryMessageListParams, operationID string) sdk.GetHistoryMessageListCallback {
 	var sourceID string
 	var conversationID string
 	var startTime uint32
-	var latestMsg sdk_struct.MsgStruct
 	var sessionType int
 	if req.UserID == "" {
 		sourceID = req.GroupID
@@ -157,15 +156,66 @@ func (c *Conversation) getHistoryMessageList(callback common.Base, req sdk.GetHi
 		startTime = req.StartMsg.SendTime
 	}
 	log.Info(operationID, "sourceID:", sourceID, "startTime:", startTime, "count:", req.Count)
-	err, list := u.getHistoryMessage(sourceID, startTime, p.Count, sessionType)
-	lc := db.LocalConversation{ConversationID: conversationID}
-	if isPinned {
-		lc.IsPinned = constant.Pinned
-		err := c.UpdateConversation(&lc)
-		common.CheckErr(callback, err, operationID)
-	} else {
-		lc.IsPinned = constant.NotPinned
-		err := c.UnPinConversation(conversationID, constant.NotPinned)
-		common.CheckErr(callback, err, operationID)
+	list, err := c.db.GetMessageList(sourceID, sessionType, req.Count, startTime)
+	common.CheckErr(callback, err, operationID)
+	return list
+
+}
+func (c *Conversation) revokeOneMessage(callback common.Base, req sdk.RevokeMessageParams, operationID string) {
+	var recvID, groupID string
+	message, err := c.db.GetMessage(req.ClientMsgID)
+	common.CheckErr(callback, err, operationID)
+	if message.Status != constant.MsgStatusSendSuccess {
+		common.CheckAnyErr(callback, 201, errors.New("only send success message can be revoked"), operationID)
 	}
+	if message.SendID != c.loginUserID {
+		common.CheckAnyErr(callback, 201, errors.New("only you send message can be revoked"), operationID)
+	}
+	//Send message internally
+	switch req.SessionType {
+	case constant.SingleChatType:
+		recvID = req.RecvID
+	case constant.GroupChatType:
+		groupID = req.GroupID
+	default:
+
+		callback.OnError(200, "args err")
+	}
+	req.Content = message.ClientMsgID
+	req.ClientMsgID = utils.GetMsgID(message.SendID)
+	req.ContentType = constant.Revoke
+	options := make(map[string]bool, 2)
+	_ = c.internalSendMessage(callback, (*sdk_struct.MsgStruct)(&req), recvID, groupID, operationID, &server_api_params.OfflinePushInfo{}, false, options)
+	//插入一条消息，以及会话最新的一条消息，触发UI的更新
+	err = c.db.UpdateColumnsMessage(req.Content, map[string]interface{}{"status": constant.MsgStatusRevoked})
+	common.CheckErr(callback, err, operationID)
+}
+func (c *Conversation) typingStatusUpdate(callback common.Base, req sdk.RevokeMessageParams, operationID string) {
+	var recvID, groupID string
+	message, err := c.db.GetMessage(req.ClientMsgID)
+	common.CheckErr(callback, err, operationID)
+	if message.Status != constant.MsgStatusSendSuccess {
+		common.CheckAnyErr(callback, 201, errors.New("only send success message can be revoked"), operationID)
+	}
+	if message.SendID != c.loginUserID {
+		common.CheckAnyErr(callback, 201, errors.New("only you send message can be revoked"), operationID)
+	}
+	//Send message internally
+	switch req.SessionType {
+	case constant.SingleChatType:
+		recvID = req.RecvID
+	case constant.GroupChatType:
+		groupID = req.GroupID
+	default:
+
+		callback.OnError(200, "args err")
+	}
+	req.Content = message.ClientMsgID
+	req.ClientMsgID = utils.GetMsgID(message.SendID)
+	req.ContentType = constant.Revoke
+	options := make(map[string]bool, 2)
+	_ = c.internalSendMessage(callback, (*sdk_struct.MsgStruct)(&req), recvID, groupID, operationID, &server_api_params.OfflinePushInfo{}, false, options)
+	//插入一条消息，以及会话最新的一条消息，触发UI的更新
+	err = c.db.UpdateColumnsMessage(req.Content, map[string]interface{}{"status": constant.MsgStatusRevoked})
+	common.CheckErr(callback, err, operationID)
 }

@@ -93,20 +93,25 @@ func (d *DataBase) UpdateMessageTimeAndStatus(ClientMsgID string, sendTime uint3
 	}
 	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
 }
-"select * from chat_log WHERE (send_id = ? OR recv_id =? )AND (content_type<=? and content_type not in (?)or
-(content_type >=? and content_type <=?  and content_type not in(?,?)  ))AND status not in(?,?)AND session_type=?AND send_time<?  order by send_time DESC  LIMIT ? OFFSET 0 ",
-func (d *DataBase) GetMessageList(sourceID string, sessionType,count int, startTime uint32) (result []*LocalChatLog, err error) {
+func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, startTime uint32) (result []*LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []LocalChatLog
-	err = utils.Wrap(d.conn.Where("(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? And send_time < ?", sourceID,sourceID,constant.MsgStatusSendFailed,sessionType,startTime)
-	.Find(&messageList).Error, "GetMultipleConversation failed")
+	err = utils.Wrap(d.conn.Where("(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? And send_time < ?", sourceID, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
+		Order("send_time DESC").Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
 	for _, v := range messageList {
 		result = append(result, &v)
 	}
-	t := d.conn.Model(LocalChatLog{}).Where("client_msg_id=? And seq=?", ClientMsgID, 0).Updates(LocalChatLog{Status: status, SendTime: sendTime})
-	if t.RowsAffected == 0 {
-		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	return result, err
+}
+func (d *DataBase) GetSelfMessageList(sourceID string, sessionType, count int, startTime uint32) (result []*LocalChatLog, err error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var messageList []LocalChatLog
+	err = utils.Wrap(d.conn.Where("send_id = ? And recv_id = ? AND status <=? And session_type = ? And send_time < ?", sourceID, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
+		Order("send_time DESC").Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
+	for _, v := range messageList {
+		result = append(result, &v)
 	}
-	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
+	return result, err
 }

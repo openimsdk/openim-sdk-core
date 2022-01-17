@@ -33,3 +33,8 @@ type GetHistoryMessageListParams struct {
 	StartMsg *sdk_struct.MsgStruct `json:"startMsg"`
 	Count    int                   `json:"count"`
 }
+type GetHistoryMessageListCallback []*db.LocalChatLog
+
+type RevokeMessageParams sdk_struct.MsgStruct
+
+const RevokeMessageCallback = constant.SuccessCallbackDefault
