@@ -589,9 +589,15 @@ func (c *Conversation) SendMessage(callback SendMsgCallBack, message, recvID, gr
 		c.sendMessageToServer(&s, &lc, callback, delFile, &p, options, operationID)
 	}()
 }
-func msgStructToLocalChatLog(s *sdk_struct.MsgStruct, localMessage *db.LocalChatLog) {
-	copier.Copy(localMessage, s)
+
+func msgStructToLocalChatLog(dst *db.LocalChatLog, src *sdk_struct.MsgStruct) {
+	copier.Copy(dst, src)
 }
+
+func localChatLogToMsgStruct(dst *sdk_struct.MsgStruct, src *db.LocalChatLog) {
+	copier.Copy(dst, src)
+}
+
 func (c *Conversation) checkErrAndUpdateMessage(callback SendMsgCallBack, errCode int32, err error, s *sdk_struct.MsgStruct, lc *db.LocalConversation, operationID string) {
 	if err != nil {
 		if callback != nil {
@@ -1165,28 +1171,32 @@ func (c *Conversation) GetHistoryMessageList(callback common.Base, getMessageOpt
 //	return s.ClientMsgID
 //}
 //
-//func (c *Conversation) InsertGroupMessageToLocalStorage(callback common.Base, message, groupID, sender string) string {
-//	s := utils.MsgStruct{}
-//	err := json.Unmarshal([]byte(message), &s)
-//	if err != nil {
-//		callback.OnError(200, err.Error())
-//		return ""
-//	}
-//	s.SendID = sender
-//	s.RecvID = groupID
-//	//Generate client message primary key
-//	s.ClientMsgID = utils.getMsgID(s.SendID)
-//	s.SendTime = utils.getCurrentTimestampByNano()
-//	go func() {
-//		if err = u.insertMessageToLocalOrUpdateContent(&s); err != nil {
-//			callback.OnError(201, err.Error())
-//		} else {
-//			callback.OnSuccess("")
-//		}
-//	}()
-//	return s.ClientMsgID
-//}
-//
+
+func (c *Conversation) InsertGroupMessageToLocalStorage(callback common.Base, message, groupID, sender, operationID string) string {
+	s := sdk_struct.MsgStruct{}
+	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+	localMessage := db.LocalChatLog{}
+	msgStructToLocalChatLog(&localMessage, &s)
+	err := json.Unmarshal([]byte(message), &s)
+	if err != nil {
+		callback.OnError(200, err.Error())
+		return ""
+	}
+	s.SendID = sender
+	s.RecvID = groupID
+	//Generate client message primary key
+	s.ClientMsgID = utils.getMsgID(s.SendID)
+	s.SendTime = utils.getCurrentTimestampByNano()
+	go func() {
+		if err = u.insertMessageToLocalOrUpdateContent(&s); err != nil {
+			callback.OnError(201, err.Error())
+		} else {
+			callback.OnSuccess("")
+		}
+	}()
+	return s.ClientMsgID
+}
+
 //func (c *Conversation) FindMessages(callback common.Base, messageIDList string) {
 //	go func() {
 //		var c []string
@@ -1208,6 +1218,8 @@ func (c *Conversation) GetHistoryMessageList(callback common.Base, getMessageOpt
 //		}
 //	}()
 //}
+//
+
 func getImageInfo(filePath string) (*sdk_struct.ImageInfo, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
