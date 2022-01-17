@@ -1,17 +1,12 @@
 package conversation_msg
 
 import (
-	"encoding/json"
 	"open_im_sdk/pkg/common"
+	"open_im_sdk/pkg/db"
 )
 
-func (c *Conversation) insertGroupMessageToLocalStorage(callback common.Base, message, groupID, sender string, operationID string) string {
-
-	if err := c.db.InsertMessage()(&s); err != nil {
-		callback.OnError(201, err.Error())
-	} else {
-		callback.OnSuccess("")
-	}
-
+func (c *Conversation) insertGroupMessageToLocalStorage(callback common.Base, s *db.LocalChatLog, operationID string) string {
+	err := c.db.InsertMessage(s)
+	common.CheckDBErr(callback, err, operationID)
 	return s.ClientMsgID
 }

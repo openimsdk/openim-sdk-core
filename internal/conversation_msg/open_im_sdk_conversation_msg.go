@@ -1172,27 +1172,19 @@ func (c *Conversation) GetHistoryMessageList(callback common.Base, getMessageOpt
 //}
 //
 
-func (c *Conversation) InsertGroupMessageToLocalStorage(callback common.Base, message, groupID, sender, operationID string) string {
+func (c *Conversation) InsertGroupMessageToLocalStorage(callback common.Base, message, groupID, sendID, operationID string) string {
 	s := sdk_struct.MsgStruct{}
 	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 	localMessage := db.LocalChatLog{}
 	msgStructToLocalChatLog(&localMessage, &s)
-	err := json.Unmarshal([]byte(message), &s)
-	if err != nil {
-		callback.OnError(200, err.Error())
-		return ""
-	}
-	s.SendID = sender
+	s.SendID = sendID
 	s.RecvID = groupID
-	//Generate client message primary key
-	s.ClientMsgID = utils.getMsgID(s.SendID)
-	s.SendTime = utils.getCurrentTimestampByNano()
+	s.ClientMsgID = utils.GetMsgID(s.SendID)
+	s.SendTime = uint32(utils.GetCurrentTimestampByNano())
+
 	go func() {
-		if err = u.insertMessageToLocalOrUpdateContent(&s); err != nil {
-			callback.OnError(201, err.Error())
-		} else {
-			callback.OnSuccess("")
-		}
+		clientMsgID := c.insertGroupMessageToLocalStorage(callback, &localMessage, operationID)
+		callback.OnSuccess(clientMsgID)
 	}()
 	return s.ClientMsgID
 }
