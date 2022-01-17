@@ -346,12 +346,6 @@ type WsSendMsgResp struct {
 	SendTime    int64  `json:"sendTime"`
 }
 
-//type PullMsgReq struct {
-//	UserID   string     `json:"userID"`
-//	GroupID  string     `json:"groupID"`
-//	StartMsg *MsgStruct `json:"startMsg"`
-//	Count    int        `json:"count"`
-//}
 type SendMsgRespFromServer struct {
 	ErrCode       int    `json:"errCode"`
 	ErrMsg        string `json:"errMsg"`

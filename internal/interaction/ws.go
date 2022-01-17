@@ -78,7 +78,7 @@ func (ws *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, ret
 	if err != nil {
 		return nil, utils.Wrap(err, "proto marshal err")
 	}
-	for i := 0; i < retryTimes; i++ {
+	for i := 0; i < retryTimes+1; i++ {
 		err, connSend = ws.writeBinaryMsg(wsReq)
 		if err != nil {
 			if !ws.IsWriteTimeout(err) {

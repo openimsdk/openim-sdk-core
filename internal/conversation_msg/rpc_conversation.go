@@ -1,12 +1,15 @@
 package conversation_msg
 
 import (
+	"encoding/json"
 	"github.com/mitchellh/mapstructure"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
+	"open_im_sdk/sdk_struct"
 )
 
 func (c *Conversation) getAllConversationList(callback common.Base, operationID string) sdk.GetAllConversationListCallback {
@@ -113,6 +116,48 @@ func (c *Conversation) setConversationDraft(callback common.Base, conversationID
 }
 
 func (c *Conversation) pinConversation(callback common.Base, conversationID string, isPinned bool, operationID string) {
+	lc := db.LocalConversation{ConversationID: conversationID}
+	if isPinned {
+		lc.IsPinned = constant.Pinned
+		err := c.UpdateConversation(&lc)
+		common.CheckErr(callback, err, operationID)
+	} else {
+		lc.IsPinned = constant.NotPinned
+		err := c.UnPinConversation(conversationID, constant.NotPinned)
+		common.CheckErr(callback, err, operationID)
+	}
+}
+
+func (c *Conversation) getHistoryMessageList(callback common.Base, req sdk.GetHistoryMessageListParams, operationID string) {
+
+	var sourceID string
+	var conversationID string
+	var startTime uint32
+	var latestMsg sdk_struct.MsgStruct
+	var sessionType int
+	if req.UserID == "" {
+		sourceID = req.GroupID
+		conversationID = c.GetConversationIDBySessionType(sourceID, constant.GroupChatType)
+		sessionType = constant.GroupChatType
+	} else {
+		sourceID = req.UserID
+		conversationID = c.GetConversationIDBySessionType(sourceID, constant.SingleChatType)
+		sessionType = constant.SingleChatType
+	}
+	if req.StartMsg == nil {
+		lc, err := c.db.GetConversation(conversationID)
+		common.CheckErr(callback, err, operationID)
+		if lc == nil {
+			startTime = 0
+		} else {
+			startTime = lc.LatestMsgSendTime + TimeOffset
+		}
+
+	} else {
+		startTime = req.StartMsg.SendTime
+	}
+	log.Info(operationID, "sourceID:", sourceID, "startTime:", startTime, "count:", req.Count)
+	err, list := u.getHistoryMessage(sourceID, startTime, p.Count, sessionType)
 	lc := db.LocalConversation{ConversationID: conversationID}
 	if isPinned {
 		lc.IsPinned = constant.Pinned
