@@ -39,12 +39,10 @@ func (u *User) DoNotification(msg *api.MsgData) {
 		log.Error(operationID, "listener == nil")
 		return
 	}
-
 	go func() {
 		switch msg.ContentType {
 		case constant.UserInfoUpdatedNotification:
 			u.userInfoUpdatedNotification(msg, operationID)
-
 		default:
 			log.Error(operationID, "type failed ", msg.ClientMsgID, msg.ServerMsgID, msg.ContentType)
 		}

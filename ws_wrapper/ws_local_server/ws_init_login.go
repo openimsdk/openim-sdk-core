@@ -74,8 +74,6 @@ func (wsRouter *WsFuncRouter) InitSDK(config string, operationID string) {
 
 func (wsRouter *WsFuncRouter) UnInitSDK() {
 	wrapSdkLog("UnInitSDK uid: ", wsRouter.uId)
-	//	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	//	userWorker.UnInitSDK()
 	open_im_sdk.UserSDKRwLock.Lock()
 	delete(open_im_sdk.UserRouterMap, wsRouter.uId)
 	wrapSdkLog("delete UnInitSDK uid: ", wsRouter.uId)

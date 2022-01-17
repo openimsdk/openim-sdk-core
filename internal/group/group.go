@@ -149,7 +149,7 @@ func (g *Group) groupOwnerTransferredNotification(msg *api.MsgData, operationID 
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	detail := api.GroupOwnerTransferredTips{Group: &api.GroupInfo{}}
 	comm.UnmarshalTips(msg, &detail)
-	g.SyncJoinedGroupList(operationID) //todo
+	g.SyncJoinedGroupList(operationID)
 }
 
 func (g *Group) memberKickedNotification(msg *api.MsgData, operationID string) {
@@ -621,7 +621,7 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string) {
 	}
 }
 
-func (g *Group) syncJoinedGroupMember(operationID string) {
+func (g *Group) SyncJoinedGroupMember(operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	groupListOnServer, err := g.getJoinedGroupListFromSvr(operationID)
 	if err != nil {

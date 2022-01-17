@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/gorilla/websocket"
+	"open_im_sdk/sdk_struct"
+	"open_im_sdk/ws_wrapper/utils"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -65,8 +67,8 @@ type WsFuncRouter struct {
 
 func DelUserRouter(uid string) {
 	wrapSdkLog("DelUserRouter ", uid)
-
-	idx := strings.LastIndex(uid, " Web")
+	sub := " " + utils.PlatformIDToName(sdk_struct.SvrConf.Platform)
+	idx := strings.LastIndex(uid, sub)
 	if idx == -1 {
 		wrapSdkLog("err uid, not Web", uid)
 		return
@@ -78,7 +80,7 @@ func DelUserRouter(uid string) {
 	defer UserRouteRwLock.Unlock()
 	urm, ok := UserRouteMap[uid]
 	if ok {
-		wrapSdkLog("DelUserRouter logout, uninitsdk", uid)
+		wrapSdkLog("DelUserRouter logout, UnInitSDK ", uid)
 		urm.wsRouter.LogoutNoCallback(uid, "0")
 		urm.wsRouter.UnInitSDK()
 	} else {
