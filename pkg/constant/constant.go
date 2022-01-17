@@ -91,6 +91,7 @@ const (
 	IsPersistent         = "persistent"
 	IsUnreadCount        = "unreadCount"
 	IsConversationUpdate = "conversationUpdate"
+	IsOfflinePush        = "offlinePush"
 )
 
 const (
