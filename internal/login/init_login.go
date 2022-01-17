@@ -36,11 +36,16 @@ type LoginMgr struct {
 	friendListener       friend.OnFriendshipListener
 	conversationListener conv.OnConversationListener
 	advancedMsgListener  conv.OnAdvancedMsgListener
+	userListener         user.OnUserListener
 
 	conversationCh chan common.Cmd2Value
 	cmdCh          chan common.Cmd2Value
 
 	imConfig sdk_struct.IMConfig
+}
+
+func (u *LoginMgr) SetUserListener(userListener user.OnUserListener) {
+	u.userListener = userListener
 }
 
 func (u *LoginMgr) Conversation() *conv.Conversation {
@@ -162,16 +167,17 @@ func (u *LoginMgr) GetLoginStatus() int32 {
 }
 
 func (u *LoginMgr) forcedSynchronization() {
-	u.friend.SyncFriendList()
-	u.friend.SyncBlackList()
-	u.friend.SyncFriendApplication()
-	u.friend.SyncSelfFriendApplication()
+	operationID := utils.OperationIDGenerator()
+	u.friend.SyncFriendList(operationID)
+	u.friend.SyncBlackList(operationID)
+	u.friend.SyncFriendApplication(operationID)
+	u.friend.SyncSelfFriendApplication(operationID)
 
-	u.user.SyncLoginUserInfo()
+	u.user.SyncLoginUserInfo(operationID)
 
-	u.group.SyncJoinedGroupInfo()
-	u.group.SyncGroupApplication()
-	u.group.SyncSelfGroupApplication()
+	u.group.SyncJoinedGroupList(operationID)
+	u.group.SyncGroupApplication(operationID)
+	u.group.SyncSelfGroupApplication(operationID)
 }
 
 func (u *LoginMgr) GetMinSeqSvr() int64 {

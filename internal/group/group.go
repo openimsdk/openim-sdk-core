@@ -14,17 +14,6 @@ import (
 )
 
 type OnGroupListener interface {
-
-	//	TransferGroupOwnerTip     = 1501
-	//	CreateGroupTip            = 1502
-	//	JoinGroupTip              = 1504
-	//	QuitGroupTip              = 1505
-	//	SetGroupInfoTip           = 1506
-	//	AcceptGroupApplicationTip = 1507
-	//	RefuseGroupApplicationTip = 1508
-	//	KickGroupMemberTip        = 1509
-	//	InviteUserToGroupTip      = 1510
-
 	OnJoinedGroupAdded(groupInfo string)
 	OnJoinedGroupDeleted(groupInfo string)
 
@@ -40,22 +29,8 @@ type OnGroupListener interface {
 	OnGroupInfoChanged(groupInfo string)
 	OnGroupMemberInfoChanged(groupMemberInfo string)
 
-	////from backend
-	//OnGroupCreated()
-	//OnGroupInfoSet()
-	//OnJoinGroupApplication()
-	//OnQuitGroup()
-	//OnApplicationGroupAccepted()
-	//OnApplicationGroupRejected()
-	//OnTransferGroupOwner()
-	//OnMemberKicked()
-	//OnMemberInvited()
-	//
-	//
-	//
-	//OnJoinGroupApplicationAccepted(groupApplication string)
-	//OnJoinGroupApplicationRejected(groupApplication string)
-
+	OnGroupApplicationAccepted(groupApplication string)
+	OnGroupApplicationRejected(groupApplication string)
 }
 
 type Group struct {
@@ -69,12 +44,12 @@ func NewGroup(loginUserID string, db *db.DataBase, p *ws.PostApi) *Group {
 	return &Group{loginUserID: loginUserID, db: db, p: p}
 }
 
-func (g *Group) DoGroupMsg(msg *api.MsgData) {
+func (g *Group) DoNotification(msg *api.MsgData) {
 	if g.listener == nil {
 		return
 	}
 	operationID := utils.OperationIDGenerator()
-
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	go func() {
 		switch msg.ContentType {
 		case constant.GroupCreatedNotification:
@@ -98,32 +73,21 @@ func (g *Group) DoGroupMsg(msg *api.MsgData) {
 		case constant.MemberEnterNotification:
 			g.memberEnterNotification(msg, operationID)
 		default:
-			log.Error("0", "ContentType tip failed, ", msg.ContentType)
+			log.Error(operationID, "ContentType tip failed ", msg.ContentType)
 		}
 	}()
 }
 
-//	GroupCreatedNotification             = 1501
-//	GroupInfoSetNotification             = 1502
-//	JoinGroupApplicationNotification     = 1503
-//	MemberQuitNotification               = 1504
-//	GroupApplicationAcceptedNotification = 1505
-//	GroupApplicationRejectedNotification = 1506
-//	GroupOwnerTransferredNotification    = 1507
-//	MemberKickedNotification             = 1508
-//	MemberInvitedNotification            = 1509
-//	MemberEnterNotification              = 1510
-
 func (g *Group) groupCreatedNotification(msg *api.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	g.SyncJoinedGroupInfo()
+	g.SyncJoinedGroupList(operationID)
 }
 
 func (g *Group) groupInfoSetNotification(msg *api.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	detail := api.GroupInfoSetTips{Group: &api.GroupInfo{}}
 	comm.UnmarshalTips(msg, &detail)
-	g.SyncJoinedGroupInfo() //todo
+	g.SyncJoinedGroupList(operationID) //todo
 
 }
 
@@ -134,9 +98,9 @@ func (g *Group) joinGroupApplicationNotification(msg *api.MsgData, operationID s
 		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
 	}
 	if detail.Applicant.UserID == g.loginUserID {
-		g.SyncSelfGroupApplication()
+		g.SyncSelfGroupApplication(operationID)
 	} else {
-		g.SyncGroupApplication()
+		g.SyncGroupApplication(operationID)
 	}
 }
 
@@ -147,9 +111,9 @@ func (g *Group) memberQuitNotification(msg *api.MsgData, operationID string) {
 		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
 	}
 	if detail.QuitUser.UserID == g.loginUserID {
-		g.SyncJoinedGroupInfo()
+		g.SyncJoinedGroupList(operationID)
 	} else {
-		g.syncGroupMemberByGroupID(detail.Group.GroupID)
+		g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
 	}
 }
 
@@ -160,12 +124,12 @@ func (g *Group) groupApplicationAcceptedNotification(msg *api.MsgData, operation
 		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
 	}
 	if detail.OpUser.UserID == g.loginUserID {
-		g.SyncGroupApplication()
+		g.SyncGroupApplication(operationID)
 	} else {
-		g.SyncSelfGroupApplication()
+		g.SyncSelfGroupApplication(operationID)
 	}
-	g.SyncJoinedGroupInfo()
-	g.syncGroupMemberByGroupID(detail.Group.GroupID)
+	g.SyncJoinedGroupList(operationID)
+	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
 }
 
 func (g *Group) groupApplicationRejectedNotification(msg *api.MsgData, operationID string) {
@@ -175,9 +139,9 @@ func (g *Group) groupApplicationRejectedNotification(msg *api.MsgData, operation
 		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
 	}
 	if detail.OpUser.UserID == g.loginUserID {
-		g.SyncGroupApplication()
+		g.SyncGroupApplication(operationID)
 	} else {
-		g.SyncSelfGroupApplication()
+		g.SyncSelfGroupApplication(operationID)
 	}
 }
 
@@ -185,7 +149,7 @@ func (g *Group) groupOwnerTransferredNotification(msg *api.MsgData, operationID 
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	detail := api.GroupOwnerTransferredTips{Group: &api.GroupInfo{}}
 	comm.UnmarshalTips(msg, &detail)
-	g.SyncJoinedGroupInfo() //todo
+	g.SyncJoinedGroupList(operationID) //todo
 }
 
 func (g *Group) memberKickedNotification(msg *api.MsgData, operationID string) {
@@ -197,11 +161,11 @@ func (g *Group) memberKickedNotification(msg *api.MsgData, operationID string) {
 
 	for _, v := range detail.KickedUserList {
 		if v.UserID == g.loginUserID {
-			g.SyncJoinedGroupInfo()
+			g.SyncJoinedGroupList(operationID)
 			return
 		}
 	}
-	g.syncGroupMemberByGroupID(detail.Group.GroupID)
+	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
 }
 
 func (g *Group) memberInvitedNotification(msg *api.MsgData, operationID string) {
@@ -213,11 +177,11 @@ func (g *Group) memberInvitedNotification(msg *api.MsgData, operationID string) 
 
 	for _, v := range detail.InvitedUserList {
 		if v.UserID == g.loginUserID {
-			g.SyncJoinedGroupInfo()
+			g.SyncJoinedGroupList(operationID)
 			return
 		}
 	}
-	g.syncGroupMemberByGroupID(detail.Group.GroupID)
+	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
 }
 
 func (g *Group) memberEnterNotification(msg *api.MsgData, operationID string) {
@@ -227,387 +191,12 @@ func (g *Group) memberEnterNotification(msg *api.MsgData, operationID string) {
 		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
 	}
 	if detail.EntrantUser.UserID == g.loginUserID {
-		g.SyncJoinedGroupInfo()
+		g.SyncJoinedGroupList(operationID)
 	} else {
-		g.syncGroupMemberByGroupID(detail.Group.GroupID)
+		g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
 	}
 }
 
-/*
-func (g *Group) doCreateGroup(msg *api.MsgData) {
-	var n utils.NotificationContent
-	err := json.Unmarshal([]byte(msg.Content), &n)
-	if err != nil {
-		return
-	}
-	u.SyncJoinedGroupInfo()
-	u.syncGroupMemberByGroupID(n.Detail)
-	u.onGroupCreated(n.Detail)
-}
-
-func (g *Group) doJoinGroup(msg *api.MsgData) {
-
-	u.SyncGroupApplication()
-
-	var n utils.NotificationContent
-	err := json.Unmarshal([]byte(msg.Content), &n)
-	if err != nil {
-		return
-	}
-
-	infoSpiltStr := strings.Split(n.Detail, ",")
-	var memberFullInfo open_im_sdk.groupMemberFullInfo
-	memberFullInfo.UserId = msg.SendID
-	memberFullInfo.GroupId = infoSpiltStr[0]
-	u.onReceiveJoinApplication(msg.RecvID, memberFullInfo, infoSpiltStr[1])
-
-}
-
-func (g *Group) doQuitGroup(msg *api.MsgData) {
-	var n utils.NotificationContent
-	err := json.Unmarshal([]byte(msg.Content), &n)
-	if err != nil {
-		utils.sdkLog("unmarshal, ", err.Error(), msg.Content)
-		return
-	}
-
-	utils.sdkLog("syncJoinedGroupInfo start")
-	u.syncJoinedGroupInfo()
-	utils.sdkLog("syncJoinedGroupInfo end")
-	u.syncGroupMemberByGroupId(n.Detail)
-	utils.sdkLog("syncJoinedGroupInfo finish")
-	utils.sdkLog("syncGroupMemberByGroupId finish")
-
-	var memberFullInfo open_im_sdk.groupMemberFullInfo
-	memberFullInfo.UserId = msg.SendID
-	memberFullInfo.GroupId = n.Detail
-
-	u.onMemberLeave(n.Detail, memberFullInfo)
-}
-
-func (g *Group) doSetGroupInfo(msg *api.MsgData) {
-	var n utils.NotificationContent
-	err := json.Unmarshal([]byte(msg.Content), &n)
-	if err != nil {
-		utils.sdkLog("unmarshal, ", err.Error(), msg.Content)
-		return
-	}
-	utils.sdkLog("doSetGroupInfo, ", n)
-
-	u.syncJoinedGroupInfo()
-	utils.sdkLog("syncJoinedGroupInfo ok")
-
-	var groupInfo open_im_sdk.setGroupInfoReq
-	err = json.Unmarshal([]byte(n.Detail), &groupInfo)
-	if err != nil {
-		utils.sdkLog("unmarshal, ", err.Error(), msg.Content)
-		return
-	}
-	utils.sdkLog("doSetGroupInfo ok , callback ", groupInfo.GroupId, groupInfo)
-	u.onGroupInfoChanged(groupInfo.GroupId, groupInfo)
-}
-
-func (g *Group) doTransferGroupOwner(msg *api.MsgData) {
-	utils.sdkLog("doTransferGroupOwner start...")
-	var transfer api.TransferGroupOwnerReq
-	var transferContent utils.NotificationContent
-	err := json.Unmarshal([]byte(msg.Content), &transferContent)
-	if err != nil {
-		utils.sdkLog("unmarshal msg.Content, ", err.Error(), msg.Content)
-		return
-	}
-	if err = json.Unmarshal([]byte(transferContent.Detail), &transfer); err != nil {
-		utils.sdkLog("unmarshal transferContent", err.Error(), transferContent.Detail)
-		return
-	}
-	u.onTransferGroupOwner(&transfer)
-}
-
-
-func (u *Group) onTransferGroupOwner(transfer *open_im_sdk.TransferGroupOwnerReq) {
-	if u.loginUserID == transfer.NewOwner || u.loginUserID == transfer.OldOwner {
-		u.SyncGroupApplication()
-	}
-	u.syncGroupMemberByGroupId(transfer.GroupID)
-
-	gInfo, err := u.getLocalGroupsInfoByGroupID(transfer.GroupID)
-	if err != nil {
-		sdkLog("onTransferGroupOwner, err ", err.Error(), transfer.GroupID, transfer.OldOwner, transfer.NewOwner, transfer.OldOwner)
-		return
-	}
-	changeInfo := changeGroupInfo{
-		data:       *gInfo,
-		changeType: 5,
-	}
-	bChangeInfo, err := json.Marshal(changeInfo)
-	if err != nil {
-		sdkLog("updateTransferGroupOwner, ", err.Error())
-		return
-	}
-	u.listener.OnGroupInfoChanged(transfer.GroupID, string(bChangeInfo))
-	sdkLog("onTransferGroupOwner success")
-}
-
-func (g *Group) doAcceptGroupApplication(msg *api.MsgData) {
-	utils.sdkLog("doAcceptGroupApplication start...")
-	var acceptInfo utils.GroupApplicationInfo
-	var acceptContent utils.NotificationContent
-	err := json.Unmarshal([]byte(msg.Content), &acceptContent)
-	if err != nil {
-		utils.sdkLog("unmarshal msg.Content ", err.Error(), msg.Content)
-		return
-	}
-	err = json.Unmarshal([]byte(acceptContent.Detail), &acceptInfo)
-	if err != nil {
-		utils.sdkLog("unmarshal acceptContent.Detail", err.Error(), msg.Content)
-		return
-	}
-
-	u.onAcceptGroupApplication(&acceptInfo)
-}
-
-func (u *Group) onAcceptGroupApplication(groupMember *open_im_sdk.GroupApplicationInfo) {
-	member := open_im_sdk.groupMemberFullInfo{
-		GroupId:  groupMember.Info.GroupId,
-		Role:     0,
-		JoinTime: uint64(groupMember.Info.AddTime),
-	}
-	if groupMember.Info.ToUser == "0" {
-		member.UserId = groupMember.Info.FromUser
-		member.NickName = groupMember.Info.FromUserNickName
-		member.FaceUrl = groupMember.Info.FromUserFaceUrl
-	} else {
-		member.UserId = groupMember.Info.ToUser
-		member.NickName = groupMember.Info.ToUserNickname
-		member.FaceUrl = groupMember.Info.ToUserFaceUrl
-	}
-
-	bOp, err := json.Marshal(member)
-	if err != nil {
-		utils.sdkLog("Marshal, ", err.Error())
-		return
-	}
-
-	var memberList []open_im_sdk.groupMemberFullInfo
-	memberList = append(memberList, member)
-	bMemberListr, err := json.Marshal(memberList)
-	if err != nil {
-		utils.sdkLog("onAcceptGroupApplication", err.Error())
-		return
-	}
-	if u.loginUserID == member.UserId {
-		u.syncJoinedGroupInfo()
-		u.listener.OnApplicationProcessed(groupMember.Info.GroupId, string(bOp), 1, groupMember.Info.HandledMsg)
-	}
-	//g.SyncGroupApplication()
-	u.syncGroupMemberByGroupId(groupMember.Info.GroupId)
-	u.listener.OnMemberEnter(groupMember.Info.GroupId, string(bMemberListr))
-
-	utils.sdkLog("onAcceptGroupApplication success")
-}
-
-func (g *Group) doRefuseGroupApplication(msg *api.MsgData) {
-	// do nothing
-	utils.sdkLog("doRefuseGroupApplication start...")
-	var refuseInfo utils.GroupApplicationInfo
-	var refuseContent utils.NotificationContent
-	err := json.Unmarshal([]byte(msg.Content), &refuseContent)
-	if err != nil {
-		utils.sdkLog("unmarshal msg.Content ", err.Error(), msg.Content)
-		return
-	}
-	err = json.Unmarshal([]byte(refuseContent.Detail), &refuseInfo)
-	if err != nil {
-		utils.sdkLog("unmarshal RefuseContent.Detail", err.Error(), msg.Content)
-		return
-	}
-
-	u.onRefuseGroupApplication(&refuseInfo)
-}
-
-
-func (u *Group) onRefuseGroupApplication(groupMember *open_im_sdk.GroupApplicationInfo) {
-	member := open_im_sdk.groupMemberFullInfo{
-		GroupId:  groupMember.Info.GroupId,
-		Role:     0,
-		JoinTime: uint64(groupMember.Info.AddTime),
-	}
-	if groupMember.Info.ToUser == "0" {
-		member.UserId = groupMember.Info.FromUser
-		member.NickName = groupMember.Info.FromUserNickName
-		member.FaceUrl = groupMember.Info.FromUserFaceUrl
-	} else {
-		member.UserId = groupMember.Info.ToUser
-		member.NickName = groupMember.Info.ToUserNickname
-		member.FaceUrl = groupMember.Info.ToUserFaceUrl
-	}
-
-	bOp, err := json.Marshal(member)
-	if err != nil {
-		utils.sdkLog("Marshal, ", err.Error())
-		return
-	}
-
-	if u.loginUserID == member.UserId {
-		u.listener.OnApplicationProcessed(groupMember.Info.GroupId, string(bOp), -1, groupMember.Info.HandledMsg)
-	}
-
-	utils.sdkLog("onRefuseGroupApplication success")
-}
-
-func (g *Group) doKickGroupMember(msg *api.MsgData) {
-	var notification utils.NotificationContent
-	err := json.Unmarshal([]byte(msg.Content), &notification)
-	if err != nil {
-		utils.sdkLog("unmarshal, ", err.Error(), msg.Content)
-		return
-	}
-	utils.sdkLog("doKickGroupMember ", *msg, msg.Content)
-	var kickReq open_im_sdk.kickGroupMemberApiReq
-	err = json.Unmarshal([]byte(notification.Detail), &kickReq)
-	if err != nil {
-		utils.sdkLog("unmarshal failed, ", err.Error())
-		return
-	}
-
-	tList := make([]string, 1)
-	tList = append(tList, msg.SendID)
-	opList, err := u.getGroupMembersInfoFromLocal(kickReq.GroupID, tList)
-	if err != nil {
-		return
-	}
-	if len(opList) == 0 || len(kickReq.UidListInfo) == 0 {
-		utils.sdkLog("len: ", len(opList), len(kickReq.UidListInfo))
-	}
-	//	g.syncGroupMember()
-	u.syncJoinedGroupInfo()
-	u.syncGroupMemberByGroupId(kickReq.GroupID)
-	//u.syncJoinedGroupInfo()
-	//u.syncGroupMemberByGroupId(kickReq.GroupID)
-	if len(opList) > 0 {
-		u.OnMemberKicked(kickReq.GroupID, opList[0], kickReq.UidListInfo)
-	} else {
-		var op open_im_sdk.groupMemberFullInfo
-		op.NickName = "manager"
-		u.OnMemberKicked(kickReq.GroupID, op, kickReq.UidListInfo)
-	}
-
-}
-
-
-func (g *Group) OnMemberKicked(groupId string, op open_im_sdk.groupMemberFullInfo, memberList []open_im_sdk.groupMemberFullInfo) {
-	jsonOp, err := json.Marshal(op)
-	if err != nil {
-		utils.sdkLog("marshal failed, ", err.Error(), op)
-		return
-	}
-
-	jsonMemberList, err := json.Marshal(memberList)
-	if err != nil {
-		utils.sdkLog("marshal faile, ", err.Error(), memberList)
-		return
-	}
-	g.listener.OnMemberKicked(groupId, string(jsonOp), string(jsonMemberList))
-}
-
-func (g *Group) doInviteUserToGroup(msg *api.MsgData) {
-	var notification utils.NotificationContent
-	err := json.Unmarshal([]byte(msg.Content), &notification)
-	if err != nil {
-		utils.sdkLog("unmarshal, ", err.Error(), msg.Content)
-		return
-	}
-
-	var inviteReq open_im_sdk.inviteUserToGroupReq
-	err = json.Unmarshal([]byte(notification.Detail), &inviteReq)
-	if err != nil {
-		utils.sdkLog("unmarshal, ", err.Error(), notification.Detail)
-		return
-	}
-
-	memberList, err := u.getGroupMembersInfoTry2(inviteReq.GroupID, inviteReq.UidList)
-	if err != nil {
-		return
-	}
-
-	tList := make([]string, 1)
-	tList = append(tList, msg.SendID)
-	opList, err := u.getGroupMembersInfoTry2(inviteReq.GroupID, tList)
-	utils.sdkLog("getGroupMembersInfoFromSvr, ", inviteReq.GroupID, tList)
-	if err != nil {
-		return
-	}
-	if len(opList) == 0 || len(memberList) == 0 {
-		utils.sdkLog("len: ", len(opList), len(memberList))
-		return
-	}
-	for _, v := range inviteReq.UidList {
-		if u.loginUserID == v {
-
-			u.syncJoinedGroupInfo()
-			utils.sdkLog("syncJoinedGroupInfo, ", v)
-			break
-		}
-	}
-
-	u.syncGroupMemberByGroupId(inviteReq.GroupID)
-	utils.sdkLog("syncGroupMemberByGroupId, ", inviteReq.GroupID)
-	u.OnMemberInvited(inviteReq.GroupID, opList[0], memberList)
-}
-
-
-
-func (g *Group) onMemberEnter(groupId string, memberList []open_im_sdk.groupMemberFullInfo) {
-	jsonMemberList, err := json.Marshal(memberList)
-	if err != nil {
-		utils.sdkLog("marshal failed, ", err.Error(), jsonMemberList)
-		return
-	}
-	g.listener.OnMemberEnter(groupId, string(jsonMemberList))
-}
-func (g *Group) onReceiveJoinApplication(groupAdminId string, member open_im_sdk.groupMemberFullInfo, opReason string) {
-	jsonMember, err := json.Marshal(member)
-	if err != nil {
-		utils.sdkLog("marshal failed, ", err.Error(), jsonMember)
-		return
-	}
-	g.listener.OnReceiveJoinApplication(groupAdminId, string(jsonMember), opReason)
-}
-func (g *Group) onMemberLeave(groupId string, member open_im_sdk.groupMemberFullInfo) {
-	jsonMember, err := json.Marshal(member)
-	if err != nil {
-		utils.sdkLog("marshal failed, ", err.Error(), jsonMember)
-		return
-	}
-	g.listener.OnMemberLeave(groupId, string(jsonMember))
-}
-
-func (g *Group) onGroupInfoChanged(groupId string, changeInfos open_im_sdk.setGroupInfoReq) {
-	jsonGroupInfo, err := json.Marshal(changeInfos)
-	if err != nil {
-		utils.sdkLog("marshal failed, ", err.Error(), jsonGroupInfo)
-		return
-	}
-	utils.sdkLog(string(jsonGroupInfo))
-	g.listener.OnGroupInfoChanged(groupId, string(jsonGroupInfo))
-}
-func (g *Group) OnMemberInvited(groupId string, op open_im_sdk.groupMemberFullInfo, memberList []open_im_sdk.groupMemberFullInfo) {
-	jsonOp, err := json.Marshal(op)
-	if err != nil {
-		utils.sdkLog("marshal failed, ", err.Error(), op)
-		return
-	}
-
-	jsonMemberList, err := json.Marshal(memberList)
-	if err != nil {
-		utils.sdkLog("marshal faile, ", err.Error(), memberList)
-		return
-	}
-	g.listener.OnMemberInvited(groupId, string(jsonOp), string(jsonMemberList))
-}
-
-
-*/
 func (g *Group) createGroup(callback common.Base, group sdk.CreateGroupBaseInfoParam,
 	memberList sdk.CreateGroupMemberRoleParam, operationID string) *sdk.CreateGroupCallback {
 	apiReq := api.CreateGroupReq{}
@@ -623,8 +212,8 @@ func (g *Group) createGroup(callback common.Base, group sdk.CreateGroupBaseInfoP
 		callback.OnError(constant.ErrData.ErrCode, constant.ErrData.ErrMsg)
 		return nil
 	}
-	g.SyncJoinedGroupInfo()
-	g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID)
+	g.SyncJoinedGroupList(operationID)
+	g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID, operationID)
 	var temp sdk.CreateGroupCallback
 	temp = sdk.CreateGroupCallback(realData.GroupInfo)
 	return &temp
@@ -636,7 +225,7 @@ func (g *Group) joinGroup(groupID, reqMsg string, callback common.Base, operatio
 	apiReq.ReqMessage = reqMsg
 	apiReq.GroupID = groupID
 	commData := g.p.PostFatalCallback(callback, constant.JoinGroupRouter, apiReq, apiReq.OperationID)
-	g.SyncJoinedGroupInfo()
+	g.SyncJoinedGroupList(operationID)
 	return commData
 }
 
@@ -645,8 +234,8 @@ func (g *Group) quitGroup(groupID string, callback common.Base, operationID stri
 	apiReq.OperationID = operationID
 	apiReq.GroupID = groupID
 	commData := g.p.PostFatalCallback(callback, constant.QuitGroupRouter, apiReq, apiReq.OperationID)
-	g.syncGroupMemberByGroupID(groupID) //todo
-	g.SyncJoinedGroupInfo()
+	g.syncGroupMemberByGroupID(groupID, operationID) //todo
+	g.SyncJoinedGroupList(operationID)
 	return commData
 }
 
@@ -685,7 +274,7 @@ func (g *Group) setGroupInfo(callback common.Base, groupInfo sdk.SetGroupInfoPar
 	apiReq.OperationID = operationID
 	apiReq.GroupID = groupID
 	commData := g.p.PostFatalCallback(callback, constant.SetGroupInfoRouter, apiReq, apiReq.OperationID)
-	g.SyncJoinedGroupInfo()
+	g.SyncJoinedGroupList(operationID)
 	return commData
 }
 
@@ -710,7 +299,7 @@ func (g *Group) kickGroupMember(callback common.Base, groupID string, memberList
 	apiReq.Reason = reason
 	apiReq.OperationID = operationID
 	commData := g.p.PostFatalCallback(callback, constant.KickGroupMemberRouter, apiReq, apiReq.OperationID)
-	g.SyncJoinedGroupInfo()
+	g.SyncJoinedGroupList(operationID)
 	realData := api.KickGroupMemberResp{}
 	err := mapstructure.Decode(commData.Data, &realData.UserIDResultList)
 	common.CheckDataErr(callback, err, operationID)
@@ -725,8 +314,8 @@ func (g *Group) transferGroupOwner(callback common.Base, groupID, newOwnerUserID
 	apiReq.OperationID = operationID
 	apiReq.OldOwnerUserID = g.loginUserID
 	commData := g.p.PostFatalCallback(callback, constant.TransferGroupRouter, apiReq, apiReq.OperationID)
-	g.syncJoinedGroupMember()
-	g.syncGroupMemberByGroupID(groupID)
+	g.syncJoinedGroupMember(operationID)
+	g.syncGroupMemberByGroupID(groupID, operationID)
 	return commData
 }
 
@@ -737,8 +326,8 @@ func (g *Group) inviteUserToGroup(callback common.Base, groupID, reason string, 
 	apiReq.InvitedUserIDList = userList
 	apiReq.OperationID = operationID
 	commData := g.p.PostFatalCallback(callback, constant.InviteUserToGroupRouter, apiReq, apiReq.OperationID)
-	g.syncJoinedGroupMember()
-	g.syncGroupMemberByGroupID(groupID)
+	g.syncJoinedGroupMember(operationID)
+	g.syncGroupMemberByGroupID(groupID, operationID)
 	var realData sdk.InviteUserToGroupCallback
 	err := mapstructure.Decode(commData.Data, &realData)
 	common.CheckDataErr(callback, err, operationID)
@@ -778,11 +367,11 @@ func (g *Group) processGroupApplication(callback common.Base, groupID, fromUserI
 	var commData *api.CommDataResp
 	if handleResult == 1 {
 		commData = g.p.PostFatalCallback(callback, constant.AcceptGroupApplicationRouter, apiReq, apiReq.OperationID)
-		g.syncGroupMemberByGroupID(groupID)
+		g.syncGroupMemberByGroupID(groupID, operationID)
 	} else if handleResult == -1 {
 		commData = g.p.PostFatalCallback(callback, constant.RefuseGroupApplicationRouter, apiReq, apiReq.OperationID)
 	}
-	g.SyncGroupApplication()
+	g.SyncGroupApplication(operationID)
 	return commData
 }
 
@@ -884,34 +473,14 @@ func (g *Group) getGroupMembersInfoFromSvr(groupID string, memberList []string) 
 	return realData, nil
 }
 
-//func (u *Group) delGroupRequestFromGroupRequest(info open_im_sdk.GroupReqListInfo) error {
-//	return u.delRequestFromGroupRequest(info)
-//}
-
-//1
-//func (u *Group) refuseGroupApplication(access *open_im_sdk.accessOrRefuseGroupApplicationReq, callback common.Base, operationID string) error {
-//	resp, err := utils.post2Api(open_im_sdk.acceptGroupApplicationRouter, access, u.token)
-//	if err != nil {
-//		return err
-//	}
-//
-//	var ret open_im_sdk.commonResp
-//	err = json.Unmarshal(resp, &ret)
-//	if err != nil {
-//		return err
-//	}
-//	if ret.ErrCode != 0 {
-//		return errors.New(ret.ErrMsg)
-//	}
-//	return nil
-//}
-
-func (g *Group) SyncSelfGroupApplication() {
+//todo
+func (g *Group) SyncSelfGroupApplication(operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 
 }
 
-func (g *Group) SyncGroupApplication() {
-	operationID := utils.OperationIDGenerator()
+func (g *Group) SyncGroupApplication(operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	svrList, err := g.getGroupApplicationListFromSvr(operationID)
 	if err != nil {
 		log.NewError(operationID, "getGroupApplicationListFromSvr failed ", err.Error())
@@ -924,19 +493,30 @@ func (g *Group) SyncGroupApplication() {
 		return
 	}
 	log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
-	aInBNot, bInANot, sameA, _ := common.CheckGroupRequestDiff(onServer, onLocal)
+	aInBNot, bInANot, sameA, sameB := common.CheckGroupRequestDiff(onServer, onLocal)
+	log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
 	for _, index := range aInBNot {
 		err := g.db.InsertGroupRequest(onServer[index])
 		if err != nil {
 			log.NewError(operationID, "InsertGroupRequest failed ", err.Error())
 			continue
 		}
+		callbackData := sdk.GroupApplicationAddedCallback(*onServer[index])
+		g.listener.OnGroupApplicationAdded(utils.StructToJsonString(callbackData))
 	}
 	for _, index := range sameA {
 		err := g.db.UpdateGroupRequest(onServer[index])
 		if err != nil {
 			log.NewError(operationID, "UpdateGroupRequest failed ", err.Error())
 			continue
+		}
+		if onServer[index].HandleResult == -1 {
+			callbackData := sdk.GroupApplicationRejectCallback(*onServer[index])
+			g.listener.OnGroupApplicationRejected(utils.StructToJsonString(callbackData))
+
+		} else if onServer[index].HandleResult == 1 {
+			callbackData := sdk.GroupApplicationAcceptCallback(*onServer[index])
+			g.listener.OnGroupApplicationAccepted(utils.StructToJsonString(callbackData))
 		}
 	}
 	for _, index := range bInANot {
@@ -945,15 +525,13 @@ func (g *Group) SyncGroupApplication() {
 			log.NewError(operationID, "DeleteGroupRequest failed ", err.Error())
 			continue
 		}
+		callbackData := sdk.GroupApplicationDeletedCallback(*onLocal[index])
+		g.listener.OnGroupApplicationDeleted(utils.StructToJsonString(callbackData))
 	}
 }
 
-//func (g *Group) SyncApplyGroupApplication() {
-//
-//}
-
-func (g *Group) SyncJoinedGroupInfo() {
-	operationID := utils.OperationIDGenerator()
+func (g *Group) SyncJoinedGroupList(operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	svrList, err := g.getJoinedGroupListFromSvr(operationID)
 	if err != nil {
 		log.NewError(operationID, "getJoinedGroupListFromSvr failed ", err.Error())
@@ -966,81 +544,92 @@ func (g *Group) SyncJoinedGroupInfo() {
 		return
 	}
 	log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
-	aInBNot, bInANot, sameA, _ := common.CheckGroupInfoDiff(onServer, onLocal)
+	aInBNot, bInANot, sameA, sameB := common.CheckGroupInfoDiff(onServer, onLocal)
+	log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
 	for _, index := range aInBNot {
 		err := g.db.InsertGroup(onServer[index])
 		if err != nil {
-			log.NewError(operationID, "InsertGroup failed ", err.Error())
+			log.NewError(operationID, "InsertGroup failed ", err.Error(), onServer[index])
 			continue
 		}
+		callbackData := sdk.JoinedGroupAddedCallback(*onServer[index])
+		g.listener.OnJoinedGroupAdded(utils.StructToJsonString(callbackData))
 	}
 	for _, index := range sameA {
 		err := g.db.UpdateGroup(onServer[index])
 		if err != nil {
-			log.NewError(operationID, "UpdateGroup failed ", err.Error())
+			log.NewError(operationID, "UpdateGroup failed ", err.Error(), onServer[index])
 			continue
 		}
+		callbackData := sdk.GroupInfoChangedCallback(*onServer[index])
+		g.listener.OnGroupInfoChanged(utils.StructToJsonString(callbackData))
 	}
+
 	for _, index := range bInANot {
 		err := g.db.DeleteGroup(onLocal[index].GroupID)
 		if err != nil {
-			log.NewError(operationID, "DeleteGroup failed ", err.Error())
+			log.NewError(operationID, "DeleteGroup failed ", err.Error(), onLocal[index].GroupID)
 			continue
 		}
+		callbackData := sdk.JoinedGroupDeletedCallback(*onLocal[index])
+		g.listener.OnJoinedGroupDeleted(utils.StructToJsonString(callbackData))
 	}
 }
 
-//func (u *Group) getLocalGroupInfoByGroupId1(groupId string) (*Group.groupInfo, error) {
-//	return u.getLocalGroupsInfoByGroupID(groupId)
-//}
-
-func (g *Group) syncGroupMemberByGroupID(groupID string) {
-	operationID := utils.OperationIDGenerator()
+func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", groupID)
 	svrList, err := g.getGroupAllMemberByGroupIDFromSvr(groupID, operationID)
 	if err != nil {
-		log.NewError(operationID, "getGroupAllMemberByGroupIDFromSvr failed ", err.Error())
+		log.NewError(operationID, "getGroupAllMemberByGroupIDFromSvr failed ", err.Error(), groupID)
 		return
 	}
 	onServer := common.TransferToLocalGroupMember(svrList)
 	onLocal, err := g.db.GetGroupMemberListByGroupID(groupID)
 	if err != nil {
-		log.NewError(operationID, "GetGroupMemberListByGroupID failed ", err.Error())
+		log.NewError(operationID, "GetGroupMemberListByGroupID failed ", err.Error(), groupID)
 		return
 	}
 	log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
-	aInBNot, bInANot, sameA, _ := common.CheckGroupMemberDiff(onServer, onLocal)
+	aInBNot, bInANot, sameA, sameB := common.CheckGroupMemberDiff(onServer, onLocal)
+	log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
 	for _, index := range aInBNot {
 		err := g.db.InsertGroupMember(onServer[index])
 		if err != nil {
-			log.NewError(operationID, "InsertGroupMember failed ", err.Error())
+			log.NewError(operationID, "InsertGroupMember failed ", err.Error(), onServer[index])
 			continue
 		}
+		callbackData := sdk.GroupMemberAddedCallback(*onServer[index])
+		g.listener.OnGroupMemberAdded(utils.StructToJsonString(callbackData))
 	}
 	for _, index := range sameA {
 		err := g.db.UpdateGroupMember(onServer[index])
 		if err != nil {
-			log.NewError(operationID, "UpdateGroupMember failed ", err.Error())
+			log.NewError(operationID, "UpdateGroupMember failed ", err.Error(), onServer[index])
 			continue
 		}
+		callbackData := sdk.GroupMemberInfoChangedCallback(*onServer[index])
+		g.listener.OnGroupMemberInfoChanged(utils.StructToJsonString(callbackData))
 	}
 	for _, index := range bInANot {
 		err := g.db.DeleteGroupMember(onLocal[index].GroupID, onLocal[index].UserID)
 		if err != nil {
-			log.NewError(operationID, "DeleteGroupMember failed ", err.Error())
+			log.NewError(operationID, "DeleteGroupMember failed ", err.Error(), onLocal[index].GroupID, onLocal[index].UserID)
 			continue
 		}
+		callbackData := sdk.GroupMemberDeletedCallback(*onLocal[index])
+		g.listener.OnGroupMemberDeleted(utils.StructToJsonString(callbackData))
 	}
 }
 
-func (g *Group) syncJoinedGroupMember() {
-	operationID := utils.OperationIDGenerator()
+func (g *Group) syncJoinedGroupMember(operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	groupListOnServer, err := g.getJoinedGroupListFromSvr(operationID)
 	if err != nil {
 		log.Error(operationID, "getJoinedGroupListFromSvr failed ", err.Error())
 		return
 	}
 	for _, v := range groupListOnServer {
-		g.syncGroupMemberByGroupID(v.GroupID)
+		g.syncGroupMemberByGroupID(v.GroupID, operationID)
 	}
 }
 
@@ -1199,4 +788,402 @@ func (u *UserRelated) getLocalGroupsInfo1() ([]groupInfo, error) {
 //
 //func (u *Group) refuseGroupApplicationCallback(node open_im_sdk.updateGroupNode) {
 //	u.GroupApplicationProcessedCallback(node, -1)
+//}
+
+/*
+func (g *Group) doCreateGroup(msg *api.MsgData) {
+	var n utils.NotificationContent
+	err := json.Unmarshal([]byte(msg.Content), &n)
+	if err != nil {
+		return
+	}
+	u.SyncJoinedGroupList()
+	u.syncGroupMemberByGroupID(n.Detail)
+	u.onGroupCreated(n.Detail)
+}
+
+func (g *Group) doJoinGroup(msg *api.MsgData) {
+
+	u.SyncGroupApplication()
+
+	var n utils.NotificationContent
+	err := json.Unmarshal([]byte(msg.Content), &n)
+	if err != nil {
+		return
+	}
+
+	infoSpiltStr := strings.Split(n.Detail, ",")
+	var memberFullInfo open_im_sdk.groupMemberFullInfo
+	memberFullInfo.UserId = msg.SendID
+	memberFullInfo.GroupId = infoSpiltStr[0]
+	u.onReceiveJoinApplication(msg.RecvID, memberFullInfo, infoSpiltStr[1])
+
+}
+
+func (g *Group) doQuitGroup(msg *api.MsgData) {
+	var n utils.NotificationContent
+	err := json.Unmarshal([]byte(msg.Content), &n)
+	if err != nil {
+		utils.sdkLog("unmarshal, ", err.Error(), msg.Content)
+		return
+	}
+
+	utils.sdkLog("SyncJoinedGroupList start")
+	u.SyncJoinedGroupList()
+	utils.sdkLog("SyncJoinedGroupList end")
+	u.syncGroupMemberByGroupId(n.Detail)
+	utils.sdkLog("SyncJoinedGroupList finish")
+	utils.sdkLog("syncGroupMemberByGroupId finish")
+
+	var memberFullInfo open_im_sdk.groupMemberFullInfo
+	memberFullInfo.UserId = msg.SendID
+	memberFullInfo.GroupId = n.Detail
+
+	u.onMemberLeave(n.Detail, memberFullInfo)
+}
+
+func (g *Group) doSetGroupInfo(msg *api.MsgData) {
+	var n utils.NotificationContent
+	err := json.Unmarshal([]byte(msg.Content), &n)
+	if err != nil {
+		utils.sdkLog("unmarshal, ", err.Error(), msg.Content)
+		return
+	}
+	utils.sdkLog("doSetGroupInfo, ", n)
+
+	u.SyncJoinedGroupList()
+	utils.sdkLog("SyncJoinedGroupList ok")
+
+	var groupInfo open_im_sdk.setGroupInfoReq
+	err = json.Unmarshal([]byte(n.Detail), &groupInfo)
+	if err != nil {
+		utils.sdkLog("unmarshal, ", err.Error(), msg.Content)
+		return
+	}
+	utils.sdkLog("doSetGroupInfo ok , callback ", groupInfo.GroupId, groupInfo)
+	u.onGroupInfoChanged(groupInfo.GroupId, groupInfo)
+}
+
+func (g *Group) doTransferGroupOwner(msg *api.MsgData) {
+	utils.sdkLog("doTransferGroupOwner start...")
+	var transfer api.TransferGroupOwnerReq
+	var transferContent utils.NotificationContent
+	err := json.Unmarshal([]byte(msg.Content), &transferContent)
+	if err != nil {
+		utils.sdkLog("unmarshal msg.Content, ", err.Error(), msg.Content)
+		return
+	}
+	if err = json.Unmarshal([]byte(transferContent.Detail), &transfer); err != nil {
+		utils.sdkLog("unmarshal transferContent", err.Error(), transferContent.Detail)
+		return
+	}
+	u.onTransferGroupOwner(&transfer)
+}
+
+
+func (u *Group) onTransferGroupOwner(transfer *open_im_sdk.TransferGroupOwnerReq) {
+	if u.loginUserID == transfer.NewOwner || u.loginUserID == transfer.OldOwner {
+		u.SyncGroupApplication()
+	}
+	u.syncGroupMemberByGroupId(transfer.GroupID)
+
+	gInfo, err := u.getLocalGroupsInfoByGroupID(transfer.GroupID)
+	if err != nil {
+		sdkLog("onTransferGroupOwner, err ", err.Error(), transfer.GroupID, transfer.OldOwner, transfer.NewOwner, transfer.OldOwner)
+		return
+	}
+	changeInfo := changeGroupInfo{
+		data:       *gInfo,
+		changeType: 5,
+	}
+	bChangeInfo, err := json.Marshal(changeInfo)
+	if err != nil {
+		sdkLog("updateTransferGroupOwner, ", err.Error())
+		return
+	}
+	u.listener.OnGroupInfoChanged(transfer.GroupID, string(bChangeInfo))
+	sdkLog("onTransferGroupOwner success")
+}
+
+func (g *Group) doAcceptGroupApplication(msg *api.MsgData) {
+	utils.sdkLog("doAcceptGroupApplication start...")
+	var acceptInfo utils.GroupApplicationInfo
+	var acceptContent utils.NotificationContent
+	err := json.Unmarshal([]byte(msg.Content), &acceptContent)
+	if err != nil {
+		utils.sdkLog("unmarshal msg.Content ", err.Error(), msg.Content)
+		return
+	}
+	err = json.Unmarshal([]byte(acceptContent.Detail), &acceptInfo)
+	if err != nil {
+		utils.sdkLog("unmarshal acceptContent.Detail", err.Error(), msg.Content)
+		return
+	}
+
+	u.onAcceptGroupApplication(&acceptInfo)
+}
+
+func (u *Group) onAcceptGroupApplication(groupMember *open_im_sdk.GroupApplicationInfo) {
+	member := open_im_sdk.groupMemberFullInfo{
+		GroupId:  groupMember.Info.GroupId,
+		Role:     0,
+		JoinTime: uint64(groupMember.Info.AddTime),
+	}
+	if groupMember.Info.ToUser == "0" {
+		member.UserId = groupMember.Info.FromUser
+		member.NickName = groupMember.Info.FromUserNickName
+		member.FaceUrl = groupMember.Info.FromUserFaceUrl
+	} else {
+		member.UserId = groupMember.Info.ToUser
+		member.NickName = groupMember.Info.ToUserNickname
+		member.FaceUrl = groupMember.Info.ToUserFaceUrl
+	}
+
+	bOp, err := json.Marshal(member)
+	if err != nil {
+		utils.sdkLog("Marshal, ", err.Error())
+		return
+	}
+
+	var memberList []open_im_sdk.groupMemberFullInfo
+	memberList = append(memberList, member)
+	bMemberListr, err := json.Marshal(memberList)
+	if err != nil {
+		utils.sdkLog("onAcceptGroupApplication", err.Error())
+		return
+	}
+	if u.loginUserID == member.UserId {
+		u.SyncJoinedGroupList()
+		u.listener.OnApplicationProcessed(groupMember.Info.GroupId, string(bOp), 1, groupMember.Info.HandledMsg)
+	}
+	//g.SyncGroupApplication()
+	u.syncGroupMemberByGroupId(groupMember.Info.GroupId)
+	u.listener.OnMemberEnter(groupMember.Info.GroupId, string(bMemberListr))
+
+	utils.sdkLog("onAcceptGroupApplication success")
+}
+
+func (g *Group) doRefuseGroupApplication(msg *api.MsgData) {
+	// do nothing
+	utils.sdkLog("doRefuseGroupApplication start...")
+	var refuseInfo utils.GroupApplicationInfo
+	var refuseContent utils.NotificationContent
+	err := json.Unmarshal([]byte(msg.Content), &refuseContent)
+	if err != nil {
+		utils.sdkLog("unmarshal msg.Content ", err.Error(), msg.Content)
+		return
+	}
+	err = json.Unmarshal([]byte(refuseContent.Detail), &refuseInfo)
+	if err != nil {
+		utils.sdkLog("unmarshal RefuseContent.Detail", err.Error(), msg.Content)
+		return
+	}
+
+	u.onRefuseGroupApplication(&refuseInfo)
+}
+
+
+func (u *Group) onRefuseGroupApplication(groupMember *open_im_sdk.GroupApplicationInfo) {
+	member := open_im_sdk.groupMemberFullInfo{
+		GroupId:  groupMember.Info.GroupId,
+		Role:     0,
+		JoinTime: uint64(groupMember.Info.AddTime),
+	}
+	if groupMember.Info.ToUser == "0" {
+		member.UserId = groupMember.Info.FromUser
+		member.NickName = groupMember.Info.FromUserNickName
+		member.FaceUrl = groupMember.Info.FromUserFaceUrl
+	} else {
+		member.UserId = groupMember.Info.ToUser
+		member.NickName = groupMember.Info.ToUserNickname
+		member.FaceUrl = groupMember.Info.ToUserFaceUrl
+	}
+
+	bOp, err := json.Marshal(member)
+	if err != nil {
+		utils.sdkLog("Marshal, ", err.Error())
+		return
+	}
+
+	if u.loginUserID == member.UserId {
+		u.listener.OnApplicationProcessed(groupMember.Info.GroupId, string(bOp), -1, groupMember.Info.HandledMsg)
+	}
+
+	utils.sdkLog("onRefuseGroupApplication success")
+}
+
+func (g *Group) doKickGroupMember(msg *api.MsgData) {
+	var notification utils.NotificationContent
+	err := json.Unmarshal([]byte(msg.Content), &notification)
+	if err != nil {
+		utils.sdkLog("unmarshal, ", err.Error(), msg.Content)
+		return
+	}
+	utils.sdkLog("doKickGroupMember ", *msg, msg.Content)
+	var kickReq open_im_sdk.kickGroupMemberApiReq
+	err = json.Unmarshal([]byte(notification.Detail), &kickReq)
+	if err != nil {
+		utils.sdkLog("unmarshal failed, ", err.Error())
+		return
+	}
+
+	tList := make([]string, 1)
+	tList = append(tList, msg.SendID)
+	opList, err := u.getGroupMembersInfoFromLocal(kickReq.GroupID, tList)
+	if err != nil {
+		return
+	}
+	if len(opList) == 0 || len(kickReq.UidListInfo) == 0 {
+		utils.sdkLog("len: ", len(opList), len(kickReq.UidListInfo))
+	}
+	//	g.syncGroupMember()
+	u.SyncJoinedGroupList()
+	u.syncGroupMemberByGroupId(kickReq.GroupID)
+	//u.SyncJoinedGroupList()
+	//u.syncGroupMemberByGroupId(kickReq.GroupID)
+	if len(opList) > 0 {
+		u.OnMemberKicked(kickReq.GroupID, opList[0], kickReq.UidListInfo)
+	} else {
+		var op open_im_sdk.groupMemberFullInfo
+		op.NickName = "manager"
+		u.OnMemberKicked(kickReq.GroupID, op, kickReq.UidListInfo)
+	}
+
+}
+
+
+func (g *Group) OnMemberKicked(groupId string, op open_im_sdk.groupMemberFullInfo, memberList []open_im_sdk.groupMemberFullInfo) {
+	jsonOp, err := json.Marshal(op)
+	if err != nil {
+		utils.sdkLog("marshal failed, ", err.Error(), op)
+		return
+	}
+
+	jsonMemberList, err := json.Marshal(memberList)
+	if err != nil {
+		utils.sdkLog("marshal faile, ", err.Error(), memberList)
+		return
+	}
+	g.listener.OnMemberKicked(groupId, string(jsonOp), string(jsonMemberList))
+}
+
+func (g *Group) doInviteUserToGroup(msg *api.MsgData) {
+	var notification utils.NotificationContent
+	err := json.Unmarshal([]byte(msg.Content), &notification)
+	if err != nil {
+		utils.sdkLog("unmarshal, ", err.Error(), msg.Content)
+		return
+	}
+
+	var inviteReq open_im_sdk.inviteUserToGroupReq
+	err = json.Unmarshal([]byte(notification.Detail), &inviteReq)
+	if err != nil {
+		utils.sdkLog("unmarshal, ", err.Error(), notification.Detail)
+		return
+	}
+
+	memberList, err := u.getGroupMembersInfoTry2(inviteReq.GroupID, inviteReq.UidList)
+	if err != nil {
+		return
+	}
+
+	tList := make([]string, 1)
+	tList = append(tList, msg.SendID)
+	opList, err := u.getGroupMembersInfoTry2(inviteReq.GroupID, tList)
+	utils.sdkLog("getGroupMembersInfoFromSvr, ", inviteReq.GroupID, tList)
+	if err != nil {
+		return
+	}
+	if len(opList) == 0 || len(memberList) == 0 {
+		utils.sdkLog("len: ", len(opList), len(memberList))
+		return
+	}
+	for _, v := range inviteReq.UidList {
+		if u.loginUserID == v {
+
+			u.SyncJoinedGroupList()
+			utils.sdkLog("SyncJoinedGroupList, ", v)
+			break
+		}
+	}
+
+	u.syncGroupMemberByGroupId(inviteReq.GroupID)
+	utils.sdkLog("syncGroupMemberByGroupId, ", inviteReq.GroupID)
+	u.OnMemberInvited(inviteReq.GroupID, opList[0], memberList)
+}
+
+
+
+func (g *Group) onMemberEnter(groupId string, memberList []open_im_sdk.groupMemberFullInfo) {
+	jsonMemberList, err := json.Marshal(memberList)
+	if err != nil {
+		utils.sdkLog("marshal failed, ", err.Error(), jsonMemberList)
+		return
+	}
+	g.listener.OnMemberEnter(groupId, string(jsonMemberList))
+}
+func (g *Group) onReceiveJoinApplication(groupAdminId string, member open_im_sdk.groupMemberFullInfo, opReason string) {
+	jsonMember, err := json.Marshal(member)
+	if err != nil {
+		utils.sdkLog("marshal failed, ", err.Error(), jsonMember)
+		return
+	}
+	g.listener.OnReceiveJoinApplication(groupAdminId, string(jsonMember), opReason)
+}
+func (g *Group) onMemberLeave(groupId string, member open_im_sdk.groupMemberFullInfo) {
+	jsonMember, err := json.Marshal(member)
+	if err != nil {
+		utils.sdkLog("marshal failed, ", err.Error(), jsonMember)
+		return
+	}
+	g.listener.OnMemberLeave(groupId, string(jsonMember))
+}
+
+func (g *Group) onGroupInfoChanged(groupId string, changeInfos open_im_sdk.setGroupInfoReq) {
+	jsonGroupInfo, err := json.Marshal(changeInfos)
+	if err != nil {
+		utils.sdkLog("marshal failed, ", err.Error(), jsonGroupInfo)
+		return
+	}
+	utils.sdkLog(string(jsonGroupInfo))
+	g.listener.OnGroupInfoChanged(groupId, string(jsonGroupInfo))
+}
+func (g *Group) OnMemberInvited(groupId string, op open_im_sdk.groupMemberFullInfo, memberList []open_im_sdk.groupMemberFullInfo) {
+	jsonOp, err := json.Marshal(op)
+	if err != nil {
+		utils.sdkLog("marshal failed, ", err.Error(), op)
+		return
+	}
+
+	jsonMemberList, err := json.Marshal(memberList)
+	if err != nil {
+		utils.sdkLog("marshal faile, ", err.Error(), memberList)
+		return
+	}
+	g.listener.OnMemberInvited(groupId, string(jsonOp), string(jsonMemberList))
+}
+
+
+*/
+
+//func (u *Group) delGroupRequestFromGroupRequest(info open_im_sdk.GroupReqListInfo) error {
+//	return u.delRequestFromGroupRequest(info)
+//}
+
+//1
+//func (u *Group) refuseGroupApplication(access *open_im_sdk.accessOrRefuseGroupApplicationReq, callback common.Base, operationID string) error {
+//	resp, err := utils.post2Api(open_im_sdk.acceptGroupApplicationRouter, access, u.token)
+//	if err != nil {
+//		return err
+//	}
+//
+//	var ret open_im_sdk.commonResp
+//	err = json.Unmarshal(resp, &ret)
+//	if err != nil {
+//		return err
+//	}
+//	if ret.ErrCode != 0 {
+//		return errors.New(ret.ErrMsg)
+//	}
+//	return nil
 //}

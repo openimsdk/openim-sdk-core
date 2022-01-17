@@ -3,6 +3,8 @@ package test
 import (
 	//	"encoding/json"
 	"fmt"
+	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/utils"
 	//"open_im_sdk/internal/open_im_sdk"
 	//"open_im_sdk/pkg/utils"
 )
@@ -24,37 +26,58 @@ func (XBase) OnProgress(progress int) {
 type testGroupListener struct {
 }
 
-func (testGroupListener) OnMemberEnter(groupId string, memberList string) {
-	fmt.Println("OnMemberEnter", groupId, memberList)
+func (testGroupListener) OnJoinedGroupAdded(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+
+}
+func (testGroupListener) OnJoinedGroupDeleted(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+
 }
 
-func (testGroupListener) OnTransferGroupOwner(groupId string, oldUserID string, newUserID string) {
-	fmt.Println("OnTransferGroupOwner", groupId, oldUserID, newUserID)
+func (testGroupListener) OnGroupMemberAdded(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+
+}
+func (testGroupListener) OnGroupMemberDeleted(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+
 }
 
-func (testGroupListener) OnMemberLeave(groupId string, member string) {
-	fmt.Println("OnMemberLeave", groupId, member)
+func (testGroupListener) OnReceiveJoinGroupApplicationAdded(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+
 }
-func (testGroupListener) OnMemberInvited(groupId string, opUser string, memberList string) {
-	fmt.Println("OnMemberInvited", groupId, opUser, memberList)
-}
-func (testGroupListener) OnMemberKicked(groupId string, opUser string, memberList string) {
-	fmt.Println("OnMemberKicked", groupId, opUser, memberList)
-}
-func (testGroupListener) OnGroupCreated(groupId string) {
-	fmt.Println("OnGroupCreated", groupId)
+func (testGroupListener) OnReceiveJoinGroupApplicationDeleted(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+
 }
 
-func (testGroupListener) OnGroupInfoChanged(groupId string, groupInfo string) {
-	fmt.Println("OnGroupInfoChanged", groupId, groupInfo)
+func (testGroupListener) OnGroupApplicationAdded(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+
+}
+func (testGroupListener) OnGroupApplicationDeleted(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+
 }
 
-func (testGroupListener) OnReceiveJoinApplication(groupId string, member string, opReason string) {
-	fmt.Println("OnReceiveJoinApplication", groupId, member, opReason)
+func (testGroupListener) OnGroupInfoChanged(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+
+}
+func (testGroupListener) OnGroupMemberInfoChanged(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+
 }
 
-func (testGroupListener) OnApplicationProcessed(groupId string, opUser string, AgreeOrReject int32, opReason string) {
-	fmt.Println("OnApplicationProcessed", groupId, opUser, AgreeOrReject, opReason)
+func (testGroupListener) OnGroupApplicationAccepted(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+
+}
+func (testGroupListener) OnGroupApplicationRejected(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+
 }
 
 //

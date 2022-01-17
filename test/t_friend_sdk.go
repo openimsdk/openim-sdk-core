@@ -5,6 +5,7 @@ import (
 	"fmt"
 	X "log"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
@@ -771,46 +772,56 @@ type testFriendListener struct {
 	x int
 }
 
-func (testFriendListener) OnFriendApplicationListAdded(friendAdded string) {
-	fmt.Println("testFriendListener,OnFriendApplicationListAdded", friendAdded)
+//OnFriendApplicationAdded(friendApplication string)
+//	OnFriendApplicationDeleted(friendApplication string)
+//	OnFriendApplicationAccepted(groupApplication string)
+//	OnFriendApplicationRejected(friendApplication string)
+//	OnFriendAdded(friendInfo string)
+//	OnFriendDeleted(friendInfo string)
+//	OnFriendInfoChanged(friendInfo string)
+//	OnBlackAdded(blackInfo string)
+//	OnBlackDeleted(blackInfo string)
+
+func (testFriendListener) OnFriendApplicationAdded(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
 }
-func (testFriendListener) OnFriendApplicationListDeleted(friendDeleted string) {
-	fmt.Println("testFriendListener,OnFriendApplicationListDeleted", friendDeleted)
+func (testFriendListener) OnFriendApplicationDeleted(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
 }
 
-func (testFriendListener) OnFriendApplicationListAccept(friendAccept string) {
-	fmt.Println("testFriendListener,OnFriendApplicationListAccept", friendAccept)
+func (testFriendListener) OnFriendApplicationAccepted(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
 }
 
-func (testFriendListener) OnFriendApplicationListReject(info string) {
-	fmt.Println("testFriendListener,OnFriendApplicationListReject", info)
+func (testFriendListener) OnFriendApplicationRejected(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
 }
 
-func (testFriendListener) OnFriendListAdded(info string) {
-	fmt.Println("testFriendListener,OnFriendListAdded", info)
+func (testFriendListener) OnFriendAdded(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
 }
 
-func (testFriendListener) OnFriendListDeleted(info string) {
-	fmt.Println("testFriendListener,OnFriendListDeleted", info)
+func (testFriendListener) OnFriendDeleted(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
 }
 
-func (testFriendListener) OnBlackListAdd(info string) {
-	fmt.Println("testFriendListener, OnBlackListAdd", info)
+func (testFriendListener) OnBlackAdded(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
 }
-func (testFriendListener) OnBlackListDeleted(info string) {
-	fmt.Println("testFriendListener, OnBlackListDeleted", info)
+func (testFriendListener) OnBlackDeleted(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
 }
 
-func (testFriendListener) OnFriendInfoChanged(InfoList string) {
-	fmt.Println("testFriendListener, OnFriendInfoChanged")
+func (testFriendListener) OnFriendInfoChanged(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
 }
 
 func (testFriendListener) OnSuccess() {
-	fmt.Println("testLogin OnSuccess")
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName())
 }
 
 func (testFriendListener) OnError(code int32, msg string) {
-	fmt.Println("testLogin, OnError", code, msg)
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), code, msg)
 }
 
 type testMarkC2CMessageAsRead struct {

@@ -1,10 +1,5 @@
 package db
 
-import (
-	"fmt"
-	"time"
-)
-
 //
 //message FriendInfo{
 //string OwnerUserID = 1;
@@ -34,19 +29,19 @@ import (
 // 	)`
 
 type LocalFriend struct {
-	OwnerUserID    string   `gorm:"column:owner_user_id;primary_key;type:varchar(64)" json:"ownerUserID"`
-	FriendUserID   string   `gorm:"column:friend_user_id;primary_key;type:varchar(64)" json:"friendUserID"`
-	Remark         string   `gorm:"column:remark;type:varchar(255)" json:"remark"`
-	CreateTime     UnixTime `gorm:"column:create_time" json:"createTime"`
-	AddSource      int32    `gorm:"column:add_source" json:"addSource"`
-	OperatorUserID string   `gorm:"column:operator_user_id;type:varchar(64)" json:"operatorUserID"`
-	Nickname       string   `gorm:"column:name;type:varchar;type:varchar(255)" json:"nickname"`
-	FaceURL        string   `gorm:"column:face_url;type:varchar;type:varchar(255)" json:"faceURL"`
-	Gender         int32    `gorm:"column:gender" json:"gender"`
-	PhoneNumber    string   `gorm:"column:phone_number;type:varchar(32)" json:"phoneNumber"`
-	Birth          UnixTime `gorm:"column:birth" json:"birth"`
-	Email          string   `gorm:"column:email;type:varchar(64)" json:"email"`
-	Ex             string   `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	OwnerUserID    string `gorm:"column:owner_user_id;primary_key;type:varchar(64)" json:"ownerUserID"`
+	FriendUserID   string `gorm:"column:friend_user_id;primary_key;type:varchar(64)" json:"friendUserID"`
+	Remark         string `gorm:"column:remark;type:varchar(255)" json:"remark"`
+	CreateTime     uint32 `gorm:"column:create_time" json:"createTime"`
+	AddSource      int32  `gorm:"column:add_source" json:"addSource"`
+	OperatorUserID string `gorm:"column:operator_user_id;type:varchar(64)" json:"operatorUserID"`
+	Nickname       string `gorm:"column:name;type:varchar;type:varchar(255)" json:"nickname"`
+	FaceURL        string `gorm:"column:face_url;type:varchar;type:varchar(255)" json:"faceURL"`
+	Gender         int32  `gorm:"column:gender" json:"gender"`
+	PhoneNumber    string `gorm:"column:phone_number;type:varchar(32)" json:"phoneNumber"`
+	Birth          uint32 `gorm:"column:birth" json:"birth"`
+	Email          string `gorm:"column:email;type:varchar(64)" json:"email"`
+	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 
 //message FriendRequest{
@@ -72,13 +67,13 @@ type LocalFriendRequest struct {
 	ToFaceURL  string `gorm:"column:face_url;type:varchar;type:varchar(255)" json:"toFaceURL"`
 	ToGender   int32  `gorm:"column:gender" json:"toGender"`
 
-	HandleResult  int32    `gorm:"column:handle_result" json:"handleResult"`
-	ReqMsg        string   `gorm:"column:req_msg;type:varchar(255)" json:"reqMsg"`
-	CreateTime    UnixTime `gorm:"column:create_time" json:"createTime"`
-	HandlerUserID string   `gorm:"column:handler_user_id;type:varchar(64)" json:"handlerUserID"`
-	HandleMsg     string   `gorm:"column:handle_msg;type:varchar(255)" json:"handleMsg"`
-	HandleTime    UnixTime `gorm:"column:handle_time" json:"handleTime"`
-	Ex            string   `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	HandleResult  int32  `gorm:"column:handle_result" json:"handleResult"`
+	ReqMsg        string `gorm:"column:req_msg;type:varchar(255)" json:"reqMsg"`
+	CreateTime    uint32 `gorm:"column:create_time" json:"createTime"`
+	HandlerUserID string `gorm:"column:handler_user_id;type:varchar(64)" json:"handlerUserID"`
+	HandleMsg     string `gorm:"column:handle_msg;type:varchar(255)" json:"handleMsg"`
+	HandleTime    uint32 `gorm:"column:handle_time" json:"handleTime"`
+	Ex            string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 
 //message GroupInfo{
@@ -112,18 +107,18 @@ type LocalFriendRequest struct {
 type LocalGroup struct {
 	//`json:"operationID" binding:"required"`
 	//`protobuf:"bytes,1,opt,name=GroupID" json:"GroupID,omitempty"` `json:"operationID" binding:"required"`
-	GroupID       string   `gorm:"column:group_id;primary_key;type:varchar(64)" json:"groupID" binding:"required"`
-	GroupName     string   `gorm:"column:name;size:255" json:"groupName"`
-	Notification  string   `gorm:"column:notification;type:varchar(255)" json:"notification"`
-	Introduction  string   `gorm:"column:introduction;type:varchar(255)" json:"introduction"`
-	FaceURL       string   `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
-	CreateTime    UnixTime `gorm:"column:create_time" json:"createTime"`
-	Status        int32    `gorm:"column:status" json:"status"`
-	CreatorUserID string   `gorm:"column:creator_user_id;type:varchar(64)" json:"creatorUserID"`
-	GroupType     int32    `gorm:"column:group_type" json:"groupType"`
-	OwnerUserID   string   `gorm:"column:owner_user_id;type:varchar(64)" json:"ownerUserID"`
-	MemberCount   int32    `gorm:"column:member_count" json:"memberCount"`
-	Ex            string   `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	GroupID       string `gorm:"column:group_id;primary_key;type:varchar(64)" json:"groupID" binding:"required"`
+	GroupName     string `gorm:"column:name;size:255" json:"groupName"`
+	Notification  string `gorm:"column:notification;type:varchar(255)" json:"notification"`
+	Introduction  string `gorm:"column:introduction;type:varchar(255)" json:"introduction"`
+	FaceURL       string `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
+	CreateTime    uint32 `gorm:"column:create_time" json:"createTime"`
+	Status        int32  `gorm:"column:status" json:"status"`
+	CreatorUserID string `gorm:"column:creator_user_id;type:varchar(64)" json:"creatorUserID"`
+	GroupType     int32  `gorm:"column:group_type" json:"groupType"`
+	OwnerUserID   string `gorm:"column:owner_user_id;type:varchar(64)" json:"ownerUserID"`
+	MemberCount   int32  `gorm:"column:member_count" json:"memberCount"`
+	Ex            string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 
 //message GroupMemberFullInfo {
@@ -148,15 +143,15 @@ type LocalGroup struct {
 //   operator_user_id char(64) NOT NULL,
 
 type LocalGroupMember struct {
-	GroupID        string   `gorm:"column:group_id;primary_key;type:varchar(64)" json:"groupID"`
-	UserID         string   `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
-	Nickname       string   `gorm:"column:nickname;type:varchar(255)" json:"nickname"`
-	FaceURL        string   `gorm:"column:user_group_face_url;type:varchar(255)" json:"faceURL"`
-	RoleLevel      int32    `gorm:"column:role_level" json:"roleLevel"`
-	JoinTime       UnixTime `gorm:"column:join_time" json:"joinTime"`
-	JoinSource     int32    `gorm:"column:join_source" json:"joinSource"`
-	OperatorUserID string   `gorm:"column:operator_user_id;type:varchar(64)" json:"operatorUserID"`
-	Ex             string   `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	GroupID        string `gorm:"column:group_id;primary_key;type:varchar(64)" json:"groupID"`
+	UserID         string `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
+	Nickname       string `gorm:"column:nickname;type:varchar(255)" json:"nickname"`
+	FaceURL        string `gorm:"column:user_group_face_url;type:varchar(255)" json:"faceURL"`
+	RoleLevel      int32  `gorm:"column:role_level" json:"roleLevel"`
+	JoinTime       uint32 `gorm:"column:join_time" json:"joinTime"`
+	JoinSource     int32  `gorm:"column:join_source" json:"joinSource"`
+	OperatorUserID string `gorm:"column:operator_user_id;type:varchar(64)" json:"operatorUserID"`
+	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 
 //message GroupRequest{
@@ -171,30 +166,30 @@ type LocalGroupMember struct {
 //string Ex = 9;
 //}open_im_sdk.GroupRequest == imdb.GroupRequest
 type LocalGroupRequest struct {
-	GroupID       string   `gorm:"column:group_id;primary_key;type:varchar(64)" json:"groupID"`
-	GroupName     string   `gorm:"column:name;size:255" json:"groupName"`
-	Notification  string   `gorm:"column:notification;type:varchar(255)" json:"notification"`
-	Introduction  string   `gorm:"column:introduction;type:varchar(255)" json:"introduction"`
-	GroupFaceURL  string   `gorm:"column:face_url;type:varchar(255)" json:"groupFaceURL"`
-	CreateTime    UnixTime `gorm:"column:create_time" json:"createTime"`
-	Status        int32    `gorm:"column:status" json:"status"`
-	CreatorUserID string   `gorm:"column:creator_user_id;type:varchar(64)" json:"creatorUserID"`
-	GroupType     int32    `gorm:"column:group_type" json:"groupType"`
-	OwnerUserID   string   `gorm:"column:owner_user_id;type:varchar(64)" json:"ownerUserID"`
-	MemberCount   int32    `gorm:"column:member_count" json:"memberCount"`
+	GroupID       string `gorm:"column:group_id;primary_key;type:varchar(64)" json:"groupID"`
+	GroupName     string `gorm:"column:name;size:255" json:"groupName"`
+	Notification  string `gorm:"column:notification;type:varchar(255)" json:"notification"`
+	Introduction  string `gorm:"column:introduction;type:varchar(255)" json:"introduction"`
+	GroupFaceURL  string `gorm:"column:face_url;type:varchar(255)" json:"groupFaceURL"`
+	CreateTime    uint32 `gorm:"column:create_time" json:"createTime"`
+	Status        int32  `gorm:"column:status" json:"status"`
+	CreatorUserID string `gorm:"column:creator_user_id;type:varchar(64)" json:"creatorUserID"`
+	GroupType     int32  `gorm:"column:group_type" json:"groupType"`
+	OwnerUserID   string `gorm:"column:owner_user_id;type:varchar(64)" json:"ownerUserID"`
+	MemberCount   int32  `gorm:"column:member_count" json:"memberCount"`
 
 	UserID      string `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
 	Nickname    string `gorm:"column:name;type:varchar(255)" json:"nickname"`
 	UserFaceURL string `gorm:"column:face_url;type:varchar(255)" json:"userFaceURL"`
 	Gender      int32  `gorm:"column:gender" json:"gender"`
 
-	HandleResult int32    `gorm:"column:handle_result" json:"handleResult"`
-	ReqMsg       string   `gorm:"column:req_msg;type:varchar(255)" json:"reqMsg"`
-	HandledMsg   string   `gorm:"column:handle_msg;type:varchar(255)" json:"handledMsg"`
-	ReqTime      UnixTime `gorm:"column:req_time" json:"reqTime"`
-	HandleUserID string   `gorm:"column:handle_user_id;type:varchar(64)" json:"handleUserID"`
-	HandledTime  UnixTime `gorm:"column:handle_time" json:"handledTime"`
-	Ex           string   `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	HandleResult int32  `gorm:"column:handle_result" json:"handleResult"`
+	ReqMsg       string `gorm:"column:req_msg;type:varchar(255)" json:"reqMsg"`
+	HandledMsg   string `gorm:"column:handle_msg;type:varchar(255)" json:"handledMsg"`
+	ReqTime      uint32 `gorm:"column:req_time" json:"reqTime"`
+	HandleUserID string `gorm:"column:handle_user_id;type:varchar(64)" json:"handleUserID"`
+	HandledTime  uint32 `gorm:"column:handle_time" json:"handledTime"`
+	Ex           string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 
 //string UserID = 1;
@@ -209,16 +204,16 @@ type LocalGroupRequest struct {
 //int32 AppMangerLevel = 10;
 //open_im_sdk.User == imdb.User
 type LocalUser struct {
-	UserID         string   `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
-	Nickname       string   `gorm:"column:name;type:varchar(255)" json:"nickname"`
-	FaceURL        string   `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
-	Gender         int32    `gorm:"column:gender" json:"gender"`
-	PhoneNumber    string   `gorm:"column:phone_number;type:varchar(32)" json:"phoneNumber"`
-	Birth          UnixTime `gorm:"column:birth" json:"birth"`
-	Email          string   `gorm:"column:email;type:varchar(64)" json:"email"`
-	CreateTime     UnixTime `gorm:"column:create_time" json:"createTime"`
-	AppMangerLevel int32    `gorm:"column:app_manger_level" json:"appMangerLevel"`
-	Ex             string   `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	UserID         string `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
+	Nickname       string `gorm:"column:name;type:varchar(255)" json:"nickname"`
+	FaceURL        string `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
+	Gender         int32  `gorm:"column:gender" json:"gender"`
+	PhoneNumber    string `gorm:"column:phone_number;type:varchar(32)" json:"phoneNumber"`
+	Birth          uint32 `gorm:"column:birth" json:"birth"`
+	Email          string `gorm:"column:email;type:varchar(64)" json:"email"`
+	CreateTime     uint32 `gorm:"column:create_time" json:"createTime"`
+	AppMangerLevel int32  `gorm:"column:app_manger_level" json:"appMangerLevel"`
+	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 
 //message BlackInfo{
@@ -231,15 +226,15 @@ type LocalUser struct {
 //}
 // open_im_sdk.BlackInfo(BlackUserInfo) != imdb.Black (BlockUserID)
 type LocalBlack struct {
-	OwnerUserID    string   `gorm:"column:owner_user_id;primary_key;type:varchar(64)" json:"ownerUserID"`
-	BlockUserID    string   `gorm:"column:block_user_id;primary_key;type:varchar(64)" json:"blockUserID"`
-	Nickname       string   `gorm:"column:nick_name;type:varchar(255)" json:"nickname"`
-	FaceURL        string   `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
-	Gender         int32    `gorm:"column:gender" json:"gender"`
-	CreateTime     UnixTime `gorm:"column:create_time" json:"createTime"`
-	AddSource      int32    `gorm:"column:add_source" json:"addSource"`
-	OperatorUserID string   `gorm:"column:operator_user_id;type:varchar(64)" json:"operatorUserID"`
-	Ex             string   `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	OwnerUserID    string `gorm:"column:owner_user_id;primary_key;type:varchar(64)" json:"ownerUserID"`
+	BlockUserID    string `gorm:"column:block_user_id;primary_key;type:varchar(64)" json:"blockUserID"`
+	Nickname       string `gorm:"column:nick_name;type:varchar(255)" json:"nickname"`
+	FaceURL        string `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
+	Gender         int32  `gorm:"column:gender" json:"gender"`
+	CreateTime     uint32 `gorm:"column:create_time" json:"createTime"`
+	AddSource      int32  `gorm:"column:add_source" json:"addSource"`
+	OperatorUserID string `gorm:"column:operator_user_id;type:varchar(64)" json:"operatorUserID"`
+	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 
 type LocalSeqData struct {
@@ -319,13 +314,4 @@ type LocalConversation struct {
 	DraftTextTime     uint32 `gorm:"column:draft_text_time" json:"draftTextTime"`
 	IsPinned          int32  `gorm:"column:is_pinned" json:"isPinned"`
 	Ex                string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
-}
-
-type UnixTime time.Time
-
-// MarshalJSON implements json.Marshaler.
-func (t UnixTime) MarshalJSON() ([]byte, error) {
-	//do your serializing here
-	stamp := fmt.Sprintf("%d", time.Time(t).Unix())
-	return []byte(stamp), nil
 }

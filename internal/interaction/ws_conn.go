@@ -17,10 +17,9 @@ import (
 type ConnListener interface {
 	OnConnecting()
 	OnConnectSuccess()
-	OnConnectFailed(ErrCode int32, ErrMsg string)
+	OnConnectFailed(errCode int32, errMsg string)
 	OnKickedOffline()
 	OnUserTokenExpired()
-	OnSelfInfoUpdated(userInfo string)
 }
 
 const writeTimeoutSeconds = 5

@@ -17,14 +17,19 @@ type User struct {
 	*db.DataBase
 	p           *ws.PostApi
 	loginUserID string
+	listener    OnUserListener
 }
 
-func NewUser(dataBase *db.DataBase, p *ws.PostApi, loginUserID string) *User {
-	return &User{DataBase: dataBase, p: p, loginUserID: loginUserID}
+func NewUser(dataBase *db.DataBase, p *ws.PostApi, loginUserID string, listener OnUserListener) *User {
+	return &User{DataBase: dataBase, p: p, loginUserID: loginUserID, listener: listener}
 }
 
-func (u *User) SyncLoginUserInfo() {
-	operationID := utils.OperationIDGenerator()
+type OnUserListener interface {
+	OnSelfInfoUpdated(userInfo string)
+}
+
+func (u *User) SyncLoginUserInfo(operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	svr, err := u.GetSelfUserInfoFromSvr(operationID)
 	if err != nil {
 		log.Error(operationID, "GetSelfUserInfoFromSvr failed")
@@ -42,6 +47,8 @@ func (u *User) SyncLoginUserInfo() {
 			log.Error(operationID, "UpdateLoginUser failed", onServer)
 			return
 		}
+		callbackData := sdk.SelfInfoUpdatedCallback(*onServer)
+		u.listener.OnSelfInfoUpdated(utils.StructToJsonString(callbackData))
 	}
 }
 

@@ -7,6 +7,7 @@ import (
 	"open_im_sdk/internal/group"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/login"
+	"open_im_sdk/internal/user"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
@@ -264,6 +265,10 @@ func SetFriendListener(listener friend.OnFriendshipListener) {
 //
 func SetConversationListener(listener conversation_msg.OnConversationListener) {
 	userForSDK.SetConversationListener(listener)
+}
+
+func SetSetUserListener(listener user.OnUserListener) {
+	userForSDK.SetUserListener(listener)
 }
 
 //
