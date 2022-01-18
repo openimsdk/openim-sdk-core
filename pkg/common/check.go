@@ -77,9 +77,12 @@ func CheckErrAndResp(err error, resp []byte, output interface{}) error {
 		if c.ErrCode != 0 {
 			return utils.Wrap(errors.New(c.ErrMsg), "")
 		}
-		err = mapstructure.Decode(c.Data, output)
-		if err != nil {
-			return utils.Wrap(err, "")
+		if output != nil {
+			err = mapstructure.Decode(c.Data, output)
+			if err != nil {
+				return utils.Wrap(err, "")
+			}
+			return nil
 		}
 		return nil
 	}
@@ -92,9 +95,12 @@ func CheckErrAndResp(err error, resp []byte, output interface{}) error {
 	if c2.ErrCode != 0 {
 		return utils.Wrap(errors.New(c2.ErrMsg), "")
 	}
-	err = mapstructure.Decode(c2.Data, output)
-	if err != nil {
-		return utils.Wrap(err, "")
+	if output != nil {
+		err = mapstructure.Decode(c2.Data, output)
+		if err != nil {
+			return utils.Wrap(err, "")
+		}
+		return nil
 	}
 	return nil
 }
