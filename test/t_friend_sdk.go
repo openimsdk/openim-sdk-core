@@ -462,7 +462,7 @@ func DoTest(uid, tk, ws, api string) {
 	//	cf.IpWsAddr = "wss://open-im.rentsoft.cn/wss"
 	cf.WsAddr = ws //"ws://120.24.45.199:17778"
 	cf.Platform = 2
-	cf.DbDir = "./"
+	cf.DataDir = "./"
 
 	var s string
 	b, _ := json.Marshal(cf)
