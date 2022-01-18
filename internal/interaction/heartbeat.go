@@ -36,7 +36,7 @@ func (u *Heartbeat) Run() {
 		}
 		u.Unlock()
 
-		resp, err := u.SendReqWaitResp(nil, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.loginUserID, operationID)
+		resp, err := u.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.loginUserID, operationID)
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.loginUserID)
 			//	if  u.IsWriteTimeout(err)

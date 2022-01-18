@@ -12,6 +12,7 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 )
@@ -164,7 +165,7 @@ func (u *LoginMgr) logout(callback common.Base, operationID string) {
 	}
 	timeout := 5
 	retryTimes := 0
-	resp, err := u.ws.SendReqWaitResp(nil, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID, operationID)
+	resp, err := u.ws.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID, operationID)
 	if err != nil {
 		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
 		if callback != nil {
