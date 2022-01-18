@@ -32,8 +32,8 @@ type postErr struct {
 	err error
 }
 
-func (p *PostApi) PostReturn(url string, data interface{}, output interface{}) error {
+func (p *PostApi) PostReturn(url string, req interface{}, output interface{}) error {
 	//log.Debug("000", utils.GetSelfFuncName(), p.apiAddress+url)
-	content, err := network.Post2Api(p.apiAddress+url, data, p.token)
+	content, err := network.Post2Api(p.apiAddress+url, req, p.token)
 	return common.CheckErrAndResp(err, content, output)
 }

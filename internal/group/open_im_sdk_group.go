@@ -145,6 +145,56 @@ func (g *Group) TransferGroupOwner(callback common.Base, groupID, newOwnerUserID
 	}()
 }
 
+func (g *Group) GetGroupMemberList(callback common.Base, groupID string, filter int32, next int32, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, filter, next)
+		groupMemberList := g.getGroupMemberList(callback, groupID, filter, next, operationID)
+		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(groupMemberList)))
+		log.NewInfo(operationID, "GetGroupMemberList callback: ", utils.StructToJsonString(groupMemberList))
+	}()
+}
+
+func (g *Group) GetGroupMembersInfo(callback common.Base, groupID string, userIDList string, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, userIDList)
+		var unmarshalParam sdk_params_callback.GetGroupMembersInfoParam
+		common.JsonUnmarshal(userIDList, &unmarshalParam, callback, operationID)
+		groupMemberList := g.getGroupMembersInfo(callback, groupID, unmarshalParam, operationID)
+		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(groupMemberList)))
+		log.NewInfo(operationID, "GetGroupMembersInfo callback: ", utils.StructToJsonString(groupMemberList))
+	}()
+}
+
+func (g *Group) KickGroupMember(callback common.Base, groupID string, reason string, userIDList string, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, reason, userIDList)
+		var unmarshalParam sdk_params_callback.KickGroupMemberParam
+		common.JsonUnmarshal(userIDList, &unmarshalParam, callback, operationID)
+		result := g.kickGroupMember(callback, groupID, unmarshalParam, reason, operationID)
+		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(result)))
+		log.NewInfo(operationID, "GetGroupMembersInfo callback: ", utils.StructToJsonString(result))
+	}()
+}
+
+func (g *Group) TransferGroupOwner(callback common.Base, groupID, newOwnerUserID string, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		g.transferGroupOwner(callback, groupID, newOwnerUserID, operationID)
+		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(sdk_params_callback.TransferGroupOwnerCallback)))
+	}()
+}
+
 func (g *Group) InviteUserToGroup(callback common.Base, groupID, reason string, userIDList string, operationID string) {
 	if callback == nil {
 		return
@@ -159,61 +209,38 @@ func (g *Group) InviteUserToGroup(callback common.Base, groupID, reason string, 
 	}()
 }
 
-//func (g *Group) GetGroupApplicationList(callback common.Base, operationID string) {
-//	if callback == nil {
-//		return
-//	}
-//	go func() {
-//		log.NewInfo(operationID, utils.RunFuncName(), "args: ")
-//		result := g.getGroupApplicationList(callback, operationID)
-//		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(result)))
-//		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonString(result))
-//	}()
-//}
-//
-//func (g *Group) AcceptGroupApplication(callback common.Base, groupID, fromUserID, handleMsg string, operationID string) {
-//	if callback == nil {
-//		return
-//	}
-//	go func() {
-//		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, fromUserID, handleMsg)
-//		g.processGroupApplication(callback, groupID, fromUserID, handleMsg, 1, operationID)
-//		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.AcceptGroupApplicationCallback))
-//		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonString(sdk_params_callback.AcceptGroupApplicationCallback))
-//	}()
-//}
-//
-//func (g *Group) RefuseGroupApplication(callback common.Base, groupID, fromUserID, handleMsg string, operationID string) {
-//	if callback == nil {
-//		return
-//	}
-//	go func() {
-//		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, fromUserID, handleMsg)
-//		g.processGroupApplication(callback, groupID, fromUserID, handleMsg, -1, operationID)
-//		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.RefuseGroupApplicationCallback))
-//		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonString(sdk_params_callback.RefuseGroupApplicationCallback))
-//	}()
-//}
-
-/*
-func (u *UserRelated) TsetGetGroupApplicationList(callback Base) string {
+func (g *Group) GetGroupApplicationList(callback common.Base, operationID string) {
 	if callback == nil {
-		return ""
+		return
 	}
+	go func() {
+		log.NewInfo(operationID, utils.RunFuncName(), "args: ")
+		result := g.getGroupApplicationList(callback, operationID)
+		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(result)))
+		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonString(result))
+	}()
+}
 
-	r, err := u.getGroupApplicationList()
-	if err != nil {
-		sdkLog("getGroupApplicationList faild, ", err.Error())
-		callback.OnError(ErrCodeGroup, err.Error())
-		return ""
+func (g *Group) AcceptGroupApplication(callback common.Base, groupID, fromUserID, handleMsg string, operationID string) {
+	if callback == nil {
+		return
 	}
-	jsonResult, err := json.Marshal(r)
-	if err != nil {
-		sdkLog("getGroupApplicationList faild, ", err.Error())
-		callback.OnError(ErrCodeGroup, err.Error())
-		return ""
-	}
-	callback.OnSuccess(string(jsonResult))
-	return string(jsonResult)
+	go func() {
+		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, fromUserID, handleMsg)
+		g.processGroupApplication(callback, groupID, fromUserID, handleMsg, 1, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.AcceptGroupApplicationCallback))
+		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonString(sdk_params_callback.AcceptGroupApplicationCallback))
+	}()
+}
 
-}*/
+func (g *Group) RefuseGroupApplication(callback common.Base, groupID, fromUserID, handleMsg string, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupID, fromUserID, handleMsg)
+		g.processGroupApplication(callback, groupID, fromUserID, handleMsg, -1, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.RefuseGroupApplicationCallback))
+		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonString(sdk_params_callback.RefuseGroupApplicationCallback))
+	}()
+}
