@@ -64,7 +64,7 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 	onLocal, err := u.GetLoginUser()
 	if err != nil {
 		log.Error(operationID, "TransferToLocalUserInfo failed")
-		return
+		onLocal = &db.LocalUser{}
 	}
 	if onServer != onLocal {
 		u.UpdateLoginUser(onServer)

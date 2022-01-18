@@ -82,6 +82,11 @@ func (ws *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, ret
 		err, connSend = ws.writeBinaryMsg(wsReq)
 		if err != nil {
 			if !ws.IsWriteTimeout(err) {
+				if connSend != nil {
+					log.Error(operationID, "conn nil")
+					time.Sleep(time.Duration(1) * time.Second)
+					continue
+				}
 				newErr := connSend.Close()
 				log.Error(operationID, m, "ws write Timeout", newErr, err.Error())
 				time.Sleep(time.Duration(1) * time.Second)
@@ -98,10 +103,12 @@ func (ws *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, ret
 }
 
 func (u *Ws) ReadData() {
+	log.Info("", "this is first read data", u.WsConn.conn)
 	for {
 		isErrorOccurred := false
 		operationID := utils.OperationIDGenerator()
 		if u.WsConn.conn != nil {
+			log.Info(operationID, "ws is not null")
 			//	timeout := 5
 			//	u.WsConn.SetReadTimeout(timeout)
 			msgType, message, err := u.WsConn.conn.ReadMessage()
@@ -135,10 +142,12 @@ func (u *Ws) ReadData() {
 			}
 		} else {
 			log.Error(operationID, "conn == nil, ReConn")
-			_, err := u.WsConn.ReConn()
+			conn, err := u.WsConn.ReConn()
 			if err != nil {
 				isErrorOccurred = true
 				log.Error(operationID, "ReConn failed ", err.Error())
+			} else {
+				u.WsConn.conn = conn
 			}
 		}
 

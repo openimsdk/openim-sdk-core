@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/go-playground/validator/v10"
+	"github.com/mitchellh/mapstructure"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
@@ -17,7 +18,7 @@ func init() {
 	validate = validator.New()
 }
 
-func CheckAnyErr(callback Base, errCode int32, err error, operationID string) {
+func CheckAnyErrCallback(callback Base, errCode int32, err error, operationID string) {
 	if err != nil {
 		if callback != nil {
 			errInfo := "operationID[" + operationID + "], " + "info[" + err.Error() + "]"
@@ -28,35 +29,16 @@ func CheckAnyErr(callback Base, errCode int32, err error, operationID string) {
 	}
 }
 
-func CheckDBErr(callback Base, err error, operationID string) {
-	if err != nil {
-		if callback != nil {
-			errInfo := operationID + err.Error() + constant.ErrDB.ErrMsg
-			log.NewError(operationID, "checkErr ", errInfo)
-			callback.OnError(constant.ErrDB.ErrCode, errInfo)
-			runtime.Goexit()
-		}
-	}
+func CheckDBErrCallback(callback Base, err error, operationID string) {
+	CheckAnyErrCallback(callback, constant.ErrDB.ErrCode, err, operationID)
 }
 
-func CheckDataErr(callback Base, err error, operationID string) {
-	if err != nil {
-		if callback != nil {
-			log.NewError(operationID, "checkErr ", err, constant.ErrData.ErrCode, constant.ErrData.ErrMsg)
-			callback.OnError(constant.ErrData.ErrCode, constant.ErrData.ErrMsg)
-			runtime.Goexit()
-		}
-	}
+func CheckDataErrCallback(callback Base, err error, operationID string) {
+	CheckAnyErrCallback(callback, constant.ErrData.ErrCode, err, operationID)
 }
 
-func CheckErr(callback Base, err error, operationID string) {
-	if err != nil {
-		if callback != nil {
-			log.NewError(operationID, "checkErr ", err, constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
-			callback.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
-			runtime.Goexit()
-		}
-	}
+func CheckArgsErrCallback(callback Base, err error, operationID string) {
+	CheckAnyErrCallback(callback, constant.ErrArgs.ErrCode, err, operationID)
 }
 
 func CheckErrAndResp(callback Base, err error, resp []byte, operationID string) *server_api_params.CommDataResp {
@@ -83,20 +65,27 @@ func CheckResp(callback Base, resp []byte, operationID string) *server_api_param
 	return &c
 }
 
-func CheckErrAndRespReturn(err error, resp []byte) (*server_api_params.CommDataResp, error) {
+func CheckErrAndRespReturn(err error, resp []byte, output interface{}) error {
 	if err != nil {
-		return nil, utils.Wrap(err, "resp failed")
+		return utils.Wrap(err, "resp failed")
 	}
 	var c server_api_params.CommDataResp
 	err = json.Unmarshal(resp, &c)
 	if err != nil {
-		return nil, utils.Wrap(err, "")
+		return utils.Wrap(err, "")
 	}
 
 	if c.ErrCode != 0 {
-		return nil, utils.Wrap(errors.New(c.ErrMsg), "")
+		return utils.Wrap(errors.New(c.ErrMsg), "")
 	}
-	return &c, nil
+
+	err = mapstructure.Decode(c.Data, output)
+	if err != nil {
+
+		return utils.Wrap(err, "")
+	}
+	return nil
+
 }
 
 func JsonUnmarshalAndArgsValidate(s string, args interface{}, callback Base, operationID string) error {
@@ -122,7 +111,7 @@ func JsonUnmarshalAndArgsValidate(s string, args interface{}, callback Base, ope
 	return nil
 }
 
-func JsonUnmarshal(s string, args interface{}, callback Base, operationID string) error {
+func JsonUnmarshalCallback(s string, args interface{}, callback Base, operationID string) error {
 	err := json.Unmarshal([]byte(s), args)
 	if err != nil {
 		if callback != nil {

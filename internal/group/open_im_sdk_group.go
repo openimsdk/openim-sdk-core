@@ -19,7 +19,7 @@ func (g *Group) CreateGroup(callback common.Base, groupBaseInfo string, memberLi
 		return
 	}
 	go func() {
-		log.NewInfo(operationID, "CreateGroup args: ", groupBaseInfo, memberList)
+		log.NewInfo(operationID, utils.RunFuncName(), groupBaseInfo, memberList)
 		var unmarshalCreateGroupBaseInfoParam sdk_params_callback.CreateGroupBaseInfoParam
 		common.JsonUnmarshalAndArgsValidate(groupBaseInfo, &unmarshalCreateGroupBaseInfoParam, callback, operationID)
 		var unmarshalCreateGroupMemberRoleParam sdk_params_callback.CreateGroupMemberRoleParam

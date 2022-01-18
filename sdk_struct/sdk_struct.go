@@ -251,7 +251,6 @@ type paramsPullUserMsg struct {
 	SendID        string                   `json:"sendID"`
 	Data          paramsPullUserMsgDataReq `json:"data"`
 }
-
 type paramsPullUserMsgBySeq struct {
 	ReqIdentifier int     `json:"reqIdentifier"`
 	OperationID   string  `json:"operationID"`
