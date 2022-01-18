@@ -12,6 +12,10 @@ type CommDataResp struct {
 	CommResp
 	Data []map[string]interface{} `json:"data"`
 }
+type CommDataRespOne struct {
+	CommResp
+	Data map[string]interface{} `json:"data"`
+}
 
 type KickGroupMemberReq struct {
 	GroupID          string   `json:"groupID" binding:"required"`

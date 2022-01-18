@@ -142,39 +142,39 @@ func GetGroupsInfo(callback common.Base, operationID string, groupIDList string)
 }
 
 func SetGroupInfo(callback common.Base, operationID string, groupID string, jsonGroupInfo string) {
-	userForSDK.Group().SetGroupInfo(callback, jsonGroupInfo, groupID, operationID)
+	//userForSDK.Group().SetGroupInfo(callback, jsonGroupInfo, groupID, operationID)
 }
 
 func GetGroupMemberList(callback common.Base, operationID string, groupID string, filter int32, next int32) {
-	userForSDK.Group().GetGroupMemberList(callback, groupID, filter, next, operationID)
+	//userForSDK.Group().GetGroupMemberList(callback, groupID, filter, next, operationID)
 }
 
 func GetGroupMembersInfo(callback common.Base, operationID string, groupID string, userList string) {
-	userForSDK.Group().GetGroupMembersInfo(callback, groupID, userList, operationID)
+	//	userForSDK.Group().GetGroupMembersInfo(callback, groupID, userList, operationID)
 }
 
 func KickGroupMember(callback common.Base, operationID string, groupID string, reason string, userList string) {
-	userForSDK.Group().KickGroupMember(callback, groupID, reason, userList, operationID)
+	//	userForSDK.Group().KickGroupMember(callback, groupID, reason, userList, operationID)
 }
 
 func TransferGroupOwner(callback common.Base, operationID string, groupID, userId string) {
-	userForSDK.Group().TransferGroupOwner(callback, groupID, userId, operationID)
+	//userForSDK.Group().TransferGroupOwner(callback, groupID, userId, operationID)
 }
 
 func InviteUserToGroup(callback common.Base, operationID string, groupID, reason string, userList string) {
-	userForSDK.Group().InviteUserToGroup(callback, groupID, reason, userList, operationID)
+	//userForSDK.Group().InviteUserToGroup(callback, groupID, reason, userList, operationID)
 }
 
 func GetGroupApplicationList(callback common.Base, operationID string) {
-	userForSDK.Group().GetGroupApplicationList(callback, operationID)
+	//userForSDK.Group().GetGroupApplicationList(callback, operationID)
 }
 
 func AcceptGroupApplication(callback common.Base, groupID, fromUserID, handleMsg string, operationID string) {
-	userForSDK.Group().AcceptGroupApplication(callback, groupID, fromUserID, handleMsg, operationID)
+	//	userForSDK.Group().AcceptGroupApplication(callback, groupID, fromUserID, handleMsg, operationID)
 }
 
 func RefuseGroupApplication(callback common.Base, operationID string, groupID, fromUserID, handleMsg string) {
-	userForSDK.Group().RefuseGroupApplication(callback, groupID, fromUserID, handleMsg, operationID)
+	//	userForSDK.Group().RefuseGroupApplication(callback, groupID, fromUserID, handleMsg, operationID)
 }
 
 ////////////////////////////friend/////////////////////////////////////

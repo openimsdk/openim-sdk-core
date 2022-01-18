@@ -69,17 +69,30 @@ func CheckErrAndRespCallback(callback Base, err error, resp []byte, output inter
 
 func CheckErrAndResp(err error, resp []byte, output interface{}) error {
 	if err != nil {
-		return utils.Wrap(err, "resp failed")
+		return utils.Wrap(err, "api resp failed")
 	}
 	var c server_api_params.CommDataResp
 	err = json.Unmarshal(resp, &c)
+	if err == nil {
+		if c.ErrCode != 0 {
+			return utils.Wrap(errors.New(c.ErrMsg), "")
+		}
+		err = mapstructure.Decode(c.Data, output)
+		if err != nil {
+			return utils.Wrap(err, "")
+		}
+		return nil
+	}
+
+	var c2 server_api_params.CommDataRespOne
+	err = json.Unmarshal(resp, &c2)
 	if err != nil {
 		return utils.Wrap(err, "")
 	}
-	if c.ErrCode != 0 {
-		return utils.Wrap(errors.New(c.ErrMsg), "")
+	if c2.ErrCode != 0 {
+		return utils.Wrap(errors.New(c2.ErrMsg), "")
 	}
-	err = mapstructure.Decode(c.Data, output)
+	err = mapstructure.Decode(c2.Data, output)
 	if err != nil {
 		return utils.Wrap(err, "")
 	}

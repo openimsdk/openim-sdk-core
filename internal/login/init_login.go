@@ -94,7 +94,7 @@ func (u *LoginMgr) login(userID, token string, cb common.Base, operationID strin
 		return
 	}
 	err := CheckToken(userID, token)
-	common.CheckAnyErr(cb, 1111, err, operationID)
+	common.CheckAnyErrCallback(cb, 1111, err, operationID)
 	log.Info("0", "checkToken ok ", userID, token)
 	u.justOnceFlag = true
 
@@ -131,7 +131,7 @@ func (u *LoginMgr) login(userID, token string, cb common.Base, operationID strin
 
 	if u.imConfig.ObjectStorage != "cos" && u.imConfig.ObjectStorage != "" {
 		err = errors.New("u.imConfig.ObjectStorage failed ")
-		common.CheckAnyErr(cb, 1000, err, operationID)
+		common.CheckAnyErrCallback(cb, 1000, err, operationID)
 	}
 	objStorage := comm2.NewCOS(p)
 	u.conversation = conv.NewConversation(u.ws, u.db, p, u.conversationCh,
@@ -193,10 +193,10 @@ func (u *LoginMgr) GetLoginStatus() int32 {
 
 func (u *LoginMgr) forcedSynchronization() {
 	operationID := utils.OperationIDGenerator()
-	go u.friend.SyncFriendList(operationID)
-	go u.friend.SyncBlackList(operationID)
-	go u.friend.SyncFriendApplication(operationID)
-	go u.friend.SyncSelfFriendApplication(operationID)
+	//go u.friend.SyncFriendList(operationID)
+	//go u.friend.SyncBlackList(operationID)
+	//go u.friend.SyncFriendApplication(operationID)
+	//go u.friend.SyncSelfFriendApplication(operationID)
 
 	go u.user.SyncLoginUserInfo(operationID)
 
