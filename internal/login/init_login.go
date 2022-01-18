@@ -1,6 +1,8 @@
 package login
 
 import (
+	"errors"
+	comm2 "open_im_sdk/internal/common"
 	conv "open_im_sdk/internal/conversation_msg"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/group"
@@ -118,7 +120,12 @@ func (u *LoginMgr) login(userID, token string, cb common.Base, operationID strin
 	u.group = group.NewGroup(u.loginUserID, u.db, p)
 	u.group.SetGroupListener(u.groupListener)
 
-	u.conversation = conv.NewConversation(u.ws, u.db, u.conversationCh, u.loginUserID, u.friend, u.group, u.user)
+	if u.imConfig.ObjectStorage != "cos" && u.imConfig.ObjectStorage != "" {
+		err = errors.New("u.imConfig.ObjectStorage failed ")
+		common.CheckAnyErr(cb, 1000, err, operationID)
+	}
+	objStorage := comm2.NewCOS(p)
+	u.conversation = conv.NewConversation(u.ws, u.db, p, u.conversationCh, u.loginUserID, u.imConfig.Platform, u.friend, u.group, u.user, objStorage)
 	u.conversation.SetConversationListener(u.conversationListener)
 
 	log.Info("forcedSynchronization run ...")

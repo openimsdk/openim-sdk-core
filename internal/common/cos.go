@@ -9,24 +9,23 @@ import (
 	"net/http"
 	"net/url"
 	ws "open_im_sdk/internal/interaction"
-	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"path"
 )
 
-type OSS struct {
+type COS struct {
 	p *ws.PostApi
 }
 
-func NewOSS(p *ws.PostApi) *OSS {
-	return &OSS{p: p}
+func NewCOS(p *ws.PostApi) *COS {
+	return &COS{p: p}
 }
 
-func (o *OSS) tencentOssCredentials() (*server_api_params.TencentCloudStorageCredentialRespData, error) {
+func (c *COS) tencentCOSCredentials() (*server_api_params.TencentCloudStorageCredentialRespData, error) {
 	req := server_api_params.TencentCloudStorageCredentialReq{OperationID: utils.OperationIDGenerator()}
-	commData, err := o.p.PostReturn(constant.TencentCloudStorageCredentialRouter, req)
+	commData, err := c.p.PostReturn(constant.TencentCloudStorageCredentialRouter, req)
 	if err != nil {
 		return nil, utils.Wrap(err, "")
 	}
@@ -38,28 +37,32 @@ func (o *OSS) tencentOssCredentials() (*server_api_params.TencentCloudStorageCre
 	return &resp.Data, nil
 }
 
-func (o *OSS) UploadImage(filePath string, onProgressFun func(int)) (string, string, error) {
-	return o.uploadObj(filePath, "img", onProgressFun)
+func (c *COS) UploadImage(filePath string, onProgressFun func(int)) (string, string, error) {
+	return c.uploadObj(filePath, "img", onProgressFun)
 
 }
 
-func (o *OSS) UploadSound(filePath string, onProgressFun func(int)) (string, string, error) {
-	return o.uploadObj(filePath, "", onProgressFun)
+func (c *COS) UploadSound(filePath string, onProgressFun func(int)) (string, string, error) {
+	return c.uploadObj(filePath, "", onProgressFun)
 }
 
-func (o *OSS) UploadVideo(videoPath, snapshotPath string, onProgressFun func(int)) (string, string, string, string, error) {
-	videoURL, videoUUID, err := o.uploadObj(videoPath, "", onProgressFun)
+func (c *COS) UploadFile(filePath string, onProgressFun func(int)) (string, string, error) {
+	return c.uploadObj(filePath, "", onProgressFun)
+}
+
+func (c *COS) UploadVideo(videoPath, snapshotPath string, onProgressFun func(int)) (string, string, string, string, error) {
+	videoURL, videoUUID, err := c.uploadObj(videoPath, "", onProgressFun)
 	if err != nil {
 		return "", "", "", "", utils.Wrap(err, "")
 	}
-	snapshotURL, snapshotUUID, err := o.uploadObj(snapshotPath, "img", onProgressFun)
+	snapshotURL, snapshotUUID, err := c.uploadObj(snapshotPath, "img", onProgressFun)
 	if err != nil {
 		return "", "", "", "", utils.Wrap(err, "")
 	}
 	return snapshotURL, snapshotUUID, videoURL, videoUUID, nil
 }
 
-func (o *OSS) getNewFileNameAndContentType(filePath string, fileType string) (string, string, error) {
+func (c *COS) getNewFileNameAndContentType(filePath string, fileType string) (string, string, error) {
 	suffix := path.Ext(filePath)
 	if len(suffix) == 0 {
 		return "", "", utils.Wrap(errors.New("no suffix "), filePath)
@@ -72,20 +75,20 @@ func (o *OSS) getNewFileNameAndContentType(filePath string, fileType string) (st
 	return newName, contentType, nil
 }
 
-func (o *OSS) uploadObj(filePath string, fileType string, onProgressFun func(int)) (string, string, error) {
-	ossResp, err := o.tencentOssCredentials()
+func (c *COS) uploadObj(filePath string, fileType string, onProgressFun func(int)) (string, string, error) {
+	COSResp, err := c.tencentCOSCredentials()
 	if err != nil {
 		return "", "", utils.Wrap(err, "")
 	}
-	dir := fmt.Sprintf("https://%s.cos.%s.myqcloud.com", ossResp.Bucket, ossResp.Region)
+	dir := fmt.Sprintf("https://%s.cos.%s.myqcloud.com", COSResp.Bucket, COSResp.Region)
 	u, _ := url.Parse(dir)
 	b := &cos.BaseURL{BucketURL: u}
 
 	client := cos.NewClient(b, &http.Client{
 		Transport: &cos.AuthorizationTransport{
-			SecretID:     ossResp.Credentials.TmpSecretID,
-			SecretKey:    ossResp.Credentials.TmpSecretKey,
-			SessionToken: ossResp.Credentials.SessionToken,
+			SecretID:     COSResp.Credentials.TmpSecretID,
+			SecretKey:    COSResp.Credentials.TmpSecretKey,
+			SessionToken: COSResp.Credentials.SessionToken,
 		},
 	})
 	if client == nil {
@@ -93,7 +96,7 @@ func (o *OSS) uploadObj(filePath string, fileType string, onProgressFun func(int
 		return "", "", utils.Wrap(err, "")
 	}
 
-	newName, contentType, err := o.getNewFileNameAndContentType(filePath, fileType)
+	newName, contentType, err := c.getNewFileNameAndContentType(filePath, fileType)
 	if err != nil {
 		return "", "", utils.Wrap(err, "")
 	}
