@@ -397,8 +397,8 @@ func main() {
 	//if err := f1(); err != nil {
 	//	fmt.Printf("f1 err1111111111111: %v", err)
 	//}
-	strMyUidx := "openIM001"
-	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0wMDEiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTY0MjY3ODMwOSwibmJmIjoxNjQyMDczNTA5LCJpYXQiOjE2NDIwNzM1MDl9.KfRD9NjsAfeoPTNQ8PsA19cn-YuILzIsuP7z13KXX-o"
+	strMyUidx := "openIM100"
+	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMDAiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTY0MzEwOTkwMywibmJmIjoxNjQyNTA1MTAzLCJpYXQiOjE2NDI1MDUxMDN9.BFI6eZm-rug_LKe8TijufjwF5Ei4EfrGdtVeYsWs9Sw"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	//	test.DoTestaddFriend()
 	//	open_im_sdk.DoTestGetFriendList()

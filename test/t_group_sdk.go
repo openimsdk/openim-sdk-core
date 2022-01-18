@@ -1,6 +1,10 @@
 package test
 
 import (
+	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/sdk_params_callback"
+	"open_im_sdk/pkg/server_api_params"
+
 	//	"encoding/json"
 	"fmt"
 	"open_im_sdk/pkg/log"
@@ -81,40 +85,38 @@ func (testGroupListener) OnGroupApplicationRejected(callbackInfo string) {
 }
 
 //
-//type testCreateGroup struct {
-//	open_im_sdk.groupInfo
-//	members []open_im_sdk.createGroupMemberInfo
-//}
-//
-//func (testCreateGroup) OnSuccess(data string) {
-//	fmt.Println("testCreateGroup,onSuccess", data)
-//	var uidList []string
-//	uidList = append(uidList, "307edc814bb0d04a")
-//	var xb XBase
-//	j, _ := json.Marshal(uidList)
-//	sdk_interface.GetGroupMembersInfo(data, string(j), xb)
-//}
-//
-//func (testCreateGroup) OnError(errCode int32, errMsg string) {
-//	fmt.Println("testCreateGroup,onError", errCode, errMsg)
-//}
-//
-//func DoTestCreateGroup() {
-//	var test testCreateGroup
-//	test.groupInfo.GroupName = "chat group1"
-//	test.groupInfo.FaceUrl = "url address"
-//	test.groupInfo.Introduction = "xxxxx"
-//	test.groupInfo.Notification = "zzzzzzzz"
-//	test.members = append(test.members, open_im_sdk.createGroupMemberInfo{
-//		Uid:     "8a97893c744db83e",
-//		SetRole: 0,
-//	})
-//
-//	groupInfo, _ := json.Marshal(test.groupInfo)
-//	members, _ := json.Marshal(test.members)
-//	fmt.Println("create groupInfo input:", string(groupInfo), string(members))
-//	sdk_interface.CreateGroup(test, string(groupInfo), string(members), "asfdfasd")
-//}
+type testCreateGroup struct {
+	OperationID string
+}
+
+func (t testCreateGroup) OnSuccess(data string) {
+	log.Info(t.OperationID, utils.GetSelfFuncName(), data)
+
+}
+
+func (t testCreateGroup) OnError(errCode int32, errMsg string) {
+	log.Info(t.OperationID, utils.GetSelfFuncName(), errCode, errMsg)
+}
+
+var memberUserID = "openIM101"
+
+func DoTestCreateGroup() {
+	var test testCreateGroup
+	test.OperationID = utils.OperationIDGenerator()
+
+	var groupInfo sdk_params_callback.CreateGroupBaseInfoParam
+	groupInfo.GroupName = "group name"
+	groupInfo.GroupType = 0
+
+	var memberlist []server_api_params.GroupAddMemberInfo
+	memberlist = append(memberlist, server_api_params.GroupAddMemberInfo{UserID: memberUserID, RoleLevel: 1})
+
+	g1 := utils.StructToJsonString(groupInfo)
+	g2 := utils.StructToJsonString(memberlist)
+
+	open_im_sdk.CreateGroup(test, test.OperationID, g1, g2)
+}
+
 //
 //type testSetGroupInfo struct {
 //	open_im_sdk.groupInfo

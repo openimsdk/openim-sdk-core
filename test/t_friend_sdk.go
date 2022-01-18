@@ -404,7 +404,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 
 	cf.WsAddr = ws
 	cf.Platform = 1
-	cf.DbDir = "./"
+	cf.DataDir = "./"
 	cf.LogLevel = 6
 
 	var s string

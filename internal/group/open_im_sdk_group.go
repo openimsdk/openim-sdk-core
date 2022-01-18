@@ -59,10 +59,10 @@ func (g *Group) GetJoinedGroupList(callback common.Base, operationID string) {
 		return
 	}
 	go func() {
-		log.NewInfo(operationID, utils.RunFuncName(), "args: ")
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 		groupList := g.getJoinedGroupList(callback, operationID)
 		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(groupList)))
-		log.NewInfo(operationID, "QuitGroup callback: ", utils.StructToJsonString(utils.StructToJsonString(groupList)))
+		log.NewInfo(operationID, "GetJoinedGroupList callback: ", utils.StructToJsonString(utils.StructToJsonString(groupList)))
 	}()
 }
 
@@ -71,7 +71,7 @@ func (g *Group) GetGroupsInfo(callback common.Base, groupIDList string, operatio
 		return
 	}
 	go func() {
-		log.NewInfo(operationID, utils.RunFuncName(), "args: ", groupIDList)
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", groupIDList)
 		var unmarshalGetGroupsInfoParam sdk_params_callback.GetGroupsInfoParam
 		common.JsonUnmarshalAndArgsValidate(groupIDList, &unmarshalGetGroupsInfoParam, callback, operationID)
 		groupsInfoList := g.getGroupsInfo(unmarshalGetGroupsInfoParam, callback, operationID)

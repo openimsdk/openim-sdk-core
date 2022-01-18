@@ -402,6 +402,7 @@ func (g *Group) getJoinedGroupListFromSvr(operationID string) ([]*api.GroupInfo,
 	apiReq.OperationID = operationID
 	apiReq.FromUserID = g.loginUserID
 	var result []*api.GroupInfo
+	log.Debug(operationID, "api args: ", apiReq)
 	err := g.p.PostReturn(constant.GetJoinedGroupListRouter, apiReq, &result)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
