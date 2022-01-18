@@ -43,7 +43,7 @@ func (u *WsConn) CloseConn() error {
 	u.Lock()
 	defer u.Unlock()
 	if u.conn != nil {
-		return u.conn.Close()
+		return utils.Wrap(u.conn.Close(), "")
 	}
 	return nil
 }

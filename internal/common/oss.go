@@ -38,19 +38,25 @@ func (o *OSS) tencentOssCredentials() (*server_api_params.TencentCloudStorageCre
 	return &resp.Data, nil
 }
 
-func (o *OSS) UploadImage(filePath string, callback SendMsgCallBack, operationID string) (string, string) {
-	return o.uploadObj(filePath, "img", callback, operationID)
+func (o *OSS) UploadImage(filePath string, onProgressFun func(int)) (string, string, error) {
+	return o.uploadObj(filePath, "img", onProgressFun)
 
 }
 
-func (o *OSS) UploadSound(filePath string, callback SendMsgCallBack, operationID string) (string, string) {
-	return o.uploadObj(filePath, "", callback, operationID)
+func (o *OSS) UploadSound(filePath string, onProgressFun func(int)) (string, string, error) {
+	return o.uploadObj(filePath, "", onProgressFun)
 }
 
-func (o *OSS) UploadVideo(videoPath, snapshotPath string, callback SendMsgCallBack, operationID string) (string, string, string, string) {
-	videoURL, videoUUID := o.uploadObj(videoPath, "", callback, operationID)
-	snapshotURL, snapshotUUID := o.uploadObj(snapshotPath, "img", callback, operationID)
-	return snapshotURL, snapshotUUID, videoURL, videoUUID
+func (o *OSS) UploadVideo(videoPath, snapshotPath string, onProgressFun func(int)) (string, string, string, string, error) {
+	videoURL, videoUUID, err := o.uploadObj(videoPath, "", onProgressFun)
+	if err != nil {
+		return "", "", "", "", utils.Wrap(err, "")
+	}
+	snapshotURL, snapshotUUID, err := o.uploadObj(snapshotPath, "img", onProgressFun)
+	if err != nil {
+		return "", "", "", "", utils.Wrap(err, "")
+	}
+	return snapshotURL, snapshotUUID, videoURL, videoUUID, nil
 }
 
 func (o *OSS) getNewFileNameAndContentType(filePath string, fileType string) (string, string, error) {
@@ -66,9 +72,11 @@ func (o *OSS) getNewFileNameAndContentType(filePath string, fileType string) (st
 	return newName, contentType, nil
 }
 
-func (o *OSS) uploadObj(filePath string, fileType string, callback SendMsgCallBack, operationID string) (string, string) {
+func (o *OSS) uploadObj(filePath string, fileType string, onProgressFun func(int)) (string, string, error) {
 	ossResp, err := o.tencentOssCredentials()
-	common.CheckAnyErr(callback, 1000, err, operationID)
+	if err != nil {
+		return "", "", utils.Wrap(err, "")
+	}
 	dir := fmt.Sprintf("https://%s.cos.%s.myqcloud.com", ossResp.Bucket, ossResp.Region)
 	u, _ := url.Parse(dir)
 	b := &cos.BaseURL{BucketURL: u}
@@ -82,33 +90,37 @@ func (o *OSS) uploadObj(filePath string, fileType string, callback SendMsgCallBa
 	})
 	if client == nil {
 		err := errors.New("client == nil")
-		common.CheckAnyErr(callback, 1000, err, operationID)
+		return "", "", utils.Wrap(err, "")
 	}
 
 	newName, contentType, err := o.getNewFileNameAndContentType(filePath, fileType)
-	common.CheckAnyErr(callback, 10001, err, operationID)
+	if err != nil {
+		return "", "", utils.Wrap(err, "")
+	}
 	var lis = &selfListener{}
-	lis.SendMsgCallBack = callback
+	lis.onProgressFun = onProgressFun
 	opt := &cos.ObjectPutOptions{ObjectPutHeaderOptions: &cos.ObjectPutHeaderOptions{Listener: lis}}
 	if fileType == "img" {
 		opt.ContentType = contentType
 	}
 	_, err = client.Object.PutFromFile(context.Background(), newName, filePath, opt)
-	common.CheckAnyErr(callback, 10002, err, operationID)
-	return dir + "/" + newName, newName
+	if err != nil {
+		return "", "", utils.Wrap(err, "")
+	}
+	return dir + "/" + newName, newName, nil
 }
 
 type selfListener struct {
-	SendMsgCallBack
+	onProgressFun func(int)
 }
 
 func (l *selfListener) ProgressChangedCallback(event *cos.ProgressEvent) {
 	switch event.EventType {
 	case cos.ProgressDataEvent:
 		if event.ConsumedBytes == event.TotalBytes {
-			l.SendMsgCallBack.OnProgress(int((event.ConsumedBytes - 1) * 100 / event.TotalBytes))
+			l.onProgressFun(int((event.ConsumedBytes - 1) * 100 / event.TotalBytes))
 		} else {
-			l.SendMsgCallBack.OnProgress(int(event.ConsumedBytes * 100 / event.TotalBytes))
+			l.onProgressFun(int(event.ConsumedBytes * 100 / event.TotalBytes))
 		}
 	case cos.ProgressFailedEvent:
 	}
