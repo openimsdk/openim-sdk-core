@@ -123,9 +123,14 @@ func (l *selfListener) ProgressChangedCallback(event *cos.ProgressEvent) {
 	switch event.EventType {
 	case cos.ProgressDataEvent:
 		if event.ConsumedBytes == event.TotalBytes {
-			l.onProgressFun(int((event.ConsumedBytes - 1) * 100 / event.TotalBytes))
+			if l.onProgressFun != nil {
+				l.onProgressFun(int((event.ConsumedBytes - 1) * 100 / event.TotalBytes))
+			}
+
 		} else {
-			l.onProgressFun(int(event.ConsumedBytes * 100 / event.TotalBytes))
+			if l.onProgressFun != nil {
+				l.onProgressFun(int(event.ConsumedBytes * 100 / event.TotalBytes))
+			}
 		}
 	case cos.ProgressFailedEvent:
 	}

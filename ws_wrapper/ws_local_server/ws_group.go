@@ -9,71 +9,118 @@ type GroupCallback struct {
 	uid string
 }
 
-func (g *GroupCallback) OnMemberEnter(groupId string, memberList string) {
-	m := make(map[string]interface{}, 2)
-	m["groupId"] = groupId
-	m["memberList"] = memberList
-	j, _ := json.Marshal(m)
-	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(j), "0"}, g.uid)
+func (g *GroupCallback) OnJoinedGroupAdded(groupInfo string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", groupInfo, "0"}, g.uid)
+}
+func (g *GroupCallback) OnJoinedGroupDeleted(groupInfo string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", groupInfo, "0"}, g.uid)
 }
 
-func (g *GroupCallback) OnMemberLeave(groupId string, memberList string) {
-	m := make(map[string]interface{}, 2)
-	m["groupId"] = groupId
-	m["memberList"] = memberList
-	j, _ := json.Marshal(m)
-	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(j), "0"}, g.uid)
+func (g *GroupCallback) OnGroupMemberAdded(groupMemberInfo string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", groupMemberInfo, "0"}, g.uid)
 }
-func (g *GroupCallback) OnMemberInvited(groupId string, opUser string, memberList string) {
-	m := make(map[string]interface{}, 3)
-	m["groupId"] = groupId
-	m["opUser"] = opUser
-	m["memberList"] = memberList
-	j, _ := json.Marshal(m)
-	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(j), "0"}, g.uid)
-}
-func (g *GroupCallback) OnMemberKicked(groupId string, opUser string, memberList string) {
-	m := make(map[string]interface{}, 3)
-	m["groupId"] = groupId
-	m["opUser"] = opUser
-	m["memberList"] = memberList
-
-	j, _ := json.Marshal(m)
-
-	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(j), "0"}, g.uid)
-}
-func (g *GroupCallback) OnGroupCreated(groupId string) {
-	m := make(map[string]interface{}, 1)
-	m["groupId"] = groupId
-	j, _ := json.Marshal(m)
-	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(j), "0"}, g.uid)
-}
-func (g *GroupCallback) OnGroupInfoChanged(groupId string, groupInfo string) {
-	m := make(map[string]interface{}, 2)
-	m["groupId"] = groupId
-	m["groupInfo"] = groupInfo
-	j, _ := json.Marshal(m)
-	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(j), "0"}, g.uid)
-}
-func (g *GroupCallback) OnReceiveJoinApplication(groupId string, member string, opReason string) {
-	m := make(map[string]interface{}, 3)
-	m["groupId"] = groupId
-	m["member"] = member
-	m["opReason"] = opReason
-	j, _ := json.Marshal(m)
-	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(j), "0"}, g.uid)
-
-}
-func (g *GroupCallback) OnApplicationProcessed(groupId string, opUser string, AgreeOrReject int32, opReason string) {
-	m := make(map[string]interface{}, 4)
-	m["groupId"] = groupId
-	m["opUser"] = opUser
-	m["AgreeOrReject"] = AgreeOrReject
-	m["opReason"] = opReason
-	j, _ := json.Marshal(m)
-	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(j), "0"}, g.uid)
+func (g *GroupCallback) OnGroupMemberDeleted(groupMemberInfo string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", groupMemberInfo, "0"}, g.uid)
 }
 
+func (g *GroupCallback) OnReceiveJoinGroupApplicationAdded(groupApplication string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", groupApplication, "0"}, g.uid)
+}
+func (g *GroupCallback) OnReceiveJoinGroupApplicationDeleted(groupApplication string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", groupApplication, "0"}, g.uid)
+}
+
+func (g *GroupCallback) OnGroupApplicationAdded(groupApplication string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", groupApplication, "0"}, g.uid)
+}
+func (g *GroupCallback) OnGroupApplicationDeleted(groupApplication string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", groupApplication, "0"}, g.uid)
+}
+
+func (g *GroupCallback) OnGroupInfoChanged(groupInfo string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", groupInfo, "0"}, g.uid)
+}
+func (g *GroupCallback) OnGroupMemberInfoChanged(groupMemberInfo string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", groupMemberInfo, "0"}, g.uid)
+}
+
+func (g *GroupCallback) OnGroupApplicationAccepted(groupApplication string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", groupApplication, "0"}, g.uid)
+}
+func (g *GroupCallback) OnGroupApplicationRejected(groupApplication string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", groupApplication, "0"}, g.uid)
+}
+
+//
+//
+//func (g *GroupCallback) OnMemberEnter(groupId string, memberList string) {
+//	m := make(map[string]interface{}, 2)
+//	m["groupId"] = groupId
+//	m["memberList"] = memberList
+//	j, _ := json.Marshal(m)
+//	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(j), "0"}, g.uid)
+//}
+//
+//func (g *GroupCallback) OnMemberLeave(groupId string, memberList string) {
+//	m := make(map[string]interface{}, 2)
+//	m["groupId"] = groupId
+//	m["memberList"] = memberList
+//	j, _ := json.Marshal(m)
+//	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(j), "0"}, g.uid)
+//}
+//func (g *GroupCallback) OnMemberInvited(groupId string, opUser string, memberList string) {
+//	m := make(map[string]interface{}, 3)
+//	m["groupId"] = groupId
+//	m["opUser"] = opUser
+//	m["memberList"] = memberList
+//	j, _ := json.Marshal(m)
+//	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(j), "0"}, g.uid)
+//}
+//func (g *GroupCallback) OnMemberKicked(groupId string, opUser string, memberList string) {
+//	m := make(map[string]interface{}, 3)
+//	m["groupId"] = groupId
+//	m["opUser"] = opUser
+//	m["memberList"] = memberList
+//
+//	j, _ := json.Marshal(m)
+//
+//	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(j), "0"}, g.uid)
+//}
+//func (g *GroupCallback) OnGroupCreated(groupId string) {
+//	m := make(map[string]interface{}, 1)
+//	m["groupId"] = groupId
+//	j, _ := json.Marshal(m)
+//	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(j), "0"}, g.uid)
+//}
+//func (g *GroupCallback) OnGroupInfoChanged(groupId string, groupInfo string) {
+//	m := make(map[string]interface{}, 2)
+//	m["groupId"] = groupId
+//	m["groupInfo"] = groupInfo
+//	j, _ := json.Marshal(m)
+//	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(j), "0"}, g.uid)
+//}
+//func (g *GroupCallback) OnReceiveJoinApplication(groupId string, member string, opReason string) {
+//	m := make(map[string]interface{}, 3)
+//	m["groupId"] = groupId
+//	m["member"] = member
+//	m["opReason"] = opReason
+//	j, _ := json.Marshal(m)
+//	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(j), "0"}, g.uid)
+//
+//}
+//func (g *GroupCallback) OnApplicationProcessed(groupId string, opUser string, AgreeOrReject int32, opReason string) {
+//	m := make(map[string]interface{}, 4)
+//	m["groupId"] = groupId
+//	m["opUser"] = opUser
+//	m["AgreeOrReject"] = AgreeOrReject
+//	m["opReason"] = opReason
+//	j, _ := json.Marshal(m)
+//	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(j), "0"}, g.uid)
+//}
+//
+//func (g *GroupCallback) OnGroupApplicationAccepted(groupApplication string){
+//
+//}
 func (wsRouter *WsFuncRouter) SetGroupListener() {
 	var g GroupCallback
 	g.uid = wsRouter.uId

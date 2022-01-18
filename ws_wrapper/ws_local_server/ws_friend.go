@@ -8,31 +8,31 @@ type FriendCallback struct {
 	uid string
 }
 
-func (f *FriendCallback) OnFriendApplicationListAdded(applyUserInfo string) {
+func (f *FriendCallback) OnFriendApplicationAdded(applyUserInfo string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", applyUserInfo, "0"}, f.uid)
 }
-func (f *FriendCallback) OnFriendApplicationListDeleted(applyUserInfo string) {
+func (f *FriendCallback) OnFriendApplicationDeleted(applyUserInfo string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", applyUserInfo, "0"}, f.uid)
 }
-func (f *FriendCallback) OnFriendApplicationListAccept(applyUserInfo string) {
+func (f *FriendCallback) OnFriendApplicationAccepted(applyUserInfo string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", applyUserInfo, "0"}, f.uid)
 }
-func (f *FriendCallback) OnFriendApplicationListReject(applyUserInfo string) {
+func (f *FriendCallback) OnFriendApplicationRejected(applyUserInfo string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", applyUserInfo, "0"}, f.uid)
 }
-func (f *FriendCallback) OnFriendListAdded(friendInfo string) {
+func (f *FriendCallback) OnFriendAdded(friendInfo string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", friendInfo, "0"}, f.uid)
 }
-func (f *FriendCallback) OnFriendListDeleted(friendInfo string) {
+func (f *FriendCallback) OnFriendDeleted(friendInfo string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", friendInfo, "0"}, f.uid)
 }
-func (f *FriendCallback) OnBlackListAdd(userInfo string) {
+func (f *FriendCallback) OnFriendInfoChanged(userInfo string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", userInfo, "0"}, f.uid)
 }
-func (f *FriendCallback) OnBlackListDeleted(userInfo string) {
+func (f *FriendCallback) OnBlackAdded(userInfo string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", userInfo, "0"}, f.uid)
 }
-func (f *FriendCallback) OnFriendInfoChanged(friendInfo string) {
+func (f *FriendCallback) OnBlackDeleted(friendInfo string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", friendInfo, "0"}, f.uid)
 }
 

@@ -388,7 +388,7 @@ func InOutlllogin(uid, tk string) {
 	var callback BaseSuccFailed
 	callback.funcName = utils.RunFuncName()
 	operationID := utils.OperationIDGenerator()
-	open_im_sdk.Login(uid, operationID, tk, &callback)
+	open_im_sdk.Login(&callback, uid, operationID, tk)
 }
 
 func InOutLogou() {
@@ -438,7 +438,7 @@ func lllogin(uid, tk string) bool {
 	var callback BaseSuccFailed
 	callback.funcName = utils.RunFuncName()
 	operationID := utils.OperationIDGenerator()
-	open_im_sdk.Login(uid, operationID, tk, &callback)
+	open_im_sdk.Login(&callback, uid, operationID, tk)
 
 	for true {
 		if callback.errCode == 1 {

@@ -2,6 +2,7 @@ package open_im_sdk
 
 import (
 	"encoding/json"
+	common2 "open_im_sdk/internal/common"
 	"open_im_sdk/internal/conversation_msg"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/group"
@@ -58,7 +59,7 @@ func InitSDK(config string, operationID string, listener ws.ConnListener) bool {
 	return userForSDK.InitSDK(sdk_struct.SvrConf, listener, operationID)
 }
 
-func Login(userID, operationID string, token string, callback common.Base) {
+func Login(callback common.Base, userID, operationID string, token string) {
 	if callback == nil {
 		log.Error("callback is nil")
 		return
@@ -68,6 +69,10 @@ func Login(userID, operationID string, token string, callback common.Base) {
 		return
 	}
 	userForSDK.Login(callback, userID, token, operationID)
+}
+
+func UploadImage(callback common.Base, filePath string, token, obj string, operationID string) string {
+	return userForSDK.UploadImage(callback, filePath, token, obj, operationID)
 }
 
 func Logout(callback common.Base, operationID string) {
@@ -392,4 +397,25 @@ func InitOnce(config *sdk_struct.IMConfig) bool {
 
 func CheckToken(userID, token string) error {
 	return login.CheckToken(userID, token)
+}
+
+func uploadImage(callback common.Base, filePath string, token, obj string, operationID string) string {
+	if obj == "cos" {
+		p := ws.NewPostApi(token, userForSDK.ImConfig().ApiAddr)
+		o := common2.NewCOS(p)
+		url, _, err := o.UploadFile(filePath, func(progress int) {
+			if progress == 100 {
+				callback.OnSuccess("")
+			}
+		})
+
+		if err != nil {
+			callback.OnError(100, err.Error())
+			return ""
+		}
+		return url
+
+	} else {
+		return ""
+	}
 }

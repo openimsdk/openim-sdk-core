@@ -46,6 +46,10 @@ type LoginMgr struct {
 	imConfig sdk_struct.IMConfig
 }
 
+func (u *LoginMgr) ImConfig() sdk_struct.IMConfig {
+	return u.imConfig
+}
+
 func (u *LoginMgr) Conversation() *conv.Conversation {
 	return u.conversation
 }
@@ -96,14 +100,14 @@ func (u *LoginMgr) login(userID, token string, cb common.Base, operationID strin
 	u.token = token
 	u.loginUserID = userID
 
-	db, err := db.NewDataBase(userID, sdk_struct.SvrConf.DbDir)
+	db, err := db.NewDataBase(userID, sdk_struct.SvrConf.DataDir)
 	if err != nil {
 		cb.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
 		log.Error("0", "NewDataBase failed ", err.Error())
 		return
 	}
 	u.db = db
-	log.Info("0", "NewDataBase ok ", userID, sdk_struct.SvrConf.DbDir)
+	log.Info("0", "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir)
 	wsRespAsyn := ws.NewWsRespAsyn()
 	wsConn := ws.NewWsConn(u.connListener, token, userID)
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
@@ -130,7 +134,7 @@ func (u *LoginMgr) login(userID, token string, cb common.Base, operationID strin
 	}
 	objStorage := comm2.NewCOS(p)
 	u.conversation = conv.NewConversation(u.ws, u.db, p, u.conversationCh,
-		u.loginUserID, u.imConfig.Platform, u.imConfig.DbDir,
+		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
 		u.friend, u.group, u.user, objStorage)
 	u.conversation.SetConversationListener(u.conversationListener)
 	u.conversation.SetMsgListener(u.advancedMsgListener)
@@ -215,6 +219,25 @@ func CheckToken(userID, token string) error {
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
 	_, err := user.NewUser(nil, p, userID).GetSelfUserInfoFromSvr(operationID)
 	return utils.Wrap(err, "GetSelfUserInfoFromSvr failed "+operationID)
+}
+
+func (u *LoginMgr) uploadImage(callback common.Base, filePath string, token, obj string, operationID string) string {
+	if obj == "cos" {
+		p := ws.NewPostApi(token, u.ImConfig().ApiAddr)
+		o := comm2.NewCOS(p)
+		url, _, err := o.UploadImage(filePath, func(progress int) {
+			if progress == 100 {
+				callback.OnSuccess("")
+			}
+		})
+		if err != nil {
+			log.Error(operationID, "UploadImage failed ", err.Error(), filePath)
+			return ""
+		}
+		return url
+	} else {
+		return ""
+	}
 }
 
 //func (u *open_im_sdk.UserRelated) kickOnline(msg utils.GeneralWsResp) {
