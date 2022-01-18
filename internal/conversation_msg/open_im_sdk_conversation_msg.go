@@ -88,7 +88,7 @@ func (c *Conversation) GetConversationRecvMessageOpt(callback common.Base, conve
 	go func() {
 		log.NewInfo(operationID, "GetConversationRecvMessageOpt args: ", conversationIDList)
 		var unmarshalParams sdk_params_callback.GetConversationRecvMessageOptParams
-		common.JsonUnmarshal(conversationIDList, &unmarshalParams, callback, operationID)
+		common.JsonUnmarshalCallback(conversationIDList, &unmarshalParams, callback, operationID)
 		result := c.getConversationRecvMessageOpt(callback, unmarshalParams, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
 		log.NewInfo(operationID, "GetConversationRecvMessageOpt callback: ", utils.StructToJsonStringDefault(result))
@@ -112,7 +112,7 @@ func (c *Conversation) GetMultipleConversation(callback common.Base, conversatio
 	go func() {
 		log.NewInfo(operationID, "GetMultipleConversation args: ", conversationIDList)
 		var unmarshalParams sdk_params_callback.GetMultipleConversationParams
-		common.JsonUnmarshal(conversationIDList, &unmarshalParams, callback, operationID)
+		common.JsonUnmarshalCallback(conversationIDList, &unmarshalParams, callback, operationID)
 		result := c.getMultipleConversation(callback, unmarshalParams, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
 		log.NewInfo(operationID, "GetMultipleConversation callback: ", utils.StructToJsonStringDefault(result))
@@ -518,13 +518,13 @@ func (c *Conversation) SendMessage(callback common.SendMsgCallBack, message, rec
 			lc.GroupID = groupID
 			lc.ConversationType = constant.GroupChatType
 			g, err := c.db.GetGroupInfoByGroupID(groupID)
-			common.CheckAnyErr(callback, 202, err, operationID)
+			common.CheckAnyErrCallback(callback, 202, err, operationID)
 			lc.ShowName = g.GroupName
 			lc.FaceURL = g.FaceURL
 			groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
-			common.CheckAnyErr(callback, 202, err, operationID)
+			common.CheckAnyErrCallback(callback, 202, err, operationID)
 			if !utils.IsContain(s.SendID, groupMemberUidList) {
-				common.CheckAnyErr(callback, 208, errors.New("you not exist in this group"), operationID)
+				common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
 			}
 		} else {
 			s.SessionType = constant.SingleChatType
@@ -533,7 +533,7 @@ func (c *Conversation) SendMessage(callback common.SendMsgCallBack, message, rec
 			lc.UserID = recvID
 			lc.ConversationType = constant.SingleChatType
 			faceUrl, name, err := c.getUserNameAndFaceUrlByUid(callback, recvID, operationID)
-			common.CheckAnyErr(callback, 301, err, operationID)
+			common.CheckAnyErrCallback(callback, 301, err, operationID)
 			lc.FaceURL = faceUrl
 			lc.ShowName = name
 		}
@@ -541,7 +541,7 @@ func (c *Conversation) SendMessage(callback common.SendMsgCallBack, message, rec
 		lc.LatestMsg = utils.StructToJsonString(s)
 		msgStructToLocalChatLog(&localMessage, &s)
 		err := c.db.InsertMessage(&localMessage)
-		common.CheckAnyErr(callback, 201, err, operationID)
+		common.CheckAnyErrCallback(callback, 201, err, operationID)
 		//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.AddConOrUpLatMsg,
 		//c}})
 		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
@@ -622,11 +622,11 @@ func (c *Conversation) SendMessage(callback common.SendMsgCallBack, message, rec
 		case constant.Quote:
 		case constant.Card:
 		default:
-			common.CheckAnyErr(callback, 202, errors.New("contentType not currently supported"+utils.Int32ToString(s.ContentType)), operationID)
+			common.CheckAnyErrCallback(callback, 202, errors.New("contentType not currently supported"+utils.Int32ToString(s.ContentType)), operationID)
 		}
 		msgStructToLocalChatLog(&localMessage, &s)
 		err = c.db.UpdateMessage(&localMessage)
-		common.CheckAnyErr(callback, 201, err, operationID)
+		common.CheckAnyErrCallback(callback, 201, err, operationID)
 		c.sendMessageToServer(&s, &lc, callback, delFile, &p, options, operationID)
 	}()
 }
@@ -637,7 +637,7 @@ func (c *Conversation) SendMessageNotOss(callback common.SendMsgCallBack, messag
 		p := server_api_params.OfflinePushInfo{}
 		common.JsonUnmarshalAndArgsValidate(offlinePushInfo, &p, callback, operationID)
 		if recvID == "" && groupID == "" {
-			common.CheckAnyErr(callback, 201, errors.New("recvID && groupID not be allowed"), operationID)
+			common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not be allowed"), operationID)
 		}
 		var localMessage db.LocalChatLog
 		var conversationID string
@@ -653,13 +653,13 @@ func (c *Conversation) SendMessageNotOss(callback common.SendMsgCallBack, messag
 			lc.GroupID = groupID
 			lc.ConversationType = constant.GroupChatType
 			g, err := c.db.GetGroupInfoByGroupID(groupID)
-			common.CheckAnyErr(callback, 202, err, operationID)
+			common.CheckAnyErrCallback(callback, 202, err, operationID)
 			lc.ShowName = g.GroupName
 			lc.FaceURL = g.FaceURL
 			groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
-			common.CheckAnyErr(callback, 202, err, operationID)
+			common.CheckAnyErrCallback(callback, 202, err, operationID)
 			if !utils.IsContain(s.SendID, groupMemberUidList) {
-				common.CheckAnyErr(callback, 208, errors.New("you not exist in this group"), operationID)
+				common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
 			}
 		} else {
 			s.SessionType = constant.SingleChatType
@@ -676,7 +676,7 @@ func (c *Conversation) SendMessageNotOss(callback common.SendMsgCallBack, messag
 		lc.LatestMsg = utils.StructToJsonString(s)
 		msgStructToLocalChatLog(&localMessage, &s)
 		err := c.db.InsertMessage(&localMessage)
-		common.CheckAnyErr(callback, 201, err, operationID)
+		common.CheckAnyErrCallback(callback, 201, err, operationID)
 		//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.AddConOrUpLatMsg,
 		//c}})
 		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
@@ -686,22 +686,22 @@ func (c *Conversation) SendMessageNotOss(callback common.SendMsgCallBack, messag
 
 		msgStructToLocalChatLog(&localMessage, &s)
 		err = c.db.UpdateMessage(&localMessage)
-		common.CheckAnyErr(callback, 201, err, operationID)
+		common.CheckAnyErrCallback(callback, 201, err, operationID)
 		c.sendMessageToServer(&s, &lc, callback, delFile, &p, options, operationID)
 
 	}()
 }
 func (c *Conversation) internalSendMessage(callback common.Base, s *sdk_struct.MsgStruct, recvID, groupID, operationID string, p *server_api_params.OfflinePushInfo, onlineUserOnly bool, options map[string]bool) error {
 	if recvID == "" && groupID == "" {
-		common.CheckAnyErr(callback, 201, errors.New("recvID && groupID not be allowed"), operationID)
+		common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not be allowed"), operationID)
 	}
 	if recvID == "" {
 		s.SessionType = constant.GroupChatType
 		s.GroupID = groupID
 		groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
-		common.CheckAnyErr(callback, 202, err, operationID)
+		common.CheckAnyErrCallback(callback, 202, err, operationID)
 		if !utils.IsContain(s.SendID, groupMemberUidList) {
-			common.CheckAnyErr(callback, 208, errors.New("you not exist in this group"), operationID)
+			common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
 		}
 
 	} else {
@@ -724,7 +724,7 @@ func (c *Conversation) internalSendMessage(callback common.Base, s *sdk_struct.M
 	timeout := 300
 	retryTimes := 0
 	_, err := c.SendReqWaitResp(&wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID, operationID)
-	common.CheckAnyErr(callback, 301, err, operationID)
+	common.CheckAnyErrCallback(callback, 301, err, operationID)
 	return nil
 
 }
@@ -881,7 +881,7 @@ func (c *Conversation) GetHistoryMessageList(callback common.Base, getMessageOpt
 	go func() {
 		log.NewInfo(operationID, "GetHistoryMessageList args: ", getMessageOptions)
 		var unmarshalParams sdk_params_callback.GetHistoryMessageListParams
-		common.JsonUnmarshal(getMessageOptions, &unmarshalParams, callback, operationID)
+		common.JsonUnmarshalCallback(getMessageOptions, &unmarshalParams, callback, operationID)
 		result := c.getHistoryMessageList(callback, unmarshalParams, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
 		log.NewInfo(operationID, "GetHistoryMessageList callback: ", utils.StructToJsonStringDefault(result))
@@ -895,7 +895,7 @@ func (c *Conversation) RevokeMessage(callback common.Base, message string, opera
 	go func() {
 		log.NewInfo(operationID, "RevokeMessage args: ", message)
 		var unmarshalParams sdk_params_callback.RevokeMessageParams
-		common.JsonUnmarshal(message, &unmarshalParams, callback, operationID)
+		common.JsonUnmarshalcall(message, &unmarshalParams, callback, operationID)
 		c.revokeOneMessage(callback, unmarshalParams, operationID)
 		callback.OnSuccess(sdk_params_callback.RevokeMessageCallback)
 		log.NewInfo(operationID, "RevokeMessage callback: ", sdk_params_callback.RevokeMessageCallback)
