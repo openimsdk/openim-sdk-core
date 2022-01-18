@@ -38,7 +38,8 @@ func (d *DataBase) GetGroupMemberListByGroupID(groupID string) ([]*LocalGroupMem
 	err := d.conn.Where("group_id = ? ", groupID).Find(&groupMemberList).Error
 	var transfer []*LocalGroupMember
 	for _, v := range groupMemberList {
-		transfer = append(transfer, &v)
+		v1 := v
+		transfer = append(transfer, &v1)
 	}
 	return transfer, utils.Wrap(err, "GetGroupMemberListByGroupID failed ")
 }

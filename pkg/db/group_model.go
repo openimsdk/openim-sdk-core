@@ -29,10 +29,10 @@ func (d *DataBase) GetJoinedGroupList() ([]*LocalGroup, error) {
 	defer d.mRWMutex.Unlock()
 	var groupList []LocalGroup
 	err := d.conn.Find(&groupList).Error
-
 	var transfer []*LocalGroup
 	for _, v := range groupList {
-		transfer = append(transfer, &v)
+		v1 := v
+		transfer = append(transfer, &v1)
 	}
 	return transfer, utils.Wrap(err, "GetJoinedGroupList failed ")
 }

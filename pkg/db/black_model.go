@@ -13,7 +13,8 @@ func (d *DataBase) GetBlackList() ([]*LocalBlack, error) {
 	err := d.conn.Find(&blackList).Error
 	var transfer []*LocalBlack
 	for _, v := range blackList {
-		transfer = append(transfer, &v)
+		v1 := v
+		transfer = append(transfer, &v1)
 	}
 	return transfer, err
 

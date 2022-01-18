@@ -56,7 +56,8 @@ func (d *DataBase) GetFriendInfoList(friendUserIDList []string) ([]*LocalFriend,
 	err := utils.Wrap(d.conn.Where("friend_user_id IN ?", friendUserIDList).Find(&friendList).Error, "GetFriendInfoListByFriendUserID failed")
 	var transfer []*LocalFriend
 	for _, v := range friendList {
-		transfer = append(transfer, &v)
+		v1 := v
+		transfer = append(transfer, &v1)
 	}
 	return transfer, err
 }

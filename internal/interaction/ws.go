@@ -103,12 +103,10 @@ func (ws *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, ret
 }
 
 func (u *Ws) ReadData() {
-	log.Info("", "this is first read data", u.WsConn.conn)
 	for {
 		isErrorOccurred := false
 		operationID := utils.OperationIDGenerator()
 		if u.WsConn.conn != nil {
-			log.Info(operationID, "ws is not null")
 			//	timeout := 5
 			//	u.WsConn.SetReadTimeout(timeout)
 			msgType, message, err := u.WsConn.conn.ReadMessage()
