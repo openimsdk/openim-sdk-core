@@ -1,7 +1,7 @@
 package user
 
 import (
-	"github.com/mitchellh/mapstructure"
+	//"github.com/mitchellh/mapstructure"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -82,13 +82,14 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 }
 
 func (u *User) GetUsersInfoFromSvr(callback common.Base, UserIDList sdk.GetUsersInfoParam, operationID string) sdk.GetUsersInfoCallback {
-	apiReq := api.GetUsersInfoReq{}
-	apiReq.OperationID = operationID
-	apiReq.UserIDList = UserIDList
-	commData := u.p.PostFatalCallback(callback, constant.GetUsersInfoRouter, apiReq, apiReq.OperationID)
-	apiResp := make([]*api.PublicUserInfo, 0)
-	common.MapstructureDecode(commData.Data, &apiResp, callback, apiReq.OperationID)
-	return apiResp
+	return nil
+	//apiReq := api.GetUsersInfoReq{}
+	//apiReq.OperationID = operationID
+	//apiReq.UserIDList = UserIDList
+	//commData := u.p.PostFatalCallback(callback, constant.GetUsersInfoRouter, apiReq, apiReq.OperationID)
+	//apiResp := make([]*api.PublicUserInfo, 0)
+	//common.MapstructureDecode(commData.Data, &apiResp, callback, apiReq.OperationID)
+	//return apiResp
 }
 
 func (u *User) getSelfUserInfo(callback common.Base, operationID string) sdk.GetSelfUserInfoCallback {
@@ -100,31 +101,33 @@ func (u *User) getSelfUserInfo(callback common.Base, operationID string) sdk.Get
 }
 
 func (u *User) updateSelfUserInfo(callback common.Base, userInfo sdk.SetSelfUserInfoParam, operationID string) *api.CommDataResp {
-	apiReq := api.UpdateSelfUserInfoReq{}
-	apiReq.OperationID = operationID
-	apiReq.UserInfo = api.UserInfo(userInfo)
-	apiReq.UserID = u.loginUserID
-	commData := u.p.PostFatalCallback(callback, constant.UpdateSelfUserInfoRouter, apiReq, apiReq.OperationID)
-	apiResp := api.CommDataResp{}
-	common.MapstructureDecode(commData.Data, &apiResp, callback, apiReq.OperationID)
-	return &apiResp
+	return nil
+	//apiReq := api.UpdateSelfUserInfoReq{}
+	//apiReq.OperationID = operationID
+	//apiReq.UserInfo = api.UserInfo(userInfo)
+	//apiReq.UserID = u.loginUserID
+	//commData := u.p.PostFatalCallback(callback, constant.UpdateSelfUserInfoRouter, apiReq, apiReq.OperationID)
+	//apiResp := api.CommDataResp{}
+	//common.MapstructureDecode(commData.Data, &apiResp, callback, apiReq.OperationID)
+	//return &apiResp
 }
 
 func (u *User) GetSelfUserInfoFromSvr(operationID string) (*api.UserInfo, error) {
-	log.Debug(operationID, utils.GetSelfFuncName())
-	apiReq := api.GetSelfUserInfoReq{}
-	apiReq.OperationID = operationID
-	apiReq.UserID = u.loginUserID
-	commData, err := u.p.PostReturn(constant.GetSelfUserInfoRouter, apiReq)
-	if err != nil {
-		return nil, utils.Wrap(err, apiReq.OperationID)
-	}
-	apiResp := api.UserInfo{}
-	mapstructure.Decode(commData.Data, &apiResp)
-	if err != nil {
-		return nil, utils.Wrap(err, apiReq.OperationID)
-	}
-	return &apiResp, nil
+	return nil, nil
+	//log.Debug(operationID, utils.GetSelfFuncName())
+	//apiReq := api.GetSelfUserInfoReq{}
+	//apiReq.OperationID = operationID
+	//apiReq.UserID = u.loginUserID
+	//commData, err := u.p.PostReturn(constant.GetSelfUserInfoRouter, apiReq)
+	//if err != nil {
+	//	return nil, utils.Wrap(err, apiReq.OperationID)
+	//}
+	//apiResp := api.UserInfo{}
+	//mapstructure.Decode(commData.Data, &apiResp)
+	//if err != nil {
+	//	return nil, utils.Wrap(err, apiReq.OperationID)
+	//}
+	//return &apiResp, nil
 }
 
 func (u *User) DoUserNotification(msg *api.MsgData) {

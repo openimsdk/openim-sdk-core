@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/mitchellh/mapstructure"
+	//"github.com/mitchellh/mapstructure"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"math/rand"
 	"net/http"
 	"net/url"
 	ws "open_im_sdk/internal/interaction"
-	"open_im_sdk/pkg/constant"
+	//	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"path"
@@ -26,17 +26,18 @@ func NewCOS(p *ws.PostApi) *COS {
 }
 
 func (c *COS) tencentCOSCredentials() (*server_api_params.TencentCloudStorageCredentialRespData, error) {
-	req := server_api_params.TencentCloudStorageCredentialReq{OperationID: utils.OperationIDGenerator()}
-	commData, err := c.p.PostReturn(constant.TencentCloudStorageCredentialRouter, req)
-	if err != nil {
-		return nil, utils.Wrap(err, "")
-	}
-	var resp server_api_params.TencentCloudStorageCredentialResp
-	err = mapstructure.Decode(commData.Data, resp.Data)
-	if err != nil {
-		return nil, utils.Wrap(err, "")
-	}
-	return &resp.Data, nil
+	return nil, nil
+	//req := server_api_params.TencentCloudStorageCredentialReq{OperationID: utils.OperationIDGenerator()}
+	//commData, err := c.p.PostReturn(constant.TencentCloudStorageCredentialRouter, req)
+	//if err != nil {
+	//	return nil, utils.Wrap(err, "")
+	//}
+	//var resp server_api_params.TencentCloudStorageCredentialResp
+	//err = mapstructure.Decode(commData.Data, resp.Data)
+	//if err != nil {
+	//	return nil, utils.Wrap(err, "")
+	//}
+	//return &resp.Data, nil
 }
 
 func (c *COS) UploadImage(filePath string, onProgressFun func(int)) (string, string, error) {
