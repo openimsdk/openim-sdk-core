@@ -17,10 +17,9 @@ func NewPostApi(token string, apiAddress string) *PostApi {
 	return &PostApi{token: token, apiAddress: apiAddress}
 }
 
-func (p *PostApi) PostFatalCallback(callback common.Base, url string, data interface{}, operationID string) *server_api_params.CommDataResp {
+func (p *PostApi) PostFatalCallback(callback common.Base, url string, data interface{}, output interface{}, operationID string) *server_api_params.CommDataResp {
 	content, err := network.Post2Api(p.apiAddress+url, data, p.token)
-	c := common.CheckErrAndResp(callback, err, content, operationID)
-	return c
+	common.CheckErrAndRespCallback(callback, err, content, output, operationID)
 }
 
 func (pe *postErr) OnError(errCode int32, errMsg string) {
@@ -34,8 +33,8 @@ type postErr struct {
 	err error
 }
 
-func (p *PostApi) PostReturn(url string, data interface{}, output interface{}) (*server_api_params.CommDataResp, error) {
+func (p *PostApi) PostReturn(url string, data interface{}, output interface{}) error {
 	//log.Debug("000", utils.GetSelfFuncName(), p.apiAddress+url)
 	content, err := network.Post2Api(p.apiAddress+url, data, p.token)
-	return common.CheckErrAndRespReturn(err, content, output)
+	return common.CheckErrAndResp(err, content, output)
 }

@@ -20,12 +20,10 @@ func init() {
 
 func CheckAnyErrCallback(callback Base, errCode int32, err error, operationID string) {
 	if err != nil {
-		if callback != nil {
-			errInfo := "operationID[" + operationID + "], " + "info[" + err.Error() + "]"
-			log.NewError(operationID, "checkErr ", errInfo)
-			callback.OnError(errCode, errInfo)
-			runtime.Goexit()
-		}
+		errInfo := "operationID[" + operationID + "], " + "info[" + err.Error() + "]"
+		log.NewError(operationID, "checkErr ", errInfo)
+		callback.OnError(errCode, errInfo)
+		runtime.Goexit()
 	}
 }
 
@@ -41,7 +39,7 @@ func CheckArgsErrCallback(callback Base, err error, operationID string) {
 	CheckAnyErrCallback(callback, constant.ErrArgs.ErrCode, err, operationID)
 }
 
-func CheckErrAndRespCallback(callback Base, err error, resp []byte, operationID string, output interface{}) {
+func CheckErrAndRespCallback(callback Base, err error, resp []byte, output interface{}, operationID string) {
 	log.Debug(operationID, utils.GetSelfFuncName(), "args: ", string(resp))
 	if err = CheckErrAndResp(err, resp, output); err != nil {
 		log.Error(operationID, "CheckErrAndResp failed ", err.Error())
@@ -86,7 +84,6 @@ func CheckErrAndResp(err error, resp []byte, output interface{}) error {
 		return utils.Wrap(err, "")
 	}
 	return nil
-
 }
 
 func JsonUnmarshalAndArgsValidate(s string, args interface{}, callback Base, operationID string) error {
