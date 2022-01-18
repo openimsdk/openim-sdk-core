@@ -144,7 +144,7 @@ func (f *Friend) GetFriendList(callback common.Base, operationID string) {
 		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 		var filterLocalFriendList sdk.GetFriendListCallback
 		localFriendList, err := f.db.GetAllFriendList()
-		common.CheckDBErrCallback((callback, err, operationID)
+		common.CheckDBErrCallback(callback, err, operationID)
 		localBlackUidList, err := f.db.GetBlackListUserID()
 		common.CheckDBErrCallback(callback, err, operationID)
 		for _, v := range localFriendList {
