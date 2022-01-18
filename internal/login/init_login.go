@@ -130,7 +130,7 @@ func (u *LoginMgr) login(userID, token string, cb common.Base, operationID strin
 	}
 	objStorage := comm2.NewCOS(p)
 	u.conversation = conv.NewConversation(u.ws, u.db, p, u.conversationCh,
-		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
+		u.loginUserID, u.imConfig.Platform, u.imConfig.DbDir,
 		u.friend, u.group, u.user, objStorage)
 	u.conversation.SetConversationListener(u.conversationListener)
 	u.conversation.SetMsgListener(u.advancedMsgListener)
