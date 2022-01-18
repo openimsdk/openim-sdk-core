@@ -164,14 +164,14 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				}
 				switch v.SessionType {
 				case constant.SingleChatType:
-					lc.ConversationID = GetConversationIDBySessionType(v.RecvID, constant.SingleChatType)
+					lc.ConversationID = c.GetConversationIDBySessionType(v.RecvID, constant.SingleChatType)
 					lc.UserID = v.RecvID
 					//localUserInfo,_ := c.user.GetLoginUser()
 					//c.FaceURL = localUserInfo.FaceUrl
 					//c.ShowName = localUserInfo.Nickname
 				case constant.GroupChatType:
 					lc.GroupID = v.GroupID
-					lc.ConversationID = GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
+					lc.ConversationID = c.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
 					//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
 					//if err != nil {
 					//	utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
@@ -204,13 +204,13 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 
 				switch v.SessionType {
 				case constant.SingleChatType:
-					lc.ConversationID = GetConversationIDBySessionType(v.SendID, constant.SingleChatType)
+					lc.ConversationID = c.GetConversationIDBySessionType(v.SendID, constant.SingleChatType)
 					lc.UserID = v.SendID
 					lc.ShowName = msg.SenderNickname
 					lc.FaceURL = msg.SenderFaceURL
 				case constant.GroupChatType:
 					lc.GroupID = v.GroupID
-					lc.ConversationID = GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
+					lc.ConversationID = c.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
 					//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
 					//if err != nil {
 					//	utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
@@ -339,84 +339,84 @@ func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 }
 func (c *Conversation) doMsgReadState(msgReadList []*sdk_struct.MsgStruct) {
-	var messageReceiptResp []*sdk_struct.MessageReceipt
-	var msgIdList []string
-	for _, rd := range msgReadList {
-		err := json.Unmarshal([]byte(rd.Content), &msgIdList)
-		if err != nil {
-			log.Error("internal", "unmarshal failed, err : ", err.Error())
-			return
-		}
-		var msgIdListStatusOK []string
-		for _, v := range msgIdList {
-			t := new(db.LocalChatLog)
-			t.ClientMsgID = v
-			t.IsRead = constant.HasRead
-			err := c.UpdateMessage(t)
-			if err != nil {
-				log.Error("internal", "setMessageHasReadByMsgID err:", err, "ClientMsgID", v)
-				continue
-			}
-			msgIdListStatusOK = append(msgIdListStatusOK, v)
-		}
-		if len(msgIdListStatusOK) > 0 {
-			msgRt := new(sdk_struct.MessageReceipt)
-			msgRt.ContentType = rd.ContentType
-			msgRt.MsgFrom = rd.MsgFrom
-			msgRt.ReadTime = rd.SendTime
-			msgRt.UserID = rd.SendID
-			msgRt.SessionType = rd.SessionType
-			msgRt.MsgIdList = msgIdListStatusOK
-			messageReceiptResp = append(messageReceiptResp, msgRt)
-		}
-	}
-	if len(messageReceiptResp) > 0 {
-		for _, v := range c.MsgListenerList {
-			log.Info("internal", "OnRecvC2CReadReceipt: ", utils.StructToJsonString(messageReceiptResp))
-			v.OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
-		}
-	}
+	//var messageReceiptResp []*sdk_struct.MessageReceipt
+	//var msgIdList []string
+	//for _, rd := range msgReadList {
+	//	err := json.Unmarshal([]byte(rd.Content), &msgIdList)
+	//	if err != nil {
+	//		log.Error("internal", "unmarshal failed, err : ", err.Error())
+	//		return
+	//	}
+	//	var msgIdListStatusOK []string
+	//	for _, v := range msgIdList {
+	//		t := new(db.LocalChatLog)
+	//		t.ClientMsgID = v
+	//		t.IsRead = constant.HasRead
+	//		err := c.UpdateMessage(t)
+	//		if err != nil {
+	//			log.Error("internal", "setMessageHasReadByMsgID err:", err, "ClientMsgID", v)
+	//			continue
+	//		}
+	//		msgIdListStatusOK = append(msgIdListStatusOK, v)
+	//	}
+	//	if len(msgIdListStatusOK) > 0 {
+	//		msgRt := new(sdk_struct.MessageReceipt)
+	//		msgRt.ContentType = rd.ContentType
+	//		msgRt.MsgFrom = rd.MsgFrom
+	//		msgRt.ReadTime = rd.SendTime
+	//		msgRt.UserID = rd.SendID
+	//		msgRt.SessionType = rd.SessionType
+	//		msgRt.MsgIdList = msgIdListStatusOK
+	//		messageReceiptResp = append(messageReceiptResp, msgRt)
+	//	}
+	//}
+	//if len(messageReceiptResp) > 0 {
+	//	for _, v := range c.MsgListenerList {
+	//		log.Info("internal", "OnRecvC2CReadReceipt: ", utils.StructToJsonString(messageReceiptResp))
+	//		v.OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
+	//	}
+	//}
 }
 
 func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
-	if c.ConversationListener == nil {
-		log.Error("internal", "not set conversationListener")
-		return
-	}
-	node := c2v.Value.(common.UpdateConNode)
-	switch node.Action {
-	case constant.AddConOrUpLatMsg:
-		lc := node.Args.(db.LocalConversation)
-		oc, err := c.GetConversation(node.ConId)
-		if err == nil && oc != nil {
-			if time.Time(lc.LatestMsgSendTime).After(time.Time(oc.LatestMsgSendTime)) { //The session update of asynchronous messages is subject to the latest sending time
-				err := c.UpdateColumnsConversation(node.ConId, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
-				if err != nil {
-					log.Error("internal", "updateConversationLatestMsgModel err: ", err)
-				}
-			}
-		} else {
-			err4 := c.InsertConversation(&lc)
-			if err4 != nil {
-				log.Error("internal", "insert new conversation err:", err4.Error())
-
-			}
-			var list []*db.LocalConversation
-			list = append(list, &lc)
-			c.ConversationListener.OnNewConversation(utils.StructToJsonString(list))
-		}
-
-	case constant.UnreadCountSetZero:
-		if err := c.UpdateColumnsConversation(node.ConId, map[string]interface{}{"unread_count": 0}); err != nil {
-		} else {
-			totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
-			if err == nil {
-				c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
-			} else {
-				log.Error("internal", "getTotalUnreadMsgCountModel err", err.Error())
-			}
-
-		}
+	//if c.ConversationListener == nil {
+	//	log.Error("internal", "not set conversationListener")
+	//	return
+	//}
+	//node := c2v.Value.(common.UpdateConNode)
+	//switch node.Action {
+	//case constant.AddConOrUpLatMsg:
+	//	lc := node.Args.(db.LocalConversation)
+	//	oc, err := c.GetConversation(node.ConId)
+	//	if err == nil && oc != nil {
+	//		if time.Time(lc.LatestMsgSendTime).After(time.Time(oc.LatestMsgSendTime)) { //The session update of asynchronous messages is subject to the latest sending time
+	//			err := c.UpdateColumnsConversation(node.ConId, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
+	//			if err != nil {
+	//				log.Error("internal", "updateConversationLatestMsgModel err: ", err)
+	//			}
+	//		}
+	//	} else {
+	//		err4 := c.InsertConversation(&lc)
+	//		if err4 != nil {
+	//			log.Error("internal", "insert new conversation err:", err4.Error())
+	//
+	//		}
+	//		var list []*db.LocalConversation
+	//		list = append(list, &lc)
+	//		c.ConversationListener.OnNewConversation(utils.StructToJsonString(list))
+	//	}
+	//
+	//case constant.UnreadCountSetZero:
+	//	if err := c.UpdateColumnsConversation(node.ConId, map[string]interface{}{"unread_count": 0}); err != nil {
+	//	} else {
+	//		totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
+	//		if err == nil {
+	//			c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
+	//		} else {
+	//			log.Error("internal", "getTotalUnreadMsgCountModel err", err.Error())
+	//		}
+	//
+	//	}
 	//case ConChange:
 	//	err, list := u.getAllConversationListModel()
 	//	if err != nil {
@@ -429,72 +429,72 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 	//
 	//		}
 	//	}
-	case constant.IncrUnread:
-		err := c.IncrConversationUnreadCount(node.ConId)
-		if err != nil {
-			log.Error("internal", "incrConversationUnreadCount database err:", err.Error())
-			return
-		}
-	case constant.TotalUnreadMessageChanged:
-		totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
-		if err != nil {
-			log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
-		} else {
-			c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
-		}
-	case constant.UpdateFaceUrlAndNickName:
-		lc := node.Args.(db.LocalConversation)
-		if lc.ShowName != "" || lc.FaceURL != "" {
-
-			err := c.UpdateConversation(&lc)
-			if err != nil {
-				log.Error("internal", "setConversationFaceUrlAndNickName database err:", err.Error())
-				return
-			}
-		}
-
-	case constant.UpdateLatestMessageChange:
-		conversationID := node.ConId
-		var latestMsg sdk_struct.MsgStruct
-		l, err := c.GetConversation(conversationID)
-		if err != nil {
-			log.Error("internal", "getConversationLatestMsgModel err", err.Error())
-		} else {
-			err := json.Unmarshal([]byte(l.LatestMsg), &latestMsg)
-			if err != nil {
-				log.Error("internal", "latestMsg,Unmarshal err :", err.Error())
-			} else {
-				latestMsg.IsRead = true
-				newLatestMessage := utils.StructToJsonString(latestMsg)
-				err = c.UpdateColumnsConversation(node.ConId, map[string]interface{}{"latest_msg_send_time": latestMsg.SendTime, "latest_msg": newLatestMessage})
-				if err != nil {
-					log.Error("internal", "updateConversationLatestMsgModel err :", err.Error())
-				}
-			}
-		}
-	case constant.NewConChange:
-		cidList := node.Args.([]string)
-		cLists, err := c.db.GetMultipleConversation(cidList)
-		if err != nil {
-			log.Error("internal", "getMultipleConversationModel err :", err.Error())
-		} else {
-			if cLists != nil {
-				log.Info("internal", "getMultipleConversationModel success :", cLists)
-				c.ConversationListener.OnConversationChanged(utils.StructToJsonString(cLists))
-			}
-		}
-	case constant.NewCon:
-		cidList := node.Args.([]string)
-		cLists, err := c.db.GetMultipleConversation(cidList)
-		if err != nil {
-			log.Error("internal", "getMultipleConversationModel err :", err.Error())
-		} else {
-			if cLists != nil {
-				log.Info("internal", "getMultipleConversationModel success :", cLists)
-				c.ConversationListener.OnNewConversation(utils.StructToJsonString(cLists))
-			}
-		}
-	}
+	//case constant.IncrUnread:
+	//	err := c.IncrConversationUnreadCount(node.ConId)
+	//	if err != nil {
+	//		log.Error("internal", "incrConversationUnreadCount database err:", err.Error())
+	//		return
+	//	}
+	//case constant.TotalUnreadMessageChanged:
+	//	totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
+	//	if err != nil {
+	//		log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
+	//	} else {
+	//		c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
+	//	}
+	//case constant.UpdateFaceUrlAndNickName:
+	//	lc := node.Args.(db.LocalConversation)
+	//	if lc.ShowName != "" || lc.FaceURL != "" {
+	//
+	//		err := c.UpdateConversation(&lc)
+	//		if err != nil {
+	//			log.Error("internal", "setConversationFaceUrlAndNickName database err:", err.Error())
+	//			return
+	//		}
+	//	}
+	//
+	//case constant.UpdateLatestMessageChange:
+	//	conversationID := node.ConId
+	//	var latestMsg sdk_struct.MsgStruct
+	//	l, err := c.GetConversation(conversationID)
+	//	if err != nil {
+	//		log.Error("internal", "getConversationLatestMsgModel err", err.Error())
+	//	} else {
+	//		err := json.Unmarshal([]byte(l.LatestMsg), &latestMsg)
+	//		if err != nil {
+	//			log.Error("internal", "latestMsg,Unmarshal err :", err.Error())
+	//		} else {
+	//			latestMsg.IsRead = true
+	//			newLatestMessage := utils.StructToJsonString(latestMsg)
+	//			err = c.UpdateColumnsConversation(node.ConId, map[string]interface{}{"latest_msg_send_time": latestMsg.SendTime, "latest_msg": newLatestMessage})
+	//			if err != nil {
+	//				log.Error("internal", "updateConversationLatestMsgModel err :", err.Error())
+	//			}
+	//		}
+	//	}
+	//case constant.NewConChange:
+	//	cidList := node.Args.([]string)
+	//	cLists, err := c.db.GetMultipleConversation(cidList)
+	//	if err != nil {
+	//		log.Error("internal", "getMultipleConversationModel err :", err.Error())
+	//	} else {
+	//		if cLists != nil {
+	//			log.Info("internal", "getMultipleConversationModel success :", cLists)
+	//			c.ConversationListener.OnConversationChanged(utils.StructToJsonString(cLists))
+	//		}
+	//	}
+	//case constant.NewCon:
+	//	cidList := node.Args.([]string)
+	//	cLists, err := c.db.GetMultipleConversation(cidList)
+	//	if err != nil {
+	//		log.Error("internal", "getMultipleConversationModel err :", err.Error())
+	//	} else {
+	//		if cLists != nil {
+	//			log.Info("internal", "getMultipleConversationModel success :", cLists)
+	//			c.ConversationListener.OnNewConversation(utils.StructToJsonString(cLists))
+	//		}
+	//	}
+	//}
 }
 
 func (c *Conversation) Work(c2v common.Cmd2Value) {
@@ -565,46 +565,46 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 //	}
 //}
 func (c *Conversation) updateConversation(lc *db.LocalConversation, cc, nc map[string]db.LocalConversation) {
-	b, err := c.ConversationIfExists(lc.ConversationID)
-	if err != nil {
-		log.Error("internal", lc, cc, nc, err.Error())
-		return
-	}
-	if b {
-		//_, o := u.getOneConversationModel(c.ConversationID)
-		//if c.LatestMsgSendTime > o.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
-		//	err := u.updateConversationLatestMsgModel(c.LatestMsgSendTime, c.LatestMsg, c.ConversationID)
-		//	if err != nil {
-		//		sdkLog("updateConversationLatestMsgModel err: ", err)
-		//	} else {
-		//		cc[c.ConversationID] = void{}
-		//	}
-		//}
-		if oldC, ok := cc[lc.ConversationID]; ok {
-			if time.Time(oldC.LatestMsgSendTime).Before(time.Time(lc.LatestMsgSendTime)) {
-				lc.UnreadCount = lc.UnreadCount + oldC.UnreadCount
-				cc[lc.ConversationID] = *lc
-			} else {
-				oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
-				cc[lc.ConversationID] = oldC
-			}
-		} else {
-			cc[lc.ConversationID] = *lc
-		}
-
-	} else {
-		if oldC, ok := nc[lc.ConversationID]; ok {
-			if time.Time(oldC.LatestMsgSendTime).Before(time.Time(lc.LatestMsgSendTime)) {
-				lc.UnreadCount = lc.UnreadCount + oldC.UnreadCount
-				nc[lc.ConversationID] = *lc
-			} else {
-				oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
-				cc[lc.ConversationID] = oldC
-			}
-		} else {
-			nc[lc.ConversationID] = *lc
-		}
-	}
+	//b, err := c.ConversationIfExists(lc.ConversationID)
+	//if err != nil {
+	//	log.Error("internal", lc, cc, nc, err.Error())
+	//	return
+	//}
+	//if b {
+	//	//_, o := u.getOneConversationModel(c.ConversationID)
+	//	//if c.LatestMsgSendTime > o.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
+	//	//	err := u.updateConversationLatestMsgModel(c.LatestMsgSendTime, c.LatestMsg, c.ConversationID)
+	//	//	if err != nil {
+	//	//		sdkLog("updateConversationLatestMsgModel err: ", err)
+	//	//	} else {
+	//	//		cc[c.ConversationID] = void{}
+	//	//	}
+	//	//}
+	//	if oldC, ok := cc[lc.ConversationID]; ok {
+	//		if time.Time(oldC.LatestMsgSendTime).Before(time.Time(lc.LatestMsgSendTime)) {
+	//			lc.UnreadCount = lc.UnreadCount + oldC.UnreadCount
+	//			cc[lc.ConversationID] = *lc
+	//		} else {
+	//			oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
+	//			cc[lc.ConversationID] = oldC
+	//		}
+	//	} else {
+	//		cc[lc.ConversationID] = *lc
+	//	}
+	//
+	//} else {
+	//	if oldC, ok := nc[lc.ConversationID]; ok {
+	//		if time.Time(oldC.LatestMsgSendTime).Before(time.Time(lc.LatestMsgSendTime)) {
+	//			lc.UnreadCount = lc.UnreadCount + oldC.UnreadCount
+	//			nc[lc.ConversationID] = *lc
+	//		} else {
+	//			oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
+	//			cc[lc.ConversationID] = oldC
+	//		}
+	//	} else {
+	//		nc[lc.ConversationID] = *lc
+	//	}
+	//}
 
 	//if u.judgeConversationIfExists(c.ConversationID) {
 	//	_, o := u.getOneConversationModel(c.ConversationID)

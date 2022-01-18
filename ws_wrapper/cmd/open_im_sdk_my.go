@@ -28,18 +28,18 @@ func main() {
 	switch sysType {
 	case "darwin":
 		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: *openIMApiAddress,
-			WsAddr: *openIMWsAddress, Platform: utils.OSXPlatformID, DbDir: "./"})
+			WsAddr: *openIMWsAddress, Platform: utils.OSXPlatformID, DataDir: "./"})
 	case "linux":
 
 		//sdkDBDir:= flag.String("sdk_db_dir","","openIMSDK initialization path")
 		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: "http://" + utils.ServerIP + ":" + utils.IntToString(*openIMApiPort),
-			WsAddr: "ws://" + utils.ServerIP + ":" + utils.IntToString(*openIMWsPort), Platform: utils.WebPlatformID, DbDir: "../db/sdk/"})
+			WsAddr: "ws://" + utils.ServerIP + ":" + utils.IntToString(*openIMWsPort), Platform: utils.WebPlatformID, DataDir: "../db/sdk/"})
 
 	case "windows":
 		sdkWsPort = flag.Int("sdk_ws_port", 30000, "openIM ws listening port")
 		flag.Parse()
 		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: APIADDR,
-			WsAddr: WSADDR, Platform: utils.WebPlatformID, DbDir: "./", LogLevel: 6})
+			WsAddr: WSADDR, Platform: utils.WebPlatformID, DataDir: "./", LogLevel: 6})
 	default:
 		fmt.Println("this os not support", sysType)
 
