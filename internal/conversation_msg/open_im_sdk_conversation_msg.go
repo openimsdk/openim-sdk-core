@@ -293,13 +293,13 @@ func (c *Conversation) CreateVideoMessageFromFullPath(videoFullPath string, vide
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		dstFile := utils.FileTmpPath(videoFullPath, c.DbDir) //a->b
+		dstFile := utils.FileTmpPath(videoFullPath, c.DataDir) //a->b
 		s, err := utils.CopyFile(videoFullPath, dstFile)
 		if err != nil {
 			log.Error("internal", "open file failed: ", err, videoFullPath)
 		}
 		log.Info("internal", "videoFullPath dstFile", videoFullPath, dstFile, s)
-		dstFile = utils.FileTmpPath(snapshotFullPath, c.DbDir) //a->b
+		dstFile = utils.FileTmpPath(snapshotFullPath, c.DataDir) //a->b
 		s, err = utils.CopyFile(snapshotFullPath, dstFile)
 		if err != nil {
 			log.Error("internal", "open file failed: ", err, snapshotFullPath)
@@ -342,7 +342,7 @@ func (c *Conversation) CreateFileMessageFromFullPath(fileFullPath string, fileNa
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		dstFile := utils.FileTmpPath(fileFullPath, c.DbDir)
+		dstFile := utils.FileTmpPath(fileFullPath, c.DataDir)
 		_, err := utils.CopyFile(fileFullPath, dstFile)
 		log.Info("internal", "copy file, ", fileFullPath, dstFile)
 		if err != nil {
@@ -366,7 +366,7 @@ func (c *Conversation) CreateImageMessageFromFullPath(imageFullPath string) stri
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		dstFile := utils.FileTmpPath(imageFullPath, c.DbDir) //a->b
+		dstFile := utils.FileTmpPath(imageFullPath, c.DataDir) //a->b
 		_, err := utils.CopyFile(imageFullPath, dstFile)
 		log.Info("internal", "copy file, ", imageFullPath, dstFile)
 		if err != nil {
@@ -396,7 +396,7 @@ func (c *Conversation) CreateSoundMessageFromFullPath(soundPath string, duration
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		dstFile := utils.FileTmpPath(soundPath, c.DbDir) //a->b
+		dstFile := utils.FileTmpPath(soundPath, c.DataDir) //a->b
 		_, err := utils.CopyFile(soundPath, dstFile)
 		log.Info("internal", "copy file, ", soundPath, dstFile)
 		if err != nil {
@@ -421,7 +421,7 @@ func (c *Conversation) CreateSoundMessageFromFullPath(soundPath string, duration
 func (c *Conversation) CreateImageMessage(imagePath string) string {
 	s := sdk_struct.MsgStruct{}
 	c.initBasicInfo(&s, constant.UserMsgType, constant.Picture)
-	s.PictureElem.SourcePath = c.DbDir + imagePath
+	s.PictureElem.SourcePath = c.DataDir + imagePath
 	log.Debug("internal", "ImageMessage  path:", s.PictureElem.SourcePath)
 	imageInfo, err := getImageInfo(s.PictureElem.SourcePath)
 	if err != nil {
@@ -455,7 +455,7 @@ func msgStructToLocalChatLog(dst *db.LocalChatLog, src *sdk_struct.MsgStruct) {
 func localChatLogToMsgStruct(dst *sdk_struct.MsgStruct, src *db.LocalChatLog) {
 	copier.Copy(dst, src)
 }
-func (c *Conversation) checkErrAndUpdateMessage(callback common2.SendMsgCallBack, errCode int32, err error, s *sdk_struct.MsgStruct, lc *db.LocalConversation, operationID string) {
+func (c *Conversation) checkErrAndUpdateMessage(callback common.SendMsgCallBack, errCode int32, err error, s *sdk_struct.MsgStruct, lc *db.LocalConversation, operationID string) {
 	if err != nil {
 		if callback != nil {
 			c.updateMsgStatusAndTriggerConversation(s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc, operationID)
@@ -475,7 +475,7 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(clientMsgID, server
 	lc.LatestMsgSendTime = sendTime
 	//会话数据库操作，触发UI会话回调
 }
-func (c *Conversation) getUserNameAndFaceUrlByUid(callback common2.SendMsgCallBack, friendUserID, operationID string) (faceUrl, name string, err error) {
+func (c *Conversation) getUserNameAndFaceUrlByUid(callback common.SendMsgCallBack, friendUserID, operationID string) (faceUrl, name string, err error) {
 	friendInfo, _ := c.db.GetFriendInfoByFriendUserID(friendUserID)
 	if friendInfo != nil {
 		if friendInfo.Remark != "" {
@@ -493,7 +493,7 @@ func (c *Conversation) getUserNameAndFaceUrlByUid(callback common2.SendMsgCallBa
 
 }
 
-func (c *Conversation) SendMessage(callback common2.SendMsgCallBack, message, recvID, groupID string, offlinePushInfo string, operationID string) {
+func (c *Conversation) SendMessage(callback common.SendMsgCallBack, message, recvID, groupID string, offlinePushInfo string, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -557,9 +557,9 @@ func (c *Conversation) SendMessage(callback common2.SendMsgCallBack, message, re
 			var sourcePath string
 			if utils.FileExist(s.PictureElem.SourcePath) {
 				sourcePath = s.PictureElem.SourcePath
-				delFile = append(delFile, utils.FileTmpPath(s.PictureElem.SourcePath, c.DbDir))
+				delFile = append(delFile, utils.FileTmpPath(s.PictureElem.SourcePath, c.DataDir))
 			} else {
-				sourcePath = utils.FileTmpPath(s.PictureElem.SourcePath, c.DbDir)
+				sourcePath = utils.FileTmpPath(s.PictureElem.SourcePath, c.DataDir)
 				delFile = append(delFile, sourcePath)
 			}
 			log.Info(operationID, "file", sourcePath, delFile)
@@ -576,13 +576,13 @@ func (c *Conversation) SendMessage(callback common2.SendMsgCallBack, message, re
 			var sourcePath string
 			if utils.FileExist(s.SoundElem.SoundPath) {
 				sourcePath = s.SoundElem.SoundPath
-				delFile = append(delFile, utils.FileTmpPath(s.SoundElem.SoundPath, c.DbDir))
+				delFile = append(delFile, utils.FileTmpPath(s.SoundElem.SoundPath, c.DataDir))
 			} else {
-				sourcePath = utils.FileTmpPath(s.SoundElem.SoundPath, c.DbDir)
+				sourcePath = utils.FileTmpPath(s.SoundElem.SoundPath, c.DataDir)
 				delFile = append(delFile, sourcePath)
 			}
 			log.Info(operationID, "file", sourcePath, delFile)
-			soundURL, uuid, err := c.UploadSound(sourcePath, callback)
+			soundURL, uuid, err := c.UploadSound(sourcePath, callback.OnProgress, operationID)
 			c.checkErrAndUpdateMessage(callback, 301, err, &s, &lc, operationID)
 			s.SoundElem.SourceURL = soundURL
 			s.SoundElem.UUID = uuid
@@ -594,16 +594,16 @@ func (c *Conversation) SendMessage(callback common2.SendMsgCallBack, message, re
 			if utils.FileExist(s.VideoElem.VideoPath) {
 				videoPath = s.VideoElem.VideoPath
 				snapPath = s.VideoElem.SnapshotPath
-				delFile = append(delFile, utils.FileTmpPath(s.VideoElem.VideoPath, c.DbDir))
-				delFile = append(delFile, utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DbDir))
+				delFile = append(delFile, utils.FileTmpPath(s.VideoElem.VideoPath, c.DataDir))
+				delFile = append(delFile, utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DataDir))
 			} else {
-				videoPath = utils.FileTmpPath(s.VideoElem.VideoPath, c.DbDir)
-				snapPath = utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DbDir)
+				videoPath = utils.FileTmpPath(s.VideoElem.VideoPath, c.DataDir)
+				snapPath = utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DataDir)
 				delFile = append(delFile, videoPath)
 				delFile = append(delFile, snapPath)
 			}
 			log.Info(operationID, "file: ", videoPath, snapPath, delFile)
-			snapshotURL, snapshotUUID, videoURL, videoUUID, err := c.uploadVideo(videoPath, snapPath, callback)
+			snapshotURL, snapshotUUID, videoURL, videoUUID, err := c.UploadVideo(videoPath, snapPath, callback.OnProgress, operationID)
 			c.checkErrAndUpdateMessage(callback, 301, err, &s, &lc, operationID)
 			s.VideoElem.VideoURL = videoURL
 			s.VideoElem.SnapshotUUID = snapshotUUID
@@ -611,7 +611,7 @@ func (c *Conversation) SendMessage(callback common2.SendMsgCallBack, message, re
 			s.VideoElem.VideoUUID = videoUUID
 			s.Content = utils.StructToJsonString(s.VideoElem)
 		case constant.File:
-			fileURL, fileUUID, err := c.uploadFile(s.FileElem.FilePath, callback)
+			fileURL, fileUUID, err := c.UploadFile(s.FileElem.FilePath, callback.OnProgress, operationID)
 			c.checkErrAndUpdateMessage(callback, 301, err, &s, &lc, operationID)
 			s.FileElem.SourceURL = fileURL
 			s.FileElem.UUID = fileUUID
@@ -632,7 +632,7 @@ func (c *Conversation) SendMessage(callback common2.SendMsgCallBack, message, re
 		c.sendMessageToServer(&s, &lc, callback, delFile, &p, options, operationID)
 	}()
 }
-func (c *Conversation) SendMessageNotOss(callback common2.SendMsgCallBack, message, recvID, groupID string, offlinePushInfo string, operationID string) {
+func (c *Conversation) SendMessageNotOss(callback common.SendMsgCallBack, message, recvID, groupID string, offlinePushInfo string, operationID string) {
 	go func() {
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
@@ -730,7 +730,7 @@ func (c *Conversation) internalSendMessage(callback common.Base, s *sdk_struct.M
 	return nil
 
 }
-func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.LocalConversation, callback common2.SendMsgCallBack,
+func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.LocalConversation, callback common.SendMsgCallBack,
 	delFile []string, offlinePushInfo *server_api_params.OfflinePushInfo, options map[string]bool, operationID string) {
 	//Protocol conversion
 	var wsMsgData server_api_params.MsgData
@@ -771,7 +771,7 @@ func (c *Conversation) CreateSoundMessageByURL(soundBaseInfo string) string {
 func (c *Conversation) CreateSoundMessage(soundPath string, duration int64) string {
 	s := sdk_struct.MsgStruct{}
 	c.initBasicInfo(&s, constant.UserMsgType, constant.Voice)
-	s.SoundElem.SoundPath = c.DbDir + soundPath
+	s.SoundElem.SoundPath = c.DataDir + soundPath
 	s.SoundElem.Duration = duration
 	fi, err := os.Stat(s.SoundElem.SoundPath)
 	if err != nil {
@@ -794,13 +794,13 @@ func (c *Conversation) CreateVideoMessageByURL(videoBaseInfo string) string {
 func (c *Conversation) CreateVideoMessage(videoPath string, videoType string, duration int64, snapshotPath string) string {
 	s := sdk_struct.MsgStruct{}
 	c.initBasicInfo(&s, constant.UserMsgType, constant.Video)
-	s.VideoElem.VideoPath = c.DbDir + videoPath
+	s.VideoElem.VideoPath = c.DataDir + videoPath
 	s.VideoElem.VideoType = videoType
 	s.VideoElem.Duration = duration
 	if snapshotPath == "" {
 		s.VideoElem.SnapshotPath = ""
 	} else {
-		s.VideoElem.SnapshotPath = c.DbDir + snapshotPath
+		s.VideoElem.SnapshotPath = c.DataDir + snapshotPath
 	}
 	fi, err := os.Stat(s.VideoElem.VideoPath)
 	if err != nil {
@@ -833,7 +833,7 @@ func (c *Conversation) CreateFileMessageByURL(fileBaseInfo string) string {
 func (c *Conversation) CreateFileMessage(filePath string, fileName string) string {
 	s := sdk_struct.MsgStruct{}
 	c.initBasicInfo(&s, constant.UserMsgType, constant.File)
-	s.FileElem.FilePath = c.DbDir + filePath
+	s.FileElem.FilePath = c.DataDir + filePath
 	s.FileElem.FileName = fileName
 	fi, err := os.Stat(s.FileElem.FilePath)
 	if err != nil {
@@ -921,14 +921,14 @@ func (c *Conversation) MarkC2CMessageAsRead(callback common.Base, recvID string,
 	}
 	go func() {
 		log.NewInfo(operationID, "RevokeMessage args: ", recvID, msgIDList)
-		var unmarshalParams sdk_params_callback.RevokeMessageParams
+		var unmarshalParams sdk_params_callback.MarkC2CMessageAsReadParams
 		common.JsonUnmarshal(msgIDList, &unmarshalParams, callback, operationID)
-		c.revokeOneMessage(callback, unmarshalParams, operationID)
-		callback.OnSuccess(sdk_params_callback.RevokeMessageCallback)
-		log.NewInfo(operationID, "RevokeMessage callback: ", sdk_params_callback.RevokeMessageCallback)
+		c.markC2CMessageAsRead(callback, unmarshalParams, recvID, operationID)
+		callback.OnSuccess(sdk_params_callback.MarkC2CMessageAsReadCallback)
+		log.NewInfo(operationID, "RevokeMessage callback: ", sdk_params_callback.MarkC2CMessageAsReadCallback)
 	}()
 	go func() {
-		conversationID := c.GetConversationIDBySessionType(receiver, constant.SingleChatType)
+		conversationID := c.GetConversationIDBySessionType(recvID, constant.SingleChatType)
 		var list []string
 		err := json.Unmarshal([]byte(msgIDList), &list)
 		if err != nil {
@@ -985,18 +985,18 @@ func (c *Conversation) MarkC2CMessageAsRead(callback common.Base, recvID string,
 //	}()
 //}
 
-//func (c *Conversation) MarkGroupMessageHasRead(callback common.Base, groupID string, operationID string) {
-//	go func() {
-//		conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
-//		if err := u.setGroupMessageHasRead(groupID); err != nil {
-//			callback.OnError(201, err.Error())
-//		} else {
-//			callback.OnSuccess("")
-//			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConId: conversationID, Action: constant.UnreadCountSetZero}})
-//			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
-//		}
-//	}()
-//}
+func (c *Conversation) MarkGroupMessageHasRead(callback common.Base, groupID string, operationID string) {
+	go func() {
+		//conversationID := c.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+		//if err := u.setGroupMessageHasRead(groupID); err != nil {
+		//	callback.OnError(201, err.Error())
+		//} else {
+		callback.OnSuccess("")
+		//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConId: conversationID, Action: constant.UnreadCountSetZero}})
+		//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+		//}
+	}()
+}
 
 func (c *Conversation) DeleteMessageFromLocalStorage(callback common.Base, message string, operationID string) {
 	go func() {
