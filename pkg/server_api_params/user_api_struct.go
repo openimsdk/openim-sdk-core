@@ -25,6 +25,6 @@ type GetSelfUserInfoReq struct {
 }
 type GetSelfUserInfoResp struct {
 	CommResp
-	UserInfoList *UserInfo                `json:"-"`
-	Data         []map[string]interface{} `json:"data"`
+	UserInfo *UserInfo              `json:"-"`
+	Data     map[string]interface{} `json:"data"`
 }

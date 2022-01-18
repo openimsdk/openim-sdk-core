@@ -427,7 +427,7 @@ func CheckGroupMemberDiff(a []*db.LocalGroupMember, b []*db.LocalGroupMember) (a
 	}
 	//for b
 	for i, v := range b {
-		ib, ok := mapA[v.GroupID]
+		ib, ok := mapA[v.GroupID+v.UserID]
 		if !ok {
 			bInANot = append(bInANot, i)
 		} else {

@@ -400,6 +400,7 @@ func main() {
 	strMyUidx := "openIM100"
 	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMDAiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTY0MzEwOTkwMywibmJmIjoxNjQyNTA1MTAzLCJpYXQiOjE2NDI1MDUxMDN9.BFI6eZm-rug_LKe8TijufjwF5Ei4EfrGdtVeYsWs9Sw"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+	test.DoTestCreateGroup()
 	//	test.DoTestaddFriend()
 	//	open_im_sdk.DoTestGetFriendList()
 	//	open_im_sdk.DoTestAddToBlackList()

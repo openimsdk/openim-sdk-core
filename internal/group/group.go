@@ -205,6 +205,7 @@ func (g *Group) createGroup(callback common.Base, group sdk.CreateGroupBaseInfoP
 	apiReq.GroupType = group.GroupType
 	apiReq.MemberList = memberList
 	realData := api.CreateGroupResp{}
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "api req args: ", apiReq)
 	g.p.PostFatalCallback(callback, constant.CreateGroupRouter, apiReq, &realData.GroupInfo, apiReq.OperationID)
 	g.SyncJoinedGroupList(operationID)
 	g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID, operationID)
@@ -614,7 +615,7 @@ func (g *Group) getGroupAllMemberByGroupIDFromSvr(groupID string, operationID st
 	apiReq.OperationID = operationID
 	apiReq.GroupID = groupID
 	var realData []*api.GroupMemberFullInfo
-	err := g.p.PostReturn(constant.GetGroupAllMemberListRouter, apiReq, realData)
+	err := g.p.PostReturn(constant.GetGroupAllMemberListRouter, apiReq, &realData)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
