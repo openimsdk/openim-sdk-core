@@ -985,18 +985,18 @@ func (c *Conversation) MarkC2CMessageAsRead(callback common.Base, recvID string,
 //	}()
 //}
 
-func (c *Conversation) MarkGroupMessageHasRead(callback common.Base, groupID string, operationID string) {
-	go func() {
-		conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
-		if err := u.setGroupMessageHasRead(groupID); err != nil {
-			callback.OnError(201, err.Error())
-		} else {
-			callback.OnSuccess("")
-			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConId: conversationID, Action: constant.UnreadCountSetZero}})
-			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
-		}
-	}()
-}
+//func (c *Conversation) MarkGroupMessageHasRead(callback common.Base, groupID string, operationID string) {
+//	go func() {
+//		conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+//		if err := u.setGroupMessageHasRead(groupID); err != nil {
+//			callback.OnError(201, err.Error())
+//		} else {
+//			callback.OnSuccess("")
+//			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConId: conversationID, Action: constant.UnreadCountSetZero}})
+//			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+//		}
+//	}()
+//}
 
 func (c *Conversation) DeleteMessageFromLocalStorage(callback common.Base, message string, operationID string) {
 	go func() {
