@@ -915,47 +915,47 @@ func (c *Conversation) TypingStatusUpdate(callback common.Base, recvID, msgTip, 
 }
 
 func (c *Conversation) MarkC2CMessageAsRead(callback common.Base, recvID string, msgIDList, operationID string) {
-	if callback == nil {
-		return
-	}
-	go func() {
-		log.NewInfo(operationID, "RevokeMessage args: ", recvID, msgIDList)
-		var unmarshalParams sdk_params_callback.MarkC2CMessageAsReadParams
-		common.JsonUnmarshal(msgIDList, &unmarshalParams, callback, operationID)
-		c.markC2CMessageAsRead(callback, unmarshalParams, recvID, operationID)
-		callback.OnSuccess(sdk_params_callback.MarkC2CMessageAsReadCallback)
-		log.NewInfo(operationID, "RevokeMessage callback: ", sdk_params_callback.MarkC2CMessageAsReadCallback)
-	}()
-	go func() {
-		conversationID := c.GetConversationIDBySessionType(recvID, constant.SingleChatType)
-		var list []string
-		err := json.Unmarshal([]byte(msgIDList), &list)
-		if err != nil {
-			callback.OnError(201, "json unmarshal err")
-			return
-		}
-		if len(list) == 0 {
-			callback.OnError(200, "msg list is null")
-			return
-		}
-		s := utils.MsgStruct{}
-		u.initBasicInfo(&s, constant.UserMsgType, constant.HasReadReceipt)
-		s.Content = msgIDList
-		utils.sdkLog("MarkC2CMessageAsRead: send Message")
-		//err = u.autoSendMsg(&s, receiver, "", false, false, false)
-		if err != nil {
-			utils.sdkLog("MarkC2CMessageAsRead  err:", err.Error())
-			callback.OnError(300, err.Error())
-		} else {
-			callback.OnSuccess("")
-			err = u.setSingleMessageHasReadByMsgIDList(receiver, list)
-			if err != nil {
-				utils.sdkLog("setSingleMessageHasReadByMsgIDList  err:", err.Error())
-			}
-			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.UpdateLatestMessageChange, ""}})
-			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
-		}
-	}()
+	//if callback == nil {
+	//	return
+	//}
+	//go func() {
+	//	log.NewInfo(operationID, "RevokeMessage args: ", recvID, msgIDList)
+	//	var unmarshalParams sdk_params_callback.MarkC2CMessageAsReadParams
+	//	common.JsonUnmarshal(msgIDList, &unmarshalParams, callback, operationID)
+	//	c.markC2CMessageAsRead(callback, unmarshalParams, recvID, operationID)
+	//	callback.OnSuccess(sdk_params_callback.MarkC2CMessageAsReadCallback)
+	//	log.NewInfo(operationID, "RevokeMessage callback: ", sdk_params_callback.MarkC2CMessageAsReadCallback)
+	//}()
+	//go func() {
+	//	conversationID := c.GetConversationIDBySessionType(recvID, constant.SingleChatType)
+	//	var list []string
+	//	err := json.Unmarshal([]byte(msgIDList), &list)
+	//	if err != nil {
+	//		callback.OnError(201, "json unmarshal err")
+	//		return
+	//	}
+	//	if len(list) == 0 {
+	//		callback.OnError(200, "msg list is null")
+	//		return
+	//	}
+	//	s := utils.MsgStruct{}
+	//	u.initBasicInfo(&s, constant.UserMsgType, constant.HasReadReceipt)
+	//	s.Content = msgIDList
+	//	utils.sdkLog("MarkC2CMessageAsRead: send Message")
+	//	//err = u.autoSendMsg(&s, receiver, "", false, false, false)
+	//	if err != nil {
+	//		utils.sdkLog("MarkC2CMessageAsRead  err:", err.Error())
+	//		callback.OnError(300, err.Error())
+	//	} else {
+	//		callback.OnSuccess("")
+	//		err = u.setSingleMessageHasReadByMsgIDList(receiver, list)
+	//		if err != nil {
+	//			utils.sdkLog("setSingleMessageHasReadByMsgIDList  err:", err.Error())
+	//		}
+	//		u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.UpdateLatestMessageChange, ""}})
+	//		u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+	//	}
+	//}()
 }
 
 ////Deprecated

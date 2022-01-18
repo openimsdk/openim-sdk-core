@@ -314,7 +314,7 @@ func (g *Group) transferGroupOwner(callback common.Base, groupID, newOwnerUserID
 	apiReq.OperationID = operationID
 	apiReq.OldOwnerUserID = g.loginUserID
 	commData := g.p.PostFatalCallback(callback, constant.TransferGroupRouter, apiReq, apiReq.OperationID)
-	g.syncJoinedGroupMember(operationID)
+	g.SyncJoinedGroupMember(operationID)
 	g.syncGroupMemberByGroupID(groupID, operationID)
 	return commData
 }
@@ -326,7 +326,7 @@ func (g *Group) inviteUserToGroup(callback common.Base, groupID, reason string, 
 	apiReq.InvitedUserIDList = userList
 	apiReq.OperationID = operationID
 	commData := g.p.PostFatalCallback(callback, constant.InviteUserToGroupRouter, apiReq, apiReq.OperationID)
-	g.syncJoinedGroupMember(operationID)
+	g.SyncJoinedGroupMember(operationID)
 	g.syncGroupMemberByGroupID(groupID, operationID)
 	var realData sdk.InviteUserToGroupCallback
 	err := mapstructure.Decode(commData.Data, &realData)

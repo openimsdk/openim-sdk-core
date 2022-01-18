@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/mitchellh/mapstructure"
 	"github.com/tencentyun/cos-go-sdk-v5"
+	"math/rand"
 	"net/http"
 	"net/url"
 	ws "open_im_sdk/internal/interaction"
@@ -13,6 +14,7 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"path"
+	"time"
 )
 
 type COS struct {

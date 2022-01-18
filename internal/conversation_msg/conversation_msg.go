@@ -98,8 +98,9 @@ func (c *Conversation) GetCh() chan common.Cmd2Value {
 }
 
 func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
+	operationID := utils.OperationIDGenerator()
 	if c.MsgListenerList == nil {
-		log.Error("internal", "not set c MsgListenerList", len(c.MsgListenerList))
+		log.Error(operationID, "not set c MsgListenerList", len(c.MsgListenerList))
 		return
 	}
 	var insertMsg []*db.LocalChatLog
@@ -112,7 +113,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	//for _, v := range MsgList.GroupData {
 	//	MsgList.SingleData = append(MsgList.SingleData, v)
 	//}
-	log.Info("internal", "do Msg come here")
+	log.Info(operationID, "do Msg come here")
 	for _, v := range c.SeqMsg() {
 		isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
 		isUnreadCount = utils.GetSwitchFromOptions(v.Options, constant.IsUnreadCount)
@@ -132,17 +133,16 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		}
 		switch v.SessionType {
 		case constant.SingleChatType:
-			if v.ContentType > constant.SingleTipBegin && v.ContentType < constant.SingleTipEnd {
-				c.friend.DoFriendNotification(&v)
+			if v.ContentType > constant.FriendNotificationBegin && v.ContentType < constant.FriendNotificationEnd {
+				c.friend.DoNotification(&v)
 				log.Info("internal", "DoFriendMsg SingleChatType", v)
-			} else if v.ContentType > constant.GroupTipBegin && v.ContentType < constant.GroupTipEnd {
-				c.group.DoGroupMsg(&v)
-				log.Info("internal", "DoGroupMsg SingleChatType", v)
+			} else if v.ContentType > constant.UserNotificationBegin && v.ContentType < constant.UserNotificationEnd {
+				c.user.DoNotification(&v)
 			}
 		case constant.GroupChatType:
-			if v.ContentType > constant.GroupTipBegin && v.ContentType < constant.GroupTipEnd {
-				c.group.DoGroupMsg(&v)
-				log.Info("internal", "DoGroupMsg GroupChatType", v)
+			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
+				c.group.DoNotification(&v)
+				log.Info("internal", "DoGroupMsg SingleChatType", v)
 			}
 		}
 		if v.SendID == c.loginUserID { //seq  Messages sent by myself  //if  sent through  this terminal
