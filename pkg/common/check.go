@@ -41,31 +41,35 @@ func CheckArgsErrCallback(callback Base, err error, operationID string) {
 	CheckAnyErrCallback(callback, constant.ErrArgs.ErrCode, err, operationID)
 }
 
-func CheckErrAndResp(callback Base, err error, resp []byte, operationID string) *server_api_params.CommDataResp {
-	CheckErr(callback, err, operationID)
-	return CheckResp(callback, resp, operationID)
-}
-
-func CheckResp(callback Base, resp []byte, operationID string) *server_api_params.CommDataResp {
+func CheckErrAndRespCallback(callback Base, err error, resp []byte, operationID string, output interface{}) {
 	log.Debug(operationID, utils.GetSelfFuncName(), "args: ", string(resp))
-	var c server_api_params.CommDataResp
-	err := json.Unmarshal(resp, &c)
-	if err != nil {
-		log.NewError(operationID, "Unmarshal ", err)
+	if err = CheckErrAndResp(err, resp, output); err != nil {
+		log.Error(operationID, "CheckErrAndResp failed ", err.Error())
 		callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
 		runtime.Goexit()
-		return nil
 	}
-	if c.ErrCode != 0 {
-		log.NewError(operationID, "errCode ", c.ErrCode, "errMsg ", c.ErrMsg)
-		callback.OnError(c.ErrCode, c.ErrMsg)
-		runtime.Goexit()
-		return nil
-	}
-	return &c
+
 }
 
-func CheckErrAndRespReturn(err error, resp []byte, output interface{}) error {
+//func CheckResp( resp []byte) *server_api_params.CommDataResp {
+//	var c server_api_params.CommDataResp
+//	err := json.Unmarshal(resp, &c)
+//	if err != nil {
+//		log.NewError(operationID, "Unmarshal ", err)
+//		callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
+//		runtime.Goexit()
+//		return nil
+//	}
+//	if c.ErrCode != 0 {
+//		log.NewError(operationID, "errCode ", c.ErrCode, "errMsg ", c.ErrMsg)
+//		callback.OnError(c.ErrCode, c.ErrMsg)
+//		runtime.Goexit()
+//		return nil
+//	}
+//	return &c
+//}
+
+func CheckErrAndResp(err error, resp []byte, output interface{}) error {
 	if err != nil {
 		return utils.Wrap(err, "resp failed")
 	}
@@ -74,14 +78,11 @@ func CheckErrAndRespReturn(err error, resp []byte, output interface{}) error {
 	if err != nil {
 		return utils.Wrap(err, "")
 	}
-
 	if c.ErrCode != 0 {
 		return utils.Wrap(errors.New(c.ErrMsg), "")
 	}
-
 	err = mapstructure.Decode(c.Data, output)
 	if err != nil {
-
 		return utils.Wrap(err, "")
 	}
 	return nil
