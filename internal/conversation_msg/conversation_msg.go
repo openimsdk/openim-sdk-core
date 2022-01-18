@@ -3,6 +3,7 @@ package conversation_msg
 import (
 	"encoding/json"
 	"github.com/jinzhu/copier"
+	common2 "open_im_sdk/internal/common"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/group"
 	ws "open_im_sdk/internal/interaction"
@@ -63,10 +64,11 @@ type Conversation struct {
 	friend               *friend.Friend
 	group                *group.Group
 	user                 *user.User
+	common2.ObjectStorage
 }
 
-func NewConversation(ws *ws.Ws, db *db.DataBase, ch chan common.Cmd2Value, loginUserID string, friend *friend.Friend, group *group.Group, user *user.User) *Conversation {
-	return &Conversation{Ws: ws, db: db, ch: ch, loginUserID: loginUserID, friend: friend, group: group, user: user}
+func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi, conversationListener OnConversationListener, msgListenerList []OnAdvancedMsgListener, ch chan common.Cmd2Value, loginUserID string, platformID int32, dbDir string, friend *friend.Friend, group *group.Group, user *user.User, objectStorage common2.ObjectStorage) *Conversation {
+	return &Conversation{Ws: ws, db: db, p: p, ConversationListener: conversationListener, MsgListenerList: msgListenerList, ch: ch, loginUserID: loginUserID, platformID: platformID, DbDir: dbDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage}
 }
 
 //func NewConversation() *Conversation {

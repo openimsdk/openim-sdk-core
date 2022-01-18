@@ -563,7 +563,7 @@ func (c *Conversation) SendMessage(callback common2.SendMsgCallBack, message, re
 				delFile = append(delFile, sourcePath)
 			}
 			log.Info(operationID, "file", sourcePath, delFile)
-			sourceUrl, uuid, err := c.uploadImage(sourcePath, callback)
+			sourceUrl, uuid, err := c.UploadImage(sourcePath, callback.OnProgress, operationID)
 			c.checkErrAndUpdateMessage(callback, 301, err, &s, &lc, operationID)
 			s.PictureElem.SourcePicture.Url = sourceUrl
 			s.PictureElem.SourcePicture.UUID = uuid
@@ -582,7 +582,7 @@ func (c *Conversation) SendMessage(callback common2.SendMsgCallBack, message, re
 				delFile = append(delFile, sourcePath)
 			}
 			log.Info(operationID, "file", sourcePath, delFile)
-			soundURL, uuid, err := c.uploadSound(sourcePath, callback)
+			soundURL, uuid, err := c.UploadSound(sourcePath, callback)
 			c.checkErrAndUpdateMessage(callback, 301, err, &s, &lc, operationID)
 			s.SoundElem.SourceURL = soundURL
 			s.SoundElem.UUID = uuid
@@ -908,57 +908,57 @@ func (c *Conversation) TypingStatusUpdate(callback common.Base, recvID, msgTip, 
 		return
 	}
 	go func() {
-		log.NewInfo(operationID, "RevokeMessage args: ", recvID, msgTip)
+		log.NewInfo(operationID, "TypingStatusUpdate args: ", recvID, msgTip)
+		c.typingStatusUpdate(callback, recvID, msgTip, operationID)
+		callback.OnSuccess(sdk_params_callback.TypingStatusUpdateCallback)
+		log.NewInfo(operationID, "TypingStatusUpdate callback: ", sdk_params_callback.TypingStatusUpdateCallback)
+	}()
+}
+
+func (c *Conversation) MarkC2CMessageAsRead(callback common.Base, recvID string, msgIDList, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, "RevokeMessage args: ", recvID, msgIDList)
+		var unmarshalParams sdk_params_callback.RevokeMessageParams
+		common.JsonUnmarshal(msgIDList, &unmarshalParams, callback, operationID)
 		c.revokeOneMessage(callback, unmarshalParams, operationID)
 		callback.OnSuccess(sdk_params_callback.RevokeMessageCallback)
 		log.NewInfo(operationID, "RevokeMessage callback: ", sdk_params_callback.RevokeMessageCallback)
 	}()
 	go func() {
+		conversationID := c.GetConversationIDBySessionType(receiver, constant.SingleChatType)
+		var list []string
+		err := json.Unmarshal([]byte(msgIDList), &list)
+		if err != nil {
+			callback.OnError(201, "json unmarshal err")
+			return
+		}
+		if len(list) == 0 {
+			callback.OnError(200, "msg list is null")
+			return
+		}
 		s := utils.MsgStruct{}
-		u.initBasicInfo(&s, constant.UserMsgType, constant.Typing)
-		s.Content = msgTip
-		//err := u.autoSendMsg(&s, receiver, "", true, false, false)
-		//if err != nil {
-		//	sdkLog("TypingStatusUpdate err:", err)
-		//} else {
-		//	sdkLog("TypingStatusUpdate success!!!")
-		//}
+		u.initBasicInfo(&s, constant.UserMsgType, constant.HasReadReceipt)
+		s.Content = msgIDList
+		utils.sdkLog("MarkC2CMessageAsRead: send Message")
+		//err = u.autoSendMsg(&s, receiver, "", false, false, false)
+		if err != nil {
+			utils.sdkLog("MarkC2CMessageAsRead  err:", err.Error())
+			callback.OnError(300, err.Error())
+		} else {
+			callback.OnSuccess("")
+			err = u.setSingleMessageHasReadByMsgIDList(receiver, list)
+			if err != nil {
+				utils.sdkLog("setSingleMessageHasReadByMsgIDList  err:", err.Error())
+			}
+			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.UpdateLatestMessageChange, ""}})
+			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+		}
 	}()
 }
 
-//func (c *Conversation) MarkC2CMessageAsRead(callback common.Base, receiver string, msgIDList string) {
-//	go func() {
-//		conversationID := utils.GetConversationIDBySessionType(receiver, constant.SingleChatType)
-//		var list []string
-//		err := json.Unmarshal([]byte(msgIDList), &list)
-//		if err != nil {
-//			callback.OnError(201, "json unmarshal err")
-//			return
-//		}
-//		if len(list) == 0 {
-//			callback.OnError(200, "msg list is null")
-//			return
-//		}
-//		s := utils.MsgStruct{}
-//		u.initBasicInfo(&s, constant.UserMsgType, constant.HasReadReceipt)
-//		s.Content = msgIDList
-//		utils.sdkLog("MarkC2CMessageAsRead: send Message")
-//		//err = u.autoSendMsg(&s, receiver, "", false, false, false)
-//		if err != nil {
-//			utils.sdkLog("MarkC2CMessageAsRead  err:", err.Error())
-//			callback.OnError(300, err.Error())
-//		} else {
-//			callback.OnSuccess("")
-//			err = u.setSingleMessageHasReadByMsgIDList(receiver, list)
-//			if err != nil {
-//				utils.sdkLog("setSingleMessageHasReadByMsgIDList  err:", err.Error())
-//			}
-//			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.UpdateLatestMessageChange, ""}})
-//			u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
-//		}
-//	}()
-//}
-//
 ////Deprecated
 //func (c *Conversation) MarkSingleMessageHasRead(callback common.Base, userID string) {
 //	go func() {

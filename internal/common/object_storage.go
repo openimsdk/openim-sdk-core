@@ -13,8 +13,8 @@ type SendMsgCallBack interface {
 }
 
 type ObjectStorage interface {
-	UploadImage(filePath string, callback SendMsgCallBack, operationID string) (string, string)
-	UploadSound(filePath string, callback SendMsgCallBack, operationID string) (string, string)
-	UploadFile(filePath string, callback SendMsgCallBack, operationID string) (string, string)
-	UploadVideo(videoPath, snapshotPath string, callback SendMsgCallBack, operationID string) (string, string, string, string)
+	UploadImage(filePath string, onProgressFun func(int), operationID string) (string, string)
+	UploadSound(filePath string, onProgressFun func(int), operationID string) (string, string)
+	UploadFile(filePath string, onProgressFun func(int), operationID string) (string, string)
+	UploadVideo(videoPath, snapshotPath string, onProgressFun func(int), operationID string) (string, string, string, string)
 }

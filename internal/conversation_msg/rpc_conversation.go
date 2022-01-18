@@ -190,32 +190,11 @@ func (c *Conversation) revokeOneMessage(callback common.Base, req sdk.RevokeMess
 	err = c.db.UpdateColumnsMessage(req.Content, map[string]interface{}{"status": constant.MsgStatusRevoked})
 	common.CheckErr(callback, err, operationID)
 }
-func (c *Conversation) typingStatusUpdate(callback common.Base, req sdk.RevokeMessageParams, operationID string) {
-	var recvID, groupID string
-	message, err := c.db.GetMessage(req.ClientMsgID)
-	common.CheckErr(callback, err, operationID)
-	if message.Status != constant.MsgStatusSendSuccess {
-		common.CheckAnyErr(callback, 201, errors.New("only send success message can be revoked"), operationID)
-	}
-	if message.SendID != c.loginUserID {
-		common.CheckAnyErr(callback, 201, errors.New("only you send message can be revoked"), operationID)
-	}
-	//Send message internally
-	switch req.SessionType {
-	case constant.SingleChatType:
-		recvID = req.RecvID
-	case constant.GroupChatType:
-		groupID = req.GroupID
-	default:
-
-		callback.OnError(200, "args err")
-	}
-	req.Content = message.ClientMsgID
-	req.ClientMsgID = utils.GetMsgID(message.SendID)
-	req.ContentType = constant.Revoke
+func (c *Conversation) typingStatusUpdate(callback common.Base, recvID, msgTip, operationID string) {
+	s := sdk_struct.MsgStruct{}
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Typing)
+	s.Content = msgTip
 	options := make(map[string]bool, 2)
-	_ = c.internalSendMessage(callback, (*sdk_struct.MsgStruct)(&req), recvID, groupID, operationID, &server_api_params.OfflinePushInfo{}, false, options)
-	//插入一条消息，以及会话最新的一条消息，触发UI的更新
-	err = c.db.UpdateColumnsMessage(req.Content, map[string]interface{}{"status": constant.MsgStatusRevoked})
-	common.CheckErr(callback, err, operationID)
+	_ = c.internalSendMessage(callback, &s, recvID, "", operationID, &server_api_params.OfflinePushInfo{}, true, options)
+
 }

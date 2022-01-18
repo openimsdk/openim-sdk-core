@@ -38,3 +38,7 @@ type GetHistoryMessageListCallback []*db.LocalChatLog
 type RevokeMessageParams sdk_struct.MsgStruct
 
 const RevokeMessageCallback = constant.SuccessCallbackDefault
+
+const TypingStatusUpdateCallback = constant.SuccessCallbackDefault
+
+type MarkC2CMessageAsReadParams []string
