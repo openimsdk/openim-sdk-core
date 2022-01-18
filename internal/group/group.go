@@ -206,12 +206,6 @@ func (g *Group) createGroup(callback common.Base, group sdk.CreateGroupBaseInfoP
 	apiReq.MemberList = memberList
 	realData := api.CreateGroupResp{}
 	g.p.PostFatalCallback(callback, constant.CreateGroupRouter, apiReq, &realData.GroupInfo, apiReq.OperationID)
-
-	//err := mapstructure.Decode(commData.Data, &realData.GroupInfo)
-	//if err != nil {
-	//	callback.OnError(constant.ErrData.ErrCode, constant.ErrData.ErrMsg)
-	//	return nil
-	//}
 	g.SyncJoinedGroupList(operationID)
 	g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID, operationID)
 	var temp sdk.CreateGroupCallback
@@ -219,95 +213,86 @@ func (g *Group) createGroup(callback common.Base, group sdk.CreateGroupBaseInfoP
 	return &temp
 }
 
-func (g *Group) joinGroup(groupID, reqMsg string, callback common.Base, operationID string) *api.CommDataResp {
-	//apiReq := api.JoinGroupReq{}
-	//apiReq.OperationID = operationID
-	//apiReq.ReqMessage = reqMsg
-	//apiReq.GroupID = groupID
-	//commData := g.p.PostFatalCallback(callback, constant.JoinGroupRouter, apiReq, apiReq.OperationID)
-	//g.SyncJoinedGroupList(operationID)
-	//return commData
-	return nil
+func (g *Group) joinGroup(groupID, reqMsg string, callback common.Base, operationID string) {
+	apiReq := api.JoinGroupReq{}
+	apiReq.OperationID = operationID
+	apiReq.ReqMessage = reqMsg
+	apiReq.GroupID = groupID
+	g.p.PostFatalCallback(callback, constant.JoinGroupRouter, apiReq, nil, apiReq.OperationID)
+	g.SyncJoinedGroupList(operationID)
 }
 
-func (g *Group) quitGroup(groupID string, callback common.Base, operationID string) *api.CommDataResp {
-	//apiReq := api.QuitGroupReq{}
-	//apiReq.OperationID = operationID
-	//apiReq.GroupID = groupID
-	//commData := g.p.PostFatalCallback(callback, constant.QuitGroupRouter, apiReq, apiReq.OperationID)
-	//g.syncGroupMemberByGroupID(groupID, operationID) //todo
-	//g.SyncJoinedGroupList(operationID)
-	//return commData
-	return nil
+func (g *Group) quitGroup(groupID string, callback common.Base, operationID string) {
+	apiReq := api.QuitGroupReq{}
+	apiReq.OperationID = operationID
+	apiReq.GroupID = groupID
+	g.p.PostFatalCallback(callback, constant.QuitGroupRouter, apiReq, nil, apiReq.OperationID)
+	g.syncGroupMemberByGroupID(groupID, operationID) //todo
+	g.SyncJoinedGroupList(operationID)
 }
 
-//
-//func (g *Group) getJoinedGroupList(callback common.Base, operationID string) sdk.GetJoinedGroupListCallback {
-//	groupList, err := g.db.GetJoinedGroupList()
-//	common.CheckErr(callback, err, operationID)
-//	return groupList
-//}
-//
-//func (g *Group) getGroupsInfo(groupIdList sdk.GetGroupsInfoParam, callback common.Base, operationID string) sdk.GetGroupsInfoCallback {
-//	groupList, err := g.db.GetJoinedGroupList()
-//	common.CheckErr(callback, err, operationID)
-//	var result sdk.GetGroupsInfoCallback
-//	for _, v := range groupList {
-//		in := false
-//		for _, k := range groupIdList {
-//			if v.GroupID == k {
-//				in = true
-//				break
-//			}
-//		}
-//		if in {
-//			result = append(result, v)
-//		}
-//	}
-//	return result
-//}
-//
-//func (g *Group) setGroupInfo(callback common.Base, groupInfo sdk.SetGroupInfoParam, groupID, operationID string) *api.CommDataResp {
-//	apiReq := api.SetGroupInfoReq{}
-//	apiReq.GroupName = groupInfo.GroupName
-//	apiReq.FaceURL = groupInfo.FaceUrl
-//	apiReq.Notification = groupInfo.Notification
-//	apiReq.Introduction = groupInfo.Introduction
-//	apiReq.Ex = groupInfo.Ex
-//	apiReq.OperationID = operationID
-//	apiReq.GroupID = groupID
-//	commData := g.p.PostFatalCallback(callback, constant.SetGroupInfoRouter, apiReq, apiReq.OperationID)
-//	g.SyncJoinedGroupList(operationID)
-//	return commData
-//}
-//
-////todo
-//func (g *Group) getGroupMemberList(callback common.Base, groupID string, filter int32, next int32, operationID string) sdk.GetGroupMemberListCallback {
-//	groupInfoList, err := g.db.GetGroupMemberListByGroupID(groupID)
-//	common.CheckErr(callback, err, operationID)
-//	return sdk.GetGroupMemberListCallback{MemberList: groupInfoList, NextSeq: 0}
-//}
-//
-////todo
-//func (g *Group) getGroupMembersInfo(callback common.Base, groupID string, userIDList sdk.GetGroupMembersInfoParam, operationID string) sdk.GetGroupMembersInfoCallback {
-//	groupInfoList, err := g.db.GetGroupSomeMemberInfo(groupID, userIDList)
-//	common.CheckErr(callback, err, operationID)
-//	return groupInfoList
-//}
-//
+func (g *Group) getJoinedGroupList(callback common.Base, operationID string) sdk.GetJoinedGroupListCallback {
+	groupList, err := g.db.GetJoinedGroupList()
+	common.CheckDBErrCallback(callback, err, operationID)
+	return groupList
+}
+
+func (g *Group) getGroupsInfo(groupIdList sdk.GetGroupsInfoParam, callback common.Base, operationID string) sdk.GetGroupsInfoCallback {
+	groupList, err := g.db.GetJoinedGroupList()
+	common.CheckDBErrCallback(callback, err, operationID)
+	var result sdk.GetGroupsInfoCallback
+	for _, v := range groupList {
+		in := false
+		for _, k := range groupIdList {
+			if v.GroupID == k {
+				in = true
+				break
+			}
+		}
+		if in {
+			result = append(result, v)
+		}
+	}
+	return result
+}
+
+func (g *Group) setGroupInfo(callback common.Base, groupInfo sdk.SetGroupInfoParam, groupID, operationID string) {
+	apiReq := api.SetGroupInfoReq{}
+	apiReq.GroupName = groupInfo.GroupName
+	apiReq.FaceURL = groupInfo.FaceUrl
+	apiReq.Notification = groupInfo.Notification
+	apiReq.Introduction = groupInfo.Introduction
+	apiReq.Ex = groupInfo.Ex
+	apiReq.OperationID = operationID
+	apiReq.GroupID = groupID
+	g.p.PostFatalCallback(callback, constant.SetGroupInfoRouter, apiReq, nil, apiReq.OperationID)
+	g.SyncJoinedGroupList(operationID)
+}
+
+//todo
+func (g *Group) getGroupMemberList(callback common.Base, groupID string, filter int32, next int32, operationID string) sdk.GetGroupMemberListCallback {
+	groupInfoList, err := g.db.GetGroupMemberListByGroupID(groupID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	return sdk.GetGroupMemberListCallback{MemberList: groupInfoList, NextSeq: 0}
+}
+
+//todo
+func (g *Group) getGroupMembersInfo(callback common.Base, groupID string, userIDList sdk.GetGroupMembersInfoParam, operationID string) sdk.GetGroupMembersInfoCallback {
+	groupInfoList, err := g.db.GetGroupSomeMemberInfo(groupID, userIDList)
+	common.CheckDBErrCallback(callback, err, operationID)
+	return groupInfoList
+}
+
 func (g *Group) kickGroupMember(callback common.Base, groupID string, memberList sdk.KickGroupMemberParam, reason string, operationID string) sdk.KickGroupMemberCallback {
-	return nil
-	//apiReq := api.KickGroupMemberReq{}
-	//apiReq.GroupID = groupID
-	//apiReq.KickedUserIDList = memberList
-	//apiReq.Reason = reason
-	//apiReq.OperationID = operationID
-	//commData := g.p.PostFatalCallback(callback, constant.KickGroupMemberRouter, apiReq, apiReq.OperationID)
-	//g.SyncJoinedGroupList(operationID)
-	//realData := api.KickGroupMemberResp{}
-	//err := mapstructure.Decode(commData.Data, &realData.UserIDResultList)
-	//common.CheckDataErr(callback, err, operationID)
-	//return realData.UserIDResultList
+	apiReq := api.KickGroupMemberReq{}
+	apiReq.GroupID = groupID
+	apiReq.KickedUserIDList = memberList
+	apiReq.Reason = reason
+	apiReq.OperationID = operationID
+	realData := api.KickGroupMemberResp{}
+	g.p.PostFatalCallback(callback, constant.KickGroupMemberRouter, apiReq, &realData.UserIDResultList, apiReq.OperationID)
+	g.SyncJoinedGroupList(operationID)
+	return realData.UserIDResultList
 }
 
 //
