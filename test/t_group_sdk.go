@@ -114,6 +114,7 @@ func DoTestCreateGroup() {
 	g1 := utils.StructToJsonString(groupInfo)
 	g2 := utils.StructToJsonString(memberlist)
 
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ", g1, g2)
 	open_im_sdk.CreateGroup(test, test.OperationID, g1, g2)
 }
 
