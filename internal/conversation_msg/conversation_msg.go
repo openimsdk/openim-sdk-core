@@ -1,7 +1,6 @@
 package conversation_msg
 
 import (
-	"encoding/json"
 	"github.com/jinzhu/copier"
 	common2 "open_im_sdk/internal/common"
 	"open_im_sdk/internal/friend"
@@ -15,7 +14,6 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
-	"time"
 )
 
 //type ChatLog struct {
@@ -199,7 +197,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				lc := db.LocalConversation{
 					ConversationType:  v.SessionType,
 					LatestMsg:         utils.StructToJsonString(msg),
-					LatestMsgSendTime: db.UnixTime(utils.UnixNanoSecondToTime(msg.SendTime)),
+					LatestMsgSendTime: msg.SendTime,
 				}
 
 				switch v.SessionType {

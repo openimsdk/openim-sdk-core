@@ -815,8 +815,8 @@ type getReceiveMessageOptResp struct {
 type MsgStruct struct {
 	ClientMsgID      string                            `json:"clientMsgID"`
 	ServerMsgID      string                            `json:"serverMsgID"`
-	CreateTime       uint32                            `json:"createTime"`
-	SendTime         uint32                            `json:"sendTime"`
+	CreateTime       int64                             `json:"createTime"`
+	SendTime         int64                             `json:"sendTime"`
 	SessionType      int32                             `json:"sessionType"`
 	SendID           string                            `json:"sendID"`
 	RecvID           string                            `json:"recvID"`

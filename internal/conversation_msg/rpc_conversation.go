@@ -132,7 +132,7 @@ func (c *Conversation) pinConversation(callback common.Base, conversationID stri
 func (c *Conversation) getHistoryMessageList(callback common.Base, req sdk.GetHistoryMessageListParams, operationID string) sdk.GetHistoryMessageListCallback {
 	var sourceID string
 	var conversationID string
-	var startTime uint32
+	var startTime int64
 	var sessionType int
 	if req.UserID == "" {
 		sourceID = req.GroupID
@@ -199,11 +199,87 @@ func (c *Conversation) typingStatusUpdate(callback common.Base, recvID, msgTip, 
 
 }
 
-func (c *Conversation) markC2CMessageAsRead(callback common.Base, msgIDList sdk.MarkC2CMessageAsReadParams, recvID, operationID string) {
-	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Typing)
-	s.Content = msgTip
-	options := make(map[string]bool, 2)
-	_ = c.internalSendMessage(callback, &s, recvID, "", operationID, &server_api_params.OfflinePushInfo{}, true, options)
+func (c *Conversation) markC2CMessageAsRead(callback common.Base, msgIDList string, recvID, operationID string) {
+	var list sdk.MarkC2CMessageAsReadParams
+	common.JsonUnmarshal(msgIDList, &list, callback, operationID)
+	//conversationID := c.GetConversationIDBySessionType(recvID, constant.SingleChatType)
 
+	s := sdk_struct.MsgStruct{}
+	c.initBasicInfo(&s, constant.UserMsgType, constant.HasReadReceipt)
+	s.Content = msgIDList
+	options := make(map[string]bool, 2)
+	_ = c.internalSendMessage(callback, &s, recvID, "", operationID, &server_api_params.OfflinePushInfo{}, false, options)
+	err := c.db.UpdateMessageHasRead(recvID, list)
+	common.CheckErr(callback, err, operationID)
+	//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.UpdateLatestMessageChange, ""}})
+	//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+}
+func (c *Conversation) insertMessageToLocalStorage(callback common.Base, s *db.LocalChatLog, operationID string) string {
+	err := c.db.InsertMessage(s)
+	common.CheckDBErr(callback, err, operationID)
+	return s.ClientMsgID
+}
+
+func (c *Conversation) clearGroupHistoryMessage(callback common.Base, groupID string, operationID string) {
+	conversationID := c.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+	err := c.db.UpdateMessageStatusBySourceID(groupID, constant.MsgStatusHasDeleted, constant.GroupChatType)
+	common.CheckDBErr(callback, err, operationID)
+	err = c.db.ClearConversation(conversationID)
+	common.CheckDBErr(callback, err, operationID)
+	//	u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+}
+
+func (c *Conversation) clearC2CHistoryMessage(callback common.Base, userID string, operationID string) {
+	conversationID := c.GetConversationIDBySessionType(userID, constant.SingleChatType)
+	err := c.db.UpdateMessageStatusBySourceID(userID, constant.MsgStatusHasDeleted, constant.SingleChatType)
+	common.CheckDBErr(callback, err, operationID)
+	err = c.db.ClearConversation(conversationID)
+	common.CheckDBErr(callback, err, operationID)
+	//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+}
+
+func (c *Conversation) deleteMessageFromLocalStorage(callback common.Base, s *sdk_struct.MsgStruct, operationID string) {
+	var conversation db.LocalConversation
+	var latestMsg sdk_struct.MsgStruct
+	var conversationID string
+	var sourceID string
+	chatLog := db.LocalChatLog{ClientMsgID: s.ClientMsgID, Status: constant.MsgStatusHasDeleted}
+	err := c.db.UpdateMessage(&chatLog)
+	common.CheckDBErr(callback, err, operationID)
+
+	callback.OnSuccess("")
+
+	if s.SessionType == constant.GroupChatType {
+		conversationID = c.GetConversationIDBySessionType(s.RecvID, constant.GroupChatType)
+		sourceID = s.RecvID
+
+	} else if s.SessionType == constant.SingleChatType {
+		if s.SendID != c.loginUserID {
+			conversationID = c.GetConversationIDBySessionType(s.SendID, constant.SingleChatType)
+			sourceID = s.SendID
+		} else {
+			conversationID = c.GetConversationIDBySessionType(s.RecvID, constant.SingleChatType)
+			sourceID = s.RecvID
+		}
+	}
+	LocalConversation, err := c.db.GetConversation(conversationID)
+	common.CheckDBErr(callback, err, operationID)
+	common.JsonUnmarshal(LocalConversation.LatestMsg, &latestMsg, callback, operationID)
+
+	if s.ClientMsgID == latestMsg.ClientMsgID { //If the deleted message is the latest message of the conversation, update the latest message of the conversation
+		list, err := c.db.GetMessageList(sourceID, int(s.SessionType), 1, s.SendTime+TimeOffset)
+		common.CheckDBErr(callback, err, operationID)
+
+		conversation.ConversationID = conversationID
+		if list == nil {
+			conversation.LatestMsg = ""
+			conversation.LatestMsgSendTime = utils.GetCurrentTimestampByMill()
+		} else {
+			conversation.LatestMsg = utils.StructToJsonString(list[0])
+			conversation.LatestMsgSendTime = list[0].SendTime
+		}
+		//		err = u.triggerCmdUpdateConversation(common.updateConNode{ConId: conversationID, Action: constant.AddConOrUpLatMsg, Args: conversation})
+
+		//	u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+	}
 }

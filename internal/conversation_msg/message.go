@@ -137,7 +137,7 @@ func autoSendTransferGroupOwnerTip(groupId string, oldOwner, newOwner string) er
 //	c.LatestMsg = utils.structToJsonString(s)
 //}
 func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, contentType int32) {
-	message.CreateTime = uint32(utils.GetCurrentTimestampByNano())
+	message.CreateTime = utils.GetCurrentTimestampByMill()
 	message.SendTime = message.CreateTime
 	message.IsRead = false
 	message.Status = constant.MsgStatusSending
@@ -153,33 +153,22 @@ func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, con
 
 }
 
-func (c *Conversation) sendMessageFailedHandle(s *sdk_struct.MsgStruct, lc *db.LocalConversation, conversationID string) {
-	_ = c.updateMessageTimeAndMsgIDStatus(s.ClientMsgID, s.CreateTime, constant.MsgStatusSendFailed)
-	s.SendTime = s.CreateTime
-	s.Status = constant.MsgStatusSendFailed
-	lc.LatestMsg = utils.StructToJsonString(s)
-	_ = u.triggerCmdUpdateConversation(open_im_sdk.updateConNode{conversationID, constant.AddConOrUpLatMsg,
-		*c})
-	u.doUpdateConversation(open_im_sdk.cmd2Value{Value: open_im_sdk.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+type MsgFormats []*db.LocalChatLog
+
+// Implement the sort.Interface interface to get the number of elements method
+func (s MsgFormats) Len() int {
+	return len(s)
 }
 
-//
-//type MsgFormats []*open_im_sdk.MsgStruct
-//
-//// Implement the sort.Interface interface to get the number of elements method
-//func (s MsgFormats) Len() int {
-//	return len(s)
-//}
-//
-////Implement the sort.Interface interface comparison element method
-//func (s MsgFormats) Less(i, j int) bool {
-//	return s[i].SendTime < s[j].SendTime
-//}
-//
-////Implement the sort.Interface interface exchange element method
-//func (s MsgFormats) Swap(i, j int) {
-//	s[i], s[j] = s[j], s[i]
-//}
+//Implement the sort.Interface interface comparison element method
+func (s MsgFormats) Less(i, j int) bool {
+	return s[i].SendTime < s[j].SendTime
+}
+
+//Implement the sort.Interface interface exchange element method
+func (s MsgFormats) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
 
 func getIsRead(b bool) int {
 	if b {

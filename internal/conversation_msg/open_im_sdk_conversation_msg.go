@@ -6,7 +6,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 	"image"
-	common2 "open_im_sdk/internal/common"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
@@ -465,7 +464,7 @@ func (c *Conversation) checkErrAndUpdateMessage(callback common.SendMsgCallBack,
 		}
 	}
 }
-func (c *Conversation) updateMsgStatusAndTriggerConversation(clientMsgID, serverMsgID string, sendTime uint32, status int32, s *sdk_struct.MsgStruct, lc *db.LocalConversation, operationID string) {
+func (c *Conversation) updateMsgStatusAndTriggerConversation(clientMsgID, serverMsgID string, sendTime int64, status int32, s *sdk_struct.MsgStruct, lc *db.LocalConversation, operationID string) {
 	_ = c.db.UpdateMessageTimeAndStatus(clientMsgID, sendTime, status)
 	s.SendTime = sendTime
 	s.Status = status
@@ -562,7 +561,7 @@ func (c *Conversation) SendMessage(callback common.SendMsgCallBack, message, rec
 				delFile = append(delFile, sourcePath)
 			}
 			log.Info(operationID, "file", sourcePath, delFile)
-			sourceUrl, uuid, err := c.UploadImage(sourcePath, callback.OnProgress, operationID)
+			sourceUrl, uuid, err := c.UploadImage(sourcePath, callback.OnProgress)
 			c.checkErrAndUpdateMessage(callback, 301, err, &s, &lc, operationID)
 			s.PictureElem.SourcePicture.Url = sourceUrl
 			s.PictureElem.SourcePicture.UUID = uuid
@@ -581,7 +580,7 @@ func (c *Conversation) SendMessage(callback common.SendMsgCallBack, message, rec
 				delFile = append(delFile, sourcePath)
 			}
 			log.Info(operationID, "file", sourcePath, delFile)
-			soundURL, uuid, err := c.UploadSound(sourcePath, callback.OnProgress, operationID)
+			soundURL, uuid, err := c.UploadSound(sourcePath, callback.OnProgress)
 			c.checkErrAndUpdateMessage(callback, 301, err, &s, &lc, operationID)
 			s.SoundElem.SourceURL = soundURL
 			s.SoundElem.UUID = uuid
@@ -602,7 +601,7 @@ func (c *Conversation) SendMessage(callback common.SendMsgCallBack, message, rec
 				delFile = append(delFile, snapPath)
 			}
 			log.Info(operationID, "file: ", videoPath, snapPath, delFile)
-			snapshotURL, snapshotUUID, videoURL, videoUUID, err := c.UploadVideo(videoPath, snapPath, callback.OnProgress, operationID)
+			snapshotURL, snapshotUUID, videoURL, videoUUID, err := c.UploadVideo(videoPath, snapPath, callback.OnProgress)
 			c.checkErrAndUpdateMessage(callback, 301, err, &s, &lc, operationID)
 			s.VideoElem.VideoURL = videoURL
 			s.VideoElem.SnapshotUUID = snapshotUUID
@@ -610,7 +609,7 @@ func (c *Conversation) SendMessage(callback common.SendMsgCallBack, message, rec
 			s.VideoElem.VideoUUID = videoUUID
 			s.Content = utils.StructToJsonString(s.VideoElem)
 		case constant.File:
-			fileURL, fileUUID, err := c.UploadFile(s.FileElem.FilePath, callback.OnProgress, operationID)
+			fileURL, fileUUID, err := c.UploadFile(s.FileElem.FilePath, callback.OnProgress)
 			c.checkErrAndUpdateMessage(callback, 301, err, &s, &lc, operationID)
 			s.FileElem.SourceURL = fileURL
 			s.FileElem.UUID = fileUUID
@@ -754,7 +753,7 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.Local
 	}
 	var sendMsgResp server_api_params.UserSendMsgResp
 	_ = proto.Unmarshal(resp.Data, &sendMsgResp)
-	c.updateMsgStatusAndTriggerConversation(sendMsgResp.ClientMsgID, sendMsgResp.ServerMsgID, uint32(sendMsgResp.SendTime), constant.MsgStatusSendSuccess, s, lc, operationID)
+	c.updateMsgStatusAndTriggerConversation(sendMsgResp.ClientMsgID, sendMsgResp.ServerMsgID, sendMsgResp.SendTime, constant.MsgStatusSendSuccess, s, lc, operationID)
 
 }
 
@@ -915,62 +914,38 @@ func (c *Conversation) TypingStatusUpdate(callback common.Base, recvID, msgTip, 
 }
 
 func (c *Conversation) MarkC2CMessageAsRead(callback common.Base, recvID string, msgIDList, operationID string) {
-	//if callback == nil {
-	//	return
-	//}
-	//go func() {
-	//	log.NewInfo(operationID, "RevokeMessage args: ", recvID, msgIDList)
-	//	var unmarshalParams sdk_params_callback.MarkC2CMessageAsReadParams
-	//	common.JsonUnmarshal(msgIDList, &unmarshalParams, callback, operationID)
-	//	c.markC2CMessageAsRead(callback, unmarshalParams, recvID, operationID)
-	//	callback.OnSuccess(sdk_params_callback.MarkC2CMessageAsReadCallback)
-	//	log.NewInfo(operationID, "RevokeMessage callback: ", sdk_params_callback.MarkC2CMessageAsReadCallback)
-	//}()
-	//go func() {
-	//	conversationID := c.GetConversationIDBySessionType(recvID, constant.SingleChatType)
-	//	var list []string
-	//	err := json.Unmarshal([]byte(msgIDList), &list)
-	//	if err != nil {
-	//		callback.OnError(201, "json unmarshal err")
-	//		return
-	//	}
-	//	if len(list) == 0 {
-	//		callback.OnError(200, "msg list is null")
-	//		return
-	//	}
-	//	s := utils.MsgStruct{}
-	//	u.initBasicInfo(&s, constant.UserMsgType, constant.HasReadReceipt)
-	//	s.Content = msgIDList
-	//	utils.sdkLog("MarkC2CMessageAsRead: send Message")
-	//	//err = u.autoSendMsg(&s, receiver, "", false, false, false)
-	//	if err != nil {
-	//		utils.sdkLog("MarkC2CMessageAsRead  err:", err.Error())
-	//		callback.OnError(300, err.Error())
-	//	} else {
-	//		callback.OnSuccess("")
-	//		err = u.setSingleMessageHasReadByMsgIDList(receiver, list)
-	//		if err != nil {
-	//			utils.sdkLog("setSingleMessageHasReadByMsgIDList  err:", err.Error())
-	//		}
-	//		u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.UpdateLatestMessageChange, ""}})
-	//		u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
-	//	}
-	//}()
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, "MarkC2CMessageAsRead args: ", recvID, msgIDList)
+		if len(msgIDList) == 0 {
+			//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConId: conversationID, Action: constant.UnreadCountSetZero}})
+			//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+			callback.OnSuccess(sdk_params_callback.MarkC2CMessageAsReadCallback)
+			return
+		}
+		c.markC2CMessageAsRead(callback, msgIDList, recvID, operationID)
+		callback.OnSuccess(sdk_params_callback.MarkC2CMessageAsReadCallback)
+		log.NewInfo(operationID, "MarkC2CMessageAsRead callback: ", sdk_params_callback.MarkC2CMessageAsReadCallback)
+	}()
+
 }
 
 ////Deprecated
-//func (c *Conversation) MarkSingleMessageHasRead(callback common.Base, userID string) {
-//	go func() {
-//		conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
-//		//if err := u.setSingleMessageHasRead(userID); err != nil {
-//		//	callback.OnError(201, err.Error())
-//		//} else {
-//		callback.OnSuccess("")
-//		u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConId: conversationID, Action: constant.UnreadCountSetZero}})
-//		u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
-//		//}
-//	}()
-//}
+func (c *Conversation) MarkSingleMessageHasRead(callback common.Base, userID string) {
+	go func() {
+		//conversationID := c.GetConversationIDBySessionType(userID, constant.SingleChatType)
+		//if err := u.setSingleMessageHasRead(userID); err != nil {
+		//	callback.OnError(201, err.Error())
+		//} else {
+		callback.OnSuccess("")
+		//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConId: conversationID, Action: constant.UnreadCountSetZero}})
+		//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+		//}
+	}()
+}
+
 //func (c *Conversation) MarkAllConversationHasRead(callback common.Base, userID string) {
 //	go func() {
 //		conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
@@ -1030,7 +1005,7 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(callback common.Base, m
 	s.SendID = sendID
 	s.RecvID = userID
 	s.ClientMsgID = utils.GetMsgID(s.SendID)
-	s.SendTime = uint32(utils.GetCurrentTimestampByNano())
+	s.SendTime = utils.GetCurrentTimestampByMill()
 
 	go func() {
 		clientMsgID := c.insertMessageToLocalStorage(callback, &localMessage, operationID)
@@ -1047,7 +1022,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback common.Base, me
 	s.SendID = sendID
 	s.RecvID = groupID
 	s.ClientMsgID = utils.GetMsgID(s.SendID)
-	s.SendTime = uint32(utils.GetCurrentTimestampByNano())
+	s.SendTime = utils.GetCurrentTimestampByMill()
 
 	go func() {
 		clientMsgID := c.insertMessageToLocalStorage(callback, &localMessage, operationID)
