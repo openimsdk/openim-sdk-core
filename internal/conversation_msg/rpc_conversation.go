@@ -198,3 +198,12 @@ func (c *Conversation) typingStatusUpdate(callback common.Base, recvID, msgTip, 
 	_ = c.internalSendMessage(callback, &s, recvID, "", operationID, &server_api_params.OfflinePushInfo{}, true, options)
 
 }
+
+func (c *Conversation) markC2CMessageAsRead(callback common.Base, msgIDList sdk.MarkC2CMessageAsReadParams, recvID, operationID string) {
+	s := sdk_struct.MsgStruct{}
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Typing)
+	s.Content = msgTip
+	options := make(map[string]bool, 2)
+	_ = c.internalSendMessage(callback, &s, recvID, "", operationID, &server_api_params.OfflinePushInfo{}, true, options)
+
+}

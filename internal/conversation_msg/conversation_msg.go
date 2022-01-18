@@ -60,15 +60,15 @@ type Conversation struct {
 	ch                   chan common.Cmd2Value
 	loginUserID          string
 	platformID           int32
-	DbDir                string
+	DataDir              string
 	friend               *friend.Friend
 	group                *group.Group
 	user                 *user.User
 	common2.ObjectStorage
 }
 
-func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi, conversationListener OnConversationListener, msgListenerList []OnAdvancedMsgListener, ch chan common.Cmd2Value, loginUserID string, platformID int32, dbDir string, friend *friend.Friend, group *group.Group, user *user.User, objectStorage common2.ObjectStorage) *Conversation {
-	return &Conversation{Ws: ws, db: db, p: p, ConversationListener: conversationListener, MsgListenerList: msgListenerList, ch: ch, loginUserID: loginUserID, platformID: platformID, DbDir: dbDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage}
+func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi, conversationListener OnConversationListener, msgListenerList []OnAdvancedMsgListener, ch chan common.Cmd2Value, loginUserID string, platformID int32, dataDir string, friend *friend.Friend, group *group.Group, user *user.User, objectStorage common2.ObjectStorage) *Conversation {
+	return &Conversation{Ws: ws, db: db, p: p, ConversationListener: conversationListener, MsgListenerList: msgListenerList, ch: ch, loginUserID: loginUserID, platformID: platformID, DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage}
 }
 
 //func NewConversation() *Conversation {
