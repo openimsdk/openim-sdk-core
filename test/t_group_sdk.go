@@ -204,25 +204,29 @@ func DoTestCreateGroup() {
 //	sdk_interface.QuitGroup(test.GroupID, test)
 //}
 //
-//type testGetJoinedGroupList struct {
-//}
+type testGetJoinedGroupList struct {
+	OperationID string
+}
+
+/*
+	OnError(errCode int, errMsg string)
+	OnSuccess(data string)
+*/
+func (t testGetJoinedGroupList) OnError(errCode int32, errMsg string) {
+	fmt.Println("testGetJoinedGroupList OnError", t.OperationID, errCode, errMsg)
+}
+
+func (t testGetJoinedGroupList) OnSuccess(data string) {
+	fmt.Println("testGetJoinedGroupList OnSuccess, output", t.OperationID, data)
+}
+
 //
-///*
-//	OnError(errCode int, errMsg string)
-//	OnSuccess(data string)
-//*/
-//func (testGetJoinedGroupList) OnError(errCode int32, errMsg string) {
-//	fmt.Println("testGetJoinedGroupList OnError", errCode, errMsg)
-//}
-//
-//func (testGetJoinedGroupList) OnSuccess(data string) {
-//	fmt.Println("testGetJoinedGroupList OnSuccess, output", data)
-//}
-//
-//func DotestGetJoinedGroupList() {
-//	var test testGetJoinedGroupList
-//	sdk_interface.GetJoinedGroupList(test)
-//}
+func DotestGetJoinedGroupList() {
+	var test testGetJoinedGroupList
+	test.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.GetJoinedGroupList(test, test.OperationID)
+}
+
 //
 //type testGetGroupMemberList struct {
 //}

@@ -614,11 +614,10 @@ func (g *Group) getGroupAllMemberByGroupIDFromSvr(groupID string, operationID st
 	apiReq.OperationID = operationID
 	apiReq.GroupID = groupID
 	var realData []*api.GroupMemberFullInfo
-	err := g.p.PostReturn(constant.GetGroupAllMemberListRouter, apiReq, realData)
+	err := g.p.PostReturn(constant.GetGroupAllMemberListRouter, apiReq, &realData)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
-
 	return realData, nil
 }
 
