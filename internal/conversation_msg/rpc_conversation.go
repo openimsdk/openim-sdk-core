@@ -2,7 +2,6 @@ package conversation_msg
 
 import (
 	"errors"
-	"github.com/mitchellh/mapstructure"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
@@ -24,28 +23,28 @@ func (c *Conversation) getConversationListSplit(callback common.Base, offset, co
 	return conversationList
 }
 
-func (c *Conversation) setConversationRecvMessageOpt(callback common.Base, conversationIDList []string, opt int, operationID string) *server_api_params.CommDataResp {
-	apiReq := server_api_params.SetReceiveMessageOptReq{}
-	apiReq.OperationID = operationID
-	apiReq.FromUserID = c.loginUserID
-	var temp int32
-	temp = int32(opt)
-	apiReq.Opt = &temp
-	apiReq.ConversationIDList = conversationIDList
-	result := c.p.PostFatalCallback(callback, constant.SetReceiveMessageOptRouter, apiReq, operationID)
-	c.db.SetMultipleConversationRecvMsgOpt(conversationIDList, opt)
-	return result
-}
-func (c *Conversation) getConversationRecvMessageOpt(callback common.Base, conversationIDList []string, operationID string) []*server_api_params.OptResult {
-	apiReq := server_api_params.GetReceiveMessageOptReq{}
-	apiReq.OperationID = operationID
-	apiReq.FromUserID = c.loginUserID
-	apiReq.ConversationIDList = conversationIDList
-	result := c.p.PostFatalCallback(callback, constant.GetReceiveMessageOptRouter, apiReq, operationID)
-	var realData []*server_api_params.OptResult
-	mapstructure.Decode(result.Data, realData)
-	return realData
-}
+//func (c *Conversation) setConversationRecvMessageOpt(callback common.Base, conversationIDList []string, opt int, operationID string) *server_api_params.CommDataResp {
+//	apiReq := server_api_params.SetReceiveMessageOptReq{}
+//	apiReq.OperationID = operationID
+//	apiReq.FromUserID = c.loginUserID
+//	var temp int32
+//	temp = int32(opt)
+//	apiReq.Opt = &temp
+//	apiReq.ConversationIDList = conversationIDList
+//	result := c.p.PostFatalCallback(callback, constant.SetReceiveMessageOptRouter, apiReq, operationID)
+//	c.db.SetMultipleConversationRecvMsgOpt(conversationIDList, opt)
+//	return result
+//}
+//func (c *Conversation) getConversationRecvMessageOpt(callback common.Base, conversationIDList []string, operationID string) []*server_api_params.OptResult {
+//	apiReq := server_api_params.GetReceiveMessageOptReq{}
+//	apiReq.OperationID = operationID
+//	apiReq.FromUserID = c.loginUserID
+//	apiReq.ConversationIDList = conversationIDList
+//	result := c.p.PostFatalCallback(callback, constant.GetReceiveMessageOptRouter, apiReq, operationID)
+//	var realData []*server_api_params.OptResult
+//	mapstructure.Decode(result.Data, realData)
+//	return realData
+//}
 func (c *Conversation) getOneConversation(callback common.Base, sourceID string, sessionType int32, operationID string) *db.LocalConversation {
 	conversationID := c.GetConversationIDBySessionType(sourceID, sessionType)
 	lc, err := c.db.GetConversation(conversationID)
