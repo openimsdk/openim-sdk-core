@@ -32,7 +32,8 @@ func (d *DataBase) GetRecvGroupApplication() ([]*LocalGroupRequest, error) {
 	err := d.conn.Where("user_id = ?", d.loginUserID).Find(&groupRequestList).Error
 	var transfer []*LocalGroupRequest
 	for _, v := range groupRequestList {
-		transfer = append(transfer, &v)
+		v1 := v
+		transfer = append(transfer, &v1)
 	}
 	return transfer, utils.Wrap(err, "GetRecvGroupApplication failed ")
 }

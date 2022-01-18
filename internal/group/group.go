@@ -520,13 +520,14 @@ func (g *Group) SyncJoinedGroupList(operationID string) {
 		log.NewError(operationID, "GetRecvFriendApplication failed ", err.Error())
 		return
 	}
-	log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
+
+	log.NewInfo(operationID, " onLocal ", onLocal)
 	aInBNot, bInANot, sameA, sameB := common.CheckGroupInfoDiff(onServer, onLocal)
 	log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
 	for _, index := range aInBNot {
 		err := g.db.InsertGroup(onServer[index])
 		if err != nil {
-			log.NewError(operationID, "InsertGroup failed ", err.Error(), onServer[index])
+			log.NewError(operationID, "InsertGroup failed ", err.Error(), *onServer[index])
 			continue
 		}
 		callbackData := sdk.JoinedGroupAddedCallback(*onServer[index])

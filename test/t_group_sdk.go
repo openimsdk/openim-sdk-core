@@ -118,30 +118,34 @@ func DoTestCreateGroup() {
 	open_im_sdk.CreateGroup(test, test.OperationID, g1, g2)
 }
 
-//
-//type testSetGroupInfo struct {
-//	open_im_sdk.groupInfo
-//}
-//
-//func (testSetGroupInfo) OnSuccess(data string) {
-//	fmt.Println("testSetGroupInfo,onSuccess")
-//}
-//
-//func (testSetGroupInfo) OnError(errCode int32, errMsg string) {
-//	fmt.Println("testSetGroupInfo,onError")
-//}
-//
-//func DoSetGroupInfo() {
-//	var test testSetGroupInfo
-//	test.groupInfo.GroupId = "a411065eedf8bc1830ce544ff51394fe"
-//	test.GroupName = "test group"
-//	test.Introduction = "This is an introduction about the test group"
-//	test.Notification = "this is test bulletins"
-//	test.FaceUrl = "this is a test face url"
-//	setInfo, _ := json.Marshal(test.groupInfo)
-//	fmt.Println("setGroupInfo input", string(setInfo))
-//	sdk_interface.SetGroupInfo(string(setInfo), test)
-//}
+type testSetGroupInfo struct {
+	OperationID string
+}
+
+func (t testSetGroupInfo) OnSuccess(data string) {
+	log.Info(t.OperationID, utils.GetSelfFuncName(), data)
+
+}
+
+func (t testSetGroupInfo) OnError(errCode int32, errMsg string) {
+	log.Info(t.OperationID, utils.GetSelfFuncName(), errCode, errMsg)
+}
+
+var TestgroupID = "19de93b442a1ca3b772aa0f12761939d"
+
+func DoSetGroupInfo() {
+	var test testSetGroupInfo
+	test.OperationID = utils.OperationIDGenerator()
+	var input sdk_params_callback.SetGroupInfoParam
+	input.GroupName = "new group name "
+	input.Notification = "new notification "
+
+	setInfo := utils.StructToJsonString(input)
+	open_im_sdk.SetGroupInfo(test, test.OperationID, TestgroupID, setInfo)
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ", setInfo)
+
+}
+
 //
 //type testGetGroupsInfo struct {
 //	open_im_sdk.getGroupsInfoReq

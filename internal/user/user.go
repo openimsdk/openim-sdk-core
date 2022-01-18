@@ -67,6 +67,12 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 		onLocal = &db.LocalUser{}
 	}
 	if onServer != onLocal {
+		if onLocal.UserID == "" {
+			if err = u.InsertLoginUser(onServer); err != nil {
+				log.Error(operationID, "InsertLoginUser failed ", *onServer, err.Error())
+			}
+			return
+		}
 		u.UpdateLoginUser(onServer)
 		if err != nil {
 			log.Error(operationID, "UpdateLoginUser failed ", *onServer, err.Error())

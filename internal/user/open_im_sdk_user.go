@@ -31,8 +31,8 @@ func (u *User) SetSelfInfo(callback common.Base, userInfo string, operationID st
 		log.NewInfo(operationID, utils.RunFuncName(), "args: ", userInfo)
 		var unmarshalParam sdk_params_callback.SetSelfUserInfoParam
 		common.JsonUnmarshalAndArgsValidate(userInfo, &unmarshalParam, callback, operationID)
-		result := u.updateSelfUserInfo(callback, unmarshalParam, operationID)
+		u.updateSelfUserInfo(callback, unmarshalParam, operationID)
 		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(sdk_params_callback.SetSelfUserInfoCallback)))
-		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonString(result))
+		log.NewInfo(operationID, utils.RunFuncName(), "callback: ")
 	}()
 }

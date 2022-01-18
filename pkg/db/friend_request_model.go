@@ -35,7 +35,8 @@ func (d *DataBase) GetRecvFriendApplication() ([]*LocalFriendRequest, error) {
 
 	var transfer []*LocalFriendRequest
 	for _, v := range friendRequestList {
-		transfer = append(transfer, &v)
+		v1 := v
+		transfer = append(transfer, &v1)
 	}
 	return transfer, utils.Wrap(err, "GetRecvFriendApplication failed")
 }
@@ -48,7 +49,8 @@ func (d *DataBase) GetSendFriendApplication() ([]*LocalFriendRequest, error) {
 
 	var transfer []*LocalFriendRequest
 	for _, v := range friendRequestList {
-		transfer = append(transfer, &v)
+		v1 := v
+		transfer = append(transfer, &v1)
 	}
 	return transfer, utils.Wrap(err, "GetSendFriendApplication failed")
 }

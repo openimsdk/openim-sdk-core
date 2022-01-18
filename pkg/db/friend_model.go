@@ -36,7 +36,8 @@ func (d *DataBase) GetAllFriendList() ([]*LocalFriend, error) {
 		"GetFriendList failed")
 	var transfer []*LocalFriend
 	for _, v := range friendList {
-		transfer = append(transfer, &v)
+		v1 := v
+		transfer = append(transfer, &v1)
 	}
 	return transfer, err
 }

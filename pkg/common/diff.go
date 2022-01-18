@@ -357,10 +357,13 @@ func CheckGroupInfoDiff(a []*db.LocalGroup, b []*db.LocalGroup) (aInBNot, bInANo
 	//to map, friendid_>friendinfo
 	mapA := make(map[string]*db.LocalGroup)
 	for _, v := range a {
+		//	fmt.Println("mapa   ", *v)
 		mapA[v.GroupID] = v
+
 	}
 	mapB := make(map[string]*db.LocalGroup)
 	for _, v := range b {
+		//	fmt.Println("mapb   ", *v)
 		mapB[v.GroupID] = v
 	}
 
@@ -376,7 +379,7 @@ func CheckGroupInfoDiff(a []*db.LocalGroup, b []*db.LocalGroup) (aInBNot, bInANo
 			//in a, but not in b
 			aInBNot = append(aInBNot, i)
 		} else {
-			if v != ia {
+			if *v != *ia {
 				// key of a and b is equal, but value different
 				sameA = append(sameA, i)
 			}
@@ -388,7 +391,7 @@ func CheckGroupInfoDiff(a []*db.LocalGroup, b []*db.LocalGroup) (aInBNot, bInANo
 		if !ok {
 			bInANot = append(bInANot, i)
 		} else {
-			if ib != v {
+			if *ib != *v {
 				sameB = append(sameB, i)
 			}
 		}
