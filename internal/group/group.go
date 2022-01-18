@@ -1,7 +1,6 @@
 package group
 
 import (
-	"github.com/mitchellh/mapstructure"
 	comm "open_im_sdk/internal/common"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/pkg/common"
@@ -319,16 +318,17 @@ func (g *Group) inviteUserToGroup(callback common.Base, groupID, reason string, 
 	g.p.PostFatalCallback(callback, constant.InviteUserToGroupRouter, apiReq, &realData, apiReq.OperationID)
 	g.SyncJoinedGroupMember(operationID)
 	g.syncGroupMemberByGroupID(groupID, operationID)
+	return realData
 }
 
 //
 ////1
-//func (g *Group) getGroupApplicationList(callback common.Base, operationID string) sdk.GetGroupApplicationListCallback {
-//	applicationList, err := g.db.GetRecvGroupApplication()
-//	common.CheckErr(callback, err, operationID)
-//	return applicationList
-//}
-//
+func (g *Group) getGroupApplicationList(callback common.Base, operationID string) sdk.GetGroupApplicationListCallback {
+	applicationList, err := g.db.GetRecvGroupApplication()
+	common.CheckDBErrCallback(callback, err, operationID)
+	return applicationList
+}
+
 func (g *Group) getGroupApplicationListFromSvr(operationID string) ([]*api.GroupRequest, error) {
 	apiReq := api.GetGroupApplicationListReq{}
 	apiReq.FromUserID = g.loginUserID
