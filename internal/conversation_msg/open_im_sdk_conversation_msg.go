@@ -17,7 +17,6 @@ import (
 	"open_im_sdk/sdk_struct"
 	"os"
 	"runtime"
-	"sort"
 	"sync"
 )
 

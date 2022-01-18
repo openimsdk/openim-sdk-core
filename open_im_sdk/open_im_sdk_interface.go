@@ -266,6 +266,9 @@ func SetFriendListener(listener friend.OnFriendshipListener) {
 func SetConversationListener(listener conversation_msg.OnConversationListener) {
 	userForSDK.SetConversationListener(listener)
 }
+func SetAdvancedMsgListener(listener conversation_msg.OnAdvancedMsgListener) {
+	userForSDK.SetAdvancedMsgListener(listener)
+}
 
 func SetUserListener(listener user.OnUserListener) {
 	userForSDK.SetUserListener(listener)

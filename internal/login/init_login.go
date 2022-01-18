@@ -66,6 +66,10 @@ func (u *LoginMgr) SetConversationListener(conversationListener conv.OnConversat
 	u.conversationListener = conversationListener
 }
 
+func (u *LoginMgr) SetAdvancedMsgListener(advancedMsgListener conv.OnAdvancedMsgListener) {
+	u.advancedMsgListener = advancedMsgListener
+}
+
 func (u *LoginMgr) SetFriendListener(friendListener friend.OnFriendshipListener) {
 	u.friendListener = friendListener
 }
@@ -125,8 +129,11 @@ func (u *LoginMgr) login(userID, token string, cb common.Base, operationID strin
 		common.CheckAnyErr(cb, 1000, err, operationID)
 	}
 	objStorage := comm2.NewCOS(p)
-	u.conversation = conv.NewConversation(u.ws, u.db, p, u.conversationCh, u.loginUserID, u.imConfig.Platform, u.friend, u.group, u.user, objStorage)
+	u.conversation = conv.NewConversation(u.ws, u.db, p, u.conversationCh,
+		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
+		u.friend, u.group, u.user, objStorage)
 	u.conversation.SetConversationListener(u.conversationListener)
+	u.conversation.SetMsgListener(u.advancedMsgListener)
 
 	log.Info("forcedSynchronization run ...")
 	go u.forcedSynchronization()
