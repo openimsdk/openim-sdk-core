@@ -247,7 +247,7 @@ func DotestGetGroupMemberList() {
 	var test testGetGroupMemberList
 	test.OperationID = utils.OperationIDGenerator()
 	var groupId = TestgroupID
-	open_im_sdk.GetGroupMemberList(test, test.OperationID, groupId, 1, 30)
+	//open_im_sdk.GetGroupMemberList(test, test.OperationID, groupId, 1, 30)
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ", groupId, 1, 30)
 }
 
@@ -320,11 +320,11 @@ type testGetGroupApplicationList struct {
 	baseCallback
 }
 
-func DotestGetAdminGroupApplicationList() string {
+func DotestGetRecvGroupApplicationList() string {
 	var test testGetGroupApplicationList
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
-	open_im_sdk.GetAdminGroupApplicationList(test, test.OperationID)
+	open_im_sdk.GetRecvGroupApplicationList(test, test.OperationID)
 	return ""
 }
 

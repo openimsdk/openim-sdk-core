@@ -358,18 +358,18 @@ func (g *Group) inviteUserToGroup(callback common.Base, groupID, reason string, 
 
 //
 ////1
-func (g *Group) getAdminGroupApplicationList(callback common.Base, operationID string) sdk.GetGroupApplicationListCallback {
+func (g *Group) getRecvGroupApplicationList(callback common.Base, operationID string) sdk.GetGroupApplicationListCallback {
 	applicationList, err := g.db.GetAdminGroupApplication()
 	common.CheckDBErrCallback(callback, err, operationID)
 	return applicationList
 }
 
-func (g *Group) getAdminGroupApplicationListFromSvr(operationID string) ([]*api.GroupRequest, error) {
+func (g *Group) getRecvGroupApplicationListFromSvr(operationID string) ([]*api.GroupRequest, error) {
 	apiReq := api.GetGroupApplicationListReq{}
 	apiReq.FromUserID = g.loginUserID
 	apiReq.OperationID = operationID
 	var realData []*api.GroupRequest
-	err := g.p.PostReturn(constant.GetAdminGroupApplicationListRouter, apiReq, &realData)
+	err := g.p.PostReturn(constant.GetRecvGroupApplicationListRouter, apiReq, &realData)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
@@ -492,9 +492,9 @@ func (g *Group) SyncSelfGroupApplication(operationID string) {
 
 func (g *Group) SyncAdminGroupApplication(operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
-	svrList, err := g.getAdminGroupApplicationListFromSvr(operationID)
+	svrList, err := g.getRecvGroupApplicationListFromSvr(operationID)
 	if err != nil {
-		log.NewError(operationID, "getAdminGroupApplicationListFromSvr failed ", err.Error())
+		log.NewError(operationID, "getRecvGroupApplicationListFromSvr failed ", err.Error())
 		return
 	}
 	onServer := common.TransferToLocalAdminGroupRequest(svrList)

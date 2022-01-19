@@ -35,7 +35,7 @@ const (
 	GetJoinedGroupListRouter           = "/group/get_joined_group_list"
 	KickGroupMemberRouter              = "/group/kick_group"
 	TransferGroupRouter                = "/group/transfer_group"
-	GetAdminGroupApplicationListRouter = "/group/get_group_applicationList"
+	GetRecvGroupApplicationListRouter  = "/group/get_recv_group_applicationList"
 	AcceptGroupApplicationRouter       = "/group/group_application_response"
 	RefuseGroupApplicationRouter       = "/group/group_application_response"
 	SetReceiveMessageOptRouter         = "/conversation/set_receive_message_opt"
