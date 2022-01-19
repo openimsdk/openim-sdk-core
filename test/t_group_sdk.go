@@ -218,15 +218,15 @@ type testGetJoinedGroupList struct {
 	OnSuccess(data string)
 */
 func (t testGetJoinedGroupList) OnError(errCode int32, errMsg string) {
-	fmt.Println("testGetJoinedGroupList OnError", t.OperationID, errCode, errMsg)
+	log.Info(t.OperationID, "testGetJoinedGroupList OnError", errCode, errMsg)
 }
 
 func (t testGetJoinedGroupList) OnSuccess(data string) {
-	fmt.Println("testGetJoinedGroupList OnSuccess, output", t.OperationID, data)
+	log.Info(t.OperationID, "testGetJoinedGroupList OnSuccess, output", data)
 }
 
 //
-func DotestGetJoinedGroupList() {
+func DoTestGetJoinedGroupList() {
 	var test testGetJoinedGroupList
 	test.OperationID = utils.OperationIDGenerator()
 	open_im_sdk.GetJoinedGroupList(test, test.OperationID)
