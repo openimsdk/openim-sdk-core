@@ -169,6 +169,7 @@ func (f *Friend) setFriendRemark(userIDRemark sdk.SetFriendRemarkParams, callbac
 	apiReq.OperationID = operationID
 	apiReq.ToUserID = userIDRemark.ToUserID
 	apiReq.FromUserID = f.loginUserID
+	apiReq.Remark = userIDRemark.Remark
 	f.p.PostFatalCallback(callback, constant.SetFriendRemark, apiReq, nil, operationID)
 	f.SyncFriendList(operationID)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ")

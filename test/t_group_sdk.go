@@ -353,7 +353,7 @@ func DotestAcceptGroupApplication(uid string) {
 	var test testProcessGroupApplication
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
-	open_im_sdk.AcceptGroupApplication(test, "19de93b442a1ca3b772aa0f12761939d", "openIM101", "ok", test.OperationID)
+	open_im_sdk.AcceptGroupApplication(test, TestgroupID, MemberUserID, "ok", test.OperationID)
 }
 
 //func DoRefuseGroupApplication(uid string) {
