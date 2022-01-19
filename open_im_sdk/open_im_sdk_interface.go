@@ -121,12 +121,12 @@ func CreateGroup(callback common.Base, operationID string, gInfo string, memberL
 	userForSDK.Group().CreateGroup(callback, gInfo, memberList, operationID)
 }
 
-func JoinGroup(callback common.Base, operationID string, groupID, message string) {
+func JoinGroup(callback common.Base, operationID string, groupID, reqMsg string) {
 	if callback == nil {
 		log.Error("callback is nil")
 		return
 	}
-	userForSDK.Group().JoinGroup(callback, groupID, message, operationID)
+	userForSDK.Group().JoinGroup(callback, groupID, reqMsg, operationID)
 }
 
 func QuitGroup(callback common.Base, operationID string, groupID string) {

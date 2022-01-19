@@ -221,7 +221,7 @@ func (g *Group) joinGroup(groupID, reqMsg string, callback common.Base, operatio
 	apiReq.ReqMessage = reqMsg
 	apiReq.GroupID = groupID
 	g.p.PostFatalCallback(callback, constant.JoinGroupRouter, apiReq, nil, apiReq.OperationID)
-	g.SyncJoinedGroupList(operationID)
+	g.SyncSelfGroupApplication(operationID)
 }
 
 func (g *Group) quitGroup(groupID string, callback common.Base, operationID string) {
@@ -240,6 +240,7 @@ func (g *Group) getJoinedGroupList(callback common.Base, operationID string) sdk
 	return groupList
 }
 
+//fixme 获取有可能不是本地的群信息
 func (g *Group) getGroupsInfo(groupIdList sdk.GetGroupsInfoParam, callback common.Base, operationID string) sdk.GetGroupsInfoCallback {
 	groupList, err := g.db.GetJoinedGroupList()
 	common.CheckDBErrCallback(callback, err, operationID)
