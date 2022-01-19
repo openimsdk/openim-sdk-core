@@ -46,7 +46,18 @@ func (d *DataBase) GetGroupMemberListByGroupID(groupID string) ([]*LocalGroupMem
 	}
 	return transfer, utils.Wrap(err, "GetGroupMemberListByGroupID failed ")
 }
-
+func (d *DataBase) GetGroupMemberListSplit(groupID string, filter int32, offset, count int) ([]*LocalGroupMember, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+	var groupMemberList []LocalGroupMember
+	err := d.conn.Where("group_id = ? And role_level = ?", groupID, filter).Offset(offset).Limit(count).Find(&groupMemberList).Error
+	var transfer []*LocalGroupMember
+	for _, v := range groupMemberList {
+		v1 := v
+		transfer = append(transfer, &v1)
+	}
+	return transfer, utils.Wrap(err, "GetGroupMemberListByGroupID failed ")
+}
 func (d *DataBase) GetGroupOwnerAndAdminByGroupID(groupID string) ([]*LocalGroupMember, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()

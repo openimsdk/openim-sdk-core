@@ -37,10 +37,7 @@ type SetGroupInfoParam struct {
 const SetGroupInfoCallback = constant.SuccessCallbackDefault
 
 //type GetGroupMemberListParam groupID ...
-type GetGroupMemberListCallback struct {
-	MemberList []*db.LocalGroupMember `json:"data"`
-	NextSeq    int32                  `json:"nextSeq"`
-}
+type GetGroupMemberListCallback []*db.LocalGroupMember
 
 type GetGroupMembersInfoParam []string
 type GetGroupMembersInfoCallback []*db.LocalGroupMember

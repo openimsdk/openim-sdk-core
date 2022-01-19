@@ -145,8 +145,8 @@ func SetGroupInfo(callback common.Base, operationID string, groupID string, json
 	userForSDK.Group().SetGroupInfo(callback, jsonGroupInfo, groupID, operationID)
 }
 
-func GetGroupMemberList(callback common.Base, operationID string, groupID string, filter int32, next int32) {
-	userForSDK.Group().GetGroupMemberList(callback, groupID, filter, next, operationID)
+func GetGroupMemberList(callback common.Base, operationID string, groupID string, filter, offset, count int32) {
+	userForSDK.Group().GetGroupMemberList(callback, groupID, filter, offset, count, operationID)
 }
 
 func GetGroupMembersInfo(callback common.Base, operationID string, groupID string, userList string) {

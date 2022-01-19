@@ -305,10 +305,10 @@ func (g *Group) setGroupInfo(callback common.Base, groupInfo sdk.SetGroupInfoPar
 }
 
 //todo
-func (g *Group) getGroupMemberList(callback common.Base, groupID string, filter int32, next int32, operationID string) sdk.GetGroupMemberListCallback {
-	groupInfoList, err := g.db.GetGroupMemberListByGroupID(groupID)
+func (g *Group) getGroupMemberList(callback common.Base, groupID string, filter, offset, count int32, operationID string) sdk.GetGroupMemberListCallback {
+	groupInfoList, err := g.db.GetGroupMemberListSplit(groupID, filter, int(offset), int(count))
 	common.CheckDBErrCallback(callback, err, operationID)
-	return sdk.GetGroupMemberListCallback{MemberList: groupInfoList, NextSeq: 0}
+	return groupInfoList
 }
 
 //todo
