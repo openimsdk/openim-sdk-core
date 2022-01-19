@@ -1,9 +1,5 @@
 package server_api_params
 
-import (
-	"open_im_sdk/pkg/db"
-)
-
 type CommResp struct {
 	ErrCode int32  `json:"errCode"`
 	ErrMsg  string `json:"errMsg"`
@@ -145,9 +141,15 @@ type QuitGroupResp struct {
 }
 
 type SetGroupInfoReq struct {
-	db.LocalGroup
-	OperationID string `json:"operationID" binding:"required"`
+	GroupID      string `json:"groupID" binding:"required"`
+	GroupName    string `json:"groupName"`
+	Notification string `json:"notification"`
+	Introduction string `json:"introduction"`
+	FaceURL      string `json:"faceURL"`
+	Ex           string `json:"ex"`
+	OperationID  string `json:"operationID" binding:"required"`
 }
+
 type SetGroupInfoResp struct {
 	CommResp
 }

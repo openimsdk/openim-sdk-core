@@ -30,7 +30,7 @@ type SetGroupInfoParam struct {
 	GroupName    string `json:"groupName"`
 	Notification string `json:"notification"`
 	Introduction string `json:"introduction"`
-	FaceUrl      string `json:"faceUrl"`
+	FaceURL      string `json:"faceURL"`
 	Ex           string `json:"ex"`
 }
 

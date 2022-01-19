@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"open_im_sdk/pkg/utils"
@@ -51,6 +52,7 @@ func postLogic(url string, data interface{}, token string) (content []byte, err 
 	if err != nil {
 		return nil, utils.Wrap(err, "marshal failed, url")
 	}
+	fmt.Println(url, "Marshal data: ", string(jsonStr))
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 	if err != nil {

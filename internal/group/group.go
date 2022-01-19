@@ -1,6 +1,7 @@
 package group
 
 import (
+	"fmt"
 	comm "open_im_sdk/internal/common"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/pkg/common"
@@ -266,6 +267,7 @@ func (g *Group) setGroupInfo(callback common.Base, groupInfo sdk.SetGroupInfoPar
 	apiReq.Ex = groupInfo.Ex
 	apiReq.OperationID = operationID
 	apiReq.GroupID = groupID
+	fmt.Println("setgroup : ", apiReq)
 	g.p.PostFatalCallback(callback, constant.SetGroupInfoRouter, apiReq, nil, apiReq.OperationID)
 	g.SyncJoinedGroupList(operationID)
 }

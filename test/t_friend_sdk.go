@@ -431,7 +431,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	open_im_sdk.SetGroupListener(groupListener)
 
 	InOutlllogin(uid, tk)
-	time.Sleep(30 * time.Second)
+	time.Sleep(2 * time.Second)
 }
 
 func lllogin(uid, tk string) bool {
