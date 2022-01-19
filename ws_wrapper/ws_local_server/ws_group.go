@@ -173,19 +173,19 @@ func (wsRouter *WsFuncRouter) GetJoinedGroupList(input, operationID string) {
 }
 
 func (wsRouter *WsFuncRouter) GetGroupsInfo(input, operationID string) { //(groupIdList string, callback Base) {
-	m := make(map[string]interface{})
-	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog("unmarshal failed")
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-		return
-	}
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupIDList") {
-		return
-	}
+	//m := make(map[string]interface{})
+	//if err := json.Unmarshal([]byte(input), &m); err != nil {
+	//	wrapSdkLog("unmarshal failed")
+	//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+	//	return
+	//}
+	//if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupIDList") {
+	//	return
+	//}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	//callback common.Base, groupIDList string, operationID string
 	userWorker.Group().GetGroupsInfo(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId},
-		m["groupIDList"].(string), operationID)
+		input, operationID)
 }
 
 func (wsRouter *WsFuncRouter) SetGroupInfo(input, operationID string) {

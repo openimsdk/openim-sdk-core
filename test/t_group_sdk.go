@@ -182,7 +182,7 @@ func DoTestJoinGroup() {
 	var test testJoinGroup
 	test.OperationID = utils.OperationIDGenerator()
 	groupID := "19de93b442a1ca3b772aa0f12761939d"
-	reqMsg := "123123"
+	reqMsg := "121212"
 	log.Info(test.OperationID, "test join group input", groupID, reqMsg)
 	open_im_sdk.JoinGroup(test, test.OperationID, groupID, reqMsg)
 }

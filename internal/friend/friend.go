@@ -85,6 +85,7 @@ func (f *Friend) addFriend(callback common.Base, userIDReqMsg sdk.AddFriendParam
 	apiReq.ReqMsg = userIDReqMsg.ReqMsg
 	apiReq.OperationID = operationID
 	f.p.PostFatalCallback(callback, constant.AddFriendRouter, apiReq, nil, operationID)
+	f.SyncFriendApplication(operationID)
 }
 
 func (f *Friend) getRecvFriendApplicationList(callback common.Base, operationID string) sdk.GetRecvFriendApplicationListCallback {
