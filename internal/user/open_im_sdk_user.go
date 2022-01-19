@@ -22,6 +22,7 @@ func (u *User) GetSelfUserInfo(callback common.Base, operationID string) {
 	go func() {
 		log.NewInfo(operationID, utils.RunFuncName(), "args: ")
 		result := u.getSelfUserInfo(callback, operationID)
+		callback.OnSuccess(utils.StructToJsonString(result))
 		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonString(result))
 	}()
 }

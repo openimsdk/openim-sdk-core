@@ -96,13 +96,13 @@ func (g *Group) SetGroupInfo(callback common.Base, groupInfo string, groupID str
 	}()
 }
 
-func (g *Group) GetGroupMemberList(callback common.Base, groupID string, filter int32, next int32, operationID string) {
+func (g *Group) GetGroupMemberList(callback common.Base, groupID string, filter, offset, count int32, operationID string) {
 	if callback == nil {
 		return
 	}
 	go func() {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", groupID, filter, next)
-		groupMemberList := g.getGroupMemberList(callback, groupID, filter, next, operationID)
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", groupID, offset, count)
+		groupMemberList := g.getGroupMemberList(callback, groupID, filter, offset, count, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(groupMemberList))
 		log.NewInfo(operationID, "GetGroupMemberList callback: ", utils.StructToJsonStringDefault(groupMemberList))
 	}()

@@ -211,13 +211,13 @@ func (wsRouter *WsFuncRouter) GetGroupMemberList(input, operationID string) { //
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupID", "filter", "next") {
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupID", "filter", "offset", "count") {
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	//callback common.Base, groupID string, filter int32, next int32, operationID string
 	userWorker.Group().GetGroupMemberList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId},
-		m["groupID"].(string), int32(m["filter"].(float64)), int32(m["next"].(float64)), operationID)
+		m["groupID"].(string), int32(m["filter"].(float64)), int32(m["offset"].(float64)), int32(m["count"].(float64)), operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetGroupMembersInfo(input, operationID string) { //(groupId string, userList string, callback Base) {
