@@ -61,7 +61,7 @@ func (g *Group) GetJoinedGroupList(callback common.Base, operationID string) {
 	go func() {
 		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 		groupList := g.getJoinedGroupList(callback, operationID)
-		log.Debug("this is a dbd test", groupList)
+		log.Debug(operationID, "this is a dbd test", groupList)
 		callback.OnSuccess(utils.StructToJsonString(groupList))
 		log.NewInfo(operationID, "GetJoinedGroupList callback: ", utils.StructToJsonString(groupList))
 	}()

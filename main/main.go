@@ -410,8 +410,11 @@ func main() {
 	//test.DotestAcceptGroupApplication("")
 
 	///////////////friend///////////////////////////////////
-	//test.DoTestGetFriendApplicationList()
-	test.DoTestAcceptFriendApplication()
+	//	test.DoTestGetFriendApplicationList()
+	//	test.DoTestAcceptFriendApplication()
+
+	//test.DotestSetFriendRemark()
+	test.DotestGetFriendList()
 
 	//	test.DoTestaddFriend()
 	//	open_im_sdk.DoTestGetFriendList()
