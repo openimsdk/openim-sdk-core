@@ -197,9 +197,7 @@ func (u *LoginMgr) forcedSynchronization() {
 	go u.friend.SyncBlackList(operationID)
 	go u.friend.SyncFriendApplication(operationID)
 	go u.friend.SyncSelfFriendApplication(operationID)
-
 	go u.user.SyncLoginUserInfo(operationID)
-
 	go u.group.SyncJoinedGroupList(operationID)
 	go u.group.SyncGroupApplication(operationID)
 	go u.group.SyncSelfGroupApplication(operationID)

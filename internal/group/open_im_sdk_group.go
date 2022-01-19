@@ -76,8 +76,8 @@ func (g *Group) GetGroupsInfo(callback common.Base, groupIDList string, operatio
 		var unmarshalGetGroupsInfoParam sdk_params_callback.GetGroupsInfoParam
 		common.JsonUnmarshalAndArgsValidate(groupIDList, &unmarshalGetGroupsInfoParam, callback, operationID)
 		groupsInfoList := g.getGroupsInfo(unmarshalGetGroupsInfoParam, callback, operationID)
-		callback.OnSuccess(utils.StructToJsonString(groupsInfoList))
-		log.NewInfo(operationID, "GetGroupsInfo callback: ", utils.StructToJsonString(groupsInfoList))
+		callback.OnSuccess(utils.StructToJsonStringDefault(groupsInfoList))
+		log.NewInfo(operationID, "GetGroupsInfo callback: ", utils.StructToJsonStringDefault(groupsInfoList))
 
 	}()
 }
