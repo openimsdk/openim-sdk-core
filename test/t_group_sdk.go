@@ -232,34 +232,38 @@ func DotestGetJoinedGroupList() {
 	open_im_sdk.GetJoinedGroupList(test, test.OperationID)
 }
 
-//
-//type testGetGroupMemberList struct {
-//}
-//
-//func (testGetGroupMemberList) OnError(errCode int32, errMsg string) {
-//	fmt.Println("testGetGroupMemberList OnError", errCode, errMsg)
-//}
-//
-//func (testGetGroupMemberList) OnSuccess(data string) {
-//	fmt.Println("testGetGroupMemberList OnSuccess, output", data)
-//}
-//
-//func DotestGetGroupMemberList() {
-//	var test testGetGroupMemberList
-//	var groupId string = ""
-//	sdk_interface.GetGroupMemberList(groupId, 0, 0, test)
-//}
-//
-//type testGetGroupMembersInfo struct {
-//}
-//
-//func (testGetGroupMembersInfo) OnError(errCode int32, errMsg string) {
-//	fmt.Println("testGetGroupMembersInfo OnError", errCode, errMsg)
-//}
-//
-//func (testGetGroupMembersInfo) OnSuccess(data string) {
-//	fmt.Println("testGetGroupMembersInfo OnSuccess, output", data)
-//}
+type testGetGroupMemberList struct {
+	OperationID string
+}
+
+func (t testGetGroupMemberList) OnSuccess(data string) {
+	log.Info(t.OperationID, utils.GetSelfFuncName(), data)
+
+}
+
+func (t testGetGroupMemberList) OnError(errCode int32, errMsg string) {
+	log.Info(t.OperationID, utils.GetSelfFuncName(), errCode, errMsg)
+}
+
+func DotestGetGroupMemberList() {
+	var test testGetGroupMemberList
+	test.OperationID = utils.OperationIDGenerator()
+	var groupId = TestgroupID
+	open_im_sdk.GetGroupMemberList(test, test.OperationID, groupId, 1, 30)
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ", groupId, 1, 30)
+}
+
+type testGetGroupMembersInfo struct {
+}
+
+func (testGetGroupMembersInfo) OnError(errCode int32, errMsg string) {
+	fmt.Println("testGetGroupMembersInfo OnError", errCode, errMsg)
+}
+
+func (testGetGroupMembersInfo) OnSuccess(data string) {
+	fmt.Println("testGetGroupMembersInfo OnSuccess, output", data)
+}
+
 //
 //func DotestGetGroupMembersInfo() {
 //	var test testGetGroupMembersInfo
@@ -272,48 +276,48 @@ func DotestGetJoinedGroupList() {
 //	//GetGroupMemberList("05dc84b52829e82242a710ecf999c72c", 0, 0, test)
 //}
 //
-//type testKickGroupMember struct {
-//}
-//
-//func (testKickGroupMember) OnError(errCode int32, errMsg string) {
-//	fmt.Println("testKickGroupMember OnError", errCode, errMsg)
-//}
-//
-//func (testKickGroupMember) OnSuccess(data string) {
-//	fmt.Println("testKickGroupMember OnSuccess, output", data)
-//}
-//
-//func DotestKickGroupMember() {
-//	var test testKickGroupMember
-//	var memlist []string
-//	//memlist = append(memlist, "e7b437c8b05a1fb8875e7196c636f327")
-//	memlist = append(memlist, "307edc814bb0d04a")
-//	jlist, _ := json.Marshal(memlist)
-//
-//	fmt.Println("KickGroupMember input", string(jlist))
-//	sdk_interface.KickGroupMember("f4cc5c9b556221b92992538f7e6ac26e", "kkkkkkk", string(jlist), test)
-//}
-//
-//type testInviteUserToGroup struct {
-//}
-//
-//func (testInviteUserToGroup) OnError(errCode int32, errMsg string) {
-//	fmt.Println("testInviteUserToGroup OnError", errCode, errMsg)
-//}
-//
-//func (testInviteUserToGroup) OnSuccess(data string) {
-//	fmt.Println("testInviteUserToGroup OnSuccess, output", data)
-//}
-//
-//func DotesttestInviteUserToGroup() {
-//	var test testInviteUserToGroup
-//	var memlist []string
-//	memlist = append(memlist, "307edc814bb0d04a")
-//	//memlist = append(memlist, "ded01dfe543700402608e19d4e2f839e")
-//	jlist, _ := json.Marshal(memlist)
-//	fmt.Println("DotesttestInviteUserToGroup, input: ", string(jlist))
-//	sdk_interface.InviteUserToGroup("f4cc5c9b556221b92992538f7e6ac26e", "friend", string(jlist), test)
-//}
+
+type baseCallback struct {
+	OperationID string
+}
+
+func (t baseCallback) OnSuccess(data string) {
+	log.Info(t.OperationID, utils.GetSelfFuncName(), data)
+
+}
+
+func (t baseCallback) OnError(errCode int32, errMsg string) {
+	log.Info(t.OperationID, utils.GetSelfFuncName(), errCode, errMsg)
+}
+
+type testKickGroupMember struct {
+	baseCallback
+}
+
+func DotestKickGroupMember() {
+	var test testKickGroupMember
+	test.OperationID = utils.OperationIDGenerator()
+	var memlist []string
+	memlist = append(memlist, memberUserID)
+	jlist := utils.StructToJsonString(memlist)
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ", jlist)
+	open_im_sdk.KickGroupMember(test, test.OperationID, TestgroupID, "kkk", jlist)
+}
+
+type testInviteUserToGroup struct {
+	baseCallback
+}
+
+func DotestInviteUserToGroup() {
+	var test testInviteUserToGroup
+	test.OperationID = utils.OperationIDGenerator()
+	var memlist []string
+	memlist = append(memlist, memberUserID)
+	jlist := utils.StructToJsonString(memlist)
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ", jlist)
+	open_im_sdk.InviteUserToGroup(test, test.OperationID, TestgroupID, "come", string(jlist))
+}
+
 //
 //type testGroupX struct {
 //}
