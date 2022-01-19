@@ -228,7 +228,7 @@ type testDeleteFriend struct {
 	baseCallback
 }
 
-func DoTestDeleteFromFriendList() {
+func DotestDeleteFriend() {
 	var test testDeleteFriend
 	test.OperationID = utils.OperationIDGenerator()
 

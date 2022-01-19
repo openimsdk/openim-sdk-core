@@ -320,11 +320,11 @@ type testGetGroupApplicationList struct {
 	baseCallback
 }
 
-func DotestGetGroupApplicationList() string {
+func DotestGetAdminGroupApplicationList() string {
 	var test testGetGroupApplicationList
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
-	open_im_sdk.GetGroupApplicationList(test, test.OperationID)
+	open_im_sdk.GetAdminGroupApplicationList(test, test.OperationID)
 	return ""
 }
 

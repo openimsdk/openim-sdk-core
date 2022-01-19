@@ -160,13 +160,13 @@ func (g *Group) InviteUserToGroup(callback common.Base, groupID, reason string, 
 	}()
 }
 
-func (g *Group) GetGroupApplicationList(callback common.Base, operationID string) {
+func (g *Group) GetAdminGroupApplicationList(callback common.Base, operationID string) {
 	if callback == nil {
 		return
 	}
 	go func() {
 		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
-		result := g.getGroupApplicationList(callback, operationID)
+		result := g.getAdminGroupApplicationList(callback, operationID)
 		callback.OnSuccess(utils.StructToJsonString(result))
 		log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
 	}()

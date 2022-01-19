@@ -414,7 +414,9 @@ func main() {
 	//	test.DoTestAcceptFriendApplication()
 
 	//test.DotestSetFriendRemark()
-	test.DotestGetFriendList()
+	//	test.DotestGetFriendList()
+
+	test.DotestDeleteFriend()
 
 	//	test.DoTestaddFriend()
 	//	open_im_sdk.DoTestGetFriendList()

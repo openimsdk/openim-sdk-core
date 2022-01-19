@@ -49,7 +49,11 @@ func (d *DataBase) initDB() error {
 		&LocalGroupMember{},
 		&LocalGroupRequest{},
 		&LocalUser{},
-		&LocalBlack{}, &LocalSeqData{}, &LocalConversation{}, &LocalChatLog{})
+		&LocalBlack{},
+		&LocalSeqData{},
+		&LocalConversation{},
+		&LocalChatLog{},
+		&LocalAdminGroupRequest{})
 	if !db.Migrator().HasTable(&LocalFriend{}) {
 		//log.NewInfo("CreateTable Friend")
 		db.Migrator().CreateTable(&LocalFriend{})

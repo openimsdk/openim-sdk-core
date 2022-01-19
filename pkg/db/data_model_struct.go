@@ -315,3 +315,18 @@ type LocalConversation struct {
 	IsPinned          int32  `gorm:"column:is_pinned" json:"isPinned"`
 	Ex                string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
+
+//message GroupRequest{
+//string UserID = 1;
+//string GroupID = 2;
+//string HandleResult = 3;
+//string ReqMsg = 4;
+//string  HandleMsg = 5;
+//int64 ReqTime = 6;
+//string HandleUserID = 7;
+//int64 HandleTime = 8;
+//string Ex = 9;
+//}open_im_sdk.GroupRequest == imdb.GroupRequest
+type LocalAdminGroupRequest struct {
+	LocalGroupRequest
+}

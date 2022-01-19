@@ -165,8 +165,8 @@ func InviteUserToGroup(callback common.Base, operationID string, groupID, reason
 	userForSDK.Group().InviteUserToGroup(callback, groupID, reason, userList, operationID)
 }
 
-func GetGroupApplicationList(callback common.Base, operationID string) {
-	userForSDK.Group().GetGroupApplicationList(callback, operationID)
+func GetAdminGroupApplicationList(callback common.Base, operationID string) {
+	userForSDK.Group().GetAdminGroupApplicationList(callback, operationID)
 }
 
 func AcceptGroupApplication(callback common.Base, groupID, fromUserID, handleMsg string, operationID string) {

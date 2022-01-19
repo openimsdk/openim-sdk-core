@@ -19,10 +19,10 @@ type JoinedGroupAddedCallback db.LocalGroup
 type JoinedGroupDeletedCallback db.LocalGroup
 type GroupMemberAddedCallback db.LocalGroupMember
 type GroupMemberDeletedCallback db.LocalGroupMember
-type GroupApplicationAddedCallback db.LocalGroupRequest
-type GroupApplicationDeletedCallback db.LocalGroupRequest
-type GroupApplicationAcceptCallback db.LocalGroupRequest
-type GroupApplicationRejectCallback db.LocalGroupRequest
+type GroupApplicationAddedCallback db.LocalAdminGroupRequest
+type GroupApplicationDeletedCallback db.LocalAdminGroupRequest
+type GroupApplicationAcceptCallback db.LocalAdminGroupRequest
+type GroupApplicationRejectCallback db.LocalAdminGroupRequest
 type GroupInfoChangedCallback db.LocalGroup
 type GroupMemberInfoChangedCallback db.LocalGroupMember
 

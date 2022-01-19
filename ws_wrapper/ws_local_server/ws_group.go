@@ -284,10 +284,9 @@ func (wsRouter *WsFuncRouter) InviteUserToGroup(input, operationID string) { //(
 		m["groupID"].(string), m["reason"].(string), m["userIDList"].(string), operationID)
 }
 
-func (wsRouter *WsFuncRouter) GetGroupApplicationList(input, operationID string) { //(callback Base) {
+func (wsRouter *WsFuncRouter) GetAdminGroupApplicationList(input, operationID string) { //(callback Base) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.Group().GetGroupApplicationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
-
+	userWorker.Group().GetAdminGroupApplicationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
 func (wsRouter *WsFuncRouter) AcceptGroupApplication(input, operationID string) { //(application, reason string, callback Base) {

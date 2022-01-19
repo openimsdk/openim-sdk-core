@@ -100,7 +100,7 @@ func (g *Group) joinGroupApplicationNotification(msg *api.MsgData, operationID s
 	if detail.Applicant.UserID == g.loginUserID {
 		g.SyncSelfGroupApplication(operationID)
 	} else {
-		g.SyncGroupApplication(operationID)
+		g.SyncAdminGroupApplication(operationID)
 	}
 }
 
@@ -124,7 +124,7 @@ func (g *Group) groupApplicationAcceptedNotification(msg *api.MsgData, operation
 		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
 	}
 	if detail.OpUser.UserID == g.loginUserID {
-		g.SyncGroupApplication(operationID)
+		g.SyncAdminGroupApplication(operationID)
 	} else {
 		g.SyncSelfGroupApplication(operationID)
 	}
@@ -139,7 +139,7 @@ func (g *Group) groupApplicationRejectedNotification(msg *api.MsgData, operation
 		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
 	}
 	if detail.OpUser.UserID == g.loginUserID {
-		g.SyncGroupApplication(operationID)
+		g.SyncAdminGroupApplication(operationID)
 	} else {
 		g.SyncSelfGroupApplication(operationID)
 	}
@@ -240,11 +240,12 @@ func (g *Group) getJoinedGroupList(callback common.Base, operationID string) sdk
 	return groupList
 }
 
-//fixme 获取有可能不是本地的群信息
 func (g *Group) getGroupsInfo(groupIdList sdk.GetGroupsInfoParam, callback common.Base, operationID string) sdk.GetGroupsInfoCallback {
 	groupList, err := g.db.GetJoinedGroupList()
 	common.CheckDBErrCallback(callback, err, operationID)
 	var result sdk.GetGroupsInfoCallback
+	var notInDB []string
+
 	for _, v := range groupList {
 		in := false
 		for _, k := range groupIdList {
@@ -257,7 +258,36 @@ func (g *Group) getGroupsInfo(groupIdList sdk.GetGroupsInfoParam, callback commo
 			result = append(result, v)
 		}
 	}
+
+	for _, v := range groupIdList {
+		in := false
+		for _, k := range result {
+			if v == k.GroupID {
+				in = true
+				break
+			}
+		}
+		if !in {
+			notInDB = append(notInDB, v)
+		}
+	}
+	groupsInfoSvr, err := g.getGroupsInfoFromSvr(notInDB, operationID)
+	common.CheckArgsErrCallback(callback, err, operationID)
+	transfer := common.TransferToLocalGroupInfo(groupsInfoSvr)
+	result = append(result, transfer...)
 	return result
+}
+
+func (g *Group) getGroupsInfoFromSvr(groupIDList []string, operationID string) ([]*api.GroupInfo, error) {
+	apiReq := api.GetGroupInfoReq{}
+	apiReq.GroupIDList = groupIDList
+	apiReq.OperationID = operationID
+	var groupInfoList []*api.GroupInfo
+	err := g.p.PostReturn(constant.GetGroupsInfoRouter, apiReq, &groupInfoList)
+	if err != nil {
+		return nil, utils.Wrap(err, apiReq.OperationID)
+	}
+	return groupInfoList, nil
 }
 
 func (g *Group) setGroupInfo(callback common.Base, groupInfo sdk.SetGroupInfoParam, groupID, operationID string) {
@@ -328,18 +358,18 @@ func (g *Group) inviteUserToGroup(callback common.Base, groupID, reason string, 
 
 //
 ////1
-func (g *Group) getGroupApplicationList(callback common.Base, operationID string) sdk.GetGroupApplicationListCallback {
-	applicationList, err := g.db.GetRecvGroupApplication()
+func (g *Group) getAdminGroupApplicationList(callback common.Base, operationID string) sdk.GetGroupApplicationListCallback {
+	applicationList, err := g.db.GetAdminGroupApplication()
 	common.CheckDBErrCallback(callback, err, operationID)
 	return applicationList
 }
 
-func (g *Group) getGroupApplicationListFromSvr(operationID string) ([]*api.GroupRequest, error) {
+func (g *Group) getAdminGroupApplicationListFromSvr(operationID string) ([]*api.GroupRequest, error) {
 	apiReq := api.GetGroupApplicationListReq{}
 	apiReq.FromUserID = g.loginUserID
 	apiReq.OperationID = operationID
 	var realData []*api.GroupRequest
-	err := g.p.PostReturn(constant.GetGroupApplicationListRouter, apiReq, &realData)
+	err := g.p.PostReturn(constant.GetAdminGroupApplicationListRouter, apiReq, &realData)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
@@ -359,7 +389,7 @@ func (g *Group) processGroupApplication(callback common.Base, groupID, fromUserI
 	} else if handleResult == -1 {
 		g.p.PostFatalCallback(callback, constant.RefuseGroupApplicationRouter, apiReq, nil, apiReq.OperationID)
 	}
-	g.SyncGroupApplication(operationID)
+	g.SyncAdminGroupApplication(operationID)
 }
 
 //
@@ -460,24 +490,25 @@ func (g *Group) SyncSelfGroupApplication(operationID string) {
 
 }
 
-func (g *Group) SyncGroupApplication(operationID string) {
+func (g *Group) SyncAdminGroupApplication(operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
-	svrList, err := g.getGroupApplicationListFromSvr(operationID)
+	svrList, err := g.getAdminGroupApplicationListFromSvr(operationID)
 	if err != nil {
-		log.NewError(operationID, "getGroupApplicationListFromSvr failed ", err.Error())
+		log.NewError(operationID, "getAdminGroupApplicationListFromSvr failed ", err.Error())
 		return
 	}
-	onServer := common.TransferToLocalGroupRequest(svrList)
-	onLocal, err := g.db.GetRecvGroupApplication()
+	onServer := common.TransferToLocalAdminGroupRequest(svrList)
+	onLocal, err := g.db.GetAdminGroupApplication()
 	if err != nil {
-		log.NewError(operationID, "GetJoinedGroupList failed ", err.Error())
+		log.NewError(operationID, "GetAdminGroupApplication failed ", err.Error())
 		return
 	}
+
 	log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
-	aInBNot, bInANot, sameA, sameB := common.CheckGroupRequestDiff(onServer, onLocal)
+	aInBNot, bInANot, sameA, sameB := common.CheckAdminGroupRequestDiff(onServer, onLocal)
 	log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
 	for _, index := range aInBNot {
-		err := g.db.InsertGroupRequest(onServer[index])
+		err := g.db.InsertAdminGroupRequest(onServer[index])
 		if err != nil {
 			log.NewError(operationID, "InsertGroupRequest failed ", err.Error())
 			continue
@@ -486,7 +517,7 @@ func (g *Group) SyncGroupApplication(operationID string) {
 		g.listener.OnGroupApplicationAdded(utils.StructToJsonString(callbackData))
 	}
 	for _, index := range sameA {
-		err := g.db.UpdateGroupRequest(onServer[index])
+		err := g.db.UpdateAdminGroupRequest(onServer[index])
 		if err != nil {
 			log.NewError(operationID, "UpdateGroupRequest failed ", err.Error())
 			continue
