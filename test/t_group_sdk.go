@@ -146,68 +146,67 @@ func DoSetGroupInfo() {
 }
 
 //
-//type testGetGroupsInfo struct {
-//	open_im_sdk.getGroupsInfoReq
-//}
-//
-//func (testGetGroupsInfo) OnSuccess(data string) {
-//	fmt.Println("testGetGroupsInfo,onSuccess", data)
-//}
-//
-//func (testGetGroupsInfo) OnError(errCode int32, errMsg string) {
-//	fmt.Println("testGetGroupsInfo,onError", errMsg)
-//}
-//
-//func DoGetGroupsInfo() {
-//	var test testGetGroupsInfo
-//	groupIDList := []string{"a411065eedf8bc1830ce544ff51394fe"}
-//	test.getGroupsInfoReq.GroupIDList = groupIDList
-//	groupsIDList, _ := json.Marshal(test.GroupIDList)
-//	fmt.Println("test getGroupsInfo input", string(groupsIDList))
-//	sdk_interface.GetGroupsInfo(string(groupsIDList), test)
-//}
-//
-//type testJoinGroup struct {
-//	open_im_sdk.joinGroupReq
-//}
-//
-//func (testJoinGroup) OnSuccess(data string) {
-//	fmt.Println("testJoinGroup,onSuccess", data)
-//}
-//
-//func (testJoinGroup) OnError(errCode int32, errMsg string) {
-//	fmt.Println("testJoinGroup,onError", errMsg)
-//}
-//
-//func DoJoinGroup() {
-//	var test testJoinGroup
-//	test.joinGroupReq.GroupID = "7149948c2fb143f9ee97e3e9b406b5ec"
-//	test.joinGroupReq.Message = "jin lai "
-//
-//	fmt.Println("test join group input", test.GroupID, test.Message)
-//	sdk_interface.JoinGroup(test.GroupID, test.Message, test)
-//}
-//
-//type testQuitGroup struct {
-//	open_im_sdk.quitGroupReq
-//}
-//
-//func (testQuitGroup) OnSuccess(data string) {
-//	fmt.Println("testQuitGroup,onSuccess", data)
-//}
-//
-//func (testQuitGroup) OnError(errCode int32, errMsg string) {
-//	fmt.Println("testQuitGroup,onError", errMsg)
-//}
-//
-//func DoQuitGroup() {
-//	var test testQuitGroup
-//	test.quitGroupReq.GroupID = "77215e1b13b75f3ab00cb6570e3d9618"
-//
-//	fmt.Println("test quit group input", test.GroupID)
-//	sdk_interface.QuitGroup(test.GroupID, test)
-//}
-//
+type testGetGroupsInfo struct {
+	OperationID string
+}
+
+func (t testGetGroupsInfo) OnSuccess(data string) {
+	log.Info(t.OperationID, "testGetGroupsInfo,onSuccess", data)
+}
+
+func (t testGetGroupsInfo) OnError(errCode int32, errMsg string) {
+	log.Info(t.OperationID, "testGetGroupsInfo,onError", errCode, errMsg)
+}
+
+func DoTestGetGroupsInfo() {
+	var test testGetGroupsInfo
+	groupIDList := []string{"8a33030b726bd4792c8410aadfacaa35", "e91805bae94ae3a00eb629f74e83605a"}
+	list := utils.StructToJsonString(groupIDList)
+	log.Info(test.OperationID, "test getGroupsInfo input", list)
+	open_im_sdk.GetGroupsInfo(test, test.OperationID, list)
+}
+
+type testJoinGroup struct {
+	OperationID string
+}
+
+func (t testJoinGroup) OnSuccess(data string) {
+	log.Info(t.OperationID, "testJoinGroup,onSuccess", data)
+}
+
+func (t testJoinGroup) OnError(errCode int32, errMsg string) {
+	log.Info(t.OperationID, "testJoinGroup,onError", errCode, errMsg)
+}
+
+func DoTestJoinGroup() {
+	var test testJoinGroup
+	test.OperationID = utils.OperationIDGenerator()
+	groupID := "19de93b442a1ca3b772aa0f12761939d"
+	reqMsg := "123123"
+	log.Info(test.OperationID, "test join group input", groupID, reqMsg)
+	open_im_sdk.JoinGroup(test, test.OperationID, groupID, reqMsg)
+}
+
+type testQuitGroup struct {
+	OperationID string
+}
+
+func (t testQuitGroup) OnSuccess(data string) {
+	log.Info(t.OperationID, "testQuitGroup,onSuccess", data)
+}
+
+func (t testQuitGroup) OnError(errCode int32, errMsg string) {
+	log.Info(t.OperationID, "testQuitGroup,onError", errCode, errMsg)
+}
+
+func DoTestQuitGroup() {
+	var test testQuitGroup
+	test.OperationID = utils.OperationIDGenerator()
+	groupID := "19de93b442a1ca3b772aa0f12761939d"
+	log.Info(test.OperationID, "test quit group input", groupID)
+	open_im_sdk.QuitGroup(test, test.OperationID, groupID)
+}
+
 type testGetJoinedGroupList struct {
 	OperationID string
 }
