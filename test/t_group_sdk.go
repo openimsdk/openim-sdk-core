@@ -98,7 +98,8 @@ func (t testCreateGroup) OnError(errCode int32, errMsg string) {
 	log.Info(t.OperationID, utils.GetSelfFuncName(), errCode, errMsg)
 }
 
-var memberUserID = "openIM101"
+var MemberUserID = "openIM101"
+var TestgroupID = "19de93b442a1ca3b772aa0f12761939d"
 
 func DoTestCreateGroup() {
 	var test testCreateGroup
@@ -109,7 +110,7 @@ func DoTestCreateGroup() {
 	groupInfo.GroupType = 0
 
 	var memberlist []server_api_params.GroupAddMemberInfo
-	memberlist = append(memberlist, server_api_params.GroupAddMemberInfo{UserID: memberUserID, RoleLevel: 1})
+	memberlist = append(memberlist, server_api_params.GroupAddMemberInfo{UserID: MemberUserID, RoleLevel: 1})
 
 	g1 := utils.StructToJsonString(groupInfo)
 	g2 := utils.StructToJsonString(memberlist)
@@ -130,8 +131,6 @@ func (t testSetGroupInfo) OnSuccess(data string) {
 func (t testSetGroupInfo) OnError(errCode int32, errMsg string) {
 	log.Info(t.OperationID, utils.GetSelfFuncName(), errCode, errMsg)
 }
-
-var TestgroupID = "19de93b442a1ca3b772aa0f12761939d"
 
 func DoSetGroupInfo() {
 	var test testSetGroupInfo
@@ -298,7 +297,7 @@ func DotestKickGroupMember() {
 	var test testKickGroupMember
 	test.OperationID = utils.OperationIDGenerator()
 	var memlist []string
-	memlist = append(memlist, memberUserID)
+	memlist = append(memlist, MemberUserID)
 	jlist := utils.StructToJsonString(memlist)
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ", jlist)
 	open_im_sdk.KickGroupMember(test, test.OperationID, TestgroupID, "kkk", jlist)
@@ -312,7 +311,7 @@ func DotestInviteUserToGroup() {
 	var test testInviteUserToGroup
 	test.OperationID = utils.OperationIDGenerator()
 	var memlist []string
-	memlist = append(memlist, memberUserID)
+	memlist = append(memlist, MemberUserID)
 	jlist := utils.StructToJsonString(memlist)
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ", jlist)
 	open_im_sdk.InviteUserToGroup(test, test.OperationID, TestgroupID, "come", string(jlist))
@@ -335,36 +334,29 @@ func DotestGetGroupApplicationList() string {
 //	fmt.Println("test DoGetGroupApplicationList....")
 //	sdk_interface.GetGroupApplicationList(test)
 //}
-//func DoTransferGroupOwner(groupid, userid string) {
-//	var test testGroupX
-//	fmt.Println("test DoTransferGroupOwner....")
-//	sdk_interface.TransferGroupOwner(groupid, userid, test)
-//}
-//func DoAcceptGroupApplication(uid string) {
-//
-//	str := DoGetGroupApplicationList()
-//	var ret open_im_sdk.groupApplicationResult
-//	err := json.Unmarshal([]byte(str), &ret)
-//	if err != nil {
-//		return
-//	}
-//	var app utils.GroupReqListInfo
-//	for i := 0; i < len(ret.GroupApplicationList); i++ {
-//		if ret.GroupApplicationList[i].FromUserID == uid {
-//			app = ret.GroupApplicationList[i]
-//			break
-//		}
-//	}
-//
-//	v, err := json.Marshal(app)
-//	if err != nil {
-//		return
-//	}
-//
-//	var test testGroupX
-//	fmt.Println("accept", string(v))
-//	sdk_interface.AcceptGroupApplication(string(v), "accept", test)
-//}
+type testTransferGroupOwner struct {
+	baseCallback
+}
+
+func DotestTransferGroupOwner() {
+	var test testTransferGroupOwner
+	test.OperationID = utils.OperationIDGenerator()
+
+	open_im_sdk.TransferGroupOwner(test, test.OperationID, TestgroupID, MemberUserID)
+
+}
+
+type testProcessGroupApplication struct {
+	baseCallback
+}
+
+func DotestAcceptGroupApplication(uid string) {
+	var test testProcessGroupApplication
+	test.OperationID = utils.OperationIDGenerator()
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
+	open_im_sdk.AcceptGroupApplication(test, "19de93b442a1ca3b772aa0f12761939d", "openIM101", "ok", test.OperationID)
+}
+
 //func DoRefuseGroupApplication(uid string) {
 //	str := DoGetGroupApplicationList()
 //	var ret open_im_sdk.groupApplicationResult

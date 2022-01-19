@@ -2,7 +2,6 @@ package db
 
 import (
 	"errors"
-	"fmt"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -32,7 +31,7 @@ func (d *DataBase) GetRecvGroupApplication() ([]*LocalGroupRequest, error) {
 		return nil, utils.Wrap(err, "")
 	}
 
-	fmt.Println("ownerAdminList ", ownerAdminList)
+	//fmt.Println("ownerAdminList ", ownerAdminList)
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var transfer []*LocalGroupRequest

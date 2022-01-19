@@ -76,7 +76,7 @@ func (d *DataBase) InsertGroupMember(groupMember *LocalGroupMember) error {
 func (d *DataBase) DeleteGroupMember(groupID, userID string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	groupMember := LocalGroupMember{GroupID: groupID, UserID: userID}
+	groupMember := LocalGroupMember{}
 	return d.conn.Where("group_id=? and user_id=?", groupID, userID).Delete(&groupMember).Error
 }
 
