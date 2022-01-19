@@ -82,7 +82,7 @@ func (ws *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, ret
 		err, connSend = ws.writeBinaryMsg(wsReq)
 		if err != nil {
 			if !ws.IsWriteTimeout(err) {
-				if connSend != nil {
+				if connSend == nil {
 					log.Error(operationID, "conn nil")
 					time.Sleep(time.Duration(1) * time.Second)
 					continue
