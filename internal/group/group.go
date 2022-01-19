@@ -620,7 +620,6 @@ func (g *Group) getGroupAllMemberByGroupIDFromSvr(groupID string, operationID st
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
-
 	return realData, nil
 }
 
