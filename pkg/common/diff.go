@@ -156,15 +156,15 @@ func GroupInfoCopyToLocal(dst *db.LocalGroup, src *server_api_params.GroupInfo) 
 
 func TransferToLocalGroupRequest(apiData []*server_api_params.GroupRequest) []*db.LocalGroupRequest {
 	local := make([]*db.LocalGroupRequest, 0)
-	operationID := utils.OperationIDGenerator()
+	//operationID := utils.OperationIDGenerator()
 	for _, v := range apiData {
 		var node db.LocalGroupRequest
-		log2.NewDebug(operationID, "local test api ", v)
+		//	log2.NewDebug(operationID, "local test api ", v)
 		GroupRequestCopyToLocal(&node, v)
-		log2.NewDebug(operationID, "local test local  ", node)
+		//		log2.NewDebug(operationID, "local test local  ", node)
 		local = append(local, &node)
 	}
-	log2.NewDebug(operationID, "local test local all ", local)
+	//	log2.NewDebug(operationID, "local test local all ", local)
 	return local
 }
 

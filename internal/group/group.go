@@ -461,53 +461,53 @@ func (g *Group) SyncSelfGroupApplication(operationID string) {
 
 func (g *Group) SyncGroupApplication(operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
-	svrList, err := g.getGroupApplicationListFromSvr(operationID)
-	if err != nil {
-		log.NewError(operationID, "getGroupApplicationListFromSvr failed ", err.Error())
-		return
-	}
-	onServer := common.TransferToLocalGroupRequest(svrList)
-	onLocal, err := g.db.GetRecvGroupApplication()
-	if err != nil {
-		log.NewError(operationID, "GetJoinedGroupList failed ", err.Error())
-		return
-	}
-	log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
-	aInBNot, bInANot, sameA, sameB := common.CheckGroupRequestDiff(onServer, onLocal)
-	log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
-	for _, index := range aInBNot {
-		err := g.db.InsertGroupRequest(onServer[index])
-		if err != nil {
-			log.NewError(operationID, "InsertGroupRequest failed ", err.Error())
-			continue
-		}
-		callbackData := sdk.GroupApplicationAddedCallback(*onServer[index])
-		g.listener.OnGroupApplicationAdded(utils.StructToJsonString(callbackData))
-	}
-	for _, index := range sameA {
-		err := g.db.UpdateGroupRequest(onServer[index])
-		if err != nil {
-			log.NewError(operationID, "UpdateGroupRequest failed ", err.Error())
-			continue
-		}
-		if onServer[index].HandleResult == -1 {
-			callbackData := sdk.GroupApplicationRejectCallback(*onServer[index])
-			g.listener.OnGroupApplicationRejected(utils.StructToJsonString(callbackData))
-
-		} else if onServer[index].HandleResult == 1 {
-			callbackData := sdk.GroupApplicationAcceptCallback(*onServer[index])
-			g.listener.OnGroupApplicationAccepted(utils.StructToJsonString(callbackData))
-		}
-	}
-	for _, index := range bInANot {
-		err := g.db.DeleteGroupRequest(onServer[index].GroupID, onServer[index].UserID)
-		if err != nil {
-			log.NewError(operationID, "DeleteGroupRequest failed ", err.Error())
-			continue
-		}
-		callbackData := sdk.GroupApplicationDeletedCallback(*onLocal[index])
-		g.listener.OnGroupApplicationDeleted(utils.StructToJsonString(callbackData))
-	}
+	//svrList, err := g.getGroupApplicationListFromSvr(operationID)
+	//if err != nil {
+	//	log.NewError(operationID, "getGroupApplicationListFromSvr failed ", err.Error())
+	//	return
+	//}
+	//onServer := common.TransferToLocalGroupRequest(svrList)
+	//onLocal, err := g.db.GetRecvGroupApplication()
+	//if err != nil {
+	//	log.NewError(operationID, "GetJoinedGroupList failed ", err.Error())
+	//	return
+	//}
+	//log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
+	//aInBNot, bInANot, sameA, sameB := common.CheckGroupRequestDiff(onServer, onLocal)
+	//log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
+	//for _, index := range aInBNot {
+	//	err := g.db.InsertGroupRequest(onServer[index])
+	//	if err != nil {
+	//		log.NewError(operationID, "InsertGroupRequest failed ", err.Error())
+	//		continue
+	//	}
+	//	callbackData := sdk.GroupApplicationAddedCallback(*onServer[index])
+	//	g.listener.OnGroupApplicationAdded(utils.StructToJsonString(callbackData))
+	//}
+	//for _, index := range sameA {
+	//	err := g.db.UpdateGroupRequest(onServer[index])
+	//	if err != nil {
+	//		log.NewError(operationID, "UpdateGroupRequest failed ", err.Error())
+	//		continue
+	//	}
+	//	if onServer[index].HandleResult == -1 {
+	//		callbackData := sdk.GroupApplicationRejectCallback(*onServer[index])
+	//		g.listener.OnGroupApplicationRejected(utils.StructToJsonString(callbackData))
+	//
+	//	} else if onServer[index].HandleResult == 1 {
+	//		callbackData := sdk.GroupApplicationAcceptCallback(*onServer[index])
+	//		g.listener.OnGroupApplicationAccepted(utils.StructToJsonString(callbackData))
+	//	}
+	//}
+	//for _, index := range bInANot {
+	//	err := g.db.DeleteGroupRequest(onServer[index].GroupID, onServer[index].UserID)
+	//	if err != nil {
+	//		log.NewError(operationID, "DeleteGroupRequest failed ", err.Error())
+	//		continue
+	//	}
+	//	callbackData := sdk.GroupApplicationDeletedCallback(*onLocal[index])
+	//	g.listener.OnGroupApplicationDeleted(utils.StructToJsonString(callbackData))
+	//}
 }
 
 func (g *Group) SyncJoinedGroupList(operationID string) {

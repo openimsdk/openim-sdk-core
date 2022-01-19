@@ -318,27 +318,18 @@ func DotestInviteUserToGroup() {
 	open_im_sdk.InviteUserToGroup(test, test.OperationID, TestgroupID, "come", string(jlist))
 }
 
-//
-//type testGroupX struct {
-//}
-//
-//func (testGroupX) OnSuccess(data string) {
-//	fmt.Println("testGroupX,onSuccess", data)
-//}
-//
-//func (testGroupX) OnError(errCode int32, errMsg string) {
-//	fmt.Println("testGroupX,onError", errMsg)
-//}
-//func (testGroupX) OnProgress(progress int) {
-//	fmt.Println("testGroupX  ", progress)
-//}
-//
-//func DoGetGroupApplicationList() string {
-//	//	var test testGroupX
-//	fmt.Println("test DoGetGroupApplicationList....")
-//
-//	return ""
-//}
+type testGetGroupApplicationList struct {
+	baseCallback
+}
+
+func DotestGetGroupApplicationList() string {
+	var test testGetGroupApplicationList
+	test.OperationID = utils.OperationIDGenerator()
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
+	open_im_sdk.GetGroupApplicationList(test, test.OperationID)
+	return ""
+}
+
 //func DoGroupApplicationList() {
 //	var test testGroupX
 //	fmt.Println("test DoGetGroupApplicationList....")
