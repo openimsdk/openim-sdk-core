@@ -3,9 +3,8 @@ package common
 import (
 	"github.com/jinzhu/copier"
 	"open_im_sdk/pkg/db"
-	log2 "open_im_sdk/pkg/log"
+	//log2 "open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
-	"open_im_sdk/pkg/utils"
 	"reflect"
 )
 
@@ -120,15 +119,15 @@ func checkListDiff(a []diff, b []diff) (aInBNot, bInANot, sameA, sameB []int) {
 
 func TransferToLocalGroupMember(apiData []*server_api_params.GroupMemberFullInfo) []*db.LocalGroupMember {
 	local := make([]*db.LocalGroupMember, 0)
-	operationID := utils.OperationIDGenerator()
+	//operationID := utils.OperationIDGenerator()
 	for _, v := range apiData {
 		var node db.LocalGroupMember
-		log2.NewDebug(operationID, "local test api ", v)
+		//		log2.NewDebug(operationID, "local test api ", v)
 		GroupMemberCopyToLocal(&node, v)
-		log2.NewDebug(operationID, "local test local  ", node)
+		//		log2.NewDebug(operationID, "local test local  ", node)
 		local = append(local, &node)
 	}
-	log2.NewDebug(operationID, "local test local all ", local)
+	//	log2.NewDebug(operationID, "local test local all ", local)
 	return local
 }
 
@@ -138,15 +137,15 @@ func GroupMemberCopyToLocal(dst *db.LocalGroupMember, src *server_api_params.Gro
 
 func TransferToLocalGroupInfo(apiData []*server_api_params.GroupInfo) []*db.LocalGroup {
 	local := make([]*db.LocalGroup, 0)
-	operationID := utils.OperationIDGenerator()
+	//operationID := utils.OperationIDGenerator()
 	for _, v := range apiData {
 		var node db.LocalGroup
-		log2.NewDebug(operationID, "local test api ", v)
+		//	log2.NewDebug(operationID, "local test api ", v)
 		GroupInfoCopyToLocal(&node, v)
-		log2.NewDebug(operationID, "local test local  ", node)
+		//		log2.NewDebug(operationID, "local test local  ", node)
 		local = append(local, &node)
 	}
-	log2.NewDebug(operationID, "local test local all ", local)
+	//	log2.NewDebug(operationID, "local test local all ", local)
 	return local
 }
 
@@ -202,15 +201,15 @@ func TransferToLocalUserInfo(apiData *server_api_params.UserInfo) *db.LocalUser 
 
 func TransferToLocalFriendRequest(apiFriendList []*server_api_params.FriendRequest) []*db.LocalFriendRequest {
 	localFriendList := make([]*db.LocalFriendRequest, 0)
-	operationID := utils.OperationIDGenerator()
+	//operationID := utils.OperationIDGenerator()
 	for _, v := range apiFriendList {
 		var localFriendRequest db.LocalFriendRequest
-		log2.NewDebug(operationID, "local test api ", v)
+		//	log2.NewDebug(operationID, "local test api ", v)
 		friendRequestCopyToLocal(&localFriendRequest, v)
-		log2.NewDebug(operationID, "local test local  ", localFriendRequest)
+		//	log2.NewDebug(operationID, "local test local  ", localFriendRequest)
 		localFriendList = append(localFriendList, &localFriendRequest)
 	}
-	log2.NewDebug(operationID, "local test local all ", localFriendList)
+	//	log2.NewDebug(operationID, "local test local all ", localFriendList)
 	return localFriendList
 }
 

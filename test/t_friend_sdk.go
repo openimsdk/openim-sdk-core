@@ -3,6 +3,7 @@ package test
 import (
 	"encoding/json"
 	"fmt"
+	//"gorm.io/gorm/callbacks"
 	X "log"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/log"
@@ -42,26 +43,19 @@ func TestLog(v ...interface{}) {
 	X.Println(a, b, c, d)
 }
 
-var Friend_uid = "openIM002"
+var Friend_uid = "openIM101"
 
 ///////////////////////////////////////////////////////////
 
-//GetFriendApplicationList
-
 type testGetFriendApplicationList struct {
-}
-
-func (testGetFriendApplicationList) OnSuccess(data string) {
-	fmt.Println("testGetFriendApplicationList, OnSuccess, output:", data)
-}
-
-func (testGetFriendApplicationList) OnError(code int32, msg string) {
-	fmt.Println("testGetFriendApplicationList, OnError, ", code, msg)
+	baseCallback
 }
 
 func DoTestGetFriendApplicationList() {
 	var test testGetFriendApplicationList
-	open_im_sdk.GetRecvFriendApplicationList(test, "")
+	test.OperationID = utils.OperationIDGenerator()
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ")
+	open_im_sdk.GetRecvFriendApplicationList(test, test.OperationID)
 
 }
 
@@ -294,25 +288,19 @@ func DoTestGetFriendList() {
 
 /////////////////////////////////////////////////////////////////////
 
-//type testAcceptFriendApplication struct {
-//	open_im_sdk.ui2AcceptFriend
-//}
-//
-//func (testAcceptFriendApplication) OnSuccess(info string) {
-//	fmt.Println("testAcceptFriendApplication OnSuccess", info)
-//}
-//func (testAcceptFriendApplication) OnError(code int32, msg string) {
-//	fmt.Println("testAcceptFriendApplication, OnError, ", code, msg)
-//}
+type testAcceptFriendApplication struct {
+	baseCallback
+}
 
-//func DoTestAcceptFriendApplication() {
-//	var testAcceptFriendApplication testAcceptFriendApplication
-//	testAcceptFriendApplication.UID = Friend_uid
-//
-//	jsontestAcceptFriendappclicatrion, _ := json.Marshal(testAcceptFriendApplication.UID)
-//	open_im_sdk.AcceptFriendApplication(testAcceptFriendApplication, string(jsontestAcceptFriendappclicatrion), "")
-//	fmt.Println("AcceptFriendApplication, input: ", string(jsontestAcceptFriendappclicatrion))
-//}
+func DoTestAcceptFriendApplication() {
+	var test testAcceptFriendApplication
+	test.OperationID = utils.OperationIDGenerator()
+	var param sdk_params_callback.ProcessFriendApplicationParams
+	param.HandleMsg = "ok ok "
+	param.ToUserID = Friend_uid
+	input := utils.StructToJsonString(param)
+	open_im_sdk.AcceptFriendApplication(test, test.OperationID, input)
+}
 
 /*
 type testRefuseFriendApplication struct {

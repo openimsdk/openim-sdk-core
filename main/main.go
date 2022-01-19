@@ -405,7 +405,13 @@ func main() {
 	//	test.DotestGetGroupMemberList()
 	//test.DotestKickGroupMember()
 	//test.DotestInviteUserToGroup()
-	test.DotestGetGroupApplicationList()
+	//test.DotestGetGroupApplicationList()
+
+	//test.DotestAcceptGroupApplication("")
+
+	///////////////friend///////////////////////////////////
+	//test.DoTestGetFriendApplicationList()
+	test.DoTestAcceptFriendApplication()
 
 	//	test.DoTestaddFriend()
 	//	open_im_sdk.DoTestGetFriendList()
