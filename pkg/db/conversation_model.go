@@ -15,7 +15,8 @@ func (d *DataBase) GetAllConversationList() ([]*LocalConversation, error) {
 		"GetFriendList failed")
 	var transfer []*LocalConversation
 	for _, v := range conversationList {
-		transfer = append(transfer, &v)
+		v1 := v
+		transfer = append(transfer, &v1)
 	}
 	return transfer, err
 }
@@ -27,7 +28,8 @@ func (d *DataBase) GetConversationListSplit(offset, count int) ([]*LocalConversa
 		"GetFriendList failed")
 	var transfer []*LocalConversation
 	for _, v := range conversationList {
-		transfer = append(transfer, &v)
+		v1 := v
+		transfer = append(transfer, &v1)
 	}
 	return transfer, err
 }
@@ -186,7 +188,8 @@ func (d *DataBase) GetMultipleConversation(conversationIDList []string) (result 
 	var conversationList []LocalConversation
 	err = utils.Wrap(d.conn.Where("conversation_id IN ?", conversationIDList).Find(&conversationList).Error, "GetMultipleConversation failed")
 	for _, v := range conversationList {
-		result = append(result, &v)
+		v1 := v
+		result = append(result, &v1)
 	}
 	return result, err
 }

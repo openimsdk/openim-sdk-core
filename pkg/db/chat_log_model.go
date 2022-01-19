@@ -100,7 +100,8 @@ func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, start
 	err = utils.Wrap(d.conn.Where("(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? And send_time < ?", sourceID, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
 		Order("send_time DESC").Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
 	for _, v := range messageList {
-		result = append(result, &v)
+		v1 := v
+		result = append(result, &v1)
 	}
 	return result, err
 }
@@ -111,7 +112,8 @@ func (d *DataBase) GetSelfMessageList(sourceID string, sessionType, count int, s
 	err = utils.Wrap(d.conn.Where("send_id = ? And recv_id = ? AND status <=? And session_type = ? And send_time < ?", sourceID, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
 		Order("send_time DESC").Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
 	for _, v := range messageList {
-		result = append(result, &v)
+		v1 := v
+		result = append(result, &v1)
 	}
 	return result, err
 }

@@ -235,6 +235,7 @@ func (g *Group) quitGroup(groupID string, callback common.Base, operationID stri
 
 func (g *Group) getJoinedGroupList(callback common.Base, operationID string) sdk.GetJoinedGroupListCallback {
 	groupList, err := g.db.GetJoinedGroupList()
+	log.Info("this is rpc", groupList)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return groupList
 }
@@ -512,6 +513,7 @@ func (g *Group) SyncGroupApplication(operationID string) {
 func (g *Group) SyncJoinedGroupList(operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	svrList, err := g.getJoinedGroupListFromSvr(operationID)
+	log.Info(operationID, "getJoinedGroupListFromSvr", svrList)
 	if err != nil {
 		log.NewError(operationID, "getJoinedGroupListFromSvr failed ", err.Error())
 		return

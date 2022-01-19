@@ -29,7 +29,6 @@ func (d *DataBase) GetJoinedGroupList() ([]*LocalGroup, error) {
 	defer d.mRWMutex.Unlock()
 	var groupList []LocalGroup
 	err := d.conn.Find(&groupList).Error
-
 	var transfer []*LocalGroup
 	for _, v := range groupList {
 		v1 := v
