@@ -137,8 +137,8 @@ func DoSetGroupInfo() {
 	var test testSetGroupInfo
 	test.OperationID = utils.OperationIDGenerator()
 	var input sdk_params_callback.SetGroupInfoParam
-	input.GroupName = "new group name "
-	input.Notification = "new notification "
+	input.GroupName = "new group name 111"
+	input.Notification = "new notification 222"
 
 	setInfo := utils.StructToJsonString(input)
 	open_im_sdk.SetGroupInfo(test, test.OperationID, TestgroupID, setInfo)

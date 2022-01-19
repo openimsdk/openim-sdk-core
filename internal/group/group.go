@@ -262,7 +262,7 @@ func (g *Group) getGroupsInfo(groupIdList sdk.GetGroupsInfoParam, callback commo
 func (g *Group) setGroupInfo(callback common.Base, groupInfo sdk.SetGroupInfoParam, groupID, operationID string) {
 	apiReq := api.SetGroupInfoReq{}
 	apiReq.GroupName = groupInfo.GroupName
-	apiReq.FaceURL = groupInfo.FaceUrl
+	apiReq.FaceURL = groupInfo.FaceURL
 	apiReq.Notification = groupInfo.Notification
 	apiReq.Introduction = groupInfo.Introduction
 	apiReq.Ex = groupInfo.Ex

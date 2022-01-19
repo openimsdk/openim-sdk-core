@@ -13,7 +13,7 @@ func (u *User) GetUsersInfo(callback common.Base, userIDList string, operationID
 		var unmarshalParam sdk_params_callback.GetUsersInfoParam
 		common.JsonUnmarshalAndArgsValidate(userIDList, &unmarshalParam, callback, operationID)
 		result := u.GetUsersInfoFromSvr(callback, unmarshalParam, operationID)
-		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(result)))
+		callback.OnSuccess(utils.StructToJsonString(result))
 		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonString(result))
 	}()
 }
@@ -32,7 +32,7 @@ func (u *User) SetSelfInfo(callback common.Base, userInfo string, operationID st
 		var unmarshalParam sdk_params_callback.SetSelfUserInfoParam
 		common.JsonUnmarshalAndArgsValidate(userInfo, &unmarshalParam, callback, operationID)
 		u.updateSelfUserInfo(callback, unmarshalParam, operationID)
-		callback.OnSuccess(utils.StructToJsonString(utils.StructToJsonString(sdk_params_callback.SetSelfUserInfoCallback)))
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.SetSelfUserInfoCallback))
 		log.NewInfo(operationID, utils.RunFuncName(), "callback: ")
 	}()
 }
