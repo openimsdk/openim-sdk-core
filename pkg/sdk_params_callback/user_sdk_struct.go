@@ -10,13 +10,9 @@ import (
 type GetUsersInfoParam []string
 type GetUsersInfoCallback []*server_api_params.PublicUserInfo
 
-
 //type GetSelfUserInfoParam string
 type GetSelfUserInfoCallback *db.LocalUser
 
+type SetSelfUserInfoParam server_api_params.ApiUserInfo
 
-type SetSelfUserInfoParam server_api_params.UserInfo
 const SetSelfUserInfoCallback = constant.SuccessCallbackDefault
-
-
-

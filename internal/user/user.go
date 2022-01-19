@@ -107,14 +107,13 @@ func (u *User) getSelfUserInfo(callback common.Base, operationID string) sdk.Get
 func (u *User) updateSelfUserInfo(callback common.Base, userInfo sdk.SetSelfUserInfoParam, operationID string) {
 	apiReq := api.UpdateSelfUserInfoReq{}
 	apiReq.OperationID = operationID
-	apiReq.UserInfo = api.UserInfo(userInfo)
+	apiReq.ApiUserInfo = api.ApiUserInfo(userInfo)
 	apiReq.UserID = u.loginUserID
 	u.p.PostFatalCallback(callback, constant.UpdateSelfUserInfoRouter, apiReq, nil, apiReq.OperationID)
 	u.SyncLoginUserInfo(operationID)
 }
 
 func (u *User) GetSelfUserInfoFromSvr(operationID string) (*api.UserInfo, error) {
-
 	log.Debug(operationID, utils.GetSelfFuncName())
 	apiReq := api.GetSelfUserInfoReq{}
 	apiReq.OperationID = operationID

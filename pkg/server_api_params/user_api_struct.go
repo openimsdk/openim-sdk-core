@@ -11,7 +11,7 @@ type GetUsersInfoResp struct {
 }
 
 type UpdateSelfUserInfoReq struct {
-	UserInfo
+	ApiUserInfo
 	OperationID string `json:"operationID" binding:"required"`
 }
 
