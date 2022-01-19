@@ -62,8 +62,8 @@ func (g *Group) GetJoinedGroupList(callback common.Base, operationID string) {
 		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 		groupList := g.getJoinedGroupList(callback, operationID)
 		log.Debug("this is a dbd test", groupList)
-		callback.OnSuccess(utils.StructToJsonString(groupList))
-		log.NewInfo(operationID, "GetJoinedGroupList callback: ", utils.StructToJsonString(groupList))
+		callback.OnSuccess(utils.StructToJsonStringDefault(groupList))
+		log.NewInfo(operationID, "GetJoinedGroupList callback: ", utils.StructToJsonStringDefault(groupList))
 	}()
 }
 
@@ -103,8 +103,8 @@ func (g *Group) GetGroupMemberList(callback common.Base, groupID string, filter 
 	go func() {
 		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", groupID, filter, next)
 		groupMemberList := g.getGroupMemberList(callback, groupID, filter, next, operationID)
-		callback.OnSuccess(utils.StructToJsonString(groupMemberList))
-		log.NewInfo(operationID, "GetGroupMemberList callback: ", utils.StructToJsonString(groupMemberList))
+		callback.OnSuccess(utils.StructToJsonStringDefault(groupMemberList))
+		log.NewInfo(operationID, "GetGroupMemberList callback: ", utils.StructToJsonStringDefault(groupMemberList))
 	}()
 }
 
@@ -117,8 +117,8 @@ func (g *Group) GetGroupMembersInfo(callback common.Base, groupID string, userID
 		var unmarshalParam sdk_params_callback.GetGroupMembersInfoParam
 		common.JsonUnmarshalCallback(userIDList, &unmarshalParam, callback, operationID)
 		groupMemberList := g.getGroupMembersInfo(callback, groupID, unmarshalParam, operationID)
-		callback.OnSuccess(utils.StructToJsonString(groupMemberList))
-		log.NewInfo(operationID, "GetGroupMembersInfo callback: ", utils.StructToJsonString(groupMemberList))
+		callback.OnSuccess(utils.StructToJsonStringDefault(groupMemberList))
+		log.NewInfo(operationID, "GetGroupMembersInfo callback: ", utils.StructToJsonStringDefault(groupMemberList))
 	}()
 }
 
@@ -131,8 +131,8 @@ func (g *Group) KickGroupMember(callback common.Base, groupID string, reason str
 		var unmarshalParam sdk_params_callback.KickGroupMemberParam
 		common.JsonUnmarshalCallback(userIDList, &unmarshalParam, callback, operationID)
 		result := g.kickGroupMember(callback, groupID, unmarshalParam, reason, operationID)
-		callback.OnSuccess(utils.StructToJsonString(result))
-		log.NewInfo(operationID, "GetGroupMembersInfo callback: ", utils.StructToJsonString(result))
+		callback.OnSuccess(utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, "GetGroupMembersInfo callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
 
@@ -155,8 +155,8 @@ func (g *Group) InviteUserToGroup(callback common.Base, groupID, reason string, 
 		var unmarshalParam sdk_params_callback.InviteUserToGroupParam
 		common.JsonUnmarshalAndArgsValidate(userIDList, &unmarshalParam, callback, operationID)
 		result := g.inviteUserToGroup(callback, groupID, reason, unmarshalParam, operationID)
-		callback.OnSuccess(utils.StructToJsonString(result))
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+		callback.OnSuccess(utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
 
@@ -167,8 +167,8 @@ func (g *Group) GetGroupApplicationList(callback common.Base, operationID string
 	go func() {
 		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 		result := g.getGroupApplicationList(callback, operationID)
-		callback.OnSuccess(utils.StructToJsonString(result))
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+		callback.OnSuccess(utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
 
