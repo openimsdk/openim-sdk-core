@@ -96,8 +96,8 @@ func GetLoginUser() string {
 }
 
 ///////////////////////user/////////////////////
-func GetUsersInfo(uIDList string, operationID string, callback common.Base) {
-	userForSDK.User().GetUsersInfo(callback, uIDList, operationID)
+func GetUsersInfo(callback common.Base, operationID string, userIDList string) {
+	userForSDK.User().GetUsersInfo(callback, userIDList, operationID)
 }
 
 func SetSelfInfo(callback common.Base, operationID string, info string) {
