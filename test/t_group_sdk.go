@@ -218,15 +218,15 @@ type testGetJoinedGroupList struct {
 	OnSuccess(data string)
 */
 func (t testGetJoinedGroupList) OnError(errCode int32, errMsg string) {
-	fmt.Println("testGetJoinedGroupList OnError", t.OperationID, errCode, errMsg)
+	log.Info(t.OperationID, "testGetJoinedGroupList OnError", errCode, errMsg)
 }
 
 func (t testGetJoinedGroupList) OnSuccess(data string) {
-	fmt.Println("testGetJoinedGroupList OnSuccess, output", t.OperationID, data)
+	log.Info(t.OperationID, "testGetJoinedGroupList OnSuccess, output", data)
 }
 
 //
-func DotestGetJoinedGroupList() {
+func DoTestGetJoinedGroupList() {
 	var test testGetJoinedGroupList
 	test.OperationID = utils.OperationIDGenerator()
 	open_im_sdk.GetJoinedGroupList(test, test.OperationID)
@@ -250,27 +250,30 @@ func DotestGetJoinedGroupList() {
 //	sdk_interface.GetGroupMemberList(groupId, 0, 0, test)
 //}
 //
-//type testGetGroupMembersInfo struct {
-//}
-//
-//func (testGetGroupMembersInfo) OnError(errCode int32, errMsg string) {
-//	fmt.Println("testGetGroupMembersInfo OnError", errCode, errMsg)
-//}
-//
-//func (testGetGroupMembersInfo) OnSuccess(data string) {
-//	fmt.Println("testGetGroupMembersInfo OnSuccess, output", data)
-//}
-//
-//func DotestGetGroupMembersInfo() {
-//	var test testGetGroupMembersInfo
-//	var memlist []string
-//	memlist = append(memlist, "307edc814bb0d04a")
-//	//memlist = append(memlist, "ded01dfe543700402608e19d4e2f839e")
-//	jlist, _ := json.Marshal(memlist)
-//	fmt.Println("GetGroupMembersInfo input : ", string(jlist))
-//	sdk_interface.GetGroupMembersInfo("7ff61d8f9d4a8a0d6d70a14e2683aad5", string(jlist), test)
-//	//GetGroupMemberList("05dc84b52829e82242a710ecf999c72c", 0, 0, test)
-//}
+type testGetGroupMembersInfo struct {
+	OperationID string
+}
+
+func (t testGetGroupMembersInfo) OnError(errCode int32, errMsg string) {
+	log.Info(t.OperationID, "testGetGroupMembersInfo OnError", errCode, errMsg)
+}
+
+func (t testGetGroupMembersInfo) OnSuccess(data string) {
+	log.Info(t.OperationID, "testGetGroupMembersInfo OnSuccess, output", data)
+}
+
+func DoTestGetGroupMembersInfo() {
+	var test testGetGroupMembersInfo
+	test.OperationID = utils.OperationIDGenerator()
+	var memlist []string
+	groupID := "e5868dbb42ec8bd559098c92cf72cdf8"
+	memlist = append(memlist, "openIM100")
+	jlist := utils.StructToJsonStringDefault(memlist)
+	log.Info(test.OperationID, "GetGroupMembersInfo input : ", jlist)
+	open_im_sdk.GetGroupMembersInfo(test, test.OperationID, groupID, jlist)
+
+}
+
 //
 //type testKickGroupMember struct {
 //}
