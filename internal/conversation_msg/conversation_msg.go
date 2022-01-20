@@ -12,7 +12,6 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 )
@@ -66,13 +65,13 @@ func (c *Conversation) GetCh() chan common.Cmd2Value {
 }
 
 func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
-	allMsg := c2v.Value.([]*server_api_params.MsgData)
-	operationID := utils.OperationIDGenerator()
+	operationID := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).OperationID
+	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).MsgList
 	if c.msgListener == nil {
 		log.Error(operationID, "not set c MsgListenerList")
 		return
 	}
-	var insertMsg []*db.LocalChatLog
+	var insertMsg, updateMsg []*db.LocalChatLog
 	var exceptionMsg []*db.LocalErrChatLog
 	var newMessages, msgReadList, msgRevokeList []*sdk_struct.MsgStruct
 	var isUnreadCount, isConversationUpdate, isHistory bool
@@ -118,7 +117,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			if err == nil && m != nil {
 				log.Info("internal", "have message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
 				if m.Seq == 0 {
-					insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
+					updateMsg = append(updateMsg, c.msgStructToLocalChatLog(msg))
 				} else {
 					exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
 
@@ -210,7 +209,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		}
 	}
 	log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
-
+	//seq sync message update
+	err5 := c.db.BatchUpdateMessageList(updateMsg)
+	if err5 != nil {
+		log.Error(operationID, "sync seq normal message err  :", err5.Error())
+	}
 	//Normal message storage
 	err1 := c.db.BatchInsertMessageList(insertMsg)
 	if err1 != nil {

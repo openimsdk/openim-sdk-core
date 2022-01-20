@@ -2,11 +2,15 @@ package db
 
 import (
 	"errors"
+	"fmt"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 )
 
 func (d *DataBase) BatchInsertMessageList(MessageList []*LocalChatLog) error {
+	if MessageList == nil {
+		return nil
+	}
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Create(MessageList).Error, "BatchInsertMessageList failed")
@@ -15,6 +19,15 @@ func (d *DataBase) InsertMessage(Message *LocalChatLog) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Create(Message).Error, "InsertMessage failed")
+}
+func (d *DataBase) BatchUpdateMessageList(MessageList []*LocalChatLog) error {
+	if MessageList == nil {
+		return nil
+	}
+	fmt.Println("this is a test ", MessageList)
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.Model(&LocalChatLog{}).Updates(MessageList).Error, "BatchUpdateMessageList failed")
 }
 func (d *DataBase) MessageIfExists(ClientMsgID string) (bool, error) {
 	d.mRWMutex.Lock()
