@@ -43,8 +43,9 @@ func (m *MsgSync) compareSeq() {
 }
 
 func (m *MsgSync) doMaxSeq(cmd common.Cmd2Value) {
-	var cmdSeq = cmd.Value.(uint32)
-	log.Debug("", "doMaxSeq", cmdSeq, m.seqMaxSynchronized, m.seqMaxNeedSync)
+	var cmdSeq = cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).MaxSeqOnSvr
+	operationID := cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).OperationID
+	log.Debug(operationID, "doMaxSeq", cmdSeq, m.seqMaxSynchronized, m.seqMaxNeedSync)
 	if cmdSeq <= m.seqMaxNeedSync {
 		return
 	}
@@ -54,14 +55,15 @@ func (m *MsgSync) doMaxSeq(cmd common.Cmd2Value) {
 }
 
 func (m *MsgSync) doPushMsg(cmd common.Cmd2Value) {
-	msg := cmd.Value.(*server_api_params.MsgData)
+	msg := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).Msg
+	operationID := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).OperationID
 	log.Debug("do push msg ", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, m.seqMaxNeedSync, m.seqMaxSynchronized)
 	if m.seqMaxNeedSync == 0 {
 		return
 	}
 
 	if msg.Seq+1 == m.seqMaxNeedSync && m.seqMaxNeedSync == m.seqMaxSynchronized {
-		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg})
+		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg}, operationID)
 		m.seqMaxNeedSync = msg.Seq + 1
 		m.seqMaxSynchronized = msg.Seq + 1
 		return
