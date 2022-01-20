@@ -23,7 +23,6 @@ type MsgSync struct {
 
 func (m *MsgSync) compareSeq() {
 	//todo 统计中间缺失的seq，并同步
-
 	n, err := m.GetNormalMsgSeq()
 	if err != nil {
 		log.Error("", "GetNormalMsgSeq failed ", err.Error())
@@ -32,7 +31,6 @@ func (m *MsgSync) compareSeq() {
 	if err != nil {
 		log.Error("", "GetAbnormalMsgSeq failed ", err.Error())
 	}
-
 	if n > a {
 		m.seqMaxSynchronized = n
 	} else {
@@ -43,31 +41,37 @@ func (m *MsgSync) compareSeq() {
 }
 
 func (m *MsgSync) doMaxSeq(cmd common.Cmd2Value) {
-	var cmdSeq = cmd.Value.(uint32)
-	log.Debug("", "doMaxSeq", cmdSeq, m.seqMaxSynchronized, m.seqMaxNeedSync)
-	if cmdSeq <= m.seqMaxNeedSync {
+	var maxSeqOnSvr = cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).MaxSeqOnSvr
+	operationID := cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).OperationID
+	log.Debug(operationID, "recv cmd, doMaxSeq, maxSeqOnSvr, m.seqMaxSynchronized, m.seqMaxNeedSync",
+		maxSeqOnSvr, m.seqMaxSynchronized, m.seqMaxNeedSync)
+	if maxSeqOnSvr <= m.seqMaxNeedSync {
 		return
 	}
-	m.seqMaxNeedSync = cmdSeq
+	m.seqMaxNeedSync = maxSeqOnSvr
+	log.Debug(operationID, "syncMsgFromServer ", m.seqMaxSynchronized+1, m.seqMaxNeedSync)
 	m.syncMsgFromServer(m.seqMaxSynchronized+1, m.seqMaxNeedSync)
 	m.seqMaxSynchronized = m.seqMaxNeedSync
 }
 
 func (m *MsgSync) doPushMsg(cmd common.Cmd2Value) {
-	msg := cmd.Value.(*server_api_params.MsgData)
-	log.Debug("do push msg ", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, m.seqMaxNeedSync, m.seqMaxSynchronized)
+	msg := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).Msg
+	operationID := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).OperationID
+	log.Debug(operationID, "doPushMsg ", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, m.seqMaxNeedSync, m.seqMaxSynchronized)
 	if m.seqMaxNeedSync == 0 {
 		return
 	}
 
 	if msg.Seq+1 == m.seqMaxNeedSync && m.seqMaxNeedSync == m.seqMaxSynchronized {
-		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg})
+		log.Debug(operationID, "TriggerCmdNewMsgCome ", msg.ServerMsgID, msg.ClientMsgID, msg.Seq)
+		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg}, operationID)
 		m.seqMaxNeedSync = msg.Seq + 1
 		m.seqMaxSynchronized = msg.Seq + 1
 		return
 	}
 	if msg.Seq > m.seqMaxNeedSync {
 		m.seqMaxNeedSync = msg.Seq
+		log.Debug(operationID, "syncMsgFromServer ", m.seqMaxSynchronized+1, m.seqMaxNeedSync)
 		m.syncMsgFromServer(m.seqMaxSynchronized+1, m.seqMaxNeedSync)
 		m.seqMaxSynchronized = m.seqMaxNeedSync
 		return

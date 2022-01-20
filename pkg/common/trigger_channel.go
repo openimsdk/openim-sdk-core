@@ -53,9 +53,7 @@ func TriggerCmdPushMsg(msg sdk_struct.CmdPushMsgToMsgSync, ch chan Cmd2Value) er
 	if ch == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
-	if len(msg.MsgList) == 0 {
-		return nil
-	}
+
 	c2v := Cmd2Value{Cmd: constant.CmdPushMsg, Value: msg}
 	return sendCmd(ch, c2v, 1)
 }
