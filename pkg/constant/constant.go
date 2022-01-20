@@ -23,7 +23,9 @@ const (
 	CmdRefuseFriend               = "016"
 	CmdAddFriend                  = "017"
 
-	CmdLogout = "Logout"
+	CmdMaxSeq  = "maxSeq"
+	CmdPushMsg = "pushMsg"
+	CmdLogout  = "Logout"
 )
 
 const (

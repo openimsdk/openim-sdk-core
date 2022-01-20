@@ -3,6 +3,7 @@ package interaction
 import (
 	"errors"
 	"github.com/golang/protobuf/proto"
+	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
@@ -72,9 +73,11 @@ func (u *Heartbeat) Run() {
 			log.Error(operationID, "Unmarshal failed ", err.Error())
 			u.CloseConn()
 		} else {
-			needSyncSeq := u.getNeedSyncSeq(int32(wsSeqResp.MinSeq), int32(wsSeqResp.MaxSeq))
-			log.Info("needSyncSeq ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, needSyncSeq)
-			u.syncMsgFromServer(needSyncSeq)
+			err := common.TriggerCmdMaxSeq(uint32(wsSeqResp.MaxSeq), u.PushMsgAndMaxSeqCh)
+			if err != nil {
+				log.Error(operationID, "TriggerMaxSeq failed ", err.Error())
+			}
+
 		}
 	}
 }

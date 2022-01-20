@@ -6,45 +6,42 @@ import (
 	"github.com/gorilla/websocket"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
 	"runtime"
-	"sync"
+
 	"time"
 )
 
 type Ws struct {
 	*WsRespAsyn
 	*WsConn
-	seqMsg      map[int32]server_api_params.MsgData
-	seqMsgMutex sync.RWMutex
-	*db.DataBase
-	conversationCh chan common.Cmd2Value
-	cmdCh          chan common.Cmd2Value
+	//*db.DataBase
+	//conversationCh chan common.Cmd2Value
+	cmdCh              chan common.Cmd2Value //waiting logout cmd
+	pushMsgAndMaxSeqCh chan common.Cmd2Value //recv push msg  -> channel
 }
 
-func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, conversationCh, cmdCh chan common.Cmd2Value) *Ws {
-	p := Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn, conversationCh: conversationCh, cmdCh: cmdCh}
+func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, conversationCh, cmdCh chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value) *Ws {
+	p := Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn, cmdCh: cmdCh, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh}
 	go p.ReadData()
 	return &p
 }
 
-func (ws *Ws) SeqMsg() map[int32]server_api_params.MsgData {
-	ws.seqMsgMutex.RLock()
-	defer ws.seqMsgMutex.RUnlock()
-	return ws.seqMsg
-}
+//func (w *Ws) SeqMsg() map[int32]server_api_params.MsgData {
+//	w.seqMsgMutex.RLock()
+//	defer w.seqMsgMutex.RUnlock()
+//	return w.seqMsg
+//}
+//
+//func (w *Ws) SetSeqMsg(seqMsg map[int32]server_api_params.MsgData) {
+//	w.seqMsgMutex.Lock()
+//	defer w.seqMsgMutex.Unlock()
+//	w.seqMsg = seqMsg
+//}
 
-func (ws *Ws) SetSeqMsg(seqMsg map[int32]server_api_params.MsgData) {
-	ws.seqMsgMutex.Lock()
-	defer ws.seqMsgMutex.Unlock()
-	ws.seqMsg = seqMsg
-}
-
-func (ws *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, connSend *websocket.Conn) (*GeneralWsResp, error) {
+func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, connSend *websocket.Conn) (*GeneralWsResp, error) {
 	select {
 	case r := <-ch:
 		log.Debug(operationID, "ws ch recvMsg success, code ", r.ErrCode, r.ErrMsg)
@@ -56,7 +53,7 @@ func (ws *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, c
 
 	case <-time.After(time.Second * time.Duration(timeout)):
 		log.Error(operationID, "ws ch recvMsg err, timeout")
-		if connSend != ws.WsConn.conn {
+		if connSend != w.WsConn.conn {
 			return nil, constant.WsRecvConnDiff
 		} else {
 			return nil, constant.WsRecvConnSame
@@ -64,14 +61,14 @@ func (ws *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, c
 	}
 }
 
-func (ws *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retryTimes int, senderID, operationID string) (*GeneralWsResp, error) {
+func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retryTimes int, senderID, operationID string) (*GeneralWsResp, error) {
 	var wsReq GeneralWsReq
 	var connSend *websocket.Conn
 	var err error
 	wsReq.ReqIdentifier = reqIdentifier
 	wsReq.OperationID = operationID
-	msgIncr, ch := ws.AddCh(senderID)
-	defer ws.DelCh(msgIncr)
+	msgIncr, ch := w.AddCh(senderID)
+	defer w.DelCh(msgIncr)
 	wsReq.SendID = senderID
 	wsReq.MsgIncr = msgIncr
 	wsReq.Data, err = proto.Marshal(m)
@@ -79,9 +76,9 @@ func (ws *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, ret
 		return nil, utils.Wrap(err, "proto marshal err")
 	}
 	for i := 0; i < retryTimes+1; i++ {
-		err, connSend = ws.writeBinaryMsg(wsReq)
+		err, connSend = w.writeBinaryMsg(wsReq)
 		if err != nil {
-			if !ws.IsWriteTimeout(err) {
+			if !w.IsWriteTimeout(err) {
 				if connSend == nil {
 					log.Error(operationID, "conn nil")
 					time.Sleep(time.Duration(1) * time.Second)
@@ -98,23 +95,23 @@ func (ws *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, ret
 			break
 		}
 	}
-	r1, r2 := ws.WaitResp(ch, timeout, wsReq.OperationID, connSend)
+	r1, r2 := w.WaitResp(ch, timeout, wsReq.OperationID, connSend)
 	return r1, r2
 }
 
-func (u *Ws) ReadData() {
+func (w *Ws) ReadData() {
 	for {
 		isErrorOccurred := false
 		operationID := utils.OperationIDGenerator()
-		if u.WsConn.conn != nil {
+		if w.WsConn.conn != nil {
 			//	timeout := 5
 			//	u.WsConn.SetReadTimeout(timeout)
-			msgType, message, err := u.WsConn.conn.ReadMessage()
+			msgType, message, err := w.WsConn.conn.ReadMessage()
 			if err != nil {
 				isErrorOccurred = true
-				if u.WsConn.IsFatalError(err) {
+				if w.WsConn.IsFatalError(err) {
 					log.Error(operationID, "IsFatalError ", err.Error(), "ReConn")
-					c, err := u.WsConn.ReConn()
+					c, err := w.WsConn.ReConn()
 					if err != nil {
 						log.Error(operationID, "reconn failed ", c, err.Error())
 						time.Sleep(time.Duration(2) * time.Second)
@@ -125,7 +122,7 @@ func (u *Ws) ReadData() {
 			} else {
 				if msgType == websocket.CloseMessage {
 					log.Error(operationID, "type websocket.CloseMessage, ReConn")
-					c, err := u.WsConn.ReConn()
+					c, err := w.WsConn.ReConn()
 					if err != nil {
 						log.Error(operationID, "reconn failed ", c, err.Error())
 						time.Sleep(time.Duration(2) * time.Second)
@@ -133,27 +130,27 @@ func (u *Ws) ReadData() {
 				} else if msgType == websocket.TextMessage {
 					log.Warn(operationID, "type websocket.TextMessage")
 				} else if msgType == websocket.BinaryMessage {
-					u.doWsMsg(message)
+					w.doWsMsg(message)
 				} else {
 					log.Warn(operationID, "recv other type ", msgType)
 				}
 			}
 		} else {
 			log.Error(operationID, "conn == nil, ReConn")
-			conn, err := u.WsConn.ReConn()
+			conn, err := w.WsConn.ReConn()
 			if err != nil {
 				isErrorOccurred = true
 				log.Error(operationID, "ReConn failed ", err.Error())
 			} else {
-				u.WsConn.conn = conn
+				w.WsConn.conn = conn
 			}
 		}
 
 		if isErrorOccurred {
 			select {
-			case r := <-u.cmdCh:
+			case r := <-w.cmdCh:
 				if r.Cmd == constant.CmdLogout {
-					u.SetLoginState(constant.Logout)
+					w.SetLoginState(constant.Logout)
 					return
 				} else {
 					log.Warn(operationID, "other cmd ...", r.Cmd)
@@ -167,26 +164,26 @@ func (u *Ws) ReadData() {
 	}
 }
 
-func (u *Ws) doWsMsg(message []byte) {
-	wsResp, err := u.decodeBinaryWs(message)
+func (w *Ws) doWsMsg(message []byte) {
+	wsResp, err := w.decodeBinaryWs(message)
 	if err != nil {
 		log.Error("decodeBinaryWs err", err.Error())
 		return
 	}
 	switch wsResp.ReqIdentifier {
 	case constant.WSGetNewestSeq:
-		go u.doWSGetNewestSeq(*wsResp)
+		go w.doWSGetNewestSeq(*wsResp)
 	case constant.WSPullMsgBySeqList:
-		go u.doWSPullMsg(*wsResp)
+		go w.doWSPullMsg(*wsResp)
 	case constant.WSPushMsg:
-		go u.doWSPushMsg(*wsResp)
+		go w.doWSPushMsg(*wsResp)
 	case constant.WSSendMsg:
-		go u.doWSSendMsg(*wsResp)
+		go w.doWSSendMsg(*wsResp)
 	case constant.WSKickOnlineMsg:
-		go u.kickOnline(*wsResp)
+		go w.kickOnline(*wsResp)
 	case constant.WsLogoutMsg:
 		log.Warn(wsResp.OperationID, "logout.. ")
-		u.SetLoginState(constant.Logout)
+		w.SetLoginState(constant.Logout)
 		runtime.Goexit()
 	default:
 		log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier, wsResp.OperationID)
@@ -194,43 +191,31 @@ func (u *Ws) doWsMsg(message []byte) {
 	}
 }
 
-func (u *Ws) doWSGetNewestSeq(wsResp GeneralWsResp) error {
-	if err := u.notifyResp(wsResp); err != nil {
+func (w *Ws) doWSGetNewestSeq(wsResp GeneralWsResp) error {
+	if err := w.notifyResp(wsResp); err != nil {
 		log.Error(wsResp.OperationID, "doWSGetNewestSeq failed ", err.Error())
 		return err
 	}
 	return nil
 }
 
-func (u *Ws) doWSPullMsg(wsResp GeneralWsResp) error {
-	if err := u.notifyResp(wsResp); err != nil {
+func (w *Ws) doWSPullMsg(wsResp GeneralWsResp) error {
+	if err := w.notifyResp(wsResp); err != nil {
 		log.Error(wsResp.OperationID, "doWSPullMsg failed ", err.Error())
 		return err
 	}
 	return nil
 }
 
-func (u *Ws) doWSSendMsg(wsResp GeneralWsResp) error {
-	if err := u.notifyResp(wsResp); err != nil {
+func (w *Ws) doWSSendMsg(wsResp GeneralWsResp) error {
+	if err := w.notifyResp(wsResp); err != nil {
 		log.Error(wsResp.OperationID, "doWSSendMsg failed ", err.Error())
 		return err
 	}
 	return nil
 }
 
-func (u *Ws) doWSPushMsg(wsResp GeneralWsResp) error {
-	if err := u.doSendMsg(wsResp); err != nil {
-		log.Error(wsResp.OperationID, "doWSPushMsg failed ", err.Error())
-		return err
-	}
-	return nil
-}
-
-func (u *Ws) kickOnline(msg GeneralWsResp) {
-	u.listener.OnKickedOffline()
-}
-
-func (u *Ws) doSendMsg(wsResp GeneralWsResp) error {
+func (w *Ws) doWSPushMsg(wsResp GeneralWsResp) error {
 	if wsResp.ErrCode != 0 {
 		return utils.Wrap(errors.New("errCode"), wsResp.ErrMsg)
 	}
@@ -239,18 +224,13 @@ func (u *Ws) doSendMsg(wsResp GeneralWsResp) error {
 	if err != nil {
 		return utils.Wrap(err, "Unmarshal failed")
 	}
-
-	u.seqMsgMutex.Lock()
-	defer u.seqMsgMutex.Unlock()
-	b1 := u.IsExistsInErrChatLogBySeq(msg.Seq)
-	b2, _ := u.MessageIfExists(msg.ClientMsgID)
-	_, ok := u.seqMsg[int32(msg.Seq)]
-	if b1 || b2 || ok {
-		log.Debug("0", "seq in : ", msg.Seq, b1, b2, ok)
-		return nil
-	}
-	u.seqMsg[int32(msg.Seq)] = msg
-	arrMsg := sdk_struct.ArrMsg{}
-	common.TriggerCmdNewMsgCome(arrMsg, u.conversationCh)
-	return nil
+	return utils.Wrap(common.TriggerCmdPushMsg(&msg, w.pushMsgAndMaxSeqCh), "")
 }
+
+func (w *Ws) kickOnline(msg GeneralWsResp) {
+	w.listener.OnKickedOffline()
+}
+
+//func (u *Ws) doSendMsg(wsResp GeneralWsResp) error {
+//
+//}

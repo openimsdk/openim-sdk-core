@@ -4,24 +4,24 @@ import (
 	"errors"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
 	"time"
 )
 
-func TriggerCmdNewMsgCome(msg sdk_struct.ArrMsg, conversationCh chan Cmd2Value) error {
+func TriggerCmdNewMsgCome(msgList []*server_api_params.MsgData, conversationCh chan Cmd2Value) error {
 	if conversationCh == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
-	c2v := Cmd2Value{Cmd: constant.CmdNewMsgCome, Value: msg}
+	c2v := Cmd2Value{Cmd: constant.CmdNewMsgCome, Value: msgList}
 	return sendCmd(conversationCh, c2v, 1)
 }
 
-func TriggerCmdLogout(msg sdk_struct.ArrMsg, conversationCh chan Cmd2Value) error {
+func TriggerCmdLogout(conversationCh chan Cmd2Value) error {
 	if conversationCh == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
-	c2v := Cmd2Value{Cmd: constant.CmdLogout, Value: msg}
+	c2v := Cmd2Value{Cmd: constant.CmdLogout, Value: nil}
 	return sendCmd(conversationCh, c2v, 1)
 }
 
@@ -43,6 +43,22 @@ func TriggerCmdUpdateConversation(node UpdateConNode, conversationCh chan Cmd2Va
 	}
 
 	return sendCmd(conversationCh, c2v, 1)
+}
+
+func TriggerCmdPushMsg(msg *server_api_params.MsgData, ch chan Cmd2Value) error {
+	if ch == nil {
+		return utils.Wrap(errors.New("ch == nil"), "")
+	}
+	c2v := Cmd2Value{Cmd: constant.CmdPushMsg, Value: msg}
+	return sendCmd(ch, c2v, 1)
+}
+
+func TriggerCmdMaxSeq(seq uint32, ch chan Cmd2Value) error {
+	if ch == nil {
+		return utils.Wrap(errors.New("ch == nil"), "")
+	}
+	c2v := Cmd2Value{Cmd: constant.CmdMaxSeq, Value: seq}
+	return sendCmd(ch, c2v, 1)
 }
 
 type DeleteConNode struct {

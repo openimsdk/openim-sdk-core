@@ -114,8 +114,9 @@ func (u *LoginMgr) login(userID, token string, cb common.Base, operationID strin
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
 	u.cmdCh = make(chan common.Cmd2Value, 10)
 
-	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.conversationCh, u.cmdCh)
-	u.msgSync = ws.NewMsgSync(db, u.ws, userID, u.conversationCh)
+	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
+	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.conversationCh, u.cmdCh, pushMsgAndMaxSeqCh)
+	u.msgSync = ws.NewMsgSync(db, u.ws, userID, u.conversationCh, pushMsgAndMaxSeqCh)
 
 	u.heartbeat = ws.NewHeartbeat(u.msgSync)
 
@@ -158,7 +159,7 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener ws.ConnListener,
 }
 
 func (u *LoginMgr) logout(callback common.Base, operationID string) {
-	err := common.TriggerCmdLogout(sdk_struct.ArrMsg{}, u.cmdCh)
+	err := common.TriggerCmdLogout(u.cmdCh)
 	if err != nil {
 		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
 		return

@@ -126,3 +126,11 @@ func (d *DataBase) UpdateMessageHasRead(sendID string, msgIDList []string) error
 	}
 	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
 }
+
+func (d *DataBase) GetNormalMsgSeq() (uint32, error) {
+	return 0, nil
+}
+
+func (d *DataBase) GetAbnormalMsgSeq() (uint32, error) {
+	return 0, nil
+}
