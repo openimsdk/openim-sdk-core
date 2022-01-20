@@ -43,7 +43,7 @@ func (m *MsgSync) compareSeq() {
 func (m *MsgSync) doMaxSeq(cmd common.Cmd2Value) {
 	var maxSeqOnSvr = cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).MaxSeqOnSvr
 	operationID := cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).OperationID
-	log.Debug(operationID, "recv cmd, doMaxSeq, maxSeqOnSvr, m.seqMaxSynchronized, m.seqMaxNeedSync",
+	log.Debug(operationID, "recv max seq on svr, doMaxSeq, maxSeqOnSvr, m.seqMaxSynchronized, m.seqMaxNeedSync",
 		maxSeqOnSvr, m.seqMaxSynchronized, m.seqMaxNeedSync)
 	if maxSeqOnSvr <= m.seqMaxNeedSync {
 		return
@@ -57,7 +57,7 @@ func (m *MsgSync) doMaxSeq(cmd common.Cmd2Value) {
 func (m *MsgSync) doPushMsg(cmd common.Cmd2Value) {
 	msg := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).Msg
 	operationID := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).OperationID
-	log.Debug(operationID, "doPushMsg ", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, m.seqMaxNeedSync, m.seqMaxSynchronized)
+	log.Debug(operationID, "recv push msg, doPushMsg ", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, m.seqMaxNeedSync, m.seqMaxSynchronized)
 	if m.seqMaxNeedSync == 0 {
 		return
 	}
