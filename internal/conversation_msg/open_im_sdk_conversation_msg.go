@@ -193,17 +193,6 @@ type OnAdvancedMsgListener interface {
 }
 
 //
-func (c *Conversation) AddAdvancedMsgListener(listener OnAdvancedMsgListener) {
-	if listener == nil {
-		log.Error("internal", "AddAdvancedMsgListener listener is null")
-		return
-	}
-	if len(c.MsgListenerList) == 1 {
-		log.Error("internal", "u.ConversationListener.MsgListenerList == 1")
-		return
-	}
-	c.MsgListenerList = append(c.MsgListenerList, listener)
-}
 
 ////
 ////func (c *Conversation) ForceSyncMsg() bool {
