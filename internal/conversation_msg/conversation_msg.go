@@ -1,6 +1,7 @@
 package conversation_msg
 
 import (
+	"encoding/json"
 	"github.com/jinzhu/copier"
 	common2 "open_im_sdk/internal/common"
 	"open_im_sdk/internal/friend"
@@ -16,39 +17,6 @@ import (
 	"open_im_sdk/sdk_struct"
 )
 
-//type ChatLog struct {
-//	MsgId            string
-//	SendID           string
-//	IsRead           int32
-//	IsFilter         int32
-//	Seq              int64
-//	Status           int32
-//	SessionType      int32
-//	RecvID           string
-//	ContentType      int32
-//	MsgFrom          int32
-//	Content          string
-//	Remark           sql.NullString
-//	SenderPlatformID int32
-//	SendTime         int64
-//	CreateTime       int64
-//}
-//type ConversationStruct struct {
-//	ConversationID    string `json:"conversationID"`
-//	ConversationType  int    `json:"conversationType"`
-//	UserID            string `json:"userID"`
-//	GroupID           string `json:"groupID"`
-//	ShowName          string `json:"showName"`
-//	FaceURL           string `json:"faceUrl"`
-//	RecvMsgOpt        int    `json:"recvMsgOpt"`
-//	UnreadCount       int    `json:"unreadCount"`
-//	GroupAtType       int    `json:"groupAtType"`
-//	LatestMsg         string `json:"latestMsg"`
-//	LatestMsgSendTime int64  `json:"latestMsgSendTime"`
-//	DraftText         string `json:"draftText"`
-//	DraftTimestamp    int64  `json:"draftTimestamp"`
-//	IsPinned          int    `json:"isPinned"`
-//}
 type Conversation struct {
 	*ws.Ws
 	db                   *db.DataBase
@@ -103,7 +71,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		return
 	}
 	var insertMsg []*db.LocalChatLog
-	var errMsg, newMessages, msgReadList, msgRevokeList []*sdk_struct.MsgStruct
+	var exceptionMsg []*db.LocalErrChatLog
+	var newMessages, msgReadList, msgRevokeList []*sdk_struct.MsgStruct
 	var isUnreadCount, isConversationUpdate, isHistory bool
 	conversationChangedSet := make(map[string]db.LocalConversation)
 	newConversationSet := make(map[string]db.LocalConversation)
@@ -117,17 +86,21 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		msg.Content = string(v.Content)
 		msg.Status = constant.MsgStatusSendSuccess
 		msg.IsRead = false
-		log.Info("internal", "new msg, seq, ServerMsgID, ClientMsgID", msg.Seq, msg.ServerMsgID, msg.ClientMsgID)
+		log.Info(operationID, "new msg, seq, ServerMsgID, ClientMsgID", msg.Seq, msg.ServerMsgID, msg.ClientMsgID)
 		//De-analyze data
 		err := c.msgHandleByContentType(msg)
 		if err != nil {
-			log.Error("internal", "Parsing data error:", err.Error())
+			log.Error(operationID, "Parsing data error:", err.Error())
+			continue
+		}
+		if msg.ClientMsgID == "" {
+			exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
 			continue
 		}
 		switch v.SessionType {
 		case constant.SingleChatType:
 			if v.ContentType > constant.FriendNotificationBegin && v.ContentType < constant.FriendNotificationEnd {
-				//c.friend.DoNotification(&v)
+				c.friend.DoNotification(v)
 				log.Info("internal", "DoFriendMsg SingleChatType", v)
 			} else if v.ContentType > constant.UserNotificationBegin && v.ContentType < constant.UserNotificationEnd {
 				c.user.DoNotification(v)
@@ -135,7 +108,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		case constant.GroupChatType:
 			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
 				c.group.DoNotification(v)
-				log.Info("internal", "DoGroupMsg SingleChatType", v)
+				log.Info(operationID, "DoGroupMsg SingleChatType", v)
 			}
 		}
 		if v.SendID == c.loginUserID { //seq  Messages sent by myself  //if  sent through  this terminal
@@ -145,11 +118,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				if m.Seq == 0 {
 					insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
 				} else {
-					errMsg = append(errMsg, msg)
+					exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
 
 				}
 			} else { //      send through  other terminal
-				log.Info("internal", "sync message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
+				log.Info(operationID, "sync message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
 				lc := db.LocalConversation{
 					ConversationType:  v.SessionType,
 					LatestMsg:         utils.StructToJsonString(msg),
@@ -230,29 +203,30 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					msgRevokeList = append(msgRevokeList, msg)
 				}
 			} else {
-				errMsg = append(errMsg, msg)
+				exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
 			}
 		}
 	}
 	//Normal message storage
 	err1 := c.db.BatchInsertMessageList(insertMsg)
 	if err1 != nil {
-		log.Error("internal", "insert normal message err  :", err1.Error())
+		log.Error(operationID, "insert normal message err  :", err1.Error())
 	}
 	//Exception message storage
-	//err2, emsg2 := u.batchInsertErrorMessageToErrorChatLog(errMsg)
-	//if err2 != nil {
-	//	utils.sdkLog("insert err message err  :", err2.Error(), emsg2)
-	//}
+	err2 := c.db.BatchInsertExceptionMsgToErrorChatLog(exceptionMsg)
+	if err2 != nil {
+		log.Error(operationID, "insert err message err  :", err2.Error())
+
+	}
 	//Changed conversation storage
 	err3 := c.db.BatchUpdateConversationList(mapConversationToList(conversationChangedSet))
 	if err3 != nil {
-		log.Error("internal", "insert changed conversation err :", err3.Error())
+		log.Error(operationID, "insert changed conversation err :", err3.Error())
 	}
 	//New conversation storage
 	err4 := c.db.BatchInsertConversationList(mapConversationToList(newConversationSet))
 	if err4 != nil {
-		log.Error("internal", "insert new conversation err:", err4.Error())
+		log.Error(operationID, "insert new conversation err:", err4.Error())
 
 	}
 
@@ -260,17 +234,26 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	c.revokeMessage(msgRevokeList)
 	c.newMessage(newMessages)
 	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, ""}})
-	log.Info("internal", "trigger map is :", newConversationSet, conversationChangedSet)
+	log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewCon, mapKeyToStringList(newConversationSet)}})
 	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, mapKeyToStringList(conversationChangSet)}})
-	c.ConversationListener.OnConversationChanged(utils.StructToJsonString(mapConversationToList(conversationChangedSet)))
-	c.ConversationListener.OnNewConversation(utils.StructToJsonString(mapConversationToList(newConversationSet)))
+	if len(conversationChangedSet) != 0 {
+		c.ConversationListener.OnConversationChanged(utils.StructToJsonString(mapConversationToList(conversationChangedSet)))
+	}
+	if len(newConversationSet) != 0 {
+		c.ConversationListener.OnNewConversation(utils.StructToJsonString(mapConversationToList(newConversationSet)))
+	}
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 	//sdkLog("length msgListenerList", u.MsgListenerList, "length message", len(newMessages), "msgListenerLen", len(u.MsgListenerList))
 
 }
 func (c *Conversation) msgStructToLocalChatLog(m *sdk_struct.MsgStruct) *db.LocalChatLog {
 	var lc db.LocalChatLog
+	copier.Copy(&lc, m)
+	return &lc
+}
+func (c *Conversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *db.LocalErrChatLog {
+	var lc db.LocalErrChatLog
 	copier.Copy(&lc, m)
 	return &lc
 }
@@ -328,84 +311,84 @@ func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 }
 func (c *Conversation) doMsgReadState(msgReadList []*sdk_struct.MsgStruct) {
-	//var messageReceiptResp []*sdk_struct.MessageReceipt
-	//var msgIdList []string
-	//for _, rd := range msgReadList {
-	//	err := json.Unmarshal([]byte(rd.Content), &msgIdList)
-	//	if err != nil {
-	//		log.Error("internal", "unmarshal failed, err : ", err.Error())
-	//		return
-	//	}
-	//	var msgIdListStatusOK []string
-	//	for _, v := range msgIdList {
-	//		t := new(db.LocalChatLog)
-	//		t.ClientMsgID = v
-	//		t.IsRead = constant.HasRead
-	//		err := c.UpdateMessage(t)
-	//		if err != nil {
-	//			log.Error("internal", "setMessageHasReadByMsgID err:", err, "ClientMsgID", v)
-	//			continue
-	//		}
-	//		msgIdListStatusOK = append(msgIdListStatusOK, v)
-	//	}
-	//	if len(msgIdListStatusOK) > 0 {
-	//		msgRt := new(sdk_struct.MessageReceipt)
-	//		msgRt.ContentType = rd.ContentType
-	//		msgRt.MsgFrom = rd.MsgFrom
-	//		msgRt.ReadTime = rd.SendTime
-	//		msgRt.UserID = rd.SendID
-	//		msgRt.SessionType = rd.SessionType
-	//		msgRt.MsgIdList = msgIdListStatusOK
-	//		messageReceiptResp = append(messageReceiptResp, msgRt)
-	//	}
-	//}
-	//if len(messageReceiptResp) > 0 {
-	//	for _, v := range c.MsgListenerList {
-	//		log.Info("internal", "OnRecvC2CReadReceipt: ", utils.StructToJsonString(messageReceiptResp))
-	//		v.OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
-	//	}
-	//}
+	var messageReceiptResp []*sdk_struct.MessageReceipt
+	var msgIdList []string
+	for _, rd := range msgReadList {
+		err := json.Unmarshal([]byte(rd.Content), &msgIdList)
+		if err != nil {
+			log.Error("internal", "unmarshal failed, err : ", err.Error())
+			return
+		}
+		var msgIdListStatusOK []string
+		for _, v := range msgIdList {
+			t := new(db.LocalChatLog)
+			t.ClientMsgID = v
+			t.IsRead = constant.HasRead
+			err := c.db.UpdateMessage(t)
+			if err != nil {
+				log.Error("internal", "setMessageHasReadByMsgID err:", err, "ClientMsgID", v)
+				continue
+			}
+			msgIdListStatusOK = append(msgIdListStatusOK, v)
+		}
+		if len(msgIdListStatusOK) > 0 {
+			msgRt := new(sdk_struct.MessageReceipt)
+			msgRt.ContentType = rd.ContentType
+			msgRt.MsgFrom = rd.MsgFrom
+			msgRt.ReadTime = rd.SendTime
+			msgRt.UserID = rd.SendID
+			msgRt.SessionType = rd.SessionType
+			msgRt.MsgIdList = msgIdListStatusOK
+			messageReceiptResp = append(messageReceiptResp, msgRt)
+		}
+	}
+	if len(messageReceiptResp) > 0 {
+		for _, v := range c.MsgListenerList {
+			log.Info("internal", "OnRecvC2CReadReceipt: ", utils.StructToJsonString(messageReceiptResp))
+			v.OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
+		}
+	}
 }
 
 func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
-	//if c.ConversationListener == nil {
-	//	log.Error("internal", "not set conversationListener")
-	//	return
-	//}
-	//node := c2v.Value.(common.UpdateConNode)
-	//switch node.Action {
-	//case constant.AddConOrUpLatMsg:
-	//	lc := node.Args.(db.LocalConversation)
-	//	oc, err := c.GetConversation(node.ConId)
-	//	if err == nil && oc != nil {
-	//		if time.Time(lc.LatestMsgSendTime).After(time.Time(oc.LatestMsgSendTime)) { //The session update of asynchronous messages is subject to the latest sending time
-	//			err := c.UpdateColumnsConversation(node.ConId, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
-	//			if err != nil {
-	//				log.Error("internal", "updateConversationLatestMsgModel err: ", err)
-	//			}
-	//		}
-	//	} else {
-	//		err4 := c.InsertConversation(&lc)
-	//		if err4 != nil {
-	//			log.Error("internal", "insert new conversation err:", err4.Error())
-	//
-	//		}
-	//		var list []*db.LocalConversation
-	//		list = append(list, &lc)
-	//		c.ConversationListener.OnNewConversation(utils.StructToJsonString(list))
-	//	}
-	//
-	//case constant.UnreadCountSetZero:
-	//	if err := c.UpdateColumnsConversation(node.ConId, map[string]interface{}{"unread_count": 0}); err != nil {
-	//	} else {
-	//		totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
-	//		if err == nil {
-	//			c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
-	//		} else {
-	//			log.Error("internal", "getTotalUnreadMsgCountModel err", err.Error())
-	//		}
-	//
-	//	}
+	if c.ConversationListener == nil {
+		log.Error("internal", "not set conversationListener")
+		return
+	}
+	node := c2v.Value.(common.UpdateConNode)
+	switch node.Action {
+	case constant.AddConOrUpLatMsg:
+		lc := node.Args.(db.LocalConversation)
+		oc, err := c.db.GetConversation(node.ConId)
+		if err == nil && oc != nil {
+			if lc.LatestMsgSendTime > oc.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
+				err := c.db.UpdateColumnsConversation(node.ConId, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
+				if err != nil {
+					log.Error("internal", "updateConversationLatestMsgModel err: ", err)
+				}
+			}
+		} else {
+			err4 := c.db.InsertConversation(&lc)
+			if err4 != nil {
+				log.Error("internal", "insert new conversation err:", err4.Error())
+
+			}
+			var list []*db.LocalConversation
+			list = append(list, &lc)
+			c.ConversationListener.OnNewConversation(utils.StructToJsonString(list))
+		}
+
+	case constant.UnreadCountSetZero:
+		if err := c.db.UpdateColumnsConversation(node.ConId, map[string]interface{}{"unread_count": 0}); err != nil {
+		} else {
+			totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
+			if err == nil {
+				c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
+			} else {
+				log.Error("internal", "getTotalUnreadMsgCountModel err", err.Error())
+			}
+
+		}
 	//case ConChange:
 	//	err, list := u.getAllConversationListModel()
 	//	if err != nil {
@@ -418,72 +401,72 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 	//
 	//		}
 	//	}
-	//case constant.IncrUnread:
-	//	err := c.IncrConversationUnreadCount(node.ConId)
-	//	if err != nil {
-	//		log.Error("internal", "incrConversationUnreadCount database err:", err.Error())
-	//		return
-	//	}
-	//case constant.TotalUnreadMessageChanged:
-	//	totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
-	//	if err != nil {
-	//		log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
-	//	} else {
-	//		c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
-	//	}
-	//case constant.UpdateFaceUrlAndNickName:
-	//	lc := node.Args.(db.LocalConversation)
-	//	if lc.ShowName != "" || lc.FaceURL != "" {
-	//
-	//		err := c.UpdateConversation(&lc)
-	//		if err != nil {
-	//			log.Error("internal", "setConversationFaceUrlAndNickName database err:", err.Error())
-	//			return
-	//		}
-	//	}
-	//
-	//case constant.UpdateLatestMessageChange:
-	//	conversationID := node.ConId
-	//	var latestMsg sdk_struct.MsgStruct
-	//	l, err := c.GetConversation(conversationID)
-	//	if err != nil {
-	//		log.Error("internal", "getConversationLatestMsgModel err", err.Error())
-	//	} else {
-	//		err := json.Unmarshal([]byte(l.LatestMsg), &latestMsg)
-	//		if err != nil {
-	//			log.Error("internal", "latestMsg,Unmarshal err :", err.Error())
-	//		} else {
-	//			latestMsg.IsRead = true
-	//			newLatestMessage := utils.StructToJsonString(latestMsg)
-	//			err = c.UpdateColumnsConversation(node.ConId, map[string]interface{}{"latest_msg_send_time": latestMsg.SendTime, "latest_msg": newLatestMessage})
-	//			if err != nil {
-	//				log.Error("internal", "updateConversationLatestMsgModel err :", err.Error())
-	//			}
-	//		}
-	//	}
-	//case constant.NewConChange:
-	//	cidList := node.Args.([]string)
-	//	cLists, err := c.db.GetMultipleConversation(cidList)
-	//	if err != nil {
-	//		log.Error("internal", "getMultipleConversationModel err :", err.Error())
-	//	} else {
-	//		if cLists != nil {
-	//			log.Info("internal", "getMultipleConversationModel success :", cLists)
-	//			c.ConversationListener.OnConversationChanged(utils.StructToJsonString(cLists))
-	//		}
-	//	}
-	//case constant.NewCon:
-	//	cidList := node.Args.([]string)
-	//	cLists, err := c.db.GetMultipleConversation(cidList)
-	//	if err != nil {
-	//		log.Error("internal", "getMultipleConversationModel err :", err.Error())
-	//	} else {
-	//		if cLists != nil {
-	//			log.Info("internal", "getMultipleConversationModel success :", cLists)
-	//			c.ConversationListener.OnNewConversation(utils.StructToJsonString(cLists))
-	//		}
-	//	}
-	//}
+	case constant.IncrUnread:
+		err := c.db.IncrConversationUnreadCount(node.ConId)
+		if err != nil {
+			log.Error("internal", "incrConversationUnreadCount database err:", err.Error())
+			return
+		}
+	case constant.TotalUnreadMessageChanged:
+		totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
+		if err != nil {
+			log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
+		} else {
+			c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
+		}
+	case constant.UpdateFaceUrlAndNickName:
+		lc := node.Args.(db.LocalConversation)
+		if lc.ShowName != "" || lc.FaceURL != "" {
+
+			err := c.db.UpdateConversation(&lc)
+			if err != nil {
+				log.Error("internal", "setConversationFaceUrlAndNickName database err:", err.Error())
+				return
+			}
+		}
+
+	case constant.UpdateLatestMessageChange:
+		conversationID := node.ConId
+		var latestMsg sdk_struct.MsgStruct
+		l, err := c.db.GetConversation(conversationID)
+		if err != nil {
+			log.Error("internal", "getConversationLatestMsgModel err", err.Error())
+		} else {
+			err := json.Unmarshal([]byte(l.LatestMsg), &latestMsg)
+			if err != nil {
+				log.Error("internal", "latestMsg,Unmarshal err :", err.Error())
+			} else {
+				latestMsg.IsRead = true
+				newLatestMessage := utils.StructToJsonString(latestMsg)
+				err = c.db.UpdateColumnsConversation(node.ConId, map[string]interface{}{"latest_msg_send_time": latestMsg.SendTime, "latest_msg": newLatestMessage})
+				if err != nil {
+					log.Error("internal", "updateConversationLatestMsgModel err :", err.Error())
+				}
+			}
+		}
+	case constant.NewConChange:
+		cidList := node.Args.([]string)
+		cLists, err := c.db.GetMultipleConversation(cidList)
+		if err != nil {
+			log.Error("internal", "getMultipleConversationModel err :", err.Error())
+		} else {
+			if cLists != nil {
+				log.Info("internal", "getMultipleConversationModel success :", cLists)
+				c.ConversationListener.OnConversationChanged(utils.StructToJsonString(cLists))
+			}
+		}
+	case constant.NewCon:
+		cidList := node.Args.([]string)
+		cLists, err := c.db.GetMultipleConversation(cidList)
+		if err != nil {
+			log.Error("internal", "getMultipleConversationModel err :", err.Error())
+		} else {
+			if cLists != nil {
+				log.Info("internal", "getMultipleConversationModel success :", cLists)
+				c.ConversationListener.OnNewConversation(utils.StructToJsonString(cLists))
+			}
+		}
+	}
 }
 
 func (c *Conversation) Work(c2v common.Cmd2Value) {
@@ -536,86 +519,39 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 	}
 	return err
 }
-
-//func (c *Conversation) getGroupNameAndFaceUrlByUid(groupID string) (faceUrl, name string, err error) {
-//	groupInfo, err := u.getLocalGroupsInfoByGroupID(groupID)
-//	if err != nil {
-//		return "", "", err
-//	}
-//	if groupInfo.GroupId == "" {
-//		groupInfo, err := u.getGroupInfoByGroupId(groupID)
-//		if err != nil {
-//			return "", "", err
-//		} else {
-//			return groupInfo.FaceUrl, groupInfo.GroupName, nil
-//		}
-//	} else {
-//		return groupInfo.FaceUrl, groupInfo.GroupName, nil
-//	}
-//}
 func (c *Conversation) updateConversation(lc *db.LocalConversation, cc, nc map[string]db.LocalConversation) {
-	//b, err := c.ConversationIfExists(lc.ConversationID)
-	//if err != nil {
-	//	log.Error("internal", lc, cc, nc, err.Error())
-	//	return
-	//}
-	//if b {
-	//	//_, o := u.getOneConversationModel(c.ConversationID)
-	//	//if c.LatestMsgSendTime > o.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
-	//	//	err := u.updateConversationLatestMsgModel(c.LatestMsgSendTime, c.LatestMsg, c.ConversationID)
-	//	//	if err != nil {
-	//	//		sdkLog("updateConversationLatestMsgModel err: ", err)
-	//	//	} else {
-	//	//		cc[c.ConversationID] = void{}
-	//	//	}
-	//	//}
-	//	if oldC, ok := cc[lc.ConversationID]; ok {
-	//		if time.Time(oldC.LatestMsgSendTime).Before(time.Time(lc.LatestMsgSendTime)) {
-	//			lc.UnreadCount = lc.UnreadCount + oldC.UnreadCount
-	//			cc[lc.ConversationID] = *lc
-	//		} else {
-	//			oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
-	//			cc[lc.ConversationID] = oldC
-	//		}
-	//	} else {
-	//		cc[lc.ConversationID] = *lc
-	//	}
-	//
-	//} else {
-	//	if oldC, ok := nc[lc.ConversationID]; ok {
-	//		if time.Time(oldC.LatestMsgSendTime).Before(time.Time(lc.LatestMsgSendTime)) {
-	//			lc.UnreadCount = lc.UnreadCount + oldC.UnreadCount
-	//			nc[lc.ConversationID] = *lc
-	//		} else {
-	//			oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
-	//			cc[lc.ConversationID] = oldC
-	//		}
-	//	} else {
-	//		nc[lc.ConversationID] = *lc
-	//	}
-	//}
+	b, err := c.db.ConversationIfExists(lc.ConversationID)
+	if err != nil {
+		log.Error("internal", lc, cc, nc, err.Error())
+		return
+	}
+	if b {
+		if oldC, ok := cc[lc.ConversationID]; ok {
+			if lc.LatestMsgSendTime > oldC.LatestMsgSendTime {
+				lc.UnreadCount = lc.UnreadCount + oldC.UnreadCount
+				cc[lc.ConversationID] = *lc
+			} else {
+				oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
+				cc[lc.ConversationID] = oldC
+			}
+		} else {
+			cc[lc.ConversationID] = *lc
+		}
 
-	//if u.judgeConversationIfExists(c.ConversationID) {
-	//	_, o := u.getOneConversationModel(c.ConversationID)
-	//	if c.LatestMsgSendTime > o.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
-	//		err := u.updateConversationLatestMsgModel(c.LatestMsgSendTime, c.LatestMsg, c.ConversationID)
-	//		if err != nil {
-	//			sdkLog("updateConversationLatestMsgModel err: ", err)
-	//		} else {
-	//			cc[c.ConversationID] = void{}
-	//		}
-	//	}
-	//} else {
-	//	err := u.insertConOrUpdateLatestMsg(c, c.ConversationID)
-	//	if err != nil {
-	//		sdkLog("insertConOrUpdateLatestMsg err: ", err.Error())
-	//	} else {
-	//		nc[c.ConversationID] = void{}
-	//	}
-	//	//var list []*ConversationStruct
-	//	//list = append(list, c)
-	//	//u.ConversationListenerx.OnNewConversation(structToJsonString(list))
-	//}
+	} else {
+		if oldC, ok := nc[lc.ConversationID]; ok {
+			if lc.LatestMsgSendTime > oldC.LatestMsgSendTime {
+				lc.UnreadCount = lc.UnreadCount + oldC.UnreadCount
+				nc[lc.ConversationID] = *lc
+			} else {
+				oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
+				cc[lc.ConversationID] = oldC
+			}
+		} else {
+			nc[lc.ConversationID] = *lc
+		}
+	}
+
 }
 func mapConversationToList(m map[string]db.LocalConversation) (cs []*db.LocalConversation) {
 	for _, v := range m {
