@@ -57,12 +57,13 @@ func (m *MsgSync) doMaxSeq(cmd common.Cmd2Value) {
 func (m *MsgSync) doPushMsg(cmd common.Cmd2Value) {
 	msg := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).Msg
 	operationID := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).OperationID
-	log.Debug("do push msg ", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, m.seqMaxNeedSync, m.seqMaxSynchronized)
+	log.Debug(operationID, "doPushMsg ", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, m.seqMaxNeedSync, m.seqMaxSynchronized)
 	if m.seqMaxNeedSync == 0 {
 		return
 	}
 
 	if msg.Seq+1 == m.seqMaxNeedSync && m.seqMaxNeedSync == m.seqMaxSynchronized {
+		log.Debug(operationID, "TriggerCmdNewMsgCome ", msg.ServerMsgID, msg.ClientMsgID, msg.Seq)
 		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg}, operationID)
 		m.seqMaxNeedSync = msg.Seq + 1
 		m.seqMaxSynchronized = msg.Seq + 1
@@ -70,6 +71,7 @@ func (m *MsgSync) doPushMsg(cmd common.Cmd2Value) {
 	}
 	if msg.Seq > m.seqMaxNeedSync {
 		m.seqMaxNeedSync = msg.Seq
+		log.Debug(operationID, "syncMsgFromServer ", m.seqMaxSynchronized+1, m.seqMaxNeedSync)
 		m.syncMsgFromServer(m.seqMaxSynchronized+1, m.seqMaxNeedSync)
 		m.seqMaxSynchronized = m.seqMaxNeedSync
 		return
