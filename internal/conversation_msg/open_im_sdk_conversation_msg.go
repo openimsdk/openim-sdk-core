@@ -221,44 +221,44 @@ type OnAdvancedMsgListener interface {
 ////}
 //
 
-func (c *Conversation) CreateTextMessage(text string) string {
+func (c *Conversation) CreateTextMessage(text, operationID string) string {
 	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Text)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Text, operationID)
 	s.Content = text
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateTextAtMessage(text, atUserList string) string {
+func (c *Conversation) CreateTextAtMessage(text, atUserList, operationID string) string {
 	var users []string
 	_ = json.Unmarshal([]byte(atUserList), &users)
 	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.AtText)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.AtText, operationID)
 	s.AtElem.Text = text
 	s.AtElem.AtUserList = users
 	s.Content = utils.StructToJsonString(s.AtElem)
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateLocationMessage(description string, longitude, latitude float64) string {
+func (c *Conversation) CreateLocationMessage(description string, longitude, latitude float64, operationID string) string {
 	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Location)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Location, operationID)
 	s.LocationElem.Description = description
 	s.LocationElem.Longitude = longitude
 	s.LocationElem.Latitude = latitude
 	s.Content = utils.StructToJsonString(s.LocationElem)
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateCustomMessage(data, extension string, description string) string {
+func (c *Conversation) CreateCustomMessage(data, extension string, description, operationID string) string {
 	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Custom)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Custom, operationID)
 	s.CustomElem.Data = data
 	s.CustomElem.Extension = extension
 	s.CustomElem.Description = description
 	s.Content = utils.StructToJsonString(s.CustomElem)
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateQuoteMessage(text string, message string) string {
+func (c *Conversation) CreateQuoteMessage(text string, message, operationID string) string {
 	s, qs := sdk_struct.MsgStruct{}, sdk_struct.MsgStruct{}
 	_ = json.Unmarshal([]byte(message), &qs)
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Quote)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Quote, operationID)
 	//Avoid nested references
 	if qs.ContentType == constant.Quote {
 		qs.Content = qs.QuoteElem.Text
@@ -269,14 +269,14 @@ func (c *Conversation) CreateQuoteMessage(text string, message string) string {
 	s.Content = utils.StructToJsonString(s.QuoteElem)
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateCardMessage(cardInfo string) string {
+func (c *Conversation) CreateCardMessage(cardInfo, operationID string) string {
 	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Card)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Card, operationID)
 	s.Content = cardInfo
 	return utils.StructToJsonString(s)
 
 }
-func (c *Conversation) CreateVideoMessageFromFullPath(videoFullPath string, videoType string, duration int64, snapshotFullPath string) string {
+func (c *Conversation) CreateVideoMessageFromFullPath(videoFullPath string, videoType string, duration int64, snapshotFullPath, operationID string) string {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -296,7 +296,7 @@ func (c *Conversation) CreateVideoMessageFromFullPath(videoFullPath string, vide
 	}()
 
 	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Video)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Video, operationID)
 	s.VideoElem.VideoPath = videoFullPath
 	s.VideoElem.VideoType = videoType
 	s.VideoElem.Duration = duration
@@ -325,7 +325,7 @@ func (c *Conversation) CreateVideoMessageFromFullPath(videoFullPath string, vide
 	s.Content = utils.StructToJsonString(s.VideoElem)
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateFileMessageFromFullPath(fileFullPath string, fileName string) string {
+func (c *Conversation) CreateFileMessageFromFullPath(fileFullPath string, fileName, operationID string) string {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -338,7 +338,7 @@ func (c *Conversation) CreateFileMessageFromFullPath(fileFullPath string, fileNa
 		wg.Done()
 	}()
 	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.File)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.File, operationID)
 	s.FileElem.FilePath = fileFullPath
 	fi, err := os.Stat(fileFullPath)
 	if err != nil {
@@ -349,7 +349,7 @@ func (c *Conversation) CreateFileMessageFromFullPath(fileFullPath string, fileNa
 	s.FileElem.FileName = fileName
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateImageMessageFromFullPath(imageFullPath string) string {
+func (c *Conversation) CreateImageMessageFromFullPath(imageFullPath, operationID string) string {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -363,7 +363,7 @@ func (c *Conversation) CreateImageMessageFromFullPath(imageFullPath string) stri
 	}()
 
 	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Picture)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Picture, operationID)
 	s.PictureElem.SourcePath = imageFullPath
 	log.Info("internal", "ImageMessage  path:", s.PictureElem.SourcePath)
 	imageInfo, err := getImageInfo(s.PictureElem.SourcePath)
@@ -379,7 +379,7 @@ func (c *Conversation) CreateImageMessageFromFullPath(imageFullPath string) stri
 	s.Content = utils.StructToJsonString(s.PictureElem)
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateSoundMessageFromFullPath(soundPath string, duration int64) string {
+func (c *Conversation) CreateSoundMessageFromFullPath(soundPath string, duration int64, operationID string) string {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -392,7 +392,7 @@ func (c *Conversation) CreateSoundMessageFromFullPath(soundPath string, duration
 		wg.Done()
 	}()
 	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Voice)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Voice, operationID)
 	s.SoundElem.SoundPath = soundPath
 	s.SoundElem.Duration = duration
 	fi, err := os.Stat(s.SoundElem.SoundPath)
@@ -405,9 +405,9 @@ func (c *Conversation) CreateSoundMessageFromFullPath(soundPath string, duration
 	s.Content = utils.StructToJsonString(s.SoundElem)
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateImageMessage(imagePath string) string {
+func (c *Conversation) CreateImageMessage(imagePath, operationID string) string {
 	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Picture)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Picture, operationID)
 	s.PictureElem.SourcePath = c.DataDir + imagePath
 	log.Debug("internal", "ImageMessage  path:", s.PictureElem.SourcePath)
 	imageInfo, err := getImageInfo(s.PictureElem.SourcePath)
@@ -422,7 +422,7 @@ func (c *Conversation) CreateImageMessage(imagePath string) string {
 	s.Content = utils.StructToJsonString(s.PictureElem)
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateImageMessageByURL(sourcePicture, bigPicture, snapshotPicture string) string {
+func (c *Conversation) CreateImageMessageByURL(sourcePicture, bigPicture, snapshotPicture, operationID string) string {
 	s := sdk_struct.MsgStruct{}
 	var p sdk_struct.PictureBaseInfo
 	_ = json.Unmarshal([]byte(sourcePicture), &p)
@@ -431,7 +431,7 @@ func (c *Conversation) CreateImageMessageByURL(sourcePicture, bigPicture, snapsh
 	s.PictureElem.BigPicture = p
 	_ = json.Unmarshal([]byte(snapshotPicture), &p)
 	s.PictureElem.SnapshotPicture = p
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Picture)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Picture, operationID)
 	s.Content = utils.StructToJsonString(s.PictureElem)
 	return utils.StructToJsonString(s)
 }
@@ -746,18 +746,18 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.Local
 
 }
 
-func (c *Conversation) CreateSoundMessageByURL(soundBaseInfo string) string {
+func (c *Conversation) CreateSoundMessageByURL(soundBaseInfo, operationID string) string {
 	s := sdk_struct.MsgStruct{}
 	var soundElem sdk_struct.SoundBaseInfo
 	_ = json.Unmarshal([]byte(soundBaseInfo), &soundElem)
 	s.SoundElem = soundElem
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Voice)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Voice, operationID)
 	s.Content = utils.StructToJsonString(s.SoundElem)
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateSoundMessage(soundPath string, duration int64) string {
+func (c *Conversation) CreateSoundMessage(soundPath string, duration int64, operationID string) string {
 	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Voice)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Voice, operationID)
 	s.SoundElem.SoundPath = c.DataDir + soundPath
 	s.SoundElem.Duration = duration
 	fi, err := os.Stat(s.SoundElem.SoundPath)
@@ -769,18 +769,18 @@ func (c *Conversation) CreateSoundMessage(soundPath string, duration int64) stri
 	s.Content = utils.StructToJsonString(s.SoundElem)
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateVideoMessageByURL(videoBaseInfo string) string {
+func (c *Conversation) CreateVideoMessageByURL(videoBaseInfo, operationID string) string {
 	s := sdk_struct.MsgStruct{}
 	var videoElem sdk_struct.VideoBaseInfo
 	_ = json.Unmarshal([]byte(videoBaseInfo), &videoElem)
 	s.VideoElem = videoElem
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Video)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Video, operationID)
 	s.Content = utils.StructToJsonString(s.VideoElem)
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateVideoMessage(videoPath string, videoType string, duration int64, snapshotPath string) string {
+func (c *Conversation) CreateVideoMessage(videoPath string, videoType string, duration int64, snapshotPath, operationID string) string {
 	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Video)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Video, operationID)
 	s.VideoElem.VideoPath = c.DataDir + videoPath
 	s.VideoElem.VideoType = videoType
 	s.VideoElem.Duration = duration
@@ -808,18 +808,18 @@ func (c *Conversation) CreateVideoMessage(videoPath string, videoType string, du
 	s.Content = utils.StructToJsonString(s.VideoElem)
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateFileMessageByURL(fileBaseInfo string) string {
+func (c *Conversation) CreateFileMessageByURL(fileBaseInfo, operationID string) string {
 	s := sdk_struct.MsgStruct{}
 	var fileElem sdk_struct.FileBaseInfo
 	_ = json.Unmarshal([]byte(fileBaseInfo), &fileElem)
 	s.FileElem = fileElem
-	c.initBasicInfo(&s, constant.UserMsgType, constant.File)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.File, operationID)
 	s.Content = utils.StructToJsonString(s.FileElem)
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateFileMessage(filePath string, fileName string) string {
+func (c *Conversation) CreateFileMessage(filePath string, fileName, operationID string) string {
 	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.File)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.File, operationID)
 	s.FileElem.FilePath = c.DataDir + filePath
 	s.FileElem.FileName = fileName
 	fi, err := os.Stat(s.FileElem.FilePath)
@@ -830,7 +830,7 @@ func (c *Conversation) CreateFileMessage(filePath string, fileName string) strin
 	s.FileElem.FileSize = fi.Size()
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateMergerMessage(messageList, title, summaryList string) string {
+func (c *Conversation) CreateMergerMessage(messageList, title, summaryList, operationID string) string {
 	var messages []*sdk_struct.MsgStruct
 	var summaries []string
 	s := sdk_struct.MsgStruct{}
@@ -840,14 +840,14 @@ func (c *Conversation) CreateMergerMessage(messageList, title, summaryList strin
 		return ""
 	}
 	_ = json.Unmarshal([]byte(summaryList), &summaries)
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Merger)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Merger, operationID)
 	s.MergeElem.AbstractList = summaries
 	s.MergeElem.Title = title
 	s.MergeElem.MultiMessage = messages
 	s.Content = utils.StructToJsonString(s.MergeElem)
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateForwardMessage(m string) string {
+func (c *Conversation) CreateForwardMessage(m, operationID string) string {
 	s := sdk_struct.MsgStruct{}
 	err := json.Unmarshal([]byte(m), &s)
 	if err != nil {
@@ -858,7 +858,7 @@ func (c *Conversation) CreateForwardMessage(m string) string {
 		log.Error("internal", "only send success message can be revoked")
 		return ""
 	}
-	c.initBasicInfo(&s, constant.UserMsgType, s.ContentType)
+	c.initBasicInfo(&s, constant.UserMsgType, s.ContentType, operationID)
 	//Forward message seq is set to 0
 	s.Seq = 0
 	return utils.StructToJsonString(s)

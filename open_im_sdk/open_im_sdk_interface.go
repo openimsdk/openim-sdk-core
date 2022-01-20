@@ -284,9 +284,10 @@ func SetUserListener(listener user.OnUserListener) {
 //	userForSDK.Conversation().AddAdvancedMsgListener(listener)
 //}
 //
-//func CreateTextMessage(operationID string, text string) string {
-//	return userForSDK.Conversation().CreateTextMessage(text)
-//}
+func CreateTextMessage(operationID string, text string) string {
+	return userForSDK.Conversation().CreateTextMessage(text, operationID)
+}
+
 //func CreateTextAtMessage(operationID string, text, atUserList string) string {
 //	return userForSDK.Conversation().CreateTextAtMessage(text, atUserList)
 //}
@@ -350,9 +351,10 @@ func SetUserListener(listener user.OnUserListener) {
 //	return userForSDK.Conversation().CreateForwardMessage(m)
 //}
 //
-//func SendMessage(callback conversation_msg.SendMsgCallBack, operationID string, message, receiver, groupID string, onlineUserOnly bool, offlinePushInfo string) string {
-//	return userForSDK.Conversation().SendMessage(callback, message, receiver, groupID, onlineUserOnly, offlinePushInfo)
-//}
+func SendMessage(callback common.SendMsgCallBack, message, recvID, groupID, offlinePushInfo, operationID string) {
+	userForSDK.Conversation().SendMessage(callback, message, recvID, groupID, offlinePushInfo, operationID)
+}
+
 //func GetHistoryMessageList(callback common.Base, operationID string, getMessageOptions string) {
 //	userForSDK.Conversation().GetHistoryMessageList(callback, getMessageOptions)
 //}

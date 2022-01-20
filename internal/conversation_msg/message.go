@@ -9,19 +9,23 @@ package conversation_msg
 import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 )
 
 const TimeOffset = 5
 
-func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, contentType int32) {
+func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, contentType int32, operationID string) {
 	message.CreateTime = utils.GetCurrentTimestampByMill()
 	message.SendTime = message.CreateTime
 	message.IsRead = false
 	message.Status = constant.MsgStatusSending
 	message.SendID = c.loginUserID
-	userInfo, _ := c.db.GetLoginUser()
+	userInfo, err := c.db.GetLoginUser()
+	if err != nil {
+		log.Error(operationID, "GetLoginUser", err.Error())
+	}
 	message.SenderFaceURL = userInfo.FaceURL
 	message.SenderNickname = userInfo.Nickname
 	ClientMsgID := utils.GetMsgID(message.SendID)
