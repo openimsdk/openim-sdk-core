@@ -279,17 +279,17 @@ func SetUserListener(listener user.OnUserListener) {
 	userForSDK.SetUserListener(listener)
 }
 
-//
 //func AddAdvancedMsgListener(listener conversation_msg.OnAdvancedMsgListener) {
 //	userForSDK.Conversation().AddAdvancedMsgListener(listener)
 //}
-//
-//func CreateTextMessage(operationID string, text string) string {
-//	return userForSDK.Conversation().CreateTextMessage(text)
-//}
-//func CreateTextAtMessage(operationID string, text, atUserList string) string {
-//	return userForSDK.Conversation().CreateTextAtMessage(text, atUserList)
-//}
+
+func CreateTextMessage(operationID string, text string) string {
+	return userForSDK.Conversation().CreateTextMessage(text)
+}
+func CreateTextAtMessage(operationID string, text, atUserList string) string {
+	return userForSDK.Conversation().CreateTextAtMessage(text, atUserList)
+}
+
 //func CreateLocationMessage(operationID string, description string, longitude, latitude float64) string {
 //	return userForSDK.Conversation().CreateLocationMessage(description, longitude, latitude)
 //}

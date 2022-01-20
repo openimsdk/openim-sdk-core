@@ -132,8 +132,9 @@ func (w *Ws) ReadData() {
 			if w.WsConn.IsFatalError(err) {
 				log.Error(operationID, "IsFatalError ", err.Error(), "ReConn")
 				w.reConnSleep(operationID, 1)
+			} else {
+				log.Warn(operationID, "timeout failed ", err.Error())
 			}
-			log.Warn(operationID, "timeout failed ", err.Error())
 			continue
 		}
 		if msgType == websocket.CloseMessage {

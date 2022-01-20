@@ -123,7 +123,7 @@ func (u *LoginMgr) login(userID, token string, cb common.Base, operationID strin
 
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
 	u.user = user.NewUser(db, p, u.loginUserID)
-	u.SetUserListener(u.userListener)
+	u.user.SetListener(u.userListener)
 
 	u.friend = friend.NewFriend(u.loginUserID, u.db, p)
 	u.friend.SetFriendListener(u.friendListener)
