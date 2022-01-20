@@ -46,7 +46,6 @@ func CheckErrAndRespCallback(callback Base, err error, resp []byte, output inter
 		callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
 		runtime.Goexit()
 	}
-
 }
 
 //func CheckResp( resp []byte) *server_api_params.CommDataResp {
