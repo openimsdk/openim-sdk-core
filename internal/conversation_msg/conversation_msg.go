@@ -212,11 +212,14 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		log.Error(operationID, "insert normal message err  :", err1.Error())
 	}
 	//Exception message storage
-	err2 := c.db.BatchInsertExceptionMsgToErrorChatLog(exceptionMsg)
-	if err2 != nil {
-		log.Error(operationID, "insert err message err  :", err2.Error())
+	if exceptionMsg != nil {
+		err2 := c.db.BatchInsertExceptionMsgToErrorChatLog(exceptionMsg)
+		if err2 != nil {
+			log.Error(operationID, "insert err message err  :", err2.Error())
 
+		}
 	}
+
 	//Changed conversation storage
 	err3 := c.db.BatchUpdateConversationList(mapConversationToList(conversationChangedSet))
 	if err3 != nil {
