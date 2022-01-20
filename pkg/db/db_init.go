@@ -48,55 +48,56 @@ func (d *DataBase) initDB() error {
 		&LocalGroup{},
 		&LocalGroupMember{},
 		&LocalGroupRequest{},
+		&LocalErrChatLog{},
 		&LocalUser{},
 		&LocalBlack{},
 		&LocalSeqData{},
 		&LocalConversation{},
 		&LocalChatLog{},
 		&LocalAdminGroupRequest{})
-	if !db.Migrator().HasTable(&LocalFriend{}) {
-		//log.NewInfo("CreateTable Friend")
-		db.Migrator().CreateTable(&LocalFriend{})
-	}
-
-	if !db.Migrator().HasTable(&LocalFriendRequest{}) {
-		//log.NewInfo("CreateTable FriendRequest")
-		db.Migrator().CreateTable(&LocalFriendRequest{})
-	}
-
-	if !db.Migrator().HasTable(&LocalGroup{}) {
-		//log.NewInfo("CreateTable Group")
-		db.Migrator().CreateTable(&LocalGroup{})
-	}
-
-	if !db.Migrator().HasTable(&LocalGroupMember{}) {
-		//log.NewInfo("CreateTable GroupMember")
-		db.Migrator().CreateTable(&LocalGroupMember{})
-	}
-
-	if !db.Migrator().HasTable(&LocalGroupRequest{}) {
-		//log.NewInfo("CreateTable GroupRequest")
-		db.Migrator().CreateTable(&LocalGroupRequest{})
-	}
-
-	if !db.Migrator().HasTable(&LocalUser{}) {
-		//log.NewInfo("CreateTable User")
-		db.Migrator().CreateTable(&LocalUser{})
-	}
-
-	if !db.Migrator().HasTable(&LocalBlack{}) {
-		//log.NewInfo("CreateTable Black")
-		db.Migrator().CreateTable(&LocalBlack{})
-	}
-
-	if !db.Migrator().HasTable(&LocalSeqData{}) {
-		db.Migrator().CreateTable(&LocalSeqData{})
-	}
-	if !db.Migrator().HasTable(&LocalConversation{}) {
-		db.Migrator().CreateTable(&LocalConversation{})
-	}
-	if !db.Migrator().HasTable(&LocalChatLog{}) {
-		db.Migrator().CreateTable(&LocalChatLog{})
-	}
+	//if !db.Migrator().HasTable(&LocalFriend{}) {
+	//	//log.NewInfo("CreateTable Friend")
+	//	db.Migrator().CreateTable(&LocalFriend{})
+	//}
+	//
+	//if !db.Migrator().HasTable(&LocalFriendRequest{}) {
+	//	//log.NewInfo("CreateTable FriendRequest")
+	//	db.Migrator().CreateTable(&LocalFriendRequest{})
+	//}
+	//
+	//if !db.Migrator().HasTable(&LocalGroup{}) {
+	//	//log.NewInfo("CreateTable Group")
+	//	db.Migrator().CreateTable(&LocalGroup{})
+	//}
+	//
+	//if !db.Migrator().HasTable(&LocalGroupMember{}) {
+	//	//log.NewInfo("CreateTable GroupMember")
+	//	db.Migrator().CreateTable(&LocalGroupMember{})
+	//}
+	//
+	//if !db.Migrator().HasTable(&LocalGroupRequest{}) {
+	//	//log.NewInfo("CreateTable GroupRequest")
+	//	db.Migrator().CreateTable(&LocalGroupRequest{})
+	//}
+	//
+	//if !db.Migrator().HasTable(&LocalUser{}) {
+	//	//log.NewInfo("CreateTable User")
+	//	db.Migrator().CreateTable(&LocalUser{})
+	//}
+	//
+	//if !db.Migrator().HasTable(&LocalBlack{}) {
+	//	//log.NewInfo("CreateTable Black")
+	//	db.Migrator().CreateTable(&LocalBlack{})
+	//}
+	//
+	//if !db.Migrator().HasTable(&LocalSeqData{}) {
+	//	db.Migrator().CreateTable(&LocalSeqData{})
+	//}
+	//if !db.Migrator().HasTable(&LocalConversation{}) {
+	//	db.Migrator().CreateTable(&LocalConversation{})
+	//}
+	//if !db.Migrator().HasTable(&LocalChatLog{}) {
+	//	db.Migrator().CreateTable(&LocalChatLog{})
+	//}
 	return nil
 }
