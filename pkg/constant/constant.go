@@ -172,9 +172,8 @@ const (
 
 const (
 	WSGetNewestSeq     = 1001
-	WSPullMsg          = 1002
+	WSPullMsgBySeqList = 1002
 	WSSendMsg          = 1003
-	WSPullMsgBySeqList = 1004
 	WSPushMsg          = 2001
 	WSKickOnlineMsg    = 2002
 	WsLogoutMsg        = 2003
