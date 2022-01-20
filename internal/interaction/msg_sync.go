@@ -23,7 +23,6 @@ type MsgSync struct {
 
 func (m *MsgSync) compareSeq() {
 	//todo 统计中间缺失的seq，并同步
-
 	n, err := m.GetNormalMsgSeq()
 	if err != nil {
 		log.Error("", "GetNormalMsgSeq failed ", err.Error())
@@ -32,7 +31,6 @@ func (m *MsgSync) compareSeq() {
 	if err != nil {
 		log.Error("", "GetAbnormalMsgSeq failed ", err.Error())
 	}
-
 	if n > a {
 		m.seqMaxSynchronized = n
 	} else {
@@ -43,13 +41,15 @@ func (m *MsgSync) compareSeq() {
 }
 
 func (m *MsgSync) doMaxSeq(cmd common.Cmd2Value) {
-	var cmdSeq = cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).MaxSeqOnSvr
+	var maxSeqOnSvr = cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).MaxSeqOnSvr
 	operationID := cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).OperationID
-	log.Debug(operationID, "doMaxSeq", cmdSeq, m.seqMaxSynchronized, m.seqMaxNeedSync)
-	if cmdSeq <= m.seqMaxNeedSync {
+	log.Debug(operationID, "recv cmd, doMaxSeq, maxSeqOnSvr, m.seqMaxSynchronized, m.seqMaxNeedSync",
+		maxSeqOnSvr, m.seqMaxSynchronized, m.seqMaxNeedSync)
+	if maxSeqOnSvr <= m.seqMaxNeedSync {
 		return
 	}
-	m.seqMaxNeedSync = cmdSeq
+	m.seqMaxNeedSync = maxSeqOnSvr
+	log.Debug(operationID, "syncMsgFromServer ", m.seqMaxSynchronized+1, m.seqMaxNeedSync)
 	m.syncMsgFromServer(m.seqMaxSynchronized+1, m.seqMaxNeedSync)
 	m.seqMaxSynchronized = m.seqMaxNeedSync
 }
