@@ -28,7 +28,6 @@ func NewCOS(p *ws.PostApi) *COS {
 }
 
 func (c *COS) tencentCOSCredentials() (*server_api_params.TencentCloudStorageCredentialRespData, error) {
-
 	req := server_api_params.TencentCloudStorageCredentialReq{OperationID: utils.OperationIDGenerator()}
 	var resp server_api_params.TencentCloudStorageCredentialResp
 	err := c.p.PostReturn(constant.TencentCloudStorageCredentialRouter, req, &resp.Data)
