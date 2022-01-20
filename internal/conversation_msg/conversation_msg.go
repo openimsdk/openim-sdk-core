@@ -22,7 +22,6 @@ type Conversation struct {
 	db                   *db.DataBase
 	p                    *ws.PostApi
 	ConversationListener OnConversationListener
-	MsgListenerList      []OnAdvancedMsgListener
 	msgListener          OnAdvancedMsgListener
 	ch                   chan common.Cmd2Value
 	loginUserID          string
@@ -66,8 +65,8 @@ func (c *Conversation) GetCh() chan common.Cmd2Value {
 func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	allMsg := c2v.Value.([]*server_api_params.MsgData)
 	operationID := utils.OperationIDGenerator()
-	if c.MsgListenerList == nil {
-		log.Error(operationID, "not set c MsgListenerList", len(c.MsgListenerList))
+	if c.msgListener == nil {
+		log.Error(operationID, "not set c MsgListenerList")
 		return
 	}
 	var insertMsg []*db.LocalChatLog
@@ -259,35 +258,32 @@ func (c *Conversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *db.L
 }
 
 func (c *Conversation) revokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
-	for _, v := range c.MsgListenerList {
-		for _, w := range msgRevokeList {
-			if v != nil {
-				t := new(db.LocalChatLog)
-				t.ClientMsgID = w.Content
-				t.Status = constant.MsgStatusRevoked
-				err := c.db.UpdateMessage(t)
-				if err != nil {
-					log.Error("internal", "setLocalMessageStatus revokeMessage err:", err.Error(), "msg", w)
-				} else {
-					log.Info("internal", "v.OnRecvMessageRevoked client_msg_id:", w.Content)
-					v.OnRecvMessageRevoked(w.Content)
-				}
+	for _, w := range msgRevokeList {
+		if c.msgListener != nil {
+			t := new(db.LocalChatLog)
+			t.ClientMsgID = w.Content
+			t.Status = constant.MsgStatusRevoked
+			err := c.db.UpdateMessage(t)
+			if err != nil {
+				log.Error("internal", "setLocalMessageStatus revokeMessage err:", err.Error(), "msg", w)
 			} else {
-				log.Error("internal", "set msgListener is err:")
+				log.Info("internal", "v.OnRecvMessageRevoked client_msg_id:", w.Content)
+				c.msgListener.OnRecvMessageRevoked(w.Content)
 			}
+		} else {
+			log.Error("internal", "set msgListener is err:")
 		}
 	}
+
 }
 func (c *Conversation) newMessage(newMessagesList []*sdk_struct.MsgStruct) {
-	for _, v := range c.MsgListenerList {
-		for _, w := range newMessagesList {
-			log.Info("internal", "newMessage: ", w.ClientMsgID)
-			if v != nil {
-				log.Info("internal", "msgListener,OnRecvNewMessage")
-				v.OnRecvNewMessage(utils.StructToJsonString(w))
-			} else {
-				log.Error("internal", "set msgListener is err ", len(c.MsgListenerList))
-			}
+	for _, w := range newMessagesList {
+		log.Info("internal", "newMessage: ", w.ClientMsgID)
+		if c.msgListener != nil {
+			log.Info("internal", "msgListener,OnRecvNewMessage")
+			c.msgListener.OnRecvNewMessage(utils.StructToJsonString(w))
+		} else {
+			log.Error("internal", "set msgListener is err ")
 		}
 	}
 }
@@ -343,10 +339,9 @@ func (c *Conversation) doMsgReadState(msgReadList []*sdk_struct.MsgStruct) {
 		}
 	}
 	if len(messageReceiptResp) > 0 {
-		for _, v := range c.MsgListenerList {
-			log.Info("internal", "OnRecvC2CReadReceipt: ", utils.StructToJsonString(messageReceiptResp))
-			v.OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
-		}
+
+		log.Info("internal", "OnRecvC2CReadReceipt: ", utils.StructToJsonString(messageReceiptResp))
+		c.msgListener.OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
 	}
 }
 
