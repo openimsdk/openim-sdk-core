@@ -34,6 +34,9 @@ func (d *DataBase) GetConversationListSplit(offset, count int) ([]*LocalConversa
 	return transfer, err
 }
 func (d *DataBase) BatchInsertConversationList(conversationList []*LocalConversation) error {
+	if conversationList == nil {
+		return nil
+	}
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Create(conversationList).Error, "BatchInsertConversationList failed")
@@ -61,6 +64,9 @@ func (d *DataBase) UpdateConversation(c *LocalConversation) error {
 	return utils.Wrap(t.Error, "UpdateConversation failed")
 }
 func (d *DataBase) BatchUpdateConversationList(conversationList []*LocalConversation) error {
+	if conversationList == nil {
+		return nil
+	}
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Updates(conversationList).Error, "BatchUpdateConversationList failed")

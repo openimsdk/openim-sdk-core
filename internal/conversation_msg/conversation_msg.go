@@ -209,18 +209,19 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			}
 		}
 	}
+	log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
+
 	//Normal message storage
 	err1 := c.db.BatchInsertMessageList(insertMsg)
 	if err1 != nil {
 		log.Error(operationID, "insert normal message err  :", err1.Error())
 	}
 	//Exception message storage
-	if exceptionMsg != nil {
-		err2 := c.db.BatchInsertExceptionMsgToErrorChatLog(exceptionMsg)
-		if err2 != nil {
-			log.Error(operationID, "insert err message err  :", err2.Error())
 
-		}
+	err2 := c.db.BatchInsertExceptionMsgToErrorChatLog(exceptionMsg)
+	if err2 != nil {
+		log.Error(operationID, "insert err message err  :", err2.Error())
+
 	}
 
 	//Changed conversation storage
