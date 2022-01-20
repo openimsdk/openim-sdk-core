@@ -383,14 +383,14 @@ func (b *BaseSuccFailed) OnSuccess(data string) {
 
 func InOutlllogin(uid, tk string) {
 	var callback BaseSuccFailed
-	callback.funcName = utils.RunFuncName()
+	callback.funcName = utils.GetSelfFuncName()
 	operationID := utils.OperationIDGenerator()
 	open_im_sdk.Login(&callback, uid, operationID, tk)
 }
 
 func InOutLogou() {
 	var callback BaseSuccFailed
-	callback.funcName = utils.RunFuncName()
+	callback.funcName = utils.GetSelfFuncName()
 	opretaionID := utils.OperationIDGenerator()
 	open_im_sdk.Logout(&callback, opretaionID)
 }
@@ -433,7 +433,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 
 func lllogin(uid, tk string) bool {
 	var callback BaseSuccFailed
-	callback.funcName = utils.RunFuncName()
+	callback.funcName = utils.GetSelfFuncName()
 	operationID := utils.OperationIDGenerator()
 	open_im_sdk.Login(&callback, uid, operationID, tk)
 
@@ -531,7 +531,7 @@ func (b *BaseSuccFailedTest) OnSuccess(data string) {
 
 //func DotestSetConversationRecvMessageOpt() {
 //	var callback BaseSuccFailedTest
-//	callback.funcName = utils.RunFuncName()
+//	callback.funcName = utils.GetSelfFuncName()
 //	var idList []string
 //	idList = append(idList, "18567155635")
 //	jsontest, _ := json.Marshal(idList)
@@ -541,7 +541,7 @@ func (b *BaseSuccFailedTest) OnSuccess(data string) {
 //
 //func DoTestGetMultipleConversation() {
 //	var callback BaseSuccFailedTest
-//	callback.funcName = utils.RunFuncName()
+//	callback.funcName = utils.GetSelfFuncName()
 //	var idList []string
 //	fmt.Println("DoTestGetMultipleConversation come here")
 //	idList = append(idList, "single_13977954313", "group_77215e1b13b75f3ab00cb6570e3d9618")
@@ -552,7 +552,7 @@ func (b *BaseSuccFailedTest) OnSuccess(data string) {
 //
 //func DoTestGetConversationRecvMessageOpt() {
 //	var callback BaseSuccFailedTest
-//	callback.funcName = utils.RunFuncName()
+//	callback.funcName = utils.GetSelfFuncName()
 //	var idList []string
 //	idList = append(idList, "18567155635")
 //	jsontest, _ := json.Marshal(idList)

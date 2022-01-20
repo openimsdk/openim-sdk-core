@@ -505,12 +505,14 @@ func (g *Group) SyncAdminGroupApplication(operationID string) {
 	}
 
 	log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
+	fmt.Println("debug onServer ", onServer)
+	fmt.Println("debug onLocal ", onLocal)
 	aInBNot, bInANot, sameA, sameB := common.CheckAdminGroupRequestDiff(onServer, onLocal)
 	log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
 	for _, index := range aInBNot {
 		err := g.db.InsertAdminGroupRequest(onServer[index])
 		if err != nil {
-			log.NewError(operationID, "InsertGroupRequest failed ", err.Error())
+			log.NewError(operationID, "InsertGroupRequest failed ", err.Error(), *onServer[index])
 			continue
 		}
 		callbackData := sdk.GroupApplicationAddedCallback(*onServer[index])

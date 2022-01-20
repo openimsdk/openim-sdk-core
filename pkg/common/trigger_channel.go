@@ -13,6 +13,10 @@ func TriggerCmdNewMsgCome(msgList []*server_api_params.MsgData, conversationCh c
 	if conversationCh == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
+	if len(msgList) == 0 {
+		return nil
+	}
+
 	c2v := Cmd2Value{Cmd: constant.CmdNewMsgCome, Value: msgList}
 	return sendCmd(conversationCh, c2v, 1)
 }

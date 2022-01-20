@@ -90,31 +90,27 @@ func (u *WsConn) SetReadTimeout(timeout int) error {
 	return u.conn.SetReadDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
 }
 
-func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (error, *websocket.Conn) {
+func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (*websocket.Conn, error) {
 	var buff bytes.Buffer
 	enc := gob.NewEncoder(&buff)
 	err := enc.Encode(msg)
 	if err != nil {
-		return utils.Wrap(err, "Encode error"), nil
+		return nil, utils.Wrap(err, "Encode error")
 	}
 
-	var connSended *websocket.Conn
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
-
 	if u.conn != nil {
-		connSended = u.conn
 		err := u.SetWriteTimeout(writeTimeoutSeconds)
 		if err != nil {
-			return utils.Wrap(err, "SetWriteTimeout"), nil
+			return nil, utils.Wrap(err, "SetWriteTimeout")
 		}
 		if len(buff.Bytes()) > constant.MaxTotalMsgLen {
-			return utils.Wrap(errors.New("msg too long"), ""), nil
+			return nil, utils.Wrap(errors.New("msg too long"), "")
 		}
-		err = u.conn.WriteMessage(websocket.BinaryMessage, buff.Bytes())
-		return utils.Wrap(err, "WriteMessage failed"), connSended
+		return u.conn, utils.Wrap(u.conn.WriteMessage(websocket.BinaryMessage, buff.Bytes()), "")
 	} else {
-		return utils.Wrap(errors.New("conn==nil"), ""), connSended
+		return nil, utils.Wrap(errors.New("conn==nil"), "")
 	}
 }
 
@@ -175,5 +171,6 @@ func (u *WsConn) ReConn() (*websocket.Conn, error) {
 	}
 	u.listener.OnConnectSuccess()
 	u.loginState = constant.LoginSuccess
+	u.conn = conn
 	return conn, nil
 }

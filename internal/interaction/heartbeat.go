@@ -14,10 +14,11 @@ import (
 type Heartbeat struct {
 	//*Ws
 	*MsgSync
+	cmdCh chan common.Cmd2Value //waiting logout cmd
 }
 
-func NewHeartbeat(msgSync *MsgSync) *Heartbeat {
-	p := Heartbeat{MsgSync: msgSync}
+func NewHeartbeat(msgSync *MsgSync, cmcCh chan common.Cmd2Value) *Heartbeat {
+	p := Heartbeat{MsgSync: msgSync, cmdCh: cmcCh}
 	go p.Run()
 	return &p
 }
@@ -26,58 +27,40 @@ func (u *Heartbeat) Run() {
 	heartbeatInterval := 5
 	reqTimeout := 30
 	retryTimes := 0
-	reTryInterval := 10
-	operationID := utils.OperationIDGenerator()
+
 	for {
-		time.Sleep(time.Duration(heartbeatInterval) * time.Second)
-		u.Lock()
-		if u.LoginState() == constant.Logout {
-			u.Unlock()
-			return
+		operationID := utils.OperationIDGenerator()
+
+		select {
+		case r := <-u.cmdCh:
+			if r.Cmd == constant.CmdLogout {
+				return
+			}
+			log.Warn(operationID, "other cmd ...", r.Cmd)
+		case <-time.After(time.Millisecond * time.Duration(heartbeatInterval*1000)):
+			log.Debug(operationID, "heartbeat waiting(ms)... ", heartbeatInterval*1000)
 		}
-		u.Unlock()
 
 		resp, err := u.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.loginUserID, operationID)
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.loginUserID)
-			//	if  u.IsWriteTimeout(err)
-			if errors.Is(err, constant.WsRecvCode) {
-				log.Error(operationID, "is WsRecvCode, CloseConn")
+			if !errors.Is(err, constant.WsRecvConnSame) && !errors.Is(err, constant.WsRecvConnDiff) {
 				u.CloseConn()
-				time.Sleep(time.Duration(reTryInterval) * time.Second)
-				continue
 			}
-			if errors.Is(err, constant.WsRecvConnSame) {
-				for tr := 0; tr < 3; tr++ {
-					err = u.SendPingMsg()
-					if err != nil {
-						log.Error("sendPingMsg failed ", operationID, err.Error(), tr)
-						time.Sleep(time.Duration(reTryInterval) * time.Second)
-					} else {
-						break
-					}
-				}
-				continue
-			}
-			if errors.Is(err, constant.WsRecvConnDiff) {
-				continue
-			} else {
-				log.Error(operationID, "other err ", err.Error(), " closeConn")
-				u.CloseConn()
-				continue
-			}
+			continue
 		}
+
 		var wsSeqResp server_api_params.GetMaxAndMinSeqResp
 		err = proto.Unmarshal(resp.Data, &wsSeqResp)
 		if err != nil {
 			log.Error(operationID, "Unmarshal failed ", err.Error())
 			u.CloseConn()
-		} else {
-			err := common.TriggerCmdMaxSeq(uint32(wsSeqResp.MaxSeq), u.PushMsgAndMaxSeqCh)
-			if err != nil {
-				log.Error(operationID, "TriggerMaxSeq failed ", err.Error())
-			}
+			continue
+		}
 
+		err = common.TriggerCmdMaxSeq(uint32(wsSeqResp.MaxSeq), u.PushMsgAndMaxSeqCh)
+		if err != nil {
+			log.Error(operationID, "TriggerMaxSeq failed ", err.Error())
 		}
 	}
 }

@@ -31,7 +31,7 @@ func (d *DataBase) GetAdminGroupApplication() ([]*LocalAdminGroupRequest, error)
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var groupRequestList []LocalAdminGroupRequest
-	err := d.conn.Where("user_id = ?", d.loginUserID).Find(&groupRequestList).Error
+	err := utils.Wrap(d.conn.Find(&groupRequestList).Error, "")
 	if err != nil {
 		return nil, utils.Wrap(err, "")
 	}

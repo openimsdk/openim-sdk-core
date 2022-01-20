@@ -8,32 +8,35 @@ import (
 )
 
 func (u *User) GetUsersInfo(callback common.Base, userIDList string, operationID string) {
+	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, utils.RunFuncName(), "args: ", userIDList)
+		log.NewInfo(operationID, fName, "args: ", userIDList)
 		var unmarshalParam sdk_params_callback.GetUsersInfoParam
 		common.JsonUnmarshalAndArgsValidate(userIDList, &unmarshalParam, callback, operationID)
 		result := u.GetUsersInfoFromSvr(callback, unmarshalParam, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
 
 func (u *User) GetSelfUserInfo(callback common.Base, operationID string) {
+	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, utils.RunFuncName(), "args: ")
+		log.NewInfo(operationID, fName, "args: ")
 		result := u.getSelfUserInfo(callback, operationID)
 		callback.OnSuccess(utils.StructToJsonString(result))
-		log.NewInfo(operationID, utils.RunFuncName(), "callback: ", utils.StructToJsonString(result))
+		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonString(result))
 	}()
 }
 
 func (u *User) SetSelfInfo(callback common.Base, userInfo string, operationID string) {
+	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, utils.RunFuncName(), "args: ", userInfo)
+		log.NewInfo(operationID, fName, "args: ", userInfo)
 		var unmarshalParam sdk_params_callback.SetSelfUserInfoParam
 		common.JsonUnmarshalAndArgsValidate(userInfo, &unmarshalParam, callback, operationID)
 		u.updateSelfUserInfo(callback, unmarshalParam, operationID)
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.SetSelfUserInfoCallback))
-		log.NewInfo(operationID, utils.RunFuncName(), "callback: ")
+		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonString(sdk_params_callback.SetSelfUserInfoCallback))
 	}()
 }

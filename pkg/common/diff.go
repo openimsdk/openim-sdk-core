@@ -5,48 +5,11 @@ import (
 	"open_im_sdk/pkg/db"
 	//log2 "open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
-	"reflect"
 )
 
 type diff interface {
 	Key() string
 	Value() interface{}
-}
-
-func CompFields(a interface{}, b interface{}, fields ...string) bool {
-	return false
-	//	at := reflect.TypeOf(a)
-	av := reflect.ValueOf(a)
-	bt := reflect.TypeOf(b)
-	bv := reflect.ValueOf(b)
-
-	av = reflect.ValueOf(av.Interface())
-
-	_fields := make([]string, 0)
-	if len(fields) > 0 {
-		_fields = fields
-	} else {
-		for i := 0; i < bv.NumField(); i++ {
-			_fields = append(_fields, bt.Field(i).Name)
-		}
-	}
-
-	if len(_fields) == 0 {
-		return false
-	}
-
-	for i := 0; i < len(_fields); i++ {
-		name := _fields[i]
-		f := av.Elem().FieldByName(name)
-		bValue := bv.FieldByName(name)
-
-		if f.IsValid() && f.Kind() == bValue.Kind() {
-			f.Set(bValue)
-		} else {
-
-		}
-	}
-	return false
 }
 
 func friendCopyToLocal(localFriend *db.LocalFriend, apiFriend *server_api_params.FriendInfo) {

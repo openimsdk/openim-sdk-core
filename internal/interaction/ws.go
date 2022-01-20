@@ -23,7 +23,7 @@ type Ws struct {
 	pushMsgAndMaxSeqCh chan common.Cmd2Value //recv push msg  -> channel
 }
 
-func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, conversationCh, cmdCh chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value) *Ws {
+func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, cmdCh chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value) *Ws {
 	p := Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn, cmdCh: cmdCh, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh}
 	go p.ReadData()
 	return &p
@@ -44,7 +44,7 @@ func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, conversationCh, cmdCh chan co
 func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, connSend *websocket.Conn) (*GeneralWsResp, error) {
 	select {
 	case r := <-ch:
-		log.Debug(operationID, "ws ch recvMsg success, code ", r.ErrCode, r.ErrMsg)
+		log.Debug(operationID, "ws ch recvMsg success, code, msg ", r.ErrCode, r.ErrMsg)
 		if r.ErrCode != 0 {
 			return nil, constant.WsRecvCode
 		} else {
@@ -76,90 +76,76 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 		return nil, utils.Wrap(err, "proto marshal err")
 	}
 	for i := 0; i < retryTimes+1; i++ {
-		err, connSend = w.writeBinaryMsg(wsReq)
+		connSend, err = w.writeBinaryMsg(wsReq)
 		if err != nil {
 			if !w.IsWriteTimeout(err) {
-				if connSend == nil {
-					log.Error(operationID, "conn nil")
-					time.Sleep(time.Duration(1) * time.Second)
-					continue
-				}
-				newErr := connSend.Close()
-				log.Error(operationID, m, "ws write Timeout", newErr, err.Error())
+				log.Error(operationID, "Not send timeout, failed, close conn, writeBinaryMsg again ", err.Error())
+				w.CloseConn()
 				time.Sleep(time.Duration(1) * time.Second)
 				continue
 			} else {
-				return nil, utils.Wrap(err, "writeBinaryMsg err")
+				return nil, utils.Wrap(err, "writeBinaryMsg timeout")
 			}
-		} else {
-			break
 		}
+		break
 	}
 	r1, r2 := w.WaitResp(ch, timeout, wsReq.OperationID, connSend)
 	return r1, r2
+}
+
+func (w *Ws) reConnSleep(operationID string, sleep int32) {
+	_, err := w.WsConn.ReConn()
+	if err != nil {
+		log.Error(operationID, "ReConn failed ", err.Error())
+		time.Sleep(time.Duration(sleep) * time.Second)
+	}
 }
 
 func (w *Ws) ReadData() {
 	for {
 		isErrorOccurred := false
 		operationID := utils.OperationIDGenerator()
-		if w.WsConn.conn != nil {
-			//	timeout := 5
-			//	u.WsConn.SetReadTimeout(timeout)
-			msgType, message, err := w.WsConn.conn.ReadMessage()
-			if err != nil {
-				isErrorOccurred = true
-				if w.WsConn.IsFatalError(err) {
-					log.Error(operationID, "IsFatalError ", err.Error(), "ReConn")
-					c, err := w.WsConn.ReConn()
-					if err != nil {
-						log.Error(operationID, "reconn failed ", c, err.Error())
-						time.Sleep(time.Duration(2) * time.Second)
-					}
-				} else {
-					log.Warn(operationID, "other err  ", err.Error())
-				}
-			} else {
-				if msgType == websocket.CloseMessage {
-					log.Error(operationID, "type websocket.CloseMessage, ReConn")
-					c, err := w.WsConn.ReConn()
-					if err != nil {
-						log.Error(operationID, "reconn failed ", c, err.Error())
-						time.Sleep(time.Duration(2) * time.Second)
-					}
-				} else if msgType == websocket.TextMessage {
-					log.Warn(operationID, "type websocket.TextMessage")
-				} else if msgType == websocket.BinaryMessage {
-					w.doWsMsg(message)
-				} else {
-					log.Warn(operationID, "recv other type ", msgType)
-				}
-			}
-		} else {
-			log.Error(operationID, "conn == nil, ReConn")
-			conn, err := w.WsConn.ReConn()
-			if err != nil {
-				isErrorOccurred = true
-				log.Error(operationID, "ReConn failed ", err.Error())
-			} else {
-				w.WsConn.conn = conn
-			}
-		}
-
 		if isErrorOccurred {
 			select {
 			case r := <-w.cmdCh:
 				if r.Cmd == constant.CmdLogout {
 					w.SetLoginState(constant.Logout)
 					return
-				} else {
-					log.Warn(operationID, "other cmd ...", r.Cmd)
-					break
 				}
-			case <-time.After(time.Microsecond * time.Duration(1000)):
-				log.Warn(operationID, "timeout... ", 1000)
-				break
+				log.Warn(operationID, "other cmd ...", r.Cmd)
+			case <-time.After(time.Microsecond * time.Duration(100)):
+				log.Warn(operationID, "timeout(ms)... ", 100)
 			}
+		}
+
+		if w.WsConn.conn == nil {
+			log.Error(operationID, "conn == nil, ReConn")
+			w.reConnSleep(operationID, 1)
+			continue
+		}
+
+		//	timeout := 5
+		//	u.WsConn.SetReadTimeout(timeout)
+		msgType, message, err := w.WsConn.conn.ReadMessage()
+		if err != nil {
+			isErrorOccurred = true
+			if w.WsConn.IsFatalError(err) {
+				log.Error(operationID, "IsFatalError ", err.Error(), "ReConn")
+				w.reConnSleep(operationID, 1)
+			}
+			log.Warn(operationID, "timeout failed ", err.Error())
+			continue
+		}
+		if msgType == websocket.CloseMessage {
+			log.Error(operationID, "type websocket.CloseMessage, ReConn")
+			w.reConnSleep(operationID, 1)
+			continue
+		} else if msgType == websocket.TextMessage {
+			log.Warn(operationID, "type websocket.TextMessage")
+		} else if msgType == websocket.BinaryMessage {
+			w.doWsMsg(message)
+		} else {
+			log.Warn(operationID, "recv other type ", msgType)
 		}
 	}
 }
