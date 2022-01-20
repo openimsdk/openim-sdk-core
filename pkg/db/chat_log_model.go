@@ -27,6 +27,7 @@ func (d *DataBase) BatchUpdateMessageList(MessageList []*LocalChatLog) error {
 	fmt.Println("this is a test ", MessageList)
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
+	//db.Model(User{}).Where("role = ?", "admin").Updates(User{Name: "hello", Age: 18})
 	return utils.Wrap(d.conn.Model(&LocalChatLog{}).Updates(MessageList).Error, "BatchUpdateMessageList failed")
 }
 func (d *DataBase) MessageIfExists(ClientMsgID string) (bool, error) {

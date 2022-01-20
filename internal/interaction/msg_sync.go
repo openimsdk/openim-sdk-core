@@ -108,18 +108,15 @@ func (m *MsgSync) syncMsgFromServer(beginSeq, endSeq uint32) {
 	}
 	var SPLIT = 100
 	for i := 0; i < len(needSyncSeqList)/SPLIT; i++ {
-		//0-99 100-199
 		m.syncMsgFromServerSplit(needSyncSeqList[i*SPLIT : (i+1)*SPLIT])
 	}
 	m.syncMsgFromServerSplit(needSyncSeqList[SPLIT*(len(needSyncSeqList)/SPLIT):])
 }
 
 func (m *MsgSync) syncMsgFromServerSplit(needSyncSeqList []uint32) {
-	operationID := utils.OperationIDGenerator()
 	var pullMsgReq server_api_params.PullMessageBySeqListReq
 	pullMsgReq.SeqList = needSyncSeqList
 	pullMsgReq.UserID = m.loginUserID
-	pullMsgReq.OperationID = operationID
 	for {
 		operationID := utils.OperationIDGenerator()
 		pullMsgReq.OperationID = operationID
