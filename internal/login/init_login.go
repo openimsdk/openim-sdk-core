@@ -42,9 +42,9 @@ type LoginMgr struct {
 	userListener         user.OnUserListener
 
 	conversationCh chan common.Cmd2Value
-	cmdCh          chan common.Cmd2Value
-
-	imConfig sdk_struct.IMConfig
+	cmdWsCh        chan common.Cmd2Value
+	heartbeatCmdCh chan common.Cmd2Value
+	imConfig       sdk_struct.IMConfig
 }
 
 func (u *LoginMgr) ImConfig() sdk_struct.IMConfig {
@@ -88,14 +88,14 @@ func (u *LoginMgr) SetUserListener(userListener user.OnUserListener) {
 }
 
 func (u *LoginMgr) login(userID, token string, cb common.Base, operationID string) {
-	log.Info("login start ", userID, token)
+	log.Info(operationID, "login start ", userID, token)
 	if u.justOnceFlag {
 		cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
 		return
 	}
 	err := CheckToken(userID, token)
-	common.CheckAnyErrCallback(cb, 1111, err, operationID)
-	log.Info("0", "checkToken ok ", userID, token)
+	common.CheckTokenErrCallback(cb, err, operationID)
+	log.Info(operationID, "checkToken ok ", userID, token)
 	u.justOnceFlag = true
 
 	u.token = token
@@ -104,21 +104,22 @@ func (u *LoginMgr) login(userID, token string, cb common.Base, operationID strin
 	db, err := db.NewDataBase(userID, sdk_struct.SvrConf.DataDir)
 	if err != nil {
 		cb.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
-		log.Error("0", "NewDataBase failed ", err.Error())
+		log.Error(operationID, "NewDataBase failed ", err.Error())
 		return
 	}
 	u.db = db
-	log.Info("0", "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir)
+	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir)
 	wsRespAsyn := ws.NewWsRespAsyn()
 	wsConn := ws.NewWsConn(u.connListener, token, userID)
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
-	u.cmdCh = make(chan common.Cmd2Value, 10)
+	u.cmdWsCh = make(chan common.Cmd2Value, 10)
 
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
-	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.conversationCh, u.cmdCh, pushMsgAndMaxSeqCh)
+	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, pushMsgAndMaxSeqCh)
 	u.msgSync = ws.NewMsgSync(db, u.ws, userID, u.conversationCh, pushMsgAndMaxSeqCh)
 
-	u.heartbeat = ws.NewHeartbeat(u.msgSync)
+	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
+	u.heartbeat = ws.NewHeartbeat(u.msgSync, u.heartbeatCmdCh)
 
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
 	u.user = user.NewUser(db, p, u.loginUserID)
@@ -132,7 +133,7 @@ func (u *LoginMgr) login(userID, token string, cb common.Base, operationID strin
 
 	if u.imConfig.ObjectStorage != "cos" && u.imConfig.ObjectStorage != "" {
 		err = errors.New("u.imConfig.ObjectStorage failed ")
-		common.CheckAnyErrCallback(cb, 1000, err, operationID)
+		common.CheckConfigErrCallback(cb, err, operationID)
 	}
 	objStorage := comm2.NewCOS(p)
 	u.conversation = conv.NewConversation(u.ws, u.db, p, u.conversationCh,
@@ -141,8 +142,8 @@ func (u *LoginMgr) login(userID, token string, cb common.Base, operationID strin
 	u.conversation.SetConversationListener(u.conversationListener)
 	u.conversation.SetMsgListener(u.advancedMsgListener)
 
-	log.Info("forcedSynchronization run ...")
-	go u.forcedSynchronization()
+	log.Info(operationID, "forcedSynchronization run ...")
+	u.forcedSynchronization()
 	//	u.forycedSyncReceiveMessageOpt()
 	cb.OnSuccess("")
 
@@ -159,10 +160,13 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener ws.ConnListener,
 }
 
 func (u *LoginMgr) logout(callback common.Base, operationID string) {
-	err := common.TriggerCmdLogout(u.cmdCh)
+	err := common.TriggerCmdLogout(u.cmdWsCh)
 	if err != nil {
 		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
-		return
+	}
+	err = common.TriggerCmdLogout(u.heartbeatCmdCh)
+	if err != nil {
+		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
 	}
 	timeout := 5
 	retryTimes := 0

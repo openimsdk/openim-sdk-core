@@ -26,6 +26,13 @@ func CheckAnyErrCallback(callback Base, errCode int32, err error, operationID st
 		runtime.Goexit()
 	}
 }
+func CheckConfigErrCallback(callback Base, err error, operationID string) {
+	CheckAnyErrCallback(callback, constant.ErrConfig.ErrCode, err, operationID)
+}
+
+func CheckTokenErrCallback(callback Base, err error, operationID string) {
+	CheckAnyErrCallback(callback, constant.ErrTokenInvalid.ErrCode, err, operationID)
+}
 
 func CheckDBErrCallback(callback Base, err error, operationID string) {
 	CheckAnyErrCallback(callback, constant.ErrDB.ErrCode, err, operationID)

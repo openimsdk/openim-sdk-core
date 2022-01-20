@@ -26,13 +26,14 @@ func (f *Friend) GetDesignatedFriendsInfo(callback common.Base, friendUserIDList
 		log.Error(operationID, "callback is nil")
 		return
 	}
+	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", friendUserIDList)
+		log.NewInfo(operationID, fName, "args: ", friendUserIDList)
 		var unmarshalList sdk.GetDesignatedFriendsInfoParams
 		common.JsonUnmarshalCallback(friendUserIDList, &unmarshalList, callback, operationID)
 		result := f.getDesignatedFriendsInfo(callback, unmarshalList, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		log.NewInfo(operationID, utils.GetSelfFuncName(), " callback: ", utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
 
@@ -41,13 +42,14 @@ func (f *Friend) AddFriend(callback common.Base, userIDReqMsg string, operationI
 		log.Error(operationID, "callback is nil")
 		return
 	}
+	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", userIDReqMsg)
+		log.NewInfo(operationID, fName, "args: ", userIDReqMsg)
 		var unmarshalAddFriendParams sdk.AddFriendParams
 		common.JsonUnmarshalAndArgsValidate(userIDReqMsg, &unmarshalAddFriendParams, callback, operationID)
 		f.addFriend(callback, unmarshalAddFriendParams, operationID)
 		callback.OnSuccess(utils.StructToJsonString(sdk.AddFriendCallback))
-		log.NewInfo(operationID, utils.GetSelfFuncName(), " callback: ", utils.StructToJsonString(sdk.AddFriendCallback))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk.AddFriendCallback))
 	}()
 }
 
@@ -56,11 +58,12 @@ func (f *Friend) GetRecvFriendApplicationList(callback common.Base, operationID 
 		log.Error(operationID, "callback is nil")
 		return
 	}
+	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
+		log.NewInfo(operationID, fName, "args: ")
 		result := f.getRecvFriendApplicationList(callback, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		log.NewInfo(operationID, utils.GetSelfFuncName(), " callback: ", utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
 
@@ -69,11 +72,12 @@ func (f *Friend) GetSendFriendApplicationList(callback common.Base, operationID 
 		log.Error(operationID, "callback is nil")
 		return
 	}
+	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
+		log.NewInfo(operationID, fName, "args: ")
 		result := f.getSendFriendApplicationList(callback, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		log.NewInfo(operationID, utils.GetSelfFuncName(), " callback: ", utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
 
@@ -82,13 +86,14 @@ func (f *Friend) AcceptFriendApplication(callback common.Base, userIDHandleMsg s
 		log.Error(operationID, "callback is nil")
 		return
 	}
+	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", userIDHandleMsg)
+		log.NewInfo(operationID, fName, "args: ", userIDHandleMsg)
 		var unmarshalParams sdk.ProcessFriendApplicationParams
 		common.JsonUnmarshalAndArgsValidate(userIDHandleMsg, &unmarshalParams, callback, operationID)
 		f.processFriendApplication(callback, unmarshalParams, 1, operationID)
 		callback.OnSuccess(utils.StructToJsonString(sdk.ProcessFriendApplicationCallback))
-		log.NewInfo(operationID, utils.GetSelfFuncName(), " callback: ", utils.StructToJsonString(sdk.ProcessFriendApplicationCallback))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk.ProcessFriendApplicationCallback))
 	}()
 }
 
@@ -97,13 +102,14 @@ func (f *Friend) RefuseFriendApplication(callback common.Base, userIDHandleMsg s
 		log.Error(operationID, "callback is nil")
 		return
 	}
+	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", userIDHandleMsg)
+		log.NewInfo(operationID, fName, "args: ", userIDHandleMsg)
 		var unmarshalParams sdk.ProcessFriendApplicationParams
 		common.JsonUnmarshalAndArgsValidate(userIDHandleMsg, &unmarshalParams, callback, operationID)
 		f.processFriendApplication(callback, unmarshalParams, -1, operationID)
 		callback.OnSuccess(utils.StructToJsonString(sdk.ProcessFriendApplicationCallback))
-		log.NewInfo(operationID, utils.GetSelfFuncName(), " callback: ", utils.StructToJsonString(sdk.ProcessFriendApplicationCallback))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk.ProcessFriendApplicationCallback))
 	}()
 }
 
@@ -112,13 +118,14 @@ func (f *Friend) CheckFriend(callback common.Base, friendUserIDList string, oper
 		log.Error(operationID, "callback is nil")
 		return
 	}
+	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", friendUserIDList)
+		log.NewInfo(operationID, fName, "args: ", friendUserIDList)
 		var unmarshalParams sdk.CheckFriendParams
 		common.JsonUnmarshalAndArgsValidate(friendUserIDList, &unmarshalParams, callback, operationID)
 		result := f.checkFriend(callback, unmarshalParams, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		log.NewInfo(operationID, utils.GetSelfFuncName(), " callback: ", utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
 
@@ -127,11 +134,12 @@ func (f *Friend) DeleteFriend(callback common.Base, friendUserID string, operati
 		log.Error(operationID, "callback is nil")
 		return
 	}
+	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", friendUserID)
+		log.NewInfo(operationID, fName, "args: ", friendUserID)
 		f.deleteFriend(sdk.DeleteFriendParams(friendUserID), callback, operationID)
 		callback.OnSuccess(utils.StructToJsonString(sdk.DeleteFriendCallback))
-		log.NewInfo(operationID, utils.GetSelfFuncName(), " callback: ", utils.StructToJsonString(sdk.DeleteFriendCallback))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk.DeleteFriendCallback))
 	}()
 }
 
@@ -140,8 +148,9 @@ func (f *Friend) GetFriendList(callback common.Base, operationID string) {
 		log.Error(operationID, "callback is nil")
 		return
 	}
+	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
+		log.NewInfo(operationID, fName, "args: ")
 		var filterLocalFriendList sdk.GetFriendListCallback
 		localFriendList, err := f.db.GetAllFriendList()
 		common.CheckDBErrCallback(callback, err, operationID)
@@ -153,7 +162,7 @@ func (f *Friend) GetFriendList(callback common.Base, operationID string) {
 			}
 		}
 		callback.OnSuccess(utils.StructToJsonStringDefault(filterLocalFriendList))
-		log.NewInfo(operationID, utils.GetSelfFuncName(), " callback: ", utils.StructToJsonStringDefault(filterLocalFriendList))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(filterLocalFriendList))
 	}()
 }
 
@@ -162,13 +171,14 @@ func (f *Friend) SetFriendRemark(callback common.Base, userIDRemark string, oper
 		log.Error(operationID, "callback is nil")
 		return
 	}
+	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", userIDRemark)
+		log.NewInfo(operationID, fName, "args: ", userIDRemark)
 		var unmarshalParams sdk.SetFriendRemarkParams
 		common.JsonUnmarshalAndArgsValidate(userIDRemark, &unmarshalParams, callback, operationID)
 		f.setFriendRemark(unmarshalParams, callback, operationID)
 		callback.OnSuccess(utils.StructToJsonString(sdk.SetFriendRemarkCallback))
-		log.NewInfo(operationID, utils.GetSelfFuncName(), " callback: ", utils.StructToJsonString(sdk.SetFriendRemarkCallback))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk.SetFriendRemarkCallback))
 	}()
 }
 
@@ -177,11 +187,12 @@ func (f *Friend) AddBlack(callback common.Base, blackUserID, operationID string)
 		log.Error(operationID, "callback is nil")
 		return
 	}
+	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", blackUserID)
+		log.NewInfo(operationID, fName, "args: ", blackUserID)
 		f.addBlack(callback, sdk.AddBlackParams(blackUserID), operationID)
 		callback.OnSuccess(utils.StructToJsonString(sdk.AddBlackCallback))
-		log.NewInfo(operationID, utils.GetSelfFuncName(), " callback: ", utils.StructToJsonString(sdk.AddBlackCallback))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk.AddBlackCallback))
 	}()
 }
 
@@ -190,12 +201,13 @@ func (f *Friend) GetBlackList(callback common.Base, operationID string) {
 		log.Error(operationID, "callback is nil")
 		return
 	}
+	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
+		log.NewInfo(operationID, fName, "args: ")
 		localBlackList, err := f.db.GetBlackList()
 		common.CheckDBErrCallback(callback, err, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(localBlackList))
-		log.NewInfo(operationID, utils.GetSelfFuncName(), " callback: ", utils.StructToJsonStringDefault(localBlackList))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(localBlackList))
 	}()
 }
 
@@ -204,11 +216,12 @@ func (f *Friend) RemoveBlack(callback common.Base, blackUserID, operationID stri
 		log.Error(operationID, "callback is nil")
 		return
 	}
+	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", blackUserID)
+		log.NewInfo(operationID, fName, "args: ", blackUserID)
 		f.removeBlack(callback, sdk.RemoveBlackParams(blackUserID), operationID)
 		callback.OnSuccess(utils.StructToJsonString(sdk.RemoveBlackCallback))
-		log.NewInfo(operationID, utils.GetSelfFuncName(), " callback: ", utils.StructToJsonString(sdk.RemoveBlackCallback))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk.RemoveBlackCallback))
 	}()
 }
 
