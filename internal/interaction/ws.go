@@ -132,8 +132,9 @@ func (w *Ws) ReadData() {
 			if w.WsConn.IsFatalError(err) {
 				log.Error(operationID, "IsFatalError ", err.Error(), "ReConn")
 				w.reConnSleep(operationID, 1)
+			} else {
+				log.Warn(operationID, "timeout failed ", err.Error())
 			}
-			log.Warn(operationID, "timeout failed ", err.Error())
 			continue
 		}
 		if msgType == websocket.CloseMessage {
@@ -143,7 +144,7 @@ func (w *Ws) ReadData() {
 		} else if msgType == websocket.TextMessage {
 			log.Warn(operationID, "type websocket.TextMessage")
 		} else if msgType == websocket.BinaryMessage {
-			w.doWsMsg(message)
+			go w.doWsMsg(message)
 		} else {
 			log.Warn(operationID, "recv other type ", msgType)
 		}
@@ -156,17 +157,26 @@ func (w *Ws) doWsMsg(message []byte) {
 		log.Error("decodeBinaryWs err", err.Error())
 		return
 	}
+	log.Debug(wsResp.OperationID, "ws recv msg: ", wsResp.ErrCode, wsResp.ErrMsg)
 	switch wsResp.ReqIdentifier {
 	case constant.WSGetNewestSeq:
-		go w.doWSGetNewestSeq(*wsResp)
+		if err = w.doWSGetNewestSeq(*wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSGetNewestSeq failed ", err.Error())
+		}
 	case constant.WSPullMsgBySeqList:
-		go w.doWSPullMsg(*wsResp)
+		if err = w.doWSPullMsg(*wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSPullMsg failed ", err.Error())
+		}
 	case constant.WSPushMsg:
-		go w.doWSPushMsg(*wsResp)
+		if err = w.doWSPushMsg(*wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSPushMsg failed ", err.Error())
+		}
 	case constant.WSSendMsg:
-		go w.doWSSendMsg(*wsResp)
+		if err = w.doWSSendMsg(*wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSSendMsg failed ", err.Error())
+		}
 	case constant.WSKickOnlineMsg:
-		go w.kickOnline(*wsResp)
+		w.kickOnline(*wsResp)
 	case constant.WsLogoutMsg:
 		log.Warn(wsResp.OperationID, "logout.. ")
 		w.SetLoginState(constant.Logout)

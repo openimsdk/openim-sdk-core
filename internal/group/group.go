@@ -383,10 +383,10 @@ func (g *Group) processGroupApplication(callback common.Base, groupID, fromUserI
 	apiReq.FromUserID = fromUserID
 	apiReq.HandleResult = handleResult
 	apiReq.HandledMsg = handleMsg
-	if handleResult == 1 {
+	if handleResult == constant.GroupResponseAgree {
 		g.p.PostFatalCallback(callback, constant.AcceptGroupApplicationRouter, apiReq, nil, apiReq.OperationID)
 		g.syncGroupMemberByGroupID(groupID, operationID)
-	} else if handleResult == -1 {
+	} else if handleResult == constant.GroupResponseRefuse {
 		g.p.PostFatalCallback(callback, constant.RefuseGroupApplicationRouter, apiReq, nil, apiReq.OperationID)
 	}
 	g.SyncAdminGroupApplication(operationID)
@@ -524,11 +524,11 @@ func (g *Group) SyncAdminGroupApplication(operationID string) {
 			log.NewError(operationID, "UpdateGroupRequest failed ", err.Error())
 			continue
 		}
-		if onServer[index].HandleResult == -1 {
+		if onServer[index].HandleResult == constant.GroupResponseRefuse {
 			callbackData := sdk.GroupApplicationRejectCallback(*onServer[index])
 			g.listener.OnGroupApplicationRejected(utils.StructToJsonString(callbackData))
 
-		} else if onServer[index].HandleResult == 1 {
+		} else if onServer[index].HandleResult == constant.GroupResponseAgree {
 			callbackData := sdk.GroupApplicationAcceptCallback(*onServer[index])
 			g.listener.OnGroupApplicationAccepted(utils.StructToJsonString(callbackData))
 		}

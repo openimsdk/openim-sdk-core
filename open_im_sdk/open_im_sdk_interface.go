@@ -279,10 +279,14 @@ func SetUserListener(listener user.OnUserListener) {
 	userForSDK.SetUserListener(listener)
 }
 
-//
 //func AddAdvancedMsgListener(listener conversation_msg.OnAdvancedMsgListener) {
 //	userForSDK.Conversation().AddAdvancedMsgListener(listener)
 //}
+
+func CreateTextAtMessage(operationID string, text, atUserList string) string {
+	return userForSDK.Conversation().CreateTextAtMessage(text, atUserList, operationID)
+}
+
 //
 func CreateTextMessage(operationID string, text string) string {
 	return userForSDK.Conversation().CreateTextMessage(text, operationID)

@@ -293,11 +293,11 @@ func (f *Friend) SyncSelfFriendApplication(operationID string) {
 				log.NewError(operationID, "UpdateFriendRequest failed ", err.Error(), *onServer[index])
 				continue
 			}
-			if onServer[index].HandleResult == -1 {
+			if onServer[index].HandleResult == constant.FriendResponseRefuse {
 				callbackData := sdk.FriendApplicationRejectCallback(*onServer[index])
 				f.friendListener.OnFriendApplicationRejected(utils.StructToJsonString(callbackData))
 
-			} else if onServer[index].HandleResult == 1 {
+			} else if onServer[index].HandleResult == constant.FriendResponseAgree {
 				callbackData := sdk.FriendApplicationAcceptCallback(*onServer[index])
 				f.friendListener.OnFriendApplicationAccepted(utils.StructToJsonString(callbackData))
 			}
@@ -348,11 +348,11 @@ func (f *Friend) SyncFriendApplication(operationID string) {
 				log.NewError(operationID, "UpdateFriendRequest failed ", err.Error(), *onServer[index])
 				continue
 			}
-			if onServer[index].HandleResult == -1 {
+			if onServer[index].HandleResult == constant.FriendResponseRefuse {
 				callbackData := sdk.FriendApplicationRejectCallback(*onServer[index])
 				f.friendListener.OnFriendApplicationRejected(utils.StructToJsonString(callbackData))
 
-			} else if onServer[index].HandleResult == 1 {
+			} else if onServer[index].HandleResult == constant.FriendResponseAgree {
 				callbackData := sdk.FriendApplicationAcceptCallback(*onServer[index])
 				f.friendListener.OnFriendApplicationAccepted(utils.StructToJsonString(callbackData))
 			}

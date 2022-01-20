@@ -40,23 +40,26 @@ func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 	ch chan common.Cmd2Value, loginUserID string, platformID int32, dataDir string,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	objectStorage common2.ObjectStorage) *Conversation {
-	return &Conversation{Ws: ws, db: db, p: p, ch: ch, loginUserID: loginUserID, platformID: platformID, DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage}
+	n := &Conversation{Ws: ws, db: db, p: p, ch: ch, loginUserID: loginUserID, platformID: platformID, DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage}
+	go common.DoListener(n)
+
+	return n
 }
 
 //func NewConversation() *Conversation {
 //	return &Conversation{}
 //}
 
-func (c *Conversation) Init(ws *ws.Ws, db *db.DataBase, ch chan common.Cmd2Value, loginUserID string, friend *friend.Friend, group *group.Group, user *user.User) {
-	c.Ws = ws
-	c.db = db
-	c.ch = ch
-	c.loginUserID = c.loginUserID
-	c.friend = friend
-	c.group = group
-	c.user = user
-	go common.DoListener(c)
-}
+//func (c *Conversation) Init(ws *ws.Ws, db *db.DataBase, ch chan common.Cmd2Value, loginUserID string, friend *friend.Friend, group *group.Group, user *user.User) {
+//	c.Ws = ws
+//	c.db = db
+//	c.ch = ch
+//	c.loginUserID = c.loginUserID
+//	c.friend = friend
+//	c.group = group
+//	c.user = user
+//	go common.DoListener(c)
+//}
 
 func (c *Conversation) GetCh() chan common.Cmd2Value {
 	return c.ch

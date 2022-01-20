@@ -418,8 +418,8 @@ func InOutDoTest(uid, tk, ws, api string) {
 	var testUser userCallback
 	open_im_sdk.SetUserListener(testUser)
 
-	//var msgCallBack MsgListenerCallBak
-	//open_im_sdk.AddAdvancedMsgListener(msgCallBack)
+	var msgCallBack MsgListenerCallBak
+	open_im_sdk.SetAdvancedMsgListener(msgCallBack)
 
 	var friendListener testFriendListener
 	open_im_sdk.SetFriendListener(friendListener)

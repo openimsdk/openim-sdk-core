@@ -42,6 +42,7 @@ func (m *MsgSync) compareSeq() {
 
 func (m *MsgSync) doMaxSeq(cmd common.Cmd2Value) {
 	var cmdSeq = cmd.Value.(uint32)
+	log.Debug("", "doMaxSeq", cmdSeq, m.seqMaxSynchronized, m.seqMaxNeedSync)
 	if cmdSeq <= m.seqMaxNeedSync {
 		return
 	}
@@ -51,10 +52,12 @@ func (m *MsgSync) doMaxSeq(cmd common.Cmd2Value) {
 }
 
 func (m *MsgSync) doPushMsg(cmd common.Cmd2Value) {
+	msg := cmd.Value.(*server_api_params.MsgData)
+	log.Debug("do push msg ", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, m.seqMaxNeedSync, m.seqMaxSynchronized)
 	if m.seqMaxNeedSync == 0 {
 		return
 	}
-	msg := cmd.Value.(*server_api_params.MsgData)
+
 	if uint32(msg.Seq)+1 == m.seqMaxNeedSync && m.seqMaxNeedSync == m.seqMaxSynchronized {
 		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg})
 		m.seqMaxNeedSync = uint32(msg.Seq) + 1
@@ -70,6 +73,7 @@ func (m *MsgSync) doPushMsg(cmd common.Cmd2Value) {
 }
 
 func (m *MsgSync) Work(cmd common.Cmd2Value) {
+
 	switch cmd.Cmd {
 	case constant.CmdPushMsg:
 		m.doPushMsg(cmd)
@@ -81,7 +85,7 @@ func (m *MsgSync) Work(cmd common.Cmd2Value) {
 }
 
 func (m *MsgSync) GetCh() chan common.Cmd2Value {
-	return m.cmdCh
+	return m.PushMsgAndMaxSeqCh
 }
 
 func NewMsgSync(dataBase *db.DataBase, ws *Ws, loginUserID string, ch chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value) *MsgSync {
@@ -112,6 +116,8 @@ func (m *MsgSync) syncMsgFromServerSplit(needSyncSeqList []uint32) {
 	pullMsgReq.UserID = m.loginUserID
 	pullMsgReq.OperationID = operationID
 	for {
+		operationID := utils.OperationIDGenerator()
+		pullMsgReq.OperationID = operationID
 		resp, err := m.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 30, 2, m.loginUserID, operationID)
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 30, 2, m.loginUserID)
