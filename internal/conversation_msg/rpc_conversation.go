@@ -191,7 +191,7 @@ func (c *Conversation) revokeOneMessage(callback common.Base, req sdk.RevokeMess
 }
 func (c *Conversation) typingStatusUpdate(callback common.Base, recvID, msgTip, operationID string) {
 	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Typing)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Typing, operationID)
 	s.Content = msgTip
 	options := make(map[string]bool, 2)
 	_ = c.internalSendMessage(callback, &s, recvID, "", operationID, &server_api_params.OfflinePushInfo{}, true, options)
@@ -204,7 +204,7 @@ func (c *Conversation) markC2CMessageAsRead(callback common.Base, msgIDList stri
 	//conversationID := c.GetConversationIDBySessionType(recvID, constant.SingleChatType)
 
 	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.HasReadReceipt)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.HasReadReceipt, operationID)
 	s.Content = msgIDList
 	options := make(map[string]bool, 2)
 	_ = c.internalSendMessage(callback, &s, recvID, "", operationID, &server_api_params.OfflinePushInfo{}, false, options)
