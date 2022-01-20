@@ -128,9 +128,9 @@ func (d *DataBase) UpdateMessageHasRead(sendID string, msgIDList []string) error
 }
 
 func (d *DataBase) GetNormalMsgSeq() (uint32, error) {
-	return 0, nil
-}
-
-func (d *DataBase) GetAbnormalMsgSeq() (uint32, error) {
-	return 0, nil
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var seq uint32
+	err := d.conn.Model(LocalChatLog{}).Select("max(seq)").Find(&seq).Error
+	return seq, utils.Wrap(err, "GetNormalMsgSeq")
 }
