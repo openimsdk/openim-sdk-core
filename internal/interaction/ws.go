@@ -45,7 +45,7 @@ func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, cmdCh chan common.Cmd2Value, 
 func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, connSend *websocket.Conn) (*GeneralWsResp, error) {
 	select {
 	case r := <-ch:
-		log.Debug(operationID, "ws ch recvMsg success, code, msg ", r.ErrCode, r.ErrMsg)
+		log.Debug(operationID, "ws ch recvMsg success, code ", r.ErrCode)
 		if r.ErrCode != 0 {
 			return nil, constant.WsRecvCode
 		} else {

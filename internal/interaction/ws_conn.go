@@ -22,7 +22,7 @@ type ConnListener interface {
 	OnUserTokenExpired()
 }
 
-const writeTimeoutSeconds = 5
+const writeTimeoutSeconds = 30
 
 type WsConn struct {
 	stateMutex  sync.Mutex

@@ -518,18 +518,6 @@ func InOutDoTestSendMsg(sendId, receiverID string) {
 	fmt.Println("test to recv : ", receiverID)
 }
 
-func DoTestSendMsg(sendId, recvID string) {
-	m := "test:Gordon->sk" + sendId + ":" + recvID + ":"
-	operationID := utils.OperationIDGenerator()
-	s := DoTestCreateTextMessage(m)
-	var testSendMsg TestSendMsgCallBack
-	o := server_api_params.OfflinePushInfo{}
-	o.Title = "121313"
-	o.Desc = "45464"
-	open_im_sdk.SendMessage(&testSendMsg, s, recvID, "", utils.StructToJsonString(o), operationID)
-
-}
-
 //func DoTestGetAllConversationList() {
 //	var test TestGetAllConversationListCallBack
 //	open_im_sdk.GetAllConversationList(test)

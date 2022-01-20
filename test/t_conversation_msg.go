@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"time"
@@ -202,3 +203,15 @@ func (testMarkC2CMessageAsRead) OnError(code int32, msg string) {
 //	jsonid, _ := json.Marshal(xlist)
 //	open_im_sdk.MarkC2CMessageAsRead(test, Friend_uid, string(jsonid))
 //}
+
+func DoTestSendMsg(sendId, recvID string) {
+	m := "test:Gordon->sk" + sendId + ":" + recvID + ":"
+	operationID := utils.OperationIDGenerator()
+	s := DoTestCreateTextMessage(m)
+	var testSendMsg TestSendMsgCallBack
+	o := server_api_params.OfflinePushInfo{}
+	o.Title = "121313"
+	o.Desc = "45464"
+	open_im_sdk.SendMessage(&testSendMsg, s, recvID, "", utils.StructToJsonString(o), operationID)
+
+}
