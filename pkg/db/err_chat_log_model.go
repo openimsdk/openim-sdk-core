@@ -10,6 +10,9 @@ func (d *DataBase) GetAbnormalMsgSeq() (uint32, error) {
 	return seq, utils.Wrap(err, "GetAbnormalMsgSeq")
 }
 func (d *DataBase) BatchInsertExceptionMsgToErrorChatLog(MessageList []*LocalErrChatLog) error {
+	if MessageList == nil {
+		return nil
+	}
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Create(MessageList).Error, "BatchInsertMessageList failed")
