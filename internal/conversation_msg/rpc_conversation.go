@@ -99,10 +99,10 @@ func (c *Conversation) deleteConversation(callback common.Base, conversationID, 
 		sourceID = lc.GroupID
 	}
 	//Mark messages related to this conversation for deletion
-	err = c.UpdateMessageStatusBySourceID(sourceID, constant.MsgStatusHasDeleted, lc.ConversationType)
+	err = c.db.UpdateMessageStatusBySourceID(sourceID, constant.MsgStatusHasDeleted, lc.ConversationType)
 	common.CheckDBErrCallback(callback, err, operationID)
 	//Reset the session information, empty session
-	err = c.ResetConversation(conversationID)
+	err = c.db.ResetConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
 }
 func (c *Conversation) setConversationDraft(callback common.Base, conversationID, draftText, operationID string) {
@@ -119,11 +119,11 @@ func (c *Conversation) pinConversation(callback common.Base, conversationID stri
 	lc := db.LocalConversation{ConversationID: conversationID}
 	if isPinned {
 		lc.IsPinned = constant.Pinned
-		err := c.UpdateConversation(&lc)
+		err := c.db.UpdateConversation(&lc)
 		common.CheckDBErrCallback(callback, err, operationID)
 	} else {
 		lc.IsPinned = constant.NotPinned
-		err := c.UnPinConversation(conversationID, constant.NotPinned)
+		err := c.db.UnPinConversation(conversationID, constant.NotPinned)
 		common.CheckDBErrCallback(callback, err, operationID)
 	}
 }

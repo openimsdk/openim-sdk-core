@@ -96,6 +96,7 @@ func (c *Conversation) GetCh() chan common.Cmd2Value {
 }
 
 func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
+	allMsg := c2v.Value.([]*server_api_params.MsgData)
 	operationID := utils.OperationIDGenerator()
 	if c.MsgListenerList == nil {
 		log.Error(operationID, "not set c MsgListenerList", len(c.MsgListenerList))
@@ -112,7 +113,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	//	MsgList.SingleData = append(MsgList.SingleData, v)
 	//}
 	log.Info(operationID, "do Msg come here")
-	for _, v := range c.SeqMsg() {
+	for _, v := range allMsg {
 		isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
 		isUnreadCount = utils.GetSwitchFromOptions(v.Options, constant.IsUnreadCount)
 		isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
@@ -135,16 +136,16 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				//c.friend.DoNotification(&v)
 				log.Info("internal", "DoFriendMsg SingleChatType", v)
 			} else if v.ContentType > constant.UserNotificationBegin && v.ContentType < constant.UserNotificationEnd {
-				c.user.DoNotification(&v)
+				c.user.DoNotification(v)
 			}
 		case constant.GroupChatType:
 			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
-				c.group.DoNotification(&v)
+				c.group.DoNotification(v)
 				log.Info("internal", "DoGroupMsg SingleChatType", v)
 			}
 		}
 		if v.SendID == c.loginUserID { //seq  Messages sent by myself  //if  sent through  this terminal
-			m, err := c.GetMessage(msg.ClientMsgID)
+			m, err := c.db.GetMessage(msg.ClientMsgID)
 			if err == nil && m != nil {
 				log.Info("internal", "have message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
 				if m.Seq == 0 {
@@ -193,7 +194,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 
 			}
 		} else { //Sent by others
-			if b, _ := c.MessageIfExists(msg.ClientMsgID); !b { //Deduplication operation
+			if b, _ := c.db.MessageIfExists(msg.ClientMsgID); !b { //Deduplication operation
 				lc := db.LocalConversation{
 					ConversationType:  v.SessionType,
 					LatestMsg:         utils.StructToJsonString(msg),
@@ -240,7 +241,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		}
 	}
 	//Normal message storage
-	err1 := c.BatchInsertMessageList(insertMsg)
+	err1 := c.db.BatchInsertMessageList(insertMsg)
 	if err1 != nil {
 		log.Error("internal", "insert normal message err  :", err1.Error())
 	}
@@ -250,19 +251,16 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	//	utils.sdkLog("insert err message err  :", err2.Error(), emsg2)
 	//}
 	//Changed conversation storage
-	err3 := c.BatchUpdateConversationList(mapConversationToList(conversationChangedSet))
+	err3 := c.db.BatchUpdateConversationList(mapConversationToList(conversationChangedSet))
 	if err3 != nil {
 		log.Error("internal", "insert changed conversation err :", err3.Error())
 	}
 	//New conversation storage
-	err4 := c.BatchInsertConversationList(mapConversationToList(newConversationSet))
+	err4 := c.db.BatchInsertConversationList(mapConversationToList(newConversationSet))
 	if err4 != nil {
 		log.Error("internal", "insert new conversation err:", err4.Error())
 
 	}
-	//clear cache
-	seqMap := make(map[int32]server_api_params.MsgData)
-	c.SetSeqMsg(seqMap)
 	if isCallbackUI {
 		c.doMsgReadState(msgReadList)
 		c.revokeMessage(msgRevokeList)
@@ -291,7 +289,7 @@ func (c *Conversation) revokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 				t := new(db.LocalChatLog)
 				t.ClientMsgID = w.Content
 				t.Status = constant.MsgStatusRevoked
-				err := c.UpdateMessage(t)
+				err := c.db.UpdateMessage(t)
 				if err != nil {
 					log.Error("internal", "setLocalMessageStatus revokeMessage err:", err.Error(), "msg", w)
 				} else {
@@ -324,13 +322,13 @@ func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
 	}
 	node := c2v.Value.(common.DeleteConNode)
 	//Mark messages related to this conversation for deletion
-	err := c.UpdateMessageStatusBySourceID(node.SourceID, constant.MsgStatusHasDeleted, int32(node.SessionType))
+	err := c.db.UpdateMessageStatusBySourceID(node.SourceID, constant.MsgStatusHasDeleted, int32(node.SessionType))
 	if err != nil {
 		log.Error("internal", "setMessageStatusBySourceID err:", err.Error())
 		return
 	}
 	//Reset the session information, empty session
-	err = c.ResetConversation(node.ConversationID)
+	err = c.db.ResetConversation(node.ConversationID)
 	if err != nil {
 		log.Error("internal", "ResetConversation err:", err.Error())
 	}
