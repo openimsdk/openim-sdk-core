@@ -88,7 +88,7 @@ func (u *LoginMgr) SetUserListener(userListener user.OnUserListener) {
 }
 
 func (u *LoginMgr) login(userID, token string, cb common.Base, operationID string) {
-	log.Info(operationID, "login start ", userID, token)
+	log.Info(operationID, "login start... ", userID, token)
 	if u.justOnceFlag {
 		cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
 		return
@@ -142,11 +142,10 @@ func (u *LoginMgr) login(userID, token string, cb common.Base, operationID strin
 	u.conversation.SetConversationListener(u.conversationListener)
 	u.conversation.SetMsgListener(u.advancedMsgListener)
 
-	log.Info(operationID, "forcedSynchronization run ...")
 	u.forcedSynchronization()
 	//	u.forycedSyncReceiveMessageOpt()
 	cb.OnSuccess("")
-
+	log.Info(operationID, "login ok callback success...")
 }
 
 func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener ws.ConnListener, operationID string) bool {
@@ -160,16 +159,19 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener ws.ConnListener,
 }
 
 func (u *LoginMgr) logout(callback common.Base, operationID string) {
+	log.Info(operationID, "TriggerCmdLogout ws...")
 	err := common.TriggerCmdLogout(u.cmdWsCh)
 	if err != nil {
 		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
 	}
+	log.Info(operationID, "TriggerCmdLogout heartbeat...")
 	err = common.TriggerCmdLogout(u.heartbeatCmdCh)
 	if err != nil {
 		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
 	}
 	timeout := 5
 	retryTimes := 0
+	log.Info(operationID, "send to svr logout ...", u.loginUserID)
 	resp, err := u.ws.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID, operationID)
 	if err != nil {
 		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)

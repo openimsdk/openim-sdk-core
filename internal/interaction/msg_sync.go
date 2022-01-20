@@ -8,6 +8,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 )
 
 type MsgSync struct {
@@ -38,6 +39,7 @@ func (m *MsgSync) compareSeq() {
 		m.seqMaxSynchronized = a
 	}
 	m.seqMaxNeedSync = m.seqMaxSynchronized
+	log.Info("", "load seq, normal, abnormal, ", n, a, m.seqMaxNeedSync, m.seqMaxSynchronized)
 }
 
 func (m *MsgSync) doMaxSeq(cmd common.Cmd2Value) {
@@ -58,14 +60,14 @@ func (m *MsgSync) doPushMsg(cmd common.Cmd2Value) {
 		return
 	}
 
-	if uint32(msg.Seq)+1 == m.seqMaxNeedSync && m.seqMaxNeedSync == m.seqMaxSynchronized {
+	if msg.Seq+1 == m.seqMaxNeedSync && m.seqMaxNeedSync == m.seqMaxSynchronized {
 		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg})
-		m.seqMaxNeedSync = uint32(msg.Seq) + 1
-		m.seqMaxSynchronized = uint32(msg.Seq) + 1
+		m.seqMaxNeedSync = msg.Seq + 1
+		m.seqMaxSynchronized = msg.Seq + 1
 		return
 	}
-	if uint32(msg.Seq) > m.seqMaxNeedSync {
-		m.seqMaxNeedSync = uint32(msg.Seq)
+	if msg.Seq > m.seqMaxNeedSync {
+		m.seqMaxNeedSync = msg.Seq
 		m.syncMsgFromServer(m.seqMaxSynchronized+1, m.seqMaxNeedSync)
 		m.seqMaxSynchronized = m.seqMaxNeedSync
 		return
@@ -73,7 +75,6 @@ func (m *MsgSync) doPushMsg(cmd common.Cmd2Value) {
 }
 
 func (m *MsgSync) Work(cmd common.Cmd2Value) {
-
 	switch cmd.Cmd {
 	case constant.CmdPushMsg:
 		m.doPushMsg(cmd)
@@ -129,14 +130,14 @@ func (m *MsgSync) syncMsgFromServerSplit(needSyncSeqList []uint32) {
 			log.Error(operationID, "Unmarshal failed ", err.Error())
 			return
 		}
-		m.TriggerCmdNewMsgCome(pullMsgResp.List)
+		m.TriggerCmdNewMsgCome(pullMsgResp.List, operationID)
 		return
 	}
 }
 
-func (m *MsgSync) TriggerCmdNewMsgCome(msgList []*server_api_params.MsgData) {
+func (m *MsgSync) TriggerCmdNewMsgCome(msgList []*server_api_params.MsgData, operationID string) {
 	for {
-		err := common.TriggerCmdNewMsgCome(msgList, m.conversationCh)
+		err := common.TriggerCmdNewMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: msgList, OperationID: operationID}, m.conversationCh)
 		if err != nil {
 			continue
 		}

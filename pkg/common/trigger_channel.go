@@ -4,20 +4,20 @@ import (
 	"errors"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 	"time"
 )
 
-func TriggerCmdNewMsgCome(msgList []*server_api_params.MsgData, conversationCh chan Cmd2Value) error {
+func TriggerCmdNewMsgCome(msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
 	if conversationCh == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
-	if len(msgList) == 0 {
+	if len(msg.MsgList) == 0 {
 		return nil
 	}
 
-	c2v := Cmd2Value{Cmd: constant.CmdNewMsgCome, Value: msgList}
+	c2v := Cmd2Value{Cmd: constant.CmdNewMsgCome, Value: msg}
 	return sendCmd(conversationCh, c2v, 1)
 }
 
@@ -49,15 +49,18 @@ func TriggerCmdUpdateConversation(node UpdateConNode, conversationCh chan Cmd2Va
 	return sendCmd(conversationCh, c2v, 1)
 }
 
-func TriggerCmdPushMsg(msg *server_api_params.MsgData, ch chan Cmd2Value) error {
+func TriggerCmdPushMsg(msg sdk_struct.CmdPushMsgToMsgSync, ch chan Cmd2Value) error {
 	if ch == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
+	}
+	if len(msg.MsgList) == 0 {
+		return nil
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdPushMsg, Value: msg}
 	return sendCmd(ch, c2v, 1)
 }
 
-func TriggerCmdMaxSeq(seq uint32, ch chan Cmd2Value) error {
+func TriggerCmdMaxSeq(seq sdk_struct.CmdMaxSeqToMsgSync, ch chan Cmd2Value) error {
 	if ch == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
@@ -99,10 +102,10 @@ func DoListener(Li goroutine) {
 		select {
 		case cmd := <-Li.GetCh():
 			if cmd.Cmd == constant.CmdUnInit {
-				log.Info("doListener goroutine.")
+				log.Info("doListener goroutine return")
 				return
 			}
-			log.Info("doListener work.")
+			//	log.Info("doListener work.")
 			Li.Work(cmd)
 		}
 	}

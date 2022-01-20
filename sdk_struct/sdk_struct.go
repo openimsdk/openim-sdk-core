@@ -929,3 +929,18 @@ type IMConfig struct {
 //}
 
 var SvrConf IMConfig
+
+type CmdNewMsgComeToConversation struct {
+	MsgList     []*server_api_params.MsgData
+	OperationID string
+}
+
+type CmdPushMsgToMsgSync struct {
+	Msg         *server_api_params.MsgData
+	OperationID string
+}
+
+type CmdMaxSeqToMsgSync struct {
+	MaxSeqOnSvr uint32
+	OperationID string
+}

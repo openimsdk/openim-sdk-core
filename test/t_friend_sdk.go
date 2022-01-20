@@ -45,7 +45,7 @@ func TestLog(v ...interface{}) {
 	X.Println(a, b, c, d)
 }
 
-var Friend_uid = "openIM100"
+var Friend_uid = "openIM101"
 
 ///////////////////////////////////////////////////////////
 

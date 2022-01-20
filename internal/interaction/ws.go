@@ -9,6 +9,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 	"runtime"
 
 	"time"
@@ -220,7 +221,7 @@ func (w *Ws) doWSPushMsg(wsResp GeneralWsResp) error {
 	if err != nil {
 		return utils.Wrap(err, "Unmarshal failed")
 	}
-	return utils.Wrap(common.TriggerCmdPushMsg(&msg, w.pushMsgAndMaxSeqCh), "")
+	return utils.Wrap(common.TriggerCmdPushMsg(sdk_struct.CmdPushMsgToMsgSync{Msg: &msg, OperationID: wsResp.OperationID}, w.pushMsgAndMaxSeqCh), "")
 }
 
 func (w *Ws) kickOnline(msg GeneralWsResp) {

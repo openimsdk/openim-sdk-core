@@ -8,6 +8,8 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
+	"runtime"
 	"time"
 )
 
@@ -34,17 +36,20 @@ func (u *Heartbeat) Run() {
 		select {
 		case r := <-u.cmdCh:
 			if r.Cmd == constant.CmdLogout {
-				return
+				log.Warn("", "recv logout cmd, Goexit...")
+				runtime.Goexit()
 			}
-			log.Warn(operationID, "other cmd ...", r.Cmd)
+			log.Warn(operationID, "other cmd...", r.Cmd)
 		case <-time.After(time.Millisecond * time.Duration(heartbeatInterval*1000)):
 			log.Debug(operationID, "heartbeat waiting(ms)... ", heartbeatInterval*1000)
 		}
 
+		log.Debug(operationID, "send heartbeat req")
 		resp, err := u.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.loginUserID, operationID)
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.loginUserID)
 			if !errors.Is(err, constant.WsRecvConnSame) && !errors.Is(err, constant.WsRecvConnDiff) {
+				log.Error(operationID, "other err,  close conn", err.Error())
 				u.CloseConn()
 			}
 			continue
@@ -53,12 +58,14 @@ func (u *Heartbeat) Run() {
 		var wsSeqResp server_api_params.GetMaxAndMinSeqResp
 		err = proto.Unmarshal(resp.Data, &wsSeqResp)
 		if err != nil {
-			log.Error(operationID, "Unmarshal failed ", err.Error())
+			log.Error(operationID, "Unmarshal failed, close conn", err.Error())
 			u.CloseConn()
 			continue
 		}
 
-		err = common.TriggerCmdMaxSeq(uint32(wsSeqResp.MaxSeq), u.PushMsgAndMaxSeqCh)
+		log.Debug(operationID, "recv heartbeat resp, max seq on svr: ", wsSeqResp.MaxSeq)
+
+		err = common.TriggerCmdMaxSeq(sdk_struct.CmdMaxSeqToMsgSync{OperationID: operationID, MaxSeqOnSvr: wsSeqResp.MaxSeq}, u.PushMsgAndMaxSeqCh)
 		if err != nil {
 			log.Error(operationID, "TriggerMaxSeq failed ", err.Error())
 		}
