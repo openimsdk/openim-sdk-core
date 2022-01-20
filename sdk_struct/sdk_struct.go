@@ -826,7 +826,7 @@ type MsgStruct struct {
 	SenderFaceURL    string                            `json:"senderFaceUrl"`
 	GroupID          string                            `json:"groupID"`
 	Content          string                            `json:"content"`
-	Seq              int64                             `json:"seq"`
+	Seq              uint32                            `json:"seq"`
 	IsRead           bool                              `json:"isRead"`
 	Status           int32                             `json:"status"`
 	OfflinePush      server_api_params.OfflinePushInfo `json:"offlinePush"`

@@ -105,19 +105,13 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	var insertMsg []*db.LocalChatLog
 	var errMsg, newMessages, msgReadList, msgRevokeList []*sdk_struct.MsgStruct
 	var isUnreadCount, isConversationUpdate, isHistory bool
-	var isCallbackUI bool
 	conversationChangedSet := make(map[string]db.LocalConversation)
 	newConversationSet := make(map[string]db.LocalConversation)
-	//MsgList := c2v.Value.(ArrMsg)c
-	//for _, v := range MsgList.GroupData {
-	//	MsgList.SingleData = append(MsgList.SingleData, v)
-	//}
 	log.Info(operationID, "do Msg come here")
 	for _, v := range allMsg {
 		isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
 		isUnreadCount = utils.GetSwitchFromOptions(v.Options, constant.IsUnreadCount)
 		isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
-		isCallbackUI = true
 		msg := new(sdk_struct.MsgStruct)
 		copier.Copy(msg, v)
 		msg.Content = string(v.Content)
@@ -261,18 +255,17 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		log.Error("internal", "insert new conversation err:", err4.Error())
 
 	}
-	if isCallbackUI {
-		c.doMsgReadState(msgReadList)
-		c.revokeMessage(msgRevokeList)
-		c.newMessage(newMessages)
-		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, ""}})
-		log.Info("internal", "trigger map is :", newConversationSet, conversationChangedSet)
-		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewCon, mapKeyToStringList(newConversationSet)}})
-		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, mapKeyToStringList(conversationChangSet)}})
-		c.ConversationListener.OnConversationChanged(utils.StructToJsonString(mapConversationToList(conversationChangedSet)))
-		c.ConversationListener.OnNewConversation(utils.StructToJsonString(mapConversationToList(newConversationSet)))
-		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
-	}
+
+	c.doMsgReadState(msgReadList)
+	c.revokeMessage(msgRevokeList)
+	c.newMessage(newMessages)
+	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, ""}})
+	log.Info("internal", "trigger map is :", newConversationSet, conversationChangedSet)
+	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewCon, mapKeyToStringList(newConversationSet)}})
+	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, mapKeyToStringList(conversationChangSet)}})
+	c.ConversationListener.OnConversationChanged(utils.StructToJsonString(mapConversationToList(conversationChangedSet)))
+	c.ConversationListener.OnNewConversation(utils.StructToJsonString(mapConversationToList(newConversationSet)))
+	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 	//sdkLog("length msgListenerList", u.MsgListenerList, "length message", len(newMessages), "msgListenerLen", len(u.MsgListenerList))
 
 }
