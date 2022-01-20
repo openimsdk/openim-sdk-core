@@ -1,53 +1,55 @@
 package ws_local_server
 
+import (
+	"encoding/json"
+	"open_im_sdk/open_im_sdk"
+)
+
 //
 //import (
 //	"encoding/json"
 //	"open_im_sdk/open_im_sdk"
 //)
 //
-//func (wsRouter *WsFuncRouter) CreateTextMessage(input string, operationID string) {
-//	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-//	msg := userWorker.CreateTextMessage(input)
-//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
-//}
-//
-//type SendCallback struct {
-//	BaseSuccFailed
-//	clientMsgID string
-//	//uid         string
-//}
-//
-//func (s *SendCallback) OnProgress(progress int) {
-//	mReply := make(map[string]interface{})
-//	mReply["progress"] = progress
-//	mReply["clientMsgID"] = s.clientMsgID
-//	jsonStr, _ := json.Marshal(mReply)
-//
-//	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(jsonStr), "0"}, s.uid)
-//}
-//
-////func SendMessage(callback SendMsgCallBack, message, receiver, groupID string, onlineUserOnly bool) string {
-//func (wsRouter *WsFuncRouter) SendMessage(input string, operationID string) {
-//
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		wrapSdkLog("unmarshal failed")
-//		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-//		return
-//	}
-//	var sc SendCallback
-//	sc.uid = wsRouter.uId
-//	sc.funcName = runFuncName()
-//	sc.operationID = operationID
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "message", "recvID", "groupID", "onlineUserOnly", "offlinePushInfo") {
-//		return
-//	}
-//	clientMsgID := userWorker.SendMessage(&sc, m["message"].(string), m["recvID"].(string), m["groupID"].(string), m["onlineUserOnly"].(bool), m["offlinePushInfo"].(string))
-//	sc.clientMsgID = clientMsgID
-//
-//}
+func (wsRouter *WsFuncRouter) CreateTextMessage(input string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	msg := userWorker.Conversation().CreateTextMessage(input)
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+}
+
+type SendCallback struct {
+	BaseSuccFailed
+	clientMsgID string
+	//uid         string
+}
+
+func (s *SendCallback) OnProgress(progress int) {
+	mReply := make(map[string]interface{})
+	mReply["progress"] = progress
+	jsonStr, _ := json.Marshal(mReply)
+
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(jsonStr), "0"}, s.uid)
+}
+
+func (wsRouter *WsFuncRouter) SendMessage(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	var sc SendCallback
+	sc.uid = wsRouter.uId
+	sc.funcName = runFuncName()
+	sc.operationID = operationID
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "message", "recvID", "groupID", "onlineUserOnly", "offlinePushInfo") {
+		return
+	}
+	userWorker.Conversation().SendMessage(&sc, m["message"].(string), m["recvID"].(string), m["groupID"].(string), m["offlinePushInfo"].(string), operationID)
+
+}
+
 //
 //type AddAdvancedMsgListenerCallback struct {
 //	uid string
