@@ -3,6 +3,8 @@ package test
 import (
 	"encoding/json"
 	"fmt"
+	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"time"
 )
@@ -101,15 +103,16 @@ func (t TestGetOneConversationCallBack) OnSuccess(data string) {
 //	open_im_sdk.GetOneConversation(sourceID, sessionType, test)
 //
 //}
-//func DoTestCreateImageMessage(path string) string {
-//	return open_im_sdk.CreateImageMessage(path)
-//}
+func DoTestCreateTextMessage(text string) string {
+	operationID := utils.OperationIDGenerator()
+	return open_im_sdk.CreateTextMessage(operationID, text)
+}
+
 //func DoTestSetConversationDraft() {
 //	var test TestSetConversationDraft
 //	open_im_sdk.SetConversationDraft("single_c93bc8b171cce7b9d1befb389abfe52f", "hah", test)
 //
 //}
-
 type TestSetConversationDraft struct {
 }
 

@@ -131,6 +131,6 @@ func (d *DataBase) GetNormalMsgSeq() (uint32, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var seq uint32
-	err := d.conn.Model(LocalChatLog{}).Select("max(seq)").Find(&seq).Error
+	err := d.conn.Model(LocalChatLog{}).Select("IFNULL(max(seq),0)").Find(&seq).Error
 	return seq, utils.Wrap(err, "GetNormalMsgSeq")
 }

@@ -3,6 +3,8 @@ package test
 import (
 	"encoding/json"
 	"fmt"
+	"open_im_sdk/pkg/server_api_params"
+
 	//"gorm.io/gorm/callbacks"
 	X "log"
 	"open_im_sdk/open_im_sdk"
@@ -43,7 +45,7 @@ func TestLog(v ...interface{}) {
 	X.Println(a, b, c, d)
 }
 
-var Friend_uid = "openIM101"
+var Friend_uid = "openIM100"
 
 ///////////////////////////////////////////////////////////
 
@@ -60,47 +62,33 @@ func DoTestGetFriendApplicationList() {
 }
 
 //////////////////////////////////////////////////////////
-//type testSetSelfInfo struct {
-//	open_im_sdk.ui2UpdateUserInfo
-//}
-//
-//func (testSetSelfInfo) OnSuccess(string) {
-//	fmt.Println("testSetSelfInfo, OnSuccess")
-//}
-//
-//func (testSetSelfInfo) OnError(code int32, msg string) {
-//	fmt.Println("testSetSelfInfo, OnError, ", code, msg)
-//}
-//
-//func DoTestSetSelfInfo() {
-//	var test testSetSelfInfo
-//	test.Name = "skkkkkkkk"
-//	test.Email = "3333333@qq.com"
-//	jsontest, _ := json.Marshal(test)
-//	fmt.Println("SetSelfInfo, input: ", string(jsontest))
-//	open_im_sdk.SetSelfInfo(string(jsontest), test)
-//}
+type testSetSelfInfo struct {
+	baseCallback
+}
+
+func DoTestSetSelfInfo() {
+	var test testSetSelfInfo
+	test.OperationID = utils.OperationIDGenerator()
+	userInfo := server_api_params.UserInfo{}
+	userInfo.Nickname = "Gordon001"
+	jsonString := utils.StructToJsonStringDefault(userInfo)
+	fmt.Println("SetSelfInfo, input: ")
+	open_im_sdk.SetSelfInfo(test, test.OperationID, jsonString)
+}
 
 /////////////////////////////////////////////////////////
-//type testGetUsersInfo struct {
-//	open_im_sdk.ui2ClientCommonReq
-//}
-//
-//func (testGetUsersInfo) OnSuccess(data string) {
-//	fmt.Println("testGetUsersInfo, OnSuccess, output: ", data)
-//}
-//
-//func (testGetUsersInfo) OnError(code int32, msg string) {
-//	fmt.Println("testGetUsersInfo, OnError, ", code, msg)
-//}
-//
-//func DoTestGetUsersInfo() {
-//	var test testGetUsersInfo
-//	test.UidList = append(test.UidList, Friend_uid)
-//	jsontest, _ := json.Marshal(test.UidList)
-//	fmt.Println("testGetUsersInfo, input: ", string(jsontest))
-//	open_im_sdk.GetUsersInfo(string(jsontest), test)
-//}
+type testGetUsersInfo struct {
+	baseCallback
+}
+
+func DoTestGetUsersInfo() {
+	var test testGetUsersInfo
+	test.OperationID = utils.OperationIDGenerator()
+	userIDList := []string{"openIM100"}
+	list := utils.StructToJsonStringDefault(userIDList)
+	fmt.Println("testGetUsersInfo, input: ", list)
+	open_im_sdk.GetUsersInfo(test, test.OperationID, list)
+}
 
 /////////////////////////////////////////////////////////
 type testGetFriendsInfo struct {
@@ -147,23 +135,14 @@ func DoTestAddToBlackList() {
 
 ///////////////////////////////////////////////////////
 type testDeleteFromBlackList struct {
-	delUid string
-}
-
-func (testDeleteFromBlackList) OnSuccess(string) {
-	fmt.Println("testDeleteFromBlackList, OnSuccess")
-}
-
-func (testDeleteFromBlackList) OnError(code int32, msg string) {
-	fmt.Println("testDeleteFromBlackList, OnError, ", code, msg)
+	baseCallback
 }
 
 func DoTestDeleteFromBlackList() {
 	var test testDeleteFromBlackList
-	test.delUid = Friend_uid
-	jsontest, _ := json.Marshal(test.delUid)
-	fmt.Println("DeleteFromBlackList, input: ", string(jsontest))
-	open_im_sdk.RemoveBlack(test, string(jsontest), "11111111111111asdf11112134dfsa")
+	test.OperationID = utils.OperationIDGenerator()
+	fmt.Println("DeleteFromBlackList, input: ")
+	open_im_sdk.RemoveBlack(test, test.OperationID, Friend_uid)
 }
 
 //////////////////////////////////////////////////////
@@ -495,15 +474,16 @@ func DoTest(uid, tk, ws, api string) {
 
 ////////////////////////////////////////////////////////////////////
 type TestSendMsgCallBack struct {
-	msg string
+	msg         string
+	OperationID string
 }
 
 func (t *TestSendMsgCallBack) OnError(errCode int32, errMsg string) {
-	fmt.Println("test_openim: send msg failed: ", errCode, errMsg, "|", t.msg, "|")
+	log.Info(t.OperationID, "test_openim: send msg failed: ", errCode, errMsg, "|", t.msg, "|")
 }
 
 func (t *TestSendMsgCallBack) OnSuccess(data string) {
-	fmt.Println("test_openim: send msg success: |", t.msg, "|")
+	log.Info(t.OperationID, "test_openim: send msg success: |", t.msg, "|")
 }
 
 func (t *TestSendMsgCallBack) OnProgress(progress int) {
@@ -538,13 +518,16 @@ func InOutDoTestSendMsg(sendId, receiverID string) {
 	fmt.Println("test to recv : ", receiverID)
 }
 
-func DoTestSendMsg(sendId, receiverID string, idx string) {
-	m := "test:" + sendId + ":" + receiverID + ":" + idx
-	//s := CreateTextMessage(m)
+func DoTestSendMsg(sendId, recvID string) {
+	m := "test:Gordon->sk" + sendId + ":" + recvID + ":"
+	operationID := utils.OperationIDGenerator()
+	s := DoTestCreateTextMessage(m)
 	var testSendMsg TestSendMsgCallBack
-	//	testSendMsg.msg = SendMessage(&testSendMsg, s, receiverID, "", false)
-	fmt.Println("func send ", m, testSendMsg.msg)
-	fmt.Println("test to recv : ", receiverID)
+	o := server_api_params.OfflinePushInfo{}
+	o.Title = "121313"
+	o.Desc = "45464"
+	open_im_sdk.SendMessage(&testSendMsg, s, recvID, "", utils.StructToJsonString(o), operationID)
+
 }
 
 //func DoTestGetAllConversationList() {
