@@ -245,3 +245,9 @@ func printCallerNameAndLine() string {
 	pc, _, line, _ := runtime.Caller(2)
 	return runtime.FuncForPC(pc).Name() + "()@" + strconv.Itoa(line) + ": "
 }
+func StructToMap(user interface{}) map[string]interface{} {
+	data, _ := json.Marshal(user)
+	m := make(map[string]interface{})
+	json.Unmarshal(data, &m)
+	return m
+}
