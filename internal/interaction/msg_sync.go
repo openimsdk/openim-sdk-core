@@ -62,11 +62,11 @@ func (m *MsgSync) doPushMsg(cmd common.Cmd2Value) {
 		return
 	}
 
-	if msg.Seq+1 == m.seqMaxNeedSync && m.seqMaxNeedSync == m.seqMaxSynchronized {
+	if msg.Seq == m.seqMaxNeedSync+1 && m.seqMaxNeedSync == m.seqMaxSynchronized {
 		log.Debug(operationID, "TriggerCmdNewMsgCome ", msg.ServerMsgID, msg.ClientMsgID, msg.Seq)
 		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg}, operationID)
-		m.seqMaxNeedSync = msg.Seq + 1
-		m.seqMaxSynchronized = msg.Seq + 1
+		m.seqMaxNeedSync = msg.Seq
+		m.seqMaxSynchronized = msg.Seq
 		return
 	}
 	if msg.Seq > m.seqMaxNeedSync {
@@ -102,6 +102,11 @@ func NewMsgSync(dataBase *db.DataBase, ws *Ws, loginUserID string, ch chan commo
 }
 
 func (m *MsgSync) syncMsgFromServer(beginSeq, endSeq uint32) {
+	if beginSeq > endSeq {
+		log.Error("", "beginSeq > endSeq", beginSeq, endSeq)
+		return
+	}
+
 	var needSyncSeqList []uint32
 	for i := beginSeq; i <= endSeq; i++ {
 		needSyncSeqList = append(needSyncSeqList, i)
