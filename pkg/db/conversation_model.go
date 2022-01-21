@@ -2,7 +2,6 @@ package db
 
 import (
 	"errors"
-	"fmt"
 	"gorm.io/gorm"
 	"open_im_sdk/pkg/utils"
 	"time"
@@ -65,13 +64,14 @@ func (d *DataBase) UpdateConversation(c *LocalConversation) error {
 	return utils.Wrap(t.Error, "UpdateConversation failed")
 }
 func (d *DataBase) BatchUpdateConversationList(conversationList []*LocalConversation) error {
-	if conversationList == nil {
-		return nil
+	for _, v := range conversationList {
+		err := d.UpdateConversation(v)
+		if err != nil {
+			return utils.Wrap(err, "BatchUpdateConversationList failed")
+		}
+
 	}
-	fmt.Println("this is a test ", conversationList)
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.Model(&LocalConversation{}).Updates(conversationList).Error, "BatchUpdateConversationList failed")
+	return nil
 }
 func (d *DataBase) ConversationIfExists(conversationID string) (bool, error) {
 	d.mRWMutex.Lock()
