@@ -427,8 +427,8 @@ func main() {
 	//DoTestGetDesignatedFriendsInfo()
 	//test.DoTestSendMsg(strMyUidx, test.Friend_uid)
 	for true {
-		time.Sleep(time.Duration(1) * time.Second)
-		test.DoTestSendMsg(strMyUidx, test.Friend_uid)
+		time.Sleep(time.Duration(5) * time.Second)
+		//	test.DoTestSendMsg(strMyUidx, test.Friend_uid)
 		fmt.Println("waiting")
 	}
 	//

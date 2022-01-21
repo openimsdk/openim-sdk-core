@@ -364,7 +364,7 @@ func InOutlllogin(uid, tk string) {
 	var callback BaseSuccFailed
 	callback.funcName = utils.GetSelfFuncName()
 	operationID := utils.OperationIDGenerator()
-	open_im_sdk.Login(&callback, uid, operationID, tk)
+	open_im_sdk.Login(&callback, operationID, uid, tk)
 }
 
 func InOutLogou() {
