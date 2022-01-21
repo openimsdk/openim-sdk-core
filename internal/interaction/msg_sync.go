@@ -98,6 +98,7 @@ func NewMsgSync(dataBase *db.DataBase, ws *Ws, loginUserID string, ch chan commo
 
 func (m *MsgSync) syncMsg() {
 	if m.seqMaxNeedSync > m.seqMaxSynchronized {
+		log.Info("", "do syncMsg ", m.seqMaxSynchronized+1, m.seqMaxNeedSync)
 		m.syncMsgFromServer(m.seqMaxSynchronized+1, m.seqMaxNeedSync)
 		m.seqMaxSynchronized = m.seqMaxNeedSync
 	}
