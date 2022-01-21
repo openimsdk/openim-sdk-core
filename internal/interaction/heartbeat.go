@@ -26,7 +26,7 @@ func NewHeartbeat(msgSync *MsgSync, cmcCh chan common.Cmd2Value) *Heartbeat {
 }
 
 func (u *Heartbeat) Run() {
-	heartbeatInterval := 5
+	heartbeatInterval := 30
 	reqTimeout := 30
 	retryTimes := 0
 

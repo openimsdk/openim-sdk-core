@@ -400,7 +400,7 @@ func main() {
 	strMyUidx := "openIM100"
 	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMDAiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTY0MzExMjYzNywibmJmIjoxNjQyNTA3ODM3LCJpYXQiOjE2NDI1MDc4Mzd9.BMOgVBhuWe6fcQxbGcX6w5swWpguA5L97KV3GTPaILE"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
-	test.DoTestSendMsg(strMyUidx, test.Friend_uid)
+
 	//	test.DoTestCreateGroup()
 	//	test.DoSetGroupInfo()
 	//	test.DotestGetGroupMemberList()
@@ -417,7 +417,7 @@ func main() {
 	//test.DotestSetFriendRemark()
 	//	test.DotestGetFriendList()
 
-	test.DotestDeleteFriend()
+	//	test.DotestDeleteFriend()
 
 	//	test.DoTestaddFriend()
 	//	open_im_sdk.DoTestGetFriendList()
@@ -426,7 +426,8 @@ func main() {
 	//	open_im_sdk.DoTestDeleteFromBlackList()
 	//DoTestGetDesignatedFriendsInfo()
 	for true {
-		time.Sleep(time.Duration(60) * time.Second)
+		test.DoTestSendMsg(strMyUidx, test.Friend_uid)
+		time.Sleep(time.Duration(5) * time.Second)
 		fmt.Println("waiting")
 	}
 	//

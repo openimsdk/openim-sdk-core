@@ -158,7 +158,7 @@ func (w *Ws) doWsMsg(message []byte) {
 		log.Error("decodeBinaryWs err", err.Error())
 		return
 	}
-	log.Debug(wsResp.OperationID, "ws recv msg: ", wsResp.ErrCode, wsResp.ErrMsg)
+	log.Debug(wsResp.OperationID, "ws recv msg, code: ", wsResp.ErrCode, wsResp.ReqIdentifier)
 	switch wsResp.ReqIdentifier {
 	case constant.WSGetNewestSeq:
 		if err = w.doWSGetNewestSeq(*wsResp); err != nil {
