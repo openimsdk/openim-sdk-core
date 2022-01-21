@@ -126,7 +126,7 @@ func (c *Conversation) DeleteConversation(callback common.Base, conversationID s
 		log.NewInfo(operationID, "DeleteConversation args: ", conversationID)
 		c.deleteConversation(callback, conversationID, operationID)
 		callback.OnSuccess(sdk_params_callback.DeleteConversationCallback)
-		//_ = u.triggerCmdUpdateConversation(common.updateConNode{ConId: conversationID, Action: constant.TotalUnreadMessageChanged})
+		//_ = u.triggerCmdUpdateConversation(common.updateConNode{ConID: conversationID, Action: constant.TotalUnreadMessageChanged})
 		log.NewInfo(operationID, "DeleteConversation callback: ", sdk_params_callback.DeleteConversationCallback)
 	}()
 }
@@ -461,6 +461,8 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(clientMsgID, server
 	lc.LatestMsg = utils.StructToJsonString(s)
 	lc.LatestMsgSendTime = sendTime
 	//会话数据库操作，触发UI会话回调
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.ch)
+
 }
 func (c *Conversation) getUserNameAndFaceUrlByUid(callback common.SendMsgCallBack, friendUserID, operationID string) (faceUrl, name string, err error) {
 	friendInfo, _ := c.db.GetFriendInfoByFriendUserID(friendUserID)
@@ -495,10 +497,8 @@ func (c *Conversation) SendMessage(callback common.SendMsgCallBack, message, rec
 		}
 		var localMessage db.LocalChatLog
 		var conversationID string
-		var options map[string]bool
-		lc := db.LocalConversation{
-			LatestMsgSendTime: s.CreateTime,
-		}
+		options := make(map[string]bool, 2)
+		lc := &db.LocalConversation{LatestMsgSendTime: s.CreateTime}
 		//根据单聊群聊类型组装消息和会话
 		if recvID == "" {
 			s.SessionType = constant.GroupChatType
@@ -531,12 +531,7 @@ func (c *Conversation) SendMessage(callback common.SendMsgCallBack, message, rec
 		msgStructToLocalChatLog(&localMessage, &s)
 		err := c.db.InsertMessage(&localMessage)
 		common.CheckAnyErrCallback(callback, 201, err, operationID)
-		//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.AddConOrUpLatMsg,
-		//c}})
-		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{conversationID}}})
-		//_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
-		options = make(map[string]bool, 2)
-
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.ch)
 		var delFile []string
 		//media file handle
 		switch s.ContentType {
@@ -551,7 +546,7 @@ func (c *Conversation) SendMessage(callback common.SendMsgCallBack, message, rec
 			}
 			log.Info(operationID, "file", sourcePath, delFile)
 			sourceUrl, uuid, err := c.UploadImage(sourcePath, callback.OnProgress)
-			c.checkErrAndUpdateMessage(callback, 301, err, &s, &lc, operationID)
+			c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
 			s.PictureElem.SourcePicture.Url = sourceUrl
 			s.PictureElem.SourcePicture.UUID = uuid
 			s.PictureElem.SnapshotPicture.Url = sourceUrl + "?imageView2/2/w/" + constant.ZoomScale + "/h/" + constant.ZoomScale
@@ -570,7 +565,7 @@ func (c *Conversation) SendMessage(callback common.SendMsgCallBack, message, rec
 			}
 			log.Info(operationID, "file", sourcePath, delFile)
 			soundURL, uuid, err := c.UploadSound(sourcePath, callback.OnProgress)
-			c.checkErrAndUpdateMessage(callback, 301, err, &s, &lc, operationID)
+			c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
 			s.SoundElem.SourceURL = soundURL
 			s.SoundElem.UUID = uuid
 			s.Content = utils.StructToJsonString(s.SoundElem)
@@ -591,7 +586,7 @@ func (c *Conversation) SendMessage(callback common.SendMsgCallBack, message, rec
 			}
 			log.Info(operationID, "file: ", videoPath, snapPath, delFile)
 			snapshotURL, snapshotUUID, videoURL, videoUUID, err := c.UploadVideo(videoPath, snapPath, callback.OnProgress)
-			c.checkErrAndUpdateMessage(callback, 301, err, &s, &lc, operationID)
+			c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
 			s.VideoElem.VideoURL = videoURL
 			s.VideoElem.SnapshotUUID = snapshotUUID
 			s.VideoElem.SnapshotURL = snapshotURL
@@ -599,7 +594,7 @@ func (c *Conversation) SendMessage(callback common.SendMsgCallBack, message, rec
 			s.Content = utils.StructToJsonString(s.VideoElem)
 		case constant.File:
 			fileURL, fileUUID, err := c.UploadFile(s.FileElem.FilePath, callback.OnProgress)
-			c.checkErrAndUpdateMessage(callback, 301, err, &s, &lc, operationID)
+			c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
 			s.FileElem.SourceURL = fileURL
 			s.FileElem.UUID = fileUUID
 			s.Content = utils.StructToJsonString(s.FileElem)
@@ -616,7 +611,7 @@ func (c *Conversation) SendMessage(callback common.SendMsgCallBack, message, rec
 		msgStructToLocalChatLog(&localMessage, &s)
 		err = c.db.UpdateMessage(&localMessage)
 		common.CheckAnyErrCallback(callback, 201, err, operationID)
-		c.sendMessageToServer(&s, &lc, callback, delFile, &p, options, operationID)
+		c.sendMessageToServer(&s, lc, callback, delFile, &p, options, operationID)
 	}()
 }
 func (c *Conversation) SendMessageNotOss(callback common.SendMsgCallBack, message, recvID, groupID string, offlinePushInfo string, operationID string) {
@@ -909,7 +904,7 @@ func (c *Conversation) MarkC2CMessageAsRead(callback common.Base, recvID string,
 	go func() {
 		log.NewInfo(operationID, "MarkC2CMessageAsRead args: ", recvID, msgIDList)
 		if len(msgIDList) == 0 {
-			//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConId: conversationID, Action: constant.UnreadCountSetZero}})
+			//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}})
 			//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 			callback.OnSuccess(sdk_params_callback.MarkC2CMessageAsReadCallback)
 			return
@@ -929,7 +924,7 @@ func (c *Conversation) MarkSingleMessageHasRead(callback common.Base, userID str
 		//	callback.OnError(201, err.Error())
 		//} else {
 		callback.OnSuccess("")
-		//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConId: conversationID, Action: constant.UnreadCountSetZero}})
+		//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}})
 		//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 		//}
 	}()
@@ -942,7 +937,7 @@ func (c *Conversation) MarkSingleMessageHasRead(callback common.Base, userID str
 //		//	callback.OnError(201, err.Error())
 //		//} else {
 //		callback.OnSuccess("")
-//		u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConId: conversationID, Action: constant.UnreadCountSetZero}})
+//		u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}})
 //		u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 //		//}
 //	}()
@@ -955,7 +950,7 @@ func (c *Conversation) MarkGroupMessageHasRead(callback common.Base, groupID str
 		//	callback.OnError(201, err.Error())
 		//} else {
 		callback.OnSuccess("")
-		//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConId: conversationID, Action: constant.UnreadCountSetZero}})
+		//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}})
 		//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 		//}
 	}()

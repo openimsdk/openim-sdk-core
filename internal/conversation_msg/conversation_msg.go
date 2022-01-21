@@ -14,6 +14,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"sort"
 )
 
 type Conversation struct {
@@ -73,7 +74,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	}
 	var insertMsg, updateMsg []*db.LocalChatLog
 	var exceptionMsg []*db.LocalErrChatLog
-	var newMessages, msgReadList, msgRevokeList []*sdk_struct.MsgStruct
+	var newMessages, msgReadList, msgRevokeList NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory bool
 	conversationChangedSet := make(map[string]db.LocalConversation)
 	newConversationSet := make(map[string]db.LocalConversation)
@@ -236,7 +237,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	err4 := c.db.BatchInsertConversationList(mapConversationToList(newConversationSet))
 	if err4 != nil {
 		log.Error(operationID, "insert new conversation err:", err4.Error())
-
 	}
 
 	c.doMsgReadState(msgReadList)
@@ -256,6 +256,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	//sdkLog("length msgListenerList", u.MsgListenerList, "length message", len(newMessages), "msgListenerLen", len(u.MsgListenerList))
 
 }
+
 func (c *Conversation) msgStructToLocalChatLog(m *sdk_struct.MsgStruct) *db.LocalChatLog {
 	var lc db.LocalChatLog
 	copier.Copy(&lc, m)
@@ -286,7 +287,8 @@ func (c *Conversation) revokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 	}
 
 }
-func (c *Conversation) newMessage(newMessagesList []*sdk_struct.MsgStruct) {
+func (c *Conversation) newMessage(newMessagesList NewMsgList) {
+	sort.Sort(newMessagesList)
 	for _, w := range newMessagesList {
 		log.Info("internal", "newMessage: ", w.ClientMsgID)
 		if c.msgListener != nil {
@@ -363,28 +365,33 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 	node := c2v.Value.(common.UpdateConNode)
 	switch node.Action {
 	case constant.AddConOrUpLatMsg:
-		lc := node.Args.(db.LocalConversation)
-		oc, err := c.db.GetConversation(node.ConId)
+		var list []*db.LocalConversation
+		lc := node.Args.(*db.LocalConversation)
+		oc, err := c.db.GetConversation(lc.ConversationID)
 		if err == nil && oc != nil {
 			if lc.LatestMsgSendTime > oc.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
-				err := c.db.UpdateColumnsConversation(node.ConId, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
+				err := c.db.UpdateColumnsConversation(node.ConID, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
 				if err != nil {
 					log.Error("internal", "updateConversationLatestMsgModel err: ", err)
+				} else {
+					oc.LatestMsgSendTime = lc.LatestMsgSendTime
+					oc.LatestMsg = lc.LatestMsg
+					list = append(list, oc)
+					c.ConversationListener.OnConversationChanged(utils.StructToJsonString(list))
 				}
 			}
 		} else {
-			err4 := c.db.InsertConversation(&lc)
+			err4 := c.db.InsertConversation(lc)
 			if err4 != nil {
 				log.Error("internal", "insert new conversation err:", err4.Error())
-
+			} else {
+				list = append(list, lc)
+				c.ConversationListener.OnNewConversation(utils.StructToJsonString(list))
 			}
-			var list []*db.LocalConversation
-			list = append(list, &lc)
-			c.ConversationListener.OnNewConversation(utils.StructToJsonString(list))
 		}
 
 	case constant.UnreadCountSetZero:
-		if err := c.db.UpdateColumnsConversation(node.ConId, map[string]interface{}{"unread_count": 0}); err != nil {
+		if err := c.db.UpdateColumnsConversation(node.ConID, map[string]interface{}{"unread_count": 0}); err != nil {
 		} else {
 			totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
 			if err == nil {
@@ -407,7 +414,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 	//		}
 	//	}
 	case constant.IncrUnread:
-		err := c.db.IncrConversationUnreadCount(node.ConId)
+		err := c.db.IncrConversationUnreadCount(node.ConID)
 		if err != nil {
 			log.Error("internal", "incrConversationUnreadCount database err:", err.Error())
 			return
@@ -431,7 +438,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 
 	case constant.UpdateLatestMessageChange:
-		conversationID := node.ConId
+		conversationID := node.ConID
 		var latestMsg sdk_struct.MsgStruct
 		l, err := c.db.GetConversation(conversationID)
 		if err != nil {
@@ -443,7 +450,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			} else {
 				latestMsg.IsRead = true
 				newLatestMessage := utils.StructToJsonString(latestMsg)
-				err = c.db.UpdateColumnsConversation(node.ConId, map[string]interface{}{"latest_msg_send_time": latestMsg.SendTime, "latest_msg": newLatestMessage})
+				err = c.db.UpdateColumnsConversation(node.ConID, map[string]interface{}{"latest_msg_send_time": latestMsg.SendTime, "latest_msg": newLatestMessage})
 				if err != nil {
 					log.Error("internal", "updateConversationLatestMsgModel err :", err.Error())
 				}
@@ -525,36 +532,44 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 	return err
 }
 func (c *Conversation) updateConversation(lc *db.LocalConversation, cc, nc map[string]db.LocalConversation) {
-	b, err := c.db.ConversationIfExists(lc.ConversationID)
-	if err != nil {
-		log.Error("internal", lc, cc, nc, err.Error())
-		return
-	}
-	if b {
-		if oldC, ok := cc[lc.ConversationID]; ok {
-			if lc.LatestMsgSendTime > oldC.LatestMsgSendTime {
-				lc.UnreadCount = lc.UnreadCount + oldC.UnreadCount
-				cc[lc.ConversationID] = *lc
+	if oldC, ok := cc[lc.ConversationID]; !ok {
+		oc, err := c.db.GetConversation(lc.ConversationID)
+		if err == nil && oc != nil {
+			if lc.LatestMsgSendTime > oc.LatestMsgSendTime {
+				oc.UnreadCount = oc.UnreadCount + lc.UnreadCount
+				oc.LatestMsg = lc.LatestMsg
+				oc.LatestMsgSendTime = lc.LatestMsgSendTime
+				cc[lc.ConversationID] = *oc
 			} else {
-				oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
-				cc[lc.ConversationID] = oldC
+				oc.UnreadCount = oc.UnreadCount + lc.UnreadCount
+				cc[lc.ConversationID] = *oc
 			}
 		} else {
-			cc[lc.ConversationID] = *lc
-		}
-
-	} else {
-		if oldC, ok := nc[lc.ConversationID]; ok {
-			if lc.LatestMsgSendTime > oldC.LatestMsgSendTime {
-				lc.UnreadCount = lc.UnreadCount + oldC.UnreadCount
+			if oldC, ok := nc[lc.ConversationID]; !ok {
 				nc[lc.ConversationID] = *lc
 			} else {
-				oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
-				cc[lc.ConversationID] = oldC
+				if lc.LatestMsgSendTime > oldC.LatestMsgSendTime {
+					oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
+					oldC.LatestMsg = lc.LatestMsg
+					oldC.LatestMsgSendTime = lc.LatestMsgSendTime
+					nc[lc.ConversationID] = oldC
+				} else {
+					oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
+					nc[lc.ConversationID] = oldC
+				}
 			}
-		} else {
-			nc[lc.ConversationID] = *lc
 		}
+	} else {
+		if lc.LatestMsgSendTime > oldC.LatestMsgSendTime {
+			oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
+			oldC.LatestMsg = lc.LatestMsg
+			oldC.LatestMsgSendTime = lc.LatestMsgSendTime
+			cc[lc.ConversationID] = oldC
+		} else {
+			oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
+			cc[lc.ConversationID] = oldC
+		}
+
 	}
 
 }
@@ -563,4 +578,21 @@ func mapConversationToList(m map[string]db.LocalConversation) (cs []*db.LocalCon
 		cs = append(cs, &v)
 	}
 	return cs
+}
+
+type NewMsgList []*sdk_struct.MsgStruct
+
+// Implement the sort.Interface interface to get the number of elements method
+func (n NewMsgList) Len() int {
+	return len(n)
+}
+
+//Implement the sort.Interface interface comparison element method
+func (n NewMsgList) Less(i, j int) bool {
+	return n[i].SendTime < n[j].SendTime
+}
+
+//Implement the sort.Interface interface exchange element method
+func (n NewMsgList) Swap(i, j int) {
+	n[i], n[j] = n[j], n[i]
 }

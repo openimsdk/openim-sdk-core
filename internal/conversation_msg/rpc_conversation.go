@@ -277,7 +277,7 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback common.Base, s *sd
 			conversation.LatestMsg = utils.StructToJsonString(list[0])
 			conversation.LatestMsgSendTime = list[0].SendTime
 		}
-		//		err = u.triggerCmdUpdateConversation(common.updateConNode{ConId: conversationID, Action: constant.AddConOrUpLatMsg, Args: conversation})
+		//		err = u.triggerCmdUpdateConversation(common.updateConNode{ConID: conversationID, Action: constant.AddConOrUpLatMsg, Args: conversation})
 
 		//	u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 	}
