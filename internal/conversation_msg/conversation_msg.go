@@ -535,7 +535,7 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 func (c *Conversation) updateConversation(lc *db.LocalConversation, cc, nc map[string]db.LocalConversation) {
 	if oldC, ok := cc[lc.ConversationID]; !ok {
 		oc, err := c.db.GetConversation(lc.ConversationID)
-		if err == nil && oc != nil {
+		if err == nil && oc.ConversationID != "" {
 			if lc.LatestMsgSendTime > oc.LatestMsgSendTime {
 				oc.UnreadCount = oc.UnreadCount + lc.UnreadCount
 				oc.LatestMsg = lc.LatestMsg
