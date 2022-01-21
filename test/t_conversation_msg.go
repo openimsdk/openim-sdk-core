@@ -214,6 +214,6 @@ func DoTestSendMsg(sendId, recvID string) {
 	o := server_api_params.OfflinePushInfo{}
 	o.Title = "121313"
 	o.Desc = "45464"
-	open_im_sdk.SendMessage(&testSendMsg, s, recvID, "", utils.StructToJsonString(o), operationID)
+	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
 
 }
