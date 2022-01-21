@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
@@ -143,9 +144,9 @@ func (m MsgListenerCallBak) OnRecvNewMessage(msg string) {
 	var mm sdk_struct.MsgStruct
 	err := json.Unmarshal([]byte(msg), &mm)
 	if err != nil {
-		fmt.Println("Unmarshal failed")
+		log.Error("", "Unmarshal failed", err.Error())
 	} else {
-		fmt.Println("test_openim: ", "recv time: ", time.Now().UnixNano(), "send time: ", mm.SendTime, " msgid: ", mm.ClientMsgID)
+		log.Info("", "recv time: ", time.Now().UnixNano(), "send_time: ", mm.SendTime, " client_msg_id: ", mm.ClientMsgID, "server_msg_id", mm.ServerMsgID)
 	}
 
 }
@@ -173,15 +174,15 @@ func (c conversationCallBack) OnSyncServerFailed() {
 }
 
 func (c conversationCallBack) OnNewConversation(conversationList string) {
-	fmt.Printf("OnNewConversation returnList is %s\n", conversationList)
+	log.Info("", "OnNewConversation returnList is ", conversationList)
 }
 
 func (c conversationCallBack) OnConversationChanged(conversationList string) {
-	fmt.Printf("OnConversationChanged returnList is %s\n", conversationList)
+	log.Info("", "OnConversationChanged returnList is", conversationList)
 }
 
 func (c conversationCallBack) OnTotalUnreadMessageCountChanged(totalUnreadCount int64) {
-	fmt.Printf("OnTotalUnreadMessageCountChanged returnTotalUnreadCount is %d\n", totalUnreadCount)
+	log.Info("", "OnTotalUnreadMessageCountChanged returnTotalUnreadCount is ", totalUnreadCount)
 }
 
 type testMarkC2CMessageAsRead struct {
@@ -209,6 +210,7 @@ func DoTestSendMsg(sendId, recvID string) {
 	operationID := utils.OperationIDGenerator()
 	s := DoTestCreateTextMessage(m)
 	var testSendMsg TestSendMsgCallBack
+	testSendMsg.OperationID = operationID
 	o := server_api_params.OfflinePushInfo{}
 	o.Title = "121313"
 	o.Desc = "45464"
