@@ -62,7 +62,7 @@ func checkListDiff(a []diff, b []diff) (aInBNot, bInANot, sameA, sameB []int) {
 			//in a, but not in b
 			aInBNot = append(aInBNot, i)
 		} else {
-			if v != ia {
+			if !cmp.Equal(v, ia) {
 				sameA = append(sameA, i)
 			}
 		}
@@ -219,7 +219,7 @@ func CheckFriendListDiff(a []*db.LocalFriend, b []*db.LocalFriend) (aInBNot, bIn
 			//in a, but not in b
 			aInBNot = append(aInBNot, i)
 		} else {
-			if v != ia {
+			if !cmp.Equal(v, ia) {
 				// key of a and b is equal, but value different
 				sameA = append(sameA, i)
 			}
@@ -262,7 +262,7 @@ func CheckFriendRequestDiff(a []*db.LocalFriendRequest, b []*db.LocalFriendReque
 			//in a, but not in b
 			aInBNot = append(aInBNot, i)
 		} else {
-			if v != ia {
+			if !cmp.Equal(v, ia) {
 				// key of a and b is equal, but value different
 				sameA = append(sameA, i)
 			}
@@ -395,7 +395,7 @@ func CheckGroupMemberDiff(a []*db.LocalGroupMember, b []*db.LocalGroupMember) (a
 		} else {
 			//reflect.DeepEqual(a, b)
 			//	reflect.DeepEqual(v, ia)
-			//if v != ia
+			//if !cmp.Equal(v, ia)
 			if !cmp.Equal(v, ia) {
 				// key of a and b is equal, but value different
 				sameA = append(sameA, i)
@@ -439,7 +439,7 @@ func CheckGroupRequestDiff(a []*db.LocalGroupRequest, b []*db.LocalGroupRequest)
 			//in a, but not in b
 			aInBNot = append(aInBNot, i)
 		} else {
-			if v != ia {
+			if !cmp.Equal(v, ia) {
 				// key of a and b is equal, but value different
 				sameA = append(sameA, i)
 			}
@@ -482,7 +482,7 @@ func CheckAdminGroupRequestDiff(a []*db.LocalAdminGroupRequest, b []*db.LocalAdm
 			//in a, but not in b
 			aInBNot = append(aInBNot, i)
 		} else {
-			if v != ia {
+			if !cmp.Equal(v, ia) {
 				// key of a and b is equal, but value different
 				sameA = append(sameA, i)
 			}
