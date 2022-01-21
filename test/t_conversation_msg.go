@@ -206,7 +206,7 @@ func (testMarkC2CMessageAsRead) OnError(code int32, msg string) {
 //}
 
 func DoTestSendMsg(sendId, recvID string) {
-	m := "test:Gordon->sk" + sendId + ":" + recvID + ":"
+	m := "mmmmmmmmtest:Gordon->sk" + sendId + ":" + recvID + ":"
 	operationID := utils.OperationIDGenerator()
 	s := DoTestCreateTextMessage(m)
 	var testSendMsg TestSendMsgCallBack

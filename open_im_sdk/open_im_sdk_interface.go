@@ -236,12 +236,13 @@ func SetFriendListener(listener friend.OnFriendshipListener) {
 
 ///////////////////////conversation////////////////////////////////////
 
-//func GetAllConversationList(callback common.Base, operationID string) {
-//	userForSDK.Conversation().GetAllConversationList(callback)
-//}
-//func GetConversationListSplit(callback common.Base, operationID string, offset, count int) {
-//	userForSDK.Conversation().GetConversationListSplit(callback, offset, count)
-//}
+func GetAllConversationList(callback common.Base, operationID string) {
+	userForSDK.Conversation().GetAllConversationList(callback, operationID)
+}
+func GetConversationListSplit(callback common.Base, operationID string, offset, count int) {
+	userForSDK.Conversation().GetConversationListSplit(callback, offset, count, operationID)
+}
+
 //func SetConversationRecvMessageOpt(callback common.Base, operationID string, conversationIDList string, opt int) {
 //	userForSDK.Conversation().SetConversationRecvMessageOpt(callback, conversationIDList, opt)
 //}
@@ -355,7 +356,7 @@ func CreateTextMessage(operationID string, text string) string {
 //	return userForSDK.Conversation().CreateForwardMessage(m)
 //}
 //
-func SendMessage(callback common.SendMsgCallBack, operationID string, message, recvID, groupID, offlinePushInfo string) {
+func SendMessage(callback common.SendMsgCallBack, operationID, message, recvID, groupID, offlinePushInfo string) {
 	userForSDK.Conversation().SendMessage(callback, message, recvID, groupID, offlinePushInfo, operationID)
 }
 
