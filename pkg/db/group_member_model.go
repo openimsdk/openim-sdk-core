@@ -2,6 +2,7 @@ package db
 
 import (
 	"errors"
+	"fmt"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 )
@@ -95,6 +96,7 @@ func (d *DataBase) UpdateGroupMember(groupMember *LocalGroupMember) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	t := d.conn.Updates(groupMember)
+	fmt.Println("update affected ", t.RowsAffected)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}

@@ -6,6 +6,7 @@ require (
 	github.com/antonfisher/nested-logrus-formatter v1.3.1
 	github.com/go-playground/validator/v10 v10.10.0
 	github.com/golang/protobuf v1.5.2
+	github.com/google/go-cmp v0.5.5
 	github.com/gorilla/websocket v1.4.2
 	github.com/jinzhu/copier v0.3.4
 	github.com/jonboulle/clockwork v0.2.2 // indirect

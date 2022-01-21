@@ -1,6 +1,7 @@
 package common
 
 import (
+	"github.com/google/go-cmp/cmp"
 	"github.com/jinzhu/copier"
 	"open_im_sdk/pkg/db"
 	//log2 "open_im_sdk/pkg/log"
@@ -392,7 +393,10 @@ func CheckGroupMemberDiff(a []*db.LocalGroupMember, b []*db.LocalGroupMember) (a
 			//in a, but not in b
 			aInBNot = append(aInBNot, i)
 		} else {
-			if v != ia {
+			//reflect.DeepEqual(a, b)
+			//	reflect.DeepEqual(v, ia)
+			//if v != ia
+			if !cmp.Equal(v, ia) {
 				// key of a and b is equal, but value different
 				sameA = append(sameA, i)
 			}

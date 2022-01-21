@@ -623,6 +623,7 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string) {
 			log.NewError(operationID, "UpdateGroupMember failed ", err.Error(), onServer[index])
 			continue
 		}
+
 		callbackData := sdk.GroupMemberInfoChangedCallback(*onServer[index])
 		g.listener.OnGroupMemberInfoChanged(utils.StructToJsonString(callbackData))
 	}
