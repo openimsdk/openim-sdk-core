@@ -59,7 +59,7 @@ func InitSDK(config string, operationID string, listener ws.ConnListener) bool {
 	return userForSDK.InitSDK(sdk_struct.SvrConf, listener, operationID)
 }
 
-func Login(callback common.Base, userID, operationID string, token string) {
+func Login(callback common.Base, operationID string, userID, token string) {
 	if callback == nil {
 		log.Error("callback is nil")
 		return
@@ -71,7 +71,7 @@ func Login(callback common.Base, userID, operationID string, token string) {
 	userForSDK.Login(callback, userID, token, operationID)
 }
 
-func UploadImage(callback common.Base, filePath string, token, obj string, operationID string) string {
+func UploadImage(callback common.Base, operationID string, filePath string, token, obj string) string {
 	return userForSDK.UploadImage(callback, filePath, token, obj, operationID)
 }
 
@@ -169,7 +169,7 @@ func GetRecvGroupApplicationList(callback common.Base, operationID string) {
 	userForSDK.Group().GetRecvGroupApplicationList(callback, operationID)
 }
 
-func AcceptGroupApplication(callback common.Base, groupID, fromUserID, handleMsg string, operationID string) {
+func AcceptGroupApplication(callback common.Base, operationID string, groupID, fromUserID, handleMsg string) {
 	userForSDK.Group().AcceptGroupApplication(callback, groupID, fromUserID, handleMsg, operationID)
 }
 
@@ -355,7 +355,7 @@ func CreateTextMessage(operationID string, text string) string {
 //	return userForSDK.Conversation().CreateForwardMessage(m)
 //}
 //
-func SendMessage(callback common.SendMsgCallBack, message, recvID, groupID, offlinePushInfo, operationID string) {
+func SendMessage(callback common.SendMsgCallBack, operationID string, message, recvID, groupID, offlinePushInfo string) {
 	userForSDK.Conversation().SendMessage(callback, message, recvID, groupID, offlinePushInfo, operationID)
 }
 
@@ -405,7 +405,7 @@ func CheckToken(userID, token string) error {
 	return login.CheckToken(userID, token)
 }
 
-func uploadImage(callback common.Base, filePath string, token, obj string, operationID string) string {
+func uploadImage(callback common.Base, operationID string, filePath string, token, obj string) string {
 	if obj == "cos" {
 		p := ws.NewPostApi(token, userForSDK.ImConfig().ApiAddr)
 		o := common2.NewCOS(p)

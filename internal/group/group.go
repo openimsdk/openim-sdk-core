@@ -505,8 +505,6 @@ func (g *Group) SyncAdminGroupApplication(operationID string) {
 	}
 
 	log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
-	fmt.Println("debug onServer ", onServer)
-	fmt.Println("debug onLocal ", onLocal)
 	aInBNot, bInANot, sameA, sameB := common.CheckAdminGroupRequestDiff(onServer, onLocal)
 	log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
 	for _, index := range aInBNot {

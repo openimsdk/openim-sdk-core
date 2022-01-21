@@ -425,9 +425,10 @@ func main() {
 	//	open_im_sdk.DoTestGetBlackList()
 	//	open_im_sdk.DoTestDeleteFromBlackList()
 	//DoTestGetDesignatedFriendsInfo()
+	//test.DoTestSendMsg(strMyUidx, test.Friend_uid)
 	for true {
+		time.Sleep(time.Duration(1) * time.Second)
 		test.DoTestSendMsg(strMyUidx, test.Friend_uid)
-		time.Sleep(time.Duration(5) * time.Second)
 		fmt.Println("waiting")
 	}
 	//
