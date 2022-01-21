@@ -454,7 +454,10 @@ func (c *Conversation) checkErrAndUpdateMessage(callback common.SendMsgCallBack,
 	}
 }
 func (c *Conversation) updateMsgStatusAndTriggerConversation(clientMsgID, serverMsgID string, sendTime int64, status int32, s *sdk_struct.MsgStruct, lc *db.LocalConversation, operationID string) {
-	_ = c.db.UpdateMessageTimeAndStatus(clientMsgID, sendTime, status)
+	err := c.db.UpdateMessageTimeAndStatus(clientMsgID, serverMsgID, sendTime, status)
+	if err != nil {
+		log.Error(operationID, "send message update message status error", clientMsgID, serverMsgID)
+	}
 	s.SendTime = sendTime
 	s.Status = status
 	s.ServerMsgID = serverMsgID
@@ -718,11 +721,11 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.Local
 	var wsMsgData server_api_params.MsgData
 	copier.Copy(&wsMsgData, s)
 	wsMsgData.Content = []byte(s.Content)
-	wsMsgData.CreateTime = int64(s.CreateTime)
+	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
 	wsMsgData.OfflinePushInfo = offlinePushInfo
 	timeout := 300
-	retryTimes := 6
+	retryTimes := 60
 	resp, err := c.SendReqWaitResp(&wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID, operationID)
 	c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
 	callback.OnProgress(100)

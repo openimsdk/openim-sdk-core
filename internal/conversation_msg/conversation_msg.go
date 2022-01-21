@@ -368,7 +368,8 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		var list []*db.LocalConversation
 		lc := node.Args.(*db.LocalConversation)
 		oc, err := c.db.GetConversation(lc.ConversationID)
-		if err == nil && oc != nil {
+		if err == nil && oc.ConversationID != "" {
+			log.Info("this is old conversation", oc)
 			if lc.LatestMsgSendTime > oc.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
 				err := c.db.UpdateColumnsConversation(node.ConID, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
 				if err != nil {

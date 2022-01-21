@@ -104,10 +104,10 @@ func (d *DataBase) UpdateMessageStatusBySourceID(sourceID string, status, sessio
 	}
 	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
 }
-func (d *DataBase) UpdateMessageTimeAndStatus(ClientMsgID string, sendTime int64, status int32) error {
+func (d *DataBase) UpdateMessageTimeAndStatus(clientMsgID string, serverMsgID string, sendTime int64, status int32) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Model(LocalChatLog{}).Where("client_msg_id=? And seq=?", ClientMsgID, 0).Updates(LocalChatLog{Status: status, SendTime: sendTime})
+	t := d.conn.Model(LocalChatLog{}).Where("client_msg_id=? And seq=?", clientMsgID, 0).Updates(LocalChatLog{Status: status, SendTime: sendTime, ServerMsgID: serverMsgID})
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
