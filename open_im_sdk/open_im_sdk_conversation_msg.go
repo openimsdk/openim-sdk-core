@@ -580,11 +580,10 @@ func (u *UserRelated) SendMessageNotOss(callback SendMsgCallBack, message, recei
 		a.Data.Content = s.Content
 		a.Data.ClientMsgID = s.ClientMsgID
 		if onlineUserOnly {
-			a.Data.Options["history"] = 0
-			a.Data.Options["persistent"] = 0
-		} else {
-			a.Data.Options = m
+			m["history"] = 0
+			m["persistent"] = 0
 		}
+		a.Data.Options = m
 		a.Data.OffLineInfo = m
 		bMsg, err := post2Api(sendMsgRouter, a, u.token)
 		if err != nil {
