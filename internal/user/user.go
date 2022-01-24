@@ -1,6 +1,7 @@
 package user
 
 import (
+	"github.com/google/go-cmp/cmp"
 	//"github.com/mitchellh/mapstructure"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
@@ -63,14 +64,14 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 		log.Error(operationID, "GetLoginUser failed", err.Error())
 		onLocal = &db.LocalUser{}
 	}
-	if onServer != onLocal {
+	if !cmp.Equal(onServer, onLocal) {
 		if onLocal.UserID == "" {
 			if err = u.InsertLoginUser(onServer); err != nil {
 				log.Error(operationID, "InsertLoginUser failed ", *onServer, err.Error())
 			}
 			return
 		}
-		u.UpdateLoginUser(onServer)
+		err := u.UpdateLoginUser(onServer)
 		if err != nil {
 			log.Error(operationID, "UpdateLoginUser failed ", *onServer, err.Error())
 			return
