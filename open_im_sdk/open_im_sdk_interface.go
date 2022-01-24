@@ -35,7 +35,7 @@ func SdkVersion() string {
 	return sdkVersion
 }
 
-func InitSDK(listener ws.ConnListener, operationID string, config string) bool {
+func InitSDK(listener open_im_sdk_callback.ConnListener, config string, operationID string) bool {
 	if err := json.Unmarshal([]byte(config), &sdk_struct.SvrConf); err != nil {
 		log.Error(operationID, "Unmarshal failed ", err.Error(), config)
 		return false

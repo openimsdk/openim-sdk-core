@@ -377,7 +377,7 @@ func InOutLogou() {
 func InOutDoTest(uid, tk, ws, api string) {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
-
+	cf.Platform = 1
 	cf.WsAddr = ws
 	cf.Platform = 1
 	cf.DataDir = "./"
@@ -389,7 +389,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	fmt.Println(s)
 	var testinit testInitLister
 	operationID := utils.OperationIDGenerator()
-	open_im_sdk.InitSDK(s, operationID, testinit)
+	open_im_sdk.InitSDK(testinit, s, operationID)
 
 	var testConversation conversationCallBack
 	open_im_sdk.SetConversationListener(testConversation)
@@ -446,7 +446,7 @@ func DoTest(uid, tk, ws, api string) {
 	fmt.Println(s)
 	var testinit testInitLister
 	operationID := utils.OperationIDGenerator()
-	open_im_sdk.InitSDK(s, operationID, testinit)
+	open_im_sdk.InitSDK(testinit, s, operationID)
 
 	var testConversation conversationCallBack
 	open_im_sdk.SetConversationListener(testConversation)
