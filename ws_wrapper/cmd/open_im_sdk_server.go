@@ -9,9 +9,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"open_im_sdk/sdk_struct"
+
 	//"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/log"
-	utils2 "open_im_sdk/pkg/utils"
 	"open_im_sdk/ws_wrapper/utils"
 	"open_im_sdk/ws_wrapper/ws_local_server"
 	"runtime"
@@ -45,25 +46,25 @@ func main() {
 	switch sysType {
 
 	case "darwin":
-		ws_local_server.InitServer(&utils2.IMConfig{IpApiAddr: *openIMApiAddress,
-			IpWsAddr: *openIMWsAddress, Platform: utils.OSXPlatformID, DbDir: "./"})
+		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: *openIMApiAddress,
+			WsAddr: *openIMWsAddress, Platform: utils.OSXPlatformID, DataDir: "./"})
 	case "linux":
 		//sdkDBDir:= flag.String("sdk_db_dir","","openIMSDK initialization path")
-		ws_local_server.InitServer(&utils2.IMConfig{IpApiAddr: "http://" + utils.ServerIP + ":" + utils.IntToString(*openIMApiPort),
-			IpWsAddr: "ws://" + utils.ServerIP + ":" + utils.IntToString(*openIMWsPort), Platform: utils.WebPlatformID, DbDir: "../db/sdk/"})
+		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: "http://" + utils.ServerIP + ":" + utils.IntToString(*openIMApiPort),
+			WsAddr: "ws://" + utils.ServerIP + ":" + utils.IntToString(*openIMWsPort), Platform: utils.WebPlatformID, DataDir: "../db/sdk/"})
 
 	case "windows":
 		//	sdkWsPort = flag.Int("sdk_ws_port", 7799, "openIM ws listening port")
 		//flag.Parse()
-		ws_local_server.InitServer(&utils2.IMConfig{IpApiAddr: APIADDR,
-			IpWsAddr: WSADDR, Platform: utils.WebPlatformID, DbDir: "./"})
+		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: APIADDR,
+			WsAddr: WSADDR, Platform: utils.WebPlatformID, DataDir: "./"})
 	default:
 		fmt.Println("this os not support", sysType)
 
 	}
 	var wg sync.WaitGroup
 	wg.Add(1)
-	log.NewPrivateLog("sdk")
+	log.NewPrivateLog("sdk", 6)
 	fmt.Println("ws server is starting")
 	ws_local_server.WS.OnInit(*sdkWsPort)
 	ws_local_server.WS.Run()
