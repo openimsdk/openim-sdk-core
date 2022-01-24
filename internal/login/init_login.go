@@ -32,7 +32,7 @@ type LoginMgr struct {
 
 	token        string
 	loginUserID  string
-	connListener open_im_sdk_callback.ConnListener
+	connListener open_im_sdk_callback.OnConnListener
 
 	justOnceFlag bool
 
@@ -155,7 +155,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	log.Info(operationID, "login ok callback success...")
 }
 
-func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_callback.ConnListener, operationID string) bool {
+func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_callback.OnConnListener, operationID string) bool {
 	u.imConfig = config
 	log.NewInfo(operationID, utils.GetSelfFuncName(), config)
 	if listener == nil {
