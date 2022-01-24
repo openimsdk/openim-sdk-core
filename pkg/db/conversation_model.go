@@ -166,7 +166,7 @@ func (d *DataBase) IncrConversationUnreadCount(conversationID string) error {
 	}
 	return utils.Wrap(t.Error, "IncrConversationUnreadCount failed")
 }
-func (d *DataBase) GetTotalUnreadMsgCount() (totalUnreadCount int64, err error) {
+func (d *DataBase) GetTotalUnreadMsgCount() (totalUnreadCount int32, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var result []int64
@@ -175,7 +175,7 @@ func (d *DataBase) GetTotalUnreadMsgCount() (totalUnreadCount int64, err error) 
 		return totalUnreadCount, utils.Wrap(errors.New("GetTotalUnreadMsgCount err"), "GetTotalUnreadMsgCount err")
 	}
 	for _, v := range result {
-		totalUnreadCount += v
+		totalUnreadCount += int32(v)
 	}
 	return totalUnreadCount, nil
 }
