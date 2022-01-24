@@ -21,12 +21,12 @@ type WsConn struct {
 	stateMutex  sync.Mutex
 	conn        *websocket.Conn
 	loginState  int32
-	listener    open_im_sdk_callback.ConnListener
+	listener    open_im_sdk_callback.OnConnListener
 	token       string
 	loginUserID string
 }
 
-func NewWsConn(listener open_im_sdk_callback.ConnListener, token string, loginUserID string) *WsConn {
+func NewWsConn(listener open_im_sdk_callback.OnConnListener, token string, loginUserID string) *WsConn {
 	p := WsConn{listener: listener, token: token, loginUserID: loginUserID}
 	p.conn, _ = p.ReConn()
 	return &p

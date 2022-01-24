@@ -8,7 +8,8 @@ type SendMsgCallBack interface {
 	Base
 	OnProgress(progress int)
 }
-type ConnListener interface {
+
+type OnConnListener interface {
 	OnConnecting()
 	OnConnectSuccess()
 	OnConnectFailed(errCode int32, errMsg string)
