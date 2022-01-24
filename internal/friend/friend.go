@@ -17,6 +17,7 @@ package friend
 import (
 	comm "open_im_sdk/internal/common"
 	ws "open_im_sdk/internal/interaction"
+	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
@@ -28,33 +29,21 @@ import (
 )
 
 type Friend struct {
-	friendListener OnFriendshipListener
+	friendListener open_im_sdk_callback.OnFriendshipListener
 	loginUserID    string
 	db             *db.DataBase
 	p              *ws.PostApi
-}
-
-type OnFriendshipListener interface {
-	OnFriendApplicationAdded(friendApplication string)
-	OnFriendApplicationDeleted(friendApplication string)
-	OnFriendApplicationAccepted(groupApplication string)
-	OnFriendApplicationRejected(friendApplication string)
-	OnFriendAdded(friendInfo string)
-	OnFriendDeleted(friendInfo string)
-	OnFriendInfoChanged(friendInfo string)
-	OnBlackAdded(blackInfo string)
-	OnBlackDeleted(blackInfo string)
 }
 
 func NewFriend(loginUserID string, db *db.DataBase, p *ws.PostApi) *Friend {
 	return &Friend{loginUserID: loginUserID, db: db, p: p}
 }
 
-func (f *Friend) SetListener(listener OnFriendshipListener) {
+func (f *Friend) SetListener(listener open_im_sdk_callback.OnFriendshipListener) {
 	f.friendListener = listener
 }
 
-func (f *Friend) getDesignatedFriendsInfo(callback common.Base, friendUserIDList sdk.GetDesignatedFriendsInfoParams, operationID string) sdk.GetDesignatedFriendsInfoCallback {
+func (f *Friend) getDesignatedFriendsInfo(callback open_im_sdk_callback.Base, friendUserIDList sdk.GetDesignatedFriendsInfoParams, operationID string) sdk.GetDesignatedFriendsInfoCallback {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", friendUserIDList)
 	blackList, err := f.db.GetBlackInfoList(friendUserIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -77,7 +66,7 @@ func (f *Friend) getDesignatedFriendsInfo(callback common.Base, friendUserIDList
 	return localFriendList
 }
 
-func (f *Friend) addFriend(callback common.Base, userIDReqMsg sdk.AddFriendParams, operationID string) {
+func (f *Friend) addFriend(callback open_im_sdk_callback.Base, userIDReqMsg sdk.AddFriendParams, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", userIDReqMsg)
 	apiReq := api.AddFriendReq{}
 	apiReq.ToUserID = userIDReqMsg.ToUserID
@@ -88,7 +77,7 @@ func (f *Friend) addFriend(callback common.Base, userIDReqMsg sdk.AddFriendParam
 	f.SyncFriendApplication(operationID)
 }
 
-func (f *Friend) getRecvFriendApplicationList(callback common.Base, operationID string) sdk.GetRecvFriendApplicationListCallback {
+func (f *Friend) getRecvFriendApplicationList(callback open_im_sdk_callback.Base, operationID string) sdk.GetRecvFriendApplicationListCallback {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	friendApplicationList, err := f.db.GetRecvFriendApplication()
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -96,7 +85,7 @@ func (f *Friend) getRecvFriendApplicationList(callback common.Base, operationID 
 	return friendApplicationList
 }
 
-func (f *Friend) getSendFriendApplicationList(callback common.Base, operationID string) sdk.GetSendFriendApplicationListCallback {
+func (f *Friend) getSendFriendApplicationList(callback open_im_sdk_callback.Base, operationID string) sdk.GetSendFriendApplicationListCallback {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	friendApplicationList, err := f.db.GetSendFriendApplication()
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -104,7 +93,7 @@ func (f *Friend) getSendFriendApplicationList(callback common.Base, operationID 
 	return friendApplicationList
 }
 
-func (f *Friend) processFriendApplication(callback common.Base, userIDHandleMsg sdk.ProcessFriendApplicationParams, handleResult int32, operationID string) {
+func (f *Friend) processFriendApplication(callback open_im_sdk_callback.Base, userIDHandleMsg sdk.ProcessFriendApplicationParams, handleResult int32, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", userIDHandleMsg, handleResult)
 	apiReq := api.AddFriendResponseReq{}
 	apiReq.FromUserID = f.loginUserID
@@ -117,7 +106,7 @@ func (f *Friend) processFriendApplication(callback common.Base, userIDHandleMsg 
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ")
 }
 
-func (f *Friend) checkFriend(callback common.Base, friendUserIDList sdk.CheckFriendParams, operationID string) sdk.CheckFriendCallback {
+func (f *Friend) checkFriend(callback open_im_sdk_callback.Base, friendUserIDList sdk.CheckFriendParams, operationID string) sdk.CheckFriendCallback {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", friendUserIDList)
 	friendList, err := f.db.GetFriendInfoList(friendUserIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -152,7 +141,7 @@ func (f *Friend) checkFriend(callback common.Base, friendUserIDList sdk.CheckFri
 	return checkFriendCallback
 }
 
-func (f *Friend) deleteFriend(friendUserID sdk.DeleteFriendParams, callback common.Base, operationID string) {
+func (f *Friend) deleteFriend(friendUserID sdk.DeleteFriendParams, callback open_im_sdk_callback.Base, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", friendUserID)
 	apiReq := api.DeleteFriendReq{}
 	apiReq.ToUserID = string(friendUserID)
@@ -163,7 +152,7 @@ func (f *Friend) deleteFriend(friendUserID sdk.DeleteFriendParams, callback comm
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ")
 }
 
-func (f *Friend) setFriendRemark(userIDRemark sdk.SetFriendRemarkParams, callback common.Base, operationID string) {
+func (f *Friend) setFriendRemark(userIDRemark sdk.SetFriendRemarkParams, callback open_im_sdk_callback.Base, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", userIDRemark)
 	apiReq := api.SetFriendRemarkReq{}
 	apiReq.OperationID = operationID
@@ -238,7 +227,7 @@ func (f *Friend) getSelfFriendApplicationFromServer(operationID string) ([]*api.
 	return realData.FriendRequestList, nil
 }
 
-func (f *Friend) addBlack(callback common.Base, blackUserID sdk.AddBlackParams, operationID string) {
+func (f *Friend) addBlack(callback open_im_sdk_callback.Base, blackUserID sdk.AddBlackParams, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", blackUserID)
 	apiReq := api.AddBlacklistReq{}
 	apiReq.ToUserID = string(blackUserID)
@@ -249,7 +238,7 @@ func (f *Friend) addBlack(callback common.Base, blackUserID sdk.AddBlackParams, 
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ")
 }
 
-func (f *Friend) removeBlack(callback common.Base, blackUserID sdk.RemoveBlackParams, operationID string) {
+func (f *Friend) removeBlack(callback open_im_sdk_callback.Base, blackUserID sdk.RemoveBlackParams, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", blackUserID)
 	apiReq := api.RemoveBlackListReq{}
 	apiReq.ToUserID = string(blackUserID)

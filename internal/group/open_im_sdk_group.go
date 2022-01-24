@@ -1,20 +1,21 @@
 package group
 
 import (
+	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
 )
 
-func (g *Group) SetGroupListener(callback OnGroupListener) {
+func (g *Group) SetGroupListener(callback open_im_sdk_callback.OnGroupListener) {
 	if callback == nil {
 		return
 	}
 	g.listener = callback
 }
 
-func (g *Group) CreateGroup(callback common.Base, groupBaseInfo string, memberList string, operationID string) {
+func (g *Group) CreateGroup(callback open_im_sdk_callback.Base, groupBaseInfo string, memberList string, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -31,7 +32,7 @@ func (g *Group) CreateGroup(callback common.Base, groupBaseInfo string, memberLi
 	}()
 }
 
-func (g *Group) JoinGroup(callback common.Base, groupID, reqMsg string, operationID string) {
+func (g *Group) JoinGroup(callback open_im_sdk_callback.Base, groupID, reqMsg string, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -44,7 +45,7 @@ func (g *Group) JoinGroup(callback common.Base, groupID, reqMsg string, operatio
 	}()
 }
 
-func (g *Group) QuitGroup(callback common.Base, groupID string, operationID string) {
+func (g *Group) QuitGroup(callback open_im_sdk_callback.Base, groupID string, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -57,7 +58,7 @@ func (g *Group) QuitGroup(callback common.Base, groupID string, operationID stri
 	}()
 }
 
-func (g *Group) GetJoinedGroupList(callback common.Base, operationID string) {
+func (g *Group) GetJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -71,7 +72,7 @@ func (g *Group) GetJoinedGroupList(callback common.Base, operationID string) {
 	}()
 }
 
-func (g *Group) GetGroupsInfo(callback common.Base, groupIDList string, operationID string) {
+func (g *Group) GetGroupsInfo(callback open_im_sdk_callback.Base, groupIDList string, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -87,7 +88,7 @@ func (g *Group) GetGroupsInfo(callback common.Base, groupIDList string, operatio
 	}()
 }
 
-func (g *Group) SetGroupInfo(callback common.Base, groupInfo string, groupID string, operationID string) {
+func (g *Group) SetGroupInfo(callback open_im_sdk_callback.Base, groupInfo string, groupID string, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -102,7 +103,7 @@ func (g *Group) SetGroupInfo(callback common.Base, groupInfo string, groupID str
 	}()
 }
 
-func (g *Group) GetGroupMemberList(callback common.Base, groupID string, filter, offset, count int32, operationID string) {
+func (g *Group) GetGroupMemberList(callback open_im_sdk_callback.Base, groupID string, filter, offset, count int32, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -115,7 +116,7 @@ func (g *Group) GetGroupMemberList(callback common.Base, groupID string, filter,
 	}()
 }
 
-func (g *Group) GetGroupMembersInfo(callback common.Base, groupID string, userIDList string, operationID string) {
+func (g *Group) GetGroupMembersInfo(callback open_im_sdk_callback.Base, groupID string, userIDList string, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -130,7 +131,7 @@ func (g *Group) GetGroupMembersInfo(callback common.Base, groupID string, userID
 	}()
 }
 
-func (g *Group) KickGroupMember(callback common.Base, groupID string, reason string, userIDList string, operationID string) {
+func (g *Group) KickGroupMember(callback open_im_sdk_callback.Base, groupID string, reason string, userIDList string, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -145,7 +146,7 @@ func (g *Group) KickGroupMember(callback common.Base, groupID string, reason str
 	}()
 }
 
-func (g *Group) TransferGroupOwner(callback common.Base, groupID, newOwnerUserID string, operationID string) {
+func (g *Group) TransferGroupOwner(callback open_im_sdk_callback.Base, groupID, newOwnerUserID string, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -158,7 +159,7 @@ func (g *Group) TransferGroupOwner(callback common.Base, groupID, newOwnerUserID
 	}()
 }
 
-func (g *Group) InviteUserToGroup(callback common.Base, groupID, reason string, userIDList string, operationID string) {
+func (g *Group) InviteUserToGroup(callback open_im_sdk_callback.Base, groupID, reason string, userIDList string, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -173,7 +174,7 @@ func (g *Group) InviteUserToGroup(callback common.Base, groupID, reason string, 
 	}()
 }
 
-func (g *Group) GetRecvGroupApplicationList(callback common.Base, operationID string) {
+func (g *Group) GetRecvGroupApplicationList(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -186,7 +187,7 @@ func (g *Group) GetRecvGroupApplicationList(callback common.Base, operationID st
 	}()
 }
 
-func (g *Group) AcceptGroupApplication(callback common.Base, groupID, fromUserID, handleMsg string, operationID string) {
+func (g *Group) AcceptGroupApplication(callback open_im_sdk_callback.Base, groupID, fromUserID, handleMsg string, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -199,7 +200,7 @@ func (g *Group) AcceptGroupApplication(callback common.Base, groupID, fromUserID
 	}()
 }
 
-func (g *Group) RefuseGroupApplication(callback common.Base, groupID, fromUserID, handleMsg string, operationID string) {
+func (g *Group) RefuseGroupApplication(callback open_im_sdk_callback.Base, groupID, fromUserID, handleMsg string, operationID string) {
 	if callback == nil {
 		return
 	}

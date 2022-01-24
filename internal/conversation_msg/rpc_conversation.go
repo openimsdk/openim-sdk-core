@@ -2,6 +2,7 @@ package conversation_msg
 
 import (
 	"errors"
+	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
@@ -12,18 +13,18 @@ import (
 	"open_im_sdk/sdk_struct"
 )
 
-func (c *Conversation) getAllConversationList(callback common.Base, operationID string) sdk.GetAllConversationListCallback {
+func (c *Conversation) getAllConversationList(callback open_im_sdk_callback.Base, operationID string) sdk.GetAllConversationListCallback {
 	conversationList, err := c.db.GetAllConversationList()
 	common.CheckDBErrCallback(callback, err, operationID)
 	return conversationList
 }
-func (c *Conversation) getConversationListSplit(callback common.Base, offset, count int, operationID string) sdk.GetConversationListSplitCallback {
+func (c *Conversation) getConversationListSplit(callback open_im_sdk_callback.Base, offset, count int, operationID string) sdk.GetConversationListSplitCallback {
 	conversationList, err := c.db.GetConversationListSplit(offset, count)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return conversationList
 }
 
-func (c *Conversation) setConversationRecvMessageOpt(callback common.Base, conversationIDList []string, opt int, operationID string) []*server_api_params.OptResult {
+func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, opt int, operationID string) []*server_api_params.OptResult {
 	apiReq := server_api_params.SetReceiveMessageOptReq{}
 	apiReq.OperationID = operationID
 	apiReq.FromUserID = c.loginUserID
@@ -36,7 +37,7 @@ func (c *Conversation) setConversationRecvMessageOpt(callback common.Base, conve
 	c.db.SetMultipleConversationRecvMsgOpt(conversationIDList, opt)
 	return realData
 }
-func (c *Conversation) getConversationRecvMessageOpt(callback common.Base, conversationIDList []string, operationID string) []*server_api_params.OptResult {
+func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) []*server_api_params.OptResult {
 	apiReq := server_api_params.GetReceiveMessageOptReq{}
 	apiReq.OperationID = operationID
 	apiReq.FromUserID = c.loginUserID
@@ -45,7 +46,7 @@ func (c *Conversation) getConversationRecvMessageOpt(callback common.Base, conve
 	c.p.PostFatalCallback(callback, constant.GetReceiveMessageOptRouter, apiReq, realData, apiReq.OperationID)
 	return realData
 }
-func (c *Conversation) getOneConversation(callback common.Base, sourceID string, sessionType int32, operationID string) *db.LocalConversation {
+func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, sourceID string, sessionType int32, operationID string) *db.LocalConversation {
 	conversationID := c.GetConversationIDBySessionType(sourceID, sessionType)
 	lc, err := c.db.GetConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -82,13 +83,13 @@ func (c *Conversation) getOneConversation(callback common.Base, sourceID string,
 		return &newConversation
 	}
 }
-func (c *Conversation) getMultipleConversation(callback common.Base, conversationIDList []string, operationID string) sdk.GetMultipleConversationCallback {
+func (c *Conversation) getMultipleConversation(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) sdk.GetMultipleConversationCallback {
 	conversationList, err := c.db.GetMultipleConversation(conversationIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return conversationList
 }
 
-func (c *Conversation) deleteConversation(callback common.Base, conversationID, operationID string) {
+func (c *Conversation) deleteConversation(callback open_im_sdk_callback.Base, conversationID, operationID string) {
 	lc, err := c.db.GetConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
 	var sourceID string
@@ -105,7 +106,7 @@ func (c *Conversation) deleteConversation(callback common.Base, conversationID, 
 	err = c.db.ResetConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
 }
-func (c *Conversation) setConversationDraft(callback common.Base, conversationID, draftText, operationID string) {
+func (c *Conversation) setConversationDraft(callback open_im_sdk_callback.Base, conversationID, draftText, operationID string) {
 	if draftText != "" {
 		err := c.db.SetConversationDraft(conversationID, draftText)
 		common.CheckDBErrCallback(callback, err, operationID)
@@ -115,7 +116,7 @@ func (c *Conversation) setConversationDraft(callback common.Base, conversationID
 	}
 }
 
-func (c *Conversation) pinConversation(callback common.Base, conversationID string, isPinned bool, operationID string) {
+func (c *Conversation) pinConversation(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
 	lc := db.LocalConversation{ConversationID: conversationID}
 	if isPinned {
 		lc.IsPinned = constant.Pinned
@@ -128,7 +129,7 @@ func (c *Conversation) pinConversation(callback common.Base, conversationID stri
 	}
 }
 
-func (c *Conversation) getHistoryMessageList(callback common.Base, req sdk.GetHistoryMessageListParams, operationID string) sdk.GetHistoryMessageListCallback {
+func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base, req sdk.GetHistoryMessageListParams, operationID string) sdk.GetHistoryMessageListCallback {
 	var sourceID string
 	var conversationID string
 	var startTime int64
@@ -160,7 +161,7 @@ func (c *Conversation) getHistoryMessageList(callback common.Base, req sdk.GetHi
 	return list
 
 }
-func (c *Conversation) revokeOneMessage(callback common.Base, req sdk.RevokeMessageParams, operationID string) {
+func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req sdk.RevokeMessageParams, operationID string) {
 	var recvID, groupID string
 	message, err := c.db.GetMessage(req.ClientMsgID)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -189,7 +190,7 @@ func (c *Conversation) revokeOneMessage(callback common.Base, req sdk.RevokeMess
 	err = c.db.UpdateColumnsMessage(req.Content, map[string]interface{}{"status": constant.MsgStatusRevoked})
 	common.CheckDBErrCallback(callback, err, operationID)
 }
-func (c *Conversation) typingStatusUpdate(callback common.Base, recvID, msgTip, operationID string) {
+func (c *Conversation) typingStatusUpdate(callback open_im_sdk_callback.Base, recvID, msgTip, operationID string) {
 	s := sdk_struct.MsgStruct{}
 	c.initBasicInfo(&s, constant.UserMsgType, constant.Typing, operationID)
 	s.Content = msgTip
@@ -198,7 +199,7 @@ func (c *Conversation) typingStatusUpdate(callback common.Base, recvID, msgTip, 
 
 }
 
-func (c *Conversation) markC2CMessageAsRead(callback common.Base, msgIDList string, recvID, operationID string) {
+func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, msgIDList string, recvID, operationID string) {
 	var list sdk.MarkC2CMessageAsReadParams
 	common.JsonUnmarshalCallback(msgIDList, &list, callback, operationID)
 	//conversationID := c.GetConversationIDBySessionType(recvID, constant.SingleChatType)
@@ -213,13 +214,13 @@ func (c *Conversation) markC2CMessageAsRead(callback common.Base, msgIDList stri
 	//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.UpdateLatestMessageChange, ""}})
 	//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 }
-func (c *Conversation) insertMessageToLocalStorage(callback common.Base, s *db.LocalChatLog, operationID string) string {
+func (c *Conversation) insertMessageToLocalStorage(callback open_im_sdk_callback.Base, s *db.LocalChatLog, operationID string) string {
 	err := c.db.InsertMessage(s)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return s.ClientMsgID
 }
 
-func (c *Conversation) clearGroupHistoryMessage(callback common.Base, groupID string, operationID string) {
+func (c *Conversation) clearGroupHistoryMessage(callback open_im_sdk_callback.Base, groupID string, operationID string) {
 	conversationID := c.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 	err := c.db.UpdateMessageStatusBySourceID(groupID, constant.MsgStatusHasDeleted, constant.GroupChatType)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -228,7 +229,7 @@ func (c *Conversation) clearGroupHistoryMessage(callback common.Base, groupID st
 	//	u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 }
 
-func (c *Conversation) clearC2CHistoryMessage(callback common.Base, userID string, operationID string) {
+func (c *Conversation) clearC2CHistoryMessage(callback open_im_sdk_callback.Base, userID string, operationID string) {
 	conversationID := c.GetConversationIDBySessionType(userID, constant.SingleChatType)
 	err := c.db.UpdateMessageStatusBySourceID(userID, constant.MsgStatusHasDeleted, constant.SingleChatType)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -237,7 +238,7 @@ func (c *Conversation) clearC2CHistoryMessage(callback common.Base, userID strin
 	//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
 }
 
-func (c *Conversation) deleteMessageFromLocalStorage(callback common.Base, s *sdk_struct.MsgStruct, operationID string) {
+func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
 	var conversation db.LocalConversation
 	var latestMsg sdk_struct.MsgStruct
 	var conversationID string

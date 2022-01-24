@@ -1,23 +1,23 @@
 package login
 
 import (
-	"open_im_sdk/pkg/common"
+	"open_im_sdk/open_im_sdk_callback"
 	"sync"
 )
 
-func (u *LoginMgr) Login(callback common.Base, userID, token string, operationID string) {
+func (u *LoginMgr) Login(callback open_im_sdk_callback.Base, userID, token string, operationID string) {
 	go func() {
 		u.login(userID, token, callback, operationID)
 	}()
 }
 
-func (u *LoginMgr) Logout(callback common.Base, operationID string) {
+func (u *LoginMgr) Logout(callback open_im_sdk_callback.Base, operationID string) {
 	go func() {
 		u.logout(callback, operationID)
 	}()
 }
 
-func (u *LoginMgr) UploadImage(callback common.Base, filePath string, token, obj string, operationID string) string {
+func (u *LoginMgr) UploadImage(callback open_im_sdk_callback.Base, filePath string, token, obj string, operationID string) string {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	url := ""
