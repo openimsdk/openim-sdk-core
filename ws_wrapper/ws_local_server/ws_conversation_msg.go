@@ -13,7 +13,7 @@ import (
 //
 func (wsRouter *WsFuncRouter) CreateTextMessage(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	msg := userWorker.Conversation().CreateTextMessage(input)
+	msg := userWorker.Conversation().CreateTextMessage(input, operationID)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }
 

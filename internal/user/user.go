@@ -3,6 +3,7 @@ package user
 import (
 	//"github.com/mitchellh/mapstructure"
 	ws "open_im_sdk/internal/interaction"
+	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
@@ -17,19 +18,15 @@ type User struct {
 	*db.DataBase
 	p           *ws.PostApi
 	loginUserID string
-	listener    OnUserListener
+	listener    open_im_sdk_callback.OnUserListener
 }
 
-func (u *User) SetListener(listener OnUserListener) {
+func (u *User) SetListener(listener open_im_sdk_callback.OnUserListener) {
 	u.listener = listener
 }
 
 func NewUser(dataBase *db.DataBase, p *ws.PostApi, loginUserID string) *User {
 	return &User{DataBase: dataBase, p: p, loginUserID: loginUserID}
-}
-
-type OnUserListener interface {
-	OnSelfInfoUpdated(userInfo string)
 }
 
 func (u *User) DoNotification(msg *api.MsgData) {
@@ -87,7 +84,7 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 	}
 }
 
-func (u *User) GetUsersInfoFromSvr(callback common.Base, UserIDList sdk.GetUsersInfoParam, operationID string) sdk.GetUsersInfoCallback {
+func (u *User) GetUsersInfoFromSvr(callback open_im_sdk_callback.Base, UserIDList sdk.GetUsersInfoParam, operationID string) sdk.GetUsersInfoCallback {
 	apiReq := api.GetUsersInfoReq{}
 	apiReq.OperationID = operationID
 	apiReq.UserIDList = UserIDList
@@ -96,7 +93,7 @@ func (u *User) GetUsersInfoFromSvr(callback common.Base, UserIDList sdk.GetUsers
 	return apiResp.UserInfoList
 }
 
-func (u *User) getSelfUserInfo(callback common.Base, operationID string) sdk.GetSelfUserInfoCallback {
+func (u *User) getSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) sdk.GetSelfUserInfoCallback {
 	userInfo, err := u.GetLoginUser()
 	if err != nil {
 		callback.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
@@ -104,7 +101,7 @@ func (u *User) getSelfUserInfo(callback common.Base, operationID string) sdk.Get
 	return userInfo
 }
 
-func (u *User) updateSelfUserInfo(callback common.Base, userInfo sdk.SetSelfUserInfoParam, operationID string) {
+func (u *User) updateSelfUserInfo(callback open_im_sdk_callback.Base, userInfo sdk.SetSelfUserInfoParam, operationID string) {
 	apiReq := api.UpdateSelfUserInfoReq{}
 	apiReq.OperationID = operationID
 	apiReq.ApiUserInfo = api.ApiUserInfo(userInfo)

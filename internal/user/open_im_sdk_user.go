@@ -1,13 +1,14 @@
 package user
 
 import (
+	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
 )
 
-func (u *User) GetUsersInfo(callback common.Base, userIDList string, operationID string) {
+func (u *User) GetUsersInfo(callback open_im_sdk_callback.Base, userIDList string, operationID string) {
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ", userIDList)
@@ -19,7 +20,7 @@ func (u *User) GetUsersInfo(callback common.Base, userIDList string, operationID
 	}()
 }
 
-func (u *User) GetSelfUserInfo(callback common.Base, operationID string) {
+func (u *User) GetSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) {
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ")
@@ -29,7 +30,7 @@ func (u *User) GetSelfUserInfo(callback common.Base, operationID string) {
 	}()
 }
 
-func (u *User) SetSelfInfo(callback common.Base, userInfo string, operationID string) {
+func (u *User) SetSelfInfo(callback open_im_sdk_callback.Base, userInfo string, operationID string) {
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ", userInfo)

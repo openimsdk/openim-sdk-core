@@ -8,6 +8,7 @@ import (
 	"open_im_sdk/internal/group"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/user"
+	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
@@ -35,11 +36,11 @@ type LoginMgr struct {
 
 	justOnceFlag bool
 
-	groupListener        group.OnGroupListener
-	friendListener       friend.OnFriendshipListener
-	conversationListener conv.OnConversationListener
-	advancedMsgListener  conv.OnAdvancedMsgListener
-	userListener         user.OnUserListener
+	groupListener        open_im_sdk_callback.OnGroupListener
+	friendListener       open_im_sdk_callback.OnFriendshipListener
+	conversationListener open_im_sdk_callback.OnConversationListener
+	advancedMsgListener  open_im_sdk_callback.OnAdvancedMsgListener
+	userListener         open_im_sdk_callback.OnUserListener
 
 	conversationCh chan common.Cmd2Value
 	cmdWsCh        chan common.Cmd2Value
@@ -67,27 +68,27 @@ func (u *LoginMgr) Friend() *friend.Friend {
 	return u.friend
 }
 
-func (u *LoginMgr) SetConversationListener(conversationListener conv.OnConversationListener) {
+func (u *LoginMgr) SetConversationListener(conversationListener open_im_sdk_callback.OnConversationListener) {
 	u.conversationListener = conversationListener
 }
 
-func (u *LoginMgr) SetAdvancedMsgListener(advancedMsgListener conv.OnAdvancedMsgListener) {
+func (u *LoginMgr) SetAdvancedMsgListener(advancedMsgListener open_im_sdk_callback.OnAdvancedMsgListener) {
 	u.advancedMsgListener = advancedMsgListener
 }
 
-func (u *LoginMgr) SetFriendListener(friendListener friend.OnFriendshipListener) {
+func (u *LoginMgr) SetFriendListener(friendListener open_im_sdk_callback.OnFriendshipListener) {
 	u.friendListener = friendListener
 }
 
-func (u *LoginMgr) SetGroupListener(groupListener group.OnGroupListener) {
+func (u *LoginMgr) SetGroupListener(groupListener open_im_sdk_callback.OnGroupListener) {
 	u.groupListener = groupListener
 }
 
-func (u *LoginMgr) SetUserListener(userListener user.OnUserListener) {
+func (u *LoginMgr) SetUserListener(userListener open_im_sdk_callback.OnUserListener) {
 	u.userListener = userListener
 }
 
-func (u *LoginMgr) login(userID, token string, cb common.Base, operationID string) {
+func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
 	log.Info(operationID, "login start... ", userID, token)
 	if u.justOnceFlag {
 		cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
@@ -108,6 +109,12 @@ func (u *LoginMgr) login(userID, token string, cb common.Base, operationID strin
 		return
 	}
 	u.db = db
+	log.Debug("test", "start", utils.GetCurrentTimestampByMill())
+	c, err := u.db.GetTestMessage(162325)
+	log.Debug("test", "end", utils.GetCurrentTimestampByMill())
+	if err == nil {
+		log.Debug("test", *c)
+	}
 	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir)
 	wsRespAsyn := ws.NewWsRespAsyn()
 	wsConn := ws.NewWsConn(u.connListener, token, userID)
@@ -158,7 +165,7 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener ws.ConnListener,
 	return true
 }
 
-func (u *LoginMgr) logout(callback common.Base, operationID string) {
+func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string) {
 	log.Info(operationID, "TriggerCmdLogout ws...")
 	err := common.TriggerCmdLogout(u.cmdWsCh)
 	if err != nil {
@@ -227,7 +234,7 @@ func CheckToken(userID, token string) error {
 	return utils.Wrap(err, "GetSelfUserInfoFromSvr failed "+operationID)
 }
 
-func (u *LoginMgr) uploadImage(callback common.Base, filePath string, token, obj string, operationID string) string {
+func (u *LoginMgr) uploadImage(callback open_im_sdk_callback.Base, filePath string, token, obj string, operationID string) string {
 	if obj == "cos" {
 		p := ws.NewPostApi(token, u.ImConfig().ApiAddr)
 		o := comm2.NewCOS(p)

@@ -6,6 +6,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 	"image"
+	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
@@ -45,7 +46,7 @@ import (
 	//	"time"
 )
 
-func (c *Conversation) GetAllConversationList(callback common.Base, operationID string) {
+func (c *Conversation) GetAllConversationList(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -56,7 +57,7 @@ func (c *Conversation) GetAllConversationList(callback common.Base, operationID 
 		log.NewInfo(operationID, "GetAllConversationList callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
-func (c *Conversation) GetConversationListSplit(callback common.Base, offset, count int, operationID string) {
+func (c *Conversation) GetConversationListSplit(callback open_im_sdk_callback.Base, offset, count int, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -67,7 +68,7 @@ func (c *Conversation) GetConversationListSplit(callback common.Base, offset, co
 		log.NewInfo(operationID, "GetConversationListSplit callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
-func (c *Conversation) SetConversationRecvMessageOpt(callback common.Base, conversationIDList string, opt int, operationID string) {
+func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList string, opt int, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -81,7 +82,7 @@ func (c *Conversation) SetConversationRecvMessageOpt(callback common.Base, conve
 	}()
 
 }
-func (c *Conversation) GetConversationRecvMessageOpt(callback common.Base, conversationIDList, operationID string) {
+func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -94,7 +95,7 @@ func (c *Conversation) GetConversationRecvMessageOpt(callback common.Base, conve
 		log.NewInfo(operationID, "GetConversationRecvMessageOpt callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
-func (c *Conversation) GetOneConversation(callback common.Base, sessionType int32, sourceID, operationID string) {
+func (c *Conversation) GetOneConversation(callback open_im_sdk_callback.Base, sessionType int32, sourceID, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -105,7 +106,7 @@ func (c *Conversation) GetOneConversation(callback common.Base, sessionType int3
 		log.NewInfo(operationID, "GetRecvFriendApplicationList callback: ", utils.StructToJsonString(result))
 	}()
 }
-func (c *Conversation) GetMultipleConversation(callback common.Base, conversationIDList string, operationID string) {
+func (c *Conversation) GetMultipleConversation(callback open_im_sdk_callback.Base, conversationIDList string, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -118,7 +119,7 @@ func (c *Conversation) GetMultipleConversation(callback common.Base, conversatio
 		log.NewInfo(operationID, "GetMultipleConversation callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
-func (c *Conversation) DeleteConversation(callback common.Base, conversationID string, operationID string) {
+func (c *Conversation) DeleteConversation(callback open_im_sdk_callback.Base, conversationID string, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -130,7 +131,7 @@ func (c *Conversation) DeleteConversation(callback common.Base, conversationID s
 		log.NewInfo(operationID, "DeleteConversation callback: ", sdk_params_callback.DeleteConversationCallback)
 	}()
 }
-func (c *Conversation) SetConversationDraft(callback common.Base, conversationID, draftText string, operationID string) {
+func (c *Conversation) SetConversationDraft(callback open_im_sdk_callback.Base, conversationID, draftText string, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -142,7 +143,7 @@ func (c *Conversation) SetConversationDraft(callback common.Base, conversationID
 		log.NewInfo(operationID, "SetConversationDraft callback: ", sdk_params_callback.SetConversationDraftCallback)
 	}()
 }
-func (c *Conversation) PinConversation(callback common.Base, conversationID string, isPinned bool, operationID string) {
+func (c *Conversation) PinConversation(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
 
 	if callback == nil {
 		return
@@ -155,7 +156,7 @@ func (c *Conversation) PinConversation(callback common.Base, conversationID stri
 		log.NewInfo(operationID, "PinConversation callback: ", sdk_params_callback.PinConversationDraftCallback)
 	}()
 }
-func (c *Conversation) GetTotalUnreadMsgCount(callback common.Base, operationID string) {
+func (c *Conversation) GetTotalUnreadMsgCount(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -168,28 +169,13 @@ func (c *Conversation) GetTotalUnreadMsgCount(callback common.Base, operationID 
 	}()
 }
 
-type OnConversationListener interface {
-	OnSyncServerStart()
-	OnSyncServerFinish()
-	OnSyncServerFailed()
-	OnNewConversation(conversationList string)
-	OnConversationChanged(conversationList string)
-	OnTotalUnreadMessageCountChanged(totalUnreadCount int64)
-}
-
 //
-func (c *Conversation) SetConversationListener(listener OnConversationListener) {
+func (c *Conversation) SetConversationListener(listener open_im_sdk_callback.OnConversationListener) {
 	if c.ConversationListener != nil {
 		log.Error("internal", "just only set on listener")
 		return
 	}
 	c.ConversationListener = listener
-}
-
-type OnAdvancedMsgListener interface {
-	OnRecvNewMessage(message string)
-	OnRecvC2CReadReceipt(msgReceiptList string)
-	OnRecvMessageRevoked(msgId string)
 }
 
 //
@@ -442,7 +428,7 @@ func msgStructToLocalChatLog(dst *db.LocalChatLog, src *sdk_struct.MsgStruct) {
 func localChatLogToMsgStruct(dst *sdk_struct.MsgStruct, src *db.LocalChatLog) {
 	copier.Copy(dst, src)
 }
-func (c *Conversation) checkErrAndUpdateMessage(callback common.SendMsgCallBack, errCode int32, err error, s *sdk_struct.MsgStruct, lc *db.LocalConversation, operationID string) {
+func (c *Conversation) checkErrAndUpdateMessage(callback open_im_sdk_callback.SendMsgCallBack, errCode int32, err error, s *sdk_struct.MsgStruct, lc *db.LocalConversation, operationID string) {
 	if err != nil {
 		if callback != nil {
 			c.updateMsgStatusAndTriggerConversation(s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc, operationID)
@@ -467,7 +453,7 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(clientMsgID, server
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.ch)
 
 }
-func (c *Conversation) getUserNameAndFaceUrlByUid(callback common.SendMsgCallBack, friendUserID, operationID string) (faceUrl, name string, err error) {
+func (c *Conversation) getUserNameAndFaceUrlByUid(callback open_im_sdk_callback.SendMsgCallBack, friendUserID, operationID string) (faceUrl, name string, err error) {
 	friendInfo, _ := c.db.GetFriendInfoByFriendUserID(friendUserID)
 	if friendInfo != nil {
 		if friendInfo.Remark != "" {
@@ -485,7 +471,7 @@ func (c *Conversation) getUserNameAndFaceUrlByUid(callback common.SendMsgCallBac
 
 }
 
-func (c *Conversation) SendMessage(callback common.SendMsgCallBack, message, recvID, groupID string, offlinePushInfo string, operationID string) {
+func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack, message, recvID, groupID string, offlinePushInfo string, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -617,7 +603,7 @@ func (c *Conversation) SendMessage(callback common.SendMsgCallBack, message, rec
 		c.sendMessageToServer(&s, lc, callback, delFile, &p, options, operationID)
 	}()
 }
-func (c *Conversation) SendMessageNotOss(callback common.SendMsgCallBack, message, recvID, groupID string, offlinePushInfo string, operationID string) {
+func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCallBack, message, recvID, groupID string, offlinePushInfo string, operationID string) {
 	go func() {
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
@@ -678,7 +664,7 @@ func (c *Conversation) SendMessageNotOss(callback common.SendMsgCallBack, messag
 
 	}()
 }
-func (c *Conversation) internalSendMessage(callback common.Base, s *sdk_struct.MsgStruct, recvID, groupID, operationID string, p *server_api_params.OfflinePushInfo, onlineUserOnly bool, options map[string]bool) error {
+func (c *Conversation) internalSendMessage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, recvID, groupID, operationID string, p *server_api_params.OfflinePushInfo, onlineUserOnly bool, options map[string]bool) error {
 	if recvID == "" && groupID == "" {
 		common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not be allowed"), operationID)
 	}
@@ -715,7 +701,7 @@ func (c *Conversation) internalSendMessage(callback common.Base, s *sdk_struct.M
 	return nil
 
 }
-func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.LocalConversation, callback common.SendMsgCallBack,
+func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.LocalConversation, callback open_im_sdk_callback.SendMsgCallBack,
 	delFile []string, offlinePushInfo *server_api_params.OfflinePushInfo, options map[string]bool, operationID string) {
 	//Protocol conversion
 	var wsMsgData server_api_params.MsgData
@@ -861,7 +847,7 @@ func (c *Conversation) CreateForwardMessage(m, operationID string) string {
 	s.Seq = 0
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) GetHistoryMessageList(callback common.Base, getMessageOptions, operationID string) {
+func (c *Conversation) GetHistoryMessageList(callback open_im_sdk_callback.Base, getMessageOptions, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -875,7 +861,7 @@ func (c *Conversation) GetHistoryMessageList(callback common.Base, getMessageOpt
 	}()
 }
 
-func (c *Conversation) RevokeMessage(callback common.Base, message string, operationID string) {
+func (c *Conversation) RevokeMessage(callback open_im_sdk_callback.Base, message string, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -888,7 +874,7 @@ func (c *Conversation) RevokeMessage(callback common.Base, message string, opera
 		log.NewInfo(operationID, "RevokeMessage callback: ", sdk_params_callback.RevokeMessageCallback)
 	}()
 }
-func (c *Conversation) TypingStatusUpdate(callback common.Base, recvID, msgTip, operationID string) {
+func (c *Conversation) TypingStatusUpdate(callback open_im_sdk_callback.Base, recvID, msgTip, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -900,7 +886,7 @@ func (c *Conversation) TypingStatusUpdate(callback common.Base, recvID, msgTip, 
 	}()
 }
 
-func (c *Conversation) MarkC2CMessageAsRead(callback common.Base, recvID string, msgIDList, operationID string) {
+func (c *Conversation) MarkC2CMessageAsRead(callback open_im_sdk_callback.Base, recvID string, msgIDList, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -920,7 +906,7 @@ func (c *Conversation) MarkC2CMessageAsRead(callback common.Base, recvID string,
 }
 
 ////Deprecated
-func (c *Conversation) MarkSingleMessageHasRead(callback common.Base, userID string) {
+func (c *Conversation) MarkSingleMessageHasRead(callback open_im_sdk_callback.Base, userID string) {
 	go func() {
 		//conversationID := c.GetConversationIDBySessionType(userID, constant.SingleChatType)
 		//if err := u.setSingleMessageHasRead(userID); err != nil {
@@ -946,7 +932,7 @@ func (c *Conversation) MarkSingleMessageHasRead(callback common.Base, userID str
 //	}()
 //}
 
-func (c *Conversation) MarkGroupMessageHasRead(callback common.Base, groupID string, operationID string) {
+func (c *Conversation) MarkGroupMessageHasRead(callback open_im_sdk_callback.Base, groupID string, operationID string) {
 	go func() {
 		//conversationID := c.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 		//if err := u.setGroupMessageHasRead(groupID); err != nil {
@@ -959,7 +945,7 @@ func (c *Conversation) MarkGroupMessageHasRead(callback common.Base, groupID str
 	}()
 }
 
-func (c *Conversation) DeleteMessageFromLocalStorage(callback common.Base, message string, operationID string) {
+func (c *Conversation) DeleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, message string, operationID string) {
 	go func() {
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
@@ -968,7 +954,7 @@ func (c *Conversation) DeleteMessageFromLocalStorage(callback common.Base, messa
 	}()
 }
 
-func (c *Conversation) ClearC2CHistoryMessage(callback common.Base, userID string, operationID string) {
+func (c *Conversation) ClearC2CHistoryMessage(callback open_im_sdk_callback.Base, userID string, operationID string) {
 	go func() {
 		c.clearC2CHistoryMessage(callback, userID, operationID)
 		callback.OnSuccess("")
@@ -976,7 +962,7 @@ func (c *Conversation) ClearC2CHistoryMessage(callback common.Base, userID strin
 	}()
 }
 
-func (c *Conversation) ClearGroupHistoryMessage(callback common.Base, groupID string, operationID string) {
+func (c *Conversation) ClearGroupHistoryMessage(callback open_im_sdk_callback.Base, groupID string, operationID string) {
 	go func() {
 		c.clearGroupHistoryMessage(callback, groupID, operationID)
 		callback.OnSuccess("")
@@ -984,7 +970,7 @@ func (c *Conversation) ClearGroupHistoryMessage(callback common.Base, groupID st
 	}()
 }
 
-func (c *Conversation) InsertSingleMessageToLocalStorage(callback common.Base, message, userID, sendID, operationID string) string {
+func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_callback.Base, message, userID, sendID, operationID string) string {
 	s := sdk_struct.MsgStruct{}
 	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 	localMessage := db.LocalChatLog{}
@@ -1001,7 +987,7 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(callback common.Base, m
 	return s.ClientMsgID
 }
 
-func (c *Conversation) InsertGroupMessageToLocalStorage(callback common.Base, message, groupID, sendID, operationID string) string {
+func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_callback.Base, message, groupID, sendID, operationID string) string {
 	s := sdk_struct.MsgStruct{}
 	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 	localMessage := db.LocalChatLog{}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
+	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
@@ -18,7 +19,7 @@ func init() {
 	validate = validator.New()
 }
 
-func CheckAnyErrCallback(callback Base, errCode int32, err error, operationID string) {
+func CheckAnyErrCallback(callback open_im_sdk_callback.Base, errCode int32, err error, operationID string) {
 	if err != nil {
 		errInfo := "operationID[" + operationID + "], " + "info[" + err.Error() + "]"
 		log.NewError(operationID, "checkErr ", errInfo)
@@ -26,27 +27,27 @@ func CheckAnyErrCallback(callback Base, errCode int32, err error, operationID st
 		runtime.Goexit()
 	}
 }
-func CheckConfigErrCallback(callback Base, err error, operationID string) {
+func CheckConfigErrCallback(callback open_im_sdk_callback.Base, err error, operationID string) {
 	CheckAnyErrCallback(callback, constant.ErrConfig.ErrCode, err, operationID)
 }
 
-func CheckTokenErrCallback(callback Base, err error, operationID string) {
+func CheckTokenErrCallback(callback open_im_sdk_callback.Base, err error, operationID string) {
 	CheckAnyErrCallback(callback, constant.ErrTokenInvalid.ErrCode, err, operationID)
 }
 
-func CheckDBErrCallback(callback Base, err error, operationID string) {
+func CheckDBErrCallback(callback open_im_sdk_callback.Base, err error, operationID string) {
 	CheckAnyErrCallback(callback, constant.ErrDB.ErrCode, err, operationID)
 }
 
-func CheckDataErrCallback(callback Base, err error, operationID string) {
+func CheckDataErrCallback(callback open_im_sdk_callback.Base, err error, operationID string) {
 	CheckAnyErrCallback(callback, constant.ErrData.ErrCode, err, operationID)
 }
 
-func CheckArgsErrCallback(callback Base, err error, operationID string) {
+func CheckArgsErrCallback(callback open_im_sdk_callback.Base, err error, operationID string) {
 	CheckAnyErrCallback(callback, constant.ErrArgs.ErrCode, err, operationID)
 }
 
-func CheckErrAndRespCallback(callback Base, err error, resp []byte, output interface{}, operationID string) {
+func CheckErrAndRespCallback(callback open_im_sdk_callback.Base, err error, resp []byte, output interface{}, operationID string) {
 	log.Debug(operationID, utils.GetSelfFuncName(), "args: ", string(resp))
 	if err = CheckErrAndResp(err, resp, output); err != nil {
 		log.Error(operationID, "CheckErrAndResp failed ", err.Error())
@@ -111,7 +112,7 @@ func CheckErrAndResp(err error, resp []byte, output interface{}) error {
 	return nil
 }
 
-func JsonUnmarshalAndArgsValidate(s string, args interface{}, callback Base, operationID string) error {
+func JsonUnmarshalAndArgsValidate(s string, args interface{}, callback open_im_sdk_callback.Base, operationID string) error {
 	err := json.Unmarshal([]byte(s), args)
 	if err != nil {
 		if callback != nil {
@@ -134,7 +135,7 @@ func JsonUnmarshalAndArgsValidate(s string, args interface{}, callback Base, ope
 	return nil
 }
 
-func JsonUnmarshalCallback(s string, args interface{}, callback Base, operationID string) error {
+func JsonUnmarshalCallback(s string, args interface{}, callback open_im_sdk_callback.Base, operationID string) error {
 	err := json.Unmarshal([]byte(s), args)
 	if err != nil {
 		if callback != nil {

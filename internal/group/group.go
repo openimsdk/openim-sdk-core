@@ -4,6 +4,7 @@ import (
 	"fmt"
 	comm "open_im_sdk/internal/common"
 	ws "open_im_sdk/internal/interaction"
+	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
@@ -13,28 +14,8 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-type OnGroupListener interface {
-	OnJoinedGroupAdded(groupInfo string)
-	OnJoinedGroupDeleted(groupInfo string)
-
-	OnGroupMemberAdded(groupMemberInfo string)
-	OnGroupMemberDeleted(groupMemberInfo string)
-
-	OnReceiveJoinGroupApplicationAdded(groupApplication string)
-	OnReceiveJoinGroupApplicationDeleted(groupApplication string)
-
-	OnGroupApplicationAdded(groupApplication string)
-	OnGroupApplicationDeleted(groupApplication string)
-
-	OnGroupInfoChanged(groupInfo string)
-	OnGroupMemberInfoChanged(groupMemberInfo string)
-
-	OnGroupApplicationAccepted(groupApplication string)
-	OnGroupApplicationRejected(groupApplication string)
-}
-
 type Group struct {
-	listener    OnGroupListener
+	listener    open_im_sdk_callback.OnGroupListener
 	loginUserID string
 	db          *db.DataBase
 	p           *ws.PostApi
@@ -197,7 +178,7 @@ func (g *Group) memberEnterNotification(msg *api.MsgData, operationID string) {
 	}
 }
 
-func (g *Group) createGroup(callback common.Base, group sdk.CreateGroupBaseInfoParam,
+func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam,
 	memberList sdk.CreateGroupMemberRoleParam, operationID string) *sdk.CreateGroupCallback {
 	apiReq := api.CreateGroupReq{}
 	apiReq.OperationID = operationID
@@ -215,7 +196,7 @@ func (g *Group) createGroup(callback common.Base, group sdk.CreateGroupBaseInfoP
 	return &temp
 }
 
-func (g *Group) joinGroup(groupID, reqMsg string, callback common.Base, operationID string) {
+func (g *Group) joinGroup(groupID, reqMsg string, callback open_im_sdk_callback.Base, operationID string) {
 	apiReq := api.JoinGroupReq{}
 	apiReq.OperationID = operationID
 	apiReq.ReqMessage = reqMsg
@@ -224,7 +205,7 @@ func (g *Group) joinGroup(groupID, reqMsg string, callback common.Base, operatio
 	g.SyncSelfGroupApplication(operationID)
 }
 
-func (g *Group) quitGroup(groupID string, callback common.Base, operationID string) {
+func (g *Group) quitGroup(groupID string, callback open_im_sdk_callback.Base, operationID string) {
 	apiReq := api.QuitGroupReq{}
 	apiReq.OperationID = operationID
 	apiReq.GroupID = groupID
@@ -233,14 +214,14 @@ func (g *Group) quitGroup(groupID string, callback common.Base, operationID stri
 	g.SyncJoinedGroupList(operationID)
 }
 
-func (g *Group) getJoinedGroupList(callback common.Base, operationID string) sdk.GetJoinedGroupListCallback {
+func (g *Group) getJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) sdk.GetJoinedGroupListCallback {
 	groupList, err := g.db.GetJoinedGroupList()
 	log.Info("this is rpc", groupList)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return groupList
 }
 
-func (g *Group) getGroupsInfo(groupIdList sdk.GetGroupsInfoParam, callback common.Base, operationID string) sdk.GetGroupsInfoCallback {
+func (g *Group) getGroupsInfo(groupIdList sdk.GetGroupsInfoParam, callback open_im_sdk_callback.Base, operationID string) sdk.GetGroupsInfoCallback {
 	groupList, err := g.db.GetJoinedGroupList()
 	common.CheckDBErrCallback(callback, err, operationID)
 	var result sdk.GetGroupsInfoCallback
@@ -290,7 +271,7 @@ func (g *Group) getGroupsInfoFromSvr(groupIDList []string, operationID string) (
 	return groupInfoList, nil
 }
 
-func (g *Group) setGroupInfo(callback common.Base, groupInfo sdk.SetGroupInfoParam, groupID, operationID string) {
+func (g *Group) setGroupInfo(callback open_im_sdk_callback.Base, groupInfo sdk.SetGroupInfoParam, groupID, operationID string) {
 	apiReq := api.SetGroupInfoReq{}
 	apiReq.GroupName = groupInfo.GroupName
 	apiReq.FaceURL = groupInfo.FaceURL
@@ -305,20 +286,20 @@ func (g *Group) setGroupInfo(callback common.Base, groupInfo sdk.SetGroupInfoPar
 }
 
 //todo
-func (g *Group) getGroupMemberList(callback common.Base, groupID string, filter, offset, count int32, operationID string) sdk.GetGroupMemberListCallback {
+func (g *Group) getGroupMemberList(callback open_im_sdk_callback.Base, groupID string, filter, offset, count int32, operationID string) sdk.GetGroupMemberListCallback {
 	groupInfoList, err := g.db.GetGroupMemberListSplit(groupID, filter, int(offset), int(count))
 	common.CheckDBErrCallback(callback, err, operationID)
 	return groupInfoList
 }
 
 //todo
-func (g *Group) getGroupMembersInfo(callback common.Base, groupID string, userIDList sdk.GetGroupMembersInfoParam, operationID string) sdk.GetGroupMembersInfoCallback {
+func (g *Group) getGroupMembersInfo(callback open_im_sdk_callback.Base, groupID string, userIDList sdk.GetGroupMembersInfoParam, operationID string) sdk.GetGroupMembersInfoCallback {
 	groupInfoList, err := g.db.GetGroupSomeMemberInfo(groupID, userIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return groupInfoList
 }
 
-func (g *Group) kickGroupMember(callback common.Base, groupID string, memberList sdk.KickGroupMemberParam, reason string, operationID string) sdk.KickGroupMemberCallback {
+func (g *Group) kickGroupMember(callback open_im_sdk_callback.Base, groupID string, memberList sdk.KickGroupMemberParam, reason string, operationID string) sdk.KickGroupMemberCallback {
 	apiReq := api.KickGroupMemberReq{}
 	apiReq.GroupID = groupID
 	apiReq.KickedUserIDList = memberList
@@ -332,7 +313,7 @@ func (g *Group) kickGroupMember(callback common.Base, groupID string, memberList
 
 //
 ////1
-func (g *Group) transferGroupOwner(callback common.Base, groupID, newOwnerUserID string, operationID string) {
+func (g *Group) transferGroupOwner(callback open_im_sdk_callback.Base, groupID, newOwnerUserID string, operationID string) {
 	apiReq := api.TransferGroupOwnerReq{}
 	apiReq.GroupID = groupID
 	apiReq.NewOwnerUserID = newOwnerUserID
@@ -343,7 +324,7 @@ func (g *Group) transferGroupOwner(callback common.Base, groupID, newOwnerUserID
 	g.syncGroupMemberByGroupID(groupID, operationID)
 }
 
-func (g *Group) inviteUserToGroup(callback common.Base, groupID, reason string, userList sdk.InviteUserToGroupParam, operationID string) sdk.InviteUserToGroupCallback {
+func (g *Group) inviteUserToGroup(callback open_im_sdk_callback.Base, groupID, reason string, userList sdk.InviteUserToGroupParam, operationID string) sdk.InviteUserToGroupCallback {
 	apiReq := api.InviteUserToGroupReq{}
 	apiReq.GroupID = groupID
 	apiReq.Reason = reason
@@ -358,7 +339,7 @@ func (g *Group) inviteUserToGroup(callback common.Base, groupID, reason string, 
 
 //
 ////1
-func (g *Group) getRecvGroupApplicationList(callback common.Base, operationID string) sdk.GetGroupApplicationListCallback {
+func (g *Group) getRecvGroupApplicationList(callback open_im_sdk_callback.Base, operationID string) sdk.GetGroupApplicationListCallback {
 	applicationList, err := g.db.GetAdminGroupApplication()
 	common.CheckDBErrCallback(callback, err, operationID)
 	return applicationList
@@ -376,7 +357,7 @@ func (g *Group) getRecvGroupApplicationListFromSvr(operationID string) ([]*api.G
 	return realData, nil
 }
 
-func (g *Group) processGroupApplication(callback common.Base, groupID, fromUserID, handleMsg string, handleResult int32, operationID string) {
+func (g *Group) processGroupApplication(callback open_im_sdk_callback.Base, groupID, fromUserID, handleMsg string, handleResult int32, operationID string) {
 	apiReq := api.ApplicationGroupResponseReq{}
 	apiReq.GroupID = groupID
 	apiReq.OperationID = operationID

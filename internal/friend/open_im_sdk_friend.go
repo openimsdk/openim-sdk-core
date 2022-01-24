@@ -15,13 +15,14 @@
 package friend
 
 import (
+	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
 )
 
-func (f *Friend) GetDesignatedFriendsInfo(callback common.Base, friendUserIDList string, operationID string) {
+func (f *Friend) GetDesignatedFriendsInfo(callback open_im_sdk_callback.Base, friendUserIDList string, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
 		return
@@ -37,7 +38,7 @@ func (f *Friend) GetDesignatedFriendsInfo(callback common.Base, friendUserIDList
 	}()
 }
 
-func (f *Friend) AddFriend(callback common.Base, userIDReqMsg string, operationID string) {
+func (f *Friend) AddFriend(callback open_im_sdk_callback.Base, userIDReqMsg string, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
 		return
@@ -53,7 +54,7 @@ func (f *Friend) AddFriend(callback common.Base, userIDReqMsg string, operationI
 	}()
 }
 
-func (f *Friend) GetRecvFriendApplicationList(callback common.Base, operationID string) {
+func (f *Friend) GetRecvFriendApplicationList(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
 		return
@@ -67,7 +68,7 @@ func (f *Friend) GetRecvFriendApplicationList(callback common.Base, operationID 
 	}()
 }
 
-func (f *Friend) GetSendFriendApplicationList(callback common.Base, operationID string) {
+func (f *Friend) GetSendFriendApplicationList(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
 		return
@@ -81,7 +82,7 @@ func (f *Friend) GetSendFriendApplicationList(callback common.Base, operationID 
 	}()
 }
 
-func (f *Friend) AcceptFriendApplication(callback common.Base, userIDHandleMsg string, operationID string) {
+func (f *Friend) AcceptFriendApplication(callback open_im_sdk_callback.Base, userIDHandleMsg string, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
 		return
@@ -97,7 +98,7 @@ func (f *Friend) AcceptFriendApplication(callback common.Base, userIDHandleMsg s
 	}()
 }
 
-func (f *Friend) RefuseFriendApplication(callback common.Base, userIDHandleMsg string, operationID string) {
+func (f *Friend) RefuseFriendApplication(callback open_im_sdk_callback.Base, userIDHandleMsg string, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
 		return
@@ -113,7 +114,7 @@ func (f *Friend) RefuseFriendApplication(callback common.Base, userIDHandleMsg s
 	}()
 }
 
-func (f *Friend) CheckFriend(callback common.Base, friendUserIDList string, operationID string) {
+func (f *Friend) CheckFriend(callback open_im_sdk_callback.Base, friendUserIDList string, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
 		return
@@ -129,7 +130,7 @@ func (f *Friend) CheckFriend(callback common.Base, friendUserIDList string, oper
 	}()
 }
 
-func (f *Friend) DeleteFriend(callback common.Base, friendUserID string, operationID string) {
+func (f *Friend) DeleteFriend(callback open_im_sdk_callback.Base, friendUserID string, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
 		return
@@ -143,7 +144,7 @@ func (f *Friend) DeleteFriend(callback common.Base, friendUserID string, operati
 	}()
 }
 
-func (f *Friend) GetFriendList(callback common.Base, operationID string) {
+func (f *Friend) GetFriendList(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
 		return
@@ -166,7 +167,7 @@ func (f *Friend) GetFriendList(callback common.Base, operationID string) {
 	}()
 }
 
-func (f *Friend) SetFriendRemark(callback common.Base, userIDRemark string, operationID string) {
+func (f *Friend) SetFriendRemark(callback open_im_sdk_callback.Base, userIDRemark string, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
 		return
@@ -182,7 +183,7 @@ func (f *Friend) SetFriendRemark(callback common.Base, userIDRemark string, oper
 	}()
 }
 
-func (f *Friend) AddBlack(callback common.Base, blackUserID, operationID string) {
+func (f *Friend) AddBlack(callback open_im_sdk_callback.Base, blackUserID, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
 		return
@@ -196,7 +197,7 @@ func (f *Friend) AddBlack(callback common.Base, blackUserID, operationID string)
 	}()
 }
 
-func (f *Friend) GetBlackList(callback common.Base, operationID string) {
+func (f *Friend) GetBlackList(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
 		return
@@ -211,7 +212,7 @@ func (f *Friend) GetBlackList(callback common.Base, operationID string) {
 	}()
 }
 
-func (f *Friend) RemoveBlack(callback common.Base, blackUserID, operationID string) {
+func (f *Friend) RemoveBlack(callback open_im_sdk_callback.Base, blackUserID, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
 		return
@@ -225,7 +226,7 @@ func (f *Friend) RemoveBlack(callback common.Base, blackUserID, operationID stri
 	}()
 }
 
-func (f *Friend) SetFriendListener(listener OnFriendshipListener) {
+func (f *Friend) SetFriendListener(listener open_im_sdk_callback.OnFriendshipListener) {
 	if listener == nil {
 		return
 	}

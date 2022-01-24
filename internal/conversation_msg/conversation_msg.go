@@ -8,6 +8,7 @@ import (
 	"open_im_sdk/internal/group"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/user"
+	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
@@ -21,8 +22,8 @@ type Conversation struct {
 	*ws.Ws
 	db                   *db.DataBase
 	p                    *ws.PostApi
-	ConversationListener OnConversationListener
-	msgListener          OnAdvancedMsgListener
+	ConversationListener open_im_sdk_callback.OnConversationListener
+	msgListener          open_im_sdk_callback.OnAdvancedMsgListener
 	ch                   chan common.Cmd2Value
 	loginUserID          string
 	platformID           int32
@@ -33,7 +34,7 @@ type Conversation struct {
 	common2.ObjectStorage
 }
 
-func (c *Conversation) SetMsgListener(msgListener OnAdvancedMsgListener) {
+func (c *Conversation) SetMsgListener(msgListener open_im_sdk_callback.OnAdvancedMsgListener) {
 	c.msgListener = msgListener
 }
 func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,

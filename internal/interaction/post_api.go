@@ -2,6 +2,7 @@ package interaction
 
 import (
 	"errors"
+	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/network"
 )
@@ -16,7 +17,7 @@ func NewPostApi(token string, apiAddress string) *PostApi {
 	return &PostApi{token: token, apiAddress: apiAddress}
 }
 
-func (p *PostApi) PostFatalCallback(callback common.Base, url string, data interface{}, output interface{}, operationID string) {
+func (p *PostApi) PostFatalCallback(callback open_im_sdk_callback.Base, url string, data interface{}, output interface{}, operationID string) {
 	content, err := network.Post2Api(p.apiAddress+url, data, p.token)
 	common.CheckErrAndRespCallback(callback, err, content, output, operationID)
 }
