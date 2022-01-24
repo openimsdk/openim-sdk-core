@@ -110,8 +110,8 @@ func GenUserRouterNoLock(uid string) *RefRouter {
 		RouteMap1[mName] = vf.Method(i)
 	}
 	wsRouter1.InitSDK(ConfigSvr, "0")
-	//wsRouter1.AddAdvancedMsgListener()
-	//wsRouter1.SetConversationListener()
+	wsRouter1.SetAdvancedMsgListener()
+	wsRouter1.SetConversationListener()
 	wrapSdkLog("SetFriendListener() ", uid)
 	wsRouter1.SetFriendListener()
 	wrapSdkLog("SetGroupListener() ", uid)

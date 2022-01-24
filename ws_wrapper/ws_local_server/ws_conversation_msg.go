@@ -50,100 +50,100 @@ func (wsRouter *WsFuncRouter) SendMessage(input string, operationID string) {
 
 }
 
-//
-//type AddAdvancedMsgListenerCallback struct {
-//	uid string
-//}
-//
-//func (a *AddAdvancedMsgListenerCallback) OnRecvNewMessage(message string) {
-//	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", message, "0"}, a.uid)
-//}
-//
-//func (a *AddAdvancedMsgListenerCallback) OnRecvC2CReadReceipt(msgReceiptList string) {
-//	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msgReceiptList, "0"}, a.uid)
-//}
-//
-//func (a *AddAdvancedMsgListenerCallback) OnRecvMessageRevoked(msgId string) {
-//	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msgId, "0"}, a.uid)
-//}
-//
-//func (wsRouter *WsFuncRouter) AddAdvancedMsgListener() {
-//	var msgCallback AddAdvancedMsgListenerCallback
-//	msgCallback.uid = wsRouter.uId
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	userWorker.AddAdvancedMsgListener(&msgCallback)
-//
-//}
-//
-//type ConversationCallback struct {
-//	uid string
-//}
-//
-//func (c *ConversationCallback) OnSyncServerStart() {
-//	var ed EventData
-//	ed.Event = cleanUpfuncName(runFuncName())
-//	ed.ErrCode = 0
-//	SendOneUserMessage(ed, c.uid)
-//}
-//func (c *ConversationCallback) OnSyncServerFinish() {
-//	var ed EventData
-//	ed.Event = cleanUpfuncName(runFuncName())
-//	ed.ErrCode = 0
-//	SendOneUserMessage(ed, c.uid)
-//}
-//func (c *ConversationCallback) OnSyncServerFailed() {
-//	var ed EventData
-//	ed.Event = cleanUpfuncName(runFuncName())
-//	ed.ErrCode = 0
-//	SendOneUserMessage(ed, c.uid)
-//}
-//func (c *ConversationCallback) OnNewConversation(conversationList string) {
-//	var ed EventData
-//	ed.Event = cleanUpfuncName(runFuncName())
-//	ed.ErrCode = 0
-//	ed.Data = conversationList
-//	SendOneUserMessage(ed, c.uid)
-//}
-//
-//func (c *ConversationCallback) OnConversationChanged(conversationList string) {
-//	var ed EventData
-//	ed.Event = cleanUpfuncName(runFuncName())
-//	ed.ErrCode = 0
-//	ed.Data = conversationList
-//	SendOneUserMessage(ed, c.uid)
-//}
-//func (c *ConversationCallback) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
-//	var ed EventData
-//	ed.Event = cleanUpfuncName(runFuncName())
-//	ed.ErrCode = 0
-//	ed.Data = int32ToString(totalUnreadCount)
-//	SendOneUserMessage(ed, c.uid)
-//}
-//
-//func (wsRouter *WsFuncRouter) SetConversationListener() {
-//	var ccb ConversationCallback
-//	ccb.uid = wsRouter.uId
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	userWorker.SetConversationListener(&ccb)
-//}
-//
-//func (wsRouter *WsFuncRouter) GetAllConversationList(input string, operationID string) {
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	userWorker.GetAllConversationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
-//}
-//func (wsRouter *WsFuncRouter) GetConversationListSplit(input string, operationID string) {
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		wrapSdkLog("unmarshal failed")
-//		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-//		return
-//	}
-//	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "offset", "count") {
-//		return
-//	}
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	userWorker.GetConversationListSplit(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["offset"].(int), m["count"].(int))
-//}
+type AddAdvancedMsgListenerCallback struct {
+	uid string
+}
+
+func (a *AddAdvancedMsgListenerCallback) OnRecvNewMessage(message string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", message, "0"}, a.uid)
+}
+
+func (a *AddAdvancedMsgListenerCallback) OnRecvC2CReadReceipt(msgReceiptList string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msgReceiptList, "0"}, a.uid)
+}
+
+func (a *AddAdvancedMsgListenerCallback) OnRecvMessageRevoked(msgId string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msgId, "0"}, a.uid)
+}
+
+func (wsRouter *WsFuncRouter) SetAdvancedMsgListener() {
+	var msgCallback AddAdvancedMsgListenerCallback
+	msgCallback.uid = wsRouter.uId
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.SetAdvancedMsgListener(&msgCallback)
+
+}
+
+type ConversationCallback struct {
+	uid string
+}
+
+func (c *ConversationCallback) OnSyncServerStart() {
+	var ed EventData
+	ed.Event = cleanUpfuncName(runFuncName())
+	ed.ErrCode = 0
+	SendOneUserMessage(ed, c.uid)
+}
+func (c *ConversationCallback) OnSyncServerFinish() {
+	var ed EventData
+	ed.Event = cleanUpfuncName(runFuncName())
+	ed.ErrCode = 0
+	SendOneUserMessage(ed, c.uid)
+}
+func (c *ConversationCallback) OnSyncServerFailed() {
+	var ed EventData
+	ed.Event = cleanUpfuncName(runFuncName())
+	ed.ErrCode = 0
+	SendOneUserMessage(ed, c.uid)
+}
+func (c *ConversationCallback) OnNewConversation(conversationList string) {
+	var ed EventData
+	ed.Event = cleanUpfuncName(runFuncName())
+	ed.ErrCode = 0
+	ed.Data = conversationList
+	SendOneUserMessage(ed, c.uid)
+}
+
+func (c *ConversationCallback) OnConversationChanged(conversationList string) {
+	var ed EventData
+	ed.Event = cleanUpfuncName(runFuncName())
+	ed.ErrCode = 0
+	ed.Data = conversationList
+	SendOneUserMessage(ed, c.uid)
+}
+func (c *ConversationCallback) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
+	var ed EventData
+	ed.Event = cleanUpfuncName(runFuncName())
+	ed.ErrCode = 0
+	ed.Data = int32ToString(totalUnreadCount)
+	SendOneUserMessage(ed, c.uid)
+}
+
+func (wsRouter *WsFuncRouter) SetConversationListener() {
+	var ccb ConversationCallback
+	ccb.uid = wsRouter.uId
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.SetConversationListener(&ccb)
+}
+
+func (wsRouter *WsFuncRouter) GetAllConversationList(input string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Conversation().GetAllConversationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
+}
+func (wsRouter *WsFuncRouter) GetConversationListSplit(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "offset", "count") {
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Conversation().GetConversationListSplit(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["offset"].(int), m["count"].(int), operationID)
+}
+
 //func (wsRouter *WsFuncRouter) SetConversationRecvMessageOpt(input string, operationID string) {
 //	m := make(map[string]interface{})
 //	if err := json.Unmarshal([]byte(input), &m); err != nil {

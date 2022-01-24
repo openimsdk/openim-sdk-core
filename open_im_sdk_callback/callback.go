@@ -47,7 +47,7 @@ type OnConversationListener interface {
 	OnSyncServerFailed()
 	OnNewConversation(conversationList string)
 	OnConversationChanged(conversationList string)
-	OnTotalUnreadMessageCountChanged(totalUnreadCount int64)
+	OnTotalUnreadMessageCountChanged(totalUnreadCount int32)
 }
 type OnAdvancedMsgListener interface {
 	OnRecvNewMessage(message string)
