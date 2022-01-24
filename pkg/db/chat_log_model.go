@@ -154,3 +154,10 @@ func (d *DataBase) GetNormalMsgSeq() (uint32, error) {
 	err := d.conn.Model(LocalChatLog{}).Select("IFNULL(max(seq),0)").Find(&seq).Error
 	return seq, utils.Wrap(err, "GetNormalMsgSeq")
 }
+func (d *DataBase) GetTestMessage(seq uint32) (*LocalChatLog, error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var c LocalChatLog
+	return &c, utils.Wrap(d.conn.Where("seq = ?",
+		seq).Find(&c).Error, "GetTestMessage failed")
+}

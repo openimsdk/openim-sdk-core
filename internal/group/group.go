@@ -16,19 +16,14 @@ import (
 type OnGroupListener interface {
 	OnJoinedGroupAdded(groupInfo string)
 	OnJoinedGroupDeleted(groupInfo string)
-
 	OnGroupMemberAdded(groupMemberInfo string)
 	OnGroupMemberDeleted(groupMemberInfo string)
-
 	OnReceiveJoinGroupApplicationAdded(groupApplication string)
 	OnReceiveJoinGroupApplicationDeleted(groupApplication string)
-
 	OnGroupApplicationAdded(groupApplication string)
 	OnGroupApplicationDeleted(groupApplication string)
-
 	OnGroupInfoChanged(groupInfo string)
 	OnGroupMemberInfoChanged(groupMemberInfo string)
-
 	OnGroupApplicationAccepted(groupApplication string)
 	OnGroupApplicationRejected(groupApplication string)
 }
