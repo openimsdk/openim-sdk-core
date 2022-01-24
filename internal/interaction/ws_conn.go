@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
@@ -14,26 +15,18 @@ import (
 	"time"
 )
 
-type ConnListener interface {
-	OnConnecting()
-	OnConnectSuccess()
-	OnConnectFailed(errCode int32, errMsg string)
-	OnKickedOffline()
-	OnUserTokenExpired()
-}
-
 const writeTimeoutSeconds = 30
 
 type WsConn struct {
 	stateMutex  sync.Mutex
 	conn        *websocket.Conn
 	loginState  int32
-	listener    ConnListener
+	listener    open_im_sdk_callback.ConnListener
 	token       string
 	loginUserID string
 }
 
-func NewWsConn(listener ConnListener, token string, loginUserID string) *WsConn {
+func NewWsConn(listener open_im_sdk_callback.ConnListener, token string, loginUserID string) *WsConn {
 	p := WsConn{listener: listener, token: token, loginUserID: loginUserID}
 	p.conn, _ = p.ReConn()
 	return &p
