@@ -40,5 +40,5 @@ func (d *DataBase) GetGroupInfoByGroupID(groupID string) (*LocalGroup, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var g LocalGroup
-	return &g, utils.Wrap(d.conn.Model(LocalGroup{}).Where("group_id = ?", groupID).Scan(&g).Error, "GetGroupList failed")
+	return &g, utils.Wrap(d.conn.Where("group_id = ?", groupID).Take(&g).Error, "GetGroupList failed")
 }

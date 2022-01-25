@@ -60,7 +60,7 @@ func (d *DataBase) GetFriendApplicationByBothID(fromUserID, toUserID string) (*L
 	defer d.mRWMutex.Unlock()
 
 	var friendRequest LocalFriendRequest
-	err := utils.Wrap(d.conn.Model(LocalFriendRequest{}).Where("from_user_id = ? AND to_user_id = ?", fromUserID, toUserID).Scan(&friendRequest).Error, "GetFriendApplicationByBothID failed")
+	err := utils.Wrap(d.conn.Where("from_user_id = ? AND to_user_id = ?", fromUserID, toUserID).Take(&friendRequest).Error, "GetFriendApplicationByBothID failed")
 
 	return &friendRequest, utils.Wrap(err, "GetFriendApplicationByBothID failed")
 }

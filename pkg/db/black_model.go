@@ -29,8 +29,8 @@ func (d *DataBase) GetBlackInfoByBlockUserID(blockUserID string) (*LocalBlack, e
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var black LocalBlack
-	return &black, utils.Wrap(d.conn.Model(LocalBlack{}).Where("owner_user_id = ? AND block_user_id = ? ",
-		d.loginUserID, blockUserID).Scan(&black).Error, "GetBlackInfoByBlockUserID failed")
+	return &black, utils.Wrap(d.conn.Where("owner_user_id = ? AND block_user_id = ? ",
+		d.loginUserID, blockUserID).Take(&black).Error, "GetBlackInfoByBlockUserID failed")
 }
 
 func (d *DataBase) GetBlackInfoList(blockUserIDList []string) ([]LocalBlack, error) {

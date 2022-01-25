@@ -46,8 +46,8 @@ func (d *DataBase) GetFriendInfoByFriendUserID(FriendUserID string) (*LocalFrien
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var friend LocalFriend
-	return &friend, utils.Wrap(d.conn.Model(LocalFriend{}).Where("owner_user_id = ? AND friend_user_id = ?",
-		d.loginUserID, FriendUserID).Scan(&friend).Error, "GetFriendInfoByFriendUserID failed")
+	return &friend, utils.Wrap(d.conn.Where("owner_user_id = ? AND friend_user_id = ?",
+		d.loginUserID, FriendUserID).Take(&friend).Error, "GetFriendInfoByFriendUserID failed")
 }
 
 func (d *DataBase) GetFriendInfoList(friendUserIDList []string) ([]*LocalFriend, error) {
