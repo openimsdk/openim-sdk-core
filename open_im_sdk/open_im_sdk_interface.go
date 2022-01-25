@@ -285,40 +285,38 @@ func CreateTextMessage(operationID string, text string) string {
 	return userForSDK.Conversation().CreateTextMessage(text, operationID)
 }
 
-//func CreateTextAtMessage(operationID string, text, atUserList string) string {
-//	return userForSDK.Conversation().CreateTextAtMessage(text, atUserList)
-//}
-//func CreateLocationMessage(operationID string, description string, longitude, latitude float64) string {
-//	return userForSDK.Conversation().CreateLocationMessage(description, longitude, latitude)
-//}
-//func CreateCustomMessage(operationID string, data, extension string, description string) string {
-//	return userForSDK.Conversation().CreateCustomMessage(data, extension, description)
-//}
-//func CreateQuoteMessage(operationID string, text string, message string) string {
-//	return userForSDK.Conversation().CreateQuoteMessage(text, message)
-//}
-//func CreateCardMessage(operationID string, cardInfo string) string {
-//	return userForSDK.Conversation().CreateCardMessage(cardInfo)
-//
-//}
-//func CreateVideoMessageFromFullPath(operationID string, videoFullPath string, videoType string, duration int64, snapshotFullPath string) string {
-//	return userForSDK.Conversation().CreateVideoMessageFromFullPath(videoFullPath, videoType, duration, snapshotFullPath)
-//}
-//func CreateImageMessageFromFullPath(operationID string, imageFullPath string) string {
-//	return userForSDK.Conversation().CreateImageMessageFromFullPath(imageFullPath)
-//}
-//func CreateSoundMessageFromFullPath(operationID string, soundPath string, duration int64) string {
-//	return userForSDK.Conversation().CreateSoundMessageFromFullPath(soundPath, duration)
-//}
-//func CreateFileMessageFromFullPath(operationID string, fileFullPath, fileName string) string {
-//	return userForSDK.Conversation().CreateFileMessageFromFullPath(fileFullPath, fileName)
-//}
-//func CreateImageMessage(operationID string, imagePath string) string {
-//	return userForSDK.Conversation().CreateImageMessage(imagePath)
-//}
-//func CreateImageMessageByURL(operationID string, sourcePicture, bigPicture, snapshotPicture string) string {
-//	return userForSDK.Conversation().CreateImageMessageByURL(sourcePicture, bigPicture, snapshotPicture)
-//}
+func CreateLocationMessage(operationID string, description string, longitude, latitude float64) string {
+	return userForSDK.Conversation().CreateLocationMessage(description, longitude, latitude, operationID)
+}
+func CreateCustomMessage(operationID string, data, extension string, description string) string {
+	return userForSDK.Conversation().CreateCustomMessage(data, extension, description, operationID)
+}
+func CreateQuoteMessage(operationID string, text string, message string) string {
+	return userForSDK.Conversation().CreateQuoteMessage(text, message, operationID)
+}
+func CreateCardMessage(operationID string, cardInfo string) string {
+	return userForSDK.Conversation().CreateCardMessage(cardInfo, operationID)
+
+}
+func CreateVideoMessageFromFullPath(operationID string, videoFullPath string, videoType string, duration int64, snapshotFullPath string) string {
+	return userForSDK.Conversation().CreateVideoMessageFromFullPath(videoFullPath, videoType, duration, snapshotFullPath, operationID)
+}
+func CreateImageMessageFromFullPath(operationID string, imageFullPath string) string {
+	return userForSDK.Conversation().CreateImageMessageFromFullPath(imageFullPath, operationID)
+}
+func CreateSoundMessageFromFullPath(operationID string, soundPath string, duration int64) string {
+	return userForSDK.Conversation().CreateSoundMessageFromFullPath(soundPath, duration, operationID)
+}
+func CreateFileMessageFromFullPath(operationID string, fileFullPath, fileName string) string {
+	return userForSDK.Conversation().CreateFileMessageFromFullPath(fileFullPath, fileName, operationID)
+}
+func CreateImageMessage(operationID string, imagePath string) string {
+	return userForSDK.Conversation().CreateImageMessage(imagePath, operationID)
+}
+func CreateImageMessageByURL(operationID string, sourcePicture, bigPicture, snapshotPicture string) string {
+	return userForSDK.Conversation().CreateImageMessageByURL(sourcePicture, bigPicture, snapshotPicture, operationID)
+}
+
 //func SendMessageNotOss(callback conversation_msg.SendMsgCallBack, operationID string, message, receiver, groupID string, onlineUserOnly bool, offlinePushInfo string) string {
 //	return userForSDK.Conversation().SendMessageNotOss(callback, message, receiver, groupID, onlineUserOnly, offlinePushInfo)
 //}
@@ -343,11 +341,11 @@ func CreateTextMessage(operationID string, text string) string {
 //func CreateMergerMessage(operationID string, messageList, title, summaryList string) string {
 //	return userForSDK.Conversation().CreateMergerMessage(messageList, title, summaryList)
 //}
-//
+
 //func CreateForwardMessage(operationID string, m string,) string {
 //	return userForSDK.Conversation().CreateForwardMessage(m)
 //}
-//
+
 func SendMessage(callback open_im_sdk_callback.SendMsgCallBack, operationID, message, recvID, groupID, offlinePushInfo string) {
 	userForSDK.Conversation().SendMessage(callback, message, recvID, groupID, offlinePushInfo, operationID)
 }

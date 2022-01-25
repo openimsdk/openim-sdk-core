@@ -73,7 +73,7 @@ func (d *DataBase) GetMessage(ClientMsgID string) (*LocalChatLog, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var c LocalChatLog
-	return &c, utils.Wrap(d.conn.Where("client_msg_id = ?",
+	return &c, utils.Wrap(d.conn.Model(LocalChatLog{}).Where("client_msg_id = ?",
 		ClientMsgID).Scan(&c).Error, "GetMessage failed")
 }
 func (d *DataBase) UpdateColumnsMessage(ClientMsgID string, args map[string]interface{}) error {

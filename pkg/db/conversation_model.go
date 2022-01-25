@@ -50,7 +50,7 @@ func (d *DataBase) GetConversation(conversationID string) (*LocalConversation, e
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var c LocalConversation
-	return &c, utils.Wrap(d.conn.Where("conversation_id = ?",
+	return &c, utils.Wrap(d.conn.Model(LocalConversation{}).Where("conversation_id = ?",
 		conversationID).Scan(&c).Error, "GetConversation failed")
 }
 
