@@ -454,8 +454,8 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(clientMsgID, server
 
 }
 func (c *Conversation) getUserNameAndFaceUrlByUid(callback open_im_sdk_callback.SendMsgCallBack, friendUserID, operationID string) (faceUrl, name string, err error) {
-	friendInfo, _ := c.db.GetFriendInfoByFriendUserID(friendUserID)
-	if friendInfo != nil {
+	friendInfo, err := c.db.GetFriendInfoByFriendUserID(friendUserID)
+	if err == nil {
 		if friendInfo.Remark != "" {
 			return friendInfo.FaceURL, friendInfo.Remark, nil
 		} else {
