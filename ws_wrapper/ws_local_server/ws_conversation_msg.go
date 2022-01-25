@@ -229,288 +229,276 @@ func (wsRouter *WsFuncRouter) GetConversationListSplit(input string, operationID
 //	userWorker.GetTotalUnreadMsgCount(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
 //}
 //
-//func (wsRouter *WsFuncRouter) CreateTextAtMessage(input string, operationID string) {
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		wrapSdkLog("unmarshal failed")
-//		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-//		return
-//	}
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "text", "atUserList") {
-//		return
-//	}
-//	msg := userWorker.CreateTextAtMessage(m["text"].(string), m["atUserList"].(string))
-//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
-//}
-//
-//func (wsRouter *WsFuncRouter) CreateLocationMessage(input string, operationID string) {
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		wrapSdkLog("unmarshal failed")
-//		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-//		return
-//	}
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "description", "longitude", "latitude") {
-//		return
-//	}
-//	msg := userWorker.CreateLocationMessage(m["description"].(string), m["longitude"].(float64), m["latitude"].(float64))
-//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
-//}
-//
-///*
-//func CreateCustomMessage(data, extension []byte, description string) string {
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		wrapSdkLog("unmarshal failed")
-//	}
-//	msg := open_im_sdk.CreateLocationMessage(m["description"].(string), m["longitude"].(float64), m["latitude"].(float64))
-//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg})
-//}
-//CreateCustomMessage(data, extension string, description string) string
-//*/
-//
-//func (wsRouter *WsFuncRouter) CreateCustomMessage(input string, operationID string) {
-//	wrapSdkLog("CreateCustomMessage", input, operationID)
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		wrapSdkLog("unmarshal failed", operationID)
-//		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-//		return
-//	}
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "data", "extension", "description") {
-//		wrapSdkLog("key not in, failed", operationID)
-//		return
-//	}
-//	wrapSdkLog("GlobalSendMessage", operationID)
-//	msg := userWorker.CreateCustomMessage(m["data"].(string), m["message"].(string), m["description"].(string))
-//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
-//}
-//
-//func (wsRouter *WsFuncRouter) CreateQuoteMessage(input string, operationID string) {
-//	wrapSdkLog("CreateQuoteMessage", input, operationID)
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		wrapSdkLog("unmarshal failed", operationID)
-//		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-//		return
-//	}
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "text", "message") {
-//		wrapSdkLog("key not in, failed", operationID)
-//		return
-//	}
-//	wrapSdkLog("GlobalSendMessage", operationID)
-//	msg := userWorker.CreateQuoteMessage(m["text"].(string), m["message"].(string))
-//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
-//}
-//
-//func (wsRouter *WsFuncRouter) CreateVideoMessageFromFullPath(input string, operationID string) {
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		wrapSdkLog("unmarshal failed")
-//		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-//		return
-//	}
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "videoFullPath", "videoType", "duration", "snapshotFullPath") {
-//		return
-//	}
-//	msg := userWorker.CreateVideoMessageFromFullPath(m["videoFullPath"].(string), m["videoType"].(string), int64(m["duration"].(float64)), m["snapshotFullPath"].(string))
-//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
-//}
-//
-//func (wsRouter *WsFuncRouter) CreateImageMessageFromFullPath(input string, operationID string) {
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		wrapSdkLog("unmarshal failed")
-//		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-//		return
-//	}
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "imageFullPath") {
-//		return
-//	}
-//	msg := userWorker.CreateImageMessageFromFullPath(m["imageFullPath"].(string))
-//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
-//}
-//
-//func (wsRouter *WsFuncRouter) CreateSoundMessageFromFullPath(input string, operationID string) {
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		wrapSdkLog("unmarshal failed")
-//		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-//		return
-//	}
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "soundPath", "duration") {
-//		return
-//	}
-//	msg := userWorker.CreateSoundMessageFromFullPath(m["soundPath"].(string), int64(m["duration"].(float64)))
-//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
-//}
-//
-//func (wsRouter *WsFuncRouter) CreateMergerMessage(input string, operationID string) {
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		wrapSdkLog("unmarshal failed")
-//		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-//		return
-//	}
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "messageList", "title", "summaryList") {
-//		return
-//	}
-//	msg := userWorker.CreateMergerMessage(m["messageList"].(string), m["title"].(string), m["summaryList"].(string))
-//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
-//}
-//
-//func (wsRouter *WsFuncRouter) CreateForwardMessage(m string, operationID string) {
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	msg := userWorker.CreateForwardMessage(m)
-//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
-//}
-//
-//func (wsRouter *WsFuncRouter) GetHistoryMessageList(getMessageOptions string, operationID string) {
-//	var sc SendCallback
-//	sc.uid = wsRouter.uId
-//	sc.funcName = runFuncName()
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	userWorker.GetHistoryMessageList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, getMessageOptions)
-//}
-//
-//func (wsRouter *WsFuncRouter) RevokeMessage(message string, operationID string) {
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	userWorker.RevokeMessage(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, message)
-//}
-//
-//func (wsRouter *WsFuncRouter) TypingStatusUpdate(input string, operationID string) {
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		wrapSdkLog("unmarshal failed")
-//		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-//		return
-//	}
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "receiver", "msgTip") {
-//		return
-//	}
-//	userWorker.TypingStatusUpdate(m["receiver"].(string), m["msgTip"].(string))
-//}
-//
-//func (wsRouter *WsFuncRouter) MarkC2CMessageAsRead(input string, operationID string) {
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		wrapSdkLog("unmarshal failed")
-//		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-//		return
-//	}
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "receiver", "msgIDList") {
-//		return
-//	}
-//	userWorker.MarkC2CMessageAsRead(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["receiver"].(string), m["msgIDList"].(string))
-//}
-//
-//func (wsRouter *WsFuncRouter) MarkSingleMessageHasRead(userID string, operationID string) {
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	userWorker.MarkSingleMessageHasRead(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, userID)
-//}
-//
-//func (wsRouter *WsFuncRouter) MarkGroupMessageHasRead(groupID string, operationID string) {
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	userWorker.MarkGroupMessageHasRead(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, groupID)
-//}
-//
-//func (wsRouter *WsFuncRouter) DeleteMessageFromLocalStorage(message string, operationID string) {
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	userWorker.DeleteMessageFromLocalStorage(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, message)
-//}
-//
-//func (wsRouter *WsFuncRouter) InsertSingleMessageToLocalStorage(input string, operationID string) {
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		wrapSdkLog("unmarshal failed")
-//		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-//		return
-//	}
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "message", "userID", "sender") {
-//		return
-//	}
-//	userWorker.InsertSingleMessageToLocalStorage(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["message"].(string), m["userID"].(string), m["sender"].(string))
-//}
-//
+func (wsRouter *WsFuncRouter) CreateTextAtMessage(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "text", "atUserIDList") {
+		return
+	}
+	msg := userWorker.Conversation().CreateTextAtMessage(m["text"].(string), m["atUserIDList"].(string), operationID)
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+}
+
+func (wsRouter *WsFuncRouter) CreateLocationMessage(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "description", "longitude", "latitude") {
+		return
+	}
+	msg := userWorker.Conversation().CreateLocationMessage(m["description"].(string), m["longitude"].(float64), m["latitude"].(float64), operationID)
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+}
+func (wsRouter *WsFuncRouter) CreateCustomMessage(input string, operationID string) {
+	wrapSdkLog("CreateCustomMessage", input, operationID)
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed", operationID)
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "data", "extension", "description") {
+		wrapSdkLog("key not in, failed", operationID)
+		return
+	}
+	wrapSdkLog("GlobalSendMessage", operationID)
+	msg := userWorker.Conversation().CreateCustomMessage(m["data"].(string), m["message"].(string), m["description"].(string), operationID)
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+}
+
+func (wsRouter *WsFuncRouter) CreateQuoteMessage(input string, operationID string) {
+	wrapSdkLog("CreateQuoteMessage", input, operationID)
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed", operationID)
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "text", "message") {
+		wrapSdkLog("key not in, failed", operationID)
+		return
+	}
+	wrapSdkLog("GlobalSendMessage", operationID)
+	msg := userWorker.Conversation().CreateQuoteMessage(m["text"].(string), m["message"].(string), operationID)
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+}
+
+func (wsRouter *WsFuncRouter) CreateVideoMessageFromFullPath(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "videoFullPath", "videoType", "duration", "snapshotFullPath") {
+		return
+	}
+	msg := userWorker.Conversation().CreateVideoMessageFromFullPath(m["videoFullPath"].(string), m["videoType"].(string), int64(m["duration"].(float64)), m["snapshotFullPath"].(string), operationID)
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+}
+
+func (wsRouter *WsFuncRouter) CreateImageMessageFromFullPath(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "imageFullPath") {
+		return
+	}
+	msg := userWorker.Conversation().CreateImageMessageFromFullPath(m["imageFullPath"].(string), operationID)
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+}
+
+func (wsRouter *WsFuncRouter) CreateSoundMessageFromFullPath(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "soundPath", "duration") {
+		return
+	}
+	msg := userWorker.Conversation().CreateSoundMessageFromFullPath(m["soundPath"].(string), int64(m["duration"].(float64)), operationID)
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+}
+
+func (wsRouter *WsFuncRouter) CreateMergerMessage(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "messageList", "title", "summaryList") {
+		return
+	}
+	msg := userWorker.Conversation().CreateMergerMessage(m["messageList"].(string), m["title"].(string), m["summaryList"].(string), operationID)
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+}
+
+func (wsRouter *WsFuncRouter) CreateForwardMessage(m string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	msg := userWorker.Conversation().CreateForwardMessage(m, operationID)
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+}
+
+func (wsRouter *WsFuncRouter) GetHistoryMessageList(getMessageOptions string, operationID string) {
+	var sc SendCallback
+	sc.uid = wsRouter.uId
+	sc.funcName = runFuncName()
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Conversation().GetHistoryMessageList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, getMessageOptions, operationID)
+}
+
+func (wsRouter *WsFuncRouter) RevokeMessage(message string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Conversation().RevokeMessage(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, message, operationID)
+}
+
+func (wsRouter *WsFuncRouter) TypingStatusUpdate(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "recvID", "msgTip") {
+		return
+	}
+	userWorker.Conversation().TypingStatusUpdate(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["recvID"].(string), m["msgTip"].(string), operationID)
+}
+
+func (wsRouter *WsFuncRouter) MarkC2CMessageAsRead(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "recvID", "msgIDList") {
+		return
+	}
+	userWorker.Conversation().MarkC2CMessageAsRead(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["recvID"].(string), m["msgIDList"].(string), operationID)
+}
+
+func (wsRouter *WsFuncRouter) MarkSingleMessageHasRead(userID string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Conversation().MarkSingleMessageHasRead(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, userID)
+}
+
+func (wsRouter *WsFuncRouter) MarkGroupMessageHasRead(groupID string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Conversation().MarkGroupMessageHasRead(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, groupID, operationID)
+}
+
+func (wsRouter *WsFuncRouter) DeleteMessageFromLocalStorage(message string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Conversation().DeleteMessageFromLocalStorage(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, message, operationID)
+}
+
+func (wsRouter *WsFuncRouter) InsertSingleMessageToLocalStorage(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "message", "userID", "sendID") {
+		return
+	}
+	userWorker.Conversation().InsertSingleMessageToLocalStorage(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["message"].(string), m["userID"].(string), m["sendID"].(string), operationID)
+}
+
 //func (wsRouter *WsFuncRouter) FindMessages(messageIDList string, operationID string) {
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	userWorker.FindMessages(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, messageIDList)
+//	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+//	userWorker.Conversation().FindMessages(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, messageIDList)
 //}
-//
-//func (wsRouter *WsFuncRouter) CreateImageMessageByURL(input string, operationID string) {
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		wrapSdkLog("unmarshal failed")
-//		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-//		return
-//	}
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "sourcePicture", "bigPicture", "snapshotPicture") {
-//		return
-//	}
-//	msg := userWorker.CreateImageMessageByURL(m["sourcePicture"].(string), m["bigPicture"].(string), m["snapshotPicture"].(string))
-//
-//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
-//
-//}
-//
-//func (wsRouter *WsFuncRouter) CreateSoundMessageByURL(input string, operationID string) {
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		wrapSdkLog("unmarshal failed")
-//		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-//		return
-//	}
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "soundBaseInfo") {
-//		return
-//	}
-//	msg := userWorker.CreateSoundMessageByURL(m["soundBaseInfo"].(string))
-//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
-//}
-//
-//func (wsRouter *WsFuncRouter) CreateVideoMessageByURL(input string, operationID string) {
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		wrapSdkLog("unmarshal failed")
-//		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-//		return
-//	}
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "videoBaseInfo") {
-//		return
-//	}
-//	msg := userWorker.CreateVideoMessageByURL(m["videoBaseInfo"].(string))
-//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
-//}
-//
-//func (wsRouter *WsFuncRouter) CreateFileMessageByURL(input string, operationID string) {
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		wrapSdkLog("unmarshal failed")
-//		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-//		return
-//	}
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "fileBaseInfo") {
-//		return
-//	}
-//
-//	msg := userWorker.CreateFileMessageByURL(m["fileBaseInfo"].(string))
-//	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
-//
-//}
+
+func (wsRouter *WsFuncRouter) CreateImageMessageByURL(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "sourcePicture", "bigPicture", "snapshotPicture") {
+		return
+	}
+	msg := userWorker.Conversation().CreateImageMessageByURL(m["sourcePicture"].(string), m["bigPicture"].(string), m["snapshotPicture"].(string), operationID)
+
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+
+}
+
+func (wsRouter *WsFuncRouter) CreateSoundMessageByURL(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "soundBaseInfo") {
+		return
+	}
+	msg := userWorker.Conversation().CreateSoundMessageByURL(m["soundBaseInfo"].(string), operationID)
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+}
+
+func (wsRouter *WsFuncRouter) CreateVideoMessageByURL(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "videoBaseInfo") {
+		return
+	}
+	msg := userWorker.Conversation().CreateVideoMessageByURL(m["videoBaseInfo"].(string), operationID)
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+}
+
+func (wsRouter *WsFuncRouter) CreateFileMessageByURL(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "fileBaseInfo") {
+		return
+	}
+
+	msg := userWorker.Conversation().CreateFileMessageByURL(m["fileBaseInfo"].(string), operationID)
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+
+}
+
 //
 //func (wsRouter *WsFuncRouter) SendMessageNotOss(input string, operationID string) {
 //	m := make(map[string]interface{})

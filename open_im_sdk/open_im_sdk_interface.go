@@ -350,9 +350,10 @@ func SendMessage(callback open_im_sdk_callback.SendMsgCallBack, operationID, mes
 	userForSDK.Conversation().SendMessage(callback, message, recvID, groupID, offlinePushInfo, operationID)
 }
 
-//func GetHistoryMessageList(callback common.Base, operationID string, getMessageOptions string) {
-//	userForSDK.Conversation().GetHistoryMessageList(callback, getMessageOptions)
-//}
+func GetHistoryMessageList(callback open_im_sdk_callback.Base, operationID string, getMessageOptions string) {
+	userForSDK.Conversation().GetHistoryMessageList(callback, getMessageOptions, operationID)
+}
+
 //func RevokeMessage(callback common.Base, operationID string, message string) {
 //	userForSDK.Conversation().RevokeMessage(callback, message)
 //}

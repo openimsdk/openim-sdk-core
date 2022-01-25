@@ -28,10 +28,10 @@ const SetConversationDraftCallback = constant.SuccessCallbackDefault
 const PinConversationDraftCallback = constant.SuccessCallbackDefault
 
 type GetHistoryMessageListParams struct {
-	UserID   string                `json:"userID"`
-	GroupID  string                `json:"groupID"`
-	StartMsg *sdk_struct.MsgStruct `json:"startMsg"`
-	Count    int                   `json:"count"`
+	UserID           string `json:"userID"`
+	GroupID          string `json:"groupID"`
+	StartClientMsgID string `json:"startClientMsgID"`
+	Count            int    `json:"count"`
 }
 type GetHistoryMessageListCallback []*db.LocalChatLog
 

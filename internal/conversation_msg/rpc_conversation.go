@@ -143,22 +143,26 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 		conversationID = c.GetConversationIDBySessionType(sourceID, constant.SingleChatType)
 		sessionType = constant.SingleChatType
 	}
-	if req.StartMsg == nil {
+	if req.StartClientMsgID == "" {
 		lc, err := c.db.GetConversation(conversationID)
 		common.CheckDBErrCallback(callback, err, operationID)
-		if lc == nil {
-			startTime = 0
-		} else {
-			startTime = lc.LatestMsgSendTime + TimeOffset
-		}
+		startTime = lc.LatestMsgSendTime + TimeOffset
 
 	} else {
-		startTime = req.StartMsg.SendTime
+		m, err := c.db.GetMessage(req.StartClientMsgID)
+		common.CheckDBErrCallback(callback, err, operationID)
+		startTime = m.SendTime
 	}
 	log.Info(operationID, "sourceID:", sourceID, "startTime:", startTime, "count:", req.Count)
-	list, err := c.db.GetMessageList(sourceID, sessionType, req.Count, startTime)
-	common.CheckDBErrCallback(callback, err, operationID)
-	return list
+	if sessionType == constant.SingleChatType && sourceID == c.loginUserID {
+		list, err := c.db.GetSelfMessageList(sourceID, sessionType, req.Count, startTime)
+		common.CheckDBErrCallback(callback, err, operationID)
+		return list
+	} else {
+		list, err := c.db.GetMessageList(sourceID, sessionType, req.Count, startTime)
+		common.CheckDBErrCallback(callback, err, operationID)
+		return list
+	}
 
 }
 func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req sdk.RevokeMessageParams, operationID string) {
@@ -267,7 +271,7 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 	common.JsonUnmarshalCallback(LocalConversation.LatestMsg, &latestMsg, callback, operationID)
 
 	if s.ClientMsgID == latestMsg.ClientMsgID { //If the deleted message is the latest message of the conversation, update the latest message of the conversation
-		list, err := c.db.GetMessageList(sourceID, int(s.SessionType), 1, s.SendTime+TimeOffset)
+		list, err := c.db.GetMessageList(sourceID, int(s.SessionType), 1, s.SendTime)
 		common.CheckDBErrCallback(callback, err, operationID)
 
 		conversation.ConversationID = conversationID

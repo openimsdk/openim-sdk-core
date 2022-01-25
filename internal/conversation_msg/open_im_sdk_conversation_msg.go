@@ -17,6 +17,7 @@ import (
 	"open_im_sdk/sdk_struct"
 	"os"
 	"runtime"
+	"sort"
 	"sync"
 )
 
@@ -425,8 +426,8 @@ func (c *Conversation) CreateImageMessageByURL(sourcePicture, bigPicture, snapsh
 func msgStructToLocalChatLog(dst *db.LocalChatLog, src *sdk_struct.MsgStruct) {
 	copier.Copy(dst, src)
 }
-func localChatLogToMsgStruct(dst *sdk_struct.MsgStruct, src *db.LocalChatLog) {
-	copier.Copy(dst, src)
+func localChatLogToMsgStruct(dst *sdk_struct.NewMsgList, src []*db.LocalChatLog) {
+	copier.Copy(dst, &src)
 }
 func (c *Conversation) checkErrAndUpdateMessage(callback open_im_sdk_callback.SendMsgCallBack, errCode int32, err error, s *sdk_struct.MsgStruct, lc *db.LocalConversation, operationID string) {
 	if err != nil {
@@ -854,12 +855,22 @@ func (c *Conversation) GetHistoryMessageList(callback open_im_sdk_callback.Base,
 		return
 	}
 	go func() {
+		var messageList sdk_struct.NewMsgList
 		log.NewInfo(operationID, "GetHistoryMessageList args: ", getMessageOptions)
 		var unmarshalParams sdk_params_callback.GetHistoryMessageListParams
 		common.JsonUnmarshalCallback(getMessageOptions, &unmarshalParams, callback, operationID)
 		result := c.getHistoryMessageList(callback, unmarshalParams, operationID)
-		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		log.NewInfo(operationID, "GetHistoryMessageList callback: ", utils.StructToJsonStringDefault(result))
+		localChatLogToMsgStruct(&messageList, result)
+		for _, v := range messageList {
+			err := c.msgHandleByContentType(v)
+			if err != nil {
+				log.Error(operationID, "Parsing data error:", err.Error(), v)
+				continue
+			}
+		}
+		sort.Sort(messageList)
+		callback.OnSuccess(utils.StructToJsonStringDefault(messageList))
+		log.NewInfo(operationID, "GetHistoryMessageList callback: ", utils.StructToJsonStringDefault(messageList))
 	}()
 }
 
@@ -1027,7 +1038,6 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 //		}
 //	}()
 //}
-//
 
 func getImageInfo(filePath string) (*sdk_struct.ImageInfo, error) {
 	file, err := os.Open(filePath)

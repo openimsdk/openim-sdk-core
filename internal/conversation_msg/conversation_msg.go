@@ -75,7 +75,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	}
 	var insertMsg, updateMsg []*db.LocalChatLog
 	var exceptionMsg []*db.LocalErrChatLog
-	var newMessages, msgReadList, msgRevokeList NewMsgList
+	var newMessages, msgReadList, msgRevokeList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory bool
 	conversationChangedSet := make(map[string]db.LocalConversation)
 	newConversationSet := make(map[string]db.LocalConversation)
@@ -288,7 +288,7 @@ func (c *Conversation) revokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 	}
 
 }
-func (c *Conversation) newMessage(newMessagesList NewMsgList) {
+func (c *Conversation) newMessage(newMessagesList sdk_struct.NewMsgList) {
 	sort.Sort(newMessagesList)
 	for _, w := range newMessagesList {
 		log.Info("internal", "newMessage: ", w.ClientMsgID)
@@ -332,7 +332,7 @@ func (c *Conversation) doMsgReadState(msgReadList []*sdk_struct.MsgStruct) {
 		for _, v := range msgIdList {
 			t := new(db.LocalChatLog)
 			t.ClientMsgID = v
-			t.IsRead = constant.HasRead
+			t.IsRead = true
 			err := c.db.UpdateMessage(t)
 			if err != nil {
 				log.Error("internal", "setMessageHasReadByMsgID err:", err, "ClientMsgID", v)
@@ -580,21 +580,4 @@ func mapConversationToList(m map[string]db.LocalConversation) (cs []*db.LocalCon
 		cs = append(cs, &v)
 	}
 	return cs
-}
-
-type NewMsgList []*sdk_struct.MsgStruct
-
-// Implement the sort.Interface interface to get the number of elements method
-func (n NewMsgList) Len() int {
-	return len(n)
-}
-
-//Implement the sort.Interface interface comparison element method
-func (n NewMsgList) Less(i, j int) bool {
-	return n[i].SendTime < n[j].SendTime
-}
-
-//Implement the sort.Interface interface exchange element method
-func (n NewMsgList) Swap(i, j int) {
-	n[i], n[j] = n[j], n[i]
 }

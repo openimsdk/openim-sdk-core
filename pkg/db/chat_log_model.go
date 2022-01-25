@@ -117,7 +117,7 @@ func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, start
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []LocalChatLog
-	err = utils.Wrap(d.conn.Where("(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? And send_time < ?", sourceID, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
+	err = utils.Wrap(d.conn.Debug().Where("(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? And send_time < ?", sourceID, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
 		Order("send_time DESC").Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
 	for _, v := range messageList {
 		v1 := v
@@ -140,7 +140,7 @@ func (d *DataBase) GetSelfMessageList(sourceID string, sessionType, count int, s
 func (d *DataBase) UpdateMessageHasRead(sendID string, msgIDList []string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Model(LocalChatLog{}).Where("send_id=? And is_read=?AND session_type=?AND client_msg_id in ?", sendID, constant.NotRead, constant.SingleChatType, msgIDList).Updates(LocalChatLog{IsRead: constant.HasRead})
+	t := d.conn.Model(LocalChatLog{}).Where("send_id=? And is_read=?AND session_type=?AND client_msg_id in ?", sendID, constant.NotRead, constant.SingleChatType, msgIDList).Updates(LocalChatLog{IsRead: true})
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}

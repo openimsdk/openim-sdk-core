@@ -899,6 +899,23 @@ type MsgStruct struct {
 	//}
 }
 
+type NewMsgList []*MsgStruct
+
+// Implement the sort.Interface interface to get the number of elements method
+func (n NewMsgList) Len() int {
+	return len(n)
+}
+
+//Implement the sort.Interface interface comparison element method
+func (n NewMsgList) Less(i, j int) bool {
+	return n[i].SendTime < n[j].SendTime
+}
+
+//Implement the sort.Interface interface exchange element method
+func (n NewMsgList) Swap(i, j int) {
+	n[i], n[j] = n[j], n[i]
+}
+
 type IMConfig struct {
 	Platform      int32  `json:"platform"`
 	ApiAddr       string `json:"api_addr"`
