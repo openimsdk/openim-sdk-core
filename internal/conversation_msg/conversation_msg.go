@@ -464,10 +464,9 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		if err != nil {
 			log.Error("internal", "getMultipleConversationModel err :", err.Error())
 		} else {
-			if cLists != nil {
-				log.Info("internal", "getMultipleConversationModel success :", cLists)
-				c.ConversationListener.OnConversationChanged(utils.StructToJsonString(cLists))
-			}
+
+			log.Info("internal", "getMultipleConversationModel success :", cLists)
+			c.ConversationListener.OnConversationChanged(utils.StructToJsonStringDefault(cLists))
 		}
 	case constant.NewCon:
 		cidList := node.Args.([]string)

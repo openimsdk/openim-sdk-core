@@ -128,7 +128,7 @@ func (c *Conversation) DeleteConversation(callback open_im_sdk_callback.Base, co
 		log.NewInfo(operationID, "DeleteConversation args: ", conversationID)
 		c.deleteConversation(callback, conversationID, operationID)
 		callback.OnSuccess(sdk_params_callback.DeleteConversationCallback)
-		//_ = u.triggerCmdUpdateConversation(common.updateConNode{ConID: conversationID, Action: constant.TotalUnreadMessageChanged})
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.TotalUnreadMessageChanged, Args: ""}, c.ch)
 		log.NewInfo(operationID, "DeleteConversation callback: ", sdk_params_callback.DeleteConversationCallback)
 	}()
 }
@@ -140,7 +140,7 @@ func (c *Conversation) SetConversationDraft(callback open_im_sdk_callback.Base, 
 		log.NewInfo(operationID, "SetConversationDraft args: ", conversationID)
 		c.setConversationDraft(callback, conversationID, draftText, operationID)
 		callback.OnSuccess(sdk_params_callback.SetConversationDraftCallback)
-		//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.NewConChange, Args: []string{conversationID}}, c.ch)
 		log.NewInfo(operationID, "SetConversationDraft callback: ", sdk_params_callback.SetConversationDraftCallback)
 	}()
 }
@@ -153,7 +153,7 @@ func (c *Conversation) PinConversation(callback open_im_sdk_callback.Base, conve
 		log.NewInfo(operationID, "PinConversation args: ", conversationID)
 		c.pinConversation(callback, conversationID, isPinned, operationID)
 		callback.OnSuccess(sdk_params_callback.PinConversationDraftCallback)
-		//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.NewConChange, Args: []string{conversationID}}, c.ch)
 		log.NewInfo(operationID, "PinConversation callback: ", sdk_params_callback.PinConversationDraftCallback)
 	}()
 }
@@ -455,7 +455,7 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(clientMsgID, server
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.ch)
 
 }
-func (c *Conversation) getUserNameAndFaceUrlByUid(callback open_im_sdk_callback.SendMsgCallBack, friendUserID, operationID string) (faceUrl, name string, err error) {
+func (c *Conversation) getUserNameAndFaceUrlByUid(callback open_im_sdk_callback.Base, friendUserID, operationID string) (faceUrl, name string, err error) {
 	friendInfo, err := c.db.GetFriendInfoByFriendUserID(friendUserID)
 	if err == nil {
 		if friendInfo.Remark != "" {
@@ -694,7 +694,7 @@ func (c *Conversation) internalSendMessage(callback open_im_sdk_callback.Base, s
 	var wsMsgData server_api_params.MsgData
 	copier.Copy(&wsMsgData, s)
 	wsMsgData.Content = []byte(s.Content)
-	wsMsgData.CreateTime = int64(s.CreateTime)
+	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
 	wsMsgData.OfflinePushInfo = p
 	timeout := 300

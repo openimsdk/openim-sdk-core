@@ -53,29 +53,6 @@ func (s MsgFormats) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-func getIsRead(b bool) int {
-	if b {
-		return constant.HasRead
-	} else {
-		return constant.NotRead
-	}
-}
-func getIsFilter(b bool) int {
-	if b {
-		return constant.IsFilter
-	} else {
-		return constant.NotFilter
-	}
-}
-func getIsReadB(i int) bool {
-	if i == constant.HasRead {
-		return true
-	} else {
-		return false
-	}
-
-}
-
 func (c *Conversation) GetConversationIDBySessionType(sourceID string, sessionType int32) string {
 	switch sessionType {
 	case constant.SingleChatType:

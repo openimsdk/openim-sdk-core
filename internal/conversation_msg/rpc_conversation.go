@@ -50,7 +50,7 @@ func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, so
 	conversationID := c.GetConversationIDBySessionType(sourceID, sessionType)
 	lc, err := c.db.GetConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
-	if lc != nil {
+	if err == nil {
 		return lc
 	} else {
 		var newConversation db.LocalConversation
@@ -59,24 +59,16 @@ func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, so
 		switch sessionType {
 		case constant.SingleChatType:
 			newConversation.UserID = sourceID
-			//faceUrl, name, err := u.getUserNameAndFaceUrlByUid(sourceID)
-			//if err != nil {
-			//	callback.OnError(301, err.Error())
-			//	utils.sdkLog("getUserNameAndFaceUrlByUid err:", err)
-			//	return
-			//}
-			//c.ShowName = name
-			//c.FaceURL = faceUrl
+			faceUrl, name, err := c.getUserNameAndFaceUrlByUid(callback, sourceID, operationID)
+			common.CheckDBErrCallback(callback, err, operationID)
+			newConversation.ShowName = name
+			newConversation.FaceURL = faceUrl
 		case constant.GroupChatType:
 			newConversation.GroupID = sourceID
-			//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(sourceID)
-			//if err != nil {
-			//	callback.OnError(301, err.Error())
-			//	utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
-			//}
-			//c.ShowName = name
-			//c.FaceURL = faceUrl
-
+			g, err := c.db.GetGroupInfoByGroupID(sourceID)
+			common.CheckDBErrCallback(callback, err, operationID)
+			newConversation.ShowName = g.GroupName
+			newConversation.FaceURL = g.FaceURL
 		}
 		err := c.db.InsertConversation(&newConversation)
 		common.CheckDBErrCallback(callback, err, operationID)
@@ -117,13 +109,11 @@ func (c *Conversation) setConversationDraft(callback open_im_sdk_callback.Base, 
 }
 
 func (c *Conversation) pinConversation(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
-	lc := db.LocalConversation{ConversationID: conversationID}
+	lc := db.LocalConversation{ConversationID: conversationID, IsPinned: isPinned}
 	if isPinned {
-		lc.IsPinned = constant.Pinned
 		err := c.db.UpdateConversation(&lc)
 		common.CheckDBErrCallback(callback, err, operationID)
 	} else {
-		lc.IsPinned = constant.NotPinned
 		err := c.db.UnPinConversation(conversationID, constant.NotPinned)
 		common.CheckDBErrCallback(callback, err, operationID)
 	}
@@ -154,16 +144,9 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 		startTime = m.SendTime
 	}
 	log.Info(operationID, "sourceID:", sourceID, "startTime:", startTime, "count:", req.Count)
-	if sessionType == constant.SingleChatType && sourceID == c.loginUserID {
-		list, err := c.db.GetSelfMessageList(sourceID, sessionType, req.Count, startTime)
-		common.CheckDBErrCallback(callback, err, operationID)
-		return list
-	} else {
-		list, err := c.db.GetMessageList(sourceID, sessionType, req.Count, startTime)
-		common.CheckDBErrCallback(callback, err, operationID)
-		return list
-	}
-
+	list, err := c.db.GetMessageList(sourceID, sessionType, req.Count, startTime)
+	common.CheckDBErrCallback(callback, err, operationID)
+	return list
 }
 func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req sdk.RevokeMessageParams, operationID string) {
 	var recvID, groupID string

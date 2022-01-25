@@ -4,14 +4,13 @@ import (
 	"errors"
 	"gorm.io/gorm"
 	"open_im_sdk/pkg/utils"
-	"time"
 )
 
 func (d *DataBase) GetAllConversationList() ([]*LocalConversation, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var conversationList []LocalConversation
-	err := utils.Wrap(d.conn.Where("latest_msg_send_time != ?", time.Time{}).Order("case when is_pinned=1 then 0 else 1 end,max(latest_msg_send_time,draft_text_time) DESC").Find(&conversationList).Error,
+	err := utils.Wrap(d.conn.Where("latest_msg_send_time != ?", 0).Order("case when is_pinned=1 then 0 else 1 end,max(latest_msg_send_time,draft_text_time) DESC").Find(&conversationList).Error,
 		"GetFriendList failed")
 	var transfer []*LocalConversation
 	for _, v := range conversationList {
@@ -24,7 +23,7 @@ func (d *DataBase) GetConversationListSplit(offset, count int) ([]*LocalConversa
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var conversationList []LocalConversation
-	err := utils.Wrap(d.conn.Where("latest_msg_send_time != ?", time.Time{}).Order("case when is_pinned=1 then 0 else 1 end,max(latest_msg_send_time,draft_text_time) DESC").Offset(offset).Limit(count).Find(&conversationList).Error,
+	err := utils.Wrap(d.conn.Where("latest_msg_send_time != ?", 0).Order("case when is_pinned=1 then 0 else 1 end,max(latest_msg_send_time,draft_text_time) DESC").Offset(offset).Limit(count).Find(&conversationList).Error,
 		"GetFriendList failed")
 	var transfer []*LocalConversation
 	for _, v := range conversationList {
@@ -118,8 +117,9 @@ func (d *DataBase) ClearConversation(conversationID string) error {
 func (d *DataBase) SetConversationDraft(conversationID, draftText string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
+	nowTime := utils.GetCurrentTimestampByMill()
 	t := d.conn.Exec("update conversation set draft_text=?,draft_text_time=?,latest_msg_send_time=case when latest_msg_send_time=? then ? else latest_msg_send_time  end where conversation_id=?",
-		draftText, time.Now(), time.Time{}, time.Now(), conversationID)
+		draftText, nowTime, 0, nowTime, conversationID)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
@@ -139,7 +139,7 @@ func (d *DataBase) UnPinConversation(conversationID string, isPinned int) error 
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	t := d.conn.Exec("update conversation set is_pinned=?,draft_text_time=case when draft_text=? then ? else draft_text_time  end where conversation_id=?",
-		isPinned, "", time.Time{}, conversationID)
+		isPinned, "", 0, conversationID)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}

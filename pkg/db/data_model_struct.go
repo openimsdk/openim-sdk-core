@@ -294,7 +294,7 @@ type LocalErrChatLog struct {
 	MsgFrom          int32  `gorm:"column:msg_from" json:"msgFrom"`
 	ContentType      int32  `gorm:"column:content_type" json:"contentType"`
 	Content          string `gorm:"column:content;type:varchar(1000)" json:"content"`
-	IsRead           int32  `gorm:"column:is_read" json:"isRead"`
+	IsRead           bool   `gorm:"column:is_read" json:"isRead"`
 	Status           int32  `gorm:"column:status" json:"status"`
 	SendTime         int64  `gorm:"column:send_time" json:"sendTime"`
 	CreateTime       int64  `gorm:"column:create_time" json:"createTime"`
@@ -331,7 +331,7 @@ type LocalConversation struct {
 	LatestMsgSendTime int64  `gorm:"column:latest_msg_send_time" json:"latestMsgSendTime"`
 	DraftText         string `gorm:"column:draft_text" json:"draftText"`
 	DraftTextTime     int64  `gorm:"column:draft_text_time" json:"draftTextTime"`
-	IsPinned          int32  `gorm:"column:is_pinned" json:"isPinned"`
+	IsPinned          bool   `gorm:"column:is_pinned" json:"isPinned"`
 	Ex                string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 

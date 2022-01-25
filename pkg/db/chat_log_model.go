@@ -98,7 +98,13 @@ func (d *DataBase) UpdateMessage(c *LocalChatLog) error {
 func (d *DataBase) UpdateMessageStatusBySourceID(sourceID string, status, sessionType int32) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Model(LocalChatLog{}).Where("(send_id=? or recv_id=?)AND session_type=?", sourceID, sourceID, sessionType).Updates(LocalChatLog{Status: status})
+	var condition string
+	if sourceID == d.loginUserID && sessionType == constant.SingleChatType {
+		condition = "send_id=? And recv_id=? AND session_type=?"
+	} else {
+		condition = "(send_id=? or recv_id=?)AND session_type=?"
+	}
+	t := d.conn.Model(LocalChatLog{}).Where(condition, sourceID, sourceID, sessionType).Updates(LocalChatLog{Status: status})
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
@@ -117,19 +123,13 @@ func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, start
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []LocalChatLog
-	err = utils.Wrap(d.conn.Debug().Where("(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? And send_time < ?", sourceID, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
-		Order("send_time DESC").Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
-	for _, v := range messageList {
-		v1 := v
-		result = append(result, &v1)
+	var condition string
+	if sessionType == constant.SingleChatType && sourceID == d.loginUserID {
+		condition = "send_id = ? And recv_id = ? AND status <=? And session_type = ? And send_time < ?"
+	} else {
+		condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? And send_time < ?"
 	}
-	return result, err
-}
-func (d *DataBase) GetSelfMessageList(sourceID string, sessionType, count int, startTime int64) (result []*LocalChatLog, err error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	var messageList []LocalChatLog
-	err = utils.Wrap(d.conn.Where("send_id = ? And recv_id = ? AND status <=? And session_type = ? And send_time < ?", sourceID, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
+	err = utils.Wrap(d.conn.Debug().Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
 		Order("send_time DESC").Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
 	for _, v := range messageList {
 		v1 := v
