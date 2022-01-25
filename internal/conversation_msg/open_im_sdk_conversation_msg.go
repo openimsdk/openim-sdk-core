@@ -449,6 +449,7 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(clientMsgID, server
 	s.ServerMsgID = serverMsgID
 	lc.LatestMsg = utils.StructToJsonString(s)
 	lc.LatestMsgSendTime = sendTime
+	log.Info(operationID, "2 send message come here", lc)
 	//会话数据库操作，触发UI会话回调
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.ch)
 
@@ -520,6 +521,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 		msgStructToLocalChatLog(&localMessage, &s)
 		err := c.db.InsertMessage(&localMessage)
 		common.CheckAnyErrCallback(callback, 201, err, operationID)
+		log.Info(operationID, "send message come here", lc)
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.ch)
 		var delFile []string
 		//media file handle
