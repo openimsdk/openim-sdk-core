@@ -11,7 +11,7 @@ func (d *DataBase) GetGroupMemberInfoByGroupIDUserID(groupID, userID string) (*L
 	defer d.mRWMutex.RUnlock()
 	var groupMember LocalGroupMember
 	return &groupMember, utils.Wrap(d.conn.Where("group_id = ? AND user_id = ?",
-		groupID, userID).Error, "GetGroupMemberInfoByGroupIDUserID failed")
+		groupID, userID).Scan(&groupMember).Error, "GetGroupMemberInfoByGroupIDUserID failed")
 }
 
 func (d *DataBase) GetAllGroupMemberList() ([]LocalGroupMember, error) {

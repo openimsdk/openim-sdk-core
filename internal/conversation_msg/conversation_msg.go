@@ -116,7 +116,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		}
 		if v.SendID == c.loginUserID { //seq  Messages sent by myself  //if  sent through  this terminal
 			m, err := c.db.GetMessage(msg.ClientMsgID)
-			if err == nil && m != nil {
+			if err == nil {
 				log.Info("internal", "have message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
 				if m.Seq == 0 {
 					updateMsg = append(updateMsg, c.msgStructToLocalChatLog(msg))
@@ -369,7 +369,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		var list []*db.LocalConversation
 		lc := node.Args.(*db.LocalConversation)
 		oc, err := c.db.GetConversation(lc.ConversationID)
-		if err == nil && oc.ConversationID != "" {
+		if err == nil {
 			log.Info("this is old conversation", oc)
 			if lc.LatestMsgSendTime > oc.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
 				err := c.db.UpdateColumnsConversation(node.ConID, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})

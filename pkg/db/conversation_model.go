@@ -51,7 +51,7 @@ func (d *DataBase) GetConversation(conversationID string) (*LocalConversation, e
 	defer d.mRWMutex.Unlock()
 	var c LocalConversation
 	return &c, utils.Wrap(d.conn.Where("conversation_id = ?",
-		conversationID).Find(&c).Error, "GetConversation failed")
+		conversationID).Scan(&c).Error, "GetConversation failed")
 }
 
 func (d *DataBase) UpdateConversation(c *LocalConversation) error {

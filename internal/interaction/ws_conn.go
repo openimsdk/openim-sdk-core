@@ -99,7 +99,7 @@ func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (*websocket.Conn, error) {
 			return nil, utils.Wrap(err, "SetWriteTimeout")
 		}
 		if len(buff.Bytes()) > constant.MaxTotalMsgLen {
-			return nil, utils.Wrap(errors.New("msg too long"), "")
+			return nil, utils.Wrap(errors.New("msg too long"), utils.IntToString(len(buff.Bytes())))
 		}
 		return u.conn, utils.Wrap(u.conn.WriteMessage(websocket.BinaryMessage, buff.Bytes()), "")
 	} else {
