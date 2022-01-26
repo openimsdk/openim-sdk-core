@@ -210,8 +210,8 @@ func AcceptFriendApplication(callback open_im_sdk_callback.Base, operationID str
 	userForSDK.Friend().AcceptFriendApplication(callback, userIDHandleMsg, operationID)
 }
 
-func RefuseFriendApplication(callback open_im_sdk_callback.Base, operationID string, params string) {
-	userForSDK.Friend().RefuseFriendApplication(callback, params, operationID)
+func RefuseFriendApplication(callback open_im_sdk_callback.Base, operationID string, userIDHandleMsg string) {
+	userForSDK.Friend().RefuseFriendApplication(callback, userIDHandleMsg, operationID)
 }
 
 func AddBlack(callback open_im_sdk_callback.Base, operationID string, blackUserID string) {
