@@ -156,6 +156,18 @@ func (d *DataBase) UpdateColumnsConversation(conversationID string, args map[str
 	}
 	return utils.Wrap(t.Error, "UpdateColumnsConversation failed")
 }
+func (d *DataBase) UpdateAllConversation(conversation *LocalConversation) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	if conversation.ConversationID != "" {
+		return utils.Wrap(errors.New("not update all conversation"), "UpdateAllConversation failed")
+	}
+	t := d.conn.Model(conversation).Updates(conversation)
+	if t.RowsAffected == 0 {
+		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	}
+	return utils.Wrap(t.Error, "UpdateColumnsConversation failed")
+}
 func (d *DataBase) IncrConversationUnreadCount(conversationID string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()

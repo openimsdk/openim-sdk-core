@@ -246,7 +246,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, ""}})
 	log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewCon, mapKeyToStringList(newConversationSet)}})
-	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, mapKeyToStringList(conversationChangSet)}})
+	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, mapKeyToStringList(conversationChangSet)}})
 	if len(conversationChangedSet) != 0 {
 		c.ConversationListener.OnConversationChanged(utils.StructToJsonString(mapConversationToList(conversationChangedSet)))
 	}
@@ -458,7 +458,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 				}
 			}
 		}
-	case constant.NewConChange:
+	case constant.ConChange:
 		cidList := node.Args.([]string)
 		cLists, err := c.db.GetMultipleConversation(cidList)
 		if err != nil {
