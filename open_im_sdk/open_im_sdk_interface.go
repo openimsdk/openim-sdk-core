@@ -96,8 +96,8 @@ func GetUsersInfo(callback open_im_sdk_callback.Base, operationID string, userID
 	userForSDK.User().GetUsersInfo(callback, userIDList, operationID)
 }
 
-func SetSelfInfo(callback open_im_sdk_callback.Base, operationID string, info string) {
-	userForSDK.User().SetSelfInfo(callback, info, operationID)
+func SetSelfInfo(callback open_im_sdk_callback.Base, operationID string, userInfo string) {
+	userForSDK.User().SetSelfInfo(callback, userInfo, operationID)
 }
 
 //////////////////////////group//////////////////////////////////////////
@@ -187,12 +187,12 @@ func CheckFriend(callback open_im_sdk_callback.Base, operationID string, userIDL
 	userForSDK.Friend().CheckFriend(callback, userIDList, operationID)
 }
 
-func AddFriend(callback open_im_sdk_callback.Base, operationID string, paramsReq string) {
-	userForSDK.Friend().AddFriend(callback, paramsReq, operationID)
+func AddFriend(callback open_im_sdk_callback.Base, operationID string, userIDReqMsg string) {
+	userForSDK.Friend().AddFriend(callback, userIDReqMsg, operationID)
 }
 
-func SetFriendRemark(callback open_im_sdk_callback.Base, operationID string, params string) {
-	userForSDK.Friend().SetFriendRemark(callback, params, operationID)
+func SetFriendRemark(callback open_im_sdk_callback.Base, operationID string, userIDRemark string) {
+	userForSDK.Friend().SetFriendRemark(callback, userIDRemark, operationID)
 }
 func DeleteFriend(callback open_im_sdk_callback.Base, operationID string, friendUserID string) {
 	userForSDK.Friend().DeleteFriend(callback, friendUserID, operationID)
@@ -206,8 +206,8 @@ func GetSendFriendApplicationList(callback open_im_sdk_callback.Base, operationI
 	userForSDK.Friend().GetSendFriendApplicationList(callback, operationID)
 }
 
-func AcceptFriendApplication(callback open_im_sdk_callback.Base, operationID string, params string) {
-	userForSDK.Friend().AcceptFriendApplication(callback, params, operationID)
+func AcceptFriendApplication(callback open_im_sdk_callback.Base, operationID string, userIDHandleMsg string) {
+	userForSDK.Friend().AcceptFriendApplication(callback, userIDHandleMsg, operationID)
 }
 
 func RefuseFriendApplication(callback open_im_sdk_callback.Base, operationID string, params string) {
