@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
@@ -42,13 +43,15 @@ import (
 //	fmt.Println("GetConversationRecvMessageOpt", string(jsontest))
 //}
 
-//func DoTestGetHistoryMessage(userID string) {
-//	var testGetHistoryCallBack GetHistoryCallBack
-//	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, utils.structToJsonString(&utils.PullMsgReq{
-//		UserID: userID,
-//		Count:  50,
-//	}))
-//}
+func DoTestGetHistoryMessage(userID string) {
+	var testGetHistoryCallBack GetHistoryCallBack
+	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
+	var params sdk_params_callback.GetHistoryMessageListParams
+	params.UserID = userID
+	params.Count = 10
+	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
+}
+
 //func DoTestDeleteConversation(conversationID string) {
 //	var testDeleteConversation DeleteConversationCallBack
 //	open_im_sdk.DeleteConversation(conversationID, testDeleteConversation)
@@ -78,14 +81,39 @@ func (d DeleteMessageFromLocalStorageCallBack) OnSuccess(data string) {
 }
 
 type TestGetAllConversationListCallBack struct {
+	OperationID string
 }
 
 func (t TestGetAllConversationListCallBack) OnError(errCode int32, errMsg string) {
-	fmt.Printf("TestGetAllConversationListCallBack , errCode:%v,errMsg:%v\n", errCode, errMsg)
+	log.Info(t.OperationID, "TestGetAllConversationListCallBack ", errCode, errMsg)
 }
 
 func (t TestGetAllConversationListCallBack) OnSuccess(data string) {
-	fmt.Printf("TestGetAllConversationListCallBack , success,data:%v\n", data)
+	log.Info(t.OperationID, "TestGetAllConversationListCallBack ", data)
+}
+func DoTestGetAllConversation() {
+	var test TestGetAllConversationListCallBack
+	test.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.GetAllConversationList(test, test.OperationID)
+
+}
+
+type TestGetConversationListSplitCallBack struct {
+	OperationID string
+}
+
+func (t TestGetConversationListSplitCallBack) OnError(errCode int32, errMsg string) {
+	log.Info(t.OperationID, "TestGetConversationListSplitCallBack err ", errCode, errMsg)
+}
+
+func (t TestGetConversationListSplitCallBack) OnSuccess(data string) {
+	log.Info(t.OperationID, "TestGetConversationListSplitCallBack  success", data)
+}
+func DoTestGetConversationListSplit() {
+	var test TestGetConversationListSplitCallBack
+	test.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.GetConversationListSplit(test, test.OperationID, 1, 2)
+
 }
 
 type TestGetOneConversationCallBack struct {
@@ -127,14 +155,15 @@ func (t TestSetConversationDraft) OnSuccess(data string) {
 }
 
 type GetHistoryCallBack struct {
+	OperationID string
 }
 
 func (g GetHistoryCallBack) OnError(errCode int32, errMsg string) {
-	fmt.Printf("GetHistoryCallBack , errCode:%v,errMsg:%v\n", errCode, errMsg)
+	log.Info(g.OperationID, "GetHistoryCallBack err", errCode, errMsg)
 }
 
 func (g GetHistoryCallBack) OnSuccess(data string) {
-	fmt.Printf("get History , OnSuccessData: %v\n", data)
+	log.Info(g.OperationID, "get History success ", data)
 }
 
 type MsgListenerCallBak struct {
@@ -181,7 +210,7 @@ func (c conversationCallBack) OnConversationChanged(conversationList string) {
 	log.Info("", "OnConversationChanged returnList is", conversationList)
 }
 
-func (c conversationCallBack) OnTotalUnreadMessageCountChanged(totalUnreadCount int64) {
+func (c conversationCallBack) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
 	log.Info("", "OnTotalUnreadMessageCountChanged returnTotalUnreadCount is ", totalUnreadCount)
 }
 

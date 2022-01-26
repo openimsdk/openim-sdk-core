@@ -174,7 +174,7 @@ func (f *Friend) setFriendRemark(userIDRemark sdk.SetFriendRemarkParams, callbac
 	//c.FaceURL = faceUrl
 	//c.ShowName = name
 	//u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, UpdateFaceUrlAndNickName, c}})
-	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewConChange, []string{c.ConversationID}}})
+	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, []string{c.ConversationID}}})
 }
 
 func (f *Friend) getServerFriendList(operationID string) ([]*api.FriendInfo, error) {

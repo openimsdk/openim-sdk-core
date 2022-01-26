@@ -395,15 +395,10 @@ func (wsRouter *WsFuncRouter) MarkC2CMessageAsRead(input string, operationID str
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "recvID", "msgIDList") {
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "userID", "msgIDList") {
 		return
 	}
-	userWorker.Conversation().MarkC2CMessageAsRead(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["recvID"].(string), m["msgIDList"].(string), operationID)
-}
-
-func (wsRouter *WsFuncRouter) MarkSingleMessageHasRead(userID string, operationID string) {
-	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.Conversation().MarkSingleMessageHasRead(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, userID)
+	userWorker.Conversation().MarkC2CMessageAsRead(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["userID"].(string), m["msgIDList"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) MarkGroupMessageHasRead(groupID string, operationID string) {

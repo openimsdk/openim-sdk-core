@@ -136,7 +136,7 @@ const (
 	TotalUnreadMessageChanged = 6
 	UpdateFaceUrlAndNickName  = 7
 	UpdateLatestMessageChange = 8
-	NewConChange              = 9
+	ConChange                 = 9
 	NewCon                    = 10
 
 	HasRead = 1

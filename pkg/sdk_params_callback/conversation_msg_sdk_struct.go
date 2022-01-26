@@ -44,3 +44,5 @@ const TypingStatusUpdateCallback = constant.SuccessCallbackDefault
 type MarkC2CMessageAsReadParams []string
 
 const MarkC2CMessageAsReadCallback = constant.SuccessCallbackDefault
+
+const MarkGroupMessageHasRead = constant.SuccessCallbackDefault

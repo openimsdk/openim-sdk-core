@@ -150,6 +150,9 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 }
 func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req sdk.RevokeMessageParams, operationID string) {
 	var recvID, groupID string
+	var localMessage db.LocalChatLog
+	var lc db.LocalConversation
+	var conversationID string
 	message, err := c.db.GetMessage(req.ClientMsgID)
 	common.CheckDBErrCallback(callback, err, operationID)
 	if message.Status != constant.MsgStatusSendSuccess {
@@ -162,44 +165,66 @@ func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req 
 	switch req.SessionType {
 	case constant.SingleChatType:
 		recvID = req.RecvID
+		conversationID = c.GetConversationIDBySessionType(groupID, constant.SingleChatType)
 	case constant.GroupChatType:
 		groupID = req.GroupID
+		conversationID = c.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 	default:
-
-		callback.OnError(200, "args err")
+		common.CheckAnyErrCallback(callback, 201, errors.New("SessionType err"), operationID)
 	}
 	req.Content = message.ClientMsgID
 	req.ClientMsgID = utils.GetMsgID(message.SendID)
 	req.ContentType = constant.Revoke
 	options := make(map[string]bool, 2)
-	_ = c.internalSendMessage(callback, (*sdk_struct.MsgStruct)(&req), recvID, groupID, operationID, &server_api_params.OfflinePushInfo{}, false, options)
-	//插入一条消息，以及会话最新的一条消息，触发UI的更新
+	resp, _ := c.internalSendMessage(callback, (*sdk_struct.MsgStruct)(&req), recvID, groupID, operationID, &server_api_params.OfflinePushInfo{}, false, options)
+	req.ServerMsgID = resp.ServerMsgID
+	req.SendTime = resp.SendTime
+	req.Status = constant.MsgStatusSendSuccess
+	msgStructToLocalChatLog(&localMessage, (*sdk_struct.MsgStruct)(&req))
+	err = c.db.InsertMessage(&localMessage)
+	if err != nil {
+		log.Error(operationID, "inset into chat log err", localMessage, req)
+	}
 	err = c.db.UpdateColumnsMessage(req.Content, map[string]interface{}{"status": constant.MsgStatusRevoked})
-	common.CheckDBErrCallback(callback, err, operationID)
+	if err != nil {
+		log.Error(operationID, "update revoke message err", localMessage, req)
+	}
+	lc.LatestMsg = utils.StructToJsonString(req)
+	lc.LatestMsgSendTime = req.SendTime
+	lc.ConversationID = conversationID
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.ch)
 }
 func (c *Conversation) typingStatusUpdate(callback open_im_sdk_callback.Base, recvID, msgTip, operationID string) {
 	s := sdk_struct.MsgStruct{}
 	c.initBasicInfo(&s, constant.UserMsgType, constant.Typing, operationID)
 	s.Content = msgTip
 	options := make(map[string]bool, 2)
-	_ = c.internalSendMessage(callback, &s, recvID, "", operationID, &server_api_params.OfflinePushInfo{}, true, options)
+	c.internalSendMessage(callback, &s, recvID, "", operationID, &server_api_params.OfflinePushInfo{}, true, options)
 
 }
 
-func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, msgIDList string, recvID, operationID string) {
-	var list sdk.MarkC2CMessageAsReadParams
-	common.JsonUnmarshalCallback(msgIDList, &list, callback, operationID)
-	//conversationID := c.GetConversationIDBySessionType(recvID, constant.SingleChatType)
-
+func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, msgIDList sdk.MarkC2CMessageAsReadParams, sourceMsgIDList, userID, operationID string) {
+	var localMessage db.LocalChatLog
+	conversationID := c.GetConversationIDBySessionType(userID, constant.SingleChatType)
 	s := sdk_struct.MsgStruct{}
 	c.initBasicInfo(&s, constant.UserMsgType, constant.HasReadReceipt, operationID)
-	s.Content = msgIDList
+	s.Content = sourceMsgIDList
 	options := make(map[string]bool, 2)
-	_ = c.internalSendMessage(callback, &s, recvID, "", operationID, &server_api_params.OfflinePushInfo{}, false, options)
-	err := c.db.UpdateMessageHasRead(recvID, list)
-	common.CheckDBErrCallback(callback, err, operationID)
-	//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.UpdateLatestMessageChange, ""}})
-	//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+	resp, _ := c.internalSendMessage(callback, &s, userID, "", operationID, &server_api_params.OfflinePushInfo{}, false, options)
+	s.ServerMsgID = resp.ServerMsgID
+	s.SendTime = resp.SendTime
+	s.Status = constant.MsgStatusSendSuccess
+	msgStructToLocalChatLog(&localMessage, &s)
+	err := c.db.InsertMessage(&localMessage)
+	if err != nil {
+		log.Error(operationID, "inset into chat log err", localMessage, s)
+	}
+	err2 := c.db.UpdateMessageHasRead(userID, msgIDList)
+	if err2 != nil {
+		log.Error(operationID, "update message has read error", msgIDList, userID)
+	}
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.ch)
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 }
 func (c *Conversation) insertMessageToLocalStorage(callback open_im_sdk_callback.Base, s *db.LocalChatLog, operationID string) string {
 	err := c.db.InsertMessage(s)
@@ -213,7 +238,8 @@ func (c *Conversation) clearGroupHistoryMessage(callback open_im_sdk_callback.Ba
 	common.CheckDBErrCallback(callback, err, operationID)
 	err = c.db.ClearConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
-	//	u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
+
 }
 
 func (c *Conversation) clearC2CHistoryMessage(callback open_im_sdk_callback.Base, userID string, operationID string) {
@@ -222,7 +248,7 @@ func (c *Conversation) clearC2CHistoryMessage(callback open_im_sdk_callback.Base
 	common.CheckDBErrCallback(callback, err, operationID)
 	err = c.db.ClearConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
-	//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 }
 
 func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
@@ -237,8 +263,8 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 	callback.OnSuccess("")
 
 	if s.SessionType == constant.GroupChatType {
-		conversationID = c.GetConversationIDBySessionType(s.RecvID, constant.GroupChatType)
-		sourceID = s.RecvID
+		conversationID = c.GetConversationIDBySessionType(s.GroupID, constant.GroupChatType)
+		sourceID = s.GroupID
 
 	} else if s.SessionType == constant.SingleChatType {
 		if s.SendID != c.loginUserID {
@@ -254,19 +280,18 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 	common.JsonUnmarshalCallback(LocalConversation.LatestMsg, &latestMsg, callback, operationID)
 
 	if s.ClientMsgID == latestMsg.ClientMsgID { //If the deleted message is the latest message of the conversation, update the latest message of the conversation
-		list, err := c.db.GetMessageList(sourceID, int(s.SessionType), 1, s.SendTime)
+		list, err := c.db.GetMessageList(sourceID, int(s.SessionType), 1, s.SendTime+TimeOffset)
 		common.CheckDBErrCallback(callback, err, operationID)
 
 		conversation.ConversationID = conversationID
 		if list == nil {
 			conversation.LatestMsg = ""
-			conversation.LatestMsgSendTime = utils.GetCurrentTimestampByMill()
+			conversation.LatestMsgSendTime = s.SendTime
 		} else {
 			conversation.LatestMsg = utils.StructToJsonString(list[0])
 			conversation.LatestMsgSendTime = list[0].SendTime
 		}
-		//		err = u.triggerCmdUpdateConversation(common.updateConNode{ConID: conversationID, Action: constant.AddConOrUpLatMsg, Args: conversation})
-
-		//	u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{"", constant.NewConChange, []string{conversationID}}})
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.ch)
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 	}
 }
