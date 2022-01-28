@@ -91,6 +91,13 @@ func (d *DataBase) DeleteGroupMember(groupID, userID string) error {
 	return d.conn.Where("group_id=? and user_id=?", groupID, userID).Delete(&groupMember).Error
 }
 
+func (d *DataBase) DeleteGroupAllMembers(groupID string) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	groupMember := LocalGroupMember{}
+	return d.conn.Where("group_id=? ", groupID).Delete(&groupMember).Error
+}
+
 func (d *DataBase) UpdateGroupMember(groupMember *LocalGroupMember) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()

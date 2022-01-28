@@ -77,6 +77,7 @@ func (g *Group) joinGroupApplicationNotification(msg *api.MsgData, operationID s
 	detail := api.JoinGroupApplicationTips{Group: &api.GroupInfo{}, Applicant: &api.PublicUserInfo{}}
 	if err := comm.UnmarshalTips(msg, &detail); err != nil {
 		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
+		return
 	}
 	if detail.Applicant.UserID == g.loginUserID {
 		g.SyncSelfGroupApplication(operationID)
@@ -90,9 +91,11 @@ func (g *Group) memberQuitNotification(msg *api.MsgData, operationID string) {
 	detail := api.MemberQuitTips{Group: &api.GroupInfo{}, QuitUser: &api.GroupMemberFullInfo{}}
 	if err := comm.UnmarshalTips(msg, &detail); err != nil {
 		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
+		return
 	}
 	if detail.QuitUser.UserID == g.loginUserID {
 		g.SyncJoinedGroupList(operationID)
+		g.db.DeleteGroupAllMembers(detail.Group.GroupID)
 	} else {
 		g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
 	}
@@ -103,14 +106,15 @@ func (g *Group) groupApplicationAcceptedNotification(msg *api.MsgData, operation
 	detail := api.GroupApplicationAcceptedTips{Group: &api.GroupInfo{}, OpUser: &api.GroupMemberFullInfo{}}
 	if err := comm.UnmarshalTips(msg, &detail); err != nil {
 		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
+		return
 	}
 	if detail.OpUser.UserID == g.loginUserID {
 		g.SyncAdminGroupApplication(operationID)
 	} else {
 		g.SyncSelfGroupApplication(operationID)
 	}
-	g.SyncJoinedGroupList(operationID)
-	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
+	//	g.SyncJoinedGroupList(operationID)
+	//	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
 }
 
 func (g *Group) groupApplicationRejectedNotification(msg *api.MsgData, operationID string) {
@@ -118,6 +122,7 @@ func (g *Group) groupApplicationRejectedNotification(msg *api.MsgData, operation
 	detail := api.GroupApplicationRejectedTips{Group: &api.GroupInfo{}, OpUser: &api.GroupMemberFullInfo{}}
 	if err := comm.UnmarshalTips(msg, &detail); err != nil {
 		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
+		return
 	}
 	if detail.OpUser.UserID == g.loginUserID {
 		g.SyncAdminGroupApplication(operationID)
@@ -129,8 +134,12 @@ func (g *Group) groupApplicationRejectedNotification(msg *api.MsgData, operation
 func (g *Group) groupOwnerTransferredNotification(msg *api.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	detail := api.GroupOwnerTransferredTips{Group: &api.GroupInfo{}}
-	comm.UnmarshalTips(msg, &detail)
+	if err := comm.UnmarshalTips(msg, &detail); err != nil {
+		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
+		return
+	}
 	g.SyncJoinedGroupList(operationID)
+	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
 }
 
 func (g *Group) memberKickedNotification(msg *api.MsgData, operationID string) {
@@ -138,11 +147,13 @@ func (g *Group) memberKickedNotification(msg *api.MsgData, operationID string) {
 	detail := api.MemberKickedTips{Group: &api.GroupInfo{}, OpUser: &api.GroupMemberFullInfo{}}
 	if err := comm.UnmarshalTips(msg, &detail); err != nil {
 		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
+		return
 	}
 
 	for _, v := range detail.KickedUserList {
 		if v.UserID == g.loginUserID {
 			g.SyncJoinedGroupList(operationID)
+			g.db.DeleteGroupAllMembers(detail.Group.GroupID)
 			return
 		}
 	}
@@ -154,11 +165,13 @@ func (g *Group) memberInvitedNotification(msg *api.MsgData, operationID string) 
 	detail := api.MemberInvitedTips{Group: &api.GroupInfo{}, OpUser: &api.GroupMemberFullInfo{}}
 	if err := comm.UnmarshalTips(msg, &detail); err != nil {
 		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
+		return
 	}
 
 	for _, v := range detail.InvitedUserList {
 		if v.UserID == g.loginUserID {
 			g.SyncJoinedGroupList(operationID)
+			g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
 			return
 		}
 	}
@@ -170,12 +183,12 @@ func (g *Group) memberEnterNotification(msg *api.MsgData, operationID string) {
 	detail := api.MemberEnterTips{Group: &api.GroupInfo{}, EntrantUser: &api.GroupMemberFullInfo{}}
 	if err := comm.UnmarshalTips(msg, &detail); err != nil {
 		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
+		return
 	}
 	if detail.EntrantUser.UserID == g.loginUserID {
 		g.SyncJoinedGroupList(operationID)
-	} else {
-		g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
 	}
+	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
 }
 
 func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam,

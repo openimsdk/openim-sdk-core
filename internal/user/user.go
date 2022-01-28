@@ -2,6 +2,8 @@ package user
 
 import (
 	"github.com/google/go-cmp/cmp"
+	comm "open_im_sdk/internal/common"
+
 	//"github.com/mitchellh/mapstructure"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
@@ -48,7 +50,18 @@ func (u *User) DoNotification(msg *api.MsgData) {
 }
 
 func (u *User) userInfoUpdatedNotification(msg *api.MsgData, operationID string) {
-	u.SyncLoginUserInfo(operationID)
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
+	var detail api.UserInfoUpdatedTips
+	if err := comm.UnmarshalTips(msg, &detail); err != nil {
+		log.Error(operationID, "comm.UnmarshalTips failed ", err.Error(), msg.Content)
+		return
+	}
+	if detail.UserID == u.loginUserID {
+		log.Info(operationID, "detail.UserID == u.loginUserID, SyncLoginUserInfo", detail.UserID)
+		u.SyncLoginUserInfo(operationID)
+	} else {
+		log.Info(operationID, "detail.UserID != u.loginUserID, do nothing", detail.UserID, u.loginUserID)
+	}
 }
 
 func (u *User) SyncLoginUserInfo(operationID string) {
@@ -71,7 +84,7 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 			}
 			return
 		}
-		err := u.UpdateLoginUser(onServer)
+		err = u.UpdateLoginUser(onServer)
 		if err != nil {
 			log.Error(operationID, "UpdateLoginUser failed ", *onServer, err.Error())
 			return

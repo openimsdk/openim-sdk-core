@@ -470,7 +470,7 @@ func (f *Friend) DoNotification(msg *api.MsgData) {
 		case constant.FriendDeletedNotification:
 			f.friendDeletedNotification(msg, operationID)
 		case constant.FriendRemarkSetNotification:
-			f.friendInfoChangedNotification(msg, operationID)
+			f.friendRemarkNotification(msg, operationID)
 		case constant.UserInfoUpdatedNotification:
 			f.friendInfoChangedNotification(msg, operationID)
 		case constant.BlackAddedNotification:
@@ -507,6 +507,18 @@ func (f *Friend) blackAddedNotification(msg *api.MsgData, operationID string) {
 	}
 }
 
+func (f *Friend) friendRemarkNotification(msg *api.MsgData, operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
+	var detail api.FriendInfoChangedTips
+	if err := comm.UnmarshalTips(msg, &detail); err != nil {
+		log.Error(operationID, "comm.UnmarshalTips failed ", err.Error(), msg.Content)
+		return
+	}
+	if detail.FromToUserID.FromUserID == f.loginUserID {
+		f.SyncFriendList(operationID)
+	}
+}
+
 func (f *Friend) friendInfoChangedNotification(msg *api.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	var detail api.UserInfoUpdatedTips
@@ -521,56 +533,86 @@ func (f *Friend) friendInfoChangedNotification(msg *api.MsgData, operationID str
 
 func (f *Friend) friendDeletedNotification(msg *api.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	f.SyncFriendList(operationID)
+	detail := api.FriendDeletedTips{FromToUserID: &api.FromToUserID{}}
+	if err := comm.UnmarshalTips(msg, &detail); err != nil {
+		log.Error(operationID, "comm.UnmarshalTips failed ", err.Error(), msg)
+		return
+	}
+	if detail.FromToUserID.FromUserID == f.loginUserID {
+		f.SyncFriendList(operationID)
+		return
+	}
 }
 
 func (f *Friend) friendAddedNotification(msg *api.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	f.SyncFriendList(operationID)
+	detail := api.FriendAddedTips{Friend: &api.FriendInfo{}, OpUser: &api.PublicUserInfo{}}
+	if err := comm.UnmarshalTips(msg, &detail); err != nil {
+		log.Error(operationID, "comm.UnmarshalTips failed ", err.Error(), msg)
+		return
+	}
+	if detail.Friend.OwnerUserID == f.loginUserID || detail.Friend.FriendUser.UserID == f.loginUserID {
+		f.SyncFriendList(operationID)
+		return
+	}
 }
 
 func (f *Friend) friendApplicationNotification(msg *api.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	detail := api.FriendApplicationTips{FromToUserID: &api.FromToUserID{}}
 	if err := comm.UnmarshalTips(msg, &detail); err != nil {
-		log.Error(operationID, "comm.UnmarshalTips failed ", err.Error(), msg.Content)
+		log.Error(operationID, "comm.UnmarshalTips failed ", err.Error(), msg)
 		return
 	}
 	if detail.FromToUserID.FromUserID == f.loginUserID {
+		log.Info(operationID, "SyncSelfFriendApplication ", detail.FromToUserID.FromUserID)
 		f.SyncSelfFriendApplication(operationID)
-	} else {
-		f.SyncFriendApplication(operationID)
+		return
 	}
+	if detail.FromToUserID.ToUserID == f.loginUserID {
+		log.Info(operationID, "SyncFriendApplication ", detail.FromToUserID.FromUserID, detail.FromToUserID.ToUserID)
+		f.SyncFriendApplication(operationID)
+		return
+	}
+	log.Error(operationID, "FromToUserID failed ", detail.FromToUserID)
 }
 
 func (f *Friend) friendApplicationRejectedNotification(msg *api.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	detail := api.FriendApplicationRejectedTips{FromToUserID: &api.FromToUserID{}}
 	if err := comm.UnmarshalTips(msg, &detail); err != nil {
-		log.Error(operationID, "comm.UnmarshalTips failed ", err.Error(), msg.Content)
+		log.Error(operationID, "comm.UnmarshalTips failed ", err.Error(), msg)
 		return
 	}
 	if f.loginUserID == detail.FromToUserID.FromUserID {
 		f.SyncFriendApplication(operationID)
-	} else {
-		f.SyncSelfFriendApplication(operationID)
+		return
 	}
+	if f.loginUserID == detail.FromToUserID.ToUserID {
+		f.SyncSelfFriendApplication(operationID)
+		return
+	}
+	log.Error(operationID, "FromToUserID failed ", detail.FromToUserID)
 }
 
 func (f *Friend) friendApplicationApprovedNotification(msg *api.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	detail := api.FriendApplicationApprovedTips{FromToUserID: &api.FromToUserID{}}
 	if err := comm.UnmarshalTips(msg, &detail); err != nil {
-		log.Error(operationID, "comm.UnmarshalTips failed ", err.Error(), msg.Content)
+		log.Error(operationID, "comm.UnmarshalTips failed ", err.Error(), msg)
 		return
 	}
 
-	f.SyncFriendList(operationID)
+	//f.SyncFriendList(operationID)
 	if f.loginUserID == detail.FromToUserID.FromUserID {
 		f.SyncFriendApplication(operationID)
-	} else {
-		f.SyncSelfFriendApplication(operationID)
+		return
 	}
+	if f.loginUserID == detail.FromToUserID.ToUserID {
+		f.SyncSelfFriendApplication(operationID)
+		return
+	}
+	log.Error(operationID, "FromToUserID failed ", detail.FromToUserID)
 }
 
 //func (f *Friend) getLocalFriendList() ([]open_im_sdk.friendInfo, error) {
