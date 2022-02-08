@@ -73,6 +73,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		log.Error(operationID, "not set c MsgListenerList")
 		return
 	}
+	var isTriggerUnReadCount bool
 	var insertMsg, updateMsg []*db.LocalChatLog
 	var exceptionMsg []*db.LocalErrChatLog
 	var newMessages, msgReadList, msgRevokeList sdk_struct.NewMsgList
@@ -150,17 +151,18 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					//}
 				}
 				if isUnreadCount {
+					isTriggerUnReadCount = true
 					lc.UnreadCount = 1
 				}
 				if isConversationUpdate {
 					c.updateConversation(&lc, conversationChangedSet, newConversationSet)
+					newMessages = append(newMessages, msg)
 				} else {
 					msg.Status = constant.MsgStatusFiltered
 				}
 				if isHistory {
 					insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
 				}
-				newMessages = append(newMessages, msg)
 
 			}
 		} else { //Sent by others
@@ -189,6 +191,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					//}
 				}
 				if isUnreadCount {
+					isTriggerUnReadCount = true
 					lc.UnreadCount = 1
 				}
 
@@ -253,7 +256,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	if len(newConversationSet) != 0 {
 		c.ConversationListener.OnNewConversation(utils.StructToJsonString(mapConversationToList(newConversationSet)))
 	}
-	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
+	if isTriggerUnReadCount {
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
+	}
 	//sdkLog("length msgListenerList", u.MsgListenerList, "length message", len(newMessages), "msgListenerLen", len(u.MsgListenerList))
 
 }
