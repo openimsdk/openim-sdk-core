@@ -210,7 +210,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			}
 		}
 	}
-	log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
+	log.Info(operationID, "trigger map is :", "newConversations", newConversationSet, "changedConversations", conversationChangedSet)
 	//seq sync message update
 	err5 := c.db.BatchUpdateMessageList(updateMsg)
 	if err5 != nil {
