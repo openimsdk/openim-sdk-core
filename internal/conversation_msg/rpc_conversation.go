@@ -34,7 +34,10 @@ func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callba
 	apiReq.ConversationIDList = conversationIDList
 	var realData []*server_api_params.OptResult
 	c.p.PostFatalCallback(callback, constant.SetReceiveMessageOptRouter, apiReq, realData, apiReq.OperationID)
-	c.db.SetMultipleConversationRecvMsgOpt(conversationIDList, opt)
+	err := c.db.SetMultipleConversationRecvMsgOpt(conversationIDList, opt)
+	if err != nil {
+		log.Error(operationID, "SetMultipleConversationRecvMsgOpt err:", err.Error())
+	}
 	return realData
 }
 func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) []*server_api_params.OptResult {

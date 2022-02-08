@@ -79,7 +79,7 @@ func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callba
 		common.JsonUnmarshalCallback(conversationIDList, &unmarshalParams, callback, operationID)
 		c.setConversationRecvMessageOpt(callback, unmarshalParams, opt, operationID)
 		callback.OnSuccess(sdk_params_callback.SetConversationRecvMessageOptCallback)
-		log.NewInfo(operationID, "SetConversationRecvMessageOpt callback: ", sdk_params_callback.AddFriendCallback)
+		log.NewInfo(operationID, "SetConversationRecvMessageOpt callback: ", sdk_params_callback.SetConversationRecvMessageOptCallback)
 	}()
 
 }
