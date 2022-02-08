@@ -25,7 +25,6 @@ import (
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
-	"strings"
 )
 
 type Friend struct {
@@ -278,10 +277,12 @@ func (f *Friend) SyncSelfFriendApplication(operationID string) {
 	for _, index := range sameA {
 		err := f.db.UpdateFriendRequest(onServer[index])
 		if err != nil {
-			if !strings.Contains(err.Error(), "RowsAffected == 0") {
-				log.NewError(operationID, "UpdateFriendRequest failed ", err.Error(), *onServer[index])
-				continue
-			}
+			log.NewError(operationID, "UpdateFriendRequest failed ", err.Error(), *onServer[index])
+			continue
+			//if !strings.Contains(err.Error(), "RowsAffected == 0") {
+			//
+			//}
+		} else {
 			if onServer[index].HandleResult == constant.FriendResponseRefuse {
 				callbackData := sdk.FriendApplicationRejectCallback(*onServer[index])
 				f.friendListener.OnFriendApplicationRejected(utils.StructToJsonString(callbackData))
@@ -333,10 +334,13 @@ func (f *Friend) SyncFriendApplication(operationID string) {
 	for _, index := range sameA {
 		err := f.db.UpdateFriendRequest(onServer[index])
 		if err != nil {
-			if !strings.Contains(err.Error(), "RowsAffected == 0") {
-				log.NewError(operationID, "UpdateFriendRequest failed ", err.Error(), *onServer[index])
-				continue
-			}
+			log.NewError(operationID, "UpdateFriendRequest failed ", err.Error(), *onServer[index])
+			continue
+			//if !strings.Contains(err.Error(), "RowsAffected == 0") {
+			//
+			//}
+
+		} else {
 			if onServer[index].HandleResult == constant.FriendResponseRefuse {
 				callbackData := sdk.FriendApplicationRejectCallback(*onServer[index])
 				f.friendListener.OnFriendApplicationRejected(utils.StructToJsonString(callbackData))
@@ -386,10 +390,13 @@ func (f *Friend) SyncFriendList(operationID string) {
 	for _, index := range sameA {
 		err := f.db.UpdateFriend(friendsInfoOnServer[index])
 		if err != nil {
-			if !strings.Contains(err.Error(), "RowsAffected == 0") {
-				log.NewError(operationID, "UpdateFriendRequest failed ", err.Error(), *friendsInfoOnServer[index])
-				continue
-			}
+			log.NewError(operationID, "UpdateFriendRequest failed ", err.Error(), *friendsInfoOnServer[index])
+			continue
+			//if !strings.Contains(err.Error(), "RowsAffected == 0") {
+			//
+			//}
+
+		} else {
 			callbackData := sdk.FriendInfoChangedCallback(*friendsInfoOnLocal[index])
 			f.friendListener.OnFriendInfoChanged(utils.StructToJsonString(callbackData))
 		}

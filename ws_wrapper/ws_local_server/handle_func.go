@@ -8,6 +8,7 @@ package ws_local_server
 
 import (
 	"encoding/json"
+	"open_im_sdk/pkg/constant"
 	"reflect"
 	"runtime"
 )
@@ -36,7 +37,7 @@ func (ws *WServer) DoLogin(m Req, conn *UserConn) {
 		}
 
 	} else {
-		if urm.wsRouter.getMyLoginStatus() == 101 {
+		if urm.wsRouter.getMyLoginStatus() == constant.LoginSuccess {
 			//send ok
 			SendOneConnMessage(EventData{"Login", 0, "ok", "", m.OperationID}, conn)
 		} else {

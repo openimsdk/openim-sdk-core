@@ -99,7 +99,7 @@ func (t testCreateGroup) OnError(errCode int32, errMsg string) {
 }
 
 var MemberUserID = "openIM101"
-var TestgroupID = "19de93b442a1ca3b772aa0f12761939d"
+var TestgroupID = "9aef5fc0db32632568e7a73d1f51c88e"
 
 func DoTestCreateGroup() {
 	var test testCreateGroup

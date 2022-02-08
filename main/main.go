@@ -397,15 +397,15 @@ func main() {
 	//if err := f1(); err != nil {
 	//	fmt.Printf("f1 err1111111111111: %v", err)
 	//}
-	strMyUidx := "openIM100"
-	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMDAiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTY0MzExMjYzNywibmJmIjoxNjQyNTA3ODM3LCJpYXQiOjE2NDI1MDc4Mzd9.BMOgVBhuWe6fcQxbGcX6w5swWpguA5L97KV3GTPaILE"
+	strMyUidx := "openIM102"
+	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMDIiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTY0NDg5ODYxNCwibmJmIjoxNjQ0MjkzODE0LCJpYXQiOjE2NDQyOTM4MTR9.IvtisGaPkx5oDHZo7X3I0Dnbpsed85ndiUUE8lswFs8"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 
-	//	test.DoTestCreateGroup()
+	//test.DoTestCreateGroup()
 	//	test.DoSetGroupInfo()
 	//	test.DotestGetGroupMemberList()
-	//test.DotestKickGroupMember()
-	//test.DotestInviteUserToGroup()
+	//	test.DotestKickGroupMember()
+	test.DotestInviteUserToGroup()
 	//test.DotestGetGroupApplicationList()
 
 	//test.DotestAcceptGroupApplication("")
@@ -418,8 +418,9 @@ func main() {
 	//	test.DotestGetFriendList()
 
 	//	test.DotestDeleteFriend()
+	//	test.DoTestDeleteFromBlackList()
+	//test.DoTestAddFriend()
 
-	//	test.DoTestaddFriend()
 	//	open_im_sdk.DoTestGetFriendList()
 	//	open_im_sdk.DoTestAddToBlackList()
 	//	open_im_sdk.DoTestGetBlackList()
@@ -427,8 +428,8 @@ func main() {
 	//DoTestGetDesignatedFriendsInfo()
 	//test.DoTestSendMsg(strMyUidx, test.Friend_uid)
 	for true {
-		time.Sleep(time.Duration(1) * time.Second)
-		test.DoTestSendMsg(strMyUidx, test.Friend_uid)
+		time.Sleep(time.Duration(100) * time.Second)
+		//	test.DoTestSendMsg(strMyUidx, test.Friend_uid)
 		fmt.Println("waiting")
 	}
 	//
