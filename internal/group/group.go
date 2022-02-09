@@ -593,8 +593,8 @@ func (g *Group) SyncAdminGroupApplication(operationID string) {
 			log.Info(operationID, "OnGroupApplicationAccepted", utils.StructToJsonString(callbackData))
 		} else {
 			callbackData := sdk.GroupApplicationAcceptCallback(*onServer[index])
-			g.listener.OnGroupApplicationAdded(utils.StructToJsonString(callbackData))
-			log.Info(operationID, "OnGroupApplicationAdded", utils.StructToJsonString(callbackData))
+			g.listener.OnReceiveJoinGroupApplicationAdded(utils.StructToJsonString(callbackData))
+			log.Info(operationID, "OnReceiveJoinGroupApplicationAdded", utils.StructToJsonString(callbackData))
 		}
 	}
 	for _, index := range bInANot {
