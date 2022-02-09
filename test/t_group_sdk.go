@@ -98,8 +98,8 @@ func (t testCreateGroup) OnError(errCode int32, errMsg string) {
 	log.Info(t.OperationID, utils.GetSelfFuncName(), errCode, errMsg)
 }
 
-var MemberUserID = "openIM102"
-var TestgroupID = "2aabb1c3c4901f3cc9ee606b824ac798"
+var MemberUserID = "openIM101"
+var TestgroupID = "46bd3bab02dc78521ff0f3af10798614"
 
 func DoTestCreateGroup() {
 	var test testCreateGroup
@@ -353,7 +353,7 @@ func DotestAcceptGroupApplication(uid string) {
 	var test testProcessGroupApplication
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
-	open_im_sdk.AcceptGroupApplication(test, TestgroupID, MemberUserID, "ok", test.OperationID)
+	open_im_sdk.AcceptGroupApplication(test, test.OperationID, TestgroupID, MemberUserID, "ok")
 }
 
 //func DoRefuseGroupApplication(uid string) {
