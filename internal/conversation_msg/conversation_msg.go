@@ -266,11 +266,17 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 func (c *Conversation) msgStructToLocalChatLog(m *sdk_struct.MsgStruct) *db.LocalChatLog {
 	var lc db.LocalChatLog
 	copier.Copy(&lc, m)
+	if m.SessionType == constant.GroupChatType {
+		lc.RecvID = m.GroupID
+	}
 	return &lc
 }
 func (c *Conversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *db.LocalErrChatLog {
 	var lc db.LocalErrChatLog
 	copier.Copy(&lc, m)
+	if m.SessionType == constant.GroupChatType {
+		lc.RecvID = m.GroupID
+	}
 	return &lc
 }
 
