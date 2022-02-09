@@ -1,6 +1,7 @@
 package common
 
 import (
+	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/jinzhu/copier"
 	"open_im_sdk/pkg/db"
@@ -231,7 +232,7 @@ func CheckFriendListDiff(a []*db.LocalFriend, b []*db.LocalFriend) (aInBNot, bIn
 		if !ok {
 			bInANot = append(bInANot, i)
 		} else {
-			if ib != v {
+			if !cmp.Equal(v, ib) {
 				sameB = append(sameB, i)
 			}
 		}
@@ -274,7 +275,7 @@ func CheckFriendRequestDiff(a []*db.LocalFriendRequest, b []*db.LocalFriendReque
 		if !ok {
 			bInANot = append(bInANot, i)
 		} else {
-			if ib != v {
+			if !cmp.Equal(v, ib) {
 				sameB = append(sameB, i)
 			}
 		}
@@ -304,7 +305,7 @@ func CheckBlackListDiff(a []*db.LocalBlack, b []*db.LocalBlack) (aInBNot, bInANo
 			//in a, but not in b
 			aInBNot = append(aInBNot, i)
 		} else {
-			if v == ia {
+			if !cmp.Equal(v, ia) {
 				// key of a and b is equal, but value different
 				sameA = append(sameA, i)
 			}
@@ -316,7 +317,7 @@ func CheckBlackListDiff(a []*db.LocalBlack, b []*db.LocalBlack) (aInBNot, bInANo
 		if !ok {
 			bInANot = append(bInANot, i)
 		} else {
-			if ib != v {
+			if !cmp.Equal(v, ib) {
 				sameB = append(sameB, i)
 			}
 		}
@@ -328,13 +329,13 @@ func CheckGroupInfoDiff(a []*db.LocalGroup, b []*db.LocalGroup) (aInBNot, bInANo
 	//to map, friendid_>friendinfo
 	mapA := make(map[string]*db.LocalGroup)
 	for _, v := range a {
-		//	fmt.Println("mapa   ", *v)
+		fmt.Println("mapa   ", *v)
 		mapA[v.GroupID] = v
 
 	}
 	mapB := make(map[string]*db.LocalGroup)
 	for _, v := range b {
-		//	fmt.Println("mapb   ", *v)
+		fmt.Println("mapb   ", *v)
 		mapB[v.GroupID] = v
 	}
 
@@ -350,7 +351,7 @@ func CheckGroupInfoDiff(a []*db.LocalGroup, b []*db.LocalGroup) (aInBNot, bInANo
 			//in a, but not in b
 			aInBNot = append(aInBNot, i)
 		} else {
-			if *v != *ia {
+			if !cmp.Equal(v, ia) {
 				// key of a and b is equal, but value different
 				sameA = append(sameA, i)
 			}
@@ -362,7 +363,7 @@ func CheckGroupInfoDiff(a []*db.LocalGroup, b []*db.LocalGroup) (aInBNot, bInANo
 		if !ok {
 			bInANot = append(bInANot, i)
 		} else {
-			if *ib != *v {
+			if !cmp.Equal(v, ib) {
 				sameB = append(sameB, i)
 			}
 		}
@@ -408,7 +409,7 @@ func CheckGroupMemberDiff(a []*db.LocalGroupMember, b []*db.LocalGroupMember) (a
 		if !ok {
 			bInANot = append(bInANot, i)
 		} else {
-			if ib != v {
+			if !cmp.Equal(v, ib) {
 				sameB = append(sameB, i)
 			}
 		}
@@ -451,7 +452,7 @@ func CheckGroupRequestDiff(a []*db.LocalGroupRequest, b []*db.LocalGroupRequest)
 		if !ok {
 			bInANot = append(bInANot, i)
 		} else {
-			if ib != v {
+			if !cmp.Equal(v, ib) {
 				sameB = append(sameB, i)
 			}
 		}
@@ -494,7 +495,7 @@ func CheckAdminGroupRequestDiff(a []*db.LocalAdminGroupRequest, b []*db.LocalAdm
 		if !ok {
 			bInANot = append(bInANot, i)
 		} else {
-			if ib != v {
+			if !cmp.Equal(v, ib) {
 				sameB = append(sameB, i)
 			}
 		}

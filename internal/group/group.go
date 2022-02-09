@@ -94,7 +94,6 @@ func (g *Group) memberQuitNotification(msg *api.MsgData, operationID string) {
 		return
 	}
 	if detail.QuitUser.UserID == g.loginUserID {
-		log.Info(operationID, "quit group detail is ", detail)
 		g.SyncJoinedGroupList(operationID)
 		g.db.DeleteGroupAllMembers(detail.Group.GroupID)
 	} else {
