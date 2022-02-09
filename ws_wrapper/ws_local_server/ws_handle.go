@@ -145,11 +145,11 @@ func SendOneUserMessage(data interface{}, uid string) {
 func SendOneConnMessage(data interface{}, conn *UserConn) {
 	bMsg, _ := json.Marshal(data)
 	err := WS.writeMsg(conn, websocket.TextMessage, bMsg)
-	wrapSdkLog("send response to web: ", string(bMsg))
+	wrapSdkLog("send response to web: ", string(bMsg), "userUid", WS.getUserUid(conn))
 	if err != nil {
 		wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", data)
 	} else {
-		wrapSdkLog("Conn is nil", "data", data)
+		wrapSdkLog("WS WriteMsg ok", "data", data, "userUid", WS.getUserUid(conn))
 	}
 }
 

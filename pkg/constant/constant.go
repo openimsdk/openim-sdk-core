@@ -41,7 +41,8 @@ const (
 	Typing         = 113
 	Quote          = 114
 	//////////////////////////////////////////
-	FriendNotificationBegin               = 1200
+	FriendNotificationBegin = 1200
+
 	FriendApplicationApprovedNotification = 1201 //add_friend_response
 	FriendApplicationRejectedNotification = 1202 //add_friend_response
 	FriendApplicationNotification         = 1203 //add_friend
@@ -56,20 +57,22 @@ const (
 	UserInfoUpdatedNotification = 1303 //SetSelfInfoTip             = 204
 	UserNotificationEnd         = 1399
 
-	GroupNotificationBegin               = 1400
-	GroupCreatedNotification             = 1401
-	GroupInfoSetNotification             = 1402
-	JoinGroupApplicationNotification     = 1403
-	MemberQuitNotification               = 1404
-	GroupApplicationAcceptedNotification = 1405
-	GroupApplicationRejectedNotification = 1406
-	GroupOwnerTransferredNotification    = 1407
-	MemberKickedNotification             = 1408
-	MemberInvitedNotification            = 1409
-	MemberEnterNotification              = 1410
-	GroupNotificationEnd                 = 1499
+	GroupNotificationBegin = 1500
+
+	GroupCreatedNotification             = 1501
+	GroupInfoSetNotification             = 1502
+	JoinGroupApplicationNotification     = 1503
+	MemberQuitNotification               = 1504
+	GroupApplicationAcceptedNotification = 1505
+	GroupApplicationRejectedNotification = 1506
+	GroupOwnerTransferredNotification    = 1507
+	MemberKickedNotification             = 1508
+	MemberInvitedNotification            = 1509
+	MemberEnterNotification              = 1510
+	GroupNotificationEnd                 = 1599
 
 	////////////////////////////////////////
+
 	//MsgFrom
 	UserMsgType = 100
 	SysMsgType  = 200

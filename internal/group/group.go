@@ -539,7 +539,7 @@ func (g *Group) SyncAdminGroupApplication(operationID string) {
 func (g *Group) SyncJoinedGroupList(operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	svrList, err := g.getJoinedGroupListFromSvr(operationID)
-	log.Info(operationID, "getJoinedGroupListFromSvr", svrList)
+	log.Info(operationID, "getJoinedGroupListFromSvr", svrList, g.loginUserID)
 	if err != nil {
 		log.NewError(operationID, "getJoinedGroupListFromSvr failed ", err.Error())
 		return
@@ -551,9 +551,9 @@ func (g *Group) SyncJoinedGroupList(operationID string) {
 		return
 	}
 
-	log.NewInfo(operationID, " onLocal ", onLocal)
+	log.NewInfo(operationID, " onLocal ", onLocal, g.loginUserID)
 	aInBNot, bInANot, sameA, sameB := common.CheckGroupInfoDiff(onServer, onLocal)
-	log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
+	log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB, g.loginUserID)
 	for _, index := range aInBNot {
 		err := g.db.InsertGroup(onServer[index])
 		if err != nil {
@@ -574,6 +574,7 @@ func (g *Group) SyncJoinedGroupList(operationID string) {
 	}
 
 	for _, index := range bInANot {
+		log.Info(operationID, "DeleteGroup: ", onLocal[index].GroupID, g.loginUserID)
 		err := g.db.DeleteGroup(onLocal[index].GroupID)
 		if err != nil {
 			log.NewError(operationID, "DeleteGroup failed ", err.Error(), onLocal[index].GroupID)

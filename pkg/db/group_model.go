@@ -13,7 +13,8 @@ func (d *DataBase) InsertGroup(groupInfo *LocalGroup) error {
 func (d *DataBase) DeleteGroup(groupID string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.Where("group_id=?", groupID).Delete(&LocalGroup{}).Error, "DeleteGroup failed")
+	localGroup := LocalGroup{GroupID: groupID}
+	return utils.Wrap(d.conn.Delete(&localGroup).Error, "DeleteGroup failed")
 }
 func (d *DataBase) UpdateGroup(groupInfo *LocalGroup) error {
 	d.mRWMutex.Lock()
