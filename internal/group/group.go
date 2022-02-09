@@ -150,6 +150,7 @@ func (g *Group) memberKickedNotification(msg *api.MsgData, operationID string) {
 		return
 	}
 
+	log.Info(operationID, "KickedUserList ", detail.KickedUserList)
 	for _, v := range detail.KickedUserList {
 		if v.UserID == g.loginUserID {
 			g.SyncJoinedGroupList(operationID)
