@@ -376,8 +376,8 @@ func ClearC2CHistoryMessage(callback open_im_sdk_callback.Base, operationID stri
 func ClearGroupHistoryMessage(callback open_im_sdk_callback.Base, operationID string, groupID string) {
 	userForSDK.Conversation().ClearGroupHistoryMessage(callback, groupID, operationID)
 }
-func InsertSingleMessageToLocalStorage(callback open_im_sdk_callback.Base, operationID string, message, userID, sendID string) {
-	userForSDK.Conversation().InsertSingleMessageToLocalStorage(callback, message, userID, sendID, operationID)
+func InsertSingleMessageToLocalStorage(callback open_im_sdk_callback.Base, operationID string, message, recvID, sendID string) {
+	userForSDK.Conversation().InsertSingleMessageToLocalStorage(callback, message, recvID, sendID, operationID)
 }
 
 //func FindMessages(callback common.Base, operationID string, messageIDList string) {

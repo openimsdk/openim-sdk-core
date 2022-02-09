@@ -888,6 +888,10 @@ type MsgStruct struct {
 		Text         string     `json:"text"`
 		QuoteMessage *MsgStruct `json:"quoteMessage"`
 	} `json:"quoteElem"`
+	NotificationElem struct {
+		Detail      string `json:"detail"`
+		DefaultTips string `json:"defaultTips"`
+	}
 	//RevokeMessage struct {
 	//	ServerMsgID    string `json:"serverMsgID"`
 	//	SendID         string `json:"sendID"`
