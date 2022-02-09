@@ -25,9 +25,10 @@ func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, con
 	userInfo, err := c.db.GetLoginUser()
 	if err != nil {
 		log.Error(operationID, "GetLoginUser", err.Error())
+	} else {
+		message.SenderFaceURL = userInfo.FaceURL
+		message.SenderNickname = userInfo.Nickname
 	}
-	message.SenderFaceURL = userInfo.FaceURL
-	message.SenderNickname = userInfo.Nickname
 	ClientMsgID := utils.GetMsgID(message.SendID)
 	message.ClientMsgID = ClientMsgID
 	message.MsgFrom = msgFrom
