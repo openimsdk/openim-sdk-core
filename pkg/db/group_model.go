@@ -19,11 +19,13 @@ func (d *DataBase) DeleteGroup(groupID string) error {
 func (d *DataBase) UpdateGroup(groupInfo *LocalGroup) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Updates(groupInfo)
+
+	t := d.conn.Model(groupInfo).Select("*").Updates(*groupInfo)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
-	return utils.Wrap(t.Error, "UpdateGroup failed")
+	return utils.Wrap(t.Error, "")
+
 }
 func (d *DataBase) GetJoinedGroupList() ([]*LocalGroup, error) {
 	d.mRWMutex.Lock()

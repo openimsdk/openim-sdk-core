@@ -19,11 +19,12 @@ func (d *DataBase) DeleteGroupRequest(groupID, userID string) error {
 func (d *DataBase) UpdateGroupRequest(groupRequest *LocalGroupRequest) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Updates(groupRequest)
+
+	t := d.conn.Model(groupRequest).Select("*").Updates(*groupRequest)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
-	return utils.Wrap(t.Error, "_updateGroupRequest failed")
+	return utils.Wrap(t.Error, "")
 }
 
 //

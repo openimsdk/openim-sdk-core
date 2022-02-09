@@ -101,11 +101,11 @@ func (d *DataBase) DeleteGroupAllMembers(groupID string) error {
 func (d *DataBase) UpdateGroupMember(groupMember *LocalGroupMember) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Updates(groupMember)
+	t := d.conn.Model(groupMember).Select("*").Updates(*groupMember)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
-	return t.Error
+	return utils.Wrap(t.Error, "")
 }
 
 func (d *DataBase) GetGroupMenberInfoIfOwnerOrAdmin() ([]*LocalGroupMember, error) {
