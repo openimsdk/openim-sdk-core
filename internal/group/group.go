@@ -94,6 +94,7 @@ func (g *Group) memberQuitNotification(msg *api.MsgData, operationID string) {
 		return
 	}
 	if detail.QuitUser.UserID == g.loginUserID {
+		log.Info(operationID, "quit group detail is ", detail)
 		g.SyncJoinedGroupList(operationID)
 		g.db.DeleteGroupAllMembers(detail.Group.GroupID)
 	} else {
@@ -112,9 +113,9 @@ func (g *Group) groupApplicationAcceptedNotification(msg *api.MsgData, operation
 		g.SyncAdminGroupApplication(operationID)
 	} else {
 		g.SyncSelfGroupApplication(operationID)
+		g.SyncJoinedGroupList(operationID)
 	}
-	//	g.SyncJoinedGroupList(operationID)
-	//	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
+	//g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
 }
 
 func (g *Group) groupApplicationRejectedNotification(msg *api.MsgData, operationID string) {
@@ -224,7 +225,7 @@ func (g *Group) quitGroup(groupID string, callback open_im_sdk_callback.Base, op
 	apiReq.OperationID = operationID
 	apiReq.GroupID = groupID
 	g.p.PostFatalCallback(callback, constant.QuitGroupRouter, apiReq, nil, apiReq.OperationID)
-	g.syncGroupMemberByGroupID(groupID, operationID, false) //todo
+	//g.syncGroupMemberByGroupID(groupID, operationID, false) //todo
 	g.SyncJoinedGroupList(operationID)
 }
 
