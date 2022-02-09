@@ -21,6 +21,7 @@ func (d *DataBase) DeleteFriend(friendUserID string) error {
 func (d *DataBase) UpdateFriend(friend *LocalFriend) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
+
 	t := d.conn.Updates(friend)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")

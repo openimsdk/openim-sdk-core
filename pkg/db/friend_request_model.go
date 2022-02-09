@@ -1,7 +1,6 @@
 package db
 
 import (
-	"errors"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -9,6 +8,11 @@ func (d *DataBase) InsertFriendRequest(friendRequest *LocalFriendRequest) error 
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Create(friendRequest).Error, "InsertFriendRequest failed")
+	//u := d.conn.Model(friendRequest).Updates(args)
+	//if u.RowsAffected != 0 {
+	//	return nil
+	//}
+
 }
 
 func (d *DataBase) DeleteFriendRequestBothUserID(fromUserID, toUserID string) error {
@@ -20,11 +24,14 @@ func (d *DataBase) DeleteFriendRequestBothUserID(fromUserID, toUserID string) er
 func (d *DataBase) UpdateFriendRequest(friendRequest *LocalFriendRequest) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Updates(friendRequest)
-	if t.RowsAffected == 0 {
-		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
-	}
-	return utils.Wrap(t.Error, "UpdateFriendRequest failed")
+	return utils.Wrap(d.conn.Model(friendRequest).Select("*").Updates(*friendRequest).Error, "")
+
+	//
+	//t := d.conn.Updates(friendRequest)
+	//if t.RowsAffected == 0 {
+	//	return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	//}
+	//return utils.Wrap(t.Error, "UpdateFriendRequest failed")
 }
 
 func (d *DataBase) GetRecvFriendApplication() ([]*LocalFriendRequest, error) {
