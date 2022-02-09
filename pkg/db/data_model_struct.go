@@ -179,8 +179,8 @@ type LocalGroupRequest struct {
 	MemberCount   int32  `gorm:"column:member_count" json:"memberCount"`
 
 	UserID      string `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
-	Nickname    string `gorm:"column:name;type:varchar(255)" json:"nickname"`
-	UserFaceURL string `gorm:"column:face_url;type:varchar(255)" json:"userFaceURL"`
+	Nickname    string `gorm:"column:nickname;type:varchar(255)" json:"nickname"`
+	UserFaceURL string `gorm:"column:user_face_url;type:varchar(255)" json:"userFaceURL"`
 	Gender      int32  `gorm:"column:gender" json:"gender"`
 
 	HandleResult int32  `gorm:"column:handle_result" json:"handleResult"`

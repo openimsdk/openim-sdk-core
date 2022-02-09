@@ -573,13 +573,16 @@ func (g *Group) SyncAdminGroupApplication(operationID string) {
 		if onServer[index].HandleResult == constant.GroupResponseRefuse {
 			callbackData := sdk.GroupApplicationRejectCallback(*onServer[index])
 			g.listener.OnGroupApplicationRejected(utils.StructToJsonString(callbackData))
+			log.Info(operationID, "OnGroupApplicationRejected", utils.StructToJsonString(callbackData))
 
 		} else if onServer[index].HandleResult == constant.GroupResponseAgree {
 			callbackData := sdk.GroupApplicationAcceptCallback(*onServer[index])
 			g.listener.OnGroupApplicationAccepted(utils.StructToJsonString(callbackData))
+			log.Info(operationID, "OnGroupApplicationAccepted", utils.StructToJsonString(callbackData))
 		} else {
 			callbackData := sdk.GroupApplicationAcceptCallback(*onServer[index])
 			g.listener.OnGroupApplicationAdded(utils.StructToJsonString(callbackData))
+			log.Info(operationID, "OnGroupApplicationAdded", utils.StructToJsonString(callbackData))
 		}
 	}
 	for _, index := range bInANot {

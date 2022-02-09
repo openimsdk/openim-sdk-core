@@ -465,10 +465,12 @@ func CheckAdminGroupRequestDiff(a []*db.LocalAdminGroupRequest, b []*db.LocalAdm
 	mapA := make(map[string]*db.LocalAdminGroupRequest)
 	for _, v := range a {
 		mapA[v.GroupID+v.UserID] = v
+		fmt.Println("mapA   ", v)
 	}
 	mapB := make(map[string]*db.LocalAdminGroupRequest)
 	for _, v := range b {
 		mapB[v.GroupID+v.UserID] = v
+		fmt.Println("mapB   ", v)
 	}
 
 	aInBNot = make([]int, 0)
@@ -481,10 +483,12 @@ func CheckAdminGroupRequestDiff(a []*db.LocalAdminGroupRequest, b []*db.LocalAdm
 		ia, ok := mapB[v.GroupID+v.UserID]
 		if !ok {
 			//in a, but not in b
+			fmt.Println("aInBNot", a[i], ia)
 			aInBNot = append(aInBNot, i)
 		} else {
 			if !cmp.Equal(v, ia) {
 				// key of a and b is equal, but value different
+				fmt.Println("sameA", a[i], ia)
 				sameA = append(sameA, i)
 			}
 		}
@@ -493,9 +497,12 @@ func CheckAdminGroupRequestDiff(a []*db.LocalAdminGroupRequest, b []*db.LocalAdm
 	for i, v := range b {
 		ib, ok := mapA[v.GroupID+v.UserID]
 		if !ok {
+			fmt.Println("bInANot", b[i], ib)
+
 			bInANot = append(bInANot, i)
 		} else {
 			if !cmp.Equal(v, ib) {
+				fmt.Println("sameB", b[i], ib)
 				sameB = append(sameB, i)
 			}
 		}

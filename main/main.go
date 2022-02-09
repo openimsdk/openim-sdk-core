@@ -406,10 +406,10 @@ func main() {
 	//	test.DoSetGroupInfo()
 	//	test.DotestGetGroupMemberList()
 	//	test.DotestKickGroupMember()
-	//test.DotestInviteUserToGroup()
+	//	test.DotestInviteUserToGroup()
 	//test.DotestGetGroupApplicationList()
 
-	//test.DotestAcceptGroupApplication("")
+	test.DotestAcceptGroupApplication("")
 
 	///////////////friend///////////////////////////////////
 	//	test.DoTestGetFriendApplicationList()
@@ -420,7 +420,7 @@ func main() {
 
 	//	test.DotestDeleteFriend()
 	//	test.DoTestDeleteFromBlackList()
-	test.DoTestAddFriend()
+	//test.DoTestAddFriend()
 
 	//test.DotestSetFriendRemark()
 
