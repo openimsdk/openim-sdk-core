@@ -365,6 +365,12 @@ func InOutlllogin(uid, tk string) {
 	callback.funcName = utils.GetSelfFuncName()
 	operationID := utils.OperationIDGenerator()
 	open_im_sdk.Login(&callback, operationID, uid, tk)
+	for {
+		if callback.errCode == 1 || callback.errCode == -1 {
+			return
+		}
+	}
+
 }
 
 func InOutLogou() {
@@ -407,7 +413,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	open_im_sdk.SetGroupListener(groupListener)
 
 	InOutlllogin(uid, tk)
-	time.Sleep(5 * time.Second)
+	log.Info("", "InOutDoTest fin")
 }
 
 func lllogin(uid, tk string) bool {

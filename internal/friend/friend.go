@@ -558,6 +558,8 @@ func (f *Friend) friendAddedNotification(msg *api.MsgData, operationID string) {
 		log.Error(operationID, "comm.UnmarshalTips failed ", err.Error(), msg)
 		return
 	}
+	log.Info("detail: ", detail.Friend)
+	f.SyncFriendList(operationID)
 	if detail.Friend.OwnerUserID == f.loginUserID || detail.Friend.FriendUser.UserID == f.loginUserID {
 		f.SyncFriendList(operationID)
 		return
