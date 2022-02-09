@@ -207,15 +207,15 @@ func (u *LoginMgr) GetLoginStatus() int32 {
 
 func (u *LoginMgr) forcedSynchronization() {
 	operationID := utils.OperationIDGenerator()
-	go u.friend.SyncFriendList(operationID)
-	go u.friend.SyncBlackList(operationID)
-	go u.friend.SyncFriendApplication(operationID)
-	go u.friend.SyncSelfFriendApplication(operationID)
-	go u.user.SyncLoginUserInfo(operationID)
-	go u.group.SyncJoinedGroupList(operationID)
-	go u.group.SyncAdminGroupApplication(operationID)
-	go u.group.SyncSelfGroupApplication(operationID)
-	go u.group.SyncJoinedGroupMember(operationID)
+	u.friend.SyncFriendList(operationID)
+	u.friend.SyncBlackList(operationID)
+	u.friend.SyncFriendApplication(operationID)
+	u.friend.SyncSelfFriendApplication(operationID)
+	u.user.SyncLoginUserInfo(operationID)
+	u.group.SyncJoinedGroupList(operationID)
+	u.group.SyncAdminGroupApplication(operationID)
+	u.group.SyncSelfGroupApplication(operationID)
+	u.group.SyncJoinedGroupMember(operationID)
 }
 
 func (u *LoginMgr) GetMinSeqSvr() int64 {

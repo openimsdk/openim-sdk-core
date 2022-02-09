@@ -686,6 +686,7 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 		if onGroupMemberNotification == true {
 			callbackData := sdk.GroupMemberAddedCallback(*onServer[index])
 			g.listener.OnGroupMemberAdded(utils.StructToJsonString(callbackData))
+			log.Info(operationID, "OnGroupMemberAdded", utils.StructToJsonString(callbackData))
 		}
 	}
 	for _, index := range sameA {
@@ -697,6 +698,7 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 
 		callbackData := sdk.GroupMemberInfoChangedCallback(*onServer[index])
 		g.listener.OnGroupMemberInfoChanged(utils.StructToJsonString(callbackData))
+		log.Info(operationID, "OnGroupMemberInfoChanged", utils.StructToJsonString(callbackData))
 	}
 	for _, index := range bInANot {
 		err := g.db.DeleteGroupMember(onLocal[index].GroupID, onLocal[index].UserID)
@@ -707,6 +709,7 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 		if onGroupMemberNotification == true {
 			callbackData := sdk.GroupMemberDeletedCallback(*onLocal[index])
 			g.listener.OnGroupMemberDeleted(utils.StructToJsonString(callbackData))
+			log.Info(operationID, "OnGroupMemberDeleted", utils.StructToJsonString(callbackData))
 		}
 	}
 }
