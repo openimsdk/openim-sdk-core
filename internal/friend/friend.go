@@ -291,7 +291,7 @@ func (f *Friend) SyncSelfFriendApplication(operationID string) {
 				callbackData := sdk.FriendApplicationAcceptCallback(*onServer[index])
 				f.friendListener.OnFriendApplicationAccepted(utils.StructToJsonString(callbackData))
 			} else {
-				callbackData := sdk.FriendApplicationAcceptCallback(*onServer[index])
+				callbackData := sdk.FriendApplicationAddedCallback(*onServer[index])
 				f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
 			}
 		}
@@ -351,6 +351,9 @@ func (f *Friend) SyncFriendApplication(operationID string) {
 			} else if onServer[index].HandleResult == constant.FriendResponseAgree {
 				callbackData := sdk.FriendApplicationAcceptCallback(*onServer[index])
 				f.friendListener.OnFriendApplicationAccepted(utils.StructToJsonString(callbackData))
+			} else {
+				callbackData := sdk.FriendApplicationAddedCallback(*onServer[index])
+				f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
 			}
 		}
 	}

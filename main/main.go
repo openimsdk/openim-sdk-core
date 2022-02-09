@@ -402,7 +402,7 @@ func main() {
 	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMDAiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTY0NDk5MTIyOCwibmJmIjoxNjQ0Mzg2NDI4LCJpYXQiOjE2NDQzODY0Mjh9.QjlFMEqeqb-i47zkbzv26175SNWaWUGv_sgAmDVkxl8"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 
-	test.DoTestCreateGroup()
+	//	test.DoTestCreateGroup()
 	//	test.DoSetGroupInfo()
 	//	test.DotestGetGroupMemberList()
 	//	test.DotestKickGroupMember()
@@ -420,7 +420,9 @@ func main() {
 
 	//	test.DotestDeleteFriend()
 	//	test.DoTestDeleteFromBlackList()
-	//test.DoTestAddFriend()
+	test.DoTestAddFriend()
+
+	//test.DotestSetFriendRemark()
 
 	//	open_im_sdk.DoTestGetFriendList()
 	//	open_im_sdk.DoTestAddToBlackList()
