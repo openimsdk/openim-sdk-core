@@ -279,9 +279,6 @@ func (f *Friend) SyncSelfFriendApplication(operationID string) {
 		if err != nil {
 			log.NewError(operationID, "UpdateFriendRequest failed ", err.Error(), *onServer[index])
 			continue
-			//if !strings.Contains(err.Error(), "RowsAffected == 0") {
-			//
-			//}
 		} else {
 			if onServer[index].HandleResult == constant.FriendResponseRefuse {
 				callbackData := sdk.FriendApplicationRejectCallback(*onServer[index])
@@ -305,14 +302,13 @@ func (f *Friend) SyncSelfFriendApplication(operationID string) {
 		callbackData := sdk.FriendApplicationAcceptCallback(*onLocal[index])
 		f.friendListener.OnFriendApplicationDeleted(utils.StructToJsonString(callbackData))
 	}
-
 }
 
 func (f *Friend) SyncFriendApplication(operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	svrList, err := f.getFriendApplicationFromServer(operationID)
 	if err != nil {
-		log.NewError(operationID, "getServerFriendList failed ", err.Error())
+		log.NewError(operationID, "getFriendApplicationFromServer failed ", err.Error())
 		return
 	}
 	onServer := common.TransferToLocalFriendRequest(svrList)
@@ -339,15 +335,10 @@ func (f *Friend) SyncFriendApplication(operationID string) {
 		if err != nil {
 			log.NewError(operationID, "UpdateFriendRequest failed ", err.Error(), *onServer[index])
 			continue
-			//if !strings.Contains(err.Error(), "RowsAffected == 0") {
-			//
-			//}
-
 		} else {
 			if onServer[index].HandleResult == constant.FriendResponseRefuse {
 				callbackData := sdk.FriendApplicationRejectCallback(*onServer[index])
 				f.friendListener.OnFriendApplicationRejected(utils.StructToJsonString(callbackData))
-
 			} else if onServer[index].HandleResult == constant.FriendResponseAgree {
 				callbackData := sdk.FriendApplicationAcceptCallback(*onServer[index])
 				f.friendListener.OnFriendApplicationAccepted(utils.StructToJsonString(callbackData))

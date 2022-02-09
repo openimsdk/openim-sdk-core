@@ -22,11 +22,12 @@ func (d *DataBase) UpdateFriend(friend *LocalFriend) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 
-	t := d.conn.Updates(friend)
+	t := d.conn.Model(friend).Select("*").Updates(*friend)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
-	return utils.Wrap(t.Error, "UpdateFriend failed")
+	return utils.Wrap(t.Error, "")
+
 }
 
 func (d *DataBase) GetAllFriendList() ([]*LocalFriend, error) {
