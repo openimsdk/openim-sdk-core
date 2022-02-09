@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"open_im_sdk/pkg/utils"
 )
 
