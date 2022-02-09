@@ -94,7 +94,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
 		return
 	}
-	err := CheckToken(userID, token)
+	err := CheckToken(userID, token, operationID)
 	common.CheckTokenErrCallback(cb, err, operationID)
 	log.Info(operationID, "checkToken ok ", userID, token)
 	u.justOnceFlag = true
@@ -226,8 +226,11 @@ func (u *LoginMgr) SetMinSeqSvr(minSeqSvr int64) {
 	u.SetMinSeqSvr(minSeqSvr)
 }
 
-func CheckToken(userID, token string) error {
-	operationID := utils.OperationIDGenerator()
+func CheckToken(userID, token string, operationID string) error {
+	if operationID == "" {
+		operationID = utils.OperationIDGenerator()
+	}
+
 	log.Debug(operationID, utils.GetSelfFuncName(), userID, token)
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
 	_, err := user.NewUser(nil, p, userID).GetSelfUserInfoFromSvr(operationID)

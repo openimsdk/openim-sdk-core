@@ -134,11 +134,7 @@ func (ws *WServer) writeMsg(conn *UserConn, a int, msg []byte) error {
 
 }
 func (ws *WServer) addUserConn(uid string, conn *UserConn) {
-	wrapSdkLog("addUserConn", uid)
 	rwLock.Lock()
-	wrapSdkLog("addUserConn lock", uid)
-	//	wrapSdkLog("before add, wsConnToUser map ", ws.wsConnToUser)
-	//wrapSdkLog("before add, wsUserToConn  map ", ws.wsUserToConn)
 
 	var flag int32
 	if oldConnMap, ok := ws.wsUserToConn[uid]; ok {
