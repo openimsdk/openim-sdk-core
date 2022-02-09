@@ -97,7 +97,7 @@ func (g *Group) memberQuitNotification(msg *api.MsgData, operationID string) {
 		g.SyncJoinedGroupList(operationID)
 		g.db.DeleteGroupAllMembers(detail.Group.GroupID)
 	} else {
-		g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
+		g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
 	}
 }
 
@@ -139,7 +139,7 @@ func (g *Group) groupOwnerTransferredNotification(msg *api.MsgData, operationID 
 		return
 	}
 	g.SyncJoinedGroupList(operationID)
-	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
+	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
 }
 
 func (g *Group) memberKickedNotification(msg *api.MsgData, operationID string) {
@@ -158,7 +158,7 @@ func (g *Group) memberKickedNotification(msg *api.MsgData, operationID string) {
 			return
 		}
 	}
-	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
+	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
 }
 
 func (g *Group) memberInvitedNotification(msg *api.MsgData, operationID string) {
@@ -172,11 +172,11 @@ func (g *Group) memberInvitedNotification(msg *api.MsgData, operationID string) 
 	for _, v := range detail.InvitedUserList {
 		if v.UserID == g.loginUserID {
 			g.SyncJoinedGroupList(operationID)
-			g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
+			g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, false)
 			return
 		}
 	}
-	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
+	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
 }
 
 func (g *Group) memberEnterNotification(msg *api.MsgData, operationID string) {
@@ -189,7 +189,7 @@ func (g *Group) memberEnterNotification(msg *api.MsgData, operationID string) {
 	if detail.EntrantUser.UserID == g.loginUserID {
 		g.SyncJoinedGroupList(operationID)
 	}
-	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
+	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
 }
 
 func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam,
@@ -204,7 +204,7 @@ func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.Create
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "api req args: ", apiReq)
 	g.p.PostFatalCallback(callback, constant.CreateGroupRouter, apiReq, &realData.GroupInfo, apiReq.OperationID)
 	g.SyncJoinedGroupList(operationID)
-	g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID, operationID)
+	g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID, operationID, true)
 	var temp sdk.CreateGroupCallback
 	temp = sdk.CreateGroupCallback(realData.GroupInfo)
 	return &temp
@@ -224,7 +224,7 @@ func (g *Group) quitGroup(groupID string, callback open_im_sdk_callback.Base, op
 	apiReq.OperationID = operationID
 	apiReq.GroupID = groupID
 	g.p.PostFatalCallback(callback, constant.QuitGroupRouter, apiReq, nil, apiReq.OperationID)
-	g.syncGroupMemberByGroupID(groupID, operationID) //todo
+	g.syncGroupMemberByGroupID(groupID, operationID, false) //todo
 	g.SyncJoinedGroupList(operationID)
 }
 
@@ -266,10 +266,13 @@ func (g *Group) getGroupsInfo(groupIdList sdk.GetGroupsInfoParam, callback open_
 			notInDB = append(notInDB, v)
 		}
 	}
-	groupsInfoSvr, err := g.getGroupsInfoFromSvr(notInDB, operationID)
-	common.CheckArgsErrCallback(callback, err, operationID)
-	transfer := common.TransferToLocalGroupInfo(groupsInfoSvr)
-	result = append(result, transfer...)
+	if len(notInDB) > 0 {
+		groupsInfoSvr, err := g.getGroupsInfoFromSvr(notInDB, operationID)
+		common.CheckArgsErrCallback(callback, err, operationID)
+		transfer := common.TransferToLocalGroupInfo(groupsInfoSvr)
+		result = append(result, transfer...)
+	}
+
 	return result
 }
 
@@ -335,7 +338,7 @@ func (g *Group) transferGroupOwner(callback open_im_sdk_callback.Base, groupID, 
 	apiReq.OldOwnerUserID = g.loginUserID
 	g.p.PostFatalCallback(callback, constant.TransferGroupRouter, apiReq, nil, apiReq.OperationID)
 	g.SyncJoinedGroupMember(operationID)
-	g.syncGroupMemberByGroupID(groupID, operationID)
+	g.syncGroupMemberByGroupID(groupID, operationID, true)
 }
 
 func (g *Group) inviteUserToGroup(callback open_im_sdk_callback.Base, groupID, reason string, userList sdk.InviteUserToGroupParam, operationID string) sdk.InviteUserToGroupCallback {
@@ -346,8 +349,8 @@ func (g *Group) inviteUserToGroup(callback open_im_sdk_callback.Base, groupID, r
 	apiReq.OperationID = operationID
 	var realData sdk.InviteUserToGroupCallback
 	g.p.PostFatalCallback(callback, constant.InviteUserToGroupRouter, apiReq, &realData, apiReq.OperationID)
-	g.SyncJoinedGroupMember(operationID)
-	g.syncGroupMemberByGroupID(groupID, operationID)
+	g.SyncJoinedGroupList(operationID)
+	g.syncGroupMemberByGroupID(groupID, operationID, false)
 	return realData
 }
 
@@ -380,7 +383,7 @@ func (g *Group) processGroupApplication(callback open_im_sdk_callback.Base, grou
 	apiReq.HandledMsg = handleMsg
 	if handleResult == constant.GroupResponseAgree {
 		g.p.PostFatalCallback(callback, constant.AcceptGroupApplicationRouter, apiReq, nil, apiReq.OperationID)
-		g.syncGroupMemberByGroupID(groupID, operationID)
+		g.syncGroupMemberByGroupID(groupID, operationID, true)
 	} else if handleResult == constant.GroupResponseRefuse {
 		g.p.PostFatalCallback(callback, constant.RefuseGroupApplicationRouter, apiReq, nil, apiReq.OperationID)
 	}
@@ -527,7 +530,7 @@ func (g *Group) SyncAdminGroupApplication(operationID string) {
 		}
 	}
 	for _, index := range bInANot {
-		err := g.db.DeleteGroupRequest(onServer[index].GroupID, onServer[index].UserID)
+		err := g.db.DeleteGroupRequest(onLocal[index].GroupID, onLocal[index].UserID)
 		if err != nil {
 			log.NewError(operationID, "DeleteGroupRequest failed ", err.Error())
 			continue
@@ -586,7 +589,7 @@ func (g *Group) SyncJoinedGroupList(operationID string) {
 	}
 }
 
-func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string) {
+func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onGroupMemberNotification bool) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", groupID)
 	svrList, err := g.getGroupAllMemberByGroupIDFromSvr(groupID, operationID)
 	if err != nil {
@@ -608,8 +611,10 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string) {
 			log.NewError(operationID, "InsertGroupMember failed ", err.Error(), onServer[index])
 			continue
 		}
-		callbackData := sdk.GroupMemberAddedCallback(*onServer[index])
-		g.listener.OnGroupMemberAdded(utils.StructToJsonString(callbackData))
+		if onGroupMemberNotification == true {
+			callbackData := sdk.GroupMemberAddedCallback(*onServer[index])
+			g.listener.OnGroupMemberAdded(utils.StructToJsonString(callbackData))
+		}
 	}
 	for _, index := range sameA {
 		err := g.db.UpdateGroupMember(onServer[index])
@@ -627,8 +632,10 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string) {
 			log.NewError(operationID, "DeleteGroupMember failed ", err.Error(), onLocal[index].GroupID, onLocal[index].UserID)
 			continue
 		}
-		callbackData := sdk.GroupMemberDeletedCallback(*onLocal[index])
-		g.listener.OnGroupMemberDeleted(utils.StructToJsonString(callbackData))
+		if onGroupMemberNotification == true {
+			callbackData := sdk.GroupMemberDeletedCallback(*onLocal[index])
+			g.listener.OnGroupMemberDeleted(utils.StructToJsonString(callbackData))
+		}
 	}
 }
 
@@ -640,7 +647,7 @@ func (g *Group) SyncJoinedGroupMember(operationID string) {
 		return
 	}
 	for _, v := range groupListOnServer {
-		g.syncGroupMemberByGroupID(v.GroupID, operationID)
+		g.syncGroupMemberByGroupID(v.GroupID, operationID, true)
 	}
 }
 

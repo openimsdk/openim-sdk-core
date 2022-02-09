@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/pkg/errors"
+	//"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/network"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/test"
@@ -397,15 +398,15 @@ func main() {
 	//if err := f1(); err != nil {
 	//	fmt.Printf("f1 err1111111111111: %v", err)
 	//}
-	strMyUidx := "openIM102"
-	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMDIiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTY0NDg5ODYxNCwibmJmIjoxNjQ0MjkzODE0LCJpYXQiOjE2NDQyOTM4MTR9.IvtisGaPkx5oDHZo7X3I0Dnbpsed85ndiUUE8lswFs8"
+	strMyUidx := "openIM100"
+	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMDAiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTY0NDk5MTIyOCwibmJmIjoxNjQ0Mzg2NDI4LCJpYXQiOjE2NDQzODY0Mjh9.QjlFMEqeqb-i47zkbzv26175SNWaWUGv_sgAmDVkxl8"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 
-	//test.DoTestCreateGroup()
+	test.DoTestCreateGroup()
 	//	test.DoSetGroupInfo()
 	//	test.DotestGetGroupMemberList()
 	//	test.DotestKickGroupMember()
-	test.DotestInviteUserToGroup()
+	//test.DotestInviteUserToGroup()
 	//test.DotestGetGroupApplicationList()
 
 	//test.DotestAcceptGroupApplication("")

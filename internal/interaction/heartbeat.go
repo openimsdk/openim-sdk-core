@@ -29,21 +29,23 @@ func (u *Heartbeat) Run() {
 	heartbeatInterval := 30
 	reqTimeout := 30
 	retryTimes := 0
-
+	heartbeatNum := 0
 	for {
 		operationID := utils.OperationIDGenerator()
-
-		select {
-		case r := <-u.cmdCh:
-			if r.Cmd == constant.CmdLogout {
-				log.Warn("", "recv logout cmd, Goexit...")
-				runtime.Goexit()
+		if heartbeatNum != 0 {
+			select {
+			case r := <-u.cmdCh:
+				if r.Cmd == constant.CmdLogout {
+					log.Warn("", "recv logout cmd, Goexit...")
+					runtime.Goexit()
+				}
+				log.Warn(operationID, "other cmd...", r.Cmd)
+			case <-time.After(time.Millisecond * time.Duration(heartbeatInterval*1000)):
+				log.Debug(operationID, "heartbeat waiting(ms)... ", heartbeatInterval*1000)
 			}
-			log.Warn(operationID, "other cmd...", r.Cmd)
-		case <-time.After(time.Millisecond * time.Duration(heartbeatInterval*1000)):
-			log.Debug(operationID, "heartbeat waiting(ms)... ", heartbeatInterval*1000)
 		}
 
+		heartbeatNum++
 		log.Debug(operationID, "send heartbeat req")
 		resp, err := u.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.loginUserID, operationID)
 		if err != nil {

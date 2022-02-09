@@ -108,6 +108,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				log.Info("internal", "DoFriendMsg SingleChatType", v)
 			} else if v.ContentType > constant.UserNotificationBegin && v.ContentType < constant.UserNotificationEnd {
 				c.user.DoNotification(v)
+			} else if v.ContentType == constant.GroupApplicationRejectedNotification ||
+				v.ContentType == constant.GroupApplicationAcceptedNotification ||
+				v.ContentType == constant.JoinGroupApplicationNotification {
+				log.Info("internal", "DoGroupMsg SingleChatType", v)
+				c.group.DoNotification(v)
 			}
 		case constant.GroupChatType:
 			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
