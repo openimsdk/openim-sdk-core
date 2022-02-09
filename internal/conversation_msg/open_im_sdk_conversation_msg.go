@@ -318,7 +318,7 @@ func (c *Conversation) CreateFileMessageFromFullPath(fileFullPath string, fileNa
 	go func() {
 		dstFile := utils.FileTmpPath(fileFullPath, c.DataDir)
 		_, err := utils.CopyFile(fileFullPath, dstFile)
-		log.Info("internal", "copy file, ", fileFullPath, dstFile)
+		log.Info(operationID, "copy file, ", fileFullPath, dstFile)
 		if err != nil {
 			log.Error("internal", "open file failed: ", err.Error(), fileFullPath)
 		}
