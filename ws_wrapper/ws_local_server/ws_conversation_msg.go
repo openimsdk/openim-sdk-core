@@ -419,10 +419,10 @@ func (wsRouter *WsFuncRouter) InsertSingleMessageToLocalStorage(input string, op
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "message", "userID", "sendID") {
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "message", "recvID", "sendID") {
 		return
 	}
-	userWorker.Conversation().InsertSingleMessageToLocalStorage(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["message"].(string), m["userID"].(string), m["sendID"].(string), operationID)
+	userWorker.Conversation().InsertSingleMessageToLocalStorage(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["message"].(string), m["recvID"].(string), m["sendID"].(string), operationID)
 }
 
 //func (wsRouter *WsFuncRouter) FindMessages(messageIDList string, operationID string) {

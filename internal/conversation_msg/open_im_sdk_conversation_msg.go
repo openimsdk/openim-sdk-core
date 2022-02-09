@@ -975,18 +975,18 @@ func (c *Conversation) ClearGroupHistoryMessage(callback open_im_sdk_callback.Ba
 	}()
 }
 
-func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_callback.Base, message, userID, sendID, operationID string) {
+func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_callback.Base, message, recvID, sendID, operationID string) {
 	go func() {
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 		localMessage := db.LocalChatLog{}
 		s.SendID = sendID
-		s.RecvID = userID
+		s.RecvID = recvID
 		s.ClientMsgID = utils.GetMsgID(s.SendID)
 		s.SendTime = utils.GetCurrentTimestampByMill()
 		msgStructToLocalChatLog(&localMessage, &s)
-		clientMsgID := c.insertMessageToLocalStorage(callback, &localMessage, operationID)
-		callback.OnSuccess(clientMsgID)
+		_ = c.insertMessageToLocalStorage(callback, &localMessage, operationID)
+		callback.OnSuccess(utils.StructToJsonString(&s))
 	}()
 }
 
