@@ -17,10 +17,11 @@ func (d *DataBase) DeleteAdminGroupRequest(groupID, userID string) error {
 	return utils.Wrap(d.conn.Where("group_id=? and user_id=?", groupID, userID).Delete(&LocalAdminGroupRequest{}).Error, "DeleteAdminGroupRequest failed")
 }
 
-func (d *DataBase) UpdateAdminGroupRequest(groupRequest *LocalAdminGroupRequest) error {
+func (d *DataBase) UpdateAdminGroupRequest(groupRequest *LocalAdminGroupRequest, args map[string]interface{}) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Updates(groupRequest)
+
+	t := d.conn.Model(groupRequest).Updates(args)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}

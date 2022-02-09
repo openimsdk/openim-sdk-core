@@ -515,7 +515,7 @@ func (g *Group) SyncAdminGroupApplication(operationID string) {
 		g.listener.OnGroupApplicationAdded(utils.StructToJsonString(callbackData))
 	}
 	for _, index := range sameA {
-		err := g.db.UpdateAdminGroupRequest(onServer[index])
+		err := g.db.UpdateAdminGroupRequest(onServer[index], map[string]interface{}{"handle_result": onServer[index].HandleResult})
 		if err != nil {
 			log.NewError(operationID, "UpdateGroupRequest failed ", err.Error())
 			continue
@@ -527,6 +527,9 @@ func (g *Group) SyncAdminGroupApplication(operationID string) {
 		} else if onServer[index].HandleResult == constant.GroupResponseAgree {
 			callbackData := sdk.GroupApplicationAcceptCallback(*onServer[index])
 			g.listener.OnGroupApplicationAccepted(utils.StructToJsonString(callbackData))
+		} else {
+			callbackData := sdk.GroupApplicationAcceptCallback(*onServer[index])
+			g.listener.OnGroupApplicationAdded(utils.StructToJsonString(callbackData))
 		}
 	}
 	for _, index := range bInANot {
