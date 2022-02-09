@@ -167,7 +167,7 @@ type LocalGroupMember struct {
 //}open_im_sdk.GroupRequest == imdb.GroupRequest
 type LocalGroupRequest struct {
 	GroupID       string `gorm:"column:group_id;primary_key;type:varchar(64)" json:"groupID"`
-	GroupName     string `gorm:"column:name;size:255" json:"groupName"`
+	GroupName     string `gorm:"column:group_name;size:255" json:"groupName"`
 	Notification  string `gorm:"column:notification;type:varchar(255)" json:"notification"`
 	Introduction  string `gorm:"column:introduction;type:varchar(255)" json:"introduction"`
 	GroupFaceURL  string `gorm:"column:face_url;type:varchar(255)" json:"groupFaceURL"`

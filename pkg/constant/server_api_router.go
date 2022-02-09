@@ -36,6 +36,7 @@ const (
 	KickGroupMemberRouter              = RouterGroup + "/kick_group"
 	TransferGroupRouter                = RouterGroup + "/transfer_group"
 	GetRecvGroupApplicationListRouter  = RouterGroup + "/get_recv_group_applicationList"
+	GetSendGroupApplicationListRouter  = RouterGroup + "/get_user_req_group_applicationList"
 	AcceptGroupApplicationRouter       = RouterGroup + "/group_application_response"
 	RefuseGroupApplicationRouter       = RouterGroup + "/group_application_response"
 	SetReceiveMessageOptRouter         = "/conversation/set_receive_message_opt"

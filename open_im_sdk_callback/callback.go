@@ -22,7 +22,7 @@ type OnGroupListener interface {
 	OnGroupMemberAdded(groupMemberInfo string)
 	OnGroupMemberDeleted(groupMemberInfo string)
 	OnReceiveJoinGroupApplicationAdded(groupApplication string)
-	OnReceiveJoinGroupApplicationDeleted(groupApplication string)
+	OnReceiveJoinGroupApplicationDeleted(groupApplication string) //todo
 	OnGroupApplicationAdded(groupApplication string)
 	OnGroupApplicationDeleted(groupApplication string)
 	OnGroupInfoChanged(groupInfo string)

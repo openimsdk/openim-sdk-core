@@ -53,9 +53,18 @@ func (d *DataBase) UpdateGroupRequest(groupRequest *LocalGroupRequest) error {
 //	return transfer, utils.Wrap(err, "GetRecvGroupApplication failed ")
 //}
 
-func (d *DataBase) GetSelfGroupApplication() ([]LocalGroupRequest, error) {
+func (d *DataBase) GetSendGroupApplication() ([]*LocalGroupRequest, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var groupRequestList []LocalGroupRequest
-	return groupRequestList, utils.Wrap(d.conn.Where("user_id = ?", d.loginUserID).Find(&groupRequestList).Error, "GetSendGroupApplication failed")
+	err := utils.Wrap(d.conn.Find(&groupRequestList).Error, "")
+	if err != nil {
+		return nil, utils.Wrap(err, "")
+	}
+	var transfer []*LocalGroupRequest
+	for _, v := range groupRequestList {
+		v1 := v
+		transfer = append(transfer, &v1)
+	}
+	return transfer, nil
 }

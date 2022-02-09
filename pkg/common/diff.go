@@ -148,6 +148,14 @@ func AdminGroupRequestCopyToLocal(dst *db.LocalAdminGroupRequest, src *server_ap
 	dst.UserFaceURL = src.UserInfo.FaceURL
 }
 
+func SendGroupRequestCopyToLocal(dst *db.LocalGroupRequest, src *server_api_params.GroupRequest) {
+	copier.Copy(dst, src)
+	copier.Copy(dst, src.GroupInfo)
+	copier.Copy(dst, src.UserInfo)
+	dst.GroupFaceURL = src.GroupInfo.FaceURL
+	dst.UserFaceURL = src.UserInfo.FaceURL
+}
+
 //
 //func TransferToLocalUserInfo(apiData []*server_api_params.UserInfo) []*db.LocalUser {
 //	localData := make([]*db.LocalUser, 0)
@@ -510,6 +518,57 @@ func CheckAdminGroupRequestDiff(a []*db.LocalAdminGroupRequest, b []*db.LocalAdm
 	return aInBNot, bInANot, sameA, sameB
 }
 
+//
+//func CheckSendGroupRequestDiff(a []*db.LocalGroupRequest, b []*db.LocalGroupRequest) (aInBNot, bInANot, sameA, sameB []int) {
+//	//to map, friendid_>friendinfo
+//	mapA := make(map[string]*db.LocalGroupRequest)
+//	for _, v := range a {
+//		mapA[v.GroupID+v.UserID] = v
+//		fmt.Println("mapA   ", v)
+//	}
+//	mapB := make(map[string]*db.LocalGroupRequest)
+//	for _, v := range b {
+//		mapB[v.GroupID+v.UserID] = v
+//		fmt.Println("mapB   ", v)
+//	}
+//
+//	aInBNot = make([]int, 0)
+//	bInANot = make([]int, 0)
+//	sameA = make([]int, 0)
+//	sameB = make([]int, 0)
+//
+//	//for a
+//	for i, v := range a {
+//		ia, ok := mapB[v.GroupID+v.UserID]
+//		if !ok {
+//			//in a, but not in b
+//			fmt.Println("aInBNot", a[i], ia)
+//			aInBNot = append(aInBNot, i)
+//		} else {
+//			if !cmp.Equal(v, ia) {
+//				// key of a and b is equal, but value different
+//				fmt.Println("sameA", a[i], ia)
+//				sameA = append(sameA, i)
+//			}
+//		}
+//	}
+//	//for b
+//	for i, v := range b {
+//		ib, ok := mapA[v.GroupID+v.UserID]
+//		if !ok {
+//			fmt.Println("bInANot", b[i], ib)
+//
+//			bInANot = append(bInANot, i)
+//		} else {
+//			if !cmp.Equal(v, ib) {
+//				fmt.Println("sameB", b[i], ib)
+//				sameB = append(sameB, i)
+//			}
+//		}
+//	}
+//	return aInBNot, bInANot, sameA, sameB
+//}
+
 func TransferToLocalAdminGroupRequest(apiData []*server_api_params.GroupRequest) []*db.LocalAdminGroupRequest {
 	local := make([]*db.LocalAdminGroupRequest, 0)
 	//operationID := utils.OperationIDGenerator()
@@ -517,6 +576,20 @@ func TransferToLocalAdminGroupRequest(apiData []*server_api_params.GroupRequest)
 		var node db.LocalAdminGroupRequest
 		//	log2.NewDebug(operationID, "local test api ", v)
 		AdminGroupRequestCopyToLocal(&node, v)
+		//		log2.NewDebug(operationID, "local test local  ", node)
+		local = append(local, &node)
+	}
+	//	log2.NewDebug(operationID, "local test local all ", local)
+	return local
+}
+
+func TransferToLocalSendGroupRequest(apiData []*server_api_params.GroupRequest) []*db.LocalGroupRequest {
+	local := make([]*db.LocalGroupRequest, 0)
+	//operationID := utils.OperationIDGenerator()
+	for _, v := range apiData {
+		var node db.LocalGroupRequest
+		//	log2.NewDebug(operationID, "local test api ", v)
+		SendGroupRequestCopyToLocal(&node, v)
 		//		log2.NewDebug(operationID, "local test local  ", node)
 		local = append(local, &node)
 	}
