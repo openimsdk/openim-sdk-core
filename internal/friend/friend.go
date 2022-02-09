@@ -290,6 +290,9 @@ func (f *Friend) SyncSelfFriendApplication(operationID string) {
 			} else if onServer[index].HandleResult == constant.FriendResponseAgree {
 				callbackData := sdk.FriendApplicationAcceptCallback(*onServer[index])
 				f.friendListener.OnFriendApplicationAccepted(utils.StructToJsonString(callbackData))
+			} else {
+				callbackData := sdk.FriendApplicationAcceptCallback(*onServer[index])
+				f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
 			}
 		}
 	}
