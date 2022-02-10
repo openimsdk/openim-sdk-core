@@ -279,6 +279,7 @@ type LocalChatLog struct {
 	Seq              uint32 `gorm:"column:seq;index:index_seq;default:0" json:"seq"`
 	SendTime         int64  `gorm:"column:send_time" json:"sendTime"`
 	CreateTime       int64  `gorm:"column:create_time" json:"createTime"`
+	AttachedInfo     string `gorm:"column:attached_info;type:varchar(1024)" json:"groupAttachedInfo"`
 	Ex               string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 type LocalErrChatLog struct {
@@ -298,6 +299,7 @@ type LocalErrChatLog struct {
 	Status           int32  `gorm:"column:status" json:"status"`
 	SendTime         int64  `gorm:"column:send_time" json:"sendTime"`
 	CreateTime       int64  `gorm:"column:create_time" json:"createTime"`
+	AttachedInfo     string `gorm:"column:attached_info;type:varchar(1024)" json:"groupAttachedInfo"`
 	Ex               string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 
@@ -332,6 +334,7 @@ type LocalConversation struct {
 	DraftText         string `gorm:"column:draft_text" json:"draftText"`
 	DraftTextTime     int64  `gorm:"column:draft_text_time" json:"draftTextTime"`
 	IsPinned          bool   `gorm:"column:is_pinned" json:"isPinned"`
+	AttachedInfo      string `gorm:"column:attached_info;type:varchar(1024)" json:"groupAttachedInfo"`
 	Ex                string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 
