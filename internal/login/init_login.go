@@ -109,12 +109,6 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		return
 	}
 	u.db = db
-	log.Debug("test", "start", utils.GetCurrentTimestampByMill())
-	c, err := u.db.GetTestMessage(162325)
-	log.Debug("test", "end", utils.GetCurrentTimestampByMill())
-	if err == nil {
-		log.Debug("test", *c)
-	}
 	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir)
 	wsRespAsyn := ws.NewWsRespAsyn()
 	wsConn := ws.NewWsConn(u.connListener, token, userID)
