@@ -2,6 +2,7 @@ package group
 
 import (
 	"fmt"
+	"github.com/jinzhu/copier"
 	comm "open_im_sdk/internal/common"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
@@ -68,8 +69,7 @@ func (g *Group) groupInfoSetNotification(msg *api.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	detail := api.GroupInfoSetTips{Group: &api.GroupInfo{}}
 	comm.UnmarshalTips(msg, &detail)
-	g.SyncJoinedGroupList(operationID) //todo
-
+	g.SyncJoinedGroupList(operationID) //todo,  sync some group info
 }
 
 func (g *Group) joinGroupApplicationNotification(msg *api.MsgData, operationID string) {
@@ -140,6 +140,7 @@ func (g *Group) groupOwnerTransferredNotification(msg *api.MsgData, operationID 
 	}
 	g.SyncJoinedGroupList(operationID)
 	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
+	g.SyncAdminGroupApplication(operationID)
 }
 
 func (g *Group) memberKickedNotification(msg *api.MsgData, operationID string) {
@@ -200,9 +201,8 @@ func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.Create
 	apiReq := api.CreateGroupReq{}
 	apiReq.OperationID = operationID
 	apiReq.OwnerUserID = g.loginUserID
-	apiReq.GroupName = group.GroupName
-	apiReq.GroupType = group.GroupType
 	apiReq.MemberList = memberList
+	copier.Copy(&apiReq, &group)
 	realData := api.CreateGroupResp{}
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "api req args: ", apiReq)
 	g.p.PostFatalCallback(callback, constant.CreateGroupRouter, apiReq, &realData.GroupInfo, apiReq.OperationID)
@@ -548,7 +548,7 @@ func (g *Group) SyncAdminGroupApplication(operationID string) {
 		}
 	}
 	for _, index := range bInANot {
-		err := g.db.DeleteGroupRequest(onLocal[index].GroupID, onLocal[index].UserID)
+		err := g.db.DeleteAdminGroupRequest(onLocal[index].GroupID, onLocal[index].UserID)
 		if err != nil {
 			log.NewError(operationID, "DeleteGroupRequest failed ", err.Error())
 			continue

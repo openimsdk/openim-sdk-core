@@ -80,12 +80,17 @@ type GetGroupAllMemberResp struct {
 }
 
 type CreateGroupReq struct {
-	MemberList  []*GroupAddMemberInfo `json:"memberList"  binding:"required"`
-	OwnerUserID string                `json:"ownerUserID" binding:"required"`
-	GroupName   string                `json:"groupName"`
-	GroupType   int32                 `json:"groupType"`
-	OperationID string                `json:"operationID" binding:"required"`
+	MemberList   []*GroupAddMemberInfo `json:"memberList"  binding:"required"`
+	OwnerUserID  string                `json:"ownerUserID" binding:"required"`
+	GroupType    int32                 `json:"groupType"`
+	GroupName    string                `json:"groupName"`
+	Notification string                `json:"notification"`
+	Introduction string                `json:"introduction"`
+	FaceURL      string                `json:"faceURL"`
+	Ex           string                `json:"ex"`
+	OperationID  string                `json:"operationID" binding:"required"`
 }
+
 type CreateGroupResp struct {
 	CommResp
 	GroupInfo GroupInfo
