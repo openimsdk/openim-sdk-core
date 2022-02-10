@@ -7,8 +7,8 @@ import (
 )
 
 type CreateGroupBaseInfoParam struct {
-	GroupName string `json:"groupName"`
 	GroupType int32  `json:"groupType"`
+	SetGroupInfoParam
 }
 
 type CreateGroupMemberRoleParam []*server_api_params.GroupAddMemberInfo

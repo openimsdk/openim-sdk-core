@@ -2,6 +2,7 @@ package group
 
 import (
 	"fmt"
+	"github.com/jinzhu/copier"
 	comm "open_im_sdk/internal/common"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
@@ -200,9 +201,8 @@ func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.Create
 	apiReq := api.CreateGroupReq{}
 	apiReq.OperationID = operationID
 	apiReq.OwnerUserID = g.loginUserID
-	apiReq.GroupName = group.GroupName
-	apiReq.GroupType = group.GroupType
 	apiReq.MemberList = memberList
+	copier.Copy(&apiReq, &group)
 	realData := api.CreateGroupResp{}
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "api req args: ", apiReq)
 	g.p.PostFatalCallback(callback, constant.CreateGroupRouter, apiReq, &realData.GroupInfo, apiReq.OperationID)
