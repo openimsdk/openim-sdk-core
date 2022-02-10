@@ -2,6 +2,8 @@ package conversation_msg
 
 import (
 	"encoding/json"
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 	common2 "open_im_sdk/internal/common"
 	"open_im_sdk/internal/friend"
@@ -13,6 +15,7 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sort"
@@ -87,7 +90,19 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
 		msg := new(sdk_struct.MsgStruct)
 		copier.Copy(msg, v)
-		msg.Content = string(v.Content)
+		if v.ContentType >= constant.NotificationBegin && v.ContentType <= constant.NotificationEnd {
+			var tips server_api_params.TipsComm
+			_ = proto.Unmarshal(v.Content, &tips)
+			marshaler := jsonpb.Marshaler{
+				OrigName:     true,
+				EnumsAsInts:  false,
+				EmitDefaults: false,
+			}
+			msg.Content, _ = marshaler.MarshalToString(&tips)
+
+		} else {
+			msg.Content = string(v.Content)
+		}
 		msg.Status = constant.MsgStatusSendSuccess
 		msg.IsRead = false
 		log.Info(operationID, "new msg, seq, ServerMsgID, ClientMsgID", msg.Seq, msg.ServerMsgID, msg.ClientMsgID)
@@ -522,32 +537,41 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 }
 
 func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err error) {
-	switch msg.ContentType {
-	case constant.Text:
-	case constant.Picture:
-		err = utils.JsonStringToStruct(msg.Content, &msg.PictureElem)
-	case constant.Voice:
-		err = utils.JsonStringToStruct(msg.Content, &msg.SoundElem)
-	case constant.Video:
-		err = utils.JsonStringToStruct(msg.Content, &msg.VideoElem)
-	case constant.File:
-		err = utils.JsonStringToStruct(msg.Content, &msg.FileElem)
-	case constant.AtText:
-		err = utils.JsonStringToStruct(msg.Content, &msg.AtElem)
-		if err == nil {
-			if utils.IsContain(c.loginUserID, msg.AtElem.AtUserList) {
-				msg.AtElem.IsAtSelf = true
+	if msg.ContentType >= constant.NotificationBegin && msg.ContentType <= constant.NotificationEnd {
+		var tips server_api_params.TipsComm
+		_ = proto.Unmarshal([]byte(msg.Content), &tips)
+		msg.NotificationElem.Detail = tips.JsonDetail
+		msg.NotificationElem.DefaultTips = tips.DefaultTips
+
+	} else {
+		switch msg.ContentType {
+		case constant.Text:
+		case constant.Picture:
+			err = utils.JsonStringToStruct(msg.Content, &msg.PictureElem)
+		case constant.Voice:
+			err = utils.JsonStringToStruct(msg.Content, &msg.SoundElem)
+		case constant.Video:
+			err = utils.JsonStringToStruct(msg.Content, &msg.VideoElem)
+		case constant.File:
+			err = utils.JsonStringToStruct(msg.Content, &msg.FileElem)
+		case constant.AtText:
+			err = utils.JsonStringToStruct(msg.Content, &msg.AtElem)
+			if err == nil {
+				if utils.IsContain(c.loginUserID, msg.AtElem.AtUserList) {
+					msg.AtElem.IsAtSelf = true
+				}
 			}
+		case constant.Location:
+			err = utils.JsonStringToStruct(msg.Content, &msg.LocationElem)
+		case constant.Custom:
+			err = utils.JsonStringToStruct(msg.Content, &msg.CustomElem)
+		case constant.Quote:
+			err = utils.JsonStringToStruct(msg.Content, &msg.QuoteElem)
+		case constant.Merger:
+			err = utils.JsonStringToStruct(msg.Content, &msg.MergeElem)
 		}
-	case constant.Location:
-		err = utils.JsonStringToStruct(msg.Content, &msg.LocationElem)
-	case constant.Custom:
-		err = utils.JsonStringToStruct(msg.Content, &msg.CustomElem)
-	case constant.Quote:
-		err = utils.JsonStringToStruct(msg.Content, &msg.QuoteElem)
-	case constant.Merger:
-		err = utils.JsonStringToStruct(msg.Content, &msg.MergeElem)
 	}
+
 	return err
 }
 func (c *Conversation) updateConversation(lc *db.LocalConversation, cc, nc map[string]db.LocalConversation) {
