@@ -296,7 +296,7 @@ func (wsRouter *WsFuncRouter) AcceptGroupApplication(input, operationID string) 
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "application", "reason") {
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "groupID", "fromUserID", "handleMsg") {
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)

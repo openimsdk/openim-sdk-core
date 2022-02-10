@@ -18,3 +18,18 @@ func (wsRouter *WsFuncRouter) GetSelfUserInfo(input string, operationID string) 
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	userWorker.User().GetSelfUserInfo(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
+
+type UserCallback struct {
+	uid string
+}
+
+func (u *UserCallback) OnSelfInfoUpdated(userInfo string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", userInfo, "0"}, u.uid)
+}
+
+func (wsRouter *WsFuncRouter) SetUserListener() {
+	var u UserCallback
+	u.uid = wsRouter.uId
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.SetUserListener(&u)
+}
