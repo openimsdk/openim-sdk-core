@@ -398,8 +398,8 @@ func main() {
 	//if err := f1(); err != nil {
 	//	fmt.Printf("f1 err1111111111111: %v", err)
 	//}
-	strMyUidx := "openIM100"
-	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMDAiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTY0NDk5MTIyOCwibmJmIjoxNjQ0Mzg2NDI4LCJpYXQiOjE2NDQzODY0Mjh9.QjlFMEqeqb-i47zkbzv26175SNWaWUGv_sgAmDVkxl8"
+	strMyUidx := "openIM123456"
+	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMjM0NTYiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTY0NTA4Mzg3MSwibmJmIjoxNjQ0NDc5MDcxLCJpYXQiOjE2NDQ0NzkwNzF9.AVJr5AMgpJ-TQg-c5uj6d2I-X97BOmlFyQmQzqX0-vM"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 
 	//	test.DoTestCreateGroup()
@@ -409,11 +409,14 @@ func main() {
 	//	test.DotestInviteUserToGroup()
 	//test.DotestGetGroupApplicationList()
 
-	test.DotestAcceptGroupApplication("")
+	//test.DotestAcceptGroupApplication("")
+	test.DoTestGetUserReqGroupApplicationList()
+	test.DoTestSetConversationStatus(strMyUidx, 2)
 
+	test.DoTestGetRecvGroupApplicationList()
 	///////////////friend///////////////////////////////////
 	//	test.DoTestGetFriendApplicationList()
-	//	test.DoTestAcceptFriendApplication()
+	//test.DoTestAcceptFriendApplication()
 
 	//test.DotestSetFriendRemark()
 	//	test.DotestGetFriendList()
@@ -424,7 +427,7 @@ func main() {
 
 	//test.DotestSetFriendRemark()
 
-	//	open_im_sdk.DoTestGetFriendList()
+		//open_im_sdk.DoTestGetFriendList()
 	//	open_im_sdk.DoTestAddToBlackList()
 	//	open_im_sdk.DoTestGetBlackList()
 	//	open_im_sdk.DoTestDeleteFromBlackList()

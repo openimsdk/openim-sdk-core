@@ -7,8 +7,8 @@ import (
 )
 
 type CreateGroupBaseInfoParam struct {
-	GroupName string `json:"groupName"`
 	GroupType int32  `json:"groupType"`
+	SetGroupInfoParam
 }
 
 type CreateGroupMemberRoleParam []*server_api_params.GroupAddMemberInfo
@@ -53,6 +53,8 @@ type InviteUserToGroupCallback []*server_api_params.UserIDResult
 
 //type GetGroupApplicationListParam
 type GetGroupApplicationListCallback []*db.LocalAdminGroupRequest
+
+type GetSendGroupApplicationListCallback []*db.LocalGroupRequest
 
 //type AcceptGroupApplicationParam
 const AcceptGroupApplicationCallback = constant.SuccessCallbackDefault

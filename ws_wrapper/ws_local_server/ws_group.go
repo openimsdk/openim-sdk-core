@@ -289,6 +289,11 @@ func (wsRouter *WsFuncRouter) GetRecvGroupApplicationList(input, operationID str
 	userWorker.Group().GetRecvGroupApplicationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
+func (wsRouter *WsFuncRouter) GetSendGroupApplicationList(input, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Group().GetSendGroupApplicationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
+}
+
 func (wsRouter *WsFuncRouter) AcceptGroupApplication(input, operationID string) { //(application, reason string, callback Base) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
