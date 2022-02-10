@@ -589,6 +589,7 @@ func (c *Conversation) updateConversation(lc *db.LocalConversation, cc, nc map[s
 			}
 		} else {
 			if oldC, ok := nc[lc.ConversationID]; !ok {
+				c.addFaceURLAndName(lc)
 				nc[lc.ConversationID] = *lc
 			} else {
 				if lc.LatestMsgSendTime > oldC.LatestMsgSendTime {
@@ -621,4 +622,26 @@ func mapConversationToList(m map[string]db.LocalConversation) (cs []*db.LocalCon
 		cs = append(cs, &v)
 	}
 	return cs
+}
+func (c *Conversation) addFaceURLAndName(lc *db.LocalConversation) {
+	var callback open_im_sdk_callback.SendMsgCallBack
+	switch lc.ConversationType {
+	case constant.SingleChatType:
+		faceUrl, name, err := c.getUserNameAndFaceUrlByUid(callback, lc.UserID, "")
+		if err != nil {
+			log.Error("internal", "getUserNameAndFaceUrlByUid err", err.Error())
+			return
+		}
+		lc.FaceURL = faceUrl
+		lc.ShowName = name
+	case constant.GroupChatType:
+		g, err := c.db.GetGroupInfoByGroupID(lc.GroupID)
+		if err != nil {
+			log.Error("internal", "GetGroupInfoByGroupID err", err.Error())
+			return
+		}
+		lc.ShowName = g.GroupName
+		lc.FaceURL = g.FaceURL
+
+	}
 }
