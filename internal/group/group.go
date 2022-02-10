@@ -188,8 +188,11 @@ func (g *Group) memberEnterNotification(msg *api.MsgData, operationID string) {
 	}
 	if detail.EntrantUser.UserID == g.loginUserID {
 		g.SyncJoinedGroupList(operationID)
+		g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, false)
+	} else {
+		g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
 	}
-	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
+
 }
 
 func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam,
@@ -204,7 +207,7 @@ func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.Create
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "api req args: ", apiReq)
 	g.p.PostFatalCallback(callback, constant.CreateGroupRouter, apiReq, &realData.GroupInfo, apiReq.OperationID)
 	g.SyncJoinedGroupList(operationID)
-	g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID, operationID, true)
+	g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID, operationID, false)
 	var temp sdk.CreateGroupCallback
 	temp = sdk.CreateGroupCallback(realData.GroupInfo)
 	return &temp

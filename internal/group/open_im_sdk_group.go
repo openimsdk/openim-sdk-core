@@ -67,8 +67,8 @@ func (g *Group) GetJoinedGroupList(callback open_im_sdk_callback.Base, operation
 		log.NewInfo(operationID, fName, "args: ")
 		groupList := g.getJoinedGroupList(callback, operationID)
 		log.Debug(operationID, "this is a dbd test", groupList)
-		callback.OnSuccess(utils.StructToJsonString(groupList))
-		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(groupList))
+		callback.OnSuccess(utils.StructToJsonStringDefault(groupList))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(groupList))
 	}()
 }
 
