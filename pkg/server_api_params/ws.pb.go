@@ -1332,6 +1332,7 @@ func (m *OfflinePushInfo) GetIOSBadgeCount() bool {
 	return false
 }
 
+//
 type TipsComm struct {
 	Detail               []byte   `protobuf:"bytes,1,opt,name=detail,proto3" json:"detail,omitempty"`
 	DefaultTips          string   `protobuf:"bytes,2,opt,name=defaultTips" json:"defaultTips,omitempty"`
