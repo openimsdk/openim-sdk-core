@@ -68,8 +68,7 @@ func (g *Group) groupInfoSetNotification(msg *api.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	detail := api.GroupInfoSetTips{Group: &api.GroupInfo{}}
 	comm.UnmarshalTips(msg, &detail)
-	g.SyncJoinedGroupList(operationID) //todo
-
+	g.SyncJoinedGroupList(operationID) //todo,  sync some group info
 }
 
 func (g *Group) joinGroupApplicationNotification(msg *api.MsgData, operationID string) {
@@ -140,6 +139,7 @@ func (g *Group) groupOwnerTransferredNotification(msg *api.MsgData, operationID 
 	}
 	g.SyncJoinedGroupList(operationID)
 	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
+	g.SyncAdminGroupApplication(operationID)
 }
 
 func (g *Group) memberKickedNotification(msg *api.MsgData, operationID string) {
@@ -542,7 +542,7 @@ func (g *Group) SyncAdminGroupApplication(operationID string) {
 		}
 	}
 	for _, index := range bInANot {
-		err := g.db.DeleteGroupRequest(onLocal[index].GroupID, onLocal[index].UserID)
+		err := g.db.DeleteAdminGroupRequest(onLocal[index].GroupID, onLocal[index].UserID)
 		if err != nil {
 			log.NewError(operationID, "DeleteGroupRequest failed ", err.Error())
 			continue
