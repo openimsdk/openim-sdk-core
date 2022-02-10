@@ -423,7 +423,8 @@ func (f *Friend) SyncBlackList(operationID string) {
 		return
 	}
 	log.NewInfo(operationID, "list ", svrList, blackListOnServer, blackListOnLocal)
-	aInBNot, bInANot, sameA, _ := common.CheckBlackListDiff(blackListOnServer, blackListOnLocal)
+	aInBNot, bInANot, sameA, sameB := common.CheckBlackListDiff(blackListOnServer, blackListOnLocal)
+	log.NewInfo(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
 	for _, index := range aInBNot {
 		err := f.db.InsertBlack(blackListOnServer[index])
 		if err != nil {
