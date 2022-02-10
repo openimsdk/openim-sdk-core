@@ -540,7 +540,6 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 	if msg.ContentType >= constant.NotificationBegin && msg.ContentType <= constant.NotificationEnd {
 		var tips server_api_params.TipsComm
 		_ = json.Unmarshal([]byte(msg.Content), &tips)
-		log.Info("tshii is a test", msg.Content, tips)
 		msg.NotificationElem.Detail = tips.JsonDetail
 		msg.NotificationElem.DefaultTips = tips.DefaultTips
 
