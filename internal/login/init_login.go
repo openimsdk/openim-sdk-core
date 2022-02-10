@@ -144,7 +144,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.conversation.SetMsgListener(u.advancedMsgListener)
 
 	u.forcedSynchronization()
-	//	u.forycedSyncReceiveMessageOpt()
+	//u.forycedSyncReceiveMessageOpt()
 	cb.OnSuccess("")
 	log.Info(operationID, "login ok callback success...")
 }
