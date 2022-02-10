@@ -1058,3 +1058,35 @@ func getImageInfo(filePath string) (*sdk_struct.ImageInfo, error) {
 	return &sdk_struct.ImageInfo{int32(b.Max.X), int32(b.Max.Y), datatype, fi.Size()}, nil
 
 }
+
+const TimeOffset = 5
+
+func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, contentType int32, operationID string) {
+	message.CreateTime = utils.GetCurrentTimestampByMill()
+	message.SendTime = message.CreateTime
+	message.IsRead = false
+	message.Status = constant.MsgStatusSending
+	message.SendID = c.loginUserID
+	userInfo, err := c.db.GetLoginUser()
+	if err != nil {
+		log.Error(operationID, "GetLoginUser", err.Error())
+	} else {
+		message.SenderFaceURL = userInfo.FaceURL
+		message.SenderNickname = userInfo.Nickname
+	}
+	ClientMsgID := utils.GetMsgID(message.SendID)
+	message.ClientMsgID = ClientMsgID
+	message.MsgFrom = msgFrom
+	message.ContentType = contentType
+	message.SenderPlatformID = c.platformID
+
+}
+func (c *Conversation) GetConversationIDBySessionType(sourceID string, sessionType int32) string {
+	switch sessionType {
+	case constant.SingleChatType:
+		return "single_" + sourceID
+	case constant.GroupChatType:
+		return "group_" + sourceID
+	}
+	return ""
+}

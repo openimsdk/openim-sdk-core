@@ -830,6 +830,8 @@ type MsgStruct struct {
 	IsRead           bool                              `json:"isRead"`
 	Status           int32                             `json:"status"`
 	OfflinePush      server_api_params.OfflinePushInfo `json:"offlinePush"`
+	AttachedInfo     string                            `json:"attachedInfo"`
+	Ex               string                            `json:"ex"`
 	PictureElem      struct {
 		SourcePath      string          `json:"sourcePath"`
 		SourcePicture   PictureBaseInfo `json:"sourcePicture"`
