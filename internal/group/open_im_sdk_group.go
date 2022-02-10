@@ -187,6 +187,20 @@ func (g *Group) GetRecvGroupApplicationList(callback open_im_sdk_callback.Base, 
 	}()
 }
 
+func (g *Group) GetSendGroupApplicationList(callback open_im_sdk_callback.Base, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, "output results")
+		result := g.getSendGroupApplicationList(callback, operationID)
+		callback.OnSuccess(utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonString(result))
+	}()
+}
+
+
 func (g *Group) AcceptGroupApplication(callback open_im_sdk_callback.Base, groupID, fromUserID, handleMsg string, operationID string) {
 	if callback == nil {
 		return

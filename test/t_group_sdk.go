@@ -349,11 +349,31 @@ type testProcessGroupApplication struct {
 	baseCallback
 }
 
-func DotestAcceptGroupApplication(uid string) {
+func DoTestAcceptGroupApplication(uid string) {
 	var test testProcessGroupApplication
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
 	open_im_sdk.AcceptGroupApplication(test, test.OperationID, TestgroupID, MemberUserID, "ok")
+}
+
+func DoTestGetUserReqGroupApplicationList() {
+	var test testProcessGroupApplication
+	test.OperationID = utils.OperationIDGenerator()
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
+	open_im_sdk.GetSendGroupApplicationList(test, test.OperationID)
+}
+
+func DoTestSetConversationStatus(uid string, status int) {
+	var test testProcessGroupApplication
+	test.OperationID = utils.OperationIDGenerator()
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
+	open_im_sdk.SetConversationStatus(test, test.OperationID, uid, status)
+}
+
+func DoTestGetRecvGroupApplicationList() {
+	var test testProcessGroupApplication
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input:")
+	open_im_sdk.GetRecvGroupApplicationList(test, test.OperationID)
 }
 
 //func DoRefuseGroupApplication(uid string) {

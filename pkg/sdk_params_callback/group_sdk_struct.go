@@ -54,6 +54,8 @@ type InviteUserToGroupCallback []*server_api_params.UserIDResult
 //type GetGroupApplicationListParam
 type GetGroupApplicationListCallback []*db.LocalAdminGroupRequest
 
+type GetSendGroupApplicationListCallback []*db.LocalGroupRequest
+
 //type AcceptGroupApplicationParam
 const AcceptGroupApplicationCallback = constant.SuccessCallbackDefault
 

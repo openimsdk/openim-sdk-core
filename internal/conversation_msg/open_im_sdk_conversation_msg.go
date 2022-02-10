@@ -1006,6 +1006,24 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 
 }
 
+
+func (c *Conversation) SetConversationStatus(callback open_im_sdk_callback.Base, operationID string, userID string, status int) {
+	if callback == nil {
+		log.Error(operationID, "callback is nil")
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", userID, status)
+		//var unmarshalParams sdk.SetConversationStatusParams
+		//common.JsonUnmarshalAndArgsValidate(userIDRemark, &unmarshalParams, callback, operationID)
+		//f.setConversationStatus(unmarshalParams, callback, operationID)
+		//callback.OnSuccess(utils.StructToJsonString(sdk.SetFriendRemarkCallback))
+		//log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk.SetFriendRemarkCallback))
+	}()
+}
+
+
 //func (c *Conversation) FindMessages(callback common.Base, messageIDList string) {
 //	go func() {
 //		var c []string

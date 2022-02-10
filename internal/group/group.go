@@ -366,6 +366,12 @@ func (g *Group) getRecvGroupApplicationList(callback open_im_sdk_callback.Base, 
 	return applicationList
 }
 
+func (g *Group) getSendGroupApplicationList(callback open_im_sdk_callback.Base, operationID string) sdk.GetSendGroupApplicationListCallback {
+	applicationList, err := g.db.GetSendGroupApplication()
+	common.CheckDBErrCallback(callback, err, operationID)
+	return applicationList
+}
+
 func (g *Group) getRecvGroupApplicationListFromSvr(operationID string) ([]*api.GroupRequest, error) {
 	apiReq := api.GetGroupApplicationListReq{}
 	apiReq.FromUserID = g.loginUserID

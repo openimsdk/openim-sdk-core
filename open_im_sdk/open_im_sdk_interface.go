@@ -165,6 +165,10 @@ func GetRecvGroupApplicationList(callback open_im_sdk_callback.Base, operationID
 	userForSDK.Group().GetRecvGroupApplicationList(callback, operationID)
 }
 
+func GetSendGroupApplicationList(callback open_im_sdk_callback.Base, operationID string) {
+	userForSDK.Group().GetSendGroupApplicationList(callback, operationID)
+}
+
 func AcceptGroupApplication(callback open_im_sdk_callback.Base, operationID string, groupID, fromUserID, handleMsg string) {
 	userForSDK.Group().AcceptGroupApplication(callback, groupID, fromUserID, handleMsg, operationID)
 }
@@ -263,6 +267,10 @@ func PinConversation(callback open_im_sdk_callback.Base, operationID string, con
 }
 func GetTotalUnreadMsgCount(callback open_im_sdk_callback.Base, operationID string) {
 	userForSDK.Conversation().GetTotalUnreadMsgCount(callback, operationID)
+}
+
+func SetConversationStatus(callback open_im_sdk_callback.Base, operationID, userID string, status int) {
+	userForSDK.Conversation().SetConversationStatus(callback, operationID, userID, status)
 }
 
 //
