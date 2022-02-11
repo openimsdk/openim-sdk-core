@@ -99,7 +99,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				EmitDefaults: false,
 			}
 			msg.Content, _ = marshaler.MarshalToString(&tips)
-
 		} else {
 			msg.Content = string(v.Content)
 		}
@@ -539,7 +538,7 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err error) {
 	if msg.ContentType >= constant.NotificationBegin && msg.ContentType <= constant.NotificationEnd {
 		var tips server_api_params.TipsComm
-		_ = json.Unmarshal([]byte(msg.Content), &tips)
+		err = utils.JsonStringToStruct(msg.Content, &tips)
 		msg.NotificationElem.Detail = tips.JsonDetail
 		msg.NotificationElem.DefaultTips = tips.DefaultTips
 
