@@ -77,6 +77,14 @@ func MergeUserResult(publicList []*api.PublicUserInfo, friendList []*db.LocalFri
 		if t, ok := m[v.BlockUserID]; ok {
 			t.BlackInfo = v
 			m[v.BlockUserID] = t
+		} else {
+			node := api.FullUserInfo{PublicInfo: &api.PublicUserInfo{}}
+			node.BlackInfo = v
+			node.PublicInfo.UserID = v.BlockUserID
+			node.PublicInfo.FaceURL = v.FaceURL
+			node.PublicInfo.Nickname = v.Nickname
+			node.PublicInfo.Gender = v.Gender
+			m[v.BlockUserID] = node
 		}
 	}
 
