@@ -145,7 +145,7 @@ func (c *Conversation) SyncConversations(operationID string) {
 	if err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 	}
-	conversationsOnServer:= common.TransferToLocalConversation(svrList)
+	conversationsOnServer := common.TransferToLocalConversation(svrList)
 	aInBNot, bInANot, sameA, sameB := common.CheckConversationListDiff(conversationsOnServer, conversationsOnLocal)
 	log.NewInfo(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
 
@@ -155,11 +155,11 @@ func (c *Conversation) SyncConversations(operationID string) {
 		conversation.RecvMsgOpt = constant.ConversationNotNotification
 		err := c.db.InsertConversation(conversation)
 		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation failed ", err.Error())
+			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation failed ", conversation, err.Error())
 			continue
 		}
-		callbackData := sdk.ConversationUpdateCallback(*conversationsOnServer[index])
-		log.Info(operationID, "OnFriendAdded", utils.StructToJsonString(callbackData))
+		//callbackData := sdk.ConversationUpdateCallback(*conversationsOnServer[index])
+		//	log.Info(operationID, "OnFriendAdded", utils.StructToJsonString(callbackData))
 	}
 
 	for _, index := range sameA {
@@ -356,5 +356,3 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 	}
 }
-
-
