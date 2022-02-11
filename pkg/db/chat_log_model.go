@@ -129,7 +129,7 @@ func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, start
 	} else {
 		condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? And send_time < ?"
 	}
-	err = utils.Wrap(d.conn.Debug().Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
+	err = utils.Wrap(d.conn.Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
 		Order("send_time DESC").Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
 	for _, v := range messageList {
 		v1 := v

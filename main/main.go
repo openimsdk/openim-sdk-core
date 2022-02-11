@@ -402,11 +402,13 @@ func main() {
 	friendUserID := "openIM2222"
 	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMTExIiwiUGxhdGZvcm0iOiJJT1MiLCJleHAiOjE2NDUxNjA5ODUsIm5iZiI6MTY0NDU1NjE4NSwiaWF0IjoxNjQ0NTU2MTg1fQ.1eb32gX4esPg1a7Snwnj3t__ym3GqDcN0muLs7yijco"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
-	//test.DoTestCreateGroup()
 	test.SetTestFriendID(friendUserID)
+
+	//test.DoTestCreateGroup()
+
 	//test.DoTestAddToBlackList()
 	//test.DoTestGetDesignatedFriendsInfo()
-	test.DoTestGetUsersInfo()
+	//	test.DoTestGetUsersInfo()
 	//	test.DoTestCreateGroup()
 
 	//	test.DoSetGroupInfo()
@@ -417,7 +419,7 @@ func main() {
 
 	//test.DotestAcceptGroupApplication("")
 	//test.DoTestGetUserReqGroupApplicationList()
-	test.DoTestSetConversationRecvMessageOpt(strMyUidx, []string{"s", "s2"})
+	//test.DoTestSetConversationRecvMessageOpt(strMyUidx, []string{"s", "s2"})
 	//test.DoTestSetConversationStatus(strMyUidx, 2)
 	//
 	//test.DoTestGetRecvGroupApplicationList()
@@ -430,14 +432,10 @@ func main() {
 
 	//	test.DotestDeleteFriend()
 	//	test.DoTestDeleteFromBlackList()
-	//	test.DoTestAddFriend()
+	test.DoTestAddFriend()
 
 	//test.DotestSetFriendRemark()
 
-	//open_im_sdk.DoTestGetFriendList()
-	//	open_im_sdk.DoTestAddToBlackList()
-	//	open_im_sdk.DoTestGetBlackList()
-	//	open_im_sdk.DoTestDeleteFromBlackList()
 	//DoTestGetDesignatedFriendsInfo()
 	//test.DoTestSendMsg(strMyUidx, test.Friend_uid)
 	for true {

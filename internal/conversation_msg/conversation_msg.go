@@ -623,13 +623,24 @@ func mapConversationToList(m map[string]db.LocalConversation) (cs []*db.LocalCon
 	}
 	return cs
 }
+
+type tmpCallback struct {
+}
+
+func (t *tmpCallback) OnError(errCode int32, errMsg string) {
+
+}
+func (t *tmpCallback) OnSuccess(data string) {
+
+}
+
 func (c *Conversation) addFaceURLAndName(lc *db.LocalConversation) {
-	var callback open_im_sdk_callback.SendMsgCallBack
+	operationID := utils.OperationIDGenerator()
 	switch lc.ConversationType {
 	case constant.SingleChatType:
-		faceUrl, name, err := c.getUserNameAndFaceUrlByUid(callback, lc.UserID, "")
+		faceUrl, name, err := c.getUserNameAndFaceUrlByUid(&tmpCallback{}, lc.UserID, operationID)
 		if err != nil {
-			log.Error("internal", "getUserNameAndFaceUrlByUid err", err.Error())
+			log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error())
 			return
 		}
 		lc.FaceURL = faceUrl
@@ -637,7 +648,7 @@ func (c *Conversation) addFaceURLAndName(lc *db.LocalConversation) {
 	case constant.GroupChatType:
 		g, err := c.db.GetGroupInfoByGroupID(lc.GroupID)
 		if err != nil {
-			log.Error("internal", "GetGroupInfoByGroupID err", err.Error())
+			log.Error(operationID, "GetGroupInfoByGroupID err", err.Error())
 			return
 		}
 		lc.ShowName = g.GroupName
