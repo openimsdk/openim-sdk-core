@@ -908,7 +908,7 @@ func (c *Conversation) MarkC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 		log.NewInfo(operationID, "MarkC2CMessageAsRead args: ", userID, msgIDList)
 		var unmarshalParams sdk_params_callback.MarkC2CMessageAsReadParams
 		common.JsonUnmarshalCallback(msgIDList, &unmarshalParams, callback, operationID)
-		if len(msgIDList) == 0 {
+		if len(unmarshalParams) == 0 {
 			conversationID := c.GetConversationIDBySessionType(userID, constant.SingleChatType)
 			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.ch)
 			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
@@ -1006,7 +1006,6 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 
 }
 
-
 func (c *Conversation) SetConversationStatus(callback open_im_sdk_callback.Base, operationID string, userID string, status int) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
@@ -1022,7 +1021,6 @@ func (c *Conversation) SetConversationStatus(callback open_im_sdk_callback.Base,
 		//log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk.SetFriendRemarkCallback))
 	}()
 }
-
 
 //func (c *Conversation) FindMessages(callback common.Base, messageIDList string) {
 //	go func() {
