@@ -103,14 +103,16 @@ func (w *Ws) reConnSleep(operationID string, sleep int32) {
 }
 
 func (w *Ws) ReadData() {
+	isErrorOccurred := false
 	for {
-		isErrorOccurred := false
 		operationID := utils.OperationIDGenerator()
 		if isErrorOccurred {
 			select {
 			case r := <-w.cmdCh:
 				if r.Cmd == constant.CmdLogout {
+					log.Info(operationID, "recv CmdLogout, return, close conn")
 					w.SetLoginState(constant.Logout)
+					//		w.CloseConn()
 					return
 				}
 				log.Warn(operationID, "other cmd ...", r.Cmd)
@@ -118,7 +120,7 @@ func (w *Ws) ReadData() {
 				log.Warn(operationID, "timeout(ms)... ", 100)
 			}
 		}
-
+		isErrorOccurred = false
 		if w.WsConn.conn == nil {
 			log.Error(operationID, "conn == nil, ReConn")
 			w.reConnSleep(operationID, 1)
@@ -130,9 +132,13 @@ func (w *Ws) ReadData() {
 		msgType, message, err := w.WsConn.conn.ReadMessage()
 		if err != nil {
 			isErrorOccurred = true
+			if w.loginState == constant.Logout {
+				log.Error(operationID, "loginState logout ")
+				continue
+			}
 			if w.WsConn.IsFatalError(err) {
 				log.Error(operationID, "IsFatalError ", err.Error(), "ReConn")
-				w.reConnSleep(operationID, 1)
+				w.reConnSleep(operationID, 5)
 			} else {
 				log.Warn(operationID, "timeout failed ", err.Error())
 			}

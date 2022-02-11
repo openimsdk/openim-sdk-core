@@ -69,13 +69,13 @@ func (c *Conversation) GetConversationListSplit(callback open_im_sdk_callback.Ba
 		log.NewInfo(operationID, "GetConversationListSplit callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
-func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, opt int, operationID string) {
+func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList string, opt int, operationID string) {
 	if callback == nil {
 		return
 	}
 	go func() {
 		log.NewInfo(operationID, "SetConversationRecvMessageOpt args: ", conversationIDList, opt)
-		c.setConversationRecvMessageOpt(callback, conversationIDList, opt, operationID)
+		//	c.setConversationRecvMessageOpt(callback, conversationIDList, opt, operationID)
 		callback.OnSuccess(sdk_params_callback.SetConversationRecvMessageOptCallback)
 		log.NewInfo(operationID, "SetConversationRecvMessageOpt callback: ", sdk_params_callback.SetConversationRecvMessageOptCallback)
 	}()
@@ -1021,7 +1021,6 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 
 }
 
-
 //func (c *Conversation) FindMessages(callback common.Base, messageIDList string) {
 //	go func() {
 //		var c []string
@@ -1106,4 +1105,3 @@ func (c *Conversation) GetConversationIDBySessionType(sourceID string, sessionTy
 	}
 	return ""
 }
-
