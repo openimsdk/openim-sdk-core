@@ -7,6 +7,7 @@ import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
+	api "open_im_sdk/pkg/server_api_params"
 )
 
 type Full struct {
@@ -43,6 +44,10 @@ func (u *Full) getUsersInfo(callback open_im_sdk_callback.Base, userIDList sdk.G
 		}
 	}
 	//from svr
-	publicList := u.user.GetUsersInfoFromSvr(callback, userIDList, operationID)
+	publicList := make([]*api.PublicUserInfo, 0)
+	if len(notIn) > 0 {
+		publicList = u.user.GetUsersInfoFromSvr(callback, notIn, operationID)
+	}
+
 	return common.MergeUserResult(publicList, friendList, blackList)
 }
