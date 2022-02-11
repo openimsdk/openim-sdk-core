@@ -25,3 +25,30 @@ func MergeResult(base []*db.LocalFriend, add []*db.LocalBlack) []api.FullUserInf
 	}
 	return r
 }
+
+func MergeUserResult(publicList []*api.PublicUserInfo, friendList []*db.LocalFriend, blackList []*db.LocalBlack) []api.FullUserInfo {
+	m := make(map[string]api.FullUserInfo, 0)
+	for _, v := range publicList {
+		node := api.FullUserInfo{}
+		node.PublicInfo = v
+		m[v.UserID] = node
+	}
+
+	for _, v := range friendList {
+		if t, ok := m[v.FriendUserID]; ok {
+			t.FriendInfo = v
+		}
+	}
+
+	for _, v := range blackList {
+		if t, ok := m[v.BlockUserID]; ok {
+			t.BlackInfo = v
+		}
+	}
+
+	r := make([]api.FullUserInfo, 0)
+	for _, v := range m {
+		r = append(r, v)
+	}
+	return r
+}

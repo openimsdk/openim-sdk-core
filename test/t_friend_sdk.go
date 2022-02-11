@@ -70,7 +70,7 @@ func DoTestSetSelfInfo() {
 	var test testSetSelfInfo
 	test.OperationID = utils.OperationIDGenerator()
 	userInfo := server_api_params.UserInfo{}
-	userInfo.Nickname = "Gordon001"
+	userInfo.Nickname = "new 4444444444444 Gordon001"
 	jsonString := utils.StructToJsonStringDefault(userInfo)
 	fmt.Println("SetSelfInfo, input: ")
 	open_im_sdk.SetSelfInfo(test, test.OperationID, jsonString)
@@ -288,6 +288,20 @@ func DoTestAcceptFriendApplication() {
 	param.ToUserID = Friend_uid
 	input := utils.StructToJsonString(param)
 	open_im_sdk.AcceptFriendApplication(test, test.OperationID, input)
+}
+
+type testRefuseFriendApplication struct {
+	baseCallback
+}
+
+func DoTestRefuseFriendApplication() {
+	var test testRefuseFriendApplication
+	test.OperationID = utils.OperationIDGenerator()
+	var param sdk_params_callback.ProcessFriendApplicationParams
+	param.HandleMsg = "nonono"
+	param.ToUserID = Friend_uid
+	input := utils.StructToJsonString(param)
+	open_im_sdk.RefuseFriendApplication(test, test.OperationID, input)
 }
 
 /*

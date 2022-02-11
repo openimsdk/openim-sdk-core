@@ -56,6 +56,18 @@ func (f *Friend) getDesignatedFriendsInfo(callback open_im_sdk_callback.Base, fr
 	return r
 }
 
+func (f *Friend) GetDesignatedFriendListInfo(callback open_im_sdk_callback.Base, friendUserIDList []string, operationID string) []*db.LocalFriend {
+	friendList, err := f.db.GetFriendInfoList(friendUserIDList)
+	common.CheckDBErrCallback(callback, err, operationID)
+	return friendList
+}
+
+func (f *Friend) GetDesignatedBlackListInfo(callback open_im_sdk_callback.Base, blackIDList []string, operationID string) []*db.LocalBlack {
+	blackList, err := f.db.GetBlackInfoList(blackIDList)
+	common.CheckDBErrCallback(callback, err, operationID)
+	return blackList
+}
+
 func (f *Friend) addFriend(callback open_im_sdk_callback.Base, userIDReqMsg sdk.AddFriendParams, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", userIDReqMsg)
 	apiReq := api.AddFriendReq{}
