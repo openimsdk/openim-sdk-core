@@ -44,25 +44,16 @@ func (f *Friend) SetListener(listener open_im_sdk_callback.OnFriendshipListener)
 
 func (f *Friend) getDesignatedFriendsInfo(callback open_im_sdk_callback.Base, friendUserIDList sdk.GetDesignatedFriendsInfoParams, operationID string) sdk.GetDesignatedFriendsInfoCallback {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", friendUserIDList)
+
+	localFriendList, err := f.db.GetFriendInfoList(friendUserIDList)
+	common.CheckDBErrCallback(callback, err, operationID)
+
 	blackList, err := f.db.GetBlackInfoList(friendUserIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
-	var pureFriendUserIDList []string
-	for _, v := range friendUserIDList {
-		flag := 0
-		for _, k := range blackList {
-			if v == k.BlockUserID {
-				flag = 1
-				break
-			}
-		}
-		if flag == 0 {
-			pureFriendUserIDList = append(pureFriendUserIDList, v)
-		}
-	}
-	localFriendList, err := f.db.GetFriendInfoList(pureFriendUserIDList)
-	common.CheckDBErrCallback(callback, err, operationID)
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ", pureFriendUserIDList, localFriendList)
-	return localFriendList
+
+	r := common.MergeResult(localFriendList, blackList)
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ", r)
+	return r
 }
 
 func (f *Friend) addFriend(callback open_im_sdk_callback.Base, userIDReqMsg sdk.AddFriendParams, operationID string) {

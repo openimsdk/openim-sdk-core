@@ -8,7 +8,7 @@ import (
 
 //other user
 type GetUsersInfoParam []string
-type GetUsersInfoCallback []*server_api_params.PublicUserInfo
+type GetUsersInfoCallback []*server_api_params.FullUserInfo
 
 //type GetSelfUserInfoParam string
 type GetSelfUserInfoCallback *db.LocalUser

@@ -8,7 +8,7 @@ import (
 
 //1
 type GetDesignatedFriendsInfoParams []string
-type GetDesignatedFriendsInfoCallback []*db.LocalFriend
+type GetDesignatedFriendsInfoCallback []server_api_params.FullUserInfo
 
 //1
 type AddFriendParams struct {
