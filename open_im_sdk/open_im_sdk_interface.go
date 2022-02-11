@@ -247,7 +247,7 @@ func GetConversationListSplit(callback open_im_sdk_callback.Base, operationID st
 	userForSDK.Conversation().GetConversationListSplit(callback, offset, count, operationID)
 }
 
-func SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, conversationIDList []string, opt int) {
+func SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, conversationIDList string, opt int) {
 	userForSDK.Conversation().SetConversationRecvMessageOpt(callback, conversationIDList, opt, operationID)
 }
 
