@@ -402,7 +402,7 @@ func main() {
 	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMjM0NTYiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTY0NTA4Mzg3MSwibmJmIjoxNjQ0NDc5MDcxLCJpYXQiOjE2NDQ0NzkwNzF9.AVJr5AMgpJ-TQg-c5uj6d2I-X97BOmlFyQmQzqX0-vM"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 
-	//	test.DoTestCreateGroup()
+	//test.DoTestCreateGroup()
 	//	test.DoSetGroupInfo()
 	//	test.DotestGetGroupMemberList()
 	//	test.DotestKickGroupMember()
@@ -410,10 +410,10 @@ func main() {
 	//test.DotestGetGroupApplicationList()
 
 	//test.DotestAcceptGroupApplication("")
-	test.DoTestGetUserReqGroupApplicationList()
-	test.DoTestSetConversationStatus(strMyUidx, 2)
+	//test.DoTestGetUserReqGroupApplicationList()
+	test.DoTestSetConversationRecvMessageOpt(strMyUidx, []string{"s", "s2"})
 
-	test.DoTestGetRecvGroupApplicationList()
+	//test.DoTestGetRecvGroupApplicationList()
 	///////////////friend///////////////////////////////////
 	//	test.DoTestGetFriendApplicationList()
 	//test.DoTestAcceptFriendApplication()

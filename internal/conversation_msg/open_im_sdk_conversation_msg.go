@@ -69,15 +69,13 @@ func (c *Conversation) GetConversationListSplit(callback open_im_sdk_callback.Ba
 		log.NewInfo(operationID, "GetConversationListSplit callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
-func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList string, opt int, operationID string) {
+func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, opt int, operationID string) {
 	if callback == nil {
 		return
 	}
 	go func() {
 		log.NewInfo(operationID, "SetConversationRecvMessageOpt args: ", conversationIDList, opt)
-		var unmarshalParams sdk_params_callback.SetConversationRecvMessageOptParams
-		common.JsonUnmarshalCallback(conversationIDList, &unmarshalParams, callback, operationID)
-		c.setConversationRecvMessageOpt(callback, unmarshalParams, opt, operationID)
+		c.setConversationRecvMessageOpt(callback, conversationIDList, opt, operationID)
 		callback.OnSuccess(sdk_params_callback.SetConversationRecvMessageOptCallback)
 		log.NewInfo(operationID, "SetConversationRecvMessageOpt callback: ", sdk_params_callback.SetConversationRecvMessageOptCallback)
 	}()
@@ -177,6 +175,23 @@ func (c *Conversation) SetConversationListener(listener open_im_sdk_callback.OnC
 		return
 	}
 	c.ConversationListener = listener
+}
+
+func (c *Conversation) GetConversationsByUserID(callback open_im_sdk_callback.Base, operationID string, UserID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, utils.GetSelfFuncName())
+		conversations, err := c.db.GetAllConversationList()
+		if err != nil {
+			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
+		}
+		var conversationIDs []string
+		for _, conversation := range conversations {
+			conversationIDs = append(conversationIDs, conversation.ConversationID)
+		}
+	}()
 }
 
 //
@@ -1007,23 +1022,6 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 }
 
 
-func (c *Conversation) SetConversationStatus(callback open_im_sdk_callback.Base, operationID string, userID string, status int) {
-	if callback == nil {
-		log.Error(operationID, "callback is nil")
-		return
-	}
-	fName := utils.GetSelfFuncName()
-	go func() {
-		log.NewInfo(operationID, fName, "args: ", userID, status)
-		//var unmarshalParams sdk.SetConversationStatusParams
-		//common.JsonUnmarshalAndArgsValidate(userIDRemark, &unmarshalParams, callback, operationID)
-		//f.setConversationStatus(unmarshalParams, callback, operationID)
-		//callback.OnSuccess(utils.StructToJsonString(sdk.SetFriendRemarkCallback))
-		//log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk.SetFriendRemarkCallback))
-	}()
-}
-
-
 //func (c *Conversation) FindMessages(callback common.Base, messageIDList string) {
 //	go func() {
 //		var c []string
@@ -1108,3 +1106,4 @@ func (c *Conversation) GetConversationIDBySessionType(sourceID string, sessionTy
 	}
 	return ""
 }
+

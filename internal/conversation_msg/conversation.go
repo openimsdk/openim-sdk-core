@@ -33,11 +33,9 @@ func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callba
 	apiReq.Opt = &temp
 	apiReq.ConversationIDList = conversationIDList
 	var realData []*server_api_params.OptResult
-	c.p.PostFatalCallback(callback, constant.SetReceiveMessageOptRouter, apiReq, realData, apiReq.OperationID)
-	err := c.db.SetMultipleConversationRecvMsgOpt(conversationIDList, opt)
-	if err != nil {
-		log.Error(operationID, "SetMultipleConversationRecvMsgOpt err:", err.Error())
-	}
+	c.p.PostFatalCallback(callback, constant.SetReceiveMessageOptRouter, apiReq, &realData, apiReq.OperationID)
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "output: ", realData)
+	c.SyncConversations(operationID)
 	return realData
 }
 func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) []*server_api_params.OptResult {
@@ -120,6 +118,66 @@ func (c *Conversation) pinConversation(callback open_im_sdk_callback.Base, conve
 		err := c.db.UnPinConversation(conversationID, constant.NotPinned)
 		common.CheckDBErrCallback(callback, err, operationID)
 	}
+}
+
+func (c *Conversation) getServerConversationList(operationID string) (server_api_params.GetServerConversationListResp, error) {
+	log.NewInfo(operationID, utils.GetSelfFuncName())
+	var resp server_api_params.GetServerConversationListResp
+	var req server_api_params.GetServerConversationListReq
+	req.FromUserID = c.loginUserID
+	req.OperationID = operationID
+	err := c.p.PostReturn(constant.GetAllConversationMessageOptRouter, req, &resp)
+	if err != nil {
+		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
+		return resp, err
+	}
+	return resp, nil
+}
+
+func (c *Conversation) SyncConversations(operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName())
+	svrList, err := c.getServerConversationList(operationID)
+	if err != nil {
+		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
+		return
+	}
+	conversationsOnLocal, err := c.db.GetAllConversationList()
+	if err != nil {
+		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
+	}
+	conversationsOnServer:= common.TransferToLocalConversation(svrList)
+	aInBNot, bInANot, sameA, sameB := common.CheckConversationListDiff(conversationsOnServer, conversationsOnLocal)
+	log.NewInfo(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
+
+	// server有 local没有
+	for _, index := range aInBNot {
+		conversation := conversationsOnServer[index]
+		conversation.RecvMsgOpt = constant.ConversationNotNotification
+		err := c.db.InsertConversation(conversation)
+		if err != nil {
+			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation failed ", err.Error())
+			continue
+		}
+		callbackData := sdk.ConversationUpdateCallback(*conversationsOnServer[index])
+		log.Info(operationID, "OnFriendAdded", utils.StructToJsonString(callbackData))
+	}
+
+	for _, index := range sameA {
+		err := c.db.InsertConversation(conversationsOnServer[index])
+		if err != nil {
+			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation failed ", err.Error(), *conversationsOnServer[index])
+			continue
+		}
+	}
+	// local有 server没有
+	for _, index := range bInANot {
+		err := c.db.DeleteConversation(conversationsOnLocal[index])
+		if err != nil {
+			log.NewError(operationID, utils.GetSelfFuncName(), "deleteConversation failed ", err.Error())
+			continue
+		}
+	}
+
 }
 
 func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base, req sdk.GetHistoryMessageListParams, operationID string) sdk.GetHistoryMessageListCallback {
@@ -298,3 +356,5 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 	}
 }
+
+

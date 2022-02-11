@@ -28,3 +28,7 @@ type GroupMemberInfoChangedCallback db.LocalGroupMember
 
 //////////////////////////////user////////////////////////////////////////
 type SelfInfoUpdatedCallback db.LocalUser
+
+//////////////////////////////user////////////////////////////////////////
+type ConversationUpdateCallback db.LocalConversation
+type ConversationDeleteCallback db.LocalConversation
