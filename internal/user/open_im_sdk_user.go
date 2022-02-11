@@ -8,17 +8,17 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func (u *User) GetUsersInfo(callback open_im_sdk_callback.Base, userIDList string, operationID string) {
-	fName := utils.GetSelfFuncName()
-	go func() {
-		log.NewInfo(operationID, fName, "args: ", userIDList)
-		var unmarshalParam sdk_params_callback.GetUsersInfoParam
-		common.JsonUnmarshalAndArgsValidate(userIDList, &unmarshalParam, callback, operationID)
-		result := u.GetUsersInfoFromSvr(callback, unmarshalParam, operationID)
-		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonStringDefault(result))
-	}()
-}
+//func (u *User) GetUsersInfo(callback open_im_sdk_callback.Base, userIDList string, operationID string) {
+//	fName := utils.GetSelfFuncName()
+//	go func() {
+//		log.NewInfo(operationID, fName, "args: ", userIDList)
+//		var unmarshalParam sdk_params_callback.GetUsersInfoParam
+//		common.JsonUnmarshalAndArgsValidate(userIDList, &unmarshalParam, callback, operationID)
+//		result := u.GetUsersInfoFromSvr(callback, unmarshalParam, operationID)
+//		callback.OnSuccess(utils.StructToJsonStringDefault(result))
+//		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonStringDefault(result))
+//	}()
+//}
 
 func (u *User) GetSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) {
 	fName := utils.GetSelfFuncName()

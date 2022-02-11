@@ -30,7 +30,7 @@ package db
 
 type LocalFriend struct {
 	OwnerUserID    string `gorm:"column:owner_user_id;primary_key;type:varchar(64)" json:"ownerUserID"`
-	FriendUserID   string `gorm:"column:friend_user_id;primary_key;type:varchar(64)" json:"friendUserID"`
+	FriendUserID   string `gorm:"column:friend_user_id;primary_key;type:varchar(64)" json:"userID"`
 	Remark         string `gorm:"column:remark;type:varchar(255)" json:"remark"`
 	CreateTime     uint32 `gorm:"column:create_time" json:"createTime"`
 	AddSource      int32  `gorm:"column:add_source" json:"addSource"`
@@ -227,7 +227,7 @@ type LocalUser struct {
 // open_im_sdk.BlackInfo(BlackUserInfo) != imdb.Black (BlockUserID)
 type LocalBlack struct {
 	OwnerUserID    string `gorm:"column:owner_user_id;primary_key;type:varchar(64)" json:"ownerUserID"`
-	BlockUserID    string `gorm:"column:block_user_id;primary_key;type:varchar(64)" json:"blockUserID"`
+	BlockUserID    string `gorm:"column:block_user_id;primary_key;type:varchar(64)" json:"userID"`
 	Nickname       string `gorm:"column:nickname;type:varchar(255)" json:"nickname"`
 	FaceURL        string `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
 	Gender         int32  `gorm:"column:gender" json:"gender"`

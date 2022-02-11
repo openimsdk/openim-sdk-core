@@ -1,5 +1,7 @@
 package server_api_params
 
+import "open_im_sdk/pkg/db"
+
 type ApiUserInfo struct {
 	UserID      string `json:"userID" binding:"required,min=1,max=64"`
 	Nickname    string `json:"nickname" binding:"omitempty,min=1,max=64"`
@@ -14,6 +16,12 @@ type ApiUserInfo struct {
 type GroupAddMemberInfo struct {
 	UserID    string `json:"userID" validate:"required"`
 	RoleLevel int32  `json:"roleLevel" validate:"required"`
+}
+
+type FullUserInfo struct {
+	PublicInfo *PublicUserInfo `json:"publicInfo"`
+	FriendInfo *db.LocalFriend `json:"friendInfo"`
+	BlackInfo  *db.LocalBlack  `json:"blackInfo"`
 }
 
 //GroupName    string                `json:"groupName"`

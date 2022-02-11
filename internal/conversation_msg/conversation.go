@@ -126,7 +126,7 @@ func (c *Conversation) getServerConversationList(operationID string) (server_api
 	var req server_api_params.GetServerConversationListReq
 	req.FromUserID = c.loginUserID
 	req.OperationID = operationID
-	err := c.p.PostReturn(constant.GetAllConversationMessageOptRouter, req, &resp)
+	err := c.p.PostReturn(constant.GetAllConversationMessageOptRouter, req, &resp.ConversationOptResultList)
 	if err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		return resp, err

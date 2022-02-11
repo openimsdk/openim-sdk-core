@@ -41,6 +41,7 @@ const (
 	Typing         = 113
 	Quote          = 114
 	//////////////////////////////////////////
+	NotificationBegin       = 1000
 	FriendNotificationBegin = 1200
 
 	FriendApplicationApprovedNotification = 1201 //add_friend_response
@@ -73,6 +74,7 @@ const (
 	MemberInvitedNotification            = 1509
 	MemberEnterNotification              = 1510
 	GroupNotificationEnd                 = 1599
+	NotificationEnd                      = 2000
 
 	////////////////////////////////////////
 

@@ -17,7 +17,6 @@ func (d *DataBase) GetBlackList() ([]*LocalBlack, error) {
 		transfer = append(transfer, &v1)
 	}
 	return transfer, err
-
 }
 func (d *DataBase) GetBlackListUserID() (blackListUid []string, err error) {
 	d.mRWMutex.RLock()
@@ -33,11 +32,20 @@ func (d *DataBase) GetBlackInfoByBlockUserID(blockUserID string) (*LocalBlack, e
 		d.loginUserID, blockUserID).Take(&black).Error, "GetBlackInfoByBlockUserID failed")
 }
 
-func (d *DataBase) GetBlackInfoList(blockUserIDList []string) ([]LocalBlack, error) {
+func (d *DataBase) GetBlackInfoList(blockUserIDList []string) ([]*LocalBlack, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
-	var black []LocalBlack
-	return black, utils.Wrap(d.conn.Where("block_user_id IN ? ", blockUserIDList).Find(&black).Error, "GetBlackInfoList failed")
+	var blackList []LocalBlack
+	if t := d.conn.Where("block_user_id IN ? ", blockUserIDList).Find(&blackList).Error; t != nil {
+		return nil, utils.Wrap(t, "GetBlackInfoList failed")
+	}
+
+	var transfer []*LocalBlack
+	for _, v := range blackList {
+		v1 := v
+		transfer = append(transfer, &v1)
+	}
+	return transfer, nil
 }
 
 func (d *DataBase) InsertBlack(black *LocalBlack) error {

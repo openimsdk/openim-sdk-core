@@ -6,7 +6,7 @@ import (
 
 func (wsRouter *WsFuncRouter) GetUsersInfo(userIDList string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.User().GetUsersInfo(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, userIDList, operationID)
+	userWorker.Full().GetUsersInfo(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, userIDList, operationID)
 }
 
 func (wsRouter *WsFuncRouter) SetSelfInfo(userInfo string, operationID string) {

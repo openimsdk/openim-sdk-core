@@ -22,6 +22,7 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
+//f
 func (f *Friend) GetDesignatedFriendsInfo(callback open_im_sdk_callback.Base, friendUserIDList string, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
@@ -144,6 +145,7 @@ func (f *Friend) DeleteFriend(callback open_im_sdk_callback.Base, friendUserID s
 	}()
 }
 
+//f
 func (f *Friend) GetFriendList(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
@@ -152,18 +154,9 @@ func (f *Friend) GetFriendList(callback open_im_sdk_callback.Base, operationID s
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ")
-		var filterLocalFriendList sdk.GetFriendListCallback
-		localFriendList, err := f.db.GetAllFriendList()
-		common.CheckDBErrCallback(callback, err, operationID)
-		localBlackUidList, err := f.db.GetBlackListUserID()
-		common.CheckDBErrCallback(callback, err, operationID)
-		for _, v := range localFriendList {
-			if !utils.IsContain(v.FriendUserID, localBlackUidList) {
-				filterLocalFriendList = append(filterLocalFriendList, v)
-			}
-		}
-		callback.OnSuccess(utils.StructToJsonStringDefault(filterLocalFriendList))
-		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(filterLocalFriendList))
+		result := f.getFriendList(callback, operationID)
+		callback.OnSuccess(utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
 

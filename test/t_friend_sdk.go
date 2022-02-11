@@ -47,6 +47,10 @@ func TestLog(v ...interface{}) {
 
 var Friend_uid = "openIM101"
 
+func SetTestFriendID(friendUserID string) {
+	Friend_uid = friendUserID
+}
+
 ///////////////////////////////////////////////////////////
 
 type testGetFriendApplicationList struct {
@@ -70,7 +74,7 @@ func DoTestSetSelfInfo() {
 	var test testSetSelfInfo
 	test.OperationID = utils.OperationIDGenerator()
 	userInfo := server_api_params.UserInfo{}
-	userInfo.Nickname = "Gordon001"
+	userInfo.Nickname = "new 4444444444444 Gordon001"
 	jsonString := utils.StructToJsonStringDefault(userInfo)
 	fmt.Println("SetSelfInfo, input: ")
 	open_im_sdk.SetSelfInfo(test, test.OperationID, jsonString)
@@ -84,7 +88,7 @@ type testGetUsersInfo struct {
 func DoTestGetUsersInfo() {
 	var test testGetUsersInfo
 	test.OperationID = utils.OperationIDGenerator()
-	userIDList := []string{"openIM100"}
+	userIDList := []string{"openIM2222"}
 	list := utils.StructToJsonStringDefault(userIDList)
 	fmt.Println("testGetUsersInfo, input: ", list)
 	open_im_sdk.GetUsersInfo(test, test.OperationID, list)
@@ -109,7 +113,7 @@ func DoTestGetDesignatedFriendsInfo() {
 
 	jsontest, _ := json.Marshal(test.uid)
 	fmt.Println("testGetFriendsInfo, input: ", string(jsontest))
-	open_im_sdk.GetDesignatedFriendsInfo(test, string(jsontest), "asdffdsfasdfa")
+	open_im_sdk.GetDesignatedFriendsInfo(test, "xxxxxxxxxxx", string(jsontest))
 }
 
 ///////////////////////////////////////////////////////
@@ -288,6 +292,20 @@ func DoTestAcceptFriendApplication() {
 	param.ToUserID = Friend_uid
 	input := utils.StructToJsonString(param)
 	open_im_sdk.AcceptFriendApplication(test, test.OperationID, input)
+}
+
+type testRefuseFriendApplication struct {
+	baseCallback
+}
+
+func DoTestRefuseFriendApplication() {
+	var test testRefuseFriendApplication
+	test.OperationID = utils.OperationIDGenerator()
+	var param sdk_params_callback.ProcessFriendApplicationParams
+	param.HandleMsg = "nonono"
+	param.ToUserID = Friend_uid
+	input := utils.StructToJsonString(param)
+	open_im_sdk.RefuseFriendApplication(test, test.OperationID, input)
 }
 
 /*
