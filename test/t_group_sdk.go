@@ -98,6 +98,11 @@ func (t testCreateGroup) OnError(errCode int32, errMsg string) {
 	log.Info(t.OperationID, utils.GetSelfFuncName(), errCode, errMsg)
 }
 
+func SetTestGroupID(groupID, memberID string) {
+	MemberUserID = memberID
+	TestgroupID = groupID
+}
+
 var MemberUserID = "openIM101"
 var TestgroupID = "6cdeba7330140fad94180a005ab5cba8"
 

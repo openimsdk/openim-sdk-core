@@ -47,6 +47,10 @@ func TestLog(v ...interface{}) {
 
 var Friend_uid = "openIM101"
 
+func SetTestFriendID(friendUserID string) {
+	Friend_uid = friendUserID
+}
+
 ///////////////////////////////////////////////////////////
 
 type testGetFriendApplicationList struct {
