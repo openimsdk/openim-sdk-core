@@ -100,6 +100,10 @@ func SetSelfInfo(callback open_im_sdk_callback.Base, operationID string, userInf
 	userForSDK.User().SetSelfInfo(callback, userInfo, operationID)
 }
 
+func GetSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) {
+	userForSDK.User().GetSelfUserInfo(callback, operationID)
+}
+
 //////////////////////////group//////////////////////////////////////////
 func SetGroupListener(callback open_im_sdk_callback.OnGroupListener) {
 	if callback == nil {
