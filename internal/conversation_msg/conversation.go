@@ -2,6 +2,7 @@ package conversation_msg
 
 import (
 	"errors"
+	_ "open_im_sdk/internal/common"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -11,6 +12,7 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+
 )
 
 func (c *Conversation) getAllConversationList(callback open_im_sdk_callback.Base, operationID string) sdk.GetAllConversationListCallback {
@@ -155,23 +157,24 @@ func (c *Conversation) SyncConversations(operationID string) {
 		conversation.RecvMsgOpt = constant.ConversationNotNotification
 		err := c.db.InsertConversation(conversation)
 		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation failed ", err.Error())
+			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation failed ", err.Error(), conversation)
 			continue
 		}
-		callbackData := sdk.ConversationUpdateCallback(*conversationsOnServer[index])
-		log.Info(operationID, "OnFriendAdded", utils.StructToJsonString(callbackData))
 	}
 
 	for _, index := range sameA {
-		err := c.db.InsertConversation(conversationsOnServer[index])
+		err := c.db.UpdateConversation(conversationsOnServer[index])
 		if err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation failed ", err.Error(), *conversationsOnServer[index])
 			continue
 		}
 	}
+
 	// local有 server没有
 	for _, index := range bInANot {
-		err := c.db.DeleteConversation(conversationsOnLocal[index])
+		conversation := conversationsOnServer[index]
+		conversation.RecvMsgOpt = constant.ConversationDefault
+		err := c.db.UpdateConversation(conversationsOnLocal[index])
 		if err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), "deleteConversation failed ", err.Error())
 			continue
@@ -358,3 +361,19 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 }
 
 
+func (c *Conversation) setConversationNotification(msg *server_api_params.MsgData, operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
+	c.SyncConversations(operationID)
+}
+
+func (c *Conversation) DoNotification(msg *server_api_params.MsgData) {
+	operationID := utils.OperationIDGenerator()
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg)
+	if c.msgListener == nil {
+		log.Error(operationID, "listener == nil")
+		return
+	}
+	go func() {
+		c.setConversationNotification(msg, operationID)
+	}()
+}

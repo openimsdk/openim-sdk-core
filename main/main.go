@@ -417,7 +417,7 @@ func main() {
 
 	//test.DotestAcceptGroupApplication("")
 	//test.DoTestGetUserReqGroupApplicationList()
-	test.DoTestSetConversationRecvMessageOpt(strMyUidx, []string{"s", "s2"})
+	test.DoTestSetConversationRecvMessageOpt(strMyUidx, `["a", "b"]`)
 	//test.DoTestSetConversationStatus(strMyUidx, 2)
 	//
 	//test.DoTestGetRecvGroupApplicationList()

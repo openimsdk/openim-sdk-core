@@ -116,6 +116,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			continue
 		}
 		switch v.SessionType {
+		case constant.ConversationType:
+			log.Info(operationID, utils.GetSelfFuncName(), v)
+			c.DoNotification(v)
 		case constant.SingleChatType:
 			if v.ContentType > constant.FriendNotificationBegin && v.ContentType < constant.FriendNotificationEnd {
 				c.friend.DoNotification(v)
