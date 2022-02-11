@@ -36,7 +36,9 @@ func (u *Heartbeat) Run() {
 			select {
 			case r := <-u.cmdCh:
 				if r.Cmd == constant.CmdLogout {
-					log.Warn("", "recv logout cmd, Goexit...")
+					log.Warn(operationID, "recv logout cmd, close conn,  set logout state, Goexit...")
+					u.SetLoginState(constant.Logout)
+					u.CloseConn()
 					runtime.Goexit()
 				}
 				log.Warn(operationID, "other cmd...", r.Cmd)

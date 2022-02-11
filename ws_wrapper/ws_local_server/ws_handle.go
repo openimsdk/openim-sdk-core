@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/gorilla/websocket"
+	utils2 "open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"open_im_sdk/ws_wrapper/utils"
 	"reflect"
@@ -80,8 +81,10 @@ func DelUserRouter(uid string) {
 	defer UserRouteRwLock.Unlock()
 	urm, ok := UserRouteMap[uid]
 	if ok {
-		wrapSdkLog("DelUserRouter logout, UnInitSDK ", uid)
-		urm.wsRouter.LogoutNoCallback(uid, "0")
+		operationID := utils2.OperationIDGenerator()
+		wrapSdkLog("DelUserRouter logout, UnInitSDK ", uid, operationID)
+
+		urm.wsRouter.LogoutNoCallback(uid, operationID)
 		urm.wsRouter.UnInitSDK()
 	} else {
 		wrapSdkLog("no found UserRouteMap: ", uid)

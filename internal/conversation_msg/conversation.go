@@ -147,7 +147,7 @@ func (c *Conversation) SyncConversations(operationID string) {
 	if err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 	}
-	conversationsOnServer:= common.TransferToLocalConversation(svrList)
+	conversationsOnServer := common.TransferToLocalConversation(svrList)
 	aInBNot, bInANot, sameA, sameB := common.CheckConversationListDiff(conversationsOnServer, conversationsOnLocal)
 	log.NewInfo(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
 
@@ -274,6 +274,7 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 	c.initBasicInfo(&s, constant.UserMsgType, constant.HasReadReceipt, operationID)
 	s.Content = sourceMsgIDList
 	options := make(map[string]bool, 2)
+	//If there is an error, the coroutine ends, so judgment is not  required
 	resp, _ := c.internalSendMessage(callback, &s, userID, "", operationID, &server_api_params.OfflinePushInfo{}, false, options)
 	s.ServerMsgID = resp.ServerMsgID
 	s.SendTime = resp.SendTime

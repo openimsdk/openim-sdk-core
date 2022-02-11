@@ -212,7 +212,7 @@ type LocalUser struct {
 	Birth          uint32 `gorm:"column:birth" json:"birth"`
 	Email          string `gorm:"column:email;type:varchar(64)" json:"email"`
 	CreateTime     uint32 `gorm:"column:create_time" json:"createTime"`
-	AppMangerLevel int32  `gorm:"column:app_manger_level" json:"appMangerLevel"`
+	AppMangerLevel int32  `gorm:"column:app_manger_level" json:"-"`
 	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 
