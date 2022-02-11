@@ -5,7 +5,28 @@ import (
 	api "open_im_sdk/pkg/server_api_params"
 )
 
-func MergeResult(base []*db.LocalFriend, add []*db.LocalBlack) []api.FullUserInfo {
+func MergeBlackFriendResult(base []*db.LocalBlack, add []*db.LocalFriend) []api.FullUserInfo {
+	m := make(map[string]api.FullUserInfo, 0)
+	for _, v := range base {
+		node := api.FullUserInfo{}
+		node.BlackInfo = v
+		m[v.BlockUserID] = node
+	}
+
+	for _, v := range add {
+		if t, ok := m[v.FriendUserID]; ok {
+			t.FriendInfo = v
+		}
+	}
+
+	r := make([]api.FullUserInfo, 0)
+	for _, v := range m {
+		r = append(r, v)
+	}
+	return r
+}
+
+func MergeFriendBlackResult(base []*db.LocalFriend, add []*db.LocalBlack) []api.FullUserInfo {
 	m := make(map[string]api.FullUserInfo, 0)
 	for _, v := range base {
 		node := api.FullUserInfo{}

@@ -46,7 +46,7 @@ const DeleteFriendCallback = constant.SuccessCallbackDefault
 
 //1
 //type GetFriendListParams struct{}
-type GetFriendListCallback []*db.LocalFriend
+type GetFriendListCallback []server_api_params.FullUserInfo
 
 //1
 type SetFriendRemarkParams struct {
@@ -65,7 +65,7 @@ const AddBlackCallback = constant.SuccessCallbackDefault
 
 //1
 //type GetBlackListParams struct{}
-type GetBlackListCallback []*db.LocalBlack
+type GetBlackListCallback []server_api_params.FullUserInfo
 
 //1
 type RemoveBlackParams string
