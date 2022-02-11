@@ -426,6 +426,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 
 	case constant.UnreadCountSetZero:
 		if err := c.db.UpdateColumnsConversation(node.ConID, map[string]interface{}{"unread_count": 0}); err != nil {
+			log.Error("internal", "UpdateColumnsConversation err", err.Error())
 		} else {
 			totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
 			if err == nil {
