@@ -6,6 +6,12 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
+func (d *DataBase) GetConversationByUserID(userID string) (*LocalConversation, error) {
+	var conversation LocalConversation
+	err := utils.Wrap(d.conn.Where("user_id=?", userID).Find(&conversation).Error, "GetConversationByUserID error")
+	return &conversation, err
+}
+
 func (d *DataBase) GetAllConversationList() ([]*LocalConversation, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
@@ -45,6 +51,13 @@ func (d *DataBase) InsertConversation(conversationList *LocalConversation) error
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Create(conversationList).Error, "InsertConversation failed")
 }
+
+func (d *DataBase) DeleteConversation(conversation *LocalConversation) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.Delete(conversation).Where("conversation_id = ?", conversation.ConversationID).Error, "DeleteConversation failed")
+}
+
 func (d *DataBase) GetConversation(conversationID string) (*LocalConversation, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()

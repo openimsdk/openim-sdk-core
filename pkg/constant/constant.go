@@ -56,7 +56,10 @@ const (
 
 	UserNotificationBegin       = 1300
 	UserInfoUpdatedNotification = 1303 //SetSelfInfoTip             = 204
+	ConversationNotNotification = 1306
+	ConversationNotification    = 1307
 	UserNotificationEnd         = 1399
+
 
 	GroupNotificationBegin = 1500
 

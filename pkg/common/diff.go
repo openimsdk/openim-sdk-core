@@ -518,6 +518,51 @@ func CheckAdminGroupRequestDiff(a []*db.LocalAdminGroupRequest, b []*db.LocalAdm
 	return aInBNot, bInANot, sameA, sameB
 }
 
+func CheckConversationListDiff(conversationsOnServer, conversationsOnLocal []*db.LocalConversation) (aInBNot, bInANot, sameA, sameB []int) {
+	mapA := make(map[string]*db.LocalConversation)
+	mapB := make(map[string]*db.LocalConversation)
+	for _, v := range conversationsOnServer {
+		mapA[v.ConversationID] = v
+	}
+	for _, v := range conversationsOnLocal {
+		mapB[v.ConversationID] = v
+	}
+	aInBNot = make([]int, 0)
+	bInANot = make([]int, 0)
+	sameA = make([]int, 0)
+	sameB = make([]int, 0)
+
+	for i, v := range conversationsOnServer {
+		ia, ok := mapB[v.ConversationID]
+		if !ok {
+			//in a, but not in b
+			fmt.Println("aInBNot", conversationsOnServer[i], ia)
+			aInBNot = append(aInBNot, i)
+		} else {
+			if !cmp.Equal(v, ia) {
+				// key of a and b is equal, but value different
+				fmt.Println("sameA", conversationsOnServer[i], ia)
+				sameA = append(sameA, i)
+			}
+		}
+	}
+
+	for i, v := range conversationsOnLocal {
+		ib, ok := mapA[v.ConversationID]
+		if !ok {
+			fmt.Println("bInANot", conversationsOnLocal[i], ib)
+
+			bInANot = append(bInANot, i)
+		} else {
+			if !cmp.Equal(v, ib) {
+				fmt.Println("sameB", conversationsOnLocal[i], ib)
+				sameB = append(sameB, i)
+			}
+		}
+	}
+	return aInBNot, bInANot, sameA, sameB
+}
+
 //
 //func CheckSendGroupRequestDiff(a []*db.LocalGroupRequest, b []*db.LocalGroupRequest) (aInBNot, bInANot, sameA, sameB []int) {
 //	//to map, friendid_>friendinfo
@@ -595,4 +640,15 @@ func TransferToLocalSendGroupRequest(apiData []*server_api_params.GroupRequest) 
 	}
 	//	log2.NewDebug(operationID, "local test local all ", local)
 	return local
+}
+
+func TransferToLocalConversation(resp server_api_params.GetServerConversationListResp) []*db.LocalConversation {
+	var localConversations []*db.LocalConversation
+	for _, serverConversation := range resp.ConversationOptResultList {
+		localConversations = append(localConversations, &db.LocalConversation{
+			RecvMsgOpt: *serverConversation.Result,
+			ConversationID: serverConversation.ConversationID,
+		})
+	}
+	return localConversations
 }

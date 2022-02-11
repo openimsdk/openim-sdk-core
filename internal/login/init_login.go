@@ -5,6 +5,7 @@ import (
 	comm2 "open_im_sdk/internal/common"
 	conv "open_im_sdk/internal/conversation_msg"
 	"open_im_sdk/internal/friend"
+	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/group"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/user"
@@ -23,10 +24,10 @@ type LoginMgr struct {
 	group        *group.Group
 	conversation *conv.Conversation
 	user         *user.User
-
-	db      *db.DataBase //1
-	ws      *ws.Ws       //2
-	msgSync *ws.MsgSync  //3
+	full         *full.Full
+	db           *db.DataBase //1
+	ws           *ws.Ws       //2
+	msgSync      *ws.MsgSync  //3
 
 	heartbeat *ws.Heartbeat //4
 
@@ -58,6 +59,10 @@ func (u *LoginMgr) Conversation() *conv.Conversation {
 
 func (u *LoginMgr) User() *user.User {
 	return u.user
+}
+
+func (u *LoginMgr) Full() *full.Full {
+	return u.full
 }
 
 func (u *LoginMgr) Group() *group.Group {
@@ -132,6 +137,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.group = group.NewGroup(u.loginUserID, u.db, p)
 	u.group.SetGroupListener(u.groupListener)
 
+	u.full = full.NewFull(u.user, u.friend, u.group)
 	if u.imConfig.ObjectStorage != "cos" && u.imConfig.ObjectStorage != "" {
 		err = errors.New("u.imConfig.ObjectStorage failed ")
 		common.CheckConfigErrCallback(cb, err, operationID)

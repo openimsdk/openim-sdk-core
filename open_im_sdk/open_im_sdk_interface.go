@@ -93,11 +93,15 @@ func GetLoginUser() string {
 
 ///////////////////////user/////////////////////
 func GetUsersInfo(callback open_im_sdk_callback.Base, operationID string, userIDList string) {
-	userForSDK.User().GetUsersInfo(callback, userIDList, operationID)
+	userForSDK.Full().GetUsersInfo(callback, userIDList, operationID)
 }
 
 func SetSelfInfo(callback open_im_sdk_callback.Base, operationID string, userInfo string) {
 	userForSDK.User().SetSelfInfo(callback, userInfo, operationID)
+}
+
+func GetSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) {
+	userForSDK.User().GetSelfUserInfo(callback, operationID)
 }
 
 //////////////////////////group//////////////////////////////////////////
@@ -243,7 +247,7 @@ func GetConversationListSplit(callback open_im_sdk_callback.Base, operationID st
 	userForSDK.Conversation().GetConversationListSplit(callback, offset, count, operationID)
 }
 
-func SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, conversationIDList string, opt int) {
+func SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, conversationIDList []string, opt int) {
 	userForSDK.Conversation().SetConversationRecvMessageOpt(callback, conversationIDList, opt, operationID)
 }
 
@@ -267,10 +271,6 @@ func PinConversation(callback open_im_sdk_callback.Base, operationID string, con
 }
 func GetTotalUnreadMsgCount(callback open_im_sdk_callback.Base, operationID string) {
 	userForSDK.Conversation().GetTotalUnreadMsgCount(callback, operationID)
-}
-
-func SetConversationStatus(callback open_im_sdk_callback.Base, operationID, userID string, status int) {
-	userForSDK.Conversation().SetConversationStatus(callback, operationID, userID, status)
 }
 
 //

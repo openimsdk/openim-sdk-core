@@ -2,6 +2,7 @@ package test
 
 import (
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
 
@@ -98,8 +99,13 @@ func (t testCreateGroup) OnError(errCode int32, errMsg string) {
 	log.Info(t.OperationID, utils.GetSelfFuncName(), errCode, errMsg)
 }
 
+func SetTestGroupID(groupID, memberID string) {
+	MemberUserID = memberID
+	TestgroupID = groupID
+}
+
 var MemberUserID = "openIM101"
-var TestgroupID = "46bd3bab02dc78521ff0f3af10798614"
+var TestgroupID = "6cdeba7330140fad94180a005ab5cba8"
 
 func DoTestCreateGroup() {
 	var test testCreateGroup
@@ -136,8 +142,8 @@ func DoSetGroupInfo() {
 	var test testSetGroupInfo
 	test.OperationID = utils.OperationIDGenerator()
 	var input sdk_params_callback.SetGroupInfoParam
-	input.GroupName = "new group name 111"
-	input.Notification = "new notification 222"
+	input.GroupName = "new group name 11111111"
+	input.Notification = "new notification 11111"
 
 	setInfo := utils.StructToJsonString(input)
 	open_im_sdk.SetGroupInfo(test, test.OperationID, TestgroupID, setInfo)
@@ -363,11 +369,11 @@ func DoTestGetUserReqGroupApplicationList() {
 	open_im_sdk.GetSendGroupApplicationList(test, test.OperationID)
 }
 
-func DoTestSetConversationStatus(uid string, status int) {
+func DoTestSetConversationRecvMessageOpt(uid string, conversationIDs []string) {
 	var test testProcessGroupApplication
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
-	open_im_sdk.SetConversationStatus(test, test.OperationID, uid, status)
+	open_im_sdk.SetConversationRecvMessageOpt(test, test.OperationID, conversationIDs, constant.ConversationNotNotification)
 }
 
 func DoTestGetRecvGroupApplicationList() {
@@ -376,29 +382,9 @@ func DoTestGetRecvGroupApplicationList() {
 	open_im_sdk.GetRecvGroupApplicationList(test, test.OperationID)
 }
 
-//func DoRefuseGroupApplication(uid string) {
-//	str := DoGetGroupApplicationList()
-//	var ret open_im_sdk.groupApplicationResult
-//	err := json.Unmarshal([]byte(str), &ret)
-//	if err != nil {
-//		return
-//	}
-//	var app utils.GroupReqListInfo
-//	for i := 0; i < len(ret.GroupApplicationList); i++ {
-//		if ret.GroupApplicationList[i].FromUserID == uid {
-//			app = ret.GroupApplicationList[i]
-//			break
-//		}
-//	}
-//
-//	v, err := json.Marshal(app)
-//	if err != nil {
-//		return
-//	}
-//
-//	fmt.Println(string(v))
-//
-//	var test testGroupX
-//	fmt.Println("refuse", string(v))
-//	sdk_interface.RefuseGroupApplication(string(v), "refuse", test)
-//}
+func DotestRefuseGroupApplication(uid string) {
+	var test testProcessGroupApplication
+	test.OperationID = utils.OperationIDGenerator()
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
+	open_im_sdk.RefuseGroupApplication(test, test.OperationID, TestgroupID, MemberUserID, "no")
+}

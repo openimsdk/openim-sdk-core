@@ -44,25 +44,31 @@ func (f *Friend) SetListener(listener open_im_sdk_callback.OnFriendshipListener)
 
 func (f *Friend) getDesignatedFriendsInfo(callback open_im_sdk_callback.Base, friendUserIDList sdk.GetDesignatedFriendsInfoParams, operationID string) sdk.GetDesignatedFriendsInfoCallback {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", friendUserIDList)
+
+	localFriendList, err := f.db.GetFriendInfoList(friendUserIDList)
+	common.CheckDBErrCallback(callback, err, operationID)
+
 	blackList, err := f.db.GetBlackInfoList(friendUserIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
-	var pureFriendUserIDList []string
-	for _, v := range friendUserIDList {
-		flag := 0
-		for _, k := range blackList {
-			if v == k.BlockUserID {
-				flag = 1
-				break
-			}
-		}
-		if flag == 0 {
-			pureFriendUserIDList = append(pureFriendUserIDList, v)
-		}
+	for _, v := range blackList {
+		log.Info(operationID, "GetBlackInfoList ", *v)
 	}
-	localFriendList, err := f.db.GetFriendInfoList(pureFriendUserIDList)
+
+	r := common.MergeFriendBlackResult(localFriendList, blackList)
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ", r)
+	return r
+}
+
+func (f *Friend) GetDesignatedFriendListInfo(callback open_im_sdk_callback.Base, friendUserIDList []string, operationID string) []*db.LocalFriend {
+	friendList, err := f.db.GetFriendInfoList(friendUserIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ", pureFriendUserIDList, localFriendList)
-	return localFriendList
+	return friendList
+}
+
+func (f *Friend) GetDesignatedBlackListInfo(callback open_im_sdk_callback.Base, blackIDList []string, operationID string) []*db.LocalBlack {
+	blackList, err := f.db.GetBlackInfoList(blackIDList)
+	common.CheckDBErrCallback(callback, err, operationID)
+	return blackList
 }
 
 func (f *Friend) addFriend(callback open_im_sdk_callback.Base, userIDReqMsg sdk.AddFriendParams, operationID string) {
@@ -149,6 +155,24 @@ func (f *Friend) deleteFriend(friendUserID sdk.DeleteFriendParams, callback open
 	f.p.PostFatalCallback(callback, constant.DeleteFriendRouter, apiReq, nil, operationID)
 	f.SyncFriendList(operationID)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ")
+}
+
+func (f *Friend) getFriendList(callback open_im_sdk_callback.Base, operationID string) sdk.GetFriendListCallback {
+	localFriendList, err := f.db.GetAllFriendList()
+	common.CheckDBErrCallback(callback, err, operationID)
+	localBlackList, err := f.db.GetBlackList()
+	common.CheckDBErrCallback(callback, err, operationID)
+	return common.MergeFriendBlackResult(localFriendList, localBlackList)
+}
+
+func (f *Friend) getBlackList(callback open_im_sdk_callback.Base, operationID string) sdk.GetBlackListCallback {
+	localBlackList, err := f.db.GetBlackList()
+	common.CheckDBErrCallback(callback, err, operationID)
+
+	localFriendList, err := f.db.GetAllFriendList()
+	common.CheckDBErrCallback(callback, err, operationID)
+
+	return common.MergeBlackFriendResult(localBlackList, localFriendList)
 }
 
 func (f *Friend) setFriendRemark(userIDRemark sdk.SetFriendRemarkParams, callback open_im_sdk_callback.Base, operationID string) {
