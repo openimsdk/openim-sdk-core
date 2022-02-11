@@ -2,6 +2,7 @@ package test
 
 import (
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
 
@@ -368,11 +369,11 @@ func DoTestGetUserReqGroupApplicationList() {
 	open_im_sdk.GetSendGroupApplicationList(test, test.OperationID)
 }
 
-func DoTestSetConversationStatus(uid string, status int) {
+func DoTestSetConversationRecvMessageOpt(uid string, conversationIDs []string) {
 	var test testProcessGroupApplication
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
-	open_im_sdk.SetConversationStatus(test, test.OperationID, uid, status)
+	open_im_sdk.SetConversationRecvMessageOpt(test, test.OperationID, conversationIDs, constant.ConversationNotNotification)
 }
 
 func DoTestGetRecvGroupApplicationList() {

@@ -402,11 +402,13 @@ func main() {
 	friendUserID := "openIM2222"
 	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMTExIiwiUGxhdGZvcm0iOiJJT1MiLCJleHAiOjE2NDUxNjA5ODUsIm5iZiI6MTY0NDU1NjE4NSwiaWF0IjoxNjQ0NTU2MTg1fQ.1eb32gX4esPg1a7Snwnj3t__ym3GqDcN0muLs7yijco"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+	//test.DoTestCreateGroup()
 	test.SetTestFriendID(friendUserID)
 	//test.DoTestAddToBlackList()
 	//test.DoTestGetDesignatedFriendsInfo()
 	test.DoTestGetUsersInfo()
 	//	test.DoTestCreateGroup()
+
 	//	test.DoSetGroupInfo()
 	//	test.DotestGetGroupMemberList()
 	//	test.DotestKickGroupMember()
@@ -415,6 +417,7 @@ func main() {
 
 	//test.DotestAcceptGroupApplication("")
 	//test.DoTestGetUserReqGroupApplicationList()
+	test.DoTestSetConversationRecvMessageOpt(strMyUidx, []string{"s", "s2"})
 	//test.DoTestSetConversationStatus(strMyUidx, 2)
 	//
 	//test.DoTestGetRecvGroupApplicationList()
