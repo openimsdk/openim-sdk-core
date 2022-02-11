@@ -403,7 +403,9 @@ func main() {
 	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMTExIiwiUGxhdGZvcm0iOiJJT1MiLCJleHAiOjE2NDUxNjA5ODUsIm5iZiI6MTY0NDU1NjE4NSwiaWF0IjoxNjQ0NTU2MTg1fQ.1eb32gX4esPg1a7Snwnj3t__ym3GqDcN0muLs7yijco"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	test.SetTestFriendID(friendUserID)
-	test.DoTestCreateGroup()
+	//test.DoTestAddToBlackList()
+	test.DoTestGetDesignatedFriendsInfo()
+	//	test.DoTestCreateGroup()
 	//	test.DoSetGroupInfo()
 	//	test.DotestGetGroupMemberList()
 	//	test.DotestKickGroupMember()
@@ -424,7 +426,7 @@ func main() {
 
 	//	test.DotestDeleteFriend()
 	//	test.DoTestDeleteFromBlackList()
-	test.DoTestAddFriend()
+	//	test.DoTestAddFriend()
 
 	//test.DotestSetFriendRemark()
 

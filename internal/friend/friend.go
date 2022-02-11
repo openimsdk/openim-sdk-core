@@ -50,6 +50,9 @@ func (f *Friend) getDesignatedFriendsInfo(callback open_im_sdk_callback.Base, fr
 
 	blackList, err := f.db.GetBlackInfoList(friendUserIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
+	for _, v := range blackList {
+		log.Info(operationID, "GetBlackInfoList ", *v)
+	}
 
 	r := common.MergeFriendBlackResult(localFriendList, blackList)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ", r)

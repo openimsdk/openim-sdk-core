@@ -20,9 +20,29 @@ func NewFull(user *user.User, friend *friend.Friend, group *group.Group) *Full {
 }
 
 func (u *Full) getUsersInfo(callback open_im_sdk_callback.Base, userIDList sdk.GetUsersInfoParam, operationID string) sdk.GetUsersInfoCallback {
-	//from svr
-	publicList := u.user.GetUsersInfoFromSvr(callback, userIDList, operationID)
 	friendList := u.friend.GetDesignatedFriendListInfo(callback, []string(userIDList), operationID)
 	blackList := u.friend.GetDesignatedBlackListInfo(callback, []string(userIDList), operationID)
+	notIn := make([]string, 0)
+	for _, v := range userIDList {
+		inFriendList := 0
+		for _, friend := range friendList {
+			if v == friend.FriendUserID {
+				inFriendList = 1
+				break
+			}
+		}
+		inBlackList := 0
+		for _, black := range blackList {
+			if v == black.BlockUserID {
+				inBlackList = 1
+				break
+			}
+		}
+		if inFriendList == 0 && inBlackList == 0 {
+			notIn = append(notIn, v)
+		}
+	}
+	//from svr
+	publicList := u.user.GetUsersInfoFromSvr(callback, userIDList, operationID)
 	return common.MergeUserResult(publicList, friendList, blackList)
 }

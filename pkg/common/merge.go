@@ -16,6 +16,7 @@ func MergeBlackFriendResult(base []*db.LocalBlack, add []*db.LocalFriend) []api.
 	for _, v := range add {
 		if t, ok := m[v.FriendUserID]; ok {
 			t.FriendInfo = v
+			m[v.FriendUserID] = t
 		}
 	}
 
@@ -36,7 +37,9 @@ func MergeFriendBlackResult(base []*db.LocalFriend, add []*db.LocalBlack) []api.
 
 	for _, v := range add {
 		if t, ok := m[v.BlockUserID]; ok {
+
 			t.BlackInfo = v
+			m[v.BlockUserID] = t
 		}
 	}
 
@@ -58,12 +61,22 @@ func MergeUserResult(publicList []*api.PublicUserInfo, friendList []*db.LocalFri
 	for _, v := range friendList {
 		if t, ok := m[v.FriendUserID]; ok {
 			t.FriendInfo = v
+			m[v.FriendUserID] = t
+		} else {
+			node := api.FullUserInfo{PublicInfo: &api.PublicUserInfo{}}
+			node.FriendInfo = v
+			node.PublicInfo.UserID = v.FriendUserID
+			node.PublicInfo.FaceURL = v.FaceURL
+			node.PublicInfo.Nickname = v.Nickname
+			node.PublicInfo.Gender = v.Gender
+			m[v.FriendUserID] = node
 		}
 	}
 
 	for _, v := range blackList {
 		if t, ok := m[v.BlockUserID]; ok {
 			t.BlackInfo = v
+			m[v.BlockUserID] = t
 		}
 	}
 
