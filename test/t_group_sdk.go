@@ -368,7 +368,7 @@ func DoTestGetUserReqGroupApplicationList() {
 	open_im_sdk.GetSendGroupApplicationList(test, test.OperationID)
 }
 
-func DoTestSetConversationRecvMessageOpt(uid string, conversationIDs []string) {
+func DoTestSetConversationRecvMessageOpt(uid string, conversationIDs string) {
 	var test testProcessGroupApplication
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")

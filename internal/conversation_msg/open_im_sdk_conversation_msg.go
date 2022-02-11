@@ -75,7 +75,6 @@ func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callba
 	}
 	go func() {
 		log.NewInfo(operationID, "SetConversationRecvMessageOpt args: ", conversationIDList, opt)
-		//	c.setConversationRecvMessageOpt(callback, conversationIDList, opt, operationID)
 		var unmarshalParams sdk_params_callback.SetConversationRecvMessageOptParams
 		common.JsonUnmarshalCallback(conversationIDList, &unmarshalParams, callback, operationID)
 		c.setConversationRecvMessageOpt(callback, unmarshalParams, opt, operationID)

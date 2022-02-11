@@ -58,6 +58,7 @@ const (
 	UserInfoUpdatedNotification = 1303 //SetSelfInfoTip             = 204
 	ConversationNotNotification = 1306
 	ConversationNotification    = 1307
+	ConversationDefault         = 0
 	UserNotificationEnd         = 1399
 
 
@@ -81,11 +82,13 @@ const (
 	//MsgFrom
 	UserMsgType = 100
 	SysMsgType  = 200
+	ConversationType  = 300
 
 	/////////////////////////////////////
 	//SessionType
 	SingleChatType = 1
 	GroupChatType  = 2
+
 
 	//MsgStatus
 	MsgStatusSending     = 1
