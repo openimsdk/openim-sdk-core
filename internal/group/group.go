@@ -631,7 +631,7 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 	for _, index := range aInBNot {
 		err := g.db.InsertGroupMember(onServer[index])
 		if err != nil {
-			log.NewError(operationID, "InsertGroupMember failed ", err.Error(), onServer[index])
+			log.NewError(operationID, "InsertGroupMember failed ", err.Error(), *onServer[index])
 			continue
 		}
 		if onGroupMemberNotification == true {
