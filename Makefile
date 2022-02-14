@@ -1,6 +1,6 @@
 .PHONY: ios build install
 
-BINARY_NAME=open_im_sdk/ws_wrapper/open_im_sdk_server
+BINARY_NAME=ws_wrapper/cmd/open_im_sdk_server
 BIN_DIR=../../bin/
 LAN_FILE=.go
 GO_FILE:=${BINARY_NAME}${LAN_FILE}
