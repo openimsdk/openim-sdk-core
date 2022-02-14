@@ -643,7 +643,7 @@ func (c *Conversation) addFaceURLAndName(lc *db.LocalConversation) {
 	case constant.SingleChatType:
 		faceUrl, name, err := c.getUserNameAndFaceUrlByUid(&tmpCallback{}, lc.UserID, operationID)
 		if err != nil {
-			log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error())
+			log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error(), lc.UserID)
 			return
 		}
 		lc.FaceURL = faceUrl
@@ -651,7 +651,7 @@ func (c *Conversation) addFaceURLAndName(lc *db.LocalConversation) {
 	case constant.GroupChatType:
 		g, err := c.db.GetGroupInfoByGroupID(lc.GroupID)
 		if err != nil {
-			log.Error(operationID, "GetGroupInfoByGroupID err", err.Error())
+			log.Error(operationID, "GetGroupInfoByGroupID err", err.Error(), lc.GroupID)
 			return
 		}
 		lc.ShowName = g.GroupName
