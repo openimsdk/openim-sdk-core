@@ -133,7 +133,7 @@ func (w *Ws) ReadData() {
 		if err != nil {
 			isErrorOccurred = true
 			if w.loginState == constant.Logout {
-				log.Error(operationID, "loginState logout ")
+				log.Warn(operationID, "loginState == logout ")
 				continue
 			}
 			if w.WsConn.IsFatalError(err) {

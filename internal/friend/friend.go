@@ -407,6 +407,9 @@ func (f *Friend) SyncFriendList(operationID string) {
 		return
 	}
 	log.NewInfo(operationID, "list ", svrList, friendsInfoOnServer, friendsInfoOnLocal)
+	for _, v := range friendsInfoOnServer {
+		log.NewDebug(operationID, "friendsInfoOnServer ", *v)
+	}
 	aInBNot, bInANot, sameA, sameB := common.CheckFriendListDiff(friendsInfoOnServer, friendsInfoOnLocal)
 	log.NewInfo(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
 	for _, index := range aInBNot {
@@ -429,7 +432,7 @@ func (f *Friend) SyncFriendList(operationID string) {
 			//}
 
 		} else {
-			callbackData := sdk.FriendInfoChangedCallback(*friendsInfoOnLocal[index])
+			callbackData := sdk.FriendInfoChangedCallback(*friendsInfoOnServer[index])
 			f.friendListener.OnFriendInfoChanged(utils.StructToJsonString(callbackData))
 			log.Info(operationID, "OnFriendInfoChanged", utils.StructToJsonString(callbackData))
 		}

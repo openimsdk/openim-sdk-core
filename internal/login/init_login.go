@@ -171,7 +171,7 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 
 	if u.friend == nil || u.conversation == nil || u.user == nil || u.full == nil ||
 		u.db == nil || u.ws == nil || u.msgSync == nil || u.heartbeat == nil {
-		log.Info(operationID, "nil, no TriggerCmdLogout")
+		log.Info(operationID, "nil, no TriggerCmdLogout ", *u)
 		return
 	}
 
@@ -191,11 +191,11 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 	resp, err := u.ws.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID, operationID)
 	if err != nil {
 		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
-		if callback != nil {
-			callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
-		} else {
-			return
-		}
+		//if callback != nil {
+		//	callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
+		//} else {
+		//	return
+		//}
 	}
 	if callback != nil {
 		callback.OnSuccess("")
