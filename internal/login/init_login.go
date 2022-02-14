@@ -168,6 +168,13 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_call
 
 func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string) {
 	log.Info(operationID, "TriggerCmdLogout ws...")
+
+	if u.friend == nil || u.conversation == nil || u.user == nil || u.full == nil ||
+		u.db == nil || u.ws == nil || u.msgSync == nil || u.heartbeat == nil {
+		log.Info(operationID, "nil, no TriggerCmdLogout")
+		return
+	}
+
 	err := common.TriggerCmdLogout(u.cmdWsCh)
 	if err != nil {
 		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
