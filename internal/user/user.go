@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"github.com/google/go-cmp/cmp"
 	comm "open_im_sdk/internal/common"
 
@@ -85,6 +86,7 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 			return
 		}
 		err = u.UpdateLoginUser(onServer)
+		fmt.Println("UpdateLoginUser ", *onServer, svr)
 		if err != nil {
 			log.Error(operationID, "UpdateLoginUser failed ", *onServer, err.Error())
 			return

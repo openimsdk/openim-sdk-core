@@ -18,24 +18,15 @@ import (
 )
 
 func main() {
-	////open_im_sdk.InitDBX("test")
-	////frd := open_im_sdk.Friend{OwnerUserID: "1dddasdfasdfasfd121", FriendUserID: "5678"}
-	////err1 := open_im_sdk.InsertFriendItem(&frd)
-	//if err1 != nil {
-	//	fmt.Printf("f1 err1111111111111: %v", err1)
-	//}
-	//
-	//fmt.Printf("f1 222222222222: %v", err1)
-	//return
-	//if err := f1(); err != nil {
-	//	fmt.Printf("f1 err1111111111111: %v", err)
-	//}
+
 	strMyUidx := "openIM1111"
 	friendUserID := "openIM2222"
 	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMTExIiwiUGxhdGZvcm0iOiJJT1MiLCJleHAiOjE2NDUxNjA5ODUsIm5iZiI6MTY0NDU1NjE4NSwiaWF0IjoxNjQ0NTU2MTg1fQ.1eb32gX4esPg1a7Snwnj3t__ym3GqDcN0muLs7yijco"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	//test.DoTestCreateGroup()
 	test.SetTestFriendID(friendUserID)
+	fmt.Println("logout ........... ")
+	test.InOutLogou()
 	//test.DoTestAddToBlackList()
 	//test.DoTestGetDesignatedFriendsInfo()
 	//	test.DoTestGetUsersInfo()
@@ -60,9 +51,9 @@ func main() {
 	//test.DotestSetFriendRemark()
 	//	test.DotestGetFriendList()
 
-	//	test.DotestDeleteFriend()
+	//test.DotestDeleteFriend()
 	//	test.DoTestDeleteFromBlackList()
-	test.DoTestAddFriend()
+	//test.DoTestAddFriend()
 
 	//test.DotestSetFriendRemark()
 

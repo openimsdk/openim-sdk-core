@@ -237,7 +237,7 @@ func DoTestAddFriend() {
 	test.OperationID = utils.OperationIDGenerator()
 	params := sdk_params_callback.AddFriendParams{
 		ToUserID: Friend_uid,
-		ReqMsg:   "23232",
+		ReqMsg:   "12111111111111111",
 	}
 	jsontestaddFriend := utils.StructToJsonString(params)
 	log.Info(test.OperationID, "addFriend input:", jsontestaddFriend)
