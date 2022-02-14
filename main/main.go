@@ -17,6 +17,291 @@ import (
 	"time"
 )
 
+func main() {
+	////open_im_sdk.InitDBX("test")
+	////frd := open_im_sdk.Friend{OwnerUserID: "1dddasdfasdfasfd121", FriendUserID: "5678"}
+	////err1 := open_im_sdk.InsertFriendItem(&frd)
+	//if err1 != nil {
+	//	fmt.Printf("f1 err1111111111111: %v", err1)
+	//}
+	//
+	//fmt.Printf("f1 222222222222: %v", err1)
+	//return
+	//if err := f1(); err != nil {
+	//	fmt.Printf("f1 err1111111111111: %v", err)
+	//}
+	strMyUidx := "openIM1111"
+	friendUserID := "openIM2222"
+	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMTExIiwiUGxhdGZvcm0iOiJJT1MiLCJleHAiOjE2NDUxNjA5ODUsIm5iZiI6MTY0NDU1NjE4NSwiaWF0IjoxNjQ0NTU2MTg1fQ.1eb32gX4esPg1a7Snwnj3t__ym3GqDcN0muLs7yijco"
+	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+	//test.DoTestCreateGroup()
+	test.SetTestFriendID(friendUserID)
+	//test.DoTestAddToBlackList()
+	//test.DoTestGetDesignatedFriendsInfo()
+	//	test.DoTestGetUsersInfo()
+	//	test.DoTestCreateGroup()
+
+	//	test.DoSetGroupInfo()
+	//	test.DotestGetGroupMemberList()
+	//	test.DotestKickGroupMember()
+	//	test.DotestInviteUserToGroup()
+	//test.DotestGetGroupApplicationList()
+
+	//test.DotestAcceptGroupApplication("")
+	//test.DoTestGetUserReqGroupApplicationList()
+	//test.DoTestSetConversationRecvMessageOpt(strMyUidx, []string{"s", "s2"})
+	//test.DoTestSetConversationStatus(strMyUidx, 2)
+	//
+	//test.DoTestGetRecvGroupApplicationList()
+	///////////////friend///////////////////////////////////
+	//	test.DoTestGetFriendApplicationList()
+	//test.DoTestAcceptFriendApplication()
+
+	//test.DotestSetFriendRemark()
+	//	test.DotestGetFriendList()
+
+	//	test.DotestDeleteFriend()
+	//	test.DoTestDeleteFromBlackList()
+	test.DoTestAddFriend()
+
+	//test.DotestSetFriendRemark()
+
+	//open_im_sdk.DoTestGetFriendList()
+	//	open_im_sdk.DoTestAddToBlackList()
+	//	open_im_sdk.DoTestGetBlackList()
+	//	open_im_sdk.DoTestDeleteFromBlackList()
+	//DoTestGetDesignatedFriendsInfo()
+	//test.DoTestSendMsg(strMyUidx, test.Friend_uid)
+	for true {
+		time.Sleep(time.Duration(100) * time.Second)
+		//	test.DoTestSendMsg(strMyUidx, test.Friend_uid)
+		fmt.Println("waiting")
+	}
+	//
+	//return
+	//
+	//err := AuthenticateRequest(0)
+	//fmt.Printf("err: %+v", err)
+	//return
+	//
+	//sdk_interface.SetHearbeatInterval(300)
+	//for i := 0; i < 1; i++ {
+	//	myUid1 := 17712341234
+	//	strMyUid1 := GenUid(myUid1)
+	//
+	//	runRigister(strMyUid1)
+	//	token1 := runGetToken(strMyUid1)
+	//	DoTest(strMyUid1, token1, WSADDR, APIADDR)
+	//	time.Sleep(time.Duration(1) * time.Second)
+	//}
+	//DotestSetConversationRecvMessageOpt()
+	//DoTestGetConversationRecvMessageOpt()
+	//DoTestGetAllConversationList()
+	////	open_im_sdk.DoTestAddToBlackList()
+	//time.Sleep(time.Duration(1) * time.Second)
+	////	open_im_sdk.DoTestGetFriendList()
+	////	open_im_sdk.DoTestGetBlackList()
+	//
+	////	open_im_sdk.DoTestGetFriendsInfo()
+	////	open_im_sdk.DoTestGetUsersInfo()
+	////open_im_sdk.InOutDoTest(strMyUid1, token1, WSADDR, APIADDR)
+	////	open_im_sdk.InOutLogou()
+	//
+	////	open_im_sdk.InOutDoTest(strMyUid1, token1, WSADDR, APIADDR)
+	//
+	//for true {
+	//	time.Sleep(time.Duration(60) * time.Second)
+	//	fmt.Println("waiting")
+	//}
+	//
+	//cmdfile := "./cmd.txt"
+	//uid := flag.Int("uid", 1, "RpcToken default listen port 10800")
+	//uidCount := flag.Int("uid_count", 2, "RpcToken default listen port 10800")
+	//messageCount := flag.Int("message_count", 1, "RpcToken default listen port 10800")
+	//APIADDR1 := flag.String("api_addr", "http://127.0.0.1:10000", "api addr")
+	//WSADDR1 := flag.String("ws_addr", "http://127.0.0.1:17778", "ws addr")
+	//REGISTERADDR1 := flag.String("register_addr", "http://127.0.0.1:10000/auth/user_register", "register addr")
+	//TOKENADDR1 := flag.String("token_addr", "http://127.0.0.1:10000/auth/user_token", "token addr")
+	//flag.Parse()
+	//
+	//APIADDR = *APIADDR1
+	//WSADDR = *WSADDR1
+	//REGISTERADDR = *REGISTERADDR1
+	//TOKENADDR = *TOKENADDR1
+	//
+	//var myUid int = *uid
+	//var uidNum int = *uidCount
+	//var msgnum int = *messageCount
+	//fmt.Println("args is ", myUid, uidNum, msgnum)
+	//var strMyUid string
+	//utils.LogBegin()
+	//strMyUid = GenUid(myUid)
+	//
+	//runRigister(strMyUid)
+	//token := runGetToken(strMyUid)
+	//
+	//cmd := GetCmd(myUid, cmdfile)
+	//
+	//fmt.Println("getcmd value ", cmd)
+	//switch cmd {
+	//case -1:
+	//	fmt.Println("GetCmd failed ")
+	//	time.Sleep(time.Duration(1) * time.Second)
+	//case 5:
+	//	fmt.Println("wait 2 mins, then login")
+	//	time.Sleep(time.Duration(1*60) * time.Second)
+	//	DoTest(strMyUid, token, WSADDR, APIADDR)
+	//	fmt.Println("login do test, only login")
+	//	fmt.Println("testmypid: ", os.Getpid())
+	//case 6:
+	//	fmt.Println("wait 4 mins, then login")
+	//	time.Sleep(time.Duration(2*60) * time.Second)
+	//	DoTest(strMyUid, token, WSADDR, APIADDR)
+	//	fmt.Println("login do test, only login")
+	//	fmt.Println("testmypid: ", os.Getpid())
+	//case 3:
+	//	fmt.Println("wait 2 mins, then login and send")
+	//	time.Sleep(time.Duration(1*60) * time.Second)
+	//	DoTest(strMyUid, token, WSADDR, APIADDR)
+	//	fmt.Println("login do test, login and send")
+	//
+	//	var recvId string
+	//	var idx string
+	//	rand.Seed(time.Now().UnixNano())
+	//	if msgnum == 0 {
+	//		fmt.Println("dont send,  exit")
+	//		os.Exit(0)
+	//	} else {
+	//		for i := 0; i < msgnum; i++ {
+	//			var r int
+	//			for true {
+	//				time.Sleep(time.Duration(SENDINTERVAL) * time.Millisecond)
+	//
+	//				r = rand.Intn(uidNum) + 1
+	//				fmt.Println("test rand ", myUid, uidNum, r)
+	//				if r == myUid {
+	//					continue
+	//				} else {
+	//					break
+	//				}
+	//			}
+	//			recvId = GenUid(r)
+	//			idx = strconv.FormatInt(int64(i), 10)
+	//
+	//			DoTestSendMsg(strMyUid, recvId, idx)
+	//		}
+	//	}
+	//
+	//case 4:
+	//	fmt.Println("wait 4 mins, then login and send")
+	//	time.Sleep(time.Duration(2*60) * time.Second)
+	//	DoTest(strMyUid, token, WSADDR, APIADDR)
+	//	fmt.Println("login do test, login and send")
+	//
+	//	var recvId string
+	//	var idx string
+	//	rand.Seed(time.Now().UnixNano())
+	//	if msgnum == 0 {
+	//		fmt.Println("dont send,  exit")
+	//		os.Exit(0)
+	//	} else {
+	//		for i := 0; i < msgnum; i++ {
+	//			var r int
+	//			for true {
+	//				time.Sleep(time.Duration(SENDINTERVAL) * time.Millisecond)
+	//
+	//				r = rand.Intn(uidNum) + 1
+	//				fmt.Println("test rand ", myUid, uidNum, r)
+	//				if r == myUid {
+	//					continue
+	//				} else {
+	//					break
+	//				}
+	//			}
+	//			recvId = GenUid(r)
+	//			idx = strconv.FormatInt(int64(i), 10)
+	//
+	//			DoTestSendMsg(strMyUid, recvId, idx)
+	//		}
+	//	}
+	//
+	//case 1:
+	//	fmt.Println("only login")
+	//	DoTest(strMyUid, token, WSADDR, APIADDR)
+	//	fmt.Println("login do test, only login...")
+	//	fmt.Println("testmypid: ", os.Getpid())
+	//case 2:
+	//	fmt.Println("login send")
+	//	DoTest(strMyUid, token, WSADDR, APIADDR)
+	//	fmt.Println("login do test, login and send")
+	//
+	//	var recvId string
+	//	var idx string
+	//	rand.Seed(time.Now().UnixNano())
+	//	if msgnum == 0 {
+	//		fmt.Println("dont send,  exit")
+	//		os.Exit(0)
+	//	} else {
+	//		for i := 0; i < msgnum; i++ {
+	//			var r int
+	//			for true {
+	//				time.Sleep(time.Duration(SENDINTERVAL) * time.Millisecond)
+	//
+	//				r = rand.Intn(uidNum) + 1
+	//				fmt.Println("test rand ", myUid, uidNum, r)
+	//				if r == myUid {
+	//					continue
+	//				} else {
+	//					break
+	//				}
+	//			}
+	//			recvId = GenUid(r)
+	//			idx = strconv.FormatInt(int64(i), 10)
+	//
+	//			DoTestSendMsg(strMyUid, recvId, idx)
+	//		}
+	//	}
+	//case 7:
+	//	fmt.Println("random sleep and send")
+	//	DoTest(strMyUid, token, WSADDR, APIADDR)
+	//
+	//	var recvId string
+	//	var idx string
+	//	rand.Seed(time.Now().UnixNano())
+	//	maxSleep := 60
+	//	msgnum = 10
+	//	if msgnum == 0 {
+	//		fmt.Println("dont send,  exit")
+	//		os.Exit(0)
+	//	} else {
+	//		for i := 0; i < msgnum; i++ {
+	//			var r int
+	//			for true {
+	//				time.Sleep(time.Duration(rand.Intn(maxSleep)+1) * time.Second)
+	//				r = rand.Intn(uidNum) + 1
+	//				fmt.Println("test rand ", myUid, uidNum, r)
+	//				if r == myUid {
+	//					continue
+	//				} else {
+	//					break
+	//				}
+	//			}
+	//			recvId = GenUid(r)
+	//			idx = strconv.FormatInt(int64(i), 10)
+	//
+	//			DoTestSendMsg(strMyUid, recvId, idx)
+	//		}
+	//	}
+	//
+	//}
+	//
+	//for true {
+	//	time.Sleep(time.Duration(60) * time.Second)
+	//	fmt.Println("waiting")
+	//}
+
+}
+
 //	var bb BaseSuccFailed
 //	bb.OnSuccess("ddd")
 
@@ -385,287 +670,3 @@ func f1() error {
 //}
 
 // myuid,  maxuid,  msgnum
-func main() {
-	////open_im_sdk.InitDBX("test")
-	////frd := open_im_sdk.Friend{OwnerUserID: "1dddasdfasdfasfd121", FriendUserID: "5678"}
-	////err1 := open_im_sdk.InsertFriendItem(&frd)
-	//if err1 != nil {
-	//	fmt.Printf("f1 err1111111111111: %v", err1)
-	//}
-	//
-	//fmt.Printf("f1 222222222222: %v", err1)
-	//return
-	//if err := f1(); err != nil {
-	//	fmt.Printf("f1 err1111111111111: %v", err)
-	//}
-	strMyUidx := "openIM1111"
-	friendUserID := "openIM2222"
-	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMTExIiwiUGxhdGZvcm0iOiJJT1MiLCJleHAiOjE2NDUxNjA5ODUsIm5iZiI6MTY0NDU1NjE4NSwiaWF0IjoxNjQ0NTU2MTg1fQ.1eb32gX4esPg1a7Snwnj3t__ym3GqDcN0muLs7yijco"
-	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
-	//test.DoTestCreateGroup()
-	test.SetTestFriendID(friendUserID)
-	//test.DoTestAddToBlackList()
-	//test.DoTestGetDesignatedFriendsInfo()
-	test.DoTestGetUsersInfo()
-	//	test.DoTestCreateGroup()
-
-	//	test.DoSetGroupInfo()
-	//	test.DotestGetGroupMemberList()
-	//	test.DotestKickGroupMember()
-	//	test.DotestInviteUserToGroup()
-	//test.DotestGetGroupApplicationList()
-
-	//test.DotestAcceptGroupApplication("")
-	//test.DoTestGetUserReqGroupApplicationList()
-	test.DoTestSetConversationRecvMessageOpt(strMyUidx, `["a", "b"]`)
-	//test.DoTestSetConversationStatus(strMyUidx, 2)
-	//
-	//test.DoTestGetRecvGroupApplicationList()
-	///////////////friend///////////////////////////////////
-	//	test.DoTestGetFriendApplicationList()
-	//test.DoTestAcceptFriendApplication()
-
-	//test.DotestSetFriendRemark()
-	//	test.DotestGetFriendList()
-
-	//	test.DotestDeleteFriend()
-	//	test.DoTestDeleteFromBlackList()
-	//	test.DoTestAddFriend()
-
-	//test.DotestSetFriendRemark()
-
-	//open_im_sdk.DoTestGetFriendList()
-	//	open_im_sdk.DoTestAddToBlackList()
-	//	open_im_sdk.DoTestGetBlackList()
-	//	open_im_sdk.DoTestDeleteFromBlackList()
-	//DoTestGetDesignatedFriendsInfo()
-	//test.DoTestSendMsg(strMyUidx, test.Friend_uid)
-	for true {
-		time.Sleep(time.Duration(100) * time.Second)
-		//	test.DoTestSendMsg(strMyUidx, test.Friend_uid)
-		fmt.Println("waiting")
-	}
-	//
-	//return
-	//
-	//err := AuthenticateRequest(0)
-	//fmt.Printf("err: %+v", err)
-	//return
-	//
-	//sdk_interface.SetHearbeatInterval(300)
-	//for i := 0; i < 1; i++ {
-	//	myUid1 := 17712341234
-	//	strMyUid1 := GenUid(myUid1)
-	//
-	//	runRigister(strMyUid1)
-	//	token1 := runGetToken(strMyUid1)
-	//	DoTest(strMyUid1, token1, WSADDR, APIADDR)
-	//	time.Sleep(time.Duration(1) * time.Second)
-	//}
-	//DotestSetConversationRecvMessageOpt()
-	//DoTestGetConversationRecvMessageOpt()
-	//DoTestGetAllConversationList()
-	////	open_im_sdk.DoTestAddToBlackList()
-	//time.Sleep(time.Duration(1) * time.Second)
-	////	open_im_sdk.DoTestGetFriendList()
-	////	open_im_sdk.DoTestGetBlackList()
-	//
-	////	open_im_sdk.DoTestGetFriendsInfo()
-	////	open_im_sdk.DoTestGetUsersInfo()
-	////open_im_sdk.InOutDoTest(strMyUid1, token1, WSADDR, APIADDR)
-	////	open_im_sdk.InOutLogou()
-	//
-	////	open_im_sdk.InOutDoTest(strMyUid1, token1, WSADDR, APIADDR)
-	//
-	//for true {
-	//	time.Sleep(time.Duration(60) * time.Second)
-	//	fmt.Println("waiting")
-	//}
-	//
-	//cmdfile := "./cmd.txt"
-	//uid := flag.Int("uid", 1, "RpcToken default listen port 10800")
-	//uidCount := flag.Int("uid_count", 2, "RpcToken default listen port 10800")
-	//messageCount := flag.Int("message_count", 1, "RpcToken default listen port 10800")
-	//APIADDR1 := flag.String("api_addr", "http://127.0.0.1:10000", "api addr")
-	//WSADDR1 := flag.String("ws_addr", "http://127.0.0.1:17778", "ws addr")
-	//REGISTERADDR1 := flag.String("register_addr", "http://127.0.0.1:10000/auth/user_register", "register addr")
-	//TOKENADDR1 := flag.String("token_addr", "http://127.0.0.1:10000/auth/user_token", "token addr")
-	//flag.Parse()
-	//
-	//APIADDR = *APIADDR1
-	//WSADDR = *WSADDR1
-	//REGISTERADDR = *REGISTERADDR1
-	//TOKENADDR = *TOKENADDR1
-	//
-	//var myUid int = *uid
-	//var uidNum int = *uidCount
-	//var msgnum int = *messageCount
-	//fmt.Println("args is ", myUid, uidNum, msgnum)
-	//var strMyUid string
-	//utils.LogBegin()
-	//strMyUid = GenUid(myUid)
-	//
-	//runRigister(strMyUid)
-	//token := runGetToken(strMyUid)
-	//
-	//cmd := GetCmd(myUid, cmdfile)
-	//
-	//fmt.Println("getcmd value ", cmd)
-	//switch cmd {
-	//case -1:
-	//	fmt.Println("GetCmd failed ")
-	//	time.Sleep(time.Duration(1) * time.Second)
-	//case 5:
-	//	fmt.Println("wait 2 mins, then login")
-	//	time.Sleep(time.Duration(1*60) * time.Second)
-	//	DoTest(strMyUid, token, WSADDR, APIADDR)
-	//	fmt.Println("login do test, only login")
-	//	fmt.Println("testmypid: ", os.Getpid())
-	//case 6:
-	//	fmt.Println("wait 4 mins, then login")
-	//	time.Sleep(time.Duration(2*60) * time.Second)
-	//	DoTest(strMyUid, token, WSADDR, APIADDR)
-	//	fmt.Println("login do test, only login")
-	//	fmt.Println("testmypid: ", os.Getpid())
-	//case 3:
-	//	fmt.Println("wait 2 mins, then login and send")
-	//	time.Sleep(time.Duration(1*60) * time.Second)
-	//	DoTest(strMyUid, token, WSADDR, APIADDR)
-	//	fmt.Println("login do test, login and send")
-	//
-	//	var recvId string
-	//	var idx string
-	//	rand.Seed(time.Now().UnixNano())
-	//	if msgnum == 0 {
-	//		fmt.Println("dont send,  exit")
-	//		os.Exit(0)
-	//	} else {
-	//		for i := 0; i < msgnum; i++ {
-	//			var r int
-	//			for true {
-	//				time.Sleep(time.Duration(SENDINTERVAL) * time.Millisecond)
-	//
-	//				r = rand.Intn(uidNum) + 1
-	//				fmt.Println("test rand ", myUid, uidNum, r)
-	//				if r == myUid {
-	//					continue
-	//				} else {
-	//					break
-	//				}
-	//			}
-	//			recvId = GenUid(r)
-	//			idx = strconv.FormatInt(int64(i), 10)
-	//
-	//			DoTestSendMsg(strMyUid, recvId, idx)
-	//		}
-	//	}
-	//
-	//case 4:
-	//	fmt.Println("wait 4 mins, then login and send")
-	//	time.Sleep(time.Duration(2*60) * time.Second)
-	//	DoTest(strMyUid, token, WSADDR, APIADDR)
-	//	fmt.Println("login do test, login and send")
-	//
-	//	var recvId string
-	//	var idx string
-	//	rand.Seed(time.Now().UnixNano())
-	//	if msgnum == 0 {
-	//		fmt.Println("dont send,  exit")
-	//		os.Exit(0)
-	//	} else {
-	//		for i := 0; i < msgnum; i++ {
-	//			var r int
-	//			for true {
-	//				time.Sleep(time.Duration(SENDINTERVAL) * time.Millisecond)
-	//
-	//				r = rand.Intn(uidNum) + 1
-	//				fmt.Println("test rand ", myUid, uidNum, r)
-	//				if r == myUid {
-	//					continue
-	//				} else {
-	//					break
-	//				}
-	//			}
-	//			recvId = GenUid(r)
-	//			idx = strconv.FormatInt(int64(i), 10)
-	//
-	//			DoTestSendMsg(strMyUid, recvId, idx)
-	//		}
-	//	}
-	//
-	//case 1:
-	//	fmt.Println("only login")
-	//	DoTest(strMyUid, token, WSADDR, APIADDR)
-	//	fmt.Println("login do test, only login...")
-	//	fmt.Println("testmypid: ", os.Getpid())
-	//case 2:
-	//	fmt.Println("login send")
-	//	DoTest(strMyUid, token, WSADDR, APIADDR)
-	//	fmt.Println("login do test, login and send")
-	//
-	//	var recvId string
-	//	var idx string
-	//	rand.Seed(time.Now().UnixNano())
-	//	if msgnum == 0 {
-	//		fmt.Println("dont send,  exit")
-	//		os.Exit(0)
-	//	} else {
-	//		for i := 0; i < msgnum; i++ {
-	//			var r int
-	//			for true {
-	//				time.Sleep(time.Duration(SENDINTERVAL) * time.Millisecond)
-	//
-	//				r = rand.Intn(uidNum) + 1
-	//				fmt.Println("test rand ", myUid, uidNum, r)
-	//				if r == myUid {
-	//					continue
-	//				} else {
-	//					break
-	//				}
-	//			}
-	//			recvId = GenUid(r)
-	//			idx = strconv.FormatInt(int64(i), 10)
-	//
-	//			DoTestSendMsg(strMyUid, recvId, idx)
-	//		}
-	//	}
-	//case 7:
-	//	fmt.Println("random sleep and send")
-	//	DoTest(strMyUid, token, WSADDR, APIADDR)
-	//
-	//	var recvId string
-	//	var idx string
-	//	rand.Seed(time.Now().UnixNano())
-	//	maxSleep := 60
-	//	msgnum = 10
-	//	if msgnum == 0 {
-	//		fmt.Println("dont send,  exit")
-	//		os.Exit(0)
-	//	} else {
-	//		for i := 0; i < msgnum; i++ {
-	//			var r int
-	//			for true {
-	//				time.Sleep(time.Duration(rand.Intn(maxSleep)+1) * time.Second)
-	//				r = rand.Intn(uidNum) + 1
-	//				fmt.Println("test rand ", myUid, uidNum, r)
-	//				if r == myUid {
-	//					continue
-	//				} else {
-	//					break
-	//				}
-	//			}
-	//			recvId = GenUid(r)
-	//			idx = strconv.FormatInt(int64(i), 10)
-	//
-	//			DoTestSendMsg(strMyUid, recvId, idx)
-	//		}
-	//	}
-	//
-	//}
-	//
-	//for true {
-	//	time.Sleep(time.Duration(60) * time.Second)
-	//	fmt.Println("waiting")
-	//}
-
-}

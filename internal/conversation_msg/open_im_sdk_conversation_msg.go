@@ -480,6 +480,9 @@ func (c *Conversation) getUserNameAndFaceUrlByUid(callback open_im_sdk_callback.
 			return friendInfo.FaceURL, friendInfo.Nickname, nil
 		}
 	} else {
+		if operationID == "" {
+			operationID = utils.OperationIDGenerator()
+		}
 		userInfos := c.user.GetUsersInfoFromSvr(callback, []string{friendUserID}, operationID)
 		for _, v := range userInfos {
 			return v.FaceURL, v.Nickname, nil
