@@ -252,11 +252,11 @@ func CheckFriendRequestDiff(a []*db.LocalFriendRequest, b []*db.LocalFriendReque
 	//to map, friendid_>friendinfo
 	mapA := make(map[string]*db.LocalFriendRequest)
 	for _, v := range a {
-		mapA[v.ToUserID] = v
+		mapA[v.FromUserID+v.ToUserID] = v
 	}
 	mapB := make(map[string]*db.LocalFriendRequest)
 	for _, v := range b {
-		mapB[v.ToUserID] = v
+		mapB[v.FromUserID+v.ToUserID] = v
 	}
 
 	aInBNot = make([]int, 0)
@@ -266,7 +266,7 @@ func CheckFriendRequestDiff(a []*db.LocalFriendRequest, b []*db.LocalFriendReque
 
 	//for a
 	for i, v := range a {
-		ia, ok := mapB[v.ToUserID]
+		ia, ok := mapB[v.FromUserID+v.ToUserID]
 		if !ok {
 			//in a, but not in b
 			aInBNot = append(aInBNot, i)
@@ -279,7 +279,7 @@ func CheckFriendRequestDiff(a []*db.LocalFriendRequest, b []*db.LocalFriendReque
 	}
 	//for b
 	for i, v := range b {
-		ib, ok := mapA[v.ToUserID]
+		ib, ok := mapA[v.FromUserID+v.ToUserID]
 		if !ok {
 			bInANot = append(bInANot, i)
 		} else {
@@ -646,7 +646,7 @@ func TransferToLocalConversation(resp server_api_params.GetServerConversationLis
 	var localConversations []*db.LocalConversation
 	for _, serverConversation := range resp.ConversationOptResultList {
 		localConversations = append(localConversations, &db.LocalConversation{
-			RecvMsgOpt: *serverConversation.Result,
+			RecvMsgOpt:     *serverConversation.Result,
 			ConversationID: serverConversation.ConversationID,
 		})
 	}
