@@ -12,7 +12,7 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
-
+	"time"
 )
 
 func (c *Conversation) getAllConversationList(callback open_im_sdk_callback.Base, operationID string) sdk.GetAllConversationListCallback {
@@ -154,7 +154,7 @@ func (c *Conversation) SyncConversations(operationID string) {
 	// server有 local没有
 	for _, index := range aInBNot {
 		conversation := conversationsOnServer[index]
-		conversation.RecvMsgOpt = constant.ConversationNotNotification
+		conversation.LatestMsgSendTime = time.Now().Unix()
 		err := c.db.InsertConversation(conversation)
 		if err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation failed ", err.Error(), conversation)
@@ -172,15 +172,12 @@ func (c *Conversation) SyncConversations(operationID string) {
 
 	// local有 server没有
 	for _, index := range bInANot {
-		conversation := conversationsOnServer[index]
-		conversation.RecvMsgOpt = constant.ConversationDefault
 		err := c.db.UpdateConversation(conversationsOnLocal[index])
 		if err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), "deleteConversation failed ", err.Error())
 			continue
 		}
 	}
-
 }
 
 func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base, req sdk.GetHistoryMessageListParams, operationID string) sdk.GetHistoryMessageListCallback {
@@ -371,7 +368,7 @@ func (c *Conversation) DoNotification(msg *server_api_params.MsgData) {
 	operationID := utils.OperationIDGenerator()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg)
 	if c.msgListener == nil {
-		log.Error(operationID, "listener == nil")
+		log.Error(operationID, utils.GetSelfFuncName(), "listener == nil")
 		return
 	}
 	go func() {

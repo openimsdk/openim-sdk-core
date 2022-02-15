@@ -116,9 +116,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			continue
 		}
 		switch v.SessionType {
-		case constant.ConversationType:
-			log.Info(operationID, utils.GetSelfFuncName(), v)
-			c.DoNotification(v)
 		case constant.SingleChatType:
 			if v.ContentType > constant.FriendNotificationBegin && v.ContentType < constant.FriendNotificationEnd {
 				c.friend.DoNotification(v)
@@ -139,7 +136,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				log.Info(operationID, "DoGroupMsg SingleChatType", v)
 			}
 		}
-		if v.SendID == c.loginUserID { //seq  Messages sent by myself  //if  sent through  this terminal
+		if v.SendID == c.loginUserID { //seq
+		// Messages sent by myself  //if  sent through  this terminal
 			m, err := c.db.GetMessage(msg.ClientMsgID)
 			if err == nil {
 				log.Info("internal", "have message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
@@ -147,7 +145,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					updateMsg = append(updateMsg, c.msgStructToLocalChatLog(msg))
 				} else {
 					exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
-
 				}
 			} else { //      send through  other terminal
 				log.Info(operationID, "sync message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
@@ -160,6 +157,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				case constant.SingleChatType:
 					lc.ConversationID = c.GetConversationIDBySessionType(v.RecvID, constant.SingleChatType)
 					lc.UserID = v.RecvID
+					switch v.ContentType {
+					case constant.ConversationOptChangeNotification:
+						log.Info(operationID, utils.GetSelfFuncName(), v)
+						c.DoNotification(v)
+					}
 					//localUserInfo,_ := c.user.GetLoginUser()
 					//c.FaceURL = localUserInfo.FaceUrl
 					//c.ShowName = localUserInfo.Nickname

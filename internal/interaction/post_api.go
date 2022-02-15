@@ -4,7 +4,9 @@ import (
 	"errors"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/network"
+	"open_im_sdk/pkg/utils"
 )
 
 //no share
@@ -18,6 +20,7 @@ func NewPostApi(token string, apiAddress string) *PostApi {
 }
 
 func (p *PostApi) PostFatalCallback(callback open_im_sdk_callback.Base, url string, data interface{}, output interface{}, operationID string) {
+	log.Info(operationID, utils.GetSelfFuncName(), p.apiAddress, url, data)
 	content, err := network.Post2Api(p.apiAddress+url, data, p.token)
 	common.CheckErrAndRespCallback(callback, err, content, output, operationID)
 }

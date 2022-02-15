@@ -368,12 +368,15 @@ func DoTestGetUserReqGroupApplicationList() {
 	open_im_sdk.GetSendGroupApplicationList(test, test.OperationID)
 }
 
-func DoTestSetConversationRecvMessageOpt(uid string, conversationIDs string) {
+// 提示
+func DoTestSetConversationRecvMessageOpt(uid string, conversationIDs string, opt int) {
 	var test testProcessGroupApplication
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
-	//	open_im_sdk.SetConversationRecvMessageOpt(test, test.OperationID, conversationIDs, constant.ConversationNotNotification)
+	open_im_sdk.SetConversationRecvMessageOpt(test, test.OperationID, conversationIDs, opt)
 }
+
+
 
 func DoTestGetRecvGroupApplicationList() {
 	var test testProcessGroupApplication

@@ -53,12 +53,13 @@ const (
 	BlackAddedNotification                = 1207 //add_black
 	BlackDeletedNotification              = 1208 //remove_black
 	FriendNotificationEnd                 = 1299
+	ConversationOptChangeNotification     = 1300
 
 	UserNotificationBegin       = 1300
 	UserInfoUpdatedNotification = 1303 //SetSelfInfoTip             = 204
-	ConversationNotNotification = 1306
 	ConversationNotification    = 1307
-	ConversationDefault         = 0
+	ConversationNotNotification = 1308
+ 	ConversationDefault         = 0
 	UserNotificationEnd         = 1399
 
 
@@ -82,7 +83,6 @@ const (
 	//MsgFrom
 	UserMsgType = 100
 	SysMsgType  = 200
-	ConversationType  = 300
 
 	/////////////////////////////////////
 	//SessionType
