@@ -293,6 +293,18 @@ func (wsRouter *WsFuncRouter) CreateQuoteMessage(input string, operationID strin
 	msg := userWorker.Conversation().CreateQuoteMessage(m["text"].(string), m["message"].(string), operationID)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }
+func (wsRouter *WsFuncRouter) CreateCardMessage(input string, operationID string) {
+	wrapSdkLog("CreateCardMessage", input, operationID)
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed", operationID)
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	msg := userWorker.Conversation().CreateCardMessage(input, operationID)
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+}
 
 func (wsRouter *WsFuncRouter) CreateVideoMessageFromFullPath(input string, operationID string) {
 	m := make(map[string]interface{})
