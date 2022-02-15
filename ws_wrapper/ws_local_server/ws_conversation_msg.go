@@ -506,7 +506,7 @@ func (wsRouter *WsFuncRouter) SendMessageNotOss(input string, operationID string
 	sc.funcName = runFuncName()
 	sc.operationID = operationID
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "message", "recvID", "groupID", "onlineUserOnly", "offlinePushInfo") {
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "message", "recvID", "groupID", "offlinePushInfo") {
 		return
 	}
 	userWorker.Conversation().SendMessageNotOss(&sc, m["message"].(string), m["recvID"].(string), m["groupID"].(string), m["offlinePushInfo"].(string), operationID)
