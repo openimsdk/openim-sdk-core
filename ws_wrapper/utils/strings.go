@@ -10,6 +10,8 @@ import (
 	"encoding/json"
 	"net"
 	"strconv"
+
+	"github.com/spf13/viper"
 )
 
 func IntToString(i int) string {
@@ -57,7 +59,15 @@ func JsonStringToStruct(s string, args interface{}) error {
 
 var ServerIP = ""
 
+var (
+	API_ENDPOINT = ""
+	WS_ENDPOINT  = ""
+)
+
 func init() {
+	viper.AutomaticEnv()
+	API_ENDPOINT = viper.GetString("API_ENDPOINT")
+	WS_ENDPOINT = viper.GetString("WS_ENDPOINT")
 	//fixme In the configuration file, ip takes precedence, if not, get the valid network card ip of the machine
 	//if config.Config.ServerIP != "" {
 	//	ServerIP = config.Config.ServerIP
