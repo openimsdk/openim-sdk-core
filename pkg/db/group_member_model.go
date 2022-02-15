@@ -74,7 +74,9 @@ func (d *DataBase) GetGroupOwnerAndAdminByGroupID(groupID string) ([]*LocalGroup
 func (d *DataBase) GetGroupMemberUIDListByGroupID(groupID string) (result []string, err error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
-	err = d.conn.Where("group_id = ? ", groupID).Pluck("user_id", &result).Error
+	var g LocalGroupMember
+	g.GroupID = groupID
+	err = d.conn.Model(&g).Pluck("user_id", &result).Error
 	return result, utils.Wrap(err, "GetGroupMemberListByGroupID failed ")
 }
 
