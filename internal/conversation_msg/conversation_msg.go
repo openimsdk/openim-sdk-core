@@ -649,7 +649,7 @@ func (c *Conversation) addFaceURLAndName(lc *db.LocalConversation) {
 		lc.FaceURL = faceUrl
 		lc.ShowName = name
 	case constant.GroupChatType:
-		g, err := c.db.GetGroupInfoByGroupID(lc.GroupID)
+		g, err := c.group.GetGroupInfoFromLocal2Svr(lc.GroupID)
 		if err != nil {
 			log.Error(operationID, "GetGroupInfoByGroupID err", err.Error(), lc.GroupID)
 			return
