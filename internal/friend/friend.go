@@ -529,7 +529,7 @@ func (f *Friend) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd
 		case constant.FriendRemarkSetNotification:
 			f.friendRemarkNotification(msg, conversationCh, operationID)
 		case constant.UserInfoUpdatedNotification:
-			f.friendInfoChangedNotification(msg, operationID)
+			f.friendInfoChangedNotification(msg, conversationCh, operationID)
 		case constant.BlackAddedNotification:
 			f.blackAddedNotification(msg, operationID)
 		case constant.BlackDeletedNotification:
@@ -579,7 +579,7 @@ func (f *Friend) friendRemarkNotification(msg *api.MsgData, conversationCh chan 
 	}
 }
 
-func (f *Friend) friendInfoChangedNotification(msg *api.MsgData, operationID string) {
+func (f *Friend) friendInfoChangedNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	var detail api.UserInfoUpdatedTips
 	if err := comm.UnmarshalTips(msg, &detail); err != nil {
@@ -588,6 +588,9 @@ func (f *Friend) friendInfoChangedNotification(msg *api.MsgData, operationID str
 	}
 	if detail.UserID != f.loginUserID {
 		f.SyncFriendList(operationID)
+		conversationID := utils.GetConversationIDBySessionType(detail.UserID, constant.SingleChatType)
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: detail.UserID, SessionType: constant.SingleChatType}}, conversationCh)
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, conversationCh)
 	}
 }
 
