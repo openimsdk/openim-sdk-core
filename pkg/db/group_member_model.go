@@ -50,7 +50,13 @@ func (d *DataBase) GetGroupMemberListSplit(groupID string, filter int32, offset,
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var groupMemberList []LocalGroupMember
-	err := d.conn.Where("group_id = ? And role_level = ?", groupID, filter).Offset(offset).Limit(count).Find(&groupMemberList).Error
+	var err error
+	if filter == 0 {
+		err = d.conn.Where("group_id = ? And role_level > ?", groupID, filter).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+	} else {
+		err = d.conn.Where("group_id = ? And role_level = ?", groupID, filter).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+	}
+
 	var transfer []*LocalGroupMember
 	for _, v := range groupMemberList {
 		v1 := v
@@ -74,7 +80,9 @@ func (d *DataBase) GetGroupOwnerAndAdminByGroupID(groupID string) ([]*LocalGroup
 func (d *DataBase) GetGroupMemberUIDListByGroupID(groupID string) (result []string, err error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
-	err = d.conn.Where("group_id = ? ", groupID).Pluck("user_id", &result).Error
+	var g LocalGroupMember
+	g.GroupID = groupID
+	err = d.conn.Model(&g).Pluck("user_id", &result).Error
 	return result, utils.Wrap(err, "GetGroupMemberListByGroupID failed ")
 }
 

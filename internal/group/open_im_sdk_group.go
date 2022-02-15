@@ -200,7 +200,6 @@ func (g *Group) GetSendGroupApplicationList(callback open_im_sdk_callback.Base, 
 	}()
 }
 
-
 func (g *Group) AcceptGroupApplication(callback open_im_sdk_callback.Base, groupID, fromUserID, handleMsg string, operationID string) {
 	if callback == nil {
 		return

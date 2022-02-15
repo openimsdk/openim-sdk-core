@@ -1,6 +1,7 @@
 package group
 
 import (
+	"errors"
 	"fmt"
 	"github.com/jinzhu/copier"
 	comm "open_im_sdk/internal/common"
@@ -238,7 +239,26 @@ func (g *Group) getJoinedGroupList(callback open_im_sdk_callback.Base, operation
 	return groupList
 }
 
-func (g *Group) getGroupsInfo(groupIdList sdk.GetGroupsInfoParam, callback open_im_sdk_callback.Base, operationID string) sdk.GetGroupsInfoCallback {
+func (g *Group) GetGroupInfoFromLocal2Svr(groupID string) (*db.LocalGroup, error) {
+	localGroup, err := g.db.GetGroupInfoByGroupID(groupID)
+	if err == nil {
+		return localGroup, nil
+	}
+	groupIDList := []string{groupID}
+	operationID := utils.OperationIDGenerator()
+	svrGroup, err := g.getGroupsInfoFromSvr(groupIDList, operationID)
+	if err == nil && len(svrGroup) == 1 {
+		transfer := common.TransferToLocalGroupInfo(svrGroup)
+		return transfer[0], nil
+	}
+	if err != nil {
+		return nil, utils.Wrap(err, "")
+	} else {
+		return nil, utils.Wrap(errors.New("no group"), "")
+	}
+}
+
+func (g *Group) getGroupsInfo(groupIDList sdk.GetGroupsInfoParam, callback open_im_sdk_callback.Base, operationID string) sdk.GetGroupsInfoCallback {
 	groupList, err := g.db.GetJoinedGroupList()
 	common.CheckDBErrCallback(callback, err, operationID)
 	var result sdk.GetGroupsInfoCallback
@@ -246,7 +266,7 @@ func (g *Group) getGroupsInfo(groupIdList sdk.GetGroupsInfoParam, callback open_
 
 	for _, v := range groupList {
 		in := false
-		for _, k := range groupIdList {
+		for _, k := range groupIDList {
 			if v.GroupID == k {
 				in = true
 				break
@@ -257,7 +277,7 @@ func (g *Group) getGroupsInfo(groupIdList sdk.GetGroupsInfoParam, callback open_
 		}
 	}
 
-	for _, v := range groupIdList {
+	for _, v := range groupIDList {
 		in := false
 		for _, k := range result {
 			if v == k.GroupID {

@@ -104,7 +104,7 @@ func (c *Conversation) GetOneConversation(callback open_im_sdk_callback.Base, se
 		log.NewInfo(operationID, "GetOneConversation args: ", sessionType, sourceID)
 		result := c.getOneConversation(callback, sourceID, sessionType, operationID)
 		callback.OnSuccess(utils.StructToJsonString(result))
-		log.NewInfo(operationID, "GetRecvFriendApplicationList callback: ", utils.StructToJsonString(result))
+		log.NewInfo(operationID, "GetOneConversation callback: ", utils.StructToJsonString(result))
 	}()
 }
 func (c *Conversation) GetMultipleConversation(callback open_im_sdk_callback.Base, conversationIDList string, operationID string) {

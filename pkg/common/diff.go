@@ -252,11 +252,11 @@ func CheckFriendRequestDiff(a []*db.LocalFriendRequest, b []*db.LocalFriendReque
 	//to map, friendid_>friendinfo
 	mapA := make(map[string]*db.LocalFriendRequest)
 	for _, v := range a {
-		mapA[v.ToUserID] = v
+		mapA[v.FromUserID+v.ToUserID] = v
 	}
 	mapB := make(map[string]*db.LocalFriendRequest)
 	for _, v := range b {
-		mapB[v.ToUserID] = v
+		mapB[v.FromUserID+v.ToUserID] = v
 	}
 
 	aInBNot = make([]int, 0)
@@ -266,7 +266,7 @@ func CheckFriendRequestDiff(a []*db.LocalFriendRequest, b []*db.LocalFriendReque
 
 	//for a
 	for i, v := range a {
-		ia, ok := mapB[v.ToUserID]
+		ia, ok := mapB[v.FromUserID+v.ToUserID]
 		if !ok {
 			//in a, but not in b
 			aInBNot = append(aInBNot, i)
@@ -279,7 +279,7 @@ func CheckFriendRequestDiff(a []*db.LocalFriendRequest, b []*db.LocalFriendReque
 	}
 	//for b
 	for i, v := range b {
-		ib, ok := mapA[v.ToUserID]
+		ib, ok := mapA[v.FromUserID+v.ToUserID]
 		if !ok {
 			bInANot = append(bInANot, i)
 		} else {
@@ -473,12 +473,12 @@ func CheckAdminGroupRequestDiff(a []*db.LocalAdminGroupRequest, b []*db.LocalAdm
 	mapA := make(map[string]*db.LocalAdminGroupRequest)
 	for _, v := range a {
 		mapA[v.GroupID+v.UserID] = v
-		fmt.Println("mapA   ", v)
+		//	fmt.Println("mapA   ", v)
 	}
 	mapB := make(map[string]*db.LocalAdminGroupRequest)
 	for _, v := range b {
 		mapB[v.GroupID+v.UserID] = v
-		fmt.Println("mapB   ", v)
+		//	fmt.Println("mapB   ", v)
 	}
 
 	aInBNot = make([]int, 0)
@@ -491,7 +491,7 @@ func CheckAdminGroupRequestDiff(a []*db.LocalAdminGroupRequest, b []*db.LocalAdm
 		ia, ok := mapB[v.GroupID+v.UserID]
 		if !ok {
 			//in a, but not in b
-			fmt.Println("aInBNot", a[i], ia)
+			//fmt.Println("aInBNot", a[i], ia)
 			aInBNot = append(aInBNot, i)
 		} else {
 			if !cmp.Equal(v, ia) {
@@ -646,7 +646,7 @@ func TransferToLocalConversation(resp server_api_params.GetServerConversationLis
 	var localConversations []*db.LocalConversation
 	for _, serverConversation := range resp.ConversationOptResultList {
 		localConversations = append(localConversations, &db.LocalConversation{
-			RecvMsgOpt: *serverConversation.Result,
+			RecvMsgOpt:     *serverConversation.Result,
 			ConversationID: serverConversation.ConversationID,
 		})
 	}

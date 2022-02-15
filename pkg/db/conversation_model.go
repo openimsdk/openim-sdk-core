@@ -131,7 +131,7 @@ func (d *DataBase) SetConversationDraft(conversationID, draftText string) error 
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	nowTime := utils.GetCurrentTimestampByMill()
-	t := d.conn.Exec("update conversation set draft_text=?,draft_text_time=?,latest_msg_send_time=case when latest_msg_send_time=? then ? else latest_msg_send_time  end where conversation_id=?",
+	t := d.conn.Exec("update local_conversations set draft_text=?,draft_text_time=?,latest_msg_send_time=case when latest_msg_send_time=? then ? else latest_msg_send_time  end where conversation_id=?",
 		draftText, nowTime, 0, nowTime, conversationID)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
@@ -151,7 +151,7 @@ func (d *DataBase) RemoveConversationDraft(conversationID, draftText string) err
 func (d *DataBase) UnPinConversation(conversationID string, isPinned int) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Exec("update conversation set is_pinned=?,draft_text_time=case when draft_text=? then ? else draft_text_time  end where conversation_id=?",
+	t := d.conn.Exec("update local_conversations set is_pinned=?,draft_text_time=case when draft_text=? then ? else draft_text_time  end where conversation_id=?",
 		isPinned, "", 0, conversationID)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")

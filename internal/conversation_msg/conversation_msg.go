@@ -234,6 +234,12 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				if msg.ContentType == constant.Revoke {
 					msgRevokeList = append(msgRevokeList, msg)
 				}
+				if msg.ContentType == constant.HasReadReceipt {
+					msgReadList = append(msgReadList, msg)
+				}
+				if msg.ContentType == constant.Typing {
+					newMessages = append(newMessages, msg)
+				}
 			} else {
 				exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
 			}
@@ -645,15 +651,15 @@ func (c *Conversation) addFaceURLAndName(lc *db.LocalConversation) {
 	case constant.SingleChatType:
 		faceUrl, name, err := c.getUserNameAndFaceUrlByUid(&tmpCallback{}, lc.UserID, operationID)
 		if err != nil {
-			log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error())
+			log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error(), lc.UserID)
 			return
 		}
 		lc.FaceURL = faceUrl
 		lc.ShowName = name
 	case constant.GroupChatType:
-		g, err := c.db.GetGroupInfoByGroupID(lc.GroupID)
+		g, err := c.group.GetGroupInfoFromLocal2Svr(lc.GroupID)
 		if err != nil {
-			log.Error(operationID, "GetGroupInfoByGroupID err", err.Error())
+			log.Error(operationID, "GetGroupInfoByGroupID err", err.Error(), lc.GroupID)
 			return
 		}
 		lc.ShowName = g.GroupName

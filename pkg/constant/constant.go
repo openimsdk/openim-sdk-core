@@ -62,7 +62,6 @@ const (
  	ConversationDefault         = 0
 	UserNotificationEnd         = 1399
 
-
 	GroupNotificationBegin = 1500
 
 	GroupCreatedNotification             = 1501
@@ -81,14 +80,14 @@ const (
 	////////////////////////////////////////
 
 	//MsgFrom
-	UserMsgType = 100
-	SysMsgType  = 200
+	UserMsgType      = 100
+	SysMsgType       = 200
+	ConversationType = 300
 
 	/////////////////////////////////////
 	//SessionType
 	SingleChatType = 1
 	GroupChatType  = 2
-
 
 	//MsgStatus
 	MsgStatusSending     = 1
@@ -104,6 +103,7 @@ const (
 	IsUnreadCount        = "unreadCount"
 	IsConversationUpdate = "conversationUpdate"
 	IsOfflinePush        = "offlinePush"
+	IsSenderSync         = "senderSync"
 )
 
 const (
