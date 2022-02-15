@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"open_im_sdk/pkg/constant"
 
 	"github.com/pkg/errors"
 	"reflect"
@@ -250,4 +251,13 @@ func StructToMap(user interface{}) map[string]interface{} {
 	m := make(map[string]interface{})
 	json.Unmarshal(data, &m)
 	return m
+}
+func GetConversationIDBySessionType(sourceID string, sessionType int) string {
+	switch sessionType {
+	case constant.SingleChatType:
+		return "single_" + sourceID
+	case constant.GroupChatType:
+		return "group_" + sourceID
+	}
+	return ""
 }

@@ -131,7 +131,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.user = user.NewUser(db, p, u.loginUserID)
 	u.user.SetListener(u.userListener)
 
-	u.friend = friend.NewFriend(u.loginUserID, u.db, p)
+	u.friend = friend.NewFriend(u.loginUserID, u.db, u.user, p)
 	u.friend.SetFriendListener(u.friendListener)
 
 	u.group = group.NewGroup(u.loginUserID, u.db, p)

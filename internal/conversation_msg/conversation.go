@@ -50,7 +50,7 @@ func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callba
 	return realData
 }
 func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, sourceID string, sessionType int32, operationID string) *db.LocalConversation {
-	conversationID := c.GetConversationIDBySessionType(sourceID, sessionType)
+	conversationID := utils.GetConversationIDBySessionType(sourceID, int(sessionType))
 	lc, err := c.db.GetConversation(conversationID)
 	if err == nil {
 		return lc
@@ -61,7 +61,7 @@ func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, so
 		switch sessionType {
 		case constant.SingleChatType:
 			newConversation.UserID = sourceID
-			faceUrl, name, err := c.getUserNameAndFaceUrlByUid(callback, sourceID, operationID)
+			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(callback, sourceID, operationID)
 			common.CheckDBErrCallback(callback, err, operationID)
 			newConversation.ShowName = name
 			newConversation.FaceURL = faceUrl
@@ -187,11 +187,11 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 	var sessionType int
 	if req.UserID == "" {
 		sourceID = req.GroupID
-		conversationID = c.GetConversationIDBySessionType(sourceID, constant.GroupChatType)
+		conversationID = utils.GetConversationIDBySessionType(sourceID, constant.GroupChatType)
 		sessionType = constant.GroupChatType
 	} else {
 		sourceID = req.UserID
-		conversationID = c.GetConversationIDBySessionType(sourceID, constant.SingleChatType)
+		conversationID = utils.GetConversationIDBySessionType(sourceID, constant.SingleChatType)
 		sessionType = constant.SingleChatType
 	}
 	if req.StartClientMsgID == "" {
@@ -226,10 +226,10 @@ func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req 
 	switch req.SessionType {
 	case constant.SingleChatType:
 		recvID = req.RecvID
-		conversationID = c.GetConversationIDBySessionType(groupID, constant.SingleChatType)
+		conversationID = utils.GetConversationIDBySessionType(groupID, constant.SingleChatType)
 	case constant.GroupChatType:
 		groupID = req.GroupID
-		conversationID = c.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+		conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 	default:
 		common.CheckAnyErrCallback(callback, 201, errors.New("SessionType err"), operationID)
 	}
@@ -272,7 +272,7 @@ func (c *Conversation) typingStatusUpdate(callback open_im_sdk_callback.Base, re
 
 func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, msgIDList sdk.MarkC2CMessageAsReadParams, sourceMsgIDList, userID, operationID string) {
 	var localMessage db.LocalChatLog
-	conversationID := c.GetConversationIDBySessionType(userID, constant.SingleChatType)
+	conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
 	s := sdk_struct.MsgStruct{}
 	c.initBasicInfo(&s, constant.UserMsgType, constant.HasReadReceipt, operationID)
 	s.Content = sourceMsgIDList
@@ -304,7 +304,7 @@ func (c *Conversation) insertMessageToLocalStorage(callback open_im_sdk_callback
 }
 
 func (c *Conversation) clearGroupHistoryMessage(callback open_im_sdk_callback.Base, groupID string, operationID string) {
-	conversationID := c.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+	conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 	err := c.db.UpdateMessageStatusBySourceID(groupID, constant.MsgStatusHasDeleted, constant.GroupChatType)
 	common.CheckDBErrCallback(callback, err, operationID)
 	err = c.db.ClearConversation(conversationID)
@@ -314,7 +314,7 @@ func (c *Conversation) clearGroupHistoryMessage(callback open_im_sdk_callback.Ba
 }
 
 func (c *Conversation) clearC2CHistoryMessage(callback open_im_sdk_callback.Base, userID string, operationID string) {
-	conversationID := c.GetConversationIDBySessionType(userID, constant.SingleChatType)
+	conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
 	err := c.db.UpdateMessageStatusBySourceID(userID, constant.MsgStatusHasDeleted, constant.SingleChatType)
 	common.CheckDBErrCallback(callback, err, operationID)
 	err = c.db.ClearConversation(conversationID)
@@ -334,15 +334,15 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 	callback.OnSuccess("")
 
 	if s.SessionType == constant.GroupChatType {
-		conversationID = c.GetConversationIDBySessionType(s.GroupID, constant.GroupChatType)
+		conversationID = utils.GetConversationIDBySessionType(s.GroupID, constant.GroupChatType)
 		sourceID = s.GroupID
 
 	} else if s.SessionType == constant.SingleChatType {
 		if s.SendID != c.loginUserID {
-			conversationID = c.GetConversationIDBySessionType(s.SendID, constant.SingleChatType)
+			conversationID = utils.GetConversationIDBySessionType(s.SendID, constant.SingleChatType)
 			sourceID = s.SendID
 		} else {
-			conversationID = c.GetConversationIDBySessionType(s.RecvID, constant.SingleChatType)
+			conversationID = utils.GetConversationIDBySessionType(s.RecvID, constant.SingleChatType)
 			sourceID = s.RecvID
 		}
 	}

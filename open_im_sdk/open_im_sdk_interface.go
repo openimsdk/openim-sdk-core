@@ -422,11 +422,5 @@ func uploadImage(callback open_im_sdk_callback.Base, operationID string, filePat
 	}
 }
 func GetConversationIDBySessionType(sourceID string, sessionType int) string {
-	switch sessionType {
-	case constant.SingleChatType:
-		return "single_" + sourceID
-	case constant.GroupChatType:
-		return "group_" + sourceID
-	}
-	return ""
+	return utils.GetConversationIDBySessionType(sourceID, sessionType)
 }

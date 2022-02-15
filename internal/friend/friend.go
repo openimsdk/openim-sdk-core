@@ -15,8 +15,10 @@
 package friend
 
 import (
+	"errors"
 	comm "open_im_sdk/internal/common"
 	ws "open_im_sdk/internal/interaction"
+	"open_im_sdk/internal/user"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -31,11 +33,12 @@ type Friend struct {
 	friendListener open_im_sdk_callback.OnFriendshipListener
 	loginUserID    string
 	db             *db.DataBase
+	user           *user.User
 	p              *ws.PostApi
 }
 
-func NewFriend(loginUserID string, db *db.DataBase, p *ws.PostApi) *Friend {
-	return &Friend{loginUserID: loginUserID, db: db, p: p}
+func NewFriend(loginUserID string, db *db.DataBase, user *user.User, p *ws.PostApi) *Friend {
+	return &Friend{loginUserID: loginUserID, db: db, user: user, p: p}
 }
 
 func (f *Friend) SetListener(listener open_im_sdk_callback.OnFriendshipListener) {
@@ -57,6 +60,26 @@ func (f *Friend) getDesignatedFriendsInfo(callback open_im_sdk_callback.Base, fr
 	r := common.MergeFriendBlackResult(localFriendList, blackList)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ", r)
 	return r
+}
+func (f *Friend) GetUserNameAndFaceUrlByUid(callback open_im_sdk_callback.Base, friendUserID, operationID string) (faceUrl, name string, err error) {
+	friendInfo, err := f.db.GetFriendInfoByFriendUserID(friendUserID)
+	if err == nil {
+		if friendInfo.Remark != "" {
+			return friendInfo.FaceURL, friendInfo.Remark, nil
+		} else {
+			return friendInfo.FaceURL, friendInfo.Nickname, nil
+		}
+	} else {
+		if operationID == "" {
+			operationID = utils.OperationIDGenerator()
+		}
+		userInfos := f.user.GetUsersInfoFromSvr(callback, []string{friendUserID}, operationID)
+		for _, v := range userInfos {
+			return v.FaceURL, v.Nickname, nil
+		}
+	}
+	return "", "", errors.New("getUserNameAndFaceUrlByUid err")
+
 }
 
 func (f *Friend) GetDesignatedFriendListInfo(callback open_im_sdk_callback.Base, friendUserIDList []string, operationID string) []*db.LocalFriend {
@@ -185,19 +208,6 @@ func (f *Friend) setFriendRemark(userIDRemark sdk.SetFriendRemarkParams, callbac
 	f.p.PostFatalCallback(callback, constant.SetFriendRemark, apiReq, nil, operationID)
 	f.SyncFriendList(operationID)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ")
-	//
-	//c := ConversationStruct{
-	//	ConversationID: GetConversationIDBySessionType(uid2comm.Uid, SingleChatType),
-	//}
-	//faceUrl, name, err := u.getUserNameAndFaceUrlByUid(uid2comm.Uid)
-	//if err != nil {
-	//	sdkLog("getUserNameAndFaceUrlByUid err:", err)
-	//	return
-	//}
-	//c.FaceURL = faceUrl
-	//c.ShowName = name
-	//u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, UpdateFaceUrlAndNickName, c}})
-	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, []string{c.ConversationID}}})
 }
 
 func (f *Friend) getServerFriendList(operationID string) ([]*api.FriendInfo, error) {
@@ -496,7 +506,7 @@ func (f *Friend) SyncBlackList(operationID string) {
 	}
 }
 
-func (f *Friend) DoNotification(msg *api.MsgData) {
+func (f *Friend) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value) {
 	operationID := utils.OperationIDGenerator()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg)
 	if f.friendListener == nil {
@@ -517,7 +527,7 @@ func (f *Friend) DoNotification(msg *api.MsgData) {
 		case constant.FriendDeletedNotification:
 			f.friendDeletedNotification(msg, operationID)
 		case constant.FriendRemarkSetNotification:
-			f.friendRemarkNotification(msg, operationID)
+			f.friendRemarkNotification(msg, conversationCh, operationID)
 		case constant.UserInfoUpdatedNotification:
 			f.friendInfoChangedNotification(msg, operationID)
 		case constant.BlackAddedNotification:
@@ -554,7 +564,7 @@ func (f *Friend) blackAddedNotification(msg *api.MsgData, operationID string) {
 	}
 }
 
-func (f *Friend) friendRemarkNotification(msg *api.MsgData, operationID string) {
+func (f *Friend) friendRemarkNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	var detail api.FriendInfoChangedTips
 	if err := comm.UnmarshalTips(msg, &detail); err != nil {
@@ -563,6 +573,11 @@ func (f *Friend) friendRemarkNotification(msg *api.MsgData, operationID string) 
 	}
 	if detail.FromToUserID.FromUserID == f.loginUserID {
 		f.SyncFriendList(operationID)
+		conversationID := utils.GetConversationIDBySessionType(detail.FromToUserID.ToUserID, constant.SingleChatType)
+		f.GetUserNameAndFaceUrlByUid(nil, detail.FromToUserID.ToUserID, operationID)
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateFaceUrlAndNickName, Args: []string{conversationID}}, conversationCh)
+
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, conversationCh)
 	}
 }
 

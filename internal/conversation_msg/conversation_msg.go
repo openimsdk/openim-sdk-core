@@ -118,12 +118,12 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		switch v.SessionType {
 		case constant.SingleChatType:
 			if v.ContentType > constant.FriendNotificationBegin && v.ContentType < constant.FriendNotificationEnd {
-				c.friend.DoNotification(v)
+				c.friend.DoNotification(v, c.ch)
 				log.Info("internal", "DoFriendMsg SingleChatType", v)
 			} else if v.ContentType > constant.UserNotificationBegin && v.ContentType < constant.UserNotificationEnd {
 				log.Info("internal", "DoFriendMsg  DoUserMsg SingleChatType", v)
 				c.user.DoNotification(v)
-				c.friend.DoNotification(v)
+				c.friend.DoNotification(v, c.ch)
 			} else if v.ContentType == constant.GroupApplicationRejectedNotification ||
 				v.ContentType == constant.GroupApplicationAcceptedNotification ||
 				v.ContentType == constant.JoinGroupApplicationNotification {
@@ -137,7 +137,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			}
 		}
 		if v.SendID == c.loginUserID { //seq
-		// Messages sent by myself  //if  sent through  this terminal
+			// Messages sent by myself  //if  sent through  this terminal
 			m, err := c.db.GetMessage(msg.ClientMsgID)
 			if err == nil {
 				log.Info("internal", "have message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
@@ -155,7 +155,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				}
 				switch v.SessionType {
 				case constant.SingleChatType:
-					lc.ConversationID = c.GetConversationIDBySessionType(v.RecvID, constant.SingleChatType)
+					lc.ConversationID = utils.GetConversationIDBySessionType(v.RecvID, constant.SingleChatType)
 					lc.UserID = v.RecvID
 					switch v.ContentType {
 					case constant.ConversationOptChangeNotification:
@@ -167,7 +167,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					//c.ShowName = localUserInfo.Nickname
 				case constant.GroupChatType:
 					lc.GroupID = v.GroupID
-					lc.ConversationID = c.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
+					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
 					//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
 					//if err != nil {
 					//	utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
@@ -198,16 +198,15 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					LatestMsg:         utils.StructToJsonString(msg),
 					LatestMsgSendTime: msg.SendTime,
 				}
-
 				switch v.SessionType {
 				case constant.SingleChatType:
-					lc.ConversationID = c.GetConversationIDBySessionType(v.SendID, constant.SingleChatType)
+					lc.ConversationID = utils.GetConversationIDBySessionType(v.SendID, constant.SingleChatType)
 					lc.UserID = v.SendID
 					lc.ShowName = msg.SenderNickname
 					lc.FaceURL = msg.SenderFaceURL
 				case constant.GroupChatType:
 					lc.GroupID = v.GroupID
-					lc.ConversationID = c.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
+					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
 					//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
 					//if err != nil {
 					//	utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
@@ -649,7 +648,7 @@ func (c *Conversation) addFaceURLAndName(lc *db.LocalConversation) {
 	operationID := utils.OperationIDGenerator()
 	switch lc.ConversationType {
 	case constant.SingleChatType:
-		faceUrl, name, err := c.getUserNameAndFaceUrlByUid(&tmpCallback{}, lc.UserID, operationID)
+		faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, lc.UserID, operationID)
 		if err != nil {
 			log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error(), lc.UserID)
 			return

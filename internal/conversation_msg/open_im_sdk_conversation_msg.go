@@ -442,9 +442,13 @@ func (c *Conversation) CreateImageMessageByURL(sourcePicture, bigPicture, snapsh
 
 func msgStructToLocalChatLog(dst *db.LocalChatLog, src *sdk_struct.MsgStruct) {
 	copier.Copy(dst, src)
+	if src.SessionType == constant.GroupChatType {
+		dst.RecvID = src.GroupID
+	}
 }
 func localChatLogToMsgStruct(dst *sdk_struct.NewMsgList, src []*db.LocalChatLog) {
 	copier.Copy(dst, &src)
+
 }
 func (c *Conversation) checkErrAndUpdateMessage(callback open_im_sdk_callback.SendMsgCallBack, errCode int32, err error, s *sdk_struct.MsgStruct, lc *db.LocalConversation, operationID string) {
 	if err != nil {
@@ -471,27 +475,6 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(clientMsgID, server
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.ch)
 
 }
-func (c *Conversation) getUserNameAndFaceUrlByUid(callback open_im_sdk_callback.Base, friendUserID, operationID string) (faceUrl, name string, err error) {
-	friendInfo, err := c.db.GetFriendInfoByFriendUserID(friendUserID)
-	if err == nil {
-		if friendInfo.Remark != "" {
-			return friendInfo.FaceURL, friendInfo.Remark, nil
-		} else {
-			return friendInfo.FaceURL, friendInfo.Nickname, nil
-		}
-	} else {
-		if operationID == "" {
-			operationID = utils.OperationIDGenerator()
-		}
-		userInfos := c.user.GetUsersInfoFromSvr(callback, []string{friendUserID}, operationID)
-		for _, v := range userInfos {
-			return v.FaceURL, v.Nickname, nil
-		}
-	}
-	return "", "", errors.New("getUserNameAndFaceUrlByUid err")
-
-}
-
 func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack, message, recvID, groupID string, offlinePushInfo string, operationID string) {
 	if callback == nil {
 		return
@@ -513,7 +496,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 		if recvID == "" {
 			s.SessionType = constant.GroupChatType
 			s.GroupID = groupID
-			conversationID = c.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+			conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 			lc.GroupID = groupID
 			lc.ConversationType = constant.GroupChatType
 			g, err := c.db.GetGroupInfoByGroupID(groupID)
@@ -528,10 +511,10 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 		} else {
 			s.SessionType = constant.SingleChatType
 			s.RecvID = recvID
-			conversationID = c.GetConversationIDBySessionType(recvID, constant.SingleChatType)
+			conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
 			lc.UserID = recvID
 			lc.ConversationType = constant.SingleChatType
-			faceUrl, name, err := c.getUserNameAndFaceUrlByUid(callback, recvID, operationID)
+			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(callback, recvID, operationID)
 			common.CheckAnyErrCallback(callback, 301, err, operationID)
 			lc.FaceURL = faceUrl
 			lc.ShowName = name
@@ -644,7 +627,7 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 		if recvID == "" {
 			s.SessionType = constant.GroupChatType
 			s.GroupID = groupID
-			conversationID = c.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+			conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 			lc.GroupID = groupID
 			lc.ConversationType = constant.GroupChatType
 			g, err := c.db.GetGroupInfoByGroupID(groupID)
@@ -659,10 +642,10 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 		} else {
 			s.SessionType = constant.SingleChatType
 			s.RecvID = recvID
-			conversationID = c.GetConversationIDBySessionType(recvID, constant.SingleChatType)
+			conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
 			lc.UserID = recvID
 			lc.ConversationType = constant.SingleChatType
-			faceUrl, name, err := c.getUserNameAndFaceUrlByUid(callback, recvID, operationID)
+			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(callback, recvID, operationID)
 			common.CheckAnyErrCallback(callback, 301, err, operationID)
 			lc.FaceURL = faceUrl
 			lc.ShowName = name
@@ -882,11 +865,23 @@ func (c *Conversation) GetHistoryMessageList(callback open_im_sdk_callback.Base,
 		common.JsonUnmarshalCallback(getMessageOptions, &unmarshalParams, callback, operationID)
 		result := c.getHistoryMessageList(callback, unmarshalParams, operationID)
 		localChatLogToMsgStruct(&messageList, result)
-		for _, v := range messageList {
-			err := c.msgHandleByContentType(v)
-			if err != nil {
-				log.Error(operationID, "Parsing data error:", err.Error(), v)
-				continue
+		if unmarshalParams.UserID == "" {
+			for _, v := range messageList {
+				err := c.msgHandleByContentType(v)
+				if err != nil {
+					log.Error(operationID, "Parsing data error:", err.Error(), v)
+					continue
+				}
+				v.GroupID = v.RecvID
+				v.RecvID = c.loginUserID
+			}
+		} else {
+			for _, v := range messageList {
+				err := c.msgHandleByContentType(v)
+				if err != nil {
+					log.Error(operationID, "Parsing data error:", err.Error(), v)
+					continue
+				}
 			}
 		}
 		sort.Sort(messageList)
@@ -929,7 +924,7 @@ func (c *Conversation) MarkC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 		var unmarshalParams sdk_params_callback.MarkC2CMessageAsReadParams
 		common.JsonUnmarshalCallback(msgIDList, &unmarshalParams, callback, operationID)
 		if len(unmarshalParams) == 0 {
-			conversationID := c.GetConversationIDBySessionType(userID, constant.SingleChatType)
+			conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
 			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.ch)
 			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 			callback.OnSuccess(sdk_params_callback.MarkC2CMessageAsReadCallback)
@@ -963,7 +958,7 @@ func (c *Conversation) MarkGroupMessageHasRead(callback open_im_sdk_callback.Bas
 	}
 	go func() {
 		log.NewInfo(operationID, "MarkGroupMessageHasRead args: ", groupID)
-		conversationID := c.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+		conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.ch)
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 		callback.OnSuccess(sdk_params_callback.MarkGroupMessageHasRead)
@@ -1116,13 +1111,4 @@ func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, con
 	message.ContentType = contentType
 	message.SenderPlatformID = c.platformID
 
-}
-func (c *Conversation) GetConversationIDBySessionType(sourceID string, sessionType int32) string {
-	switch sessionType {
-	case constant.SingleChatType:
-		return "single_" + sourceID
-	case constant.GroupChatType:
-		return "group_" + sourceID
-	}
-	return ""
 }
