@@ -235,6 +235,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				if msg.ContentType == constant.HasReadReceipt {
 					msgReadList = append(msgReadList, msg)
 				}
+				if msg.ContentType == constant.Typing {
+					newMessages = append(newMessages, msg)
+				}
 			} else {
 				exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
 			}
