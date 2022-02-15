@@ -262,6 +262,12 @@ func (c *Conversation) typingStatusUpdate(callback open_im_sdk_callback.Base, re
 	c.initBasicInfo(&s, constant.UserMsgType, constant.Typing, operationID)
 	s.Content = msgTip
 	options := make(map[string]bool, 5)
+	utils.SetSwitchFromOptions(options, constant.IsHistory, false)
+	utils.SetSwitchFromOptions(options, constant.IsPersistent, false)
+	utils.SetSwitchFromOptions(options, constant.IsSenderSync, false)
+	utils.SetSwitchFromOptions(options, constant.IsConversationUpdate, false)
+	utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
+	utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
 	c.internalSendMessage(callback, &s, recvID, "", operationID, &server_api_params.OfflinePushInfo{}, true, options)
 
 }
