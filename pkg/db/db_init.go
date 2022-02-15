@@ -31,8 +31,7 @@ func (d *DataBase) initDB() error {
 	db, err := gorm.Open(sqlite.Open(d.dbDir+"OpenIM_"+d.loginUserID+".db"), &gorm.Config{})
 	log.Info("open db:", d.dbDir+"OpenIM_"+d.loginUserID+".db")
 	if err != nil {
-		panic("failed to connect database" + err.Error())
-		return err
+		return utils.Wrap(err, "open db failed")
 	}
 	d.conn = db
 	//db, err := sql.Open("sqlite3", SvrConf.DbDir+"OpenIM_"+uid+".db")
