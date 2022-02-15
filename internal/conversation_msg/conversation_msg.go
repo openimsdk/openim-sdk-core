@@ -232,6 +232,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				if msg.ContentType == constant.Revoke {
 					msgRevokeList = append(msgRevokeList, msg)
 				}
+				if msg.ContentType == constant.HasReadReceipt {
+					msgReadList = append(msgReadList, msg)
+				}
 			} else {
 				exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
 			}

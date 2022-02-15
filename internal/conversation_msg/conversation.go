@@ -280,7 +280,7 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 	resp, _ := c.internalSendMessage(callback, &s, userID, "", operationID, &server_api_params.OfflinePushInfo{}, false, options)
 	s.ServerMsgID = resp.ServerMsgID
 	s.SendTime = resp.SendTime
-	s.Status = constant.MsgStatusSendSuccess
+	s.Status = constant.MsgStatusFiltered
 	msgStructToLocalChatLog(&localMessage, &s)
 	err := c.db.InsertMessage(&localMessage)
 	if err != nil {
