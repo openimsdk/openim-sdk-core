@@ -82,6 +82,10 @@ type Cmd2Value struct {
 	Cmd   string
 	Value interface{}
 }
+type SourceIDAndSessionType struct {
+	SourceID    string
+	SessionType int32
+}
 
 func unInitAll(conversationCh chan Cmd2Value) {
 	c2v := Cmd2Value{Cmd: constant.CmdUnInit}

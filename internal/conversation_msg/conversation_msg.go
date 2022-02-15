@@ -128,11 +128,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				v.ContentType == constant.GroupApplicationAcceptedNotification ||
 				v.ContentType == constant.JoinGroupApplicationNotification {
 				log.Info("internal", "DoGroupMsg SingleChatType", v)
-				c.group.DoNotification(v)
+				c.group.DoNotification(v, c.ch)
 			}
 		case constant.GroupChatType:
 			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
-				c.group.DoNotification(v)
+				c.group.DoNotification(v, c.ch)
 				log.Info(operationID, "DoGroupMsg SingleChatType", v)
 			}
 		}
@@ -472,14 +472,20 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
 		}
 	case constant.UpdateFaceUrlAndNickName:
-		lc := node.Args.(db.LocalConversation)
-		if lc.ShowName != "" || lc.FaceURL != "" {
-
-			err := c.db.UpdateConversation(&lc)
-			if err != nil {
-				log.Error("internal", "setConversationFaceUrlAndNickName database err:", err.Error())
-				return
-			}
+		var lc db.LocalConversation
+		st := node.Args.(common.SourceIDAndSessionType)
+		lc.ConversationID = node.ConID
+		lc.ConversationType = st.SessionType
+		if st.SessionType == constant.SingleChatType {
+			lc.UserID = st.SourceID
+		} else {
+			lc.GroupID = st.SourceID
+		}
+		c.addFaceURLAndName(&lc)
+		err := c.db.UpdateConversation(&lc)
+		if err != nil {
+			log.Error("internal", "setConversationFaceUrlAndNickName database err:", err.Error())
+			return
 		}
 
 	case constant.UpdateLatestMessageChange:

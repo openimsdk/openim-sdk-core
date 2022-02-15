@@ -27,7 +27,7 @@ func NewGroup(loginUserID string, db *db.DataBase, p *ws.PostApi) *Group {
 	return &Group{loginUserID: loginUserID, db: db, p: p}
 }
 
-func (g *Group) DoNotification(msg *api.MsgData) {
+func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value) {
 	if g.listener == nil {
 		return
 	}
@@ -38,7 +38,7 @@ func (g *Group) DoNotification(msg *api.MsgData) {
 		case constant.GroupCreatedNotification:
 			g.groupCreatedNotification(msg, operationID)
 		case constant.GroupInfoSetNotification:
-			g.groupInfoSetNotification(msg, operationID)
+			g.groupInfoSetNotification(msg, conversationCh, operationID)
 		case constant.JoinGroupApplicationNotification:
 			g.joinGroupApplicationNotification(msg, operationID)
 		case constant.MemberQuitNotification:
@@ -66,11 +66,14 @@ func (g *Group) groupCreatedNotification(msg *api.MsgData, operationID string) {
 	g.SyncJoinedGroupList(operationID)
 }
 
-func (g *Group) groupInfoSetNotification(msg *api.MsgData, operationID string) {
+func (g *Group) groupInfoSetNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	detail := api.GroupInfoSetTips{Group: &api.GroupInfo{}}
 	comm.UnmarshalTips(msg, &detail)
 	g.SyncJoinedGroupList(operationID) //todo,  sync some group info
+	conversationID := utils.GetConversationIDBySessionType(detail.Group.GroupID, constant.GroupChatType)
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: detail.Group.GroupID, SessionType: constant.GroupChatType}}, conversationCh)
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, conversationCh)
 }
 
 func (g *Group) joinGroupApplicationNotification(msg *api.MsgData, operationID string) {

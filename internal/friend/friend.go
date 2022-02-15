@@ -574,9 +574,7 @@ func (f *Friend) friendRemarkNotification(msg *api.MsgData, conversationCh chan 
 	if detail.FromToUserID.FromUserID == f.loginUserID {
 		f.SyncFriendList(operationID)
 		conversationID := utils.GetConversationIDBySessionType(detail.FromToUserID.ToUserID, constant.SingleChatType)
-		f.GetUserNameAndFaceUrlByUid(nil, detail.FromToUserID.ToUserID, operationID)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateFaceUrlAndNickName, Args: []string{conversationID}}, conversationCh)
-
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: detail.FromToUserID.ToUserID, SessionType: constant.SingleChatType}}, conversationCh)
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, conversationCh)
 	}
 }
