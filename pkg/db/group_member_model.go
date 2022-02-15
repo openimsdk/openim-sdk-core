@@ -50,7 +50,13 @@ func (d *DataBase) GetGroupMemberListSplit(groupID string, filter int32, offset,
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var groupMemberList []LocalGroupMember
-	err := d.conn.Where("group_id = ? And role_level = ?", groupID, filter).Offset(offset).Limit(count).Find(&groupMemberList).Error
+	var err error
+	if filter == 0 {
+		err = d.conn.Where("group_id = ? And role_level > ?", groupID, filter).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+	} else {
+		err = d.conn.Where("group_id = ? And role_level = ?", groupID, filter).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+	}
+
 	var transfer []*LocalGroupMember
 	for _, v := range groupMemberList {
 		v1 := v
