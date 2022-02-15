@@ -273,6 +273,9 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 	c.initBasicInfo(&s, constant.UserMsgType, constant.HasReadReceipt, operationID)
 	s.Content = sourceMsgIDList
 	options := make(map[string]bool, 5)
+	utils.SetSwitchFromOptions(options, constant.IsConversationUpdate, false)
+	utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
+	utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
 	//If there is an error, the coroutine ends, so judgment is not  required
 	resp, _ := c.internalSendMessage(callback, &s, userID, "", operationID, &server_api_params.OfflinePushInfo{}, false, options)
 	s.ServerMsgID = resp.ServerMsgID
