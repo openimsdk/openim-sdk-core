@@ -992,6 +992,8 @@ func (c *Conversation) ClearGroupHistoryMessage(callback open_im_sdk_callback.Ba
 
 func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_callback.Base, message, recvID, sendID, operationID string) {
 	go func() {
+		var conversation db.LocalConversation
+		conversation.ConversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 		localMessage := db.LocalChatLog{}
@@ -999,14 +1001,21 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_ca
 		s.RecvID = recvID
 		s.ClientMsgID = utils.GetMsgID(s.SendID)
 		s.SendTime = utils.GetCurrentTimestampByMill()
+		s.SessionType = constant.SingleChatType
+		s.Status = constant.MsgStatusSendSuccess
 		msgStructToLocalChatLog(&localMessage, &s)
+		conversation.LatestMsg = utils.StructToJsonString(s)
+		conversation.LatestMsgSendTime = s.SendTime
 		_ = c.insertMessageToLocalStorage(callback, &localMessage, operationID)
 		callback.OnSuccess(utils.StructToJsonString(&s))
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.ch)
 	}()
 }
 
 func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_callback.Base, message, groupID, sendID, operationID string) {
 	go func() {
+		var conversation db.LocalConversation
+		conversation.ConversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 		localMessage := db.LocalChatLog{}
@@ -1014,9 +1023,14 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 		s.RecvID = groupID
 		s.ClientMsgID = utils.GetMsgID(s.SendID)
 		s.SendTime = utils.GetCurrentTimestampByMill()
+		s.SessionType = constant.GroupChatType
+		s.Status = constant.MsgStatusSendSuccess
 		msgStructToLocalChatLog(&localMessage, &s)
+		conversation.LatestMsg = utils.StructToJsonString(s)
+		conversation.LatestMsgSendTime = s.SendTime
 		clientMsgID := c.insertMessageToLocalStorage(callback, &localMessage, operationID)
 		callback.OnSuccess(clientMsgID)
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.ch)
 	}()
 
 }

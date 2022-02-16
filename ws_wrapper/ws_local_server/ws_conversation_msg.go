@@ -272,7 +272,7 @@ func (wsRouter *WsFuncRouter) CreateCustomMessage(input string, operationID stri
 		return
 	}
 	wrapSdkLog("GlobalSendMessage", operationID)
-	msg := userWorker.Conversation().CreateCustomMessage(m["data"].(string), m["message"].(string), m["description"].(string), operationID)
+	msg := userWorker.Conversation().CreateCustomMessage(m["data"].(string), m["extension"].(string), m["description"].(string), operationID)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }
 
