@@ -63,7 +63,10 @@ func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2
 
 func (g *Group) groupCreatedNotification(msg *api.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
+	detail := api.GroupCreatedTips{Group: &api.GroupInfo{}}
+	comm.UnmarshalTips(msg, &detail)
 	g.SyncJoinedGroupList(operationID)
+	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, false)
 }
 
 func (g *Group) groupInfoSetNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value, operationID string) {
