@@ -28,19 +28,19 @@ func (d *DataBase) SearchMessageByKeyword(keyword string, startTime, endTime int
 	switch sessionType {
 	case constant.SingleChatType:
 		if startTime == endTime {
-			condition = fmt.Sprintf("session_type==%d And send_time<=%d And content like %q", constant.SingleChatType, startTime, keyword+"%%")
+			condition = fmt.Sprintf("session_type==%d And send_time<=%d AND status <=%d And content like %q", constant.SingleChatType, startTime, constant.MsgStatusSendFailed, keyword+"%%")
 		}
-		condition = fmt.Sprintf("session_type==%d And send_time  between %d and %d And content like %q", constant.SingleChatType, startTime, endTime, keyword+"%%")
+		condition = fmt.Sprintf("session_type==%d And send_time  between %d and %d AND status <=%d And content like %q", constant.SingleChatType, startTime, endTime, constant.MsgStatusSendFailed, keyword+"%%")
 	case constant.GroupChatType:
 		if startTime == endTime {
-			condition = fmt.Sprintf("session_type==%d And send_time<=%d And content like %q", constant.GroupChatType, startTime, keyword+"%%")
+			condition = fmt.Sprintf("session_type==%d And send_time<=%d AND status <=%d And content like %q", constant.GroupChatType, startTime, constant.MsgStatusSendFailed, keyword+"%%")
 		}
-		condition = fmt.Sprintf("session_type==%d And send_time  between %d and %d And content like %q", constant.GroupChatType, startTime, endTime, keyword+"%%")
+		condition = fmt.Sprintf("session_type==%d And send_time  between %d and %d AND status <=%d And content like %q", constant.GroupChatType, startTime, endTime, constant.MsgStatusSendFailed, keyword+"%%")
 	default:
 		if startTime == endTime {
-			condition = fmt.Sprintf(" send_time<=%d And content like %s%%", startTime, keyword)
+			condition = fmt.Sprintf(" send_time<=%d AND status <=%d And content like %q", startTime, constant.MsgStatusSendFailed, keyword+"%%")
 		}
-		condition = fmt.Sprintf(" send_time  between %d and %d And content like %s%%", startTime, endTime, keyword)
+		condition = fmt.Sprintf(" send_time  between %d and %d AND status <=%d And content like %q", startTime, endTime, constant.MsgStatusSendFailed, keyword+"%%")
 	}
 	err = utils.Wrap(d.conn.Debug().Where(condition).Order("send_time DESC").Group("recv_id,client_msg_id").Find(&messageList).Error, "InsertMessage failed")
 	for _, v := range messageList {
