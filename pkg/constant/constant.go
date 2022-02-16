@@ -59,7 +59,7 @@ const (
 	UserInfoUpdatedNotification = 1303 //SetSelfInfoTip             = 204
 	ConversationNotification    = 1307
 	ConversationNotNotification = 1308
- 	ConversationDefault         = 0
+	ConversationDefault         = 0
 	UserNotificationEnd         = 1399
 
 	GroupNotificationBegin = 1500
@@ -172,7 +172,7 @@ const (
 	GroupActionRefuseGroupApplication = 9
 )
 const ZoomScale = "200"
-const MaxTotalMsgLen = 2048
+const MaxTotalMsgLen = 20480
 const (
 	FriendAcceptTip  = "You have successfully become friends, so start chatting"
 	TransferGroupTip = "The owner of the group is transferred!"
