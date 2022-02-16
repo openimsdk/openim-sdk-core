@@ -409,7 +409,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 	switch node.Action {
 	case constant.AddConOrUpLatMsg:
 		var list []*db.LocalConversation
-		lc := node.Args.(*db.LocalConversation)
+		lc := node.Args.(db.LocalConversation)
 		oc, err := c.db.GetConversation(lc.ConversationID)
 		if err == nil {
 			log.Info("this is old conversation", oc)
@@ -425,11 +425,11 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 				}
 			}
 		} else {
-			err4 := c.db.InsertConversation(lc)
+			err4 := c.db.InsertConversation(&lc)
 			if err4 != nil {
 				log.Error("internal", "insert new conversation err:", err4.Error())
 			} else {
-				list = append(list, lc)
+				list = append(list, &lc)
 				c.ConversationListener.OnNewConversation(utils.StructToJsonString(list))
 			}
 		}

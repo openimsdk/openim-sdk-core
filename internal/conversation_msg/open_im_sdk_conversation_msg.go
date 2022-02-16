@@ -471,7 +471,7 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(clientMsgID, server
 	lc.LatestMsg = utils.StructToJsonString(s)
 	lc.LatestMsgSendTime = sendTime
 	log.Info(operationID, "2 send message come here", *lc)
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.ch)
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.ch)
 
 }
 func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack, message, recvID, groupID string, offlinePushInfo string, operationID string) {
@@ -524,7 +524,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 		err := c.db.InsertMessage(&localMessage)
 		common.CheckAnyErrCallback(callback, 201, err, operationID)
 		log.Info(operationID, "send message come here", *lc)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.ch)
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.ch)
 		var delFile []string
 		//media file handle
 		switch s.ContentType {
@@ -720,8 +720,13 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.Local
 	retryTimes := 60
 	resp, err := c.SendReqWaitResp(&wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID, operationID)
 	c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
+	var sendMsgResp server_api_params.UserSendMsgResp
+	_ = proto.Unmarshal(resp.Data, &sendMsgResp)
+	s.SendTime = sendMsgResp.SendTime
+	s.Status = constant.MsgStatusSendSuccess
+	s.ServerMsgID = sendMsgResp.ServerMsgID
 	callback.OnProgress(100)
-	callback.OnSuccess("")
+	callback.OnSuccess(utils.StructToJsonString(s))
 	//remove media cache file
 	for _, v := range delFile {
 		err := os.Remove(v)
@@ -730,8 +735,6 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.Local
 		}
 		log.Debug(operationID, "remove file: ", v)
 	}
-	var sendMsgResp server_api_params.UserSendMsgResp
-	_ = proto.Unmarshal(resp.Data, &sendMsgResp)
 	c.updateMsgStatusAndTriggerConversation(sendMsgResp.ClientMsgID, sendMsgResp.ServerMsgID, sendMsgResp.SendTime, constant.MsgStatusSendSuccess, s, lc, operationID)
 
 }

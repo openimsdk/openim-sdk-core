@@ -276,7 +276,7 @@ func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req 
 	lc.LatestMsg = utils.StructToJsonString(req)
 	lc.LatestMsgSendTime = req.SendTime
 	lc.ConversationID = conversationID
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: &lc}, c.ch)
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.ch)
 }
 func (c *Conversation) typingStatusUpdate(callback open_im_sdk_callback.Base, recvID, msgTip, operationID string) {
 	s := sdk_struct.MsgStruct{}
@@ -353,8 +353,6 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 	chatLog := db.LocalChatLog{ClientMsgID: s.ClientMsgID, Status: constant.MsgStatusHasDeleted}
 	err := c.db.UpdateMessage(&chatLog)
 	common.CheckDBErrCallback(callback, err, operationID)
-
-	callback.OnSuccess("")
 
 	if s.SessionType == constant.GroupChatType {
 		conversationID = utils.GetConversationIDBySessionType(s.GroupID, constant.GroupChatType)
