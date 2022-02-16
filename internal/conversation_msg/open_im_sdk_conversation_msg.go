@@ -17,7 +17,6 @@ import (
 	"open_im_sdk/sdk_struct"
 	"os"
 	"runtime"
-	"sort"
 	"sync"
 )
 
@@ -859,34 +858,12 @@ func (c *Conversation) GetHistoryMessageList(callback open_im_sdk_callback.Base,
 		return
 	}
 	go func() {
-		var messageList sdk_struct.NewMsgList
 		log.NewInfo(operationID, "GetHistoryMessageList args: ", getMessageOptions)
 		var unmarshalParams sdk_params_callback.GetHistoryMessageListParams
 		common.JsonUnmarshalCallback(getMessageOptions, &unmarshalParams, callback, operationID)
 		result := c.getHistoryMessageList(callback, unmarshalParams, operationID)
-		localChatLogToMsgStruct(&messageList, result)
-		if unmarshalParams.UserID == "" {
-			for _, v := range messageList {
-				err := c.msgHandleByContentType(v)
-				if err != nil {
-					log.Error(operationID, "Parsing data error:", err.Error(), v)
-					continue
-				}
-				v.GroupID = v.RecvID
-				v.RecvID = c.loginUserID
-			}
-		} else {
-			for _, v := range messageList {
-				err := c.msgHandleByContentType(v)
-				if err != nil {
-					log.Error(operationID, "Parsing data error:", err.Error(), v)
-					continue
-				}
-			}
-		}
-		sort.Sort(messageList)
-		callback.OnSuccess(utils.StructToJsonStringDefault(messageList))
-		log.NewInfo(operationID, "GetHistoryMessageList callback: ", utils.StructToJsonStringDefault(messageList))
+		callback.OnSuccess(utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, "GetHistoryMessageList callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
 
@@ -1072,7 +1049,19 @@ func (c *Conversation) SetConversationStatus(callback open_im_sdk_callback.Base,
 //		}
 //	}()
 //}
-
+func (c *Conversation) SearchLocalMessages(callback open_im_sdk_callback.Base, searchParam, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, "SearchLocalMessages args: ", searchParam)
+		var unmarshalParams sdk_params_callback.SearchLocalMessagesParams
+		common.JsonUnmarshalCallback(searchParam, &unmarshalParams, callback, operationID)
+		result := c.searchLocalMessages(callback, unmarshalParams, operationID)
+		callback.OnSuccess(utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, "SearchLocalMessages callback: ", utils.StructToJsonStringDefault(result))
+	}()
+}
 func getImageInfo(filePath string) (*sdk_struct.ImageInfo, error) {
 	file, err := os.Open(filePath)
 	if err != nil {

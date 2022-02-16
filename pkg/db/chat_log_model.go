@@ -2,6 +2,7 @@ package db
 
 import (
 	"errors"
+	"fmt"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 )
@@ -18,6 +19,35 @@ func (d *DataBase) InsertMessage(Message *LocalChatLog) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Create(Message).Error, "InsertMessage failed")
+}
+func (d *DataBase) SearchMessageByKeyword(keyword string, startTime, endTime int64, sessionType int) (result []*LocalChatLog, err error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var messageList []LocalChatLog
+	var condition string
+	switch sessionType {
+	case constant.SingleChatType:
+		if startTime == endTime {
+			condition = fmt.Sprintf("session_type==%d And send_time<=%d And content like %q", constant.SingleChatType, startTime, keyword+"%%")
+		}
+		condition = fmt.Sprintf("session_type==%d And send_time  between %d and %d And content like %q", constant.SingleChatType, startTime, endTime, keyword+"%%")
+	case constant.GroupChatType:
+		if startTime == endTime {
+			condition = fmt.Sprintf("session_type==%d And send_time<=%d And content like %q", constant.GroupChatType, startTime, keyword+"%%")
+		}
+		condition = fmt.Sprintf("session_type==%d And send_time  between %d and %d And content like %q", constant.GroupChatType, startTime, endTime, keyword+"%%")
+	default:
+		if startTime == endTime {
+			condition = fmt.Sprintf(" send_time<=%d And content like %s%%", startTime, keyword)
+		}
+		condition = fmt.Sprintf(" send_time  between %d and %d And content like %s%%", startTime, endTime, keyword)
+	}
+	err = utils.Wrap(d.conn.Debug().Where(condition).Order("send_time DESC").Group("recv_id,client_msg_id").Find(&messageList).Error, "InsertMessage failed")
+	for _, v := range messageList {
+		v1 := v
+		result = append(result, &v1)
+	}
+	return result, err
 }
 func (d *DataBase) BatchUpdateMessageList(MessageList []*LocalChatLog) error {
 	if MessageList == nil {
