@@ -101,6 +101,9 @@ func (c *Conversation) deleteConversation(callback open_im_sdk_callback.Base, co
 	//Reset the session information, empty session
 	err = c.db.ResetConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
+	callback.OnSuccess("")
+	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
+
 }
 func (c *Conversation) setConversationDraft(callback open_im_sdk_callback.Base, conversationID, draftText, operationID string) {
 	if draftText != "" {
