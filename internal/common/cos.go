@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"open_im_sdk/pkg/log"
 
 	"open_im_sdk/pkg/constant"
 
@@ -30,11 +31,11 @@ func NewCOS(p *ws.PostApi) *COS {
 func (c *COS) tencentCOSCredentials() (*server_api_params.TencentCloudStorageCredentialRespData, error) {
 	req := server_api_params.TencentCloudStorageCredentialReq{OperationID: utils.OperationIDGenerator()}
 	var resp server_api_params.TencentCloudStorageCredentialResp
-	err := c.p.PostReturn(constant.TencentCloudStorageCredentialRouter, req, &resp.Data)
+	err := c.p.PostReturn(constant.TencentCloudStorageCredentialRouter, req, &resp.CosData)
 	if err != nil {
 		return nil, utils.Wrap(err, "")
 	}
-	return &resp.Data, nil
+	return &resp.CosData, nil
 }
 
 func (c *COS) UploadImage(filePath string, onProgressFun func(int)) (string, string, error) {
@@ -77,6 +78,7 @@ func (c *COS) getNewFileNameAndContentType(filePath string, fileType string) (st
 
 func (c *COS) uploadObj(filePath string, fileType string, onProgressFun func(int)) (string, string, error) {
 	COSResp, err := c.tencentCOSCredentials()
+	log.Info("upload ", COSResp.Credentials.SessionToken, "bucket ", COSResp.Credentials.TmpSecretID)
 	if err != nil {
 		return "", "", utils.Wrap(err, "")
 	}

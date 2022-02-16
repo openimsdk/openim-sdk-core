@@ -21,9 +21,9 @@ import (
 
 func main() {
 
-	strMyUidx := "openIM101"
+	strMyUidx := "18666662412"
 	//friendUserID := "openIM2222"
-	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMDEiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTY0NTYwOTUzMiwibmJmIjoxNjQ1MDA0NzMyLCJpYXQiOjE2NDUwMDQ3MzJ9.UjRlW2D5KULr4ZzfVan8rbgR-skMyMiqrP5zb8-cRiU"
+	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxODY2NjY2MjQxMiIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxNjQ1NjE2NzI2LCJuYmYiOjE2NDUwMTE5MjYsImlhdCI6MTY0NTAxMTkyNn0.AR9khKiUXNDUu1gxNY7cqeZmmDyIMXFd6hlnJsppt0o"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	//test.DoTestCreateGroup()
 	//test.SetTestFriendID(friendUserID)
@@ -68,6 +68,7 @@ func main() {
 	//	open_im_sdk.DoTestDeleteFromBlackList()
 	//DoTestGetDesignatedFriendsInfo()
 	//test.DoTestSendMsg(strMyUidx, test.Friend_uid)
+	test.DoTestSendImageMsg("", test.Friend_uid)
 	for true {
 		time.Sleep(time.Duration(100) * time.Second)
 		//	test.DoTestSendMsg(strMyUidx, test.Friend_uid)
