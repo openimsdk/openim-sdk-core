@@ -30,7 +30,7 @@ func main() {
 	//fmt.Println("logout ........... ")
 	//test.InOutLogou()
 	//test.DoTestSetConversationRecvMessageOpt("17396220460", `["id1","id2"]`, constant.ConversationNotification)
-	test.DoTestSetConversationRecvMessageOpt("17396220460", `["single_openIM101", "id2"]`, constant.ConversationNotNotification)
+	test.DoTestSetConversationRecvMessageOpt("17396220460", `["single_openIM101", "id2"]`, constant.ConversationNotification)
 	//test.DoTestAddToBlackList()
 	//test.DoTestGetDesignatedFriendsInfo()
 	//	test.DoTestGetUsersInfo()

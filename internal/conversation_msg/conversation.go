@@ -46,7 +46,7 @@ func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callba
 	apiReq.FromUserID = c.loginUserID
 	apiReq.ConversationIDList = conversationIDList
 	var realData []*server_api_params.OptResult
-	c.p.PostFatalCallback(callback, constant.GetReceiveMessageOptRouter, apiReq, realData, apiReq.OperationID)
+	c.p.PostFatalCallback(callback, constant.GetReceiveMessageOptRouter, apiReq, &realData, apiReq.OperationID)
 	return realData
 }
 func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, sourceID string, sessionType int32, operationID string) *db.LocalConversation {
