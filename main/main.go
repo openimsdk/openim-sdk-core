@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/pkg/errors"
-	"open_im_sdk/pkg/constant"
+	//"open_im_sdk/pkg/constant"
 
 	//"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/network"
@@ -21,17 +21,17 @@ import (
 
 func main() {
 
-	strMyUidx := "openIM123456"
+	strMyUidx := "openIM101"
 	//friendUserID := "openIM2222"
-	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMjM0NTYiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTY0NTUwMjg1MSwibmJmIjoxNjQ0ODk4MDUxLCJpYXQiOjE2NDQ4OTgwNTF9.umoxjX5U-BV-H0euuC8mizuQp5P9ACGHlOLnIoDmNEU"
+	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMDEiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTY0NTYwOTUzMiwibmJmIjoxNjQ1MDA0NzMyLCJpYXQiOjE2NDUwMDQ3MzJ9.UjRlW2D5KULr4ZzfVan8rbgR-skMyMiqrP5zb8-cRiU"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	//test.DoTestCreateGroup()
 	//test.SetTestFriendID(friendUserID)
 	//fmt.Println("logout ........... ")
 	//test.InOutLogou()
 	//test.DoTestSetConversationRecvMessageOpt("17396220460", `["id1","id2"]`, constant.ConversationNotNotification)
-	test.DoTestSetConversationRecvMessageOpt("openIM123456", `["single_openIM101", "id2"]`, constant.ConversationNotification)
-	test.DoTestGetConversationRecvMessageOpt(`["single_openIM101"]`)
+	//	test.DoTestSetConversationRecvMessageOpt("openIM123456", `["single_openIM101", "id2"]`, constant.ConversationNotification)
+	//	test.DoTestGetConversationRecvMessageOpt(`["single_openIM101"]`)
 	//test.DoTestAddToBlackList()
 	//test.DoTestGetDesignatedFriendsInfo()
 	//	test.DoTestGetUsersInfo()
@@ -601,7 +601,7 @@ func getMyIP() string {
 }
 
 var (
-	TESTIP       = "43.128.5.63"
+	TESTIP = "43.128.5.63"
 	//TESTIP       = "1.14.194.38"
 	APIADDR      = "http://" + TESTIP + ":10000"
 	WSADDR       = "ws://" + TESTIP + ":17778"

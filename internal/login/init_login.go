@@ -200,6 +200,7 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 	if callback != nil {
 		callback.OnSuccess("")
 	}
+	u.justOnceFlag = false
 }
 
 func (u *LoginMgr) GetLoginUser() string {
