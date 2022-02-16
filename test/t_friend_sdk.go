@@ -604,6 +604,13 @@ type testFriendListener struct {
 	x int
 }
 
+func (testFriendListener) OnReceiveFriendApplicationAdded(friendApplication string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), friendApplication)
+}
+func (testFriendListener) OnReceiveFriendApplicationDeleted(friendApplication string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), friendApplication)
+}
+
 func (testFriendListener) OnFriendApplicationAdded(callbackInfo string) {
 	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
 }
