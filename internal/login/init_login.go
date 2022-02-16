@@ -25,11 +25,11 @@ type LoginMgr struct {
 	conversation *conv.Conversation
 	user         *user.User
 	full         *full.Full
-	db           *db.DataBase //1
-	ws           *ws.Ws       //2
-	msgSync      *ws.MsgSync  //3
+	db           *db.DataBase
+	ws           *ws.Ws
+	msgSync      *ws.MsgSync
 
-	heartbeat *ws.Heartbeat //4
+	heartbeat *ws.Heartbeat
 
 	token        string
 	loginUserID  string

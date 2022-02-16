@@ -183,37 +183,36 @@ func (w *Ws) doWsMsg(message []byte) {
 			log.Error(wsResp.OperationID, "doWSSendMsg failed ", err.Error())
 		}
 	case constant.WSKickOnlineMsg:
+		log.Warn(wsResp.OperationID, "kick... ")
 		w.kickOnline(*wsResp)
 	case constant.WsLogoutMsg:
-		log.Warn(wsResp.OperationID, "logout.. ")
+		log.Warn(wsResp.OperationID, "logout... ")
 		w.SetLoginState(constant.Logout)
+		w.CloseConn()
 		runtime.Goexit()
 	default:
-		log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier, wsResp.OperationID)
+		log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
 		return
 	}
 }
 
 func (w *Ws) doWSGetNewestSeq(wsResp GeneralWsResp) error {
 	if err := w.notifyResp(wsResp); err != nil {
-		log.Error(wsResp.OperationID, "doWSGetNewestSeq failed ", err.Error())
-		return err
+		return utils.Wrap(err, "")
 	}
 	return nil
 }
 
 func (w *Ws) doWSPullMsg(wsResp GeneralWsResp) error {
 	if err := w.notifyResp(wsResp); err != nil {
-		log.Error(wsResp.OperationID, "doWSPullMsg failed ", err.Error())
-		return err
+		return utils.Wrap(err, "")
 	}
 	return nil
 }
 
 func (w *Ws) doWSSendMsg(wsResp GeneralWsResp) error {
 	if err := w.notifyResp(wsResp); err != nil {
-		log.Error(wsResp.OperationID, "doWSSendMsg failed ", err.Error())
-		return err
+		return utils.Wrap(err, "")
 	}
 	return nil
 }

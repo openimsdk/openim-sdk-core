@@ -206,6 +206,11 @@ func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.Create
 	apiReq.OperationID = operationID
 	apiReq.OwnerUserID = g.loginUserID
 	apiReq.MemberList = memberList
+	for _, v := range apiReq.MemberList {
+		if v.RoleLevel == 0 {
+			v.RoleLevel = 1
+		}
+	}
 	copier.Copy(&apiReq, &group)
 	realData := api.CreateGroupResp{}
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "api req args: ", apiReq)
