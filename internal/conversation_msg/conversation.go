@@ -363,7 +363,7 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 			conversation.LatestMsgSendTime = list[0].SendTime
 		}
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.ch)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
+
 	}
 }
 
