@@ -999,6 +999,7 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_ca
 		s.RecvID = recvID
 		s.ClientMsgID = utils.GetMsgID(s.SendID)
 		s.SendTime = utils.GetCurrentTimestampByMill()
+		s.Status = constant.MsgStatusSendSuccess
 		msgStructToLocalChatLog(&localMessage, &s)
 		_ = c.insertMessageToLocalStorage(callback, &localMessage, operationID)
 		callback.OnSuccess(utils.StructToJsonString(&s))
