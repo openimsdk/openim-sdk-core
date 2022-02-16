@@ -354,8 +354,6 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 	err := c.db.UpdateMessage(&chatLog)
 	common.CheckDBErrCallback(callback, err, operationID)
 
-	callback.OnSuccess("")
-
 	if s.SessionType == constant.GroupChatType {
 		conversationID = utils.GetConversationIDBySessionType(s.GroupID, constant.GroupChatType)
 		sourceID = s.GroupID
