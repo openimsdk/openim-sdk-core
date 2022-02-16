@@ -35,7 +35,7 @@ type GetHistoryMessageListParams struct {
 	StartClientMsgID string `json:"startClientMsgID"`
 	Count            int    `json:"count"`
 }
-type GetHistoryMessageListCallback []*db.LocalChatLog
+type GetHistoryMessageListCallback []*sdk_struct.MsgStruct
 
 type RevokeMessageParams sdk_struct.MsgStruct
 
@@ -51,6 +51,26 @@ const MarkGroupMessageHasRead = constant.SuccessCallbackDefault
 
 type SetConversationStatusParams struct {
 	UserId string `json:"userID" validate:"required"`
-	Status int `json:"status" validate:"required"`
+	Status int    `json:"status" validate:"required"`
 }
-
+type SearchLocalMessagesParams struct {
+	SourceID             string   `json:"sourceID"`
+	SessionType          int      `json:"sessionType"`
+	KeywordList          []string `json:"keywordList"`
+	KeywordListMatchType int      `json:"keywordListMatchType"`
+	SenderUserIDList     []string `json:"senderUserIDList"`
+	MessageTypeList      []int    `json:"messageTypeList"`
+	SearchTimePosition   int64    `json:"searchTimePosition"`
+	SearchTimePeriod     int64    `json:"searchTimePeriod"`
+	PageIndex            int      `json:"pageIndex"`
+	Count                int      `json:"count"`
+}
+type SearchLocalMessagesCallback struct {
+	TotalCount        int                           `json:"totalCount"`
+	SearchResultItems []*SearchByConversationResult `json:"searchResultItems"`
+}
+type SearchByConversationResult struct {
+	ConversationID string                  `json:"conversationID"`
+	MessageCount   int                     `json:"messageCount"`
+	MessageList    []*sdk_struct.MsgStruct `json:"messageList"`
+}

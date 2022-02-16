@@ -387,6 +387,12 @@ func ClearGroupHistoryMessage(callback open_im_sdk_callback.Base, operationID st
 func InsertSingleMessageToLocalStorage(callback open_im_sdk_callback.Base, operationID string, message, recvID, sendID string) {
 	userForSDK.Conversation().InsertSingleMessageToLocalStorage(callback, message, recvID, sendID, operationID)
 }
+func InsertGroupMessageToLocalStorage(callback open_im_sdk_callback.Base, operationID string, message, groupID, sendID string) {
+	userForSDK.Conversation().InsertGroupMessageToLocalStorage(callback, message, groupID, sendID, operationID)
+}
+func SearchLocalMessages(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
+	userForSDK.Conversation().SearchLocalMessages(callback, searchParam, operationID)
+}
 
 //func FindMessages(callback common.Base, operationID string, messageIDList string) {
 //	userForSDK.Conversation().FindMessages(callback, messageIDList)

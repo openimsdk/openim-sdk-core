@@ -436,6 +436,19 @@ func (wsRouter *WsFuncRouter) InsertSingleMessageToLocalStorage(input string, op
 	}
 	userWorker.Conversation().InsertSingleMessageToLocalStorage(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["message"].(string), m["recvID"].(string), m["sendID"].(string), operationID)
 }
+func (wsRouter *WsFuncRouter) InsertGroupMessageToLocalStorage(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "message", "groupID", "sendID") {
+		return
+	}
+	userWorker.Conversation().InsertGroupMessageToLocalStorage(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["message"].(string), m["groupID"].(string), m["sendID"].(string), operationID)
+}
 
 //func (wsRouter *WsFuncRouter) FindMessages(messageIDList string, operationID string) {
 //	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)

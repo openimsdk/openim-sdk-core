@@ -12,6 +12,7 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"sort"
 	"time"
 )
 
@@ -185,6 +186,7 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 	var conversationID string
 	var startTime int64
 	var sessionType int
+	var messageList sdk_struct.NewMsgList
 	if req.UserID == "" {
 		sourceID = req.GroupID
 		conversationID = utils.GetConversationIDBySessionType(sourceID, constant.GroupChatType)
@@ -207,7 +209,28 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 	log.Info(operationID, "sourceID:", sourceID, "startTime:", startTime, "count:", req.Count)
 	list, err := c.db.GetMessageList(sourceID, sessionType, req.Count, startTime)
 	common.CheckDBErrCallback(callback, err, operationID)
-	return list
+	localChatLogToMsgStruct(&messageList, list)
+	if req.UserID == "" {
+		for _, v := range messageList {
+			err := c.msgHandleByContentType(v)
+			if err != nil {
+				log.Error(operationID, "Parsing data error:", err.Error(), v)
+				continue
+			}
+			v.GroupID = v.RecvID
+			v.RecvID = c.loginUserID
+		}
+	} else {
+		for _, v := range messageList {
+			err := c.msgHandleByContentType(v)
+			if err != nil {
+				log.Error(operationID, "Parsing data error:", err.Error(), v)
+				continue
+			}
+		}
+	}
+	sort.Sort(messageList)
+	return sdk.GetHistoryMessageListCallback(messageList)
 }
 func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req sdk.RevokeMessageParams, operationID string) {
 	var recvID, groupID string
@@ -365,6 +388,67 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.ch)
 
 	}
+}
+func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, searchParam sdk.SearchLocalMessagesParams, operationID string) (r sdk.SearchLocalMessagesCallback) {
+	var conversationID string
+	var startTime, endTime int64
+	//var searchResultItems []sdk.SearchByConversationResult
+	var searchResultItem sdk.SearchByConversationResult
+	var messageList sdk_struct.NewMsgList
+	switch searchParam.SessionType {
+	case constant.SingleChatType:
+		conversationID = utils.GetConversationIDBySessionType(searchParam.SourceID, constant.SingleChatType)
+	case constant.GroupChatType:
+		conversationID = utils.GetConversationIDBySessionType(searchParam.SourceID, constant.GroupChatType)
+	default:
+	}
+	if searchParam.SearchTimePosition == 0 {
+		startTime = utils.GetCurrentTimestampBySecond()
+	} else {
+		startTime = searchParam.SearchTimePosition
+	}
+	endTime = startTime - searchParam.SearchTimePeriod
+	if len(searchParam.KeywordList) == 0 {
+		common.CheckAnyErrCallback(callback, 201, errors.New("keyword is null"), operationID)
+	}
+	list, err := c.db.SearchMessageByKeyword(searchParam.KeywordList[0], utils.UnixSecondToTime(endTime).UnixNano()/1e6, utils.UnixSecondToTime(startTime).UnixNano()/1e6, searchParam.SessionType)
+	common.CheckDBErrCallback(callback, err, operationID)
+	r.TotalCount = len(list)
+	localChatLogToMsgStruct(&messageList, list)
+	switch searchParam.SessionType {
+	case constant.SingleChatType:
+		for _, v := range messageList {
+			err := c.msgHandleByContentType(v)
+			if err != nil {
+				log.Error(operationID, "Parsing data error:", err.Error(), v)
+				continue
+			}
+		}
+		sort.Sort(messageList)
+		searchResultItem.ConversationID = conversationID
+		searchResultItem.MessageCount = r.TotalCount
+		searchResultItem.MessageList = messageList
+		r.SearchResultItems = append(r.SearchResultItems, &searchResultItem)
+	case constant.GroupChatType:
+
+		for _, v := range messageList {
+			err := c.msgHandleByContentType(v)
+			if err != nil {
+				log.Error(operationID, "Parsing data error:", err.Error(), v)
+				continue
+			}
+			v.GroupID = v.RecvID
+			v.RecvID = c.loginUserID
+		}
+		sort.Sort(messageList)
+		searchResultItem.ConversationID = conversationID
+		searchResultItem.MessageCount = r.TotalCount
+		searchResultItem.MessageList = messageList
+		r.SearchResultItems = append(r.SearchResultItems, &searchResultItem)
+	default:
+
+	}
+	return r
 }
 
 func (c *Conversation) setConversationNotification(msg *server_api_params.MsgData, operationID string) {
