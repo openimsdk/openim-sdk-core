@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
 	"open_im_sdk/open_im_sdk_callback"
@@ -95,7 +96,9 @@ func CheckErrAndResp(err error, resp []byte, output interface{}) error {
 	}
 
 	var c2 server_api_params.CommDataRespOne
+
 	err = json.Unmarshal(resp, &c2)
+	fmt.Println("CommDataRespOne ", string(resp), c2)
 	if err != nil {
 		return utils.Wrap(err, "")
 	}
@@ -104,6 +107,7 @@ func CheckErrAndResp(err error, resp []byte, output interface{}) error {
 	}
 	if output != nil {
 		err = mapstructure.Decode(c2.Data, output)
+		fmt.Println("CommDataRespOne2 ", c2.Data)
 		if err != nil {
 			return utils.Wrap(err, "")
 		}
