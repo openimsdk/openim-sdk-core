@@ -142,6 +142,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			if err == nil {
 				log.Info("internal", "have message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
 				if m.Seq == 0 {
+					if !isConversationUpdate {
+						msg.Status = constant.MsgStatusFiltered
+					}
 					updateMsg = append(updateMsg, c.msgStructToLocalChatLog(msg))
 				} else {
 					exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
