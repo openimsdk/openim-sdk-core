@@ -119,6 +119,9 @@ func GenUserRouterNoLock(uid string) *RefRouter {
 	wsRouter1.SetFriendListener()
 	wrapSdkLog("SetGroupListener() ", uid)
 	wsRouter1.SetGroupListener()
+	wrapSdkLog("SetUserListener() ", uid)
+	wsRouter1.SetUserListener()
+
 	var rr RefRouter
 	rr.refName = &RouteMap1
 	rr.wsRouter = &wsRouter1
