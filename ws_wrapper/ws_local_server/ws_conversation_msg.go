@@ -155,7 +155,7 @@ func (wsRouter *WsFuncRouter) SetConversationRecvMessageOpt(input string, operat
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.Conversation().SetConversationRecvMessageOpt(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationIDList"].(string), m["opt"].(int), operationID)
+	userWorker.Conversation().SetConversationRecvMessageOpt(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationIDList"].(string), int(m["opt"].(float64)), operationID)
 }
 func (wsRouter *WsFuncRouter) GetConversationRecvMessageOpt(input string, operationID string) {
 	m := make(map[string]interface{})
