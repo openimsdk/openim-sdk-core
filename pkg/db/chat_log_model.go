@@ -58,6 +58,7 @@ func (d *DataBase) BatchUpdateMessageList(MessageList []*LocalChatLog) error {
 		v1 := new(LocalChatLog)
 		v1.ClientMsgID = v.ClientMsgID
 		v1.Seq = v.Seq
+		v1.Status = v.Status
 		err := d.UpdateMessage(v1)
 		if err != nil {
 			return utils.Wrap(err, "BatchUpdateMessageList failed")
