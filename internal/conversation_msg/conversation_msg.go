@@ -255,7 +255,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	}
 	m := make(map[string]*db.LocalConversation)
 	listToMap(list, m)
-	diff(m, conversationSet, conversationChangedSet, newConversationSet)
+	c.diff(m, conversationSet, conversationChangedSet, newConversationSet)
 	log.Info(operationID, "trigger map is :", "newConversations", newConversationSet, "changedConversations", conversationChangedSet)
 	//seq sync message update
 	err5 := c.db.BatchUpdateMessageList(updateMsg)
@@ -311,7 +311,7 @@ func listToMap(list []*db.LocalConversation, m map[string]*db.LocalConversation)
 	}
 
 }
-func diff(local, generated, cc, nc map[string]*db.LocalConversation) {
+func (c *Conversation) diff(local, generated, cc, nc map[string]*db.LocalConversation) {
 	for _, v := range generated {
 		if localC, ok := local[v.ConversationID]; ok {
 			if v.LatestMsgSendTime > localC.LatestMsgSendTime {
@@ -325,6 +325,7 @@ func diff(local, generated, cc, nc map[string]*db.LocalConversation) {
 			}
 
 		} else {
+			c.addFaceURLAndName(v)
 			nc[v.ConversationID] = v
 		}
 	}
