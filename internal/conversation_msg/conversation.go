@@ -101,7 +101,6 @@ func (c *Conversation) deleteConversation(callback open_im_sdk_callback.Base, co
 	//Reset the session information, empty session
 	err = c.db.ResetConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
-	callback.OnSuccess("")
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 
 }
@@ -314,11 +313,11 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 	msgStructToLocalChatLog(&localMessage, &s)
 	err := c.db.InsertMessage(&localMessage)
 	if err != nil {
-		log.Error(operationID, "inset into chat log err", localMessage, s)
+		log.Error(operationID, "inset into chat log err", localMessage, s, err.Error())
 	}
 	err2 := c.db.UpdateMessageHasRead(userID, msgIDList)
 	if err2 != nil {
-		log.Error(operationID, "update message has read error", msgIDList, userID)
+		log.Error(operationID, "update message has read error", msgIDList, userID, err2.Error())
 	}
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.ch)
 	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)

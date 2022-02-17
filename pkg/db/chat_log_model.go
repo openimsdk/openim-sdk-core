@@ -134,7 +134,7 @@ func (d *DataBase) UpdateMessageStatusBySourceID(sourceID string, status, sessio
 	} else {
 		condition = "(send_id=? or recv_id=?)AND session_type=?"
 	}
-	t := d.conn.Model(LocalChatLog{}).Where(condition, sourceID, sourceID, sessionType).Updates(LocalChatLog{Status: status})
+	t := d.conn.Model(LocalChatLog{}).Debug().Where(condition, sourceID, sourceID, sessionType).Updates(LocalChatLog{Status: status})
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
@@ -170,7 +170,7 @@ func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, start
 func (d *DataBase) UpdateMessageHasRead(sendID string, msgIDList []string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Model(LocalChatLog{}).Where("send_id=? And is_read=?AND session_type=?AND client_msg_id in ?", sendID, constant.NotRead, constant.SingleChatType, msgIDList).Updates(LocalChatLog{IsRead: true})
+	t := d.conn.Model(LocalChatLog{}).Debug().Where("send_id=? And is_read=?AND session_type=?AND client_msg_id in ?", sendID, constant.NotRead, constant.SingleChatType, msgIDList).Updates(LocalChatLog{IsRead: true})
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
