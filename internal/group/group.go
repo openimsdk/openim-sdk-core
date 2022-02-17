@@ -554,7 +554,7 @@ func (g *Group) SyncAdminGroupApplication(operationID string) {
 			continue
 		}
 		callbackData := sdk.GroupApplicationAddedCallback(*onServer[index])
-		g.listener.OnReceiveJoinGroupApplicationAdded(utils.StructToJsonString(callbackData))
+		g.listener.OnGroupApplicationAdded(utils.StructToJsonString(callbackData))
 		log.Info(operationID, "OnReceiveJoinGroupApplicationAdded", utils.StructToJsonString(callbackData))
 	}
 	for _, index := range sameA {
@@ -574,7 +574,7 @@ func (g *Group) SyncAdminGroupApplication(operationID string) {
 			log.Info(operationID, "OnGroupApplicationAccepted", utils.StructToJsonString(callbackData))
 		} else {
 			callbackData := sdk.GroupApplicationAcceptCallback(*onServer[index])
-			g.listener.OnReceiveJoinGroupApplicationAdded(utils.StructToJsonString(callbackData))
+			g.listener.OnGroupApplicationAdded(utils.StructToJsonString(callbackData))
 			log.Info(operationID, "OnReceiveJoinGroupApplicationAdded", utils.StructToJsonString(callbackData))
 		}
 	}
@@ -585,7 +585,7 @@ func (g *Group) SyncAdminGroupApplication(operationID string) {
 			continue
 		}
 		callbackData := sdk.GroupApplicationDeletedCallback(*onLocal[index])
-		g.listener.OnReceiveJoinGroupApplicationDeleted(utils.StructToJsonString(callbackData))
+		g.listener.OnGroupApplicationDeleted(utils.StructToJsonString(callbackData))
 		log.Info(operationID, "OnReceiveJoinGroupApplicationDeleted", utils.StructToJsonString(callbackData))
 	}
 }

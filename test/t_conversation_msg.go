@@ -138,6 +138,12 @@ func DoTestCreateTextMessage(text string) string {
 	return open_im_sdk.CreateTextMessage(operationID, text)
 }
 
+func DoTestCreateImageMessageFromFullPath() string {
+	operationID := utils.OperationIDGenerator()
+	return open_im_sdk.CreateImageMessageFromFullPath(operationID, "C:\\1.jpg")
+	//open_im_sdk.SendMessage(&testSendMsg, operationID, s, , "", utils.StructToJsonString(o))
+}
+
 //func DoTestSetConversationDraft() {
 //	var test TestSetConversationDraft
 //	open_im_sdk.SetConversationDraft("single_c93bc8b171cce7b9d1befb389abfe52f", "hah", test)
@@ -244,5 +250,15 @@ func DoTestSendMsg(sendId, recvID string) {
 	o.Title = "121313"
 	o.Desc = "45464"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
+}
 
+func DoTestSendImageMsg(sendId, recvID string) {
+	operationID := utils.OperationIDGenerator()
+	s := DoTestCreateImageMessageFromFullPath()
+	var testSendMsg TestSendMsgCallBack
+	testSendMsg.OperationID = operationID
+	o := server_api_params.OfflinePushInfo{}
+	o.Title = "121313"
+	o.Desc = "45464"
+	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
 }

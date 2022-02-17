@@ -45,7 +45,7 @@ func TestLog(v ...interface{}) {
 	X.Println(a, b, c, d)
 }
 
-var Friend_uid = "openIM101"
+var Friend_uid = "18349115126"
 
 func SetTestFriendID(friendUserID string) {
 	Friend_uid = friendUserID
@@ -602,13 +602,6 @@ func (testLogin) OnError(code int32, msg string) {
 
 type testFriendListener struct {
 	x int
-}
-
-func (testFriendListener) OnReceiveFriendApplicationAdded(friendApplication string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), friendApplication)
-}
-func (testFriendListener) OnReceiveFriendApplicationDeleted(friendApplication string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), friendApplication)
 }
 
 func (testFriendListener) OnFriendApplicationAdded(callbackInfo string) {

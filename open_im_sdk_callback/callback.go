@@ -21,8 +21,6 @@ type OnGroupListener interface {
 	OnJoinedGroupDeleted(groupInfo string)
 	OnGroupMemberAdded(groupMemberInfo string)
 	OnGroupMemberDeleted(groupMemberInfo string)
-	OnReceiveJoinGroupApplicationAdded(groupApplication string)
-	OnReceiveJoinGroupApplicationDeleted(groupApplication string) //todo
 	OnGroupApplicationAdded(groupApplication string)
 	OnGroupApplicationDeleted(groupApplication string)
 	OnGroupInfoChanged(groupInfo string)
@@ -40,8 +38,6 @@ type OnFriendshipListener interface {
 	OnFriendInfoChanged(friendInfo string)
 	OnBlackAdded(blackInfo string)
 	OnBlackDeleted(blackInfo string)
-	OnReceiveFriendApplicationAdded(friendApplication string)
-	OnReceiveFriendApplicationDeleted(friendApplication string)
 }
 type OnConversationListener interface {
 	OnSyncServerStart()

@@ -48,15 +48,6 @@ func (testGroupListener) OnGroupMemberDeleted(callbackInfo string) {
 
 }
 
-func (testGroupListener) OnReceiveJoinGroupApplicationAdded(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
-
-}
-func (testGroupListener) OnReceiveJoinGroupApplicationDeleted(callbackInfo string) {
-	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
-
-}
-
 func (testGroupListener) OnGroupApplicationAdded(callbackInfo string) {
 	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
 
@@ -382,7 +373,6 @@ func DoTestGetConversationRecvMessageOpt(conversationIDs string) {
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
 	open_im_sdk.GetConversationRecvMessageOpt(test, test.OperationID, conversationIDs)
 }
-
 
 func DoTestGetRecvGroupApplicationList() {
 	var test testProcessGroupApplication

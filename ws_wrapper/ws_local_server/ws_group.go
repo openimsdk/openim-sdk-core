@@ -23,13 +23,6 @@ func (g *GroupCallback) OnGroupMemberDeleted(groupMemberInfo string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", groupMemberInfo, "0"}, g.uid)
 }
 
-func (g *GroupCallback) OnReceiveJoinGroupApplicationAdded(groupApplication string) {
-	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", groupApplication, "0"}, g.uid)
-}
-func (g *GroupCallback) OnReceiveJoinGroupApplicationDeleted(groupApplication string) {
-	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", groupApplication, "0"}, g.uid)
-}
-
 func (g *GroupCallback) OnGroupApplicationAdded(groupApplication string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", groupApplication, "0"}, g.uid)
 }

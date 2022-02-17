@@ -8,13 +8,6 @@ type FriendCallback struct {
 	uid string
 }
 
-func (f *FriendCallback) OnReceiveFriendApplicationAdded(friendApplication string) {
-	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", friendApplication, "0"}, f.uid)
-}
-func (f *FriendCallback) OnReceiveFriendApplicationDeleted(applyUserInfo string) {
-	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", applyUserInfo, "0"}, f.uid)
-}
-
 func (f *FriendCallback) OnFriendApplicationAdded(applyUserInfo string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", applyUserInfo, "0"}, f.uid)
 }

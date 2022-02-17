@@ -343,6 +343,7 @@ func (f *Friend) SyncSelfFriendApplication(operationID string) {
 	}
 }
 
+//recv
 func (f *Friend) SyncFriendApplication(operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	svrList, err := f.getFriendApplicationFromServer(operationID)
@@ -368,7 +369,7 @@ func (f *Friend) SyncFriendApplication(operationID string) {
 		}
 		callbackData := sdk.FriendApplicationAddedCallback(*onServer[index])
 		//f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
-		f.friendListener.OnReceiveFriendApplicationAdded(utils.StructToJsonString(callbackData))
+		f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
 		log.Info(operationID, "OnReceiveFriendApplicationAdded", utils.StructToJsonString(callbackData))
 	}
 	for _, index := range sameA {
@@ -387,7 +388,7 @@ func (f *Friend) SyncFriendApplication(operationID string) {
 				log.Info(operationID, "OnFriendApplicationAccepted", utils.StructToJsonString(callbackData))
 			} else {
 				callbackData := sdk.FriendApplicationAddedCallback(*onServer[index])
-				f.friendListener.OnReceiveFriendApplicationAdded(utils.StructToJsonString(callbackData))
+				f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
 				log.Info(operationID, "OnReceiveFriendApplicationAdded", utils.StructToJsonString(callbackData))
 			}
 		}
@@ -399,7 +400,7 @@ func (f *Friend) SyncFriendApplication(operationID string) {
 			continue
 		}
 		callbackData := sdk.FriendApplicationDeletedCallback(*onLocal[index])
-		f.friendListener.OnReceiveFriendApplicationDeleted(utils.StructToJsonString(callbackData))
+		f.friendListener.OnFriendApplicationDeleted(utils.StructToJsonString(callbackData))
 		log.Info(operationID, "OnReceiveFriendApplicationDeleted", utils.StructToJsonString(callbackData))
 	}
 }

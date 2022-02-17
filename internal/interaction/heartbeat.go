@@ -16,17 +16,23 @@ import (
 type Heartbeat struct {
 	//*Ws
 	*MsgSync
-	cmdCh chan common.Cmd2Value //waiting logout cmd
+	cmdCh             chan common.Cmd2Value //waiting logout cmd
+	heartbeatInterval int
+}
+
+func (u *Heartbeat) SetHeartbeatInterval(heartbeatInterval int) {
+	u.heartbeatInterval = heartbeatInterval
 }
 
 func NewHeartbeat(msgSync *MsgSync, cmcCh chan common.Cmd2Value) *Heartbeat {
 	p := Heartbeat{MsgSync: msgSync, cmdCh: cmcCh}
+	p.heartbeatInterval = 30
 	go p.Run()
 	return &p
 }
 
 func (u *Heartbeat) Run() {
-	heartbeatInterval := 30
+	//	heartbeatInterval := 30
 	reqTimeout := 30
 	retryTimes := 0
 	heartbeatNum := 0
@@ -42,8 +48,8 @@ func (u *Heartbeat) Run() {
 					runtime.Goexit()
 				}
 				log.Warn(operationID, "other cmd...", r.Cmd)
-			case <-time.After(time.Millisecond * time.Duration(heartbeatInterval*1000)):
-				log.Debug(operationID, "heartbeat waiting(ms)... ", heartbeatInterval*1000)
+			case <-time.After(time.Millisecond * time.Duration(u.heartbeatInterval*1000)):
+				log.Debug(operationID, "heartbeat waiting(ms)... ", u.heartbeatInterval*1000)
 			}
 		}
 

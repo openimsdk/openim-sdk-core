@@ -190,7 +190,7 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 	log.Info(operationID, "send to svr logout ...", u.loginUserID)
 	resp, err := u.ws.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID, operationID)
 	if err != nil {
-		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
+		log.Warn(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
 		//if callback != nil {
 		//	callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
 		//} else {
@@ -265,38 +265,3 @@ func (u *LoginMgr) uploadImage(callback open_im_sdk_callback.Base, filePath stri
 		return ""
 	}
 }
-
-//func (u *open_im_sdk.UserRelated) kickOnline(msg utils.GeneralWsResp) {
-//	utils.sdkLog("kickOnline ", msg.ReqIdentifier, msg.ErrCode, msg.ErrMsg)
-//	u.logout(nil)
-//	u.cb.OnKickedOffline()
-//}
-
-//
-//func (u *open_im_sdk.UserRelated) forycedSyncReceiveMessageOpt() {
-//	OperationID := utils.operationIDGenerator()
-//	resp, err := utils.post2ApiForRead(open_im_sdk.getAllConversationMessageOptRouter, open_im_sdk.paramGetAllConversationMessageOpt{OperationID: OperationID}, u.token)
-//	if err != nil {
-//		utils.sdkLog("post2Api failed, ", open_im_sdk.getAllConversationMessageOptRouter, OperationID)
-//		return
-//	}
-//	var v open_im_sdk.getReceiveMessageOptResp
-//	err = json.Unmarshal(resp, &v)
-//	if err != nil {
-//		utils.sdkLog("Unmarshal failed ", resp, OperationID)
-//		return
-//	}
-//	if v.ErrCode != 0 {
-//		utils.sdkLog("errCode failed, ", v.ErrCode, v.ErrMsg, string(resp), OperationID)
-//		return
-//	}
-//
-//	utils.sdkLog("get receive opt ", v)
-//	u.receiveMessageOptMutex.Lock()
-//	for _, v := range v.Data {
-//		if v.Result != 0 {
-//			u.receiveMessageOpt[v.ConversationId] = v.Result
-//		}
-//	}
-//	u.receiveMessageOptMutex.Unlock()
-//}
