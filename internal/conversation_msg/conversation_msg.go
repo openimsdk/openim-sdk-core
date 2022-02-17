@@ -81,8 +81,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	var exceptionMsg []*db.LocalErrChatLog
 	var newMessages, msgReadList, msgRevokeList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory bool
-	conversationChangedSet := make(map[string]db.LocalConversation)
-	newConversationSet := make(map[string]db.LocalConversation)
+	conversationChangedSet := make(map[string]*db.LocalConversation)
+	newConversationSet := make(map[string]*db.LocalConversation)
+	conversationSet := make(map[string]*db.LocalConversation)
 	log.Info(operationID, "do Msg come here")
 	for _, v := range allMsg {
 		isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
@@ -184,7 +185,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					lc.UnreadCount = 1
 				}
 				if isConversationUpdate {
-					c.updateConversation(&lc, conversationChangedSet, newConversationSet)
+					c.updateConversation(&lc, conversationSet)
 					newMessages = append(newMessages, msg)
 				} else {
 					msg.Status = constant.MsgStatusFiltered
@@ -225,7 +226,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 
 				//u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, UpdateFaceUrlAndNickName, c}})
 				if isConversationUpdate {
-					c.updateConversation(&lc, conversationChangedSet, newConversationSet)
+					c.updateConversation(&lc, conversationSet)
 					newMessages = append(newMessages, msg)
 				} else {
 					msg.Status = constant.MsgStatusFiltered
@@ -247,6 +248,14 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			}
 		}
 	}
+	log.Info(operationID, "generate conversation map is :", conversationSet)
+	list, err := c.db.GetAllConversationList()
+	if err != nil {
+		log.Error(operationID, "GetAllConversationList", "error", err.Error())
+	}
+	m := make(map[string]*db.LocalConversation)
+	listToMap(list, m)
+	diff(m, conversationSet, conversationChangedSet, newConversationSet)
 	log.Info(operationID, "trigger map is :", "newConversations", newConversationSet, "changedConversations", conversationChangedSet)
 	//seq sync message update
 	err5 := c.db.BatchUpdateMessageList(updateMsg)
@@ -296,7 +305,31 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	//sdkLog("length msgListenerList", u.MsgListenerList, "length message", len(newMessages), "msgListenerLen", len(u.MsgListenerList))
 
 }
+func listToMap(list []*db.LocalConversation, m map[string]*db.LocalConversation) {
+	for _, v := range list {
+		m[v.ConversationID] = v
+	}
 
+}
+func diff(local, generated, cc, nc map[string]*db.LocalConversation) {
+	for _, v := range generated {
+		if localC, ok := local[v.ConversationID]; ok {
+			if v.LatestMsgSendTime > localC.LatestMsgSendTime {
+				localC.UnreadCount = localC.UnreadCount + v.UnreadCount
+				localC.LatestMsg = v.LatestMsg
+				localC.LatestMsgSendTime = v.LatestMsgSendTime
+				cc[v.ConversationID] = localC
+			} else {
+				localC.UnreadCount = localC.UnreadCount + v.UnreadCount
+				cc[v.ConversationID] = localC
+			}
+
+		} else {
+			nc[v.ConversationID] = v
+		}
+	}
+
+}
 func (c *Conversation) msgStructToLocalChatLog(m *sdk_struct.MsgStruct) *db.LocalChatLog {
 	var lc db.LocalChatLog
 	copier.Copy(&lc, m)
@@ -593,52 +626,65 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 
 	return err
 }
-func (c *Conversation) updateConversation(lc *db.LocalConversation, cc, nc map[string]db.LocalConversation) {
-	if oldC, ok := cc[lc.ConversationID]; !ok {
-		oc, err := c.db.GetConversation(lc.ConversationID)
-		if err == nil && oc.ConversationID != "" {
-			if lc.LatestMsgSendTime > oc.LatestMsgSendTime {
-				oc.UnreadCount = oc.UnreadCount + lc.UnreadCount
-				oc.LatestMsg = lc.LatestMsg
-				oc.LatestMsgSendTime = lc.LatestMsgSendTime
-				cc[lc.ConversationID] = *oc
-			} else {
-				oc.UnreadCount = oc.UnreadCount + lc.UnreadCount
-				cc[lc.ConversationID] = *oc
-			}
-		} else {
-			if oldC, ok := nc[lc.ConversationID]; !ok {
-				c.addFaceURLAndName(lc)
-				nc[lc.ConversationID] = *lc
-			} else {
-				if lc.LatestMsgSendTime > oldC.LatestMsgSendTime {
-					oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
-					oldC.LatestMsg = lc.LatestMsg
-					oldC.LatestMsgSendTime = lc.LatestMsgSendTime
-					nc[lc.ConversationID] = oldC
-				} else {
-					oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
-					nc[lc.ConversationID] = oldC
-				}
-			}
-		}
+func (c *Conversation) updateConversation(lc *db.LocalConversation, cs map[string]*db.LocalConversation) {
+	if oldC, ok := cs[lc.ConversationID]; !ok {
+		cs[lc.ConversationID] = lc
 	} else {
 		if lc.LatestMsgSendTime > oldC.LatestMsgSendTime {
 			oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
 			oldC.LatestMsg = lc.LatestMsg
 			oldC.LatestMsgSendTime = lc.LatestMsgSendTime
-			cc[lc.ConversationID] = oldC
+			cs[lc.ConversationID] = oldC
 		} else {
 			oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
-			cc[lc.ConversationID] = oldC
+			cs[lc.ConversationID] = oldC
 		}
-
 	}
+	//if oldC, ok := cc[lc.ConversationID]; !ok {
+	//	oc, err := c.db.GetConversation(lc.ConversationID)
+	//	if err == nil && oc.ConversationID != "" {//如果会话已经存在
+	//		if lc.LatestMsgSendTime > oc.LatestMsgSendTime {
+	//			oc.UnreadCount = oc.UnreadCount + lc.UnreadCount
+	//			oc.LatestMsg = lc.LatestMsg
+	//			oc.LatestMsgSendTime = lc.LatestMsgSendTime
+	//			cc[lc.ConversationID] = *oc
+	//		} else {
+	//			oc.UnreadCount = oc.UnreadCount + lc.UnreadCount
+	//			cc[lc.ConversationID] = *oc
+	//		}
+	//	} else {
+	//		if oldC, ok := nc[lc.ConversationID]; !ok {
+	//			c.addFaceURLAndName(lc)
+	//			nc[lc.ConversationID] = *lc
+	//		} else {
+	//			if lc.LatestMsgSendTime > oldC.LatestMsgSendTime {
+	//				oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
+	//				oldC.LatestMsg = lc.LatestMsg
+	//				oldC.LatestMsgSendTime = lc.LatestMsgSendTime
+	//				nc[lc.ConversationID] = oldC
+	//			} else {
+	//				oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
+	//				nc[lc.ConversationID] = oldC
+	//			}
+	//		}
+	//	}
+	//} else {
+	//	if lc.LatestMsgSendTime > oldC.LatestMsgSendTime {
+	//		oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
+	//		oldC.LatestMsg = lc.LatestMsg
+	//		oldC.LatestMsgSendTime = lc.LatestMsgSendTime
+	//		cc[lc.ConversationID] = oldC
+	//	} else {
+	//		oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
+	//		cc[lc.ConversationID] = oldC
+	//	}
+	//
+	//}
 
 }
-func mapConversationToList(m map[string]db.LocalConversation) (cs []*db.LocalConversation) {
+func mapConversationToList(m map[string]*db.LocalConversation) (cs []*db.LocalConversation) {
 	for _, v := range m {
-		cs = append(cs, &v)
+		cs = append(cs, v)
 	}
 	return cs
 }
