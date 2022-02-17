@@ -463,7 +463,7 @@ func (c *Conversation) checkErrAndUpdateMessage(callback open_im_sdk_callback.Se
 func (c *Conversation) updateMsgStatusAndTriggerConversation(clientMsgID, serverMsgID string, sendTime int64, status int32, s *sdk_struct.MsgStruct, lc *db.LocalConversation, operationID string) {
 	err := c.db.UpdateMessageTimeAndStatus(clientMsgID, serverMsgID, sendTime, status)
 	if err != nil {
-		log.Error(operationID, "send message update message status error", clientMsgID, serverMsgID)
+		log.Error(operationID, "send message update message status error", sendTime, status, clientMsgID, serverMsgID, err.Error())
 	}
 	s.SendTime = sendTime
 	s.Status = status
@@ -848,12 +848,13 @@ func (c *Conversation) CreateForwardMessage(m, operationID string) string {
 		return ""
 	}
 	if s.Status != constant.MsgStatusSendSuccess {
-		log.Error("internal", "only send success message can be revoked")
+		log.Error("internal", "only send success message can be Forward")
 		return ""
 	}
 	c.initBasicInfo(&s, constant.UserMsgType, s.ContentType, operationID)
 	//Forward message seq is set to 0
 	s.Seq = 0
+	s.Status = constant.MsgStatusSendSuccess
 	return utils.StructToJsonString(s)
 }
 func (c *Conversation) GetHistoryMessageList(callback open_im_sdk_callback.Base, getMessageOptions, operationID string) {
