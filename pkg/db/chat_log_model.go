@@ -170,7 +170,7 @@ func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, start
 func (d *DataBase) UpdateMessageHasRead(sendID string, msgIDList []string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Model(LocalChatLog{}).Debug().Where("send_id=? And is_read=?AND session_type=?AND client_msg_id in ?", sendID, constant.NotRead, constant.SingleChatType, msgIDList).Updates(LocalChatLog{IsRead: true})
+	t := d.conn.Model(LocalChatLog{}).Debug().Where("send_id=? And is_read=? AND session_type=? AND client_msg_id in ?", sendID, constant.NotRead, constant.SingleChatType, msgIDList).Updates(LocalChatLog{IsRead: true})
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
