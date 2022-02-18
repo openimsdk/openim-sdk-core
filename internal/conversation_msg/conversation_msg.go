@@ -161,11 +161,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				case constant.SingleChatType:
 					lc.ConversationID = utils.GetConversationIDBySessionType(v.RecvID, constant.SingleChatType)
 					lc.UserID = v.RecvID
-					//switch v.ContentType {
-					//case constant.ConversationOptChangeNotification:
-					//	log.Info(operationID, utils.GetSelfFuncName(), v)
-					//	c.DoNotification(v)
-					//}
+					switch v.ContentType {
+					case constant.ConversationOptChangeNotification:
+						log.Info(operationID, utils.GetSelfFuncName(), v)
+						c.DoNotification(v)
+					}
 					//localUserInfo,_ := c.user.GetLoginUser()
 					//c.FaceURL = localUserInfo.FaceUrl
 					//c.ShowName = localUserInfo.Nickname

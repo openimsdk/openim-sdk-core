@@ -158,17 +158,17 @@ func (c *Conversation) SyncConversations(operationID string) {
 	for _, index := range aInBNot {
 		conversation := conversationsOnServer[index]
 		conversation.LatestMsgSendTime = time.Now().Unix()
-		err := c.db.InsertConversation(conversation)
-		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation failed ", err.Error(), conversation)
-			continue
-		}
+		//err := c.db.InsertConversation(conversation)
+		//if err != nil {
+		//	log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation failed ", err.Error(), conversation)
+		//	continue
+		//}
 	}
 
 	for _, index := range sameA {
 		err := c.db.UpdateConversation(conversationsOnServer[index])
 		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation failed ", err.Error(), *conversationsOnServer[index])
+			log.NewError(operationID, utils.GetSelfFuncName(), "UpdateConversation failed ", err.Error(), *conversationsOnServer[index])
 			continue
 		}
 	}
