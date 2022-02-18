@@ -43,10 +43,11 @@ func (c *Conversation) SetMsgListener(msgListener open_im_sdk_callback.OnAdvance
 func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 	ch chan common.Cmd2Value, loginUserID string, platformID int32, dataDir string,
 	friend *friend.Friend, group *group.Group, user *user.User,
-	objectStorage common2.ObjectStorage) *Conversation {
+	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener, msgListener open_im_sdk_callback.OnAdvancedMsgListener) *Conversation {
 	n := &Conversation{Ws: ws, db: db, p: p, ch: ch, loginUserID: loginUserID, platformID: platformID, DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage}
 	go common.DoListener(n)
-
+	n.SetMsgListener(msgListener)
+	n.SetConversationListener(conversationListener)
 	return n
 }
 
