@@ -148,6 +148,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.conversation = conv.NewConversation(u.ws, u.db, p, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
 		u.friend, u.group, u.user, objStorage)
+	u.conversation.SyncConversations(operationID)
 	u.conversation.SetConversationListener(u.conversationListener)
 	u.conversation.SetMsgListener(u.advancedMsgListener)
 	log.Info(operationID, "login success...")
