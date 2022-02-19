@@ -142,8 +142,10 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		err = errors.New("u.imConfig.ObjectStorage failed ")
 		common.CheckConfigErrCallback(cb, err, operationID)
 	}
+	log.NewInfo(operationID, u.imConfig.ObjectStorage)
 	u.forcedSynchronization()
 	log.Info(operationID, "forcedSynchronization success...")
+	log.NewInfo(operationID, u.imConfig.ObjectStorage)
 	objStorage := comm2.NewCOS(p)
 	u.conversation = conv.NewConversation(u.ws, u.db, p, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,

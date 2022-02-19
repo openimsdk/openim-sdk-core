@@ -1,16 +1,18 @@
 package test
 
 import (
+	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
-
 	//	"encoding/json"
 	"fmt"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	//"open_im_sdk/internal/open_im_sdk"
 	//"open_im_sdk/pkg/utils"
+
+	"open_im_sdk/internal/common"
 )
 
 type XBase struct {
@@ -244,7 +246,51 @@ func DotestGetGroupMemberList() {
 	test.OperationID = utils.OperationIDGenerator()
 	var groupId = TestgroupID
 	//open_im_sdk.GetGroupMemberList(test, test.OperationID, groupId, 1, 30)
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ", groupId, 1, 30)
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "./main/main.go", groupId, 1, 30)
+}
+
+func DotestCos() {
+	//var callback baseCallback
+	//p := ws.NewPostApi(token, userForSDK.ImConfig().ApiAddr)
+	//var storage common.ObjectStorage = common.NewCOS(p)
+	//test(storage, callback)
+}
+
+func DotestMinio() {
+	var callback baseCallback
+	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxMzkwMDAwMDAwMCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxNjQ1NzgyNDY0LCJuYmYiOjE2NDUxNzc2NjQsImlhdCI6MTY0NTE3NzY2NH0.T-SDoLxdlwRGOMZPIKriPtAlOGWCLodsGi1dWxN8kto"
+	p := ws.NewPostApi(token, "http://127.0.0.1:10000")
+	minio := common.NewMinio(p)
+	var storage common.ObjectStorage = minio
+	log.NewInfo("", *minio)
+	test(storage, callback)
+}
+
+func test(storage common.ObjectStorage, callback baseCallback) {
+	//dir, newName, err := storage.UploadFile("./main/main.go",  func(progress int) {
+	//	if progress == 100 {
+	//		callback.OnSuccess("")
+	//	}
+	//})
+	//log.NewInfo("0", dir, newName, err)
+	dir, newName, err := storage.UploadImage("C:\\Users\\Administrator\\Desktop\\1.jpg", func(progress int) {
+		if progress == 100 {
+			callback.OnSuccess("")
+		}
+	})
+	log.NewInfo("0", dir, newName, err, err)
+	//dir, newName, err = storage.UploadSound("./main/main.go", func(progress int) {
+	//	if progress == 100 {
+	//		callback.OnSuccess("")
+	//	}
+	//})
+	//log.NewInfo("0", dir, newName, err, err)
+	//snapshotURL, snapshotUUID, videoURL, videoUUID, err := storage.UploadVideo("./main/main.go", "", func(progress int) {
+	//	if progress == 100 {
+	//		callback.OnSuccess("")
+	//	}
+	//})
+	//log.NewInfo(snapshotURL, snapshotUUID, videoURL, videoUUID, err)
 }
 
 type testGetGroupMembersInfo struct {

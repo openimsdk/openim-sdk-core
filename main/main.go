@@ -3,16 +3,16 @@ package main
 import (
 	"encoding/json"
 	"github.com/pkg/errors"
-	//"open_im_sdk/pkg/constant"
-
-	//"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/network"
-	"open_im_sdk/pkg/utils"
 	"open_im_sdk/test"
+
+	//"open_im_sdk/pkg/constant"
 
 	"fmt"
 	"io/ioutil"
 	"net"
+	//"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/network"
+	"open_im_sdk/pkg/utils"
 	"os"
 	"strconv"
 	"strings"
@@ -21,10 +21,10 @@ import (
 
 func main() {
 
-	strMyUidx := "18666662412"
+	//strMyUidx := "13900000000"
 	//friendUserID := "openIM2222"
-	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxODY2NjY2MjQxMiIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxNjQ1NjE2NzI2LCJuYmYiOjE2NDUwMTE5MjYsImlhdCI6MTY0NTAxMTkyNn0.AR9khKiUXNDUu1gxNY7cqeZmmDyIMXFd6hlnJsppt0o"
-	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxMzkwMDAwMDAwMCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxNjQ1ODYyMzIzLCJuYmYiOjE2NDUyNTc1MjMsImlhdCI6MTY0NTI1NzUyM30.TsrIgtKZhnbAUjjGFNnJvdzVQECLIaIJy_bvfRlNF4k"
+	//test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	//test.DoTestCreateGroup()
 	//test.SetTestFriendID(friendUserID)
 	//fmt.Println("logout ........... ")
@@ -38,8 +38,9 @@ func main() {
 	//	test.DoTestCreateGroup()
 
 	//	test.DoSetGroupInfo()
-	//	test.DotestGetGroupMemberList()
-	//	test.DotestKickGroupMember()
+	//test.DotestGetGroupMemberList()
+	test.DotestMinio()
+	//test.DotestKickGroupMember()
 	//	test.DotestInviteUserToGroup()
 	//test.DotestGetGroupApplicationList()
 
@@ -68,12 +69,12 @@ func main() {
 	//	open_im_sdk.DoTestDeleteFromBlackList()
 	//DoTestGetDesignatedFriendsInfo()
 	//test.DoTestSendMsg(strMyUidx, test.Friend_uid)
-	test.DoTestSendImageMsg("", test.Friend_uid)
-	for true {
-		time.Sleep(time.Duration(100) * time.Second)
-		//	test.DoTestSendMsg(strMyUidx, test.Friend_uid)
-		fmt.Println("waiting")
-	}
+	//test.DoTestSendImageMsg("", test.Friend_uid)
+	//for true {
+	//	time.Sleep(time.Duration(100) * time.Second)
+	//	//	test.DoTestSendMsg(strMyUidx, test.Friend_uid)
+	//	fmt.Println("waiting")
+	//}
 	//
 	//return
 	//
