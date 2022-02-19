@@ -184,7 +184,7 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
 	}
 
-	timeout := 5
+	timeout := 2
 	retryTimes := 0
 	log.Info(operationID, "send to svr logout ...", u.loginUserID)
 	resp, err := u.ws.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID, operationID)
