@@ -25,6 +25,8 @@ func main() {
 	//friendUserID := "openIM2222"
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxMzkwMDAwMDAwMCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxNjQ1ODYyMzIzLCJuYmYiOjE2NDUyNTc1MjMsImlhdCI6MTY0NTI1NzUyM30.TsrIgtKZhnbAUjjGFNnJvdzVQECLIaIJy_bvfRlNF4k"
 	//test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxODY2NjY2MjQxMiIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxNjQ1Njg5NjU3LCJuYmYiOjE2NDUwODQ4NTcsImlhdCI6MTY0NTA4NDg1N30.nV3cIcvaRjyUEay8G7UMe5LzKeNi6UenET1RXDT4Nao"
+	//test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	//test.DoTestCreateGroup()
 	//test.SetTestFriendID(friendUserID)
 	//fmt.Println("logout ........... ")
@@ -75,6 +77,17 @@ func main() {
 	//	//	test.DoTestSendMsg(strMyUidx, test.Friend_uid)
 	//	fmt.Println("waiting")
 	//}
+	//	test.DoTestSendImageMsg("", test.Friend_uid)
+	i := 0
+	for true {
+
+		time.Sleep(time.Duration(1) * time.Second)
+
+		//test.DoTestSendMsg(strMyUidx, test.Friend_uid)
+		i++
+		fmt.Println("DoTestSendMsg count: ", i)
+		fmt.Println("waiting")
+	}
 	//
 	//return
 	//
