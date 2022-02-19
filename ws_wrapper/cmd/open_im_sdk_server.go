@@ -17,6 +17,8 @@ import (
 	"open_im_sdk/ws_wrapper/ws_local_server"
 	"runtime"
 	"sync"
+
+	"github.com/spf13/viper"
 )
 
 func main() {
@@ -49,8 +51,12 @@ func main() {
 			WsAddr: *openIMWsAddress, Platform: utils.OSXPlatformID, DataDir: "./"})
 	case "linux":
 		//sdkDBDir:= flag.String("sdk_db_dir","","openIMSDK initialization path")
+		dir := viper.GetString("DB_DIR")
+		if dir == "" {
+			dir = "../db/sdk/"
+		}
 		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: utils.API_ENDPOINT,
-			WsAddr: utils.API_ENDPOINT, Platform: utils.WebPlatformID, DataDir: "../db/sdk/"})
+			WsAddr: utils.API_ENDPOINT, Platform: utils.WebPlatformID, DataDir: dir})
 
 	case "windows":
 		//	sdkWsPort = flag.Int("sdk_ws_port", 7799, "openIM ws listening port")

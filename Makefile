@@ -6,11 +6,9 @@ DEPLOY_DIR=../../deploy/
 LAN_FILE=.go
 GO_FILE:=${BINARY_NAME}${LAN_FILE}
 
-build-win:
-	go env -w GOOS=linux 
+build-linux:
 	go mod tidy
-	go build -o open_im_sdk_server ws_wrapper/cmd/open_im_sdk_server.go
-	go env -w GOOS=windows
+	CGO_ENABLED=1 go build -o open_im_sdk_server ws_wrapper/cmd/open_im_sdk_server.go
 
 # 打包 open_im_sdk
 build-image:
