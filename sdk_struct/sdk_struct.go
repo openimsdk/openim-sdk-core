@@ -893,7 +893,7 @@ type MsgStruct struct {
 	NotificationElem struct {
 		Detail      string `json:"detail"`
 		DefaultTips string `json:"defaultTips"`
-	}
+	} `json:"notificationElem"`
 	//RevokeMessage struct {
 	//	ServerMsgID    string `json:"serverMsgID"`
 	//	SendID         string `json:"sendID"`
