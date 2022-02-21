@@ -251,7 +251,7 @@ func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req 
 	switch req.SessionType {
 	case constant.SingleChatType:
 		recvID = req.RecvID
-		conversationID = utils.GetConversationIDBySessionType(groupID, constant.SingleChatType)
+		conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
 	case constant.GroupChatType:
 		groupID = req.GroupID
 		conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
@@ -261,7 +261,11 @@ func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req 
 	req.Content = message.ClientMsgID
 	req.ClientMsgID = utils.GetMsgID(message.SendID)
 	req.ContentType = constant.Revoke
+	req.SendTime = 0
+	req.CreateTime = utils.GetCurrentTimestampByMill()
 	options := make(map[string]bool, 5)
+	utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
+	utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
 	resp, _ := c.internalSendMessage(callback, (*sdk_struct.MsgStruct)(&req), recvID, groupID, operationID, &server_api_params.OfflinePushInfo{}, false, options)
 	req.ServerMsgID = resp.ServerMsgID
 	req.SendTime = resp.SendTime

@@ -216,6 +216,6 @@ const (
 	Female = 2
 )
 
-const BigVersion = "3"
+const BigVersion = "v2"
 const UpdateVersion = ".0.0"
-const SdkVersion = "Open-IM-SDK-Core-v"
+const SdkVersion = "Open-IM-SDK-Core-"
