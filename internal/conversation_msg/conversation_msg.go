@@ -181,10 +181,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					//	c.FaceURL = faceUrl
 					//}
 				}
-				if isUnreadCount {
-					isTriggerUnReadCount = true
-					lc.UnreadCount = 1
-				}
 				if isConversationUpdate {
 					c.updateConversation(&lc, conversationSet)
 					newMessages = append(newMessages, msg)
