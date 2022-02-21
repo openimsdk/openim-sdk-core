@@ -19,7 +19,28 @@ type DataBase struct {
 
 func NewDataBase(loginUserID string, dbDir string) (*DataBase, error) {
 	dataBase := &DataBase{loginUserID: loginUserID, dbDir: dbDir}
-	return dataBase, utils.Wrap(dataBase.initDB(), "db init error")
+	err := dataBase.initDB()
+	if err != nil {
+		return dataBase, utils.Wrap(err, "initDB failed")
+	}
+	dataBase.setChatLogFailedStatus()
+	return dataBase, nil
+}
+
+func (d *DataBase) setChatLogFailedStatus() {
+	msgList, err := d.GetSendingMessageList()
+	if err != nil {
+		log.Error("", "GetSendingMessageList failed ", err.Error())
+		return
+	}
+	for _, v := range msgList {
+		v.Status = constant.MsgStatusSendFailed
+		err := d.UpdateMessage(v)
+		if err != nil {
+			log.Error("", "UpdateMessage failed ", err.Error(), v)
+			continue
+		}
+	}
 }
 
 func (d *DataBase) initDB() error {

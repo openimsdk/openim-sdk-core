@@ -42,6 +42,7 @@ type LocalFriend struct {
 	Birth          uint32 `gorm:"column:birth" json:"birth"`
 	Email          string `gorm:"column:email;type:varchar(64)" json:"email"`
 	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	AttachedInfo   string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 }
 
 //message FriendRequest{
@@ -74,6 +75,8 @@ type LocalFriendRequest struct {
 	HandleMsg     string `gorm:"column:handle_msg;type:varchar(255)" json:"handleMsg"`
 	HandleTime    uint32 `gorm:"column:handle_time" json:"handleTime"`
 	Ex            string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+
+	AttachedInfo string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 }
 
 //message GroupInfo{
@@ -119,6 +122,7 @@ type LocalGroup struct {
 	OwnerUserID   string `gorm:"column:owner_user_id;type:varchar(64)" json:"ownerUserID"`
 	MemberCount   int32  `gorm:"column:member_count" json:"memberCount"`
 	Ex            string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	AttachedInfo  string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 }
 
 //message GroupMemberFullInfo {
@@ -152,6 +156,7 @@ type LocalGroupMember struct {
 	JoinSource     int32  `gorm:"column:join_source" json:"joinSource"`
 	OperatorUserID string `gorm:"column:operator_user_id;type:varchar(64)" json:"operatorUserID"`
 	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	AttachedInfo   string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 }
 
 //message GroupRequest{
@@ -190,6 +195,7 @@ type LocalGroupRequest struct {
 	HandleUserID string `gorm:"column:handle_user_id;type:varchar(64)" json:"handleUserID"`
 	HandledTime  uint32 `gorm:"column:handle_time" json:"handledTime"`
 	Ex           string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	AttachedInfo string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 }
 
 //string UserID = 1;
@@ -214,6 +220,7 @@ type LocalUser struct {
 	CreateTime     uint32 `gorm:"column:create_time" json:"createTime"`
 	AppMangerLevel int32  `gorm:"column:app_manger_level" json:"-"`
 	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	AttachedInfo   string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 }
 
 //message BlackInfo{
@@ -235,6 +242,7 @@ type LocalBlack struct {
 	AddSource      int32  `gorm:"column:add_source" json:"addSource"`
 	OperatorUserID string `gorm:"column:operator_user_id;type:varchar(64)" json:"operatorUserID"`
 	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	AttachedInfo   string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 }
 
 type LocalSeqData struct {
