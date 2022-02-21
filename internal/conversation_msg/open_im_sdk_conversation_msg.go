@@ -80,7 +80,6 @@ func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callba
 		callback.OnSuccess(sdk_params_callback.SetConversationRecvMessageOptCallback)
 		log.NewInfo(operationID, "SetConversationRecvMessageOpt callback: ", sdk_params_callback.SetConversationRecvMessageOptCallback)
 	}()
-
 }
 func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList, operationID string) {
 	if callback == nil {
