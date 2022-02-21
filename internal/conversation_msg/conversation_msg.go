@@ -458,6 +458,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 				}
 			}
 		} else {
+			log.Info("this is new conversation", lc)
 			err4 := c.db.InsertConversation(&lc)
 			if err4 != nil {
 				log.Error("internal", "insert new conversation err:", err4.Error())
