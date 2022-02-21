@@ -462,12 +462,12 @@ func (wsRouter *WsFuncRouter) SearchLocalMessages(input string, operationID stri
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
-	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "searchParam") {
-		return
-	}
+	//if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "searchParam") {
+	//	return
+	//}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	userWorker.Conversation().SearchLocalMessages(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId},
-		m["searchParam"].(string), operationID)
+		input, operationID)
 }
 
 func (wsRouter *WsFuncRouter) CreateImageMessageByURL(input string, operationID string) {
