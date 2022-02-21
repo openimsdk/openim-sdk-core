@@ -251,7 +251,7 @@ func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req 
 	switch req.SessionType {
 	case constant.SingleChatType:
 		recvID = req.RecvID
-		conversationID = utils.GetConversationIDBySessionType(groupID, constant.SingleChatType)
+		conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
 	case constant.GroupChatType:
 		groupID = req.GroupID
 		conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
