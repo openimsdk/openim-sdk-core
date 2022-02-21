@@ -176,7 +176,7 @@ func (d *DataBase) GetSendingMessageList() (result []*LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []LocalChatLog
-	err = utils.Wrap(d.conn.Where("status = ?", constant.MsgStatusSendFailed).Find(&messageList).Error, "GetMessageList failed")
+	err = utils.Wrap(d.conn.Where("status = ?", constant.MsgStatusSending).Find(&messageList).Error, "GetMessageList failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)
