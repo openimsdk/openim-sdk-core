@@ -1,7 +1,6 @@
 package login
 
 import (
-	"errors"
 	comm2 "open_im_sdk/internal/common"
 	conv "open_im_sdk/internal/conversation_msg"
 	"open_im_sdk/internal/friend"
@@ -138,15 +137,21 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.group.SetGroupListener(u.groupListener)
 
 	u.full = full.NewFull(u.user, u.friend, u.group)
-	if u.imConfig.ObjectStorage != "cos" && u.imConfig.ObjectStorage != "" {
-		err = errors.New("u.imConfig.ObjectStorage failed ")
-		common.CheckConfigErrCallback(cb, err, operationID)
-	}
+	//if u.imConfig.ObjectStorage != "cos" && u.imConfig.ObjectStorage != "" {
+	//	err = errors.New("u.imConfig.ObjectStorage failed ")
+	//	common.CheckConfigErrCallback(cb, err, operationID)
+	//}
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
 	u.forcedSynchronization()
 	log.Info(operationID, "forcedSynchronization success...")
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
-	objStorage := comm2.NewCOS(p)
+	var objStorage comm2.ObjectStorage
+	switch u.imConfig.ObjectStorage {
+	case "cos":
+		objStorage = comm2.NewCOS(p)
+	case "minio":
+		objStorage = comm2.NewMinio(p)
+	}
 	u.conversation = conv.NewConversation(u.ws, u.db, p, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener)

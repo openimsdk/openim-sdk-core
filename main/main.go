@@ -21,10 +21,10 @@ import (
 
 func main() {
 
-	//strMyUidx := "13900000000"
+	strMyUidx := "13900000000"
 	//friendUserID := "openIM2222"
-	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxMzkwMDAwMDAwMCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxNjQ1ODYyMzIzLCJuYmYiOjE2NDUyNTc1MjMsImlhdCI6MTY0NTI1NzUyM30.TsrIgtKZhnbAUjjGFNnJvdzVQECLIaIJy_bvfRlNF4k"
-	//test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxMzkwMDAwMDAwMCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYwNzk0Mjg0LCJuYmYiOjE2NDU0MzQyODQsImlhdCI6MTY0NTQzNDI4NH0.pchFgEhL6vaYirWuAbMnVTcrQTk552i50_SWXlOHbuo"
+	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxODY2NjY2MjQxMiIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxNjQ1Njg5NjU3LCJuYmYiOjE2NDUwODQ4NTcsImlhdCI6MTY0NTA4NDg1N30.nV3cIcvaRjyUEay8G7UMe5LzKeNi6UenET1RXDT4Nao"
 	//test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	//test.DoTestCreateGroup()
@@ -41,7 +41,7 @@ func main() {
 
 	//	test.DoSetGroupInfo()
 	//test.DotestGetGroupMemberList()
-	test.DotestMinio()
+	//test.DotestMinio()
 	//test.DotestKickGroupMember()
 	//	test.DotestInviteUserToGroup()
 	//test.DotestGetGroupApplicationList()
