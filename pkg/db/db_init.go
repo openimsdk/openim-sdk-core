@@ -29,7 +29,7 @@ func (d *DataBase) initDB() error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 
-	dbFileName := d.dbDir + "OpenIM_" + "v" + constant.BigVersion + "_" + d.loginUserID + ".db"
+	dbFileName := d.dbDir + "OpenIM_" + constant.BigVersion + "_" + d.loginUserID + ".db"
 	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
 	log.Info("open db:", dbFileName)
 	if err != nil {
