@@ -127,7 +127,6 @@ func (c *Conversation) DeleteConversation(callback open_im_sdk_callback.Base, co
 		log.NewInfo(operationID, "DeleteConversation args: ", conversationID)
 		c.deleteConversation(callback, conversationID, operationID)
 		callback.OnSuccess(sdk_params_callback.DeleteConversationCallback)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.TotalUnreadMessageChanged, Args: ""}, c.ch)
 		log.NewInfo(operationID, "DeleteConversation callback: ", sdk_params_callback.DeleteConversationCallback)
 	}()
 }
