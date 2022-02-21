@@ -99,7 +99,7 @@ func (c *Conversation) deleteConversation(callback open_im_sdk_callback.Base, co
 	err = c.db.UpdateMessageStatusBySourceID(sourceID, constant.MsgStatusHasDeleted, lc.ConversationType)
 	common.CheckDBErrCallback(callback, err, operationID)
 	//Reset the session information, empty session
-	err = c.db.ResetConversation(conversationID)
+	err = c.db.DeleteConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 

@@ -53,10 +53,10 @@ func (d *DataBase) InsertConversation(conversationList *LocalConversation) error
 	return utils.Wrap(d.conn.Create(conversationList).Error, "InsertConversation failed")
 }
 
-func (d *DataBase) DeleteConversation(conversation *LocalConversation) error {
+func (d *DataBase) DeleteConversation(conversationID string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.Delete(conversation).Where("conversation_id = ?", conversation.ConversationID).Error, "DeleteConversation failed")
+	return utils.Wrap(d.conn.Delete(&LocalConversation{}, conversationID).Error, "DeleteConversation failed")
 }
 
 func (d *DataBase) GetConversation(conversationID string) (*LocalConversation, error) {
