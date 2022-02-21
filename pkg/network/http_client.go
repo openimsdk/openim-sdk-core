@@ -4,11 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 
-	//"fmt"
-
-	//"fmt"
 	"io/ioutil"
 	"net/http"
 	"open_im_sdk/pkg/utils"
@@ -78,6 +74,6 @@ func postLogic(url string, data interface{}, token string) (content []byte, err 
 	if err != nil {
 		return nil, utils.Wrap(err, "ioutil.ReadAll failed, url")
 	}
-	fmt.Println(url, "Marshal data: ", string(jsonStr), string(result))
+	//	fmt.Println(url, "Marshal data: ", string(jsonStr), string(result))
 	return result, nil
 }
