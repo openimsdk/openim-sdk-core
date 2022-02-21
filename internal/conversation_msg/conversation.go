@@ -261,6 +261,8 @@ func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req 
 	req.Content = message.ClientMsgID
 	req.ClientMsgID = utils.GetMsgID(message.SendID)
 	req.ContentType = constant.Revoke
+	req.SendTime = 0
+	req.CreateTime = utils.GetCurrentTimestampByMill()
 	options := make(map[string]bool, 5)
 	utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
 	utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
