@@ -56,7 +56,7 @@ func (d *DataBase) InsertConversation(conversationList *LocalConversation) error
 func (d *DataBase) DeleteConversation(conversationID string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.Delete(&LocalConversation{}, conversationID).Error, "DeleteConversation failed")
+	return utils.Wrap(d.conn.Where("conversation_id = ?", conversationID).Delete(&LocalConversation{}).Error, "DeleteConversation failed")
 }
 
 func (d *DataBase) GetConversation(conversationID string) (*LocalConversation, error) {
