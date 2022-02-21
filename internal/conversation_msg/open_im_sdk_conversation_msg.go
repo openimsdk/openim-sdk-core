@@ -481,8 +481,12 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 		//参数校验
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
-		p := server_api_params.OfflinePushInfo{}
-		common.JsonUnmarshalAndArgsValidate(offlinePushInfo, &p, callback, operationID)
+		p := &server_api_params.OfflinePushInfo{}
+		if offlinePushInfo == "" {
+			p = nil
+		} else {
+			common.JsonUnmarshalAndArgsValidate(offlinePushInfo, &p, callback, operationID)
+		}
 		if recvID == "" && groupID == "" {
 			common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not be allowed"), operationID)
 		}
@@ -603,15 +607,19 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 		msgStructToLocalChatLog(&localMessage, &s)
 		err = c.db.UpdateMessage(&localMessage)
 		common.CheckAnyErrCallback(callback, 201, err, operationID)
-		c.sendMessageToServer(&s, lc, callback, delFile, &p, options, operationID)
+		c.sendMessageToServer(&s, lc, callback, delFile, p, options, operationID)
 	}()
 }
 func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCallBack, message, recvID, groupID string, offlinePushInfo string, operationID string) {
 	go func() {
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
-		p := server_api_params.OfflinePushInfo{}
-		common.JsonUnmarshalAndArgsValidate(offlinePushInfo, &p, callback, operationID)
+		p := &server_api_params.OfflinePushInfo{}
+		if offlinePushInfo == "" {
+			p = nil
+		} else {
+			common.JsonUnmarshalAndArgsValidate(offlinePushInfo, &p, callback, operationID)
+		}
 		if recvID == "" && groupID == "" {
 			common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not be allowed"), operationID)
 		}
@@ -663,7 +671,7 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 		msgStructToLocalChatLog(&localMessage, &s)
 		err = c.db.UpdateMessage(&localMessage)
 		common.CheckAnyErrCallback(callback, 201, err, operationID)
-		c.sendMessageToServer(&s, &lc, callback, delFile, &p, options, operationID)
+		c.sendMessageToServer(&s, &lc, callback, delFile, p, options, operationID)
 
 	}()
 }
