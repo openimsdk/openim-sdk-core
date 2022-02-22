@@ -146,11 +146,14 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	log.Info(operationID, "forcedSynchronization success...")
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
 	var objStorage comm2.ObjectStorage
+	objStorage = comm2.NewCOS(p)
 	switch u.imConfig.ObjectStorage {
 	case "cos":
 		objStorage = comm2.NewCOS(p)
 	case "minio":
 		objStorage = comm2.NewMinio(p)
+	default:
+		objStorage = comm2.NewCOS(p)
 	}
 	u.conversation = conv.NewConversation(u.ws, u.db, p, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
