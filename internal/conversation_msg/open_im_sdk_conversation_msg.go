@@ -1015,8 +1015,8 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 		msgStructToLocalChatLog(&localMessage, &s)
 		conversation.LatestMsg = utils.StructToJsonString(s)
 		conversation.LatestMsgSendTime = s.SendTime
-		clientMsgID := c.insertMessageToLocalStorage(callback, &localMessage, operationID)
-		callback.OnSuccess(clientMsgID)
+		_ = c.insertMessageToLocalStorage(callback, &localMessage, operationID)
+		callback.OnSuccess(utils.StructToJsonString(&s))
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.ch)
 	}()
 

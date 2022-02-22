@@ -553,6 +553,16 @@ func (wsRouter *WsFuncRouter) SendMessageNotOss(input string, operationID string
 
 }
 
+func (wsRouter *WsFuncRouter) ClearC2CHistoryMessage(input string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Conversation().ClearC2CHistoryMessage(&BaseSuccFailed{runFuncName(),operationID,wsRouter.uId},input,operationID)
+}
+
+func (wsRouter *WsFuncRouter) ClearGroupHistoryMessage(input string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Conversation().ClearGroupHistoryMessage(&BaseSuccFailed{runFuncName(),operationID,wsRouter.uId},input,operationID)
+}
+
 //func (wsRouter *WsFuncRouter) SetSdkLog(input string, operationID string) {
 //	m := make(map[string]interface{})
 //	if err := json.Unmarshal([]byte(input), &m); err != nil {
