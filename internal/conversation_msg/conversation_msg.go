@@ -51,21 +51,6 @@ func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 	return n
 }
 
-//func NewConversation() *Conversation {
-//	return &Conversation{}
-//}
-
-//func (c *Conversation) Init(ws *ws.Ws, db *db.DataBase, ch chan common.Cmd2Value, loginUserID string, friend *friend.Friend, group *group.Group, user *user.User) {
-//	c.Ws = ws
-//	c.db = db
-//	c.ch = ch
-//	c.loginUserID = c.loginUserID
-//	c.friend = friend
-//	c.group = group
-//	c.user = user
-//	go common.DoListener(c)
-//}
-
 func (c *Conversation) GetCh() chan common.Cmd2Value {
 	return c.ch
 }
@@ -190,7 +175,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				if isHistory {
 					insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
 				}
-
+				if msg.ContentType == constant.HasReadReceipt {
+					msgReadList = append(msgReadList, msg)
+				}
 			}
 		} else { //Sent by others
 			if b, _ := c.db.MessageIfExists(msg.ClientMsgID); !b { //Deduplication operation
@@ -221,7 +208,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					lc.UnreadCount = 1
 				}
 
-				//u.doUpdateConversation(cmd2Value{Value: updateConNode{c.ConversationID, UpdateFaceUrlAndNickName, c}})
 				if isConversationUpdate {
 					c.updateConversation(&lc, conversationSet)
 					newMessages = append(newMessages, msg)
@@ -285,21 +271,17 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	c.doMsgReadState(msgReadList)
 	c.revokeMessage(msgRevokeList)
 	c.newMessage(newMessages)
-	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, ""}})
 	log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
-	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewCon, mapKeyToStringList(newConversationSet)}})
-	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, mapKeyToStringList(conversationChangSet)}})
-	if len(conversationChangedSet) != 0 {
-		c.ConversationListener.OnConversationChanged(utils.StructToJsonString(mapConversationToList(conversationChangedSet)))
-	}
 	if len(newConversationSet) != 0 {
 		c.ConversationListener.OnNewConversation(utils.StructToJsonString(mapConversationToList(newConversationSet)))
 	}
+	if len(conversationChangedSet) != 0 {
+		c.ConversationListener.OnConversationChanged(utils.StructToJsonString(mapConversationToList(conversationChangedSet)))
+	}
+
 	if isTriggerUnReadCount {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 	}
-	//sdkLog("length msgListenerList", u.MsgListenerList, "length message", len(newMessages), "msgListenerLen", len(u.MsgListenerList))
-
 }
 func listToMap(list []*db.LocalConversation, m map[string]*db.LocalConversation) {
 	for _, v := range list {
