@@ -1,7 +1,6 @@
 package common
 
 import (
-	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/jinzhu/copier"
 	"open_im_sdk/pkg/db"
@@ -337,13 +336,13 @@ func CheckGroupInfoDiff(a []*db.LocalGroup, b []*db.LocalGroup) (aInBNot, bInANo
 	//to map, friendid_>friendinfo
 	mapA := make(map[string]*db.LocalGroup)
 	for _, v := range a {
-		fmt.Println("mapa   ", *v)
+		//fmt.Println("mapa   ", *v)
 		mapA[v.GroupID] = v
 
 	}
 	mapB := make(map[string]*db.LocalGroup)
 	for _, v := range b {
-		fmt.Println("mapb   ", *v)
+		//	fmt.Println("mapb   ", *v)
 		mapB[v.GroupID] = v
 	}
 
@@ -496,7 +495,7 @@ func CheckAdminGroupRequestDiff(a []*db.LocalAdminGroupRequest, b []*db.LocalAdm
 		} else {
 			if !cmp.Equal(v, ia) {
 				// key of a and b is equal, but value different
-				fmt.Println("sameA", a[i], ia)
+				//fmt.Println("sameA", a[i], ia)
 				sameA = append(sameA, i)
 			}
 		}
@@ -505,12 +504,12 @@ func CheckAdminGroupRequestDiff(a []*db.LocalAdminGroupRequest, b []*db.LocalAdm
 	for i, v := range b {
 		ib, ok := mapA[v.GroupID+v.UserID]
 		if !ok {
-			fmt.Println("bInANot", b[i], ib)
+			//fmt.Println("bInANot", b[i], ib)
 
 			bInANot = append(bInANot, i)
 		} else {
 			if !cmp.Equal(v, ib) {
-				fmt.Println("sameB", b[i], ib)
+				//	fmt.Println("sameB", b[i], ib)
 				sameB = append(sameB, i)
 			}
 		}
@@ -536,12 +535,12 @@ func CheckConversationListDiff(conversationsOnServer, conversationsOnLocal []*db
 		ia, ok := mapB[v.ConversationID]
 		if !ok {
 			//in a, but not in b
-			fmt.Println("aInBNot", conversationsOnServer[i], ia)
+			//fmt.Println("aInBNot", conversationsOnServer[i], ia)
 			aInBNot = append(aInBNot, i)
 		} else {
 			if !cmp.Equal(v, ia) {
 				// key of a and b is equal, but value different
-				fmt.Println("sameA", conversationsOnServer[i], ia)
+				//fmt.Println("sameA", conversationsOnServer[i], ia)
 				sameA = append(sameA, i)
 			}
 		}
@@ -550,12 +549,12 @@ func CheckConversationListDiff(conversationsOnServer, conversationsOnLocal []*db
 	for i, v := range conversationsOnLocal {
 		ib, ok := mapA[v.ConversationID]
 		if !ok {
-			fmt.Println("bInANot", conversationsOnLocal[i], ib)
+			//fmt.Println("bInANot", conversationsOnLocal[i], ib)
 
 			bInANot = append(bInANot, i)
 		} else {
 			if !cmp.Equal(v, ib) {
-				fmt.Println("sameB", conversationsOnLocal[i], ib)
+				//	fmt.Println("sameB", conversationsOnLocal[i], ib)
 				sameB = append(sameB, i)
 			}
 		}

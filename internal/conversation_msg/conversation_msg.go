@@ -181,10 +181,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					//	c.FaceURL = faceUrl
 					//}
 				}
-				if isUnreadCount {
-					isTriggerUnReadCount = true
-					lc.UnreadCount = 1
-				}
 				if isConversationUpdate {
 					c.updateConversation(&lc, conversationSet)
 					newMessages = append(newMessages, msg)
@@ -293,12 +289,13 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", NewCon, mapKeyToStringList(newConversationSet)}})
 	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, mapKeyToStringList(conversationChangSet)}})
-	if len(conversationChangedSet) != 0 {
-		c.ConversationListener.OnConversationChanged(utils.StructToJsonString(mapConversationToList(conversationChangedSet)))
-	}
 	if len(newConversationSet) != 0 {
 		c.ConversationListener.OnNewConversation(utils.StructToJsonString(mapConversationToList(newConversationSet)))
 	}
+	if len(conversationChangedSet) != 0 {
+		c.ConversationListener.OnConversationChanged(utils.StructToJsonString(mapConversationToList(conversationChangedSet)))
+	}
+
 	if isTriggerUnReadCount {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 	}
@@ -449,7 +446,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		lc := node.Args.(db.LocalConversation)
 		oc, err := c.db.GetConversation(lc.ConversationID)
 		if err == nil {
-			log.Info("this is old conversation", oc)
+			log.Info("this is old conversation", *oc)
 			if lc.LatestMsgSendTime >= oc.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
 				err := c.db.UpdateColumnsConversation(node.ConID, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
 				if err != nil {
@@ -462,6 +459,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 				}
 			}
 		} else {
+			log.Info("this is new conversation", lc)
 			err4 := c.db.InsertConversation(&lc)
 			if err4 != nil {
 				log.Error("internal", "insert new conversation err:", err4.Error())

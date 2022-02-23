@@ -183,8 +183,11 @@ func (w *Ws) doWsMsg(message []byte) {
 			log.Error(wsResp.OperationID, "doWSSendMsg failed ", err.Error())
 		}
 	case constant.WSKickOnlineMsg:
-		log.Warn(wsResp.OperationID, "kick... ")
+		log.Warn(wsResp.OperationID, "kick...  logout")
 		w.kickOnline(*wsResp)
+		w.SetLoginState(constant.Logout)
+		w.CloseConn()
+		runtime.Goexit()
 	case constant.WsLogoutMsg:
 		log.Warn(wsResp.OperationID, "logout... ")
 		w.SetLoginState(constant.Logout)

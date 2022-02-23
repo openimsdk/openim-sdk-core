@@ -3,6 +3,7 @@ package db
 import (
 	"errors"
 	"gorm.io/gorm"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -52,10 +53,10 @@ func (d *DataBase) InsertConversation(conversationList *LocalConversation) error
 	return utils.Wrap(d.conn.Create(conversationList).Error, "InsertConversation failed")
 }
 
-func (d *DataBase) DeleteConversation(conversation *LocalConversation) error {
+func (d *DataBase) DeleteConversation(conversationID string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.Delete(conversation).Where("conversation_id = ?", conversation.ConversationID).Error, "DeleteConversation failed")
+	return utils.Wrap(d.conn.Where("conversation_id = ?", conversationID).Delete(&LocalConversation{}).Error, "DeleteConversation failed")
 }
 
 func (d *DataBase) GetConversation(conversationID string) (*LocalConversation, error) {
@@ -195,7 +196,7 @@ func (d *DataBase) GetTotalUnreadMsgCount() (totalUnreadCount int32, err error) 
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var result []int64
-	err = d.conn.Model(&LocalConversation{}).Pluck("unread_count", &result).Error
+	err = d.conn.Model(&LocalConversation{}).Where("recv_msg_opt < ?", constant.ReceiveNotNotifyMessage).Pluck("unread_count", &result).Error
 	if err != nil {
 		return totalUnreadCount, utils.Wrap(errors.New("GetTotalUnreadMsgCount err"), "GetTotalUnreadMsgCount err")
 	}

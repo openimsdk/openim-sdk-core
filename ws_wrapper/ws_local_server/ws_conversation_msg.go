@@ -455,6 +455,21 @@ func (wsRouter *WsFuncRouter) InsertGroupMessageToLocalStorage(input string, ope
 //	userWorker.Conversation().FindMessages(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, messageIDList)
 //}
 
+func (wsRouter *WsFuncRouter) SearchLocalMessages(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog("unmarshal failed")
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	//if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "searchParam") {
+	//	return
+	//}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Conversation().SearchLocalMessages(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId},
+		input, operationID)
+}
+
 func (wsRouter *WsFuncRouter) CreateImageMessageByURL(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
@@ -536,6 +551,16 @@ func (wsRouter *WsFuncRouter) SendMessageNotOss(input string, operationID string
 	}
 	userWorker.Conversation().SendMessageNotOss(&sc, m["message"].(string), m["recvID"].(string), m["groupID"].(string), m["offlinePushInfo"].(string), operationID)
 
+}
+
+func (wsRouter *WsFuncRouter) ClearC2CHistoryMessage(input string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Conversation().ClearC2CHistoryMessage(&BaseSuccFailed{runFuncName(),operationID,wsRouter.uId},input,operationID)
+}
+
+func (wsRouter *WsFuncRouter) ClearGroupHistoryMessage(input string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.Conversation().ClearGroupHistoryMessage(&BaseSuccFailed{runFuncName(),operationID,wsRouter.uId},input,operationID)
 }
 
 //func (wsRouter *WsFuncRouter) SetSdkLog(input string, operationID string) {

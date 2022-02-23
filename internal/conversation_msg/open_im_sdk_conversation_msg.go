@@ -80,7 +80,6 @@ func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callba
 		callback.OnSuccess(sdk_params_callback.SetConversationRecvMessageOptCallback)
 		log.NewInfo(operationID, "SetConversationRecvMessageOpt callback: ", sdk_params_callback.SetConversationRecvMessageOptCallback)
 	}()
-
 }
 func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList, operationID string) {
 	if callback == nil {
@@ -127,7 +126,6 @@ func (c *Conversation) DeleteConversation(callback open_im_sdk_callback.Base, co
 		log.NewInfo(operationID, "DeleteConversation args: ", conversationID)
 		c.deleteConversation(callback, conversationID, operationID)
 		callback.OnSuccess(sdk_params_callback.DeleteConversationCallback)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.TotalUnreadMessageChanged, Args: ""}, c.ch)
 		log.NewInfo(operationID, "DeleteConversation callback: ", sdk_params_callback.DeleteConversationCallback)
 	}()
 }
@@ -482,8 +480,12 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 		//参数校验
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
-		p := server_api_params.OfflinePushInfo{}
-		common.JsonUnmarshalAndArgsValidate(offlinePushInfo, &p, callback, operationID)
+		p := &server_api_params.OfflinePushInfo{}
+		if offlinePushInfo == "" {
+			p = nil
+		} else {
+			common.JsonUnmarshalAndArgsValidate(offlinePushInfo, &p, callback, operationID)
+		}
 		if recvID == "" && groupID == "" {
 			common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not be allowed"), operationID)
 		}
@@ -604,15 +606,19 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 		msgStructToLocalChatLog(&localMessage, &s)
 		err = c.db.UpdateMessage(&localMessage)
 		common.CheckAnyErrCallback(callback, 201, err, operationID)
-		c.sendMessageToServer(&s, lc, callback, delFile, &p, options, operationID)
+		c.sendMessageToServer(&s, lc, callback, delFile, p, options, operationID)
 	}()
 }
 func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCallBack, message, recvID, groupID string, offlinePushInfo string, operationID string) {
 	go func() {
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
-		p := server_api_params.OfflinePushInfo{}
-		common.JsonUnmarshalAndArgsValidate(offlinePushInfo, &p, callback, operationID)
+		p := &server_api_params.OfflinePushInfo{}
+		if offlinePushInfo == "" {
+			p = nil
+		} else {
+			common.JsonUnmarshalAndArgsValidate(offlinePushInfo, &p, callback, operationID)
+		}
 		if recvID == "" && groupID == "" {
 			common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not be allowed"), operationID)
 		}
@@ -664,7 +670,7 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 		msgStructToLocalChatLog(&localMessage, &s)
 		err = c.db.UpdateMessage(&localMessage)
 		common.CheckAnyErrCallback(callback, 201, err, operationID)
-		c.sendMessageToServer(&s, &lc, callback, delFile, &p, options, operationID)
+		c.sendMessageToServer(&s, &lc, callback, delFile, p, options, operationID)
 
 	}()
 }
@@ -1009,8 +1015,8 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 		msgStructToLocalChatLog(&localMessage, &s)
 		conversation.LatestMsg = utils.StructToJsonString(s)
 		conversation.LatestMsgSendTime = s.SendTime
-		clientMsgID := c.insertMessageToLocalStorage(callback, &localMessage, operationID)
-		callback.OnSuccess(clientMsgID)
+		_ = c.insertMessageToLocalStorage(callback, &localMessage, operationID)
+		callback.OnSuccess(utils.StructToJsonString(&s))
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.ch)
 	}()
 

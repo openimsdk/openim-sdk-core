@@ -55,7 +55,7 @@ const (
 	FriendNotificationEnd                 = 1299
 	ConversationOptChangeNotification     = 1300
 
-	UserNotificationBegin       = 1300
+	UserNotificationBegin       = 1301
 	UserInfoUpdatedNotification = 1303 //SetSelfInfoTip             = 204
 	ConversationNotification    = 1307
 	ConversationNotNotification = 1308
@@ -215,3 +215,7 @@ const (
 	Male   = 1
 	Female = 2
 )
+
+const BigVersion = "v2"
+const UpdateVersion = ".0.0"
+const SdkVersion = "Open-IM-SDK-Core-"

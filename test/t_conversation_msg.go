@@ -185,6 +185,48 @@ func (m MsgListenerCallBak) OnRecvNewMessage(msg string) {
 	}
 
 }
+
+type TestSearchLocalMessages struct {
+	OperationID string
+}
+
+func (t TestSearchLocalMessages) OnError(errCode int32, errMsg string) {
+	log.Info(t.OperationID, "SearchLocalMessages , OnError %v\n", errMsg)
+}
+
+func (t TestSearchLocalMessages) OnSuccess(data string) {
+	log.Info(t.OperationID, "SearchLocalMessages , OnSuccess %v\n", data)
+}
+func DoTestSearchLocalMessages() {
+	var t TestSearchLocalMessages
+	operationID := utils.OperationIDGenerator()
+	t.OperationID = operationID
+	var p sdk_params_callback.SearchLocalMessagesParams
+	//p.SessionType = constant.SingleChatType
+	p.SourceID = "18090680773"
+	p.KeywordList = []string{}
+	p.SearchTimePeriod = 24 * 60 * 60 * 10
+	open_im_sdk.SearchLocalMessages(t, operationID, utils.StructToJsonString(p))
+}
+
+type TestDeleteConversation struct {
+	OperationID string
+}
+
+func (t TestDeleteConversation) OnError(errCode int32, errMsg string) {
+	log.Info(t.OperationID, "TestDeleteConversation , OnError %v\n", errMsg)
+}
+
+func (t TestDeleteConversation) OnSuccess(data string) {
+	log.Info(t.OperationID, "TestDeleteConversation , OnSuccess %v\n", data)
+}
+func DoTestDeleteConversation() {
+	var t TestDeleteConversation
+	operationID := utils.OperationIDGenerator()
+	t.OperationID = operationID
+	conversationID := "single_17396220460"
+	open_im_sdk.DeleteConversation(t, operationID, conversationID)
+}
 func (m MsgListenerCallBak) OnRecvC2CReadReceipt(data string) {
 	fmt.Println("OnRecvC2CReadReceipt , ", data)
 }

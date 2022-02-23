@@ -29,10 +29,9 @@ func init(){
 
 }
 */
-const sdkVersion = "Open-IM-SDK-Core-v2.0.0"
 
 func SdkVersion() string {
-	return sdkVersion
+	return constant.SdkVersion + constant.BigVersion + constant.UpdateVersion
 }
 
 func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, config string) bool {

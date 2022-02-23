@@ -49,6 +49,7 @@ func (d *DataBase) SearchMessageByKeyword(keyword string, startTime, endTime int
 	}
 	return result, err
 }
+
 func (d *DataBase) BatchUpdateMessageList(MessageList []*LocalChatLog) error {
 	if MessageList == nil {
 		return nil
@@ -67,6 +68,7 @@ func (d *DataBase) BatchUpdateMessageList(MessageList []*LocalChatLog) error {
 	}
 	return nil
 }
+
 func (d *DataBase) MessageIfExists(ClientMsgID string) (bool, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
@@ -150,6 +152,7 @@ func (d *DataBase) UpdateMessageTimeAndStatus(clientMsgID string, serverMsgID st
 	}
 	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
 }
+
 func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, startTime int64) (result []*LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
@@ -168,10 +171,23 @@ func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, start
 	}
 	return result, err
 }
+
+func (d *DataBase) GetSendingMessageList() (result []*LocalChatLog, err error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var messageList []LocalChatLog
+	err = utils.Wrap(d.conn.Where("status = ?", constant.MsgStatusSending).Find(&messageList).Error, "GetMessageList failed")
+	for _, v := range messageList {
+		v1 := v
+		result = append(result, &v1)
+	}
+	return result, err
+}
+
 func (d *DataBase) UpdateMessageHasRead(sendID string, msgIDList []string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Model(LocalChatLog{}).Debug().Where("send_id=? And is_read=? AND session_type=? AND client_msg_id in ?", sendID, constant.NotRead, constant.SingleChatType, msgIDList).Updates(LocalChatLog{IsRead: true})
+	t := d.conn.Model(LocalChatLog{}).Debug().Where("send_id=? And is_read=? AND session_type=? AND client_msg_id in ?", sendID, constant.NotRead, constant.SingleChatType, msgIDList).Update("is_read", constant.HasRead)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}

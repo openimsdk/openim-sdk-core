@@ -3,16 +3,16 @@ package main
 import (
 	"encoding/json"
 	"github.com/pkg/errors"
-	//"open_im_sdk/pkg/constant"
-
-	//"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/network"
-	"open_im_sdk/pkg/utils"
 	"open_im_sdk/test"
+
+	//"open_im_sdk/pkg/constant"
 
 	"fmt"
 	"io/ioutil"
 	"net"
+	//"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/network"
+	"open_im_sdk/pkg/utils"
 	"os"
 	"strconv"
 	"strings"
@@ -21,12 +21,13 @@ import (
 
 func main() {
 
-	strMyUidx := "18666662412"
-	//friendUserID := "openIM2222"
-	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxODY2NjY2MjQxMiIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxNjQ1Njg5NjU3LCJuYmYiOjE2NDUwODQ4NTcsImlhdCI6MTY0NTA4NDg1N30.nV3cIcvaRjyUEay8G7UMe5LzKeNi6UenET1RXDT4Nao"
+
+	strMyUidx := "18666663333"
+	friendUserID := "18349115126"
+	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxODY2NjY2MzMzMyIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYwNzk0NTA1LCJuYmYiOjE2NDU0MzQ1MDUsImlhdCI6MTY0NTQzNDUwNX0.3DRA5OQNV8l9d9zfpgxuxyPt6u92lYamHnDlDB4MWN0"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
-	//test.DoTestCreateGroup()
-	//test.SetTestFriendID(friendUserID)
+	//	test.DoTestCreateGroup()
+	test.SetTestFriendID(friendUserID)
 	//fmt.Println("logout ........... ")
 	//test.InOutLogou()
 	//test.DoTestSetConversationRecvMessageOpt("17396220460", `["id1","id2"]`, constant.ConversationNotNotification)
@@ -38,8 +39,10 @@ func main() {
 	//	test.DoTestCreateGroup()
 
 	//	test.DoSetGroupInfo()
-	//	test.DotestGetGroupMemberList()
-	//	test.DotestKickGroupMember()
+	//test.DotestGetGroupMemberList()
+
+	//test.DotestMinio()
+	//test.DotestKickGroupMember()
 	//	test.DotestInviteUserToGroup()
 	//test.DotestGetGroupApplicationList()
 
@@ -68,16 +71,21 @@ func main() {
 	//	open_im_sdk.DoTestDeleteFromBlackList()
 	//DoTestGetDesignatedFriendsInfo()
 	//test.DoTestSendMsg(strMyUidx, test.Friend_uid)
+	//test.DoTestSendImageMsg("", test.Friend_uid)
+	//for true {
+	//	time.Sleep(time.Duration(100) * time.Second)
+	//	//	test.DoTestSendMsg(strMyUidx, test.Friend_uid)
+	//	fmt.Println("waiting")
+	//}
 	//	test.DoTestSendImageMsg("", test.Friend_uid)
 	i := 0
 	for true {
-
-		time.Sleep(time.Duration(1) * time.Second)
 
 		test.DoTestSendMsg(strMyUidx, test.Friend_uid)
 		i++
 		fmt.Println("DoTestSendMsg count: ", i)
 		fmt.Println("waiting")
+		time.Sleep(time.Duration(1) * time.Second)
 	}
 	//
 	//return
