@@ -917,7 +917,7 @@ func (c *Conversation) MarkC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 			callback.OnSuccess(sdk_params_callback.MarkC2CMessageAsReadCallback)
 			return
 		}
-		c.markC2CMessageAsRead(callback, unmarshalParams, msgIDList, userID, operationID)
+		c.markC2CMessageAsRead(callback, unmarshalParams, userID, operationID)
 		callback.OnSuccess(sdk_params_callback.MarkC2CMessageAsReadCallback)
 		log.NewInfo(operationID, "MarkC2CMessageAsRead callback: ", sdk_params_callback.MarkC2CMessageAsReadCallback)
 	}()
@@ -1015,8 +1015,8 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 		msgStructToLocalChatLog(&localMessage, &s)
 		conversation.LatestMsg = utils.StructToJsonString(s)
 		conversation.LatestMsgSendTime = s.SendTime
-		clientMsgID := c.insertMessageToLocalStorage(callback, &localMessage, operationID)
-		callback.OnSuccess(clientMsgID)
+		_ = c.insertMessageToLocalStorage(callback, &localMessage, operationID)
+		callback.OnSuccess(utils.StructToJsonString(&s))
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.ch)
 	}()
 

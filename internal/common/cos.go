@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/log"
+
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"math/rand"
 	"net/http"
 	"net/url"
 	ws "open_im_sdk/internal/interaction"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/log"
-
 	//	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"

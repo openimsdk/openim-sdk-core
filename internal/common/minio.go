@@ -66,11 +66,7 @@ func (m *Minio) upload(filePath, fileType string, onProgressFun func(int)) (stri
 	}
 	// fake callback
 	onProgressFun(100)
-	reqParams := make(url.Values)
-	log.NewInfo("", reqParams)
-
 	presignedURL := endPoint.String() + "/" + minioResp.BucketName + "/" + newName
-	log.NewInfo("", presignedURL)
 	return presignedURL, newName, nil
 }
 
