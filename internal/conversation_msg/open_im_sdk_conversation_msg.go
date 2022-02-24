@@ -696,6 +696,7 @@ func (c *Conversation) internalSendMessage(callback open_im_sdk_callback.Base, s
 		options[constant.IsHistory] = false
 		options[constant.IsPersistent] = false
 		options[constant.IsOfflinePush] = false
+		options[constant.IsSenderSync] = false
 	}
 
 	var wsMsgData server_api_params.MsgData
