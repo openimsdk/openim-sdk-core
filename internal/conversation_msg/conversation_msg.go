@@ -175,6 +175,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				if isHistory {
 					insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
 				}
+				if msg.ContentType == constant.Revoke {
+					msgRevokeList = append(msgRevokeList, msg)
+				}
 				if msg.ContentType == constant.HasReadReceipt {
 					msgReadList = append(msgReadList, msg)
 				}
