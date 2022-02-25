@@ -2,11 +2,28 @@ package test
 
 import (
 	"github.com/gorilla/websocket"
+	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"time"
 )
+
+func GenUserIDToken(userID string) (string, error) {
+	return "", nil
+}
+
+func GenWs(userID, token string) *ws.Ws {
+	return nil
+}
+
+func test(num int) {
+
+	for i := 0; i < num; i++ {
+
+	}
+
+}
 
 func SendReqWaitResp(text, senderID, recvID, operationID string, conn *websocket.Conn) bool {
 	timeout := 300
