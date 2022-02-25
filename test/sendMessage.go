@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-func SendTextMessage(text, senderID, recvID, operationID string, ws *interaction.Ws) bool {
-	ws.
 func GenUserIDToken(userID string) (string, error) {
 	return "", nil
 }
@@ -27,7 +25,8 @@ func test(num int) {
 
 }
 
-func SendReqWaitResp(text, senderID, recvID, operationID string, conn *websocket.Conn) bool {
+func SendTextMessage(text, senderID, recvID, operationID string, ws *interaction.Ws) bool {
+
 	timeout := 300
 	retryTimes := 60
 	var wsReq GeneralWsReq
