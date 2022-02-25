@@ -267,24 +267,24 @@ func DotestMinio() {
 }
 
 func test(storage common.ObjectStorage, callback baseCallback) {
-	//dir, newName, err := storage.UploadFile("./main/main.go",  func(progress int) {
-	//	if progress == 100 {
-	//		callback.OnSuccess("")
-	//	}
-	//})
-	//log.NewInfo("0", dir, newName, err)
-	//dir, newName, err = storage.UploadImage("C:\\Users\\Administrator\\Desktop\\1.jpg", func(progress int) {
-	//	if progress == 100 {
-	//		callback.OnSuccess("")
-	//	}
-	//})
-	//log.NewInfo("0", dir, newName, err, err)
-	//dir, newName, err = storage.UploadSound("./main/main.go", func(progress int) {
-	//	if progress == 100 {
-	//		callback.OnSuccess("")
-	//	}
-	//})
-	//log.NewInfo("0", dir, newName, err, err)
+	dir, newName, err := storage.UploadFile("./main/main.go",  func(progress int) {
+		if progress == 100 {
+			callback.OnSuccess("")
+		}
+	})
+	log.NewInfo("0", dir, newName, err)
+	dir, newName, err = storage.UploadImage("C:\\Users\\Administrator\\Desktop\\1.jpg", func(progress int) {
+		if progress == 100 {
+			callback.OnSuccess("")
+		}
+	})
+	log.NewInfo("0", dir, newName, err, err)
+	dir, newName, err = storage.UploadSound("./main/main.go", func(progress int) {
+		if progress == 100 {
+			callback.OnSuccess("")
+		}
+	})
+	log.NewInfo("0", dir, newName, err, err)
 	snapshotURL, snapshotUUID, videoURL, videoUUID, err := storage.UploadVideo("./main/main.go", "C:\\Users\\Administrator\\Desktop\\1.jpg", func(progress int) {
 		if progress == 100 {
 			callback.OnSuccess("")
