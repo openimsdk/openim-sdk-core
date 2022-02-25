@@ -21,7 +21,6 @@ import (
 
 func main() {
 
-
 	strMyUidx := "18381415165"
 	friendID := "17726378428"
 	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxODM4MTQxNTE2NSIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYxMTI5NTQyLCJuYmYiOjE2NDU3Njk1NDIsImlhdCI6MTY0NTc2OTU0Mn0.hwLlECGDdaJscqGFLx-Avx6lbj3cNHSHq1QhdO8-zHg"
@@ -447,67 +446,6 @@ func main() {
 //		fmt.Println("waiting")
 //	}
 
-type GetTokenReq struct {
-	Secret   string `json:"secret"`
-	Platform int    `json:"platform"`
-	Uid      string `json:"uid"`
-}
-
-type RegisterReq struct {
-	Secret   string `json:"secret"`
-	Platform int    `json:"platform"`
-	Uid      string `json:"uid"`
-	Name     string `json:"name"`
-}
-
-type ResToken struct {
-	Data struct {
-		ExpiredTime int64  `json:"expiredTime"`
-		Token       string `json:"token"`
-		Uid         string `json:"uid"`
-	}
-	ErrCode int    `json:"errCode"`
-	ErrMsg  string `json:"errMsg"`
-}
-
-func register(uid string) error {
-	url := REGISTERADDR
-	var req RegisterReq
-	req.Platform = 1
-	req.Uid = uid
-	req.Secret = SECRET
-	req.Name = uid
-	r, err := network.Post2Api(url, req, "")
-	if err != nil {
-		fmt.Println(r, err)
-		return err
-	}
-
-	return nil
-
-}
-func getToken(uid string) string {
-	url := TOKENADDR
-	var req GetTokenReq
-	req.Platform = 2
-	req.Uid = uid
-	req.Secret = SECRET
-	r, err := network.Post2Api(url, req, "")
-	if err != nil {
-		fmt.Println(r, err)
-		return ""
-	}
-
-	var stcResp ResToken
-	err = json.Unmarshal(r, &stcResp)
-	if stcResp.ErrCode != 0 {
-		fmt.Println(stcResp.ErrCode, stcResp.ErrMsg)
-		return ""
-	}
-	return stcResp.Data.Token
-
-}
-
 type zx struct {
 }
 
@@ -520,20 +458,6 @@ func (z zx) txexfc(uid int) int {
 	utils.LogSReturn(1)
 	return 1
 
-}
-func GenUid(uid int) string {
-	if uid > 1000 {
-		return strconv.FormatInt(int64(uid), 10)
-	}
-	utils.LogBegin(uid)
-
-	if getMyIP() == "" {
-		fmt.Println("getMyIP() failed")
-		os.Exit(1)
-	}
-	UidPrefix := getMyIP() + "open_im_test_uid_"
-	utils.LogSReturn(UidPrefix + strconv.FormatInt(int64(uid), 10))
-	return UidPrefix + strconv.FormatInt(int64(uid), 10)
 }
 
 func GetFileContentAsStringLines(filePath string) ([]string, error) {
@@ -565,67 +489,6 @@ func GetCmd(myUid int, filename string) int {
 	}
 	return int(utils.StringToInt64(cmd[myUid-1]))
 }
-
-func runRigister(strMyUid string) {
-	for true {
-		err := register(strMyUid)
-		if err == nil {
-			break
-		} else {
-			time.Sleep(time.Duration(30) * time.Second)
-			continue
-		}
-	}
-}
-
-func runGetToken(strMyUid string) string {
-	var token string
-	for true {
-		token = getToken(strMyUid)
-		if token == "" {
-			fmt.Println("test_openim: get token failed")
-			time.Sleep(time.Duration(30) * time.Second)
-			continue
-		} else {
-			fmt.Println("get token: ", strMyUid, token)
-			break
-		}
-	}
-
-	return token
-}
-func getMyIP() string {
-	addrs, err := net.InterfaceAddrs()
-
-	if err != nil {
-		fmt.Println(err)
-
-		os.Exit(1)
-		return ""
-	}
-	for _, address := range addrs {
-
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				fmt.Println(ipnet.IP.String())
-				return ipnet.IP.String()
-			}
-
-		}
-	}
-	return ""
-}
-
-var (
-	TESTIP = "43.128.5.63"
-	//TESTIP       = "1.14.194.38"
-	APIADDR      = "http://" + TESTIP + ":10000"
-	WSADDR       = "ws://" + TESTIP + ":17778"
-	REGISTERADDR = APIADDR + "/user_register"
-	TOKENADDR    = APIADDR + "/auth/user_token"
-	SECRET       = "tuoyun"
-	SENDINTERVAL = 20
-)
 
 func authenticate(a int) error {
 	if a == 0 {

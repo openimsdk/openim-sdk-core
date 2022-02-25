@@ -218,9 +218,13 @@ func (w *Ws) doWsMsg(message []byte) {
 			log.Error(wsResp.OperationID, "doWSPullMsg failed ", err.Error())
 		}
 	case constant.WSPushMsg:
-		if err = w.doWSPushMsg(*wsResp); err != nil {
-			log.Error(wsResp.OperationID, "doWSPushMsg failed ", err.Error())
+		//if err = w.doWSPushMsg(*wsResp); err != nil {
+		//	log.Error(wsResp.OperationID, "doWSPushMsg failed ", err.Error())
+		//}
+		if err = w.doWSPushMsgForTest(*wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSPushMsgForTest failed ", err.Error())
 		}
+
 	case constant.WSSendMsg:
 		if err = w.doWSSendMsg(*wsResp); err != nil {
 			log.Error(wsResp.OperationID, "doWSSendMsg failed ", err.Error())
@@ -273,6 +277,20 @@ func (w *Ws) doWSPushMsg(wsResp GeneralWsResp) error {
 		return utils.Wrap(err, "Unmarshal failed")
 	}
 	return utils.Wrap(common.TriggerCmdPushMsg(sdk_struct.CmdPushMsgToMsgSync{Msg: &msg, OperationID: wsResp.OperationID}, w.pushMsgAndMaxSeqCh), "")
+}
+
+func (w *Ws) doWSPushMsgForTest(wsResp GeneralWsResp) error {
+	if wsResp.ErrCode != 0 {
+		return utils.Wrap(errors.New("errCode"), wsResp.ErrMsg)
+	}
+	var msg server_api_params.MsgData
+	err := proto.Unmarshal(wsResp.Data, &msg)
+	if err != nil {
+		return utils.Wrap(err, "Unmarshal failed")
+	}
+	log.Debug(wsResp.OperationID, "recv push doWSPushMsgForTest")
+	return nil
+	//	return utils.Wrap(common.TriggerCmdPushMsg(sdk_struct.CmdPushMsgToMsgSync{Msg: &msg, OperationID: wsResp.OperationID}, w.pushMsgAndMaxSeqCh), "")
 }
 
 func (w *Ws) kickOnline(msg GeneralWsResp) {
