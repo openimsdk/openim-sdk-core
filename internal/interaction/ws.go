@@ -93,7 +93,48 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 	r1, r2 := w.WaitResp(ch, timeout, wsReq.OperationID, connSend)
 	return r1, r2
 }
+func (w *Ws) SendReqTest(m proto.Message, reqIdentifier int32, timeout int, senderID, operationID string) bool {
+	var wsReq GeneralWsReq
+	var connSend *websocket.Conn
+	var err error
+	wsReq.ReqIdentifier = reqIdentifier
+	wsReq.OperationID = operationID
+	msgIncr, ch := w.AddCh(senderID)
+	defer w.DelCh(msgIncr)
+	wsReq.SendID = senderID
+	wsReq.MsgIncr = msgIncr
+	wsReq.Data, err = proto.Marshal(m)
+	if err != nil {
+		return false
+	}
+	connSend, err = w.writeBinaryMsg(wsReq)
+	if err != nil {
+		log.Debug(operationID, "writeBinaryMsg timeout", m.String(), senderID, err.Error())
+		return false
+	} else {
+		log.Debug(operationID, "writeBinaryMsg success", m.String(), senderID)
+	}
+	return w.WaitTest(ch, timeout, wsReq.OperationID, connSend, m, senderID)
 
+}
+func (w *Ws) WaitTest(ch chan GeneralWsResp, timeout int, operationID string, connSend *websocket.Conn, m proto.Message, senderID string) bool {
+	select {
+	case r := <-ch:
+		if r.ErrCode != 0 {
+			log.Debug(operationID, "ws ch recvMsg success, code ", r.ErrCode, r.ErrMsg, m.String(), senderID)
+			return false
+		} else {
+			log.Debug(operationID, "ws ch recvMsg send success, code ", m.String(), senderID)
+
+			return true
+		}
+
+	case <-time.After(time.Second * time.Duration(timeout)):
+		log.Debug(operationID, "ws ch recvMsg err, timeout ", m.String(), senderID)
+
+		return false
+	}
+}
 func (w *Ws) reConnSleep(operationID string, sleep int32) {
 	_, err := w.WsConn.ReConn()
 	if err != nil {
