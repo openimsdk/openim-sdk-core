@@ -3,6 +3,8 @@ package test
 import (
 	"encoding/json"
 	"fmt"
+	"open_im_sdk/sdk_struct"
+
 	//"github.com/gorilla/websocket"
 	//"github.com/jinzhu/copier"
 	//"google.golang.org/protobuf/types/known/apipb"
@@ -25,7 +27,7 @@ var (
 	//TESTIP       = "1.14.194.38"
 	APIADDR      = "http://" + TESTIP + ":10000"
 	WSADDR       = "ws://" + TESTIP + ":17778"
-	REGISTERADDR = APIADDR + "/user_register"
+	REGISTERADDR = APIADDR + "/auth/user_register"
 	TOKENADDR    = APIADDR + "/auth/user_token"
 	SECRET       = "tuoyun"
 	SENDINTERVAL = 20
@@ -68,11 +70,12 @@ type ResToken struct {
 
 func register(uid string) error {
 	url := REGISTERADDR
-	var req RegisterReq
+	var req server_api_params.UserRegisterReq
+	req.OperationID = "1111111111111111111"
 	req.Platform = 1
-	req.Uid = uid
+	req.UserID = uid
 	req.Secret = SECRET
-	req.Name = uid
+	req.Nickname = uid
 	r, err := network.Post2Api(url, req, "")
 	if err != nil {
 		fmt.Println(r, err)
@@ -84,10 +87,11 @@ func register(uid string) error {
 }
 func getToken(uid string) string {
 	url := TOKENADDR
-	var req GetTokenReq
+	var req server_api_params.UserTokenReq
 	req.Platform = 2
-	req.Uid = uid
+	req.UserID = uid
 	req.Secret = SECRET
+	req.OperationID = "2222222"
 	r, err := network.Post2Api(url, req, "")
 	if err != nil {
 		fmt.Println(r, err)
@@ -102,6 +106,10 @@ func getToken(uid string) string {
 	}
 	return stcResp.Data.Token
 
+}
+
+func init() {
+	sdk_struct.SvrConf = sdk_struct.IMConfig{Platform: 1, ApiAddr: APIADDR, WsAddr: WSADDR, DataDir: "./", LogLevel: 6, ObjectStorage: "cos"}
 }
 
 func runGetToken(strMyUid string) string {
@@ -159,6 +167,7 @@ func GenToken(userID string) string {
 func GenWs(id int) {
 	userID := GenUid(id)
 	allUserID = append(allUserID, userID)
+	register(userID)
 	token := GenToken(userID)
 	allToken = append(allToken, token)
 
@@ -186,6 +195,8 @@ func DoTestRun(num int) {
 		log.Debug("", "user: ", allUserID[i], "token: ", allToken[i], allWs[i])
 	}
 
+	time.Sleep(time.Duration(5) * time.Second)
+
 	for i := 0; i < num; i++ {
 		go testSend(i, "ok", num)
 	}
@@ -203,7 +214,7 @@ func testSend(idx int, text string, uidNum int) {
 			log.Debug(operationID, sendID, recvID, "SendTextMessage failed")
 		}
 
-		time.Sleep(time.Duration(100) * time.Second)
+		time.Sleep(time.Duration(1) * time.Second)
 	}
 }
 

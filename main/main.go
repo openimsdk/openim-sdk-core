@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"github.com/pkg/errors"
 	"open_im_sdk/test"
 
@@ -9,22 +8,21 @@ import (
 
 	"fmt"
 	"io/ioutil"
-	"net"
+
 	//"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/network"
+
 	"open_im_sdk/pkg/utils"
-	"os"
-	"strconv"
+
 	"strings"
 	"time"
 )
 
 func main() {
 
-	strMyUidx := "18381415165"
-	friendID := "17726378428"
-	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxODM4MTQxNTE2NSIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYxMTI5NTQyLCJuYmYiOjE2NDU3Njk1NDIsImlhdCI6MTY0NTc2OTU0Mn0.hwLlECGDdaJscqGFLx-Avx6lbj3cNHSHq1QhdO8-zHg"
-	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+	//	strMyUidx := "18381415165"
+	//	friendID := "17726378428"
+	//	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxODM4MTQxNTE2NSIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYxMTI5NTQyLCJuYmYiOjE2NDU3Njk1NDIsImlhdCI6MTY0NTc2OTU0Mn0.hwLlECGDdaJscqGFLx-Avx6lbj3cNHSHq1QhdO8-zHg"
+	//	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	//	test.DoTestCreateGroup()
 	//test.SetTestFriendID(friendUserID)
 	//fmt.Println("logout ........... ")
@@ -77,16 +75,15 @@ func main() {
 	//	fmt.Println("waiting")
 	//}
 	//	test.DoTestSendImageMsg("", test.Friend_uid)
+	testClientNum := 2
+	test.DoTestRun(testClientNum)
 	i := 0
 	for true {
 
-		test.DoTestSendOtherMsg(strMyUidx, friendID)
-		test.DoTestSendImageMsg(strMyUidx, friendID)
-		test.DoTestSendVideo(strMyUidx, friendID)
 		i++
 		fmt.Println("DoTestSendMsg count: ", i)
 		fmt.Println("waiting")
-		time.Sleep(time.Duration(10) * time.Second)
+		time.Sleep(time.Duration(1000) * time.Second)
 	}
 	//
 	//return
@@ -498,16 +495,16 @@ func authenticate(a int) error {
 }
 
 // Annotate error
-func AuthenticateRequest(a int) error {
-	err := authenticate(a)
-	if err != nil {
-		var v GetTokenReq
-		v.Platform = 100
-		//	return fmt.Errorf("authenticate failed: %v", err, v)
-		return fmt.Errorf("open file error: %w", err)
-	}
-	return nil
-}
+//func AuthenticateRequest(a int) error {
+//	err := authenticate(a)
+//	if err != nil {
+//		var v GetTokenReq
+//		v.Platform = 100
+//		//	return fmt.Errorf("authenticate failed: %v", err, v)
+//		return fmt.Errorf("open file error: %w", err)
+//	}
+//	return nil
+//}
 
 // Better
 func f3() error {
