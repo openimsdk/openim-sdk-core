@@ -42,15 +42,21 @@ func (m *Minio) getMinioCredentials() (*server_api_params.MinioStorageCredential
 
 func (m *Minio) upload(filePath, fileType string, onProgressFun func(int)) (string, string, error){
 	minioResp, err := m.getMinioCredentials()
+	if err != nil {
+		log.NewError("", utils.GetSelfFuncName(), "getMinioCredentials failed", err.Error())
+		return "", "", err
+	}
+	log.NewInfo("0", utils.GetSelfFuncName(), "minio", minioResp)
 	endPoint, err  := url.Parse(minioResp.StsEndpointURL)
 	if err != nil {
 		log.NewError("", utils.GetSelfFuncName(), "url parse failed", err.Error())
 		return "", "", err
 	}
-	if err != nil {
-		log.NewError("0", utils.GetSelfFuncName(), "new minio client failed", err.Error())
-	}
 	newName, newType, err := m.getNewFileNameAndContentType(filePath, fileType)
+	if err != nil {
+		log.NewError("", utils.GetSelfFuncName(), "getNewFileNameAndContentType failed", err.Error())
+		return "", "", err
+	}
 	client, err := minio.New(endPoint.Host,  &minio.Options{
 		Creds:        credentials.NewStaticV4(minioResp.AccessKeyID, minioResp.SecretAccessKey, minioResp.SessionToken),
 		Secure:       false,

@@ -140,8 +140,19 @@ func DoTestCreateTextMessage(text string) string {
 
 func DoTestCreateImageMessageFromFullPath() string {
 	operationID := utils.OperationIDGenerator()
-	return open_im_sdk.CreateImageMessageFromFullPath(operationID, "C:\\1.jpg")
+	return open_im_sdk.CreateImageMessageFromFullPath(operationID, "C:\\Users\\Administrator\\Desktop\\1.jpg")
 	//open_im_sdk.SendMessage(&testSendMsg, operationID, s, , "", utils.StructToJsonString(o))
+}
+
+func DoTestCreateOtherMessageFromFullPath() string {
+	operationID := utils.OperationIDGenerator()
+	return open_im_sdk.CreateFileMessageFromFullPath(operationID, "C:\\Users\\Administrator\\Desktop\\2.txt", "2.txt")
+	//open_im_sdk.SendMessage(&testSendMsg, operationID, s, , "", utils.StructToJsonString(o))
+}
+
+func DoTestCreateVideoMessageFromFullPath() string {
+	operationID := utils.OperationIDGenerator()
+	return open_im_sdk.CreateVideoMessageFromFullPath(operationID, "C:\\Users\\Administrator\\Desktop\\video_test.mp4", "mp4", 5, "C:\\Users\\Administrator\\Desktop\\shot.jpg")
 }
 
 //func DoTestSetConversationDraft() {
@@ -283,7 +294,7 @@ func (testMarkC2CMessageAsRead) OnError(code int32, msg string) {
 //}
 
 func DoTestSendMsg(sendId, recvID string) {
-	m := "mmmmmmmmtest:Gordon->sk" + sendId + ":" + recvID + ":"
+	m := "mmmmmmmmtest:18->17" + sendId + ":" + recvID + ":"
 	operationID := utils.OperationIDGenerator()
 	s := DoTestCreateTextMessage(m)
 	var testSendMsg TestSendMsgCallBack
@@ -303,4 +314,28 @@ func DoTestSendImageMsg(sendId, recvID string) {
 	o.Title = "121313"
 	o.Desc = "45464"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
+}
+
+func DoTestSendOtherMsg(sendId, recvID string) {
+	operationID := utils.OperationIDGenerator()
+	s := DoTestCreateOtherMessageFromFullPath()
+	var testSendMsg TestSendMsgCallBack
+	testSendMsg.OperationID = operationID
+	o := server_api_params.OfflinePushInfo{}
+	o.Title = "121313"
+	o.Desc = "45464"
+	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
+}
+
+func DoTestSendVideo(sendId, recvID string) {
+	operationID := utils.OperationIDGenerator()
+	s := DoTestCreateVideoMessageFromFullPath()
+	var testSendMsg TestSendMsgCallBack
+	testSendMsg.OperationID = operationID
+	o := server_api_params.OfflinePushInfo{}
+	o.Title = "121313"
+	o.Desc = "45464"
+	log.NewInfo(operationID, s)
+	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
+
 }
