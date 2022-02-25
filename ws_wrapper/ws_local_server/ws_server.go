@@ -7,10 +7,12 @@
 package ws_local_server
 
 import (
-	"github.com/gorilla/websocket"
 	sLog "log"
 	"net/http"
 	"open_im_sdk/open_im_sdk"
+
+	"github.com/gorilla/websocket"
+
 	//"open_im_sdk/pkg/log"
 	"open_im_sdk/ws_wrapper/utils"
 	"runtime"
@@ -44,8 +46,7 @@ type WServer struct {
 }
 
 func (ws *WServer) OnInit(wsPort int) {
-	ip := utils.ServerIP
-	ws.wsAddr = ip + ":" + utils.IntToString(wsPort)
+	ws.wsAddr = ":" + utils.IntToString(wsPort)
 	ws.wsMaxConnNum = 10000
 	ws.wsConnToUser = make(map[*UserConn]map[string]string)
 	ws.wsUserToConn = make(map[string]map[string]*UserConn)
