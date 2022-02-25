@@ -2,13 +2,15 @@ package test
 
 import (
 	"github.com/gorilla/websocket"
+	"open_im_sdk/internal/interaction"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"time"
 )
 
-func SendReqWaitResp(text, senderID, recvID, operationID string, conn *websocket.Conn) bool {
+func SendTextMessage(text, senderID, recvID, operationID string, ws *interaction.Ws) bool {
+	ws.
 	timeout := 300
 	retryTimes := 60
 	var wsReq GeneralWsReq
