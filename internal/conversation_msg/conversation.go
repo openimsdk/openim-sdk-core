@@ -299,12 +299,23 @@ func (c *Conversation) typingStatusUpdate(callback open_im_sdk_callback.Base, re
 
 }
 
-func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, msgIDList sdk.MarkC2CMessageAsReadParams, sourceMsgIDList, userID, operationID string) {
+func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, msgIDList sdk.MarkC2CMessageAsReadParams, userID, operationID string) {
 	var localMessage db.LocalChatLog
+	var newMessageIDList []string
+	messages, err := c.db.GetMultipleMessage(msgIDList)
+	common.CheckDBErrCallback(callback, err, operationID)
+	for _, v := range messages {
+		if v.IsRead == false && v.ContentType < constant.NotificationBegin {
+			newMessageIDList = append(newMessageIDList, v.ClientMsgID)
+		}
+	}
+	if len(newMessageIDList) == 0 {
+		common.CheckAnyErrCallback(callback, 201, errors.New("message has been marked read"), operationID)
+	}
 	conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
 	s := sdk_struct.MsgStruct{}
 	c.initBasicInfo(&s, constant.UserMsgType, constant.HasReadReceipt, operationID)
-	s.Content = sourceMsgIDList
+	s.Content = utils.StructToJsonString(newMessageIDList)
 	options := make(map[string]bool, 5)
 	utils.SetSwitchFromOptions(options, constant.IsConversationUpdate, false)
 	utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
@@ -315,13 +326,13 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 	s.SendTime = resp.SendTime
 	s.Status = constant.MsgStatusFiltered
 	msgStructToLocalChatLog(&localMessage, &s)
-	err := c.db.InsertMessage(&localMessage)
+	err = c.db.InsertMessage(&localMessage)
 	if err != nil {
 		log.Error(operationID, "inset into chat log err", localMessage, s, err.Error())
 	}
-	err2 := c.db.UpdateMessageHasRead(userID, msgIDList)
+	err2 := c.db.UpdateMessageHasRead(userID, newMessageIDList)
 	if err2 != nil {
-		log.Error(operationID, "update message has read error", msgIDList, userID, err2.Error())
+		log.Error(operationID, "update message has read error", newMessageIDList, userID, err2.Error())
 	}
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.ch)
 	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)

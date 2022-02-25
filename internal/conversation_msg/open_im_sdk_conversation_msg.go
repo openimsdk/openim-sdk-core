@@ -696,6 +696,7 @@ func (c *Conversation) internalSendMessage(callback open_im_sdk_callback.Base, s
 		options[constant.IsHistory] = false
 		options[constant.IsPersistent] = false
 		options[constant.IsOfflinePush] = false
+		options[constant.IsSenderSync] = false
 	}
 
 	var wsMsgData server_api_params.MsgData
@@ -917,7 +918,7 @@ func (c *Conversation) MarkC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 			callback.OnSuccess(sdk_params_callback.MarkC2CMessageAsReadCallback)
 			return
 		}
-		c.markC2CMessageAsRead(callback, unmarshalParams, msgIDList, userID, operationID)
+		c.markC2CMessageAsRead(callback, unmarshalParams, userID, operationID)
 		callback.OnSuccess(sdk_params_callback.MarkC2CMessageAsReadCallback)
 		log.NewInfo(operationID, "MarkC2CMessageAsRead callback: ", sdk_params_callback.MarkC2CMessageAsReadCallback)
 	}()

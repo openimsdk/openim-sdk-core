@@ -187,11 +187,22 @@ func (d *DataBase) GetSendingMessageList() (result []*LocalChatLog, err error) {
 func (d *DataBase) UpdateMessageHasRead(sendID string, msgIDList []string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Model(LocalChatLog{}).Debug().Where("send_id=? And is_read=? AND session_type=? AND client_msg_id in ?", sendID, constant.NotRead, constant.SingleChatType, msgIDList).Update("is_read", constant.HasRead)
+	t := d.conn.Model(LocalChatLog{}).Debug().Where("send_id=?  AND session_type=? AND client_msg_id in ?", sendID, constant.SingleChatType, msgIDList).Update("is_read", constant.HasRead)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
 	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
+}
+func (d *DataBase) GetMultipleMessage(conversationIDList []string) (result []*LocalChatLog, err error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var messageList []LocalChatLog
+	err = utils.Wrap(d.conn.Where("client_msg_id IN ?", conversationIDList).Find(&messageList).Error, "GetMultipleMessage failed")
+	for _, v := range messageList {
+		v1 := v
+		result = append(result, &v1)
+	}
+	return result, err
 }
 
 func (d *DataBase) GetNormalMsgSeq() (uint32, error) {

@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"open_im_sdk/pkg/log"
-
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/log"
 
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"math/rand"
@@ -78,10 +77,10 @@ func (c *COS) getNewFileNameAndContentType(filePath string, fileType string) (st
 
 func (c *COS) uploadObj(filePath string, fileType string, onProgressFun func(int)) (string, string, error) {
 	COSResp, err := c.tencentCOSCredentials()
-	log.Info("upload ", COSResp.Credentials.SessionToken, "bucket ", COSResp.Credentials.TmpSecretID)
 	if err != nil {
 		return "", "", utils.Wrap(err, "")
 	}
+	log.Info("upload ", COSResp.Credentials.SessionToken, "bucket ", COSResp.Credentials.TmpSecretID)
 	dir := fmt.Sprintf("https://%s.cos.%s.myqcloud.com", COSResp.Bucket, COSResp.Region)
 	u, _ := url.Parse(dir)
 	b := &cos.BaseURL{BucketURL: u}
