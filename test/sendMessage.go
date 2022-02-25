@@ -195,7 +195,7 @@ func DoTestRun(num int) {
 		log.Debug("", "user: ", allUserID[i], "token: ", allToken[i], allWs[i])
 	}
 
-	time.Sleep(time.Duration(5) * time.Second)
+	time.Sleep(time.Duration(20) * time.Second)
 
 	for i := 0; i < num; i++ {
 		go testSend(i, "ok", num)

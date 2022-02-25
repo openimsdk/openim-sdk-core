@@ -75,7 +75,7 @@ func main() {
 	//	fmt.Println("waiting")
 	//}
 	//	test.DoTestSendImageMsg("", test.Friend_uid)
-	testClientNum := 2
+	testClientNum := 1000
 	test.DoTestRun(testClientNum)
 	i := 0
 	for true {
