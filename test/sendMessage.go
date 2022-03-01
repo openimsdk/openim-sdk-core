@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"open_im_sdk/sdk_struct"
+	"strings"
+	"sync"
 
 	//"github.com/gorilla/websocket"
 	//"github.com/jinzhu/copier"
@@ -23,8 +25,7 @@ import (
 )
 
 var (
-	TESTIP = "43.128.5.63"
-	//TESTIP       = "1.14.194.38"
+	TESTIP       = "43.128.5.63"
 	APIADDR      = "http://" + TESTIP + ":10000"
 	WSADDR       = "ws://" + TESTIP + ":17778"
 	REGISTERADDR = APIADDR + "/auth/user_register"
@@ -71,37 +72,43 @@ type ResToken struct {
 func register(uid string) error {
 	url := REGISTERADDR
 	var req server_api_params.UserRegisterReq
-	req.OperationID = "1111111111111111111"
+	req.OperationID = utils.OperationIDGenerator()
 	req.Platform = 1
 	req.UserID = uid
 	req.Secret = SECRET
 	req.Nickname = uid
-	r, err := network.Post2Api(url, req, "")
-	if err != nil {
-		fmt.Println(r, err)
-		return err
+	for {
+		_, err := network.Post2Api(url, req, "")
+		if err != nil && !strings.Contains(err.Error(), "status code failed") {
+			log.Error(req.OperationID, "post failed ,continue ", err.Error())
+			time.Sleep(time.Duration(1) * time.Second)
+			continue
+		} else {
+			return nil
+		}
+		//status code failed
 	}
 
 	return nil
-
 }
+
 func getToken(uid string) string {
 	url := TOKENADDR
 	var req server_api_params.UserTokenReq
 	req.Platform = 2
 	req.UserID = uid
 	req.Secret = SECRET
-	req.OperationID = "2222222"
+	req.OperationID = utils.OperationIDGenerator()
 	r, err := network.Post2Api(url, req, "")
 	if err != nil {
-		fmt.Println(r, err)
+		log.Error(req.OperationID, "Post2Api failed ", err.Error(), url, req)
 		return ""
 	}
 
 	var stcResp ResToken
 	err = json.Unmarshal(r, &stcResp)
 	if stcResp.ErrCode != 0 {
-		fmt.Println(stcResp.ErrCode, stcResp.ErrMsg)
+		log.Error(req.OperationID, "ErrCode failed ", stcResp.ErrMsg, stcResp.ErrMsg)
 		return ""
 	}
 	return stcResp.Data.Token
@@ -117,11 +124,11 @@ func runGetToken(strMyUid string) string {
 	for true {
 		token = getToken(strMyUid)
 		if token == "" {
-			fmt.Println("test_openim: get token failed")
-			time.Sleep(time.Duration(30) * time.Second)
+			log.Error("test_openim: get token failed")
+			time.Sleep(time.Duration(1) * time.Second)
 			continue
 		} else {
-			fmt.Println("get token: ", strMyUid, token)
+			log.Info("get token: ", strMyUid, token)
 			break
 		}
 	}
@@ -142,7 +149,7 @@ func getMyIP() string {
 
 		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil {
-				fmt.Println(ipnet.IP.String())
+				//	fmt.Println(ipnet.IP.String())
 				return ipnet.IP.String()
 			}
 
@@ -156,7 +163,7 @@ func GenUid(uid int) string {
 		fmt.Println("getMyIP() failed")
 		os.Exit(1)
 	}
-	UidPrefix := getMyIP() + "open_im_test_uid_"
+	UidPrefix := getMyIP() + "uid"
 	return UidPrefix + strconv.FormatInt(int64(uid), 10)
 }
 
@@ -165,7 +172,10 @@ func GenToken(userID string) string {
 }
 
 func GenWs(id int) {
+	//return
 	userID := GenUid(id)
+	userLock.Lock()
+	defer userLock.Unlock()
 	allUserID = append(allUserID, userID)
 	register(userID)
 	token := GenToken(userID)
@@ -182,20 +192,36 @@ func GenWs(id int) {
 
 }
 
+var userLock sync.RWMutex
+
 var allUserID []string
 var allToken []string
 var allWs []*interaction.Ws
 
 func DoTestRun(num int) {
+	var wg sync.WaitGroup
+	wg.Add(num)
+
 	for i := 0; i < num; i++ {
-		GenWs(i)
-		if allUserID[i] == "" || allToken[i] == "" || allWs[i] == nil {
-			log.Error("", "args failed")
-		}
-		log.Debug("", "user: ", allUserID[i], "token: ", allToken[i], allWs[i])
+		go func(t int) {
+
+			GenWs(t)
+			log.Info("genws ", t)
+			wg.Done()
+		}(i)
+
+		//if allUserID[i] == "" || allToken[i] == "" || allWs[i] == nil {
+		//	log.Error("", "args failed")
+		//}
+		//log.Debug("", "user: ", allUserID[i], "token: ", allToken[i], allWs[i])
 	}
 
-	time.Sleep(time.Duration(20) * time.Second)
+	for i := 0; i < num; i++ {
+		wg.Wait()
+	}
+
+	log.Info("", "start send message...")
+	time.Sleep(time.Duration(1) * time.Second)
 
 	for i := 0; i < num; i++ {
 		go testSend(i, "ok", num)
@@ -209,12 +235,12 @@ func testSend(idx int, text string, uidNum int) {
 		recvID := allUserID[rand.Intn(uidNum)]
 		b := SendTextMessage(text, sendID, recvID, operationID, allWs[idx])
 		if b {
-			log.Debug(operationID, sendID, recvID, "SendTextMessage success")
+			//	log.Debug(operationID, sendID, recvID, "SendTextMessage success")
 		} else {
-			log.Debug(operationID, sendID, recvID, "SendTextMessage failed")
+			log.Error(operationID, sendID, recvID, "SendTextMessage failed")
 		}
 
-		time.Sleep(time.Duration(1) * time.Second)
+		time.Sleep(time.Duration(rand.Intn(500)+5) * time.Second)
 	}
 }
 
