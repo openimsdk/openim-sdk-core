@@ -168,6 +168,7 @@ func GenUid(uid int) string {
 }
 
 func GenToken(userID string) string {
+
 	return runGetToken(userID)
 }
 
@@ -177,8 +178,9 @@ func GenWs(id int) {
 	userLock.Lock()
 	defer userLock.Unlock()
 	allUserID = append(allUserID, userID)
-	register(userID)
-	token := GenToken(userID)
+	//register(userID)
+	//token := GenToken(userID)
+	token := "testtokentokentokentokentokentokentokentokentokentoken"
 	allToken = append(allToken, token)
 
 	wsRespAsyn := interaction.NewWsRespAsyn()
