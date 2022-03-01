@@ -99,8 +99,8 @@ func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (*websocket.Conn, error) {
 		if err != nil {
 			return nil, utils.Wrap(err, "SetWriteTimeout")
 		}
+		log.Debug("this msg length is :", len(buff.Bytes())/1024, "kb")
 		if len(buff.Bytes()) > constant.MaxTotalMsgLen {
-			log.Debug("this msg length is :", len(buff.Bytes())/1024, "kb")
 			return nil, utils.Wrap(errors.New("msg too long"), utils.IntToString(len(buff.Bytes())))
 		}
 		return u.conn, utils.Wrap(u.conn.WriteMessage(websocket.BinaryMessage, buff.Bytes()), "")
