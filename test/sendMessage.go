@@ -81,7 +81,7 @@ func register(uid string) error {
 		_, err := network.Post2Api(url, req, "")
 		if err != nil && !strings.Contains(err.Error(), "status code failed") {
 			log.Error(req.OperationID, "post failed ,continue ", err.Error())
-			time.Sleep(time.Duration(1) * time.Second)
+			//	time.Sleep(time.Duration(1) * time.Second)
 			continue
 		} else {
 			return nil
