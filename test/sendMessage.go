@@ -240,7 +240,7 @@ func testSend(idx int, text string, uidNum int) {
 			log.Error(operationID, sendID, recvID, "SendTextMessage failed")
 		}
 
-		time.Sleep(time.Duration(rand.Intn(500)+5) * time.Second)
+		time.Sleep(time.Duration(rand.Intn(200)+300) * time.Second)
 	}
 }
 
