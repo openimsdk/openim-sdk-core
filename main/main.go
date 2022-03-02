@@ -53,7 +53,7 @@ func main() {
 	//	test.DoTestGetFriendApplicationList()
 	//test.DoTestAcceptFriendApplication()
 
-	//test.DotestSetFriendRemark()
+	//	test.DotestSetFriendRemark()
 	//	test.DotestGetFriendList()
 
 	//test.DotestDeleteFriend()
@@ -75,6 +75,7 @@ func main() {
 	//	fmt.Println("waiting")
 	//}
 	//	test.DoTestSendImageMsg("", test.Friend_uid)
+
 	//testClientNum := 1000
 	//test.DoTestRun(testClientNum)
 	i := 0

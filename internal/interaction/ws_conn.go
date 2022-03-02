@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"strings"
@@ -98,6 +99,7 @@ func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (*websocket.Conn, error) {
 		if err != nil {
 			return nil, utils.Wrap(err, "SetWriteTimeout")
 		}
+		log.Debug("this msg length is :", len(buff.Bytes())/1024, "kb")
 		if len(buff.Bytes()) > constant.MaxTotalMsgLen {
 			return nil, utils.Wrap(errors.New("msg too long"), utils.IntToString(len(buff.Bytes())))
 		}

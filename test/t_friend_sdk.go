@@ -198,7 +198,7 @@ func DotestSetFriendRemark() {
 
 	var param sdk_params_callback.SetFriendRemarkParams
 	param.ToUserID = Friend_uid
-	param.Remark = "u-gordon"
+	param.Remark = "ttttttttttttttttt "
 	jsontest := utils.StructToJsonString(param)
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ", jsontest)
 	open_im_sdk.SetFriendRemark(test, test.OperationID, jsontest)
@@ -237,7 +237,7 @@ func DoTestAddFriend() {
 	test.OperationID = utils.OperationIDGenerator()
 	params := sdk_params_callback.AddFriendParams{
 		ToUserID: Friend_uid,
-		ReqMsg:   "00065645546566565",
+		ReqMsg:   "777777777777777777777777",
 	}
 	jsontestaddFriend := utils.StructToJsonString(params)
 	log.Info(test.OperationID, "addFriend input:", jsontestaddFriend)

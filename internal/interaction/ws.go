@@ -288,7 +288,7 @@ func (w *Ws) doWSPushMsgForTest(wsResp GeneralWsResp) error {
 	if err != nil {
 		return utils.Wrap(err, "Unmarshal failed")
 	}
-	log.Debug(wsResp.OperationID, "recv push doWSPushMsgForTest")
+	//log.Debug(wsResp.OperationID, "recv push doWSPushMsgForTest")
 	return nil
 	//	return utils.Wrap(common.TriggerCmdPushMsg(sdk_struct.CmdPushMsgToMsgSync{Msg: &msg, OperationID: wsResp.OperationID}, w.pushMsgAndMaxSeqCh), "")
 }
