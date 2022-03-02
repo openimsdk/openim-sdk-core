@@ -34,7 +34,7 @@ func (m *Minio) getMinioCredentials() (*server_api_params.MinioStorageCredential
 	var resp server_api_params.MinioStorageCredentialResp
 	err := m.p.PostReturn(constant.MinioStorageCredentialRouter, req, &resp)
 	if err != nil {
-		log.NewError("0", utils.GetSelfFuncName(), err.Error())
+		log.NewError("0", utils.GetSelfFuncName(), err.Error(), resp, req)
 		return &resp, utils.Wrap(err, "")
 	}
 	return &resp, nil
@@ -46,7 +46,7 @@ func (m *Minio) upload(filePath, fileType string, onProgressFun func(int)) (stri
 		log.NewError("", utils.GetSelfFuncName(), "getMinioCredentials failed", err.Error())
 		return "", "", err
 	}
-	log.NewInfo("0", utils.GetSelfFuncName(), "minio", minioResp)
+	log.NewInfo("", utils.GetSelfFuncName(), "recv minio credentials", *minioResp)
 	endPoint, err  := url.Parse(minioResp.StsEndpointURL)
 	if err != nil {
 		log.NewError("", utils.GetSelfFuncName(), "url parse failed", err.Error())
@@ -54,7 +54,7 @@ func (m *Minio) upload(filePath, fileType string, onProgressFun func(int)) (stri
 	}
 	newName, newType, err := m.getNewFileNameAndContentType(filePath, fileType)
 	if err != nil {
-		log.NewError("", utils.GetSelfFuncName(), "getNewFileNameAndContentType failed", err.Error())
+		log.NewError("", utils.GetSelfFuncName(), "getNewFileNameAndContentType failed", err.Error(), filePath, fileType)
 		return "", "", err
 	}
 	client, err := minio.New(endPoint.Host,  &minio.Options{
@@ -105,9 +105,12 @@ func (m *Minio) UploadFile(filePath string, onProgressFun func(int)) (string, st
 
 func (m *Minio) UploadVideo(videoPath, snapshotPath string, onProgressFun func(int)) (string, string, string, string, error) {
 	videoURL, videoName, err := m.upload(videoPath, "", onProgressFun)
+	if err != nil {
+		return "", "", "", "", utils.Wrap(err, "")
+	}
 	snapshotURL, snapshotUUID, err :=  m.upload(snapshotPath, "img", onProgressFun)
 	if err != nil {
-		return snapshotURL, snapshotUUID, videoURL, videoName, utils.Wrap(err, "")
+		return "", "", "", "", utils.Wrap(err, "")
 	}
 	return snapshotURL, snapshotUUID, videoURL, videoName, nil
 }

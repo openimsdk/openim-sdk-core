@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/pkg/errors"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/test"
 
 	//"open_im_sdk/pkg/constant"
@@ -18,11 +19,10 @@ import (
 )
 
 func main() {
-
-	//	strMyUidx := "18381415165"
-	//	friendID := "17726378428"
-	//	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxODM4MTQxNTE2NSIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYxMTI5NTQyLCJuYmYiOjE2NDU3Njk1NDIsImlhdCI6MTY0NTc2OTU0Mn0.hwLlECGDdaJscqGFLx-Avx6lbj3cNHSHq1QhdO8-zHg"
-	//	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+		strMyUidx := "18381415165"
+		friendID := "17726378428"
+		tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxODM4MTQxNTE2NSIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYxNDg1MDk2LCJuYmYiOjE2NDYxMjUwOTYsImlhdCI6MTY0NjEyNTA5Nn0.1FB78hxqZimK5Y4UaIwYGjSsu-fEM5ldb2x25-N_dYg"
+		test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
 	//	test.DoTestCreateGroup()
 	//test.SetTestFriendID(friendUserID)
 	//fmt.Println("logout ........... ")
@@ -75,15 +75,17 @@ func main() {
 	//	fmt.Println("waiting")
 	//}
 	//	test.DoTestSendImageMsg("", test.Friend_uid)
-	testClientNum := 2
-	test.DoTestRun(testClientNum)
+	//testClientNum := 1000
+	//test.DoTestRun(testClientNum)
 	i := 0
 	for true {
-
+		log.NewInfo("00", "start new")
 		i++
+		test.DoTestSendImageMsg(strMyUidx, friendID)
 		fmt.Println("DoTestSendMsg count: ", i)
 		fmt.Println("waiting")
 		time.Sleep(time.Duration(1000) * time.Second)
+
 	}
 	//
 	//return
