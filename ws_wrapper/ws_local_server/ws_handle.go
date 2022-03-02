@@ -32,19 +32,19 @@ type BaseSuccFailed struct {
 func cleanUpfuncName(funcName string) string {
 	end := strings.LastIndex(funcName, ".")
 	if end == -1 {
-		wrapSdkLog("funcName not include.", funcName)
+		wrapSdkLog("", "funcName not include.", funcName)
 		return ""
 	}
 	return funcName[end+1:]
 }
 
 func (b *BaseSuccFailed) OnError(errCode int32, errMsg string) {
-	wrapSdkLog("!!!!!!!OnError ", b.uid, b.operationID, b.funcName)
+	wrapSdkLog("","!!!!!!!OnError ", b.uid, b.operationID, b.funcName)
 	SendOneUserMessage(EventData{cleanUpfuncName(b.funcName), errCode, errMsg, "", b.operationID}, b.uid)
 }
 
 func (b *BaseSuccFailed) OnSuccess(data string) {
-	wrapSdkLog("!!!!!!!OnSuccess ", b.uid, b.operationID, b.funcName)
+	wrapSdkLog("", "!!!!!!!OnSuccess ", b.uid, b.operationID, b.funcName)
 	SendOneUserMessage(EventData{cleanUpfuncName(b.funcName), 0, "", data, b.operationID}, b.uid)
 }
 
@@ -67,11 +67,11 @@ type WsFuncRouter struct {
 }
 
 func DelUserRouter(uid string) {
-	wrapSdkLog("DelUserRouter ", uid)
+	wrapSdkLog("", "DelUserRouter ", uid)
 	sub := " " + utils.PlatformIDToName(sdk_struct.SvrConf.Platform)
 	idx := strings.LastIndex(uid, sub)
 	if idx == -1 {
-		wrapSdkLog("err uid, not Web", uid)
+		wrapSdkLog("", "err uid, not Web", uid)
 		return
 	}
 
@@ -82,14 +82,14 @@ func DelUserRouter(uid string) {
 	urm, ok := UserRouteMap[uid]
 	if ok {
 		operationID := utils2.OperationIDGenerator()
-		wrapSdkLog("DelUserRouter logout, UnInitSDK ", uid, operationID)
+		wrapSdkLog("", "DelUserRouter logout, UnInitSDK ", uid, operationID)
 
 		urm.wsRouter.LogoutNoCallback(uid, operationID)
 		urm.wsRouter.UnInitSDK()
 	} else {
-		wrapSdkLog("no found UserRouteMap: ", uid)
+		wrapSdkLog("", "no found UserRouteMap: ", uid)
 	}
-	wrapSdkLog("DelUserRouter delete ", uid)
+	wrapSdkLog("", "DelUserRouter delete ", uid)
 	delete(UserRouteMap, uid)
 }
 
@@ -109,24 +109,24 @@ func GenUserRouterNoLock(uid string) *RefRouter {
 	mNum := vf.NumMethod()
 	for i := 0; i < mNum; i++ {
 		mName := vft.Method(i).Name
-		wrapSdkLog("index:", i, " MethodName:", mName)
+		wrapSdkLog("", "index:", i, " MethodName:", mName)
 		RouteMap1[mName] = vf.Method(i)
 	}
 	wsRouter1.InitSDK(ConfigSvr, "0")
 	wsRouter1.SetAdvancedMsgListener()
 	wsRouter1.SetConversationListener()
-	wrapSdkLog("SetFriendListener() ", uid)
+	wrapSdkLog("", "SetFriendListener() ", uid)
 	wsRouter1.SetFriendListener()
-	wrapSdkLog("SetGroupListener() ", uid)
+	wrapSdkLog("", "SetGroupListener() ", uid)
 	wsRouter1.SetGroupListener()
-	wrapSdkLog("SetUserListener() ", uid)
+	wrapSdkLog("", "SetUserListener() ", uid)
 	wsRouter1.SetUserListener()
 
 	var rr RefRouter
 	rr.refName = &RouteMap1
 	rr.wsRouter = &wsRouter1
 	UserRouteMap[uid] = rr
-	wrapSdkLog("insert UserRouteMap: ", uid)
+	wrapSdkLog("", "insert UserRouteMap: ", uid)
 	return &rr
 }
 
@@ -142,20 +142,20 @@ func SendOneUserMessage(data interface{}, uid string) {
 	chMsg.uid = uid
 	err := send2Ch(WS.ch, chMsg, 2)
 	if err != nil {
-		wrapSdkLog("send2ch failed, ", err, string(bMsg), uid)
+		wrapSdkLog("", "send2ch failed, ", err, string(bMsg), uid)
 		return
 	}
-	wrapSdkLog("send response to web: ", string(bMsg))
+	wrapSdkLog("", "send response to web: ", string(bMsg))
 }
 
 func SendOneConnMessage(data interface{}, conn *UserConn) {
 	bMsg, _ := json.Marshal(data)
 	err := WS.writeMsg(conn, websocket.TextMessage, bMsg)
-	wrapSdkLog("send response to web: ", string(bMsg), "userUid", WS.getUserUid(conn))
+	wrapSdkLog("", "send response to web: ", string(bMsg), "userUid", WS.getUserUid(conn))
 	if err != nil {
-		wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", data)
+		wrapSdkLog("", "WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", WS.getUserUid(conn), "error", err, "data", data)
 	} else {
-		wrapSdkLog("WS WriteMsg ok", "data", data, "userUid", WS.getUserUid(conn))
+		wrapSdkLog("", "WS WriteMsg ok", "data", data, "userUid", WS.getUserUid(conn))
 	}
 }
 
@@ -170,7 +170,7 @@ func send2Ch(ch chan ChanMsg, value ChanMsg, timeout int64) error {
 	if flag == 1 {
 		return nil
 	} else {
-		wrapSdkLog("send cmd timeout, ", timeout, value)
+		wrapSdkLog("", "send cmd timeout, ", timeout, value)
 		return errors.New("send cmd timeout")
 	}
 }

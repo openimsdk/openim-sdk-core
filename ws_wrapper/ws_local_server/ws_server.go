@@ -8,9 +8,10 @@ package ws_local_server
 
 import (
 	"github.com/gorilla/websocket"
-	sLog "log"
 	"net/http"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/log"
+
 	//"open_im_sdk/pkg/log"
 	"open_im_sdk/ws_wrapper/utils"
 	"runtime"
@@ -63,7 +64,7 @@ func (ws *WServer) Run() {
 	http.HandleFunc("/", ws.wsHandler)         //Get request from client to handle by wsHandler
 	err := http.ListenAndServe(ws.wsAddr, nil) //Start listening
 	if err != nil {
-		wrapSdkLog("Ws listening err", "", "err", err.Error())
+		wrapSdkLog("", "Ws listening err", "", "err", err.Error())
 	}
 }
 func (ws *WServer) getMsgAndSend() {
@@ -73,18 +74,18 @@ func (ws *WServer) getMsgAndSend() {
 			go func() {
 				conns := ws.getUserConn(r.uid + " " + "Web")
 				if conns == nil {
-					wrapSdkLog("uid no conn, failed ", r.uid)
+					wrapSdkLog("", "uid no conn, failed ", r.uid)
 				}
 				for _, conn := range conns {
 					if conn != nil {
-						wrapSdkLog("getMsgAndSend begin: ", string(r.data))
+						wrapSdkLog("", "getMsgAndSend begin: ", string(r.data))
 						err := WS.writeMsg(conn, websocket.TextMessage, r.data)
-						wrapSdkLog("getMsgAndSend end: ", string(r.data))
+						wrapSdkLog("", "getMsgAndSend end: ", string(r.data))
 						if err != nil {
-							wrapSdkLog("WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", r.uid, "error", err, "data", string(r.data))
+							wrapSdkLog("", "WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", r.uid, "error", err, "data", string(r.data))
 						}
 					} else {
-						wrapSdkLog("Conn is nil, failed", "data", string(r.data))
+						wrapSdkLog("", "Conn is nil, failed", "data", string(r.data))
 					}
 				}
 			}()
@@ -95,12 +96,12 @@ func (ws *WServer) getMsgAndSend() {
 }
 
 func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
-	wrapSdkLog("wsHandler ", r.URL.Query())
+	wrapSdkLog("", "wsHandler ", r.URL.Query())
 	if ws.headerCheck(w, r) {
 		query := r.URL.Query()
 		conn, err := ws.wsUpGrader.Upgrade(w, r, nil) //Conn is obtained through the upgraded escalator
 		if err != nil {
-			wrapSdkLog("upgrade http conn err", "", "err", err)
+			wrapSdkLog("", "upgrade http conn err", "", "err", err)
 			return
 		} else {
 			//Connection mapping relationship,
@@ -117,11 +118,11 @@ func (ws *WServer) readMsg(conn *UserConn) {
 	for {
 		msgType, msg, err := conn.ReadMessage()
 		if err != nil {
-			wrapSdkLog("ReadMessage error", "", "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn), "error", err)
+			wrapSdkLog("", "ReadMessage error", "", "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn), "error", err)
 			ws.delUserConn(conn)
 			return
 		} else {
-			wrapSdkLog("ReadMessage ok ", "", "msgType", msgType, "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn))
+			wrapSdkLog("", "ReadMessage ok ", "", "msgType", msgType, "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn))
 		}
 		ws.msgParse(conn, msg)
 	}
@@ -141,38 +142,38 @@ func (ws *WServer) addUserConn(uid string, conn *UserConn) {
 		flag = 1
 		oldConnMap[conn.RemoteAddr().String()] = conn
 		ws.wsUserToConn[uid] = oldConnMap
-		wrapSdkLog("this user is not first login", "", "uid", uid)
+		wrapSdkLog("", "this user is not first login", "", "uid", uid)
 		//err := oldConn.Close()
 		//delete(ws.wsConnToUser, oldConn)
 		//if err != nil {
-		//	wrapSdkLog("close err", "", "uid", uid, "conn", conn)
+		//	wrapSdkLog("", "close err", "", "uid", uid, "conn", conn)
 		//}
 	} else {
 		i := make(map[string]*UserConn)
 		i[conn.RemoteAddr().String()] = conn
 		ws.wsUserToConn[uid] = i
-		wrapSdkLog("this user is first login", "", "uid", uid)
+		wrapSdkLog("", "this user is first login", "", "uid", uid)
 	}
 	if oldStringMap, ok := ws.wsConnToUser[conn]; ok {
 		oldStringMap[conn.RemoteAddr().String()] = uid
 		ws.wsConnToUser[conn] = oldStringMap
-		wrapSdkLog("find failed", "", "uid", uid)
+		wrapSdkLog("", "find failed", "", "uid", uid)
 		//err := oldConn.Close()
 		//delete(ws.wsConnToUser, oldConn)
 		//if err != nil {
-		//	wrapSdkLog("close err", "", "uid", uid, "conn", conn)
+		//	wrapSdkLog("", "close err", "", "uid", uid, "conn", conn)
 		//}
 	} else {
 		i := make(map[string]string)
 		i[conn.RemoteAddr().String()] = uid
 		ws.wsConnToUser[conn] = i
-		wrapSdkLog("this user is first login", "", "uid", uid)
+		wrapSdkLog("", "this user is first login", "", "uid", uid)
 	}
-	wrapSdkLog("WS Add operation", "", "wsUser added", ws.wsUserToConn, "uid", uid, "online_num", len(ws.wsUserToConn))
+	wrapSdkLog("", "WS Add operation", "", "wsUser added", ws.wsUserToConn, "uid", uid, "online_num", len(ws.wsUserToConn))
 	rwLock.Unlock()
 
-	//wrapSdkLog("after add, wsConnToUser map ", ws.wsConnToUser)
-	//	wrapSdkLog("after add, wsUserToConn  map ", ws.wsUserToConn)
+	//wrapSdkLog("", "after add, wsConnToUser map ", ws.wsConnToUser)
+	//	wrapSdkLog("", "after add, wsUserToConn  map ", ws.wsUserToConn)
 
 	if flag == 1 {
 		//	DelUserRouter(uid)
@@ -182,9 +183,9 @@ func (ws *WServer) addUserConn(uid string, conn *UserConn) {
 func (ws *WServer) getConnNum(uid string) int {
 	rwLock.Lock()
 	defer rwLock.Unlock()
-	wrapSdkLog("getConnNum uid: ", uid)
+	wrapSdkLog("", "getConnNum uid: ", uid)
 	if connMap, ok := ws.wsUserToConn[uid]; ok {
-		wrapSdkLog("uid->conn ", connMap)
+		wrapSdkLog("", "uid->conn ", connMap)
 		return len(connMap)
 	} else {
 		return 0
@@ -195,8 +196,8 @@ func (ws *WServer) getConnNum(uid string) int {
 func (ws *WServer) delUserConn(conn *UserConn) {
 	rwLock.Lock()
 	var uidPlatform string
-	//	wrapSdkLog("before del, wsConnToUser map ", ws.wsConnToUser)
-	//	wrapSdkLog("before del, wsUserToConn  map ", ws.wsUserToConn)
+	//	wrapSdkLog("", "before del, wsConnToUser map ", ws.wsConnToUser)
+	//	wrapSdkLog("", "before del, wsUserToConn  map ", ws.wsUserToConn)
 	if oldStringMap, ok := ws.wsConnToUser[conn]; ok {
 		uidPlatform = oldStringMap[conn.RemoteAddr().String()]
 		if oldConnMap, ok := ws.wsUserToConn[uidPlatform]; ok {
@@ -283,7 +284,7 @@ func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request) bool {
 	}
 }
 
-func wrapSdkLog(v ...interface{}) {
+func wrapSdkLog(operationID string, v ...interface{}) {
 	//if !log.IsNil() {
 	//	log.NewInfo("", v...)
 	//	return
@@ -291,6 +292,7 @@ func wrapSdkLog(v ...interface{}) {
 	_, b, c, _ := runtime.Caller(1)
 	i := strings.LastIndex(b, "/")
 	if i != -1 {
-		sLog.Println("[", b[i+1:len(b)], ":", c, "]", v)
+		//sLog.Println("[", b[i+1:len(b)], ":", c, "]", v)
+		log.NewInfo(operationID, "[", b[i+1:len(b)], ":", c, "]", v)
 	}
 }
