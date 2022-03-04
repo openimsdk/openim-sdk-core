@@ -3,6 +3,7 @@ package ws_local_server
 import (
 	"encoding/json"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/utils"
 )
 
 type GroupCallback struct {
@@ -124,7 +125,7 @@ func (wsRouter *WsFuncRouter) SetGroupListener() {
 func (wsRouter *WsFuncRouter) CreateGroup(input, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog("unmarshal failed")
+		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -140,7 +141,7 @@ func (wsRouter *WsFuncRouter) CreateGroup(input, operationID string) {
 func (wsRouter *WsFuncRouter) JoinGroup(input, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog("unmarshal failed")
+		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -184,7 +185,7 @@ func (wsRouter *WsFuncRouter) GetGroupsInfo(input, operationID string) { //(grou
 func (wsRouter *WsFuncRouter) SetGroupInfo(input, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog("unmarshal failed")
+		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -200,7 +201,7 @@ func (wsRouter *WsFuncRouter) SetGroupInfo(input, operationID string) {
 func (wsRouter *WsFuncRouter) GetGroupMemberList(input, operationID string) { //(groupId string, filter int32, next int32, callback Base) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog("unmarshal failed")
+		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -216,7 +217,7 @@ func (wsRouter *WsFuncRouter) GetGroupMemberList(input, operationID string) { //
 func (wsRouter *WsFuncRouter) GetGroupMembersInfo(input, operationID string) { //(groupId string, userList string, callback Base) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog("unmarshal failed")
+		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -232,7 +233,7 @@ func (wsRouter *WsFuncRouter) GetGroupMembersInfo(input, operationID string) { /
 func (wsRouter *WsFuncRouter) KickGroupMember(input, operationID string) { //(groupId string, reason string, userList string, callback Base) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog("unmarshal failed")
+		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -248,7 +249,7 @@ func (wsRouter *WsFuncRouter) KickGroupMember(input, operationID string) { //(gr
 func (wsRouter *WsFuncRouter) TransferGroupOwner(input, operationID string) { //(groupId, userId string, callback Base) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog("unmarshal failed")
+		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -264,7 +265,7 @@ func (wsRouter *WsFuncRouter) TransferGroupOwner(input, operationID string) { //
 func (wsRouter *WsFuncRouter) InviteUserToGroup(input, operationID string) { //(groupId, reason string, userList string, callback Base) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog("unmarshal failed")
+		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -290,7 +291,7 @@ func (wsRouter *WsFuncRouter) GetSendGroupApplicationList(input, operationID str
 func (wsRouter *WsFuncRouter) AcceptGroupApplication(input, operationID string) { //(application, reason string, callback Base) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog("unmarshal failed")
+		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -305,7 +306,7 @@ func (wsRouter *WsFuncRouter) AcceptGroupApplication(input, operationID string) 
 func (wsRouter *WsFuncRouter) RefuseGroupApplication(input, operationID string) { //(application, reason string, callback Base) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog("unmarshal failed")
+		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
