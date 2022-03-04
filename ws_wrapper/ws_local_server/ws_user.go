@@ -6,16 +6,25 @@ import (
 
 func (wsRouter *WsFuncRouter) GetUsersInfo(userIDList string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, userIDList, operationID, runFuncName(), nil) {
+		return
+	}
 	userWorker.Full().GetUsersInfo(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, userIDList, operationID)
 }
 
 func (wsRouter *WsFuncRouter) SetSelfInfo(userInfo string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, userInfo, operationID, runFuncName(), nil) {
+		return
+	}
 	userWorker.User().SetSelfInfo(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, userInfo, operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetSelfUserInfo(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
+		return
+	}
 	userWorker.User().GetSelfUserInfo(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 

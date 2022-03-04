@@ -46,72 +46,111 @@ func (wsRouter *WsFuncRouter) SetFriendListener() {
 //1
 func (wsRouter *WsFuncRouter) GetDesignatedFriendsInfo(userIDList string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, userIDList, operationID, runFuncName(), nil) {
+		return
+	}
 	userWorker.Friend().GetDesignatedFriendsInfo(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, userIDList, operationID)
 }
 
 //1
 func (wsRouter *WsFuncRouter) AddFriend(paramsReq string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, paramsReq, operationID, runFuncName(), nil) {
+		return
+	}
 	userWorker.Friend().AddFriend(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, paramsReq, operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetRecvFriendApplicationList(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
+		return
+	}
 	userWorker.Friend().GetRecvFriendApplicationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetSendFriendApplicationList(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
+		return
+	}
 	userWorker.Friend().GetSendFriendApplicationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
 //1
 func (wsRouter *WsFuncRouter) AcceptFriendApplication(params string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, params, operationID, runFuncName(), nil) {
+		return
+	}
 	userWorker.Friend().AcceptFriendApplication(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, params, operationID)
 }
 
 //1
 func (wsRouter *WsFuncRouter) RefuseFriendApplication(params string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, params, operationID, runFuncName(), nil) {
+		return
+	}
 	userWorker.Friend().RefuseFriendApplication(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, params, operationID)
 }
 
 //1
 func (wsRouter *WsFuncRouter) CheckFriend(userIDList string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, userIDList, operationID, runFuncName(), nil) {
+		return
+	}
 	userWorker.Friend().CheckFriend(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, userIDList, operationID)
 }
 
 //1
 func (wsRouter *WsFuncRouter) DeleteFriend(friendUserID string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, friendUserID, operationID, runFuncName(), nil) {
+		return
+	}
 	userWorker.Friend().DeleteFriend(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, friendUserID, operationID)
 }
 
 //1
 func (wsRouter *WsFuncRouter) GetFriendList(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
+		return
+	}
 	userWorker.Friend().GetFriendList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
 //1
 func (wsRouter *WsFuncRouter) SetFriendRemark(remark string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, remark, operationID, runFuncName(), nil) {
+		return
+	}
 	userWorker.Friend().SetFriendRemark(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, remark, operationID)
 }
 
 func (wsRouter *WsFuncRouter) AddBlack(blackUserID string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, blackUserID, operationID, runFuncName(), nil) {
+		return
+	}
 	userWorker.Friend().AddBlack(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, blackUserID, operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetBlackList(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
+		return
+	}
 	userWorker.Friend().GetBlackList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
 func (wsRouter *WsFuncRouter) RemoveBlack(removeUserID string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, removeUserID, operationID, runFuncName(), nil) {
+		return
+	}
 	userWorker.Friend().RemoveBlack(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, removeUserID, operationID)
 }

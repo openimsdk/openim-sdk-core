@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"open_im_sdk/internal/login"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 
 	//	"open_im_sdk/pkg/constant"
@@ -64,7 +65,7 @@ var ConfigSvr string
 func (wsRouter *WsFuncRouter) InitSDK(config string, operationID string) {
 	var initcb InitCallback
 	initcb.uid = wsRouter.uId
-	wrapSdkLog(operationID,"Initsdk uid: ", initcb.uid, config)
+	wrapSdkLog(operationID, "Initsdk uid: ", initcb.uid, config)
 	c := sdk_struct.IMConfig{}
 	json.Unmarshal([]byte(config), &c)
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
@@ -87,14 +88,14 @@ func (wsRouter *WsFuncRouter) checkResourceLoadingAndKeysIn(mgr *login.LoginMgr,
 	for _, k := range keys {
 		_, ok := m[k]
 		if !ok {
-			wrapSdkLog("key not in", keys, input, operationID, funcName)
+			wrapSdkLog(operationID, "key not in", keys, input, operationID, funcName)
 			wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(funcName), StatusBadParameter, "key not in", "", operationID})
 			return false
 		}
 	}
 
 	if err := open_im_sdk.CheckResourceLoad(mgr); err != nil {
-		wrapSdkLog("Resource Loading ", mgr, err.Error())
+		wrapSdkLog(operationID, "Resource Loading ", mgr, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(funcName), StatusResourceNotCompleted, "resource loading is not completed", "", operationID})
 		return false
 	}
@@ -141,18 +142,27 @@ func (wsRouter *WsFuncRouter) LogoutNoCallback(input string, operationID string)
 
 func (wsRouter *WsFuncRouter) GetLoginStatus(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
+		return
+	}
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", int32ToString(int32(userWorker.GetLoginStatus())), operationID})
 }
 
 //1
 func (wsRouter *WsFuncRouter) getMyLoginStatus() int32 {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, "", "", runFuncName(), nil) {
+		return constant.SdkInit
+	}
 	return userWorker.GetLoginStatus()
 }
 
 //1
 func (wsRouter *WsFuncRouter) GetLoginUser(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
+		return
+	}
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", userWorker.GetLoginUser(), operationID})
 }
 
