@@ -2,7 +2,11 @@ package ws_local_server
 
 import (
 	"encoding/json"
+	"open_im_sdk/internal/login"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/utils"
+
 	//	"open_im_sdk/pkg/constant"
 	//	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
@@ -61,7 +65,7 @@ var ConfigSvr string
 func (wsRouter *WsFuncRouter) InitSDK(config string, operationID string) {
 	var initcb InitCallback
 	initcb.uid = wsRouter.uId
-	wrapSdkLog("Initsdk uid: ", initcb.uid)
+	wrapSdkLog(operationID, "Initsdk uid: ", initcb.uid, config)
 	c := sdk_struct.IMConfig{}
 	json.Unmarshal([]byte(config), &c)
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
@@ -73,18 +77,36 @@ func (wsRouter *WsFuncRouter) InitSDK(config string, operationID string) {
 }
 
 func (wsRouter *WsFuncRouter) UnInitSDK() {
-	wrapSdkLog("UnInitSDK uid: ", wsRouter.uId)
+	wrapSdkLog("", "UnInitSDK uid: ", wsRouter.uId)
 	open_im_sdk.UserSDKRwLock.Lock()
 	delete(open_im_sdk.UserRouterMap, wsRouter.uId)
-	wrapSdkLog("delete UnInitSDK uid: ", wsRouter.uId)
+	wrapSdkLog("", "delete UnInitSDK uid: ", wsRouter.uId)
 	open_im_sdk.UserSDKRwLock.Unlock()
+}
+
+func (wsRouter *WsFuncRouter) checkResourceLoadingAndKeysIn(mgr *login.LoginMgr, input, operationID, funcName string, m map[string]interface{}, keys ...string) bool {
+	for _, k := range keys {
+		_, ok := m[k]
+		if !ok {
+			wrapSdkLog(operationID, "key not in", keys, input, operationID, funcName)
+			wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(funcName), StatusBadParameter, "key not in", "", operationID})
+			return false
+		}
+	}
+
+	if err := open_im_sdk.CheckResourceLoad(mgr); err != nil {
+		wrapSdkLog(operationID, "Resource Loading ", mgr, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(funcName), StatusResourceNotCompleted, "resource loading is not completed", "", operationID})
+		return false
+	}
+	return true
 }
 
 func (wsRouter *WsFuncRouter) checkKeysIn(input, operationID, funcName string, m map[string]interface{}, keys ...string) bool {
 	for _, k := range keys {
 		_, ok := m[k]
 		if !ok {
-			wrapSdkLog("key not in", keys, input, operationID, funcName)
+			wrapSdkLog(operationID, "key not in", keys, input, funcName, m)
 			wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(funcName), StatusBadParameter, "key not in", "", operationID})
 			return false
 		}
@@ -95,7 +117,7 @@ func (wsRouter *WsFuncRouter) checkKeysIn(input, operationID, funcName string, m
 func (wsRouter *WsFuncRouter) Login(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog("unmarshal failed", err.Error())
+		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -120,18 +142,27 @@ func (wsRouter *WsFuncRouter) LogoutNoCallback(input string, operationID string)
 
 func (wsRouter *WsFuncRouter) GetLoginStatus(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
+		return
+	}
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", int32ToString(int32(userWorker.GetLoginStatus())), operationID})
 }
 
 //1
 func (wsRouter *WsFuncRouter) getMyLoginStatus() int32 {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, "", "", runFuncName(), nil) {
+		return constant.SdkInit
+	}
 	return userWorker.GetLoginStatus()
 }
 
 //1
 func (wsRouter *WsFuncRouter) GetLoginUser(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
+		return
+	}
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", userWorker.GetLoginUser(), operationID})
 }
 

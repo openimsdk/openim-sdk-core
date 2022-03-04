@@ -93,7 +93,50 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 	r1, r2 := w.WaitResp(ch, timeout, wsReq.OperationID, connSend)
 	return r1, r2
 }
+func (w *Ws) SendReqTest(m proto.Message, reqIdentifier int32, timeout int, senderID, operationID string) bool {
+	var wsReq GeneralWsReq
+	var connSend *websocket.Conn
+	var err error
+	wsReq.ReqIdentifier = reqIdentifier
+	wsReq.OperationID = operationID
+	msgIncr, ch := w.AddCh(senderID)
+	defer w.DelCh(msgIncr)
+	wsReq.SendID = senderID
+	wsReq.MsgIncr = msgIncr
+	wsReq.Data, err = proto.Marshal(m)
+	if err != nil {
+		return false
+	}
+	connSend, err = w.writeBinaryMsg(wsReq)
+	if err != nil {
+		log.Debug(operationID, "writeBinaryMsg timeout", m.String(), senderID, err.Error())
+		return false
+	} else {
+		log.Debug(operationID, "writeBinaryMsg success", m.String(), senderID)
+	}
+	startTime := utils.GetCurrentTimestampByMill()
+	result := w.WaitTest(ch, timeout, wsReq.OperationID, connSend, m, senderID)
+	log.Debug(operationID, "ws Response time：", utils.GetCurrentTimestampByMill()-startTime, m.String(), senderID, result)
+	return result
+}
+func (w *Ws) WaitTest(ch chan GeneralWsResp, timeout int, operationID string, connSend *websocket.Conn, m proto.Message, senderID string) bool {
+	select {
+	case r := <-ch:
+		if r.ErrCode != 0 {
+			log.Debug(operationID, "ws ch recvMsg success, code ", r.ErrCode, r.ErrMsg, m.String(), senderID)
+			return false
+		} else {
+			log.Debug(operationID, "ws ch recvMsg send success, code ", m.String(), senderID)
 
+			return true
+		}
+
+	case <-time.After(time.Second * time.Duration(timeout)):
+		log.Debug(operationID, "ws ch recvMsg err, timeout ", m.String(), senderID)
+
+		return false
+	}
+}
 func (w *Ws) reConnSleep(operationID string, sleep int32) {
 	_, err := w.WsConn.ReConn()
 	if err != nil {
@@ -178,6 +221,10 @@ func (w *Ws) doWsMsg(message []byte) {
 		if err = w.doWSPushMsg(*wsResp); err != nil {
 			log.Error(wsResp.OperationID, "doWSPushMsg failed ", err.Error())
 		}
+		//if err = w.doWSPushMsgForTest(*wsResp); err != nil {
+		//	log.Error(wsResp.OperationID, "doWSPushMsgForTest failed ", err.Error())
+		//}
+
 	case constant.WSSendMsg:
 		if err = w.doWSSendMsg(*wsResp); err != nil {
 			log.Error(wsResp.OperationID, "doWSSendMsg failed ", err.Error())
@@ -230,6 +277,20 @@ func (w *Ws) doWSPushMsg(wsResp GeneralWsResp) error {
 		return utils.Wrap(err, "Unmarshal failed")
 	}
 	return utils.Wrap(common.TriggerCmdPushMsg(sdk_struct.CmdPushMsgToMsgSync{Msg: &msg, OperationID: wsResp.OperationID}, w.pushMsgAndMaxSeqCh), "")
+}
+
+func (w *Ws) doWSPushMsgForTest(wsResp GeneralWsResp) error {
+	if wsResp.ErrCode != 0 {
+		return utils.Wrap(errors.New("errCode"), wsResp.ErrMsg)
+	}
+	var msg server_api_params.MsgData
+	err := proto.Unmarshal(wsResp.Data, &msg)
+	if err != nil {
+		return utils.Wrap(err, "Unmarshal failed")
+	}
+	log.Debug(wsResp.OperationID, "recv push doWSPushMsgForTest")
+	return nil
+	//	return utils.Wrap(common.TriggerCmdPushMsg(sdk_struct.CmdPushMsgToMsgSync{Msg: &msg, OperationID: wsResp.OperationID}, w.pushMsgAndMaxSeqCh), "")
 }
 
 func (w *Ws) kickOnline(msg GeneralWsResp) {

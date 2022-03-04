@@ -20,7 +20,7 @@ import (
 )
 
 func main() {
-	var sdkWsPort, openIMApiPort, openIMWsPort *int
+	var sdkWsPort, openIMApiPort, openIMWsPort, logLevel *int
 	var openIMWsAddress, openIMApiAddress *string
 	//
 	//openIMTerminalType := flag.String("terminal_type", "web", "different terminal types")
@@ -28,6 +28,7 @@ func main() {
 	sdkWsPort = flag.Int("sdk_ws_port", 30000, "openIMSDK ws listening port")
 	openIMApiPort = flag.Int("openIM_api_port", 10000, "openIM api listening port")
 	openIMWsPort = flag.Int("openIM_ws_port", 17778, "openIM ws listening port")
+	logLevel = flag.Int("openIM_log_level", 6, "control log output level")
 	flag.Parse()
 	//switch *openIMTerminalType {
 	//case "pc":
@@ -64,7 +65,7 @@ func main() {
 	}
 	var wg sync.WaitGroup
 	wg.Add(1)
-	log.NewPrivateLog("sdk", 6)
+	log.NewPrivateLog("sdk", uint32(*logLevel))
 	fmt.Println("ws server is starting")
 	ws_local_server.WS.OnInit(*sdkWsPort)
 	ws_local_server.WS.Run()

@@ -91,7 +91,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		}
 		msg.Status = constant.MsgStatusSendSuccess
 		msg.IsRead = false
-		log.Info(operationID, "new msg, seq, ServerMsgID, ClientMsgID", msg.Seq, msg.ServerMsgID, msg.ClientMsgID)
+		//		log.Info(operationID, "new msg, seq, ServerMsgID, ClientMsgID", msg.Seq, msg.ServerMsgID, msg.ClientMsgID)
 		//De-analyze data
 		err := c.msgHandleByContentType(msg)
 		if err != nil {
@@ -167,6 +167,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					//}
 				}
 				if isConversationUpdate {
+					log.Debug(operationID, "updateConversation msg", v, lc)
 					c.updateConversation(&lc, conversationSet)
 					newMessages = append(newMessages, msg)
 				} else {
@@ -241,6 +242,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	}
 	m := make(map[string]*db.LocalConversation)
 	listToMap(list, m)
+	log.Debug(operationID, "listToMap: ", list, conversationSet)
 	c.diff(m, conversationSet, conversationChangedSet, newConversationSet)
 	log.Info(operationID, "trigger map is :", "newConversations", newConversationSet, "changedConversations", conversationChangedSet)
 	//seq sync message update
@@ -294,20 +296,24 @@ func listToMap(list []*db.LocalConversation, m map[string]*db.LocalConversation)
 }
 func (c *Conversation) diff(local, generated, cc, nc map[string]*db.LocalConversation) {
 	for _, v := range generated {
+		log.Debug("node diff", *v)
 		if localC, ok := local[v.ConversationID]; ok {
 			if v.LatestMsgSendTime > localC.LatestMsgSendTime {
 				localC.UnreadCount = localC.UnreadCount + v.UnreadCount
 				localC.LatestMsg = v.LatestMsg
 				localC.LatestMsgSendTime = v.LatestMsgSendTime
 				cc[v.ConversationID] = localC
+				log.Debug("", "diff1 ", *localC, *v)
 			} else {
 				localC.UnreadCount = localC.UnreadCount + v.UnreadCount
 				cc[v.ConversationID] = localC
+				log.Debug("", "diff2 ", *localC, *v)
 			}
 
 		} else {
 			c.addFaceURLAndName(v)
 			nc[v.ConversationID] = v
+			log.Debug("", "diff3 ", *v)
 		}
 	}
 
@@ -604,6 +610,7 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 			err = utils.JsonStringToStruct(msg.Content, &msg.QuoteElem)
 		case constant.Merger:
 			err = utils.JsonStringToStruct(msg.Content, &msg.MergeElem)
+
 		}
 	}
 

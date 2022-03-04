@@ -34,7 +34,7 @@ func (m *Minio) getMinioCredentials() (*server_api_params.MinioStorageCredential
 	var resp server_api_params.MinioStorageCredentialResp
 	err := m.p.PostReturn(constant.MinioStorageCredentialRouter, req, &resp)
 	if err != nil {
-		log.NewError("0", utils.GetSelfFuncName(), err.Error())
+		log.NewError("0", utils.GetSelfFuncName(), err.Error(), resp, req)
 		return &resp, utils.Wrap(err, "")
 	}
 	return &resp, nil
@@ -42,26 +42,32 @@ func (m *Minio) getMinioCredentials() (*server_api_params.MinioStorageCredential
 
 func (m *Minio) upload(filePath, fileType string, onProgressFun func(int)) (string, string, error){
 	minioResp, err := m.getMinioCredentials()
+	if err != nil {
+		log.NewError("", utils.GetSelfFuncName(), "getMinioCredentials from server failed, please check server log", err.Error(), "resp: ", *minioResp)
+		return "", "", utils.Wrap(err, "")
+	}
+	log.NewInfo("", utils.GetSelfFuncName(), "recv minio credentials", *minioResp)
 	endPoint, err  := url.Parse(minioResp.StsEndpointURL)
 	if err != nil {
-		log.NewError("", utils.GetSelfFuncName(), "url parse failed", err.Error())
-		return "", "", err
-	}
-	if err != nil {
-		log.NewError("0", utils.GetSelfFuncName(), "new minio client failed", err.Error())
+		log.NewError("", utils.GetSelfFuncName(), "url parse failed, pleace check config/config.yaml", err.Error())
+		return "", "", utils.Wrap(err, "")
 	}
 	newName, newType, err := m.getNewFileNameAndContentType(filePath, fileType)
+	if err != nil {
+		log.NewError("", utils.GetSelfFuncName(), "getNewFileNameAndContentType failed", err.Error(), filePath, fileType)
+		return "", "", utils.Wrap(err, "")
+	}
 	client, err := minio.New(endPoint.Host,  &minio.Options{
 		Creds:        credentials.NewStaticV4(minioResp.AccessKeyID, minioResp.SecretAccessKey, minioResp.SessionToken),
 		Secure:       false,
 	})
 	if err != nil {
-		log.NewError("", utils.GetSelfFuncName(), "generate filename and filetype failed", err.Error())
+		log.NewError("", utils.GetSelfFuncName(), "generate filename and filetype failed", err.Error(), endPoint.Host)
 		return "", "", utils.Wrap(err, "")
 	}
 	_, err = client.FPutObject(context.Background(), minioResp.BucketName, newName, filePath, minio.PutObjectOptions{ContentType:newType})
 	if err != nil {
-		log.NewError("0", utils.GetSelfFuncName(), "FPutObject failed", err.Error())
+		log.NewError("0", utils.GetSelfFuncName(), "FPutObject failed", err.Error(), newName, filePath, newType)
 		return "", "", utils.Wrap(err, "")
 	}
 	// fake callback
@@ -99,9 +105,12 @@ func (m *Minio) UploadFile(filePath string, onProgressFun func(int)) (string, st
 
 func (m *Minio) UploadVideo(videoPath, snapshotPath string, onProgressFun func(int)) (string, string, string, string, error) {
 	videoURL, videoName, err := m.upload(videoPath, "", onProgressFun)
+	if err != nil {
+		return "", "", "", "", utils.Wrap(err, "")
+	}
 	snapshotURL, snapshotUUID, err :=  m.upload(snapshotPath, "img", onProgressFun)
 	if err != nil {
-		return snapshotURL, snapshotUUID, videoURL, videoName, utils.Wrap(err, "")
+		return "", "", "", "", utils.Wrap(err, "")
 	}
 	return snapshotURL, snapshotUUID, videoURL, videoName, nil
 }
