@@ -218,12 +218,12 @@ func (w *Ws) doWsMsg(message []byte) {
 			log.Error(wsResp.OperationID, "doWSPullMsg failed ", err.Error())
 		}
 	case constant.WSPushMsg:
-		//if err = w.doWSPushMsg(*wsResp); err != nil {
-		//	log.Error(wsResp.OperationID, "doWSPushMsg failed ", err.Error())
-		//}
-		if err = w.doWSPushMsgForTest(*wsResp); err != nil {
-			log.Error(wsResp.OperationID, "doWSPushMsgForTest failed ", err.Error())
+		if err = w.doWSPushMsg(*wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSPushMsg failed ", err.Error())
 		}
+		//if err = w.doWSPushMsgForTest(*wsResp); err != nil {
+		//	log.Error(wsResp.OperationID, "doWSPushMsgForTest failed ", err.Error())
+		//}
 
 	case constant.WSSendMsg:
 		if err = w.doWSSendMsg(*wsResp); err != nil {
