@@ -30,10 +30,11 @@ var (
 	ErrConfig     = ErrInfo{ErrCode: 807, ErrMsg: ConfigMsg.Error()}
 	ErrThirdParty = ErrInfo{ErrCode: 808, ErrMsg: ThirdPartyMsg.Error()}
 
-	ErrWsRecvConnDiff = ErrInfo{ErrCode: 901, ErrMsg: WsRecvConnDiff.Error()}
-	ErrWsRecvConnSame = ErrInfo{ErrCode: 902, ErrMsg: WsRecvConnSame.Error()}
-	ErrWsRecvCode     = ErrInfo{ErrCode: 903, ErrMsg: WsRecvCode.Error()}
-	ErrWsSendTimeout  = ErrInfo{ErrCode: 904, ErrMsg: WsSendTimeout.Error()}
+	ErrWsRecvConnDiff          = ErrInfo{ErrCode: 901, ErrMsg: WsRecvConnDiff.Error()}
+	ErrWsRecvConnSame          = ErrInfo{ErrCode: 902, ErrMsg: WsRecvConnSame.Error()}
+	ErrWsRecvCode              = ErrInfo{ErrCode: 903, ErrMsg: WsRecvCode.Error()}
+	ErrWsSendTimeout           = ErrInfo{ErrCode: 904, ErrMsg: WsSendTimeout.Error()}
+	ErrResourceLoadNotComplete = ErrInfo{ErrCode: 905, ErrMsg: ResourceLoadNotComplete.Error()}
 )
 
 var (
@@ -54,10 +55,11 @@ var (
 
 	ThirdPartyMsg = errors.New("third party error")
 
-	WsRecvConnDiff = errors.New("recv timeout, conn diff")
-	WsRecvConnSame = errors.New("recv timeout, conn same")
-	WsRecvCode     = errors.New("recv code err")
-	WsSendTimeout  = errors.New("send timeout")
+	WsRecvConnDiff          = errors.New("recv timeout, conn diff")
+	WsRecvConnSame          = errors.New("recv timeout, conn same")
+	WsRecvCode              = errors.New("recv code err")
+	WsSendTimeout           = errors.New("send timeout")
+	ResourceLoadNotComplete = errors.New("resource loading is not complete")
 )
 
 func (e *ErrInfo) Error() string {

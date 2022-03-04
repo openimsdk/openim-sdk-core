@@ -293,8 +293,8 @@ func (testMarkC2CMessageAsRead) OnError(code int32, msg string) {
 //	open_im_sdk.MarkC2CMessageAsRead(test, Friend_uid, string(jsonid))
 //}
 
-func DoTestSendMsg(sendId, recvID string) {
-	m := "mmmmmmmmtest:18->17" + sendId + ":" + recvID + ":"
+func DoTestSendMsg(sendId, recvID string, idx string) {
+	m := "test msg " + sendId + ":" + recvID + ":" + idx
 	operationID := utils.OperationIDGenerator()
 	s := DoTestCreateTextMessage(m)
 	var testSendMsg TestSendMsgCallBack

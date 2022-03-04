@@ -199,8 +199,24 @@ var userLock sync.RWMutex
 var allUserID []string
 var allToken []string
 var allWs []*interaction.Ws
+var intervalSleep int
+var sendSuccessCount, sendFailedCount int
+var sendSuccessLock sync.RWMutex
+var sendFailedLock sync.RWMutex
 
-func DoTestRun(num int) {
+func addSendSuccess() {
+	sendSuccessLock.Lock()
+	defer sendSuccessLock.Unlock()
+	sendSuccessCount++
+}
+func addSendFailed() {
+	sendFailedLock.Lock()
+	defer sendFailedLock.Unlock()
+	sendFailedCount++
+}
+func DoTestRun(num int, interval int, ip string) {
+	TESTIP = ip
+	intervalSleep = interval
 	var wg sync.WaitGroup
 	wg.Add(num)
 
@@ -226,10 +242,28 @@ func DoTestRun(num int) {
 	time.Sleep(time.Duration(1) * time.Second)
 
 	for i := 0; i < num; i++ {
-		go testSend(i, "ok", num)
+		//go testSend(i, "ok", num)
+		go testSendReliability(i, "ok", num)
 	}
 }
 
+func TestSendCostTime() {
+	GenWs(0)
+	sendID := allUserID[0]
+	recvID := allUserID[0]
+	for {
+		operationID := utils.OperationIDGenerator()
+		b := SendTextMessage("test", sendID, recvID, operationID, allWs[0])
+		if b {
+			log.Debug(operationID, sendID, recvID, "SendTextMessage success")
+		} else {
+			log.Error(operationID, sendID, recvID, "SendTextMessage failed")
+		}
+		time.Sleep(time.Duration(5) * time.Second)
+		log.Debug(operationID, "//////////////////////////////////")
+	}
+
+}
 func testSend(idx int, text string, uidNum int) {
 	for {
 		operationID := utils.OperationIDGenerator()
@@ -237,15 +271,27 @@ func testSend(idx int, text string, uidNum int) {
 		recvID := allUserID[rand.Intn(uidNum)]
 		b := SendTextMessage(text, sendID, recvID, operationID, allWs[idx])
 		if b {
-			//	log.Debug(operationID, sendID, recvID, "SendTextMessage success")
+			log.Debug(operationID, sendID, recvID, "SendTextMessage success")
 		} else {
 			log.Error(operationID, sendID, recvID, "SendTextMessage failed")
 		}
-
-		time.Sleep(time.Duration(rand.Intn(100)+100) * time.Second)
+		time.Sleep(time.Duration(rand.Intn(intervalSleep)) * time.Second)
 	}
 }
-
+func testSendReliability(idx int, text string, uidNum int) {
+	for {
+		operationID := utils.OperationIDGenerator()
+		sendID := allUserID[idx]
+		recvID := allUserID[rand.Intn(uidNum)]
+		b := SendTextMessage(text, sendID, recvID, operationID, allWs[idx])
+		if b {
+			log.Debug(operationID, sendID, recvID, "SendTextMessage success")
+		} else {
+			log.Error(operationID, sendID, recvID, "SendTextMessage failed")
+		}
+		time.Sleep(time.Duration(rand.Intn(intervalSleep)) * time.Second)
+	}
+}
 func SendTextMessage(text, senderID, recvID, operationID string, ws *interaction.Ws) bool {
 	var wsMsgData server_api_params.MsgData
 	options := make(map[string]bool, 2)

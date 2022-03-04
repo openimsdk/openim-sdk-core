@@ -6,6 +6,9 @@ import (
 )
 
 func (d *DataBase) GetBlackList() ([]*LocalBlack, error) {
+	if d == nil {
+		return nil, errors.New("database is not open")
+	}
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var blackList []LocalBlack
