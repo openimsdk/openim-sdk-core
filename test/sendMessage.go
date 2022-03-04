@@ -199,8 +199,11 @@ var userLock sync.RWMutex
 var allUserID []string
 var allToken []string
 var allWs []*interaction.Ws
+var intervalSleep int
 
-func DoTestRun(num int) {
+func DoTestRun(num int, interval int, ip string) {
+	TESTIP = ip
+	intervalSleep = interval
 	var wg sync.WaitGroup
 	wg.Add(num)
 
@@ -230,6 +233,23 @@ func DoTestRun(num int) {
 	}
 }
 
+func TestSendCostTime() {
+	GenWs(0)
+	sendID := allUserID[0]
+	recvID := allUserID[0]
+	for {
+		operationID := utils.OperationIDGenerator()
+		b := SendTextMessage("test", sendID, recvID, operationID, allWs[0])
+		if b {
+			log.Debug(operationID, sendID, recvID, "SendTextMessage success")
+		} else {
+			log.Error(operationID, sendID, recvID, "SendTextMessage failed")
+		}
+		time.Sleep(time.Duration(5) * time.Second)
+		log.Debug(operationID, "//////////////////////////////////")
+	}
+
+}
 func testSend(idx int, text string, uidNum int) {
 	for {
 		operationID := utils.OperationIDGenerator()
@@ -237,12 +257,11 @@ func testSend(idx int, text string, uidNum int) {
 		recvID := allUserID[rand.Intn(uidNum)]
 		b := SendTextMessage(text, sendID, recvID, operationID, allWs[idx])
 		if b {
-			//	log.Debug(operationID, sendID, recvID, "SendTextMessage success")
+			log.Debug(operationID, sendID, recvID, "SendTextMessage success")
 		} else {
 			log.Error(operationID, sendID, recvID, "SendTextMessage failed")
 		}
-
-		time.Sleep(time.Duration(rand.Intn(100)+100) * time.Second)
+		time.Sleep(time.Duration(rand.Intn(intervalSleep)) * time.Second)
 	}
 }
 

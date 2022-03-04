@@ -2,6 +2,7 @@ package open_im_sdk
 
 import (
 	"encoding/json"
+	"errors"
 	common2 "open_im_sdk/internal/common"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/login"
@@ -390,6 +391,10 @@ func InsertGroupMessageToLocalStorage(callback open_im_sdk_callback.Base, operat
 	userForSDK.Conversation().InsertGroupMessageToLocalStorage(callback, message, groupID, sendID, operationID)
 }
 func SearchLocalMessages(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
+	if err := CheckResourceLoad(userForSDK, callback); err != nil {
+		log.Error(operationID, "CheckResourceLoad failed ", err.Error())
+		return
+	}
 	userForSDK.Conversation().SearchLocalMessages(callback, searchParam, operationID)
 }
 
@@ -404,6 +409,18 @@ func InitOnce(config *sdk_struct.IMConfig) bool {
 
 func CheckToken(userID, token string) error {
 	return login.CheckToken(userID, token, "")
+}
+
+func CheckResourceLoad(uSDK *login.LoginMgr, callback open_im_sdk_callback.Base) error {
+	if uSDK == nil {
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		utils.Wrap(errors.New("CheckResourceLoad failed uSDK == nil "), "")
+	}
+	if uSDK.Friend() == nil || uSDK.User() == nil || uSDK.Group() == nil || uSDK.Conversation() == nil ||
+		uSDK.Full() == nil {
+		utils.Wrap(errors.New("CheckResourceLoad failed, resource nil "), "")
+	}
+	return nil
 }
 
 func uploadImage(callback open_im_sdk_callback.Base, operationID string, filePath string, token, obj string) string {
