@@ -91,9 +91,10 @@ const (
 	StatusNotExtended                   = 510 // RFC 2774, 7
 	StatusNetworkAuthenticationRequired = 511 // RFC 6585, 6
 
-	StatusBadParameter = 1001
-	StatusLoginPending = 1002
-	StatusNoLogin      = 1003
+	StatusBadParameter         = 1001
+	StatusLoginPending         = 1002
+	StatusNoLogin              = 1003
+	StatusResourceNotCompleted = 1004
 )
 
 var statusText = map[int]string{

@@ -391,8 +391,9 @@ func InsertGroupMessageToLocalStorage(callback open_im_sdk_callback.Base, operat
 	userForSDK.Conversation().InsertGroupMessageToLocalStorage(callback, message, groupID, sendID, operationID)
 }
 func SearchLocalMessages(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
-	if err := CheckResourceLoad(userForSDK, callback); err != nil {
+	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "CheckResourceLoad failed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
 		return
 	}
 	userForSDK.Conversation().SearchLocalMessages(callback, searchParam, operationID)
@@ -411,14 +412,14 @@ func CheckToken(userID, token string) error {
 	return login.CheckToken(userID, token, "")
 }
 
-func CheckResourceLoad(uSDK *login.LoginMgr, callback open_im_sdk_callback.Base) error {
+func CheckResourceLoad(uSDK *login.LoginMgr) error {
 	if uSDK == nil {
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
-		utils.Wrap(errors.New("CheckResourceLoad failed uSDK == nil "), "")
+		//	callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return utils.Wrap(errors.New("CheckResourceLoad failed uSDK == nil "), "")
 	}
 	if uSDK.Friend() == nil || uSDK.User() == nil || uSDK.Group() == nil || uSDK.Conversation() == nil ||
 		uSDK.Full() == nil {
-		utils.Wrap(errors.New("CheckResourceLoad failed, resource nil "), "")
+		return utils.Wrap(errors.New("CheckResourceLoad failed, resource nil "), "")
 	}
 	return nil
 }

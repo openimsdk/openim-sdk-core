@@ -2,6 +2,7 @@ package ws_local_server
 
 import (
 	"encoding/json"
+	"open_im_sdk/internal/login"
 	"open_im_sdk/open_im_sdk"
 	//	"open_im_sdk/pkg/constant"
 	//	"open_im_sdk/pkg/utils"
@@ -78,6 +79,24 @@ func (wsRouter *WsFuncRouter) UnInitSDK() {
 	delete(open_im_sdk.UserRouterMap, wsRouter.uId)
 	wrapSdkLog("delete UnInitSDK uid: ", wsRouter.uId)
 	open_im_sdk.UserSDKRwLock.Unlock()
+}
+
+func (wsRouter *WsFuncRouter) checkResourceLoadingAndKeysIn(mgr *login.LoginMgr, input, operationID, funcName string, m map[string]interface{}, keys ...string) bool {
+	for _, k := range keys {
+		_, ok := m[k]
+		if !ok {
+			wrapSdkLog("key not in", keys, input, operationID, funcName)
+			wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(funcName), StatusBadParameter, "key not in", "", operationID})
+			return false
+		}
+	}
+
+	if err := open_im_sdk.CheckResourceLoad(mgr); err != nil {
+		wrapSdkLog("Resource Loading ", mgr, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(funcName), StatusResourceNotCompleted, "resource loading is not completed", "", operationID})
+		return false
+	}
+	return true
 }
 
 func (wsRouter *WsFuncRouter) checkKeysIn(input, operationID, funcName string, m map[string]interface{}, keys ...string) bool {

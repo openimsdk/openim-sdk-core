@@ -74,8 +74,8 @@ func main() {
 	//	test.DoTestSendImageMsg("", test.Friend_uid)
 	//	test.TestSendCostTime()
 
-	testClientNum := 2000
-	intervalSleep := 10
+	testClientNum := 100
+	intervalSleep := 1
 	imIP := "43.128.5.63"
 	test.DoTestRun(testClientNum, intervalSleep, imIP)
 
