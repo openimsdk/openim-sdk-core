@@ -3,6 +3,7 @@ package test
 import (
 	"encoding/json"
 	"fmt"
+	"open_im_sdk/internal/login"
 	"open_im_sdk/pkg/server_api_params"
 
 	//"gorm.io/gorm/callbacks"
@@ -422,7 +423,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	open_im_sdk.SetUserListener(testUser)
 
 	var msgCallBack MsgListenerCallBak
-	open_im_sdk.SetAdvancedMsgListener(msgCallBack)
+	open_im_sdk.SetAdvancedMsgListener(&msgCallBack)
 
 	var friendListener testFriendListener
 	open_im_sdk.SetFriendListener(friendListener)
@@ -454,6 +455,59 @@ func lllogin(uid, tk string) bool {
 		}
 	}
 	return true
+}
+
+func DoReliabilityTest(uid, tk, ws, api string) {
+
+	var cf sdk_struct.IMConfig
+	cf.ApiAddr = api // "http://120.24.45.199:10000"
+	//	cf.IpWsAddr = "wss://open-im.rentsoft.cn/wss"
+	cf.WsAddr = ws //"ws://120.24.45.199:17778"
+	cf.Platform = 2
+	cf.DataDir = "./"
+	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
+	var s string
+	b, _ := json.Marshal(cf)
+	s = string(b)
+
+	log.Info("", "000000000000000000000")
+
+	var testinittmp testInitLister
+	operationID := utils.OperationIDGenerator()
+	open_im_sdk.InitSDK(testinittmp, operationID, s)
+
+	log.Info("", "3333333333333333333333333333333")
+	var testinit testInitLister
+	lg := new(login.LoginMgr)
+	log.Info("", "1111111111111111111111111")
+	userLock.Lock()
+	allLoginMgr = append(allLoginMgr, lg)
+	userLock.Unlock()
+
+	log.Info("", "2222222222222222222222222")
+	lg.InitSDK(sdk_struct.SvrConf, testinit, operationID)
+
+	var testConversation conversationCallBack
+	lg.SetConversationListener(testConversation)
+
+	var testUser userCallback
+	lg.SetUserListener(testUser)
+
+	var msgCallBack MsgListenerCallBak
+	lg.SetAdvancedMsgListener(&msgCallBack)
+
+	var friendListener testFriendListener
+	lg.SetFriendListener(friendListener)
+
+	var groupListener testGroupListener
+	lg.SetGroupListener(groupListener)
+
+	var callback BaseSuccFailed
+	callback.funcName = utils.GetSelfFuncName()
+	lg.Login(&callback, uid, tk, operationID)
+
+	time.Sleep(5 * time.Second)
+
 }
 
 func DoTest(uid, tk, ws, api string) {
@@ -500,14 +554,24 @@ func DoTest(uid, tk, ws, api string) {
 type TestSendMsgCallBack struct {
 	msg         string
 	OperationID string
+	sendID      string
+	recvID      string
+	msgID       string
 }
 
 func (t *TestSendMsgCallBack) OnError(errCode int32, errMsg string) {
 	log.Info(t.OperationID, "test_openim: send msg failed: ", errCode, errMsg, "|", t.msg, "|")
+	SendMsgMapLock.Lock()
+	defer SendMsgMapLock.Unlock()
+	SendFailedAllMsg[t.msgID] = t.sendID + t.recvID
+
 }
 
 func (t *TestSendMsgCallBack) OnSuccess(data string) {
 	log.Info(t.OperationID, "test_openim: send msg success: |", t.msg, "|")
+	SendMsgMapLock.Lock()
+	defer SendMsgMapLock.Unlock()
+	SendSuccAllMsg[t.msgID] = t.sendID + t.recvID
 }
 
 func (t *TestSendMsgCallBack) OnProgress(progress int) {

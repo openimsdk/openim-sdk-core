@@ -74,11 +74,14 @@ func main() {
 	//	test.DoTestSendImageMsg("", test.Friend_uid)
 	//	test.TestSendCostTime()
 
-	testClientNum := 100
+	//testClientNum := 100
 	intervalSleep := 1
 	imIP := "43.128.5.63"
-	test.DoTestRun(testClientNum, intervalSleep, imIP)
+	//	test.DoTestRun(testClientNum, intervalSleep, imIP)
 
+	msgNum := 1
+	test.ReliabilityTest(msgNum, intervalSleep, imIP)
+	test.CheckReliabilityResult()
 	i := 0
 	for true {
 

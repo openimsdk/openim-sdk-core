@@ -3,6 +3,7 @@ package test
 import (
 	"encoding/json"
 	"fmt"
+	"open_im_sdk/internal/login"
 	"open_im_sdk/sdk_struct"
 	"strings"
 	"sync"
@@ -77,6 +78,7 @@ func register(uid string) error {
 	req.UserID = uid
 	req.Secret = SECRET
 	req.Nickname = uid
+	req.FaceURL = "www.baidu.com"
 	for {
 		_, err := network.Post2Api(url, req, "")
 		if err != nil && !strings.Contains(err.Error(), "status code failed") {
@@ -108,7 +110,7 @@ func getToken(uid string) string {
 	var stcResp ResToken
 	err = json.Unmarshal(r, &stcResp)
 	if stcResp.ErrCode != 0 {
-		log.Error(req.OperationID, "ErrCode failed ", stcResp.ErrMsg, stcResp.ErrMsg)
+		log.Error(req.OperationID, "ErrCode failed ", stcResp.ErrCode, stcResp.ErrMsg, url, req)
 		return ""
 	}
 	return stcResp.Data.Token
@@ -163,7 +165,7 @@ func GenUid(uid int) string {
 		fmt.Println("getMyIP() failed")
 		os.Exit(1)
 	}
-	UidPrefix := getMyIP() + "uid"
+	UidPrefix := getMyIP() + "x"
 	return UidPrefix + strconv.FormatInt(int64(uid), 10)
 }
 
@@ -194,8 +196,22 @@ func GenWs(id int) {
 
 }
 
+func GenWsReliability(id int) {
+	//return
+	userID := GenUid(id)
+	userLock.Lock()
+	defer userLock.Unlock()
+	allUserID = append(allUserID, userID)
+	register(userID)
+	token := GenToken(userID)
+
+	allToken = append(allToken, token)
+
+}
+
 var userLock sync.RWMutex
 
+var allLoginMgr []*login.LoginMgr
 var allUserID []string
 var allToken []string
 var allWs []*interaction.Ws
