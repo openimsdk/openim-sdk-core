@@ -43,6 +43,47 @@ func GetCmd(myUid int, filename string) int {
 	return int(utils.StringToInt64(cmd[myUid-1]))
 }
 
+var testTotalNum = 0
+
+func ReliabilityTest(num int, interval int, ip string) {
+	testTotalNum = num
+	TESTIP = ip
+	GenWs(6) //0-5
+	go ReliabilityOne(0, 0, true)
+	go ReliabilityOne(1, 0, false)
+	go ReliabilityOne(2, 60, true)
+	go ReliabilityOne(3, 60, false)
+	go ReliabilityOne(4, 120, true)
+	go ReliabilityOne(5, 120, false)
+}
+
+func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool) {
+	time.Sleep(time.Duration(beforeLoginSleep) * time.Second)
+	strMyUid := allUserID[index]
+	token := allToken[index]
+	DoTest(strMyUid, token, WSADDR, APIADDR)
+	log.Info("ReliabilityOne", index, beforeLoginSleep, isSendMsg)
+	msgnum := testTotalNum
+	uidNum := len(allUserID)
+	var recvId string
+	var idx string
+	rand.Seed(time.Now().UnixNano())
+	if msgnum == 0 {
+		os.Exit(0)
+	}
+
+	for i := 0; i < msgnum; i++ {
+		var r int
+		time.Sleep(time.Duration(SENDINTERVAL) * time.Millisecond)
+		r = rand.Intn(uidNum)
+		recvId = allToken[r]
+		idx = strconv.FormatInt(int64(i), 10)
+
+		DoTestSendMsg(strMyUid, recvId, idx)
+	}
+
+}
+
 func TestReliability() {
 
 	cmdfile := "./cmd.txt"
