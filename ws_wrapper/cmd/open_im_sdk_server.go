@@ -67,7 +67,7 @@ func main() {
 	wg.Add(1)
 	log.NewPrivateLog("sdk", uint32(*logLevel))
 	fmt.Println("ws server is starting")
-	ws_local_server.WS.OnInit(*sdkWsPort)
+	ws_local_server.WS.OnInit(*sdkWsPort, "")
 	ws_local_server.WS.Run()
 	wg.Wait()
 
