@@ -7,10 +7,11 @@
 package ws_local_server
 
 import (
-	"github.com/gorilla/websocket"
 	"net/http"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/log"
+
+	"github.com/gorilla/websocket"
 
 	//"open_im_sdk/pkg/log"
 	"open_im_sdk/ws_wrapper/utils"
@@ -44,8 +45,12 @@ type WServer struct {
 	ch           chan ChanMsg
 }
 
-func (ws *WServer) OnInit(wsPort int) {
-	ip := utils.ServerIP
+func (ws *WServer) OnInit(wsPort int, wsIp string) {
+	ip := wsIp
+	if ip == "" {
+		ip = utils.ServerIP
+	}
+
 	ws.wsAddr = ip + ":" + utils.IntToString(wsPort)
 	ws.wsMaxConnNum = 10000
 	ws.wsConnToUser = make(map[*UserConn]map[string]string)
