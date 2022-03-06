@@ -42,7 +42,7 @@ func (d *DataBase) SearchMessageByKeyword(keyword string, startTime, endTime int
 		}
 		condition = fmt.Sprintf(" send_time  between %d and %d AND status <=%d And content like %q", startTime, endTime, constant.MsgStatusSendFailed, keyword+"%%")
 	}
-	err = utils.Wrap(d.conn.Debug().Where(condition).Order("send_time DESC").Group("recv_id,client_msg_id").Find(&messageList).Error, "InsertMessage failed")
+	err = utils.Wrap(d.conn.Where(condition).Order("send_time DESC").Group("recv_id,client_msg_id").Find(&messageList).Error, "InsertMessage failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)
@@ -137,7 +137,7 @@ func (d *DataBase) UpdateMessageStatusBySourceID(sourceID string, status, sessio
 	} else {
 		condition = "(send_id=? or recv_id=?)AND session_type=?"
 	}
-	t := d.conn.Model(LocalChatLog{}).Debug().Where(condition, sourceID, sourceID, sessionType).Updates(LocalChatLog{Status: status})
+	t := d.conn.Model(LocalChatLog{}).Where(condition, sourceID, sourceID, sessionType).Updates(LocalChatLog{Status: status})
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
@@ -146,7 +146,7 @@ func (d *DataBase) UpdateMessageStatusBySourceID(sourceID string, status, sessio
 func (d *DataBase) UpdateMessageTimeAndStatus(clientMsgID string, serverMsgID string, sendTime int64, status int32) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Model(LocalChatLog{}).Debug().Where("client_msg_id=? And seq=?", clientMsgID, 0).Updates(LocalChatLog{Status: status, SendTime: sendTime, ServerMsgID: serverMsgID})
+	t := d.conn.Model(LocalChatLog{}).Where("client_msg_id=? And seq=?", clientMsgID, 0).Updates(LocalChatLog{Status: status, SendTime: sendTime, ServerMsgID: serverMsgID})
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
@@ -187,7 +187,7 @@ func (d *DataBase) GetSendingMessageList() (result []*LocalChatLog, err error) {
 func (d *DataBase) UpdateMessageHasRead(sendID string, msgIDList []string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Model(LocalChatLog{}).Debug().Where("send_id=?  AND session_type=? AND client_msg_id in ?", sendID, constant.SingleChatType, msgIDList).Update("is_read", constant.HasRead)
+	t := d.conn.Model(LocalChatLog{}).Where("send_id=?  AND session_type=? AND client_msg_id in ?", sendID, constant.SingleChatType, msgIDList).Update("is_read", constant.HasRead)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}

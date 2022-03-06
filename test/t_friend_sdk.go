@@ -368,15 +368,14 @@ type BaseSuccFailed struct {
 func (b *BaseSuccFailed) OnError(errCode int32, errMsg string) {
 	b.errCode = -1
 	b.errMsg = errMsg
-	fmt.Println("onError ", b.funcName)
-	fmt.Println("test_openim: ", "login failed ", errCode, errMsg)
+	log.Error("login failed", errCode, errMsg)
 
 }
 
 func (b *BaseSuccFailed) OnSuccess(data string) {
 	b.errCode = 1
 	b.successData = data
-	fmt.Println("test_openim: ", "login success")
+	log.Info("login success", data)
 }
 
 func InOutlllogin(uid, tk string) {
@@ -457,35 +456,29 @@ func lllogin(uid, tk string) bool {
 	return true
 }
 
-func DoReliabilityTest(uid, tk, ws, api string) {
+func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
+	coreMgrLock.Lock()
+	defer coreMgrLock.Unlock()
 
 	var cf sdk_struct.IMConfig
-	cf.ApiAddr = api // "http://120.24.45.199:10000"
-	//	cf.IpWsAddr = "wss://open-im.rentsoft.cn/wss"
-	cf.WsAddr = ws //"ws://120.24.45.199:17778"
+	cf.ApiAddr = api
+	cf.WsAddr = ws
 	cf.Platform = 2
 	cf.DataDir = "./"
+	cf.LogLevel = 3
 	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
-	var s string
-	b, _ := json.Marshal(cf)
-	s = string(b)
 
-	log.Info("", "000000000000000000000")
-
-	var testinittmp testInitLister
 	operationID := utils.OperationIDGenerator()
-	open_im_sdk.InitSDK(testinittmp, operationID, s)
-
-	log.Info("", "3333333333333333333333333333333")
 	var testinit testInitLister
 	lg := new(login.LoginMgr)
-	log.Info("", "1111111111111111111111111")
-	userLock.Lock()
-	allLoginMgr = append(allLoginMgr, lg)
-	userLock.Unlock()
+	log.Info(operationID, "new login ", lg)
 
-	log.Info("", "2222222222222222222222222")
+	allLoginMgr[index].mgr = lg
+	sdk_struct.SvrConf = cf
+
 	lg.InitSDK(sdk_struct.SvrConf, testinit, operationID)
+
+	log.Info(operationID, "InitSDK ", sdk_struct.SvrConf)
 
 	var testConversation conversationCallBack
 	lg.SetConversationListener(testConversation)
@@ -506,7 +499,14 @@ func DoReliabilityTest(uid, tk, ws, api string) {
 	callback.funcName = utils.GetSelfFuncName()
 	lg.Login(&callback, uid, tk, operationID)
 
-	time.Sleep(5 * time.Second)
+	for {
+		if callback.errCode == 1 {
+			log.Info(operationID, "login ok ", uid)
+			return
+		}
+		log.Warn(operationID, "waiting login...", uid)
+		time.Sleep(1 * time.Second)
+	}
 
 }
 
@@ -560,7 +560,7 @@ type TestSendMsgCallBack struct {
 }
 
 func (t *TestSendMsgCallBack) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, "test_openim: send msg failed: ", errCode, errMsg, "|", t.msg, "|")
+	log.Info(t.OperationID, "test_openim: send msg failed: ", errCode, errMsg, t.msgID, t.msg)
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
 	SendFailedAllMsg[t.msgID] = t.sendID + t.recvID
@@ -568,7 +568,7 @@ func (t *TestSendMsgCallBack) OnError(errCode int32, errMsg string) {
 }
 
 func (t *TestSendMsgCallBack) OnSuccess(data string) {
-	log.Info(t.OperationID, "test_openim: send msg success: |", t.msg, "|")
+	log.Info(t.OperationID, "test_openim: send msg success: |", t.msgID, t.msg)
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
 	SendSuccAllMsg[t.msgID] = t.sendID + t.recvID
