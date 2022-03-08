@@ -69,6 +69,7 @@ func MergeUserResult(publicList []*api.PublicUserInfo, friendList []*db.LocalFri
 			node.PublicInfo.FaceURL = v.FaceURL
 			node.PublicInfo.Nickname = v.Nickname
 			node.PublicInfo.Gender = v.Gender
+			node.PublicInfo.Ex = v.Ex
 			m[v.FriendUserID] = node
 		}
 	}
@@ -84,6 +85,7 @@ func MergeUserResult(publicList []*api.PublicUserInfo, friendList []*db.LocalFri
 			node.PublicInfo.FaceURL = v.FaceURL
 			node.PublicInfo.Nickname = v.Nickname
 			node.PublicInfo.Gender = v.Gender
+			node.PublicInfo.Ex = v.Ex
 			m[v.BlockUserID] = node
 		}
 	}
