@@ -1,7 +1,6 @@
 package test
 
 import (
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -44,233 +43,118 @@ func GetCmd(myUid int, filename string) int {
 }
 
 var testTotalNum = 0
+var intervalSleepMS = 0
 
-func ReliabilityTest(num int, interval int, ip string) {
-	testTotalNum = num
+//var Msgwg sync.WaitGroup
+var sendMsgClient = 0
+
+func ReliabilityTest(msgNum int, interval int, ip string, randSleepMaxSecond int, clientNum int) {
+	testTotalNum = msgNum
+	intervalSleepMS = interval
 	TESTIP = ip
-	GenWs(6) //0-5
-	go ReliabilityOne(0, 0, true)
-	go ReliabilityOne(1, 0, false)
-	go ReliabilityOne(2, 60, true)
-	go ReliabilityOne(3, 60, false)
-	go ReliabilityOne(4, 120, true)
-	go ReliabilityOne(5, 120, false)
+	testClientNum := clientNum
+	for i := 0; i < testClientNum; i++ {
+		GenWsReliability(i)
+	}
+	rand.Seed(time.Now().UnixNano())
+	log.NewPrivateLog("sdk", 6)
+	for i := 0; i < testClientNum; i++ {
+		rdSleep := rand.Intn(randSleepMaxSecond) + 1
+		isSend := rand.Intn(2)
+		if isSend == 0 {
+			go ReliabilityOne(i, rdSleep, true)
+			sendMsgClient++
+		} else {
+			go ReliabilityOne(i, rdSleep, false)
+		}
+	}
+
+}
+
+func CheckReliabilityResult() bool {
+	log.Info("", "start check map send -> map recv")
+
+	sameNum := 0
+	for ksend, vsend := range SendSuccAllMsg {
+		krecv, ok := RecvAllMsg[ksend]
+		if ok {
+			sameNum++
+			x := vsend
+			y := krecv
+			x = x + x
+			y = y + y
+
+		} else {
+			log.Error("", "check failed  not in recv ", ksend)
+			return false
+		}
+	}
+
+	log.Info("", "start check map recv -> map send")
+	sameNum = 0
+
+	for k1, v1 := range RecvAllMsg {
+		v2, ok := SendSuccAllMsg[k1]
+		if ok {
+			sameNum++
+			x := v1 + v2
+			x = x + x
+
+		} else {
+			log.Error("", "check failed  not in send ", k1)
+			//	return false
+		}
+	}
+
+	log.Warn("", "send msg succ num ", len(SendSuccAllMsg), "recv msg num ", len(RecvAllMsg), "same num ", sameNum)
+	log.Warn("", "send msg failed num ", len(SendFailedAllMsg))
+	log.Warn("", "need send msg num : ", sendMsgClient*testTotalNum)
+	if len(SendSuccAllMsg) > 0 {
+		return true
+	}
+	return false
 }
 
 func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool) {
+
 	time.Sleep(time.Duration(beforeLoginSleep) * time.Second)
-	strMyUid := allUserID[index]
-	token := allToken[index]
-	DoTest(strMyUid, token, WSADDR, APIADDR)
-	log.Info("ReliabilityOne", index, beforeLoginSleep, isSendMsg)
+	//	coreMgrLock.Lock()
+	strMyUid := allLoginMgr[index].userID
+	token := allLoginMgr[index].token
+	//	coreMgrLock.Unlock()
+	ReliabilityInitAndLogin(index, strMyUid, token, WSADDR, APIADDR)
+	log.Info("start One", index, beforeLoginSleep, isSendMsg, strMyUid, token, WSADDR, APIADDR)
 	msgnum := testTotalNum
-	uidNum := len(allUserID)
+	uidNum := len(allLoginMgr)
 	var recvId string
 	var idx string
 	rand.Seed(time.Now().UnixNano())
 	if msgnum == 0 {
 		os.Exit(0)
 	}
+	if !isSendMsg {
+		//	Msgwg.Done()
+	} else {
+		for i := 0; i < msgnum; i++ {
+			var r int
+			time.Sleep(time.Duration(intervalSleepMS) * time.Millisecond)
+			for {
+				r = rand.Intn(uidNum)
+				if r == index {
+					continue
+				} else {
 
-	for i := 0; i < msgnum; i++ {
-		var r int
-		time.Sleep(time.Duration(SENDINTERVAL) * time.Millisecond)
-		r = rand.Intn(uidNum)
-		recvId = allToken[r]
-		idx = strconv.FormatInt(int64(i), 10)
+					break
+				}
 
-		DoTestSendMsg(strMyUid, recvId, idx)
+			}
+
+			recvId = allLoginMgr[r].userID
+
+			idx = strconv.FormatInt(int64(i), 10)
+			DoTestSendMsg(index, strMyUid, recvId, idx)
+
+		}
+		//Msgwg.Done()
 	}
-
 }
-
-func TestReliability() {
-
-	cmdfile := "./cmd.txt"
-	uid := flag.Int("uid", 1, "RpcToken default listen port 10800")
-	uidCount := flag.Int("uid_count", 2, "RpcToken default listen port 10800")
-	messageCount := flag.Int("message_count", 1, "RpcToken default listen port 10800")
-	APIADDR1 := flag.String("api_addr", "http://127.0.0.1:10000", "api addr")
-	WSADDR1 := flag.String("ws_addr", "http://127.0.0.1:17778", "ws addr")
-	REGISTERADDR1 := flag.String("register_addr", "http://127.0.0.1:10000/auth/user_register", "register addr")
-	TOKENADDR1 := flag.String("token_addr", "http://127.0.0.1:10000/auth/user_token", "token addr")
-	flag.Parse()
-
-	APIADDR = *APIADDR1
-	WSADDR = *WSADDR1
-	REGISTERADDR = *REGISTERADDR1
-	TOKENADDR = *TOKENADDR1
-
-	var myUid int = *uid
-	var uidNum int = *uidCount
-	var msgnum int = *messageCount
-
-	log.Info("args is ", myUid, uidNum, msgnum)
-	var strMyUid string
-
-	strMyUid = GenUid(myUid)
-
-	runRigister(strMyUid)
-	token := runGetToken(strMyUid)
-
-	cmd := GetCmd(myUid, cmdfile)
-
-	log.Info("getcmd value ", cmd)
-	switch cmd {
-	case -1:
-		log.Info("GetCmd failed ")
-		time.Sleep(time.Duration(1) * time.Second)
-	case 5:
-		log.Info("wait 2 mins, then login")
-		time.Sleep(time.Duration(1*60) * time.Second)
-		DoTest(strMyUid, token, WSADDR, APIADDR)
-		log.Info("login do test, only login")
-		log.Info("testmypid: ", os.Getpid())
-	case 6:
-		log.Info("wait 4 mins, then login")
-		time.Sleep(time.Duration(2*60) * time.Second)
-		DoTest(strMyUid, token, WSADDR, APIADDR)
-		log.Info("login do test, only login")
-		log.Info("testmypid: ", os.Getpid())
-	case 3:
-		log.Info("wait 2 mins, then login and send")
-		time.Sleep(time.Duration(1*60) * time.Second)
-		DoTest(strMyUid, token, WSADDR, APIADDR)
-		log.Info("login do test, login and send")
-
-		var recvId string
-		var idx string
-		rand.Seed(time.Now().UnixNano())
-		if msgnum == 0 {
-			fmt.Println("dont send,  exit")
-			os.Exit(0)
-		} else {
-			for i := 0; i < msgnum; i++ {
-				var r int
-				for true {
-					time.Sleep(time.Duration(SENDINTERVAL) * time.Millisecond)
-
-					r = rand.Intn(uidNum) + 1
-					fmt.Println("test rand ", myUid, uidNum, r)
-					if r == myUid {
-						continue
-					} else {
-						break
-					}
-				}
-				recvId = GenUid(r)
-				idx = strconv.FormatInt(int64(i), 10)
-
-				DoTestSendMsg(strMyUid, recvId, idx)
-			}
-		}
-
-	case 4:
-		fmt.Println("wait 4 mins, then login and send")
-		time.Sleep(time.Duration(2*60) * time.Second)
-		DoTest(strMyUid, token, WSADDR, APIADDR)
-		fmt.Println("login do test, login and send")
-
-		var recvId string
-		var idx string
-		rand.Seed(time.Now().UnixNano())
-		if msgnum == 0 {
-			fmt.Println("dont send,  exit")
-			os.Exit(0)
-		} else {
-			for i := 0; i < msgnum; i++ {
-				var r int
-				for true {
-					time.Sleep(time.Duration(SENDINTERVAL) * time.Millisecond)
-
-					r = rand.Intn(uidNum) + 1
-					fmt.Println("test rand ", myUid, uidNum, r)
-					if r == myUid {
-						continue
-					} else {
-						break
-					}
-				}
-				recvId = GenUid(r)
-				idx = strconv.FormatInt(int64(i), 10)
-
-				DoTestSendMsg(strMyUid, recvId, idx)
-			}
-		}
-
-	case 1:
-		fmt.Println("only login")
-		DoTest(strMyUid, token, WSADDR, APIADDR)
-		fmt.Println("login do test, only login...")
-		fmt.Println("testmypid: ", os.Getpid())
-	case 2:
-		fmt.Println("login send")
-		DoTest(strMyUid, token, WSADDR, APIADDR)
-		fmt.Println("login do test, login and send")
-
-		var recvId string
-		var idx string
-		rand.Seed(time.Now().UnixNano())
-		if msgnum == 0 {
-			fmt.Println("dont send,  exit")
-			os.Exit(0)
-		} else {
-			for i := 0; i < msgnum; i++ {
-				var r int
-				for true {
-					time.Sleep(time.Duration(SENDINTERVAL) * time.Millisecond)
-
-					r = rand.Intn(uidNum) + 1
-					fmt.Println("test rand ", myUid, uidNum, r)
-					if r == myUid {
-						continue
-					} else {
-						break
-					}
-				}
-				recvId = GenUid(r)
-				idx = strconv.FormatInt(int64(i), 10)
-
-				DoTestSendMsg(strMyUid, recvId, idx)
-			}
-		}
-	case 7:
-		fmt.Println("random sleep and send")
-		DoTest(strMyUid, token, WSADDR, APIADDR)
-
-		var recvId string
-		var idx string
-		rand.Seed(time.Now().UnixNano())
-		maxSleep := 60
-		msgnum = 10
-		if msgnum == 0 {
-			fmt.Println("dont send,  exit")
-			os.Exit(0)
-		} else {
-			for i := 0; i < msgnum; i++ {
-				var r int
-				for true {
-					time.Sleep(time.Duration(rand.Intn(maxSleep)+1) * time.Second)
-					r = rand.Intn(uidNum) + 1
-					fmt.Println("test rand ", myUid, uidNum, r)
-					if r == myUid {
-						continue
-					} else {
-						break
-					}
-				}
-				recvId = GenUid(r)
-				idx = strconv.FormatInt(int64(i), 10)
-
-				DoTestSendMsg(strMyUid, recvId, idx)
-			}
-		}
-
-	}
-
-}
-
-//for true {
-//	time.Sleep(time.Duration(60) * time.Second)
-//	fmt.Println("waiting")
-//}

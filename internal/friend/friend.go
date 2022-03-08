@@ -77,6 +77,7 @@ func (f *Friend) GetUserNameAndFaceUrlByUid(callback open_im_sdk_callback.Base, 
 		for _, v := range userInfos {
 			return v.FaceURL, v.Nickname, nil
 		}
+		log.Info(operationID, "GetUsersInfoFromSvr ", friendUserID)
 	}
 	return "", "", errors.New("getUserNameAndFaceUrlByUid err")
 

@@ -3,6 +3,7 @@ package test
 import (
 	"encoding/json"
 	"fmt"
+	"open_im_sdk/internal/login"
 	"open_im_sdk/pkg/server_api_params"
 
 	//"gorm.io/gorm/callbacks"
@@ -367,15 +368,14 @@ type BaseSuccFailed struct {
 func (b *BaseSuccFailed) OnError(errCode int32, errMsg string) {
 	b.errCode = -1
 	b.errMsg = errMsg
-	fmt.Println("onError ", b.funcName)
-	fmt.Println("test_openim: ", "login failed ", errCode, errMsg)
+	log.Error("login failed", errCode, errMsg)
 
 }
 
 func (b *BaseSuccFailed) OnSuccess(data string) {
 	b.errCode = 1
 	b.successData = data
-	fmt.Println("test_openim: ", "login success")
+	log.Info("login success", data)
 }
 
 func InOutlllogin(uid, tk string) {
@@ -422,7 +422,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	open_im_sdk.SetUserListener(testUser)
 
 	var msgCallBack MsgListenerCallBak
-	open_im_sdk.SetAdvancedMsgListener(msgCallBack)
+	open_im_sdk.SetAdvancedMsgListener(&msgCallBack)
 
 	var friendListener testFriendListener
 	open_im_sdk.SetFriendListener(friendListener)
@@ -454,6 +454,60 @@ func lllogin(uid, tk string) bool {
 		}
 	}
 	return true
+}
+
+func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
+	coreMgrLock.Lock()
+	defer coreMgrLock.Unlock()
+
+	var cf sdk_struct.IMConfig
+	cf.ApiAddr = api
+	cf.WsAddr = ws
+	cf.Platform = 2
+	cf.DataDir = "./"
+	cf.LogLevel = 3
+	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
+
+	operationID := utils.OperationIDGenerator()
+	var testinit testInitLister
+	lg := new(login.LoginMgr)
+	log.Info(operationID, "new login ", lg)
+
+	allLoginMgr[index].mgr = lg
+	sdk_struct.SvrConf = cf
+
+	lg.InitSDK(sdk_struct.SvrConf, testinit, operationID)
+
+	log.Info(operationID, "InitSDK ", sdk_struct.SvrConf)
+
+	var testConversation conversationCallBack
+	lg.SetConversationListener(testConversation)
+
+	var testUser userCallback
+	lg.SetUserListener(testUser)
+
+	var msgCallBack MsgListenerCallBak
+	lg.SetAdvancedMsgListener(&msgCallBack)
+
+	var friendListener testFriendListener
+	lg.SetFriendListener(friendListener)
+
+	var groupListener testGroupListener
+	lg.SetGroupListener(groupListener)
+
+	var callback BaseSuccFailed
+	callback.funcName = utils.GetSelfFuncName()
+	lg.Login(&callback, uid, tk, operationID)
+
+	for {
+		if callback.errCode == 1 {
+			log.Info(operationID, "login ok ", uid)
+			return
+		}
+		log.Warn(operationID, "waiting login...", uid)
+		time.Sleep(1 * time.Second)
+	}
+
 }
 
 func DoTest(uid, tk, ws, api string) {
@@ -500,14 +554,24 @@ func DoTest(uid, tk, ws, api string) {
 type TestSendMsgCallBack struct {
 	msg         string
 	OperationID string
+	sendID      string
+	recvID      string
+	msgID       string
 }
 
 func (t *TestSendMsgCallBack) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, "test_openim: send msg failed: ", errCode, errMsg, "|", t.msg, "|")
+	log.Info(t.OperationID, "test_openim: send msg failed: ", errCode, errMsg, t.msgID, t.msg)
+	SendMsgMapLock.Lock()
+	defer SendMsgMapLock.Unlock()
+	SendFailedAllMsg[t.msgID] = t.sendID + t.recvID
+
 }
 
 func (t *TestSendMsgCallBack) OnSuccess(data string) {
-	log.Info(t.OperationID, "test_openim: send msg success: |", t.msg, "|")
+	log.Info(t.OperationID, "test_openim: send msg success: |", t.msgID, t.msg)
+	SendMsgMapLock.Lock()
+	defer SendMsgMapLock.Unlock()
+	SendSuccAllMsg[t.msgID] = t.sendID + t.recvID
 }
 
 func (t *TestSendMsgCallBack) OnProgress(progress int) {

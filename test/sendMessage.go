@@ -3,6 +3,7 @@ package test
 import (
 	"encoding/json"
 	"fmt"
+	"open_im_sdk/internal/login"
 	"open_im_sdk/sdk_struct"
 	"strings"
 	"sync"
@@ -40,7 +41,7 @@ func runRigister(strMyUid string) {
 		if err == nil {
 			break
 		} else {
-			time.Sleep(time.Duration(30) * time.Second)
+			time.Sleep(time.Duration(1) * time.Second)
 			continue
 		}
 	}
@@ -77,6 +78,7 @@ func register(uid string) error {
 	req.UserID = uid
 	req.Secret = SECRET
 	req.Nickname = uid
+	req.FaceURL = "www.baidu.com"
 	for {
 		_, err := network.Post2Api(url, req, "")
 		if err != nil && !strings.Contains(err.Error(), "status code failed") {
@@ -108,7 +110,7 @@ func getToken(uid string) string {
 	var stcResp ResToken
 	err = json.Unmarshal(r, &stcResp)
 	if stcResp.ErrCode != 0 {
-		log.Error(req.OperationID, "ErrCode failed ", stcResp.ErrMsg, stcResp.ErrMsg)
+		log.Error(req.OperationID, "ErrCode failed ", stcResp.ErrCode, stcResp.ErrMsg, url, req)
 		return ""
 	}
 	return stcResp.Data.Token
@@ -117,6 +119,8 @@ func getToken(uid string) string {
 
 func init() {
 	sdk_struct.SvrConf = sdk_struct.IMConfig{Platform: 1, ApiAddr: APIADDR, WsAddr: WSADDR, DataDir: "./", LogLevel: 6, ObjectStorage: "cos"}
+	allLoginMgr = make(map[int]*CoreNode)
+
 }
 
 func runGetToken(strMyUid string) string {
@@ -158,23 +162,22 @@ func getMyIP() string {
 	return ""
 }
 
-func GenUid(uid int) string {
+func GenUid(uid int, prefix string) string {
 	if getMyIP() == "" {
 		fmt.Println("getMyIP() failed")
 		os.Exit(1)
 	}
-	UidPrefix := getMyIP() + "uid"
+	UidPrefix := getMyIP() + prefix
 	return UidPrefix + strconv.FormatInt(int64(uid), 10)
 }
 
 func GenToken(userID string) string {
-
 	return runGetToken(userID)
 }
 
 func GenWs(id int) {
 	//return
-	userID := GenUid(id)
+	userID := GenUid(id, "p")
 	userLock.Lock()
 	defer userLock.Unlock()
 	allUserID = append(allUserID, userID)
@@ -193,6 +196,24 @@ func GenWs(id int) {
 	allWs = append(allWs, ws)
 
 }
+
+func GenWsReliability(id int) {
+	userID := GenUid(id, "v")
+	coreMgrLock.Lock()
+	defer coreMgrLock.Unlock()
+	register(userID)
+	token := GenToken(userID)
+	allLoginMgr[id] = &CoreNode{token: token, userID: userID}
+}
+
+type CoreNode struct {
+	token  string
+	userID string
+	mgr    *login.LoginMgr
+}
+
+var coreMgrLock sync.RWMutex
+var allLoginMgr map[int]*CoreNode
 
 var userLock sync.RWMutex
 
@@ -214,7 +235,7 @@ func addSendFailed() {
 	defer sendFailedLock.Unlock()
 	sendFailedCount++
 }
-func DoTestRun(num int, interval int, ip string) {
+func PressTest(num int, interval int, ip string) {
 	TESTIP = ip
 	intervalSleep = interval
 	var wg sync.WaitGroup
@@ -222,16 +243,11 @@ func DoTestRun(num int, interval int, ip string) {
 
 	for i := 0; i < num; i++ {
 		go func(t int) {
-
 			GenWs(t)
 			log.Info("genws ", t)
 			wg.Done()
 		}(i)
 
-		//if allUserID[i] == "" || allToken[i] == "" || allWs[i] == nil {
-		//	log.Error("", "args failed")
-		//}
-		//log.Debug("", "user: ", allUserID[i], "token: ", allToken[i], allWs[i])
 	}
 
 	for i := 0; i < num; i++ {
@@ -242,8 +258,8 @@ func DoTestRun(num int, interval int, ip string) {
 	time.Sleep(time.Duration(1) * time.Second)
 
 	for i := 0; i < num; i++ {
-		//go testSend(i, "ok", num)
-		go testSendReliability(i, "ok", num)
+		go testSend(i, "ok", num)
+		//	go testSendReliability(i, "ok", num)
 	}
 }
 
