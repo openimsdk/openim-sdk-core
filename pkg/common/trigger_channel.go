@@ -21,12 +21,12 @@ func TriggerCmdNewMsgCome(msg sdk_struct.CmdNewMsgComeToConversation, conversati
 	return sendCmd(conversationCh, c2v, 1)
 }
 
-func TriggerCmdLogout(conversationCh chan Cmd2Value) error {
-	if conversationCh == nil {
+func TriggerCmdLogout(ch chan Cmd2Value) error {
+	if ch == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdLogout, Value: nil}
-	return sendCmd(conversationCh, c2v, 1)
+	return sendCmd(ch, c2v, 1)
 }
 
 func TriggerCmdDeleteConversationAndMessage(sourceID, conversationID string, sessionType int, conversationCh chan Cmd2Value) error {

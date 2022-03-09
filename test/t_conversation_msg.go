@@ -11,7 +11,6 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sync"
-	"time"
 )
 
 //func DotestSetConversationRecvMessageOpt() {
@@ -200,7 +199,7 @@ func (m *MsgListenerCallBak) OnRecvNewMessage(msg string) {
 	if err != nil {
 		log.Error("", "Unmarshal failed", err.Error())
 	} else {
-		log.Info("", "recv time: ", time.Now().UnixNano(), "send_time: ", mm.SendTime, " client_msg_id: ", mm.ClientMsgID, "server_msg_id", mm.ServerMsgID)
+		//		log.Info("", "recv time: ", time.Now().UnixNano(), "send_time: ", mm.SendTime, " client_msg_id: ", mm.ClientMsgID, "server_msg_id", mm.ServerMsgID)
 		RecvMsgMapLock.Lock()
 		defer RecvMsgMapLock.Unlock()
 
@@ -273,15 +272,15 @@ func (c conversationCallBack) OnSyncServerFailed() {
 }
 
 func (c conversationCallBack) OnNewConversation(conversationList string) {
-	log.Info("", "OnNewConversation returnList is ", conversationList)
+	//	log.Info("", "OnNewConversation returnList is ", conversationList)
 }
 
 func (c conversationCallBack) OnConversationChanged(conversationList string) {
-	log.Info("", "OnConversationChanged returnList is", conversationList)
+	//	log.Info("", "OnConversationChanged returnList is", conversationList)
 }
 
 func (c conversationCallBack) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
-	log.Info("", "OnTotalUnreadMessageCountChanged returnTotalUnreadCount is ", totalUnreadCount)
+	//	log.Info("", "OnTotalUnreadMessageCountChanged returnTotalUnreadCount is ", totalUnreadCount)
 }
 
 type testMarkC2CMessageAsRead struct {
@@ -314,12 +313,15 @@ func init() {
 	SendSuccAllMsg = make(map[string]string)
 	SendFailedAllMsg = make(map[string]string)
 	RecvAllMsg = make(map[string]string)
+
 }
 
 func DoTestSendMsg(index int, sendId, recvID string, idx string) {
 	m := "test msg " + sendId + ":" + recvID + ":" + idx
 	operationID := utils.OperationIDGenerator()
-	s := DoTestCreateTextMessageReliability(allLoginMgr[index], m)
+	//coreMgrLock.Lock()
+	s := DoTestCreateTextMessageReliability(allLoginMgr[index].mgr, m)
+	//coreMgrLock.Unlock()
 	var mstruct sdk_struct.MsgStruct
 	_ = json.Unmarshal([]byte(s), &mstruct)
 
@@ -332,11 +334,13 @@ func DoTestSendMsg(index int, sendId, recvID string, idx string) {
 	testSendMsg.recvID = recvID
 	testSendMsg.msgID = mstruct.ClientMsgID
 
-	log.Info(operationID, "SendMessage", sendId, recvID, testSendMsg.msgID)
+	log.Info(operationID, "SendMessage", sendId, recvID, testSendMsg.msgID, index)
 	// SendMessage(callback open_im_sdk_callback.SendMsgCallBack, message, recvID,
 	//groupID string, offlinePushInfo string, operationID string) {
 
-	allLoginMgr[index].Conversation().SendMessage(&testSendMsg, s, recvID, "", utils.StructToJsonString(o), operationID)
+	//coreMgrLock.Lock()
+	allLoginMgr[index].mgr.Conversation().SendMessage(&testSendMsg, s, recvID, "", utils.StructToJsonString(o), operationID)
+	//coreMgrLock.Unlock()
 }
 
 func DoTestSendImageMsg(sendId, recvID string) {
