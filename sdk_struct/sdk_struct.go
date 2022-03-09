@@ -119,6 +119,10 @@ type MsgStruct struct {
 		AtUserList []string `json:"atUserList"`
 		IsAtSelf   bool     `json:"isAtSelf"`
 	} `json:"atElem"`
+	FaceElem struct {
+		Index int    `json:"index"`
+		Data  string `json:"data"`
+	} `json:"faceElem"`
 	LocationElem struct {
 		Description string  `json:"description"`
 		Longitude   float64 `json:"longitude"`
