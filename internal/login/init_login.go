@@ -48,6 +48,10 @@ type LoginMgr struct {
 	imConfig       sdk_struct.IMConfig
 }
 
+func (u *LoginMgr) Ws() *ws.Ws {
+	return u.ws
+}
+
 func (u *LoginMgr) ImConfig() sdk_struct.IMConfig {
 	return u.imConfig
 }
