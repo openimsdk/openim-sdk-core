@@ -12,6 +12,7 @@ import (
 	"open_im_sdk/sdk_struct"
 	"open_im_sdk/ws_wrapper/utils"
 	"open_im_sdk/ws_wrapper/ws_local_server"
+	"os"
 	"runtime"
 	"sync"
 )
@@ -46,7 +47,9 @@ func main() {
 	wg.Add(1)
 	fmt.Println("ws server is starting")
 	ws_local_server.WS.OnInit(*sdkWsPort, *sdkWsIp)
-	ws_local_server.WS.Run()
+	if ws_local_server.WS.Run()!=nil {
+		os.Exit(-10);
+	}
 	wg.Wait()
 
 }

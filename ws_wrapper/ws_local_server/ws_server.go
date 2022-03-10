@@ -7,6 +7,7 @@
 package ws_local_server
 
 import (
+	"fmt"
 	"net/http"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/log"
@@ -64,13 +65,17 @@ func (ws *WServer) OnInit(wsPort int, wsIp string) {
 	}
 }
 
-func (ws *WServer) Run() {
+func (ws *WServer) Run() error {
 	go ws.getMsgAndSend()
 	http.HandleFunc("/", ws.wsHandler)         //Get request from client to handle by wsHandler
 	err := http.ListenAndServe(ws.wsAddr, nil) //Start listening
 	if err != nil {
 		wrapSdkLog("", "Ws listening err", "", "err", err.Error())
+	} else {
+		fmt.Println("ws server listening: ", ws.wsAddr)
 	}
+
+	return err
 }
 func (ws *WServer) getMsgAndSend() {
 	for {
@@ -298,6 +303,6 @@ func wrapSdkLog(operationID string, v ...interface{}) {
 	i := strings.LastIndex(b, "/")
 	if i != -1 {
 		//sLog.Println("[", b[i+1:len(b)], ":", c, "]", v)
-		log.NewInfo(operationID, "[", b[i+1:len(b)], ":", c, "]", v)
+		log.NewInfo(operationID, "[", b[i+1:], ":", c, "]", v)
 	}
 }
