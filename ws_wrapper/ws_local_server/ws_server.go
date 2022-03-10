@@ -63,6 +63,8 @@ func (ws *WServer) OnInit(wsPort int, wsIp string) {
 		ReadBufferSize:   4096,
 		CheckOrigin:      func(r *http.Request) bool { return true },
 	}
+
+	fmt.Println("ws server listening: ", ws.wsAddr)
 }
 
 func (ws *WServer) Run() error {
@@ -71,8 +73,6 @@ func (ws *WServer) Run() error {
 	err := http.ListenAndServe(ws.wsAddr, nil) //Start listening
 	if err != nil {
 		wrapSdkLog("", "Ws listening err", "", "err", err.Error())
-	} else {
-		fmt.Println("ws server listening: ", ws.wsAddr)
 	}
 
 	return err
