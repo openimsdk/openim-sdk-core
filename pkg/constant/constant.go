@@ -40,6 +40,7 @@ const (
 	HasReadReceipt = 112
 	Typing         = 113
 	Quote          = 114
+	Face           = 115
 	//////////////////////////////////////////
 	NotificationBegin       = 1000
 	FriendNotificationBegin = 1200

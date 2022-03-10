@@ -847,6 +847,15 @@ func (c *Conversation) CreateMergerMessage(messageList, title, summaryList, oper
 	s.Content = utils.StructToJsonString(s.MergeElem)
 	return utils.StructToJsonString(s)
 }
+func (c *Conversation) CreateFaceMessage(index int, data, operationID string) string {
+	s := sdk_struct.MsgStruct{}
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Face, operationID)
+	s.FaceElem.Data = data
+	s.FaceElem.Index = index
+	s.Content = utils.StructToJsonString(s.FaceElem)
+	return utils.StructToJsonString(s)
+
+}
 func (c *Conversation) CreateForwardMessage(m, operationID string) string {
 	s := sdk_struct.MsgStruct{}
 	err := json.Unmarshal([]byte(m), &s)
