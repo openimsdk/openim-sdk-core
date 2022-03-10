@@ -86,10 +86,22 @@ func Logout(callback open_im_sdk_callback.Base, operationID string) {
 }
 
 func GetLoginStatus() int32 {
+	if userForSDK == nil {
+		log.Error("", "userForSDK == nil")
+		return -1
+	}
+	if userForSDK.Ws() == nil {
+		log.Error("", "userForSDK.Ws() == nil")
+		return -2
+	}
 	return userForSDK.GetLoginStatus()
 }
 
 func GetLoginUser() string {
+	if userForSDK == nil {
+		log.Error("", "userForSDK == nil")
+		return ""
+	}
 	return userForSDK.GetLoginUser()
 }
 
