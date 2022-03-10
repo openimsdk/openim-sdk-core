@@ -123,11 +123,12 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
 	u.cmdWsCh = make(chan common.Cmd2Value, 10)
 
+	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
+
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
-	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, pushMsgAndMaxSeqCh)
+	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
 	u.msgSync = ws.NewMsgSync(db, u.ws, userID, u.conversationCh, pushMsgAndMaxSeqCh)
 
-	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 	u.heartbeat = ws.NewHeartbeat(u.msgSync, u.heartbeatCmdCh)
 
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)

@@ -22,10 +22,11 @@ type Ws struct {
 	//conversationCh chan common.Cmd2Value
 	cmdCh              chan common.Cmd2Value //waiting logout cmd
 	pushMsgAndMaxSeqCh chan common.Cmd2Value //recv push msg  -> channel
+	cmdHeartbeatCh     chan common.Cmd2Value //
 }
 
-func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, cmdCh chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value) *Ws {
-	p := Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn, cmdCh: cmdCh, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh}
+func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, cmdCh chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value, cmdHeartbeatCh chan common.Cmd2Value) *Ws {
+	p := Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn, cmdCh: cmdCh, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh, cmdHeartbeatCh: cmdHeartbeatCh}
 	go p.ReadData()
 	return &p
 }
@@ -155,7 +156,6 @@ func (w *Ws) ReadData() {
 				if r.Cmd == constant.CmdLogout {
 					log.Info(operationID, "recv CmdLogout, return, close conn")
 					w.SetLoginState(constant.Logout)
-					//		w.CloseConn()
 					return
 				}
 				log.Warn(operationID, "other cmd ...", r.Cmd)
@@ -177,7 +177,7 @@ func (w *Ws) ReadData() {
 			isErrorOccurred = true
 			if w.loginState == constant.Logout {
 				log.Warn(operationID, "loginState == logout ")
-				continue
+				return
 			}
 			if w.WsConn.IsFatalError(err) {
 				log.Error(operationID, "IsFatalError ", err.Error(), "ReConn")
@@ -232,17 +232,29 @@ func (w *Ws) doWsMsg(message []byte) {
 	case constant.WSKickOnlineMsg:
 		log.Warn(wsResp.OperationID, "kick...  logout")
 		w.kickOnline(*wsResp)
-		w.SetLoginState(constant.Logout)
-		w.CloseConn()
-		runtime.Goexit()
+		w.Logout(wsResp.OperationID)
+
 	case constant.WsLogoutMsg:
 		log.Warn(wsResp.OperationID, "logout... ")
-		w.SetLoginState(constant.Logout)
-		w.CloseConn()
-		runtime.Goexit()
+
 	default:
 		log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
 		return
+	}
+}
+
+func (w *Ws) Logout(operationID string) {
+	w.SetLoginState(constant.Logout)
+	w.CloseConn()
+	log.Warn(operationID, "TriggerCmdLogout ws...")
+	err := common.TriggerCmdLogout(w.cmdCh)
+	if err != nil {
+		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
+	}
+	log.Info(operationID, "TriggerCmdLogout heartbeat...")
+	err = common.TriggerCmdLogout(w.cmdHeartbeatCh)
+	if err != nil {
+		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
 	}
 }
 
