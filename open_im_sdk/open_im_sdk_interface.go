@@ -555,6 +555,9 @@ func CreateFileMessage(operationID string, filePath string, fileName string) str
 func CreateMergerMessage(operationID string, messageList, title, summaryList string) string {
 	return userForSDK.Conversation().CreateMergerMessage(messageList, title, summaryList, operationID)
 }
+func CreateFaceMessage(operationID string, index int, data string) string {
+	return userForSDK.Conversation().CreateFaceMessage(index, data, operationID)
+}
 func CreateForwardMessage(operationID string, m string) string {
 	return userForSDK.Conversation().CreateForwardMessage(m, operationID)
 }
