@@ -22,7 +22,8 @@ const (
 	PullUserMsgBySeqRouter              = "/chat/pull_msg_by_seq"
 	NewestSeqRouter                     = "/chat/newest_seq"
 	TencentCloudStorageCredentialRouter = "/third/tencent_cloud_storage_credential"
-	MinioStorageCredentialRouter = "/third/minio_storage_credential"
+	AliOSSCredentialRouter              = "/third/ali_oss_credential"
+	MinioStorageCredentialRouter        = "/third/minio_storage_credential"
 
 	//group
 	CreateGroupRouter                  = RouterGroup + "/create_group"
