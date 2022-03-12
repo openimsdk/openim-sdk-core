@@ -18,7 +18,8 @@ func (s *Base) OnSuccess(data string) {
 }
 
 type SendMsgCallBack struct {
-	Base
+	onError   GoFunIntString
+	onSuccess GoFunString
 	onProgress GoFunInt
 }
 
