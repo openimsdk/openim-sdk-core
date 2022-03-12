@@ -1,12 +1,13 @@
 package main
 
 import (
+	"C"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/test"
-
 	"time"
 )
 
+//export reliabilityTest
 func reliabilityTest() {
 	intervalSleepMs := 1
 	randSleepMaxSecond := 30
