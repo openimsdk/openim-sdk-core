@@ -8,7 +8,7 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func (s *LiveSignaling) Invite(signalInviteReq string, callback open_im_sdk_callback.Base, operationID string){
+func (s *LiveSignaling) Invite(signalInviteReq string, callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
 		return
@@ -21,5 +21,19 @@ func (s *LiveSignaling) Invite(signalInviteReq string, callback open_im_sdk_call
 		result := s.invite(&unmarshalReq, callback, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
 		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(result))
+	}()
+}
+
+func (s *LiveSignaling) InviteInGroup(signalInviteGroupReq string, callback open_im_sdk_callback.Base, operationID string) {
+	fName := utils.GetSelfFuncName()
+	if callback == nil {
+		log.NewError(operationID, fName, "callback is nil")
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", signalInviteGroupReq)
+		var unmarshalReq api.SignalInviteInGroupReq
+		common.JsonUnmarshalCallback(signalInviteGroupReq, &unmarshalReq, callback, operationID)
+
 	}()
 }
