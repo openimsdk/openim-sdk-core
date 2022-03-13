@@ -35,23 +35,30 @@ func (s *LiveSignaling) invite(req *api.SignalInviteReq, callback open_im_sdk_ca
 	}
 }
 
-func (s *LiveSignaling) waitPush(req *api.SignalInviteReq, operationID string) {
-	for _, v := range req.Invitation.InviteeUserIDList {
+func (s *LiveSignaling) waitPush(req *api.SignalReq, operationID string) {
+	var invt api.InvitationInfo
+	switch payload := req.Payload.(type) {
+	case *api.SignalReq_Invite:
+		invt = *payload.Invite.Invitation
+	case *api.SignalReq_InviteInGroup:
+		invt = *payload.InviteInGroup.Invitation
+	}
+
+	for _, v := range invt.InviteeUserIDList {
 		go func() {
-			push, err := s.SignalingWaitPush(req.Invitation.InviterUserID, v, req.Invitation.RoomID, req.Invitation.Timeout, operationID)
+			push, err := s.SignalingWaitPush(invt.InviterUserID, v, invt.RoomID, invt.Timeout, operationID)
 			if err != nil {
 				if strings.Contains(err.Error(), "timeout") {
-					log.Error(operationID, "wait push timeout ", err.Error(), req.Invitation.InviterUserID, v, req.Invitation.RoomID, req.Invitation.Timeout)
+					log.Error(operationID, "wait push timeout ", err.Error(), invt.InviterUserID, v, invt.RoomID, invt.Timeout)
 
 				} else {
-					log.Error(operationID, "other failed ", err.Error(), req.Invitation.InviterUserID, v, req.Invitation.RoomID, req.Invitation.Timeout)
+					log.Error(operationID, "other failed ", err.Error(), invt.InviterUserID, v, invt.RoomID, invt.Timeout)
 				}
 				return
 			}
 			s.doSignalPush(push)
 		}()
 	}
-
 }
 
 func (s *LiveSignaling) doSignalPush(req *api.SignalReq) {
