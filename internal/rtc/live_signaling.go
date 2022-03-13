@@ -24,7 +24,7 @@ func (s *LiveSignaling) invite(req *api.SignalInviteReq, callback open_im_sdk_ca
 	common.CheckAnyErrCallback(callback, 3001, err, operationID)
 	switch payload := resp.Payload.(type) {
 	case *api.SignalResp_Invite:
-		go s.do(req.Invitation.InviterUserID, req.Invitation.InviteeUserIDList[0], "invite", 100, operationID)
+		go s.waitPush(req.Invitation.InviterUserID, req.Invitation.InviteeUserIDList[0], "invite", 100, operationID)
 		return sdk_params_callback.InviteCallback(payload.Invite)
 	default:
 		log.Error(operationID, "resp payload type failed ", payload)
@@ -33,12 +33,12 @@ func (s *LiveSignaling) invite(req *api.SignalInviteReq, callback open_im_sdk_ca
 	}
 }
 
-func (s *LiveSignaling) do(inviterUserID, inviteeUserID, event string, timeout int, operationID string) {
+func (s *LiveSignaling) waitPush(inviterUserID, inviteeUserID, event string, timeout int, operationID string) {
 	req, err := s.SignalingWaitPush(inviterUserID, inviteeUserID, "invite", 100, operationID)
-	s.dopush(req)
+	s.doSignalPush(req)
 }
 
-func (s *LiveSignaling) dopush(req *api.SignalReq) {
+func (s *LiveSignaling) doSignalPush(req *api.SignalReq) {
 	//payload.Accept
 	switch payload := req.Payload.(type) {
 	case *api.SignalReq_Invite:
@@ -52,7 +52,6 @@ func (s *LiveSignaling) dopush(req *api.SignalReq) {
 	default:
 		log.Error("", "payload type failed ")
 	}
-
 }
 
 func (s *LiveSignaling) inviteInGroup(groupID string, inviteeUserIDList []string, customData string, offlinePushInfo *api.OfflinePushInfo, timeout uint32, callback open_im_sdk_callback.Base, operationID string) sdk_params_callback.InviteInGroupCallback {
