@@ -2,7 +2,6 @@ package rtc
 
 import (
 	"errors"
-	"github.com/golang/protobuf/proto"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -10,6 +9,8 @@ import (
 	"open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+
+	"github.com/golang/protobuf/proto"
 )
 
 type LiveSignaling struct {
@@ -45,7 +46,7 @@ func (s *LiveSignaling) invite(req *api.SignalInviteReq, callback open_im_sdk_ca
 }
 
 func (s *LiveSignaling) waitPush(inviterUserID, inviteeUserID, event string, timeout int, operationID string) {
-	req, err := s.SignalingWaitPush(inviterUserID, inviteeUserID, "invite", 100, operationID)
+	req, err := s.SignalingWaitPush(inviterUserID, inviteeUserID, "invite", timeout, operationID)
 	if err != nil {
 		return
 	}
@@ -72,22 +73,25 @@ func (s *LiveSignaling) inviteInGroup(groupID string, inviteeUserIDList []string
 	return nil
 }
 
-func (s *LiveSignaling) cancel(inviteeUserID, customData string, callback open_im_sdk_callback.Base, operationID string) sdk_params_callback.CancelCallback {
-	return nil
-}
-
-func (s *LiveSignaling) accept(inviteUserID, customData string, callback open_im_sdk_callback.Base, operationID string) sdk_params_callback.AcceptCallback {
-	return nil
-}
-
-func (s *LiveSignaling) hungUp(peerUserID, customData string, callback open_im_sdk_callback.Base, operationID string) sdk_params_callback.HungUpCallback {
-	return nil
-}
-
-func (s *LiveSignaling) reject(inviteUserID, customData string, callback open_im_sdk_callback.Base, operationID string) sdk_params_callback.RejectCallback {
-	return nil
-}
-
 func (s *LiveSignaling) SetListener(listener open_im_sdk_callback.OnSignalingListener, operationID string) {
 	s.listener = listener
+}
+
+func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk_callback.Base, operationID string) {
+	resp, err := s.SendSignalingReqWaitResp(req, 0, operationID)
+	common.CheckAnyErrCallback(callback, 3001, err, operationID)
+	switch payload := resp.Payload.(type) {
+	case *api.SignalResp_Accept:
+		//return sdk_params_callback.AcceptCallback(payload.Accept)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.AcceptCallback(payload.Accept)))
+	case *api.SignalResp_Reject:
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.RejectCallback(payload.Reject)))
+	case *api.SignalResp_HungUp:
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.HungUpCallback(payload.HungUp)))
+	case *api.SignalResp_Cancel:
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.CancelCallback(payload.Cancel)))
+	default:
+		log.Error(operationID, "resp payload type failed ", payload)
+		common.CheckAnyErrCallback(callback, 3002, errors.New("resp payload type failed"), operationID)
+	}
 }
