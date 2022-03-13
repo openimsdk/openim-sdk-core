@@ -77,7 +77,11 @@ const (
 	MemberInvitedNotification            = 1509
 	MemberEnterNotification              = 1510
 	GroupNotificationEnd                 = 1599
-	NotificationEnd                      = 2000
+
+	SignalingNotificationBegin = 1600
+	SignalingNotification      = 1601
+	SignalingNotificationEnd   = 1699
+	NotificationEnd            = 2000
 
 	////////////////////////////////////////
 

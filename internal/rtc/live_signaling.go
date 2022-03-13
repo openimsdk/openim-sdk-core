@@ -2,18 +2,29 @@ package rtc
 
 import (
 	"errors"
+	"github.com/golang/protobuf/proto"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
+	"open_im_sdk/pkg/utils"
 )
 
 type LiveSignaling struct {
 	*ws.Ws
 	listener    open_im_sdk_callback.OnSignalingListener
 	loginUserID string
+}
+
+func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value) {
+	var signalReq api.SignalReq
+	err := proto.Unmarshal(msg.Content, &signalReq)
+	if err != nil {
+		log.Error("", "Unmarshal failed ", err.Error())
+	}
+	s.doSignalPush(&signalReq)
 }
 
 //invitee 被邀请者
@@ -35,6 +46,9 @@ func (s *LiveSignaling) invite(req *api.SignalInviteReq, callback open_im_sdk_ca
 
 func (s *LiveSignaling) waitPush(inviterUserID, inviteeUserID, event string, timeout int, operationID string) {
 	req, err := s.SignalingWaitPush(inviterUserID, inviteeUserID, "invite", 100, operationID)
+	if err != nil {
+		return
+	}
 	s.doSignalPush(req)
 }
 
@@ -42,13 +56,13 @@ func (s *LiveSignaling) doSignalPush(req *api.SignalReq) {
 	//payload.Accept
 	switch payload := req.Payload.(type) {
 	case *api.SignalReq_Invite:
-		s.listener.OnReceiveNewInvitation()
+		s.listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.Invite))
 	case *api.SignalReq_Accept:
-		s.listener.OnInviteeAccepted()
+		s.listener.OnInviteeAccepted(utils.StructToJsonString(payload.Accept))
 	case *api.SignalReq_Reject:
-		s.listener.OnInviteeRejected()
+		s.listener.OnInviteeRejected(utils.StructToJsonString(payload.Reject))
 	case *api.SignalReq_Cancel:
-		s.listener.OnInvitationCancelled()
+		s.listener.OnInvitationCancelled(utils.StructToJsonString(payload.Cancel))
 	default:
 		log.Error("", "payload type failed ")
 	}
@@ -75,5 +89,5 @@ func (s *LiveSignaling) reject(inviteUserID, customData string, callback open_im
 }
 
 func (s *LiveSignaling) SetListener(listener open_im_sdk_callback.OnSignalingListener, operationID string) {
-	return nil
+	s.listener = listener
 }
