@@ -82,7 +82,6 @@ func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk
 	common.CheckAnyErrCallback(callback, 3001, err, operationID)
 	switch payload := resp.Payload.(type) {
 	case *api.SignalResp_Accept:
-		//return sdk_params_callback.AcceptCallback(payload.Accept)
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.AcceptCallback(payload.Accept)))
 	case *api.SignalResp_Reject:
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.RejectCallback(payload.Reject)))
@@ -90,6 +89,9 @@ func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.HungUpCallback(payload.HungUp)))
 	case *api.SignalResp_Cancel:
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.CancelCallback(payload.Cancel)))
+	case *api.SignalResp_Invite:
+		go s.waitPush(, req.Invitation.InviteeUserIDList[0], "invite", 100, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.InviteCallback(payload.Invite)))
 	default:
 		log.Error(operationID, "resp payload type failed ", payload)
 		common.CheckAnyErrCallback(callback, 3002, errors.New("resp payload type failed"), operationID)

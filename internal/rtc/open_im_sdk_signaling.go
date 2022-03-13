@@ -16,11 +16,12 @@ func (s *LiveSignaling) Invite(signalInviteReq string, callback open_im_sdk_call
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ", signalInviteReq)
-		var unmarshalReq api.SignalInviteReq
-		common.JsonUnmarshalCallback(signalInviteReq, &unmarshalReq, callback, operationID)
-		result := s.invite(&unmarshalReq, callback, operationID)
-		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(result))
+		req := &api.SignalInviteReq{}
+		var signalReq api.SignalReq
+		common.JsonUnmarshalCallback(signalInviteReq, req, callback, operationID)
+		*signalReq.GetInvite() = *req
+		s.handleSignaling(&signalReq, callback, operationID)
+		log.NewInfo(operationID, fName, " callback: finished")
 	}()
 }
 
