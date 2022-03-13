@@ -35,7 +35,7 @@ func (s *LiveSignaling) invite(req *api.SignalInviteReq, callback open_im_sdk_ca
 
 func (s *LiveSignaling) do(inviterUserID, inviteeUserID, event string, timeout int, operationID string) {
 	req, err := s.SignalingWaitPush(inviterUserID, inviteeUserID, "invite", 100, operationID)
-	s.f(req)
+	s.dopush(req)
 }
 
 func (s *LiveSignaling) dopush(req *api.SignalReq) {

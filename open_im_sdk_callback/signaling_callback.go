@@ -1,12 +1,13 @@
 package open_im_sdk_callback
 
 type OnSignalingListener interface {
-	OnReceiveNewInvitation( )
-	OnInviteeAccepted()
+	OnReceiveNewInvitation(receiveNewInvitationCallback string)
 
-	OnInviteeRejected()
+	OnInviteeAccepted(inviteeAcceptedCallback string)
+
+	OnInviteeRejected(inviteeRejectedCallback string)
 	//
-	OnInvitationCancelled()
+	OnInvitationCancelled(invitationCancelledCallback string)
 	//
-	OnInvitationTimeout()
+	OnInvitationTimeout(invitationTimeoutCallback string)
 }
