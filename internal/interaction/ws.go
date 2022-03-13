@@ -320,7 +320,7 @@ func (w *Ws) kickOnline(msg GeneralWsResp) {
 	w.listener.OnKickedOffline()
 }
 
-func (w *Ws) SendSignalingReqWaitResp(req *server_api_params.SignalReq, timeout int, operationID string) (*server_api_params.SignalResp, error) {
+func (w *Ws) SendSignalingReqWaitResp(req *server_api_params.SignalReq, operationID string) (*server_api_params.SignalResp, error) {
 	resp, err := w.SendReqWaitResp(req, constant.WSSendSignalMsg, 10, 12, w.loginUserID, operationID)
 	if err != nil {
 		return nil, utils.Wrap(err, "")
@@ -333,10 +333,10 @@ func (w *Ws) SendSignalingReqWaitResp(req *server_api_params.SignalReq, timeout 
 	return &signalResp, nil
 }
 
-func (w *Ws) SignalingWaitPush(inviterUserID, inviteeUserID, event string, timeout int, operationID string) (*server_api_params.SignalReq, error) {
-	msgIncr := inviterUserID + inviteeUserID + event
+func (w *Ws) SignalingWaitPush(inviterUserID, inviteeUserID, roomID string, timeout int32, operationID string) (*server_api_params.SignalReq, error) {
+	msgIncr := inviterUserID + inviteeUserID + roomID
 	ch := w.AddChByIncr(msgIncr)
-	resp, err := w.WaitResp(ch, timeout, operationID, nil)
+	resp, err := w.WaitResp(ch, int(timeout), operationID, nil)
 	if err != nil {
 		return nil, utils.Wrap(err, "")
 	}

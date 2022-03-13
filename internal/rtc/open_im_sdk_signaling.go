@@ -34,7 +34,7 @@ func (s *LiveSignaling) Accept(signalAcceptReq string, callback open_im_sdk_call
 		log.NewInfo(operationID, fName, "args: ", signalAcceptReq)
 		req := &api.SignalAcceptReq{}
 		var signalReq api.SignalReq
-		utils.JsonStringToStruct(signalAcceptReq, req)
+		common.JsonUnmarshalCallback(signalAcceptReq, req, callback, operationID)
 		*signalReq.GetAccept() = *req
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback finished")
@@ -83,7 +83,7 @@ func (s *LiveSignaling) HungUp(signalHungUpReq string, callback open_im_sdk_call
 		log.NewInfo(operationID, fName, "args: ", signalHungUpReq)
 		req := &api.SignalHungUpReq{}
 		var signalReq api.SignalReq
-		utils.JsonStringToStruct(signalHungUpReq, req)
+		common.JsonUnmarshalCallback(signalHungUpReq, req, callback, operationID)
 		*signalReq.GetHungUp() = *req
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback finished")
