@@ -53,8 +53,13 @@ func ReliabilityTest(msgNum int, interval int, ip string, randSleepMaxSecond int
 	intervalSleepMS = interval
 	TESTIP = ip
 	testClientNum := clientNum
+	fmt.Println("1111111")
+
+	fmt.Println("2222222222222222")
 	for i := 0; i < testClientNum; i++ {
+		fmt.Println("3333333333333")
 		GenWsReliability(i)
+		fmt.Println("4444444444444444")
 	}
 	rand.Seed(time.Now().UnixNano())
 	log.NewPrivateLog("sdk", 6)

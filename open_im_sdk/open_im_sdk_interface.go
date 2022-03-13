@@ -86,10 +86,22 @@ func Logout(callback open_im_sdk_callback.Base, operationID string) {
 }
 
 func GetLoginStatus() int32 {
+	if userForSDK == nil {
+		log.Error("", "userForSDK == nil")
+		return -1
+	}
+	if userForSDK.Ws() == nil {
+		log.Error("", "userForSDK.Ws() == nil")
+		return -2
+	}
 	return userForSDK.GetLoginStatus()
 }
 
 func GetLoginUser() string {
+	if userForSDK == nil {
+		log.Error("", "userForSDK == nil")
+		return ""
+	}
 	return userForSDK.GetLoginUser()
 }
 
@@ -579,6 +591,9 @@ func CreateFileMessage(operationID string, filePath string, fileName string) str
 }
 func CreateMergerMessage(operationID string, messageList, title, summaryList string) string {
 	return userForSDK.Conversation().CreateMergerMessage(messageList, title, summaryList, operationID)
+}
+func CreateFaceMessage(operationID string, index int, data string) string {
+	return userForSDK.Conversation().CreateFaceMessage(index, data, operationID)
 }
 func CreateForwardMessage(operationID string, m string) string {
 	return userForSDK.Conversation().CreateForwardMessage(m, operationID)

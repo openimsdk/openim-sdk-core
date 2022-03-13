@@ -628,6 +628,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 		case constant.Merger:
 		case constant.Quote:
 		case constant.Card:
+		case constant.Face:
 		default:
 			common.CheckAnyErrCallback(callback, 202, errors.New("contentType not currently supported"+utils.Int32ToString(s.ContentType)), operationID)
 		}
@@ -702,6 +703,7 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 
 	}()
 }
+
 func (c *Conversation) internalSendMessage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, recvID, groupID, operationID string, p *server_api_params.OfflinePushInfo, onlineUserOnly bool, options map[string]bool) (*server_api_params.UserSendMsgResp, error) {
 	if recvID == "" && groupID == "" {
 		common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not be allowed"), operationID)
@@ -875,6 +877,15 @@ func (c *Conversation) CreateMergerMessage(messageList, title, summaryList, oper
 	s.Content = utils.StructToJsonString(s.MergeElem)
 	return utils.StructToJsonString(s)
 }
+func (c *Conversation) CreateFaceMessage(index int, data, operationID string) string {
+	s := sdk_struct.MsgStruct{}
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Face, operationID)
+	s.FaceElem.Data = data
+	s.FaceElem.Index = index
+	s.Content = utils.StructToJsonString(s.FaceElem)
+	return utils.StructToJsonString(s)
+
+}
 func (c *Conversation) CreateForwardMessage(m, operationID string) string {
 	s := sdk_struct.MsgStruct{}
 	err := json.Unmarshal([]byte(m), &s)
@@ -1008,6 +1019,10 @@ func (c *Conversation) ClearGroupHistoryMessage(callback open_im_sdk_callback.Ba
 
 func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_callback.Base, message, recvID, sendID, operationID string) {
 	go func() {
+		log.NewInfo(operationID, "InsertSingleMessageToLocalStorage args: ", message, recvID, sendID)
+		if recvID == "" || sendID == "" {
+			common.CheckAnyErrCallback(callback, 208, errors.New("recvID or sendID is null"), operationID)
+		}
 		var conversation db.LocalConversation
 		conversation.ConversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
 		s := sdk_struct.MsgStruct{}
@@ -1030,6 +1045,10 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_ca
 
 func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_callback.Base, message, groupID, sendID, operationID string) {
 	go func() {
+		log.NewInfo(operationID, "InsertSingleMessageToLocalStorage args: ", message, groupID, sendID)
+		if groupID == "" || sendID == "" {
+			common.CheckAnyErrCallback(callback, 208, errors.New("groupID or sendID is null"), operationID)
+		}
 		var conversation db.LocalConversation
 		conversation.ConversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 		s := sdk_struct.MsgStruct{}
@@ -1037,6 +1056,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 		localMessage := db.LocalChatLog{}
 		s.SendID = sendID
 		s.RecvID = groupID
+		s.GroupID = groupID
 		s.ClientMsgID = utils.GetMsgID(s.SendID)
 		s.SendTime = utils.GetCurrentTimestampByMill()
 		s.SessionType = constant.GroupChatType

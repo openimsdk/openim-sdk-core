@@ -281,7 +281,9 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 	}
 	if req.StartClientMsgID == "" {
 		lc, err := c.db.GetConversation(conversationID)
-		common.CheckDBErrCallback(callback, err, operationID)
+		if err != nil {
+			return nil
+		}
 		startTime = lc.LatestMsgSendTime + TimeOffset
 
 	} else {

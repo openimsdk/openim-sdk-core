@@ -12,8 +12,8 @@ func reliabilityTest() {
 	intervalSleepMs := 1
 	randSleepMaxSecond := 30
 	imIP := "43.128.5.63"
-	oneClientSendMsgNum := 5000
-	testClientNum := 50
+	oneClientSendMsgNum := 1
+	testClientNum := 100
 	test.ReliabilityTest(oneClientSendMsgNum, intervalSleepMs, imIP, randSleepMaxSecond, testClientNum)
 
 	for {
@@ -57,6 +57,8 @@ func main() {
 	for {
 		time.Sleep(2 * time.Second)
 	}
+	//reliabilityTest()
+	//	test.PressTest(testClientNum, intervalSleep, imIP)
 }
 
 //
@@ -64,7 +66,7 @@ func main() {
 //	testClientNum := 100
 //	intervalSleep := 2
 //	imIP := "43.128.5.63"
-//	test.PressTest(testClientNum, intervalSleep, imIP)
+
 //
 //	msgNum := 1000
 //	test.ReliabilityTest(msgNum, intervalSleep, imIP)

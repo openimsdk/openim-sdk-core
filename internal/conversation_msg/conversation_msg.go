@@ -611,6 +611,8 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 			err = utils.JsonStringToStruct(msg.Content, &msg.QuoteElem)
 		case constant.Merger:
 			err = utils.JsonStringToStruct(msg.Content, &msg.MergeElem)
+		case constant.Face:
+			err = utils.JsonStringToStruct(msg.Content, &msg.FaceElem)
 
 		}
 	}

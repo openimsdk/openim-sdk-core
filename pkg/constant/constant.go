@@ -40,6 +40,8 @@ const (
 	HasReadReceipt = 112
 	Typing         = 113
 	Quote          = 114
+	Face           = 115
+
 	//////////////////////////////////////////
 	NotificationBegin       = 1000
 	FriendNotificationBegin = 1200
@@ -177,9 +179,12 @@ const (
 	WSGetNewestSeq     = 1001
 	WSPullMsgBySeqList = 1002
 	WSSendMsg          = 1003
+	WSSendSignalMsg    = 1004
 	WSPushMsg          = 2001
 	WSKickOnlineMsg    = 2002
 	WsLogoutMsg        = 2003
+
+	Signaling = 2222
 	WSDataError        = 3001
 )
 
