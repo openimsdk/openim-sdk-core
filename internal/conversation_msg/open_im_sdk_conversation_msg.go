@@ -675,6 +675,7 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 
 	}()
 }
+
 func (c *Conversation) internalSendMessage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, recvID, groupID, operationID string, p *server_api_params.OfflinePushInfo, onlineUserOnly bool, options map[string]bool) (*server_api_params.UserSendMsgResp, error) {
 	if recvID == "" && groupID == "" {
 		common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not be allowed"), operationID)

@@ -46,6 +46,7 @@ func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, co
 	case r := <-ch:
 		log.Debug(operationID, "ws ch recvMsg success, code ", r.ErrCode)
 		if r.ErrCode != 0 {
+			log.Error(operationID, "ws ch recvMsg failed, code, err msg: ", r.ErrCode, r.ErrMsg)
 			return nil, constant.WsRecvCode
 		} else {
 			return &r, nil
@@ -53,6 +54,9 @@ func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, co
 
 	case <-time.After(time.Second * time.Duration(timeout)):
 		log.Error(operationID, "ws ch recvMsg err, timeout")
+		if connSend == nil {
+			return nil, errors.New("ws ch recvMsg err, timeout")
+		}
 		if connSend != w.WsConn.conn {
 			return nil, constant.WsRecvConnDiff
 		} else {
@@ -307,6 +311,26 @@ func (w *Ws) kickOnline(msg GeneralWsResp) {
 	w.listener.OnKickedOffline()
 }
 
-//func (u *Ws) doSendMsg(wsResp GeneralWsResp) error {
-//
-//}
+
+func (w *Ws) SendSignalingReqWaitResp(req *server_api_params.SignalReq, timeout int, operationID string) (*server_api_params.SignalResp, error) {
+	return nil, nil
+}
+
+
+func (w *Ws) SignalingWaitPush(inviterUserID, inviteeUserID, event string, timeout int, operationID string) (*server_api_params.SignalReq, error) {
+	msgIncr := inviterUserID + inviteeUserID + event
+	ch := w.AddChByIncr(msgIncr)
+	resp, err := w.WaitResp(ch, timeout, operationID, nil)
+	if err != nil {
+		return nil, utils.Wrap(err, "")
+	}
+	var signalReq server_api_params.SignalReq
+	err = proto.Unmarshal(resp.Data, &signalReq)
+	if err != nil {
+		return nil, utils.Wrap(err,"")
+	}
+
+	return &signalReq, nil
+}
+
+
