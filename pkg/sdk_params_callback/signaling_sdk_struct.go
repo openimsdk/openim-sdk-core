@@ -2,24 +2,14 @@ package sdk_params_callback
 
 import "open_im_sdk/pkg/server_api_params"
 
-type InviteCallback  *server_api_params.SignalInviteReply
+type InviteCallback *server_api_params.SignalInviteReply
 
-type InviteInGroupCallback server_api_params.SignalInviteInGroupReply
+type InviteInGroupCallback *server_api_params.SignalInviteInGroupReply
 
+type CancelCallback *server_api_params.SignalCancelReply
 
-type CancelCallback struct {
+type RejectCallback *server_api_params.SignalRejectReply
 
-}
+type AcceptCallback *server_api_params.SignalAcceptReply
 
-type RejectCallback struct {
-
-}
-
-
-type AcceptCallback struct {
-
-}
-
-type HungUpCallback struct {
-
-}
+type HungUpCallback *server_api_params.SignalHungUpReply

@@ -190,8 +190,7 @@ const (
 	WSKickOnlineMsg    = 2002
 	WsLogoutMsg        = 2003
 
-	Signaling = 2222
-	WSDataError        = 3001
+	WSDataError = 3001
 )
 
 const (
