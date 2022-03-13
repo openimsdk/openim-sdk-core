@@ -238,7 +238,9 @@ func (w *Ws) doWsMsg(message []byte) {
 
 	case constant.WsLogoutMsg:
 		log.Warn(wsResp.OperationID, "logout... ")
-
+	case constant.WSSendSignalMsg:
+		log.Info(wsResp.OperationID, "signaling...")
+		w.doWSSignal(*wsResp)
 	default:
 		log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
 		return
@@ -281,6 +283,13 @@ func (w *Ws) doWSSendMsg(wsResp GeneralWsResp) error {
 	return nil
 }
 
+func (w *Ws) doWSSignal(wsResp GeneralWsResp) error {
+	if err := w.notifyResp(wsResp); err != nil {
+		return utils.Wrap(err, "")
+	}
+	return nil
+}
+
 func (w *Ws) doWSPushMsg(wsResp GeneralWsResp) error {
 	if wsResp.ErrCode != 0 {
 		return utils.Wrap(errors.New("errCode"), wsResp.ErrMsg)
@@ -311,11 +320,18 @@ func (w *Ws) kickOnline(msg GeneralWsResp) {
 	w.listener.OnKickedOffline()
 }
 
-
 func (w *Ws) SendSignalingReqWaitResp(req *server_api_params.SignalReq, timeout int, operationID string) (*server_api_params.SignalResp, error) {
-	return nil, nil
+	resp, err := w.SendReqWaitResp(req, constant.WSSendSignalMsg, 10, 12, w.loginUserID, operationID)
+	if err != nil {
+		return nil, utils.Wrap(err, "")
+	}
+	var signalResp server_api_params.SignalResp
+	err = proto.Unmarshal(resp.Data, &signalResp)
+	if err != nil {
+		return nil, utils.Wrap(err, "")
+	}
+	return &signalResp, nil
 }
-
 
 func (w *Ws) SignalingWaitPush(inviterUserID, inviteeUserID, event string, timeout int, operationID string) (*server_api_params.SignalReq, error) {
 	msgIncr := inviterUserID + inviteeUserID + event
@@ -327,10 +343,8 @@ func (w *Ws) SignalingWaitPush(inviterUserID, inviteeUserID, event string, timeo
 	var signalReq server_api_params.SignalReq
 	err = proto.Unmarshal(resp.Data, &signalReq)
 	if err != nil {
-		return nil, utils.Wrap(err,"")
+		return nil, utils.Wrap(err, "")
 	}
 
 	return &signalReq, nil
 }
-
-

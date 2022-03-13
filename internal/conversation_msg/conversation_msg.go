@@ -6,6 +6,7 @@ import (
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/group"
 	ws "open_im_sdk/internal/interaction"
+	"open_im_sdk/internal/rtc"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -35,7 +36,12 @@ type Conversation struct {
 	friend               *friend.Friend
 	group                *group.Group
 	user                 *user.User
+	signaling            rtc.Signaling
 	common2.ObjectStorage
+}
+
+func (c *Conversation) SetSignaling(signaling rtc.Signaling) {
+	c.signaling = signaling
 }
 
 func (c *Conversation) SetMsgListener(msgListener open_im_sdk_callback.OnAdvancedMsgListener) {
@@ -117,11 +123,25 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				v.ContentType == constant.JoinGroupApplicationNotification {
 				log.Info("internal", "DoGroupMsg SingleChatType", v)
 				c.group.DoNotification(v, c.ch)
+			} else if v.ContentType == constant.SignalingNotification {
+				if c.signaling != nil {
+					log.Info(operationID, "signaling DoNotification ", v)
+					c.signaling.DoNotification(v, c.ch)
+				} else {
+					log.Error(operationID, "signaling is nil", v)
+				}
 			}
 		case constant.GroupChatType:
 			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
 				c.group.DoNotification(v, c.ch)
 				log.Info(operationID, "DoGroupMsg SingleChatType", v)
+			} else if v.ContentType == constant.SignalingNotification {
+				if c.signaling != nil {
+					log.Info(operationID, "signaling DoNotification ", v)
+					c.signaling.DoNotification(v, c.ch)
+				} else {
+					log.Error(operationID, "signaling is nil", v)
+				}
 			}
 		}
 		if v.SendID == c.loginUserID { //seq
