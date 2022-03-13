@@ -19,22 +19,6 @@ type LiveSignaling struct {
 	loginUserID string
 }
 
-func (s *LiveSignaling) invite(req *api.SignalInviteReq, callback open_im_sdk_callback.Base, operationID string) sdk_params_callback.InviteCallback {
-	var signalReq api.SignalReq
-	*signalReq.GetInvite() = *req
-	resp, err := s.SendSignalingReqWaitResp(&signalReq, operationID)
-	common.CheckAnyErrCallback(callback, 3001, err, operationID)
-	switch payload := resp.Payload.(type) {
-	case *api.SignalResp_Invite:
-		s.waitPush(req, operationID)
-		return sdk_params_callback.InviteCallback(payload.Invite)
-	default:
-		log.Error(operationID, "resp payload type failed ", payload)
-		common.CheckAnyErrCallback(callback, 3002, errors.New("resp payload type failed"), operationID)
-		return nil
-	}
-}
-
 func (s *LiveSignaling) waitPush(req *api.SignalReq, operationID string) {
 	var invt api.InvitationInfo
 	switch payload := req.Payload.(type) {
@@ -89,7 +73,7 @@ func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk
 	resp, err := s.SendSignalingReqWaitResp(req, operationID)
 	if err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), "SendSignalingReqWaitResp error", err.Error())
-		//callback.OnError()
+		common.CheckAnyErrCallback(callback, 3003, errors.New("timeout"), operationID)
 	}
 	common.CheckAnyErrCallback(callback, 3001, err, operationID)
 	switch payload := resp.Payload.(type) {
@@ -107,9 +91,9 @@ func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk
 		log.Error(operationID, "resp payload type failed ", payload)
 		common.CheckAnyErrCallback(callback, 3002, errors.New("resp payload type failed"), operationID)
 	}
-	switch payload := req.Payload.(type) {
+	switch req.Payload.(type) {
 	case *api.SignalReq_Invite:
-		s.waitPush(payload.Invite, operationID)
+		s.waitPush(req, operationID)
 	case *api.SignalReq_InviteInGroup:
 		s.waitPush(req, operationID)
 	}
