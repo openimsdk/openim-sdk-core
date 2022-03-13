@@ -12,20 +12,20 @@ typedef void (*FunWithInt)(int);
 typedef void (*FunWithString)(char *);
 typedef void (*FunWithIntString)(int, char *);
 
-static inline void CallFunWithVoid(void* cb) {
-    return (*(FunWithVoid)cb)();
+static inline void CallFunWithVoid(FunWithVoid cb) {
+    return cb();
 }
 
-static inline void CallFunWithInt(void* cb, int i) {
-    return (*(FunWithVoid)cb)(i);
+static inline void CallFunWithInt(FunWithInt cb, int i) {
+    return cb(i);
 }
 
-static inline void CallFunWithString(void* cb, char * s) {
-    return (*(FunWithVoid)cb)(s);
+static inline void CallFunWithString(FunWithString cb, char * s) {
+    return cb(s);
 }
 
-static inline void CallFunWithIntString(void* cb, int i, char * s) {
-    return (*(FunWithVoid)cb)(i, s);
+static inline void CallFunWithIntString(FunWithIntString cb, int i, char * s) {
+    return cb(i, s);
 }
 
 */
@@ -37,42 +37,249 @@ import (
 	"unsafe"
 )
 
-
 func main() {
 
 }
 
-func FunWithVoid(cb unsafe.Pointer) {
+type GoFunVoid = func()
+type GoFunInt = func(int)
+type GoFunString = func(string)
+type GoFunIntString = func(int, string)
+
+type BaseCallBack struct {
+	onError   GoFunIntString
+	onSuccess GoFunString
+}
+
+func (s *BaseCallBack) OnError(errCode int32, errMsg string) {
+	s.onError(int(errCode), errMsg)
+}
+
+func (s *BaseCallBack) OnSuccess(data string) {
+	s.onSuccess(data)
+}
+
+type SendMsgCallBack struct {
+	onError    GoFunIntString
+	onSuccess  GoFunString
+	onProgress GoFunInt
+}
+
+func (s *SendMsgCallBack) OnError(errCode int32, errMsg string) {
+	s.onError(int(errCode), errMsg)
+}
+
+func (s *SendMsgCallBack) OnSuccess(data string) {
+	s.onSuccess(data)
+}
+
+func (s *SendMsgCallBack) OnProgress(progress int) {
+	s.onProgress(progress)
+}
+
+type OnConnListener struct {
+	onConnecting       GoFunVoid
+	onConnectSuccess   GoFunVoid
+	onConnectFailed    GoFunIntString
+	onKickedOffline    GoFunVoid
+	onUserTokenExpired GoFunVoid
+}
+
+func (s *OnConnListener) OnConnecting() {
+	s.onConnecting()
+}
+
+func (s *OnConnListener) OnConnectSuccess() {
+	s.onConnectSuccess()
+}
+
+func (s *OnConnListener) OnConnectFailed(errCode int32, errMsg string) {
+	s.onConnectFailed(int(errCode), errMsg)
+}
+
+func (s *OnConnListener) OnKickedOffline() {
+	s.onKickedOffline()
+}
+
+func (s *OnConnListener) OnUserTokenExpired() {
+	s.onUserTokenExpired()
+}
+
+type OnGroupListener struct {
+	onJoinedGroupAdded         GoFunString
+	onJoinedGroupDeleted       GoFunString
+	onGroupMemberAdded         GoFunString
+	onGroupMemberDeleted       GoFunString
+	onGroupApplicationAdded    GoFunString
+	onGroupApplicationDeleted  GoFunString
+	onGroupInfoChanged         GoFunString
+	onGroupMemberInfoChanged   GoFunString
+	onGroupApplicationAccepted GoFunString
+	onGroupApplicationRejected GoFunString
+}
+
+func (s *OnGroupListener) OnJoinedGroupAdded(groupInfo string) {
+	s.onJoinedGroupAdded(groupInfo)
+}
+
+func (s *OnGroupListener) OnJoinedGroupDeleted(groupInfo string) {
+	s.onJoinedGroupDeleted(groupInfo)
+}
+func (s *OnGroupListener) OnGroupMemberAdded(groupMemberInfo string) {
+	s.onGroupMemberAdded(groupMemberInfo)
+}
+func (s *OnGroupListener) OnGroupMemberDeleted(groupMemberInfo string) {
+	s.onGroupMemberDeleted(groupMemberInfo)
+}
+func (s *OnGroupListener) OnGroupApplicationAdded(groupApplication string) {
+	s.onGroupApplicationAdded(groupApplication)
+}
+func (s *OnGroupListener) OnGroupApplicationDeleted(groupApplication string) {
+	s.onGroupApplicationDeleted(groupApplication)
+}
+func (s *OnGroupListener) OnGroupInfoChanged(groupInfo string) {
+	s.onGroupInfoChanged(groupInfo)
+}
+func (s *OnGroupListener) OnGroupMemberInfoChanged(groupMemberInfo string) {
+	s.onGroupMemberInfoChanged(groupMemberInfo)
+}
+func (s *OnGroupListener) OnGroupApplicationAccepted(groupApplication string) {
+	s.onGroupApplicationAccepted(groupApplication)
+}
+func (s *OnGroupListener) OnGroupApplicationRejected(groupApplication string) {
+	s.onGroupApplicationRejected(groupApplication)
+}
+
+type OnFriendshipListener struct {
+	onFriendApplicationAdded    GoFunString
+	onFriendApplicationDeleted  GoFunString
+	onFriendApplicationAccepted GoFunString
+	onFriendApplicationRejected GoFunString
+	onFriendAdded               GoFunString
+	onFriendDeleted             GoFunString
+	onFriendInfoChanged         GoFunString
+	onBlackAdded                GoFunString
+	onBlackDeleted              GoFunString
+}
+
+func (s *OnFriendshipListener) OnFriendApplicationAdded(friendApplication string) {
+	s.onFriendApplicationAdded(friendApplication)
+}
+func (s *OnFriendshipListener) OnFriendApplicationDeleted(friendApplication string) {
+	s.onFriendApplicationDeleted(friendApplication)
+}
+func (s *OnFriendshipListener) OnFriendApplicationAccepted(groupApplication string) {
+	s.onFriendApplicationAccepted(groupApplication)
+}
+func (s *OnFriendshipListener) OnFriendApplicationRejected(friendApplication string) {
+	s.onFriendApplicationRejected(friendApplication)
+}
+func (s *OnFriendshipListener) OnFriendAdded(friendInfo string) {
+	s.onFriendAdded(friendInfo)
+}
+func (s *OnFriendshipListener) OnFriendDeleted(friendInfo string) {
+	s.onFriendDeleted(friendInfo)
+}
+func (s *OnFriendshipListener) OnFriendInfoChanged(friendInfo string) {
+	s.onFriendInfoChanged(friendInfo)
+}
+func (s *OnFriendshipListener) OnBlackAdded(blackInfo string) {
+	s.onBlackAdded(blackInfo)
+}
+func (s *OnFriendshipListener) OnBlackDeleted(blackInfo string) {
+	s.onBlackDeleted(blackInfo)
+}
+
+type OnConversationListener struct {
+	onSyncServerStart                GoFunVoid
+	onSyncServerFinish               GoFunVoid
+	onSyncServerFailed               GoFunVoid
+	onNewConversation                GoFunString
+	onConversationChanged            GoFunString
+	onTotalUnreadMessageCountChanged GoFunInt
+}
+
+func (s *OnConversationListener) OnSyncServerStart() {
+	s.onSyncServerStart()
+}
+func (s *OnConversationListener) OnSyncServerFinish() {
+	s.onSyncServerFinish()
+}
+func (s *OnConversationListener) OnSyncServerFailed() {
+	s.onSyncServerFailed()
+}
+func (s *OnConversationListener) OnNewConversation(conversationList string) {
+	s.onNewConversation(conversationList)
+}
+func (s *OnConversationListener) OnConversationChanged(conversationList string) {
+	s.onConversationChanged(conversationList)
+}
+func (s *OnConversationListener) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
+	s.onTotalUnreadMessageCountChanged(int(totalUnreadCount))
+}
+
+type OnAdvancedMsgListener struct {
+	onRecvNewMessage     GoFunString
+	onRecvC2CReadReceipt GoFunString
+	onRecvMessageRevoked GoFunString
+}
+
+func (s *OnAdvancedMsgListener) OnRecvNewMessage(message string) {
+	s.onRecvNewMessage(message)
+}
+func (s *OnAdvancedMsgListener) OnRecvC2CReadReceipt(msgReceiptList string) {
+	s.onRecvC2CReadReceipt(msgReceiptList)
+}
+func (s *OnAdvancedMsgListener) OnRecvMessageRevoked(msgId string) {
+	s.onRecvMessageRevoked(msgId)
+}
+
+type OnUserListener struct {
+	onSelfInfoUpdated GoFunString
+}
+
+func (s *OnUserListener) OnSelfInfoUpdated(userInfo string) {
+	s.onSelfInfoUpdated(userInfo)
+}
+
+func FunWithVoid(cb C.FunWithVoid) {
 	C.CallFunWithVoid(cb)
 }
 
-func FunWithInt(cb unsafe.Pointer, i int) {
+func FunWithInt(cb C.FunWithInt, i int) {
 	cint := C.int(i)
 	C.CallFunWithInt(cb, cint)
 }
 
-func FunWithString(cb unsafe.Pointer, str string) {
-	cstr := C.CString(str)
-	defer C.free(unsafe.Pointer(cstr))
+func FunWithString(cb C.FunWithString, str string) {
+	//go会保证在c函数返回之前不移动内存
+	var bstr = []byte(str)
+	cstr := (*C.char)(unsafe.Pointer(&bstr[0]))
+	//cstr := C.CString(str)
+	//defer C.free(unsafe.Pointer(cstr))
+
 	C.CallFunWithString(cb, cstr)
 }
 
-func FunWithIntString(cb unsafe.Pointer, i int, str string) {
-	cstr := C.CString(str)
-	defer C.free(unsafe.Pointer(cstr))
+func FunWithIntString(cb C.FunWithIntString, i int, str string) {
+	var bstr = []byte(str)
+	cstr := (*C.char)(unsafe.Pointer(&bstr[0]))
+	//cstr := C.CString(str)
+	//defer C.free(unsafe.Pointer(cstr))
+
 	C.CallFunWithIntString(cb, C.int(i), cstr)
 }
 
 //export SdkVersion
-func SdkVersion(verCb unsafe.Pointer) {
+func SdkVersion(verCb C.FunWithString) {
 	ver := openIM.SdkVersion()
 	FunWithString(verCb, ver)
 }
 
 //export InitSDK
-func InitSDK(onConnecting unsafe.Pointer, onConnectSuccess unsafe.Pointer,
-	onConnectFailed unsafe.Pointer, onKickedOffline unsafe.Pointer,
-	onUserTokenExpired unsafe.Pointer, operationID *C.char, config *C.char) bool {
+func InitSDK(onConnecting C.FunWithVoid, onConnectSuccess C.FunWithVoid,
+	onConnectFailed C.FunWithIntString, onKickedOffline C.FunWithVoid,
+	onUserTokenExpired C.FunWithVoid, operationID *C.char, config *C.char) bool {
 
 	return openIM.InitSDK(&OnConnListener{
 		onConnecting: func() {
@@ -95,9 +302,10 @@ func InitSDK(onConnecting unsafe.Pointer, onConnectSuccess unsafe.Pointer,
 		C.GoString(config),
 	)
 }
+
 //export Login
-func Login(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, userID, token *C.char) {
-	openIM.Login(&Base{
+func Login(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, userID, token *C.char) {
+	openIM.Login(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -106,9 +314,10 @@ func Login(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char
 		},
 	}, C.GoString(operationID), C.GoString(userID), C.GoString(token))
 }
+
 //export UploadImage
-func UploadImage(onReturn unsafe.Pointer, onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, filePath *C.char, token, obj *C.char) {
-	ret := openIM.UploadImage(&Base{
+func UploadImage(onReturn C.FunWithString, onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, filePath *C.char, token, obj *C.char) {
+	ret := openIM.UploadImage(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -119,9 +328,10 @@ func UploadImage(onReturn unsafe.Pointer, onError unsafe.Pointer, onSuccess unsa
 
 	FunWithString(onReturn, ret)
 }
+
 //export Logout
-func Logout(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char) {
-	openIM.Logout(&Base{
+func Logout(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char) {
+	openIM.Logout(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -130,20 +340,22 @@ func Logout(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.cha
 		},
 	}, C.GoString(operationID))
 }
+
 //export GetLoginStatus
 func GetLoginStatus() int32 {
 	return openIM.GetLoginStatus()
 }
-//export GetLoginStatus
-func GetLoginUser(OnReturn unsafe.Pointer) {
+
+//export GetLoginUser
+func GetLoginUser(OnReturn C.FunWithString,) {
 	ret := openIM.GetLoginUser()
 	FunWithString(OnReturn, ret)
 }
 
 ///////////////////////user/////////////////////
-//export GetLoginStatus
-func GetUsersInfo(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, userIDList *C.char) {
-	openIM.GetUsersInfo(&Base{
+//export GetUsersInfo
+func GetUsersInfo(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, userIDList *C.char) {
+	openIM.GetUsersInfo(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -152,9 +364,10 @@ func GetUsersInfo(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID 
 		},
 	}, C.GoString(operationID), C.GoString(userIDList))
 }
-//export GetLoginStatus
-func SetSelfInfo(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, userInfo *C.char) {
-	openIM.SetSelfInfo(&Base{
+
+//export SetSelfInfo
+func SetSelfInfo(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, userInfo *C.char) {
+	openIM.SetSelfInfo(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -163,9 +376,10 @@ func SetSelfInfo(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *
 		},
 	}, C.GoString(operationID), C.GoString(userInfo))
 }
-//export GetLoginStatus
-func GetSelfUserInfo(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char) {
-	openIM.GetSelfUserInfo(&Base{
+
+//export GetSelfUserInfo
+func GetSelfUserInfo(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char) {
+	openIM.GetSelfUserInfo(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -176,18 +390,18 @@ func GetSelfUserInfo(onError unsafe.Pointer, onSuccess unsafe.Pointer, operation
 }
 
 //////////////////////////group//////////////////////////////////////////
-//export GetLoginStatus
+//export SetGroupListener
 func SetGroupListener(
-	onJoinedGroupAdded unsafe.Pointer,
-	onJoinedGroupDeleted unsafe.Pointer,
-	onGroupMemberAdded unsafe.Pointer,
-	onGroupMemberDeleted unsafe.Pointer,
-	onGroupApplicationAdded unsafe.Pointer,
-	onGroupApplicationDeleted unsafe.Pointer,
-	onGroupInfoChanged unsafe.Pointer,
-	onGroupMemberInfoChanged unsafe.Pointer,
-	onGroupApplicationAccepted unsafe.Pointer,
-	onGroupApplicationRejected unsafe.Pointer,
+	onJoinedGroupAdded C.FunWithString,
+	onJoinedGroupDeleted C.FunWithString,
+	onGroupMemberAdded C.FunWithString,
+	onGroupMemberDeleted C.FunWithString,
+	onGroupApplicationAdded C.FunWithString,
+	onGroupApplicationDeleted C.FunWithString,
+	onGroupInfoChanged C.FunWithString,
+	onGroupMemberInfoChanged C.FunWithString,
+	onGroupApplicationAccepted C.FunWithString,
+	onGroupApplicationRejected C.FunWithString,
 ) {
 	openIM.SetGroupListener(&OnGroupListener{
 		onJoinedGroupAdded: func(s string) {
@@ -222,9 +436,10 @@ func SetGroupListener(
 		},
 	})
 }
-//export GetLoginStatus
-func CreateGroup(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, groupBaseInfo *C.char, memberList *C.char) {
-	openIM.CreateGroup(&Base{
+
+//export CreateGroup
+func CreateGroup(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, groupBaseInfo *C.char, memberList *C.char) {
+	openIM.CreateGroup(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -233,9 +448,10 @@ func CreateGroup(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *
 		},
 	}, C.GoString(operationID), C.GoString(groupBaseInfo), C.GoString(memberList))
 }
-//export GetLoginStatus
-func JoinGroup(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, groupID, reqMsg *C.char) {
-	openIM.JoinGroup(&Base{
+
+//export JoinGroup
+func JoinGroup(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, groupID, reqMsg *C.char) {
+	openIM.JoinGroup(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -244,9 +460,10 @@ func JoinGroup(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.
 		},
 	}, C.GoString(operationID), C.GoString(groupID), C.GoString(reqMsg))
 }
-//export GetLoginStatus
-func QuitGroup(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, groupID *C.char) {
-	openIM.QuitGroup(&Base{
+
+//export QuitGroup
+func QuitGroup(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, groupID *C.char) {
+	openIM.QuitGroup(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -255,9 +472,10 @@ func QuitGroup(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.
 		},
 	}, C.GoString(operationID), C.GoString(groupID))
 }
-//export GetLoginStatus
-func GetJoinedGroupList(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char) {
-	openIM.GetJoinedGroupList(&Base{
+
+//export GetJoinedGroupList
+func GetJoinedGroupList(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char) {
+	openIM.GetJoinedGroupList(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -266,9 +484,10 @@ func GetJoinedGroupList(onError unsafe.Pointer, onSuccess unsafe.Pointer, operat
 		},
 	}, C.GoString(operationID))
 }
-//export GetLoginStatus
-func GetGroupsInfo(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, groupIDList *C.char) {
-	openIM.GetGroupsInfo(&Base{
+
+//export GetGroupsInfo
+func GetGroupsInfo(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, groupIDList *C.char) {
+	openIM.GetGroupsInfo(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -277,9 +496,10 @@ func GetGroupsInfo(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID
 		},
 	}, C.GoString(operationID), C.GoString(groupIDList))
 }
-//export GetLoginStatus
-func SetGroupInfo(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, groupID *C.char, groupInfo *C.char) {
-	openIM.SetGroupInfo(&Base{
+
+//export SetGroupInfo
+func SetGroupInfo(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, groupID *C.char, groupInfo *C.char) {
+	openIM.SetGroupInfo(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -288,9 +508,10 @@ func SetGroupInfo(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID 
 		},
 	}, C.GoString(operationID), C.GoString(groupID), C.GoString(groupInfo))
 }
-//export GetLoginStatus
-func GetGroupMemberList(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, groupID *C.char, filter, offset, count int32) {
-	openIM.GetGroupMemberList(&Base{
+
+//export GetGroupMemberList
+func GetGroupMemberList(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, groupID *C.char, filter, offset, count int32) {
+	openIM.GetGroupMemberList(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -299,9 +520,10 @@ func GetGroupMemberList(onError unsafe.Pointer, onSuccess unsafe.Pointer, operat
 		},
 	}, C.GoString(operationID), C.GoString(groupID), filter, offset, count)
 }
-//export GetLoginStatus
-func GetGroupMembersInfo(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, groupID *C.char, userIDList *C.char) {
-	openIM.GetGroupMembersInfo(&Base{
+
+//export GetGroupMembersInfo
+func GetGroupMembersInfo(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, groupID *C.char, userIDList *C.char) {
+	openIM.GetGroupMembersInfo(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -310,9 +532,10 @@ func GetGroupMembersInfo(onError unsafe.Pointer, onSuccess unsafe.Pointer, opera
 		},
 	}, C.GoString(operationID), C.GoString(groupID), C.GoString(userIDList))
 }
-//export GetLoginStatus
-func KickGroupMember(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, groupID *C.char, reason *C.char, userIDList *C.char) {
-	openIM.KickGroupMember(&Base{
+
+//export KickGroupMember
+func KickGroupMember(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, groupID *C.char, reason *C.char, userIDList *C.char) {
+	openIM.KickGroupMember(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -321,9 +544,10 @@ func KickGroupMember(onError unsafe.Pointer, onSuccess unsafe.Pointer, operation
 		},
 	}, C.GoString(operationID), C.GoString(groupID), C.GoString(reason), C.GoString(userIDList))
 }
-//export GetLoginStatus
-func TransferGroupOwner(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, groupID, newOwnerUserID *C.char) {
-	openIM.TransferGroupOwner(&Base{
+
+//export TransferGroupOwner
+func TransferGroupOwner(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, groupID, newOwnerUserID *C.char) {
+	openIM.TransferGroupOwner(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -332,9 +556,10 @@ func TransferGroupOwner(onError unsafe.Pointer, onSuccess unsafe.Pointer, operat
 		},
 	}, C.GoString(operationID), C.GoString(groupID), C.GoString(newOwnerUserID))
 }
-//export GetLoginStatus
-func InviteUserToGroup(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, groupID, reason *C.char, userIDList *C.char) {
-	openIM.InviteUserToGroup(&Base{
+
+//export InviteUserToGroup
+func InviteUserToGroup(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, groupID, reason *C.char, userIDList *C.char) {
+	openIM.InviteUserToGroup(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -343,9 +568,10 @@ func InviteUserToGroup(onError unsafe.Pointer, onSuccess unsafe.Pointer, operati
 		},
 	}, C.GoString(operationID), C.GoString(groupID), C.GoString(reason), C.GoString(userIDList))
 }
-//export GetLoginStatus
-func GetRecvGroupApplicationList(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char) {
-	openIM.GetRecvGroupApplicationList(&Base{
+
+//export GetRecvGroupApplicationList
+func GetRecvGroupApplicationList(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char) {
+	openIM.GetRecvGroupApplicationList(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -354,9 +580,10 @@ func GetRecvGroupApplicationList(onError unsafe.Pointer, onSuccess unsafe.Pointe
 		},
 	}, C.GoString(operationID))
 }
-//export GetLoginStatus
-func GetSendGroupApplicationList(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char) {
-	openIM.GetSendGroupApplicationList(&Base{
+
+//export GetSendGroupApplicationList
+func GetSendGroupApplicationList(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char) {
+	openIM.GetSendGroupApplicationList(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -365,9 +592,10 @@ func GetSendGroupApplicationList(onError unsafe.Pointer, onSuccess unsafe.Pointe
 		},
 	}, C.GoString(operationID))
 }
-//export GetLoginStatus
-func AcceptGroupApplication(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, groupID, fromUserID, handleMsg *C.char) {
-	openIM.AcceptGroupApplication(&Base{
+
+//export AcceptGroupApplication
+func AcceptGroupApplication(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, groupID, fromUserID, handleMsg *C.char) {
+	openIM.AcceptGroupApplication(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -376,9 +604,10 @@ func AcceptGroupApplication(onError unsafe.Pointer, onSuccess unsafe.Pointer, op
 		},
 	}, C.GoString(operationID), C.GoString(groupID), C.GoString(fromUserID), C.GoString(handleMsg))
 }
-//export GetLoginStatus
-func RefuseGroupApplication(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, groupID, fromUserID, handleMsg *C.char) {
-	openIM.RefuseGroupApplication(&Base{
+
+//export RefuseGroupApplication
+func RefuseGroupApplication(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, groupID, fromUserID, handleMsg *C.char) {
+	openIM.RefuseGroupApplication(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -389,9 +618,9 @@ func RefuseGroupApplication(onError unsafe.Pointer, onSuccess unsafe.Pointer, op
 }
 
 ////////////////////////////friend/////////////////////////////////////
-//export GetLoginStatus
-func GetDesignatedFriendsInfo(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, userIDList *C.char) {
-	openIM.GetDesignatedFriendsInfo(&Base{
+//export GetDesignatedFriendsInfo
+func GetDesignatedFriendsInfo(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, userIDList *C.char) {
+	openIM.GetDesignatedFriendsInfo(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -400,9 +629,10 @@ func GetDesignatedFriendsInfo(onError unsafe.Pointer, onSuccess unsafe.Pointer, 
 		},
 	}, C.GoString(operationID), C.GoString(userIDList))
 }
-//export GetLoginStatus
-func GetFriendList(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char) {
-	openIM.GetFriendList(&Base{
+
+//export GetFriendList
+func GetFriendList(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char) {
+	openIM.GetFriendList(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -411,9 +641,10 @@ func GetFriendList(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID
 		},
 	}, C.GoString(operationID))
 }
-//export GetLoginStatus
-func CheckFriend(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, userIDList *C.char) {
-	openIM.CheckFriend(&Base{
+
+//export CheckFriend
+func CheckFriend(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, userIDList *C.char) {
+	openIM.CheckFriend(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -422,9 +653,10 @@ func CheckFriend(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *
 		},
 	}, C.GoString(operationID), C.GoString(userIDList))
 }
-//export GetLoginStatus
-func AddFriend(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, userIDReqMsg *C.char) {
-	openIM.AddFriend(&Base{
+
+//export AddFriend
+func AddFriend(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, userIDReqMsg *C.char) {
+	openIM.AddFriend(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -433,9 +665,10 @@ func AddFriend(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.
 		},
 	}, C.GoString(operationID), C.GoString(userIDReqMsg))
 }
+
 //export SetFriendRemark
-func SetFriendRemark(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, userIDRemark *C.char) {
-	openIM.SetFriendRemark(&Base{
+func SetFriendRemark(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, userIDRemark *C.char) {
+	openIM.SetFriendRemark(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -444,9 +677,10 @@ func SetFriendRemark(onError unsafe.Pointer, onSuccess unsafe.Pointer, operation
 		},
 	}, C.GoString(operationID), C.GoString(userIDRemark))
 }
+
 //export DeleteFriend
-func DeleteFriend(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, friendUserID *C.char) {
-	openIM.DeleteFriend(&Base{
+func DeleteFriend(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, friendUserID *C.char) {
+	openIM.DeleteFriend(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -455,9 +689,10 @@ func DeleteFriend(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID 
 		},
 	}, C.GoString(operationID), C.GoString(friendUserID))
 }
+
 //export GetRecvFriendApplicationList
-func GetRecvFriendApplicationList(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char) {
-	openIM.GetRecvFriendApplicationList(&Base{
+func GetRecvFriendApplicationList(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char) {
+	openIM.GetRecvFriendApplicationList(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -466,9 +701,10 @@ func GetRecvFriendApplicationList(onError unsafe.Pointer, onSuccess unsafe.Point
 		},
 	}, C.GoString(operationID))
 }
+
 //export GetSendFriendApplicationList
-func GetSendFriendApplicationList(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char) {
-	openIM.GetSendFriendApplicationList(&Base{
+func GetSendFriendApplicationList(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char) {
+	openIM.GetSendFriendApplicationList(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -477,9 +713,10 @@ func GetSendFriendApplicationList(onError unsafe.Pointer, onSuccess unsafe.Point
 		},
 	}, C.GoString(operationID))
 }
+
 //export AcceptFriendApplication
-func AcceptFriendApplication(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, userIDHandleMsg *C.char) {
-	openIM.AcceptFriendApplication(&Base{
+func AcceptFriendApplication(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, userIDHandleMsg *C.char) {
+	openIM.AcceptFriendApplication(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -488,9 +725,10 @@ func AcceptFriendApplication(onError unsafe.Pointer, onSuccess unsafe.Pointer, o
 		},
 	}, C.GoString(operationID), C.GoString(userIDHandleMsg))
 }
+
 //export RefuseFriendApplication
-func RefuseFriendApplication(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, userIDHandleMsg *C.char) {
-	openIM.RefuseFriendApplication(&Base{
+func RefuseFriendApplication(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, userIDHandleMsg *C.char) {
+	openIM.RefuseFriendApplication(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -499,9 +737,10 @@ func RefuseFriendApplication(onError unsafe.Pointer, onSuccess unsafe.Pointer, o
 		},
 	}, C.GoString(operationID), C.GoString(userIDHandleMsg))
 }
+
 //export AddBlack
-func AddBlack(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, blackUserID *C.char) {
-	openIM.AddBlack(&Base{
+func AddBlack(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, blackUserID *C.char) {
+	openIM.AddBlack(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -510,9 +749,10 @@ func AddBlack(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.c
 		},
 	}, C.GoString(operationID), C.GoString(blackUserID))
 }
+
 //export GetBlackList
-func GetBlackList(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char) {
-	openIM.GetBlackList(&Base{
+func GetBlackList(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char) {
+	openIM.GetBlackList(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -521,9 +761,10 @@ func GetBlackList(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID 
 		},
 	}, C.GoString(operationID))
 }
+
 //export RemoveBlack
-func RemoveBlack(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, removeUserID *C.char) {
-	openIM.RemoveBlack(&Base{
+func RemoveBlack(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, removeUserID *C.char) {
+	openIM.RemoveBlack(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -532,17 +773,18 @@ func RemoveBlack(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *
 		},
 	}, C.GoString(operationID), C.GoString(removeUserID))
 }
+
 //export SetFriendListener
 func SetFriendListener(
-	onFriendApplicationAdded unsafe.Pointer,
-	onFriendApplicationDeleted unsafe.Pointer,
-	onFriendApplicationAccepted unsafe.Pointer,
-	onFriendApplicationRejected unsafe.Pointer,
-	onFriendAdded unsafe.Pointer,
-	onFriendDeleted unsafe.Pointer,
-	onFriendInfoChanged unsafe.Pointer,
-	onBlackAdded unsafe.Pointer,
-	onBlackDeleted unsafe.Pointer,
+	onFriendApplicationAdded C.FunWithString,
+	onFriendApplicationDeleted C.FunWithString,
+	onFriendApplicationAccepted C.FunWithString,
+	onFriendApplicationRejected C.FunWithString,
+	onFriendAdded C.FunWithString,
+	onFriendDeleted C.FunWithString,
+	onFriendInfoChanged C.FunWithString,
+	onBlackAdded C.FunWithString,
+	onBlackDeleted C.FunWithString,
 ) {
 	openIM.SetFriendListener(&OnFriendshipListener{
 		onFriendApplicationAdded: func(s string) {
@@ -577,8 +819,8 @@ func SetFriendListener(
 
 ///////////////////////conversation////////////////////////////////////
 //export GetAllConversationList
-func GetAllConversationList(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char) {
-	openIM.GetAllConversationList(&Base{
+func GetAllConversationList(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char) {
+	openIM.GetAllConversationList(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -587,9 +829,10 @@ func GetAllConversationList(onError unsafe.Pointer, onSuccess unsafe.Pointer, op
 		},
 	}, C.GoString(operationID))
 }
+
 //export GetConversationListSplit
-func GetConversationListSplit(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, offset, count int) {
-	openIM.GetConversationListSplit(&Base{
+func GetConversationListSplit(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, offset, count int) {
+	openIM.GetConversationListSplit(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -598,9 +841,10 @@ func GetConversationListSplit(onError unsafe.Pointer, onSuccess unsafe.Pointer, 
 		},
 	}, C.GoString(operationID), offset, count)
 }
+
 //export SetConversationRecvMessageOpt
-func SetConversationRecvMessageOpt(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, conversationIDList *C.char, opt int) {
-	openIM.SetConversationRecvMessageOpt(&Base{
+func SetConversationRecvMessageOpt(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, conversationIDList *C.char, opt int) {
+	openIM.SetConversationRecvMessageOpt(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -609,9 +853,10 @@ func SetConversationRecvMessageOpt(onError unsafe.Pointer, onSuccess unsafe.Poin
 		},
 	}, C.GoString(operationID), C.GoString(conversationIDList), opt)
 }
+
 //export GetConversationRecvMessageOpt
-func GetConversationRecvMessageOpt(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, conversationIDList *C.char) {
-	openIM.GetConversationRecvMessageOpt(&Base{
+func GetConversationRecvMessageOpt(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, conversationIDList *C.char) {
+	openIM.GetConversationRecvMessageOpt(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -620,9 +865,10 @@ func GetConversationRecvMessageOpt(onError unsafe.Pointer, onSuccess unsafe.Poin
 		},
 	}, C.GoString(operationID), C.GoString(conversationIDList))
 }
+
 //export GetOneConversation
-func GetOneConversation(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, sessionType int, sourceID *C.char) {
-	openIM.GetOneConversation(&Base{
+func GetOneConversation(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, sessionType int, sourceID *C.char) {
+	openIM.GetOneConversation(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -631,9 +877,10 @@ func GetOneConversation(onError unsafe.Pointer, onSuccess unsafe.Pointer, operat
 		},
 	}, C.GoString(operationID), sessionType, C.GoString(sourceID))
 }
-//export GetLoginStatus
-func GetMultipleConversation(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, conversationIDList *C.char) {
-	openIM.GetMultipleConversation(&Base{
+
+//export GetMultipleConversation
+func GetMultipleConversation(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, conversationIDList *C.char) {
+	openIM.GetMultipleConversation(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -644,8 +891,8 @@ func GetMultipleConversation(onError unsafe.Pointer, onSuccess unsafe.Pointer, o
 }
 
 //export DeleteConversation
-func DeleteConversation(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, conversationID *C.char) {
-	openIM.DeleteConversation(&Base{
+func DeleteConversation(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, conversationID *C.char) {
+	openIM.DeleteConversation(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -654,9 +901,10 @@ func DeleteConversation(onError unsafe.Pointer, onSuccess unsafe.Pointer, operat
 		},
 	}, C.GoString(operationID), C.GoString(conversationID))
 }
+
 //export SetConversationDraft
-func SetConversationDraft(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, conversationID, draftText *C.char) {
-	openIM.SetConversationDraft(&Base{
+func SetConversationDraft(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, conversationID, draftText *C.char) {
+	openIM.SetConversationDraft(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -665,9 +913,10 @@ func SetConversationDraft(onError unsafe.Pointer, onSuccess unsafe.Pointer, oper
 		},
 	}, C.GoString(operationID), C.GoString(conversationID), C.GoString(draftText))
 }
+
 //export PinConversation
-func PinConversation(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, conversationID *C.char, isPinned bool) {
-	openIM.PinConversation(&Base{
+func PinConversation(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, conversationID *C.char, isPinned bool) {
+	openIM.PinConversation(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -676,9 +925,10 @@ func PinConversation(onError unsafe.Pointer, onSuccess unsafe.Pointer, operation
 		},
 	}, C.GoString(operationID), C.GoString(conversationID), isPinned)
 }
+
 //export GetTotalUnreadMsgCount
-func GetTotalUnreadMsgCount(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char) {
-	openIM.GetTotalUnreadMsgCount(&Base{
+func GetTotalUnreadMsgCount(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char) {
+	openIM.GetTotalUnreadMsgCount(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -690,12 +940,12 @@ func GetTotalUnreadMsgCount(onError unsafe.Pointer, onSuccess unsafe.Pointer, op
 
 //export SetConversationListener
 func SetConversationListener(
-	onSyncServerStart unsafe.Pointer,
-	onSyncServerFinish unsafe.Pointer,
-	onSyncServerFailed unsafe.Pointer,
-	onNewConversation unsafe.Pointer,
-	onConversationChanged unsafe.Pointer,
-	onTotalUnreadMessageCountChanged unsafe.Pointer,
+	onSyncServerStart C.FunWithVoid,
+	onSyncServerFinish C.FunWithVoid,
+	onSyncServerFailed C.FunWithVoid,
+	onNewConversation C.FunWithString,
+	onConversationChanged C.FunWithString,
+	onTotalUnreadMessageCountChanged C.FunWithInt,
 ) {
 	openIM.SetConversationListener(&OnConversationListener{
 		onSyncServerStart:  func() { FunWithVoid(onSyncServerStart) },
@@ -714,11 +964,12 @@ func SetConversationListener(
 		},
 	})
 }
+
 //export SetAdvancedMsgListener
 func SetAdvancedMsgListener(
-	onRecvNewMessage unsafe.Pointer,
-	onRecvC2CReadReceipt unsafe.Pointer,
-	onRecvMessageRevoked unsafe.Pointer,
+	onRecvNewMessage C.FunWithString,
+	onRecvC2CReadReceipt C.FunWithString,
+	onRecvMessageRevoked C.FunWithString,
 ) {
 	openIM.SetAdvancedMsgListener(
 		&OnAdvancedMsgListener{
@@ -734,117 +985,138 @@ func SetAdvancedMsgListener(
 		},
 	)
 }
+
 //export SetUserListener
-func SetUserListener(onSelfInfoUpdated unsafe.Pointer) {
+func SetUserListener(onSelfInfoUpdated C.FunWithString) {
 	openIM.SetUserListener(&OnUserListener{
 		onSelfInfoUpdated: func(s string) {
 			FunWithString(onSelfInfoUpdated, s)
 		},
 	})
 }
+
 //export CreateTextAtMessage
-func CreateTextAtMessage(onReturn unsafe.Pointer, operationID *C.char, text, atUserList *C.char) {
+func CreateTextAtMessage(onReturn C.FunWithString, operationID *C.char, text, atUserList *C.char) {
 	ret := openIM.CreateTextAtMessage(C.GoString(operationID), C.GoString(text), C.GoString(atUserList))
 	FunWithString(onReturn, ret)
 }
 
 //export CreateTextMessage
-func CreateTextMessage(onReturn unsafe.Pointer, operationID *C.char, text *C.char) {
+func CreateTextMessage(onReturn C.FunWithString, operationID *C.char, text *C.char) {
 	ret := openIM.CreateTextMessage(C.GoString(operationID), C.GoString(text))
 	FunWithString(onReturn, ret)
 }
+
 //export CreateLocationMessage
-func CreateLocationMessage(onReturn unsafe.Pointer, operationID *C.char, description *C.char, longitude, latitude float64) {
+func CreateLocationMessage(onReturn C.FunWithString, operationID *C.char, description *C.char, longitude, latitude float64) {
 	ret := openIM.CreateLocationMessage(C.GoString(operationID), C.GoString(description), longitude, latitude)
 	FunWithString(onReturn, ret)
 }
+
 //export CreateCustomMessage
-func CreateCustomMessage(onReturn unsafe.Pointer, operationID *C.char, data, extension *C.char, description *C.char) {
+func CreateCustomMessage(onReturn C.FunWithString, operationID *C.char, data, extension *C.char, description *C.char) {
 	ret := openIM.CreateCustomMessage(C.GoString(operationID), C.GoString(data), C.GoString(extension), C.GoString(description))
 	FunWithString(onReturn, ret)
 }
+
 //export CreateQuoteMessage
-func CreateQuoteMessage(onReturn unsafe.Pointer, operationID *C.char, text *C.char, message *C.char) {
+func CreateQuoteMessage(onReturn C.FunWithString, operationID *C.char, text *C.char, message *C.char) {
 	ret := openIM.CreateQuoteMessage(C.GoString(operationID), C.GoString(text), C.GoString(message))
 	FunWithString(onReturn, ret)
 }
+
 //export CreateCardMessage
-func CreateCardMessage(onReturn unsafe.Pointer, operationID *C.char, cardInfo *C.char) {
+func CreateCardMessage(onReturn C.FunWithString, operationID *C.char, cardInfo *C.char) {
 	ret := openIM.CreateCardMessage(C.GoString(operationID), C.GoString(cardInfo))
 	FunWithString(onReturn, ret)
 }
+
 //export CreateVideoMessageFromFullPath
-func CreateVideoMessageFromFullPath(onReturn unsafe.Pointer, operationID *C.char, videoFullPath *C.char, videoType *C.char, duration int64, snapshotFullPath *C.char) {
+func CreateVideoMessageFromFullPath(onReturn C.FunWithString, operationID *C.char, videoFullPath *C.char, videoType *C.char, duration int64, snapshotFullPath *C.char) {
 	ret := openIM.CreateVideoMessageFromFullPath(C.GoString(operationID), C.GoString(videoFullPath), C.GoString(videoType), duration, C.GoString(snapshotFullPath))
 	FunWithString(onReturn, ret)
 }
+
 //export CreateImageMessageFromFullPath
-func CreateImageMessageFromFullPath(onReturn unsafe.Pointer, operationID *C.char, imageFullPath *C.char) {
+func CreateImageMessageFromFullPath(onReturn C.FunWithString, operationID *C.char, imageFullPath *C.char) {
 	ret := openIM.CreateImageMessageFromFullPath(C.GoString(operationID), C.GoString(imageFullPath))
 	FunWithString(onReturn, ret)
 }
+
 //export CreateSoundMessageFromFullPath
-func CreateSoundMessageFromFullPath(onReturn unsafe.Pointer, operationID *C.char, soundPath *C.char, duration int64) {
+func CreateSoundMessageFromFullPath(onReturn C.FunWithString, operationID *C.char, soundPath *C.char, duration int64) {
 	ret := openIM.CreateSoundMessageFromFullPath(C.GoString(operationID), C.GoString(soundPath), duration)
 	FunWithString(onReturn, ret)
 }
+
 //export CreateFileMessageFromFullPath
-func CreateFileMessageFromFullPath(onReturn unsafe.Pointer, operationID *C.char, fileFullPath, fileName *C.char) {
+func CreateFileMessageFromFullPath(onReturn C.FunWithString, operationID *C.char, fileFullPath, fileName *C.char) {
 	ret := openIM.CreateFileMessageFromFullPath(C.GoString(operationID), C.GoString(fileFullPath), C.GoString(fileName))
 	FunWithString(onReturn, ret)
 }
+
 //export CreateImageMessage
-func CreateImageMessage(onReturn unsafe.Pointer, operationID *C.char, imagePath *C.char) {
+func CreateImageMessage(onReturn C.FunWithString, operationID *C.char, imagePath *C.char) {
 	ret := openIM.CreateImageMessage(C.GoString(operationID), C.GoString(imagePath))
 	FunWithString(onReturn, ret)
 }
+
 //export CreateImageMessageByURL
-func CreateImageMessageByURL(onReturn unsafe.Pointer, operationID *C.char, sourcePicture, bigPicture, snapshotPicture *C.char) {
+func CreateImageMessageByURL(onReturn C.FunWithString, operationID *C.char, sourcePicture, bigPicture, snapshotPicture *C.char) {
 	ret := openIM.CreateImageMessageByURL(C.GoString(operationID), C.GoString(sourcePicture), C.GoString(bigPicture), C.GoString(snapshotPicture))
 	FunWithString(onReturn, ret)
 }
+
 //export CreateSoundMessageByURL
-func CreateSoundMessageByURL(onReturn unsafe.Pointer, operationID *C.char, soundBaseInfo *C.char) {
+func CreateSoundMessageByURL(onReturn C.FunWithString, operationID *C.char, soundBaseInfo *C.char) {
 	ret := openIM.CreateSoundMessageByURL(C.GoString(operationID), C.GoString(soundBaseInfo))
 	FunWithString(onReturn, ret)
 }
+
 //export CreateSoundMessage
-func CreateSoundMessage(onReturn unsafe.Pointer, operationID *C.char, soundPath *C.char, duration int64) {
+func CreateSoundMessage(onReturn C.FunWithString, operationID *C.char, soundPath *C.char, duration int64) {
 	ret := openIM.CreateSoundMessage(C.GoString(operationID), C.GoString(soundPath), duration)
 	FunWithString(onReturn, ret)
 }
+
 //export CreateVideoMessageByURL
-func CreateVideoMessageByURL(onReturn unsafe.Pointer, operationID *C.char, videoBaseInfo *C.char) {
+func CreateVideoMessageByURL(onReturn C.FunWithString, operationID *C.char, videoBaseInfo *C.char) {
 	ret := openIM.CreateVideoMessageByURL(C.GoString(operationID), C.GoString(videoBaseInfo))
 	FunWithString(onReturn, ret)
 }
+
 //export CreateVideoMessage
-func CreateVideoMessage(onReturn unsafe.Pointer, operationID *C.char, videoPath *C.char, videoType *C.char, duration int64, snapshotPath *C.char) {
+func CreateVideoMessage(onReturn C.FunWithString, operationID *C.char, videoPath *C.char, videoType *C.char, duration int64, snapshotPath *C.char) {
 	ret := openIM.CreateVideoMessage(C.GoString(operationID), C.GoString(videoPath), C.GoString(videoType), duration, C.GoString(snapshotPath))
 	FunWithString(onReturn, ret)
 }
+
 //export CreateFileMessageByURL
-func CreateFileMessageByURL(onReturn unsafe.Pointer, operationID *C.char, fileBaseInfo *C.char) {
+func CreateFileMessageByURL(onReturn C.FunWithString, operationID *C.char, fileBaseInfo *C.char) {
 	ret := openIM.CreateFileMessageByURL(C.GoString(operationID), C.GoString(fileBaseInfo))
 	FunWithString(onReturn, ret)
 }
+
 //export CreateFileMessage
-func CreateFileMessage(onReturn unsafe.Pointer, operationID *C.char, filePath *C.char, fileName *C.char) {
+func CreateFileMessage(onReturn C.FunWithString, operationID *C.char, filePath *C.char, fileName *C.char) {
 	ret := openIM.CreateFileMessage(C.GoString(operationID), C.GoString(filePath), C.GoString(fileName))
 	FunWithString(onReturn, ret)
 }
+
 //export CreateMergerMessage
-func CreateMergerMessage(onReturn unsafe.Pointer, operationID *C.char, messageList, title, summaryList *C.char) {
+func CreateMergerMessage(onReturn C.FunWithString, operationID *C.char, messageList, title, summaryList *C.char) {
 	ret := openIM.CreateMergerMessage(C.GoString(operationID), C.GoString(messageList), C.GoString(title), C.GoString(summaryList))
 	FunWithString(onReturn, ret)
 }
+
 //export CreateForwardMessage
-func CreateForwardMessage(onReturn unsafe.Pointer, operationID *C.char, m *C.char) {
+func CreateForwardMessage(onReturn C.FunWithString, operationID *C.char, m *C.char) {
 	ret := openIM.CreateForwardMessage(C.GoString(operationID), C.GoString(m))
 	FunWithString(onReturn, ret)
 }
+
 //export SendMessage
-func SendMessage(onError unsafe.Pointer, onSuccess unsafe.Pointer, onProgress unsafe.Pointer, operationID, message, recvID, groupID, offlinePushInfo *C.char) {
+func SendMessage(onError C.FunWithIntString, onSuccess C.FunWithString, onProgress C.FunWithInt, operationID, message, recvID, groupID, offlinePushInfo *C.char) {
 	openIM.SendMessage(&SendMsgCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
@@ -857,8 +1129,9 @@ func SendMessage(onError unsafe.Pointer, onSuccess unsafe.Pointer, onProgress un
 		},
 	}, C.GoString(operationID), C.GoString(message), C.GoString(recvID), C.GoString(groupID), C.GoString(offlinePushInfo))
 }
+
 //export SendMessageNotOss
-func SendMessageNotOss(onError unsafe.Pointer, onSuccess unsafe.Pointer, onProgress unsafe.Pointer, operationID *C.char, message, recvID, groupID *C.char, offlinePushInfo *C.char) {
+func SendMessageNotOss(onError C.FunWithIntString, onSuccess C.FunWithString, onProgress C.FunWithInt, operationID *C.char, message, recvID, groupID *C.char, offlinePushInfo *C.char) {
 	openIM.SendMessageNotOss(&SendMsgCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
@@ -871,9 +1144,10 @@ func SendMessageNotOss(onError unsafe.Pointer, onSuccess unsafe.Pointer, onProgr
 		},
 	}, C.GoString(operationID), C.GoString(message), C.GoString(recvID), C.GoString(groupID), C.GoString(offlinePushInfo))
 }
+
 //export GetHistoryMessageList
-func GetHistoryMessageList(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, getMessageOptions *C.char) {
-	openIM.GetHistoryMessageList(&Base{
+func GetHistoryMessageList(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, getMessageOptions *C.char) {
+	openIM.GetHistoryMessageList(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -882,9 +1156,10 @@ func GetHistoryMessageList(onError unsafe.Pointer, onSuccess unsafe.Pointer, ope
 		},
 	}, C.GoString(operationID), C.GoString(getMessageOptions))
 }
+
 //export RevokeMessage
-func RevokeMessage(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, message *C.char) {
-	openIM.RevokeMessage(&Base{
+func RevokeMessage(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, message *C.char) {
+	openIM.RevokeMessage(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -893,9 +1168,10 @@ func RevokeMessage(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID
 		},
 	}, C.GoString(operationID), C.GoString(message))
 }
+
 //export TypingStatusUpdate
-func TypingStatusUpdate(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, recvID, msgTip *C.char) {
-	openIM.TypingStatusUpdate(&Base{
+func TypingStatusUpdate(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, recvID, msgTip *C.char) {
+	openIM.TypingStatusUpdate(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -904,9 +1180,10 @@ func TypingStatusUpdate(onError unsafe.Pointer, onSuccess unsafe.Pointer, operat
 		},
 	}, C.GoString(operationID), C.GoString(recvID), C.GoString(msgTip))
 }
+
 //export MarkC2CMessageAsRead
-func MarkC2CMessageAsRead(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, userID *C.char, msgIDList *C.char) {
-	openIM.MarkC2CMessageAsRead(&Base{
+func MarkC2CMessageAsRead(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, userID *C.char, msgIDList *C.char) {
+	openIM.MarkC2CMessageAsRead(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -915,9 +1192,10 @@ func MarkC2CMessageAsRead(onError unsafe.Pointer, onSuccess unsafe.Pointer, oper
 		},
 	}, C.GoString(operationID), C.GoString(userID), C.GoString(msgIDList))
 }
+
 //export MarkGroupMessageHasRead
-func MarkGroupMessageHasRead(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, groupID *C.char) {
-	openIM.MarkGroupMessageHasRead(&Base{
+func MarkGroupMessageHasRead(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, groupID *C.char) {
+	openIM.MarkGroupMessageHasRead(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -926,9 +1204,10 @@ func MarkGroupMessageHasRead(onError unsafe.Pointer, onSuccess unsafe.Pointer, o
 		},
 	}, C.GoString(operationID), C.GoString(groupID))
 }
+
 //export DeleteMessageFromLocalStorage
-func DeleteMessageFromLocalStorage(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, message *C.char) {
-	openIM.DeleteMessageFromLocalStorage(&Base{
+func DeleteMessageFromLocalStorage(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, message *C.char) {
+	openIM.DeleteMessageFromLocalStorage(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -937,10 +1216,11 @@ func DeleteMessageFromLocalStorage(onError unsafe.Pointer, onSuccess unsafe.Poin
 		},
 	}, C.GoString(operationID), C.GoString(message))
 }
-//export func ClearC2CHistoryMessage(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, userID *C.char) {
 
-func ClearC2CHistoryMessage(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, userID *C.char) {
-	openIM.ClearC2CHistoryMessage(&Base{
+//export func ClearC2CHistoryMessage(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, userID *C.char) {
+
+func ClearC2CHistoryMessage(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, userID *C.char) {
+	openIM.ClearC2CHistoryMessage(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -949,9 +1229,10 @@ func ClearC2CHistoryMessage(onError unsafe.Pointer, onSuccess unsafe.Pointer, op
 		},
 	}, C.GoString(operationID), C.GoString(userID))
 }
+
 //export ClearGroupHistoryMessage
-func ClearGroupHistoryMessage(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, groupID *C.char) {
-	openIM.ClearGroupHistoryMessage(&Base{
+func ClearGroupHistoryMessage(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, groupID *C.char) {
+	openIM.ClearGroupHistoryMessage(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -960,9 +1241,10 @@ func ClearGroupHistoryMessage(onError unsafe.Pointer, onSuccess unsafe.Pointer, 
 		},
 	}, C.GoString(operationID), C.GoString(groupID))
 }
+
 //export InsertSingleMessageToLocalStorage
-func InsertSingleMessageToLocalStorage(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, message, recvID, sendID *C.char) {
-	openIM.InsertSingleMessageToLocalStorage(&Base{
+func InsertSingleMessageToLocalStorage(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, message, recvID, sendID *C.char) {
+	openIM.InsertSingleMessageToLocalStorage(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -971,9 +1253,10 @@ func InsertSingleMessageToLocalStorage(onError unsafe.Pointer, onSuccess unsafe.
 		},
 	}, C.GoString(operationID), C.GoString(message), C.GoString(recvID), C.GoString(sendID))
 }
+
 //export InsertGroupMessageToLocalStorage
-func InsertGroupMessageToLocalStorage(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, message, groupID, sendID *C.char) {
-	openIM.InsertGroupMessageToLocalStorage(&Base{
+func InsertGroupMessageToLocalStorage(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, message, groupID, sendID *C.char) {
+	openIM.InsertGroupMessageToLocalStorage(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -982,9 +1265,10 @@ func InsertGroupMessageToLocalStorage(onError unsafe.Pointer, onSuccess unsafe.P
 		},
 	}, C.GoString(operationID), C.GoString(message), C.GoString(groupID), C.GoString(sendID))
 }
+
 //export SearchLocalMessages
-func SearchLocalMessages(onError unsafe.Pointer, onSuccess unsafe.Pointer, operationID *C.char, searchParam *C.char) {
-	openIM.SearchLocalMessages(&Base{
+func SearchLocalMessages(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, searchParam *C.char) {
+	openIM.SearchLocalMessages(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
@@ -1009,8 +1293,9 @@ func CheckToken(userID, token *C.char) error {
 func CheckResourceLoad(uSDK *login.LoginMgr) error {
 	return openIM.CheckResourceLoad(uSDK)
 }
+
 //export GetConversationIDBySessionType
-func GetConversationIDBySessionType(onReturn unsafe.Pointer, sourceID *C.char, sessionType int) {
+func GetConversationIDBySessionType(onReturn C.FunWithString, sourceID *C.char, sessionType int) {
 	ret := openIM.GetConversationIDBySessionType(C.GoString(sourceID), sessionType)
 	FunWithString(onReturn, ret)
 }
