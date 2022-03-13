@@ -27,27 +27,92 @@ func (c *Conversation) getConversationListSplit(callback open_im_sdk_callback.Ba
 	return conversationList
 }
 
-func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, opt int, operationID string) []*server_api_params.OptResult {
-	apiReq := server_api_params.SetReceiveMessageOptReq{}
+func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, opt int, operationID string) {
+	apiReq := server_api_params.BatchSetConversationsReq{}
+	apiResp := server_api_params.BatchSetConversationsResp{}
 	apiReq.OperationID = operationID
-	apiReq.FromUserID = c.loginUserID
-	var temp int32
-	temp = int32(opt)
-	apiReq.Opt = &temp
-	apiReq.ConversationIDList = conversationIDList
-	var realData []*server_api_params.OptResult
-	c.p.PostFatalCallback(callback, constant.SetReceiveMessageOptRouter, apiReq, &realData, apiReq.OperationID)
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "output: ", realData)
+	apiReq.OwnerUserID = c.loginUserID
+	var conversations []server_api_params.Conversation
+	for _, conversationID := range conversationIDList {
+		localConversation, err := c.db.GetConversation(conversationID)
+		if err != nil {
+			log.NewError(operationID, utils.GetSelfFuncName(), "GetConversation failed", err.Error())
+			continue
+		}
+		conversations = append(conversations, server_api_params.Conversation{
+			OwnerUserID:    c.loginUserID,
+			ConversationID: conversationID,
+			RecvMsgOpt:     int32(opt),
+			IsPinned:       localConversation.IsPinned,
+			IsPrivateChat:  localConversation.IsPinned,
+		})
+	}
+	apiReq.Conversations = conversations
+	c.p.PostFatalCallback(callback, constant.BatchSetConversationRouter, apiReq, &apiResp, apiReq.OperationID)
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "output: ", apiResp)
 	c.SyncConversations(operationID)
-	return realData
 }
-func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) []*server_api_params.OptResult {
-	apiReq := server_api_params.GetReceiveMessageOptReq{}
+
+func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiReq *server_api_params.SetConversationReq, conversationID string, operationID string) {
+	apiResp := server_api_params.SetConversationResp{}
+	apiReq.OwnerUserID = c.loginUserID
 	apiReq.OperationID = operationID
-	apiReq.FromUserID = c.loginUserID
-	apiReq.ConversationIDList = conversationIDList
-	var realData []*server_api_params.OptResult
-	c.p.PostFatalCallback(callback, constant.GetReceiveMessageOptRouter, apiReq, &realData, apiReq.OperationID)
+	apiReq.ConversationID = conversationID
+	c.p.PostFatalCallback(callback, constant.SetConversationOptRouter, apiReq, nil, apiReq.OperationID)
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "request success, output: ", apiResp)
+}
+
+func (c *Conversation) setOneConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationID string, opt int, operationID string) {
+	apiReq := &server_api_params.SetConversationReq{}
+	localConversation, err := c.db.GetConversation(conversationID)
+	if err != nil {
+		log.NewError(operationID, utils.GetSelfFuncName(), "GetConversation failed", err.Error())
+		callback.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
+		return
+	}
+	apiReq.RecvMsgOpt = int32(opt)
+	apiReq.IsPinned = localConversation.IsPinned
+	apiReq.IsPrivateChat = localConversation.IsPrivateChat
+	c.setConversation(callback, apiReq, conversationID, operationID)
+	c.SyncConversations(operationID)
+}
+
+func (c *Conversation) setOneConversationPrivateChat(callback open_im_sdk_callback.Base, conversationID string, isPrivate bool, operationID string) {
+	apiReq := &server_api_params.SetConversationReq{}
+	localConversation, err := c.db.GetConversation(conversationID)
+	if err != nil {
+		log.NewError(operationID, utils.GetSelfFuncName(), "GetConversation failed", err.Error())
+		callback.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
+		return
+	}
+	apiReq.RecvMsgOpt = localConversation.RecvMsgOpt
+	apiReq.IsPinned = localConversation.IsPinned
+	apiReq.IsPrivateChat = isPrivate
+	c.setConversation(callback, apiReq, conversationID, operationID)
+	c.SyncConversations(operationID)
+}
+
+func (c *Conversation) setOneConversationPinned(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
+	apiReq := &server_api_params.SetConversationReq{}
+	localConversation, err := c.db.GetConversation(conversationID)
+	if err != nil {
+		log.NewError(operationID, utils.GetSelfFuncName(), "GetConversation failed", err.Error())
+		callback.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
+		return
+	}
+	apiReq.RecvMsgOpt = localConversation.RecvMsgOpt
+	apiReq.IsPinned = isPinned
+	apiReq.IsPrivateChat = localConversation.IsPrivateChat
+	c.setConversation(callback, apiReq, conversationID, operationID)
+}
+
+func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) server_api_params.GetConversationResp {
+	apiReq := server_api_params.GetConversationsReq{}
+	apiReq.OperationID = operationID
+	apiReq.OwnerUserID = c.loginUserID
+	apiReq.ConversationIDs = conversationIDList
+	var realData server_api_params.GetConversationResp
+	c.p.PostFatalCallback(callback, constant.GetConversationRouter, apiReq, &realData, apiReq.OperationID)
 	return realData
 }
 func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, sourceID string, sessionType int32, operationID string) *db.LocalConversation {
@@ -112,6 +177,7 @@ func (c *Conversation) setConversationDraft(callback open_im_sdk_callback.Base, 
 		err := c.db.RemoveConversationDraft(conversationID, draftText)
 		common.CheckDBErrCallback(callback, err, operationID)
 	}
+	c.SyncConversations(operationID)
 }
 
 func (c *Conversation) pinConversation(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
@@ -123,20 +189,26 @@ func (c *Conversation) pinConversation(callback open_im_sdk_callback.Base, conve
 		err := c.db.UnPinConversation(conversationID, constant.NotPinned)
 		common.CheckDBErrCallback(callback, err, operationID)
 	}
+	c.setOneConversationPinned(callback, conversationID, isPinned, operationID)
+	c.SyncConversations(operationID)
 }
 
-func (c *Conversation) getServerConversationList(operationID string) (server_api_params.GetServerConversationListResp, error) {
+func (c *Conversation) getServerConversationList(operationID string) (server_api_params.GetAllConversationsResp, error) {
 	log.NewInfo(operationID, utils.GetSelfFuncName())
-	var resp server_api_params.GetServerConversationListResp
-	var req server_api_params.GetServerConversationListReq
-	req.FromUserID = c.loginUserID
+	var req server_api_params.GetAllConversationsReq
+	var resp server_api_params.GetAllConversationsResp
+	req.OwnerUserID = c.loginUserID
 	req.OperationID = operationID
-	err := c.p.PostReturn(constant.GetAllConversationMessageOptRouter, req, &resp.ConversationOptResultList)
+	err := c.p.PostReturn(constant.GetAllConversationsRouter, req, &resp.Conversations)
 	if err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		return resp, err
 	}
 	return resp, nil
+}
+
+func (c *Conversation) getServerConversation(conversationID, operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "conversationID: ", conversationID)
 }
 
 func (c *Conversation) SyncConversations(operationID string) {
@@ -146,41 +218,50 @@ func (c *Conversation) SyncConversations(operationID string) {
 		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		return
 	}
-	conversationsOnLocal, err := c.db.GetAllConversationList()
+	// 判断不出本地有没有 重写
+	conversationsOnLocal, err := c.db.GetAllConversationListToSync()
 	if err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
+	}
+	for _, v := range svrList.Conversations {
+		log.Debug(operationID, v.IsPrivateChat)
 	}
 	conversationsOnServer := common.TransferToLocalConversation(svrList)
 	aInBNot, bInANot, sameA, sameB := common.CheckConversationListDiff(conversationsOnServer, conversationsOnLocal)
 	log.NewInfo(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
 
 	// server有 local没有
+	// 可能是其他点开一下生成会话设置免打扰 插入到本地 不回调
 	for _, index := range aInBNot {
 		conversation := conversationsOnServer[index]
 		conversation.LatestMsgSendTime = time.Now().Unix()
-		//err := c.db.InsertConversation(conversation)
-		//if err != nil {
-		//	log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation failed ", err.Error(), conversation)
-		//	continue
-		//}
+		err := c.db.InsertConversation(conversation)
+		if err != nil {
+			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation failed ", err.Error(), conversation)
+			continue
+		}
 	}
-
+	// 本地服务器有的会话 以服务器为准更新 触发回调
+	var conversationChangedList []string
 	for _, index := range sameA {
-		err := c.db.UpdateConversation(conversationsOnServer[index])
+		log.NewInfo("", *conversationsOnServer[index])
+		err := c.db.UpdateConversationForSync(conversationsOnServer[index])
 		if err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), "UpdateConversation failed ", err.Error(), *conversationsOnServer[index])
 			continue
 		}
 	}
-
-	// local有 server没有
+	c.ConversationListener.OnConversationChanged(utils.StructToJsonString(conversationChangedList))
+	// local有 server没有 代表没有修改公共字段
 	for _, index := range bInANot {
-		err := c.db.UpdateConversation(conversationsOnLocal[index])
-		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "deleteConversation failed ", err.Error())
-			continue
-		}
+		log.NewDebug(operationID, utils.GetSelfFuncName(), index, conversationsOnLocal[index].ConversationID,
+			conversationsOnLocal[index].RecvMsgOpt, conversationsOnLocal[index].IsPinned, conversationsOnLocal[index].IsPrivateChat)
 	}
+}
+
+func (c *Conversation) SyncOneConversation(conversationID, operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "conversationID: ", conversationID)
+	// todo
 }
 
 func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base, req sdk.GetHistoryMessageListParams, operationID string) sdk.GetHistoryMessageListCallback {

@@ -53,13 +53,10 @@ const (
 	BlackAddedNotification                = 1207 //add_black
 	BlackDeletedNotification              = 1208 //remove_black
 	FriendNotificationEnd                 = 1299
-	ConversationOptChangeNotification     = 1300
+	ConversationChangeNotification        = 1300
 
 	UserNotificationBegin       = 1301
 	UserInfoUpdatedNotification = 1303 //SetSelfInfoTip             = 204
-	ConversationNotification    = 1307
-	ConversationNotNotification = 1308
-	ConversationDefault         = 0
 	UserNotificationEnd         = 1399
 
 	GroupNotificationBegin = 1500
@@ -155,9 +152,6 @@ const (
 
 	IsFilter  = 1
 	NotFilter = 0
-
-	Pinned    = 1
-	NotPinned = 0
 )
 
 const (
@@ -189,11 +183,20 @@ const (
 	WSDataError        = 3001
 )
 
+// conversation
 const (
 	//MsgReceiveOpt
 	ReceiveMessage          = 0
 	NotReceiveMessage       = 1
 	ReceiveNotNotifyMessage = 2
+
+	//pinned
+	Pinned    = 1
+	NotPinned = 0
+
+	//privateChat
+	IsPrivateChat  = true
+	NotPrivateChat = false
 )
 
 const SuccessCallbackDefault = ""

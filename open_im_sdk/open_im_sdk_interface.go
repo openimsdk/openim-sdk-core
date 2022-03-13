@@ -406,6 +406,7 @@ func GetAllConversationList(callback open_im_sdk_callback.Base, operationID stri
 	}
 	userForSDK.Conversation().GetAllConversationList(callback, operationID)
 }
+
 func GetConversationListSplit(callback open_im_sdk_callback.Base, operationID string, offset, count int) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
@@ -413,6 +414,42 @@ func GetConversationListSplit(callback open_im_sdk_callback.Base, operationID st
 		return
 	}
 	userForSDK.Conversation().GetConversationListSplit(callback, offset, count, operationID)
+}
+
+func GetOneConversation(callback open_im_sdk_callback.Base, operationID string, sessionType int, sourceID string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Conversation().GetOneConversation(callback, int32(sessionType), sourceID, operationID)
+}
+
+func GetMultipleConversation(callback open_im_sdk_callback.Base, operationID string, conversationIDList string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Conversation().GetMultipleConversation(callback, conversationIDList, operationID)
+}
+
+func SetOneConversationPrivateChat(callback open_im_sdk_callback.Base, operationID, conversationID string, isPrivate bool) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Conversation().SetOneConversationPrivateChat(callback, conversationID, isPrivate, operationID)
+}
+
+func SetOneConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operationID, conversationID string, opt int) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Conversation().SetOneConversationRecvMessageOpt(callback, conversationID, opt, operationID)
 }
 
 func SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, conversationIDList string, opt int) {
@@ -432,22 +469,7 @@ func GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operation
 	}
 	userForSDK.Conversation().GetConversationRecvMessageOpt(callback, conversationIDList, operationID)
 }
-func GetOneConversation(callback open_im_sdk_callback.Base, operationID string, sessionType int, sourceID string) {
-	if err := CheckResourceLoad(userForSDK); err != nil {
-		log.Error(operationID, "resource loading is not completed ", err.Error())
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
-		return
-	}
-	userForSDK.Conversation().GetOneConversation(callback, int32(sessionType), sourceID, operationID)
-}
-func GetMultipleConversation(callback open_im_sdk_callback.Base, operationID string, conversationIDList string) {
-	if err := CheckResourceLoad(userForSDK); err != nil {
-		log.Error(operationID, "resource loading is not completed ", err.Error())
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
-		return
-	}
-	userForSDK.Conversation().GetMultipleConversation(callback, conversationIDList, operationID)
-}
+
 func DeleteConversation(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
@@ -456,6 +478,7 @@ func DeleteConversation(callback open_im_sdk_callback.Base, operationID string, 
 	}
 	userForSDK.Conversation().DeleteConversation(callback, conversationID, operationID)
 }
+
 func SetConversationDraft(callback open_im_sdk_callback.Base, operationID string, conversationID, draftText string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
@@ -464,6 +487,7 @@ func SetConversationDraft(callback open_im_sdk_callback.Base, operationID string
 	}
 	userForSDK.Conversation().SetConversationDraft(callback, conversationID, draftText, operationID)
 }
+
 func PinConversation(callback open_im_sdk_callback.Base, operationID string, conversationID string, isPinned bool) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
@@ -472,6 +496,7 @@ func PinConversation(callback open_im_sdk_callback.Base, operationID string, con
 	}
 	userForSDK.Conversation().PinConversation(callback, conversationID, isPinned, operationID)
 }
+
 func GetTotalUnreadMsgCount(callback open_im_sdk_callback.Base, operationID string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())

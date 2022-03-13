@@ -3,8 +3,6 @@ package conversation_msg
 import (
 	"encoding/json"
 	"errors"
-	"github.com/golang/protobuf/proto"
-	"github.com/jinzhu/copier"
 	"image"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -18,45 +16,50 @@ import (
 	"os"
 	"runtime"
 	"sync"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/jinzhu/copier"
+	imgtype "github.com/shamsher31/goimgtype"
 )
 
 //
 //import "C"
-import (
-	//	//"bytes"
-	//	//"encoding/gob"
-	//	"encoding/json"
-	//	"errors"
-	//	"github.com/golang/protobuf/proto"
-	//	"github.com/gorilla/websocket"
-	imgtype "github.com/shamsher31/goimgtype"
-	//	"image"
-	//	"net/http"
-	//	"open_im_sdk/pkg/db"
-	//
-	//	"open_im_sdk/pkg/common"
-	//	"open_im_sdk/pkg/constant"
-	//	"open_im_sdk/pkg/log"
-	//	"open_im_sdk/pkg/sdk_params_callback"
-	//	"open_im_sdk/pkg/server_api_params"
-	//	"open_im_sdk/pkg/utils"
-	//	"os"
-	//	"sort"
-	//	"sync"
-	//	"time"
-)
+
+//	//"bytes"
+//	//"encoding/gob"
+//	"encoding/json"
+//	"errors"
+//	"github.com/golang/protobuf/proto"
+//	"github.com/gorilla/websocket"
+
+//	"image"
+//	"net/http"
+//	"open_im_sdk/pkg/db"
+//
+//	"open_im_sdk/pkg/common"
+//	"open_im_sdk/pkg/constant"
+//	"open_im_sdk/pkg/log"
+//	"open_im_sdk/pkg/sdk_params_callback"
+//	"open_im_sdk/pkg/server_api_params"
+//	"open_im_sdk/pkg/utils"
+//	"os"
+//	"sort"
+//	"sync"
+//	"time"
 
 func (c *Conversation) GetAllConversationList(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
 		return
 	}
 	go func() {
-		log.NewInfo(operationID, "GetAllConversationList args: ")
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "GetAllConversationList args: ")
 		result := c.getAllConversationList(callback, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		log.NewInfo(operationID, "GetAllConversationList callback: ", utils.StructToJsonStringDefault(result))
+		//log.NewInfo(operationID, "GetAllConversationList callback: ", utils.StructToJsonStringDefault(result))
 	}()
+	//log.NewInfo("ss")
 }
+
 func (c *Conversation) GetConversationListSplit(callback open_im_sdk_callback.Base, offset, count int, operationID string) {
 	if callback == nil {
 		return
@@ -68,6 +71,7 @@ func (c *Conversation) GetConversationListSplit(callback open_im_sdk_callback.Ba
 		log.NewInfo(operationID, "GetConversationListSplit callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
+
 func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList string, opt int, operationID string) {
 	if callback == nil {
 		return
@@ -142,7 +146,6 @@ func (c *Conversation) SetConversationDraft(callback open_im_sdk_callback.Base, 
 	}()
 }
 func (c *Conversation) PinConversation(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
-
 	if callback == nil {
 		return
 	}
@@ -154,6 +157,31 @@ func (c *Conversation) PinConversation(callback open_im_sdk_callback.Base, conve
 		log.NewInfo(operationID, "PinConversation callback: ", sdk_params_callback.PinConversationDraftCallback)
 	}()
 }
+
+func (c *Conversation) SetOneConversationPrivateChat(callback open_im_sdk_callback.Base, conversationID string, isPrivate bool, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", conversationID, isPrivate)
+		c.setOneConversationPrivateChat(callback, conversationID, isPrivate, operationID)
+		callback.OnSuccess(sdk_params_callback.SetConversationMessageOptCallback)
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", sdk_params_callback.SetConversationMessageOptCallback)
+	}()
+}
+
+func (c *Conversation) SetOneConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationID string, opt int, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", conversationID, opt)
+		c.setOneConversationRecvMessageOpt(callback, conversationID, opt, operationID)
+		callback.OnSuccess(sdk_params_callback.SetConversationMessageOptCallback)
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", sdk_params_callback.SetConversationMessageOptCallback)
+	}()
+}
+
 func (c *Conversation) GetTotalUnreadMsgCount(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
 		return

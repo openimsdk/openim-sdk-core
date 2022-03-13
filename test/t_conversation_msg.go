@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"open_im_sdk/internal/login"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
@@ -90,13 +91,57 @@ func (t TestGetAllConversationListCallBack) OnError(errCode int32, errMsg string
 }
 
 func (t TestGetAllConversationListCallBack) OnSuccess(data string) {
-	log.Info(t.OperationID, "TestGetAllConversationListCallBack ", data)
+	log.Info(t.OperationID, "ConversationCallBack ", data)
 }
+
 func DoTestGetAllConversation() {
 	var test TestGetAllConversationListCallBack
 	test.OperationID = utils.OperationIDGenerator()
 	open_im_sdk.GetAllConversationList(test, test.OperationID)
+}
 
+func DoTestGetOneConversation(friendID string) {
+	var test TestGetAllConversationListCallBack
+	test.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.GetOneConversation(test, test.OperationID, constant.SingleChatType, friendID)
+}
+
+type TestSetConversationPinnedCallback struct {
+	OperationID string
+}
+
+func (t TestSetConversationPinnedCallback) OnError(errCode int32, errMsg string) {
+	log.Info(t.OperationID, "TestSetConversationPinnedCallback ", errCode, errMsg)
+}
+
+func (t TestSetConversationPinnedCallback) OnSuccess(data string) {
+	log.Info(t.OperationID, "TestSetConversationPinnedCallback ", data)
+}
+
+func DoTestSetConversationRecvMessageOpt(conversationIDs []string, opt int) {
+	var test testProcessGroupApplication
+	test.OperationID = utils.OperationIDGenerator()
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
+	s := utils.StructToJsonString(conversationIDs)
+	open_im_sdk.SetConversationRecvMessageOpt(test, test.OperationID, s, opt)
+}
+
+func DoTestSetConversationPinned(conversationID string, pin bool) {
+	var test TestSetConversationPinnedCallback
+	test.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.PinConversation(test, test.OperationID, conversationID, pin)
+}
+
+func DoTestSetOneConversationPrivateChat(conversationID string, privateChat bool) {
+	var test TestSetConversationPinnedCallback
+	test.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.SetOneConversationPrivateChat(test, test.OperationID, conversationID, privateChat)
+}
+
+func DoTestSetOneConversationRecvMessageOpt(conversationID string, opt int) {
+	var test TestSetConversationPinnedCallback
+	test.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.SetOneConversationRecvMessageOpt(test, test.OperationID, conversationID, opt)
 }
 
 type TestGetConversationListSplitCallBack struct {
@@ -314,6 +359,20 @@ func init() {
 	SendFailedAllMsg = make(map[string]string)
 	RecvAllMsg = make(map[string]string)
 
+}
+
+func DoTestSendMsg2(sendId, recvID string) {
+	m := "mmmmmmmmtest:Gordon->sk" + sendId + ":" + recvID + ":"
+	operationID := utils.OperationIDGenerator()
+	s := DoTestCreateTextMessage(m)
+	log.NewInfo("", s)
+	var testSendMsg TestSendMsgCallBack
+	testSendMsg.OperationID = operationID
+	o := server_api_params.OfflinePushInfo{}
+	o.Title = "121313"
+	o.Desc = "45464"
+	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
 }
 
 func DoTestSendMsg(index int, sendId, recvID string, idx string) {

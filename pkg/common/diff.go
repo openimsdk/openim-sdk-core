@@ -1,9 +1,11 @@
 package common
 
 import (
+	"open_im_sdk/pkg/db"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/jinzhu/copier"
-	"open_im_sdk/pkg/db"
+
 	//log2 "open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 )
@@ -641,12 +643,18 @@ func TransferToLocalSendGroupRequest(apiData []*server_api_params.GroupRequest) 
 	return local
 }
 
-func TransferToLocalConversation(resp server_api_params.GetServerConversationListResp) []*db.LocalConversation {
+func TransferToLocalConversation(resp server_api_params.GetAllConversationsResp) []*db.LocalConversation {
 	var localConversations []*db.LocalConversation
-	for _, serverConversation := range resp.ConversationOptResultList {
+	for _, serverConversation := range resp.Conversations {
 		localConversations = append(localConversations, &db.LocalConversation{
-			RecvMsgOpt:     *serverConversation.Result,
-			ConversationID: serverConversation.ConversationID,
+			RecvMsgOpt:       serverConversation.RecvMsgOpt,
+			ConversationID:   serverConversation.ConversationID,
+			ConversationType: serverConversation.ConversationType,
+			UserID:           serverConversation.UserID,
+			GroupID:          serverConversation.GroupID,
+			UnreadCount:      serverConversation.UnreadCount,
+			IsPrivateChat:    serverConversation.IsPrivateChat,
+			IsPinned:         serverConversation.IsPinned,
 		})
 	}
 	return localConversations

@@ -27,7 +27,9 @@ const SetConversationDraftCallback = constant.SuccessCallbackDefault
 
 const PinConversationDraftCallback = constant.SuccessCallbackDefault
 
-const SetConversationStatusCallback = constant.SuccessCallbackDefault
+const SetConversationMessageOptCallback = constant.SuccessCallbackDefault
+
+const SetConversationPrivateChatOptCallback = constant.SuccessCallbackDefault
 
 type GetHistoryMessageListParams struct {
 	UserID           string `json:"userID"`

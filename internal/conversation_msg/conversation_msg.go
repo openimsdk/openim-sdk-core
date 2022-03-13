@@ -2,9 +2,6 @@ package conversation_msg
 
 import (
 	"encoding/json"
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
-	"github.com/jinzhu/copier"
 	common2 "open_im_sdk/internal/common"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/group"
@@ -19,6 +16,10 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sort"
+
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
+	"github.com/jinzhu/copier"
 )
 
 type Conversation struct {
@@ -148,7 +149,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					lc.ConversationID = utils.GetConversationIDBySessionType(v.RecvID, constant.SingleChatType)
 					lc.UserID = v.RecvID
 					switch v.ContentType {
-					case constant.ConversationOptChangeNotification:
+					case constant.ConversationChangeNotification:
 						log.Info(operationID, utils.GetSelfFuncName(), v)
 						c.DoNotification(v)
 					}
