@@ -10,7 +10,7 @@ import (
 	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 
-	"github.com/golang/protobuf/proto"
+	"strings"
 )
 
 type LiveSignaling struct {
@@ -19,24 +19,14 @@ type LiveSignaling struct {
 	loginUserID string
 }
 
-func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value) {
-	var signalReq api.SignalReq
-	err := proto.Unmarshal(msg.Content, &signalReq)
-	if err != nil {
-		log.Error("", "Unmarshal failed ", err.Error())
-	}
-	s.doSignalPush(&signalReq)
-}
-
-//invitee 被邀请者
 func (s *LiveSignaling) invite(req *api.SignalInviteReq, callback open_im_sdk_callback.Base, operationID string) sdk_params_callback.InviteCallback {
 	var signalReq api.SignalReq
 	*signalReq.GetInvite() = *req
-	resp, err := s.SendSignalingReqWaitResp(&signalReq, 0, operationID)
+	resp, err := s.SendSignalingReqWaitResp(&signalReq, operationID)
 	common.CheckAnyErrCallback(callback, 3001, err, operationID)
 	switch payload := resp.Payload.(type) {
 	case *api.SignalResp_Invite:
-		go s.waitPush(req.Invitation.InviterUserID, req.Invitation.InviteeUserIDList[0], "invite", 100, operationID)
+		s.waitPush(req, operationID)
 		return sdk_params_callback.InviteCallback(payload.Invite)
 	default:
 		log.Error(operationID, "resp payload type failed ", payload)
@@ -45,12 +35,23 @@ func (s *LiveSignaling) invite(req *api.SignalInviteReq, callback open_im_sdk_ca
 	}
 }
 
-func (s *LiveSignaling) waitPush(inviterUserID, inviteeUserID, event string, timeout int, operationID string) {
-	req, err := s.SignalingWaitPush(inviterUserID, inviteeUserID, "invite", timeout, operationID)
-	if err != nil {
-		return
+func (s *LiveSignaling) waitPush(req *api.SignalInviteReq, operationID string) {
+	for _, v := range req.Invitation.InviteeUserIDList {
+		go func() {
+			push, err := s.SignalingWaitPush(req.Invitation.InviterUserID, v, req.Invitation.RoomID, req.Invitation.Timeout, operationID)
+			if err != nil {
+				if strings.Contains(err.Error(), "timeout") {
+					log.Error(operationID, "wait push timeout ", err.Error(), req.Invitation.InviterUserID, v, req.Invitation.RoomID, req.Invitation.Timeout)
+
+				} else {
+					log.Error(operationID, "other failed ", err.Error(), req.Invitation.InviterUserID, v, req.Invitation.RoomID, req.Invitation.Timeout)
+				}
+				return
+			}
+			s.doSignalPush(push)
+		}()
 	}
-	s.doSignalPush(req)
+
 }
 
 func (s *LiveSignaling) doSignalPush(req *api.SignalReq) {
@@ -78,7 +79,7 @@ func (s *LiveSignaling) SetListener(listener open_im_sdk_callback.OnSignalingLis
 }
 
 func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk_callback.Base, operationID string) {
-	resp, err := s.SendSignalingReqWaitResp(req, 0, operationID)
+	resp, err := s.SendSignalingReqWaitResp(req, 100, operationID)
 	common.CheckAnyErrCallback(callback, 3001, err, operationID)
 	switch payload := resp.Payload.(type) {
 	case *api.SignalResp_Accept:
