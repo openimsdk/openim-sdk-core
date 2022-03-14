@@ -780,7 +780,7 @@ func SignalingInvite(callback open_im_sdk_callback.Base, operationID string, sig
 		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
 		return
 	}
-	userForSDK.Signaling().Invite(signalInviteReq, callback, operationID)
+	userForSDK.Signaling().Invite(callback, signalInviteReq, operationID)
 }
 
 func SignalingAccept(callback open_im_sdk_callback.Base, operationID string, signalAcceptReq string) {
@@ -789,7 +789,7 @@ func SignalingAccept(callback open_im_sdk_callback.Base, operationID string, sig
 		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
 		return
 	}
-	userForSDK.Signaling().Accept(signalAcceptReq, callback, operationID)
+	userForSDK.Signaling().Accept(callback, signalAcceptReq, operationID)
 }
 
 func SignalingReject(callback open_im_sdk_callback.Base, operationID string, signalRejectReq string) {
@@ -798,7 +798,7 @@ func SignalingReject(callback open_im_sdk_callback.Base, operationID string, sig
 		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
 		return
 	}
-	userForSDK.Signaling().Reject(signalRejectReq, callback, operationID)
+	userForSDK.Signaling().Reject(callback, signalRejectReq, operationID)
 }
 
 func SignalingCancel(callback open_im_sdk_callback.Base, operationID string, signalCancelReq string) {
@@ -807,7 +807,7 @@ func SignalingCancel(callback open_im_sdk_callback.Base, operationID string, sig
 		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
 		return
 	}
-	userForSDK.Signaling().Cancel(signalCancelReq, callback, operationID)
+	userForSDK.Signaling().Cancel(callback, signalCancelReq, operationID)
 }
 
 func SignalingHungUp(callback open_im_sdk_callback.Base, operationID string, signalHungUpReq string) {
@@ -816,5 +816,5 @@ func SignalingHungUp(callback open_im_sdk_callback.Base, operationID string, sig
 		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
 		return
 	}
-	userForSDK.Signaling().HungUp(signalHungUpReq, callback, operationID)
+	userForSDK.Signaling().HungUp(callback, signalHungUpReq, operationID)
 }
