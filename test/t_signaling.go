@@ -49,7 +49,7 @@ func DoTestInviteInGroup() {
 
 func SetTestInviteInfo() *api.InvitationInfo {
 	req := &api.InvitationInfo{}
-	req.Timeout = 100
+	req.Timeout = 1000
 	req.InviteeUserIDList = append(req.InviteeUserIDList, MemberUserID)
 	req.MediaType = "video"
 	req.RoomID = TestRoomID

@@ -55,7 +55,7 @@ func main() {
 	//test.DoTestSetOneConversationRecvMessageOpt("single_17726378428", constant.NotReceiveMessage)
 	//test.DoTestSetOneConversationPrivateChat("single_17726378428", false)
 	for {
-		time.Sleep(2 * time.Second)
+		time.Sleep(30 * time.Second)
 		log.Info("", "waiting...")
 	}
 	//reliabilityTest()
