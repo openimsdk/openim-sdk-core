@@ -371,7 +371,7 @@ func (c *Conversation) typingStatusUpdate(callback open_im_sdk_callback.Base, re
 	s := sdk_struct.MsgStruct{}
 	c.initBasicInfo(&s, constant.UserMsgType, constant.Typing, operationID)
 	s.Content = msgTip
-	options := make(map[string]bool, 5)
+	options := make(map[string]bool, 6)
 	utils.SetSwitchFromOptions(options, constant.IsHistory, false)
 	utils.SetSwitchFromOptions(options, constant.IsPersistent, false)
 	utils.SetSwitchFromOptions(options, constant.IsSenderSync, false)
