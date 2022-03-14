@@ -1,0 +1,104 @@
+package test
+
+import (
+	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/log"
+	api "open_im_sdk/pkg/server_api_params"
+	"open_im_sdk/pkg/utils"
+)
+
+type testSignalingListener struct {
+}
+
+func (s *testSignalingListener) OnReceiveNewInvitation(receiveNewInvitationCallback string) {
+	log.Info("", utils.GetSelfFuncName(), "listener ", receiveNewInvitationCallback)
+}
+
+func (s *testSignalingListener) OnInviteeAccepted(inviteeAcceptedCallback string) {
+	log.Info("", utils.GetSelfFuncName(), "listener ", inviteeAcceptedCallback)
+}
+
+func (s *testSignalingListener) OnInviteeRejected(inviteeRejectedCallback string) {
+	log.Info("", utils.GetSelfFuncName(), "listener ", inviteeRejectedCallback)
+}
+
+//
+func (s *testSignalingListener) OnInvitationCancelled(invitationCancelledCallback string) {
+	log.Info("", utils.GetSelfFuncName(), "listener ", invitationCancelledCallback)
+}
+
+//
+func (s *testSignalingListener) OnInvitationTimeout(invitationTimeoutCallback string) {
+	log.Info("", utils.GetSelfFuncName(), "listener ", invitationTimeoutCallback)
+}
+
+type testSingaling struct {
+	baseCallback
+}
+
+var TestRoomID = "room_id_111"
+
+func DoTestInviteInGroup() {
+	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
+	req := &api.SignalInviteInGroupReq{}
+
+	s := utils.StructToJsonString(req)
+	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
+	open_im_sdk.SignalingInviteInGroup(t, t.OperationID, s)
+}
+
+func SetTestInviteInfo() *api.InvitationInfo {
+	req := &api.InvitationInfo{}
+	req.Timeout = 100
+	req.InviteeUserIDList = append(req.InviteeUserIDList, MemberUserID)
+	req.MediaType = "video"
+	req.RoomID = TestRoomID
+	req.GroupID = TestgroupID
+	return req
+}
+
+func DoTestInvite() {
+	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
+	req := &api.SignalInviteReq{}
+	req.Invitation = SetTestInviteInfo()
+	req.Invitation.GroupID = ""
+	s := utils.StructToJsonString(req)
+	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
+	open_im_sdk.SignalingInviteInGroup(t, t.OperationID, s)
+}
+
+func DoTestAccept() {
+	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
+	req := &api.SignalAcceptReq{Invitation: &api.SignalInviteReq{}}
+	req.Invitation.Invitation = SetTestInviteInfo()
+	s := utils.StructToJsonString(req)
+	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
+	open_im_sdk.SignalingAccept(t, t.OperationID, s)
+}
+
+func DoTestReject() {
+	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
+	req := &api.SignalRejectReq{Invitation: &api.SignalInviteReq{}}
+	req.Invitation.Invitation = SetTestInviteInfo()
+	s := utils.StructToJsonString(req)
+	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
+	open_im_sdk.SignalingReject(t, t.OperationID, s)
+}
+
+func DoTestCancel() {
+	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
+	req := &api.SignalCancelReq{Invitation: &api.SignalInviteReq{}}
+	req.Invitation.Invitation = SetTestInviteInfo()
+	s := utils.StructToJsonString(req)
+	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
+	open_im_sdk.SignalingCancel(t, t.OperationID, s)
+}
+
+func DoTestHungUp() {
+	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
+	req := &api.SignalHungUpReq{Invitation: &api.SignalInviteReq{}}
+	req.Invitation.Invitation = SetTestInviteInfo()
+	s := utils.StructToJsonString(req)
+	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
+	open_im_sdk.SignalingHungUp(t, t.OperationID, s)
+}

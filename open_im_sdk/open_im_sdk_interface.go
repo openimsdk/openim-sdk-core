@@ -755,3 +755,66 @@ func uploadImage(callback open_im_sdk_callback.Base, operationID string, filePat
 func GetConversationIDBySessionType(sourceID string, sessionType int) string {
 	return utils.GetConversationIDBySessionType(sourceID, sessionType)
 }
+
+//////////////////////////signaling//////////////////////////////////////////
+func SetSignalingListener(callback open_im_sdk_callback.OnSignalingListener) {
+	if callback == nil || userForSDK == nil {
+		log.Error("callback or userForSDK is nil")
+		return
+	}
+	userForSDK.SetSignalingListener(callback)
+}
+
+func SignalingInviteInGroup(callback open_im_sdk_callback.Base, operationID string, signalInviteInGroupReq string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Signaling().InviteInGroup(signalInviteInGroupReq, callback, operationID)
+}
+
+func SignalingInvite(callback open_im_sdk_callback.Base, operationID string, signalInviteReq string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Signaling().Invite(signalInviteReq, callback, operationID)
+}
+
+func SignalingAccept(callback open_im_sdk_callback.Base, operationID string, signalAcceptReq string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Signaling().Accept(signalAcceptReq, callback, operationID)
+}
+
+func SignalingReject(callback open_im_sdk_callback.Base, operationID string, signalRejectReq string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Signaling().Reject(signalRejectReq, callback, operationID)
+}
+
+func SignalingCancel(callback open_im_sdk_callback.Base, operationID string, signalCancelReq string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Signaling().Cancel(signalCancelReq, callback, operationID)
+}
+
+func SignalingHungUp(callback open_im_sdk_callback.Base, operationID string, signalHungUpReq string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Signaling().HungUp(signalHungUpReq, callback, operationID)
+}

@@ -7,6 +7,7 @@ import (
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/group"
 	ws "open_im_sdk/internal/interaction"
+	"open_im_sdk/internal/rtc"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -27,8 +28,8 @@ type LoginMgr struct {
 	db           *db.DataBase
 	ws           *ws.Ws
 	msgSync      *ws.MsgSync
-
-	heartbeat *ws.Heartbeat
+	signaling    *rtc.LiveSignaling
+	heartbeat    *ws.Heartbeat
 
 	token        string
 	loginUserID  string
@@ -41,11 +42,16 @@ type LoginMgr struct {
 	conversationListener open_im_sdk_callback.OnConversationListener
 	advancedMsgListener  open_im_sdk_callback.OnAdvancedMsgListener
 	userListener         open_im_sdk_callback.OnUserListener
+	signalingListener    open_im_sdk_callback.OnSignalingListener
 
 	conversationCh chan common.Cmd2Value
 	cmdWsCh        chan common.Cmd2Value
 	heartbeatCmdCh chan common.Cmd2Value
 	imConfig       sdk_struct.IMConfig
+}
+
+func (u *LoginMgr) Signaling() *rtc.LiveSignaling {
+	return u.signaling
 }
 
 func (u *LoginMgr) Ws() *ws.Ws {
@@ -94,6 +100,10 @@ func (u *LoginMgr) SetGroupListener(groupListener open_im_sdk_callback.OnGroupLi
 
 func (u *LoginMgr) SetUserListener(userListener open_im_sdk_callback.OnUserListener) {
 	u.userListener = userListener
+}
+
+func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalingListener) {
+	u.signalingListener = listener
 }
 
 func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
@@ -163,8 +173,9 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener)
 	u.conversation.SyncConversations(operationID)
+
+	u.signaling = rtc.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID)
 	log.Info(operationID, "login success...")
-	//u.forycedSyncReceiveMessageOpt()
 	cb.OnSuccess("")
 
 }

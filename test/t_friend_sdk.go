@@ -429,6 +429,8 @@ func InOutDoTest(uid, tk, ws, api string) {
 
 	var groupListener testGroupListener
 	open_im_sdk.SetGroupListener(groupListener)
+	var signalingListener testSignalingListener
+	open_im_sdk.SetSignalingListener(&signalingListener)
 
 	InOutlllogin(uid, tk)
 	log.Info("", "InOutDoTest fin")
@@ -541,6 +543,8 @@ func DoTest(uid, tk, ws, api string) {
 	var groupListener testGroupListener
 	open_im_sdk.SetGroupListener(groupListener)
 
+	var signalingListener testSignalingListener
+	open_im_sdk.SetSignalingListener(&signalingListener)
 	time.Sleep(1 * time.Second)
 
 	for !lllogin(uid, tk) {
