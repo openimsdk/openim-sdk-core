@@ -2,9 +2,11 @@ package rtc
 
 import (
 	"errors"
+	"github.com/golang/protobuf/proto"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
@@ -54,18 +56,18 @@ func (s *LiveSignaling) waitPush(req *api.SignalReq, operationID string) {
 
 func (s *LiveSignaling) doSignalPush(req *api.SignalReq, operationID string) {
 	switch payload := req.Payload.(type) {
-	case *api.SignalReq_Invite:
-		log.Info(operationID, "recv signal push ", payload.Invite.String())
-		s.listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.Invite))
+	//case *api.SignalReq_Invite:
+	//	log.Info(operationID, "recv signal push ", payload.Invite.String())
+	//	s.listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.Invite))
 	case *api.SignalReq_Accept:
 		log.Info(operationID, "recv signal push ", payload.Accept.String())
 		s.listener.OnInviteeAccepted(utils.StructToJsonString(payload.Accept))
 	case *api.SignalReq_Reject:
 		log.Info(operationID, "recv signal push ", payload.Reject.String())
 		s.listener.OnInviteeRejected(utils.StructToJsonString(payload.Reject))
-	case *api.SignalReq_Cancel:
-		log.Info(operationID, "recv signal push ", payload.Cancel.String())
-		s.listener.OnInvitationCancelled(utils.StructToJsonString(payload.Cancel))
+	//case *api.SignalReq_Cancel:
+	//	log.Info(operationID, "recv signal push ", payload.Cancel.String())
+	//	s.listener.OnInvitationCancelled(utils.StructToJsonString(payload.Cancel))
 	default:
 		log.Error(operationID, "payload type failed ")
 	}
@@ -73,6 +75,51 @@ func (s *LiveSignaling) doSignalPush(req *api.SignalReq, operationID string) {
 
 func (s *LiveSignaling) SetListener(listener open_im_sdk_callback.OnSignalingListener, operationID string) {
 	s.listener = listener
+}
+
+func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value, operationID string) {
+	log.Debug("", utils.GetSelfFuncName(), "args ", msg.String())
+	var resp api.SignalReq
+	err := proto.Unmarshal(msg.Content, &resp)
+	if err != nil {
+		log.Error(operationID, "Unmarshal failed")
+		return
+	}
+	switch payload := resp.Payload.(type) {
+	case *api.SignalReq_Accept:
+		log.Info(operationID, "signaling response ", payload.Accept.String())
+		if payload.Accept.Invitation.Invitation.InviterUserID == s.loginUserID {
+			var wsResp ws.GeneralWsResp
+			wsResp.ReqIdentifier = constant.WSSendSignalMsg
+			wsResp.MsgIncr = s.loginUserID + payload.Accept.InviteeUserID + payload.Accept.Invitation.Invitation.RoomID
+			s.DoWSSignal(wsResp)
+		}
+
+	case *api.SignalReq_Reject:
+		log.Info(operationID, "signaling response ", payload.Reject.String())
+		if payload.Reject.Invitation.Invitation.InviterUserID == s.loginUserID {
+			var wsResp ws.GeneralWsResp
+			wsResp.ReqIdentifier = constant.WSSendSignalMsg
+			wsResp.MsgIncr = s.loginUserID + payload.Reject.InviteeUserID + payload.Reject.Invitation.Invitation.RoomID
+			s.DoWSSignal(wsResp)
+		}
+
+	case *api.SignalReq_HungUp:
+		log.Info(operationID, "signaling response ", payload.HungUp.String())
+
+	case *api.SignalReq_Cancel:
+		log.Info(operationID, "signaling response ", payload.Cancel.String())
+		if utils.IsContain(s.loginUserID, payload.Cancel.Invitation.Invitation.InviteeUserIDList) {
+			s.listener.OnInvitationCancelled(utils.StructToJsonString(payload.Cancel))
+		}
+	case *api.SignalReq_Invite:
+		log.Info(operationID, "signaling response ", payload.Invite.String())
+		if utils.IsContain(s.loginUserID, payload.Invite.Invitation.InviteeUserIDList) {
+			s.listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.Invite))
+		}
+	default:
+		log.Error(operationID, "resp payload type failed ", payload)
+	}
 }
 
 func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk_callback.Base, operationID string) {

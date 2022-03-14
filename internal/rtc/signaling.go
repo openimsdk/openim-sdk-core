@@ -7,21 +7,19 @@ import (
 )
 
 type Signaling interface {
+	Invite(callback open_im_sdk_callback.Base, signalInviteReq string, operationID string)
 
-	//invitee 被邀请者
-	Invite(inviteeUserID, customData string, offlinePushInfo *api.OfflinePushInfo, timeout uint32, callback open_im_sdk_callback.Base, operationID string) error
+	InviteInGroup(signalInviteInGroupReq string, callback open_im_sdk_callback.Base, operationID string)
 
-	InviteInGroup(groupID string, inviteeUserIDList []string, customData string, offlinePushInfo *api.OfflinePushInfo, timeout uint32, callback open_im_sdk_callback.Base, operationID string) error
+	Cancel(callback open_im_sdk_callback.Base, signalCancelReq string, operationID string)
 
-	Cancel(inviteeUserID, customData string, callback open_im_sdk_callback.Base, operationID string) error
+	Accept(callback open_im_sdk_callback.Base, signalAcceptReq string, operationID string)
 
-	Accept(inviteUserID, customData string, callback open_im_sdk_callback.Base, operationID string) error
+	Reject(callback open_im_sdk_callback.Base, signalRejectReq string, operationID string)
 
-	Reject(inviteUserID, customData string, callback open_im_sdk_callback.Base, operationID string) error
+	HungUp(callback open_im_sdk_callback.Base, signalHungUpReq string, operationID string)
 
-	HungUp(peerUserID, customData string, callback open_im_sdk_callback.Base, operationID string) error
+	SetListener(listener open_im_sdk_callback.OnSignalingListener, operationID string)
 
-	SetListener(listener open_im_sdk_callback.OnSignalingListener, operationID string) error
-
-	DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value)
+	DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value, operationID string)
 }
