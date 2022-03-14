@@ -41,7 +41,7 @@ var TestRoomID = "room_id_111"
 func DoTestInviteInGroup() {
 	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
 	req := &api.SignalInviteInGroupReq{}
-
+	req.Invitation = SetTestInviteInfo()
 	s := utils.StructToJsonString(req)
 	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
 	open_im_sdk.SignalingInviteInGroup(t, t.OperationID, s)
@@ -54,6 +54,7 @@ func SetTestInviteInfo() *api.InvitationInfo {
 	req.MediaType = "video"
 	req.RoomID = TestRoomID
 	req.GroupID = TestgroupID
+	req.SessionType = 2
 	return req
 }
 
@@ -72,7 +73,7 @@ func DoTestAccept() {
 	req := &api.SignalAcceptReq{Invitation: &api.SignalInviteReq{}}
 	req.Invitation.Invitation = SetTestInviteInfo()
 	s := utils.StructToJsonString(req)
-	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
+	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s, req.String())
 	open_im_sdk.SignalingAccept(t, t.OperationID, s)
 }
 
