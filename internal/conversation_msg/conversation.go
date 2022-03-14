@@ -445,6 +445,11 @@ func (c *Conversation) clearC2CHistoryMessage(callback open_im_sdk_callback.Base
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 }
 
+func (c *Conversation) deleteMessage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
+	//c.p.PostFatalCallback(callback, constant.BatchSetConversationRouter, apiReq, &apiResp, apiReq.OperationID)
+	c.deleteMessageFromLocalStorage(callback, s, operationID)
+}
+
 func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
 	var conversation db.LocalConversation
 	var latestMsg sdk_struct.MsgStruct

@@ -18,7 +18,7 @@ func (s *LiveSignaling) SetDefaultReq(req *api.InvitationInfo) {
 	req.InviterUserID = s.loginUserID
 }
 
-func (s *LiveSignaling) InviteInGroup(signalInviteInGroupReq string, callback open_im_sdk_callback.Base, operationID string) {
+func (s *LiveSignaling) InviteInGroup(callback open_im_sdk_callback.Base, signalInviteInGroupReq string, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
 		return

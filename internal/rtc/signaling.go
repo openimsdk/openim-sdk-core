@@ -9,7 +9,7 @@ import (
 type Signaling interface {
 	Invite(callback open_im_sdk_callback.Base, signalInviteReq string, operationID string)
 
-	InviteInGroup(signalInviteInGroupReq string, callback open_im_sdk_callback.Base, operationID string)
+	InviteInGroup(callback open_im_sdk_callback.Base, signalInviteInGroupReq string, operationID string)
 
 	Cancel(callback open_im_sdk_callback.Base, signalCancelReq string, operationID string)
 
