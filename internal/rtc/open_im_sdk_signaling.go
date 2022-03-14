@@ -83,10 +83,10 @@ func (s *LiveSignaling) Cancel(signalCancelReq string, callback open_im_sdk_call
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ", signalCancelReq)
-		req := &api.SignalCancelReq{}
+		req := api.SignalReq_Cancel{}
 		var signalReq api.SignalReq
 		utils.JsonStringToStruct(signalCancelReq, req)
-		*signalReq.GetCancel() = *req
+		signalReq.Payload = &req
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback finished")
 	}()
