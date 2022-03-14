@@ -15,7 +15,6 @@ func (s *LiveSignaling) SetDefaultReq(req *api.InvitationInfo) {
 	if req.Timeout == 0 {
 		req.Timeout = 60 * 60
 	}
-	req.InviterUserID = s.loginUserID
 }
 
 func (s *LiveSignaling) InviteInGroup(callback open_im_sdk_callback.Base, signalInviteInGroupReq string, operationID string) {
