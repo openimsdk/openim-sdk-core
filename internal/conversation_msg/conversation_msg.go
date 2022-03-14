@@ -127,6 +127,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				log.Info(operationID, "signaling DoNotification ", v)
 				if c.signaling != nil {
 					c.signaling.DoNotification(v, c.ch, operationID)
+					continue
 				}
 			}
 		case constant.GroupChatType:
@@ -137,6 +138,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				log.Info(operationID, "signaling DoNotification ", v)
 				if c.signaling != nil {
 					c.signaling.DoNotification(v, c.ch, operationID)
+					continue
 				}
 			}
 		}
