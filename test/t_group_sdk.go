@@ -98,8 +98,8 @@ func SetTestGroupID(groupID, memberID string) {
 	TestgroupID = groupID
 }
 
-var MemberUserID = "openIM101"
-var TestgroupID = "6cdeba7330140fad94180a005ab5cba8"
+var MemberUserID = "18349115126"
+var TestgroupID = "f2e77b9ec33e92298675ad511fdfa6ab"
 
 func DoTestCreateGroup() {
 	var test testCreateGroup

@@ -27,7 +27,7 @@ func reliabilityTest() {
 
 var (
 	TESTIP       = "43.128.5.63"
-	TESTIP_LOCAL = "127.0.0.1"
+	TESTIP_LOCAL = "43.128.5.63"
 	//TESTIP       = "1.14.194.38"
 	APIADDR      = "http://" + TESTIP_LOCAL + ":10000"
 	WSADDR       = "ws://" + TESTIP + ":17778"
@@ -42,6 +42,7 @@ func main() {
 	//friendID := "17726378428"
 	tokenx := test.GenToken(strMyUidx)
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+	test.DoTestInviteInGroup()
 	//test.DoTestSendMsg2(strMyUidx, friendID)
 	//test.DoTestGetAllConversation()
 	//test.DoTestGetOneConversation(friendID)

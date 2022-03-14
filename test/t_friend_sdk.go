@@ -433,6 +433,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	open_im_sdk.SetSignalingListener(&signalingListener)
 
 	InOutlllogin(uid, tk)
+	time.Sleep(10 * time.Second)
 	log.Info("", "InOutDoTest fin")
 }
 
