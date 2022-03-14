@@ -658,6 +658,7 @@ func MarkGroupMessageHasRead(callback open_im_sdk_callback.Base, operationID str
 	}
 	userForSDK.Conversation().MarkGroupMessageHasRead(callback, groupID, operationID)
 }
+
 func DeleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, operationID string, message string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
@@ -666,6 +667,7 @@ func DeleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, operation
 	}
 	userForSDK.Conversation().DeleteMessageFromLocalStorage(callback, message, operationID)
 }
+
 func ClearC2CHistoryMessage(callback open_im_sdk_callback.Base, operationID string, userID string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())

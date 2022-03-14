@@ -967,6 +967,18 @@ func (c *Conversation) MarkGroupMessageHasRead(callback open_im_sdk_callback.Bas
 	}()
 }
 
+func (c *Conversation) DeleteMessage(callback open_im_sdk_callback.Base, message string, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		s := sdk_struct.MsgStruct{}
+		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+		c.deleteMessage(callback, &s, operationID)
+		callback.OnSuccess("")
+	}()
+}
+
 func (c *Conversation) DeleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, message string, operationID string) {
 	go func() {
 		s := sdk_struct.MsgStruct{}
