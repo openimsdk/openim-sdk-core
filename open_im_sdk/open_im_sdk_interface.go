@@ -773,7 +773,7 @@ func SignalingInviteInGroup(callback open_im_sdk_callback.Base, operationID stri
 		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
 		return
 	}
-	userForSDK.Signaling().InviteInGroup(signalInviteInGroupReq, callback, operationID)
+	userForSDK.Signaling().InviteInGroup(callback, signalInviteInGroupReq, operationID)
 }
 
 func SignalingInvite(callback open_im_sdk_callback.Base, operationID string, signalInviteReq string) {
