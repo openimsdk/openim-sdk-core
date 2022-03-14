@@ -117,6 +117,11 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 		if utils.IsContain(s.loginUserID, payload.Invite.Invitation.InviteeUserIDList) {
 			s.listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.Invite))
 		}
+	case *api.SignalReq_InviteInGroup:
+		log.Info(operationID, "signaling response ", payload.InviteInGroup.String())
+		if utils.IsContain(s.loginUserID, payload.InviteInGroup.Invitation.InviteeUserIDList) {
+			s.listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.InviteInGroup))
+		}
 	default:
 		log.Error(operationID, "resp payload type failed ", payload)
 	}
@@ -146,6 +151,9 @@ func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk
 	case *api.SignalResp_Invite:
 		log.Info(operationID, "signaling response ", payload.Invite.String())
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.InviteCallback(payload.Invite)))
+	case *api.SignalResp_InviteInGroup:
+		log.Info(operationID, "signaling response ", payload.InviteInGroup.String())
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.InviteInGroupCallback(payload.InviteInGroup)))
 	default:
 		log.Error(operationID, "resp payload type failed ", payload)
 		common.CheckAnyErrCallback(callback, 3002, errors.New("resp payload type failed"), operationID)

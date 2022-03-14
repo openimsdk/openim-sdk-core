@@ -229,11 +229,13 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 }
 
 func (u *LoginMgr) GetLoginUser() string {
-	if u.GetLoginStatus() == constant.LoginSuccess {
-		return u.loginUserID
-	} else {
-		return ""
-	}
+	return u.loginUserID
+	//
+	//if u.GetLoginStatus() == constant.LoginSuccess {
+	//	return u.loginUserID
+	//} else {
+	//	return ""
+	//}
 }
 
 func (u *LoginMgr) GetLoginStatus() int32 {

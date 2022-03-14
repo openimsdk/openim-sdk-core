@@ -1,7 +1,6 @@
 package main
 
 import (
-	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/test"
 
@@ -43,15 +42,21 @@ func main() {
 	//friendID := "17726378428"
 	tokenx := test.GenToken(strMyUidx)
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+	//test.DoTestInviteInGroup()
 	//test.DoTestSendMsg2(strMyUidx, friendID)
 	//test.DoTestGetAllConversation()
-	//test.DoTestGetOneConversation(friendID)
+	//test.DoTestGetOneConversation("single_17726378428")
+	//test.DoTestGetConversationRecvMessageOpt([]string{"single_17726378428"})
+	//test.DoTestGetConversations()
 	//test.DoTestGetConversationListSplit()
 
 	//set batch
-	test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.ReceiveMessage)
+	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.NotReceiveMessage)
 	//set one
-	//test.DoTestSetConversationPinned("single_13312345678", true)
+	////set batch
+	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.ReceiveMessage)
+	////set one
+	test.DoTestSetConversationPinned("single_17726378428", false)
 	//test.DoTestSetOneConversationRecvMessageOpt("single_17726378428", constant.NotReceiveMessage)
 	//test.DoTestSetOneConversationPrivateChat("single_17726378428", false)
 	for {

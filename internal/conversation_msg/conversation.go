@@ -21,6 +21,7 @@ func (c *Conversation) getAllConversationList(callback open_im_sdk_callback.Base
 	common.CheckDBErrCallback(callback, err, operationID)
 	return conversationList
 }
+
 func (c *Conversation) getConversationListSplit(callback open_im_sdk_callback.Base, offset, count int, operationID string) sdk.GetConversationListSplitCallback {
 	conversationList, err := c.db.GetConversationListSplit(offset, count)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -112,9 +113,10 @@ func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callba
 	apiReq.OwnerUserID = c.loginUserID
 	apiReq.ConversationIDs = conversationIDList
 	var realData server_api_params.GetConversationResp
-	c.p.PostFatalCallback(callback, constant.GetConversationRouter, apiReq, &realData, apiReq.OperationID)
+	c.p.PostFatalCallback(callback, constant.GetConversationsRouter, apiReq, &realData, apiReq.OperationID)
 	return realData
 }
+
 func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, sourceID string, sessionType int32, operationID string) *db.LocalConversation {
 	conversationID := utils.GetConversationIDBySessionType(sourceID, int(sessionType))
 	lc, err := c.db.GetConversation(conversationID)
@@ -246,11 +248,13 @@ func (c *Conversation) SyncConversations(operationID string) {
 	for _, index := range sameA {
 		log.NewInfo("", *conversationsOnServer[index])
 		err := c.db.UpdateConversationForSync(conversationsOnServer[index])
+		conversationChangedList = append(conversationChangedList, utils.StructToJsonString(conversationsOnServer[index]))
 		if err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), "UpdateConversation failed ", err.Error(), *conversationsOnServer[index])
 			continue
 		}
 	}
+	log.NewInfo(operationID, conversationChangedList)
 	c.ConversationListener.OnConversationChanged(utils.StructToJsonString(conversationChangedList))
 	// local有 server没有 代表没有修改公共字段
 	for _, index := range bInANot {

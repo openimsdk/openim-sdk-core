@@ -405,7 +405,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	cf.WsAddr = ws
 	cf.Platform = 1
 	cf.DataDir = "./"
-	cf.LogLevel = 6
+	cf.LogLevel = 5
 
 	var s string
 	b, _ := json.Marshal(cf)
@@ -433,6 +433,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	open_im_sdk.SetSignalingListener(&signalingListener)
 
 	InOutlllogin(uid, tk)
+	time.Sleep(10 * time.Second)
 	log.Info("", "InOutDoTest fin")
 }
 
