@@ -286,6 +286,10 @@ func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req 
 	lc.ConversationID = conversationID
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.ch)
 }
+func (c *Conversation) UpdateOneMessage(callback open_im_sdk_callback.Base, req sdk.UpdateMessageParams, operationID string) {
+	err := c.db.UpdateColumnsMessage(req.ClientMsgID, map[string]interface{}{"ex": req.Ex})
+	common.CheckDBErrCallback(callback, err, operationID)
+}
 func (c *Conversation) typingStatusUpdate(callback open_im_sdk_callback.Base, recvID, msgTip, operationID string) {
 	s := sdk_struct.MsgStruct{}
 	c.initBasicInfo(&s, constant.UserMsgType, constant.Typing, operationID)

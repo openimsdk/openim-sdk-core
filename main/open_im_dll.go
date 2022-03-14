@@ -347,7 +347,7 @@ func GetLoginStatus() int32 {
 }
 
 //export GetLoginUser
-func GetLoginUser(OnReturn C.FunWithString,) {
+func GetLoginUser(OnReturn C.FunWithString) {
 	ret := openIM.GetLoginUser()
 	FunWithString(OnReturn, ret)
 }
@@ -1160,6 +1160,18 @@ func GetHistoryMessageList(onError C.FunWithIntString, onSuccess C.FunWithString
 //export RevokeMessage
 func RevokeMessage(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, message *C.char) {
 	openIM.RevokeMessage(&BaseCallBack{
+		onError: func(i int, s string) {
+			FunWithIntString(onError, i, s)
+		},
+		onSuccess: func(s string) {
+			FunWithString(onSuccess, s)
+		},
+	}, C.GoString(operationID), C.GoString(message))
+}
+
+//export UpdateMessage
+func UpdateMessage(onError C.FunWithIntString, onSuccess C.FunWithString, operationID *C.char, message *C.char) {
+	openIM.UpdateMessage(&BaseCallBack{
 		onError: func(i int, s string) {
 			FunWithIntString(onError, i, s)
 		},
