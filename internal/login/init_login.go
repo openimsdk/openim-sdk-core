@@ -29,8 +29,7 @@ type LoginMgr struct {
 	db           *db.DataBase
 	ws           *ws.Ws
 	msgSync      *ws.MsgSync
-
-	heartbeat *ws.Heartbeat
+	heartbeat    *ws.Heartbeat
 
 	token        string
 	loginUserID  string
@@ -103,6 +102,10 @@ func (u *LoginMgr) SetUserListener(userListener open_im_sdk_callback.OnUserListe
 	u.userListener = userListener
 }
 
+func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalingListener) {
+	u.signalingListener = listener
+}
+
 func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
 	log.Info(operationID, "login start... ", userID, token)
 	if u.justOnceFlag {
@@ -170,8 +173,9 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener)
 	u.conversation.SyncConversations(operationID)
+
+	u.signaling = rtc.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID)
 	log.Info(operationID, "login success...")
-	//u.forycedSyncReceiveMessageOpt()
 	cb.OnSuccess("")
 
 }

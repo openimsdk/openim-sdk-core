@@ -1,7 +1,6 @@
 package main
 
 import (
-	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/test"
 
@@ -39,9 +38,9 @@ var (
 )
 
 func main() {
-	strMyUidx := "18381415165"
+	strMyUidx := "18666662412"
 	//friendID := "17726378428"
-	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxODM4MTQxNTE2NSIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYyMDA1MTIwLCJuYmYiOjE2NDY2NDUxMjAsImlhdCI6MTY0NjY0NTEyMH0.UPPMBj8NdTPAKDVFE3XFLRg-Og1THEGCwHIQHBsf23M"
+	tokenx := test.GenToken(strMyUidx)
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	//test.DoTestSendMsg2(strMyUidx, friendID)
 	//test.DoTestGetAllConversation()
@@ -49,11 +48,11 @@ func main() {
 	//test.DoTestGetConversationListSplit()
 
 	//set batch
-	test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.ReceiveMessage)
+	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.ReceiveMessage)
 	//set one
-	test.DoTestSetConversationPinned("single_13312345678", true)
-	test.DoTestSetOneConversationRecvMessageOpt("single_17726378428", constant.NotReceiveMessage)
-	test.DoTestSetOneConversationPrivateChat("single_17726378428", false)
+	//test.DoTestSetConversationPinned("single_13312345678", true)
+	//test.DoTestSetOneConversationRecvMessageOpt("single_17726378428", constant.NotReceiveMessage)
+	//	test.DoTestSetOneConversationPrivateChat("single_17726378428", false)
 	for {
 		time.Sleep(2 * time.Second)
 	}

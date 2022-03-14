@@ -8,18 +8,33 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func (s *LiveSignaling) InviteInGroup(callback open_im_sdk_callback.Base, signalInviteInGroupReq string, operationID string) {
+func (s *LiveSignaling) SetDefaultReq(req *api.InvitationInfo) {
+	if req.RoomID == "" {
+		req.RoomID = utils.OperationIDGenerator()
+	}
+	if req.Timeout == 0 {
+		req.Timeout = 60 * 60
+	}
+	req.InviterUserID = s.loginUserID
+}
+
+func (s *LiveSignaling) InviteInGroup(signalInviteInGroupReq string, callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
 		return
 	}
+	if s.listener == nil {
+		log.Error(operationID, "listener is nil")
+		callback.OnError(3004, "listener is nil")
+	}
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ", signalInviteInGroupReq)
-		req := &api.SignalInviteInGroupReq{}
+		req := &api.SignalReq_InviteInGroup{InviteInGroup: &api.SignalInviteInGroupReq{Invitation: &api.InvitationInfo{}, OfflinePushInfo: &api.OfflinePushInfo{}}}
 		var signalReq api.SignalReq
 		common.JsonUnmarshalCallback(signalInviteInGroupReq, req, callback, operationID)
-		*signalReq.GetInviteInGroup() = *req
+		s.SetDefaultReq(req.InviteInGroup.Invitation)
+		signalReq.Payload = req
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback: finished")
 	}()
@@ -30,13 +45,18 @@ func (s *LiveSignaling) Invite(callback open_im_sdk_callback.Base, signalInviteR
 		log.Error(operationID, "callback is nil")
 		return
 	}
+	if s.listener == nil {
+		log.Error(operationID, "listener is nil")
+		callback.OnError(3004, "listener is nil")
+	}
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ", signalInviteReq)
-		req := &api.SignalInviteReq{}
+		req := &api.SignalReq_Invite{Invite: &api.SignalInviteReq{Invitation: &api.InvitationInfo{}, OfflinePushInfo: &api.OfflinePushInfo{}}}
 		var signalReq api.SignalReq
 		common.JsonUnmarshalCallback(signalInviteReq, req, callback, operationID)
-		*signalReq.GetInvite() = *req
+		s.SetDefaultReq(req.Invite.Invitation)
+		signalReq.Payload = req
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback: finished")
 	}()
@@ -47,13 +67,19 @@ func (s *LiveSignaling) Accept(callback open_im_sdk_callback.Base, signalAcceptR
 		log.Error(operationID, "callback is nil")
 		return
 	}
+	if s.listener == nil {
+		log.Error(operationID, "listener is nil")
+		callback.OnError(3004, "listener is nil")
+	}
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ", signalAcceptReq)
-		req := &api.SignalAcceptReq{}
+		req := &api.SignalReq_Accept{Accept: &api.SignalAcceptReq{Invitation: &api.SignalInviteReq{Invitation: &api.InvitationInfo{}, OfflinePushInfo: &api.OfflinePushInfo{}}}}
 		var signalReq api.SignalReq
 		common.JsonUnmarshalCallback(signalAcceptReq, req, callback, operationID)
-		*signalReq.GetAccept() = *req
+		s.SetDefaultReq(req.Accept.Invitation.Invitation)
+		req.Accept.InviteeUserID = s.loginUserID
+		signalReq.Payload = req
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback finished")
 	}()
@@ -64,13 +90,19 @@ func (s *LiveSignaling) Reject(callback open_im_sdk_callback.Base, signalRejectR
 		log.NewError(operationID, "callback is nil")
 		return
 	}
+	if s.listener == nil {
+		log.Error(operationID, "listener is nil")
+		callback.OnError(3004, "listener is nil")
+	}
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ", signalRejectReq)
-		req := &api.SignalRejectReq{}
+		req := &api.SignalReq_Reject{Reject: &api.SignalRejectReq{Invitation: &api.SignalInviteReq{Invitation: &api.InvitationInfo{}, OfflinePushInfo: &api.OfflinePushInfo{}}}}
 		var signalReq api.SignalReq
-		utils.JsonStringToStruct(signalRejectReq, req)
-		*signalReq.GetReject() = *req
+		common.JsonUnmarshalCallback(signalRejectReq, req, callback, operationID)
+		s.SetDefaultReq(req.Reject.Invitation.Invitation)
+		req.Reject.InviteeUserID = s.loginUserID
+		signalReq.Payload = req
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback finished")
 	}()
@@ -80,13 +112,19 @@ func (s *LiveSignaling) Cancel(callback open_im_sdk_callback.Base, signalCancelR
 	if callback == nil {
 		log.NewError(operationID, "callback is nil")
 	}
+	if s.listener == nil {
+		log.Error(operationID, "listener is nil")
+		callback.OnError(3004, "listener is nil")
+	}
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ", signalCancelReq)
-		req := &api.SignalCancelReq{}
+		req := &api.SignalReq_Cancel{Cancel: &api.SignalCancelReq{Invitation: &api.SignalInviteReq{Invitation: &api.InvitationInfo{}, OfflinePushInfo: &api.OfflinePushInfo{}}}}
 		var signalReq api.SignalReq
-		utils.JsonStringToStruct(signalCancelReq, req)
-		*signalReq.GetCancel() = *req
+		common.JsonUnmarshalCallback(signalCancelReq, req, callback, operationID)
+		s.SetDefaultReq(req.Cancel.Invitation.Invitation)
+		req.Cancel.InviterUserID = s.loginUserID
+		signalReq.Payload = req
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback finished")
 	}()
@@ -96,13 +134,19 @@ func (s *LiveSignaling) HungUp(callback open_im_sdk_callback.Base, signalHungUpR
 	if callback == nil {
 		log.NewError(operationID, "callback is nil")
 	}
+	if s.listener == nil {
+		log.Error(operationID, "listener is nil")
+		callback.OnError(3004, "listener is nil")
+	}
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ", signalHungUpReq)
-		req := &api.SignalHungUpReq{}
+		req := &api.SignalReq_HungUp{HungUp: &api.SignalHungUpReq{Invitation: &api.SignalInviteReq{Invitation: &api.InvitationInfo{}, OfflinePushInfo: &api.OfflinePushInfo{}}}}
 		var signalReq api.SignalReq
 		common.JsonUnmarshalCallback(signalHungUpReq, req, callback, operationID)
-		*signalReq.GetHungUp() = *req
+		s.SetDefaultReq(req.HungUp.Invitation.Invitation)
+		req.HungUp.UserID = s.loginUserID
+		signalReq.Payload = req
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback finished")
 	}()
