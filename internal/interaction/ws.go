@@ -240,7 +240,7 @@ func (w *Ws) doWsMsg(message []byte) {
 		log.Warn(wsResp.OperationID, "logout... ")
 	case constant.WSSendSignalMsg:
 		log.Info(wsResp.OperationID, "signaling...")
-		w.doWSSignal(*wsResp)
+		w.DoWSSignal(*wsResp)
 	default:
 		log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
 		return
@@ -283,7 +283,7 @@ func (w *Ws) doWSSendMsg(wsResp GeneralWsResp) error {
 	return nil
 }
 
-func (w *Ws) doWSSignal(wsResp GeneralWsResp) error {
+func (w *Ws) DoWSSignal(wsResp GeneralWsResp) error {
 	if err := w.notifyResp(wsResp); err != nil {
 		return utils.Wrap(err, "")
 	}
@@ -336,6 +336,8 @@ func (w *Ws) SendSignalingReqWaitResp(req *server_api_params.SignalReq, operatio
 func (w *Ws) SignalingWaitPush(inviterUserID, inviteeUserID, roomID string, timeout int32, operationID string) (*server_api_params.SignalReq, error) {
 	msgIncr := inviterUserID + inviteeUserID + roomID
 	ch := w.AddChByIncr(msgIncr)
+	defer w.DelCh(msgIncr)
+
 	resp, err := w.WaitResp(ch, int(timeout), operationID, nil)
 	if err != nil {
 		return nil, utils.Wrap(err, "")

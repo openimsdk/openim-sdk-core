@@ -24,7 +24,7 @@ type LoginMgr struct {
 	group        *group.Group
 	conversation *conv.Conversation
 	user         *user.User
-	signaling    *rtc.LiveSignaling
+	signaling    rtc.Signaling
 	full         *full.Full
 	db           *db.DataBase
 	ws           *ws.Ws
@@ -78,7 +78,7 @@ func (u *LoginMgr) Friend() *friend.Friend {
 	return u.friend
 }
 
-func (u *LoginMgr) Signaling() *rtc.LiveSignaling {
+func (u *LoginMgr) Signaling() rtc.Signaling {
 	return u.signaling
 }
 
@@ -175,6 +175,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.conversation.SyncConversations(operationID)
 
 	u.signaling = rtc.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID)
+	u.conversation.SetSignaling(u.signaling)
 	log.Info(operationID, "login success...")
 	cb.OnSuccess("")
 

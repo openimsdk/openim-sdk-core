@@ -52,9 +52,10 @@ func main() {
 	//set one
 	//test.DoTestSetConversationPinned("single_13312345678", true)
 	//test.DoTestSetOneConversationRecvMessageOpt("single_17726378428", constant.NotReceiveMessage)
-	test.DoTestSetOneConversationPrivateChat("single_17726378428", false)
+	//	test.DoTestSetOneConversationPrivateChat("single_17726378428", false)
 	for {
 		time.Sleep(2 * time.Second)
+		log.Info("", "waiting...")
 	}
 	//reliabilityTest()
 	//	test.PressTest(testClientNum, intervalSleep, imIP)
