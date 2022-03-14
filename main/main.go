@@ -42,7 +42,7 @@ func main() {
 	//friendID := "17726378428"
 	tokenx := test.GenToken(strMyUidx)
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
-	test.DoTestInviteInGroup()
+	test.DoTestCancel()
 	//test.DoTestSendMsg2(strMyUidx, friendID)
 	//test.DoTestGetAllConversation()
 	//test.DoTestGetOneConversation(friendID)

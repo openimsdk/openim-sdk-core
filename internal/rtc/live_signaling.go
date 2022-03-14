@@ -88,19 +88,19 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 	switch payload := resp.Payload.(type) {
 	case *api.SignalReq_Accept:
 		log.Info(operationID, "signaling response ", payload.Accept.String())
-		if payload.Accept.Invitation.Invitation.InviterUserID == s.loginUserID {
+		if payload.Accept.Invitation.InviterUserID == s.loginUserID {
 			var wsResp ws.GeneralWsResp
 			wsResp.ReqIdentifier = constant.WSSendSignalMsg
-			wsResp.MsgIncr = s.loginUserID + payload.Accept.InviteeUserID + payload.Accept.Invitation.Invitation.RoomID
+			wsResp.MsgIncr = s.loginUserID + payload.Accept.InviteeUserID + payload.Accept.Invitation.RoomID
 			s.DoWSSignal(wsResp)
 		}
 
 	case *api.SignalReq_Reject:
 		log.Info(operationID, "signaling response ", payload.Reject.String())
-		if payload.Reject.Invitation.Invitation.InviterUserID == s.loginUserID {
+		if payload.Reject.Invitation.InviterUserID == s.loginUserID {
 			var wsResp ws.GeneralWsResp
 			wsResp.ReqIdentifier = constant.WSSendSignalMsg
-			wsResp.MsgIncr = s.loginUserID + payload.Reject.InviteeUserID + payload.Reject.Invitation.Invitation.RoomID
+			wsResp.MsgIncr = s.loginUserID + payload.Reject.InviteeUserID + payload.Reject.Invitation.RoomID
 			s.DoWSSignal(wsResp)
 		}
 
@@ -109,7 +109,7 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 
 	case *api.SignalReq_Cancel:
 		log.Info(operationID, "signaling response ", payload.Cancel.String())
-		if utils.IsContain(s.loginUserID, payload.Cancel.Invitation.Invitation.InviteeUserIDList) {
+		if utils.IsContain(s.loginUserID, payload.Cancel.Invitation.InviteeUserIDList) {
 			s.listener.OnInvitationCancelled(utils.StructToJsonString(payload.Cancel))
 		}
 	case *api.SignalReq_Invite:
@@ -139,6 +139,7 @@ func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk
 	switch payload := resp.Payload.(type) {
 	case *api.SignalResp_Accept:
 		log.Info(operationID, "signaling response ", payload.Accept.String())
+
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.AcceptCallback(payload.Accept)))
 	case *api.SignalResp_Reject:
 		log.Info(operationID, "signaling response ", payload.Reject.String())

@@ -70,8 +70,8 @@ func DoTestInvite() {
 
 func DoTestAccept() {
 	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
-	req := &api.SignalAcceptReq{Invitation: &api.SignalInviteReq{}}
-	req.Invitation.Invitation = SetTestInviteInfo()
+	req := &api.SignalAcceptReq{Invitation: &api.InvitationInfo{}}
+	req.Invitation = SetTestInviteInfo()
 	s := utils.StructToJsonString(req)
 	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s, req.String())
 	open_im_sdk.SignalingAccept(t, t.OperationID, s)
@@ -79,8 +79,8 @@ func DoTestAccept() {
 
 func DoTestReject() {
 	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
-	req := &api.SignalRejectReq{Invitation: &api.SignalInviteReq{}}
-	req.Invitation.Invitation = SetTestInviteInfo()
+	req := &api.SignalRejectReq{Invitation: &api.InvitationInfo{}}
+	req.Invitation = SetTestInviteInfo()
 	s := utils.StructToJsonString(req)
 	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
 	open_im_sdk.SignalingReject(t, t.OperationID, s)
@@ -88,8 +88,9 @@ func DoTestReject() {
 
 func DoTestCancel() {
 	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
-	req := &api.SignalCancelReq{Invitation: &api.SignalInviteReq{}}
-	req.Invitation.Invitation = SetTestInviteInfo()
+	req := &api.SignalCancelReq{Invitation: &api.InvitationInfo{}}
+	req.Invitation = SetTestInviteInfo()
+	req.InviterUserID = "18666662412"
 	s := utils.StructToJsonString(req)
 	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
 	open_im_sdk.SignalingCancel(t, t.OperationID, s)
@@ -97,8 +98,8 @@ func DoTestCancel() {
 
 func DoTestHungUp() {
 	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
-	req := &api.SignalHungUpReq{Invitation: &api.SignalInviteReq{}}
-	req.Invitation.Invitation = SetTestInviteInfo()
+	req := &api.SignalHungUpReq{Invitation: &api.InvitationInfo{}}
+	req.Invitation = SetTestInviteInfo()
 	s := utils.StructToJsonString(req)
 	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
 	open_im_sdk.SignalingHungUp(t, t.OperationID, s)
