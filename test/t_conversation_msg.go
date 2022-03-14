@@ -15,7 +15,7 @@ import (
 )
 
 //func DotestSetConversationRecvMessageOpt() {
-//	var callback BaseSuccFailedTest
+//	var callback BaseSuccessFailedTest
 //	callback.funcName = utils.GetSelfFuncName()
 //	var idList []string
 //	idList = append(idList, "18567155635")
@@ -25,7 +25,7 @@ import (
 //}
 //
 //func DoTestGetMultipleConversation() {
-//	var callback BaseSuccFailedTest
+//	var callback BaseSuccessFailedTest
 //	callback.funcName = utils.GetSelfFuncName()
 //	var idList []string
 //	fmt.Println("DoTestGetMultipleConversation come here")
@@ -36,7 +36,7 @@ import (
 //}
 //
 //func DoTestGetConversationRecvMessageOpt() {
-//	var callback BaseSuccFailedTest
+//	var callback BaseSuccessFailedTest
 //	callback.funcName = utils.GetSelfFuncName()
 //	var idList []string
 //	idList = append(idList, "18567155635")

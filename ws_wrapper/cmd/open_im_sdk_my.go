@@ -49,6 +49,7 @@ func main() {
 	fmt.Println("ws server is starting")
 	ws_local_server.WS.OnInit(*sdkWsPort)
 	ws_local_server.WS.Run()
+	fmt.Println("run success")
 	wg.Wait()
 
 }

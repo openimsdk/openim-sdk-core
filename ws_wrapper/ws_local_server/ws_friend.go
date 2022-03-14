@@ -49,7 +49,7 @@ func (wsRouter *WsFuncRouter) GetDesignatedFriendsInfo(userIDList string, operat
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, userIDList, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Friend().GetDesignatedFriendsInfo(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, userIDList, operationID)
+	userWorker.Friend().GetDesignatedFriendsInfo(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, userIDList, operationID)
 }
 
 //1
@@ -58,7 +58,7 @@ func (wsRouter *WsFuncRouter) AddFriend(paramsReq string, operationID string) {
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, paramsReq, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Friend().AddFriend(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, paramsReq, operationID)
+	userWorker.Friend().AddFriend(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, paramsReq, operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetRecvFriendApplicationList(input string, operationID string) {
@@ -66,7 +66,7 @@ func (wsRouter *WsFuncRouter) GetRecvFriendApplicationList(input string, operati
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Friend().GetRecvFriendApplicationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
+	userWorker.Friend().GetRecvFriendApplicationList(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetSendFriendApplicationList(input string, operationID string) {
@@ -74,7 +74,7 @@ func (wsRouter *WsFuncRouter) GetSendFriendApplicationList(input string, operati
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Friend().GetSendFriendApplicationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
+	userWorker.Friend().GetSendFriendApplicationList(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
 //1
@@ -83,7 +83,7 @@ func (wsRouter *WsFuncRouter) AcceptFriendApplication(params string, operationID
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, params, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Friend().AcceptFriendApplication(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, params, operationID)
+	userWorker.Friend().AcceptFriendApplication(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, params, operationID)
 }
 
 //1
@@ -92,7 +92,7 @@ func (wsRouter *WsFuncRouter) RefuseFriendApplication(params string, operationID
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, params, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Friend().RefuseFriendApplication(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, params, operationID)
+	userWorker.Friend().RefuseFriendApplication(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, params, operationID)
 }
 
 //1
@@ -101,7 +101,7 @@ func (wsRouter *WsFuncRouter) CheckFriend(userIDList string, operationID string)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, userIDList, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Friend().CheckFriend(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, userIDList, operationID)
+	userWorker.Friend().CheckFriend(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, userIDList, operationID)
 }
 
 //1
@@ -110,7 +110,7 @@ func (wsRouter *WsFuncRouter) DeleteFriend(friendUserID string, operationID stri
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, friendUserID, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Friend().DeleteFriend(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, friendUserID, operationID)
+	userWorker.Friend().DeleteFriend(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, friendUserID, operationID)
 }
 
 //1
@@ -119,7 +119,7 @@ func (wsRouter *WsFuncRouter) GetFriendList(input string, operationID string) {
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Friend().GetFriendList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
+	userWorker.Friend().GetFriendList(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
 //1
@@ -128,7 +128,7 @@ func (wsRouter *WsFuncRouter) SetFriendRemark(remark string, operationID string)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, remark, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Friend().SetFriendRemark(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, remark, operationID)
+	userWorker.Friend().SetFriendRemark(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, remark, operationID)
 }
 
 func (wsRouter *WsFuncRouter) AddBlack(blackUserID string, operationID string) {
@@ -136,7 +136,7 @@ func (wsRouter *WsFuncRouter) AddBlack(blackUserID string, operationID string) {
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, blackUserID, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Friend().AddBlack(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, blackUserID, operationID)
+	userWorker.Friend().AddBlack(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, blackUserID, operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetBlackList(input string, operationID string) {
@@ -144,7 +144,7 @@ func (wsRouter *WsFuncRouter) GetBlackList(input string, operationID string) {
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Friend().GetBlackList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
+	userWorker.Friend().GetBlackList(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
 func (wsRouter *WsFuncRouter) RemoveBlack(removeUserID string, operationID string) {
@@ -152,5 +152,5 @@ func (wsRouter *WsFuncRouter) RemoveBlack(removeUserID string, operationID strin
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, removeUserID, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Friend().RemoveBlack(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, removeUserID, operationID)
+	userWorker.Friend().RemoveBlack(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, removeUserID, operationID)
 }

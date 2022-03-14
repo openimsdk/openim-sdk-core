@@ -51,8 +51,8 @@ func main() {
 	//set batch
 	test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.ReceiveMessage)
 	//set one
-	//test.DoTestSetConversationPinned("single_13312345678", true)
-	//test.DoTestSetOneConversationRecvMessageOpt("single_17726378428", constant.NotReceiveMessage)
+	test.DoTestSetConversationPinned("single_13312345678", true)
+	test.DoTestSetOneConversationRecvMessageOpt("single_17726378428", constant.NotReceiveMessage)
 	test.DoTestSetOneConversationPrivateChat("single_17726378428", false)
 	for {
 		time.Sleep(2 * time.Second)

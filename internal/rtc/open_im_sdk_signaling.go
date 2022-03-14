@@ -8,7 +8,7 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func (s *LiveSignaling) InviteInGroup(signalInviteInGroupReq string, callback open_im_sdk_callback.Base, operationID string) {
+func (s *LiveSignaling) InviteInGroup(callback open_im_sdk_callback.Base, signalInviteInGroupReq string, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
 		return
@@ -25,7 +25,7 @@ func (s *LiveSignaling) InviteInGroup(signalInviteInGroupReq string, callback op
 	}()
 }
 
-func (s *LiveSignaling) Invite(signalInviteReq string, callback open_im_sdk_callback.Base, operationID string) {
+func (s *LiveSignaling) Invite(callback open_im_sdk_callback.Base, signalInviteReq string, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
 		return
@@ -42,7 +42,7 @@ func (s *LiveSignaling) Invite(signalInviteReq string, callback open_im_sdk_call
 	}()
 }
 
-func (s *LiveSignaling) Accept(signalAcceptReq string, callback open_im_sdk_callback.Base, operationID string) {
+func (s *LiveSignaling) Accept(callback open_im_sdk_callback.Base, signalAcceptReq string, operationID string) {
 	if callback == nil {
 		log.Error(operationID, "callback is nil")
 		return
@@ -59,7 +59,7 @@ func (s *LiveSignaling) Accept(signalAcceptReq string, callback open_im_sdk_call
 	}()
 }
 
-func (s *LiveSignaling) Reject(signalRejectReq string, callback open_im_sdk_callback.Base, operationID string) {
+func (s *LiveSignaling) Reject(callback open_im_sdk_callback.Base, signalRejectReq string, operationID string) {
 	if callback == nil {
 		log.NewError(operationID, "callback is nil")
 		return
@@ -76,7 +76,7 @@ func (s *LiveSignaling) Reject(signalRejectReq string, callback open_im_sdk_call
 	}()
 }
 
-func (s *LiveSignaling) Cancel(signalCancelReq string, callback open_im_sdk_callback.Base, operationID string) {
+func (s *LiveSignaling) Cancel(callback open_im_sdk_callback.Base, signalCancelReq string, operationID string) {
 	if callback == nil {
 		log.NewError(operationID, "callback is nil")
 	}
@@ -92,7 +92,7 @@ func (s *LiveSignaling) Cancel(signalCancelReq string, callback open_im_sdk_call
 	}()
 }
 
-func (s *LiveSignaling) HungUp(signalHungUpReq string, callback open_im_sdk_callback.Base, operationID string) {
+func (s *LiveSignaling) HungUp(callback open_im_sdk_callback.Base, signalHungUpReq string, operationID string) {
 	if callback == nil {
 		log.NewError(operationID, "callback is nil")
 	}

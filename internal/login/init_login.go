@@ -7,6 +7,7 @@ import (
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/group"
 	ws "open_im_sdk/internal/interaction"
+	"open_im_sdk/internal/rtc"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -23,6 +24,7 @@ type LoginMgr struct {
 	group        *group.Group
 	conversation *conv.Conversation
 	user         *user.User
+	signaling    *rtc.LiveSignaling
 	full         *full.Full
 	db           *db.DataBase
 	ws           *ws.Ws
@@ -41,6 +43,7 @@ type LoginMgr struct {
 	conversationListener open_im_sdk_callback.OnConversationListener
 	advancedMsgListener  open_im_sdk_callback.OnAdvancedMsgListener
 	userListener         open_im_sdk_callback.OnUserListener
+	signalingListener    open_im_sdk_callback.OnSignalingListener
 
 	conversationCh chan common.Cmd2Value
 	cmdWsCh        chan common.Cmd2Value
@@ -74,6 +77,10 @@ func (u *LoginMgr) Group() *group.Group {
 
 func (u *LoginMgr) Friend() *friend.Friend {
 	return u.friend
+}
+
+func (u *LoginMgr) Signaling() *rtc.LiveSignaling {
+	return u.signaling
 }
 
 func (u *LoginMgr) SetConversationListener(conversationListener open_im_sdk_callback.OnConversationListener) {
