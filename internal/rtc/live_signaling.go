@@ -114,13 +114,15 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 		}
 	case *api.SignalReq_Invite:
 		log.Info(operationID, "signaling response ", payload.Invite.String())
-		if s.loginUserID == payload.Invite.Invitation.InviterUserID {
+		if utils.IsContain(s.loginUserID, payload.Invite.Invitation.InviteeUserIDList) {
+			//	if s.loginUserID == payload.Invite.Invitation.InviterUserID {
 			s.listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.Invite))
 		}
 
 	case *api.SignalReq_InviteInGroup:
 		log.Info(operationID, "signaling response ", payload.InviteInGroup.String())
-		if s.loginUserID == payload.InviteInGroup.Invitation.InviterUserID {
+		if utils.IsContain(s.loginUserID, payload.InviteInGroup.Invitation.InviteeUserIDList) {
+			//	if s.loginUserID == payload.InviteInGroup.Invitation.InviterUserID {
 			s.listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.InviteInGroup))
 		}
 	default:
