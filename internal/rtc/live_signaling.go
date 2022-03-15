@@ -42,6 +42,12 @@ func (s *LiveSignaling) waitPush(req *api.SignalReq, operationID string) {
 			if err != nil {
 				if strings.Contains(err.Error(), "timeout") {
 					log.Error(operationID, "wait push timeout ", err.Error(), invt.InviterUserID, v, invt.RoomID, invt.Timeout)
+					switch payload := req.Payload.(type) {
+					case *api.SignalReq_Invite:
+						s.listener.OnInvitationTimeout(utils.StructToJsonString(payload.Invite))
+					case *api.SignalReq_InviteInGroup:
+						s.listener.OnInvitationTimeout(utils.StructToJsonString(payload.InviteInGroup))
+					}
 
 				} else {
 					log.Error(operationID, "other failed ", err.Error(), invt.InviterUserID, v, invt.RoomID, invt.Timeout)

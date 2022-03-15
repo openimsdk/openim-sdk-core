@@ -219,3 +219,19 @@ func (d *DataBase) GetTestMessage(seq uint32) (*LocalChatLog, error) {
 	return &c, utils.Wrap(d.conn.Where("seq = ?",
 		seq).Find(&c).Error, "GetTestMessage failed")
 }
+
+func (d *DataBase) UpdateMsgSenderNickname(sendID, nickname string, sType int) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.Model(LocalChatLog{}).Where(
+		"send_id = ? and sessionType = ? and senderNickname != ? ", sendID, sType, nickname).Updates(
+		map[string]interface{}{"senderNickname": nickname}).Error, utils.GetSelfFuncName()+" failed")
+}
+
+func (d *DataBase) UpdateMsgSenderFaceURL(sendID, faceURL string, sType int) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.Model(LocalChatLog{}).Where(
+		"send_id = ? and sessionType = ? and senderFaceURL != ? ", sendID, sType, faceURL).Updates(
+		map[string]interface{}{"senderFaceURL": faceURL}).Error, utils.GetSelfFuncName()+" failed")
+}

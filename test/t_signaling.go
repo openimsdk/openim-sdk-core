@@ -65,6 +65,7 @@ func DoTestInvite() {
 	req.Invitation.GroupID = ""
 	req.Invitation.SessionType = 1
 	req.Invitation.PlatformID = 1
+	req.Invitation.Timeout = 10
 	s := utils.StructToJsonString(req)
 	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
 	open_im_sdk.SignalingInvite(t, t.OperationID, s)
@@ -91,7 +92,14 @@ func DoTestReject() {
 func DoTestCancel() {
 	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
 	req := &api.SignalCancelReq{Invitation: &api.InvitationInfo{}}
+
 	req.Invitation = SetTestInviteInfo()
+	req.Invitation.GroupID = ""
+	req.Invitation.SessionType = 1
+	req.Invitation.PlatformID = 1
+	req.Invitation.Timeout = 10
+	req.Invitation.InviterUserID = "18666662412"
+
 	req.OpUserID = "18666662412"
 	s := utils.StructToJsonString(req)
 	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
