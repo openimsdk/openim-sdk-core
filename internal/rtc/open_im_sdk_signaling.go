@@ -105,7 +105,7 @@ func (s *LiveSignaling) Reject(callback open_im_sdk_callback.Base, signalRejectR
 		var signalReq api.SignalReq
 		common.JsonUnmarshalCallback(signalRejectReq, req.Reject, callback, operationID)
 		s.SetDefaultReq(req.Reject.Invitation)
-		req.Reject.InviteeUserID = s.loginUserID
+		req.Reject.OpUserID = s.loginUserID
 		signalReq.Payload = req
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback finished")
