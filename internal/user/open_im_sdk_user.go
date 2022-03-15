@@ -41,3 +41,8 @@ func (u *User) SetSelfInfo(callback open_im_sdk_callback.Base, userInfo string, 
 		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonString(sdk_params_callback.SetSelfUserInfoCallback))
 	}()
 }
+
+func (u *User) updateMsgSenderInfo(nickname, faceURL string) {
+
+	u.DataBase.UpdateMsgSenderInfo()
+}
