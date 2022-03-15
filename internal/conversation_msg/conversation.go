@@ -51,7 +51,7 @@ func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callba
 	apiReq.Conversations = conversations
 	c.p.PostFatalCallback(callback, constant.BatchSetConversationRouter, apiReq, &apiResp, apiReq.OperationID)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "output: ", apiResp)
-	c.SyncConversations(operationID)
+	c.SyncConversations(operationID, conversationIDList...)
 }
 
 func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiReq *server_api_params.SetConversationReq, conversationID string, operationID string) {
@@ -75,7 +75,7 @@ func (c *Conversation) setOneConversationRecvMessageOpt(callback open_im_sdk_cal
 	apiReq.IsPinned = localConversation.IsPinned
 	apiReq.IsPrivateChat = localConversation.IsPrivateChat
 	c.setConversation(callback, apiReq, conversationID, operationID)
-	c.SyncConversations(operationID)
+	c.SyncConversations(operationID, conversationID)
 }
 
 func (c *Conversation) setOneConversationPrivateChat(callback open_im_sdk_callback.Base, conversationID string, isPrivate bool, operationID string) {
@@ -90,7 +90,7 @@ func (c *Conversation) setOneConversationPrivateChat(callback open_im_sdk_callba
 	apiReq.IsPinned = localConversation.IsPinned
 	apiReq.IsPrivateChat = isPrivate
 	c.setConversation(callback, apiReq, conversationID, operationID)
-	c.SyncConversations(operationID)
+	c.SyncConversations(operationID, conversationID)
 }
 
 func (c *Conversation) setOneConversationPinned(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
@@ -185,7 +185,7 @@ func (c *Conversation) setConversationDraft(callback open_im_sdk_callback.Base, 
 		err := c.db.RemoveConversationDraft(conversationID, draftText)
 		common.CheckDBErrCallback(callback, err, operationID)
 	}
-	c.SyncConversations(operationID)
+	c.SyncConversations(operationID, conversationID)
 }
 
 func (c *Conversation) pinConversation(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
@@ -198,7 +198,7 @@ func (c *Conversation) pinConversation(callback open_im_sdk_callback.Base, conve
 		common.CheckDBErrCallback(callback, err, operationID)
 	}
 	c.setOneConversationPinned(callback, conversationID, isPinned, operationID)
-	c.SyncConversations(operationID)
+	c.SyncConversations(operationID, conversationID)
 }
 
 func (c *Conversation) getServerConversationList(operationID string) (server_api_params.GetAllConversationsResp, error) {
@@ -215,7 +215,7 @@ func (c *Conversation) getServerConversationList(operationID string) (server_api
 	return resp, nil
 }
 
-func (c *Conversation) SyncConversations(operationID string) {
+func (c *Conversation) SyncConversations(operationID string, conversationIDs ...string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	svrList, err := c.getServerConversationList(operationID)
 	if err != nil {
@@ -244,31 +244,35 @@ func (c *Conversation) SyncConversations(operationID string) {
 			continue
 		}
 	}
-	// 本地服务器有的会话 以服务器为准更新 触发回调
+	// 本地服务器有的会话 以服务器为准更新
 	var conversationChangedList []*db.LocalConversation
 	for _, index := range sameA {
 		log.NewInfo("", *conversationsOnServer[index])
-		isUpdate, err := c.db.UpdateConversationForSync(conversationsOnServer[index])
+		err := c.db.UpdateConversationForSync(conversationsOnServer[index])
 		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
+			log.NewError(operationID, utils.GetSelfFuncName(), "UpdateConversation failed ", err.Error(), *conversationsOnServer[index])
+			continue
 		}
-		if isUpdate {
-			conversationLocal, err := c.db.GetConversation(conversationsOnServer[index].ConversationID)
+		if len(conversationIDs) == 0 {
+			conversation, err := c.db.GetConversation(conversationsOnServer[index].ConversationID)
 			if err != nil {
-				log.NewError(operationID, utils.GetSelfFuncName(), "get", conversationsOnServer[index].ConversationID, "failed")
-				continue
+				log.NewError(operationID, utils.GetSelfFuncName(), "GetConversation failed", err.Error(), conversationsOnServer[index].ConversationID)
 			}
-			conversationChangedList = append(conversationChangedList, conversationLocal)
-			if err != nil {
-				log.NewError(operationID, utils.GetSelfFuncName(), "UpdateConversation failed ", err.Error(), *conversationsOnServer[index])
-				continue
-			}
+			conversationChangedList = append(conversationChangedList, conversation)
 		}
-
+	}
+	if len(conversationIDs) > 0 {
+		for _, conversationID := range conversationIDs {
+			conversation, err := c.db.GetConversation(conversationID)
+			if err != nil {
+				log.NewError(operationID, utils.GetSelfFuncName(), "GetConversation failed", err.Error(), conversationID)
+			}
+			conversationChangedList = append(conversationChangedList, conversation)
+		}
 	}
 	// callback
 	c.ConversationListener.OnConversationChanged(utils.StructToJsonString(conversationChangedList))
-	//log.NewInfo(operationID, utils.StructToJsonString(conversationChangedList))
+	log.NewInfo(operationID, utils.StructToJsonString(conversationChangedList))
 	// local有 server没有 代表没有修改公共字段
 	for _, index := range bInANot {
 		log.NewDebug(operationID, utils.GetSelfFuncName(), index, conversationsOnLocal[index].ConversationID,

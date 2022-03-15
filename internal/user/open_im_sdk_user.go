@@ -40,15 +40,21 @@ func (u *User) SetSelfInfo(callback open_im_sdk_callback.Base, userInfo string, 
 		u.updateSelfUserInfo(callback, unmarshalParam, operationID)
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.SetSelfUserInfoCallback))
 		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonString(sdk_params_callback.SetSelfUserInfoCallback))
-		go u.updateMsgSenderInfo(unmarshalParam.Nickname, unmarshalParam.FaceURL)
+		go u.updateMsgSenderInfo(unmarshalParam.Nickname, unmarshalParam.FaceURL, operationID)
 	}()
 }
 
-func (u *User) updateMsgSenderInfo(nickname, faceURL string) {
+func (u *User) updateMsgSenderInfo(nickname, faceURL string, operationID string) {
 	if nickname != "" {
-		u.DataBase.UpdateMsgSenderNickname(u.loginUserID, nickname, constant.SingleChatType)
+		err := u.DataBase.UpdateMsgSenderNickname(u.loginUserID, nickname, constant.SingleChatType)
+		if err != nil {
+			log.Error(operationID, "UpdateMsgSenderNickname failed ", err.Error(), u.loginUserID, nickname, constant.SingleChatType)
+		}
 	}
 	if faceURL != "" {
-		u.DataBase.UpdateMsgSenderFaceURL(u.loginUserID, nickname, constant.SingleChatType)
+		err := u.DataBase.UpdateMsgSenderFaceURL(u.loginUserID, faceURL, constant.SingleChatType)
+		if err != nil {
+			log.Error(operationID, "UpdateMsgSenderNickname failed ", err.Error(), u.loginUserID, faceURL, constant.SingleChatType)
+		}
 	}
 }
