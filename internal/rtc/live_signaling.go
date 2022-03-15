@@ -105,7 +105,7 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 			var wsResp ws.GeneralWsResp
 			wsResp.ReqIdentifier = constant.WSSendSignalMsg
 			wsResp.Data = msg.Content
-			wsResp.MsgIncr = s.loginUserID + payload.Reject.InviteeUserID + payload.Reject.Invitation.RoomID
+			wsResp.MsgIncr = s.loginUserID + payload.Reject.OpUserID + payload.Reject.Invitation.RoomID
 			s.DoWSSignal(wsResp)
 		}
 
