@@ -32,13 +32,18 @@ func NewHeartbeat(msgSync *MsgSync, cmcCh chan common.Cmd2Value) *Heartbeat {
 }
 
 func (u *Heartbeat) Run() {
-	//	heartbeatInterval := 30
+	heartbeatInterval := time.Millisecond * time.Duration(u.heartbeatInterval*1000)
 	reqTimeout := 30
 	retryTimes := 0
 	heartbeatNum := 0
+
+	timer := time.NewTimer(heartbeatInterval)
+	defer timer.Stop()
+
 	for {
 		operationID := utils.OperationIDGenerator()
 		if heartbeatNum != 0 {
+			timer.Reset(heartbeatInterval)
 			select {
 			case r := <-u.cmdCh:
 				if r.Cmd == constant.CmdLogout {
@@ -48,7 +53,14 @@ func (u *Heartbeat) Run() {
 					runtime.Goexit()
 				}
 				log.Warn(operationID, "other cmd...", r.Cmd)
-			case <-time.After(time.Millisecond * time.Duration(u.heartbeatInterval*1000)):
+				if !timer.Stop() {
+					select {
+					case <-timer.C:
+					default:
+					}
+				}
+				log.Warn(operationID, "timer stopped")
+			case <-timer.C:
 				log.Debug(operationID, "heartbeat waiting(ms)... ", u.heartbeatInterval*1000)
 			}
 		}
