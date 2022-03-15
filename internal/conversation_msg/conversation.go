@@ -245,11 +245,11 @@ func (c *Conversation) SyncConversations(operationID string) {
 		}
 	}
 	// 本地服务器有的会话 以服务器为准更新 触发回调
-	var conversationChangedList []string
+	var conversationChangedList []*db.LocalConversation
 	for _, index := range sameA {
 		log.NewInfo("", *conversationsOnServer[index])
 		err := c.db.UpdateConversationForSync(conversationsOnServer[index])
-		conversationChangedList = append(conversationChangedList, utils.StructToJsonString(conversationsOnServer[index]))
+		conversationChangedList = append(conversationChangedList, conversationsOnServer[index])
 		if err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), "UpdateConversation failed ", err.Error(), *conversationsOnServer[index])
 			continue
@@ -257,6 +257,7 @@ func (c *Conversation) SyncConversations(operationID string) {
 	}
 	// callback
 	c.ConversationListener.OnConversationChanged(utils.StructToJsonString(conversationChangedList))
+	//log.NewInfo(operationID, utils.StructToJsonString(conversationChangedList))
 	// local有 server没有 代表没有修改公共字段
 	for _, index := range bInANot {
 		log.NewDebug(operationID, utils.GetSelfFuncName(), index, conversationsOnLocal[index].ConversationID,
