@@ -60,19 +60,19 @@ func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callba
 	}()
 }
 
-//func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList, operationID string) {
-//	if callback == nil {
-//		return
-//	}
-//	go func() {
-//		log.NewInfo(operationID, "GetConversationRecvMessageOpt args: ", conversationIDList)
-//		var unmarshalParams sdk_params_callback.GetConversationRecvMessageOptParams
-//		common.JsonUnmarshalCallback(conversationIDList, &unmarshalParams, callback, operationID)
-//		result := c.getConversationRecvMessageOpt(callback, unmarshalParams, operationID)
-//		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-//		log.NewInfo(operationID, "GetConversationRecvMessageOpt callback: ", utils.StructToJsonStringDefault(result))
-//	}()
-//}
+func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, "GetConversationRecvMessageOpt args: ", conversationIDList)
+		var unmarshalParams sdk_params_callback.GetConversationRecvMessageOptParams
+		common.JsonUnmarshalCallback(conversationIDList, &unmarshalParams, callback, operationID)
+		result := c.getConversationRecvMessageOpt(callback, unmarshalParams, operationID)
+		callback.OnSuccess(utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, "GetConversationRecvMessageOpt callback: ", utils.StructToJsonStringDefault(result))
+	}()
+}
 
 func (c *Conversation) GetOneConversation(callback open_im_sdk_callback.Base, sessionType int32, sourceID, operationID string) {
 	if callback == nil {

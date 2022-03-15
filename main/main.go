@@ -47,9 +47,10 @@ func main() {
 	//test.DoTestSendMsg2(strMyUidx, friendID)
 	//test.DoTestGetAllConversation()
 
-	test.DoTestGetOneConversation("17726378428")
-	test.DoTestGetConversations(`["single_17726378428"]`)
+	//test.DoTestGetOneConversation("17726378428")
+	//test.DoTestGetConversations(`["single_17726378428"]`)
 	//test.DoTestGetConversationListSplit()
+	test.DoTestGetConversationRecvMessageOpt(`["single_17726378428"]`)
 
 	//set batch
 	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.NotReceiveMessage)

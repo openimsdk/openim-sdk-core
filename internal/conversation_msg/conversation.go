@@ -107,15 +107,21 @@ func (c *Conversation) setOneConversationPinned(callback open_im_sdk_callback.Ba
 	c.setConversation(callback, apiReq, conversationID, operationID)
 }
 
-//func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) server_api_params.GetConversationsResp {
-//	apiReq := server_api_params.GetConversationsReq{}
-//	apiReq.OperationID = operationID
-//	apiReq.OwnerUserID = c.loginUserID
-//	apiReq.ConversationIDs = conversationIDList
-//	var realData server_api_params.GetConversationsResp
-//	c.p.PostFatalCallback(callback, constant.GetConversationsRouter, apiReq, &realData, apiReq.OperationID)
-//	return realData
-//}
+func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) []server_api_params.GetConversationRecvMessageOptResp {
+	apiReq := server_api_params.GetConversationsReq{}
+	apiReq.OperationID = operationID
+	apiReq.OwnerUserID = c.loginUserID
+	apiReq.ConversationIDs = conversationIDList
+	var resp []server_api_params.GetConversationRecvMessageOptResp
+	conversations := c.getMultipleConversation(callback, conversationIDList, operationID)
+	for _, conversation := range conversations {
+		resp = append(resp, server_api_params.GetConversationRecvMessageOptResp{
+			ConversationID: conversation.ConversationID,
+			Result:         &conversation.RecvMsgOpt,
+		})
+	}
+	return resp
+}
 
 func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, sourceID string, sessionType int32, operationID string) *db.LocalConversation {
 	conversationID := utils.GetConversationIDBySessionType(sourceID, int(sessionType))
