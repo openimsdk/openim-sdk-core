@@ -94,7 +94,7 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 			var wsResp ws.GeneralWsResp
 			wsResp.ReqIdentifier = constant.WSSendSignalMsg
 			wsResp.Data = msg.Content
-			wsResp.MsgIncr = s.loginUserID + payload.Accept.InviteeUserID + payload.Accept.Invitation.RoomID
+			wsResp.MsgIncr = s.loginUserID + payload.Accept.OpUserID + payload.Accept.Invitation.RoomID
 			log.Info(operationID, "search msgIncr: ", wsResp.MsgIncr)
 			s.DoWSSignal(wsResp)
 		}

@@ -79,7 +79,7 @@ func (s *LiveSignaling) Accept(callback open_im_sdk_callback.Base, signalAcceptR
 		var signalReq api.SignalReq
 		common.JsonUnmarshalCallback(signalAcceptReq, req.Accept, callback, operationID)
 		s.SetDefaultReq(req.Accept.Invitation)
-		req.Accept.InviteeUserID = s.loginUserID
+		req.Accept.OpUserID = s.loginUserID
 		signalReq.Payload = req
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback finished")
@@ -124,7 +124,7 @@ func (s *LiveSignaling) Cancel(callback open_im_sdk_callback.Base, signalCancelR
 		var signalReq api.SignalReq
 		common.JsonUnmarshalCallback(signalCancelReq, req.Cancel, callback, operationID)
 		s.SetDefaultReq(req.Cancel.Invitation)
-		req.Cancel.InviterUserID = s.loginUserID
+		req.Cancel.OpUserID = s.loginUserID
 
 		signalReq.Payload = req
 		s.handleSignaling(&signalReq, callback, operationID)
@@ -147,7 +147,7 @@ func (s *LiveSignaling) HungUp(callback open_im_sdk_callback.Base, signalHungUpR
 		var signalReq api.SignalReq
 		common.JsonUnmarshalCallback(signalHungUpReq, req.HungUp, callback, operationID)
 		s.SetDefaultReq(req.HungUp.Invitation)
-		req.HungUp.UserID = s.loginUserID
+		req.HungUp.OpUserID = s.loginUserID
 		signalReq.Payload = req
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback finished")
