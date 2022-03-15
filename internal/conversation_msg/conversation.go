@@ -107,15 +107,15 @@ func (c *Conversation) setOneConversationPinned(callback open_im_sdk_callback.Ba
 	c.setConversation(callback, apiReq, conversationID, operationID)
 }
 
-func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) server_api_params.GetConversationResp {
-	apiReq := server_api_params.GetConversationsReq{}
-	apiReq.OperationID = operationID
-	apiReq.OwnerUserID = c.loginUserID
-	apiReq.ConversationIDs = conversationIDList
-	var realData server_api_params.GetConversationResp
-	c.p.PostFatalCallback(callback, constant.GetConversationsRouter, apiReq, &realData, apiReq.OperationID)
-	return realData
-}
+//func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) server_api_params.GetConversationsResp {
+//	apiReq := server_api_params.GetConversationsReq{}
+//	apiReq.OperationID = operationID
+//	apiReq.OwnerUserID = c.loginUserID
+//	apiReq.ConversationIDs = conversationIDList
+//	var realData server_api_params.GetConversationsResp
+//	c.p.PostFatalCallback(callback, constant.GetConversationsRouter, apiReq, &realData, apiReq.OperationID)
+//	return realData
+//}
 
 func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, sourceID string, sessionType int32, operationID string) *db.LocalConversation {
 	conversationID := utils.GetConversationIDBySessionType(sourceID, int(sessionType))
@@ -209,10 +209,6 @@ func (c *Conversation) getServerConversationList(operationID string) (server_api
 	return resp, nil
 }
 
-func (c *Conversation) getServerConversation(conversationID, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "conversationID: ", conversationID)
-}
-
 func (c *Conversation) SyncConversations(operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	svrList, err := c.getServerConversationList(operationID)
@@ -220,7 +216,6 @@ func (c *Conversation) SyncConversations(operationID string) {
 		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		return
 	}
-	// 判断不出本地有没有 重写
 	conversationsOnLocal, err := c.db.GetAllConversationListToSync()
 	if err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
@@ -254,7 +249,7 @@ func (c *Conversation) SyncConversations(operationID string) {
 			continue
 		}
 	}
-	log.NewInfo(operationID, conversationChangedList)
+	// callback
 	c.ConversationListener.OnConversationChanged(utils.StructToJsonString(conversationChangedList))
 	// local有 server没有 代表没有修改公共字段
 	for _, index := range bInANot {
@@ -375,7 +370,7 @@ func (c *Conversation) typingStatusUpdate(callback open_im_sdk_callback.Base, re
 	s := sdk_struct.MsgStruct{}
 	c.initBasicInfo(&s, constant.UserMsgType, constant.Typing, operationID)
 	s.Content = msgTip
-	options := make(map[string]bool, 5)
+	options := make(map[string]bool, 6)
 	utils.SetSwitchFromOptions(options, constant.IsHistory, false)
 	utils.SetSwitchFromOptions(options, constant.IsPersistent, false)
 	utils.SetSwitchFromOptions(options, constant.IsSenderSync, false)

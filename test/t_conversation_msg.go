@@ -106,6 +106,12 @@ func DoTestGetOneConversation(friendID string) {
 	open_im_sdk.GetOneConversation(test, test.OperationID, constant.SingleChatType, friendID)
 }
 
+func DoTestGetConversations(conversationIDs string) {
+	var test TestGetAllConversationListCallBack
+	test.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.GetMultipleConversation(test, test.OperationID, conversationIDs)
+}
+
 type TestSetConversationPinnedCallback struct {
 	OperationID string
 }

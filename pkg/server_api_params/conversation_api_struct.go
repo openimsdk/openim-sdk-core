@@ -60,5 +60,6 @@ type GetConversationsReq struct {
 }
 
 type GetConversationsResp struct {
+	CommResp
 	Conversations []Conversation `json:"data"`
 }

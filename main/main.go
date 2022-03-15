@@ -43,11 +43,12 @@ func main() {
 	tokenx := test.GenToken(strMyUidx)
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	//test.DoTestInviteInGroup()
+	//test.DoTestCancel()
 	//test.DoTestSendMsg2(strMyUidx, friendID)
 	//test.DoTestGetAllConversation()
-	//test.DoTestGetOneConversation("single_17726378428")
-	//test.DoTestGetConversationRecvMessageOpt([]string{"single_17726378428"})
-	//test.DoTestGetConversations()
+
+	test.DoTestGetOneConversation("17726378428")
+	test.DoTestGetConversations(`["single_17726378428"]`)
 	//test.DoTestGetConversationListSplit()
 
 	//set batch
@@ -56,11 +57,11 @@ func main() {
 	////set batch
 	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.ReceiveMessage)
 	////set one
-	test.DoTestSetConversationPinned("single_17726378428", false)
+	//test.DoTestSetConversationPinned("single_17726378428", false)
 	//test.DoTestSetOneConversationRecvMessageOpt("single_17726378428", constant.NotReceiveMessage)
 	//test.DoTestSetOneConversationPrivateChat("single_17726378428", false)
 	for {
-		time.Sleep(2 * time.Second)
+		time.Sleep(30 * time.Second)
 		log.Info("", "waiting...")
 	}
 	//reliabilityTest()

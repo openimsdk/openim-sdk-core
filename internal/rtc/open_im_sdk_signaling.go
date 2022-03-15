@@ -15,7 +15,6 @@ func (s *LiveSignaling) SetDefaultReq(req *api.InvitationInfo) {
 	if req.Timeout == 0 {
 		req.Timeout = 60 * 60
 	}
-	req.InviterUserID = s.loginUserID
 }
 
 func (s *LiveSignaling) InviteInGroup(callback open_im_sdk_callback.Base, signalInviteInGroupReq string, operationID string) {
@@ -34,7 +33,10 @@ func (s *LiveSignaling) InviteInGroup(callback open_im_sdk_callback.Base, signal
 		var signalReq api.SignalReq
 		common.JsonUnmarshalCallback(signalInviteInGroupReq, req.InviteInGroup, callback, operationID)
 		s.SetDefaultReq(req.InviteInGroup.Invitation)
+		req.InviteInGroup.Invitation.InviterUserID = s.loginUserID
+		req.InviteInGroup.OpUserID = s.loginUserID
 		signalReq.Payload = req
+
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback: finished")
 	}()
@@ -56,6 +58,8 @@ func (s *LiveSignaling) Invite(callback open_im_sdk_callback.Base, signalInviteR
 		var signalReq api.SignalReq
 		common.JsonUnmarshalCallback(signalInviteReq, req.Invite, callback, operationID)
 		s.SetDefaultReq(req.Invite.Invitation)
+		req.Invite.Invitation.InviterUserID = s.loginUserID
+		req.Invite.OpUserID = s.loginUserID
 		signalReq.Payload = req
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback: finished")
@@ -74,11 +78,11 @@ func (s *LiveSignaling) Accept(callback open_im_sdk_callback.Base, signalAcceptR
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ", signalAcceptReq)
-		req := &api.SignalReq_Accept{Accept: &api.SignalAcceptReq{Invitation: &api.SignalInviteReq{Invitation: &api.InvitationInfo{}, OfflinePushInfo: &api.OfflinePushInfo{}}}}
+		req := &api.SignalReq_Accept{Accept: &api.SignalAcceptReq{Invitation: &api.InvitationInfo{}, OfflinePushInfo: &api.OfflinePushInfo{}}}
 		var signalReq api.SignalReq
 		common.JsonUnmarshalCallback(signalAcceptReq, req.Accept, callback, operationID)
-		s.SetDefaultReq(req.Accept.Invitation.Invitation)
-		req.Accept.InviteeUserID = s.loginUserID
+		s.SetDefaultReq(req.Accept.Invitation)
+		req.Accept.OpUserID = s.loginUserID
 		signalReq.Payload = req
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback finished")
@@ -97,10 +101,10 @@ func (s *LiveSignaling) Reject(callback open_im_sdk_callback.Base, signalRejectR
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ", signalRejectReq)
-		req := &api.SignalReq_Reject{Reject: &api.SignalRejectReq{Invitation: &api.SignalInviteReq{Invitation: &api.InvitationInfo{}, OfflinePushInfo: &api.OfflinePushInfo{}}}}
+		req := &api.SignalReq_Reject{Reject: &api.SignalRejectReq{Invitation: &api.InvitationInfo{}, OfflinePushInfo: &api.OfflinePushInfo{}}}
 		var signalReq api.SignalReq
 		common.JsonUnmarshalCallback(signalRejectReq, req.Reject, callback, operationID)
-		s.SetDefaultReq(req.Reject.Invitation.Invitation)
+		s.SetDefaultReq(req.Reject.Invitation)
 		req.Reject.InviteeUserID = s.loginUserID
 		signalReq.Payload = req
 		s.handleSignaling(&signalReq, callback, operationID)
@@ -119,11 +123,12 @@ func (s *LiveSignaling) Cancel(callback open_im_sdk_callback.Base, signalCancelR
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ", signalCancelReq)
-		req := &api.SignalReq_Cancel{Cancel: &api.SignalCancelReq{Invitation: &api.SignalInviteReq{Invitation: &api.InvitationInfo{}, OfflinePushInfo: &api.OfflinePushInfo{}}}}
+		req := &api.SignalReq_Cancel{Cancel: &api.SignalCancelReq{Invitation: &api.InvitationInfo{}, OfflinePushInfo: &api.OfflinePushInfo{}}}
 		var signalReq api.SignalReq
 		common.JsonUnmarshalCallback(signalCancelReq, req.Cancel, callback, operationID)
-		s.SetDefaultReq(req.Cancel.Invitation.Invitation)
-		req.Cancel.InviterUserID = s.loginUserID
+		s.SetDefaultReq(req.Cancel.Invitation)
+		req.Cancel.OpUserID = s.loginUserID
+
 		signalReq.Payload = req
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback finished")
@@ -141,11 +146,11 @@ func (s *LiveSignaling) HungUp(callback open_im_sdk_callback.Base, signalHungUpR
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ", signalHungUpReq)
-		req := &api.SignalReq_HungUp{HungUp: &api.SignalHungUpReq{Invitation: &api.SignalInviteReq{Invitation: &api.InvitationInfo{}, OfflinePushInfo: &api.OfflinePushInfo{}}}}
+		req := &api.SignalReq_HungUp{HungUp: &api.SignalHungUpReq{Invitation: &api.InvitationInfo{}, OfflinePushInfo: &api.OfflinePushInfo{}}}
 		var signalReq api.SignalReq
 		common.JsonUnmarshalCallback(signalHungUpReq, req.HungUp, callback, operationID)
-		s.SetDefaultReq(req.HungUp.Invitation.Invitation)
-		req.HungUp.UserID = s.loginUserID
+		s.SetDefaultReq(req.HungUp.Invitation)
+		req.HungUp.OpUserID = s.loginUserID
 		signalReq.Payload = req
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback finished")
