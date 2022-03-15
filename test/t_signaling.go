@@ -64,6 +64,7 @@ func DoTestInvite() {
 	req.Invitation = SetTestInviteInfo()
 	req.Invitation.GroupID = ""
 	req.Invitation.SessionType = 1
+	req.Invitation.PlatformID = 1
 	s := utils.StructToJsonString(req)
 	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
 	open_im_sdk.SignalingInvite(t, t.OperationID, s)
