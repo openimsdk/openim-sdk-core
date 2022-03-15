@@ -224,14 +224,21 @@ func (d *DataBase) UpdateMsgSenderNickname(sendID, nickname string, sType int) e
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Model(LocalChatLog{}).Where(
-		"send_id = ? and sessionType = ? and senderNickname != ? ", sendID, sType, nickname).Updates(
-		map[string]interface{}{"senderNickname": nickname}).Error, utils.GetSelfFuncName()+" failed")
+		"send_id = ? and session_type = ? and sender_nick_name != ? ", sendID, sType, nickname).Updates(
+		map[string]interface{}{"sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
 }
 
 func (d *DataBase) UpdateMsgSenderFaceURL(sendID, faceURL string, sType int) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Model(LocalChatLog{}).Where(
-		"send_id = ? and sessionType = ? and senderFaceURL != ? ", sendID, sType, faceURL).Updates(
-		map[string]interface{}{"senderFaceURL": faceURL}).Error, utils.GetSelfFuncName()+" failed")
+		"send_id = ? and session_type = ? and sender_face_url != ? ", sendID, sType, faceURL).Updates(
+		map[string]interface{}{"sender_face_url": faceURL}).Error, utils.GetSelfFuncName()+" failed")
+}
+func (d *DataBase) UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.Model(LocalChatLog{}).Where(
+		"send_id = ?  and (sender_face_url != ? or sender_nick_name != ?)", sendID, faceURL, nickname).Updates(
+		map[string]interface{}{"sender_face_url": faceURL, "sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
 }
