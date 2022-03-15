@@ -261,8 +261,11 @@ func (c *Conversation) SyncConversations(operationID string) {
 		conversationChangedList = append(conversationChangedList, conversation)
 	}
 
+	log.NewInfo(operationID, utils.StructToJsonString(conversationChangedList))
 	// callback
-	c.ConversationListener.OnConversationChanged(utils.StructToJsonString(conversationChangedList))
+	if len(conversationChangedList) > 0 {
+		c.ConversationListener.OnConversationChanged(utils.StructToJsonString(conversationChangedList))
+	}
 
 	// local有 server没有 代表没有修改公共字段
 	for _, index := range bInANot {
