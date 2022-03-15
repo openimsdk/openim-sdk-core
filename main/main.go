@@ -39,7 +39,7 @@ var (
 )
 
 func main() {
-	strMyUidx := "17726378428"
+	strMyUidx := "18381415165"
 	//friendID := "17726378428"
 	tokenx := test.GenToken(strMyUidx)
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
@@ -54,7 +54,7 @@ func main() {
 	//test.DoTestGetConversationRecvMessageOpt(`["single_17726378428"]`)
 
 	//set batch
-	test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.NotReceiveMessage)
+	test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.ReceiveMessage)
 	//set one
 	////set batch
 	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.ReceiveMessage)

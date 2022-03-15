@@ -1,6 +1,7 @@
 package common
 
 import (
+	"fmt"
 	"open_im_sdk/pkg/db"
 
 	"github.com/google/go-cmp/cmp"
@@ -519,9 +520,9 @@ func CheckAdminGroupRequestDiff(a []*db.LocalAdminGroupRequest, b []*db.LocalAdm
 	return aInBNot, bInANot, sameA, sameB
 }
 
-func CheckConversationListDiff(conversationsOnServer, conversationsOnLocal []*db.LocalConversation) (aInBNot, bInANot, sameA, sameB []int) {
-	mapA := make(map[string]*db.LocalConversation)
-	mapB := make(map[string]*db.LocalConversation)
+func CheckConversationListDiff(conversationsOnServer, conversationsOnLocal []*tempConversation) (aInBNot, bInANot, sameA, sameB []int) {
+	mapA := make(map[string]*tempConversation)
+	mapB := make(map[string]*tempConversation)
 	for _, v := range conversationsOnServer {
 		mapA[v.ConversationID] = v
 	}
@@ -532,7 +533,6 @@ func CheckConversationListDiff(conversationsOnServer, conversationsOnLocal []*db
 	bInANot = make([]int, 0)
 	sameA = make([]int, 0)
 	sameB = make([]int, 0)
-
 	for i, v := range conversationsOnServer {
 		ia, ok := mapB[v.ConversationID]
 		if !ok {
@@ -541,6 +541,7 @@ func CheckConversationListDiff(conversationsOnServer, conversationsOnLocal []*db
 			aInBNot = append(aInBNot, i)
 		} else {
 			if !cmp.Equal(v, ia) {
+				fmt.Println(v, ia)
 				// key of a and b is equal, but value different
 				//fmt.Println("sameA", conversationsOnServer[i], ia)
 				sameA = append(sameA, i)
@@ -552,7 +553,6 @@ func CheckConversationListDiff(conversationsOnServer, conversationsOnLocal []*db
 		ib, ok := mapA[v.ConversationID]
 		if !ok {
 			//fmt.Println("bInANot", conversationsOnLocal[i], ib)
-
 			bInANot = append(bInANot, i)
 		} else {
 			if !cmp.Equal(v, ib) {
@@ -561,6 +561,7 @@ func CheckConversationListDiff(conversationsOnServer, conversationsOnLocal []*db
 			}
 		}
 	}
+
 	return aInBNot, bInANot, sameA, sameB
 }
 
@@ -643,6 +644,51 @@ func TransferToLocalSendGroupRequest(apiData []*server_api_params.GroupRequest) 
 	return local
 }
 
+type tempConversation struct {
+	RecvMsgOpt     int32
+	ConversationID string
+	//ConversationType int32
+	//UserID           string
+	//GroupID          string
+	//UnreadCount      int32
+	IsPrivateChat bool
+	IsPinned      bool
+}
+
+func ServerTransferToTempConversation(resp server_api_params.GetAllConversationsResp) []*tempConversation {
+	var tempConversations []*tempConversation
+	for _, serverConversation := range resp.Conversations {
+		tempConversations = append(tempConversations, &tempConversation{
+			RecvMsgOpt:     serverConversation.RecvMsgOpt,
+			ConversationID: serverConversation.ConversationID,
+			//ConversationType: serverConversation.ConversationType,
+			//UserID:           serverConversation.UserID,
+			//GroupID:          serverConversation.GroupID,
+			//UnreadCount:      serverConversation.UnreadCount,
+			IsPrivateChat: serverConversation.IsPrivateChat,
+			IsPinned:      serverConversation.IsPinned,
+		})
+	}
+	return tempConversations
+}
+
+func LocalTransferToTempConversation(local []*db.LocalConversation) []*tempConversation {
+	var tempConversations []*tempConversation
+	for _, localConversation := range local {
+		tempConversations = append(tempConversations, &tempConversation{
+			RecvMsgOpt:     localConversation.RecvMsgOpt,
+			ConversationID: localConversation.ConversationID,
+			//ConversationType: localConversation.ConversationType,
+			//UserID:           localConversation.UserID,
+			//GroupID:          localConversation.GroupID,
+			//UnreadCount:      localConversation.UnreadCount,
+			IsPrivateChat: localConversation.IsPrivateChat,
+			IsPinned:      localConversation.IsPinned,
+		})
+	}
+	return tempConversations
+}
+
 func TransferToLocalConversation(resp server_api_params.GetAllConversationsResp) []*db.LocalConversation {
 	var localConversations []*db.LocalConversation
 	for _, serverConversation := range resp.Conversations {
@@ -658,4 +704,22 @@ func TransferToLocalConversation(resp server_api_params.GetAllConversationsResp)
 		})
 	}
 	return localConversations
+}
+
+func TransferToServerConversation(local []*db.LocalConversation) server_api_params.GetAllConversationsResp {
+	var serverConversations server_api_params.GetAllConversationsResp
+
+	for _, localConversation := range local {
+		serverConversations.Conversations = append(serverConversations.Conversations, server_api_params.Conversation{
+			RecvMsgOpt:       localConversation.RecvMsgOpt,
+			ConversationID:   localConversation.ConversationID,
+			ConversationType: localConversation.ConversationType,
+			UserID:           localConversation.UserID,
+			GroupID:          localConversation.GroupID,
+			UnreadCount:      localConversation.UnreadCount,
+			IsPrivateChat:    localConversation.IsPrivateChat,
+			IsPinned:         localConversation.IsPinned,
+		})
+	}
+	return serverConversations
 }
