@@ -33,6 +33,7 @@ func (s *LiveSignaling) InviteInGroup(callback open_im_sdk_callback.Base, signal
 		var signalReq api.SignalReq
 		common.JsonUnmarshalCallback(signalInviteInGroupReq, req.InviteInGroup, callback, operationID)
 		s.SetDefaultReq(req.InviteInGroup.Invitation)
+		req.InviteInGroup.Invitation.InviterUserID = s.loginUserID
 		signalReq.Payload = req
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback: finished")
@@ -55,6 +56,7 @@ func (s *LiveSignaling) Invite(callback open_im_sdk_callback.Base, signalInviteR
 		var signalReq api.SignalReq
 		common.JsonUnmarshalCallback(signalInviteReq, req.Invite, callback, operationID)
 		s.SetDefaultReq(req.Invite.Invitation)
+		req.Invite.Invitation.InviterUserID = s.loginUserID
 		signalReq.Payload = req
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback: finished")
@@ -123,6 +125,7 @@ func (s *LiveSignaling) Cancel(callback open_im_sdk_callback.Base, signalCancelR
 		common.JsonUnmarshalCallback(signalCancelReq, req.Cancel, callback, operationID)
 		s.SetDefaultReq(req.Cancel.Invitation)
 		req.Cancel.InviterUserID = s.loginUserID
+
 		signalReq.Payload = req
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback finished")

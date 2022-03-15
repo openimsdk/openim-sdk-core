@@ -68,8 +68,10 @@ func (s *LiveSignaling) doSignalPush(req *api.SignalReq, operationID string) {
 	//case *api.SignalReq_Cancel:
 	//	log.Info(operationID, "recv signal push ", payload.Cancel.String())
 	//	s.listener.OnInvitationCancelled(utils.StructToJsonString(payload.Cancel))
+	//case *api.SignalReq_InviteInGroup:
+	//	log.Info(operationID, "recv signal push ", payload.InviteInGroup.String())
 	default:
-		log.Error(operationID, "payload type failed ")
+		log.Error(operationID, "payload type failed ", payload)
 	}
 }
 
@@ -91,7 +93,9 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 		if payload.Accept.Invitation.InviterUserID == s.loginUserID {
 			var wsResp ws.GeneralWsResp
 			wsResp.ReqIdentifier = constant.WSSendSignalMsg
+			wsResp.Data = msg.Content
 			wsResp.MsgIncr = s.loginUserID + payload.Accept.InviteeUserID + payload.Accept.Invitation.RoomID
+			log.Info(operationID, "search msgIncr: ", wsResp.MsgIncr)
 			s.DoWSSignal(wsResp)
 		}
 
@@ -100,6 +104,7 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 		if payload.Reject.Invitation.InviterUserID == s.loginUserID {
 			var wsResp ws.GeneralWsResp
 			wsResp.ReqIdentifier = constant.WSSendSignalMsg
+			wsResp.Data = msg.Content
 			wsResp.MsgIncr = s.loginUserID + payload.Reject.InviteeUserID + payload.Reject.Invitation.RoomID
 			s.DoWSSignal(wsResp)
 		}
