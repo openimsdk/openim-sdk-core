@@ -532,7 +532,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			common.CheckAnyErrCallback(callback, 201, err, operationID)
 		} else {
 			if oldMessage.Status != constant.MsgStatusSendFailed {
-				common.CheckAnyErrCallback(callback, 202, err, operationID)
+				common.CheckAnyErrCallback(callback, 202, errors.New("only failed message can be repeatedly send"), operationID)
 			} else {
 				s.Status = constant.MsgStatusSending
 			}
@@ -670,11 +670,21 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 			lc.FaceURL = faceUrl
 			lc.ShowName = name
 		}
+
+		oldMessage, err := c.db.GetMessage(s.ClientMsgID)
+		if err != nil {
+			msgStructToLocalChatLog(&localMessage, &s)
+			err := c.db.InsertMessage(&localMessage)
+			common.CheckAnyErrCallback(callback, 201, err, operationID)
+		} else {
+			if oldMessage.Status != constant.MsgStatusSendFailed {
+				common.CheckAnyErrCallback(callback, 202, errors.New("only failed message can be repeatedly send"), operationID)
+			} else {
+				s.Status = constant.MsgStatusSending
+			}
+		}
 		lc.ConversationID = conversationID
 		lc.LatestMsg = utils.StructToJsonString(s)
-		msgStructToLocalChatLog(&localMessage, &s)
-		err := c.db.InsertMessage(&localMessage)
-		common.CheckAnyErrCallback(callback, 201, err, operationID)
 		//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.AddConOrUpLatMsg,
 		//c}})
 		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, []string{conversationID}}})
