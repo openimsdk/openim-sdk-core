@@ -30,9 +30,8 @@ func (c *Conversation) GetAllConversationList(callback open_im_sdk_callback.Base
 		log.NewInfo(operationID, utils.GetSelfFuncName(), "GetAllConversationList args: ")
 		result := c.getAllConversationList(callback, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		//log.NewInfo(operationID, "GetAllConversationList callback: ", utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, "GetAllConversationList callback: ", utils.StructToJsonStringDefault(result))
 	}()
-	//log.NewInfo("ss")
 }
 
 func (c *Conversation) GetConversationListSplit(callback open_im_sdk_callback.Base, offset, count int, operationID string) {
@@ -60,6 +59,7 @@ func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callba
 		log.NewInfo(operationID, "SetConversationRecvMessageOpt callback: ", sdk_params_callback.SetConversationRecvMessageOptCallback)
 	}()
 }
+
 func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList, operationID string) {
 	if callback == nil {
 		return
@@ -73,6 +73,7 @@ func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callba
 		log.NewInfo(operationID, "GetConversationRecvMessageOpt callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
+
 func (c *Conversation) GetOneConversation(callback open_im_sdk_callback.Base, sessionType int32, sourceID, operationID string) {
 	if callback == nil {
 		return
@@ -84,6 +85,7 @@ func (c *Conversation) GetOneConversation(callback open_im_sdk_callback.Base, se
 		log.NewInfo(operationID, "GetOneConversation callback: ", utils.StructToJsonString(result))
 	}()
 }
+
 func (c *Conversation) GetMultipleConversation(callback open_im_sdk_callback.Base, conversationIDList string, operationID string) {
 	if callback == nil {
 		return
@@ -125,7 +127,7 @@ func (c *Conversation) PinConversation(callback open_im_sdk_callback.Base, conve
 		return
 	}
 	go func() {
-		log.NewInfo(operationID, "PinConversation args: ", conversationID)
+		log.NewInfo(operationID, "PinConversation args: ", conversationID, isPinned)
 		c.pinConversation(callback, conversationID, isPinned, operationID)
 		callback.OnSuccess(sdk_params_callback.PinConversationDraftCallback)
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}, c.ch)

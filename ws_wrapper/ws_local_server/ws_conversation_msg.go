@@ -178,6 +178,7 @@ func (wsRouter *WsFuncRouter) SetConversationRecvMessageOpt(input string, operat
 	}
 	userWorker.Conversation().SetConversationRecvMessageOpt(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationIDList"].(string), int(m["opt"].(float64)), operationID)
 }
+
 func (wsRouter *WsFuncRouter) GetConversationRecvMessageOpt(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {

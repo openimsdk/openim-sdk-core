@@ -60,5 +60,11 @@ type GetConversationsReq struct {
 }
 
 type GetConversationsResp struct {
+	CommResp
 	Conversations []Conversation `json:"data"`
+}
+
+type GetConversationRecvMessageOptResp struct {
+	ConversationID string `json:"conversationID"`
+	Result         *int32 `json:"result"`
 }

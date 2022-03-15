@@ -106,6 +106,12 @@ func DoTestGetOneConversation(friendID string) {
 	open_im_sdk.GetOneConversation(test, test.OperationID, constant.SingleChatType, friendID)
 }
 
+func DoTestGetConversations(conversationIDs string) {
+	var test TestGetAllConversationListCallBack
+	test.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.GetMultipleConversation(test, test.OperationID, conversationIDs)
+}
+
 type TestSetConversationPinnedCallback struct {
 	OperationID string
 }
@@ -159,7 +165,6 @@ func DoTestGetConversationListSplit() {
 	var test TestGetConversationListSplitCallBack
 	test.OperationID = utils.OperationIDGenerator()
 	open_im_sdk.GetConversationListSplit(test, test.OperationID, 1, 2)
-
 }
 
 type TestGetOneConversationCallBack struct {
@@ -171,6 +176,24 @@ func (t TestGetOneConversationCallBack) OnError(errCode int32, errMsg string) {
 
 func (t TestGetOneConversationCallBack) OnSuccess(data string) {
 	fmt.Printf("TestGetOneConversationCallBack , success,data:%v\n", data)
+}
+
+func DoTestGetConversationRecvMessageOpt(list string) {
+	var test TestGetConversationRecvMessageOpt
+	test.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.GetConversationRecvMessageOpt(test, test.OperationID, list)
+}
+
+type TestGetConversationRecvMessageOpt struct {
+	OperationID string
+}
+
+func (t TestGetConversationRecvMessageOpt) OnError(errCode int32, errMsg string) {
+	fmt.Printf("TestGetConversationRecvMessageOpt , errCode:%v,errMsg:%v\n", errCode, errMsg)
+}
+
+func (t TestGetConversationRecvMessageOpt) OnSuccess(data string) {
+	fmt.Printf("TestGetConversationRecvMessageOpt , success,data:%v\n", data)
 }
 
 //func DoTestGetOneConversation(sourceID string, sessionType int) {

@@ -21,6 +21,7 @@ func (c *Conversation) getAllConversationList(callback open_im_sdk_callback.Base
 	common.CheckDBErrCallback(callback, err, operationID)
 	return conversationList
 }
+
 func (c *Conversation) getConversationListSplit(callback open_im_sdk_callback.Base, offset, count int, operationID string) sdk.GetConversationListSplitCallback {
 	conversationList, err := c.db.GetConversationListSplit(offset, count)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -106,15 +107,22 @@ func (c *Conversation) setOneConversationPinned(callback open_im_sdk_callback.Ba
 	c.setConversation(callback, apiReq, conversationID, operationID)
 }
 
-func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) server_api_params.GetConversationResp {
+func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) []server_api_params.GetConversationRecvMessageOptResp {
 	apiReq := server_api_params.GetConversationsReq{}
 	apiReq.OperationID = operationID
 	apiReq.OwnerUserID = c.loginUserID
 	apiReq.ConversationIDs = conversationIDList
-	var realData server_api_params.GetConversationResp
-	c.p.PostFatalCallback(callback, constant.GetConversationRouter, apiReq, &realData, apiReq.OperationID)
-	return realData
+	var resp []server_api_params.GetConversationRecvMessageOptResp
+	conversations := c.getMultipleConversation(callback, conversationIDList, operationID)
+	for _, conversation := range conversations {
+		resp = append(resp, server_api_params.GetConversationRecvMessageOptResp{
+			ConversationID: conversation.ConversationID,
+			Result:         &conversation.RecvMsgOpt,
+		})
+	}
+	return resp
 }
+
 func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, sourceID string, sessionType int32, operationID string) *db.LocalConversation {
 	conversationID := utils.GetConversationIDBySessionType(sourceID, int(sessionType))
 	lc, err := c.db.GetConversation(conversationID)
@@ -207,10 +215,6 @@ func (c *Conversation) getServerConversationList(operationID string) (server_api
 	return resp, nil
 }
 
-func (c *Conversation) getServerConversation(conversationID, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "conversationID: ", conversationID)
-}
-
 func (c *Conversation) SyncConversations(operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	svrList, err := c.getServerConversationList(operationID)
@@ -218,7 +222,6 @@ func (c *Conversation) SyncConversations(operationID string) {
 		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		return
 	}
-	// 判断不出本地有没有 重写
 	conversationsOnLocal, err := c.db.GetAllConversationListToSync()
 	if err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
@@ -242,16 +245,30 @@ func (c *Conversation) SyncConversations(operationID string) {
 		}
 	}
 	// 本地服务器有的会话 以服务器为准更新 触发回调
-	var conversationChangedList []string
+	var conversationChangedList []*db.LocalConversation
 	for _, index := range sameA {
 		log.NewInfo("", *conversationsOnServer[index])
-		err := c.db.UpdateConversationForSync(conversationsOnServer[index])
+		isUpdate, err := c.db.UpdateConversationForSync(conversationsOnServer[index])
 		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "UpdateConversation failed ", err.Error(), *conversationsOnServer[index])
-			continue
+			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		}
+		if isUpdate {
+			conversationLocal, err := c.db.GetConversation(conversationsOnServer[index].ConversationID)
+			if err != nil {
+				log.NewError(operationID, utils.GetSelfFuncName(), "get", conversationsOnServer[index].ConversationID, "failed")
+				continue
+			}
+			conversationChangedList = append(conversationChangedList, conversationLocal)
+			if err != nil {
+				log.NewError(operationID, utils.GetSelfFuncName(), "UpdateConversation failed ", err.Error(), *conversationsOnServer[index])
+				continue
+			}
+		}
+
 	}
+	// callback
 	c.ConversationListener.OnConversationChanged(utils.StructToJsonString(conversationChangedList))
+	//log.NewInfo(operationID, utils.StructToJsonString(conversationChangedList))
 	// local有 server没有 代表没有修改公共字段
 	for _, index := range bInANot {
 		log.NewDebug(operationID, utils.GetSelfFuncName(), index, conversationsOnLocal[index].ConversationID,

@@ -38,20 +38,27 @@ var (
 )
 
 func main() {
-	strMyUidx := "18666662412"
+	strMyUidx := "17726378428"
 	//friendID := "17726378428"
 	tokenx := test.GenToken(strMyUidx)
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
-	test.DoTestCancel()
+	//test.DoTestInviteInGroup()
+	//test.DoTestCancel()
 	//test.DoTestSendMsg2(strMyUidx, friendID)
 	//test.DoTestGetAllConversation()
-	//test.DoTestGetOneConversation(friendID)
-	//test.DoTestGetConversationListSplit()
 
+	//test.DoTestGetOneConversation("17726378428")
+	//test.DoTestGetConversations(`["single_17726378428"]`)
+	//test.DoTestGetConversationListSplit()
+	//test.DoTestGetConversationRecvMessageOpt(`["single_17726378428"]`)
+
+	//set batch
+	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.NotReceiveMessage)
+	//set one
 	////set batch
 	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.ReceiveMessage)
 	////set one
-	//test.DoTestSetConversationPinned("single_13312345678", true)
+	//test.DoTestSetConversationPinned("single_17726378428", false)
 	//test.DoTestSetOneConversationRecvMessageOpt("single_17726378428", constant.NotReceiveMessage)
 	//test.DoTestSetOneConversationPrivateChat("single_17726378428", false)
 	for {
