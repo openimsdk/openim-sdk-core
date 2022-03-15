@@ -248,17 +248,23 @@ func (c *Conversation) SyncConversations(operationID string) {
 	var conversationChangedList []*db.LocalConversation
 	for _, index := range sameA {
 		log.NewInfo("", *conversationsOnServer[index])
-		err := c.db.UpdateConversationForSync(conversationsOnServer[index])
-		conversationLocal, err := c.db.GetConversation(conversationsOnServer[index].ConversationID)
+		isUpdate, err := c.db.UpdateConversationForSync(conversationsOnServer[index])
 		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "get", conversationsOnServer[index].ConversationID, "failed")
-			continue
+			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		}
-		conversationChangedList = append(conversationChangedList, conversationLocal)
-		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "UpdateConversation failed ", err.Error(), *conversationsOnServer[index])
-			continue
+		if isUpdate {
+			conversationLocal, err := c.db.GetConversation(conversationsOnServer[index].ConversationID)
+			if err != nil {
+				log.NewError(operationID, utils.GetSelfFuncName(), "get", conversationsOnServer[index].ConversationID, "failed")
+				continue
+			}
+			conversationChangedList = append(conversationChangedList, conversationLocal)
+			if err != nil {
+				log.NewError(operationID, utils.GetSelfFuncName(), "UpdateConversation failed ", err.Error(), *conversationsOnServer[index])
+				continue
+			}
 		}
+
 	}
 	// callback
 	c.ConversationListener.OnConversationChanged(utils.StructToJsonString(conversationChangedList))

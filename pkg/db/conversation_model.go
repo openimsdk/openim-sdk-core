@@ -92,14 +92,14 @@ func (d *DataBase) UpdateConversation(c *LocalConversation) error {
 	return utils.Wrap(t.Error, "UpdateConversation failed")
 }
 
-func (d *DataBase) UpdateConversationForSync(c *LocalConversation) error {
+func (d *DataBase) UpdateConversationForSync(c *LocalConversation) (bool, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	t := d.conn.Updates(c).Updates(map[string]interface{}{"recv_msg_opt": c.RecvMsgOpt, "is_pinned": c.IsPinned, "is_private_chat": c.IsPrivateChat})
 	if t.RowsAffected == 0 {
-		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+		return false, utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
-	return utils.Wrap(t.Error, "UpdateConversation failed")
+	return true, utils.Wrap(t.Error, "UpdateConversation failed")
 }
 
 func (d *DataBase) BatchUpdateConversationList(conversationList []*LocalConversation) error {
