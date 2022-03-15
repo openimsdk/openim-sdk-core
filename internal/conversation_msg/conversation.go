@@ -249,7 +249,12 @@ func (c *Conversation) SyncConversations(operationID string) {
 	for _, index := range sameA {
 		log.NewInfo("", *conversationsOnServer[index])
 		err := c.db.UpdateConversationForSync(conversationsOnServer[index])
-		conversationChangedList = append(conversationChangedList, conversationsOnServer[index])
+		conversationLocal, err := c.db.GetConversation(conversationsOnServer[index].ConversationID)
+		if err != nil {
+			log.NewError(operationID, utils.GetSelfFuncName(), "get", conversationsOnServer[index].ConversationID, "failed")
+			continue
+		}
+		conversationChangedList = append(conversationChangedList, conversationLocal)
 		if err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), "UpdateConversation failed ", err.Error(), *conversationsOnServer[index])
 			continue
