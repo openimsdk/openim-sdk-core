@@ -34,7 +34,9 @@ func (s *LiveSignaling) InviteInGroup(callback open_im_sdk_callback.Base, signal
 		common.JsonUnmarshalCallback(signalInviteInGroupReq, req.InviteInGroup, callback, operationID)
 		s.SetDefaultReq(req.InviteInGroup.Invitation)
 		req.InviteInGroup.Invitation.InviterUserID = s.loginUserID
+		req.InviteInGroup.OpUserID = s.loginUserID
 		signalReq.Payload = req
+
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback: finished")
 	}()
