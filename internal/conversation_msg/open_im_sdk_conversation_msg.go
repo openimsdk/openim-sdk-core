@@ -525,11 +525,20 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			lc.FaceURL = faceUrl
 			lc.ShowName = name
 		}
+		oldMessage, err := c.db.GetMessage(s.ClientMsgID)
+		if err != nil {
+			msgStructToLocalChatLog(&localMessage, &s)
+			err := c.db.InsertMessage(&localMessage)
+			common.CheckAnyErrCallback(callback, 201, err, operationID)
+		} else {
+			if oldMessage.Status != constant.MsgStatusSendFailed {
+				common.CheckAnyErrCallback(callback, 202, err, operationID)
+			} else {
+				s.Status = constant.MsgStatusSending
+			}
+		}
 		lc.ConversationID = conversationID
 		lc.LatestMsg = utils.StructToJsonString(s)
-		msgStructToLocalChatLog(&localMessage, &s)
-		err := c.db.InsertMessage(&localMessage)
-		common.CheckAnyErrCallback(callback, 201, err, operationID)
 		log.Info(operationID, "send message come here", *lc)
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.ch)
 		var delFile []string
