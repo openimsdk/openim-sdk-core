@@ -261,7 +261,7 @@ func (c *Conversation) SyncConversations(operationID string, conversationIDs ...
 			conversationChangedList = append(conversationChangedList, conversation)
 		}
 	}
-	if len(conversationIDs) > 1 {
+	if len(conversationIDs) > 0 {
 		for _, conversationID := range conversationIDs {
 			conversation, err := c.db.GetConversation(conversationID)
 			if err != nil {
