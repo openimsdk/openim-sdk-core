@@ -28,6 +28,14 @@ func (s *SignalingCallback) OnInvitationTimeout(invitationTimeout string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", invitationTimeout, "0"}, s.uid)
 }
 
+func (s *SignalingCallback) OnInviteeAcceptedByOtherDevice(inviteeAcceptedCallback string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", inviteeAcceptedCallback, "0"}, s.uid)
+}
+
+func (s *SignalingCallback) OnInviteeRejectedByOtherDevice(inviteeRejectedCallback string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", inviteeRejectedCallback, "0"}, s.uid)
+}
+
 func (wsRouter *WsFuncRouter) SetSignalingListener() {
 	var sr SignalingCallback
 	sr.uid = wsRouter.uId
