@@ -21,8 +21,8 @@ func NewFull(user *user.User, friend *friend.Friend, group *group.Group) *Full {
 }
 
 func (u *Full) getUsersInfo(callback open_im_sdk_callback.Base, userIDList sdk.GetUsersInfoParam, operationID string) sdk.GetUsersInfoCallback {
-	friendList := u.friend.GetDesignatedFriendListInfo(callback, []string(userIDList), operationID)
-	blackList := u.friend.GetDesignatedBlackListInfo(callback, []string(userIDList), operationID)
+	friendList := u.friend.GetDesignatedFriendListInfo(callback, userIDList, operationID)
+	blackList := u.friend.GetDesignatedBlackListInfo(callback, userIDList, operationID)
 	notIn := make([]string, 0)
 	for _, v := range userIDList {
 		inFriendList := 0
@@ -47,7 +47,11 @@ func (u *Full) getUsersInfo(callback open_im_sdk_callback.Base, userIDList sdk.G
 	publicList := make([]*api.PublicUserInfo, 0)
 	if len(notIn) > 0 {
 		publicList = u.user.GetUsersInfoFromSvr(callback, notIn, operationID)
+		go func() {
+			for _, v := range publicList {
+				_ = u.user.UpdateMsgSenderFaceURLAndSenderNickname(v.UserID, v.FaceURL, v.Nickname)
+			}
+		}()
 	}
-
 	return common.MergeUserResult(publicList, friendList, blackList)
 }

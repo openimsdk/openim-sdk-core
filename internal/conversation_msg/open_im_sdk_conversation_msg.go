@@ -525,11 +525,20 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			lc.FaceURL = faceUrl
 			lc.ShowName = name
 		}
+		oldMessage, err := c.db.GetMessage(s.ClientMsgID)
+		if err != nil {
+			msgStructToLocalChatLog(&localMessage, &s)
+			err := c.db.InsertMessage(&localMessage)
+			common.CheckAnyErrCallback(callback, 201, err, operationID)
+		} else {
+			if oldMessage.Status != constant.MsgStatusSendFailed {
+				common.CheckAnyErrCallback(callback, 202, errors.New("only failed message can be repeatedly send"), operationID)
+			} else {
+				s.Status = constant.MsgStatusSending
+			}
+		}
 		lc.ConversationID = conversationID
 		lc.LatestMsg = utils.StructToJsonString(s)
-		msgStructToLocalChatLog(&localMessage, &s)
-		err := c.db.InsertMessage(&localMessage)
-		common.CheckAnyErrCallback(callback, 201, err, operationID)
 		log.Info(operationID, "send message come here", *lc)
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.ch)
 		var delFile []string
@@ -661,11 +670,21 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 			lc.FaceURL = faceUrl
 			lc.ShowName = name
 		}
+
+		oldMessage, err := c.db.GetMessage(s.ClientMsgID)
+		if err != nil {
+			msgStructToLocalChatLog(&localMessage, &s)
+			err := c.db.InsertMessage(&localMessage)
+			common.CheckAnyErrCallback(callback, 201, err, operationID)
+		} else {
+			if oldMessage.Status != constant.MsgStatusSendFailed {
+				common.CheckAnyErrCallback(callback, 202, errors.New("only failed message can be repeatedly send"), operationID)
+			} else {
+				s.Status = constant.MsgStatusSending
+			}
+		}
 		lc.ConversationID = conversationID
 		lc.LatestMsg = utils.StructToJsonString(s)
-		msgStructToLocalChatLog(&localMessage, &s)
-		err := c.db.InsertMessage(&localMessage)
-		common.CheckAnyErrCallback(callback, 201, err, operationID)
 		//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.AddConOrUpLatMsg,
 		//c}})
 		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, []string{conversationID}}})
@@ -715,7 +734,12 @@ func (c *Conversation) internalSendMessage(callback open_im_sdk_callback.Base, s
 	timeout := 300
 	retryTimes := 0
 	g, err := c.SendReqWaitResp(&wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID, operationID)
-	common.CheckAnyErrCallback(callback, 301, err, operationID)
+	switch e := err.(type) {
+	case *constant.ErrInfo:
+		common.CheckAnyErrCallback(callback, e.ErrCode, e, operationID)
+	default:
+		common.CheckAnyErrCallback(callback, 301, err, operationID)
+	}
 	var sendMsgResp server_api_params.UserSendMsgResp
 	_ = proto.Unmarshal(g.Data, &sendMsgResp)
 	return &sendMsgResp, nil
@@ -733,7 +757,12 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.Local
 	timeout := 300
 	retryTimes := 60
 	resp, err := c.SendReqWaitResp(&wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID, operationID)
-	c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
+	switch e := err.(type) {
+	case *constant.ErrInfo:
+		c.checkErrAndUpdateMessage(callback, e.ErrCode, e, s, lc, operationID)
+	default:
+		c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
+	}
 	var sendMsgResp server_api_params.UserSendMsgResp
 	_ = proto.Unmarshal(resp.Data, &sendMsgResp)
 	s.SendTime = sendMsgResp.SendTime

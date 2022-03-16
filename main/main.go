@@ -1,6 +1,7 @@
 package main
 
 import (
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/test"
 
