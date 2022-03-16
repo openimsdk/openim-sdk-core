@@ -54,7 +54,7 @@ func (u *User) updateMsgSenderInfo(nickname, faceURL string, operationID string)
 	if faceURL != "" {
 		err := u.DataBase.UpdateMsgSenderFaceURL(u.loginUserID, faceURL, constant.SingleChatType)
 		if err != nil {
-			log.Error(operationID, "UpdateMsgSenderNickname failed ", err.Error(), u.loginUserID, faceURL, constant.SingleChatType)
+			log.Error(operationID, "UpdateMsgSenderFaceURL failed ", err.Error(), u.loginUserID, faceURL, constant.SingleChatType)
 		}
 	}
 }
