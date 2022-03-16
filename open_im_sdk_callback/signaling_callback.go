@@ -5,7 +5,11 @@ type OnSignalingListener interface {
 
 	OnInviteeAccepted(inviteeAcceptedCallback string)
 
+	OnInviteeAcceptedByOtherDevice(inviteeAcceptedCallback string)
+
 	OnInviteeRejected(inviteeRejectedCallback string)
+
+	OnInviteeRejectedByOtherDevice(inviteeRejectedCallback string)
 	//
 	OnInvitationCancelled(invitationCancelledCallback string)
 	//
