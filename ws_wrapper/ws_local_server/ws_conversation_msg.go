@@ -148,7 +148,7 @@ func (wsRouter *WsFuncRouter) GetConversationListSplit(input string, operationID
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "offset", "count") {
 		return
 	}
-	userWorker.Conversation().GetConversationListSplit(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["offset"].(int), m["count"].(int), operationID)
+	userWorker.Conversation().GetConversationListSplit(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},int(m["offset"].(float64)),int(m["count"].(float64)), operationID)
 }
 
 func (wsRouter *WsFuncRouter) SetOneConversationRecvMessageOpt(input, operationID string) {
