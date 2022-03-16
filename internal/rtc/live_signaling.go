@@ -20,15 +20,15 @@ type LiveSignaling struct {
 	*ws.Ws
 	listener    open_im_sdk_callback.OnSignalingListener
 	loginUserID string
-	db.DataBase
+	*db.DataBase
 	platformID int32
 }
 
-func NewLiveSignaling(ws *ws.Ws, listener open_im_sdk_callback.OnSignalingListener, loginUserID string, platformID int32) *LiveSignaling {
+func NewLiveSignaling(ws *ws.Ws, listener open_im_sdk_callback.OnSignalingListener, loginUserID string, platformID int32, db *db.DataBase) *LiveSignaling {
 	if ws == nil || listener == nil {
 		log.Error("", "ws or listener is nil")
 	}
-	return &LiveSignaling{Ws: ws, listener: listener, loginUserID: loginUserID, platformID: platformID}
+	return &LiveSignaling{Ws: ws, listener: listener, loginUserID: loginUserID, platformID: platformID, DataBase: db}
 }
 
 func (s *LiveSignaling) waitPush(req *api.SignalReq, operationID string) {

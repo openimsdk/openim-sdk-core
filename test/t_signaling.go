@@ -32,6 +32,14 @@ func (s *testSignalingListener) OnInvitationTimeout(invitationTimeoutCallback st
 	log.Info("", utils.GetSelfFuncName(), "listener ", invitationTimeoutCallback)
 }
 
+func (s *testSignalingListener) OnInviteeAcceptedByOtherDevice(inviteeAcceptedCallback string) {
+	log.Info("", utils.GetSelfFuncName(), "listener ", inviteeAcceptedCallback)
+}
+
+func (s *testSignalingListener) OnInviteeRejectedByOtherDevice(inviteeRejectedCallback string) {
+	log.Info("", utils.GetSelfFuncName(), "listener ", inviteeRejectedCallback)
+}
+
 type testSingaling struct {
 	baseCallback
 }
