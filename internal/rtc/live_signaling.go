@@ -41,8 +41,8 @@ func (s *LiveSignaling) waitPush(req *api.SignalReq, operationID string) {
 	}
 
 	for _, v := range invt.InviteeUserIDList {
-		go func() {
-			push, err := s.SignalingWaitPush(invt.InviterUserID, v, invt.RoomID, invt.Timeout, operationID)
+		go func(invitee string) {
+			push, err := s.SignalingWaitPush(invt.InviterUserID, invitee, invt.RoomID, invt.Timeout, operationID)
 			if err != nil {
 				if strings.Contains(err.Error(), "timeout") {
 					log.Error(operationID, "wait push timeout ", err.Error(), invt.InviterUserID, v, invt.RoomID, invt.Timeout)
@@ -60,7 +60,7 @@ func (s *LiveSignaling) waitPush(req *api.SignalReq, operationID string) {
 			}
 			log.Info(operationID, "SignalingWaitPush ", push.String(), invt.InviterUserID, v, invt.RoomID, invt.Timeout)
 			s.doSignalPush(push, operationID)
-		}()
+		}(v)
 	}
 }
 
