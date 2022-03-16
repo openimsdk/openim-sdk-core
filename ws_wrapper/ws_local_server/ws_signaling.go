@@ -4,6 +4,37 @@ import (
 	"open_im_sdk/open_im_sdk"
 )
 
+type SignalingCallback struct {
+	uid string
+}
+
+func (s *SignalingCallback) OnReceiveNewInvitation(receiveNewInvitation string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", receiveNewInvitation, "0"}, s.uid)
+}
+
+func (s *SignalingCallback) OnInviteeAccepted(inviteeAccepted string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", inviteeAccepted, "0"}, s.uid)
+}
+
+func (s *SignalingCallback) OnInviteeRejected(inviteeRejected string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", inviteeRejected, "0"}, s.uid)
+}
+
+func (s *SignalingCallback) OnInvitationCancelled(invitationCancelled string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", invitationCancelled, "0"}, s.uid)
+}
+
+func (s *SignalingCallback) OnInvitationTimeout(invitationTimeout string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", invitationTimeout, "0"}, s.uid)
+}
+
+func (wsRouter *WsFuncRouter) SetSignalingListener() {
+	var sr SignalingCallback
+	sr.uid = wsRouter.uId
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.SetSignalingListener(&sr)
+}
+
 func (wsRouter *WsFuncRouter) SignalingInvite(input, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
