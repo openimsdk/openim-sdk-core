@@ -35,8 +35,6 @@ type LoginMgr struct {
 	loginUserID  string
 	connListener open_im_sdk_callback.OnConnListener
 
-	justOnceFlag bool
-
 	groupListener        open_im_sdk_callback.OnGroupListener
 	friendListener       open_im_sdk_callback.OnFriendshipListener
 	conversationListener open_im_sdk_callback.OnConversationListener
@@ -108,14 +106,14 @@ func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalin
 
 func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
 	log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)
-	if u.justOnceFlag {
-		cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
-		return
-	}
+	//if u.justOnceFlag {
+	//	cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
+	//	return
+	//}
 	err := CheckToken(userID, token, operationID)
 	common.CheckTokenErrCallback(cb, err, operationID)
 	log.Info(operationID, "checkToken ok ", userID, token)
-	u.justOnceFlag = true
+	//	u.justOnceFlag = true
 
 	u.token = token
 	u.loginUserID = userID
@@ -225,7 +223,7 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 	if callback != nil {
 		callback.OnSuccess("")
 	}
-	u.justOnceFlag = false
+	//	u.justOnceFlag = false
 }
 
 func (u *LoginMgr) GetLoginUser() string {

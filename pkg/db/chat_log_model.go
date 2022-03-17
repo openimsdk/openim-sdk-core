@@ -242,3 +242,19 @@ func (d *DataBase) UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nick
 		"send_id = ?  and (sender_face_url != ? or sender_nick_name != ?)", sendID, faceURL, nickname).Updates(
 		map[string]interface{}{"sender_face_url": faceURL, "sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
 }
+
+func (d *DataBase) GetMsgSeqByClientMsgID(clientMsgID string) (uint32, error) {
+	return 0, nil
+}
+
+func (d *DataBase) GetMsgSeqListByGroupID(groupID string) ([]uint32, error) {
+	return nil, nil
+}
+
+func (d *DataBase) GetMsgSeqListByPeerUserID(userID string) ([]uint32, error) {
+	return nil, nil
+}
+
+func (d *DataBase) GetMsgSeqListBySelfUserID(userID string) ([]uint32, error) {
+	return nil, nil
+}

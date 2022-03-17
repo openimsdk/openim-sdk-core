@@ -83,9 +83,8 @@ const (
 	////////////////////////////////////////
 
 	//MsgFrom
-	UserMsgType      = 100
-	SysMsgType       = 200
-	ConversationType = 300
+	UserMsgType = 100
+	SysMsgType  = 200
 
 	/////////////////////////////////////
 	//SessionType
@@ -184,6 +183,7 @@ const (
 	WSPullMsgBySeqList = 1002
 	WSSendMsg          = 1003
 	WSSendSignalMsg    = 1004
+	WsDelMsg           = 1005
 	WSPushMsg          = 2001
 	WSKickOnlineMsg    = 2002
 	WsLogoutMsg        = 2003

@@ -21,6 +21,8 @@ type Ws struct {
 	cmdCh              chan common.Cmd2Value //waiting logout cmd
 	pushMsgAndMaxSeqCh chan common.Cmd2Value //recv push msg  -> channel
 	cmdHeartbeatCh     chan common.Cmd2Value //
+
+	JustOnceFlag bool
 }
 
 func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, cmdCh chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value, cmdHeartbeatCh chan common.Cmd2Value) *Ws {
@@ -324,6 +326,7 @@ func (w *Ws) doWSPushMsgForTest(wsResp GeneralWsResp) error {
 
 func (w *Ws) kickOnline(msg GeneralWsResp) {
 	w.listener.OnKickedOffline()
+
 }
 
 func (w *Ws) SendSignalingReqWaitResp(req *server_api_params.SignalReq, operationID string) (*server_api_params.SignalResp, error) {

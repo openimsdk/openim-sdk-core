@@ -1194,3 +1194,34 @@ func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, con
 	message.SenderPlatformID = c.platformID
 
 }
+
+func (c *Conversation) DeleteConversationMsgFromLocalAndSvr(callback open_im_sdk_callback.Base, conversationID string, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", conversationID)
+		c.deleteConversationAndMsgFromSvr(callback, conversationID, operationID)
+		c.deleteConversation(callback, conversationID, operationID)
+		callback.OnSuccess(sdk_params_callback.DeleteConversationCallback)
+		log.NewInfo(operationID, fName, "callback: ", sdk_params_callback.DeleteConversationCallback)
+	}()
+
+}
+
+func (c *Conversation) DeleteMessageFromLocalAndSvr(callback open_im_sdk_callback.Base, message string, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", message)
+		s := sdk_struct.MsgStruct{}
+		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+		c.deleteMessageFromSvr(callback, &s, operationID)
+		c.deleteMessage(callback, &s, operationID)
+		callback.OnSuccess("")
+		log.NewInfo(operationID, fName, "callback: ", "")
+	}()
+}
