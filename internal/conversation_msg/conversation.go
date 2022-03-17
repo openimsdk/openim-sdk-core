@@ -2,6 +2,7 @@ package conversation_msg
 
 import (
 	"errors"
+	"github.com/golang/protobuf/proto"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -585,4 +586,33 @@ func (c *Conversation) DoNotification(msg *server_api_params.MsgData) {
 	go func() {
 		c.setConversationNotification(msg, operationID)
 	}()
+}
+
+func (c *Conversation) DelMsgBySeq(seqList []uint32) error {
+	var SPLIT = 1000
+	for i := 0; i < len(seqList)/SPLIT; i++ {
+		if err := c.DelMsgBySeqSplit(seqList[i*SPLIT : (i+1)*SPLIT]); err != nil {
+			return utils.Wrap(err, "")
+		}
+	}
+	return nil
+}
+
+func (c *Conversation) DelMsgBySeqSplit(seqList []uint32) error {
+	var req server_api_params.DelMsgListReq
+	req.SeqList = seqList
+	req.OperationID = utils.OperationIDGenerator()
+	operationID := req.OperationID
+
+	resp, err := c.Ws.SendReqWaitResp(&req, constant.WSPullMsgBySeqList, 30, 2, c.loginUserID, req.OperationID)
+	if err != nil {
+		return utils.Wrap(err, "SendReqWaitResp failed")
+	}
+	var delResp server_api_params.DelMsgListResp
+	err = proto.Unmarshal(resp.Data, &delResp)
+	if err != nil {
+		log.Error(operationID, "Unmarshal failed ", err.Error())
+		return utils.Wrap(err, "Unmarshal failed")
+	}
+	return nil
 }

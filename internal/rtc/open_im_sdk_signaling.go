@@ -36,7 +36,7 @@ func (s *LiveSignaling) InviteInGroup(callback open_im_sdk_callback.Base, signal
 		req.InviteInGroup.Invitation.InviterUserID = s.loginUserID
 		req.InviteInGroup.OpUserID = s.loginUserID
 		signalReq.Payload = req
-
+		req.InviteInGroup.Participant = s.getSelfParticipant(req.InviteInGroup.Invitation.GroupID, callback, operationID)
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback: finished")
 	}()
@@ -61,6 +61,7 @@ func (s *LiveSignaling) Invite(callback open_im_sdk_callback.Base, signalInviteR
 		req.Invite.Invitation.InviterUserID = s.loginUserID
 		req.Invite.OpUserID = s.loginUserID
 		signalReq.Payload = req
+		req.Invite.Participant = s.getSelfParticipant(req.Invite.Invitation.GroupID, callback, operationID)
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback: finished")
 	}()
@@ -84,6 +85,8 @@ func (s *LiveSignaling) Accept(callback open_im_sdk_callback.Base, signalAcceptR
 		s.SetDefaultReq(req.Accept.Invitation)
 		req.Accept.OpUserID = s.loginUserID
 		signalReq.Payload = req
+		req.Accept.Participant = s.getSelfParticipant(req.Accept.Invitation.GroupID, callback, operationID)
+		req.Accept.OpUserPlatformID = s.platformID
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback finished")
 	}()
@@ -107,6 +110,8 @@ func (s *LiveSignaling) Reject(callback open_im_sdk_callback.Base, signalRejectR
 		s.SetDefaultReq(req.Reject.Invitation)
 		req.Reject.OpUserID = s.loginUserID
 		signalReq.Payload = req
+		req.Reject.OpUserPlatformID = s.platformID
+		req.Reject.Participant = s.getSelfParticipant(req.Reject.Invitation.GroupID, callback, operationID)
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback finished")
 	}()

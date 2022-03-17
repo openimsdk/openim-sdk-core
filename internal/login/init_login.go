@@ -174,7 +174,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener)
 	u.conversation.SyncConversations(operationID)
 
-	u.signaling = rtc.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID)
+	u.signaling = rtc.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID, u.imConfig.Platform, u.db)
 	u.conversation.SetSignaling(u.signaling)
 	log.Info(operationID, "login success...")
 	cb.OnSuccess("")

@@ -40,7 +40,6 @@ func (u *User) SetSelfInfo(callback open_im_sdk_callback.Base, userInfo string, 
 		u.updateSelfUserInfo(callback, unmarshalParam, operationID)
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.SetSelfUserInfoCallback))
 		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonString(sdk_params_callback.SetSelfUserInfoCallback))
-		go u.updateMsgSenderInfo(unmarshalParam.Nickname, unmarshalParam.FaceURL, operationID)
 	}()
 }
 
@@ -54,7 +53,7 @@ func (u *User) updateMsgSenderInfo(nickname, faceURL string, operationID string)
 	if faceURL != "" {
 		err := u.DataBase.UpdateMsgSenderFaceURL(u.loginUserID, faceURL, constant.SingleChatType)
 		if err != nil {
-			log.Error(operationID, "UpdateMsgSenderNickname failed ", err.Error(), u.loginUserID, faceURL, constant.SingleChatType)
+			log.Error(operationID, "UpdateMsgSenderFaceURL failed ", err.Error(), u.loginUserID, faceURL, constant.SingleChatType)
 		}
 	}
 }

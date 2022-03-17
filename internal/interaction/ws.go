@@ -47,6 +47,12 @@ func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, co
 		log.Debug(operationID, "ws ch recvMsg success, code ", r.ErrCode)
 		if r.ErrCode != 0 {
 			log.Error(operationID, "ws ch recvMsg failed, code, err msg: ", r.ErrCode, r.ErrMsg)
+			switch r.ErrCode {
+			case int(constant.ErrInBlackList.ErrCode):
+				return nil, &constant.ErrInBlackList
+			case int(constant.ErrNotFriend.ErrCode):
+				return nil, &constant.ErrNotFriend
+			}
 			return nil, constant.WsRecvCode
 		} else {
 			return &r, nil
