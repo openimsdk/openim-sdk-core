@@ -1015,7 +1015,6 @@ func (c *Conversation) DeleteMessageFromLocalStorage(callback open_im_sdk_callba
 	go func() {
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
-		c.deleteMessage(callback, &s, operationID)
 		c.deleteMessageFromLocalStorage(callback, &s, operationID)
 		callback.OnSuccess("")
 	}()

@@ -44,7 +44,7 @@ func main() {
 	tokenx := test.GenToken(strMyUidx)
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	//test.DoTestInviteInGroup()
-	test.DoTestCancel()
+	//test.DoTestCancel()
 	//test.DoTestSendMsg2(strMyUidx, friendID)
 	test.DoTestGetAllConversation()
 
