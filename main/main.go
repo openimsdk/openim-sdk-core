@@ -1,7 +1,6 @@
 package main
 
 import (
-	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/test"
 
@@ -39,14 +38,14 @@ var (
 )
 
 func main() {
-	strMyUidx := "18381415165"
+	strMyUidx := "18349115126"
 	//friendID := "17726378428"
 	tokenx := test.GenToken(strMyUidx)
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	//test.DoTestInviteInGroup()
 	//test.DoTestCancel()
 	//test.DoTestSendMsg2(strMyUidx, friendID)
-	//test.DoTestGetAllConversation()
+	test.DoTestGetAllConversation()
 
 	//test.DoTestGetOneConversation("17726378428")
 	//test.DoTestGetConversations(`["single_17726378428"]`)
@@ -54,7 +53,7 @@ func main() {
 	//test.DoTestGetConversationRecvMessageOpt(`["single_17726378428"]`)
 
 	//set batch
-	test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.ReceiveMessage)
+	//test.DoTestSetConversationRecvMessageOpt([]string{"single_12312"}, constant.ReceiveMessage)
 	//set one
 	////set batch
 	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.ReceiveMessage)

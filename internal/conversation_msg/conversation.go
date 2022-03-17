@@ -461,8 +461,9 @@ func (c *Conversation) clearC2CHistoryMessage(callback open_im_sdk_callback.Base
 }
 
 func (c *Conversation) deleteMessage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
-	//c.p.PostFatalCallback(callback, constant.BatchSetConversationRouter, apiReq, &apiResp, apiReq.OperationID)
-	c.deleteMessageFromLocalStorage(callback, s, operationID)
+	var apiReq server_api_params.DeleteMsgReq
+	var apiResp server_api_params.DeleteMsgResp
+	c.p.PostFatalCallback(callback, constant.DeleteMsgRouter, apiReq, &apiResp, apiReq.OperationID)
 }
 
 func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {

@@ -17,10 +17,12 @@ const (
 	RemoveBlackRouter  = "/friend/remove_black"
 	GetBlackListRouter = "/friend/get_black_list"
 
-	SendMsgRouter                       = "/chat/send_msg"
-	PullUserMsgRouter                   = "/chat/pull_msg"
-	PullUserMsgBySeqRouter              = "/chat/pull_msg_by_seq"
-	NewestSeqRouter                     = "/chat/newest_seq"
+	SendMsgRouter          = "/chat/send_msg"
+	PullUserMsgRouter      = "/chat/pull_msg"
+	PullUserMsgBySeqRouter = "/chat/pull_msg_by_seq"
+	NewestSeqRouter        = "/chat/newest_seq"
+	DeleteMsgRouter        = "/chat/delete_msg"
+
 	TencentCloudStorageCredentialRouter = "/third/tencent_cloud_storage_credential"
 	MinioStorageCredentialRouter        = "/third/minio_storage_credential"
 
