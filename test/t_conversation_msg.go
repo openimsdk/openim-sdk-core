@@ -101,11 +101,11 @@ func DoTestGetAllConversation() {
 }
 
 //
-//func DoTestDeleteMessage() {
-//	var test TestGetAllConversationListCallBack
-//	test.OperationID = utils.OperationIDGenerator()
-//	open_im_sdk.DeleteMessage(test)
-//}
+func DoTestDeleteMessage() {
+	var test TestGetAllConversationListCallBack
+	test.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.DeleteMessage(test)
+}
 
 func DoTestGetOneConversation(friendID string) {
 	var test TestGetAllConversationListCallBack

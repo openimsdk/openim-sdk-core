@@ -141,6 +141,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 
 	u.heartbeat = ws.NewHeartbeat(u.msgSync, u.heartbeatCmdCh)
 
+	sdk_struct.SvrConf.ApiAddr = "http://43.128.5.63:10000"
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
 	u.user = user.NewUser(db, p, u.loginUserID)
 	u.user.SetListener(u.userListener)
