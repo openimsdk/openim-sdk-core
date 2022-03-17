@@ -593,23 +593,23 @@ func (c *Conversation) DoNotification(msg *server_api_params.MsgData) {
 	}()
 }
 
-func (c *Conversation) DelMsgBySeq(seqList []uint32) error {
+func (c *Conversation) delMsgBySeq(seqList []uint32) error {
 	var SPLIT = 1000
 	for i := 0; i < len(seqList)/SPLIT; i++ {
-		if err := c.DelMsgBySeqSplit(seqList[i*SPLIT : (i+1)*SPLIT]); err != nil {
+		if err := c.delMsgBySeqSplit(seqList[i*SPLIT : (i+1)*SPLIT]); err != nil {
 			return utils.Wrap(err, "")
 		}
 	}
 	return nil
 }
 
-func (c *Conversation) DelMsgBySeqSplit(seqList []uint32) error {
+func (c *Conversation) delMsgBySeqSplit(seqList []uint32) error {
 	var req server_api_params.DelMsgListReq
 	req.SeqList = seqList
 	req.OperationID = utils.OperationIDGenerator()
 	operationID := req.OperationID
 
-	resp, err := c.Ws.SendReqWaitResp(&req, constant.WSPullMsgBySeqList, 30, 2, c.loginUserID, req.OperationID)
+	resp, err := c.Ws.SendReqWaitResp(&req, constant.WsDelMsg, 30, 5, c.loginUserID, req.OperationID)
 	if err != nil {
 		return utils.Wrap(err, "SendReqWaitResp failed")
 	}
@@ -620,4 +620,41 @@ func (c *Conversation) DelMsgBySeqSplit(seqList []uint32) error {
 		return utils.Wrap(err, "Unmarshal failed")
 	}
 	return nil
+}
+
+func (c *Conversation) deleteMessageFromSvr(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
+	seq, err := c.db.GetMsgSeqByClientMsgID(s.ClientMsgID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	if seq == 0 {
+		err = errors.New("seq == 0 ")
+		common.CheckArgsErrCallback(callback, err, operationID)
+	}
+	seqList := []uint32{seq}
+	err = c.delMsgBySeq(seqList)
+	common.CheckArgsErrCallback(callback, err, operationID)
+}
+
+func (c *Conversation) deleteConversationAndMsgFromSvr(callback open_im_sdk_callback.Base, conversationID, operationID string) {
+	local, err := c.db.GetConversation(conversationID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	var seqList []uint32
+	switch local.ConversationType {
+	case constant.SingleChatType:
+		peerUserID := local.UserID
+		if peerUserID != c.loginUserID {
+			seqList, err = c.db.GetMsgSeqListByPeerUserID(peerUserID)
+		} else {
+			seqList, err = c.db.GetMsgSeqListBySelfUserID(c.loginUserID)
+		}
+		common.CheckDBErrCallback(callback, err, operationID)
+		err = c.delMsgBySeq(seqList)
+		common.CheckArgsErrCallback(callback, err, operationID)
+
+	case constant.GroupChatType:
+		groupID := local.GroupID
+		seqList, err = c.db.GetMsgSeqListByGroupID(groupID)
+	}
+	common.CheckDBErrCallback(callback, err, operationID)
+	err = c.delMsgBySeq(seqList)
+	common.CheckArgsErrCallback(callback, err, operationID)
 }

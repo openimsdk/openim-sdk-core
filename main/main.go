@@ -26,27 +26,34 @@ func reliabilityTest() {
 }
 
 var (
-	TESTIP       = "43.128.5.63"
-	TESTIP_LOCAL = "43.128.5.63"
+	//	TESTIP       = "43.128.5.63"
+	//TESTIP_LOCAL = "43.128.5.63"
 	//TESTIP       = "1.14.194.38"
-	APIADDR      = "http://" + TESTIP_LOCAL + ":10000"
-	WSADDR       = "ws://" + TESTIP + ":17778"
+	//	APIADDR      = "http://" + TESTIP_LOCAL + ":10000"
+	APIADDR = "https://im-api.jiarenapp.com"
+
+	//WSADDR       = "ws://" + TESTIP + ":17778"
+	WSADDR = "wss://im.jiarenapp.com"
+
 	REGISTERADDR = APIADDR + "/user_register"
 	TOKENADDR    = APIADDR + "/auth/user_token"
-	SECRET       = "tuoyun"
+	SECRET       = "1111"
 	SENDINTERVAL = 20
 )
 
 func main() {
-	strMyUidx := "18349115126"
-	//strMyUidx := "18666662412"
+	test.REGISTERADDR = REGISTERADDR
+	test.TOKENADDR = TOKENADDR
+	test.SECRET = SECRET
+	test.SENDINTERVAL = SENDINTERVAL
+	strMyUidx := "1111"
 	//friendID := "17726378428"
 	tokenx := test.GenToken(strMyUidx)
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	//test.DoTestInviteInGroup()
 	//test.DoTestCancel()
 	//test.DoTestSendMsg2(strMyUidx, friendID)
-	test.DoTestGetAllConversation()
+	//test.DoTestGetAllConversation()
 
 	//test.DoTestGetOneConversation("17726378428")
 	//test.DoTestGetConversations(`["single_17726378428"]`)
@@ -54,7 +61,6 @@ func main() {
 	//test.DoTestGetConversationRecvMessageOpt(`["single_17726378428"]`)
 
 	//set batch
-	//test.DoTestSetConversationRecvMessageOpt([]string{"single_12312"}, constant.ReceiveMessage)
 	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.NotReceiveMessage)
 	//set one
 	////set batch
