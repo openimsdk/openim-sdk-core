@@ -2,7 +2,6 @@ package conversation_msg
 
 import (
 	"errors"
-	"github.com/golang/protobuf/proto"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -15,6 +14,8 @@ import (
 	"open_im_sdk/sdk_struct"
 	"sort"
 	"time"
+
+	"github.com/golang/protobuf/proto"
 )
 
 func (c *Conversation) getAllConversationList(callback open_im_sdk_callback.Base, operationID string) sdk.GetAllConversationListCallback {
@@ -464,7 +465,7 @@ func (c *Conversation) clearC2CHistoryMessage(callback open_im_sdk_callback.Base
 func (c *Conversation) deleteMessage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
 	var apiReq server_api_params.DeleteMsgReq
 	var apiResp server_api_params.DeleteMsgResp
-	c.p.PostFatalCallback(callback, constant.DeleteMsgRouter, apiReq, &apiResp, apiReq.OperationID)
+	c.p.PostFatalCallback(callback, constant.DeleteMsgRouter, apiReq, nil, apiReq.OperationID)
 }
 
 func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
