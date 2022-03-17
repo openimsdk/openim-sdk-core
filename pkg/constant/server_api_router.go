@@ -21,7 +21,7 @@ const (
 	PullUserMsgRouter      = "/chat/pull_msg"
 	PullUserMsgBySeqRouter = "/chat/pull_msg_by_seq"
 	NewestSeqRouter        = "/chat/newest_seq"
-	DeleteMsgRouter        = "/chat/delete_msg"
+	DeleteMsgRouter        = "/chat/del_msg"
 
 	TencentCloudStorageCredentialRouter = "/third/tencent_cloud_storage_credential"
 	MinioStorageCredentialRouter        = "/third/minio_storage_credential"
