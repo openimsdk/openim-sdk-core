@@ -107,7 +107,7 @@ func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalin
 }
 
 func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
-	log.Info(operationID, "login start... ", userID, token)
+	log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)
 	if u.justOnceFlag {
 		cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
 		return

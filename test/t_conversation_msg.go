@@ -100,6 +100,7 @@ func DoTestGetAllConversation() {
 	open_im_sdk.GetAllConversationList(test, test.OperationID)
 }
 
+//
 //func DoTestDeleteMessage() {
 //	var test TestGetAllConversationListCallBack
 //	test.OperationID = utils.OperationIDGenerator()
