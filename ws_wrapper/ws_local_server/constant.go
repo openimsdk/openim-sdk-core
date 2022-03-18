@@ -95,6 +95,7 @@ const (
 	StatusLoginPending         = 1002
 	StatusNoLogin              = 1003
 	StatusResourceNotCompleted = 1004
+	StatusNotSupportFunction   = 1005
 )
 
 var statusText = map[int]string{

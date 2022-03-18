@@ -81,8 +81,9 @@ func DoTestInvite() {
 
 func DoTestAccept() {
 	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
-	req := &api.SignalAcceptReq{Invitation: &api.InvitationInfo{}}
+	req := &api.SignalAcceptReq{Invitation: &api.InvitationInfo{}, OpUserID: "18349115126"}
 	req.Invitation = SetTestInviteInfo()
+	req.Invitation.InviterUserID = "18666662412"
 	s := utils.StructToJsonString(req)
 	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s, req.String())
 	open_im_sdk.SignalingAccept(t, t.OperationID, s)
@@ -90,8 +91,9 @@ func DoTestAccept() {
 
 func DoTestReject() {
 	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
-	req := &api.SignalRejectReq{Invitation: &api.InvitationInfo{}}
+	req := &api.SignalRejectReq{Invitation: &api.InvitationInfo{}, OpUserID: "18349115126"}
 	req.Invitation = SetTestInviteInfo()
+	req.Invitation.InviterUserID = "18666662412"
 	s := utils.StructToJsonString(req)
 	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
 	open_im_sdk.SignalingReject(t, t.OperationID, s)

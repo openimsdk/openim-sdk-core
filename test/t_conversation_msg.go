@@ -53,6 +53,14 @@ func DoTestGetHistoryMessage(userID string) {
 	params.Count = 10
 	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
 }
+func DoTestGetGroupHistoryMessage() {
+	var testGetHistoryCallBack GetHistoryCallBack
+	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
+	var params sdk_params_callback.GetHistoryMessageListParams
+	params.GroupID = "cb7aaa8e5f83d92db2ed1573cd01870c"
+	params.Count = 10
+	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
+}
 
 //func DoTestDeleteConversation(conversationID string) {
 //	var testDeleteConversation DeleteConversationCallBack
@@ -268,6 +276,10 @@ func (g GetHistoryCallBack) OnSuccess(data string) {
 type MsgListenerCallBak struct {
 }
 
+func (m *MsgListenerCallBak) OnRecvGroupReadReceipt(groupMsgReceiptList string) {
+	fmt.Println("OnRecvC2CReadReceipt , ", groupMsgReceiptList)
+}
+
 func (m *MsgListenerCallBak) OnRecvNewMessage(msg string) {
 	var mm sdk_struct.MsgStruct
 	err := json.Unmarshal([]byte(msg), &mm)
@@ -335,7 +347,7 @@ type conversationCallBack struct {
 }
 
 func (c conversationCallBack) OnSyncServerStart() {
-	panic("implement me")
+
 }
 
 func (c conversationCallBack) OnSyncServerFinish() {
@@ -405,6 +417,26 @@ func DoTestSendMsg2(sendId, recvID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
 }
 
+type TestMarkGroupMessageAsRead struct {
+	OperationID string
+}
+
+func (t TestMarkGroupMessageAsRead) OnError(errCode int32, errMsg string) {
+	log.Info(t.OperationID, "TestMarkGroupMessageAsRead , OnError %v\n", errMsg)
+}
+
+func (t TestMarkGroupMessageAsRead) OnSuccess(data string) {
+	log.Info(t.OperationID, "TestMarkGroupMessageAsRead , OnSuccess %v \n", data)
+}
+func DoTestMarkGroupMessageAsRead() {
+	groupID := "cb7aaa8e5f83d92db2ed1573cd01870c"
+	msgIDList := []string{"70107abbd8757df95f600edbed8c33fa", "56938acc45b1ac7c418018b516d3d4fe"}
+	operationID := utils.OperationIDGenerator()
+	var testMarkGroupMessageAsRead TestMarkGroupMessageAsRead
+	testMarkGroupMessageAsRead.OperationID = operationID
+	open_im_sdk.MarkGroupMessageAsRead(&testMarkGroupMessageAsRead, operationID, groupID, utils.StructToJsonString(msgIDList))
+
+}
 func DoTestSendMsg(index int, sendId, recvID string, idx string) {
 	m := "test msg " + sendId + ":" + recvID + ":" + idx
 	operationID := utils.OperationIDGenerator()

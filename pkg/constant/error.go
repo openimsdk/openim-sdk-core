@@ -37,6 +37,7 @@ var (
 	ErrWsRecvCode              = ErrInfo{ErrCode: 903, ErrMsg: WsRecvCode.Error()}
 	ErrWsSendTimeout           = ErrInfo{ErrCode: 904, ErrMsg: WsSendTimeout.Error()}
 	ErrResourceLoadNotComplete = ErrInfo{ErrCode: 905, ErrMsg: ResourceLoadNotComplete.Error()}
+	ErrNotSupportFunction      = ErrInfo{ErrCode: 906, ErrMsg: NotSupportFunction.Error()}
 )
 
 var (
@@ -62,6 +63,7 @@ var (
 	WsRecvCode              = errors.New("recv code err")
 	WsSendTimeout           = errors.New("send timeout")
 	ResourceLoadNotComplete = errors.New("resource loading is not complete")
+	NotSupportFunction      = errors.New("unsupported function")
 
 	NotFriend   = errors.New("not friend")
 	InBlackList = errors.New("in blackList")

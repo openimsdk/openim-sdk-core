@@ -543,84 +543,86 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.ch)
 		var delFile []string
 		//media file handle
-		switch s.ContentType {
-		case constant.Picture:
-			var sourcePath string
-			if utils.FileExist(s.PictureElem.SourcePath) {
-				sourcePath = s.PictureElem.SourcePath
-				delFile = append(delFile, utils.FileTmpPath(s.PictureElem.SourcePath, c.DataDir))
-			} else {
-				sourcePath = utils.FileTmpPath(s.PictureElem.SourcePath, c.DataDir)
-				delFile = append(delFile, sourcePath)
-			}
-			log.Info(operationID, "file", sourcePath, delFile)
-			sourceUrl, uuid, err := c.UploadImage(sourcePath, callback.OnProgress)
-			c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
-			s.PictureElem.SourcePicture.Url = sourceUrl
-			s.PictureElem.SourcePicture.UUID = uuid
-			s.PictureElem.SnapshotPicture.Url = sourceUrl + "?imageView2/2/w/" + constant.ZoomScale + "/h/" + constant.ZoomScale
-			s.PictureElem.SnapshotPicture.Width = int32(utils.StringToInt(constant.ZoomScale))
-			s.PictureElem.SnapshotPicture.Height = int32(utils.StringToInt(constant.ZoomScale))
-			s.Content = utils.StructToJsonString(s.PictureElem)
+		if s.Status != constant.MsgStatusSendSuccess { //filter forward message
+			switch s.ContentType {
+			case constant.Picture:
+				var sourcePath string
+				if utils.FileExist(s.PictureElem.SourcePath) {
+					sourcePath = s.PictureElem.SourcePath
+					delFile = append(delFile, utils.FileTmpPath(s.PictureElem.SourcePath, c.DataDir))
+				} else {
+					sourcePath = utils.FileTmpPath(s.PictureElem.SourcePath, c.DataDir)
+					delFile = append(delFile, sourcePath)
+				}
+				log.Info(operationID, "file", sourcePath, delFile)
+				sourceUrl, uuid, err := c.UploadImage(sourcePath, callback.OnProgress)
+				c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
+				s.PictureElem.SourcePicture.Url = sourceUrl
+				s.PictureElem.SourcePicture.UUID = uuid
+				s.PictureElem.SnapshotPicture.Url = sourceUrl + "?imageView2/2/w/" + constant.ZoomScale + "/h/" + constant.ZoomScale
+				s.PictureElem.SnapshotPicture.Width = int32(utils.StringToInt(constant.ZoomScale))
+				s.PictureElem.SnapshotPicture.Height = int32(utils.StringToInt(constant.ZoomScale))
+				s.Content = utils.StructToJsonString(s.PictureElem)
 
-		case constant.Voice:
-			var sourcePath string
-			if utils.FileExist(s.SoundElem.SoundPath) {
-				sourcePath = s.SoundElem.SoundPath
-				delFile = append(delFile, utils.FileTmpPath(s.SoundElem.SoundPath, c.DataDir))
-			} else {
-				sourcePath = utils.FileTmpPath(s.SoundElem.SoundPath, c.DataDir)
-				delFile = append(delFile, sourcePath)
-			}
-			log.Info(operationID, "file", sourcePath, delFile)
-			soundURL, uuid, err := c.UploadSound(sourcePath, callback.OnProgress)
-			c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
-			s.SoundElem.SourceURL = soundURL
-			s.SoundElem.UUID = uuid
-			s.Content = utils.StructToJsonString(s.SoundElem)
+			case constant.Voice:
+				var sourcePath string
+				if utils.FileExist(s.SoundElem.SoundPath) {
+					sourcePath = s.SoundElem.SoundPath
+					delFile = append(delFile, utils.FileTmpPath(s.SoundElem.SoundPath, c.DataDir))
+				} else {
+					sourcePath = utils.FileTmpPath(s.SoundElem.SoundPath, c.DataDir)
+					delFile = append(delFile, sourcePath)
+				}
+				log.Info(operationID, "file", sourcePath, delFile)
+				soundURL, uuid, err := c.UploadSound(sourcePath, callback.OnProgress)
+				c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
+				s.SoundElem.SourceURL = soundURL
+				s.SoundElem.UUID = uuid
+				s.Content = utils.StructToJsonString(s.SoundElem)
 
-		case constant.Video:
-			var videoPath string
-			var snapPath string
-			if utils.FileExist(s.VideoElem.VideoPath) {
-				videoPath = s.VideoElem.VideoPath
-				snapPath = s.VideoElem.SnapshotPath
-				delFile = append(delFile, utils.FileTmpPath(s.VideoElem.VideoPath, c.DataDir))
-				delFile = append(delFile, utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DataDir))
-			} else {
-				videoPath = utils.FileTmpPath(s.VideoElem.VideoPath, c.DataDir)
-				snapPath = utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DataDir)
-				delFile = append(delFile, videoPath)
-				delFile = append(delFile, snapPath)
+			case constant.Video:
+				var videoPath string
+				var snapPath string
+				if utils.FileExist(s.VideoElem.VideoPath) {
+					videoPath = s.VideoElem.VideoPath
+					snapPath = s.VideoElem.SnapshotPath
+					delFile = append(delFile, utils.FileTmpPath(s.VideoElem.VideoPath, c.DataDir))
+					delFile = append(delFile, utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DataDir))
+				} else {
+					videoPath = utils.FileTmpPath(s.VideoElem.VideoPath, c.DataDir)
+					snapPath = utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DataDir)
+					delFile = append(delFile, videoPath)
+					delFile = append(delFile, snapPath)
+				}
+				log.Info(operationID, "file: ", videoPath, snapPath, delFile)
+				snapshotURL, snapshotUUID, videoURL, videoUUID, err := c.UploadVideo(videoPath, snapPath, callback.OnProgress)
+				c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
+				s.VideoElem.VideoURL = videoURL
+				s.VideoElem.SnapshotUUID = snapshotUUID
+				s.VideoElem.SnapshotURL = snapshotURL
+				s.VideoElem.VideoUUID = videoUUID
+				s.Content = utils.StructToJsonString(s.VideoElem)
+			case constant.File:
+				fileURL, fileUUID, err := c.UploadFile(s.FileElem.FilePath, callback.OnProgress)
+				c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
+				s.FileElem.SourceURL = fileURL
+				s.FileElem.UUID = fileUUID
+				s.Content = utils.StructToJsonString(s.FileElem)
+			case constant.Text:
+			case constant.AtText:
+			case constant.Location:
+			case constant.Custom:
+			case constant.Merger:
+			case constant.Quote:
+			case constant.Card:
+			case constant.Face:
+			default:
+				common.CheckAnyErrCallback(callback, 202, errors.New("contentType not currently supported"+utils.Int32ToString(s.ContentType)), operationID)
 			}
-			log.Info(operationID, "file: ", videoPath, snapPath, delFile)
-			snapshotURL, snapshotUUID, videoURL, videoUUID, err := c.UploadVideo(videoPath, snapPath, callback.OnProgress)
-			c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
-			s.VideoElem.VideoURL = videoURL
-			s.VideoElem.SnapshotUUID = snapshotUUID
-			s.VideoElem.SnapshotURL = snapshotURL
-			s.VideoElem.VideoUUID = videoUUID
-			s.Content = utils.StructToJsonString(s.VideoElem)
-		case constant.File:
-			fileURL, fileUUID, err := c.UploadFile(s.FileElem.FilePath, callback.OnProgress)
-			c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
-			s.FileElem.SourceURL = fileURL
-			s.FileElem.UUID = fileUUID
-			s.Content = utils.StructToJsonString(s.FileElem)
-		case constant.Text:
-		case constant.AtText:
-		case constant.Location:
-		case constant.Custom:
-		case constant.Merger:
-		case constant.Quote:
-		case constant.Card:
-		case constant.Face:
-		default:
-			common.CheckAnyErrCallback(callback, 202, errors.New("contentType not currently supported"+utils.Int32ToString(s.ContentType)), operationID)
+			msgStructToLocalChatLog(&localMessage, &s)
+			err = c.db.UpdateMessage(&localMessage)
+			common.CheckAnyErrCallback(callback, 201, err, operationID)
 		}
-		msgStructToLocalChatLog(&localMessage, &s)
-		err = c.db.UpdateMessage(&localMessage)
-		common.CheckAnyErrCallback(callback, 201, err, operationID)
 		c.sendMessageToServer(&s, lc, callback, delFile, p, options, operationID)
 	}()
 }
@@ -700,7 +702,7 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 	}()
 }
 
-func (c *Conversation) internalSendMessage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, recvID, groupID, operationID string, p *server_api_params.OfflinePushInfo, onlineUserOnly bool, options map[string]bool) (*server_api_params.UserSendMsgResp, error) {
+func (c *Conversation) InternalSendMessage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, recvID, groupID, operationID string, p *server_api_params.OfflinePushInfo, onlineUserOnly bool, options map[string]bool) (*server_api_params.UserSendMsgResp, error) {
 	if recvID == "" && groupID == "" {
 		common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not be allowed"), operationID)
 	}
@@ -985,6 +987,7 @@ func (c *Conversation) MarkAllConversationHasRead(callback open_im_sdk_callback.
 	}()
 }
 
+//deprecated
 func (c *Conversation) MarkGroupMessageHasRead(callback open_im_sdk_callback.Base, groupID string, operationID string) {
 	if callback == nil {
 		return
@@ -994,7 +997,7 @@ func (c *Conversation) MarkGroupMessageHasRead(callback open_im_sdk_callback.Bas
 		conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.ch)
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
-		callback.OnSuccess(sdk_params_callback.MarkGroupMessageHasRead)
+		callback.OnSuccess(sdk_params_callback.MarkGroupMessageHasReadCallback)
 	}()
 }
 

@@ -184,10 +184,10 @@ func (d *DataBase) GetSendingMessageList() (result []*LocalChatLog, err error) {
 	return result, err
 }
 
-func (d *DataBase) UpdateMessageHasRead(sendID string, msgIDList []string) error {
+func (d *DataBase) UpdateMessageHasRead(sendID string, msgIDList []string, sessionType int) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Model(LocalChatLog{}).Where("send_id=?  AND session_type=? AND client_msg_id in ?", sendID, constant.SingleChatType, msgIDList).Update("is_read", constant.HasRead)
+	t := d.conn.Model(LocalChatLog{}).Where("send_id=?  AND session_type=? AND client_msg_id in ?", sendID, sessionType, msgIDList).Update("is_read", constant.HasRead)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}

@@ -366,7 +366,7 @@ func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req 
 	options := make(map[string]bool, 5)
 	utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
 	utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
-	resp, _ := c.internalSendMessage(callback, (*sdk_struct.MsgStruct)(&req), recvID, groupID, operationID, &server_api_params.OfflinePushInfo{}, false, options)
+	resp, _ := c.InternalSendMessage(callback, (*sdk_struct.MsgStruct)(&req), recvID, groupID, operationID, &server_api_params.OfflinePushInfo{}, false, options)
 	req.ServerMsgID = resp.ServerMsgID
 	req.SendTime = resp.SendTime
 	req.Status = constant.MsgStatusSendSuccess
@@ -395,7 +395,7 @@ func (c *Conversation) typingStatusUpdate(callback open_im_sdk_callback.Base, re
 	utils.SetSwitchFromOptions(options, constant.IsConversationUpdate, false)
 	utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
 	utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
-	c.internalSendMessage(callback, &s, recvID, "", operationID, &server_api_params.OfflinePushInfo{}, true, options)
+	c.InternalSendMessage(callback, &s, recvID, "", operationID, &server_api_params.OfflinePushInfo{}, true, options)
 
 }
 
@@ -421,7 +421,7 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 	utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
 	utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
 	//If there is an error, the coroutine ends, so judgment is not  required
-	resp, _ := c.internalSendMessage(callback, &s, userID, "", operationID, &server_api_params.OfflinePushInfo{}, false, options)
+	resp, _ := c.InternalSendMessage(callback, &s, userID, "", operationID, &server_api_params.OfflinePushInfo{}, false, options)
 	s.ServerMsgID = resp.ServerMsgID
 	s.SendTime = resp.SendTime
 	s.Status = constant.MsgStatusFiltered
@@ -430,7 +430,7 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 	if err != nil {
 		log.Error(operationID, "inset into chat log err", localMessage, s, err.Error())
 	}
-	err2 := c.db.UpdateMessageHasRead(userID, newMessageIDList)
+	err2 := c.db.UpdateMessageHasRead(userID, newMessageIDList, constant.SingleChatType)
 	if err2 != nil {
 		log.Error(operationID, "update message has read error", newMessageIDList, userID, err2.Error())
 	}

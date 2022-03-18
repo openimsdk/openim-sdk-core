@@ -650,6 +650,7 @@ func MarkC2CMessageAsRead(callback open_im_sdk_callback.Base, operationID string
 	userForSDK.Conversation().MarkC2CMessageAsRead(callback, userID, msgIDList, operationID)
 }
 
+//deprecated
 func MarkGroupMessageHasRead(callback open_im_sdk_callback.Base, operationID string, groupID string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
@@ -657,6 +658,18 @@ func MarkGroupMessageHasRead(callback open_im_sdk_callback.Base, operationID str
 		return
 	}
 	userForSDK.Conversation().MarkGroupMessageHasRead(callback, groupID, operationID)
+}
+func MarkGroupMessageAsRead(callback open_im_sdk_callback.Base, operationID string, groupID, msgIDList string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	if userForSDK.AdvancedFunction() == nil {
+		callback.OnError(constant.ErrNotSupportFunction.ErrCode, constant.ErrNotSupportFunction.ErrMsg)
+
+	}
+	userForSDK.AdvancedFunction().MarkGroupMessageAsRead(callback, groupID, msgIDList, operationID)
 }
 
 func DeleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, operationID string, message string) {

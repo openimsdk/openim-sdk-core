@@ -65,7 +65,9 @@ func (a *AddAdvancedMsgListenerCallback) OnRecvNewMessage(message string) {
 func (a *AddAdvancedMsgListenerCallback) OnRecvC2CReadReceipt(msgReceiptList string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msgReceiptList, "0"}, a.uid)
 }
-
+func (a *AddAdvancedMsgListenerCallback) OnRecvGroupReadReceipt(groupMsgReceiptList string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", groupMsgReceiptList, "0"}, a.uid)
+}
 func (a *AddAdvancedMsgListenerCallback) OnRecvMessageRevoked(msgId string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msgId, "0"}, a.uid)
 }
@@ -148,7 +150,7 @@ func (wsRouter *WsFuncRouter) GetConversationListSplit(input string, operationID
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "offset", "count") {
 		return
 	}
-	userWorker.Conversation().GetConversationListSplit(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},int(m["offset"].(float64)),int(m["count"].(float64)), operationID)
+	userWorker.Conversation().GetConversationListSplit(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, int(m["offset"].(float64)), int(m["count"].(float64)), operationID)
 }
 
 func (wsRouter *WsFuncRouter) SetOneConversationRecvMessageOpt(input, operationID string) {
@@ -488,6 +490,22 @@ func (wsRouter *WsFuncRouter) MarkGroupMessageHasRead(groupID string, operationI
 		return
 	}
 	userWorker.Conversation().MarkGroupMessageHasRead(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, groupID, operationID)
+}
+func (wsRouter *WsFuncRouter) MarkGroupMessageAsRead(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if userWorker.AdvancedFunction() == nil {
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusNotSupportFunction, "unsupported function", "", operationID})
+	}
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "groupID", "msgIDList") {
+		return
+	}
+	userWorker.AdvancedFunction().MarkGroupMessageAsRead(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["groupID"].(string), m["msgIDList"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) DeleteMessageFromLocalStorage(message string, operationID string) {

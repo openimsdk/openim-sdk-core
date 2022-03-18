@@ -69,6 +69,10 @@ func main() {
 	//test.DoTestSetConversationPinned("single_17726378428", false)
 	//test.DoTestSetOneConversationRecvMessageOpt("single_17726378428", constant.NotReceiveMessage)
 	//test.DoTestSetOneConversationPrivateChat("single_17726378428", false)
+	//test.DoTestReject()
+	//test.DoTestAccept()
+	//test.DoTestMarkGroupMessageAsRead()
+	test.DoTestGetGroupHistoryMessage()
 	for {
 		time.Sleep(30 * time.Second)
 		log.Info("", "waiting...")

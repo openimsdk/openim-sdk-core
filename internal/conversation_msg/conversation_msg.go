@@ -2,11 +2,11 @@ package conversation_msg
 
 import (
 	"encoding/json"
+	"open_im_sdk/internal/advanced_interface"
 	common2 "open_im_sdk/internal/common"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/group"
 	ws "open_im_sdk/internal/interaction"
-	"open_im_sdk/internal/rtc"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -36,11 +36,20 @@ type Conversation struct {
 	friend               *friend.Friend
 	group                *group.Group
 	user                 *user.User
-	signaling            rtc.Signaling
+	signaling            advanced_interface.Signaling
+	advancedFunction     advanced_interface.AdvancedFunction
 	common2.ObjectStorage
 }
 
-func (c *Conversation) SetSignaling(signaling rtc.Signaling) {
+func (c *Conversation) SetAdvancedFunction(advancedFunction advanced_interface.AdvancedFunction) {
+	c.advancedFunction = advancedFunction
+}
+
+func (c *Conversation) MsgListener() open_im_sdk_callback.OnAdvancedMsgListener {
+	return c.msgListener
+}
+
+func (c *Conversation) SetSignaling(signaling advanced_interface.Signaling) {
 	c.signaling = signaling
 }
 
@@ -72,7 +81,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	var isTriggerUnReadCount bool
 	var insertMsg, updateMsg []*db.LocalChatLog
 	var exceptionMsg []*db.LocalErrChatLog
-	var newMessages, msgReadList, msgRevokeList sdk_struct.NewMsgList
+	var newMessages, msgReadList, groupMsgReadList, msgRevokeList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory bool
 	conversationChangedSet := make(map[string]*db.LocalConversation)
 	newConversationSet := make(map[string]*db.LocalConversation)
@@ -201,6 +210,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				if msg.ContentType == constant.HasReadReceipt {
 					msgReadList = append(msgReadList, msg)
 				}
+				if msg.ContentType == constant.GroupHasReadReceipt {
+					groupMsgReadList = append(groupMsgReadList, msg)
+
+				}
 			}
 		} else { //Sent by others
 			if b, _ := c.db.MessageIfExists(msg.ClientMsgID); !b { //Deduplication operation
@@ -245,6 +258,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				}
 				if msg.ContentType == constant.HasReadReceipt {
 					msgReadList = append(msgReadList, msg)
+				}
+				if msg.ContentType == constant.GroupHasReadReceipt {
+					groupMsgReadList = append(groupMsgReadList, msg)
+
 				}
 				if msg.ContentType == constant.Typing {
 					newMessages = append(newMessages, msg)
@@ -293,6 +310,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		log.Error(operationID, "insert new conversation err:", err4.Error())
 	}
 	c.doMsgReadState(msgReadList)
+	c.advancedFunction.DoGroupMsgReadState(groupMsgReadList)
 	c.revokeMessage(msgRevokeList)
 	c.newMessage(newMessages)
 	log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
@@ -442,7 +460,6 @@ func (c *Conversation) doMsgReadState(msgReadList []*sdk_struct.MsgStruct) {
 		c.msgListener.OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
 	}
 }
-
 func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 	if c.ConversationListener == nil {
 		log.Error("internal", "not set conversationListener")
@@ -597,6 +614,7 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 }
 
 func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err error) {
+	_ = utils.JsonStringToStruct(msg.AttachedInfo, &msg.AttachedInfoElem)
 	if msg.ContentType >= constant.NotificationBegin && msg.ContentType <= constant.NotificationEnd {
 		var tips server_api_params.TipsComm
 		err = utils.JsonStringToStruct(msg.Content, &tips)
