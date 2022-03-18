@@ -175,15 +175,12 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	default:
 		objStorage = comm2.NewCOS(p)
 	}
+	u.signaling = sdk_advanced_function.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID, u.imConfig.Platform, u.db)
+	u.advancedFunction = sdk_advanced_function.NewChatHasRead(u.ws, u.conversation, u.loginUserID, u.db, u.imConfig.Platform)
 	u.conversation = conv.NewConversation(u.ws, u.db, p, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
-		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener)
+		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener, u.signaling, u.advancedFunction)
 	u.conversation.SyncConversations(operationID)
-
-	u.signaling = sdk_advanced_function.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID, u.imConfig.Platform, u.db)
-	u.conversation.SetSignaling(u.signaling)
-	u.advancedFunction = sdk_advanced_function.NewChatHasRead(u.ws, u.conversation, u.loginUserID, u.db, u.imConfig.Platform)
-	u.conversation.SetAdvancedFunction(u.advancedFunction)
 	log.Info(operationID, "login success...")
 	cb.OnSuccess("")
 

@@ -59,8 +59,10 @@ func (c *Conversation) SetMsgListener(msgListener open_im_sdk_callback.OnAdvance
 func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 	ch chan common.Cmd2Value, loginUserID string, platformID int32, dataDir string,
 	friend *friend.Friend, group *group.Group, user *user.User,
-	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener, msgListener open_im_sdk_callback.OnAdvancedMsgListener) *Conversation {
-	n := &Conversation{Ws: ws, db: db, p: p, ch: ch, loginUserID: loginUserID, platformID: platformID, DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage}
+	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener,
+	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling advanced_interface.Signaling, advancedFunction advanced_interface.AdvancedFunction) *Conversation {
+	n := &Conversation{Ws: ws, db: db, p: p, ch: ch, loginUserID: loginUserID, platformID: platformID,
+		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage, signaling: signaling, advancedFunction: advancedFunction}
 	go common.DoListener(n)
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
@@ -134,10 +136,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				c.group.DoNotification(v, c.ch)
 			} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
 				log.Info(operationID, "signaling DoNotification ", v)
-				if c.signaling != nil {
-					c.signaling.DoNotification(v, c.ch, operationID)
-					continue
-				}
+				c.signaling.DoNotification(v, c.ch, operationID)
+				continue
 			}
 		case constant.GroupChatType:
 			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
@@ -145,10 +145,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				log.Info(operationID, "DoGroupMsg SingleChatType", v)
 			} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
 				log.Info(operationID, "signaling DoNotification ", v)
-				if c.signaling != nil {
-					c.signaling.DoNotification(v, c.ch, operationID)
-					continue
-				}
+				c.signaling.DoNotification(v, c.ch, operationID)
+				continue
 			}
 		}
 		if v.SendID == c.loginUserID { //seq
