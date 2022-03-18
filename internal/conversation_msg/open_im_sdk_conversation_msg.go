@@ -1051,7 +1051,7 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_ca
 		if sendID != c.loginUserID {
 			friendInfo, _ := c.db.GetFriendInfoByFriendUserID(sendID)
 			sourceID = sendID
-			s.SenderFaceURL = friendInfo.Nickname
+			s.SenderFaceURL = friendInfo.FaceURL
 			s.SenderNickname = friendInfo.Nickname
 		} else {
 			sourceID = recvID
@@ -1087,7 +1087,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 		if sendID != c.loginUserID {
 			friendInfo, _ := c.db.GetFriendInfoByFriendUserID(sendID)
-			s.SenderFaceURL = friendInfo.Nickname
+			s.SenderFaceURL = friendInfo.FaceURL
 			s.SenderNickname = friendInfo.Nickname
 		}
 		localMessage := db.LocalChatLog{}
