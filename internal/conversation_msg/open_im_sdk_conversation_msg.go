@@ -1045,10 +1045,20 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_ca
 		if recvID == "" || sendID == "" {
 			common.CheckAnyErrCallback(callback, 208, errors.New("recvID or sendID is null"), operationID)
 		}
-		var conversation db.LocalConversation
-		conversation.ConversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
+		var sourceID string
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+		if sendID != c.loginUserID {
+			friendInfo, _ := c.db.GetFriendInfoByFriendUserID(sendID)
+			sourceID = sendID
+			s.SenderFaceURL = friendInfo.Nickname
+			s.SenderNickname = friendInfo.Nickname
+		} else {
+			sourceID = recvID
+		}
+		var conversation db.LocalConversation
+		conversation.ConversationID = utils.GetConversationIDBySessionType(sourceID, constant.SingleChatType)
+
 		localMessage := db.LocalChatLog{}
 		s.SendID = sendID
 		s.RecvID = recvID
@@ -1075,6 +1085,11 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 		conversation.ConversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+		if sendID != c.loginUserID {
+			friendInfo, _ := c.db.GetFriendInfoByFriendUserID(sendID)
+			s.SenderFaceURL = friendInfo.Nickname
+			s.SenderNickname = friendInfo.Nickname
+		}
 		localMessage := db.LocalChatLog{}
 		s.SendID = sendID
 		s.RecvID = groupID
