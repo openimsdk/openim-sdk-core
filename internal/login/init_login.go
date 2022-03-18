@@ -1,7 +1,6 @@
 package login
 
 import (
-	"open_im_sdk/internal/sdk_advanced_function"
 	"open_im_sdk/internal/advanced_interface"
 	comm2 "open_im_sdk/internal/common"
 	conv "open_im_sdk/internal/conversation_msg"
@@ -9,6 +8,7 @@ import (
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/group"
 	ws "open_im_sdk/internal/interaction"
+	"open_im_sdk/internal/sdk_advanced_function"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -84,7 +84,7 @@ func (u *LoginMgr) Friend() *friend.Friend {
 	return u.friend
 }
 
-func (u *LoginMgr)  Signaling() advanced_interface.Signaling {
+func (u *LoginMgr) Signaling() advanced_interface.Signaling {
 	return u.signaling
 }
 
@@ -180,19 +180,14 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener)
 	u.conversation.SyncConversations(operationID)
 
-	(u *LoginMgr)SetA(u)
-	log.Info(operationID, "login success...")
-	cb.OnSuccess("")
-
-}
-
-func (u *LoginMgr)SetA(u *LoginMgr) {
 	u.signaling = sdk_advanced_function.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID, u.imConfig.Platform, u.db)
 	u.conversation.SetSignaling(u.signaling)
 	u.advancedFunction = sdk_advanced_function.NewChatHasRead(u.ws, u.conversation, u.loginUserID, u.db, u.imConfig.Platform)
 	u.conversation.SetAdvancedFunction(u.advancedFunction)
-}
+	log.Info(operationID, "login success...")
+	cb.OnSuccess("")
 
+}
 func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_callback.OnConnListener, operationID string) bool {
 	u.imConfig = config
 	log.NewInfo(operationID, utils.GetSelfFuncName(), config)
