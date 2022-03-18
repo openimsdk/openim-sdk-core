@@ -369,7 +369,7 @@ func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req 
 	resp, _ := c.InternalSendMessage(callback, (*sdk_struct.MsgStruct)(&req), recvID, groupID, operationID, &server_api_params.OfflinePushInfo{}, false, options)
 	req.ServerMsgID = resp.ServerMsgID
 	req.SendTime = resp.SendTime
-	req.Status = constant.MsgStatusFiltered
+	req.Status = constant.MsgStatusSendSuccess
 	msgStructToLocalChatLog(&localMessage, (*sdk_struct.MsgStruct)(&req))
 	err = c.db.InsertMessage(&localMessage)
 	if err != nil {
