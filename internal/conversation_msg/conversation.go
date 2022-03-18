@@ -510,8 +510,12 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 			conversation.LatestMsg = utils.StructToJsonString(list[0])
 			conversation.LatestMsgSendTime = list[0].SendTime
 		}
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.ch)
-
+		err = c.db.UpdateColumnsConversation(conversation.ConversationID, map[string]interface{}{"latest_msg_send_time": conversation.LatestMsgSendTime, "latest_msg": conversation.LatestMsg})
+		if err != nil {
+			log.Error("internal", "updateConversationLatestMsgModel err: ", err)
+		} else {
+			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
+		}
 	}
 }
 func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, searchParam sdk.SearchLocalMessagesParams, operationID string) (r sdk.SearchLocalMessagesCallback) {
