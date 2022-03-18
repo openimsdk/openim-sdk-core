@@ -1049,10 +1049,13 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_ca
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 		if sendID != c.loginUserID {
-			friendInfo, _ := c.db.GetFriendInfoByFriendUserID(sendID)
+			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, sendID, operationID)
+			if err != nil {
+				log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error(), sendID)
+			}
 			sourceID = sendID
-			s.SenderFaceURL = friendInfo.FaceURL
-			s.SenderNickname = friendInfo.Nickname
+			s.SenderFaceURL = faceUrl
+			s.SenderNickname = name
 		} else {
 			sourceID = recvID
 		}
@@ -1069,6 +1072,8 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_ca
 		msgStructToLocalChatLog(&localMessage, &s)
 		conversation.LatestMsg = utils.StructToJsonString(s)
 		conversation.LatestMsgSendTime = s.SendTime
+		conversation.FaceURL = s.SenderFaceURL
+		conversation.ShowName = s.SenderNickname
 		_ = c.insertMessageToLocalStorage(callback, &localMessage, operationID)
 		callback.OnSuccess(utils.StructToJsonString(&s))
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.ch)
@@ -1086,9 +1091,12 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 		if sendID != c.loginUserID {
-			friendInfo, _ := c.db.GetFriendInfoByFriendUserID(sendID)
-			s.SenderFaceURL = friendInfo.FaceURL
-			s.SenderNickname = friendInfo.Nickname
+			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, sendID, operationID)
+			if err != nil {
+				log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error(), sendID)
+			}
+			s.SenderFaceURL = faceUrl
+			s.SenderNickname = name
 		}
 		localMessage := db.LocalChatLog{}
 		s.SendID = sendID
@@ -1101,6 +1109,8 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 		msgStructToLocalChatLog(&localMessage, &s)
 		conversation.LatestMsg = utils.StructToJsonString(s)
 		conversation.LatestMsgSendTime = s.SendTime
+		conversation.FaceURL = s.SenderFaceURL
+		conversation.ShowName = s.SenderNickname
 		_ = c.insertMessageToLocalStorage(callback, &localMessage, operationID)
 		callback.OnSuccess(utils.StructToJsonString(&s))
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.ch)
