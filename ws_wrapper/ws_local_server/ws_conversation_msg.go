@@ -2,6 +2,7 @@ package ws_local_server
 
 import (
 	"encoding/json"
+	"github.com/pkg/profile"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/utils"
 	"os"
@@ -38,8 +39,13 @@ func (s *SendCallback) OnProgress(progress int) {
 }
 
 func (wsRouter *WsFuncRouter) SendMessage(input string, operationID string) {
-	f, _ := os.OpenFile("operationID", os.O_CREATE|os.O_RDWR, 0644)
+	f, err := os.OpenFile(operationID+"mem.profile", os.O_CREATE|os.O_RDWR, 0644)
+	if err != nil {
+		wrapSdkLog(operationID, "OpenFile failed", input, err.Error())
+	}
 	defer f.Close()
+
+	defer profile.Start(profile.MemProfile).Stop()
 
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
