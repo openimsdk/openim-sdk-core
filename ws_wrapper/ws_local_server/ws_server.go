@@ -7,8 +7,11 @@
 package ws_local_server
 
 import (
+	"fmt"
 	"net/http"
 	"open_im_sdk/open_im_sdk"
+
+	"github.com/gorilla/websocket"
 
 	"github.com/gorilla/websocket"
 
@@ -45,8 +48,12 @@ type WServer struct {
 	ch           chan ChanMsg
 }
 
-func (ws *WServer) OnInit(wsPort int) {
-	ip := utils.ServerIP
+func (ws *WServer) OnInit(wsPort int, wsIp string) {
+	ip := wsIp
+	if ip == "" {
+		ip = utils.ServerIP
+	}
+
 	ws.wsAddr = ip + ":" + utils.IntToString(wsPort)
 	ws.wsMaxConnNum = 10000
 	ws.wsConnToUser = make(map[*UserConn]map[string]string)
@@ -58,15 +65,19 @@ func (ws *WServer) OnInit(wsPort int) {
 		ReadBufferSize:   4096,
 		CheckOrigin:      func(r *http.Request) bool { return true },
 	}
+
+	fmt.Println("ws server listening: ", ws.wsAddr)
 }
 
-func (ws *WServer) Run() {
+func (ws *WServer) Run() error {
 	go ws.getMsgAndSend()
 	http.HandleFunc("/", ws.wsHandler)         //Get request from client to handle by wsHandler
 	err := http.ListenAndServe(ws.wsAddr, nil) //Start listening
 	if err != nil {
 		wrapSdkLog("", "Ws listening err", "", "err", err.Error())
 	}
+
+	return err
 }
 
 func (ws *WServer) getMsgAndSend() {
