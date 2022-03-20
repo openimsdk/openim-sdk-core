@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/utils"
+	"os"
+	"runtime/pprof"
 )
 
 //
@@ -36,6 +38,9 @@ func (s *SendCallback) OnProgress(progress int) {
 }
 
 func (wsRouter *WsFuncRouter) SendMessage(input string, operationID string) {
+	f, _ := os.OpenFile("operationID", os.O_CREATE|os.O_RDWR, 0644)
+	defer f.Close()
+
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
 		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
@@ -51,7 +56,7 @@ func (wsRouter *WsFuncRouter) SendMessage(input string, operationID string) {
 		return
 	}
 	userWorker.Conversation().SendMessage(&sc, m["message"].(string), m["recvID"].(string), m["groupID"].(string), m["offlinePushInfo"].(string), operationID)
-
+	pprof.Lookup("heap").WriteTo(f, 0)
 }
 
 type AddAdvancedMsgListenerCallback struct {
