@@ -27,7 +27,9 @@ const SetConversationDraftCallback = constant.SuccessCallbackDefault
 
 const PinConversationDraftCallback = constant.SuccessCallbackDefault
 
-const SetConversationStatusCallback = constant.SuccessCallbackDefault
+const SetConversationMessageOptCallback = constant.SuccessCallbackDefault
+
+const SetConversationPrivateChatOptCallback = constant.SuccessCallbackDefault
 
 type GetHistoryMessageListParams struct {
 	UserID           string `json:"userID"`
@@ -47,7 +49,11 @@ type MarkC2CMessageAsReadParams []string
 
 const MarkC2CMessageAsReadCallback = constant.SuccessCallbackDefault
 
-const MarkGroupMessageHasRead = constant.SuccessCallbackDefault
+const MarkGroupMessageHasReadCallback = constant.SuccessCallbackDefault
+
+type MarkGroupMessageAsReadParams []string
+
+const MarkGroupMessageAsReadCallback = constant.SuccessCallbackDefault
 
 type SetConversationStatusParams struct {
 	UserId string `json:"userID" validate:"required"`

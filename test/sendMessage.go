@@ -86,6 +86,7 @@ func register(uid string) error {
 			//	time.Sleep(time.Duration(1) * time.Second)
 			continue
 		} else {
+			log.Info(req.OperationID, "Post2Api ok ", req)
 			return nil
 		}
 		//status code failed
@@ -128,7 +129,7 @@ func runGetToken(strMyUid string) string {
 	for true {
 		token = getToken(strMyUid)
 		if token == "" {
-			log.Error("test_openim: get token failed")
+			log.Error("test_openim: get token failed", strMyUid)
 			time.Sleep(time.Duration(1) * time.Second)
 			continue
 		} else {
@@ -192,7 +193,7 @@ func GenWs(id int) {
 	cmdWsCh := make(chan common.Cmd2Value, 10)
 
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
-	ws := interaction.NewWs(wsRespAsyn, wsConn, cmdWsCh, pushMsgAndMaxSeqCh)
+	ws := interaction.NewWs(wsRespAsyn, wsConn, cmdWsCh, pushMsgAndMaxSeqCh, nil)
 	allWs = append(allWs, ws)
 
 }

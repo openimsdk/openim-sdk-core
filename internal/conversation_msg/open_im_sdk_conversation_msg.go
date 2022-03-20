@@ -3,8 +3,6 @@ package conversation_msg
 import (
 	"encoding/json"
 	"errors"
-	"github.com/golang/protobuf/proto"
-	"github.com/jinzhu/copier"
 	"image"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -18,32 +16,10 @@ import (
 	"os"
 	"runtime"
 	"sync"
-)
 
-//
-//import "C"
-import (
-	//	//"bytes"
-	//	//"encoding/gob"
-	//	"encoding/json"
-	//	"errors"
-	//	"github.com/golang/protobuf/proto"
-	//	"github.com/gorilla/websocket"
+	"github.com/golang/protobuf/proto"
+	"github.com/jinzhu/copier"
 	imgtype "github.com/shamsher31/goimgtype"
-	//	"image"
-	//	"net/http"
-	//	"open_im_sdk/pkg/db"
-	//
-	//	"open_im_sdk/pkg/common"
-	//	"open_im_sdk/pkg/constant"
-	//	"open_im_sdk/pkg/log"
-	//	"open_im_sdk/pkg/sdk_params_callback"
-	//	"open_im_sdk/pkg/server_api_params"
-	//	"open_im_sdk/pkg/utils"
-	//	"os"
-	//	"sort"
-	//	"sync"
-	//	"time"
 )
 
 func (c *Conversation) GetAllConversationList(callback open_im_sdk_callback.Base, operationID string) {
@@ -51,12 +27,13 @@ func (c *Conversation) GetAllConversationList(callback open_im_sdk_callback.Base
 		return
 	}
 	go func() {
-		log.NewInfo(operationID, "GetAllConversationList args: ")
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "GetAllConversationList args: ")
 		result := c.getAllConversationList(callback, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
 		log.NewInfo(operationID, "GetAllConversationList callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
+
 func (c *Conversation) GetConversationListSplit(callback open_im_sdk_callback.Base, offset, count int, operationID string) {
 	if callback == nil {
 		return
@@ -68,6 +45,7 @@ func (c *Conversation) GetConversationListSplit(callback open_im_sdk_callback.Ba
 		log.NewInfo(operationID, "GetConversationListSplit callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
+
 func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList string, opt int, operationID string) {
 	if callback == nil {
 		return
@@ -81,6 +59,7 @@ func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callba
 		log.NewInfo(operationID, "SetConversationRecvMessageOpt callback: ", sdk_params_callback.SetConversationRecvMessageOptCallback)
 	}()
 }
+
 func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList, operationID string) {
 	if callback == nil {
 		return
@@ -94,6 +73,7 @@ func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callba
 		log.NewInfo(operationID, "GetConversationRecvMessageOpt callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
+
 func (c *Conversation) GetOneConversation(callback open_im_sdk_callback.Base, sessionType int32, sourceID, operationID string) {
 	if callback == nil {
 		return
@@ -105,6 +85,7 @@ func (c *Conversation) GetOneConversation(callback open_im_sdk_callback.Base, se
 		log.NewInfo(operationID, "GetOneConversation callback: ", utils.StructToJsonString(result))
 	}()
 }
+
 func (c *Conversation) GetMultipleConversation(callback open_im_sdk_callback.Base, conversationIDList string, operationID string) {
 	if callback == nil {
 		return
@@ -142,18 +123,42 @@ func (c *Conversation) SetConversationDraft(callback open_im_sdk_callback.Base, 
 	}()
 }
 func (c *Conversation) PinConversation(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
-
 	if callback == nil {
 		return
 	}
 	go func() {
-		log.NewInfo(operationID, "PinConversation args: ", conversationID)
+		log.NewInfo(operationID, "PinConversation args: ", conversationID, isPinned)
 		c.pinConversation(callback, conversationID, isPinned, operationID)
 		callback.OnSuccess(sdk_params_callback.PinConversationDraftCallback)
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 		log.NewInfo(operationID, "PinConversation callback: ", sdk_params_callback.PinConversationDraftCallback)
 	}()
 }
+
+func (c *Conversation) SetOneConversationPrivateChat(callback open_im_sdk_callback.Base, conversationID string, isPrivate bool, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", conversationID, isPrivate)
+		c.setOneConversationPrivateChat(callback, conversationID, isPrivate, operationID)
+		callback.OnSuccess(sdk_params_callback.SetConversationMessageOptCallback)
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", sdk_params_callback.SetConversationMessageOptCallback)
+	}()
+}
+
+func (c *Conversation) SetOneConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationID string, opt int, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", conversationID, opt)
+		c.setOneConversationRecvMessageOpt(callback, conversationID, opt, operationID)
+		callback.OnSuccess(sdk_params_callback.SetConversationMessageOptCallback)
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", sdk_params_callback.SetConversationMessageOptCallback)
+	}()
+}
+
 func (c *Conversation) GetTotalUnreadMsgCount(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
 		return
@@ -520,92 +525,104 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			lc.FaceURL = faceUrl
 			lc.ShowName = name
 		}
+		oldMessage, err := c.db.GetMessage(s.ClientMsgID)
+		if err != nil {
+			msgStructToLocalChatLog(&localMessage, &s)
+			err := c.db.InsertMessage(&localMessage)
+			common.CheckAnyErrCallback(callback, 201, err, operationID)
+		} else {
+			if oldMessage.Status != constant.MsgStatusSendFailed {
+				common.CheckAnyErrCallback(callback, 202, errors.New("only failed message can be repeatedly send"), operationID)
+			} else {
+				s.Status = constant.MsgStatusSending
+			}
+		}
 		lc.ConversationID = conversationID
 		lc.LatestMsg = utils.StructToJsonString(s)
-		msgStructToLocalChatLog(&localMessage, &s)
-		err := c.db.InsertMessage(&localMessage)
-		common.CheckAnyErrCallback(callback, 201, err, operationID)
 		log.Info(operationID, "send message come here", *lc)
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.ch)
 		var delFile []string
 		//media file handle
-		switch s.ContentType {
-		case constant.Picture:
-			var sourcePath string
-			if utils.FileExist(s.PictureElem.SourcePath) {
-				sourcePath = s.PictureElem.SourcePath
-				delFile = append(delFile, utils.FileTmpPath(s.PictureElem.SourcePath, c.DataDir))
-			} else {
-				sourcePath = utils.FileTmpPath(s.PictureElem.SourcePath, c.DataDir)
-				delFile = append(delFile, sourcePath)
-			}
-			log.Info(operationID, "file", sourcePath, delFile)
-			sourceUrl, uuid, err := c.UploadImage(sourcePath, callback.OnProgress)
-			c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
-			s.PictureElem.SourcePicture.Url = sourceUrl
-			s.PictureElem.SourcePicture.UUID = uuid
-			s.PictureElem.SnapshotPicture.Url = sourceUrl + "?imageView2/2/w/" + constant.ZoomScale + "/h/" + constant.ZoomScale
-			s.PictureElem.SnapshotPicture.Width = int32(utils.StringToInt(constant.ZoomScale))
-			s.PictureElem.SnapshotPicture.Height = int32(utils.StringToInt(constant.ZoomScale))
-			s.Content = utils.StructToJsonString(s.PictureElem)
+		if s.Status != constant.MsgStatusSendSuccess { //filter forward message
+			switch s.ContentType {
+			case constant.Picture:
+				var sourcePath string
+				if utils.FileExist(s.PictureElem.SourcePath) {
+					sourcePath = s.PictureElem.SourcePath
+					delFile = append(delFile, utils.FileTmpPath(s.PictureElem.SourcePath, c.DataDir))
+				} else {
+					sourcePath = utils.FileTmpPath(s.PictureElem.SourcePath, c.DataDir)
+					delFile = append(delFile, sourcePath)
+				}
+				log.Info(operationID, "file", sourcePath, delFile)
+				sourceUrl, uuid, err := c.UploadImage(sourcePath, callback.OnProgress)
+				c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
+				s.PictureElem.SourcePicture.Url = sourceUrl
+				s.PictureElem.SourcePicture.UUID = uuid
+				s.PictureElem.SnapshotPicture.Url = sourceUrl + "?imageView2/2/w/" + constant.ZoomScale + "/h/" + constant.ZoomScale
+				s.PictureElem.SnapshotPicture.Width = int32(utils.StringToInt(constant.ZoomScale))
+				s.PictureElem.SnapshotPicture.Height = int32(utils.StringToInt(constant.ZoomScale))
+				s.Content = utils.StructToJsonString(s.PictureElem)
 
-		case constant.Voice:
-			var sourcePath string
-			if utils.FileExist(s.SoundElem.SoundPath) {
-				sourcePath = s.SoundElem.SoundPath
-				delFile = append(delFile, utils.FileTmpPath(s.SoundElem.SoundPath, c.DataDir))
-			} else {
-				sourcePath = utils.FileTmpPath(s.SoundElem.SoundPath, c.DataDir)
-				delFile = append(delFile, sourcePath)
-			}
-			log.Info(operationID, "file", sourcePath, delFile)
-			soundURL, uuid, err := c.UploadSound(sourcePath, callback.OnProgress)
-			c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
-			s.SoundElem.SourceURL = soundURL
-			s.SoundElem.UUID = uuid
-			s.Content = utils.StructToJsonString(s.SoundElem)
+			case constant.Voice:
+				var sourcePath string
+				if utils.FileExist(s.SoundElem.SoundPath) {
+					sourcePath = s.SoundElem.SoundPath
+					delFile = append(delFile, utils.FileTmpPath(s.SoundElem.SoundPath, c.DataDir))
+				} else {
+					sourcePath = utils.FileTmpPath(s.SoundElem.SoundPath, c.DataDir)
+					delFile = append(delFile, sourcePath)
+				}
+				log.Info(operationID, "file", sourcePath, delFile)
+				soundURL, uuid, err := c.UploadSound(sourcePath, callback.OnProgress)
+				c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
+				s.SoundElem.SourceURL = soundURL
+				s.SoundElem.UUID = uuid
+				s.Content = utils.StructToJsonString(s.SoundElem)
 
-		case constant.Video:
-			var videoPath string
-			var snapPath string
-			if utils.FileExist(s.VideoElem.VideoPath) {
-				videoPath = s.VideoElem.VideoPath
-				snapPath = s.VideoElem.SnapshotPath
-				delFile = append(delFile, utils.FileTmpPath(s.VideoElem.VideoPath, c.DataDir))
-				delFile = append(delFile, utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DataDir))
-			} else {
-				videoPath = utils.FileTmpPath(s.VideoElem.VideoPath, c.DataDir)
-				snapPath = utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DataDir)
-				delFile = append(delFile, videoPath)
-				delFile = append(delFile, snapPath)
+			case constant.Video:
+				var videoPath string
+				var snapPath string
+				if utils.FileExist(s.VideoElem.VideoPath) {
+					videoPath = s.VideoElem.VideoPath
+					snapPath = s.VideoElem.SnapshotPath
+					delFile = append(delFile, utils.FileTmpPath(s.VideoElem.VideoPath, c.DataDir))
+					delFile = append(delFile, utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DataDir))
+				} else {
+					videoPath = utils.FileTmpPath(s.VideoElem.VideoPath, c.DataDir)
+					snapPath = utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DataDir)
+					delFile = append(delFile, videoPath)
+					delFile = append(delFile, snapPath)
+				}
+				log.Info(operationID, "file: ", videoPath, snapPath, delFile)
+				snapshotURL, snapshotUUID, videoURL, videoUUID, err := c.UploadVideo(videoPath, snapPath, callback.OnProgress)
+				c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
+				s.VideoElem.VideoURL = videoURL
+				s.VideoElem.SnapshotUUID = snapshotUUID
+				s.VideoElem.SnapshotURL = snapshotURL
+				s.VideoElem.VideoUUID = videoUUID
+				s.Content = utils.StructToJsonString(s.VideoElem)
+			case constant.File:
+				fileURL, fileUUID, err := c.UploadFile(s.FileElem.FilePath, callback.OnProgress)
+				c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
+				s.FileElem.SourceURL = fileURL
+				s.FileElem.UUID = fileUUID
+				s.Content = utils.StructToJsonString(s.FileElem)
+			case constant.Text:
+			case constant.AtText:
+			case constant.Location:
+			case constant.Custom:
+			case constant.Merger:
+			case constant.Quote:
+			case constant.Card:
+			case constant.Face:
+			default:
+				common.CheckAnyErrCallback(callback, 202, errors.New("contentType not currently supported"+utils.Int32ToString(s.ContentType)), operationID)
 			}
-			log.Info(operationID, "file: ", videoPath, snapPath, delFile)
-			snapshotURL, snapshotUUID, videoURL, videoUUID, err := c.UploadVideo(videoPath, snapPath, callback.OnProgress)
-			c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
-			s.VideoElem.VideoURL = videoURL
-			s.VideoElem.SnapshotUUID = snapshotUUID
-			s.VideoElem.SnapshotURL = snapshotURL
-			s.VideoElem.VideoUUID = videoUUID
-			s.Content = utils.StructToJsonString(s.VideoElem)
-		case constant.File:
-			fileURL, fileUUID, err := c.UploadFile(s.FileElem.FilePath, callback.OnProgress)
-			c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
-			s.FileElem.SourceURL = fileURL
-			s.FileElem.UUID = fileUUID
-			s.Content = utils.StructToJsonString(s.FileElem)
-		case constant.Text:
-		case constant.AtText:
-		case constant.Location:
-		case constant.Custom:
-		case constant.Merger:
-		case constant.Quote:
-		case constant.Card:
-		default:
-			common.CheckAnyErrCallback(callback, 202, errors.New("contentType not currently supported"+utils.Int32ToString(s.ContentType)), operationID)
+			msgStructToLocalChatLog(&localMessage, &s)
+			err = c.db.UpdateMessage(&localMessage)
+			common.CheckAnyErrCallback(callback, 201, err, operationID)
 		}
-		msgStructToLocalChatLog(&localMessage, &s)
-		err = c.db.UpdateMessage(&localMessage)
-		common.CheckAnyErrCallback(callback, 201, err, operationID)
 		c.sendMessageToServer(&s, lc, callback, delFile, p, options, operationID)
 	}()
 }
@@ -655,11 +672,21 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 			lc.FaceURL = faceUrl
 			lc.ShowName = name
 		}
+
+		oldMessage, err := c.db.GetMessage(s.ClientMsgID)
+		if err != nil {
+			msgStructToLocalChatLog(&localMessage, &s)
+			err := c.db.InsertMessage(&localMessage)
+			common.CheckAnyErrCallback(callback, 201, err, operationID)
+		} else {
+			if oldMessage.Status != constant.MsgStatusSendFailed {
+				common.CheckAnyErrCallback(callback, 202, errors.New("only failed message can be repeatedly send"), operationID)
+			} else {
+				s.Status = constant.MsgStatusSending
+			}
+		}
 		lc.ConversationID = conversationID
 		lc.LatestMsg = utils.StructToJsonString(s)
-		msgStructToLocalChatLog(&localMessage, &s)
-		err := c.db.InsertMessage(&localMessage)
-		common.CheckAnyErrCallback(callback, 201, err, operationID)
 		//u.doUpdateConversation(common.cmd2Value{Value: common.updateConNode{conversationID, constant.AddConOrUpLatMsg,
 		//c}})
 		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, []string{conversationID}}})
@@ -674,7 +701,8 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 
 	}()
 }
-func (c *Conversation) internalSendMessage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, recvID, groupID, operationID string, p *server_api_params.OfflinePushInfo, onlineUserOnly bool, options map[string]bool) (*server_api_params.UserSendMsgResp, error) {
+
+func (c *Conversation) InternalSendMessage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, recvID, groupID, operationID string, p *server_api_params.OfflinePushInfo, onlineUserOnly bool, options map[string]bool) (*server_api_params.UserSendMsgResp, error) {
 	if recvID == "" && groupID == "" {
 		common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not be allowed"), operationID)
 	}
@@ -708,7 +736,12 @@ func (c *Conversation) internalSendMessage(callback open_im_sdk_callback.Base, s
 	timeout := 300
 	retryTimes := 0
 	g, err := c.SendReqWaitResp(&wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID, operationID)
-	common.CheckAnyErrCallback(callback, 301, err, operationID)
+	switch e := err.(type) {
+	case *constant.ErrInfo:
+		common.CheckAnyErrCallback(callback, e.ErrCode, e, operationID)
+	default:
+		common.CheckAnyErrCallback(callback, 301, err, operationID)
+	}
 	var sendMsgResp server_api_params.UserSendMsgResp
 	_ = proto.Unmarshal(g.Data, &sendMsgResp)
 	return &sendMsgResp, nil
@@ -726,7 +759,12 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.Local
 	timeout := 300
 	retryTimes := 60
 	resp, err := c.SendReqWaitResp(&wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID, operationID)
-	c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
+	switch e := err.(type) {
+	case *constant.ErrInfo:
+		c.checkErrAndUpdateMessage(callback, e.ErrCode, e, s, lc, operationID)
+	default:
+		c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
+	}
 	var sendMsgResp server_api_params.UserSendMsgResp
 	_ = proto.Unmarshal(resp.Data, &sendMsgResp)
 	s.SendTime = sendMsgResp.SendTime
@@ -949,6 +987,7 @@ func (c *Conversation) MarkAllConversationHasRead(callback open_im_sdk_callback.
 	}()
 }
 
+//deprecated
 func (c *Conversation) MarkGroupMessageHasRead(callback open_im_sdk_callback.Base, groupID string, operationID string) {
 	if callback == nil {
 		return
@@ -958,7 +997,20 @@ func (c *Conversation) MarkGroupMessageHasRead(callback open_im_sdk_callback.Bas
 		conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.ch)
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
-		callback.OnSuccess(sdk_params_callback.MarkGroupMessageHasRead)
+		callback.OnSuccess(sdk_params_callback.MarkGroupMessageHasReadCallback)
+	}()
+}
+
+func (c *Conversation) DeleteMessage(callback open_im_sdk_callback.Base, message string, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		s := sdk_struct.MsgStruct{}
+		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+		//c.deleteMessage(callback, &s, operationID)
+		c.deleteMessageFromLocalStorage(callback, &s, operationID)
+		callback.OnSuccess("")
 	}()
 }
 
@@ -989,10 +1041,27 @@ func (c *Conversation) ClearGroupHistoryMessage(callback open_im_sdk_callback.Ba
 
 func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_callback.Base, message, recvID, sendID, operationID string) {
 	go func() {
-		var conversation db.LocalConversation
-		conversation.ConversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
+		log.NewInfo(operationID, "InsertSingleMessageToLocalStorage args: ", message, recvID, sendID)
+		if recvID == "" || sendID == "" {
+			common.CheckAnyErrCallback(callback, 208, errors.New("recvID or sendID is null"), operationID)
+		}
+		var sourceID string
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+		if sendID != c.loginUserID {
+			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, sendID, operationID)
+			if err != nil {
+				log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error(), sendID)
+			}
+			sourceID = sendID
+			s.SenderFaceURL = faceUrl
+			s.SenderNickname = name
+		} else {
+			sourceID = recvID
+		}
+		var conversation db.LocalConversation
+		conversation.ConversationID = utils.GetConversationIDBySessionType(sourceID, constant.SingleChatType)
+
 		localMessage := db.LocalChatLog{}
 		s.SendID = sendID
 		s.RecvID = recvID
@@ -1003,6 +1072,8 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_ca
 		msgStructToLocalChatLog(&localMessage, &s)
 		conversation.LatestMsg = utils.StructToJsonString(s)
 		conversation.LatestMsgSendTime = s.SendTime
+		conversation.FaceURL = s.SenderFaceURL
+		conversation.ShowName = s.SenderNickname
 		_ = c.insertMessageToLocalStorage(callback, &localMessage, operationID)
 		callback.OnSuccess(utils.StructToJsonString(&s))
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.ch)
@@ -1011,13 +1082,26 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_ca
 
 func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_callback.Base, message, groupID, sendID, operationID string) {
 	go func() {
+		log.NewInfo(operationID, "InsertSingleMessageToLocalStorage args: ", message, groupID, sendID)
+		if groupID == "" || sendID == "" {
+			common.CheckAnyErrCallback(callback, 208, errors.New("groupID or sendID is null"), operationID)
+		}
 		var conversation db.LocalConversation
 		conversation.ConversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+		if sendID != c.loginUserID {
+			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, sendID, operationID)
+			if err != nil {
+				log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error(), sendID)
+			}
+			s.SenderFaceURL = faceUrl
+			s.SenderNickname = name
+		}
 		localMessage := db.LocalChatLog{}
 		s.SendID = sendID
 		s.RecvID = groupID
+		s.GroupID = groupID
 		s.ClientMsgID = utils.GetMsgID(s.SendID)
 		s.SendTime = utils.GetCurrentTimestampByMill()
 		s.SessionType = constant.GroupChatType
@@ -1025,6 +1109,8 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 		msgStructToLocalChatLog(&localMessage, &s)
 		conversation.LatestMsg = utils.StructToJsonString(s)
 		conversation.LatestMsgSendTime = s.SendTime
+		conversation.FaceURL = s.SenderFaceURL
+		conversation.ShowName = s.SenderNickname
 		_ = c.insertMessageToLocalStorage(callback, &localMessage, operationID)
 		callback.OnSuccess(utils.StructToJsonString(&s))
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.ch)
@@ -1134,4 +1220,35 @@ func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, con
 	message.ContentType = contentType
 	message.SenderPlatformID = c.platformID
 
+}
+
+func (c *Conversation) DeleteConversationMsgFromLocalAndSvr(callback open_im_sdk_callback.Base, conversationID string, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", conversationID)
+		c.deleteConversationAndMsgFromSvr(callback, conversationID, operationID)
+		c.deleteConversation(callback, conversationID, operationID)
+		callback.OnSuccess(sdk_params_callback.DeleteConversationCallback)
+		log.NewInfo(operationID, fName, "callback: ", sdk_params_callback.DeleteConversationCallback)
+	}()
+
+}
+
+func (c *Conversation) DeleteMessageFromLocalAndSvr(callback open_im_sdk_callback.Base, message string, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", message)
+		s := sdk_struct.MsgStruct{}
+		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+		c.deleteMessageFromSvr(callback, &s, operationID)
+		c.deleteMessage(callback, &s, operationID)
+		callback.OnSuccess("")
+		log.NewInfo(operationID, fName, "callback: ", "")
+	}()
 }

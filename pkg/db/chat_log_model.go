@@ -184,10 +184,10 @@ func (d *DataBase) GetSendingMessageList() (result []*LocalChatLog, err error) {
 	return result, err
 }
 
-func (d *DataBase) UpdateMessageHasRead(sendID string, msgIDList []string) error {
+func (d *DataBase) UpdateMessageHasRead(sendID string, msgIDList []string, sessionType int) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Model(LocalChatLog{}).Where("send_id=?  AND session_type=? AND client_msg_id in ?", sendID, constant.SingleChatType, msgIDList).Update("is_read", constant.HasRead)
+	t := d.conn.Model(LocalChatLog{}).Where("send_id=?  AND session_type=? AND client_msg_id in ?", sendID, sessionType, msgIDList).Update("is_read", constant.HasRead)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
@@ -218,4 +218,43 @@ func (d *DataBase) GetTestMessage(seq uint32) (*LocalChatLog, error) {
 	var c LocalChatLog
 	return &c, utils.Wrap(d.conn.Where("seq = ?",
 		seq).Find(&c).Error, "GetTestMessage failed")
+}
+
+func (d *DataBase) UpdateMsgSenderNickname(sendID, nickname string, sType int) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.Model(LocalChatLog{}).Where(
+		"send_id = ? and session_type = ? and sender_nick_name != ? ", sendID, sType, nickname).Updates(
+		map[string]interface{}{"sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
+}
+
+func (d *DataBase) UpdateMsgSenderFaceURL(sendID, faceURL string, sType int) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.Model(LocalChatLog{}).Where(
+		"send_id = ? and session_type = ? and sender_face_url != ? ", sendID, sType, faceURL).Updates(
+		map[string]interface{}{"sender_face_url": faceURL}).Error, utils.GetSelfFuncName()+" failed")
+}
+func (d *DataBase) UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.Model(LocalChatLog{}).Where(
+		"send_id = ?  and (sender_face_url != ? or sender_nick_name != ?)", sendID, faceURL, nickname).Updates(
+		map[string]interface{}{"sender_face_url": faceURL, "sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
+}
+
+func (d *DataBase) GetMsgSeqByClientMsgID(clientMsgID string) (uint32, error) {
+	return 0, nil
+}
+
+func (d *DataBase) GetMsgSeqListByGroupID(groupID string) ([]uint32, error) {
+	return nil, nil
+}
+
+func (d *DataBase) GetMsgSeqListByPeerUserID(userID string) ([]uint32, error) {
+	return nil, nil
+}
+
+func (d *DataBase) GetMsgSeqListBySelfUserID(userID string) ([]uint32, error) {
+	return nil, nil
 }

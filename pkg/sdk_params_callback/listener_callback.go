@@ -1,6 +1,9 @@
 package sdk_params_callback
 
-import "open_im_sdk/pkg/db"
+import (
+	"open_im_sdk/pkg/db"
+	api "open_im_sdk/pkg/server_api_params"
+)
 
 ////////////////////////////////friend////////////////////////////////////
 type FriendApplicationAddedCallback db.LocalFriendRequest
@@ -32,3 +35,26 @@ type SelfInfoUpdatedCallback db.LocalUser
 //////////////////////////////user////////////////////////////////////////
 type ConversationUpdateCallback db.LocalConversation
 type ConversationDeleteCallback db.LocalConversation
+
+/////////////////////////////signaling/////////////////////////////////////
+type InvitationInfo struct {
+	InviterUserID string
+	InviteeUserIDList  	[]string
+	CustomData string
+	GroupID string
+}
+
+
+
+type ReceiveNewInvitationCallback api.SignalInviteReq
+
+type InviteeAcceptedCallback api.SignalAcceptReq
+
+
+type InviteeRejectedCallback api.SignalRejectReq
+
+
+type InvitationCancelledCallback  api.SignalCancelReq
+
+
+type InvitationTimeoutCallback api.SignalInviteReq

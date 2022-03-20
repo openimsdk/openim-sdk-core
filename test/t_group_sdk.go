@@ -5,10 +5,12 @@ import (
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
+
 	//	"encoding/json"
 	"fmt"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
+
 	//"open_im_sdk/internal/open_im_sdk"
 	//"open_im_sdk/pkg/utils"
 
@@ -96,8 +98,8 @@ func SetTestGroupID(groupID, memberID string) {
 	TestgroupID = groupID
 }
 
-var MemberUserID = "openIM101"
-var TestgroupID = "6cdeba7330140fad94180a005ab5cba8"
+var MemberUserID = "18349115126"
+var TestgroupID = "f2e77b9ec33e92298675ad511fdfa6ab"
 
 func DoTestCreateGroup() {
 	var test testCreateGroup
@@ -267,7 +269,7 @@ func DotestMinio() {
 }
 
 func test(storage common.ObjectStorage, callback baseCallback) {
-	dir, newName, err := storage.UploadFile("./main/main.go",  func(progress int) {
+	dir, newName, err := storage.UploadFile("./main/main.go", func(progress int) {
 		if progress == 100 {
 			callback.OnSuccess("")
 		}
@@ -406,19 +408,6 @@ func DoTestGetUserReqGroupApplicationList() {
 }
 
 // 提示
-func DoTestSetConversationRecvMessageOpt(uid string, conversationIDs string, opt int) {
-	var test testProcessGroupApplication
-	test.OperationID = utils.OperationIDGenerator()
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
-	open_im_sdk.SetConversationRecvMessageOpt(test, test.OperationID, conversationIDs, opt)
-}
-
-func DoTestGetConversationRecvMessageOpt(conversationIDs string) {
-	var test testProcessGroupApplication
-	test.OperationID = utils.OperationIDGenerator()
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
-	open_im_sdk.GetConversationRecvMessageOpt(test, test.OperationID, conversationIDs)
-}
 
 func DoTestGetRecvGroupApplicationList() {
 	var test testProcessGroupApplication

@@ -10,11 +10,13 @@ import (
 	"fmt"
 	"net/http"
 	"open_im_sdk/open_im_sdk"
-	"open_im_sdk/pkg/log"
+
+	"github.com/gorilla/websocket"
 
 	"github.com/gorilla/websocket"
 
 	//"open_im_sdk/pkg/log"
+	sLog "log"
 	"open_im_sdk/ws_wrapper/utils"
 	"runtime"
 	"strings"
@@ -77,7 +79,18 @@ func (ws *WServer) Run() error {
 
 	return err
 }
+
 func (ws *WServer) getMsgAndSend() {
+	defer func() {
+		if r := recover(); r != nil {
+			wrapSdkLog("", "getMsgAndSend panic", " panic is ", r)
+			buf := make([]byte, 1<<16)
+			runtime.Stack(buf, true)
+			wrapSdkLog("", "panic", "call", string(buf))
+			ws.getMsgAndSend()
+			wrapSdkLog("", "goroutine getMsgAndSend restart")
+		}
+	}()
 	for {
 		select {
 		case r := <-ws.ch:
@@ -107,6 +120,14 @@ func (ws *WServer) getMsgAndSend() {
 
 func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 	wrapSdkLog("", "wsHandler ", r.URL.Query())
+	defer func() {
+		if r := recover(); r != nil {
+			wrapSdkLog("", "wsHandler panic recover", " panic is ", r)
+			buf := make([]byte, 1<<16)
+			runtime.Stack(buf, true)
+			wrapSdkLog("", "panic", "call", string(buf))
+		}
+	}()
 	if ws.headerCheck(w, r) {
 		query := r.URL.Query()
 		conn, err := ws.wsUpGrader.Upgrade(w, r, nil) //Conn is obtained through the upgraded escalator
@@ -125,6 +146,16 @@ func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ws *WServer) readMsg(conn *UserConn) {
+	defer func() {
+		if r := recover(); r != nil {
+			wrapSdkLog("", "readMsg panic", " panic is ", r)
+			buf := make([]byte, 1<<16)
+			runtime.Stack(buf, true)
+			wrapSdkLog("", "panic", "call", string(buf))
+			ws.readMsg(conn)
+			wrapSdkLog("", "goroutine readMsg restart")
+		}
+	}()
 	for {
 		msgType, msg, err := conn.ReadMessage()
 		if err != nil {
@@ -302,7 +333,6 @@ func wrapSdkLog(operationID string, v ...interface{}) {
 	_, b, c, _ := runtime.Caller(1)
 	i := strings.LastIndex(b, "/")
 	if i != -1 {
-		//sLog.Println("[", b[i+1:len(b)], ":", c, "]", v)
-		log.NewInfo(operationID, "[", b[i+1:], ":", c, "]", v)
+		sLog.Println("[OperationID:", operationID, "]", "[", b[i+1:len(b)], ":", c, "]", v)
 	}
 }

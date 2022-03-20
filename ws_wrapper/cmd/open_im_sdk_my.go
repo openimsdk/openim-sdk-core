@@ -35,10 +35,10 @@ func main() {
 			WsAddr: *openIMWsAddress, Platform: utils.OSXPlatformID, DataDir: *sqliteDir})
 	case "linux":
 		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: *openIMApiAddress,
-			WsAddr: *openIMWsAddress, Platform: utils.WebPlatformID, DataDir: *sqliteDir})
+			WsAddr: *openIMWsAddress, Platform: utils.LinuxPlatformID, DataDir: *sqliteDir})
 	case "windows":
 		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: *openIMApiAddress,
-			WsAddr: *openIMWsAddress, Platform: utils.WebPlatformID, DataDir: *sqliteDir})
+			WsAddr: *openIMWsAddress, Platform: utils.WindowsPlatformID, DataDir: *sqliteDir})
 	default:
 		fmt.Println("this os not support", sysType)
 	}
@@ -50,6 +50,7 @@ func main() {
 	if ws_local_server.WS.Run()!=nil {
 		os.Exit(-10);
 	}
+	fmt.Println("run success")
 	wg.Wait()
 
 }

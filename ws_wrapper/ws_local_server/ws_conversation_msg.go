@@ -22,7 +22,7 @@ func (wsRouter *WsFuncRouter) CreateTextMessage(input string, operationID string
 }
 
 type SendCallback struct {
-	BaseSuccFailed
+	BaseSuccessFailed
 	clientMsgID string
 	//uid         string
 }
@@ -65,7 +65,9 @@ func (a *AddAdvancedMsgListenerCallback) OnRecvNewMessage(message string) {
 func (a *AddAdvancedMsgListenerCallback) OnRecvC2CReadReceipt(msgReceiptList string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msgReceiptList, "0"}, a.uid)
 }
-
+func (a *AddAdvancedMsgListenerCallback) OnRecvGroupReadReceipt(groupMsgReceiptList string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", groupMsgReceiptList, "0"}, a.uid)
+}
 func (a *AddAdvancedMsgListenerCallback) OnRecvMessageRevoked(msgId string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msgId, "0"}, a.uid)
 }
@@ -135,7 +137,7 @@ func (wsRouter *WsFuncRouter) GetAllConversationList(input string, operationID s
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Conversation().GetAllConversationList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
+	userWorker.Conversation().GetAllConversationList(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 func (wsRouter *WsFuncRouter) GetConversationListSplit(input string, operationID string) {
 	m := make(map[string]interface{})
@@ -148,7 +150,21 @@ func (wsRouter *WsFuncRouter) GetConversationListSplit(input string, operationID
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "offset", "count") {
 		return
 	}
-	userWorker.Conversation().GetConversationListSplit(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["offset"].(int), m["count"].(int), operationID)
+	userWorker.Conversation().GetConversationListSplit(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, int(m["offset"].(float64)), int(m["count"].(float64)), operationID)
+}
+
+func (wsRouter *WsFuncRouter) SetOneConversationRecvMessageOpt(input, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "conversationIDList", "opt") {
+		return
+	}
+	userWorker.Conversation().SetOneConversationRecvMessageOpt(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationID"].(string), int(m["opt"].(float64)), operationID)
 }
 
 func (wsRouter *WsFuncRouter) SetConversationRecvMessageOpt(input string, operationID string) {
@@ -162,8 +178,9 @@ func (wsRouter *WsFuncRouter) SetConversationRecvMessageOpt(input string, operat
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "conversationIDList", "opt") {
 		return
 	}
-	userWorker.Conversation().SetConversationRecvMessageOpt(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationIDList"].(string), int(m["opt"].(float64)), operationID)
+	userWorker.Conversation().SetConversationRecvMessageOpt(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationIDList"].(string), int(m["opt"].(float64)), operationID)
 }
+
 func (wsRouter *WsFuncRouter) GetConversationRecvMessageOpt(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
@@ -175,7 +192,7 @@ func (wsRouter *WsFuncRouter) GetConversationRecvMessageOpt(input string, operat
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "conversationIDList") {
 		return
 	}
-	userWorker.Conversation().GetConversationRecvMessageOpt(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationIDList"].(string), operationID)
+	userWorker.Conversation().GetConversationRecvMessageOpt(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationIDList"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetOneConversation(input string, operationID string) {
@@ -189,7 +206,7 @@ func (wsRouter *WsFuncRouter) GetOneConversation(input string, operationID strin
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "sourceID", "sessionType") {
 		return
 	}
-	userWorker.Conversation().GetOneConversation(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, int32(m["sessionType"].(float64)), m["sourceID"].(string), operationID)
+	userWorker.Conversation().GetOneConversation(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, int32(m["sessionType"].(float64)), m["sourceID"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetMultipleConversation(conversationIDList string, operationID string) {
@@ -197,7 +214,7 @@ func (wsRouter *WsFuncRouter) GetMultipleConversation(conversationIDList string,
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, conversationIDList, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Conversation().GetMultipleConversation(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, conversationIDList, operationID)
+	userWorker.Conversation().GetMultipleConversation(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, conversationIDList, operationID)
 }
 
 func (wsRouter *WsFuncRouter) DeleteConversation(conversationID string, operationID string) {
@@ -205,7 +222,7 @@ func (wsRouter *WsFuncRouter) DeleteConversation(conversationID string, operatio
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, conversationID, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Conversation().DeleteConversation(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, conversationID, operationID)
+	userWorker.Conversation().DeleteConversation(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, conversationID, operationID)
 }
 
 func (wsRouter *WsFuncRouter) SetConversationDraft(input string, operationID string) {
@@ -219,7 +236,7 @@ func (wsRouter *WsFuncRouter) SetConversationDraft(input string, operationID str
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "conversationID", "draftText") {
 		return
 	}
-	userWorker.Conversation().SetConversationDraft(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationID"].(string), m["draftText"].(string), operationID)
+	userWorker.Conversation().SetConversationDraft(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationID"].(string), m["draftText"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) PinConversation(input string, operationID string) {
@@ -233,7 +250,21 @@ func (wsRouter *WsFuncRouter) PinConversation(input string, operationID string) 
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "conversationID", "isPinned") {
 		return
 	}
-	userWorker.Conversation().PinConversation(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationID"].(string), m["isPinned"].(bool), operationID)
+	userWorker.Conversation().PinConversation(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationID"].(string), m["isPinned"].(bool), operationID)
+}
+
+func (wsRouter *WsFuncRouter) SetOneConversationPrivateChat(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "conversationID", "privateChat") {
+		return
+	}
+	userWorker.Conversation().SetOneConversationPrivateChat(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationID"].(string), m["isPrivate"].(bool), operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetTotalUnreadMsgCount(input string, operationID string) {
@@ -241,7 +272,7 @@ func (wsRouter *WsFuncRouter) GetTotalUnreadMsgCount(input string, operationID s
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Conversation().GetTotalUnreadMsgCount(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
+	userWorker.Conversation().GetTotalUnreadMsgCount(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
 func (wsRouter *WsFuncRouter) CreateTextAtMessage(input string, operationID string) {
@@ -383,7 +414,20 @@ func (wsRouter *WsFuncRouter) CreateMergerMessage(input string, operationID stri
 	msg := userWorker.Conversation().CreateMergerMessage(m["messageList"].(string), m["title"].(string), m["summaryList"].(string), operationID)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }
-
+func (wsRouter *WsFuncRouter) CreateFaceMessage(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "index", "data") {
+		return
+	}
+	msg := userWorker.Conversation().CreateFaceMessage(int(m["index"].(float64)), m["data"].(string), operationID)
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+}
 func (wsRouter *WsFuncRouter) CreateForwardMessage(m string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, m, operationID, runFuncName(), nil) {
@@ -401,7 +445,7 @@ func (wsRouter *WsFuncRouter) GetHistoryMessageList(getMessageOptions string, op
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, getMessageOptions, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Conversation().GetHistoryMessageList(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, getMessageOptions, operationID)
+	userWorker.Conversation().GetHistoryMessageList(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, getMessageOptions, operationID)
 }
 
 func (wsRouter *WsFuncRouter) RevokeMessage(message string, operationID string) {
@@ -409,7 +453,7 @@ func (wsRouter *WsFuncRouter) RevokeMessage(message string, operationID string) 
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, message, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Conversation().RevokeMessage(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, message, operationID)
+	userWorker.Conversation().RevokeMessage(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, message, operationID)
 }
 
 func (wsRouter *WsFuncRouter) TypingStatusUpdate(input string, operationID string) {
@@ -423,7 +467,7 @@ func (wsRouter *WsFuncRouter) TypingStatusUpdate(input string, operationID strin
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "recvID", "msgTip") {
 		return
 	}
-	userWorker.Conversation().TypingStatusUpdate(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["recvID"].(string), m["msgTip"].(string), operationID)
+	userWorker.Conversation().TypingStatusUpdate(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["recvID"].(string), m["msgTip"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) MarkC2CMessageAsRead(input string, operationID string) {
@@ -437,7 +481,7 @@ func (wsRouter *WsFuncRouter) MarkC2CMessageAsRead(input string, operationID str
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "userID", "msgIDList") {
 		return
 	}
-	userWorker.Conversation().MarkC2CMessageAsRead(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["userID"].(string), m["msgIDList"].(string), operationID)
+	userWorker.Conversation().MarkC2CMessageAsRead(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["userID"].(string), m["msgIDList"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) MarkGroupMessageHasRead(groupID string, operationID string) {
@@ -445,7 +489,23 @@ func (wsRouter *WsFuncRouter) MarkGroupMessageHasRead(groupID string, operationI
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, groupID, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Conversation().MarkGroupMessageHasRead(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, groupID, operationID)
+	userWorker.Conversation().MarkGroupMessageHasRead(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, groupID, operationID)
+}
+func (wsRouter *WsFuncRouter) MarkGroupMessageAsRead(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if userWorker.AdvancedFunction() == nil {
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusNotSupportFunction, "unsupported function", "", operationID})
+	}
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "groupID", "msgIDList") {
+		return
+	}
+	userWorker.AdvancedFunction().MarkGroupMessageAsRead(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["groupID"].(string), m["msgIDList"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) DeleteMessageFromLocalStorage(message string, operationID string) {
@@ -453,7 +513,15 @@ func (wsRouter *WsFuncRouter) DeleteMessageFromLocalStorage(message string, oper
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, message, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Conversation().DeleteMessageFromLocalStorage(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, message, operationID)
+	userWorker.Conversation().DeleteMessageFromLocalStorage(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, message, operationID)
+}
+
+func (wsRouter *WsFuncRouter) DeleteMessage(message string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, message, operationID, runFuncName(), nil) {
+		return
+	}
+	userWorker.Conversation().DeleteMessage(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, message, operationID)
 }
 
 func (wsRouter *WsFuncRouter) InsertSingleMessageToLocalStorage(input string, operationID string) {
@@ -467,7 +535,7 @@ func (wsRouter *WsFuncRouter) InsertSingleMessageToLocalStorage(input string, op
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "message", "recvID", "sendID") {
 		return
 	}
-	userWorker.Conversation().InsertSingleMessageToLocalStorage(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["message"].(string), m["recvID"].(string), m["sendID"].(string), operationID)
+	userWorker.Conversation().InsertSingleMessageToLocalStorage(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["message"].(string), m["recvID"].(string), m["sendID"].(string), operationID)
 }
 func (wsRouter *WsFuncRouter) InsertGroupMessageToLocalStorage(input string, operationID string) {
 	m := make(map[string]interface{})
@@ -480,12 +548,12 @@ func (wsRouter *WsFuncRouter) InsertGroupMessageToLocalStorage(input string, ope
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "message", "groupID", "sendID") {
 		return
 	}
-	userWorker.Conversation().InsertGroupMessageToLocalStorage(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["message"].(string), m["groupID"].(string), m["sendID"].(string), operationID)
+	userWorker.Conversation().InsertGroupMessageToLocalStorage(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["message"].(string), m["groupID"].(string), m["sendID"].(string), operationID)
 }
 
 //func (wsRouter *WsFuncRouter) FindMessages(messageIDList string, operationID string) {
 //	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-//	userWorker.Conversation().FindMessages(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, messageIDList)
+//	userWorker.Conversation().FindMessages(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, messageIDList)
 //}
 
 func (wsRouter *WsFuncRouter) SearchLocalMessages(input string, operationID string) {
@@ -503,7 +571,7 @@ func (wsRouter *WsFuncRouter) SearchLocalMessages(input string, operationID stri
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Conversation().SearchLocalMessages(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId},
+	userWorker.Conversation().SearchLocalMessages(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},
 		input, operationID)
 }
 
@@ -595,7 +663,7 @@ func (wsRouter *WsFuncRouter) ClearC2CHistoryMessage(input string, operationID s
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Conversation().ClearC2CHistoryMessage(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, input, operationID)
+	userWorker.Conversation().ClearC2CHistoryMessage(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, input, operationID)
 }
 
 func (wsRouter *WsFuncRouter) ClearGroupHistoryMessage(input string, operationID string) {
@@ -603,7 +671,7 @@ func (wsRouter *WsFuncRouter) ClearGroupHistoryMessage(input string, operationID
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Conversation().ClearGroupHistoryMessage(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, input, operationID)
+	userWorker.Conversation().ClearGroupHistoryMessage(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, input, operationID)
 }
 
 //func (wsRouter *WsFuncRouter) SetSdkLog(input string, operationID string) {
