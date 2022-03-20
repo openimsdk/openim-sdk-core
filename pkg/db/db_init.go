@@ -17,6 +17,19 @@ type DataBase struct {
 	mRWMutex    sync.RWMutex
 }
 
+//func (d *DataBase) CloseDB() error {
+//	d.mRWMutex.Lock()
+//	defer d.mRWMutex.Unlock()
+//	if d.conn != nil {
+//
+//		if err := d.conn.Close(); err != nil {
+//			log.Error("", "GetSendingMessageList failed ", err.Error())
+//			return err
+//		}
+//	}
+//	return nil
+//}
+
 func NewDataBase(loginUserID string, dbDir string) (*DataBase, error) {
 	dataBase := &DataBase{loginUserID: loginUserID, dbDir: dbDir}
 	err := dataBase.initDB()

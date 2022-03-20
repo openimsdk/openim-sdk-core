@@ -10,6 +10,8 @@ import (
 	"flag"
 	"fmt"
 	"open_im_sdk/sdk_struct"
+	"os"
+	"runtime/pprof"
 
 	//"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/log"
@@ -20,6 +22,11 @@ import (
 )
 
 func main() {
+	f, _ := os.OpenFile("cpu.profile", os.O_CREATE|os.O_RDWR, 0644)
+	defer f.Close()
+	pprof.StartCPUProfile(f)
+	defer pprof.StopCPUProfile()
+
 	var sdkWsPort, openIMApiPort, openIMWsPort, logLevel *int
 	var openIMWsAddress, openIMApiAddress *string
 	//
