@@ -2,7 +2,9 @@ package ws_local_server
 
 import (
 	"encoding/json"
+	"github.com/pkg/profile"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -36,6 +38,8 @@ func (s *SendCallback) OnProgress(progress int) {
 }
 
 func (wsRouter *WsFuncRouter) SendMessage(input string, operationID string) {
+	log.Info(operationID, "profile.MemProfil")
+	defer profile.Start(profile.MemProfile, profile.MemProfileRate(1)).Stop()
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
 		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())

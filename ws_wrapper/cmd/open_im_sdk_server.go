@@ -10,7 +10,6 @@ import (
 	"flag"
 	"fmt"
 	"open_im_sdk/sdk_struct"
-
 	//"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/ws_wrapper/utils"
@@ -20,6 +19,7 @@ import (
 )
 
 func main() {
+
 	var sdkWsPort, openIMApiPort, openIMWsPort, logLevel *int
 	var openIMWsAddress, openIMApiAddress *string
 	//
