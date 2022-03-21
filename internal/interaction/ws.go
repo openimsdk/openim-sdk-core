@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
+	"github.com/pkg/profile"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
@@ -74,6 +75,9 @@ func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, co
 }
 
 func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retryTimes int, senderID, operationID string) (*GeneralWsResp, error) {
+	log.Info(operationID, utils.GetSelfFuncName(), "profile.Start")
+	defer profile.Start(profile.MemProfile).Stop()
+
 	var wsReq GeneralWsReq
 	var connSend *websocket.Conn
 	var err error
