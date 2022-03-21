@@ -38,8 +38,7 @@ func (s *SendCallback) OnProgress(progress int) {
 }
 
 func (wsRouter *WsFuncRouter) SendMessage(input string, operationID string) {
-	log.Info(operationID, "profile.MemProfil")
-	defer profile.Start(profile.MemProfile, profile.MemProfileRate(1)).Stop()
+
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
 		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
@@ -644,6 +643,8 @@ func (wsRouter *WsFuncRouter) CreateFileMessageByURL(input string, operationID s
 }
 
 func (wsRouter *WsFuncRouter) SendMessageNotOss(input string, operationID string) {
+	log.Info(operationID, "profile.MemProfile")
+	defer profile.Start(profile.MemProfile, profile.MemProfileRate(1)).Stop()
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
 		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
