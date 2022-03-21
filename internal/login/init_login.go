@@ -116,7 +116,7 @@ func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalin
 }
 
 func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
-	f, _ := os.OpenFile("./"+userID, os.O_CREATE|os.O_RDWR, 0644)
+	f, _ := os.OpenFile("./mem.profile", os.O_CREATE|os.O_RDWR, 0644)
 	u.F = f
 
 	log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)
