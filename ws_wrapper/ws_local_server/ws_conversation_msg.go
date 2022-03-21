@@ -2,9 +2,7 @@ package ws_local_server
 
 import (
 	"encoding/json"
-	"github.com/pkg/profile"
 	"open_im_sdk/open_im_sdk"
-	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -643,8 +641,7 @@ func (wsRouter *WsFuncRouter) CreateFileMessageByURL(input string, operationID s
 }
 
 func (wsRouter *WsFuncRouter) SendMessageNotOss(input string, operationID string) {
-	log.Info(operationID, "profile.MemProfile")
-	defer profile.Start(profile.MemProfile, profile.MemProfileRate(1)).Stop()
+
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
 		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
