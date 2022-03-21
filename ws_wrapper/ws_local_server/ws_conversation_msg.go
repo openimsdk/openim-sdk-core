@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/utils"
+	"runtime/pprof"
 )
 
 //
@@ -48,11 +49,12 @@ func (wsRouter *WsFuncRouter) SendMessage(input string, operationID string) {
 	sc.funcName = runFuncName()
 	sc.operationID = operationID
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "message", "recvID", "groupID", "offlinePushInfo") {
 		return
 	}
 	userWorker.Conversation().SendMessage(&sc, m["message"].(string), m["recvID"].(string), m["groupID"].(string), m["offlinePushInfo"].(string), operationID)
-
+	pprof.Lookup("heap").WriteTo(userWorker.F, 0)
 }
 
 type AddAdvancedMsgListenerCallback struct {
@@ -657,7 +659,7 @@ func (wsRouter *WsFuncRouter) SendMessageNotOss(input string, operationID string
 		return
 	}
 	userWorker.Conversation().SendMessageNotOss(&sc, m["message"].(string), m["recvID"].(string), m["groupID"].(string), m["offlinePushInfo"].(string), operationID)
-
+	pprof.Lookup("heap").WriteTo(userWorker.F, 0)
 }
 
 func (wsRouter *WsFuncRouter) ClearC2CHistoryMessage(input string, operationID string) {

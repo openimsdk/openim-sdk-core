@@ -18,6 +18,7 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"os"
 )
 
 type LoginMgr struct {
@@ -50,6 +51,8 @@ type LoginMgr struct {
 	cmdWsCh        chan common.Cmd2Value
 	heartbeatCmdCh chan common.Cmd2Value
 	imConfig       sdk_struct.IMConfig
+
+	F *os.File
 }
 
 func (u *LoginMgr) AdvancedFunction() advanced_interface.AdvancedFunction {
@@ -113,6 +116,9 @@ func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalin
 }
 
 func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
+	f, _ := os.OpenFile("mem.profile", os.O_CREATE|os.O_RDWR, 0644)
+	u.F = f
+
 	log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)
 	//if u.justOnceFlag {
 	//	cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)

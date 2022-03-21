@@ -8,9 +8,7 @@ package ws_local_server
 
 import (
 	"encoding/json"
-	"github.com/pkg/profile"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/log"
 	"reflect"
 	"runtime"
 )
@@ -55,8 +53,7 @@ func (ws *WServer) msgParse(conn *UserConn, jsonMsg []byte) {
 		SendOneConnMessage(EventData{"error", 100, "Unmarshal failed", "", ""}, conn)
 		return
 	}
-	log.Info("test x", "profile.MemProfile")
-	defer profile.Start(profile.MemProfile, profile.MemProfileRate(1)).Stop()
+
 	defer func() {
 		if r := recover(); r != nil {
 			SendOneConnMessage(EventData{m.ReqFuncName, StatusBadParameter, StatusText(StatusBadParameter), "", m.OperationID}, conn)
@@ -82,6 +79,7 @@ func (ws *WServer) msgParse(conn *UserConn, jsonMsg []byte) {
 	//	rwLock.RLock()
 	//	defer rwLock.RUnlock()
 	urm, ok := UserRouteMap[m.UserID]
+
 	if !ok {
 		wrapSdkLog("", "msgParse", "user not login failed, must login first: ", m.UserID)
 		SendOneConnMessage(EventData{"Login", StatusNoLogin, StatusText(StatusNoLogin), "", m.OperationID}, conn)
