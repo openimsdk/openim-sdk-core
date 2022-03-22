@@ -19,6 +19,7 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"os"
+	"sync"
 )
 
 type LoginMgr struct {
@@ -53,6 +54,8 @@ type LoginMgr struct {
 	imConfig       sdk_struct.IMConfig
 
 	F *os.File
+
+	FWMutex sync.RWMutex
 }
 
 func (u *LoginMgr) AdvancedFunction() advanced_interface.AdvancedFunction {
