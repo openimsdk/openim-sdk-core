@@ -19,6 +19,7 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"os"
+	"runtime/pprof"
 	"sync"
 )
 
@@ -118,10 +119,17 @@ func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalin
 	u.signalingListener = listener
 }
 
-func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
-	f, _ := os.OpenFile("./mem.profile", os.O_CREATE|os.O_RDWR, 0644)
+func (u *LoginMgr) DebugMem(userID string) {
+	u.FWMutex.Lock()
+	f, _ := os.OpenFile(userID+"mem.profile", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
 	u.F = f
+	pprof.Lookup("heap").WriteTo(u.F, 0)
+	u.FWMutex.Unlock()
+}
 
+func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
+
+	u.DebugMem(userID)
 	log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)
 	//if u.justOnceFlag {
 	//	cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
