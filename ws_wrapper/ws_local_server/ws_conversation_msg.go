@@ -53,7 +53,7 @@ func (wsRouter *WsFuncRouter) SendMessage(input string, operationID string) {
 		return
 	}
 	userWorker.Conversation().SendMessage(&sc, m["message"].(string), m["recvID"].(string), m["groupID"].(string), m["offlinePushInfo"].(string), operationID)
-
+	userWorker.DebugMem(userWorker.GetLoginUser())
 }
 
 type AddAdvancedMsgListenerCallback struct {
