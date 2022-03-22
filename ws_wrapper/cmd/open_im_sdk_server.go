@@ -22,6 +22,7 @@ import (
 
 func main() {
 	go func() {
+
 		log1.Println(http.ListenAndServe("0.0.0.0:6060", nil))
 	}()
 	var sdkWsPort, openIMApiPort, openIMWsPort, logLevel *int
