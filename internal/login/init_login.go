@@ -129,7 +129,6 @@ func (u *LoginMgr) DebugMem(userID string) {
 
 func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
 
-	u.DebugMem(userID)
 	log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)
 	//if u.justOnceFlag {
 	//	cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
