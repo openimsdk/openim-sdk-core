@@ -121,7 +121,8 @@ func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalin
 
 func (u *LoginMgr) DebugMem(userID string) {
 	u.FWMutex.Lock()
-	f, _ := os.OpenFile(userID+"mem.profile", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+
+	f, _ := os.OpenFile(utils.OperationIDGenerator()+"mem.profile", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
 	u.F = f
 	pprof.Lookup("heap").WriteTo(u.F, 0)
 	u.FWMutex.Unlock()
