@@ -1,7 +1,6 @@
 package main
 
 import (
-	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/test"
 
@@ -65,7 +64,7 @@ func main() {
 	//test.DoTestGetConversationRecvMessageOpt(`["single_17899999999"]`)
 
 	//set batch
-	test.DoTestSetConversationRecvMessageOpt([]string{"single_17396220460"}, constant.ReceiveMessage)
+	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17396220460"}, constant.ReceiveMessage)
 	//set one
 	////set batch
 	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.ReceiveMessage)
