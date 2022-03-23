@@ -485,6 +485,8 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 		//参数校验
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+		s.SendID = c.loginUserID
+		s.SenderPlatformID = c.platformID
 		p := &server_api_params.OfflinePushInfo{}
 		if offlinePushInfo == "" {
 			p = nil
@@ -630,6 +632,8 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 	go func() {
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+		s.SendID = c.loginUserID
+		s.SenderPlatformID = c.platformID
 		p := &server_api_params.OfflinePushInfo{}
 		if offlinePushInfo == "" {
 			p = nil

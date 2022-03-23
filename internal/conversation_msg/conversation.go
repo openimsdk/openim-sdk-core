@@ -433,12 +433,12 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 	messages, err := c.db.GetMultipleMessage(msgIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
 	for _, v := range messages {
-		if v.IsRead == false && v.ContentType < constant.NotificationBegin {
+		if v.IsRead == false && v.ContentType < constant.NotificationBegin && v.SendID != c.loginUserID {
 			newMessageIDList = append(newMessageIDList, v.ClientMsgID)
 		}
 	}
 	if len(newMessageIDList) == 0 {
-		common.CheckAnyErrCallback(callback, 201, errors.New("message has been marked read"), operationID)
+		common.CheckAnyErrCallback(callback, 201, errors.New("message has been marked read or sender is yourself"), operationID)
 	}
 	conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
 	s := sdk_struct.MsgStruct{}
