@@ -107,9 +107,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		} else {
 			msg.Content = string(v.Content)
 		}
-		if msg.Status == constant.MsgStatusDefault {
-			msg.Status = constant.MsgStatusSendSuccess
-		}
+		msg.Status = constant.MsgStatusSendSuccess
 		msg.IsRead = false
 		//		log.Info(operationID, "new msg, seq, ServerMsgID, ClientMsgID", msg.Seq, msg.ServerMsgID, msg.ClientMsgID)
 		//De-analyze data

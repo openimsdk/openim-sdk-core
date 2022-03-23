@@ -464,7 +464,7 @@ func (c *Conversation) checkErrAndUpdateMessage(callback open_im_sdk_callback.Se
 	}
 }
 func (c *Conversation) updateMsgStatusAndTriggerConversation(clientMsgID, serverMsgID string, sendTime int64, status int32, s *sdk_struct.MsgStruct, lc *db.LocalConversation, operationID string) {
-	log.NewDebug(operationID, "this is test send message ", sendTime, status, clientMsgID, serverMsgID)
+	//log.NewDebug(operationID, "this is test send message ", sendTime, status, clientMsgID, serverMsgID)
 	err := c.db.UpdateMessageTimeAndStatus(clientMsgID, serverMsgID, sendTime, status)
 	if err != nil {
 		log.Error(operationID, "send message update message status error", sendTime, status, clientMsgID, serverMsgID, err.Error())
