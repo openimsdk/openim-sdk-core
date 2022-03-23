@@ -11,6 +11,15 @@ type MessageReceipt struct {
 	ContentType int32    `json:"contentType"`
 	SessionType int32    `json:"sessionType"`
 }
+type GroupMessageReceipt struct {
+	GroupID     string   `json:"groupID"`
+	UserID      string   `json:"userID"`
+	MsgIdList   []string `json:"msgIDList"`
+	ReadTime    int64    `json:"readTime"`
+	MsgFrom     int32    `json:"msgFrom"`
+	ContentType int32    `json:"contentType"`
+	SessionType int32    `json:"sessionType"`
+}
 type ImageInfo struct {
 	Width  int32  `json:"x"`
 	Height int32  `json:"y"`
@@ -141,8 +150,15 @@ type MsgStruct struct {
 		Detail      string `json:"detail"`
 		DefaultTips string `json:"defaultTips"`
 	} `json:"notificationElem"`
+	AttachedInfoElem AttachedInfoElem `json:"attachedInfoElem"`
 }
-
+type AttachedInfoElem struct {
+	GroupHasReadInfo GroupHasReadInfo `json:"groupHasReadInfo"`
+}
+type GroupHasReadInfo struct {
+	HasReadUserIDList []string `json:"hasReadUserIDList"`
+	HasReadCount      int32    `json:"hasReadCount"`
+}
 type NewMsgList []*MsgStruct
 
 // Implement the sort.Interface interface to get the number of elements method

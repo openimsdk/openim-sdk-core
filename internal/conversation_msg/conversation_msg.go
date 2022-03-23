@@ -2,9 +2,7 @@ package conversation_msg
 
 import (
 	"encoding/json"
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
-	"github.com/jinzhu/copier"
+	"open_im_sdk/internal/advanced_interface"
 	common2 "open_im_sdk/internal/common"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/group"
@@ -19,6 +17,10 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sort"
+
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
+	"github.com/jinzhu/copier"
 )
 
 type Conversation struct {
@@ -34,7 +36,21 @@ type Conversation struct {
 	friend               *friend.Friend
 	group                *group.Group
 	user                 *user.User
+	signaling            advanced_interface.Signaling
+	advancedFunction     advanced_interface.AdvancedFunction
 	common2.ObjectStorage
+}
+
+func (c *Conversation) SetAdvancedFunction(advancedFunction advanced_interface.AdvancedFunction) {
+	c.advancedFunction = advancedFunction
+}
+
+func (c *Conversation) MsgListener() open_im_sdk_callback.OnAdvancedMsgListener {
+	return c.msgListener
+}
+
+func (c *Conversation) SetSignaling(signaling advanced_interface.Signaling) {
+	c.signaling = signaling
 }
 
 func (c *Conversation) SetMsgListener(msgListener open_im_sdk_callback.OnAdvancedMsgListener) {
@@ -43,8 +59,10 @@ func (c *Conversation) SetMsgListener(msgListener open_im_sdk_callback.OnAdvance
 func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 	ch chan common.Cmd2Value, loginUserID string, platformID int32, dataDir string,
 	friend *friend.Friend, group *group.Group, user *user.User,
-	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener, msgListener open_im_sdk_callback.OnAdvancedMsgListener) *Conversation {
-	n := &Conversation{Ws: ws, db: db, p: p, ch: ch, loginUserID: loginUserID, platformID: platformID, DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage}
+	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener,
+	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling advanced_interface.Signaling, advancedFunction advanced_interface.AdvancedFunction) *Conversation {
+	n := &Conversation{Ws: ws, db: db, p: p, ch: ch, loginUserID: loginUserID, platformID: platformID,
+		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage, signaling: signaling, advancedFunction: advancedFunction}
 	go common.DoListener(n)
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
@@ -65,7 +83,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	var isTriggerUnReadCount bool
 	var insertMsg, updateMsg []*db.LocalChatLog
 	var exceptionMsg []*db.LocalErrChatLog
-	var newMessages, msgReadList, msgRevokeList sdk_struct.NewMsgList
+	var newMessages, msgReadList, groupMsgReadList, msgRevokeList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory bool
 	conversationChangedSet := make(map[string]*db.LocalConversation)
 	newConversationSet := make(map[string]*db.LocalConversation)
@@ -116,11 +134,19 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				v.ContentType == constant.JoinGroupApplicationNotification {
 				log.Info("internal", "DoGroupMsg SingleChatType", v)
 				c.group.DoNotification(v, c.ch)
+			} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
+				log.Info(operationID, "signaling DoNotification ", v)
+				c.signaling.DoNotification(v, c.ch, operationID)
+				continue
 			}
 		case constant.GroupChatType:
 			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
 				c.group.DoNotification(v, c.ch)
 				log.Info(operationID, "DoGroupMsg SingleChatType", v)
+			} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
+				log.Info(operationID, "signaling DoNotification ", v)
+				c.signaling.DoNotification(v, c.ch, operationID)
+				continue
 			}
 		}
 		if v.SendID == c.loginUserID { //seq
@@ -148,7 +174,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					lc.ConversationID = utils.GetConversationIDBySessionType(v.RecvID, constant.SingleChatType)
 					lc.UserID = v.RecvID
 					switch v.ContentType {
-					case constant.ConversationOptChangeNotification:
+					case constant.ConversationChangeNotification:
 						log.Info(operationID, utils.GetSelfFuncName(), v)
 						c.DoNotification(v)
 					}
@@ -181,6 +207,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				}
 				if msg.ContentType == constant.HasReadReceipt {
 					msgReadList = append(msgReadList, msg)
+				}
+				if msg.ContentType == constant.GroupHasReadReceipt {
+					groupMsgReadList = append(groupMsgReadList, msg)
+
 				}
 			}
 		} else { //Sent by others
@@ -226,6 +256,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				}
 				if msg.ContentType == constant.HasReadReceipt {
 					msgReadList = append(msgReadList, msg)
+				}
+				if msg.ContentType == constant.GroupHasReadReceipt {
+					groupMsgReadList = append(groupMsgReadList, msg)
+
 				}
 				if msg.ContentType == constant.Typing {
 					newMessages = append(newMessages, msg)
@@ -274,6 +308,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		log.Error(operationID, "insert new conversation err:", err4.Error())
 	}
 	c.doMsgReadState(msgReadList)
+	c.advancedFunction.DoGroupMsgReadState(groupMsgReadList)
 	c.revokeMessage(msgRevokeList)
 	c.newMessage(newMessages)
 	log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
@@ -423,7 +458,6 @@ func (c *Conversation) doMsgReadState(msgReadList []*sdk_struct.MsgStruct) {
 		c.msgListener.OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
 	}
 }
-
 func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 	if c.ConversationListener == nil {
 		log.Error("internal", "not set conversationListener")
@@ -578,6 +612,7 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 }
 
 func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err error) {
+	_ = utils.JsonStringToStruct(msg.AttachedInfo, &msg.AttachedInfoElem)
 	if msg.ContentType >= constant.NotificationBegin && msg.ContentType <= constant.NotificationEnd {
 		var tips server_api_params.TipsComm
 		err = utils.JsonStringToStruct(msg.Content, &tips)

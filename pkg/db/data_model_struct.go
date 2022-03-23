@@ -342,6 +342,7 @@ type LocalConversation struct {
 	DraftText         string `gorm:"column:draft_text" json:"draftText"`
 	DraftTextTime     int64  `gorm:"column:draft_text_time" json:"draftTextTime"`
 	IsPinned          bool   `gorm:"column:is_pinned" json:"isPinned"`
+	IsPrivateChat     bool   `gorm:"column:is_private_chat" json:"isPrivateChat"`
 	AttachedInfo      string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 	Ex                string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }

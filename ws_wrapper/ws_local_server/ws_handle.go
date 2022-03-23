@@ -3,7 +3,6 @@ package ws_local_server
 import (
 	"encoding/json"
 	"errors"
-	"github.com/gorilla/websocket"
 	utils2 "open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"open_im_sdk/ws_wrapper/utils"
@@ -12,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 type EventData struct {
@@ -22,7 +23,7 @@ type EventData struct {
 	OperationID string `json:"operationID"`
 }
 
-type BaseSuccFailed struct {
+type BaseSuccessFailed struct {
 	funcName    string //e.g open_im_sdk/open_im_sdk.Login
 	operationID string
 	uid         string
@@ -38,12 +39,12 @@ func cleanUpfuncName(funcName string) string {
 	return funcName[end+1:]
 }
 
-func (b *BaseSuccFailed) OnError(errCode int32, errMsg string) {
-	wrapSdkLog("","!!!!!!!OnError ", b.uid, b.operationID, b.funcName)
+func (b *BaseSuccessFailed) OnError(errCode int32, errMsg string) {
+	wrapSdkLog("", "!!!!!!!OnError ", b.uid, b.operationID, b.funcName)
 	SendOneUserMessage(EventData{cleanUpfuncName(b.funcName), errCode, errMsg, "", b.operationID}, b.uid)
 }
 
-func (b *BaseSuccFailed) OnSuccess(data string) {
+func (b *BaseSuccessFailed) OnSuccess(data string) {
 	wrapSdkLog("", "!!!!!!!OnSuccess ", b.uid, b.operationID, b.funcName)
 	SendOneUserMessage(EventData{cleanUpfuncName(b.funcName), 0, "", data, b.operationID}, b.uid)
 }
@@ -121,6 +122,8 @@ func GenUserRouterNoLock(uid string) *RefRouter {
 	wsRouter1.SetGroupListener()
 	wrapSdkLog("", "SetUserListener() ", uid)
 	wsRouter1.SetUserListener()
+	wrapSdkLog("", "SetSignalingListener() ", uid)
+	wsRouter1.SetSignalingListener()
 
 	var rr RefRouter
 	rr.refName = &RouteMap1

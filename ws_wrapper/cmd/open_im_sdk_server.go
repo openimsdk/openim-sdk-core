@@ -40,8 +40,8 @@ func main() {
 	//	openIMWsPort = flag.Int("openIM_ws_port", 0, "openIM ws listening port")
 	//	flag.Parse()
 	//}
-	APIADDR := "http://1.14.194.38:10000"
-	WSADDR := "ws://1.14.194.38:17778"
+	APIADDR := "http://43.128.5.63:10000"
+	WSADDR := "ws://43.128.5.63:17778"
 
 	sysType := runtime.GOOS
 	switch sysType {

@@ -358,28 +358,28 @@ func DoTestRefuseFriendApplication() {
 
 ////////////////////////////////////////////////////////////////////
 
-type BaseSuccFailed struct {
+type BaseSuccessFailed struct {
 	successData string
 	errCode     int
 	errMsg      string
 	funcName    string
 }
 
-func (b *BaseSuccFailed) OnError(errCode int32, errMsg string) {
+func (b *BaseSuccessFailed) OnError(errCode int32, errMsg string) {
 	b.errCode = -1
 	b.errMsg = errMsg
 	log.Error("login failed", errCode, errMsg)
 
 }
 
-func (b *BaseSuccFailed) OnSuccess(data string) {
+func (b *BaseSuccessFailed) OnSuccess(data string) {
 	b.errCode = 1
 	b.successData = data
 	log.Info("login success", data)
 }
 
 func InOutlllogin(uid, tk string) {
-	var callback BaseSuccFailed
+	var callback BaseSuccessFailed
 	callback.funcName = utils.GetSelfFuncName()
 	operationID := utils.OperationIDGenerator()
 	open_im_sdk.Login(&callback, operationID, uid, tk)
@@ -392,7 +392,7 @@ func InOutlllogin(uid, tk string) {
 }
 
 func InOutLogou() {
-	var callback BaseSuccFailed
+	var callback BaseSuccessFailed
 	callback.funcName = utils.GetSelfFuncName()
 	opretaionID := utils.OperationIDGenerator()
 	open_im_sdk.Logout(&callback, opretaionID)
@@ -401,11 +401,11 @@ func InOutLogou() {
 func InOutDoTest(uid, tk, ws, api string) {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
-	cf.Platform = 1
+	cf.Platform = 2
 	cf.WsAddr = ws
-	cf.Platform = 1
+	cf.Platform = 2
 	cf.DataDir = "./"
-	cf.LogLevel = 6
+	cf.LogLevel = 5
 
 	var s string
 	b, _ := json.Marshal(cf)
@@ -429,13 +429,16 @@ func InOutDoTest(uid, tk, ws, api string) {
 
 	var groupListener testGroupListener
 	open_im_sdk.SetGroupListener(groupListener)
+	var signalingListener testSignalingListener
+	open_im_sdk.SetSignalingListener(&signalingListener)
 
 	InOutlllogin(uid, tk)
+	time.Sleep(2 * time.Second)
 	log.Info("", "InOutDoTest fin")
 }
 
 func lllogin(uid, tk string) bool {
-	var callback BaseSuccFailed
+	var callback BaseSuccessFailed
 	callback.funcName = utils.GetSelfFuncName()
 	operationID := utils.OperationIDGenerator()
 	open_im_sdk.Login(&callback, uid, operationID, tk)
@@ -495,7 +498,7 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	var groupListener testGroupListener
 	lg.SetGroupListener(groupListener)
 
-	var callback BaseSuccFailed
+	var callback BaseSuccessFailed
 	callback.funcName = utils.GetSelfFuncName()
 	lg.Login(&callback, uid, tk, operationID)
 
@@ -541,6 +544,8 @@ func DoTest(uid, tk, ws, api string) {
 	var groupListener testGroupListener
 	open_im_sdk.SetGroupListener(groupListener)
 
+	var signalingListener testSignalingListener
+	open_im_sdk.SetSignalingListener(&signalingListener)
 	time.Sleep(1 * time.Second)
 
 	for !lllogin(uid, tk) {
@@ -578,20 +583,20 @@ func (t *TestSendMsgCallBack) OnProgress(progress int) {
 	//	fmt.Printf("msg_send , onProgress %d\n", progress)
 }
 
-type BaseSuccFailedTest struct {
+type BaseSuccessFailedTest struct {
 	successData string
 	errCode     int
 	errMsg      string
 	funcName    string
 }
 
-func (b *BaseSuccFailedTest) OnError(errCode int32, errMsg string) {
+func (b *BaseSuccessFailedTest) OnError(errCode int32, errMsg string) {
 	b.errCode = -1
 	b.errMsg = errMsg
 	fmt.Println("22onError ", b.funcName, errCode, errMsg)
 }
 
-func (b *BaseSuccFailedTest) OnSuccess(data string) {
+func (b *BaseSuccessFailedTest) OnSuccess(data string) {
 	b.errCode = 1
 	b.successData = data
 	fmt.Println("22OnSuccess: ", b.funcName, data)
