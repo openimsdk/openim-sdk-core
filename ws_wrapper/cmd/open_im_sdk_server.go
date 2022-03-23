@@ -9,9 +9,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/http"
+	_ "net/http/pprof"
 	"open_im_sdk/sdk_struct"
-
 	//"open_im_sdk/open_im_sdk"
+	log1 "log"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/ws_wrapper/utils"
 	"open_im_sdk/ws_wrapper/ws_local_server"
@@ -20,6 +22,10 @@ import (
 )
 
 func main() {
+	go func() {
+
+		log1.Println(http.ListenAndServe("0.0.0.0:6060", nil))
+	}()
 	var sdkWsPort, openIMApiPort, openIMWsPort, logLevel *int
 	var openIMWsAddress, openIMApiAddress *string
 	//

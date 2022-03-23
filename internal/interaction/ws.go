@@ -74,6 +74,14 @@ func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, co
 }
 
 func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retryTimes int, senderID, operationID string) (*GeneralWsResp, error) {
+
+	//log.Info(operationID, "mem.profile")
+	//f, err1 := os.OpenFile(operationID+"mem.profile", os.O_CREATE|os.O_RDWR, 0644)
+	//if err1 != nil {
+	//	log.Info(operationID, "OpenFile failed", err1.Error())
+	//}
+	//defer f.Close()
+
 	var wsReq GeneralWsReq
 	var connSend *websocket.Conn
 	var err error
@@ -102,6 +110,7 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 		break
 	}
 	r1, r2 := w.WaitResp(ch, timeout, wsReq.OperationID, connSend)
+	//pprof.Lookup("heap").WriteTo(f, 0)
 	return r1, r2
 }
 func (w *Ws) SendReqTest(m proto.Message, reqIdentifier int32, timeout int, senderID, operationID string) bool {

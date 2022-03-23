@@ -464,6 +464,7 @@ func (c *Conversation) checkErrAndUpdateMessage(callback open_im_sdk_callback.Se
 	}
 }
 func (c *Conversation) updateMsgStatusAndTriggerConversation(clientMsgID, serverMsgID string, sendTime int64, status int32, s *sdk_struct.MsgStruct, lc *db.LocalConversation, operationID string) {
+	//log.NewDebug(operationID, "this is test send message ", sendTime, status, clientMsgID, serverMsgID)
 	err := c.db.UpdateMessageTimeAndStatus(clientMsgID, serverMsgID, sendTime, status)
 	if err != nil {
 		log.Error(operationID, "send message update message status error", sendTime, status, clientMsgID, serverMsgID, err.Error())
@@ -485,6 +486,8 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 		//参数校验
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+		s.SendID = c.loginUserID
+		s.SenderPlatformID = c.platformID
 		p := &server_api_params.OfflinePushInfo{}
 		if offlinePushInfo == "" {
 			p = nil
@@ -630,6 +633,8 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 	go func() {
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+		s.SendID = c.loginUserID
+		s.SenderPlatformID = c.platformID
 		p := &server_api_params.OfflinePushInfo{}
 		if offlinePushInfo == "" {
 			p = nil
@@ -1016,19 +1021,6 @@ func (c *Conversation) MarkGroupMessageHasRead(callback open_im_sdk_callback.Bas
 	}()
 }
 
-func (c *Conversation) DeleteMessage(callback open_im_sdk_callback.Base, message string, operationID string) {
-	if callback == nil {
-		return
-	}
-	go func() {
-		s := sdk_struct.MsgStruct{}
-		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
-		//c.deleteMessage(callback, &s, operationID)
-		c.deleteMessageFromLocalStorage(callback, &s, operationID)
-		callback.OnSuccess("")
-	}()
-}
-
 func (c *Conversation) DeleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, message string, operationID string) {
 	go func() {
 		s := sdk_struct.MsgStruct{}
@@ -1262,7 +1254,7 @@ func (c *Conversation) DeleteMessageFromLocalAndSvr(callback open_im_sdk_callbac
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 		c.deleteMessageFromSvr(callback, &s, operationID)
-		c.deleteMessage(callback, &s, operationID)
+		c.deleteMessageFromLocalStorage(callback, &s, operationID)
 		callback.OnSuccess("")
 		log.NewInfo(operationID, fName, "callback: ", "")
 	}()

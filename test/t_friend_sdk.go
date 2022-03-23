@@ -405,7 +405,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	cf.WsAddr = ws
 	cf.Platform = 2
 	cf.DataDir = "./"
-	cf.LogLevel = 5
+	cf.LogLevel = 6
 
 	var s string
 	b, _ := json.Marshal(cf)

@@ -2,6 +2,7 @@ package conversation_msg
 
 import (
 	"errors"
+	"github.com/golang/protobuf/proto"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -13,9 +14,6 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sort"
-	"time"
-
-	"github.com/golang/protobuf/proto"
 )
 
 func (c *Conversation) getAllConversationList(callback open_im_sdk_callback.Base, operationID string) sdk.GetAllConversationListCallback {
@@ -43,11 +41,18 @@ func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callba
 			continue
 		}
 		conversations = append(conversations, server_api_params.Conversation{
-			OwnerUserID:    c.loginUserID,
-			ConversationID: conversationID,
-			RecvMsgOpt:     int32(opt),
-			IsPinned:       localConversation.IsPinned,
-			IsPrivateChat:  localConversation.IsPinned,
+			OwnerUserID:      c.loginUserID,
+			ConversationID:   conversationID,
+			ConversationType: localConversation.ConversationType,
+			UserID:           localConversation.UserID,
+			GroupID:          localConversation.GroupID,
+			RecvMsgOpt:       int32(opt),
+			IsPinned:         localConversation.IsPinned,
+			IsPrivateChat:    localConversation.IsPrivateChat,
+			UnreadCount:      localConversation.UnreadCount,
+			DraftTextTime:    localConversation.DraftTextTime,
+			AttachedInfo:     localConversation.AttachedInfo,
+			Ex:               localConversation.Ex,
 		})
 	}
 	apiReq.Conversations = conversations
@@ -174,7 +179,7 @@ func (c *Conversation) deleteConversation(callback open_im_sdk_callback.Base, co
 	err = c.db.UpdateMessageStatusBySourceID(sourceID, constant.MsgStatusHasDeleted, lc.ConversationType)
 	common.CheckDBErrCallback(callback, err, operationID)
 	//Reset the session information, empty session
-	err = c.db.DeleteConversation(conversationID)
+	err = c.db.ResetConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 
@@ -240,15 +245,42 @@ func (c *Conversation) SyncConversations(operationID string) {
 	// 可能是其他点开一下生成会话设置免打扰 插入到本地 不回调
 	for _, index := range aInBNot {
 		conversation := conversationsOnServerLocalFormat[index]
-		conversation.LatestMsgSendTime = time.Now().Unix()
-		err := c.db.InsertConversation(conversation)
+		var newConversation db.LocalConversation
+		newConversation.ConversationID = conversation.ConversationID
+		newConversation.ConversationType = conversation.ConversationType
+		switch conversation.ConversationType {
+		case constant.SingleChatType:
+			newConversation.UserID = conversation.UserID
+			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, conversation.UserID, operationID)
+			if err != nil {
+				log.NewError(operationID, utils.GetSelfFuncName(), "GetUserNameAndFaceUrlByUid error", err.Error())
+				continue
+			}
+			newConversation.ShowName = name
+			newConversation.FaceURL = faceUrl
+		case constant.GroupChatType:
+			newConversation.GroupID = conversation.GroupID
+			g, err := c.group.GetGroupInfoFromLocal2Svr(conversation.GroupID)
+			if err != nil {
+				log.NewError(operationID, utils.GetSelfFuncName(), "GetGroupInfoFromLocal2Svr error", err.Error())
+				continue
+			}
+			newConversation.ShowName = g.GroupName
+			newConversation.FaceURL = g.FaceURL
+		}
+		err := c.db.InsertConversation(&newConversation)
+		if err != nil {
+			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation error", err.Error())
+			continue
+		}
+		err = c.db.UpdateConversationForSync(conversation)
 		if err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation failed ", err.Error(), conversation)
 			continue
 		}
 	}
 	// 本地服务器有的会话 以服务器为准更新
-	var conversationChangedList []*db.LocalConversation
+	var conversationChangedList []string
 	for _, index := range sameA {
 		log.NewInfo("", *conversationsOnServerLocalFormat[index])
 		err := c.db.UpdateConversationForSync(conversationsOnServerLocalFormat[index])
@@ -256,17 +288,13 @@ func (c *Conversation) SyncConversations(operationID string) {
 			log.NewError(operationID, utils.GetSelfFuncName(), "UpdateConversation failed ", err.Error(), *conversationsOnServerLocalFormat[index])
 			continue
 		}
-		conversation, err := c.db.GetConversation(conversationsOnServerLocalFormat[index].ConversationID)
-		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "GetConversation failed", err.Error(), conversationsOnServerLocalFormat[index].ConversationID)
-		}
-		conversationChangedList = append(conversationChangedList, conversation)
+		conversationChangedList = append(conversationChangedList, conversationsOnServerLocalFormat[index].ConversationID)
 	}
-
-	log.NewInfo(operationID, utils.StructToJsonString(conversationChangedList))
 	// callback
 	if len(conversationChangedList) > 0 {
-		c.ConversationListener.OnConversationChanged(utils.StructToJsonString(conversationChangedList))
+		if err = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedList}, c.ch); err != nil {
+			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
+		}
 	}
 
 	// local有 server没有 代表没有修改公共字段
@@ -409,12 +437,12 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 	messages, err := c.db.GetMultipleMessage(msgIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
 	for _, v := range messages {
-		if v.IsRead == false && v.ContentType < constant.NotificationBegin {
+		if v.IsRead == false && v.ContentType < constant.NotificationBegin && v.SendID != c.loginUserID {
 			newMessageIDList = append(newMessageIDList, v.ClientMsgID)
 		}
 	}
 	if len(newMessageIDList) == 0 {
-		common.CheckAnyErrCallback(callback, 201, errors.New("message has been marked read"), operationID)
+		common.CheckAnyErrCallback(callback, 201, errors.New("message has been marked read or sender is yourself"), operationID)
 	}
 	conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
 	s := sdk_struct.MsgStruct{}
@@ -466,10 +494,11 @@ func (c *Conversation) clearC2CHistoryMessage(callback open_im_sdk_callback.Base
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 }
 
-func (c *Conversation) deleteMessage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
+func (c *Conversation) deleteMessageFromSvr(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
 	var apiReq server_api_params.DeleteMsgReq
-	//var apiResp server_api_params.DeleteMsgResp
-	apiReq.SeqList = []uint32{s.Seq}
+	seq, err := c.db.GetMsgSeqByClientMsgID(s.ClientMsgID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	apiReq.SeqList = []uint32{seq}
 	apiReq.OpUserID = c.loginUserID
 	apiReq.UserID = c.loginUserID
 	apiReq.OperationID = operationID
@@ -615,6 +644,8 @@ func (c *Conversation) delMsgBySeqSplit(seqList []uint32) error {
 	var req server_api_params.DelMsgListReq
 	req.SeqList = seqList
 	req.OperationID = utils.OperationIDGenerator()
+	req.OpUserID = c.loginUserID
+	req.UserID = c.loginUserID
 	operationID := req.OperationID
 
 	resp, err := c.Ws.SendReqWaitResp(&req, constant.WsDelMsg, 30, 5, c.loginUserID, req.OperationID)
@@ -630,20 +661,22 @@ func (c *Conversation) delMsgBySeqSplit(seqList []uint32) error {
 	return nil
 }
 
-func (c *Conversation) deleteMessageFromSvr(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
-	seq, err := c.db.GetMsgSeqByClientMsgID(s.ClientMsgID)
-	common.CheckDBErrCallback(callback, err, operationID)
-	if seq == 0 {
-		err = errors.New("seq == 0 ")
-		common.CheckArgsErrCallback(callback, err, operationID)
-	}
-	seqList := []uint32{seq}
-	err = c.delMsgBySeq(seqList)
-	common.CheckArgsErrCallback(callback, err, operationID)
-}
+// old WS method
+//func (c *Conversation) deleteMessageFromSvr(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
+//	seq, err := c.db.GetMsgSeqByClientMsgID(s.ClientMsgID)
+//	common.CheckDBErrCallback(callback, err, operationID)
+//	if seq == 0 {
+//		err = errors.New("seq == 0 ")
+//		common.CheckArgsErrCallback(callback, err, operationID)
+//	}
+//	seqList := []uint32{seq}
+//	err = c.delMsgBySeq(seqList)
+//	common.CheckArgsErrCallback(callback, err, operationID)
+//}
 
 func (c *Conversation) deleteConversationAndMsgFromSvr(callback open_im_sdk_callback.Base, conversationID, operationID string) {
 	local, err := c.db.GetConversation(conversationID)
+	log.Debug(operationID, utils.GetSelfFuncName(), *local)
 	common.CheckDBErrCallback(callback, err, operationID)
 	var seqList []uint32
 	switch local.ConversationType {
@@ -654,15 +687,19 @@ func (c *Conversation) deleteConversationAndMsgFromSvr(callback open_im_sdk_call
 		} else {
 			seqList, err = c.db.GetMsgSeqListBySelfUserID(c.loginUserID)
 		}
+		log.NewDebug(operationID, utils.GetSelfFuncName(), "seqList: ", seqList)
 		common.CheckDBErrCallback(callback, err, operationID)
-		err = c.delMsgBySeq(seqList)
-		common.CheckArgsErrCallback(callback, err, operationID)
-
 	case constant.GroupChatType:
 		groupID := local.GroupID
 		seqList, err = c.db.GetMsgSeqListByGroupID(groupID)
+		log.NewDebug(operationID, utils.GetSelfFuncName(), "seqList: ", seqList)
+		common.CheckDBErrCallback(callback, err, operationID)
 	}
-	common.CheckDBErrCallback(callback, err, operationID)
-	err = c.delMsgBySeq(seqList)
+	var apiReq server_api_params.DeleteMsgReq
+	apiReq.OpUserID = c.loginUserID
+	apiReq.UserID = c.loginUserID
+	apiReq.OperationID = operationID
+	apiReq.SeqList = seqList
+	c.p.PostFatalCallback(callback, constant.DeleteMsgRouter, apiReq, nil, apiReq.OperationID)
 	common.CheckArgsErrCallback(callback, err, operationID)
 }

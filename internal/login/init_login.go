@@ -112,7 +112,17 @@ func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalin
 	u.signalingListener = listener
 }
 
+//func (u *LoginMgr) DebugMem(userID string) {
+//	u.FWMutex.Lock()
+//
+//	f, _ := os.OpenFile(utils.OperationIDGenerator()+"mem.profile", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+//	u.F = f
+//	pprof.Lookup("heap").WriteTo(u.F, 0)
+//	u.FWMutex.Unlock()
+//}
+
 func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
+
 	log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)
 	//if u.justOnceFlag {
 	//	cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
@@ -176,7 +186,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		objStorage = comm2.NewCOS(p)
 	}
 	u.signaling = sdk_advanced_function.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID, u.imConfig.Platform, u.db)
-	u.advancedFunction = sdk_advanced_function.NewChatHasRead(u.ws, u.conversation, u.loginUserID, u.db, u.imConfig.Platform)
+	u.advancedFunction = sdk_advanced_function.NewChatHasRead(u.ws, u.loginUserID, u.db, u.imConfig.Platform, u.conversationCh, u.advancedMsgListener)
 	u.conversation = conv.NewConversation(u.ws, u.db, p, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener, u.signaling, u.advancedFunction)

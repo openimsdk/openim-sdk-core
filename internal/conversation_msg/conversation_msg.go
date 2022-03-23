@@ -120,6 +120,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
 			continue
 		}
+		switch v.ContentType {
+		case constant.ConversationChangeNotification:
+			log.Info(operationID, utils.GetSelfFuncName(), v)
+			c.DoNotification(v)
+		}
 		switch v.SessionType {
 		case constant.SingleChatType:
 			if v.ContentType > constant.FriendNotificationBegin && v.ContentType < constant.FriendNotificationEnd {
@@ -447,7 +452,7 @@ func (c *Conversation) doMsgReadState(msgReadList []*sdk_struct.MsgStruct) {
 			msgRt.MsgFrom = rd.MsgFrom
 			msgRt.ReadTime = rd.SendTime
 			msgRt.UserID = rd.SendID
-			msgRt.SessionType = rd.SessionType
+			msgRt.SessionType = constant.SingleChatType
 			msgRt.MsgIdList = msgIdListStatusOK
 			messageReceiptResp = append(messageReceiptResp, msgRt)
 		}

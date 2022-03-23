@@ -53,6 +53,7 @@ func (ws *WServer) msgParse(conn *UserConn, jsonMsg []byte) {
 		SendOneConnMessage(EventData{"error", 100, "Unmarshal failed", "", ""}, conn)
 		return
 	}
+
 	defer func() {
 		if r := recover(); r != nil {
 			SendOneConnMessage(EventData{m.ReqFuncName, StatusBadParameter, StatusText(StatusBadParameter), "", m.OperationID}, conn)
@@ -78,6 +79,7 @@ func (ws *WServer) msgParse(conn *UserConn, jsonMsg []byte) {
 	//	rwLock.RLock()
 	//	defer rwLock.RUnlock()
 	urm, ok := UserRouteMap[m.UserID]
+
 	if !ok {
 		wrapSdkLog("", "msgParse", "user not login failed, must login first: ", m.UserID)
 		SendOneConnMessage(EventData{"Login", StatusNoLogin, StatusText(StatusNoLogin), "", m.OperationID}, conn)
