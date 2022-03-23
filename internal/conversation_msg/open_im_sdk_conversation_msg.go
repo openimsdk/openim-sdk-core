@@ -1001,19 +1001,6 @@ func (c *Conversation) MarkGroupMessageHasRead(callback open_im_sdk_callback.Bas
 	}()
 }
 
-func (c *Conversation) DeleteMessage(callback open_im_sdk_callback.Base, message string, operationID string) {
-	if callback == nil {
-		return
-	}
-	go func() {
-		s := sdk_struct.MsgStruct{}
-		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
-		//c.deleteMessage(callback, &s, operationID)
-		c.deleteMessageFromLocalStorage(callback, &s, operationID)
-		callback.OnSuccess("")
-	}()
-}
-
 func (c *Conversation) DeleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, message string, operationID string) {
 	go func() {
 		s := sdk_struct.MsgStruct{}
@@ -1247,7 +1234,7 @@ func (c *Conversation) DeleteMessageFromLocalAndSvr(callback open_im_sdk_callbac
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 		c.deleteMessageFromSvr(callback, &s, operationID)
-		c.deleteMessage(callback, &s, operationID)
+		c.deleteMessageFromLocalStorage(callback, &s, operationID)
 		callback.OnSuccess("")
 		log.NewInfo(operationID, fName, "callback: ", "")
 	}()

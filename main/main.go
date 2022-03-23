@@ -1,6 +1,7 @@
 package main
 
 import (
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/test"
 
@@ -26,18 +27,18 @@ func reliabilityTest() {
 }
 
 var (
-	//	TESTIP       = "43.128.5.63"
-	//TESTIP_LOCAL = "43.128.5.63"
+	TESTIP       = "43.128.5.63"
+	TESTIP_LOCAL = "43.128.5.63"
 	//TESTIP       = "1.14.194.38"
-	//	APIADDR      = "http://" + TESTIP_LOCAL + ":10000"
-	APIADDR = "https://im-api.jiarenapp.com"
+	APIADDR = "http://" + TESTIP_LOCAL + ":10000"
+	//APIADDR = "https://im-api.jiarenapp.com"
 
-	//WSADDR       = "ws://" + TESTIP + ":17778"
-	WSADDR = "wss://im.jiarenapp.com"
+	WSADDR = "ws://" + TESTIP + ":17778"
+	//WSADDR = "wss://im.jiarenapp.com"
 
 	REGISTERADDR = APIADDR + "/user_register"
 	TOKENADDR    = APIADDR + "/auth/user_token"
-	SECRET       = "1111"
+	SECRET       = "tuoyun"
 	SENDINTERVAL = 20
 )
 
@@ -46,10 +47,13 @@ func main() {
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
 	test.SENDINTERVAL = SENDINTERVAL
-	strMyUidx := "1111"
+	strMyUidx := "17726378428"
 	//friendID := "17726378428"
 	tokenx := test.GenToken(strMyUidx)
+	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNzcyNjM3ODQyOCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYzMjE2NDU1LCJuYmYiOjE2NDc4NTY0NTUsImlhdCI6MTY0Nzg1NjQ1NX0.3fOcyhw7r5lOkRTJdDy7-tG9XC4XrKj_N7ufrGHPWYM"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+	//test.DoTestDeleteConversationMsgFromLocalAndSvr("single_17396220460")
+	//test.I
 	//test.DoTestInviteInGroup()
 	//test.DoTestCancel()
 	//test.DoTestSendMsg2(strMyUidx, friendID)
@@ -58,21 +62,21 @@ func main() {
 	//test.DoTestGetOneConversation("17726378428")
 	//test.DoTestGetConversations(`["single_17726378428"]`)
 	//test.DoTestGetConversationListSplit()
-	//test.DoTestGetConversationRecvMessageOpt(`["single_17726378428"]`)
+	//test.DoTestGetConversationRecvMessageOpt(`["single_17899999999"]`)
 
 	//set batch
-	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.NotReceiveMessage)
+	test.DoTestSetConversationRecvMessageOpt([]string{"single_17396220460"}, constant.ReceiveMessage)
 	//set one
 	////set batch
 	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.ReceiveMessage)
 	////set one
 	//test.DoTestSetConversationPinned("single_17726378428", false)
 	//test.DoTestSetOneConversationRecvMessageOpt("single_17726378428", constant.NotReceiveMessage)
-	//test.DoTestSetOneConversationPrivateChat("single_17726378428", false)
+	//test.DoTestSetOneConversationPrivateChat("single_17800000000", false)
 	//test.DoTestReject()
 	//test.DoTestAccept()
 	//test.DoTestMarkGroupMessageAsRead()
-	test.DoTestGetGroupHistoryMessage()
+	//test.DoTestGetGroupHistoryMessage()
 	for {
 		time.Sleep(30 * time.Second)
 		log.Info("", "waiting...")
