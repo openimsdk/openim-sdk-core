@@ -251,7 +251,7 @@ func (c *Conversation) SyncConversations(operationID string) {
 		switch conversation.ConversationType {
 		case constant.SingleChatType:
 			newConversation.UserID = conversation.UserID
-			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(nil, conversation.UserID, operationID)
+			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, conversation.UserID, operationID)
 			if err != nil {
 				log.NewError(operationID, utils.GetSelfFuncName(), "GetUserNameAndFaceUrlByUid error", err.Error())
 				continue
