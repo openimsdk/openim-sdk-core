@@ -49,6 +49,13 @@ const MarkC2CMessageAsReadCallback = constant.SuccessCallbackDefault
 
 const MarkGroupMessageHasRead = constant.SuccessCallbackDefault
 
+type UpdateMessageParams struct {
+	ClientMsgID string `json:"clientMsgID"`
+	Ex          string `json:"ex"`
+}
+
+const UpdateMessageCallback = constant.SuccessCallbackDefault
+
 type SetConversationStatusParams struct {
 	UserId string `json:"userID" validate:"required"`
 	Status int    `json:"status" validate:"required"`

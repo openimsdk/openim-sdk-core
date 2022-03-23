@@ -412,6 +412,14 @@ func (wsRouter *WsFuncRouter) RevokeMessage(message string, operationID string) 
 	userWorker.Conversation().RevokeMessage(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, message, operationID)
 }
 
+func (wsRouter *WsFuncRouter) UpdateMessage(message string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, message, operationID, runFuncName(), nil) {
+		return
+	}
+	userWorker.Conversation().UpdateMessage(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, message, operationID)
+}
+
 func (wsRouter *WsFuncRouter) TypingStatusUpdate(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {

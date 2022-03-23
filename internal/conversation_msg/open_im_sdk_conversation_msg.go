@@ -3,8 +3,6 @@ package conversation_msg
 import (
 	"encoding/json"
 	"errors"
-	"github.com/golang/protobuf/proto"
-	"github.com/jinzhu/copier"
 	"image"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -18,11 +16,13 @@ import (
 	"os"
 	"runtime"
 	"sync"
-)
 
-//
-//import "C"
-import (
+	"github.com/golang/protobuf/proto"
+	"github.com/jinzhu/copier"
+
+	//
+	//import "C"
+
 	//	//"bytes"
 	//	//"encoding/gob"
 	//	"encoding/json"
@@ -30,21 +30,22 @@ import (
 	//	"github.com/golang/protobuf/proto"
 	//	"github.com/gorilla/websocket"
 	imgtype "github.com/shamsher31/goimgtype"
-	//	"image"
-	//	"net/http"
-	//	"open_im_sdk/pkg/db"
-	//
-	//	"open_im_sdk/pkg/common"
-	//	"open_im_sdk/pkg/constant"
-	//	"open_im_sdk/pkg/log"
-	//	"open_im_sdk/pkg/sdk_params_callback"
-	//	"open_im_sdk/pkg/server_api_params"
-	//	"open_im_sdk/pkg/utils"
-	//	"os"
-	//	"sort"
-	//	"sync"
-	//	"time"
 )
+
+//	"image"
+//	"net/http"
+//	"open_im_sdk/pkg/db"
+//
+//	"open_im_sdk/pkg/common"
+//	"open_im_sdk/pkg/constant"
+//	"open_im_sdk/pkg/log"
+//	"open_im_sdk/pkg/sdk_params_callback"
+//	"open_im_sdk/pkg/server_api_params"
+//	"open_im_sdk/pkg/utils"
+//	"os"
+//	"sort"
+//	"sync"
+//	"time"
 
 func (c *Conversation) GetAllConversationList(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
@@ -900,6 +901,21 @@ func (c *Conversation) RevokeMessage(callback open_im_sdk_callback.Base, message
 		log.NewInfo(operationID, "RevokeMessage callback: ", sdk_params_callback.RevokeMessageCallback)
 	}()
 }
+
+func (c *Conversation) UpdateMessage(callback open_im_sdk_callback.Base, message string, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, "UpdateMessage args: ", message)
+		var unmarshalParams sdk_params_callback.UpdateMessageParams
+		common.JsonUnmarshalCallback(message, &unmarshalParams, callback, operationID)
+		c.UpdateOneMessage(callback, unmarshalParams, operationID)
+		callback.OnSuccess(sdk_params_callback.RevokeMessageCallback)
+		log.NewInfo(operationID, "UpdateMessage callback: ", sdk_params_callback.RevokeMessageCallback)
+	}()
+}
+
 func (c *Conversation) TypingStatusUpdate(callback open_im_sdk_callback.Base, recvID, msgTip, operationID string) {
 	if callback == nil {
 		return
