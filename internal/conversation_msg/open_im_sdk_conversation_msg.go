@@ -1009,6 +1009,20 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_ca
 		conversation.ConversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+<<<<<<< HEAD
+=======
+		if sendID != c.loginUserID {
+			friendInfo, _ := c.db.GetFriendInfoByFriendUserID(sendID)
+			sourceID = sendID
+			s.SenderFaceURL = friendInfo.FaceURL
+			s.SenderNickname = friendInfo.Nickname
+		} else {
+			sourceID = recvID
+		}
+		var conversation db.LocalConversation
+		conversation.ConversationID = utils.GetConversationIDBySessionType(sourceID, constant.SingleChatType)
+
+>>>>>>> parent of d48a23f (conversation update)
 		localMessage := db.LocalChatLog{}
 		s.SendID = sendID
 		s.RecvID = recvID
@@ -1031,6 +1045,11 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 		conversation.ConversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+		if sendID != c.loginUserID {
+			friendInfo, _ := c.db.GetFriendInfoByFriendUserID(sendID)
+			s.SenderFaceURL = friendInfo.FaceURL
+			s.SenderNickname = friendInfo.Nickname
+		}
 		localMessage := db.LocalChatLog{}
 		s.SendID = sendID
 		s.RecvID = groupID
