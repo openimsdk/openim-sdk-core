@@ -358,7 +358,7 @@ func (g *Group) kickGroupMember(callback open_im_sdk_callback.Base, groupID stri
 	apiReq.OperationID = operationID
 	realData := api.KickGroupMemberResp{}
 	g.p.PostFatalCallback(callback, constant.KickGroupMemberRouter, apiReq, &realData.UserIDResultList, apiReq.OperationID)
-	//g.SyncJoinedGroupList(operationID)
+	g.SyncJoinedGroupList(operationID)
 	g.syncGroupMemberByGroupID(groupID, operationID, true)
 	return realData.UserIDResultList
 }
