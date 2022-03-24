@@ -20,6 +20,8 @@ const JoinGroupCallback = constant.SuccessCallbackDefault
 //type QuitGroupParam // groupID
 const QuitGroupCallback = constant.SuccessCallbackDefault
 
+const DismissGroupCallback = constant.SuccessCallbackDefault
+
 //type GetJoinedGroupListParam null
 type GetJoinedGroupListCallback []*db.LocalGroup
 

@@ -178,6 +178,15 @@ func QuitGroup(callback open_im_sdk_callback.Base, operationID string, groupID s
 	userForSDK.Group().QuitGroup(callback, groupID, operationID)
 }
 
+func DismissGroup(callback open_im_sdk_callback.Base, operationID string, groupID string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Group().DismissGroup(callback, groupID, operationID)
+}
+
 func GetJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())

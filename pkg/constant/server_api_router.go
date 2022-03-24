@@ -43,6 +43,7 @@ const (
 	GetSendGroupApplicationListRouter = RouterGroup + "/get_user_req_group_applicationList"
 	AcceptGroupApplicationRouter      = RouterGroup + "/group_application_response"
 	RefuseGroupApplicationRouter      = RouterGroup + "/group_application_response"
+	DismissGroupRoute                 = RouterGroup + "/dismiss_group"
 
 	//conversation
 	SetConversationOptRouter   = ConversationGroup + "/set_conversation"

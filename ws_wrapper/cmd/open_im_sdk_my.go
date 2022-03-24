@@ -9,6 +9,7 @@ package main
 import (
 	"flag"
 	"fmt"
+
 	"open_im_sdk/sdk_struct"
 	"open_im_sdk/ws_wrapper/utils"
 	"open_im_sdk/ws_wrapper/ws_local_server"
@@ -31,12 +32,15 @@ func main() {
 	sysType := runtime.GOOS
 	switch sysType {
 	case "darwin":
+
 		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: *openIMApiAddress,
 			WsAddr: *openIMWsAddress, Platform: utils.OSXPlatformID, DataDir: *sqliteDir})
 	case "linux":
+
 		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: *openIMApiAddress,
 			WsAddr: *openIMWsAddress, Platform: utils.LinuxPlatformID, DataDir: *sqliteDir})
 	case "windows":
+
 		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: *openIMApiAddress,
 			WsAddr: *openIMWsAddress, Platform: utils.WindowsPlatformID, DataDir: *sqliteDir})
 	default:
@@ -46,6 +50,7 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	fmt.Println("ws server is starting")
+
 	ws_local_server.WS.OnInit(*sdkWsPort, *sdkWsIp)
 	if ws_local_server.WS.Run()!=nil {
 		os.Exit(-10);

@@ -55,6 +55,8 @@ func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2
 			g.memberInvitedNotification(msg, operationID)
 		case constant.MemberEnterNotification:
 			g.memberEnterNotification(msg, operationID)
+		case constant.GroupDismissedNotification:
+			g.groupDismissNotification(msg,operationID)
 		default:
 			log.Error(operationID, "ContentType tip failed ", msg.ContentType)
 		}
@@ -203,6 +205,18 @@ func (g *Group) memberEnterNotification(msg *api.MsgData, operationID string) {
 
 }
 
+func (g *Group) groupDismissNotification(msg *api.MsgData, operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
+	detail := api.GroupDismissedTips{Group: &api.GroupInfo{}, OpUser: &api.GroupMemberFullInfo{}}
+	if err := comm.UnmarshalTips(msg, &detail); err != nil {
+		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
+		return
+	}
+	g.SyncJoinedGroupList(operationID)
+	g.db.DeleteGroupAllMembers(detail.Group.GroupID)
+
+}
+
 func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam,
 	memberList sdk.CreateGroupMemberRoleParam, operationID string) *sdk.CreateGroupCallback {
 	apiReq := api.CreateGroupReq{}
@@ -241,6 +255,14 @@ func (g *Group) quitGroup(groupID string, callback open_im_sdk_callback.Base, op
 	g.p.PostFatalCallback(callback, constant.QuitGroupRouter, apiReq, nil, apiReq.OperationID)
 	//g.syncGroupMemberByGroupID(groupID, operationID, false) //todo
 	g.SyncJoinedGroupList(operationID)
+}
+
+func (g *Group) dismissGroup(groupID string, callback open_im_sdk_callback.Base, operationID string) {
+	apiReq := api.DismissGroupReq{}
+	apiReq.OperationID = operationID
+	apiReq.GroupID = groupID
+	g.p.PostFatalCallback(callback, constant.DismissGroupRoute, apiReq, nil, apiReq.OperationID)
+	//g.SyncJoinedGroupList(operationID)
 }
 
 func (g *Group) getJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) sdk.GetJoinedGroupListCallback {

@@ -95,6 +95,15 @@ func (wsRouter *WsFuncRouter) QuitGroup(groupID, operationID string) {
 	userWorker.Group().QuitGroup(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, groupID, operationID)
 }
 
+func (wsRouter *WsFuncRouter) DismissGroup(groupID, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	//callback common.Base, groupID string, operationID string
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, groupID, operationID, runFuncName(), nil) {
+		return
+	}
+	userWorker.Group().DismissGroup(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, groupID, operationID)
+}
+
 func (wsRouter *WsFuncRouter) GetJoinedGroupList(input, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	//(callback common.Base, operationID string)
