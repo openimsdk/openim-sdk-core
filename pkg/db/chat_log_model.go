@@ -259,17 +259,33 @@ func (d *DataBase) UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nick
 }
 
 func (d *DataBase) GetMsgSeqByClientMsgID(clientMsgID string) (uint32, error) {
-	return 0, nil
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var seq uint32
+	err := utils.Wrap(d.conn.Model(LocalChatLog{}).Select("seq").Where("client_msg_id=?", clientMsgID).First(&seq).Error, utils.GetSelfFuncName()+" failed")
+	return seq, err
 }
 
 func (d *DataBase) GetMsgSeqListByGroupID(groupID string) ([]uint32, error) {
-	return nil, nil
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var seqList []uint32
+	err := utils.Wrap(d.conn.Model(LocalChatLog{}).Select("seq").Where("recv_id=?", groupID).Find(&seqList).Error, utils.GetSelfFuncName()+" failed")
+	return seqList, err
 }
 
 func (d *DataBase) GetMsgSeqListByPeerUserID(userID string) ([]uint32, error) {
-	return nil, nil
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var seqList []uint32
+	err := utils.Wrap(d.conn.Model(LocalChatLog{}).Select("seq").Where("recv_id=? or send_id=?", userID, userID).Find(&seqList).Error, utils.GetSelfFuncName()+" failed")
+	return seqList, err
 }
 
 func (d *DataBase) GetMsgSeqListBySelfUserID(userID string) ([]uint32, error) {
-	return nil, nil
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var seqList []uint32
+	err := utils.Wrap(d.conn.Model(LocalChatLog{}).Select("seq").Where("recv_id=? and send_id=?", userID, userID).Find(&seqList).Error, utils.GetSelfFuncName()+" failed")
+	return seqList, err
 }

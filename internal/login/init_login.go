@@ -18,9 +18,6 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
-	"os"
-	"runtime/pprof"
-	"sync"
 )
 
 type LoginMgr struct {
@@ -53,10 +50,6 @@ type LoginMgr struct {
 	cmdWsCh        chan common.Cmd2Value
 	heartbeatCmdCh chan common.Cmd2Value
 	imConfig       sdk_struct.IMConfig
-
-	F *os.File
-
-	FWMutex sync.RWMutex
 }
 
 func (u *LoginMgr) AdvancedFunction() advanced_interface.AdvancedFunction {
@@ -119,14 +112,14 @@ func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalin
 	u.signalingListener = listener
 }
 
-func (u *LoginMgr) DebugMem(userID string) {
-	u.FWMutex.Lock()
-
-	f, _ := os.OpenFile(utils.OperationIDGenerator()+"mem.profile", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
-	u.F = f
-	pprof.Lookup("heap").WriteTo(u.F, 0)
-	u.FWMutex.Unlock()
-}
+//func (u *LoginMgr) DebugMem(userID string) {
+//	u.FWMutex.Lock()
+//
+//	f, _ := os.OpenFile(utils.OperationIDGenerator()+"mem.profile", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+//	u.F = f
+//	pprof.Lookup("heap").WriteTo(u.F, 0)
+//	u.FWMutex.Unlock()
+//}
 
 func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
 

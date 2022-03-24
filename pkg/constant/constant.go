@@ -92,6 +92,7 @@ const (
 	GroupChatType  = 2
 
 	//MsgStatus
+	MsgStatusDefault     = 0
 	MsgStatusSending     = 1
 	MsgStatusSendSuccess = 2
 	MsgStatusSendFailed  = 3

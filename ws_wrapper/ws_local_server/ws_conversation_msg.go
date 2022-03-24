@@ -53,7 +53,7 @@ func (wsRouter *WsFuncRouter) SendMessage(input string, operationID string) {
 		return
 	}
 	userWorker.Conversation().SendMessage(&sc, m["message"].(string), m["recvID"].(string), m["groupID"].(string), m["offlinePushInfo"].(string), operationID)
-	userWorker.DebugMem(userWorker.GetLoginUser())
+
 }
 
 type AddAdvancedMsgListenerCallback struct {
@@ -518,12 +518,20 @@ func (wsRouter *WsFuncRouter) DeleteMessageFromLocalStorage(message string, oper
 	userWorker.Conversation().DeleteMessageFromLocalStorage(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, message, operationID)
 }
 
-func (wsRouter *WsFuncRouter) DeleteMessage(message string, operationID string) {
+func (wsRouter *WsFuncRouter) DeleteMessageFromLocalAndSvr(message string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, message, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Conversation().DeleteMessage(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, message, operationID)
+	userWorker.Conversation().DeleteMessageFromLocalAndSvr(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, message, operationID)
+}
+
+func (wsRouter *WsFuncRouter) DeleteConversationMsgFromLocalAndSvr(conversationID string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, conversationID, operationID, runFuncName(), nil) {
+		return
+	}
+	userWorker.Conversation().DeleteConversationMsgFromLocalAndSvr(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, conversationID, operationID)
 }
 
 func (wsRouter *WsFuncRouter) InsertSingleMessageToLocalStorage(input string, operationID string) {
@@ -659,7 +667,6 @@ func (wsRouter *WsFuncRouter) SendMessageNotOss(input string, operationID string
 	}
 	userWorker.Conversation().SendMessageNotOss(&sc, m["message"].(string), m["recvID"].(string), m["groupID"].(string), m["offlinePushInfo"].(string), operationID)
 
-	userWorker.DebugMem(userWorker.GetLoginUser())
 }
 
 func (wsRouter *WsFuncRouter) ClearC2CHistoryMessage(input string, operationID string) {
