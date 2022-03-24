@@ -557,6 +557,12 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 	//var searchResultItems []sdk.SearchByConversationResult
 	var searchResultItem sdk.SearchByConversationResult
 	var messageList sdk_struct.NewMsgList
+	var list []*db.LocalChatLog
+	var err error
+	if searchParam.PageIndex < 1 || searchParam.Count < 1 {
+		common.CheckAnyErrCallback(callback, 201, errors.New("page or count is null"), operationID)
+	}
+	offset := (searchParam.PageIndex-1) * searchParam.Count
 	switch searchParam.SessionType {
 	case constant.SingleChatType:
 		conversationID = utils.GetConversationIDBySessionType(searchParam.SourceID, constant.SingleChatType)
@@ -569,11 +575,20 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 	} else {
 		startTime = searchParam.SearchTimePosition
 	}
-	endTime = startTime - searchParam.SearchTimePeriod
-	if len(searchParam.KeywordList) == 0 {
+	if searchParam.SearchTimePosition == 0 {
+		endTime = 0
+	} else {
+		endTime = startTime - searchParam.SearchTimePeriod
+	}
+	if (len(searchParam.KeywordList) == 0 || searchParam.KeywordList[0] == "") && len(searchParam.MessageTypeList) == 0 {
 		common.CheckAnyErrCallback(callback, 201, errors.New("keyword is null"), operationID)
 	}
-	list, err := c.db.SearchMessageByKeyword(searchParam.KeywordList[0], utils.UnixSecondToTime(endTime).UnixNano()/1e6, utils.UnixSecondToTime(startTime).UnixNano()/1e6, searchParam.SessionType)
+	if len(searchParam.MessageTypeList) == 0 {
+		list, err = c.db.SearchMessageByKeyword(searchParam.KeywordList[0],searchParam.SourceID, utils.UnixSecondToTime(endTime).UnixNano()/1e6, utils.UnixSecondToTime(startTime).UnixNano()/1e6, searchParam.SessionType,offset,searchParam.Count)
+	} else {
+		list, err = c.db.SearchMessageByContentType(searchParam.MessageTypeList[0],searchParam.SourceID, utils.UnixSecondToTime(endTime).UnixNano()/1e6, utils.UnixSecondToTime(startTime).UnixNano()/1e6, searchParam.SessionType,offset,searchParam.Count)
+	}
+
 	common.CheckDBErrCallback(callback, err, operationID)
 	r.TotalCount = len(list)
 	localChatLogToMsgStruct(&messageList, list)
