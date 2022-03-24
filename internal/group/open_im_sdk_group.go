@@ -58,6 +58,19 @@ func (g *Group) QuitGroup(callback open_im_sdk_callback.Base, groupID string, op
 	}()
 }
 
+func (g *Group) DismissGroup(callback open_im_sdk_callback.Base, groupID string, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", groupID)
+		g.dismissGroup(groupID, callback, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.DismissGroupCallback))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk_params_callback.DismissGroupCallback))
+	}()
+}
+
 func (g *Group) GetJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
 		return
