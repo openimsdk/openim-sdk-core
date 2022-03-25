@@ -442,7 +442,7 @@ func DoTestSendMsg2(sendId, recvID string) {
 	m := "DoTestSendMsg2 test:Gordon->sk" + sendId + ":" + recvID + ":"
 	operationID := utils.OperationIDGenerator()
 	s := DoTestCreateTextMessage(m)
-	log.NewInfo("", s)
+	log.NewInfo(operationID, "send msg:", s)
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
 	o := server_api_params.OfflinePushInfo{}
