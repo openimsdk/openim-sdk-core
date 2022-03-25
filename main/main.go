@@ -79,6 +79,7 @@ func main() {
 	//test.DoTestMarkGroupMessageAsRead()
 	//test.DoTestGetGroupHistoryMessage()
 	for {
+		test.DoTestSendMsg2(strMyUidx, test.Friend_uid)
 		time.Sleep(30 * time.Second)
 		log.Info("", "waiting...")
 	}
