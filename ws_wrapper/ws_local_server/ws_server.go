@@ -137,16 +137,6 @@ func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ws *WServer) readMsg(conn *UserConn) {
-	defer func() {
-		if r := recover(); r != nil {
-			wrapSdkLog("", "readMsg panic", " panic is ", r)
-			buf := make([]byte, 1<<16)
-			runtime.Stack(buf, true)
-			wrapSdkLog("", "panic", "call", string(buf))
-			ws.readMsg(conn)
-			wrapSdkLog("", "goroutine readMsg restart")
-		}
-	}()
 	for {
 		msgType, msg, err := conn.ReadMessage()
 		if err != nil {

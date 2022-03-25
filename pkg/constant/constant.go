@@ -108,6 +108,7 @@ const (
 	IsConversationUpdate = "conversationUpdate"
 	IsOfflinePush        = "offlinePush"
 	IsSenderSync         = "senderSync"
+	IsPrivate
 )
 
 const (

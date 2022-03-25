@@ -197,6 +197,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					//	c.FaceURL = faceUrl
 					//}
 				}
+				if msg.ContentType == constant.HasReadReceipt {
+					msgReadList = append(msgReadList, msg)
+					lc.UnreadCount = -1
+				}
 				if isConversationUpdate {
 					log.Debug(operationID, "updateConversation msg", v, lc)
 					c.updateConversation(&lc, conversationSet)
@@ -210,9 +214,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				if msg.ContentType == constant.Revoke {
 					msgRevokeList = append(msgRevokeList, msg)
 				}
-				if msg.ContentType == constant.HasReadReceipt {
-					msgReadList = append(msgReadList, msg)
-				}
+
 				if msg.ContentType == constant.GroupHasReadReceipt {
 					groupMsgReadList = append(groupMsgReadList, msg)
 
