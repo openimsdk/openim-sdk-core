@@ -10,7 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
-	_ "net/http/pprof"
+	//	_ "net/http/pprof"
 	"open_im_sdk/sdk_struct"
 	//"open_im_sdk/open_im_sdk"
 	log1 "log"

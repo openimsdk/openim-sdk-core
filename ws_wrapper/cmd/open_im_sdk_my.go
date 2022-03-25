@@ -9,8 +9,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
-	"net/http"
 	"open_im_sdk/sdk_struct"
 	"open_im_sdk/ws_wrapper/utils"
 	"open_im_sdk/ws_wrapper/ws_local_server"
@@ -48,9 +46,9 @@ func main() {
 	wg.Add(1)
 	fmt.Println("ws server is starting")
 	ws_local_server.WS.OnInit(*sdkWsPort)
-	go func() {
-		log.Println(http.ListenAndServe("0.0.0.0:6060", nil))
-	}()
+	//go func() {
+	//	log.Println(http.ListenAndServe("0.0.0.0:6060", nil))
+	//}()
 
 	ws_local_server.WS.Run()
 
