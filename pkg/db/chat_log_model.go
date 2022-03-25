@@ -28,11 +28,11 @@ func (d *DataBase) SearchMessageByKeyword(keyword,sourceID string, startTime, en
 	var condition string
 	switch sessionType {
 	case constant.SingleChatType:
-		condition = fmt.Sprintf("session_type==%d And (send_id==%q OR recv_id==%q) And send_time  between %d and %d AND status <=%d And content like %q", constant.SingleChatType,sourceID,sourceID, startTime, endTime, constant.MsgStatusSendFailed, keyword+"%%")
+		condition = fmt.Sprintf("session_type==%d And (send_id==%q OR recv_id==%q) And send_time  between %d and %d AND status <=%d And content like %q", constant.SingleChatType,sourceID,sourceID, startTime, endTime, constant.MsgStatusSendFailed, "%%"+keyword+"%%")
 	case constant.GroupChatType:
-		condition = fmt.Sprintf("session_type==%d And recv_id==%q And send_time between %d and %d AND status <=%d And content like %q", constant.GroupChatType,sourceID, startTime, endTime, constant.MsgStatusSendFailed, keyword+"%%")
+		condition = fmt.Sprintf("session_type==%d And recv_id==%q And send_time between %d and %d AND status <=%d And content like %q", constant.GroupChatType,sourceID, startTime, endTime, constant.MsgStatusSendFailed, "%%"+keyword+"%%")
 	default:
-		condition = fmt.Sprintf("(send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content like %q",sourceID,sourceID,startTime, endTime, constant.MsgStatusSendFailed, keyword+"%%")
+		condition = fmt.Sprintf("(send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content like %q",sourceID,sourceID,startTime, endTime, constant.MsgStatusSendFailed,"%%"+keyword+"%%")
 	}
 	err = utils.Wrap(d.conn.Where(condition).Order("send_time DESC").Group("recv_id,client_msg_id").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
 	for _, v := range messageList {
