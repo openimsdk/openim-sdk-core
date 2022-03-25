@@ -9,6 +9,7 @@ package ws_local_server
 import (
 	"net/http"
 	"open_im_sdk/open_im_sdk"
+	utils2 "open_im_sdk/pkg/utils"
 
 	"github.com/gorilla/websocket"
 
@@ -83,23 +84,26 @@ func (ws *WServer) getMsgAndSend() {
 	for {
 		select {
 		case r := <-ws.ch:
+			operationID := utils2.OperationIDGenerator()
+			wrapSdkLog(operationID, "getMsgAndSend channel: ", string(r.data), r.uid)
+
 			conns := ws.getUserConn(r.uid + " " + "Web")
 			if conns == nil {
-				wrapSdkLog("", "uid no conn, failed ", r.uid)
+				wrapSdkLog(operationID, "uid no conn, failed ", r.uid)
+				r.data = nil
+				continue
 			}
 			for _, conn := range conns {
 				if conn != nil {
-					wrapSdkLog("", "getMsgAndSend begin: ", string(r.data))
 					err := WS.writeMsg(conn, websocket.TextMessage, r.data)
-					wrapSdkLog("", "getMsgAndSend end: ", string(r.data))
 					if err != nil {
-						wrapSdkLog("", "WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", r.uid, "error", err, "data", string(r.data))
+						wrapSdkLog(operationID, "WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", r.uid, "error", err.Error())
 					}
 				} else {
-					wrapSdkLog("", "Conn is nil, failed", "data", string(r.data))
+					wrapSdkLog(operationID, "Conn is nil, failed")
 				}
 			}
-
+			r.data = nil
 		}
 	}
 
