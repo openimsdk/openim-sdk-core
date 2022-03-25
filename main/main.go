@@ -80,7 +80,7 @@ func main() {
 	//test.DoTestGetGroupHistoryMessage()
 	for {
 		test.DoTestSendMsg2(strMyUidx, test.Friend_uid)
-		time.Sleep(30 * time.Second)
+		time.Sleep(5 * time.Second)
 		log.Info("", "waiting...")
 	}
 	//reliabilityTest()
