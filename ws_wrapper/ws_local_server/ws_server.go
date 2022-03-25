@@ -83,24 +83,22 @@ func (ws *WServer) getMsgAndSend() {
 	for {
 		select {
 		case r := <-ws.ch:
-			go func() {
-				conns := ws.getUserConn(r.uid + " " + "Web")
-				if conns == nil {
-					wrapSdkLog("", "uid no conn, failed ", r.uid)
-				}
-				for _, conn := range conns {
-					if conn != nil {
-						wrapSdkLog("", "getMsgAndSend begin: ", string(r.data))
-						err := WS.writeMsg(conn, websocket.TextMessage, r.data)
-						wrapSdkLog("", "getMsgAndSend end: ", string(r.data))
-						if err != nil {
-							wrapSdkLog("", "WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", r.uid, "error", err, "data", string(r.data))
-						}
-					} else {
-						wrapSdkLog("", "Conn is nil, failed", "data", string(r.data))
+			conns := ws.getUserConn(r.uid + " " + "Web")
+			if conns == nil {
+				wrapSdkLog("", "uid no conn, failed ", r.uid)
+			}
+			for _, conn := range conns {
+				if conn != nil {
+					wrapSdkLog("", "getMsgAndSend begin: ", string(r.data))
+					err := WS.writeMsg(conn, websocket.TextMessage, r.data)
+					wrapSdkLog("", "getMsgAndSend end: ", string(r.data))
+					if err != nil {
+						wrapSdkLog("", "WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", r.uid, "error", err, "data", string(r.data))
 					}
+				} else {
+					wrapSdkLog("", "Conn is nil, failed", "data", string(r.data))
 				}
-			}()
+			}
 
 		}
 	}
