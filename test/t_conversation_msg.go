@@ -254,7 +254,7 @@ func (t TestGetConversationRecvMessageOpt) OnSuccess(data string) {
 //}
 func DoTestCreateTextMessage(text string) string {
 	operationID := utils.OperationIDGenerator()
-	return open_im_sdk.CreateTextMessage(text, operationID)
+	return open_im_sdk.CreateTextMessage(operationID, text)
 }
 
 func DoTestCreateTextMessageReliability(mgr *login.LoginMgr, text string) string {
