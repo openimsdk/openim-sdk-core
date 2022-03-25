@@ -139,16 +139,15 @@ func (wsRouter *WsFuncRouter) GlobalSendMessage(data interface{}) {
 
 //listener
 func SendOneUserMessage(data interface{}, uid string) {
-	bMsg, _ := json.Marshal(data)
 	var chMsg ChanMsg
-	chMsg.data = bMsg
+	chMsg.data, _ = json.Marshal(data)
 	chMsg.uid = uid
-	err := send2Ch(WS.ch, chMsg, 2)
+	err := send2Ch(WS.ch, &chMsg, 2)
 	if err != nil {
-		wrapSdkLog("", "send2ch failed, ", err, string(bMsg), uid)
+		wrapSdkLog("", "send2ch failed, ", err, string(chMsg.data), uid)
 		return
 	}
-	wrapSdkLog("", "send response to web: ", string(bMsg))
+	wrapSdkLog("", "send response to web: ", string(chMsg.data))
 }
 
 func SendOneConnMessage(data interface{}, conn *UserConn) {
@@ -162,10 +161,10 @@ func SendOneConnMessage(data interface{}, conn *UserConn) {
 	}
 }
 
-func send2Ch(ch chan ChanMsg, value ChanMsg, timeout int64) error {
+func send2Ch(ch chan ChanMsg, value *ChanMsg, timeout int64) error {
 	var flag = 0
 	select {
-	case ch <- value:
+	case ch <- *value:
 		flag = 1
 	case <-time.After(time.Second * time.Duration(timeout)):
 		flag = 2
