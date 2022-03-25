@@ -46,11 +46,13 @@ func main() {
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
 	test.SENDINTERVAL = SENDINTERVAL
-	strMyUidx := "17726378428"
+	strMyUidx := "13911112222"
 	//friendID := "17726378428"
 	tokenx := test.GenToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNzcyNjM3ODQyOCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYzMjE2NDU1LCJuYmYiOjE2NDc4NTY0NTUsImlhdCI6MTY0Nzg1NjQ1NX0.3fOcyhw7r5lOkRTJdDy7-tG9XC4XrKj_N7ufrGHPWYM"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+
+	test.DoTestSendMsg2(strMyUidx, test.Friend_uid)
 	//test.DoTestDeleteConversationMsgFromLocalAndSvr("single_17396220460")
 	//test.I
 	//test.DoTestInviteInGroup()

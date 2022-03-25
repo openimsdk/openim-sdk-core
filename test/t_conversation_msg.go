@@ -439,7 +439,7 @@ func init() {
 }
 
 func DoTestSendMsg2(sendId, recvID string) {
-	m := "mmmmmmmmtest:Gordon->sk" + sendId + ":" + recvID + ":"
+	m := "DoTestSendMsg2 test:Gordon->sk" + sendId + ":" + recvID + ":"
 	operationID := utils.OperationIDGenerator()
 	s := DoTestCreateTextMessage(m)
 	log.NewInfo("", s)
