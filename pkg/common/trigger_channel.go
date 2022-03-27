@@ -87,9 +87,9 @@ type SourceIDAndSessionType struct {
 	SessionType int32
 }
 
-func unInitAll(conversationCh chan Cmd2Value) {
+func UnInitAll(conversationCh chan Cmd2Value) error {
 	c2v := Cmd2Value{Cmd: constant.CmdUnInit}
-	_ = sendCmd(conversationCh, c2v, 1)
+	return sendCmd(conversationCh, c2v, 1)
 }
 
 type goroutine interface {
@@ -103,7 +103,8 @@ func DoListener(Li goroutine) {
 		select {
 		case cmd := <-Li.GetCh():
 			if cmd.Cmd == constant.CmdUnInit {
-				log.Info("doListener goroutine return")
+				log.Warn("", "close heartbeat channel ", Li.GetCh())
+				close(Li.GetCh())
 				return
 			}
 			//	log.Info("doListener work.")

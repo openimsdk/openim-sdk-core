@@ -131,7 +131,7 @@ func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 			//userID+" "+platformID->conn
 			SendID := query["sendID"][0] + " " + utils.PlatformIDToName(int32(utils.StringToInt64(query["platformID"][0])))
 			newConn := &UserConn{conn, new(sync.Mutex)}
-			ws.addUserConn(SendID, newConn)
+			ws.addUserConn(SendID, newConn, operationID)
 			go ws.readMsg(newConn)
 		}
 	} else {

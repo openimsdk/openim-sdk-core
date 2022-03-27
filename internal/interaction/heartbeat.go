@@ -45,6 +45,8 @@ func (u *Heartbeat) Run() {
 					log.Warn(operationID, "recv logout cmd, close conn,  set logout state, Goexit...")
 					u.SetLoginState(constant.Logout)
 					u.CloseConn()
+					log.Warn(operationID, "close heartbeat channel ", u.cmdCh)
+					close(u.cmdCh)
 					runtime.Goexit()
 				}
 				log.Warn(operationID, "other cmd...", r.Cmd)

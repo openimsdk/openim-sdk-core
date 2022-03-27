@@ -46,10 +46,11 @@ type LoginMgr struct {
 	userListener         open_im_sdk_callback.OnUserListener
 	signalingListener    open_im_sdk_callback.OnSignalingListener
 
-	conversationCh chan common.Cmd2Value
-	cmdWsCh        chan common.Cmd2Value
-	heartbeatCmdCh chan common.Cmd2Value
-	imConfig       sdk_struct.IMConfig
+	conversationCh     chan common.Cmd2Value
+	cmdWsCh            chan common.Cmd2Value
+	heartbeatCmdCh     chan common.Cmd2Value
+	pushMsgAndMaxSeqCh chan common.Cmd2Value
+	imConfig           sdk_struct.IMConfig
 }
 
 func (u *LoginMgr) AdvancedFunction() advanced_interface.AdvancedFunction {
@@ -152,6 +153,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
+	u.pushMsgAndMaxSeqCh = pushMsgAndMaxSeqCh
 	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
 	u.msgSync = ws.NewMsgSync(db, u.ws, userID, u.conversationCh, pushMsgAndMaxSeqCh)
 
@@ -205,6 +207,13 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_call
 	return true
 }
 
+//func (u *LoginMgr) clearAll(operationID string) {
+//	log.Info(operationID, utils.GetSelfFuncName(), "close all channel...")
+//	close(u.pushMsgAndMaxSeqCh)
+//	close(u.conversationCh)
+//	close(u.cmdWsCh)
+//	close(u.heartbeatCmdCh)
+//}
 func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string) {
 	log.Info(operationID, "TriggerCmdLogout ws...")
 
@@ -222,6 +231,11 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 	err = common.TriggerCmdLogout(u.heartbeatCmdCh)
 	if err != nil {
 		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
+	}
+	log.Info(operationID, "TriggerCmd UnInit...")
+	common.UnInitAll(u.conversationCh)
+	if err != nil {
+		log.Error(operationID, "TriggerCmd UnInit conversation failed ", err.Error())
 	}
 
 	timeout := 2
