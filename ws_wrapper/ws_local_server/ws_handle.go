@@ -150,6 +150,20 @@ func SendOneUserMessage(data interface{}, uid string) {
 	wrapSdkLog("", "send response to web: ", string(chMsg.data))
 }
 
+func SendOneUserMessageForTest(data interface{}, uid string) {
+	d, err := json.Marshal(data)
+	wrapSdkLog("", "Marshal ", string(d))
+	var chMsg ChanMsg
+	chMsg.data, = d
+	chMsg.uid = uid
+	err = send2ChForTest(WS.ch, &chMsg, 2)
+	if err != nil {
+		wrapSdkLog("", "send2ch failed, ", err, string(chMsg.data), uid)
+		return
+	}
+	wrapSdkLog("", "send response to web: ", string(chMsg.data))
+}
+
 func SendOneConnMessage(data interface{}, conn *UserConn) {
 	bMsg, _ := json.Marshal(data)
 	err := WS.writeMsg(conn, websocket.TextMessage, bMsg)
@@ -159,6 +173,10 @@ func SendOneConnMessage(data interface{}, conn *UserConn) {
 	} else {
 		wrapSdkLog("", "WS WriteMsg ok", "data", data, "userUid", WS.getUserUid(conn))
 	}
+}
+
+func send2ChForTest(ch chan ChanMsg, value *ChanMsg, timeout int64) error {
+	return nil
 }
 
 func send2Ch(ch chan ChanMsg, value *ChanMsg, timeout int64) error {

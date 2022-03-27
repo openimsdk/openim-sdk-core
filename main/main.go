@@ -1,10 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/test"
+	"open_im_sdk/ws_wrapper/ws_local_server"
 
 	"time"
 )
@@ -56,15 +56,13 @@ func testMem() {
 	s.SenderNickname = "asdfafdassssssssssssssssssssssfds"
 	s.SenderFaceURL = "bbbbbbbbbbbbbbbbsfdaaaaaaaaaaaaaaaaaaaaaaaaa"
 
-	var chMsg ChanMsg
-	d, _ := json.Marshal(s)
-	chMsg.data = d
-	chMsg.uid = "aa"
+	ws_local_server.SendOneUserMessageForTest(s, "aaaa")
 }
 
 func main() {
 
 	for {
+		log.Info("", "testMem...")
 		testMem()
 		time.Sleep(1 * time.Second)
 	}
