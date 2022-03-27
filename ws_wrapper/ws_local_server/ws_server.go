@@ -153,13 +153,23 @@ func (ws *WServer) readMsg(conn *UserConn) {
 		msgType, msg, err := conn.ReadMessage()
 		if err != nil {
 			wrapSdkLog("", "ReadMessage error", "", "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn), "error", err)
+
+			wrapSdkLog("delUserConn begin ")
+			time.Sleep(30 * time.Second)
+
 			ws.delUserConn(conn)
-			pMem()
+			wrapSdkLog("delUserConn end  ")
+			time.Sleep(30 * time.Second)
 			return
 		} else {
 			wrapSdkLog("", "ReadMessage ok ", "", "msgType", msgType, "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn))
 		}
+		wrapSdkLog("msgParse begin ")
+		time.Sleep(30 * time.Second)
+
 		ws.msgParse(conn, msg)
+		wrapSdkLog("msgParse end ")
+		time.Sleep(30 * time.Second)
 	}
 }
 
