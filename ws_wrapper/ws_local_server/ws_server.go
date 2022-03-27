@@ -74,7 +74,7 @@ func (ws *WServer) getMsgAndSend() {
 	defer func() {
 		if r := recover(); r != nil {
 			wrapSdkLog("", "getMsgAndSend panic", " panic is ", r)
-			buf := make([]byte, 1<<16)
+			buf := make([]byte, 1<<20)
 			runtime.Stack(buf, true)
 			wrapSdkLog("", "panic", "call", string(buf))
 			ws.getMsgAndSend()
@@ -115,7 +115,7 @@ func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if r := recover(); r != nil {
 			wrapSdkLog(operationID, "wsHandler panic recover", " panic is ", r)
-			buf := make([]byte, 1<<16)
+			buf := make([]byte, 1<<20)
 			runtime.Stack(buf, true)
 			wrapSdkLog(operationID, "panic", "call", string(buf))
 		}
