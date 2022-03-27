@@ -143,8 +143,10 @@ func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 func pMem() {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	fmt.Printf("mem for test %+v\n", m)
-	fmt.Printf("mem for test os %d\n", m.Sys)
+
+	fmt.Println("mem for test ", m)
+	fmt.Println("mem for test os ", m.Sys)
+	fmt.Println("mem for test HeapAlloc ", m.HeapAlloc)
 }
 func (ws *WServer) readMsg(conn *UserConn) {
 	for {
