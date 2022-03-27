@@ -176,6 +176,9 @@ func SendOneConnMessage(data interface{}, conn *UserConn) {
 }
 
 func send2ChForTest(ch chan ChanMsg, value ChanMsg, timeout int64) error {
+	var t ChanMsg
+	t = value
+	wrapSdkLog("", "test uid ", t.uid)
 	return nil
 }
 
