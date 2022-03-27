@@ -232,11 +232,11 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 	if err != nil {
 		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
 	}
-	log.Info(operationID, "TriggerCmd UnInit...")
-	common.UnInitAll(u.conversationCh)
-	if err != nil {
-		log.Error(operationID, "TriggerCmd UnInit conversation failed ", err.Error())
-	}
+	//log.Info(operationID, "TriggerCmd UnInit...")
+	//common.UnInitAll(u.conversationCh)
+	//if err != nil {
+	//	log.Error(operationID, "TriggerCmd UnInit conversation failed ", err.Error())
+	//}
 
 	timeout := 2
 	retryTimes := 0
