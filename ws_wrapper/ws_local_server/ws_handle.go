@@ -156,7 +156,7 @@ func SendOneUserMessageForTest(data interface{}, uid string) {
 	var chMsg ChanMsg
 	chMsg.data = d
 	chMsg.uid = uid
-	err = send2ChForTest(WS.ch, &chMsg, 2)
+	err = send2ChForTest(WS.ch, chMsg, 2)
 	if err != nil {
 		wrapSdkLog("", "send2ch failed, ", err, string(chMsg.data), uid)
 		return
@@ -175,7 +175,7 @@ func SendOneConnMessage(data interface{}, conn *UserConn) {
 	}
 }
 
-func send2ChForTest(ch chan ChanMsg, value *ChanMsg, timeout int64) error {
+func send2ChForTest(ch chan ChanMsg, value ChanMsg, timeout int64) error {
 	return nil
 }
 
