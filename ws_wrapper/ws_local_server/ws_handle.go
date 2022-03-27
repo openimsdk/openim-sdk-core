@@ -93,7 +93,7 @@ func DelUserRouter(uid string) {
 	wrapSdkLog("", "DelUserRouter delete ", uid)
 	t, ok := UserRouteMap[uid]
 	if ok {
-		*t.refName = make(map[string]reflect.Value)
+		t.refName = make(map[string]reflect.Value)
 	}
 
 	delete(UserRouteMap, uid)
@@ -131,7 +131,7 @@ func GenUserRouterNoLock(uid string) *RefRouter {
 	wsRouter1.SetSignalingListener()
 
 	var rr RefRouter
-	rr.refName = &RouteMap1
+	rr.refName = RouteMap1
 	rr.wsRouter = &wsRouter1
 	UserRouteMap[uid] = rr
 	wrapSdkLog("", "insert UserRouteMap: ", uid)

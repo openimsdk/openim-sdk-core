@@ -14,7 +14,7 @@ import (
 const CMDLogin = "Login"
 
 type RefRouter struct {
-	refName  *map[string]reflect.Value
+	refName  map[string]reflect.Value
 	wsRouter *WsFuncRouter
 }
 
