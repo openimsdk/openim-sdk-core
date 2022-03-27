@@ -7,6 +7,7 @@
 package ws_local_server
 
 import (
+	"fmt"
 	"net/http"
 	"open_im_sdk/open_im_sdk"
 	utils2 "open_im_sdk/pkg/utils"
@@ -139,12 +140,19 @@ func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func pMem() {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	fmt.Printf("mem for test %+v\n", m)
+	fmt.Printf("mem for test os %d\n", m.Sys)
+}
 func (ws *WServer) readMsg(conn *UserConn) {
 	for {
 		msgType, msg, err := conn.ReadMessage()
 		if err != nil {
 			wrapSdkLog("", "ReadMessage error", "", "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn), "error", err)
 			ws.delUserConn(conn)
+			pMem()
 			return
 		} else {
 			wrapSdkLog("", "ReadMessage ok ", "", "msgType", msgType, "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn))
@@ -219,6 +227,7 @@ func (ws *WServer) getConnNum(uid string) int {
 }
 
 func (ws *WServer) delUserConn(conn *UserConn) {
+
 	rwLock.Lock()
 	var uidPlatform string
 	//	wrapSdkLog("", "before del, wsConnToUser map ", ws.wsConnToUser)
