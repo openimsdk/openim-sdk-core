@@ -103,7 +103,7 @@ func DoListener(Li goroutine) {
 		select {
 		case cmd := <-Li.GetCh():
 			if cmd.Cmd == constant.CmdUnInit {
-				log.Warn("", "close heartbeat channel ", Li.GetCh())
+				log.Warn("", "close doListener channel ", Li.GetCh())
 				close(Li.GetCh())
 				return
 			}
