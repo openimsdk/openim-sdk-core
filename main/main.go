@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/test"
 
 	"time"
@@ -41,7 +43,31 @@ var (
 	SENDINTERVAL = 20
 )
 
+type ChanMsg struct {
+	data []byte
+	uid  string
+}
+
+func testMem() {
+	s := server_api_params.MsgData{}
+	s.RecvID = "11111111sdfaaaaaaaaaaaaaaaaa11111"
+	s.RecvID = "222222222afsddddddddddddddddddddddd22"
+	s.ClientMsgID = "aaaaaaaaaaaadfsaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	s.SenderNickname = "asdfafdassssssssssssssssssssssfds"
+	s.SenderFaceURL = "bbbbbbbbbbbbbbbbsfdaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+	var chMsg ChanMsg
+	d, _ := json.Marshal(s)
+	chMsg.data = d
+	chMsg.uid = "aa"
+}
+
 func main() {
+
+	for {
+		testMem()
+		time.Sleep(1 * time.Second)
+	}
 	test.REGISTERADDR = REGISTERADDR
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
