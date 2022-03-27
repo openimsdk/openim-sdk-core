@@ -159,7 +159,7 @@ func (ws *WServer) writeMsg(conn *UserConn, a int, msg []byte) error {
 	return conn.WriteMessage(a, msg)
 
 }
-func (ws *WServer) addUserConn(uid string, conn *UserConn) {
+func (ws *WServer) addUserConn(uid string, conn *UserConn, operationID string) {
 	rwLock.Lock()
 
 	var flag int32
@@ -167,7 +167,7 @@ func (ws *WServer) addUserConn(uid string, conn *UserConn) {
 		flag = 1
 		oldConnMap[conn.RemoteAddr().String()] = conn
 		ws.wsUserToConn[uid] = oldConnMap
-		wrapSdkLog("", "this user is not first login", "", "uid", uid)
+		wrapSdkLog(operationID, "this user is not first login", "", "uid", uid)
 		//err := oldConn.Close()
 		//delete(ws.wsConnToUser, oldConn)
 		//if err != nil {
@@ -177,12 +177,12 @@ func (ws *WServer) addUserConn(uid string, conn *UserConn) {
 		i := make(map[string]*UserConn)
 		i[conn.RemoteAddr().String()] = conn
 		ws.wsUserToConn[uid] = i
-		wrapSdkLog("", "this user is first login", "", "uid", uid)
+		wrapSdkLog(operationID, "this user is first login", "", "uid", uid)
 	}
 	if oldStringMap, ok := ws.wsConnToUser[conn]; ok {
 		oldStringMap[conn.RemoteAddr().String()] = uid
 		ws.wsConnToUser[conn] = oldStringMap
-		wrapSdkLog("", "find failed", "", "uid", uid)
+		wrapSdkLog(operationID, "find failed", "", "uid", uid)
 		//err := oldConn.Close()
 		//delete(ws.wsConnToUser, oldConn)
 		//if err != nil {
@@ -192,9 +192,9 @@ func (ws *WServer) addUserConn(uid string, conn *UserConn) {
 		i := make(map[string]string)
 		i[conn.RemoteAddr().String()] = uid
 		ws.wsConnToUser[conn] = i
-		wrapSdkLog("", "this user is first login", "", "uid", uid)
+		wrapSdkLog(operationID, "this user is first login", "", "uid", uid)
 	}
-	wrapSdkLog("", "WS Add operation", "", "wsUser added", ws.wsUserToConn, "uid", uid, "online_num", len(ws.wsUserToConn))
+	wrapSdkLog(operationID, "WS Add operation", "", "wsUser added", ws.wsUserToConn, "uid", uid, "online_num", len(ws.wsUserToConn))
 	rwLock.Unlock()
 
 	//wrapSdkLog("", "after add, wsConnToUser map ", ws.wsConnToUser)
