@@ -6,6 +6,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"runtime"
 	"time"
 )
 
@@ -105,7 +106,7 @@ func DoListener(Li goroutine) {
 			if cmd.Cmd == constant.CmdUnInit {
 				log.Warn("", "close doListener channel ", Li.GetCh())
 				close(Li.GetCh())
-				return
+				runtime.Goexit()
 			}
 			//	log.Info("doListener work.")
 			Li.Work(cmd)
