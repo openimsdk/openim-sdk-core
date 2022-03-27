@@ -154,22 +154,22 @@ func (ws *WServer) readMsg(conn *UserConn) {
 		if err != nil {
 			wrapSdkLog("", "ReadMessage error", "", "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn), "error", err)
 
-			wrapSdkLog("delUserConn begin ")
-			time.Sleep(30 * time.Second)
+			wrapSdkLog("debug memory delUserConn begin ")
+			time.Sleep(10 * time.Second)
 
 			ws.delUserConn(conn)
-			wrapSdkLog("delUserConn end  ")
-			time.Sleep(30 * time.Second)
+			wrapSdkLog("debug memory delUserConn end  ")
+			time.Sleep(10 * time.Second)
 			return
 		} else {
 			wrapSdkLog("", "ReadMessage ok ", "", "msgType", msgType, "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn))
 		}
-		wrapSdkLog("msgParse begin ")
-		time.Sleep(30 * time.Second)
+		wrapSdkLog("debug memory msgParse begin ")
+		time.Sleep(10 * time.Second)
 
 		ws.msgParse(conn, msg)
-		wrapSdkLog("msgParse end ")
-		time.Sleep(30 * time.Second)
+		wrapSdkLog("debug memory msgParse end ")
+		time.Sleep(10 * time.Second)
 	}
 }
 
