@@ -110,20 +110,21 @@ func (ws *WServer) getMsgAndSend() {
 }
 
 func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
-	wrapSdkLog("", "wsHandler ", r.URL.Query())
+	operationID := utils2.OperationIDGenerator()
+	wrapSdkLog(operationID, "wsHandler ", r.URL.Query())
 	defer func() {
 		if r := recover(); r != nil {
-			wrapSdkLog("", "wsHandler panic recover", " panic is ", r)
+			wrapSdkLog(operationID, "wsHandler panic recover", " panic is ", r)
 			buf := make([]byte, 1<<16)
 			runtime.Stack(buf, true)
-			wrapSdkLog("", "panic", "call", string(buf))
+			wrapSdkLog(operationID, "panic", "call", string(buf))
 		}
 	}()
 	if ws.headerCheck(w, r) {
 		query := r.URL.Query()
 		conn, err := ws.wsUpGrader.Upgrade(w, r, nil) //Conn is obtained through the upgraded escalator
 		if err != nil {
-			wrapSdkLog("", "upgrade http conn err", "", "err", err)
+			wrapSdkLog(operationID, "upgrade http conn err", "", "err", err)
 			return
 		} else {
 			//Connection mapping relationship,
@@ -133,6 +134,8 @@ func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 			ws.addUserConn(SendID, newConn)
 			go ws.readMsg(newConn)
 		}
+	} else {
+		wrapSdkLog(operationID, "headerCheck failed")
 	}
 }
 
@@ -290,7 +293,7 @@ func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request) bool {
 		//}
 		checkFlag := open_im_sdk.CheckToken(query["sendID"][0], query["token"][0])
 		if checkFlag != nil {
-			wrapSdkLog("check token failed", query["sendID"][0], query["token"][0])
+			wrapSdkLog("check token failed", query["sendID"][0], query["token"][0], checkFlag.Error())
 			w.Header().Set("Sec-Websocket-Version", "13")
 			http.Error(w, http.StatusText(status), status)
 			return false
