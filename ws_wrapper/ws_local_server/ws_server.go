@@ -236,11 +236,13 @@ func (ws *WServer) delUserConn(conn *UserConn) {
 				wrapSdkLog("no conn delete user router ", uidPlatform)
 				wrapSdkLog("DelUserRouter ", uidPlatform)
 				DelUserRouter(uidPlatform)
+				ws.wsUserToConn[uidPlatform] = make(map[string]*UserConn)
 				delete(ws.wsUserToConn, uidPlatform)
 			}
 		} else {
 			wrapSdkLog("uid not exist", "", "wsUser deleted", ws.wsUserToConn, "uid", uidPlatform, "online_num", len(ws.wsUserToConn))
 		}
+		oldStringMap = make(map[string]string)
 		delete(ws.wsConnToUser, conn)
 
 	}
