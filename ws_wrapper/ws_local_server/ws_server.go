@@ -7,6 +7,7 @@
 package ws_local_server
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"open_im_sdk/open_im_sdk"
@@ -164,11 +165,14 @@ func (ws *WServer) readMsg(conn *UserConn) {
 		} else {
 			wrapSdkLog("", "ReadMessage ok ", "", "msgType", msgType, "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn))
 		}
-		wrapSdkLog("debug memory msgParse begin ")
+		m := Req{}
+		json.Unmarshal(msg, &m)
+
+		wrapSdkLog("debug memory msgParse begin ", m)
 		time.Sleep(10 * time.Second)
 
 		ws.msgParse(conn, msg)
-		wrapSdkLog("debug memory msgParse end ")
+		wrapSdkLog("debug memory msgParse end ", m)
 		time.Sleep(10 * time.Second)
 	}
 }
