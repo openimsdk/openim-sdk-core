@@ -91,6 +91,11 @@ func DelUserRouter(uid string) {
 		wrapSdkLog("", "no found UserRouteMap: ", uid)
 	}
 	wrapSdkLog("", "DelUserRouter delete ", uid)
+	t, ok := UserRouteMap[uid]
+	if ok {
+		*t.refName = make(map[string]reflect.Value)
+	}
+
 	delete(UserRouteMap, uid)
 }
 

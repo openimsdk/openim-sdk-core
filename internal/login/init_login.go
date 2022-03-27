@@ -147,12 +147,12 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir)
 	wsRespAsyn := ws.NewWsRespAsyn()
 	wsConn := ws.NewWsConn(u.connListener, token, userID)
-	u.conversationCh = make(chan common.Cmd2Value, 10)
+	u.conversationCh = make(chan common.Cmd2Value, 1000)
 	u.cmdWsCh = make(chan common.Cmd2Value, 10)
 
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 
-	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 10)
+	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
 	u.pushMsgAndMaxSeqCh = pushMsgAndMaxSeqCh
 	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
 	u.msgSync = ws.NewMsgSync(db, u.ws, userID, u.conversationCh, pushMsgAndMaxSeqCh)
