@@ -2,7 +2,9 @@ package main
 
 import (
 	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/test"
+	"open_im_sdk/ws_wrapper/ws_local_server"
 
 	"time"
 )
@@ -41,16 +43,40 @@ var (
 	SENDINTERVAL = 20
 )
 
+type ChanMsg struct {
+	data []byte
+	uid  string
+}
+
+func testMem() {
+	s := server_api_params.MsgData{}
+	s.RecvID = "11111111sdfaaaaaaaaaaaaaaaaa11111"
+	s.RecvID = "222222222afsddddddddddddddddddddddd22"
+	s.ClientMsgID = "aaaaaaaaaaaadfsaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	s.SenderNickname = "asdfafdassssssssssssssssssssssfds"
+	s.SenderFaceURL = "bbbbbbbbbbbbbbbbsfdaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+	ws_local_server.SendOneUserMessageForTest(s, "aaaa")
+}
+
 func main() {
+
 	test.REGISTERADDR = REGISTERADDR
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
 	test.SENDINTERVAL = SENDINTERVAL
-	strMyUidx := "13911112222"
+	strMyUidx := "18666662412"
 	//friendID := "17726378428"
 	tokenx := test.GenToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNzcyNjM3ODQyOCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYzMjE2NDU1LCJuYmYiOjE2NDc4NTY0NTUsImlhdCI6MTY0Nzg1NjQ1NX0.3fOcyhw7r5lOkRTJdDy7-tG9XC4XrKj_N7ufrGHPWYM"
-	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+	for {
+		test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+		//log.Warn("", "login ok, see memory, sleep 10s")
+		//time.Sleep(2 * time.Second)
+		//	test.InOutLogou()
+		//	log.Warn("", "logout ok, see memory, sleep 10s")
+		//	time.Sleep(10 * time.Second)
+	}
 
 	test.DoTestSendMsg2(strMyUidx, test.Friend_uid)
 	//test.DoTestDeleteConversationMsgFromLocalAndSvr("single_17396220460")

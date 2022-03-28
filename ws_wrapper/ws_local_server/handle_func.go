@@ -28,7 +28,7 @@ func (ws *WServer) DoLogin(m Req, conn *UserConn) {
 		wrapSdkLog("", "login", "user first login: ", m)
 		refR := GenUserRouterNoLock(m.UserID)
 		params := []reflect.Value{reflect.ValueOf(m.Data), reflect.ValueOf(m.OperationID)}
-		vf, ok := (*refR.refName)[m.ReqFuncName]
+		vf, ok := (refR.refName)[m.ReqFuncName]
 		if ok {
 			vf.Call(params)
 		} else {
@@ -86,7 +86,7 @@ func (ws *WServer) msgParse(conn *UserConn, jsonMsg []byte) {
 		return
 	}
 	parms := []reflect.Value{reflect.ValueOf(m.Data), reflect.ValueOf(m.OperationID)}
-	vf, ok := (*urm.refName)[m.ReqFuncName]
+	vf, ok := (urm.refName)[m.ReqFuncName]
 	if ok {
 		vf.Call(parms)
 	} else {
