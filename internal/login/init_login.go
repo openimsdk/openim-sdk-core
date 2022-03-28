@@ -139,7 +139,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.token = token
 	u.loginUserID = userID
 	log.Warn("", "database begin , see memory, sleep 20s")
-	time.Sleep(20 * time.Second)
+	time.Sleep(2 * time.Second)
 	db, err := db.NewDataBase(userID, sdk_struct.SvrConf.DataDir)
 	if err != nil {
 		cb.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
@@ -150,7 +150,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir)
 
 	log.Warn("", "make channel begin , see memory, sleep 20s")
-	time.Sleep(20 * time.Second)
+	time.Sleep(2 * time.Second)
 	wsRespAsyn := ws.NewWsRespAsyn()
 	wsConn := ws.NewWsConn(u.connListener, token, userID)
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
