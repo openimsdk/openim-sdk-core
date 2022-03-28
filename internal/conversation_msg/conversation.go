@@ -421,6 +421,7 @@ func (c *Conversation) typingStatusUpdate(callback open_im_sdk_callback.Base, re
 	utils.SetSwitchFromOptions(options, constant.IsPersistent, false)
 	utils.SetSwitchFromOptions(options, constant.IsSenderSync, false)
 	utils.SetSwitchFromOptions(options, constant.IsConversationUpdate, false)
+	utils.SetSwitchFromOptions(options, constant.IsSenderConversationUpdate, false)
 	utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
 	utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
 	c.InternalSendMessage(callback, &s, recvID, "", operationID, &server_api_params.OfflinePushInfo{}, true, options)
@@ -446,6 +447,7 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 	s.Content = utils.StructToJsonString(newMessageIDList)
 	options := make(map[string]bool, 5)
 	utils.SetSwitchFromOptions(options, constant.IsConversationUpdate, false)
+	utils.SetSwitchFromOptions(options, constant.IsSenderConversationUpdate, false)
 	utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
 	utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
 	//If there is an error, the coroutine ends, so judgment is not  required
@@ -557,7 +559,7 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 	if searchParam.PageIndex < 1 || searchParam.Count < 1 {
 		common.CheckAnyErrCallback(callback, 201, errors.New("page or count is null"), operationID)
 	}
-	offset := (searchParam.PageIndex-1) * searchParam.Count
+	offset := (searchParam.PageIndex - 1) * searchParam.Count
 	switch searchParam.SessionType {
 	case constant.SingleChatType:
 		conversationID = utils.GetConversationIDBySessionType(searchParam.SourceID, constant.SingleChatType)
@@ -579,9 +581,9 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 		common.CheckAnyErrCallback(callback, 201, errors.New("keyword is null"), operationID)
 	}
 	if len(searchParam.MessageTypeList) != 0 && len(searchParam.KeywordList) == 0 {
-		list, err = c.db.SearchMessageByContentType(searchParam.MessageTypeList,searchParam.SourceID, utils.UnixSecondToTime(endTime).UnixNano()/1e6, utils.UnixSecondToTime(startTime).UnixNano()/1e6, searchParam.SessionType,offset,searchParam.Count)
+		list, err = c.db.SearchMessageByContentType(searchParam.MessageTypeList, searchParam.SourceID, utils.UnixSecondToTime(endTime).UnixNano()/1e6, utils.UnixSecondToTime(startTime).UnixNano()/1e6, searchParam.SessionType, offset, searchParam.Count)
 	} else {
-		list, err = c.db.SearchMessageByKeyword(searchParam.KeywordList[0],searchParam.SourceID, utils.UnixSecondToTime(endTime).UnixNano()/1e6, utils.UnixSecondToTime(startTime).UnixNano()/1e6, searchParam.SessionType,offset,searchParam.Count)
+		list, err = c.db.SearchMessageByKeyword(searchParam.KeywordList[0], searchParam.SourceID, utils.UnixSecondToTime(endTime).UnixNano()/1e6, utils.UnixSecondToTime(startTime).UnixNano()/1e6, searchParam.SessionType, offset, searchParam.Count)
 	}
 
 	common.CheckDBErrCallback(callback, err, operationID)

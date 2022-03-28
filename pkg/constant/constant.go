@@ -105,13 +105,14 @@ const (
 	MsgStatusFiltered    = 6
 
 	//OptionsKey
-	IsHistory            = "history"
-	IsPersistent         = "persistent"
-	IsUnreadCount        = "unreadCount"
-	IsConversationUpdate = "conversationUpdate"
-	IsOfflinePush        = "offlinePush"
-	IsSenderSync         = "senderSync"
-	IsNotPrivate         = "notPrivate"
+	IsHistory                  = "history"
+	IsPersistent               = "persistent"
+	IsUnreadCount              = "unreadCount"
+	IsConversationUpdate       = "conversationUpdate"
+	IsOfflinePush              = "offlinePush"
+	IsSenderSync               = "senderSync"
+	IsNotPrivate               = "notPrivate"
+	IsSenderConversationUpdate = "senderConversationUpdate"
 )
 
 const (
