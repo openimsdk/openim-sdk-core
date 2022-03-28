@@ -73,9 +73,9 @@ func main() {
 		test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 		log.Warn("", "login ok, see memory, sleep 10s")
 		time.Sleep(10 * time.Second)
-		test.InOutLogou()
-		log.Warn("", "logout ok, see memory, sleep 10s")
-		time.Sleep(10 * time.Second)
+		//	test.InOutLogou()
+		//	log.Warn("", "logout ok, see memory, sleep 10s")
+		//	time.Sleep(10 * time.Second)
 	}
 
 	test.DoTestSendMsg2(strMyUidx, test.Friend_uid)
