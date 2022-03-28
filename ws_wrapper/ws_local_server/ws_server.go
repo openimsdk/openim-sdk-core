@@ -155,12 +155,12 @@ func (ws *WServer) readMsg(conn *UserConn) {
 		if err != nil {
 			wrapSdkLog("", "ReadMessage error", "", "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn), "error", err)
 
-			wrapSdkLog("debug memory delUserConn begin ")
-			time.Sleep(1 * time.Second)
+			//wrapSdkLog("debug memory delUserConn begin ")
+			//time.Sleep(1 * time.Second)
 
 			ws.delUserConn(conn)
-			wrapSdkLog("debug memory delUserConn end  ")
-			time.Sleep(1 * time.Second)
+			//wrapSdkLog("debug memory delUserConn end  ")
+			//time.Sleep(1 * time.Second)
 			return
 		} else {
 			wrapSdkLog("", "ReadMessage ok ", "", "msgType", msgType, "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn))
@@ -168,12 +168,12 @@ func (ws *WServer) readMsg(conn *UserConn) {
 		m := Req{}
 		json.Unmarshal(msg, &m)
 
-		wrapSdkLog("debug memory msgParse begin ", m)
-		time.Sleep(1 * time.Second)
+		//wrapSdkLog("debug memory msgParse begin ", m)
+		//time.Sleep(1 * time.Second)
 
 		ws.msgParse(conn, msg)
-		wrapSdkLog("debug memory msgParse end ", m)
-		time.Sleep(1 * time.Second)
+		//wrapSdkLog("debug memory msgParse end ", m)
+		//time.Sleep(1 * time.Second)
 	}
 }
 
