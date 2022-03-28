@@ -71,8 +71,8 @@ func main() {
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNzcyNjM3ODQyOCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYzMjE2NDU1LCJuYmYiOjE2NDc4NTY0NTUsImlhdCI6MTY0Nzg1NjQ1NX0.3fOcyhw7r5lOkRTJdDy7-tG9XC4XrKj_N7ufrGHPWYM"
 	for {
 		test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
-		log.Warn("", "login ok, see memory, sleep 10s")
-		time.Sleep(2 * time.Second)
+		//log.Warn("", "login ok, see memory, sleep 10s")
+		//time.Sleep(2 * time.Second)
 		//	test.InOutLogou()
 		//	log.Warn("", "logout ok, see memory, sleep 10s")
 		//	time.Sleep(10 * time.Second)
