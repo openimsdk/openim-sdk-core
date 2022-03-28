@@ -105,7 +105,7 @@ func DoListener(Li goroutine) {
 		case cmd := <-Li.GetCh():
 			if cmd.Cmd == constant.CmdUnInit {
 				log.Warn("", "close doListener channel ", Li.GetCh())
-				close(Li.GetCh())
+				//	close(Li.GetCh())
 				runtime.Goexit()
 			}
 			//	log.Info("doListener work.")
