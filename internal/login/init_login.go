@@ -18,6 +18,7 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"time"
 )
 
 type LoginMgr struct {
@@ -125,8 +126,8 @@ func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalin
 func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
 
 	log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)
-	//log.Warn("", "database begin , see memory, sleep 5s")
-	//time.Sleep(5 * time.Second)
+	log.Warn("", "database begin , see memory, sleep 20s")
+	time.Sleep(20 * time.Second)
 	//if u.justOnceFlag {
 	//	cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
 	//	return
@@ -148,8 +149,8 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.db = db
 	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir)
 
-	//log.Warn("", "make channel begin , see memory, sleep 5s")
-	//time.Sleep(5 * time.Second)
+	log.Warn("", "make channel begin , see memory, sleep 20s")
+	time.Sleep(20 * time.Second)
 	wsRespAsyn := ws.NewWsRespAsyn()
 	wsConn := ws.NewWsConn(u.connListener, token, userID)
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
@@ -159,8 +160,8 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
 
-	//log.Warn("", "make channel end , see memory, sleep 20s")
-	//time.Sleep(20 * time.Second)
+	log.Warn("", "make channel end , see memory, sleep 20s")
+	time.Sleep(20 * time.Second)
 
 	u.pushMsgAndMaxSeqCh = pushMsgAndMaxSeqCh
 	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
