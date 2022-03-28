@@ -18,7 +18,6 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
-	"time"
 )
 
 type LoginMgr struct {
