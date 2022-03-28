@@ -53,6 +53,10 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		userForSDK.Logout(nil, utils.OperationIDGenerator())
 		log.Warn("", "Logout ok, see memory, sleep 10s")
 		time.Sleep(10 * time.Second)
+		userForSDK = nil
+
+		log.Warn("", "set loginmgr == nil, see memory, sleep 10s")
+		time.Sleep(10 * time.Second)
 	}
 	userForSDK = new(login.LoginMgr)
 
