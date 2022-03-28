@@ -55,6 +55,7 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		time.Sleep(10 * time.Second)
 	}
 	userForSDK = new(login.LoginMgr)
+
 	return userForSDK.InitSDK(sdk_struct.SvrConf, listener, operationID)
 }
 
