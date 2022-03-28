@@ -61,11 +61,6 @@ func testMem() {
 
 func main() {
 
-	for {
-		log.Info("", "testMem...")
-		testMem()
-		time.Sleep(1 * time.Second)
-	}
 	test.REGISTERADDR = REGISTERADDR
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
@@ -74,7 +69,14 @@ func main() {
 	//friendID := "17726378428"
 	tokenx := test.GenToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNzcyNjM3ODQyOCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYzMjE2NDU1LCJuYmYiOjE2NDc4NTY0NTUsImlhdCI6MTY0Nzg1NjQ1NX0.3fOcyhw7r5lOkRTJdDy7-tG9XC4XrKj_N7ufrGHPWYM"
-	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+	for {
+		test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+		log.Warn("", "login ok, see memory, sleep 10s")
+		time.Sleep(10 * time.Second)
+		test.InOutLogou()
+		log.Warn("", "logout ok, see memory, sleep 10s")
+		time.Sleep(10 * time.Second)
+	}
 
 	test.DoTestSendMsg2(strMyUidx, test.Friend_uid)
 	//test.DoTestDeleteConversationMsgFromLocalAndSvr("single_17396220460")
