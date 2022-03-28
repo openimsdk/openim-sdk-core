@@ -528,6 +528,12 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			lc.FaceURL = faceUrl
 			lc.ShowName = name
 		}
+		oldLc, err := c.db.GetConversation(conversationID)
+		if err == nil && oldLc.IsPrivateChat {
+			options[constant.IsNotPrivate] = false
+			s.AttachedInfoElem.IsPrivateChat = true
+			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
+		}
 		oldMessage, err := c.db.GetMessage(s.ClientMsgID)
 		if err != nil {
 			msgStructToLocalChatLog(&localMessage, &s)
@@ -646,7 +652,7 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 		}
 		var localMessage db.LocalChatLog
 		var conversationID string
-		var options map[string]bool
+		options := make(map[string]bool, 2)
 		lc := db.LocalConversation{
 			LatestMsgSendTime: s.CreateTime,
 		}
@@ -677,7 +683,12 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 			lc.FaceURL = faceUrl
 			lc.ShowName = name
 		}
-
+		oldLc, err := c.db.GetConversation(conversationID)
+		if err == nil && oldLc.IsPrivateChat {
+			options[constant.IsNotPrivate] = false
+			s.AttachedInfoElem.IsPrivateChat = true
+			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
+		}
 		oldMessage, err := c.db.GetMessage(s.ClientMsgID)
 		if err != nil {
 			msgStructToLocalChatLog(&localMessage, &s)
@@ -696,12 +707,12 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 		//c}})
 		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, []string{conversationID}}})
 		//_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
-		options = make(map[string]bool, 2)
 		var delFile []string
 
 		msgStructToLocalChatLog(&localMessage, &s)
 		err = c.db.UpdateMessage(&localMessage)
 		common.CheckAnyErrCallback(callback, 201, err, operationID)
+
 		c.sendMessageToServer(&s, &lc, callback, delFile, p, options, operationID)
 
 	}()
