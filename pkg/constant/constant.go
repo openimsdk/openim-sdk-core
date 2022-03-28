@@ -60,6 +60,7 @@ const (
 	UserNotificationBegin       = 1301
 	UserInfoUpdatedNotification = 1303 //SetSelfInfoTip             = 204
 	UserNotificationEnd         = 1399
+	OANotification              = 1400
 
 	GroupNotificationBegin = 1500
 
@@ -92,6 +93,8 @@ const (
 	SingleChatType = 1
 	GroupChatType  = 2
 
+	NotificationChatType = 4
+
 	//MsgStatus
 	MsgStatusDefault     = 0
 	MsgStatusSending     = 1
@@ -108,7 +111,7 @@ const (
 	IsConversationUpdate = "conversationUpdate"
 	IsOfflinePush        = "offlinePush"
 	IsSenderSync         = "senderSync"
-	IsPrivate
+	IsNotPrivate         = "notPrivate"
 )
 
 const (
