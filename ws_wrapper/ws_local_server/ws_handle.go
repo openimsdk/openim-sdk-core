@@ -81,16 +81,17 @@ func DelUserRouter(uid string) {
 	UserRouteRwLock.Lock()
 	defer UserRouteRwLock.Unlock()
 	urm, ok := UserRouteMap[uid]
+	operationID := utils2.OperationIDGenerator()
 	if ok {
-		operationID := utils2.OperationIDGenerator()
-		wrapSdkLog("", "DelUserRouter logout, UnInitSDK ", uid, operationID)
+
+		wrapSdkLog(operationID, "DelUserRouter logout, UnInitSDK ", uid, operationID)
 
 		urm.wsRouter.LogoutNoCallback(uid, operationID)
 		urm.wsRouter.UnInitSDK()
 	} else {
-		wrapSdkLog("", "no found UserRouteMap: ", uid)
+		wrapSdkLog(operationID, "no found UserRouteMap: ", uid)
 	}
-	wrapSdkLog("", "DelUserRouter delete ", uid)
+	wrapSdkLog(operationID, "DelUserRouter delete ", uid)
 	t, ok := UserRouteMap[uid]
 	if ok {
 		t.refName = make(map[string]reflect.Value)
