@@ -72,7 +72,7 @@ func main() {
 	for {
 		test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 		log.Warn("", "login ok, see memory, sleep 10s")
-		time.Sleep(10 * time.Second)
+		time.Sleep(2 * time.Second)
 		//	test.InOutLogou()
 		//	log.Warn("", "logout ok, see memory, sleep 10s")
 		//	time.Sleep(10 * time.Second)
