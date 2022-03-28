@@ -550,7 +550,6 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, searchParam sdk.SearchLocalMessagesParams, operationID string) (r sdk.SearchLocalMessagesCallback) {
 	var conversationID string
 	var startTime, endTime int64
-	//var searchResultItems []sdk.SearchByConversationResult
 	var searchResultItem sdk.SearchByConversationResult
 	var messageList sdk_struct.NewMsgList
 	var list []*db.LocalChatLog
@@ -579,10 +578,10 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 	if (len(searchParam.KeywordList) == 0 || searchParam.KeywordList[0] == "") && len(searchParam.MessageTypeList) == 0 {
 		common.CheckAnyErrCallback(callback, 201, errors.New("keyword is null"), operationID)
 	}
-	if len(searchParam.MessageTypeList) == 0 {
-		list, err = c.db.SearchMessageByKeyword(searchParam.KeywordList[0],searchParam.SourceID, utils.UnixSecondToTime(endTime).UnixNano()/1e6, utils.UnixSecondToTime(startTime).UnixNano()/1e6, searchParam.SessionType,offset,searchParam.Count)
+	if len(searchParam.MessageTypeList) != 0 && len(searchParam.KeywordList) == 0 {
+		list, err = c.db.SearchMessageByContentType(searchParam.MessageTypeList,searchParam.SourceID, utils.UnixSecondToTime(endTime).UnixNano()/1e6, utils.UnixSecondToTime(startTime).UnixNano()/1e6, searchParam.SessionType,offset,searchParam.Count)
 	} else {
-		list, err = c.db.SearchMessageByContentType(searchParam.MessageTypeList[0],searchParam.SourceID, utils.UnixSecondToTime(endTime).UnixNano()/1e6, utils.UnixSecondToTime(startTime).UnixNano()/1e6, searchParam.SessionType,offset,searchParam.Count)
+		list, err = c.db.SearchMessageByKeyword(searchParam.KeywordList[0],searchParam.SourceID, utils.UnixSecondToTime(endTime).UnixNano()/1e6, utils.UnixSecondToTime(startTime).UnixNano()/1e6, searchParam.SessionType,offset,searchParam.Count)
 	}
 
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -603,7 +602,6 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 		searchResultItem.MessageList = messageList
 		r.SearchResultItems = append(r.SearchResultItems, &searchResultItem)
 	case constant.GroupChatType:
-
 		for _, v := range messageList {
 			err := c.msgHandleByContentType(v)
 			if err != nil {
