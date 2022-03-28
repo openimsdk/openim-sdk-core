@@ -201,6 +201,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					//	c.ShowName = name
 					//	c.FaceURL = faceUrl
 					//}
+
 				}
 				if msg.ContentType == constant.HasReadReceipt {
 					msgReadList = append(msgReadList, msg)
@@ -248,6 +249,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					//	c.ShowName = name
 					//	c.FaceURL = faceUrl
 					//}
+				case constant.NotificationChatType:
+					lc.ConversationID = utils.GetConversationIDBySessionType(v.SendID, constant.NotificationChatType)
+					lc.UserID = v.SendID
+					lc.ShowName = msg.SenderNickname
+					lc.FaceURL = msg.SenderFaceURL
 				}
 				if isUnreadCount {
 					isTriggerUnReadCount = true

@@ -258,6 +258,8 @@ func GetConversationIDBySessionType(sourceID string, sessionType int) string {
 		return "single_" + sourceID
 	case constant.GroupChatType:
 		return "group_" + sourceID
+	case constant.NotificationChatType:
+		return "notification_" + sourceID
 	}
 	return ""
 }
