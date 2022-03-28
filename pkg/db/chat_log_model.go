@@ -28,36 +28,35 @@ func (d *DataBase) SearchMessageByKeyword(keyword,sourceID string, startTime, en
 	var condition string
 	switch sessionType {
 	case constant.SingleChatType:
-		condition = fmt.Sprintf("session_type==%d And (send_id==%q OR recv_id==%q) And send_time  between %d and %d AND status <=%d And content like %q", constant.SingleChatType,sourceID,sourceID, startTime, endTime, constant.MsgStatusSendFailed, "%%"+keyword+"%%")
+		condition = fmt.Sprintf("session_type==%d And (send_id==%q OR recv_id==%q) And send_time  between %d and %d AND status <=%d And content_type == %d And content like %q", constant.SingleChatType,sourceID,sourceID, startTime, endTime, constant.MsgStatusSendFailed,constant.Text, "%%"+keyword+"%%")
 	case constant.GroupChatType:
-		condition = fmt.Sprintf("session_type==%d And recv_id==%q And send_time between %d and %d AND status <=%d And content like %q", constant.GroupChatType,sourceID, startTime, endTime, constant.MsgStatusSendFailed, "%%"+keyword+"%%")
+		condition = fmt.Sprintf("session_type==%d And recv_id==%q And send_time between %d and %d AND status <=%d And content_type == %d And content like %q", constant.GroupChatType,sourceID, startTime, endTime, constant.MsgStatusSendFailed,constant.Text, "%%"+keyword+"%%")
 	default:
-		condition = fmt.Sprintf("(send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content like %q",sourceID,sourceID,startTime, endTime, constant.MsgStatusSendFailed,"%%"+keyword+"%%")
+		condition = fmt.Sprintf("(send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content_type == %d And content like %q",sourceID,sourceID,startTime, endTime, constant.MsgStatusSendFailed,constant.Text,"%%"+keyword+"%%")
 	}
 	err = utils.Wrap(d.conn.Where(condition).Order("send_time DESC").Group("recv_id,client_msg_id").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
+
 	for _, v := range messageList {
 		v1 := v
-		if v1.ContentType < 200 && v1.ContentType != 111 {
-			result = append(result, &v1)
-		}
+		result = append(result, &v1)
 	}
 	return result, err
 }
 
-func (d *DataBase) SearchMessageByContentType(contentType int,sourceID string, startTime, endTime int64, sessionType,offset,count int) (result []*LocalChatLog, err error) {
+func (d *DataBase) SearchMessageByContentType(contentType []int,sourceID string, startTime, endTime int64, sessionType,offset,count int) (result []*LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []LocalChatLog
 	var condition string
 	switch sessionType {
 	case constant.SingleChatType:
-		condition = fmt.Sprintf("session_type==%d And (send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content_type == %d", constant.SingleChatType,sourceID,sourceID, startTime, endTime, constant.MsgStatusSendFailed, contentType)
+		condition = fmt.Sprintf("session_type==%d And (send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content_type IN ?", constant.SingleChatType,sourceID,sourceID, startTime, endTime, constant.MsgStatusSendFailed)
 	case constant.GroupChatType:
-		condition = fmt.Sprintf("session_type==%d And recv_id==%q And send_time between %d and %d AND status <=%d And content_type == %d", constant.GroupChatType,sourceID, startTime, endTime, constant.MsgStatusSendFailed, contentType)
+		condition = fmt.Sprintf("session_type==%d And recv_id==%q And send_time between %d and %d AND status <=%d And content_type IN ?", constant.GroupChatType,sourceID, startTime, endTime, constant.MsgStatusSendFailed)
 	default:
-		condition = fmt.Sprintf("(send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content_type == %d",sourceID,sourceID, startTime, endTime, constant.MsgStatusSendFailed, contentType)
+		condition = fmt.Sprintf("(send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content_type IN ?",sourceID,sourceID, startTime, endTime, constant.MsgStatusSendFailed)
 	}
-	err = utils.Wrap(d.conn.Where(condition).Order("send_time DESC").Group("recv_id,client_msg_id").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
+	err = utils.Wrap(d.conn.Where(condition,contentType).Order("send_time DESC").Group("recv_id,client_msg_id").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)
