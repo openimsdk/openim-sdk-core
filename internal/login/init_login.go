@@ -126,6 +126,8 @@ func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalin
 func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
 
 	log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)
+	log.Warn("", "database begin , see memory, sleep 20s")
+	time.Sleep(20 * time.Second)
 	//if u.justOnceFlag {
 	//	cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
 	//	return
