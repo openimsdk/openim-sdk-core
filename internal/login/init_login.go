@@ -123,6 +123,7 @@ func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalin
 //}
 
 func (u *LoginMgr) wakeUp(cb open_im_sdk_callback.Base, operationID string) {
+	log.Info(operationID, utils.GetSelfFuncName(), "args ")
 	err := common.TriggerCmdWakeUp(u.heartbeatCmdCh)
 	common.CheckAnyErrCallback(cb, 2001, err, operationID)
 	cb.OnSuccess("")
