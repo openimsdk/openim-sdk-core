@@ -44,6 +44,10 @@ const (
 	AcceptGroupApplicationRouter      = RouterGroup + "/group_application_response"
 	RefuseGroupApplicationRouter      = RouterGroup + "/group_application_response"
 	DismissGroupRoute                 = RouterGroup + "/dismiss_group"
+	MuteGroupMember                   = RouterGroup + "/mute_group_member"
+	CancelMuteGroupMember             = RouterGroup + "/cancel_mute_group_member"
+	MuteGroup                         = RouterGroup + "/mute_group"
+	CancelMuteGroup                   = RouterGroup + "/cancel_mute_group"
 
 	//conversation
 	SetConversationOptRouter   = ConversationGroup + "/set_conversation"
