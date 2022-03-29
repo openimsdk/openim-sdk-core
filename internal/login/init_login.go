@@ -122,6 +122,12 @@ func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalin
 //	u.FWMutex.Unlock()
 //}
 
+func (u *LoginMgr) wakeUp(cb open_im_sdk_callback.Base, operationID string) {
+	err := common.TriggerCmdWakeUp(u.heartbeatCmdCh)
+	common.CheckAnyErrCallback(cb, 2001, err, operationID)
+	cb.OnSuccess("")
+}
+
 func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
 
 	log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)

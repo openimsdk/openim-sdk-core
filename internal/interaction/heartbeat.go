@@ -16,7 +16,7 @@ import (
 type Heartbeat struct {
 	//*Ws
 	*MsgSync
-	cmdCh             chan common.Cmd2Value //waiting logout cmd
+	cmdCh             chan common.Cmd2Value //waiting logout cmd , wake up cmd
 	heartbeatInterval int
 }
 
@@ -49,6 +49,11 @@ func (u *Heartbeat) Run() {
 					//	close(u.cmdCh)
 					runtime.Goexit()
 				}
+				if r.Cmd == constant.CmdWakeUp {
+					log.Info(operationID, "recv wake up cmd, start heartbeat ", r.Cmd)
+					break
+				}
+
 				log.Warn(operationID, "other cmd...", r.Cmd)
 			case <-time.After(time.Millisecond * time.Duration(u.heartbeatInterval*1000)):
 				log.Debug(operationID, "heartbeat waiting(ms)... ", u.heartbeatInterval*1000)

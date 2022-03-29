@@ -30,6 +30,14 @@ func TriggerCmdLogout(ch chan Cmd2Value) error {
 	return sendCmd(ch, c2v, 1)
 }
 
+func TriggerCmdWakeUp(ch chan Cmd2Value) error {
+	if ch == nil {
+		return utils.Wrap(errors.New("ch == nil"), "")
+	}
+	c2v := Cmd2Value{Cmd: constant.CmdWakeUp, Value: nil}
+	return sendCmd(ch, c2v, 1)
+}
+
 func TriggerCmdDeleteConversationAndMessage(sourceID, conversationID string, sessionType int, conversationCh chan Cmd2Value) error {
 	if conversationCh == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")

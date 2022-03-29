@@ -22,6 +22,7 @@ const (
 	CmdMaxSeq  = "maxSeq"
 	CmdPushMsg = "pushMsg"
 	CmdLogout  = "Logout"
+	CmdWakeUp  = "wakeUp"
 )
 
 const (
