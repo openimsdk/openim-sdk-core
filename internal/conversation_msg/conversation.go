@@ -62,10 +62,19 @@ func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callba
 }
 
 func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiReq *server_api_params.SetConversationReq, conversationID string, operationID string) {
+	localConversation, err := c.db.GetConversation(conversationID)
+	common.CheckDBErrCallback(callback, err, operationID)
 	apiResp := server_api_params.SetConversationResp{}
 	apiReq.OwnerUserID = c.loginUserID
 	apiReq.OperationID = operationID
 	apiReq.ConversationID = conversationID
+	apiReq.ConversationType = localConversation.ConversationType
+	apiReq.UserID = localConversation.UserID
+	apiReq.GroupID = localConversation.GroupID
+	apiReq.Ex = localConversation.Ex
+	apiReq.AttachedInfo = localConversation.AttachedInfo
+	apiReq.DraftTextTime = localConversation.DraftTextTime
+	apiReq.UnreadCount = localConversation.UnreadCount
 	c.p.PostFatalCallback(callback, constant.SetConversationOptRouter, apiReq, nil, apiReq.OperationID)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "request success, output: ", apiResp)
 }
