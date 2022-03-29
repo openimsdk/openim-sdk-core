@@ -206,7 +206,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				}
 				if msg.ContentType == constant.HasReadReceipt {
 					msgReadList = append(msgReadList, msg)
-					lc.UnreadCount = -1
 				}
 				if isSenderConversationUpdate {
 					log.Debug(operationID, "updateConversation msg", v, lc)
