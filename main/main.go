@@ -65,20 +65,22 @@ func main() {
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
 	test.SENDINTERVAL = SENDINTERVAL
-	strMyUidx := "18666662412"
+	strMyUidx := "17726378428"
 	//friendID := "17726378428"
 	tokenx := test.GenToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNzcyNjM3ODQyOCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYzMjE2NDU1LCJuYmYiOjE2NDc4NTY0NTUsImlhdCI6MTY0Nzg1NjQ1NX0.3fOcyhw7r5lOkRTJdDy7-tG9XC4XrKj_N7ufrGHPWYM"
-	for {
-		test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
-		//log.Warn("", "login ok, see memory, sleep 10s")
-		//time.Sleep(2 * time.Second)
-		//	test.InOutLogou()
-		//	log.Warn("", "logout ok, see memory, sleep 10s")
-		//	time.Sleep(10 * time.Second)
-	}
+	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+	//for {
 
-	test.DoTestSendMsg2(strMyUidx, test.Friend_uid)
+	//log.Warn("", "login ok, see memory, sleep 10s")
+	//time.Sleep(2 * time.Second)
+	//	test.InOutLogou()
+	//	log.Warn("", "logout ok, see memory, sleep 10s")
+	//	time.Sleep(10 * time.Second)
+	//}
+	test.DoTestSetOneConversationPrivateChat("single_17396220460", true)
+	test.DoTestSetConversationPinned("single_17396220460", true)
+	//test.DoTestSendMsg2(strMyUidx, test.Friend_uid)
 	//test.DoTestDeleteConversationMsgFromLocalAndSvr("single_17396220460")
 	//test.I
 	//test.DoTestInviteInGroup()
@@ -97,15 +99,15 @@ func main() {
 	////set batch
 	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.ReceiveMessage)
 	////set one
-	//test.DoTestSetConversationPinned("single_17726378428", false)
+
 	//test.DoTestSetOneConversationRecvMessageOpt("single_17726378428", constant.NotReceiveMessage)
-	//test.DoTestSetOneConversationPrivateChat("single_17800000000", false)
+
 	//test.DoTestReject()
 	//test.DoTestAccept()
 	//test.DoTestMarkGroupMessageAsRead()
 	//test.DoTestGetGroupHistoryMessage()
 	for {
-		test.DoTestSendMsg2(strMyUidx, test.Friend_uid)
+		//test.DoTestSendMsg2(strMyUidx, test.Friend_uid)
 		time.Sleep(1 * time.Second)
 		log.Info("", "waiting...")
 	}
