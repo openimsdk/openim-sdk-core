@@ -63,6 +63,7 @@ func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2
 		case constant.GroupMemberCancelMutedNotification:
 			g.groupMemberMuteChangedNotification(msg, true, operationID)
 		case constant.GroupMutedNotification:
+			fallthrough
 		case constant.GroupCancelMutedNotification:
 			g.groupMuteChangedNotification(msg, operationID)
 		default:
@@ -243,6 +244,7 @@ func (g *Group) groupMemberMuteChangedNotification(msg *api.MsgData, isCancel bo
 		}
 		syncGroupID = detail.Group.GroupID
 	}
+	fmt.Println("syncGroupID::::::",syncGroupID)
 	g.syncGroupMemberByGroupID(syncGroupID, operationID, true)
 }
 
