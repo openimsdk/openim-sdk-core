@@ -195,3 +195,27 @@ type CmdMaxSeqToMsgSync struct {
 	MaxSeqOnSvr uint32
 	OperationID string
 }
+
+type OANotificationDetails struct {
+	NotificationName    string `json:"notificationName"`
+	NotificationFaceURL string `json:"notificationFaceUrl"`
+	NotificationType    int32  `json:"notificationType"`
+	Text                string `json:"text"`
+	Url                 string `json:"url"`
+	MixType             int32  `json:"mixType"`
+	Image               struct {
+		SourceURL   string `json:"sourceUrl"`
+		SnapshotURL string `json:"snapshotUrl"`
+	} `json:"image"`
+	Video struct {
+		SourceURL   string `json:"sourceUrl"`
+		SnapshotURL string `json:"snapshotUrl"`
+		Duration    int64  `json:"duration"`
+	} `json:"video"`
+	File struct {
+		SourceURL string `json:"sourceUrl"`
+		FileName  string `json:"fileName"`
+		FileSize  int64  `json:"fileSize"`
+	} `json:"file"`
+	Ex string `json:"ex"`
+}

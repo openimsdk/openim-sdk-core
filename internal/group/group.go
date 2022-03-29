@@ -3,7 +3,6 @@ package group
 import (
 	"errors"
 	"fmt"
-	"github.com/jinzhu/copier"
 	comm "open_im_sdk/internal/common"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
@@ -14,6 +13,8 @@ import (
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+
+	"github.com/jinzhu/copier"
 )
 
 type Group struct {
@@ -56,7 +57,14 @@ func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2
 		case constant.MemberEnterNotification:
 			g.memberEnterNotification(msg, operationID)
 		case constant.GroupDismissedNotification:
-			g.groupDismissNotification(msg,operationID)
+			g.groupDismissNotification(msg, operationID)
+		case constant.GroupMemberMutedNotification:
+			g.groupMemberMuteChangedNotification(msg, false, operationID)
+		case constant.GroupMemberCancelMutedNotification:
+			g.groupMemberMuteChangedNotification(msg, true, operationID)
+		case constant.GroupMutedNotification:
+		case constant.GroupCancelMutedNotification:
+			g.groupMuteChangedNotification(msg, operationID)
 		default:
 			log.Error(operationID, "ContentType tip failed ", msg.ContentType)
 		}
@@ -217,6 +225,32 @@ func (g *Group) groupDismissNotification(msg *api.MsgData, operationID string) {
 
 }
 
+func (g *Group) groupMemberMuteChangedNotification(msg *api.MsgData, isCancel bool, operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
+	var syncGroupID string
+	if isCancel {
+		detail := api.GroupMemberCancelMutedTips{Group: &api.GroupInfo{}}
+		if err := comm.UnmarshalTips(msg, &detail); err != nil {
+			log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
+			return
+		}
+		syncGroupID = detail.Group.GroupID
+	} else {
+		detail := api.GroupMemberMutedTips{Group: &api.GroupInfo{}}
+		if err := comm.UnmarshalTips(msg, &detail); err != nil {
+			log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
+			return
+		}
+		syncGroupID = detail.Group.GroupID
+	}
+	g.syncGroupMemberByGroupID(syncGroupID, operationID, true)
+}
+
+func (g *Group) groupMuteChangedNotification(msg *api.MsgData, operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
+	g.SyncJoinedGroupList(operationID)
+}
+
 func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam,
 	memberList sdk.CreateGroupMemberRoleParam, operationID string) *sdk.CreateGroupCallback {
 	apiReq := api.CreateGroupReq{}
@@ -263,6 +297,37 @@ func (g *Group) dismissGroup(groupID string, callback open_im_sdk_callback.Base,
 	apiReq.GroupID = groupID
 	g.p.PostFatalCallback(callback, constant.DismissGroupRoute, apiReq, nil, apiReq.OperationID)
 	//g.SyncJoinedGroupList(operationID)
+}
+
+func (g *Group) changeGroupMute(groupID string, isMute bool, callback open_im_sdk_callback.Base, operationID string) {
+	if isMute {
+		apiReq := api.MuteGroupReq{}
+		apiReq.OperationID = operationID
+		apiReq.GroupID = groupID
+		g.p.PostFatalCallback(callback, constant.MuteGroup, apiReq, nil, apiReq.OperationID)
+	} else {
+		apiReq := api.CancelMuteGroupReq{}
+		apiReq.OperationID = operationID
+		apiReq.GroupID = groupID
+		g.p.PostFatalCallback(callback, constant.CancelMuteGroup, apiReq, nil, apiReq.OperationID)
+	}
+}
+
+func (g *Group) changeGroupMemberMute(groupID, userID string, mutedSeconds uint32, callback open_im_sdk_callback.Base, operationID string) {
+	if mutedSeconds == 0 {
+		apiReq := api.CancelMuteGroupMemberReq{}
+		apiReq.OperationID = operationID
+		apiReq.GroupID = groupID
+		apiReq.UserID = userID
+		g.p.PostFatalCallback(callback, constant.CancelMuteGroupMember, apiReq, nil, apiReq.OperationID)
+	} else {
+		apiReq := api.MuteGroupMemberReq{}
+		apiReq.OperationID = operationID
+		apiReq.GroupID = groupID
+		apiReq.UserID = userID
+		apiReq.MutedSeconds = mutedSeconds
+		g.p.PostFatalCallback(callback, constant.MuteGroupMember, apiReq, nil, apiReq.OperationID)
+	}
 }
 
 func (g *Group) getJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) sdk.GetJoinedGroupListCallback {

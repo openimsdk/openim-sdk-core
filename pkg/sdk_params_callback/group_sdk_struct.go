@@ -7,7 +7,7 @@ import (
 )
 
 type CreateGroupBaseInfoParam struct {
-	GroupType int32  `json:"groupType"`
+	GroupType int32 `json:"groupType"`
 	SetGroupInfoParam
 }
 
@@ -21,6 +21,10 @@ const JoinGroupCallback = constant.SuccessCallbackDefault
 const QuitGroupCallback = constant.SuccessCallbackDefault
 
 const DismissGroupCallback = constant.SuccessCallbackDefault
+
+const GroupMuteChangeCallback = constant.SuccessCallbackDefault
+
+const GroupMemberMuteChangeCallback = constant.SuccessCallbackDefault
 
 //type GetJoinedGroupListParam null
 type GetJoinedGroupListCallback []*db.LocalGroup

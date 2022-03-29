@@ -71,6 +71,32 @@ func (g *Group) DismissGroup(callback open_im_sdk_callback.Base, groupID string,
 	}()
 }
 
+func (g *Group) ChangeGroupMute(callback open_im_sdk_callback.Base, groupID string, isMute bool, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", groupID, isMute)
+		g.changeGroupMute(groupID, isMute, callback, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GroupMuteChangeCallback))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk_params_callback.GroupMuteChangeCallback))
+	}()
+}
+
+func (g *Group) ChangeGroupMemberMute(callback open_im_sdk_callback.Base, groupID, userID string, mutedSeconds uint32, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", groupID, userID, mutedSeconds)
+		g.changeGroupMemberMute(groupID, userID, mutedSeconds, callback, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GroupMemberMuteChangeCallback))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk_params_callback.GroupMemberMuteChangeCallback))
+	}()
+}
+
 func (g *Group) GetJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
 		return

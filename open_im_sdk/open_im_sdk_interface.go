@@ -194,6 +194,24 @@ func DismissGroup(callback open_im_sdk_callback.Base, operationID string, groupI
 	userForSDK.Group().DismissGroup(callback, groupID, operationID)
 }
 
+func ChangeGroupMute(callback open_im_sdk_callback.Base, operationID string, groupID string, isMute bool) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Group().ChangeGroupMute(callback, groupID, isMute, operationID)
+}
+
+func ChangeGroupMemberMute(callback open_im_sdk_callback.Base, operationID string, groupID, userID string, mutedSeconds uint32) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Group().ChangeGroupMemberMute(callback, groupID, userID, mutedSeconds, operationID)
+}
+
 func GetJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
