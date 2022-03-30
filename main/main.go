@@ -1,6 +1,7 @@
 package main
 
 import (
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/test"
@@ -78,8 +79,8 @@ func main() {
 	//	log.Warn("", "logout ok, see memory, sleep 10s")
 	//	time.Sleep(10 * time.Second)
 	//}
-	test.DoTestSetOneConversationPrivateChat("single_17396220460", true)
-	test.DoTestSetConversationPinned("single_17396220460", true)
+	//test.DoTestSetOneConversationPrivateChat("single_17396220460", false	)
+	//test.DoTestSetConversationPinned("single_17396220460", true)
 	//test.DoTestSendMsg2(strMyUidx, test.Friend_uid)
 	//test.DoTestDeleteConversationMsgFromLocalAndSvr("single_17396220460")
 	//test.I
@@ -94,7 +95,7 @@ func main() {
 	//test.DoTestGetConversationRecvMessageOpt(`["single_17899999999"]`)
 
 	//set batch
-	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17396220460"}, constant.ReceiveMessage)
+	test.DoTestSetConversationRecvMessageOpt([]string{"single_17396220460"}, constant.ReceiveNotNotifyMessage)
 	//set one
 	////set batch
 	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.ReceiveMessage)

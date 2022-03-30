@@ -33,6 +33,7 @@ func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callba
 	apiResp := server_api_params.BatchSetConversationsResp{}
 	apiReq.OperationID = operationID
 	apiReq.OwnerUserID = c.loginUserID
+	apiReq.NotificationType = constant.ConversationChangeNotification
 	var conversations []server_api_params.Conversation
 	for _, conversationID := range conversationIDList {
 		localConversation, err := c.db.GetConversation(conversationID)
@@ -88,6 +89,7 @@ func (c *Conversation) setOneConversationRecvMessageOpt(callback open_im_sdk_cal
 	apiReq.RecvMsgOpt = int32(opt)
 	apiReq.IsPinned = localConversation.IsPinned
 	apiReq.IsPrivateChat = localConversation.IsPrivateChat
+	apiReq.NotificationType = constant.ConversationChangeNotification
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
 	c.SyncConversations(operationID)
 }
@@ -103,6 +105,7 @@ func (c *Conversation) setOneConversationPrivateChat(callback open_im_sdk_callba
 	apiReq.RecvMsgOpt = localConversation.RecvMsgOpt
 	apiReq.IsPinned = localConversation.IsPinned
 	apiReq.IsPrivateChat = isPrivate
+	apiReq.NotificationType = constant.ConversationPrivateChatNotification
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
 	c.SyncConversations(operationID)
 }
@@ -115,6 +118,7 @@ func (c *Conversation) setOneConversationPinned(callback open_im_sdk_callback.Ba
 		callback.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
 		return
 	}
+	apiReq.NotificationType = constant.ConversationChangeNotification
 	apiReq.RecvMsgOpt = localConversation.RecvMsgOpt
 	apiReq.IsPinned = isPinned
 	apiReq.IsPrivateChat = localConversation.IsPrivateChat

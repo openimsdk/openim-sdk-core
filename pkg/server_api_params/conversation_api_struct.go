@@ -17,16 +17,18 @@ type Conversation struct {
 
 type SetConversationReq struct {
 	Conversation
-	OperationID string `json:"operationID" binding:"required"`
+	NotificationType int    `json:"notificationType"`
+	OperationID      string `json:"operationID" binding:"required"`
 }
 
 type SetConversationResp struct {
 }
 
 type BatchSetConversationsReq struct {
-	Conversations []Conversation `json:"conversations" binding:"required"`
-	OwnerUserID   string         `json:"ownerUserID" binding:"required"`
-	OperationID   string         `json:"operationID" binding:"required"`
+	Conversations    []Conversation `json:"conversations" binding:"required"`
+	OwnerUserID      string         `json:"ownerUserID" binding:"required"`
+	NotificationType int            `json:"notificationType"`
+	OperationID      string         `json:"operationID" binding:"required"`
 }
 
 type BatchSetConversationsResp struct {
