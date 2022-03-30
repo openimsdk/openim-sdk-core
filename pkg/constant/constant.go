@@ -119,6 +119,12 @@ const (
 	IsSenderSync               = "senderSync"
 	IsNotPrivate               = "notPrivate"
 	IsSenderConversationUpdate = "senderConversationUpdate"
+
+	//GroupStatus
+	GroupOk              = 0
+	GroupBanChat         = 1
+	GroupStatusDismissed = 2
+	GroupStatusMuted     = 3
 )
 
 const (
