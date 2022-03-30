@@ -61,9 +61,7 @@ func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callba
 	c.SyncConversations(operationID)
 }
 
-func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiReq *server_api_params.SetConversationReq, conversationID string, operationID string) {
-	localConversation, err := c.db.GetConversation(conversationID)
-	common.CheckDBErrCallback(callback, err, operationID)
+func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiReq *server_api_params.SetConversationReq, conversationID string, localConversation *db.LocalConversation, operationID string) {
 	apiResp := server_api_params.SetConversationResp{}
 	apiReq.OwnerUserID = c.loginUserID
 	apiReq.OperationID = operationID
@@ -90,7 +88,7 @@ func (c *Conversation) setOneConversationRecvMessageOpt(callback open_im_sdk_cal
 	apiReq.RecvMsgOpt = int32(opt)
 	apiReq.IsPinned = localConversation.IsPinned
 	apiReq.IsPrivateChat = localConversation.IsPrivateChat
-	c.setConversation(callback, apiReq, conversationID, operationID)
+	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
 	c.SyncConversations(operationID)
 }
 
@@ -105,7 +103,7 @@ func (c *Conversation) setOneConversationPrivateChat(callback open_im_sdk_callba
 	apiReq.RecvMsgOpt = localConversation.RecvMsgOpt
 	apiReq.IsPinned = localConversation.IsPinned
 	apiReq.IsPrivateChat = isPrivate
-	c.setConversation(callback, apiReq, conversationID, operationID)
+	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
 	c.SyncConversations(operationID)
 }
 
@@ -120,7 +118,7 @@ func (c *Conversation) setOneConversationPinned(callback open_im_sdk_callback.Ba
 	apiReq.RecvMsgOpt = localConversation.RecvMsgOpt
 	apiReq.IsPinned = isPinned
 	apiReq.IsPrivateChat = localConversation.IsPrivateChat
-	c.setConversation(callback, apiReq, conversationID, operationID)
+	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
 }
 
 func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) []server_api_params.GetConversationRecvMessageOptResp {
