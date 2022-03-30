@@ -151,6 +151,8 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		objStorage = comm2.NewCOS(p)
 	case "minio":
 		objStorage = comm2.NewMinio(p)
+	case "oss":
+		objStorage = comm2.NewOSS(p)
 	default:
 		objStorage = comm2.NewCOS(p)
 	}
