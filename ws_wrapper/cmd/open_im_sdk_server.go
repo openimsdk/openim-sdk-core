@@ -10,6 +10,8 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"open_im_sdk/open_im_sdk"
+
 	//	_ "net/http/pprof"
 	_ "net/http/pprof"
 	"open_im_sdk/pkg/constant"
@@ -52,6 +54,7 @@ func main() {
 	WSADDR := "ws://43.128.5.63:17778"
 
 	sysType := runtime.GOOS
+	open_im_sdk.SetHeartbeatInterval(60)
 	switch sysType {
 
 	case "darwin":

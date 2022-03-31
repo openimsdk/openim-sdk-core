@@ -35,6 +35,10 @@ func SdkVersion() string {
 	return constant.SdkVersion + constant.BigVersion + constant.UpdateVersion
 }
 
+func SetHeartbeatInterval(heartbeatInterval int) {
+	constant.HeartbeatInterval = heartbeatInterval
+}
+
 func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, config string) bool {
 	if err := json.Unmarshal([]byte(config), &sdk_struct.SvrConf); err != nil {
 		log.Error(operationID, "Unmarshal failed ", err.Error(), config)
