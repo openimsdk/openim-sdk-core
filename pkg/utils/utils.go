@@ -263,3 +263,16 @@ func GetConversationIDBySessionType(sourceID string, sessionType int) string {
 	}
 	return ""
 }
+
+func RemoveRepeatedStringInList(slc []string) []string {
+	var result []string
+	tempMap := map[string]byte{}
+	for _, e := range slc {
+		l := len(tempMap)
+		tempMap[e] = 0
+		if len(tempMap) != l {
+			result = append(result, e)
+		}
+	}
+	return result
+}

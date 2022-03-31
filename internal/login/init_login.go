@@ -53,6 +53,10 @@ type LoginMgr struct {
 	imConfig           sdk_struct.IMConfig
 }
 
+func (u *LoginMgr) Heartbeat() *ws.Heartbeat {
+	return u.heartbeat
+}
+
 func (u *LoginMgr) AdvancedFunction() advanced_interface.AdvancedFunction {
 	return u.advancedFunction
 }

@@ -10,7 +10,11 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"open_im_sdk/open_im_sdk"
+
 	//	_ "net/http/pprof"
+	_ "net/http/pprof"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/sdk_struct"
 	//"open_im_sdk/open_im_sdk"
 	log1 "log"
@@ -50,6 +54,7 @@ func main() {
 	WSADDR := "ws://43.128.5.63:17778"
 
 	sysType := runtime.GOOS
+	open_im_sdk.SetHeartbeatInterval(60)
 	switch sysType {
 
 	case "darwin":
@@ -71,7 +76,7 @@ func main() {
 	}
 	var wg sync.WaitGroup
 	wg.Add(1)
-	log.NewPrivateLog("sdk", uint32(*logLevel))
+	log.NewPrivateLog(constant.LogFileName, uint32(*logLevel))
 	fmt.Println("ws server is starting")
 	ws_local_server.WS.OnInit(*sdkWsPort)
 	ws_local_server.WS.Run()

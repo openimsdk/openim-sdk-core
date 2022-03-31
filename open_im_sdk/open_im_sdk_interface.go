@@ -35,13 +35,17 @@ func SdkVersion() string {
 	return constant.SdkVersion + constant.BigVersion + constant.UpdateVersion
 }
 
+func SetHeartbeatInterval(heartbeatInterval int) {
+	constant.HeartbeatInterval = heartbeatInterval
+}
+
 func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, config string) bool {
 	if err := json.Unmarshal([]byte(config), &sdk_struct.SvrConf); err != nil {
 		log.Error(operationID, "Unmarshal failed ", err.Error(), config)
 		return false
 	}
 	log.Info(operationID, "config ", config, sdk_struct.SvrConf)
-	log.NewPrivateLog("", sdk_struct.SvrConf.LogLevel)
+	//log.NewPrivateLog(constant.LogFileName, sdk_struct.SvrConf.LogLevel)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), config, SdkVersion())
 	if listener == nil || config == "" {
 		log.Error(operationID, "listener or config is nil")

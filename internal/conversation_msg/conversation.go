@@ -325,32 +325,65 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 	var startTime int64
 	var sessionType int
 	var messageList sdk_struct.NewMsgList
-	if req.UserID == "" {
-		sourceID = req.GroupID
-		conversationID = utils.GetConversationIDBySessionType(sourceID, constant.GroupChatType)
-		sessionType = constant.GroupChatType
-	} else {
-		sourceID = req.UserID
-		conversationID = utils.GetConversationIDBySessionType(sourceID, constant.SingleChatType)
-		sessionType = constant.SingleChatType
-	}
-	if req.StartClientMsgID == "" {
+	if req.ConversationID != "" {
+		conversationID = req.ConversationID
 		lc, err := c.db.GetConversation(conversationID)
 		if err != nil {
 			return nil
 		}
-		startTime = lc.LatestMsgSendTime + TimeOffset
+		switch lc.ConversationType {
+		case constant.SingleChatType, constant.NotificationChatType:
+			sourceID = lc.UserID
+		case constant.GroupChatType:
+			sourceID = lc.GroupID
+		}
+		sessionType = int(lc.ConversationType)
+		if req.StartClientMsgID == "" {
+			startTime = lc.LatestMsgSendTime + TimeOffset
 
+		} else {
+			m, err := c.db.GetMessage(req.StartClientMsgID)
+			common.CheckDBErrCallback(callback, err, operationID)
+			startTime = m.SendTime
+		}
 	} else {
-		m, err := c.db.GetMessage(req.StartClientMsgID)
-		common.CheckDBErrCallback(callback, err, operationID)
-		startTime = m.SendTime
+		if req.UserID == "" {
+			sourceID = req.GroupID
+			conversationID = utils.GetConversationIDBySessionType(sourceID, constant.GroupChatType)
+			sessionType = constant.GroupChatType
+		} else {
+			sourceID = req.UserID
+			conversationID = utils.GetConversationIDBySessionType(sourceID, constant.SingleChatType)
+			sessionType = constant.SingleChatType
+		}
+		if req.StartClientMsgID == "" {
+			lc, err := c.db.GetConversation(conversationID)
+			if err != nil {
+				return nil
+			}
+			startTime = lc.LatestMsgSendTime + TimeOffset
+
+		} else {
+			m, err := c.db.GetMessage(req.StartClientMsgID)
+			common.CheckDBErrCallback(callback, err, operationID)
+			startTime = m.SendTime
+		}
 	}
+
 	log.Info(operationID, "sourceID:", sourceID, "startTime:", startTime, "count:", req.Count)
 	list, err := c.db.GetMessageList(sourceID, sessionType, req.Count, startTime)
 	common.CheckDBErrCallback(callback, err, operationID)
 	localChatLogToMsgStruct(&messageList, list)
-	if req.UserID == "" {
+	switch sessionType {
+	case constant.SingleChatType, constant.NotificationChatType:
+		for _, v := range messageList {
+			err := c.msgHandleByContentType(v)
+			if err != nil {
+				log.Error(operationID, "Parsing data error:", err.Error(), v)
+				continue
+			}
+		}
+	case constant.GroupChatType:
 		for _, v := range messageList {
 			err := c.msgHandleByContentType(v)
 			if err != nil {
@@ -359,14 +392,6 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 			}
 			v.GroupID = v.RecvID
 			v.RecvID = c.loginUserID
-		}
-	} else {
-		for _, v := range messageList {
-			err := c.msgHandleByContentType(v)
-			if err != nil {
-				log.Error(operationID, "Parsing data error:", err.Error(), v)
-				continue
-			}
 		}
 	}
 	sort.Sort(messageList)

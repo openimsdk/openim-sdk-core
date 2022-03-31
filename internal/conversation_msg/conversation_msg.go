@@ -109,6 +109,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		} else {
 			msg.Content = string(v.Content)
 		}
+		//When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
+		if msg.Status == constant.MsgStatusHasDeleted {
+			insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
+			continue
+		}
 		msg.Status = constant.MsgStatusSendSuccess
 		msg.IsRead = false
 		//		log.Info(operationID, "new msg, seq, ServerMsgID, ClientMsgID", msg.Seq, msg.ServerMsgID, msg.ClientMsgID)
