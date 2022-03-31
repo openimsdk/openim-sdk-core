@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/sdk_struct"
 	//"open_im_sdk/open_im_sdk"
 	log1 "log"
@@ -71,7 +72,7 @@ func main() {
 	}
 	var wg sync.WaitGroup
 	wg.Add(1)
-	log.NewPrivateLog("sdk", uint32(*logLevel))
+	log.NewPrivateLog(constant.LogFileName, uint32(*logLevel))
 	fmt.Println("ws server is starting")
 	ws_local_server.WS.OnInit(*sdkWsPort)
 	ws_local_server.WS.Run()
