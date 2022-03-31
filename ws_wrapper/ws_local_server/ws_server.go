@@ -7,8 +7,11 @@
 package ws_local_server
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"open_im_sdk/open_im_sdk"
+	utils2 "open_im_sdk/pkg/utils"
 
 	"github.com/gorilla/websocket"
 
@@ -73,7 +76,7 @@ func (ws *WServer) getMsgAndSend() {
 	defer func() {
 		if r := recover(); r != nil {
 			wrapSdkLog("", "getMsgAndSend panic", " panic is ", r)
-			buf := make([]byte, 1<<16)
+			buf := make([]byte, 1<<20)
 			runtime.Stack(buf, true)
 			wrapSdkLog("", "panic", "call", string(buf))
 			ws.getMsgAndSend()
@@ -84,77 +87,94 @@ func (ws *WServer) getMsgAndSend() {
 		select {
 		case r := <-ws.ch:
 			go func() {
+				operationID := utils2.OperationIDGenerator()
+				wrapSdkLog(operationID, "getMsgAndSend channel: ", string(r.data), r.uid)
+
 				conns := ws.getUserConn(r.uid + " " + "Web")
 				if conns == nil {
-					wrapSdkLog("", "uid no conn, failed ", r.uid)
+					wrapSdkLog(operationID, "uid no conn, failed ", r.uid)
+					r.data = nil
 				}
 				for _, conn := range conns {
 					if conn != nil {
-						wrapSdkLog("", "getMsgAndSend begin: ", string(r.data))
 						err := WS.writeMsg(conn, websocket.TextMessage, r.data)
-						wrapSdkLog("", "getMsgAndSend end: ", string(r.data))
 						if err != nil {
-							wrapSdkLog("", "WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", r.uid, "error", err, "data", string(r.data))
+							wrapSdkLog(operationID, "WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", r.uid, "error", err.Error())
 						}
 					} else {
-						wrapSdkLog("", "Conn is nil, failed", "data", string(r.data))
+						wrapSdkLog(operationID, "Conn is nil, failed")
 					}
 				}
+				r.data = nil
 			}()
-
 		}
 	}
 
 }
 
 func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
-	wrapSdkLog("", "wsHandler ", r.URL.Query())
+	operationID := utils2.OperationIDGenerator()
+	wrapSdkLog(operationID, "wsHandler ", r.URL.Query())
 	defer func() {
 		if r := recover(); r != nil {
-			wrapSdkLog("", "wsHandler panic recover", " panic is ", r)
-			buf := make([]byte, 1<<16)
+			wrapSdkLog(operationID, "wsHandler panic recover", " panic is ", r)
+			buf := make([]byte, 1<<20)
 			runtime.Stack(buf, true)
-			wrapSdkLog("", "panic", "call", string(buf))
+			wrapSdkLog(operationID, "panic", "call", string(buf))
 		}
 	}()
 	if ws.headerCheck(w, r) {
 		query := r.URL.Query()
 		conn, err := ws.wsUpGrader.Upgrade(w, r, nil) //Conn is obtained through the upgraded escalator
 		if err != nil {
-			wrapSdkLog("", "upgrade http conn err", "", "err", err)
+			wrapSdkLog(operationID, "upgrade http conn err", "", "err", err)
 			return
 		} else {
 			//Connection mapping relationship,
 			//userID+" "+platformID->conn
 			SendID := query["sendID"][0] + " " + utils.PlatformIDToName(int32(utils.StringToInt64(query["platformID"][0])))
 			newConn := &UserConn{conn, new(sync.Mutex)}
-			ws.addUserConn(SendID, newConn)
+			ws.addUserConn(SendID, newConn, operationID)
 			go ws.readMsg(newConn)
 		}
+	} else {
+		wrapSdkLog(operationID, "headerCheck failed")
 	}
 }
 
+func pMem() {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+
+	fmt.Println("mem for test ", m)
+	fmt.Println("mem for test os ", m.Sys)
+	fmt.Println("mem for test HeapAlloc ", m.HeapAlloc)
+}
 func (ws *WServer) readMsg(conn *UserConn) {
-	defer func() {
-		if r := recover(); r != nil {
-			wrapSdkLog("", "readMsg panic", " panic is ", r)
-			buf := make([]byte, 1<<16)
-			runtime.Stack(buf, true)
-			wrapSdkLog("", "panic", "call", string(buf))
-			ws.readMsg(conn)
-			wrapSdkLog("", "goroutine readMsg restart")
-		}
-	}()
 	for {
 		msgType, msg, err := conn.ReadMessage()
 		if err != nil {
 			wrapSdkLog("", "ReadMessage error", "", "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn), "error", err)
+
+			//wrapSdkLog("debug memory delUserConn begin ")
+			//time.Sleep(1 * time.Second)
+
 			ws.delUserConn(conn)
+			//wrapSdkLog("debug memory delUserConn end  ")
+			//time.Sleep(1 * time.Second)
 			return
 		} else {
 			wrapSdkLog("", "ReadMessage ok ", "", "msgType", msgType, "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn))
 		}
+		m := Req{}
+		json.Unmarshal(msg, &m)
+
+		//wrapSdkLog("debug memory msgParse begin ", m)
+		//time.Sleep(1 * time.Second)
+
 		ws.msgParse(conn, msg)
+		//wrapSdkLog("debug memory msgParse end ", m)
+		//time.Sleep(1 * time.Second)
 	}
 }
 
@@ -164,7 +184,7 @@ func (ws *WServer) writeMsg(conn *UserConn, a int, msg []byte) error {
 	return conn.WriteMessage(a, msg)
 
 }
-func (ws *WServer) addUserConn(uid string, conn *UserConn) {
+func (ws *WServer) addUserConn(uid string, conn *UserConn, operationID string) {
 	rwLock.Lock()
 
 	var flag int32
@@ -172,7 +192,7 @@ func (ws *WServer) addUserConn(uid string, conn *UserConn) {
 		flag = 1
 		oldConnMap[conn.RemoteAddr().String()] = conn
 		ws.wsUserToConn[uid] = oldConnMap
-		wrapSdkLog("", "this user is not first login", "", "uid", uid)
+		wrapSdkLog(operationID, "this user is not first login", "", "uid", uid)
 		//err := oldConn.Close()
 		//delete(ws.wsConnToUser, oldConn)
 		//if err != nil {
@@ -182,12 +202,12 @@ func (ws *WServer) addUserConn(uid string, conn *UserConn) {
 		i := make(map[string]*UserConn)
 		i[conn.RemoteAddr().String()] = conn
 		ws.wsUserToConn[uid] = i
-		wrapSdkLog("", "this user is first login", "", "uid", uid)
+		wrapSdkLog(operationID, "this user is first login", "", "uid", uid)
 	}
 	if oldStringMap, ok := ws.wsConnToUser[conn]; ok {
 		oldStringMap[conn.RemoteAddr().String()] = uid
 		ws.wsConnToUser[conn] = oldStringMap
-		wrapSdkLog("", "find failed", "", "uid", uid)
+		wrapSdkLog(operationID, "find failed", "", "uid", uid)
 		//err := oldConn.Close()
 		//delete(ws.wsConnToUser, oldConn)
 		//if err != nil {
@@ -197,9 +217,9 @@ func (ws *WServer) addUserConn(uid string, conn *UserConn) {
 		i := make(map[string]string)
 		i[conn.RemoteAddr().String()] = uid
 		ws.wsConnToUser[conn] = i
-		wrapSdkLog("", "this user is first login", "", "uid", uid)
+		wrapSdkLog(operationID, "this user is first login", "", "uid", uid)
 	}
-	wrapSdkLog("", "WS Add operation", "", "wsUser added", ws.wsUserToConn, "uid", uid, "online_num", len(ws.wsUserToConn))
+	wrapSdkLog(operationID, "WS Add operation", "", "wsUser added", ws.wsUserToConn, "uid", uid, "online_num", len(ws.wsUserToConn))
 	rwLock.Unlock()
 
 	//wrapSdkLog("", "after add, wsConnToUser map ", ws.wsConnToUser)
@@ -224,6 +244,7 @@ func (ws *WServer) getConnNum(uid string) int {
 }
 
 func (ws *WServer) delUserConn(conn *UserConn) {
+
 	rwLock.Lock()
 	var uidPlatform string
 	//	wrapSdkLog("", "before del, wsConnToUser map ", ws.wsConnToUser)
@@ -241,11 +262,13 @@ func (ws *WServer) delUserConn(conn *UserConn) {
 				wrapSdkLog("no conn delete user router ", uidPlatform)
 				wrapSdkLog("DelUserRouter ", uidPlatform)
 				DelUserRouter(uidPlatform)
+				ws.wsUserToConn[uidPlatform] = make(map[string]*UserConn)
 				delete(ws.wsUserToConn, uidPlatform)
 			}
 		} else {
 			wrapSdkLog("uid not exist", "", "wsUser deleted", ws.wsUserToConn, "uid", uidPlatform, "online_num", len(ws.wsUserToConn))
 		}
+		oldStringMap = make(map[string]string)
 		delete(ws.wsConnToUser, conn)
 
 	}
@@ -298,7 +321,7 @@ func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request) bool {
 		//}
 		checkFlag := open_im_sdk.CheckToken(query["sendID"][0], query["token"][0])
 		if checkFlag != nil {
-			wrapSdkLog("check token failed", query["sendID"][0], query["token"][0])
+			wrapSdkLog("check token failed", query["sendID"][0], query["token"][0], checkFlag.Error())
 			w.Header().Set("Sec-Websocket-Version", "13")
 			http.Error(w, http.StatusText(status), status)
 			return false

@@ -518,12 +518,20 @@ func (wsRouter *WsFuncRouter) DeleteMessageFromLocalStorage(message string, oper
 	userWorker.Conversation().DeleteMessageFromLocalStorage(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, message, operationID)
 }
 
-func (wsRouter *WsFuncRouter) DeleteMessage(message string, operationID string) {
+func (wsRouter *WsFuncRouter) DeleteMessageFromLocalAndSvr(message string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, message, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.Conversation().DeleteMessage(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, message, operationID)
+	userWorker.Conversation().DeleteMessageFromLocalAndSvr(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, message, operationID)
+}
+
+func (wsRouter *WsFuncRouter) DeleteConversationMsgFromLocalAndSvr(conversationID string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, conversationID, operationID, runFuncName(), nil) {
+		return
+	}
+	userWorker.Conversation().DeleteConversationMsgFromLocalAndSvr(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, conversationID, operationID)
 }
 
 func (wsRouter *WsFuncRouter) InsertSingleMessageToLocalStorage(input string, operationID string) {

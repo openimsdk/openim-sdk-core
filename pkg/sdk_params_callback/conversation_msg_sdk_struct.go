@@ -34,6 +34,7 @@ const SetConversationPrivateChatOptCallback = constant.SuccessCallbackDefault
 type GetHistoryMessageListParams struct {
 	UserID           string `json:"userID"`
 	GroupID          string `json:"groupID"`
+	ConversationID   string `json:"conversationID"`
 	StartClientMsgID string `json:"startClientMsgID"`
 	Count            int    `json:"count"`
 }

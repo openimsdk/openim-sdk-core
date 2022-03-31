@@ -95,6 +95,43 @@ func (wsRouter *WsFuncRouter) QuitGroup(groupID, operationID string) {
 	userWorker.Group().QuitGroup(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, groupID, operationID)
 }
 
+func (wsRouter *WsFuncRouter) DismissGroup(groupID, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	//callback common.Base, groupID string, operationID string
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, groupID, operationID, runFuncName(), nil) {
+		return
+	}
+	userWorker.Group().DismissGroup(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, groupID, operationID)
+}
+
+func (wsRouter *WsFuncRouter) ChangeGroupMute(input, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input),&m); err != nil {
+		wrapSdkLog(operationID,utils.GetSelfFuncName(),"unmarshal failed",input,err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	//callback common.Base, groupID string, operationID string
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m,"groupID","isMute") {
+		return
+	}
+	userWorker.Group().ChangeGroupMute(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["groupID"].(string), m["isMute"].(bool), operationID)
+}
+
+func (wsRouter *WsFuncRouter) ChangeGroupMemberMute(input, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input),&m); err != nil {
+		wrapSdkLog(operationID,utils.GetSelfFuncName(),"unmarshal failed",input,err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	//callback common.Base, groupID string, operationID string
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m,"groupID","userID","mutedSeconds") {
+		return
+	}
+	userWorker.Group().ChangeGroupMemberMute(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["groupID"].(string),m["userID"].(string), uint32(m["mutedSeconds"].(float64)), operationID)
+}
+
 func (wsRouter *WsFuncRouter) GetJoinedGroupList(input, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	//(callback common.Base, operationID string)

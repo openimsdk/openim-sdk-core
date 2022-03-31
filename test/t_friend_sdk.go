@@ -46,7 +46,7 @@ func TestLog(v ...interface{}) {
 	X.Println(a, b, c, d)
 }
 
-var Friend_uid = "18349115126"
+var Friend_uid = "18666662412"
 
 func SetTestFriendID(friendUserID string) {
 	Friend_uid = friendUserID
@@ -405,7 +405,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	cf.WsAddr = ws
 	cf.Platform = 2
 	cf.DataDir = "./"
-	cf.LogLevel = 5
+	cf.LogLevel = 6
 
 	var s string
 	b, _ := json.Marshal(cf)

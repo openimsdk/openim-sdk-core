@@ -46,10 +46,11 @@ type LoginMgr struct {
 	userListener         open_im_sdk_callback.OnUserListener
 	signalingListener    open_im_sdk_callback.OnSignalingListener
 
-	conversationCh chan common.Cmd2Value
-	cmdWsCh        chan common.Cmd2Value
-	heartbeatCmdCh chan common.Cmd2Value
-	imConfig       sdk_struct.IMConfig
+	conversationCh     chan common.Cmd2Value
+	cmdWsCh            chan common.Cmd2Value
+	heartbeatCmdCh     chan common.Cmd2Value
+	pushMsgAndMaxSeqCh chan common.Cmd2Value
+	imConfig           sdk_struct.IMConfig
 }
 
 func (u *LoginMgr) AdvancedFunction() advanced_interface.AdvancedFunction {
@@ -121,9 +122,17 @@ func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalin
 //	u.FWMutex.Unlock()
 //}
 
+func (u *LoginMgr) wakeUp(cb open_im_sdk_callback.Base, operationID string) {
+	log.Info(operationID, utils.GetSelfFuncName(), "args ")
+	err := common.TriggerCmdWakeUp(u.heartbeatCmdCh)
+	common.CheckAnyErrCallback(cb, 2001, err, operationID)
+	cb.OnSuccess("")
+}
+
 func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
 
 	log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)
+
 	//if u.justOnceFlag {
 	//	cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
 	//	return
@@ -135,7 +144,8 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 
 	u.token = token
 	u.loginUserID = userID
-
+	//log.Warn("", "database begin , see memory, sleep 20s")
+	//time.Sleep(5 * time.Second)
 	db, err := db.NewDataBase(userID, sdk_struct.SvrConf.DataDir)
 	if err != nil {
 		cb.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
@@ -144,6 +154,9 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	}
 	u.db = db
 	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir)
+	//
+	//log.Warn("", "make channel begin , see memory, sleep 20s")
+	//time.Sleep(5 * time.Second)
 	wsRespAsyn := ws.NewWsRespAsyn()
 	wsConn := ws.NewWsConn(u.connListener, token, userID)
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
@@ -152,6 +165,11 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
+
+	//log.Warn("", "make channel end , see memory, sleep 20s")
+	//time.Sleep(2 * time.Second)
+
+	u.pushMsgAndMaxSeqCh = pushMsgAndMaxSeqCh
 	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
 	u.msgSync = ws.NewMsgSync(db, u.ws, userID, u.conversationCh, pushMsgAndMaxSeqCh)
 
@@ -175,6 +193,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
 	u.forcedSynchronization()
 	log.Info(operationID, "forcedSynchronization success...")
+	log.Info(operationID, "all channel ", u.pushMsgAndMaxSeqCh, u.conversationCh, u.heartbeatCmdCh, u.cmdWsCh)
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
 	var objStorage comm2.ObjectStorage
 	switch u.imConfig.ObjectStorage {
@@ -205,6 +224,13 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_call
 	return true
 }
 
+//func (u *LoginMgr) clearAll(operationID string) {
+//	log.Info(operationID, utils.GetSelfFuncName(), "close all channel...")
+//	close(u.pushMsgAndMaxSeqCh)
+//	close(u.conversationCh)
+//	close(u.cmdWsCh)
+//	close(u.heartbeatCmdCh)
+//}
 func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string) {
 	log.Info(operationID, "TriggerCmdLogout ws...")
 
@@ -222,6 +248,17 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 	err = common.TriggerCmdLogout(u.heartbeatCmdCh)
 	if err != nil {
 		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
+	}
+	log.Info(operationID, "TriggerCmd conversationCh UnInit...")
+	common.UnInitAll(u.conversationCh)
+	if err != nil {
+		log.Error(operationID, "TriggerCmd UnInit conversation failed ", err.Error())
+	}
+
+	log.Info(operationID, "TriggerCmd pushMsgAndMaxSeqCh UnInit...")
+	common.UnInitAll(u.pushMsgAndMaxSeqCh)
+	if err != nil {
+		log.Error(operationID, "TriggerCmd UnInit pushMsgAndMaxSeqCh failed ", err.Error())
 	}
 
 	timeout := 2

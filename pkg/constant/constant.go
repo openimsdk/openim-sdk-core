@@ -22,6 +22,7 @@ const (
 	CmdMaxSeq  = "maxSeq"
 	CmdPushMsg = "pushMsg"
 	CmdLogout  = "Logout"
+	CmdWakeUp  = "wakeUp"
 )
 
 const (
@@ -60,6 +61,7 @@ const (
 	UserNotificationBegin       = 1301
 	UserInfoUpdatedNotification = 1303 //SetSelfInfoTip             = 204
 	UserNotificationEnd         = 1399
+	OANotification              = 1400
 
 	GroupNotificationBegin = 1500
 
@@ -73,6 +75,11 @@ const (
 	MemberKickedNotification             = 1508
 	MemberInvitedNotification            = 1509
 	MemberEnterNotification              = 1510
+	GroupDismissedNotification           = 1511
+	GroupMemberMutedNotification         = 1512
+	GroupMemberCancelMutedNotification   = 1513
+	GroupMutedNotification               = 1514
+	GroupCancelMutedNotification         = 1515
 	GroupNotificationEnd                 = 1599
 
 	SignalingNotificationBegin = 1600
@@ -91,7 +98,10 @@ const (
 	SingleChatType = 1
 	GroupChatType  = 2
 
+	NotificationChatType = 4
+
 	//MsgStatus
+	MsgStatusDefault     = 0
 	MsgStatusSending     = 1
 	MsgStatusSendSuccess = 2
 	MsgStatusSendFailed  = 3
@@ -100,12 +110,20 @@ const (
 	MsgStatusFiltered    = 6
 
 	//OptionsKey
-	IsHistory            = "history"
-	IsPersistent         = "persistent"
-	IsUnreadCount        = "unreadCount"
-	IsConversationUpdate = "conversationUpdate"
-	IsOfflinePush        = "offlinePush"
-	IsSenderSync         = "senderSync"
+	IsHistory                  = "history"
+	IsPersistent               = "persistent"
+	IsUnreadCount              = "unreadCount"
+	IsConversationUpdate       = "conversationUpdate"
+	IsOfflinePush              = "offlinePush"
+	IsSenderSync               = "senderSync"
+	IsNotPrivate               = "notPrivate"
+	IsSenderConversationUpdate = "senderConversationUpdate"
+
+	//GroupStatus
+	GroupOk              = 0
+	GroupBanChat         = 1
+	GroupStatusDismissed = 2
+	GroupStatusMuted     = 3
 )
 
 const (

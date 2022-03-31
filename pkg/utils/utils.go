@@ -258,6 +258,21 @@ func GetConversationIDBySessionType(sourceID string, sessionType int) string {
 		return "single_" + sourceID
 	case constant.GroupChatType:
 		return "group_" + sourceID
+	case constant.NotificationChatType:
+		return "notification_" + sourceID
 	}
 	return ""
+}
+
+func RemoveRepeatedStringInList(slc []string) []string {
+	var result []string
+	tempMap := map[string]byte{}
+	for _, e := range slc {
+		l := len(tempMap)
+		tempMap[e] = 0
+		if len(tempMap) != l {
+			result = append(result, e)
+		}
+	}
+	return result
 }

@@ -174,6 +174,8 @@ func (w *Ws) ReadData() {
 			case r := <-w.cmdCh:
 				if r.Cmd == constant.CmdLogout {
 					log.Info(operationID, "recv CmdLogout, return, close conn")
+					log.Warn(operationID, "close ws read channel ", w.cmdCh)
+					//		close(w.cmdCh)
 					w.SetLoginState(constant.Logout)
 					return
 				}
@@ -196,6 +198,8 @@ func (w *Ws) ReadData() {
 			isErrorOccurred = true
 			if w.loginState == constant.Logout {
 				log.Warn(operationID, "loginState == logout ")
+				log.Warn(operationID, "close ws read channel ", w.cmdCh)
+				//	close(w.cmdCh)
 				return
 			}
 			if w.WsConn.IsFatalError(err) {

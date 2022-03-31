@@ -645,28 +645,34 @@ func TransferToLocalSendGroupRequest(apiData []*server_api_params.GroupRequest) 
 }
 
 type tempConversation struct {
-	RecvMsgOpt     int32
-	ConversationID string
-	//ConversationType int32
-	//UserID           string
-	//GroupID          string
-	//UnreadCount      int32
-	IsPrivateChat bool
-	IsPinned      bool
+	RecvMsgOpt       int32
+	ConversationID   string
+	ConversationType int32
+	UserID           string
+	GroupID          string
+	UnreadCount      int32
+	IsPrivateChat    bool
+	IsPinned         bool
+	DraftTextTime    int64
+	AttachedInfo     string
+	Ex               string
 }
 
 func ServerTransferToTempConversation(resp server_api_params.GetAllConversationsResp) []*tempConversation {
 	var tempConversations []*tempConversation
 	for _, serverConversation := range resp.Conversations {
 		tempConversations = append(tempConversations, &tempConversation{
-			RecvMsgOpt:     serverConversation.RecvMsgOpt,
-			ConversationID: serverConversation.ConversationID,
-			//ConversationType: serverConversation.ConversationType,
-			//UserID:           serverConversation.UserID,
-			//GroupID:          serverConversation.GroupID,
-			//UnreadCount:      serverConversation.UnreadCount,
-			IsPrivateChat: serverConversation.IsPrivateChat,
-			IsPinned:      serverConversation.IsPinned,
+			RecvMsgOpt:       serverConversation.RecvMsgOpt,
+			ConversationID:   serverConversation.ConversationID,
+			ConversationType: serverConversation.ConversationType,
+			UserID:           serverConversation.UserID,
+			GroupID:          serverConversation.GroupID,
+			UnreadCount:      serverConversation.UnreadCount,
+			IsPrivateChat:    serverConversation.IsPrivateChat,
+			IsPinned:         serverConversation.IsPinned,
+			DraftTextTime:    serverConversation.DraftTextTime,
+			AttachedInfo:     serverConversation.AttachedInfo,
+			Ex:               serverConversation.Ex,
 		})
 	}
 	return tempConversations
@@ -676,14 +682,17 @@ func LocalTransferToTempConversation(local []*db.LocalConversation) []*tempConve
 	var tempConversations []*tempConversation
 	for _, localConversation := range local {
 		tempConversations = append(tempConversations, &tempConversation{
-			RecvMsgOpt:     localConversation.RecvMsgOpt,
-			ConversationID: localConversation.ConversationID,
-			//ConversationType: localConversation.ConversationType,
-			//UserID:           localConversation.UserID,
-			//GroupID:          localConversation.GroupID,
-			//UnreadCount:      localConversation.UnreadCount,
-			IsPrivateChat: localConversation.IsPrivateChat,
-			IsPinned:      localConversation.IsPinned,
+			RecvMsgOpt:       localConversation.RecvMsgOpt,
+			ConversationID:   localConversation.ConversationID,
+			ConversationType: localConversation.ConversationType,
+			UserID:           localConversation.UserID,
+			GroupID:          localConversation.GroupID,
+			UnreadCount:      localConversation.UnreadCount,
+			IsPrivateChat:    localConversation.IsPrivateChat,
+			IsPinned:         localConversation.IsPinned,
+			DraftTextTime:    localConversation.DraftTextTime,
+			AttachedInfo:     localConversation.AttachedInfo,
+			Ex:               localConversation.Ex,
 		})
 	}
 	return tempConversations
@@ -701,6 +710,9 @@ func TransferToLocalConversation(resp server_api_params.GetAllConversationsResp)
 			UnreadCount:      serverConversation.UnreadCount,
 			IsPrivateChat:    serverConversation.IsPrivateChat,
 			IsPinned:         serverConversation.IsPinned,
+			DraftTextTime:    serverConversation.DraftTextTime,
+			AttachedInfo:     serverConversation.AttachedInfo,
+			Ex:               serverConversation.Ex,
 		})
 	}
 	return localConversations
@@ -708,7 +720,6 @@ func TransferToLocalConversation(resp server_api_params.GetAllConversationsResp)
 
 func TransferToServerConversation(local []*db.LocalConversation) server_api_params.GetAllConversationsResp {
 	var serverConversations server_api_params.GetAllConversationsResp
-
 	for _, localConversation := range local {
 		serverConversations.Conversations = append(serverConversations.Conversations, server_api_params.Conversation{
 			RecvMsgOpt:       localConversation.RecvMsgOpt,
@@ -719,6 +730,9 @@ func TransferToServerConversation(local []*db.LocalConversation) server_api_para
 			UnreadCount:      localConversation.UnreadCount,
 			IsPrivateChat:    localConversation.IsPrivateChat,
 			IsPinned:         localConversation.IsPinned,
+			DraftTextTime:    localConversation.DraftTextTime,
+			AttachedInfo:     localConversation.AttachedInfo,
+			Ex:               localConversation.Ex,
 		})
 	}
 	return serverConversations

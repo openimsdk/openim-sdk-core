@@ -16,7 +16,7 @@ import (
 type Heartbeat struct {
 	//*Ws
 	*MsgSync
-	cmdCh             chan common.Cmd2Value //waiting logout cmd
+	cmdCh             chan common.Cmd2Value //waiting logout cmd , wake up cmd
 	heartbeatInterval int
 }
 
@@ -26,7 +26,7 @@ func (u *Heartbeat) SetHeartbeatInterval(heartbeatInterval int) {
 
 func NewHeartbeat(msgSync *MsgSync, cmcCh chan common.Cmd2Value) *Heartbeat {
 	p := Heartbeat{MsgSync: msgSync, cmdCh: cmcCh}
-	p.heartbeatInterval = 1
+	p.heartbeatInterval = 30
 	go p.Run()
 	return &p
 }
@@ -45,8 +45,15 @@ func (u *Heartbeat) Run() {
 					log.Warn(operationID, "recv logout cmd, close conn,  set logout state, Goexit...")
 					u.SetLoginState(constant.Logout)
 					u.CloseConn()
+					log.Warn(operationID, "close heartbeat channel ", u.cmdCh)
+					//	close(u.cmdCh)
 					runtime.Goexit()
 				}
+				if r.Cmd == constant.CmdWakeUp {
+					log.Info(operationID, "recv wake up cmd, start heartbeat ", r.Cmd)
+					break
+				}
+
 				log.Warn(operationID, "other cmd...", r.Cmd)
 			case <-time.After(time.Millisecond * time.Duration(u.heartbeatInterval*1000)):
 				log.Debug(operationID, "heartbeat waiting(ms)... ", u.heartbeatInterval*1000)

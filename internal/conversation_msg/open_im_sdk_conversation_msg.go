@@ -464,6 +464,7 @@ func (c *Conversation) checkErrAndUpdateMessage(callback open_im_sdk_callback.Se
 	}
 }
 func (c *Conversation) updateMsgStatusAndTriggerConversation(clientMsgID, serverMsgID string, sendTime int64, status int32, s *sdk_struct.MsgStruct, lc *db.LocalConversation, operationID string) {
+	//log.NewDebug(operationID, "this is test send message ", sendTime, status, clientMsgID, serverMsgID)
 	err := c.db.UpdateMessageTimeAndStatus(clientMsgID, serverMsgID, sendTime, status)
 	if err != nil {
 		log.Error(operationID, "send message update message status error", sendTime, status, clientMsgID, serverMsgID, err.Error())
@@ -485,6 +486,8 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 		//参数校验
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+		s.SendID = c.loginUserID
+		s.SenderPlatformID = c.platformID
 		p := &server_api_params.OfflinePushInfo{}
 		if offlinePushInfo == "" {
 			p = nil
@@ -524,6 +527,12 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			common.CheckAnyErrCallback(callback, 301, err, operationID)
 			lc.FaceURL = faceUrl
 			lc.ShowName = name
+		}
+		oldLc, err := c.db.GetConversation(conversationID)
+		if err == nil && oldLc.IsPrivateChat {
+			options[constant.IsNotPrivate] = false
+			s.AttachedInfoElem.IsPrivateChat = true
+			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 		}
 		oldMessage, err := c.db.GetMessage(s.ClientMsgID)
 		if err != nil {
@@ -630,6 +639,8 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 	go func() {
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+		s.SendID = c.loginUserID
+		s.SenderPlatformID = c.platformID
 		p := &server_api_params.OfflinePushInfo{}
 		if offlinePushInfo == "" {
 			p = nil
@@ -641,7 +652,7 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 		}
 		var localMessage db.LocalChatLog
 		var conversationID string
-		var options map[string]bool
+		options := make(map[string]bool, 2)
 		lc := db.LocalConversation{
 			LatestMsgSendTime: s.CreateTime,
 		}
@@ -672,7 +683,12 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 			lc.FaceURL = faceUrl
 			lc.ShowName = name
 		}
-
+		oldLc, err := c.db.GetConversation(conversationID)
+		if err == nil && oldLc.IsPrivateChat {
+			options[constant.IsNotPrivate] = false
+			s.AttachedInfoElem.IsPrivateChat = true
+			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
+		}
 		oldMessage, err := c.db.GetMessage(s.ClientMsgID)
 		if err != nil {
 			msgStructToLocalChatLog(&localMessage, &s)
@@ -691,12 +707,12 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 		//c}})
 		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, []string{conversationID}}})
 		//_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
-		options = make(map[string]bool, 2)
 		var delFile []string
 
 		msgStructToLocalChatLog(&localMessage, &s)
 		err = c.db.UpdateMessage(&localMessage)
 		common.CheckAnyErrCallback(callback, 201, err, operationID)
+
 		c.sendMessageToServer(&s, &lc, callback, delFile, p, options, operationID)
 
 	}()
@@ -1001,19 +1017,6 @@ func (c *Conversation) MarkGroupMessageHasRead(callback open_im_sdk_callback.Bas
 	}()
 }
 
-func (c *Conversation) DeleteMessage(callback open_im_sdk_callback.Base, message string, operationID string) {
-	if callback == nil {
-		return
-	}
-	go func() {
-		s := sdk_struct.MsgStruct{}
-		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
-		//c.deleteMessage(callback, &s, operationID)
-		c.deleteMessageFromLocalStorage(callback, &s, operationID)
-		callback.OnSuccess("")
-	}()
-}
-
 func (c *Conversation) DeleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, message string, operationID string) {
 	go func() {
 		s := sdk_struct.MsgStruct{}
@@ -1247,7 +1250,7 @@ func (c *Conversation) DeleteMessageFromLocalAndSvr(callback open_im_sdk_callbac
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 		c.deleteMessageFromSvr(callback, &s, operationID)
-		c.deleteMessage(callback, &s, operationID)
+		c.deleteMessageFromLocalStorage(callback, &s, operationID)
 		callback.OnSuccess("")
 		log.NewInfo(operationID, fName, "callback: ", "")
 	}()

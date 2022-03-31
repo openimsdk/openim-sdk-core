@@ -84,7 +84,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	var insertMsg, updateMsg []*db.LocalChatLog
 	var exceptionMsg []*db.LocalErrChatLog
 	var newMessages, msgReadList, groupMsgReadList, msgRevokeList sdk_struct.NewMsgList
-	var isUnreadCount, isConversationUpdate, isHistory bool
+	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate bool
 	conversationChangedSet := make(map[string]*db.LocalConversation)
 	newConversationSet := make(map[string]*db.LocalConversation)
 	conversationSet := make(map[string]*db.LocalConversation)
@@ -93,6 +93,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
 		isUnreadCount = utils.GetSwitchFromOptions(v.Options, constant.IsUnreadCount)
 		isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
+		isNotPrivate = utils.GetSwitchFromOptions(v.Options, constant.IsNotPrivate)
+		isSenderConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsSenderConversationUpdate)
 		msg := new(sdk_struct.MsgStruct)
 		copier.Copy(msg, v)
 		if v.ContentType >= constant.NotificationBegin && v.ContentType <= constant.NotificationEnd {
@@ -107,6 +109,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		} else {
 			msg.Content = string(v.Content)
 		}
+		//When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
+		if msg.Status == constant.MsgStatusHasDeleted {
+			insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
+			continue
+		}
 		msg.Status = constant.MsgStatusSendSuccess
 		msg.IsRead = false
 		//		log.Info(operationID, "new msg, seq, ServerMsgID, ClientMsgID", msg.Seq, msg.ServerMsgID, msg.ClientMsgID)
@@ -116,9 +123,18 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			log.Error(operationID, "Parsing data error:", err.Error())
 			continue
 		}
+		if !isNotPrivate {
+			msg.AttachedInfoElem.IsPrivateChat = true
+			msg.AttachedInfo = utils.StructToJsonString(msg.AttachedInfoElem)
+		}
 		if msg.ClientMsgID == "" {
 			exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
 			continue
+		}
+		switch v.ContentType {
+		case constant.ConversationChangeNotification:
+			log.Info(operationID, utils.GetSelfFuncName(), v)
+			c.DoNotification(v)
 		}
 		switch v.SessionType {
 		case constant.SingleChatType:
@@ -191,11 +207,17 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					//	c.ShowName = name
 					//	c.FaceURL = faceUrl
 					//}
+
+				}
+				if msg.ContentType == constant.HasReadReceipt {
+					msgReadList = append(msgReadList, msg)
 				}
 				if isConversationUpdate {
-					log.Debug(operationID, "updateConversation msg", v, lc)
-					c.updateConversation(&lc, conversationSet)
-					newMessages = append(newMessages, msg)
+					if isSenderConversationUpdate {
+						log.Debug(operationID, "updateConversation msg", v, lc)
+						c.updateConversation(&lc, conversationSet)
+						newMessages = append(newMessages, msg)
+					}
 				} else {
 					msg.Status = constant.MsgStatusFiltered
 				}
@@ -205,9 +227,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				if msg.ContentType == constant.Revoke {
 					msgRevokeList = append(msgRevokeList, msg)
 				}
-				if msg.ContentType == constant.HasReadReceipt {
-					msgReadList = append(msgReadList, msg)
-				}
+
 				if msg.ContentType == constant.GroupHasReadReceipt {
 					groupMsgReadList = append(groupMsgReadList, msg)
 
@@ -236,6 +256,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					//	c.ShowName = name
 					//	c.FaceURL = faceUrl
 					//}
+				case constant.NotificationChatType:
+					lc.ConversationID = utils.GetConversationIDBySessionType(v.SendID, constant.NotificationChatType)
+					lc.UserID = v.SendID
+					lc.ShowName = msg.SenderNickname
+					lc.FaceURL = msg.SenderFaceURL
 				}
 				if isUnreadCount {
 					isTriggerUnReadCount = true
