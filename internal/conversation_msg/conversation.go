@@ -247,44 +247,46 @@ func (c *Conversation) SyncConversations(operationID string) {
 
 	aInBNot, bInANot, sameA, sameB := common.CheckConversationListDiff(conversationsOnServerTempFormat, conversationsOnLocalTempFormat)
 	log.NewInfo(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
-
+	//fixme 当心跳协程启动时获取最大seq，通过与本地差值对应开始拉取消息，送到会话协程中进行处理
+	//fixme 会话同步操作和会话协程同时运行，会话同步操作通过比对，发现服务器有会话数据，本地没有，于是准备插入一条会话
+	//fixme 但是这个时候（在会话同步插入新会话之前），会话协程通过消息已经生成了一条会话到本地，这个时候，同步操作生成的会话会插入失败
 	// server有 local没有
 	// 可能是其他点开一下生成会话设置免打扰 插入到本地 不回调
 	for _, index := range aInBNot {
 		conversation := conversationsOnServerLocalFormat[index]
-		var newConversation db.LocalConversation
-		newConversation.ConversationID = conversation.ConversationID
-		newConversation.ConversationType = conversation.ConversationType
-		switch conversation.ConversationType {
-		case constant.SingleChatType:
-			newConversation.UserID = conversation.UserID
-			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, conversation.UserID, operationID)
-			if err != nil {
-				log.NewError(operationID, utils.GetSelfFuncName(), "GetUserNameAndFaceUrlByUid error", err.Error())
-				continue
-			}
-			newConversation.ShowName = name
-			newConversation.FaceURL = faceUrl
-		case constant.GroupChatType:
-			newConversation.GroupID = conversation.GroupID
-			g, err := c.group.GetGroupInfoFromLocal2Svr(conversation.GroupID)
-			if err != nil {
-				log.NewError(operationID, utils.GetSelfFuncName(), "GetGroupInfoFromLocal2Svr error", err.Error())
-				continue
-			}
-			newConversation.ShowName = g.GroupName
-			newConversation.FaceURL = g.FaceURL
-		}
-		err := c.db.InsertConversation(&newConversation)
+		//var newConversation db.LocalConversation
+		//newConversation.ConversationID = conversation.ConversationID
+		//newConversation.ConversationType = conversation.ConversationType
+		//switch conversation.ConversationType {
+		//case constant.SingleChatType:
+		//	newConversation.UserID = conversation.UserID
+		//	faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, conversation.UserID, operationID)
+		//	if err != nil {
+		//		log.NewError(operationID, utils.GetSelfFuncName(), "GetUserNameAndFaceUrlByUid error", err.Error())
+		//		continue
+		//	}
+		//	newConversation.ShowName = name
+		//	newConversation.FaceURL = faceUrl
+		//case constant.GroupChatType:
+		//	newConversation.GroupID = conversation.GroupID
+		//	g, err := c.group.GetGroupInfoFromLocal2Svr(conversation.GroupID)
+		//	if err != nil {
+		//		log.NewError(operationID, utils.GetSelfFuncName(), "GetGroupInfoFromLocal2Svr error", err.Error())
+		//		continue
+		//	}
+		//	newConversation.ShowName = g.GroupName
+		//	newConversation.FaceURL = g.FaceURL
+		//}
+		err := c.db.InsertConversation(conversation)
 		if err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation error", err.Error())
 			continue
 		}
-		err = c.db.UpdateConversationForSync(conversation)
-		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation failed ", err.Error(), conversation)
-			continue
-		}
+		//err = c.db.UpdateConversationForSync(conversation)
+		//if err != nil {
+		//	log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation failed ", err.Error(), conversation)
+		//	continue
+		//}
 	}
 	// 本地服务器有的会话 以服务器为准更新
 	var conversationChangedList []string

@@ -336,7 +336,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	c.advancedFunction.DoGroupMsgReadState(groupMsgReadList)
 	c.revokeMessage(msgRevokeList)
 	c.newMessage(newMessages)
-	log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
+	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	if len(newConversationSet) != 0 {
 		c.ConversationListener.OnNewConversation(utils.StructToJsonString(mapConversationToList(newConversationSet)))
 	}

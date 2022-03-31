@@ -707,12 +707,12 @@ func TransferToLocalConversation(resp server_api_params.GetAllConversationsResp)
 			ConversationType: serverConversation.ConversationType,
 			UserID:           serverConversation.UserID,
 			GroupID:          serverConversation.GroupID,
-			UnreadCount:      serverConversation.UnreadCount,
-			IsPrivateChat:    serverConversation.IsPrivateChat,
-			IsPinned:         serverConversation.IsPinned,
-			DraftTextTime:    serverConversation.DraftTextTime,
-			AttachedInfo:     serverConversation.AttachedInfo,
-			Ex:               serverConversation.Ex,
+			//UnreadCount:      serverConversation.UnreadCount,
+			IsPrivateChat: serverConversation.IsPrivateChat,
+			IsPinned:      serverConversation.IsPinned,
+			//DraftTextTime:    serverConversation.DraftTextTime,
+			AttachedInfo: serverConversation.AttachedInfo,
+			Ex:           serverConversation.Ex,
 		})
 	}
 	return localConversations

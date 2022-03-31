@@ -195,27 +195,26 @@ type CmdMaxSeqToMsgSync struct {
 	MaxSeqOnSvr uint32
 	OperationID string
 }
-
-type OANotificationDetails struct {
-	NotificationName    string `json:"notificationName"`
-	NotificationFaceURL string `json:"notificationFaceUrl"`
-	NotificationType    int32  `json:"notificationType"`
-	Text                string `json:"text"`
-	Url                 string `json:"url"`
-	MixType             int32  `json:"mixType"`
+type OANotificationElem struct {
+	NotificationName    string `mapstructure:"notificationName" validate:"required"`
+	NotificationFaceURL string `mapstructure:"notificationFaceURL" validate:"required"`
+	NotificationType    int32  `mapstructure:"notificationType" validate:"required"`
+	Text                string `mapstructure:"text" validate:"required"`
+	Url                 string `mapstructure:"url"`
+	MixType             int32  `mapstructure:"mixType"`
 	Image               struct {
-		SourceURL   string `json:"sourceUrl"`
-		SnapshotURL string `json:"snapshotUrl"`
-	} `json:"image"`
+		SourceUrl   string `mapstructure:"sourceURL"`
+		SnapshotUrl string `mapstructure:"snapshotURL"`
+	} `mapstructure:"image"`
 	Video struct {
-		SourceURL   string `json:"sourceUrl"`
-		SnapshotURL string `json:"snapshotUrl"`
-		Duration    int64  `json:"duration"`
-	} `json:"video"`
+		SourceUrl   string `mapstructure:"sourceURL"`
+		SnapshotUrl string `mapstructure:"snapshotURL"`
+		Duration    int64  `mapstructure:"duration"`
+	} `mapstructure:"video"`
 	File struct {
-		SourceURL string `json:"sourceUrl"`
-		FileName  string `json:"fileName"`
-		FileSize  int64  `json:"fileSize"`
-	} `json:"file"`
-	Ex string `json:"ex"`
+		SourceUrl string `mapstructure:"sourceURL"`
+		FileName  string `mapstructure:"fileName"`
+		FileSize  int64  `mapstructure:"fileSize"`
+	} `mapstructure:"file"`
+	Ex string `mapstructure:"ex"`
 }
