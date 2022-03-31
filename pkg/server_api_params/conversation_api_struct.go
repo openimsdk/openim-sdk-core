@@ -7,12 +7,12 @@ type Conversation struct {
 	UserID           string `json:"userID"`
 	GroupID          string `json:"groupID"`
 	RecvMsgOpt       int32  `json:"recvMsgOpt"`
-	UnreadCount      int32  `json:"unreadCount"`
-	DraftTextTime    int64  `json:"draftTextTime"`
-	IsPinned         bool   `json:"isPinned"`
-	IsPrivateChat    bool   `json:"isPrivateChat"`
-	AttachedInfo     string `json:"attachedInfo"`
-	Ex               string `json:"ex"`
+	//UnreadCount      int32  `json:"unreadCount"`
+	//DraftTextTime    int64  `json:"draftTextTime"`
+	IsPinned      bool   `json:"isPinned"`
+	IsPrivateChat bool   `json:"isPrivateChat"`
+	AttachedInfo  string `json:"attachedInfo"`
+	Ex            string `json:"ex"`
 }
 
 type SetConversationReq struct {

@@ -330,20 +330,24 @@ func CheckToken(userID, token string, operationID string) error {
 }
 
 func (u *LoginMgr) uploadImage(callback open_im_sdk_callback.Base, filePath string, token, obj string, operationID string) string {
-	if obj == "cos" {
-		p := ws.NewPostApi(token, u.ImConfig().ApiAddr)
-		o := comm2.NewCOS(p)
-		url, _, err := o.UploadImage(filePath, func(progress int) {
-			if progress == 100 {
-				callback.OnSuccess("")
-			}
-		})
-		if err != nil {
-			log.Error(operationID, "UploadImage failed ", err.Error(), filePath)
-			return ""
+	p := ws.NewPostApi(token, u.ImConfig().ApiAddr)
+	var o comm2.ObjectStorage
+	switch obj {
+	case "cos":
+		o = comm2.NewCOS(p)
+	case "minio":
+		o = comm2.NewMinio(p)
+	default:
+		o = comm2.NewCOS(p)
+	}
+	url, _, err := o.UploadImage(filePath, func(progress int) {
+		if progress == 100 {
+			callback.OnSuccess("")
 		}
-		return url
-	} else {
+	})
+	if err != nil {
+		log.Error(operationID, "UploadImage failed ", err.Error(), filePath)
 		return ""
 	}
+	return url
 }

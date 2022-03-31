@@ -85,10 +85,18 @@ func (d *DataBase) GetConversation(conversationID string) (*LocalConversation, e
 func (d *DataBase) UpdateConversation(c *LocalConversation) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
+	d.conn.Logger.LogMode(6)
 	t := d.conn.Updates(c)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
+	return utils.Wrap(t.Error, "UpdateConversation failed")
+}
+
+func (d *DataBase) ClearAllConversationLatestMsg(c *LocalConversation) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	t := d.conn.Model(&LocalConversation{}).Exec("update local_conversations set latest_msg = ''")
 	return utils.Wrap(t.Error, "UpdateConversation failed")
 }
 

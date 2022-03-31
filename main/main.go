@@ -1,7 +1,6 @@
 package main
 
 import (
-	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/test"
@@ -71,16 +70,15 @@ func main() {
 	tokenx := test.GenToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNzcyNjM3ODQyOCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYzMjE2NDU1LCJuYmYiOjE2NDc4NTY0NTUsImlhdCI6MTY0Nzg1NjQ1NX0.3fOcyhw7r5lOkRTJdDy7-tG9XC4XrKj_N7ufrGHPWYM"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
-	//for {
-
+	//test.DoTestDeleteAllMsgFromLocalAndSvr()
 	//log.Warn("", "login ok, see memory, sleep 10s")
 	//time.Sleep(2 * time.Second)
 	//	test.InOutLogou()
 	//	log.Warn("", "logout ok, see memory, sleep 10s")
 	//	time.Sleep(10 * time.Second)
 	//}
-	//test.DoTestSetOneConversationPrivateChat("single_17396220460", false	)
-	//test.DoTestSetConversationPinned("single_17396220460", true)
+	//test.DoTestSetOneConversationPrivateChat("single_17726378428", false)
+	test.DoTestSetConversationPinned("single_17396220460", true)
 	//test.DoTestSendMsg2(strMyUidx, test.Friend_uid)
 	//test.DoTestDeleteConversationMsgFromLocalAndSvr("single_17396220460")
 	//test.I
@@ -95,7 +93,7 @@ func main() {
 	//test.DoTestGetConversationRecvMessageOpt(`["single_17899999999"]`)
 
 	//set batch
-	test.DoTestSetConversationRecvMessageOpt([]string{"single_17396220460"}, constant.ReceiveNotNotifyMessage)
+	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17396220460"}, constant.ReceiveNotNotifyMessage)
 	//set one
 	////set batch
 	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.ReceiveMessage)

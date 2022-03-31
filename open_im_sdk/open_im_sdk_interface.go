@@ -751,6 +751,15 @@ func DeleteConversationMsgFromLocalAndSvr(callback open_im_sdk_callback.Base, op
 	userForSDK.Conversation().DeleteConversationMsgFromLocalAndSvr(callback, conversationID, operationID)
 }
 
+func DeleteAllMsgFromLocalAndSvr(callback open_im_sdk_callback.Base, operationID string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Conversation().DeleteAllMsgFromLocalAndSvr(callback, operationID)
+}
+
 func ClearC2CHistoryMessage(callback open_im_sdk_callback.Base, operationID string, userID string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
