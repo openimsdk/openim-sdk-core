@@ -41,7 +41,7 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		return false
 	}
 	log.Info(operationID, "config ", config, sdk_struct.SvrConf)
-	log.NewPrivateLog(constant.LogFileName, sdk_struct.SvrConf.LogLevel)
+	//log.NewPrivateLog(constant.LogFileName, sdk_struct.SvrConf.LogLevel)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), config, SdkVersion())
 	if listener == nil || config == "" {
 		log.Error(operationID, "listener or config is nil")
