@@ -26,7 +26,7 @@ func (u *Heartbeat) SetHeartbeatInterval(heartbeatInterval int) {
 
 func NewHeartbeat(msgSync *MsgSync, cmcCh chan common.Cmd2Value) *Heartbeat {
 	p := Heartbeat{MsgSync: msgSync, cmdCh: cmcCh}
-	p.heartbeatInterval = 30
+	p.heartbeatInterval = constant.HeartbeatInterval
 	go p.Run()
 	return &p
 }

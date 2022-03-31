@@ -21,18 +21,18 @@ func (d *DataBase) InsertMessage(Message *LocalChatLog) error {
 	return utils.Wrap(d.conn.Create(Message).Error, "InsertMessage failed")
 }
 
-func (d *DataBase) SearchMessageByKeyword(keyword,sourceID string, startTime, endTime int64, sessionType,offset,count int) (result []*LocalChatLog, err error) {
+func (d *DataBase) SearchMessageByKeyword(keyword, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []LocalChatLog
 	var condition string
 	switch sessionType {
 	case constant.SingleChatType:
-		condition = fmt.Sprintf("session_type==%d And (send_id==%q OR recv_id==%q) And send_time  between %d and %d AND status <=%d And content_type == %d And content like %q", constant.SingleChatType,sourceID,sourceID, startTime, endTime, constant.MsgStatusSendFailed,constant.Text, "%%"+keyword+"%%")
+		condition = fmt.Sprintf("session_type==%d And (send_id==%q OR recv_id==%q) And send_time  between %d and %d AND status <=%d And content_type == %d And content like %q", constant.SingleChatType, sourceID, sourceID, startTime, endTime, constant.MsgStatusSendFailed, constant.Text, "%%"+keyword+"%%")
 	case constant.GroupChatType:
-		condition = fmt.Sprintf("session_type==%d And recv_id==%q And send_time between %d and %d AND status <=%d And content_type == %d And content like %q", constant.GroupChatType,sourceID, startTime, endTime, constant.MsgStatusSendFailed,constant.Text, "%%"+keyword+"%%")
+		condition = fmt.Sprintf("session_type==%d And recv_id==%q And send_time between %d and %d AND status <=%d And content_type == %d And content like %q", constant.GroupChatType, sourceID, startTime, endTime, constant.MsgStatusSendFailed, constant.Text, "%%"+keyword+"%%")
 	default:
-		condition = fmt.Sprintf("(send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content_type == %d And content like %q",sourceID,sourceID,startTime, endTime, constant.MsgStatusSendFailed,constant.Text,"%%"+keyword+"%%")
+		condition = fmt.Sprintf("(send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content_type == %d And content like %q", sourceID, sourceID, startTime, endTime, constant.MsgStatusSendFailed, constant.Text, "%%"+keyword+"%%")
 	}
 	err = utils.Wrap(d.conn.Where(condition).Order("send_time DESC").Group("recv_id,client_msg_id").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
 
@@ -43,20 +43,20 @@ func (d *DataBase) SearchMessageByKeyword(keyword,sourceID string, startTime, en
 	return result, err
 }
 
-func (d *DataBase) SearchMessageByContentType(contentType []int,sourceID string, startTime, endTime int64, sessionType,offset,count int) (result []*LocalChatLog, err error) {
+func (d *DataBase) SearchMessageByContentType(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []LocalChatLog
 	var condition string
 	switch sessionType {
 	case constant.SingleChatType:
-		condition = fmt.Sprintf("session_type==%d And (send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content_type IN ?", constant.SingleChatType,sourceID,sourceID, startTime, endTime, constant.MsgStatusSendFailed)
+		condition = fmt.Sprintf("session_type==%d And (send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content_type IN ?", constant.SingleChatType, sourceID, sourceID, startTime, endTime, constant.MsgStatusSendFailed)
 	case constant.GroupChatType:
-		condition = fmt.Sprintf("session_type==%d And recv_id==%q And send_time between %d and %d AND status <=%d And content_type IN ?", constant.GroupChatType,sourceID, startTime, endTime, constant.MsgStatusSendFailed)
+		condition = fmt.Sprintf("session_type==%d And recv_id==%q And send_time between %d and %d AND status <=%d And content_type IN ?", constant.GroupChatType, sourceID, startTime, endTime, constant.MsgStatusSendFailed)
 	default:
-		condition = fmt.Sprintf("(send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content_type IN ?",sourceID,sourceID, startTime, endTime, constant.MsgStatusSendFailed)
+		condition = fmt.Sprintf("(send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content_type IN ?", sourceID, sourceID, startTime, endTime, constant.MsgStatusSendFailed)
 	}
-	err = utils.Wrap(d.conn.Where(condition,contentType).Order("send_time DESC").Group("recv_id,client_msg_id").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
+	err = utils.Wrap(d.conn.Where(condition, contentType).Order("send_time DESC").Group("recv_id,client_msg_id").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)
@@ -123,6 +123,12 @@ func (d *DataBase) GetMessage(ClientMsgID string) (*LocalChatLog, error) {
 	return &c, utils.Wrap(d.conn.Where("client_msg_id = ?",
 		ClientMsgID).Take(&c).Error, "GetMessage failed")
 }
+
+func (d *DataBase) GetAllUnDeleteMessageSeqList() ([]uint32, error) {
+	var seqList []uint32
+	return seqList, utils.Wrap(d.conn.Model(&LocalChatLog{}).Where("status != 4").Select("seq").Find(&seqList).Error, "")
+}
+
 func (d *DataBase) UpdateColumnsMessage(ClientMsgID string, args map[string]interface{}) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
@@ -142,6 +148,14 @@ func (d *DataBase) UpdateMessage(c *LocalChatLog) error {
 	}
 	return utils.Wrap(t.Error, "UpdateMessage failed")
 }
+
+func (d *DataBase) DeleteAllMessage() error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	err := d.conn.Model(&LocalChatLog{}).Exec("update local_chat_logs set status = 4").Error
+	return utils.Wrap(err, "delete all message error")
+}
+
 func (d *DataBase) UpdateMessageStatusBySourceID(sourceID string, status, sessionType int32) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()

@@ -7,26 +7,28 @@ type Conversation struct {
 	UserID           string `json:"userID"`
 	GroupID          string `json:"groupID"`
 	RecvMsgOpt       int32  `json:"recvMsgOpt"`
-	UnreadCount      int32  `json:"unreadCount"`
-	DraftTextTime    int64  `json:"draftTextTime"`
-	IsPinned         bool   `json:"isPinned"`
-	IsPrivateChat    bool   `json:"isPrivateChat"`
-	AttachedInfo     string `json:"attachedInfo"`
-	Ex               string `json:"ex"`
+	//UnreadCount      int32  `json:"unreadCount"`
+	//DraftTextTime    int64  `json:"draftTextTime"`
+	IsPinned      bool   `json:"isPinned"`
+	IsPrivateChat bool   `json:"isPrivateChat"`
+	AttachedInfo  string `json:"attachedInfo"`
+	Ex            string `json:"ex"`
 }
 
 type SetConversationReq struct {
 	Conversation
-	OperationID string `json:"operationID" binding:"required"`
+	NotificationType int    `json:"notificationType"`
+	OperationID      string `json:"operationID" binding:"required"`
 }
 
 type SetConversationResp struct {
 }
 
 type BatchSetConversationsReq struct {
-	Conversations []Conversation `json:"conversations" binding:"required"`
-	OwnerUserID   string         `json:"ownerUserID" binding:"required"`
-	OperationID   string         `json:"operationID" binding:"required"`
+	Conversations    []Conversation `json:"conversations" binding:"required"`
+	OwnerUserID      string         `json:"ownerUserID" binding:"required"`
+	NotificationType int            `json:"notificationType"`
+	OperationID      string         `json:"operationID" binding:"required"`
 }
 
 type BatchSetConversationsResp struct {

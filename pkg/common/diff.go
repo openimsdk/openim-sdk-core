@@ -650,10 +650,8 @@ type tempConversation struct {
 	ConversationType int32
 	UserID           string
 	GroupID          string
-	UnreadCount      int32
 	IsPrivateChat    bool
 	IsPinned         bool
-	DraftTextTime    int64
 	AttachedInfo     string
 	Ex               string
 }
@@ -667,10 +665,8 @@ func ServerTransferToTempConversation(resp server_api_params.GetAllConversations
 			ConversationType: serverConversation.ConversationType,
 			UserID:           serverConversation.UserID,
 			GroupID:          serverConversation.GroupID,
-			UnreadCount:      serverConversation.UnreadCount,
 			IsPrivateChat:    serverConversation.IsPrivateChat,
 			IsPinned:         serverConversation.IsPinned,
-			DraftTextTime:    serverConversation.DraftTextTime,
 			AttachedInfo:     serverConversation.AttachedInfo,
 			Ex:               serverConversation.Ex,
 		})
@@ -687,10 +683,8 @@ func LocalTransferToTempConversation(local []*db.LocalConversation) []*tempConve
 			ConversationType: localConversation.ConversationType,
 			UserID:           localConversation.UserID,
 			GroupID:          localConversation.GroupID,
-			UnreadCount:      localConversation.UnreadCount,
 			IsPrivateChat:    localConversation.IsPrivateChat,
 			IsPinned:         localConversation.IsPinned,
-			DraftTextTime:    localConversation.DraftTextTime,
 			AttachedInfo:     localConversation.AttachedInfo,
 			Ex:               localConversation.Ex,
 		})
@@ -707,12 +701,10 @@ func TransferToLocalConversation(resp server_api_params.GetAllConversationsResp)
 			ConversationType: serverConversation.ConversationType,
 			UserID:           serverConversation.UserID,
 			GroupID:          serverConversation.GroupID,
-			//UnreadCount:      serverConversation.UnreadCount,
-			IsPrivateChat: serverConversation.IsPrivateChat,
-			IsPinned:      serverConversation.IsPinned,
-			//DraftTextTime:    serverConversation.DraftTextTime,
-			AttachedInfo: serverConversation.AttachedInfo,
-			Ex:           serverConversation.Ex,
+			IsPrivateChat:    serverConversation.IsPrivateChat,
+			IsPinned:         serverConversation.IsPinned,
+			AttachedInfo:     serverConversation.AttachedInfo,
+			Ex:               serverConversation.Ex,
 		})
 	}
 	return localConversations
@@ -727,10 +719,8 @@ func TransferToServerConversation(local []*db.LocalConversation) server_api_para
 			ConversationType: localConversation.ConversationType,
 			UserID:           localConversation.UserID,
 			GroupID:          localConversation.GroupID,
-			UnreadCount:      localConversation.UnreadCount,
 			IsPrivateChat:    localConversation.IsPrivateChat,
 			IsPinned:         localConversation.IsPinned,
-			DraftTextTime:    localConversation.DraftTextTime,
 			AttachedInfo:     localConversation.AttachedInfo,
 			Ex:               localConversation.Ex,
 		})

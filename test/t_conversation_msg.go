@@ -46,6 +46,11 @@ import (
 //	fmt.Println("GetConversationRecvMessageOpt", string(jsontest))
 //}
 
+func DoTestDeleteAllMsgFromLocalAndSvr() {
+	var deleteConversationCallback DeleteConversationCallBack
+	open_im_sdk.DeleteAllMsgFromLocalAndSvr(deleteConversationCallback, utils.OperationIDGenerator())
+}
+
 func DoTestGetHistoryMessage(userID string) {
 	var testGetHistoryCallBack GetHistoryCallBack
 	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()

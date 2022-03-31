@@ -33,6 +33,7 @@ func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callba
 	apiResp := server_api_params.BatchSetConversationsResp{}
 	apiReq.OperationID = operationID
 	apiReq.OwnerUserID = c.loginUserID
+	apiReq.NotificationType = constant.ConversationChangeNotification
 	var conversations []server_api_params.Conversation
 	for _, conversationID := range conversationIDList {
 		localConversation, err := c.db.GetConversation(conversationID)
@@ -49,8 +50,6 @@ func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callba
 			RecvMsgOpt:       int32(opt),
 			IsPinned:         localConversation.IsPinned,
 			IsPrivateChat:    localConversation.IsPrivateChat,
-			UnreadCount:      localConversation.UnreadCount,
-			DraftTextTime:    localConversation.DraftTextTime,
 			AttachedInfo:     localConversation.AttachedInfo,
 			Ex:               localConversation.Ex,
 		})
@@ -71,8 +70,6 @@ func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiRe
 	apiReq.GroupID = localConversation.GroupID
 	apiReq.Ex = localConversation.Ex
 	apiReq.AttachedInfo = localConversation.AttachedInfo
-	apiReq.DraftTextTime = localConversation.DraftTextTime
-	apiReq.UnreadCount = localConversation.UnreadCount
 	c.p.PostFatalCallback(callback, constant.SetConversationOptRouter, apiReq, nil, apiReq.OperationID)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "request success, output: ", apiResp)
 }
@@ -88,6 +85,7 @@ func (c *Conversation) setOneConversationRecvMessageOpt(callback open_im_sdk_cal
 	apiReq.RecvMsgOpt = int32(opt)
 	apiReq.IsPinned = localConversation.IsPinned
 	apiReq.IsPrivateChat = localConversation.IsPrivateChat
+	apiReq.NotificationType = constant.ConversationChangeNotification
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
 	c.SyncConversations(operationID)
 }
@@ -103,6 +101,7 @@ func (c *Conversation) setOneConversationPrivateChat(callback open_im_sdk_callba
 	apiReq.RecvMsgOpt = localConversation.RecvMsgOpt
 	apiReq.IsPinned = localConversation.IsPinned
 	apiReq.IsPrivateChat = isPrivate
+	apiReq.NotificationType = constant.ConversationPrivateChatNotification
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
 	c.SyncConversations(operationID)
 }
@@ -115,6 +114,7 @@ func (c *Conversation) setOneConversationPinned(callback open_im_sdk_callback.Ba
 		callback.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
 		return
 	}
+	apiReq.NotificationType = constant.ConversationChangeNotification
 	apiReq.RecvMsgOpt = localConversation.RecvMsgOpt
 	apiReq.IsPinned = isPinned
 	apiReq.IsPrivateChat = localConversation.IsPrivateChat
@@ -305,7 +305,6 @@ func (c *Conversation) SyncConversations(operationID string) {
 			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		}
 	}
-
 	// local有 server没有 代表没有修改公共字段
 	for _, index := range bInANot {
 		log.NewDebug(operationID, utils.GetSelfFuncName(), index, conversationsOnLocal[index].ConversationID,
@@ -721,8 +720,8 @@ func (c *Conversation) delMsgBySeqSplit(seqList []uint32) error {
 
 func (c *Conversation) deleteConversationAndMsgFromSvr(callback open_im_sdk_callback.Base, conversationID, operationID string) {
 	local, err := c.db.GetConversation(conversationID)
-	log.Debug(operationID, utils.GetSelfFuncName(), *local)
 	common.CheckDBErrCallback(callback, err, operationID)
+	log.Debug(operationID, utils.GetSelfFuncName(), *local)
 	var seqList []uint32
 	switch local.ConversationType {
 	case constant.SingleChatType:
@@ -747,4 +746,31 @@ func (c *Conversation) deleteConversationAndMsgFromSvr(callback open_im_sdk_call
 	apiReq.SeqList = seqList
 	c.p.PostFatalCallback(callback, constant.DeleteMsgRouter, apiReq, nil, apiReq.OperationID)
 	common.CheckArgsErrCallback(callback, err, operationID)
+}
+
+func (c *Conversation) deleteAllMsgFromLocal(callback open_im_sdk_callback.Base, operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName())
+	err := c.db.DeleteAllMessage()
+	common.CheckDBErrCallback(callback, err, operationID)
+	conversation := &db.LocalConversation{LatestMsg: ""}
+	err = c.db.ClearAllConversationLatestMsg(conversation)
+	common.CheckDBErrCallback(callback, err, operationID)
+	conversationList, err := c.db.GetAllConversationList()
+	common.CheckDBErrCallback(callback, err, operationID)
+	for _, conversation := range conversationList {
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.ConChange, Args: []string{conversation.ConversationID}}, c.ch)
+	}
+}
+
+func (c *Conversation) deleteAllMsgFromSvr(callback open_im_sdk_callback.Base, operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName())
+	seqList, err := c.db.GetAllUnDeleteMessageSeqList()
+	log.NewInfo(operationID, utils.GetSelfFuncName(), seqList)
+	common.CheckDBErrCallback(callback, err, operationID)
+	var apiReq server_api_params.DeleteMsgReq
+	apiReq.OpUserID = c.loginUserID
+	apiReq.UserID = c.loginUserID
+	apiReq.OperationID = operationID
+	apiReq.SeqList = seqList
+	c.p.PostFatalCallback(callback, constant.DeleteMsgRouter, apiReq, nil, apiReq.OperationID)
 }

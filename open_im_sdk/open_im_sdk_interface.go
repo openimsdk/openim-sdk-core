@@ -35,6 +35,10 @@ func SdkVersion() string {
 	return constant.SdkVersion + constant.BigVersion + constant.UpdateVersion
 }
 
+func SetHeartbeatInterval(heartbeatInterval int) {
+	constant.HeartbeatInterval = heartbeatInterval
+}
+
 func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, config string) bool {
 	if err := json.Unmarshal([]byte(config), &sdk_struct.SvrConf); err != nil {
 		log.Error(operationID, "Unmarshal failed ", err.Error(), config)
@@ -745,6 +749,24 @@ func DeleteConversationMsgFromLocalAndSvr(callback open_im_sdk_callback.Base, op
 		return
 	}
 	userForSDK.Conversation().DeleteConversationMsgFromLocalAndSvr(callback, conversationID, operationID)
+}
+
+func DeleteAllMsgFromLocalAndSvr(callback open_im_sdk_callback.Base, operationID string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Conversation().DeleteAllMsgFromLocalAndSvr(callback, operationID)
+}
+
+func DeleteAllMsgFromLocal(callback open_im_sdk_callback.Base, operationID string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Conversation().DeleteAllMsgFromLocal(callback, operationID)
 }
 
 func ClearC2CHistoryMessage(callback open_im_sdk_callback.Base, operationID string, userID string) {
