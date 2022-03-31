@@ -1269,3 +1269,16 @@ func (c *Conversation) DeleteAllMsgFromLocalAndSvr(callback open_im_sdk_callback
 		log.NewInfo(operationID, fName, "callback: ", "")
 	}()
 }
+
+func (c *Conversation) DeleteAllMsgFromLocal(callback open_im_sdk_callback.Base, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName)
+		c.deleteAllMsgFromLocal(callback, operationID)
+		callback.OnSuccess("")
+		log.NewInfo(operationID, fName, "callback: ", "")
+	}()
+}
