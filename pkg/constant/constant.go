@@ -58,11 +58,10 @@ const (
 	FriendNotificationEnd                 = 1299
 	ConversationChangeNotification        = 1300
 
-	UserNotificationBegin               = 1301
-	UserInfoUpdatedNotification         = 1303 //SetSelfInfoTip             = 204
-	ConversationPrivateChatNotification = 1309
-	UserNotificationEnd                 = 1399
-	OANotification                      = 1400
+	UserNotificationBegin       = 1301
+	UserInfoUpdatedNotification = 1303 //SetSelfInfoTip             = 204
+	UserNotificationEnd         = 1399
+	OANotification              = 1400
 
 	GroupNotificationBegin = 1500
 
@@ -86,7 +85,10 @@ const (
 	SignalingNotificationBegin = 1600
 	SignalingNotification      = 1601
 	SignalingNotificationEnd   = 1699
-	NotificationEnd            = 2000
+
+	ConversationPrivateChatNotification = 1701
+
+	NotificationEnd = 2000
 
 	////////////////////////////////////////
 

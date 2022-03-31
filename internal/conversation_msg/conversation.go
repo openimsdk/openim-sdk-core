@@ -307,7 +307,6 @@ func (c *Conversation) SyncConversations(operationID string) {
 			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		}
 	}
-
 	// local有 server没有 代表没有修改公共字段
 	for _, index := range bInANot {
 		log.NewDebug(operationID, utils.GetSelfFuncName(), index, conversationsOnLocal[index].ConversationID,

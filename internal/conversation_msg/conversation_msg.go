@@ -126,8 +126,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
 			continue
 		}
-		switch v.ContentType {
-		case constant.ConversationChangeNotification:
+		switch {
+		case v.ContentType == constant.ConversationChangeNotification || v.ContentType == constant.ConversationPrivateChatNotification:
 			log.Info(operationID, utils.GetSelfFuncName(), v)
 			c.DoNotification(v)
 		}
@@ -184,11 +184,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				case constant.SingleChatType:
 					lc.ConversationID = utils.GetConversationIDBySessionType(v.RecvID, constant.SingleChatType)
 					lc.UserID = v.RecvID
-					switch v.ContentType {
-					case constant.ConversationChangeNotification:
-						log.Info(operationID, utils.GetSelfFuncName(), v)
-						c.DoNotification(v)
-					}
 					//localUserInfo,_ := c.user.GetLoginUser()
 					//c.FaceURL = localUserInfo.FaceUrl
 					//c.ShowName = localUserInfo.Nickname
