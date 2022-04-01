@@ -63,7 +63,6 @@ func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling advanced_interface.Signaling, advancedFunction advanced_interface.AdvancedFunction) *Conversation {
 	n := &Conversation{Ws: ws, db: db, p: p, ch: ch, loginUserID: loginUserID, platformID: platformID,
 		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage, signaling: signaling, advancedFunction: advancedFunction}
-	go common.DoListener(n)
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
 	return n

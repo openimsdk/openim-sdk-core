@@ -214,6 +214,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener, u.signaling, u.advancedFunction)
 	u.conversation.SyncConversations(operationID)
+	go common.DoListener(u.conversation)
 	log.Info(operationID, "login success...")
 	cb.OnSuccess("")
 
