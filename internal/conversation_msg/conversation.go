@@ -3,6 +3,7 @@ package conversation_msg
 import (
 	"errors"
 	"github.com/golang/protobuf/proto"
+	"github.com/jinzhu/copier"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -624,8 +625,13 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 			conversation.LatestMsg = ""
 			conversation.LatestMsgSendTime = s.SendTime
 		} else {
-			conversation.LatestMsg = utils.StructToJsonString(list[0])
-			conversation.LatestMsgSendTime = list[0].SendTime
+			copier.Copy(&latestMsg, list[0])
+			err := c.msgConvert(&latestMsg)
+			if err != nil {
+				log.Error(operationID, "Parsing data error:", err.Error(), latestMsg)
+			}
+			conversation.LatestMsg = utils.StructToJsonString(latestMsg)
+			conversation.LatestMsgSendTime = latestMsg.SendTime
 		}
 		err = c.db.UpdateColumnsConversation(conversation.ConversationID, map[string]interface{}{"latest_msg_send_time": conversation.LatestMsgSendTime, "latest_msg": conversation.LatestMsg})
 		if err != nil {

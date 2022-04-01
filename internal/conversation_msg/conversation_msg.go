@@ -637,6 +637,18 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 		log.Info("internal", "doUpdateConversation end..", c2v.Cmd)
 	}
 }
+func (c *Conversation) msgConvert(msg *sdk_struct.MsgStruct) (err error) {
+	err = c.msgHandleByContentType(msg)
+	if err != nil {
+		return err
+	} else {
+		if msg.SessionType == constant.GroupChatType {
+			msg.GroupID = msg.RecvID
+			msg.RecvID = c.loginUserID
+		}
+		return nil
+	}
+}
 
 func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err error) {
 	_ = utils.JsonStringToStruct(msg.AttachedInfo, &msg.AttachedInfoElem)
