@@ -85,7 +85,10 @@ const (
 	SignalingNotificationBegin = 1600
 	SignalingNotification      = 1601
 	SignalingNotificationEnd   = 1699
-	NotificationEnd            = 2000
+
+	ConversationPrivateChatNotification = 1701
+
+	NotificationEnd = 2000
 
 	////////////////////////////////////////
 
@@ -248,6 +251,6 @@ const (
 const BigVersion = "v2"
 const UpdateVersion = ".0.0"
 const SdkVersion = "Open-IM-SDK-Core-"
-const LogFileName = "OpenIM_jssdk.log"
+const LogFileName = "sdk"
 
 var HeartbeatInterval = 30

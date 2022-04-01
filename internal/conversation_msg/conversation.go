@@ -3,6 +3,7 @@ package conversation_msg
 import (
 	"errors"
 	"github.com/golang/protobuf/proto"
+	"github.com/jinzhu/copier"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -33,6 +34,7 @@ func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callba
 	apiResp := server_api_params.BatchSetConversationsResp{}
 	apiReq.OperationID = operationID
 	apiReq.OwnerUserID = c.loginUserID
+	apiReq.NotificationType = constant.ConversationChangeNotification
 	var conversations []server_api_params.Conversation
 	for _, conversationID := range conversationIDList {
 		localConversation, err := c.db.GetConversation(conversationID)
@@ -49,8 +51,6 @@ func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callba
 			RecvMsgOpt:       int32(opt),
 			IsPinned:         localConversation.IsPinned,
 			IsPrivateChat:    localConversation.IsPrivateChat,
-			UnreadCount:      localConversation.UnreadCount,
-			DraftTextTime:    localConversation.DraftTextTime,
 			AttachedInfo:     localConversation.AttachedInfo,
 			Ex:               localConversation.Ex,
 		})
@@ -71,8 +71,6 @@ func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiRe
 	apiReq.GroupID = localConversation.GroupID
 	apiReq.Ex = localConversation.Ex
 	apiReq.AttachedInfo = localConversation.AttachedInfo
-	apiReq.DraftTextTime = localConversation.DraftTextTime
-	apiReq.UnreadCount = localConversation.UnreadCount
 	c.p.PostFatalCallback(callback, constant.SetConversationOptRouter, apiReq, nil, apiReq.OperationID)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "request success, output: ", apiResp)
 }
@@ -88,6 +86,7 @@ func (c *Conversation) setOneConversationRecvMessageOpt(callback open_im_sdk_cal
 	apiReq.RecvMsgOpt = int32(opt)
 	apiReq.IsPinned = localConversation.IsPinned
 	apiReq.IsPrivateChat = localConversation.IsPrivateChat
+	apiReq.NotificationType = constant.ConversationChangeNotification
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
 	c.SyncConversations(operationID)
 }
@@ -103,6 +102,7 @@ func (c *Conversation) setOneConversationPrivateChat(callback open_im_sdk_callba
 	apiReq.RecvMsgOpt = localConversation.RecvMsgOpt
 	apiReq.IsPinned = localConversation.IsPinned
 	apiReq.IsPrivateChat = isPrivate
+	apiReq.NotificationType = constant.ConversationPrivateChatNotification
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
 	c.SyncConversations(operationID)
 }
@@ -115,6 +115,7 @@ func (c *Conversation) setOneConversationPinned(callback open_im_sdk_callback.Ba
 		callback.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
 		return
 	}
+	apiReq.NotificationType = constant.ConversationChangeNotification
 	apiReq.RecvMsgOpt = localConversation.RecvMsgOpt
 	apiReq.IsPinned = isPinned
 	apiReq.IsPrivateChat = localConversation.IsPrivateChat
@@ -177,7 +178,7 @@ func (c *Conversation) deleteConversation(callback open_im_sdk_callback.Base, co
 	common.CheckDBErrCallback(callback, err, operationID)
 	var sourceID string
 	switch lc.ConversationType {
-	case constant.SingleChatType:
+	case constant.SingleChatType, constant.NotificationChatType:
 		sourceID = lc.UserID
 	case constant.GroupChatType:
 		sourceID = lc.GroupID
@@ -199,7 +200,6 @@ func (c *Conversation) setConversationDraft(callback open_im_sdk_callback.Base, 
 		err := c.db.RemoveConversationDraft(conversationID, draftText)
 		common.CheckDBErrCallback(callback, err, operationID)
 	}
-	c.SyncConversations(operationID)
 }
 
 func (c *Conversation) pinConversation(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
@@ -247,16 +247,15 @@ func (c *Conversation) SyncConversations(operationID string) {
 
 	aInBNot, bInANot, sameA, sameB := common.CheckConversationListDiff(conversationsOnServerTempFormat, conversationsOnLocalTempFormat)
 	log.NewInfo(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
-
 	// server有 local没有
-	// 可能是其他点开一下生成会话设置免打扰 插入到本地 不回调
+	// 可能是其他点开一下生成会话设置免打扰 插入到本地 不回调..
 	for _, index := range aInBNot {
 		conversation := conversationsOnServerLocalFormat[index]
 		var newConversation db.LocalConversation
 		newConversation.ConversationID = conversation.ConversationID
 		newConversation.ConversationType = conversation.ConversationType
 		switch conversation.ConversationType {
-		case constant.SingleChatType:
+		case constant.SingleChatType, constant.NotificationChatType:
 			newConversation.UserID = conversation.UserID
 			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, conversation.UserID, operationID)
 			if err != nil {
@@ -275,9 +274,10 @@ func (c *Conversation) SyncConversations(operationID string) {
 			newConversation.ShowName = g.GroupName
 			newConversation.FaceURL = g.FaceURL
 		}
+		newConversation.LatestMsgSendTime = TimeOffset
 		err := c.db.InsertConversation(&newConversation)
 		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation error", err.Error())
+			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation error", err.Error(), conversation)
 			continue
 		}
 		err = c.db.UpdateConversationForSync(conversation)
@@ -303,7 +303,6 @@ func (c *Conversation) SyncConversations(operationID string) {
 			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		}
 	}
-
 	// local有 server没有 代表没有修改公共字段
 	for _, index := range bInANot {
 		log.NewDebug(operationID, utils.GetSelfFuncName(), index, conversationsOnLocal[index].ConversationID,
@@ -492,13 +491,69 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 	if err != nil {
 		log.Error(operationID, "inset into chat log err", localMessage, s, err.Error())
 	}
+
 	err2 := c.db.UpdateMessageHasRead(userID, newMessageIDList, constant.SingleChatType)
 	if err2 != nil {
 		log.Error(operationID, "update message has read error", newMessageIDList, userID, err2.Error())
 	}
+	newMessages, err3 := c.db.GetMultipleMessage(newMessageIDList)
+	if err3 != nil {
+		log.Error(operationID, "get messages error", newMessageIDList, userID, err3.Error())
+	}
+	for _, v := range newMessages {
+		attachInfo := sdk_struct.AttachedInfoElem{}
+		_ = utils.JsonStringToStruct(v.AttachedInfo, &attachInfo)
+		attachInfo.HasReadTime = s.SendTime
+		v.AttachedInfo = utils.StructToJsonString(attachInfo)
+		err = c.db.UpdateMessage(v)
+		if err != nil {
+			log.Error("internal", "setMessageHasReadByMsgID err:", err, "ClientMsgID", v)
+			continue
+		}
+	}
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.ch)
 	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 }
+
+//func (c *Conversation) markMessageAsReadByConID(callback open_im_sdk_callback.Base, msgIDList sdk.MarkMessageAsReadByConIDParams, conversationID, operationID string) {
+//	var localMessage db.LocalChatLog
+//	var newMessageIDList []string
+//	messages, err := c.db.GetMultipleMessage(msgIDList)
+//	common.CheckDBErrCallback(callback, err, operationID)
+//	for _, v := range messages {
+//		if v.IsRead == false && v.ContentType < constant.NotificationBegin && v.SendID != c.loginUserID {
+//			newMessageIDList = append(newMessageIDList, v.ClientMsgID)
+//		}
+//	}
+//	if len(newMessageIDList) == 0 {
+//		common.CheckAnyErrCallback(callback, 201, errors.New("message has been marked read or sender is yourself"), operationID)
+//	}
+//	conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
+//	s := sdk_struct.MsgStruct{}
+//	c.initBasicInfo(&s, constant.UserMsgType, constant.HasReadReceipt, operationID)
+//	s.Content = utils.StructToJsonString(newMessageIDList)
+//	options := make(map[string]bool, 5)
+//	utils.SetSwitchFromOptions(options, constant.IsConversationUpdate, false)
+//	utils.SetSwitchFromOptions(options, constant.IsSenderConversationUpdate, false)
+//	utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
+//	utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
+//	//If there is an error, the coroutine ends, so judgment is not  required
+//	resp, _ := c.InternalSendMessage(callback, &s, userID, "", operationID, &server_api_params.OfflinePushInfo{}, false, options)
+//	s.ServerMsgID = resp.ServerMsgID
+//	s.SendTime = resp.SendTime
+//	s.Status = constant.MsgStatusFiltered
+//	msgStructToLocalChatLog(&localMessage, &s)
+//	err = c.db.InsertMessage(&localMessage)
+//	if err != nil {
+//		log.Error(operationID, "inset into chat log err", localMessage, s, err.Error())
+//	}
+//	err2 := c.db.UpdateMessageHasRead(userID, newMessageIDList, constant.SingleChatType)
+//	if err2 != nil {
+//		log.Error(operationID, "update message has read error", newMessageIDList, userID, err2.Error())
+//	}
+//	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.ch)
+//	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
+//}
 func (c *Conversation) insertMessageToLocalStorage(callback open_im_sdk_callback.Base, s *db.LocalChatLog, operationID string) string {
 	err := c.db.InsertMessage(s)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -570,8 +625,13 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 			conversation.LatestMsg = ""
 			conversation.LatestMsgSendTime = s.SendTime
 		} else {
-			conversation.LatestMsg = utils.StructToJsonString(list[0])
-			conversation.LatestMsgSendTime = list[0].SendTime
+			copier.Copy(&latestMsg, list[0])
+			err := c.msgConvert(&latestMsg)
+			if err != nil {
+				log.Error(operationID, "Parsing data error:", err.Error(), latestMsg)
+			}
+			conversation.LatestMsg = utils.StructToJsonString(latestMsg)
+			conversation.LatestMsgSendTime = latestMsg.SendTime
 		}
 		err = c.db.UpdateColumnsConversation(conversation.ConversationID, map[string]interface{}{"latest_msg_send_time": conversation.LatestMsgSendTime, "latest_msg": conversation.LatestMsg})
 		if err != nil {
@@ -719,8 +779,8 @@ func (c *Conversation) delMsgBySeqSplit(seqList []uint32) error {
 
 func (c *Conversation) deleteConversationAndMsgFromSvr(callback open_im_sdk_callback.Base, conversationID, operationID string) {
 	local, err := c.db.GetConversation(conversationID)
-	log.Debug(operationID, utils.GetSelfFuncName(), *local)
 	common.CheckDBErrCallback(callback, err, operationID)
+	log.Debug(operationID, utils.GetSelfFuncName(), *local)
 	var seqList []uint32
 	switch local.ConversationType {
 	case constant.SingleChatType:
@@ -745,4 +805,31 @@ func (c *Conversation) deleteConversationAndMsgFromSvr(callback open_im_sdk_call
 	apiReq.SeqList = seqList
 	c.p.PostFatalCallback(callback, constant.DeleteMsgRouter, apiReq, nil, apiReq.OperationID)
 	common.CheckArgsErrCallback(callback, err, operationID)
+}
+
+func (c *Conversation) deleteAllMsgFromLocal(callback open_im_sdk_callback.Base, operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName())
+	err := c.db.DeleteAllMessage()
+	common.CheckDBErrCallback(callback, err, operationID)
+	conversation := &db.LocalConversation{LatestMsg: ""}
+	err = c.db.ClearAllConversationLatestMsg(conversation)
+	common.CheckDBErrCallback(callback, err, operationID)
+	conversationList, err := c.db.GetAllConversationList()
+	common.CheckDBErrCallback(callback, err, operationID)
+	for _, conversation := range conversationList {
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.ConChange, Args: []string{conversation.ConversationID}}, c.ch)
+	}
+}
+
+func (c *Conversation) deleteAllMsgFromSvr(callback open_im_sdk_callback.Base, operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName())
+	seqList, err := c.db.GetAllUnDeleteMessageSeqList()
+	log.NewInfo(operationID, utils.GetSelfFuncName(), seqList)
+	common.CheckDBErrCallback(callback, err, operationID)
+	var apiReq server_api_params.DeleteMsgReq
+	apiReq.OpUserID = c.loginUserID
+	apiReq.UserID = c.loginUserID
+	apiReq.OperationID = operationID
+	apiReq.SeqList = seqList
+	c.p.PostFatalCallback(callback, constant.DeleteMsgRouter, apiReq, nil, apiReq.OperationID)
 }

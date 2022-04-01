@@ -205,6 +205,8 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		objStorage = comm2.NewCOS(p)
 	case "minio":
 		objStorage = comm2.NewMinio(p)
+	case "oss":
+		objStorage = comm2.NewOSS(p)
 	default:
 		objStorage = comm2.NewCOS(p)
 	}
@@ -214,6 +216,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener, u.signaling, u.advancedFunction)
 	u.conversation.SyncConversations(operationID)
+	go common.DoListener(u.conversation)
 	log.Info(operationID, "login success...")
 	cb.OnSuccess("")
 
@@ -330,20 +333,24 @@ func CheckToken(userID, token string, operationID string) error {
 }
 
 func (u *LoginMgr) uploadImage(callback open_im_sdk_callback.Base, filePath string, token, obj string, operationID string) string {
-	if obj == "cos" {
-		p := ws.NewPostApi(token, u.ImConfig().ApiAddr)
-		o := comm2.NewCOS(p)
-		url, _, err := o.UploadImage(filePath, func(progress int) {
-			if progress == 100 {
-				callback.OnSuccess("")
-			}
-		})
-		if err != nil {
-			log.Error(operationID, "UploadImage failed ", err.Error(), filePath)
-			return ""
+	p := ws.NewPostApi(token, u.ImConfig().ApiAddr)
+	var o comm2.ObjectStorage
+	switch obj {
+	case "cos":
+		o = comm2.NewCOS(p)
+	case "minio":
+		o = comm2.NewMinio(p)
+	default:
+		o = comm2.NewCOS(p)
+	}
+	url, _, err := o.UploadImage(filePath, func(progress int) {
+		if progress == 100 {
+			callback.OnSuccess("")
 		}
-		return url
-	} else {
+	})
+	if err != nil {
+		log.Error(operationID, "UploadImage failed ", err.Error(), filePath)
 		return ""
 	}
+	return url
 }

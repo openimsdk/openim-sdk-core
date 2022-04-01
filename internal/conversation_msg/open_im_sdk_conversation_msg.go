@@ -988,6 +988,27 @@ func (c *Conversation) MarkC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 
 }
 
+func (c *Conversation) MarkMessageAsReadByConID(callback open_im_sdk_callback.Base, conversationID, msgIDList, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, "MarkMessageAsReadByConID args: ", conversationID, msgIDList)
+		var unmarshalParams sdk_params_callback.MarkMessageAsReadByConIDParams
+		common.JsonUnmarshalCallback(msgIDList, &unmarshalParams, callback, operationID)
+		if len(unmarshalParams) == 0 {
+			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.ch)
+			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
+			callback.OnSuccess(sdk_params_callback.MarkMessageAsReadByConIDCallback)
+			return
+		}
+		//c.markMessageAsReadByConID(callback, unmarshalParams, conversationID, operationID)
+		callback.OnSuccess(sdk_params_callback.MarkMessageAsReadByConIDCallback)
+		log.NewInfo(operationID, "MarkMessageAsReadByConID callback: ", sdk_params_callback.MarkMessageAsReadByConIDCallback)
+	}()
+
+}
+
 // fixme
 func (c *Conversation) MarkAllConversationHasRead(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
@@ -1251,6 +1272,33 @@ func (c *Conversation) DeleteMessageFromLocalAndSvr(callback open_im_sdk_callbac
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 		c.deleteMessageFromSvr(callback, &s, operationID)
 		c.deleteMessageFromLocalStorage(callback, &s, operationID)
+		callback.OnSuccess("")
+		log.NewInfo(operationID, fName, "callback: ", "")
+	}()
+}
+
+func (c *Conversation) DeleteAllMsgFromLocalAndSvr(callback open_im_sdk_callback.Base, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName)
+		c.deleteAllMsgFromSvr(callback, operationID)
+		c.deleteAllMsgFromLocal(callback, operationID)
+		callback.OnSuccess("")
+		log.NewInfo(operationID, fName, "callback: ", "")
+	}()
+}
+
+func (c *Conversation) DeleteAllMsgFromLocal(callback open_im_sdk_callback.Base, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName)
+		c.deleteAllMsgFromLocal(callback, operationID)
 		callback.OnSuccess("")
 		log.NewInfo(operationID, fName, "callback: ", "")
 	}()

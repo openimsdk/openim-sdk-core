@@ -52,9 +52,9 @@ const MarkC2CMessageAsReadCallback = constant.SuccessCallbackDefault
 
 const MarkGroupMessageHasReadCallback = constant.SuccessCallbackDefault
 
-type MarkGroupMessageAsReadParams []string
+type MarkMessageAsReadByConIDParams []string
 
-const MarkGroupMessageAsReadCallback = constant.SuccessCallbackDefault
+const MarkMessageAsReadByConIDCallback = constant.SuccessCallbackDefault
 
 type SetConversationStatusParams struct {
 	UserId string `json:"userID" validate:"required"`
