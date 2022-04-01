@@ -178,7 +178,7 @@ func (c *Conversation) deleteConversation(callback open_im_sdk_callback.Base, co
 	common.CheckDBErrCallback(callback, err, operationID)
 	var sourceID string
 	switch lc.ConversationType {
-	case constant.SingleChatType:
+	case constant.SingleChatType, constant.NotificationChatType:
 		sourceID = lc.UserID
 	case constant.GroupChatType:
 		sourceID = lc.GroupID
