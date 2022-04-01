@@ -263,7 +263,7 @@ func (wsRouter *WsFuncRouter) SetOneConversationPrivateChat(input string, operat
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "conversationID", "privateChat") {
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "conversationID", "isPrivate") {
 		return
 	}
 	userWorker.Conversation().SetOneConversationPrivateChat(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationID"].(string), m["isPrivate"].(bool), operationID)
