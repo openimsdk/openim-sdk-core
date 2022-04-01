@@ -54,6 +54,7 @@ func main() {
 	WSADDR := "ws://43.128.5.63:17778"
 
 	sysType := runtime.GOOS
+	log.NewPrivateLog(constant.LogFileName, uint32(*logLevel))
 	open_im_sdk.SetHeartbeatInterval(60)
 	switch sysType {
 
@@ -76,7 +77,6 @@ func main() {
 	}
 	var wg sync.WaitGroup
 	wg.Add(1)
-	log.NewPrivateLog(constant.LogFileName, uint32(*logLevel))
 	fmt.Println("ws server is starting")
 	ws_local_server.WS.OnInit(*sdkWsPort)
 	ws_local_server.WS.Run()
