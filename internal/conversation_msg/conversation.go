@@ -230,6 +230,7 @@ func (c *Conversation) getServerConversationList(operationID string) (server_api
 }
 
 func (c *Conversation) SyncConversations(operationID string) {
+	return
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	conversationsOnServer, err := c.getServerConversationList(operationID)
 	if err != nil {

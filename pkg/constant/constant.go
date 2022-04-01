@@ -251,6 +251,6 @@ const (
 const BigVersion = "v2"
 const UpdateVersion = ".0.0"
 const SdkVersion = "Open-IM-SDK-Core-"
-const LogFileName = "OpenIM.log"
+const LogFileName = "sdk"
 
 var HeartbeatInterval = 30
