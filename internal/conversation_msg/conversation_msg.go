@@ -450,14 +450,22 @@ func (c *Conversation) doMsgReadState(msgReadList []*sdk_struct.MsgStruct) {
 		}
 		var msgIdListStatusOK []string
 		for _, v := range msgIdList {
-			t := new(db.LocalChatLog)
-			t.ClientMsgID = v
-			t.IsRead = true
-			err := c.db.UpdateMessage(t)
+			m, err := c.db.GetMessage(v)
+			if err != nil {
+				log.Error("internal", "GetMessage err:", err, "ClientMsgID", v)
+				continue
+			}
+			attachInfo := sdk_struct.AttachedInfoElem{}
+			_ = utils.JsonStringToStruct(m.AttachedInfo, &attachInfo)
+			attachInfo.HasReadTime = rd.SendTime
+			m.AttachedInfo = utils.StructToJsonString(attachInfo)
+			m.IsRead = true
+			err = c.db.UpdateMessage(m)
 			if err != nil {
 				log.Error("internal", "setMessageHasReadByMsgID err:", err, "ClientMsgID", v)
 				continue
 			}
+
 			msgIdListStatusOK = append(msgIdListStatusOK, v)
 		}
 		if len(msgIdListStatusOK) > 0 {

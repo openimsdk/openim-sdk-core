@@ -148,6 +148,7 @@ type MsgStruct struct {
 type AttachedInfoElem struct {
 	GroupHasReadInfo GroupHasReadInfo `json:"groupHasReadInfo"`
 	IsPrivateChat    bool             `json:"isPrivateChat"`
+	HasReadTime      int64            `json:"hasReadTime"`
 }
 type GroupHasReadInfo struct {
 	HasReadUserIDList []string `json:"hasReadUserIDList"`

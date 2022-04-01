@@ -490,9 +490,25 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 	if err != nil {
 		log.Error(operationID, "inset into chat log err", localMessage, s, err.Error())
 	}
+
 	err2 := c.db.UpdateMessageHasRead(userID, newMessageIDList, constant.SingleChatType)
 	if err2 != nil {
 		log.Error(operationID, "update message has read error", newMessageIDList, userID, err2.Error())
+	}
+	newMessages, err3 := c.db.GetMultipleMessage(newMessageIDList)
+	if err3 != nil {
+		log.Error(operationID, "get messages error", newMessageIDList, userID, err3.Error())
+	}
+	for _, v := range newMessages {
+		attachInfo := sdk_struct.AttachedInfoElem{}
+		_ = utils.JsonStringToStruct(v.AttachedInfo, &attachInfo)
+		attachInfo.HasReadTime = s.SendTime
+		v.AttachedInfo = utils.StructToJsonString(attachInfo)
+		err = c.db.UpdateMessage(v)
+		if err != nil {
+			log.Error("internal", "setMessageHasReadByMsgID err:", err, "ClientMsgID", v)
+			continue
+		}
 	}
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.ch)
 	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
