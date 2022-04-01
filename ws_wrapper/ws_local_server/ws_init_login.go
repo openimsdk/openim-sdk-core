@@ -125,12 +125,12 @@ func (wsRouter *WsFuncRouter) Login(input string, operationID string) {
 	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "userID", "token") {
 		return
 	}
-	userWorker.Login(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId}, m["userID"].(string), m["token"].(string), operationID)
+	userWorker.Login(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["userID"].(string), m["token"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) Logout(input string, operationID string) {
 	//userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	//userWorker.Logout(&BaseSuccFailed{runFuncName(), operationID, wsRouter.uId})
+	//userWorker.Logout(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId})
 	//todo just send response
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", "", operationID})
 }
@@ -167,6 +167,7 @@ func (wsRouter *WsFuncRouter) GetLoginUser(input string, operationID string) {
 }
 
 func InitServer(config *sdk_struct.IMConfig) {
+
 	data, _ := json.Marshal(config)
 	ConfigSvr = string(data)
 	UserRouteMap = make(map[string]RefRouter, 0)

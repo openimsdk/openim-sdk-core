@@ -154,6 +154,7 @@ type LocalGroupMember struct {
 	RoleLevel      int32  `gorm:"column:role_level" json:"roleLevel"`
 	JoinTime       uint32 `gorm:"column:join_time" json:"joinTime"`
 	JoinSource     int32  `gorm:"column:join_source" json:"joinSource"`
+	MuteEndTime    uint32 `gorm:"column:mute_end_time;default:0" json:"muteEndTime"`
 	OperatorUserID string `gorm:"column:operator_user_id;type:varchar(64)" json:"operatorUserID"`
 	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 	AttachedInfo   string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
@@ -342,6 +343,7 @@ type LocalConversation struct {
 	DraftText         string `gorm:"column:draft_text" json:"draftText"`
 	DraftTextTime     int64  `gorm:"column:draft_text_time" json:"draftTextTime"`
 	IsPinned          bool   `gorm:"column:is_pinned" json:"isPinned"`
+	IsPrivateChat     bool   `gorm:"column:is_private_chat" json:"isPrivateChat"`
 	AttachedInfo      string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 	Ex                string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }

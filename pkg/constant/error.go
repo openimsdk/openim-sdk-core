@@ -14,12 +14,15 @@ var (
 	ErrParseToken = ErrInfo{200, ParseTokenMsg.Error()}
 
 	ErrTencentCredential = ErrInfo{400, ThirdPartyMsg.Error()}
+	ErrInBlackList       = ErrInfo{ErrCode: 600, ErrMsg: InBlackList.Error()}
+	ErrNotFriend         = ErrInfo{ErrCode: 601, ErrMsg: NotFriend.Error()}
 
 	ErrTokenExpired     = ErrInfo{701, TokenExpiredMsg.Error()}
 	ErrTokenInvalid     = ErrInfo{702, TokenInvalidMsg.Error()}
 	ErrTokenMalformed   = ErrInfo{703, TokenMalformedMsg.Error()}
 	ErrTokenNotValidYet = ErrInfo{704, TokenNotValidYetMsg.Error()}
 	ErrTokenUnknown     = ErrInfo{705, TokenUnknownMsg.Error()}
+	ErrTokenKicked      = ErrInfo{706, TokenUserKickedMsg.Error()}
 
 	ErrAccess     = ErrInfo{ErrCode: 801, ErrMsg: AccessMsg.Error()}
 	ErrDB         = ErrInfo{ErrCode: 802, ErrMsg: DBMsg.Error()}
@@ -35,6 +38,7 @@ var (
 	ErrWsRecvCode              = ErrInfo{ErrCode: 903, ErrMsg: WsRecvCode.Error()}
 	ErrWsSendTimeout           = ErrInfo{ErrCode: 904, ErrMsg: WsSendTimeout.Error()}
 	ErrResourceLoadNotComplete = ErrInfo{ErrCode: 905, ErrMsg: ResourceLoadNotComplete.Error()}
+	ErrNotSupportFunction      = ErrInfo{ErrCode: 906, ErrMsg: NotSupportFunction.Error()}
 )
 
 var (
@@ -44,6 +48,7 @@ var (
 	TokenNotValidYetMsg = errors.New("token not active yet")
 	TokenMalformedMsg   = errors.New("that's not even a token")
 	TokenUnknownMsg     = errors.New("couldn't handle this token")
+	TokenUserKickedMsg  = errors.New("user has been kicked")
 
 	AccessMsg = errors.New("no permission")
 	DBMsg     = errors.New("db failed")
@@ -60,8 +65,34 @@ var (
 	WsRecvCode              = errors.New("recv code err")
 	WsSendTimeout           = errors.New("send timeout")
 	ResourceLoadNotComplete = errors.New("resource loading is not complete")
+	NotSupportFunction      = errors.New("unsupported function")
+
+	NotFriend   = errors.New("not friend")
+	InBlackList = errors.New("in blackList")
 )
 
 func (e *ErrInfo) Error() string {
 	return e.ErrMsg
+}
+
+const (
+	StatusErrTokenExpired     = 701
+	StatusErrTokenInvalid     = 702
+	StatusErrTokenMalformed   = 703
+	StatusErrTokenNotValidYet = 704
+	StatusErrTokenUnknown     = 705
+	StatusErrTokenKicked      = 706
+)
+
+var statusText = map[int]*ErrInfo{
+	StatusErrTokenExpired:     &ErrTokenExpired,
+	StatusErrTokenInvalid:     &ErrTokenInvalid,
+	StatusErrTokenMalformed:   &ErrTokenMalformed,
+	StatusErrTokenNotValidYet: &ErrTokenNotValidYet,
+	StatusErrTokenUnknown:     &ErrTokenUnknown,
+	StatusErrTokenKicked:      &ErrTokenKicked,
+}
+
+func StatusText(code int) *ErrInfo {
+	return statusText[code]
 }

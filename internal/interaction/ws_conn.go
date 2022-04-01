@@ -37,7 +37,9 @@ func (u *WsConn) CloseConn() error {
 	u.Lock()
 	defer u.Unlock()
 	if u.conn != nil {
-		return utils.Wrap(u.conn.Close(), "")
+		err := u.conn.Close()
+		u.conn = nil
+		return utils.Wrap(err, "")
 	}
 	return nil
 }
@@ -158,7 +160,13 @@ func (u *WsConn) ReConn() (*websocket.Conn, error) {
 	if err != nil {
 		u.loginState = constant.LoginFailed
 		if httpResp != nil {
-			u.listener.OnConnectFailed(int32(httpResp.StatusCode), err.Error())
+			errInfo := constant.StatusText(httpResp.StatusCode)
+			if errInfo != nil {
+				log.Error("", httpResp.StatusCode, errInfo.ErrMsg)
+				u.listener.OnConnectFailed(int32(httpResp.StatusCode), errInfo.ErrMsg)
+			} else {
+				u.listener.OnConnectFailed(int32(httpResp.StatusCode), err.Error())
+			}
 		} else {
 			u.listener.OnConnectFailed(1001, err.Error())
 		}

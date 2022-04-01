@@ -2,9 +2,10 @@ package db
 
 import (
 	"errors"
-	"gorm.io/gorm"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
+
+	"gorm.io/gorm"
 )
 
 func (d *DataBase) GetConversationByUserID(userID string) (*LocalConversation, error) {
@@ -26,6 +27,20 @@ func (d *DataBase) GetAllConversationList() ([]*LocalConversation, error) {
 	}
 	return transfer, err
 }
+
+func (d *DataBase) GetAllConversationListToSync() ([]*LocalConversation, error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var conversationList []LocalConversation
+	err := utils.Wrap(d.conn.Find(&conversationList).Error, "GetAllConversationListToSync failed")
+	var transfer []*LocalConversation
+	for _, v := range conversationList {
+		v1 := v
+		transfer = append(transfer, &v1)
+	}
+	return transfer, err
+}
+
 func (d *DataBase) GetConversationListSplit(offset, count int) ([]*LocalConversation, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
@@ -70,12 +85,31 @@ func (d *DataBase) GetConversation(conversationID string) (*LocalConversation, e
 func (d *DataBase) UpdateConversation(c *LocalConversation) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
+	d.conn.Logger.LogMode(6)
 	t := d.conn.Updates(c)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
 	return utils.Wrap(t.Error, "UpdateConversation failed")
 }
+
+func (d *DataBase) ClearAllConversationLatestMsg(c *LocalConversation) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	t := d.conn.Model(&LocalConversation{}).Exec("update local_conversations set latest_msg = ''")
+	return utils.Wrap(t.Error, "UpdateConversation failed")
+}
+
+func (d *DataBase) UpdateConversationForSync(c *LocalConversation) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	t := d.conn.Model(&LocalConversation{}).Where("conversation_id = ?", c.ConversationID).Updates(map[string]interface{}{"recv_msg_opt": c.RecvMsgOpt, "is_pinned": c.IsPinned, "is_private_chat": c.IsPrivateChat, "ex": c.Ex, "attached_info": c.AttachedInfo})
+	if t.RowsAffected == 0 {
+		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	}
+	return utils.Wrap(t.Error, "UpdateConversation failed")
+}
+
 func (d *DataBase) BatchUpdateConversationList(conversationList []*LocalConversation) error {
 	for _, v := range conversationList {
 		err := d.UpdateConversation(v)

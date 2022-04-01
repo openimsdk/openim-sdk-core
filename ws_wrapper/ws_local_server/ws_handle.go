@@ -3,7 +3,6 @@ package ws_local_server
 import (
 	"encoding/json"
 	"errors"
-	"github.com/gorilla/websocket"
 	utils2 "open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"open_im_sdk/ws_wrapper/utils"
@@ -12,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 type EventData struct {
@@ -22,7 +23,7 @@ type EventData struct {
 	OperationID string `json:"operationID"`
 }
 
-type BaseSuccFailed struct {
+type BaseSuccessFailed struct {
 	funcName    string //e.g open_im_sdk/open_im_sdk.Login
 	operationID string
 	uid         string
@@ -38,12 +39,12 @@ func cleanUpfuncName(funcName string) string {
 	return funcName[end+1:]
 }
 
-func (b *BaseSuccFailed) OnError(errCode int32, errMsg string) {
-	wrapSdkLog("","!!!!!!!OnError ", b.uid, b.operationID, b.funcName)
+func (b *BaseSuccessFailed) OnError(errCode int32, errMsg string) {
+	wrapSdkLog("", "!!!!!!!OnError ", b.uid, b.operationID, b.funcName)
 	SendOneUserMessage(EventData{cleanUpfuncName(b.funcName), errCode, errMsg, "", b.operationID}, b.uid)
 }
 
-func (b *BaseSuccFailed) OnSuccess(data string) {
+func (b *BaseSuccessFailed) OnSuccess(data string) {
 	wrapSdkLog("", "!!!!!!!OnSuccess ", b.uid, b.operationID, b.funcName)
 	SendOneUserMessage(EventData{cleanUpfuncName(b.funcName), 0, "", data, b.operationID}, b.uid)
 }
@@ -80,16 +81,22 @@ func DelUserRouter(uid string) {
 	UserRouteRwLock.Lock()
 	defer UserRouteRwLock.Unlock()
 	urm, ok := UserRouteMap[uid]
+	operationID := utils2.OperationIDGenerator()
 	if ok {
-		operationID := utils2.OperationIDGenerator()
-		wrapSdkLog("", "DelUserRouter logout, UnInitSDK ", uid, operationID)
+
+		wrapSdkLog(operationID, "DelUserRouter logout, UnInitSDK ", uid, operationID)
 
 		urm.wsRouter.LogoutNoCallback(uid, operationID)
 		urm.wsRouter.UnInitSDK()
 	} else {
-		wrapSdkLog("", "no found UserRouteMap: ", uid)
+		wrapSdkLog(operationID, "no found UserRouteMap: ", uid)
 	}
-	wrapSdkLog("", "DelUserRouter delete ", uid)
+	wrapSdkLog(operationID, "DelUserRouter delete ", uid)
+	t, ok := UserRouteMap[uid]
+	if ok {
+		t.refName = make(map[string]reflect.Value)
+	}
+
 	delete(UserRouteMap, uid)
 }
 
@@ -121,9 +128,11 @@ func GenUserRouterNoLock(uid string) *RefRouter {
 	wsRouter1.SetGroupListener()
 	wrapSdkLog("", "SetUserListener() ", uid)
 	wsRouter1.SetUserListener()
+	wrapSdkLog("", "SetSignalingListener() ", uid)
+	wsRouter1.SetSignalingListener()
 
 	var rr RefRouter
-	rr.refName = &RouteMap1
+	rr.refName = RouteMap1
 	rr.wsRouter = &wsRouter1
 	UserRouteMap[uid] = rr
 	wrapSdkLog("", "insert UserRouteMap: ", uid)
@@ -136,16 +145,29 @@ func (wsRouter *WsFuncRouter) GlobalSendMessage(data interface{}) {
 
 //listener
 func SendOneUserMessage(data interface{}, uid string) {
-	bMsg, _ := json.Marshal(data)
 	var chMsg ChanMsg
-	chMsg.data = bMsg
+	chMsg.data, _ = json.Marshal(data)
 	chMsg.uid = uid
-	err := send2Ch(WS.ch, chMsg, 2)
+	err := send2Ch(WS.ch, &chMsg, 2)
 	if err != nil {
-		wrapSdkLog("", "send2ch failed, ", err, string(bMsg), uid)
+		wrapSdkLog("", "send2ch failed, ", err, string(chMsg.data), uid)
 		return
 	}
-	wrapSdkLog("", "send response to web: ", string(bMsg))
+	wrapSdkLog("", "send response to web: ", string(chMsg.data))
+}
+
+func SendOneUserMessageForTest(data interface{}, uid string) {
+	d, err := json.Marshal(data)
+	wrapSdkLog("", "Marshal ", string(d))
+	var chMsg ChanMsg
+	chMsg.data = d
+	chMsg.uid = uid
+	err = send2ChForTest(WS.ch, chMsg, 2)
+	if err != nil {
+		wrapSdkLog("", "send2ch failed, ", err, string(chMsg.data), uid)
+		return
+	}
+	wrapSdkLog("", "send response to web: ", string(chMsg.data))
 }
 
 func SendOneConnMessage(data interface{}, conn *UserConn) {
@@ -159,10 +181,17 @@ func SendOneConnMessage(data interface{}, conn *UserConn) {
 	}
 }
 
-func send2Ch(ch chan ChanMsg, value ChanMsg, timeout int64) error {
+func send2ChForTest(ch chan ChanMsg, value ChanMsg, timeout int64) error {
+	var t ChanMsg
+	t = value
+	wrapSdkLog("", "test uid ", t.uid)
+	return nil
+}
+
+func send2Ch(ch chan ChanMsg, value *ChanMsg, timeout int64) error {
 	var flag = 0
 	select {
-	case ch <- value:
+	case ch <- *value:
 		flag = 1
 	case <-time.After(time.Second * time.Duration(timeout)):
 		flag = 2

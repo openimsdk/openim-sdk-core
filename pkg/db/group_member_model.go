@@ -116,7 +116,7 @@ func (d *DataBase) UpdateGroupMember(groupMember *LocalGroupMember) error {
 	return utils.Wrap(t.Error, "")
 }
 
-func (d *DataBase) GetGroupMenberInfoIfOwnerOrAdmin() ([]*LocalGroupMember, error) {
+func (d *DataBase) GetGroupMemberInfoIfOwnerOrAdmin() ([]*LocalGroupMember, error) {
 	var ownerAndAdminList []*LocalGroupMember
 	groupList, err := d.GetJoinedGroupList()
 	if err != nil {

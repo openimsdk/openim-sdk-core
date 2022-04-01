@@ -18,28 +18,26 @@ import (
 
 func main() {
 	var sdkWsPort, openIMApiPort, openIMWsPort *int
-	var openIMWsAddress, openIMApiAddress *string
+	//var openIMWsAddress, openIMApiAddress *string
 	APIADDR := "http://43.128.5.63:10000"
 	WSADDR := "ws://43.128.5.63:17778"
-	openIMApiAddress = flag.String("openIMApiAddress", "", "openIM api listening port")
-	openIMWsAddress = flag.String("openIMWsAddress", "", "openIM ws listening port")
+	sdkWsPort = flag.Int("sdk_ws_port", 30000, "openIM ws listening port")
+	//openIMApiAddress = flag.String("openIMApiAddress", "", "openIM api listening port")
+	//openIMWsAddress = flag.String("openIMWsAddress", "", "openIM ws listening port")
 	flag.Parse()
 	sysType := runtime.GOOS
 	switch sysType {
 	case "darwin":
-		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: *openIMApiAddress,
-			WsAddr: *openIMWsAddress, Platform: utils.OSXPlatformID, DataDir: "./"})
+		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: APIADDR,
+			WsAddr: WSADDR, Platform: utils.WebPlatformID, DataDir: "./"})
 	case "linux":
-
 		//sdkDBDir:= flag.String("sdk_db_dir","","openIMSDK initialization path")
 		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: "http://" + utils.ServerIP + ":" + utils.IntToString(*openIMApiPort),
 			WsAddr: "ws://" + utils.ServerIP + ":" + utils.IntToString(*openIMWsPort), Platform: utils.WebPlatformID, DataDir: "../db/sdk/"})
 
 	case "windows":
-		sdkWsPort = flag.Int("sdk_ws_port", 30000, "openIM ws listening port")
-		flag.Parse()
 		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: APIADDR,
-			WsAddr: WSADDR, Platform: utils.WebPlatformID, DataDir: "./", LogLevel: 6})
+			WsAddr: WSADDR, Platform: utils.WindowsPlatformID, DataDir: "./", LogLevel: 6})
 	default:
 		fmt.Println("this os not support", sysType)
 
@@ -48,7 +46,13 @@ func main() {
 	wg.Add(1)
 	fmt.Println("ws server is starting")
 	ws_local_server.WS.OnInit(*sdkWsPort)
+	//go func() {
+	//	log.Println(http.ListenAndServe("0.0.0.0:6060", nil))
+	//}()
+
 	ws_local_server.WS.Run()
+
+	fmt.Println("run success")
 	wg.Wait()
 
 }

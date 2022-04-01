@@ -21,6 +21,7 @@ const (
 	PullUserMsgRouter                   = "/chat/pull_msg"
 	PullUserMsgBySeqRouter              = "/chat/pull_msg_by_seq"
 	NewestSeqRouter                     = "/chat/newest_seq"
+	DeleteMsgRouter = "/msg/del_msg"
 	TencentCloudStorageCredentialRouter = "/third/tencent_cloud_storage_credential"
 	AliOSSCredentialRouter              = "/third/ali_oss_credential"
 	MinioStorageCredentialRouter        = "/third/minio_storage_credential"
@@ -41,10 +42,22 @@ const (
 	GetSendGroupApplicationListRouter  = RouterGroup + "/get_user_req_group_applicationList"
 	AcceptGroupApplicationRouter       = RouterGroup + "/group_application_response"
 	RefuseGroupApplicationRouter       = RouterGroup + "/group_application_response"
+	DismissGroupRoute                 = RouterGroup + "/dismiss_group"
+	MuteGroupMember                   = RouterGroup + "/mute_group_member"
+	CancelMuteGroupMember             = RouterGroup + "/cancel_mute_group_member"
+	MuteGroup                         = RouterGroup + "/mute_group"
+	CancelMuteGroup                   = RouterGroup + "/cancel_mute_group"
+
 	SetReceiveMessageOptRouter         = "/conversation/set_receive_message_opt"
 	GetReceiveMessageOptRouter         = "/conversation/get_receive_message_opt"
 	GetAllConversationMessageOptRouter = "/conversation/get_all_conversation_message_opt"
+	SetConversationOptRouter   = ConversationGroup + "/set_conversation"
+	GetConversationsRouter     = ConversationGroup + "/get_conversations"
+	GetAllConversationsRouter  = ConversationGroup + "/get_all_conversations"
+	GetConversationRouter      = ConversationGroup + "/get_conversation"
+	BatchSetConversationRouter = ConversationGroup + "/batch_set_conversation"
 )
 const (
-	RouterGroup = "/group"
+	RouterGroup       = "/group"
+	ConversationGroup = "/conversation"
 )

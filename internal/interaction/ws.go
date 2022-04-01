@@ -10,8 +10,6 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
-	"runtime"
-
 	"time"
 )
 
@@ -22,10 +20,13 @@ type Ws struct {
 	//conversationCh chan common.Cmd2Value
 	cmdCh              chan common.Cmd2Value //waiting logout cmd
 	pushMsgAndMaxSeqCh chan common.Cmd2Value //recv push msg  -> channel
+	cmdHeartbeatCh     chan common.Cmd2Value //
+
+	JustOnceFlag bool
 }
 
-func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, cmdCh chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value) *Ws {
-	p := Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn, cmdCh: cmdCh, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh}
+func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, cmdCh chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value, cmdHeartbeatCh chan common.Cmd2Value) *Ws {
+	p := Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn, cmdCh: cmdCh, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh, cmdHeartbeatCh: cmdHeartbeatCh}
 	go p.ReadData()
 	return &p
 }
@@ -47,6 +48,13 @@ func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, co
 	case r := <-ch:
 		log.Debug(operationID, "ws ch recvMsg success, code ", r.ErrCode)
 		if r.ErrCode != 0 {
+			log.Error(operationID, "ws ch recvMsg failed, code, err msg: ", r.ErrCode, r.ErrMsg)
+			switch r.ErrCode {
+			case int(constant.ErrInBlackList.ErrCode):
+				return nil, &constant.ErrInBlackList
+			case int(constant.ErrNotFriend.ErrCode):
+				return nil, &constant.ErrNotFriend
+			}
 			return nil, constant.WsRecvCode
 		} else {
 			return &r, nil
@@ -54,6 +62,9 @@ func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, co
 
 	case <-time.After(time.Second * time.Duration(timeout)):
 		log.Error(operationID, "ws ch recvMsg err, timeout")
+		if connSend == nil {
+			return nil, errors.New("ws ch recvMsg err, timeout")
+		}
 		if connSend != w.WsConn.conn {
 			return nil, constant.WsRecvConnDiff
 		} else {
@@ -63,6 +74,14 @@ func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, co
 }
 
 func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retryTimes int, senderID, operationID string) (*GeneralWsResp, error) {
+
+	//log.Info(operationID, "mem.profile")
+	//f, err1 := os.OpenFile(operationID+"mem.profile", os.O_CREATE|os.O_RDWR, 0644)
+	//if err1 != nil {
+	//	log.Info(operationID, "OpenFile failed", err1.Error())
+	//}
+	//defer f.Close()
+
 	var wsReq GeneralWsReq
 	var connSend *websocket.Conn
 	var err error
@@ -91,6 +110,7 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 		break
 	}
 	r1, r2 := w.WaitResp(ch, timeout, wsReq.OperationID, connSend)
+	//pprof.Lookup("heap").WriteTo(f, 0)
 	return r1, r2
 }
 func (w *Ws) SendReqTest(m proto.Message, reqIdentifier int32, timeout int, senderID, operationID string) bool {
@@ -154,8 +174,9 @@ func (w *Ws) ReadData() {
 			case r := <-w.cmdCh:
 				if r.Cmd == constant.CmdLogout {
 					log.Info(operationID, "recv CmdLogout, return, close conn")
+					log.Warn(operationID, "close ws read channel ", w.cmdCh)
+					//		close(w.cmdCh)
 					w.SetLoginState(constant.Logout)
-					//		w.CloseConn()
 					return
 				}
 				log.Warn(operationID, "other cmd ...", r.Cmd)
@@ -177,7 +198,9 @@ func (w *Ws) ReadData() {
 			isErrorOccurred = true
 			if w.loginState == constant.Logout {
 				log.Warn(operationID, "loginState == logout ")
-				continue
+				log.Warn(operationID, "close ws read channel ", w.cmdCh)
+				//	close(w.cmdCh)
+				return
 			}
 			if w.WsConn.IsFatalError(err) {
 				log.Error(operationID, "IsFatalError ", err.Error(), "ReConn")
@@ -232,17 +255,31 @@ func (w *Ws) doWsMsg(message []byte) {
 	case constant.WSKickOnlineMsg:
 		log.Warn(wsResp.OperationID, "kick...  logout")
 		w.kickOnline(*wsResp)
-		w.SetLoginState(constant.Logout)
-		w.CloseConn()
-		runtime.Goexit()
+		w.Logout(wsResp.OperationID)
+
 	case constant.WsLogoutMsg:
 		log.Warn(wsResp.OperationID, "logout... ")
-		w.SetLoginState(constant.Logout)
-		w.CloseConn()
-		runtime.Goexit()
+	case constant.WSSendSignalMsg:
+		log.Info(wsResp.OperationID, "signaling...")
+		w.DoWSSignal(*wsResp)
 	default:
 		log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
 		return
+	}
+}
+
+func (w *Ws) Logout(operationID string) {
+	w.SetLoginState(constant.Logout)
+	w.CloseConn()
+	log.Warn(operationID, "TriggerCmdLogout ws...")
+	err := common.TriggerCmdLogout(w.cmdCh)
+	if err != nil {
+		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
+	}
+	log.Info(operationID, "TriggerCmdLogout heartbeat...")
+	err = common.TriggerCmdLogout(w.cmdHeartbeatCh)
+	if err != nil {
+		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
 	}
 }
 
@@ -261,6 +298,13 @@ func (w *Ws) doWSPullMsg(wsResp GeneralWsResp) error {
 }
 
 func (w *Ws) doWSSendMsg(wsResp GeneralWsResp) error {
+	if err := w.notifyResp(wsResp); err != nil {
+		return utils.Wrap(err, "")
+	}
+	return nil
+}
+
+func (w *Ws) DoWSSignal(wsResp GeneralWsResp) error {
 	if err := w.notifyResp(wsResp); err != nil {
 		return utils.Wrap(err, "")
 	}
@@ -295,8 +339,38 @@ func (w *Ws) doWSPushMsgForTest(wsResp GeneralWsResp) error {
 
 func (w *Ws) kickOnline(msg GeneralWsResp) {
 	w.listener.OnKickedOffline()
+
 }
 
-//func (u *Ws) doSendMsg(wsResp GeneralWsResp) error {
-//
-//}
+func (w *Ws) SendSignalingReqWaitResp(req *server_api_params.SignalReq, operationID string) (*server_api_params.SignalResp, error) {
+	resp, err := w.SendReqWaitResp(req, constant.WSSendSignalMsg, 10, 12, w.loginUserID, operationID)
+	if err != nil {
+		return nil, utils.Wrap(err, "")
+	}
+	var signalResp server_api_params.SignalResp
+	err = proto.Unmarshal(resp.Data, &signalResp)
+	if err != nil {
+		return nil, utils.Wrap(err, "")
+	}
+	return &signalResp, nil
+}
+
+func (w *Ws) SignalingWaitPush(inviterUserID, inviteeUserID, roomID string, timeout int32, operationID string) (*server_api_params.SignalReq, error) {
+
+	msgIncr := inviterUserID + inviteeUserID + roomID
+	log.Info(operationID, "add msgIncr: ", msgIncr)
+	ch := w.AddChByIncr(msgIncr)
+	defer w.DelCh(msgIncr)
+
+	resp, err := w.WaitResp(ch, int(timeout), operationID, nil)
+	if err != nil {
+		return nil, utils.Wrap(err, "")
+	}
+	var signalReq server_api_params.SignalReq
+	err = proto.Unmarshal(resp.Data, &signalReq)
+	if err != nil {
+		return nil, utils.Wrap(err, "")
+	}
+
+	return &signalReq, nil
+}

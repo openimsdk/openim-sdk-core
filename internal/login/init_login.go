@@ -1,12 +1,14 @@
 package login
 
 import (
+	"open_im_sdk/internal/advanced_interface"
 	comm2 "open_im_sdk/internal/common"
 	conv "open_im_sdk/internal/conversation_msg"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/group"
 	ws "open_im_sdk/internal/interaction"
+	"open_im_sdk/internal/sdk_advanced_function"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -19,16 +21,17 @@ import (
 )
 
 type LoginMgr struct {
-	friend       *friend.Friend
-	group        *group.Group
-	conversation *conv.Conversation
-	user         *user.User
-	full         *full.Full
-	db           *db.DataBase
-	ws           *ws.Ws
-	msgSync      *ws.MsgSync
-
-	heartbeat *ws.Heartbeat
+	friend           *friend.Friend
+	group            *group.Group
+	conversation     *conv.Conversation
+	user             *user.User
+	signaling        advanced_interface.Signaling
+	advancedFunction advanced_interface.AdvancedFunction
+	full             *full.Full
+	db               *db.DataBase
+	ws               *ws.Ws
+	msgSync          *ws.MsgSync
+	heartbeat        *ws.Heartbeat
 
 	token        string
 	loginUserID  string
@@ -41,11 +44,25 @@ type LoginMgr struct {
 	conversationListener open_im_sdk_callback.OnConversationListener
 	advancedMsgListener  open_im_sdk_callback.OnAdvancedMsgListener
 	userListener         open_im_sdk_callback.OnUserListener
+	signalingListener    open_im_sdk_callback.OnSignalingListener
 
-	conversationCh chan common.Cmd2Value
-	cmdWsCh        chan common.Cmd2Value
-	heartbeatCmdCh chan common.Cmd2Value
-	imConfig       sdk_struct.IMConfig
+	conversationCh     chan common.Cmd2Value
+	cmdWsCh            chan common.Cmd2Value
+	heartbeatCmdCh     chan common.Cmd2Value
+	pushMsgAndMaxSeqCh chan common.Cmd2Value
+	imConfig           sdk_struct.IMConfig
+}
+
+func (u *LoginMgr) Heartbeat() *ws.Heartbeat {
+	return u.heartbeat
+}
+
+func (u *LoginMgr) AdvancedFunction() advanced_interface.AdvancedFunction {
+	return u.advancedFunction
+}
+
+func (u *LoginMgr) Ws() *ws.Ws {
+	return u.ws
 }
 
 func (u *LoginMgr) ImConfig() sdk_struct.IMConfig {
@@ -72,6 +89,10 @@ func (u *LoginMgr) Friend() *friend.Friend {
 	return u.friend
 }
 
+func (u *LoginMgr) Signaling() advanced_interface.Signaling {
+	return u.signaling
+}
+
 func (u *LoginMgr) SetConversationListener(conversationListener open_im_sdk_callback.OnConversationListener) {
 	u.conversationListener = conversationListener
 }
@@ -92,20 +113,43 @@ func (u *LoginMgr) SetUserListener(userListener open_im_sdk_callback.OnUserListe
 	u.userListener = userListener
 }
 
+func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalingListener) {
+	u.signalingListener = listener
+}
+
+//func (u *LoginMgr) DebugMem(userID string) {
+//	u.FWMutex.Lock()
+//
+//	f, _ := os.OpenFile(utils.OperationIDGenerator()+"mem.profile", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+//	u.F = f
+//	pprof.Lookup("heap").WriteTo(u.F, 0)
+//	u.FWMutex.Unlock()
+//}
+
+func (u *LoginMgr) wakeUp(cb open_im_sdk_callback.Base, operationID string) {
+	log.Info(operationID, utils.GetSelfFuncName(), "args ")
+	err := common.TriggerCmdWakeUp(u.heartbeatCmdCh)
+	common.CheckAnyErrCallback(cb, 2001, err, operationID)
+	cb.OnSuccess("")
+}
+
 func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
-	log.Info(operationID, "login start... ", userID, token)
-	if u.justOnceFlag {
-		cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
-		return
-	}
+
+	log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)
+
+	//if u.justOnceFlag {
+	//	cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
+	//	return
+	//}
 	err := CheckToken(userID, token, operationID)
 	common.CheckTokenErrCallback(cb, err, operationID)
 	log.Info(operationID, "checkToken ok ", userID, token)
-	u.justOnceFlag = true
+	//	u.justOnceFlag = true
 
 	u.token = token
 	u.loginUserID = userID
-
+	//log.Warn("", "database begin , see memory, sleep 20s")
+	//time.Sleep(5 * time.Second)
 	db, err := db.NewDataBase(userID, sdk_struct.SvrConf.DataDir)
 	if err != nil {
 		cb.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
@@ -114,16 +158,25 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	}
 	u.db = db
 	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir)
+	//
+	//log.Warn("", "make channel begin , see memory, sleep 20s")
+	//time.Sleep(5 * time.Second)
 	wsRespAsyn := ws.NewWsRespAsyn()
 	wsConn := ws.NewWsConn(u.connListener, token, userID)
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
 	u.cmdWsCh = make(chan common.Cmd2Value, 10)
 
+	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
+
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
-	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, pushMsgAndMaxSeqCh)
+
+	//log.Warn("", "make channel end , see memory, sleep 20s")
+	//time.Sleep(2 * time.Second)
+
+	u.pushMsgAndMaxSeqCh = pushMsgAndMaxSeqCh
+	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
 	u.msgSync = ws.NewMsgSync(db, u.ws, userID, u.conversationCh, pushMsgAndMaxSeqCh)
 
-	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 	u.heartbeat = ws.NewHeartbeat(u.msgSync, u.heartbeatCmdCh)
 
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
@@ -144,6 +197,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
 	u.forcedSynchronization()
 	log.Info(operationID, "forcedSynchronization success...")
+	log.Info(operationID, "all channel ", u.pushMsgAndMaxSeqCh, u.conversationCh, u.heartbeatCmdCh, u.cmdWsCh)
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
 	var objStorage comm2.ObjectStorage
 	switch u.imConfig.ObjectStorage {
@@ -156,16 +210,17 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	default:
 		objStorage = comm2.NewCOS(p)
 	}
+	u.signaling = sdk_advanced_function.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID, u.imConfig.Platform, u.db)
+	u.advancedFunction = sdk_advanced_function.NewChatHasRead(u.ws, u.loginUserID, u.db, u.imConfig.Platform, u.conversationCh, u.advancedMsgListener)
 	u.conversation = conv.NewConversation(u.ws, u.db, p, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
-		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener)
+		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener, u.signaling, u.advancedFunction)
 	u.conversation.SyncConversations(operationID)
+	go common.DoListener(u.conversation)
 	log.Info(operationID, "login success...")
-	//u.forycedSyncReceiveMessageOpt()
 	cb.OnSuccess("")
 
 }
-
 func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_callback.OnConnListener, operationID string) bool {
 	u.imConfig = config
 	log.NewInfo(operationID, utils.GetSelfFuncName(), config)
@@ -176,6 +231,13 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_call
 	return true
 }
 
+//func (u *LoginMgr) clearAll(operationID string) {
+//	log.Info(operationID, utils.GetSelfFuncName(), "close all channel...")
+//	close(u.pushMsgAndMaxSeqCh)
+//	close(u.conversationCh)
+//	close(u.cmdWsCh)
+//	close(u.heartbeatCmdCh)
+//}
 func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string) {
 	log.Info(operationID, "TriggerCmdLogout ws...")
 
@@ -193,6 +255,17 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 	err = common.TriggerCmdLogout(u.heartbeatCmdCh)
 	if err != nil {
 		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
+	}
+	log.Info(operationID, "TriggerCmd conversationCh UnInit...")
+	common.UnInitAll(u.conversationCh)
+	if err != nil {
+		log.Error(operationID, "TriggerCmd UnInit conversation failed ", err.Error())
+	}
+
+	log.Info(operationID, "TriggerCmd pushMsgAndMaxSeqCh UnInit...")
+	common.UnInitAll(u.pushMsgAndMaxSeqCh)
+	if err != nil {
+		log.Error(operationID, "TriggerCmd UnInit pushMsgAndMaxSeqCh failed ", err.Error())
 	}
 
 	timeout := 2
@@ -214,11 +287,13 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 }
 
 func (u *LoginMgr) GetLoginUser() string {
-	if u.GetLoginStatus() == constant.LoginSuccess {
-		return u.loginUserID
-	} else {
-		return ""
-	}
+	return u.loginUserID
+	//
+	//if u.GetLoginStatus() == constant.LoginSuccess {
+	//	return u.loginUserID
+	//} else {
+	//	return ""
+	//}
 }
 
 func (u *LoginMgr) GetLoginStatus() int32 {
@@ -258,20 +333,24 @@ func CheckToken(userID, token string, operationID string) error {
 }
 
 func (u *LoginMgr) uploadImage(callback open_im_sdk_callback.Base, filePath string, token, obj string, operationID string) string {
-	if obj == "cos" {
-		p := ws.NewPostApi(token, u.ImConfig().ApiAddr)
-		o := comm2.NewCOS(p)
-		url, _, err := o.UploadImage(filePath, func(progress int) {
-			if progress == 100 {
-				callback.OnSuccess("")
-			}
-		})
-		if err != nil {
-			log.Error(operationID, "UploadImage failed ", err.Error(), filePath)
-			return ""
+	p := ws.NewPostApi(token, u.ImConfig().ApiAddr)
+	var o comm2.ObjectStorage
+	switch obj {
+	case "cos":
+		o = comm2.NewCOS(p)
+	case "minio":
+		o = comm2.NewMinio(p)
+	default:
+		o = comm2.NewCOS(p)
+	}
+	url, _, err := o.UploadImage(filePath, func(progress int) {
+		if progress == 100 {
+			callback.OnSuccess("")
 		}
-		return url
-	} else {
+	})
+	if err != nil {
+		log.Error(operationID, "UploadImage failed ", err.Error(), filePath)
 		return ""
 	}
+	return url
 }

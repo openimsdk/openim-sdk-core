@@ -2,6 +2,7 @@ package interaction
 
 import (
 	"errors"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"sync"
 	"time"
@@ -50,6 +51,21 @@ func (u *WsRespAsyn) AddCh(userID string) (string, chan GeneralWsResp) {
 	u.wsNotification[msgIncr] = ch
 	return msgIncr, ch
 }
+
+
+func (u *WsRespAsyn) AddChByIncr(msgIncr string) chan GeneralWsResp {
+	u.wsMutex.Lock()
+	defer u.wsMutex.Unlock()
+	ch := make(chan GeneralWsResp, 1)
+	_, ok := u.wsNotification[msgIncr]
+	if ok {
+		log.Error("Repeat failed ", msgIncr)
+	}
+	u.wsNotification[msgIncr] = ch
+	return  ch
+}
+
+
 
 func (u *WsRespAsyn) GetCh(msgIncr string) chan GeneralWsResp {
 	ch, ok := u.wsNotification[msgIncr]

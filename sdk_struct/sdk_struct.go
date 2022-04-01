@@ -3,8 +3,10 @@ package sdk_struct
 import "open_im_sdk/pkg/server_api_params"
 
 ////////////////////////// message/////////////////////////
+
 type MessageReceipt struct {
-	UserID      string   `json:"uid"`
+	GroupID     string   `json:"groupID"`
+	UserID      string   `json:"userID"`
 	MsgIdList   []string `json:"msgIDList"`
 	ReadTime    int64    `json:"readTime"`
 	MsgFrom     int32    `json:"msgFrom"`
@@ -119,6 +121,10 @@ type MsgStruct struct {
 		AtUserList []string `json:"atUserList"`
 		IsAtSelf   bool     `json:"isAtSelf"`
 	} `json:"atElem"`
+	FaceElem struct {
+		Index int    `json:"index"`
+		Data  string `json:"data"`
+	} `json:"faceElem"`
 	LocationElem struct {
 		Description string  `json:"description"`
 		Longitude   float64 `json:"longitude"`
@@ -137,8 +143,17 @@ type MsgStruct struct {
 		Detail      string `json:"detail"`
 		DefaultTips string `json:"defaultTips"`
 	} `json:"notificationElem"`
+	AttachedInfoElem AttachedInfoElem `json:"attachedInfoElem"`
 }
-
+type AttachedInfoElem struct {
+	GroupHasReadInfo GroupHasReadInfo `json:"groupHasReadInfo"`
+	IsPrivateChat    bool             `json:"isPrivateChat"`
+	HasReadTime      int64            `json:"hasReadTime"`
+}
+type GroupHasReadInfo struct {
+	HasReadUserIDList []string `json:"hasReadUserIDList"`
+	HasReadCount      int32    `json:"hasReadCount"`
+}
 type NewMsgList []*MsgStruct
 
 // Implement the sort.Interface interface to get the number of elements method
@@ -180,4 +195,27 @@ type CmdPushMsgToMsgSync struct {
 type CmdMaxSeqToMsgSync struct {
 	MaxSeqOnSvr uint32
 	OperationID string
+}
+type OANotificationElem struct {
+	NotificationName    string `mapstructure:"notificationName" validate:"required"`
+	NotificationFaceURL string `mapstructure:"notificationFaceURL" validate:"required"`
+	NotificationType    int32  `mapstructure:"notificationType" validate:"required"`
+	Text                string `mapstructure:"text" validate:"required"`
+	Url                 string `mapstructure:"url"`
+	MixType             int32  `mapstructure:"mixType"`
+	Image               struct {
+		SourceUrl   string `mapstructure:"sourceURL"`
+		SnapshotUrl string `mapstructure:"snapshotURL"`
+	} `mapstructure:"image"`
+	Video struct {
+		SourceUrl   string `mapstructure:"sourceURL"`
+		SnapshotUrl string `mapstructure:"snapshotURL"`
+		Duration    int64  `mapstructure:"duration"`
+	} `mapstructure:"video"`
+	File struct {
+		SourceUrl string `mapstructure:"sourceURL"`
+		FileName  string `mapstructure:"fileName"`
+		FileSize  int64  `mapstructure:"fileSize"`
+	} `mapstructure:"file"`
+	Ex string `mapstructure:"ex"`
 }

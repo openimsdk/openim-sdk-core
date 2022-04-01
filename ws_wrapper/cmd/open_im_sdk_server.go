@@ -9,9 +9,15 @@ package main
 import (
 	"flag"
 	"fmt"
-	"open_im_sdk/sdk_struct"
+	"net/http"
+	"open_im_sdk/open_im_sdk"
 
+	//	_ "net/http/pprof"
+	_ "net/http/pprof"
+	"open_im_sdk/pkg/constant"
+	"open_im_sdk/sdk_struct"
 	//"open_im_sdk/open_im_sdk"
+	log1 "log"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/ws_wrapper/utils"
 	"open_im_sdk/ws_wrapper/ws_local_server"
@@ -20,6 +26,10 @@ import (
 )
 
 func main() {
+	go func() {
+
+		log1.Println(http.ListenAndServe("0.0.0.0:6060", nil))
+	}()
 	var sdkWsPort, openIMApiPort, openIMWsPort, logLevel *int
 	var openIMWsAddress, openIMApiAddress *string
 	//
@@ -40,10 +50,11 @@ func main() {
 	//	openIMWsPort = flag.Int("openIM_ws_port", 0, "openIM ws listening port")
 	//	flag.Parse()
 	//}
-	APIADDR := "http://1.14.194.38:10000"
-	WSADDR := "ws://1.14.194.38:17778"
+	APIADDR := "http://43.128.5.63:10000"
+	WSADDR := "ws://43.128.5.63:17778"
 
 	sysType := runtime.GOOS
+	open_im_sdk.SetHeartbeatInterval(60)
 	switch sysType {
 
 	case "darwin":
@@ -65,7 +76,7 @@ func main() {
 	}
 	var wg sync.WaitGroup
 	wg.Add(1)
-	log.NewPrivateLog("sdk", uint32(*logLevel))
+	log.NewPrivateLog(constant.LogFileName, uint32(*logLevel))
 	fmt.Println("ws server is starting")
 	ws_local_server.WS.OnInit(*sdkWsPort)
 	ws_local_server.WS.Run()

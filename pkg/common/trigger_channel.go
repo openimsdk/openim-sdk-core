@@ -6,6 +6,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"runtime"
 	"time"
 )
 
@@ -26,6 +27,14 @@ func TriggerCmdLogout(ch chan Cmd2Value) error {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdLogout, Value: nil}
+	return sendCmd(ch, c2v, 1)
+}
+
+func TriggerCmdWakeUp(ch chan Cmd2Value) error {
+	if ch == nil {
+		return utils.Wrap(errors.New("ch == nil"), "")
+	}
+	c2v := Cmd2Value{Cmd: constant.CmdWakeUp, Value: nil}
 	return sendCmd(ch, c2v, 1)
 }
 
@@ -87,9 +96,9 @@ type SourceIDAndSessionType struct {
 	SessionType int32
 }
 
-func unInitAll(conversationCh chan Cmd2Value) {
+func UnInitAll(conversationCh chan Cmd2Value) error {
 	c2v := Cmd2Value{Cmd: constant.CmdUnInit}
-	_ = sendCmd(conversationCh, c2v, 1)
+	return sendCmd(conversationCh, c2v, 1)
 }
 
 type goroutine interface {
@@ -103,8 +112,9 @@ func DoListener(Li goroutine) {
 		select {
 		case cmd := <-Li.GetCh():
 			if cmd.Cmd == constant.CmdUnInit {
-				log.Info("doListener goroutine return")
-				return
+				log.Warn("", "close doListener channel ", Li.GetCh())
+				//	close(Li.GetCh())
+				runtime.Goexit()
 			}
 			//	log.Info("doListener work.")
 			Li.Work(cmd)

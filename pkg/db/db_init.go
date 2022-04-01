@@ -10,6 +10,14 @@ import (
 	"sync"
 )
 
+var UserDBMap map[string]*DataBase
+
+var UserDBLock sync.RWMutex
+
+func init() {
+	UserDBMap = make(map[string]*DataBase, 0)
+}
+
 type DataBase struct {
 	loginUserID string
 	dbDir       string
@@ -17,12 +25,33 @@ type DataBase struct {
 	mRWMutex    sync.RWMutex
 }
 
+//func (d *DataBase) CloseDB() error {
+//	d.mRWMutex.Lock()
+//	defer d.mRWMutex.Unlock()
+//	if d.conn != nil {
+//
+//		if err := d.conn.Close(); err != nil {
+//			log.Error("", "GetSendingMessageList failed ", err.Error())
+//			return err
+//		}
+//	}
+//	return nil
+//}
+
 func NewDataBase(loginUserID string, dbDir string) (*DataBase, error) {
-	dataBase := &DataBase{loginUserID: loginUserID, dbDir: dbDir}
-	err := dataBase.initDB()
-	if err != nil {
-		return dataBase, utils.Wrap(err, "initDB failed")
+	UserDBLock.Lock()
+	defer UserDBLock.Unlock()
+	dataBase, ok := UserDBMap[loginUserID]
+	if !ok {
+		dataBase = &DataBase{loginUserID: loginUserID, dbDir: dbDir}
+		err := dataBase.initDB()
+		if err != nil {
+			return dataBase, utils.Wrap(err, "initDB failed")
+		}
+		UserDBMap[loginUserID] = dataBase
+		log.Info("", "open db", loginUserID)
 	}
+	log.Info("", "db in map", loginUserID)
 	dataBase.setChatLogFailedStatus()
 	return dataBase, nil
 }
@@ -56,6 +85,7 @@ func (d *DataBase) initDB() error {
 	if err != nil {
 		return utils.Wrap(err, "open db failed")
 	}
+
 	d.conn = db
 	//db, err := sql.Open("sqlite3", SvrConf.DbDir+"OpenIM_"+uid+".db")
 	//sdkLog("open db:", SvrConf.DbDir+"OpenIM_"+uid+".db")
