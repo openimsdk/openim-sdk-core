@@ -701,6 +701,14 @@ func MarkC2CMessageAsRead(callback open_im_sdk_callback.Base, operationID string
 	}
 	userForSDK.Conversation().MarkC2CMessageAsRead(callback, userID, msgIDList, operationID)
 }
+func MarkMessageAsReadByConID(callback open_im_sdk_callback.Base, operationID string, conversationID string, msgIDList string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Conversation().MarkMessageAsReadByConID(callback, conversationID, msgIDList, operationID)
+}
 
 //deprecated
 func MarkGroupMessageHasRead(callback open_im_sdk_callback.Base, operationID string, groupID string) {

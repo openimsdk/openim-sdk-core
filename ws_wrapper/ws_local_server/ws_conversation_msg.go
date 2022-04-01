@@ -485,6 +485,19 @@ func (wsRouter *WsFuncRouter) MarkC2CMessageAsRead(input string, operationID str
 	}
 	userWorker.Conversation().MarkC2CMessageAsRead(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["userID"].(string), m["msgIDList"].(string), operationID)
 }
+func (wsRouter *WsFuncRouter) MarkMessageAsReadByConID(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "conversationID", "msgIDList") {
+		return
+	}
+	userWorker.Conversation().MarkMessageAsReadByConID(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationID"].(string), m["msgIDList"].(string), operationID)
+}
 
 func (wsRouter *WsFuncRouter) MarkGroupMessageHasRead(groupID string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)

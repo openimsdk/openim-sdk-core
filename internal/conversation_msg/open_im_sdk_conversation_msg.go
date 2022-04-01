@@ -988,6 +988,27 @@ func (c *Conversation) MarkC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 
 }
 
+func (c *Conversation) MarkMessageAsReadByConID(callback open_im_sdk_callback.Base, conversationID, msgIDList, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, "MarkMessageAsReadByConID args: ", conversationID, msgIDList)
+		var unmarshalParams sdk_params_callback.MarkMessageAsReadByConIDParams
+		common.JsonUnmarshalCallback(msgIDList, &unmarshalParams, callback, operationID)
+		if len(unmarshalParams) == 0 {
+			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.ch)
+			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
+			callback.OnSuccess(sdk_params_callback.MarkMessageAsReadByConIDCallback)
+			return
+		}
+		//c.markMessageAsReadByConID(callback, unmarshalParams, conversationID, operationID)
+		callback.OnSuccess(sdk_params_callback.MarkMessageAsReadByConIDCallback)
+		log.NewInfo(operationID, "MarkMessageAsReadByConID callback: ", sdk_params_callback.MarkMessageAsReadByConIDCallback)
+	}()
+
+}
+
 // fixme
 func (c *Conversation) MarkAllConversationHasRead(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
