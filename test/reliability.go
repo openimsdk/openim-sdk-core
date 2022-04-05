@@ -62,7 +62,7 @@ func ReliabilityTest(msgNum int, interval int, ip string, randSleepMaxSecond int
 		fmt.Println("4444444444444444")
 	}
 	rand.Seed(time.Now().UnixNano())
-	log.NewPrivateLog("sdk", 6)
+	//log.NewPrivateLog("sdk", 6)
 	for i := 0; i < testClientNum; i++ {
 		rdSleep := rand.Intn(randSleepMaxSecond) + 1
 		isSend := rand.Intn(2)
