@@ -9,13 +9,11 @@ package ws_local_server
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"net/http"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/log"
 	utils2 "open_im_sdk/pkg/utils"
-
-	"github.com/gorilla/websocket"
-
 	"open_im_sdk/ws_wrapper/utils"
 	"runtime"
 	"sync"
