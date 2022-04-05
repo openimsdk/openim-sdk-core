@@ -3,6 +3,7 @@ package ws_local_server
 import (
 	"encoding/json"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 )
 

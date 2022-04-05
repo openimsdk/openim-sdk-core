@@ -3,6 +3,8 @@ package ws_local_server
 import (
 	"encoding/json"
 	"errors"
+	"github.com/gorilla/websocket"
+	"open_im_sdk/pkg/log"
 	utils2 "open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"open_im_sdk/ws_wrapper/utils"
@@ -11,8 +13,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/gorilla/websocket"
 )
 
 type EventData struct {

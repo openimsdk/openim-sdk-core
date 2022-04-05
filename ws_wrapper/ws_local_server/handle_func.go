@@ -9,6 +9,7 @@ package ws_local_server
 import (
 	"encoding/json"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/log"
 	"reflect"
 	"runtime"
 )
