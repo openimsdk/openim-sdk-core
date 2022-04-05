@@ -67,7 +67,7 @@ func NewLfsHook(rotationTime time.Duration, maxRemainNum uint, moduleName string
 	lfsHook := lfshook.NewHook(lfshook.WriterMap{
 		logrus.DebugLevel: initRotateLogs(rotationTime, maxRemainNum, "all", moduleName),
 		logrus.InfoLevel:  initRotateLogs(rotationTime, maxRemainNum, "all", moduleName),
-		logrus.WarnLevel:  initRotateLogs(rotationTime, maxRemainNum, "all;", moduleName),
+		logrus.WarnLevel:  initRotateLogs(rotationTime, maxRemainNum, "warn;", moduleName),
 		logrus.ErrorLevel: initRotateLogs(rotationTime, maxRemainNum, "all", moduleName),
 	}, &nested.Formatter{
 		TimestampFormat: "2006-01-02 15:04:05.000",
