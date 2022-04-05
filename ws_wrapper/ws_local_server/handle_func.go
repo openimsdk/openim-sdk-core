@@ -25,14 +25,14 @@ func (ws *WServer) DoLogin(m Req, conn *UserConn) {
 	defer UserRouteRwLock.RUnlock()
 	urm, ok := UserRouteMap[m.UserID]
 	if !ok {
-		wrapSdkLog("", "login", "user first login: ", m)
+		log.Info("", "login", "user first login: ", m)
 		refR := GenUserRouterNoLock(m.UserID)
 		params := []reflect.Value{reflect.ValueOf(m.Data), reflect.ValueOf(m.OperationID)}
 		vf, ok := (refR.refName)[m.ReqFuncName]
 		if ok {
 			vf.Call(params)
 		} else {
-			wrapSdkLog("", "login", "no func name: ", m.ReqFuncName, m)
+			log.Info("", "login", "no func name: ", m.ReqFuncName, m)
 			SendOneConnMessage(EventData{m.ReqFuncName, StatusBadParameter, StatusText(StatusBadParameter), "", m.OperationID}, conn)
 		}
 
@@ -41,7 +41,7 @@ func (ws *WServer) DoLogin(m Req, conn *UserConn) {
 			//send ok
 			SendOneConnMessage(EventData{"Login", 0, "ok", "", m.OperationID}, conn)
 		} else {
-			wrapSdkLog("", "login", "login status pending, try after 5 second ", urm.wsRouter.getMyLoginStatus(), m.UserID)
+			log.Info("", "login", "login status pending, try after 5 second ", urm.wsRouter.getMyLoginStatus(), m.UserID)
 			SendOneConnMessage(EventData{"Login", StatusLoginPending, StatusText(StatusLoginPending), "", m.OperationID}, conn)
 		}
 	}
@@ -57,19 +57,19 @@ func (ws *WServer) msgParse(conn *UserConn, jsonMsg []byte) {
 	defer func() {
 		if r := recover(); r != nil {
 			SendOneConnMessage(EventData{m.ReqFuncName, StatusBadParameter, StatusText(StatusBadParameter), "", m.OperationID}, conn)
-			wrapSdkLog("", "msgParse", "bad request, panic is ", r)
+			log.Info("", "msgParse", "bad request, panic is ", r)
 			buf := make([]byte, 1<<16)
 			runtime.Stack(buf, true)
-			wrapSdkLog("", "msgParse", "call", string(buf))
+			log.Info("", "msgParse", "call", string(buf))
 		}
 	}()
 
-	wrapSdkLog("", "msgParse", "recv request from web: ", "reqFuncName ", m.ReqFuncName, "data ", m.Data, "recv jsonMsg: ", string(jsonMsg))
+	log.Info("", "msgParse", "recv request from web: ", "reqFuncName ", m.ReqFuncName, "data ", m.Data, "recv jsonMsg: ", string(jsonMsg))
 
 	if m.ReqFuncName == "Login" {
 		//	rwLock.Lock()
 		ws.DoLogin(m, conn)
-		wrapSdkLog("", "msgParse", m)
+		log.Info("", "msgParse", m)
 		//	rwLock.Unlock()
 		return
 	}
@@ -81,7 +81,7 @@ func (ws *WServer) msgParse(conn *UserConn, jsonMsg []byte) {
 	urm, ok := UserRouteMap[m.UserID]
 
 	if !ok {
-		wrapSdkLog("", "msgParse", "user not login failed, must login first: ", m.UserID)
+		log.Info("", "msgParse", "user not login failed, must login first: ", m.UserID)
 		SendOneConnMessage(EventData{"Login", StatusNoLogin, StatusText(StatusNoLogin), "", m.OperationID}, conn)
 		return
 	}
@@ -90,7 +90,7 @@ func (ws *WServer) msgParse(conn *UserConn, jsonMsg []byte) {
 	if ok {
 		vf.Call(parms)
 	} else {
-		wrapSdkLog("", "msgParse", "no func ", m.ReqFuncName)
+		log.Info("", "msgParse", "no func ", m.ReqFuncName)
 		SendOneConnMessage(EventData{m.ReqFuncName, StatusBadParameter, StatusText(StatusBadParameter), "", m.OperationID}, conn)
 	}
 
