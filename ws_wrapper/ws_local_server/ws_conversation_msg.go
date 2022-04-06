@@ -3,6 +3,7 @@ package ws_local_server
 import (
 	"encoding/json"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -39,7 +40,7 @@ func (wsRouter *WsFuncRouter) SendMessage(input string, operationID string) {
 
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -144,7 +145,7 @@ func (wsRouter *WsFuncRouter) GetAllConversationList(input string, operationID s
 func (wsRouter *WsFuncRouter) GetConversationListSplit(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -158,7 +159,7 @@ func (wsRouter *WsFuncRouter) GetConversationListSplit(input string, operationID
 func (wsRouter *WsFuncRouter) SetOneConversationRecvMessageOpt(input, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -172,7 +173,7 @@ func (wsRouter *WsFuncRouter) SetOneConversationRecvMessageOpt(input, operationI
 func (wsRouter *WsFuncRouter) SetConversationRecvMessageOpt(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -186,7 +187,7 @@ func (wsRouter *WsFuncRouter) SetConversationRecvMessageOpt(input string, operat
 func (wsRouter *WsFuncRouter) GetConversationRecvMessageOpt(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -200,7 +201,7 @@ func (wsRouter *WsFuncRouter) GetConversationRecvMessageOpt(input string, operat
 func (wsRouter *WsFuncRouter) GetOneConversation(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -230,7 +231,7 @@ func (wsRouter *WsFuncRouter) DeleteConversation(conversationID string, operatio
 func (wsRouter *WsFuncRouter) SetConversationDraft(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -244,7 +245,7 @@ func (wsRouter *WsFuncRouter) SetConversationDraft(input string, operationID str
 func (wsRouter *WsFuncRouter) PinConversation(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -258,7 +259,7 @@ func (wsRouter *WsFuncRouter) PinConversation(input string, operationID string) 
 func (wsRouter *WsFuncRouter) SetOneConversationPrivateChat(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -280,7 +281,7 @@ func (wsRouter *WsFuncRouter) GetTotalUnreadMsgCount(input string, operationID s
 func (wsRouter *WsFuncRouter) CreateTextAtMessage(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -295,7 +296,7 @@ func (wsRouter *WsFuncRouter) CreateTextAtMessage(input string, operationID stri
 func (wsRouter *WsFuncRouter) CreateLocationMessage(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -307,45 +308,45 @@ func (wsRouter *WsFuncRouter) CreateLocationMessage(input string, operationID st
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }
 func (wsRouter *WsFuncRouter) CreateCustomMessage(input string, operationID string) {
-	wrapSdkLog(operationID, utils.GetSelfFuncName(), "CreateCustomMessage", input)
+	log.Info(operationID, utils.GetSelfFuncName(), "CreateCustomMessage", input)
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "data", "extension", "description") {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "key not in, failed", input, m)
+		log.Info(operationID, utils.GetSelfFuncName(), "key not in, failed", input, m)
 		return
 	}
-	wrapSdkLog(operationID, utils.GetSelfFuncName(), "GlobalSendMessage", input)
+	log.Info(operationID, utils.GetSelfFuncName(), "GlobalSendMessage", input)
 	msg := userWorker.Conversation().CreateCustomMessage(m["data"].(string), m["extension"].(string), m["description"].(string), operationID)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }
 
 func (wsRouter *WsFuncRouter) CreateQuoteMessage(input string, operationID string) {
-	wrapSdkLog(operationID, utils.GetSelfFuncName(), "CreateQuoteMessage", input)
+	log.Info(operationID, utils.GetSelfFuncName(), "CreateQuoteMessage", input)
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "text", "message") {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "key not in, failed", input)
+		log.Info(operationID, utils.GetSelfFuncName(), "key not in, failed", input)
 		return
 	}
-	wrapSdkLog(operationID, utils.GetSelfFuncName(), "GlobalSendMessage")
+	log.Info(operationID, utils.GetSelfFuncName(), "GlobalSendMessage")
 	msg := userWorker.Conversation().CreateQuoteMessage(m["text"].(string), m["message"].(string), operationID)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }
 func (wsRouter *WsFuncRouter) CreateCardMessage(input string, operationID string) {
-	wrapSdkLog(operationID, "CreateCardMessage", input)
+	log.Info(operationID, "CreateCardMessage", input)
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -360,7 +361,7 @@ func (wsRouter *WsFuncRouter) CreateCardMessage(input string, operationID string
 func (wsRouter *WsFuncRouter) CreateVideoMessageFromFullPath(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -375,7 +376,7 @@ func (wsRouter *WsFuncRouter) CreateVideoMessageFromFullPath(input string, opera
 func (wsRouter *WsFuncRouter) CreateImageMessageFromFullPath(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -390,7 +391,7 @@ func (wsRouter *WsFuncRouter) CreateImageMessageFromFullPath(input string, opera
 func (wsRouter *WsFuncRouter) CreateSoundMessageFromFullPath(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -405,7 +406,7 @@ func (wsRouter *WsFuncRouter) CreateSoundMessageFromFullPath(input string, opera
 func (wsRouter *WsFuncRouter) CreateMergerMessage(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -419,7 +420,7 @@ func (wsRouter *WsFuncRouter) CreateMergerMessage(input string, operationID stri
 func (wsRouter *WsFuncRouter) CreateFaceMessage(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -461,7 +462,7 @@ func (wsRouter *WsFuncRouter) RevokeMessage(message string, operationID string) 
 func (wsRouter *WsFuncRouter) TypingStatusUpdate(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -475,7 +476,7 @@ func (wsRouter *WsFuncRouter) TypingStatusUpdate(input string, operationID strin
 func (wsRouter *WsFuncRouter) MarkC2CMessageAsRead(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -488,7 +489,7 @@ func (wsRouter *WsFuncRouter) MarkC2CMessageAsRead(input string, operationID str
 func (wsRouter *WsFuncRouter) MarkMessageAsReadByConID(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -509,7 +510,7 @@ func (wsRouter *WsFuncRouter) MarkGroupMessageHasRead(groupID string, operationI
 func (wsRouter *WsFuncRouter) MarkGroupMessageAsRead(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -558,7 +559,7 @@ func (wsRouter *WsFuncRouter) DeleteAllMsgFromLocal(conversationID string, opera
 func (wsRouter *WsFuncRouter) InsertSingleMessageToLocalStorage(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -571,7 +572,7 @@ func (wsRouter *WsFuncRouter) InsertSingleMessageToLocalStorage(input string, op
 func (wsRouter *WsFuncRouter) InsertGroupMessageToLocalStorage(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -590,7 +591,7 @@ func (wsRouter *WsFuncRouter) InsertGroupMessageToLocalStorage(input string, ope
 func (wsRouter *WsFuncRouter) SearchLocalMessages(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -609,7 +610,7 @@ func (wsRouter *WsFuncRouter) SearchLocalMessages(input string, operationID stri
 func (wsRouter *WsFuncRouter) CreateImageMessageByURL(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -626,7 +627,7 @@ func (wsRouter *WsFuncRouter) CreateImageMessageByURL(input string, operationID 
 func (wsRouter *WsFuncRouter) CreateSoundMessageByURL(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -641,7 +642,7 @@ func (wsRouter *WsFuncRouter) CreateSoundMessageByURL(input string, operationID 
 func (wsRouter *WsFuncRouter) CreateVideoMessageByURL(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -656,7 +657,7 @@ func (wsRouter *WsFuncRouter) CreateVideoMessageByURL(input string, operationID 
 func (wsRouter *WsFuncRouter) CreateFileMessageByURL(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -674,7 +675,7 @@ func (wsRouter *WsFuncRouter) SendMessageNotOss(input string, operationID string
 
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}
@@ -709,7 +710,7 @@ func (wsRouter *WsFuncRouter) ClearGroupHistoryMessage(input string, operationID
 //func (wsRouter *WsFuncRouter) SetSdkLog(input string, operationID string) {
 //	m := make(map[string]interface{})
 //	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		wrapSdkLog("unmarshal failed")
+//		log.Info("unmarshal failed")
 //		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 //		return
 //	}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
@@ -80,7 +81,10 @@ func (d *DataBase) initDB() error {
 	defer d.mRWMutex.Unlock()
 
 	dbFileName := d.dbDir + "OpenIM_" + constant.BigVersion + "_" + d.loginUserID + ".db"
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
+	//db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{
+	//  Logger: logger.Default.LogMode(logger.Silent),
+	//})
+	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	log.Info("open db:", dbFileName)
 	if err != nil {
 		return utils.Wrap(err, "open db failed")
