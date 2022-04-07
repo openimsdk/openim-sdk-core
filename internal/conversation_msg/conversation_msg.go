@@ -209,9 +209,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				if isConversationUpdate {
 					if isSenderConversationUpdate {
 						log.Debug(operationID, "updateConversation msg", v, lc)
-						c.updateConversation(&lc, conversationSet, false)
+						c.updateConversation(&lc, conversationSet)
 					} else {
-						c.updateConversation(&lc, conversationSet, true)
+						//special fix
+						c.updateConversation(&lc, conversationSet)
 					}
 					newMessages = append(newMessages, msg)
 				} else {
@@ -264,7 +265,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				}
 
 				if isConversationUpdate {
-					c.updateConversation(&lc, conversationSet, false)
+					c.updateConversation(&lc, conversationSet)
 					newMessages = append(newMessages, msg)
 				} else {
 					msg.Status = constant.MsgStatusFiltered
@@ -694,10 +695,7 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 
 	return err
 }
-func (c *Conversation) updateConversation(lc *db.LocalConversation, cs map[string]*db.LocalConversation, onlyUpdateTime bool) {
-	if onlyUpdateTime {
-		lc.LatestMsg = ""
-	}
+func (c *Conversation) updateConversation(lc *db.LocalConversation, cs map[string]*db.LocalConversation) {
 	if oldC, ok := cs[lc.ConversationID]; !ok {
 		cs[lc.ConversationID] = lc
 	} else {
