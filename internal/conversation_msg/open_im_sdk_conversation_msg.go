@@ -353,6 +353,7 @@ func (c *Conversation) CreateFileMessageFromFullPath(fileFullPath string, fileNa
 	}
 	s.FileElem.FileSize = fi.Size()
 	s.FileElem.FileName = fileName
+	s.Content = utils.StructToJsonString(s.FileElem)
 	return utils.StructToJsonString(s)
 }
 func (c *Conversation) CreateImageMessageFromFullPath(imageFullPath, operationID string) string {
@@ -882,6 +883,7 @@ func (c *Conversation) CreateFileMessage(filePath string, fileName, operationID 
 		return ""
 	}
 	s.FileElem.FileSize = fi.Size()
+	s.Content = utils.StructToJsonString(s.FileElem)
 	return utils.StructToJsonString(s)
 }
 func (c *Conversation) CreateMergerMessage(messageList, title, summaryList, operationID string) string {
