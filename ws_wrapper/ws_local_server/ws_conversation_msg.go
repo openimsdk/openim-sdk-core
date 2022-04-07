@@ -550,9 +550,9 @@ func (wsRouter *WsFuncRouter) DeleteAllMsgFromLocal(operationID string) {
 	userWorker.Conversation().DeleteAllMsgFromLocal(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
-func (wsRouter *WsFuncRouter) DeleteConversationMsgFromLocalAndSvr(conversationID string, operationID string) {
+func (wsRouter *WsFuncRouter) DeleteConversationFromLocalAndSvr(conversationID string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	userWorker.Conversation().DeleteConversationMsgFromLocalAndSvr(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, conversationID,operationID)
+	userWorker.Conversation().DeleteConversationFromLocalAndSvr(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, conversationID, operationID)
 }
 
 func (wsRouter *WsFuncRouter) InsertSingleMessageToLocalStorage(input string, operationID string) {
@@ -697,6 +697,13 @@ func (wsRouter *WsFuncRouter) ClearC2CHistoryMessage(input string, operationID s
 	}
 	userWorker.Conversation().ClearC2CHistoryMessage(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, input, operationID)
 }
+func (wsRouter *WsFuncRouter) ClearC2CHistoryMessageFromLocalAndSvr(input string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
+		return
+	}
+	userWorker.Conversation().ClearC2CHistoryMessageFromLocalAndSvr(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, input, operationID)
+}
 
 func (wsRouter *WsFuncRouter) ClearGroupHistoryMessage(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
@@ -704,6 +711,13 @@ func (wsRouter *WsFuncRouter) ClearGroupHistoryMessage(input string, operationID
 		return
 	}
 	userWorker.Conversation().ClearGroupHistoryMessage(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, input, operationID)
+}
+func (wsRouter *WsFuncRouter) ClearGroupHistoryMessageFromLocalAndSvr(input string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
+		return
+	}
+	userWorker.Conversation().ClearGroupHistoryMessageFromLocalAndSvr(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, input, operationID)
 }
 
 //func (wsRouter *WsFuncRouter) SetSdkLog(input string, operationID string) {

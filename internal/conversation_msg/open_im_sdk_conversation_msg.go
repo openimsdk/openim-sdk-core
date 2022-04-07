@@ -1056,12 +1056,38 @@ func (c *Conversation) ClearC2CHistoryMessage(callback open_im_sdk_callback.Base
 
 	}()
 }
-
 func (c *Conversation) ClearGroupHistoryMessage(callback open_im_sdk_callback.Base, groupID string, operationID string) {
 	go func() {
 		c.clearGroupHistoryMessage(callback, groupID, operationID)
 		callback.OnSuccess("")
 
+	}()
+}
+func (c *Conversation) ClearC2CHistoryMessageFromLocalAndSvr(callback open_im_sdk_callback.Base, userID string, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", userID)
+		conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
+		c.deleteConversationAndMsgFromSvr(callback, conversationID, operationID)
+		c.clearC2CHistoryMessage(callback, userID, operationID)
+		callback.OnSuccess("")
+	}()
+}
+
+func (c *Conversation) ClearGroupHistoryMessageFromLocalAndSvr(callback open_im_sdk_callback.Base, groupID string, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", groupID)
+		conversationID := utils.GetConversationIDBySessionType(groupID, constant.SingleChatType)
+		c.deleteConversationAndMsgFromSvr(callback, conversationID, operationID)
+		c.clearGroupHistoryMessage(callback, groupID, operationID)
+		callback.OnSuccess("")
 	}()
 }
 
@@ -1248,7 +1274,7 @@ func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, con
 
 }
 
-func (c *Conversation) DeleteConversationMsgFromLocalAndSvr(callback open_im_sdk_callback.Base, conversationID string, operationID string) {
+func (c *Conversation) DeleteConversationFromLocalAndSvr(callback open_im_sdk_callback.Base, conversationID string, operationID string) {
 	if callback == nil {
 		return
 	}
