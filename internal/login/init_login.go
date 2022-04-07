@@ -189,7 +189,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.group = group.NewGroup(u.loginUserID, u.db, p)
 	u.group.SetGroupListener(u.groupListener)
 
-	u.full = full.NewFull(u.user, u.friend, u.group)
+	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh)
 	//if u.imConfig.ObjectStorage != "cos" && u.imConfig.ObjectStorage != "" {
 	//	err = errors.New("u.imConfig.ObjectStorage failed ")
 	//	common.CheckConfigErrCallback(cb, err, operationID)

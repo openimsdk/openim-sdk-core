@@ -210,8 +210,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					if isSenderConversationUpdate {
 						log.Debug(operationID, "updateConversation msg", v, lc)
 						c.updateConversation(&lc, conversationSet)
+						newMessages = append(newMessages, msg)
 					}
-					newMessages = append(newMessages, msg)
 				} else {
 					msg.Status = constant.MsgStatusFiltered
 				}
