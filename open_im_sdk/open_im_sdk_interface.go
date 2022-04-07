@@ -750,7 +750,7 @@ func DeleteMessageFromLocalAndSvr(callback open_im_sdk_callback.Base, operationI
 	userForSDK.Conversation().DeleteMessageFromLocalAndSvr(callback, message, operationID)
 }
 
-func DeleteConversationMsgFromLocalAndSvr(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
+func DeleteConversationFromLocalAndSvr(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
 		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
