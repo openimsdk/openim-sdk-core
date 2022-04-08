@@ -45,8 +45,8 @@ type WServer struct {
 }
 
 func (ws *WServer) OnInit(wsPort int) {
-	ip := utils.ServerIP
-	ws.wsAddr = ip + ":" + utils.IntToString(wsPort)
+	//ip := utils.ServerIP
+	ws.wsAddr = ":" + utils.IntToString(wsPort)
 	ws.wsMaxConnNum = 10000
 	ws.wsConnToUser = make(map[*UserConn]map[string]string)
 	ws.wsUserToConn = make(map[string]map[string]*UserConn)
