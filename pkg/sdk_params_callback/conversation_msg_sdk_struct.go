@@ -22,6 +22,7 @@ type GetMultipleConversationParams []string
 type GetMultipleConversationCallback []*db.LocalConversation
 
 const DeleteConversationCallback = constant.SuccessCallbackDefault
+const DeleteAllConversationFromLocalCallback = constant.SuccessCallbackDefault
 
 const SetConversationDraftCallback = constant.SuccessCallbackDefault
 

@@ -110,6 +110,18 @@ func (c *Conversation) DeleteConversation(callback open_im_sdk_callback.Base, co
 		log.NewInfo(operationID, "DeleteConversation callback: ", sdk_params_callback.DeleteConversationCallback)
 	}()
 }
+func (c *Conversation) DeleteAllConversationFromLocal(callback open_im_sdk_callback.Base, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, "DeleteAllConversationFromLocal args: ")
+		err := c.db.ResetAllConversation()
+		common.CheckDBErrCallback(callback, err, operationID)
+		callback.OnSuccess(sdk_params_callback.DeleteAllConversationFromLocalCallback)
+		log.NewInfo(operationID, "DeleteConversation callback: ", sdk_params_callback.DeleteAllConversationFromLocalCallback)
+	}()
+}
 func (c *Conversation) SetConversationDraft(callback open_im_sdk_callback.Base, conversationID, draftText string, operationID string) {
 	if callback == nil {
 		return

@@ -542,7 +542,14 @@ func DeleteConversation(callback open_im_sdk_callback.Base, operationID string, 
 	}
 	userForSDK.Conversation().DeleteConversation(callback, conversationID, operationID)
 }
-
+func DeleteAllConversationFromLocal(callback open_im_sdk_callback.Base, operationID string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Conversation().DeleteAllConversationFromLocal(callback, operationID)
+}
 func SetConversationDraft(callback open_im_sdk_callback.Base, operationID string, conversationID, draftText string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
