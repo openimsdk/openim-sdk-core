@@ -405,7 +405,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	cf.WsAddr = ws
 	cf.Platform = 2
 	cf.DataDir = "./"
-	cf.LogLevel = 6
+	cf.LogLevel = 2
 
 	var s string
 	b, _ := json.Marshal(cf)
@@ -434,7 +434,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 
 	InOutlllogin(uid, tk)
 	time.Sleep(2 * time.Second)
-	log.Info("", "InOutDoTest fin")
+	log.Warn("", "InOutDoTest fin")
 }
 
 func lllogin(uid, tk string) bool {

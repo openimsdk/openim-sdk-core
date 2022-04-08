@@ -13,6 +13,7 @@ import (
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+	"sync"
 
 	"github.com/jinzhu/copier"
 )
@@ -791,9 +792,21 @@ func (g *Group) SyncJoinedGroupMember(operationID string) {
 		log.Error(operationID, "getJoinedGroupListFromSvr failed ", err.Error())
 		return
 	}
-	for _, v := range groupListOnServer {
-		g.syncGroupMemberByGroupID(v.GroupID, operationID, true)
+	var wg sync.WaitGroup
+	if len(groupListOnServer) == 0 {
+		return
 	}
+	wg.Add(len(groupListOnServer))
+	log.Info(operationID, "syncGroupMemberByGroupID begin", len(groupListOnServer))
+	for _, v := range groupListOnServer {
+		go func(groupID, operationID string) {
+			g.syncGroupMemberByGroupID(groupID, operationID, true)
+			wg.Done()
+		}(v.GroupID, operationID)
+	}
+
+	wg.Wait()
+	log.Info(operationID, "syncGroupMemberByGroupID end")
 }
 
 func (g *Group) getGroupAllMemberByGroupIDFromSvr(groupID string, operationID string) ([]*api.GroupMemberFullInfo, error) {
