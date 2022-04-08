@@ -540,12 +540,12 @@ func (wsRouter *WsFuncRouter) DeleteMessageFromLocalAndSvr(message string, opera
 	userWorker.Conversation().DeleteMessageFromLocalAndSvr(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, message, operationID)
 }
 
-func (wsRouter *WsFuncRouter) DeleteAllMsgFromLocalAndSvr(operationID string) {
+func (wsRouter *WsFuncRouter) DeleteAllMsgFromLocalAndSvr(input string,operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	userWorker.Conversation().DeleteAllMsgFromLocalAndSvr(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
-func (wsRouter *WsFuncRouter) DeleteAllMsgFromLocal(operationID string) {
+func (wsRouter *WsFuncRouter) DeleteAllMsgFromLocal(input string,operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	userWorker.Conversation().DeleteAllMsgFromLocal(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
