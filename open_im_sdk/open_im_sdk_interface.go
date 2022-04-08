@@ -542,7 +542,14 @@ func DeleteConversation(callback open_im_sdk_callback.Base, operationID string, 
 	}
 	userForSDK.Conversation().DeleteConversation(callback, conversationID, operationID)
 }
-
+func DeleteAllConversationFromLocal(callback open_im_sdk_callback.Base, operationID string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Conversation().DeleteAllConversationFromLocal(callback, operationID)
+}
 func SetConversationDraft(callback open_im_sdk_callback.Base, operationID string, conversationID, draftText string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
@@ -750,13 +757,13 @@ func DeleteMessageFromLocalAndSvr(callback open_im_sdk_callback.Base, operationI
 	userForSDK.Conversation().DeleteMessageFromLocalAndSvr(callback, message, operationID)
 }
 
-func DeleteConversationMsgFromLocalAndSvr(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
+func DeleteConversationFromLocalAndSvr(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
 		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
 		return
 	}
-	userForSDK.Conversation().DeleteConversationMsgFromLocalAndSvr(callback, conversationID, operationID)
+	userForSDK.Conversation().DeleteConversationFromLocalAndSvr(callback, conversationID, operationID)
 }
 
 func DeleteAllMsgFromLocalAndSvr(callback open_im_sdk_callback.Base, operationID string) {
@@ -785,6 +792,15 @@ func ClearC2CHistoryMessage(callback open_im_sdk_callback.Base, operationID stri
 	}
 	userForSDK.Conversation().ClearC2CHistoryMessage(callback, userID, operationID)
 }
+func ClearC2CHistoryMessageFromLocalAndSvr(callback open_im_sdk_callback.Base, operationID string, userID string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Conversation().ClearC2CHistoryMessageFromLocalAndSvr(callback, userID, operationID)
+}
+
 func ClearGroupHistoryMessage(callback open_im_sdk_callback.Base, operationID string, groupID string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
@@ -792,6 +808,14 @@ func ClearGroupHistoryMessage(callback open_im_sdk_callback.Base, operationID st
 		return
 	}
 	userForSDK.Conversation().ClearGroupHistoryMessage(callback, groupID, operationID)
+}
+func ClearGroupHistoryMessageFromLocalAndSvr(callback open_im_sdk_callback.Base, operationID string, groupID string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Conversation().ClearGroupHistoryMessageFromLocalAndSvr(callback, groupID, operationID)
 }
 func InsertSingleMessageToLocalStorage(callback open_im_sdk_callback.Base, operationID string, message, recvID, sendID string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {

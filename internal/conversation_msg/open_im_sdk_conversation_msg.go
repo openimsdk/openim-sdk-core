@@ -110,6 +110,18 @@ func (c *Conversation) DeleteConversation(callback open_im_sdk_callback.Base, co
 		log.NewInfo(operationID, "DeleteConversation callback: ", sdk_params_callback.DeleteConversationCallback)
 	}()
 }
+func (c *Conversation) DeleteAllConversationFromLocal(callback open_im_sdk_callback.Base, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, "DeleteAllConversationFromLocal args: ")
+		err := c.db.ResetAllConversation()
+		common.CheckDBErrCallback(callback, err, operationID)
+		callback.OnSuccess(sdk_params_callback.DeleteAllConversationFromLocalCallback)
+		log.NewInfo(operationID, "DeleteConversation callback: ", sdk_params_callback.DeleteAllConversationFromLocalCallback)
+	}()
+}
 func (c *Conversation) SetConversationDraft(callback open_im_sdk_callback.Base, conversationID, draftText string, operationID string) {
 	if callback == nil {
 		return
@@ -353,6 +365,7 @@ func (c *Conversation) CreateFileMessageFromFullPath(fileFullPath string, fileNa
 	}
 	s.FileElem.FileSize = fi.Size()
 	s.FileElem.FileName = fileName
+	s.Content = utils.StructToJsonString(s.FileElem)
 	return utils.StructToJsonString(s)
 }
 func (c *Conversation) CreateImageMessageFromFullPath(imageFullPath, operationID string) string {
@@ -882,6 +895,7 @@ func (c *Conversation) CreateFileMessage(filePath string, fileName, operationID 
 		return ""
 	}
 	s.FileElem.FileSize = fi.Size()
+	s.Content = utils.StructToJsonString(s.FileElem)
 	return utils.StructToJsonString(s)
 }
 func (c *Conversation) CreateMergerMessage(messageList, title, summaryList, operationID string) string {
@@ -1054,12 +1068,38 @@ func (c *Conversation) ClearC2CHistoryMessage(callback open_im_sdk_callback.Base
 
 	}()
 }
-
 func (c *Conversation) ClearGroupHistoryMessage(callback open_im_sdk_callback.Base, groupID string, operationID string) {
 	go func() {
 		c.clearGroupHistoryMessage(callback, groupID, operationID)
 		callback.OnSuccess("")
 
+	}()
+}
+func (c *Conversation) ClearC2CHistoryMessageFromLocalAndSvr(callback open_im_sdk_callback.Base, userID string, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", userID)
+		conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
+		c.deleteConversationAndMsgFromSvr(callback, conversationID, operationID)
+		c.clearC2CHistoryMessage(callback, userID, operationID)
+		callback.OnSuccess("")
+	}()
+}
+
+func (c *Conversation) ClearGroupHistoryMessageFromLocalAndSvr(callback open_im_sdk_callback.Base, groupID string, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", groupID)
+		conversationID := utils.GetConversationIDBySessionType(groupID, constant.SingleChatType)
+		c.deleteConversationAndMsgFromSvr(callback, conversationID, operationID)
+		c.clearGroupHistoryMessage(callback, groupID, operationID)
+		callback.OnSuccess("")
 	}()
 }
 
@@ -1246,7 +1286,7 @@ func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, con
 
 }
 
-func (c *Conversation) DeleteConversationMsgFromLocalAndSvr(callback open_im_sdk_callback.Base, conversationID string, operationID string) {
+func (c *Conversation) DeleteConversationFromLocalAndSvr(callback open_im_sdk_callback.Base, conversationID string, operationID string) {
 	if callback == nil {
 		return
 	}

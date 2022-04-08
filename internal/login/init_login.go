@@ -18,6 +18,7 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"sync"
 )
 
 type LoginMgr struct {
@@ -189,7 +190,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.group = group.NewGroup(u.loginUserID, u.db, p)
 	u.group.SetGroupListener(u.groupListener)
 
-	u.full = full.NewFull(u.user, u.friend, u.group)
+	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh)
 	//if u.imConfig.ObjectStorage != "cos" && u.imConfig.ObjectStorage != "" {
 	//	err = errors.New("u.imConfig.ObjectStorage failed ")
 	//	common.CheckConfigErrCallback(cb, err, operationID)
@@ -302,15 +303,57 @@ func (u *LoginMgr) GetLoginStatus() int32 {
 
 func (u *LoginMgr) forcedSynchronization() {
 	operationID := utils.OperationIDGenerator()
-	u.friend.SyncFriendList(operationID)
-	u.friend.SyncBlackList(operationID)
-	u.friend.SyncFriendApplication(operationID)
-	u.friend.SyncSelfFriendApplication(operationID)
-	u.user.SyncLoginUserInfo(operationID)
-	u.group.SyncJoinedGroupList(operationID)
-	u.group.SyncAdminGroupApplication(operationID)
-	u.group.SyncSelfGroupApplication(operationID)
-	u.group.SyncJoinedGroupMember(operationID)
+
+	var wg sync.WaitGroup
+	wg.Add(9)
+
+	go func() {
+		u.friend.SyncFriendList(operationID)
+		wg.Done()
+	}()
+
+	go func() {
+		u.friend.SyncBlackList(operationID)
+		wg.Done()
+	}()
+
+	go func() {
+		u.friend.SyncFriendApplication(operationID)
+		wg.Done()
+	}()
+
+	go func() {
+		u.friend.SyncSelfFriendApplication(operationID)
+		wg.Done()
+	}()
+
+	go func() {
+		u.user.SyncLoginUserInfo(operationID)
+		wg.Done()
+	}()
+
+	go func() {
+		u.group.SyncJoinedGroupList(operationID)
+		wg.Done()
+	}()
+
+	go func() {
+		u.group.SyncAdminGroupApplication(operationID)
+		wg.Done()
+	}()
+
+	go func() {
+		u.group.SyncSelfGroupApplication(operationID)
+		wg.Done()
+	}()
+
+	go func() {
+		u.group.SyncJoinedGroupMember(operationID)
+		wg.Done()
+	}()
+
+	wg.Wait()
+
 }
 
 func (u *LoginMgr) GetMinSeqSvr() int64 {

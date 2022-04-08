@@ -178,7 +178,7 @@ func (c *Conversation) deleteConversation(callback open_im_sdk_callback.Base, co
 	common.CheckDBErrCallback(callback, err, operationID)
 	var sourceID string
 	switch lc.ConversationType {
-	case constant.SingleChatType:
+	case constant.SingleChatType, constant.NotificationChatType:
 		sourceID = lc.UserID
 	case constant.GroupChatType:
 		sourceID = lc.GroupID
@@ -274,7 +274,6 @@ func (c *Conversation) SyncConversations(operationID string) {
 			newConversation.ShowName = g.GroupName
 			newConversation.FaceURL = g.FaceURL
 		}
-		newConversation.LatestMsgSendTime = TimeOffset
 		err := c.db.InsertConversation(&newConversation)
 		if err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation error", err.Error(), conversation)
@@ -811,8 +810,7 @@ func (c *Conversation) deleteAllMsgFromLocal(callback open_im_sdk_callback.Base,
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	err := c.db.DeleteAllMessage()
 	common.CheckDBErrCallback(callback, err, operationID)
-	conversation := &db.LocalConversation{LatestMsg: ""}
-	err = c.db.ClearAllConversationLatestMsg(conversation)
+	err = c.db.CleaALLConversation()
 	common.CheckDBErrCallback(callback, err, operationID)
 	conversationList, err := c.db.GetAllConversationList()
 	common.CheckDBErrCallback(callback, err, operationID)

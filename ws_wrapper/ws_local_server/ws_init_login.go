@@ -5,6 +5,7 @@ import (
 	"open_im_sdk/internal/login"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 
 	//	"open_im_sdk/pkg/constant"
@@ -65,7 +66,7 @@ var ConfigSvr string
 func (wsRouter *WsFuncRouter) InitSDK(config string, operationID string) {
 	var initcb InitCallback
 	initcb.uid = wsRouter.uId
-	wrapSdkLog(operationID, "Initsdk uid: ", initcb.uid, config)
+	log.Info(operationID, "Initsdk uid: ", initcb.uid, config)
 	c := sdk_struct.IMConfig{}
 	json.Unmarshal([]byte(config), &c)
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
@@ -77,10 +78,10 @@ func (wsRouter *WsFuncRouter) InitSDK(config string, operationID string) {
 }
 
 func (wsRouter *WsFuncRouter) UnInitSDK() {
-	wrapSdkLog("", "UnInitSDK uid: ", wsRouter.uId)
+	log.Info("", "UnInitSDK uid: ", wsRouter.uId)
 	open_im_sdk.UserSDKRwLock.Lock()
 	delete(open_im_sdk.UserRouterMap, wsRouter.uId)
-	wrapSdkLog("", "delete UnInitSDK uid: ", wsRouter.uId)
+	log.Info("", "delete UnInitSDK uid: ", wsRouter.uId)
 	open_im_sdk.UserSDKRwLock.Unlock()
 }
 
@@ -88,14 +89,14 @@ func (wsRouter *WsFuncRouter) checkResourceLoadingAndKeysIn(mgr *login.LoginMgr,
 	for _, k := range keys {
 		_, ok := m[k]
 		if !ok {
-			wrapSdkLog(operationID, "key not in", keys, input, operationID, funcName)
+			log.Info(operationID, "key not in", keys, input, operationID, funcName)
 			wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(funcName), StatusBadParameter, "key not in", "", operationID})
 			return false
 		}
 	}
 
 	if err := open_im_sdk.CheckResourceLoad(mgr); err != nil {
-		wrapSdkLog(operationID, "Resource Loading ", mgr, err.Error())
+		log.Info(operationID, "Resource Loading ", mgr, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(funcName), StatusResourceNotCompleted, "resource loading is not completed", "", operationID})
 		return false
 	}
@@ -106,7 +107,7 @@ func (wsRouter *WsFuncRouter) checkKeysIn(input, operationID, funcName string, m
 	for _, k := range keys {
 		_, ok := m[k]
 		if !ok {
-			wrapSdkLog(operationID, "key not in", keys, input, funcName, m)
+			log.Info(operationID, "key not in", keys, input, funcName, m)
 			wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(funcName), StatusBadParameter, "key not in", "", operationID})
 			return false
 		}
@@ -117,7 +118,7 @@ func (wsRouter *WsFuncRouter) checkKeysIn(input, operationID, funcName string, m
 func (wsRouter *WsFuncRouter) Login(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		wrapSdkLog(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
 		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
 		return
 	}

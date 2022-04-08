@@ -152,7 +152,7 @@ func (d *DataBase) UpdateMessage(c *LocalChatLog) error {
 func (d *DataBase) DeleteAllMessage() error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	err := d.conn.Model(&LocalChatLog{}).Exec("update local_chat_logs set status = 4").Error
+	err := d.conn.Model(&LocalChatLog{}).Exec("update local_chat_logs set status = ?,content = ? ", constant.MsgStatusHasDeleted, "").Error
 	return utils.Wrap(err, "delete all message error")
 }
 

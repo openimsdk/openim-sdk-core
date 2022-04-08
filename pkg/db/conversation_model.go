@@ -19,7 +19,20 @@ func (d *DataBase) GetAllConversationList() ([]*LocalConversation, error) {
 	defer d.mRWMutex.Unlock()
 	var conversationList []LocalConversation
 	err := utils.Wrap(d.conn.Where("latest_msg_send_time != ?", 0).Order("case when is_pinned=1 then 0 else 1 end,max(latest_msg_send_time,draft_text_time) DESC").Find(&conversationList).Error,
-		"GetFriendList failed")
+		"GetAllConversationList failed")
+	var transfer []*LocalConversation
+	for _, v := range conversationList {
+		v1 := v
+		transfer = append(transfer, &v1)
+	}
+	return transfer, err
+}
+func (d *DataBase) GetHiddenConversationList() ([]*LocalConversation, error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var conversationList []LocalConversation
+	err := utils.Wrap(d.conn.Where("latest_msg_send_time = ?", 0).Find(&conversationList).Error,
+		"GetHiddenConversationList failed")
 	var transfer []*LocalConversation
 	for _, v := range conversationList {
 		v1 := v
@@ -93,13 +106,6 @@ func (d *DataBase) UpdateConversation(c *LocalConversation) error {
 	return utils.Wrap(t.Error, "UpdateConversation failed")
 }
 
-func (d *DataBase) ClearAllConversationLatestMsg(c *LocalConversation) error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	t := d.conn.Model(&LocalConversation{}).Exec("update local_conversations set latest_msg = ''")
-	return utils.Wrap(t.Error, "UpdateConversation failed")
-}
-
 func (d *DataBase) UpdateConversationForSync(c *LocalConversation) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
@@ -149,6 +155,19 @@ func (d *DataBase) ResetConversation(conversationID string) error {
 	return utils.Wrap(t.Error, "ResetConversation failed")
 }
 
+//Reset ALL conversation is equivalent to deleting the conversation,
+//and the GetAllConversation or GetConversationListSplit interface will no longer be obtained.
+func (d *DataBase) ResetAllConversation() error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	c := LocalConversation{UnreadCount: 0, LatestMsg: "", LatestMsgSendTime: 0, DraftText: "", DraftTextTime: 0}
+	t := d.conn.Session(&gorm.Session{AllowGlobalUpdate: true}).Select("unread_count", "latest_msg", "latest_msg_send_time", "draft_text", "draft_text_time").Updates(c)
+	if t.RowsAffected == 0 {
+		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	}
+	return utils.Wrap(t.Error, "ResetConversation failed")
+}
+
 //Clear the conversation, which is used to delete the conversation history message and clear the conversation at the same time.
 //The GetAllConversation or GetConversationListSplit interface can still be obtained,
 //but there is no latest message.
@@ -157,6 +176,20 @@ func (d *DataBase) ClearConversation(conversationID string) error {
 	defer d.mRWMutex.Unlock()
 	c := LocalConversation{ConversationID: conversationID, UnreadCount: 0, LatestMsg: "", DraftText: "", DraftTextTime: 0}
 	t := d.conn.Select("unread_count", "latest_msg", "draft_text", "draft_text_time").Updates(c)
+	if t.RowsAffected == 0 {
+		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	}
+	return utils.Wrap(t.Error, "ClearConversation failed")
+}
+
+//Clear ALL conversation, which is used to delete the conversation history message and clear the conversation at the same time.
+//The GetAllConversation or GetConversationListSplit interface can still be obtained,
+//but there is no latest message.
+func (d *DataBase) CleaALLConversation() error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	c := LocalConversation{UnreadCount: 0, LatestMsg: "", DraftText: "", DraftTextTime: 0}
+	t := d.conn.Session(&gorm.Session{AllowGlobalUpdate: true}).Select("unread_count", "latest_msg", "draft_text", "draft_text_time").Updates(c)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
