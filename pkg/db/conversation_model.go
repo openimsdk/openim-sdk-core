@@ -27,6 +27,19 @@ func (d *DataBase) GetAllConversationList() ([]*LocalConversation, error) {
 	}
 	return transfer, err
 }
+func (d *DataBase) GetHiddenConversationList() ([]*LocalConversation, error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var conversationList []LocalConversation
+	err := utils.Wrap(d.conn.Where("latest_msg_send_time = ?", 0).Find(&conversationList).Error,
+		"GetFriendList failed")
+	var transfer []*LocalConversation
+	for _, v := range conversationList {
+		v1 := v
+		transfer = append(transfer, &v1)
+	}
+	return transfer, err
+}
 
 func (d *DataBase) GetAllConversationListToSync() ([]*LocalConversation, error) {
 	d.mRWMutex.Lock()

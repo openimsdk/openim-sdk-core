@@ -87,6 +87,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	conversationChangedSet := make(map[string]*db.LocalConversation)
 	newConversationSet := make(map[string]*db.LocalConversation)
 	conversationSet := make(map[string]*db.LocalConversation)
+	phConversationChangedSet := make(map[string]*db.LocalConversation)
+	phNewConversationSet := make(map[string]*db.LocalConversation)
 	log.Info(operationID, "do Msg come here")
 	for _, v := range allMsg {
 		isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
@@ -318,14 +320,24 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		log.Error(operationID, "insert err message err  :", err2.Error())
 
 	}
-
+	hList, _ := c.db.GetHiddenConversationList()
+	for _, v := range hList {
+		if nc, ok := newConversationSet[v.ConversationID]; ok {
+			phConversationChangedSet[v.ConversationID] = nc
+		}
+	}
+	for k, v := range newConversationSet {
+		if _, ok := phConversationChangedSet[v.ConversationID]; !ok {
+			phNewConversationSet[k] = v
+		}
+	}
 	//Changed conversation storage
-	err3 := c.db.BatchUpdateConversationList(mapConversationToList(conversationChangedSet))
+	err3 := c.db.BatchUpdateConversationList(append(mapConversationToList(conversationChangedSet), mapConversationToList(phConversationChangedSet)...))
 	if err3 != nil {
 		log.Error(operationID, "insert changed conversation err :", err3.Error())
 	}
 	//New conversation storage
-	err4 := c.db.BatchInsertConversationList(mapConversationToList(newConversationSet))
+	err4 := c.db.BatchInsertConversationList(mapConversationToList(phNewConversationSet))
 	if err4 != nil {
 		log.Error(operationID, "insert new conversation err:", err4.Error())
 	}
