@@ -274,7 +274,6 @@ func (c *Conversation) SyncConversations(operationID string) {
 			newConversation.ShowName = g.GroupName
 			newConversation.FaceURL = g.FaceURL
 		}
-		newConversation.LatestMsgSendTime = TimeOffset
 		err := c.db.InsertConversation(&newConversation)
 		if err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation error", err.Error(), conversation)
