@@ -5,6 +5,10 @@ BIN_DIR=../../bin/
 LAN_FILE=.go
 GO_FILE:=${BINARY_NAME}${LAN_FILE}
 
+build-linux:
+	go mod tidy
+	CGO_ENABLED=1 go build -o open_im_sdk_server ws_wrapper/cmd/open_im_sdk_server.go
+
 build:
 	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o ${BINARY_NAME}  ${GO_FILE}
 install:

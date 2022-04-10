@@ -2,8 +2,6 @@ package interaction
 
 import (
 	"errors"
-	"github.com/golang/protobuf/proto"
-	"github.com/gorilla/websocket"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
@@ -11,6 +9,9 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"time"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/gorilla/websocket"
 )
 
 type Ws struct {
@@ -48,6 +49,10 @@ func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, co
 	case r := <-ch:
 		log.Debug(operationID, "ws ch recvMsg success, code ", r.ErrCode)
 		if r.ErrCode != 0 {
+			// 首先判断是否是自定义的错误码区间【拦截器】
+			if r.ErrCode >= constant.ErrCodeFilterMin && r.ErrCode <= constant.ErrCodeFilterMax {
+				return nil, common.NewCodeError(r.ErrCode, r.ErrMsg)
+			}
 			log.Error(operationID, "ws ch recvMsg failed, code, err msg: ", r.ErrCode, r.ErrMsg)
 			switch r.ErrCode {
 			case int(constant.ErrInBlackList.ErrCode):
