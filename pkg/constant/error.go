@@ -43,10 +43,10 @@ var (
 
 const (
 	// 自定义的过滤器错误码最小值
-	ErrCodeFilterMin = 10001
+	ErrCodeFilterMin = 30001
 
 	// 自定义的过滤器错误码大值
-	ErrCodeFilterMax = 11000
+	ErrCodeFilterMax = 39999
 )
 
 var (
