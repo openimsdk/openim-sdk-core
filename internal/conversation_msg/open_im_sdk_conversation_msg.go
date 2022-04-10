@@ -788,11 +788,19 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.Local
 	timeout := 300
 	retryTimes := 60
 	resp, err := c.SendReqWaitResp(&wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID, operationID)
-	switch e := err.(type) {
-	case *constant.ErrInfo:
-		c.checkErrAndUpdateMessage(callback, e.ErrCode, e, s, lc, operationID)
-	default:
-		c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
+	if err != nil {
+		switch e := err.(type) {
+		case *constant.ErrInfo:
+			c.checkErrAndUpdateMessage(callback, e.ErrCode, e, s, lc, operationID)
+		case *common.CodeError:
+			c.updateMsgStatusAndTriggerConversation(s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc, operationID)
+			errInfo := "operationID[" + operationID + "], " + "info[" + err.Error() + "]"
+			log.NewError(operationID, "checkErr ", errInfo)
+			callback.OnError(int32(e.Code), e.Msg)
+			return
+		default:
+			c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
+		}
 	}
 	var sendMsgResp server_api_params.UserSendMsgResp
 	_ = proto.Unmarshal(resp.Data, &sendMsgResp)
