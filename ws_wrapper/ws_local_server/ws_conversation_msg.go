@@ -26,6 +26,7 @@ type SendCallback struct {
 	BaseSuccessFailed
 	clientMsgID string
 	//uid         string
+	operationID string
 }
 
 func (s *SendCallback) OnProgress(progress int) {
@@ -33,7 +34,7 @@ func (s *SendCallback) OnProgress(progress int) {
 	mReply["progress"] = progress
 	jsonStr, _ := json.Marshal(mReply)
 
-	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(jsonStr), "0"}, s.uid)
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(jsonStr), operationID}, s.uid)
 }
 
 func (wsRouter *WsFuncRouter) SendMessage(input string, operationID string) {
@@ -46,6 +47,7 @@ func (wsRouter *WsFuncRouter) SendMessage(input string, operationID string) {
 	}
 	var sc SendCallback
 	sc.uid = wsRouter.uId
+	sc.operationID = operationID
 	sc.funcName = runFuncName()
 	sc.operationID = operationID
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
