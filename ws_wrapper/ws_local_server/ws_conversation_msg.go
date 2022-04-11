@@ -34,7 +34,7 @@ func (s *SendCallback) OnProgress(progress int) {
 	mReply["progress"] = progress
 	jsonStr, _ := json.Marshal(mReply)
 
-	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(jsonStr), operationID}, s.uid)
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(jsonStr), s.operationID}, s.uid)
 }
 
 func (wsRouter *WsFuncRouter) SendMessage(input string, operationID string) {
