@@ -26,7 +26,7 @@ type SendCallback struct {
 	BaseSuccessFailed
 	clientMsgID string
 	//uid         string
-	operationID string
+	//operationID string
 }
 
 func (s *SendCallback) OnProgress(progress int) {
@@ -49,7 +49,6 @@ func (wsRouter *WsFuncRouter) SendMessage(input string, operationID string) {
 	sc.uid = wsRouter.uId
 	sc.operationID = operationID
 	sc.funcName = runFuncName()
-	sc.operationID = operationID
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "message", "recvID", "groupID", "offlinePushInfo") {
