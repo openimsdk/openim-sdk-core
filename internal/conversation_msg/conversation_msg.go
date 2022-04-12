@@ -258,8 +258,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				case constant.NotificationChatType:
 					lc.ConversationID = utils.GetConversationIDBySessionType(v.SendID, constant.NotificationChatType)
 					lc.UserID = v.SendID
-					lc.ShowName = msg.SenderNickname
-					lc.FaceURL = msg.SenderFaceURL
 				}
 				if isUnreadCount {
 					isTriggerUnReadCount = true
@@ -783,7 +781,7 @@ func (t *tmpCallback) OnSuccess(data string) {
 func (c *Conversation) addFaceURLAndName(lc *db.LocalConversation) {
 	operationID := utils.OperationIDGenerator()
 	switch lc.ConversationType {
-	case constant.SingleChatType:
+	case constant.SingleChatType, constant.NotificationChatType:
 		faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, lc.UserID, operationID)
 		if err != nil {
 			log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error(), lc.UserID)
