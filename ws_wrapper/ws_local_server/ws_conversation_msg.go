@@ -3,8 +3,10 @@ package ws_local_server
 import (
 	"encoding/json"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 )
 
 //
@@ -32,9 +34,10 @@ type SendCallback struct {
 func (s *SendCallback) OnProgress(progress int) {
 	mReply := make(map[string]interface{})
 	mReply["progress"] = progress
+	mReply["clientMsgID"] = s.clientMsgID
 	jsonStr, _ := json.Marshal(mReply)
 
-	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(jsonStr), s.operationID}, s.uid)
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", string(jsonStr), ""}, s.uid)
 }
 
 func (wsRouter *WsFuncRouter) SendMessage(input string, operationID string) {
@@ -50,10 +53,12 @@ func (wsRouter *WsFuncRouter) SendMessage(input string, operationID string) {
 	sc.operationID = operationID
 	sc.funcName = runFuncName()
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "message", "recvID", "groupID", "offlinePushInfo") {
 		return
 	}
+	s := sdk_struct.MsgStruct{}
+	common.JsonUnmarshalAndArgsValidate(m["message"].(string), &s, &sc, operationID)
+	sc.clientMsgID = s.ClientMsgID
 	userWorker.Conversation().SendMessage(&sc, m["message"].(string), m["recvID"].(string), m["groupID"].(string), m["offlinePushInfo"].(string), operationID)
 
 }
@@ -674,6 +679,23 @@ func (wsRouter *WsFuncRouter) CreateFileMessageByURL(input string, operationID s
 	}
 
 	msg := userWorker.Conversation().CreateFileMessageByURL(m["fileBaseInfo"].(string), operationID)
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+
+}
+
+func (wsRouter *WsFuncRouter) CreateFileMessageFromFullPath(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "fileFullPath","fileName") {
+		return
+	}
+
+	msg := userWorker.Conversation().CreateFileMessageFromFullPath(m["fileFullPath"].(string),m["fileName"].(string), operationID)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 
 }
