@@ -88,7 +88,7 @@ func (ws *WServer) getMsgAndSend() {
 				log.Info(operationID, "getMsgAndSend channel: ", string(r.data), r.uid)
 
 				//		conns := ws.getUserConn(r.uid + " " + "Web")
-				conns := ws.getUserConn(r.uid + utils.PlatformIDToName(sdk_struct.SvrConf.Platform))
+				conns := ws.getUserConn(r.uid + " " + utils.PlatformIDToName(sdk_struct.SvrConf.Platform))
 				if conns == nil {
 					log.Info(operationID, "uid no conn, failed ", r.uid)
 					r.data = nil
