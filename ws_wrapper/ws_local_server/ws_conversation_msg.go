@@ -27,8 +27,6 @@ func (wsRouter *WsFuncRouter) CreateTextMessage(input string, operationID string
 type SendCallback struct {
 	BaseSuccessFailed
 	clientMsgID string
-	//uid         string
-	//operationID string
 }
 
 func (s *SendCallback) OnProgress(progress int) {
@@ -691,11 +689,11 @@ func (wsRouter *WsFuncRouter) CreateFileMessageFromFullPath(input string, operat
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "fileFullPath","fileName") {
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "fileFullPath", "fileName") {
 		return
 	}
 
-	msg := userWorker.Conversation().CreateFileMessageFromFullPath(m["fileFullPath"].(string),m["fileName"].(string), operationID)
+	msg := userWorker.Conversation().CreateFileMessageFromFullPath(m["fileFullPath"].(string), m["fileName"].(string), operationID)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 
 }

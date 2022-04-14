@@ -6,8 +6,6 @@ import (
 	"github.com/gorilla/websocket"
 	"open_im_sdk/pkg/log"
 	utils2 "open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
-	"open_im_sdk/ws_wrapper/utils"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -69,14 +67,15 @@ type WsFuncRouter struct {
 
 func DelUserRouter(uid string) {
 	log.Info("", "DelUserRouter ", uid)
-	sub := " " + utils.PlatformIDToName(sdk_struct.SvrConf.Platform)
-	idx := strings.LastIndex(uid, sub)
-	if idx == -1 {
-		log.Info("", "err uid, not Web", uid)
-		return
-	}
+	//sub := " " + utils.PlatformIDToName(sdk_struct.SvrConf.Platform)
+	//idx := strings.LastIndex(uid, sub)
+	//if idx == -1 {
+	//	log.Info("", "err uid, not Web", uid)
+	//	return
+	//}
+	uid = strings.Split(uid, " ")[0]
 
-	uid = uid[:idx]
+	//= uid[:idx]
 
 	UserRouteRwLock.Lock()
 	defer UserRouteRwLock.Unlock()
