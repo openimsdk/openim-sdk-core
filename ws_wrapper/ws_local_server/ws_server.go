@@ -90,7 +90,7 @@ func (ws *WServer) getMsgAndSend() {
 				//		conns := ws.getUserConn(r.uid + " " + "Web")
 				conns := ws.getUserConn(r.uid + " " + utils.PlatformIDToName(sdk_struct.SvrConf.Platform))
 				if conns == nil {
-					log.Info(operationID, "uid no conn, failed ", r.uid)
+					log.Info(operationID, "uid no conn, failed ", r.uid+" "+utils.PlatformIDToName(sdk_struct.SvrConf.Platform))
 					r.data = nil
 				}
 				for _, conn := range conns {
