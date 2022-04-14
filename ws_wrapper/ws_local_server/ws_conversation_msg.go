@@ -385,17 +385,11 @@ func (wsRouter *WsFuncRouter) CreateVideoMessageFromFullPath(input string, opera
 }
 
 func (wsRouter *WsFuncRouter) CreateImageMessageFromFullPath(input string, operationID string) {
-	m := make(map[string]interface{})
-	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-		return
-	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "imageFullPath") {
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil ) {
 		return
 	}
-	msg := userWorker.Conversation().CreateImageMessageFromFullPath(m["imageFullPath"].(string), operationID)
+	msg := userWorker.Conversation().CreateImageMessageFromFullPath(input, operationID)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }
 
