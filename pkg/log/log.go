@@ -7,7 +7,6 @@ import (
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
-	"open_im_sdk/sdk_struct"
 	"os"
 	"time"
 )
@@ -20,7 +19,7 @@ type Logger struct {
 }
 
 func init() {
-	logger = loggerInit("", sdk_struct.SvrConf.LogLevel)
+	logger = loggerInit("", 6)
 }
 func NewPrivateLog(moduleName string, logLevel uint32) {
 	logger = loggerInit(moduleName, logLevel)
