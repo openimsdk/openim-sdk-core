@@ -72,7 +72,7 @@ func DelUserRouter(uid string) {
 	sub := " " + utils.PlatformIDToName(sdk_struct.SvrConf.Platform)
 	idx := strings.LastIndex(uid, sub)
 	if idx == -1 {
-		log.Info("", "err uid, not Web", uid)
+		log.Info("", "err uid, not Web", uid, sub)
 		return
 	}
 
