@@ -762,7 +762,7 @@ func (c *Conversation) InternalSendMessage(callback open_im_sdk_callback.Base, s
 	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
 	wsMsgData.OfflinePushInfo = p
-	timeout := 300
+	timeout := 10
 	retryTimes := 0
 	g, err := c.SendReqWaitResp(&wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID, operationID)
 	switch e := err.(type) {
