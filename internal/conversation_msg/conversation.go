@@ -2,8 +2,6 @@ package conversation_msg
 
 import (
 	"errors"
-	"github.com/golang/protobuf/proto"
-	"github.com/jinzhu/copier"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -15,6 +13,9 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sort"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/jinzhu/copier"
 )
 
 func (c *Conversation) getAllConversationList(callback open_im_sdk_callback.Base, operationID string) sdk.GetAllConversationListCallback {
@@ -25,6 +26,12 @@ func (c *Conversation) getAllConversationList(callback open_im_sdk_callback.Base
 
 func (c *Conversation) getConversationListSplit(callback open_im_sdk_callback.Base, offset, count int, operationID string) sdk.GetConversationListSplitCallback {
 	conversationList, err := c.db.GetConversationListSplit(offset, count)
+	common.CheckDBErrCallback(callback, err, operationID)
+	return conversationList
+}
+
+func (c *Conversation) getConversationListByUser(callback open_im_sdk_callback.Base, isPinedOrder bool, userIds []string, operationID string) sdk.GetConversationListSplitCallback {
+	conversationList, err := c.db.GetConversationListByUser(isPinedOrder, userIds...)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return conversationList
 }

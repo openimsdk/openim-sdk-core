@@ -481,6 +481,15 @@ func GetConversationListSplit(callback open_im_sdk_callback.Base, operationID st
 	userForSDK.Conversation().GetConversationListSplit(callback, offset, count, operationID)
 }
 
+func GetConversationListByUser(callback open_im_sdk_callback.Base, operationID string, isPinedOrder bool, userIds []string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Conversation().GetConversationListByUser(callback, isPinedOrder, userIds, operationID)
+}
+
 func GetOneConversation(callback open_im_sdk_callback.Base, operationID string, sessionType int, sourceID string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())

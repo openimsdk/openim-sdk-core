@@ -46,6 +46,18 @@ func (c *Conversation) GetConversationListSplit(callback open_im_sdk_callback.Ba
 	}()
 }
 
+func (c *Conversation) GetConversationListByUser(callback open_im_sdk_callback.Base, isPinedOrder bool, userIds []string, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, "GetConversationListByUser args: ", isPinedOrder, userIds)
+		result := c.getConversationListByUser(callback, isPinedOrder, userIds, operationID)
+		callback.OnSuccess(utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, "GetConversationListByUser callback: ", utils.StructToJsonStringDefault(result))
+	}()
+}
+
 func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList string, opt int, operationID string) {
 	if callback == nil {
 		return

@@ -59,7 +59,7 @@ func (d *DataBase) GetConversationListSplit(offset, count int) ([]*LocalConversa
 	defer d.mRWMutex.Unlock()
 	var conversationList []LocalConversation
 	err := utils.Wrap(d.conn.Where("latest_msg_send_time != ?", 0).Order("case when is_pinned=1 then 0 else 1 end,max(latest_msg_send_time,draft_text_time) DESC").Offset(offset).Limit(count).Find(&conversationList).Error,
-		"GetFriendList failed")
+		"GetConversationListSplit failed")
 	var transfer []*LocalConversation
 	for _, v := range conversationList {
 		v1 := v
@@ -67,6 +67,31 @@ func (d *DataBase) GetConversationListSplit(offset, count int) ([]*LocalConversa
 	}
 	return transfer, err
 }
+
+func (d *DataBase) GetConversationListByUser(isPinedOrder bool, userIds ...string) ([]*LocalConversation, error) {
+	if len(userIds) == 0 {
+		return nil, nil
+	}
+
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var conversationList []LocalConversation
+	tx := d.conn.Where("user_id in ? and latest_msg_send_time != ?", userIds, 0)
+	if isPinedOrder {
+		tx = tx.Order("case when is_pinned=1 then 0 else 1 end,max(latest_msg_send_time,draft_text_time) DESC")
+	} else {
+		tx = tx.Order("case when is_pinned=1 then 0 else 1 end")
+	}
+	err := utils.Wrap(tx.Find(&conversationList).Error,
+		"GetConversationListByUser failed")
+	var transfer []*LocalConversation
+	for _, v := range conversationList {
+		v1 := v
+		transfer = append(transfer, &v1)
+	}
+	return transfer, err
+}
+
 func (d *DataBase) BatchInsertConversationList(conversationList []*LocalConversation) error {
 	if conversationList == nil {
 		return nil

@@ -160,6 +160,28 @@ func (wsRouter *WsFuncRouter) GetConversationListSplit(input string, operationID
 	userWorker.Conversation().GetConversationListSplit(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, int(m["offset"].(float64)), int(m["count"].(float64)), operationID)
 }
 
+func (wsRouter *WsFuncRouter) GetConversationListByUser(input string, operationID string) {
+	m := struct {
+		IsPinedOrder bool     `json:"isPinedOrder"`
+		UserIds      []string `json:"userIds"`
+	}{}
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	funcName := runFuncName()
+	if err := open_im_sdk.CheckResourceLoad(userWorker); err != nil {
+		log.Info(operationID, "Resource Loading ", userWorker, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(funcName), StatusResourceNotCompleted, "resource loading is not completed", "", operationID})
+		return
+	}
+
+	userWorker.Conversation().GetConversationListByUser(&BaseSuccessFailed{funcName, operationID, wsRouter.uId}, m.IsPinedOrder, m.UserIds, operationID)
+}
+
 func (wsRouter *WsFuncRouter) SetOneConversationRecvMessageOpt(input, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
@@ -386,7 +408,7 @@ func (wsRouter *WsFuncRouter) CreateVideoMessageFromFullPath(input string, opera
 
 func (wsRouter *WsFuncRouter) CreateImageMessageFromFullPath(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil ) {
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
 		return
 	}
 	msg := userWorker.Conversation().CreateImageMessageFromFullPath(input, operationID)
