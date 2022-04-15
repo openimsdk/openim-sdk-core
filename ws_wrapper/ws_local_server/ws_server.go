@@ -97,10 +97,12 @@ func (ws *WServer) getMsgAndSend() {
 					if conn != nil {
 						err := WS.writeMsg(conn, websocket.TextMessage, r.data)
 						if err != nil {
-							log.Info(operationID, "WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", r.uid, "error", err.Error())
+							log.Error(operationID, "WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", r.uid, "error", err.Error())
+						} else {
+							log.Info(operationID, "writeMsg  ", conn, string(r.data))
 						}
 					} else {
-						log.Info(operationID, "Conn is nil, failed")
+						log.Error(operationID, "Conn is nil, failed")
 					}
 				}
 				r.data = nil
