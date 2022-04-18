@@ -159,11 +159,15 @@ func (u *WsConn) ReConn() (*websocket.Conn, error) {
 	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
 	log.Info(operationID, "ws conn, dail : ", url)
 	if err != nil {
+		errMsg := err.Error()
 		u.loginState = constant.LoginFailed
-		log.Error(operationID, "websocket.DefaultDialer.Dial failed ", err.Error(), "url ", url)
-		u.listener.OnConnectFailed(1001, err.Error())
 		if httpResp != nil {
-			log.Error(operationID, "Dial  httpResp", *httpResp)
+			errMsg = httpResp.Header.Get("ws_err_msg")
+			log.Error(operationID, "websocket.DefaultDialer.Dial failed ", err.Error(), "url ", url, errMsg)
+			u.listener.OnConnectFailed(1001, errMsg)
+		} else {
+			u.listener.OnConnectFailed(1001, err.Error())
+			log.Error(operationID, "websocket.DefaultDialer.Dial failed ", errMsg, "url ", url)
 		}
 		//if httpResp != nil {
 		//	errInfo := constant.StatusText(httpResp.StatusCode)
@@ -176,7 +180,7 @@ func (u *WsConn) ReConn() (*websocket.Conn, error) {
 		//} else {
 		//	u.listener.OnConnectFailed(1001, err.Error())
 		//}
-		return nil, err
+		return nil, utils.Wrap(err, errMsg)
 	}
 	u.listener.OnConnectSuccess()
 	u.loginState = constant.LoginSuccess
