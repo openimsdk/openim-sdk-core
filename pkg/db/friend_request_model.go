@@ -31,7 +31,7 @@ func (d *DataBase) GetRecvFriendApplication() ([]*LocalFriendRequest, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var friendRequestList []LocalFriendRequest
-	err := utils.Wrap(d.conn.Where("to_user_id = ?", d.loginUserID).Find(&friendRequestList).Error, "GetRecvFriendApplication failed")
+	err := utils.Wrap(d.conn.Where("to_user_id = ?", d.loginUserID).Order("create_time DESC").Find(&friendRequestList).Error, "GetRecvFriendApplication failed")
 
 	var transfer []*LocalFriendRequest
 	for _, v := range friendRequestList {
@@ -45,7 +45,7 @@ func (d *DataBase) GetSendFriendApplication() ([]*LocalFriendRequest, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var friendRequestList []LocalFriendRequest
-	err := utils.Wrap(d.conn.Where("from_user_id = ?", d.loginUserID).Find(&friendRequestList).Error, "GetSendFriendApplication failed")
+	err := utils.Wrap(d.conn.Where("from_user_id = ?", d.loginUserID).Order("create_time DESC").Find(&friendRequestList).Error, "GetSendFriendApplication failed")
 
 	var transfer []*LocalFriendRequest
 	for _, v := range friendRequestList {

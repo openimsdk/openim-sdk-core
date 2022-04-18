@@ -382,10 +382,13 @@ func InOutlllogin(uid, tk string) {
 	var callback BaseSuccessFailed
 	callback.funcName = utils.GetSelfFuncName()
 	operationID := utils.OperationIDGenerator()
+	//	log.Info(operationID, " login start ")
 	open_im_sdk.Login(&callback, operationID, uid, tk)
 	for {
 		if callback.errCode == 1 || callback.errCode == -1 {
 			return
+		} else {
+			//	log.Info(operationID, "waiting login ")
 		}
 	}
 
@@ -405,7 +408,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	cf.WsAddr = ws
 	cf.Platform = 2
 	cf.DataDir = "./"
-	cf.LogLevel = 2
+	cf.LogLevel = 6
 
 	var s string
 	b, _ := json.Marshal(cf)

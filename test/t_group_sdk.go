@@ -99,7 +99,7 @@ func SetTestGroupID(groupID, memberID string) {
 }
 
 var MemberUserID = "18349115126"
-var TestgroupID = "f2e77b9ec33e92298675ad511fdfa6ab"
+var TestgroupID = "2de9d19e73f7b314978b42a8744e664d"
 
 func DoTestCreateGroup() {
 	var test testCreateGroup
@@ -420,4 +420,16 @@ func DotestRefuseGroupApplication(uid string) {
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
 	open_im_sdk.RefuseGroupApplication(test, test.OperationID, TestgroupID, MemberUserID, "no")
+}
+
+type testSetGroupMemberNickname struct {
+	baseCallback
+}
+
+func DotestSetGroupMemberNickname(myUserID string) {
+	var test testSetGroupMemberNickname
+	test.OperationID = utils.OperationIDGenerator()
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
+	open_im_sdk.SetGroupMemberNickname(test, test.OperationID, TestgroupID, myUserID, "")
+
 }
