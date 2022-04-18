@@ -117,9 +117,11 @@ type MsgStruct struct {
 		MultiMessage []*MsgStruct `json:"multiMessage"`
 	} `json:"mergeElem"`
 	AtElem struct {
-		Text       string   `json:"text"`
-		AtUserList []string `json:"atUserList"`
-		IsAtSelf   bool     `json:"isAtSelf"`
+		Text         string     `json:"text"`
+		AtUserList   []string   `json:"atUserList"`
+		AtUsersInfo  []*AtInfo  `json:"atUsersInfo"`
+		QuoteMessage *MsgStruct `json:"quoteMessage"`
+		IsAtSelf     bool       `json:"isAtSelf"`
 	} `json:"atElem"`
 	FaceElem struct {
 		Index int    `json:"index"`
@@ -144,6 +146,10 @@ type MsgStruct struct {
 		DefaultTips string `json:"defaultTips"`
 	} `json:"notificationElem"`
 	AttachedInfoElem AttachedInfoElem `json:"attachedInfoElem"`
+}
+type AtInfo struct {
+	AtUserID      string `json:"atUserID"`
+	GroupNickname string `json:"groupNickname"`
 }
 type AttachedInfoElem struct {
 	GroupHasReadInfo GroupHasReadInfo `json:"groupHasReadInfo"`

@@ -297,10 +297,10 @@ func (wsRouter *WsFuncRouter) CreateTextAtMessage(input string, operationID stri
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "text", "atUserIDList") {
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "text", "atUserList", "atUsersInfo", "message") {
 		return
 	}
-	msg := userWorker.Conversation().CreateTextAtMessage(m["text"].(string), m["atUserIDList"].(string), operationID)
+	msg := userWorker.Conversation().CreateTextAtMessage(m["text"].(string), m["atUserList"].(string), m["atUsersInfo"].(string), m["message"].(string), operationID)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }
 
@@ -386,7 +386,7 @@ func (wsRouter *WsFuncRouter) CreateVideoMessageFromFullPath(input string, opera
 
 func (wsRouter *WsFuncRouter) CreateImageMessageFromFullPath(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil ) {
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
 		return
 	}
 	msg := userWorker.Conversation().CreateImageMessageFromFullPath(input, operationID)

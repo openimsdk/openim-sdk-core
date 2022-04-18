@@ -245,13 +245,23 @@ func (c *Conversation) CreateTextMessage(text, operationID string) string {
 	s.Content = text
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateTextAtMessage(text, atUserList, operationID string) string {
-	var users []string
-	_ = json.Unmarshal([]byte(atUserList), &users)
-	s := sdk_struct.MsgStruct{}
+func (c *Conversation) CreateTextAtMessage(text, atUserList, atUsersInfo, message, operationID string) string {
+	var usersInfo []*sdk_struct.AtInfo
+	var userIDList []string
+	_ = json.Unmarshal([]byte(atUsersInfo), &usersInfo)
+	_ = json.Unmarshal([]byte(atUserList), &userIDList)
+	s, qs := sdk_struct.MsgStruct{}, sdk_struct.MsgStruct{}
+	_ = json.Unmarshal([]byte(message), &qs)
 	c.initBasicInfo(&s, constant.UserMsgType, constant.AtText, operationID)
+	//Avoid nested references
+	if qs.ContentType == constant.Quote {
+		qs.Content = qs.QuoteElem.Text
+		qs.ContentType = constant.Text
+	}
 	s.AtElem.Text = text
-	s.AtElem.AtUserList = users
+	s.AtElem.AtUserList = userIDList
+	s.AtElem.AtUsersInfo = usersInfo
+	s.AtElem.QuoteMessage = &qs
 	s.Content = utils.StructToJsonString(s.AtElem)
 	return utils.StructToJsonString(s)
 }

@@ -590,8 +590,8 @@ func SetUserListener(listener open_im_sdk_callback.OnUserListener) {
 	userForSDK.SetUserListener(listener)
 }
 
-func CreateTextAtMessage(operationID string, text, atUserList string) string {
-	return userForSDK.Conversation().CreateTextAtMessage(text, atUserList, operationID)
+func CreateTextAtMessage(operationID string, text, atUserList, atUsersInfo, message string) string {
+	return userForSDK.Conversation().CreateTextAtMessage(text, atUserList, atUsersInfo, message, operationID)
 }
 
 //
