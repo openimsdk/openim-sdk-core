@@ -153,23 +153,29 @@ func (u *WsConn) ReConn() (*websocket.Conn, error) {
 	if u.loginState == constant.TokenFailedKickedOffline {
 		return nil, utils.Wrap(errors.New("don't re conn"), "TokenFailedKickedOffline")
 	}
-
+	operationID := utils.OperationIDGenerator()
 	u.listener.OnConnecting()
-	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", sdk_struct.SvrConf.WsAddr, u.loginUserID, u.token, sdk_struct.SvrConf.Platform)
+	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s", sdk_struct.SvrConf.WsAddr, u.loginUserID, u.token, sdk_struct.SvrConf.Platform, operationID)
 	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
+	log.Info(operationID, "ws conn, dail : ", url)
 	if err != nil {
 		u.loginState = constant.LoginFailed
+		log.Error(operationID, "websocket.DefaultDialer.Dial failed ", err.Error(), "url ", url)
+		u.listener.OnConnectFailed(1001, err.Error())
 		if httpResp != nil {
-			errInfo := constant.StatusText(httpResp.StatusCode)
-			if errInfo != nil {
-				log.Error("", httpResp.StatusCode, errInfo.ErrMsg)
-				u.listener.OnConnectFailed(int32(httpResp.StatusCode), errInfo.ErrMsg)
-			} else {
-				u.listener.OnConnectFailed(int32(httpResp.StatusCode), err.Error())
-			}
-		} else {
-			u.listener.OnConnectFailed(1001, err.Error())
+			log.Error(operationID, "Dial  httpResp", *httpResp)
 		}
+		//if httpResp != nil {
+		//	errInfo := constant.StatusText(httpResp.StatusCode)
+		//	if errInfo != nil {
+		//		log.Error(operationID, httpResp.StatusCode, errInfo.ErrMsg)
+		//		u.listener.OnConnectFailed(int32(httpResp.StatusCode), errInfo.ErrMsg)
+		//	} else {
+		//		u.listener.OnConnectFailed(int32(httpResp.StatusCode), err.Error())
+		//	}
+		//} else {
+		//	u.listener.OnConnectFailed(1001, err.Error())
+		//}
 		return nil, err
 	}
 	u.listener.OnConnectSuccess()
