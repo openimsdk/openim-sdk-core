@@ -26,6 +26,8 @@ const GroupMuteChangeCallback = constant.SuccessCallbackDefault
 
 const GroupMemberMuteChangeCallback = constant.SuccessCallbackDefault
 
+const SetGroupMemberNicknameCallback = constant.SuccessCallbackDefault
+
 //type GetJoinedGroupListParam null
 type GetJoinedGroupListCallback []*db.LocalGroup
 

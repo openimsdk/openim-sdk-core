@@ -90,9 +90,10 @@ func (ws *WServer) getMsgAndSend() {
 				//		conns := ws.getUserConn(r.uid + " " + "Web")
 				conns := ws.getUserConn(r.uid + " " + utils.PlatformIDToName(sdk_struct.SvrConf.Platform))
 				if conns == nil {
-					log.Info(operationID, "uid no conn, failed ", r.uid+" "+utils.PlatformIDToName(sdk_struct.SvrConf.Platform))
+					log.Error(operationID, "uid no conn, failed ", r.uid+" "+utils.PlatformIDToName(sdk_struct.SvrConf.Platform))
 					r.data = nil
 				}
+				log.Info(operationID, "conns  ", conns, r.uid+" "+utils.PlatformIDToName(sdk_struct.SvrConf.Platform))
 				for _, conn := range conns {
 					if conn != nil {
 						err := WS.writeMsg(conn, websocket.TextMessage, r.data)

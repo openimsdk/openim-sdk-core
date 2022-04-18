@@ -80,6 +80,7 @@ const (
 	GroupMemberCancelMutedNotification   = 1513
 	GroupMutedNotification               = 1514
 	GroupCancelMutedNotification         = 1515
+	GroupMemberInfoSetNotification       = 1516
 	GroupNotificationEnd                 = 1599
 
 	SignalingNotificationBegin = 1600

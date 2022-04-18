@@ -264,3 +264,16 @@ func (g *Group) RefuseGroupApplication(callback open_im_sdk_callback.Base, group
 		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonString(sdk_params_callback.RefuseGroupApplicationCallback))
 	}()
 }
+
+func (g *Group) SetGroupMemberNickname(callback open_im_sdk_callback.Base, groupID, userID string, GroupMemberNickname string, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", groupID, userID, GroupMemberNickname)
+		g.setGroupMemberNickname(callback, groupID, userID, GroupMemberNickname, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.SetGroupMemberNicknameCallback))
+		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonString(sdk_params_callback.SetGroupMemberNicknameCallback))
+	}()
+}
