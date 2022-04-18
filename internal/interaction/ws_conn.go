@@ -166,7 +166,7 @@ func (u *WsConn) ReConn() (*websocket.Conn, error) {
 			log.Error(operationID, "websocket.DefaultDialer.Dial failed ", err.Error(), "url ", url, errMsg)
 			u.listener.OnConnectFailed(1001, errMsg)
 		} else {
-			u.listener.OnConnectFailed(1001, err.Error())
+			u.listener.OnConnectFailed(1001, errMsg)
 			log.Error(operationID, "websocket.DefaultDialer.Dial failed ", errMsg, "url ", url)
 		}
 		//if httpResp != nil {
