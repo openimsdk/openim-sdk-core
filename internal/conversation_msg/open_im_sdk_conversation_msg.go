@@ -262,6 +262,9 @@ func (c *Conversation) CreateTextAtMessage(text, atUserList, atUsersInfo, messag
 	s.AtElem.AtUserList = userIDList
 	s.AtElem.AtUsersInfo = usersInfo
 	s.AtElem.QuoteMessage = &qs
+	if message == "" {
+		s.AtElem.QuoteMessage = nil
+	}
 	s.Content = utils.StructToJsonString(s.AtElem)
 	return utils.StructToJsonString(s)
 }

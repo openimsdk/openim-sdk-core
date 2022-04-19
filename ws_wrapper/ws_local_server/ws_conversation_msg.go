@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/common"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
@@ -755,3 +756,11 @@ func (wsRouter *WsFuncRouter) ClearGroupHistoryMessageFromLocalAndSvr(input stri
 //	userWorker := init.GetUserWorker(wsRouter.uId)
 //	userWorker.SetSdkLog(m["flag"].(int32))
 //}
+func (wsRouter *WsFuncRouter) GetAtAllTag(input string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
+		return
+	}
+	msg := constant.AtAllString
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+}

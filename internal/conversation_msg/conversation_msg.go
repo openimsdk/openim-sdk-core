@@ -246,6 +246,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					lc.ShowName = msg.SenderNickname
 					lc.FaceURL = msg.SenderFaceURL
 				case constant.GroupChatType:
+					//Generate At type into Conversation
+					c.genConversationGroupAtType(&lc, msg)
 					lc.GroupID = v.GroupID
 					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
 					//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
@@ -365,6 +367,7 @@ func (c *Conversation) diff(local, generated, cc, nc map[string]*db.LocalConvers
 	for _, v := range generated {
 		log.Debug("node diff", *v)
 		if localC, ok := local[v.ConversationID]; ok {
+			localC.GroupAtType = v.GroupAtType
 			if v.LatestMsgSendTime > localC.LatestMsgSendTime {
 				localC.UnreadCount = localC.UnreadCount + v.UnreadCount
 				localC.LatestMsg = v.LatestMsg
@@ -381,6 +384,24 @@ func (c *Conversation) diff(local, generated, cc, nc map[string]*db.LocalConvers
 			c.addFaceURLAndName(v)
 			nc[v.ConversationID] = v
 			log.Debug("", "diff3 ", *v)
+		}
+	}
+
+}
+func (c *Conversation) genConversationGroupAtType(lc *db.LocalConversation, s *sdk_struct.MsgStruct) {
+	if s.ContentType == constant.AtText {
+		tagMe := utils.IsContain(c.loginUserID, s.AtElem.AtUserList)
+		tagAll := utils.IsContain(constant.AtAllString, s.AtElem.AtUserList)
+		if tagAll {
+			if tagMe {
+				lc.GroupAtType = constant.AtAllAtMe
+				return
+			}
+			lc.GroupAtType = constant.AtAll
+			return
+		}
+		if tagMe {
+			lc.GroupAtType = constant.AtMe
 		}
 	}
 
@@ -709,6 +730,7 @@ func (c *Conversation) updateConversation(lc *db.LocalConversation, cs map[strin
 	if oldC, ok := cs[lc.ConversationID]; !ok {
 		cs[lc.ConversationID] = lc
 	} else {
+		oldC.GroupAtType = lc.GroupAtType
 		if lc.LatestMsgSendTime > oldC.LatestMsgSendTime {
 			oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
 			oldC.LatestMsg = lc.LatestMsg

@@ -900,6 +900,9 @@ func uploadImage(callback open_im_sdk_callback.Base, operationID string, filePat
 func GetConversationIDBySessionType(sourceID string, sessionType int) string {
 	return utils.GetConversationIDBySessionType(sourceID, sessionType)
 }
+func GetAtAllTag() string {
+	return constant.AtAllString
+}
 
 //////////////////////////signaling//////////////////////////////////////////
 func SetSignalingListener(callback open_im_sdk_callback.OnSignalingListener) {
