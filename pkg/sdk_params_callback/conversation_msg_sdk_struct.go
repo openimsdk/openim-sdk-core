@@ -25,6 +25,7 @@ const DeleteConversationCallback = constant.SuccessCallbackDefault
 const DeleteAllConversationFromLocalCallback = constant.SuccessCallbackDefault
 
 const SetConversationDraftCallback = constant.SuccessCallbackDefault
+const ResetConversationGroupAtTypeCallback = constant.SuccessCallbackDefault
 
 const PinConversationDraftCallback = constant.SuccessCallbackDefault
 

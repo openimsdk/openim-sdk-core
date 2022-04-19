@@ -134,6 +134,18 @@ func (c *Conversation) SetConversationDraft(callback open_im_sdk_callback.Base, 
 		log.NewInfo(operationID, "SetConversationDraft callback: ", sdk_params_callback.SetConversationDraftCallback)
 	}()
 }
+func (c *Conversation) ResetConversationGroupAtType(callback open_im_sdk_callback.Base, conversationID, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, "ResetConversationGroupAtType args: ", conversationID)
+		c.resetConversationGroupAtType(callback, conversationID, operationID)
+		callback.OnSuccess(sdk_params_callback.ResetConversationGroupAtTypeCallback)
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
+		log.NewInfo(operationID, "ResetConversationGroupAtType callback: ", sdk_params_callback.ResetConversationGroupAtTypeCallback)
+	}()
+}
 func (c *Conversation) PinConversation(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
 	if callback == nil {
 		return
