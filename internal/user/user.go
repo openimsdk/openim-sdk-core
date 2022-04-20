@@ -73,7 +73,7 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	svr, err := u.GetSelfUserInfoFromSvr(operationID)
 	if err != nil {
-		log.Error(operationID, "GetSelfUserInfoFromSvr failed")
+		log.Error(operationID, "GetSelfUserInfoFromSvr failed", err.Error())
 		return
 	}
 	onServer := common.TransferToLocalUserInfo(svr)
