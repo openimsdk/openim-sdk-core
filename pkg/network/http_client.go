@@ -61,7 +61,7 @@ func postLogic(url string, data interface{}, token string) (content []byte, err 
 	req.Header.Add("content-type", "application/json")
 	req.Header.Add("token", token)
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 20 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, utils.Wrap(err, "client.Do failed, url")
