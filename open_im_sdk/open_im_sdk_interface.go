@@ -981,3 +981,40 @@ func SignalingHungUp(callback open_im_sdk_callback.Base, operationID string, sig
 	}
 	userForSDK.Signaling().HungUp(callback, signalHungUpReq, operationID)
 }
+
+//////////////////////////////////////////organization///////////////////////////////////////////////////
+func GetSubDepartment(callback open_im_sdk_callback.Base, operationID string, departmentID string, offset, count int) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Organization().GetSubDepartment(callback, departmentID, offset, count, operationID)
+}
+
+func GetDepartmentMember(callback open_im_sdk_callback.Base, operationID string, departmentID string, offset, count int) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Organization().GetDepartmentMember(callback, departmentID, offset, count, operationID)
+}
+
+func GetUserInDepartment(callback open_im_sdk_callback.Base, operationID string, userID string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Organization().GetUserInDepartment(callback, userID, operationID)
+}
+
+func GetDepartmentMemberAndSubDepartment(callback open_im_sdk_callback.Base, operationID string, departmentID string, departmentOffset, departmentCount, memberOffset, memberCount int) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Organization().GetDepartmentMemberAndSubDepartment(callback, departmentID, departmentOffset, departmentCount, memberOffset, memberCount, operationID)
+}

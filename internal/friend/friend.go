@@ -61,7 +61,8 @@ func (f *Friend) getDesignatedFriendsInfo(callback open_im_sdk_callback.Base, fr
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ", r)
 	return r
 }
-func (f *Friend) GetUserNameAndFaceUrlByUid(callback open_im_sdk_callback.Base, friendUserID, operationID string) (faceUrl, name string, err error) {
+
+func (f *Friend) GetUserNameAndFaceUrlByUid(friendUserID, operationID string) (faceUrl, name string, err error) {
 	friendInfo, err := f.db.GetFriendInfoByFriendUserID(friendUserID)
 	if err == nil {
 		if friendInfo.Remark != "" {
@@ -73,14 +74,16 @@ func (f *Friend) GetUserNameAndFaceUrlByUid(callback open_im_sdk_callback.Base, 
 		if operationID == "" {
 			operationID = utils.OperationIDGenerator()
 		}
-		userInfos := f.user.GetUsersInfoFromSvr(callback, []string{friendUserID}, operationID)
+		userInfos, err := f.user.GetUsersInfoFromSvrNoCallback([]string{friendUserID}, operationID)
+		if err != nil {
+			return "", "", err
+		}
 		for _, v := range userInfos {
 			return v.FaceURL, v.Nickname, nil
 		}
 		log.Info(operationID, "GetUsersInfoFromSvr ", friendUserID)
 	}
 	return "", "", errors.New("getUserNameAndFaceUrlByUid err")
-
 }
 
 func (f *Friend) GetDesignatedFriendListInfo(callback open_im_sdk_callback.Base, friendUserIDList []string, operationID string) []*db.LocalFriend {

@@ -108,6 +108,7 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 //	u.GetFriendInfoByFriendUserID()
 //	return nil
 //}
+
 func (u *User) GetUsersInfoFromSvr(callback open_im_sdk_callback.Base, UserIDList sdk.GetUsersInfoParam, operationID string) []*api.PublicUserInfo {
 	apiReq := api.GetUsersInfoReq{}
 	apiReq.OperationID = operationID
@@ -115,6 +116,15 @@ func (u *User) GetUsersInfoFromSvr(callback open_im_sdk_callback.Base, UserIDLis
 	apiResp := api.GetUsersInfoResp{}
 	u.p.PostFatalCallback(callback, constant.GetUsersInfoRouter, apiReq, &apiResp.UserInfoList, apiReq.OperationID)
 	return apiResp.UserInfoList
+}
+
+func (u *User) GetUsersInfoFromSvrNoCallback(UserIDList sdk.GetUsersInfoParam, operationID string) ([]*api.PublicUserInfo, error) {
+	apiReq := api.GetUsersInfoReq{}
+	apiReq.OperationID = operationID
+	apiReq.UserIDList = UserIDList
+	apiResp := api.GetUsersInfoResp{}
+	err := u.p.PostReturn(constant.GetUsersInfoRouter, apiReq, &apiResp.UserInfoList)
+	return apiResp.UserInfoList, err
 }
 
 func (u *User) getSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) sdk.GetSelfUserInfoCallback {

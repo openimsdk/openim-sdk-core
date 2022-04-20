@@ -57,6 +57,10 @@ type LoginMgr struct {
 	imConfig           sdk_struct.IMConfig
 }
 
+func (u *LoginMgr) Organization() *organization.Organization {
+	return u.organization
+}
+
 func (u *LoginMgr) Heartbeat() *ws.Heartbeat {
 	return u.heartbeat
 }

@@ -328,15 +328,16 @@ func (testGetGroupMembersInfo) OnSuccess(data string) {
 
 type baseCallback struct {
 	OperationID string
+	callName    string
 }
 
 func (t baseCallback) OnSuccess(data string) {
-	log.Info(t.OperationID, utils.GetSelfFuncName(), data)
+	log.Info(t.OperationID, t.callName, utils.GetSelfFuncName(), data)
 
 }
 
 func (t baseCallback) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, utils.GetSelfFuncName(), errCode, errMsg)
+	log.Info(t.OperationID, t.callName, utils.GetSelfFuncName(), errCode, errMsg)
 }
 
 type testKickGroupMember struct {
