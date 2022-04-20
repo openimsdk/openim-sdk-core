@@ -110,7 +110,7 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 	} else {
 		log.Error(operationID, "send failed")
 		err := errors.New("send failed")
-		return nil, utils.Wrap(err, "writeBinaryMsg timeout")
+		return nil, utils.Wrap(err, "SendReqWaitResp failed")
 	}
 }
 func (w *Ws) SendReqTest(m proto.Message, reqIdentifier int32, timeout int, senderID, operationID string) bool {
