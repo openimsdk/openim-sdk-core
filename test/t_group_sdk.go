@@ -79,6 +79,13 @@ func (testGroupListener) OnGroupApplicationRejected(callbackInfo string) {
 
 }
 
+type testOrganizationListener struct {
+}
+
+func (testOrganizationListener) OnOrganizationUpdated() {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), "on listener callback ")
+}
+
 //
 type testCreateGroup struct {
 	OperationID string

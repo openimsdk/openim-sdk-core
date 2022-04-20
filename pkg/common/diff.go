@@ -427,6 +427,97 @@ func CheckGroupMemberDiff(a []*db.LocalGroupMember, b []*db.LocalGroupMember) (a
 	return aInBNot, bInANot, sameA, sameB
 }
 
+func CheckDepartmentMemberDiff(a []*db.LocalDepartmentMember, b []*db.LocalDepartmentMember) (aInBNot, bInANot, sameA, sameB []int) {
+	//to map, friendid_>friendinfo
+	mapA := make(map[string]*db.LocalDepartmentMember)
+	for _, v := range a {
+		mapA[v.DepartmentID+v.UserID] = v
+	}
+	mapB := make(map[string]*db.LocalDepartmentMember)
+	for _, v := range b {
+		mapB[v.DepartmentID+v.UserID] = v
+	}
+
+	aInBNot = make([]int, 0)
+	bInANot = make([]int, 0)
+	sameA = make([]int, 0)
+	sameB = make([]int, 0)
+
+	//for a
+	for i, v := range a {
+		ia, ok := mapB[v.DepartmentID+v.UserID]
+		if !ok {
+			//in a, but not in b
+			aInBNot = append(aInBNot, i)
+		} else {
+			//reflect.DeepEqual(a, b)
+			//	reflect.DeepEqual(v, ia)
+			//if !cmp.Equal(v, ia)
+			if !cmp.Equal(v, ia) {
+				// key of a and b is equal, but value different
+				sameA = append(sameA, i)
+			}
+		}
+	}
+	//for b
+	for i, v := range b {
+		ib, ok := mapA[v.DepartmentID+v.UserID]
+		if !ok {
+			bInANot = append(bInANot, i)
+		} else {
+			if !cmp.Equal(v, ib) {
+				sameB = append(sameB, i)
+			}
+		}
+	}
+	return aInBNot, bInANot, sameA, sameB
+
+}
+
+func CheckDepartmentDiff(a []*db.LocalDepartment, b []*db.LocalDepartment) (aInBNot, bInANot, sameA, sameB []int) {
+	//to map, friendid_>friendinfo
+	mapA := make(map[string]*db.LocalDepartment)
+	for _, v := range a {
+		mapA[v.DepartmentID] = v
+	}
+	mapB := make(map[string]*db.LocalDepartment)
+	for _, v := range b {
+		mapB[v.DepartmentID] = v
+	}
+
+	aInBNot = make([]int, 0)
+	bInANot = make([]int, 0)
+	sameA = make([]int, 0)
+	sameB = make([]int, 0)
+
+	//for a
+	for i, v := range a {
+		ia, ok := mapB[v.DepartmentID]
+		if !ok {
+			//in a, but not in b
+			aInBNot = append(aInBNot, i)
+		} else {
+			if !cmp.Equal(v, ia) {
+				// key of a and b is equal, but value different
+				sameA = append(sameA, i)
+			}
+		}
+	}
+	//for b
+	for i, v := range b {
+		ib, ok := mapA[v.DepartmentID]
+		if !ok {
+			bInANot = append(bInANot, i)
+		} else {
+			if !cmp.Equal(v, ib) {
+				sameB = append(sameB, i)
+			}
+		}
+	}
+	return aInBNot, bInANot, sameA, sameB
+
+}
+
 func CheckGroupRequestDiff(a []*db.LocalGroupRequest, b []*db.LocalGroupRequest) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
 	mapA := make(map[string]*db.LocalGroupRequest)
@@ -630,17 +721,34 @@ func TransferToLocalAdminGroupRequest(apiData []*server_api_params.GroupRequest)
 	return local
 }
 
-func TransferToLocalSendGroupRequest(apiData []*server_api_params.GroupRequest) []*db.LocalGroupRequest {
-	local := make([]*db.LocalGroupRequest, 0)
-	//operationID := utils.OperationIDGenerator()
+func TransferToLocalDepartmentMember(apiData []*server_api_params.UserDepartmentMember) []*db.LocalDepartmentMember {
+	local := make([]*db.LocalDepartmentMember, 0)
 	for _, v := range apiData {
-		var node db.LocalGroupRequest
-		//	log2.NewDebug(operationID, "local test api ", v)
-		SendGroupRequestCopyToLocal(&node, v)
-		//		log2.NewDebug(operationID, "local test local  ", node)
+		var node db.LocalDepartmentMember
+		copier.Copy(&node, v.DepartmentMember)
+		copier.Copy(&node, v.OrganizationUser)
 		local = append(local, &node)
 	}
-	//	log2.NewDebug(operationID, "local test local all ", local)
+	return local
+}
+
+func TransferToLocalDepartment(apiData []*server_api_params.Department) []*db.LocalDepartment {
+	local := make([]*db.LocalDepartment, 0)
+	for _, v := range apiData {
+		var node db.LocalDepartment
+		copier.Copy(&node, v)
+		local = append(local, &node)
+	}
+	return local
+}
+
+func TransferToLocalSendGroupRequest(apiData []*server_api_params.GroupRequest) []*db.LocalGroupRequest {
+	local := make([]*db.LocalGroupRequest, 0)
+	for _, v := range apiData {
+		var node db.LocalGroupRequest
+		SendGroupRequestCopyToLocal(&node, v)
+		local = append(local, &node)
+	}
 	return local
 }
 

@@ -110,7 +110,9 @@ func (d *DataBase) initDB() error {
 		&LocalSeqData{},
 		&LocalConversation{},
 		&LocalChatLog{},
-		&LocalAdminGroupRequest{})
+		&LocalAdminGroupRequest{},
+		&LocalDepartment{},
+		&LocalDepartmentMember{})
 	if !db.Migrator().HasTable(&LocalFriend{}) {
 		//log.NewInfo("CreateTable Friend")
 		db.Migrator().CreateTable(&LocalFriend{})
@@ -157,6 +159,12 @@ func (d *DataBase) initDB() error {
 	}
 	if !db.Migrator().HasTable(&LocalAdminGroupRequest{}) {
 		db.Migrator().CreateTable(&LocalAdminGroupRequest{})
+	}
+	if !db.Migrator().HasTable(&LocalDepartment{}) {
+		db.Migrator().CreateTable(&LocalDepartment{})
+	}
+	if !db.Migrator().HasTable(&LocalDepartmentMember{}) {
+		db.Migrator().CreateTable(&LocalDepartmentMember{})
 	}
 	return nil
 }

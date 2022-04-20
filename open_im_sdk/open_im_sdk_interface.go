@@ -165,8 +165,15 @@ func SetGroupListener(callback open_im_sdk_callback.OnGroupListener) {
 		log.Error("callback or userForSDK is nil")
 		return
 	}
-
 	userForSDK.SetGroupListener(callback)
+}
+
+func SetOrganizationListener(callback open_im_sdk_callback.OnOrganizationListener) {
+	if callback == nil || userForSDK == nil {
+		log.Error("callback or userForSDK is nil")
+		return
+	}
+	userForSDK.SetOrganizationListener(callback)
 }
 
 func CreateGroup(callback open_im_sdk_callback.Base, operationID string, groupBaseInfo string, memberList string) {

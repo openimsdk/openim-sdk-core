@@ -435,6 +435,9 @@ func InOutDoTest(uid, tk, ws, api string) {
 	var signalingListener testSignalingListener
 	open_im_sdk.SetSignalingListener(&signalingListener)
 
+	var organizationListener testOrganizationListener
+	open_im_sdk.SetOrganizationListener(organizationListener)
+
 	InOutlllogin(uid, tk)
 	time.Sleep(2 * time.Second)
 	log.Warn("", "InOutDoTest fin")
@@ -500,6 +503,9 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 
 	var groupListener testGroupListener
 	lg.SetGroupListener(groupListener)
+
+	var organizationListener testOrganizationListener
+	lg.SetOrganizationListener(organizationListener)
 
 	var callback BaseSuccessFailed
 	callback.funcName = utils.GetSelfFuncName()

@@ -28,15 +28,10 @@ func reliabilityTest() {
 }
 
 var (
-	TESTIP       = "43.128.5.63"
-	TESTIP_LOCAL = "43.128.5.63"
-	//TESTIP       = "1.14.194.38"
-	APIADDR = "http://" + TESTIP_LOCAL + ":10000"
-	//APIADDR = "https://im-api.jiarenapp.com"
+	TESTIP = "43.128.5.63"
 
-	WSADDR = "ws://" + TESTIP + ":17778"
-	//WSADDR = "wss://im.jiarenapp.com"
-
+	APIADDR      = "http://" + TESTIP + ":10000"
+	WSADDR       = "ws://" + TESTIP + ":17778"
 	REGISTERADDR = APIADDR + "/user_register"
 	TOKENADDR    = APIADDR + "/auth/user_token"
 	SECRET       = "tuoyun"
@@ -65,14 +60,14 @@ func main() {
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
 	test.SENDINTERVAL = SENDINTERVAL
-	strMyUidx := "13911112222"
+	strMyUidx := "org_user_001"
 	//friendID := "17726378428"
 	tokenx := test.GenToken(strMyUidx)
 	//	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNTA5NDc5NTI0MDgzOTU3NzYwIiwiUGxhdGZvcm0iOiJBbmRyb2lkIiwiZXhwIjoxOTY0NzQ0NDY1LCJuYmYiOjE2NDkzODQ0NjUsImlhdCI6MTY0OTM4NDQ2NX0.io-mLXoL4fiBCmV1KzBbKLBY8gz_oXfGgCrgzG5lCeA"
-	tokenx = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNzcyNjM3ODQyOCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYzMjE2NDU1LCJuYmYiOjE2NDc4NTY0NTUsImlhdCI6MTY0Nzg1NjQ1NX0.3fOcyhw7r5lOkRTJdDy7-tG9XC4XrKj_N7ufrGHPWYM"
+	//	tokenx = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNzcyNjM3ODQyOCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYzMjE2NDU1LCJuYmYiOjE2NDc4NTY0NTUsImlhdCI6MTY0Nzg1NjQ1NX0.3fOcyhw7r5lOkRTJdDy7-tG9XC4XrKj_N7ufrGHPWYM"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	log.Info("", "DotestSetGroupMemberNickname start...")
-	test.DotestSetGroupMemberNickname(strMyUidx)
+	//test.DotestSetGroupMemberNickname(strMyUidx)
 	//test.DoTestDeleteAllMsgFromLocalAndSvr()
 	//log.Warn("", "login ok, see memory, sleep 10s")
 	//time.Sleep(2 * time.Second)
@@ -109,8 +104,8 @@ func main() {
 	//test.DoTestMarkGroupMessageAsRead()
 	//test.DoTestGetGroupHistoryMessage()
 	for {
-		//test.DoTestSendMsg2(strMyUidx, test.Friend_uid)
-		time.Sleep(1 * time.Second)
+		test.DoTestSendMsg2(strMyUidx, "100908")
+		time.Sleep(10 * time.Second)
 		log.Info("", "waiting...")
 	}
 	//reliabilityTest()

@@ -364,15 +364,17 @@ type LocalAdminGroupRequest struct {
 }
 
 type LocalDepartment struct {
-	DepartmentID   string `gorm:"column:department_id;primary_key;size:64" json:"departmentID"`
-	FaceURL        string `gorm:"column:face_url;size:255" json:"faceURL"`
-	Name           string `gorm:"column:name;size:256" json:"name" binding:"required"`
-	ParentID       string `gorm:"column:parent_id;size:64" json:"parentID" binding:"required"` // "0" or Real parent id
-	Order          int32  `gorm:"column:order" json:"order" `                                  // 1, 2, ...
-	DepartmentType int32  `gorm:"column:department_type" json:"departmentType"`                //1, 2...
-	CreateTime     uint32 `gorm:"column:create_time" json:"createTime"`
-	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
-	AttachedInfo   string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+	DepartmentID     string `gorm:"column:department_id;primary_key;size:64" json:"departmentID"`
+	FaceURL          string `gorm:"column:face_url;size:255" json:"faceURL"`
+	Name             string `gorm:"column:name;size:256" json:"name" binding:"required"`
+	ParentID         string `gorm:"column:parent_id;size:64" json:"parentID" binding:"required"` // "0" or Real parent id
+	Order            int32  `gorm:"column:order" json:"order" `                                  // 1, 2, ...
+	DepartmentType   int32  `gorm:"column:department_type" json:"departmentType"`                //1, 2...
+	CreateTime       uint32 `gorm:"column:create_time" json:"createTime"`
+	SubDepartmentNum uint32 `gorm:"column:sub_department_num" json:"subDepartmentNum"`
+	MemberNum        uint32 `gorm:"column:member_num" json:"memberNum"`
+	Ex               string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	AttachedInfo     string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 }
 
 type LocalDepartmentMember struct {
@@ -393,4 +395,5 @@ type LocalDepartmentMember struct {
 	Status       int32  `gorm:"column:status" json:"status"` //-1, 1
 	CreateTime   uint32 `gorm:"column:create_time"`
 	Ex           string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	AttachedInfo string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 }

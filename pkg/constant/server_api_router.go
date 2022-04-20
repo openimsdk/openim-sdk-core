@@ -57,8 +57,13 @@ const (
 	GetAllConversationsRouter          = ConversationGroup + "/get_all_conversations"
 	GetConversationRouter              = ConversationGroup + "/get_conversation"
 	BatchSetConversationRouter         = ConversationGroup + "/batch_set_conversation"
+
+	//organization
+	GetSubDepartmentRouter    = RouterOrganization + "/get_sub_department"
+	GetDepartmentMemberRouter = RouterOrganization + "/get_department_member"
 )
 const (
-	RouterGroup       = "/group"
-	ConversationGroup = "/conversation"
+	RouterGroup        = "/group"
+	ConversationGroup  = "/conversation"
+	RouterOrganization = "/organization"
 )

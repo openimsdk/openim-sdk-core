@@ -88,8 +88,8 @@ const (
 	SignalingNotificationEnd   = 1699
 
 	ConversationPrivateChatNotification = 1701
-
-	NotificationEnd = 2000
+	OrganizationChangedNotification     = 1801
+	NotificationEnd                     = 2000
 
 	////////////////////////////////////////
 

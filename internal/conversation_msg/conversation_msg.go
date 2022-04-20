@@ -7,6 +7,7 @@ import (
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/group"
 	ws "open_im_sdk/internal/interaction"
+	"open_im_sdk/internal/organization"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -38,6 +39,7 @@ type Conversation struct {
 	user                 *user.User
 	signaling            advanced_interface.Signaling
 	advancedFunction     advanced_interface.AdvancedFunction
+	organization         *organization.Organization
 	common2.ObjectStorage
 }
 
@@ -60,9 +62,11 @@ func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 	ch chan common.Cmd2Value, loginUserID string, platformID int32, dataDir string,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener,
-	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling advanced_interface.Signaling, advancedFunction advanced_interface.AdvancedFunction) *Conversation {
+	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling advanced_interface.Signaling,
+	advancedFunction advanced_interface.AdvancedFunction, organization *organization.Organization) *Conversation {
 	n := &Conversation{Ws: ws, db: db, p: p, ch: ch, loginUserID: loginUserID, platformID: platformID,
-		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage, signaling: signaling, advancedFunction: advancedFunction}
+		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage, signaling: signaling,
+		advancedFunction: advancedFunction, organization: organization}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
 	return n
@@ -155,6 +159,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				log.Info(operationID, "signaling DoNotification ", v)
 				c.signaling.DoNotification(v, c.ch, operationID)
 				continue
+			} else if v.ContentType == constant.OrganizationChangedNotification {
+				log.Info(operationID, "Organization Changed Notification ")
+				c.organization.DoNotification(v, c.ch, operationID)
 			}
 		case constant.GroupChatType:
 			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
