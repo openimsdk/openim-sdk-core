@@ -150,7 +150,7 @@ func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, so
 		switch sessionType {
 		case constant.SingleChatType:
 			newConversation.UserID = sourceID
-			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(callback, sourceID, operationID)
+			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(sourceID, operationID)
 			common.CheckDBErrCallback(callback, err, operationID)
 			newConversation.ShowName = name
 			newConversation.FaceURL = faceUrl
@@ -267,7 +267,7 @@ func (c *Conversation) SyncConversations(operationID string) {
 		switch conversation.ConversationType {
 		case constant.SingleChatType, constant.NotificationChatType:
 			newConversation.UserID = conversation.UserID
-			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, conversation.UserID, operationID)
+			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(conversation.UserID, operationID)
 			if err != nil {
 				log.NewError(operationID, utils.GetSelfFuncName(), "GetUserNameAndFaceUrlByUid error", err.Error())
 				continue

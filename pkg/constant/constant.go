@@ -99,9 +99,9 @@ const (
 
 	/////////////////////////////////////
 	//SessionType
-	SingleChatType = 1
-	GroupChatType  = 2
-
+	SingleChatType       = 1
+	GroupChatType        = 2
+	SuperGroupChatType   = 3
 	NotificationChatType = 4
 
 	//MsgStatus

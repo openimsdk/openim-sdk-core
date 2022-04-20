@@ -561,7 +561,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
 			lc.UserID = recvID
 			lc.ConversationType = constant.SingleChatType
-			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(callback, recvID, operationID)
+			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(recvID, operationID)
 			common.CheckAnyErrCallback(callback, 301, err, operationID)
 			lc.FaceURL = faceUrl
 			lc.ShowName = name
@@ -718,7 +718,7 @@ func (c *Conversation) SendMessageToSuperGroup(callback open_im_sdk_callback.Sen
 			conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
 			lc.UserID = recvID
 			lc.ConversationType = constant.SingleChatType
-			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(callback, recvID, operationID)
+			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(recvID, operationID)
 			common.CheckAnyErrCallback(callback, 301, err, operationID)
 			lc.FaceURL = faceUrl
 			lc.ShowName = name
@@ -873,7 +873,7 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 			conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
 			lc.UserID = recvID
 			lc.ConversationType = constant.SingleChatType
-			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(callback, recvID, operationID)
+			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(recvID, operationID)
 			common.CheckAnyErrCallback(callback, 301, err, operationID)
 			lc.FaceURL = faceUrl
 			lc.ShowName = name
@@ -1295,7 +1295,7 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_ca
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 		if sendID != c.loginUserID {
-			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, sendID, operationID)
+			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(sendID, operationID)
 			if err != nil {
 				log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error(), sendID)
 			}
@@ -1337,7 +1337,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 		if sendID != c.loginUserID {
-			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, sendID, operationID)
+			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(sendID, operationID)
 			if err != nil {
 				log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error(), sendID)
 			}

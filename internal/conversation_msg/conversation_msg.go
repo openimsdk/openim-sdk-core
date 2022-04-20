@@ -796,22 +796,11 @@ func mapConversationToList(m map[string]*db.LocalConversation) (cs []*db.LocalCo
 	}
 	return cs
 }
-
-type tmpCallback struct {
-}
-
-func (t *tmpCallback) OnError(errCode int32, errMsg string) {
-
-}
-func (t *tmpCallback) OnSuccess(data string) {
-
-}
-
 func (c *Conversation) addFaceURLAndName(lc *db.LocalConversation) {
 	operationID := utils.OperationIDGenerator()
 	switch lc.ConversationType {
 	case constant.SingleChatType, constant.NotificationChatType:
-		faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, lc.UserID, operationID)
+		faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(lc.UserID, operationID)
 		if err != nil {
 			log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error(), lc.UserID)
 			return
