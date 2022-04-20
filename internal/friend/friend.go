@@ -37,6 +37,10 @@ type Friend struct {
 	p              *ws.PostApi
 }
 
+func (f *Friend) Db() *db.DataBase {
+	return f.db
+}
+
 func NewFriend(loginUserID string, db *db.DataBase, user *user.User, p *ws.PostApi) *Friend {
 	return &Friend{loginUserID: loginUserID, db: db, user: user, p: p}
 }
@@ -62,13 +66,14 @@ func (f *Friend) getDesignatedFriendsInfo(callback open_im_sdk_callback.Base, fr
 	return r
 }
 
-func (f *Friend) GetUserNameAndFaceUrlByUid(friendUserID, operationID string) (faceUrl, name string, err error) {
+func (f *Friend) GetUserNameAndFaceUrlByUid(friendUserID, operationID string) (faceUrl, name string, err error, isFromSvr bool) {
+	isFromSvr = false
 	friendInfo, err := f.db.GetFriendInfoByFriendUserID(friendUserID)
 	if err == nil {
 		if friendInfo.Remark != "" {
-			return friendInfo.FaceURL, friendInfo.Remark, nil
+			return friendInfo.FaceURL, friendInfo.Remark, nil, isFromSvr
 		} else {
-			return friendInfo.FaceURL, friendInfo.Nickname, nil
+			return friendInfo.FaceURL, friendInfo.Nickname, nil, isFromSvr
 		}
 	} else {
 		if operationID == "" {
@@ -76,14 +81,15 @@ func (f *Friend) GetUserNameAndFaceUrlByUid(friendUserID, operationID string) (f
 		}
 		userInfos, err := f.user.GetUsersInfoFromSvrNoCallback([]string{friendUserID}, operationID)
 		if err != nil {
-			return "", "", err
+			return "", "", err, isFromSvr
 		}
 		for _, v := range userInfos {
-			return v.FaceURL, v.Nickname, nil
+			isFromSvr = true
+			return v.FaceURL, v.Nickname, nil, isFromSvr
 		}
 		log.Info(operationID, "GetUsersInfoFromSvr ", friendUserID)
 	}
-	return "", "", errors.New("getUserNameAndFaceUrlByUid err")
+	return "", "", errors.New("getUserNameAndFaceUrlByUid err"), isFromSvr
 }
 
 func (f *Friend) GetDesignatedFriendListInfo(callback open_im_sdk_callback.Base, friendUserIDList []string, operationID string) []*db.LocalFriend {
