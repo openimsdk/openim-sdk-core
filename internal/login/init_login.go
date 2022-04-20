@@ -2,6 +2,7 @@ package login
 
 import (
 	"open_im_sdk/internal/advanced_interface"
+	"open_im_sdk/internal/cache"
 	comm2 "open_im_sdk/internal/common"
 	conv "open_im_sdk/internal/conversation_msg"
 	"open_im_sdk/internal/friend"
@@ -35,10 +36,10 @@ type LoginMgr struct {
 	ws               *ws.Ws
 	msgSync          *ws.MsgSync
 	heartbeat        *ws.Heartbeat
-
-	token        string
-	loginUserID  string
-	connListener open_im_sdk_callback.OnConnListener
+	cache            *cache.Cache
+	token            string
+	loginUserID      string
+	connListener     open_im_sdk_callback.OnConnListener
 
 	justOnceFlag bool
 

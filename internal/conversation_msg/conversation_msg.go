@@ -3,6 +3,7 @@ package conversation_msg
 import (
 	"encoding/json"
 	"open_im_sdk/internal/advanced_interface"
+	"open_im_sdk/internal/cache"
 	common2 "open_im_sdk/internal/common"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/group"
@@ -41,6 +42,8 @@ type Conversation struct {
 	advancedFunction     advanced_interface.AdvancedFunction
 	organization         *organization.Organization
 	common2.ObjectStorage
+
+	cache *cache.Cache
 }
 
 func (c *Conversation) SetAdvancedFunction(advancedFunction advanced_interface.AdvancedFunction) {
@@ -69,6 +72,7 @@ func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 		advancedFunction: advancedFunction, organization: organization}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
+	n.cache = cache.NewCache(n.user, n.friend)
 	return n
 }
 
@@ -800,13 +804,17 @@ func (c *Conversation) addFaceURLAndName(lc *db.LocalConversation) {
 	operationID := utils.OperationIDGenerator()
 	switch lc.ConversationType {
 	case constant.SingleChatType, constant.NotificationChatType:
-		faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(lc.UserID, operationID)
+		faceUrl, name, err, isFromSvr := c.friend.GetUserNameAndFaceUrlByUid(lc.UserID, operationID)
 		if err != nil {
 			log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error(), lc.UserID)
 			return
 		}
 		lc.FaceURL = faceUrl
 		lc.ShowName = name
+		if isFromSvr {
+			c.cache.Update(lc.UserID, faceUrl, name)
+		}
+
 	case constant.GroupChatType:
 		g, err := c.group.GetGroupInfoFromLocal2Svr(lc.GroupID)
 		if err != nil {
