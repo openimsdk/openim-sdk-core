@@ -368,7 +368,7 @@ type LocalDepartment struct {
 	FaceURL          string `gorm:"column:face_url;size:255" json:"faceURL"`
 	Name             string `gorm:"column:name;size:256" json:"name" binding:"required"`
 	ParentID         string `gorm:"column:parent_id;size:64" json:"parentID" binding:"required"` // "0" or Real parent id
-	Order            int32  `gorm:"column:order" json:"order" `                                  // 1, 2, ...
+	Order            int32  `gorm:"column:order_department" json:"order" `                       // 1, 2, ...
 	DepartmentType   int32  `gorm:"column:department_type" json:"departmentType"`                //1, 2...
 	CreateTime       uint32 `gorm:"column:create_time" json:"createTime"`
 	SubDepartmentNum uint32 `gorm:"column:sub_department_num" json:"subDepartmentNum"`
@@ -389,7 +389,7 @@ type LocalDepartmentMember struct {
 	Email       string `gorm:"column:email;size:64"`
 
 	DepartmentID string `gorm:"column:department_id;primary_key;size:64"`
-	Order        int32  `gorm:"column:order" json:"order"` //1,2
+	Order        int32  `gorm:"column:order_member" json:"order"` //1,2
 	Position     string `gorm:"column:position;size:256" json:"position"`
 	Leader       int32  `gorm:"column:leader" json:"leader"` //-1, 1
 	Status       int32  `gorm:"column:status" json:"status"` //-1, 1

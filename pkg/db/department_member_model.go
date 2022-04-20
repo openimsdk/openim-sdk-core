@@ -6,7 +6,7 @@ func (d *DataBase) GetDepartmentMemberListByDepartmentID(departmentID string, of
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var departmentMemberList []LocalDepartmentMember
-	err := d.conn.Where("department_id = ? ", departmentID).Order("nickname DESC").Offset(offset).Limit(count).Find(&departmentMemberList).Error
+	err := d.conn.Where("department_id = ? ", departmentID).Order("order_member DESC").Offset(offset).Limit(count).Find(&departmentMemberList).Error
 
 	var transfer []*LocalDepartmentMember
 	for _, v := range departmentMemberList {

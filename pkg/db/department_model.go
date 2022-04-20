@@ -48,7 +48,7 @@ func (d *DataBase) GetAllDepartmentList() ([]*LocalDepartment, error) {
 	var departmentList []LocalDepartment
 	d.conn.Debug()
 	//	err := d.conn.Order("order DESC").Find(&departmentList).Error
-	err := d.conn.Order("name DESC").Find(&departmentList).Error
+	err := d.conn.Order("order_department DESC").Find(&departmentList).Error
 	var transfer []*LocalDepartment
 	for _, v := range departmentList {
 		v1 := v
