@@ -201,6 +201,16 @@ func (c *Conversation) setConversationDraft(callback open_im_sdk_callback.Base, 
 		common.CheckDBErrCallback(callback, err, operationID)
 	}
 }
+func (c *Conversation) resetConversationGroupAtType(callback open_im_sdk_callback.Base, conversationID, operationID string) {
+	lc, err := c.db.GetConversation(conversationID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	if lc.GroupAtType == constant.AtNormal {
+		common.CheckAnyErrCallback(callback, 201, errors.New("conversation don't need to reset"), operationID)
+	}
+	err = c.db.UpdateColumnsConversation(conversationID, map[string]interface{}{"group_at_type": 0})
+	common.CheckDBErrCallback(callback, err, operationID)
+
+}
 
 func (c *Conversation) pinConversation(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
 	lc := db.LocalConversation{ConversationID: conversationID, IsPinned: isPinned}

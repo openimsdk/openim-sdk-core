@@ -568,6 +568,14 @@ func SetConversationDraft(callback open_im_sdk_callback.Base, operationID string
 	}
 	userForSDK.Conversation().SetConversationDraft(callback, conversationID, draftText, operationID)
 }
+func ResetConversationGroupAtType(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Conversation().ResetConversationGroupAtType(callback, conversationID, operationID)
+}
 
 func PinConversation(callback open_im_sdk_callback.Base, operationID string, conversationID string, isPinned bool) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
@@ -899,6 +907,9 @@ func uploadImage(callback open_im_sdk_callback.Base, operationID string, filePat
 }
 func GetConversationIDBySessionType(sourceID string, sessionType int) string {
 	return utils.GetConversationIDBySessionType(sourceID, sessionType)
+}
+func GetAtAllTag() string {
+	return constant.AtAllString
 }
 
 //////////////////////////signaling//////////////////////////////////////////

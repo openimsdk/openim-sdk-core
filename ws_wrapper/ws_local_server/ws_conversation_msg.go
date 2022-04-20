@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/common"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
@@ -251,6 +252,19 @@ func (wsRouter *WsFuncRouter) SetConversationDraft(input string, operationID str
 		return
 	}
 	userWorker.Conversation().SetConversationDraft(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationID"].(string), m["draftText"].(string), operationID)
+}
+func (wsRouter *WsFuncRouter) ResetConversationGroupAtType(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "conversationID") {
+		return
+	}
+	userWorker.Conversation().ResetConversationGroupAtType(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationID"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) PinConversation(input string, operationID string) {
@@ -755,3 +769,11 @@ func (wsRouter *WsFuncRouter) ClearGroupHistoryMessageFromLocalAndSvr(input stri
 //	userWorker := init.GetUserWorker(wsRouter.uId)
 //	userWorker.SetSdkLog(m["flag"].(int32))
 //}
+func (wsRouter *WsFuncRouter) GetAtAllTag(input string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
+		return
+	}
+	msg := constant.AtAllString
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+}

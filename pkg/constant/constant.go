@@ -248,6 +248,13 @@ const (
 	Male   = 1
 	Female = 2
 )
+const (
+	AtAllString = "AtAllTag"
+	AtNormal    = 0
+	AtMe        = 1
+	AtAll       = 2
+	AtAllAtMe   = 3
+)
 
 const BigVersion = "v2"
 const UpdateVersion = ".0.0"
