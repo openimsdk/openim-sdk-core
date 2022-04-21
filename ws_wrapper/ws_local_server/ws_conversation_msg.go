@@ -311,10 +311,10 @@ func (wsRouter *WsFuncRouter) CreateTextAtMessage(input string, operationID stri
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "text", "atUserList", "atUsersInfo", "message") {
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "text", "atUserIDList", "atUsersInfo", "message") {
 		return
 	}
-	msg := userWorker.Conversation().CreateTextAtMessage(m["text"].(string), m["atUserList"].(string), m["atUsersInfo"].(string), m["message"].(string), operationID)
+	msg := userWorker.Conversation().CreateTextAtMessage(m["text"].(string), m["atUserIDList"].(string), m["atUsersInfo"].(string), m["message"].(string), operationID)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }
 
