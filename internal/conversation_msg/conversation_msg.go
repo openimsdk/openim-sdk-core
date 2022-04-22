@@ -101,11 +101,16 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	phNewConversationSet := make(map[string]*db.LocalConversation)
 	log.Info(operationID, "do Msg come here")
 	for _, v := range allMsg {
+		log.Error("this test", v.Options, v.ClientMsgID)
+
 		isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
 		isUnreadCount = utils.GetSwitchFromOptions(v.Options, constant.IsUnreadCount)
 		isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
 		isNotPrivate = utils.GetSwitchFromOptions(v.Options, constant.IsNotPrivate)
 		isSenderConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsSenderConversationUpdate)
+		//if v.ClientMsgID == "a1eb02b43909fbe33e44e80d2b49c87e" {
+		//	log.Error("this test",v.Options,isConversationUpdate)
+		//}
 		msg := new(sdk_struct.MsgStruct)
 		copier.Copy(msg, v)
 		if v.ContentType >= constant.NotificationBegin && v.ContentType <= constant.NotificationEnd {
@@ -263,7 +268,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					lc.FaceURL = msg.SenderFaceURL
 				case constant.GroupChatType:
 					//Generate At type into Conversation
-					//c.genConversationGroupAtType(&lc, msg)
+					c.genConversationGroupAtType(&lc, msg)
 					lc.GroupID = v.GroupID
 					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
 					//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
@@ -281,7 +286,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					isTriggerUnReadCount = true
 					lc.UnreadCount = 1
 				}
-
 				if isConversationUpdate {
 					c.updateConversation(&lc, conversationSet)
 					newMessages = append(newMessages, msg)
@@ -383,6 +387,7 @@ func (c *Conversation) diff(local, generated, cc, nc map[string]*db.LocalConvers
 	for _, v := range generated {
 		log.Debug("node diff", *v)
 		if localC, ok := local[v.ConversationID]; ok {
+			localC.GroupAtType = v.GroupAtType
 			if v.LatestMsgSendTime > localC.LatestMsgSendTime {
 				localC.UnreadCount = localC.UnreadCount + v.UnreadCount
 				localC.LatestMsg = v.LatestMsg
@@ -745,6 +750,7 @@ func (c *Conversation) updateConversation(lc *db.LocalConversation, cs map[strin
 	if oldC, ok := cs[lc.ConversationID]; !ok {
 		cs[lc.ConversationID] = lc
 	} else {
+		oldC.GroupAtType = lc.GroupAtType
 		if lc.LatestMsgSendTime > oldC.LatestMsgSendTime {
 			oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
 			oldC.LatestMsg = lc.LatestMsg
