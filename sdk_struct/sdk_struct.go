@@ -14,66 +14,66 @@ type MessageReceipt struct {
 	SessionType int32    `json:"sessionType"`
 }
 type ImageInfo struct {
-	Width  int32  `json:"x,omitempty"`
-	Height int32  `json:"y,omitempty"`
+	Width  int32  `json:"x"`
+	Height int32  `json:"y"`
 	Type   string `json:"type,omitempty"`
-	Size   int64  `json:"size,omitempty"`
+	Size   int64  `json:"size"`
 }
 type PictureBaseInfo struct {
 	UUID   string `json:"uuid,omitempty"`
 	Type   string `json:"type,omitempty"`
-	Size   int64  `json:"size,omitempty"`
-	Width  int32  `json:"width,omitempty"`
-	Height int32  `json:"height,omitempty"`
+	Size   int64  `json:"size"`
+	Width  int32  `json:"width"`
+	Height int32  `json:"height"`
 	Url    string `json:"url,omitempty"`
 }
 type SoundBaseInfo struct {
 	UUID      string `json:"uuid,omitempty"`
 	SoundPath string `json:"soundPath,omitempty"`
 	SourceURL string `json:"sourceUrl,omitempty"`
-	DataSize  int64  `json:"dataSize,omitempty"`
-	Duration  int64  `json:"duration,omitempty"`
+	DataSize  int64  `json:"dataSize"`
+	Duration  int64  `json:"duration"`
 }
 type VideoBaseInfo struct {
 	VideoPath      string `json:"videoPath,omitempty"`
 	VideoUUID      string `json:"videoUUID,omitempty"`
 	VideoURL       string `json:"videoUrl,omitempty"`
 	VideoType      string `json:"videoType,omitempty"`
-	VideoSize      int64  `json:"videoSize,omitempty"`
-	Duration       int64  `json:"duration,omitempty"`
+	VideoSize      int64  `json:"videoSize"`
+	Duration       int64  `json:"duration"`
 	SnapshotPath   string `json:"snapshotPath,omitempty"`
 	SnapshotUUID   string `json:"snapshotUUID,omitempty"`
-	SnapshotSize   int64  `json:"snapshotSize,omitempty"`
+	SnapshotSize   int64  `json:"snapshotSize"`
 	SnapshotURL    string `json:"snapshotUrl,omitempty"`
-	SnapshotWidth  int32  `json:"snapshotWidth,omitempty"`
-	SnapshotHeight int32  `json:"snapshotHeight,omitempty"`
+	SnapshotWidth  int32  `json:"snapshotWidth"`
+	SnapshotHeight int32  `json:"snapshotHeight"`
 }
 type FileBaseInfo struct {
 	FilePath  string `json:"filePath,omitempty"`
 	UUID      string `json:"uuid,omitempty"`
 	SourceURL string `json:"sourceUrl,omitempty"`
 	FileName  string `json:"fileName,omitempty"`
-	FileSize  int64  `json:"fileSize,omitempty"`
+	FileSize  int64  `json:"fileSize"`
 }
 
 type MsgStruct struct {
 	ClientMsgID      string                            `json:"clientMsgID,omitempty"`
 	ServerMsgID      string                            `json:"serverMsgID,omitempty"`
-	CreateTime       int64                             `json:"createTime,omitempty"`
-	SendTime         int64                             `json:"sendTime,omitempty"`
-	SessionType      int32                             `json:"sessionType,omitempty"`
+	CreateTime       int64                             `json:"createTime"`
+	SendTime         int64                             `json:"sendTime"`
+	SessionType      int32                             `json:"sessionType"`
 	SendID           string                            `json:"sendID,omitempty"`
 	RecvID           string                            `json:"recvID,omitempty"`
-	MsgFrom          int32                             `json:"msgFrom,omitempty"`
-	ContentType      int32                             `json:"contentType,omitempty"`
-	SenderPlatformID int32                             `json:"platformID,omitempty"`
+	MsgFrom          int32                             `json:"msgFrom"`
+	ContentType      int32                             `json:"contentType"`
+	SenderPlatformID int32                             `json:"platformID"`
 	SenderNickname   string                            `json:"senderNickname,omitempty"`
 	SenderFaceURL    string                            `json:"senderFaceUrl,omitempty"`
 	GroupID          string                            `json:"groupID,omitempty"`
 	Content          string                            `json:"content,omitempty"`
-	Seq              uint32                            `json:"seq,omitempty"`
-	IsRead           bool                              `json:"isRead,omitempty"`
-	Status           int32                             `json:"status,omitempty"`
+	Seq              uint32                            `json:"seq"`
+	IsRead           bool                              `json:"isRead"`
+	Status           int32                             `json:"status"`
 	OfflinePush      server_api_params.OfflinePushInfo `json:"offlinePush,omitempty"`
 	AttachedInfo     string                            `json:"attachedInfo,omitempty"`
 	Ex               string                            `json:"ex,omitempty"`
@@ -87,29 +87,29 @@ type MsgStruct struct {
 		UUID      string `json:"uuid,omitempty"`
 		SoundPath string `json:"soundPath,omitempty"`
 		SourceURL string `json:"sourceUrl,omitempty"`
-		DataSize  int64  `json:"dataSize,omitempty"`
-		Duration  int64  `json:"duration,omitempty"`
+		DataSize  int64  `json:"dataSize"`
+		Duration  int64  `json:"duration"`
 	} `json:"soundElem,omitempty"`
 	VideoElem struct {
 		VideoPath      string `json:"videoPath,omitempty"`
 		VideoUUID      string `json:"videoUUID,omitempty"`
 		VideoURL       string `json:"videoUrl,omitempty"`
 		VideoType      string `json:"videoType,omitempty"`
-		VideoSize      int64  `json:"videoSize,omitempty"`
-		Duration       int64  `json:"duration,omitempty"`
+		VideoSize      int64  `json:"videoSize"`
+		Duration       int64  `json:"duration"`
 		SnapshotPath   string `json:"snapshotPath,omitempty"`
 		SnapshotUUID   string `json:"snapshotUUID,omitempty"`
-		SnapshotSize   int64  `json:"snapshotSize,omitempty"`
+		SnapshotSize   int64  `json:"snapshotSize"`
 		SnapshotURL    string `json:"snapshotUrl,omitempty"`
-		SnapshotWidth  int32  `json:"snapshotWidth,omitempty"`
-		SnapshotHeight int32  `json:"snapshotHeight,omitempty"`
+		SnapshotWidth  int32  `json:"snapshotWidth"`
+		SnapshotHeight int32  `json:"snapshotHeight"`
 	} `json:"videoElem,omitempty"`
 	FileElem struct {
 		FilePath  string `json:"filePath,omitempty"`
 		UUID      string `json:"uuid,omitempty"`
 		SourceURL string `json:"sourceUrl,omitempty"`
 		FileName  string `json:"fileName,omitempty"`
-		FileSize  int64  `json:"fileSize,omitempty"`
+		FileSize  int64  `json:"fileSize"`
 	} `json:"fileElem,omitempty"`
 	MergeElem struct {
 		Title        string       `json:"title,omitempty"`
@@ -121,16 +121,16 @@ type MsgStruct struct {
 		AtUserList   []string   `json:"atUserList,omitempty"`
 		AtUsersInfo  []*AtInfo  `json:"atUsersInfo,omitempty"`
 		QuoteMessage *MsgStruct `json:"quoteMessage,omitempty"`
-		IsAtSelf     bool       `json:"isAtSelf,omitempty"`
+		IsAtSelf     bool       `json:"isAtSelf"`
 	} `json:"atElem,omitempty"`
 	FaceElem struct {
-		Index int    `json:"index,omitempty"`
+		Index int    `json:"index"`
 		Data  string `json:"data,omitempty"`
 	} `json:"faceElem,omitempty"`
 	LocationElem struct {
 		Description string  `json:"description,omitempty"`
-		Longitude   float64 `json:"longitude,omitempty"`
-		Latitude    float64 `json:"latitude,omitempty"`
+		Longitude   float64 `json:"longitude"`
+		Latitude    float64 `json:"latitude"`
 	} `json:"locationElem,omitempty"`
 	CustomElem struct {
 		Data        string `json:"data,omitempty"`
@@ -153,12 +153,12 @@ type AtInfo struct {
 }
 type AttachedInfoElem struct {
 	GroupHasReadInfo GroupHasReadInfo `json:"groupHasReadInfo,omitempty"`
-	IsPrivateChat    bool             `json:"isPrivateChat,omitempty"`
-	HasReadTime      int64            `json:"hasReadTime,omitempty"`
+	IsPrivateChat    bool             `json:"isPrivateChat"`
+	HasReadTime      int64            `json:"hasReadTime"`
 }
 type GroupHasReadInfo struct {
 	HasReadUserIDList []string `json:"hasReadUserIDList,omitempty"`
-	HasReadCount      int32    `json:"hasReadCount,omitempty"`
+	HasReadCount      int32    `json:"hasReadCount"`
 }
 type NewMsgList []*MsgStruct
 
