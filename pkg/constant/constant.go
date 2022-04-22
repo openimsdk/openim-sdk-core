@@ -89,7 +89,11 @@ const (
 
 	ConversationPrivateChatNotification = 1701
 	OrganizationChangedNotification     = 1801
-	NotificationEnd                     = 2000
+
+	WorkMomentNotificationBegin = 1900
+	WorkMomentNotification      = 1901
+
+	NotificationEnd = 2000
 
 	////////////////////////////////////////
 
@@ -128,6 +132,17 @@ const (
 	GroupBanChat         = 1
 	GroupStatusDismissed = 2
 	GroupStatusMuted     = 3
+
+	// workMoment permission
+	WorkMomentPublic            = 0
+	WorkMomentPrivate           = 1
+	WorkMomentPermissionCanSee  = 2
+	WorkMomentPermissionCantSee = 3
+
+	// workMoment sdk notification type
+	WorkMomentCommentNotification = 0
+	WorkMomentLikeNotification    = 1
+	WorkMomentAtUserNotification  = 2
 )
 
 const (

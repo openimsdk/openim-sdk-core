@@ -404,7 +404,7 @@ func InOutLogou() {
 func InOutDoTest(uid, tk, ws, api string) {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
-	cf.Platform = 2
+	cf.Platform = 1
 	cf.WsAddr = ws
 	cf.Platform = 2
 	cf.DataDir = "./"
@@ -437,6 +437,9 @@ func InOutDoTest(uid, tk, ws, api string) {
 
 	var organizationListener testOrganizationListener
 	open_im_sdk.SetOrganizationListener(organizationListener)
+
+	var workMomentsListener testWorkMomentsListener
+	open_im_sdk.SetWorkMomentsListener(workMomentsListener)
 
 	InOutlllogin(uid, tk)
 	time.Sleep(2 * time.Second)

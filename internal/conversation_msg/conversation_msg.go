@@ -9,6 +9,7 @@ import (
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/organization"
 	"open_im_sdk/internal/user"
+	"open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -40,6 +41,7 @@ type Conversation struct {
 	signaling            advanced_interface.Signaling
 	advancedFunction     advanced_interface.AdvancedFunction
 	organization         *organization.Organization
+	workMoments          *workMoments.WorkMoments
 	common2.ObjectStorage
 }
 
@@ -63,10 +65,10 @@ func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener,
 	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling advanced_interface.Signaling,
-	advancedFunction advanced_interface.AdvancedFunction, organization *organization.Organization) *Conversation {
+	advancedFunction advanced_interface.AdvancedFunction, organization *organization.Organization, workMoments *workMoments.WorkMoments) *Conversation {
 	n := &Conversation{Ws: ws, db: db, p: p, ch: ch, loginUserID: loginUserID, platformID: platformID,
 		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage, signaling: signaling,
-		advancedFunction: advancedFunction, organization: organization}
+		advancedFunction: advancedFunction, organization: organization, workMoments: workMoments}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
 	return n
@@ -162,6 +164,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			} else if v.ContentType == constant.OrganizationChangedNotification {
 				log.Info(operationID, "Organization Changed Notification ")
 				c.organization.DoNotification(v, c.ch, operationID)
+			} else if v.ContentType == constant.WorkMomentNotification {
+				log.Info(operationID, "WorkMoment New Notification")
+				c.workMoments.DoNotification(v, operationID)
 			}
 		case constant.GroupChatType:
 			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {

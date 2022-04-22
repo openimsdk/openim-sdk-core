@@ -60,13 +60,17 @@ func main() {
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
 	test.SENDINTERVAL = SENDINTERVAL
-	strMyUidx := "org_user_001"
+	strMyUidx := "17726378428"
 	//friendID := "17726378428"
 	tokenx := test.GenToken(strMyUidx)
 	//	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNTA5NDc5NTI0MDgzOTU3NzYwIiwiUGxhdGZvcm0iOiJBbmRyb2lkIiwiZXhwIjoxOTY0NzQ0NDY1LCJuYmYiOjE2NDkzODQ0NjUsImlhdCI6MTY0OTM4NDQ2NX0.io-mLXoL4fiBCmV1KzBbKLBY8gz_oXfGgCrgzG5lCeA"
 	//	tokenx = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNzcyNjM3ODQyOCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYzMjE2NDU1LCJuYmYiOjE2NDc4NTY0NTUsImlhdCI6MTY0Nzg1NjQ1NX0.3fOcyhw7r5lOkRTJdDy7-tG9XC4XrKj_N7ufrGHPWYM"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	log.Info("", "DotestSetGroupMemberNickname start...")
+
+	//test.TestGetWorkMomentsUnReadCount()
+	test.TestGetWorkMomentsNotification()
+	//test.TestClearWorkMomentsNotification()
 	//test.DotestSetGroupMemberNickname(strMyUidx)
 	//test.DoTestDeleteAllMsgFromLocalAndSvr()
 	//log.Warn("", "login ok, see memory, sleep 10s")
@@ -75,20 +79,6 @@ func main() {
 	//	log.Warn("", "logout ok, see memory, sleep 10s")
 	//	time.Sleep(10 * time.Second)
 	//}
-	//test.DoTestSetOneConversationPrivateChat("single_17726378428", false)
-	//test.DoTestSetConversationPinned("single_17396220460", true)
-	//test.DoTestSendMsg2(strMyUidx, test.Friend_uid)
-	//test.DoTestDeleteConversationMsgFromLocalAndSvr("single_17396220460")
-	//test.I
-	//test.DoTestInviteInGroup()
-	//test.DoTestCancel()
-	//test.DoTestSendMsg2(strMyUidx, friendID)
-	//test.DoTestGetAllConversation()
-
-	//test.DoTestGetOneConversation("17726378428")
-	//test.DoTestGetConversations(`["single_17726378428"]`)
-	//test.DoTestGetConversationListSplit()
-	//test.DoTestGetConversationRecvMessageOpt(`["single_17899999999"]`)
 
 	//set batch
 	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17396220460"}, constant.ReceiveNotNotifyMessage)
@@ -138,10 +128,3 @@ func main() {
 //	}
 //
 //}
-
-//func printCallerNameAndLine() string {
-//	pc, _, line, _ := runtime.Caller(2)
-//	return runtime.FuncForPC(pc).Name() + "()@" + strconv.Itoa(line) + ": "
-//}
-
-// myuid,  maxuid,  msgnum

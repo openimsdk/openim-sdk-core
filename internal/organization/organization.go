@@ -287,7 +287,6 @@ func (o *Organization) SyncDepartmentMember(operationID string) {
 	}
 	wg.Wait()
 	log.Info(operationID, "SyncDepartmentMemberByDepartmentID end")
-
 }
 
 func (o *Organization) SyncOrganization(operationID string) {
