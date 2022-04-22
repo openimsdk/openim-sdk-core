@@ -258,7 +258,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					lc.FaceURL = msg.SenderFaceURL
 				case constant.GroupChatType:
 					//Generate At type into Conversation
-					c.genConversationGroupAtType(&lc, msg)
+					//c.genConversationGroupAtType(&lc, msg)
 					lc.GroupID = v.GroupID
 					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
 					//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
@@ -378,7 +378,6 @@ func (c *Conversation) diff(local, generated, cc, nc map[string]*db.LocalConvers
 	for _, v := range generated {
 		log.Debug("node diff", *v)
 		if localC, ok := local[v.ConversationID]; ok {
-			localC.GroupAtType = v.GroupAtType
 			if v.LatestMsgSendTime > localC.LatestMsgSendTime {
 				localC.UnreadCount = localC.UnreadCount + v.UnreadCount
 				localC.LatestMsg = v.LatestMsg
@@ -741,7 +740,6 @@ func (c *Conversation) updateConversation(lc *db.LocalConversation, cs map[strin
 	if oldC, ok := cs[lc.ConversationID]; !ok {
 		cs[lc.ConversationID] = lc
 	} else {
-		oldC.GroupAtType = lc.GroupAtType
 		if lc.LatestMsgSendTime > oldC.LatestMsgSendTime {
 			oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
 			oldC.LatestMsg = lc.LatestMsg

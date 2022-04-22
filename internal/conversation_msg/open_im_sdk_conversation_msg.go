@@ -977,6 +977,7 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.Local
 	wsMsgData.Content = []byte(s.Content)
 	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
+	wsMsgData.AtUserIDList = s.AtElem.AtUserList
 	wsMsgData.OfflinePushInfo = offlinePushInfo
 	timeout := 300
 	retryTimes := 60
