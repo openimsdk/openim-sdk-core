@@ -745,9 +745,7 @@ func (c *Conversation) DoNotification(msg *server_api_params.MsgData) {
 		log.Error(operationID, utils.GetSelfFuncName(), "listener == nil")
 		return
 	}
-	go func() {
-		c.setConversationNotification(msg, operationID)
-	}()
+	c.setConversationNotification(msg, operationID)
 }
 
 func (c *Conversation) delMsgBySeq(seqList []uint32) error {
