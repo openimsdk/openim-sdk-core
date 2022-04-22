@@ -14,151 +14,151 @@ type MessageReceipt struct {
 	SessionType int32    `json:"sessionType"`
 }
 type ImageInfo struct {
-	Width  int32  `json:"x"`
-	Height int32  `json:"y"`
-	Type   string `json:"type"`
-	Size   int64  `json:"size"`
+	Width  int32  `json:"x,omitempty"`
+	Height int32  `json:"y,omitempty"`
+	Type   string `json:"type,omitempty"`
+	Size   int64  `json:"size,omitempty"`
 }
 type PictureBaseInfo struct {
-	UUID   string `json:"uuid"`
-	Type   string `json:"type"`
-	Size   int64  `json:"size"`
-	Width  int32  `json:"width"`
-	Height int32  `json:"height"`
-	Url    string `json:"url"`
+	UUID   string `json:"uuid,omitempty"`
+	Type   string `json:"type,omitempty"`
+	Size   int64  `json:"size,omitempty"`
+	Width  int32  `json:"width,omitempty"`
+	Height int32  `json:"height,omitempty"`
+	Url    string `json:"url,omitempty"`
 }
 type SoundBaseInfo struct {
-	UUID      string `json:"uuid"`
-	SoundPath string `json:"soundPath"`
-	SourceURL string `json:"sourceUrl"`
-	DataSize  int64  `json:"dataSize"`
-	Duration  int64  `json:"duration"`
+	UUID      string `json:"uuid,omitempty"`
+	SoundPath string `json:"soundPath,omitempty"`
+	SourceURL string `json:"sourceUrl,omitempty"`
+	DataSize  int64  `json:"dataSize,omitempty"`
+	Duration  int64  `json:"duration,omitempty"`
 }
 type VideoBaseInfo struct {
-	VideoPath      string `json:"videoPath"`
-	VideoUUID      string `json:"videoUUID"`
-	VideoURL       string `json:"videoUrl"`
-	VideoType      string `json:"videoType"`
-	VideoSize      int64  `json:"videoSize"`
-	Duration       int64  `json:"duration"`
-	SnapshotPath   string `json:"snapshotPath"`
-	SnapshotUUID   string `json:"snapshotUUID"`
-	SnapshotSize   int64  `json:"snapshotSize"`
-	SnapshotURL    string `json:"snapshotUrl"`
-	SnapshotWidth  int32  `json:"snapshotWidth"`
-	SnapshotHeight int32  `json:"snapshotHeight"`
+	VideoPath      string `json:"videoPath,omitempty"`
+	VideoUUID      string `json:"videoUUID,omitempty"`
+	VideoURL       string `json:"videoUrl,omitempty"`
+	VideoType      string `json:"videoType,omitempty"`
+	VideoSize      int64  `json:"videoSize,omitempty"`
+	Duration       int64  `json:"duration,omitempty"`
+	SnapshotPath   string `json:"snapshotPath,omitempty"`
+	SnapshotUUID   string `json:"snapshotUUID,omitempty"`
+	SnapshotSize   int64  `json:"snapshotSize,omitempty"`
+	SnapshotURL    string `json:"snapshotUrl,omitempty"`
+	SnapshotWidth  int32  `json:"snapshotWidth,omitempty"`
+	SnapshotHeight int32  `json:"snapshotHeight,omitempty"`
 }
 type FileBaseInfo struct {
-	FilePath  string `json:"filePath"`
-	UUID      string `json:"uuid"`
-	SourceURL string `json:"sourceUrl"`
-	FileName  string `json:"fileName"`
-	FileSize  int64  `json:"fileSize"`
+	FilePath  string `json:"filePath,omitempty"`
+	UUID      string `json:"uuid,omitempty"`
+	SourceURL string `json:"sourceUrl,omitempty"`
+	FileName  string `json:"fileName,omitempty"`
+	FileSize  int64  `json:"fileSize,omitempty"`
 }
 
 type MsgStruct struct {
-	ClientMsgID      string                            `json:"clientMsgID"`
-	ServerMsgID      string                            `json:"serverMsgID"`
-	CreateTime       int64                             `json:"createTime"`
-	SendTime         int64                             `json:"sendTime"`
-	SessionType      int32                             `json:"sessionType"`
-	SendID           string                            `json:"sendID"`
-	RecvID           string                            `json:"recvID"`
-	MsgFrom          int32                             `json:"msgFrom"`
-	ContentType      int32                             `json:"contentType"`
-	SenderPlatformID int32                             `json:"platformID"`
-	SenderNickname   string                            `json:"senderNickname"`
-	SenderFaceURL    string                            `json:"senderFaceUrl"`
-	GroupID          string                            `json:"groupID"`
-	Content          string                            `json:"content"`
-	Seq              uint32                            `json:"seq"`
-	IsRead           bool                              `json:"isRead"`
-	Status           int32                             `json:"status"`
-	OfflinePush      server_api_params.OfflinePushInfo `json:"offlinePush"`
-	AttachedInfo     string                            `json:"attachedInfo"`
-	Ex               string                            `json:"ex"`
+	ClientMsgID      string                            `json:"clientMsgID,omitempty"`
+	ServerMsgID      string                            `json:"serverMsgID,omitempty"`
+	CreateTime       int64                             `json:"createTime,omitempty"`
+	SendTime         int64                             `json:"sendTime,omitempty"`
+	SessionType      int32                             `json:"sessionType,omitempty"`
+	SendID           string                            `json:"sendID,omitempty"`
+	RecvID           string                            `json:"recvID,omitempty"`
+	MsgFrom          int32                             `json:"msgFrom,omitempty"`
+	ContentType      int32                             `json:"contentType,omitempty"`
+	SenderPlatformID int32                             `json:"platformID,omitempty"`
+	SenderNickname   string                            `json:"senderNickname,omitempty"`
+	SenderFaceURL    string                            `json:"senderFaceUrl,omitempty"`
+	GroupID          string                            `json:"groupID,omitempty"`
+	Content          string                            `json:"content,omitempty"`
+	Seq              uint32                            `json:"seq,omitempty"`
+	IsRead           bool                              `json:"isRead,omitempty"`
+	Status           int32                             `json:"status,omitempty"`
+	OfflinePush      server_api_params.OfflinePushInfo `json:"offlinePush,omitempty"`
+	AttachedInfo     string                            `json:"attachedInfo,omitempty"`
+	Ex               string                            `json:"ex,omitempty"`
 	PictureElem      struct {
-		SourcePath      string          `json:"sourcePath"`
-		SourcePicture   PictureBaseInfo `json:"sourcePicture"`
-		BigPicture      PictureBaseInfo `json:"bigPicture"`
-		SnapshotPicture PictureBaseInfo `json:"snapshotPicture"`
-	} `json:"pictureElem"`
+		SourcePath      string          `json:"sourcePath,omitempty"`
+		SourcePicture   PictureBaseInfo `json:"sourcePicture,omitempty"`
+		BigPicture      PictureBaseInfo `json:"bigPicture,omitempty"`
+		SnapshotPicture PictureBaseInfo `json:"snapshotPicture,omitempty"`
+	} `json:"pictureElem,omitempty"`
 	SoundElem struct {
-		UUID      string `json:"uuid"`
-		SoundPath string `json:"soundPath"`
-		SourceURL string `json:"sourceUrl"`
-		DataSize  int64  `json:"dataSize"`
-		Duration  int64  `json:"duration"`
-	} `json:"soundElem"`
+		UUID      string `json:"uuid,omitempty"`
+		SoundPath string `json:"soundPath,omitempty"`
+		SourceURL string `json:"sourceUrl,omitempty"`
+		DataSize  int64  `json:"dataSize,omitempty"`
+		Duration  int64  `json:"duration,omitempty"`
+	} `json:"soundElem,omitempty"`
 	VideoElem struct {
-		VideoPath      string `json:"videoPath"`
-		VideoUUID      string `json:"videoUUID"`
-		VideoURL       string `json:"videoUrl"`
-		VideoType      string `json:"videoType"`
-		VideoSize      int64  `json:"videoSize"`
-		Duration       int64  `json:"duration"`
-		SnapshotPath   string `json:"snapshotPath"`
-		SnapshotUUID   string `json:"snapshotUUID"`
-		SnapshotSize   int64  `json:"snapshotSize"`
-		SnapshotURL    string `json:"snapshotUrl"`
-		SnapshotWidth  int32  `json:"snapshotWidth"`
-		SnapshotHeight int32  `json:"snapshotHeight"`
-	} `json:"videoElem"`
+		VideoPath      string `json:"videoPath,omitempty"`
+		VideoUUID      string `json:"videoUUID,omitempty"`
+		VideoURL       string `json:"videoUrl,omitempty"`
+		VideoType      string `json:"videoType,omitempty"`
+		VideoSize      int64  `json:"videoSize,omitempty"`
+		Duration       int64  `json:"duration,omitempty"`
+		SnapshotPath   string `json:"snapshotPath,omitempty"`
+		SnapshotUUID   string `json:"snapshotUUID,omitempty"`
+		SnapshotSize   int64  `json:"snapshotSize,omitempty"`
+		SnapshotURL    string `json:"snapshotUrl,omitempty"`
+		SnapshotWidth  int32  `json:"snapshotWidth,omitempty"`
+		SnapshotHeight int32  `json:"snapshotHeight,omitempty"`
+	} `json:"videoElem,omitempty"`
 	FileElem struct {
-		FilePath  string `json:"filePath"`
-		UUID      string `json:"uuid"`
-		SourceURL string `json:"sourceUrl"`
-		FileName  string `json:"fileName"`
-		FileSize  int64  `json:"fileSize"`
-	} `json:"fileElem"`
+		FilePath  string `json:"filePath,omitempty"`
+		UUID      string `json:"uuid,omitempty"`
+		SourceURL string `json:"sourceUrl,omitempty"`
+		FileName  string `json:"fileName,omitempty"`
+		FileSize  int64  `json:"fileSize,omitempty"`
+	} `json:"fileElem,omitempty"`
 	MergeElem struct {
-		Title        string       `json:"title"`
-		AbstractList []string     `json:"abstractList"`
-		MultiMessage []*MsgStruct `json:"multiMessage"`
-	} `json:"mergeElem"`
+		Title        string       `json:"title,omitempty"`
+		AbstractList []string     `json:"abstractList,omitempty"`
+		MultiMessage []*MsgStruct `json:"multiMessage,omitempty"`
+	} `json:"mergeElem,omitempty"`
 	AtElem struct {
-		Text         string     `json:"text"`
-		AtUserList   []string   `json:"atUserList"`
-		AtUsersInfo  []*AtInfo  `json:"atUsersInfo"`
-		QuoteMessage *MsgStruct `json:"quoteMessage"`
-		IsAtSelf     bool       `json:"isAtSelf"`
-	} `json:"atElem"`
+		Text         string     `json:"text,omitempty"`
+		AtUserList   []string   `json:"atUserList,omitempty"`
+		AtUsersInfo  []*AtInfo  `json:"atUsersInfo,omitempty"`
+		QuoteMessage *MsgStruct `json:"quoteMessage,omitempty"`
+		IsAtSelf     bool       `json:"isAtSelf,omitempty"`
+	} `json:"atElem,omitempty"`
 	FaceElem struct {
-		Index int    `json:"index"`
-		Data  string `json:"data"`
-	} `json:"faceElem"`
+		Index int    `json:"index,omitempty"`
+		Data  string `json:"data,omitempty"`
+	} `json:"faceElem,omitempty"`
 	LocationElem struct {
-		Description string  `json:"description"`
-		Longitude   float64 `json:"longitude"`
-		Latitude    float64 `json:"latitude"`
-	} `json:"locationElem"`
+		Description string  `json:"description,omitempty"`
+		Longitude   float64 `json:"longitude,omitempty"`
+		Latitude    float64 `json:"latitude,omitempty"`
+	} `json:"locationElem,omitempty"`
 	CustomElem struct {
-		Data        string `json:"data"`
-		Description string `json:"description"`
-		Extension   string `json:"extension"`
-	} `json:"customElem"`
+		Data        string `json:"data,omitempty"`
+		Description string `json:"description,omitempty"`
+		Extension   string `json:"extension,omitempty"`
+	} `json:"customElem,omitempty"`
 	QuoteElem struct {
-		Text         string     `json:"text"`
-		QuoteMessage *MsgStruct `json:"quoteMessage"`
-	} `json:"quoteElem"`
+		Text         string     `json:"text,omitempty"`
+		QuoteMessage *MsgStruct `json:"quoteMessage,omitempty"`
+	} `json:"quoteElem,omitempty"`
 	NotificationElem struct {
-		Detail      string `json:"detail"`
-		DefaultTips string `json:"defaultTips"`
-	} `json:"notificationElem"`
-	AttachedInfoElem AttachedInfoElem `json:"attachedInfoElem"`
+		Detail      string `json:"detail,omitempty"`
+		DefaultTips string `json:"defaultTips,omitempty"`
+	} `json:"notificationElem,omitempty"`
+	AttachedInfoElem AttachedInfoElem `json:"attachedInfoElem,omitempty"`
 }
 type AtInfo struct {
-	AtUserID      string `json:"atUserID"`
-	GroupNickname string `json:"groupNickname"`
+	AtUserID      string `json:"atUserID,omitempty"`
+	GroupNickname string `json:"groupNickname,omitempty"`
 }
 type AttachedInfoElem struct {
-	GroupHasReadInfo GroupHasReadInfo `json:"groupHasReadInfo"`
-	IsPrivateChat    bool             `json:"isPrivateChat"`
-	HasReadTime      int64            `json:"hasReadTime"`
+	GroupHasReadInfo GroupHasReadInfo `json:"groupHasReadInfo,omitempty"`
+	IsPrivateChat    bool             `json:"isPrivateChat,omitempty"`
+	HasReadTime      int64            `json:"hasReadTime,omitempty"`
 }
 type GroupHasReadInfo struct {
-	HasReadUserIDList []string `json:"hasReadUserIDList"`
-	HasReadCount      int32    `json:"hasReadCount"`
+	HasReadUserIDList []string `json:"hasReadUserIDList,omitempty"`
+	HasReadCount      int32    `json:"hasReadCount,omitempty"`
 }
 type NewMsgList []*MsgStruct
 
