@@ -113,8 +113,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		//}
 		msg := new(sdk_struct.MsgStruct)
 		copier.Copy(msg, v)
+		var tips server_api_params.TipsComm
 		if v.ContentType >= constant.NotificationBegin && v.ContentType <= constant.NotificationEnd {
-			var tips server_api_params.TipsComm
 			_ = proto.Unmarshal(v.Content, &tips)
 			marshaler := jsonpb.Marshaler{
 				OrigName:     true,
@@ -175,7 +175,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				c.organization.DoNotification(v, c.ch, operationID)
 			} else if v.ContentType == constant.WorkMomentNotification {
 				log.Info(operationID, "WorkMoment New Notification")
-				c.workMoments.DoNotification(v, operationID)
+				c.workMoments.DoNotification(tips.JsonDetail, operationID)
 			}
 		case constant.GroupChatType:
 			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {

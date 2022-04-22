@@ -1,14 +1,12 @@
 package workMoments
 
 import (
-	"github.com/golang/protobuf/proto"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
-	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -23,14 +21,9 @@ func NewWorkMoments(loginUserID string, db *db.DataBase, p *ws.PostApi) *WorkMom
 	return &WorkMoments{loginUserID: loginUserID, db: db, p: p}
 }
 
-func (w *WorkMoments) DoNotification(msg *server_api_params.MsgData, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), string(msg.Content))
-	var tips server_api_params.TipsComm
-	if err := proto.Unmarshal(msg.Content, &tips); err != nil {
-		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
-	}
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "json_detail: ", tips.JsonDetail)
-	if err := w.db.InsertWorkMomentsNotification(tips.JsonDetail); err != nil {
+func (w *WorkMoments) DoNotification(jsonDetailStr string, operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "json_detail: ", jsonDetailStr)
+	if err := w.db.InsertWorkMomentsNotification(jsonDetailStr); err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), "InsertWorkMomentsNotification failed", err.Error())
 		return
 	}
