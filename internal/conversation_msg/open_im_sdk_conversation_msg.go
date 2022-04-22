@@ -561,7 +561,8 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
 			lc.UserID = recvID
 			lc.ConversationType = constant.SingleChatType
-			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(callback, recvID, operationID)
+			//faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(recvID, operationID)
+			faceUrl, name, err := c.cache.GetUserNameAndFaceURL(recvID, operationID)
 			common.CheckAnyErrCallback(callback, 301, err, operationID)
 			lc.FaceURL = faceUrl
 			lc.ShowName = name
@@ -718,8 +719,13 @@ func (c *Conversation) SendMessageToSuperGroup(callback open_im_sdk_callback.Sen
 			conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
 			lc.UserID = recvID
 			lc.ConversationType = constant.SingleChatType
-			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(callback, recvID, operationID)
+			faceUrl, name, err, isFromSvr := c.friend.GetUserNameAndFaceUrlByUid(recvID, operationID)
 			common.CheckAnyErrCallback(callback, 301, err, operationID)
+
+			if isFromSvr {
+				c.cache.Update(recvID, faceUrl, name)
+			}
+
 			lc.FaceURL = faceUrl
 			lc.ShowName = name
 		}
@@ -873,8 +879,13 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 			conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
 			lc.UserID = recvID
 			lc.ConversationType = constant.SingleChatType
-			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(callback, recvID, operationID)
+			faceUrl, name, err, isFromSvr := c.friend.GetUserNameAndFaceUrlByUid(recvID, operationID)
 			common.CheckAnyErrCallback(callback, 301, err, operationID)
+
+			if isFromSvr {
+				c.cache.Update(recvID, faceUrl, name)
+			}
+
 			lc.FaceURL = faceUrl
 			lc.ShowName = name
 		}
@@ -966,6 +977,7 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.Local
 	wsMsgData.Content = []byte(s.Content)
 	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
+	wsMsgData.AtUserIDList = s.AtElem.AtUserList
 	wsMsgData.OfflinePushInfo = offlinePushInfo
 	timeout := 300
 	retryTimes := 60
@@ -1295,9 +1307,9 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_ca
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 		if sendID != c.loginUserID {
-			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, sendID, operationID)
+			faceUrl, name, err := c.cache.GetUserNameAndFaceURL(sendID, operationID)
 			if err != nil {
-				log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error(), sendID)
+				log.Error(operationID, "GetUserNameAndFaceURL err", err.Error(), sendID)
 			}
 			sourceID = sendID
 			s.SenderFaceURL = faceUrl
@@ -1337,12 +1349,16 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 		if sendID != c.loginUserID {
-			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, sendID, operationID)
+			faceUrl, name, err, isFromSvr := c.friend.GetUserNameAndFaceUrlByUid(sendID, operationID)
 			if err != nil {
 				log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error(), sendID)
 			}
 			s.SenderFaceURL = faceUrl
 			s.SenderNickname = name
+			if isFromSvr {
+				c.cache.Update(sendID, faceUrl, name)
+			}
+
 		}
 		localMessage := db.LocalChatLog{}
 		s.SendID = sendID

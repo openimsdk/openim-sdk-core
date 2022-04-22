@@ -109,7 +109,7 @@ func (d *DataBase) UpdateConversation(c *LocalConversation) error {
 func (d *DataBase) UpdateConversationForSync(c *LocalConversation) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Model(&LocalConversation{}).Where("conversation_id = ?", c.ConversationID).Updates(map[string]interface{}{"recv_msg_opt": c.RecvMsgOpt, "is_pinned": c.IsPinned, "is_private_chat": c.IsPrivateChat, "ex": c.Ex, "attached_info": c.AttachedInfo})
+	t := d.conn.Model(&LocalConversation{}).Where("conversation_id = ?", c.ConversationID).Updates(map[string]interface{}{"recv_msg_opt": c.RecvMsgOpt, "is_pinned": c.IsPinned, "is_private_chat": c.IsPrivateChat, "group_at_type": c.GroupAtType, "is_not_in_group": c.IsNotInGroup, "ex": c.Ex, "attached_info": c.AttachedInfo})
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}

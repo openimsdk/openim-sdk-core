@@ -29,7 +29,9 @@ func TestGetWorkMomentsUnReadCount() {
 func TestGetWorkMomentsNotification() {
 	operationID := utils.OperationIDGenerator()
 	var cb WBase
-	open_im_sdk.GetWorkMomentsNotification(cb, operationID)
+	offset := 0
+	count := 1
+	open_im_sdk.GetWorkMomentsNotification(cb, operationID, offset, count)
 }
 
 func TestClearWorkMomentsNotification() {

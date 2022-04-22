@@ -27,14 +27,14 @@ func (w *WorkMoments) GetWorkMomentsUnReadCount(callback open_im_sdk_callback.Ba
 	}()
 }
 
-func (w *WorkMoments) GetWorkMomentsNotification(callback open_im_sdk_callback.Base, operationID string) {
+func (w *WorkMoments) GetWorkMomentsNotification(callback open_im_sdk_callback.Base, offset, count int, operationID string) {
 	if callback == nil {
 		return
 	}
 	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, fName)
-		result := w.getWorkMomentsNotification(callback, operationID)
+		log.NewInfo(operationID, fName, offset, count)
+		result := w.getWorkMomentsNotification(offset, count, callback, operationID)
 		callback.OnSuccess(utils.StructToJsonString(result))
 		log.NewInfo(operationID, fName)
 	}()

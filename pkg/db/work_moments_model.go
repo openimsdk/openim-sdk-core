@@ -4,10 +4,12 @@ import (
 	"errors"
 	"gorm.io/gorm"
 	"open_im_sdk/pkg/utils"
+	"time"
 )
 
 type LocalWorkMomentsNotification struct {
 	JsonDetail string `gorm:"column:json_detail"`
+	CreateTime int64  `gorm:"create_time"`
 }
 
 func (LocalWorkMomentsNotification) TableName() string {
@@ -27,15 +29,16 @@ func (d *DataBase) InsertWorkMomentsNotification(jsonDetail string) error {
 	defer d.mRWMutex.Unlock()
 	workMomentsNotification := LocalWorkMomentsNotification{
 		JsonDetail: jsonDetail,
+		CreateTime: time.Now().Unix(),
 	}
 	return utils.Wrap(d.conn.Create(workMomentsNotification).Error, "")
 }
 
-func (d *DataBase) GetAllWorkMomentsNotification() (WorkMomentsNotifications []*LocalWorkMomentsNotification, err error) {
+func (d *DataBase) GetWorkMomentsNotification(offset, count int) (WorkMomentsNotifications []*LocalWorkMomentsNotification, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	WorkMomentsNotifications = []*LocalWorkMomentsNotification{}
-	err = utils.Wrap(d.conn.Table("local_work_moments_notification").Find(&WorkMomentsNotifications).Error, "")
+	err = utils.Wrap(d.conn.Table("local_work_moments_notification").Order("create_time DESC").Offset(offset).Limit(count).Find(&WorkMomentsNotifications).Error, "")
 	return WorkMomentsNotifications, err
 }
 

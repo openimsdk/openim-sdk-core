@@ -103,9 +103,9 @@ const (
 
 	/////////////////////////////////////
 	//SessionType
-	SingleChatType = 1
-	GroupChatType  = 2
-
+	SingleChatType       = 1
+	GroupChatType        = 2
+	SuperGroupChatType   = 3
 	NotificationChatType = 4
 
 	//MsgStatus
@@ -208,7 +208,7 @@ const (
 	GroupActionRefuseGroupApplication = 9
 )
 const ZoomScale = "200"
-const MaxTotalMsgLen = 20480
+const MaxTotalMsgLen = 51200
 const (
 	FriendAcceptTip  = "You have successfully become friends, so start chatting"
 	TransferGroupTip = "The owner of the group is transferred!"

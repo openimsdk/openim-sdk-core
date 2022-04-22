@@ -1,6 +1,11 @@
 package ws_local_server
 
-import "open_im_sdk/open_im_sdk"
+import (
+	"encoding/json"
+	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/utils"
+)
 
 type WorkMomentsCallback struct {
 	uid string
@@ -26,11 +31,16 @@ func (wsRouter *WsFuncRouter) GetWorkMomentsUnReadCount(input, operationID strin
 }
 
 func (wsRouter *WsFuncRouter) GetWorkMomentsNotification(input, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
 		return
 	}
-	userWorker.WorkMoments().GetWorkMomentsNotification(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
+	userWorker.WorkMoments().GetWorkMomentsNotification(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, int(m["offset"].(float64)), int(m["count"].(float64)), operationID)
 }
 
 func (wsRouter *WsFuncRouter) ClearWorkMomentsNotification(input, operationID string) {

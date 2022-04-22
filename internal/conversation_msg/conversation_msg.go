@@ -3,6 +3,7 @@ package conversation_msg
 import (
 	"encoding/json"
 	"open_im_sdk/internal/advanced_interface"
+	"open_im_sdk/internal/cache"
 	common2 "open_im_sdk/internal/common"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/group"
@@ -43,6 +44,8 @@ type Conversation struct {
 	organization         *organization.Organization
 	workMoments          *workMoments.WorkMoments
 	common2.ObjectStorage
+
+	cache *cache.Cache
 }
 
 func (c *Conversation) SetAdvancedFunction(advancedFunction advanced_interface.AdvancedFunction) {
@@ -71,6 +74,7 @@ func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 		advancedFunction: advancedFunction, organization: organization, workMoments: workMoments}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
+	n.cache = cache.NewCache(n.user, n.friend)
 	return n
 }
 
@@ -259,7 +263,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					lc.FaceURL = msg.SenderFaceURL
 				case constant.GroupChatType:
 					//Generate At type into Conversation
-					c.genConversationGroupAtType(&lc, msg)
+					//c.genConversationGroupAtType(&lc, msg)
 					lc.GroupID = v.GroupID
 					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
 					//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
@@ -379,7 +383,6 @@ func (c *Conversation) diff(local, generated, cc, nc map[string]*db.LocalConvers
 	for _, v := range generated {
 		log.Debug("node diff", *v)
 		if localC, ok := local[v.ConversationID]; ok {
-			localC.GroupAtType = v.GroupAtType
 			if v.LatestMsgSendTime > localC.LatestMsgSendTime {
 				localC.UnreadCount = localC.UnreadCount + v.UnreadCount
 				localC.LatestMsg = v.LatestMsg
@@ -742,7 +745,6 @@ func (c *Conversation) updateConversation(lc *db.LocalConversation, cs map[strin
 	if oldC, ok := cs[lc.ConversationID]; !ok {
 		cs[lc.ConversationID] = lc
 	} else {
-		oldC.GroupAtType = lc.GroupAtType
 		if lc.LatestMsgSendTime > oldC.LatestMsgSendTime {
 			oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
 			oldC.LatestMsg = lc.LatestMsg
@@ -801,28 +803,21 @@ func mapConversationToList(m map[string]*db.LocalConversation) (cs []*db.LocalCo
 	}
 	return cs
 }
-
-type tmpCallback struct {
-}
-
-func (t *tmpCallback) OnError(errCode int32, errMsg string) {
-
-}
-func (t *tmpCallback) OnSuccess(data string) {
-
-}
-
 func (c *Conversation) addFaceURLAndName(lc *db.LocalConversation) {
 	operationID := utils.OperationIDGenerator()
 	switch lc.ConversationType {
 	case constant.SingleChatType, constant.NotificationChatType:
-		faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, lc.UserID, operationID)
+		faceUrl, name, err, isFromSvr := c.friend.GetUserNameAndFaceUrlByUid(lc.UserID, operationID)
 		if err != nil {
 			log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error(), lc.UserID)
 			return
 		}
 		lc.FaceURL = faceUrl
 		lc.ShowName = name
+		if isFromSvr {
+			c.cache.Update(lc.UserID, faceUrl, name)
+		}
+
 	case constant.GroupChatType:
 		g, err := c.group.GetGroupInfoFromLocal2Svr(lc.GroupID)
 		if err != nil {

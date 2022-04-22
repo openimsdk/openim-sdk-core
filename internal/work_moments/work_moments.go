@@ -37,11 +37,11 @@ func (w *WorkMoments) DoNotification(msg *server_api_params.MsgData, operationID
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "do notification callback success")
 }
 
-func (w *WorkMoments) getWorkMomentsNotification(callback open_im_sdk_callback.Base, operationID string) sdk_params_callback.GetWorkMomentsNotificationCallback {
-	log.NewInfo(operationID, utils.GetSelfFuncName())
+func (w *WorkMoments) getWorkMomentsNotification(offset, count int, callback open_im_sdk_callback.Base, operationID string) sdk_params_callback.GetWorkMomentsNotificationCallback {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), offset, count)
 	err := w.db.MarkAllWorkMomentsNotificationAsRead()
 	common.CheckDBErrCallback(callback, err, operationID)
-	workMomentsNotifications, err := w.db.GetAllWorkMomentsNotification()
+	workMomentsNotifications, err := w.db.GetWorkMomentsNotification(offset, count)
 	common.CheckDBErrCallback(callback, err, operationID)
 	var msgs []sdk_params_callback.WorkMomentNotificationMsg
 	for _, v := range workMomentsNotifications {
