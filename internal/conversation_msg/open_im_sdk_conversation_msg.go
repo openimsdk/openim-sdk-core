@@ -60,6 +60,7 @@ func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callba
 	}()
 }
 
+//deprecated
 func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList, operationID string) {
 	if callback == nil {
 		return
@@ -140,9 +141,8 @@ func (c *Conversation) ResetConversationGroupAtType(callback open_im_sdk_callbac
 	}
 	go func() {
 		log.NewInfo(operationID, "ResetConversationGroupAtType args: ", conversationID)
-		c.resetConversationGroupAtType(callback, conversationID, operationID)
+		c.setOneConversationGroupAtType(callback, conversationID, operationID)
 		callback.OnSuccess(sdk_params_callback.ResetConversationGroupAtTypeCallback)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 		log.NewInfo(operationID, "ResetConversationGroupAtType callback: ", sdk_params_callback.ResetConversationGroupAtTypeCallback)
 	}()
 }
@@ -154,7 +154,6 @@ func (c *Conversation) PinConversation(callback open_im_sdk_callback.Base, conve
 		log.NewInfo(operationID, "PinConversation args: ", conversationID, isPinned)
 		c.pinConversation(callback, conversationID, isPinned, operationID)
 		callback.OnSuccess(sdk_params_callback.PinConversationDraftCallback)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 		log.NewInfo(operationID, "PinConversation callback: ", sdk_params_callback.PinConversationDraftCallback)
 	}()
 }

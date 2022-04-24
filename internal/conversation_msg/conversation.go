@@ -61,67 +61,62 @@ func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callba
 	c.SyncConversations(operationID)
 }
 
-func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiReq *server_api_params.SetConversationReq, conversationID string, localConversation *db.LocalConversation, operationID string) {
-	apiResp := server_api_params.SetConversationResp{}
+func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiReq *server_api_params.ModifyConversationFieldReq, conversationID string, localConversation *db.LocalConversation, operationID string) {
+	apiResp := server_api_params.ModifyConversationFieldResp{}
 	apiReq.OwnerUserID = c.loginUserID
 	apiReq.OperationID = operationID
 	apiReq.ConversationID = conversationID
 	apiReq.ConversationType = localConversation.ConversationType
 	apiReq.UserID = localConversation.UserID
 	apiReq.GroupID = localConversation.GroupID
-	apiReq.Ex = localConversation.Ex
-	apiReq.AttachedInfo = localConversation.AttachedInfo
-	c.p.PostFatalCallback(callback, constant.SetConversationOptRouter, apiReq, nil, apiReq.OperationID)
+	apiReq.UserIDList = []string{c.loginUserID}
+	c.p.PostFatalCallback(callback, constant.ModifyConversationFieldRouter, apiReq, nil, apiReq.OperationID)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "request success, output: ", apiResp)
 }
 
 func (c *Conversation) setOneConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationID string, opt int, operationID string) {
-	apiReq := &server_api_params.SetConversationReq{}
+	apiReq := &server_api_params.ModifyConversationFieldReq{}
 	localConversation, err := c.db.GetConversation(conversationID)
-	if err != nil {
-		log.NewError(operationID, utils.GetSelfFuncName(), "GetConversation failed", err.Error())
-		callback.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
-		return
-	}
+	common.CheckDBErrCallback(callback, err, operationID)
 	apiReq.RecvMsgOpt = int32(opt)
-	apiReq.IsPinned = localConversation.IsPinned
-	apiReq.IsPrivateChat = localConversation.IsPrivateChat
-	apiReq.NotificationType = constant.ConversationChangeNotification
+	apiReq.FieldType = constant.FieldRecvMsgOpt
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
 	c.SyncConversations(operationID)
 }
 
 func (c *Conversation) setOneConversationPrivateChat(callback open_im_sdk_callback.Base, conversationID string, isPrivate bool, operationID string) {
-	apiReq := &server_api_params.SetConversationReq{}
+	apiReq := &server_api_params.ModifyConversationFieldReq{}
 	localConversation, err := c.db.GetConversation(conversationID)
-	if err != nil {
-		log.NewError(operationID, utils.GetSelfFuncName(), "GetConversation failed", err.Error())
-		callback.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
-		return
-	}
-	apiReq.RecvMsgOpt = localConversation.RecvMsgOpt
-	apiReq.IsPinned = localConversation.IsPinned
+	common.CheckDBErrCallback(callback, err, operationID)
 	apiReq.IsPrivateChat = isPrivate
-	apiReq.NotificationType = constant.ConversationPrivateChatNotification
+	apiReq.FieldType = constant.FieldIsPrivateChat
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
 	c.SyncConversations(operationID)
 }
 
 func (c *Conversation) setOneConversationPinned(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
-	apiReq := &server_api_params.SetConversationReq{}
+	apiReq := &server_api_params.ModifyConversationFieldReq{}
 	localConversation, err := c.db.GetConversation(conversationID)
-	if err != nil {
-		log.NewError(operationID, utils.GetSelfFuncName(), "GetConversation failed", err.Error())
-		callback.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
-		return
-	}
-	apiReq.NotificationType = constant.ConversationChangeNotification
-	apiReq.RecvMsgOpt = localConversation.RecvMsgOpt
+	common.CheckDBErrCallback(callback, err, operationID)
 	apiReq.IsPinned = isPinned
-	apiReq.IsPrivateChat = localConversation.IsPrivateChat
+	apiReq.FieldType = constant.FieldIsPinned
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
+	c.SyncConversations(operationID)
 }
-
+func (c *Conversation) setOneConversationGroupAtType(callback open_im_sdk_callback.Base, conversationID, operationID string) {
+	lc, err := c.db.GetConversation(conversationID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	if lc.GroupAtType == constant.AtNormal {
+		common.CheckAnyErrCallback(callback, 201, errors.New("conversation don't need to reset"), operationID)
+	}
+	apiReq := &server_api_params.ModifyConversationFieldReq{}
+	localConversation, err := c.db.GetConversation(conversationID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	apiReq.GroupAtType = constant.AtNormal
+	apiReq.FieldType = constant.FieldGroupAtType
+	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
+	c.SyncConversations(operationID)
+}
 func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) []server_api_params.GetConversationRecvMessageOptResp {
 	apiReq := server_api_params.GetConversationsReq{}
 	apiReq.OperationID = operationID
@@ -205,17 +200,6 @@ func (c *Conversation) setConversationDraft(callback open_im_sdk_callback.Base, 
 		common.CheckDBErrCallback(callback, err, operationID)
 	}
 }
-func (c *Conversation) resetConversationGroupAtType(callback open_im_sdk_callback.Base, conversationID, operationID string) {
-	lc, err := c.db.GetConversation(conversationID)
-	common.CheckDBErrCallback(callback, err, operationID)
-	if lc.GroupAtType == constant.AtNormal {
-		common.CheckAnyErrCallback(callback, 201, errors.New("conversation don't need to reset"), operationID)
-	}
-	err = c.db.UpdateColumnsConversation(conversationID, map[string]interface{}{"group_at_type": 0})
-	common.CheckDBErrCallback(callback, err, operationID)
-
-}
-
 func (c *Conversation) pinConversation(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
 	lc := db.LocalConversation{ConversationID: conversationID, IsPinned: isPinned}
 	if isPinned {
@@ -226,9 +210,7 @@ func (c *Conversation) pinConversation(callback open_im_sdk_callback.Base, conve
 		common.CheckDBErrCallback(callback, err, operationID)
 	}
 	c.setOneConversationPinned(callback, conversationID, isPinned, operationID)
-	c.SyncConversations(operationID)
 }
-
 func (c *Conversation) getServerConversationList(operationID string) (server_api_params.GetAllConversationsResp, error) {
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	var req server_api_params.GetAllConversationsReq
