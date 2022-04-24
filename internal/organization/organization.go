@@ -157,6 +157,7 @@ func (o *Organization) SyncDepartment(operationID string) {
 	if flag != 0 {
 		if o.listener == nil {
 			log.Error(operationID, "o.listener == nil ")
+			return
 		}
 		o.listener.OnOrganizationUpdated()
 	}
