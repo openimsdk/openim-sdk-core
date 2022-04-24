@@ -17,7 +17,7 @@ func (LocalWorkMomentsNotification) TableName() string {
 }
 
 type LocalWorkMomentsNotificationUnreadCount struct {
-	UnreadCount int `gorm:"unread_count" json:"unread_count"`
+	UnreadCount int `gorm:"unread_count" json:"unreadCount"`
 }
 
 func (LocalWorkMomentsNotificationUnreadCount) TableName() string {

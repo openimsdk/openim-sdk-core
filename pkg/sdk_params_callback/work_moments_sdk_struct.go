@@ -23,13 +23,17 @@ type Comment struct {
 }
 
 type WorkMomentNotificationMsg struct {
-	NotificationMsgType int32    `json:"notificationMsgType"`
-	Comment             *Comment `json:"comment"`
-	WorkMomentID        string   `json:"workMomentID"`
-	UserID              string   `json:"userID"`
-	UserName            string   `json:"userName"`
-	FaceURL             string   `json:"faceURL"`
-	WorkMomentContent   string   `json:"workMomentContent"`
+	NotificationMsgType int32  `json:"notificationMsgType"`
+	ReplyUserName       string `json:"replyUserName"`
+	ReplyUserID         string `json:"replyUserID"`
+	Content             string `json:"content"`
+	ContentID           string `json:"contentID"`
+	WorkMomentID        string `json:"workMomentID"`
+	UserID              string `json:"userID"`
+	UserName            string `json:"userName"`
+	FaceURL             string `json:"faceURL"`
+	WorkMomentContent   string `json:"workMomentContent"`
+	CreateTime          int32  `json:"createTime"`
 }
 
 type GetWorkMomentsNotificationCallback []WorkMomentNotificationMsg
