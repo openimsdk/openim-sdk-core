@@ -288,7 +288,7 @@ func (c *Conversation) SyncConversations(operationID string) {
 	// 本地服务器有的会话 以服务器为准更新
 	var conversationChangedList []string
 	for _, index := range sameA {
-		log.NewInfo("", *conversationsOnServerLocalFormat[index])
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "server and client both have", *conversationsOnServerLocalFormat[index])
 		err := c.db.UpdateConversationForSync(conversationsOnServerLocalFormat[index])
 		if err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), "UpdateConversation failed ", err.Error(), *conversationsOnServerLocalFormat[index])
