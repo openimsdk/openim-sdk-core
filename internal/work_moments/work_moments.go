@@ -42,13 +42,13 @@ func (w *WorkMoments) getWorkMomentsNotification(offset, count int, callback ope
 	workMomentsNotifications, err := w.db.GetWorkMomentsNotification(offset, count)
 	common.CheckDBErrCallback(callback, err, operationID)
 	msgs := make([]sdk_params_callback.WorkMomentNotificationMsg, len(workMomentsNotifications))
-	for _, v := range workMomentsNotifications {
+	for i, v := range workMomentsNotifications {
 		workMomentNotificationMsg := sdk_params_callback.WorkMomentNotificationMsg{}
 		if err := utils.JsonStringToStruct(v.JsonDetail, &workMomentNotificationMsg); err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), "JsonStringToStruct failed", err.Error())
 			continue
 		}
-		msgs = append(msgs, workMomentNotificationMsg)
+		msgs[i] = workMomentNotificationMsg
 	}
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
 	return msgs
