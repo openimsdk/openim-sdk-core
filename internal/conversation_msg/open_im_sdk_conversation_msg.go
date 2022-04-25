@@ -1143,12 +1143,25 @@ func (c *Conversation) GetHistoryMessageList(callback open_im_sdk_callback.Base,
 		log.NewInfo(operationID, "GetHistoryMessageList args: ", getMessageOptions)
 		var unmarshalParams sdk_params_callback.GetHistoryMessageListParams
 		common.JsonUnmarshalCallback(getMessageOptions, &unmarshalParams, callback, operationID)
-		result := c.getHistoryMessageList(callback, unmarshalParams, operationID)
+		result := c.getHistoryMessageList(callback, unmarshalParams, operationID, false)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
 		log.NewInfo(operationID, "GetHistoryMessageList callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
 
+func (c *Conversation) GetHistoryMessageListReverse(callback open_im_sdk_callback.Base, getMessageOptions, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, "GetHistoryMessageListReverse args: ", getMessageOptions)
+		var unmarshalParams sdk_params_callback.GetHistoryMessageListParams
+		common.JsonUnmarshalCallback(getMessageOptions, &unmarshalParams, callback, operationID)
+		result := c.getHistoryMessageList(callback, unmarshalParams, operationID, true)
+		callback.OnSuccess(utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, "GetHistoryMessageListReverse callback: ", utils.StructToJsonStringDefault(result))
+	}()
+}
 func (c *Conversation) RevokeMessage(callback open_im_sdk_callback.Base, message string, operationID string) {
 	if callback == nil {
 		return

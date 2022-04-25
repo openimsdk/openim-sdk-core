@@ -314,7 +314,7 @@ func (c *Conversation) SyncOneConversation(conversationID, operationID string) {
 	// todo
 }
 
-func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base, req sdk.GetHistoryMessageListParams, operationID string) sdk.GetHistoryMessageListCallback {
+func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base, req sdk.GetHistoryMessageListParams, operationID string, isReverse bool) sdk.GetHistoryMessageListCallback {
 	var sourceID string
 	var conversationID string
 	var startTime int64
@@ -366,7 +366,7 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 	}
 
 	log.Info(operationID, "sourceID:", sourceID, "startTime:", startTime, "count:", req.Count)
-	list, err := c.db.GetMessageList(sourceID, sessionType, req.Count, startTime)
+	list, err := c.db.GetMessageList(sourceID, sessionType, req.Count, startTime, isReverse)
 	common.CheckDBErrCallback(callback, err, operationID)
 	localChatLogToMsgStruct(&messageList, list)
 	switch sessionType {
@@ -389,7 +389,9 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 			v.RecvID = c.loginUserID
 		}
 	}
-	sort.Sort(messageList)
+	if !isReverse {
+		sort.Sort(messageList)
+	}
 	return sdk.GetHistoryMessageListCallback(messageList)
 }
 func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req sdk.RevokeMessageParams, operationID string) {
@@ -616,7 +618,7 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 	common.JsonUnmarshalCallback(LocalConversation.LatestMsg, &latestMsg, callback, operationID)
 
 	if s.ClientMsgID == latestMsg.ClientMsgID { //If the deleted message is the latest message of the conversation, update the latest message of the conversation
-		list, err := c.db.GetMessageList(sourceID, int(s.SessionType), 1, s.SendTime+TimeOffset)
+		list, err := c.db.GetMessageList(sourceID, int(s.SessionType), 1, s.SendTime+TimeOffset, false)
 		common.CheckDBErrCallback(callback, err, operationID)
 
 		conversation.ConversationID = conversationID
@@ -681,6 +683,9 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 		if len(searchParam.MessageTypeList) == 0 {
 			searchParam.MessageTypeList = []int{constant.File, constant.Text}
 		}
+		if len(searchParam.KeywordList) == 0 {
+			common.CheckAnyErrCallback(callback, 201, errors.New("keyword is null"), operationID)
+		}
 		list, err = c.db.SearchMessageByContentTypeAndKeyword(searchParam.MessageTypeList, searchParam.KeywordList[0], endTime, startTime)
 	}
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -698,8 +703,10 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 			log.Error(operationID, "Parsing data error:", err.Error(), v)
 			continue
 		}
-		if v.ContentType == constant.File && !utils.KMP(v.FileElem.FileName, searchParam.KeywordList[0]) {
-			continue
+		if len(searchParam.KeywordList) != 0 {
+			if v.ContentType == constant.File && !utils.KMP(v.FileElem.FileName, searchParam.KeywordList[0]) {
+				continue
+			}
 		}
 		switch v.SessionType {
 		case constant.SingleChatType:

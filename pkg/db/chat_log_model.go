@@ -194,18 +194,25 @@ func (d *DataBase) UpdateMessageTimeAndStatus(clientMsgID string, serverMsgID st
 	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
 }
 
-func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, startTime int64) (result []*LocalChatLog, err error) {
+func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []LocalChatLog
-	var condition string
-	if sessionType == constant.SingleChatType && sourceID == d.loginUserID {
-		condition = "send_id = ? And recv_id = ? AND status <=? And session_type = ? And send_time < ?"
+	var condition, timeOrder, timeSymbol string
+	if isReverse {
+		timeOrder = "send_time ASC"
+		timeSymbol = ">"
 	} else {
-		condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? And send_time < ?"
+		timeOrder = "send_time DESC"
+		timeSymbol = "<"
 	}
-	err = utils.Wrap(d.conn.Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
-		Order("send_time DESC").Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
+	if sessionType == constant.SingleChatType && sourceID == d.loginUserID {
+		condition = "send_id = ? And recv_id = ? AND status <=? And session_type = ? And send_time " + timeSymbol + " ?"
+	} else {
+		condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? And send_time " + timeSymbol + " ?"
+	}
+	err = utils.Wrap(d.conn.Debug().Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
+		Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)

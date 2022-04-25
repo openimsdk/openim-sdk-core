@@ -469,7 +469,16 @@ func (wsRouter *WsFuncRouter) GetHistoryMessageList(getMessageOptions string, op
 	}
 	userWorker.Conversation().GetHistoryMessageList(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, getMessageOptions, operationID)
 }
-
+func (wsRouter *WsFuncRouter) GetHistoryMessageListReverse(getMessageOptions string, operationID string) {
+	var sc SendCallback
+	sc.uid = wsRouter.uId
+	sc.funcName = runFuncName()
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, getMessageOptions, operationID, runFuncName(), nil) {
+		return
+	}
+	userWorker.Conversation().GetHistoryMessageListReverse(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, getMessageOptions, operationID)
+}
 func (wsRouter *WsFuncRouter) RevokeMessage(message string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, message, operationID, runFuncName(), nil) {
