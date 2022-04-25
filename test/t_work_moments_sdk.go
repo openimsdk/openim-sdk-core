@@ -30,7 +30,7 @@ func TestGetWorkMomentsNotification() {
 	operationID := utils.OperationIDGenerator()
 	var cb WBase
 	offset := 0
-	count := 1
+	count := 3
 	open_im_sdk.GetWorkMomentsNotification(cb, operationID, offset, count)
 }
 

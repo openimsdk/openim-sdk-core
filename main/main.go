@@ -69,7 +69,7 @@ func main() {
 
 	log.Info("", "DotestSetGroupMemberNickname start...")
 
-	test.TestGetWorkMomentsUnReadCount()
+	//test.TestGetWorkMomentsUnReadCount()
 	test.TestGetWorkMomentsNotification()
 	//test.TestClearWorkMomentsNotification()
 

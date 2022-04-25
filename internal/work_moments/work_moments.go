@@ -41,7 +41,7 @@ func (w *WorkMoments) getWorkMomentsNotification(offset, count int, callback ope
 	common.CheckDBErrCallback(callback, err, operationID)
 	workMomentsNotifications, err := w.db.GetWorkMomentsNotification(offset, count)
 	common.CheckDBErrCallback(callback, err, operationID)
-	var msgs []sdk_params_callback.WorkMomentNotificationMsg
+	msgs := make([]sdk_params_callback.WorkMomentNotificationMsg, len(workMomentsNotifications))
 	for _, v := range workMomentsNotifications {
 		workMomentNotificationMsg := sdk_params_callback.WorkMomentNotificationMsg{}
 		if err := utils.JsonStringToStruct(v.JsonDetail, &workMomentNotificationMsg); err != nil {
