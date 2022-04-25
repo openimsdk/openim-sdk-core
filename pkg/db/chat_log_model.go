@@ -34,7 +34,7 @@ func (d *DataBase) SearchMessageByKeyword(keyword, sourceID string, startTime, e
 	default:
 		condition = fmt.Sprintf("(send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content_type == %d And content like %q", sourceID, sourceID, startTime, endTime, constant.MsgStatusSendFailed, constant.Text, "%%"+keyword+"%%")
 	}
-	err = utils.Wrap(d.conn.Where(condition).Order("send_time DESC").Group("recv_id,client_msg_id").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
+	err = utils.Wrap(d.conn.Debug().Where(condition).Order("send_time DESC").Group("recv_id,client_msg_id").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
 
 	for _, v := range messageList {
 		v1 := v
@@ -56,7 +56,7 @@ func (d *DataBase) SearchMessageByContentType(contentType []int, sourceID string
 	default:
 		condition = fmt.Sprintf("(send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content_type IN ?", sourceID, sourceID, startTime, endTime, constant.MsgStatusSendFailed)
 	}
-	err = utils.Wrap(d.conn.Where(condition, contentType).Order("send_time DESC").Group("recv_id,client_msg_id").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
+	err = utils.Wrap(d.conn.Debug().Where(condition, contentType).Order("send_time DESC").Group("recv_id,client_msg_id").Offset(offset).Limit(count).Find(&messageList).Error, "SearchMessage failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)
@@ -64,6 +64,19 @@ func (d *DataBase) SearchMessageByContentType(contentType []int, sourceID string
 	return result, err
 }
 
+func (d *DataBase) SearchMessageByContentTypeAndKeyword(contentType []int, keyword string, startTime, endTime int64) (result []*LocalChatLog, err error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var messageList []LocalChatLog
+	var condition string
+	condition = fmt.Sprintf("send_time between %d and %d AND status <=%d And content_type<%d And (content like %q And content_type IN ?)", startTime, endTime, constant.MsgStatusSendFailed, constant.NotificationBegin, "%%"+keyword+"%%")
+	err = utils.Wrap(d.conn.Debug().Where(condition, contentType).Order("send_time DESC").Group("recv_id,client_msg_id").Find(&messageList).Error, "SearchMessage failed")
+	for _, v := range messageList {
+		v1 := v
+		result = append(result, &v1)
+	}
+	return result, err
+}
 func (d *DataBase) BatchUpdateMessageList(MessageList []*LocalChatLog) error {
 	if MessageList == nil {
 		return nil

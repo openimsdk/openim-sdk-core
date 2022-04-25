@@ -63,8 +63,7 @@ type SetConversationStatusParams struct {
 	Status int    `json:"status" validate:"required"`
 }
 type SearchLocalMessagesParams struct {
-	SourceID             string   `json:"sourceID"`
-	SessionType          int      `json:"sessionType"`
+	ConversationID       string   `json:"conversationID"`
 	KeywordList          []string `json:"keywordList"`
 	KeywordListMatchType int      `json:"keywordListMatchType"`
 	SenderUserIDList     []string `json:"senderUserIDList"`

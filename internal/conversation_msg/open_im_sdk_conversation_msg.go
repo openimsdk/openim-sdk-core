@@ -16,6 +16,7 @@ import (
 	"os"
 	"runtime"
 	"sync"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
@@ -1421,12 +1422,14 @@ func (c *Conversation) SearchLocalMessages(callback open_im_sdk_callback.Base, s
 		return
 	}
 	go func() {
+		s := time.Now()
 		log.NewInfo(operationID, "SearchLocalMessages args: ", searchParam)
 		var unmarshalParams sdk_params_callback.SearchLocalMessagesParams
 		common.JsonUnmarshalCallback(searchParam, &unmarshalParams, callback, operationID)
 		result := c.searchLocalMessages(callback, unmarshalParams, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		log.NewInfo(operationID, "SearchLocalMessages callback: ", utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, "cost time", time.Since(s))
+		//log.NewInfo(operationID, "SearchLocalMessages callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
 func getImageInfo(filePath string) (*sdk_struct.ImageInfo, error) {

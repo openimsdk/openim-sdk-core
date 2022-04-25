@@ -641,75 +641,93 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 	}
 }
 func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, searchParam sdk.SearchLocalMessagesParams, operationID string) (r sdk.SearchLocalMessagesCallback) {
-	var conversationID string
+	var conversationID, sourceID string
 	var startTime, endTime int64
-	var searchResultItem sdk.SearchByConversationResult
+	//var searchResultItem sdk.SearchByConversationResult
 	var messageList sdk_struct.NewMsgList
 	var list []*db.LocalChatLog
+	conversationMap := make(map[string]*sdk.SearchByConversationResult, 10)
 	var err error
-	if searchParam.PageIndex < 1 || searchParam.Count < 1 {
-		common.CheckAnyErrCallback(callback, 201, errors.New("page or count is null"), operationID)
-	}
-	offset := (searchParam.PageIndex - 1) * searchParam.Count
-	switch searchParam.SessionType {
-	case constant.SingleChatType:
-		conversationID = utils.GetConversationIDBySessionType(searchParam.SourceID, constant.SingleChatType)
-	case constant.GroupChatType:
-		conversationID = utils.GetConversationIDBySessionType(searchParam.SourceID, constant.GroupChatType)
-	default:
-	}
+
 	if searchParam.SearchTimePosition == 0 {
-		startTime = utils.GetCurrentTimestampBySecond()
+		startTime = utils.UnixSecondToTime(utils.GetCurrentTimestampBySecond()).UnixNano() / 1e6
 	} else {
-		startTime = searchParam.SearchTimePosition
-	}
-	if searchParam.SearchTimePosition == 0 {
-		endTime = 0
-	} else {
-		endTime = startTime - searchParam.SearchTimePeriod
+		startTime = utils.UnixSecondToTime(searchParam.SearchTimePosition).UnixNano() / 1e6
+		endTime = utils.UnixSecondToTime(startTime-searchParam.SearchTimePeriod).UnixNano() / 1e6
 	}
 	if (len(searchParam.KeywordList) == 0 || searchParam.KeywordList[0] == "") && len(searchParam.MessageTypeList) == 0 {
 		common.CheckAnyErrCallback(callback, 201, errors.New("keyword is null"), operationID)
 	}
-	if len(searchParam.MessageTypeList) != 0 && len(searchParam.KeywordList) == 0 {
-		list, err = c.db.SearchMessageByContentType(searchParam.MessageTypeList, searchParam.SourceID, utils.UnixSecondToTime(endTime).UnixNano()/1e6, utils.UnixSecondToTime(startTime).UnixNano()/1e6, searchParam.SessionType, offset, searchParam.Count)
-	} else {
-		list, err = c.db.SearchMessageByKeyword(searchParam.KeywordList[0], searchParam.SourceID, utils.UnixSecondToTime(endTime).UnixNano()/1e6, utils.UnixSecondToTime(startTime).UnixNano()/1e6, searchParam.SessionType, offset, searchParam.Count)
-	}
-
-	common.CheckDBErrCallback(callback, err, operationID)
-	r.TotalCount = len(list)
-	localChatLogToMsgStruct(&messageList, list)
-	switch searchParam.SessionType {
-	case constant.SingleChatType:
-		for _, v := range messageList {
-			err := c.msgHandleByContentType(v)
-			if err != nil {
-				log.Error(operationID, "Parsing data error:", err.Error(), v)
-				continue
-			}
+	offset := (searchParam.PageIndex - 1) * searchParam.Count
+	if searchParam.ConversationID != "" {
+		if searchParam.PageIndex < 1 || searchParam.Count < 1 {
+			common.CheckAnyErrCallback(callback, 201, errors.New("page or count is null"), operationID)
 		}
-		sort.Sort(messageList)
-		searchResultItem.ConversationID = conversationID
-		searchResultItem.MessageCount = r.TotalCount
-		searchResultItem.MessageList = messageList
-		r.SearchResultItems = append(r.SearchResultItems, &searchResultItem)
-	case constant.GroupChatType:
-		for _, v := range messageList {
-			err := c.msgHandleByContentType(v)
-			if err != nil {
-				log.Error(operationID, "Parsing data error:", err.Error(), v)
-				continue
+		localConversation, err := c.db.GetConversation(searchParam.ConversationID)
+		common.CheckDBErrCallback(callback, err, operationID)
+		switch localConversation.ConversationType {
+		case constant.SingleChatType:
+			sourceID = localConversation.UserID
+		case constant.GroupChatType:
+			sourceID = localConversation.GroupID
+		}
+		if len(searchParam.MessageTypeList) != 0 && len(searchParam.KeywordList) == 0 {
+			list, err = c.db.SearchMessageByContentType(searchParam.MessageTypeList, sourceID, endTime, startTime, int(localConversation.ConversationType), offset, searchParam.Count)
+		} else {
+			list, err = c.db.SearchMessageByKeyword(searchParam.KeywordList[0], sourceID, endTime, startTime, int(localConversation.ConversationType), offset, searchParam.Count)
+		}
+	} else {
+		//Comprehensive search, search all
+		if len(searchParam.MessageTypeList) == 0 {
+			searchParam.MessageTypeList = []int{constant.File, constant.Text}
+		}
+		list, err = c.db.SearchMessageByContentTypeAndKeyword(searchParam.MessageTypeList, searchParam.KeywordList[0], endTime, startTime)
+	}
+	common.CheckDBErrCallback(callback, err, operationID)
+	localChatLogToMsgStruct(&messageList, list)
+
+	//log.Debug("hahh",utils.KMP("SSSsdf3434","s"))
+	//log.Debug("hahh",utils.KMP("SSSsdf3434","g"))
+	//log.Debug("hahh",utils.KMP("SSSsdf3434","3434"))
+	//log.Debug("hahh",utils.KMP("SSSsdf3434","F3434"))
+	//log.Debug("hahh",utils.KMP("SSSsdf3434","SDF3"))
+	log.Debug("haha", len(list))
+	for _, v := range messageList {
+		err := c.msgHandleByContentType(v)
+		if err != nil {
+			log.Error(operationID, "Parsing data error:", err.Error(), v)
+			continue
+		}
+		if v.ContentType == constant.File && !utils.KMP(v.FileElem.FileName, searchParam.KeywordList[0]) {
+			continue
+		}
+		switch v.SessionType {
+		case constant.SingleChatType:
+			if v.SendID == c.loginUserID {
+				conversationID = utils.GetConversationIDBySessionType(v.RecvID, constant.SingleChatType)
+			} else {
+				conversationID = utils.GetConversationIDBySessionType(v.SendID, constant.SingleChatType)
 			}
+		case constant.GroupChatType:
 			v.GroupID = v.RecvID
 			v.RecvID = c.loginUserID
+			conversationID = utils.GetConversationIDBySessionType(v.GroupID, constant.GroupChatType)
 		}
-		sort.Sort(messageList)
-		searchResultItem.ConversationID = conversationID
-		searchResultItem.MessageCount = r.TotalCount
-		searchResultItem.MessageList = messageList
-		r.SearchResultItems = append(r.SearchResultItems, &searchResultItem)
-	default:
+		if oldItem, ok := conversationMap[conversationID]; !ok {
+			searchResultItem := sdk.SearchByConversationResult{}
+			searchResultItem.ConversationID = conversationID
+			searchResultItem.MessageList = append(searchResultItem.MessageList, v)
+			searchResultItem.MessageCount++
+			conversationMap[conversationID] = &searchResultItem
+		} else {
+			oldItem.MessageCount++
+			oldItem.MessageList = append(oldItem.MessageList, v)
+			conversationMap[conversationID] = oldItem
+		}
+	}
+	for _, v := range conversationMap {
+		r.SearchResultItems = append(r.SearchResultItems, v)
+		r.TotalCount += v.MessageCount
 
 	}
 	return r
