@@ -201,15 +201,15 @@ func (c *Conversation) setConversationDraft(callback open_im_sdk_callback.Base, 
 	}
 }
 func (c *Conversation) pinConversation(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
-	lc := db.LocalConversation{ConversationID: conversationID, IsPinned: isPinned}
-	if isPinned {
-		err := c.db.UpdateConversation(&lc)
-		common.CheckDBErrCallback(callback, err, operationID)
-	} else {
-		err := c.db.UnPinConversation(conversationID, constant.NotPinned)
-		common.CheckDBErrCallback(callback, err, operationID)
-	}
+	//lc := db.LocalConversation{ConversationID: conversationID, IsPinned: isPinned}
+	//if isPinned {
 	c.setOneConversationPinned(callback, conversationID, isPinned, operationID)
+	//err := c.db.UpdateConversation(&lc)
+	//common.CheckDBErrCallback(callback, err, operationID)
+	//} else {
+	//	err := c.db.UnPinConversation(conversationID, constant.NotPinned)
+	//	common.CheckDBErrCallback(callback, err, operationID)
+	//}
 }
 func (c *Conversation) getServerConversationList(operationID string) (server_api_params.GetAllConversationsResp, error) {
 	log.NewInfo(operationID, utils.GetSelfFuncName())
