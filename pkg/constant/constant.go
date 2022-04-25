@@ -209,6 +209,8 @@ const (
 )
 const ZoomScale = "200"
 const MaxTotalMsgLen = 51200
+
+//const MaxTotalMsgLen = 20480
 const (
 	FriendAcceptTip  = "You have successfully become friends, so start chatting"
 	TransferGroupTip = "The owner of the group is transferred!"
@@ -270,7 +272,15 @@ const (
 	AtAll       = 2
 	AtAllAtMe   = 3
 )
-
+const (
+	FieldRecvMsgOpt    = 1
+	FieldIsPinned      = 2
+	FieldAttachedInfo  = 3
+	FieldIsPrivateChat = 4
+	FieldGroupAtType   = 5
+	FieldIsNotInGroup  = 6
+	FieldEx            = 7
+)
 const BigVersion = "v2"
 const UpdateVersion = ".0.0"
 const SdkVersion = "Open-IM-SDK-Core-"

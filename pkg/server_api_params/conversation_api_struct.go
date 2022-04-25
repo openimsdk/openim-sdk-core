@@ -25,7 +25,15 @@ type SetConversationReq struct {
 
 type SetConversationResp struct {
 }
-
+type ModifyConversationFieldReq struct {
+	Conversation
+	FieldType   int32    `json:"fieldType" binding:"required"`
+	UserIDList  []string `json:"userIDList" binding:"required"`
+	OperationID string   `json:"operationID" binding:"required"`
+}
+type ModifyConversationFieldResp struct {
+	CommResp
+}
 type BatchSetConversationsReq struct {
 	Conversations    []Conversation `json:"conversations" binding:"required"`
 	OwnerUserID      string         `json:"ownerUserID" binding:"required"`
