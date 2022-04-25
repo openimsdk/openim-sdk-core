@@ -631,6 +631,8 @@ func CheckConversationListDiff(conversationsOnServer, conversationsOnLocal []*te
 			//fmt.Println("aInBNot", conversationsOnServer[i], ia)
 			aInBNot = append(aInBNot, i)
 		} else {
+			fmt.Println("test result is v", v)
+			fmt.Println("test result is ia", ia)
 			if !cmp.Equal(v, ia) {
 				fmt.Println(v, ia)
 				// key of a and b is equal, but value different
