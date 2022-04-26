@@ -158,18 +158,10 @@ func (u *LoginMgr) wakeUp(cb open_im_sdk_callback.Base, operationID string) {
 }
 
 func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
-
 	log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)
-
-	//if u.justOnceFlag {
-	//	cb.OnError(constant.ErrLogin.ErrCode, constant.ErrLogin.ErrMsg)
-	//	return
-	//}
 	err := CheckToken(userID, token, operationID)
 	common.CheckTokenErrCallback(cb, err, operationID)
 	log.Info(operationID, "checkToken ok ", userID, token)
-	//	u.justOnceFlag = true
-
 	u.token = token
 	u.loginUserID = userID
 
@@ -213,10 +205,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache)
 	u.workMoments = workMoments.NewWorkMoments(u.loginUserID, u.db, p)
 	u.workMoments.SetListener(u.workMomentsListener)
-	//if u.imConfig.ObjectStorage != "cos" && u.imConfig.ObjectStorage != "" {
-	//	err = errors.New("u.imConfig.ObjectStorage failed ")
-	//	common.CheckConfigErrCallback(cb, err, operationID)
-	//}
+
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
 	u.forcedSynchronization()
 	log.Info(operationID, "forcedSynchronization success...")

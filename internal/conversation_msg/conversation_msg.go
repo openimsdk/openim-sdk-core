@@ -75,7 +75,6 @@ func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 		advancedFunction: advancedFunction, organization: organization, workMoments: workMoments}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
-	//	n.cache = cache.NewCache(n.user, n.friend)
 	n.cache = cache
 	return n
 }
