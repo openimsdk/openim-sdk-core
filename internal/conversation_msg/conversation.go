@@ -106,7 +106,7 @@ func (c *Conversation) setOneConversationPinned(callback open_im_sdk_callback.Ba
 func (c *Conversation) setOneConversationGroupAtType(callback open_im_sdk_callback.Base, conversationID, operationID string) {
 	lc, err := c.db.GetConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
-	if lc.GroupAtType == constant.AtNormal {
+	if lc.GroupAtType == constant.AtNormal || lc.ConversationType != constant.GroupChatType {
 		common.CheckAnyErrCallback(callback, 201, errors.New("conversation don't need to reset"), operationID)
 	}
 	apiReq := &server_api_params.ModifyConversationFieldReq{}
@@ -660,11 +660,11 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 	if (len(searchParam.KeywordList) == 0 || searchParam.KeywordList[0] == "") && len(searchParam.MessageTypeList) == 0 {
 		common.CheckAnyErrCallback(callback, 201, errors.New("keyword is null"), operationID)
 	}
-	offset := (searchParam.PageIndex - 1) * searchParam.Count
 	if searchParam.ConversationID != "" {
 		if searchParam.PageIndex < 1 || searchParam.Count < 1 {
 			common.CheckAnyErrCallback(callback, 201, errors.New("page or count is null"), operationID)
 		}
+		offset := (searchParam.PageIndex - 1) * searchParam.Count
 		localConversation, err := c.db.GetConversation(searchParam.ConversationID)
 		common.CheckDBErrCallback(callback, err, operationID)
 		switch localConversation.ConversationType {
@@ -722,7 +722,10 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 		}
 		if oldItem, ok := conversationMap[conversationID]; !ok {
 			searchResultItem := sdk.SearchByConversationResult{}
+			localConversation, _ := c.db.GetConversation(conversationID)
 			searchResultItem.ConversationID = conversationID
+			searchResultItem.FaceURL = localConversation.FaceURL
+			searchResultItem.ShowName = localConversation.ShowName
 			searchResultItem.MessageList = append(searchResultItem.MessageList, v)
 			searchResultItem.MessageCount++
 			conversationMap[conversationID] = &searchResultItem

@@ -79,6 +79,8 @@ type SearchLocalMessagesCallback struct {
 }
 type SearchByConversationResult struct {
 	ConversationID string                  `json:"conversationID"`
+	ShowName       string                  `json:"showName"`
+	FaceURL        string                  `json:"faceURL"`
 	MessageCount   int                     `json:"messageCount"`
 	MessageList    []*sdk_struct.MsgStruct `json:"messageList"`
 }
