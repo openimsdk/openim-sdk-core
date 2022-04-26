@@ -104,11 +104,6 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 	}
 }
 
-//func (u *User) getUsersInfo(callback open_im_sdk_callback.Base, UserIDList sdk.GetUsersInfoParam, operationID string) sdk.GetUsersInfoCallback{
-//	u.GetFriendInfoByFriendUserID()
-//	return nil
-//}
-
 func (u *User) GetUsersInfoFromSvr(callback open_im_sdk_callback.Base, UserIDList sdk.GetUsersInfoParam, operationID string) []*api.PublicUserInfo {
 	apiReq := api.GetUsersInfoReq{}
 	apiReq.OperationID = operationID
