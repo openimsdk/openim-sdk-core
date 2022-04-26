@@ -33,6 +33,12 @@ type GetJoinedGroupListCallback []*db.LocalGroup
 
 type GetGroupsInfoParam []string
 type GetGroupsInfoCallback []*db.LocalGroup
+type SearchGroupsParam struct {
+	KeywordList       []string `json:"keywordList"`
+	IsSearchGroupID   bool     `json:"isSearchGroupID"`
+	IsSearchGroupName bool     `json:"isSearchGroupName"`
+}
+type SearchGroupsCallback []*db.LocalGroup
 
 type SetGroupInfoParam struct {
 	GroupName    string `json:"groupName"`

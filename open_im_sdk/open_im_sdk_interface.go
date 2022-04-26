@@ -258,6 +258,14 @@ func GetGroupsInfo(callback open_im_sdk_callback.Base, operationID string, group
 	}
 	userForSDK.Group().GetGroupsInfo(callback, groupIDList, operationID)
 }
+func SearchGroups(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Group().SearchGroups(callback, searchParam, operationID)
+}
 
 func SetGroupInfo(callback open_im_sdk_callback.Base, operationID string, groupID string, groupInfo string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
