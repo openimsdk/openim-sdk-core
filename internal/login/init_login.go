@@ -195,7 +195,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
 	u.msgSync = ws.NewMsgSync(db, u.ws, userID, u.conversationCh, pushMsgAndMaxSeqCh)
 
-	u.heartbeat = ws.NewHeartbeat(u.msgSync, u.heartbeatCmdCh)
+	u.heartbeat = ws.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, token)
 
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
 

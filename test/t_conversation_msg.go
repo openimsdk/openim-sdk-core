@@ -351,7 +351,7 @@ func DoTestSearchLocalMessages() {
 	t.OperationID = operationID
 	var p sdk_params_callback.SearchLocalMessagesParams
 	//p.SessionType = constant.SingleChatType
-	p.SourceID = "18090680773"
+
 	p.KeywordList = []string{}
 	p.SearchTimePeriod = 24 * 60 * 60 * 10
 	open_im_sdk.SearchLocalMessages(t, operationID, utils.StructToJsonString(p))

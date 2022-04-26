@@ -1,8 +1,11 @@
 package interaction
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"github.com/golang/protobuf/proto"
+	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
@@ -10,6 +13,7 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"runtime"
+	"strings"
 	"time"
 )
 
@@ -18,17 +22,55 @@ type Heartbeat struct {
 	*MsgSync
 	cmdCh             chan common.Cmd2Value //waiting logout cmd , wake up cmd
 	heartbeatInterval int
+	token             string
+	listener          open_im_sdk_callback.OnConnListener
 }
 
 func (u *Heartbeat) SetHeartbeatInterval(heartbeatInterval int) {
 	u.heartbeatInterval = heartbeatInterval
 }
 
-func NewHeartbeat(msgSync *MsgSync, cmcCh chan common.Cmd2Value) *Heartbeat {
+func NewHeartbeat(msgSync *MsgSync, cmcCh chan common.Cmd2Value, listener open_im_sdk_callback.OnConnListener, token string) *Heartbeat {
 	p := Heartbeat{MsgSync: msgSync, cmdCh: cmcCh}
 	p.heartbeatInterval = constant.HeartbeatInterval
+	p.listener = listener
+	p.token = token
 	go p.Run()
 	return &p
+}
+
+type ParseToken struct {
+	UID      string `json:"UID"`
+	Platform string `json:"Platform"`
+	Exp      int    `json:"exp"`
+	Nbf      int    `json:"nbf"`
+	Iat      int    `json:"iat"`
+}
+
+func (u *Heartbeat) IsTokenExp(operationID string) bool {
+	b := strings.IndexAny(u.token, ".")
+	e := strings.LastIndex(u.token, ".")
+	if b == -1 || e == -1 || b >= e {
+		return false
+	}
+	log.Debug(operationID, "sub token ", u.token[b+1:e])
+	decodeBytes, err := base64.StdEncoding.DecodeString(u.token[b+1 : e])
+	if err != nil {
+		log.Error(operationID, "DecodeString failed ", err.Error(), u.token[b+1:e])
+		return false
+	}
+	log.Debug(operationID, "decodeBytes ", string(decodeBytes))
+	parseToken := ParseToken{}
+	err = json.Unmarshal(decodeBytes, &parseToken)
+	if err != nil {
+		log.Error(operationID, "Unmarshal failed ", err.Error())
+		return false
+	}
+	log.Debug(operationID, "exp ", parseToken.Exp, "now ", time.Now().Unix())
+	if parseToken.Exp > int(time.Now().Unix()) {
+		return true
+	}
+	return false
 }
 
 func (u *Heartbeat) Run() {
@@ -46,7 +88,6 @@ func (u *Heartbeat) Run() {
 					u.SetLoginState(constant.Logout)
 					u.CloseConn()
 					log.Warn(operationID, "close heartbeat channel ", u.cmdCh)
-					//	close(u.cmdCh)
 					runtime.Goexit()
 				}
 				if r.Cmd == constant.CmdWakeUp {
@@ -62,6 +103,13 @@ func (u *Heartbeat) Run() {
 
 		heartbeatNum++
 		log.Debug(operationID, "send heartbeat req")
+		if u.IsTokenExp(operationID) {
+			log.Warn(operationID, "TokenExp, close heartbeat channel, call OnUserTokenExpired ,set logout", u.cmdCh)
+			u.listener.OnUserTokenExpired()
+			u.SetLoginState(constant.Logout)
+			u.CloseConn()
+			runtime.Goexit()
+		}
 		resp, err := u.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.loginUserID, operationID)
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.loginUserID)

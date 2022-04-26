@@ -30,8 +30,8 @@ func reliabilityTest() {
 var (
 	TESTIP = "43.128.5.63"
 
-	APIADDR      = "http://" + TESTIP + ":10000"
-	WSADDR       = "ws://" + TESTIP + ":17778"
+	APIADDR      = "http://" + TESTIP + ":10002"
+	WSADDR       = "ws://" + TESTIP + ":10001"
 	REGISTERADDR = APIADDR + "/user_register"
 	TOKENADDR    = APIADDR + "/auth/user_token"
 	SECRET       = "tuoyun"
@@ -60,7 +60,7 @@ func main() {
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
 	test.SENDINTERVAL = SENDINTERVAL
-	strMyUidx := "17726378428"
+	strMyUidx := "18666662412"
 	//friendID := "17726378428"
 	tokenx := test.GenToken(strMyUidx)
 	//	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNTA5NDc5NTI0MDgzOTU3NzYwIiwiUGxhdGZvcm0iOiJBbmRyb2lkIiwiZXhwIjoxOTY0NzQ0NDY1LCJuYmYiOjE2NDkzODQ0NjUsImlhdCI6MTY0OTM4NDQ2NX0.io-mLXoL4fiBCmV1KzBbKLBY8gz_oXfGgCrgzG5lCeA"
