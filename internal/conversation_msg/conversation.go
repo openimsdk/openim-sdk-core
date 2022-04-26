@@ -726,6 +726,7 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 			searchResultItem.ConversationID = conversationID
 			searchResultItem.FaceURL = localConversation.FaceURL
 			searchResultItem.ShowName = localConversation.ShowName
+			searchResultItem.ConversationType = localConversation.ConversationType
 			searchResultItem.MessageList = append(searchResultItem.MessageList, v)
 			searchResultItem.MessageCount++
 			conversationMap[conversationID] = &searchResultItem
