@@ -67,7 +67,7 @@ func (u *Heartbeat) IsTokenExp(operationID string) bool {
 		return false
 	}
 	log.Debug(operationID, "exp ", parseToken.Exp, "now ", time.Now().Unix())
-	if parseToken.Exp > int(time.Now().Unix()) {
+	if parseToken.Exp < int(time.Now().Unix()) {
 		return true
 	}
 	return false
