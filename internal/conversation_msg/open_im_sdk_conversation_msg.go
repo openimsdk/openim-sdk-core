@@ -1357,7 +1357,6 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 			if isFromSvr {
 				c.cache.Update(sendID, faceUrl, name)
 			}
-
 		}
 		localMessage := db.LocalChatLog{}
 		s.SendID = sendID

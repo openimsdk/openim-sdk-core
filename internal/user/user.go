@@ -127,6 +127,15 @@ func (u *User) GetUsersInfoFromSvrNoCallback(UserIDList sdk.GetUsersInfoParam, o
 	return apiResp.UserInfoList, err
 }
 
+func (u *User) GetUsersInfoFromCacheSvr(UserIDList sdk.GetUsersInfoParam, operationID string) ([]*api.PublicUserInfo, error) {
+	apiReq := api.GetUsersInfoReq{}
+	apiReq.OperationID = operationID
+	apiReq.UserIDList = UserIDList
+	apiResp := api.GetUsersInfoResp{}
+	err := u.p.PostReturn(constant.GetUsersInfoFromCacheRouter, apiReq, &apiResp.UserInfoList)
+	return apiResp.UserInfoList, err
+}
+
 func (u *User) getSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) sdk.GetSelfUserInfoCallback {
 	userInfo, err := u.GetLoginUser()
 	if err != nil {

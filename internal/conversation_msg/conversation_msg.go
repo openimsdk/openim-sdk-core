@@ -66,13 +66,14 @@ func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener,
 	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling advanced_interface.Signaling,
-	advancedFunction advanced_interface.AdvancedFunction, organization *organization.Organization) *Conversation {
+	advancedFunction advanced_interface.AdvancedFunction, organization *organization.Organization, cache *cache.Cache) *Conversation {
 	n := &Conversation{Ws: ws, db: db, p: p, ch: ch, loginUserID: loginUserID, platformID: platformID,
 		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage, signaling: signaling,
 		advancedFunction: advancedFunction, organization: organization}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
-	n.cache = cache.NewCache(n.user, n.friend)
+	//	n.cache = cache.NewCache(n.user, n.friend)
+	n.cache = cache
 	return n
 }
 

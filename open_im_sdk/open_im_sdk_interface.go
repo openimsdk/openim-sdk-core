@@ -11,6 +11,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"strings"
 )
 
 /*
@@ -44,9 +45,17 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		log.Error(operationID, "Unmarshal failed ", err.Error(), config)
 		return false
 	}
+	if !strings.Contains(sdk_struct.SvrConf.ApiAddr, "http") {
+		log.Error(operationID, "api is http protocol", sdk_struct.SvrConf.ApiAddr)
+		return false
+	}
+	if !strings.Contains(sdk_struct.SvrConf.WsAddr, "ws") {
+		log.Error(operationID, "ws is ws protocol", sdk_struct.SvrConf.ApiAddr)
+		return false
+	}
+
 	log.NewPrivateLog("", sdk_struct.SvrConf.LogLevel)
 	log.Info(operationID, "config ", config, sdk_struct.SvrConf)
-	//log.NewPrivateLog(constant.LogFileName, sdk_struct.SvrConf.LogLevel)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), config, SdkVersion())
 	if listener == nil || config == "" {
 		log.Error(operationID, "listener or config is nil")
@@ -55,12 +64,6 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 	if userForSDK != nil {
 		log.Warn(operationID, "Initialize multiple times, call logout")
 		userForSDK.Logout(nil, utils.OperationIDGenerator())
-		//	log.Warn("", "Logout ok, see memory, sleep 10s")
-		//	time.Sleep(10 * time.Second)
-		//	userForSDK = nil
-
-		//	log.Warn("", "set loginmgr == nil, see memory, sleep 10s")
-		//	time.Sleep(10 * time.Second)
 	}
 	userForSDK = new(login.LoginMgr)
 
