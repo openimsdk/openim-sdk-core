@@ -62,8 +62,8 @@ func main() {
 	test.SENDINTERVAL = SENDINTERVAL
 	strMyUidx := "18666662412"
 	//friendID := "17726378428"
-	tokenx := test.GenToken(strMyUidx)
-	//	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNTA5NDc5NTI0MDgzOTU3NzYwIiwiUGxhdGZvcm0iOiJBbmRyb2lkIiwiZXhwIjoxOTY0NzQ0NDY1LCJuYmYiOjE2NDkzODQ0NjUsImlhdCI6MTY0OTM4NDQ2NX0.io-mLXoL4fiBCmV1KzBbKLBY8gz_oXfGgCrgzG5lCeA"
+	//	tokenx := test.GenToken(strMyUidx)
+	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNTA5NDc5NTI0MDgzOTU3NzYwIiwiUGxhdGZvcm0iOiJBbmRyb2lkIiwiZXhwIjoxOTY0NzQ0NDY1LCJuYmYiOjE2NDkzODQ0NjUsImlhdCI6MTY0OTM4NDQ2NX0.io-mLXoL4fiBCmV1KzBbKLBY8gz_oXfGgCrgzG5lCeA"
 	//	tokenx = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNzcyNjM3ODQyOCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYzMjE2NDU1LCJuYmYiOjE2NDc4NTY0NTUsImlhdCI6MTY0Nzg1NjQ1NX0.3fOcyhw7r5lOkRTJdDy7-tG9XC4XrKj_N7ufrGHPWYM"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 

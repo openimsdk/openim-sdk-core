@@ -51,7 +51,7 @@ func (c *Cache) GetUserNameAndFaceURL(userID string, operationID string) (faceUR
 		operationID = utils.OperationIDGenerator()
 	}
 
-	userInfos, err := c.user.GetUsersInfoFromSvrNoCallback([]string{userID}, operationID)
+	userInfos, err := c.user.GetUsersInfoFromCacheSvr([]string{userID}, operationID)
 	if err != nil {
 		return "", "", err
 	}

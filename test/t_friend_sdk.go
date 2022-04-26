@@ -416,7 +416,10 @@ func InOutDoTest(uid, tk, ws, api string) {
 	fmt.Println(s)
 	var testinit testInitLister
 	operationID := utils.OperationIDGenerator()
-	open_im_sdk.InitSDK(testinit, operationID, s)
+	if !open_im_sdk.InitSDK(testinit, operationID, s) {
+		log.Error("", "InitSDK failed")
+		return
+	}
 
 	var testConversation conversationCallBack
 	open_im_sdk.SetConversationListener(testConversation)
@@ -539,7 +542,10 @@ func DoTest(uid, tk, ws, api string) {
 	fmt.Println(s)
 	var testinit testInitLister
 	operationID := utils.OperationIDGenerator()
-	open_im_sdk.InitSDK(testinit, operationID, s)
+	if !open_im_sdk.InitSDK(testinit, operationID, s) {
+		log.Error("", "InitSDK failed")
+		return
+	}
 
 	var testConversation conversationCallBack
 	open_im_sdk.SetConversationListener(testConversation)
