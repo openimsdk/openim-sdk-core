@@ -209,7 +209,8 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.group.SetGroupListener(u.groupListener)
 	u.organization = organization.NewOrganization(u.loginUserID, u.db, p)
 	u.organization.SetListener(u.organizationListener)
-	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh)
+	u.cache = cache.NewCache(u.user, u.friend)
+	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache)
 	u.workMoments = workMoments.NewWorkMoments(u.loginUserID, u.db, p)
 	u.workMoments.SetListener(u.workMomentsListener)
 	//if u.imConfig.ObjectStorage != "cos" && u.imConfig.ObjectStorage != "" {
@@ -234,7 +235,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	}
 	u.signaling = sdk_advanced_function.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID, u.imConfig.Platform, u.db)
 	u.advancedFunction = sdk_advanced_function.NewChatHasRead(u.ws, u.loginUserID, u.db, u.imConfig.Platform, u.conversationCh, u.advancedMsgListener)
-	u.cache = cache.NewCache(u.user, u.friend)
+
 	u.conversation = conv.NewConversation(u.ws, u.db, p, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener,

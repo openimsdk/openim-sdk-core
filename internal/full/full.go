@@ -21,8 +21,8 @@ type Full struct {
 	userCache *cache.Cache
 }
 
-func NewFull(user *user.User, friend *friend.Friend, group *group.Group, ch chan common.Cmd2Value) *Full {
-	return &Full{user: user, friend: friend, group: group, ch: ch}
+func NewFull(user *user.User, friend *friend.Friend, group *group.Group, ch chan common.Cmd2Value, userCache *cache.Cache) *Full {
+	return &Full{user: user, friend: friend, group: group, ch: ch, userCache: userCache}
 }
 func (u *Full) getUsersInfo(callback open_im_sdk_callback.Base, userIDList sdk.GetUsersInfoParam, operationID string) sdk.GetUsersInfoCallback {
 	friendList := u.friend.GetDesignatedFriendListInfo(callback, userIDList, operationID)
