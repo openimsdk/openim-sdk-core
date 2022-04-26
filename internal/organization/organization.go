@@ -157,6 +157,7 @@ func (o *Organization) SyncDepartment(operationID string) {
 	if flag != 0 {
 		if o.listener == nil {
 			log.Error(operationID, "o.listener == nil ")
+			return
 		}
 		o.listener.OnOrganizationUpdated()
 	}
@@ -208,6 +209,10 @@ func (o *Organization) SyncDepartmentMemberByDepartmentID(operationID string, de
 		flag = 1
 	}
 	if flag != 0 {
+		if o.listener == nil {
+			log.Error(operationID, "o.listener == nil ")
+			return
+		}
 		o.listener.OnOrganizationUpdated()
 	}
 }
@@ -264,6 +269,10 @@ func (o *Organization) SyncAllDepartmentMember(operationID string) {
 		flag = 1
 	}
 	if flag != 0 {
+		if o.listener == nil {
+			log.Error(operationID, "o.listener == nil ")
+			return
+		}
 		o.listener.OnOrganizationUpdated()
 	}
 }
@@ -287,7 +296,6 @@ func (o *Organization) SyncDepartmentMember(operationID string) {
 	}
 	wg.Wait()
 	log.Info(operationID, "SyncDepartmentMemberByDepartmentID end")
-
 }
 
 func (o *Organization) SyncOrganization(operationID string) {

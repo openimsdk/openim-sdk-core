@@ -60,3 +60,7 @@ type OnUserListener interface {
 type OnOrganizationListener interface {
 	OnOrganizationUpdated()
 }
+
+type OnWorkMomentsListener interface {
+	OnRecvNewNotification()
+}

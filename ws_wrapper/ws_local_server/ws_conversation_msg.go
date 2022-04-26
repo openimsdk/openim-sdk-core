@@ -311,10 +311,10 @@ func (wsRouter *WsFuncRouter) CreateTextAtMessage(input string, operationID stri
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "text", "atUserList", "atUsersInfo", "message") {
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "text", "atUserIDList", "atUsersInfo", "message") {
 		return
 	}
-	msg := userWorker.Conversation().CreateTextAtMessage(m["text"].(string), m["atUserList"].(string), m["atUsersInfo"].(string), m["message"].(string), operationID)
+	msg := userWorker.Conversation().CreateTextAtMessage(m["text"].(string), m["atUserIDList"].(string), m["atUsersInfo"].(string), m["message"].(string), operationID)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }
 
@@ -469,7 +469,16 @@ func (wsRouter *WsFuncRouter) GetHistoryMessageList(getMessageOptions string, op
 	}
 	userWorker.Conversation().GetHistoryMessageList(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, getMessageOptions, operationID)
 }
-
+func (wsRouter *WsFuncRouter) GetHistoryMessageListReverse(getMessageOptions string, operationID string) {
+	var sc SendCallback
+	sc.uid = wsRouter.uId
+	sc.funcName = runFuncName()
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, getMessageOptions, operationID, runFuncName(), nil) {
+		return
+	}
+	userWorker.Conversation().GetHistoryMessageListReverse(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, getMessageOptions, operationID)
+}
 func (wsRouter *WsFuncRouter) RevokeMessage(message string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, message, operationID, runFuncName(), nil) {

@@ -631,6 +631,8 @@ func CheckConversationListDiff(conversationsOnServer, conversationsOnLocal []*te
 			//fmt.Println("aInBNot", conversationsOnServer[i], ia)
 			aInBNot = append(aInBNot, i)
 		} else {
+			//fmt.Println("test result is v", v)
+			//fmt.Println("test result is ia", ia)
 			if !cmp.Equal(v, ia) {
 				fmt.Println(v, ia)
 				// key of a and b is equal, but value different
@@ -760,6 +762,8 @@ type tempConversation struct {
 	GroupID          string
 	IsPrivateChat    bool
 	IsPinned         bool
+	GroupAtType      int32
+	IsNotInGroup     bool
 	AttachedInfo     string
 	Ex               string
 }
@@ -775,6 +779,8 @@ func ServerTransferToTempConversation(resp server_api_params.GetAllConversations
 			GroupID:          serverConversation.GroupID,
 			IsPrivateChat:    serverConversation.IsPrivateChat,
 			IsPinned:         serverConversation.IsPinned,
+			GroupAtType:      serverConversation.GroupAtType,
+			IsNotInGroup:     serverConversation.IsNotInGroup,
 			AttachedInfo:     serverConversation.AttachedInfo,
 			Ex:               serverConversation.Ex,
 		})
@@ -793,6 +799,8 @@ func LocalTransferToTempConversation(local []*db.LocalConversation) []*tempConve
 			GroupID:          localConversation.GroupID,
 			IsPrivateChat:    localConversation.IsPrivateChat,
 			IsPinned:         localConversation.IsPinned,
+			GroupAtType:      localConversation.GroupAtType,
+			IsNotInGroup:     localConversation.IsNotInGroup,
 			AttachedInfo:     localConversation.AttachedInfo,
 			Ex:               localConversation.Ex,
 		})
@@ -811,6 +819,8 @@ func TransferToLocalConversation(resp server_api_params.GetAllConversationsResp)
 			GroupID:          serverConversation.GroupID,
 			IsPrivateChat:    serverConversation.IsPrivateChat,
 			IsPinned:         serverConversation.IsPinned,
+			GroupAtType:      serverConversation.GroupAtType,
+			IsNotInGroup:     serverConversation.IsNotInGroup,
 			AttachedInfo:     serverConversation.AttachedInfo,
 			Ex:               serverConversation.Ex,
 		})

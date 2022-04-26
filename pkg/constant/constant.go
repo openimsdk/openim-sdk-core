@@ -89,7 +89,11 @@ const (
 
 	ConversationPrivateChatNotification = 1701
 	OrganizationChangedNotification     = 1801
-	NotificationEnd                     = 2000
+
+	WorkMomentNotificationBegin = 1900
+	WorkMomentNotification      = 1901
+
+	NotificationEnd = 2000
 
 	////////////////////////////////////////
 
@@ -128,6 +132,17 @@ const (
 	GroupBanChat         = 1
 	GroupStatusDismissed = 2
 	GroupStatusMuted     = 3
+
+	// workMoment permission
+	WorkMomentPublic            = 0
+	WorkMomentPrivate           = 1
+	WorkMomentPermissionCanSee  = 2
+	WorkMomentPermissionCantSee = 3
+
+	// workMoment sdk notification type
+	WorkMomentCommentNotification = 0
+	WorkMomentLikeNotification    = 1
+	WorkMomentAtUserNotification  = 2
 )
 
 const (
@@ -193,7 +208,9 @@ const (
 	GroupActionRefuseGroupApplication = 9
 )
 const ZoomScale = "200"
-const MaxTotalMsgLen = 20480
+const MaxTotalMsgLen = 51200
+
+//const MaxTotalMsgLen = 20480
 const (
 	FriendAcceptTip  = "You have successfully become friends, so start chatting"
 	TransferGroupTip = "The owner of the group is transferred!"
@@ -255,7 +272,15 @@ const (
 	AtAll       = 2
 	AtAllAtMe   = 3
 )
-
+const (
+	FieldRecvMsgOpt    = 1
+	FieldIsPinned      = 2
+	FieldAttachedInfo  = 3
+	FieldIsPrivateChat = 4
+	FieldGroupAtType   = 5
+	FieldIsNotInGroup  = 6
+	FieldEx            = 7
+)
 const BigVersion = "v2"
 const UpdateVersion = ".0.0"
 const SdkVersion = "Open-IM-SDK-Core-"

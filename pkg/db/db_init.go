@@ -112,7 +112,10 @@ func (d *DataBase) initDB() error {
 		&LocalChatLog{},
 		&LocalAdminGroupRequest{},
 		&LocalDepartment{},
-		&LocalDepartmentMember{})
+		&LocalDepartmentMember{},
+		&LocalWorkMomentsNotification{},
+		&LocalWorkMomentsNotificationUnreadCount{},
+	)
 	if !db.Migrator().HasTable(&LocalFriend{}) {
 		//log.NewInfo("CreateTable Friend")
 		db.Migrator().CreateTable(&LocalFriend{})
@@ -165,6 +168,16 @@ func (d *DataBase) initDB() error {
 	}
 	if !db.Migrator().HasTable(&LocalDepartmentMember{}) {
 		db.Migrator().CreateTable(&LocalDepartmentMember{})
+	}
+	if !db.Migrator().HasTable(&LocalWorkMomentsNotification{}) {
+		db.Migrator().CreateTable(&LocalWorkMomentsNotification{})
+	}
+	if !db.Migrator().HasTable(&LocalWorkMomentsNotificationUnreadCount{}) {
+		db.Migrator().CreateTable(&LocalWorkMomentsNotificationUnreadCount{})
+	}
+	log.NewInfo("init db", "startInitWorkMomentsNotificationUnreadCount ")
+	if err := d.InitWorkMomentsNotificationUnreadCount(); err != nil {
+		log.NewError("init InitWorkMomentsNotificationUnreadCount:", utils.GetSelfFuncName(), err.Error())
 	}
 	return nil
 }

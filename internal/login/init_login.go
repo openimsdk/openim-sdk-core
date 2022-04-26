@@ -12,6 +12,7 @@ import (
 	"open_im_sdk/internal/organization"
 	"open_im_sdk/internal/sdk_advanced_function"
 	"open_im_sdk/internal/user"
+	workMoments "open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -31,6 +32,7 @@ type LoginMgr struct {
 	user             *user.User
 	signaling        advanced_interface.Signaling
 	advancedFunction advanced_interface.AdvancedFunction
+	workMoments      *workMoments.WorkMoments
 	full             *full.Full
 	db               *db.DataBase
 	ws               *ws.Ws
@@ -50,6 +52,7 @@ type LoginMgr struct {
 	userListener         open_im_sdk_callback.OnUserListener
 	signalingListener    open_im_sdk_callback.OnSignalingListener
 	organizationListener open_im_sdk_callback.OnOrganizationListener
+	workMomentsListener  open_im_sdk_callback.OnWorkMomentsListener
 
 	conversationCh     chan common.Cmd2Value
 	cmdWsCh            chan common.Cmd2Value
@@ -102,6 +105,10 @@ func (u *LoginMgr) Signaling() advanced_interface.Signaling {
 	return u.signaling
 }
 
+func (u *LoginMgr) WorkMoments() *workMoments.WorkMoments {
+	return u.workMoments
+}
+
 func (u *LoginMgr) SetConversationListener(conversationListener open_im_sdk_callback.OnConversationListener) {
 	u.conversationListener = conversationListener
 }
@@ -129,6 +136,19 @@ func (u *LoginMgr) SetUserListener(userListener open_im_sdk_callback.OnUserListe
 func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalingListener) {
 	u.signalingListener = listener
 }
+
+func (u *LoginMgr) SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMomentsListener) {
+	u.workMomentsListener = listener
+}
+
+//func (u *LoginMgr) DebugMem(userID string) {
+//	u.FWMutex.Lock()
+//
+//	f, _ := os.OpenFile(utils.OperationIDGenerator()+"mem.profile", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+//	u.F = f
+//	pprof.Lookup("heap").WriteTo(u.F, 0)
+//	u.FWMutex.Unlock()
+//}
 
 func (u *LoginMgr) wakeUp(cb open_im_sdk_callback.Base, operationID string) {
 	log.Info(operationID, utils.GetSelfFuncName(), "args ")
@@ -178,6 +198,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.heartbeat = ws.NewHeartbeat(u.msgSync, u.heartbeatCmdCh)
 
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
+
 	u.user = user.NewUser(db, p, u.loginUserID)
 	u.user.SetListener(u.userListener)
 
@@ -189,6 +210,8 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.organization = organization.NewOrganization(u.loginUserID, u.db, p)
 	u.organization.SetListener(u.organizationListener)
 	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh)
+	u.workMoments = workMoments.NewWorkMoments(u.loginUserID, u.db, p)
+	u.workMoments.SetListener(u.workMomentsListener)
 	//if u.imConfig.ObjectStorage != "cos" && u.imConfig.ObjectStorage != "" {
 	//	err = errors.New("u.imConfig.ObjectStorage failed ")
 	//	common.CheckConfigErrCallback(cb, err, operationID)
@@ -213,7 +236,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.advancedFunction = sdk_advanced_function.NewChatHasRead(u.ws, u.loginUserID, u.db, u.imConfig.Platform, u.conversationCh, u.advancedMsgListener)
 	u.conversation = conv.NewConversation(u.ws, u.db, p, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
-		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener, u.signaling, u.advancedFunction, u.organization)
+		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener, u.signaling, u.advancedFunction, u.organization, u.workMoments)
 	u.conversation.SyncConversations(operationID)
 	go common.DoListener(u.conversation)
 	log.Info(operationID, "login success...")

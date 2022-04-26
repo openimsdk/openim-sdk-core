@@ -16,6 +16,7 @@ import (
 	"os"
 	"runtime"
 	"sync"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
@@ -60,6 +61,7 @@ func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callba
 	}()
 }
 
+//deprecated
 func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList, operationID string) {
 	if callback == nil {
 		return
@@ -140,9 +142,8 @@ func (c *Conversation) ResetConversationGroupAtType(callback open_im_sdk_callbac
 	}
 	go func() {
 		log.NewInfo(operationID, "ResetConversationGroupAtType args: ", conversationID)
-		c.resetConversationGroupAtType(callback, conversationID, operationID)
+		c.setOneConversationGroupAtType(callback, conversationID, operationID)
 		callback.OnSuccess(sdk_params_callback.ResetConversationGroupAtTypeCallback)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 		log.NewInfo(operationID, "ResetConversationGroupAtType callback: ", sdk_params_callback.ResetConversationGroupAtTypeCallback)
 	}()
 }
@@ -154,7 +155,6 @@ func (c *Conversation) PinConversation(callback open_im_sdk_callback.Base, conve
 		log.NewInfo(operationID, "PinConversation args: ", conversationID, isPinned)
 		c.pinConversation(callback, conversationID, isPinned, operationID)
 		callback.OnSuccess(sdk_params_callback.PinConversationDraftCallback)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 		log.NewInfo(operationID, "PinConversation callback: ", sdk_params_callback.PinConversationDraftCallback)
 	}()
 }
@@ -977,6 +977,7 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.Local
 	wsMsgData.Content = []byte(s.Content)
 	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
+	wsMsgData.AtUserIDList = s.AtElem.AtUserList
 	wsMsgData.OfflinePushInfo = offlinePushInfo
 	timeout := 300
 	retryTimes := 60
@@ -1142,12 +1143,25 @@ func (c *Conversation) GetHistoryMessageList(callback open_im_sdk_callback.Base,
 		log.NewInfo(operationID, "GetHistoryMessageList args: ", getMessageOptions)
 		var unmarshalParams sdk_params_callback.GetHistoryMessageListParams
 		common.JsonUnmarshalCallback(getMessageOptions, &unmarshalParams, callback, operationID)
-		result := c.getHistoryMessageList(callback, unmarshalParams, operationID)
+		result := c.getHistoryMessageList(callback, unmarshalParams, operationID, false)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
 		log.NewInfo(operationID, "GetHistoryMessageList callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
 
+func (c *Conversation) GetHistoryMessageListReverse(callback open_im_sdk_callback.Base, getMessageOptions, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, "GetHistoryMessageListReverse args: ", getMessageOptions)
+		var unmarshalParams sdk_params_callback.GetHistoryMessageListParams
+		common.JsonUnmarshalCallback(getMessageOptions, &unmarshalParams, callback, operationID)
+		result := c.getHistoryMessageList(callback, unmarshalParams, operationID, true)
+		callback.OnSuccess(utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, "GetHistoryMessageListReverse callback: ", utils.StructToJsonStringDefault(result))
+	}()
+}
 func (c *Conversation) RevokeMessage(callback open_im_sdk_callback.Base, message string, operationID string) {
 	if callback == nil {
 		return
@@ -1420,12 +1434,14 @@ func (c *Conversation) SearchLocalMessages(callback open_im_sdk_callback.Base, s
 		return
 	}
 	go func() {
+		s := time.Now()
 		log.NewInfo(operationID, "SearchLocalMessages args: ", searchParam)
 		var unmarshalParams sdk_params_callback.SearchLocalMessagesParams
 		common.JsonUnmarshalCallback(searchParam, &unmarshalParams, callback, operationID)
 		result := c.searchLocalMessages(callback, unmarshalParams, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		log.NewInfo(operationID, "SearchLocalMessages callback: ", utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, "cost time", time.Since(s))
+		//log.NewInfo(operationID, "SearchLocalMessages callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
 func getImageInfo(filePath string) (*sdk_struct.ImageInfo, error) {

@@ -2,6 +2,7 @@ package conversation_msg
 
 import (
 	"encoding/json"
+	"fmt"
 	"open_im_sdk/internal/advanced_interface"
 	"open_im_sdk/internal/cache"
 	common2 "open_im_sdk/internal/common"
@@ -10,6 +11,7 @@ import (
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/organization"
 	"open_im_sdk/internal/user"
+	"open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -41,6 +43,7 @@ type Conversation struct {
 	signaling            advanced_interface.Signaling
 	advancedFunction     advanced_interface.AdvancedFunction
 	organization         *organization.Organization
+	workMoments          *workMoments.WorkMoments
 	common2.ObjectStorage
 
 	cache *cache.Cache
@@ -66,10 +69,11 @@ func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener,
 	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling advanced_interface.Signaling,
+	advancedFunction advanced_interface.AdvancedFunction, organization *organization.Organization, workMoments *workMoments.WorkMoments) *Conversation {
 	advancedFunction advanced_interface.AdvancedFunction, organization *organization.Organization, cache *cache.Cache) *Conversation {
 	n := &Conversation{Ws: ws, db: db, p: p, ch: ch, loginUserID: loginUserID, platformID: platformID,
 		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage, signaling: signaling,
-		advancedFunction: advancedFunction, organization: organization}
+		advancedFunction: advancedFunction, organization: organization, workMoments: workMoments}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
 	//	n.cache = cache.NewCache(n.user, n.friend)
@@ -100,6 +104,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	phNewConversationSet := make(map[string]*db.LocalConversation)
 	log.Info(operationID, "do Msg come here")
 	for _, v := range allMsg {
+
 		isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
 		isUnreadCount = utils.GetSwitchFromOptions(v.Options, constant.IsUnreadCount)
 		isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
@@ -107,8 +112,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		isSenderConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsSenderConversationUpdate)
 		msg := new(sdk_struct.MsgStruct)
 		copier.Copy(msg, v)
+		var tips server_api_params.TipsComm
 		if v.ContentType >= constant.NotificationBegin && v.ContentType <= constant.NotificationEnd {
-			var tips server_api_params.TipsComm
 			_ = proto.Unmarshal(v.Content, &tips)
 			marshaler := jsonpb.Marshaler{
 				OrigName:     true,
@@ -167,6 +172,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			} else if v.ContentType == constant.OrganizationChangedNotification {
 				log.Info(operationID, "Organization Changed Notification ")
 				c.organization.DoNotification(v, c.ch, operationID)
+			} else if v.ContentType == constant.WorkMomentNotification {
+				log.Info(operationID, "WorkMoment New Notification")
+				c.workMoments.DoNotification(tips.JsonDetail, operationID)
 			}
 		case constant.GroupChatType:
 			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
@@ -178,6 +186,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				continue
 			}
 		}
+		fmt.Println(v.Options, isConversationUpdate)
 		if v.SendID == c.loginUserID { //seq
 			// Messages sent by myself  //if  sent through  this terminal
 			m, err := c.db.GetMessage(msg.ClientMsgID)
@@ -259,7 +268,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					lc.FaceURL = msg.SenderFaceURL
 				case constant.GroupChatType:
 					//Generate At type into Conversation
-					c.genConversationGroupAtType(&lc, msg)
+					//c.genConversationGroupAtType(&lc, msg)
 					lc.GroupID = v.GroupID
 					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
 					//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
@@ -277,7 +286,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					isTriggerUnReadCount = true
 					lc.UnreadCount = 1
 				}
-
 				if isConversationUpdate {
 					c.updateConversation(&lc, conversationSet)
 					newMessages = append(newMessages, msg)
@@ -379,7 +387,6 @@ func (c *Conversation) diff(local, generated, cc, nc map[string]*db.LocalConvers
 	for _, v := range generated {
 		log.Debug("node diff", *v)
 		if localC, ok := local[v.ConversationID]; ok {
-			localC.GroupAtType = v.GroupAtType
 			if v.LatestMsgSendTime > localC.LatestMsgSendTime {
 				localC.UnreadCount = localC.UnreadCount + v.UnreadCount
 				localC.LatestMsg = v.LatestMsg
@@ -742,7 +749,6 @@ func (c *Conversation) updateConversation(lc *db.LocalConversation, cs map[strin
 	if oldC, ok := cs[lc.ConversationID]; !ok {
 		cs[lc.ConversationID] = lc
 	} else {
-		oldC.GroupAtType = lc.GroupAtType
 		if lc.LatestMsgSendTime > oldC.LatestMsgSendTime {
 			oldC.UnreadCount = oldC.UnreadCount + lc.UnreadCount
 			oldC.LatestMsg = lc.LatestMsg
