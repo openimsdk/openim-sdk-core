@@ -263,6 +263,8 @@ func (g *Group) groupMemberInfoSetNotification(msg *api.MsgData, operationID str
 		return
 	}
 	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
+	_ = g.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.ChangedUser.UserID, detail.ChangedUser.FaceURL, detail.ChangedUser.Nickname, constant.GroupChatType)
+
 }
 
 func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam,

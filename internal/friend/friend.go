@@ -606,7 +606,7 @@ func (f *Friend) friendInfoChangedNotification(msg *api.MsgData, conversationCh 
 		go func() {
 			friendInfo, err := f.db.GetFriendInfoByFriendUserID(detail.UserID)
 			if err == nil {
-				_ = f.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.UserID, friendInfo.FaceURL, friendInfo.Nickname)
+				_ = f.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.UserID, friendInfo.FaceURL, friendInfo.Nickname, constant.SingleChatType)
 			}
 		}()
 
@@ -615,7 +615,7 @@ func (f *Friend) friendInfoChangedNotification(msg *api.MsgData, conversationCh 
 		go func() {
 			loginUserInfo, err := f.db.GetLoginUser()
 			if err == nil {
-				_ = f.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.UserID, loginUserInfo.FaceURL, loginUserInfo.Nickname)
+				_ = f.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.UserID, loginUserInfo.FaceURL, loginUserInfo.Nickname, constant.SingleChatType)
 			}
 		}()
 	}
