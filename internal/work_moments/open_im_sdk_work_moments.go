@@ -9,8 +9,10 @@ import (
 
 func (w *WorkMoments) SetListener(callback open_im_sdk_callback.OnWorkMomentsListener) {
 	if callback == nil {
+		log.NewError("", "callback is null")
 		return
 	}
+	log.NewDebug("", "callback set success")
 	w.listener = callback
 }
 

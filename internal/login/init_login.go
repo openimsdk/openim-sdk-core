@@ -139,7 +139,6 @@ func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalin
 
 func (u *LoginMgr) SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMomentsListener) {
 	u.workMomentsListener = listener
-	log.NewDebug("0", utils.GetSelfFuncName(), u.workMomentsListener)
 }
 
 //func (u *LoginMgr) DebugMem(userID string) {
@@ -206,7 +205,6 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache)
 	u.workMoments = workMoments.NewWorkMoments(u.loginUserID, u.db, p)
 	u.workMoments.SetListener(u.workMomentsListener)
-	log.NewDebug("", u.workMomentsListener)
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
 	u.forcedSynchronization()
 	log.Info(operationID, "forcedSynchronization success...")
