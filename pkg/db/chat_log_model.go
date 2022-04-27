@@ -341,8 +341,8 @@ func (d *DataBase) UpdateMsgSenderFaceURL(sendID, faceURL string, sType int) err
 func (d *DataBase) UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.Model(LocalChatLog{}).Where(
-		"send_id = ?  and (sender_face_url != ? or sender_nick_name != ?) and session_type = ?", sendID, faceURL, nickname, sessionType).Updates(
+	return utils.Wrap(d.conn.Debug().Model(LocalChatLog{}).Where(
+		"send_id = ? and session_type = ?", sendID, sessionType).Updates(
 		map[string]interface{}{"sender_face_url": faceURL, "sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
 }
 
