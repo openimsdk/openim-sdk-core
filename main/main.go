@@ -60,7 +60,7 @@ func main() {
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
 	test.SENDINTERVAL = SENDINTERVAL
-	strMyUidx := "18666662412"
+	strMyUidx := "17726378428"
 	//friendID := "17726378428"
 	tokenx := test.GenToken(strMyUidx)
 	//tokenx :=    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTUiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjYzMTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUwOTU1MDc5fQ.eLwd0meauHV8sBtR-MnZLkhVB9dFzU_g41Z5HI7U7YM"

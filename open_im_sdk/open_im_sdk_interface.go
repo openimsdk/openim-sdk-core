@@ -628,6 +628,7 @@ func SetUserListener(listener open_im_sdk_callback.OnUserListener) {
 
 func SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMomentsListener) {
 	userForSDK.SetWorkMomentsListener(listener)
+	log.NewDebug("0", utils.GetSelfFuncName(), listener)
 }
 
 func CreateTextAtMessage(operationID string, text, atUserList, atUsersInfo, message string) string {
