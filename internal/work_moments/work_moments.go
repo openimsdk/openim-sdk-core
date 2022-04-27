@@ -22,6 +22,10 @@ func NewWorkMoments(loginUserID string, db *db.DataBase, p *ws.PostApi) *WorkMom
 }
 
 func (w *WorkMoments) DoNotification(jsonDetailStr string, operationID string) {
+	if w.listener == nil {
+		log.NewDebug(operationID, "WorkMoments listener is null", jsonDetailStr)
+		return
+	}
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "json_detail: ", jsonDetailStr)
 	if err := w.db.InsertWorkMomentsNotification(jsonDetailStr); err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), "InsertWorkMomentsNotification failed", err.Error())
