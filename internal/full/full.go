@@ -55,7 +55,7 @@ func (u *Full) getUsersInfo(callback open_im_sdk_callback.Base, userIDList sdk.G
 			for _, v := range publicList {
 				u.userCache.Update(v.UserID, v.FaceURL, v.Nickname)
 				//Update the faceURL and nickname information of the local chat history with non-friends
-				_ = u.user.UpdateMsgSenderFaceURLAndSenderNickname(v.UserID, v.FaceURL, v.Nickname)
+				_ = u.user.UpdateMsgSenderFaceURLAndSenderNickname(v.UserID, v.FaceURL, v.Nickname, constant.SingleChatType)
 				conversationID := utils.GetConversationIDBySessionType(v.UserID, constant.SingleChatType)
 				//Update session information of local non-friends
 				_, err := u.user.GetConversation(conversationID)

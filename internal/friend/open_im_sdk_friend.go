@@ -159,6 +159,26 @@ func (f *Friend) GetFriendList(callback open_im_sdk_callback.Base, operationID s
 		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
+func (f *Friend) SearchFriends(callback open_im_sdk_callback.Base, searchParam, operationID string) {
+	if callback == nil {
+		log.Error(operationID, "callback is nil")
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", searchParam)
+		var unmarshalGetGroupsInfoParam sdk.SearchFriendsParam
+		common.JsonUnmarshalAndArgsValidate(searchParam, &unmarshalGetGroupsInfoParam, callback, operationID)
+		//groupsInfoList := g.searchGroups(callback, unmarshalGetGroupsInfoParam, operationID)
+		//callback.OnSuccess(utils.StructToJsonStringDefault(groupsInfoList))
+		//log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(groupsInfoList), len(groupsInfoList))
+
+		log.NewInfo(operationID, fName, "args: ")
+		result := f.getFriendList(callback, operationID)
+		callback.OnSuccess(utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(result))
+	}()
+}
 
 func (f *Friend) SetFriendRemark(callback open_im_sdk_callback.Base, userIDRemark string, operationID string) {
 	if callback == nil {

@@ -15,6 +15,7 @@ import (
 	"open_im_sdk/sdk_struct"
 	"os"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -546,6 +547,11 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 			lc.GroupID = groupID
 			lc.ConversationType = constant.GroupChatType
+			gm, err := c.db.GetGroupMemberInfoByGroupIDUserID(groupID, c.loginUserID)
+			common.CheckAnyErrCallback(callback, 202, err, operationID)
+			if gm.Nickname != "" {
+				s.SenderNickname = gm.Nickname
+			}
 			g, err := c.db.GetGroupInfoByGroupID(groupID)
 			common.CheckAnyErrCallback(callback, 202, err, operationID)
 			lc.ShowName = g.GroupName
@@ -864,6 +870,11 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 			conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 			lc.GroupID = groupID
 			lc.ConversationType = constant.GroupChatType
+			gm, err := c.db.GetGroupMemberInfoByGroupIDUserID(groupID, c.loginUserID)
+			common.CheckAnyErrCallback(callback, 202, err, operationID)
+			if gm.Nickname != "" {
+				s.SenderNickname = gm.Nickname
+			}
 			g, err := c.db.GetGroupInfoByGroupID(groupID)
 			common.CheckAnyErrCallback(callback, 202, err, operationID)
 			lc.ShowName = g.GroupName
@@ -1438,10 +1449,18 @@ func (c *Conversation) SearchLocalMessages(callback open_im_sdk_callback.Base, s
 		log.NewInfo(operationID, "SearchLocalMessages args: ", searchParam)
 		var unmarshalParams sdk_params_callback.SearchLocalMessagesParams
 		common.JsonUnmarshalCallback(searchParam, &unmarshalParams, callback, operationID)
+		unmarshalParams.KeywordList = func(list []string) (result []string) {
+			for _, v := range list {
+				if len(strings.Trim(v, " ")) != 0 {
+					result = append(result, v)
+				}
+			}
+			return result
+		}(unmarshalParams.KeywordList)
 		result := c.searchLocalMessages(callback, unmarshalParams, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
 		log.NewInfo(operationID, "cost time", time.Since(s))
-		//log.NewInfo(operationID, "SearchLocalMessages callback: ", utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, "SearchLocalMessages callback: ", result.TotalCount, len(result.SearchResultItems))
 	}()
 }
 func getImageInfo(filePath string) (*sdk_struct.ImageInfo, error) {

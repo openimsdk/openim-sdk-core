@@ -48,6 +48,13 @@ const DeleteFriendCallback = constant.SuccessCallbackDefault
 //type GetFriendListParams struct{}
 type GetFriendListCallback []server_api_params.FullUserInfo
 
+type SearchFriendsParam struct {
+	KeywordList      []string `json:"keywordList"`
+	IsSearchUserID   bool     `json:"isSearchUserID"`
+	IsSearchNickname bool     `json:"isSearchNickname"`
+	IsSearchRemark   bool     `json:"isSearchRemark"`
+}
+
 //1
 type SetFriendRemarkParams struct {
 	ToUserID string `json:"toUserID" validate:"required"`
