@@ -642,11 +642,28 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 		}
 	}
 }
+func (c *Conversation) judgeMultipleSubString(keywordList []string, main string, keywordListMatchType int) bool {
+	if keywordListMatchType == constant.KeywordMatchOr {
+		for _, v := range keywordList {
+			if utils.KMP(main, v) {
+				return true
+			}
+		}
+	} else {
+		for _, v := range keywordList {
+			if !utils.KMP(main, v) {
+				return false
+			}
+		}
+		return true
+	}
+	return true
+}
+
 func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, searchParam sdk.SearchLocalMessagesParams, operationID string) (r sdk.SearchLocalMessagesCallback) {
+
 	var conversationID, sourceID string
 	var startTime, endTime int64
-	//var searchResultItem sdk.SearchByConversationResult
-	var messageList sdk_struct.NewMsgList
 	var list []*db.LocalChatLog
 	conversationMap := make(map[string]*sdk.SearchByConversationResult, 10)
 	var err error
@@ -657,8 +674,8 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 		startTime = utils.UnixSecondToTime(searchParam.SearchTimePosition).UnixNano() / 1e6
 		endTime = utils.UnixSecondToTime(startTime-searchParam.SearchTimePeriod).UnixNano() / 1e6
 	}
-	if (len(searchParam.KeywordList) == 0 || searchParam.KeywordList[0] == "") && len(searchParam.MessageTypeList) == 0 {
-		common.CheckAnyErrCallback(callback, 201, errors.New("keyword is null"), operationID)
+	if len(searchParam.KeywordList) == 0 && len(searchParam.MessageTypeList) == 0 {
+		common.CheckAnyErrCallback(callback, 201, errors.New("keywordlist and messageTypelist all null"), operationID)
 	}
 	if searchParam.ConversationID != "" {
 		if searchParam.PageIndex < 1 || searchParam.Count < 1 {
@@ -676,49 +693,77 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 		if len(searchParam.MessageTypeList) != 0 && len(searchParam.KeywordList) == 0 {
 			list, err = c.db.SearchMessageByContentType(searchParam.MessageTypeList, sourceID, endTime, startTime, int(localConversation.ConversationType), offset, searchParam.Count)
 		} else {
-			list, err = c.db.SearchMessageByKeyword(searchParam.KeywordList[0], sourceID, endTime, startTime, int(localConversation.ConversationType), offset, searchParam.Count)
+			newContentTypeList := func(list []int) (result []int) {
+				for _, v := range list {
+					if utils.IsContainInt(v, SearchContentType) {
+						result = append(result, v)
+					}
+				}
+				return result
+			}(searchParam.MessageTypeList)
+			if len(newContentTypeList) == 0 {
+				newContentTypeList = SearchContentType
+			}
+			list, err = c.db.SearchMessageByKeyword(newContentTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, sourceID, endTime, startTime, int(localConversation.ConversationType), offset, searchParam.Count)
 		}
 	} else {
 		//Comprehensive search, search all
 		if len(searchParam.MessageTypeList) == 0 {
-			searchParam.MessageTypeList = []int{constant.File, constant.Text}
+			searchParam.MessageTypeList = SearchContentType
 		}
-		if len(searchParam.KeywordList) == 0 {
-			common.CheckAnyErrCallback(callback, 201, errors.New("keyword is null"), operationID)
-		}
-		list, err = c.db.SearchMessageByContentTypeAndKeyword(searchParam.MessageTypeList, searchParam.KeywordList[0], endTime, startTime)
+		list, err = c.db.SearchMessageByContentTypeAndKeyword(searchParam.MessageTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, endTime, startTime)
 	}
 	common.CheckDBErrCallback(callback, err, operationID)
-	localChatLogToMsgStruct(&messageList, list)
+	//localChatLogToMsgStruct(&messageList, list)
 
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","s"))
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","g"))
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","3434"))
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","F3434"))
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","SDF3"))
-	log.Debug("haha", len(list))
-	for _, v := range messageList {
-		err := c.msgHandleByContentType(v)
+	log.Debug("get raw data length is", len(list))
+	for _, v := range list {
+		temp := sdk_struct.MsgStruct{}
+		temp.ClientMsgID = v.ClientMsgID
+		temp.ServerMsgID = v.ServerMsgID
+		temp.CreateTime = v.CreateTime
+		temp.SendTime = v.SendTime
+		temp.SessionType = v.SessionType
+		temp.SendID = v.SendID
+		temp.RecvID = v.RecvID
+		temp.MsgFrom = v.MsgFrom
+		temp.ContentType = v.ContentType
+		temp.SenderPlatformID = v.SenderPlatformID
+		temp.SenderNickname = v.SenderNickname
+		temp.SenderFaceURL = v.SenderFaceURL
+		temp.Content = v.Content
+		temp.Seq = v.Seq
+		temp.IsRead = v.IsRead
+		temp.Status = v.Status
+		temp.AttachedInfo = v.AttachedInfo
+		temp.Ex = v.Ex
+		err := c.msgHandleByContentType(&temp)
 		if err != nil {
-			log.Error(operationID, "Parsing data error:", err.Error(), v)
+			log.Error(operationID, "Parsing data error:", err.Error(), temp)
 			continue
 		}
-		if len(searchParam.KeywordList) != 0 {
-			if v.ContentType == constant.File && !utils.KMP(v.FileElem.FileName, searchParam.KeywordList[0]) {
-				continue
-			}
+		if temp.ContentType == constant.File && !c.judgeMultipleSubString(searchParam.KeywordList, temp.FileElem.FileName, searchParam.KeywordListMatchType) {
+			continue
 		}
-		switch v.SessionType {
+		if temp.ContentType == constant.AtText && !c.judgeMultipleSubString(searchParam.KeywordList, temp.AtElem.Text, searchParam.KeywordListMatchType) {
+			continue
+		}
+		switch temp.SessionType {
 		case constant.SingleChatType:
-			if v.SendID == c.loginUserID {
-				conversationID = utils.GetConversationIDBySessionType(v.RecvID, constant.SingleChatType)
+			if temp.SendID == c.loginUserID {
+				conversationID = utils.GetConversationIDBySessionType(temp.RecvID, constant.SingleChatType)
 			} else {
-				conversationID = utils.GetConversationIDBySessionType(v.SendID, constant.SingleChatType)
+				conversationID = utils.GetConversationIDBySessionType(temp.SendID, constant.SingleChatType)
 			}
 		case constant.GroupChatType:
-			v.GroupID = v.RecvID
-			v.RecvID = c.loginUserID
-			conversationID = utils.GetConversationIDBySessionType(v.GroupID, constant.GroupChatType)
+			temp.GroupID = temp.RecvID
+			temp.RecvID = c.loginUserID
+			conversationID = utils.GetConversationIDBySessionType(temp.GroupID, constant.GroupChatType)
 		}
 		if oldItem, ok := conversationMap[conversationID]; !ok {
 			searchResultItem := sdk.SearchByConversationResult{}
@@ -727,12 +772,12 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 			searchResultItem.FaceURL = localConversation.FaceURL
 			searchResultItem.ShowName = localConversation.ShowName
 			searchResultItem.ConversationType = localConversation.ConversationType
-			searchResultItem.MessageList = append(searchResultItem.MessageList, v)
+			searchResultItem.MessageList = append(searchResultItem.MessageList, &temp)
 			searchResultItem.MessageCount++
 			conversationMap[conversationID] = &searchResultItem
 		} else {
 			oldItem.MessageCount++
-			oldItem.MessageList = append(oldItem.MessageList, v)
+			oldItem.MessageList = append(oldItem.MessageList, &temp)
 			conversationMap[conversationID] = oldItem
 		}
 	}

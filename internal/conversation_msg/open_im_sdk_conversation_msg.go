@@ -15,6 +15,7 @@ import (
 	"open_im_sdk/sdk_struct"
 	"os"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -1448,6 +1449,14 @@ func (c *Conversation) SearchLocalMessages(callback open_im_sdk_callback.Base, s
 		log.NewInfo(operationID, "SearchLocalMessages args: ", searchParam)
 		var unmarshalParams sdk_params_callback.SearchLocalMessagesParams
 		common.JsonUnmarshalCallback(searchParam, &unmarshalParams, callback, operationID)
+		unmarshalParams.KeywordList = func(list []string) (result []string) {
+			for _, v := range list {
+				if len(strings.Trim(v, " ")) != 0 {
+					result = append(result, v)
+				}
+			}
+			return result
+		}(unmarshalParams.KeywordList)
 		result := c.searchLocalMessages(callback, unmarshalParams, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
 		log.NewInfo(operationID, "cost time", time.Since(s))

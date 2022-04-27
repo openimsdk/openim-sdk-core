@@ -211,6 +211,17 @@ func IsContain(target string, List []string) bool {
 	return false
 
 }
+func IsContainInt(target int, List []int) bool {
+
+	for _, element := range List {
+
+		if target == element {
+			return true
+		}
+	}
+	return false
+
+}
 
 func GetSwitchFromOptions(Options map[string]bool, key string) (result bool) {
 	if flag, ok := Options[key]; !ok || flag {

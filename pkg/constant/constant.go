@@ -281,6 +281,11 @@ const (
 	FieldIsNotInGroup  = 6
 	FieldEx            = 7
 )
+const (
+	KeywordMatchOr  = 0
+	KeywordMatchAnd = 1
+)
+
 const BigVersion = "v2"
 const UpdateVersion = ".0.0"
 const SdkVersion = "Open-IM-SDK-Core-"
