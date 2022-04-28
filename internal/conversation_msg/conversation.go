@@ -655,7 +655,6 @@ func (c *Conversation) judgeMultipleSubString(keywordList []string, main string,
 				return false
 			}
 		}
-		return true
 	}
 	return true
 }

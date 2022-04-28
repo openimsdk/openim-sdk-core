@@ -568,16 +568,19 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			lc.UserID = recvID
 			lc.ConversationType = constant.SingleChatType
 			//faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(recvID, operationID)
-			faceUrl, name, err := c.cache.GetUserNameAndFaceURL(recvID, operationID)
-			common.CheckAnyErrCallback(callback, 301, err, operationID)
-			lc.FaceURL = faceUrl
-			lc.ShowName = name
-		}
-		oldLc, err := c.db.GetConversation(conversationID)
-		if err == nil && oldLc.IsPrivateChat {
-			options[constant.IsNotPrivate] = false
-			s.AttachedInfoElem.IsPrivateChat = true
-			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
+			oldLc, err := c.db.GetConversation(conversationID)
+			if err == nil && oldLc.IsPrivateChat {
+				options[constant.IsNotPrivate] = false
+				s.AttachedInfoElem.IsPrivateChat = true
+				s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
+			}
+			if err != nil {
+				faceUrl, name, err := c.cache.GetUserNameAndFaceURL(recvID, operationID)
+				common.CheckAnyErrCallback(callback, 301, err, operationID)
+				lc.FaceURL = faceUrl
+				lc.ShowName = name
+			}
+
 		}
 		oldMessage, err := c.db.GetMessage(s.ClientMsgID)
 		if err != nil {
@@ -890,21 +893,18 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 			conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
 			lc.UserID = recvID
 			lc.ConversationType = constant.SingleChatType
-			faceUrl, name, err, isFromSvr := c.friend.GetUserNameAndFaceUrlByUid(recvID, operationID)
-			common.CheckAnyErrCallback(callback, 301, err, operationID)
-
-			if isFromSvr {
-				c.cache.Update(recvID, faceUrl, name)
+			oldLc, err := c.db.GetConversation(conversationID)
+			if err == nil && oldLc.IsPrivateChat {
+				options[constant.IsNotPrivate] = false
+				s.AttachedInfoElem.IsPrivateChat = true
+				s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 			}
-
-			lc.FaceURL = faceUrl
-			lc.ShowName = name
-		}
-		oldLc, err := c.db.GetConversation(conversationID)
-		if err == nil && oldLc.IsPrivateChat {
-			options[constant.IsNotPrivate] = false
-			s.AttachedInfoElem.IsPrivateChat = true
-			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
+			if err != nil {
+				faceUrl, name, err := c.cache.GetUserNameAndFaceURL(recvID, operationID)
+				common.CheckAnyErrCallback(callback, 301, err, operationID)
+				lc.FaceURL = faceUrl
+				lc.ShowName = name
+			}
 		}
 		oldMessage, err := c.db.GetMessage(s.ClientMsgID)
 		if err != nil {
