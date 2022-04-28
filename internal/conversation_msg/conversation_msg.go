@@ -652,9 +652,15 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		if err != nil {
 			log.Error("internal", "getMultipleConversationModel err :", err.Error())
 		} else {
+			var newCList []*db.LocalConversation
+			for _, v := range cLists {
+				if v.LatestMsgSendTime != 0 {
+					newCList = append(newCList, v)
+				}
+			}
+			log.Info("internal", "getMultipleConversationModel success :", newCList)
 
-			log.Info("internal", "getMultipleConversationModel success :", cLists)
-			c.ConversationListener.OnConversationChanged(utils.StructToJsonStringDefault(cLists))
+			c.ConversationListener.OnConversationChanged(utils.StructToJsonStringDefault(newCList))
 		}
 	case constant.NewCon:
 		cidList := node.Args.([]string)
