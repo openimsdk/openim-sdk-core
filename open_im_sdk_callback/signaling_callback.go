@@ -14,4 +14,6 @@ type OnSignalingListener interface {
 	OnInvitationCancelled(invitationCancelledCallback string)
 	//
 	OnInvitationTimeout(invitationTimeoutCallback string)
+	//
+	OnHangUp(hangUpCallback string)
 }

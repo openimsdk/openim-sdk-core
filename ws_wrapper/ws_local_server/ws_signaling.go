@@ -36,6 +36,10 @@ func (s *SignalingCallback) OnInviteeRejectedByOtherDevice(inviteeRejectedCallba
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", inviteeRejectedCallback, "0"}, s.uid)
 }
 
+func (s *SignalingCallback) OnHangUp(hangUpCallback string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", hangUpCallback, "0"}, s.uid)
+}
+
 func (wsRouter *WsFuncRouter) SetSignalingListener() {
 	var sr SignalingCallback
 	sr.uid = wsRouter.uId
