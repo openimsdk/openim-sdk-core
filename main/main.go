@@ -28,10 +28,10 @@ func reliabilityTest() {
 }
 
 var (
-	TESTIP = "43.128.5.63"
+	TESTIP = "111.62.143.78"
 
-	APIADDR      = "http://" + TESTIP + ":10002"
-	WSADDR       = "ws://" + TESTIP + ":10001"
+	APIADDR      = "http://" + TESTIP + ":10000"
+	WSADDR       = "ws://" + TESTIP + ":17778"
 	REGISTERADDR = APIADDR + "/user_register"
 	TOKENADDR    = APIADDR + "/auth/user_token"
 	SECRET       = "tuoyun"
@@ -60,11 +60,11 @@ func main() {
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
 	test.SENDINTERVAL = SENDINTERVAL
-	strMyUidx := "17726378428"
+	strMyUidx := "707008160"
 	//friendID := "17726378428"
 	tokenx := test.GenToken(strMyUidx)
-	//tokenx :=    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTUiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjYzMTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUwOTU1MDc5fQ.eLwd0meauHV8sBtR-MnZLkhVB9dFzU_g41Z5HI7U7YM"
-	//	tokenx = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNzcyNjM3ODQyOCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYzMjE2NDU1LCJuYmYiOjE2NDc4NTY0NTUsImlhdCI6MTY0Nzg1NjQ1NX0.3fOcyhw7r5lOkRTJdDy7-tG9XC4XrKj_N7ufrGHPWYM"
+
+	// tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMjM0NTYiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTk2NjQwOTQ3MSwibmJmIjoxNjUxMDQ5NDcxLCJpYXQiOjE2NTEwNDk0NzF9.7VrCn4afLrsDJ1UsNuLPwgwd2FEL9AQ71F2odO4f9MA"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 
 	log.Info("", "DotestSetGroupMemberNickname start...")
