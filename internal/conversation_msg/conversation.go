@@ -649,6 +649,7 @@ func (c *Conversation) judgeMultipleSubString(keywordList []string, main string,
 				return true
 			}
 		}
+		return false
 	} else {
 		for _, v := range keywordList {
 			if !utils.KMP(main, v) {
