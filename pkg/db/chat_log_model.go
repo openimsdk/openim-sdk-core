@@ -266,7 +266,7 @@ func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, start
 	} else {
 		condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? And send_time " + timeSymbol + " ?"
 	}
-	err = utils.Wrap(d.conn.Debug().Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
+	err = utils.Wrap(d.conn.Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
 		Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
 	for _, v := range messageList {
 		v1 := v
@@ -341,7 +341,7 @@ func (d *DataBase) UpdateMsgSenderFaceURL(sendID, faceURL string, sType int) err
 func (d *DataBase) UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.Debug().Model(LocalChatLog{}).Where(
+	return utils.Wrap(d.conn.Model(LocalChatLog{}).Where(
 		"send_id = ? and session_type = ?", sendID, sessionType).Updates(
 		map[string]interface{}{"sender_face_url": faceURL, "sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
 }
