@@ -779,7 +779,7 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 		if onGroupMemberNotification == true {
 			callbackData := sdk.GroupMemberAddedCallback(*onServer[index])
 			g.listener.OnGroupMemberAdded(utils.StructToJsonString(callbackData))
-			log.Info(operationID, "OnGroupMemberAdded", utils.StructToJsonString(callbackData))
+			log.Debug(operationID, "OnGroupMemberAdded", utils.StructToJsonString(callbackData))
 		}
 	}
 	for _, index := range sameA {

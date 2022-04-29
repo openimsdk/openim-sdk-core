@@ -2,7 +2,6 @@ package conversation_msg
 
 import (
 	"encoding/json"
-	"fmt"
 	"open_im_sdk/internal/advanced_interface"
 	"open_im_sdk/internal/cache"
 	common2 "open_im_sdk/internal/common"
@@ -186,7 +185,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				continue
 			}
 		}
-		fmt.Println(v.Options, isConversationUpdate)
 		if v.SendID == c.loginUserID { //seq
 			// Messages sent by myself  //if  sent through  this terminal
 			m, err := c.db.GetMessage(msg.ClientMsgID)

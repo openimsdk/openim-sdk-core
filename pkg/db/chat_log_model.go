@@ -62,7 +62,7 @@ func (d *DataBase) SearchMessageByKeyword(contentType []int, keywordList []strin
 		return nil, err
 	}
 	condition += subCondition
-	err = utils.Wrap(d.conn.Debug().Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
+	err = utils.Wrap(d.conn.Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
 
 	for _, v := range messageList {
 		v1 := v
@@ -84,7 +84,7 @@ func (d *DataBase) SearchMessageByContentType(contentType []int, sourceID string
 	default:
 		return nil, err
 	}
-	err = utils.Wrap(d.conn.Debug().Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&messageList).Error, "SearchMessage failed")
+	err = utils.Wrap(d.conn.Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&messageList).Error, "SearchMessage failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)
@@ -125,7 +125,7 @@ func (d *DataBase) SearchMessageByContentTypeAndKeyword(contentType []int, keywo
 	condition = fmt.Sprintf("send_time between %d and %d AND status <=%d  And content_type IN ? ", startTime, endTime, constant.MsgStatusSendFailed)
 	condition += subCondition
 	log.Info("key owrd", condition)
-	err = utils.Wrap(d.conn.Debug().Where(condition, contentType).Order("send_time DESC").Find(&messageList).Error, "SearchMessage failed")
+	err = utils.Wrap(d.conn.Where(condition, contentType).Order("send_time DESC").Find(&messageList).Error, "SearchMessage failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)
