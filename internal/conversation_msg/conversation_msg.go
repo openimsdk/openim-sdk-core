@@ -103,7 +103,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	phNewConversationSet := make(map[string]*db.LocalConversation)
 	log.Info(operationID, "do Msg come here")
 	for _, v := range allMsg {
-
 		isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
 		isUnreadCount = utils.GetSwitchFromOptions(v.Options, constant.IsUnreadCount)
 		isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
@@ -265,8 +264,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					lc.ShowName = msg.SenderNickname
 					lc.FaceURL = msg.SenderFaceURL
 				case constant.GroupChatType:
-					//Generate At type into Conversation
-					//c.genConversationGroupAtType(&lc, msg)
 					lc.GroupID = v.GroupID
 					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
 					//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
