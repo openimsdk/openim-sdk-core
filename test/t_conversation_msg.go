@@ -50,14 +50,40 @@ func DoTestDeleteAllMsgFromLocalAndSvr() {
 	var deleteConversationCallback DeleteConversationCallBack
 	open_im_sdk.DeleteAllMsgFromLocalAndSvr(deleteConversationCallback, utils.OperationIDGenerator())
 }
+func DoTestSearchLocalMessages() {
+	//[SearchLocalMessages args:  {"conversationID":"single_707010937","keywordList":["1"],"keywordListMatchType":0,"senderUserIDList":[],"messageTypeList":[],"searchTimePosition":0,"searchTimePeriod":0,"pageIndex":1,"count":200}]
+	var testSearchLocalMessagesCallBack SearchLocalMessagesCallBack
+	testSearchLocalMessagesCallBack.OperationID = utils.OperationIDGenerator()
+	var params sdk_params_callback.SearchLocalMessagesParams
+	params.KeywordList = []string{"1"}
+	params.ConversationID = "single_707010937"
+	params.Count = 200
+	params.PageIndex = 1
+	//s:=strings.Trim(params.KeywordList[0],"")
+	//fmt.Println(len(s),s)
+	//params.KeywordListMatchType = 1
+	//params.MessageTypeList = []int{105}
+	open_im_sdk.SearchLocalMessages(testSearchLocalMessagesCallBack, testSearchLocalMessagesCallBack.OperationID, utils.StructToJsonString(params))
+}
 
 func DoTestGetHistoryMessage(userID string) {
 	var testGetHistoryCallBack GetHistoryCallBack
 	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
 	var params sdk_params_callback.GetHistoryMessageListParams
 	params.UserID = userID
-	params.Count = 10
+	params.ConversationID = "single_707008149"
+	params.Count = 20
 	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
+}
+func DoTestGetHistoryMessageReverse(userID string) {
+	var testGetHistoryReverseCallBack GetHistoryReverseCallBack
+	testGetHistoryReverseCallBack.OperationID = utils.OperationIDGenerator()
+	var params sdk_params_callback.GetHistoryMessageListParams
+	params.UserID = userID
+	params.Count = 10
+	params.ConversationID = "single_707008149"
+	params.StartClientMsgID = "d40dde77f29b14d3a16ca6f422776890"
+	open_im_sdk.GetHistoryMessageListReverse(testGetHistoryReverseCallBack, testGetHistoryReverseCallBack.OperationID, utils.StructToJsonString(params))
 }
 func DoTestGetGroupHistoryMessage() {
 	var testGetHistoryCallBack GetHistoryCallBack
@@ -67,6 +93,15 @@ func DoTestGetGroupHistoryMessage() {
 	params.Count = 10
 	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
 }
+
+//func DoTestGetGroupHistoryMessage() {
+//	var testGetHistoryCallBack GetHistoryCallBack
+//	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
+//	var params sdk_params_callback.GetHistoryMessageListParams
+//	params.GroupID = "cb7aaa8e5f83d92db2ed1573cd01870c"
+//	params.Count = 10
+//	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
+//}
 
 //func DoTestDeleteConversation(conversationID string) {
 //	var testDeleteConversation DeleteConversationCallBack
@@ -313,6 +348,30 @@ func (g GetHistoryCallBack) OnSuccess(data string) {
 	log.Info(g.OperationID, "get History success ", data)
 }
 
+type GetHistoryReverseCallBack struct {
+	OperationID string
+}
+
+func (g GetHistoryReverseCallBack) OnError(errCode int32, errMsg string) {
+	log.Info(g.OperationID, "GetHistoryReverseCallBack err", errCode, errMsg)
+}
+
+func (g GetHistoryReverseCallBack) OnSuccess(data string) {
+	log.Info(g.OperationID, "GetHistoryReverseCallBack success ", data)
+}
+
+type SearchLocalMessagesCallBack struct {
+	OperationID string
+}
+
+func (g SearchLocalMessagesCallBack) OnError(errCode int32, errMsg string) {
+	log.Info(g.OperationID, "SearchLocalMessagesCallBack err", errCode, errMsg)
+}
+
+func (g SearchLocalMessagesCallBack) OnSuccess(data string) {
+	log.Info(g.OperationID, "SearchLocalMessagesCallBack success ", data)
+}
+
 type MsgListenerCallBak struct {
 }
 
@@ -345,17 +404,18 @@ func (t TestSearchLocalMessages) OnError(errCode int32, errMsg string) {
 func (t TestSearchLocalMessages) OnSuccess(data string) {
 	log.Info(t.OperationID, "SearchLocalMessages , OnSuccess %v\n", data)
 }
-func DoTestSearchLocalMessages() {
-	var t TestSearchLocalMessages
-	operationID := utils.OperationIDGenerator()
-	t.OperationID = operationID
-	var p sdk_params_callback.SearchLocalMessagesParams
-	//p.SessionType = constant.SingleChatType
 
-	p.KeywordList = []string{}
-	p.SearchTimePeriod = 24 * 60 * 60 * 10
-	open_im_sdk.SearchLocalMessages(t, operationID, utils.StructToJsonString(p))
-}
+//func DoTestSearchLocalMessages() {
+//	var t TestSearchLocalMessages
+//	operationID := utils.OperationIDGenerator()
+//	t.OperationID = operationID
+//	var p sdk_params_callback.SearchLocalMessagesParams
+//	//p.SessionType = constant.SingleChatType
+//	p.SourceID = "18090680773"
+//	p.KeywordList = []string{}
+//	p.SearchTimePeriod = 24 * 60 * 60 * 10
+//	open_im_sdk.SearchLocalMessages(t, operationID, utils.StructToJsonString(p))
+//}
 
 type TestDeleteConversation struct {
 	OperationID string
@@ -399,11 +459,11 @@ func (c conversationCallBack) OnSyncServerFailed() {
 }
 
 func (c conversationCallBack) OnNewConversation(conversationList string) {
-	//	log.Info("", "OnNewConversation returnList is ", conversationList)
+	//log.Info("", "OnNewConversation returnList is ", conversationList)
 }
 
 func (c conversationCallBack) OnConversationChanged(conversationList string) {
-	//	log.Info("", "OnConversationChanged returnList is", conversationList)
+	log.Info("", "OnConversationChanged returnList is", conversationList)
 }
 
 func (c conversationCallBack) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {

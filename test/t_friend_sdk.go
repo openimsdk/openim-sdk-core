@@ -363,6 +363,7 @@ type BaseSuccessFailed struct {
 	errCode     int
 	errMsg      string
 	funcName    string
+	time        time.Time
 }
 
 func (b *BaseSuccessFailed) OnError(errCode int32, errMsg string) {
@@ -375,11 +376,12 @@ func (b *BaseSuccessFailed) OnError(errCode int32, errMsg string) {
 func (b *BaseSuccessFailed) OnSuccess(data string) {
 	b.errCode = 1
 	b.successData = data
-	log.Info("login success", data)
+	log.Info("login success", data, time.Since(b.time))
 }
 
 func InOutlllogin(uid, tk string) {
 	var callback BaseSuccessFailed
+	callback.time = time.Now()
 	callback.funcName = utils.GetSelfFuncName()
 	operationID := utils.OperationIDGenerator()
 	//	log.Info(operationID, " login start ")
@@ -404,11 +406,11 @@ func InOutLogou() {
 func InOutDoTest(uid, tk, ws, api string) {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
-	cf.Platform = 1
+	cf.Platform = 2
 	cf.WsAddr = ws
 	cf.Platform = 2
 	cf.DataDir = "./"
-	cf.LogLevel = 6
+	cf.LogLevel = 4
 
 	var s string
 	b, _ := json.Marshal(cf)
