@@ -305,6 +305,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				}
 			} else {
 				exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
+				log.Warn(operationID, "Deduplication operation ", *c.msgStructToLocalErrChatLog(msg))
 			}
 		}
 	}
@@ -326,9 +327,21 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	//Normal message storage
 	err1 := c.db.BatchInsertMessageList(insertMsg)
 	if err1 != nil {
-		log.Error(operationID, "insert normal message err  :", err1.Error())
+		log.Error(operationID, "insert GetMessage detail err:", err1.Error(), len(insertMsg))
+		for _, v := range insertMsg {
+			e := c.db.InsertMessage(v)
+			if e != nil {
+				errChatLog := &db.LocalErrChatLog{}
+				copier.Copy(errChatLog, v)
+				exceptionMsg = append(exceptionMsg, errChatLog)
+				log.Warn(operationID, "InsertMessage operation ", "chat err log: ", errChatLog, "chat log: ", v, e.Error())
+			}
+		}
 	}
 	//Exception message storage
+	for _, v := range exceptionMsg {
+		log.Warn(operationID, "exceptionMsg show: ", *v)
+	}
 
 	err2 := c.db.BatchInsertExceptionMsgToErrorChatLog(exceptionMsg)
 	if err2 != nil {
