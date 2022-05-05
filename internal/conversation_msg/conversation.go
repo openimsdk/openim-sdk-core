@@ -225,7 +225,6 @@ func (c *Conversation) getServerConversationList(operationID string) (server_api
 	}
 	return resp, nil
 }
-
 func (c *Conversation) SyncConversations(operationID string) {
 	var newConversationList []*db.LocalConversation
 	ccTime := time.Now()

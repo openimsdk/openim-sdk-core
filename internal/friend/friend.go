@@ -197,7 +197,46 @@ func (f *Friend) getFriendList(callback open_im_sdk_callback.Base, operationID s
 	common.CheckDBErrCallback(callback, err, operationID)
 	return common.MergeFriendBlackResult(localFriendList, localBlackList)
 }
-
+func (f *Friend) searchFriends(callback open_im_sdk_callback.Base, param sdk.SearchFriendsParam, operationID string) sdk.SearchFriendsCallback {
+	if len(param.KeywordList) == 0 || (!param.IsSearchNickname && !param.IsSearchUserID && !param.IsSearchRemark) {
+		common.CheckAnyErrCallback(callback, 201, errors.New("keyword is null or search field all false"), operationID)
+	}
+	localFriendList, err := f.db.SearchFriendList(param.KeywordList[0], param.IsSearchUserID, param.IsSearchNickname, param.IsSearchRemark)
+	common.CheckDBErrCallback(callback, err, operationID)
+	localBlackList, err := f.db.GetBlackList()
+	common.CheckDBErrCallback(callback, err, operationID)
+	return mergeFriendBlackSearchResult(localFriendList, localBlackList)
+}
+func mergeFriendBlackSearchResult(base []*db.LocalFriend, add []*db.LocalBlack) (result []*sdk.SearchFriendItem) {
+	blackUserIDList := func(bl []*db.LocalBlack) (result []string) {
+		for _, v := range bl {
+			result = append(result, v.BlockUserID)
+		}
+		return result
+	}(add)
+	for _, v := range base {
+		node := sdk.SearchFriendItem{}
+		node.OwnerUserID = v.OwnerUserID
+		node.FriendUserID = v.FriendUserID
+		node.Remark = v.Remark
+		node.CreateTime = v.CreateTime
+		node.AddSource = v.AddSource
+		node.OperatorUserID = v.OperatorUserID
+		node.Nickname = v.Nickname
+		node.FaceURL = v.FaceURL
+		node.Gender = v.Gender
+		node.PhoneNumber = v.PhoneNumber
+		node.Birth = v.Birth
+		node.Email = v.Email
+		node.Ex = v.Ex
+		node.AttachedInfo = v.AttachedInfo
+		if !utils.IsContain(v.FriendUserID, blackUserIDList) {
+			node.Relationship = constant.FriendRelationship
+		}
+		result = append(result, &node)
+	}
+	return result
+}
 func (f *Friend) getBlackList(callback open_im_sdk_callback.Base, operationID string) sdk.GetBlackListCallback {
 	localBlackList, err := f.db.GetBlackList()
 	common.CheckDBErrCallback(callback, err, operationID)

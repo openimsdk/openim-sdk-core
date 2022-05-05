@@ -279,6 +279,23 @@ func DotestGetFriendList() {
 	open_im_sdk.GetFriendList(test, test.OperationID)
 }
 
+type testSearchFriends struct {
+	baseCallback
+}
+
+func DotestSearchFriends() {
+	var test testSearchFriends
+	test.OperationID = utils.OperationIDGenerator()
+	test.callName = "SearchFriends"
+	var params sdk_params_callback.SearchFriendsParam
+	params.KeywordList = []string{"G"}
+	params.IsSearchUserID = true
+	params.IsSearchNickname = true
+	params.IsSearchRemark = true
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ", params)
+	open_im_sdk.SearchFriends(test, test.OperationID, utils.StructToJsonString(params))
+}
+
 /////////////////////////////////////////////////////////////////////
 
 type testAcceptFriendApplication struct {
@@ -410,7 +427,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	cf.WsAddr = ws
 	cf.Platform = 2
 	cf.DataDir = "./"
-	cf.LogLevel = 3
+	cf.LogLevel = 6
 
 	var s string
 	b, _ := json.Marshal(cf)

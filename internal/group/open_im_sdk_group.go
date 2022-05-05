@@ -136,6 +136,7 @@ func (g *Group) SearchGroups(callback open_im_sdk_callback.Base, searchParam, op
 		log.NewInfo(operationID, fName, "args: ", searchParam)
 		var unmarshalGetGroupsInfoParam sdk_params_callback.SearchGroupsParam
 		common.JsonUnmarshalAndArgsValidate(searchParam, &unmarshalGetGroupsInfoParam, callback, operationID)
+		unmarshalGetGroupsInfoParam.KeywordList = utils.TrimStringList(unmarshalGetGroupsInfoParam.KeywordList)
 		groupsInfoList := g.searchGroups(callback, unmarshalGetGroupsInfoParam, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(groupsInfoList))
 		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(groupsInfoList), len(groupsInfoList))
