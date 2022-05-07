@@ -550,6 +550,8 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			common.CheckAnyErrCallback(callback, 202, err, operationID)
 			log.NewError(operationID, "group chat test", *gm)
 			if gm.Nickname != "" {
+				log.NewError(operationID, "group chat test come here ", *gm)
+
 				s.SenderNickname = gm.Nickname
 			}
 			g, err := c.db.GetGroupInfoByGroupID(groupID)
@@ -1005,6 +1007,7 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.Local
 	s.Status = constant.MsgStatusSendSuccess
 	s.ServerMsgID = sendMsgResp.ServerMsgID
 	callback.OnProgress(100)
+	log.NewError(operationID, "group chat test come here ", s.SenderNickname)
 	callback.OnSuccess(utils.StructToJsonString(s))
 	//remove media cache file
 	for _, v := range delFile {
