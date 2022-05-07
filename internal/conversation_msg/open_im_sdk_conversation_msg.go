@@ -548,7 +548,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			lc.ConversationType = constant.GroupChatType
 			gm, err := c.db.GetGroupMemberInfoByGroupIDUserID(groupID, c.loginUserID)
 			common.CheckAnyErrCallback(callback, 202, err, operationID)
-			log.NewError(operationID, "group chat test", gm)
+			log.NewError(operationID, "group chat test", *gm)
 			if gm.Nickname != "" {
 				s.SenderNickname = gm.Nickname
 			}
