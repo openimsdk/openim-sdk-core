@@ -561,6 +561,8 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			if !utils.IsContain(s.SendID, groupMemberUidList) {
 				common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
 			}
+			s.AttachedInfoElem.GroupHasReadInfo.GroupMemberCount = uint32(len(groupMemberUidList))
+			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 		} else {
 			s.SessionType = constant.SingleChatType
 			s.RecvID = recvID
@@ -887,6 +889,8 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 			if !utils.IsContain(s.SendID, groupMemberUidList) {
 				common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
 			}
+			s.AttachedInfoElem.GroupHasReadInfo.GroupMemberCount = uint32(len(groupMemberUidList))
+			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 		} else {
 			s.SessionType = constant.SingleChatType
 			s.RecvID = recvID
