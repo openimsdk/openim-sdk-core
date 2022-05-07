@@ -62,7 +62,7 @@ func (d *DataBase) SearchMessageByKeyword(contentType []int, keywordList []strin
 		return nil, err
 	}
 	condition += subCondition
-	err = utils.Wrap(d.conn.Debug().Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
+	err = utils.Wrap(d.conn.Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
 
 	for _, v := range messageList {
 		v1 := v

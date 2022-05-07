@@ -656,7 +656,9 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 	}
 }
 func (c *Conversation) judgeMultipleSubString(keywordList []string, main string, keywordListMatchType int) bool {
-	log.Debug("test judgeMultipleSubString", keywordList, main, keywordListMatchType)
+	if len(keywordList) == 0 {
+		return true
+	}
 	if keywordListMatchType == constant.KeywordMatchOr {
 		for _, v := range keywordList {
 			if utils.KMP(main, v) {
