@@ -100,7 +100,7 @@ func register(uid string) error {
 func getToken(uid string) string {
 	url := TOKENADDR
 	var req server_api_params.UserTokenReq
-	req.Platform = 2
+	req.Platform = 1
 	req.UserID = uid
 	req.Secret = SECRET
 	req.OperationID = utils.OperationIDGenerator()
@@ -198,7 +198,7 @@ func GenWsConn(id int) {
 	userLock.Lock()
 	defer userLock.Unlock()
 	allUserID = append(allUserID, userID)
-	register(userID)
+	//register(userID)
 	token := GenToken(userID)
 	allToken = append(allToken, token)
 

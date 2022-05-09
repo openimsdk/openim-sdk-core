@@ -65,15 +65,17 @@ func main() {
 	singleSenderMsgNum = flag.Int("mn", 1000, "single sender msg num")
 	intervalTime = flag.Int("t", 1000, "interval time mill second")
 	flag.Parse()
-	strMyUidx := "18666662412"
+	//strMyUidx := "18666662412"
 	//friendID := "17726378428"
-	tokenx := test.GenToken(strMyUidx)
+	//tokenx := test.GenToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
-	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
+	//test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
 	//test.DotestSearchFriends()
-	test.RegisterAccounts(*onlineNum)
+	if *senderNum == 0 {
+		test.RegisterAccounts(*onlineNum)
+	}
 	test.OnlineTest(*onlineNum)
-	test.TestSendCostTime()
+	//test.TestSendCostTime()
 	test.ReliabilityTest(*singleSenderMsgNum, *intervalTime, 10, *senderNum)
 	//test.DoTestSearchLocalMessages()
 	//test.DoTestSearchGroups()
