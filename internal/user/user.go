@@ -133,9 +133,7 @@ func (u *User) GetUsersInfoFromCacheSvr(UserIDList sdk.GetUsersInfoParam, operat
 
 func (u *User) getSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) sdk.GetSelfUserInfoCallback {
 	userInfo, err := u.GetLoginUser()
-	if err != nil {
-		callback.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
-	}
+	common.CheckDBErrCallback(callback, err, operationID)
 	return userInfo
 }
 
