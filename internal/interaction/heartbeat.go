@@ -56,7 +56,7 @@ func (u *Heartbeat) IsTokenExp(operationID string) bool {
 	log.Debug(operationID, "sub token ", u.token[b+1:e])
 	decodeBytes, err := base64.StdEncoding.DecodeString(u.token[b+1 : e])
 	if err != nil {
-		log.Error(operationID, "DecodeString failed ", err.Error(), u.token[b+1:e])
+		//	log.Error(operationID, "DecodeString failed ", err.Error(), u.token[b+1:e])
 		return false
 	}
 	log.Debug(operationID, "decodeBytes ", string(decodeBytes))

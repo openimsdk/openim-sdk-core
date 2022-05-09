@@ -182,7 +182,7 @@ func RegisterAccounts(number int) {
 	wg.Add(number)
 	for i := 0; i < number; i++ {
 		go func(t int) {
-			userID := GenUid(i, "online")
+			userID := GenUid(t, "online")
 			register(userID)
 			log.Info("register ", userID)
 			wg.Done()

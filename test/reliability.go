@@ -66,7 +66,8 @@ func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecon
 
 	for {
 		if CheckReliabilityResult() {
-			log.Warn("", "CheckReliabilityResult ok, again")
+			log.Warn("", "CheckReliabilityResult ok, return")
+			return
 		} else {
 			log.Warn("", "CheckReliabilityResult failed , wait.... ")
 		}

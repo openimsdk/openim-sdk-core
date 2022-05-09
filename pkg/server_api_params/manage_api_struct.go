@@ -27,6 +27,7 @@ type AccountCheckReq struct {
 	OperationID     string   `json:"operationID" binding:"required"`
 	CheckUserIDList []string `json:"checkUserIDList" binding:"required,lte=100"`
 }
+
 type AccountCheckResp struct {
 	CommResp
 	ResultList AccountcheckrespSingleuserstatus `json:"data"`
