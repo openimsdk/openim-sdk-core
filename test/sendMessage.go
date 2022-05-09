@@ -33,6 +33,7 @@ var (
 	TOKENADDR    = APIADDR + "/auth/user_token"
 	SECRET       = "tuoyun"
 	SENDINTERVAL = 20
+	ACCOUNTCHECK = APIADDR + "/manager/account_check"
 )
 
 func runRigister(strMyUid string) {
@@ -71,6 +72,20 @@ type ResToken struct {
 }
 
 func register(uid string) error {
+	var reqCheckAccount server_api_params.AccountCheckReq
+	reqCheckAccount.OperationID = utils.OperationIDGenerator()
+	reqCheckAccount.CheckUserIDList = append(reqCheckAccount.CheckUserIDList, uid)
+	for {
+		_, err := network.Post2Api(ACCOUNTCHECK, reqCheckAccount, "")
+		if err != nil && !strings.Contains(err.Error(), "status code failed") {
+			log.Error(reqCheckAccount.OperationID, "post failed ,continue ", err.Error())
+			continue
+		} else {
+			log.Info(reqCheckAccount.OperationID, "Post2Api ok ", reqCheckAccount)
+			break
+		}
+	}
+
 	url := REGISTERADDR
 	var req server_api_params.UserRegisterReq
 	req.OperationID = utils.OperationIDGenerator()
@@ -78,21 +93,16 @@ func register(uid string) error {
 	req.UserID = uid
 	req.Secret = SECRET
 	req.Nickname = uid
-	req.FaceURL = "www.baidu.com"
 	for {
 		_, err := network.Post2Api(url, req, "")
 		if err != nil && !strings.Contains(err.Error(), "status code failed") {
 			log.Error(req.OperationID, "post failed ,continue ", err.Error())
-			//	time.Sleep(time.Duration(1) * time.Second)
 			continue
 		} else {
 			log.Info(req.OperationID, "Post2Api ok ", req)
 			return nil
 		}
-		//status code failed
 	}
-
-	return nil
 }
 
 func getToken(uid string) string {
@@ -137,7 +147,6 @@ func runGetToken(strMyUid string) string {
 			break
 		}
 	}
-
 	return token
 }
 
@@ -168,7 +177,7 @@ func GenUid(uid int, prefix string) string {
 		fmt.Println("getMyIP() failed")
 		os.Exit(1)
 	}
-	UidPrefix := getMyIP() + prefix
+	UidPrefix := getMyIP() + "_" + prefix
 	return UidPrefix + strconv.FormatInt(int64(uid), 10)
 }
 
@@ -176,15 +185,29 @@ func GenToken(userID string) string {
 	return runGetToken(userID)
 }
 
-func GenWs(id int) {
-	//return
-	userID := GenUid(id, "p")
+func RegisterAccounts(number int) {
+	var wg sync.WaitGroup
+	wg.Add(number)
+	for i := 0; i < number; i++ {
+		go func(t int) {
+			userID := GenUid(i, "online")
+			register(userID)
+			log.Info("register ", userID)
+			wg.Done()
+		}(i)
+
+	}
+	wg.Wait()
+	log.Info("", "RegisterAccounts finish ", number)
+}
+
+func GenWsConn(id int) {
+	userID := GenUid(id, "online")
 	userLock.Lock()
 	defer userLock.Unlock()
 	allUserID = append(allUserID, userID)
-	//register(userID)
-	//token := GenToken(userID)
-	token := "testtokentokentokentokentokentokentokentokentokentoken"
+	register(userID)
+	token := GenToken(userID)
 	allToken = append(allToken, token)
 
 	wsRespAsyn := interaction.NewWsRespAsyn()
@@ -195,11 +218,10 @@ func GenWs(id int) {
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
 	ws := interaction.NewWs(wsRespAsyn, wsConn, cmdWsCh, pushMsgAndMaxSeqCh, nil)
 	allWs = append(allWs, ws)
-
 }
 
-func GenWsReliability(id int) {
-	userID := GenUid(id, "v")
+func RegisterUserReliability(id int) {
+	userID := GenUid(id, "reliability"+utils.Int64ToString(time.Now().Unix()))
 	coreMgrLock.Lock()
 	defer coreMgrLock.Unlock()
 	register(userID)
@@ -236,36 +258,23 @@ func addSendFailed() {
 	defer sendFailedLock.Unlock()
 	sendFailedCount++
 }
-func PressTest(num int, interval int, ip string) {
-	TESTIP = ip
-	intervalSleep = interval
-	var wg sync.WaitGroup
-	wg.Add(num)
 
-	for i := 0; i < num; i++ {
+func OnlineTest(number int) {
+	var wg sync.WaitGroup
+	wg.Add(number)
+	for i := 0; i < number; i++ {
 		go func(t int) {
-			GenWs(t)
-			log.Info("genws ", t)
+			GenWsConn(t)
+			log.Info("GenWsConn ", t)
 			wg.Done()
 		}(i)
-
 	}
-
-	for i := 0; i < num; i++ {
-		wg.Wait()
-	}
-
-	log.Info("", "start send message...")
-	time.Sleep(time.Duration(1) * time.Second)
-
-	for i := 0; i < num; i++ {
-		go testSend(i, "ok", num)
-		//	go testSendReliability(i, "ok", num)
-	}
+	wg.Wait()
+	log.Info("", "OnlineTest finish ", number)
 }
 
 func TestSendCostTime() {
-	GenWs(0)
+	GenWsConn(0)
 	sendID := allUserID[0]
 	recvID := allUserID[0]
 	for {

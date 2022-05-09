@@ -43,27 +43,20 @@ func GetCmd(myUid int, filename string) int {
 }
 
 var testTotalNum = 0
-var intervalSleepMS = 0
 
 //var Msgwg sync.WaitGroup
 var sendMsgClient = 0
 
-func ReliabilityTest(msgNum int, interval int, ip string, randSleepMaxSecond int, clientNum int) {
+func ReliabilityTest(msgNum int, intervalSleepMS int, randSleepMaxSecond int, clientNum int) {
 	testTotalNum = msgNum
-	intervalSleepMS = interval
-	TESTIP = ip
-	testClientNum := clientNum
-	fmt.Println("1111111")
-
-	fmt.Println("2222222222222222")
-	for i := 0; i < testClientNum; i++ {
-		fmt.Println("3333333333333")
-		GenWsReliability(i)
-		fmt.Println("4444444444444444")
+	for i := 0; i < clientNum; i++ {
+		RegisterUserReliability(i)
 	}
+	log.Info("", "RegisterUserReliability finish ", clientNum)
+
 	rand.Seed(time.Now().UnixNano())
-	//log.NewPrivateLog("sdk", 6)
-	for i := 0; i < testClientNum; i++ {
+
+	for i := 0; i < clientNum; i++ {
 		rdSleep := rand.Intn(randSleepMaxSecond) + 1
 		isSend := rand.Intn(2)
 		if isSend == 0 {
@@ -73,7 +66,7 @@ func ReliabilityTest(msgNum int, interval int, ip string, randSleepMaxSecond int
 			go ReliabilityOne(i, rdSleep, false)
 		}
 	}
-
+	log.Info("send msg client number: ", sendMsgClient, "total client number: ", clientNum)
 }
 
 func CheckReliabilityResult() bool {
@@ -121,12 +114,9 @@ func CheckReliabilityResult() bool {
 }
 
 func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool) {
-
 	time.Sleep(time.Duration(beforeLoginSleep) * time.Second)
-	//	coreMgrLock.Lock()
 	strMyUid := allLoginMgr[index].userID
 	token := allLoginMgr[index].token
-	//	coreMgrLock.Unlock()
 	ReliabilityInitAndLogin(index, strMyUid, token, WSADDR, APIADDR)
 	log.Info("start One", index, beforeLoginSleep, isSendMsg, strMyUid, token, WSADDR, APIADDR)
 	msgnum := testTotalNum
