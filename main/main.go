@@ -9,24 +9,6 @@ import (
 	"time"
 )
 
-func reliabilityTest() {
-	intervalSleepMs := 1
-	randSleepMaxSecond := 30
-	imIP := "43.128.5.63"
-	oneClientSendMsgNum := 1
-	testClientNum := 100
-	test.ReliabilityTest(oneClientSendMsgNum, intervalSleepMs, imIP, randSleepMaxSecond, testClientNum)
-
-	for {
-		if test.CheckReliabilityResult() {
-			log.Warn("", "CheckReliabilityResult ok, again")
-		} else {
-			log.Warn("", "CheckReliabilityResult failed , wait.... ")
-		}
-		time.Sleep(time.Duration(10) * time.Second)
-	}
-}
-
 //var (
 //	TESTIP = "43.128.5.63"
 //	APIADDR      = "http://" + TESTIP + ":10000"

@@ -67,6 +67,15 @@ func ReliabilityTest(msgNum int, intervalSleepMS int, randSleepMaxSecond int, cl
 		}
 	}
 	log.Info("send msg client number: ", sendMsgClient, "total client number: ", clientNum)
+
+	for {
+		if CheckReliabilityResult() {
+			log.Warn("", "CheckReliabilityResult ok, again")
+		} else {
+			log.Warn("", "CheckReliabilityResult failed , wait.... ")
+		}
+		time.Sleep(time.Duration(10) * time.Second)
+	}
 }
 
 func CheckReliabilityResult() bool {

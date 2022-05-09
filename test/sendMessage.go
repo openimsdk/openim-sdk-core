@@ -25,17 +25,6 @@ import (
 	"time"
 )
 
-var (
-	TESTIP       = "43.128.5.63"
-	APIADDR      = "http://" + TESTIP + ":10002"
-	WSADDR       = "ws://" + TESTIP + ":10001"
-	REGISTERADDR = APIADDR + "/auth/user_register"
-	TOKENADDR    = APIADDR + "/auth/user_token"
-	SECRET       = "tuoyun"
-	SENDINTERVAL = 20
-	ACCOUNTCHECK = APIADDR + "/manager/account_check"
-)
-
 func runRigister(strMyUid string) {
 	for true {
 		err := register(strMyUid)
@@ -234,19 +223,6 @@ type CoreNode struct {
 	userID string
 	mgr    *login.LoginMgr
 }
-
-var coreMgrLock sync.RWMutex
-var allLoginMgr map[int]*CoreNode
-
-var userLock sync.RWMutex
-
-var allUserID []string
-var allToken []string
-var allWs []*interaction.Ws
-var intervalSleep int
-var sendSuccessCount, sendFailedCount int
-var sendSuccessLock sync.RWMutex
-var sendFailedLock sync.RWMutex
 
 func addSendSuccess() {
 	sendSuccessLock.Lock()
