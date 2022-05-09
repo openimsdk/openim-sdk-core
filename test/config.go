@@ -24,7 +24,6 @@ var userLock sync.RWMutex
 var allUserID []string
 var allToken []string
 var allWs []*interaction.Ws
-var intervalSleep int
 var sendSuccessCount, sendFailedCount int
 var sendSuccessLock sync.RWMutex
 var sendFailedLock sync.RWMutex
