@@ -60,10 +60,10 @@ func main() {
 	var senderNum *int          //Number of users sending messages
 	var singleSenderMsgNum *int //Number of single user send messages
 	var intervalTime *int       //Sending time interval, in millseconds
-	onlineNum = flag.Int("online_num", 10000, "online num")
-	senderNum = flag.Int("sender_num", 100, "sender num")
-	singleSenderMsgNum = flag.Int("single_msg_num", 1000, "sender num")
-	intervalTime = flag.Int("interval_time", 1000, "interval time mill second")
+	onlineNum = flag.Int("on", 10000, "online num")
+	senderNum = flag.Int("sn", 100, "sender num")
+	singleSenderMsgNum = flag.Int("mn", 1000, "single sender msg num")
+	intervalTime = flag.Int("t", 1000, "interval time mill second")
 	flag.Parse()
 	strMyUidx := "18666662412"
 	//friendID := "17726378428"
