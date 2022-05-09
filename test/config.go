@@ -6,9 +6,9 @@ import (
 )
 
 var (
-	TESTIP       = "43.128.5.63"
-	APIADDR      = "http://" + TESTIP + ":10002"
-	WSADDR       = "ws://" + TESTIP + ":10001"
+	TESTIP       = "111.62.143.78"
+	APIADDR      = "http://" + TESTIP + ":10000"
+	WSADDR       = "ws://" + TESTIP + ":17778"
 	REGISTERADDR = APIADDR + "/auth/user_register"
 	TOKENADDR    = APIADDR + "/auth/user_token"
 	SECRET       = "tuoyun"
