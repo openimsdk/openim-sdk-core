@@ -256,12 +256,12 @@ func (g *Group) groupMuteChangedNotification(msg *api.MsgData, operationID strin
 }
 
 func (g *Group) groupMemberInfoSetNotification(msg *api.MsgData, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	detail := api.GroupMemberInfoSetTips{Group: &api.GroupInfo{}}
 	if err := comm.UnmarshalTips(msg, &detail); err != nil {
 		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
 		return
 	}
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID, msg.String(), "detail : ", detail.String())
 	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
 	_ = g.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.ChangedUser.UserID, detail.ChangedUser.FaceURL, detail.ChangedUser.Nickname, constant.GroupChatType)
 
@@ -779,7 +779,7 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 		if onGroupMemberNotification == true {
 			callbackData := sdk.GroupMemberAddedCallback(*onServer[index])
 			g.listener.OnGroupMemberAdded(utils.StructToJsonString(callbackData))
-			log.Info(operationID, "OnGroupMemberAdded", utils.StructToJsonString(callbackData))
+			log.Debug(operationID, "OnGroupMemberAdded", utils.StructToJsonString(callbackData))
 		}
 	}
 	for _, index := range sameA {

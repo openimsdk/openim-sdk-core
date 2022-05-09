@@ -3,6 +3,7 @@ package db
 import (
 	_ "database/sql"
 	"errors"
+	"fmt"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -42,6 +43,38 @@ func (d *DataBase) GetAllFriendList() ([]*LocalFriend, error) {
 		transfer = append(transfer, &v1)
 	}
 	return transfer, err
+}
+func (d *DataBase) SearchFriendList(keyword string, isSearchUserID, isSearchNickname, isSearchRemark bool) ([]*LocalFriend, error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var count int
+	var friendList []LocalFriend
+	var condition string
+	if isSearchUserID {
+		condition = fmt.Sprintf("friend_user_id like %q ", "%"+keyword+"%")
+		count++
+	}
+	if isSearchNickname {
+		if count > 0 {
+			condition += "or "
+		}
+		condition += fmt.Sprintf("name like %q ", "%"+keyword+"%")
+		count++
+	}
+	if isSearchRemark {
+		if count > 0 {
+			condition += "or "
+		}
+		condition += fmt.Sprintf("remark like %q ", "%"+keyword+"%")
+	}
+	err := d.conn.Debug().Where(condition).Order("create_time DESC").Find(&friendList).Error
+	var transfer []*LocalFriend
+	for _, v := range friendList {
+		v1 := v
+		transfer = append(transfer, &v1)
+	}
+	return transfer, utils.Wrap(err, "SearchFriendList failed ")
+
 }
 
 func (d *DataBase) GetFriendInfoByFriendUserID(FriendUserID string) (*LocalFriend, error) {

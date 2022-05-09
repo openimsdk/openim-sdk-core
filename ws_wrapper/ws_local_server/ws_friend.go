@@ -1,7 +1,10 @@
 package ws_local_server
 
 import (
+	"encoding/json"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/utils"
 )
 
 type FriendCallback struct {
@@ -120,6 +123,20 @@ func (wsRouter *WsFuncRouter) GetFriendList(input string, operationID string) {
 		return
 	}
 	userWorker.Friend().GetFriendList(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
+}
+func (wsRouter *WsFuncRouter) SearchFriends(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
+		return
+	}
+	userWorker.Friend().SearchFriends(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},
+		input, operationID)
 }
 
 //1

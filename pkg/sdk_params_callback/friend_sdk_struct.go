@@ -54,6 +54,11 @@ type SearchFriendsParam struct {
 	IsSearchNickname bool     `json:"isSearchNickname"`
 	IsSearchRemark   bool     `json:"isSearchRemark"`
 }
+type SearchFriendsCallback []*SearchFriendItem
+type SearchFriendItem struct {
+	db.LocalFriend
+	Relationship int `json:"relationship"`
+}
 
 //1
 type SetFriendRemarkParams struct {

@@ -2,7 +2,6 @@ package conversation_msg
 
 import (
 	"encoding/json"
-	"fmt"
 	"open_im_sdk/internal/advanced_interface"
 	"open_im_sdk/internal/cache"
 	common2 "open_im_sdk/internal/common"
@@ -104,7 +103,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	phNewConversationSet := make(map[string]*db.LocalConversation)
 	log.Info(operationID, "do Msg come here")
 	for _, v := range allMsg {
-
 		isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
 		isUnreadCount = utils.GetSwitchFromOptions(v.Options, constant.IsUnreadCount)
 		isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
@@ -186,7 +184,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				continue
 			}
 		}
-		fmt.Println(v.Options, isConversationUpdate)
 		if v.SendID == c.loginUserID { //seq
 			// Messages sent by myself  //if  sent through  this terminal
 			m, err := c.db.GetMessage(msg.ClientMsgID)
@@ -267,8 +264,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					lc.ShowName = msg.SenderNickname
 					lc.FaceURL = msg.SenderFaceURL
 				case constant.GroupChatType:
-					//Generate At type into Conversation
-					//c.genConversationGroupAtType(&lc, msg)
 					lc.GroupID = v.GroupID
 					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
 					//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
@@ -310,6 +305,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				}
 			} else {
 				exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
+				log.Warn(operationID, "Deduplication operation ", *c.msgStructToLocalErrChatLog(msg))
 			}
 		}
 	}
@@ -331,9 +327,21 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	//Normal message storage
 	err1 := c.db.BatchInsertMessageList(insertMsg)
 	if err1 != nil {
-		log.Error(operationID, "insert normal message err  :", err1.Error())
+		log.Error(operationID, "insert GetMessage detail err:", err1.Error(), len(insertMsg))
+		for _, v := range insertMsg {
+			e := c.db.InsertMessage(v)
+			if e != nil {
+				errChatLog := &db.LocalErrChatLog{}
+				copier.Copy(errChatLog, v)
+				exceptionMsg = append(exceptionMsg, errChatLog)
+				log.Warn(operationID, "InsertMessage operation ", "chat err log: ", errChatLog, "chat log: ", v, e.Error())
+			}
+		}
 	}
 	//Exception message storage
+	for _, v := range exceptionMsg {
+		log.Warn(operationID, "exceptionMsg show: ", *v)
+	}
 
 	err2 := c.db.BatchInsertExceptionMsgToErrorChatLog(exceptionMsg)
 	if err2 != nil {
@@ -652,9 +660,15 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		if err != nil {
 			log.Error("internal", "getMultipleConversationModel err :", err.Error())
 		} else {
+			var newCList []*db.LocalConversation
+			for _, v := range cLists {
+				if v.LatestMsgSendTime != 0 {
+					newCList = append(newCList, v)
+				}
+			}
+			log.Info("internal", "getMultipleConversationModel success :", newCList)
 
-			log.Info("internal", "getMultipleConversationModel success :", cLists)
-			c.ConversationListener.OnConversationChanged(utils.StructToJsonStringDefault(cLists))
+			c.ConversationListener.OnConversationChanged(utils.StructToJsonStringDefault(newCList))
 		}
 	case constant.NewCon:
 		cidList := node.Args.([]string)

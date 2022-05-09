@@ -60,7 +60,7 @@ func (d *DataBase) GetAllGroupInfoByGroupIDOrGroupName(keyword string, isSearchG
 	} else {
 		condition = fmt.Sprintf("name like %q ", "%"+keyword+"%")
 	}
-	err := d.conn.Debug().Where(condition).Order("create_time DESC").Find(&groupList).Error
+	err := d.conn.Where(condition).Order("create_time DESC").Find(&groupList).Error
 	var transfer []*LocalGroup
 	for _, v := range groupList {
 		v1 := v

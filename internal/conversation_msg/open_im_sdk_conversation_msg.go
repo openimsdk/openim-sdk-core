@@ -15,7 +15,6 @@ import (
 	"open_im_sdk/sdk_struct"
 	"os"
 	"runtime"
-	"strings"
 	"sync"
 	"time"
 
@@ -549,6 +548,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			lc.ConversationType = constant.GroupChatType
 			gm, err := c.db.GetGroupMemberInfoByGroupIDUserID(groupID, c.loginUserID)
 			common.CheckAnyErrCallback(callback, 202, err, operationID)
+			log.NewError(operationID, "group chat test", *gm)
 			if gm.Nickname != "" {
 				s.SenderNickname = gm.Nickname
 			}
@@ -561,6 +561,8 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			if !utils.IsContain(s.SendID, groupMemberUidList) {
 				common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
 			}
+			s.AttachedInfoElem.GroupHasReadInfo.GroupMemberCount = uint32(len(groupMemberUidList))
+			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 		} else {
 			s.SessionType = constant.SingleChatType
 			s.RecvID = recvID
@@ -568,16 +570,19 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			lc.UserID = recvID
 			lc.ConversationType = constant.SingleChatType
 			//faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(recvID, operationID)
-			faceUrl, name, err := c.cache.GetUserNameAndFaceURL(recvID, operationID)
-			common.CheckAnyErrCallback(callback, 301, err, operationID)
-			lc.FaceURL = faceUrl
-			lc.ShowName = name
-		}
-		oldLc, err := c.db.GetConversation(conversationID)
-		if err == nil && oldLc.IsPrivateChat {
-			options[constant.IsNotPrivate] = false
-			s.AttachedInfoElem.IsPrivateChat = true
-			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
+			oldLc, err := c.db.GetConversation(conversationID)
+			if err == nil && oldLc.IsPrivateChat {
+				options[constant.IsNotPrivate] = false
+				s.AttachedInfoElem.IsPrivateChat = true
+				s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
+			}
+			if err != nil {
+				faceUrl, name, err := c.cache.GetUserNameAndFaceURL(recvID, operationID)
+				common.CheckAnyErrCallback(callback, 301, err, operationID)
+				lc.FaceURL = faceUrl
+				lc.ShowName = name
+			}
+
 		}
 		oldMessage, err := c.db.GetMessage(s.ClientMsgID)
 		if err != nil {
@@ -884,27 +889,26 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 			if !utils.IsContain(s.SendID, groupMemberUidList) {
 				common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
 			}
+			s.AttachedInfoElem.GroupHasReadInfo.GroupMemberCount = uint32(len(groupMemberUidList))
+			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 		} else {
 			s.SessionType = constant.SingleChatType
 			s.RecvID = recvID
 			conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
 			lc.UserID = recvID
 			lc.ConversationType = constant.SingleChatType
-			faceUrl, name, err, isFromSvr := c.friend.GetUserNameAndFaceUrlByUid(recvID, operationID)
-			common.CheckAnyErrCallback(callback, 301, err, operationID)
-
-			if isFromSvr {
-				c.cache.Update(recvID, faceUrl, name)
+			oldLc, err := c.db.GetConversation(conversationID)
+			if err == nil && oldLc.IsPrivateChat {
+				options[constant.IsNotPrivate] = false
+				s.AttachedInfoElem.IsPrivateChat = true
+				s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 			}
-
-			lc.FaceURL = faceUrl
-			lc.ShowName = name
-		}
-		oldLc, err := c.db.GetConversation(conversationID)
-		if err == nil && oldLc.IsPrivateChat {
-			options[constant.IsNotPrivate] = false
-			s.AttachedInfoElem.IsPrivateChat = true
-			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
+			if err != nil {
+				faceUrl, name, err := c.cache.GetUserNameAndFaceURL(recvID, operationID)
+				common.CheckAnyErrCallback(callback, 301, err, operationID)
+				lc.FaceURL = faceUrl
+				lc.ShowName = name
+			}
 		}
 		oldMessage, err := c.db.GetMessage(s.ClientMsgID)
 		if err != nil {
@@ -1005,6 +1009,7 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.Local
 	s.Status = constant.MsgStatusSendSuccess
 	s.ServerMsgID = sendMsgResp.ServerMsgID
 	callback.OnProgress(100)
+	log.NewError(operationID, "group chat test come here ", s.SenderNickname)
 	callback.OnSuccess(utils.StructToJsonString(s))
 	//remove media cache file
 	for _, v := range delFile {
@@ -1449,14 +1454,7 @@ func (c *Conversation) SearchLocalMessages(callback open_im_sdk_callback.Base, s
 		log.NewInfo(operationID, "SearchLocalMessages args: ", searchParam)
 		var unmarshalParams sdk_params_callback.SearchLocalMessagesParams
 		common.JsonUnmarshalCallback(searchParam, &unmarshalParams, callback, operationID)
-		unmarshalParams.KeywordList = func(list []string) (result []string) {
-			for _, v := range list {
-				if len(strings.Trim(v, " ")) != 0 {
-					result = append(result, v)
-				}
-			}
-			return result
-		}(unmarshalParams.KeywordList)
+		unmarshalParams.KeywordList = utils.TrimStringList(unmarshalParams.KeywordList)
 		result := c.searchLocalMessages(callback, unmarshalParams, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
 		log.NewInfo(operationID, "cost time", time.Since(s))

@@ -344,3 +344,13 @@ func computeNextArray(subString string) []int {
 	}
 	return next
 }
+
+func TrimStringList(list []string) (result []string) {
+	for _, v := range list {
+		if len(strings.Trim(v, " ")) != 0 {
+			result = append(result, v)
+		}
+	}
+	return result
+
+}

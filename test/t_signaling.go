@@ -10,6 +10,10 @@ import (
 type testSignalingListener struct {
 }
 
+func (s *testSignalingListener) OnHangUp(hangUpCallback string) {
+	panic("implement me")
+}
+
 func (s *testSignalingListener) OnReceiveNewInvitation(receiveNewInvitationCallback string) {
 	log.Info("", utils.GetSelfFuncName(), "listener ", receiveNewInvitationCallback)
 }
