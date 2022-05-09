@@ -153,6 +153,10 @@ const (
 	ckTokenExpired      string = "token-expired"
 	ckSelfInfoUpdate    string = "self-info-update"
 )
+const (
+	BlackRelationship  = 0
+	FriendRelationship = 1
+)
 
 //const (
 //	ErrCodeInitLogin    = 1001

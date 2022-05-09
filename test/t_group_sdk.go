@@ -172,12 +172,31 @@ func (t testGetGroupsInfo) OnError(errCode int32, errMsg string) {
 	log.Info(t.OperationID, "testGetGroupsInfo,onError", errCode, errMsg)
 }
 
+type testSearchGroups struct {
+	OperationID string
+}
+
+func (t testSearchGroups) OnSuccess(data string) {
+	log.Info(t.OperationID, "testSearchGroups,onSuccess", data)
+}
+
+func (t testSearchGroups) OnError(errCode int32, errMsg string) {
+	log.Info(t.OperationID, "testSearchGroups,onError", errCode, errMsg)
+}
 func DoTestGetGroupsInfo() {
 	var test testGetGroupsInfo
 	groupIDList := []string{"8a33030b726bd4792c8410aadfacaa35", "e91805bae94ae3a00eb629f74e83605a"}
 	list := utils.StructToJsonString(groupIDList)
 	log.Info(test.OperationID, "test getGroupsInfo input", list)
 	open_im_sdk.GetGroupsInfo(test, test.OperationID, list)
+}
+func DoTestSearchGroups() {
+	var test testGetGroupsInfo
+	var params sdk_params_callback.SearchGroupsParam
+	params.KeywordList = []string{"17"}
+	//params.IsSearchGroupID =true
+	params.IsSearchGroupName = true
+	open_im_sdk.SearchGroups(test, test.OperationID, utils.StructToJsonString(params))
 }
 
 type testJoinGroup struct {

@@ -167,16 +167,13 @@ func (f *Friend) SearchFriends(callback open_im_sdk_callback.Base, searchParam, 
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ", searchParam)
-		var unmarshalGetGroupsInfoParam sdk.SearchFriendsParam
-		common.JsonUnmarshalAndArgsValidate(searchParam, &unmarshalGetGroupsInfoParam, callback, operationID)
-		//groupsInfoList := g.searchGroups(callback, unmarshalGetGroupsInfoParam, operationID)
-		//callback.OnSuccess(utils.StructToJsonStringDefault(groupsInfoList))
-		//log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(groupsInfoList), len(groupsInfoList))
+		var unmarshalSearchFriendsInfoParam sdk.SearchFriendsParam
+		common.JsonUnmarshalAndArgsValidate(searchParam, &unmarshalSearchFriendsInfoParam, callback, operationID)
+		unmarshalSearchFriendsInfoParam.KeywordList = utils.TrimStringList(unmarshalSearchFriendsInfoParam.KeywordList)
+		friendsInfoList := f.searchFriends(callback, unmarshalSearchFriendsInfoParam, operationID)
+		callback.OnSuccess(utils.StructToJsonStringDefault(friendsInfoList))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(friendsInfoList), len(friendsInfoList))
 
-		log.NewInfo(operationID, fName, "args: ")
-		result := f.getFriendList(callback, operationID)
-		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
 

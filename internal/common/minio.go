@@ -54,10 +54,16 @@ func (m *Minio) upload(filePath, fileType string, onProgressFun func(int)) (stri
 		log.NewError("", utils.GetSelfFuncName(), "getNewFileNameAndContentType failed", err.Error(), filePath, fileType)
 		return "", "", utils.Wrap(err, "")
 	}
-	client, err := minio.New(endPoint.Host, &minio.Options{
-		Creds:  credentials.NewStaticV4(minioResp.AccessKeyID, minioResp.SecretAccessKey, minioResp.SessionToken),
-		Secure: false,
-	})
+	opts := &minio.Options{
+		Creds: credentials.NewStaticV4(minioResp.AccessKeyID, minioResp.SecretAccessKey, minioResp.SessionToken),
+	}
+	switch endPoint.Scheme {
+	case "http":
+		opts.Secure = false
+	case "https":
+		opts.Secure = true
+	}
+	client, err := minio.New(endPoint.Host, opts)
 	if err != nil {
 		log.NewError("", utils.GetSelfFuncName(), "generate filename and filetype failed", err.Error(), endPoint.Host)
 		return "", "", utils.Wrap(err, "")

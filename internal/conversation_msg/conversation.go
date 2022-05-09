@@ -15,6 +15,7 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sort"
+	"time"
 )
 
 func (c *Conversation) getAllConversationList(callback open_im_sdk_callback.Base, operationID string) sdk.GetAllConversationListCallback {
@@ -224,8 +225,9 @@ func (c *Conversation) getServerConversationList(operationID string) (server_api
 	}
 	return resp, nil
 }
-
 func (c *Conversation) SyncConversations(operationID string) {
+	var newConversationList []*db.LocalConversation
+	ccTime := time.Now()
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	conversationsOnServer, err := c.getServerConversationList(operationID)
 	if err != nil {
@@ -236,12 +238,14 @@ func (c *Conversation) SyncConversations(operationID string) {
 	if err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 	}
-
+	log.Info(operationID, "get server cost time", time.Since(ccTime))
 	conversationsOnLocalTempFormat := common.LocalTransferToTempConversation(conversationsOnLocal)
 	conversationsOnServerTempFormat := common.ServerTransferToTempConversation(conversationsOnServer)
 	conversationsOnServerLocalFormat := common.TransferToLocalConversation(conversationsOnServer)
 
 	aInBNot, bInANot, sameA, sameB := common.CheckConversationListDiff(conversationsOnServerTempFormat, conversationsOnLocalTempFormat)
+	log.Info(operationID, "diff server cost time", time.Since(ccTime))
+
 	log.NewInfo(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
 	// server有 local没有
 	// 可能是其他点开一下生成会话设置免打扰 插入到本地 不回调..
@@ -274,17 +278,26 @@ func (c *Conversation) SyncConversations(operationID string) {
 			newConversation.ShowName = g.GroupName
 			newConversation.FaceURL = g.FaceURL
 		}
-		err := c.db.InsertConversation(&newConversation)
-		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation error", err.Error(), conversation)
-			continue
-		}
-		err = c.db.UpdateConversationForSync(conversation)
-		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation failed ", err.Error(), conversation)
-			continue
-		}
+		newConversation.RecvMsgOpt = conversation.RecvMsgOpt
+		newConversation.IsPinned = conversation.IsPinned
+		newConversation.IsPrivateChat = conversation.IsPrivateChat
+		newConversation.GroupAtType = conversation.GroupAtType
+		newConversation.IsNotInGroup = conversation.IsNotInGroup
+		newConversation.Ex = conversation.Ex
+		newConversation.AttachedInfo = conversation.AttachedInfo
+		newConversationList = append(newConversationList, &newConversation)
+		//err := c.db.InsertConversation(&newConversation)
+		//if err != nil {
+		//	log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation error", err.Error(), conversation)
+		//	continue
+		//}
 	}
+	//New conversation storage
+	err2 := c.db.BatchInsertConversationList(newConversationList)
+	if err2 != nil {
+		log.Error(operationID, "insert new conversation err:", err2.Error(), newConversationList)
+	}
+	log.Info(operationID, "insert cost time", time.Since(ccTime))
 	// 本地服务器有的会话 以服务器为准更新
 	var conversationChangedList []string
 	for _, index := range sameA {
@@ -643,6 +656,9 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 	}
 }
 func (c *Conversation) judgeMultipleSubString(keywordList []string, main string, keywordListMatchType int) bool {
+	if len(keywordList) == 0 {
+		return true
+	}
 	if keywordListMatchType == constant.KeywordMatchOr {
 		for _, v := range keywordList {
 			if utils.KMP(main, v) {

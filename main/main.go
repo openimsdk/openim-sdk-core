@@ -60,19 +60,19 @@ func main() {
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
 	test.SENDINTERVAL = SENDINTERVAL
-	strMyUidx := "707008160"
+	strMyUidx := "13911112222"
 	//friendID := "17726378428"
 	tokenx := test.GenToken(strMyUidx)
-
-	// tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMjM0NTYiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTk2NjQwOTQ3MSwibmJmIjoxNjUxMDQ5NDcxLCJpYXQiOjE2NTEwNDk0NzF9.7VrCn4afLrsDJ1UsNuLPwgwd2FEL9AQ71F2odO4f9MA"
+	//	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNTYxNzQzIiwiUGxhdGZvcm0iOiJMaW51eCIsImV4cCI6MTY1MjIzNzYyNCwibmJmIjoxNjUxNjMyODI0LCJpYXQiOjE2NTE2MzI4MjR9.7-mA-QYTwAz-zSFrcpWqHv7d2itl6DgDMyNh8nwn6Vg"
+	//	tokenx = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNzcyNjM3ODQyOCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYzMjE2NDU1LCJuYmYiOjE2NDc4NTY0NTUsImlhdCI6MTY0Nzg1NjQ1NX0.3fOcyhw7r5lOkRTJdDy7-tG9XC4XrKj_N7ufrGHPWYM"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 
 	log.Info("", "DotestSetGroupMemberNickname start...")
 
 	//test.TestGetWorkMomentsUnReadCount()
-	test.TestGetWorkMomentsNotification()
+	//test.TestGetWorkMomentsNotification()
 	//test.TestClearWorkMomentsNotification()
-
+	test.DoTestSendImageMsg(strMyUidx, "13312341234")
 	log.Info("", "test start...")
 	//test.DoTestGetSubDepartment()
 	//test.DoTestGetDepartmentMember()

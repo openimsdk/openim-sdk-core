@@ -385,7 +385,14 @@ func GetFriendList(callback open_im_sdk_callback.Base, operationID string) {
 	}
 	userForSDK.Friend().GetFriendList(callback, operationID)
 }
-
+func SearchFriends(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Friend().SearchFriends(callback, searchParam, operationID)
+}
 func CheckFriend(callback open_im_sdk_callback.Base, operationID string, userIDList string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
