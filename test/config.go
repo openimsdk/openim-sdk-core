@@ -28,3 +28,8 @@ var intervalSleep int
 var sendSuccessCount, sendFailedCount int
 var sendSuccessLock sync.RWMutex
 var sendFailedLock sync.RWMutex
+
+var msgNumInOneClient = 0
+
+//var Msgwg sync.WaitGroup
+var sendMsgClient = 0

@@ -42,13 +42,8 @@ func GetCmd(myUid int, filename string) int {
 	return int(utils.StringToInt64(cmd[myUid-1]))
 }
 
-var testTotalNum = 0
-
-//var Msgwg sync.WaitGroup
-var sendMsgClient = 0
-
-func ReliabilityTest(msgNum int, intervalSleepMS int, randSleepMaxSecond int, clientNum int) {
-	testTotalNum = msgNum
+func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecond int, clientNum int) {
+	msgNumInOneClient = msgNumOneClient
 	for i := 0; i < clientNum; i++ {
 		RegisterUserReliability(i)
 	}
@@ -60,10 +55,10 @@ func ReliabilityTest(msgNum int, intervalSleepMS int, randSleepMaxSecond int, cl
 		rdSleep := rand.Intn(randSleepMaxSecond) + 1
 		isSend := rand.Intn(2)
 		if isSend == 0 {
-			go ReliabilityOne(i, rdSleep, true)
+			go ReliabilityOne(i, rdSleep, true, intervalSleepMS)
 			sendMsgClient++
 		} else {
-			go ReliabilityOne(i, rdSleep, false)
+			go ReliabilityOne(i, rdSleep, false, intervalSleepMS)
 		}
 	}
 	log.Info("send msg client number: ", sendMsgClient, "total client number: ", clientNum)
@@ -109,26 +104,26 @@ func CheckReliabilityResult() bool {
 
 		} else {
 			log.Error("", "check failed  not in send ", k1)
-			//	return false
+			return false
 		}
 	}
 
 	log.Warn("", "send msg succ num ", len(SendSuccAllMsg), "recv msg num ", len(RecvAllMsg), "same num ", sameNum)
 	log.Warn("", "send msg failed num ", len(SendFailedAllMsg))
-	log.Warn("", "need send msg num : ", sendMsgClient*testTotalNum)
-	if len(SendSuccAllMsg) > 0 {
+	log.Warn("", "need send msg num : ", sendMsgClient*msgNumInOneClient)
+	if len(SendSuccAllMsg) == sendMsgClient*msgNumInOneClient {
 		return true
 	}
 	return false
 }
 
-func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool) {
+func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS int) {
 	time.Sleep(time.Duration(beforeLoginSleep) * time.Second)
 	strMyUid := allLoginMgr[index].userID
 	token := allLoginMgr[index].token
 	ReliabilityInitAndLogin(index, strMyUid, token, WSADDR, APIADDR)
 	log.Info("start One", index, beforeLoginSleep, isSendMsg, strMyUid, token, WSADDR, APIADDR)
-	msgnum := testTotalNum
+	msgnum := msgNumInOneClient
 	uidNum := len(allLoginMgr)
 	var recvId string
 	var idx string
