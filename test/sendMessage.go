@@ -213,7 +213,7 @@ func RegisterUserReliability(id int) {
 	userID := GenUid(id, "reliability"+utils.Int64ToString(time.Now().Unix()))
 	coreMgrLock.Lock()
 	defer coreMgrLock.Unlock()
-	//register(userID)
+	register(userID)
 	token := GenToken(userID)
 	allLoginMgr[id] = &CoreNode{token: token, userID: userID}
 }
