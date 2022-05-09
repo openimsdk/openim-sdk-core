@@ -269,7 +269,7 @@ func TestSendCostTime() {
 	}
 
 }
-func testSend(idx int, text string, uidNum int) {
+func TestSend(idx int, text string, uidNum, intervalSleep int) {
 	for {
 		operationID := utils.OperationIDGenerator()
 		sendID := allUserID[idx]
@@ -280,10 +280,10 @@ func testSend(idx int, text string, uidNum int) {
 		} else {
 			log.Error(operationID, sendID, recvID, "SendTextMessage failed")
 		}
-		time.Sleep(time.Duration(rand.Intn(intervalSleep)) * time.Second)
+		time.Sleep(time.Duration(rand.Intn(intervalSleep)) * time.Millisecond)
 	}
 }
-func testSendReliability(idx int, text string, uidNum int) {
+func testSendReliability(idx int, text string, uidNum, intervalSleep int) {
 	for {
 		operationID := utils.OperationIDGenerator()
 		sendID := allUserID[idx]
