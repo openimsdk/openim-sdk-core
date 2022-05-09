@@ -61,19 +61,22 @@ type ResToken struct {
 }
 
 func register(uid string) error {
-	var reqCheckAccount server_api_params.AccountCheckReq
-	reqCheckAccount.OperationID = utils.OperationIDGenerator()
-	reqCheckAccount.CheckUserIDList = append(reqCheckAccount.CheckUserIDList, uid)
-	for {
-		_, err := network.Post2Api(ACCOUNTCHECK, reqCheckAccount, "")
-		if err != nil && !strings.Contains(err.Error(), "status code failed") {
-			log.Error(reqCheckAccount.OperationID, "post failed ,continue ", err.Error())
-			continue
-		} else {
-			log.Info(reqCheckAccount.OperationID, "Post2Api ok ", reqCheckAccount)
-			break
-		}
-	}
+	//var reqCheckAccount server_api_params.AccountCheckReq
+	//reqCheckAccount.OperationID = utils.OperationIDGenerator()
+	//reqCheckAccount.CheckUserIDList = append(reqCheckAccount.CheckUserIDList, uid)
+	//for {
+	//	resp, err := network.Post2Api(ACCOUNTCHECK, reqCheckAccount, "")
+	//	if err != nil && !strings.Contains(err.Error(), "status code failed") {
+	//		log.Error(reqCheckAccount.OperationID, "post failed ,continue ", err.Error())
+	//		continue
+	//	} else {
+	//		log.Info(reqCheckAccount.OperationID, "Post2Api ok ", reqCheckAccount)
+	//		result := server_api_params.AccountCheckResp{}
+	//		json.Unmarshal(resp ,&result)
+	//		if result.ResultList
+	//		break
+	//	}
+	//}
 
 	url := REGISTERADDR
 	var req server_api_params.UserRegisterReq
