@@ -44,8 +44,9 @@ func GetCmd(myUid int, filename string) int {
 
 func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecond int, clientNum int) {
 	msgNumInOneClient = msgNumOneClient
+	timeStamp := utils.Int64ToString(time.Now().Unix())
 	for i := 0; i < clientNum; i++ {
-		RegisterUserReliability(i)
+		RegisterUserReliability(i, timeStamp)
 	}
 	log.Info("", "RegisterUserReliability finish ", clientNum)
 

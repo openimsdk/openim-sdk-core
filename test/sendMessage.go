@@ -212,8 +212,8 @@ func GenWsConn(id int) {
 	allWs = append(allWs, ws)
 }
 
-func RegisterUserReliability(id int) {
-	userID := GenUid(id, "reliability"+utils.Int64ToString(time.Now().Unix()))
+func RegisterUserReliability(id int, timeStamp string) {
+	userID := GenUid(id, "reliability"+timeStamp+"_")
 	coreMgrLock.Lock()
 	defer coreMgrLock.Unlock()
 	register(userID)
