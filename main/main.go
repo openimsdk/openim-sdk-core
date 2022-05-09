@@ -70,9 +70,9 @@ func main() {
 	log.Info("", "DotestSetGroupMemberNickname start...")
 
 	//test.TestGetWorkMomentsUnReadCount()
-	test.TestGetWorkMomentsNotification()
+	//test.TestGetWorkMomentsNotification()
 	//test.TestClearWorkMomentsNotification()
-
+	test.DoTestSendImageMsg(strMyUidx, "13312341234")
 	log.Info("", "test start...")
 	//test.DoTestGetSubDepartment()
 	//test.DoTestGetDepartmentMember()

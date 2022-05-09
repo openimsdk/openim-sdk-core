@@ -409,6 +409,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	cf.Platform = 2
 	cf.DataDir = "./"
 	cf.LogLevel = 6
+	cf.ObjectStorage = "minio"
 
 	var s string
 	b, _ := json.Marshal(cf)
