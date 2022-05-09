@@ -320,6 +320,10 @@ func (u *LoginMgr) forcedSynchronization() {
 	wg.Add(10)
 
 	go func() {
+		u.user.SyncLoginUserInfo(operationID)
+		wg.Done()
+	}()
+	go func() {
 		u.friend.SyncFriendList(operationID)
 		wg.Done()
 	}()
@@ -336,11 +340,6 @@ func (u *LoginMgr) forcedSynchronization() {
 
 	go func() {
 		u.friend.SyncSelfFriendApplication(operationID)
-		wg.Done()
-	}()
-
-	go func() {
-		u.user.SyncLoginUserInfo(operationID)
 		wg.Done()
 	}()
 
