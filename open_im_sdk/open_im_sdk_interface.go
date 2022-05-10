@@ -908,7 +908,8 @@ func InitOnce(config *sdk_struct.IMConfig) bool {
 }
 
 func CheckToken(userID, token string) error {
-	return login.CheckToken(userID, token, "")
+	err, _ := login.CheckToken(userID, token, "")
+	return err
 }
 
 func CheckResourceLoad(uSDK *login.LoginMgr) error {

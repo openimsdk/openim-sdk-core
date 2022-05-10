@@ -1,8 +1,6 @@
 package interaction
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"github.com/golang/protobuf/proto"
 	"open_im_sdk/open_im_sdk_callback"
@@ -13,7 +11,6 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"runtime"
-	"strings"
 	"time"
 )
 
@@ -24,17 +21,19 @@ type Heartbeat struct {
 	heartbeatInterval int
 	token             string
 	listener          open_im_sdk_callback.OnConnListener
+	ExpireTimeSeconds uint32
 }
 
 func (u *Heartbeat) SetHeartbeatInterval(heartbeatInterval int) {
 	u.heartbeatInterval = heartbeatInterval
 }
 
-func NewHeartbeat(msgSync *MsgSync, cmcCh chan common.Cmd2Value, listener open_im_sdk_callback.OnConnListener, token string) *Heartbeat {
+func NewHeartbeat(msgSync *MsgSync, cmcCh chan common.Cmd2Value, listener open_im_sdk_callback.OnConnListener, token string, expireTimeSeconds uint32) *Heartbeat {
 	p := Heartbeat{MsgSync: msgSync, cmdCh: cmcCh}
 	p.heartbeatInterval = constant.HeartbeatInterval
 	p.listener = listener
 	p.token = token
+	p.ExpireTimeSeconds = expireTimeSeconds
 	go p.Run()
 	return &p
 }
@@ -48,29 +47,41 @@ type ParseToken struct {
 }
 
 func (u *Heartbeat) IsTokenExp(operationID string) bool {
-	b := strings.IndexAny(u.token, ".")
-	e := strings.LastIndex(u.token, ".")
-	if b == -1 || e == -1 || b >= e {
+	if u.ExpireTimeSeconds == 0 {
 		return false
 	}
-	log.Debug(operationID, "sub token ", u.token[b+1:e])
-	decodeBytes, err := base64.StdEncoding.DecodeString(u.token[b+1 : e])
-	if err != nil {
-		//	log.Error(operationID, "DecodeString failed ", err.Error(), u.token[b+1:e])
-		return false
-	}
-	log.Debug(operationID, "decodeBytes ", string(decodeBytes))
-	parseToken := ParseToken{}
-	err = json.Unmarshal(decodeBytes, &parseToken)
-	if err != nil {
-		log.Error(operationID, "Unmarshal failed ", err.Error())
-		return false
-	}
-	log.Debug(operationID, "exp ", parseToken.Exp, "now ", time.Now().Unix())
-	if parseToken.Exp < int(time.Now().Unix()) {
+	log.Debug(operationID, "ExpireTimeSeconds ", u.ExpireTimeSeconds, "now ", uint32(time.Now().Unix()))
+	if u.ExpireTimeSeconds < uint32(time.Now().Unix()) {
 		return true
+	} else {
+		return false
 	}
-	return false
+
+	//
+	//
+	//b := strings.IndexAny(u.token, ".")
+	//e := strings.LastIndex(u.token, ".")
+	//if b == -1 || e == -1 || b >= e {
+	//	return false
+	//}
+	//log.Debug(operationID, "sub token ", u.token[b+1:e])
+	//decodeBytes, err := base64.StdEncoding.DecodeString(u.token[b+1 : e])
+	//if err != nil {
+	//	//	log.Error(operationID, "DecodeString failed ", err.Error(), u.token[b+1:e])
+	//	return false
+	//}
+	//log.Debug(operationID, "decodeBytes ", string(decodeBytes))
+	//parseToken := ParseToken{}
+	//err = json.Unmarshal(decodeBytes, &parseToken)
+	//if err != nil {
+	//	log.Error(operationID, "Unmarshal failed ", err.Error())
+	//	return false
+	//}
+	//log.Debug(operationID, "exp ", parseToken.Exp, "now ", time.Now().Unix())
+	//if parseToken.Exp < int(time.Now().Unix()) {
+	//	return true
+	//}
+	//return false
 }
 
 func (u *Heartbeat) Run() {

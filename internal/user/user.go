@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 	comm "open_im_sdk/internal/common"
-
 	//"github.com/mitchellh/mapstructure"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
@@ -79,7 +78,7 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 	onServer := common.TransferToLocalUserInfo(svr)
 	onLocal, err := u.GetLoginUser()
 	if err != nil {
-		log.Error(operationID, "GetLoginUser failed", err.Error())
+		log.Warn(operationID, "GetLoginUser failed", err.Error())
 		onLocal = &db.LocalUser{}
 	}
 	if !cmp.Equal(onServer, onLocal) {
@@ -163,4 +162,16 @@ func (u *User) DoUserNotification(msg *api.MsgData) {
 	if msg.SendID == u.loginUserID && msg.SenderPlatformID == sdk_struct.SvrConf.Platform {
 		return
 	}
+}
+
+func (u *User) ParseTokenFromSvr(operationID string) (uint32, error) {
+	apiReq := api.ParseTokenReq{}
+	apiReq.OperationID = operationID
+	apiResp := api.ParseTokenResp{}
+	err := u.p.PostReturn(constant.ParseTokenRouter, apiReq, &apiResp.ExpireTime)
+	if err != nil {
+		return 0, utils.Wrap(err, apiReq.OperationID)
+	}
+	log.Info(operationID, "apiResp.ExpireTime.ExpireTimeSeconds ", apiResp.ExpireTime)
+	return apiResp.ExpireTime.ExpireTimeSeconds, nil
 }
