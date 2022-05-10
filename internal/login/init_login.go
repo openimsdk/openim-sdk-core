@@ -206,6 +206,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.workMoments = workMoments.NewWorkMoments(u.loginUserID, u.db, p)
 	u.workMoments.SetListener(u.workMomentsListener)
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
+	u.user.SyncLoginUserInfo(operationID)
 	go u.forcedSynchronization()
 	log.Info(operationID, "forcedSynchronization success...")
 	log.Info(operationID, "all channel ", u.pushMsgAndMaxSeqCh, u.conversationCh, u.heartbeatCmdCh, u.cmdWsCh)
@@ -315,14 +316,9 @@ func (u *LoginMgr) GetLoginStatus() int32 {
 
 func (u *LoginMgr) forcedSynchronization() {
 	operationID := utils.OperationIDGenerator()
-
 	var wg sync.WaitGroup
-	wg.Add(10)
+	wg.Add(9)
 
-	go func() {
-		u.user.SyncLoginUserInfo(operationID)
-		wg.Done()
-	}()
 	go func() {
 		u.friend.SyncFriendList(operationID)
 		wg.Done()
