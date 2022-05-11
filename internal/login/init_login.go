@@ -278,19 +278,19 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 	}
 	u.justOnceFlag = false
 
-	//go func(mgr *LoginMgr) {
-	//	time.Sleep(5 * time.Second)
-	//	if mgr == nil {
-	//		log.Warn(operationID, "login mgr == nil")
-	//		return
-	//	}
-	//	log.Warn(operationID, "close channel ", mgr.heartbeatCmdCh, mgr.cmdWsCh, mgr.pushMsgAndMaxSeqCh, mgr.conversationCh, mgr.loginUserID)
-	//	close(mgr.heartbeatCmdCh)
-	//	close(mgr.cmdWsCh)
-	//	close(mgr.pushMsgAndMaxSeqCh)
-	//	close(mgr.conversationCh)
-	//	mgr = nil
-	//}(u)
+	go func(mgr *LoginMgr) {
+		time.Sleep(5 * time.Second)
+		if mgr == nil {
+			log.Warn(operationID, "login mgr == nil")
+			return
+		}
+		log.Warn(operationID, "close channel ", mgr.heartbeatCmdCh, mgr.cmdWsCh, mgr.pushMsgAndMaxSeqCh, mgr.conversationCh, mgr.loginUserID)
+		close(mgr.heartbeatCmdCh)
+		close(mgr.cmdWsCh)
+		close(mgr.pushMsgAndMaxSeqCh)
+		close(mgr.conversationCh)
+		mgr = nil
+	}(u)
 }
 
 func (u *LoginMgr) GetLoginUser() string {
