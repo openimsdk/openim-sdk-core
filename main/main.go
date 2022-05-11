@@ -71,7 +71,6 @@ func main() {
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	//test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
 	//test.DotestSearchFriends()
-	log.NewPrivateLog("", 3)
 	if *senderNum == 0 {
 		test.RegisterAccounts(*onlineNum)
 		return

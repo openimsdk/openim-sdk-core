@@ -22,6 +22,7 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sync"
+	"time"
 )
 
 type LoginMgr struct {
@@ -236,13 +237,6 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_call
 	return true
 }
 
-//func (u *LoginMgr) clearAll(operationID string) {
-//	log.Info(operationID, utils.GetSelfFuncName(), "close all channel...")
-//	close(u.pushMsgAndMaxSeqCh)
-//	close(u.conversationCh)
-//	close(u.cmdWsCh)
-//	close(u.heartbeatCmdCh)
-//}
 func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string) {
 	log.Info(operationID, "TriggerCmdLogout ws...")
 
@@ -279,26 +273,29 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 	resp, err := u.ws.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID, operationID)
 	if err != nil {
 		log.Warn(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
-		//if callback != nil {
-		//	callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
-		//} else {
-		//	return
-		//}
 	}
 	if callback != nil {
 		callback.OnSuccess("")
 	}
 	u.justOnceFlag = false
+
+	go func(mgr *LoginMgr) {
+		time.Sleep(5 * time.Second)
+		if mgr == nil {
+			log.Warn(operationID, "login mgr == nil")
+			return
+		}
+		log.Warn(operationID, "close channel ", mgr.heartbeatCmdCh, mgr.cmdWsCh, mgr.pushMsgAndMaxSeqCh, mgr.conversationCh)
+		close(mgr.heartbeatCmdCh)
+		close(mgr.cmdWsCh)
+		close(mgr.pushMsgAndMaxSeqCh)
+		close(mgr.conversationCh)
+		mgr = nil
+	}(u)
 }
 
 func (u *LoginMgr) GetLoginUser() string {
 	return u.loginUserID
-	//
-	//if u.GetLoginStatus() == constant.LoginSuccess {
-	//	return u.loginUserID
-	//} else {
-	//	return ""
-	//}
 }
 
 func (u *LoginMgr) GetLoginStatus() int32 {
