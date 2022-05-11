@@ -285,7 +285,7 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 			log.Warn(operationID, "login mgr == nil")
 			return
 		}
-		log.Warn(operationID, "logout close channel ", mgr.heartbeatCmdCh, mgr.cmdWsCh, mgr.pushMsgAndMaxSeqCh, mgr.conversationCh, mgr.loginUserID)
+		log.Warn(operationID, "logout close   channel ", mgr.heartbeatCmdCh, mgr.cmdWsCh, mgr.pushMsgAndMaxSeqCh, mgr.conversationCh, mgr.loginUserID)
 		close(mgr.heartbeatCmdCh)
 		close(mgr.cmdWsCh)
 		close(mgr.pushMsgAndMaxSeqCh)
