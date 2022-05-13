@@ -37,3 +37,16 @@ type UserTokenResp struct {
 	CommResp
 	UserToken UserTokenInfo `json:"data"`
 }
+
+type ParseTokenReq struct {
+	OperationID string `json:"operationID" binding:"required"`
+}
+
+type ExpireTime struct {
+	ExpireTimeSeconds uint32 `json:"expireTimeSeconds" `
+}
+
+type ParseTokenResp struct {
+	CommResp
+	ExpireTime ExpireTime `json:"expireTime"`
+}

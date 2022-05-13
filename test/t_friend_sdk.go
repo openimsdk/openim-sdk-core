@@ -498,7 +498,7 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
 	cf.WsAddr = ws
-	cf.Platform = 2
+	cf.Platform = 1
 	cf.DataDir = "./"
 	cf.LogLevel = 3
 	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
@@ -545,7 +545,6 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 		log.Warn(operationID, "waiting login...", uid)
 		time.Sleep(1 * time.Second)
 	}
-
 }
 
 func DoTest(uid, tk, ws, api string) {

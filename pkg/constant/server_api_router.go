@@ -63,9 +63,11 @@ const (
 	//organization
 	GetSubDepartmentRouter    = RouterOrganization + "/get_sub_department"
 	GetDepartmentMemberRouter = RouterOrganization + "/get_department_member"
+	ParseTokenRouter          = RouterAuth + "/parse_token"
 )
 const (
 	RouterGroup        = "/group"
 	ConversationGroup  = "/conversation"
 	RouterOrganization = "/organization"
+	RouterAuth         = "/auth"
 )

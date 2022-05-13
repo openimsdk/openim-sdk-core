@@ -56,24 +56,6 @@ func CheckErrAndRespCallback(callback open_im_sdk_callback.Base, err error, resp
 	}
 }
 
-//func CheckResp( resp []byte) *server_api_params.CommDataResp {
-//	var c server_api_params.CommDataResp
-//	err := json.Unmarshal(resp, &c)
-//	if err != nil {
-//		log.NewError(operationID, "Unmarshal ", err)
-//		callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
-//		runtime.Goexit()
-//		return nil
-//	}
-//	if c.ErrCode != 0 {
-//		log.NewError(operationID, "errCode ", c.ErrCode, "errMsg ", c.ErrMsg)
-//		callback.OnError(c.ErrCode, c.ErrMsg)
-//		runtime.Goexit()
-//		return nil
-//	}
-//	return &c
-//}
-
 func CheckErrAndResp(err error, resp []byte, output interface{}) error {
 	if err != nil {
 		return utils.Wrap(err, "api resp failed")
@@ -87,13 +69,14 @@ func CheckErrAndResp(err error, resp []byte, output interface{}) error {
 		if output != nil {
 			err = mapstructure.Decode(c.Data, output)
 			if err != nil {
-				return utils.Wrap(err, "")
+				goto one
 			}
 			return nil
 		}
 		return nil
 	}
 
+one:
 	var c2 server_api_params.CommDataRespOne
 
 	err = json.Unmarshal(resp, &c2)

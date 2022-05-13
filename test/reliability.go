@@ -42,38 +42,38 @@ func GetCmd(myUid int, filename string) int {
 	return int(utils.StringToInt64(cmd[myUid-1]))
 }
 
-var testTotalNum = 0
-var intervalSleepMS = 0
-
-//var Msgwg sync.WaitGroup
-var sendMsgClient = 0
-
-func ReliabilityTest(msgNum int, interval int, ip string, randSleepMaxSecond int, clientNum int) {
-	testTotalNum = msgNum
-	intervalSleepMS = interval
-	TESTIP = ip
-	testClientNum := clientNum
-	fmt.Println("1111111")
-
-	fmt.Println("2222222222222222")
-	for i := 0; i < testClientNum; i++ {
-		fmt.Println("3333333333333")
-		GenWsReliability(i)
-		fmt.Println("4444444444444444")
+func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecond int, clientNum int) {
+	msgNumInOneClient = msgNumOneClient
+	timeStamp := utils.Int64ToString(time.Now().Unix())
+	for i := 0; i < clientNum; i++ {
+		RegisterUserReliability(i, timeStamp)
 	}
+	log.Info("", "RegisterUserReliability finish ", clientNum)
+
 	rand.Seed(time.Now().UnixNano())
-	//log.NewPrivateLog("sdk", 6)
-	for i := 0; i < testClientNum; i++ {
+
+	for i := 0; i < clientNum; i++ {
 		rdSleep := rand.Intn(randSleepMaxSecond) + 1
 		isSend := rand.Intn(2)
 		if isSend == 0 {
-			go ReliabilityOne(i, rdSleep, true)
+			go ReliabilityOne(i, rdSleep, true, intervalSleepMS)
 			sendMsgClient++
 		} else {
-			go ReliabilityOne(i, rdSleep, false)
+			go ReliabilityOne(i, rdSleep, false, intervalSleepMS)
 		}
 	}
+	log.Info("send msg client number: ", sendMsgClient, "total client number: ", clientNum)
 
+	for {
+		if CheckReliabilityResult() {
+			log.Warn("", "CheckReliabilityResult ok, exit")
+			os.Exit(0)
+			return
+		} else {
+			log.Warn("", "CheckReliabilityResult failed , wait.... ")
+		}
+		time.Sleep(time.Duration(10) * time.Second)
+	}
 }
 
 func CheckReliabilityResult() bool {
@@ -107,29 +107,26 @@ func CheckReliabilityResult() bool {
 
 		} else {
 			log.Error("", "check failed  not in send ", k1)
-			//	return false
+			return false
 		}
 	}
 
 	log.Warn("", "send msg succ num ", len(SendSuccAllMsg), "recv msg num ", len(RecvAllMsg), "same num ", sameNum)
 	log.Warn("", "send msg failed num ", len(SendFailedAllMsg))
-	log.Warn("", "need send msg num : ", sendMsgClient*testTotalNum)
-	if len(SendSuccAllMsg) > 0 {
+	log.Warn("", "need send msg num : ", sendMsgClient*msgNumInOneClient)
+	if len(SendSuccAllMsg) == sendMsgClient*msgNumInOneClient {
 		return true
 	}
 	return false
 }
 
-func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool) {
-
+func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS int) {
 	time.Sleep(time.Duration(beforeLoginSleep) * time.Second)
-	//	coreMgrLock.Lock()
 	strMyUid := allLoginMgr[index].userID
 	token := allLoginMgr[index].token
-	//	coreMgrLock.Unlock()
 	ReliabilityInitAndLogin(index, strMyUid, token, WSADDR, APIADDR)
 	log.Info("start One", index, beforeLoginSleep, isSendMsg, strMyUid, token, WSADDR, APIADDR)
-	msgnum := testTotalNum
+	msgnum := msgNumInOneClient
 	uidNum := len(allLoginMgr)
 	var recvId string
 	var idx string
