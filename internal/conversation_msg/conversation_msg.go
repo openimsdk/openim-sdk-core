@@ -103,7 +103,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	phNewConversationSet := make(map[string]*db.LocalConversation)
 	log.Info(operationID, "do Msg come here")
 	for _, v := range allMsg {
-		log.Info(operationID, "do Msg come here, msg detail ", v.RecvID, v.SendID, v.ClientMsgID, v.ServerMsgID, v.Seq)
+		log.Info(operationID, "do Msg come here, msg detail ", v.RecvID, v.SendID, v.ClientMsgID, v.ServerMsgID, v.Seq, c.loginUserID)
 		isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
 		isUnreadCount = utils.GetSwitchFromOptions(v.Options, constant.IsUnreadCount)
 		isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
