@@ -15,7 +15,7 @@ func main() {
 	var intervalTime *int       //Sending time interval, in millseconds
 	onlineNum = flag.Int("on", 10000, "online num")
 	senderNum = flag.Int("sn", 100, "sender num")
-	singleSenderMsgNum = flag.Int("mn", 1000, "single sender msg num")
+	singleSenderMsgNum = flag.Int("mn", 100, "single sender msg num")
 	intervalTime = flag.Int("t", 1000, "interval time mill second")
 	flag.Parse()
 

@@ -110,8 +110,8 @@ func CheckReliabilityResult() bool {
 			return false
 		}
 	}
-
-	log.Info("", "start check map recv -> map send")
+	log.Info("", "check map send -> map recv ok ", sameNum)
+	log.Info("", "start check map recv -> map send ")
 	sameNum = 0
 
 	for k1, v1 := range RecvAllMsg {
@@ -123,13 +123,15 @@ func CheckReliabilityResult() bool {
 
 		} else {
 			log.Error("", "check failed  not in send ", k1, len(SendFailedAllMsg), len(SendSuccAllMsg), len(RecvAllMsg))
-			return false
+			//	return false
 		}
 	}
-
-	log.Warn("", "send msg succ num ", len(SendSuccAllMsg), "recv msg num ", len(RecvAllMsg), "same num ", sameNum)
-	log.Warn("", "send msg failed num ", len(SendFailedAllMsg))
 	log.Warn("", "need send msg num : ", sendMsgClient*msgNumInOneClient)
+	log.Warn("", "send msg succ num ", len(SendSuccAllMsg))
+	log.Warn("", "send msg failed num ", len(SendFailedAllMsg))
+	log.Warn("", "recv msg succ num ", len(RecvAllMsg))
+	log.Warn("", "msg in recv, and in send num ", sameNum)
+
 	if len(SendSuccAllMsg) == sendMsgClient*msgNumInOneClient {
 		return true
 	}
