@@ -103,6 +103,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	phNewConversationSet := make(map[string]*db.LocalConversation)
 	log.Info(operationID, "do Msg come here")
 	for _, v := range allMsg {
+		log.Info(operationID, "do Msg come here, msg detail ", v.RecvID, v.SendID, v.ClientMsgID, v.ServerMsgID, v.Seq)
 		isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
 		isUnreadCount = utils.GetSwitchFromOptions(v.Options, constant.IsUnreadCount)
 		isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
@@ -153,15 +154,15 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		case constant.SingleChatType:
 			if v.ContentType > constant.FriendNotificationBegin && v.ContentType < constant.FriendNotificationEnd {
 				c.friend.DoNotification(v, c.ch)
-				log.Info("internal", "DoFriendMsg SingleChatType", v)
+				log.Info(operationID, "DoFriendMsg SingleChatType", v)
 			} else if v.ContentType > constant.UserNotificationBegin && v.ContentType < constant.UserNotificationEnd {
-				log.Info("internal", "DoFriendMsg  DoUserMsg SingleChatType", v)
+				log.Info(operationID, "DoFriendMsg  DoUserMsg SingleChatType", v)
 				c.user.DoNotification(v)
 				c.friend.DoNotification(v, c.ch)
 			} else if v.ContentType == constant.GroupApplicationRejectedNotification ||
 				v.ContentType == constant.GroupApplicationAcceptedNotification ||
 				v.ContentType == constant.JoinGroupApplicationNotification {
-				log.Info("internal", "DoGroupMsg SingleChatType", v)
+				log.Info(operationID, "DoGroupMsg SingleChatType", v)
 				c.group.DoNotification(v, c.ch)
 			} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
 				log.Info(operationID, "signaling DoNotification ", v)
@@ -188,7 +189,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			// Messages sent by myself  //if  sent through  this terminal
 			m, err := c.db.GetMessage(msg.ClientMsgID)
 			if err == nil {
-				log.Info("internal", "have message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
+				log.Info(operationID, "have message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
 				if m.Seq == 0 {
 					if !isConversationUpdate {
 						msg.Status = constant.MsgStatusFiltered

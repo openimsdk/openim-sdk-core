@@ -390,6 +390,7 @@ func (m *MsgListenerCallBak) OnRecvNewMessage(msg string) {
 		defer RecvMsgMapLock.Unlock()
 
 		RecvAllMsg[mm.ClientMsgID] = mm.SendID + mm.RecvID
+		log.Info("", "OnRecvNewMessage  callback", mm.ClientMsgID, mm.SendID, mm.RecvID)
 	}
 }
 

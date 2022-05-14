@@ -14,7 +14,7 @@ func main() {
 	onlineNum = flag.Int("on", 10, "online num")
 	senderNum = flag.Int("sn", 100, "sender num")
 	singleSenderMsgNum = flag.Int("mn", 100, "single sender msg num")
-	intervalTime = flag.Int("t", 10, "interval time mill second")
+	intervalTime = flag.Int("t", 1, "interval time mill second")
 	flag.Parse()
 
 	log.NewPrivateLog("open_im_test", 4)
