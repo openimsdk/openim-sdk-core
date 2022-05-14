@@ -156,7 +156,7 @@ func (m *MsgSync) TriggerCmdNewMsgCome(msgList []*server_api_params.MsgData, ope
 			log.Error(operationID, "TriggerCmdNewMsgCome failed ", err.Error(), m.loginUserID)
 			continue
 		}
-		log.Warn(operationID, "TriggerCmdNewMsgCome ok ", m.loginUserID)
+		//		log.Warn(operationID, "TriggerCmdNewMsgCome ok ", m.loginUserID)
 		return
 	}
 }

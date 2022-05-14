@@ -435,8 +435,9 @@ func InOutDoTest(uid, tk, ws, api string) {
 	s = string(b)
 	fmt.Println(s)
 	var testinit testInitLister
+
 	operationID := utils.OperationIDGenerator()
-	if !open_im_sdk.InitSDK(testinit, operationID, s) {
+	if !open_im_sdk.InitSDK(&testinit, operationID, s) {
 		log.Error("", "InitSDK failed")
 		return
 	}
@@ -511,7 +512,7 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	allLoginMgr[index].mgr = lg
 	sdk_struct.SvrConf = cf
 
-	lg.InitSDK(sdk_struct.SvrConf, testinit, operationID)
+	lg.InitSDK(sdk_struct.SvrConf, &testinit, operationID)
 
 	log.Info(operationID, "InitSDK ", sdk_struct.SvrConf)
 
@@ -543,7 +544,7 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 			return
 		}
 		log.Warn(operationID, "waiting login...", uid)
-		time.Sleep(1 * time.Second)
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 
@@ -561,7 +562,7 @@ func DoTest(uid, tk, ws, api string) {
 	fmt.Println(s)
 	var testinit testInitLister
 	operationID := utils.OperationIDGenerator()
-	if !open_im_sdk.InitSDK(testinit, operationID, s) {
+	if !open_im_sdk.InitSDK(&testinit, operationID, s) {
 		log.Error("", "InitSDK failed")
 		return
 	}
@@ -664,35 +665,35 @@ func (userCallback) OnSelfInfoUpdated(callbackData string) {
 type testInitLister struct {
 }
 
-func (testInitLister) OnUserTokenExpired() {
-	fmt.Println("testInitLister, OnUserTokenExpired")
+func (t *testInitLister) OnUserTokenExpired() {
+	log.Info("", utils.GetSelfFuncName())
 }
-func (testInitLister) OnConnecting() {
-	fmt.Println("testInitLister, OnConnecting")
-}
-
-func (testInitLister) OnConnectSuccess() {
-	fmt.Println("testInitLister, OnConnectSuccess")
+func (t *testInitLister) OnConnecting() {
+	log.Info("", utils.GetSelfFuncName())
 }
 
-func (testInitLister) OnConnectFailed(ErrCode int32, ErrMsg string) {
-	fmt.Println("testInitLister, OnConnectFailed", ErrCode, ErrMsg)
+func (t *testInitLister) OnConnectSuccess() {
+	log.Info("", utils.GetSelfFuncName())
 }
 
-func (testInitLister) OnKickedOffline() {
-	fmt.Println("testInitLister, OnKickedOffline")
+func (t *testInitLister) OnConnectFailed(ErrCode int32, ErrMsg string) {
+	log.Info("", utils.GetSelfFuncName(), ErrCode, ErrMsg)
 }
 
-func (testInitLister) OnSelfInfoUpdated(info string) {
-	fmt.Println("testInitLister, OnSelfInfoUpdated, ", info)
+func (t *testInitLister) OnKickedOffline() {
+	log.Info("", utils.GetSelfFuncName())
 }
 
-func (testInitLister) OnSucess() {
-	fmt.Println("testInitLister, OnSucess")
+func (t *testInitLister) OnSelfInfoUpdated(info string) {
+	log.Info("", utils.GetSelfFuncName())
 }
 
-func (testInitLister) OnError(code int32, msg string) {
-	fmt.Println("testInitLister, OnError", code, msg)
+func (t *testInitLister) OnSuccess() {
+	log.Info("", utils.GetSelfFuncName())
+}
+
+func (t *testInitLister) OnError(code int32, msg string) {
+	log.Info("", utils.GetSelfFuncName(), code, msg)
 }
 
 type testLogin struct {

@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -45,24 +46,39 @@ func GetCmd(myUid int, filename string) int {
 func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecond int, clientNum int) {
 	msgNumInOneClient = msgNumOneClient
 	timeStamp := utils.Int64ToString(time.Now().Unix())
+
+	var wg sync.WaitGroup
+	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
-		RegisterUserReliability(i, timeStamp)
+		go func(idx int) {
+			RegisterUserReliability(idx, timeStamp)
+			wg.Done()
+		}(i)
 	}
+	wg.Wait()
 	log.Info("", "RegisterUserReliability finish ", clientNum)
 
 	rand.Seed(time.Now().UnixNano())
 
+	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
 		rdSleep := rand.Intn(randSleepMaxSecond) + 1
 		isSend := rand.Intn(2)
 		if isSend == 0 {
-			go ReliabilityOne(i, rdSleep, true, intervalSleepMS)
+			go func(idx int) {
+				ReliabilityOne(idx, rdSleep, true, intervalSleepMS)
+				wg.Done()
+			}(i)
 			sendMsgClient++
 		} else {
-			go ReliabilityOne(i, rdSleep, false, intervalSleepMS)
+			go func(idx int) {
+				ReliabilityOne(idx, rdSleep, false, intervalSleepMS)
+				wg.Done()
+			}(i)
 		}
 	}
-	log.Info("send msg client number: ", sendMsgClient, "total client number: ", clientNum)
+	wg.Wait()
+	log.Warn("CheckReliabilityResult start, send msg client number: ", sendMsgClient, "total client number: ", clientNum)
 
 	for {
 		if CheckReliabilityResult() {
@@ -78,8 +94,8 @@ func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecon
 
 func CheckReliabilityResult() bool {
 	log.Info("", "start check map send -> map recv")
-
 	sameNum := 0
+
 	for ksend, vsend := range SendSuccAllMsg {
 		krecv, ok := RecvAllMsg[ksend]
 		if ok {
@@ -106,7 +122,7 @@ func CheckReliabilityResult() bool {
 			x = x + x
 
 		} else {
-			log.Error("", "check failed  not in send ", k1)
+			log.Error("", "check failed  not in send ", k1, len(SendFailedAllMsg), len(SendSuccAllMsg), len(RecvAllMsg))
 			return false
 		}
 	}
