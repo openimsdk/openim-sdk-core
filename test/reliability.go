@@ -132,10 +132,7 @@ func CheckReliabilityResult() bool {
 	log.Warn("", "recv msg succ num ", len(RecvAllMsg))
 	log.Warn("", "msg in recv, and in send num ", sameNum)
 
-	if len(SendSuccAllMsg) == sendMsgClient*msgNumInOneClient {
-		return true
-	}
-	return false
+	return true
 }
 
 func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS int) {
