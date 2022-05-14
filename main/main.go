@@ -27,17 +27,6 @@ import (
 //	}
 //}
 
-var (
-	TESTIP       = "43.128.5.63"
-	APIADDR      = "http://" + TESTIP + ":10000"
-	WSADDR       = "ws://" + TESTIP + ":17778"
-	REGISTERADDR = APIADDR + "/user_register"
-	ACCOUNTCHECK = APIADDR + "/manager/account_check"
-	TOKENADDR    = APIADDR + "/auth/user_token"
-	SECRET       = "tuoyun"
-	SENDINTERVAL = 20
-)
-
 type ChanMsg struct {
 	data []byte
 	uid  string
