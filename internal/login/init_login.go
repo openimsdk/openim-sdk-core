@@ -159,7 +159,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 
 	db, err := db.NewDataBase(userID, sdk_struct.SvrConf.DataDir)
 	if err != nil {
-		cb.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
+		cb.OnError(constant.ErrDB.ErrCode, err.Error())
 		log.Error(operationID, "NewDataBase failed ", err.Error())
 		return
 	}

@@ -509,9 +509,8 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	lg := new(login.LoginMgr)
 	log.Info(operationID, "new login ", lg)
 
-	allLoginMgr[index].mgr = lg
 	sdk_struct.SvrConf = cf
-
+	allLoginMgr[index].mgr = lg
 	lg.InitSDK(sdk_struct.SvrConf, &testinit, operationID)
 
 	log.Info(operationID, "InitSDK ", sdk_struct.SvrConf)
@@ -546,6 +545,7 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 		log.Warn(operationID, "waiting login...", uid)
 		time.Sleep(10 * time.Millisecond)
 	}
+
 }
 
 func DoTest(uid, tk, ws, api string) {
