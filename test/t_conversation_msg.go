@@ -460,7 +460,7 @@ func (c conversationCallBack) OnSyncServerFailed() {
 }
 
 func (c conversationCallBack) OnNewConversation(conversationList string) {
-	//log.Info("", "OnNewConversation returnList is ", conversationList)
+	log.Info("", "OnNewConversation returnList is ", conversationList)
 }
 
 func (c conversationCallBack) OnConversationChanged(conversationList string) {
@@ -468,7 +468,7 @@ func (c conversationCallBack) OnConversationChanged(conversationList string) {
 }
 
 func (c conversationCallBack) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
-	//	log.Info("", "OnTotalUnreadMessageCountChanged returnTotalUnreadCount is ", totalUnreadCount)
+	log.Info("", "OnTotalUnreadMessageCountChanged returnTotalUnreadCount is ", totalUnreadCount)
 }
 
 type testMarkC2CMessageAsRead struct {
