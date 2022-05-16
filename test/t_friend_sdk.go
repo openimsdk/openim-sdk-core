@@ -603,7 +603,7 @@ type TestSendMsgCallBack struct {
 }
 
 func (t *TestSendMsgCallBack) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, "test_openim: send msg failed: ", errCode, errMsg, t.msgID, t.msg)
+	log.Warn(t.OperationID, "test_openim: send msg failed: ", errCode, errMsg, t.msgID, t.msg)
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
 	SendFailedAllMsg[t.msgID] = t.sendID + t.recvID

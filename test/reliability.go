@@ -106,7 +106,7 @@ func CheckReliabilityResult() bool {
 			y = y + y
 
 		} else {
-			log.Error("", "check failed  not in recv ", ksend)
+			log.Error("", "check failed  not in recv ", ksend, len(SendFailedAllMsg), len(SendSuccAllMsg), len(RecvAllMsg))
 			return false
 		}
 	}
