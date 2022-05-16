@@ -134,7 +134,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		//De-analyze data
 		err := c.msgHandleByContentType(msg)
 		if err != nil {
-			log.Error(operationID, "Parsing data error:", err.Error())
+			log.Error(operationID, "Parsing data error:", err.Error(), *msg, "type: ", msg.ContentType)
 			continue
 		}
 		if !isNotPrivate {
@@ -758,7 +758,7 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 		}
 	}
 
-	return err
+	return utils.Wrap(err, "")
 }
 func (c *Conversation) updateConversation(lc *db.LocalConversation, cs map[string]*db.LocalConversation) {
 	if oldC, ok := cs[lc.ConversationID]; !ok {
