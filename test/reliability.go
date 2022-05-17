@@ -92,6 +92,44 @@ func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecon
 	}
 }
 
+func PressTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecond int, clientNum int) {
+	msgNumInOneClient = msgNumOneClient
+	timeStamp := utils.Int64ToString(time.Now().Unix())
+
+	var wg sync.WaitGroup
+	wg.Add(clientNum)
+	for i := 0; i < clientNum; i++ {
+		go func(idx int) {
+			RegisterUserReliability(idx, timeStamp)
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+	log.Info("", "RegisterUserReliability finish ", clientNum)
+
+	rand.Seed(time.Now().UnixNano())
+
+	wg.Add(clientNum)
+	for i := 0; i < clientNum; i++ {
+		rdSleep := rand.Intn(randSleepMaxSecond) + 1
+		isSend := rand.Intn(2)
+		if isSend == 0 {
+			go func(idx int) {
+				PressOne(idx, rdSleep, true, intervalSleepMS)
+				wg.Done()
+			}(i)
+			sendMsgClient++
+		} else {
+			go func(idx int) {
+				PressOne(idx, rdSleep, false, intervalSleepMS)
+				wg.Done()
+			}(i)
+		}
+	}
+	wg.Wait()
+	log.Warn("CheckReliabilityResult start, send msg client number: ", sendMsgClient, "total client number: ", clientNum)
+}
+
 func CheckReliabilityResult() bool {
 	log.Info("", "start check map send -> map recv")
 	sameNum := 0
@@ -171,6 +209,48 @@ func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSle
 
 			idx = strconv.FormatInt(int64(i), 10)
 			DoTestSendMsg(index, strMyUid, recvId, idx)
+
+		}
+		//Msgwg.Done()
+	}
+}
+
+func PressOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS int) {
+	time.Sleep(time.Duration(beforeLoginSleep) * time.Second)
+	strMyUid := allLoginMgr[index].userID
+	token := allLoginMgr[index].token
+	ReliabilityInitAndLogin(index, strMyUid, token, WSADDR, APIADDR)
+	log.Info("", "login ok client num: ", len(allLoginMgr))
+	log.Info("start One", index, beforeLoginSleep, isSendMsg, strMyUid, token, WSADDR, APIADDR)
+	msgnum := msgNumInOneClient
+	uidNum := len(allLoginMgr)
+	var recvId string
+	var idx string
+	rand.Seed(time.Now().UnixNano())
+	if msgnum == 0 {
+		os.Exit(0)
+	}
+	if !isSendMsg {
+		//	Msgwg.Done()
+	} else {
+		for i := 0; i < msgnum; i++ {
+			var r int
+			time.Sleep(time.Duration(intervalSleepMS) * time.Millisecond)
+			for {
+				r = rand.Intn(uidNum)
+				if r == index {
+					continue
+				} else {
+
+					break
+				}
+
+			}
+
+			recvId = allLoginMgr[r].userID
+
+			idx = strconv.FormatInt(int64(i), 10)
+			DoTestSendMsgPress(index, strMyUid, recvId, idx)
 
 		}
 		//Msgwg.Done()

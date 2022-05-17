@@ -153,7 +153,7 @@ func (m *MsgSync) TriggerCmdNewMsgCome(msgList []*server_api_params.MsgData, ope
 	for {
 		err := common.TriggerCmdNewMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: msgList, OperationID: operationID}, m.conversationCh)
 		if err != nil {
-			log.Error(operationID, "TriggerCmdNewMsgCome failed ", err.Error(), m.loginUserID)
+			log.Warn(operationID, "TriggerCmdNewMsgCome failed ", err.Error(), m.loginUserID)
 			continue
 		}
 		//		log.Warn(operationID, "TriggerCmdNewMsgCome ok ", m.loginUserID)

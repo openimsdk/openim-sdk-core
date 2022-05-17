@@ -594,6 +594,7 @@ func DoTest(uid, tk, ws, api string) {
 }
 
 ////////////////////////////////////////////////////////////////////
+
 type TestSendMsgCallBack struct {
 	msg         string
 	OperationID string
@@ -618,6 +619,26 @@ func (t *TestSendMsgCallBack) OnSuccess(data string) {
 }
 
 func (t *TestSendMsgCallBack) OnProgress(progress int) {
+	//	fmt.Printf("msg_send , onProgress %d\n", progress)
+}
+
+type TestSendMsgCallBackPress struct {
+	msg         string
+	OperationID string
+	sendID      string
+	recvID      string
+	msgID       string
+}
+
+func (t *TestSendMsgCallBackPress) OnError(errCode int32, errMsg string) {
+	log.Warn(t.OperationID, "TestSendMsgCallBackPress: send msg failed: ", errCode, errMsg, t.msgID, t.msg)
+}
+
+func (t *TestSendMsgCallBackPress) OnSuccess(data string) {
+	log.Info(t.OperationID, "TestSendMsgCallBackPress: send msg success: |", t.msgID, t.msg)
+}
+
+func (t *TestSendMsgCallBackPress) OnProgress(progress int) {
 	//	fmt.Printf("msg_send , onProgress %d\n", progress)
 }
 
