@@ -233,7 +233,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 						c.updateConversation(&lc, conversationSet)
 					} else {
 						//special fix
-						c.updateConversation(&lc, conversationSet)
+						//c.updateConversation(&lc, conversationSet)
 					}
 					newMessages = append(newMessages, msg)
 				} else {
