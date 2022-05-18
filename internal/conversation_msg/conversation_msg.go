@@ -95,7 +95,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	var insertMsg, updateMsg []*db.LocalChatLog
 	var exceptionMsg []*db.LocalErrChatLog
 	var newMessages, msgReadList, groupMsgReadList, msgRevokeList sdk_struct.NewMsgList
-	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate bool
+	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate, isSenderNotificationPush bool
 	conversationChangedSet := make(map[string]*db.LocalConversation)
 	newConversationSet := make(map[string]*db.LocalConversation)
 	conversationSet := make(map[string]*db.LocalConversation)
@@ -109,6 +109,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
 		isNotPrivate = utils.GetSwitchFromOptions(v.Options, constant.IsNotPrivate)
 		isSenderConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsSenderConversationUpdate)
+		isSenderNotificationPush = utils.GetSwitchFromOptions(v.Options, constant.IsSenderNotificationPush)
 		msg := new(sdk_struct.MsgStruct)
 		copier.Copy(msg, v)
 		var tips server_api_params.TipsComm
@@ -136,6 +137,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		if err != nil {
 			log.Error(operationID, "Parsing data error:", err.Error(), *msg, "type: ", msg.ContentType)
 			continue
+		}
+		if !isSenderNotificationPush {
+			msg.AttachedInfoElem.NotSenderNotificationPush = true
+			msg.AttachedInfo = utils.StructToJsonString(msg.AttachedInfoElem)
 		}
 		if !isNotPrivate {
 			msg.AttachedInfoElem.IsPrivateChat = true

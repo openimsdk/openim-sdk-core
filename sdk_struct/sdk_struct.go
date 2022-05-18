@@ -152,9 +152,10 @@ type AtInfo struct {
 	GroupNickname string `json:"groupNickname,omitempty"`
 }
 type AttachedInfoElem struct {
-	GroupHasReadInfo GroupHasReadInfo `json:"groupHasReadInfo,omitempty"`
-	IsPrivateChat    bool             `json:"isPrivateChat"`
-	HasReadTime      int64            `json:"hasReadTime"`
+	GroupHasReadInfo          GroupHasReadInfo `json:"groupHasReadInfo,omitempty"`
+	IsPrivateChat             bool             `json:"isPrivateChat"`
+	HasReadTime               int64            `json:"hasReadTime"`
+	NotSenderNotificationPush bool             `json:"notSenderNotificationPush"`
 }
 type GroupHasReadInfo struct {
 	HasReadUserIDList []string `json:"hasReadUserIDList,omitempty"`
