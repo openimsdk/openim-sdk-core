@@ -347,8 +347,8 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 		}
 		sessionType = int(lc.ConversationType)
 		if req.StartClientMsgID == "" {
-			//startTime = lc.LatestMsgSendTime + TimeOffset
-			startTime = utils.GetCurrentTimestampByMill()
+			startTime = lc.LatestMsgSendTime + TimeOffset
+			//startTime = utils.GetCurrentTimestampByMill()
 
 		} else {
 			m, err := c.db.GetMessage(req.StartClientMsgID)
@@ -366,12 +366,12 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 			sessionType = constant.SingleChatType
 		}
 		if req.StartClientMsgID == "" {
-			//lc, err := c.db.GetConversation(conversationID)
-			//if err != nil {
-			//	return nil
-			//}
-			//startTime = lc.LatestMsgSendTime + TimeOffset
-			startTime = utils.GetCurrentTimestampByMill()
+			lc, err := c.db.GetConversation(conversationID)
+			if err != nil {
+				return nil
+			}
+			startTime = lc.LatestMsgSendTime + TimeOffset
+			//startTime = utils.GetCurrentTimestampByMill()
 
 		} else {
 			m, err := c.db.GetMessage(req.StartClientMsgID)
