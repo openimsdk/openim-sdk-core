@@ -29,8 +29,8 @@ import (
 
 var (
 	TESTIP       = "43.128.5.63"
-	APIADDR      = "http://" + TESTIP + ":10000"
-	WSADDR       = "ws://" + TESTIP + ":17778"
+	APIADDR      = "http://" + TESTIP + ":10002"
+	WSADDR       = "ws://" + TESTIP + ":10001"
 	REGISTERADDR = APIADDR + "/user_register"
 	ACCOUNTCHECK = APIADDR + "/manager/account_check"
 	TOKENADDR    = APIADDR + "/auth/user_token"
@@ -60,7 +60,7 @@ func main() {
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
 	test.SENDINTERVAL = SENDINTERVAL
-	strMyUidx := "17726378428"
+	strMyUidx := "kafkas"
 
 	//	var onlineNum *int          //Number of online users
 	//	var senderNum *int          //Number of users sending messages
@@ -77,6 +77,8 @@ func main() {
 	tokenx := test.GenToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
+	println("start")
+	//test.DotestMinio()
 	//test.DotestSearchFriends()
 	//if *senderNum == 0 {
 	//	test.RegisterAccounts(*onlineNum)
@@ -87,7 +89,8 @@ func main() {
 	////test.TestSendCostTime()
 	//test.ReliabilityTest(*singleSenderMsgNum, *intervalTime, 10, *senderNum)
 	//test.DoTestSearchLocalMessages()
-	test.DoTestSendImageMsg(strMyUidx, "18666662412")
+	//println("start")
+	test.DoTestSendImageMsg(strMyUidx, "17726378428")
 	//test.DoTestSearchGroups()
 	//test.DoTestGetHistoryMessage("")
 	//test.DoTestGetHistoryMessageReverse("")

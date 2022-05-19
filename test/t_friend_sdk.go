@@ -423,9 +423,8 @@ func InOutLogou() {
 func InOutDoTest(uid, tk, ws, api string) {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
-	cf.Platform = 2
+	cf.Platform = 1
 	cf.WsAddr = ws
-	cf.Platform = 2
 	cf.DataDir = "./"
 	cf.LogLevel = 6
 	cf.ObjectStorage = "minio"
