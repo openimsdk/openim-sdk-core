@@ -140,7 +140,6 @@ func (progress *UploadProgress) Read(b []byte) (int, error) {
 	// 只有计算出百分比不同时,才输出并更新progress.percent
 	if percent != progress.percent {
 		progress.percent = percent
-		fmt.Println(percent)
 		progress.callbackFunc(progress.percent)
 	}
 	return int(n), nil
