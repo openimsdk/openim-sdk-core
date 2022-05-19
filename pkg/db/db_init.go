@@ -51,8 +51,9 @@ func NewDataBase(loginUserID string, dbDir string) (*DataBase, error) {
 		}
 		UserDBMap[loginUserID] = dataBase
 		log.Info("", "open db", loginUserID)
+	} else {
+		log.Info("", "db in map", loginUserID)
 	}
-	log.Info("", "db in map", loginUserID)
 	dataBase.setChatLogFailedStatus()
 	return dataBase, nil
 }

@@ -1010,6 +1010,7 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.Local
 	s.ServerMsgID = sendMsgResp.ServerMsgID
 	callback.OnProgress(100)
 	callback.OnSuccess(utils.StructToJsonString(s))
+	log.Debug(operationID, "callback OnSuccess", s.ClientMsgID, s.ServerMsgID)
 	//remove media cache file
 	for _, v := range delFile {
 		err := os.Remove(v)

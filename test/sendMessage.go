@@ -239,6 +239,7 @@ func addSendFailed() {
 }
 
 func OnlineTest(number int) {
+	RegisterAccounts(number)
 	var wg sync.WaitGroup
 	wg.Add(number)
 	for i := 0; i < number; i++ {

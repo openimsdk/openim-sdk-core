@@ -434,8 +434,9 @@ func InOutDoTest(uid, tk, ws, api string) {
 	s = string(b)
 	fmt.Println(s)
 	var testinit testInitLister
+
 	operationID := utils.OperationIDGenerator()
-	if !open_im_sdk.InitSDK(testinit, operationID, s) {
+	if !open_im_sdk.InitSDK(&testinit, operationID, s) {
 		log.Error("", "InitSDK failed")
 		return
 	}
@@ -507,10 +508,9 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	lg := new(login.LoginMgr)
 	log.Info(operationID, "new login ", lg)
 
-	allLoginMgr[index].mgr = lg
 	sdk_struct.SvrConf = cf
-
-	lg.InitSDK(sdk_struct.SvrConf, testinit, operationID)
+	allLoginMgr[index].mgr = lg
+	lg.InitSDK(sdk_struct.SvrConf, &testinit, operationID)
 
 	log.Info(operationID, "InitSDK ", sdk_struct.SvrConf)
 
@@ -542,8 +542,9 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 			return
 		}
 		log.Warn(operationID, "waiting login...", uid)
-		time.Sleep(1 * time.Second)
+		time.Sleep(10 * time.Millisecond)
 	}
+
 }
 
 func DoTest(uid, tk, ws, api string) {
@@ -560,7 +561,7 @@ func DoTest(uid, tk, ws, api string) {
 	fmt.Println(s)
 	var testinit testInitLister
 	operationID := utils.OperationIDGenerator()
-	if !open_im_sdk.InitSDK(testinit, operationID, s) {
+	if !open_im_sdk.InitSDK(&testinit, operationID, s) {
 		log.Error("", "InitSDK failed")
 		return
 	}
@@ -592,6 +593,7 @@ func DoTest(uid, tk, ws, api string) {
 }
 
 ////////////////////////////////////////////////////////////////////
+
 type TestSendMsgCallBack struct {
 	msg         string
 	OperationID string
@@ -601,7 +603,7 @@ type TestSendMsgCallBack struct {
 }
 
 func (t *TestSendMsgCallBack) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, "test_openim: send msg failed: ", errCode, errMsg, t.msgID, t.msg)
+	log.Warn(t.OperationID, "test_openim: send msg failed: ", errCode, errMsg, t.msgID, t.msg)
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
 	SendFailedAllMsg[t.msgID] = t.sendID + t.recvID
@@ -616,6 +618,26 @@ func (t *TestSendMsgCallBack) OnSuccess(data string) {
 }
 
 func (t *TestSendMsgCallBack) OnProgress(progress int) {
+	//	fmt.Printf("msg_send , onProgress %d\n", progress)
+}
+
+type TestSendMsgCallBackPress struct {
+	msg         string
+	OperationID string
+	sendID      string
+	recvID      string
+	msgID       string
+}
+
+func (t *TestSendMsgCallBackPress) OnError(errCode int32, errMsg string) {
+	log.Warn(t.OperationID, "TestSendMsgCallBackPress: send msg failed: ", errCode, errMsg, t.msgID, t.msg)
+}
+
+func (t *TestSendMsgCallBackPress) OnSuccess(data string) {
+	log.Info(t.OperationID, "TestSendMsgCallBackPress: send msg success: |", t.msgID, t.msg)
+}
+
+func (t *TestSendMsgCallBackPress) OnProgress(progress int) {
 	//	fmt.Printf("msg_send , onProgress %d\n", progress)
 }
 
@@ -663,35 +685,35 @@ func (userCallback) OnSelfInfoUpdated(callbackData string) {
 type testInitLister struct {
 }
 
-func (testInitLister) OnUserTokenExpired() {
-	fmt.Println("testInitLister, OnUserTokenExpired")
+func (t *testInitLister) OnUserTokenExpired() {
+	log.Info("", utils.GetSelfFuncName())
 }
-func (testInitLister) OnConnecting() {
-	fmt.Println("testInitLister, OnConnecting")
-}
-
-func (testInitLister) OnConnectSuccess() {
-	fmt.Println("testInitLister, OnConnectSuccess")
+func (t *testInitLister) OnConnecting() {
+	log.Info("", utils.GetSelfFuncName())
 }
 
-func (testInitLister) OnConnectFailed(ErrCode int32, ErrMsg string) {
-	fmt.Println("testInitLister, OnConnectFailed", ErrCode, ErrMsg)
+func (t *testInitLister) OnConnectSuccess() {
+	log.Info("", utils.GetSelfFuncName())
 }
 
-func (testInitLister) OnKickedOffline() {
-	fmt.Println("testInitLister, OnKickedOffline")
+func (t *testInitLister) OnConnectFailed(ErrCode int32, ErrMsg string) {
+	log.Info("", utils.GetSelfFuncName(), ErrCode, ErrMsg)
 }
 
-func (testInitLister) OnSelfInfoUpdated(info string) {
-	fmt.Println("testInitLister, OnSelfInfoUpdated, ", info)
+func (t *testInitLister) OnKickedOffline() {
+	log.Info("", utils.GetSelfFuncName())
 }
 
-func (testInitLister) OnSucess() {
-	fmt.Println("testInitLister, OnSucess")
+func (t *testInitLister) OnSelfInfoUpdated(info string) {
+	log.Info("", utils.GetSelfFuncName())
 }
 
-func (testInitLister) OnError(code int32, msg string) {
-	fmt.Println("testInitLister, OnError", code, msg)
+func (t *testInitLister) OnSuccess() {
+	log.Info("", utils.GetSelfFuncName())
+}
+
+func (t *testInitLister) OnError(code int32, msg string) {
+	log.Info("", utils.GetSelfFuncName(), code, msg)
 }
 
 type testLogin struct {

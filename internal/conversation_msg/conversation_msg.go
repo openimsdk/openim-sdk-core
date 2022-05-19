@@ -95,7 +95,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	var insertMsg, updateMsg []*db.LocalChatLog
 	var exceptionMsg []*db.LocalErrChatLog
 	var newMessages, msgReadList, groupMsgReadList, msgRevokeList sdk_struct.NewMsgList
-	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate bool
+	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate, isSenderNotificationPush bool
 	conversationChangedSet := make(map[string]*db.LocalConversation)
 	newConversationSet := make(map[string]*db.LocalConversation)
 	conversationSet := make(map[string]*db.LocalConversation)
@@ -103,11 +103,13 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	phNewConversationSet := make(map[string]*db.LocalConversation)
 	log.Info(operationID, "do Msg come here")
 	for _, v := range allMsg {
+		log.Info(operationID, "do Msg come here, msg detail ", v.RecvID, v.SendID, v.ClientMsgID, v.ServerMsgID, v.Seq, c.loginUserID)
 		isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
 		isUnreadCount = utils.GetSwitchFromOptions(v.Options, constant.IsUnreadCount)
 		isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
 		isNotPrivate = utils.GetSwitchFromOptions(v.Options, constant.IsNotPrivate)
 		isSenderConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsSenderConversationUpdate)
+		isSenderNotificationPush = utils.GetSwitchFromOptions(v.Options, constant.IsSenderNotificationPush)
 		msg := new(sdk_struct.MsgStruct)
 		copier.Copy(msg, v)
 		var tips server_api_params.TipsComm
@@ -133,8 +135,12 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		//De-analyze data
 		err := c.msgHandleByContentType(msg)
 		if err != nil {
-			log.Error(operationID, "Parsing data error:", err.Error())
+			log.Error(operationID, "Parsing data error:", err.Error(), *msg, "type: ", msg.ContentType)
 			continue
+		}
+		if !isSenderNotificationPush {
+			msg.AttachedInfoElem.NotSenderNotificationPush = true
+			msg.AttachedInfo = utils.StructToJsonString(msg.AttachedInfoElem)
 		}
 		if !isNotPrivate {
 			msg.AttachedInfoElem.IsPrivateChat = true
@@ -153,15 +159,15 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		case constant.SingleChatType:
 			if v.ContentType > constant.FriendNotificationBegin && v.ContentType < constant.FriendNotificationEnd {
 				c.friend.DoNotification(v, c.ch)
-				log.Info("internal", "DoFriendMsg SingleChatType", v)
+				log.Info(operationID, "DoFriendMsg SingleChatType", v)
 			} else if v.ContentType > constant.UserNotificationBegin && v.ContentType < constant.UserNotificationEnd {
-				log.Info("internal", "DoFriendMsg  DoUserMsg SingleChatType", v)
+				log.Info(operationID, "DoFriendMsg  DoUserMsg SingleChatType", v)
 				c.user.DoNotification(v)
 				c.friend.DoNotification(v, c.ch)
 			} else if v.ContentType == constant.GroupApplicationRejectedNotification ||
 				v.ContentType == constant.GroupApplicationAcceptedNotification ||
 				v.ContentType == constant.JoinGroupApplicationNotification {
-				log.Info("internal", "DoGroupMsg SingleChatType", v)
+				log.Info(operationID, "DoGroupMsg SingleChatType", v)
 				c.group.DoNotification(v, c.ch)
 			} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
 				log.Info(operationID, "signaling DoNotification ", v)
@@ -188,7 +194,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			// Messages sent by myself  //if  sent through  this terminal
 			m, err := c.db.GetMessage(msg.ClientMsgID)
 			if err == nil {
-				log.Info("internal", "have message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
+				log.Info(operationID, "have message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
 				if m.Seq == 0 {
 					if !isConversationUpdate {
 						msg.Status = constant.MsgStatusFiltered
@@ -232,7 +238,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 						c.updateConversation(&lc, conversationSet)
 					} else {
 						//special fix
-						c.updateConversation(&lc, conversationSet)
+						//c.updateConversation(&lc, conversationSet)
 					}
 					newMessages = append(newMessages, msg)
 				} else {
@@ -757,7 +763,7 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 		}
 	}
 
-	return err
+	return utils.Wrap(err, "")
 }
 func (c *Conversation) updateConversation(lc *db.LocalConversation, cs map[string]*db.LocalConversation) {
 	if oldC, ok := cs[lc.ConversationID]; !ok {
