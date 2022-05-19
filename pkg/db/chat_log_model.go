@@ -274,6 +274,29 @@ func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, start
 	}
 	return result, err
 }
+func (d *DataBase) GetMessageListNoTime(sourceID string, sessionType, count int, isReverse bool) (result []*LocalChatLog, err error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var messageList []LocalChatLog
+	var condition, timeOrder string
+	if isReverse {
+		timeOrder = "send_time ASC"
+	} else {
+		timeOrder = "send_time DESC"
+	}
+	if sessionType == constant.SingleChatType && sourceID == d.loginUserID {
+		condition = "send_id = ? And recv_id = ? AND status <=? And session_type = ?"
+	} else {
+		condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? "
+	}
+	err = utils.Wrap(d.conn.Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType).
+		Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
+	for _, v := range messageList {
+		v1 := v
+		result = append(result, &v1)
+	}
+	return result, err
+}
 
 func (d *DataBase) GetSendingMessageList() (result []*LocalChatLog, err error) {
 	d.mRWMutex.Lock()

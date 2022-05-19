@@ -332,7 +332,10 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 	var conversationID string
 	var startTime int64
 	var sessionType int
+	var list []*db.LocalChatLog
+	var err error
 	var messageList sdk_struct.NewMsgList
+	var notStartTime bool
 	if req.ConversationID != "" {
 		conversationID = req.ConversationID
 		lc, err := c.db.GetConversation(conversationID)
@@ -347,9 +350,9 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 		}
 		sessionType = int(lc.ConversationType)
 		if req.StartClientMsgID == "" {
-			startTime = lc.LatestMsgSendTime + TimeOffset
-			//startTime = utils.GetCurrentTimestampByMill()
-
+			//startTime = lc.LatestMsgSendTime + TimeOffset
+			////startTime = utils.GetCurrentTimestampByMill()
+			notStartTime = true
 		} else {
 			m, err := c.db.GetMessage(req.StartClientMsgID)
 			common.CheckDBErrCallback(callback, err, operationID)
@@ -366,13 +369,13 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 			sessionType = constant.SingleChatType
 		}
 		if req.StartClientMsgID == "" {
-			lc, err := c.db.GetConversation(conversationID)
-			if err != nil {
-				return nil
-			}
-			startTime = lc.LatestMsgSendTime + TimeOffset
+			//lc, err := c.db.GetConversation(conversationID)
+			//if err != nil {
+			//	return nil
+			//}
+			//startTime = lc.LatestMsgSendTime + TimeOffset
 			//startTime = utils.GetCurrentTimestampByMill()
-
+			notStartTime = true
 		} else {
 			m, err := c.db.GetMessage(req.StartClientMsgID)
 			common.CheckDBErrCallback(callback, err, operationID)
@@ -380,8 +383,12 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 		}
 	}
 
-	log.Info(operationID, "sourceID:", sourceID, "startTime:", startTime, "count:", req.Count)
-	list, err := c.db.GetMessageList(sourceID, sessionType, req.Count, startTime, isReverse)
+	log.Info(operationID, "sourceID:", sourceID, "startTime:", startTime, "count:", req.Count, "not start_time", notStartTime)
+	if notStartTime {
+		list, err = c.db.GetMessageListNoTime(sourceID, sessionType, req.Count, isReverse)
+	} else {
+		list, err = c.db.GetMessageList(sourceID, sessionType, req.Count, startTime, isReverse)
+	}
 	common.CheckDBErrCallback(callback, err, operationID)
 	localChatLogToMsgStruct(&messageList, list)
 	switch sessionType {
