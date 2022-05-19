@@ -14,6 +14,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+	"os"
 	"path"
 	"time"
 )
@@ -68,13 +69,16 @@ func (m *Minio) upload(filePath, fileType string, onProgressFun func(int)) (stri
 		log.NewError("", utils.GetSelfFuncName(), "generate filename and filetype failed", err.Error(), endPoint.Host)
 		return "", "", utils.Wrap(err, "")
 	}
-	_, err = client.FPutObject(context.Background(), minioResp.BucketName, newName, filePath, minio.PutObjectOptions{ContentType: newType})
+	fi, err := os.Stat(filePath)
+	if err != nil {
+		return "", "", utils.Wrap(err, "os stat failed")
+	}
+	progressBar := NewUploadProgress(fi.Size(), onProgressFun)
+	_, err = client.FPutObject(context.Background(), minioResp.BucketName, newName, filePath, minio.PutObjectOptions{ContentType: newType, Progress: progressBar})
 	if err != nil {
 		log.NewError("0", utils.GetSelfFuncName(), "FPutObject failed", err.Error(), newName, filePath, newType)
 		return "", "", utils.Wrap(err, "")
 	}
-	// fake callback
-	onProgressFun(100)
 	presignedURL := endPoint.String() + "/" + minioResp.BucketName + "/" + newName
 	return presignedURL, newName, nil
 }
@@ -115,4 +119,28 @@ func (m *Minio) UploadVideo(videoPath, snapshotPath string, onProgressFun func(i
 		return "", "", "", "", utils.Wrap(err, "")
 	}
 	return snapshotURL, snapshotUUID, videoURL, videoName, nil
+}
+
+// NewUploadProgress: Create a *UploadProgress object
+func NewUploadProgress(total int64, f func(int)) *UploadProgress {
+	return &UploadProgress{total: total, current: 0, percent: 0, callbackFunc: f}
+}
+
+type UploadProgress struct {
+	total        int64
+	current      int64
+	percent      int
+	callbackFunc func(int)
+}
+
+func (progress *UploadProgress) Read(b []byte) (int, error) {
+	n := int64(len(b))
+	progress.current += n
+	percent := int(float64(progress.current) * 100 / float64(progress.total))
+	// 只有计算出百分比不同时,才输出并更新progress.percent
+	if percent != progress.percent {
+		progress.percent = percent
+		progress.callbackFunc(progress.percent)
+	}
+	return int(n), nil
 }

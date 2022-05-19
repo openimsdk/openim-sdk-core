@@ -294,7 +294,7 @@ func DotestCos() {
 func DotestMinio() {
 	var callback baseCallback
 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxMzkwMDAwMDAwMCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxNjQ1NzgyNDY0LCJuYmYiOjE2NDUxNzc2NjQsImlhdCI6MTY0NTE3NzY2NH0.T-SDoLxdlwRGOMZPIKriPtAlOGWCLodsGi1dWxN8kto"
-	p := ws.NewPostApi(token, "http://127.0.0.1:10000")
+	p := ws.NewPostApi(token, "https://storage.rentsoft.cn")
 	minio := common.NewMinio(p)
 	var storage common.ObjectStorage = minio
 	log.NewInfo("", *minio)
