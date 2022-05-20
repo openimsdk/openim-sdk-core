@@ -35,3 +35,13 @@ func (u *LoginMgr) UploadImage(callback open_im_sdk_callback.Base, filePath stri
 	wg.Wait()
 	return url
 }
+
+func (u *LoginMgr) UploadFile(callback open_im_sdk_callback.SendMsgCallBack, filePath, operationID string) {
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		u.uploadFile(callback, filePath, operationID)
+		wg.Done()
+	}()
+	wg.Wait()
+}

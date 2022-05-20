@@ -100,6 +100,10 @@ func UploadImage(callback open_im_sdk_callback.Base, operationID string, filePat
 	return userForSDK.UploadImage(callback, filePath, token, obj, operationID)
 }
 
+func UploadFile(callback open_im_sdk_callback.SendMsgCallBack, operationID string, filePath string) {
+	userForSDK.UploadFile(callback, filePath, operationID)
+}
+
 func Logout(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
 		log.Error("callback is nil")

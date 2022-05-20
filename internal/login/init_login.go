@@ -401,3 +401,13 @@ func (u *LoginMgr) uploadImage(callback open_im_sdk_callback.Base, filePath stri
 	}
 	return url
 }
+
+func (u LoginMgr) uploadFile(callback open_im_sdk_callback.SendMsgCallBack, filePath, operationID string) {
+	url, _, err := u.conversation.UploadFile(filePath, callback.OnProgress)
+	log.NewInfo(operationID, utils.GetSelfFuncName(), url)
+	if err != nil {
+		log.Error(operationID, "UploadImage failed ", err.Error(), filePath)
+		callback.OnError(constant.ErrApi.ErrCode, err.Error())
+	}
+	callback.OnSuccess(url)
+}

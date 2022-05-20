@@ -767,9 +767,9 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 		log.NewError(operationID, "GetGroupMemberListByGroupID failed ", err.Error(), groupID)
 		return
 	}
-	log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
-	aInBNot, bInANot, sameA, sameB := common.CheckGroupMemberDiff(onServer, onLocal)
-	log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
+	//log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
+	aInBNot, bInANot, sameA, _ := common.CheckGroupMemberDiff(onServer, onLocal)
+	//log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
 	for _, index := range aInBNot {
 		err := g.db.InsertGroupMember(onServer[index])
 		if err != nil {

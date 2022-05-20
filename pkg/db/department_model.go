@@ -1,13 +1,14 @@
 package db
 
-import "open_im_sdk/pkg/utils"
+import (
+	"open_im_sdk/pkg/utils"
+)
 
 func (d *DataBase) GetSubDepartmentList(departmentID string, offset, count int) ([]*LocalDepartment, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var departmentList []LocalDepartment
-	err := d.conn.Where("department_id = ? ", departmentID).Order("order_department DESC").Offset(offset).Limit(count).Find(&departmentList).Error
-
+	err := d.conn.Where("parent_id = ? ", departmentID).Order("order_department DESC").Offset(offset).Limit(count).Find(&departmentList).Error
 	var transfer []*LocalDepartment
 	for _, v := range departmentList {
 		v1 := v
@@ -39,7 +40,7 @@ func (d *DataBase) GetDepartmentInfo(departmentID string) (*LocalDepartment, err
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var local LocalDepartment
-	return &local, utils.Wrap(d.conn.First(&local).Error, "GetDepartmentInfo failed")
+	return &local, utils.Wrap(d.conn.Where("department_id=?", departmentID).First(&local).Error, "GetDepartmentInfo failed")
 }
 
 func (d *DataBase) GetAllDepartmentList() ([]*LocalDepartment, error) {

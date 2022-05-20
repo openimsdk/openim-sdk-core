@@ -1,6 +1,8 @@
 package db
 
-import "open_im_sdk/pkg/utils"
+import (
+	"open_im_sdk/pkg/utils"
+)
 
 func (d *DataBase) GetDepartmentMemberListByDepartmentID(departmentID string, offset, count int) ([]*LocalDepartmentMember, error) {
 	d.mRWMutex.RLock()
@@ -54,7 +56,6 @@ func (d *DataBase) GetDepartmentMemberListByUserID(userID string) ([]*LocalDepar
 	defer d.mRWMutex.RUnlock()
 	var departmentMemberList []LocalDepartmentMember
 	err := d.conn.Where("user_id = ? ", userID).Find(&departmentMemberList).Error
-
 	var transfer []*LocalDepartmentMember
 	for _, v := range departmentMemberList {
 		v1 := v

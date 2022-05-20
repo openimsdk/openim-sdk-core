@@ -45,7 +45,7 @@ func DoTestGetUserInDepartment() {
 	test.OperationID = utils.OperationIDGenerator()
 	test.CallName = utils.GetSelfFuncName()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
-	open_im_sdk.GetUserInDepartment(test, test.OperationID, "org_user_001")
+	open_im_sdk.GetUserInDepartment(test, test.OperationID, "13900000000")
 }
 
 func DoTestGetDepartmentMemberAndSubDepartment() {
@@ -53,5 +53,5 @@ func DoTestGetDepartmentMemberAndSubDepartment() {
 	test.OperationID = utils.OperationIDGenerator()
 	test.CallName = utils.GetSelfFuncName()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
-	open_im_sdk.GetDepartmentMemberAndSubDepartment(test, test.OperationID, "001", 0, 1, 0, 1)
+	open_im_sdk.GetDepartmentMemberAndSubDepartment(test, test.OperationID, "0", 0, 1, 0, 1)
 }

@@ -60,7 +60,7 @@ func main() {
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
 	test.SENDINTERVAL = SENDINTERVAL
-	strMyUidx := "kafkas"
+	strMyUidx := "13900000000"
 
 	//	var onlineNum *int          //Number of online users
 	//	var senderNum *int          //Number of users sending messages
@@ -71,13 +71,18 @@ func main() {
 	//	singleSenderMsgNum = flag.Int("mn", 1000, "single sender msg num")
 	//	intervalTime = flag.Int("t", 1000, "interval time mill second")
 	//	flag.Parse()
-	//strMyUidx := "18666662412"
+	//strMyUidx := "13900000000"
 
 	//friendID := "17726378428"
 	tokenx := test.GenToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
 	println("start")
+	//test.DoTestGetUserInDepartment()
+	//test.DoTestGetDepartmentMemberAndSubDepartment()
+	//test.DoTestDeleteAllMsgFromLocalAndSvr()
+	//test.DoTestGetDepartmentMemberAndSubDepartment()
+	test.DotestUploadFile()
 	//test.DotestMinio()
 	//test.DotestSearchFriends()
 	//if *senderNum == 0 {
@@ -90,7 +95,7 @@ func main() {
 	//test.ReliabilityTest(*singleSenderMsgNum, *intervalTime, 10, *senderNum)
 	//test.DoTestSearchLocalMessages()
 	//println("start")
-	test.DoTestSendImageMsg(strMyUidx, "17726378428")
+	//test.DoTestSendImageMsg(strMyUidx, "17726378428")
 	//test.DoTestSearchGroups()
 	//test.DoTestGetHistoryMessage("")
 	//test.DoTestGetHistoryMessageReverse("")

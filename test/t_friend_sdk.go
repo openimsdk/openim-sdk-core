@@ -611,7 +611,7 @@ func (t *TestSendMsgCallBack) OnError(errCode int32, errMsg string) {
 }
 
 func (t *TestSendMsgCallBack) OnSuccess(data string) {
-	log.Info(t.OperationID, "test_openim: send msg success: |", t.msgID, t.msg)
+	log.Info(t.OperationID, "test_openim: send msg success: |", t.msgID, t.msg, data)
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
 	SendSuccAllMsg[t.msgID] = t.sendID + t.recvID
