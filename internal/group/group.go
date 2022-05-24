@@ -831,6 +831,30 @@ func (g *Group) SyncJoinedGroupMember(operationID string) {
 	log.Info(operationID, "syncGroupMemberByGroupID end")
 }
 
+func (g *Group) SyncJoinedGroupMemberForFirstLogin(operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
+	groupListOnServer, err := g.getJoinedGroupListFromSvr(operationID)
+	if err != nil {
+		log.Error(operationID, "getJoinedGroupListFromSvr failed ", err.Error())
+		return
+	}
+	var wg sync.WaitGroup
+	if len(groupListOnServer) == 0 {
+		return
+	}
+	wg.Add(len(groupListOnServer))
+	log.Info(operationID, "syncGroupMemberByGroupID begin", len(groupListOnServer))
+	for _, v := range groupListOnServer {
+		go func(groupID, operationID string) {
+			g.syncGroupMemberByGroupID(groupID, operationID, false)
+			wg.Done()
+		}(v.GroupID, operationID)
+	}
+
+	wg.Wait()
+	log.Info(operationID, "syncGroupMemberByGroupID end")
+}
+
 func (g *Group) getGroupAllMemberByGroupIDFromSvr(groupID string, operationID string) ([]*api.GroupMemberFullInfo, error) {
 	var apiReq api.GetGroupAllMemberReq
 	apiReq.OperationID = operationID

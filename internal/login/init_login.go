@@ -343,7 +343,7 @@ func (u *LoginMgr) forcedSynchronization() {
 	}()
 
 	go func() {
-		u.group.SyncJoinedGroupMember(operationID)
+		u.group.SyncJoinedGroupMemberForFirstLogin(operationID)
 		wg.Done()
 	}()
 
