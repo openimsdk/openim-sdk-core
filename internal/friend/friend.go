@@ -35,6 +35,15 @@ type Friend struct {
 	db             *db.DataBase
 	user           *user.User
 	p              *ws.PostApi
+	loginTime      int64
+}
+
+func (f *Friend) LoginTime() int64 {
+	return f.loginTime
+}
+
+func (f *Friend) SetLoginTime(loginTime int64) {
+	f.loginTime = loginTime
 }
 
 func (f *Friend) Db() *db.DataBase {
@@ -564,7 +573,10 @@ func (f *Friend) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd
 		log.Error(operationID, "f.friendListener == nil")
 		return
 	}
-
+	if msg.SendTime < f.loginTime {
+		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
+		return
+	}
 	go func() {
 		switch msg.ContentType {
 		case constant.FriendApplicationNotification:

@@ -18,11 +18,21 @@ import (
 	"github.com/jinzhu/copier"
 )
 
+//	//utils.GetCurrentTimestampByMill()
 type Group struct {
 	listener    open_im_sdk_callback.OnGroupListener
 	loginUserID string
 	db          *db.DataBase
 	p           *ws.PostApi
+	loginTime   int64
+}
+
+func (g *Group) LoginTime() int64 {
+	return g.loginTime
+}
+
+func (g *Group) SetLoginTime(loginTime int64) {
+	g.loginTime = loginTime
 }
 
 func NewGroup(loginUserID string, db *db.DataBase, p *ws.PostApi) *Group {
@@ -33,8 +43,13 @@ func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2
 	if g.listener == nil {
 		return
 	}
+
 	operationID := utils.OperationIDGenerator()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
+	if msg.SendTime < g.loginTime {
+		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
+		return
+	}
 	go func() {
 		switch msg.ContentType {
 		case constant.GroupCreatedNotification:

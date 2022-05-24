@@ -22,6 +22,15 @@ type User struct {
 	p           *ws.PostApi
 	loginUserID string
 	listener    open_im_sdk_callback.OnUserListener
+	loginTime   int64
+}
+
+func (u *User) LoginTime() int64 {
+	return u.loginTime
+}
+
+func (u *User) SetLoginTime(loginTime int64) {
+	u.loginTime = loginTime
 }
 
 func (u *User) SetListener(listener open_im_sdk_callback.OnUserListener) {
@@ -39,6 +48,12 @@ func (u *User) DoNotification(msg *api.MsgData) {
 		log.Error(operationID, "listener == nil")
 		return
 	}
+
+	if msg.SendTime < u.loginTime {
+		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
+		return
+	}
+
 	go func() {
 		switch msg.ContentType {
 		case constant.UserInfoUpdatedNotification:

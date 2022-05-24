@@ -44,6 +44,8 @@ type LoginMgr struct {
 	loginUserID      string
 	connListener     open_im_sdk_callback.OnConnListener
 
+	loginTime int64
+
 	justOnceFlag bool
 
 	groupListener        open_im_sdk_callback.OnGroupListener
@@ -199,6 +201,10 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.workMoments.SetListener(u.workMomentsListener)
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
 	u.user.SyncLoginUserInfo(operationID)
+	u.loginTime = utils.GetCurrentTimestampByMill()
+	u.user.SetLoginTime(u.loginTime)
+	u.friend.SetLoginTime(u.loginTime)
+	u.group.SetLoginTime(u.loginTime)
 	go u.forcedSynchronization()
 	log.Info(operationID, "forcedSynchronization success...")
 	log.Info(operationID, "all channel ", u.pushMsgAndMaxSeqCh, u.conversationCh, u.heartbeatCmdCh, u.cmdWsCh)
