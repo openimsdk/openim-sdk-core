@@ -81,8 +81,8 @@ func main() {
 	//test.DoTestGetUserInDepartment()
 	//test.DoTestGetDepartmentMemberAndSubDepartment()
 	//test.DoTestDeleteAllMsgFromLocalAndSvr()
-	//test.DoTestGetDepartmentMemberAndSubDepartment()
-	test.DotestUploadFile()
+	test.DoTestGetDepartmentMemberAndSubDepartment()
+	//test.DotestUploadFile()
 	//test.DotestMinio()
 	//test.DotestSearchFriends()
 	//if *senderNum == 0 {

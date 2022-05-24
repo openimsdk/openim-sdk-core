@@ -55,14 +55,14 @@ func (o *Organization) GetUserInDepartment(callback open_im_sdk_callback.Base, u
 	}()
 }
 
-func (o *Organization) GetDepartmentMemberAndSubDepartment(callback open_im_sdk_callback.Base, departmentID string, departmentOffset, departmentCount, memberOffset, memberCount int, operationID string) {
+func (o *Organization) GetDepartmentMemberAndSubDepartment(callback open_im_sdk_callback.Base, departmentID string, operationID string) {
 	if callback == nil {
 		return
 	}
 	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, fName, "args: ", departmentID, departmentOffset, departmentCount, memberOffset, memberCount)
-		result := o.getDepartmentMemberAndSubDepartment(callback, departmentID, departmentOffset, departmentCount, memberOffset, memberCount, operationID)
+		log.NewInfo(operationID, fName, "args: ", departmentID)
+		result := o.getDepartmentMemberAndSubDepartment(callback, departmentID, operationID)
 		resp := utils.StructToJsonStringDefault(result)
 		callback.OnSuccess(resp)
 		log.NewInfo(operationID, fName, " callback: ", resp)

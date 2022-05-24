@@ -69,12 +69,12 @@ func (o *Organization) getUserInDepartment(callback open_im_sdk_callback.Base, u
 	return userInDepartment
 }
 
-func (o *Organization) getDepartmentMemberAndSubDepartment(callback open_im_sdk_callback.Base, departmentID string, departmentOffset, departmentCount int, memberOffset, memberCount int, operationID string) sdk_params_callback.GetDepartmentMemberAndSubDepartmentCallback {
-	subDepartmentList, err := o.db.GetSubDepartmentList(departmentID, departmentOffset, departmentCount)
+func (o *Organization) getDepartmentMemberAndSubDepartment(callback open_im_sdk_callback.Base, departmentID string, operationID string) sdk_params_callback.GetDepartmentMemberAndSubDepartmentCallback {
+	subDepartmentList, err := o.db.GetSubDepartmentList(departmentID)
 	common.CheckDBErrCallback(callback, err, operationID)
-	departmentMemberLis, err := o.db.GetDepartmentMemberListByDepartmentID(departmentID, memberOffset, memberCount)
+	departmentMemberList, err := o.db.GetDepartmentMemberListByDepartmentID(departmentID)
 	common.CheckDBErrCallback(callback, err, operationID)
-	return sdk_params_callback.GetDepartmentMemberAndSubDepartmentCallback{DepartmentList: subDepartmentList, DepartmentMemberList: departmentMemberLis}
+	return sdk_params_callback.GetDepartmentMemberAndSubDepartmentCallback{DepartmentList: subDepartmentList, DepartmentMemberList: departmentMemberList}
 }
 
 func (o *Organization) getSubDepartmentFromSvr(departmentID string, operationID string) ([]*api.Department, error) {

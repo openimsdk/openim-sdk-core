@@ -4,12 +4,19 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func (d *DataBase) GetDepartmentMemberListByDepartmentID(departmentID string, offset, count int) ([]*LocalDepartmentMember, error) {
+func (d *DataBase) GetDepartmentMemberListByDepartmentID(departmentID string, args ...int) ([]*LocalDepartmentMember, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var departmentMemberList []LocalDepartmentMember
-	err := d.conn.Where("department_id = ? ", departmentID).Order("order_member DESC").Offset(offset).Limit(count).Find(&departmentMemberList).Error
-
+	var err error
+	sql := d.conn.Where("department_id = ? ", departmentID).Order("order_member DESC")
+	if len(args) == 2 {
+		offset := args[0]
+		count := args[1]
+		err = sql.Offset(offset).Limit(count).Find(&departmentMemberList).Error
+	} else {
+		err = sql.Find(&departmentMemberList).Error
+	}
 	var transfer []*LocalDepartmentMember
 	for _, v := range departmentMemberList {
 		v1 := v
