@@ -296,4 +296,4 @@ const UpdateVersion = ".0.0"
 const SdkVersion = "Open-IM-SDK-Core-"
 const LogFileName = "sdk"
 
-var HeartbeatInterval = 30
+var HeartbeatInterval = 5
