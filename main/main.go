@@ -5,7 +5,6 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/test"
 	"open_im_sdk/ws_wrapper/ws_local_server"
-
 	"time"
 )
 
@@ -60,7 +59,7 @@ func main() {
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
 	test.SENDINTERVAL = SENDINTERVAL
-	strMyUidx := "13900000000"
+	strMyUidx := "18666662345"
 
 	//	var onlineNum *int          //Number of online users
 	//	var senderNum *int          //Number of users sending messages
@@ -74,6 +73,7 @@ func main() {
 	//strMyUidx := "13900000000"
 
 	//friendID := "17726378428"
+	log.NewPrivateLog("", 6)
 	tokenx := test.GenToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
@@ -81,7 +81,7 @@ func main() {
 	//test.DoTestGetUserInDepartment()
 	//test.DoTestGetDepartmentMemberAndSubDepartment()
 	//test.DoTestDeleteAllMsgFromLocalAndSvr()
-	test.DoTestGetDepartmentMemberAndSubDepartment()
+	//	test.DoTestGetDepartmentMemberAndSubDepartment()
 	//test.DotestUploadFile()
 	//test.DotestMinio()
 	//test.DotestSearchFriends()
@@ -123,10 +123,38 @@ func main() {
 	//test.DoTestMarkGroupMessageAsRead()
 	//test.DoTestGetGroupHistoryMessage()
 	//test.DoTestGetHistoryMessage("17396220460")
+	time.Sleep(1000000 * time.Millisecond)
+
+	i := 0
 	for {
-		time.Sleep(30 * time.Second)
-		log.Info("", "waiting...")
+		test.DoTestSendMsg2Group(strMyUidx, "42c9f515cb84ee0e82b3f3ce71eb14d6", i)
+		i++
+		time.Sleep(250 * time.Millisecond)
+		if i == 10 {
+			break
+		}
+		log.Warn("", "10 * time.Millisecond ###################waiting... msg: ", i)
 	}
+
+	i = 0
+	for {
+		test.DoTestSendMsg2Group(strMyUidx, "42c9f515cb84ee0e82b3f3ce71eb14d6", i)
+		i++
+		time.Sleep(1000 * time.Millisecond)
+		if i == 10 {
+			break
+		}
+		log.Warn("", "1000 * time.Millisecond ###################waiting... msg: ", i)
+	}
+
+	i = 0
+	for {
+		test.DoTestSendMsg2Group(strMyUidx, "42c9f515cb84ee0e82b3f3ce71eb14d6", i)
+		i++
+		time.Sleep(10000 * time.Millisecond)
+		log.Warn("", "10000 * time.Millisecond ###################waiting... msg: ", i)
+	}
+
 	//reliabilityTest()
 	//	test.PressTest(testClientNum, intervalSleep, imIP)
 }
