@@ -203,6 +203,8 @@ type CmdPushMsgToMsgSync struct {
 type CmdMaxSeqToMsgSync struct {
 	MaxSeqOnSvr uint32
 	OperationID string
+
+	GroupID2MaxSeqOnSvr map[string]uint32
 }
 type OANotificationElem struct {
 	NotificationName    string `mapstructure:"notificationName" validate:"required"`
