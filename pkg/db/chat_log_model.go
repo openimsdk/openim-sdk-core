@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -21,20 +22,47 @@ func (d *DataBase) InsertMessage(Message *LocalChatLog) error {
 	return utils.Wrap(d.conn.Create(Message).Error, "InsertMessage failed")
 }
 
-func (d *DataBase) SearchMessageByKeyword(keyword, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*LocalChatLog, err error) {
+func (d *DataBase) SearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []LocalChatLog
 	var condition string
-	switch sessionType {
-	case constant.SingleChatType:
-		condition = fmt.Sprintf("session_type==%d And (send_id==%q OR recv_id==%q) And send_time  between %d and %d AND status <=%d And content_type == %d And content like %q", constant.SingleChatType, sourceID, sourceID, startTime, endTime, constant.MsgStatusSendFailed, constant.Text, "%%"+keyword+"%%")
-	case constant.GroupChatType:
-		condition = fmt.Sprintf("session_type==%d And recv_id==%q And send_time between %d and %d AND status <=%d And content_type == %d And content like %q", constant.GroupChatType, sourceID, startTime, endTime, constant.MsgStatusSendFailed, constant.Text, "%%"+keyword+"%%")
-	default:
-		condition = fmt.Sprintf("(send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content_type == %d And content like %q", sourceID, sourceID, startTime, endTime, constant.MsgStatusSendFailed, constant.Text, "%%"+keyword+"%%")
+	var subCondition string
+	if keywordListMatchType == constant.KeywordMatchOr {
+		for i := 0; i < len(keywordList); i++ {
+			if i == 0 {
+				subCondition += "And ("
+			}
+			if i+1 >= len(keywordList) {
+				subCondition += "content like " + "'%" + keywordList[i] + "%') "
+			} else {
+				subCondition += "content like " + "'%" + keywordList[i] + "%' " + "or "
+
+			}
+		}
+	} else {
+		for i := 0; i < len(keywordList); i++ {
+			if i == 0 {
+				subCondition += "And ("
+			}
+			if i+1 >= len(keywordList) {
+				subCondition += "content like " + "'%" + keywordList[i] + "%') "
+			} else {
+				subCondition += "content like " + "'%" + keywordList[i] + "%' " + "and "
+			}
+		}
 	}
-	err = utils.Wrap(d.conn.Where(condition).Order("send_time DESC").Group("recv_id,client_msg_id").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
+	switch sessionType {
+	case constant.SingleChatType, constant.NotificationChatType:
+		condition = fmt.Sprintf("session_type==%d And (send_id==%q OR recv_id==%q) And send_time  between %d and %d AND status <=%d  And content_type IN ? ", constant.SingleChatType, sourceID, sourceID, startTime, endTime, constant.MsgStatusSendFailed)
+	case constant.GroupChatType:
+		condition = fmt.Sprintf("session_type==%d And recv_id==%q And send_time between %d and %d AND status <=%d  And content_type IN ? ", constant.GroupChatType, sourceID, startTime, endTime, constant.MsgStatusSendFailed)
+	default:
+		//condition = fmt.Sprintf("(send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content_type == %d And content like %q", sourceID, sourceID, startTime, endTime, constant.MsgStatusSendFailed, constant.Text, "%"+keyword+"%")
+		return nil, err
+	}
+	condition += subCondition
+	err = utils.Wrap(d.conn.Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
 
 	for _, v := range messageList {
 		v1 := v
@@ -49,14 +77,14 @@ func (d *DataBase) SearchMessageByContentType(contentType []int, sourceID string
 	var messageList []LocalChatLog
 	var condition string
 	switch sessionType {
-	case constant.SingleChatType:
+	case constant.SingleChatType, constant.NotificationChatType:
 		condition = fmt.Sprintf("session_type==%d And (send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content_type IN ?", constant.SingleChatType, sourceID, sourceID, startTime, endTime, constant.MsgStatusSendFailed)
 	case constant.GroupChatType:
 		condition = fmt.Sprintf("session_type==%d And recv_id==%q And send_time between %d and %d AND status <=%d And content_type IN ?", constant.GroupChatType, sourceID, startTime, endTime, constant.MsgStatusSendFailed)
 	default:
-		condition = fmt.Sprintf("(send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content_type IN ?", sourceID, sourceID, startTime, endTime, constant.MsgStatusSendFailed)
+		return nil, err
 	}
-	err = utils.Wrap(d.conn.Where(condition, contentType).Order("send_time DESC").Group("recv_id,client_msg_id").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
+	err = utils.Wrap(d.conn.Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&messageList).Error, "SearchMessage failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)
@@ -64,6 +92,46 @@ func (d *DataBase) SearchMessageByContentType(contentType []int, sourceID string
 	return result, err
 }
 
+func (d *DataBase) SearchMessageByContentTypeAndKeyword(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*LocalChatLog, err error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var messageList []LocalChatLog
+	var condition string
+	var subCondition string
+	if keywordListMatchType == constant.KeywordMatchOr {
+		for i := 0; i < len(keywordList); i++ {
+			if i == 0 {
+				subCondition += "And ("
+			}
+			if i+1 >= len(keywordList) {
+				subCondition += "content like " + "'%" + keywordList[i] + "%') "
+			} else {
+				subCondition += "content like " + "'%" + keywordList[i] + "%' " + "or "
+
+			}
+		}
+	} else {
+		for i := 0; i < len(keywordList); i++ {
+			if i == 0 {
+				subCondition += "And ("
+			}
+			if i+1 >= len(keywordList) {
+				subCondition += "content like " + "'%" + keywordList[i] + "%') "
+			} else {
+				subCondition += "content like " + "'%" + keywordList[i] + "%' " + "and "
+			}
+		}
+	}
+	condition = fmt.Sprintf("send_time between %d and %d AND status <=%d  And content_type IN ? ", startTime, endTime, constant.MsgStatusSendFailed)
+	condition += subCondition
+	log.Info("key owrd", condition)
+	err = utils.Wrap(d.conn.Where(condition, contentType).Order("send_time DESC").Find(&messageList).Error, "SearchMessage failed")
+	for _, v := range messageList {
+		v1 := v
+		result = append(result, &v1)
+	}
+	return result, err
+}
 func (d *DataBase) BatchUpdateMessageList(MessageList []*LocalChatLog) error {
 	if MessageList == nil {
 		return nil
@@ -181,18 +249,25 @@ func (d *DataBase) UpdateMessageTimeAndStatus(clientMsgID string, serverMsgID st
 	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
 }
 
-func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, startTime int64) (result []*LocalChatLog, err error) {
+func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []LocalChatLog
-	var condition string
-	if sessionType == constant.SingleChatType && sourceID == d.loginUserID {
-		condition = "send_id = ? And recv_id = ? AND status <=? And session_type = ? And send_time < ?"
+	var condition, timeOrder, timeSymbol string
+	if isReverse {
+		timeOrder = "send_time ASC"
+		timeSymbol = ">"
 	} else {
-		condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? And send_time < ?"
+		timeOrder = "send_time DESC"
+		timeSymbol = "<"
+	}
+	if sessionType == constant.SingleChatType && sourceID == d.loginUserID {
+		condition = "send_id = ? And recv_id = ? AND status <=? And session_type = ? And send_time " + timeSymbol + " ?"
+	} else {
+		condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? And send_time " + timeSymbol + " ?"
 	}
 	err = utils.Wrap(d.conn.Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
-		Order("send_time DESC").Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
+		Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)
@@ -263,11 +338,11 @@ func (d *DataBase) UpdateMsgSenderFaceURL(sendID, faceURL string, sType int) err
 		"send_id = ? and session_type = ? and sender_face_url != ? ", sendID, sType, faceURL).Updates(
 		map[string]interface{}{"sender_face_url": faceURL}).Error, utils.GetSelfFuncName()+" failed")
 }
-func (d *DataBase) UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string) error {
+func (d *DataBase) UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Model(LocalChatLog{}).Where(
-		"send_id = ?  and (sender_face_url != ? or sender_nick_name != ?)", sendID, faceURL, nickname).Updates(
+		"send_id = ? and session_type = ?", sendID, sessionType).Updates(
 		map[string]interface{}{"sender_face_url": faceURL, "sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
 }
 

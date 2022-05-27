@@ -2,6 +2,7 @@ package db
 
 import (
 	"errors"
+	"fmt"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -44,4 +45,26 @@ func (d *DataBase) GetGroupInfoByGroupID(groupID string) (*LocalGroup, error) {
 	defer d.mRWMutex.Unlock()
 	var g LocalGroup
 	return &g, utils.Wrap(d.conn.Where("group_id = ?", groupID).Take(&g).Error, "GetGroupList failed")
+}
+func (d *DataBase) GetAllGroupInfoByGroupIDOrGroupName(keyword string, isSearchGroupID bool, isSearchGroupName bool) ([]*LocalGroup, error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var groupList []LocalGroup
+	var condition string
+	if isSearchGroupID {
+		if isSearchGroupName {
+			condition = fmt.Sprintf("group_id like %q or name like %q", "%"+keyword+"%", "%"+keyword+"%")
+		} else {
+			condition = fmt.Sprintf("group_id like %q ", "%"+keyword+"%")
+		}
+	} else {
+		condition = fmt.Sprintf("name like %q ", "%"+keyword+"%")
+	}
+	err := d.conn.Where(condition).Order("create_time DESC").Find(&groupList).Error
+	var transfer []*LocalGroup
+	for _, v := range groupList {
+		v1 := v
+		transfer = append(transfer, &v1)
+	}
+	return transfer, utils.Wrap(err, "GetAllGroupInfoByGroupIDOrGroupName failed ")
 }

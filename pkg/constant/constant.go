@@ -80,6 +80,7 @@ const (
 	GroupMemberCancelMutedNotification   = 1513
 	GroupMutedNotification               = 1514
 	GroupCancelMutedNotification         = 1515
+	GroupMemberInfoSetNotification       = 1516
 	GroupNotificationEnd                 = 1599
 
 	SignalingNotificationBegin = 1600
@@ -87,6 +88,10 @@ const (
 	SignalingNotificationEnd   = 1699
 
 	ConversationPrivateChatNotification = 1701
+	OrganizationChangedNotification     = 1801
+
+	WorkMomentNotificationBegin = 1900
+	WorkMomentNotification      = 1901
 
 	NotificationEnd = 2000
 
@@ -98,9 +103,9 @@ const (
 
 	/////////////////////////////////////
 	//SessionType
-	SingleChatType = 1
-	GroupChatType  = 2
-
+	SingleChatType       = 1
+	GroupChatType        = 2
+	SuperGroupChatType   = 3
 	NotificationChatType = 4
 
 	//MsgStatus
@@ -127,6 +132,17 @@ const (
 	GroupBanChat         = 1
 	GroupStatusDismissed = 2
 	GroupStatusMuted     = 3
+
+	// workMoment permission
+	WorkMomentPublic            = 0
+	WorkMomentPrivate           = 1
+	WorkMomentPermissionCanSee  = 2
+	WorkMomentPermissionCantSee = 3
+
+	// workMoment sdk notification type
+	WorkMomentCommentNotification = 0
+	WorkMomentLikeNotification    = 1
+	WorkMomentAtUserNotification  = 2
 )
 
 const (
@@ -192,7 +208,9 @@ const (
 	GroupActionRefuseGroupApplication = 9
 )
 const ZoomScale = "200"
-const MaxTotalMsgLen = 20480
+const MaxTotalMsgLen = 51200
+
+//const MaxTotalMsgLen = 20480
 const (
 	FriendAcceptTip  = "You have successfully become friends, so start chatting"
 	TransferGroupTip = "The owner of the group is transferred!"
@@ -246,6 +264,26 @@ const (
 
 	Male   = 1
 	Female = 2
+)
+const (
+	AtAllString = "AtAllTag"
+	AtNormal    = 0
+	AtMe        = 1
+	AtAll       = 2
+	AtAllAtMe   = 3
+)
+const (
+	FieldRecvMsgOpt    = 1
+	FieldIsPinned      = 2
+	FieldAttachedInfo  = 3
+	FieldIsPrivateChat = 4
+	FieldGroupAtType   = 5
+	FieldIsNotInGroup  = 6
+	FieldEx            = 7
+)
+const (
+	KeywordMatchOr  = 0
+	KeywordMatchAnd = 1
 )
 
 const BigVersion = "v2"

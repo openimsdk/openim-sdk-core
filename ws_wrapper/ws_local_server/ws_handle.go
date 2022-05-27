@@ -72,7 +72,7 @@ func DelUserRouter(uid string) {
 	sub := " " + utils.PlatformIDToName(sdk_struct.SvrConf.Platform)
 	idx := strings.LastIndex(uid, sub)
 	if idx == -1 {
-		log.Info("", "err uid, not Web", uid)
+		log.Info("", "err uid, not Web", uid, sub)
 		return
 	}
 
@@ -130,7 +130,8 @@ func GenUserRouterNoLock(uid string) *RefRouter {
 	wsRouter1.SetUserListener()
 	log.Info("", "SetSignalingListener() ", uid)
 	wsRouter1.SetSignalingListener()
-
+	log.Info("", "setWorkMomentsListener", uid)
+	wsRouter1.SetWorkMomentsListener()
 	var rr RefRouter
 	rr.refName = RouteMap1
 	rr.wsRouter = &wsRouter1

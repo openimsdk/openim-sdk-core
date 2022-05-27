@@ -73,7 +73,7 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	svr, err := u.GetSelfUserInfoFromSvr(operationID)
 	if err != nil {
-		log.Error(operationID, "GetSelfUserInfoFromSvr failed")
+		log.Error(operationID, "GetSelfUserInfoFromSvr failed", err.Error())
 		return
 	}
 	onServer := common.TransferToLocalUserInfo(svr)
@@ -104,10 +104,6 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 	}
 }
 
-//func (u *User) getUsersInfo(callback open_im_sdk_callback.Base, UserIDList sdk.GetUsersInfoParam, operationID string) sdk.GetUsersInfoCallback{
-//	u.GetFriendInfoByFriendUserID()
-//	return nil
-//}
 func (u *User) GetUsersInfoFromSvr(callback open_im_sdk_callback.Base, UserIDList sdk.GetUsersInfoParam, operationID string) []*api.PublicUserInfo {
 	apiReq := api.GetUsersInfoReq{}
 	apiReq.OperationID = operationID
@@ -115,6 +111,24 @@ func (u *User) GetUsersInfoFromSvr(callback open_im_sdk_callback.Base, UserIDLis
 	apiResp := api.GetUsersInfoResp{}
 	u.p.PostFatalCallback(callback, constant.GetUsersInfoRouter, apiReq, &apiResp.UserInfoList, apiReq.OperationID)
 	return apiResp.UserInfoList
+}
+
+func (u *User) GetUsersInfoFromSvrNoCallback(UserIDList sdk.GetUsersInfoParam, operationID string) ([]*api.PublicUserInfo, error) {
+	apiReq := api.GetUsersInfoReq{}
+	apiReq.OperationID = operationID
+	apiReq.UserIDList = UserIDList
+	apiResp := api.GetUsersInfoResp{}
+	err := u.p.PostReturn(constant.GetUsersInfoRouter, apiReq, &apiResp.UserInfoList)
+	return apiResp.UserInfoList, err
+}
+
+func (u *User) GetUsersInfoFromCacheSvr(UserIDList sdk.GetUsersInfoParam, operationID string) ([]*api.PublicUserInfo, error) {
+	apiReq := api.GetUsersInfoReq{}
+	apiReq.OperationID = operationID
+	apiReq.UserIDList = UserIDList
+	apiResp := api.GetUsersInfoResp{}
+	err := u.p.PostReturn(constant.GetUsersInfoFromCacheRouter, apiReq, &apiResp.UserInfoList)
+	return apiResp.UserInfoList, err
 }
 
 func (u *User) getSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) sdk.GetSelfUserInfoCallback {

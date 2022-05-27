@@ -93,16 +93,13 @@ func (c *OSS) uploadObj(filePath string, fileType string, onProgressFun func(int
 	if err != nil {
 		return "", "", utils.Wrap(err, "")
 	}
-	newName, contentType, err := c.getNewFileNameAndContentType(filePath, fileType)
+	newName, _, err := c.getNewFileNameAndContentType(filePath, fileType)
 	if err != nil {
 		return "", "", utils.Wrap(err, "")
 	}
 	// 带可选参数的签名直传。请确保设置的ContentType值与在前端使用时设置的ContentType值一致。
 	options := []oss.Option{
 		oss.Progress(&OssProgressListener{onProgressFun: onProgressFun}), // 进度条
-	}
-	if fileType == "img" {
-		options = append(options, oss.ContentType(contentType))
 	}
 	// 签名直传。
 	signedURL, err := bucket.SignURL(newName, oss.HTTPPut, 60)

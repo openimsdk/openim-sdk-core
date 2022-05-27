@@ -168,7 +168,6 @@ func (wsRouter *WsFuncRouter) GetLoginUser(input string, operationID string) {
 }
 
 func InitServer(config *sdk_struct.IMConfig) {
-
 	data, _ := json.Marshal(config)
 	ConfigSvr = string(data)
 	UserRouteMap = make(map[string]RefRouter, 0)

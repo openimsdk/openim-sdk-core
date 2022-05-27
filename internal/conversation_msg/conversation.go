@@ -15,6 +15,7 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sort"
+	"time"
 )
 
 func (c *Conversation) getAllConversationList(callback open_im_sdk_callback.Base, operationID string) sdk.GetAllConversationListCallback {
@@ -61,67 +62,62 @@ func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callba
 	c.SyncConversations(operationID)
 }
 
-func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiReq *server_api_params.SetConversationReq, conversationID string, localConversation *db.LocalConversation, operationID string) {
-	apiResp := server_api_params.SetConversationResp{}
+func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiReq *server_api_params.ModifyConversationFieldReq, conversationID string, localConversation *db.LocalConversation, operationID string) {
+	apiResp := server_api_params.ModifyConversationFieldResp{}
 	apiReq.OwnerUserID = c.loginUserID
 	apiReq.OperationID = operationID
 	apiReq.ConversationID = conversationID
 	apiReq.ConversationType = localConversation.ConversationType
 	apiReq.UserID = localConversation.UserID
 	apiReq.GroupID = localConversation.GroupID
-	apiReq.Ex = localConversation.Ex
-	apiReq.AttachedInfo = localConversation.AttachedInfo
-	c.p.PostFatalCallback(callback, constant.SetConversationOptRouter, apiReq, nil, apiReq.OperationID)
+	apiReq.UserIDList = []string{c.loginUserID}
+	c.p.PostFatalCallback(callback, constant.ModifyConversationFieldRouter, apiReq, nil, apiReq.OperationID)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "request success, output: ", apiResp)
 }
 
 func (c *Conversation) setOneConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationID string, opt int, operationID string) {
-	apiReq := &server_api_params.SetConversationReq{}
+	apiReq := &server_api_params.ModifyConversationFieldReq{}
 	localConversation, err := c.db.GetConversation(conversationID)
-	if err != nil {
-		log.NewError(operationID, utils.GetSelfFuncName(), "GetConversation failed", err.Error())
-		callback.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
-		return
-	}
+	common.CheckDBErrCallback(callback, err, operationID)
 	apiReq.RecvMsgOpt = int32(opt)
-	apiReq.IsPinned = localConversation.IsPinned
-	apiReq.IsPrivateChat = localConversation.IsPrivateChat
-	apiReq.NotificationType = constant.ConversationChangeNotification
+	apiReq.FieldType = constant.FieldRecvMsgOpt
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
 	c.SyncConversations(operationID)
 }
 
 func (c *Conversation) setOneConversationPrivateChat(callback open_im_sdk_callback.Base, conversationID string, isPrivate bool, operationID string) {
-	apiReq := &server_api_params.SetConversationReq{}
+	apiReq := &server_api_params.ModifyConversationFieldReq{}
 	localConversation, err := c.db.GetConversation(conversationID)
-	if err != nil {
-		log.NewError(operationID, utils.GetSelfFuncName(), "GetConversation failed", err.Error())
-		callback.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
-		return
-	}
-	apiReq.RecvMsgOpt = localConversation.RecvMsgOpt
-	apiReq.IsPinned = localConversation.IsPinned
+	common.CheckDBErrCallback(callback, err, operationID)
 	apiReq.IsPrivateChat = isPrivate
-	apiReq.NotificationType = constant.ConversationPrivateChatNotification
+	apiReq.FieldType = constant.FieldIsPrivateChat
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
 	c.SyncConversations(operationID)
 }
 
 func (c *Conversation) setOneConversationPinned(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
-	apiReq := &server_api_params.SetConversationReq{}
+	apiReq := &server_api_params.ModifyConversationFieldReq{}
 	localConversation, err := c.db.GetConversation(conversationID)
-	if err != nil {
-		log.NewError(operationID, utils.GetSelfFuncName(), "GetConversation failed", err.Error())
-		callback.OnError(constant.ErrDB.ErrCode, constant.ErrDB.ErrMsg)
-		return
-	}
-	apiReq.NotificationType = constant.ConversationChangeNotification
-	apiReq.RecvMsgOpt = localConversation.RecvMsgOpt
+	common.CheckDBErrCallback(callback, err, operationID)
 	apiReq.IsPinned = isPinned
-	apiReq.IsPrivateChat = localConversation.IsPrivateChat
+	apiReq.FieldType = constant.FieldIsPinned
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
+	c.SyncConversations(operationID)
 }
-
+func (c *Conversation) setOneConversationGroupAtType(callback open_im_sdk_callback.Base, conversationID, operationID string) {
+	lc, err := c.db.GetConversation(conversationID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	if lc.GroupAtType == constant.AtNormal || lc.ConversationType != constant.GroupChatType {
+		common.CheckAnyErrCallback(callback, 201, errors.New("conversation don't need to reset"), operationID)
+	}
+	apiReq := &server_api_params.ModifyConversationFieldReq{}
+	localConversation, err := c.db.GetConversation(conversationID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	apiReq.GroupAtType = constant.AtNormal
+	apiReq.FieldType = constant.FieldGroupAtType
+	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
+	c.SyncConversations(operationID)
+}
 func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) []server_api_params.GetConversationRecvMessageOptResp {
 	apiReq := server_api_params.GetConversationsReq{}
 	apiReq.OperationID = operationID
@@ -150,8 +146,12 @@ func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, so
 		switch sessionType {
 		case constant.SingleChatType:
 			newConversation.UserID = sourceID
-			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(callback, sourceID, operationID)
+			faceUrl, name, err, isFromSvr := c.friend.GetUserNameAndFaceUrlByUid(sourceID, operationID)
+			//	faceUrl, name, err := c.cache.GetUserNameAndFaceURL(sourceID, operationID)
 			common.CheckDBErrCallback(callback, err, operationID)
+			if isFromSvr {
+				c.cache.Update(sourceID, faceUrl, name)
+			}
 			newConversation.ShowName = name
 			newConversation.FaceURL = faceUrl
 		case constant.GroupChatType:
@@ -201,20 +201,17 @@ func (c *Conversation) setConversationDraft(callback open_im_sdk_callback.Base, 
 		common.CheckDBErrCallback(callback, err, operationID)
 	}
 }
-
 func (c *Conversation) pinConversation(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
-	lc := db.LocalConversation{ConversationID: conversationID, IsPinned: isPinned}
-	if isPinned {
-		err := c.db.UpdateConversation(&lc)
-		common.CheckDBErrCallback(callback, err, operationID)
-	} else {
-		err := c.db.UnPinConversation(conversationID, constant.NotPinned)
-		common.CheckDBErrCallback(callback, err, operationID)
-	}
+	//lc := db.LocalConversation{ConversationID: conversationID, IsPinned: isPinned}
+	//if isPinned {
 	c.setOneConversationPinned(callback, conversationID, isPinned, operationID)
-	c.SyncConversations(operationID)
+	//err := c.db.UpdateConversation(&lc)
+	//common.CheckDBErrCallback(callback, err, operationID)
+	//} else {
+	//	err := c.db.UnPinConversation(conversationID, constant.NotPinned)
+	//	common.CheckDBErrCallback(callback, err, operationID)
+	//}
 }
-
 func (c *Conversation) getServerConversationList(operationID string) (server_api_params.GetAllConversationsResp, error) {
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	var req server_api_params.GetAllConversationsReq
@@ -230,6 +227,8 @@ func (c *Conversation) getServerConversationList(operationID string) (server_api
 }
 
 func (c *Conversation) SyncConversations(operationID string) {
+	var newConversationList []*db.LocalConversation
+	ccTime := time.Now()
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	conversationsOnServer, err := c.getServerConversationList(operationID)
 	if err != nil {
@@ -240,12 +239,14 @@ func (c *Conversation) SyncConversations(operationID string) {
 	if err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 	}
-
+	log.Info(operationID, "get server cost time", time.Since(ccTime))
 	conversationsOnLocalTempFormat := common.LocalTransferToTempConversation(conversationsOnLocal)
 	conversationsOnServerTempFormat := common.ServerTransferToTempConversation(conversationsOnServer)
 	conversationsOnServerLocalFormat := common.TransferToLocalConversation(conversationsOnServer)
 
 	aInBNot, bInANot, sameA, sameB := common.CheckConversationListDiff(conversationsOnServerTempFormat, conversationsOnLocalTempFormat)
+	log.Info(operationID, "diff server cost time", time.Since(ccTime))
+
 	log.NewInfo(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
 	// server有 local没有
 	// 可能是其他点开一下生成会话设置免打扰 插入到本地 不回调..
@@ -257,11 +258,15 @@ func (c *Conversation) SyncConversations(operationID string) {
 		switch conversation.ConversationType {
 		case constant.SingleChatType, constant.NotificationChatType:
 			newConversation.UserID = conversation.UserID
-			faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, conversation.UserID, operationID)
+			faceUrl, name, err, isFromSvr := c.friend.GetUserNameAndFaceUrlByUid(conversation.UserID, operationID)
 			if err != nil {
 				log.NewError(operationID, utils.GetSelfFuncName(), "GetUserNameAndFaceUrlByUid error", err.Error())
 				continue
 			}
+			if isFromSvr {
+				c.cache.Update(conversation.UserID, faceUrl, name)
+			}
+
 			newConversation.ShowName = name
 			newConversation.FaceURL = faceUrl
 		case constant.GroupChatType:
@@ -274,21 +279,30 @@ func (c *Conversation) SyncConversations(operationID string) {
 			newConversation.ShowName = g.GroupName
 			newConversation.FaceURL = g.FaceURL
 		}
-		err := c.db.InsertConversation(&newConversation)
-		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation error", err.Error(), conversation)
-			continue
-		}
-		err = c.db.UpdateConversationForSync(conversation)
-		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation failed ", err.Error(), conversation)
-			continue
-		}
+		newConversation.RecvMsgOpt = conversation.RecvMsgOpt
+		newConversation.IsPinned = conversation.IsPinned
+		newConversation.IsPrivateChat = conversation.IsPrivateChat
+		newConversation.GroupAtType = conversation.GroupAtType
+		newConversation.IsNotInGroup = conversation.IsNotInGroup
+		newConversation.Ex = conversation.Ex
+		newConversation.AttachedInfo = conversation.AttachedInfo
+		newConversationList = append(newConversationList, &newConversation)
+		//err := c.db.InsertConversation(&newConversation)
+		//if err != nil {
+		//	log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation error", err.Error(), conversation)
+		//	continue
+		//}
 	}
+	//New conversation storage
+	err2 := c.db.BatchInsertConversationList(newConversationList)
+	if err2 != nil {
+		log.Error(operationID, "insert new conversation err:", err2.Error(), newConversationList)
+	}
+	log.Info(operationID, "insert cost time", time.Since(ccTime))
 	// 本地服务器有的会话 以服务器为准更新
 	var conversationChangedList []string
 	for _, index := range sameA {
-		log.NewInfo("", *conversationsOnServerLocalFormat[index])
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "server and client both have", *conversationsOnServerLocalFormat[index])
 		err := c.db.UpdateConversationForSync(conversationsOnServerLocalFormat[index])
 		if err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), "UpdateConversation failed ", err.Error(), *conversationsOnServerLocalFormat[index])
@@ -314,7 +328,7 @@ func (c *Conversation) SyncOneConversation(conversationID, operationID string) {
 	// todo
 }
 
-func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base, req sdk.GetHistoryMessageListParams, operationID string) sdk.GetHistoryMessageListCallback {
+func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base, req sdk.GetHistoryMessageListParams, operationID string, isReverse bool) sdk.GetHistoryMessageListCallback {
 	var sourceID string
 	var conversationID string
 	var startTime int64
@@ -366,7 +380,7 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 	}
 
 	log.Info(operationID, "sourceID:", sourceID, "startTime:", startTime, "count:", req.Count)
-	list, err := c.db.GetMessageList(sourceID, sessionType, req.Count, startTime)
+	list, err := c.db.GetMessageList(sourceID, sessionType, req.Count, startTime, isReverse)
 	common.CheckDBErrCallback(callback, err, operationID)
 	localChatLogToMsgStruct(&messageList, list)
 	switch sessionType {
@@ -389,7 +403,9 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 			v.RecvID = c.loginUserID
 		}
 	}
-	sort.Sort(messageList)
+	if !isReverse {
+		sort.Sort(messageList)
+	}
 	return sdk.GetHistoryMessageListCallback(messageList)
 }
 func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req sdk.RevokeMessageParams, operationID string) {
@@ -616,7 +632,7 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 	common.JsonUnmarshalCallback(LocalConversation.LatestMsg, &latestMsg, callback, operationID)
 
 	if s.ClientMsgID == latestMsg.ClientMsgID { //If the deleted message is the latest message of the conversation, update the latest message of the conversation
-		list, err := c.db.GetMessageList(sourceID, int(s.SessionType), 1, s.SendTime+TimeOffset)
+		list, err := c.db.GetMessageList(sourceID, int(s.SessionType), 1, s.SendTime+TimeOffset, false)
 		common.CheckDBErrCallback(callback, err, operationID)
 
 		conversation.ConversationID = conversationID
@@ -640,76 +656,148 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 		}
 	}
 }
-func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, searchParam sdk.SearchLocalMessagesParams, operationID string) (r sdk.SearchLocalMessagesCallback) {
-	var conversationID string
-	var startTime, endTime int64
-	var searchResultItem sdk.SearchByConversationResult
-	var messageList sdk_struct.NewMsgList
-	var list []*db.LocalChatLog
-	var err error
-	if searchParam.PageIndex < 1 || searchParam.Count < 1 {
-		common.CheckAnyErrCallback(callback, 201, errors.New("page or count is null"), operationID)
-	}
-	offset := (searchParam.PageIndex - 1) * searchParam.Count
-	switch searchParam.SessionType {
-	case constant.SingleChatType:
-		conversationID = utils.GetConversationIDBySessionType(searchParam.SourceID, constant.SingleChatType)
-	case constant.GroupChatType:
-		conversationID = utils.GetConversationIDBySessionType(searchParam.SourceID, constant.GroupChatType)
-	default:
-	}
-	if searchParam.SearchTimePosition == 0 {
-		startTime = utils.GetCurrentTimestampBySecond()
+func (c *Conversation) judgeMultipleSubString(keywordList []string, main string, keywordListMatchType int) bool {
+	if keywordListMatchType == constant.KeywordMatchOr {
+		for _, v := range keywordList {
+			if utils.KMP(main, v) {
+				return true
+			}
+		}
+		return false
 	} else {
-		startTime = searchParam.SearchTimePosition
+		for _, v := range keywordList {
+			if !utils.KMP(main, v) {
+				return false
+			}
+		}
 	}
-	if searchParam.SearchTimePosition == 0 {
-		endTime = 0
-	} else {
-		endTime = startTime - searchParam.SearchTimePeriod
-	}
-	if (len(searchParam.KeywordList) == 0 || searchParam.KeywordList[0] == "") && len(searchParam.MessageTypeList) == 0 {
-		common.CheckAnyErrCallback(callback, 201, errors.New("keyword is null"), operationID)
-	}
-	if len(searchParam.MessageTypeList) != 0 && len(searchParam.KeywordList) == 0 {
-		list, err = c.db.SearchMessageByContentType(searchParam.MessageTypeList, searchParam.SourceID, utils.UnixSecondToTime(endTime).UnixNano()/1e6, utils.UnixSecondToTime(startTime).UnixNano()/1e6, searchParam.SessionType, offset, searchParam.Count)
-	} else {
-		list, err = c.db.SearchMessageByKeyword(searchParam.KeywordList[0], searchParam.SourceID, utils.UnixSecondToTime(endTime).UnixNano()/1e6, utils.UnixSecondToTime(startTime).UnixNano()/1e6, searchParam.SessionType, offset, searchParam.Count)
-	}
+	return true
+}
 
+func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, searchParam sdk.SearchLocalMessagesParams, operationID string) (r sdk.SearchLocalMessagesCallback) {
+
+	var conversationID, sourceID string
+	var startTime, endTime int64
+	var list []*db.LocalChatLog
+	conversationMap := make(map[string]*sdk.SearchByConversationResult, 10)
+	var err error
+
+	if searchParam.SearchTimePosition == 0 {
+		startTime = utils.UnixSecondToTime(utils.GetCurrentTimestampBySecond()).UnixNano() / 1e6
+	} else {
+		startTime = utils.UnixSecondToTime(searchParam.SearchTimePosition).UnixNano() / 1e6
+		endTime = utils.UnixSecondToTime(startTime-searchParam.SearchTimePeriod).UnixNano() / 1e6
+	}
+	if len(searchParam.KeywordList) == 0 && len(searchParam.MessageTypeList) == 0 {
+		common.CheckAnyErrCallback(callback, 201, errors.New("keywordlist and messageTypelist all null"), operationID)
+	}
+	if searchParam.ConversationID != "" {
+		if searchParam.PageIndex < 1 || searchParam.Count < 1 {
+			common.CheckAnyErrCallback(callback, 201, errors.New("page or count is null"), operationID)
+		}
+		offset := (searchParam.PageIndex - 1) * searchParam.Count
+		localConversation, err := c.db.GetConversation(searchParam.ConversationID)
+		common.CheckDBErrCallback(callback, err, operationID)
+		switch localConversation.ConversationType {
+		case constant.SingleChatType:
+			sourceID = localConversation.UserID
+		case constant.GroupChatType:
+			sourceID = localConversation.GroupID
+		}
+		if len(searchParam.MessageTypeList) != 0 && len(searchParam.KeywordList) == 0 {
+			list, err = c.db.SearchMessageByContentType(searchParam.MessageTypeList, sourceID, endTime, startTime, int(localConversation.ConversationType), offset, searchParam.Count)
+		} else {
+			newContentTypeList := func(list []int) (result []int) {
+				for _, v := range list {
+					if utils.IsContainInt(v, SearchContentType) {
+						result = append(result, v)
+					}
+				}
+				return result
+			}(searchParam.MessageTypeList)
+			if len(newContentTypeList) == 0 {
+				newContentTypeList = SearchContentType
+			}
+			list, err = c.db.SearchMessageByKeyword(newContentTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, sourceID, endTime, startTime, int(localConversation.ConversationType), offset, searchParam.Count)
+		}
+	} else {
+		//Comprehensive search, search all
+		if len(searchParam.MessageTypeList) == 0 {
+			searchParam.MessageTypeList = SearchContentType
+		}
+		list, err = c.db.SearchMessageByContentTypeAndKeyword(searchParam.MessageTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, endTime, startTime)
+	}
 	common.CheckDBErrCallback(callback, err, operationID)
-	r.TotalCount = len(list)
-	localChatLogToMsgStruct(&messageList, list)
-	switch searchParam.SessionType {
-	case constant.SingleChatType:
-		for _, v := range messageList {
-			err := c.msgHandleByContentType(v)
-			if err != nil {
-				log.Error(operationID, "Parsing data error:", err.Error(), v)
-				continue
-			}
+	//localChatLogToMsgStruct(&messageList, list)
+
+	//log.Debug("hahh",utils.KMP("SSSsdf3434","s"))
+	//log.Debug("hahh",utils.KMP("SSSsdf3434","g"))
+	//log.Debug("hahh",utils.KMP("SSSsdf3434","3434"))
+	//log.Debug("hahh",utils.KMP("SSSsdf3434","F3434"))
+	//log.Debug("hahh",utils.KMP("SSSsdf3434","SDF3"))
+	log.Debug("get raw data length is", len(list))
+	for _, v := range list {
+		temp := sdk_struct.MsgStruct{}
+		temp.ClientMsgID = v.ClientMsgID
+		temp.ServerMsgID = v.ServerMsgID
+		temp.CreateTime = v.CreateTime
+		temp.SendTime = v.SendTime
+		temp.SessionType = v.SessionType
+		temp.SendID = v.SendID
+		temp.RecvID = v.RecvID
+		temp.MsgFrom = v.MsgFrom
+		temp.ContentType = v.ContentType
+		temp.SenderPlatformID = v.SenderPlatformID
+		temp.SenderNickname = v.SenderNickname
+		temp.SenderFaceURL = v.SenderFaceURL
+		temp.Content = v.Content
+		temp.Seq = v.Seq
+		temp.IsRead = v.IsRead
+		temp.Status = v.Status
+		temp.AttachedInfo = v.AttachedInfo
+		temp.Ex = v.Ex
+		err := c.msgHandleByContentType(&temp)
+		if err != nil {
+			log.Error(operationID, "Parsing data error:", err.Error(), temp)
+			continue
 		}
-		sort.Sort(messageList)
-		searchResultItem.ConversationID = conversationID
-		searchResultItem.MessageCount = r.TotalCount
-		searchResultItem.MessageList = messageList
-		r.SearchResultItems = append(r.SearchResultItems, &searchResultItem)
-	case constant.GroupChatType:
-		for _, v := range messageList {
-			err := c.msgHandleByContentType(v)
-			if err != nil {
-				log.Error(operationID, "Parsing data error:", err.Error(), v)
-				continue
-			}
-			v.GroupID = v.RecvID
-			v.RecvID = c.loginUserID
+		if temp.ContentType == constant.File && !c.judgeMultipleSubString(searchParam.KeywordList, temp.FileElem.FileName, searchParam.KeywordListMatchType) {
+			continue
 		}
-		sort.Sort(messageList)
-		searchResultItem.ConversationID = conversationID
-		searchResultItem.MessageCount = r.TotalCount
-		searchResultItem.MessageList = messageList
-		r.SearchResultItems = append(r.SearchResultItems, &searchResultItem)
-	default:
+		if temp.ContentType == constant.AtText && !c.judgeMultipleSubString(searchParam.KeywordList, temp.AtElem.Text, searchParam.KeywordListMatchType) {
+			continue
+		}
+		switch temp.SessionType {
+		case constant.SingleChatType:
+			if temp.SendID == c.loginUserID {
+				conversationID = utils.GetConversationIDBySessionType(temp.RecvID, constant.SingleChatType)
+			} else {
+				conversationID = utils.GetConversationIDBySessionType(temp.SendID, constant.SingleChatType)
+			}
+		case constant.GroupChatType:
+			temp.GroupID = temp.RecvID
+			temp.RecvID = c.loginUserID
+			conversationID = utils.GetConversationIDBySessionType(temp.GroupID, constant.GroupChatType)
+		}
+		if oldItem, ok := conversationMap[conversationID]; !ok {
+			searchResultItem := sdk.SearchByConversationResult{}
+			localConversation, _ := c.db.GetConversation(conversationID)
+			searchResultItem.ConversationID = conversationID
+			searchResultItem.FaceURL = localConversation.FaceURL
+			searchResultItem.ShowName = localConversation.ShowName
+			searchResultItem.ConversationType = localConversation.ConversationType
+			searchResultItem.MessageList = append(searchResultItem.MessageList, &temp)
+			searchResultItem.MessageCount++
+			conversationMap[conversationID] = &searchResultItem
+		} else {
+			oldItem.MessageCount++
+			oldItem.MessageList = append(oldItem.MessageList, &temp)
+			conversationMap[conversationID] = oldItem
+		}
+	}
+	for _, v := range conversationMap {
+		r.SearchResultItems = append(r.SearchResultItems, v)
+		r.TotalCount += v.MessageCount
 
 	}
 	return r

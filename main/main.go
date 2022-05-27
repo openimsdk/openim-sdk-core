@@ -28,15 +28,10 @@ func reliabilityTest() {
 }
 
 var (
-	TESTIP       = "api.adger.me"
-	TESTIP_LOCAL = "api.adger.me"
-	//TESTIP       = "1.14.194.38"
-	APIADDR = "http://" + TESTIP_LOCAL + ":10000"
-	//APIADDR = "https://im-api.jiarenapp.com"
+	TESTIP = "111.62.143.78"
 
-	WSADDR = "ws://" + TESTIP + ":17778"
-	//WSADDR = "wss://im.jiarenapp.com"
-
+	APIADDR      = "http://" + TESTIP + ":10000"
+	WSADDR       = "ws://" + TESTIP + ":17778"
 	REGISTERADDR = APIADDR + "/user_register"
 	TOKENADDR    = APIADDR + "/auth/user_token"
 	SECRET       = "tuoyun"
@@ -65,12 +60,25 @@ func main() {
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
 	test.SENDINTERVAL = SENDINTERVAL
-	strMyUidx := "1509479524083957760"
+	strMyUidx := "707008160"
 	//friendID := "17726378428"
-	//tokenx := test.GenToken(strMyUidx)
-	tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNTA5NDc5NTI0MDgzOTU3NzYwIiwiUGxhdGZvcm0iOiJBbmRyb2lkIiwiZXhwIjoxOTY0NzQ0NDY1LCJuYmYiOjE2NDkzODQ0NjUsImlhdCI6MTY0OTM4NDQ2NX0.io-mLXoL4fiBCmV1KzBbKLBY8gz_oXfGgCrgzG5lCeA"
-	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxNzcyNjM3ODQyOCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxOTYzMjE2NDU1LCJuYmYiOjE2NDc4NTY0NTUsImlhdCI6MTY0Nzg1NjQ1NX0.3fOcyhw7r5lOkRTJdDy7-tG9XC4XrKj_N7ufrGHPWYM"
+	tokenx := test.GenToken(strMyUidx)
+
+	// tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJvcGVuSU0xMjM0NTYiLCJQbGF0Zm9ybSI6IklPUyIsImV4cCI6MTk2NjQwOTQ3MSwibmJmIjoxNjUxMDQ5NDcxLCJpYXQiOjE2NTEwNDk0NzF9.7VrCn4afLrsDJ1UsNuLPwgwd2FEL9AQ71F2odO4f9MA"
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+
+	log.Info("", "DotestSetGroupMemberNickname start...")
+
+	//test.TestGetWorkMomentsUnReadCount()
+	test.TestGetWorkMomentsNotification()
+	//test.TestClearWorkMomentsNotification()
+
+	log.Info("", "test start...")
+	//test.DoTestGetSubDepartment()
+	//test.DoTestGetDepartmentMember()
+	//test.DoTestGetUserInDepartment()
+	//test.DoTestGetDepartmentMemberAndSubDepartment()
+	//test.DotestSetGroupMemberNickname(strMyUidx)
 	//test.DoTestDeleteAllMsgFromLocalAndSvr()
 	//log.Warn("", "login ok, see memory, sleep 10s")
 	//time.Sleep(2 * time.Second)
@@ -78,20 +86,6 @@ func main() {
 	//	log.Warn("", "logout ok, see memory, sleep 10s")
 	//	time.Sleep(10 * time.Second)
 	//}
-	//test.DoTestSetOneConversationPrivateChat("single_17726378428", false)
-	test.DoTestSetConversationPinned("single_17396220460", true)
-	//test.DoTestSendMsg2(strMyUidx, test.Friend_uid)
-	//test.DoTestDeleteConversationMsgFromLocalAndSvr("single_17396220460")
-	//test.I
-	//test.DoTestInviteInGroup()
-	//test.DoTestCancel()
-	//test.DoTestSendMsg2(strMyUidx, friendID)
-	//test.DoTestGetAllConversation()
-
-	//test.DoTestGetOneConversation("17726378428")
-	//test.DoTestGetConversations(`["single_17726378428"]`)
-	//test.DoTestGetConversationListSplit()
-	//test.DoTestGetConversationRecvMessageOpt(`["single_17899999999"]`)
 
 	//set batch
 	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17396220460"}, constant.ReceiveNotNotifyMessage)
@@ -107,8 +101,8 @@ func main() {
 	//test.DoTestMarkGroupMessageAsRead()
 	//test.DoTestGetGroupHistoryMessage()
 	for {
-		//test.DoTestSendMsg2(strMyUidx, test.Friend_uid)
-		time.Sleep(1 * time.Second)
+		//	test.DoTestSendMsg2(strMyUidx, "100908")
+		time.Sleep(10 * time.Second)
 		log.Info("", "waiting...")
 	}
 	//reliabilityTest()
@@ -141,10 +135,3 @@ func main() {
 //	}
 //
 //}
-
-//func printCallerNameAndLine() string {
-//	pc, _, line, _ := runtime.Caller(2)
-//	return runtime.FuncForPC(pc).Name() + "()@" + strconv.Itoa(line) + ": "
-//}
-
-// myuid,  maxuid,  msgnum

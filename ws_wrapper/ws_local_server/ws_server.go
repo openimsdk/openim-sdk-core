@@ -14,6 +14,7 @@ import (
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/log"
 	utils2 "open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 	"open_im_sdk/ws_wrapper/utils"
 	"runtime"
 	"sync"
@@ -86,19 +87,23 @@ func (ws *WServer) getMsgAndSend() {
 				operationID := utils2.OperationIDGenerator()
 				log.Info(operationID, "getMsgAndSend channel: ", string(r.data), r.uid)
 
-				conns := ws.getUserConn(r.uid + " " + "Web")
+				//		conns := ws.getUserConn(r.uid + " " + "Web")
+				conns := ws.getUserConn(r.uid + " " + utils.PlatformIDToName(sdk_struct.SvrConf.Platform))
 				if conns == nil {
-					log.Info(operationID, "uid no conn, failed ", r.uid)
+					log.Error(operationID, "uid no conn, failed ", r.uid+" "+utils.PlatformIDToName(sdk_struct.SvrConf.Platform))
 					r.data = nil
 				}
+				log.Info(operationID, "conns  ", conns, r.uid+" "+utils.PlatformIDToName(sdk_struct.SvrConf.Platform))
 				for _, conn := range conns {
 					if conn != nil {
 						err := WS.writeMsg(conn, websocket.TextMessage, r.data)
 						if err != nil {
-							log.Info(operationID, "WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", r.uid, "error", err.Error())
+							log.Error(operationID, "WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", r.uid, "error", err.Error())
+						} else {
+							log.Info(operationID, "writeMsg  ", conn, string(r.data))
 						}
 					} else {
-						log.Info(operationID, "Conn is nil, failed")
+						log.Error(operationID, "Conn is nil, failed")
 					}
 				}
 				r.data = nil

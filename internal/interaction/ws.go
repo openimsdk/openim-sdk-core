@@ -74,14 +74,6 @@ func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, co
 }
 
 func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retryTimes int, senderID, operationID string) (*GeneralWsResp, error) {
-
-	//log.Info(operationID, "mem.profile")
-	//f, err1 := os.OpenFile(operationID+"mem.profile", os.O_CREATE|os.O_RDWR, 0644)
-	//if err1 != nil {
-	//	log.Info(operationID, "OpenFile failed", err1.Error())
-	//}
-	//defer f.Close()
-
 	var wsReq GeneralWsReq
 	var connSend *websocket.Conn
 	var err error
@@ -95,6 +87,7 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 	if err != nil {
 		return nil, utils.Wrap(err, "proto marshal err")
 	}
+	flag := 0
 	for i := 0; i < retryTimes+1; i++ {
 		connSend, err = w.writeBinaryMsg(wsReq)
 		if err != nil {
@@ -107,11 +100,18 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 				return nil, utils.Wrap(err, "writeBinaryMsg timeout")
 			}
 		}
+		flag = 1
 		break
 	}
-	r1, r2 := w.WaitResp(ch, timeout, wsReq.OperationID, connSend)
-	//pprof.Lookup("heap").WriteTo(f, 0)
-	return r1, r2
+	if flag == 1 {
+		log.Debug(operationID, "send ok wait resp")
+		r1, r2 := w.WaitResp(ch, timeout, wsReq.OperationID, connSend)
+		return r1, r2
+	} else {
+		log.Error(operationID, "send failed")
+		err := errors.New("send failed")
+		return nil, utils.Wrap(err, "SendReqWaitResp failed")
+	}
 }
 func (w *Ws) SendReqTest(m proto.Message, reqIdentifier int32, timeout int, senderID, operationID string) bool {
 	var wsReq GeneralWsReq

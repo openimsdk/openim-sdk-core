@@ -1,6 +1,7 @@
 package full
 
 import (
+	"open_im_sdk/internal/cache"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/group"
 	"open_im_sdk/internal/user"
@@ -13,14 +14,15 @@ import (
 )
 
 type Full struct {
-	user   *user.User
-	friend *friend.Friend
-	group  *group.Group
-	ch     chan common.Cmd2Value
+	user      *user.User
+	friend    *friend.Friend
+	group     *group.Group
+	ch        chan common.Cmd2Value
+	userCache *cache.Cache
 }
 
-func NewFull(user *user.User, friend *friend.Friend, group *group.Group, ch chan common.Cmd2Value) *Full {
-	return &Full{user: user, friend: friend, group: group, ch: ch}
+func NewFull(user *user.User, friend *friend.Friend, group *group.Group, ch chan common.Cmd2Value, userCache *cache.Cache) *Full {
+	return &Full{user: user, friend: friend, group: group, ch: ch, userCache: userCache}
 }
 func (u *Full) getUsersInfo(callback open_im_sdk_callback.Base, userIDList sdk.GetUsersInfoParam, operationID string) sdk.GetUsersInfoCallback {
 	friendList := u.friend.GetDesignatedFriendListInfo(callback, userIDList, operationID)
@@ -51,8 +53,9 @@ func (u *Full) getUsersInfo(callback open_im_sdk_callback.Base, userIDList sdk.G
 		publicList = u.user.GetUsersInfoFromSvr(callback, notIn, operationID)
 		go func() {
 			for _, v := range publicList {
+				u.userCache.Update(v.UserID, v.FaceURL, v.Nickname)
 				//Update the faceURL and nickname information of the local chat history with non-friends
-				_ = u.user.UpdateMsgSenderFaceURLAndSenderNickname(v.UserID, v.FaceURL, v.Nickname)
+				_ = u.user.UpdateMsgSenderFaceURLAndSenderNickname(v.UserID, v.FaceURL, v.Nickname, constant.SingleChatType)
 				conversationID := utils.GetConversationIDBySessionType(v.UserID, constant.SingleChatType)
 				//Update session information of local non-friends
 				_, err := u.user.GetConversation(conversationID)

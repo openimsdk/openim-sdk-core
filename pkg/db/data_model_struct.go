@@ -344,6 +344,7 @@ type LocalConversation struct {
 	DraftTextTime     int64  `gorm:"column:draft_text_time" json:"draftTextTime"`
 	IsPinned          bool   `gorm:"column:is_pinned" json:"isPinned"`
 	IsPrivateChat     bool   `gorm:"column:is_private_chat" json:"isPrivateChat"`
+	IsNotInGroup      bool   `gorm:"column:is_not_in_group" json:"isNotInGroup"`
 	AttachedInfo      string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 	Ex                string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
@@ -361,4 +362,39 @@ type LocalConversation struct {
 //}open_im_sdk.GroupRequest == imdb.GroupRequest
 type LocalAdminGroupRequest struct {
 	LocalGroupRequest
+}
+
+type LocalDepartment struct {
+	DepartmentID     string `gorm:"column:department_id;primary_key;size:64" json:"departmentID"`
+	FaceURL          string `gorm:"column:face_url;size:255" json:"faceURL"`
+	Name             string `gorm:"column:name;size:256" json:"name" binding:"required"`
+	ParentID         string `gorm:"column:parent_id;size:64" json:"parentID" binding:"required"` // "0" or Real parent id
+	Order            int32  `gorm:"column:order_department" json:"order" `                       // 1, 2, ...
+	DepartmentType   int32  `gorm:"column:department_type" json:"departmentType"`                //1, 2...
+	CreateTime       uint32 `gorm:"column:create_time" json:"createTime"`
+	SubDepartmentNum uint32 `gorm:"column:sub_department_num" json:"subDepartmentNum"`
+	MemberNum        uint32 `gorm:"column:member_num" json:"memberNum"`
+	Ex               string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	AttachedInfo     string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+}
+
+type LocalDepartmentMember struct {
+	UserID      string `gorm:"column:user_id;primary_key;size:64"`
+	Nickname    string `gorm:"column:nickname;size:256"`
+	EnglishName string `gorm:"column:english_name;size:256"`
+	FaceURL     string `gorm:"column:face_url;size:256"`
+	Gender      int32  `gorm:"column:gender"` //1 ,2
+	Mobile      string `gorm:"column:mobile;size:32"`
+	Telephone   string `gorm:"column:telephone;size:32"`
+	Birth       uint32 `gorm:"column:birth"`
+	Email       string `gorm:"column:email;size:64"`
+
+	DepartmentID string `gorm:"column:department_id;primary_key;size:64"`
+	Order        int32  `gorm:"column:order_member" json:"order"` //1,2
+	Position     string `gorm:"column:position;size:256" json:"position"`
+	Leader       int32  `gorm:"column:leader" json:"leader"` //-1, 1
+	Status       int32  `gorm:"column:status" json:"status"` //-1, 1
+	CreateTime   uint32 `gorm:"column:create_time"`
+	Ex           string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	AttachedInfo string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 }

@@ -79,6 +79,20 @@ func (testGroupListener) OnGroupApplicationRejected(callbackInfo string) {
 
 }
 
+type testOrganizationListener struct {
+}
+
+func (testOrganizationListener) OnOrganizationUpdated() {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), "on listener callback ")
+}
+
+type testWorkMomentsListener struct {
+}
+
+func (testWorkMomentsListener) OnRecvNewNotification() {
+	log.NewInfo(utils.OperationIDGenerator(), utils.GetSelfFuncName(), "on listener callback ")
+}
+
 //
 type testCreateGroup struct {
 	OperationID string
@@ -99,7 +113,7 @@ func SetTestGroupID(groupID, memberID string) {
 }
 
 var MemberUserID = "18349115126"
-var TestgroupID = "f2e77b9ec33e92298675ad511fdfa6ab"
+var TestgroupID = "2de9d19e73f7b314978b42a8744e664d"
 
 func DoTestCreateGroup() {
 	var test testCreateGroup
@@ -158,12 +172,31 @@ func (t testGetGroupsInfo) OnError(errCode int32, errMsg string) {
 	log.Info(t.OperationID, "testGetGroupsInfo,onError", errCode, errMsg)
 }
 
+type testSearchGroups struct {
+	OperationID string
+}
+
+func (t testSearchGroups) OnSuccess(data string) {
+	log.Info(t.OperationID, "testSearchGroups,onSuccess", data)
+}
+
+func (t testSearchGroups) OnError(errCode int32, errMsg string) {
+	log.Info(t.OperationID, "testSearchGroups,onError", errCode, errMsg)
+}
 func DoTestGetGroupsInfo() {
 	var test testGetGroupsInfo
 	groupIDList := []string{"8a33030b726bd4792c8410aadfacaa35", "e91805bae94ae3a00eb629f74e83605a"}
 	list := utils.StructToJsonString(groupIDList)
 	log.Info(test.OperationID, "test getGroupsInfo input", list)
 	open_im_sdk.GetGroupsInfo(test, test.OperationID, list)
+}
+func DoTestSearchGroups() {
+	var test testGetGroupsInfo
+	var params sdk_params_callback.SearchGroupsParam
+	params.KeywordList = []string{"17"}
+	//params.IsSearchGroupID =true
+	params.IsSearchGroupName = true
+	open_im_sdk.SearchGroups(test, test.OperationID, utils.StructToJsonString(params))
 }
 
 type testJoinGroup struct {
@@ -321,15 +354,16 @@ func (testGetGroupMembersInfo) OnSuccess(data string) {
 
 type baseCallback struct {
 	OperationID string
+	callName    string
 }
 
 func (t baseCallback) OnSuccess(data string) {
-	log.Info(t.OperationID, utils.GetSelfFuncName(), data)
+	log.Info(t.OperationID, t.callName, utils.GetSelfFuncName(), data)
 
 }
 
 func (t baseCallback) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, utils.GetSelfFuncName(), errCode, errMsg)
+	log.Info(t.OperationID, t.callName, utils.GetSelfFuncName(), errCode, errMsg)
 }
 
 type testKickGroupMember struct {
@@ -420,4 +454,16 @@ func DotestRefuseGroupApplication(uid string) {
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
 	open_im_sdk.RefuseGroupApplication(test, test.OperationID, TestgroupID, MemberUserID, "no")
+}
+
+type testSetGroupMemberNickname struct {
+	baseCallback
+}
+
+func DotestSetGroupMemberNickname(myUserID string) {
+	var test testSetGroupMemberNickname
+	test.OperationID = utils.OperationIDGenerator()
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
+	open_im_sdk.SetGroupMemberNickname(test, test.OperationID, TestgroupID, myUserID, "")
+
 }

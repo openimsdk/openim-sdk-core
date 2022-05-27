@@ -153,24 +153,34 @@ func (u *WsConn) ReConn() (*websocket.Conn, error) {
 	if u.loginState == constant.TokenFailedKickedOffline {
 		return nil, utils.Wrap(errors.New("don't re conn"), "TokenFailedKickedOffline")
 	}
-
+	operationID := utils.OperationIDGenerator()
 	u.listener.OnConnecting()
-	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d", sdk_struct.SvrConf.WsAddr, u.loginUserID, u.token, sdk_struct.SvrConf.Platform)
+	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s", sdk_struct.SvrConf.WsAddr, u.loginUserID, u.token, sdk_struct.SvrConf.Platform, operationID)
 	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
+	log.Info(operationID, "ws conn, dail : ", url)
 	if err != nil {
+		errMsg := err.Error()
 		u.loginState = constant.LoginFailed
 		if httpResp != nil {
-			errInfo := constant.StatusText(httpResp.StatusCode)
-			if errInfo != nil {
-				log.Error("", httpResp.StatusCode, errInfo.ErrMsg)
-				u.listener.OnConnectFailed(int32(httpResp.StatusCode), errInfo.ErrMsg)
-			} else {
-				u.listener.OnConnectFailed(int32(httpResp.StatusCode), err.Error())
-			}
+			errMsg = httpResp.Header.Get("ws_err_msg")
+			log.Error(operationID, "websocket.DefaultDialer.Dial failed ", err.Error(), "url ", url, errMsg)
+			u.listener.OnConnectFailed(1001, errMsg)
 		} else {
-			u.listener.OnConnectFailed(1001, err.Error())
+			u.listener.OnConnectFailed(1001, errMsg)
+			log.Error(operationID, "websocket.DefaultDialer.Dial failed ", errMsg, "url ", url)
 		}
-		return nil, err
+		//if httpResp != nil {
+		//	errInfo := constant.StatusText(httpResp.StatusCode)
+		//	if errInfo != nil {
+		//		log.Error(operationID, httpResp.StatusCode, errInfo.ErrMsg)
+		//		u.listener.OnConnectFailed(int32(httpResp.StatusCode), errInfo.ErrMsg)
+		//	} else {
+		//		u.listener.OnConnectFailed(int32(httpResp.StatusCode), err.Error())
+		//	}
+		//} else {
+		//	u.listener.OnConnectFailed(1001, err.Error())
+		//}
+		return nil, utils.Wrap(err, errMsg)
 	}
 	u.listener.OnConnectSuccess()
 	u.loginState = constant.LoginSuccess

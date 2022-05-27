@@ -363,6 +363,7 @@ type BaseSuccessFailed struct {
 	errCode     int
 	errMsg      string
 	funcName    string
+	time        time.Time
 }
 
 func (b *BaseSuccessFailed) OnError(errCode int32, errMsg string) {
@@ -375,17 +376,21 @@ func (b *BaseSuccessFailed) OnError(errCode int32, errMsg string) {
 func (b *BaseSuccessFailed) OnSuccess(data string) {
 	b.errCode = 1
 	b.successData = data
-	log.Info("login success", data)
+	log.Info("login success", data, time.Since(b.time))
 }
 
 func InOutlllogin(uid, tk string) {
 	var callback BaseSuccessFailed
+	callback.time = time.Now()
 	callback.funcName = utils.GetSelfFuncName()
 	operationID := utils.OperationIDGenerator()
+	//	log.Info(operationID, " login start ")
 	open_im_sdk.Login(&callback, operationID, uid, tk)
 	for {
 		if callback.errCode == 1 || callback.errCode == -1 {
 			return
+		} else {
+			//	log.Info(operationID, "waiting login ")
 		}
 	}
 
@@ -405,7 +410,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	cf.WsAddr = ws
 	cf.Platform = 2
 	cf.DataDir = "./"
-	cf.LogLevel = 2
+	cf.LogLevel = 4
 
 	var s string
 	b, _ := json.Marshal(cf)
@@ -413,7 +418,10 @@ func InOutDoTest(uid, tk, ws, api string) {
 	fmt.Println(s)
 	var testinit testInitLister
 	operationID := utils.OperationIDGenerator()
-	open_im_sdk.InitSDK(testinit, operationID, s)
+	if !open_im_sdk.InitSDK(testinit, operationID, s) {
+		log.Error("", "InitSDK failed")
+		return
+	}
 
 	var testConversation conversationCallBack
 	open_im_sdk.SetConversationListener(testConversation)
@@ -431,6 +439,12 @@ func InOutDoTest(uid, tk, ws, api string) {
 	open_im_sdk.SetGroupListener(groupListener)
 	var signalingListener testSignalingListener
 	open_im_sdk.SetSignalingListener(&signalingListener)
+
+	var organizationListener testOrganizationListener
+	open_im_sdk.SetOrganizationListener(organizationListener)
+
+	var workMomentsListener testWorkMomentsListener
+	open_im_sdk.SetWorkMomentsListener(workMomentsListener)
 
 	InOutlllogin(uid, tk)
 	time.Sleep(2 * time.Second)
@@ -498,6 +512,9 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	var groupListener testGroupListener
 	lg.SetGroupListener(groupListener)
 
+	var organizationListener testOrganizationListener
+	lg.SetOrganizationListener(organizationListener)
+
 	var callback BaseSuccessFailed
 	callback.funcName = utils.GetSelfFuncName()
 	lg.Login(&callback, uid, tk, operationID)
@@ -527,7 +544,10 @@ func DoTest(uid, tk, ws, api string) {
 	fmt.Println(s)
 	var testinit testInitLister
 	operationID := utils.OperationIDGenerator()
-	open_im_sdk.InitSDK(testinit, operationID, s)
+	if !open_im_sdk.InitSDK(testinit, operationID, s) {
+		log.Error("", "InitSDK failed")
+		return
+	}
 
 	var testConversation conversationCallBack
 	open_im_sdk.SetConversationListener(testConversation)

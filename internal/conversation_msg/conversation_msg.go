@@ -3,11 +3,14 @@ package conversation_msg
 import (
 	"encoding/json"
 	"open_im_sdk/internal/advanced_interface"
+	"open_im_sdk/internal/cache"
 	common2 "open_im_sdk/internal/common"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/group"
 	ws "open_im_sdk/internal/interaction"
+	"open_im_sdk/internal/organization"
 	"open_im_sdk/internal/user"
+	"open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -22,6 +25,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 )
+
+var SearchContentType = []int{constant.Text, constant.AtText, constant.File}
 
 type Conversation struct {
 	*ws.Ws
@@ -38,7 +43,11 @@ type Conversation struct {
 	user                 *user.User
 	signaling            advanced_interface.Signaling
 	advancedFunction     advanced_interface.AdvancedFunction
+	organization         *organization.Organization
+	workMoments          *workMoments.WorkMoments
 	common2.ObjectStorage
+
+	cache *cache.Cache
 }
 
 func (c *Conversation) SetAdvancedFunction(advancedFunction advanced_interface.AdvancedFunction) {
@@ -60,11 +69,14 @@ func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 	ch chan common.Cmd2Value, loginUserID string, platformID int32, dataDir string,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener,
-	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling advanced_interface.Signaling, advancedFunction advanced_interface.AdvancedFunction) *Conversation {
+	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling advanced_interface.Signaling,
+	advancedFunction advanced_interface.AdvancedFunction, organization *organization.Organization, workMoments *workMoments.WorkMoments, cache *cache.Cache) *Conversation {
 	n := &Conversation{Ws: ws, db: db, p: p, ch: ch, loginUserID: loginUserID, platformID: platformID,
-		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage, signaling: signaling, advancedFunction: advancedFunction}
+		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage, signaling: signaling,
+		advancedFunction: advancedFunction, organization: organization, workMoments: workMoments}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
+	n.cache = cache
 	return n
 }
 
@@ -98,8 +110,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		isSenderConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsSenderConversationUpdate)
 		msg := new(sdk_struct.MsgStruct)
 		copier.Copy(msg, v)
+		var tips server_api_params.TipsComm
 		if v.ContentType >= constant.NotificationBegin && v.ContentType <= constant.NotificationEnd {
-			var tips server_api_params.TipsComm
 			_ = proto.Unmarshal(v.Content, &tips)
 			marshaler := jsonpb.Marshaler{
 				OrigName:     true,
@@ -155,6 +167,12 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				log.Info(operationID, "signaling DoNotification ", v)
 				c.signaling.DoNotification(v, c.ch, operationID)
 				continue
+			} else if v.ContentType == constant.OrganizationChangedNotification {
+				log.Info(operationID, "Organization Changed Notification ")
+				c.organization.DoNotification(v, c.ch, operationID)
+			} else if v.ContentType == constant.WorkMomentNotification {
+				log.Info(operationID, "WorkMoment New Notification")
+				c.workMoments.DoNotification(tips.JsonDetail, operationID)
 			}
 		case constant.GroupChatType:
 			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
@@ -258,14 +276,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				case constant.NotificationChatType:
 					lc.ConversationID = utils.GetConversationIDBySessionType(v.SendID, constant.NotificationChatType)
 					lc.UserID = v.SendID
-					lc.ShowName = msg.SenderNickname
-					lc.FaceURL = msg.SenderFaceURL
 				}
 				if isUnreadCount {
 					isTriggerUnReadCount = true
 					lc.UnreadCount = 1
 				}
-
 				if isConversationUpdate {
 					c.updateConversation(&lc, conversationSet)
 					newMessages = append(newMessages, msg)
@@ -383,6 +398,24 @@ func (c *Conversation) diff(local, generated, cc, nc map[string]*db.LocalConvers
 			c.addFaceURLAndName(v)
 			nc[v.ConversationID] = v
 			log.Debug("", "diff3 ", *v)
+		}
+	}
+
+}
+func (c *Conversation) genConversationGroupAtType(lc *db.LocalConversation, s *sdk_struct.MsgStruct) {
+	if s.ContentType == constant.AtText {
+		tagMe := utils.IsContain(c.loginUserID, s.AtElem.AtUserList)
+		tagAll := utils.IsContain(constant.AtAllString, s.AtElem.AtUserList)
+		if tagAll {
+			if tagMe {
+				lc.GroupAtType = constant.AtAllAtMe
+				return
+			}
+			lc.GroupAtType = constant.AtAll
+			return
+		}
+		if tagMe {
+			lc.GroupAtType = constant.AtMe
 		}
 	}
 
@@ -614,9 +647,15 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		if err != nil {
 			log.Error("internal", "getMultipleConversationModel err :", err.Error())
 		} else {
+			var newCList []*db.LocalConversation
+			for _, v := range cLists {
+				if v.LatestMsgSendTime != 0 {
+					newCList = append(newCList, v)
+				}
+			}
+			log.Info("internal", "getMultipleConversationModel success :", newCList)
 
-			log.Info("internal", "getMultipleConversationModel success :", cLists)
-			c.ConversationListener.OnConversationChanged(utils.StructToJsonStringDefault(cLists))
+			c.ConversationListener.OnConversationChanged(utils.StructToJsonStringDefault(newCList))
 		}
 	case constant.NewCon:
 		cidList := node.Args.([]string)
@@ -769,28 +808,21 @@ func mapConversationToList(m map[string]*db.LocalConversation) (cs []*db.LocalCo
 	}
 	return cs
 }
-
-type tmpCallback struct {
-}
-
-func (t *tmpCallback) OnError(errCode int32, errMsg string) {
-
-}
-func (t *tmpCallback) OnSuccess(data string) {
-
-}
-
 func (c *Conversation) addFaceURLAndName(lc *db.LocalConversation) {
 	operationID := utils.OperationIDGenerator()
 	switch lc.ConversationType {
-	case constant.SingleChatType:
-		faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(&tmpCallback{}, lc.UserID, operationID)
+	case constant.SingleChatType, constant.NotificationChatType:
+		faceUrl, name, err, isFromSvr := c.friend.GetUserNameAndFaceUrlByUid(lc.UserID, operationID)
 		if err != nil {
 			log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error(), lc.UserID)
 			return
 		}
 		lc.FaceURL = faceUrl
 		lc.ShowName = name
+		if isFromSvr {
+			c.cache.Update(lc.UserID, faceUrl, name)
+		}
+
 	case constant.GroupChatType:
 		g, err := c.group.GetGroupInfoFromLocal2Svr(lc.GroupID)
 		if err != nil {

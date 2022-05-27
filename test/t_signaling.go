@@ -10,6 +10,10 @@ import (
 type testSignalingListener struct {
 }
 
+func (s *testSignalingListener) OnHangUp(hangUpCallback string) {
+	panic("implement me")
+}
+
 func (s *testSignalingListener) OnReceiveNewInvitation(receiveNewInvitationCallback string) {
 	log.Info("", utils.GetSelfFuncName(), "listener ", receiveNewInvitationCallback)
 }
@@ -47,7 +51,7 @@ type testSingaling struct {
 var TestRoomID = "room_id_111"
 
 func DoTestInviteInGroup() {
-	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
+	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
 	req := &api.SignalInviteInGroupReq{}
 	req.Invitation = SetTestInviteInfo()
 	s := utils.StructToJsonString(req)
@@ -67,7 +71,7 @@ func SetTestInviteInfo() *api.InvitationInfo {
 }
 
 func DoTestInvite() {
-	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
+	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
 	req := &api.SignalInviteReq{}
 	req.Invitation = SetTestInviteInfo()
 	req.Invitation.GroupID = ""
@@ -80,7 +84,7 @@ func DoTestInvite() {
 }
 
 func DoTestAccept() {
-	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
+	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
 	req := &api.SignalAcceptReq{Invitation: &api.InvitationInfo{}, OpUserID: "18349115126"}
 	req.Invitation = SetTestInviteInfo()
 	req.Invitation.InviterUserID = "18666662412"
@@ -90,7 +94,7 @@ func DoTestAccept() {
 }
 
 func DoTestReject() {
-	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
+	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
 	req := &api.SignalRejectReq{Invitation: &api.InvitationInfo{}, OpUserID: "18349115126"}
 	req.Invitation = SetTestInviteInfo()
 	req.Invitation.InviterUserID = "18666662412"
@@ -100,7 +104,7 @@ func DoTestReject() {
 }
 
 func DoTestCancel() {
-	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
+	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
 	req := &api.SignalCancelReq{Invitation: &api.InvitationInfo{}}
 
 	req.Invitation = SetTestInviteInfo()
@@ -117,7 +121,7 @@ func DoTestCancel() {
 }
 
 func DoTestHungUp() {
-	t := testSingaling{baseCallback{utils.OperationIDGenerator()}}
+	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
 	req := &api.SignalHungUpReq{Invitation: &api.InvitationInfo{}}
 	req.Invitation = SetTestInviteInfo()
 	s := utils.StructToJsonString(req)

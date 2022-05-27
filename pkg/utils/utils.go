@@ -211,6 +211,17 @@ func IsContain(target string, List []string) bool {
 	return false
 
 }
+func IsContainInt(target int, List []int) bool {
+
+	for _, element := range List {
+
+		if target == element {
+			return true
+		}
+	}
+	return false
+
+}
 
 func GetSwitchFromOptions(Options map[string]bool, key string) (result bool) {
 	if flag, ok := Options[key]; !ok || flag {
@@ -275,4 +286,61 @@ func RemoveRepeatedStringInList(slc []string) []string {
 		}
 	}
 	return result
+}
+
+/**
+KMP
+**/
+func KMP(rMainString string, rSubString string) (isInMainString bool) {
+	mainString := strings.ToLower(rMainString)
+	subString := strings.ToLower(rSubString)
+	mainIdx := 0
+	subIdx := 0
+	mainLen := len(mainString)
+	subLen := len(subString)
+	next := computeNextArray(subString)
+	for {
+		if mainIdx >= mainLen || subIdx >= subLen {
+			break
+		}
+
+		if mainString[mainIdx] == subString[subIdx] {
+			mainIdx++
+			subIdx++
+		} else {
+			if subIdx != 0 {
+				subIdx = next[subIdx-1]
+			} else {
+				mainIdx++
+			}
+
+		}
+	}
+	if subIdx >= subLen {
+		if mainIdx-subLen >= 0 {
+			return true
+		}
+	}
+	return false
+
+}
+
+func computeNextArray(subString string) []int {
+	next := make([]int, len(subString))
+	index := 0
+	i := 1
+	for i < len(subString) {
+		if subString[i] == subString[index] {
+			next[i] = index + 1
+			i++
+			index++
+		} else {
+			if index != 0 {
+				index = next[index-1]
+			} else {
+				i++
+			}
+		}
+	}
+	return next
 }

@@ -1,0 +1,304 @@
+package organization
+
+import (
+	"github.com/jinzhu/copier"
+	ws "open_im_sdk/internal/interaction"
+	"open_im_sdk/open_im_sdk_callback"
+	"open_im_sdk/pkg/common"
+	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/sdk_params_callback"
+	api "open_im_sdk/pkg/server_api_params"
+	"open_im_sdk/pkg/utils"
+	"sync"
+)
+
+type Organization struct {
+	listener    open_im_sdk_callback.OnOrganizationListener
+	loginUserID string
+	db          *db.DataBase
+	p           *ws.PostApi
+}
+
+func NewOrganization(loginUserID string, db *db.DataBase, p *ws.PostApi) *Organization {
+	return &Organization{loginUserID: loginUserID, db: db, p: p}
+}
+
+func (o *Organization) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value, operationID string) {
+	if o.listener == nil {
+		return
+	}
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
+	go func() {
+		switch msg.ContentType {
+		case constant.OrganizationChangedNotification:
+			o.organizationChangedNotification(msg, operationID)
+		default:
+			log.Error(operationID, "ContentType tip failed ", msg.ContentType)
+		}
+	}()
+}
+
+func (o *Organization) getSubDepartment(callback open_im_sdk_callback.Base, departmentID string, offset, count int, operationID string) sdk_params_callback.GetSubDepartmentCallback {
+	subDepartmentList, err := o.db.GetSubDepartmentList(departmentID, offset, count)
+	common.CheckDBErrCallback(callback, err, operationID)
+	return subDepartmentList
+}
+
+func (o *Organization) getDepartmentMember(callback open_im_sdk_callback.Base, departmentID string, offset, count int, operationID string) sdk_params_callback.GetDepartmentMemberCallback {
+	departmentMemberLis, err := o.db.GetDepartmentMemberListByDepartmentID(departmentID, offset, count)
+	common.CheckDBErrCallback(callback, err, operationID)
+	return departmentMemberLis
+}
+
+func (o *Organization) getUserInDepartment(callback open_im_sdk_callback.Base, userID string, operationID string) sdk_params_callback.GetUserInDepartmentCallback {
+	departmentMemberList, err := o.db.GetDepartmentMemberListByUserID(userID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	var userInDepartment []*sdk_params_callback.UserInDepartment
+	for _, v := range departmentMemberList {
+		department, err := o.db.GetDepartmentInfo(v.DepartmentID)
+		if err != nil {
+			continue
+		}
+		node := sdk_params_callback.UserInDepartment{MemberInfo: &db.LocalDepartmentMember{}}
+		node.DepartmentInfo = department
+		copier.Copy(node.MemberInfo, v)
+		userInDepartment = append(userInDepartment, &node)
+	}
+	return userInDepartment
+}
+
+func (o *Organization) getDepartmentMemberAndSubDepartment(callback open_im_sdk_callback.Base, departmentID string, departmentOffset, departmentCount int, memberOffset, memberCount int, operationID string) sdk_params_callback.GetDepartmentMemberAndSubDepartmentCallback {
+	subDepartmentList, err := o.db.GetSubDepartmentList(departmentID, departmentOffset, departmentCount)
+	common.CheckDBErrCallback(callback, err, operationID)
+	departmentMemberLis, err := o.db.GetDepartmentMemberListByDepartmentID(departmentID, memberOffset, memberCount)
+	common.CheckDBErrCallback(callback, err, operationID)
+	return sdk_params_callback.GetDepartmentMemberAndSubDepartmentCallback{DepartmentList: subDepartmentList, DepartmentMemberList: departmentMemberLis}
+}
+
+func (o *Organization) getSubDepartmentFromSvr(departmentID string, operationID string) ([]*api.Department, error) {
+	var apiReq api.GetSubDepartmentReq
+	apiReq.OperationID = operationID
+	apiReq.DepartmentID = departmentID
+	var realData []*api.Department
+	err := o.p.PostReturn(constant.GetSubDepartmentRouter, apiReq, &realData)
+	if err != nil {
+		return nil, utils.Wrap(err, apiReq.OperationID)
+	}
+	return realData, nil
+}
+
+func (o *Organization) getAllDepartmentFromSvr(operationID string) ([]*api.Department, error) {
+	return o.getSubDepartmentFromSvr("-1", operationID)
+}
+
+func (o *Organization) getAllDepartmentMemberFromSvr(operationID string) ([]*api.UserDepartmentMember, error) {
+	return o.getDepartmentMemberFromSvr("-1", operationID)
+}
+
+func (o *Organization) getDepartmentMemberFromSvr(departmentID string, operationID string) ([]*api.UserDepartmentMember, error) {
+	var apiReq api.GetDepartmentMemberReq
+	apiReq.OperationID = operationID
+	apiReq.DepartmentID = departmentID
+	var realData []*api.UserDepartmentMember
+	err := o.p.PostReturn(constant.GetDepartmentMemberRouter, apiReq, &realData)
+	if err != nil {
+		return nil, utils.Wrap(err, apiReq.OperationID)
+	}
+	return realData, nil
+}
+
+func (o *Organization) SyncDepartment(operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
+	svrList, err := o.getAllDepartmentFromSvr(operationID)
+	if err != nil {
+		log.NewError(operationID, "getAllDepartmentFromSvr failed ", err.Error())
+		return
+	}
+	log.Info(operationID, "getAllDepartmentFromSvr ", svrList)
+	onServer := common.TransferToLocalDepartment(svrList)
+	onLocal, err := o.db.GetAllDepartmentList()
+	if err != nil {
+		log.NewError(operationID, "GetAllDepartmentList failed ", err.Error())
+		return
+	}
+	flag := 0
+	log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
+	aInBNot, bInANot, sameA, sameB := common.CheckDepartmentDiff(onServer, onLocal)
+	log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
+	for _, index := range aInBNot {
+		err := o.db.InsertDepartment(onServer[index])
+		if err != nil {
+			log.NewError(operationID, "InsertDepartment failed ", err.Error(), *onServer[index])
+			continue
+		}
+		log.Info(operationID, "InsertDepartment", onServer[index])
+		flag = 1
+	}
+	for _, index := range sameA {
+		err := o.db.UpdateDepartment(onServer[index])
+		if err != nil {
+			log.NewError(operationID, "UpdateDepartment failed ", err.Error())
+			continue
+		}
+		log.Info(operationID, "UpdateDepartment ", onServer[index])
+		flag = 1
+	}
+	for _, index := range bInANot {
+		err := o.db.DeleteDepartment(onLocal[index].DepartmentID)
+		if err != nil {
+			log.NewError(operationID, "DeleteDepartment failed ", err.Error())
+			continue
+		}
+		log.Info(operationID, "DeleteDepartment", onLocal[index].DepartmentID)
+		flag = 1
+	}
+	if flag != 0 {
+		if o.listener == nil {
+			log.Error(operationID, "o.listener == nil ")
+			return
+		}
+		o.listener.OnOrganizationUpdated()
+	}
+}
+
+func (o *Organization) SyncDepartmentMemberByDepartmentID(operationID string, departmentID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", departmentID)
+	svrList, err := o.getDepartmentMemberFromSvr(departmentID, operationID)
+	if err != nil {
+		log.NewError(operationID, "getDepartmentMemberFromSvr failed ", err.Error())
+		return
+	}
+	log.Info(operationID, "getDepartmentMemberFromSvr result ", svrList, departmentID)
+	onServer := common.TransferToLocalDepartmentMember(svrList)
+	onLocal, err := o.db.GetDepartmentMemberListByDepartmentID(departmentID, 0, 1000000)
+	if err != nil {
+		log.NewError(operationID, "GetDepartmentMemberListByDepartmentID failed ", err.Error())
+		return
+	}
+	flag := 0
+	log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
+	aInBNot, bInANot, sameA, sameB := common.CheckDepartmentMemberDiff(onServer, onLocal)
+	log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
+	for _, index := range aInBNot {
+		err := o.db.InsertDepartmentMember(onServer[index])
+		if err != nil {
+			log.NewError(operationID, "InsertDepartmentMember failed ", err.Error(), *onServer[index])
+			continue
+		}
+		log.Info(operationID, "InsertDepartmentMember", onServer[index])
+		flag = 1
+	}
+	for _, index := range sameA {
+		err := o.db.UpdateDepartmentMember(onServer[index])
+		if err != nil {
+			log.NewError(operationID, "UpdateDepartmentMember failed ", err.Error())
+			continue
+		}
+		log.Info(operationID, "UpdateDepartmentMember ", onServer[index])
+		flag = 1
+	}
+	for _, index := range bInANot {
+		err := o.db.DeleteDepartmentMember(onLocal[index].DepartmentID, onLocal[index].UserID)
+		if err != nil {
+			log.NewError(operationID, "DeleteDepartmentMember failed ", err.Error())
+			continue
+		}
+		log.Info(operationID, "DeleteDepartmentMember", onLocal[index].DepartmentID, onLocal[index].UserID)
+		flag = 1
+	}
+	if flag != 0 {
+		if o.listener == nil {
+			log.Error(operationID, "o.listener == nil ")
+			return
+		}
+		o.listener.OnOrganizationUpdated()
+	}
+}
+
+func (o *Organization) organizationChangedNotification(msg *api.MsgData, operationID string) {
+	o.SyncDepartment(operationID)
+	o.SyncAllDepartmentMember(operationID)
+	//	o.SyncDepartmentMember(operationID)
+
+}
+func (o *Organization) SyncAllDepartmentMember(operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
+	svrList, err := o.getAllDepartmentMemberFromSvr(operationID)
+	if err != nil {
+		log.NewError(operationID, "getAllDepartmentMemberFromSvr failed ", err.Error())
+		return
+	}
+	log.Info(operationID, "getDepartmentMemberFromSvr result ", svrList)
+	onServer := common.TransferToLocalDepartmentMember(svrList)
+	onLocal, err := o.db.GetAllDepartmentMemberList()
+	if err != nil {
+		log.NewError(operationID, "GetAllDepartmentMemberList failed ", err.Error())
+		return
+	}
+	flag := 0
+	log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
+	aInBNot, bInANot, sameA, sameB := common.CheckDepartmentMemberDiff(onServer, onLocal)
+	log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
+	for _, index := range aInBNot {
+		err := o.db.InsertDepartmentMember(onServer[index])
+		if err != nil {
+			log.NewError(operationID, "InsertDepartmentMember failed ", err.Error(), *onServer[index])
+			continue
+		}
+		log.Info(operationID, "InsertDepartmentMember", onServer[index])
+		flag = 1
+	}
+	for _, index := range sameA {
+		err := o.db.UpdateDepartmentMember(onServer[index])
+		if err != nil {
+			log.NewError(operationID, "UpdateDepartmentMember failed ", err.Error())
+			continue
+		}
+		log.Info(operationID, "UpdateDepartmentMember ", onServer[index])
+		flag = 1
+	}
+	for _, index := range bInANot {
+		err := o.db.DeleteDepartmentMember(onLocal[index].DepartmentID, onLocal[index].UserID)
+		if err != nil {
+			log.NewError(operationID, "DeleteDepartmentMember failed ", err.Error(), onLocal[index].DepartmentID, onLocal[index].UserID)
+			continue
+		}
+		log.Info(operationID, "DeleteDepartmentMember", onLocal[index].DepartmentID, onLocal[index].UserID)
+		flag = 1
+	}
+	if flag != 0 {
+		if o.listener == nil {
+			log.Error(operationID, "o.listener == nil ")
+			return
+		}
+		o.listener.OnOrganizationUpdated()
+	}
+}
+
+func (o *Organization) SyncDepartmentMember(operationID string) {
+	departmentList, err := o.db.GetAllDepartmentList()
+	if err != nil {
+		log.Error(operationID, "GetAllDepartmentList failed ", err.Error())
+	}
+	if len(departmentList) == 0 {
+		return
+	}
+	var wg sync.WaitGroup
+	wg.Add(len(departmentList))
+	log.Info(operationID, "SyncDepartmentMemberByDepartmentID begin", len(departmentList))
+	for _, v := range departmentList {
+		go func(departmentID, operationID string) {
+			o.SyncDepartmentMemberByDepartmentID(operationID, departmentID)
+			wg.Done()
+		}(v.DepartmentID, operationID)
+	}
+	wg.Wait()
+	log.Info(operationID, "SyncDepartmentMemberByDepartmentID end")
+}
+
+func (o *Organization) SyncOrganization(operationID string) {
+	o.SyncDepartment(operationID)
+	o.SyncAllDepartmentMember(operationID)
+}

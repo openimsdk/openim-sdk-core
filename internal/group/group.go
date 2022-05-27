@@ -67,6 +67,8 @@ func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2
 			fallthrough
 		case constant.GroupCancelMutedNotification:
 			g.groupMuteChangedNotification(msg, operationID)
+		case constant.GroupMemberInfoSetNotification:
+			g.groupMemberInfoSetNotification(msg, operationID)
 		default:
 			log.Error(operationID, "ContentType tip failed ", msg.ContentType)
 		}
@@ -253,6 +255,18 @@ func (g *Group) groupMuteChangedNotification(msg *api.MsgData, operationID strin
 	g.SyncJoinedGroupList(operationID)
 }
 
+func (g *Group) groupMemberInfoSetNotification(msg *api.MsgData, operationID string) {
+	detail := api.GroupMemberInfoSetTips{Group: &api.GroupInfo{}}
+	if err := comm.UnmarshalTips(msg, &detail); err != nil {
+		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
+		return
+	}
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID, msg.String(), "detail : ", detail.String())
+	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
+	_ = g.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.ChangedUser.UserID, detail.ChangedUser.FaceURL, detail.ChangedUser.Nickname, constant.GroupChatType)
+
+}
+
 func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam,
 	memberList sdk.CreateGroupMemberRoleParam, operationID string) *sdk.CreateGroupCallback {
 	apiReq := api.CreateGroupReq{}
@@ -297,7 +311,7 @@ func (g *Group) dismissGroup(groupID string, callback open_im_sdk_callback.Base,
 	apiReq := api.DismissGroupReq{}
 	apiReq.OperationID = operationID
 	apiReq.GroupID = groupID
-	g.p.PostFatalCallback(callback, constant.DismissGroupRoute, apiReq, nil, apiReq.OperationID)
+	g.p.PostFatalCallback(callback, constant.DismissGroupRouter, apiReq, nil, apiReq.OperationID)
 	//g.SyncJoinedGroupList(operationID)
 }
 
@@ -306,12 +320,12 @@ func (g *Group) changeGroupMute(groupID string, isMute bool, callback open_im_sd
 		apiReq := api.MuteGroupReq{}
 		apiReq.OperationID = operationID
 		apiReq.GroupID = groupID
-		g.p.PostFatalCallback(callback, constant.MuteGroup, apiReq, nil, apiReq.OperationID)
+		g.p.PostFatalCallback(callback, constant.MuteGroupRouter, apiReq, nil, apiReq.OperationID)
 	} else {
 		apiReq := api.CancelMuteGroupReq{}
 		apiReq.OperationID = operationID
 		apiReq.GroupID = groupID
-		g.p.PostFatalCallback(callback, constant.CancelMuteGroup, apiReq, nil, apiReq.OperationID)
+		g.p.PostFatalCallback(callback, constant.CancelMuteGroupRouter, apiReq, nil, apiReq.OperationID)
 	}
 }
 
@@ -321,14 +335,14 @@ func (g *Group) changeGroupMemberMute(groupID, userID string, mutedSeconds uint3
 		apiReq.OperationID = operationID
 		apiReq.GroupID = groupID
 		apiReq.UserID = userID
-		g.p.PostFatalCallback(callback, constant.CancelMuteGroupMember, apiReq, nil, apiReq.OperationID)
+		g.p.PostFatalCallback(callback, constant.CancelMuteGroupMemberRouter, apiReq, nil, apiReq.OperationID)
 	} else {
 		apiReq := api.MuteGroupMemberReq{}
 		apiReq.OperationID = operationID
 		apiReq.GroupID = groupID
 		apiReq.UserID = userID
 		apiReq.MutedSeconds = mutedSeconds
-		g.p.PostFatalCallback(callback, constant.MuteGroupMember, apiReq, nil, apiReq.OperationID)
+		g.p.PostFatalCallback(callback, constant.MuteGroupMemberRouter, apiReq, nil, apiReq.OperationID)
 	}
 }
 
@@ -356,6 +370,14 @@ func (g *Group) GetGroupInfoFromLocal2Svr(groupID string) (*db.LocalGroup, error
 	} else {
 		return nil, utils.Wrap(errors.New("no group"), "")
 	}
+}
+func (g *Group) searchGroups(callback open_im_sdk_callback.Base, param sdk.SearchGroupsParam, operationID string) sdk.SearchGroupsCallback {
+	if len(param.KeywordList) == 0 || (!param.IsSearchGroupName && !param.IsSearchGroupID) {
+		common.CheckAnyErrCallback(callback, 201, errors.New("keyword is null or search field all false"), operationID)
+	}
+	localGroup, err := g.db.GetAllGroupInfoByGroupIDOrGroupName(param.KeywordList[0], param.IsSearchGroupID, param.IsSearchGroupName)
+	common.CheckDBErrCallback(callback, err, operationID)
+	return localGroup
 }
 
 func (g *Group) getGroupsInfo(groupIDList sdk.GetGroupsInfoParam, callback open_im_sdk_callback.Base, operationID string) sdk.GetGroupsInfoCallback {
@@ -757,7 +779,7 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 		if onGroupMemberNotification == true {
 			callbackData := sdk.GroupMemberAddedCallback(*onServer[index])
 			g.listener.OnGroupMemberAdded(utils.StructToJsonString(callbackData))
-			log.Info(operationID, "OnGroupMemberAdded", utils.StructToJsonString(callbackData))
+			log.Debug(operationID, "OnGroupMemberAdded", utils.StructToJsonString(callbackData))
 		}
 	}
 	for _, index := range sameA {
@@ -819,4 +841,14 @@ func (g *Group) getGroupAllMemberByGroupIDFromSvr(groupID string, operationID st
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 	return realData, nil
+}
+
+func (g *Group) setGroupMemberNickname(callback open_im_sdk_callback.Base, groupID, userID string, GroupMemberNickname string, operationID string) {
+	var apiReq api.SetGroupMemberNicknameReq
+	apiReq.OperationID = operationID
+	apiReq.GroupID = groupID
+	apiReq.UserID = userID
+	apiReq.Nickname = GroupMemberNickname
+	g.p.PostFatalCallback(callback, constant.SetGroupMemberNicknameRouter, apiReq, nil, apiReq.OperationID)
+	g.syncGroupMemberByGroupID(groupID, operationID, true)
 }
