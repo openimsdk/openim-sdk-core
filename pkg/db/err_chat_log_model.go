@@ -17,3 +17,7 @@ func (d *DataBase) BatchInsertExceptionMsgToErrorChatLog(MessageList []*LocalErr
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Create(MessageList).Error, "BatchInsertMessageList failed")
 }
+
+func (d *DataBase) GetSuperGroupAbnormalMsgSeq(groupID string) (uint32, error) {
+	return 0, nil
+}
