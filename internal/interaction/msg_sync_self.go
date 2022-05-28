@@ -14,9 +14,8 @@ import (
 type SelfMsgSync struct {
 	*db.DataBase
 	*Ws
-	loginUserID    string
-	conversationCh chan common.Cmd2Value
-	//  PushMsgAndMaxSeqCh chan common.Cmd2Value
+	loginUserID        string
+	conversationCh     chan common.Cmd2Value
 	seqMaxSynchronized uint32
 	seqMaxNeedSync     uint32
 }
@@ -81,29 +80,6 @@ func (m *SelfMsgSync) doPushMsg(cmd common.Cmd2Value) {
 	m.syncMsg()
 }
 
-//func (m *MsgSync) Work(cmd common.Cmd2Value) {
-//	switch cmd.Cmd {
-//	case constant.CmdPushMsg:
-//		m.doPushMsg(cmd)
-//	case constant.CmdMaxSeq:
-//		m.doMaxSeq(cmd)
-//	default:
-//		log.Error("", "cmd failed ", cmd.Cmd)
-//	}
-//}
-
-//func (m *MsgSync) GetCh() chan common.Cmd2Value {
-//	return m.PushMsgAndMaxSeqCh
-//}
-
-//func NewMsgSync(dataBase *db.DataBase, ws *Ws, loginUserID string, ch chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value) *MsgSync {
-//	p := &MsgSync{DataBase: dataBase,
-//		Ws: ws, loginUserID: loginUserID, conversationCh: ch, PushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh}
-//	p.compareSeq()
-//	go common.DoListener(p)
-//	return p
-//}
-
 func (m *SelfMsgSync) syncMsg() {
 	if m.seqMaxNeedSync > m.seqMaxSynchronized {
 		log.Info("", "do syncMsg ", m.seqMaxSynchronized+1, m.seqMaxNeedSync)
@@ -159,7 +135,6 @@ func (m *SelfMsgSync) TriggerCmdNewMsgCome(msgList []*server_api_params.MsgData,
 			log.Warn(operationID, "TriggerCmdNewMsgCome failed ", err.Error(), m.loginUserID)
 			continue
 		}
-		//		log.Warn(operationID, "TriggerCmdNewMsgCome ok ", m.loginUserID)
 		return
 	}
 }

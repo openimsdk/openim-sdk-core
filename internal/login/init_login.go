@@ -63,6 +63,7 @@ type LoginMgr struct {
 	cmdWsCh            chan common.Cmd2Value
 	heartbeatCmdCh     chan common.Cmd2Value
 	pushMsgAndMaxSeqCh chan common.Cmd2Value
+	joinedSuperGroupCh chan common.Cmd2Value
 	imConfig           sdk_struct.IMConfig
 }
 
@@ -177,12 +178,10 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 
-	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
-
-	u.pushMsgAndMaxSeqCh = pushMsgAndMaxSeqCh
-	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
-	joinedSuperGroupCh := make(chan common.Cmd2Value, 10)
-	u.msgSync = ws.NewMsgSync(db, u.ws, userID, u.conversationCh, pushMsgAndMaxSeqCh, joinedSuperGroupCh)
+	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
+	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
+	u.joinedSuperGroupCh = make(chan common.Cmd2Value, 10)
+	u.msgSync = ws.NewMsgSync(db, u.ws, userID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
 
 	u.heartbeat = ws.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, token, exp)
 
@@ -196,9 +195,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 
 	u.group = group.NewGroup(u.loginUserID, u.db, p)
 	u.group.SetGroupListener(u.groupListener)
-
-	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db, p, joinedSuperGroupCh)
-
+	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db, p, u.joinedSuperGroupCh)
 	u.organization = organization.NewOrganization(u.loginUserID, u.db, p)
 	u.organization.SetListener(u.organizationListener)
 	u.cache = cache.NewCache(u.user, u.friend)
@@ -211,6 +208,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.user.SetLoginTime(u.loginTime)
 	u.friend.SetLoginTime(u.loginTime)
 	u.group.SetLoginTime(u.loginTime)
+	u.superGroup.SetLoginTime(u.loginTime)
 	go u.forcedSynchronization()
 	log.Info(operationID, "forcedSynchronization success...")
 	log.Info(operationID, "all channel ", u.pushMsgAndMaxSeqCh, u.conversationCh, u.heartbeatCmdCh, u.cmdWsCh)

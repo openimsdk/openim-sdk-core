@@ -15,11 +15,8 @@ import (
 type SuperGroupMsgSync struct {
 	*db.DataBase
 	*Ws
-	loginUserID    string
-	conversationCh chan common.Cmd2Value
-	//  PushMsgAndMaxSeqCh chan common.Cmd2Value
-	//seqMaxSynchronized uint32
-	//seqMaxNeedSync     uint32
+	loginUserID              string
+	conversationCh           chan common.Cmd2Value
 	superGroupMtx            sync.Mutex
 	Group2SeqMaxNeedSync     map[string]uint32
 	Group2SeqMaxSynchronized map[string]uint32
@@ -38,17 +35,16 @@ func (m *SuperGroupMsgSync) updateJoinedSuperGroup() {
 	for {
 		select {
 		case cmd := <-m.joinedSuperGroupCh:
-			{
-				g, err := m.GetJoinedSuperGroupList()
-				if err != nil {
-					m.superGroupMtx.Lock()
-					m.SuperGroupIDList = m.SuperGroupIDList[0:0]
-					for _, v := range g {
-						m.SuperGroupIDList = append(m.SuperGroupIDList, v.GroupID)
-					}
-					m.superGroupMtx.Unlock()
-					m.compareSeq()
+			log.Info("", "updateJoinedSuperGroup recv cmd: ", cmd)
+			g, err := m.GetJoinedSuperGroupList()
+			if err != nil {
+				m.superGroupMtx.Lock()
+				m.SuperGroupIDList = m.SuperGroupIDList[0:0]
+				for _, v := range g {
+					m.SuperGroupIDList = append(m.SuperGroupIDList, v.GroupID)
 				}
+				m.superGroupMtx.Unlock()
+				m.compareSeq()
 			}
 		}
 	}

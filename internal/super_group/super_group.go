@@ -19,6 +19,10 @@ type SuperGroup struct {
 	joinedSuperGroupCh chan common.Cmd2Value
 }
 
+func (s *SuperGroup) SetLoginTime(loginTime int64) {
+	s.loginTime = loginTime
+}
+
 func NewSuperGroup(loginUserID string, db *db.DataBase, p *ws.PostApi, joinedSuperGroupCh chan common.Cmd2Value) *SuperGroup {
 	return &SuperGroup{loginUserID: loginUserID, db: db, p: p, joinedSuperGroupCh: joinedSuperGroupCh}
 }

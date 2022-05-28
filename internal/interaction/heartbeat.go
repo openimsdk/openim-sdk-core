@@ -15,7 +15,7 @@ import (
 )
 
 type Heartbeat struct {
-	//*Ws
+	*Ws
 	*MsgSync
 	cmdCh             chan common.Cmd2Value //waiting logout cmd , wake up cmd
 	heartbeatInterval int
@@ -60,32 +60,6 @@ func (u *Heartbeat) IsTokenExp(operationID string) bool {
 	} else {
 		return false
 	}
-
-	//
-	//
-	//b := strings.IndexAny(u.token, ".")
-	//e := strings.LastIndex(u.token, ".")
-	//if b == -1 || e == -1 || b >= e {
-	//	return false
-	//}
-	//log.Debug(operationID, "sub token ", u.token[b+1:e])
-	//decodeBytes, err := base64.StdEncoding.DecodeString(u.token[b+1 : e])
-	//if err != nil {
-	//	//	log.Error(operationID, "DecodeString failed ", err.Error(), u.token[b+1:e])
-	//	return false
-	//}
-	//log.Debug(operationID, "decodeBytes ", string(decodeBytes))
-	//parseToken := ParseToken{}
-	//err = json.Unmarshal(decodeBytes, &parseToken)
-	//if err != nil {
-	//	log.Error(operationID, "Unmarshal failed ", err.Error())
-	//	return false
-	//}
-	//log.Debug(operationID, "exp ", parseToken.Exp, "now ", time.Now().Unix())
-	//if parseToken.Exp < int(time.Now().Unix()) {
-	//	return true
-	//}
-	//return false
 }
 
 func (u *Heartbeat) Run() {
@@ -147,10 +121,13 @@ func (u *Heartbeat) Run() {
 			continue
 		}
 
-		log.Debug(operationID, "recv heartbeat resp, max seq on svr: ", wsSeqResp.MaxSeq)
-
+		log.Debug(operationID, "recv heartbeat resp, max seq on svr: ", wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)
+		groupID2MaxSeqOnSvr := make(map[string]uint32, 0)
+		for groupID, seq := range wsSeqResp.GroupMaxAndMinSeq {
+			groupID2MaxSeqOnSvr[groupID] = seq.MaxSeq
+		}
 		for {
-			err = common.TriggerCmdMaxSeq(sdk_struct.CmdMaxSeqToMsgSync{OperationID: operationID, MaxSeqOnSvr: wsSeqResp.MaxSeq}, u.PushMsgAndMaxSeqCh)
+			err = common.TriggerCmdMaxSeq(sdk_struct.CmdMaxSeqToMsgSync{OperationID: operationID, MaxSeqOnSvr: wsSeqResp.MaxSeq, GroupID2MaxSeqOnSvr: groupID2MaxSeqOnSvr}, u.PushMsgAndMaxSeqCh)
 			if err != nil {
 				log.Error(operationID, "TriggerMaxSeq failed ", err.Error(), " MaxSeq ", wsSeqResp.MaxSeq)
 				continue
