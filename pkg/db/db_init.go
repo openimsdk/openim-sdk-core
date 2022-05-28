@@ -106,10 +106,11 @@ func (d *DataBase) initDB() error {
 	//	return err
 	//}
 	//u.db = db
-
+	superGroup := &LocalGroup{TblName: "super_groups"}
 	db.AutoMigrate(&LocalFriend{},
 		&LocalFriendRequest{},
 		&LocalGroup{},
+		superGroup,
 		&LocalGroupMember{},
 		&LocalGroupRequest{},
 		&LocalErrChatLog{},
@@ -137,6 +138,10 @@ func (d *DataBase) initDB() error {
 	if !db.Migrator().HasTable(&LocalGroup{}) {
 		//log.NewInfo("CreateTable Group")
 		db.Migrator().CreateTable(&LocalGroup{})
+	}
+	if !db.Migrator().HasTable(superGroup) {
+		//log.NewInfo("CreateTable Group")
+		db.Migrator().CreateTable(superGroup)
 	}
 
 	if !db.Migrator().HasTable(&LocalGroupMember{}) {

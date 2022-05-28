@@ -123,6 +123,7 @@ type LocalGroup struct {
 	MemberCount   int32  `gorm:"column:member_count" json:"memberCount"`
 	Ex            string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 	AttachedInfo  string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+	TblName       string `gorm:"-"`
 }
 
 //message GroupMemberFullInfo {
