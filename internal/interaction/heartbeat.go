@@ -125,7 +125,11 @@ func (u *Heartbeat) Run() {
 			u.CloseConn()
 			runtime.Goexit()
 		}
-		resp, err := u.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.loginUserID, operationID)
+		groupIDList, err := u.GetJoinedSuperGroupIDList()
+		if err != nil {
+			log.Error(operationID, "GetJoinedSuperGroupIDList failed ", err.Error())
+		}
+		resp, err := u.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: u.loginUserID, GroupIDList: groupIDList}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.loginUserID, operationID)
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.loginUserID)
 			if !errors.Is(err, constant.WsRecvConnSame) && !errors.Is(err, constant.WsRecvConnDiff) {

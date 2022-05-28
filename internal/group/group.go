@@ -43,7 +43,6 @@ func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2
 	if g.listener == nil {
 		return
 	}
-
 	operationID := utils.OperationIDGenerator()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	if msg.SendTime < g.loginTime {

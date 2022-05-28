@@ -9,6 +9,7 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"sync"
 )
 
 type SuperGroupMsgSync struct {
@@ -19,13 +20,44 @@ type SuperGroupMsgSync struct {
 	//  PushMsgAndMaxSeqCh chan common.Cmd2Value
 	//seqMaxSynchronized uint32
 	//seqMaxNeedSync     uint32
+	superGroupMtx            sync.Mutex
 	Group2SeqMaxNeedSync     map[string]uint32
 	Group2SeqMaxSynchronized map[string]uint32
-	GroupIDList              []string
+	SuperGroupIDList         []string
+
+	joinedSuperGroupCh chan common.Cmd2Value
+}
+
+func NewSuperGroupMsgSync(dataBase *db.DataBase, ws *Ws, loginUserID string, conversationCh chan common.Cmd2Value, joinedSuperGroupCh chan common.Cmd2Value) *SuperGroupMsgSync {
+	p := &SuperGroupMsgSync{DataBase: dataBase, Ws: ws, loginUserID: loginUserID, conversationCh: conversationCh, joinedSuperGroupCh: joinedSuperGroupCh}
+	go p.updateJoinedSuperGroup()
+	return p
+}
+
+func (m *SuperGroupMsgSync) updateJoinedSuperGroup() {
+	for {
+		select {
+		case cmd := <-m.joinedSuperGroupCh:
+			{
+				g, err := m.GetJoinedSuperGroupList()
+				if err != nil {
+					m.superGroupMtx.Lock()
+					m.SuperGroupIDList = m.SuperGroupIDList[0:0]
+					for _, v := range g {
+						m.SuperGroupIDList = append(m.SuperGroupIDList, v.GroupID)
+					}
+					m.superGroupMtx.Unlock()
+					m.compareSeq()
+				}
+			}
+		}
+	}
 }
 
 func (m *SuperGroupMsgSync) compareSeq() {
-	for _, v := range m.GroupIDList {
+	m.superGroupMtx.Lock()
+	defer m.superGroupMtx.Unlock()
+	for _, v := range m.SuperGroupIDList {
 		var seqMaxSynchronized uint32
 		var seqMaxNeedSync uint32
 		n, err := m.GetSuperGroupNormalMsgSeq(v)
@@ -50,6 +82,7 @@ func (m *SuperGroupMsgSync) compareSeq() {
 
 func (m *SuperGroupMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 	operationID := cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).OperationID
+	m.superGroupMtx.Lock()
 	for groupID, maxSeqOnSvr := range cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).GroupID2MaxSeqOnSvr {
 		seqMaxNeedSync := m.Group2SeqMaxNeedSync[groupID]
 		log.Debug(operationID, "super group doMaxSeq, maxSeqOnSvr, seqMaxSynchronized, seqMaxNeedSync",
@@ -59,6 +92,7 @@ func (m *SuperGroupMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 		}
 		m.Group2SeqMaxNeedSync[groupID] = maxSeqOnSvr
 	}
+	m.superGroupMtx.Unlock()
 	m.syncMsg()
 }
 
@@ -94,6 +128,7 @@ func (m *SuperGroupMsgSync) doPushMsg(cmd common.Cmd2Value) {
 }
 
 func (m *SuperGroupMsgSync) syncMsg() {
+	m.superGroupMtx.Lock()
 	for groupID, seqMaxNeedSync := range m.Group2SeqMaxNeedSync {
 		seqMaxSynchronized := m.Group2SeqMaxSynchronized[groupID]
 		if seqMaxNeedSync > seqMaxSynchronized {
@@ -102,7 +137,7 @@ func (m *SuperGroupMsgSync) syncMsg() {
 			m.Group2SeqMaxSynchronized[groupID] = seqMaxNeedSync
 		}
 	}
-
+	m.superGroupMtx.Unlock()
 }
 
 func (m *SuperGroupMsgSync) syncMsgFromServer(beginSeq, endSeq uint32, groupID string) {

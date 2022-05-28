@@ -21,6 +21,10 @@ type SelfMsgSync struct {
 	seqMaxNeedSync     uint32
 }
 
+func NewSelfMsgSync(dataBase *db.DataBase, ws *Ws, loginUserID string, conversationCh chan common.Cmd2Value) *SelfMsgSync {
+	return &SelfMsgSync{DataBase: dataBase, Ws: ws, loginUserID: loginUserID, conversationCh: conversationCh}
+}
+
 func (m *SelfMsgSync) compareSeq() {
 	//todo 统计中间缺失的seq，并同步
 	n, err := m.GetNormalMsgSeq()

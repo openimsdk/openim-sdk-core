@@ -10,6 +10,14 @@ import (
 	"time"
 )
 
+func TriggerCmdJoinedSuperGroup(cmd sdk_struct.CmdJoinedSuperGroup, joinedSuperGroupCh chan Cmd2Value) error {
+	if joinedSuperGroupCh == nil {
+		return utils.Wrap(errors.New("ch == nil"), "")
+	}
+	c2v := Cmd2Value{Cmd: constant.CmdJoinedSuperGroup, Value: cmd}
+	return sendCmd(joinedSuperGroupCh, c2v, 1)
+}
+
 func TriggerCmdNewMsgCome(msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
 	if conversationCh == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
