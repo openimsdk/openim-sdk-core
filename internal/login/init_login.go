@@ -11,6 +11,7 @@ import (
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/organization"
 	"open_im_sdk/internal/sdk_advanced_function"
+	"open_im_sdk/internal/super_group"
 	"open_im_sdk/internal/user"
 	workMoments "open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
@@ -29,6 +30,7 @@ type LoginMgr struct {
 	organization     *organization.Organization
 	friend           *friend.Friend
 	group            *group.Group
+	superGroup       *super_group.SuperGroup
 	conversation     *conv.Conversation
 	user             *user.User
 	signaling        advanced_interface.Signaling
@@ -179,7 +181,8 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 
 	u.pushMsgAndMaxSeqCh = pushMsgAndMaxSeqCh
 	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
-	u.msgSync = ws.NewMsgSync(db, u.ws, userID, u.conversationCh, pushMsgAndMaxSeqCh)
+	joinedSuperGroupCh := make(chan common.Cmd2Value, 10)
+	u.msgSync = ws.NewMsgSync(db, u.ws, userID, u.conversationCh, pushMsgAndMaxSeqCh, joinedSuperGroupCh)
 
 	u.heartbeat = ws.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, token, exp)
 
@@ -193,6 +196,9 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 
 	u.group = group.NewGroup(u.loginUserID, u.db, p)
 	u.group.SetGroupListener(u.groupListener)
+
+	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db, p, joinedSuperGroupCh)
+
 	u.organization = organization.NewOrganization(u.loginUserID, u.db, p)
 	u.organization.SetListener(u.organizationListener)
 	u.cache = cache.NewCache(u.user, u.friend)
@@ -311,7 +317,7 @@ func (u *LoginMgr) GetLoginStatus() int32 {
 func (u *LoginMgr) forcedSynchronization() {
 	operationID := utils.OperationIDGenerator()
 	var wg sync.WaitGroup
-	wg.Add(9)
+	wg.Add(10)
 
 	go func() {
 		u.friend.SyncFriendList(operationID)
@@ -357,8 +363,12 @@ func (u *LoginMgr) forcedSynchronization() {
 		u.organization.SyncOrganization(operationID)
 		wg.Done()
 	}()
-	wg.Wait()
 
+	go func() {
+		u.superGroup.SyncJoinedGroupList(operationID)
+		wg.Done()
+	}()
+	wg.Wait()
 }
 
 func (u *LoginMgr) GetMinSeqSvr() int64 {

@@ -206,6 +206,9 @@ type CmdMaxSeqToMsgSync struct {
 
 	GroupID2MaxSeqOnSvr map[string]uint32
 }
+type CmdJoinedSuperGroup struct {
+}
+
 type OANotificationElem struct {
 	NotificationName    string `mapstructure:"notificationName" validate:"required"`
 	NotificationFaceURL string `mapstructure:"notificationFaceURL" validate:"required"`

@@ -19,6 +19,8 @@ const (
 	CmdRefuseFriend               = "016"
 	CmdAddFriend                  = "017"
 
+	CmdJoinedSuperGroup = "018"
+
 	CmdMaxSeq  = "maxSeq"
 	CmdPushMsg = "pushMsg"
 	CmdLogout  = "Logout"
@@ -85,7 +87,11 @@ const (
 
 	SignalingNotificationBegin = 1600
 	SignalingNotification      = 1601
-	SignalingNotificationEnd   = 1699
+	SignalingNotificationEnd   = 1610
+
+	SuperGroupNotificationBegin  = 1620
+	SuperGroupUpdateNotification = 1621
+	SuperGroupNotificationEnd    = 1630
 
 	ConversationPrivateChatNotification = 1701
 	OrganizationChangedNotification     = 1801
