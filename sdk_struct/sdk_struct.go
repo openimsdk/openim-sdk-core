@@ -160,7 +160,7 @@ type AttachedInfoElem struct {
 type GroupHasReadInfo struct {
 	HasReadUserIDList []string `json:"hasReadUserIDList,omitempty"`
 	HasReadCount      int32    `json:"hasReadCount"`
-	GroupMemberCount  uint32   `json:"groupMemberCount"`
+	GroupMemberCount  int32    `json:"groupMemberCount"`
 }
 type NewMsgList []*MsgStruct
 

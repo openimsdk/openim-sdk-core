@@ -34,7 +34,7 @@ type Conversation struct {
 	p                    *ws.PostApi
 	ConversationListener open_im_sdk_callback.OnConversationListener
 	msgListener          open_im_sdk_callback.OnAdvancedMsgListener
-	ch                   chan common.Cmd2Value
+	recvCH               chan common.Cmd2Value
 	loginUserID          string
 	platformID           int32
 	DataDir              string
@@ -71,7 +71,7 @@ func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener,
 	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling advanced_interface.Signaling,
 	advancedFunction advanced_interface.AdvancedFunction, organization *organization.Organization, workMoments *workMoments.WorkMoments, cache *cache.Cache) *Conversation {
-	n := &Conversation{Ws: ws, db: db, p: p, ch: ch, loginUserID: loginUserID, platformID: platformID,
+	n := &Conversation{Ws: ws, db: db, p: p, recvCH: ch, loginUserID: loginUserID, platformID: platformID,
 		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage, signaling: signaling,
 		advancedFunction: advancedFunction, organization: organization, workMoments: workMoments}
 	n.SetMsgListener(msgListener)
@@ -81,9 +81,8 @@ func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 }
 
 func (c *Conversation) GetCh() chan common.Cmd2Value {
-	return c.ch
+	return c.recvCH
 }
-
 func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	operationID := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).OperationID
 	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).MsgList
@@ -158,41 +157,41 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		switch v.SessionType {
 		case constant.SingleChatType:
 			if v.ContentType > constant.FriendNotificationBegin && v.ContentType < constant.FriendNotificationEnd {
-				c.friend.DoNotification(v, c.ch)
+				c.friend.DoNotification(v, c.GetCh())
 				log.Info(operationID, "DoFriendMsg SingleChatType", v)
 			} else if v.ContentType > constant.UserNotificationBegin && v.ContentType < constant.UserNotificationEnd {
 				log.Info(operationID, "DoFriendMsg  DoUserMsg SingleChatType", v)
 				c.user.DoNotification(v)
-				c.friend.DoNotification(v, c.ch)
+				c.friend.DoNotification(v, c.GetCh())
 			} else if v.ContentType == constant.GroupApplicationRejectedNotification ||
 				v.ContentType == constant.GroupApplicationAcceptedNotification ||
 				v.ContentType == constant.JoinGroupApplicationNotification {
 				log.Info(operationID, "DoGroupMsg SingleChatType", v)
-				c.group.DoNotification(v, c.ch)
+				c.group.DoNotification(v, c.GetCh())
 			} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
 				log.Info(operationID, "signaling DoNotification ", v)
-				c.signaling.DoNotification(v, c.ch, operationID)
+				c.signaling.DoNotification(v, c.GetCh(), operationID)
 				continue
 			} else if v.ContentType == constant.OrganizationChangedNotification {
 				log.Info(operationID, "Organization Changed Notification ")
-				c.organization.DoNotification(v, c.ch, operationID)
+				c.organization.DoNotification(v, c.GetCh(), operationID)
 			} else if v.ContentType == constant.WorkMomentNotification {
 				log.Info(operationID, "WorkMoment New Notification")
 				c.workMoments.DoNotification(tips.JsonDetail, operationID)
 			}
-		case constant.GroupChatType:
+		case constant.GroupChatType, constant.SuperGroupChatType:
 			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
-				c.group.DoNotification(v, c.ch)
+				c.group.DoNotification(v, c.GetCh())
 				log.Info(operationID, "DoGroupMsg SingleChatType", v)
 			} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
 				log.Info(operationID, "signaling DoNotification ", v)
-				c.signaling.DoNotification(v, c.ch, operationID)
+				c.signaling.DoNotification(v, c.GetCh(), operationID)
 				continue
 			}
 		}
 		if v.SendID == c.loginUserID { //seq
 			// Messages sent by myself  //if  sent through  this terminal
-			m, err := c.db.GetMessage(msg.ClientMsgID)
+			m, err := c.db.GetMessageController(msg)
 			if err == nil {
 				log.Info(operationID, "have message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
 				if m.Seq == 0 {
@@ -220,6 +219,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				case constant.GroupChatType:
 					lc.GroupID = v.GroupID
 					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
+				case constant.SuperGroupChatType:
+					lc.GroupID = v.GroupID
+					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.SuperGroupChatType)
 					//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
 					//if err != nil {
 					//	utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
@@ -236,9 +238,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					if isSenderConversationUpdate {
 						log.Debug(operationID, "updateConversation msg", v, lc)
 						c.updateConversation(&lc, conversationSet)
-					} else {
-						//special fix
-						//c.updateConversation(&lc, conversationSet)
 					}
 					newMessages = append(newMessages, msg)
 				} else {
@@ -257,7 +256,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				}
 			}
 		} else { //Sent by others
-			if b, _ := c.db.MessageIfExists(msg.ClientMsgID); !b { //Deduplication operation
+			if _, err := c.db.GetMessageController(msg); err != nil { //Deduplication operation
 				lc := db.LocalConversation{
 					ConversationType:  v.SessionType,
 					LatestMsg:         utils.StructToJsonString(msg),
@@ -272,6 +271,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				case constant.GroupChatType:
 					lc.GroupID = v.GroupID
 					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
+				case constant.SuperGroupChatType:
+					lc.GroupID = v.GroupID
+					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.SuperGroupChatType)
 					//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
 					//if err != nil {
 					//	utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
@@ -331,11 +333,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		log.Error(operationID, "sync seq normal message err  :", err5.Error())
 	}
 	//Normal message storage
-	err1 := c.db.BatchInsertMessageList(insertMsg)
+	err1 := c.db.BatchInsertMessageListController(insertMsg)
 	if err1 != nil {
 		log.Error(operationID, "insert GetMessage detail err:", err1.Error(), len(insertMsg))
 		for _, v := range insertMsg {
-			e := c.db.InsertMessage(v)
+			e := c.db.InsertMessageController(v)
 			if e != nil {
 				errChatLog := &db.LocalErrChatLog{}
 				copier.Copy(errChatLog, v)

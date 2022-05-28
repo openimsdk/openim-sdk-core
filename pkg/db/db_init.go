@@ -9,6 +9,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"sync"
+	"time"
 )
 
 var UserDBMap map[string]*DataBase
@@ -90,7 +91,13 @@ func (d *DataBase) initDB() error {
 	if err != nil {
 		return utils.Wrap(err, "open db failed")
 	}
-
+	sqlDB, err := db.DB()
+	if err != nil {
+		return utils.Wrap(err, "get sql db failed")
+	}
+	sqlDB.SetConnMaxLifetime(time.Hour * 1)
+	sqlDB.SetMaxOpenConns(10)
+	sqlDB.SetMaxIdleConns(2)
 	d.conn = db
 	//db, err := sql.Open("sqlite3", SvrConf.DbDir+"OpenIM_"+uid+".db")
 	//sdkLog("open db:", SvrConf.DbDir+"OpenIM_"+uid+".db")

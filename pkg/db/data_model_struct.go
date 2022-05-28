@@ -290,10 +290,12 @@ type LocalChatLog struct {
 	CreateTime       int64  `gorm:"column:create_time" json:"createTime"`
 	AttachedInfo     string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 	Ex               string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	TblName          string `gorm:"-"`
 }
+
 type LocalErrChatLog struct {
 	Seq              uint32 `gorm:"column:seq;primary_key" json:"seq"`
-	ClientMsgID      string `gorm:"column:client_msg_id;type:char(64)" json:"clientMsgID"`
+	ClientMsgID      string `gorm:"column:client_msg_id;primary_key;type:char(64)" json:"clientMsgID"`
 	ServerMsgID      string `gorm:"column:server_msg_id;type:char(64)" json:"serverMsgID"`
 	SendID           string `gorm:"column:send_id;type:char(64)" json:"sendID"`
 	RecvID           string `gorm:"column:recv_id;type:char(64)" json:"recvID"`
