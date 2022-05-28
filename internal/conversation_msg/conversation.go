@@ -311,7 +311,7 @@ func (c *Conversation) SyncConversations(operationID string) {
 	}
 	// callback
 	if len(conversationChangedList) > 0 {
-		if err = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedList}, c.ch); err != nil {
+		if err = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedList}, c.GetCh()); err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		}
 	}
@@ -335,6 +335,7 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 	var list []*db.LocalChatLog
 	var err error
 	var messageList sdk_struct.NewMsgList
+	var msg sdk_struct.MsgStruct
 	var notStartTime bool
 	if req.ConversationID != "" {
 		conversationID = req.ConversationID
@@ -345,8 +346,9 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 		switch lc.ConversationType {
 		case constant.SingleChatType, constant.NotificationChatType:
 			sourceID = lc.UserID
-		case constant.GroupChatType:
+		case constant.GroupChatType, constant.SuperGroupChatType:
 			sourceID = lc.GroupID
+			msg.GroupID = lc.GroupID
 		}
 		sessionType = int(lc.ConversationType)
 		if req.StartClientMsgID == "" {
@@ -354,7 +356,9 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 			////startTime = utils.GetCurrentTimestampByMill()
 			notStartTime = true
 		} else {
-			m, err := c.db.GetMessage(req.StartClientMsgID)
+			msg.SessionType = lc.ConversationType
+			msg.ClientMsgID = req.StartClientMsgID
+			m, err := c.db.GetMessageController(&msg)
 			common.CheckDBErrCallback(callback, err, operationID)
 			startTime = m.SendTime
 		}
@@ -385,9 +389,9 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 
 	log.Info(operationID, "sourceID:", sourceID, "startTime:", startTime, "count:", req.Count, "not start_time", notStartTime)
 	if notStartTime {
-		list, err = c.db.GetMessageListNoTime(sourceID, sessionType, req.Count, isReverse)
+		list, err = c.db.GetMessageListNoTimeController(sourceID, sessionType, req.Count, isReverse)
 	} else {
-		list, err = c.db.GetMessageList(sourceID, sessionType, req.Count, startTime, isReverse)
+		list, err = c.db.GetMessageListController(sourceID, sessionType, req.Count, startTime, isReverse)
 	}
 	common.CheckDBErrCallback(callback, err, operationID)
 	localChatLogToMsgStruct(&messageList, list)
@@ -464,7 +468,7 @@ func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req 
 	lc.LatestMsg = utils.StructToJsonString(req)
 	lc.LatestMsgSendTime = req.SendTime
 	lc.ConversationID = conversationID
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.ch)
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.GetCh())
 }
 func (c *Conversation) typingStatusUpdate(callback open_im_sdk_callback.Base, recvID, msgTip, operationID string) {
 	s := sdk_struct.MsgStruct{}
@@ -534,7 +538,7 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 			continue
 		}
 	}
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.ch)
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.GetCh())
 	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 }
 
@@ -589,7 +593,7 @@ func (c *Conversation) clearGroupHistoryMessage(callback open_im_sdk_callback.Ba
 	common.CheckDBErrCallback(callback, err, operationID)
 	err = c.db.ClearConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 
 }
 
@@ -599,7 +603,7 @@ func (c *Conversation) clearC2CHistoryMessage(callback open_im_sdk_callback.Base
 	common.CheckDBErrCallback(callback, err, operationID)
 	err = c.db.ClearConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 }
 
 func (c *Conversation) deleteMessageFromSvr(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
@@ -660,7 +664,7 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 		if err != nil {
 			log.Error("internal", "updateConversationLatestMsgModel err: ", err)
 		} else {
-			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
+			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 		}
 	}
 }
@@ -914,7 +918,7 @@ func (c *Conversation) deleteAllMsgFromLocal(callback open_im_sdk_callback.Base,
 	conversationList, err := c.db.GetAllConversationList()
 	common.CheckDBErrCallback(callback, err, operationID)
 	for _, conversation := range conversationList {
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.ConChange, Args: []string{conversation.ConversationID}}, c.ch)
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.ConChange, Args: []string{conversation.ConversationID}}, c.GetCh())
 	}
 }
 

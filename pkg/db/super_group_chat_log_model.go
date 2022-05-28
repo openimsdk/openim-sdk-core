@@ -9,39 +9,32 @@ import (
 	"open_im_sdk/sdk_struct"
 )
 
-func (d *DataBase) BatchInsertMessageList(MessageList []*LocalChatLog) error {
+func NewLocalChatLog(tblName string) *LocalChatLog {
+	return &LocalChatLog{TblName: tblName}
+}
+
+func (d *DataBase) initSuperLocalChatLog(groupID string) {
+	m := NewLocalChatLog(utils.GetSuperGroupTableName(groupID))
+	if !d.conn.Migrator().HasTable(m) {
+		d.conn.Migrator().CreateTable(m)
+	}
+	d.conn.AutoMigrate(m)
+}
+func (d *DataBase) SuperGroupBatchInsertMessageList(MessageList []*LocalChatLog, groupID string) error {
 	if MessageList == nil {
 		return nil
 	}
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.Create(MessageList).Error, "BatchInsertMessageList failed")
+	return utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Create(MessageList).Error, "SuperGroupBatchInsertMessageList failed")
 }
-func (d *DataBase) BatchInsertMessageListController(MessageList []*LocalChatLog) error {
-	if len(MessageList) == 0 {
-		return nil
-	}
-	switch MessageList[len(MessageList)-1].SessionType {
-	case constant.SuperGroup:
-		return d.SuperGroupBatchInsertMessageList(MessageList, MessageList[len(MessageList)-1].RecvID)
-	default:
-		return d.BatchInsertMessageList(MessageList)
-	}
-}
-func (d *DataBase) InsertMessage(Message *LocalChatLog) error {
+func (d *DataBase) SuperGroupInsertMessage(Message *LocalChatLog, groupID string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.Create(Message).Error, "InsertMessage failed")
+	return utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Create(Message).Error, "SuperGroupInsertMessage failed")
 }
-func (d *DataBase) InsertMessageController(Message *LocalChatLog) error {
-	switch Message.SessionType {
-	case constant.SuperGroup:
-		return d.SuperGroupInsertMessage(Message, Message.RecvID)
-	default:
-		return d.InsertMessage(Message)
-	}
-}
-func (d *DataBase) SearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*LocalChatLog, err error) {
+
+func (d *DataBase) SuperGroupSearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int, groupID string) (result []*LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []LocalChatLog
@@ -81,7 +74,7 @@ func (d *DataBase) SearchMessageByKeyword(contentType []int, keywordList []strin
 		return nil, err
 	}
 	condition += subCondition
-	err = utils.Wrap(d.conn.Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
+	err = utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
 
 	for _, v := range messageList {
 		v1 := v
@@ -90,7 +83,7 @@ func (d *DataBase) SearchMessageByKeyword(contentType []int, keywordList []strin
 	return result, err
 }
 
-func (d *DataBase) SearchMessageByContentType(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*LocalChatLog, err error) {
+func (d *DataBase) SuperGroupSearchMessageByContentType(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []LocalChatLog
@@ -111,7 +104,7 @@ func (d *DataBase) SearchMessageByContentType(contentType []int, sourceID string
 	return result, err
 }
 
-func (d *DataBase) SearchMessageByContentTypeAndKeyword(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*LocalChatLog, err error) {
+func (d *DataBase) SuperGroupSearchMessageByContentTypeAndKeyword(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []LocalChatLog
@@ -151,7 +144,7 @@ func (d *DataBase) SearchMessageByContentTypeAndKeyword(contentType []int, keywo
 	}
 	return result, err
 }
-func (d *DataBase) BatchUpdateMessageList(MessageList []*LocalChatLog) error {
+func (d *DataBase) SuperGroupBatchUpdateMessageList(MessageList []*LocalChatLog) error {
 	if MessageList == nil {
 		return nil
 	}
@@ -161,8 +154,7 @@ func (d *DataBase) BatchUpdateMessageList(MessageList []*LocalChatLog) error {
 		v1.ClientMsgID = v.ClientMsgID
 		v1.Seq = v.Seq
 		v1.Status = v.Status
-		v1.RecvID = v.RecvID
-		err := d.UpdateMessageController(v1)
+		err := d.SuperGroupUpdateMessage(v1)
 		if err != nil {
 			return utils.Wrap(err, "BatchUpdateMessageList failed")
 		}
@@ -171,7 +163,7 @@ func (d *DataBase) BatchUpdateMessageList(MessageList []*LocalChatLog) error {
 	return nil
 }
 
-func (d *DataBase) MessageIfExists(ClientMsgID string) (bool, error) {
+func (d *DataBase) SuperGroupMessageIfExists(ClientMsgID string) (bool, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var count int64
@@ -186,10 +178,10 @@ func (d *DataBase) MessageIfExists(ClientMsgID string) (bool, error) {
 		return true, nil
 	}
 }
-func (d *DataBase) IsExistsInErrChatLogBySeq(seq int64) bool {
+func (d *DataBase) SuperGroupIsExistsInErrChatLogBySeq(seq int64) bool {
 	return true
 }
-func (d *DataBase) MessageIfExistsBySeq(seq int64) (bool, error) {
+func (d *DataBase) SuperGroupMessageIfExistsBySeq(seq int64) (bool, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var count int64
@@ -204,28 +196,21 @@ func (d *DataBase) MessageIfExistsBySeq(seq int64) (bool, error) {
 		return true, nil
 	}
 }
-func (d *DataBase) GetMessage(ClientMsgID string) (*LocalChatLog, error) {
+func (d *DataBase) SuperGroupGetMessage(msg *sdk_struct.MsgStruct) (*LocalChatLog, error) {
+	d.initSuperLocalChatLog(msg.GroupID)
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var c LocalChatLog
-	return &c, utils.Wrap(d.conn.Where("client_msg_id = ?",
-		ClientMsgID).Take(&c).Error, "GetMessage failed")
-}
-func (d *DataBase) GetMessageController(msg *sdk_struct.MsgStruct) (*LocalChatLog, error) {
-	switch msg.SessionType {
-	case constant.SuperGroup:
-		return d.SuperGroupGetMessage(msg)
-	default:
-		return d.GetMessage(msg.ClientMsgID)
-	}
+	return &c, utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(msg.GroupID)).Where("client_msg_id = ?",
+		msg.ClientMsgID).Take(&c).Error, "GetMessage failed")
 }
 
-func (d *DataBase) GetAllUnDeleteMessageSeqList() ([]uint32, error) {
+func (d *DataBase) SuperGroupGetAllUnDeleteMessageSeqList() ([]uint32, error) {
 	var seqList []uint32
 	return seqList, utils.Wrap(d.conn.Model(&LocalChatLog{}).Where("status != 4").Select("seq").Find(&seqList).Error, "")
 }
 
-func (d *DataBase) UpdateColumnsMessage(ClientMsgID string, args map[string]interface{}) error {
+func (d *DataBase) SuperGroupUpdateColumnsMessage(ClientMsgID string, args map[string]interface{}) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	c := LocalChatLog{ClientMsgID: ClientMsgID}
@@ -235,32 +220,24 @@ func (d *DataBase) UpdateColumnsMessage(ClientMsgID string, args map[string]inte
 	}
 	return utils.Wrap(t.Error, "UpdateColumnsConversation failed")
 }
-func (d *DataBase) UpdateMessage(c *LocalChatLog) error {
+func (d *DataBase) SuperGroupUpdateMessage(c *LocalChatLog) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Updates(c)
+	t := d.conn.Table(utils.GetSuperGroupTableName(c.RecvID)).Updates(c)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
 	return utils.Wrap(t.Error, "UpdateMessage failed")
 }
-func (d *DataBase) UpdateMessageController(c *LocalChatLog) error {
-	switch c.SessionType {
-	case constant.SuperGroup:
-		return d.SuperGroupUpdateMessage(c)
-	default:
-		return d.UpdateMessage(c)
-	}
-}
 
-func (d *DataBase) DeleteAllMessage() error {
+func (d *DataBase) SuperGroupDeleteAllMessage() error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	err := d.conn.Model(&LocalChatLog{}).Exec("update local_chat_logs set status = ?,content = ? ", constant.MsgStatusHasDeleted, "").Error
 	return utils.Wrap(err, "delete all message error")
 }
 
-func (d *DataBase) UpdateMessageStatusBySourceID(sourceID string, status, sessionType int32) error {
+func (d *DataBase) SuperGroupUpdateMessageStatusBySourceID(sourceID string, status, sessionType int32) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var condition string
@@ -275,25 +252,17 @@ func (d *DataBase) UpdateMessageStatusBySourceID(sourceID string, status, sessio
 	}
 	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
 }
-func (d *DataBase) UpdateMessageTimeAndStatus(clientMsgID string, serverMsgID string, sendTime int64, status int32) error {
+func (d *DataBase) SuperGroupUpdateMessageTimeAndStatus(msg *sdk_struct.MsgStruct) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Model(LocalChatLog{}).Where("client_msg_id=? And seq=?", clientMsgID, 0).Updates(LocalChatLog{Status: status, SendTime: sendTime, ServerMsgID: serverMsgID})
+	t := d.conn.Table(utils.GetSuperGroupTableName(msg.GroupID)).Where("client_msg_id=? And seq=?", msg.ClientMsgID, 0).Updates(LocalChatLog{Status: msg.Status, SendTime: msg.SendTime, ServerMsgID: msg.ServerMsgID})
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
-	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
-}
-func (d *DataBase) UpdateMessageTimeAndStatusController(msg *sdk_struct.MsgStruct) error {
-	switch msg.SessionType {
-	case constant.SuperGroup:
-		return d.SuperGroupUpdateMessageTimeAndStatus(msg)
-	default:
-		return d.UpdateMessageTimeAndStatus(msg.ClientMsgID, msg.ServerMsgID, msg.SendTime, msg.Status)
-	}
+	return utils.Wrap(t.Error, "SuperGroupUpdateMessageTimeAndStatus failed")
 }
 
-func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*LocalChatLog, err error) {
+func (d *DataBase) SuperGroupGetMessageList(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []LocalChatLog
@@ -305,12 +274,9 @@ func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, start
 		timeOrder = "send_time DESC"
 		timeSymbol = "<"
 	}
-	if sessionType == constant.SingleChatType && sourceID == d.loginUserID {
-		condition = "send_id = ? And recv_id = ? AND status <=? And session_type = ? And send_time " + timeSymbol + " ?"
-	} else {
-		condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? And send_time " + timeSymbol + " ?"
-	}
-	err = utils.Wrap(d.conn.Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
+	condition = " recv_id = ? AND status <=? And session_type = ? And send_time " + timeSymbol + " ?"
+
+	err = utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(sourceID)).Where(condition, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
 		Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
 	for _, v := range messageList {
 		v1 := v
@@ -318,15 +284,7 @@ func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, start
 	}
 	return result, err
 }
-func (d *DataBase) GetMessageListController(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*LocalChatLog, err error) {
-	switch sessionType {
-	case constant.SuperGroup:
-		return d.SuperGroupGetMessageList(sourceID, sessionType, count, startTime, isReverse)
-	default:
-		return d.GetMessageList(sourceID, sessionType, count, startTime, isReverse)
-	}
-}
-func (d *DataBase) GetMessageListNoTime(sourceID string, sessionType, count int, isReverse bool) (result []*LocalChatLog, err error) {
+func (d *DataBase) SuperGroupGetMessageListNoTime(sourceID string, sessionType, count int, isReverse bool) (result []*LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []LocalChatLog
@@ -336,12 +294,9 @@ func (d *DataBase) GetMessageListNoTime(sourceID string, sessionType, count int,
 	} else {
 		timeOrder = "send_time DESC"
 	}
-	if sessionType == constant.SingleChatType && sourceID == d.loginUserID {
-		condition = "send_id = ? And recv_id = ? AND status <=? And session_type = ?"
-	} else {
-		condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? "
-	}
-	err = utils.Wrap(d.conn.Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType).
+	condition = "recv_id = ? AND status <=? And session_type = ? "
+
+	err = utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(sourceID)).Where(condition, sourceID, constant.MsgStatusSendFailed, sessionType).
 		Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
 	for _, v := range messageList {
 		v1 := v
@@ -350,16 +305,7 @@ func (d *DataBase) GetMessageListNoTime(sourceID string, sessionType, count int,
 	return result, err
 }
 
-func (d *DataBase) GetMessageListNoTimeController(sourceID string, sessionType, count int, isReverse bool) (result []*LocalChatLog, err error) {
-	switch sessionType {
-	case constant.SuperGroup:
-		return d.SuperGroupGetMessageListNoTime(sourceID, sessionType, count, isReverse)
-	default:
-		return d.GetMessageListNoTime(sourceID, sessionType, count, isReverse)
-	}
-}
-
-func (d *DataBase) GetSendingMessageList() (result []*LocalChatLog, err error) {
+func (d *DataBase) SuperGroupGetSendingMessageList() (result []*LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []LocalChatLog
@@ -371,7 +317,7 @@ func (d *DataBase) GetSendingMessageList() (result []*LocalChatLog, err error) {
 	return result, err
 }
 
-func (d *DataBase) UpdateMessageHasRead(sendID string, msgIDList []string, sessionType int) error {
+func (d *DataBase) SuperGroupUpdateMessageHasRead(sendID string, msgIDList []string, sessionType int) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	t := d.conn.Model(LocalChatLog{}).Where("send_id=?  AND session_type=? AND client_msg_id in ?", sendID, sessionType, msgIDList).Update("is_read", constant.HasRead)
@@ -380,7 +326,7 @@ func (d *DataBase) UpdateMessageHasRead(sendID string, msgIDList []string, sessi
 	}
 	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
 }
-func (d *DataBase) GetMultipleMessage(conversationIDList []string) (result []*LocalChatLog, err error) {
+func (d *DataBase) SuperGroupGetMultipleMessage(conversationIDList []string) (result []*LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []LocalChatLog
@@ -392,14 +338,14 @@ func (d *DataBase) GetMultipleMessage(conversationIDList []string) (result []*Lo
 	return result, err
 }
 
-func (d *DataBase) GetNormalMsgSeq() (uint32, error) {
+func (d *DataBase) SuperGroupGetNormalMsgSeq() (uint32, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var seq uint32
 	err := d.conn.Model(LocalChatLog{}).Select("IFNULL(max(seq),0)").Find(&seq).Error
 	return seq, utils.Wrap(err, "GetNormalMsgSeq")
 }
-func (d *DataBase) GetTestMessage(seq uint32) (*LocalChatLog, error) {
+func (d *DataBase) SuperGroupGetTestMessage(seq uint32) (*LocalChatLog, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var c LocalChatLog
@@ -407,7 +353,7 @@ func (d *DataBase) GetTestMessage(seq uint32) (*LocalChatLog, error) {
 		seq).Find(&c).Error, "GetTestMessage failed")
 }
 
-func (d *DataBase) UpdateMsgSenderNickname(sendID, nickname string, sType int) error {
+func (d *DataBase) SuperGroupUpdateMsgSenderNickname(sendID, nickname string, sType int) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Model(LocalChatLog{}).Where(
@@ -415,14 +361,14 @@ func (d *DataBase) UpdateMsgSenderNickname(sendID, nickname string, sType int) e
 		map[string]interface{}{"sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
 }
 
-func (d *DataBase) UpdateMsgSenderFaceURL(sendID, faceURL string, sType int) error {
+func (d *DataBase) SuperGroupUpdateMsgSenderFaceURL(sendID, faceURL string, sType int) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Model(LocalChatLog{}).Where(
 		"send_id = ? and session_type = ? and sender_face_url != ? ", sendID, sType, faceURL).Updates(
 		map[string]interface{}{"sender_face_url": faceURL}).Error, utils.GetSelfFuncName()+" failed")
 }
-func (d *DataBase) UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int) error {
+func (d *DataBase) SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Model(LocalChatLog{}).Where(
@@ -430,7 +376,7 @@ func (d *DataBase) UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nick
 		map[string]interface{}{"sender_face_url": faceURL, "sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
 }
 
-func (d *DataBase) GetMsgSeqByClientMsgID(clientMsgID string) (uint32, error) {
+func (d *DataBase) SuperGroupGetMsgSeqByClientMsgID(clientMsgID string) (uint32, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var seq uint32
@@ -438,7 +384,7 @@ func (d *DataBase) GetMsgSeqByClientMsgID(clientMsgID string) (uint32, error) {
 	return seq, err
 }
 
-func (d *DataBase) GetMsgSeqListByGroupID(groupID string) ([]uint32, error) {
+func (d *DataBase) SuperGroupGetMsgSeqListByGroupID(groupID string) ([]uint32, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var seqList []uint32
@@ -446,7 +392,7 @@ func (d *DataBase) GetMsgSeqListByGroupID(groupID string) ([]uint32, error) {
 	return seqList, err
 }
 
-func (d *DataBase) GetMsgSeqListByPeerUserID(userID string) ([]uint32, error) {
+func (d *DataBase) SuperGroupGetMsgSeqListByPeerUserID(userID string) ([]uint32, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var seqList []uint32
@@ -454,7 +400,7 @@ func (d *DataBase) GetMsgSeqListByPeerUserID(userID string) ([]uint32, error) {
 	return seqList, err
 }
 
-func (d *DataBase) GetMsgSeqListBySelfUserID(userID string) ([]uint32, error) {
+func (d *DataBase) SuperGroupGetMsgSeqListBySelfUserID(userID string) ([]uint32, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var seqList []uint32

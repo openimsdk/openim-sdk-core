@@ -166,6 +166,10 @@ const (
 //	ErrCodeUserInfo     = 4001
 //	ErrCodeGroup        = 5001
 //)
+const (
+	NormalGroup = 0
+	SuperGroup  = 1
+)
 
 const (
 	SdkInit      = 0
