@@ -838,6 +838,7 @@ func (c *Conversation) InternalSendMessage(callback open_im_sdk_callback.Base, s
 	return &sendMsgResp, nil
 
 }
+
 func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.LocalConversation, callback open_im_sdk_callback.SendMsgCallBack,
 	delFile []string, offlinePushInfo *server_api_params.OfflinePushInfo, options map[string]bool, operationID string) {
 	//Protocol conversion
