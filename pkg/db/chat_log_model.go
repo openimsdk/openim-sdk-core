@@ -401,7 +401,9 @@ func (d *DataBase) GetNormalMsgSeq() (uint32, error) {
 }
 
 func (d *DataBase) GetSuperGroupNormalMsgSeq(groupID string) (uint32, error) {
-	return 0, nil
+	var seq uint32
+	err := d.conn.Table(utils.GetSuperGroupTableName(groupID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
+	return seq, utils.Wrap(err, "GetSuperGroupNormalMsgSeq")
 }
 
 func (d *DataBase) GetTestMessage(seq uint32) (*LocalChatLog, error) {
