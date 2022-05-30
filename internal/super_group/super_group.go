@@ -65,7 +65,7 @@ func (s *SuperGroup) getJoinedGroupListFromSvr(operationID string) ([]*api.Group
 }
 
 func (s *SuperGroup) GetGroupInfoFromLocal2Svr(groupID string) (*model_struct.LocalGroup, error) {
-	localGroup, err := s.db.GetGroupInfoByGroupID(groupID)
+	localGroup, err := s.db.GetSuperGroupInfoByGroupID(groupID)
 	if err == nil {
 		return localGroup, nil
 	}

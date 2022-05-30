@@ -856,8 +856,8 @@ func (c *Conversation) addFaceURLAndName(lc *model_struct.LocalConversation) {
 			c.cache.Update(lc.UserID, faceUrl, name)
 		}
 
-	case constant.GroupChatType:
-		g, err := c.group.GetGroupInfoFromLocal2Svr(lc.GroupID)
+	case constant.GroupChatType, constant.SuperGroupChatType:
+		g, err := c.full.GetGroupInfoFromLocal2Svr(lc.GroupID)
 		if err != nil {
 			log.Error(operationID, "GetGroupInfoByGroupID err", err.Error(), lc.GroupID)
 			return
