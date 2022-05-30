@@ -48,3 +48,16 @@ func (s *SuperGroup) DoNotification(msg *api.MsgData, conversationCh chan common
 		}
 	}()
 }
+
+func (s *SuperGroup) getJoinedGroupListFromSvr(operationID string) ([]*api.GroupInfo, error) {
+	apiReq := api.GetJoinedSuperGroupReq{}
+	apiReq.OperationID = operationID
+	apiReq.FromUserID = s.loginUserID
+	var result []*api.GroupInfo
+	log.Debug(operationID, "api args: ", apiReq)
+	err := s.p.PostReturn(constant.GetJoinedSuperGroupListRouter, apiReq, &result)
+	if err != nil {
+		return nil, utils.Wrap(err, apiReq.OperationID)
+	}
+	return result, nil
+}

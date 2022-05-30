@@ -87,11 +87,11 @@ const (
 
 	SignalingNotificationBegin = 1600
 	SignalingNotification      = 1601
-	SignalingNotificationEnd   = 1610
+	SignalingNotificationEnd   = 1649
 
-	SuperGroupNotificationBegin  = 1620
+	SuperGroupNotificationBegin  = 1650
 	SuperGroupUpdateNotification = 1621
-	SuperGroupNotificationEnd    = 1630
+	SuperGroupNotificationEnd    = 1699
 
 	ConversationPrivateChatNotification = 1701
 	OrganizationChangedNotification     = 1801

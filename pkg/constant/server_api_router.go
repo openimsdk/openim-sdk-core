@@ -64,10 +64,14 @@ const (
 	GetSubDepartmentRouter    = RouterOrganization + "/get_sub_department"
 	GetDepartmentMemberRouter = RouterOrganization + "/get_department_member"
 	ParseTokenRouter          = RouterAuth + "/parse_token"
+
+	//super_group
+	GetJoinedSuperGroupListRouter = RouterSuperGroup + "/get_joined_group_list"
 )
 const (
 	RouterGroup        = "/group"
 	ConversationGroup  = "/conversation"
 	RouterOrganization = "/organization"
 	RouterAuth         = "/auth"
+	RouterSuperGroup   = "/super_group"
 )
