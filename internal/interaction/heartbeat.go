@@ -15,7 +15,7 @@ import (
 )
 
 type Heartbeat struct {
-	*Ws
+	//	*Ws
 	*MsgSync
 	cmdCh             chan common.Cmd2Value //waiting logout cmd , wake up cmd
 	heartbeatInterval int
