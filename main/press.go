@@ -12,22 +12,21 @@ func main() {
 	var senderNum *int          //Number of users sending messages
 	var singleSenderMsgNum *int //Number of single user send messages
 	var intervalTime *int       //Sending time interval, in millisecond
-	onlineNum = flag.Int("on", 100, "online num")
-	senderNum = flag.Int("sn", 100, "sender num")
-	singleSenderMsgNum = flag.Int("mn", 100000, "single sender msg num")
+	onlineNum = flag.Int("on", 4, "online num")
+	senderNum = flag.Int("sn", 4, "sender num")
+	singleSenderMsgNum = flag.Int("mn", 10000, "single sender msg num")
 	intervalTime = flag.Int("t", 1, "interval time mill second")
 	flag.Parse()
 
 	if *onlineNum < *senderNum {
-		log.Error("", "args failed onlineNum < senderNum ", *onlineNum, *senderNum)
+		log.Error("", "args failed onlineNum < senderNu ", *onlineNum, *senderNum)
 		os.Exit(-1)
 	}
-	log.NewPrivateLog("open_im_test", 6)
-	//log.NewPrivateLog("", 3)
+	log.NewPrivateLog("", 3)
 	log.Warn("", "online test start, number of online users: ", *onlineNum)
 	test.OnlineTest(*onlineNum)
 	log.Warn("", "online test finish, number of online users: ", *onlineNum)
 	log.Warn("", "reliability test start, user: ", *senderNum, "message number: ", *singleSenderMsgNum)
-	//test.ReliabilityTest(*singleSenderMsgNum, *intervalTime, 10, *senderNum)
-	test.PressTest(*singleSenderMsgNum, *intervalTime, 10, *senderNum)
+	test.ReliabilityTest(*singleSenderMsgNum, *intervalTime, 10, *senderNum)
+	//	test.PressTest(*singleSenderMsgNum, *intervalTime, 10, *senderNum)
 }

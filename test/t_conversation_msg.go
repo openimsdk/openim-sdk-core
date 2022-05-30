@@ -518,6 +518,20 @@ func DoTestSendMsg2(sendId, recvID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
 }
 
+func DoTestSendMsg2Group(sendId, groupID string, index int) {
+	m := "test:" + sendId + ":" + groupID + ":  " + utils.IntToString(index)
+	operationID := utils.OperationIDGenerator()
+	s := DoTestCreateTextMessage(m)
+	log.NewInfo(operationID, "send msg:", s)
+	var testSendMsg TestSendMsgCallBack
+	testSendMsg.OperationID = operationID
+	o := server_api_params.OfflinePushInfo{}
+	o.Title = "Title"
+	o.Desc = "Desc"
+	open_im_sdk.SendMessage(&testSendMsg, operationID, s, "", groupID, utils.StructToJsonString(o))
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
+}
+
 type TestMarkGroupMessageAsRead struct {
 	OperationID string
 }
@@ -584,7 +598,7 @@ func DoTestSendMsgPress(index int, sendId, recvID string, idx string) {
 	testSendMsg.recvID = recvID
 	testSendMsg.msgID = mstruct.ClientMsgID
 
-	log.Info(operationID, "SendMessage", sendId, recvID, testSendMsg.msgID, index)
+	log.Warn(operationID, "SendMessage", sendId, recvID, testSendMsg.msgID, index)
 	// SendMessage(callback open_im_sdk_callback.SendMsgCallBack, message, recvID,
 	//groupID string, offlinePushInfo string, operationID string) {
 

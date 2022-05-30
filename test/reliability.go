@@ -101,11 +101,12 @@ func PressTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecond int,
 	for i := 0; i < clientNum; i++ {
 		go func(idx int) {
 			RegisterUserReliability(idx, timeStamp)
+			log.Warn("", "get user token finish ", idx)
 			wg.Done()
 		}(i)
 	}
 	wg.Wait()
-	log.Info("", "RegisterUserReliability finish ", clientNum)
+	log.Info("", "get all user token finish ", clientNum)
 
 	rand.Seed(time.Now().UnixNano())
 
@@ -113,6 +114,7 @@ func PressTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecond int,
 	for i := 0; i < clientNum; i++ {
 		rdSleep := rand.Intn(randSleepMaxSecond) + 1
 		isSend := rand.Intn(2)
+		isSend = 0
 		if isSend == 0 {
 			go func(idx int) {
 				PressOne(idx, rdSleep, true, intervalSleepMS)
@@ -164,6 +166,7 @@ func CheckReliabilityResult() bool {
 			//	return false
 		}
 	}
+
 	log.Warn("", "need send msg num : ", sendMsgClient*msgNumInOneClient)
 	log.Warn("", "send msg succ num ", len(SendSuccAllMsg))
 	log.Warn("", "send msg failed num ", len(SendFailedAllMsg))
@@ -179,7 +182,7 @@ func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSle
 	token := allLoginMgr[index].token
 	ReliabilityInitAndLogin(index, strMyUid, token, WSADDR, APIADDR)
 	log.Info("", "login ok client num: ", len(allLoginMgr))
-	log.Info("start One", index, beforeLoginSleep, isSendMsg, strMyUid, token, WSADDR, APIADDR)
+	log.Warn("start One", index, beforeLoginSleep, isSendMsg, strMyUid, token, WSADDR, APIADDR)
 	msgnum := msgNumInOneClient
 	uidNum := len(allLoginMgr)
 	var recvId string
@@ -235,7 +238,7 @@ func PressOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS i
 	} else {
 		for i := 0; i < msgnum; i++ {
 			var r int
-			time.Sleep(time.Duration(intervalSleepMS) * time.Millisecond)
+			//	time.Sleep(time.Duration(intervalSleepMS) * time.Millisecond)
 			for {
 				r = rand.Intn(uidNum)
 				if r == index {

@@ -3,6 +3,7 @@ package main
 import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
+	"open_im_sdk/pkg/utils"
 	"open_im_sdk/test"
 	"open_im_sdk/ws_wrapper/ws_local_server"
 	"time"
@@ -123,19 +124,21 @@ func main() {
 	//test.DoTestMarkGroupMessageAsRead()
 	//test.DoTestGetGroupHistoryMessage()
 	//test.DoTestGetHistoryMessage("17396220460")
-	time.Sleep(1000000 * time.Millisecond)
 
+	b := utils.GetCurrentTimestampBySecond()
 	i := 0
 	for {
 		test.DoTestSendMsg2Group(strMyUidx, "42c9f515cb84ee0e82b3f3ce71eb14d6", i)
 		i++
 		time.Sleep(250 * time.Millisecond)
-		if i == 10 {
+		if i == 100 {
 			break
 		}
 		log.Warn("", "10 * time.Millisecond ###################waiting... msg: ", i)
 	}
 
+	log.Warn("", "cost time: ", utils.GetCurrentTimestampBySecond()-b)
+	return
 	i = 0
 	for {
 		test.DoTestSendMsg2Group(strMyUidx, "42c9f515cb84ee0e82b3f3ce71eb14d6", i)

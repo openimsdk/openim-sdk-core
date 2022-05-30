@@ -401,16 +401,17 @@ func InOutlllogin(uid, tk string) {
 	callback.time = time.Now()
 	callback.funcName = utils.GetSelfFuncName()
 	operationID := utils.OperationIDGenerator()
-	//	log.Info(operationID, " login start ")
 	open_im_sdk.Login(&callback, operationID, uid, tk)
 	for {
-		if callback.errCode == 1 || callback.errCode == -1 {
+		if callback.errCode == 1 {
 			return
+		} else if callback.errCode == -1 {
+			time.Sleep(100 * time.Millisecond)
 		} else {
-			//	log.Info(operationID, "waiting login ")
+			time.Sleep(100 * time.Millisecond)
+			log.Info(operationID, "waiting login ")
 		}
 	}
-
 }
 
 func InOutLogou() {
@@ -465,7 +466,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	open_im_sdk.SetWorkMomentsListener(workMomentsListener)
 
 	InOutlllogin(uid, tk)
-	time.Sleep(2 * time.Second)
+
 	log.Warn("", "InOutDoTest fin")
 }
 
@@ -542,7 +543,7 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 			return
 		}
 		log.Warn(operationID, "waiting login...", uid)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 	}
 
 }
@@ -603,7 +604,7 @@ type TestSendMsgCallBack struct {
 }
 
 func (t *TestSendMsgCallBack) OnError(errCode int32, errMsg string) {
-	log.Warn(t.OperationID, "test_openim: send msg failed: ", errCode, errMsg, t.msgID, t.msg)
+	log.Info(t.OperationID, "test_openim: send msg failed: ", errCode, errMsg, t.msgID, t.msg)
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
 	SendFailedAllMsg[t.msgID] = t.sendID + t.recvID
