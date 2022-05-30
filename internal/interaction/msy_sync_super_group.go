@@ -158,6 +158,7 @@ func (m *SuperGroupMsgSync) syncMsgFromServerSplit(needSyncSeqList []uint32, gro
 	var pullMsgReq server_api_params.PullMessageBySeqListReq
 	pullMsgReq.SeqList = needSyncSeqList
 	pullMsgReq.UserID = m.loginUserID
+	pullMsgReq.GroupSeqList = make(map[string]*server_api_params.SeqList, 0)
 	pullMsgReq.GroupSeqList[groupID] = &server_api_params.SeqList{SeqList: needSyncSeqList}
 
 	for {
