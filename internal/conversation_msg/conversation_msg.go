@@ -360,6 +360,13 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	for _, v := range hList {
 		if nc, ok := newConversationSet[v.ConversationID]; ok {
 			phConversationChangedSet[v.ConversationID] = nc
+			nc.RecvMsgOpt = v.RecvMsgOpt
+			nc.GroupAtType = v.GroupAtType
+			nc.IsPinned = v.IsPinned
+			nc.IsPrivateChat = v.IsPrivateChat
+			nc.IsNotInGroup = v.IsNotInGroup
+			nc.AttachedInfo = v.AttachedInfo
+			nc.Ex = v.Ex
 		}
 	}
 	for k, v := range newConversationSet {
