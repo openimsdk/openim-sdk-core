@@ -23,7 +23,7 @@ func (d *DataBase) BatchInsertMessageListController(MessageList []*model_struct.
 		return nil
 	}
 	switch MessageList[len(MessageList)-1].SessionType {
-	case constant.SuperGroup:
+	case constant.SuperGroupChatType:
 		return d.SuperGroupBatchInsertMessageList(MessageList, MessageList[len(MessageList)-1].RecvID)
 	default:
 		return d.BatchInsertMessageList(MessageList)
@@ -36,7 +36,7 @@ func (d *DataBase) InsertMessage(Message *model_struct.LocalChatLog) error {
 }
 func (d *DataBase) InsertMessageController(Message *model_struct.LocalChatLog) error {
 	switch Message.SessionType {
-	case constant.SuperGroup:
+	case constant.SuperGroupChatType:
 		return d.SuperGroupInsertMessage(Message, Message.RecvID)
 	default:
 		return d.InsertMessage(Message)
@@ -214,7 +214,7 @@ func (d *DataBase) GetMessage(ClientMsgID string) (*model_struct.LocalChatLog, e
 }
 func (d *DataBase) GetMessageController(msg *sdk_struct.MsgStruct) (*model_struct.LocalChatLog, error) {
 	switch msg.SessionType {
-	case constant.SuperGroup:
+	case constant.SuperGroupChatType:
 		return d.SuperGroupGetMessage(msg)
 	default:
 		return d.GetMessage(msg.ClientMsgID)
@@ -247,7 +247,7 @@ func (d *DataBase) UpdateMessage(c *model_struct.LocalChatLog) error {
 }
 func (d *DataBase) UpdateMessageController(c *model_struct.LocalChatLog) error {
 	switch c.SessionType {
-	case constant.SuperGroup:
+	case constant.SuperGroupChatType:
 		return d.SuperGroupUpdateMessage(c)
 	default:
 		return d.UpdateMessage(c)
@@ -287,7 +287,7 @@ func (d *DataBase) UpdateMessageTimeAndStatus(clientMsgID string, serverMsgID st
 }
 func (d *DataBase) UpdateMessageTimeAndStatusController(msg *sdk_struct.MsgStruct) error {
 	switch msg.SessionType {
-	case constant.SuperGroup:
+	case constant.SuperGroupChatType:
 		return d.SuperGroupUpdateMessageTimeAndStatus(msg)
 	default:
 		return d.UpdateMessageTimeAndStatus(msg.ClientMsgID, msg.ServerMsgID, msg.SendTime, msg.Status)
@@ -321,7 +321,7 @@ func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, start
 }
 func (d *DataBase) GetMessageListController(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	switch sessionType {
-	case constant.SuperGroup:
+	case constant.SuperGroupChatType:
 		return d.SuperGroupGetMessageList(sourceID, sessionType, count, startTime, isReverse)
 	default:
 		return d.GetMessageList(sourceID, sessionType, count, startTime, isReverse)
@@ -353,7 +353,7 @@ func (d *DataBase) GetMessageListNoTime(sourceID string, sessionType, count int,
 
 func (d *DataBase) GetMessageListNoTimeController(sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	switch sessionType {
-	case constant.SuperGroup:
+	case constant.SuperGroupChatType:
 		return d.SuperGroupGetMessageListNoTime(sourceID, sessionType, count, isReverse)
 	default:
 		return d.GetMessageListNoTime(sourceID, sessionType, count, isReverse)
