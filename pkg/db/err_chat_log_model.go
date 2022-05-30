@@ -7,8 +7,8 @@ import (
 )
 
 func (d *DataBase) initSuperLocalErrChatLog(groupID string) {
-	if !d.conn.Migrator().HasTable(utils.GetSuperGroupTableName(groupID)) {
-		d.conn.Table(utils.GetSuperGroupTableName(groupID)).AutoMigrate(&model_struct.LocalErrChatLog{})
+	if !d.conn.Migrator().HasTable(utils.GetErrSuperGroupTableName(groupID)) {
+		d.conn.Table(utils.GetErrSuperGroupTableName(groupID)).AutoMigrate(&model_struct.LocalErrChatLog{})
 	}
 }
 func (d *DataBase) SuperBatchInsertExceptionMsg(MessageList []*model_struct.LocalErrChatLog, groupID string) error {
