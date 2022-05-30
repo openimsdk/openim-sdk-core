@@ -38,7 +38,7 @@ func (m *SuperGroupMsgSync) updateJoinedSuperGroup() {
 		case cmd := <-m.joinedSuperGroupCh:
 			log.Info("", "updateJoinedSuperGroup recv cmd: ", cmd)
 			g, err := m.GetJoinedSuperGroupList()
-			if err != nil {
+			if err == nil {
 				m.superGroupMtx.Lock()
 				m.SuperGroupIDList = m.SuperGroupIDList[0:0]
 				for _, v := range g {
@@ -52,7 +52,20 @@ func (m *SuperGroupMsgSync) updateJoinedSuperGroup() {
 }
 
 func (m *SuperGroupMsgSync) compareSeq() {
+	g, err := m.GetJoinedSuperGroupList()
+	if err == nil {
+		m.superGroupMtx.Lock()
+		m.SuperGroupIDList = m.SuperGroupIDList[0:0]
+		for _, v := range g {
+			m.SuperGroupIDList = append(m.SuperGroupIDList, v.GroupID)
+		}
+		m.superGroupMtx.Unlock()
+	}
+
+	log.Debug("compareSeq load groupID list ", m.SuperGroupIDList)
+
 	m.superGroupMtx.Lock()
+
 	defer m.superGroupMtx.Unlock()
 	for _, v := range m.SuperGroupIDList {
 		var seqMaxSynchronized uint32
@@ -65,6 +78,7 @@ func (m *SuperGroupMsgSync) compareSeq() {
 		if err != nil {
 			log.Error("", "GetSuperGroupAbnormalMsgSeq failed ", err.Error(), v)
 		}
+		log.Warn("", "GetSuperGroupNormalMsgSeq GetSuperGroupAbnormalMsgSeq", n, a)
 		if n > a {
 			seqMaxSynchronized = n
 		} else {
@@ -169,14 +183,18 @@ func (m *SuperGroupMsgSync) syncMsgFromServerSplit(needSyncSeqList []uint32, gro
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 30, 2, m.loginUserID)
 			continue
 		}
-		log.Debug(operationID, "SendReqWaitResp pull msg ", pullMsgReq.String())
+
 		var pullMsgResp server_api_params.PullMessageBySeqListResp
 		err = proto.Unmarshal(resp.Data, &pullMsgResp)
 		if err != nil {
 			log.Error(operationID, "Unmarshal failed ", err.Error())
 			return
 		}
-		m.TriggerCmdNewMsgCome(pullMsgResp.List, operationID)
+		log.Debug(operationID, "SendReqWaitResp pull msg ", pullMsgReq.String())
+		log.Debug(operationID, "SendReqWaitResp pull msg result ", pullMsgResp.String())
+		for _, v := range pullMsgResp.GroupMsgDataList {
+			m.TriggerCmdNewMsgCome(v.MsgDataList, operationID)
+		}
 		return
 	}
 }
