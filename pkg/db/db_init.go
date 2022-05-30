@@ -107,11 +107,31 @@ func (d *DataBase) initDB() error {
 	//	return err
 	//}
 	//u.db = db
-	superGroup := &model_struct.LocalGroup{TblName: "super_groups"}
+
+	superGroup := &model_struct.LocalGroup{}
+	localGroup := &model_struct.LocalGroup{}
+	//err = db.Exec(`CREATE TABLE IF NOT EXISTS super_groups (
+	//   group_id  varchar(64),
+	//   name  text,
+	//   notification  varchar(255),
+	//   introduction  varchar(255),
+	//   face_url  varchar(255),
+	//   create_time  integer,
+	//   status  integer,
+	//   creator_user_id  varchar(64),
+	//   group_type  integer,
+	//   owner_user_id  varchar(64),
+	//   member_count  integer,
+	//   ex  varchar(1024),
+	//   attached_info  varchar(1024),
+	//   PRIMARY KEY ( group_id ))`).Error
+	//if err != nil {
+	//	log.Error("super_group","create super group failed",err.Error())
+	//}
+
 	db.AutoMigrate(&model_struct.LocalFriend{},
 		&model_struct.LocalFriendRequest{},
-		&model_struct.LocalGroup{},
-		superGroup,
+		localGroup,
 		&model_struct.LocalGroupMember{},
 		&model_struct.LocalGroupRequest{},
 		&model_struct.LocalErrChatLog{},
@@ -126,6 +146,7 @@ func (d *DataBase) initDB() error {
 		&LocalWorkMomentsNotification{},
 		&LocalWorkMomentsNotificationUnreadCount{},
 	)
+	db.Table("super_groups").AutoMigrate(superGroup)
 	if !db.Migrator().HasTable(&model_struct.LocalFriend{}) {
 		//log.NewInfo("CreateTable Friend")
 		db.Migrator().CreateTable(&model_struct.LocalFriend{})
@@ -136,15 +157,10 @@ func (d *DataBase) initDB() error {
 		db.Migrator().CreateTable(&model_struct.LocalFriendRequest{})
 	}
 
-	if !db.Migrator().HasTable(&model_struct.LocalGroup{}) {
+	if !db.Migrator().HasTable(localGroup) {
 		//log.NewInfo("CreateTable Group")
-		db.Migrator().CreateTable(&model_struct.LocalGroup{})
+		db.Migrator().CreateTable(localGroup)
 	}
-	if !db.Migrator().HasTable(superGroup) {
-		//log.NewInfo("CreateTable Group")
-		db.Migrator().CreateTable(superGroup)
-	}
-
 	if !db.Migrator().HasTable(&model_struct.LocalGroupMember{}) {
 		//log.NewInfo("CreateTable GroupMember")
 		db.Migrator().CreateTable(&model_struct.LocalGroupMember{})

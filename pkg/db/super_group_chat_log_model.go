@@ -10,16 +10,10 @@ import (
 	"open_im_sdk/sdk_struct"
 )
 
-func NewLocalChatLog(tblName string) *model_struct.LocalChatLog {
-	return &model_struct.LocalChatLog{TblName: tblName}
-}
-
 func (d *DataBase) initSuperLocalChatLog(groupID string) {
-	m := NewLocalChatLog(utils.GetSuperGroupTableName(groupID))
-	if !d.conn.Migrator().HasTable(m) {
-		d.conn.Migrator().CreateTable(m)
+	if !d.conn.Migrator().HasTable(utils.GetSuperGroupTableName(groupID)) {
+		d.conn.Table(utils.GetSuperGroupTableName(groupID)).AutoMigrate(&model_struct.LocalChatLog{})
 	}
-	d.conn.AutoMigrate(m)
 }
 func (d *DataBase) SuperGroupBatchInsertMessageList(MessageList []*model_struct.LocalChatLog, groupID string) error {
 	if MessageList == nil {

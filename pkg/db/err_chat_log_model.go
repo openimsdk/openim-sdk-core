@@ -6,16 +6,10 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func NewLocalErrChatLog(tblName string) *model_struct.LocalErrChatLog {
-	return &model_struct.LocalErrChatLog{TblName: tblName}
-}
-
 func (d *DataBase) initSuperLocalErrChatLog(groupID string) {
-	m := NewLocalErrChatLog(utils.GetSuperGroupTableName(groupID))
-	if !d.conn.Migrator().HasTable(m) {
-		d.conn.Migrator().CreateTable(m)
+	if !d.conn.Migrator().HasTable(utils.GetSuperGroupTableName(groupID)) {
+		d.conn.Table(utils.GetSuperGroupTableName(groupID)).AutoMigrate(&model_struct.LocalErrChatLog{})
 	}
-	d.conn.AutoMigrate(m)
 }
 func (d *DataBase) SuperBatchInsertExceptionMsg(MessageList []*model_struct.LocalErrChatLog, groupID string) error {
 	if MessageList == nil {
