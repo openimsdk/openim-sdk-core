@@ -773,7 +773,7 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 		oldMessage, err := c.db.GetMessageController(&s)
 		if err != nil {
 			msgStructToLocalChatLog(&localMessage, &s)
-			err := c.db.InsertMessage(&localMessage)
+			err := c.db.InsertMessageController(&localMessage)
 			common.CheckAnyErrCallback(callback, 201, err, operationID)
 		} else {
 			if oldMessage.Status != constant.MsgStatusSendFailed {
