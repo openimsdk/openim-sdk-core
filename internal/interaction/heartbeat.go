@@ -99,6 +99,7 @@ func (u *Heartbeat) Run() {
 		if err != nil {
 			log.Error(operationID, "GetJoinedSuperGroupIDList failed ", err.Error())
 		}
+		log.Debug(operationID, "GetJoinedSuperGroupIDList ", groupIDList)
 		resp, err := u.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: u.loginUserID, GroupIDList: groupIDList}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.loginUserID, operationID)
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.loginUserID)

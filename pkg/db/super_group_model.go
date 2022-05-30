@@ -26,7 +26,7 @@ func (d *DataBase) GetJoinedSuperGroupIDList() ([]string, error) {
 	for _, v := range groupList {
 		groupIDList = append(groupIDList, v.GroupID)
 	}
-	return nil, nil
+	return groupIDList, nil
 }
 
 func (d *DataBase) InsertSuperGroup(groupInfo *model_struct.LocalGroup) error {
