@@ -124,7 +124,7 @@ func main() {
 	//test.DoTestMarkGroupMessageAsRead()
 	//test.DoTestGetGroupHistoryMessage()
 	//test.DoTestGetHistoryMessage("17396220460")
-
+	time.Sleep(250000 * time.Millisecond)
 	b := utils.GetCurrentTimestampBySecond()
 	i := 0
 	for {
