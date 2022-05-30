@@ -6,6 +6,7 @@ import (
 	"open_im_sdk/internal/cache"
 	common2 "open_im_sdk/internal/common"
 	"open_im_sdk/internal/friend"
+	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/group"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/organization"
@@ -49,6 +50,7 @@ type Conversation struct {
 	common2.ObjectStorage
 
 	cache *cache.Cache
+	full  *full.Full
 }
 
 func (c *Conversation) SetAdvancedFunction(advancedFunction advanced_interface.AdvancedFunction) {
@@ -71,10 +73,12 @@ func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener,
 	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling advanced_interface.Signaling,
-	advancedFunction advanced_interface.AdvancedFunction, organization *organization.Organization, workMoments *workMoments.WorkMoments, cache *cache.Cache) *Conversation {
+	advancedFunction advanced_interface.AdvancedFunction, organization *organization.Organization,
+	workMoments *workMoments.WorkMoments, cache *cache.Cache, full *full.Full) *Conversation {
 	n := &Conversation{Ws: ws, db: db, p: p, recvCH: ch, loginUserID: loginUserID, platformID: platformID,
 		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage, signaling: signaling,
-		advancedFunction: advancedFunction, organization: organization, workMoments: workMoments}
+		advancedFunction: advancedFunction, organization: organization, workMoments: workMoments,
+		full: full}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
 	n.cache = cache
