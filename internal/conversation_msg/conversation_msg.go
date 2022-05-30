@@ -15,6 +15,7 @@ import (
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
@@ -91,15 +92,15 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		return
 	}
 	var isTriggerUnReadCount bool
-	var insertMsg, updateMsg []*db.LocalChatLog
-	var exceptionMsg []*db.LocalErrChatLog
+	var insertMsg, updateMsg []*model_struct.LocalChatLog
+	var exceptionMsg []*model_struct.LocalErrChatLog
 	var newMessages, msgReadList, groupMsgReadList, msgRevokeList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate, isSenderNotificationPush bool
-	conversationChangedSet := make(map[string]*db.LocalConversation)
-	newConversationSet := make(map[string]*db.LocalConversation)
-	conversationSet := make(map[string]*db.LocalConversation)
-	phConversationChangedSet := make(map[string]*db.LocalConversation)
-	phNewConversationSet := make(map[string]*db.LocalConversation)
+	conversationChangedSet := make(map[string]*model_struct.LocalConversation)
+	newConversationSet := make(map[string]*model_struct.LocalConversation)
+	conversationSet := make(map[string]*model_struct.LocalConversation)
+	phConversationChangedSet := make(map[string]*model_struct.LocalConversation)
+	phNewConversationSet := make(map[string]*model_struct.LocalConversation)
 	log.Info(operationID, "do Msg come here")
 	for _, v := range allMsg {
 		log.Info(operationID, "do Msg come here, msg detail ", v.RecvID, v.SendID, v.ClientMsgID, v.ServerMsgID, v.Seq, c.loginUserID)
@@ -204,7 +205,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				}
 			} else { //      send through  other terminal
 				log.Info(operationID, "sync message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
-				lc := db.LocalConversation{
+				lc := model_struct.LocalConversation{
 					ConversationType:  v.SessionType,
 					LatestMsg:         utils.StructToJsonString(msg),
 					LatestMsgSendTime: msg.SendTime,
@@ -257,7 +258,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			}
 		} else { //Sent by others
 			if _, err := c.db.GetMessageController(msg); err != nil { //Deduplication operation
-				lc := db.LocalConversation{
+				lc := model_struct.LocalConversation{
 					ConversationType:  v.SessionType,
 					LatestMsg:         utils.StructToJsonString(msg),
 					LatestMsgSendTime: msg.SendTime,
@@ -322,7 +323,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	if err != nil {
 		log.Error(operationID, "GetAllConversationList", "error", err.Error())
 	}
-	m := make(map[string]*db.LocalConversation)
+	m := make(map[string]*model_struct.LocalConversation)
 	listToMap(list, m)
 	log.Debug(operationID, "listToMap: ", list, conversationSet)
 	c.diff(m, conversationSet, conversationChangedSet, newConversationSet)
@@ -339,7 +340,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		for _, v := range insertMsg {
 			e := c.db.InsertMessageController(v)
 			if e != nil {
-				errChatLog := &db.LocalErrChatLog{}
+				errChatLog := &model_struct.LocalErrChatLog{}
 				copier.Copy(errChatLog, v)
 				exceptionMsg = append(exceptionMsg, errChatLog)
 				log.Warn(operationID, "InsertMessage operation ", "chat err log: ", errChatLog, "chat log: ", v, e.Error())
@@ -351,7 +352,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		log.Warn(operationID, "exceptionMsg show: ", *v)
 	}
 
-	err2 := c.db.BatchInsertExceptionMsgToErrorChatLog(exceptionMsg)
+	err2 := c.db.BatchInsertExceptionMsgController(exceptionMsg)
 	if err2 != nil {
 		log.Error(operationID, "insert err message err  :", err2.Error())
 
@@ -400,13 +401,13 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 	}
 }
-func listToMap(list []*db.LocalConversation, m map[string]*db.LocalConversation) {
+func listToMap(list []*model_struct.LocalConversation, m map[string]*model_struct.LocalConversation) {
 	for _, v := range list {
 		m[v.ConversationID] = v
 	}
 
 }
-func (c *Conversation) diff(local, generated, cc, nc map[string]*db.LocalConversation) {
+func (c *Conversation) diff(local, generated, cc, nc map[string]*model_struct.LocalConversation) {
 	for _, v := range generated {
 		log.Debug("node diff", *v)
 		if localC, ok := local[v.ConversationID]; ok {
@@ -430,7 +431,7 @@ func (c *Conversation) diff(local, generated, cc, nc map[string]*db.LocalConvers
 	}
 
 }
-func (c *Conversation) genConversationGroupAtType(lc *db.LocalConversation, s *sdk_struct.MsgStruct) {
+func (c *Conversation) genConversationGroupAtType(lc *model_struct.LocalConversation, s *sdk_struct.MsgStruct) {
 	if s.ContentType == constant.AtText {
 		tagMe := utils.IsContain(c.loginUserID, s.AtElem.AtUserList)
 		tagAll := utils.IsContain(constant.AtAllString, s.AtElem.AtUserList)
@@ -448,18 +449,18 @@ func (c *Conversation) genConversationGroupAtType(lc *db.LocalConversation, s *s
 	}
 
 }
-func (c *Conversation) msgStructToLocalChatLog(m *sdk_struct.MsgStruct) *db.LocalChatLog {
-	var lc db.LocalChatLog
+func (c *Conversation) msgStructToLocalChatLog(m *sdk_struct.MsgStruct) *model_struct.LocalChatLog {
+	var lc model_struct.LocalChatLog
 	copier.Copy(&lc, m)
-	if m.SessionType == constant.GroupChatType {
+	if m.SessionType == constant.GroupChatType || m.SessionType == constant.SuperGroupChatType {
 		lc.RecvID = m.GroupID
 	}
 	return &lc
 }
-func (c *Conversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *db.LocalErrChatLog {
-	var lc db.LocalErrChatLog
+func (c *Conversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *model_struct.LocalErrChatLog {
+	var lc model_struct.LocalErrChatLog
 	copier.Copy(&lc, m)
-	if m.SessionType == constant.GroupChatType {
+	if m.SessionType == constant.GroupChatType || m.SessionType == constant.SuperGroupChatType {
 		lc.RecvID = m.GroupID
 	}
 	return &lc
@@ -468,7 +469,7 @@ func (c *Conversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *db.L
 func (c *Conversation) revokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 	for _, w := range msgRevokeList {
 		if c.msgListener != nil {
-			t := new(db.LocalChatLog)
+			t := new(model_struct.LocalChatLog)
 			t.ClientMsgID = w.Content
 			t.Status = constant.MsgStatusRevoked
 			err := c.db.UpdateMessage(t)
@@ -569,8 +570,8 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 	node := c2v.Value.(common.UpdateConNode)
 	switch node.Action {
 	case constant.AddConOrUpLatMsg:
-		var list []*db.LocalConversation
-		lc := node.Args.(db.LocalConversation)
+		var list []*model_struct.LocalConversation
+		lc := node.Args.(model_struct.LocalConversation)
 		oc, err := c.db.GetConversation(lc.ConversationID)
 		if err == nil {
 			log.Info("this is old conversation", *oc)
@@ -634,7 +635,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
 		}
 	case constant.UpdateFaceUrlAndNickName:
-		var lc db.LocalConversation
+		var lc model_struct.LocalConversation
 		st := node.Args.(common.SourceIDAndSessionType)
 		lc.ConversationID = node.ConID
 		lc.ConversationType = st.SessionType
@@ -675,7 +676,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		if err != nil {
 			log.Error("internal", "getMultipleConversationModel err :", err.Error())
 		} else {
-			var newCList []*db.LocalConversation
+			var newCList []*model_struct.LocalConversation
 			for _, v := range cLists {
 				if v.LatestMsgSendTime != 0 {
 					newCList = append(newCList, v)
@@ -774,7 +775,7 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 
 	return utils.Wrap(err, "")
 }
-func (c *Conversation) updateConversation(lc *db.LocalConversation, cs map[string]*db.LocalConversation) {
+func (c *Conversation) updateConversation(lc *model_struct.LocalConversation, cs map[string]*model_struct.LocalConversation) {
 	if oldC, ok := cs[lc.ConversationID]; !ok {
 		cs[lc.ConversationID] = lc
 	} else {
@@ -830,13 +831,13 @@ func (c *Conversation) updateConversation(lc *db.LocalConversation, cs map[strin
 	//}
 
 }
-func mapConversationToList(m map[string]*db.LocalConversation) (cs []*db.LocalConversation) {
+func mapConversationToList(m map[string]*model_struct.LocalConversation) (cs []*model_struct.LocalConversation) {
 	for _, v := range m {
 		cs = append(cs, v)
 	}
 	return cs
 }
-func (c *Conversation) addFaceURLAndName(lc *db.LocalConversation) {
+func (c *Conversation) addFaceURLAndName(lc *model_struct.LocalConversation) {
 	operationID := utils.OperationIDGenerator()
 	switch lc.ConversationType {
 	case constant.SingleChatType, constant.NotificationChatType:

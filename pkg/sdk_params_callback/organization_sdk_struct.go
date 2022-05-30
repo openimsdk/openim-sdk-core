@@ -1,24 +1,26 @@
 package sdk_params_callback
 
-import "open_im_sdk/pkg/db"
+import (
+	"open_im_sdk/pkg/db/model_struct"
+)
 
 type UserInDepartment struct {
-	DepartmentInfo *db.LocalDepartment       `json:"department"`
-	MemberInfo     *db.LocalDepartmentMember `json:"member"`
+	DepartmentInfo *model_struct.LocalDepartment       `json:"department"`
+	MemberInfo     *model_struct.LocalDepartmentMember `json:"member"`
 }
 
 type DepartmentAndUser struct {
-	db.LocalDepartment
-	db.LocalDepartmentMember
+	model_struct.LocalDepartment
+	model_struct.LocalDepartmentMember
 }
 
-type GetSubDepartmentCallback []*db.LocalDepartment
+type GetSubDepartmentCallback []*model_struct.LocalDepartment
 
-type GetDepartmentMemberCallback []*db.LocalDepartmentMember
+type GetDepartmentMemberCallback []*model_struct.LocalDepartmentMember
 
 type GetUserInDepartmentCallback []*UserInDepartment
 
 type GetDepartmentMemberAndSubDepartmentCallback struct {
-	DepartmentList       []*db.LocalDepartment       `json:"departmentList"`
-	DepartmentMemberList []*db.LocalDepartmentMember `json:"departmentMemberList"`
+	DepartmentList       []*model_struct.LocalDepartment       `json:"departmentList"`
+	DepartmentMemberList []*model_struct.LocalDepartmentMember `json:"departmentMemberList"`
 }

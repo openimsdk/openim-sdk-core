@@ -1,11 +1,11 @@
 package common
 
 import (
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/model_struct"
 	api "open_im_sdk/pkg/server_api_params"
 )
 
-func MergeBlackFriendResult(base []*db.LocalBlack, add []*db.LocalFriend) []api.FullUserInfo {
+func MergeBlackFriendResult(base []*model_struct.LocalBlack, add []*model_struct.LocalFriend) []api.FullUserInfo {
 	m := make(map[string]api.FullUserInfo, 0)
 	for _, v := range base {
 		node := api.FullUserInfo{}
@@ -27,7 +27,7 @@ func MergeBlackFriendResult(base []*db.LocalBlack, add []*db.LocalFriend) []api.
 	return r
 }
 
-func MergeFriendBlackResult(base []*db.LocalFriend, add []*db.LocalBlack) []api.FullUserInfo {
+func MergeFriendBlackResult(base []*model_struct.LocalFriend, add []*model_struct.LocalBlack) []api.FullUserInfo {
 	m := make(map[string]api.FullUserInfo, 0)
 	for _, v := range base {
 		node := api.FullUserInfo{}
@@ -50,7 +50,7 @@ func MergeFriendBlackResult(base []*db.LocalFriend, add []*db.LocalBlack) []api.
 	return r
 }
 
-func MergeUserResult(publicList []*api.PublicUserInfo, friendList []*db.LocalFriend, blackList []*db.LocalBlack) []api.FullUserInfo {
+func MergeUserResult(publicList []*api.PublicUserInfo, friendList []*model_struct.LocalFriend, blackList []*model_struct.LocalBlack) []api.FullUserInfo {
 	m := make(map[string]api.FullUserInfo, 0)
 	for _, v := range publicList {
 		node := api.FullUserInfo{}

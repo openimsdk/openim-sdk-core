@@ -7,7 +7,7 @@ import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
@@ -480,17 +480,17 @@ func (c *Conversation) CreateImageMessageByURL(sourcePicture, bigPicture, snapsh
 	return utils.StructToJsonString(s)
 }
 
-func msgStructToLocalChatLog(dst *db.LocalChatLog, src *sdk_struct.MsgStruct) {
+func msgStructToLocalChatLog(dst *model_struct.LocalChatLog, src *sdk_struct.MsgStruct) {
 	copier.Copy(dst, src)
-	if src.SessionType == constant.GroupChatType {
+	if src.SessionType == constant.GroupChatType || src.SessionType == constant.SuperGroupChatType {
 		dst.RecvID = src.GroupID
 	}
 }
-func localChatLogToMsgStruct(dst *sdk_struct.NewMsgList, src []*db.LocalChatLog) {
+func localChatLogToMsgStruct(dst *sdk_struct.NewMsgList, src []*model_struct.LocalChatLog) {
 	copier.Copy(dst, &src)
 
 }
-func (c *Conversation) checkErrAndUpdateMessage(callback open_im_sdk_callback.SendMsgCallBack, errCode int32, err error, s *sdk_struct.MsgStruct, lc *db.LocalConversation, operationID string) {
+func (c *Conversation) checkErrAndUpdateMessage(callback open_im_sdk_callback.SendMsgCallBack, errCode int32, err error, s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation, operationID string) {
 	if err != nil {
 		if callback != nil {
 			c.updateMsgStatusAndTriggerConversation(s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc, operationID)
@@ -501,7 +501,7 @@ func (c *Conversation) checkErrAndUpdateMessage(callback open_im_sdk_callback.Se
 		}
 	}
 }
-func (c *Conversation) updateMsgStatusAndTriggerConversation(clientMsgID, serverMsgID string, sendTime int64, status int32, s *sdk_struct.MsgStruct, lc *db.LocalConversation, operationID string) {
+func (c *Conversation) updateMsgStatusAndTriggerConversation(clientMsgID, serverMsgID string, sendTime int64, status int32, s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation, operationID string) {
 	//log.NewDebug(operationID, "this is test send message ", sendTime, status, clientMsgID, serverMsgID)
 	s.SendTime = sendTime
 	s.Status = status
@@ -534,10 +534,10 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 		if recvID == "" && groupID == "" {
 			common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not be allowed"), operationID)
 		}
-		var localMessage db.LocalChatLog
+		var localMessage model_struct.LocalChatLog
 		var conversationID string
 		options := make(map[string]bool, 2)
-		lc := &db.LocalConversation{LatestMsgSendTime: s.CreateTime}
+		lc := &model_struct.LocalConversation{LatestMsgSendTime: s.CreateTime}
 		//根据单聊群聊类型组装消息和会话
 		if recvID == "" {
 			g, err := c.db.GetGroupInfoByGroupID(groupID)
@@ -710,10 +710,10 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 		if recvID == "" && groupID == "" {
 			common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not be allowed"), operationID)
 		}
-		var localMessage db.LocalChatLog
+		var localMessage model_struct.LocalChatLog
 		var conversationID string
 		options := make(map[string]bool, 2)
-		lc := &db.LocalConversation{LatestMsgSendTime: s.CreateTime}
+		lc := &model_struct.LocalConversation{LatestMsgSendTime: s.CreateTime}
 		//根据单聊群聊类型组装消息和会话
 		if recvID == "" {
 			g, err := c.db.GetGroupInfoByGroupID(groupID)
@@ -839,7 +839,7 @@ func (c *Conversation) InternalSendMessage(callback open_im_sdk_callback.Base, s
 
 }
 
-func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *db.LocalConversation, callback open_im_sdk_callback.SendMsgCallBack,
+func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation, callback open_im_sdk_callback.SendMsgCallBack,
 	delFile []string, offlinePushInfo *server_api_params.OfflinePushInfo, options map[string]bool, operationID string) {
 	//Protocol conversion
 	var wsMsgData server_api_params.MsgData
@@ -1107,7 +1107,7 @@ func (c *Conversation) MarkAllConversationHasRead(callback open_im_sdk_callback.
 		return
 	}
 	go func() {
-		var lc db.LocalConversation
+		var lc model_struct.LocalConversation
 		lc.UnreadCount = 0
 		err := c.db.UpdateAllConversation(&lc)
 		common.CheckDBErrCallback(callback, err, operationID)
@@ -1201,10 +1201,10 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_ca
 		} else {
 			sourceID = recvID
 		}
-		var conversation db.LocalConversation
+		var conversation model_struct.LocalConversation
 		conversation.ConversationID = utils.GetConversationIDBySessionType(sourceID, constant.SingleChatType)
 
-		localMessage := db.LocalChatLog{}
+		localMessage := model_struct.LocalChatLog{}
 		s.SendID = sendID
 		s.RecvID = recvID
 		s.ClientMsgID = utils.GetMsgID(s.SendID)
@@ -1228,7 +1228,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 		if groupID == "" || sendID == "" {
 			common.CheckAnyErrCallback(callback, 208, errors.New("groupID or sendID is null"), operationID)
 		}
-		var conversation db.LocalConversation
+		var conversation model_struct.LocalConversation
 		conversation.ConversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
@@ -1243,7 +1243,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 				c.cache.Update(sendID, faceUrl, name)
 			}
 		}
-		localMessage := db.LocalChatLog{}
+		localMessage := model_struct.LocalChatLog{}
 		s.SendID = sendID
 		s.RecvID = groupID
 		s.GroupID = groupID

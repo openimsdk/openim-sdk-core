@@ -9,6 +9,7 @@ import (
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
@@ -367,7 +368,7 @@ func (g *Group) getJoinedGroupList(callback open_im_sdk_callback.Base, operation
 	return groupList
 }
 
-func (g *Group) GetGroupInfoFromLocal2Svr(groupID string) (*db.LocalGroup, error) {
+func (g *Group) GetGroupInfoFromLocal2Svr(groupID string) (*model_struct.LocalGroup, error) {
 	localGroup, err := g.db.GetGroupInfoByGroupID(groupID)
 	if err == nil {
 		return localGroup, nil

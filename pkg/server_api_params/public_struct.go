@@ -1,6 +1,8 @@
 package server_api_params
 
-import "open_im_sdk/pkg/db"
+import (
+	"open_im_sdk/pkg/db/model_struct"
+)
 
 type ApiUserInfo struct {
 	UserID      string `json:"userID" binding:"required,min=1,max=64"`
@@ -19,9 +21,9 @@ type GroupAddMemberInfo struct {
 }
 
 type FullUserInfo struct {
-	PublicInfo *PublicUserInfo `json:"publicInfo"`
-	FriendInfo *db.LocalFriend `json:"friendInfo"`
-	BlackInfo  *db.LocalBlack  `json:"blackInfo"`
+	PublicInfo *PublicUserInfo           `json:"publicInfo"`
+	FriendInfo *model_struct.LocalFriend `json:"friendInfo"`
+	BlackInfo  *model_struct.LocalBlack  `json:"blackInfo"`
 }
 
 //GroupName    string                `json:"groupName"`

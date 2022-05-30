@@ -1,4 +1,4 @@
-package db
+package model_struct
 
 //
 //message FriendInfo{
@@ -313,6 +313,7 @@ type LocalErrChatLog struct {
 	CreateTime       int64  `gorm:"column:create_time" json:"createTime"`
 	AttachedInfo     string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 	Ex               string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	TblName          string `gorm:"-"`
 }
 
 //`create table if not exists  conversation (

@@ -1,15 +1,39 @@
 package db
 
-import "open_im_sdk/pkg/utils"
+import (
+	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/utils"
+)
 
+func NewLocalErrChatLog(tblName string) *model_struct.LocalErrChatLog {
+	return &model_struct.LocalErrChatLog{TblName: tblName}
+}
+
+func (d *DataBase) initSuperLocalErrChatLog(groupID string) {
+	m := NewLocalErrChatLog(utils.GetSuperGroupTableName(groupID))
+	if !d.conn.Migrator().HasTable(m) {
+		d.conn.Migrator().CreateTable(m)
+	}
+	d.conn.AutoMigrate(m)
+}
+func (d *DataBase) SuperBatchInsertExceptionMsg(MessageList []*model_struct.LocalErrChatLog, groupID string) error {
+	if MessageList == nil {
+		return nil
+	}
+	d.initSuperLocalErrChatLog(groupID)
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Create(MessageList).Error, "BatchInsertMessageList failed")
+}
 func (d *DataBase) GetAbnormalMsgSeq() (uint32, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var seq uint32
-	err := d.conn.Model(LocalErrChatLog{}).Select("IFNULL(max(seq),0)").Find(&seq).Error
+	err := d.conn.Model(model_struct.LocalErrChatLog{}).Select("IFNULL(max(seq),0)").Find(&seq).Error
 	return seq, utils.Wrap(err, "GetAbnormalMsgSeq")
 }
-func (d *DataBase) BatchInsertExceptionMsgToErrorChatLog(MessageList []*LocalErrChatLog) error {
+func (d *DataBase) BatchInsertExceptionMsg(MessageList []*model_struct.LocalErrChatLog) error {
 	if MessageList == nil {
 		return nil
 	}
@@ -17,7 +41,17 @@ func (d *DataBase) BatchInsertExceptionMsgToErrorChatLog(MessageList []*LocalErr
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Create(MessageList).Error, "BatchInsertMessageList failed")
 }
-
+func (d *DataBase) BatchInsertExceptionMsgController(MessageList []*model_struct.LocalErrChatLog) error {
+	if len(MessageList) == 0 {
+		return nil
+	}
+	switch MessageList[len(MessageList)-1].SessionType {
+	case constant.SuperGroup:
+		return d.SuperBatchInsertExceptionMsg(MessageList, MessageList[len(MessageList)-1].RecvID)
+	default:
+		return d.BatchInsertExceptionMsg(MessageList)
+	}
+}
 func (d *DataBase) GetSuperGroupAbnormalMsgSeq(groupID string) (uint32, error) {
 	return 0, nil
 }

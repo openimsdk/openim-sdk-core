@@ -8,7 +8,7 @@ import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
@@ -62,7 +62,7 @@ func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callba
 	c.SyncConversations(operationID)
 }
 
-func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiReq *server_api_params.ModifyConversationFieldReq, conversationID string, localConversation *db.LocalConversation, operationID string) {
+func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiReq *server_api_params.ModifyConversationFieldReq, conversationID string, localConversation *model_struct.LocalConversation, operationID string) {
 	apiResp := server_api_params.ModifyConversationFieldResp{}
 	apiReq.OwnerUserID = c.loginUserID
 	apiReq.OperationID = operationID
@@ -134,13 +134,13 @@ func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callba
 	return resp
 }
 
-func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, sourceID string, sessionType int32, operationID string) *db.LocalConversation {
+func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, sourceID string, sessionType int32, operationID string) *model_struct.LocalConversation {
 	conversationID := utils.GetConversationIDBySessionType(sourceID, int(sessionType))
 	lc, err := c.db.GetConversation(conversationID)
 	if err == nil {
 		return lc
 	} else {
-		var newConversation db.LocalConversation
+		var newConversation model_struct.LocalConversation
 		newConversation.ConversationID = conversationID
 		newConversation.ConversationType = sessionType
 		switch sessionType {
@@ -226,7 +226,7 @@ func (c *Conversation) getServerConversationList(operationID string) (server_api
 	return resp, nil
 }
 func (c *Conversation) SyncConversations(operationID string) {
-	var newConversationList []*db.LocalConversation
+	var newConversationList []*model_struct.LocalConversation
 	ccTime := time.Now()
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	conversationsOnServer, err := c.getServerConversationList(operationID)
@@ -251,7 +251,7 @@ func (c *Conversation) SyncConversations(operationID string) {
 	// 可能是其他点开一下生成会话设置免打扰 插入到本地 不回调..
 	for _, index := range aInBNot {
 		conversation := conversationsOnServerLocalFormat[index]
-		var newConversation db.LocalConversation
+		var newConversation model_struct.LocalConversation
 		newConversation.ConversationID = conversation.ConversationID
 		newConversation.ConversationType = conversation.ConversationType
 		switch conversation.ConversationType {
@@ -332,7 +332,7 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 	var conversationID string
 	var startTime int64
 	var sessionType int
-	var list []*db.LocalChatLog
+	var list []*model_struct.LocalChatLog
 	var err error
 	var messageList sdk_struct.NewMsgList
 	var msg sdk_struct.MsgStruct
@@ -422,8 +422,8 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 }
 func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req sdk.RevokeMessageParams, operationID string) {
 	var recvID, groupID string
-	var localMessage db.LocalChatLog
-	var lc db.LocalConversation
+	var localMessage model_struct.LocalChatLog
+	var lc model_struct.LocalConversation
 	var conversationID string
 	message, err := c.db.GetMessage(req.ClientMsgID)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -487,7 +487,7 @@ func (c *Conversation) typingStatusUpdate(callback open_im_sdk_callback.Base, re
 }
 
 func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, msgIDList sdk.MarkC2CMessageAsReadParams, userID, operationID string) {
-	var localMessage db.LocalChatLog
+	var localMessage model_struct.LocalChatLog
 	var newMessageIDList []string
 	messages, err := c.db.GetMultipleMessage(msgIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -581,7 +581,7 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 //	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.ch)
 //	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 //}
-func (c *Conversation) insertMessageToLocalStorage(callback open_im_sdk_callback.Base, s *db.LocalChatLog, operationID string) string {
+func (c *Conversation) insertMessageToLocalStorage(callback open_im_sdk_callback.Base, s *model_struct.LocalChatLog, operationID string) string {
 	err := c.db.InsertMessage(s)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return s.ClientMsgID
@@ -618,11 +618,11 @@ func (c *Conversation) deleteMessageFromSvr(callback open_im_sdk_callback.Base, 
 }
 
 func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
-	var conversation db.LocalConversation
+	var conversation model_struct.LocalConversation
 	var latestMsg sdk_struct.MsgStruct
 	var conversationID string
 	var sourceID string
-	chatLog := db.LocalChatLog{ClientMsgID: s.ClientMsgID, Status: constant.MsgStatusHasDeleted}
+	chatLog := model_struct.LocalChatLog{ClientMsgID: s.ClientMsgID, Status: constant.MsgStatusHasDeleted}
 	err := c.db.UpdateMessage(&chatLog)
 	common.CheckDBErrCallback(callback, err, operationID)
 
@@ -693,7 +693,7 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 
 	var conversationID, sourceID string
 	var startTime, endTime int64
-	var list []*db.LocalChatLog
+	var list []*model_struct.LocalChatLog
 	conversationMap := make(map[string]*sdk.SearchByConversationResult, 10)
 	var err error
 
