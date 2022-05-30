@@ -169,6 +169,7 @@ func (m *SuperGroupMsgSync) syncMsgFromServerSplit(needSyncSeqList []uint32, gro
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 30, 2, m.loginUserID)
 			continue
 		}
+		log.Debug(operationID, "SendReqWaitResp pull msg ", pullMsgReq.String())
 		var pullMsgResp server_api_params.PullMessageBySeqListResp
 		err = proto.Unmarshal(resp.Data, &pullMsgResp)
 		if err != nil {
