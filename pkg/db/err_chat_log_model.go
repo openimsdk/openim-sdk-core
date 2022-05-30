@@ -47,5 +47,10 @@ func (d *DataBase) BatchInsertExceptionMsgController(MessageList []*model_struct
 	}
 }
 func (d *DataBase) GetSuperGroupAbnormalMsgSeq(groupID string) (uint32, error) {
-	return 0, nil
+	var seq uint32
+	if !d.conn.Migrator().HasTable(utils.GetErrSuperGroupTableName(groupID)) {
+		return 0, nil
+	}
+	err := d.conn.Table(utils.GetErrSuperGroupTableName(groupID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
+	return seq, utils.Wrap(err, "GetSuperGroupNormalMsgSeq")
 }
