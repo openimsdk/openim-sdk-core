@@ -1,10 +1,12 @@
 package super_group
 
 import (
+	"errors"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
@@ -60,4 +62,35 @@ func (s *SuperGroup) getJoinedGroupListFromSvr(operationID string) ([]*api.Group
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 	return result, nil
+}
+
+func (s *SuperGroup) GetGroupInfoFromLocal2Svr(groupID string) (*model_struct.LocalGroup, error) {
+	localGroup, err := s.db.GetGroupInfoByGroupID(groupID)
+	if err == nil {
+		return localGroup, nil
+	}
+	groupIDList := []string{groupID}
+	operationID := utils.OperationIDGenerator()
+	svrGroup, err := s.getGroupsInfoFromSvr(groupIDList, operationID)
+	if err == nil && len(svrGroup) == 1 {
+		transfer := common.TransferToLocalGroupInfo(svrGroup)
+		return transfer[0], nil
+	}
+	if err != nil {
+		return nil, utils.Wrap(err, "")
+	} else {
+		return nil, utils.Wrap(errors.New("no group"), "")
+	}
+}
+
+func (s *SuperGroup) getGroupsInfoFromSvr(groupIDList []string, operationID string) ([]*api.GroupInfo, error) {
+	apiReq := api.GetSuperGroupsInfoReq{}
+	apiReq.GroupIDList = groupIDList
+	apiReq.OperationID = operationID
+	var groupInfoList []*api.GroupInfo
+	err := s.p.PostReturn(constant.GetSuperGroupsInfoRouter, apiReq, &groupInfoList)
+	if err != nil {
+		return nil, utils.Wrap(err, apiReq.OperationID)
+	}
+	return groupInfoList, nil
 }

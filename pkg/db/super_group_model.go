@@ -37,3 +37,8 @@ func (d *DataBase) InsertSuperGroup(groupInfo *model_struct.LocalGroup) error {
 func (d *DataBase) DeleteAllSuperGroup() error {
 	return utils.Wrap(d.conn.Table(SuperGroupTableName).Delete(&model_struct.LocalGroup{}).Error, "DeleteAllSuperGroup failed")
 }
+
+func (d *DataBase) GetSuperGroupInfoByGroupID(groupID string) (*model_struct.LocalGroup, error) {
+	var g model_struct.LocalGroup
+	return &g, utils.Wrap(d.conn.Table(SuperGroupTableName).Where("group_id = ?", groupID).Take(&g).Error, "GetGroupList failed")
+}

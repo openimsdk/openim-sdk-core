@@ -24,10 +24,6 @@ type Heartbeat struct {
 	ExpireTimeSeconds uint32
 }
 
-func (u *Heartbeat) SetSuperGroupIDList(groupIDList []string) {
-
-}
-
 func (u *Heartbeat) SetHeartbeatInterval(heartbeatInterval int) {
 	u.heartbeatInterval = heartbeatInterval
 }

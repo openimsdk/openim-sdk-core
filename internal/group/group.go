@@ -386,6 +386,7 @@ func (g *Group) GetGroupInfoFromLocal2Svr(groupID string) (*model_struct.LocalGr
 		return nil, utils.Wrap(errors.New("no group"), "")
 	}
 }
+
 func (g *Group) searchGroups(callback open_im_sdk_callback.Base, param sdk.SearchGroupsParam, operationID string) sdk.SearchGroupsCallback {
 	if len(param.KeywordList) == 0 || (!param.IsSearchGroupName && !param.IsSearchGroupID) {
 		common.CheckAnyErrCallback(callback, 201, errors.New("keyword is null or search field all false"), operationID)

@@ -67,6 +67,7 @@ const (
 
 	//super_group
 	GetJoinedSuperGroupListRouter = RouterSuperGroup + "/get_joined_group_list"
+	GetSuperGroupsInfoRouter      = RouterSuperGroup + "/get_groups_info"
 )
 const (
 	RouterGroup        = "/group"
