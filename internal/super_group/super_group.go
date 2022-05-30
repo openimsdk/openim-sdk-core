@@ -56,11 +56,12 @@ func (s *SuperGroup) getJoinedGroupListFromSvr(operationID string) ([]*api.Group
 	apiReq.OperationID = operationID
 	apiReq.FromUserID = s.loginUserID
 	var result []*api.GroupInfo
-	log.Debug(operationID, "api args: ", apiReq)
+	log.Debug(operationID, "super group api args: ", apiReq)
 	err := s.p.PostReturn(constant.GetJoinedSuperGroupListRouter, apiReq, &result)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
+	log.Debug(operationID, "super group api result: ", result)
 	return result, nil
 }
 
