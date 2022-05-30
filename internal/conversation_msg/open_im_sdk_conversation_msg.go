@@ -540,7 +540,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 		lc := &model_struct.LocalConversation{LatestMsgSendTime: s.CreateTime}
 		//根据单聊群聊类型组装消息和会话
 		if recvID == "" {
-			g, err := c.db.GetGroupInfoByGroupID(groupID)
+			g, err := c.full.GetGroupInfoByGroupID(groupID)
 			common.CheckAnyErrCallback(callback, 202, err, operationID)
 			lc.ShowName = g.GroupName
 			lc.FaceURL = g.FaceURL
@@ -556,16 +556,18 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			}
 			s.GroupID = groupID
 			lc.GroupID = groupID
-			gm, err := c.db.GetGroupMemberInfoByGroupIDUserID(groupID, c.loginUserID)
-			common.CheckAnyErrCallback(callback, 202, err, operationID)
-			log.Debug(operationID, "group chat test", *gm)
-			if gm.Nickname != "" {
-				s.SenderNickname = gm.Nickname
-			}
-			groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
-			common.CheckAnyErrCallback(callback, 202, err, operationID)
-			if !utils.IsContain(s.SendID, groupMemberUidList) {
-				common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
+			if s.SessionType == constant.GroupChatType {
+				gm, err := c.db.GetGroupMemberInfoByGroupIDUserID(groupID, c.loginUserID)
+				common.CheckAnyErrCallback(callback, 202, err, operationID)
+				log.Debug(operationID, "group chat test", *gm)
+				if gm.Nickname != "" {
+					s.SenderNickname = gm.Nickname
+				}
+				groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
+				common.CheckAnyErrCallback(callback, 202, err, operationID)
+				if !utils.IsContain(s.SendID, groupMemberUidList) {
+					common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
+				}
 			}
 			s.AttachedInfoElem.GroupHasReadInfo.GroupMemberCount = g.MemberCount
 			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
@@ -716,7 +718,7 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 		lc := &model_struct.LocalConversation{LatestMsgSendTime: s.CreateTime}
 		//根据单聊群聊类型组装消息和会话
 		if recvID == "" {
-			g, err := c.db.GetGroupInfoByGroupID(groupID)
+			g, err := c.full.GetGroupInfoByGroupID(groupID)
 			common.CheckAnyErrCallback(callback, 202, err, operationID)
 			lc.ShowName = g.GroupName
 			lc.FaceURL = g.FaceURL
@@ -732,16 +734,18 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 			}
 			s.GroupID = groupID
 			lc.GroupID = groupID
-			gm, err := c.db.GetGroupMemberInfoByGroupIDUserID(groupID, c.loginUserID)
-			common.CheckAnyErrCallback(callback, 202, err, operationID)
-			log.Debug(operationID, "group chat test", *gm)
-			if gm.Nickname != "" {
-				s.SenderNickname = gm.Nickname
-			}
-			groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
-			common.CheckAnyErrCallback(callback, 202, err, operationID)
-			if !utils.IsContain(s.SendID, groupMemberUidList) {
-				common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
+			if s.SessionType == constant.GroupChatType {
+				gm, err := c.db.GetGroupMemberInfoByGroupIDUserID(groupID, c.loginUserID)
+				common.CheckAnyErrCallback(callback, 202, err, operationID)
+				log.Debug(operationID, "group chat test", *gm)
+				if gm.Nickname != "" {
+					s.SenderNickname = gm.Nickname
+				}
+				groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
+				common.CheckAnyErrCallback(callback, 202, err, operationID)
+				if !utils.IsContain(s.SendID, groupMemberUidList) {
+					common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
+				}
 			}
 			s.AttachedInfoElem.GroupHasReadInfo.GroupMemberCount = g.MemberCount
 			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)

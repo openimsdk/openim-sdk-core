@@ -14,5 +14,5 @@ func (u *Full) GetGroupInfoByGroupID(groupID string) (*model_struct.LocalGroup, 
 	if t == constant.NormalGroup {
 		return u.db.GetGroupInfoByGroupID(groupID)
 	}
-	return u.db.GetGroupInfoByGroupID(groupID)
+	return u.db.GetSuperGroupInfoByGroupID(groupID)
 }
