@@ -26,6 +26,8 @@ type SuperGroupMsgSync struct {
 
 func NewSuperGroupMsgSync(dataBase *db.DataBase, ws *Ws, loginUserID string, conversationCh chan common.Cmd2Value, joinedSuperGroupCh chan common.Cmd2Value) *SuperGroupMsgSync {
 	p := &SuperGroupMsgSync{DataBase: dataBase, Ws: ws, loginUserID: loginUserID, conversationCh: conversationCh, joinedSuperGroupCh: joinedSuperGroupCh}
+	p.Group2SeqMaxNeedSync = make(map[string]uint32, 0)
+	p.Group2SeqMaxSynchronized = make(map[string]uint32, 0)
 	go p.updateJoinedSuperGroup()
 	return p
 }
