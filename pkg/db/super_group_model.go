@@ -1,15 +1,14 @@
 package db
 
 import (
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 )
 
-var SuperGroupTableName = "super_groups"
-
 func (d *DataBase) GetJoinedSuperGroupList() ([]*model_struct.LocalGroup, error) {
 	var groupList []model_struct.LocalGroup
-	err := d.conn.Table(SuperGroupTableName).Find(&groupList).Error
+	err := d.conn.Table(constant.SuperGroupTableName).Find(&groupList).Error
 	var transfer []*model_struct.LocalGroup
 	for _, v := range groupList {
 		v1 := v
@@ -31,14 +30,14 @@ func (d *DataBase) GetJoinedSuperGroupIDList() ([]string, error) {
 }
 
 func (d *DataBase) InsertSuperGroup(groupInfo *model_struct.LocalGroup) error {
-	return utils.Wrap(d.conn.Table(SuperGroupTableName).Create(groupInfo).Error, "InsertSuperGroup failed")
+	return utils.Wrap(d.conn.Table(constant.SuperGroupTableName).Create(groupInfo).Error, "InsertSuperGroup failed")
 }
 
 func (d *DataBase) DeleteAllSuperGroup() error {
-	return utils.Wrap(d.conn.Table(SuperGroupTableName).Delete(&model_struct.LocalGroup{}).Error, "DeleteAllSuperGroup failed")
+	return utils.Wrap(d.conn.Table(constant.SuperGroupTableName).Delete(&model_struct.LocalGroup{}).Error, "DeleteAllSuperGroup failed")
 }
 
 func (d *DataBase) GetSuperGroupInfoByGroupID(groupID string) (*model_struct.LocalGroup, error) {
 	var g model_struct.LocalGroup
-	return &g, utils.Wrap(d.conn.Table(SuperGroupTableName).Where("group_id = ?", groupID).Take(&g).Error, "GetGroupList failed")
+	return &g, utils.Wrap(d.conn.Table(constant.SuperGroupTableName).Where("group_id = ?", groupID).Take(&g).Error, "GetGroupList failed")
 }

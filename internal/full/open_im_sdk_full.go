@@ -8,7 +8,6 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-//f
 func (u *Full) GetUsersInfo(callback open_im_sdk_callback.Base, userIDList string, operationID string) {
 	fName := utils.GetSelfFuncName()
 	go func() {
