@@ -173,8 +173,9 @@ const (
 //	ErrCodeGroup        = 5001
 //)
 const (
-	NormalGroup = 0
-	SuperGroup  = 1
+	NormalGroup         = 0
+	SuperGroup          = 1
+	SuperGroupTableName = "super_groups"
 )
 
 const (

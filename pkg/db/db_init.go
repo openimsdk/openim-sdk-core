@@ -146,7 +146,7 @@ func (d *DataBase) initDB() error {
 		&LocalWorkMomentsNotification{},
 		&LocalWorkMomentsNotificationUnreadCount{},
 	)
-	db.Table("super_groups").AutoMigrate(superGroup)
+	db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup)
 	if !db.Migrator().HasTable(&model_struct.LocalFriend{}) {
 		//log.NewInfo("CreateTable Friend")
 		db.Migrator().CreateTable(&model_struct.LocalFriend{})
