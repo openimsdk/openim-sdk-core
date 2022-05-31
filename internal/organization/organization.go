@@ -79,7 +79,14 @@ func (o *Organization) getDepartmentMemberAndSubDepartment(callback open_im_sdk_
 	department, err := o.db.GetDepartmentInfo(departmentID)
 	common.CheckDBErrCallback(callback, err, operationID)
 	parentDepartmentList = append(parentDepartmentList, department)
-	return sdk_params_callback.GetDepartmentMemberAndSubDepartmentCallback{DepartmentList: subDepartmentList, DepartmentMemberList: departmentMemberList, ParentDepartmentList: parentDepartmentList}
+	var parentDepartmentCallbackList []sdk_params_callback.ParentDepartmentCallback
+	for _, v := range parentDepartmentList {
+		parentDepartmentCallbackList = append(parentDepartmentCallbackList, sdk_params_callback.ParentDepartmentCallback{
+			Name:         v.Name,
+			DepartmentID: v.DepartmentID,
+		})
+	}
+	return sdk_params_callback.GetDepartmentMemberAndSubDepartmentCallback{DepartmentList: subDepartmentList, DepartmentMemberList: departmentMemberList, ParentDepartmentList: parentDepartmentCallbackList}
 }
 
 func (o *Organization) getParentDepartmentList(callback open_im_sdk_callback.Base, departmentID string, operationID string) sdk_params_callback.GetParentDepartmentListCallback {

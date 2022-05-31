@@ -20,8 +20,13 @@ type GetDepartmentMemberCallback []*db.LocalDepartmentMember
 
 type GetUserInDepartmentCallback []*UserInDepartment
 
+type ParentDepartmentCallback struct {
+	Name         string `json:"name"`
+	DepartmentID string `json:"departmentID"`
+}
+
 type GetDepartmentMemberAndSubDepartmentCallback struct {
 	DepartmentList       []*db.LocalDepartment       `json:"departmentList"`
 	DepartmentMemberList []*db.LocalDepartmentMember `json:"departmentMemberList"`
-	ParentDepartmentList []*db.LocalDepartment       `json:"parentDepartmentList"`
+	ParentDepartmentList []ParentDepartmentCallback  `json:"parentDepartmentList"`
 }
