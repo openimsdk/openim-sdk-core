@@ -55,3 +55,11 @@ func DoTestGetDepartmentMemberAndSubDepartment() {
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
 	open_im_sdk.GetDepartmentMemberAndSubDepartment(test, test.OperationID, "002")
 }
+
+func DoTestGetParentDepartmentList(departmentID string) {
+	var test testOrganization
+	test.OperationID = utils.OperationIDGenerator()
+	test.CallName = utils.GetSelfFuncName()
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
+	open_im_sdk.GetParentDepartmentList(test, test.OperationID, departmentID)
+}
