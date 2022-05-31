@@ -74,7 +74,18 @@ func (o *Organization) getDepartmentMemberAndSubDepartment(callback open_im_sdk_
 	common.CheckDBErrCallback(callback, err, operationID)
 	departmentMemberList, err := o.db.GetDepartmentMemberListByDepartmentID(departmentID)
 	common.CheckDBErrCallback(callback, err, operationID)
-	return sdk_params_callback.GetDepartmentMemberAndSubDepartmentCallback{DepartmentList: subDepartmentList, DepartmentMemberList: departmentMemberList}
+	parentDepartmentList, err := o.db.GetParentDepartmentList(departmentID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	department, err := o.db.GetDepartmentInfo(departmentID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	parentDepartmentList = append(parentDepartmentList, department)
+	return sdk_params_callback.GetDepartmentMemberAndSubDepartmentCallback{DepartmentList: subDepartmentList, DepartmentMemberList: departmentMemberList, ParentDepartmentList: parentDepartmentList}
+}
+
+func (o *Organization) getParentDepartmentList(callback open_im_sdk_callback.Base, departmentID string, operationID string) sdk_params_callback.GetParentDepartmentListCallback {
+	parentDepartmentList, err := o.db.GetParentDepartmentList(departmentID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	return parentDepartmentList
 }
 
 func (o *Organization) getSubDepartmentFromSvr(departmentID string, operationID string) ([]*api.Department, error) {

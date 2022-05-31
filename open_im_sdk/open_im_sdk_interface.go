@@ -1054,6 +1054,15 @@ func GetDepartmentMemberAndSubDepartment(callback open_im_sdk_callback.Base, ope
 	userForSDK.Organization().GetDepartmentMemberAndSubDepartment(callback, departmentID, operationID)
 }
 
+func GetParentDepartmentList(callback open_im_sdk_callback.Base, operationID string, departmentID string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Organization().GetParentDepartmentList(callback, departmentID, operationID)
+}
+
 // workMomentsInterface
 func GetWorkMomentsUnReadCount(callback open_im_sdk_callback.Base, operationID string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {

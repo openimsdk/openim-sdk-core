@@ -65,3 +65,34 @@ func (d *DataBase) GetAllDepartmentList() ([]*LocalDepartment, error) {
 	}
 	return transfer, utils.Wrap(err, utils.GetSelfFuncName()+" failed")
 }
+
+func (d *DataBase) GetParentDepartmentList(departmentID string) ([]*LocalDepartment, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+	var departmentList []*LocalDepartment
+	err := d.getParentDepartmentList(&departmentList, departmentID)
+	return departmentList, err
+}
+
+func (d *DataBase) getParentDepartmentList(departmentList *[]*LocalDepartment, departmentID string) error {
+	department, err := d.getParentDepartment(departmentID)
+	if err != nil {
+		return utils.Wrap(err, "getParentDepartment failed")
+	}
+	if department.DepartmentID != "" {
+		*departmentList = append([]*LocalDepartment{&department}, *departmentList...)
+		err := d.getParentDepartmentList(departmentList, department.DepartmentID)
+		if err != nil {
+			return utils.Wrap(err, "getParentDepartmentList failed")
+		}
+	}
+	return nil
+}
+
+func (d *DataBase) getParentDepartment(departmentID string) (LocalDepartment, error) {
+	var department LocalDepartment
+	var parentID string
+	d.conn.Model(&department).Where("department_id=?", departmentID).Pluck("parent_id", &parentID)
+	err := d.conn.Where("department_id=?", parentID).Find(&department).Error
+	return department, err
+}

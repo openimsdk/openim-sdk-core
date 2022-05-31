@@ -14,6 +14,8 @@ type DepartmentAndUser struct {
 
 type GetSubDepartmentCallback []*db.LocalDepartment
 
+type GetParentDepartmentListCallback []*db.LocalDepartment
+
 type GetDepartmentMemberCallback []*db.LocalDepartmentMember
 
 type GetUserInDepartmentCallback []*UserInDepartment
@@ -21,4 +23,5 @@ type GetUserInDepartmentCallback []*UserInDepartment
 type GetDepartmentMemberAndSubDepartmentCallback struct {
 	DepartmentList       []*db.LocalDepartment       `json:"departmentList"`
 	DepartmentMemberList []*db.LocalDepartmentMember `json:"departmentMemberList"`
+	ParentDepartmentList []*db.LocalDepartment       `json:"parentDepartmentList"`
 }
