@@ -913,9 +913,12 @@ func (c *Conversation) deleteAllMsgFromLocal(callback open_im_sdk_callback.Base,
 	common.CheckDBErrCallback(callback, err, operationID)
 	conversationList, err := c.db.GetAllConversationList()
 	common.CheckDBErrCallback(callback, err, operationID)
+	var cidList []string
 	for _, conversation := range conversationList {
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.ConChange, Args: []string{conversation.ConversationID}}, c.ch)
+		cidList = append(cidList, conversation.ConversationID)
 	}
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: cidList}, c.GetCh())
+	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 }
 
 func (c *Conversation) deleteAllMsgFromSvr(callback open_im_sdk_callback.Base, operationID string) {
