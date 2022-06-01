@@ -48,7 +48,9 @@ import (
 
 func DoTestDeleteAllMsgFromLocalAndSvr() {
 	var deleteConversationCallback DeleteConversationCallBack
-	open_im_sdk.DeleteAllMsgFromLocalAndSvr(deleteConversationCallback, utils.OperationIDGenerator())
+	operationID := utils.OperationIDGenerator()
+	log.Info(operationID, utils.GetSelfFuncName(), "args ")
+	open_im_sdk.DeleteAllMsgFromLocalAndSvr(deleteConversationCallback, operationID)
 }
 func DoTestSearchLocalMessages() {
 	//[SearchLocalMessages args:  {"conversationID":"single_707010937","keywordList":["1"],"keywordListMatchType":0,"senderUserIDList":[],"messageTypeList":[],"searchTimePosition":0,"searchTimePeriod":0,"pageIndex":1,"count":200}]

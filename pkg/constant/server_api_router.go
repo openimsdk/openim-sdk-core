@@ -18,11 +18,15 @@ const (
 	RemoveBlackRouter  = "/friend/remove_black"
 	GetBlackListRouter = "/friend/get_black_list"
 
-	SendMsgRouter                       = "/chat/send_msg"
-	PullUserMsgRouter                   = "/chat/pull_msg"
-	PullUserMsgBySeqRouter              = "/chat/pull_msg_by_seq"
-	NewestSeqRouter                     = "/chat/newest_seq"
-	DeleteMsgRouter                     = "/msg/del_msg"
+	SendMsgRouter          = "/chat/send_msg"
+	PullUserMsgRouter      = "/chat/pull_msg"
+	PullUserMsgBySeqRouter = "/chat/pull_msg_by_seq"
+	NewestSeqRouter        = "/chat/newest_seq"
+
+	//msg
+	DeleteMsgRouter = RouterMsg + "/del_msg"
+	ClearMsgRouter  = RouterMsg + "/clear_msg"
+
 	TencentCloudStorageCredentialRouter = "/third/tencent_cloud_storage_credential"
 	AliOSSCredentialRouter              = "/third/ali_oss_credential"
 	MinioStorageCredentialRouter        = "/third/minio_storage_credential"
@@ -75,4 +79,5 @@ const (
 	RouterOrganization = "/organization"
 	RouterAuth         = "/auth"
 	RouterSuperGroup   = "/super_group"
+	RouterMsg          = "/msg"
 )

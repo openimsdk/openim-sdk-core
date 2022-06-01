@@ -7,24 +7,6 @@ import (
 	"time"
 )
 
-//func reliabilityTest() {
-//	intervalSleepMs := 1
-//	randSleepMaxSecond := 30
-//	imIP := "43.128.5.63"
-//	oneClientSendMsgNum := 1
-//	testClientNum := 100
-//	test.ReliabilityTest(oneClientSendMsgNum, intervalSleepMs, imIP, randSleepMaxSecond, testClientNum)
-//
-//	for {
-//		if test.CheckReliabilityResult() {
-//			log.Warn("", "CheckReliabilityResult ok, again")
-//		} else {
-//			log.Warn("", "CheckReliabilityResult failed , wait.... ")
-//		}
-//		time.Sleep(time.Duration(10) * time.Second)
-//	}
-//}
-
 func main() {
 
 	strMyUidx := "18666662345"
@@ -32,8 +14,13 @@ func main() {
 	tokenx := test.GenToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
+	test.DoTestDeleteAllMsgFromLocalAndSvr()
+
+	time.Sleep(250000 * time.Millisecond)
+
 	println("start")
 	test.DoTestSendMsg2Group(strMyUidx, "0a3b3b8cc181b9fcfdfe4887e0b4ac30", 0)
+
 	//test.DoTestGetUserInDepartment()
 	//test.DoTestGetDepartmentMemberAndSubDepartment()
 	//test.DoTestDeleteAllMsgFromLocalAndSvr()
@@ -79,7 +66,7 @@ func main() {
 	//test.DoTestMarkGroupMessageAsRead()
 	//test.DoTestGetGroupHistoryMessage()
 	//test.DoTestGetHistoryMessage("17396220460")
-	time.Sleep(250000 * time.Millisecond)
+
 	b := utils.GetCurrentTimestampBySecond()
 	i := 0
 	for {

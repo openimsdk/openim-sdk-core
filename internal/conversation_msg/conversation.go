@@ -617,6 +617,13 @@ func (c *Conversation) deleteMessageFromSvr(callback open_im_sdk_callback.Base, 
 	c.p.PostFatalCallback(callback, constant.DeleteMsgRouter, apiReq, nil, apiReq.OperationID)
 }
 
+func (c *Conversation) clearMessageFromSvr(callback open_im_sdk_callback.Base, operationID string) {
+	var apiReq server_api_params.CleanUpMsgReq
+	apiReq.UserID = c.loginUserID
+	apiReq.OperationID = operationID
+	c.p.PostFatalCallback(callback, constant.ClearMsgRouter, apiReq, nil, apiReq.OperationID)
+}
+
 func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
 	var conversation model_struct.LocalConversation
 	var latestMsg sdk_struct.MsgStruct
