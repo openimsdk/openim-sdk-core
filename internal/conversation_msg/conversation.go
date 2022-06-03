@@ -154,9 +154,9 @@ func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, so
 			}
 			newConversation.ShowName = name
 			newConversation.FaceURL = faceUrl
-		case constant.GroupChatType:
+		case constant.GroupChatType, constant.SuperGroupChatType:
 			newConversation.GroupID = sourceID
-			g, err := c.group.GetGroupInfoFromLocal2Svr(sourceID)
+			g, err := c.full.GetGroupInfoFromLocal2Svr(sourceID)
 			//g, err := c.db.GetGroupInfoByGroupID(sourceID)
 			common.CheckDBErrCallback(callback, err, operationID)
 			newConversation.ShowName = g.GroupName
