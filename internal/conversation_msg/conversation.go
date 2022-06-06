@@ -694,11 +694,18 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 	var err error
 
 	if searchParam.SearchTimePosition == 0 {
-		startTime = utils.UnixSecondToTime(utils.GetCurrentTimestampBySecond()).UnixNano() / 1e6
+		endTime = utils.GetCurrentTimestampBySecond()
+		//endTime = utils.GetCurrentTimestampByMill()
 	} else {
-		startTime = utils.UnixSecondToTime(searchParam.SearchTimePosition).UnixNano() / 1e6
-		endTime = utils.UnixSecondToTime(startTime-searchParam.SearchTimePeriod).UnixNano() / 1e6
+		//endTime = utils.UnixSecondToTime(searchParam.SearchTimePosition).UnixNano() / 1e6
+		endTime = searchParam.SearchTimePosition
 	}
+	if searchParam.SearchTimePeriod != 0 {
+		//startTime = utils.UnixSecondToTime(endTimeSecond-searchParam.SearchTimePeriod).UnixNano() / 1e6
+		startTime = endTime - searchParam.SearchTimePeriod
+	}
+	startTime = utils.UnixSecondToTime(startTime).UnixNano() / 1e6
+	endTime = utils.UnixSecondToTime(startTime).UnixNano() / 1e6
 	if len(searchParam.KeywordList) == 0 && len(searchParam.MessageTypeList) == 0 {
 		common.CheckAnyErrCallback(callback, 201, errors.New("keywordlist and messageTypelist all null"), operationID)
 	}
