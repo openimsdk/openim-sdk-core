@@ -695,13 +695,10 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 
 	if searchParam.SearchTimePosition == 0 {
 		endTime = utils.GetCurrentTimestampBySecond()
-		//endTime = utils.GetCurrentTimestampByMill()
 	} else {
-		//endTime = utils.UnixSecondToTime(searchParam.SearchTimePosition).UnixNano() / 1e6
 		endTime = searchParam.SearchTimePosition
 	}
 	if searchParam.SearchTimePeriod != 0 {
-		//startTime = utils.UnixSecondToTime(endTimeSecond-searchParam.SearchTimePeriod).UnixNano() / 1e6
 		startTime = endTime - searchParam.SearchTimePeriod
 	}
 	startTime = utils.UnixSecondToTime(startTime).UnixNano() / 1e6
