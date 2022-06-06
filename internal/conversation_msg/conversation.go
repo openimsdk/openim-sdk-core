@@ -705,7 +705,7 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 		startTime = endTime - searchParam.SearchTimePeriod
 	}
 	startTime = utils.UnixSecondToTime(startTime).UnixNano() / 1e6
-	endTime = utils.UnixSecondToTime(startTime).UnixNano() / 1e6
+	endTime = utils.UnixSecondToTime(endTime).UnixNano() / 1e6
 	if len(searchParam.KeywordList) == 0 && len(searchParam.MessageTypeList) == 0 {
 		common.CheckAnyErrCallback(callback, 201, errors.New("keywordlist and messageTypelist all null"), operationID)
 	}
@@ -723,7 +723,7 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 			sourceID = localConversation.GroupID
 		}
 		if len(searchParam.MessageTypeList) != 0 && len(searchParam.KeywordList) == 0 {
-			list, err = c.db.SearchMessageByContentType(searchParam.MessageTypeList, sourceID, endTime, startTime, int(localConversation.ConversationType), offset, searchParam.Count)
+			list, err = c.db.SearchMessageByContentType(searchParam.MessageTypeList, sourceID, startTime, endTime, int(localConversation.ConversationType), offset, searchParam.Count)
 		} else {
 			newContentTypeList := func(list []int) (result []int) {
 				for _, v := range list {
@@ -736,14 +736,14 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 			if len(newContentTypeList) == 0 {
 				newContentTypeList = SearchContentType
 			}
-			list, err = c.db.SearchMessageByKeyword(newContentTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, sourceID, endTime, startTime, int(localConversation.ConversationType), offset, searchParam.Count)
+			list, err = c.db.SearchMessageByKeyword(newContentTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, sourceID, startTime, endTime, int(localConversation.ConversationType), offset, searchParam.Count)
 		}
 	} else {
 		//Comprehensive search, search all
 		if len(searchParam.MessageTypeList) == 0 {
 			searchParam.MessageTypeList = SearchContentType
 		}
-		list, err = c.db.SearchMessageByContentTypeAndKeyword(searchParam.MessageTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, endTime, startTime)
+		list, err = c.db.SearchMessageByContentTypeAndKeyword(searchParam.MessageTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
 	}
 	common.CheckDBErrCallback(callback, err, operationID)
 	//localChatLogToMsgStruct(&messageList, list)
