@@ -1,7 +1,6 @@
 package organization
 
 import (
-	"fmt"
 	"github.com/jinzhu/copier"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
@@ -108,7 +107,6 @@ func (o *Organization) searchOrganization(callback open_im_sdk_callback.Base, in
 		DepartmentList: departmentList,
 	}
 	for _, member := range departmentMemberList {
-		fmt.Println(member.DepartmentID)
 		parentDepartmentList, err := o.db.GetParentDepartmentList(member.DepartmentID)
 		if err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), "GetParentDepartmentList failed", err.Error())
