@@ -81,8 +81,9 @@ func main() {
 	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
 	println("start")
 	//test.DoTestSendImageMsg( "17726378428")
-	test.DoTestGetDepartmentInfo("008")
-	test.DoTestSearchOrganization("13900000000", 0, 20)
+	//test.DoTestGetParentDepartmentList("003")
+	//test.DoTestGetDepartmentInfo("008")
+	test.DoTestSearchOrganization("null", 0, 20)
 
 	//test.DoTestGetUserInDepartment()
 	//test.DoTestGetDepartmentMemberAndSubDepartment()
