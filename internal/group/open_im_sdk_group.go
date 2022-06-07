@@ -3,6 +3,7 @@ package group
 import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
@@ -94,6 +95,19 @@ func (g *Group) ChangeGroupMemberMute(callback open_im_sdk_callback.Base, groupI
 		g.changeGroupMemberMute(groupID, userID, mutedSeconds, callback, operationID)
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GroupMemberMuteChangeCallback))
 		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk_params_callback.GroupMemberMuteChangeCallback))
+	}()
+}
+
+func (g *Group) SetGroupMemberRoleLevel(callback open_im_sdk_callback.Base, groupID, userID string, roleLevel int, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", groupID, userID, roleLevel)
+		g.setGroupMemberRoleLevel(callback, groupID, userID, roleLevel, operationID)
+		callback.OnSuccess(constant.SuccessCallbackDefault)
+		log.NewInfo(operationID, fName, " callback: ", constant.SuccessCallbackDefault)
 	}()
 }
 
