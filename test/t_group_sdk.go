@@ -467,3 +467,10 @@ func DotestSetGroupMemberNickname(myUserID string) {
 	open_im_sdk.SetGroupMemberNickname(test, test.OperationID, TestgroupID, myUserID, "")
 
 }
+
+func DoTestSetGroupMemberRoleLevel(groupID, userID string, roleLevel int) {
+	var test testSetGroupMemberNickname
+	test.OperationID = utils.OperationIDGenerator()
+	fmt.Println(test.OperationID, utils.GetSelfFuncName(), "inputx: ")
+	open_im_sdk.SetGroupMemberRoleLevel(test, test.OperationID, groupID, userID, roleLevel)
+}

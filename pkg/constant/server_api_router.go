@@ -53,6 +53,7 @@ const (
 	MuteGroupRouter                   = RouterGroup + "/mute_group"
 	CancelMuteGroupRouter             = RouterGroup + "/cancel_mute_group"
 	SetGroupMemberNicknameRouter      = RouterGroup + "/set_group_member_nickname"
+	SetGroupMemberInfoRouter          = RouterGroup + "/set_group_member_info"
 
 	SetReceiveMessageOptRouter         = "/conversation/set_receive_message_opt"
 	GetReceiveMessageOptRouter         = "/conversation/get_receive_message_opt"
