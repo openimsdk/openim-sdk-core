@@ -23,11 +23,11 @@ type Full struct {
 	ch         chan common.Cmd2Value
 	userCache  *cache.Cache
 	db         *db.DataBase
-	superGroup *super_group.SuperGroup
+	SuperGroup *super_group.SuperGroup
 }
 
 func NewFull(user *user.User, friend *friend.Friend, group *group.Group, ch chan common.Cmd2Value, userCache *cache.Cache, db *db.DataBase, superGroup *super_group.SuperGroup) *Full {
-	return &Full{user: user, friend: friend, group: group, ch: ch, userCache: userCache, db: db, superGroup: superGroup}
+	return &Full{user: user, friend: friend, group: group, ch: ch, userCache: userCache, db: db, SuperGroup: superGroup}
 }
 func (u *Full) getUsersInfo(callback open_im_sdk_callback.Base, userIDList sdk.GetUsersInfoParam, operationID string) sdk.GetUsersInfoCallback {
 	friendList := u.friend.GetDesignatedFriendListInfo(callback, userIDList, operationID)
@@ -82,5 +82,5 @@ func (u *Full) GetGroupInfoFromLocal2Svr(groupID string) (*model_struct.LocalGro
 	if t == constant.NormalGroup {
 		return u.group.GetGroupInfoFromLocal2Svr(groupID)
 	}
-	return u.superGroup.GetGroupInfoFromLocal2Svr(groupID)
+	return u.SuperGroup.GetGroupInfoFromLocal2Svr(groupID)
 }

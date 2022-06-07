@@ -29,7 +29,7 @@ func NewSuperGroup(loginUserID string, db *db.DataBase, p *ws.PostApi, joinedSup
 	return &SuperGroup{loginUserID: loginUserID, db: db, p: p, joinedSuperGroupCh: joinedSuperGroupCh}
 }
 
-func (s *SuperGroup) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value) {
+func (s *SuperGroup) DoNotification(msg *api.MsgData, _ chan common.Cmd2Value) {
 	operationID := utils.OperationIDGenerator()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	if msg.SendTime < s.loginTime {
