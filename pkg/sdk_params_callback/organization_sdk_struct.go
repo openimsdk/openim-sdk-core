@@ -30,3 +30,10 @@ type GetDepartmentMemberAndSubDepartmentCallback struct {
 	DepartmentMemberList []*db.LocalDepartmentMember `json:"departmentMemberList"`
 	ParentDepartmentList []ParentDepartmentCallback  `json:"parentDepartmentList"`
 }
+
+type GetDepartmentInfoCallback *db.LocalDepartment
+
+type SearchOrganizationCallback struct {
+	DepartmentList       []*db.LocalDepartment              `json:"departmentList"`
+	DepartmentMemberList []*db.SearchDepartmentMemberResult `json:"departmentMemberList"`
+}

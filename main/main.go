@@ -28,9 +28,11 @@ import (
 //}
 
 var (
-	TESTIP       = "43.128.5.63"
-	APIADDR      = "http://" + TESTIP + ":10002"
-	WSADDR       = "ws://" + TESTIP + ":10001"
+	TESTIP  = "43.128.5.63"
+	APIADDR = "http://" + TESTIP + ":10002"
+	WSADDR  = "ws://" + TESTIP + ":10001"
+	//APIADDR      = "http://k8s.open-im-test.rentsoft.cn:31886/api"
+	//WSADDR       = "ws://k8s.open-im-test.rentsoft.cn:31886/msg-gateway"
 	REGISTERADDR = APIADDR + "/user_register"
 	ACCOUNTCHECK = APIADDR + "/manager/account_check"
 	TOKENADDR    = APIADDR + "/auth/user_token"
@@ -60,7 +62,7 @@ func main() {
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
 	test.SENDINTERVAL = SENDINTERVAL
-	strMyUidx := "13900000000"
+	strMyUidx := "17726378428"
 
 	//	var onlineNum *int          //Number of online users
 	//	var senderNum *int          //Number of users sending messages
@@ -78,10 +80,14 @@ func main() {
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
 	println("start")
+	//test.DoTestSendImageMsg( "17726378428")
+	test.DoTestGetDepartmentInfo("008")
+	test.DoTestSearchOrganization("13900000000", 0, 20)
+
 	//test.DoTestGetUserInDepartment()
 	//test.DoTestGetDepartmentMemberAndSubDepartment()
 	//test.DoTestDeleteAllMsgFromLocalAndSvr()
-	test.DoTestGetDepartmentMemberAndSubDepartment()
+	//test.DoTestGetDepartmentMemberAndSubDepartment()
 	//test.DotestUploadFile()
 	//test.DotestMinio()
 	//test.DotestSearchFriends()

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -75,6 +76,8 @@ func (d *DataBase) GetParentDepartmentList(departmentID string) ([]*LocalDepartm
 }
 
 func (d *DataBase) getParentDepartmentList(departmentList *[]*LocalDepartment, departmentID string) error {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	department, err := d.getParentDepartment(departmentID)
 	if err != nil {
 		return utils.Wrap(err, "getParentDepartment failed")
@@ -90,9 +93,40 @@ func (d *DataBase) getParentDepartmentList(departmentList *[]*LocalDepartment, d
 }
 
 func (d *DataBase) getParentDepartment(departmentID string) (LocalDepartment, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
 	var department LocalDepartment
 	var parentID string
 	d.conn.Model(&department).Where("department_id=?", departmentID).Pluck("parent_id", &parentID)
 	err := d.conn.Where("department_id=?", parentID).Find(&department).Error
-	return department, err
+	return department, utils.Wrap(err, "getParentDepartment failed")
+}
+
+type SearchDepartmentMemberResult struct {
+	LocalDepartmentMember
+	DepartmentName string `gorm:"column:name;size:256" json:"departmentName"`
+}
+
+func (d *DataBase) SearchDepartmentMember(input string, offset, count int) ([]*SearchDepartmentMemberResult, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+	var departmentMemberList []*SearchDepartmentMemberResult
+	condition := fmt.Sprintf("%%%s%%", input)
+	err := d.conn.Model(&LocalDepartmentMember{}).
+		Select([]string{"local_departments.name, local_department_members.*"}).
+		Where("nickname LIKE ? or english_name LIKE ? or mobile LIKE ? or telephone LIKE ? or email LIKE ? or position LIKE ?",
+			condition, condition, condition, condition, condition, condition).
+		Joins("left join local_departments on local_departments.department_id = local_department_members.department_id").
+		Offset(offset).Limit(count).
+		Scan(&departmentMemberList).Error
+	return departmentMemberList, utils.Wrap(err, "")
+}
+
+func (d *DataBase) SearchDepartment(input string, offset, count int) ([]*LocalDepartment, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+	var departmentMemberList []*LocalDepartment
+	condition := fmt.Sprintf("%%%s%%", input)
+	err := d.conn.Model(&LocalDepartment{}).Where("name LIKE ? and department_id != 0", condition).Offset(offset).Limit(count).Find(&departmentMemberList).Error
+	return departmentMemberList, utils.Wrap(err, "")
 }

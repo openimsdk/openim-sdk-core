@@ -63,3 +63,17 @@ func DoTestGetParentDepartmentList(departmentID string) {
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
 	open_im_sdk.GetParentDepartmentList(test, test.OperationID, departmentID)
 }
+
+func DoTestGetDepartmentInfo(departmentID string) {
+	var test testOrganization
+	test.OperationID = utils.OperationIDGenerator()
+	test.CallName = utils.GetSelfFuncName()
+	open_im_sdk.GetDepartmentInfo(test, test.OperationID, departmentID)
+}
+
+func DoTestSearchOrganization(input string, offset, count int) {
+	var test testOrganization
+	test.OperationID = utils.OperationIDGenerator()
+	test.CallName = utils.GetSelfFuncName()
+	open_im_sdk.SearchOrganization(test, test.OperationID, input, offset, count)
+}
