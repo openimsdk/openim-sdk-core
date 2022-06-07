@@ -75,7 +75,7 @@ func (o *Organization) getDepartmentMemberAndSubDepartment(callback open_im_sdk_
 	common.CheckDBErrCallback(callback, err, operationID)
 	departmentMemberList, err := o.db.GetDepartmentMemberListByDepartmentID(departmentID)
 	common.CheckDBErrCallback(callback, err, operationID)
-	parentDepartmentList, err := o.db.GetParentDepartmentPathList(departmentID)
+	parentDepartmentList, err := o.db.GetParentDepartmentList(departmentID)
 	common.CheckDBErrCallback(callback, err, operationID)
 	var parentDepartmentCallbackList []sdk_params_callback.ParentDepartmentCallback
 	for _, v := range parentDepartmentList {
@@ -88,7 +88,7 @@ func (o *Organization) getDepartmentMemberAndSubDepartment(callback open_im_sdk_
 }
 
 func (o *Organization) getParentDepartmentList(callback open_im_sdk_callback.Base, departmentID string, operationID string) sdk_params_callback.GetParentDepartmentListCallback {
-	parentDepartmentList, err := o.db.GetParentDepartmentPathList(departmentID)
+	parentDepartmentList, err := o.db.GetParentDepartmentList(departmentID)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return parentDepartmentList
 }
@@ -109,7 +109,7 @@ func (o *Organization) searchOrganization(callback open_im_sdk_callback.Base, in
 	}
 	for _, member := range departmentMemberList {
 		fmt.Println(member.DepartmentID)
-		parentDepartmentList, err := o.db.GetParentDepartmentPathList(member.DepartmentID)
+		parentDepartmentList, err := o.db.GetParentDepartmentList(member.DepartmentID)
 		if err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), "GetParentDepartmentList failed", err.Error())
 		}
@@ -122,8 +122,8 @@ func (o *Organization) searchOrganization(callback open_im_sdk_callback.Base, in
 		}
 		result.DepartmentMemberList = append(result.DepartmentMemberList, &struct {
 			*db.SearchDepartmentMemberResult
-			Path []*sdk_params_callback.ParentDepartmentCallback `json:"path"`
-		}{member, path})
+			ParentDepartmentList []*sdk_params_callback.ParentDepartmentCallback `json:"parentDepartmentList"`
+		}{SearchDepartmentMemberResult: member, ParentDepartmentList: path})
 	}
 	return result
 }

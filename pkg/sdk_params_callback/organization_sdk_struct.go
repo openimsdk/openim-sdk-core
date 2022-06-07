@@ -37,6 +37,6 @@ type SearchOrganizationCallback struct {
 	DepartmentList       []*db.LocalDepartment `json:"departmentList"`
 	DepartmentMemberList []*struct {
 		*db.SearchDepartmentMemberResult
-		Path []*ParentDepartmentCallback `json:"path"`
+		ParentDepartmentList []*ParentDepartmentCallback `json:"parentDepartmentList"`
 	} `json:"departmentMemberList"`
 }

@@ -67,15 +67,15 @@ func (d *DataBase) GetAllDepartmentList() ([]*LocalDepartment, error) {
 	return transfer, utils.Wrap(err, utils.GetSelfFuncName()+" failed")
 }
 
-func (d *DataBase) GetParentDepartmentPathList(departmentID string) ([]*LocalDepartment, error) {
+func (d *DataBase) GetParentDepartmentList(departmentID string) ([]*LocalDepartment, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var departmentList []*LocalDepartment
-	err := d.getDepartmentPathList(&departmentList, departmentID)
+	err := d.getDepartmentList(&departmentList, departmentID)
 	return departmentList, err
 }
 
-func (d *DataBase) getDepartmentPathList(departmentList *[]*LocalDepartment, departmentID string) error {
+func (d *DataBase) getDepartmentList(departmentList *[]*LocalDepartment, departmentID string) error {
 	if len(*departmentList) == 0 {
 		department, err := d.GetDepartmentInfo(departmentID)
 		if err != nil {
@@ -89,7 +89,7 @@ func (d *DataBase) getDepartmentPathList(departmentList *[]*LocalDepartment, dep
 	}
 	if department.DepartmentID != "" {
 		*departmentList = append([]*LocalDepartment{&department}, *departmentList...)
-		err := d.getDepartmentPathList(departmentList, department.DepartmentID)
+		err := d.getDepartmentList(departmentList, department.DepartmentID)
 		if err != nil {
 			return utils.Wrap(err, "getParentDepartmentList failed")
 		}
