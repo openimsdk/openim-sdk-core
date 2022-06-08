@@ -83,7 +83,7 @@ func main() {
 	//test.DoTestSendImageMsg( "17726378428")
 	//test.DoTestGetParentDepartmentList("003")
 	//test.DoTestGetDepartmentInfo("008")
-	test.DoTestSearchOrganization("null", 0, 20)
+	test.DoTestSearchOrganization("2", 0, 20)
 
 	//test.DoTestGetUserInDepartment()
 	//test.DoTestGetDepartmentMemberAndSubDepartment()

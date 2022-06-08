@@ -33,6 +33,17 @@ type GetDepartmentMemberAndSubDepartmentCallback struct {
 
 type GetDepartmentInfoCallback *db.LocalDepartment
 
+type SearchOrganizationParams struct {
+	KeyWord                 string `json:"keyWord"`
+	IsSearchUserName        bool   `json:"isSearchUserName"`
+	IsSearchUserEnglishName bool   `json:"isSearchEnglishName"`
+	IsSearchPosition        bool   `json:"isSearchPosition"`
+	IsSearchUserID          bool   `json:"isSearchUserID"`
+	IsSearchMobile          bool   `json:"isSearchMobile"`
+	IsSearchEmail           bool   `json:"isSearchEmail"`
+	IsSearchTelephone       bool   `json:"isSearchTelephone"`
+}
+
 type SearchOrganizationCallback struct {
 	DepartmentList       []*db.LocalDepartment `json:"departmentList"`
 	DepartmentMemberList []*struct {

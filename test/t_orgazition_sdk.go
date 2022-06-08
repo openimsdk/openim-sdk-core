@@ -1,8 +1,11 @@
 package test
 
 import (
+	"encoding/json"
+	"fmt"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -75,5 +78,17 @@ func DoTestSearchOrganization(input string, offset, count int) {
 	var test testOrganization
 	test.OperationID = utils.OperationIDGenerator()
 	test.CallName = utils.GetSelfFuncName()
-	open_im_sdk.SearchOrganization(test, test.OperationID, input, offset, count)
+	params := sdk_params_callback.SearchOrganizationParams{
+		KeyWord:                 "+8613900000000",
+		IsSearchUserName:        false,
+		IsSearchUserEnglishName: false,
+		IsSearchPosition:        false,
+		IsSearchUserID:          false,
+		IsSearchMobile:          false,
+		IsSearchEmail:           false,
+		IsSearchTelephone:       true,
+	}
+	bytes, _ := json.Marshal(params)
+	fmt.Println("input params", string(bytes))
+	open_im_sdk.SearchOrganization(test, test.OperationID, string(bytes), offset, count)
 }

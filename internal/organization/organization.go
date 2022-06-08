@@ -98,10 +98,13 @@ func (o *Organization) getDepartmentInfo(callback open_im_sdk_callback.Base, dep
 	return departmentInfo
 }
 
-func (o *Organization) searchOrganization(callback open_im_sdk_callback.Base, input string, offset, count int, operationID string) sdk_params_callback.SearchOrganizationCallback {
-	departmentMemberList, err := o.db.SearchDepartmentMember(input, offset, count)
+func (o *Organization) searchOrganization(callback open_im_sdk_callback.Base, searchParam sdk_params_callback.SearchOrganizationParams, offset, count int, operationID string) sdk_params_callback.SearchOrganizationCallback {
+	departmentMemberList, err := o.db.SearchDepartmentMember(searchParam.KeyWord,
+		searchParam.IsSearchUserName, searchParam.IsSearchEmail, searchParam.IsSearchMobile,
+		searchParam.IsSearchPosition, searchParam.IsSearchTelephone, searchParam.IsSearchUserEnglishName, searchParam.IsSearchUserID,
+		offset, count)
 	common.CheckDBErrCallback(callback, err, operationID)
-	departmentList, err := o.db.SearchDepartment(input, offset, count)
+	departmentList, err := o.db.SearchDepartment(searchParam.KeyWord, offset, count)
 	common.CheckDBErrCallback(callback, err, operationID)
 	result := sdk_params_callback.SearchOrganizationCallback{
 		DepartmentList: departmentList,

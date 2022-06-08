@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"open_im_sdk/pkg/utils"
+	"strings"
 )
 
 func (d *DataBase) GetSubDepartmentList(departmentID string, args ...int) ([]*LocalDepartment, error) {
@@ -112,26 +113,62 @@ type SearchDepartmentMemberResult struct {
 	DepartmentName string `gorm:"column:name;size:256" json:"departmentName"`
 }
 
-func (d *DataBase) SearchDepartmentMember(input string, offset, count int) ([]*SearchDepartmentMemberResult, error) {
+func (d *DataBase) SearchDepartmentMember(keyWord string, isSearchUserName, isSearchEmail, isSearchMobile, isSearchPosition, isSearchTelephone, isSearchUserEnglishName, isSearchUserID bool, offset, count int) ([]*SearchDepartmentMemberResult, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var departmentMemberList []*SearchDepartmentMemberResult
-	condition := fmt.Sprintf("%%%s%%", input)
+	likeCondition := fmt.Sprintf("%%%s%%", keyWord)
+	var likeConditions []interface{}
+	var whereConditions []string
+	if isSearchEmail {
+		whereConditions = append(whereConditions, "email LIKE ?")
+		likeConditions = append(likeConditions, likeCondition)
+	}
+	if isSearchMobile {
+		whereConditions = append(whereConditions, "mobile LIKE ?")
+		likeConditions = append(likeConditions, likeCondition)
+	}
+	if isSearchPosition {
+		whereConditions = append(whereConditions, "position LIKE ?")
+		likeConditions = append(likeConditions, likeCondition)
+	}
+	if isSearchTelephone {
+		whereConditions = append(whereConditions, "telephone LIKE ?")
+		likeConditions = append(likeConditions, likeCondition)
+
+	}
+	if isSearchUserEnglishName {
+		whereConditions = append(whereConditions, "english_name LIKE ?")
+		likeConditions = append(likeConditions, likeCondition)
+	}
+	if isSearchUserID {
+		whereConditions = append(whereConditions, "user_id LIKE ?")
+		likeConditions = append(likeConditions, likeCondition)
+	}
+	if isSearchUserName {
+		whereConditions = append(whereConditions, "nickname LIKE ?")
+		likeConditions = append(likeConditions, likeCondition)
+	}
+	if len(whereConditions) == 0 {
+		whereConditions = append(whereConditions, "nickname LIKE ?")
+		likeConditions = append(likeConditions, likeCondition)
+	}
 	err := d.conn.Model(&LocalDepartmentMember{}).
 		Select([]string{"local_departments.name, local_department_members.*"}).
-		Where("nickname LIKE ? or english_name LIKE ? or mobile LIKE ? or telephone LIKE ? or email LIKE ? or position LIKE ?",
-			condition, condition, condition, condition, condition, condition).
+		//Where("nickname LIKE ? or english_name LIKE ? or mobile LIKE ? or telephone LIKE ? or email LIKE ? or position LIKE ?",
+		Where(strings.Join(whereConditions, " or "),
+			likeConditions...).
 		Joins("left join local_departments on local_departments.department_id = local_department_members.department_id").
 		Offset(offset).Limit(count).
 		Scan(&departmentMemberList).Error
 	return departmentMemberList, utils.Wrap(err, "")
 }
 
-func (d *DataBase) SearchDepartment(input string, offset, count int) ([]*LocalDepartment, error) {
+func (d *DataBase) SearchDepartment(keyWord string, offset, count int) ([]*LocalDepartment, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var departmentMemberList []*LocalDepartment
-	condition := fmt.Sprintf("%%%s%%", input)
-	err := d.conn.Model(&LocalDepartment{}).Where("name LIKE ? and department_id != 0", condition).Offset(offset).Limit(count).Find(&departmentMemberList).Error
+	likeCondition := fmt.Sprintf("%%%s%%", keyWord)
+	err := d.conn.Model(&LocalDepartment{}).Where("name LIKE ? and department_id != 0", likeCondition).Offset(offset).Limit(count).Find(&departmentMemberList).Error
 	return departmentMemberList, utils.Wrap(err, "")
 }

@@ -2,7 +2,9 @@ package organization
 
 import (
 	"open_im_sdk/open_im_sdk_callback"
+	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -104,7 +106,9 @@ func (o *Organization) SearchOrganization(callback open_im_sdk_callback.Base, in
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ", input)
-		result := o.searchOrganization(callback, input, offset, count, operationID)
+		var searchParam sdk_params_callback.SearchOrganizationParams
+		common.JsonUnmarshalAndArgsValidate(input, &searchParam, callback, operationID)
+		result := o.searchOrganization(callback, searchParam, offset, count, operationID)
 		resp := utils.StructToJsonStringDefault(result)
 		callback.OnSuccess(resp)
 		log.NewInfo(operationID, fName, " callback: ", resp)
