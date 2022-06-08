@@ -108,3 +108,35 @@ func (wsRouter *WsFuncRouter) GetParentDepartmentList(input, operationID string)
 	userWorker.Organization().GetParentDepartmentList(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},
 		m["departmentID"].(string), operationID)
 }
+
+func (wsRouter *WsFuncRouter) GetDepartmentInfo(input, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "departmentID") {
+		return
+	}
+	userWorker.Organization().GetDepartmentInfo(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},
+		m["departmentID"].(string), operationID)
+}
+
+func (wsRouter *WsFuncRouter) SearchOrganization(input, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "departmentID") {
+		return
+	}
+	userWorker.Organization().SearchOrganization(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},
+		m["input"].(string), int(m["offset"].(float64)), int(m["count"].(float64)), operationID)
+}
