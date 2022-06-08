@@ -43,8 +43,6 @@ func (d *DataBase) InsertMessageController(Message *model_struct.LocalChatLog) e
 	}
 }
 func (d *DataBase) SearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
 	var messageList []model_struct.LocalChatLog
 	var condition string
 	var subCondition string
@@ -92,8 +90,6 @@ func (d *DataBase) SearchMessageByKeyword(contentType []int, keywordList []strin
 }
 
 func (d *DataBase) SearchMessageByContentType(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
 	var messageList []model_struct.LocalChatLog
 	var condition string
 	switch sessionType {
@@ -113,8 +109,6 @@ func (d *DataBase) SearchMessageByContentType(contentType []int, sourceID string
 }
 
 func (d *DataBase) SearchMessageByContentTypeAndKeyword(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
 	var messageList []model_struct.LocalChatLog
 	var condition string
 	var subCondition string
@@ -225,7 +219,14 @@ func (d *DataBase) GetAllUnDeleteMessageSeqList() ([]uint32, error) {
 	var seqList []uint32
 	return seqList, utils.Wrap(d.conn.Model(&model_struct.LocalChatLog{}).Where("status != 4").Select("seq").Find(&seqList).Error, "")
 }
-
+func (d *DataBase) UpdateColumnsMessageList(clientMsgIDList []string, args map[string]interface{}) error {
+	c := model_struct.LocalChatLog{}
+	t := d.conn.Model(&c).Where("client_msg_id IN", clientMsgIDList).Updates(args)
+	if t.RowsAffected == 0 {
+		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	}
+	return utils.Wrap(t.Error, "UpdateColumnsConversation failed")
+}
 func (d *DataBase) UpdateColumnsMessage(ClientMsgID string, args map[string]interface{}) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
@@ -237,8 +238,6 @@ func (d *DataBase) UpdateColumnsMessage(ClientMsgID string, args map[string]inte
 	return utils.Wrap(t.Error, "UpdateColumnsConversation failed")
 }
 func (d *DataBase) UpdateMessage(c *model_struct.LocalChatLog) error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
 	t := d.conn.Updates(c)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
@@ -381,11 +380,9 @@ func (d *DataBase) UpdateMessageHasRead(sendID string, msgIDList []string, sessi
 	}
 	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
 }
-func (d *DataBase) GetMultipleMessage(conversationIDList []string) (result []*model_struct.LocalChatLog, err error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+func (d *DataBase) GetMultipleMessage(msgIDList []string) (result []*model_struct.LocalChatLog, err error) {
 	var messageList []model_struct.LocalChatLog
-	err = utils.Wrap(d.conn.Where("client_msg_id IN ?", conversationIDList).Find(&messageList).Error, "GetMultipleMessage failed")
+	err = utils.Wrap(d.conn.Where("client_msg_id IN ?", msgIDList).Find(&messageList).Error, "GetMultipleMessage failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)
