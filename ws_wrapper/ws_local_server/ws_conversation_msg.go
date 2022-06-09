@@ -21,6 +21,7 @@ func (wsRouter *WsFuncRouter) CreateTextMessage(input string, operationID string
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
 		return
 	}
+	log.Info(operationID, "CreateTextMessage start ", input)
 	msg := userWorker.Conversation().CreateTextMessage(input, operationID)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }
