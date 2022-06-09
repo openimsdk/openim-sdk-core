@@ -7,7 +7,7 @@ import "open_im_sdk/pkg/server_api_params"
 type MessageReceipt struct {
 	GroupID     string   `json:"groupID"`
 	UserID      string   `json:"userID"`
-	MsgIdList   []string `json:"msgIDList"`
+	MsgIDList   []string `json:"msgIDList"`
 	ReadTime    int64    `json:"readTime"`
 	MsgFrom     int32    `json:"msgFrom"`
 	ContentType int32    `json:"contentType"`
