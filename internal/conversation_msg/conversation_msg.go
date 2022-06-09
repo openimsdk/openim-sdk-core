@@ -554,7 +554,9 @@ func (c *Conversation) batchNewMessages(newMessagesList sdk_struct.NewMsgList) {
 	sort.Sort(newMessagesList)
 	if c.batchMsgListener != nil {
 		log.Info("internal", "batchMsgListener,OnRecvNewMessage")
-		c.batchMsgListener.OnRecvNewMessages(utils.StructToJsonString(newMessagesList))
+		if len(newMessagesList) > 0 {
+			c.batchMsgListener.OnRecvNewMessages(utils.StructToJsonString(newMessagesList))
+		}
 	} else {
 		log.Warn("internal", "not set batchMsgListener ")
 	}
