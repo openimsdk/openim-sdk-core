@@ -56,7 +56,7 @@ func (m *SelfMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 	}
 	m.seqMaxNeedSync = maxSeqOnSvr
 	log.Debug(operationID, "syncMsgFromServer ", m.seqMaxSynchronized+1, m.seqMaxNeedSync)
-	m.syncMsg()
+	m.syncMsg(operationID)
 }
 
 func (m *SelfMsgSync) doPushBatchMsg(cmd common.Cmd2Value) {
@@ -64,6 +64,7 @@ func (m *SelfMsgSync) doPushBatchMsg(cmd common.Cmd2Value) {
 	operationID := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).OperationID
 	log.Debug(operationID, utils.GetSelfFuncName(), "recv push msg, doPushMsg ", msg.String())
 	if len(msg.MsgDataList) == 1 && msg.MsgDataList[0].Seq == 0 {
+		log.Debug(operationID, "seq ==0 ")
 		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg.MsgDataList[0]}, operationID)
 		return
 	}
@@ -73,11 +74,15 @@ func (m *SelfMsgSync) doPushBatchMsg(cmd common.Cmd2Value) {
 	for _, v := range msg.MsgDataList {
 		if v.Seq > m.seqMaxSynchronized {
 			m.pushMsgCache[v.Seq] = v
+			log.Debug(operationID, "doPushBatchMsg insert cache v.Seq > m.seqMaxSynchronized", v.Seq, m.seqMaxSynchronized)
+		} else {
+			log.Debug(operationID, "doPushBatchMsg don't insert cache ", v.Seq, m.seqMaxSynchronized)
 		}
 		if v.Seq > maxSeq {
 			maxSeq = v.Seq
 		}
 	}
+	log.Debug(operationID, "max Seq in push,    m.seqMaxNeedSync ", maxSeq, m.seqMaxNeedSync)
 	if maxSeq > m.seqMaxNeedSync {
 		m.seqMaxNeedSync = maxSeq
 	}
@@ -90,6 +95,7 @@ func (m *SelfMsgSync) doPushBatchMsg(cmd common.Cmd2Value) {
 		if !ok {
 			break
 		}
+		log.Debug(operationID, "triggerMsgList, node seq:  ", cacheMsg.Seq)
 		triggerMsgList = append(triggerMsgList, cacheMsg)
 	}
 
@@ -99,14 +105,17 @@ func (m *SelfMsgSync) doPushBatchMsg(cmd common.Cmd2Value) {
 	for _, v := range triggerMsgList {
 		delete(m.pushMsgCache, v.Seq)
 	}
-	m.syncMsg()
+	m.syncMsg(operationID)
 }
 
 func (m *SelfMsgSync) doPushMsg(cmd common.Cmd2Value) {
 	msg := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).Msg
+	operationID := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).OperationID
 	if len(msg.MsgDataList) == 0 {
+		log.Debug(operationID, "no batch push")
 		m.doPushSingleMsg(cmd)
 	} else {
+		log.Debug(operationID, "batch push")
 		m.doPushBatchMsg(cmd)
 	}
 }
@@ -132,12 +141,12 @@ func (m *SelfMsgSync) doPushSingleMsg(cmd common.Cmd2Value) {
 		m.seqMaxNeedSync = msg.Seq
 	}
 	log.Debug(operationID, "syncMsgFromServer ", m.seqMaxSynchronized+1, m.seqMaxNeedSync)
-	m.syncMsg()
+	m.syncMsg(operationID)
 }
 
-func (m *SelfMsgSync) syncMsg() {
+func (m *SelfMsgSync) syncMsg(operationID string) {
 	if m.seqMaxNeedSync > m.seqMaxSynchronized {
-		log.Info("", "do syncMsg ", m.seqMaxSynchronized+1, m.seqMaxNeedSync)
+		log.Info(operationID, "do syncMsg ", m.seqMaxSynchronized+1, m.seqMaxNeedSync)
 		m.syncMsgFromServer(m.seqMaxSynchronized+1, m.seqMaxNeedSync)
 		m.seqMaxSynchronized = m.seqMaxNeedSync
 	}
