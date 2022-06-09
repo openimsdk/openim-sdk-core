@@ -53,6 +53,11 @@ type OnAdvancedMsgListener interface {
 	OnRecvGroupReadReceipt(groupMsgReceiptList string)
 	OnRecvMessageRevoked(msgID string)
 }
+
+type OnBatchMsgListener interface {
+	OnRecvNewMessages(messageList string)
+}
+
 type OnUserListener interface {
 	OnSelfInfoUpdated(userInfo string)
 }

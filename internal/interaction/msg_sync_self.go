@@ -18,10 +18,13 @@ type SelfMsgSync struct {
 	conversationCh     chan common.Cmd2Value
 	seqMaxSynchronized uint32
 	seqMaxNeedSync     uint32
+	pushMsgCache       map[uint32]*server_api_params.MsgData
 }
 
 func NewSelfMsgSync(dataBase *db.DataBase, ws *Ws, loginUserID string, conversationCh chan common.Cmd2Value) *SelfMsgSync {
-	return &SelfMsgSync{DataBase: dataBase, Ws: ws, loginUserID: loginUserID, conversationCh: conversationCh}
+	p := &SelfMsgSync{DataBase: dataBase, Ws: ws, loginUserID: loginUserID, conversationCh: conversationCh}
+	p.pushMsgCache = make(map[uint32]*server_api_params.MsgData, 0)
+	return p
 }
 
 func (m *SelfMsgSync) compareSeq() {
@@ -56,10 +59,62 @@ func (m *SelfMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 	m.syncMsg()
 }
 
-func (m *SelfMsgSync) doPushMsg(cmd common.Cmd2Value) {
+func (m *SelfMsgSync) doPushBatchMsg(cmd common.Cmd2Value) {
 	msg := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).Msg
 	operationID := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).OperationID
-	log.Debug(operationID, "recv push msg, doPushMsg ", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, m.seqMaxNeedSync, m.seqMaxSynchronized)
+	log.Debug(operationID, utils.GetSelfFuncName(), "recv push msg, doPushMsg ", msg.String())
+	if len(msg.MsgDataList) == 1 && msg.MsgDataList[0].Seq == 0 {
+		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg.MsgDataList[0]}, operationID)
+		return
+	}
+
+	//to cache
+	var maxSeq uint32
+	for _, v := range msg.MsgDataList {
+		if v.Seq > m.seqMaxSynchronized {
+			m.pushMsgCache[v.Seq] = v
+		}
+		if v.Seq > maxSeq {
+			maxSeq = v.Seq
+		}
+	}
+	if maxSeq > m.seqMaxNeedSync {
+		m.seqMaxNeedSync = maxSeq
+	}
+
+	seqMaxSynchronizedBegin := m.seqMaxSynchronized
+	var triggerMsgList []*server_api_params.MsgData
+	for {
+		seqMaxSynchronizedBegin++
+		cacheMsg, ok := m.pushMsgCache[seqMaxSynchronizedBegin]
+		if !ok {
+			break
+		}
+		triggerMsgList = append(triggerMsgList, cacheMsg)
+	}
+
+	if len(triggerMsgList) != 0 {
+		m.TriggerCmdNewMsgCome(triggerMsgList, operationID)
+	}
+	for _, v := range triggerMsgList {
+		delete(m.pushMsgCache, v.Seq)
+	}
+	m.syncMsg()
+}
+
+func (m *SelfMsgSync) doPushMsg(cmd common.Cmd2Value) {
+	msg := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).Msg
+	if len(msg.MsgDataList) == 0 {
+		m.doPushSingleMsg(cmd)
+	} else {
+		m.doPushBatchMsg(cmd)
+	}
+}
+
+func (m *SelfMsgSync) doPushSingleMsg(cmd common.Cmd2Value) {
+	msg := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).Msg
+	operationID := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).OperationID
+	log.Debug(operationID, utils.GetSelfFuncName(), "recv push msg, doPushMsg ", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, m.seqMaxNeedSync, m.seqMaxSynchronized)
 	if msg.Seq == 0 {
 		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg}, operationID)
 		return
@@ -105,14 +160,31 @@ func (m *SelfMsgSync) syncMsgFromServer(beginSeq, endSeq uint32) {
 	m.syncMsgFromServerSplit(needSyncSeqList[SPLIT*(len(needSyncSeqList)/SPLIT):])
 }
 
-func (m *SelfMsgSync) syncMsgFromServerSplit(needSyncSeqList []uint32) {
+func (m *SelfMsgSync) syncMsgFromCache2ServerSplit(needSyncSeqList []uint32) {
+	var msgList []*server_api_params.MsgData
+	var noInCache []uint32
+	for _, v := range needSyncSeqList {
+		cacheMsg, ok := m.pushMsgCache[v]
+		if !ok {
+			noInCache = append(noInCache, v)
+		} else {
+			msgList = append(msgList, cacheMsg)
+			delete(m.pushMsgCache, v)
+		}
+	}
+	operationID := utils.OperationIDGenerator()
+	if len(noInCache) == 0 {
+		m.TriggerCmdNewMsgCome(msgList, operationID)
+		return
+	}
+
 	var pullMsgReq server_api_params.PullMessageBySeqListReq
-	pullMsgReq.SeqList = needSyncSeqList
+	pullMsgReq.SeqList = noInCache
 	pullMsgReq.UserID = m.loginUserID
 	for {
-		operationID := utils.OperationIDGenerator()
+		operationID = utils.OperationIDGenerator()
 		pullMsgReq.OperationID = operationID
-		resp, err := m.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 30, 2, m.loginUserID, operationID)
+		resp, err := m.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 60, 2, m.loginUserID, operationID)
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 30, 2, m.loginUserID)
 			continue
@@ -123,9 +195,35 @@ func (m *SelfMsgSync) syncMsgFromServerSplit(needSyncSeqList []uint32) {
 			log.Error(operationID, "Unmarshal failed ", err.Error())
 			return
 		}
-		m.TriggerCmdNewMsgCome(pullMsgResp.List, operationID)
-		return
+		msgList = append(msgList, pullMsgResp.List...)
+		m.TriggerCmdNewMsgCome(msgList, operationID)
+		break
 	}
+}
+
+func (m *SelfMsgSync) syncMsgFromServerSplit(needSyncSeqList []uint32) {
+	m.syncMsgFromCache2ServerSplit(needSyncSeqList)
+
+	//var pullMsgReq server_api_params.PullMessageBySeqListReq
+	//pullMsgReq.SeqList = needSyncSeqList
+	//pullMsgReq.UserID = m.loginUserID
+	//for {
+	//	operationID := utils.OperationIDGenerator()
+	//	pullMsgReq.OperationID = operationID
+	//	resp, err := m.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 30, 2, m.loginUserID, operationID)
+	//	if err != nil {
+	//		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 30, 2, m.loginUserID)
+	//		continue
+	//	}
+	//	var pullMsgResp server_api_params.PullMessageBySeqListResp
+	//	err = proto.Unmarshal(resp.Data, &pullMsgResp)
+	//	if err != nil {
+	//		log.Error(operationID, "Unmarshal failed ", err.Error())
+	//		return
+	//	}
+	//	m.TriggerCmdNewMsgCome(pullMsgResp.List, operationID)
+	//	return
+	//}
 }
 
 func (m *SelfMsgSync) TriggerCmdNewMsgCome(msgList []*server_api_params.MsgData, operationID string) {

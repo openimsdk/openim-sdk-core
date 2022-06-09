@@ -36,6 +36,7 @@ type Conversation struct {
 	p                    *ws.PostApi
 	ConversationListener open_im_sdk_callback.OnConversationListener
 	msgListener          open_im_sdk_callback.OnAdvancedMsgListener
+	batchMsgListener     open_im_sdk_callback.OnBatchMsgListener
 	recvCH               chan common.Cmd2Value
 	loginUserID          string
 	platformID           int32
@@ -105,7 +106,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	conversationSet := make(map[string]*model_struct.LocalConversation)
 	phConversationChangedSet := make(map[string]*model_struct.LocalConversation)
 	phNewConversationSet := make(map[string]*model_struct.LocalConversation)
-	log.Info(operationID, "do Msg come here")
+	log.Info(operationID, "do Msg come here, len: ", len(allMsg))
+	b := utils.GetCurrentTimestampByMill()
+
 	for _, v := range allMsg {
 		log.Info(operationID, "do Msg come here, msg detail ", v.RecvID, v.SendID, v.ClientMsgID, v.ServerMsgID, v.Seq, c.loginUserID)
 		isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
@@ -324,7 +327,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			}
 		}
 	}
+	b1 := utils.GetCurrentTimestampByMill()
 	log.Info(operationID, "generate conversation map is :", conversationSet)
+	log.Warn(operationID, "before insert msg cost time : ", b1-b)
+
 	list, err := c.db.GetAllConversationList()
 	if err != nil {
 		log.Error(operationID, "GetAllConversationList", "error", err.Error())
@@ -334,11 +340,17 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	log.Debug(operationID, "listToMap: ", list, conversationSet)
 	c.diff(m, conversationSet, conversationChangedSet, newConversationSet)
 	log.Info(operationID, "trigger map is :", "newConversations", newConversationSet, "changedConversations", conversationChangedSet)
+	b2 := utils.GetCurrentTimestampByMill()
+	log.Warn(operationID, "listToMap diff, cost time : ", b2-b1)
+
 	//seq sync message update
 	err5 := c.db.BatchUpdateMessageList(updateMsg)
 	if err5 != nil {
 		log.Error(operationID, "sync seq normal message err  :", err5.Error())
 	}
+	b3 := utils.GetCurrentTimestampByMill()
+	log.Warn(operationID, "BatchUpdateMessageList, cost time : ", b3-b2)
+
 	//Normal message storage
 	err1 := c.db.BatchInsertMessageListController(insertMsg)
 	if err1 != nil {
@@ -353,6 +365,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			}
 		}
 	}
+	b4 := utils.GetCurrentTimestampByMill()
+	log.Warn(operationID, "BatchInsertMessageListController, cost time : ", b4-b3)
+
 	//Exception message storage
 	for _, v := range exceptionMsg {
 		log.Warn(operationID, "exceptionMsg show: ", *v)
@@ -376,6 +391,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			nc.Ex = v.Ex
 		}
 	}
+	b5 := utils.GetCurrentTimestampByMill()
+	log.Warn(operationID, "GetHiddenConversationList, cost time : ", b5-b4)
+
 	for k, v := range newConversationSet {
 		if _, ok := phConversationChangedSet[v.ConversationID]; !ok {
 			phNewConversationSet[k] = v
@@ -386,15 +404,31 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	if err3 != nil {
 		log.Error(operationID, "insert changed conversation err :", err3.Error())
 	}
+	b6 := utils.GetCurrentTimestampByMill()
+	log.Warn(operationID, "BatchUpdateConversationList, cost time : ", b6-b5)
 	//New conversation storage
 	err4 := c.db.BatchInsertConversationList(mapConversationToList(phNewConversationSet))
 	if err4 != nil {
 		log.Error(operationID, "insert new conversation err:", err4.Error())
 	}
+	b7 := utils.GetCurrentTimestampByMill()
+	log.Warn(operationID, "BatchInsertConversationList, cost time : ", b7-b6)
+
 	c.doMsgReadState(msgReadList)
+	b8 := utils.GetCurrentTimestampByMill()
+	log.Warn(operationID, "doMsgReadState  cost time : ", b8-b7)
+
 	c.advancedFunction.DoGroupMsgReadState(groupMsgReadList)
+	b9 := utils.GetCurrentTimestampByMill()
+	log.Warn(operationID, "DoGroupMsgReadState  cost time : ", b9-b8, "len: ", len(groupMsgReadList))
+
 	c.revokeMessage(msgRevokeList)
+	b10 := utils.GetCurrentTimestampByMill()
+	log.Warn(operationID, "revokeMessage  cost time : ", b10-b9)
 	c.newMessage(newMessages)
+	b11 := utils.GetCurrentTimestampByMill()
+	log.Warn(operationID, "newMessage  cost time : ", b11-b10)
+
 	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	if len(newConversationSet) != 0 {
 		c.ConversationListener.OnNewConversation(utils.StructToJsonString(mapConversationToList(newConversationSet)))
@@ -406,6 +440,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	if isTriggerUnReadCount {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 	}
+	defer log.Warn(operationID, "insert msg, total cost time: ", utils.GetCurrentTimestampByMill()-b, "len:  ", len(allMsg))
 }
 func listToMap(list []*model_struct.LocalConversation, m map[string]*model_struct.LocalConversation) {
 	for _, v := range list {
@@ -417,6 +452,7 @@ func (c *Conversation) diff(local, generated, cc, nc map[string]*model_struct.Lo
 	for _, v := range generated {
 		log.Debug("node diff", *v)
 		if localC, ok := local[v.ConversationID]; ok {
+
 			if v.LatestMsgSendTime > localC.LatestMsgSendTime {
 				localC.UnreadCount = localC.UnreadCount + v.UnreadCount
 				localC.LatestMsg = v.LatestMsg
