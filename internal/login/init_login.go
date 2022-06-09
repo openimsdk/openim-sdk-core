@@ -54,6 +54,7 @@ type LoginMgr struct {
 	friendListener       open_im_sdk_callback.OnFriendshipListener
 	conversationListener open_im_sdk_callback.OnConversationListener
 	advancedMsgListener  open_im_sdk_callback.OnAdvancedMsgListener
+	batchMsgListener     open_im_sdk_callback.OnBatchMsgListener
 	userListener         open_im_sdk_callback.OnUserListener
 	signalingListener    open_im_sdk_callback.OnSignalingListener
 	organizationListener open_im_sdk_callback.OnOrganizationListener
@@ -123,6 +124,9 @@ func (u *LoginMgr) SetAdvancedMsgListener(advancedMsgListener open_im_sdk_callba
 	u.advancedMsgListener = advancedMsgListener
 }
 
+func (u *LoginMgr) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnBatchMsgListener) {
+	u.batchMsgListener = batchMsgListener
+}
 func (u *LoginMgr) SetFriendListener(friendListener open_im_sdk_callback.OnFriendshipListener) {
 	u.friendListener = friendListener
 }
@@ -231,6 +235,11 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener,
 		u.signaling, u.advancedFunction, u.organization, u.workMoments, u.cache, u.full)
+	if u.batchMsgListener != nil {
+		u.conversation.SetBatchMsgListener(u.batchMsgListener)
+		log.Info(operationID, "SetBatchMsgListener ", u.batchMsgListener)
+	}
+
 	u.conversation.SyncConversations(operationID)
 	go common.DoListener(u.conversation)
 	log.Info(operationID, "login success...")

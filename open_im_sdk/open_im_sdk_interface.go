@@ -641,6 +641,9 @@ func SetConversationListener(listener open_im_sdk_callback.OnConversationListene
 func SetAdvancedMsgListener(listener open_im_sdk_callback.OnAdvancedMsgListener) {
 	userForSDK.SetAdvancedMsgListener(listener)
 }
+func SetBatchMsgListener(listener open_im_sdk_callback.OnBatchMsgListener) {
+	userForSDK.SetBatchMsgListener(listener)
+}
 
 func SetUserListener(listener open_im_sdk_callback.OnUserListener) {
 	userForSDK.SetUserListener(listener)

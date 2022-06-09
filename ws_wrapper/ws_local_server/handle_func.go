@@ -19,6 +19,7 @@ type Req struct {
 	OperationID string `json:"operationID"`
 	Data        string `json:"data"`
 	UserID      string `json:"userID"`
+	Batch       int    `json:"batchMsg"`
 }
 
 func (ws *WServer) DoLogin(m Req, conn *UserConn) {
@@ -27,7 +28,7 @@ func (ws *WServer) DoLogin(m Req, conn *UserConn) {
 	urm, ok := UserRouteMap[m.UserID]
 	if !ok {
 		log.Info("", "login", "user first login: ", m)
-		refR := GenUserRouterNoLock(m.UserID)
+		refR := GenUserRouterNoLock(m.UserID, m.Batch, m.OperationID)
 		params := []reflect.Value{reflect.ValueOf(m.Data), reflect.ValueOf(m.OperationID)}
 		vf, ok := (refR.refName)[m.ReqFuncName]
 		if ok {
