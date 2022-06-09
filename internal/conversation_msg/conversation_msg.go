@@ -430,9 +430,15 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	c.revokeMessage(msgRevokeList)
 	b10 := utils.GetCurrentTimestampByMill()
 	log.Warn(operationID, "revokeMessage  cost time : ", b10-b9)
-	c.newMessage(newMessages)
-	b11 := utils.GetCurrentTimestampByMill()
-	log.Warn(operationID, "newMessage  cost time : ", b11-b10)
+	if c.batchMsgListener != nil {
+		c.batchNewMessages(newMessages)
+		b11 := utils.GetCurrentTimestampByMill()
+		log.Warn(operationID, "batchNewMessages  cost time : ", b11-b10)
+	} else {
+		c.newMessage(newMessages)
+		b12 := utils.GetCurrentTimestampByMill()
+		log.Warn(operationID, "newMessage  cost time : ", b12-b10)
+	}
 
 	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	if len(newConversationSet) != 0 {
@@ -543,6 +549,16 @@ func (c *Conversation) newMessage(newMessagesList sdk_struct.NewMsgList) {
 			log.Error("internal", "set msgListener is err ")
 		}
 	}
+}
+func (c *Conversation) batchNewMessages(newMessagesList sdk_struct.NewMsgList) {
+	sort.Sort(newMessagesList)
+	if c.batchMsgListener != nil {
+		log.Info("internal", "batchMsgListener,OnRecvNewMessage")
+		c.batchMsgListener.OnRecvNewMessages(utils.StructToJsonString(newMessagesList))
+	} else {
+		log.Warn("internal", "not set batchMsgListener ")
+	}
+
 }
 func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
 	if c.ConversationListener == nil {
