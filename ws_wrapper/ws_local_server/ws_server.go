@@ -100,7 +100,7 @@ func (ws *WServer) getMsgAndSend() {
 						if err != nil {
 							log.Error(operationID, "WS WriteMsg error", "", "userIP", conn.RemoteAddr().String(), "userUid", r.uid, "error", err.Error())
 						} else {
-							log.Info(operationID, "writeMsg  ", conn.RemoteAddr(), string(r.data))
+							log.Info(operationID, "writeMsg  ", conn.RemoteAddr(), string(r.data), r.uid)
 						}
 					} else {
 						log.Error(operationID, "Conn is nil, failed")
