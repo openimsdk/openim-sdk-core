@@ -66,6 +66,14 @@ type AddAdvancedMsgListenerCallback struct {
 	uid string
 }
 
+type BatchMsgListenerCallback struct {
+	uid string
+}
+
+func (b *BatchMsgListenerCallback) OnRecvNewMessages(messageList string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", messageList, "0"}, b.uid)
+}
+
 func (a *AddAdvancedMsgListenerCallback) OnRecvNewMessage(message string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", message, "0"}, a.uid)
 }
@@ -85,7 +93,13 @@ func (wsRouter *WsFuncRouter) SetAdvancedMsgListener() {
 	msgCallback.uid = wsRouter.uId
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	userWorker.SetAdvancedMsgListener(&msgCallback)
+}
 
+func (wsRouter *WsFuncRouter) SetBatchMsgListener() {
+	var callback BatchMsgListenerCallback
+	callback.uid = wsRouter.uId
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.SetBatchMsgListener(&callback)
 }
 
 type ConversationCallback struct {
