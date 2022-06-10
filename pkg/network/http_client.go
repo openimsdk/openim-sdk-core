@@ -63,11 +63,11 @@ func postLogic(url string, data interface{}, token string) (content []byte, err 
 	req.Header.Add("token", token)
 	tp := &http.Transport{
 		DialContext: (&net.Dialer{
-			KeepAlive: 30 * time.Minute,
+			KeepAlive: 10 * time.Minute,
 		}).DialContext,
-		ResponseHeaderTimeout: 60 * time.Second,
-		MaxIdleConns:          100,
-		IdleConnTimeout:       90 * time.Second,
+		ResponseHeaderTimeout: 20 * time.Second,
+		MaxIdleConns:          50,
+		IdleConnTimeout:       60 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 	}
 	client := &http.Client{Timeout: 20 * time.Second, Transport: tp}
