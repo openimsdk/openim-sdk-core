@@ -156,6 +156,14 @@ type AttachedInfoElem struct {
 	IsPrivateChat             bool             `json:"isPrivateChat"`
 	HasReadTime               int64            `json:"hasReadTime"`
 	NotSenderNotificationPush bool             `json:"notSenderNotificationPush"`
+	MessageEntityList         []*MessageEntity `json:"messageEntityList,omitempty"`
+}
+type MessageEntity struct {
+	Type     string                            `json:"type,omitempty"`
+	Offset   int32                             `json:"offset"`
+	Length   int32                             `json:"length"`
+	Url      string                            `json:"url,omitempty"`
+	UserInfo *server_api_params.PublicUserInfo `json:"userInfo,omitempty"`
 }
 type GroupHasReadInfo struct {
 	HasReadUserIDList []string `json:"hasReadUserIDList,omitempty"`
