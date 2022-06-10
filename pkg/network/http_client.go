@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"net"
 
 	"io/ioutil"
 	"net/http"
@@ -60,8 +61,16 @@ func postLogic(url string, data interface{}, token string) (content []byte, err 
 	req.Close = true
 	req.Header.Add("content-type", "application/json")
 	req.Header.Add("token", token)
-
-	client := &http.Client{Timeout: 20 * time.Second}
+	tp := &http.Transport{
+		DialContext: (&net.Dialer{
+			KeepAlive: 30 * time.Minute,
+		}).DialContext,
+		ResponseHeaderTimeout: 60 * time.Second,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+	}
+	client := &http.Client{Timeout: 20 * time.Second, Transport: tp}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, utils.Wrap(err, "client.Do failed, url")
