@@ -145,6 +145,10 @@ type MsgStruct struct {
 		Detail      string `json:"detail,omitempty"`
 		DefaultTips string `json:"defaultTips,omitempty"`
 	} `json:"notificationElem,omitempty"`
+	MessageEntityElem struct {
+		Text              string           `json:"text,omitempty"`
+		MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
+	} `json:"messageEntityElem,omitempty"`
 	AttachedInfoElem AttachedInfoElem `json:"attachedInfoElem,omitempty"`
 }
 type AtInfo struct {
@@ -156,7 +160,6 @@ type AttachedInfoElem struct {
 	IsPrivateChat             bool             `json:"isPrivateChat"`
 	HasReadTime               int64            `json:"hasReadTime"`
 	NotSenderNotificationPush bool             `json:"notSenderNotificationPush"`
-	MessageEntityList         []*MessageEntity `json:"messageEntityList,omitempty"`
 }
 type MessageEntity struct {
 	Type     string                            `json:"type,omitempty"`

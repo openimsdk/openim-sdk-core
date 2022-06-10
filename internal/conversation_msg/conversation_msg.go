@@ -817,6 +817,8 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 			err = utils.JsonStringToStruct(msg.Content, &msg.VideoElem)
 		case constant.File:
 			err = utils.JsonStringToStruct(msg.Content, &msg.FileElem)
+		case constant.AdvancedText:
+			err = utils.JsonStringToStruct(msg.Content, &msg.MessageEntityElem)
 		case constant.AtText:
 			err = utils.JsonStringToStruct(msg.Content, &msg.AtElem)
 			if err == nil {

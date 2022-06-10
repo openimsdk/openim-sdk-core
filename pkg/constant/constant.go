@@ -45,6 +45,7 @@ const (
 	Quote               = 114
 	Face                = 115
 	GroupHasReadReceipt = 116
+	AdvancedText        = 117
 	//////////////////////////////////////////
 	NotificationBegin       = 1000
 	FriendNotificationBegin = 1200

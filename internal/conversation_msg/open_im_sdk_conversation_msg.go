@@ -265,9 +265,10 @@ func (c *Conversation) CreateAdvancedTextMessage(text, messageEntityList, operat
 		log.Error("internal", "messages unmarshal err", err.Error())
 		return ""
 	}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Text, operationID)
-	s.Content = text
-	s.AttachedInfoElem.MessageEntityList = messageEntitys
+	c.initBasicInfo(&s, constant.UserMsgType, constant.AdvancedText, operationID)
+	s.MessageEntityElem.Text = text
+	s.MessageEntityElem.MessageEntityList = messageEntitys
+	s.Content = utils.StructToJsonString(s.MessageEntityElem)
 	return utils.StructToJsonString(s)
 }
 func (c *Conversation) CreateTextAtMessage(text, atUserList, atUsersInfo, message, operationID string) string {
