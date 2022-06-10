@@ -65,12 +65,12 @@ func postLogic(url string, data interface{}, token string) (content []byte, err 
 		DialContext: (&net.Dialer{
 			KeepAlive: 10 * time.Minute,
 		}).DialContext,
-		ResponseHeaderTimeout: 20 * time.Second,
-		MaxIdleConns:          50,
+		ResponseHeaderTimeout: 60 * time.Second,
+		MaxIdleConnsPerHost:   100,
 		IdleConnTimeout:       60 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 	}
-	client := &http.Client{Timeout: 20 * time.Second, Transport: tp}
+	client := &http.Client{Timeout: 60 * time.Second, Transport: tp}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, utils.Wrap(err, "client.Do failed, url")
