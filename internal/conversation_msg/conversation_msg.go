@@ -549,7 +549,7 @@ func (c *Conversation) doMsgReadState(msgReadList []*sdk_struct.MsgStruct) {
 			msgRt.ReadTime = rd.SendTime
 			msgRt.UserID = rd.SendID
 			msgRt.SessionType = constant.SingleChatType
-			msgRt.MsgIdList = msgIdListStatusOK
+			msgRt.MsgIDList = msgIdListStatusOK
 			messageReceiptResp = append(messageReceiptResp, msgRt)
 		}
 	}
