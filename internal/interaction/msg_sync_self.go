@@ -17,7 +17,7 @@ type SelfMsgSync struct {
 	loginUserID        string
 	conversationCh     chan common.Cmd2Value
 	seqMaxSynchronized uint32
-	seqMaxNeedSync     uint32
+	seqMaxNeedSync     uint32 //max seq in push or max seq in redis
 	pushMsgCache       map[uint32]*server_api_params.MsgData
 }
 
@@ -51,20 +51,19 @@ func (m *SelfMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 	operationID := cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).OperationID
 	log.Debug(operationID, "recv max seq on svr, doMaxSeq, maxSeqOnSvr, m.seqMaxSynchronized, m.seqMaxNeedSync",
 		maxSeqOnSvr, m.seqMaxSynchronized, m.seqMaxNeedSync)
-	if maxSeqOnSvr <= m.seqMaxNeedSync {
+	if maxSeqOnSvr < m.seqMaxNeedSync {
 		return
 	}
 	m.seqMaxNeedSync = maxSeqOnSvr
-	log.Debug(operationID, "syncMsgFromServer ", m.seqMaxSynchronized+1, m.seqMaxNeedSync)
 	m.syncMsg(operationID)
 }
 
 func (m *SelfMsgSync) doPushBatchMsg(cmd common.Cmd2Value) {
 	msg := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).Msg
 	operationID := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).OperationID
-	log.Debug(operationID, utils.GetSelfFuncName(), "recv push msg, doPushMsg ", msg.String())
+	log.Debug(operationID, utils.GetSelfFuncName(), "recv push msg, doPushBatchMsg ", "msgData len: ", len(msg.MsgDataList))
 	if len(msg.MsgDataList) == 1 && msg.MsgDataList[0].Seq == 0 {
-		log.Debug(operationID, "seq ==0 ")
+		log.Debug(operationID, utils.GetSelfFuncName(), "seq ==0 TriggerCmdNewMsgCome", msg.MsgDataList[0].String())
 		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg.MsgDataList[0]}, operationID)
 		return
 	}
@@ -76,13 +75,15 @@ func (m *SelfMsgSync) doPushBatchMsg(cmd common.Cmd2Value) {
 			m.pushMsgCache[v.Seq] = v
 			log.Debug(operationID, "doPushBatchMsg insert cache v.Seq > m.seqMaxSynchronized", v.Seq, m.seqMaxSynchronized)
 		} else {
-			log.Debug(operationID, "doPushBatchMsg don't insert cache ", v.Seq, m.seqMaxSynchronized)
+			log.Debug(operationID, "doPushBatchMsg don't insert cache v.Seq <= m.seqMaxSynchronized", v.Seq, m.seqMaxSynchronized)
 		}
 		if v.Seq > maxSeq {
 			maxSeq = v.Seq
 		}
 	}
-	log.Debug(operationID, "max Seq in push,    m.seqMaxNeedSync ", maxSeq, m.seqMaxNeedSync)
+
+	//update m.seqMaxNeedSync
+	log.Debug(operationID, "max Seq in push batch msg, m.seqMaxNeedSync ", maxSeq, m.seqMaxNeedSync)
 	if maxSeq > m.seqMaxNeedSync {
 		m.seqMaxNeedSync = maxSeq
 	}
@@ -95,10 +96,12 @@ func (m *SelfMsgSync) doPushBatchMsg(cmd common.Cmd2Value) {
 		if !ok {
 			break
 		}
-		log.Debug(operationID, "triggerMsgList, node seq:  ", cacheMsg.Seq)
+		log.Debug(operationID, "TriggerCmdNewMsgCome, node seq ", cacheMsg.Seq)
 		triggerMsgList = append(triggerMsgList, cacheMsg)
+		m.seqMaxSynchronized = seqMaxSynchronizedBegin
 	}
 
+	log.Debug(operationID, "TriggerCmdNewMsgCome, len:  ", len(triggerMsgList))
 	if len(triggerMsgList) != 0 {
 		m.TriggerCmdNewMsgCome(triggerMsgList, operationID)
 	}
@@ -149,6 +152,9 @@ func (m *SelfMsgSync) syncMsg(operationID string) {
 		log.Info(operationID, "do syncMsg ", m.seqMaxSynchronized+1, m.seqMaxNeedSync)
 		m.syncMsgFromServer(m.seqMaxSynchronized+1, m.seqMaxNeedSync)
 		m.seqMaxSynchronized = m.seqMaxNeedSync
+	} else {
+		log.Info(operationID, "syncMsg do nothing, m.seqMaxNeedSync <= m.seqMaxSynchronized ",
+			m.seqMaxNeedSync, m.seqMaxSynchronized)
 	}
 }
 
@@ -195,7 +201,7 @@ func (m *SelfMsgSync) syncMsgFromCache2ServerSplit(needSyncSeqList []uint32) {
 		pullMsgReq.OperationID = operationID
 		resp, err := m.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 60, 2, m.loginUserID, operationID)
 		if err != nil {
-			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 30, 2, m.loginUserID)
+			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 60, 2, m.loginUserID)
 			continue
 		}
 		var pullMsgResp server_api_params.PullMessageBySeqListResp
