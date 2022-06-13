@@ -364,6 +364,19 @@ func (g *Group) changeGroupMemberMute(groupID, userID string, mutedSeconds uint3
 	}
 }
 
+func (g *Group) setGroupMemberRoleLevel(callback open_im_sdk_callback.Base, groupID, userID string, roleLevel int, operationID string) {
+	apiReq := api.SetGroupMemberRoleLevelReq{
+		SetGroupMemberInfoReq: api.SetGroupMemberInfoReq{
+			OperationID: operationID,
+			UserID:      userID,
+			GroupID:     groupID,
+		},
+		RoleLevel: roleLevel,
+	}
+	g.p.PostFatalCallback(callback, constant.SetGroupMemberInfoRouter, apiReq, nil, apiReq.OperationID)
+	//g.syncGroupMemberByGroupID(groupID, operationID, true)
+}
+
 func (g *Group) getJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) sdk.GetJoinedGroupListCallback {
 	groupList, err := g.db.GetJoinedGroupList()
 	log.Info("this is rpc", groupList)

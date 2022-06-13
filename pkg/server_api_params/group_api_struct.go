@@ -232,3 +232,18 @@ type SetGroupMemberNicknameReq struct {
 type SetGroupMemberNicknameResp struct {
 	CommResp
 }
+
+type SetGroupMemberInfoReq struct {
+	OperationID string `json:"operationID" binding:"required"`
+	GroupID     string `json:"groupID" binding:"required"`
+	UserID      string `json:"userID" binding:"required"`
+}
+
+type SetGroupMemberRoleLevelReq struct {
+	SetGroupMemberInfoReq
+	RoleLevel int `json:"roleLevel"`
+}
+
+type SetGroupMemberRoleLevelResp struct {
+	CommResp
+}
