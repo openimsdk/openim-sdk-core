@@ -62,15 +62,22 @@ func (m *SelfMsgSync) doPushBatchMsg(cmd common.Cmd2Value) {
 	msg := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).Msg
 	operationID := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).OperationID
 	log.Debug(operationID, utils.GetSelfFuncName(), "recv push msg, doPushBatchMsg ", "msgData len: ", len(msg.MsgDataList))
-	if len(msg.MsgDataList) == 1 && msg.MsgDataList[0].Seq == 0 {
-		log.Debug(operationID, utils.GetSelfFuncName(), "seq ==0 TriggerCmdNewMsgCome", msg.MsgDataList[0].String())
-		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg.MsgDataList[0]}, operationID)
+	msgDataWrap := server_api_params.MsgDataList{}
+	err := proto.Unmarshal(msg.MsgDataList, &msgDataWrap)
+	if err != nil {
+		log.Error(operationID, "proto Unmarshal err", err.Error())
+		return
+	}
+
+	if len(msgDataWrap.MsgDataList) == 1 && msgDataWrap.MsgDataList[0].Seq == 0 {
+		log.Debug(operationID, utils.GetSelfFuncName(), "seq ==0 TriggerCmdNewMsgCome", msgDataWrap.MsgDataList[0].String())
+		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msgDataWrap.MsgDataList[0]}, operationID)
 		return
 	}
 
 	//to cache
 	var maxSeq uint32
-	for _, v := range msg.MsgDataList {
+	for _, v := range msgDataWrap.MsgDataList {
 		if v.Seq > m.seqMaxSynchronized {
 			m.pushMsgCache[v.Seq] = v
 			log.Debug(operationID, "doPushBatchMsg insert cache v.Seq > m.seqMaxSynchronized", v.Seq, m.seqMaxSynchronized)
