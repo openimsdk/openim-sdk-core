@@ -7,7 +7,7 @@ import "open_im_sdk/pkg/server_api_params"
 type MessageReceipt struct {
 	GroupID     string   `json:"groupID"`
 	UserID      string   `json:"userID"`
-	MsgIdList   []string `json:"msgIDList"`
+	MsgIDList   []string `json:"msgIDList"`
 	ReadTime    int64    `json:"readTime"`
 	MsgFrom     int32    `json:"msgFrom"`
 	ContentType int32    `json:"contentType"`
@@ -156,6 +156,14 @@ type AttachedInfoElem struct {
 	IsPrivateChat             bool             `json:"isPrivateChat"`
 	HasReadTime               int64            `json:"hasReadTime"`
 	NotSenderNotificationPush bool             `json:"notSenderNotificationPush"`
+	MessageEntityList         []*MessageEntity `json:"messageEntityList,omitempty"`
+}
+type MessageEntity struct {
+	Type     string                            `json:"type,omitempty"`
+	Offset   int32                             `json:"offset"`
+	Length   int32                             `json:"length"`
+	Url      string                            `json:"url,omitempty"`
+	UserInfo *server_api_params.PublicUserInfo `json:"userInfo,omitempty"`
 }
 type GroupHasReadInfo struct {
 	HasReadUserIDList []string `json:"hasReadUserIDList,omitempty"`

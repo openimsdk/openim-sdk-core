@@ -24,6 +24,20 @@ func (wsRouter *WsFuncRouter) CreateTextMessage(input string, operationID string
 	msg := userWorker.Conversation().CreateTextMessage(input, operationID)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }
+func (wsRouter *WsFuncRouter) CreateAdvancedTextMessage(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "text", "messageEntityList") {
+		return
+	}
+	msg := userWorker.Conversation().CreateAdvancedTextMessage(m["text"].(string), m["messageEntityList"].(string), operationID)
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+}
 
 type SendCallback struct {
 	BaseSuccessFailed
