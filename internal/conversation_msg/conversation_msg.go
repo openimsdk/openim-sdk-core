@@ -334,7 +334,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	}
 	b1 := utils.GetCurrentTimestampByMill()
 	log.Info(operationID, "generate conversation map is :", conversationSet)
-	log.Warn(operationID, "before insert msg cost time : ", b1-b)
+	log.Debug(operationID, "before insert msg cost time : ", b1-b)
 
 	list, err := c.db.GetAllConversationList()
 	if err != nil {
@@ -346,7 +346,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	c.diff(m, conversationSet, conversationChangedSet, newConversationSet)
 	log.Info(operationID, "trigger map is :", "newConversations", newConversationSet, "changedConversations", conversationChangedSet)
 	b2 := utils.GetCurrentTimestampByMill()
-	log.Warn(operationID, "listToMap diff, cost time : ", b2-b1)
+	log.Debug(operationID, "listToMap diff, cost time : ", b2-b1)
 
 	//seq sync message update
 	err5 := c.db.BatchUpdateMessageList(updateMsg)
@@ -354,7 +354,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		log.Error(operationID, "sync seq normal message err  :", err5.Error())
 	}
 	b3 := utils.GetCurrentTimestampByMill()
-	log.Warn(operationID, "BatchUpdateMessageList, cost time : ", b3-b2)
+	log.Debug(operationID, "BatchUpdateMessageList, cost time : ", b3-b2)
 
 	//Normal message storage
 	err1 := c.db.BatchInsertMessageListController(insertMsg)
@@ -371,7 +371,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		}
 	}
 	b4 := utils.GetCurrentTimestampByMill()
-	log.Warn(operationID, "BatchInsertMessageListController, cost time : ", b4-b3)
+	log.Debug(operationID, "BatchInsertMessageListController, cost time : ", b4-b3)
 
 	//Exception message storage
 	for _, v := range exceptionMsg {
@@ -397,7 +397,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		}
 	}
 	b5 := utils.GetCurrentTimestampByMill()
-	log.Warn(operationID, "GetHiddenConversationList, cost time : ", b5-b4)
+	log.Debug(operationID, "GetHiddenConversationList, cost time : ", b5-b4)
 
 	for k, v := range newConversationSet {
 		if _, ok := phConversationChangedSet[v.ConversationID]; !ok {
@@ -410,34 +410,34 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		log.Error(operationID, "insert changed conversation err :", err3.Error())
 	}
 	b6 := utils.GetCurrentTimestampByMill()
-	log.Warn(operationID, "BatchUpdateConversationList, cost time : ", b6-b5)
+	log.Debug(operationID, "BatchUpdateConversationList, cost time : ", b6-b5)
 	//New conversation storage
 	err4 := c.db.BatchInsertConversationList(mapConversationToList(phNewConversationSet))
 	if err4 != nil {
 		log.Error(operationID, "insert new conversation err:", err4.Error())
 	}
 	b7 := utils.GetCurrentTimestampByMill()
-	log.Warn(operationID, "BatchInsertConversationList, cost time : ", b7-b6)
+	log.Debug(operationID, "BatchInsertConversationList, cost time : ", b7-b6)
 
 	c.doMsgReadState(msgReadList)
 	b8 := utils.GetCurrentTimestampByMill()
-	log.Warn(operationID, "doMsgReadState  cost time : ", b8-b7)
+	log.Debug(operationID, "doMsgReadState  cost time : ", b8-b7)
 
 	c.advancedFunction.DoGroupMsgReadState(groupMsgReadList)
 	b9 := utils.GetCurrentTimestampByMill()
-	log.Warn(operationID, "DoGroupMsgReadState  cost time : ", b9-b8, "len: ", len(groupMsgReadList))
+	log.Debug(operationID, "DoGroupMsgReadState  cost time : ", b9-b8, "len: ", len(groupMsgReadList))
 
 	c.revokeMessage(msgRevokeList)
 	b10 := utils.GetCurrentTimestampByMill()
-	log.Warn(operationID, "revokeMessage  cost time : ", b10-b9)
+	log.Debug(operationID, "revokeMessage  cost time : ", b10-b9)
 	if c.batchMsgListener != nil {
 		c.batchNewMessages(newMessages)
 		b11 := utils.GetCurrentTimestampByMill()
-		log.Warn(operationID, "batchNewMessages  cost time : ", b11-b10)
+		log.Debug(operationID, "batchNewMessages  cost time : ", b11-b10)
 	} else {
 		c.newMessage(newMessages)
 		b12 := utils.GetCurrentTimestampByMill()
-		log.Warn(operationID, "newMessage  cost time : ", b12-b10)
+		log.Debug(operationID, "newMessage  cost time : ", b12-b10)
 	}
 
 	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
