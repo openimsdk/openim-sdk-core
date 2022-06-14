@@ -71,18 +71,20 @@ func SetTestInviteInfo() *api.InvitationInfo {
 	return req
 }
 
-func DoTestInvite() {
+func DoTestInvite(userID string) {
 	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
 	req := &api.SignalInviteReq{}
+	req.OpUserID = userID
 	req.Invitation = SetTestInviteInfo()
 	req.Invitation.GroupID = ""
 	req.Invitation.SessionType = 1
 	req.Invitation.PlatformID = 1
-	req.Invitation.Timeout = 10
-	req.Invitation.InviteeUserIDList = []string{"17726378428"}
+	req.Invitation.Timeout = 30
+	req.Invitation.MediaType = "video"
+	req.Invitation.InviteeUserIDList = []string{"13766666661"}
 	s := utils.StructToJsonString(req)
 	fmt.Println(utils.GetSelfFuncName(), "input: ", s)
-	open_im_sdk.SignalingInvite(t, "x23x2x123sa12d", s)
+	open_im_sdk.SignalingInvite(t, "qwert123", s)
 }
 
 func DoTestAccept() {

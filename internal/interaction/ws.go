@@ -2,6 +2,7 @@ package interaction
 
 import (
 	"errors"
+	"fmt"
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 	"open_im_sdk/pkg/common"
@@ -358,9 +359,11 @@ func (w *Ws) SendSignalingReqWaitResp(req *server_api_params.SignalReq, operatio
 func (w *Ws) SignalingWaitPush(inviterUserID, inviteeUserID, roomID string, timeout int32, operationID string) (*server_api_params.SignalReq, error) {
 
 	msgIncr := inviterUserID + inviteeUserID + roomID
+	fmt.Println(msgIncr)
 	log.Info(operationID, "add msgIncr: ", msgIncr)
 	ch := w.AddChByIncr(msgIncr)
 	defer w.DelCh(msgIncr)
+	fmt.Println("begin wait push")
 
 	resp, err := w.WaitResp(ch, int(timeout), operationID, nil)
 	if err != nil {
