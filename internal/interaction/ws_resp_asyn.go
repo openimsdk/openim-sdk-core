@@ -52,7 +52,6 @@ func (u *WsRespAsyn) AddCh(userID string) (string, chan GeneralWsResp) {
 	return msgIncr, ch
 }
 
-
 func (u *WsRespAsyn) AddChByIncr(msgIncr string) chan GeneralWsResp {
 	u.wsMutex.Lock()
 	defer u.wsMutex.Unlock()
@@ -62,10 +61,8 @@ func (u *WsRespAsyn) AddChByIncr(msgIncr string) chan GeneralWsResp {
 		log.Error("Repeat failed ", msgIncr)
 	}
 	u.wsNotification[msgIncr] = ch
-	return  ch
+	return ch
 }
-
-
 
 func (u *WsRespAsyn) GetCh(msgIncr string) chan GeneralWsResp {
 	ch, ok := u.wsNotification[msgIncr]
@@ -106,11 +103,15 @@ func (u *WsRespAsyn) notifyResp(wsResp GeneralWsResp) error {
 
 	ch := u.GetCh(wsResp.MsgIncr)
 	if ch == nil {
-		return utils.Wrap(errors.New("no ch"), "GetCh failed")
+		return utils.Wrap(errors.New("no ch"), "GetCh failed "+wsResp.MsgIncr)
 	}
-	err := notifyCh(ch, wsResp, 1)
-	if err != nil {
-		return utils.Wrap(err, "notifyCh failed")
+	for {
+		err := notifyCh(ch, wsResp, 1)
+		if err != nil {
+			log.Warn(wsResp.OperationID, "TriggerCmdNewMsgCome failed ", err.Error(), ch, wsResp.ReqIdentifier, wsResp.MsgIncr)
+			continue
+		}
+		return nil
 	}
-	return err
+	return nil
 }

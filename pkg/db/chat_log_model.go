@@ -240,16 +240,16 @@ func (d *DataBase) UpdateColumnsMessage(ClientMsgID string, args map[string]inte
 func (d *DataBase) UpdateMessage(c *model_struct.LocalChatLog) error {
 	t := d.conn.Updates(c)
 	if t.RowsAffected == 0 {
-		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+		return utils.Wrap(errors.New("RowsAffected == 0"), "no update ")
 	}
 	return utils.Wrap(t.Error, "UpdateMessage failed")
 }
 func (d *DataBase) UpdateMessageController(c *model_struct.LocalChatLog) error {
 	switch c.SessionType {
 	case constant.SuperGroupChatType:
-		return d.SuperGroupUpdateMessage(c)
+		return utils.Wrap(d.SuperGroupUpdateMessage(c), "")
 	default:
-		return d.UpdateMessage(c)
+		return utils.Wrap(d.UpdateMessage(c), "")
 	}
 }
 
