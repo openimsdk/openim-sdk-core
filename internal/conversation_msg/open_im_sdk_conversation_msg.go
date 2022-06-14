@@ -706,10 +706,12 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 				log.Warn(operationID, "get message err")
 			}
 			log.Warn(operationID, "before update database message is ", *oldMessage)
-			msgStructToLocalChatLog(&localMessage, &s)
-			log.Warn(operationID, "update message is ", s, localMessage)
-			err = c.db.UpdateMessageController(&localMessage)
-			common.CheckAnyErrCallback(callback, 201, err, operationID)
+			if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Voice, constant.Video, constant.File}) {
+				msgStructToLocalChatLog(&localMessage, &s)
+				log.Warn(operationID, "update message is ", s, localMessage)
+				err = c.db.UpdateMessageController(&localMessage)
+				common.CheckAnyErrCallback(callback, 201, err, operationID)
+			}
 		}
 		c.sendMessageToServer(&s, lc, callback, delFile, p, options, operationID)
 	}()
