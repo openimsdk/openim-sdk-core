@@ -129,6 +129,7 @@ func (u *Heartbeat) Run() {
 				log.Error(operationID, "TriggerMaxSeq failed ", err.Error(), " MaxSeq ", wsSeqResp.MaxSeq)
 				continue
 			} else {
+				log.Debug(operationID, "TriggerMaxSeq  success ", " MaxSeq ", wsSeqResp.MaxSeq)
 				break
 			}
 		}

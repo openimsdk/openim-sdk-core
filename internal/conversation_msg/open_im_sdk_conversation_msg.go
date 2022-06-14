@@ -508,7 +508,7 @@ func (c *Conversation) checkErrAndUpdateMessage(callback open_im_sdk_callback.Se
 	if err != nil {
 		if callback != nil {
 			c.updateMsgStatusAndTriggerConversation(s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc, operationID)
-			errInfo := "operationID[" + operationID + "], " + "info[" + err.Error() + "]"
+			errInfo := "operationID[" + operationID + "], " + "info[" + err.Error() + "]" + s.ClientMsgID + " " + s.ServerMsgID
 			log.NewError(operationID, "checkErr ", errInfo)
 			callback.OnError(errCode, errInfo)
 			runtime.Goexit()
@@ -859,6 +859,7 @@ func (c *Conversation) InternalSendMessage(callback open_im_sdk_callback.Base, s
 
 func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation, callback open_im_sdk_callback.SendMsgCallBack,
 	delFile []string, offlinePushInfo *server_api_params.OfflinePushInfo, options map[string]bool, operationID string) {
+	log.Debug(operationID, "sendMessageToServer ", s.ServerMsgID, " ", s.ClientMsgID)
 	//Protocol conversion
 	var wsMsgData server_api_params.MsgData
 	copier.Copy(&wsMsgData, s)

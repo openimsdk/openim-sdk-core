@@ -15,7 +15,7 @@ func TriggerCmdJoinedSuperGroup(cmd sdk_struct.CmdJoinedSuperGroup, joinedSuperG
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdJoinedSuperGroup, Value: cmd}
-	return sendCmd(joinedSuperGroupCh, c2v, 1)
+	return sendCmd(joinedSuperGroupCh, c2v, 100)
 }
 
 func TriggerCmdNewMsgCome(msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
@@ -27,7 +27,7 @@ func TriggerCmdNewMsgCome(msg sdk_struct.CmdNewMsgComeToConversation, conversati
 	}
 
 	c2v := Cmd2Value{Cmd: constant.CmdNewMsgCome, Value: msg}
-	return sendCmd(conversationCh, c2v, 1)
+	return sendCmd(conversationCh, c2v, 100)
 }
 
 func TriggerCmdLogout(ch chan Cmd2Value) error {
@@ -35,7 +35,7 @@ func TriggerCmdLogout(ch chan Cmd2Value) error {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdLogout, Value: nil}
-	return sendCmd(ch, c2v, 1)
+	return sendCmd(ch, c2v, 100)
 }
 
 func TriggerCmdWakeUp(ch chan Cmd2Value) error {
@@ -43,7 +43,7 @@ func TriggerCmdWakeUp(ch chan Cmd2Value) error {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdWakeUp, Value: nil}
-	return sendCmd(ch, c2v, 1)
+	return sendCmd(ch, c2v, 100)
 }
 
 func TriggerCmdDeleteConversationAndMessage(sourceID, conversationID string, sessionType int, conversationCh chan Cmd2Value) error {
@@ -55,7 +55,7 @@ func TriggerCmdDeleteConversationAndMessage(sourceID, conversationID string, ses
 		Value: DeleteConNode{SourceID: sourceID, ConversationID: conversationID, SessionType: sessionType},
 	}
 
-	return sendCmd(conversationCh, c2v, 1)
+	return sendCmd(conversationCh, c2v, 100)
 }
 func TriggerCmdUpdateConversation(node UpdateConNode, conversationCh chan Cmd2Value) error {
 	c2v := Cmd2Value{
@@ -63,7 +63,7 @@ func TriggerCmdUpdateConversation(node UpdateConNode, conversationCh chan Cmd2Va
 		Value: node,
 	}
 
-	return sendCmd(conversationCh, c2v, 1)
+	return sendCmd(conversationCh, c2v, 100)
 }
 
 func TriggerCmdPushMsg(msg sdk_struct.CmdPushMsgToMsgSync, ch chan Cmd2Value) error {
@@ -72,7 +72,7 @@ func TriggerCmdPushMsg(msg sdk_struct.CmdPushMsgToMsgSync, ch chan Cmd2Value) er
 	}
 
 	c2v := Cmd2Value{Cmd: constant.CmdPushMsg, Value: msg}
-	return sendCmd(ch, c2v, 1)
+	return sendCmd(ch, c2v, 100)
 }
 
 func TriggerCmdMaxSeq(seq sdk_struct.CmdMaxSeqToMsgSync, ch chan Cmd2Value) error {
@@ -80,7 +80,7 @@ func TriggerCmdMaxSeq(seq sdk_struct.CmdMaxSeqToMsgSync, ch chan Cmd2Value) erro
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
 	c2v := Cmd2Value{Cmd: constant.CmdMaxSeq, Value: seq}
-	return sendCmd(ch, c2v, 1)
+	return sendCmd(ch, c2v, 100)
 }
 
 type DeleteConNode struct {
@@ -106,7 +106,7 @@ type SourceIDAndSessionType struct {
 
 func UnInitAll(conversationCh chan Cmd2Value) error {
 	c2v := Cmd2Value{Cmd: constant.CmdUnInit}
-	return sendCmd(conversationCh, c2v, 1)
+	return sendCmd(conversationCh, c2v, 100)
 }
 
 type goroutine interface {
@@ -135,7 +135,7 @@ func sendCmd(ch chan Cmd2Value, value Cmd2Value, timeout int64) error {
 	select {
 	case ch <- value:
 		flag = 1
-	case <-time.After(time.Second * time.Duration(timeout)):
+	case <-time.After(time.Millisecond * time.Duration(timeout)):
 		flag = 2
 	}
 	if flag == 1 {
