@@ -7,6 +7,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -211,6 +212,16 @@ func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSle
 			recvId = allLoginMgr[r].userID
 
 			idx = strconv.FormatInt(int64(i), 10)
+			for {
+				if runtime.NumGoroutine() > MaxNumGoroutine {
+					time.Sleep(time.Duration(intervalSleepMS) * time.Millisecond)
+					log.Warn("", "NumGoroutine > max  ", runtime.NumGoroutine(), MaxNumGoroutine)
+					continue
+				} else {
+					break
+				}
+			}
+
 			DoTestSendMsg(index, strMyUid, recvId, idx)
 
 		}
@@ -251,8 +262,17 @@ func PressOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS i
 			}
 
 			recvId = allLoginMgr[r].userID
-
 			idx = strconv.FormatInt(int64(i), 10)
+			for {
+				if runtime.NumGoroutine() > MaxNumGoroutine {
+					time.Sleep(time.Duration(intervalSleepMS) * time.Millisecond)
+					log.Warn("", "NumGoroutine > max  ", runtime.NumGoroutine(), MaxNumGoroutine)
+					continue
+				} else {
+					break
+				}
+			}
+
 			DoTestSendMsgPress(index, strMyUid, recvId, idx)
 
 		}

@@ -381,6 +381,13 @@ func (m *MsgListenerCallBak) OnRecvGroupReadReceipt(groupMsgReceiptList string) 
 	fmt.Println("OnRecvC2CReadReceipt , ", groupMsgReceiptList)
 }
 
+type BatchMsg struct {
+}
+
+func (m *BatchMsg) OnRecvNewMessages(groupMsgReceiptList string) {
+	fmt.Println("OnRecvNewMessages , ", groupMsgReceiptList)
+}
+
 func (m *MsgListenerCallBak) OnRecvNewMessage(msg string) {
 	var mm sdk_struct.MsgStruct
 	err := json.Unmarshal([]byte(msg), &mm)
@@ -507,7 +514,7 @@ func init() {
 }
 
 func DoTestSendMsg2(sendId, recvID string) {
-	m := "DoTestSendMsg2 test:Gordon->sk" + sendId + ":" + recvID + ":"
+	m := "Single chat test" + sendId + ":" + recvID + ":"
 	operationID := utils.OperationIDGenerator()
 	s := DoTestCreateTextMessage(m)
 	log.NewInfo(operationID, "send msg:", s)
@@ -517,7 +524,7 @@ func DoTestSendMsg2(sendId, recvID string) {
 	o.Title = "121313"
 	o.Desc = "45464"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "success", sendId, recvID)
 }
 
 func DoTestSendMsg2Group(sendId, groupID string, index int) {
