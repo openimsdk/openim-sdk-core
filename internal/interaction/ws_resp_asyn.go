@@ -36,7 +36,7 @@ func NewWsRespAsyn() *WsRespAsyn {
 }
 
 func GenMsgIncr(userID string) string {
-	return userID + "_" + utils.Int64ToString(utils.GetCurrentTimestampByNano())
+	return userID + "_" + utils.OperationIDGenerator()
 }
 
 func (u *WsRespAsyn) AddCh(userID string) (string, chan GeneralWsResp) {

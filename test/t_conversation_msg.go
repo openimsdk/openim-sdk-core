@@ -656,3 +656,22 @@ func DoTestSendVideo(sendId, recvID string) {
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
 
 }
+
+type TestClearMsg struct {
+	OperationID string
+}
+
+func (t *TestClearMsg) OnError(errCode int32, errMsg string) {
+	log.Info(t.OperationID, "TestClearMsg , OnError ", errMsg)
+}
+
+func (t *TestClearMsg) OnSuccess(data string) {
+	log.Info(t.OperationID, "TestClearMsg , OnSuccess ", data)
+}
+
+func DoTestClearMsg() {
+	var test TestClearMsg
+	operationID := utils.OperationIDGenerator()
+	open_im_sdk.DeleteAllMsgFromLocalAndSvr(&test, operationID)
+
+}
