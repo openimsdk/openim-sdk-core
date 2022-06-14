@@ -62,7 +62,7 @@ func main() {
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
 	test.SENDINTERVAL = SENDINTERVAL
-	strMyUidx := "17726378428"
+	strMyUidx := "13766666663"
 
 	//	var onlineNum *int          //Number of online users
 	//	var senderNum *int          //Number of users sending messages
@@ -83,8 +83,9 @@ func main() {
 	//test.DoTestSendImageMsg( "17726378428")
 	//test.DoTestGetParentDepartmentList("003")
 	//test.DoTestGetDepartmentInfo("008")
-	test.DoTestSearchOrganization("2", 0, 20)
-
+	test.DoTestInvite()
+	//test.DoTestSearchOrganization("2", 0, 20)
+	//
 	//test.DoTestGetUserInDepartment()
 	//test.DoTestGetDepartmentMemberAndSubDepartment()
 	//test.DoTestDeleteAllMsgFromLocalAndSvr()

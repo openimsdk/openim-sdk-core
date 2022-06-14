@@ -1,6 +1,7 @@
 package test
 
 import (
+	"fmt"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/log"
 	api "open_im_sdk/pkg/server_api_params"
@@ -78,9 +79,10 @@ func DoTestInvite() {
 	req.Invitation.SessionType = 1
 	req.Invitation.PlatformID = 1
 	req.Invitation.Timeout = 10
+	req.Invitation.InviteeUserIDList = []string{"17726378428"}
 	s := utils.StructToJsonString(req)
-	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
-	open_im_sdk.SignalingInvite(t, t.OperationID, s)
+	fmt.Println(utils.GetSelfFuncName(), "input: ", s)
+	open_im_sdk.SignalingInvite(t, "x23x2x123sa12d", s)
 }
 
 func DoTestAccept() {
