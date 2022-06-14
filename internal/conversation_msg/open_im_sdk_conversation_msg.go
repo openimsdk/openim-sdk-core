@@ -60,17 +60,15 @@ func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callba
 		log.NewInfo(operationID, "SetConversationRecvMessageOpt callback: ", sdk_params_callback.SetConversationRecvMessageOptCallback)
 	}()
 }
-func (c *Conversation) SetAllConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList string, opt int, operationID string) {
+func (c *Conversation) SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, opt int, operationID string) {
 	if callback == nil {
 		return
 	}
 	go func() {
-		log.NewInfo(operationID, "SetConversationRecvMessageOpt args: ", conversationIDList, opt)
-		var unmarshalParams sdk_params_callback.SetConversationRecvMessageOptParams
-		common.JsonUnmarshalCallback(conversationIDList, &unmarshalParams, callback, operationID)
-		c.setConversationRecvMessageOpt(callback, unmarshalParams, opt, operationID)
-		callback.OnSuccess(sdk_params_callback.SetConversationRecvMessageOptCallback)
-		log.NewInfo(operationID, "SetConversationRecvMessageOpt callback: ", sdk_params_callback.SetConversationRecvMessageOptCallback)
+		log.NewInfo(operationID, "SetGlobalRecvMessageOpt args: ", opt)
+		c.setGlobalRecvMessageOpt(callback, opt, operationID)
+		callback.OnSuccess(sdk_params_callback.SetGlobalRecvMessageOptCallback)
+		log.NewInfo(operationID, "SetGlobalRecvMessageOpt callback: ", sdk_params_callback.SetGlobalRecvMessageOptCallback)
 	}()
 }
 

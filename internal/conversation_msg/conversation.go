@@ -74,7 +74,21 @@ func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiRe
 	c.p.PostFatalCallback(callback, constant.ModifyConversationFieldRouter, apiReq, nil, apiReq.OperationID)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "request success, output: ", apiResp)
 }
-
+func (c *Conversation) setGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, opt int, operationID string) {
+	apiReq := server_api_params.UpdateSelfUserInfoReq{}
+	apiReq.OperationID = operationID
+	apiReq.UserID = c.loginUserID
+	apiReq.GlobalRecvMsgOpt = int32(opt)
+	err := c.p.PostReturn(constant.UpdateSelfUserInfoRouter, apiReq, nil)
+	common.CheckAnyErrCallback(callback, 301, err, operationID)
+	apiReq := &server_api_params.ModifyConversationFieldReq{}
+	localConversation, err := c.db.GetConversation(conversationID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	apiReq.RecvMsgOpt = int32(opt)
+	apiReq.FieldType = constant.FieldRecvMsgOpt
+	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
+	c.SyncConversations(operationID)
+}
 func (c *Conversation) setOneConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationID string, opt int, operationID string) {
 	apiReq := &server_api_params.ModifyConversationFieldReq{}
 	localConversation, err := c.db.GetConversation(conversationID)

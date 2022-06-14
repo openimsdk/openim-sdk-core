@@ -572,6 +572,14 @@ func SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operation
 	}
 	userForSDK.Conversation().SetConversationRecvMessageOpt(callback, conversationIDList, opt, operationID)
 }
+func SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, opt int) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Conversation().SetGlobalRecvMessageOpt(callback, opt, operationID)
+}
 
 //deprecated
 func GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, conversationIDList string) {
