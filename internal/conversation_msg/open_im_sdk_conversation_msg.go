@@ -701,8 +701,13 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			default:
 				common.CheckAnyErrCallback(callback, 202, errors.New("contentType not currently supported"+utils.Int32ToString(s.ContentType)), operationID)
 			}
+			oldMessage, err := c.db.GetMessageController(&s)
+			if err != nil {
+				log.Warn(operationID, "get message err")
+			}
+			log.Warn(operationID, "before update database message is ", *oldMessage)
 			msgStructToLocalChatLog(&localMessage, &s)
-			log.Debug(operationID, " localMessage ", localMessage)
+			log.Warn(operationID, "update message is ", s, localMessage)
 			err = c.db.UpdateMessageController(&localMessage)
 			common.CheckAnyErrCallback(callback, 201, err, operationID)
 		}
