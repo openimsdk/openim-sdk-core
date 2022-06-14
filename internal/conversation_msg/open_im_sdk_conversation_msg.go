@@ -606,6 +606,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			}
 
 		}
+		log.Warn(operationID, "before insert  message is ", s)
 		oldMessage, err := c.db.GetMessageController(&s)
 		if err != nil {
 			msgStructToLocalChatLog(&localMessage, &s)
