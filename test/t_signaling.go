@@ -81,10 +81,10 @@ func DoTestInvite(userID string) {
 	req.Invitation.PlatformID = 1
 	req.Invitation.Timeout = 30
 	req.Invitation.MediaType = "video"
-	req.Invitation.InviteeUserIDList = []string{"13766666661"}
+	req.Invitation.InviteeUserIDList = []string{"17726378428"}
 	s := utils.StructToJsonString(req)
-	fmt.Println(utils.GetSelfFuncName(), "input: ", s)
-	open_im_sdk.SignalingInvite(t, "qwert123", s)
+	fmt.Println(utils.GetSelfFuncName(), "input: ", s, t.OperationID)
+	open_im_sdk.SignalingInvite(t, t.OperationID, s)
 }
 
 func DoTestAccept() {
