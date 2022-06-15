@@ -400,3 +400,8 @@ type LocalDepartmentMember struct {
 	Ex           string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 	AttachedInfo string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 }
+
+type SearchDepartmentMemberResult struct {
+	LocalDepartmentMember
+	DepartmentName string `gorm:"column:name;size:256" json:"departmentName"`
+}

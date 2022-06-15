@@ -84,6 +84,10 @@ func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2
 			g.groupMuteChangedNotification(msg, operationID)
 		case constant.GroupMemberInfoSetNotification:
 			g.groupMemberInfoSetNotification(msg, operationID)
+		case constant.GroupMemberSetToAdminNotification:
+			g.groupMemberInfoSetNotification(msg, operationID)
+		case constant.GroupMemberSetToOrdinaryUserNotification:
+			g.groupMemberInfoSetNotification(msg, operationID)
 		default:
 			log.Error(operationID, "ContentType tip failed ", msg.ContentType)
 		}
@@ -279,7 +283,6 @@ func (g *Group) groupMemberInfoSetNotification(msg *api.MsgData, operationID str
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID, msg.String(), "detail : ", detail.String())
 	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
 	_ = g.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.ChangedUser.UserID, detail.ChangedUser.FaceURL, detail.ChangedUser.Nickname, constant.GroupChatType)
-
 }
 
 func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam,

@@ -1,6 +1,7 @@
 package test
 
 import (
+	"fmt"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/log"
 	api "open_im_sdk/pkg/server_api_params"
@@ -70,16 +71,19 @@ func SetTestInviteInfo() *api.InvitationInfo {
 	return req
 }
 
-func DoTestInvite() {
+func DoTestInvite(userID string) {
 	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
 	req := &api.SignalInviteReq{}
+	req.OpUserID = userID
 	req.Invitation = SetTestInviteInfo()
 	req.Invitation.GroupID = ""
 	req.Invitation.SessionType = 1
 	req.Invitation.PlatformID = 1
-	req.Invitation.Timeout = 10
+	req.Invitation.Timeout = 30
+	req.Invitation.MediaType = "video"
+	req.Invitation.InviteeUserIDList = []string{"17726378428"}
 	s := utils.StructToJsonString(req)
-	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
+	fmt.Println(utils.GetSelfFuncName(), "input: ", s, t.OperationID)
 	open_im_sdk.SignalingInvite(t, t.OperationID, s)
 }
 

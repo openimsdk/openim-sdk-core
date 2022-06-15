@@ -616,7 +616,7 @@ func DoTestSendMsgPress(index int, sendId, recvID string, idx string) {
 	//coreMgrLock.Unlock()
 }
 
-func DoTestSendImageMsg(sendId, recvID string) {
+func DoTestSendImageMsg(recvID string) {
 	operationID := utils.OperationIDGenerator()
 	s := DoTestCreateImageMessageFromFullPath()
 	var testSendMsg TestSendMsgCallBack

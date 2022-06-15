@@ -358,7 +358,6 @@ func (w *Ws) SendSignalingReqWaitResp(req *server_api_params.SignalReq, operatio
 }
 
 func (w *Ws) SignalingWaitPush(inviterUserID, inviteeUserID, roomID string, timeout int32, operationID string) (*server_api_params.SignalReq, error) {
-
 	msgIncr := inviterUserID + inviteeUserID + roomID
 	log.Info(operationID, "add msgIncr: ", msgIncr)
 	ch := w.AddChByIncr(msgIncr)
