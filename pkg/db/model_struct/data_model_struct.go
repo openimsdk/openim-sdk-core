@@ -295,7 +295,7 @@ type LocalChatLog struct {
 
 type LocalErrChatLog struct {
 	Seq              uint32 `gorm:"column:seq;primary_key" json:"seq"`
-	ClientMsgID      string `gorm:"column:client_msg_id;primary_key;type:char(64)" json:"clientMsgID"`
+	ClientMsgID      string `gorm:"column:client_msg_id;type:char(64)" json:"clientMsgID"`
 	ServerMsgID      string `gorm:"column:server_msg_id;type:char(64)" json:"serverMsgID"`
 	SendID           string `gorm:"column:send_id;type:char(64)" json:"sendID"`
 	RecvID           string `gorm:"column:recv_id;type:char(64)" json:"recvID"`
