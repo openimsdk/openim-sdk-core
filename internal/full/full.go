@@ -1,6 +1,7 @@
 package full
 
 import (
+	"errors"
 	"open_im_sdk/internal/cache"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/group"
@@ -74,13 +75,13 @@ func (u *Full) getUsersInfo(callback open_im_sdk_callback.Base, userIDList sdk.G
 	return common.MergeUserResult(publicList, friendList, blackList)
 }
 
-func (u *Full) GetGroupInfoFromLocal2Svr(groupID string) (*model_struct.LocalGroup, error) {
-	t, err := u.db.GetGroupType(groupID)
-	if err != nil {
-		return nil, utils.Wrap(err, "")
-	}
-	if t == constant.NormalGroup {
+func (u *Full) GetGroupInfoFromLocal2Svr(groupID string, sessionType int32) (*model_struct.LocalGroup, error) {
+	switch sessionType {
+	case constant.GroupChatType:
 		return u.group.GetGroupInfoFromLocal2Svr(groupID)
+	case constant.SuperGroupChatType:
+		return u.SuperGroup.GetGroupInfoFromLocal2Svr(groupID)
+	default:
+		return nil, errors.New("err sessionType")
 	}
-	return u.SuperGroup.GetGroupInfoFromLocal2Svr(groupID)
 }

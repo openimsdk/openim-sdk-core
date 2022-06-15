@@ -920,7 +920,7 @@ func (c *Conversation) addFaceURLAndName(lc *model_struct.LocalConversation) {
 		}
 
 	case constant.GroupChatType, constant.SuperGroupChatType:
-		g, err := c.full.GetGroupInfoFromLocal2Svr(lc.GroupID)
+		g, err := c.full.GetGroupInfoFromLocal2Svr(lc.GroupID, lc.ConversationType)
 		if err != nil {
 			log.Error(operationID, "GetGroupInfoByGroupID err", err.Error(), lc.GroupID)
 			return
