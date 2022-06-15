@@ -163,11 +163,11 @@ type AttachedInfoElem struct {
 	MessageEntityList         []*MessageEntity `json:"messageEntityList,omitempty"`
 }
 type MessageEntity struct {
-	Type     string                            `json:"type,omitempty"`
-	Offset   int32                             `json:"offset"`
-	Length   int32                             `json:"length"`
-	Url      string                            `json:"url,omitempty"`
-	UserInfo *server_api_params.PublicUserInfo `json:"userInfo,omitempty"`
+	Type   string `json:"type,omitempty"`
+	Offset int32  `json:"offset"`
+	Length int32  `json:"length"`
+	Url    string `json:"url,omitempty"`
+	Info   string `json:"info,omitempty"`
 }
 
 type GroupHasReadInfo struct {
