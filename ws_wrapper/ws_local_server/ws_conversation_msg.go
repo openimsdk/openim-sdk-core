@@ -218,6 +218,21 @@ func (wsRouter *WsFuncRouter) SetConversationRecvMessageOpt(input string, operat
 	userWorker.Conversation().SetConversationRecvMessageOpt(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationIDList"].(string), int(m["opt"].(float64)), operationID)
 }
 
+func (wsRouter *WsFuncRouter) SetGlobalRecvMessageOpt(input, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "opt") {
+		return
+	}
+	userWorker.Conversation().SetGlobalRecvMessageOpt(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, int(m["opt"].(float64)), operationID)
+}
+
+
 func (wsRouter *WsFuncRouter) GetConversationRecvMessageOpt(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
@@ -793,6 +808,8 @@ func (wsRouter *WsFuncRouter) ClearGroupHistoryMessageFromLocalAndSvr(input stri
 	}
 	userWorker.Conversation().ClearGroupHistoryMessageFromLocalAndSvr(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, input, operationID)
 }
+
+
 
 //func (wsRouter *WsFuncRouter) SetSdkLog(input string, operationID string) {
 //	m := make(map[string]interface{})
