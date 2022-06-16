@@ -60,6 +60,17 @@ func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callba
 		log.NewInfo(operationID, "SetConversationRecvMessageOpt callback: ", sdk_params_callback.SetConversationRecvMessageOptCallback)
 	}()
 }
+func (c *Conversation) SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, opt int, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, "SetGlobalRecvMessageOpt args: ", opt)
+		c.setGlobalRecvMessageOpt(callback, opt, operationID)
+		callback.OnSuccess(sdk_params_callback.SetGlobalRecvMessageOptCallback)
+		log.NewInfo(operationID, "SetGlobalRecvMessageOpt callback: ", sdk_params_callback.SetGlobalRecvMessageOptCallback)
+	}()
+}
 
 //deprecated
 func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList, operationID string) {
