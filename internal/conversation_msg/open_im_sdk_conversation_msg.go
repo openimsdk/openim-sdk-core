@@ -66,7 +66,7 @@ func (c *Conversation) SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Bas
 	}
 	go func() {
 		log.NewInfo(operationID, "SetGlobalRecvMessageOpt args: ", opt)
-		c.setGlobalRecvMessageOpt(callback, opt, operationID)
+		c.setGlobalRecvMessageOpt(callback, int32(opt), operationID)
 		callback.OnSuccess(sdk_params_callback.SetGlobalRecvMessageOptCallback)
 		log.NewInfo(operationID, "SetGlobalRecvMessageOpt callback: ", sdk_params_callback.SetGlobalRecvMessageOptCallback)
 	}()

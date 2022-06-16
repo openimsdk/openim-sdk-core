@@ -1,10 +1,11 @@
 package constant
 
 const (
-	GetSelfUserInfoRouter       = "/user/get_self_user_info"
-	GetUsersInfoRouter          = "/user/get_users_info"
-	UpdateSelfUserInfoRouter    = "/user/update_user_info"
-	GetUsersInfoFromCacheRouter = "/user/get_users_info_from_cache"
+	GetSelfUserInfoRouter         = "/user/get_self_user_info"
+	GetUsersInfoRouter            = "/user/get_users_info"
+	UpdateSelfUserInfoRouter      = "/user/update_user_info"
+	SetGlobalRecvMessageOptRouter = "/user/set_global_msg_recv_opt"
+	GetUsersInfoFromCacheRouter   = "/user/get_users_info_from_cache"
 
 	AddFriendRouter                    = "/friend/add_friend"
 	DeleteFriendRouter                 = "/friend/delete_friend"

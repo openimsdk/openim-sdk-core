@@ -74,12 +74,12 @@ func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiRe
 	c.p.PostFatalCallback(callback, constant.ModifyConversationFieldRouter, apiReq, nil, apiReq.OperationID)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "request success, output: ", apiResp)
 }
-func (c *Conversation) setGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, opt int, operationID string) {
-	apiReq := server_api_params.UpdateSelfUserInfoReq{}
+
+func (c *Conversation) setGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, opt int32, operationID string) {
+	apiReq := server_api_params.SetGlobalRecvMessageOptReq{}
 	apiReq.OperationID = operationID
-	apiReq.UserID = c.loginUserID
-	apiReq.GlobalRecvMsgOpt = int32(opt)
-	c.p.PostFatalCallback(callback, constant.UpdateSelfUserInfoRouter, apiReq, nil, apiReq.OperationID)
+	apiReq.GlobalRecvMsgOpt = &opt
+	c.p.PostFatalCallback(callback, constant.SetGlobalRecvMessageOptRouter, apiReq, nil, apiReq.OperationID)
 	c.user.SyncLoginUserInfo(operationID)
 }
 func (c *Conversation) setOneConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationID string, opt int, operationID string) {
