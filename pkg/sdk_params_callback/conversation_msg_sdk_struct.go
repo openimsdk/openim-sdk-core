@@ -15,6 +15,7 @@ type GetConversationListSplitCallback []*db.LocalConversation
 type SetConversationRecvMessageOptParams []string
 
 const SetConversationRecvMessageOptCallback = constant.SuccessCallbackDefault
+const SetGlobalRecvMessageOptCallback = constant.SuccessCallbackDefault
 
 type GetConversationRecvMessageOptParams []string
 
