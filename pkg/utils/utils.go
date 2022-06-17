@@ -269,12 +269,19 @@ func GetConversationIDBySessionType(sourceID string, sessionType int) string {
 		return "single_" + sourceID
 	case constant.GroupChatType:
 		return "group_" + sourceID
+	case constant.SuperGroupChatType:
+		return "super_group_" + sourceID
 	case constant.NotificationChatType:
 		return "notification_" + sourceID
 	}
 	return ""
 }
-
+func GetSuperGroupTableName(groupID string) string {
+	return constant.SuperGroupChatLogsTableNamePre + groupID
+}
+func GetErrSuperGroupTableName(groupID string) string {
+	return constant.SuperGroupErrChatLogsTableNamePre + groupID
+}
 func RemoveRepeatedStringInList(slc []string) []string {
 	var result []string
 	tempMap := map[string]byte{}

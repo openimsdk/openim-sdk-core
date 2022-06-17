@@ -6,7 +6,10 @@ import (
 )
 
 var (
-	TESTIP       = "43.128.5.63"
+	//	TESTIP = "cjyy.zs.sjz.gov.cn"
+	TESTIP = "43.128.5.63"
+	//TESTIP       = "8.213.195.63"
+	//TESTIP       = "103.116.45.174"
 	APIADDR      = "http://" + TESTIP + ":10002"
 	WSADDR       = "ws://" + TESTIP + ":10001"
 	REGISTERADDR = APIADDR + "/auth/user_register"
@@ -32,3 +35,5 @@ var msgNumInOneClient = 0
 
 //var Msgwg sync.WaitGroup
 var sendMsgClient = 0
+
+var MaxNumGoroutine = 100000

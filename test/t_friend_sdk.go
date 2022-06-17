@@ -46,7 +46,7 @@ func TestLog(v ...interface{}) {
 	X.Println(a, b, c, d)
 }
 
-var Friend_uid = "18666662412"
+var Friend_uid = "13911112222"
 
 func SetTestFriendID(friendUserID string) {
 	Friend_uid = friendUserID
@@ -401,16 +401,17 @@ func InOutlllogin(uid, tk string) {
 	callback.time = time.Now()
 	callback.funcName = utils.GetSelfFuncName()
 	operationID := utils.OperationIDGenerator()
-	//	log.Info(operationID, " login start ")
 	open_im_sdk.Login(&callback, operationID, uid, tk)
 	for {
-		if callback.errCode == 1 || callback.errCode == -1 {
+		if callback.errCode == 1 {
 			return
+		} else if callback.errCode == -1 {
+			time.Sleep(100 * time.Millisecond)
 		} else {
-			//	log.Info(operationID, "waiting login ")
+			time.Sleep(100 * time.Millisecond)
+			log.Info(operationID, "waiting login ")
 		}
 	}
-
 }
 
 func InOutLogou() {
@@ -450,6 +451,9 @@ func InOutDoTest(uid, tk, ws, api string) {
 	var msgCallBack MsgListenerCallBak
 	open_im_sdk.SetAdvancedMsgListener(&msgCallBack)
 
+	var batchMsg BatchMsg
+	open_im_sdk.SetBatchMsgListener(&batchMsg)
+
 	var friendListener testFriendListener
 	open_im_sdk.SetFriendListener(friendListener)
 
@@ -465,7 +469,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	open_im_sdk.SetWorkMomentsListener(workMomentsListener)
 
 	InOutlllogin(uid, tk)
-	time.Sleep(2 * time.Second)
+
 	log.Warn("", "InOutDoTest fin")
 }
 
@@ -542,7 +546,7 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 			return
 		}
 		log.Warn(operationID, "waiting login...", uid)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 	}
 
 }
@@ -552,7 +556,7 @@ func DoTest(uid, tk, ws, api string) {
 	cf.ApiAddr = api // "http://120.24.45.199:10000"
 	//	cf.IpWsAddr = "wss://open-im.rentsoft.cn/wss"
 	cf.WsAddr = ws //"ws://120.24.45.199:17778"
-	cf.Platform = 2
+	cf.Platform = 1
 	cf.DataDir = "./"
 
 	var s string
@@ -603,7 +607,7 @@ type TestSendMsgCallBack struct {
 }
 
 func (t *TestSendMsgCallBack) OnError(errCode int32, errMsg string) {
-	log.Warn(t.OperationID, "test_openim: send msg failed: ", errCode, errMsg, t.msgID, t.msg)
+	log.Error(t.OperationID, "test_openim: send msg failed: ", errCode, errMsg, t.msgID, t.msg)
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
 	SendFailedAllMsg[t.msgID] = t.sendID + t.recvID

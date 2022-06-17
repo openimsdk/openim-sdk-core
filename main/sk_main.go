@@ -2,83 +2,25 @@ package main
 
 import (
 	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/test"
-	"open_im_sdk/ws_wrapper/ws_local_server"
 	"time"
 )
 
-//func reliabilityTest() {
-//	intervalSleepMs := 1
-//	randSleepMaxSecond := 30
-//	imIP := "43.128.5.63"
-//	oneClientSendMsgNum := 1
-//	testClientNum := 100
-//	test.ReliabilityTest(oneClientSendMsgNum, intervalSleepMs, imIP, randSleepMaxSecond, testClientNum)
-//
-//	for {
-//		if test.CheckReliabilityResult() {
-//			log.Warn("", "CheckReliabilityResult ok, again")
-//		} else {
-//			log.Warn("", "CheckReliabilityResult failed , wait.... ")
-//		}
-//		time.Sleep(time.Duration(10) * time.Second)
-//	}
-//}
-
-var (
-	TESTIP       = "43.128.5.63"
-	APIADDR      = "http://" + TESTIP + ":10002"
-	WSADDR       = "ws://" + TESTIP + ":10001"
-	REGISTERADDR = APIADDR + "/user_register"
-	ACCOUNTCHECK = APIADDR + "/manager/account_check"
-	TOKENADDR    = APIADDR + "/auth/user_token"
-	SECRET       = "tuoyun"
-	SENDINTERVAL = 20
-)
-
-type ChanMsg struct {
-	data []byte
-	uid  string
-}
-
-func testMem() {
-	s := server_api_params.MsgData{}
-	s.RecvID = "11111111sdfaaaaaaaaaaaaaaaaa11111"
-	s.RecvID = "222222222afsddddddddddddddddddddddd22"
-	s.ClientMsgID = "aaaaaaaaaaaadfsaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-	s.SenderNickname = "asdfafdassssssssssssssssssssssfds"
-	s.SenderFaceURL = "bbbbbbbbbbbbbbbbsfdaaaaaaaaaaaaaaaaaaaaaaaaa"
-
-	ws_local_server.SendOneUserMessageForTest(s, "aaaa")
-}
-
 func main() {
 
-	test.REGISTERADDR = REGISTERADDR
-	test.TOKENADDR = TOKENADDR
-	test.SECRET = SECRET
-	test.SENDINTERVAL = SENDINTERVAL
 	strMyUidx := "18666662345"
-
-	//	var onlineNum *int          //Number of online users
-	//	var senderNum *int          //Number of users sending messages
-	//	var singleSenderMsgNum *int //Number of single user send messages
-	//	var intervalTime *int       //Sending time interval, in millseconds
-	//	onlineNum = flag.Int("on", 10000, "online num")
-	//	senderNum = flag.Int("sn", 100, "sender num")
-	//	singleSenderMsgNum = flag.Int("mn", 1000, "single sender msg num")
-	//	intervalTime = flag.Int("t", 1000, "interval time mill second")
-	//	flag.Parse()
-	//strMyUidx := "13900000000"
-
-	//friendID := "17726378428"
 	log.NewPrivateLog("", 6)
 	tokenx := test.GenToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
+	test.DoTestDeleteAllMsgFromLocalAndSvr()
+
+	time.Sleep(250000 * time.Millisecond)
+
 	println("start")
+	test.DoTestSendMsg2Group(strMyUidx, "0a3b3b8cc181b9fcfdfe4887e0b4ac30", 0)
+
 	//test.DoTestGetUserInDepartment()
 	//test.DoTestGetDepartmentMemberAndSubDepartment()
 	//test.DoTestDeleteAllMsgFromLocalAndSvr()
@@ -124,7 +66,7 @@ func main() {
 	//test.DoTestMarkGroupMessageAsRead()
 	//test.DoTestGetGroupHistoryMessage()
 	//test.DoTestGetHistoryMessage("17396220460")
-	time.Sleep(250000 * time.Millisecond)
+
 	b := utils.GetCurrentTimestampBySecond()
 	i := 0
 	for {

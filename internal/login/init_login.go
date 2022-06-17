@@ -11,6 +11,7 @@ import (
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/organization"
 	"open_im_sdk/internal/sdk_advanced_function"
+	"open_im_sdk/internal/super_group"
 	"open_im_sdk/internal/user"
 	workMoments "open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
@@ -28,6 +29,7 @@ type LoginMgr struct {
 	organization     *organization.Organization
 	friend           *friend.Friend
 	group            *group.Group
+	superGroup       *super_group.SuperGroup
 	conversation     *conv.Conversation
 	user             *user.User
 	signaling        advanced_interface.Signaling
@@ -51,6 +53,7 @@ type LoginMgr struct {
 	friendListener       open_im_sdk_callback.OnFriendshipListener
 	conversationListener open_im_sdk_callback.OnConversationListener
 	advancedMsgListener  open_im_sdk_callback.OnAdvancedMsgListener
+	batchMsgListener     open_im_sdk_callback.OnBatchMsgListener
 	userListener         open_im_sdk_callback.OnUserListener
 	signalingListener    open_im_sdk_callback.OnSignalingListener
 	organizationListener open_im_sdk_callback.OnOrganizationListener
@@ -60,6 +63,7 @@ type LoginMgr struct {
 	cmdWsCh            chan common.Cmd2Value
 	heartbeatCmdCh     chan common.Cmd2Value
 	pushMsgAndMaxSeqCh chan common.Cmd2Value
+	joinedSuperGroupCh chan common.Cmd2Value
 	imConfig           sdk_struct.IMConfig
 }
 
@@ -119,6 +123,9 @@ func (u *LoginMgr) SetAdvancedMsgListener(advancedMsgListener open_im_sdk_callba
 	u.advancedMsgListener = advancedMsgListener
 }
 
+func (u *LoginMgr) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnBatchMsgListener) {
+	u.batchMsgListener = batchMsgListener
+}
 func (u *LoginMgr) SetFriendListener(friendListener open_im_sdk_callback.OnFriendshipListener) {
 	u.friendListener = friendListener
 }
@@ -174,11 +181,10 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 
-	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
-
-	u.pushMsgAndMaxSeqCh = pushMsgAndMaxSeqCh
-	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
-	u.msgSync = ws.NewMsgSync(db, u.ws, userID, u.conversationCh, pushMsgAndMaxSeqCh)
+	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
+	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
+	u.joinedSuperGroupCh = make(chan common.Cmd2Value, 10)
+	u.msgSync = ws.NewMsgSync(db, u.ws, userID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
 
 	u.heartbeat = ws.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, token, exp)
 
@@ -192,10 +198,11 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 
 	u.group = group.NewGroup(u.loginUserID, u.db, p)
 	u.group.SetGroupListener(u.groupListener)
+	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db, p, u.joinedSuperGroupCh)
 	u.organization = organization.NewOrganization(u.loginUserID, u.db, p)
 	u.organization.SetListener(u.organizationListener)
 	u.cache = cache.NewCache(u.user, u.friend)
-	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache)
+	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache, u.db, u.superGroup)
 	u.workMoments = workMoments.NewWorkMoments(u.loginUserID, u.db, p)
 	u.workMoments.SetListener(u.workMomentsListener)
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
@@ -204,6 +211,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.user.SetLoginTime(u.loginTime)
 	u.friend.SetLoginTime(u.loginTime)
 	u.group.SetLoginTime(u.loginTime)
+	u.superGroup.SetLoginTime(u.loginTime)
 	go u.forcedSynchronization()
 	log.Info(operationID, "forcedSynchronization success...")
 	log.Info(operationID, "all channel ", u.pushMsgAndMaxSeqCh, u.conversationCh, u.heartbeatCmdCh, u.cmdWsCh)
@@ -225,7 +233,12 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.conversation = conv.NewConversation(u.ws, u.db, p, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener,
-		u.signaling, u.advancedFunction, u.organization, u.workMoments, u.cache)
+		u.signaling, u.advancedFunction, u.organization, u.workMoments, u.cache, u.full)
+	if u.batchMsgListener != nil {
+		u.conversation.SetBatchMsgListener(u.batchMsgListener)
+		log.Info(operationID, "SetBatchMsgListener ", u.batchMsgListener)
+	}
+
 	u.conversation.SyncConversations(operationID)
 	go common.DoListener(u.conversation)
 	log.Info(operationID, "login success...")
@@ -310,7 +323,7 @@ func (u *LoginMgr) GetLoginStatus() int32 {
 func (u *LoginMgr) forcedSynchronization() {
 	operationID := utils.OperationIDGenerator()
 	var wg sync.WaitGroup
-	wg.Add(9)
+	wg.Add(10)
 
 	go func() {
 		u.friend.SyncFriendList(operationID)
@@ -356,8 +369,12 @@ func (u *LoginMgr) forcedSynchronization() {
 		u.organization.SyncOrganization(operationID)
 		wg.Done()
 	}()
-	wg.Wait()
 
+	go func() {
+		u.superGroup.SyncJoinedGroupList(operationID)
+		wg.Done()
+	}()
+	wg.Wait()
 }
 
 func (u *LoginMgr) GetMinSeqSvr() int64 {

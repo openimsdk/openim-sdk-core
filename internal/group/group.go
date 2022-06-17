@@ -9,6 +9,7 @@ import (
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
@@ -43,7 +44,6 @@ func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2
 	if g.listener == nil {
 		return
 	}
-
 	operationID := utils.OperationIDGenerator()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	if msg.SendTime < g.loginTime {
@@ -384,7 +384,7 @@ func (g *Group) getJoinedGroupList(callback open_im_sdk_callback.Base, operation
 	return groupList
 }
 
-func (g *Group) GetGroupInfoFromLocal2Svr(groupID string) (*db.LocalGroup, error) {
+func (g *Group) GetGroupInfoFromLocal2Svr(groupID string) (*model_struct.LocalGroup, error) {
 	localGroup, err := g.db.GetGroupInfoByGroupID(groupID)
 	if err == nil {
 		return localGroup, nil
@@ -402,6 +402,7 @@ func (g *Group) GetGroupInfoFromLocal2Svr(groupID string) (*db.LocalGroup, error
 		return nil, utils.Wrap(errors.New("no group"), "")
 	}
 }
+
 func (g *Group) searchGroups(callback open_im_sdk_callback.Base, param sdk.SearchGroupsParam, operationID string) sdk.SearchGroupsCallback {
 	if len(param.KeywordList) == 0 || (!param.IsSearchGroupName && !param.IsSearchGroupID) {
 		common.CheckAnyErrCallback(callback, 201, errors.New("keyword is null or search field all false"), operationID)

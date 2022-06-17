@@ -23,6 +23,7 @@ import (
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
@@ -101,13 +102,13 @@ func (f *Friend) GetUserNameAndFaceUrlByUid(friendUserID, operationID string) (f
 	return "", "", errors.New("getUserNameAndFaceUrlByUid err"), isFromSvr
 }
 
-func (f *Friend) GetDesignatedFriendListInfo(callback open_im_sdk_callback.Base, friendUserIDList []string, operationID string) []*db.LocalFriend {
+func (f *Friend) GetDesignatedFriendListInfo(callback open_im_sdk_callback.Base, friendUserIDList []string, operationID string) []*model_struct.LocalFriend {
 	friendList, err := f.db.GetFriendInfoList(friendUserIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return friendList
 }
 
-func (f *Friend) GetDesignatedBlackListInfo(callback open_im_sdk_callback.Base, blackIDList []string, operationID string) []*db.LocalBlack {
+func (f *Friend) GetDesignatedBlackListInfo(callback open_im_sdk_callback.Base, blackIDList []string, operationID string) []*model_struct.LocalBlack {
 	blackList, err := f.db.GetBlackInfoList(blackIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return blackList
@@ -216,8 +217,8 @@ func (f *Friend) searchFriends(callback open_im_sdk_callback.Base, param sdk.Sea
 	common.CheckDBErrCallback(callback, err, operationID)
 	return mergeFriendBlackSearchResult(localFriendList, localBlackList)
 }
-func mergeFriendBlackSearchResult(base []*db.LocalFriend, add []*db.LocalBlack) (result []*sdk.SearchFriendItem) {
-	blackUserIDList := func(bl []*db.LocalBlack) (result []string) {
+func mergeFriendBlackSearchResult(base []*model_struct.LocalFriend, add []*model_struct.LocalBlack) (result []*sdk.SearchFriendItem) {
+	blackUserIDList := func(bl []*model_struct.LocalBlack) (result []string) {
 		for _, v := range bl {
 			result = append(result, v.BlockUserID)
 		}

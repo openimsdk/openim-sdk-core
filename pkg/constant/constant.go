@@ -19,6 +19,8 @@ const (
 	CmdRefuseFriend               = "016"
 	CmdAddFriend                  = "017"
 
+	CmdJoinedSuperGroup = "018"
+
 	CmdMaxSeq  = "maxSeq"
 	CmdPushMsg = "pushMsg"
 	CmdLogout  = "Logout"
@@ -43,6 +45,7 @@ const (
 	Quote               = 114
 	Face                = 115
 	GroupHasReadReceipt = 116
+	AdvancedText        = 117
 	//////////////////////////////////////////
 	NotificationBegin       = 1000
 	FriendNotificationBegin = 1200
@@ -87,7 +90,11 @@ const (
 
 	SignalingNotificationBegin = 1600
 	SignalingNotification      = 1601
-	SignalingNotificationEnd   = 1699
+	SignalingNotificationEnd   = 1649
+
+	SuperGroupNotificationBegin  = 1650
+	SuperGroupUpdateNotification = 1651
+	SuperGroupNotificationEnd    = 1699
 
 	ConversationPrivateChatNotification = 1701
 	OrganizationChangedNotification     = 1801
@@ -168,6 +175,13 @@ const (
 //	ErrCodeUserInfo     = 4001
 //	ErrCodeGroup        = 5001
 //)
+const (
+	NormalGroup                       = 0
+	SuperGroup                        = 1
+	SuperGroupTableName               = "local_super_groups"
+	SuperGroupErrChatLogsTableNamePre = "local_sg_err_chat_logs_"
+	SuperGroupChatLogsTableNamePre    = "local_sg_chat_logs_"
+)
 
 const (
 	SdkInit      = 0

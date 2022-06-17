@@ -48,7 +48,9 @@ import (
 
 func DoTestDeleteAllMsgFromLocalAndSvr() {
 	var deleteConversationCallback DeleteConversationCallBack
-	open_im_sdk.DeleteAllMsgFromLocalAndSvr(deleteConversationCallback, utils.OperationIDGenerator())
+	operationID := utils.OperationIDGenerator()
+	log.Info(operationID, utils.GetSelfFuncName(), "args ")
+	open_im_sdk.DeleteAllMsgFromLocalAndSvr(deleteConversationCallback, operationID)
 }
 func DoTestSearchLocalMessages() {
 	//[SearchLocalMessages args:  {"conversationID":"single_707010937","keywordList":["1"],"keywordListMatchType":0,"senderUserIDList":[],"messageTypeList":[],"searchTimePosition":0,"searchTimePeriod":0,"pageIndex":1,"count":200}]
@@ -379,6 +381,13 @@ func (m *MsgListenerCallBak) OnRecvGroupReadReceipt(groupMsgReceiptList string) 
 	fmt.Println("OnRecvC2CReadReceipt , ", groupMsgReceiptList)
 }
 
+type BatchMsg struct {
+}
+
+func (m *BatchMsg) OnRecvNewMessages(groupMsgReceiptList string) {
+	fmt.Println("OnRecvNewMessages , ", groupMsgReceiptList)
+}
+
 func (m *MsgListenerCallBak) OnRecvNewMessage(msg string) {
 	var mm sdk_struct.MsgStruct
 	err := json.Unmarshal([]byte(msg), &mm)
@@ -505,7 +514,7 @@ func init() {
 }
 
 func DoTestSendMsg2(sendId, recvID string) {
-	m := "DoTestSendMsg2 test:Gordon->sk" + sendId + ":" + recvID + ":"
+	m := "Single chat test" + sendId + ":" + recvID + ":"
 	operationID := utils.OperationIDGenerator()
 	s := DoTestCreateTextMessage(m)
 	log.NewInfo(operationID, "send msg:", s)
@@ -515,6 +524,20 @@ func DoTestSendMsg2(sendId, recvID string) {
 	o.Title = "121313"
 	o.Desc = "45464"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "success", sendId, recvID)
+}
+
+func DoTestSendMsg2Group(sendId, groupID string, index int) {
+	m := "test:" + sendId + ":" + groupID + ":  " + utils.IntToString(index)
+	operationID := utils.OperationIDGenerator()
+	s := DoTestCreateTextMessage(m)
+	log.NewInfo(operationID, "send msg:", s)
+	var testSendMsg TestSendMsgCallBack
+	testSendMsg.OperationID = operationID
+	o := server_api_params.OfflinePushInfo{}
+	o.Title = "Title"
+	o.Desc = "Desc"
+	open_im_sdk.SendMessage(&testSendMsg, operationID, s, "", groupID, utils.StructToJsonString(o))
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
 }
 
@@ -584,7 +607,7 @@ func DoTestSendMsgPress(index int, sendId, recvID string, idx string) {
 	testSendMsg.recvID = recvID
 	testSendMsg.msgID = mstruct.ClientMsgID
 
-	log.Info(operationID, "SendMessage", sendId, recvID, testSendMsg.msgID, index)
+	log.Warn(operationID, "SendMessage", sendId, recvID, testSendMsg.msgID, index)
 	// SendMessage(callback open_im_sdk_callback.SendMsgCallBack, message, recvID,
 	//groupID string, offlinePushInfo string, operationID string) {
 
@@ -631,5 +654,24 @@ func DoTestSendVideo(sendId, recvID string) {
 	o.Desc = "45464"
 	log.NewInfo(operationID, s)
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
+
+}
+
+type TestClearMsg struct {
+	OperationID string
+}
+
+func (t *TestClearMsg) OnError(errCode int32, errMsg string) {
+	log.Info(t.OperationID, "TestClearMsg , OnError ", errMsg)
+}
+
+func (t *TestClearMsg) OnSuccess(data string) {
+	log.Info(t.OperationID, "TestClearMsg , OnSuccess ", data)
+}
+
+func DoTestClearMsg() {
+	var test TestClearMsg
+	operationID := utils.OperationIDGenerator()
+	open_im_sdk.DeleteAllMsgFromLocalAndSvr(&test, operationID)
 
 }

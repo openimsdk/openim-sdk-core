@@ -2,7 +2,7 @@ package common
 
 import (
 	"fmt"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/model_struct"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/jinzhu/copier"
@@ -16,26 +16,26 @@ type diff interface {
 	Value() interface{}
 }
 
-func friendCopyToLocal(localFriend *db.LocalFriend, apiFriend *server_api_params.FriendInfo) {
+func friendCopyToLocal(localFriend *model_struct.LocalFriend, apiFriend *server_api_params.FriendInfo) {
 	copier.Copy(localFriend, apiFriend)
 	copier.Copy(localFriend, apiFriend.FriendUser)
 	localFriend.FriendUserID = apiFriend.FriendUser.UserID
 }
 
-func friendRequestCopyToLocal(localFriendRequest *db.LocalFriendRequest, apiFriendRequest *server_api_params.FriendRequest) {
+func friendRequestCopyToLocal(localFriendRequest *model_struct.LocalFriendRequest, apiFriendRequest *server_api_params.FriendRequest) {
 	copier.Copy(localFriendRequest, apiFriendRequest)
 }
 
-func blackCopyToLocal(localBlack *db.LocalBlack, apiBlack *server_api_params.PublicUserInfo, ownerUserID string) {
+func blackCopyToLocal(localBlack *model_struct.LocalBlack, apiBlack *server_api_params.PublicUserInfo, ownerUserID string) {
 	copier.Copy(localBlack, apiBlack)
 	localBlack.OwnerUserID = ownerUserID
 	localBlack.BlockUserID = apiBlack.UserID
 }
 
-func TransferToLocalFriend(apiFriendList []*server_api_params.FriendInfo) []*db.LocalFriend {
-	localFriendList := make([]*db.LocalFriend, 0)
+func TransferToLocalFriend(apiFriendList []*server_api_params.FriendInfo) []*model_struct.LocalFriend {
+	localFriendList := make([]*model_struct.LocalFriend, 0)
 	for _, v := range apiFriendList {
-		var localFriend db.LocalFriend
+		var localFriend model_struct.LocalFriend
 		friendCopyToLocal(&localFriend, v)
 		localFriendList = append(localFriendList, &localFriend)
 	}
@@ -84,11 +84,11 @@ func checkListDiff(a []diff, b []diff) (aInBNot, bInANot, sameA, sameB []int) {
 	return aInBNot, bInANot, sameA, sameB
 }
 
-func TransferToLocalGroupMember(apiData []*server_api_params.GroupMemberFullInfo) []*db.LocalGroupMember {
-	local := make([]*db.LocalGroupMember, 0)
+func TransferToLocalGroupMember(apiData []*server_api_params.GroupMemberFullInfo) []*model_struct.LocalGroupMember {
+	local := make([]*model_struct.LocalGroupMember, 0)
 	//operationID := utils.OperationIDGenerator()
 	for _, v := range apiData {
-		var node db.LocalGroupMember
+		var node model_struct.LocalGroupMember
 		//		log2.NewDebug(operationID, "local test api ", v)
 		GroupMemberCopyToLocal(&node, v)
 		//		log2.NewDebug(operationID, "local test local  ", node)
@@ -98,15 +98,15 @@ func TransferToLocalGroupMember(apiData []*server_api_params.GroupMemberFullInfo
 	return local
 }
 
-func GroupMemberCopyToLocal(dst *db.LocalGroupMember, src *server_api_params.GroupMemberFullInfo) {
+func GroupMemberCopyToLocal(dst *model_struct.LocalGroupMember, src *server_api_params.GroupMemberFullInfo) {
 	copier.Copy(dst, src)
 }
 
-func TransferToLocalGroupInfo(apiData []*server_api_params.GroupInfo) []*db.LocalGroup {
-	local := make([]*db.LocalGroup, 0)
+func TransferToLocalGroupInfo(apiData []*server_api_params.GroupInfo) []*model_struct.LocalGroup {
+	local := make([]*model_struct.LocalGroup, 0)
 	//operationID := utils.OperationIDGenerator()
 	for _, v := range apiData {
-		var node db.LocalGroup
+		var node model_struct.LocalGroup
 		//	log2.NewDebug(operationID, "local test api ", v)
 		GroupInfoCopyToLocal(&node, v)
 		//		log2.NewDebug(operationID, "local test local  ", node)
@@ -116,15 +116,15 @@ func TransferToLocalGroupInfo(apiData []*server_api_params.GroupInfo) []*db.Loca
 	return local
 }
 
-func GroupInfoCopyToLocal(dst *db.LocalGroup, src *server_api_params.GroupInfo) {
+func GroupInfoCopyToLocal(dst *model_struct.LocalGroup, src *server_api_params.GroupInfo) {
 	copier.Copy(dst, src)
 }
 
-func TransferToLocalGroupRequest(apiData []*server_api_params.GroupRequest) []*db.LocalGroupRequest {
-	local := make([]*db.LocalGroupRequest, 0)
+func TransferToLocalGroupRequest(apiData []*server_api_params.GroupRequest) []*model_struct.LocalGroupRequest {
+	local := make([]*model_struct.LocalGroupRequest, 0)
 	//operationID := utils.OperationIDGenerator()
 	for _, v := range apiData {
-		var node db.LocalGroupRequest
+		var node model_struct.LocalGroupRequest
 		//	log2.NewDebug(operationID, "local test api ", v)
 		GroupRequestCopyToLocal(&node, v)
 		//		log2.NewDebug(operationID, "local test local  ", node)
@@ -134,7 +134,7 @@ func TransferToLocalGroupRequest(apiData []*server_api_params.GroupRequest) []*d
 	return local
 }
 
-func GroupRequestCopyToLocal(dst *db.LocalGroupRequest, src *server_api_params.GroupRequest) {
+func GroupRequestCopyToLocal(dst *model_struct.LocalGroupRequest, src *server_api_params.GroupRequest) {
 	copier.Copy(dst, src)
 	copier.Copy(dst, src.GroupInfo)
 	copier.Copy(dst, src.UserInfo)
@@ -142,7 +142,7 @@ func GroupRequestCopyToLocal(dst *db.LocalGroupRequest, src *server_api_params.G
 	dst.UserFaceURL = src.UserInfo.FaceURL
 }
 
-func AdminGroupRequestCopyToLocal(dst *db.LocalAdminGroupRequest, src *server_api_params.GroupRequest) {
+func AdminGroupRequestCopyToLocal(dst *model_struct.LocalAdminGroupRequest, src *server_api_params.GroupRequest) {
 	copier.Copy(dst, src)
 	copier.Copy(dst, src.GroupInfo)
 	copier.Copy(dst, src.UserInfo)
@@ -150,7 +150,7 @@ func AdminGroupRequestCopyToLocal(dst *db.LocalAdminGroupRequest, src *server_ap
 	dst.UserFaceURL = src.UserInfo.FaceURL
 }
 
-func SendGroupRequestCopyToLocal(dst *db.LocalGroupRequest, src *server_api_params.GroupRequest) {
+func SendGroupRequestCopyToLocal(dst *model_struct.LocalGroupRequest, src *server_api_params.GroupRequest) {
 	copier.Copy(dst, src)
 	copier.Copy(dst, src.GroupInfo)
 	copier.Copy(dst, src.UserInfo)
@@ -176,17 +176,17 @@ func SendGroupRequestCopyToLocal(dst *db.LocalGroupRequest, src *server_api_para
 //	copier.Copy(dst, src)
 //}
 
-func TransferToLocalUserInfo(apiData *server_api_params.UserInfo) *db.LocalUser {
-	var localNode db.LocalUser
+func TransferToLocalUserInfo(apiData *server_api_params.UserInfo) *model_struct.LocalUser {
+	var localNode model_struct.LocalUser
 	copier.Copy(&localNode, apiData)
 	return &localNode
 }
 
-func TransferToLocalFriendRequest(apiFriendList []*server_api_params.FriendRequest) []*db.LocalFriendRequest {
-	localFriendList := make([]*db.LocalFriendRequest, 0)
+func TransferToLocalFriendRequest(apiFriendList []*server_api_params.FriendRequest) []*model_struct.LocalFriendRequest {
+	localFriendList := make([]*model_struct.LocalFriendRequest, 0)
 	//operationID := utils.OperationIDGenerator()
 	for _, v := range apiFriendList {
-		var localFriendRequest db.LocalFriendRequest
+		var localFriendRequest model_struct.LocalFriendRequest
 		//	log2.NewDebug(operationID, "local test api ", v)
 		friendRequestCopyToLocal(&localFriendRequest, v)
 		//	log2.NewDebug(operationID, "local test local  ", localFriendRequest)
@@ -196,10 +196,10 @@ func TransferToLocalFriendRequest(apiFriendList []*server_api_params.FriendReque
 	return localFriendList
 }
 
-func TransferToLocalBlack(apiBlackList []*server_api_params.PublicUserInfo, ownerUserID string) []*db.LocalBlack {
-	localBlackList := make([]*db.LocalBlack, 0)
+func TransferToLocalBlack(apiBlackList []*server_api_params.PublicUserInfo, ownerUserID string) []*model_struct.LocalBlack {
+	localBlackList := make([]*model_struct.LocalBlack, 0)
 	for _, v := range apiBlackList {
-		var localBlack db.LocalBlack
+		var localBlack model_struct.LocalBlack
 		blackCopyToLocal(&localBlack, v, ownerUserID)
 		localBlackList = append(localBlackList, &localBlack)
 	}
@@ -207,13 +207,13 @@ func TransferToLocalBlack(apiBlackList []*server_api_params.PublicUserInfo, owne
 	return localBlackList
 }
 
-func CheckFriendListDiff(a []*db.LocalFriend, b []*db.LocalFriend) (aInBNot, bInANot, sameA, sameB []int) {
+func CheckFriendListDiff(a []*model_struct.LocalFriend, b []*model_struct.LocalFriend) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
-	mapA := make(map[string]*db.LocalFriend)
+	mapA := make(map[string]*model_struct.LocalFriend)
 	for _, v := range a {
 		mapA[v.FriendUserID] = v
 	}
-	mapB := make(map[string]*db.LocalFriend)
+	mapB := make(map[string]*model_struct.LocalFriend)
 	for _, v := range b {
 		mapB[v.FriendUserID] = v
 	}
@@ -250,13 +250,13 @@ func CheckFriendListDiff(a []*db.LocalFriend, b []*db.LocalFriend) (aInBNot, bIn
 	return aInBNot, bInANot, sameA, sameB
 }
 
-func CheckFriendRequestDiff(a []*db.LocalFriendRequest, b []*db.LocalFriendRequest) (aInBNot, bInANot, sameA, sameB []int) {
+func CheckFriendRequestDiff(a []*model_struct.LocalFriendRequest, b []*model_struct.LocalFriendRequest) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
-	mapA := make(map[string]*db.LocalFriendRequest)
+	mapA := make(map[string]*model_struct.LocalFriendRequest)
 	for _, v := range a {
 		mapA[v.FromUserID+v.ToUserID] = v
 	}
-	mapB := make(map[string]*db.LocalFriendRequest)
+	mapB := make(map[string]*model_struct.LocalFriendRequest)
 	for _, v := range b {
 		mapB[v.FromUserID+v.ToUserID] = v
 	}
@@ -292,13 +292,13 @@ func CheckFriendRequestDiff(a []*db.LocalFriendRequest, b []*db.LocalFriendReque
 	}
 	return aInBNot, bInANot, sameA, sameB
 }
-func CheckBlackListDiff(a []*db.LocalBlack, b []*db.LocalBlack) (aInBNot, bInANot, sameA, sameB []int) {
+func CheckBlackListDiff(a []*model_struct.LocalBlack, b []*model_struct.LocalBlack) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
-	mapA := make(map[string]*db.LocalBlack)
+	mapA := make(map[string]*model_struct.LocalBlack)
 	for _, v := range a {
 		mapA[v.BlockUserID] = v
 	}
-	mapB := make(map[string]*db.LocalBlack)
+	mapB := make(map[string]*model_struct.LocalBlack)
 	for _, v := range b {
 		mapB[v.BlockUserID] = v
 	}
@@ -335,15 +335,15 @@ func CheckBlackListDiff(a []*db.LocalBlack, b []*db.LocalBlack) (aInBNot, bInANo
 	return aInBNot, bInANot, sameA, sameB
 }
 
-func CheckGroupInfoDiff(a []*db.LocalGroup, b []*db.LocalGroup) (aInBNot, bInANot, sameA, sameB []int) {
+func CheckGroupInfoDiff(a []*model_struct.LocalGroup, b []*model_struct.LocalGroup) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
-	mapA := make(map[string]*db.LocalGroup)
+	mapA := make(map[string]*model_struct.LocalGroup)
 	for _, v := range a {
 		//fmt.Println("mapa   ", *v)
 		mapA[v.GroupID] = v
 
 	}
-	mapB := make(map[string]*db.LocalGroup)
+	mapB := make(map[string]*model_struct.LocalGroup)
 	for _, v := range b {
 		//	fmt.Println("mapb   ", *v)
 		mapB[v.GroupID] = v
@@ -381,13 +381,13 @@ func CheckGroupInfoDiff(a []*db.LocalGroup, b []*db.LocalGroup) (aInBNot, bInANo
 	return aInBNot, bInANot, sameA, sameB
 }
 
-func CheckGroupMemberDiff(a []*db.LocalGroupMember, b []*db.LocalGroupMember) (aInBNot, bInANot, sameA, sameB []int) {
+func CheckGroupMemberDiff(a []*model_struct.LocalGroupMember, b []*model_struct.LocalGroupMember) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
-	mapA := make(map[string]*db.LocalGroupMember)
+	mapA := make(map[string]*model_struct.LocalGroupMember)
 	for _, v := range a {
 		mapA[v.GroupID+v.UserID] = v
 	}
-	mapB := make(map[string]*db.LocalGroupMember)
+	mapB := make(map[string]*model_struct.LocalGroupMember)
 	for _, v := range b {
 		mapB[v.GroupID+v.UserID] = v
 	}
@@ -427,13 +427,13 @@ func CheckGroupMemberDiff(a []*db.LocalGroupMember, b []*db.LocalGroupMember) (a
 	return aInBNot, bInANot, sameA, sameB
 }
 
-func CheckDepartmentMemberDiff(a []*db.LocalDepartmentMember, b []*db.LocalDepartmentMember) (aInBNot, bInANot, sameA, sameB []int) {
+func CheckDepartmentMemberDiff(a []*model_struct.LocalDepartmentMember, b []*model_struct.LocalDepartmentMember) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
-	mapA := make(map[string]*db.LocalDepartmentMember)
+	mapA := make(map[string]*model_struct.LocalDepartmentMember)
 	for _, v := range a {
 		mapA[v.DepartmentID+v.UserID] = v
 	}
-	mapB := make(map[string]*db.LocalDepartmentMember)
+	mapB := make(map[string]*model_struct.LocalDepartmentMember)
 	for _, v := range b {
 		mapB[v.DepartmentID+v.UserID] = v
 	}
@@ -474,13 +474,13 @@ func CheckDepartmentMemberDiff(a []*db.LocalDepartmentMember, b []*db.LocalDepar
 
 }
 
-func CheckDepartmentDiff(a []*db.LocalDepartment, b []*db.LocalDepartment) (aInBNot, bInANot, sameA, sameB []int) {
+func CheckDepartmentDiff(a []*model_struct.LocalDepartment, b []*model_struct.LocalDepartment) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
-	mapA := make(map[string]*db.LocalDepartment)
+	mapA := make(map[string]*model_struct.LocalDepartment)
 	for _, v := range a {
 		mapA[v.DepartmentID] = v
 	}
-	mapB := make(map[string]*db.LocalDepartment)
+	mapB := make(map[string]*model_struct.LocalDepartment)
 	for _, v := range b {
 		mapB[v.DepartmentID] = v
 	}
@@ -518,13 +518,13 @@ func CheckDepartmentDiff(a []*db.LocalDepartment, b []*db.LocalDepartment) (aInB
 
 }
 
-func CheckGroupRequestDiff(a []*db.LocalGroupRequest, b []*db.LocalGroupRequest) (aInBNot, bInANot, sameA, sameB []int) {
+func CheckGroupRequestDiff(a []*model_struct.LocalGroupRequest, b []*model_struct.LocalGroupRequest) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
-	mapA := make(map[string]*db.LocalGroupRequest)
+	mapA := make(map[string]*model_struct.LocalGroupRequest)
 	for _, v := range a {
 		mapA[v.GroupID+v.UserID] = v
 	}
-	mapB := make(map[string]*db.LocalGroupRequest)
+	mapB := make(map[string]*model_struct.LocalGroupRequest)
 	for _, v := range b {
 		mapB[v.GroupID+v.UserID] = v
 	}
@@ -561,14 +561,14 @@ func CheckGroupRequestDiff(a []*db.LocalGroupRequest, b []*db.LocalGroupRequest)
 	return aInBNot, bInANot, sameA, sameB
 }
 
-func CheckAdminGroupRequestDiff(a []*db.LocalAdminGroupRequest, b []*db.LocalAdminGroupRequest) (aInBNot, bInANot, sameA, sameB []int) {
+func CheckAdminGroupRequestDiff(a []*model_struct.LocalAdminGroupRequest, b []*model_struct.LocalAdminGroupRequest) (aInBNot, bInANot, sameA, sameB []int) {
 	//to map, friendid_>friendinfo
-	mapA := make(map[string]*db.LocalAdminGroupRequest)
+	mapA := make(map[string]*model_struct.LocalAdminGroupRequest)
 	for _, v := range a {
 		mapA[v.GroupID+v.UserID] = v
 		//	fmt.Println("mapA   ", v)
 	}
-	mapB := make(map[string]*db.LocalAdminGroupRequest)
+	mapB := make(map[string]*model_struct.LocalAdminGroupRequest)
 	for _, v := range b {
 		mapB[v.GroupID+v.UserID] = v
 		//	fmt.Println("mapB   ", v)
@@ -709,11 +709,11 @@ func CheckConversationListDiff(conversationsOnServer, conversationsOnLocal []*te
 //	return aInBNot, bInANot, sameA, sameB
 //}
 
-func TransferToLocalAdminGroupRequest(apiData []*server_api_params.GroupRequest) []*db.LocalAdminGroupRequest {
-	local := make([]*db.LocalAdminGroupRequest, 0)
+func TransferToLocalAdminGroupRequest(apiData []*server_api_params.GroupRequest) []*model_struct.LocalAdminGroupRequest {
+	local := make([]*model_struct.LocalAdminGroupRequest, 0)
 	//operationID := utils.OperationIDGenerator()
 	for _, v := range apiData {
-		var node db.LocalAdminGroupRequest
+		var node model_struct.LocalAdminGroupRequest
 		//	log2.NewDebug(operationID, "local test api ", v)
 		AdminGroupRequestCopyToLocal(&node, v)
 		//		log2.NewDebug(operationID, "local test local  ", node)
@@ -723,10 +723,10 @@ func TransferToLocalAdminGroupRequest(apiData []*server_api_params.GroupRequest)
 	return local
 }
 
-func TransferToLocalDepartmentMember(apiData []*server_api_params.UserDepartmentMember) []*db.LocalDepartmentMember {
-	local := make([]*db.LocalDepartmentMember, 0)
+func TransferToLocalDepartmentMember(apiData []*server_api_params.UserDepartmentMember) []*model_struct.LocalDepartmentMember {
+	local := make([]*model_struct.LocalDepartmentMember, 0)
 	for _, v := range apiData {
-		var node db.LocalDepartmentMember
+		var node model_struct.LocalDepartmentMember
 		copier.Copy(&node, v.DepartmentMember)
 		copier.Copy(&node, v.OrganizationUser)
 		local = append(local, &node)
@@ -734,20 +734,20 @@ func TransferToLocalDepartmentMember(apiData []*server_api_params.UserDepartment
 	return local
 }
 
-func TransferToLocalDepartment(apiData []*server_api_params.Department) []*db.LocalDepartment {
-	local := make([]*db.LocalDepartment, 0)
+func TransferToLocalDepartment(apiData []*server_api_params.Department) []*model_struct.LocalDepartment {
+	local := make([]*model_struct.LocalDepartment, 0)
 	for _, v := range apiData {
-		var node db.LocalDepartment
+		var node model_struct.LocalDepartment
 		copier.Copy(&node, v)
 		local = append(local, &node)
 	}
 	return local
 }
 
-func TransferToLocalSendGroupRequest(apiData []*server_api_params.GroupRequest) []*db.LocalGroupRequest {
-	local := make([]*db.LocalGroupRequest, 0)
+func TransferToLocalSendGroupRequest(apiData []*server_api_params.GroupRequest) []*model_struct.LocalGroupRequest {
+	local := make([]*model_struct.LocalGroupRequest, 0)
 	for _, v := range apiData {
-		var node db.LocalGroupRequest
+		var node model_struct.LocalGroupRequest
 		SendGroupRequestCopyToLocal(&node, v)
 		local = append(local, &node)
 	}
@@ -788,7 +788,7 @@ func ServerTransferToTempConversation(resp server_api_params.GetAllConversations
 	return tempConversations
 }
 
-func LocalTransferToTempConversation(local []*db.LocalConversation) []*tempConversation {
+func LocalTransferToTempConversation(local []*model_struct.LocalConversation) []*tempConversation {
 	var tempConversations []*tempConversation
 	for _, localConversation := range local {
 		tempConversations = append(tempConversations, &tempConversation{
@@ -808,10 +808,10 @@ func LocalTransferToTempConversation(local []*db.LocalConversation) []*tempConve
 	return tempConversations
 }
 
-func TransferToLocalConversation(resp server_api_params.GetAllConversationsResp) []*db.LocalConversation {
-	var localConversations []*db.LocalConversation
+func TransferToLocalConversation(resp server_api_params.GetAllConversationsResp) []*model_struct.LocalConversation {
+	var localConversations []*model_struct.LocalConversation
 	for _, serverConversation := range resp.Conversations {
-		localConversations = append(localConversations, &db.LocalConversation{
+		localConversations = append(localConversations, &model_struct.LocalConversation{
 			RecvMsgOpt:       serverConversation.RecvMsgOpt,
 			ConversationID:   serverConversation.ConversationID,
 			ConversationType: serverConversation.ConversationType,
@@ -828,7 +828,7 @@ func TransferToLocalConversation(resp server_api_params.GetAllConversationsResp)
 	return localConversations
 }
 
-func TransferToServerConversation(local []*db.LocalConversation) server_api_params.GetAllConversationsResp {
+func TransferToServerConversation(local []*model_struct.LocalConversation) server_api_params.GetAllConversationsResp {
 	var serverConversations server_api_params.GetAllConversationsResp
 	for _, localConversation := range local {
 		serverConversations.Conversations = append(serverConversations.Conversations, server_api_params.Conversation{

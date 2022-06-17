@@ -145,6 +145,10 @@ type MsgStruct struct {
 		Detail      string `json:"detail,omitempty"`
 		DefaultTips string `json:"defaultTips,omitempty"`
 	} `json:"notificationElem,omitempty"`
+	MessageEntityElem struct {
+		Text              string           `json:"text,omitempty"`
+		MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
+	} `json:"messageEntityElem,omitempty"`
 	AttachedInfoElem AttachedInfoElem `json:"attachedInfoElem,omitempty"`
 }
 type AtInfo struct {
@@ -159,16 +163,17 @@ type AttachedInfoElem struct {
 	MessageEntityList         []*MessageEntity `json:"messageEntityList,omitempty"`
 }
 type MessageEntity struct {
-	Type     string                            `json:"type,omitempty"`
-	Offset   int32                             `json:"offset"`
-	Length   int32                             `json:"length"`
-	Url      string                            `json:"url,omitempty"`
-	UserInfo *server_api_params.PublicUserInfo `json:"userInfo,omitempty"`
+	Type   string `json:"type,omitempty"`
+	Offset int32  `json:"offset"`
+	Length int32  `json:"length"`
+	Url    string `json:"url,omitempty"`
+	Info   string `json:"info,omitempty"`
 }
+
 type GroupHasReadInfo struct {
 	HasReadUserIDList []string `json:"hasReadUserIDList,omitempty"`
 	HasReadCount      int32    `json:"hasReadCount"`
-	GroupMemberCount  uint32   `json:"groupMemberCount"`
+	GroupMemberCount  int32    `json:"groupMemberCount"`
 }
 type NewMsgList []*MsgStruct
 
@@ -211,7 +216,12 @@ type CmdPushMsgToMsgSync struct {
 type CmdMaxSeqToMsgSync struct {
 	MaxSeqOnSvr uint32
 	OperationID string
+
+	GroupID2MaxSeqOnSvr map[string]uint32
 }
+type CmdJoinedSuperGroup struct {
+}
+
 type OANotificationElem struct {
 	NotificationName    string `mapstructure:"notificationName" validate:"required"`
 	NotificationFaceURL string `mapstructure:"notificationFaceURL" validate:"required"`

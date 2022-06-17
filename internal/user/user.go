@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 	comm "open_im_sdk/internal/common"
+	"open_im_sdk/pkg/db/model_struct"
+
 	//"github.com/mitchellh/mapstructure"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
@@ -94,7 +96,7 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 	onLocal, err := u.GetLoginUser()
 	if err != nil {
 		log.Warn(operationID, "GetLoginUser failed", err.Error())
-		onLocal = &db.LocalUser{}
+		onLocal = &model_struct.LocalUser{}
 	}
 	if !cmp.Equal(onServer, onLocal) {
 		if onLocal.UserID == "" {
@@ -103,7 +105,8 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 			}
 			return
 		}
-		err = u.UpdateLoginUser(onServer)
+		err = u.UpdateLoginUserByMap(onServer, map[string]interface{}{"name": onServer.Nickname, "face_url": onServer.FaceURL,
+			"gender": onServer.Gender, "phone_number": onServer.PhoneNumber, "birth": onServer.Birth, "email": onServer.Email, "create_time": onServer.CreateTime, "app_manger_level": onServer.AppMangerLevel, "ex": onServer.Ex, "attached_info": onServer.AttachedInfo, "global_recv_msg_opt": onServer.GlobalRecvMsgOpt})
 		fmt.Println("UpdateLoginUser ", *onServer, svr)
 		if err != nil {
 			log.Error(operationID, "UpdateLoginUser failed ", *onServer, err.Error())

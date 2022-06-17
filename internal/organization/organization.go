@@ -7,6 +7,7 @@ import (
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
@@ -61,7 +62,7 @@ func (o *Organization) getUserInDepartment(callback open_im_sdk_callback.Base, u
 		if err != nil {
 			continue
 		}
-		node := sdk_params_callback.UserInDepartment{MemberInfo: &db.LocalDepartmentMember{}}
+		node := sdk_params_callback.UserInDepartment{MemberInfo: &model_struct.LocalDepartmentMember{}}
 		node.DepartmentInfo = department
 		copier.Copy(node.MemberInfo, v)
 		userInDepartment = append(userInDepartment, &node)
@@ -122,7 +123,7 @@ func (o *Organization) searchOrganization(callback open_im_sdk_callback.Base, se
 			})
 		}
 		result.DepartmentMemberList = append(result.DepartmentMemberList, &struct {
-			*db.SearchDepartmentMemberResult
+			*model_struct.SearchDepartmentMemberResult
 			ParentDepartmentList []*sdk_params_callback.ParentDepartmentCallback `json:"parentDepartmentList"`
 		}{SearchDepartmentMemberResult: member, ParentDepartmentList: path})
 	}

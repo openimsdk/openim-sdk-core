@@ -1,10 +1,11 @@
 package constant
 
 const (
-	GetSelfUserInfoRouter       = "/user/get_self_user_info"
-	GetUsersInfoRouter          = "/user/get_users_info"
-	UpdateSelfUserInfoRouter    = "/user/update_user_info"
-	GetUsersInfoFromCacheRouter = "/user/get_users_info_from_cache"
+	GetSelfUserInfoRouter         = "/user/get_self_user_info"
+	GetUsersInfoRouter            = "/user/get_users_info"
+	UpdateSelfUserInfoRouter      = "/user/update_user_info"
+	SetGlobalRecvMessageOptRouter = "/user/set_global_msg_recv_opt"
+	GetUsersInfoFromCacheRouter   = "/user/get_users_info_from_cache"
 
 	AddFriendRouter                    = "/friend/add_friend"
 	DeleteFriendRouter                 = "/friend/delete_friend"
@@ -18,11 +19,15 @@ const (
 	RemoveBlackRouter  = "/friend/remove_black"
 	GetBlackListRouter = "/friend/get_black_list"
 
-	SendMsgRouter                       = "/chat/send_msg"
-	PullUserMsgRouter                   = "/chat/pull_msg"
-	PullUserMsgBySeqRouter              = "/chat/pull_msg_by_seq"
-	NewestSeqRouter                     = "/chat/newest_seq"
-	DeleteMsgRouter                     = "/msg/del_msg"
+	SendMsgRouter          = "/chat/send_msg"
+	PullUserMsgRouter      = "/chat/pull_msg"
+	PullUserMsgBySeqRouter = "/chat/pull_msg_by_seq"
+	NewestSeqRouter        = "/chat/newest_seq"
+
+	//msg
+	DeleteMsgRouter = RouterMsg + "/del_msg"
+	ClearMsgRouter  = RouterMsg + "/clear_msg"
+
 	TencentCloudStorageCredentialRouter = "/third/tencent_cloud_storage_credential"
 	AliOSSCredentialRouter              = "/third/ali_oss_credential"
 	MinioStorageCredentialRouter        = "/third/minio_storage_credential"
@@ -65,10 +70,16 @@ const (
 	GetSubDepartmentRouter    = RouterOrganization + "/get_sub_department"
 	GetDepartmentMemberRouter = RouterOrganization + "/get_department_member"
 	ParseTokenRouter          = RouterAuth + "/parse_token"
+
+	//super_group
+	GetJoinedSuperGroupListRouter = RouterSuperGroup + "/get_joined_group_list"
+	GetSuperGroupsInfoRouter      = RouterSuperGroup + "/get_groups_info"
 )
 const (
 	RouterGroup        = "/group"
 	ConversationGroup  = "/conversation"
 	RouterOrganization = "/organization"
 	RouterAuth         = "/auth"
+	RouterSuperGroup   = "/super_group"
+	RouterMsg          = "/msg"
 )

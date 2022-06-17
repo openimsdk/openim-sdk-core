@@ -80,7 +80,9 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 	wsReq.ReqIdentifier = reqIdentifier
 	wsReq.OperationID = operationID
 	msgIncr, ch := w.AddCh(senderID)
+	log.Debug(wsReq.OperationID, "SendReqWaitResp AddCh msgIncr:", msgIncr, reqIdentifier)
 	defer w.DelCh(msgIncr)
+	defer log.Debug(wsReq.OperationID, "SendReqWaitResp DelCh msgIncr:", msgIncr, reqIdentifier)
 	wsReq.SendID = senderID
 	wsReq.MsgIncr = msgIncr
 	wsReq.Data, err = proto.Marshal(m)
@@ -234,7 +236,7 @@ func (w *Ws) doWsMsg(message []byte) {
 	switch wsResp.ReqIdentifier {
 	case constant.WSGetNewestSeq:
 		if err = w.doWSGetNewestSeq(*wsResp); err != nil {
-			log.Error(wsResp.OperationID, "doWSGetNewestSeq failed ", err.Error())
+			log.Error(wsResp.OperationID, "doWSGetNewestSeq failed ", err.Error(), wsResp.ReqIdentifier, wsResp.MsgIncr)
 		}
 	case constant.WSPullMsgBySeqList:
 		if err = w.doWSPullMsg(*wsResp); err != nil {
@@ -250,7 +252,7 @@ func (w *Ws) doWsMsg(message []byte) {
 
 	case constant.WSSendMsg:
 		if err = w.doWSSendMsg(*wsResp); err != nil {
-			log.Error(wsResp.OperationID, "doWSSendMsg failed ", err.Error())
+			log.Error(wsResp.OperationID, "doWSSendMsg failed ", err.Error(), wsResp.ReqIdentifier, wsResp.MsgIncr)
 		}
 	case constant.WSKickOnlineMsg:
 		log.Warn(wsResp.OperationID, "kick...  logout")

@@ -8,7 +8,7 @@ import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
@@ -62,7 +62,7 @@ func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callba
 	c.SyncConversations(operationID)
 }
 
-func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiReq *server_api_params.ModifyConversationFieldReq, conversationID string, localConversation *db.LocalConversation, operationID string) {
+func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiReq *server_api_params.ModifyConversationFieldReq, conversationID string, localConversation *model_struct.LocalConversation, operationID string) {
 	apiResp := server_api_params.ModifyConversationFieldResp{}
 	apiReq.OwnerUserID = c.loginUserID
 	apiReq.OperationID = operationID
@@ -74,12 +74,12 @@ func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiRe
 	c.p.PostFatalCallback(callback, constant.ModifyConversationFieldRouter, apiReq, nil, apiReq.OperationID)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "request success, output: ", apiResp)
 }
-func (c *Conversation) setGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, opt int, operationID string) {
-	apiReq := server_api_params.UpdateSelfUserInfoReq{}
+
+func (c *Conversation) setGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, opt int32, operationID string) {
+	apiReq := server_api_params.SetGlobalRecvMessageOptReq{}
 	apiReq.OperationID = operationID
-	apiReq.UserID = c.loginUserID
-	apiReq.GlobalRecvMsgOpt = int32(opt)
-	c.p.PostFatalCallback(callback, constant.UpdateSelfUserInfoRouter, apiReq, nil, apiReq.OperationID)
+	apiReq.GlobalRecvMsgOpt = &opt
+	c.p.PostFatalCallback(callback, constant.SetGlobalRecvMessageOptRouter, apiReq, nil, apiReq.OperationID)
 	c.user.SyncLoginUserInfo(operationID)
 }
 func (c *Conversation) setOneConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationID string, opt int, operationID string) {
@@ -141,13 +141,13 @@ func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callba
 	return resp
 }
 
-func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, sourceID string, sessionType int32, operationID string) *db.LocalConversation {
+func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, sourceID string, sessionType int32, operationID string) *model_struct.LocalConversation {
 	conversationID := utils.GetConversationIDBySessionType(sourceID, int(sessionType))
 	lc, err := c.db.GetConversation(conversationID)
 	if err == nil {
 		return lc
 	} else {
-		var newConversation db.LocalConversation
+		var newConversation model_struct.LocalConversation
 		newConversation.ConversationID = conversationID
 		newConversation.ConversationType = sessionType
 		switch sessionType {
@@ -161,9 +161,9 @@ func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, so
 			}
 			newConversation.ShowName = name
 			newConversation.FaceURL = faceUrl
-		case constant.GroupChatType:
+		case constant.GroupChatType, constant.SuperGroupChatType:
 			newConversation.GroupID = sourceID
-			g, err := c.group.GetGroupInfoFromLocal2Svr(sourceID)
+			g, err := c.full.GetGroupInfoFromLocal2Svr(sourceID, sessionType)
 			//g, err := c.db.GetGroupInfoByGroupID(sourceID)
 			common.CheckDBErrCallback(callback, err, operationID)
 			newConversation.ShowName = g.GroupName
@@ -233,7 +233,7 @@ func (c *Conversation) getServerConversationList(operationID string) (server_api
 	return resp, nil
 }
 func (c *Conversation) SyncConversations(operationID string) {
-	var newConversationList []*db.LocalConversation
+	var newConversationList []*model_struct.LocalConversation
 	ccTime := time.Now()
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	conversationsOnServer, err := c.getServerConversationList(operationID)
@@ -258,7 +258,7 @@ func (c *Conversation) SyncConversations(operationID string) {
 	// 可能是其他点开一下生成会话设置免打扰 插入到本地 不回调..
 	for _, index := range aInBNot {
 		conversation := conversationsOnServerLocalFormat[index]
-		var newConversation db.LocalConversation
+		var newConversation model_struct.LocalConversation
 		newConversation.ConversationID = conversation.ConversationID
 		newConversation.ConversationType = conversation.ConversationType
 		switch conversation.ConversationType {
@@ -318,7 +318,7 @@ func (c *Conversation) SyncConversations(operationID string) {
 	}
 	// callback
 	if len(conversationChangedList) > 0 {
-		if err = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedList}, c.ch); err != nil {
+		if err = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedList}, c.GetCh()); err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		}
 	}
@@ -339,9 +339,10 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 	var conversationID string
 	var startTime int64
 	var sessionType int
-	var list []*db.LocalChatLog
+	var list []*model_struct.LocalChatLog
 	var err error
 	var messageList sdk_struct.NewMsgList
+	var msg sdk_struct.MsgStruct
 	var notStartTime bool
 	if req.ConversationID != "" {
 		conversationID = req.ConversationID
@@ -352,8 +353,9 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 		switch lc.ConversationType {
 		case constant.SingleChatType, constant.NotificationChatType:
 			sourceID = lc.UserID
-		case constant.GroupChatType:
+		case constant.GroupChatType, constant.SuperGroupChatType:
 			sourceID = lc.GroupID
+			msg.GroupID = lc.GroupID
 		}
 		sessionType = int(lc.ConversationType)
 		if req.StartClientMsgID == "" {
@@ -361,7 +363,9 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 			////startTime = utils.GetCurrentTimestampByMill()
 			notStartTime = true
 		} else {
-			m, err := c.db.GetMessage(req.StartClientMsgID)
+			msg.SessionType = lc.ConversationType
+			msg.ClientMsgID = req.StartClientMsgID
+			m, err := c.db.GetMessageController(&msg)
 			common.CheckDBErrCallback(callback, err, operationID)
 			startTime = m.SendTime
 		}
@@ -392,9 +396,9 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 
 	log.Info(operationID, "sourceID:", sourceID, "startTime:", startTime, "count:", req.Count, "not start_time", notStartTime)
 	if notStartTime {
-		list, err = c.db.GetMessageListNoTime(sourceID, sessionType, req.Count, isReverse)
+		list, err = c.db.GetMessageListNoTimeController(sourceID, sessionType, req.Count, isReverse)
 	} else {
-		list, err = c.db.GetMessageList(sourceID, sessionType, req.Count, startTime, isReverse)
+		list, err = c.db.GetMessageListController(sourceID, sessionType, req.Count, startTime, isReverse)
 	}
 	common.CheckDBErrCallback(callback, err, operationID)
 	localChatLogToMsgStruct(&messageList, list)
@@ -425,8 +429,8 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 }
 func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req sdk.RevokeMessageParams, operationID string) {
 	var recvID, groupID string
-	var localMessage db.LocalChatLog
-	var lc db.LocalConversation
+	var localMessage model_struct.LocalChatLog
+	var lc model_struct.LocalConversation
 	var conversationID string
 	message, err := c.db.GetMessage(req.ClientMsgID)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -471,7 +475,7 @@ func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req 
 	lc.LatestMsg = utils.StructToJsonString(req)
 	lc.LatestMsgSendTime = req.SendTime
 	lc.ConversationID = conversationID
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.ch)
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.GetCh())
 }
 func (c *Conversation) typingStatusUpdate(callback open_im_sdk_callback.Base, recvID, msgTip, operationID string) {
 	s := sdk_struct.MsgStruct{}
@@ -490,7 +494,7 @@ func (c *Conversation) typingStatusUpdate(callback open_im_sdk_callback.Base, re
 }
 
 func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, msgIDList sdk.MarkC2CMessageAsReadParams, userID, operationID string) {
-	var localMessage db.LocalChatLog
+	var localMessage model_struct.LocalChatLog
 	var newMessageIDList []string
 	messages, err := c.db.GetMultipleMessage(msgIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -541,7 +545,7 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 			continue
 		}
 	}
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.ch)
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.GetCh())
 	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 }
 
@@ -584,7 +588,7 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 //	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.ch)
 //	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 //}
-func (c *Conversation) insertMessageToLocalStorage(callback open_im_sdk_callback.Base, s *db.LocalChatLog, operationID string) string {
+func (c *Conversation) insertMessageToLocalStorage(callback open_im_sdk_callback.Base, s *model_struct.LocalChatLog, operationID string) string {
 	err := c.db.InsertMessage(s)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return s.ClientMsgID
@@ -596,7 +600,7 @@ func (c *Conversation) clearGroupHistoryMessage(callback open_im_sdk_callback.Ba
 	common.CheckDBErrCallback(callback, err, operationID)
 	err = c.db.ClearConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 
 }
 
@@ -606,7 +610,7 @@ func (c *Conversation) clearC2CHistoryMessage(callback open_im_sdk_callback.Base
 	common.CheckDBErrCallback(callback, err, operationID)
 	err = c.db.ClearConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 }
 
 func (c *Conversation) deleteMessageFromSvr(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
@@ -620,12 +624,19 @@ func (c *Conversation) deleteMessageFromSvr(callback open_im_sdk_callback.Base, 
 	c.p.PostFatalCallback(callback, constant.DeleteMsgRouter, apiReq, nil, apiReq.OperationID)
 }
 
+func (c *Conversation) clearMessageFromSvr(callback open_im_sdk_callback.Base, operationID string) {
+	var apiReq server_api_params.CleanUpMsgReq
+	apiReq.UserID = c.loginUserID
+	apiReq.OperationID = operationID
+	c.p.PostFatalCallback(callback, constant.ClearMsgRouter, apiReq, nil, apiReq.OperationID)
+}
+
 func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
-	var conversation db.LocalConversation
+	var conversation model_struct.LocalConversation
 	var latestMsg sdk_struct.MsgStruct
 	var conversationID string
 	var sourceID string
-	chatLog := db.LocalChatLog{ClientMsgID: s.ClientMsgID, Status: constant.MsgStatusHasDeleted}
+	chatLog := model_struct.LocalChatLog{ClientMsgID: s.ClientMsgID, Status: constant.MsgStatusHasDeleted}
 	err := c.db.UpdateMessage(&chatLog)
 	common.CheckDBErrCallback(callback, err, operationID)
 
@@ -667,7 +678,7 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 		if err != nil {
 			log.Error("internal", "updateConversationLatestMsgModel err: ", err)
 		} else {
-			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
+			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 		}
 	}
 }
@@ -696,20 +707,16 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 
 	var conversationID, sourceID string
 	var startTime, endTime int64
-	var list []*db.LocalChatLog
+	var list []*model_struct.LocalChatLog
 	conversationMap := make(map[string]*sdk.SearchByConversationResult, 10)
 	var err error
 
 	if searchParam.SearchTimePosition == 0 {
-		endTime = utils.GetCurrentTimestampBySecond()
+		startTime = utils.UnixSecondToTime(utils.GetCurrentTimestampBySecond()).UnixNano() / 1e6
 	} else {
-		endTime = searchParam.SearchTimePosition
+		startTime = utils.UnixSecondToTime(searchParam.SearchTimePosition).UnixNano() / 1e6
+		endTime = utils.UnixSecondToTime(startTime-searchParam.SearchTimePeriod).UnixNano() / 1e6
 	}
-	if searchParam.SearchTimePeriod != 0 {
-		startTime = endTime - searchParam.SearchTimePeriod
-	}
-	startTime = utils.UnixSecondToTime(startTime).UnixNano() / 1e6
-	endTime = utils.UnixSecondToTime(endTime).UnixNano() / 1e6
 	if len(searchParam.KeywordList) == 0 && len(searchParam.MessageTypeList) == 0 {
 		common.CheckAnyErrCallback(callback, 201, errors.New("keywordlist and messageTypelist all null"), operationID)
 	}
@@ -727,7 +734,7 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 			sourceID = localConversation.GroupID
 		}
 		if len(searchParam.MessageTypeList) != 0 && len(searchParam.KeywordList) == 0 {
-			list, err = c.db.SearchMessageByContentType(searchParam.MessageTypeList, sourceID, startTime, endTime, int(localConversation.ConversationType), offset, searchParam.Count)
+			list, err = c.db.SearchMessageByContentType(searchParam.MessageTypeList, sourceID, endTime, startTime, int(localConversation.ConversationType), offset, searchParam.Count)
 		} else {
 			newContentTypeList := func(list []int) (result []int) {
 				for _, v := range list {
@@ -740,14 +747,14 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 			if len(newContentTypeList) == 0 {
 				newContentTypeList = SearchContentType
 			}
-			list, err = c.db.SearchMessageByKeyword(newContentTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, sourceID, startTime, endTime, int(localConversation.ConversationType), offset, searchParam.Count)
+			list, err = c.db.SearchMessageByKeyword(newContentTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, sourceID, endTime, startTime, int(localConversation.ConversationType), offset, searchParam.Count)
 		}
 	} else {
 		//Comprehensive search, search all
 		if len(searchParam.MessageTypeList) == 0 {
 			searchParam.MessageTypeList = SearchContentType
 		}
-		list, err = c.db.SearchMessageByContentTypeAndKeyword(searchParam.MessageTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
+		list, err = c.db.SearchMessageByContentTypeAndKeyword(searchParam.MessageTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, endTime, startTime)
 	}
 	common.CheckDBErrCallback(callback, err, operationID)
 	//localChatLogToMsgStruct(&messageList, list)
@@ -930,6 +937,7 @@ func (c *Conversation) deleteAllMsgFromLocal(callback open_im_sdk_callback.Base,
 	}
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: cidList}, c.GetCh())
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
+
 }
 
 func (c *Conversation) deleteAllMsgFromSvr(callback open_im_sdk_callback.Base, operationID string) {
