@@ -450,6 +450,7 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 	log.Debug(operationID, "sort cost time", time.Since(t))
 	return sdk.GetHistoryMessageListCallback(messageList)
 }
+
 func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req sdk.RevokeMessageParams, operationID string) {
 	var recvID, groupID string
 	var localMessage model_struct.LocalChatLog

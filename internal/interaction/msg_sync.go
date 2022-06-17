@@ -5,6 +5,7 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
+	"open_im_sdk/sdk_struct"
 )
 
 type SeqPair struct {
@@ -34,9 +35,13 @@ func (m *MsgSync) doMaxSeq(cmd common.Cmd2Value) {
 }
 
 func (m *MsgSync) doPushMsg(cmd common.Cmd2Value) {
-	m.selfMsgSync.doPushMsg(cmd)
-	m.superGroupMsgSync.doPushMsg(cmd)
-
+	msg := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).Msg
+	switch msg.SessionType {
+	case constant.SuperGroupChatType:
+		m.superGroupMsgSync.doPushMsg(cmd)
+	default:
+		m.selfMsgSync.doPushMsg(cmd)
+	}
 }
 
 func (m *MsgSync) Work(cmd common.Cmd2Value) {
