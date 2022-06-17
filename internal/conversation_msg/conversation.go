@@ -401,25 +401,36 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 		list, err = c.db.GetMessageListController(sourceID, sessionType, req.Count, startTime, isReverse)
 	}
 	common.CheckDBErrCallback(callback, err, operationID)
-	localChatLogToMsgStruct(&messageList, list)
-	switch sessionType {
-	case constant.SingleChatType, constant.NotificationChatType:
-		for _, v := range messageList {
-			err := c.msgHandleByContentType(v)
-			if err != nil {
-				log.Error(operationID, "Parsing data error:", err.Error(), v)
-				continue
-			}
+	for _, v := range list {
+		temp := sdk_struct.MsgStruct{}
+		temp.ClientMsgID = v.ClientMsgID
+		temp.ServerMsgID = v.ServerMsgID
+		temp.CreateTime = v.CreateTime
+		temp.SendTime = v.SendTime
+		temp.SessionType = v.SessionType
+		temp.SendID = v.SendID
+		temp.RecvID = v.RecvID
+		temp.MsgFrom = v.MsgFrom
+		temp.ContentType = v.ContentType
+		temp.SenderPlatformID = v.SenderPlatformID
+		temp.SenderNickname = v.SenderNickname
+		temp.SenderFaceURL = v.SenderFaceURL
+		temp.Content = v.Content
+		temp.Seq = v.Seq
+		temp.IsRead = v.IsRead
+		temp.Status = v.Status
+		temp.AttachedInfo = v.AttachedInfo
+		temp.Ex = v.Ex
+		err := c.msgHandleByContentType(&temp)
+		if err != nil {
+			log.Error(operationID, "Parsing data error:", err.Error(), temp)
+			continue
 		}
-	case constant.GroupChatType:
-		for _, v := range messageList {
-			err := c.msgHandleByContentType(v)
-			if err != nil {
-				log.Error(operationID, "Parsing data error:", err.Error(), v)
-				continue
-			}
-			v.GroupID = v.RecvID
-			v.RecvID = c.loginUserID
+		switch sessionType {
+		case constant.GroupChatType, constant.SuperGroupChatType:
+			temp.GroupID = temp.RecvID
+			temp.RecvID = c.loginUserID
+		case constant.SingleChatType, constant.NotificationChatType:
 		}
 	}
 	if !isReverse {
