@@ -22,7 +22,15 @@ func (d *DataBase) UpdateLoginUser(user *model_struct.LocalUser) error {
 	}
 	return utils.Wrap(t.Error, "UpdateLoginUser failed")
 }
-
+func (d *DataBase) UpdateLoginUserByMap(user *model_struct.LocalUser, args map[string]interface{}) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	t := d.conn.Model(&user).Updates(args)
+	if t.RowsAffected == 0 {
+		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	}
+	return utils.Wrap(t.Error, "UpdateColumnsConversation failed")
+}
 func (d *DataBase) InsertLoginUser(user *model_struct.LocalUser) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
