@@ -432,6 +432,7 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 			temp.RecvID = c.loginUserID
 		case constant.SingleChatType, constant.NotificationChatType:
 		}
+		messageList = append(messageList, &temp)
 	}
 	if !isReverse {
 		sort.Sort(messageList)
