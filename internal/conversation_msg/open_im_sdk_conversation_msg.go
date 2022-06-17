@@ -1050,12 +1050,13 @@ func (c *Conversation) GetHistoryMessageList(callback open_im_sdk_callback.Base,
 		return
 	}
 	go func() {
+		t := time.Now()
 		log.NewInfo(operationID, "GetHistoryMessageList args: ", getMessageOptions)
 		var unmarshalParams sdk_params_callback.GetHistoryMessageListParams
 		common.JsonUnmarshalCallback(getMessageOptions, &unmarshalParams, callback, operationID)
 		result := c.getHistoryMessageList(callback, unmarshalParams, operationID, false)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		log.NewInfo(operationID, "GetHistoryMessageList callback: ", utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, "GetHistoryMessageList callback: ", utils.StructToJsonStringDefault(result), "cost time", time.Since(t))
 	}()
 }
 
