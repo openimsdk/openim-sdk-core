@@ -18,7 +18,6 @@ require (
 	github.com/minio/minio-go/v7 v7.0.22
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/pkg/errors v0.9.1
-	github.com/pkg/profile v1.6.0
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/shamsher31/goimgext v1.0.0 // indirect

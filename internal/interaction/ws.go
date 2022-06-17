@@ -80,7 +80,9 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 	wsReq.ReqIdentifier = reqIdentifier
 	wsReq.OperationID = operationID
 	msgIncr, ch := w.AddCh(senderID)
+	log.Debug(wsReq.OperationID, "SendReqWaitResp AddCh msgIncr:", msgIncr, reqIdentifier)
 	defer w.DelCh(msgIncr)
+	defer log.Debug(wsReq.OperationID, "SendReqWaitResp DelCh msgIncr:", msgIncr, reqIdentifier)
 	wsReq.SendID = senderID
 	wsReq.MsgIncr = msgIncr
 	wsReq.Data, err = proto.Marshal(m)
@@ -134,9 +136,9 @@ func (w *Ws) SendReqTest(m proto.Message, reqIdentifier int32, timeout int, send
 	} else {
 		log.Debug(operationID, "writeBinaryMsg success", m.String(), senderID)
 	}
-	startTime := utils.GetCurrentTimestampByMill()
+	startTime := time.Now()
 	result := w.WaitTest(ch, timeout, wsReq.OperationID, connSend, m, senderID)
-	log.Debug(operationID, "ws Response time：", utils.GetCurrentTimestampByMill()-startTime, m.String(), senderID, result)
+	log.Debug(operationID, "ws Response time：", time.Since(startTime), m.String(), senderID, result)
 	return result
 }
 func (w *Ws) WaitTest(ch chan GeneralWsResp, timeout int, operationID string, connSend *websocket.Conn, m proto.Message, senderID string) bool {
@@ -234,7 +236,7 @@ func (w *Ws) doWsMsg(message []byte) {
 	switch wsResp.ReqIdentifier {
 	case constant.WSGetNewestSeq:
 		if err = w.doWSGetNewestSeq(*wsResp); err != nil {
-			log.Error(wsResp.OperationID, "doWSGetNewestSeq failed ", err.Error())
+			log.Error(wsResp.OperationID, "doWSGetNewestSeq failed ", err.Error(), wsResp.ReqIdentifier, wsResp.MsgIncr)
 		}
 	case constant.WSPullMsgBySeqList:
 		if err = w.doWSPullMsg(*wsResp); err != nil {
@@ -250,7 +252,7 @@ func (w *Ws) doWsMsg(message []byte) {
 
 	case constant.WSSendMsg:
 		if err = w.doWSSendMsg(*wsResp); err != nil {
-			log.Error(wsResp.OperationID, "doWSSendMsg failed ", err.Error())
+			log.Error(wsResp.OperationID, "doWSSendMsg failed ", err.Error(), wsResp.ReqIdentifier, wsResp.MsgIncr)
 		}
 	case constant.WSKickOnlineMsg:
 		log.Warn(wsResp.OperationID, "kick...  logout")
@@ -356,7 +358,6 @@ func (w *Ws) SendSignalingReqWaitResp(req *server_api_params.SignalReq, operatio
 }
 
 func (w *Ws) SignalingWaitPush(inviterUserID, inviteeUserID, roomID string, timeout int32, operationID string) (*server_api_params.SignalReq, error) {
-
 	msgIncr := inviterUserID + inviteeUserID + roomID
 	log.Info(operationID, "add msgIncr: ", msgIncr)
 	ch := w.AddChByIncr(msgIncr)

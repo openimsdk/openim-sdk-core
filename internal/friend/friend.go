@@ -23,6 +23,7 @@ import (
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
@@ -35,6 +36,15 @@ type Friend struct {
 	db             *db.DataBase
 	user           *user.User
 	p              *ws.PostApi
+	loginTime      int64
+}
+
+func (f *Friend) LoginTime() int64 {
+	return f.loginTime
+}
+
+func (f *Friend) SetLoginTime(loginTime int64) {
+	f.loginTime = loginTime
 }
 
 func (f *Friend) Db() *db.DataBase {
@@ -92,13 +102,13 @@ func (f *Friend) GetUserNameAndFaceUrlByUid(friendUserID, operationID string) (f
 	return "", "", errors.New("getUserNameAndFaceUrlByUid err"), isFromSvr
 }
 
-func (f *Friend) GetDesignatedFriendListInfo(callback open_im_sdk_callback.Base, friendUserIDList []string, operationID string) []*db.LocalFriend {
+func (f *Friend) GetDesignatedFriendListInfo(callback open_im_sdk_callback.Base, friendUserIDList []string, operationID string) []*model_struct.LocalFriend {
 	friendList, err := f.db.GetFriendInfoList(friendUserIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return friendList
 }
 
-func (f *Friend) GetDesignatedBlackListInfo(callback open_im_sdk_callback.Base, blackIDList []string, operationID string) []*db.LocalBlack {
+func (f *Friend) GetDesignatedBlackListInfo(callback open_im_sdk_callback.Base, blackIDList []string, operationID string) []*model_struct.LocalBlack {
 	blackList, err := f.db.GetBlackInfoList(blackIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return blackList
@@ -197,7 +207,46 @@ func (f *Friend) getFriendList(callback open_im_sdk_callback.Base, operationID s
 	common.CheckDBErrCallback(callback, err, operationID)
 	return common.MergeFriendBlackResult(localFriendList, localBlackList)
 }
-
+func (f *Friend) searchFriends(callback open_im_sdk_callback.Base, param sdk.SearchFriendsParam, operationID string) sdk.SearchFriendsCallback {
+	if len(param.KeywordList) == 0 || (!param.IsSearchNickname && !param.IsSearchUserID && !param.IsSearchRemark) {
+		common.CheckAnyErrCallback(callback, 201, errors.New("keyword is null or search field all false"), operationID)
+	}
+	localFriendList, err := f.db.SearchFriendList(param.KeywordList[0], param.IsSearchUserID, param.IsSearchNickname, param.IsSearchRemark)
+	common.CheckDBErrCallback(callback, err, operationID)
+	localBlackList, err := f.db.GetBlackList()
+	common.CheckDBErrCallback(callback, err, operationID)
+	return mergeFriendBlackSearchResult(localFriendList, localBlackList)
+}
+func mergeFriendBlackSearchResult(base []*model_struct.LocalFriend, add []*model_struct.LocalBlack) (result []*sdk.SearchFriendItem) {
+	blackUserIDList := func(bl []*model_struct.LocalBlack) (result []string) {
+		for _, v := range bl {
+			result = append(result, v.BlockUserID)
+		}
+		return result
+	}(add)
+	for _, v := range base {
+		node := sdk.SearchFriendItem{}
+		node.OwnerUserID = v.OwnerUserID
+		node.FriendUserID = v.FriendUserID
+		node.Remark = v.Remark
+		node.CreateTime = v.CreateTime
+		node.AddSource = v.AddSource
+		node.OperatorUserID = v.OperatorUserID
+		node.Nickname = v.Nickname
+		node.FaceURL = v.FaceURL
+		node.Gender = v.Gender
+		node.PhoneNumber = v.PhoneNumber
+		node.Birth = v.Birth
+		node.Email = v.Email
+		node.Ex = v.Ex
+		node.AttachedInfo = v.AttachedInfo
+		if !utils.IsContain(v.FriendUserID, blackUserIDList) {
+			node.Relationship = constant.FriendRelationship
+		}
+		result = append(result, &node)
+	}
+	return result
+}
 func (f *Friend) getBlackList(callback open_im_sdk_callback.Base, operationID string) sdk.GetBlackListCallback {
 	localBlackList, err := f.db.GetBlackList()
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -525,7 +574,10 @@ func (f *Friend) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd
 		log.Error(operationID, "f.friendListener == nil")
 		return
 	}
-
+	if msg.SendTime < f.loginTime {
+		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
+		return
+	}
 	go func() {
 		switch msg.ContentType {
 		case constant.FriendApplicationNotification:

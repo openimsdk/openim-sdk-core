@@ -19,6 +19,8 @@ const (
 	CmdRefuseFriend               = "016"
 	CmdAddFriend                  = "017"
 
+	CmdJoinedSuperGroup = "018"
+
 	CmdMaxSeq  = "maxSeq"
 	CmdPushMsg = "pushMsg"
 	CmdLogout  = "Logout"
@@ -43,6 +45,7 @@ const (
 	Quote               = 114
 	Face                = 115
 	GroupHasReadReceipt = 116
+	AdvancedText        = 117
 	//////////////////////////////////////////
 	NotificationBegin       = 1000
 	FriendNotificationBegin = 1200
@@ -65,27 +68,33 @@ const (
 
 	GroupNotificationBegin = 1500
 
-	GroupCreatedNotification             = 1501
-	GroupInfoSetNotification             = 1502
-	JoinGroupApplicationNotification     = 1503
-	MemberQuitNotification               = 1504
-	GroupApplicationAcceptedNotification = 1505
-	GroupApplicationRejectedNotification = 1506
-	GroupOwnerTransferredNotification    = 1507
-	MemberKickedNotification             = 1508
-	MemberInvitedNotification            = 1509
-	MemberEnterNotification              = 1510
-	GroupDismissedNotification           = 1511
-	GroupMemberMutedNotification         = 1512
-	GroupMemberCancelMutedNotification   = 1513
-	GroupMutedNotification               = 1514
-	GroupCancelMutedNotification         = 1515
-	GroupMemberInfoSetNotification       = 1516
-	GroupNotificationEnd                 = 1599
+	GroupCreatedNotification                 = 1501
+	GroupInfoSetNotification                 = 1502
+	JoinGroupApplicationNotification         = 1503
+	MemberQuitNotification                   = 1504
+	GroupApplicationAcceptedNotification     = 1505
+	GroupApplicationRejectedNotification     = 1506
+	GroupOwnerTransferredNotification        = 1507
+	MemberKickedNotification                 = 1508
+	MemberInvitedNotification                = 1509
+	MemberEnterNotification                  = 1510
+	GroupDismissedNotification               = 1511
+	GroupMemberMutedNotification             = 1512
+	GroupMemberCancelMutedNotification       = 1513
+	GroupMutedNotification                   = 1514
+	GroupCancelMutedNotification             = 1515
+	GroupMemberInfoSetNotification           = 1516
+	GroupMemberSetToAdminNotification        = 1517
+	GroupMemberSetToOrdinaryUserNotification = 1518
+	GroupNotificationEnd                     = 1599
 
 	SignalingNotificationBegin = 1600
 	SignalingNotification      = 1601
-	SignalingNotificationEnd   = 1699
+	SignalingNotificationEnd   = 1649
+
+	SuperGroupNotificationBegin  = 1650
+	SuperGroupUpdateNotification = 1651
+	SuperGroupNotificationEnd    = 1699
 
 	ConversationPrivateChatNotification = 1701
 	OrganizationChangedNotification     = 1801
@@ -126,6 +135,7 @@ const (
 	IsSenderSync               = "senderSync"
 	IsNotPrivate               = "notPrivate"
 	IsSenderConversationUpdate = "senderConversationUpdate"
+	IsSenderNotificationPush   = "senderNotificationPush"
 
 	//GroupStatus
 	GroupOk              = 0
@@ -153,6 +163,10 @@ const (
 	ckTokenExpired      string = "token-expired"
 	ckSelfInfoUpdate    string = "self-info-update"
 )
+const (
+	BlackRelationship  = 0
+	FriendRelationship = 1
+)
 
 //const (
 //	ErrCodeInitLogin    = 1001
@@ -161,6 +175,13 @@ const (
 //	ErrCodeUserInfo     = 4001
 //	ErrCodeGroup        = 5001
 //)
+const (
+	NormalGroup                       = 0
+	SuperGroup                        = 1
+	SuperGroupTableName               = "local_super_groups"
+	SuperGroupErrChatLogsTableNamePre = "local_sg_err_chat_logs_"
+	SuperGroupChatLogsTableNamePre    = "local_sg_chat_logs_"
+)
 
 const (
 	SdkInit      = 0
@@ -291,4 +312,4 @@ const UpdateVersion = ".0.0"
 const SdkVersion = "Open-IM-SDK-Core-"
 const LogFileName = "sdk"
 
-var HeartbeatInterval = 30
+var HeartbeatInterval = 5

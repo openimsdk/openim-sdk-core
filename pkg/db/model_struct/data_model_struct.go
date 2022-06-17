@@ -1,4 +1,4 @@
-package db
+package model_struct
 
 //
 //message FriendInfo{
@@ -211,17 +211,18 @@ type LocalGroupRequest struct {
 //int32 AppMangerLevel = 10;
 //open_im_sdk.User == imdb.User
 type LocalUser struct {
-	UserID         string `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
-	Nickname       string `gorm:"column:name;type:varchar(255)" json:"nickname"`
-	FaceURL        string `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
-	Gender         int32  `gorm:"column:gender" json:"gender"`
-	PhoneNumber    string `gorm:"column:phone_number;type:varchar(32)" json:"phoneNumber"`
-	Birth          uint32 `gorm:"column:birth" json:"birth"`
-	Email          string `gorm:"column:email;type:varchar(64)" json:"email"`
-	CreateTime     uint32 `gorm:"column:create_time" json:"createTime"`
-	AppMangerLevel int32  `gorm:"column:app_manger_level" json:"-"`
-	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
-	AttachedInfo   string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+	UserID           string `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
+	Nickname         string `gorm:"column:name;type:varchar(255)" json:"nickname"`
+	FaceURL          string `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
+	Gender           int32  `gorm:"column:gender" json:"gender"`
+	PhoneNumber      string `gorm:"column:phone_number;type:varchar(32)" json:"phoneNumber"`
+	Birth            uint32 `gorm:"column:birth" json:"birth"`
+	Email            string `gorm:"column:email;type:varchar(64)" json:"email"`
+	CreateTime       uint32 `gorm:"column:create_time" json:"createTime"`
+	AppMangerLevel   int32  `gorm:"column:app_manger_level" json:"-"`
+	Ex               string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	AttachedInfo     string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+	GlobalRecvMsgOpt int32  `gorm:"column:global_recv_msg_opt" json:"globalRecvMsgOpt"`
 }
 
 //message BlackInfo{
@@ -291,6 +292,7 @@ type LocalChatLog struct {
 	AttachedInfo     string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 	Ex               string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
+
 type LocalErrChatLog struct {
 	Seq              uint32 `gorm:"column:seq;primary_key" json:"seq"`
 	ClientMsgID      string `gorm:"column:client_msg_id;type:char(64)" json:"clientMsgID"`
@@ -379,22 +381,27 @@ type LocalDepartment struct {
 }
 
 type LocalDepartmentMember struct {
-	UserID      string `gorm:"column:user_id;primary_key;size:64"`
-	Nickname    string `gorm:"column:nickname;size:256"`
-	EnglishName string `gorm:"column:english_name;size:256"`
-	FaceURL     string `gorm:"column:face_url;size:256"`
-	Gender      int32  `gorm:"column:gender"` //1 ,2
-	Mobile      string `gorm:"column:mobile;size:32"`
-	Telephone   string `gorm:"column:telephone;size:32"`
-	Birth       uint32 `gorm:"column:birth"`
-	Email       string `gorm:"column:email;size:64"`
+	UserID      string `gorm:"column:user_id;primary_key;size:64" json:"userID"`
+	Nickname    string `gorm:"column:nickname;size:256" json:"nickname"`
+	EnglishName string `gorm:"column:english_name;size:256" json:"englishName"`
+	FaceURL     string `gorm:"column:face_url;size:256" json:"faceURL"`
+	Gender      int32  `gorm:"column:gender" json:"gender"` //1 ,2
+	Mobile      string `gorm:"column:mobile;size:32" json:"mobile"`
+	Telephone   string `gorm:"column:telephone;size:32" json:"telephone"`
+	Birth       uint32 `gorm:"column:birth" json:"birth"`
+	Email       string `gorm:"column:email;size:64" json:"email"`
 
-	DepartmentID string `gorm:"column:department_id;primary_key;size:64"`
+	DepartmentID string `gorm:"column:department_id;primary_key;size:64" json:"departmentID"`
 	Order        int32  `gorm:"column:order_member" json:"order"` //1,2
 	Position     string `gorm:"column:position;size:256" json:"position"`
 	Leader       int32  `gorm:"column:leader" json:"leader"` //-1, 1
 	Status       int32  `gorm:"column:status" json:"status"` //-1, 1
-	CreateTime   uint32 `gorm:"column:create_time"`
+	CreateTime   uint32 `gorm:"column:create_time" json:"createTime"`
 	Ex           string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 	AttachedInfo string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+}
+
+type SearchDepartmentMemberResult struct {
+	LocalDepartmentMember
+	DepartmentName string `gorm:"column:name;size:256" json:"departmentName"`
 }

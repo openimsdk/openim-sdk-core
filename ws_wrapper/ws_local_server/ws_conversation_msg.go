@@ -21,7 +21,22 @@ func (wsRouter *WsFuncRouter) CreateTextMessage(input string, operationID string
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
 		return
 	}
+	log.Info(operationID, "CreateTextMessage start ", input)
 	msg := userWorker.Conversation().CreateTextMessage(input, operationID)
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+}
+func (wsRouter *WsFuncRouter) CreateAdvancedTextMessage(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "text", "messageEntityList") {
+		return
+	}
+	msg := userWorker.Conversation().CreateAdvancedTextMessage(m["text"].(string), m["messageEntityList"].(string), operationID)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }
 
@@ -66,6 +81,14 @@ type AddAdvancedMsgListenerCallback struct {
 	uid string
 }
 
+type BatchMsgListenerCallback struct {
+	uid string
+}
+
+func (b *BatchMsgListenerCallback) OnRecvNewMessages(messageList string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", messageList, "0"}, b.uid)
+}
+
 func (a *AddAdvancedMsgListenerCallback) OnRecvNewMessage(message string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", message, "0"}, a.uid)
 }
@@ -85,7 +108,13 @@ func (wsRouter *WsFuncRouter) SetAdvancedMsgListener() {
 	msgCallback.uid = wsRouter.uId
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	userWorker.SetAdvancedMsgListener(&msgCallback)
+}
 
+func (wsRouter *WsFuncRouter) SetBatchMsgListener() {
+	var callback BatchMsgListenerCallback
+	callback.uid = wsRouter.uId
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	userWorker.SetBatchMsgListener(&callback)
 }
 
 type ConversationCallback struct {
@@ -187,6 +216,19 @@ func (wsRouter *WsFuncRouter) SetConversationRecvMessageOpt(input string, operat
 		return
 	}
 	userWorker.Conversation().SetConversationRecvMessageOpt(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationIDList"].(string), int(m["opt"].(float64)), operationID)
+}
+func (wsRouter *WsFuncRouter) SetGlobalRecvMessageOpt(input, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "opt") {
+		return
+	}
+	userWorker.Conversation().SetGlobalRecvMessageOpt(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, int(m["opt"].(float64)), operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetConversationRecvMessageOpt(input string, operationID string) {

@@ -1,8 +1,11 @@
 package test
 
 import (
+	"encoding/json"
+	"fmt"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -45,7 +48,7 @@ func DoTestGetUserInDepartment() {
 	test.OperationID = utils.OperationIDGenerator()
 	test.CallName = utils.GetSelfFuncName()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
-	open_im_sdk.GetUserInDepartment(test, test.OperationID, "org_user_001")
+	open_im_sdk.GetUserInDepartment(test, test.OperationID, "13900000000")
 }
 
 func DoTestGetDepartmentMemberAndSubDepartment() {
@@ -53,5 +56,39 @@ func DoTestGetDepartmentMemberAndSubDepartment() {
 	test.OperationID = utils.OperationIDGenerator()
 	test.CallName = utils.GetSelfFuncName()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
-	open_im_sdk.GetDepartmentMemberAndSubDepartment(test, test.OperationID, "001", 0, 1, 0, 1)
+	open_im_sdk.GetDepartmentMemberAndSubDepartment(test, test.OperationID, "002")
+}
+
+func DoTestGetParentDepartmentList(departmentID string) {
+	var test testOrganization
+	test.OperationID = utils.OperationIDGenerator()
+	test.CallName = utils.GetSelfFuncName()
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
+	open_im_sdk.GetParentDepartmentList(test, test.OperationID, departmentID)
+}
+
+func DoTestGetDepartmentInfo(departmentID string) {
+	var test testOrganization
+	test.OperationID = utils.OperationIDGenerator()
+	test.CallName = utils.GetSelfFuncName()
+	open_im_sdk.GetDepartmentInfo(test, test.OperationID, departmentID)
+}
+
+func DoTestSearchOrganization(input string, offset, count int) {
+	var test testOrganization
+	test.OperationID = utils.OperationIDGenerator()
+	test.CallName = utils.GetSelfFuncName()
+	params := sdk_params_callback.SearchOrganizationParams{
+		KeyWord:                 "+8613900000000",
+		IsSearchUserName:        false,
+		IsSearchUserEnglishName: false,
+		IsSearchPosition:        false,
+		IsSearchUserID:          false,
+		IsSearchMobile:          false,
+		IsSearchEmail:           false,
+		IsSearchTelephone:       true,
+	}
+	bytes, _ := json.Marshal(params)
+	fmt.Println("input params", string(bytes))
+	open_im_sdk.SearchOrganization(test, test.OperationID, string(bytes), offset, count)
 }

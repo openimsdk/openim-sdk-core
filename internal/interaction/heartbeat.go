@@ -1,8 +1,6 @@
 package interaction
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"github.com/golang/protobuf/proto"
 	"open_im_sdk/open_im_sdk_callback"
@@ -13,28 +11,29 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"runtime"
-	"strings"
 	"time"
 )
 
 type Heartbeat struct {
-	//*Ws
+	//	*Ws
 	*MsgSync
 	cmdCh             chan common.Cmd2Value //waiting logout cmd , wake up cmd
 	heartbeatInterval int
 	token             string
 	listener          open_im_sdk_callback.OnConnListener
+	ExpireTimeSeconds uint32
 }
 
 func (u *Heartbeat) SetHeartbeatInterval(heartbeatInterval int) {
 	u.heartbeatInterval = heartbeatInterval
 }
 
-func NewHeartbeat(msgSync *MsgSync, cmcCh chan common.Cmd2Value, listener open_im_sdk_callback.OnConnListener, token string) *Heartbeat {
+func NewHeartbeat(msgSync *MsgSync, cmcCh chan common.Cmd2Value, listener open_im_sdk_callback.OnConnListener, token string, expireTimeSeconds uint32) *Heartbeat {
 	p := Heartbeat{MsgSync: msgSync, cmdCh: cmcCh}
 	p.heartbeatInterval = constant.HeartbeatInterval
 	p.listener = listener
 	p.token = token
+	p.ExpireTimeSeconds = expireTimeSeconds
 	go p.Run()
 	return &p
 }
@@ -48,29 +47,15 @@ type ParseToken struct {
 }
 
 func (u *Heartbeat) IsTokenExp(operationID string) bool {
-	b := strings.IndexAny(u.token, ".")
-	e := strings.LastIndex(u.token, ".")
-	if b == -1 || e == -1 || b >= e {
+	if u.ExpireTimeSeconds == 0 {
 		return false
 	}
-	log.Debug(operationID, "sub token ", u.token[b+1:e])
-	decodeBytes, err := base64.StdEncoding.DecodeString(u.token[b+1 : e])
-	if err != nil {
-		log.Error(operationID, "DecodeString failed ", err.Error(), u.token[b+1:e])
-		return false
-	}
-	log.Debug(operationID, "decodeBytes ", string(decodeBytes))
-	parseToken := ParseToken{}
-	err = json.Unmarshal(decodeBytes, &parseToken)
-	if err != nil {
-		log.Error(operationID, "Unmarshal failed ", err.Error())
-		return false
-	}
-	log.Debug(operationID, "exp ", parseToken.Exp, "now ", time.Now().Unix())
-	if parseToken.Exp < int(time.Now().Unix()) {
+	log.Debug(operationID, "ExpireTimeSeconds ", u.ExpireTimeSeconds, "now ", uint32(time.Now().Unix()))
+	if u.ExpireTimeSeconds < uint32(time.Now().Unix()) {
 		return true
+	} else {
+		return false
 	}
-	return false
 }
 
 func (u *Heartbeat) Run() {
@@ -110,7 +95,12 @@ func (u *Heartbeat) Run() {
 			u.CloseConn()
 			runtime.Goexit()
 		}
-		resp, err := u.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.loginUserID, operationID)
+		groupIDList, err := u.GetJoinedSuperGroupIDList()
+		if err != nil {
+			log.Error(operationID, "GetJoinedSuperGroupIDList failed ", err.Error())
+		}
+		log.Debug(operationID, "GetJoinedSuperGroupIDList ", groupIDList)
+		resp, err := u.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: u.loginUserID, GroupIDList: groupIDList}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.loginUserID, operationID)
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.loginUserID)
 			if !errors.Is(err, constant.WsRecvConnSame) && !errors.Is(err, constant.WsRecvConnDiff) {
@@ -128,11 +118,21 @@ func (u *Heartbeat) Run() {
 			continue
 		}
 
-		log.Debug(operationID, "recv heartbeat resp, max seq on svr: ", wsSeqResp.MaxSeq)
-
-		err = common.TriggerCmdMaxSeq(sdk_struct.CmdMaxSeqToMsgSync{OperationID: operationID, MaxSeqOnSvr: wsSeqResp.MaxSeq}, u.PushMsgAndMaxSeqCh)
-		if err != nil {
-			log.Error(operationID, "TriggerMaxSeq failed ", err.Error())
+		log.Debug(operationID, "recv heartbeat resp, max seq on svr: ", wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)
+		groupID2MaxSeqOnSvr := make(map[string]uint32, 0)
+		for groupID, seq := range wsSeqResp.GroupMaxAndMinSeq {
+			groupID2MaxSeqOnSvr[groupID] = seq.MaxSeq
 		}
+		for {
+			err = common.TriggerCmdMaxSeq(sdk_struct.CmdMaxSeqToMsgSync{OperationID: operationID, MaxSeqOnSvr: wsSeqResp.MaxSeq, GroupID2MaxSeqOnSvr: groupID2MaxSeqOnSvr}, u.PushMsgAndMaxSeqCh)
+			if err != nil {
+				log.Error(operationID, "TriggerMaxSeq failed ", err.Error(), " MaxSeq ", wsSeqResp.MaxSeq)
+				continue
+			} else {
+				log.Debug(operationID, "TriggerMaxSeq  success ", " MaxSeq ", wsSeqResp.MaxSeq)
+				break
+			}
+		}
+
 	}
 }

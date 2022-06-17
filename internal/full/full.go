@@ -1,28 +1,34 @@
 package full
 
 import (
+	"errors"
 	"open_im_sdk/internal/cache"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/group"
+	"open_im_sdk/internal/super_group"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/model_struct"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 )
 
 type Full struct {
-	user      *user.User
-	friend    *friend.Friend
-	group     *group.Group
-	ch        chan common.Cmd2Value
-	userCache *cache.Cache
+	user       *user.User
+	friend     *friend.Friend
+	group      *group.Group
+	ch         chan common.Cmd2Value
+	userCache  *cache.Cache
+	db         *db.DataBase
+	SuperGroup *super_group.SuperGroup
 }
 
-func NewFull(user *user.User, friend *friend.Friend, group *group.Group, ch chan common.Cmd2Value, userCache *cache.Cache) *Full {
-	return &Full{user: user, friend: friend, group: group, ch: ch, userCache: userCache}
+func NewFull(user *user.User, friend *friend.Friend, group *group.Group, ch chan common.Cmd2Value, userCache *cache.Cache, db *db.DataBase, superGroup *super_group.SuperGroup) *Full {
+	return &Full{user: user, friend: friend, group: group, ch: ch, userCache: userCache, db: db, SuperGroup: superGroup}
 }
 func (u *Full) getUsersInfo(callback open_im_sdk_callback.Base, userIDList sdk.GetUsersInfoParam, operationID string) sdk.GetUsersInfoCallback {
 	friendList := u.friend.GetDesignatedFriendListInfo(callback, userIDList, operationID)
@@ -67,4 +73,15 @@ func (u *Full) getUsersInfo(callback open_im_sdk_callback.Base, userIDList sdk.G
 		}()
 	}
 	return common.MergeUserResult(publicList, friendList, blackList)
+}
+
+func (u *Full) GetGroupInfoFromLocal2Svr(groupID string, sessionType int32) (*model_struct.LocalGroup, error) {
+	switch sessionType {
+	case constant.GroupChatType:
+		return u.group.GetGroupInfoFromLocal2Svr(groupID)
+	case constant.SuperGroupChatType:
+		return u.SuperGroup.GetGroupInfoFromLocal2Svr(groupID)
+	default:
+		return nil, errors.New("err sessionType")
+	}
 }

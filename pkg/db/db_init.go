@@ -6,9 +6,11 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"sync"
+	"time"
 )
 
 var UserDBMap map[string]*DataBase
@@ -51,8 +53,9 @@ func NewDataBase(loginUserID string, dbDir string) (*DataBase, error) {
 		}
 		UserDBMap[loginUserID] = dataBase
 		log.Info("", "open db", loginUserID)
+	} else {
+		log.Info("", "db in map", loginUserID)
 	}
-	log.Info("", "db in map", loginUserID)
 	dataBase.setChatLogFailedStatus()
 	return dataBase, nil
 }
@@ -89,7 +92,13 @@ func (d *DataBase) initDB() error {
 	if err != nil {
 		return utils.Wrap(err, "open db failed")
 	}
-
+	sqlDB, err := db.DB()
+	if err != nil {
+		return utils.Wrap(err, "get sql db failed")
+	}
+	sqlDB.SetConnMaxLifetime(time.Hour * 1)
+	sqlDB.SetMaxOpenConns(10)
+	sqlDB.SetMaxIdleConns(2)
 	d.conn = db
 	//db, err := sql.Open("sqlite3", SvrConf.DbDir+"OpenIM_"+uid+".db")
 	//sdkLog("open db:", SvrConf.DbDir+"OpenIM_"+uid+".db")
@@ -99,75 +108,96 @@ func (d *DataBase) initDB() error {
 	//}
 	//u.db = db
 
-	db.AutoMigrate(&LocalFriend{},
-		&LocalFriendRequest{},
-		&LocalGroup{},
-		&LocalGroupMember{},
-		&LocalGroupRequest{},
-		&LocalErrChatLog{},
-		&LocalUser{},
-		&LocalBlack{},
-		&LocalSeqData{},
-		&LocalConversation{},
-		&LocalChatLog{},
-		&LocalAdminGroupRequest{},
-		&LocalDepartment{},
-		&LocalDepartmentMember{},
+	superGroup := &model_struct.LocalGroup{}
+	localGroup := &model_struct.LocalGroup{}
+	//err = db.Exec(`CREATE TABLE IF NOT EXISTS super_groups (
+	//   group_id  varchar(64),
+	//   name  text,
+	//   notification  varchar(255),
+	//   introduction  varchar(255),
+	//   face_url  varchar(255),
+	//   create_time  integer,
+	//   status  integer,
+	//   creator_user_id  varchar(64),
+	//   group_type  integer,
+	//   owner_user_id  varchar(64),
+	//   member_count  integer,
+	//   ex  varchar(1024),
+	//   attached_info  varchar(1024),
+	//   PRIMARY KEY ( group_id ))`).Error
+	//if err != nil {
+	//	log.Error("super_group","create super group failed",err.Error())
+	//}
+
+	db.AutoMigrate(&model_struct.LocalFriend{},
+		&model_struct.LocalFriendRequest{},
+		localGroup,
+		&model_struct.LocalGroupMember{},
+		&model_struct.LocalGroupRequest{},
+		&model_struct.LocalErrChatLog{},
+		&model_struct.LocalUser{},
+		&model_struct.LocalBlack{},
+		&model_struct.LocalSeqData{},
+		&model_struct.LocalConversation{},
+		&model_struct.LocalChatLog{},
+		&model_struct.LocalAdminGroupRequest{},
+		&model_struct.LocalDepartment{},
+		&model_struct.LocalDepartmentMember{},
 		&LocalWorkMomentsNotification{},
 		&LocalWorkMomentsNotificationUnreadCount{},
 	)
-	if !db.Migrator().HasTable(&LocalFriend{}) {
+	db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup)
+	if !db.Migrator().HasTable(&model_struct.LocalFriend{}) {
 		//log.NewInfo("CreateTable Friend")
-		db.Migrator().CreateTable(&LocalFriend{})
+		db.Migrator().CreateTable(&model_struct.LocalFriend{})
 	}
 
-	if !db.Migrator().HasTable(&LocalFriendRequest{}) {
+	if !db.Migrator().HasTable(&model_struct.LocalFriendRequest{}) {
 		//log.NewInfo("CreateTable FriendRequest")
-		db.Migrator().CreateTable(&LocalFriendRequest{})
+		db.Migrator().CreateTable(&model_struct.LocalFriendRequest{})
 	}
 
-	if !db.Migrator().HasTable(&LocalGroup{}) {
+	if !db.Migrator().HasTable(localGroup) {
 		//log.NewInfo("CreateTable Group")
-		db.Migrator().CreateTable(&LocalGroup{})
+		db.Migrator().CreateTable(localGroup)
 	}
-
-	if !db.Migrator().HasTable(&LocalGroupMember{}) {
+	if !db.Migrator().HasTable(&model_struct.LocalGroupMember{}) {
 		//log.NewInfo("CreateTable GroupMember")
-		db.Migrator().CreateTable(&LocalGroupMember{})
+		db.Migrator().CreateTable(&model_struct.LocalGroupMember{})
 	}
 
-	if !db.Migrator().HasTable(&LocalGroupRequest{}) {
+	if !db.Migrator().HasTable(&model_struct.LocalGroupRequest{}) {
 		//log.NewInfo("CreateTable GroupRequest")
-		db.Migrator().CreateTable(&LocalGroupRequest{})
+		db.Migrator().CreateTable(&model_struct.LocalGroupRequest{})
 	}
 
-	if !db.Migrator().HasTable(&LocalUser{}) {
+	if !db.Migrator().HasTable(&model_struct.LocalUser{}) {
 		//log.NewInfo("CreateTable User")
-		db.Migrator().CreateTable(&LocalUser{})
+		db.Migrator().CreateTable(&model_struct.LocalUser{})
 	}
 
-	if !db.Migrator().HasTable(&LocalBlack{}) {
+	if !db.Migrator().HasTable(&model_struct.LocalBlack{}) {
 		//log.NewInfo("CreateTable Black")
-		db.Migrator().CreateTable(&LocalBlack{})
+		db.Migrator().CreateTable(&model_struct.LocalBlack{})
 	}
 
-	if !db.Migrator().HasTable(&LocalSeqData{}) {
-		db.Migrator().CreateTable(&LocalSeqData{})
+	if !db.Migrator().HasTable(&model_struct.LocalSeqData{}) {
+		db.Migrator().CreateTable(&model_struct.LocalSeqData{})
 	}
-	if !db.Migrator().HasTable(&LocalConversation{}) {
-		db.Migrator().CreateTable(&LocalConversation{})
+	if !db.Migrator().HasTable(&model_struct.LocalConversation{}) {
+		db.Migrator().CreateTable(&model_struct.LocalConversation{})
 	}
-	if !db.Migrator().HasTable(&LocalChatLog{}) {
-		db.Migrator().CreateTable(&LocalChatLog{})
+	if !db.Migrator().HasTable(&model_struct.LocalChatLog{}) {
+		db.Migrator().CreateTable(&model_struct.LocalChatLog{})
 	}
-	if !db.Migrator().HasTable(&LocalAdminGroupRequest{}) {
-		db.Migrator().CreateTable(&LocalAdminGroupRequest{})
+	if !db.Migrator().HasTable(&model_struct.LocalAdminGroupRequest{}) {
+		db.Migrator().CreateTable(&model_struct.LocalAdminGroupRequest{})
 	}
-	if !db.Migrator().HasTable(&LocalDepartment{}) {
-		db.Migrator().CreateTable(&LocalDepartment{})
+	if !db.Migrator().HasTable(&model_struct.LocalDepartment{}) {
+		db.Migrator().CreateTable(&model_struct.LocalDepartment{})
 	}
-	if !db.Migrator().HasTable(&LocalDepartmentMember{}) {
-		db.Migrator().CreateTable(&LocalDepartmentMember{})
+	if !db.Migrator().HasTable(&model_struct.LocalDepartmentMember{}) {
+		db.Migrator().CreateTable(&model_struct.LocalDepartmentMember{})
 	}
 	if !db.Migrator().HasTable(&LocalWorkMomentsNotification{}) {
 		db.Migrator().CreateTable(&LocalWorkMomentsNotification{})

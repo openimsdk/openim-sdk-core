@@ -7,7 +7,7 @@ import "open_im_sdk/pkg/server_api_params"
 type MessageReceipt struct {
 	GroupID     string   `json:"groupID"`
 	UserID      string   `json:"userID"`
-	MsgIdList   []string `json:"msgIDList"`
+	MsgIDList   []string `json:"msgIDList"`
 	ReadTime    int64    `json:"readTime"`
 	MsgFrom     int32    `json:"msgFrom"`
 	ContentType int32    `json:"contentType"`
@@ -145,6 +145,10 @@ type MsgStruct struct {
 		Detail      string `json:"detail,omitempty"`
 		DefaultTips string `json:"defaultTips,omitempty"`
 	} `json:"notificationElem,omitempty"`
+	MessageEntityElem struct {
+		Text              string           `json:"text,omitempty"`
+		MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
+	} `json:"messageEntityElem,omitempty"`
 	AttachedInfoElem AttachedInfoElem `json:"attachedInfoElem,omitempty"`
 }
 type AtInfo struct {
@@ -152,13 +156,24 @@ type AtInfo struct {
 	GroupNickname string `json:"groupNickname,omitempty"`
 }
 type AttachedInfoElem struct {
-	GroupHasReadInfo GroupHasReadInfo `json:"groupHasReadInfo,omitempty"`
-	IsPrivateChat    bool             `json:"isPrivateChat"`
-	HasReadTime      int64            `json:"hasReadTime"`
+	GroupHasReadInfo          GroupHasReadInfo `json:"groupHasReadInfo,omitempty"`
+	IsPrivateChat             bool             `json:"isPrivateChat"`
+	HasReadTime               int64            `json:"hasReadTime"`
+	NotSenderNotificationPush bool             `json:"notSenderNotificationPush"`
+	MessageEntityList         []*MessageEntity `json:"messageEntityList,omitempty"`
 }
+type MessageEntity struct {
+	Type   string `json:"type,omitempty"`
+	Offset int32  `json:"offset"`
+	Length int32  `json:"length"`
+	Url    string `json:"url,omitempty"`
+	Info   string `json:"info,omitempty"`
+}
+
 type GroupHasReadInfo struct {
 	HasReadUserIDList []string `json:"hasReadUserIDList,omitempty"`
 	HasReadCount      int32    `json:"hasReadCount"`
+	GroupMemberCount  int32    `json:"groupMemberCount"`
 }
 type NewMsgList []*MsgStruct
 
@@ -201,7 +216,12 @@ type CmdPushMsgToMsgSync struct {
 type CmdMaxSeqToMsgSync struct {
 	MaxSeqOnSvr uint32
 	OperationID string
+
+	GroupID2MaxSeqOnSvr map[string]uint32
 }
+type CmdJoinedSuperGroup struct {
+}
+
 type OANotificationElem struct {
 	NotificationName    string `mapstructure:"notificationName" validate:"required"`
 	NotificationFaceURL string `mapstructure:"notificationFaceURL" validate:"required"`

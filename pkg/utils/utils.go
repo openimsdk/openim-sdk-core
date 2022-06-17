@@ -269,12 +269,19 @@ func GetConversationIDBySessionType(sourceID string, sessionType int) string {
 		return "single_" + sourceID
 	case constant.GroupChatType:
 		return "group_" + sourceID
+	case constant.SuperGroupChatType:
+		return "super_group_" + sourceID
 	case constant.NotificationChatType:
 		return "notification_" + sourceID
 	}
 	return ""
 }
-
+func GetSuperGroupTableName(groupID string) string {
+	return constant.SuperGroupChatLogsTableNamePre + groupID
+}
+func GetErrSuperGroupTableName(groupID string) string {
+	return constant.SuperGroupErrChatLogsTableNamePre + groupID
+}
 func RemoveRepeatedStringInList(slc []string) []string {
 	var result []string
 	tempMap := map[string]byte{}
@@ -343,4 +350,14 @@ func computeNextArray(subString string) []int {
 		}
 	}
 	return next
+}
+
+func TrimStringList(list []string) (result []string) {
+	for _, v := range list {
+		if len(strings.Trim(v, " ")) != 0 {
+			result = append(result, v)
+		}
+	}
+	return result
+
 }

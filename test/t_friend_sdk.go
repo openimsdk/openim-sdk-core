@@ -46,7 +46,7 @@ func TestLog(v ...interface{}) {
 	X.Println(a, b, c, d)
 }
 
-var Friend_uid = "18666662412"
+var Friend_uid = "13911112222"
 
 func SetTestFriendID(friendUserID string) {
 	Friend_uid = friendUserID
@@ -279,6 +279,23 @@ func DotestGetFriendList() {
 	open_im_sdk.GetFriendList(test, test.OperationID)
 }
 
+type testSearchFriends struct {
+	baseCallback
+}
+
+func DotestSearchFriends() {
+	var test testSearchFriends
+	test.OperationID = utils.OperationIDGenerator()
+	test.callName = "SearchFriends"
+	var params sdk_params_callback.SearchFriendsParam
+	params.KeywordList = []string{"G"}
+	params.IsSearchUserID = true
+	params.IsSearchNickname = true
+	params.IsSearchRemark = true
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ", params)
+	open_im_sdk.SearchFriends(test, test.OperationID, utils.StructToJsonString(params))
+}
+
 /////////////////////////////////////////////////////////////////////
 
 type testAcceptFriendApplication struct {
@@ -384,16 +401,17 @@ func InOutlllogin(uid, tk string) {
 	callback.time = time.Now()
 	callback.funcName = utils.GetSelfFuncName()
 	operationID := utils.OperationIDGenerator()
-	//	log.Info(operationID, " login start ")
 	open_im_sdk.Login(&callback, operationID, uid, tk)
 	for {
-		if callback.errCode == 1 || callback.errCode == -1 {
+		if callback.errCode == 1 {
 			return
+		} else if callback.errCode == -1 {
+			time.Sleep(100 * time.Millisecond)
 		} else {
-			//	log.Info(operationID, "waiting login ")
+			time.Sleep(100 * time.Millisecond)
+			log.Info(operationID, "waiting login ")
 		}
 	}
-
 }
 
 func InOutLogou() {
@@ -406,19 +424,20 @@ func InOutLogou() {
 func InOutDoTest(uid, tk, ws, api string) {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
-	cf.Platform = 2
+	cf.Platform = 1
 	cf.WsAddr = ws
-	cf.Platform = 2
 	cf.DataDir = "./"
-	cf.LogLevel = 4
+	cf.LogLevel = 6
+	cf.ObjectStorage = "minio"
 
 	var s string
 	b, _ := json.Marshal(cf)
 	s = string(b)
 	fmt.Println(s)
 	var testinit testInitLister
+
 	operationID := utils.OperationIDGenerator()
-	if !open_im_sdk.InitSDK(testinit, operationID, s) {
+	if !open_im_sdk.InitSDK(&testinit, operationID, s) {
 		log.Error("", "InitSDK failed")
 		return
 	}
@@ -431,6 +450,9 @@ func InOutDoTest(uid, tk, ws, api string) {
 
 	var msgCallBack MsgListenerCallBak
 	open_im_sdk.SetAdvancedMsgListener(&msgCallBack)
+
+	var batchMsg BatchMsg
+	open_im_sdk.SetBatchMsgListener(&batchMsg)
 
 	var friendListener testFriendListener
 	open_im_sdk.SetFriendListener(friendListener)
@@ -447,7 +469,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	open_im_sdk.SetWorkMomentsListener(workMomentsListener)
 
 	InOutlllogin(uid, tk)
-	time.Sleep(2 * time.Second)
+
 	log.Warn("", "InOutDoTest fin")
 }
 
@@ -480,7 +502,7 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
 	cf.WsAddr = ws
-	cf.Platform = 2
+	cf.Platform = 1
 	cf.DataDir = "./"
 	cf.LogLevel = 3
 	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
@@ -490,10 +512,9 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	lg := new(login.LoginMgr)
 	log.Info(operationID, "new login ", lg)
 
-	allLoginMgr[index].mgr = lg
 	sdk_struct.SvrConf = cf
-
-	lg.InitSDK(sdk_struct.SvrConf, testinit, operationID)
+	allLoginMgr[index].mgr = lg
+	lg.InitSDK(sdk_struct.SvrConf, &testinit, operationID)
 
 	log.Info(operationID, "InitSDK ", sdk_struct.SvrConf)
 
@@ -525,7 +546,7 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 			return
 		}
 		log.Warn(operationID, "waiting login...", uid)
-		time.Sleep(1 * time.Second)
+		time.Sleep(100 * time.Millisecond)
 	}
 
 }
@@ -535,7 +556,7 @@ func DoTest(uid, tk, ws, api string) {
 	cf.ApiAddr = api // "http://120.24.45.199:10000"
 	//	cf.IpWsAddr = "wss://open-im.rentsoft.cn/wss"
 	cf.WsAddr = ws //"ws://120.24.45.199:17778"
-	cf.Platform = 2
+	cf.Platform = 1
 	cf.DataDir = "./"
 
 	var s string
@@ -544,7 +565,7 @@ func DoTest(uid, tk, ws, api string) {
 	fmt.Println(s)
 	var testinit testInitLister
 	operationID := utils.OperationIDGenerator()
-	if !open_im_sdk.InitSDK(testinit, operationID, s) {
+	if !open_im_sdk.InitSDK(&testinit, operationID, s) {
 		log.Error("", "InitSDK failed")
 		return
 	}
@@ -576,6 +597,7 @@ func DoTest(uid, tk, ws, api string) {
 }
 
 ////////////////////////////////////////////////////////////////////
+
 type TestSendMsgCallBack struct {
 	msg         string
 	OperationID string
@@ -585,7 +607,7 @@ type TestSendMsgCallBack struct {
 }
 
 func (t *TestSendMsgCallBack) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, "test_openim: send msg failed: ", errCode, errMsg, t.msgID, t.msg)
+	log.Error(t.OperationID, "test_openim: send msg failed: ", errCode, errMsg, t.msgID, t.msg)
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
 	SendFailedAllMsg[t.msgID] = t.sendID + t.recvID
@@ -593,13 +615,33 @@ func (t *TestSendMsgCallBack) OnError(errCode int32, errMsg string) {
 }
 
 func (t *TestSendMsgCallBack) OnSuccess(data string) {
-	log.Info(t.OperationID, "test_openim: send msg success: |", t.msgID, t.msg)
+	log.Info(t.OperationID, "test_openim: send msg success: |", t.msgID, t.msg, data)
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
 	SendSuccAllMsg[t.msgID] = t.sendID + t.recvID
 }
 
 func (t *TestSendMsgCallBack) OnProgress(progress int) {
+	//	fmt.Printf("msg_send , onProgress %d\n", progress)
+}
+
+type TestSendMsgCallBackPress struct {
+	msg         string
+	OperationID string
+	sendID      string
+	recvID      string
+	msgID       string
+}
+
+func (t *TestSendMsgCallBackPress) OnError(errCode int32, errMsg string) {
+	log.Warn(t.OperationID, "TestSendMsgCallBackPress: send msg failed: ", errCode, errMsg, t.msgID, t.msg)
+}
+
+func (t *TestSendMsgCallBackPress) OnSuccess(data string) {
+	log.Info(t.OperationID, "TestSendMsgCallBackPress: send msg success: |", t.msgID, t.msg)
+}
+
+func (t *TestSendMsgCallBackPress) OnProgress(progress int) {
 	//	fmt.Printf("msg_send , onProgress %d\n", progress)
 }
 
@@ -647,35 +689,35 @@ func (userCallback) OnSelfInfoUpdated(callbackData string) {
 type testInitLister struct {
 }
 
-func (testInitLister) OnUserTokenExpired() {
-	fmt.Println("testInitLister, OnUserTokenExpired")
+func (t *testInitLister) OnUserTokenExpired() {
+	log.Info("", utils.GetSelfFuncName())
 }
-func (testInitLister) OnConnecting() {
-	fmt.Println("testInitLister, OnConnecting")
-}
-
-func (testInitLister) OnConnectSuccess() {
-	fmt.Println("testInitLister, OnConnectSuccess")
+func (t *testInitLister) OnConnecting() {
+	log.Info("", utils.GetSelfFuncName())
 }
 
-func (testInitLister) OnConnectFailed(ErrCode int32, ErrMsg string) {
-	fmt.Println("testInitLister, OnConnectFailed", ErrCode, ErrMsg)
+func (t *testInitLister) OnConnectSuccess() {
+	log.Info("", utils.GetSelfFuncName())
 }
 
-func (testInitLister) OnKickedOffline() {
-	fmt.Println("testInitLister, OnKickedOffline")
+func (t *testInitLister) OnConnectFailed(ErrCode int32, ErrMsg string) {
+	log.Info("", utils.GetSelfFuncName(), ErrCode, ErrMsg)
 }
 
-func (testInitLister) OnSelfInfoUpdated(info string) {
-	fmt.Println("testInitLister, OnSelfInfoUpdated, ", info)
+func (t *testInitLister) OnKickedOffline() {
+	log.Info("", utils.GetSelfFuncName())
 }
 
-func (testInitLister) OnSucess() {
-	fmt.Println("testInitLister, OnSucess")
+func (t *testInitLister) OnSelfInfoUpdated(info string) {
+	log.Info("", utils.GetSelfFuncName())
 }
 
-func (testInitLister) OnError(code int32, msg string) {
-	fmt.Println("testInitLister, OnError", code, msg)
+func (t *testInitLister) OnSuccess() {
+	log.Info("", utils.GetSelfFuncName())
+}
+
+func (t *testInitLister) OnError(code int32, msg string) {
+	log.Info("", utils.GetSelfFuncName(), code, msg)
 }
 
 type testLogin struct {

@@ -2,24 +2,25 @@ package sdk_params_callback
 
 import (
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/sdk_struct"
 )
 
 //type GetAllConversationListParam null
-type GetAllConversationListCallback []*db.LocalConversation
+type GetAllConversationListCallback []*model_struct.LocalConversation
 
 //type GetAllConversationListParam offset count
-type GetConversationListSplitCallback []*db.LocalConversation
+type GetConversationListSplitCallback []*model_struct.LocalConversation
 
 type SetConversationRecvMessageOptParams []string
 
 const SetConversationRecvMessageOptCallback = constant.SuccessCallbackDefault
+const SetGlobalRecvMessageOptCallback = constant.SuccessCallbackDefault
 
 type GetConversationRecvMessageOptParams []string
 
 type GetMultipleConversationParams []string
-type GetMultipleConversationCallback []*db.LocalConversation
+type GetMultipleConversationCallback []*model_struct.LocalConversation
 
 const DeleteConversationCallback = constant.SuccessCallbackDefault
 const DeleteAllConversationFromLocalCallback = constant.SuccessCallbackDefault

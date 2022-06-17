@@ -7,6 +7,7 @@ import (
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
@@ -61,7 +62,7 @@ func (o *Organization) getUserInDepartment(callback open_im_sdk_callback.Base, u
 		if err != nil {
 			continue
 		}
-		node := sdk_params_callback.UserInDepartment{MemberInfo: &db.LocalDepartmentMember{}}
+		node := sdk_params_callback.UserInDepartment{MemberInfo: &model_struct.LocalDepartmentMember{}}
 		node.DepartmentInfo = department
 		copier.Copy(node.MemberInfo, v)
 		userInDepartment = append(userInDepartment, &node)
@@ -69,12 +70,64 @@ func (o *Organization) getUserInDepartment(callback open_im_sdk_callback.Base, u
 	return userInDepartment
 }
 
-func (o *Organization) getDepartmentMemberAndSubDepartment(callback open_im_sdk_callback.Base, departmentID string, departmentOffset, departmentCount int, memberOffset, memberCount int, operationID string) sdk_params_callback.GetDepartmentMemberAndSubDepartmentCallback {
-	subDepartmentList, err := o.db.GetSubDepartmentList(departmentID, departmentOffset, departmentCount)
+func (o *Organization) getDepartmentMemberAndSubDepartment(callback open_im_sdk_callback.Base, departmentID string, operationID string) sdk_params_callback.GetDepartmentMemberAndSubDepartmentCallback {
+	subDepartmentList, err := o.db.GetSubDepartmentList(departmentID)
 	common.CheckDBErrCallback(callback, err, operationID)
-	departmentMemberLis, err := o.db.GetDepartmentMemberListByDepartmentID(departmentID, memberOffset, memberCount)
+	departmentMemberList, err := o.db.GetDepartmentMemberListByDepartmentID(departmentID)
 	common.CheckDBErrCallback(callback, err, operationID)
-	return sdk_params_callback.GetDepartmentMemberAndSubDepartmentCallback{DepartmentList: subDepartmentList, DepartmentMemberList: departmentMemberLis}
+	parentDepartmentList, err := o.db.GetParentDepartmentList(departmentID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	var parentDepartmentCallbackList []sdk_params_callback.ParentDepartmentCallback
+	for _, v := range parentDepartmentList {
+		parentDepartmentCallbackList = append(parentDepartmentCallbackList, sdk_params_callback.ParentDepartmentCallback{
+			Name:         v.Name,
+			DepartmentID: v.DepartmentID,
+		})
+	}
+	return sdk_params_callback.GetDepartmentMemberAndSubDepartmentCallback{DepartmentList: subDepartmentList, DepartmentMemberList: departmentMemberList, ParentDepartmentList: parentDepartmentCallbackList}
+}
+
+func (o *Organization) getParentDepartmentList(callback open_im_sdk_callback.Base, departmentID string, operationID string) sdk_params_callback.GetParentDepartmentListCallback {
+	parentDepartmentList, err := o.db.GetParentDepartmentList(departmentID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	return parentDepartmentList
+}
+
+func (o *Organization) getDepartmentInfo(callback open_im_sdk_callback.Base, departmentID string, operationID string) sdk_params_callback.GetDepartmentInfoCallback {
+	departmentInfo, err := o.db.GetDepartmentInfo(departmentID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	return departmentInfo
+}
+
+func (o *Organization) searchOrganization(callback open_im_sdk_callback.Base, searchParam sdk_params_callback.SearchOrganizationParams, offset, count int, operationID string) sdk_params_callback.SearchOrganizationCallback {
+	departmentMemberList, err := o.db.SearchDepartmentMember(searchParam.KeyWord,
+		searchParam.IsSearchUserName, searchParam.IsSearchEmail, searchParam.IsSearchMobile,
+		searchParam.IsSearchPosition, searchParam.IsSearchTelephone, searchParam.IsSearchUserEnglishName, searchParam.IsSearchUserID,
+		offset, count)
+	common.CheckDBErrCallback(callback, err, operationID)
+	departmentList, err := o.db.SearchDepartment(searchParam.KeyWord, offset, count)
+	common.CheckDBErrCallback(callback, err, operationID)
+	result := sdk_params_callback.SearchOrganizationCallback{
+		DepartmentList: departmentList,
+	}
+	for _, member := range departmentMemberList {
+		parentDepartmentList, err := o.db.GetParentDepartmentList(member.DepartmentID)
+		if err != nil {
+			log.NewError(operationID, utils.GetSelfFuncName(), "GetParentDepartmentList failed", err.Error())
+		}
+		var path []*sdk_params_callback.ParentDepartmentCallback
+		for _, department := range parentDepartmentList {
+			path = append(path, &sdk_params_callback.ParentDepartmentCallback{
+				Name:         department.Name,
+				DepartmentID: department.DepartmentID,
+			})
+		}
+		result.DepartmentMemberList = append(result.DepartmentMemberList, &struct {
+			*model_struct.SearchDepartmentMemberResult
+			ParentDepartmentList []*sdk_params_callback.ParentDepartmentCallback `json:"parentDepartmentList"`
+		}{SearchDepartmentMemberResult: member, ParentDepartmentList: path})
+	}
+	return result
 }
 
 func (o *Organization) getSubDepartmentFromSvr(departmentID string, operationID string) ([]*api.Department, error) {

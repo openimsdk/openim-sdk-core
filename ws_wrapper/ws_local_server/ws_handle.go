@@ -100,7 +100,7 @@ func DelUserRouter(uid string) {
 	delete(UserRouteMap, uid)
 }
 
-func GenUserRouterNoLock(uid string) *RefRouter {
+func GenUserRouterNoLock(uid string, batchMsg int, operationID string) *RefRouter {
 	_, ok := UserRouteMap[uid]
 	if ok {
 		return nil
@@ -108,7 +108,6 @@ func GenUserRouterNoLock(uid string) *RefRouter {
 	RouteMap1 := make(map[string]reflect.Value, 0)
 	var wsRouter1 WsFuncRouter
 	wsRouter1.uId = uid
-	//	wsRouter1.conn = conn
 
 	vf := reflect.ValueOf(&wsRouter1)
 	vft := vf.Type()
@@ -116,21 +115,26 @@ func GenUserRouterNoLock(uid string) *RefRouter {
 	mNum := vf.NumMethod()
 	for i := 0; i < mNum; i++ {
 		mName := vft.Method(i).Name
-		log.Info("", "index:", i, " MethodName:", mName)
+		log.Info(operationID, "index:", i, " MethodName:", mName)
 		RouteMap1[mName] = vf.Method(i)
 	}
-	wsRouter1.InitSDK(ConfigSvr, "0")
+	wsRouter1.InitSDK(ConfigSvr, operationID)
+	log.Info(operationID, "SetAdvancedMsgListener() ", uid)
 	wsRouter1.SetAdvancedMsgListener()
+	if batchMsg == 1 {
+		log.Info(operationID, "SetBatchMsgListener() ", uid)
+		wsRouter1.SetBatchMsgListener()
+	}
 	wsRouter1.SetConversationListener()
-	log.Info("", "SetFriendListener() ", uid)
+	log.Info(operationID, "SetFriendListener() ", uid)
 	wsRouter1.SetFriendListener()
-	log.Info("", "SetGroupListener() ", uid)
+	log.Info(operationID, "SetGroupListener() ", uid)
 	wsRouter1.SetGroupListener()
-	log.Info("", "SetUserListener() ", uid)
+	log.Info(operationID, "SetUserListener() ", uid)
 	wsRouter1.SetUserListener()
-	log.Info("", "SetSignalingListener() ", uid)
+	log.Info(operationID, "SetSignalingListener() ", uid)
 	wsRouter1.SetSignalingListener()
-	log.Info("", "setWorkMomentsListener", uid)
+	log.Info(operationID, "setWorkMomentsListener", uid)
 	wsRouter1.SetWorkMomentsListener()
 	var rr RefRouter
 	rr.refName = RouteMap1

@@ -9,6 +9,7 @@ import (
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
@@ -18,11 +19,21 @@ import (
 	"github.com/jinzhu/copier"
 )
 
+//	//utils.GetCurrentTimestampByMill()
 type Group struct {
 	listener    open_im_sdk_callback.OnGroupListener
 	loginUserID string
 	db          *db.DataBase
 	p           *ws.PostApi
+	loginTime   int64
+}
+
+func (g *Group) LoginTime() int64 {
+	return g.loginTime
+}
+
+func (g *Group) SetLoginTime(loginTime int64) {
+	g.loginTime = loginTime
 }
 
 func NewGroup(loginUserID string, db *db.DataBase, p *ws.PostApi) *Group {
@@ -35,6 +46,10 @@ func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2
 	}
 	operationID := utils.OperationIDGenerator()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
+	if msg.SendTime < g.loginTime {
+		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
+		return
+	}
 	go func() {
 		switch msg.ContentType {
 		case constant.GroupCreatedNotification:
@@ -69,6 +84,10 @@ func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2
 			g.groupMuteChangedNotification(msg, operationID)
 		case constant.GroupMemberInfoSetNotification:
 			g.groupMemberInfoSetNotification(msg, operationID)
+		case constant.GroupMemberSetToAdminNotification:
+			g.groupMemberInfoSetNotification(msg, operationID)
+		case constant.GroupMemberSetToOrdinaryUserNotification:
+			g.groupMemberInfoSetNotification(msg, operationID)
 		default:
 			log.Error(operationID, "ContentType tip failed ", msg.ContentType)
 		}
@@ -79,8 +98,8 @@ func (g *Group) groupCreatedNotification(msg *api.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	detail := api.GroupCreatedTips{Group: &api.GroupInfo{}}
 	comm.UnmarshalTips(msg, &detail)
-	g.SyncJoinedGroupList(operationID)
 	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, false)
+	g.SyncJoinedGroupList(operationID)
 }
 
 func (g *Group) groupInfoSetNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value, operationID string) {
@@ -193,8 +212,8 @@ func (g *Group) memberInvitedNotification(msg *api.MsgData, operationID string) 
 
 	for _, v := range detail.InvitedUserList {
 		if v.UserID == g.loginUserID {
-			g.SyncJoinedGroupList(operationID)
 			g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, false)
+			g.SyncJoinedGroupList(operationID)
 			return
 		}
 	}
@@ -264,7 +283,6 @@ func (g *Group) groupMemberInfoSetNotification(msg *api.MsgData, operationID str
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID, msg.String(), "detail : ", detail.String())
 	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
 	_ = g.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.ChangedUser.UserID, detail.ChangedUser.FaceURL, detail.ChangedUser.Nickname, constant.GroupChatType)
-
 }
 
 func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam,
@@ -346,6 +364,19 @@ func (g *Group) changeGroupMemberMute(groupID, userID string, mutedSeconds uint3
 	}
 }
 
+func (g *Group) setGroupMemberRoleLevel(callback open_im_sdk_callback.Base, groupID, userID string, roleLevel int, operationID string) {
+	apiReq := api.SetGroupMemberRoleLevelReq{
+		SetGroupMemberInfoReq: api.SetGroupMemberInfoReq{
+			OperationID: operationID,
+			UserID:      userID,
+			GroupID:     groupID,
+		},
+		RoleLevel: roleLevel,
+	}
+	g.p.PostFatalCallback(callback, constant.SetGroupMemberInfoRouter, apiReq, nil, apiReq.OperationID)
+	//g.syncGroupMemberByGroupID(groupID, operationID, true)
+}
+
 func (g *Group) getJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) sdk.GetJoinedGroupListCallback {
 	groupList, err := g.db.GetJoinedGroupList()
 	log.Info("this is rpc", groupList)
@@ -353,7 +384,7 @@ func (g *Group) getJoinedGroupList(callback open_im_sdk_callback.Base, operation
 	return groupList
 }
 
-func (g *Group) GetGroupInfoFromLocal2Svr(groupID string) (*db.LocalGroup, error) {
+func (g *Group) GetGroupInfoFromLocal2Svr(groupID string) (*model_struct.LocalGroup, error) {
 	localGroup, err := g.db.GetGroupInfoByGroupID(groupID)
 	if err == nil {
 		return localGroup, nil
@@ -371,6 +402,7 @@ func (g *Group) GetGroupInfoFromLocal2Svr(groupID string) (*db.LocalGroup, error
 		return nil, utils.Wrap(errors.New("no group"), "")
 	}
 }
+
 func (g *Group) searchGroups(callback open_im_sdk_callback.Base, param sdk.SearchGroupsParam, operationID string) sdk.SearchGroupsCallback {
 	if len(param.KeywordList) == 0 || (!param.IsSearchGroupName && !param.IsSearchGroupID) {
 		common.CheckAnyErrCallback(callback, 201, errors.New("keyword is null or search field all false"), operationID)
@@ -767,9 +799,9 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 		log.NewError(operationID, "GetGroupMemberListByGroupID failed ", err.Error(), groupID)
 		return
 	}
-	log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
-	aInBNot, bInANot, sameA, sameB := common.CheckGroupMemberDiff(onServer, onLocal)
-	log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
+	//log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
+	aInBNot, bInANot, sameA, _ := common.CheckGroupMemberDiff(onServer, onLocal)
+	//log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
 	for _, index := range aInBNot {
 		err := g.db.InsertGroupMember(onServer[index])
 		if err != nil {
@@ -823,6 +855,30 @@ func (g *Group) SyncJoinedGroupMember(operationID string) {
 	for _, v := range groupListOnServer {
 		go func(groupID, operationID string) {
 			g.syncGroupMemberByGroupID(groupID, operationID, true)
+			wg.Done()
+		}(v.GroupID, operationID)
+	}
+
+	wg.Wait()
+	log.Info(operationID, "syncGroupMemberByGroupID end")
+}
+
+func (g *Group) SyncJoinedGroupMemberForFirstLogin(operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
+	groupListOnServer, err := g.getJoinedGroupListFromSvr(operationID)
+	if err != nil {
+		log.Error(operationID, "getJoinedGroupListFromSvr failed ", err.Error())
+		return
+	}
+	var wg sync.WaitGroup
+	if len(groupListOnServer) == 0 {
+		return
+	}
+	wg.Add(len(groupListOnServer))
+	log.Info(operationID, "syncGroupMemberByGroupID begin", len(groupListOnServer))
+	for _, v := range groupListOnServer {
+		go func(groupID, operationID string) {
+			g.syncGroupMemberByGroupID(groupID, operationID, false)
 			wg.Done()
 		}(v.GroupID, operationID)
 	}

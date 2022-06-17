@@ -1,16 +1,19 @@
 package server_api_params
 
-import "open_im_sdk/pkg/db"
+import (
+	"open_im_sdk/pkg/db/model_struct"
+)
 
 type ApiUserInfo struct {
-	UserID      string `json:"userID" binding:"required,min=1,max=64"`
-	Nickname    string `json:"nickname" binding:"omitempty,min=1,max=64"`
-	FaceURL     string `json:"faceURL" binding:"omitempty,max=1024"`
-	Gender      int32  `json:"gender" binding:"omitempty,oneof=0 1 2"`
-	PhoneNumber string `json:"phoneNumber" binding:"omitempty,max=32"`
-	Birth       uint32 `json:"birth" binding:"omitempty"`
-	Email       string `json:"email" binding:"omitempty,max=64"`
-	Ex          string `json:"ex" binding:"omitempty,max=1024"`
+	UserID           string `json:"userID" binding:"required,min=1,max=64"`
+	Nickname         string `json:"nickname" binding:"omitempty,min=1,max=64"`
+	FaceURL          string `json:"faceURL" binding:"omitempty,max=1024"`
+	Gender           int32  `json:"gender" binding:"omitempty,oneof=0 1 2"`
+	PhoneNumber      string `json:"phoneNumber" binding:"omitempty,max=32"`
+	Birth            uint32 `json:"birth" binding:"omitempty"`
+	Email            string `json:"email" binding:"omitempty,max=64"`
+	GlobalRecvMsgOpt int32  `json:"globalRecvMsgOpt" binding:"omitempty,oneof=0 1 2"`
+	Ex               string `json:"ex" binding:"omitempty,max=1024"`
 }
 
 type GroupAddMemberInfo struct {
@@ -19,9 +22,9 @@ type GroupAddMemberInfo struct {
 }
 
 type FullUserInfo struct {
-	PublicInfo *PublicUserInfo `json:"publicInfo"`
-	FriendInfo *db.LocalFriend `json:"friendInfo"`
-	BlackInfo  *db.LocalBlack  `json:"blackInfo"`
+	PublicInfo *PublicUserInfo           `json:"publicInfo"`
+	FriendInfo *model_struct.LocalFriend `json:"friendInfo"`
+	BlackInfo  *model_struct.LocalBlack  `json:"blackInfo"`
 }
 
 //GroupName    string                `json:"groupName"`

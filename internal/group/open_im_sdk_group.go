@@ -3,6 +3,7 @@ package group
 import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
@@ -97,6 +98,19 @@ func (g *Group) ChangeGroupMemberMute(callback open_im_sdk_callback.Base, groupI
 	}()
 }
 
+func (g *Group) SetGroupMemberRoleLevel(callback open_im_sdk_callback.Base, groupID, userID string, roleLevel int, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", groupID, userID, roleLevel)
+		g.setGroupMemberRoleLevel(callback, groupID, userID, roleLevel, operationID)
+		callback.OnSuccess(constant.SuccessCallbackDefault)
+		log.NewInfo(operationID, fName, " callback: ", constant.SuccessCallbackDefault)
+	}()
+}
+
 func (g *Group) GetJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
 		return
@@ -136,6 +150,7 @@ func (g *Group) SearchGroups(callback open_im_sdk_callback.Base, searchParam, op
 		log.NewInfo(operationID, fName, "args: ", searchParam)
 		var unmarshalGetGroupsInfoParam sdk_params_callback.SearchGroupsParam
 		common.JsonUnmarshalAndArgsValidate(searchParam, &unmarshalGetGroupsInfoParam, callback, operationID)
+		unmarshalGetGroupsInfoParam.KeywordList = utils.TrimStringList(unmarshalGetGroupsInfoParam.KeywordList)
 		groupsInfoList := g.searchGroups(callback, unmarshalGetGroupsInfoParam, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(groupsInfoList))
 		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(groupsInfoList), len(groupsInfoList))

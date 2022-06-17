@@ -2,7 +2,7 @@ package sdk_params_callback
 
 import (
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/server_api_params"
 )
 
@@ -20,11 +20,11 @@ const AddFriendCallback = constant.SuccessCallbackDefault
 
 //1
 //type GetRecvFriendApplicationListParams struct{}
-type GetRecvFriendApplicationListCallback []*db.LocalFriendRequest
+type GetRecvFriendApplicationListCallback []*model_struct.LocalFriendRequest
 
 //1
 //type GetSendFriendApplicationListParams struct{}
-type GetSendFriendApplicationListCallback []*db.LocalFriendRequest
+type GetSendFriendApplicationListCallback []*model_struct.LocalFriendRequest
 
 //1
 type ProcessFriendApplicationParams struct {
@@ -53,6 +53,11 @@ type SearchFriendsParam struct {
 	IsSearchUserID   bool     `json:"isSearchUserID"`
 	IsSearchNickname bool     `json:"isSearchNickname"`
 	IsSearchRemark   bool     `json:"isSearchRemark"`
+}
+type SearchFriendsCallback []*SearchFriendItem
+type SearchFriendItem struct {
+	model_struct.LocalFriend
+	Relationship int `json:"relationship"`
 }
 
 //1

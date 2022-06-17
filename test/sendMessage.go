@@ -25,16 +25,6 @@ import (
 	"time"
 )
 
-var (
-	TESTIP       = "43.128.5.63"
-	APIADDR      = "http://" + TESTIP + ":10002"
-	WSADDR       = "ws://" + TESTIP + ":10001"
-	REGISTERADDR = APIADDR + "/auth/user_register"
-	TOKENADDR    = APIADDR + "/auth/user_token"
-	SECRET       = "tuoyun"
-	SENDINTERVAL = 20
-)
-
 func runRigister(strMyUid string) {
 	for true {
 		err := register(strMyUid)
@@ -78,27 +68,22 @@ func register(uid string) error {
 	req.UserID = uid
 	req.Secret = SECRET
 	req.Nickname = uid
-	req.FaceURL = "www.baidu.com"
 	for {
 		_, err := network.Post2Api(url, req, "")
 		if err != nil && !strings.Contains(err.Error(), "status code failed") {
 			log.Error(req.OperationID, "post failed ,continue ", err.Error())
-			//	time.Sleep(time.Duration(1) * time.Second)
 			continue
 		} else {
 			log.Info(req.OperationID, "Post2Api ok ", req)
 			return nil
 		}
-		//status code failed
 	}
-
-	return nil
 }
 
 func getToken(uid string) string {
 	url := TOKENADDR
 	var req server_api_params.UserTokenReq
-	req.Platform = 2
+	req.Platform = 1
 	req.UserID = uid
 	req.Secret = SECRET
 	req.OperationID = utils.OperationIDGenerator()
@@ -137,7 +122,6 @@ func runGetToken(strMyUid string) string {
 			break
 		}
 	}
-
 	return token
 }
 
@@ -168,7 +152,7 @@ func GenUid(uid int, prefix string) string {
 		fmt.Println("getMyIP() failed")
 		os.Exit(1)
 	}
-	UidPrefix := getMyIP() + prefix
+	UidPrefix := getMyIP() + "_" + prefix
 	return UidPrefix + strconv.FormatInt(int64(uid), 10)
 }
 
@@ -176,15 +160,29 @@ func GenToken(userID string) string {
 	return runGetToken(userID)
 }
 
-func GenWs(id int) {
-	//return
-	userID := GenUid(id, "p")
+func RegisterAccounts(number int) {
+	var wg sync.WaitGroup
+	wg.Add(number)
+	for i := 0; i < number; i++ {
+		go func(t int) {
+			userID := GenUid(t, "online")
+			register(userID)
+			log.Info("register ", userID)
+			wg.Done()
+		}(i)
+
+	}
+	wg.Wait()
+	log.Info("", "RegisterAccounts finish ", number)
+}
+
+func GenWsConn(id int) {
+	userID := GenUid(id, "online")
 	userLock.Lock()
 	defer userLock.Unlock()
 	allUserID = append(allUserID, userID)
 	//register(userID)
-	//token := GenToken(userID)
-	token := "testtokentokentokentokentokentokentokentokentokentoken"
+	token := GenToken(userID)
 	allToken = append(allToken, token)
 
 	wsRespAsyn := interaction.NewWsRespAsyn()
@@ -195,11 +193,10 @@ func GenWs(id int) {
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
 	ws := interaction.NewWs(wsRespAsyn, wsConn, cmdWsCh, pushMsgAndMaxSeqCh, nil)
 	allWs = append(allWs, ws)
-
 }
 
-func GenWsReliability(id int) {
-	userID := GenUid(id, "v")
+func RegisterUserReliability(id int, timeStamp string) {
+	userID := GenUid(id, "reliability"+timeStamp+"_")
 	coreMgrLock.Lock()
 	defer coreMgrLock.Unlock()
 	register(userID)
@@ -213,19 +210,6 @@ type CoreNode struct {
 	mgr    *login.LoginMgr
 }
 
-var coreMgrLock sync.RWMutex
-var allLoginMgr map[int]*CoreNode
-
-var userLock sync.RWMutex
-
-var allUserID []string
-var allToken []string
-var allWs []*interaction.Ws
-var intervalSleep int
-var sendSuccessCount, sendFailedCount int
-var sendSuccessLock sync.RWMutex
-var sendFailedLock sync.RWMutex
-
 func addSendSuccess() {
 	sendSuccessLock.Lock()
 	defer sendSuccessLock.Unlock()
@@ -236,36 +220,24 @@ func addSendFailed() {
 	defer sendFailedLock.Unlock()
 	sendFailedCount++
 }
-func PressTest(num int, interval int, ip string) {
-	TESTIP = ip
-	intervalSleep = interval
-	var wg sync.WaitGroup
-	wg.Add(num)
 
-	for i := 0; i < num; i++ {
+func OnlineTest(number int) {
+	RegisterAccounts(number)
+	var wg sync.WaitGroup
+	wg.Add(number)
+	for i := 0; i < number; i++ {
 		go func(t int) {
-			GenWs(t)
-			log.Info("genws ", t)
+			GenWsConn(t)
+			log.Info("GenWsConn ", t)
 			wg.Done()
 		}(i)
-
 	}
-
-	for i := 0; i < num; i++ {
-		wg.Wait()
-	}
-
-	log.Info("", "start send message...")
-	time.Sleep(time.Duration(1) * time.Second)
-
-	for i := 0; i < num; i++ {
-		go testSend(i, "ok", num)
-		//	go testSendReliability(i, "ok", num)
-	}
+	wg.Wait()
+	log.Info("", "OnlineTest finish ", number)
 }
 
 func TestSendCostTime() {
-	GenWs(0)
+	GenWsConn(0)
 	sendID := allUserID[0]
 	recvID := allUserID[0]
 	for {
@@ -281,7 +253,7 @@ func TestSendCostTime() {
 	}
 
 }
-func testSend(idx int, text string, uidNum int) {
+func TestSend(idx int, text string, uidNum, intervalSleep int) {
 	for {
 		operationID := utils.OperationIDGenerator()
 		sendID := allUserID[idx]
@@ -292,10 +264,10 @@ func testSend(idx int, text string, uidNum int) {
 		} else {
 			log.Error(operationID, sendID, recvID, "SendTextMessage failed")
 		}
-		time.Sleep(time.Duration(rand.Intn(intervalSleep)) * time.Second)
+		time.Sleep(time.Duration(rand.Intn(intervalSleep)) * time.Millisecond)
 	}
 }
-func testSendReliability(idx int, text string, uidNum int) {
+func testSendReliability(idx int, text string, uidNum, intervalSleep int) {
 	for {
 		operationID := utils.OperationIDGenerator()
 		sendID := allUserID[idx]

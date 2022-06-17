@@ -2,10 +2,11 @@ package db
 
 import (
 	"errors"
+	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 )
 
-func (d *DataBase) InsertAdminGroupRequest(groupRequest *LocalAdminGroupRequest) error {
+func (d *DataBase) InsertAdminGroupRequest(groupRequest *model_struct.LocalAdminGroupRequest) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Create(groupRequest).Error, "InsertAdminGroupRequest failed")
@@ -14,10 +15,10 @@ func (d *DataBase) InsertAdminGroupRequest(groupRequest *LocalAdminGroupRequest)
 func (d *DataBase) DeleteAdminGroupRequest(groupID, userID string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.Where("group_id=? and user_id=?", groupID, userID).Delete(&LocalAdminGroupRequest{}).Error, "DeleteAdminGroupRequest failed")
+	return utils.Wrap(d.conn.Where("group_id=? and user_id=?", groupID, userID).Delete(&model_struct.LocalAdminGroupRequest{}).Error, "DeleteAdminGroupRequest failed")
 }
 
-func (d *DataBase) UpdateAdminGroupRequest(groupRequest *LocalAdminGroupRequest) error {
+func (d *DataBase) UpdateAdminGroupRequest(groupRequest *model_struct.LocalAdminGroupRequest) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 
@@ -28,15 +29,15 @@ func (d *DataBase) UpdateAdminGroupRequest(groupRequest *LocalAdminGroupRequest)
 	return utils.Wrap(t.Error, "")
 }
 
-func (d *DataBase) GetAdminGroupApplication() ([]*LocalAdminGroupRequest, error) {
+func (d *DataBase) GetAdminGroupApplication() ([]*model_struct.LocalAdminGroupRequest, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	var groupRequestList []LocalAdminGroupRequest
+	var groupRequestList []model_struct.LocalAdminGroupRequest
 	err := utils.Wrap(d.conn.Find(&groupRequestList).Error, "")
 	if err != nil {
 		return nil, utils.Wrap(err, "")
 	}
-	var transfer []*LocalAdminGroupRequest
+	var transfer []*model_struct.LocalAdminGroupRequest
 	for _, v := range groupRequestList {
 		v1 := v
 		transfer = append(transfer, &v1)
