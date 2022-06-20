@@ -5,6 +5,7 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 )
 
@@ -25,8 +26,9 @@ type MsgSync struct {
 }
 
 func (m *MsgSync) compareSeq() {
-	m.selfMsgSync.compareSeq()
-	m.superGroupMsgSync.compareSeq()
+	operationID := utils.OperationIDGenerator()
+	m.selfMsgSync.compareSeq(operationID)
+	m.superGroupMsgSync.compareSeq(operationID)
 }
 
 func (m *MsgSync) doMaxSeq(cmd common.Cmd2Value) {

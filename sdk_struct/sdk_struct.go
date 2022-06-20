@@ -220,6 +220,7 @@ type CmdMaxSeqToMsgSync struct {
 	GroupID2MaxSeqOnSvr map[string]uint32
 }
 type CmdJoinedSuperGroup struct {
+	OperationID string
 }
 
 type OANotificationElem struct {
