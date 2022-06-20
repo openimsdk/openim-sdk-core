@@ -15,8 +15,7 @@ type orgBaseCallback struct {
 }
 
 func (t orgBaseCallback) OnSuccess(data string) {
-	log.Info(t.OperationID, t.CallName, utils.GetSelfFuncName(), data)
-
+	fmt.Println("=======================\n", t.OperationID, t.CallName, utils.GetSelfFuncName(), data)
 }
 
 func (t orgBaseCallback) OnError(errCode int32, errMsg string) {
@@ -79,13 +78,13 @@ func DoTestSearchOrganization(input string, offset, count int) {
 	test.OperationID = utils.OperationIDGenerator()
 	test.CallName = utils.GetSelfFuncName()
 	params := sdk_params_callback.SearchOrganizationParams{
-		KeyWord:                 "+8613900000000",
-		IsSearchUserName:        false,
-		IsSearchUserEnglishName: false,
-		IsSearchPosition:        false,
-		IsSearchUserID:          false,
-		IsSearchMobile:          false,
-		IsSearchEmail:           false,
+		KeyWord:                 input,
+		IsSearchUserName:        true,
+		IsSearchUserEnglishName: true,
+		IsSearchPosition:        true,
+		IsSearchUserID:          true,
+		IsSearchMobile:          true,
+		IsSearchEmail:           true,
 		IsSearchTelephone:       true,
 	}
 	bytes, _ := json.Marshal(params)

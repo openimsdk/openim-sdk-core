@@ -57,8 +57,8 @@ func DoTestSearchLocalMessages() {
 	var testSearchLocalMessagesCallBack SearchLocalMessagesCallBack
 	testSearchLocalMessagesCallBack.OperationID = utils.OperationIDGenerator()
 	var params sdk_params_callback.SearchLocalMessagesParams
-	params.KeywordList = []string{"1"}
-	params.ConversationID = "single_707010937"
+	params.KeywordList = []string{"o"}
+	//params.ConversationID = "single_1195727294"
 	params.Count = 200
 	params.PageIndex = 1
 	//s:=strings.Trim(params.KeywordList[0],"")
@@ -371,7 +371,7 @@ func (g SearchLocalMessagesCallBack) OnError(errCode int32, errMsg string) {
 }
 
 func (g SearchLocalMessagesCallBack) OnSuccess(data string) {
-	log.Info(g.OperationID, "SearchLocalMessagesCallBack success ", data)
+	fmt.Println(g.OperationID, "SearchLocalMessagesCallBack success ", data)
 }
 
 type MsgListenerCallBak struct {
@@ -630,7 +630,7 @@ func DoTestSendImageMsg(recvID string) {
 func DotestUploadFile() {
 	operationID := utils.OperationIDGenerator()
 	var testSendMsg TestSendMsgCallBack
-	open_im_sdk.UploadFile(&testSendMsg, operationID, "C:\\Users\\Administrator\\Desktop\\1.jpg")
+	open_im_sdk.UploadFile(&testSendMsg, operationID, "C:\\Users\\Administrator\\Desktop\\video_test.mp4")
 }
 
 func DoTestSendOtherMsg(sendId, recvID string) {

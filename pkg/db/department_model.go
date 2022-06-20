@@ -48,8 +48,6 @@ func (d *DataBase) DeleteDepartment(departmentID string) error {
 }
 
 func (d *DataBase) GetDepartmentInfo(departmentID string) (*model_struct.LocalDepartment, error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
 	var local model_struct.LocalDepartment
 	return &local, utils.Wrap(d.conn.Where("department_id=?", departmentID).First(&local).Error, "GetDepartmentInfo failed")
 }
@@ -70,8 +68,6 @@ func (d *DataBase) GetAllDepartmentList() ([]*model_struct.LocalDepartment, erro
 }
 
 func (d *DataBase) GetParentDepartmentList(departmentID string) ([]*model_struct.LocalDepartment, error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
 	var departmentList []*model_struct.LocalDepartment
 	err := d.getDepartmentList(&departmentList, departmentID)
 	return departmentList, err
@@ -110,8 +106,6 @@ func (d *DataBase) getParentDepartment(departmentID string) (model_struct.LocalD
 }
 
 func (d *DataBase) SearchDepartmentMember(keyWord string, isSearchUserName, isSearchEmail, isSearchMobile, isSearchPosition, isSearchTelephone, isSearchUserEnglishName, isSearchUserID bool, offset, count int) ([]*model_struct.SearchDepartmentMemberResult, error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
 	var departmentMemberList []*model_struct.SearchDepartmentMemberResult
 	likeCondition := fmt.Sprintf("%%%s%%", keyWord)
 	var likeConditions []interface{}
@@ -161,8 +155,6 @@ func (d *DataBase) SearchDepartmentMember(keyWord string, isSearchUserName, isSe
 }
 
 func (d *DataBase) SearchDepartment(keyWord string, offset, count int) ([]*model_struct.LocalDepartment, error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
 	var departmentMemberList []*model_struct.LocalDepartment
 	likeCondition := fmt.Sprintf("%%%s%%", keyWord)
 	err := d.conn.Model(&model_struct.LocalDepartment{}).Where("name LIKE ? and department_id != 0", likeCondition).Offset(offset).Limit(count).Find(&departmentMemberList).Error

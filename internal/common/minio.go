@@ -114,7 +114,7 @@ func (m *Minio) UploadVideo(videoPath, snapshotPath string, onProgressFun func(i
 	if err != nil {
 		return "", "", "", "", utils.Wrap(err, "")
 	}
-	snapshotURL, snapshotUUID, err := m.upload(snapshotPath, "img", onProgressFun)
+	snapshotURL, snapshotUUID, err := m.upload(snapshotPath, "img", nil)
 	if err != nil {
 		return "", "", "", "", utils.Wrap(err, "")
 	}
@@ -139,7 +139,9 @@ func (progress *UploadProgress) Read(b []byte) (int, error) {
 	percent := int(float64(progress.current) * 100 / float64(progress.total))
 	if percent != progress.percent && percent%5 == 0 {
 		progress.percent = percent
-		progress.callbackFunc(progress.percent)
+		if progress.callbackFunc != nil {
+			progress.callbackFunc(progress.percent)
+		}
 	}
 	return int(n), nil
 }

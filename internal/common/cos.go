@@ -55,7 +55,7 @@ func (c *COS) UploadVideo(videoPath, snapshotPath string, onProgressFun func(int
 	if err != nil {
 		return "", "", "", "", utils.Wrap(err, "")
 	}
-	snapshotURL, snapshotUUID, err := c.uploadObj(snapshotPath, "img", onProgressFun)
+	snapshotURL, snapshotUUID, err := c.uploadObj(snapshotPath, "img", nil)
 	if err != nil {
 		return "", "", "", "", utils.Wrap(err, "")
 	}
