@@ -27,15 +27,15 @@ func NewSelfMsgSync(dataBase *db.DataBase, ws *Ws, loginUserID string, conversat
 	return p
 }
 
-func (m *SelfMsgSync) compareSeq() {
+func (m *SelfMsgSync) compareSeq(operationID string) {
 	//todo 统计中间缺失的seq，并同步
 	n, err := m.GetNormalMsgSeq()
 	if err != nil {
-		log.Error("", "GetNormalMsgSeq failed ", err.Error())
+		log.Error(operationID, "GetNormalMsgSeq failed ", err.Error())
 	}
 	a, err := m.GetAbnormalMsgSeq()
 	if err != nil {
-		log.Error("", "GetAbnormalMsgSeq failed ", err.Error())
+		log.Error(operationID, "GetAbnormalMsgSeq failed ", err.Error())
 	}
 	if n > a {
 		m.seqMaxSynchronized = n
@@ -43,7 +43,7 @@ func (m *SelfMsgSync) compareSeq() {
 		m.seqMaxSynchronized = a
 	}
 	m.seqMaxNeedSync = m.seqMaxSynchronized
-	log.Info("", "load seq, normal, abnormal, ", n, a, m.seqMaxNeedSync, m.seqMaxSynchronized)
+	log.Info(operationID, "load seq, normal, abnormal, ", n, a, m.seqMaxNeedSync, m.seqMaxSynchronized)
 }
 
 func (m *SelfMsgSync) doMaxSeq(cmd common.Cmd2Value) {

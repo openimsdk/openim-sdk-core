@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
@@ -40,4 +41,22 @@ func (d *DataBase) DeleteAllSuperGroup() error {
 func (d *DataBase) GetSuperGroupInfoByGroupID(groupID string) (*model_struct.LocalGroup, error) {
 	var g model_struct.LocalGroup
 	return &g, utils.Wrap(d.conn.Table(constant.SuperGroupTableName).Where("group_id = ?", groupID).Take(&g).Error, "GetGroupList failed")
+}
+
+func (d *DataBase) UpdateSuperGroup(groupInfo *model_struct.LocalGroup) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+
+	t := d.conn.Table(constant.SuperGroupTableName).Select("*").Updates(*groupInfo)
+	if t.RowsAffected == 0 {
+		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	}
+	return utils.Wrap(t.Error, "")
+}
+
+func (d *DataBase) DeleteSuperGroup(groupID string) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	localGroup := model_struct.LocalGroup{GroupID: groupID}
+	return utils.Wrap(d.conn.Table(constant.SuperGroupTableName).Delete(&localGroup).Error, "DeleteSuperGroup failed")
 }

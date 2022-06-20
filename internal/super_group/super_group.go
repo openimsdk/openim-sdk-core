@@ -31,7 +31,7 @@ func NewSuperGroup(loginUserID string, db *db.DataBase, p *ws.PostApi, joinedSup
 
 func (s *SuperGroup) DoNotification(msg *api.MsgData, _ chan common.Cmd2Value) {
 	operationID := utils.OperationIDGenerator()
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID, msg.String())
 	if msg.SendTime < s.loginTime {
 		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
 		return
@@ -40,11 +40,13 @@ func (s *SuperGroup) DoNotification(msg *api.MsgData, _ chan common.Cmd2Value) {
 		switch msg.ContentType {
 		case constant.SuperGroupUpdateNotification:
 			s.SyncJoinedGroupList(operationID)
-			cmd := sdk_struct.CmdJoinedSuperGroup{}
+			cmd := sdk_struct.CmdJoinedSuperGroup{OperationID: operationID}
 			err := common.TriggerCmdJoinedSuperGroup(cmd, s.joinedSuperGroupCh)
 			if err != nil {
 				log.Error(operationID, "TriggerCmdJoinedSuperGroup failed ", err.Error(), cmd)
+				return
 			}
+			log.Info(operationID, "constant.SuperGroupUpdateNotification", msg.String())
 		default:
 			log.Error(operationID, "ContentType tip failed ", msg.ContentType)
 		}

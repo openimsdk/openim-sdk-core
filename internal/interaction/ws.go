@@ -159,12 +159,13 @@ func (w *Ws) WaitTest(ch chan GeneralWsResp, timeout int, operationID string, co
 		return false
 	}
 }
-func (w *Ws) reConnSleep(operationID string, sleep int32) {
-	_, err := w.WsConn.ReConn()
+func (w *Ws) reConnSleep(operationID string, sleep int32) (error, bool) {
+	_, err, isNeedReConn := w.WsConn.ReConn()
 	if err != nil {
-		log.Error(operationID, "ReConn failed ", err.Error())
+		log.Error(operationID, "ReConn failed ", err.Error(), "is need re connect ", isNeedReConn)
 		time.Sleep(time.Duration(sleep) * time.Second)
 	}
+	return err, isNeedReConn
 }
 
 func (w *Ws) ReadData() {
@@ -189,7 +190,11 @@ func (w *Ws) ReadData() {
 		isErrorOccurred = false
 		if w.WsConn.conn == nil {
 			log.Error(operationID, "conn == nil, ReConn")
-			w.reConnSleep(operationID, 1)
+			err, isNeedReConnect := w.reConnSleep(operationID, 1)
+			if err != nil && isNeedReConnect == false {
+				log.Warn(operationID, "token failed, don't connect again")
+				return
+			}
 			continue
 		}
 
@@ -206,7 +211,10 @@ func (w *Ws) ReadData() {
 			}
 			if w.WsConn.IsFatalError(err) {
 				log.Error(operationID, "IsFatalError ", err.Error(), "ReConn")
-				w.reConnSleep(operationID, 5)
+				if w.reConnSleep(operationID, 5) {
+					log.Warn(operationID, "token failed, don't connect again")
+					return
+				}
 			} else {
 				log.Warn(operationID, "timeout failed ", err.Error())
 			}

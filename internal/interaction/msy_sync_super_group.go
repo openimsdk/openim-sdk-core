@@ -36,7 +36,9 @@ func (m *SuperGroupMsgSync) updateJoinedSuperGroup() {
 	for {
 		select {
 		case cmd := <-m.joinedSuperGroupCh:
-			log.Info("", "updateJoinedSuperGroup recv cmd: ", cmd)
+
+			operationID := cmd.Value.(sdk_struct.CmdJoinedSuperGroup).OperationID
+			log.Info(operationID, "updateJoinedSuperGroup recv cmd: ", cmd)
 			g, err := m.GetJoinedSuperGroupList()
 			if err == nil {
 				m.superGroupMtx.Lock()
@@ -45,13 +47,13 @@ func (m *SuperGroupMsgSync) updateJoinedSuperGroup() {
 					m.SuperGroupIDList = append(m.SuperGroupIDList, v.GroupID)
 				}
 				m.superGroupMtx.Unlock()
-				m.compareSeq()
+				m.compareSeq(operationID)
 			}
 		}
 	}
 }
 
-func (m *SuperGroupMsgSync) compareSeq() {
+func (m *SuperGroupMsgSync) compareSeq(operationID string) {
 	g, err := m.GetJoinedSuperGroupList()
 	if err == nil {
 		m.superGroupMtx.Lock()
@@ -62,7 +64,7 @@ func (m *SuperGroupMsgSync) compareSeq() {
 		m.superGroupMtx.Unlock()
 	}
 
-	log.Debug("compareSeq load groupID list ", m.SuperGroupIDList)
+	log.Debug(operationID, "compareSeq load groupID list ", m.SuperGroupIDList)
 
 	m.superGroupMtx.Lock()
 
@@ -72,13 +74,13 @@ func (m *SuperGroupMsgSync) compareSeq() {
 		var seqMaxNeedSync uint32
 		n, err := m.GetSuperGroupNormalMsgSeq(v)
 		if err != nil {
-			log.Error("", "GetSuperGroupNormalMsgSeq failed ", err.Error(), v)
+			log.Error(operationID, "GetSuperGroupNormalMsgSeq failed ", err.Error(), v)
 		}
 		a, err := m.GetSuperGroupAbnormalMsgSeq(v)
 		if err != nil {
-			log.Error("", "GetSuperGroupAbnormalMsgSeq failed ", err.Error(), v)
+			log.Error(operationID, "GetSuperGroupAbnormalMsgSeq failed ", err.Error(), v)
 		}
-		log.Warn("", "GetSuperGroupNormalMsgSeq GetSuperGroupAbnormalMsgSeq", n, a)
+		log.Warn(operationID, "GetSuperGroupNormalMsgSeq GetSuperGroupAbnormalMsgSeq", n, a)
 		if n > a {
 			seqMaxSynchronized = n
 		} else {
@@ -87,7 +89,7 @@ func (m *SuperGroupMsgSync) compareSeq() {
 		seqMaxNeedSync = seqMaxSynchronized
 		m.Group2SeqMaxNeedSync[v] = seqMaxNeedSync
 		m.Group2SeqMaxSynchronized[v] = seqMaxSynchronized
-		log.Info("", "load seq, normal, abnormal, ", n, a, seqMaxNeedSync, seqMaxSynchronized)
+		log.Info(operationID, "load seq, normal, abnormal, ", n, a, seqMaxNeedSync, seqMaxSynchronized)
 	}
 }
 
