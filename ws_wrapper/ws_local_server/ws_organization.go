@@ -59,20 +59,10 @@ func (wsRouter *WsFuncRouter) GetDepartmentMember(input, operationID string) {
 }
 
 func (wsRouter *WsFuncRouter) GetUserInDepartment(input, operationID string) {
-	m := make(map[string]interface{})
-	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-		return
-	}
-
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "userID") {
-		return
-	}
 	//callback open_im_sdk_callback.Base, departmentID string, offset, count int, operationID string
 	userWorker.Organization().GetUserInDepartment(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},
-		m["userID"].(string), operationID)
+		input, operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetDepartmentMemberAndSubDepartment(input, operationID string) {

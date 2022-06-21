@@ -296,17 +296,8 @@ func (wsRouter *WsFuncRouter) SetConversationDraft(input string, operationID str
 	userWorker.Conversation().SetConversationDraft(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationID"].(string), m["draftText"].(string), operationID)
 }
 func (wsRouter *WsFuncRouter) ResetConversationGroupAtType(input string, operationID string) {
-	m := make(map[string]interface{})
-	if err := json.Unmarshal([]byte(input), &m); err != nil {
-		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-		return
-	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "conversationID") {
-		return
-	}
-	userWorker.Conversation().ResetConversationGroupAtType(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["conversationID"].(string), operationID)
+	userWorker.Conversation().ResetConversationGroupAtType(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, input, operationID)
 }
 
 func (wsRouter *WsFuncRouter) PinConversation(input string, operationID string) {
