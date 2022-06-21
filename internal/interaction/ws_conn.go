@@ -165,7 +165,7 @@ func (u *WsConn) ReConn() (*websocket.Conn, error, bool) {
 		u.loginState = constant.LoginFailed
 		if httpResp != nil {
 			errMsg := httpResp.Header.Get("ws_err_msg") + " operationID " + operationID + err.Error()
-			log.Error(operationID, "websocket.DefaultDialer.Dial failed ", errMsg)
+			log.Error(operationID, "websocket.DefaultDialer.Dial failed ", errMsg, httpResp.StatusCode)
 			u.listener.OnConnectFailed(int32(httpResp.StatusCode), errMsg)
 			switch int32(httpResp.StatusCode) {
 			case constant.ErrTokenExpired.ErrCode:

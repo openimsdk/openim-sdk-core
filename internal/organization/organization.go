@@ -20,6 +20,15 @@ type Organization struct {
 	loginUserID string
 	db          *db.DataBase
 	p           *ws.PostApi
+	loginTime   int64
+}
+
+func (o *Organization) LoginTime() int64 {
+	return o.loginTime
+}
+
+func (o *Organization) SetLoginTime(loginTime int64) {
+	o.loginTime = loginTime
 }
 
 func NewOrganization(loginUserID string, db *db.DataBase, p *ws.PostApi) *Organization {
@@ -31,6 +40,12 @@ func (o *Organization) DoNotification(msg *api.MsgData, conversationCh chan comm
 		return
 	}
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
+
+	if msg.SendTime < o.loginTime {
+		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
+		return
+	}
+
 	go func() {
 		switch msg.ContentType {
 		case constant.OrganizationChangedNotification:

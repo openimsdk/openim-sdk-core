@@ -99,8 +99,8 @@ func getToken(uid string) string {
 		log.Error(req.OperationID, "ErrCode failed ", stcResp.ErrCode, stcResp.ErrMsg, url, req)
 		return ""
 	}
+	log.Info(req.OperationID, "get token: ", stcResp.Data.Token)
 	return stcResp.Data.Token
-
 }
 
 func init() {
@@ -114,11 +114,10 @@ func runGetToken(strMyUid string) string {
 	for true {
 		token = getToken(strMyUid)
 		if token == "" {
-			log.Error("test_openim: get token failed", strMyUid)
+
 			time.Sleep(time.Duration(1) * time.Second)
 			continue
 		} else {
-			log.Info("get token: ", strMyUid, token)
 			break
 		}
 	}

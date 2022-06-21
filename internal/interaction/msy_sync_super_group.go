@@ -106,7 +106,7 @@ func (m *SuperGroupMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 		m.Group2SeqMaxNeedSync[groupID] = maxSeqOnSvr
 	}
 	m.superGroupMtx.Unlock()
-	m.syncMsg()
+	m.syncMsg(operationID)
 }
 
 func (m *SuperGroupMsgSync) doPushMsg(cmd common.Cmd2Value) {
@@ -118,34 +118,34 @@ func (m *SuperGroupMsgSync) doPushMsg(cmd common.Cmd2Value) {
 		return
 	}
 
-	seqMaxNeedSync := m.Group2SeqMaxNeedSync[msg.GroupID]
-	seqMaxSynchronized := m.Group2SeqMaxSynchronized[msg.GroupID]
+	//seqMaxNeedSync := m.Group2SeqMaxNeedSync[msg.GroupID]
+	//	seqMaxSynchronized := m.Group2SeqMaxSynchronized[msg.GroupID]
 
 	if m.Group2SeqMaxNeedSync[msg.GroupID] == 0 {
 		return
 	}
-	if seqMaxNeedSync == 0 {
+	if m.Group2SeqMaxNeedSync[msg.GroupID] == 0 {
 		return
 	}
 
-	if msg.Seq == seqMaxSynchronized+1 {
+	if msg.Seq == m.Group2SeqMaxSynchronized[msg.GroupID]+1 {
 		log.Debug(operationID, "TriggerCmdNewMsgCome ", msg.ServerMsgID, msg.ClientMsgID, msg.Seq)
 		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg}, operationID)
-		seqMaxSynchronized = msg.Seq
+		m.Group2SeqMaxSynchronized[msg.GroupID] = msg.Seq
 	}
-	if msg.Seq > seqMaxNeedSync {
-		seqMaxNeedSync = msg.Seq
+	if msg.Seq > m.Group2SeqMaxNeedSync[msg.GroupID] {
+		m.Group2SeqMaxNeedSync[msg.GroupID] = msg.Seq
 	}
-	log.Debug(operationID, "syncMsgFromServer ", seqMaxSynchronized+1, seqMaxNeedSync)
-	m.syncMsg()
+	log.Debug(operationID, "syncMsgFromServer ", m.Group2SeqMaxSynchronized[msg.GroupID]+1, m.Group2SeqMaxNeedSync[msg.GroupID])
+	m.syncMsg(operationID)
 }
 
-func (m *SuperGroupMsgSync) syncMsg() {
+func (m *SuperGroupMsgSync) syncMsg(operationID string) {
 	m.superGroupMtx.Lock()
 	for groupID, seqMaxNeedSync := range m.Group2SeqMaxNeedSync {
 		seqMaxSynchronized := m.Group2SeqMaxSynchronized[groupID]
 		if seqMaxNeedSync > seqMaxSynchronized {
-			log.Info("", "do syncMsg ", seqMaxSynchronized+1, seqMaxNeedSync)
+			log.Info(operationID, "do syncMsg ", seqMaxSynchronized+1, seqMaxNeedSync)
 			m.syncMsgFromServer(seqMaxSynchronized+1, seqMaxNeedSync, groupID)
 			m.Group2SeqMaxSynchronized[groupID] = seqMaxNeedSync
 		}
