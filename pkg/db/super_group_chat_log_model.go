@@ -29,7 +29,7 @@ func (d *DataBase) SuperGroupInsertMessage(Message *model_struct.LocalChatLog, g
 	return utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Create(Message).Error, "SuperGroupInsertMessage failed")
 }
 
-func (d *DataBase) SuperGroupSearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int, groupID string) (result []*model_struct.LocalChatLog, err error) {
+func (d *DataBase) SuperGroupSearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []model_struct.LocalChatLog
@@ -59,17 +59,10 @@ func (d *DataBase) SuperGroupSearchMessageByKeyword(contentType []int, keywordLi
 			}
 		}
 	}
-	switch sessionType {
-	case constant.SingleChatType, constant.NotificationChatType:
-		condition = fmt.Sprintf("session_type==%d And (send_id==%q OR recv_id==%q) And send_time  between %d and %d AND status <=%d  And content_type IN ? ", constant.SingleChatType, sourceID, sourceID, startTime, endTime, constant.MsgStatusSendFailed)
-	case constant.GroupChatType:
-		condition = fmt.Sprintf("session_type==%d And recv_id==%q And send_time between %d and %d AND status <=%d  And content_type IN ? ", constant.GroupChatType, sourceID, startTime, endTime, constant.MsgStatusSendFailed)
-	default:
-		//condition = fmt.Sprintf("(send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content_type == %d And content like %q", sourceID, sourceID, startTime, endTime, constant.MsgStatusSendFailed, constant.Text, "%"+keyword+"%")
-		return nil, err
-	}
+	condition = fmt.Sprintf("session_type=%d And recv_id=%q And send_time between %d and %d AND status <=%d  And content_type IN ? ", constant.GroupChatType, sourceID, startTime, endTime, constant.MsgStatusSendFailed)
+
 	condition += subCondition
-	err = utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
+	err = utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(sourceID)).Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
 
 	for _, v := range messageList {
 		v1 := v
@@ -79,19 +72,11 @@ func (d *DataBase) SuperGroupSearchMessageByKeyword(contentType []int, keywordLi
 }
 
 func (d *DataBase) SuperGroupSearchMessageByContentType(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
 	var messageList []model_struct.LocalChatLog
 	var condition string
-	switch sessionType {
-	case constant.SingleChatType, constant.NotificationChatType:
-		condition = fmt.Sprintf("session_type==%d And (send_id==%q OR recv_id==%q) And send_time between %d and %d AND status <=%d And content_type IN ?", constant.SingleChatType, sourceID, sourceID, startTime, endTime, constant.MsgStatusSendFailed)
-	case constant.GroupChatType:
-		condition = fmt.Sprintf("session_type==%d And recv_id==%q And send_time between %d and %d AND status <=%d And content_type IN ?", constant.GroupChatType, sourceID, startTime, endTime, constant.MsgStatusSendFailed)
-	default:
-		return nil, err
-	}
-	err = utils.Wrap(d.conn.Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&messageList).Error, "SearchMessage failed")
+	condition = fmt.Sprintf("session_type=%d And recv_id==%q And send_time between %d and %d AND status <=%d And content_type IN ?", sessionType, sourceID, startTime, endTime, constant.MsgStatusSendFailed)
+
+	err = utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(sourceID)).Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&messageList).Error, "SearchMessage failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)
@@ -99,9 +84,7 @@ func (d *DataBase) SuperGroupSearchMessageByContentType(contentType []int, sourc
 	return result, err
 }
 
-func (d *DataBase) SuperGroupSearchMessageByContentTypeAndKeyword(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+func (d *DataBase) SuperGroupSearchMessageByContentTypeAndKeyword(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64, groupID string) (result []*model_struct.LocalChatLog, err error) {
 	var messageList []model_struct.LocalChatLog
 	var condition string
 	var subCondition string
@@ -132,7 +115,7 @@ func (d *DataBase) SuperGroupSearchMessageByContentTypeAndKeyword(contentType []
 	condition = fmt.Sprintf("send_time between %d and %d AND status <=%d  And content_type IN ? ", startTime, endTime, constant.MsgStatusSendFailed)
 	condition += subCondition
 	log.Info("key owrd", condition)
-	err = utils.Wrap(d.conn.Where(condition, contentType).Order("send_time DESC").Find(&messageList).Error, "SearchMessage failed")
+	err = utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Where(condition, contentType).Order("send_time DESC").Find(&messageList).Error, "SearchMessage failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)

@@ -183,10 +183,10 @@ func (d *DataBase) ClearConversation(conversationID string) error {
 	return utils.Wrap(t.Error, "ClearConversation failed")
 }
 
-//Clear ALL conversation, which is used to delete the conversation history message and clear the conversation at the same time.
+//Clear All conversation, which is used to delete the conversation history message and clear the conversation at the same time.
 //The GetAllConversation or GetConversationListSplit interface can still be obtained,
 //but there is no latest message.
-func (d *DataBase) CleaALLConversation() error {
+func (d *DataBase) CleaAllConversation() error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	c := model_struct.LocalConversation{UnreadCount: 0, LatestMsg: "", DraftText: "", DraftTextTime: 0}

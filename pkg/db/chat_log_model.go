@@ -3,6 +3,7 @@ package db
 import (
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
@@ -34,12 +35,12 @@ func (d *DataBase) InsertMessage(Message *model_struct.LocalChatLog) error {
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Create(Message).Error, "InsertMessage failed")
 }
-func (d *DataBase) InsertMessageController(Message *model_struct.LocalChatLog) error {
-	switch Message.SessionType {
+func (d *DataBase) InsertMessageController(message *model_struct.LocalChatLog) error {
+	switch message.SessionType {
 	case constant.SuperGroupChatType:
-		return d.SuperGroupInsertMessage(Message, Message.RecvID)
+		return d.SuperGroupInsertMessage(message, message.RecvID)
 	default:
-		return d.InsertMessage(Message)
+		return d.InsertMessage(message)
 	}
 }
 func (d *DataBase) SearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
@@ -88,6 +89,14 @@ func (d *DataBase) SearchMessageByKeyword(contentType []int, keywordList []strin
 	}
 	return result, err
 }
+func (d *DataBase) SearchMessageByKeywordController(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return d.SuperGroupSearchMessageByKeyword(contentType, keywordList, keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
+	default:
+		return d.SearchMessageByKeyword(contentType, keywordList, keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
+	}
+}
 
 func (d *DataBase) SearchMessageByContentType(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
 	var messageList []model_struct.LocalChatLog
@@ -106,6 +115,15 @@ func (d *DataBase) SearchMessageByContentType(contentType []int, sourceID string
 		result = append(result, &v1)
 	}
 	return result, err
+}
+
+func (d *DataBase) SearchMessageByContentTypeController(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return d.SuperGroupSearchMessageByContentType(contentType, sourceID, startTime, endTime, sessionType, offset, count)
+	default:
+		return d.SearchMessageByContentType(contentType, sourceID, startTime, endTime, sessionType, offset, count)
+	}
 }
 
 func (d *DataBase) SearchMessageByContentTypeAndKeyword(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
@@ -145,6 +163,25 @@ func (d *DataBase) SearchMessageByContentTypeAndKeyword(contentType []int, keywo
 		result = append(result, &v1)
 	}
 	return result, err
+}
+func (d *DataBase) SearchMessageByContentTypeAndKeywordController(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64, operationID string) (result []*model_struct.LocalChatLog, err error) {
+	list, err := d.SearchMessageByContentTypeAndKeyword(contentType, keywordList, keywordListMatchType, startTime, endTime)
+	if err != nil {
+		return nil, err
+	}
+	superGroupIDList, err := d.GetJoinedSuperGroupIDList()
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range superGroupIDList {
+		sList, err := d.SuperGroupSearchMessageByContentTypeAndKeyword(contentType, keywordList, keywordListMatchType, startTime, endTime, v)
+		if err != nil {
+			log.Error(operationID, "search message in group err", err.Error(), v)
+			continue
+		}
+		list = append(list, sList...)
+	}
+	return list, nil
 }
 func (d *DataBase) BatchUpdateMessageList(MessageList []*model_struct.LocalChatLog) error {
 	if MessageList == nil {
@@ -254,12 +291,10 @@ func (d *DataBase) UpdateMessageController(c *model_struct.LocalChatLog) error {
 }
 
 func (d *DataBase) DeleteAllMessage() error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	err := d.conn.Model(&model_struct.LocalChatLog{}).Exec("update local_chat_logs set status = ?,content = ? ", constant.MsgStatusHasDeleted, "").Error
+	m := model_struct.LocalChatLog{Status: constant.MsgStatusHasDeleted, Content: ""}
+	err := d.conn.Session(&gorm.Session{AllowGlobalUpdate: true}).Select("status", "content").Updates(m).Error
 	return utils.Wrap(err, "delete all message error")
 }
-
 func (d *DataBase) UpdateMessageStatusBySourceID(sourceID string, status, sessionType int32) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
@@ -274,6 +309,14 @@ func (d *DataBase) UpdateMessageStatusBySourceID(sourceID string, status, sessio
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
 	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
+}
+func (d *DataBase) UpdateMessageStatusBySourceIDController(sourceID string, status, sessionType int32) error {
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return d.SuperGroupUpdateMessageStatusBySourceID(sourceID, status, sessionType)
+	default:
+		return d.UpdateMessageStatusBySourceID(sourceID, status, sessionType)
+	}
 }
 func (d *DataBase) UpdateMessageTimeAndStatus(clientMsgID string, serverMsgID string, sendTime int64, status int32) error {
 	d.mRWMutex.Lock()

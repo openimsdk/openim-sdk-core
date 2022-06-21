@@ -187,7 +187,7 @@ func (c *Conversation) deleteConversation(callback open_im_sdk_callback.Base, co
 	switch lc.ConversationType {
 	case constant.SingleChatType, constant.NotificationChatType:
 		sourceID = lc.UserID
-	case constant.GroupChatType:
+	case constant.GroupChatType, constant.SuperGroupChatType:
 		sourceID = lc.GroupID
 	}
 	//Mark messages related to this conversation for deletion
@@ -456,7 +456,7 @@ func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req 
 	var localMessage model_struct.LocalChatLog
 	var lc model_struct.LocalConversation
 	var conversationID string
-	message, err := c.db.GetMessage(req.ClientMsgID)
+	message, err := c.db.GetMessageController((*sdk_struct.MsgStruct)(&req))
 	common.CheckDBErrCallback(callback, err, operationID)
 	if message.Status != constant.MsgStatusSendSuccess {
 		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can be revoked"), operationID)
@@ -472,6 +472,9 @@ func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req 
 	case constant.GroupChatType:
 		groupID = req.GroupID
 		conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+	case constant.SuperGroupChatType:
+		groupID = req.GroupID
+		conversationID = utils.GetConversationIDBySessionType(groupID, constant.SuperGroupChatType)
 	default:
 		common.CheckAnyErrCallback(callback, 201, errors.New("SessionType err"), operationID)
 	}
@@ -488,7 +491,7 @@ func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req 
 	req.SendTime = resp.SendTime
 	req.Status = constant.MsgStatusSendSuccess
 	msgStructToLocalChatLog(&localMessage, (*sdk_struct.MsgStruct)(&req))
-	err = c.db.InsertMessage(&localMessage)
+	err = c.db.InsertMessageController(&localMessage)
 	if err != nil {
 		log.Error(operationID, "inset into chat log err", localMessage, req)
 	}
@@ -613,14 +616,23 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 //	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 //}
 func (c *Conversation) insertMessageToLocalStorage(callback open_im_sdk_callback.Base, s *model_struct.LocalChatLog, operationID string) string {
-	err := c.db.InsertMessage(s)
+	err := c.db.InsertMessageController(s)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return s.ClientMsgID
 }
 
 func (c *Conversation) clearGroupHistoryMessage(callback open_im_sdk_callback.Base, groupID string, operationID string) {
-	conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
-	err := c.db.UpdateMessageStatusBySourceID(groupID, constant.MsgStatusHasDeleted, constant.GroupChatType)
+	var sessionType int32
+	g, err := c.full.GetGroupInfoByGroupID(groupID)
+	common.CheckAnyErrCallback(callback, 202, err, operationID)
+	switch g.GroupType {
+	case constant.NormalGroup:
+		sessionType = constant.GroupChatType
+	case constant.SuperGroup:
+		sessionType = constant.SuperGroupChatType
+	}
+	conversationID := utils.GetConversationIDBySessionType(groupID, int(sessionType))
+	err = c.db.UpdateMessageStatusBySourceIDController(groupID, constant.MsgStatusHasDeleted, sessionType)
 	common.CheckDBErrCallback(callback, err, operationID)
 	err = c.db.ClearConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -661,14 +673,13 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 	var conversationID string
 	var sourceID string
 	chatLog := model_struct.LocalChatLog{ClientMsgID: s.ClientMsgID, Status: constant.MsgStatusHasDeleted}
-	err := c.db.UpdateMessage(&chatLog)
+	err := c.db.UpdateMessageController(&chatLog)
 	common.CheckDBErrCallback(callback, err, operationID)
-
-	if s.SessionType == constant.GroupChatType {
+	switch s.SessionType {
+	case constant.GroupChatType:
 		conversationID = utils.GetConversationIDBySessionType(s.GroupID, constant.GroupChatType)
 		sourceID = s.GroupID
-
-	} else if s.SessionType == constant.SingleChatType {
+	case constant.SingleChatType:
 		if s.SendID != c.loginUserID {
 			conversationID = utils.GetConversationIDBySessionType(s.SendID, constant.SingleChatType)
 			sourceID = s.SendID
@@ -676,13 +687,16 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 			conversationID = utils.GetConversationIDBySessionType(s.RecvID, constant.SingleChatType)
 			sourceID = s.RecvID
 		}
+	case constant.SuperGroupChatType:
+		conversationID = utils.GetConversationIDBySessionType(s.GroupID, constant.SuperGroupChatType)
+		sourceID = s.GroupID
 	}
 	LocalConversation, err := c.db.GetConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
 	common.JsonUnmarshalCallback(LocalConversation.LatestMsg, &latestMsg, callback, operationID)
 
 	if s.ClientMsgID == latestMsg.ClientMsgID { //If the deleted message is the latest message of the conversation, update the latest message of the conversation
-		list, err := c.db.GetMessageList(sourceID, int(s.SessionType), 1, s.SendTime+TimeOffset, false)
+		list, err := c.db.GetMessageListNoTimeController(sourceID, int(s.SessionType), 1, false)
 		common.CheckDBErrCallback(callback, err, operationID)
 
 		conversation.ConversationID = conversationID
@@ -760,9 +774,11 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 			sourceID = localConversation.UserID
 		case constant.GroupChatType:
 			sourceID = localConversation.GroupID
+		case constant.SuperGroupChatType:
+			sourceID = localConversation.GroupID
 		}
 		if len(searchParam.MessageTypeList) != 0 && len(searchParam.KeywordList) == 0 {
-			list, err = c.db.SearchMessageByContentType(searchParam.MessageTypeList, sourceID, startTime, endTime, int(localConversation.ConversationType), offset, searchParam.Count)
+			list, err = c.db.SearchMessageByContentTypeController(searchParam.MessageTypeList, sourceID, startTime, endTime, int(localConversation.ConversationType), offset, searchParam.Count)
 		} else {
 			newContentTypeList := func(list []int) (result []int) {
 				for _, v := range list {
@@ -775,14 +791,14 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 			if len(newContentTypeList) == 0 {
 				newContentTypeList = SearchContentType
 			}
-			list, err = c.db.SearchMessageByKeyword(newContentTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, sourceID, startTime, endTime, int(localConversation.ConversationType), offset, searchParam.Count)
+			list, err = c.db.SearchMessageByKeywordController(newContentTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, sourceID, startTime, endTime, int(localConversation.ConversationType), offset, searchParam.Count)
 		}
 	} else {
 		//Comprehensive search, search all
 		if len(searchParam.MessageTypeList) == 0 {
 			searchParam.MessageTypeList = SearchContentType
 		}
-		list, err = c.db.SearchMessageByContentTypeAndKeyword(searchParam.MessageTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
+		list, err = c.db.SearchMessageByContentTypeAndKeywordController(searchParam.MessageTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime, operationID)
 	}
 	common.CheckDBErrCallback(callback, err, operationID)
 	//localChatLogToMsgStruct(&messageList, list)
@@ -835,10 +851,18 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 			temp.GroupID = temp.RecvID
 			temp.RecvID = c.loginUserID
 			conversationID = utils.GetConversationIDBySessionType(temp.GroupID, constant.GroupChatType)
+		case constant.SuperGroupChatType:
+			temp.GroupID = temp.RecvID
+			temp.RecvID = c.loginUserID
+			conversationID = utils.GetConversationIDBySessionType(temp.GroupID, constant.SuperGroupChatType)
 		}
 		if oldItem, ok := conversationMap[conversationID]; !ok {
 			searchResultItem := sdk.SearchByConversationResult{}
-			localConversation, _ := c.db.GetConversation(conversationID)
+			localConversation, err := c.db.GetConversation(conversationID)
+			if err != nil {
+				log.Error(operationID, "get conversation err ", err.Error(), conversationID)
+				continue
+			}
 			searchResultItem.ConversationID = conversationID
 			searchResultItem.FaceURL = localConversation.FaceURL
 			searchResultItem.ShowName = localConversation.ShowName
@@ -955,7 +979,7 @@ func (c *Conversation) deleteAllMsgFromLocal(callback open_im_sdk_callback.Base,
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	err := c.db.DeleteAllMessage()
 	common.CheckDBErrCallback(callback, err, operationID)
-	err = c.db.CleaALLConversation()
+	err = c.db.CleaAllConversation()
 	common.CheckDBErrCallback(callback, err, operationID)
 	conversationList, err := c.db.GetAllConversationList()
 	common.CheckDBErrCallback(callback, err, operationID)
