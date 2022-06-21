@@ -823,10 +823,11 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 		//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, []string{conversationID}}})
 		//_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 		var delFile []string
-
-		msgStructToLocalChatLog(&localMessage, &s)
-		err = c.db.UpdateMessageController(&localMessage)
-		common.CheckAnyErrCallback(callback, 201, err, operationID)
+		if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Voice, constant.Video, constant.File}) {
+			msgStructToLocalChatLog(&localMessage, &s)
+			err = c.db.UpdateMessageController(&localMessage)
+			common.CheckAnyErrCallback(callback, 201, err, operationID)
+		}
 		c.sendMessageToServer(&s, lc, callback, delFile, p, options, operationID)
 	}()
 }
@@ -1207,6 +1208,7 @@ func (c *Conversation) ClearC2CHistoryMessageFromLocalAndSvr(callback open_im_sd
 	}()
 }
 
+//fixme
 func (c *Conversation) ClearGroupHistoryMessageFromLocalAndSvr(callback open_im_sdk_callback.Base, groupID string, operationID string) {
 	if callback == nil {
 		return
@@ -1269,7 +1271,15 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 			common.CheckAnyErrCallback(callback, 208, errors.New("groupID or sendID is null"), operationID)
 		}
 		var conversation model_struct.LocalConversation
-		conversation.ConversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+		g, err := c.full.GetGroupInfoByGroupID(groupID)
+		common.CheckAnyErrCallback(callback, 202, err, operationID)
+		switch g.GroupType {
+		case constant.NormalGroup:
+			conversation.ConversationType = constant.GroupChatType
+		case constant.SuperGroup:
+			conversation.ConversationType = constant.SuperGroupChatType
+		}
+		conversation.ConversationID = utils.GetConversationIDBySessionType(groupID, int(conversation.ConversationType))
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 		if sendID != c.loginUserID {
@@ -1289,7 +1299,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 		s.GroupID = groupID
 		s.ClientMsgID = utils.GetMsgID(s.SendID)
 		s.SendTime = utils.GetCurrentTimestampByMill()
-		s.SessionType = constant.GroupChatType
+		s.SessionType = conversation.ConversationType
 		s.Status = constant.MsgStatusSendSuccess
 		msgStructToLocalChatLog(&localMessage, &s)
 		conversation.LatestMsg = utils.StructToJsonString(s)
