@@ -194,6 +194,7 @@ func (d *DataBase) BatchUpdateMessageList(MessageList []*model_struct.LocalChatL
 		v1.Seq = v.Seq
 		v1.Status = v.Status
 		v1.RecvID = v.RecvID
+		v1.SessionType = v.SessionType
 		err := d.UpdateMessageController(v1)
 		if err != nil {
 			return utils.Wrap(err, "BatchUpdateMessageList failed")
