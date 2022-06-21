@@ -211,7 +211,8 @@ func (w *Ws) ReadData() {
 			}
 			if w.WsConn.IsFatalError(err) {
 				log.Error(operationID, "IsFatalError ", err.Error(), "ReConn")
-				if w.reConnSleep(operationID, 5) {
+				err, isNeedReConnect := w.reConnSleep(operationID, 5)
+				if err != nil && isNeedReConnect == false {
 					log.Warn(operationID, "token failed, don't connect again")
 					return
 				}
@@ -222,7 +223,11 @@ func (w *Ws) ReadData() {
 		}
 		if msgType == websocket.CloseMessage {
 			log.Error(operationID, "type websocket.CloseMessage, ReConn")
-			w.reConnSleep(operationID, 1)
+			err, isNeedReConnect := w.reConnSleep(operationID, 1)
+			if err != nil && isNeedReConnect == false {
+				log.Warn(operationID, "token failed, don't connect again")
+				return
+			}
 			continue
 		} else if msgType == websocket.TextMessage {
 			log.Warn(operationID, "type websocket.TextMessage")
