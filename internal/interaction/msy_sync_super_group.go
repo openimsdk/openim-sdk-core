@@ -7,7 +7,6 @@ import (
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
-	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sync"
 )
@@ -112,7 +111,7 @@ func (m *SuperGroupMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 func (m *SuperGroupMsgSync) doPushMsg(cmd common.Cmd2Value) {
 	msg := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).Msg
 	operationID := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).OperationID
-	log.Debug(operationID, "recv push msg, doPushMsg ", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, msg.GroupID, msg.SessionType)
+	log.Debug(operationID, "recv super group push msg, doPushMsg ", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, msg.GroupID, msg.SessionType)
 	if msg.Seq == 0 {
 		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg}, operationID)
 		return
@@ -146,14 +145,14 @@ func (m *SuperGroupMsgSync) syncMsg(operationID string) {
 		seqMaxSynchronized := m.Group2SeqMaxSynchronized[groupID]
 		if seqMaxNeedSync > seqMaxSynchronized {
 			log.Info(operationID, "do syncMsg ", seqMaxSynchronized+1, seqMaxNeedSync)
-			m.syncMsgFromServer(seqMaxSynchronized+1, seqMaxNeedSync, groupID)
+			m.syncMsgFromServer(seqMaxSynchronized+1, seqMaxNeedSync, groupID, operationID)
 			m.Group2SeqMaxSynchronized[groupID] = seqMaxNeedSync
 		}
 	}
 	m.superGroupMtx.Unlock()
 }
 
-func (m *SuperGroupMsgSync) syncMsgFromServer(beginSeq, endSeq uint32, groupID string) {
+func (m *SuperGroupMsgSync) syncMsgFromServer(beginSeq, endSeq uint32, groupID, operationID string) {
 	if beginSeq > endSeq {
 		log.Error("", "beginSeq > endSeq", beginSeq, endSeq)
 		return
@@ -165,12 +164,12 @@ func (m *SuperGroupMsgSync) syncMsgFromServer(beginSeq, endSeq uint32, groupID s
 	}
 	var SPLIT = 100
 	for i := 0; i < len(needSyncSeqList)/SPLIT; i++ {
-		m.syncMsgFromServerSplit(needSyncSeqList[i*SPLIT:(i+1)*SPLIT], groupID)
+		m.syncMsgFromServerSplit(needSyncSeqList[i*SPLIT:(i+1)*SPLIT], groupID, operationID)
 	}
-	m.syncMsgFromServerSplit(needSyncSeqList[SPLIT*(len(needSyncSeqList)/SPLIT):], groupID)
+	m.syncMsgFromServerSplit(needSyncSeqList[SPLIT*(len(needSyncSeqList)/SPLIT):], groupID, operationID)
 }
 
-func (m *SuperGroupMsgSync) syncMsgFromServerSplit(needSyncSeqList []uint32, groupID string) {
+func (m *SuperGroupMsgSync) syncMsgFromServerSplit(needSyncSeqList []uint32, groupID, operationID string) {
 	var pullMsgReq server_api_params.PullMessageBySeqListReq
 	//pullMsgReq.SeqList = needSyncSeqList
 	pullMsgReq.UserID = m.loginUserID
@@ -178,8 +177,8 @@ func (m *SuperGroupMsgSync) syncMsgFromServerSplit(needSyncSeqList []uint32, gro
 	pullMsgReq.GroupSeqList[groupID] = &server_api_params.SeqList{SeqList: needSyncSeqList}
 
 	for {
-		operationID := utils.OperationIDGenerator()
 		pullMsgReq.OperationID = operationID
+		log.Debug(operationID, "super group pull message", groupID)
 		resp, err := m.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 30, 2, m.loginUserID, operationID)
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 30, 2, m.loginUserID)

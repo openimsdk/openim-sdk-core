@@ -133,7 +133,7 @@ func (m *SelfMsgSync) doPushMsg(cmd common.Cmd2Value) {
 func (m *SelfMsgSync) doPushSingleMsg(cmd common.Cmd2Value) {
 	msg := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).Msg
 	operationID := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).OperationID
-	log.Debug(operationID, utils.GetSelfFuncName(), "recv push msg, doPushMsg ", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, m.seqMaxNeedSync, m.seqMaxSynchronized)
+	log.Debug(operationID, utils.GetSelfFuncName(), "recv normal push msg, doPushMsg ", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, m.seqMaxNeedSync, m.seqMaxSynchronized)
 	if msg.Seq == 0 {
 		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg}, operationID)
 		return
@@ -216,6 +216,7 @@ func (m *SelfMsgSync) syncMsgFromCache2ServerSplit(needSyncSeqList []uint32) {
 		if err != nil {
 			log.Error(operationID, "Unmarshal failed ", err.Error())
 			return
+
 		}
 		msgList = append(msgList, pullMsgResp.List...)
 		m.TriggerCmdNewMsgCome(msgList, operationID)
