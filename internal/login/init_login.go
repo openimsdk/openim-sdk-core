@@ -212,6 +212,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.friend.SetLoginTime(u.loginTime)
 	u.group.SetLoginTime(u.loginTime)
 	u.superGroup.SetLoginTime(u.loginTime)
+	u.organization.SetLoginTime(u.loginTime)
 	go u.forcedSynchronization()
 	log.Info(operationID, "forcedSynchronization success...")
 	log.Info(operationID, "all channel ", u.pushMsgAndMaxSeqCh, u.conversationCh, u.heartbeatCmdCh, u.cmdWsCh)
