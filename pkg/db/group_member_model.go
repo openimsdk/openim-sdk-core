@@ -22,6 +22,12 @@ func (d *DataBase) GetAllGroupMemberList() ([]model_struct.LocalGroupMember, err
 	return groupMemberList, utils.Wrap(d.conn.Find(&groupMemberList).Error, "GetAllGroupMemberList failed")
 }
 
+func (d *DataBase) GetGroupMemberCount(groupID string) (uint32, error) {
+	var count int64
+	err := d.conn.Model(&model_struct.LocalGroupMember{}).Where("group_id = ? ", groupID).Count(&count).Error
+	return uint32(count), utils.Wrap(err, "GetGroupMemberCount failed")
+}
+
 func (d *DataBase) GetGroupSomeMemberInfo(groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
@@ -48,8 +54,6 @@ func (d *DataBase) GetGroupMemberListByGroupID(groupID string) ([]*model_struct.
 	return transfer, utils.Wrap(err, "GetGroupMemberListByGroupID failed ")
 }
 func (d *DataBase) GetGroupMemberListSplit(groupID string, filter int32, offset, count int) ([]*model_struct.LocalGroupMember, error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
 	var groupMemberList []model_struct.LocalGroupMember
 	var err error
 	if filter == 0 {
@@ -63,8 +67,23 @@ func (d *DataBase) GetGroupMemberListSplit(groupID string, filter int32, offset,
 		v1 := v
 		transfer = append(transfer, &v1)
 	}
-	return transfer, utils.Wrap(err, "GetGroupMemberListByGroupID failed ")
+	return transfer, utils.Wrap(err, "GetGroupMemberListSplit failed ")
 }
+
+func (d *DataBase) GetGroupMemberListSplitByJoinTimeFilter(groupID string, offset, count int, joinTimeBegin, joinTimeEnd uint32) ([]*model_struct.LocalGroupMember, error) {
+	d.mRWMutex.RLock()
+	defer d.mRWMutex.RUnlock()
+	var groupMemberList []model_struct.LocalGroupMember
+	var err error
+	err = d.conn.Where("group_id = ? And join_time > ? And join_time < ?", groupID, joinTimeBegin, joinTimeEnd).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+	var transfer []*model_struct.LocalGroupMember
+	for _, v := range groupMemberList {
+		v1 := v
+		transfer = append(transfer, &v1)
+	}
+	return transfer, utils.Wrap(err, "GetGroupMemberListSplitByJoinTimeFilter failed ")
+}
+
 func (d *DataBase) GetGroupOwnerAndAdminByGroupID(groupID string) ([]*model_struct.LocalGroupMember, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()

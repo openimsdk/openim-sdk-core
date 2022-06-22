@@ -138,6 +138,7 @@ func (g *Group) memberQuitNotification(msg *api.MsgData, operationID string) {
 		g.db.DeleteGroupAllMembers(detail.Group.GroupID)
 	} else {
 		g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
+		g.updateMemberCount(detail.Group.GroupID, operationID)
 	}
 }
 
@@ -200,6 +201,7 @@ func (g *Group) memberKickedNotification(msg *api.MsgData, operationID string) {
 		}
 	}
 	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
+	g.updateMemberCount(detail.Group.GroupID, operationID)
 }
 
 func (g *Group) memberInvitedNotification(msg *api.MsgData, operationID string) {
@@ -218,6 +220,7 @@ func (g *Group) memberInvitedNotification(msg *api.MsgData, operationID string) 
 		}
 	}
 	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
+	g.updateMemberCount(detail.Group.GroupID, operationID)
 }
 
 func (g *Group) memberEnterNotification(msg *api.MsgData, operationID string) {
@@ -232,6 +235,7 @@ func (g *Group) memberEnterNotification(msg *api.MsgData, operationID string) {
 		g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, false)
 	} else {
 		g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
+		g.updateMemberCount(detail.Group.GroupID, operationID)
 	}
 
 }
@@ -486,6 +490,12 @@ func (g *Group) getGroupMemberList(callback open_im_sdk_callback.Base, groupID s
 	return groupInfoList
 }
 
+func (g *Group) getGroupMemberListByJoinTimeFilter(callback open_im_sdk_callback.Base, groupID string, offset, count int32, joinTimeBegin, joinTimeEnd uint32, operationID string) sdk.GetGroupMemberListCallback {
+	groupInfoList, err := g.db.GetGroupMemberListSplitByJoinTimeFilter(groupID, int(offset), int(count), joinTimeBegin, joinTimeEnd)
+	common.CheckDBErrCallback(callback, err, operationID)
+	return groupInfoList
+}
+
 //todo
 func (g *Group) getGroupMembersInfo(callback open_im_sdk_callback.Base, groupID string, userIDList sdk.GetGroupMembersInfoParam, operationID string) sdk.GetGroupMembersInfoCallback {
 	groupInfoList, err := g.db.GetGroupSomeMemberInfo(groupID, userIDList)
@@ -597,6 +607,25 @@ func (g *Group) getJoinedGroupListFromSvr(operationID string) ([]*api.GroupInfo,
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 	return result, nil
+}
+
+func (g *Group) updateMemberCount(groupID string, operationID string) {
+	memberCount, err := g.db.GetGroupMemberCount(groupID)
+	if err != nil {
+		log.Error(operationID, "GetGroupMemberCount failed ", err.Error(), groupID)
+		return
+	}
+	groupInfo, err := g.db.GetGroupInfoByGroupID(groupID)
+	if err != nil {
+		log.Error(operationID, "GetGroupInfoByGroupID failed ", err.Error(), groupID)
+		return
+	}
+	if groupInfo.MemberCount != int32(memberCount) {
+		groupInfo.MemberCount = int32(memberCount)
+		log.Info(operationID, "OnGroupInfoChanged , update group info", groupInfo)
+		g.db.UpdateGroup(groupInfo)
+		g.listener.OnGroupInfoChanged(utils.StructToJsonString(groupInfo))
+	}
 }
 
 func (g *Group) getGroupMembersInfoFromSvr(groupID string, memberList []string) ([]*api.GroupMemberFullInfo, error) {
