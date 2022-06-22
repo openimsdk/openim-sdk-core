@@ -490,7 +490,7 @@ func (g *Group) getGroupMemberList(callback open_im_sdk_callback.Base, groupID s
 	return groupInfoList
 }
 
-func (g *Group) getGroupMemberListByJoinTimeFilter(callback open_im_sdk_callback.Base, groupID string, offset, count int32, joinTimeBegin, joinTimeEnd int32, operationID string) sdk.GetGroupMemberListCallback {
+func (g *Group) getGroupMemberListByJoinTimeFilter(callback open_im_sdk_callback.Base, groupID string, offset, count int32, joinTimeBegin, joinTimeEnd int64, operationID string) sdk.GetGroupMemberListCallback {
 	groupInfoList, err := g.db.GetGroupMemberListSplitByJoinTimeFilter(groupID, int(offset), int(count), joinTimeBegin, joinTimeEnd)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return groupInfoList

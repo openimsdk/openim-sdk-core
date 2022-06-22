@@ -186,7 +186,7 @@ func (g *Group) GetGroupMemberList(callback open_im_sdk_callback.Base, groupID s
 }
 
 //getGroupMemberListByJoinTimeFilter
-func (g *Group) GetGroupMemberListByJoinTimeFilter(callback open_im_sdk_callback.Base, groupID string, offset, count int32, joinTimeBegin, joinTimeEnd int32, operationID string) {
+func (g *Group) GetGroupMemberListByJoinTimeFilter(callback open_im_sdk_callback.Base, groupID string, offset, count int32, joinTimeBegin, joinTimeEnd int64, operationID string) {
 	if callback == nil {
 		return
 	}

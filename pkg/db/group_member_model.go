@@ -70,7 +70,7 @@ func (d *DataBase) GetGroupMemberListSplit(groupID string, filter int32, offset,
 	return transfer, utils.Wrap(err, "GetGroupMemberListSplit failed ")
 }
 
-func (d *DataBase) GetGroupMemberListSplitByJoinTimeFilter(groupID string, offset, count int, joinTimeBegin, joinTimeEnd int32) ([]*model_struct.LocalGroupMember, error) {
+func (d *DataBase) GetGroupMemberListSplitByJoinTimeFilter(groupID string, offset, count int, joinTimeBegin, joinTimeEnd int64) ([]*model_struct.LocalGroupMember, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var groupMemberList []model_struct.LocalGroupMember
