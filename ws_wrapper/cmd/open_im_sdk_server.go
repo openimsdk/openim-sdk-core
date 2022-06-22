@@ -55,7 +55,7 @@ func main() {
 
 	sysType := runtime.GOOS
 	log.NewPrivateLog(constant.LogFileName, uint32(*logLevel))
-	open_im_sdk.SetHeartbeatInterval(60)
+	open_im_sdk.SetHeartbeatInterval(5)
 	switch sysType {
 
 	case "darwin":
