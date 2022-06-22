@@ -195,6 +195,7 @@ func (d *DataBase) BatchUpdateMessageList(MessageList []*model_struct.LocalChatL
 		v1.Status = v.Status
 		v1.RecvID = v.RecvID
 		v1.SessionType = v.SessionType
+		v1.ServerMsgID = v.ServerMsgID
 		err := d.UpdateMessageController(v1)
 		if err != nil {
 			return utils.Wrap(err, "BatchUpdateMessageList failed")
@@ -322,11 +323,8 @@ func (d *DataBase) UpdateMessageStatusBySourceIDController(sourceID string, stat
 func (d *DataBase) UpdateMessageTimeAndStatus(clientMsgID string, serverMsgID string, sendTime int64, status int32) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Model(model_struct.LocalChatLog{}).Where("client_msg_id=? And seq=?", clientMsgID, 0).Updates(model_struct.LocalChatLog{Status: status, SendTime: sendTime, ServerMsgID: serverMsgID})
-	if t.RowsAffected == 0 {
-		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
-	}
-	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
+	return utils.Wrap(d.conn.Model(model_struct.LocalChatLog{}).Where("client_msg_id=? And seq=?", clientMsgID, 0).Updates(model_struct.LocalChatLog{Status: status, SendTime: sendTime, ServerMsgID: serverMsgID}).Error, "UpdateMessageStatusBySourceID failed")
+
 }
 func (d *DataBase) UpdateMessageTimeAndStatusController(msg *sdk_struct.MsgStruct) error {
 	switch msg.SessionType {
