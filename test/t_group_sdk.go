@@ -369,7 +369,18 @@ func (t baseCallback) OnError(errCode int32, errMsg string) {
 type testKickGroupMember struct {
 	baseCallback
 }
+type testGetGroupMemberListByJoinTimeFilter struct {
+	baseCallback
+}
 
+func DotestGetGroupMemberListByJoinTimeFilter() {
+	var test testGetGroupMemberListByJoinTimeFilter
+	test.OperationID = utils.OperationIDGenerator()
+	var memlist []string
+	jlist := utils.StructToJsonString(memlist)
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ", jlist)
+	open_im_sdk.GetGroupMemberListByJoinTimeFilter(test, test.OperationID, "3750066757", 1, 40, 0, 0, jlist)
+}
 func DotestKickGroupMember() {
 	var test testKickGroupMember
 	test.OperationID = utils.OperationIDGenerator()
