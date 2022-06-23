@@ -245,11 +245,11 @@ func (wsRouter *WsFuncRouter) GetGroupMemberListByJoinTimeFilter(input, operatio
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "groupID", "offset", "count", "joinTimeBegin", "joinTimeEnd") {
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "groupID", "offset", "count", "joinTimeBegin", "joinTimeEnd", "filterUserID") {
 		return
 	}
 	userWorker.Group().GetGroupMemberListByJoinTimeFilter(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},
-		m["groupID"].(string), int32(m["offset"].(float64)), int32(m["count"].(float64)), int64(m["joinTimeBegin"].(float64)), int64(m["joinTimeEnd"].(float64)), operationID)
+		m["groupID"].(string), int32(m["offset"].(float64)), int32(m["count"].(float64)), int64(m["joinTimeBegin"].(float64)), int64(m["joinTimeEnd"].(float64)), m["filterUserID"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetGroupMembersInfo(input, operationID string) { //(groupId string, userList string, callback Base) {

@@ -70,12 +70,12 @@ func (d *DataBase) GetGroupMemberListSplit(groupID string, filter int32, offset,
 	return transfer, utils.Wrap(err, "GetGroupMemberListSplit failed ")
 }
 
-func (d *DataBase) GetGroupMemberListSplitByJoinTimeFilter(groupID string, offset, count int, joinTimeBegin, joinTimeEnd int64) ([]*model_struct.LocalGroupMember, error) {
+func (d *DataBase) GetGroupMemberListSplitByJoinTimeFilter(groupID string, offset, count int, joinTimeBegin, joinTimeEnd int64, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var groupMemberList []model_struct.LocalGroupMember
 	var err error
-	err = d.conn.Where("group_id = ? And join_time > ? And join_time < ?", groupID, joinTimeBegin, joinTimeEnd).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+	err = d.conn.Where("group_id = ? And join_time  between ? and ? And user_id NOT IN ?", groupID, joinTimeBegin, joinTimeEnd, userIDList).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	var transfer []*model_struct.LocalGroupMember
 	for _, v := range groupMemberList {
 		v1 := v
