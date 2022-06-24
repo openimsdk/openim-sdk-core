@@ -41,11 +41,12 @@ type SearchGroupsParam struct {
 type SearchGroupsCallback []*model_struct.LocalGroup
 
 type SetGroupInfoParam struct {
-	GroupName    string `json:"groupName"`
-	Notification string `json:"notification"`
-	Introduction string `json:"introduction"`
-	FaceURL      string `json:"faceURL"`
-	Ex           string `json:"ex"`
+	GroupName        string `json:"groupName"`
+	Notification     string `json:"notification"`
+	Introduction     string `json:"introduction"`
+	FaceURL          string `json:"faceURL"`
+	Ex               string `json:"ex"`
+	NeedVerification *int32 `json:"needVerification" binding "oneof=0 1 2"`
 }
 
 const SetGroupInfoCallback = constant.SuccessCallbackDefault
