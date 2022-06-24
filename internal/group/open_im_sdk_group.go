@@ -186,14 +186,16 @@ func (g *Group) GetGroupMemberList(callback open_im_sdk_callback.Base, groupID s
 }
 
 //getGroupMemberListByJoinTimeFilter
-func (g *Group) GetGroupMemberListByJoinTimeFilter(callback open_im_sdk_callback.Base, groupID string, offset, count int32, joinTimeBegin, joinTimeEnd int64, operationID string) {
+func (g *Group) GetGroupMemberListByJoinTimeFilter(callback open_im_sdk_callback.Base, groupID string, offset, count int32, joinTimeBegin, joinTimeEnd int64, filterUserID, operationID string) {
 	if callback == nil {
 		return
 	}
 	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, fName, "args: ", groupID, offset, count)
-		groupMemberList := g.getGroupMemberListByJoinTimeFilter(callback, groupID, offset, count, joinTimeBegin, joinTimeEnd, operationID)
+		log.NewInfo(operationID, fName, "args: ", groupID, offset, count, filterUserID)
+		var userIDList []string
+		common.JsonUnmarshalAndArgsValidate(filterUserID, &userIDList, callback, operationID)
+		groupMemberList := g.getGroupMemberListByJoinTimeFilter(callback, groupID, offset, count, joinTimeBegin, joinTimeEnd, userIDList, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(groupMemberList))
 		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(groupMemberList))
 	}()
