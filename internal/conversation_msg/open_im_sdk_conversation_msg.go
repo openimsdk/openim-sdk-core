@@ -1170,7 +1170,26 @@ func (c *Conversation) MarkGroupMessageHasRead(callback open_im_sdk_callback.Bas
 		callback.OnSuccess(sdk_params_callback.MarkGroupMessageHasReadCallback)
 	}()
 }
-
+func (c *Conversation) MarkGroupMessageAsRead(callback open_im_sdk_callback.Base, groupID string, msgIDList, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, "MarkGroupMessageAsRead args: ", groupID, msgIDList)
+		var unmarshalParams sdk_params_callback.MarkGroupMessageAsReadParams
+		common.JsonUnmarshalCallback(msgIDList, &unmarshalParams, callback, operationID)
+		if len(unmarshalParams) == 0 {
+			conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
+			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+			callback.OnSuccess(sdk_params_callback.MarkGroupMessageAsReadCallback)
+			return
+		}
+		c.markGroupMessageAsRead(callback, unmarshalParams, groupID, operationID)
+		callback.OnSuccess(sdk_params_callback.MarkGroupMessageAsReadCallback)
+		log.NewInfo(operationID, "MarkGroupMessageAsRead callback: ", sdk_params_callback.MarkGroupMessageAsReadCallback)
+	}()
+}
 func (c *Conversation) DeleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, message string, operationID string) {
 	go func() {
 		s := sdk_struct.MsgStruct{}

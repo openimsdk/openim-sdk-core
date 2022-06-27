@@ -25,6 +25,11 @@ func (d *DataBase) GetAbnormalMsgSeq() (uint32, error) {
 	err := d.conn.Model(model_struct.LocalErrChatLog{}).Select("IFNULL(max(seq),0)").Find(&seq).Error
 	return seq, utils.Wrap(err, "GetAbnormalMsgSeq")
 }
+func (d *DataBase) GetAbnormalMsgSeqList() ([]uint32, error) {
+	var seqList []uint32
+	err := d.conn.Model(model_struct.LocalErrChatLog{}).Select("seq").Find(&seqList).Error
+	return seqList, utils.Wrap(err, "GetAbnormalMsgSeqList")
+}
 func (d *DataBase) BatchInsertExceptionMsg(MessageList []*model_struct.LocalErrChatLog) error {
 	if MessageList == nil {
 		return nil

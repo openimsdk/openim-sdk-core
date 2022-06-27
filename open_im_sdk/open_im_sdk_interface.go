@@ -821,11 +821,7 @@ func MarkGroupMessageAsRead(callback open_im_sdk_callback.Base, operationID stri
 		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
 		return
 	}
-	if userForSDK.AdvancedFunction() == nil {
-		callback.OnError(constant.ErrNotSupportFunction.ErrCode, constant.ErrNotSupportFunction.ErrMsg)
-
-	}
-	userForSDK.AdvancedFunction().MarkGroupMessageAsRead(callback, groupID, msgIDList, operationID)
+	userForSDK.Conversation().MarkGroupMessageAsRead(callback, groupID, msgIDList, operationID)
 }
 
 func DeleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, operationID string, message string) {

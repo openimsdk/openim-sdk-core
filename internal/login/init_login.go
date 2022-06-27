@@ -10,7 +10,7 @@ import (
 	"open_im_sdk/internal/group"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/organization"
-	"open_im_sdk/internal/sdk_advanced_function"
+	"open_im_sdk/internal/signaling"
 	"open_im_sdk/internal/super_group"
 	"open_im_sdk/internal/user"
 	workMoments "open_im_sdk/internal/work_moments"
@@ -26,24 +26,24 @@ import (
 )
 
 type LoginMgr struct {
-	organization     *organization.Organization
-	friend           *friend.Friend
-	group            *group.Group
-	superGroup       *super_group.SuperGroup
-	conversation     *conv.Conversation
-	user             *user.User
-	signaling        advanced_interface.Signaling
-	advancedFunction advanced_interface.AdvancedFunction
-	workMoments      *workMoments.WorkMoments
-	full             *full.Full
-	db               *db.DataBase
-	ws               *ws.Ws
-	msgSync          *ws.MsgSync
-	heartbeat        *ws.Heartbeat
-	cache            *cache.Cache
-	token            string
-	loginUserID      string
-	connListener     open_im_sdk_callback.OnConnListener
+	organization *organization.Organization
+	friend       *friend.Friend
+	group        *group.Group
+	superGroup   *super_group.SuperGroup
+	conversation *conv.Conversation
+	user         *user.User
+	signaling    *signaling.LiveSignaling
+	//advancedFunction advanced_interface.AdvancedFunction
+	workMoments  *workMoments.WorkMoments
+	full         *full.Full
+	db           *db.DataBase
+	ws           *ws.Ws
+	msgSync      *ws.MsgSync
+	heartbeat    *ws.Heartbeat
+	cache        *cache.Cache
+	token        string
+	loginUserID  string
+	connListener open_im_sdk_callback.OnConnListener
 
 	loginTime int64
 
@@ -73,10 +73,6 @@ func (u *LoginMgr) Organization() *organization.Organization {
 
 func (u *LoginMgr) Heartbeat() *ws.Heartbeat {
 	return u.heartbeat
-}
-
-func (u *LoginMgr) AdvancedFunction() advanced_interface.AdvancedFunction {
-	return u.advancedFunction
 }
 
 func (u *LoginMgr) Ws() *ws.Ws {
@@ -228,13 +224,12 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	default:
 		objStorage = comm2.NewCOS(p)
 	}
-	u.signaling = sdk_advanced_function.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID, u.imConfig.Platform, u.db)
-	u.advancedFunction = sdk_advanced_function.NewChatHasRead(u.ws, u.loginUserID, u.db, u.imConfig.Platform, u.conversationCh, u.advancedMsgListener)
+	u.signaling = signaling.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID, u.imConfig.Platform, u.db)
 
 	u.conversation = conv.NewConversation(u.ws, u.db, p, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener,
-		u.signaling, u.advancedFunction, u.organization, u.workMoments, u.cache, u.full)
+		u.organization, u.signaling, u.workMoments, u.cache, u.full)
 	if u.batchMsgListener != nil {
 		u.conversation.SetBatchMsgListener(u.batchMsgListener)
 		log.Info(operationID, "SetBatchMsgListener ", u.batchMsgListener)
