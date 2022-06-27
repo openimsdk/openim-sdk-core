@@ -325,7 +325,7 @@ func (g *Group) quitGroup(groupID string, callback open_im_sdk_callback.Base, op
 	apiReq.OperationID = operationID
 	apiReq.GroupID = groupID
 	g.p.PostFatalCallback(callback, constant.QuitGroupRouter, apiReq, nil, apiReq.OperationID)
-	//g.syncGroupMemberByGroupID(groupID, operationID, false) //todo
+	//	g.syncGroupMemberByGroupID(groupID, operationID, false) //todo
 	g.SyncJoinedGroupList(operationID)
 }
 
@@ -812,6 +812,7 @@ func (g *Group) SyncJoinedGroupList(operationID string) {
 			log.NewError(operationID, "DeleteGroup failed ", err.Error(), onLocal[index].GroupID)
 			continue
 		}
+		g.db.DeleteGroupAllMembers(onLocal[index].GroupID)
 		callbackData := sdk.JoinedGroupDeletedCallback(*onLocal[index])
 		g.listener.OnJoinedGroupDeleted(utils.StructToJsonString(callbackData))
 		log.Info(operationID, "OnJoinedGroupDeleted", utils.StructToJsonString(callbackData))

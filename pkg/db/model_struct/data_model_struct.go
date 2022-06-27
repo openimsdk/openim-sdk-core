@@ -110,19 +110,20 @@ type LocalFriendRequest struct {
 type LocalGroup struct {
 	//`json:"operationID" binding:"required"`
 	//`protobuf:"bytes,1,opt,name=GroupID" json:"GroupID,omitempty"` `json:"operationID" binding:"required"`
-	GroupID       string `gorm:"column:group_id;primary_key;type:varchar(64)" json:"groupID" binding:"required"`
-	GroupName     string `gorm:"column:name;size:255" json:"groupName"`
-	Notification  string `gorm:"column:notification;type:varchar(255)" json:"notification"`
-	Introduction  string `gorm:"column:introduction;type:varchar(255)" json:"introduction"`
-	FaceURL       string `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
-	CreateTime    uint32 `gorm:"column:create_time" json:"createTime"`
-	Status        int32  `gorm:"column:status" json:"status"`
-	CreatorUserID string `gorm:"column:creator_user_id;type:varchar(64)" json:"creatorUserID"`
-	GroupType     int32  `gorm:"column:group_type" json:"groupType"`
-	OwnerUserID   string `gorm:"column:owner_user_id;type:varchar(64)" json:"ownerUserID"`
-	MemberCount   int32  `gorm:"column:member_count" json:"memberCount"`
-	Ex            string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
-	AttachedInfo  string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+	GroupID          string `gorm:"column:group_id;primary_key;type:varchar(64)" json:"groupID" binding:"required"`
+	GroupName        string `gorm:"column:name;size:255" json:"groupName"`
+	Notification     string `gorm:"column:notification;type:varchar(255)" json:"notification"`
+	Introduction     string `gorm:"column:introduction;type:varchar(255)" json:"introduction"`
+	FaceURL          string `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
+	CreateTime       uint32 `gorm:"column:create_time" json:"createTime"`
+	Status           int32  `gorm:"column:status" json:"status"`
+	CreatorUserID    string `gorm:"column:creator_user_id;type:varchar(64)" json:"creatorUserID"`
+	GroupType        int32  `gorm:"column:group_type" json:"groupType"`
+	OwnerUserID      string `gorm:"column:owner_user_id;type:varchar(64)" json:"ownerUserID"`
+	MemberCount      int32  `gorm:"column:member_count" json:"memberCount"`
+	Ex               string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	AttachedInfo     string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+	NeedVerification int32  `gorm:"column:need_verification"  json:"needVerification"`
 }
 
 //message GroupMemberFullInfo {
