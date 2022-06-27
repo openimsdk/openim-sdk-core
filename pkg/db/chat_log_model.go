@@ -378,13 +378,19 @@ func (d *DataBase) GetMessageListNoTime(sourceID string, sessionType, count int,
 	} else {
 		timeOrder = "send_time DESC"
 	}
-	if sessionType == constant.SingleChatType && sourceID == d.loginUserID {
-		condition = "send_id = ? And recv_id = ? AND status <=? And session_type = ?"
+	if sessionType == constant.SingleChatType {
+		if sourceID == d.loginUserID {
+			condition = "send_id = ? And recv_id = ? AND status <=? And session_type = ?"
+		} else {
+			condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? "
+		}
+		err = utils.Wrap(d.conn.Debug().Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType).
+			Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
 	} else {
-		condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? "
+		condition = " recv_id = ? AND status <=? And session_type = ? "
+		err = utils.Wrap(d.conn.Debug().Where(condition, sourceID, constant.MsgStatusSendFailed, sessionType).
+			Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
 	}
-	err = utils.Wrap(d.conn.Debug().Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType).
-		Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)
