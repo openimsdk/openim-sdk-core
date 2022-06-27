@@ -313,3 +313,8 @@ const SdkVersion = "Open-IM-SDK-Core-"
 const LogFileName = "sdk"
 
 var HeartbeatInterval = 5
+
+const (
+	MsgSyncModelLogin    = 1   //SyncFlag
+	SyncOrderStartLatest = 101 //PullMsgOrder
+)

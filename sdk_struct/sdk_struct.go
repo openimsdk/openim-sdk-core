@@ -204,8 +204,13 @@ type IMConfig struct {
 var SvrConf IMConfig
 
 type CmdNewMsgComeToConversation struct {
-	MsgList     []*server_api_params.MsgData
-	OperationID string
+	MsgList       []*server_api_params.MsgData
+	OperationID   string
+	SyncFlag      int
+	MaxSeqOnSvr   uint32
+	MaxSeqOnLocal uint32
+	CurrentMaxSeq uint32
+	PullMsgOrder  int
 }
 
 type CmdPushMsgToMsgSync struct {
@@ -214,9 +219,9 @@ type CmdPushMsgToMsgSync struct {
 }
 
 type CmdMaxSeqToMsgSync struct {
-	MaxSeqOnSvr uint32
-	OperationID string
-
+	MaxSeqOnSvr         uint32
+	OperationID         string
+	MinSeqOnSvr         uint32
 	GroupID2MaxSeqOnSvr map[string]uint32
 }
 type CmdJoinedSuperGroup struct {
