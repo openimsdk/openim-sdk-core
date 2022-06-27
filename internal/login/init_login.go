@@ -1,7 +1,6 @@
 package login
 
 import (
-	"open_im_sdk/internal/advanced_interface"
 	"open_im_sdk/internal/cache"
 	comm2 "open_im_sdk/internal/common"
 	conv "open_im_sdk/internal/conversation_msg"
@@ -103,7 +102,7 @@ func (u *LoginMgr) Friend() *friend.Friend {
 	return u.friend
 }
 
-func (u *LoginMgr) Signaling() advanced_interface.Signaling {
+func (u *LoginMgr) Signaling() *signaling.LiveSignaling {
 	return u.signaling
 }
 
