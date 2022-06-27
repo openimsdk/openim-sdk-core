@@ -6,12 +6,12 @@ import (
 )
 
 var (
-	//	TESTIP = "cjyy.zs.sjz.gov.cn"
-	TESTIP = "43.128.5.63"
+	TESTIP = "cjyy.zs.sjz.gov.cn"
+	//TESTIP = "43.128.5.63"
 	//TESTIP       = "8.213.195.63"
 	//TESTIP       = "103.116.45.174"
-	APIADDR      = "http://" + TESTIP + ":10002"
-	WSADDR       = "ws://" + TESTIP + ":10001"
+	APIADDR      = "https://" + TESTIP + ":10000"
+	WSADDR       = "wss://" + TESTIP + ":17778"
 	REGISTERADDR = APIADDR + "/auth/user_register"
 	TOKENADDR    = APIADDR + "/auth/user_token"
 	SECRET       = "tuoyun"
