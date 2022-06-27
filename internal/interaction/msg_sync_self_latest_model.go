@@ -20,7 +20,7 @@ type SelfMsgSyncLatestModel struct {
 	seqMaxNeedSync     uint32 //max seq in push or max seq in redis
 	pushMsgCache       map[uint32]*server_api_params.MsgData
 
-	lostMsgSeqList  []uint32 //
+	lostMsgSeqList  []uint32
 	syncMsgFinished bool
 	maxSeqOnLocal   uint32
 }
@@ -31,15 +31,18 @@ func NewSelfMsgSyncLatestModel(dataBase *db.DataBase, ws *Ws, loginUserID string
 	return p
 }
 
+//1
 func (m *SelfMsgSyncLatestModel) GetLocalNormalMsgMaxSeq() (uint32, error) {
 	return m.GetNormalMsgSeq()
 }
 
+//1
 func (m *SelfMsgSyncLatestModel) GetLocalLostMsgSeqList(minSeqInSvr uint32) ([]uint32, error) {
 	return m.GetLostMsgSeqList(minSeqInSvr)
 }
 
-func (m *SelfMsgSyncLatestModel) compareSeq(operationID string, minSeqInSvr uint32, maxSeqInSvr uint32) {
+//1
+func (m *SelfMsgSyncLatestModel) compareSeq(operationID string, minSeqInSvr uint32) {
 	n, err := m.GetLocalNormalMsgMaxSeq()
 	if err != nil {
 		log.Error(operationID, "GetNormalMsgSeq failed ", err.Error())
@@ -49,13 +52,14 @@ func (m *SelfMsgSyncLatestModel) compareSeq(operationID string, minSeqInSvr uint
 	}
 	lostSeqList, err := m.GetLocalLostMsgSeqList(minSeqInSvr)
 	if err != nil {
-		log.Error(operationID, "GetLostMsgSeqList failed ", err.Error(), minSeqInSvr, maxSeqInSvr)
+		log.Error(operationID, "GetLostMsgSeqList failed ", err.Error(), minSeqInSvr)
 	} else {
 		m.lostMsgSeqList = lostSeqList
 	}
 	log.Info(operationID, "load,  seqMaxSynchronized, lostMsgSeqList maxSeqOnLocal ", m.seqMaxSynchronized, m.lostMsgSeqList, m.maxSeqOnLocal)
 }
 
+//1
 func (m *SelfMsgSyncLatestModel) doMaxSeq(cmd common.Cmd2Value) {
 	var maxSeqOnSvr = cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).MaxSeqOnSvr
 	var minSeqOnSvr = cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).MinSeqOnSvr
@@ -63,24 +67,28 @@ func (m *SelfMsgSyncLatestModel) doMaxSeq(cmd common.Cmd2Value) {
 	log.Debug(operationID, "doMaxSeq, minSeqOnSvr, maxSeqOnSvr, m.seqMaxSynchronized, m.seqMaxNeedSync, m.maxSeqOnLocal",
 		minSeqOnSvr, maxSeqOnSvr, m.seqMaxSynchronized, m.seqMaxNeedSync, m.maxSeqOnLocal)
 	if !m.syncMsgFinished {
-		log.Info(operationID, " syncMsgWhenLogin ", minSeqOnSvr, maxSeqOnSvr)
+		log.Info(operationID, " syncMsgWhenLogin start ", minSeqOnSvr, maxSeqOnSvr)
 		m.syncMsgWhenLogin(minSeqOnSvr, maxSeqOnSvr, operationID)
 	}
-	if maxSeqOnSvr < m.seqMaxNeedSync {
+	if maxSeqOnSvr <= m.seqMaxNeedSync {
 		return
 	}
 	m.seqMaxNeedSync = maxSeqOnSvr
 	m.syncMsg(operationID, constant.MsgSyncModelDefault)
 }
 
+//1
 func (m *SelfMsgSyncLatestModel) syncMsgWhenLogin(minSeqOnSvr, maxSeqOnSvr uint32, operationID string) {
 	log.Debug(operationID, utils.GetSelfFuncName(), "args: ", minSeqOnSvr, maxSeqOnSvr, m.syncMsgFinished)
 	if m.syncMsgFinished {
 		return
 	}
-	m.compareSeq(operationID, minSeqOnSvr, maxSeqOnSvr)
-	m.seqMaxNeedSync = maxSeqOnSvr
+	m.compareSeq(operationID, minSeqOnSvr)
+	if maxSeqOnSvr > m.seqMaxNeedSync {
+		m.seqMaxNeedSync = maxSeqOnSvr
+	}
 	m.syncMsg(operationID, constant.MsgSyncModelLogin)
+	go m.syncLostMsg(operationID)
 	m.syncMsgFinished = true
 }
 
@@ -181,17 +189,31 @@ func (m *SelfMsgSyncLatestModel) doPushSingleMsg(cmd common.Cmd2Value) {
 	m.syncMsg(operationID, constant.MsgSyncModelDefault)
 }
 
+//1
 func (m *SelfMsgSyncLatestModel) syncMsg(operationID string, syncFlag int) {
 	if m.seqMaxNeedSync > m.seqMaxSynchronized {
 		log.Info(operationID, "do syncMsg ", m.seqMaxSynchronized+1, m.seqMaxNeedSync)
-		m.syncMsgFromServer(m.seqMaxSynchronized+1, m.seqMaxNeedSync, syncFlag, operationID)
-		m.seqMaxSynchronized = m.seqMaxNeedSync
+		if syncFlag == constant.MsgSyncModelDefault {
+			m.syncMsgFromServer(m.seqMaxSynchronized+1, m.seqMaxNeedSync, syncFlag, operationID)
+			m.seqMaxSynchronized = m.seqMaxNeedSync
+			return
+		}
+
+		if m.seqMaxNeedSync-m.seqMaxSynchronized < uint32(pullMsgNumWhenLogin) {
+			m.syncMsgFromServer(m.seqMaxSynchronized+1, m.seqMaxNeedSync, syncFlag, operationID)
+			m.seqMaxSynchronized = m.seqMaxNeedSync
+		} else { //50000-20000
+			m.syncMsgFromServer(m.seqMaxNeedSync-uint32(pullMsgNumWhenLogin)+1, m.seqMaxNeedSync, constant.MsgSyncModelDefault, operationID) //40000+1,50000
+			m.seqMaxSynchronized = m.seqMaxNeedSync
+			go m.syncMsgFromServer(m.seqMaxSynchronized+1, m.seqMaxNeedSync-uint32(pullMsgNumWhenLogin), constant.MsgSyncModelDefault, operationID) //20000+1 , 40000
+		}
 	} else {
 		log.Info(operationID, "syncMsg do nothing, m.seqMaxNeedSync <= m.seqMaxSynchronized ",
 			m.seqMaxNeedSync, m.seqMaxSynchronized)
 	}
 }
 
+//1
 func (m *SelfMsgSyncLatestModel) syncLostMsg(operationID string) {
 	if len(m.lostMsgSeqList) == 0 {
 		return
@@ -205,6 +227,7 @@ func (m *SelfMsgSyncLatestModel) syncLostMsg(operationID string) {
 	needSyncSeqList = nil
 }
 
+//1
 func (m *SelfMsgSyncLatestModel) syncMsgFromServer(beginSeq, endSeq uint32, syncFlag int, operationID string) {
 	log.Info(operationID, utils.GetSelfFuncName(), "args: ", beginSeq, endSeq, syncFlag)
 	if beginSeq > endSeq {
@@ -224,7 +247,12 @@ func (m *SelfMsgSyncLatestModel) syncMsgFromServer(beginSeq, endSeq uint32, sync
 	m.syncMsgFromServerSplit(needSyncSeqList[SPLIT*(len(needSyncSeqList)/SPLIT):], syncFlag, operationID)
 }
 
+//1
 func (m *SelfMsgSyncLatestModel) syncMsgFromCache2ServerSplit(needSyncSeqList []uint32, syncFlag int, operationID string) {
+	log.Info(operationID, utils.GetSelfFuncName(), "args: ", len(needSyncSeqList), syncFlag)
+	if len(needSyncSeqList) == 0 {
+		return
+	}
 	var msgList []*server_api_params.MsgData
 	var noInCache []uint32
 	for _, v := range needSyncSeqList {
@@ -237,11 +265,7 @@ func (m *SelfMsgSyncLatestModel) syncMsgFromCache2ServerSplit(needSyncSeqList []
 		}
 	}
 	if len(noInCache) == 0 {
-		if syncFlag == constant.MsgSyncModelLogin {
-			m.TriggerCmdNewMsgCome(msgList, operationID, syncFlag, needSyncSeqList[0])
-		} else {
-			m.TriggerCmdNewMsgCome(msgList, operationID, syncFlag, 0)
-		}
+		m.TriggerCmdNewMsgCome(msgList, operationID, syncFlag, needSyncSeqList[0])
 		return
 	}
 
@@ -249,7 +273,6 @@ func (m *SelfMsgSyncLatestModel) syncMsgFromCache2ServerSplit(needSyncSeqList []
 	pullMsgReq.SeqList = noInCache
 	pullMsgReq.UserID = m.loginUserID
 	for {
-		operationID = utils.OperationIDGenerator()
 		pullMsgReq.OperationID = operationID
 		resp, err := m.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 60, 2, m.loginUserID, operationID)
 		if err != nil {
@@ -261,22 +284,19 @@ func (m *SelfMsgSyncLatestModel) syncMsgFromCache2ServerSplit(needSyncSeqList []
 		if err != nil {
 			log.Error(operationID, "Unmarshal failed ", err.Error())
 			return
-
 		}
 		msgList = append(msgList, pullMsgResp.List...)
-		if syncFlag == constant.MsgSyncModelLogin {
-			m.TriggerCmdNewMsgCome(msgList, operationID, syncFlag, needSyncSeqList[0])
-		} else {
-			m.TriggerCmdNewMsgCome(msgList, operationID, syncFlag, 0)
-		}
+		m.TriggerCmdNewMsgCome(msgList, operationID, syncFlag, needSyncSeqList[0])
 		return
 	}
 }
 
+//1
 func (m *SelfMsgSyncLatestModel) syncMsgFromServerSplit(needSyncSeqList []uint32, syncFlag int, operationID string) {
 	m.syncMsgFromCache2ServerSplit(needSyncSeqList, syncFlag, operationID)
 }
 
+//1
 func (m *SelfMsgSyncLatestModel) TriggerCmdNewMsgCome(msgList []*server_api_params.MsgData, operationID string, syncFlag int, currentMaxSeq uint32) {
 	for {
 		if syncFlag == constant.MsgSyncModelLogin {

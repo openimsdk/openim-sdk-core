@@ -12,6 +12,7 @@ import (
 )
 
 var splitPullMsgNum = 1000
+var pullMsgNumWhenLogin = 10000
 
 type SelfMsgSync struct {
 	*db.DataBase

@@ -28,7 +28,7 @@ type MsgSync struct {
 
 func (m *MsgSync) compareSeq() {
 	operationID := utils.OperationIDGenerator()
-	m.selfMsgSync.compareSeq(operationID, 0, 0)
+	m.selfMsgSync.compareSeq(operationID, 0)
 	m.superGroupMsgSync.compareSeq(operationID)
 }
 
