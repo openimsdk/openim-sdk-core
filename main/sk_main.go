@@ -9,71 +9,22 @@ import (
 
 func main() {
 
-	strMyUidx := "18666662345"
+	strMyUidx := "707010937"
 	log.NewPrivateLog("", 6)
 	tokenx := test.GenToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
 	test.DoTestDeleteAllMsgFromLocalAndSvr()
 
-	time.Sleep(250000 * time.Millisecond)
-
-	println("start")
-	test.DoTestSendMsg2Group(strMyUidx, "0a3b3b8cc181b9fcfdfe4887e0b4ac30", 0)
-
-	//test.DoTestGetUserInDepartment()
-	//test.DoTestGetDepartmentMemberAndSubDepartment()
-	//test.DoTestDeleteAllMsgFromLocalAndSvr()
-	//	test.DoTestGetDepartmentMemberAndSubDepartment()
-	//test.DotestUploadFile()
-	//test.DotestMinio()
-	//test.DotestSearchFriends()
-	//if *senderNum == 0 {
-	//	test.RegisterAccounts(*onlineNum)
-	//	return
-	//}
-	//
-	//test.OnlineTest(*onlineNum)
-	////test.TestSendCostTime()
-	//test.ReliabilityTest(*singleSenderMsgNum, *intervalTime, 10, *senderNum)
-	//test.DoTestSearchLocalMessages()
-	//println("start")
-	//test.DoTestSendImageMsg(strMyUidx, "17726378428")
-	//test.DoTestSearchGroups()
-	//test.DoTestGetHistoryMessage("")
-	//test.DoTestGetHistoryMessageReverse("")
-	//test.DoTestInviteInGroup()
-	//test.DoTestCancel()
-	//test.DoTestSendMsg2(strMyUidx, friendID)
-	//test.DoTestGetAllConversation()
-
-	//test.DoTestGetOneConversation("17726378428")
-	//test.DoTestGetConversations(`["single_17726378428"]`)
-	//test.DoTestGetConversationListSplit()
-	//test.DoTestGetConversationRecvMessageOpt(`["single_17726378428"]`)
-
-	//set batch
-	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.NotReceiveMessage)
-	//set one
-	////set batch
-	//test.DoTestSetConversationRecvMessageOpt([]string{"single_17726378428"}, constant.ReceiveMessage)
-	////set one
-	//test.DoTestSetConversationPinned("single_17726378428", false)
-	//test.DoTestSetOneConversationRecvMessageOpt("single_17726378428", constant.NotReceiveMessage)
-	//test.DoTestSetOneConversationPrivateChat("single_17726378428", false)
-	//test.DoTestReject()
-	//test.DoTestAccept()
-	//test.DoTestMarkGroupMessageAsRead()
-	//test.DoTestGetGroupHistoryMessage()
-	//test.DoTestGetHistoryMessage("17396220460")
+	println("token ", tokenx)
 
 	b := utils.GetCurrentTimestampBySecond()
 	i := 0
 	for {
-		test.DoTestSendMsg2Group(strMyUidx, "42c9f515cb84ee0e82b3f3ce71eb14d6", i)
+		test.DoTestSendMsg2Group(strMyUidx, "a43619731c1c05eb93fc2501eab04f33", i)
 		i++
-		time.Sleep(250 * time.Millisecond)
-		if i == 100 {
+		time.Sleep(100 * time.Millisecond)
+		if i == 10000 {
 			break
 		}
 		log.Warn("", "10 * time.Millisecond ###################waiting... msg: ", i)

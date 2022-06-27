@@ -11,6 +11,8 @@ import (
 	"open_im_sdk/sdk_struct"
 )
 
+var splitPullMsgNum = 1000
+
 type SelfMsgSync struct {
 	*db.DataBase
 	*Ws
@@ -25,6 +27,14 @@ func NewSelfMsgSync(dataBase *db.DataBase, ws *Ws, loginUserID string, conversat
 	p := &SelfMsgSync{DataBase: dataBase, Ws: ws, loginUserID: loginUserID, conversationCh: conversationCh}
 	p.pushMsgCache = make(map[uint32]*server_api_params.MsgData, 0)
 	return p
+}
+
+func (m *SelfMsgSync) GetNormalMsgMaxSeq() (uint32, error) {
+	return 0, nil
+}
+
+func (m *SelfMsgSync) GetLostMsgSeqList(minSeqInSvr uint32, maxSeqInSvr uint32) ([]uint32, error) {
+	return nil, nil
 }
 
 func (m *SelfMsgSync) compareSeq(operationID string) {
@@ -44,6 +54,7 @@ func (m *SelfMsgSync) compareSeq(operationID string) {
 	}
 	m.seqMaxNeedSync = m.seqMaxSynchronized
 	log.Info(operationID, "load seq, normal, abnormal, ", n, a, m.seqMaxNeedSync, m.seqMaxSynchronized)
+
 }
 
 func (m *SelfMsgSync) doMaxSeq(cmd common.Cmd2Value) {
@@ -175,7 +186,7 @@ func (m *SelfMsgSync) syncMsgFromServer(beginSeq, endSeq uint32) {
 	for i := beginSeq; i <= endSeq; i++ {
 		needSyncSeqList = append(needSyncSeqList, i)
 	}
-	var SPLIT = 100
+	var SPLIT = splitPullMsgNum
 	for i := 0; i < len(needSyncSeqList)/SPLIT; i++ {
 		m.syncMsgFromServerSplit(needSyncSeqList[i*SPLIT : (i+1)*SPLIT])
 	}
@@ -226,27 +237,6 @@ func (m *SelfMsgSync) syncMsgFromCache2ServerSplit(needSyncSeqList []uint32) {
 
 func (m *SelfMsgSync) syncMsgFromServerSplit(needSyncSeqList []uint32) {
 	m.syncMsgFromCache2ServerSplit(needSyncSeqList)
-
-	//var pullMsgReq server_api_params.PullMessageBySeqListReq
-	//pullMsgReq.SeqList = needSyncSeqList
-	//pullMsgReq.UserID = m.loginUserID
-	//for {
-	//	operationID := utils.OperationIDGenerator()
-	//	pullMsgReq.OperationID = operationID
-	//	resp, err := m.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 30, 2, m.loginUserID, operationID)
-	//	if err != nil {
-	//		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 30, 2, m.loginUserID)
-	//		continue
-	//	}
-	//	var pullMsgResp server_api_params.PullMessageBySeqListResp
-	//	err = proto.Unmarshal(resp.Data, &pullMsgResp)
-	//	if err != nil {
-	//		log.Error(operationID, "Unmarshal failed ", err.Error())
-	//		return
-	//	}
-	//	m.TriggerCmdNewMsgCome(pullMsgResp.List, operationID)
-	//	return
-	//}
 }
 
 func (m *SelfMsgSync) TriggerCmdNewMsgCome(msgList []*server_api_params.MsgData, operationID string) {

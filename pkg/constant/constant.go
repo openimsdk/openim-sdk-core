@@ -315,6 +315,7 @@ const LogFileName = "sdk"
 var HeartbeatInterval = 5
 
 const (
+	MsgSyncModelDefault  = 0   //SyncFlag
 	MsgSyncModelLogin    = 1   //SyncFlag
 	SyncOrderStartLatest = 101 //PullMsgOrder
 )

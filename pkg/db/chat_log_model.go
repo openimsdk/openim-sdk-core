@@ -446,7 +446,7 @@ func (d *DataBase) GetNormalMsgSeq() (uint32, error) {
 	err := d.conn.Model(model_struct.LocalChatLog{}).Select("IFNULL(max(seq),0)").Find(&seq).Error
 	return seq, utils.Wrap(err, "GetNormalMsgSeq")
 }
-func (d *DataBase) GetLostMsgSeqList() ([]uint32, error) {
+func (d *DataBase) GetLostMsgSeqList(minSeqInSvr uint32) ([]uint32, error) {
 	var hasSeqList []uint32
 	err := d.conn.Model(model_struct.LocalChatLog{}).Select("seq").Order("seq ASC").Find(&hasSeqList).Error
 	if err != nil {
