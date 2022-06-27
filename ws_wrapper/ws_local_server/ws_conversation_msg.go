@@ -121,6 +121,14 @@ type ConversationCallback struct {
 	uid string
 }
 
+//func (c *ConversationCallback) OnSyncServerProgress(progress int) {
+//	var ed EventData
+//	ed.Event = cleanUpfuncName(runFuncName())
+//	ed.ErrCode = 0
+//	ed.Data = utils.IntToString(progress)
+//	SendOneUserMessage(ed, c.uid)
+//}
+
 func (c *ConversationCallback) OnSyncServerStart() {
 	var ed EventData
 	ed.Event = cleanUpfuncName(runFuncName())
@@ -576,13 +584,10 @@ func (wsRouter *WsFuncRouter) MarkGroupMessageAsRead(input string, operationID s
 		return
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if userWorker.AdvancedFunction() == nil {
-		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusNotSupportFunction, "unsupported function", "", operationID})
-	}
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "groupID", "msgIDList") {
 		return
 	}
-	userWorker.AdvancedFunction().MarkGroupMessageAsRead(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["groupID"].(string), m["msgIDList"].(string), operationID)
+	userWorker.Conversation().MarkGroupMessageAsRead(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["groupID"].(string), m["msgIDList"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) DeleteMessageFromLocalStorage(message string, operationID string) {

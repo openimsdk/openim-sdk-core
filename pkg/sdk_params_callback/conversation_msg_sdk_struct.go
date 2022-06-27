@@ -55,6 +55,10 @@ const MarkC2CMessageAsReadCallback = constant.SuccessCallbackDefault
 
 const MarkGroupMessageHasReadCallback = constant.SuccessCallbackDefault
 
+type MarkGroupMessageAsReadParams []string
+
+const MarkGroupMessageAsReadCallback = constant.SuccessCallbackDefault
+
 type MarkMessageAsReadByConIDParams []string
 
 const MarkMessageAsReadByConIDCallback = constant.SuccessCallbackDefault

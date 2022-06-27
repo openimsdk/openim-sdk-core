@@ -2,7 +2,6 @@ package conversation_msg
 
 import (
 	"encoding/json"
-	"open_im_sdk/internal/advanced_interface"
 	"open_im_sdk/internal/cache"
 	common2 "open_im_sdk/internal/common"
 	"open_im_sdk/internal/friend"
@@ -10,6 +9,7 @@ import (
 	"open_im_sdk/internal/group"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/organization"
+	"open_im_sdk/internal/signaling"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
@@ -44,25 +44,25 @@ type Conversation struct {
 	friend               *friend.Friend
 	group                *group.Group
 	user                 *user.User
-	signaling            advanced_interface.Signaling
-	advancedFunction     advanced_interface.AdvancedFunction
-	organization         *organization.Organization
-	workMoments          *workMoments.WorkMoments
+	signaling            *signaling.LiveSignaling
+	//advancedFunction     advanced_interface.AdvancedFunction
+	organization *organization.Organization
+	workMoments  *workMoments.WorkMoments
 	common2.ObjectStorage
 
 	cache *cache.Cache
 	full  *full.Full
 }
 
-func (c *Conversation) SetAdvancedFunction(advancedFunction advanced_interface.AdvancedFunction) {
-	c.advancedFunction = advancedFunction
-}
+//func (c *Conversation) SetAdvancedFunction(advancedFunction advanced_interface.AdvancedFunction) {
+//	c.advancedFunction = advancedFunction
+//}
 
 func (c *Conversation) MsgListener() open_im_sdk_callback.OnAdvancedMsgListener {
 	return c.msgListener
 }
 
-func (c *Conversation) SetSignaling(signaling advanced_interface.Signaling) {
+func (c *Conversation) SetSignaling(signaling *signaling.LiveSignaling) {
 	c.signaling = signaling
 }
 
@@ -78,12 +78,10 @@ func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 	ch chan common.Cmd2Value, loginUserID string, platformID int32, dataDir string,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener,
-	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling advanced_interface.Signaling,
-	advancedFunction advanced_interface.AdvancedFunction, organization *organization.Organization,
+	msgListener open_im_sdk_callback.OnAdvancedMsgListener, organization *organization.Organization, signaling *signaling.LiveSignaling,
 	workMoments *workMoments.WorkMoments, cache *cache.Cache, full *full.Full) *Conversation {
 	n := &Conversation{Ws: ws, db: db, p: p, recvCH: ch, loginUserID: loginUserID, platformID: platformID,
-		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage, signaling: signaling,
-		advancedFunction: advancedFunction, organization: organization, workMoments: workMoments,
+		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage, signaling: signaling, organization: organization, workMoments: workMoments,
 		full: full}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
@@ -423,7 +421,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	b8 := utils.GetCurrentTimestampByMill()
 	log.Debug(operationID, "doMsgReadState  cost time : ", b8-b7)
 
-	c.advancedFunction.DoGroupMsgReadState(groupMsgReadList)
+	c.DoGroupMsgReadState(groupMsgReadList)
 	b9 := utils.GetCurrentTimestampByMill()
 	log.Debug(operationID, "DoGroupMsgReadState  cost time : ", b9-b8, "len: ", len(groupMsgReadList))
 
@@ -538,6 +536,88 @@ func (c *Conversation) revokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 	}
 
 }
+func (c *Conversation) DoGroupMsgReadState(groupMsgReadList []*sdk_struct.MsgStruct) {
+	var groupMessageReceiptResp []*sdk_struct.MessageReceipt
+	var msgIDList []string
+	for _, rd := range groupMsgReadList {
+		err := json.Unmarshal([]byte(rd.Content), &msgIDList)
+		if err != nil {
+			log.Error("internal", "unmarshal failed, err : ", err.Error(), rd)
+			continue
+		}
+		messages, err := c.db.GetMultipleMessage(msgIDList)
+		if err != nil {
+			log.Error("internal", "GetMessage err:", err.Error(), "ClientMsgID", msgIDList)
+			continue
+		}
+		var msgIDListStatusOK []string
+		if rd.SendID != c.loginUserID {
+			for _, message := range messages {
+				t := new(model_struct.LocalChatLog)
+				attachInfo := sdk_struct.AttachedInfoElem{}
+				_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
+				attachInfo.GroupHasReadInfo.HasReadUserIDList = utils.RemoveRepeatedStringInList(append(attachInfo.GroupHasReadInfo.HasReadUserIDList, rd.SendID))
+				attachInfo.GroupHasReadInfo.HasReadCount = int32(len(attachInfo.GroupHasReadInfo.HasReadUserIDList))
+				t.AttachedInfo = utils.StructToJsonString(attachInfo)
+				t.ClientMsgID = message.ClientMsgID
+				t.IsRead = true
+				err = c.db.UpdateMessage(t)
+				if err != nil {
+					log.Error("internal", "setMessageHasReadByMsgID err:", err, "ClientMsgID", t, message)
+					continue
+				}
+				msgIDListStatusOK = append(msgIDListStatusOK, message.ClientMsgID)
+			}
+		} else {
+			err = c.db.UpdateColumnsMessageList(msgIDList, map[string]interface{}{"is_read": true})
+			if err != nil {
+				log.Error("internal", "setMessageHasReadByMsgID err:", err, "ClientMsgID", msgIDList)
+				continue
+			}
+			msgIDListStatusOK = append(msgIDListStatusOK, msgIDList...)
+		}
+		//var msgIDListStatusOK []string
+		//for _, v := range msgIDList {
+		//	t := new(model_struct.LocalChatLog)
+		//	if rd.SendID != c.loginUserID {
+		//		m, err := c.GetMessage(v)
+		//		if err != nil {
+		//			log.Error("internal", "GetMessage err:", err, "ClientMsgID", v)
+		//			continue
+		//		}
+		//		attachInfo := sdk_struct.AttachedInfoElem{}
+		//		_ = utils.JsonStringToStruct(m.AttachedInfo, &attachInfo)
+		//		attachInfo.GroupHasReadInfo.HasReadUserIDList = utils.RemoveRepeatedStringInList(append(attachInfo.GroupHasReadInfo.HasReadUserIDList, rd.SendID))
+		//		attachInfo.GroupHasReadInfo.HasReadCount = int32(len(attachInfo.GroupHasReadInfo.HasReadUserIDList))
+		//		t.AttachedInfo = utils.StructToJsonString(attachInfo)
+		//	}
+		//	t.ClientMsgID = v
+		//	t.IsRead = true
+		//	err = c.UpdateMessage(t)
+		//	if err != nil {
+		//		log.Error("internal", "setMessageHasReadByMsgID err:", err, "ClientMsgID", v)
+		//		continue
+		//	}
+		//	msgIDListStatusOK = append(msgIDListStatusOK, v)
+		//}
+		if len(msgIDListStatusOK) > 0 {
+			msgRt := new(sdk_struct.MessageReceipt)
+			msgRt.ContentType = rd.ContentType
+			msgRt.MsgFrom = rd.MsgFrom
+			msgRt.ReadTime = rd.SendTime
+			msgRt.UserID = rd.SendID
+			msgRt.GroupID = rd.GroupID
+			msgRt.SessionType = constant.GroupChatType
+			msgRt.MsgIDList = msgIDListStatusOK
+			groupMessageReceiptResp = append(groupMessageReceiptResp, msgRt)
+		}
+	}
+	if len(groupMessageReceiptResp) > 0 {
+		log.Info("internal", "OnRecvGroupReadReceipt: ", utils.StructToJsonString(groupMessageReceiptResp))
+		c.msgListener.OnRecvGroupReadReceipt(utils.StructToJsonString(groupMessageReceiptResp))
+	}
+}
+
 func (c *Conversation) newMessage(newMessagesList sdk_struct.NewMsgList) {
 	sort.Sort(newMessagesList)
 	for _, w := range newMessagesList {

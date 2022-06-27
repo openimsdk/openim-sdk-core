@@ -42,6 +42,7 @@ type OnFriendshipListener interface {
 type OnConversationListener interface {
 	OnSyncServerStart()
 	OnSyncServerFinish()
+	//OnSyncServerProgress(progress int)
 	OnSyncServerFailed()
 	OnNewConversation(conversationList string)
 	OnConversationChanged(conversationList string)

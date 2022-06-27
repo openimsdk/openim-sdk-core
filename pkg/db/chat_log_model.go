@@ -335,6 +335,7 @@ func (d *DataBase) UpdateMessageTimeAndStatusController(msg *sdk_struct.MsgStruc
 	}
 }
 
+//group ,index_recv_id and index_send_time only one can be used,when index_recv_id be used,temp B tree use for order by,Query speed decrease
 func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
@@ -445,7 +446,36 @@ func (d *DataBase) GetNormalMsgSeq() (uint32, error) {
 	err := d.conn.Model(model_struct.LocalChatLog{}).Select("IFNULL(max(seq),0)").Find(&seq).Error
 	return seq, utils.Wrap(err, "GetNormalMsgSeq")
 }
+func (d *DataBase) GetLostMsgSeqList() ([]uint32, error) {
+	var hasSeqList []uint32
+	err := d.conn.Model(model_struct.LocalChatLog{}).Select("seq").Order("seq ASC").Find(&hasSeqList).Error
+	if err != nil {
+		return nil, err
+	}
+	seqLength := len(hasSeqList)
+	if seqLength == 0 {
+		return nil, nil
+	}
+	var normalSeqList []uint32
 
+	var i uint32
+	for i = 1; i <= hasSeqList[seqLength-1]; i++ {
+		normalSeqList = append(normalSeqList, i)
+	}
+	lostSeqList := utils.DifferenceSubset(normalSeqList, hasSeqList)
+	if len(lostSeqList) == 0 {
+		return nil, nil
+	}
+	abnormalSeqList, err := d.GetAbnormalMsgSeqList()
+	if err != nil {
+		return nil, err
+	}
+	if len(abnormalSeqList) == 0 {
+		return lostSeqList, nil
+	}
+	return utils.DifferenceSubset(lostSeqList, utils.Intersect(lostSeqList, abnormalSeqList)), nil
+
+}
 func (d *DataBase) GetSuperGroupNormalMsgSeq(groupID string) (uint32, error) {
 	var seq uint32
 	err := d.conn.Table(utils.GetSuperGroupTableName(groupID)).Select("IFNULL(max(seq),0)").Find(&seq).Error

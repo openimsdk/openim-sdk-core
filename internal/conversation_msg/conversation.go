@@ -575,6 +575,51 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.GetCh())
 	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 }
+func (c *Conversation) markGroupMessageAsRead(callback open_im_sdk_callback.Base, msgIDList sdk.MarkGroupMessageAsReadParams, groupID, operationID string) {
+	var localMessage model_struct.LocalChatLog
+	allUserMessage := make(map[string][]string, 3)
+	messages, err := c.db.GetMultipleMessage(msgIDList)
+	common.CheckDBErrCallback(callback, err, operationID)
+	for _, v := range messages {
+		if v.IsRead == false && v.ContentType < constant.NotificationBegin && v.SendID != c.loginUserID {
+			if msgIDList, ok := allUserMessage[v.SendID]; ok {
+				msgIDList = append(msgIDList, v.ClientMsgID)
+				allUserMessage[v.SendID] = msgIDList
+			} else {
+				allUserMessage[v.SendID] = []string{v.ClientMsgID}
+			}
+		}
+	}
+	if len(allUserMessage) == 0 {
+		common.CheckAnyErrCallback(callback, 201, errors.New("message has been marked read or sender is yourself or notification message not support"), operationID)
+	}
+
+	for userID, list := range allUserMessage {
+		s := sdk_struct.MsgStruct{}
+		s.GroupID = groupID
+		c.initBasicInfo(&s, constant.UserMsgType, constant.GroupHasReadReceipt, operationID)
+		s.Content = utils.StructToJsonString(list)
+		options := make(map[string]bool, 5)
+		utils.SetSwitchFromOptions(options, constant.IsConversationUpdate, false)
+		utils.SetSwitchFromOptions(options, constant.IsSenderConversationUpdate, false)
+		utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
+		utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
+		//If there is an error, the coroutine ends, so judgment is not  required
+		resp, _ := c.InternalSendMessage(callback, &s, userID, "", operationID, &server_api_params.OfflinePushInfo{}, false, options)
+		s.ServerMsgID = resp.ServerMsgID
+		s.SendTime = resp.SendTime
+		s.Status = constant.MsgStatusFiltered
+		msgStructToLocalChatLog(&localMessage, &s)
+		err = c.db.InsertMessage(&localMessage)
+		if err != nil {
+			log.Error(operationID, "inset into chat log err", localMessage, s, err.Error())
+		}
+		err2 := c.db.UpdateMessageHasRead(userID, list, constant.GroupChatType)
+		if err2 != nil {
+			log.Error(operationID, "update message has read err", list, userID, err2.Error())
+		}
+	}
+}
 
 //func (c *Conversation) markMessageAsReadByConID(callback open_im_sdk_callback.Base, msgIDList sdk.MarkMessageAsReadByConIDParams, conversationID, operationID string) {
 //	var localMessage db.LocalChatLog
