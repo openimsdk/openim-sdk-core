@@ -102,7 +102,7 @@ func GroupMemberCopyToLocal(dst *model_struct.LocalGroupMember, src *server_api_
 	copier.Copy(dst, src)
 }
 
-func TransferToLocalGroupInfo(apiData []*server_api_params.GroupInfo) []*model_struct.LocalGroup {
+func TransferToLocalGroupInfo(apiData []*server_api_params.GroupInfoAlias) []*model_struct.LocalGroup {
 	local := make([]*model_struct.LocalGroup, 0)
 	//operationID := utils.OperationIDGenerator()
 	for _, v := range apiData {
@@ -116,7 +116,7 @@ func TransferToLocalGroupInfo(apiData []*server_api_params.GroupInfo) []*model_s
 	return local
 }
 
-func GroupInfoCopyToLocal(dst *model_struct.LocalGroup, src *server_api_params.GroupInfo) {
+func GroupInfoCopyToLocal(dst *model_struct.LocalGroup, src *server_api_params.GroupInfoAlias) {
 	copier.Copy(dst, src)
 }
 

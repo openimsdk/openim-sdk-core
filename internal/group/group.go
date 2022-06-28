@@ -457,11 +457,11 @@ func (g *Group) getGroupsInfo(groupIDList sdk.GetGroupsInfoParam, callback open_
 	return result
 }
 
-func (g *Group) getGroupsInfoFromSvr(groupIDList []string, operationID string) ([]*api.GroupInfo, error) {
+func (g *Group) getGroupsInfoFromSvr(groupIDList []string, operationID string) ([]*api.GroupInfoAlias, error) {
 	apiReq := api.GetGroupInfoReq{}
 	apiReq.GroupIDList = groupIDList
 	apiReq.OperationID = operationID
-	var groupInfoList []*api.GroupInfo
+	var groupInfoList []*api.GroupInfoAlias
 	err := g.p.PostReturn(constant.GetGroupsInfoRouter, apiReq, &groupInfoList)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
@@ -764,7 +764,18 @@ func (g *Group) SyncAdminGroupApplication(operationID string) {
 		log.Info(operationID, "OnReceiveJoinGroupApplicationDeleted", utils.StructToJsonString(callbackData))
 	}
 }
-
+func transferGroupInfo(input []*api.GroupInfo) []*api.GroupInfoAlias {
+	var result []*api.GroupInfoAlias
+	for _, v := range input {
+		t := &api.GroupInfoAlias{}
+		copier.Copy(t, &v)
+		if v.NeedVerification != nil {
+			t.NeedVerification = v.NeedVerification.Value
+		}
+		result = append(result, t)
+	}
+	return result
+}
 func (g *Group) SyncJoinedGroupList(operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	svrList, err := g.getJoinedGroupListFromSvr(operationID)
@@ -773,7 +784,7 @@ func (g *Group) SyncJoinedGroupList(operationID string) {
 		log.NewError(operationID, "getJoinedGroupListFromSvr failed ", err.Error())
 		return
 	}
-	onServer := common.TransferToLocalGroupInfo(svrList)
+	onServer := common.TransferToLocalGroupInfo(transferGroupInfo(svrList))
 	onLocal, err := g.db.GetJoinedGroupList()
 	if err != nil {
 		log.NewError(operationID, "GetJoinedGroupList failed ", err.Error())
