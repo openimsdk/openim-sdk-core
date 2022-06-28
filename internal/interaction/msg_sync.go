@@ -21,14 +21,14 @@ type MsgSync struct {
 	conversationCh     chan common.Cmd2Value
 	PushMsgAndMaxSeqCh chan common.Cmd2Value
 
-	selfMsgSync *SelfMsgSyncLatestModel
+	selfMsgSync *SelfMsgSync
 	//selfMsgSyncLatestModel *SelfMsgSyncLatestModel
 	superGroupMsgSync *SuperGroupMsgSync
 }
 
 func (m *MsgSync) compareSeq() {
 	operationID := utils.OperationIDGenerator()
-	m.selfMsgSync.compareSeq(operationID, 0)
+	m.selfMsgSync.compareSeq(operationID)
 	m.superGroupMsgSync.compareSeq(operationID)
 }
 
@@ -65,8 +65,8 @@ func (m *MsgSync) GetCh() chan common.Cmd2Value {
 func NewMsgSync(dataBase *db.DataBase, ws *Ws, loginUserID string, ch chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value, joinedSuperGroupCh chan common.Cmd2Value) *MsgSync {
 	p := &MsgSync{DataBase: dataBase, Ws: ws, loginUserID: loginUserID, conversationCh: ch, PushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh}
 	p.superGroupMsgSync = NewSuperGroupMsgSync(dataBase, ws, loginUserID, ch, joinedSuperGroupCh)
-	//p.selfMsgSync = NewSelfMsgSync(dataBase, ws, loginUserID, ch)
-	p.selfMsgSync = NewSelfMsgSyncLatestModel(dataBase, ws, loginUserID, ch)
+	p.selfMsgSync = NewSelfMsgSync(dataBase, ws, loginUserID, ch)
+	//	p.selfMsgSync = NewSelfMsgSyncLatestModel(dataBase, ws, loginUserID, ch)
 	p.compareSeq()
 	go common.DoListener(p)
 	return p
