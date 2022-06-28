@@ -2,7 +2,6 @@ package group
 
 import (
 	"errors"
-	"fmt"
 	comm "open_im_sdk/internal/common"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
@@ -449,6 +448,7 @@ func (g *Group) getGroupsInfo(groupIDList sdk.GetGroupsInfoParam, callback open_
 	}
 	if len(notInDB) > 0 {
 		groupsInfoSvr, err := g.getGroupsInfoFromSvr(notInDB, operationID)
+		log.Info(operationID, "getGroupsInfoFromSvr groupsInfoSvr", groupsInfoSvr)
 		common.CheckArgsErrCallback(callback, err, operationID)
 		transfer := common.TransferToLocalGroupInfo(groupsInfoSvr)
 		result = append(result, transfer...)
@@ -478,7 +478,7 @@ func (g *Group) setGroupInfo(callback open_im_sdk_callback.Base, groupInfo sdk.S
 	apiReq.Ex = groupInfo.Ex
 	apiReq.OperationID = operationID
 	apiReq.GroupID = groupID
-	fmt.Println("setgroup : ", apiReq)
+	apiReq.NeedVerification = groupInfo.NeedVerification
 	g.p.PostFatalCallback(callback, constant.SetGroupInfoRouter, apiReq, nil, apiReq.OperationID)
 	g.SyncJoinedGroupList(operationID)
 }

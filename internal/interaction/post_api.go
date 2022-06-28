@@ -38,5 +38,10 @@ type postErr struct {
 
 func (p *PostApi) PostReturn(url string, req interface{}, output interface{}) error {
 	content, err := network.Post2Api(p.apiAddress+url, req, p.token)
-	return common.CheckErrAndResp(err, content, output)
+
+	err1 := common.CheckErrAndResp(err, content, output)
+	if err1 != nil {
+		log.Error("", "PostReturn failed ", err1.Error(), "input: ", string(content))
+	}
+	return err1
 }

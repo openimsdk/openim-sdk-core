@@ -113,7 +113,7 @@ func SetTestGroupID(groupID, memberID string) {
 }
 
 var MemberUserID = "18349115126"
-var TestgroupID = "2de9d19e73f7b314978b42a8744e664d"
+var TestgroupID = "807981398"
 
 func DoTestCreateGroup() {
 	var test testCreateGroup
@@ -152,7 +152,9 @@ func DoSetGroupInfo() {
 	var input sdk_params_callback.SetGroupInfoParam
 	input.GroupName = "new group name 11111111"
 	input.Notification = "new notification 11111"
-
+	var n int32
+	n = 1
+	input.NeedVerification = &n
 	setInfo := utils.StructToJsonString(input)
 	open_im_sdk.SetGroupInfo(test, test.OperationID, TestgroupID, setInfo)
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ", setInfo)
@@ -185,8 +187,9 @@ func (t testSearchGroups) OnError(errCode int32, errMsg string) {
 }
 func DoTestGetGroupsInfo() {
 	var test testGetGroupsInfo
-	groupIDList := []string{"8a33030b726bd4792c8410aadfacaa35", "e91805bae94ae3a00eb629f74e83605a"}
+	groupIDList := []string{TestgroupID}
 	list := utils.StructToJsonString(groupIDList)
+	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, "test getGroupsInfo input", list)
 	open_im_sdk.GetGroupsInfo(test, test.OperationID, list)
 }
