@@ -123,24 +123,29 @@ type GetGroupInfoReq struct {
 }
 type GetGroupInfoResp struct {
 	CommResp
-	GroupInfoList []*GroupInfoAlias        `json:"-"`
+	GroupInfoList []*GroupInfo             `json:"-"`
 	Data          []map[string]interface{} `json:"data"`
 }
-type GroupInfoAlias struct {
-	GroupID          string `protobuf:"bytes,1,opt,name=groupID" json:"groupID,omitempty"`
-	GroupName        string `protobuf:"bytes,2,opt,name=groupName" json:"groupName,omitempty"`
-	Notification     string `protobuf:"bytes,3,opt,name=notification" json:"notification,omitempty"`
-	Introduction     string `protobuf:"bytes,4,opt,name=introduction" json:"introduction,omitempty"`
-	FaceURL          string `protobuf:"bytes,5,opt,name=faceURL" json:"faceURL,omitempty"`
-	OwnerUserID      string `protobuf:"bytes,6,opt,name=ownerUserID" json:"ownerUserID,omitempty"`
-	CreateTime       uint32 `protobuf:"varint,7,opt,name=createTime" json:"createTime,omitempty"`
-	MemberCount      uint32 `protobuf:"varint,8,opt,name=memberCount" json:"memberCount,omitempty"`
-	Ex               string `protobuf:"bytes,9,opt,name=ex" json:"ex,omitempty"`
-	Status           int32  `protobuf:"varint,10,opt,name=status" json:"status,omitempty"`
-	CreatorUserID    string `protobuf:"bytes,11,opt,name=creatorUserID" json:"creatorUserID,omitempty"`
-	GroupType        int32  `protobuf:"varint,12,opt,name=groupType" json:"groupType,omitempty"`
-	NeedVerification int32  `protobuf:"bytes,13,opt,name=needVerification" json:"needVerification,omitempty"`
-}
+
+//type GroupInfoAlias struct {
+//	GroupID          string `protobuf:"bytes,1,opt,name=groupID" json:"groupID,omitempty"`
+//	GroupName        string `protobuf:"bytes,2,opt,name=groupName" json:"groupName,omitempty"`
+//	Notification     string `protobuf:"bytes,3,opt,name=notification" json:"notification,omitempty"`
+//	Introduction     string `protobuf:"bytes,4,opt,name=introduction" json:"introduction,omitempty"`
+//	FaceURL          string `protobuf:"bytes,5,opt,name=faceURL" json:"faceURL,omitempty"`
+//	OwnerUserID      string `protobuf:"bytes,6,opt,name=ownerUserID" json:"ownerUserID,omitempty"`
+//	CreateTime       uint32 `protobuf:"varint,7,opt,name=createTime" json:"createTime,omitempty"`
+//	MemberCount      uint32 `protobuf:"varint,8,opt,name=memberCount" json:"memberCount,omitempty"`
+//	Ex               string `protobuf:"bytes,9,opt,name=ex" json:"ex,omitempty"`
+//	Status           int32  `protobuf:"varint,10,opt,name=status" json:"status,omitempty"`
+//	CreatorUserID    string `protobuf:"bytes,11,opt,name=creatorUserID" json:"creatorUserID,omitempty"`
+//	GroupType        int32  `protobuf:"varint,12,opt,name=groupType" json:"groupType,omitempty"`
+//	NeedVerification int32  `protobuf:"bytes,13,opt,name=needVerification" json:"needVerification,omitempty"`
+//}
+//type GroupInfoAlias struct {
+//	GroupInfo
+//	NeedVerification int32 `protobuf:"bytes,13,opt,name=needVerification" json:"needVerification,omitempty"`
+//}
 
 type ApplicationGroupResponseReq struct {
 	OperationID  string `json:"operationID" binding:"required"`
@@ -178,7 +183,7 @@ type SetGroupInfoReq struct {
 	FaceURL          string `json:"faceURL"`
 	Ex               string `json:"ex"`
 	OperationID      string `json:"operationID" binding:"required"`
-	NeedVerification *int32 `json:"needVerification" binding "oneof=0 1 2"`
+	NeedVerification *int32 `json:"needVerification" binding:"oneof=0 1 2"`
 }
 
 type SetGroupInfoResp struct {

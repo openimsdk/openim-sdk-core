@@ -41,7 +41,7 @@ func (p *PostApi) PostReturn(url string, req interface{}, output interface{}) er
 
 	err1 := common.CheckErrAndResp(err, content, output)
 	if err1 != nil {
-		log.Error("", "PostReturn failed ", err1.Error(), "input: ", string(content))
+		log.Error("", "PostReturn failed ", err1.Error(), "input: ", string(content), " req:", req)
 	}
 	return err1
 }
