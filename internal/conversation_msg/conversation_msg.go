@@ -309,6 +309,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					msg.Status = constant.MsgStatusFiltered
 				}
 				if isHistory {
+					log.Warn("test", "trigger msg is ", msg.SenderNickname, msg.SenderFaceURL)
 					insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
 				}
 				if msg.ContentType == constant.Revoke {
@@ -635,6 +636,9 @@ func (c *Conversation) batchNewMessages(newMessagesList sdk_struct.NewMsgList) {
 	if c.batchMsgListener != nil {
 		log.Info("internal", "batchMsgListener,OnRecvNewMessage")
 		if len(newMessagesList) > 0 {
+			for _, v := range newMessagesList {
+				log.Warn("internal", "trigger msg is ", v.SenderFaceURL, v.SenderNickname)
+			}
 			c.batchMsgListener.OnRecvNewMessages(utils.StructToJsonString(newMessagesList))
 		}
 	} else {
