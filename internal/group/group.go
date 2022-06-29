@@ -479,6 +479,7 @@ func (g *Group) setGroupInfo(callback open_im_sdk_callback.Base, groupInfo sdk.S
 	apiReq.OperationID = operationID
 	apiReq.GroupID = groupID
 	apiReq.NeedVerification = groupInfo.NeedVerification
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", groupInfo, groupID)
 	g.p.PostFatalCallback(callback, constant.SetGroupInfoRouter, apiReq, nil, apiReq.OperationID)
 	g.SyncJoinedGroupList(operationID)
 }

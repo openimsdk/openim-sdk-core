@@ -172,6 +172,24 @@ func (g *Group) SetGroupInfo(callback open_im_sdk_callback.Base, groupInfo strin
 	}()
 }
 
+//func SetGroupVerification(callback open_im_sdk_callback.Base, operationID string, groupID string, verification int32)
+
+func (g *Group) SetGroupVerification(callback open_im_sdk_callback.Base, verification int32, groupID string, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", verification, groupID)
+		var unmarshalSetGroupInfoParam sdk_params_callback.SetGroupInfoParam
+		n := verification
+		unmarshalSetGroupInfoParam.NeedVerification = &n
+		g.setGroupInfo(callback, unmarshalSetGroupInfoParam, groupID, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.SetGroupInfoCallback))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk_params_callback.SetGroupInfoCallback))
+	}()
+}
+
 func (g *Group) GetGroupMemberList(callback open_im_sdk_callback.Base, groupID string, filter, offset, count int32, operationID string) {
 	if callback == nil {
 		return
