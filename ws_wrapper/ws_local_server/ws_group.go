@@ -221,6 +221,23 @@ func (wsRouter *WsFuncRouter) SetGroupInfo(input, operationID string) {
 		m["groupInfo"].(string), m["groupID"].(string), operationID)
 }
 
+func (wsRouter *WsFuncRouter) SetGroupVerification(input, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "verification", "groupID") {
+		return
+	}
+	//(callback common.Base, groupInfo string, groupID string, operationID string)
+	userWorker.Group().SetGroupVerification(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},
+		m["verification"].(int32), m["groupID"].(string), operationID)
+}
+
 func (wsRouter *WsFuncRouter) GetGroupMemberList(input, operationID string) { //(groupId string, filter int32, next int32, callback Base) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {

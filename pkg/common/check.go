@@ -56,6 +56,60 @@ func CheckErrAndRespCallback(callback open_im_sdk_callback.Base, err error, resp
 	}
 }
 
+//
+//func CheckErrAndResp2(err error, resp []byte, output interface{}) error {
+//	if err != nil {
+//		return utils.Wrap(err, "api resp failed")
+//	}
+//	var c server_api_params.CommDataResp
+//	err = json.Unmarshal(resp, &c)
+//	if err == nil {
+//		if c.ErrCode != 0 {
+//			return utils.Wrap(errors.New(c.ErrMsg), "")
+//		}
+//		if output != nil {
+//			err = mapstructure.Decode(c.Data, output)
+//			if err != nil {
+//				goto one
+//			}
+//			return nil
+//		}
+//		return nil
+//	}
+//
+//	unMarshaler := jsonpb.Unmarshaler{}
+//	unMarshaler.Unmarshal()
+//	s, _ := marshaler.MarshalToString(pb)
+//	out := make(map[string]interface{})
+//	json.Unmarshal([]byte(s), &out)
+//	if idFix {
+//		if _, ok := out["id"]; ok {
+//			out["_id"] = out["id"]
+//			delete(out, "id")
+//		}
+//	}
+//	return out
+//
+//one:
+//	var c2 server_api_params.CommDataRespOne
+//
+//	err = json.Unmarshal(resp, &c2)
+//	if err != nil {
+//		return utils.Wrap(err, "")
+//	}
+//	if c2.ErrCode != 0 {
+//		return utils.Wrap(errors.New(c2.ErrMsg), "")
+//	}
+//	if output != nil {
+//		err = mapstructure.Decode(c2.Data, output)
+//		if err != nil {
+//			return utils.Wrap(err, "")
+//		}
+//		return nil
+//	}
+//	return nil
+//}
+
 func CheckErrAndResp(err error, resp []byte, output interface{}) error {
 	if err != nil {
 		return utils.Wrap(err, "api resp failed")
@@ -69,11 +123,14 @@ func CheckErrAndResp(err error, resp []byte, output interface{}) error {
 		if output != nil {
 			err = mapstructure.Decode(c.Data, output)
 			if err != nil {
+				//	log.Error("mapstructure.Decode failed ", "err: ", err.Error(), c.Data)
 				goto one
 			}
 			return nil
 		}
 		return nil
+	} else {
+		//	log.Error("json.Unmarshal failed ", string(resp), "err: ", err.Error())
 	}
 
 one:
@@ -81,6 +138,7 @@ one:
 
 	err = json.Unmarshal(resp, &c2)
 	if err != nil {
+		log.Error("json.Unmarshal failed ", string(resp), "err: ", err.Error())
 		return utils.Wrap(err, "")
 	}
 	if c2.ErrCode != 0 {

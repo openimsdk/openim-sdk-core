@@ -161,6 +161,13 @@ func DoSetGroupInfo() {
 
 }
 
+func DoSetGroupVerification() {
+	var test testSetGroupInfo
+	test.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.SetGroupVerification(test, test.OperationID, TestgroupID, 2)
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ", TestgroupID, 2)
+}
+
 //
 type testGetGroupsInfo struct {
 	OperationID string
