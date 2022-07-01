@@ -307,13 +307,13 @@ func GetGroupMemberList(callback open_im_sdk_callback.Base, operationID string, 
 	userForSDK.Group().GetGroupMemberList(callback, groupID, filter, offset, count, operationID)
 }
 
-func GetGroupMemberListByJoinTimeFilter(callback open_im_sdk_callback.Base, operationID string, groupID string, offset, count int32, joinTimeBegin, joinTimeEnd int64, filterUserID string) {
+func GetGroupMemberListByJoinTimeFilter(callback open_im_sdk_callback.Base, operationID string, groupID string, offset, count int32, joinTimeBegin, joinTimeEnd int64, filterUserIDList string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
 		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
 		return
 	}
-	userForSDK.Group().GetGroupMemberListByJoinTimeFilter(callback, groupID, offset, count, joinTimeBegin, joinTimeEnd, filterUserID, operationID)
+	userForSDK.Group().GetGroupMemberListByJoinTimeFilter(callback, groupID, offset, count, joinTimeBegin, joinTimeEnd, filterUserIDList, operationID)
 }
 
 func GetGroupMembersInfo(callback open_im_sdk_callback.Base, operationID string, groupID string, userIDList string) {
