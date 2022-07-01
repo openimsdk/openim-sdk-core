@@ -115,7 +115,7 @@ func (wsRouter *WsFuncRouter) SearchOrganization(input, operationID string) {
 	}
 
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "departmentID") {
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "input","offset","count") {
 		return
 	}
 	userWorker.Organization().SearchOrganization(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},

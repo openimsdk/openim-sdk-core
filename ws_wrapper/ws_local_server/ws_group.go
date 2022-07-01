@@ -141,10 +141,10 @@ func (wsRouter *WsFuncRouter) SetGroupMemberRoleLevel(input, operationID string)
 	}
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	//callback common.Base, groupID string, operationID string
-	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "groupID", "userID", "GroupMemberNickname") {
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "groupID", "userID", "roleLevel") {
 		return
 	}
-	userWorker.Group().SetGroupMemberRoleLevel(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["groupID"].(string), m["userID"].(string), m["roleLevel"].(int), operationID)
+	userWorker.Group().SetGroupMemberRoleLevel(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["groupID"].(string), m["userID"].(string), int(m["roleLevel"].(float64)), operationID)
 }
 
 func (wsRouter *WsFuncRouter) ChangeGroupMemberMute(input, operationID string) {
@@ -235,7 +235,7 @@ func (wsRouter *WsFuncRouter) SetGroupVerification(input, operationID string) {
 	}
 	//(callback common.Base, groupInfo string, groupID string, operationID string)
 	userWorker.Group().SetGroupVerification(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},
-		m["verification"].(int32), m["groupID"].(string), operationID)
+		int32(m["verification"].(float64)), m["groupID"].(string), operationID)
 }
 
 func (wsRouter *WsFuncRouter) GetGroupMemberList(input, operationID string) { //(groupId string, filter int32, next int32, callback Base) {
