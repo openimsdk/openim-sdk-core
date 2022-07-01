@@ -588,11 +588,11 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 				if gm.Nickname != "" {
 					s.SenderNickname = gm.Nickname
 				}
-				groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
-				common.CheckAnyErrCallback(callback, 202, err, operationID)
-				if !utils.IsContain(s.SendID, groupMemberUidList) {
-					common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
-				}
+				//groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
+				//common.CheckAnyErrCallback(callback, 202, err, operationID)
+				//if !utils.IsContain(s.SendID, groupMemberUidList) {
+				//	common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
+				//}
 			}
 			s.AttachedInfoElem.GroupHasReadInfo.GroupMemberCount = g.MemberCount
 			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
@@ -775,11 +775,11 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 				if gm.Nickname != "" {
 					s.SenderNickname = gm.Nickname
 				}
-				groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
-				common.CheckAnyErrCallback(callback, 202, err, operationID)
-				if !utils.IsContain(s.SendID, groupMemberUidList) {
-					common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
-				}
+				//groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
+				//common.CheckAnyErrCallback(callback, 202, err, operationID)
+				//if !utils.IsContain(s.SendID, groupMemberUidList) {
+				//	common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
+				//}
 			}
 			s.AttachedInfoElem.GroupHasReadInfo.GroupMemberCount = g.MemberCount
 			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
