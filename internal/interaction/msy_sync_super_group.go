@@ -38,13 +38,11 @@ func (m *SuperGroupMsgSync) updateJoinedSuperGroup() {
 
 			operationID := cmd.Value.(sdk_struct.CmdJoinedSuperGroup).OperationID
 			log.Info(operationID, "updateJoinedSuperGroup recv cmd: ", cmd)
-			g, err := m.GetJoinedSuperGroupList()
+			//g, err := m.GetJoinedSuperGroupList()
+			g, err := m.GetReadDiffusionGroupIDList()
 			if err == nil {
 				m.superGroupMtx.Lock()
-				m.SuperGroupIDList = m.SuperGroupIDList[0:0]
-				for _, v := range g {
-					m.SuperGroupIDList = append(m.SuperGroupIDList, v.GroupID)
-				}
+				m.SuperGroupIDList = g
 				m.superGroupMtx.Unlock()
 				m.compareSeq(operationID)
 			}
@@ -53,13 +51,11 @@ func (m *SuperGroupMsgSync) updateJoinedSuperGroup() {
 }
 
 func (m *SuperGroupMsgSync) compareSeq(operationID string) {
-	g, err := m.GetJoinedSuperGroupList()
+	g, err := m.GetReadDiffusionGroupIDList()
 	if err == nil {
 		m.superGroupMtx.Lock()
 		m.SuperGroupIDList = m.SuperGroupIDList[0:0]
-		for _, v := range g {
-			m.SuperGroupIDList = append(m.SuperGroupIDList, v.GroupID)
-		}
+		m.SuperGroupIDList = g
 		m.superGroupMtx.Unlock()
 	}
 

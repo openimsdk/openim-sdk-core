@@ -80,8 +80,18 @@ func (u *Full) GetGroupInfoFromLocal2Svr(groupID string, sessionType int32) (*mo
 	case constant.GroupChatType:
 		return u.group.GetGroupInfoFromLocal2Svr(groupID)
 	case constant.SuperGroupChatType:
-		return u.SuperGroup.GetGroupInfoFromLocal2Svr(groupID)
+		if t, err := u.db.GetGroupType(groupID); err == nil {
+			if t == constant.WorkingGroup {
+				return u.group.GetGroupInfoFromLocal2Svr(groupID)
+			} else if t == constant.SuperGroup {
+				return u.SuperGroup.GetGroupInfoFromLocal2Svr(groupID)
+			} else {
+				return nil, utils.Wrap(errors.New("err type"), "")
+			}
+		} else {
+			return nil, utils.Wrap(errors.New("err sessionType"), "")
+		}
 	default:
-		return nil, errors.New("err sessionType")
+		return nil, utils.Wrap(errors.New("err sessionType"), "")
 	}
 }

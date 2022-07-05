@@ -95,9 +95,9 @@ func (u *Heartbeat) Run() {
 			u.CloseConn()
 			runtime.Goexit()
 		}
-		groupIDList, err := u.GetJoinedSuperGroupIDList()
+		groupIDList, err := u.GetReadDiffusionGroupIDList()
 		if err != nil {
-			log.Error(operationID, "GetJoinedSuperGroupIDList failed ", err.Error())
+			log.Error(operationID, "GetReadDiffusionGroupIDList failed ", err.Error())
 		}
 		log.Debug(operationID, "GetJoinedSuperGroupIDList ", groupIDList)
 		resp, err := u.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: u.loginUserID, GroupIDList: groupIDList}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.loginUserID, operationID)

@@ -60,3 +60,23 @@ func (d *DataBase) DeleteSuperGroup(groupID string) error {
 	localGroup := model_struct.LocalGroup{GroupID: groupID}
 	return utils.Wrap(d.conn.Table(constant.SuperGroupTableName).Delete(&localGroup).Error, "DeleteSuperGroup failed")
 }
+
+func (d *DataBase) GetReadDiffusionGroupIDList() ([]string, error) {
+	g1, err1 := d.GetJoinedSuperGroupIDList()
+	g2, err2 := d.GetJoinedWorkingGroupIDList()
+	var groupIDList []string
+	if err1 == nil {
+		groupIDList = append(groupIDList, g1...)
+	}
+	if err2 == nil {
+		groupIDList = append(groupIDList, g2...)
+	}
+	var err error
+	if err1 != nil {
+		err = err1
+	}
+	if err2 != nil {
+		err = err2
+	}
+	return groupIDList, err
+}
