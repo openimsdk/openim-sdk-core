@@ -35,7 +35,6 @@ func (m *SuperGroupMsgSync) updateJoinedSuperGroup() {
 	for {
 		select {
 		case cmd := <-m.joinedSuperGroupCh:
-
 			operationID := cmd.Value.(sdk_struct.CmdJoinedSuperGroup).OperationID
 			log.Info(operationID, "updateJoinedSuperGroup recv cmd: ", cmd)
 			//g, err := m.GetJoinedSuperGroupList()

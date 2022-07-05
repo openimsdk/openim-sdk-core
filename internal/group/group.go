@@ -13,6 +13,7 @@ import (
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 	"sync"
 
 	"github.com/jinzhu/copier"
@@ -20,11 +21,12 @@ import (
 
 //	//utils.GetCurrentTimestampByMill()
 type Group struct {
-	listener    open_im_sdk_callback.OnGroupListener
-	loginUserID string
-	db          *db.DataBase
-	p           *ws.PostApi
-	loginTime   int64
+	listener           open_im_sdk_callback.OnGroupListener
+	loginUserID        string
+	db                 *db.DataBase
+	p                  *ws.PostApi
+	loginTime          int64
+	joinedSuperGroupCh chan common.Cmd2Value
 }
 
 func (g *Group) LoginTime() int64 {
@@ -35,8 +37,8 @@ func (g *Group) SetLoginTime(loginTime int64) {
 	g.loginTime = loginTime
 }
 
-func NewGroup(loginUserID string, db *db.DataBase, p *ws.PostApi) *Group {
-	return &Group{loginUserID: loginUserID, db: db, p: p}
+func NewGroup(loginUserID string, db *db.DataBase, p *ws.PostApi, joinedSuperGroupCh chan common.Cmd2Value) *Group {
+	return &Group{loginUserID: loginUserID, db: db, p: p, joinedSuperGroupCh: joinedSuperGroupCh}
 }
 
 func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value) {
@@ -796,6 +798,7 @@ func (g *Group) SyncJoinedGroupList(operationID string) {
 	log.NewInfo(operationID, " onLocal ", onLocal, g.loginUserID)
 	aInBNot, bInANot, sameA, sameB := common.CheckGroupInfoDiff(onServer, onLocal)
 	log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB, g.loginUserID)
+	var isReadDiffusion bool
 	for _, index := range aInBNot {
 		err := g.db.InsertGroup(onServer[index])
 		if err != nil {
@@ -804,6 +807,9 @@ func (g *Group) SyncJoinedGroupList(operationID string) {
 		}
 
 		callbackData := sdk.JoinedGroupAddedCallback(*onServer[index])
+		if (*onServer[index]).GroupType == int32(constant.WorkingGroup) {
+			isReadDiffusion = true
+		}
 		g.listener.OnJoinedGroupAdded(utils.StructToJsonString(callbackData))
 		log.Info(operationID, "OnJoinedGroupAdded", utils.StructToJsonString(callbackData))
 	}
@@ -829,6 +835,13 @@ func (g *Group) SyncJoinedGroupList(operationID string) {
 		callbackData := sdk.JoinedGroupDeletedCallback(*onLocal[index])
 		g.listener.OnJoinedGroupDeleted(utils.StructToJsonString(callbackData))
 		log.Info(operationID, "OnJoinedGroupDeleted", utils.StructToJsonString(callbackData))
+	}
+	if isReadDiffusion {
+		cmd := sdk_struct.CmdJoinedSuperGroup{OperationID: operationID}
+		err := common.TriggerCmdJoinedSuperGroup(cmd, g.joinedSuperGroupCh)
+		if err != nil {
+			log.Error(operationID, "TriggerCmdJoinedSuperGroup failed ", err.Error())
+		}
 	}
 }
 
