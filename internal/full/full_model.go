@@ -11,8 +11,12 @@ func (u *Full) GetGroupInfoByGroupID(groupID string) (*model_struct.LocalGroup, 
 	if err != nil {
 		return nil, utils.Wrap(err, "")
 	}
-	if t == constant.NormalGroup {
+	switch t {
+	case constant.NormalGroup:
+		fallthrough
+	case constant.WorkingGroup:
 		return u.db.GetGroupInfoByGroupID(groupID)
+	default:
+		return u.db.GetSuperGroupInfoByGroupID(groupID)
 	}
-	return u.db.GetSuperGroupInfoByGroupID(groupID)
 }
