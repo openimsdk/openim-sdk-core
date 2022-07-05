@@ -583,10 +583,11 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			lc.GroupID = groupID
 			if s.SessionType == constant.GroupChatType {
 				gm, err := c.db.GetGroupMemberInfoByGroupIDUserID(groupID, c.loginUserID)
-				common.CheckAnyErrCallback(callback, 202, err, operationID)
-				log.Debug(operationID, "group chat test", *gm)
-				if gm.Nickname != "" {
-					s.SenderNickname = gm.Nickname
+				if err != nil && gm != nil {
+					log.Debug(operationID, "group chat test", *gm)
+					if gm.Nickname != "" {
+						s.SenderNickname = gm.Nickname
+					}
 				}
 				//groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
 				//common.CheckAnyErrCallback(callback, 202, err, operationID)
@@ -761,7 +762,7 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 				s.SessionType = constant.GroupChatType
 				lc.ConversationType = constant.GroupChatType
 				conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
-			case constant.SuperGroup:
+			case constant.SuperGroup, constant.WorkingGroup:
 				s.SessionType = constant.SuperGroupChatType
 				conversationID = utils.GetConversationIDBySessionType(groupID, constant.SuperGroupChatType)
 				lc.ConversationType = constant.SuperGroupChatType
@@ -770,10 +771,11 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 			lc.GroupID = groupID
 			if s.SessionType == constant.GroupChatType {
 				gm, err := c.db.GetGroupMemberInfoByGroupIDUserID(groupID, c.loginUserID)
-				common.CheckAnyErrCallback(callback, 202, err, operationID)
-				log.Debug(operationID, "group chat test", *gm)
-				if gm.Nickname != "" {
-					s.SenderNickname = gm.Nickname
+				if err != nil && gm != nil {
+					log.Debug(operationID, "group chat test", *gm)
+					if gm.Nickname != "" {
+						s.SenderNickname = gm.Nickname
+					}
 				}
 				//groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
 				//common.CheckAnyErrCallback(callback, 202, err, operationID)
