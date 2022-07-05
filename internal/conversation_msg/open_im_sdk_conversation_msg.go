@@ -574,7 +574,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 				s.SessionType = constant.GroupChatType
 				lc.ConversationType = constant.GroupChatType
 				conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
-			case constant.SuperGroup:
+			case constant.SuperGroup, constant.WorkingGroup:
 				s.SessionType = constant.SuperGroupChatType
 				conversationID = utils.GetConversationIDBySessionType(groupID, constant.SuperGroupChatType)
 				lc.ConversationType = constant.SuperGroupChatType
