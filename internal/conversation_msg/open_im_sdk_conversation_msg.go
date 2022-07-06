@@ -1180,13 +1180,6 @@ func (c *Conversation) MarkGroupMessageAsRead(callback open_im_sdk_callback.Base
 		log.NewInfo(operationID, "MarkGroupMessageAsRead args: ", groupID, msgIDList)
 		var unmarshalParams sdk_params_callback.MarkGroupMessageAsReadParams
 		common.JsonUnmarshalCallback(msgIDList, &unmarshalParams, callback, operationID)
-		if len(unmarshalParams) == 0 {
-			conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
-			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
-			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
-			callback.OnSuccess(sdk_params_callback.MarkGroupMessageAsReadCallback)
-			return
-		}
 		c.markGroupMessageAsRead(callback, unmarshalParams, groupID, operationID)
 		callback.OnSuccess(sdk_params_callback.MarkGroupMessageAsReadCallback)
 		log.NewInfo(operationID, "MarkGroupMessageAsRead callback: ", sdk_params_callback.MarkGroupMessageAsReadCallback)
@@ -1297,7 +1290,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 		switch g.GroupType {
 		case constant.NormalGroup:
 			conversation.ConversationType = constant.GroupChatType
-		case constant.SuperGroup:
+		case constant.SuperGroup, constant.WorkingGroup:
 			conversation.ConversationType = constant.SuperGroupChatType
 		}
 		conversation.ConversationID = utils.GetConversationIDBySessionType(groupID, int(conversation.ConversationType))

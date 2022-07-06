@@ -576,6 +576,23 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 }
 func (c *Conversation) markGroupMessageAsRead(callback open_im_sdk_callback.Base, msgIDList sdk.MarkGroupMessageAsReadParams, groupID, operationID string) {
+	g, err := c.full.GetGroupInfoByGroupID(groupID)
+	common.CheckAnyErrCallback(callback, 202, err, operationID)
+	if len(msgIDList) == 0 {
+		var conversationID string
+		switch g.GroupType {
+		case constant.NormalGroup:
+			conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+		case constant.SuperGroup, constant.WorkingGroup:
+			conversationID = utils.GetConversationIDBySessionType(groupID, constant.SuperGroupChatType)
+		}
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+		return
+	}
+	if g.GroupType != constant.NormalGroup {
+		common.CheckAnyErrCallback(callback, 201, errors.New("super group not yet support send has read message"), operationID)
+	}
 	var localMessage model_struct.LocalChatLog
 	allUserMessage := make(map[string][]string, 3)
 	messages, err := c.db.GetMultipleMessage(msgIDList)
