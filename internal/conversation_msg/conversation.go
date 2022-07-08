@@ -580,19 +580,20 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 }
 func (c *Conversation) markGroupMessageAsRead(callback open_im_sdk_callback.Base, msgIDList sdk.MarkGroupMessageAsReadParams, groupID, operationID string) {
 	var conversationType int32
+	var conversationID string
+
 	g, err := c.full.GetGroupInfoByGroupID(groupID)
 	common.CheckAnyErrCallback(callback, 202, err, operationID)
 	log.Debug(operationID, "get group info is ", g.GroupType)
+	switch g.GroupType {
+	case constant.NormalGroup:
+		conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+		conversationType = constant.GroupChatType
+	case constant.SuperGroup, constant.WorkingGroup:
+		conversationID = utils.GetConversationIDBySessionType(groupID, constant.SuperGroupChatType)
+		conversationType = constant.SuperGroupChatType
+	}
 	if len(msgIDList) == 0 {
-		var conversationID string
-		switch g.GroupType {
-		case constant.NormalGroup:
-			conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
-			conversationType = constant.GroupChatType
-		case constant.SuperGroup, constant.WorkingGroup:
-			conversationID = utils.GetConversationIDBySessionType(groupID, constant.SuperGroupChatType)
-			conversationType = constant.SuperGroupChatType
-		}
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 		return
