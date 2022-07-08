@@ -525,6 +525,7 @@ func (c *Conversation) revokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 			t.ClientMsgID = w.Content
 			t.Status = constant.MsgStatusRevoked
 			t.SessionType = w.SessionType
+			t.RecvID = w.GroupID
 			err := c.db.UpdateMessageController(t)
 			if err != nil {
 				log.Error("internal", "setLocalMessageStatus revokeMessage err:", err.Error(), "msg", w)
@@ -684,6 +685,7 @@ func (c *Conversation) DoGroupMsgReadState(groupMsgReadList []*sdk_struct.MsgStr
 				t.ClientMsgID = message.ClientMsgID
 				t.IsRead = true
 				t.SessionType = message.SessionType
+				t.RecvID = message.RecvID
 				err1 := c.db.UpdateMessageController(t)
 				if err1 != nil {
 					log.Error("internal", "setGroupMessageHasReadByMsgID err:", err1, "ClientMsgID", t, message)
