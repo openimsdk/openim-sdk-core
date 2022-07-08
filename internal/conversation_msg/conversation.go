@@ -469,12 +469,15 @@ func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req 
 	case constant.SingleChatType:
 		recvID = req.RecvID
 		conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
+		req.SessionType = constant.SingleChatType
 	case constant.GroupChatType:
 		groupID = req.GroupID
 		conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+		req.SessionType = constant.GroupChatType
 	case constant.SuperGroupChatType:
 		groupID = req.GroupID
 		conversationID = utils.GetConversationIDBySessionType(groupID, constant.SuperGroupChatType)
+		req.SessionType = constant.SuperGroupChatType
 	default:
 		common.CheckAnyErrCallback(callback, 201, errors.New("SessionType err"), operationID)
 	}
@@ -579,6 +582,7 @@ func (c *Conversation) markGroupMessageAsRead(callback open_im_sdk_callback.Base
 	var conversationType int32
 	g, err := c.full.GetGroupInfoByGroupID(groupID)
 	common.CheckAnyErrCallback(callback, 202, err, operationID)
+	log.Debug(operationID, "get group info is ", g.GroupType)
 	if len(msgIDList) == 0 {
 		var conversationID string
 		switch g.GroupType {
@@ -598,6 +602,7 @@ func (c *Conversation) markGroupMessageAsRead(callback open_im_sdk_callback.Base
 	messages, err := c.db.GetMultipleMessageController(msgIDList, groupID, conversationType)
 	common.CheckDBErrCallback(callback, err, operationID)
 	for _, v := range messages {
+		log.Debug(operationID, "get group info is test2", v.ClientMsgID, v.SessionType)
 		if v.IsRead == false && v.ContentType < constant.NotificationBegin && v.SendID != c.loginUserID {
 			if msgIDList, ok := allUserMessage[v.SendID]; ok {
 				msgIDList = append(msgIDList, v.ClientMsgID)
@@ -631,6 +636,7 @@ func (c *Conversation) markGroupMessageAsRead(callback open_im_sdk_callback.Base
 		if err != nil {
 			log.Error(operationID, "inset into chat log err", localMessage, s, err.Error())
 		}
+		log.Debug(operationID, "get group info is test3", list, conversationType)
 		err2 := c.db.UpdateGroupMessageHasReadController(list, groupID, conversationType)
 		if err2 != nil {
 			log.Error(operationID, "update message has read err", list, userID, err2.Error())
