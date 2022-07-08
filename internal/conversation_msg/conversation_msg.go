@@ -682,7 +682,7 @@ func (c *Conversation) DoGroupMsgReadState(groupMsgReadList []*sdk_struct.MsgStr
 				}
 				t.ClientMsgID = message.ClientMsgID
 				t.IsRead = true
-				err1 := c.db.UpdateMessage(t)
+				err1 := c.db.UpdateMessageController(t)
 				if err1 != nil {
 					log.Error("internal", "setGroupMessageHasReadByMsgID err:", err1, "ClientMsgID", t, message)
 					continue
