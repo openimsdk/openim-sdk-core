@@ -495,7 +495,7 @@ func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req 
 	if err != nil {
 		log.Error(operationID, "inset into chat log err", localMessage, req)
 	}
-	err = c.db.UpdateColumnsMessage(req.Content, map[string]interface{}{"status": constant.MsgStatusRevoked})
+	err = c.db.UpdateColumnsMessageController(req.Content, groupID, req.SessionType, map[string]interface{}{"status": constant.MsgStatusRevoked})
 	if err != nil {
 		log.Error(operationID, "update revoke message err", localMessage, req)
 	}

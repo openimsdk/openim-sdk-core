@@ -191,8 +191,8 @@ func (d *DataBase) SuperGroupGetAllUnDeleteMessageSeqList() ([]uint32, error) {
 func (d *DataBase) SuperGroupUpdateColumnsMessage(ClientMsgID, groupID string, args map[string]interface{}) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	c := model_struct.LocalChatLog{ClientMsgID: ClientMsgID}
-	t := d.conn.Model(&c).Updates(args)
+	t := d.conn.Table(utils.GetSuperGroupTableName(groupID)).Where(
+		"client_msg_id = ? ", ClientMsgID).Updates(args)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}

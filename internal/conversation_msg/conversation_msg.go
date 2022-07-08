@@ -524,7 +524,8 @@ func (c *Conversation) revokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 			t := new(model_struct.LocalChatLog)
 			t.ClientMsgID = w.Content
 			t.Status = constant.MsgStatusRevoked
-			err := c.db.UpdateMessage(t)
+			t.SessionType = w.SessionType
+			err := c.db.UpdateMessageController(t)
 			if err != nil {
 				log.Error("internal", "setLocalMessageStatus revokeMessage err:", err.Error(), "msg", w)
 			} else {
