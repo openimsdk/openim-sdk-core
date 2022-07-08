@@ -276,6 +276,14 @@ func (d *DataBase) UpdateColumnsMessage(ClientMsgID string, args map[string]inte
 	}
 	return utils.Wrap(t.Error, "UpdateColumnsConversation failed")
 }
+func (d *DataBase) UpdateColumnsMessageController(ClientMsgID string, groupID string, sessionType int32, args map[string]interface{}) error {
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return utils.Wrap(d.SuperGroupUpdateColumnsMessage(ClientMsgID, groupID, args), "")
+	default:
+		return utils.Wrap(d.UpdateColumnsMessage(ClientMsgID, args), "")
+	}
+}
 func (d *DataBase) UpdateMessage(c *model_struct.LocalChatLog) error {
 	t := d.conn.Updates(c)
 	if t.RowsAffected == 0 {

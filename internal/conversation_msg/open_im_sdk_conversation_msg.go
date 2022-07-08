@@ -835,13 +835,28 @@ func (c *Conversation) InternalSendMessage(callback open_im_sdk_callback.Base, s
 		common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not be allowed"), operationID)
 	}
 	if recvID == "" {
-		s.SessionType = constant.GroupChatType
-		s.GroupID = groupID
-		groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
+		g, err := c.full.GetGroupInfoByGroupID(groupID)
 		common.CheckAnyErrCallback(callback, 202, err, operationID)
-		if !utils.IsContain(s.SendID, groupMemberUidList) {
-			common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
+		switch g.GroupType {
+		case constant.NormalGroup:
+			s.SessionType = constant.GroupChatType
+			groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
+			common.CheckAnyErrCallback(callback, 202, err, operationID)
+			if !utils.IsContain(s.SendID, groupMemberUidList) {
+				common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
+			}
+
+		case constant.SuperGroup:
+			s.SessionType = constant.SuperGroupChatType
+		case constant.WorkingGroup:
+			s.SessionType = constant.SuperGroupChatType
+			groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
+			common.CheckAnyErrCallback(callback, 202, err, operationID)
+			if !utils.IsContain(s.SendID, groupMemberUidList) {
+				common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
+			}
 		}
+		s.GroupID = groupID
 
 	} else {
 		s.SessionType = constant.SingleChatType

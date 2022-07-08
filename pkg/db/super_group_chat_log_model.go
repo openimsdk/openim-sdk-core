@@ -188,7 +188,7 @@ func (d *DataBase) SuperGroupGetAllUnDeleteMessageSeqList() ([]uint32, error) {
 	return seqList, utils.Wrap(d.conn.Model(&model_struct.LocalChatLog{}).Where("status != 4").Select("seq").Find(&seqList).Error, "")
 }
 
-func (d *DataBase) SuperGroupUpdateColumnsMessage(ClientMsgID string, args map[string]interface{}) error {
+func (d *DataBase) SuperGroupUpdateColumnsMessage(ClientMsgID, groupID string, args map[string]interface{}) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	c := model_struct.LocalChatLog{ClientMsgID: ClientMsgID}

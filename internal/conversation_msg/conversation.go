@@ -469,15 +469,12 @@ func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req 
 	case constant.SingleChatType:
 		recvID = req.RecvID
 		conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
-		req.SessionType = constant.SingleChatType
 	case constant.GroupChatType:
 		groupID = req.GroupID
 		conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
-		req.SessionType = constant.GroupChatType
 	case constant.SuperGroupChatType:
 		groupID = req.GroupID
 		conversationID = utils.GetConversationIDBySessionType(groupID, constant.SuperGroupChatType)
-		req.SessionType = constant.SuperGroupChatType
 	default:
 		common.CheckAnyErrCallback(callback, 201, errors.New("SessionType err"), operationID)
 	}
