@@ -581,20 +581,18 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			}
 			s.GroupID = groupID
 			lc.GroupID = groupID
-			if s.SessionType == constant.GroupChatType {
-				gm, err := c.db.GetGroupMemberInfoByGroupIDUserID(groupID, c.loginUserID)
-				if err != nil && gm != nil {
-					log.Debug(operationID, "group chat test", *gm)
-					if gm.Nickname != "" {
-						s.SenderNickname = gm.Nickname
-					}
+			gm, err := c.db.GetGroupMemberInfoByGroupIDUserID(groupID, c.loginUserID)
+			if err == nil && gm != nil {
+				log.Debug(operationID, "group chat test", *gm)
+				if gm.Nickname != "" {
+					s.SenderNickname = gm.Nickname
 				}
-				//groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
-				//common.CheckAnyErrCallback(callback, 202, err, operationID)
-				//if !utils.IsContain(s.SendID, groupMemberUidList) {
-				//	common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
-				//}
 			}
+			//groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
+			//common.CheckAnyErrCallback(callback, 202, err, operationID)
+			//if !utils.IsContain(s.SendID, groupMemberUidList) {
+			//	common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
+			//}
 			s.AttachedInfoElem.GroupHasReadInfo.GroupMemberCount = g.MemberCount
 			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 		} else {
@@ -769,20 +767,18 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 			}
 			s.GroupID = groupID
 			lc.GroupID = groupID
-			if s.SessionType == constant.GroupChatType {
-				gm, err := c.db.GetGroupMemberInfoByGroupIDUserID(groupID, c.loginUserID)
-				if err != nil && gm != nil {
-					log.Debug(operationID, "group chat test", *gm)
-					if gm.Nickname != "" {
-						s.SenderNickname = gm.Nickname
-					}
+			gm, err := c.db.GetGroupMemberInfoByGroupIDUserID(groupID, c.loginUserID)
+			if err == nil && gm != nil {
+				log.Debug(operationID, "group chat test", *gm)
+				if gm.Nickname != "" {
+					s.SenderNickname = gm.Nickname
 				}
-				//groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
-				//common.CheckAnyErrCallback(callback, 202, err, operationID)
-				//if !utils.IsContain(s.SendID, groupMemberUidList) {
-				//	common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
-				//}
 			}
+			//groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(groupID)
+			//common.CheckAnyErrCallback(callback, 202, err, operationID)
+			//if !utils.IsContain(s.SendID, groupMemberUidList) {
+			//	common.CheckAnyErrCallback(callback, 208, errors.New("you not exist in this group"), operationID)
+			//}
 			s.AttachedInfoElem.GroupHasReadInfo.GroupMemberCount = g.MemberCount
 			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 		} else {

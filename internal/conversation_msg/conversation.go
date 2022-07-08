@@ -553,7 +553,7 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 		log.Error(operationID, "inset into chat log err", localMessage, s, err.Error())
 	}
 
-	err2 := c.db.UpdateMessageHasRead(userID, newMessageIDList, constant.SingleChatType)
+	err2 := c.db.UpdateSingleMessageHasRead(userID, newMessageIDList)
 	if err2 != nil {
 		log.Error(operationID, "update message has read error", newMessageIDList, userID, err2.Error())
 	}
@@ -576,6 +576,7 @@ func (c *Conversation) markC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 }
 func (c *Conversation) markGroupMessageAsRead(callback open_im_sdk_callback.Base, msgIDList sdk.MarkGroupMessageAsReadParams, groupID, operationID string) {
+	var conversationType int32
 	g, err := c.full.GetGroupInfoByGroupID(groupID)
 	common.CheckAnyErrCallback(callback, 202, err, operationID)
 	if len(msgIDList) == 0 {
@@ -583,19 +584,18 @@ func (c *Conversation) markGroupMessageAsRead(callback open_im_sdk_callback.Base
 		switch g.GroupType {
 		case constant.NormalGroup:
 			conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+			conversationType = constant.GroupChatType
 		case constant.SuperGroup, constant.WorkingGroup:
 			conversationID = utils.GetConversationIDBySessionType(groupID, constant.SuperGroupChatType)
+			conversationType = constant.SuperGroupChatType
 		}
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 		return
 	}
-	if g.GroupType != constant.NormalGroup {
-		common.CheckAnyErrCallback(callback, 201, errors.New("super group not yet support send has read message"), operationID)
-	}
 	var localMessage model_struct.LocalChatLog
 	allUserMessage := make(map[string][]string, 3)
-	messages, err := c.db.GetMultipleMessage(msgIDList)
+	messages, err := c.db.GetMultipleMessageController(msgIDList, groupID, conversationType)
 	common.CheckDBErrCallback(callback, err, operationID)
 	for _, v := range messages {
 		if v.IsRead == false && v.ContentType < constant.NotificationBegin && v.SendID != c.loginUserID {
@@ -627,11 +627,11 @@ func (c *Conversation) markGroupMessageAsRead(callback open_im_sdk_callback.Base
 		s.SendTime = resp.SendTime
 		s.Status = constant.MsgStatusFiltered
 		msgStructToLocalChatLog(&localMessage, &s)
-		err = c.db.InsertMessage(&localMessage)
+		err = c.db.InsertMessageController(&localMessage)
 		if err != nil {
 			log.Error(operationID, "inset into chat log err", localMessage, s, err.Error())
 		}
-		err2 := c.db.UpdateMessageHasRead(userID, list, constant.GroupChatType)
+		err2 := c.db.UpdateGroupMessageHasReadController(list, groupID, conversationType)
 		if err2 != nil {
 			log.Error(operationID, "update message has read err", list, userID, err2.Error())
 		}

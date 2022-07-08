@@ -425,15 +425,31 @@ func (d *DataBase) GetSendingMessageList() (result []*model_struct.LocalChatLog,
 	}
 	return result, err
 }
-
-func (d *DataBase) UpdateMessageHasRead(sendID string, msgIDList []string, sessionType int) error {
+func (d *DataBase) UpdateSingleMessageHasRead(sendID string, msgIDList []string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Model(model_struct.LocalChatLog{}).Where("send_id=?  AND session_type=? AND client_msg_id in ?", sendID, sessionType, msgIDList).Update("is_read", constant.HasRead)
+	t := d.conn.Model(model_struct.LocalChatLog{}).Where("send_id=?  AND session_type=? AND client_msg_id in ?", sendID, constant.SingleChatType, msgIDList).Update("is_read", constant.HasRead)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
 	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
+}
+func (d *DataBase) UpdateGroupMessageHasRead(msgIDList []string, sessionType int32) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	t := d.conn.Model(model_struct.LocalChatLog{}).Where("session_type=? AND client_msg_id in ?", sessionType, msgIDList).Update("is_read", constant.HasRead)
+	if t.RowsAffected == 0 {
+		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	}
+	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
+}
+func (d *DataBase) UpdateGroupMessageHasReadController(msgIDList []string, groupID string, sessionType int32) error {
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return d.SuperGroupUpdateGroupMessageHasRead(msgIDList, groupID)
+	default:
+		return d.UpdateGroupMessageHasRead(msgIDList, sessionType)
+	}
 }
 func (d *DataBase) GetMultipleMessage(msgIDList []string) (result []*model_struct.LocalChatLog, err error) {
 	var messageList []model_struct.LocalChatLog
@@ -443,6 +459,14 @@ func (d *DataBase) GetMultipleMessage(msgIDList []string) (result []*model_struc
 		result = append(result, &v1)
 	}
 	return result, err
+}
+func (d *DataBase) GetMultipleMessageController(msgIDList []string, groupID string, sessionType int32) (result []*model_struct.LocalChatLog, err error) {
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return d.SuperGroupGetMultipleMessage(msgIDList, groupID)
+	default:
+		return d.GetMultipleMessage(msgIDList)
+	}
 }
 
 func (d *DataBase) GetNormalMsgSeq() (uint32, error) {

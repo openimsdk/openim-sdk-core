@@ -295,20 +295,20 @@ func (d *DataBase) SuperGroupGetSendingMessageList() (result []*model_struct.Loc
 	return result, err
 }
 
-func (d *DataBase) SuperGroupUpdateMessageHasRead(sendID string, msgIDList []string, sessionType int) error {
+func (d *DataBase) SuperGroupUpdateGroupMessageHasRead(msgIDList []string, groupID string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Model(model_struct.LocalChatLog{}).Where("send_id=?  AND session_type=? AND client_msg_id in ?", sendID, sessionType, msgIDList).Update("is_read", constant.HasRead)
+	t := d.conn.Table(utils.GetSuperGroupTableName(groupID)).Where(" client_msg_id in ?", msgIDList).Update("is_read", constant.HasRead)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
 	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
 }
-func (d *DataBase) SuperGroupGetMultipleMessage(conversationIDList []string) (result []*model_struct.LocalChatLog, err error) {
+func (d *DataBase) SuperGroupGetMultipleMessage(conversationIDList []string, groupID string) (result []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []model_struct.LocalChatLog
-	err = utils.Wrap(d.conn.Where("client_msg_id IN ?", conversationIDList).Find(&messageList).Error, "GetMultipleMessage failed")
+	err = utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Where("client_msg_id IN ?", conversationIDList).Find(&messageList).Error, "GetMultipleMessage failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)
