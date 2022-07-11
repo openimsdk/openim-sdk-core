@@ -4,6 +4,8 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
 	"open_im_sdk/pkg/constant"
 
 	"github.com/pkg/errors"
@@ -391,4 +393,26 @@ func DifferenceSubset(mainSlice, subSlice []uint32) []uint32 {
 		}
 	}
 	return n
+}
+func JsonDataOne(pb proto.Message) map[string]interface{} {
+	return ProtoToMap(pb, false)
+}
+
+func ProtoToMap(pb proto.Message, idFix bool) map[string]interface{} {
+	marshaler := jsonpb.Marshaler{
+		OrigName:     true,
+		EnumsAsInts:  false,
+		EmitDefaults: true,
+	}
+
+	s, _ := marshaler.MarshalToString(pb)
+	out := make(map[string]interface{})
+	json.Unmarshal([]byte(s), &out)
+	if idFix {
+		if _, ok := out["id"]; ok {
+			out["_id"] = out["id"]
+			delete(out, "id")
+		}
+	}
+	return out
 }

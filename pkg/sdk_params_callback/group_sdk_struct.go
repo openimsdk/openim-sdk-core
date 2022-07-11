@@ -12,7 +12,7 @@ type CreateGroupBaseInfoParam struct {
 }
 
 type CreateGroupMemberRoleParam []*server_api_params.GroupAddMemberInfo
-type CreateGroupCallback server_api_params.GroupInfo
+type CreateGroupCallback map[string]interface{}
 
 //param groupID reqMsg
 const JoinGroupCallback = constant.SuccessCallbackDefault

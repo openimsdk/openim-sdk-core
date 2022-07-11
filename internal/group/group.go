@@ -305,11 +305,10 @@ func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.Create
 	realData := api.CreateGroupResp{}
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "api req args: ", apiReq)
 	g.p.PostFatalCallback(callback, constant.CreateGroupRouter, apiReq, &realData.GroupInfo, apiReq.OperationID)
+	m := utils.JsonDataOne(&realData.GroupInfo)
 	g.SyncJoinedGroupList(operationID)
 	g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID, operationID, false)
-	var temp sdk.CreateGroupCallback
-	temp = sdk.CreateGroupCallback(realData.GroupInfo)
-	return &temp
+	return (*sdk.CreateGroupCallback)(&m)
 }
 
 func (g *Group) joinGroup(groupID, reqMsg string, callback open_im_sdk_callback.Base, operationID string) {
