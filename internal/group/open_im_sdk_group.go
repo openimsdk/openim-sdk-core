@@ -6,6 +6,7 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
+	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -185,6 +186,38 @@ func (g *Group) SetGroupVerification(callback open_im_sdk_callback.Base, verific
 		n := verification
 		unmarshalSetGroupInfoParam.NeedVerification = &n
 		g.setGroupInfo(callback, unmarshalSetGroupInfoParam, groupID, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.SetGroupInfoCallback))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk_params_callback.SetGroupInfoCallback))
+	}()
+}
+func (g *Group) SetGroupLookMemberInfo(callback open_im_sdk_callback.Base, rule int32, groupID string, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", rule, groupID)
+		apiReq := api.SetGroupInfoReq{}
+		apiReq.GroupID = groupID
+		apiReq.LookMemberInfo = &rule
+		apiReq.OperationID = operationID
+		g.modifyGroupInfo(callback, apiReq, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.SetGroupInfoCallback))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk_params_callback.SetGroupInfoCallback))
+	}()
+}
+func (g *Group) SetGroupApplyMemberFriend(callback open_im_sdk_callback.Base, rule int32, groupID string, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", rule, groupID)
+		apiReq := api.SetGroupInfoReq{}
+		apiReq.GroupID = groupID
+		apiReq.ApplyMemberFriend = &rule
+		apiReq.OperationID = operationID
+		g.modifyGroupInfo(callback, apiReq, operationID)
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.SetGroupInfoCallback))
 		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk_params_callback.SetGroupInfoCallback))
 	}()
