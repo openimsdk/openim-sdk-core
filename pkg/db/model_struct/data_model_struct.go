@@ -155,6 +155,7 @@ type LocalGroupMember struct {
 	RoleLevel      int32  `gorm:"column:role_level" json:"roleLevel"`
 	JoinTime       uint32 `gorm:"column:join_time" json:"joinTime"`
 	JoinSource     int32  `gorm:"column:join_source" json:"joinSource"`
+	InviterUserID  string `gorm:"column:inviter_user_id;primary_key;size:64"  json:"inviterUserID"`
 	MuteEndTime    uint32 `gorm:"column:mute_end_time;default:0" json:"muteEndTime"`
 	OperatorUserID string `gorm:"column:operator_user_id;type:varchar(64)" json:"operatorUserID"`
 	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
@@ -190,14 +191,16 @@ type LocalGroupRequest struct {
 	UserFaceURL string `gorm:"column:user_face_url;type:varchar(255)" json:"userFaceURL"`
 	Gender      int32  `gorm:"column:gender" json:"gender"`
 
-	HandleResult int32  `gorm:"column:handle_result" json:"handleResult"`
-	ReqMsg       string `gorm:"column:req_msg;type:varchar(255)" json:"reqMsg"`
-	HandledMsg   string `gorm:"column:handle_msg;type:varchar(255)" json:"handledMsg"`
-	ReqTime      uint32 `gorm:"column:req_time" json:"reqTime"`
-	HandleUserID string `gorm:"column:handle_user_id;type:varchar(64)" json:"handleUserID"`
-	HandledTime  uint32 `gorm:"column:handle_time" json:"handledTime"`
-	Ex           string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
-	AttachedInfo string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+	HandleResult  int32  `gorm:"column:handle_result" json:"handleResult"`
+	ReqMsg        string `gorm:"column:req_msg;type:varchar(255)" json:"reqMsg"`
+	HandledMsg    string `gorm:"column:handle_msg;type:varchar(255)" json:"handledMsg"`
+	ReqTime       uint32 `gorm:"column:req_time" json:"reqTime"`
+	HandleUserID  string `gorm:"column:handle_user_id;type:varchar(64)" json:"handleUserID"`
+	HandledTime   uint32 `gorm:"column:handle_time" json:"handledTime"`
+	Ex            string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	AttachedInfo  string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+	JoinSource    int32  `gorm:"column:join_source" json:"joinSource"`
+	InviterUserID string `gorm:"column:inviter_user_id;primary_key;size:64"  json:"inviterUserID"`
 }
 
 //string UserID = 1;

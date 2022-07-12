@@ -79,12 +79,12 @@ func (wsRouter *WsFuncRouter) JoinGroup(input, operationID string) {
 	}
 
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
-	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "groupID", "reqMsg") {
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "groupID", "reqMsg", "joinSource") {
 		return
 	}
 	//callback common.Base, groupID, reqMsg string, operationID string
 	userWorker.Group().JoinGroup(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},
-		m["groupID"].(string), m["reqMsg"].(string), operationID)
+		m["groupID"].(string), m["reqMsg"].(string), int32(m["joinSource"].(int64)), operationID)
 }
 
 func (wsRouter *WsFuncRouter) QuitGroup(groupID, operationID string) {
