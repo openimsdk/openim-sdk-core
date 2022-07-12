@@ -1241,7 +1241,8 @@ func (c *Conversation) ClearGroupHistoryMessageFromLocalAndSvr(callback open_im_
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ", groupID)
-		conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+		conversationID, _, err := c.getConversationTypeByGroupID(groupID)
+		common.CheckDBErrCallback(callback, err, operationID)
 		c.deleteConversationAndMsgFromSvr(callback, conversationID, operationID)
 		c.clearGroupHistoryMessage(callback, groupID, operationID)
 		callback.OnSuccess("")
@@ -1296,14 +1297,9 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 			common.CheckAnyErrCallback(callback, 208, errors.New("groupID or sendID is null"), operationID)
 		}
 		var conversation model_struct.LocalConversation
-		g, err := c.full.GetGroupInfoByGroupID(groupID)
+		var err error
+		_, conversation.ConversationType, err = c.getConversationTypeByGroupID(groupID)
 		common.CheckAnyErrCallback(callback, 202, err, operationID)
-		switch g.GroupType {
-		case constant.NormalGroup:
-			conversation.ConversationType = constant.GroupChatType
-		case constant.SuperGroup, constant.WorkingGroup:
-			conversation.ConversationType = constant.SuperGroupChatType
-		}
 		conversation.ConversationID = utils.GetConversationIDBySessionType(groupID, int(conversation.ConversationType))
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
@@ -1502,4 +1498,18 @@ func (c *Conversation) DeleteAllMsgFromLocal(callback open_im_sdk_callback.Base,
 		callback.OnSuccess("")
 		log.NewInfo(operationID, fName, "callback: ", "")
 	}()
+}
+func (c *Conversation) getConversationTypeByGroupID(groupID string) (conversationID string, conversationType int32, err error) {
+	g, err := c.full.GetGroupInfoByGroupID(groupID)
+	if err != nil {
+		return "", 0, utils.Wrap(err, "get group info error")
+	}
+	switch g.GroupType {
+	case constant.NormalGroup:
+		return utils.GetConversationIDBySessionType(groupID, constant.GroupChatType), constant.GroupChatType, nil
+	case constant.SuperGroup, constant.WorkingGroup:
+		return utils.GetConversationIDBySessionType(groupID, constant.SuperGroupChatType), constant.SuperGroupChatType, nil
+	default:
+		return "", 0, utils.Wrap(errors.New("err groupType"), "group type err")
+	}
 }

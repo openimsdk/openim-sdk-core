@@ -251,3 +251,8 @@ type OANotificationElem struct {
 	} `mapstructure:"file"`
 	Ex string `mapstructure:"ex"`
 }
+type MsgDeleteNotificationElem struct {
+	GroupID     string   `json:"groupID"`
+	IsAllDelete bool     `json:"isAllDelete"`
+	SeqList     []string `json:"seqList"`
+}

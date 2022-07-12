@@ -624,7 +624,6 @@ func (c *Conversation) revokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 func (c *Conversation) DoGroupMsgReadState(groupMsgReadList []*sdk_struct.MsgStruct) {
 	var groupMessageReceiptResp []*sdk_struct.MessageReceipt
 	userMsgMap := make(map[string]map[string][]string)
-	var sessionType int32
 	//var temp []*sdk_struct.MessageReceipt
 	for _, rd := range groupMsgReadList {
 		var list []string
@@ -651,16 +650,10 @@ func (c *Conversation) DoGroupMsgReadState(groupMsgReadList []*sdk_struct.MsgStr
 		for groupID, msgIDList := range m {
 			var successMsgIDlist []string
 			newMsgID := utils.RemoveRepeatedStringInList(msgIDList)
-			g, err := c.full.GetGroupInfoByGroupID(groupID)
+			_, sessionType, err := c.getConversationTypeByGroupID(groupID)
 			if err != nil {
 				log.Error("internal", "GetGroupInfoByGroupID err:", err.Error(), "groupID", groupID)
 				continue
-			}
-			switch g.GroupType {
-			case constant.NormalGroup:
-				sessionType = constant.GroupChatType
-			case constant.SuperGroup, constant.WorkingGroup:
-				sessionType = constant.SuperGroupChatType
 			}
 			messages, err := c.db.GetMultipleMessageController(newMsgID, groupID, sessionType)
 			if err != nil {
