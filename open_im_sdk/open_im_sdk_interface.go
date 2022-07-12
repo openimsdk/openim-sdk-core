@@ -196,7 +196,7 @@ func CreateGroup(callback open_im_sdk_callback.Base, operationID string, groupBa
 	userForSDK.Group().CreateGroup(callback, groupBaseInfo, memberList, operationID)
 }
 
-func JoinGroup(callback open_im_sdk_callback.Base, operationID string, groupID, reqMsg string) {
+func JoinGroup(callback open_im_sdk_callback.Base, operationID string, groupID, reqMsg string, joinSource int32) {
 	if callback == nil {
 		log.Error("callback is nil")
 		return
@@ -206,7 +206,7 @@ func JoinGroup(callback open_im_sdk_callback.Base, operationID string, groupID, 
 		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
 		return
 	}
-	userForSDK.Group().JoinGroup(callback, groupID, reqMsg, operationID)
+	userForSDK.Group().JoinGroup(callback, groupID, reqMsg, joinSource, operationID)
 }
 
 func QuitGroup(callback open_im_sdk_callback.Base, operationID string, groupID string) {
