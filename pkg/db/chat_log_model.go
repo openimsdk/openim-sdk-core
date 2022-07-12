@@ -559,6 +559,15 @@ func (d *DataBase) GetMsgSeqByClientMsgID(clientMsgID string) (uint32, error) {
 	return seq, err
 }
 
+func (d *DataBase) GetMsgSeqByClientMsgIDController(m *sdk_struct.MsgStruct) (uint32, error) {
+	switch m.SessionType {
+	case constant.SuperGroupChatType:
+		return d.SuperGroupGetMsgSeqByClientMsgID(m.ClientMsgID, m.GroupID)
+	default:
+		return d.GetMsgSeqByClientMsgID(m.ClientMsgID)
+	}
+}
+
 func (d *DataBase) GetMsgSeqListByGroupID(groupID string) ([]uint32, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()

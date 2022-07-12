@@ -25,8 +25,9 @@ const (
 	NewestSeqRouter        = "/chat/newest_seq"
 
 	//msg
-	DeleteMsgRouter = RouterMsg + "/del_msg"
-	ClearMsgRouter  = RouterMsg + "/clear_msg"
+	DeleteMsgRouter           = RouterMsg + "/del_msg"
+	ClearMsgRouter            = RouterMsg + "/clear_msg"
+	DeleteSuperGroupMsgRouter = RouterMsg + "/del_super_group_msg"
 
 	TencentCloudStorageCredentialRouter = "/third/tencent_cloud_storage_credential"
 	AliOSSCredentialRouter              = "/third/ali_oss_credential"

@@ -24,14 +24,15 @@ var (
 	ErrTokenUnknown     = ErrInfo{705, TokenUnknownMsg.Error()}
 	ErrTokenKicked      = ErrInfo{706, TokenUserKickedMsg.Error()}
 
-	ErrAccess     = ErrInfo{ErrCode: 801, ErrMsg: AccessMsg.Error()}
-	ErrDB         = ErrInfo{ErrCode: 802, ErrMsg: DBMsg.Error()}
-	ErrArgs       = ErrInfo{ErrCode: 803, ErrMsg: ArgsMsg.Error()}
-	ErrApi        = ErrInfo{ErrCode: 804, ErrMsg: ApiMsg.Error()}
-	ErrData       = ErrInfo{ErrCode: 805, ErrMsg: DataMsg.Error()}
-	ErrLogin      = ErrInfo{ErrCode: 806, ErrMsg: LoginMsg.Error()}
-	ErrConfig     = ErrInfo{ErrCode: 807, ErrMsg: ConfigMsg.Error()}
-	ErrThirdParty = ErrInfo{ErrCode: 808, ErrMsg: ThirdPartyMsg.Error()}
+	ErrAccess       = ErrInfo{ErrCode: 801, ErrMsg: AccessMsg.Error()}
+	ErrDB           = ErrInfo{ErrCode: 802, ErrMsg: DBMsg.Error()}
+	ErrArgs         = ErrInfo{ErrCode: 803, ErrMsg: ArgsMsg.Error()}
+	ErrApi          = ErrInfo{ErrCode: 804, ErrMsg: ApiMsg.Error()}
+	ErrData         = ErrInfo{ErrCode: 805, ErrMsg: DataMsg.Error()}
+	ErrLogin        = ErrInfo{ErrCode: 806, ErrMsg: LoginMsg.Error()}
+	ErrConfig       = ErrInfo{ErrCode: 807, ErrMsg: ConfigMsg.Error()}
+	ErrThirdParty   = ErrInfo{ErrCode: 808, ErrMsg: ThirdPartyMsg.Error()}
+	ErrServerReturn = ErrInfo{ErrCode: 809, ErrMsg: ServerReturn.Error()}
 
 	ErrWsRecvConnDiff          = ErrInfo{ErrCode: 901, ErrMsg: WsRecvConnDiff.Error()}
 	ErrWsRecvConnSame          = ErrInfo{ErrCode: 902, ErrMsg: WsRecvConnSame.Error()}
@@ -59,6 +60,7 @@ var (
 	ConfigMsg = errors.New("config failed")
 
 	ThirdPartyMsg = errors.New("third party error")
+	ServerReturn  = errors.New("server return data err")
 
 	WsRecvConnDiff          = errors.New("recv timeout, conn diff")
 	WsRecvConnSame          = errors.New("recv timeout, conn same")

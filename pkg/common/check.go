@@ -51,7 +51,7 @@ func CheckErrAndRespCallback(callback open_im_sdk_callback.Base, err error, resp
 	log.Debug(operationID, utils.GetSelfFuncName(), "args: ", string(resp))
 	if err = CheckErrAndResp(err, resp, output); err != nil {
 		log.Error(operationID, "CheckErrAndResp failed ", err.Error(), "input: ", string(resp))
-		callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
+		callback.OnError(constant.ErrServerReturn.ErrCode, err.Error())
 		runtime.Goexit()
 	}
 }

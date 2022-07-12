@@ -485,6 +485,11 @@ func (g *Group) setGroupInfo(callback open_im_sdk_callback.Base, groupInfo sdk.S
 	g.p.PostFatalCallback(callback, constant.SetGroupInfoRouter, apiReq, nil, apiReq.OperationID)
 	g.SyncJoinedGroupList(operationID)
 }
+func (g *Group) modifyGroupInfo(callback open_im_sdk_callback.Base, apiReq api.SetGroupInfoReq, operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", apiReq)
+	g.p.PostFatalCallback(callback, constant.SetGroupInfoRouter, apiReq, nil, apiReq.OperationID)
+	g.SyncJoinedGroupList(operationID)
+}
 
 //todo
 func (g *Group) getGroupMemberList(callback open_im_sdk_callback.Base, groupID string, filter, offset, count int32, operationID string) sdk.GetGroupMemberListCallback {
