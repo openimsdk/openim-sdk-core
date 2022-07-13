@@ -46,6 +46,7 @@ const (
 	Face                = 115
 	GroupHasReadReceipt = 116
 	AdvancedText        = 117
+	AdvancedRevoke      = 118
 	//////////////////////////////////////////
 	NotificationBegin       = 1000
 	FriendNotificationBegin = 1200
@@ -275,10 +276,9 @@ const (
 	AppOrdinaryUsers = 1
 	AppAdmin         = 2
 
-	GroupOrdinaryUsers = 1
-	GroupOwner         = 2
-	GroupAdmin         = 3
-
+	GroupOrdinaryUsers  = 1
+	GroupOwner          = 2
+	GroupAdmin          = 3
 	GroupResponseAgree  = 1
 	GroupResponseRefuse = -1
 

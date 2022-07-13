@@ -1100,6 +1100,19 @@ func (c *Conversation) RevokeMessage(callback open_im_sdk_callback.Base, message
 		log.NewInfo(operationID, "RevokeMessage callback: ", sdk_params_callback.RevokeMessageCallback)
 	}()
 }
+func (c *Conversation) NewRevokeMessage(callback open_im_sdk_callback.Base, message string, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, "RevokeMessage args: ", message)
+		var unmarshalParams sdk_params_callback.RevokeMessageParams
+		common.JsonUnmarshalCallback(message, &unmarshalParams, callback, operationID)
+		c.newRevokeOneMessage(callback, unmarshalParams, operationID)
+		callback.OnSuccess(sdk_params_callback.RevokeMessageCallback)
+		log.NewInfo(operationID, "RevokeMessage callback: ", sdk_params_callback.RevokeMessageCallback)
+	}()
+}
 func (c *Conversation) TypingStatusUpdate(callback open_im_sdk_callback.Base, recvID, msgTip, operationID string) {
 	if callback == nil {
 		return

@@ -318,7 +318,17 @@ func (g *Group) joinGroup(groupID, reqMsg string, joinSource int32, callback ope
 	g.p.PostFatalCallback(callback, constant.JoinGroupRouter, apiReq, nil, apiReq.OperationID)
 	g.SyncSelfGroupApplication(operationID)
 }
-
+func (g *Group) GetGroupOwnerIDAndAdminIDList(groupID, operationID string) (ownerID string, adminIDList []string, err error) {
+	localGroup, err := g.db.GetGroupInfoByGroupID(groupID)
+	if err != nil {
+		return "", nil, err
+	}
+	adminIDList, err = g.db.GetGroupAdminID(groupID)
+	if err != nil {
+		return "", nil, err
+	}
+	return localGroup.OwnerUserID, adminIDList, nil
+}
 func (g *Group) quitGroup(groupID string, callback open_im_sdk_callback.Base, operationID string) {
 	apiReq := api.QuitGroupReq{}
 	apiReq.OperationID = operationID

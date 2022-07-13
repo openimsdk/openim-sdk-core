@@ -52,7 +52,9 @@ type OnAdvancedMsgListener interface {
 	OnRecvNewMessage(message string)
 	OnRecvC2CReadReceipt(msgReceiptList string)
 	OnRecvGroupReadReceipt(groupMsgReceiptList string)
+	//deprecated
 	OnRecvMessageRevoked(msgID string)
+	OnNewRecvMessageRevoked(messageRevoked string)
 }
 
 type OnBatchMsgListener interface {

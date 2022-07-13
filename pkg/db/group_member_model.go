@@ -40,6 +40,10 @@ func (d *DataBase) GetGroupSomeMemberInfo(groupID string, userIDList []string) (
 	}
 	return transfer, utils.Wrap(err, "GetGroupMemberListByGroupID failed ")
 }
+func (d *DataBase) GetGroupAdminID(groupID string) ([]string, error) {
+	var adminID []string
+	return adminID, utils.Wrap(d.conn.Model(&model_struct.LocalChatLog{}).Where("group_id = ? And role_level = ?", groupID, constant.GroupAdmin).Select("user_id").Find(&adminID).Error, "")
+}
 
 func (d *DataBase) GetGroupMemberListByGroupID(groupID string) ([]*model_struct.LocalGroupMember, error) {
 	d.mRWMutex.RLock()

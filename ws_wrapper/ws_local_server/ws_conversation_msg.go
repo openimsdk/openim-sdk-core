@@ -102,7 +102,9 @@ func (a *AddAdvancedMsgListenerCallback) OnRecvGroupReadReceipt(groupMsgReceiptL
 func (a *AddAdvancedMsgListenerCallback) OnRecvMessageRevoked(msgId string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msgId, "0"}, a.uid)
 }
-
+func (a *AddAdvancedMsgListenerCallback) OnNewRecvMessageRevoked(messageRevoked string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", messageRevoked, "0"}, a.uid)
+}
 func (wsRouter *WsFuncRouter) SetAdvancedMsgListener() {
 	var msgCallback AddAdvancedMsgListenerCallback
 	msgCallback.uid = wsRouter.uId
@@ -520,6 +522,8 @@ func (wsRouter *WsFuncRouter) GetHistoryMessageListReverse(getMessageOptions str
 	}
 	userWorker.Conversation().GetHistoryMessageListReverse(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, getMessageOptions, operationID)
 }
+
+//deprecated
 func (wsRouter *WsFuncRouter) RevokeMessage(message string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, message, operationID, runFuncName(), nil) {
@@ -527,7 +531,13 @@ func (wsRouter *WsFuncRouter) RevokeMessage(message string, operationID string) 
 	}
 	userWorker.Conversation().RevokeMessage(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, message, operationID)
 }
-
+func (wsRouter *WsFuncRouter) NewRevokeMessage(message string, operationID string) {
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, message, operationID, runFuncName(), nil) {
+		return
+	}
+	userWorker.Conversation().NewRevokeMessage(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, message, operationID)
+}
 func (wsRouter *WsFuncRouter) TypingStatusUpdate(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {

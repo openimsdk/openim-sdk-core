@@ -504,6 +504,98 @@ func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req 
 	lc.ConversationID = conversationID
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.GetCh())
 }
+func (c *Conversation) newRevokeOneMessage(callback open_im_sdk_callback.Base, req sdk.RevokeMessageParams, operationID string) {
+	var recvID, groupID string
+	var localMessage model_struct.LocalChatLog
+	var revokeMessage sdk_struct.MessageRevoked
+	var lc model_struct.LocalConversation
+	var conversationID string
+	message, err := c.db.GetMessageController((*sdk_struct.MsgStruct)(&req))
+	common.CheckDBErrCallback(callback, err, operationID)
+	if message.Status != constant.MsgStatusSendSuccess {
+		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can be revoked"), operationID)
+	}
+	s := sdk_struct.MsgStruct{}
+	c.initBasicInfo(&s, constant.UserMsgType, constant.AdvancedRevoke, operationID)
+	revokeMessage.ClientMsgID = message.ClientMsgID
+	revokeMessage.RevokerID = c.loginUserID
+	revokeMessage.RevokeTime = utils.GetCurrentTimestampBySecond()
+	revokeMessage.RevokerNickname = s.SenderNickname
+	revokeMessage.OldMessageSendTime = message.SendTime
+	revokeMessage.SessionType = message.SessionType
+	//Send message internally
+	switch message.SessionType {
+	case constant.SingleChatType:
+		if message.SendID != c.loginUserID {
+			common.CheckAnyErrCallback(callback, 201, errors.New("only you send message can be revoked"), operationID)
+		}
+		recvID = message.RecvID
+		conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
+	case constant.GroupChatType:
+		if message.SendID != c.loginUserID {
+			ownerID, adminIDList, err := c.group.GetGroupOwnerIDAndAdminIDList(message.RecvID, operationID)
+			common.CheckDBErrCallback(callback, err, operationID)
+			if c.loginUserID == ownerID {
+				revokeMessage.RevokerRole = constant.GroupOwner
+			} else if utils.IsContain(c.loginUserID, adminIDList) {
+				if utils.IsContain(message.SendID, adminIDList) || message.SendID == ownerID {
+					common.CheckAnyErrCallback(callback, 201, errors.New("you do not have this permission"), operationID)
+				} else {
+					revokeMessage.RevokerRole = constant.GroupAdmin
+				}
+
+			} else {
+				common.CheckAnyErrCallback(callback, 201, errors.New("you do not have this permission"), operationID)
+			}
+		}
+		groupID = message.RecvID
+		conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+	case constant.SuperGroupChatType:
+		if message.SendID != c.loginUserID {
+			ownerID, adminIDList, err := c.group.GetGroupOwnerIDAndAdminIDList(message.RecvID, operationID)
+			common.CheckDBErrCallback(callback, err, operationID)
+			if c.loginUserID == ownerID {
+				revokeMessage.RevokerRole = constant.GroupOwner
+			} else if utils.IsContain(c.loginUserID, adminIDList) {
+				if utils.IsContain(message.SendID, adminIDList) || message.SendID == ownerID {
+					common.CheckAnyErrCallback(callback, 201, errors.New("you do not have this permission"), operationID)
+				} else {
+					revokeMessage.RevokerRole = constant.GroupAdmin
+				}
+
+			} else {
+				common.CheckAnyErrCallback(callback, 201, errors.New("you do not have this permission"), operationID)
+			}
+		}
+		groupID = message.RecvID
+		conversationID = utils.GetConversationIDBySessionType(groupID, constant.SuperGroupChatType)
+	default:
+		common.CheckAnyErrCallback(callback, 201, errors.New("SessionType err"), operationID)
+	}
+	s.Content = utils.StructToJsonString(revokeMessage)
+	options := make(map[string]bool, 5)
+	utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
+	utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
+	resp, _ := c.InternalSendMessage(callback, &s, recvID, groupID, operationID, &server_api_params.OfflinePushInfo{}, false, options)
+	s.ServerMsgID = resp.ServerMsgID
+	s.SendTime = message.SendTime //New message takes the old place
+	s.Status = constant.MsgStatusSendSuccess
+	msgStructToLocalChatLog(&localMessage, &s)
+	err = c.db.InsertMessageController(&localMessage)
+	if err != nil {
+		log.Error(operationID, "inset into chat log err", localMessage, s)
+	}
+	err = c.db.UpdateColumnsMessageController(message.ClientMsgID, groupID, message.SessionType, map[string]interface{}{"status": constant.MsgStatusRevoked})
+	if err != nil {
+		log.Error(operationID, "update revoke message err", localMessage, message)
+	}
+	s.SendTime = resp.SendTime
+	lc.LatestMsg = utils.StructToJsonString(s)
+	lc.LatestMsgSendTime = s.SendTime
+	lc.ConversationID = conversationID
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.GetCh())
+}
+
 func (c *Conversation) typingStatusUpdate(callback open_im_sdk_callback.Base, recvID, msgTip, operationID string) {
 	s := sdk_struct.MsgStruct{}
 	c.initBasicInfo(&s, constant.UserMsgType, constant.Typing, operationID)

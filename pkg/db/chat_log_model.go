@@ -256,7 +256,7 @@ func (d *DataBase) GetMessageController(msg *sdk_struct.MsgStruct) (*model_struc
 
 func (d *DataBase) GetAllUnDeleteMessageSeqList() ([]uint32, error) {
 	var seqList []uint32
-	return seqList, utils.Wrap(d.conn.Model(&model_struct.LocalChatLog{}).Where("status != 4").Select("seq").Find(&seqList).Error, "")
+	return seqList, utils.Wrap(d.conn.Model(&model_struct.LocalChatLog{}).Where("status != ?", constant.MsgStatusHasDeleted).Select("seq").Find(&seqList).Error, "")
 }
 func (d *DataBase) UpdateColumnsMessageList(clientMsgIDList []string, args map[string]interface{}) error {
 	c := model_struct.LocalChatLog{}
