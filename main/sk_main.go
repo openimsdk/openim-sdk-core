@@ -16,6 +16,7 @@ func main() {
 	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
 	test.DoSetGroupVerification()
 	time.Sleep(1000 * time.Millisecond)
+	test.DoTestJoinGroup()
 	test.DoTestGetGroupsInfo()
 	//	test.DoTestDeleteAllMsgFromLocalAndSvr()
 
