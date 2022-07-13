@@ -693,7 +693,9 @@ func SetUserListener(listener open_im_sdk_callback.OnUserListener) {
 func SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMomentsListener) {
 	userForSDK.SetWorkMomentsListener(listener)
 }
-
+func CreateAdvancedTextMessage(operationID string, text, messageEntityList string) string {
+	return userForSDK.Conversation().CreateAdvancedTextMessage(text, messageEntityList, operationID)
+}
 func CreateTextAtMessage(operationID string, text, atUserList, atUsersInfo, message string) string {
 	return userForSDK.Conversation().CreateTextAtMessage(text, atUserList, atUsersInfo, message, operationID)
 }
@@ -797,6 +799,7 @@ func GetHistoryMessageListReverse(callback open_im_sdk_callback.Base, operationI
 	userForSDK.Conversation().GetHistoryMessageListReverse(callback, getMessageOptions, operationID)
 }
 
+//deprecated
 func RevokeMessage(callback open_im_sdk_callback.Base, operationID string, message string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
@@ -805,6 +808,15 @@ func RevokeMessage(callback open_im_sdk_callback.Base, operationID string, messa
 	}
 	userForSDK.Conversation().RevokeMessage(callback, message, operationID)
 }
+
+//func RevokeMessageByRevokerID(callback open_im_sdk_callback.Base, operationID string, message string) {
+//	if err := CheckResourceLoad(userForSDK); err != nil {
+//		log.Error(operationID, "resource loading is not completed ", err.Error())
+//		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+//		return
+//	}
+//	userForSDK.Conversation().RevokeMessageByRevokerID(callback, message, operationID)
+//}
 func TypingStatusUpdate(callback open_im_sdk_callback.Base, operationID string, recvID, msgTip string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
