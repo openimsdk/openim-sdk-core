@@ -159,7 +159,7 @@ type LocalGroupMember struct {
 	RoleLevel      int32  `gorm:"column:role_level" json:"roleLevel"`
 	JoinTime       uint32 `gorm:"column:join_time" json:"joinTime"`
 	JoinSource     int32  `gorm:"column:join_source" json:"joinSource"`
-	InviterUserID  string `gorm:"column:inviter_user_id;primary_key;size:64"  json:"inviterUserID"`
+	InviterUserID  string `gorm:"column:inviter_user_id;size:64"  json:"inviterUserID"`
 	MuteEndTime    uint32 `gorm:"column:mute_end_time;default:0" json:"muteEndTime"`
 	OperatorUserID string `gorm:"column:operator_user_id;type:varchar(64)" json:"operatorUserID"`
 	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`

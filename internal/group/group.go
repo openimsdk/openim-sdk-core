@@ -238,7 +238,6 @@ func (g *Group) memberEnterNotification(msg *api.MsgData, operationID string) {
 		g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
 		g.updateMemberCount(detail.Group.GroupID, operationID)
 	}
-
 }
 
 func (g *Group) groupDismissNotification(msg *api.MsgData, operationID string) {
@@ -290,8 +289,7 @@ func (g *Group) groupMemberInfoSetNotification(msg *api.MsgData, operationID str
 	_ = g.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.ChangedUser.UserID, detail.ChangedUser.FaceURL, detail.ChangedUser.Nickname, constant.GroupChatType)
 }
 
-func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam,
-	memberList sdk.CreateGroupMemberRoleParam, operationID string) *sdk.CreateGroupCallback {
+func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam, memberList sdk.CreateGroupMemberRoleParam, operationID string) *sdk.CreateGroupCallback {
 	apiReq := api.CreateGroupReq{}
 	apiReq.OperationID = operationID
 	apiReq.OwnerUserID = g.loginUserID
@@ -857,6 +855,7 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 		log.NewError(operationID, "getGroupAllMemberByGroupIDFromSvr failed ", err.Error(), groupID)
 		return
 	}
+	log.NewInfo(operationID, "getGroupAllMemberByGroupIDFromSvr ", svrList)
 	onServer := common.TransferToLocalGroupMember(svrList)
 	onLocal, err := g.db.GetGroupMemberListByGroupID(groupID)
 	if err != nil {
@@ -865,7 +864,7 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 	}
 	//log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
 	aInBNot, bInANot, sameA, _ := common.CheckGroupMemberDiff(onServer, onLocal)
-	//log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
+	log.Info(operationID, "getGroupAllMemberByGroupIDFromSvr  diff ", aInBNot, bInANot, sameA)
 	for _, index := range aInBNot {
 		err := g.db.InsertGroupMember(onServer[index])
 		if err != nil {
@@ -881,7 +880,7 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 	for _, index := range sameA {
 		err := g.db.UpdateGroupMember(onServer[index])
 		if err != nil {
-			log.NewError(operationID, "UpdateGroupMember failed ", err.Error(), onServer[index])
+			log.NewError(operationID, "UpdateGroupMember failed ", err.Error(), *onServer[index])
 			continue
 		}
 

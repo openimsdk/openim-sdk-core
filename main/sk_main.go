@@ -9,15 +9,15 @@ import (
 
 func main() {
 
-	strMyUidx := "3064833583"
+	strMyUidx := "1153408799"
 	log.NewPrivateLog("", 6)
 	tokenx := test.GenToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
 	test.DoSetGroupVerification()
-	time.Sleep(1000 * time.Millisecond)
-	test.DoTestJoinGroup()
-	test.DoTestGetGroupsInfo()
+	time.Sleep(100000 * time.Millisecond)
+	//	test.DoTestJoinGroup()
+	//	test.DoTestGetGroupsInfo()
 	//	test.DoTestDeleteAllMsgFromLocalAndSvr()
 
 	println("token ", tokenx)
