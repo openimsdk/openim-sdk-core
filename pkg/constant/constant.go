@@ -321,3 +321,9 @@ const (
 	MsgSyncModelLogin    = 1   //SyncFlag
 	SyncOrderStartLatest = 101 //PullMsgOrder
 )
+
+const (
+	JoinByInvitation = 2
+	JoinBySearch     = 3
+	JoinByQRCode     = 4
+)

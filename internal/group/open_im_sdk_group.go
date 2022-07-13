@@ -34,14 +34,14 @@ func (g *Group) CreateGroup(callback open_im_sdk_callback.Base, groupBaseInfo st
 	}()
 }
 
-func (g *Group) JoinGroup(callback open_im_sdk_callback.Base, groupID, reqMsg string, operationID string) {
+func (g *Group) JoinGroup(callback open_im_sdk_callback.Base, groupID, reqMsg string, joinSource int32, operationID string) {
 	if callback == nil {
 		return
 	}
 	fName := utils.GetSelfFuncName()
 	go func() {
-		log.NewInfo(operationID, fName, "args: ", groupID, reqMsg)
-		g.joinGroup(groupID, reqMsg, callback, operationID)
+		log.NewInfo(operationID, fName, "args: ", groupID, reqMsg, joinSource)
+		g.joinGroup(groupID, reqMsg, joinSource, callback, operationID)
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.JoinGroupCallback))
 		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonString(sdk_params_callback.JoinGroupCallback))
 	}()

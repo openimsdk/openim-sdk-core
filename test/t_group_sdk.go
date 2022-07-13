@@ -3,6 +3,7 @@ package test
 import (
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
 
@@ -224,10 +225,10 @@ func (t testJoinGroup) OnError(errCode int32, errMsg string) {
 func DoTestJoinGroup() {
 	var test testJoinGroup
 	test.OperationID = utils.OperationIDGenerator()
-	groupID := "19de93b442a1ca3b772aa0f12761939d"
+	groupID := "1003105543"
 	reqMsg := "121212"
 	log.Info(test.OperationID, "test join group input", groupID, reqMsg)
-	open_im_sdk.JoinGroup(test, test.OperationID, groupID, reqMsg)
+	open_im_sdk.JoinGroup(test, test.OperationID, groupID, reqMsg, constant.JoinBySearch)
 }
 
 type testQuitGroup struct {

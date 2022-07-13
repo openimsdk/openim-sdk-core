@@ -311,11 +311,12 @@ func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.Create
 	return (*sdk.CreateGroupCallback)(&m)
 }
 
-func (g *Group) joinGroup(groupID, reqMsg string, callback open_im_sdk_callback.Base, operationID string) {
+func (g *Group) joinGroup(groupID, reqMsg string, joinSource int32, callback open_im_sdk_callback.Base, operationID string) {
 	apiReq := api.JoinGroupReq{}
 	apiReq.OperationID = operationID
 	apiReq.ReqMessage = reqMsg
 	apiReq.GroupID = groupID
+	apiReq.JoinSource = joinSource
 	g.p.PostFatalCallback(callback, constant.JoinGroupRouter, apiReq, nil, apiReq.OperationID)
 	g.SyncSelfGroupApplication(operationID)
 }
