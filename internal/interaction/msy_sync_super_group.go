@@ -111,16 +111,13 @@ func (m *SuperGroupMsgSync) doPushMsg(cmd common.Cmd2Value) {
 		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg}, operationID)
 		return
 	}
-
-	//seqMaxNeedSync := m.Group2SeqMaxNeedSync[msg.GroupID]
-	//	seqMaxSynchronized := m.Group2SeqMaxSynchronized[msg.GroupID]
-
-	if m.Group2SeqMaxNeedSync[msg.GroupID] == 0 {
-		return
-	}
-	if m.Group2SeqMaxSynchronized[msg.GroupID] == 0 {
-		return
-	}
+	//
+	//if m.Group2SeqMaxNeedSync[msg.GroupID] == 0 {
+	//	return
+	//}
+	//if m.Group2SeqMaxSynchronized[msg.GroupID] == 0 {
+	//	return
+	//}
 
 	if msg.Seq == m.Group2SeqMaxSynchronized[msg.GroupID]+1 {
 		log.Debug(operationID, "TriggerCmdNewMsgCome ", msg.ServerMsgID, msg.ClientMsgID, msg.Seq)
