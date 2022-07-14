@@ -263,8 +263,7 @@ func (d *DataBase) SuperGroupGetMessageList(sourceID string, sessionType, count 
 	return result, err
 }
 func (d *DataBase) SuperGroupGetMessageListNoTime(sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.initSuperLocalChatLog(sourceID)
 	var messageList []model_struct.LocalChatLog
 	var condition, timeOrder string
 	if isReverse {
