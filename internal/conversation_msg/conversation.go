@@ -521,8 +521,10 @@ func (c *Conversation) newRevokeOneMessage(callback open_im_sdk_callback.Base, r
 	revokeMessage.RevokerID = c.loginUserID
 	revokeMessage.RevokeTime = utils.GetCurrentTimestampBySecond()
 	revokeMessage.RevokerNickname = s.SenderNickname
-	revokeMessage.OldMessageSendTime = message.SendTime
+	revokeMessage.SourceMessageSendTime = message.SendTime
 	revokeMessage.SessionType = message.SessionType
+	revokeMessage.SourceMessageSendID = message.SendID
+	revokeMessage.SourceMessageSenderNickname = message.SenderNickname
 	//Send message internally
 	switch message.SessionType {
 	case constant.SingleChatType:

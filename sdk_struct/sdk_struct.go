@@ -14,13 +14,15 @@ type MessageReceipt struct {
 	SessionType int32    `json:"sessionType"`
 }
 type MessageRevoked struct {
-	RevokerID          string `json:"revokerID"`
-	RevokerRole        int32  `json:"revokerRole"`
-	ClientMsgID        string `json:"clientMsgID"`
-	RevokerNickname    string `json:"revokerNickname"`
-	RevokeTime         int64  `json:"revokeTime"`
-	OldMessageSendTime int64  `json:"oldMessageSendTime"`
-	SessionType        int32  `json:"sessionType"`
+	RevokerID                   string `json:"revokerID"`
+	RevokerRole                 int32  `json:"revokerRole"`
+	ClientMsgID                 string `json:"clientMsgID"`
+	RevokerNickname             string `json:"revokerNickname"`
+	RevokeTime                  int64  `json:"revokeTime"`
+	SourceMessageSendTime       int64  `json:"sourceMessageSendTime"`
+	SourceMessageSendID         string `json:"sourceMessageSendID"`
+	SourceMessageSenderNickname string `json:"sourceMessageSenderNickname"`
+	SessionType                 int32  `json:"sessionType"`
 }
 type ImageInfo struct {
 	Width  int32  `json:"x"`

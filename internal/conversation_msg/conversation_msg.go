@@ -263,6 +263,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					msgReadList = append(msgReadList, msg)
 				case constant.GroupHasReadReceipt:
 					groupMsgReadList = append(groupMsgReadList, msg)
+				case constant.AdvancedRevoke:
+					newMsgRevokeList = append(newMsgRevokeList, msg)
+					newMessages = removeElementInList(newMessages, msg)
 				default:
 				}
 			}
@@ -321,6 +324,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					newMessages = append(newMessages, msg)
 				case constant.AdvancedRevoke:
 					newMsgRevokeList = append(newMsgRevokeList, msg)
+					newMessages = removeElementInList(newMessages, msg)
 				default:
 				}
 
@@ -458,6 +462,14 @@ func listToMap(list []*model_struct.LocalConversation, m map[string]*model_struc
 	}
 
 }
+func removeElementInList(a sdk_struct.NewMsgList, e *sdk_struct.MsgStruct) (b sdk_struct.NewMsgList) {
+	for i := 0; i < len(a); i++ {
+		if a[i] != e {
+			b = append(b, a[i])
+		}
+	}
+	return b
+}
 func (c *Conversation) diff(local, generated, cc, nc map[string]*model_struct.LocalConversation) {
 	for _, v := range generated {
 		log.Debug("node diff", *v)
@@ -560,7 +572,7 @@ func (c *Conversation) newRevokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 			} else {
 				t := new(model_struct.LocalChatLog)
 				t.ClientMsgID = w.ClientMsgID
-				t.SendTime = msg.OldMessageSendTime
+				t.SendTime = msg.SourceMessageSendTime
 				t.SessionType = w.SessionType
 				t.RecvID = w.GroupID
 				err = c.db.UpdateMessageController(t)
