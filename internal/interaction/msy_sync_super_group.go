@@ -93,7 +93,7 @@ func (m *SuperGroupMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 	for groupID, maxSeqOnSvr := range cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).GroupID2MaxSeqOnSvr {
 		seqMaxNeedSync := m.Group2SeqMaxNeedSync[groupID]
 		log.Debug(operationID, "super group doMaxSeq, maxSeqOnSvr, seqMaxSynchronized, seqMaxNeedSync",
-			maxSeqOnSvr, m.Group2SeqMaxSynchronized[groupID], seqMaxNeedSync)
+			maxSeqOnSvr, m.Group2SeqMaxSynchronized[groupID], seqMaxNeedSync, groupID)
 		if maxSeqOnSvr <= seqMaxNeedSync {
 			continue
 		}
@@ -118,7 +118,7 @@ func (m *SuperGroupMsgSync) doPushMsg(cmd common.Cmd2Value) {
 	if m.Group2SeqMaxNeedSync[msg.GroupID] == 0 {
 		return
 	}
-	if m.Group2SeqMaxNeedSync[msg.GroupID] == 0 {
+	if m.Group2SeqMaxSynchronized[msg.GroupID] == 0 {
 		return
 	}
 

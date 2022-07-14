@@ -46,7 +46,7 @@ func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2
 		return
 	}
 	operationID := utils.OperationIDGenerator()
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID, msg.ContentType)
 	if msg.SendTime < g.loginTime {
 		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
 		return
