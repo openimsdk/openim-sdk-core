@@ -1,22 +1,14 @@
 package full
 
 import (
-	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/utils"
 )
 
 func (u *Full) GetGroupInfoByGroupID(groupID string) (*model_struct.LocalGroup, error) {
-	t, err := u.db.GetGroupType(groupID)
-	if err != nil {
-		return nil, utils.Wrap(err, "")
+	g1, err := u.group.GetGroupInfoFromLocal2Svr(groupID)
+	if err == nil {
+		return g1, nil
 	}
-	switch t {
-	case constant.NormalGroup:
-		fallthrough
-	case constant.WorkingGroup:
-		return u.db.GetGroupInfoByGroupID(groupID)
-	default:
-		return u.db.GetSuperGroupInfoByGroupID(groupID)
-	}
+	g2, err := u.SuperGroup.GetGroupInfoFromLocal2Svr(groupID)
+	return g2, err
 }
