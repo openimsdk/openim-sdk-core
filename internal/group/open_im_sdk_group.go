@@ -235,6 +235,18 @@ func (g *Group) GetGroupMemberList(callback open_im_sdk_callback.Base, groupID s
 		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(groupMemberList))
 	}()
 }
+func (g *Group) GetGroupMemberOwnerAndAdmin(callback open_im_sdk_callback.Base, groupID string, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", groupID)
+		groupMemberList := g.getGroupMemberOwnerAndAdmin(callback, groupID, operationID)
+		callback.OnSuccess(utils.StructToJsonStringDefault(groupMemberList))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(groupMemberList))
+	}()
+}
 
 //getGroupMemberListByJoinTimeFilter
 func (g *Group) GetGroupMemberListByJoinTimeFilter(callback open_im_sdk_callback.Base, groupID string, offset, count int32, joinTimeBegin, joinTimeEnd int64, filterUserID, operationID string) {

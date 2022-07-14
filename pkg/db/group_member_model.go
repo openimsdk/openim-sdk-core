@@ -74,6 +74,17 @@ func (d *DataBase) GetGroupMemberListSplit(groupID string, filter int32, offset,
 	return transfer, utils.Wrap(err, "GetGroupMemberListSplit failed ")
 }
 
+func (d *DataBase) GetGroupMemberOwnerAndAdmin(groupID string) ([]*model_struct.LocalGroupMember, error) {
+	var groupMemberList []model_struct.LocalGroupMember
+	err := d.conn.Where("group_id = ? And role_level > ?", groupID, constant.GroupOrdinaryUsers).Order("join_time DESC").Find(&groupMemberList).Error
+	var transfer []*model_struct.LocalGroupMember
+	for _, v := range groupMemberList {
+		v1 := v
+		transfer = append(transfer, &v1)
+	}
+	return transfer, utils.Wrap(err, "GetGroupMemberListSplit failed ")
+}
+
 func (d *DataBase) GetGroupMemberListSplitByJoinTimeFilter(groupID string, offset, count int, joinTimeBegin, joinTimeEnd int64, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()

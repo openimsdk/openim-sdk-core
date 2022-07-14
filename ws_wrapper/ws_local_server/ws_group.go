@@ -253,7 +253,21 @@ func (wsRouter *WsFuncRouter) GetGroupMemberList(input, operationID string) { //
 	userWorker.Group().GetGroupMemberList(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},
 		m["groupID"].(string), int32(m["filter"].(float64)), int32(m["offset"].(float64)), int32(m["count"].(float64)), operationID)
 }
-
+func (wsRouter *WsFuncRouter) GetGroupMemberOwnerAndAdmin(input, operationID string) { //(groupId string, filter int32, next int32, callback Base) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "groupID") {
+		return
+	}
+	//callback common.Base, groupID string, filter int32, next int32, operationID string
+	userWorker.Group().GetGroupMemberOwnerAndAdmin(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},
+		m["groupID"].(string), operationID)
+}
 func (wsRouter *WsFuncRouter) GetGroupMemberListByJoinTimeFilter(input, operationID string) { //(groupId string, filter int32, next int32, callback Base) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
