@@ -849,6 +849,9 @@ func (g *Group) SyncJoinedGroupList(operationID string) {
 			log.NewError(operationID, "DeleteGroup failed ", err.Error(), onLocal[index].GroupID)
 			continue
 		}
+		if (*onLocal[index]).GroupType == int32(constant.WorkingGroup) {
+			isReadDiffusion = true
+		}
 		g.db.DeleteGroupAllMembers(onLocal[index].GroupID)
 		callbackData := sdk.JoinedGroupDeletedCallback(*onLocal[index])
 		g.listener.OnJoinedGroupDeleted(utils.StructToJsonString(callbackData))
