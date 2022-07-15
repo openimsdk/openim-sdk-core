@@ -113,19 +113,21 @@ func SetTestGroupID(groupID, memberID string) {
 	TestgroupID = groupID
 }
 
-var MemberUserID = "18349115126"
-var TestgroupID = "2957243129"
+var MemberUserID = "2101502031"
+var me = "3984071717"
+var TestgroupID = "1240111487"
 
 func DoTestCreateGroup() {
 	var test testCreateGroup
 	test.OperationID = utils.OperationIDGenerator()
 
 	var groupInfo sdk_params_callback.CreateGroupBaseInfoParam
-	groupInfo.GroupName = "work group 2222"
-	groupInfo.GroupType = 2
+	groupInfo.GroupName = "normal tttttt"
+	groupInfo.GroupType = 0
 
 	var memberlist []server_api_params.GroupAddMemberInfo
 	memberlist = append(memberlist, server_api_params.GroupAddMemberInfo{UserID: MemberUserID, RoleLevel: 1})
+	memberlist = append(memberlist, server_api_params.GroupAddMemberInfo{UserID: me, RoleLevel: 2})
 
 	g1 := utils.StructToJsonString(groupInfo)
 	g2 := utils.StructToJsonString(memberlist)
@@ -165,8 +167,20 @@ func DoSetGroupInfo() {
 func DoSetGroupVerification() {
 	var test testSetGroupInfo
 	test.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.SetGroupVerification(test, test.OperationID, TestgroupID, 2)
+	open_im_sdk.SetGroupVerification(test, test.OperationID, TestgroupID, 1)
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ", TestgroupID, 2)
+}
+func DoSetGroupLookMemberInfo() {
+	var test testSetGroupInfo
+	test.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.SetGroupLookMemberInfo(test, test.OperationID, TestgroupID, 0)
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ", TestgroupID, 1)
+}
+func DoSetGroupApplyMemberFriend() {
+	var test testSetGroupInfo
+	test.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.SetGroupApplyMemberFriend(test, test.OperationID, TestgroupID, 1)
+	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ", TestgroupID, 1)
 }
 
 //

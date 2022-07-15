@@ -57,7 +57,7 @@ func DoTestSearchLocalMessages() {
 	var testSearchLocalMessagesCallBack SearchLocalMessagesCallBack
 	testSearchLocalMessagesCallBack.OperationID = utils.OperationIDGenerator()
 	var params sdk_params_callback.SearchLocalMessagesParams
-	params.KeywordList = []string{"o"}
+	params.KeywordList = []string{"3"}
 	//params.ConversationID = "single_1195727294"
 	params.Count = 200
 	params.PageIndex = 1
@@ -73,7 +73,8 @@ func DoTestGetHistoryMessage(userID string) {
 	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
 	var params sdk_params_callback.GetHistoryMessageListParams
 	params.UserID = userID
-	params.ConversationID = "single_707008149"
+	params.ConversationID = "single_707010481"
+	//params.StartClientMsgID = "97f12899778823019f13ea46b0c1e6dd"
 	params.Count = 20
 	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
 }
@@ -459,6 +460,10 @@ func (m MsgListenerCallBak) OnRecvMessageRevoked(msgId string) {
 type conversationCallBack struct {
 }
 
+func (c conversationCallBack) OnSyncServerProgress(progress int) {
+	panic("implement me")
+}
+
 func (c conversationCallBack) OnSyncServerStart() {
 
 }
@@ -556,8 +561,8 @@ func (t TestMarkGroupMessageAsRead) OnSuccess(data string) {
 	log.Info(t.OperationID, "TestMarkGroupMessageAsRead , OnSuccess %v \n", data)
 }
 func DoTestMarkGroupMessageAsRead() {
-	groupID := "cb7aaa8e5f83d92db2ed1573cd01870c"
-	msgIDList := []string{"70107abbd8757df95f600edbed8c33fa", "56938acc45b1ac7c418018b516d3d4fe"}
+	groupID := "769129589"
+	msgIDList := []string{"b4602c5a9f261c3832f6513a21cf55d6"}
 	operationID := utils.OperationIDGenerator()
 	var testMarkGroupMessageAsRead TestMarkGroupMessageAsRead
 	testMarkGroupMessageAsRead.OperationID = operationID

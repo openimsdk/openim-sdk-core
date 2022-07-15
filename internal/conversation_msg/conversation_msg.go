@@ -838,6 +838,13 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			lc.UserID = st.SourceID
 		} else {
 			lc.GroupID = st.SourceID
+			conversationID, conversationType, err := c.getConversationTypeByGroupID(st.SourceID)
+			if err != nil {
+				log.Error("internal", "getConversationTypeByGroupID database err:", err.Error())
+				return
+			}
+			lc.ConversationID = conversationID
+			lc.ConversationType = conversationType
 		}
 		c.addFaceURLAndName(&lc)
 		err := c.db.UpdateConversation(&lc)
@@ -845,6 +852,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			log.Error("internal", "setConversationFaceUrlAndNickName database err:", err.Error())
 			return
 		}
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.ConChange, Args: []string{lc.ConversationID}}, c.GetCh())
 
 	case constant.UpdateLatestMessageChange:
 		conversationID := node.ConID

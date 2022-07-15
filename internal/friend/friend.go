@@ -639,7 +639,6 @@ func (f *Friend) friendRemarkNotification(msg *api.MsgData, conversationCh chan 
 		f.SyncFriendList(operationID)
 		conversationID := utils.GetConversationIDBySessionType(detail.FromToUserID.ToUserID, constant.SingleChatType)
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: detail.FromToUserID.ToUserID, SessionType: constant.SingleChatType}}, conversationCh)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, conversationCh)
 	}
 }
 
@@ -654,7 +653,6 @@ func (f *Friend) friendInfoChangedNotification(msg *api.MsgData, conversationCh 
 		f.SyncFriendList(operationID)
 		conversationID := utils.GetConversationIDBySessionType(detail.UserID, constant.SingleChatType)
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: detail.UserID, SessionType: constant.SingleChatType}}, conversationCh)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, conversationCh)
 		go func() {
 			friendInfo, err := f.db.GetFriendInfoByFriendUserID(detail.UserID)
 			if err == nil {
