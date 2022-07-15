@@ -114,15 +114,15 @@ func SetTestGroupID(groupID, memberID string) {
 }
 
 var MemberUserID = "18349115126"
-var TestgroupID = "807981398"
+var TestgroupID = "2957243129"
 
 func DoTestCreateGroup() {
 	var test testCreateGroup
 	test.OperationID = utils.OperationIDGenerator()
 
 	var groupInfo sdk_params_callback.CreateGroupBaseInfoParam
-	groupInfo.GroupName = "group name"
-	groupInfo.GroupType = 0
+	groupInfo.GroupName = "work group 2222"
+	groupInfo.GroupType = 2
 
 	var memberlist []server_api_params.GroupAddMemberInfo
 	memberlist = append(memberlist, server_api_params.GroupAddMemberInfo{UserID: MemberUserID, RoleLevel: 1})

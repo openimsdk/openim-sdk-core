@@ -380,6 +380,9 @@ type MsgListenerCallBak struct {
 func (m *MsgListenerCallBak) OnRecvGroupReadReceipt(groupMsgReceiptList string) {
 	fmt.Println("OnRecvC2CReadReceipt , ", groupMsgReceiptList)
 }
+func (m *MsgListenerCallBak) OnNewRecvMessageRevoked(messageRevoked string) {
+	fmt.Println("OnNewRecvMessageRevoked , ", messageRevoked)
+}
 
 type BatchMsg struct {
 }
