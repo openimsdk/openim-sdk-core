@@ -372,9 +372,13 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 		}
 	} else {
 		if req.UserID == "" {
+			newConversationID, newSessionType, err := c.getConversationTypeByGroupID(req.GroupID)
+			common.CheckDBErrCallback(callback, err, operationID)
 			sourceID = req.GroupID
-			conversationID = utils.GetConversationIDBySessionType(sourceID, constant.GroupChatType)
-			sessionType = constant.GroupChatType
+			sessionType = int(newSessionType)
+			conversationID = newConversationID
+			msg.GroupID = req.GroupID
+			msg.SessionType = newSessionType
 		} else {
 			sourceID = req.UserID
 			conversationID = utils.GetConversationIDBySessionType(sourceID, constant.SingleChatType)
@@ -389,7 +393,8 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 			//startTime = utils.GetCurrentTimestampByMill()
 			notStartTime = true
 		} else {
-			m, err := c.db.GetMessage(req.StartClientMsgID)
+			msg.ClientMsgID = req.StartClientMsgID
+			m, err := c.db.GetMessageController(&msg)
 			common.CheckDBErrCallback(callback, err, operationID)
 			startTime = m.SendTime
 		}
