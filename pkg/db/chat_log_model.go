@@ -181,6 +181,18 @@ func (d *DataBase) SearchMessageByContentTypeAndKeywordController(contentType []
 		}
 		list = append(list, sList...)
 	}
+	workingGroupIDList, err := d.GetJoinedWorkingGroupIDList()
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range workingGroupIDList {
+		sList, err := d.SuperGroupSearchMessageByContentTypeAndKeyword(contentType, keywordList, keywordListMatchType, startTime, endTime, v)
+		if err != nil {
+			log.Error(operationID, "search message in group err", err.Error(), v)
+			continue
+		}
+		list = append(list, sList...)
+	}
 	return list, nil
 }
 func (d *DataBase) BatchUpdateMessageList(MessageList []*model_struct.LocalChatLog) error {
