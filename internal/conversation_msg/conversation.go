@@ -828,8 +828,7 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 	var conversationID string
 	var sourceID string
 	chatLog := model_struct.LocalChatLog{ClientMsgID: s.ClientMsgID, Status: constant.MsgStatusHasDeleted, SessionType: s.SessionType}
-	err := c.db.UpdateMessageController(&chatLog)
-	common.CheckDBErrCallback(callback, err, operationID)
+
 	switch s.SessionType {
 	case constant.GroupChatType:
 		conversationID = utils.GetConversationIDBySessionType(s.GroupID, constant.GroupChatType)
@@ -845,7 +844,10 @@ func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callba
 	case constant.SuperGroupChatType:
 		conversationID = utils.GetConversationIDBySessionType(s.GroupID, constant.SuperGroupChatType)
 		sourceID = s.GroupID
+		chatLog.RecvID = s.GroupID
 	}
+	err := c.db.UpdateMessageController(&chatLog)
+	common.CheckDBErrCallback(callback, err, operationID)
 	LocalConversation, err := c.db.GetConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
 	common.JsonUnmarshalCallback(LocalConversation.LatestMsg, &latestMsg, callback, operationID)

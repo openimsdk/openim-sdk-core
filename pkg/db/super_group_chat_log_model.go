@@ -224,7 +224,7 @@ func (d *DataBase) SuperGroupUpdateMessageStatusBySourceID(sourceID string, stat
 	} else {
 		condition = "(send_id=? or recv_id=?)AND session_type=?"
 	}
-	t := d.conn.Model(model_struct.LocalChatLog{}).Where(condition, sourceID, sourceID, sessionType).Updates(model_struct.LocalChatLog{Status: status})
+	t := d.conn.Table(utils.GetSuperGroupTableName(sourceID)).Where(condition, sourceID, sourceID, sessionType).Updates(model_struct.LocalChatLog{Status: status})
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
