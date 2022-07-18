@@ -13,6 +13,7 @@ import (
 
 var splitPullMsgNum = 1000
 var pullMsgNumWhenLogin = 10000
+var pullMsgNumForReadDiffusion = 100
 
 type SelfMsgSync struct {
 	*db.DataBase
@@ -242,6 +243,7 @@ func (m *SelfMsgSync) syncMsgFromServerSplit(needSyncSeqList []uint32) {
 
 func (m *SelfMsgSync) TriggerCmdNewMsgCome(msgList []*server_api_params.MsgData, operationID string) {
 	for {
+
 		err := common.TriggerCmdNewMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: msgList, OperationID: operationID}, m.conversationCh)
 		if err != nil {
 			log.Warn(operationID, "TriggerCmdNewMsgCome failed ", err.Error(), m.loginUserID)

@@ -310,7 +310,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					msg.Status = constant.MsgStatusFiltered
 				}
 				if isHistory {
-					log.Warn("test", "trigger msg is ", msg.SenderNickname, msg.SenderFaceURL)
+					log.Debug(operationID, "trigger msg is ", msg.SenderNickname, msg.SenderFaceURL)
 					insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
 				}
 				switch msg.ContentType {
@@ -454,7 +454,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	if isTriggerUnReadCount {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 	}
-	log.Warn(operationID, "insert msg, total cost time: ", utils.GetCurrentTimestampByMill()-b, "len:  ", len(allMsg))
+	log.Info(operationID, "insert msg, total cost time: ", utils.GetCurrentTimestampByMill()-b, "len:  ", len(allMsg))
 }
 func listToMap(list []*model_struct.LocalConversation, m map[string]*model_struct.LocalConversation) {
 	for _, v := range list {
@@ -683,7 +683,7 @@ func (c *Conversation) batchNewMessages(newMessagesList sdk_struct.NewMsgList) {
 		log.Info("internal", "batchMsgListener,OnRecvNewMessage")
 		if len(newMessagesList) > 0 {
 			for _, v := range newMessagesList {
-				log.Warn("internal", "trigger msg is ", v.SenderFaceURL, v.SenderNickname)
+				log.Info("internal", "trigger msg is ", v.SenderFaceURL, v.SenderNickname)
 			}
 			c.batchMsgListener.OnRecvNewMessages(utils.StructToJsonString(newMessagesList))
 		}
