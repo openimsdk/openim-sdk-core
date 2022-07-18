@@ -6,7 +6,7 @@ const (
 	CmdFriendApplication          = "003"
 	CmdDeleteConversation         = "004"
 	CmdNewMsgCome                 = "005"
-	CmdGeyLoginUserInfo           = "006"
+	CmdSuperGroupMsgCome          = "006"
 	CmdUpdateConversation         = "007"
 	CmdForceSyncFriend            = "008"
 	CmdFroceSyncBlackList         = "009"
@@ -39,14 +39,14 @@ const (
 	Card                = 108
 	Location            = 109
 	Custom              = 110
-	Revoke              = 111
-	HasReadReceipt      = 112
+	Revoke              = 111 //影响前者消息
+	HasReadReceipt      = 112 //影响前者消息
 	Typing              = 113
 	Quote               = 114
 	Face                = 115
-	GroupHasReadReceipt = 116
+	GroupHasReadReceipt = 116 //影响前者消息
 	AdvancedText        = 117
-	AdvancedRevoke      = 118
+	AdvancedRevoke      = 118 //影响前者消息
 	//////////////////////////////////////////
 	NotificationBegin       = 1000
 	FriendNotificationBegin = 1200
