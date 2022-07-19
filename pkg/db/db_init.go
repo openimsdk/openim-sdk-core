@@ -145,6 +145,7 @@ func (d *DataBase) initDB() error {
 		&model_struct.LocalDepartmentMember{},
 		&LocalWorkMomentsNotification{},
 		&LocalWorkMomentsNotificationUnreadCount{},
+		&model_struct.TempCacheLocalChatLog{},
 	)
 	db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup)
 	if !db.Migrator().HasTable(&model_struct.LocalFriend{}) {

@@ -154,7 +154,7 @@ func (m *SuperGroupMsgSync) syncMsgFromServer(beginSeq, endSeq uint32, groupID, 
 	for i := beginSeq; i <= endSeq; i++ {
 		needSyncSeqList = append(needSyncSeqList, i)
 	}
-	var SPLIT = splitPullMsgNum
+	var SPLIT = constant.SplitPullMsgNum
 	for i := 0; i < len(needSyncSeqList)/SPLIT; i++ {
 		m.syncMsgFromServerSplit(needSyncSeqList[i*SPLIT:(i+1)*SPLIT], groupID, operationID)
 	}

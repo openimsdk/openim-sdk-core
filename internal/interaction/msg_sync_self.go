@@ -11,10 +11,6 @@ import (
 	"open_im_sdk/sdk_struct"
 )
 
-var splitPullMsgNum = 1000
-var pullMsgNumWhenLogin = 10000
-var pullMsgNumForReadDiffusion = 100
-
 type SelfMsgSync struct {
 	*db.DataBase
 	*Ws
@@ -192,7 +188,7 @@ func (m *SelfMsgSync) syncMsgFromServer(beginSeq, endSeq uint32, operationID str
 	for i := beginSeq; i <= endSeq; i++ {
 		needSyncSeqList = append(needSyncSeqList, i)
 	}
-	var SPLIT = splitPullMsgNum
+	var SPLIT = constant.SplitPullMsgNum
 	for i := 0; i < len(needSyncSeqList)/SPLIT; i++ {
 		m.syncMsgFromServerSplit(needSyncSeqList[i*SPLIT:(i+1)*SPLIT], operationID)
 	}

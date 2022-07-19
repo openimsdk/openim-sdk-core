@@ -322,6 +322,11 @@ func (d *DataBase) SuperGroupGetNormalMsgSeq() (uint32, error) {
 	err := d.conn.Model(model_struct.LocalChatLog{}).Select("IFNULL(max(seq),0)").Find(&seq).Error
 	return seq, utils.Wrap(err, "GetNormalMsgSeq")
 }
+func (d *DataBase) SuperGroupGetNormalMinSeq(groupID string) (uint32, error) {
+	var seq uint32
+	err := d.conn.Debug().Table(utils.GetSuperGroupTableName(groupID)).Select("min(seq)").Where("seq >?", 0).Find(&seq).Error
+	return seq, utils.Wrap(err, "SuperGroupGetNormalMinSeq")
+}
 func (d *DataBase) SuperGroupGetTestMessage(seq uint32) (*model_struct.LocalChatLog, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()

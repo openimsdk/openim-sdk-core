@@ -199,13 +199,13 @@ func (m *SelfMsgSyncLatestModel) syncMsg(operationID string, syncFlag int) {
 			return
 		}
 
-		if m.seqMaxNeedSync-m.seqMaxSynchronized < uint32(pullMsgNumWhenLogin) {
+		if m.seqMaxNeedSync-m.seqMaxSynchronized < uint32(constant.PullMsgNumWhenLogin) {
 			m.syncMsgFromServer(m.seqMaxSynchronized+1, m.seqMaxNeedSync, syncFlag, operationID)
 			m.seqMaxSynchronized = m.seqMaxNeedSync
 		} else { //50000-20000
-			m.syncMsgFromServer(m.seqMaxNeedSync-uint32(pullMsgNumWhenLogin)+1, m.seqMaxNeedSync, constant.MsgSyncModelDefault, operationID) //40000+1,50000
+			m.syncMsgFromServer(m.seqMaxNeedSync-uint32(constant.PullMsgNumWhenLogin)+1, m.seqMaxNeedSync, constant.MsgSyncModelDefault, operationID) //40000+1,50000
 			m.seqMaxSynchronized = m.seqMaxNeedSync
-			go m.syncMsgFromServer(m.seqMaxSynchronized+1, m.seqMaxNeedSync-uint32(pullMsgNumWhenLogin), constant.MsgSyncModelDefault, operationID) //20000+1 , 40000
+			go m.syncMsgFromServer(m.seqMaxSynchronized+1, m.seqMaxNeedSync-uint32(constant.PullMsgNumWhenLogin), constant.MsgSyncModelDefault, operationID) //20000+1 , 40000
 		}
 	} else {
 		log.Info(operationID, "syncMsg do nothing, m.seqMaxNeedSync <= m.seqMaxSynchronized ",
@@ -219,7 +219,7 @@ func (m *SelfMsgSyncLatestModel) syncLostMsg(operationID string) {
 		return
 	}
 	needSyncSeqList := m.lostMsgSeqList
-	var SPLIT = splitPullMsgNum
+	var SPLIT = constant.SplitPullMsgNum
 	for i := 0; i < len(needSyncSeqList)/SPLIT; i++ {
 		m.syncMsgFromServerSplit(needSyncSeqList[i*SPLIT:(i+1)*SPLIT], constant.MsgSyncModelDefault, operationID)
 	}
@@ -238,7 +238,7 @@ func (m *SelfMsgSyncLatestModel) syncMsgFromServer(beginSeq, endSeq uint32, sync
 	for i := endSeq; i >= beginSeq; i-- {
 		needSyncSeqList = append(needSyncSeqList, i)
 	}
-	var SPLIT = splitPullMsgNum
+	var SPLIT = constant.SplitPullMsgNum
 	for i := 0; i < len(needSyncSeqList)/SPLIT; i++ {
 		log.Debug(operationID, "syncMsgFromServerSplit", syncFlag, len(needSyncSeqList[i*SPLIT:(i+1)*SPLIT]))
 		m.syncMsgFromServerSplit(needSyncSeqList[i*SPLIT:(i+1)*SPLIT], syncFlag, operationID)
