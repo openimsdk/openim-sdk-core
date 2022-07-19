@@ -22,8 +22,7 @@ type ReadDiffusionGroupMsgSync struct {
 	Group2SeqMaxSynchronized map[string]uint32
 	SuperGroupIDList         []string
 	joinedSuperGroupCh       chan common.Cmd2Value
-
-	Group2SyncMsgFinished map[string]bool
+	Group2SyncMsgFinished    map[string]bool
 }
 
 func NewReadDiffusionGroupMsgSync(dataBase *db.DataBase, ws *Ws, loginUserID string, conversationCh chan common.Cmd2Value, joinedSuperGroupCh chan common.Cmd2Value) *ReadDiffusionGroupMsgSync {
@@ -249,9 +248,10 @@ func (m *ReadDiffusionGroupMsgSync) TriggerCmdNewMsgCome(msgList []*server_api_p
 	for {
 		err := common.TriggerCmdSuperGroupMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: msgList, OperationID: operationID}, m.conversationCh)
 		if err != nil {
-			log.Warn(operationID, "TriggerCmdNewMsgCome failed ", err.Error(), m.loginUserID)
+			log.Warn(operationID, "TriggerCmdSuperGroupMsgCome failed ", err.Error(), m.loginUserID)
 			continue
 		}
+		log.Warn(operationID, "TriggerCmdSuperGroupMsgCome ok ", m.loginUserID)
 		return
 	}
 }
