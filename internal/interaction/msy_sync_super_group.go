@@ -90,14 +90,14 @@ func (m *SuperGroupMsgSync) compareSeq(operationID string) {
 func (m *SuperGroupMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 	operationID := cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).OperationID
 	m.superGroupMtx.Lock()
-	for groupID, maxSeqOnSvr := range cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).GroupID2MaxSeqOnSvr {
+	for groupID, maxSeqOnSvr := range cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).GroupID2MinMaxSeqOnSvr {
 		seqMaxNeedSync := m.Group2SeqMaxNeedSync[groupID]
 		log.Debug(operationID, "super group doMaxSeq, maxSeqOnSvr, seqMaxSynchronized, seqMaxNeedSync",
 			maxSeqOnSvr, m.Group2SeqMaxSynchronized[groupID], seqMaxNeedSync, groupID)
-		if maxSeqOnSvr <= seqMaxNeedSync {
+		if maxSeqOnSvr.MaxSeq <= seqMaxNeedSync {
 			continue
 		}
-		m.Group2SeqMaxNeedSync[groupID] = maxSeqOnSvr
+		m.Group2SeqMaxNeedSync[groupID] = maxSeqOnSvr.MaxSeq
 	}
 	m.superGroupMtx.Unlock()
 	m.syncMsg(operationID)
