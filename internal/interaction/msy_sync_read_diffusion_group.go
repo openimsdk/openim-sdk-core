@@ -42,7 +42,7 @@ func (m *ReadDiffusionGroupMsgSync) updateJoinedSuperGroup() {
 			log.Info(operationID, "updateJoinedSuperGroup cmd: ", cmd)
 			g, err := m.GetReadDiffusionGroupIDList()
 			if err == nil {
-				log.Info(operationID, "updateJoinedSuperGroup, group id list: ", g)
+				log.Info(operationID, "GetReadDiffusionGroupIDList, group id list: ", g)
 				m.superGroupMtx.Lock()
 				m.SuperGroupIDList = g
 				m.superGroupMtx.Unlock()
@@ -104,9 +104,16 @@ func (m *ReadDiffusionGroupMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 	m.syncLatestMsg(operationID)
 
 	//更新需要同步的最大seq
-	for groupID, maxSeqOnSvr := range cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).GroupID2MaxSeqOnSvr {
-		if maxSeqOnSvr > m.Group2SeqMaxNeedSync[groupID] {
-			m.Group2SeqMaxNeedSync[groupID] = maxSeqOnSvr
+	for groupID, MinMaxSeqOnSvr := range cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).GroupID2MinMaxSeqOnSvr {
+		if MinMaxSeqOnSvr.MinSeq > MinMaxSeqOnSvr.MaxSeq {
+			log.Warn(operationID, "MinMaxSeqOnSvr.MinSeq > MinMaxSeqOnSvr.MaxSeq", MinMaxSeqOnSvr.MinSeq, MinMaxSeqOnSvr.MaxSeq)
+			return
+		}
+		if MinMaxSeqOnSvr.MaxSeq > m.Group2SeqMaxNeedSync[groupID] {
+			m.Group2SeqMaxNeedSync[groupID] = MinMaxSeqOnSvr.MaxSeq
+		}
+		if MinMaxSeqOnSvr.MinSeq > m.Group2SeqMaxSynchronized[groupID] {
+			m.Group2SeqMaxSynchronized[groupID] = MinMaxSeqOnSvr.MinSeq - 1
 		}
 	}
 	//同步所有群的新消息

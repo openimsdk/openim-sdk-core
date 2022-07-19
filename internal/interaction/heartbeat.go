@@ -118,13 +118,14 @@ func (u *Heartbeat) Run() {
 			continue
 		}
 
-		log.Debug(operationID, "recv heartbeat resp, max seq on svr: ", wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)
-		groupID2MaxSeqOnSvr := make(map[string]uint32, 0)
+		//server_api_params.MaxAndMinSeq
+		log.Debug(operationID, "recv heartbeat resp, max min seq on svr: ", wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)
+		groupID2MinMaxSeqOnSvr := make(map[string]*server_api_params.MaxAndMinSeq, 0)
 		for groupID, seq := range wsSeqResp.GroupMaxAndMinSeq {
-			groupID2MaxSeqOnSvr[groupID] = seq.MaxSeq
+			groupID2MinMaxSeqOnSvr[groupID] = seq
 		}
 		for {
-			err = common.TriggerCmdMaxSeq(sdk_struct.CmdMaxSeqToMsgSync{OperationID: operationID, MaxSeqOnSvr: wsSeqResp.MaxSeq, GroupID2MaxSeqOnSvr: groupID2MaxSeqOnSvr}, u.PushMsgAndMaxSeqCh)
+			err = common.TriggerCmdMaxSeq(sdk_struct.CmdMaxSeqToMsgSync{OperationID: operationID, MaxSeqOnSvr: wsSeqResp.MaxSeq, GroupID2MinMaxSeqOnSvr: groupID2MinMaxSeqOnSvr}, u.PushMsgAndMaxSeqCh)
 			if err != nil {
 				log.Error(operationID, "TriggerMaxSeq failed ", err.Error(), " MaxSeq ", wsSeqResp.MaxSeq)
 				continue

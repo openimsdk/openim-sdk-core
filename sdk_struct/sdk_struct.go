@@ -230,11 +230,12 @@ type CmdPushMsgToMsgSync struct {
 }
 
 type CmdMaxSeqToMsgSync struct {
-	MaxSeqOnSvr         uint32
-	OperationID         string
-	MinSeqOnSvr         uint32
-	GroupID2MaxSeqOnSvr map[string]uint32
+	MaxSeqOnSvr            uint32
+	OperationID            string
+	MinSeqOnSvr            uint32
+	GroupID2MinMaxSeqOnSvr map[string]*server_api_params.MaxAndMinSeq
 }
+
 type CmdJoinedSuperGroup struct {
 	OperationID string
 }
