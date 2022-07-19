@@ -197,7 +197,7 @@ func (m *SelfMsgSync) syncMsgFromServer(beginSeq, endSeq uint32, operationID str
 
 //先从本地缓存读取消息，如果不存在，再从服务端读取， 上层把seq列表拆分
 func (m *SelfMsgSync) syncMsgFromCache2ServerSplit(needSyncSeqList []uint32, operationID string) {
-	if len(needSyncSeqList) > splitPullMsgNum {
+	if len(needSyncSeqList) > constant.SplitPullMsgNum {
 		log.Error(operationID, "seq list too large ", len(needSyncSeqList))
 		return
 	}
