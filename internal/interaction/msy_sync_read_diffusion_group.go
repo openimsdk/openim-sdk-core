@@ -117,35 +117,9 @@ func (m *ReadDiffusionGroupMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 			m.Group2SeqMaxSynchronized[groupID] = MinMaxSeqOnSvr.MinSeq - 1
 		}
 	}
-	////同步所有群的新消息，内部只调用一次
-	//m.syncLatestMsgForAllGroup(operationID)
 	//同步所有群的新消息
 	m.syncMsgFroAllGroup(operationID)
 }
-
-////获取所有群的最新消息，只调用一次1
-//func (m *ReadDiffusionGroupMsgSync) syncLatestMsgForAllGroup(operationID string) {
-//	m.superGroupMtx.Lock()
-//	for _, groupID := range m.SuperGroupIDList {
-//		if !m.Group2SyncMsgFinished[groupID] {
-//			need := m.Group2SeqMaxNeedSync[groupID]
-//			synchronized := m.Group2SeqMaxSynchronized[groupID]
-//			begin := synchronized + 1
-//			if int64(need)-int64(synchronized) > int64(constant.PullMsgNumForReadDiffusion) {
-//				begin = need - uint32(constant.PullMsgNumForReadDiffusion) + 1
-//			}
-//			if begin > need {
-//				log.Debug(operationID, "do nothing syncLatestMsgForGroup seq: ", need, synchronized, begin)
-//				return
-//			}
-//			log.Debug(operationID, "syncLatestMsgForGroup seq: ", need, synchronized, begin)
-//			m.syncMsgFromServer(begin, need, groupID, operationID)
-//			m.Group2SyncMsgFinished[groupID] = true
-//			m.Group2SeqMaxSynchronized[groupID] = begin
-//		}
-//	}
-//	m.superGroupMtx.Unlock()
-//}
 
 //在获取最大seq后同步最新消息，只调用一次
 func (m *ReadDiffusionGroupMsgSync) syncLatestMsg(operationID string) {

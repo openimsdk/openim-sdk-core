@@ -60,7 +60,7 @@ func (m *SelfMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 		m.seqMaxSynchronized = minSeqOnSvr - 1
 	}
 	if maxSeqOnSvr <= m.seqMaxNeedSync {
-		log.Warn(operationID, "do nothing ", maxSeqOnSvr, m.seqMaxNeedSync)
+		log.Debug(operationID, "do nothing ", maxSeqOnSvr, m.seqMaxNeedSync)
 		return
 	}
 

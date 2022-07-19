@@ -257,7 +257,12 @@ type LocalBlack struct {
 
 type LocalSeqData struct {
 	UserID string `gorm:"column:user_id;primary_key;type:varchar(64)"`
-	Seq    int32  `gorm:"column:seq; default:1"`
+	Seq    uint32 `gorm:"column:seq"`
+}
+
+type LocalSeq struct {
+	ID     string `gorm:"column:id;primary_key;type:varchar(64)"`
+	MinSeq uint32 `gorm:"column:min_seq"`
 }
 
 //`create table if not exists  chat_log (

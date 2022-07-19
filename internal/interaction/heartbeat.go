@@ -22,18 +22,20 @@ type Heartbeat struct {
 	token             string
 	listener          open_im_sdk_callback.OnConnListener
 	ExpireTimeSeconds uint32
+	id2MinSeq         map[string]uint32
 }
 
 func (u *Heartbeat) SetHeartbeatInterval(heartbeatInterval int) {
 	u.heartbeatInterval = heartbeatInterval
 }
 
-func NewHeartbeat(msgSync *MsgSync, cmcCh chan common.Cmd2Value, listener open_im_sdk_callback.OnConnListener, token string, expireTimeSeconds uint32) *Heartbeat {
+func NewHeartbeat(msgSync *MsgSync, cmcCh chan common.Cmd2Value, listener open_im_sdk_callback.OnConnListener, token string, expireTimeSeconds uint32, id2MinSeq map[string]uint32) *Heartbeat {
 	p := Heartbeat{MsgSync: msgSync, cmdCh: cmcCh}
 	p.heartbeatInterval = constant.HeartbeatInterval
 	p.listener = listener
 	p.token = token
 	p.ExpireTimeSeconds = expireTimeSeconds
+	p.id2MinSeq = id2MinSeq
 	go p.Run()
 	return &p
 }
@@ -117,23 +119,21 @@ func (u *Heartbeat) Run() {
 			u.CloseConn()
 			continue
 		}
-
-		//server_api_params.MaxAndMinSeq
-		log.Debug(operationID, "recv heartbeat resp, max min seq on svr: ", wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)
-		groupID2MinMaxSeqOnSvr := make(map[string]*server_api_params.MaxAndMinSeq, 0)
-		for groupID, seq := range wsSeqResp.GroupMaxAndMinSeq {
-			groupID2MinMaxSeqOnSvr[groupID] = seq
+		u.id2MinSeq["u_"+u.loginUserID] = wsSeqResp.MinSeq
+		for g, v := range wsSeqResp.GroupMaxAndMinSeq {
+			u.id2MinSeq["g_"+g] = v.MinSeq
 		}
+		//server_api_params.MaxAndMinSeq
+		log.Debug(operationID, "recv heartbeat resp,  seq on svr: ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)
 		for {
-			err = common.TriggerCmdMaxSeq(sdk_struct.CmdMaxSeqToMsgSync{OperationID: operationID, MaxSeqOnSvr: wsSeqResp.MaxSeq, GroupID2MinMaxSeqOnSvr: groupID2MinMaxSeqOnSvr}, u.PushMsgAndMaxSeqCh)
+			err = common.TriggerCmdMaxSeq(sdk_struct.CmdMaxSeqToMsgSync{OperationID: operationID, MaxSeqOnSvr: wsSeqResp.MaxSeq, GroupID2MinMaxSeqOnSvr: wsSeqResp.GroupMaxAndMinSeq}, u.PushMsgAndMaxSeqCh)
 			if err != nil {
-				log.Error(operationID, "TriggerMaxSeq failed ", err.Error(), " MaxSeq ", wsSeqResp.MaxSeq)
+				log.Error(operationID, "TriggerMaxSeq failed ", err.Error(), "seq ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)
 				continue
 			} else {
-				log.Debug(operationID, "TriggerMaxSeq  success ", " MaxSeq ", wsSeqResp.MaxSeq)
+				log.Debug(operationID, "TriggerMaxSeq  success ", "seq ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)
 				break
 			}
 		}
-
 	}
 }

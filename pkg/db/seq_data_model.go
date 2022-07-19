@@ -5,18 +5,13 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func (d *DataBase) GetMinSeq() (int32, error) {
-	d.mRWMutex.RLock()
-	defer d.mRWMutex.RUnlock()
-	var seqData model_struct.LocalSeqData
-	return seqData.Seq, utils.Wrap(d.conn.First(&seqData).Error, "GetMinSeq failed")
+func (d *DataBase) GetMinSeq(ID string) (uint32, error) {
+	var seqData model_struct.LocalSeq
+	return seqData.MinSeq, utils.Wrap(d.conn.First(&seqData).Error, "GetMinSeq failed")
 }
 
-func (d *DataBase) SetMinSeq(seq int32) error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-
-	seqData := model_struct.LocalSeqData{UserID: d.loginUserID, Seq: seq}
+func (d *DataBase) SetMinSeq(ID string, minSeq uint32) error {
+	seqData := model_struct.LocalSeq{ID: ID, MinSeq: minSeq}
 	t := d.conn.Updates(&seqData)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(d.conn.Create(seqData).Error, "Updates failed")
@@ -25,11 +20,10 @@ func (d *DataBase) SetMinSeq(seq int32) error {
 	}
 }
 
-func (d *DataBase) GetNeedSyncLocalMinSeq() int32 {
-	return 0
+func (d *DataBase) GetUserMinSeq() (uint32, error) {
+	return 0, nil
 }
 
-func (d *DataBase) SetNeedSyncLocalMinSeq(seq int32) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+func (d *DataBase) GetGroupMinSeq(groupID string) (uint32, error) {
+	return 0, nil
 }
