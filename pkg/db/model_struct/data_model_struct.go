@@ -204,7 +204,7 @@ type LocalGroupRequest struct {
 	Ex            string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 	AttachedInfo  string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 	JoinSource    int32  `gorm:"column:join_source" json:"joinSource"`
-	InviterUserID string `gorm:"column:inviter_user_id;primary_key;size:64"  json:"inviterUserID"`
+	InviterUserID string `gorm:"column:inviter_user_id;size:64"  json:"inviterUserID"`
 }
 
 //string UserID = 1;
