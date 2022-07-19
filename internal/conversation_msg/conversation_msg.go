@@ -22,6 +22,7 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sort"
+	"sync"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
@@ -50,8 +51,9 @@ type Conversation struct {
 	workMoments  *workMoments.WorkMoments
 	common2.ObjectStorage
 
-	cache *cache.Cache
-	full  *full.Full
+	cache          *cache.Cache
+	full           *full.Full
+	tempMessageMap sync.Map
 }
 
 //func (c *Conversation) SetAdvancedFunction(advancedFunction advanced_interface.AdvancedFunction) {
@@ -454,6 +456,382 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	if isTriggerUnReadCount {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 	}
+	log.Warn(operationID, "insert msg, total cost time: ", utils.GetCurrentTimestampByMill()-b, "len:  ", len(allMsg))
+}
+func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
+	operationID := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).OperationID
+	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).MsgList
+	if c.msgListener == nil {
+		log.Error(operationID, "not set c MsgListenerList")
+		return
+	}
+	var isTriggerUnReadCount bool
+	var insertMsg, updateMsg, specialUpdateMsg []*model_struct.LocalChatLog
+	var exceptionMsg []*model_struct.LocalErrChatLog
+	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList sdk_struct.NewMsgList
+	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate, isSenderNotificationPush bool
+	conversationChangedSet := make(map[string]*model_struct.LocalConversation)
+	newConversationSet := make(map[string]*model_struct.LocalConversation)
+	conversationSet := make(map[string]*model_struct.LocalConversation)
+	phConversationChangedSet := make(map[string]*model_struct.LocalConversation)
+	phNewConversationSet := make(map[string]*model_struct.LocalConversation)
+	log.Info(operationID, "do Msg come here, len: ", len(allMsg))
+	b := utils.GetCurrentTimestampByMill()
+
+	for _, v := range allMsg {
+		log.Info(operationID, "do Msg come here, msg detail ", v.RecvID, v.SendID, v.ClientMsgID, v.ServerMsgID, v.Seq, c.loginUserID)
+		isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
+		isUnreadCount = utils.GetSwitchFromOptions(v.Options, constant.IsUnreadCount)
+		isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
+		isNotPrivate = utils.GetSwitchFromOptions(v.Options, constant.IsNotPrivate)
+		isSenderConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsSenderConversationUpdate)
+		isSenderNotificationPush = utils.GetSwitchFromOptions(v.Options, constant.IsSenderNotificationPush)
+		msg := new(sdk_struct.MsgStruct)
+		copier.Copy(msg, v)
+		var tips server_api_params.TipsComm
+		if v.ContentType >= constant.NotificationBegin && v.ContentType <= constant.NotificationEnd {
+			_ = proto.Unmarshal(v.Content, &tips)
+			marshaler := jsonpb.Marshaler{
+				OrigName:     true,
+				EnumsAsInts:  false,
+				EmitDefaults: false,
+			}
+			msg.Content, _ = marshaler.MarshalToString(&tips)
+		} else {
+			msg.Content = string(v.Content)
+		}
+		//When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
+		if msg.Status == constant.MsgStatusHasDeleted {
+			insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
+			continue
+		}
+		msg.Status = constant.MsgStatusSendSuccess
+		msg.IsRead = false
+		//		log.Info(operationID, "new msg, seq, ServerMsgID, ClientMsgID", msg.Seq, msg.ServerMsgID, msg.ClientMsgID)
+		//De-analyze data
+		err := c.msgHandleByContentType(msg)
+		if err != nil {
+			log.Error(operationID, "Parsing data error:", err.Error(), *msg, "type: ", msg.ContentType)
+			continue
+		}
+		if !isSenderNotificationPush {
+			msg.AttachedInfoElem.NotSenderNotificationPush = true
+			msg.AttachedInfo = utils.StructToJsonString(msg.AttachedInfoElem)
+		}
+		if !isNotPrivate {
+			msg.AttachedInfoElem.IsPrivateChat = true
+			msg.AttachedInfo = utils.StructToJsonString(msg.AttachedInfoElem)
+		}
+		if msg.ClientMsgID == "" {
+			exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
+			continue
+		}
+		switch {
+		case v.ContentType == constant.ConversationChangeNotification || v.ContentType == constant.ConversationPrivateChatNotification:
+			log.Info(operationID, utils.GetSelfFuncName(), v)
+			c.DoNotification(v)
+		case v.ContentType == constant.SuperGroupUpdateNotification:
+			c.full.SuperGroup.DoNotification(v, c.GetCh())
+		}
+		switch v.SessionType {
+		case constant.SingleChatType:
+			if v.ContentType > constant.FriendNotificationBegin && v.ContentType < constant.FriendNotificationEnd {
+				c.friend.DoNotification(v, c.GetCh())
+				log.Info(operationID, "DoFriendMsg SingleChatType", v)
+			} else if v.ContentType > constant.UserNotificationBegin && v.ContentType < constant.UserNotificationEnd {
+				log.Info(operationID, "DoFriendMsg  DoUserMsg SingleChatType", v)
+				c.user.DoNotification(v)
+				c.friend.DoNotification(v, c.GetCh())
+			} else if v.ContentType == constant.GroupApplicationRejectedNotification ||
+				v.ContentType == constant.GroupApplicationAcceptedNotification ||
+				v.ContentType == constant.JoinGroupApplicationNotification {
+				log.Info(operationID, "DoGroupMsg SingleChatType", v)
+				c.group.DoNotification(v, c.GetCh())
+			} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
+				log.Info(operationID, "signaling DoNotification ", v)
+				c.signaling.DoNotification(v, c.GetCh(), operationID)
+				continue
+			} else if v.ContentType == constant.OrganizationChangedNotification {
+				log.Info(operationID, "Organization Changed Notification ")
+				c.organization.DoNotification(v, c.GetCh(), operationID)
+			} else if v.ContentType == constant.WorkMomentNotification {
+				log.Info(operationID, "WorkMoment New Notification")
+				c.workMoments.DoNotification(tips.JsonDetail, operationID)
+			}
+		case constant.GroupChatType, constant.SuperGroupChatType:
+			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
+				c.group.DoNotification(v, c.GetCh())
+				log.Info(operationID, "DoGroupMsg SingleChatType", v)
+			} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
+				log.Info(operationID, "signaling DoNotification ", v)
+				c.signaling.DoNotification(v, c.GetCh(), operationID)
+				continue
+			}
+		}
+		if v.SendID == c.loginUserID { //seq
+			// Messages sent by myself  //if  sent through  this terminal
+			m, err := c.db.GetMessageController(msg)
+			if err == nil {
+				log.Info(operationID, "have message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
+				if m.Seq == 0 {
+					if m.CreateTime == 0 {
+						specialUpdateMsg = append(specialUpdateMsg, c.msgStructToLocalChatLog(msg))
+					} else {
+						if !isConversationUpdate {
+							msg.Status = constant.MsgStatusFiltered
+						}
+						updateMsg = append(updateMsg, c.msgStructToLocalChatLog(msg))
+					}
+				} else {
+					exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
+				}
+			} else { //      send through  other terminal
+				log.Info(operationID, "sync message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
+				lc := model_struct.LocalConversation{
+					ConversationType:  v.SessionType,
+					LatestMsg:         utils.StructToJsonString(msg),
+					LatestMsgSendTime: msg.SendTime,
+				}
+				switch v.SessionType {
+				case constant.SingleChatType:
+					lc.ConversationID = utils.GetConversationIDBySessionType(v.RecvID, constant.SingleChatType)
+					lc.UserID = v.RecvID
+					//localUserInfo,_ := c.user.GetLoginUser()
+					//c.FaceURL = localUserInfo.FaceUrl
+					//c.ShowName = localUserInfo.Nickname
+				case constant.GroupChatType:
+					lc.GroupID = v.GroupID
+					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
+				case constant.SuperGroupChatType:
+					lc.GroupID = v.GroupID
+					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.SuperGroupChatType)
+					//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
+					//if err != nil {
+					//	utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
+					//} else {
+					//	c.ShowName = name
+					//	c.FaceURL = faceUrl
+					//}
+
+				}
+				if isConversationUpdate {
+					if isSenderConversationUpdate {
+						log.Debug(operationID, "updateConversation msg", v, lc)
+						c.updateConversation(&lc, conversationSet)
+					}
+					newMessages = append(newMessages, msg)
+				} else {
+					msg.Status = constant.MsgStatusFiltered
+				}
+				if isHistory {
+					insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
+				}
+				switch msg.ContentType {
+				case constant.Revoke:
+					msgRevokeList = append(msgRevokeList, msg)
+				case constant.HasReadReceipt:
+					msgReadList = append(msgReadList, msg)
+				case constant.GroupHasReadReceipt:
+					groupMsgReadList = append(groupMsgReadList, msg)
+				case constant.AdvancedRevoke:
+					newMsgRevokeList = append(newMsgRevokeList, msg)
+					newMessages = removeElementInList(newMessages, msg)
+				default:
+				}
+			}
+		} else { //Sent by others
+			if oldMessage, err := c.db.GetMessageController(msg); err != nil { //Deduplication operation
+				lc := model_struct.LocalConversation{
+					ConversationType:  v.SessionType,
+					LatestMsg:         utils.StructToJsonString(msg),
+					LatestMsgSendTime: msg.SendTime,
+				}
+				switch v.SessionType {
+				case constant.SingleChatType:
+					lc.ConversationID = utils.GetConversationIDBySessionType(v.SendID, constant.SingleChatType)
+					lc.UserID = v.SendID
+					lc.ShowName = msg.SenderNickname
+					lc.FaceURL = msg.SenderFaceURL
+				case constant.GroupChatType:
+					lc.GroupID = v.GroupID
+					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
+				case constant.SuperGroupChatType:
+					lc.GroupID = v.GroupID
+					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.SuperGroupChatType)
+					//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
+					//if err != nil {
+					//	utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
+					//} else {
+					//	c.ShowName = name
+					//	c.FaceURL = faceUrl
+					//}
+				case constant.NotificationChatType:
+					lc.ConversationID = utils.GetConversationIDBySessionType(v.SendID, constant.NotificationChatType)
+					lc.UserID = v.SendID
+				}
+				if isUnreadCount {
+					isTriggerUnReadCount = true
+					lc.UnreadCount = 1
+				}
+				if isConversationUpdate {
+					c.updateConversation(&lc, conversationSet)
+					newMessages = append(newMessages, msg)
+				} else {
+					msg.Status = constant.MsgStatusFiltered
+				}
+				if isHistory {
+					log.Warn("test", "trigger msg is ", msg.SenderNickname, msg.SenderFaceURL)
+					insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
+				}
+				switch msg.ContentType {
+				case constant.Revoke:
+					msgRevokeList = append(msgRevokeList, msg)
+				case constant.HasReadReceipt:
+					msgReadList = append(msgReadList, msg)
+				case constant.GroupHasReadReceipt:
+					groupMsgReadList = append(groupMsgReadList, msg)
+				case constant.Typing:
+					newMessages = append(newMessages, msg)
+				case constant.AdvancedRevoke:
+					newMsgRevokeList = append(newMsgRevokeList, msg)
+					newMessages = removeElementInList(newMessages, msg)
+				default:
+				}
+
+			} else {
+				if oldMessage.Seq == 0 {
+					specialUpdateMsg = append(specialUpdateMsg, c.msgStructToLocalChatLog(msg))
+				} else {
+					exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
+					log.Warn(operationID, "Deduplication operation ", *c.msgStructToLocalErrChatLog(msg))
+				}
+			}
+		}
+	}
+	b1 := utils.GetCurrentTimestampByMill()
+	log.Info(operationID, "generate conversation map is :", conversationSet)
+	log.Debug(operationID, "before insert msg cost time : ", b1-b)
+
+	list, err := c.db.GetAllConversationList()
+	if err != nil {
+		log.Error(operationID, "GetAllConversationList", "error", err.Error())
+	}
+	m := make(map[string]*model_struct.LocalConversation)
+	listToMap(list, m)
+	log.Debug(operationID, "listToMap: ", list, conversationSet)
+	c.diff(m, conversationSet, conversationChangedSet, newConversationSet)
+	log.Info(operationID, "trigger map is :", "newConversations", newConversationSet, "changedConversations", conversationChangedSet)
+	b2 := utils.GetCurrentTimestampByMill()
+	log.Debug(operationID, "listToMap diff, cost time : ", b2-b1)
+	//update message
+	err6 := c.db.BatchSpecialUpdateMessageList(specialUpdateMsg)
+	if err6 != nil {
+		log.Error(operationID, "sync seq normal message err  :", err6.Error())
+	}
+	//seq sync message update
+	err5 := c.db.BatchUpdateMessageList(updateMsg)
+	if err5 != nil {
+		log.Error(operationID, "sync seq normal message err  :", err5.Error())
+	}
+	b3 := utils.GetCurrentTimestampByMill()
+	log.Debug(operationID, "BatchUpdateMessageList, cost time : ", b3-b2)
+
+	//Normal message storage
+	err1 := c.db.BatchInsertMessageListController(insertMsg)
+	if err1 != nil {
+		log.Error(operationID, "insert GetMessage detail err:", err1.Error(), len(insertMsg))
+		for _, v := range insertMsg {
+			e := c.db.InsertMessageController(v)
+			if e != nil {
+				errChatLog := &model_struct.LocalErrChatLog{}
+				copier.Copy(errChatLog, v)
+				exceptionMsg = append(exceptionMsg, errChatLog)
+				log.Warn(operationID, "InsertMessage operation ", "chat err log: ", errChatLog, "chat log: ", v, e.Error())
+			}
+		}
+	}
+	b4 := utils.GetCurrentTimestampByMill()
+	log.Debug(operationID, "BatchInsertMessageListController, cost time : ", b4-b3)
+
+	//Exception message storage
+	for _, v := range exceptionMsg {
+		log.Warn(operationID, "exceptionMsg show: ", *v)
+	}
+
+	err2 := c.db.BatchInsertExceptionMsgController(exceptionMsg)
+	if err2 != nil {
+		log.Error(operationID, "insert err message err  :", err2.Error())
+
+	}
+	hList, _ := c.db.GetHiddenConversationList()
+	for _, v := range hList {
+		if nc, ok := newConversationSet[v.ConversationID]; ok {
+			phConversationChangedSet[v.ConversationID] = nc
+			nc.RecvMsgOpt = v.RecvMsgOpt
+			nc.GroupAtType = v.GroupAtType
+			nc.IsPinned = v.IsPinned
+			nc.IsPrivateChat = v.IsPrivateChat
+			nc.IsNotInGroup = v.IsNotInGroup
+			nc.AttachedInfo = v.AttachedInfo
+			nc.Ex = v.Ex
+		}
+	}
+	b5 := utils.GetCurrentTimestampByMill()
+	log.Debug(operationID, "GetHiddenConversationList, cost time : ", b5-b4)
+
+	for k, v := range newConversationSet {
+		if _, ok := phConversationChangedSet[v.ConversationID]; !ok {
+			phNewConversationSet[k] = v
+		}
+	}
+	//Changed conversation storage
+	err3 := c.db.BatchUpdateConversationList(append(mapConversationToList(conversationChangedSet), mapConversationToList(phConversationChangedSet)...))
+	if err3 != nil {
+		log.Error(operationID, "insert changed conversation err :", err3.Error())
+	}
+	b6 := utils.GetCurrentTimestampByMill()
+	log.Debug(operationID, "BatchUpdateConversationList, cost time : ", b6-b5)
+	//New conversation storage
+	err4 := c.db.BatchInsertConversationList(mapConversationToList(phNewConversationSet))
+	if err4 != nil {
+		log.Error(operationID, "insert new conversation err:", err4.Error())
+	}
+	b7 := utils.GetCurrentTimestampByMill()
+	log.Debug(operationID, "BatchInsertConversationList, cost time : ", b7-b6)
+
+	c.doMsgReadState(msgReadList)
+	b8 := utils.GetCurrentTimestampByMill()
+	log.Debug(operationID, "doMsgReadState  cost time : ", b8-b7)
+
+	c.DoGroupMsgReadState(groupMsgReadList)
+	b9 := utils.GetCurrentTimestampByMill()
+	log.Debug(operationID, "DoGroupMsgReadState  cost time : ", b9-b8, "len: ", len(groupMsgReadList))
+
+	c.revokeMessage(msgRevokeList)
+	c.newRevokeMessage(newMsgRevokeList)
+	b10 := utils.GetCurrentTimestampByMill()
+	log.Debug(operationID, "revokeMessage  cost time : ", b10-b9)
+	if c.batchMsgListener != nil {
+		c.batchNewMessages(newMessages)
+		b11 := utils.GetCurrentTimestampByMill()
+		log.Debug(operationID, "batchNewMessages  cost time : ", b11-b10)
+	} else {
+		c.newMessage(newMessages)
+		b12 := utils.GetCurrentTimestampByMill()
+		log.Debug(operationID, "newMessage  cost time : ", b12-b10)
+	}
+
+	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
+	if len(newConversationSet) != 0 {
+		c.ConversationListener.OnNewConversation(utils.StructToJsonString(mapConversationToList(newConversationSet)))
+	}
+	if len(conversationChangedSet) != 0 {
+		c.ConversationListener.OnConversationChanged(utils.StructToJsonString(mapConversationToList(conversationChangedSet)))
+	}
+
+	if isTriggerUnReadCount {
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
+	}
 	log.Info(operationID, "insert msg, total cost time: ", utils.GetCurrentTimestampByMill()-b, "len:  ", len(allMsg))
 }
 func listToMap(list []*model_struct.LocalConversation, m map[string]*model_struct.LocalConversation) {
@@ -552,7 +930,22 @@ func (c *Conversation) revokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 	}
 
 }
+func (c *Conversation) tempCacheChatLog(messageList []*sdk_struct.MsgStruct) {
+	var newMessageList []*model_struct.TempCacheLocalChatLog
+	copier.Copy(&newMessageList, &messageList)
+	err1 := c.db.BatchInsertTempCacheMessageList(newMessageList)
+	if err1 != nil {
+		log.Error("", "BatchInsertTempCacheMessageList detail err:", err1.Error(), len(newMessageList))
+		for _, v := range newMessageList {
+			e := c.db.InsertTempCacheMessage(v)
+			if e != nil {
+				log.Warn("", "InsertTempCacheMessage operation ", "chat err log: ", *v, e.Error())
+			}
+		}
+	}
+}
 func (c *Conversation) newRevokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
+	var failedRevokeMessageList []*sdk_struct.MsgStruct
 	for _, w := range msgRevokeList {
 		if c.msgListener != nil {
 			var msg sdk_struct.MessageRevoked
@@ -569,6 +962,14 @@ func (c *Conversation) newRevokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 			err = c.db.UpdateMessageController(t)
 			if err != nil {
 				log.Error("internal", "setLocalMessageStatus revokeMessage err:", err.Error(), "msg", w)
+				failedRevokeMessageList = append(failedRevokeMessageList, w)
+				switch msg.SessionType {
+				case constant.SuperGroupChatType:
+					err := c.db.InsertMessageController(t)
+					if err != nil {
+						log.Error("internal", "InsertMessageController preDefine Message err:", err.Error(), "msg", *t)
+					}
+				}
 			} else {
 				t := new(model_struct.LocalChatLog)
 				t.ClientMsgID = w.ClientMsgID
@@ -586,11 +987,14 @@ func (c *Conversation) newRevokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 			log.Error("internal", "set msgListener is err:")
 		}
 	}
-
+	if len(failedRevokeMessageList) > 0 {
+		c.tempCacheChatLog(failedRevokeMessageList)
+	}
 }
 
 func (c *Conversation) DoGroupMsgReadState(groupMsgReadList []*sdk_struct.MsgStruct) {
 	var groupMessageReceiptResp []*sdk_struct.MessageReceipt
+	var failedMessageList []*sdk_struct.MsgStruct
 	userMsgMap := make(map[string]map[string][]string)
 	//var temp []*sdk_struct.MessageReceipt
 	for _, rd := range groupMsgReadList {
@@ -617,6 +1021,7 @@ func (c *Conversation) DoGroupMsgReadState(groupMsgReadList []*sdk_struct.MsgStr
 	for userID, m := range userMsgMap {
 		for groupID, msgIDList := range m {
 			var successMsgIDlist []string
+			var failedMsgIDList []string
 			newMsgID := utils.RemoveRepeatedStringInList(msgIDList)
 			_, sessionType, err := c.getConversationTypeByGroupID(groupID)
 			if err != nil {
@@ -652,17 +1057,31 @@ func (c *Conversation) DoGroupMsgReadState(groupMsgReadList []*sdk_struct.MsgStr
 					log.Error("internal", "setGroupMessageHasReadByMsgID err:", err1, "ClientMsgID", t, message)
 					continue
 				}
-
 				successMsgIDlist = append(successMsgIDlist, message.ClientMsgID)
 			}
-			msgRt.MsgIDList = successMsgIDlist
-			groupMessageReceiptResp = append(groupMessageReceiptResp, msgRt)
-
+			failedMsgIDList = utils.DifferenceSubsetString(newMsgID, successMsgIDlist)
+			if len(successMsgIDlist) != 0 {
+				msgRt.MsgIDList = successMsgIDlist
+				groupMessageReceiptResp = append(groupMessageReceiptResp, msgRt)
+			}
+			if len(failedMsgIDList) != 0 {
+				m := new(sdk_struct.MsgStruct)
+				m.ClientMsgID = utils.GetMsgID(userID)
+				m.SendID = userID
+				m.GroupID = groupID
+				m.ContentType = constant.GroupHasReadReceipt
+				m.Content = utils.StructToJsonString(failedMsgIDList)
+				m.Status = constant.MsgStatusFiltered
+				failedMessageList = append(failedMessageList, m)
+			}
 		}
 	}
 	if len(groupMessageReceiptResp) > 0 {
 		log.Info("internal", "OnRecvGroupReadReceipt: ", utils.StructToJsonString(groupMessageReceiptResp))
 		c.msgListener.OnRecvGroupReadReceipt(utils.StructToJsonString(groupMessageReceiptResp))
+	}
+	if len(failedMessageList) > 0 {
+		c.tempCacheChatLog(failedMessageList)
 	}
 }
 func (c *Conversation) newMessage(newMessagesList sdk_struct.NewMsgList) {
@@ -916,7 +1335,10 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 		log.Info("internal", "doMsgNew start..", c2v.Cmd)
 		c.doMsgNew(c2v)
 		log.Info("internal", "doMsgNew end..", c2v.Cmd)
-
+	case constant.CmdSuperGroupMsgCome:
+		log.Info("internal", "doSuperGroupMsgNew start..", c2v.Cmd)
+		c.doSuperGroupMsgNew(c2v)
+		log.Info("internal", "doSuperGroupMsgNew end..", c2v.Cmd)
 	case constant.CmdUpdateConversation:
 		log.Info("internal", "doUpdateConversation start ..", c2v.Cmd)
 		c.doUpdateConversation(c2v)

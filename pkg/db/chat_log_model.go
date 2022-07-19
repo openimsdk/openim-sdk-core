@@ -217,6 +217,37 @@ func (d *DataBase) BatchUpdateMessageList(MessageList []*model_struct.LocalChatL
 	return nil
 }
 
+func (d *DataBase) BatchSpecialUpdateMessageList(MessageList []*model_struct.LocalChatLog) error {
+	if MessageList == nil {
+		return nil
+	}
+
+	for _, v := range MessageList {
+		v1 := new(model_struct.LocalChatLog)
+		v1.ClientMsgID = v.ClientMsgID
+		v1.ServerMsgID = v.ServerMsgID
+		v1.SendID = v.SendID
+		v1.SenderPlatformID = v.SenderPlatformID
+		v1.SenderNickname = v.SenderNickname
+		v1.SenderFaceURL = v.SenderFaceURL
+		v1.MsgFrom = v.MsgFrom
+		v1.ContentType = v.ContentType
+		v1.Content = v.Content
+		v1.Seq = v.Seq
+		v1.SendTime = v.SendTime
+		v1.CreateTime = v.CreateTime
+		v1.AttachedInfo = v.AttachedInfo
+		v1.Ex = v.Ex
+		err := d.UpdateMessageController(v1)
+		if err != nil {
+			log.Error("", "update single message failed", *v)
+			return utils.Wrap(err, "BatchUpdateMessageList failed")
+		}
+
+	}
+	return nil
+}
+
 func (d *DataBase) MessageIfExists(ClientMsgID string) (bool, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()

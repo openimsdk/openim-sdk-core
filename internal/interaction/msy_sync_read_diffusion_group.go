@@ -30,6 +30,7 @@ func NewReadDiffusionGroupMsgSync(dataBase *db.DataBase, ws *Ws, loginUserID str
 	p := &ReadDiffusionGroupMsgSync{DataBase: dataBase, Ws: ws, loginUserID: loginUserID, conversationCh: conversationCh, joinedSuperGroupCh: joinedSuperGroupCh}
 	p.Group2SeqMaxNeedSync = make(map[string]uint32, 0)
 	p.Group2SeqMaxSynchronized = make(map[string]uint32, 0)
+	p.Group2SyncMsgFinished = make(map[string]bool, 0)
 	go p.updateJoinedSuperGroup()
 	return p
 }
@@ -129,8 +130,8 @@ func (m *ReadDiffusionGroupMsgSync) syncLatestMsgForGroup(groupID, operationID s
 		need := m.Group2SeqMaxNeedSync[groupID]
 		synchronized := m.Group2SeqMaxSynchronized[groupID]
 		begin := synchronized + 1
-		if int64(need)-int64(synchronized) > int64(pullMsgNumForReadDiffusion) {
-			begin = need - uint32(pullMsgNumForReadDiffusion) + 1
+		if int64(need)-int64(synchronized) > int64(constant.PullMsgNumForReadDiffusion) {
+			begin = need - uint32(constant.PullMsgNumForReadDiffusion) + 1
 		}
 		m.syncMsgFromServer(begin, need, groupID, operationID)
 		m.Group2SyncMsgFinished[groupID] = true
@@ -207,7 +208,7 @@ func (m *ReadDiffusionGroupMsgSync) syncMsgFromServer(beginSeq, endSeq uint32, g
 	for i := beginSeq; i <= endSeq; i++ {
 		needSyncSeqList = append(needSyncSeqList, i)
 	}
-	var SPLIT = splitPullMsgNum
+	var SPLIT = constant.SplitPullMsgNum
 	for i := 0; i < len(needSyncSeqList)/SPLIT; i++ {
 		m.syncMsgFromServerSplit(needSyncSeqList[i*SPLIT:(i+1)*SPLIT], groupID, operationID)
 	}

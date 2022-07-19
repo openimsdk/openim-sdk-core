@@ -409,6 +409,50 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 	}
 	log.Debug(operationID, "db cost time", time.Since(t))
 	common.CheckDBErrCallback(callback, err, operationID)
+	if len(list) < req.Count && sessionType == constant.SuperGroupChatType {
+		seq, _ := c.db.SuperGroupGetNormalMinSeq(sourceID)
+		if seq != 0 && seq != 1 {
+			seqList := func(seq uint32) (seqList []uint32) {
+				startSeq := seq - constant.PullMsgNumForReadDiffusion
+				if startSeq <= 0 {
+					startSeq = 1
+				}
+				for i := startSeq; i < seq; i++ {
+					seqList = append(seqList, i)
+				}
+				return seqList
+			}(seq)
+			var pullMsgReq server_api_params.PullMessageBySeqListReq
+			pullMsgReq.UserID = c.loginUserID
+			pullMsgReq.GroupSeqList = make(map[string]*server_api_params.SeqList, 0)
+			pullMsgReq.GroupSeqList[sourceID] = &server_api_params.SeqList{SeqList: seqList}
+
+			pullMsgReq.OperationID = operationID
+			log.Debug(operationID, "read diffusion group pull message, req: ", pullMsgReq)
+			resp, err := c.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 30, 3, c.loginUserID, operationID)
+			if err != nil {
+				log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 30, 3, c.loginUserID)
+			} else {
+				var pullMsgResp server_api_params.PullMessageBySeqListResp
+				err = proto.Unmarshal(resp.Data, &pullMsgResp)
+				if err != nil {
+					log.Error(operationID, "pullMsgResp Unmarshal failed ", err.Error())
+				} else {
+					log.Debug(operationID, "syncMsgFromServerSplit pull msg ", pullMsgReq.String(), pullMsgResp.String())
+					if v, ok := pullMsgResp.GroupMsgDataList[sourceID]; ok {
+						_ = common.TriggerCmdSuperGroupMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: v.MsgDataList, OperationID: operationID}, c.GetCh())
+					}
+					time.Sleep(time.Duration(500) * time.Millisecond)
+					if notStartTime {
+						list, err = c.db.GetMessageListNoTimeController(sourceID, sessionType, req.Count, isReverse)
+					} else {
+						list, err = c.db.GetMessageListController(sourceID, sessionType, req.Count, startTime, isReverse)
+					}
+				}
+
+			}
+		}
+	}
 	t = time.Now()
 	for _, v := range list {
 		temp := sdk_struct.MsgStruct{}

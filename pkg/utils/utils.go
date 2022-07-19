@@ -394,6 +394,19 @@ func DifferenceSubset(mainSlice, subSlice []uint32) []uint32 {
 	}
 	return n
 }
+func DifferenceSubsetString(mainSlice, subSlice []string) []string {
+	m := make(map[string]bool)
+	n := make([]string, 0)
+	for _, v := range subSlice {
+		m[v] = true
+	}
+	for _, v := range mainSlice {
+		if !m[v] {
+			n = append(n, v)
+		}
+	}
+	return n
+}
 func JsonDataOne(pb proto.Message) map[string]interface{} {
 	return ProtoToMap(pb, false)
 }

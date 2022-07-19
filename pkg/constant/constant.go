@@ -327,3 +327,8 @@ const (
 	JoinBySearch     = 3
 	JoinByQRCode     = 4
 )
+const (
+	SplitPullMsgNum            = 1000
+	PullMsgNumWhenLogin        = 10000
+	PullMsgNumForReadDiffusion = 100
+)
