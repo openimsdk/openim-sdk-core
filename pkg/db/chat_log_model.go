@@ -227,9 +227,11 @@ func (d *DataBase) BatchSpecialUpdateMessageList(MessageList []*model_struct.Loc
 		v1.ClientMsgID = v.ClientMsgID
 		v1.ServerMsgID = v.ServerMsgID
 		v1.SendID = v.SendID
+		v1.RecvID = v.RecvID
 		v1.SenderPlatformID = v.SenderPlatformID
 		v1.SenderNickname = v.SenderNickname
 		v1.SenderFaceURL = v.SenderFaceURL
+		v1.SessionType = v.SessionType
 		v1.MsgFrom = v.MsgFrom
 		v1.ContentType = v.ContentType
 		v1.Content = v.Content

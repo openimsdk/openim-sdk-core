@@ -930,6 +930,7 @@ func (c *Conversation) revokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 	}
 
 }
+
 func (c *Conversation) tempCacheChatLog(messageList []*sdk_struct.MsgStruct) {
 	var newMessageList []*model_struct.TempCacheLocalChatLog
 	copier.Copy(&newMessageList, &messageList)

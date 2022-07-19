@@ -411,17 +411,21 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 	common.CheckDBErrCallback(callback, err, operationID)
 	if len(list) < req.Count && sessionType == constant.SuperGroupChatType {
 		seq, _ := c.db.SuperGroupGetNormalMinSeq(sourceID)
+		log.Debug(operationID, sourceID+":table min seq is ", seq)
 		if seq != 0 && seq != 1 {
 			seqList := func(seq uint32) (seqList []uint32) {
-				startSeq := seq - constant.PullMsgNumForReadDiffusion
+				startSeq := int64(seq) - constant.PullMsgNumForReadDiffusion
 				if startSeq <= 0 {
 					startSeq = 1
 				}
-				for i := startSeq; i < seq; i++ {
-					seqList = append(seqList, i)
+				log.Debug(operationID, "pull start is ", startSeq)
+				for i := startSeq; i < int64(seq); i++ {
+					seqList = append(seqList, uint32(i))
 				}
+				log.Debug(operationID, "pull seqList is ", seqList)
 				return seqList
 			}(seq)
+			log.Debug(operationID, "pull seqList is ", seqList)
 			var pullMsgReq server_api_params.PullMessageBySeqListReq
 			pullMsgReq.UserID = c.loginUserID
 			pullMsgReq.GroupSeqList = make(map[string]*server_api_params.SeqList, 0)
