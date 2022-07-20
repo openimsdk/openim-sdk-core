@@ -2,6 +2,7 @@ package conversation_msg
 
 import (
 	"errors"
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 	_ "open_im_sdk/internal/common"
@@ -444,9 +445,8 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 				} else {
 					log.Debug(operationID, "syncMsgFromServerSplit pull msg ", pullMsgReq.String(), pullMsgResp.String())
 					if v, ok := pullMsgResp.GroupMsgDataList[sourceID]; ok {
-						_ = common.TriggerCmdSuperGroupMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: v.MsgDataList, OperationID: operationID}, c.GetCh())
+						c.pullMessageIntoTable(v.MsgDataList, operationID)
 					}
-					time.Sleep(time.Duration(500) * time.Millisecond)
 					if notStartTime {
 						list, err = c.db.GetMessageListNoTimeController(sourceID, sessionType, req.Count, isReverse)
 					} else {
@@ -502,6 +502,149 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 	}
 	log.Debug(operationID, "sort cost time", time.Since(t))
 	return sdk.GetHistoryMessageListCallback(messageList)
+}
+func (c *Conversation) pullMessageIntoTable(pullMsgData []*server_api_params.MsgData, operationID string) {
+
+	var insertMsg, specialUpdateMsg []*model_struct.LocalChatLog
+	var exceptionMsg []*model_struct.LocalErrChatLog
+	var msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList sdk_struct.NewMsgList
+
+	log.Info(operationID, "do Msg come here, len: ", len(pullMsgData))
+	b := utils.GetCurrentTimestampByMill()
+
+	for _, v := range pullMsgData {
+		log.Info(operationID, "do Msg come here, msg detail ", v.RecvID, v.SendID, v.ClientMsgID, v.ServerMsgID, v.Seq, c.loginUserID)
+		msg := new(sdk_struct.MsgStruct)
+		copier.Copy(msg, v)
+		var tips server_api_params.TipsComm
+		if v.ContentType >= constant.NotificationBegin && v.ContentType <= constant.NotificationEnd {
+			_ = proto.Unmarshal(v.Content, &tips)
+			marshaler := jsonpb.Marshaler{
+				OrigName:     true,
+				EnumsAsInts:  false,
+				EmitDefaults: false,
+			}
+			msg.Content, _ = marshaler.MarshalToString(&tips)
+		} else {
+			msg.Content = string(v.Content)
+		}
+		//When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
+		if msg.Status == constant.MsgStatusHasDeleted {
+			insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
+			continue
+		}
+		msg.Status = constant.MsgStatusSendSuccess
+		msg.IsRead = false
+		//		log.Info(operationID, "new msg, seq, ServerMsgID, ClientMsgID", msg.Seq, msg.ServerMsgID, msg.ClientMsgID)
+		//De-analyze data
+		if msg.ClientMsgID == "" {
+			exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
+			continue
+		}
+		switch {
+		case v.ContentType == constant.ConversationChangeNotification || v.ContentType == constant.ConversationPrivateChatNotification:
+			log.Info(operationID, utils.GetSelfFuncName(), v)
+			c.DoNotification(v)
+		case v.ContentType == constant.SuperGroupUpdateNotification:
+			c.full.SuperGroup.DoNotification(v, c.GetCh())
+		}
+		if v.SendID == c.loginUserID { //seq
+			// Messages sent by myself  //if  sent through  this terminal
+			m, err := c.db.GetMessageController(msg)
+			if err == nil {
+				log.Info(operationID, "have message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
+				if m.Seq == 0 {
+					specialUpdateMsg = append(specialUpdateMsg, c.msgStructToLocalChatLog(msg))
+
+				} else {
+					exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
+				}
+			} else { //      send through  other terminal
+				log.Info(operationID, "sync message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
+				insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
+				switch msg.ContentType {
+				case constant.Revoke:
+					msgRevokeList = append(msgRevokeList, msg)
+				case constant.HasReadReceipt:
+					msgReadList = append(msgReadList, msg)
+				case constant.GroupHasReadReceipt:
+					groupMsgReadList = append(groupMsgReadList, msg)
+				case constant.AdvancedRevoke:
+					newMsgRevokeList = append(newMsgRevokeList, msg)
+				default:
+				}
+			}
+		} else { //Sent by others
+			if oldMessage, err := c.db.GetMessageController(msg); err != nil { //Deduplication operation
+				log.Warn("test", "trigger msg is ", msg.SenderNickname, msg.SenderFaceURL)
+				insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
+				switch msg.ContentType {
+				case constant.Revoke:
+					msgRevokeList = append(msgRevokeList, msg)
+				case constant.HasReadReceipt:
+					msgReadList = append(msgReadList, msg)
+				case constant.GroupHasReadReceipt:
+					groupMsgReadList = append(groupMsgReadList, msg)
+				case constant.AdvancedRevoke:
+					newMsgRevokeList = append(newMsgRevokeList, msg)
+
+				default:
+				}
+
+			} else {
+				if oldMessage.Seq == 0 {
+					specialUpdateMsg = append(specialUpdateMsg, c.msgStructToLocalChatLog(msg))
+				} else {
+					exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
+					log.Warn(operationID, "Deduplication operation ", *c.msgStructToLocalErrChatLog(msg))
+				}
+			}
+		}
+	}
+
+	//update message
+	err6 := c.db.BatchSpecialUpdateMessageList(specialUpdateMsg)
+	if err6 != nil {
+		log.Error(operationID, "sync seq normal message err  :", err6.Error())
+	}
+	b3 := utils.GetCurrentTimestampByMill()
+	//Normal message storage
+	err1 := c.db.BatchInsertMessageListController(insertMsg)
+	if err1 != nil {
+		log.Error(operationID, "insert GetMessage detail err:", err1.Error(), len(insertMsg))
+		for _, v := range insertMsg {
+			e := c.db.InsertMessageController(v)
+			if e != nil {
+				errChatLog := &model_struct.LocalErrChatLog{}
+				copier.Copy(errChatLog, v)
+				exceptionMsg = append(exceptionMsg, errChatLog)
+				log.Warn(operationID, "InsertMessage operation ", "chat err log: ", errChatLog, "chat log: ", v, e.Error())
+			}
+		}
+	}
+	b4 := utils.GetCurrentTimestampByMill()
+	log.Debug(operationID, "BatchInsertMessageListController, cost time : ", b4-b3)
+
+	//Exception message storage
+	for _, v := range exceptionMsg {
+		log.Warn(operationID, "exceptionMsg show: ", *v)
+	}
+
+	err2 := c.db.BatchInsertExceptionMsgController(exceptionMsg)
+	if err2 != nil {
+		log.Error(operationID, "BatchInsertExceptionMsgController err message err  :", err2.Error())
+
+	}
+	b8 := utils.GetCurrentTimestampByMill()
+	c.DoGroupMsgReadState(groupMsgReadList)
+	b9 := utils.GetCurrentTimestampByMill()
+	log.Debug(operationID, "DoGroupMsgReadState  cost time : ", b9-b8, "len: ", len(groupMsgReadList))
+
+	c.revokeMessage(msgRevokeList)
+	c.newRevokeMessage(newMsgRevokeList)
+	b10 := utils.GetCurrentTimestampByMill()
+	log.Debug(operationID, "revokeMessage  cost time : ", b10-b9)
+	log.Info(operationID, "insert msg, total cost time: ", utils.GetCurrentTimestampByMill()-b, "len:  ", len(pullMsgData))
 }
 
 func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req sdk.RevokeMessageParams, operationID string) {
