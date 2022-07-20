@@ -22,6 +22,7 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sync"
+	"time"
 )
 
 type LoginMgr struct {
@@ -154,9 +155,10 @@ func (u *LoginMgr) wakeUp(cb open_im_sdk_callback.Base, operationID string) {
 
 func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
 	log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)
+	t1 := time.Now()
 	err, exp := CheckToken(userID, token, operationID)
 	common.CheckTokenErrCallback(cb, err, operationID)
-	log.Info(operationID, "checkToken ok ", userID, token, exp)
+	log.Info(operationID, "checkToken ok ", userID, token, exp, "login cost time: ", time.Since(t1))
 	u.token = token
 	u.loginUserID = userID
 
@@ -167,7 +169,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		return
 	}
 	u.db = db
-	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir)
+	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir, "login cost time: ", time.Since(t1))
 
 	wsRespAsyn := ws.NewWsRespAsyn()
 	wsConn := ws.NewWsConn(u.connListener, token, userID)
@@ -200,8 +202,9 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache, u.db, u.superGroup)
 	u.workMoments = workMoments.NewWorkMoments(u.loginUserID, u.db, p)
 	u.workMoments.SetListener(u.workMomentsListener)
-	log.NewInfo(operationID, u.imConfig.ObjectStorage)
+	log.NewInfo(operationID, u.imConfig.ObjectStorage, "new obj login cost time: ", time.Since(t1))
 	u.user.SyncLoginUserInfo(operationID)
+	log.NewInfo(operationID, u.imConfig.ObjectStorage, "SyncLoginUserInfo login cost time: ", time.Since(t1))
 	u.loginTime = utils.GetCurrentTimestampByMill()
 	u.user.SetLoginTime(u.loginTime)
 	u.friend.SetLoginTime(u.loginTime)
@@ -209,7 +212,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.superGroup.SetLoginTime(u.loginTime)
 	u.organization.SetLoginTime(u.loginTime)
 	go u.forcedSynchronization()
-	log.Info(operationID, "forcedSynchronization success...")
+	log.Info(operationID, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	log.Info(operationID, "all channel ", u.pushMsgAndMaxSeqCh, u.conversationCh, u.heartbeatCmdCh, u.cmdWsCh)
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
 	var objStorage comm2.ObjectStorage
@@ -233,10 +236,11 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		u.conversation.SetBatchMsgListener(u.batchMsgListener)
 		log.Info(operationID, "SetBatchMsgListener ", u.batchMsgListener)
 	}
-
+	log.Debug(operationID, "SyncConversations begin ")
 	u.conversation.SyncConversations(operationID)
+	log.Debug(operationID, "SyncConversations end ")
 	go common.DoListener(u.conversation)
-	log.Info(operationID, "login success...")
+	log.Info(operationID, "login success...", "login cost time: ", time.Since(t1))
 	cb.OnSuccess("")
 
 }
@@ -384,16 +388,15 @@ func CheckToken(userID, token string, operationID string) (error, uint32) {
 	if operationID == "" {
 		operationID = utils.OperationIDGenerator()
 	}
-
 	log.Debug(operationID, utils.GetSelfFuncName(), userID, token)
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
 	user := user.NewUser(nil, p, userID)
-	_, err := user.GetSelfUserInfoFromSvr(operationID)
-	if err != nil {
-		return utils.Wrap(err, "GetSelfUserInfoFromSvr failed "+operationID), 0
-	}
-	exp, _ := user.ParseTokenFromSvr(operationID)
-	return nil, exp
+	//_, err := user.GetSelfUserInfoFromSvr(operationID)
+	//if err != nil {
+	//	return utils.Wrap(err, "GetSelfUserInfoFromSvr failed "+operationID), 0
+	//}
+	exp, err := user.ParseTokenFromSvr(operationID)
+	return err, exp
 }
 
 func (u *LoginMgr) uploadImage(callback open_im_sdk_callback.Base, filePath string, token, obj string, operationID string) string {

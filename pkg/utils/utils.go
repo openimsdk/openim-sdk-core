@@ -429,3 +429,10 @@ func ProtoToMap(pb proto.Message, idFix bool) map[string]interface{} {
 	}
 	return out
 }
+func GetUserIDForMinSeq(userID string) string {
+	return "u_" + userID
+}
+
+func GetGroupIDForMinSeq(groupID string) string {
+	return "g_" + groupID
+}
