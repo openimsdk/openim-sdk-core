@@ -16,3 +16,11 @@ func UnmarshalTips(msg *api.MsgData, detail proto.Message) error {
 	}
 	return nil
 }
+
+func GetUserIDForMinSeq(userID string) string {
+	return "u_" + userID
+}
+
+func GetGroupIDForMinSeq(groupID string) string {
+	return "g_" + groupID
+}
