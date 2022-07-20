@@ -29,7 +29,9 @@ type WsConn struct {
 
 func NewWsConn(listener open_im_sdk_callback.OnConnListener, token string, loginUserID string) *WsConn {
 	p := WsConn{listener: listener, token: token, loginUserID: loginUserID}
-	p.conn, _, _ = p.ReConn()
+	go func() {
+		p.conn, _, _ = p.ReConn()
+	}()
 	return &p
 }
 

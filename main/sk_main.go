@@ -9,7 +9,7 @@ import (
 
 func main() {
 
-	strMyUidx := "3542977171"
+	strMyUidx := "1153408799"
 	log.NewPrivateLog("", 6)
 	tokenx := test.GenToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
@@ -20,15 +20,15 @@ func main() {
 	//	test.DoTestGetGroupsInfo()
 	//	test.DoTestDeleteAllMsgFromLocalAndSvr()
 
-	println("token ", tokenx)
-	time.Sleep(100000 * time.Second)
+	//	println("token ", tokenx)
+	//	time.Sleep(100000 * time.Second)
 	b := utils.GetCurrentTimestampBySecond()
 	i := 0
 	for {
-		test.DoTestSendMsg2Group(strMyUidx, "a43619731c1c05eb93fc2501eab04f33", i)
+		test.DoTestSendMsg2Group(strMyUidx, "2192900037", i)
 		i++
-		time.Sleep(100 * time.Millisecond)
-		if i == 10000 {
+		time.Sleep(1 * time.Millisecond)
+		if i == 50000 {
 			break
 		}
 		log.Warn("", "10 * time.Millisecond ###################waiting... msg: ", i)

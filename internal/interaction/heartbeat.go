@@ -119,9 +119,10 @@ func (u *Heartbeat) Run() {
 			u.CloseConn()
 			continue
 		}
-		u.id2MinSeq["u_"+u.loginUserID] = wsSeqResp.MinSeq
+
+		u.id2MinSeq[utils.GetUserIDForMinSeq(u.loginUserID)] = wsSeqResp.MinSeq
 		for g, v := range wsSeqResp.GroupMaxAndMinSeq {
-			u.id2MinSeq["g_"+g] = v.MinSeq
+			u.id2MinSeq[utils.GetGroupIDForMinSeq(g)] = v.MinSeq
 		}
 		//server_api_params.MaxAndMinSeq
 		log.Debug(operationID, "recv heartbeat resp,  seq on svr: ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)

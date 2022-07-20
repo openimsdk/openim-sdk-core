@@ -536,7 +536,7 @@ func DoTestSendMsg2(sendId, recvID string) {
 }
 
 func DoTestSendMsg2Group(sendId, groupID string, index int) {
-	m := "test:" + sendId + ":" + groupID + ":  " + utils.IntToString(index)
+	m := "test: " + sendId + " : " + groupID + " : " + utils.IntToString(index)
 	operationID := utils.OperationIDGenerator()
 	s := DoTestCreateTextMessage(m)
 	log.NewInfo(operationID, "send msg:", s)
