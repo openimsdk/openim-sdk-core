@@ -992,7 +992,7 @@ func (c *Conversation) newRevokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 		}
 	}
 	if len(failedRevokeMessageList) > 0 {
-		c.tempCacheChatLog(failedRevokeMessageList)
+		//c.tempCacheChatLog(failedRevokeMessageList)
 	}
 }
 
@@ -1085,7 +1085,7 @@ func (c *Conversation) DoGroupMsgReadState(groupMsgReadList []*sdk_struct.MsgStr
 		c.msgListener.OnRecvGroupReadReceipt(utils.StructToJsonString(groupMessageReceiptResp))
 	}
 	if len(failedMessageList) > 0 {
-		c.tempCacheChatLog(failedMessageList)
+		//c.tempCacheChatLog(failedMessageList)
 	}
 }
 func (c *Conversation) newMessage(newMessagesList sdk_struct.NewMsgList) {
