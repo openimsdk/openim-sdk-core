@@ -334,7 +334,6 @@ func (c *Conversation) SyncOneConversation(conversationID, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "conversationID: ", conversationID)
 	// todo
 }
-
 func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base, req sdk.GetHistoryMessageListParams, operationID string, isReverse bool) sdk.GetHistoryMessageListCallback {
 	t := time.Now()
 	var sourceID string
@@ -351,6 +350,130 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 		lc, err := c.db.GetConversation(conversationID)
 		if err != nil {
 			return nil
+		}
+		switch lc.ConversationType {
+		case constant.SingleChatType, constant.NotificationChatType:
+			sourceID = lc.UserID
+		case constant.GroupChatType, constant.SuperGroupChatType:
+			sourceID = lc.GroupID
+			msg.GroupID = lc.GroupID
+		}
+		sessionType = int(lc.ConversationType)
+		if req.StartClientMsgID == "" {
+			//startTime = lc.LatestMsgSendTime + TimeOffset
+			////startTime = utils.GetCurrentTimestampByMill()
+			notStartTime = true
+		} else {
+			msg.SessionType = lc.ConversationType
+			msg.ClientMsgID = req.StartClientMsgID
+			m, err := c.db.GetMessageController(&msg)
+			common.CheckDBErrCallback(callback, err, operationID)
+			startTime = m.SendTime
+		}
+	} else {
+		if req.UserID == "" {
+			newConversationID, newSessionType, err := c.getConversationTypeByGroupID(req.GroupID)
+			common.CheckDBErrCallback(callback, err, operationID)
+			sourceID = req.GroupID
+			sessionType = int(newSessionType)
+			conversationID = newConversationID
+			msg.GroupID = req.GroupID
+			msg.SessionType = newSessionType
+		} else {
+			sourceID = req.UserID
+			conversationID = utils.GetConversationIDBySessionType(sourceID, constant.SingleChatType)
+			sessionType = constant.SingleChatType
+		}
+		if req.StartClientMsgID == "" {
+			//lc, err := c.db.GetConversation(conversationID)
+			//if err != nil {
+			//	return nil
+			//}
+			//startTime = lc.LatestMsgSendTime + TimeOffset
+			//startTime = utils.GetCurrentTimestampByMill()
+			notStartTime = true
+		} else {
+			msg.ClientMsgID = req.StartClientMsgID
+			m, err := c.db.GetMessageController(&msg)
+			common.CheckDBErrCallback(callback, err, operationID)
+			startTime = m.SendTime
+		}
+	}
+	log.Debug(operationID, "Assembly parameters cost time", time.Since(t))
+	t = time.Now()
+	log.Info(operationID, "sourceID:", sourceID, "startTime:", startTime, "count:", req.Count, "not start_time", notStartTime)
+	if notStartTime {
+		list, err = c.db.GetMessageListNoTimeController(sourceID, sessionType, req.Count, isReverse)
+	} else {
+		list, err = c.db.GetMessageListController(sourceID, sessionType, req.Count, startTime, isReverse)
+	}
+	log.Debug(operationID, "db cost time", time.Since(t))
+	common.CheckDBErrCallback(callback, err, operationID)
+	t = time.Now()
+	for _, v := range list {
+		temp := sdk_struct.MsgStruct{}
+		tt := time.Now()
+		temp.ClientMsgID = v.ClientMsgID
+		temp.ServerMsgID = v.ServerMsgID
+		temp.CreateTime = v.CreateTime
+		temp.SendTime = v.SendTime
+		temp.SessionType = v.SessionType
+		temp.SendID = v.SendID
+		temp.RecvID = v.RecvID
+		temp.MsgFrom = v.MsgFrom
+		temp.ContentType = v.ContentType
+		temp.SenderPlatformID = v.SenderPlatformID
+		temp.SenderNickname = v.SenderNickname
+		temp.SenderFaceURL = v.SenderFaceURL
+		temp.Content = v.Content
+		temp.Seq = v.Seq
+		temp.IsRead = v.IsRead
+		temp.Status = v.Status
+		temp.AttachedInfo = v.AttachedInfo
+		temp.Ex = v.Ex
+		err := c.msgHandleByContentType(&temp)
+		if err != nil {
+			log.Error(operationID, "Parsing data error:", err.Error(), temp)
+			continue
+		}
+		log.Debug(operationID, "internal unmarshal cost time", time.Since(tt))
+
+		switch sessionType {
+		case constant.GroupChatType:
+			fallthrough
+		case constant.SuperGroupChatType:
+			temp.GroupID = temp.RecvID
+			temp.RecvID = c.loginUserID
+		}
+		messageList = append(messageList, &temp)
+	}
+	log.Debug(operationID, "unmarshal cost time", time.Since(t))
+	t = time.Now()
+	if !isReverse {
+		sort.Sort(messageList)
+	}
+	log.Debug(operationID, "sort cost time", time.Since(t))
+	return sdk.GetHistoryMessageListCallback(messageList)
+}
+func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callback.Base, req sdk.GetAdvancedHistoryMessageListParams, operationID string, isReverse bool) sdk.GetAdvancedHistoryMessageListCallback {
+	t := time.Now()
+	var messageListCallback sdk.GetAdvancedHistoryMessageListCallback
+	var sourceID string
+	var conversationID string
+	var startTime int64
+	var sessionType int
+	var list []*model_struct.LocalChatLog
+	var err error
+	var messageList sdk_struct.NewMsgList
+	var msg sdk_struct.MsgStruct
+	var notStartTime bool
+	if req.ConversationID != "" {
+		conversationID = req.ConversationID
+		lc, err := c.db.GetConversation(conversationID)
+		if err != nil {
+			messageListCallback.ErrCode = 100
+			messageListCallback.ErrMsg = "conversation get err"
+			return messageListCallback
 		}
 		switch lc.ConversationType {
 		case constant.SingleChatType, constant.NotificationChatType:
@@ -427,34 +550,52 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 				return seqList
 			}(seq)
 			log.Debug(operationID, "pull seqList is ", seqList)
-			var pullMsgReq server_api_params.PullMessageBySeqListReq
-			pullMsgReq.UserID = c.loginUserID
-			pullMsgReq.GroupSeqList = make(map[string]*server_api_params.SeqList, 0)
-			pullMsgReq.GroupSeqList[sourceID] = &server_api_params.SeqList{SeqList: seqList}
-
-			pullMsgReq.OperationID = operationID
-			log.Debug(operationID, "read diffusion group pull message, req: ", pullMsgReq)
-			resp, err := c.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 30, 3, c.loginUserID, operationID)
-			if err != nil {
-				log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 30, 3, c.loginUserID)
-			} else {
-				var pullMsgResp server_api_params.PullMessageBySeqListResp
-				err = proto.Unmarshal(resp.Data, &pullMsgResp)
-				if err != nil {
-					log.Error(operationID, "pullMsgResp Unmarshal failed ", err.Error())
-				} else {
-					log.Debug(operationID, "syncMsgFromServerSplit pull msg ", pullMsgReq.String(), pullMsgResp.String())
-					if v, ok := pullMsgResp.GroupMsgDataList[sourceID]; ok {
-						c.pullMessageIntoTable(v.MsgDataList, operationID)
-					}
-					if notStartTime {
-						list, err = c.db.GetMessageListNoTimeController(sourceID, sessionType, req.Count, isReverse)
-					} else {
-						list, err = c.db.GetMessageListController(sourceID, sessionType, req.Count, startTime, isReverse)
-					}
+			c.pullMessageAndReGetHistoryMessages(sourceID, seqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+		}
+	} else if len(list) == req.Count && sessionType == constant.SuperGroupChatType {
+		maxSeq, minSeq, haveSeqList := func(messages []*model_struct.LocalChatLog) (max, min uint32, seqList []uint32) {
+			for _, message := range messages {
+				if message.Seq != 0 {
+					max = message.Seq
+					min = message.Seq
+					break
 				}
-
 			}
+			for i := 0; i < len(messages); i++ {
+				if messages[i].Seq != 0 {
+					seqList = append(seqList, messages[i].Seq)
+				}
+				if messages[i].Seq > max {
+					max = messages[i].Seq
+
+				}
+				if messages[i].Seq < min {
+					min = messages[i].Seq
+				}
+			}
+			return max, min, seqList
+		}(list)
+		log.Debug(operationID, "get message from local db max seq:", maxSeq, "minSeq:", minSeq, "haveSeqList:", haveSeqList)
+		if maxSeq != 0 && minSeq != 0 {
+			successiveSeqList := func(max, min uint32) (seqList []uint32) {
+				for i := min; i <= max; i++ {
+					seqList = append(seqList, i)
+				}
+				return seqList
+			}(maxSeq, minSeq)
+			lostSeqList := utils.DifferenceSubset(successiveSeqList, haveSeqList)
+			lostSeqListLength := len(lostSeqList)
+			log.Debug(operationID, "get lost seqList is :", lostSeqList, "length:", lostSeqListLength)
+			if lostSeqListLength > 0 {
+				var pullSeqList []uint32
+				if lostSeqListLength <= constant.PullMsgNumForReadDiffusion {
+					pullSeqList = lostSeqList
+				} else {
+					pullSeqList = lostSeqList[0:constant.PullMsgNumForReadDiffusion]
+				}
+				c.pullMessageAndReGetHistoryMessages(sourceID, pullSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+			}
+
 		}
 	}
 	t = time.Now()
@@ -501,7 +642,42 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 		sort.Sort(messageList)
 	}
 	log.Debug(operationID, "sort cost time", time.Since(t))
-	return sdk.GetHistoryMessageListCallback(messageList)
+	messageListCallback.MessageList = messageList
+	return messageListCallback
+}
+func (c *Conversation) pullMessageAndReGetHistoryMessages(sourceID string, seqList []uint32, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback, operationID string) {
+	var pullMsgReq server_api_params.PullMessageBySeqListReq
+	pullMsgReq.UserID = c.loginUserID
+	pullMsgReq.GroupSeqList = make(map[string]*server_api_params.SeqList, 0)
+	pullMsgReq.GroupSeqList[sourceID] = &server_api_params.SeqList{SeqList: seqList}
+
+	pullMsgReq.OperationID = operationID
+	log.Debug(operationID, "read diffusion group pull message, req: ", pullMsgReq)
+	resp, err := c.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 30, 3, c.loginUserID, operationID)
+	if err != nil {
+		messageListCallback.ErrCode = 100
+		messageListCallback.ErrMsg = err.Error()
+		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 30, 3, c.loginUserID)
+	} else {
+		var pullMsgResp server_api_params.PullMessageBySeqListResp
+		err = proto.Unmarshal(resp.Data, &pullMsgResp)
+		if err != nil {
+			messageListCallback.ErrCode = 100
+			messageListCallback.ErrMsg = err.Error()
+			log.Error(operationID, "pullMsgResp Unmarshal failed ", err.Error())
+		} else {
+			log.Debug(operationID, "syncMsgFromServerSplit pull msg ", pullMsgReq.String(), pullMsgResp.String())
+			if v, ok := pullMsgResp.GroupMsgDataList[sourceID]; ok {
+				c.pullMessageIntoTable(v.MsgDataList, operationID)
+			}
+			if notStartTime {
+				*list, err = c.db.GetMessageListNoTimeController(sourceID, sessionType, count, isReverse)
+			} else {
+				*list, err = c.db.GetMessageListController(sourceID, sessionType, count, startTime, isReverse)
+			}
+		}
+
+	}
 }
 func (c *Conversation) pullMessageIntoTable(pullMsgData []*server_api_params.MsgData, operationID string) {
 

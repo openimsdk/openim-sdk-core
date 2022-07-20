@@ -799,6 +799,14 @@ func GetHistoryMessageList(callback open_im_sdk_callback.Base, operationID strin
 	}
 	userForSDK.Conversation().GetHistoryMessageList(callback, getMessageOptions, operationID)
 }
+func GetAdvancedHistoryMessageList(callback open_im_sdk_callback.Base, operationID string, getMessageOptions string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Conversation().GetAdvancedHistoryMessageList(callback, getMessageOptions, operationID)
+}
 func GetHistoryMessageListReverse(callback open_im_sdk_callback.Base, operationID string, getMessageOptions string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())

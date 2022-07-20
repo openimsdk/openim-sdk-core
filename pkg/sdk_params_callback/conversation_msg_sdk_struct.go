@@ -41,6 +41,19 @@ type GetHistoryMessageListParams struct {
 	StartClientMsgID string `json:"startClientMsgID"`
 	Count            int    `json:"count"`
 }
+type GetAdvancedHistoryMessageListParams struct {
+	UserID           string `json:"userID"`
+	GroupID          string `json:"groupID"`
+	ConversationID   string `json:"conversationID"`
+	StartClientMsgID string `json:"startClientMsgID"`
+	Count            int    `json:"count"`
+}
+type GetAdvancedHistoryMessageListCallback struct {
+	MessageList []*sdk_struct.MsgStruct `json:"messageList"`
+	IsEnd       bool                    `json:"isEnd"`
+	ErrCode     int32                   `json:"errCode"`
+	ErrMsg      string                  `json:"errMsg"`
+}
 type GetHistoryMessageListCallback []*sdk_struct.MsgStruct
 
 type RevokeMessageParams sdk_struct.MsgStruct
