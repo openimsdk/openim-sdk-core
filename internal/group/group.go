@@ -342,7 +342,7 @@ func (g *Group) dismissGroup(groupID string, callback open_im_sdk_callback.Base,
 	apiReq.OperationID = operationID
 	apiReq.GroupID = groupID
 	g.p.PostFatalCallback(callback, constant.DismissGroupRouter, apiReq, nil, apiReq.OperationID)
-	//g.SyncJoinedGroupList(operationID)
+	g.SyncJoinedGroupList(operationID)
 }
 
 func (g *Group) changeGroupMute(groupID string, isMute bool, callback open_im_sdk_callback.Base, operationID string) {
