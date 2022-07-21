@@ -532,6 +532,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 		list, err = c.db.GetMessageListController(sourceID, sessionType, req.Count, startTime, isReverse)
 	}
 	log.Debug(operationID, "db cost time", time.Since(t))
+	t = time.Now()
 	common.CheckDBErrCallback(callback, err, operationID)
 	if len(list) < req.Count && sessionType == constant.SuperGroupChatType {
 		seq, _ := c.db.SuperGroupGetNormalMinSeq(sourceID)
@@ -598,6 +599,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 
 		}
 	}
+	log.Debug(operationID, "pull cost time", time.Since(t))
 	t = time.Now()
 	for _, v := range list {
 		temp := sdk_struct.MsgStruct{}
