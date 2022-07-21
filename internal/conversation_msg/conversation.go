@@ -461,6 +461,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 	var sourceID string
 	var conversationID string
 	var startTime int64
+
 	var sessionType int
 	var list []*model_struct.LocalChatLog
 	var err error
@@ -595,13 +596,51 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 					pullSeqList = lostSeqList[lostSeqListLength-constant.PullMsgNumForReadDiffusion : lostSeqListLength]
 				}
 				c.pullMessageAndReGetHistoryMessages(sourceID, pullSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+			} else {
+				if req.LastMinSeq != 0 {
+					var thisMaxSeq uint32
+					for i := 0; i < len(list); i++ {
+						if list[i].Seq != 0 && thisMaxSeq == 0 {
+							thisMaxSeq = list[i].Seq
+						}
+						if list[i].Seq > thisMaxSeq {
+							thisMaxSeq = list[i].Seq
+						}
+					}
+					if thisMaxSeq != 0 {
+						if thisMaxSeq+1 != req.LastMinSeq {
+							startSeq := int64(req.LastMinSeq) - constant.PullMsgNumForReadDiffusion
+							if startSeq <= int64(thisMaxSeq) {
+								startSeq = int64(thisMaxSeq) + 1
+							}
+							successiveSeqList := func(max, min uint32) (seqList []uint32) {
+								for i := min; i <= max; i++ {
+									seqList = append(seqList, i)
+								}
+								return seqList
+							}(req.LastMinSeq-1, uint32(startSeq))
+							if len(successiveSeqList) > 0 {
+								c.pullMessageAndReGetHistoryMessages(sourceID, successiveSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+							}
+						}
+
+					}
+
+				}
 			}
 
 		}
 	}
 	log.Debug(operationID, "pull cost time", time.Since(t))
 	t = time.Now()
+	var thisMinSeq uint32
 	for _, v := range list {
+		if v.Seq != 0 && thisMinSeq == 0 {
+			thisMinSeq = v.Seq
+		}
+		if v.Seq < thisMinSeq {
+			thisMinSeq = v.Seq
+		}
 		temp := sdk_struct.MsgStruct{}
 		tt := time.Now()
 		temp.ClientMsgID = v.ClientMsgID
@@ -645,6 +684,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 	}
 	log.Debug(operationID, "sort cost time", time.Since(t))
 	messageListCallback.MessageList = messageList
+	messageListCallback.LastMinSeq = thisMinSeq
 	return messageListCallback
 }
 func (c *Conversation) pullMessageAndReGetHistoryMessages(sourceID string, seqList []uint32, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback, operationID string) {
