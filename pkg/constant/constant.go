@@ -331,5 +331,5 @@ const (
 	SplitPullMsgNum              = 1000
 	PullMsgNumWhenLogin          = 10000
 	PullMsgNumForReadDiffusion   = 10
-	NormalMsgMinNumReadDiffusion = 20
+	NormalMsgMinNumReadDiffusion = 100
 )
