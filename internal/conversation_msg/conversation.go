@@ -592,7 +592,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 				if lostSeqListLength <= constant.PullMsgNumForReadDiffusion {
 					pullSeqList = lostSeqList
 				} else {
-					pullSeqList = lostSeqList[lostSeqListLength-constant.PullMsgNumForReadDiffusion : constant.PullMsgNumForReadDiffusion]
+					pullSeqList = lostSeqList[lostSeqListLength-constant.PullMsgNumForReadDiffusion : lostSeqListLength]
 				}
 				c.pullMessageAndReGetHistoryMessages(sourceID, pullSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
 			}
