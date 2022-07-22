@@ -2,12 +2,14 @@ package login
 
 import (
 	"open_im_sdk/internal/cache"
-	comm2 "open_im_sdk/internal/common"
+	comm3 "open_im_sdk/internal/common"
 	conv "open_im_sdk/internal/conversation_msg"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/group"
+	"open_im_sdk/internal/heartbeart"
 	ws "open_im_sdk/internal/interaction"
+	comm2 "open_im_sdk/internal/obj_storage"
 	"open_im_sdk/internal/organization"
 	"open_im_sdk/internal/signaling"
 	"open_im_sdk/internal/super_group"
@@ -39,7 +41,7 @@ type LoginMgr struct {
 	db           *db.DataBase
 	ws           *ws.Ws
 	msgSync      *ws.MsgSync
-	heartbeat    *ws.Heartbeat
+	heartbeat    *heartbeart.Heartbeat
 	cache        *cache.Cache
 	token        string
 	loginUserID  string
@@ -71,7 +73,7 @@ func (u *LoginMgr) Organization() *organization.Organization {
 	return u.organization
 }
 
-func (u *LoginMgr) Heartbeat() *ws.Heartbeat {
+func (u *LoginMgr) Heartbeat() *heartbeart.Heartbeat {
 	return u.heartbeat
 }
 
@@ -177,14 +179,11 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.cmdWsCh = make(chan common.Cmd2Value, 10)
 
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
-
 	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
 	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
 	u.joinedSuperGroupCh = make(chan common.Cmd2Value, 10)
 	u.msgSync = ws.NewMsgSync(db, u.ws, userID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
 	id2MinSeq := make(map[string]uint32, 100)
-	u.heartbeat = ws.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, token, exp, id2MinSeq)
-
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
 
 	u.user = user.NewUser(db, p, u.loginUserID)
@@ -212,10 +211,11 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.superGroup.SetLoginTime(u.loginTime)
 	u.organization.SetLoginTime(u.loginTime)
 	go u.forcedSynchronization()
+	u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, token, exp, id2MinSeq, u.full)
 	log.Info(operationID, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	log.Info(operationID, "all channel ", u.pushMsgAndMaxSeqCh, u.conversationCh, u.heartbeatCmdCh, u.cmdWsCh)
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
-	var objStorage comm2.ObjectStorage
+	var objStorage comm3.ObjectStorage
 	switch u.imConfig.ObjectStorage {
 	case "cos":
 		objStorage = comm2.NewCOS(p)
@@ -323,7 +323,6 @@ func (u *LoginMgr) forcedSynchronization() {
 	operationID := utils.OperationIDGenerator()
 	var wg sync.WaitGroup
 	wg.Add(10)
-
 	go func() {
 		u.friend.SyncFriendList(operationID)
 		wg.Done()
@@ -401,7 +400,7 @@ func CheckToken(userID, token string, operationID string) (error, uint32) {
 
 func (u *LoginMgr) uploadImage(callback open_im_sdk_callback.Base, filePath string, token, obj string, operationID string) string {
 	p := ws.NewPostApi(token, u.ImConfig().ApiAddr)
-	var o comm2.ObjectStorage
+	var o comm3.ObjectStorage
 	switch obj {
 	case "cos":
 		o = comm2.NewCOS(p)

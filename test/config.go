@@ -1,7 +1,6 @@
 package test
 
 import (
-	"open_im_sdk/internal/interaction"
 	"sync"
 )
 
@@ -26,7 +25,8 @@ var userLock sync.RWMutex
 
 var allUserID []string
 var allToken []string
-var allWs []*interaction.Ws
+
+//var allWs []*interaction.Ws
 var sendSuccessCount, sendFailedCount int
 var sendSuccessLock sync.RWMutex
 var sendFailedLock sync.RWMutex

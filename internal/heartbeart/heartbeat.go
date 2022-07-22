@@ -1,8 +1,10 @@
-package interaction
+package heartbeart
 
 import (
 	"errors"
 	"github.com/golang/protobuf/proto"
+	"open_im_sdk/internal/full"
+	"open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -16,21 +18,22 @@ import (
 
 type Heartbeat struct {
 	//	*Ws
-	*MsgSync
+	*interaction.MsgSync
 	cmdCh             chan common.Cmd2Value //waiting logout cmd , wake up cmd
 	heartbeatInterval int
 	token             string
 	listener          open_im_sdk_callback.OnConnListener
 	ExpireTimeSeconds uint32
 	id2MinSeq         map[string]uint32
+	full              *full.Full
 }
 
 func (u *Heartbeat) SetHeartbeatInterval(heartbeatInterval int) {
 	u.heartbeatInterval = heartbeatInterval
 }
 
-func NewHeartbeat(msgSync *MsgSync, cmcCh chan common.Cmd2Value, listener open_im_sdk_callback.OnConnListener, token string, expireTimeSeconds uint32, id2MinSeq map[string]uint32) *Heartbeat {
-	p := Heartbeat{MsgSync: msgSync, cmdCh: cmcCh}
+func NewHeartbeat(msgSync *interaction.MsgSync, cmcCh chan common.Cmd2Value, listener open_im_sdk_callback.OnConnListener, token string, expireTimeSeconds uint32, id2MinSeq map[string]uint32, full *full.Full) *Heartbeat {
+	p := Heartbeat{MsgSync: msgSync, cmdCh: cmcCh, full: full}
 	p.heartbeatInterval = constant.HeartbeatInterval
 	p.listener = listener
 	p.token = token
@@ -97,14 +100,22 @@ func (u *Heartbeat) Run() {
 			u.CloseConn()
 			runtime.Goexit()
 		}
-		groupIDList, err := u.GetReadDiffusionGroupIDList()
+		var groupIDList []string
+		var err error
+		if heartbeatNum == 1 {
+			groupIDList, err = u.full.GetReadDiffusionGroupIDList(operationID)
+			log.NewInfo(operationID, "full.GetReadDiffusionGroupIDList ", heartbeatNum)
+		} else {
+			groupIDList, err = u.GetReadDiffusionGroupIDList()
+			log.NewInfo(operationID, "db.GetReadDiffusionGroupIDList ", heartbeatNum)
+		}
 		if err != nil {
 			log.Error(operationID, "GetReadDiffusionGroupIDList failed ", err.Error())
 		}
 		log.Debug(operationID, "GetJoinedSuperGroupIDList ", groupIDList)
-		resp, err := u.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: u.loginUserID, GroupIDList: groupIDList}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.loginUserID, operationID)
+		resp, err := u.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: u.LoginUserID, GroupIDList: groupIDList}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.LoginUserID, operationID)
 		if err != nil {
-			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.loginUserID)
+			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.LoginUserID)
 			if !errors.Is(err, constant.WsRecvConnSame) && !errors.Is(err, constant.WsRecvConnDiff) {
 				log.Error(operationID, "other err,  close conn", err.Error())
 				u.CloseConn()
@@ -120,7 +131,7 @@ func (u *Heartbeat) Run() {
 			continue
 		}
 
-		u.id2MinSeq[utils.GetUserIDForMinSeq(u.loginUserID)] = wsSeqResp.MinSeq
+		u.id2MinSeq[utils.GetUserIDForMinSeq(u.LoginUserID)] = wsSeqResp.MinSeq
 		for g, v := range wsSeqResp.GroupMaxAndMinSeq {
 			u.id2MinSeq[utils.GetGroupIDForMinSeq(g)] = v.MinSeq
 		}

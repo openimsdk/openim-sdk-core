@@ -3,9 +3,9 @@ package open_im_sdk
 import (
 	"encoding/json"
 	"errors"
-	common2 "open_im_sdk/internal/common"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/login"
+	common2 "open_im_sdk/internal/obj_storage"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"

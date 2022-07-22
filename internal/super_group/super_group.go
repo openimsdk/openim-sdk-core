@@ -97,3 +97,15 @@ func (s *SuperGroup) getGroupsInfoFromSvr(groupIDList []string, operationID stri
 	}
 	return groupInfoList, nil
 }
+
+func (s *SuperGroup) GetJoinedGroupIDListFromSvr(operationID string) ([]string, error) {
+	result, err := s.getJoinedGroupListFromSvr(operationID)
+	if err != nil {
+		return nil, utils.Wrap(err, "")
+	}
+	var groupIDList []string
+	for _, v := range result {
+		groupIDList = append(groupIDList, v.GroupID)
+	}
+	return groupIDList, nil
+}

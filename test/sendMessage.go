@@ -3,19 +3,14 @@ package test
 import (
 	"encoding/json"
 	"fmt"
+	//	"open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/login"
 	"open_im_sdk/sdk_struct"
 	"strings"
 	"sync"
 
-	//"github.com/gorilla/websocket"
-	//"github.com/jinzhu/copier"
-	//"google.golang.org/protobuf/types/known/apipb"
-	"math/rand"
 	"net"
-	"open_im_sdk/internal/interaction"
-	"open_im_sdk/pkg/common"
-	"open_im_sdk/pkg/constant"
+
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/network"
 	"open_im_sdk/pkg/server_api_params"
@@ -175,24 +170,25 @@ func RegisterAccounts(number int) {
 	log.Info("", "RegisterAccounts finish ", number)
 }
 
-func GenWsConn(id int) {
-	userID := GenUid(id, "online")
-	userLock.Lock()
-	defer userLock.Unlock()
-	allUserID = append(allUserID, userID)
-	//register(userID)
-	token := GenToken(userID)
-	allToken = append(allToken, token)
-
-	wsRespAsyn := interaction.NewWsRespAsyn()
-
-	wsConn := interaction.NewWsConn(new(testInitLister), token, userID)
-	cmdWsCh := make(chan common.Cmd2Value, 10)
-
-	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
-	ws := interaction.NewWs(wsRespAsyn, wsConn, cmdWsCh, pushMsgAndMaxSeqCh, nil)
-	allWs = append(allWs, ws)
-}
+//
+//func GenWsConn(id int) {
+//	userID := GenUid(id, "online")
+//	userLock.Lock()
+//	defer userLock.Unlock()
+//	allUserID = append(allUserID, userID)
+//	//register(userID)
+//	token := GenToken(userID)
+//	allToken = append(allToken, token)
+//
+//	wsRespAsyn := interaction.NewWsRespAsyn()
+//
+//	wsConn := interaction.NewWsConn(new(testInitLister), token, userID)
+//	cmdWsCh := make(chan common.Cmd2Value, 10)
+//
+//	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
+//	ws := interaction.NewWs(wsRespAsyn, wsConn, cmdWsCh, pushMsgAndMaxSeqCh, nil)
+//	allWs = append(allWs, ws)
+//}
 
 func RegisterUserReliability(id int, timeStamp string) {
 	userID := GenUid(id, "reliability"+timeStamp+"_")
@@ -220,80 +216,83 @@ func addSendFailed() {
 	sendFailedCount++
 }
 
-func OnlineTest(number int) {
-	RegisterAccounts(number)
-	var wg sync.WaitGroup
-	wg.Add(number)
-	for i := 0; i < number; i++ {
-		go func(t int) {
-			GenWsConn(t)
-			log.Info("GenWsConn ", t)
-			wg.Done()
-		}(i)
-	}
-	wg.Wait()
-	log.Info("", "OnlineTest finish ", number)
-}
+//
+//func OnlineTest(number int) {
+//	RegisterAccounts(number)
+//	var wg sync.WaitGroup
+//	wg.Add(number)
+//	for i := 0; i < number; i++ {
+//		go func(t int) {
+//			GenWsConn(t)
+//			log.Info("GenWsConn ", t)
+//			wg.Done()
+//		}(i)
+//	}
+//	wg.Wait()
+//	log.Info("", "OnlineTest finish ", number)
+//}
 
-func TestSendCostTime() {
-	GenWsConn(0)
-	sendID := allUserID[0]
-	recvID := allUserID[0]
-	for {
-		operationID := utils.OperationIDGenerator()
-		b := SendTextMessage("test", sendID, recvID, operationID, allWs[0])
-		if b {
-			log.Debug(operationID, sendID, recvID, "SendTextMessage success")
-		} else {
-			log.Error(operationID, sendID, recvID, "SendTextMessage failed")
-		}
-		time.Sleep(time.Duration(5) * time.Second)
-		log.Debug(operationID, "//////////////////////////////////")
-	}
-
-}
-func TestSend(idx int, text string, uidNum, intervalSleep int) {
-	for {
-		operationID := utils.OperationIDGenerator()
-		sendID := allUserID[idx]
-		recvID := allUserID[rand.Intn(uidNum)]
-		b := SendTextMessage(text, sendID, recvID, operationID, allWs[idx])
-		if b {
-			log.Debug(operationID, sendID, recvID, "SendTextMessage success")
-		} else {
-			log.Error(operationID, sendID, recvID, "SendTextMessage failed")
-		}
-		time.Sleep(time.Duration(rand.Intn(intervalSleep)) * time.Millisecond)
-	}
-}
-func testSendReliability(idx int, text string, uidNum, intervalSleep int) {
-	for {
-		operationID := utils.OperationIDGenerator()
-		sendID := allUserID[idx]
-		recvID := allUserID[rand.Intn(uidNum)]
-		b := SendTextMessage(text, sendID, recvID, operationID, allWs[idx])
-		if b {
-			log.Debug(operationID, sendID, recvID, "SendTextMessage success")
-		} else {
-			log.Error(operationID, sendID, recvID, "SendTextMessage failed")
-		}
-		time.Sleep(time.Duration(rand.Intn(intervalSleep)) * time.Second)
-	}
-}
-func SendTextMessage(text, senderID, recvID, operationID string, ws *interaction.Ws) bool {
-	var wsMsgData server_api_params.MsgData
-	options := make(map[string]bool, 2)
-	wsMsgData.SendID = senderID
-	wsMsgData.RecvID = recvID
-	wsMsgData.ClientMsgID = utils.GetMsgID(senderID)
-	wsMsgData.SenderPlatformID = 1
-	wsMsgData.SessionType = constant.SingleChatType
-	wsMsgData.MsgFrom = constant.UserMsgType
-	wsMsgData.ContentType = constant.Text
-	wsMsgData.Content = []byte(text)
-	wsMsgData.CreateTime = utils.GetCurrentTimestampByMill()
-	wsMsgData.Options = options
-	wsMsgData.OfflinePushInfo = nil
-	timeout := 300
-	return ws.SendReqTest(&wsMsgData, constant.WSSendMsg, timeout, senderID, operationID)
-}
+//
+//func TestSendCostTime() {
+//	GenWsConn(0)
+//	sendID := allUserID[0]
+//	recvID := allUserID[0]
+//	for {
+//		operationID := utils.OperationIDGenerator()
+//		b := SendTextMessage("test", sendID, recvID, operationID, allWs[0])
+//		if b {
+//			log.Debug(operationID, sendID, recvID, "SendTextMessage success")
+//		} else {
+//			log.Error(operationID, sendID, recvID, "SendTextMessage failed")
+//		}
+//		time.Sleep(time.Duration(5) * time.Second)
+//		log.Debug(operationID, "//////////////////////////////////")
+//	}
+//
+//}
+//func TestSend(idx int, text string, uidNum, intervalSleep int) {
+//	for {
+//		operationID := utils.OperationIDGenerator()
+//		sendID := allUserID[idx]
+//		recvID := allUserID[rand.Intn(uidNum)]
+//		b := SendTextMessage(text, sendID, recvID, operationID, allWs[idx])
+//		if b {
+//			log.Debug(operationID, sendID, recvID, "SendTextMessage success")
+//		} else {
+//			log.Error(operationID, sendID, recvID, "SendTextMessage failed")
+//		}
+//		time.Sleep(time.Duration(rand.Intn(intervalSleep)) * time.Millisecond)
+//	}
+//}
+//
+//func testSendReliability(idx int, text string, uidNum, intervalSleep int) {
+//	for {
+//		operationID := utils.OperationIDGenerator()
+//		sendID := allUserID[idx]
+//		recvID := allUserID[rand.Intn(uidNum)]
+//		b := SendTextMessage(text, sendID, recvID, operationID, allWs[idx])
+//		if b {
+//			log.Debug(operationID, sendID, recvID, "SendTextMessage success")
+//		} else {
+//			log.Error(operationID, sendID, recvID, "SendTextMessage failed")
+//		}
+//		time.Sleep(time.Duration(rand.Intn(intervalSleep)) * time.Second)
+//	}
+//}
+//func SendTextMessage(text, senderID, recvID, operationID string, ws *interaction.Ws) bool {
+//	var wsMsgData server_api_params.MsgData
+//	options := make(map[string]bool, 2)
+//	wsMsgData.SendID = senderID
+//	wsMsgData.RecvID = recvID
+//	wsMsgData.ClientMsgID = utils.GetMsgID(senderID)
+//	wsMsgData.SenderPlatformID = 1
+//	wsMsgData.SessionType = constant.SingleChatType
+//	wsMsgData.MsgFrom = constant.UserMsgType
+//	wsMsgData.ContentType = constant.Text
+//	wsMsgData.Content = []byte(text)
+//	wsMsgData.CreateTime = utils.GetCurrentTimestampByMill()
+//	wsMsgData.Options = options
+//	wsMsgData.OfflinePushInfo = nil
+//	timeout := 300
+//	return ws.SendReqTest(&wsMsgData, constant.WSSendMsg, timeout, senderID, operationID)
+//}

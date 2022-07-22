@@ -84,3 +84,22 @@ func (u *Full) GetGroupInfoFromLocal2Svr(groupID string, sessionType int32) (*mo
 		return nil, utils.Wrap(errors.New("err sessionType"), "")
 	}
 }
+func (u *Full) GetReadDiffusionGroupIDList(operationID string) ([]string, error) {
+	g1, err1 := u.group.GetJoinedDiffusionGroupIDListFromSvr(operationID)
+	g2, err2 := u.SuperGroup.GetJoinedGroupIDListFromSvr(operationID)
+	var groupIDList []string
+	if err1 == nil {
+		groupIDList = append(groupIDList, g1...)
+	}
+	if err2 == nil {
+		groupIDList = append(groupIDList, g2...)
+	}
+	var err error
+	if err1 != nil {
+		err = err1
+	}
+	if err2 != nil {
+		err = err2
+	}
+	return groupIDList, err
+}

@@ -1,7 +1,6 @@
 package test
 
 import (
-	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/sdk_params_callback"
@@ -11,11 +10,9 @@ import (
 	"fmt"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
-
 	//"open_im_sdk/internal/open_im_sdk"
 	//"open_im_sdk/pkg/utils"
-
-	"open_im_sdk/internal/common"
+	//	"open_im_sdk/internal/common"
 )
 
 type XBase struct {
@@ -316,42 +313,42 @@ func DotestCos() {
 	//test(storage, callback)
 }
 
-func DotestMinio() {
-	var callback baseCallback
-	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxMzkwMDAwMDAwMCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxNjQ1NzgyNDY0LCJuYmYiOjE2NDUxNzc2NjQsImlhdCI6MTY0NTE3NzY2NH0.T-SDoLxdlwRGOMZPIKriPtAlOGWCLodsGi1dWxN8kto"
-	p := ws.NewPostApi(token, "https://storage.rentsoft.cn")
-	minio := common.NewMinio(p)
-	var storage common.ObjectStorage = minio
-	log.NewInfo("", *minio)
-	test(storage, callback)
-}
-
-func test(storage common.ObjectStorage, callback baseCallback) {
-	dir, newName, err := storage.UploadFile("./main/main.go", func(progress int) {
-		if progress == 100 {
-			callback.OnSuccess("")
-		}
-	})
-	log.NewInfo("0", dir, newName, err)
-	dir, newName, err = storage.UploadImage("C:\\Users\\Administrator\\Desktop\\1.jpg", func(progress int) {
-		if progress == 100 {
-			callback.OnSuccess("")
-		}
-	})
-	log.NewInfo("0", dir, newName, err, err)
-	dir, newName, err = storage.UploadSound("./main/main.go", func(progress int) {
-		if progress == 100 {
-			callback.OnSuccess("")
-		}
-	})
-	log.NewInfo("0", dir, newName, err, err)
-	snapshotURL, snapshotUUID, videoURL, videoUUID, err := storage.UploadVideo("./main/main.go", "C:\\Users\\Administrator\\Desktop\\1.jpg", func(progress int) {
-		if progress == 100 {
-			callback.OnSuccess("")
-		}
-	})
-	log.NewInfo(snapshotURL, snapshotUUID, videoURL, videoUUID, err)
-}
+//func DotestMinio() {
+//	var callback baseCallback
+//	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIxMzkwMDAwMDAwMCIsIlBsYXRmb3JtIjoiSU9TIiwiZXhwIjoxNjQ1NzgyNDY0LCJuYmYiOjE2NDUxNzc2NjQsImlhdCI6MTY0NTE3NzY2NH0.T-SDoLxdlwRGOMZPIKriPtAlOGWCLodsGi1dWxN8kto"
+//	p := ws.NewPostApi(token, "https://storage.rentsoft.cn")
+//	minio := common.NewMinio(p)
+//	var storage common.ObjectStorage = minio
+//	log.NewInfo("", *minio)
+//	test(storage, callback)
+//}
+//
+//func test(storage common.ObjectStorage, callback baseCallback) {
+//	dir, newName, err := storage.UploadFile("./main/main.go", func(progress int) {
+//		if progress == 100 {
+//			callback.OnSuccess("")
+//		}
+//	})
+//	log.NewInfo("0", dir, newName, err)
+//	dir, newName, err = storage.UploadImage("C:\\Users\\Administrator\\Desktop\\1.jpg", func(progress int) {
+//		if progress == 100 {
+//			callback.OnSuccess("")
+//		}
+//	})
+//	log.NewInfo("0", dir, newName, err, err)
+//	dir, newName, err = storage.UploadSound("./main/main.go", func(progress int) {
+//		if progress == 100 {
+//			callback.OnSuccess("")
+//		}
+//	})
+//	log.NewInfo("0", dir, newName, err, err)
+//	snapshotURL, snapshotUUID, videoURL, videoUUID, err := storage.UploadVideo("./main/main.go", "C:\\Users\\Administrator\\Desktop\\1.jpg", func(progress int) {
+//		if progress == 100 {
+//			callback.OnSuccess("")
+//		}
+//	})
+//	log.NewInfo(snapshotURL, snapshotUUID, videoURL, videoUUID, err)
+//}
 
 type testGetGroupMembersInfo struct {
 }

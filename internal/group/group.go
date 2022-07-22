@@ -632,6 +632,20 @@ func (g *Group) getJoinedGroupListFromSvr(operationID string) ([]*api.GroupInfo,
 	return result, nil
 }
 
+func (g *Group) GetJoinedDiffusionGroupIDListFromSvr(operationID string) ([]string, error) {
+	result, err := g.getJoinedGroupListFromSvr(operationID)
+	if err != nil {
+		return nil, utils.Wrap(err, "")
+	}
+	var groupIDList []string
+	for _, v := range result {
+		if v.GroupType == constant.WorkingGroup {
+			groupIDList = append(groupIDList, v.GroupID)
+		}
+	}
+	return groupIDList, nil
+}
+
 func (g *Group) updateMemberCount(groupID string, operationID string) {
 	memberCount, err := g.db.GetGroupMemberCount(groupID)
 	if err != nil {

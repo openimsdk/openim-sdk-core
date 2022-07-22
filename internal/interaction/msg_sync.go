@@ -17,7 +17,7 @@ type SeqPair struct {
 type MsgSync struct {
 	*db.DataBase
 	*Ws
-	loginUserID        string
+	LoginUserID        string
 	conversationCh     chan common.Cmd2Value
 	PushMsgAndMaxSeqCh chan common.Cmd2Value
 
@@ -65,7 +65,7 @@ func (m *MsgSync) GetCh() chan common.Cmd2Value {
 }
 
 func NewMsgSync(dataBase *db.DataBase, ws *Ws, loginUserID string, ch chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value, joinedSuperGroupCh chan common.Cmd2Value) *MsgSync {
-	p := &MsgSync{DataBase: dataBase, Ws: ws, loginUserID: loginUserID, conversationCh: ch, PushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh}
+	p := &MsgSync{DataBase: dataBase, Ws: ws, LoginUserID: loginUserID, conversationCh: ch, PushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh}
 	//	p.superGroupMsgSync = NewSuperGroupMsgSync(dataBase, ws, loginUserID, ch, joinedSuperGroupCh)
 	p.selfMsgSync = NewSelfMsgSync(dataBase, ws, loginUserID, ch)
 	p.readDiffusionGroupMsgSync = NewReadDiffusionGroupMsgSync(dataBase, ws, loginUserID, ch, joinedSuperGroupCh)
