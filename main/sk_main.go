@@ -9,13 +9,14 @@ import (
 
 func main() {
 
-	strMyUidx := "1153408799"
+	strMyUidx := "3542977171"
 	log.NewPrivateLog("", 6)
 	tokenx := test.GenToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
-	////	test.DoTestCreateGroup()
-	time.Sleep(100000 * time.Second)
+	//	time.Sleep(100000 * time.Second)
+	//	test.DoTestCreateGroup()
+
 	//	test.DoTestJoinGroup()
 	//	test.DoTestGetGroupsInfo()
 	//	test.DoTestDeleteAllMsgFromLocalAndSvr()
@@ -23,18 +24,19 @@ func main() {
 	//	println("token ", tokenx)
 	//	time.Sleep(100000 * time.Second)
 	b := utils.GetCurrentTimestampBySecond()
-	i := 0
+	i := 50
 	for {
-		test.DoTestSendMsg2Group(strMyUidx, "2192900037", i)
+		test.DoTestSendMsg2Group(strMyUidx, "1674509465", i)
 		i++
-		time.Sleep(1 * time.Millisecond)
-		if i == 50000 {
+		time.Sleep(1000 * time.Millisecond)
+		if i == 100 {
 			break
 		}
 		log.Warn("", "10 * time.Millisecond ###################waiting... msg: ", i)
 	}
 
 	log.Warn("", "cost time: ", utils.GetCurrentTimestampBySecond()-b)
+	time.Sleep(100000 * time.Second)
 	return
 	i = 0
 	for {

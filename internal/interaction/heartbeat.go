@@ -91,7 +91,7 @@ func (u *Heartbeat) Run() {
 		heartbeatNum++
 		log.Debug(operationID, "send heartbeat req")
 		if u.IsTokenExp(operationID) {
-			log.Warn(operationID, "TokenExp, close heartbeat channel, call OnUserTokenExpired ,set logout", u.cmdCh)
+			log.Warn(operationID, "TokenExp, close heartbeat channel, call OnUserTokenExpired, set logout", u.cmdCh)
 			u.listener.OnUserTokenExpired()
 			u.SetLoginState(constant.Logout)
 			u.CloseConn()
