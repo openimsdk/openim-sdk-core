@@ -35,8 +35,8 @@ func (m *MsgSync) compareSeq() {
 }
 
 func (m *MsgSync) doMaxSeq(cmd common.Cmd2Value) {
-	m.selfMsgSync.doMaxSeq(cmd)
 	m.readDiffusionGroupMsgSync.doMaxSeq(cmd)
+	m.selfMsgSync.doMaxSeq(cmd)
 }
 
 func (m *MsgSync) doPushMsg(cmd common.Cmd2Value) {
