@@ -607,6 +607,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 							thisMaxSeq = list[i].Seq
 						}
 					}
+					log.Debug(operationID, "get lost LastMinSeq is :", req.LastMinSeq, "thisMaxSeq is :", thisMaxSeq)
 					if thisMaxSeq != 0 {
 						if thisMaxSeq+1 != req.LastMinSeq {
 							startSeq := int64(req.LastMinSeq) - constant.PullMsgNumForReadDiffusion
@@ -619,6 +620,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 								}
 								return seqList
 							}(req.LastMinSeq-1, uint32(startSeq))
+							log.Debug(operationID, "get lost successiveSeqList is :", successiveSeqList, len(successiveSeqList))
 							if len(successiveSeqList) > 0 {
 								c.pullMessageAndReGetHistoryMessages(sourceID, successiveSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
 							}
