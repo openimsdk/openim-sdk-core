@@ -410,6 +410,23 @@ func (wsRouter *WsFuncRouter) CreateQuoteMessage(input string, operationID strin
 	msg := userWorker.Conversation().CreateQuoteMessage(m["text"].(string), m["message"].(string), operationID)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }
+func (wsRouter *WsFuncRouter) CreateAdvancedQuoteMessage(input string, operationID string) {
+	log.Info(operationID, utils.GetSelfFuncName(), "CreateQuoteMessage", input)
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "text", "message", "messageEntityList") {
+		log.Info(operationID, utils.GetSelfFuncName(), "key not in, failed", input)
+		return
+	}
+	log.Info(operationID, utils.GetSelfFuncName(), "GlobalSendMessage")
+	msg := userWorker.Conversation().CreateAdvancedQuoteMessage(m["text"].(string), m["message"].(string), m["messageEntityList"].(string), operationID)
+	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
+}
 func (wsRouter *WsFuncRouter) CreateCardMessage(input string, operationID string) {
 	log.Info(operationID, "CreateCardMessage", input)
 	m := make(map[string]interface{})
