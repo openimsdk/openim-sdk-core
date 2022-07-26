@@ -691,6 +691,10 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 	messageListCallback.LastMinSeq = thisMinSeq
 	return messageListCallback
 }
+
+//1、保证单次拉取消息量低于sdk单次从服务器拉取量
+//2、块中连续性检测
+//3、块之间连续性检测
 func (c *Conversation) pullMessageAndReGetHistoryMessages(sourceID string, seqList []uint32, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback, operationID string) {
 	var pullMsgReq server_api_params.PullMessageBySeqListReq
 	pullMsgReq.UserID = c.loginUserID

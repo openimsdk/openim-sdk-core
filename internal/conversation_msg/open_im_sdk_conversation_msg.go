@@ -725,6 +725,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			case constant.Quote:
 			case constant.Card:
 			case constant.Face:
+			case constant.AdvancedText:
 			default:
 				common.CheckAnyErrCallback(callback, 202, errors.New("contentType not currently supported"+utils.Int32ToString(s.ContentType)), operationID)
 			}
