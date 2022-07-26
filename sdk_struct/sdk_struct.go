@@ -123,9 +123,10 @@ type MsgStruct struct {
 		FileSize  int64  `json:"fileSize"`
 	} `json:"fileElem,omitempty"`
 	MergeElem struct {
-		Title        string       `json:"title,omitempty"`
-		AbstractList []string     `json:"abstractList,omitempty"`
-		MultiMessage []*MsgStruct `json:"multiMessage,omitempty"`
+		Title             string           `json:"title,omitempty"`
+		AbstractList      []string         `json:"abstractList,omitempty"`
+		MultiMessage      []*MsgStruct     `json:"multiMessage,omitempty"`
+		MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
 	} `json:"mergeElem,omitempty"`
 	AtElem struct {
 		Text         string     `json:"text,omitempty"`
@@ -149,8 +150,9 @@ type MsgStruct struct {
 		Extension   string `json:"extension,omitempty"`
 	} `json:"customElem,omitempty"`
 	QuoteElem struct {
-		Text         string     `json:"text,omitempty"`
-		QuoteMessage *MsgStruct `json:"quoteMessage,omitempty"`
+		Text              string           `json:"text,omitempty"`
+		QuoteMessage      *MsgStruct       `json:"quoteMessage,omitempty"`
+		MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
 	} `json:"quoteElem,omitempty"`
 	NotificationElem struct {
 		Detail      string `json:"detail,omitempty"`

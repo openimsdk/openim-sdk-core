@@ -337,6 +337,23 @@ func (c *Conversation) CreateQuoteMessage(text string, message, operationID stri
 	s.Content = utils.StructToJsonString(s.QuoteElem)
 	return utils.StructToJsonString(s)
 }
+func (c *Conversation) CreateAdvancedQuoteMessage(text string, message, messageEntityList, operationID string) string {
+	var messageEntitys []*sdk_struct.MessageEntity
+	s, qs := sdk_struct.MsgStruct{}, sdk_struct.MsgStruct{}
+	_ = json.Unmarshal([]byte(message), &qs)
+	_ = json.Unmarshal([]byte(messageEntityList), &messageEntitys)
+	c.initBasicInfo(&s, constant.UserMsgType, constant.Quote, operationID)
+	//Avoid nested references
+	if qs.ContentType == constant.Quote {
+		qs.Content = qs.QuoteElem.Text
+		qs.ContentType = constant.Text
+	}
+	s.QuoteElem.Text = text
+	s.QuoteElem.MessageEntityList = messageEntitys
+	s.QuoteElem.QuoteMessage = &qs
+	s.Content = utils.StructToJsonString(s.QuoteElem)
+	return utils.StructToJsonString(s)
+}
 func (c *Conversation) CreateCardMessage(cardInfo, operationID string) string {
 	s := sdk_struct.MsgStruct{}
 	c.initBasicInfo(&s, constant.UserMsgType, constant.Card, operationID)

@@ -551,8 +551,10 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 				log.Debug(operationID, "pull seqList is ", seqList)
 				return seqList
 			}(seq)
-			log.Debug(operationID, "pull seqList is ", seqList)
-			c.pullMessageAndReGetHistoryMessages(sourceID, seqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+			log.Debug(operationID, "pull seqList is ", seqList, len(seqList))
+			if len(seqList) > 0 {
+				c.pullMessageAndReGetHistoryMessages(sourceID, seqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+			}
 		}
 	} else if len(list) == req.Count && sessionType == constant.SuperGroupChatType {
 		maxSeq, minSeq, haveSeqList := func(messages []*model_struct.LocalChatLog) (max, min uint32, seqList []uint32) {

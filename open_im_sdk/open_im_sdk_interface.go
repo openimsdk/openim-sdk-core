@@ -723,6 +723,9 @@ func CreateCustomMessage(operationID string, data, extension string, description
 func CreateQuoteMessage(operationID string, text string, message string) string {
 	return userForSDK.Conversation().CreateQuoteMessage(text, message, operationID)
 }
+func CreateAdvancedQuoteMessage(operationID string, text string, message, messageEntityList string) string {
+	return userForSDK.Conversation().CreateAdvancedQuoteMessage(text, message, messageEntityList, operationID)
+}
 func CreateCardMessage(operationID string, cardInfo string) string {
 	return userForSDK.Conversation().CreateCardMessage(cardInfo, operationID)
 
