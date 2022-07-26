@@ -320,6 +320,10 @@ const (
 	MsgSyncModelDefault  = 0   //SyncFlag
 	MsgSyncModelLogin    = 1   //SyncFlag
 	SyncOrderStartLatest = 101 //PullMsgOrder
+
+	MsgSyncBegin      = 1001 //
+	MsgSyncProcessing = 1002 //
+	MsgSyncEnd        = 1003 //
 )
 
 const (

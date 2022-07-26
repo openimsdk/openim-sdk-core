@@ -124,14 +124,35 @@ func (m *ReadDiffusionGroupMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 //在获取最大seq后同步最新消息，只调用一次
 func (m *ReadDiffusionGroupMsgSync) syncLatestMsg(operationID string) {
 	m.superGroupMtx.Lock()
+	flag := 0
 	for _, v := range m.SuperGroupIDList {
-		m.syncLatestMsgForGroup(v, operationID)
+		if m.Group2SyncMsgFinished[v] == false {
+			flag = 1
+			break
+		}
 	}
+
+	if flag == 1 {
+		log.Info(operationID, "sync latest msg begin for read diffusion group: ", m.SuperGroupIDList)
+		m.TriggerCmdNewMsgCome(nil, operationID, constant.MsgSyncBegin)
+		for _, v := range m.SuperGroupIDList {
+			m.syncLatestMsgForGroup(v, operationID, constant.MsgSyncProcessing)
+		}
+		m.TriggerCmdNewMsgCome(nil, operationID, constant.MsgSyncEnd)
+		log.Info(operationID, "sync latest msg end for read diffusion group: ", m.SuperGroupIDList)
+	} else {
+		log.Info(operationID, "do nothing ")
+		for _, v := range m.SuperGroupIDList {
+			m.syncLatestMsgForGroup(v, operationID, 0)
+		}
+	}
+
+	//end
 	m.superGroupMtx.Unlock()
 }
 
 //获取某个群的最新消息，只调用一次
-func (m *ReadDiffusionGroupMsgSync) syncLatestMsgForGroup(groupID, operationID string) {
+func (m *ReadDiffusionGroupMsgSync) syncLatestMsgForGroup(groupID, operationID string, loginSync int) {
 	if !m.Group2SyncMsgFinished[groupID] {
 		need := m.Group2SeqMaxNeedSync[groupID]
 		synchronized := m.Group2SeqMaxSynchronized[groupID]
@@ -144,7 +165,7 @@ func (m *ReadDiffusionGroupMsgSync) syncLatestMsgForGroup(groupID, operationID s
 			log.Debug(operationID, "do nothing syncLatestMsgForGroup seq: ", need, synchronized, begin)
 			return
 		}
-		m.syncMsgFromServer(begin, need, groupID, operationID)
+		m.syncMsgFromServer(begin, need, groupID, operationID, loginSync)
 		m.Group2SyncMsgFinished[groupID] = true
 		m.Group2SeqMaxSynchronized[groupID] = begin
 	}
@@ -155,12 +176,12 @@ func (m *ReadDiffusionGroupMsgSync) doPushMsg(cmd common.Cmd2Value) {
 	operationID := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).OperationID
 	log.Debug(operationID, "recv super group push msg, doPushMsg ", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, msg.GroupID, msg.SessionType)
 	if msg.Seq == 0 {
-		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg}, operationID)
+		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg}, operationID, 0)
 		return
 	}
 	if msg.Seq == m.Group2SeqMaxSynchronized[msg.GroupID]+1 {
 		log.Debug(operationID, "TriggerCmdNewMsgCome ", msg.ServerMsgID, msg.ClientMsgID, msg.Seq)
-		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg}, operationID)
+		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg}, operationID, 0)
 		m.Group2SeqMaxSynchronized[msg.GroupID] = msg.Seq
 	}
 
@@ -169,7 +190,7 @@ func (m *ReadDiffusionGroupMsgSync) doPushMsg(cmd common.Cmd2Value) {
 	}
 	log.Debug(operationID, "syncMsgFromServer ", m.Group2SeqMaxSynchronized[msg.GroupID]+1, m.Group2SeqMaxNeedSync[msg.GroupID])
 	//获取此群最新消息，内部保证只调用一次
-	m.syncLatestMsgForGroup(msg.GroupID, operationID)
+	m.syncLatestMsgForGroup(msg.GroupID, operationID, 0)
 	//同步此群新消息
 	m.syncMsgForOneGroup(operationID, msg.GroupID)
 }
@@ -185,7 +206,7 @@ func (m *ReadDiffusionGroupMsgSync) syncMsgFroAllGroup(operationID string) {
 		seqMaxSynchronized := m.Group2SeqMaxSynchronized[v]
 		if seqMaxNeedSync > seqMaxSynchronized {
 			log.Info(operationID, "do syncMsgFromServer ", seqMaxSynchronized+1, seqMaxNeedSync, v)
-			m.syncMsgFromServer(seqMaxSynchronized+1, seqMaxNeedSync, v, operationID)
+			m.syncMsgFromServer(seqMaxSynchronized+1, seqMaxNeedSync, v, operationID, 0)
 			m.Group2SeqMaxSynchronized[v] = seqMaxNeedSync
 		} else {
 			log.Info(operationID, "do nothing ", seqMaxSynchronized+1, seqMaxNeedSync, v)
@@ -205,7 +226,7 @@ func (m *ReadDiffusionGroupMsgSync) syncMsgForOneGroup(operationID string, group
 		seqMaxSynchronized := m.Group2SeqMaxSynchronized[v]
 		if seqMaxNeedSync > seqMaxSynchronized {
 			log.Info(operationID, "do syncMsg ", seqMaxSynchronized+1, seqMaxNeedSync)
-			m.syncMsgFromServer(seqMaxSynchronized+1, seqMaxNeedSync, v, operationID)
+			m.syncMsgFromServer(seqMaxSynchronized+1, seqMaxNeedSync, v, operationID, 0)
 			m.Group2SeqMaxSynchronized[v] = seqMaxNeedSync
 		}
 		break
@@ -213,7 +234,7 @@ func (m *ReadDiffusionGroupMsgSync) syncMsgForOneGroup(operationID string, group
 	m.superGroupMtx.Unlock()
 }
 
-func (m *ReadDiffusionGroupMsgSync) syncMsgFromServer(beginSeq, endSeq uint32, groupID, operationID string) {
+func (m *ReadDiffusionGroupMsgSync) syncMsgFromServer(beginSeq, endSeq uint32, groupID, operationID string, loginSync int) {
 	log.Debug(operationID, utils.GetSelfFuncName(), "args: ", beginSeq, endSeq, groupID)
 	if beginSeq > endSeq {
 		log.Error(operationID, "beginSeq > endSeq", beginSeq, endSeq)
@@ -226,12 +247,12 @@ func (m *ReadDiffusionGroupMsgSync) syncMsgFromServer(beginSeq, endSeq uint32, g
 	}
 	var SPLIT = constant.SplitPullMsgNum
 	for i := 0; i < len(needSyncSeqList)/SPLIT; i++ {
-		m.syncMsgFromServerSplit(needSyncSeqList[i*SPLIT:(i+1)*SPLIT], groupID, operationID)
+		m.syncMsgFromServerSplit(needSyncSeqList[i*SPLIT:(i+1)*SPLIT], groupID, operationID, loginSync)
 	}
-	m.syncMsgFromServerSplit(needSyncSeqList[SPLIT*(len(needSyncSeqList)/SPLIT):], groupID, operationID)
+	m.syncMsgFromServerSplit(needSyncSeqList[SPLIT*(len(needSyncSeqList)/SPLIT):], groupID, operationID, loginSync)
 }
 
-func (m *ReadDiffusionGroupMsgSync) syncMsgFromServerSplit(needSyncSeqList []uint32, groupID, operationID string) {
+func (m *ReadDiffusionGroupMsgSync) syncMsgFromServerSplit(needSyncSeqList []uint32, groupID, operationID string, loginSync int) {
 	var pullMsgReq server_api_params.PullMessageBySeqListReq
 	pullMsgReq.UserID = m.loginUserID
 	pullMsgReq.GroupSeqList = make(map[string]*server_api_params.SeqList, 0)
@@ -255,15 +276,15 @@ func (m *ReadDiffusionGroupMsgSync) syncMsgFromServerSplit(needSyncSeqList []uin
 		log.Debug(operationID, "syncMsgFromServerSplit pull msg ", pullMsgReq.String(), pullMsgResp.String())
 		for _, v := range pullMsgResp.GroupMsgDataList {
 			log.Debug(operationID, "TriggerCmdNewMsgCome ", len(v.MsgDataList))
-			m.TriggerCmdNewMsgCome(v.MsgDataList, operationID)
+			m.TriggerCmdNewMsgCome(v.MsgDataList, operationID, loginSync)
 		}
 		return
 	}
 }
 
-func (m *ReadDiffusionGroupMsgSync) TriggerCmdNewMsgCome(msgList []*server_api_params.MsgData, operationID string) {
+func (m *ReadDiffusionGroupMsgSync) TriggerCmdNewMsgCome(msgList []*server_api_params.MsgData, operationID string, loginSync int) {
 	for {
-		err := common.TriggerCmdSuperGroupMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: msgList, OperationID: operationID}, m.conversationCh)
+		err := common.TriggerCmdSuperGroupMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: msgList, OperationID: operationID, SyncFlag: loginSync}, m.conversationCh)
 		if err != nil {
 			log.Warn(operationID, "TriggerCmdSuperGroupMsgCome failed ", err.Error(), m.loginUserID)
 			continue

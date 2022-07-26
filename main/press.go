@@ -24,7 +24,7 @@ func main() {
 	}
 	log.NewPrivateLog("press.log", 6)
 	log.Warn("", "online test start, number of online users: ", *onlineNum)
-	test.OnlineTest(*onlineNum)
+	//test.OnlineTest(*onlineNum)
 	log.Warn("", "online test finish, number of online users: ", *onlineNum)
 	log.Warn("", "reliability test start, user: ", *senderNum, "message number: ", *singleSenderMsgNum)
 	test.ReliabilityTest(*singleSenderMsgNum, *intervalTime, 10, *senderNum)
