@@ -212,6 +212,8 @@ const (
 	UpdateLatestMessageChange = 8
 	ConChange                 = 9
 	NewCon                    = 10
+	ConChangeDirect           = 11
+	NewConDirect              = 12
 
 	HasRead = 1
 	NotRead = 0

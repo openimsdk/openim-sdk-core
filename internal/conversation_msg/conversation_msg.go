@@ -449,11 +449,12 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	}
 
 	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
-	if len(newConversationSet) != 0 {
-		c.ConversationListener.OnNewConversation(utils.StructToJsonString(mapConversationToList(newConversationSet)))
+	if len(newConversationSet) > 0 {
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.NewConDirect, utils.StructToJsonString(mapConversationToList(newConversationSet))}})
+
 	}
-	if len(conversationChangedSet) != 0 {
-		c.ConversationListener.OnConversationChanged(utils.StructToJsonString(mapConversationToList(conversationChangedSet)))
+	if len(conversationChangedSet) > 0 {
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.ConChangeDirect, utils.StructToJsonString(mapConversationToList(conversationChangedSet))}})
 	}
 
 	if isTriggerUnReadCount {
@@ -825,11 +826,12 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	}
 
 	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
-	if len(newConversationSet) != 0 {
-		c.ConversationListener.OnNewConversation(utils.StructToJsonString(mapConversationToList(newConversationSet)))
+	if len(newConversationSet) > 0 {
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.NewConDirect, utils.StructToJsonString(mapConversationToList(newConversationSet))}})
+
 	}
-	if len(conversationChangedSet) != 0 {
-		c.ConversationListener.OnConversationChanged(utils.StructToJsonString(mapConversationToList(conversationChangedSet)))
+	if len(conversationChangedSet) > 0 {
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.ConChangeDirect, utils.StructToJsonString(mapConversationToList(conversationChangedSet))}})
 	}
 
 	if isTriggerUnReadCount {
@@ -1217,13 +1219,13 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 
 	case constant.UnreadCountSetZero:
 		if err := c.db.UpdateColumnsConversation(node.ConID, map[string]interface{}{"unread_count": 0}); err != nil {
-			log.Error("internal", "UpdateColumnsConversation err", err.Error())
+			log.Error("internal", "UpdateColumnsConversation err", err.Error(), node.ConID)
 		} else {
 			totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
 			if err == nil {
 				c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
 			} else {
-				log.Error("internal", "getTotalUnreadMsgCountModel err", err.Error())
+				log.Error("internal", "getTotalUnreadMsgCountModel err", err.Error(), node.ConID)
 			}
 
 		}
@@ -1323,6 +1325,15 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 				c.ConversationListener.OnNewConversation(utils.StructToJsonString(cLists))
 			}
 		}
+	case constant.ConChangeDirect:
+		cidList := node.Args.(string)
+		c.ConversationListener.OnConversationChanged(cidList)
+
+	case constant.NewConDirect:
+		cidList := node.Args.(string)
+		log.Debug("internal", "NewConversation", cidList)
+		c.ConversationListener.OnNewConversation(cidList)
+
 	}
 }
 
