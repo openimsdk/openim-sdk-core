@@ -43,8 +43,6 @@ func (d *DataBase) GetHiddenConversationList() ([]*model_struct.LocalConversatio
 }
 
 func (d *DataBase) GetAllConversationListToSync() ([]*model_struct.LocalConversation, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
 	var conversationList []model_struct.LocalConversation
 	err := utils.Wrap(d.conn.Find(&conversationList).Error, "GetAllConversationListToSync failed")
 	var transfer []*model_struct.LocalConversation
@@ -110,7 +108,7 @@ func (d *DataBase) UpdateConversation(c *model_struct.LocalConversation) error {
 func (d *DataBase) UpdateConversationForSync(c *model_struct.LocalConversation) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Model(&model_struct.LocalConversation{}).Where("conversation_id = ?", c.ConversationID).Updates(map[string]interface{}{"recv_msg_opt": c.RecvMsgOpt, "is_pinned": c.IsPinned, "is_private_chat": c.IsPrivateChat, "group_at_type": c.GroupAtType, "is_not_in_group": c.IsNotInGroup, "ex": c.Ex, "attached_info": c.AttachedInfo})
+	t := d.conn.Model(&model_struct.LocalConversation{}).Where("conversation_id = ?", c.ConversationID).Updates(map[string]interface{}{"recv_msg_opt": c.RecvMsgOpt, "is_pinned": c.IsPinned, "is_private_chat": c.IsPrivateChat, "group_at_type": c.GroupAtType, "is_not_in_group": c.IsNotInGroup, "ex": c.Ex, "attached_info": c.AttachedInfo, "unread_count": c.UnreadCount})
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}

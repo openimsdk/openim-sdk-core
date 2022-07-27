@@ -1168,6 +1168,7 @@ func (c *Conversation) MarkC2CMessageAsRead(callback open_im_sdk_callback.Base, 
 		common.JsonUnmarshalCallback(msgIDList, &unmarshalParams, callback, operationID)
 		if len(unmarshalParams) == 0 {
 			conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
+			c.setOneConversationUnread(callback, conversationID, 0, operationID)
 			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
 			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 			callback.OnSuccess(sdk_params_callback.MarkC2CMessageAsReadCallback)
@@ -1189,6 +1190,7 @@ func (c *Conversation) MarkMessageAsReadByConID(callback open_im_sdk_callback.Ba
 		var unmarshalParams sdk_params_callback.MarkMessageAsReadByConIDParams
 		common.JsonUnmarshalCallback(msgIDList, &unmarshalParams, callback, operationID)
 		if len(unmarshalParams) == 0 {
+			c.setOneConversationUnread(callback, conversationID, 0, operationID)
 			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
 			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 			callback.OnSuccess(sdk_params_callback.MarkMessageAsReadByConIDCallback)
@@ -1224,6 +1226,7 @@ func (c *Conversation) MarkGroupMessageHasRead(callback open_im_sdk_callback.Bas
 	go func() {
 		log.NewInfo(operationID, "MarkGroupMessageHasRead args: ", groupID)
 		conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+		c.setOneConversationUnread(callback, conversationID, 0, operationID)
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 		callback.OnSuccess(sdk_params_callback.MarkGroupMessageHasReadCallback)

@@ -54,7 +54,7 @@ func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, co
 			case int(constant.ErrNotFriend.ErrCode):
 				return nil, &constant.ErrNotFriend
 			}
-			return nil, constant.WsRecvCode
+			return nil, errors.New(utils.IntToString(r.ErrCode) + ":" + r.ErrMsg)
 		} else {
 			return &r, nil
 		}

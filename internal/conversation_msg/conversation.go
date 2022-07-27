@@ -92,6 +92,14 @@ func (c *Conversation) setOneConversationRecvMessageOpt(callback open_im_sdk_cal
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
 	c.SyncConversations(operationID)
 }
+func (c *Conversation) setOneConversationUnread(callback open_im_sdk_callback.Base, conversationID string, unreadCount int, operationID string) {
+	apiReq := &server_api_params.ModifyConversationFieldReq{}
+	localConversation, err := c.db.GetConversation(conversationID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	apiReq.UnreadCount = int32(unreadCount)
+	apiReq.FieldType = constant.FieldUnread
+	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
+}
 
 func (c *Conversation) setOneConversationPrivateChat(callback open_im_sdk_callback.Base, conversationID string, isPrivate bool, operationID string) {
 	apiReq := &server_api_params.ModifyConversationFieldReq{}
@@ -293,6 +301,7 @@ func (c *Conversation) SyncConversations(operationID string) {
 		newConversation.IsNotInGroup = conversation.IsNotInGroup
 		newConversation.Ex = conversation.Ex
 		newConversation.AttachedInfo = conversation.AttachedInfo
+		newConversation.UnreadCount = conversation.UnreadCount
 		newConversationList = append(newConversationList, &newConversation)
 		//err := c.db.InsertConversation(&newConversation)
 		//if err != nil {
@@ -1095,6 +1104,7 @@ func (c *Conversation) markGroupMessageAsRead(callback open_im_sdk_callback.Base
 	conversationID, conversationType, err := c.getConversationTypeByGroupID(groupID)
 	common.CheckAnyErrCallback(callback, 202, err, operationID)
 	if len(msgIDList) == 0 {
+		c.setOneConversationUnread(callback, conversationID, 0, operationID)
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 		return
