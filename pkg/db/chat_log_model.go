@@ -439,15 +439,15 @@ func (d *DataBase) GetMessageListNoTime(sourceID string, sessionType, count int,
 		} else {
 			condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? "
 		}
-		err = utils.Wrap(d.conn.Debug().Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType).
+		err = utils.Wrap(d.conn.Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType).
 			Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
 	case constant.GroupChatType:
 		condition = " recv_id = ? AND status <=? And session_type = ? "
-		err = utils.Wrap(d.conn.Debug().Where(condition, sourceID, constant.MsgStatusSendFailed, sessionType).
+		err = utils.Wrap(d.conn.Where(condition, sourceID, constant.MsgStatusSendFailed, sessionType).
 			Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
 	default:
 		condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? "
-		err = utils.Wrap(d.conn.Debug().Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType).
+		err = utils.Wrap(d.conn.Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType).
 			Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
 	}
 
