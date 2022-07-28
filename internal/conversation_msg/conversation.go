@@ -1667,7 +1667,7 @@ func (c *Conversation) deleteConversationAndMsgFromSvr(callback open_im_sdk_call
 	log.Debug(operationID, utils.GetSelfFuncName(), *local)
 	var seqList []uint32
 	switch local.ConversationType {
-	case constant.SingleChatType:
+	case constant.SingleChatType, constant.NotificationChatType:
 		peerUserID := local.UserID
 		if peerUserID != c.loginUserID {
 			seqList, err = c.db.GetMsgSeqListByPeerUserID(peerUserID)
