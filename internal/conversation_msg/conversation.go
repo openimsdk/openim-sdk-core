@@ -347,8 +347,8 @@ func (c *Conversation) SyncOneConversation(conversationID, operationID string) {
 	// todo
 }
 
-func (c *Conversation) findMessageList(callback open_im_sdk_callback.Base, req sdk.FindMessageListParams, operationID string, isReverse bool) sdk.GetHistoryMessageListCallback {
-	return nil
+func (c *Conversation) findMessageList(callback open_im_sdk_callback.Base, req sdk.FindMessageListParams, operationID string, isReverse bool) sdk.FindMessageListCallback {
+	return sdk.FindMessageListCallback{}
 	//t := time.Now()
 	//var sourceID string
 	//var conversationID string
