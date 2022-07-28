@@ -1077,6 +1077,20 @@ func (c *Conversation) CreateForwardMessage(m, operationID string) string {
 	s.Status = constant.MsgStatusSendSuccess
 	return utils.StructToJsonString(s)
 }
+func (c *Conversation) FindMessageList(callback open_im_sdk_callback.Base, findMessageOptions, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		t := time.Now()
+		log.NewInfo(operationID, "FindMessageList args: ", findMessageOptions)
+		var unmarshalParams sdk_params_callback.FindMessageListParams
+		common.JsonUnmarshalCallback(findMessageOptions, &unmarshalParams, callback, operationID)
+		result := c.findMessageList(callback, unmarshalParams, operationID, false)
+		callback.OnSuccess(utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, "FindMessageList callback: ", utils.StructToJsonStringDefault(result), "cost time", time.Since(t))
+	}()
+}
 func (c *Conversation) GetHistoryMessageList(callback open_im_sdk_callback.Base, getMessageOptions, operationID string) {
 	if callback == nil {
 		return
@@ -1091,7 +1105,6 @@ func (c *Conversation) GetHistoryMessageList(callback open_im_sdk_callback.Base,
 		log.NewInfo(operationID, "GetHistoryMessageList callback: ", utils.StructToJsonStringDefault(result), "cost time", time.Since(t))
 	}()
 }
-
 func (c *Conversation) GetAdvancedHistoryMessageList(callback open_im_sdk_callback.Base, getMessageOptions, operationID string) {
 	if callback == nil {
 		return
@@ -1382,6 +1395,8 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(callback open_im_sdk_cal
 	}()
 
 }
+
+//modifyLocalMessages(callback open_im_sdk_callback.Base, message, groupID, sendID, operationID string)
 
 func (c *Conversation) SetConversationStatus(callback open_im_sdk_callback.Base, operationID string, userID string, status int) {
 	if callback == nil {

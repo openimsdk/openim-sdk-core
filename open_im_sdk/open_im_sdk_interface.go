@@ -793,7 +793,14 @@ func SendMessageNotOss(callback open_im_sdk_callback.SendMsgCallBack, operationI
 	}
 	userForSDK.Conversation().SendMessageNotOss(callback, message, recvID, groupID, offlinePushInfo, operationID)
 }
-
+func FindMessageList(callback open_im_sdk_callback.Base, operationID string, findMessageOptions string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Conversation().FindMessageList(callback, findMessageOptions, operationID)
+}
 func GetHistoryMessageList(callback open_im_sdk_callback.Base, operationID string, getMessageOptions string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())

@@ -519,6 +519,16 @@ func (wsRouter *WsFuncRouter) CreateForwardMessage(m string, operationID string)
 	wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", msg, operationID})
 }
 
+func (wsRouter *WsFuncRouter) FindMessageList(findMessageOptions string, operationID string) {
+	var sc SendCallback
+	sc.uid = wsRouter.uId
+	sc.funcName = runFuncName()
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, findMessageOptions, operationID, runFuncName(), nil) {
+		return
+	}
+	userWorker.Conversation().FindMessageList(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, findMessageOptions, operationID)
+}
 func (wsRouter *WsFuncRouter) GetHistoryMessageList(getMessageOptions string, operationID string) {
 	var sc SendCallback
 	sc.uid = wsRouter.uId
@@ -528,6 +538,16 @@ func (wsRouter *WsFuncRouter) GetHistoryMessageList(getMessageOptions string, op
 		return
 	}
 	userWorker.Conversation().GetHistoryMessageList(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, getMessageOptions, operationID)
+}
+func (wsRouter *WsFuncRouter) GetAdvancedHistoryMessageList(getMessageOptions string, operationID string) {
+	var sc SendCallback
+	sc.uid = wsRouter.uId
+	sc.funcName = runFuncName()
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, getMessageOptions, operationID, runFuncName(), nil) {
+		return
+	}
+	userWorker.Conversation().GetAdvancedHistoryMessageList(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, getMessageOptions, operationID)
 }
 func (wsRouter *WsFuncRouter) GetHistoryMessageListReverse(getMessageOptions string, operationID string) {
 	var sc SendCallback
