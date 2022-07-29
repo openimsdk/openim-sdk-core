@@ -192,9 +192,9 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.friend = friend.NewFriend(u.loginUserID, u.db, u.user, p)
 	u.friend.SetFriendListener(u.friendListener)
 
-	u.group = group.NewGroup(u.loginUserID, u.db, p, u.joinedSuperGroupCh)
+	u.group = group.NewGroup(u.loginUserID, u.db, p, u.joinedSuperGroupCh, u.heartbeatCmdCh)
 	u.group.SetGroupListener(u.groupListener)
-	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db, p, u.joinedSuperGroupCh)
+	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db, p, u.joinedSuperGroupCh, u.heartbeatCmdCh)
 	u.organization = organization.NewOrganization(u.loginUserID, u.db, p)
 	u.organization.SetListener(u.organizationListener)
 	u.cache = cache.NewCache(u.user, u.friend)

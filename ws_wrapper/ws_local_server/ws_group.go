@@ -395,3 +395,18 @@ func (wsRouter *WsFuncRouter) RefuseGroupApplication(input, operationID string) 
 	userWorker.Group().RefuseGroupApplication(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},
 		m["groupID"].(string), m["fromUserID"].(string), m["handleMsg"].(string), operationID)
 }
+
+func (wsRouter *WsFuncRouter) SearchGroupMembers(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "searchParam") {
+		return
+	}
+	userWorker.Group().SearchGroupMembers(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},
+		m["searchParam"].(string), operationID)
+}

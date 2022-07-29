@@ -68,7 +68,7 @@ func (d *DataBase) SearchFriendList(keyword string, isSearchUserID, isSearchNick
 		}
 		condition += fmt.Sprintf("remark like %q ", "%"+keyword+"%")
 	}
-	err := d.conn.Debug().Where(condition).Order("create_time DESC").Find(&friendList).Error
+	err := d.conn.Where(condition).Order("create_time DESC").Find(&friendList).Error
 	var transfer []*model_struct.LocalFriend
 	for _, v := range friendList {
 		v1 := v

@@ -27,6 +27,7 @@ type Group struct {
 	p                  *ws.PostApi
 	loginTime          int64
 	joinedSuperGroupCh chan common.Cmd2Value
+	heartbeatCmdCh     chan common.Cmd2Value
 }
 
 func (g *Group) LoginTime() int64 {
@@ -37,8 +38,8 @@ func (g *Group) SetLoginTime(loginTime int64) {
 	g.loginTime = loginTime
 }
 
-func NewGroup(loginUserID string, db *db.DataBase, p *ws.PostApi, joinedSuperGroupCh chan common.Cmd2Value) *Group {
-	return &Group{loginUserID: loginUserID, db: db, p: p, joinedSuperGroupCh: joinedSuperGroupCh}
+func NewGroup(loginUserID string, db *db.DataBase, p *ws.PostApi, joinedSuperGroupCh chan common.Cmd2Value, heartbeatCmdCh chan common.Cmd2Value) *Group {
+	return &Group{loginUserID: loginUserID, db: db, p: p, joinedSuperGroupCh: joinedSuperGroupCh, heartbeatCmdCh: heartbeatCmdCh}
 }
 
 func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value) {
@@ -876,6 +877,10 @@ func (g *Group) SyncJoinedGroupList(operationID string) {
 		if err != nil {
 			log.Error(operationID, "TriggerCmdJoinedSuperGroup failed ", err.Error())
 		}
+		err = common.TriggerCmdWakeUp(g.heartbeatCmdCh)
+		if err != nil {
+			log.Error(operationID, "TriggerCmdWakeUp failed ", err.Error())
+		}
 	}
 }
 
@@ -1001,4 +1006,14 @@ func (g *Group) setGroupMemberNickname(callback open_im_sdk_callback.Base, group
 	apiReq.Nickname = GroupMemberNickname
 	g.p.PostFatalCallback(callback, constant.SetGroupMemberNicknameRouter, apiReq, nil, apiReq.OperationID)
 	g.syncGroupMemberByGroupID(groupID, operationID, true)
+}
+
+func (g *Group) searchGroupMembers(callback open_im_sdk_callback.Base, searchParam sdk.SearchGroupMembersParam, operationID string) sdk.SearchGroupMembersCallback {
+	if len(searchParam.KeywordList) == 0 {
+		log.Error(operationID, "len keywordList == 0")
+		common.CheckArgsErrCallback(callback, errors.New("no keyword"), operationID)
+	}
+	members, err := g.db.SearchGroupMembers(searchParam.KeywordList[0], searchParam.GroupID, searchParam.IsSearchMemberNickname, searchParam.IsSearchUserID, searchParam.Offset, searchParam.Count)
+	common.CheckDBErrCallback(callback, err, operationID)
+	return members
 }

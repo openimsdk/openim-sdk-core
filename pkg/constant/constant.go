@@ -214,6 +214,8 @@ const (
 	UpdateLatestMessageChange = 8
 	ConChange                 = 9
 	NewCon                    = 10
+	ConChangeDirect           = 11
+	NewConDirect              = 12
 
 	HasRead = 1
 	NotRead = 0
@@ -305,6 +307,7 @@ const (
 	FieldGroupAtType   = 5
 	FieldIsNotInGroup  = 6
 	FieldEx            = 7
+	FieldUnread        = 8
 )
 const (
 	KeywordMatchOr  = 0
