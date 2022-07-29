@@ -82,9 +82,9 @@ func (d *DataBase) GetGroupMemberListSplitByJoinTimeFilter(groupID string, offse
 	var groupMemberList []model_struct.LocalGroupMember
 	var err error
 	if len(userIDList) == 0 {
-		err = d.conn.Debug().Where("group_id = ? And join_time  between ? and ? ", groupID, joinTimeBegin, joinTimeEnd).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		err = d.conn.Where("group_id = ? And join_time  between ? and ? ", groupID, joinTimeBegin, joinTimeEnd).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	} else {
-		err = d.conn.Debug().Where("group_id = ? And join_time  between ? and ? And user_id NOT IN ?", groupID, joinTimeBegin, joinTimeEnd, userIDList).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		err = d.conn.Where("group_id = ? And join_time  between ? and ? And user_id NOT IN ?", groupID, joinTimeBegin, joinTimeEnd, userIDList).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	}
 	var transfer []*model_struct.LocalGroupMember
 	for _, v := range groupMemberList {

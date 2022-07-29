@@ -34,6 +34,15 @@ const SetConversationMessageOptCallback = constant.SuccessCallbackDefault
 
 const SetConversationPrivateChatOptCallback = constant.SuccessCallbackDefault
 
+type FindMessageListParams []*ConversationArgs
+type ConversationArgs struct {
+	ConversationID  string   `json:"conversationID"`
+	ClientMsgIDList []string `json:"clientMsgIDList"`
+}
+type FindMessageListCallback struct {
+	TotalCount      int                           `json:"totalCount"`
+	FindResultItems []*SearchByConversationResult `json:"findResultItems"`
+}
 type GetHistoryMessageListParams struct {
 	UserID           string `json:"userID"`
 	GroupID          string `json:"groupID"`
@@ -41,6 +50,7 @@ type GetHistoryMessageListParams struct {
 	StartClientMsgID string `json:"startClientMsgID"`
 	Count            int    `json:"count"`
 }
+type GetHistoryMessageListCallback []*sdk_struct.MsgStruct
 type GetAdvancedHistoryMessageListParams struct {
 	UserID           string `json:"userID"`
 	LastMinSeq       uint32 `json:"lastMinSeq"`
@@ -56,7 +66,6 @@ type GetAdvancedHistoryMessageListCallback struct {
 	ErrCode     int32                   `json:"errCode"`
 	ErrMsg      string                  `json:"errMsg"`
 }
-type GetHistoryMessageListCallback []*sdk_struct.MsgStruct
 
 type RevokeMessageParams sdk_struct.MsgStruct
 

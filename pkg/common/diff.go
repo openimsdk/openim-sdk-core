@@ -762,6 +762,7 @@ type tempConversation struct {
 	GroupID          string
 	IsPrivateChat    bool
 	IsPinned         bool
+	UnreadCount      int32
 	GroupAtType      int32
 	IsNotInGroup     bool
 	AttachedInfo     string
@@ -782,6 +783,7 @@ func ServerTransferToTempConversation(resp server_api_params.GetAllConversations
 			GroupAtType:      serverConversation.GroupAtType,
 			IsNotInGroup:     serverConversation.IsNotInGroup,
 			AttachedInfo:     serverConversation.AttachedInfo,
+			UnreadCount:      serverConversation.UnreadCount,
 			Ex:               serverConversation.Ex,
 		})
 	}
@@ -802,6 +804,7 @@ func LocalTransferToTempConversation(local []*model_struct.LocalConversation) []
 			GroupAtType:      localConversation.GroupAtType,
 			IsNotInGroup:     localConversation.IsNotInGroup,
 			AttachedInfo:     localConversation.AttachedInfo,
+			UnreadCount:      localConversation.UnreadCount,
 			Ex:               localConversation.Ex,
 		})
 	}
@@ -822,6 +825,7 @@ func TransferToLocalConversation(resp server_api_params.GetAllConversationsResp)
 			GroupAtType:      serverConversation.GroupAtType,
 			IsNotInGroup:     serverConversation.IsNotInGroup,
 			AttachedInfo:     serverConversation.AttachedInfo,
+			UnreadCount:      serverConversation.UnreadCount,
 			Ex:               serverConversation.Ex,
 		})
 	}
