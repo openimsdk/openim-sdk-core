@@ -3,6 +3,7 @@ package db
 import (
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
@@ -28,7 +29,9 @@ func (d *DataBase) SuperGroupInsertMessage(Message *model_struct.LocalChatLog, g
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Create(Message).Error, "SuperGroupInsertMessage failed")
 }
-
+func (d *DataBase) SuperGroupDeleteAllMessage(groupID string) error {
+	return utils.Wrap(d.conn.Session(&gorm.Session{AllowGlobalUpdate: true}).Table(utils.GetSuperGroupTableName(groupID)).Delete(&model_struct.LocalChatLog{}).Error, "SuperGroupDeleteAllMessage failed")
+}
 func (d *DataBase) SuperGroupSearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
@@ -208,12 +211,12 @@ func (d *DataBase) SuperGroupUpdateMessage(c *model_struct.LocalChatLog) error {
 	return utils.Wrap(t.Error, "UpdateMessage failed")
 }
 
-func (d *DataBase) SuperGroupDeleteAllMessage() error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	err := d.conn.Model(&model_struct.LocalChatLog{}).Exec("update local_chat_logs set status = ?,content = ? ", constant.MsgStatusHasDeleted, "").Error
-	return utils.Wrap(err, "delete all message error")
-}
+//func (d *DataBase) SuperGroupDeleteAllMessage() error {
+//	d.mRWMutex.Lock()
+//	defer d.mRWMutex.Unlock()
+//	err := d.conn.Model(&model_struct.LocalChatLog{}).Exec("update local_chat_logs set status = ?,content = ? ", constant.MsgStatusHasDeleted, "").Error
+//	return utils.Wrap(err, "delete all message error")
+//}
 
 func (d *DataBase) SuperGroupUpdateMessageStatusBySourceID(sourceID string, status, sessionType int32) error {
 	d.mRWMutex.Lock()

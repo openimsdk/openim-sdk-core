@@ -157,7 +157,7 @@ type LocalGroupMember struct {
 	Nickname       string `gorm:"column:nickname;type:varchar(255)" json:"nickname"`
 	FaceURL        string `gorm:"column:user_group_face_url;type:varchar(255)" json:"faceURL"`
 	RoleLevel      int32  `gorm:"column:role_level" json:"roleLevel"`
-	JoinTime       uint32 `gorm:"column:join_time" json:"joinTime"`
+	JoinTime       uint32 `gorm:"column:join_time;index:index_join_time;" json:"joinTime"`
 	JoinSource     int32  `gorm:"column:join_source" json:"joinSource"`
 	InviterUserID  string `gorm:"column:inviter_user_id;size:64"  json:"inviterUserID"`
 	MuteEndTime    uint32 `gorm:"column:mute_end_time;default:0" json:"muteEndTime"`
