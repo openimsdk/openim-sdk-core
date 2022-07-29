@@ -677,9 +677,26 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 	t = time.Now()
 	common.CheckDBErrCallback(callback, err, operationID)
 	if len(list) < req.Count && sessionType == constant.SuperGroupChatType {
+		var minSeq uint32
+		resp, err := c.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 30, 3, c.loginUserID, operationID)
+		if err != nil {
+			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, 30, c.loginUserID)
+		} else {
+			var wsSeqResp server_api_params.GetMaxAndMinSeqResp
+			err = proto.Unmarshal(resp.Data, &wsSeqResp)
+			if err != nil {
+				log.Error(operationID, "Unmarshal failed", err.Error())
+			} else if wsSeqResp.ErrCode != 0 {
+				log.Error(operationID, "GetMaxAndMinSeqReq failed ", wsSeqResp.ErrCode, wsSeqResp.ErrMsg)
+			} else {
+				if value, ok := wsSeqResp.GroupMaxAndMinSeq[sourceID]; ok {
+					minSeq = value.MinSeq
+				}
+			}
+		}
 		seq, _ := c.db.SuperGroupGetNormalMinSeq(sourceID)
 		log.Debug(operationID, sourceID+":table min seq is ", seq)
-		if seq != 0 && seq != 1 {
+		if seq != 0 && seq != 1 && seq > minSeq {
 			seqList := func(seq uint32) (seqList []uint32) {
 				startSeq := int64(seq) - constant.PullMsgNumForReadDiffusion
 				if startSeq <= 0 {
@@ -696,6 +713,8 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 			if len(seqList) > 0 {
 				c.pullMessageAndReGetHistoryMessages(sourceID, seqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
 			}
+		} else {
+			messageListCallback.IsEnd = true
 		}
 	} else if len(list) == req.Count && sessionType == constant.SuperGroupChatType {
 		maxSeq, minSeq, haveSeqList := func(messages []*model_struct.LocalChatLog) (max, min uint32, seqList []uint32) {
