@@ -1411,7 +1411,10 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 			err = utils.JsonStringToStruct(msg.Content, &msg.MergeElem)
 		case constant.Face:
 			err = utils.JsonStringToStruct(msg.Content, &msg.FaceElem)
-
+		case constant.CustomMsgNotTriggerConversation:
+			err = utils.JsonStringToStruct(msg.Content, &msg.CustomElem)
+		case constant.CustomMsgOnlineOnly:
+			err = utils.JsonStringToStruct(msg.Content, &msg.CustomElem)
 		}
 	}
 
