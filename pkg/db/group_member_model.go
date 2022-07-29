@@ -174,12 +174,12 @@ func (d *DataBase) SearchGroupMembers(keyword string, groupID string, isSearchMe
 	if groupID != "" {
 		condition = "( " + condition + " ) "
 		condition += " and group_id IN ? "
-		log.Warn("", "subCondition SearchGroupMembers ", condition)
-		err = d.conn.Debug().Where(condition, []string{groupID}).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		log.Debug("", "subCondition SearchGroupMembers ", condition)
+		err = d.conn.Where(condition, []string{groupID}).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	} else {
-		log.Warn("", "subCondition SearchGroupMembers ", condition)
-		err = d.conn.Debug().Where(condition).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
-		log.Warn("", "subCondition SearchGroupMembers ", condition, len(groupMemberList))
+		log.Debug("", "subCondition SearchGroupMembers ", condition)
+		err = d.conn.Where(condition).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		log.Debug("", "subCondition SearchGroupMembers ", condition, len(groupMemberList))
 	}
 
 	for _, v := range groupMemberList {
