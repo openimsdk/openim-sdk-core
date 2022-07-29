@@ -202,9 +202,14 @@ func (c *Conversation) deleteConversation(callback open_im_sdk_callback.Base, co
 	case constant.GroupChatType, constant.SuperGroupChatType:
 		sourceID = lc.GroupID
 	}
-	//Mark messages related to this conversation for deletion
-	err = c.db.UpdateMessageStatusBySourceIDController(sourceID, constant.MsgStatusHasDeleted, lc.ConversationType)
-	common.CheckDBErrCallback(callback, err, operationID)
+	if lc.ConversationType == constant.SuperGroupChatType {
+		err = c.db.SuperGroupDeleteAllMessage(lc.GroupID)
+		common.CheckDBErrCallback(callback, err, operationID)
+	} else {
+		//Mark messages related to this conversation for deletion
+		err = c.db.UpdateMessageStatusBySourceIDController(sourceID, constant.MsgStatusHasDeleted, lc.ConversationType)
+		common.CheckDBErrCallback(callback, err, operationID)
+	}
 	//Reset the session information, empty session
 	err = c.db.ResetConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -1333,8 +1338,15 @@ func (c *Conversation) clearGroupHistoryMessage(callback open_im_sdk_callback.Ba
 	common.CheckAnyErrCallback(callback, 202, err, operationID)
 
 	conversationID := utils.GetConversationIDBySessionType(groupID, int(sessionType))
-	err = c.db.UpdateMessageStatusBySourceIDController(groupID, constant.MsgStatusHasDeleted, sessionType)
-	common.CheckDBErrCallback(callback, err, operationID)
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		err = c.db.SuperGroupDeleteAllMessage(groupID)
+		common.CheckDBErrCallback(callback, err, operationID)
+	default:
+		err = c.db.UpdateMessageStatusBySourceIDController(groupID, constant.MsgStatusHasDeleted, sessionType)
+		common.CheckDBErrCallback(callback, err, operationID)
+	}
+
 	err = c.db.ClearConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
@@ -1379,6 +1391,17 @@ func (c *Conversation) clearMessageFromSvr(callback open_im_sdk_callback.Base, o
 	apiReq.UserID = c.loginUserID
 	apiReq.OperationID = operationID
 	c.p.PostFatalCallback(callback, constant.ClearMsgRouter, apiReq, nil, apiReq.OperationID)
+	groupIDList, err := c.full.GetReadDiffusionGroupIDList(operationID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	var superGroupApiReq server_api_params.DelSuperGroupMsgReq
+	superGroupApiReq.UserID = c.loginUserID
+	superGroupApiReq.IsAllDelete = true
+	for _, v := range groupIDList {
+		superGroupApiReq.GroupID = v
+		superGroupApiReq.OperationID = operationID
+		c.p.PostFatalCallback(callback, constant.DeleteSuperGroupMsgRouter, apiReq, nil, apiReq.OperationID)
+		return
+	}
 }
 
 func (c *Conversation) deleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
@@ -1704,6 +1727,15 @@ func (c *Conversation) deleteAllMsgFromLocal(callback open_im_sdk_callback.Base,
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	err := c.db.DeleteAllMessage()
 	common.CheckDBErrCallback(callback, err, operationID)
+	groupIDList, err := c.full.GetReadDiffusionGroupIDList(operationID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	for _, v := range groupIDList {
+		err = c.db.SuperGroupDeleteAllMessage(v)
+		if err != nil {
+			log.Error(operationID, "SuperGroupDeleteAllMessage err", err.Error())
+			continue
+		}
+	}
 	err = c.db.CleaAllConversation()
 	common.CheckDBErrCallback(callback, err, operationID)
 	conversationList, err := c.db.GetAllConversationList()
