@@ -89,10 +89,10 @@ func (u *Heartbeat) Run() {
 				log.Debug(operationID, "heartbeat waiting(ms)... ", u.heartbeatInterval*1000)
 			}
 		}
-		//if u.LoginState() == constant.Logout {
-		//	log.Warn(operationID, " logout state Goexit", u.cmdCh)
-		//	runtime.Goexit()
-		//}
+		if u.LoginState() == constant.Logout {
+			log.Warn(operationID, " logout state Goexit", u.cmdCh)
+			runtime.Goexit()
+		}
 		heartbeatNum++
 		log.Debug(operationID, "send heartbeat req")
 		if u.IsTokenExp(operationID) {
