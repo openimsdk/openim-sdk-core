@@ -2,6 +2,7 @@ package db
 
 import (
 	"errors"
+	"fmt"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
@@ -151,28 +152,34 @@ func (d *DataBase) GetGroupMemberInfoIfOwnerOrAdmin() ([]*model_struct.LocalGrou
 	return ownerAndAdminList, nil
 }
 
-func (d *DataBase) SearchGroupMembers(keyWord string, groupID string, isSearchMemberNickname, isSearchUserID bool, offset, count int) (result []*model_struct.LocalGroupMember, err error) {
+func (d *DataBase) SearchGroupMembers(keyword string, groupID string, isSearchMemberNickname, isSearchUserID bool, offset, count int) (result []*model_struct.LocalGroupMember, err error) {
 	if !isSearchMemberNickname && !isSearchUserID {
 		return nil, errors.New("args failed")
 	}
-	subCondition := ""
-	if isSearchMemberNickname {
-		//subCondition += "content like " + "'%" + keywordList[i] + "%') "
-		//WHERE field1 LIKE condition1 OR  field1  LIKE  condition2
-		subCondition += " ( nickname like " + "'%" + keyWord + "%' "
-	}
+
+	var countCon int
+	var condition string
 	if isSearchUserID {
-		subCondition += " or user_id like " + "'%" + keyWord + "%' )"
+		condition = fmt.Sprintf("user_id like %q ", "%"+keyword+"%")
+		countCon++
 	}
+	if isSearchMemberNickname {
+		if countCon > 0 {
+			condition += "or "
+		}
+		condition += fmt.Sprintf("nickname like %q ", "%"+keyword+"%")
+	}
+
 	var groupMemberList []model_struct.LocalGroupMember
 	if groupID != "" {
-		subCondition += " and group_id IN ? "
-		log.Warn("", "subCondition SearchGroupMembers ", subCondition)
-		err = d.conn.Debug().Where(subCondition, []string{groupID}).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		condition = "( " + condition + " ) "
+		condition += " and group_id IN ? "
+		log.Warn("", "subCondition SearchGroupMembers ", condition)
+		err = d.conn.Debug().Where(condition, []string{groupID}).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	} else {
-		log.Warn("", "subCondition SearchGroupMembers ", subCondition)
-		err = d.conn.Debug().Where(subCondition).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
-		log.Warn("", "subCondition SearchGroupMembers ", subCondition, len(groupMemberList))
+		log.Warn("", "subCondition SearchGroupMembers ", condition)
+		err = d.conn.Debug().Where(condition).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		log.Warn("", "subCondition SearchGroupMembers ", condition, len(groupMemberList))
 	}
 
 	for _, v := range groupMemberList {
