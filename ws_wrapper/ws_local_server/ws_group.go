@@ -410,3 +410,35 @@ func (wsRouter *WsFuncRouter) SearchGroupMembers(input string, operationID strin
 	userWorker.Group().SearchGroupMembers(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},
 		m["searchParam"].(string), operationID)
 }
+
+//SetGroupApplyMemberFriend
+func (wsRouter *WsFuncRouter) SetGroupApplyMemberFriend(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "rule", "groupID") {
+		return
+	}
+	userWorker.Group().SetGroupApplyMemberFriend(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},
+		int32(m["rule"].(float64)), m["groupID"].(string), operationID)
+}
+
+//SetGroupApplyMemberFriend
+func (wsRouter *WsFuncRouter) SetGroupLookMemberInfo(input string, operationID string) {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(input), &m); err != nil {
+		log.Info(operationID, utils.GetSelfFuncName(), "unmarshal failed", input, err.Error())
+		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+		return
+	}
+	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
+	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), m, "rule", "groupID") {
+		return
+	}
+	userWorker.Group().SetGroupLookMemberInfo(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId},
+		int32(m["rule"].(float64)), m["groupID"].(string), operationID)
+}

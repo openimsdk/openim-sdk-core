@@ -188,7 +188,7 @@ func (w *Ws) ReadData() {
 		}
 		isErrorOccurred = false
 		if w.WsConn.conn == nil {
-			log.Error(operationID, "conn == nil, ReConn")
+			log.Warn(operationID, "conn == nil, ReConn")
 			err, isNeedReConnect := w.reConnSleep(operationID, 1)
 			if err != nil && isNeedReConnect == false {
 				log.Warn(operationID, "token failed, don't connect again")
