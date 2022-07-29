@@ -84,13 +84,15 @@ func (u *Heartbeat) Run() {
 					log.Info(operationID, "recv wake up cmd, start heartbeat ", r.Cmd)
 					break
 				}
-
 				log.Warn(operationID, "other cmd...", r.Cmd)
 			case <-time.After(time.Millisecond * time.Duration(u.heartbeatInterval*1000)):
 				log.Debug(operationID, "heartbeat waiting(ms)... ", u.heartbeatInterval*1000)
 			}
 		}
-
+		if u.LoginState() == constant.Logout {
+			log.Warn(operationID, " logout state Goexit", u.cmdCh)
+			runtime.Goexit()
+		}
 		heartbeatNum++
 		log.Debug(operationID, "send heartbeat req")
 		if u.IsTokenExp(operationID) {
