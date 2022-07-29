@@ -421,6 +421,16 @@ func SetGroupMemberNickname(callback open_im_sdk_callback.Base, operationID stri
 	userForSDK.Group().SetGroupMemberNickname(callback, groupID, userID, groupMemberNickname, operationID)
 }
 
+//SearchGroupMembers
+func SearchGroupMembers(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Group().SearchGroupMembers(callback, searchParam, operationID)
+}
+
 ////////////////////////////friend/////////////////////////////////////
 
 func GetDesignatedFriendsInfo(callback open_im_sdk_callback.Base, operationID string, userIDList string) {

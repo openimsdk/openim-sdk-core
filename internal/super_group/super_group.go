@@ -19,14 +19,15 @@ type SuperGroup struct {
 	p                  *ws.PostApi
 	loginTime          int64
 	joinedSuperGroupCh chan common.Cmd2Value
+	heartbeatCmdCh     chan common.Cmd2Value
 }
 
 func (s *SuperGroup) SetLoginTime(loginTime int64) {
 	s.loginTime = loginTime
 }
 
-func NewSuperGroup(loginUserID string, db *db.DataBase, p *ws.PostApi, joinedSuperGroupCh chan common.Cmd2Value) *SuperGroup {
-	return &SuperGroup{loginUserID: loginUserID, db: db, p: p, joinedSuperGroupCh: joinedSuperGroupCh}
+func NewSuperGroup(loginUserID string, db *db.DataBase, p *ws.PostApi, joinedSuperGroupCh chan common.Cmd2Value, heartbeatCmdCh chan common.Cmd2Value) *SuperGroup {
+	return &SuperGroup{loginUserID: loginUserID, db: db, p: p, joinedSuperGroupCh: joinedSuperGroupCh, heartbeatCmdCh: heartbeatCmdCh}
 }
 
 func (s *SuperGroup) DoNotification(msg *api.MsgData, _ chan common.Cmd2Value) {
@@ -46,6 +47,11 @@ func (s *SuperGroup) DoNotification(msg *api.MsgData, _ chan common.Cmd2Value) {
 				log.Error(operationID, "TriggerCmdJoinedSuperGroup failed ", err.Error(), cmd)
 				return
 			}
+			err = common.TriggerCmdWakeUp(s.heartbeatCmdCh)
+			if err != nil {
+				log.Error(operationID, "TriggerCmdWakeUp failed ", err.Error())
+			}
+
 			log.Info(operationID, "constant.SuperGroupUpdateNotification", msg.String())
 		default:
 			log.Error(operationID, "ContentType tip failed ", msg.ContentType)

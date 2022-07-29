@@ -40,6 +40,17 @@ type SearchGroupsParam struct {
 }
 type SearchGroupsCallback []*model_struct.LocalGroup
 
+type SearchGroupMembersParam struct {
+	GroupID                string   `json:"groupID"`
+	KeywordList            []string `json:"keywordList"`
+	IsSearchUserID         bool     `json:"isSearchUserID"`
+	IsSearchMemberNickname bool     `json:"isSearchMemberNickname"`
+	//offset, count int
+	Offset int `json:"offset"`
+	Count  int `json:"count"`
+}
+type SearchGroupMembersCallback []*model_struct.LocalGroupMember
+
 type SetGroupInfoParam struct {
 	GroupName        string `json:"groupName"`
 	Notification     string `json:"notification"`

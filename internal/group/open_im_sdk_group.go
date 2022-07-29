@@ -386,3 +386,18 @@ func (g *Group) SetGroupMemberNickname(callback open_im_sdk_callback.Base, group
 		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonString(sdk_params_callback.SetGroupMemberNicknameCallback))
 	}()
 }
+
+func (g *Group) SearchGroupMembers(callback open_im_sdk_callback.Base, searchParam string, operationID string) {
+	if callback == nil {
+		return
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", searchParam)
+		var unmarshalSearchGroupMembersParam sdk_params_callback.SearchGroupMembersParam
+		common.JsonUnmarshalAndArgsValidate(searchParam, &unmarshalSearchGroupMembersParam, callback, operationID)
+		members := g.searchGroupMembers(callback, unmarshalSearchGroupMembersParam, operationID)
+		callback.OnSuccess(utils.StructToJsonStringDefault(members))
+		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonStringDefault(members))
+	}()
+}

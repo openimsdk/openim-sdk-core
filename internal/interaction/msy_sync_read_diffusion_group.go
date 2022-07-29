@@ -289,7 +289,7 @@ func (m *ReadDiffusionGroupMsgSync) TriggerCmdNewMsgCome(msgList []*server_api_p
 			log.Warn(operationID, "TriggerCmdSuperGroupMsgCome failed ", err.Error(), m.loginUserID)
 			continue
 		}
-		log.Warn(operationID, "TriggerCmdSuperGroupMsgCome ok ", m.loginUserID)
+		log.Info(operationID, "TriggerCmdSuperGroupMsgCome ok ", m.loginUserID)
 		return
 	}
 }
