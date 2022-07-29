@@ -574,7 +574,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			common.JsonUnmarshalAndArgsValidate(offlinePushInfo, &p, callback, operationID)
 		}
 		if recvID == "" && groupID == "" {
-			common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not be allowed"), operationID)
+			common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not both null"), operationID)
 		}
 		var localMessage model_struct.LocalChatLog
 		var conversationID string
@@ -761,7 +761,7 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 			common.JsonUnmarshalAndArgsValidate(offlinePushInfo, &p, callback, operationID)
 		}
 		if recvID == "" && groupID == "" {
-			common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not be allowed"), operationID)
+			common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not both null"), operationID)
 		}
 		var localMessage model_struct.LocalChatLog
 		var conversationID string
@@ -850,7 +850,7 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 
 func (c *Conversation) InternalSendMessage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, recvID, groupID, operationID string, p *server_api_params.OfflinePushInfo, onlineUserOnly bool, options map[string]bool) (*server_api_params.UserSendMsgResp, error) {
 	if recvID == "" && groupID == "" {
-		common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not be allowed"), operationID)
+		common.CheckAnyErrCallback(callback, 201, errors.New("recvID && groupID not both null"), operationID)
 	}
 	if recvID == "" {
 		g, err := c.full.GetGroupInfoByGroupID(groupID)
