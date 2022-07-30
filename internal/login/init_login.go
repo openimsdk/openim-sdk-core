@@ -223,6 +223,8 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		objStorage = comm2.NewMinio(p)
 	case "oss":
 		objStorage = comm2.NewOSS(p)
+	case "aws":
+		objStorage = comm2.NewAWS(p)
 	default:
 		objStorage = comm2.NewCOS(p)
 	}
@@ -406,6 +408,8 @@ func (u *LoginMgr) uploadImage(callback open_im_sdk_callback.Base, filePath stri
 		o = comm2.NewCOS(p)
 	case "minio":
 		o = comm2.NewMinio(p)
+	case "aws":
+		o = comm2.NewAWS(p)
 	default:
 		o = comm2.NewCOS(p)
 	}
@@ -425,7 +429,7 @@ func (u LoginMgr) uploadFile(callback open_im_sdk_callback.SendMsgCallBack, file
 	url, _, err := u.conversation.UploadFile(filePath, callback.OnProgress)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), url)
 	if err != nil {
-		log.Error(operationID, "UploadImage failed ", err.Error(), filePath)
+		log.Error(operationID, "uploadFile failed ", err.Error(), filePath)
 		callback.OnError(constant.ErrApi.ErrCode, err.Error())
 	}
 	callback.OnSuccess(url)

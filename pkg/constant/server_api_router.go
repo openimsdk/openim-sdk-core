@@ -32,6 +32,7 @@ const (
 	TencentCloudStorageCredentialRouter = "/third/tencent_cloud_storage_credential"
 	AliOSSCredentialRouter              = "/third/ali_oss_credential"
 	MinioStorageCredentialRouter        = "/third/minio_storage_credential"
+	AwsStorageCredentialRouter          = "/third/aws_storage_credential"
 
 	//group
 	CreateGroupRouter                 = RouterGroup + "/create_group"
