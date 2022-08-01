@@ -280,11 +280,12 @@ const (
 	AppOrdinaryUsers = 1
 	AppAdmin         = 2
 
-	GroupOrdinaryUsers  = 1
-	GroupOwner          = 2
-	GroupAdmin          = 3
-	GroupResponseAgree  = 1
-	GroupResponseRefuse = -1
+	GroupOrdinaryUsers         = 1
+	GroupOwner                 = 2
+	GroupAdmin                 = 3
+	GroupAdminAndOrdinaryUsers = 4
+	GroupResponseAgree         = 1
+	GroupResponseRefuse        = -1
 
 	FriendResponseAgree  = 1
 	FriendResponseRefuse = -1
