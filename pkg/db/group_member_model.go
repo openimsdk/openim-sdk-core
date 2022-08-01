@@ -69,11 +69,11 @@ func (d *DataBase) GetGroupMemberListSplit(groupID string, filter int32, offset,
 	var groupMemberList []model_struct.LocalGroupMember
 	var err error
 	if filter == 0 {
-		err = d.conn.Where("group_id = ? And role_level > ?", groupID, filter).Order("role_level DESC").Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		err = d.conn.Where("group_id = ? And role_level > ?", groupID, filter).Order("role_level DESC").Order("join_time ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	} else if filter == constant.GroupOrdinaryUsers || filter == constant.GroupOwner || filter == constant.GroupAdmin {
-		err = d.conn.Where("group_id = ? And role_level = ?", groupID, filter).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		err = d.conn.Where("group_id = ? And role_level = ?", groupID, filter).Order("join_time ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	} else if filter == constant.GroupAdminAndOrdinaryUsers {
-		err = d.conn.Where("group_id = ? And ( role_level = 1 OR role_level = 3 ) ", groupID).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		err = d.conn.Where("group_id = ? And ( role_level = 1 OR role_level = 3 ) ", groupID).Order("join_time ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	} else {
 		return nil, errors.New("filter args failed")
 	}
