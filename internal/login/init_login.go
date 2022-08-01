@@ -237,7 +237,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		log.Info(operationID, "SetBatchMsgListener ", u.batchMsgListener)
 	}
 	log.Debug(operationID, "SyncConversations begin ")
-	u.conversation.SyncConversations(operationID)
+	//u.conversation.SyncConversations(operationID)
 	log.Debug(operationID, "SyncConversations end ")
 	go common.DoListener(u.conversation)
 	log.Info(operationID, "login success...", "login cost time: ", time.Since(t1))
