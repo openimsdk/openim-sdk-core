@@ -112,7 +112,7 @@ func SetTestGroupID(groupID, memberID string) {
 
 var MemberUserID = "2101502031"
 var me = "3984071717"
-var TestgroupID = "1240111487"
+var TestgroupID = "3109164461"
 
 func DoTestCreateGroup() {
 	var test testCreateGroup
@@ -290,20 +290,19 @@ type testGetGroupMemberList struct {
 }
 
 func (t testGetGroupMemberList) OnSuccess(data string) {
-	log.Info(t.OperationID, utils.GetSelfFuncName(), data)
+	log.Info(t.OperationID, utils.GetSelfFuncName(), "testGetGroupMemberList: ", data)
 
 }
 
 func (t testGetGroupMemberList) OnError(errCode int32, errMsg string) {
-	log.Info(t.OperationID, utils.GetSelfFuncName(), errCode, errMsg)
+	log.Info(t.OperationID, utils.GetSelfFuncName(), "testGetGroupMemberList", errCode, errMsg)
 }
 
 func DotestGetGroupMemberList() {
 	var test testGetGroupMemberList
 	test.OperationID = utils.OperationIDGenerator()
 	var groupId = TestgroupID
-	//open_im_sdk.GetGroupMemberList(test, test.OperationID, groupId, 1, 30)
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "./main/main.go", groupId, 1, 30)
+	open_im_sdk.GetGroupMemberList(test, test.OperationID, groupId, 0, 0, 100)
 }
 
 func DotestCos() {

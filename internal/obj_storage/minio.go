@@ -73,8 +73,17 @@ func (m *Minio) upload(filePath, fileType string, onProgressFun func(int)) (stri
 	if err != nil {
 		return "", "", utils.Wrap(err, "os stat failed")
 	}
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", "", utils.Wrap(err, "")
+	}
+	defer file.Close()
+
 	progressBar := NewUploadProgress(fi.Size(), onProgressFun)
-	_, err = client.FPutObject(context.Background(), minioResp.BucketName, newName, filePath, minio.PutObjectOptions{ContentType: newType, Progress: progressBar})
+	//_, err = client.FPutObject(context.Background(), minioResp.BucketName, newName, filePath, minio.PutObjectOptions{ContentType: newType,
+	//	Progress: progressBar, RetainUntilDate:time.Now().Add(time.Duration(minioResp.StorageTime)*time.Hour*24), Mode: "", Rente})
+	_, err = client.PutObject(context.Background(), minioResp.BucketName, newName, file, fi.Size(), minio.PutObjectOptions{ContentType: newType,
+		Progress: progressBar})
 	if err != nil {
 		log.NewError("0", utils.GetSelfFuncName(), "FPutObject failed", err.Error(), newName, filePath, newType)
 		return "", "", utils.Wrap(err, "")
