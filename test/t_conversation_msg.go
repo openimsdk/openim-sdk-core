@@ -73,10 +73,21 @@ func DoTestGetHistoryMessage(userID string) {
 	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
 	var params sdk_params_callback.GetHistoryMessageListParams
 	params.UserID = userID
-	params.ConversationID = "super_group_311432389"
+	params.ConversationID = "super_group_3907826375"
 	//params.StartClientMsgID = "97f12899778823019f13ea46b0c1e6dd"
 	params.Count = 10
 	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
+}
+
+func DoTestGetAdvancedHistoryMessageList(userID string) {
+	var testGetHistoryCallBack GetHistoryCallBack
+	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
+	var params sdk_params_callback.GetAdvancedHistoryMessageListParams
+	params.UserID = userID
+	params.ConversationID = "super_group_3907826375"
+	//params.StartClientMsgID = "97f12899778823019f13ea46b0c1e6dd"
+	params.Count = 10
+	open_im_sdk.GetAdvancedHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
 }
 func DoTestGetHistoryMessageReverse(userID string) {
 	var testGetHistoryReverseCallBack GetHistoryReverseCallBack
