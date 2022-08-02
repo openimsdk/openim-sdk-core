@@ -159,7 +159,7 @@ func JsonUnmarshalAndArgsValidate(s string, args interface{}, callback open_im_s
 	if err != nil {
 		if callback != nil {
 			log.NewError(operationID, "Unmarshal failed ", err.Error(), s)
-			callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
+			callback.OnError(constant.ErrArgs.ErrCode, err.Error())
 			runtime.Goexit()
 		} else {
 			return utils.Wrap(err, "json Unmarshal failed")
@@ -182,7 +182,7 @@ func JsonUnmarshalCallback(s string, args interface{}, callback open_im_sdk_call
 	if err != nil {
 		if callback != nil {
 			log.NewError(operationID, "Unmarshal failed ", err.Error(), s)
-			callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
+			callback.OnError(constant.ErrArgs.ErrCode, err.Error())
 			runtime.Goexit()
 		} else {
 			return utils.Wrap(err, "json Unmarshal failed")

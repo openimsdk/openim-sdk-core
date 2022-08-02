@@ -206,16 +206,17 @@ const (
 )
 
 const (
-	AddConOrUpLatMsg          = 2
-	UnreadCountSetZero        = 3
-	IncrUnread                = 5
-	TotalUnreadMessageChanged = 6
-	UpdateFaceUrlAndNickName  = 7
-	UpdateLatestMessageChange = 8
-	ConChange                 = 9
-	NewCon                    = 10
-	ConChangeDirect           = 11
-	NewConDirect              = 12
+	AddConOrUpLatMsg             = 2
+	UnreadCountSetZero           = 3
+	IncrUnread                   = 5
+	TotalUnreadMessageChanged    = 6
+	UpdateFaceUrlAndNickName     = 7
+	UpdateLatestMessageChange    = 8
+	ConChange                    = 9
+	NewCon                       = 10
+	ConChangeDirect              = 11
+	NewConDirect                 = 12
+	ConversationLatestMsgHasRead = 13
 
 	HasRead = 1
 	NotRead = 0

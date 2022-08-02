@@ -695,6 +695,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 				}
 			}
 		}
+		log.Debug(operationID, "from server min seq is", minSeq)
 		seq, _ := c.db.SuperGroupGetNormalMinSeq(sourceID)
 		log.Debug(operationID, sourceID+":table min seq is ", seq)
 		if seq != 0 && seq != 1 && seq > minSeq {
