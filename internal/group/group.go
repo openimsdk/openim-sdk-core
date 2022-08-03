@@ -636,7 +636,7 @@ func (g *Group) getJoinedGroupListFromSvr(operationID string) ([]*api.GroupInfo,
 func (g *Group) GetJoinedDiffusionGroupIDListFromSvr(operationID string) ([]string, error) {
 	result, err := g.getJoinedGroupListFromSvr(operationID)
 	if err != nil {
-		return nil, utils.Wrap(err, "")
+		return nil, utils.Wrap(err, "working group get err")
 	}
 	var groupIDList []string
 	for _, v := range result {

@@ -107,7 +107,7 @@ func (s *SuperGroup) getGroupsInfoFromSvr(groupIDList []string, operationID stri
 func (s *SuperGroup) GetJoinedGroupIDListFromSvr(operationID string) ([]string, error) {
 	result, err := s.getJoinedGroupListFromSvr(operationID)
 	if err != nil {
-		return nil, utils.Wrap(err, "")
+		return nil, utils.Wrap(err, "SuperGroup get err")
 	}
 	var groupIDList []string
 	for _, v := range result {
