@@ -465,6 +465,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	operationID := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).OperationID
 	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).MsgList
+	syncFlag := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).SyncFlag
+	if syncFlag == constant.MsgSyncBegin {
+		c.ConversationListener.OnSyncServerStart()
+	}
 	if c.msgListener == nil {
 		log.Error(operationID, "not set c MsgListenerList")
 		return
@@ -836,6 +840,9 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 
 	if isTriggerUnReadCount {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
+	}
+	if syncFlag == constant.MsgSyncEnd {
+		c.ConversationListener.OnSyncServerFinish()
 	}
 	log.Info(operationID, "insert msg, total cost time: ", utils.GetCurrentTimestampByMill()-b, "len:  ", len(allMsg))
 }
