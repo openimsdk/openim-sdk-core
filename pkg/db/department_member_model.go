@@ -46,6 +46,12 @@ func (d *DataBase) InsertDepartmentMember(departmentMember *model_struct.LocalDe
 	return utils.Wrap(d.conn.Create(departmentMember).Error, "InsertDepartmentMember failed")
 }
 
+//func (d *DataBase) BatchInsertDepartmentMember(departmentMember *model_struct.LocalDepartmentMember) error {
+//	d.mRWMutex.Lock()
+//	defer d.mRWMutex.Unlock()
+//	return utils.Wrap(d.conn.Create(departmentMember).Error, "InsertDepartmentMember failed")
+//}
+
 func (d *DataBase) UpdateDepartmentMember(departmentMember *model_struct.LocalDepartmentMember) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
