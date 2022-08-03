@@ -339,7 +339,7 @@ const (
 	JoinByQRCode     = 4
 )
 const (
-	SplitPullMsgNum              = 1000
+	SplitPullMsgNum              = 100
 	PullMsgNumWhenLogin          = 10000
 	PullMsgNumForReadDiffusion   = 100
 	NormalMsgMinNumReadDiffusion = 100
