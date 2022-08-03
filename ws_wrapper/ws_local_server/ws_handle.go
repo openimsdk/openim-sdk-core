@@ -60,6 +60,10 @@ func int32ToString(i int32) string {
 	return strconv.FormatInt(int64(i), 10)
 }
 
+func int64ToString(i int64) string {
+	return strconv.FormatInt(i, 10)
+}
+
 //uid->funcname->func
 
 type WsFuncRouter struct {

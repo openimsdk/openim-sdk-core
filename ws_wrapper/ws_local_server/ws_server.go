@@ -115,7 +115,9 @@ func (ws *WServer) getMsgAndSend() {
 
 func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 	operationID := utils2.OperationIDGenerator()
-	log.Info(operationID, "wsHandler ", r.URL.Query())
+	var mem runtime.MemStats
+	runtime.ReadMemStats(&mem)
+
 	defer func() {
 		if r := recover(); r != nil {
 			log.Info(operationID, "wsHandler panic recover", " panic is ", r)
@@ -124,6 +126,12 @@ func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 			log.Info(operationID, "panic", "call", string(buf))
 		}
 	}()
+
+	if mem.Alloc > 2*1024*1024*1024 {
+		panic("Memory leak " + int64ToString(int64(mem.Alloc)))
+	}
+	log.Info(operationID, "wsHandler ", r.URL.Query(), "js sdk svr mem: ", mem.Alloc, mem.TotalAlloc)
+
 	if ws.headerCheck(w, r) {
 		query := r.URL.Query()
 		conn, err := ws.wsUpGrader.Upgrade(w, r, nil) //Conn is obtained through the upgraded escalator
@@ -131,8 +139,7 @@ func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 			log.Info(operationID, "upgrade http conn err", "", "err", err)
 			return
 		} else {
-			//Connection mapping relationship,
-			//userID+" "+platformID->conn
+
 			SendID := query["sendID"][0] + " " + utils.PlatformIDToName(int32(utils.StringToInt64(query["platformID"][0])))
 			newConn := &UserConn{conn, new(sync.Mutex)}
 			ws.addUserConn(SendID, newConn, operationID)
