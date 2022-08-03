@@ -115,9 +115,6 @@ func (ws *WServer) getMsgAndSend() {
 
 func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 	operationID := utils2.OperationIDGenerator()
-	var mem runtime.MemStats
-	runtime.ReadMemStats(&mem)
-
 	defer func() {
 		if r := recover(); r != nil {
 			log.Info(operationID, "wsHandler panic recover", " panic is ", r)
@@ -126,7 +123,8 @@ func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 			log.Info(operationID, "panic", "call", string(buf))
 		}
 	}()
-
+	var mem runtime.MemStats
+	runtime.ReadMemStats(&mem)
 	if mem.Alloc > 2*1024*1024*1024 {
 		panic("Memory leak " + int64ToString(int64(mem.Alloc)))
 	}
