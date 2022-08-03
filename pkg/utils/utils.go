@@ -224,7 +224,17 @@ func IsContainInt(target int, List []int) bool {
 	return false
 
 }
+func IsContainUInt32(target uint32, List []uint32) bool {
 
+	for _, element := range List {
+
+		if target == element {
+			return true
+		}
+	}
+	return false
+
+}
 func GetSwitchFromOptions(Options map[string]bool, key string) (result bool) {
 	if flag, ok := Options[key]; !ok || flag {
 		return true
