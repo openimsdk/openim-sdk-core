@@ -142,7 +142,25 @@ func (d *DataBase) GetGroupMemberUIDListByGroupID(groupID string) (result []stri
 func (d *DataBase) InsertGroupMember(groupMember *model_struct.LocalGroupMember) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return d.conn.Create(groupMember).Error
+	return utils.Wrap(d.conn.Create(groupMember).Error, "")
+}
+
+//func (d *DataBase) BatchInsertMessageList(MessageList []*model_struct.LocalChatLog) error {
+//	if MessageList == nil {
+//		return nil
+//	}
+//	d.mRWMutex.Lock()
+//	defer d.mRWMutex.Unlock()
+//	return utils.Wrap(d.conn.Create(MessageList).Error, "BatchInsertMessageList failed")
+//}
+
+func (d *DataBase) BatchInsertGroupMember(groupMemberList []*model_struct.LocalGroupMember) error {
+	if groupMemberList == nil {
+		return errors.New("nil")
+	}
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.Create(groupMemberList).Error, "BatchInsertMessageList failed")
 }
 
 func (d *DataBase) DeleteGroupMember(groupID, userID string) error {

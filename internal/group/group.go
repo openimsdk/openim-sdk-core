@@ -901,7 +901,12 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 	//log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
 	aInBNot, bInANot, sameA, _ := common.CheckGroupMemberDiff(onServer, onLocal)
 	log.Info(operationID, "getGroupAllMemberByGroupIDFromSvr  diff ", aInBNot, bInANot, sameA)
+	var insertGroupMemberList []*model_struct.LocalGroupMember
 	for _, index := range aInBNot {
+		if onGroupMemberNotification == false {
+			insertGroupMemberList = append(insertGroupMemberList, onServer[index])
+			continue
+		}
 		err := g.db.InsertGroupMember(onServer[index])
 		if err != nil {
 			log.NewError(operationID, "InsertGroupMember failed ", err.Error(), *onServer[index])
@@ -913,6 +918,38 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 			log.Debug(operationID, "OnGroupMemberAdded", utils.StructToJsonString(callbackData))
 		}
 	}
+	if len(insertGroupMemberList) > 0 {
+		split := 1000
+		idx := 0
+		remain := len(insertGroupMemberList) % split
+		log.Warn(operationID, "BatchInsertGroupMember all: ", len(insertGroupMemberList))
+		for idx = 0; idx < len(insertGroupMemberList)/split; idx++ {
+			sub := insertGroupMemberList[idx*split : (idx+1)*split]
+			err = g.db.BatchInsertGroupMember(sub)
+			log.Warn(operationID, "BatchInsertGroupMember len: ", len(sub))
+			if err != nil {
+				log.Error(operationID, "BatchInsertGroupMember failed ", err.Error(), len(sub))
+				for again := 0; again < len(sub); again++ {
+					if err = g.db.InsertGroupMember(sub[again]); err != nil {
+						log.Error(operationID, "InsertGroupMember failed ", err.Error(), sub[again])
+					}
+				}
+			}
+		}
+		if remain > 0 {
+			sub := insertGroupMemberList[idx*split:]
+			log.Warn(operationID, "BatchInsertGroupMember len: ", len(sub))
+			if err != nil {
+				log.Error(operationID, "BatchInsertGroupMember failed ", err.Error(), len(sub))
+				for again := 0; again < len(sub); again++ {
+					if err = g.db.InsertGroupMember(sub[again]); err != nil {
+						log.Error(operationID, "InsertGroupMember failed ", err.Error(), sub[again])
+					}
+				}
+			}
+		}
+	}
+
 	for _, index := range sameA {
 		err := g.db.UpdateGroupMember(onServer[index])
 		if err != nil {
