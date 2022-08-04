@@ -159,7 +159,7 @@ func (w *Ws) WaitTest(ch chan GeneralWsResp, timeout int, operationID string, co
 	}
 }
 func (w *Ws) reConnSleep(operationID string, sleep int32) (error, bool) {
-	_, err, isNeedReConn := w.WsConn.ReConn()
+	_, err, isNeedReConn := w.WsConn.ReConn(operationID)
 	if err != nil {
 		log.Error(operationID, "ReConn failed ", err.Error(), "is need re connect ", isNeedReConn)
 		time.Sleep(time.Duration(sleep) * time.Second)

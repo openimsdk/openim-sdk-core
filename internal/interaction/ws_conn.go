@@ -30,7 +30,7 @@ type WsConn struct {
 func NewWsConn(listener open_im_sdk_callback.OnConnListener, token string, loginUserID string) *WsConn {
 	p := WsConn{listener: listener, token: token, loginUserID: loginUserID}
 	go func() {
-		p.conn, _, _ = p.ReConn()
+		p.conn, _, _ = p.ReConn("first conn")
 	}()
 	return &p
 }
@@ -145,7 +145,7 @@ func (u *WsConn) IsFatalError(err error) bool {
 	return true
 }
 
-func (u *WsConn) ReConn() (*websocket.Conn, error, bool) {
+func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool) {
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
 	if u.conn != nil {
@@ -155,7 +155,6 @@ func (u *WsConn) ReConn() (*websocket.Conn, error, bool) {
 	if u.loginState == constant.TokenFailedKickedOffline {
 		return nil, utils.Wrap(errors.New("don't re conn"), "TokenFailedKickedOffline"), false
 	}
-	operationID := utils.OperationIDGenerator()
 	u.listener.OnConnecting()
 
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s", sdk_struct.SvrConf.WsAddr, u.loginUserID, u.token, sdk_struct.SvrConf.Platform, operationID)
