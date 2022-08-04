@@ -40,6 +40,7 @@ func (u *WsConn) CloseConn() error {
 	defer u.Unlock()
 	if u.conn != nil {
 		err := u.conn.Close()
+		log.NewWarn("close conn, ", u.conn)
 		u.conn = nil
 		return utils.Wrap(err, "")
 	}
@@ -149,6 +150,7 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool) {
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
 	if u.conn != nil {
+		log.NewWarn("close conn, ", u.conn)
 		u.conn.Close()
 		u.conn = nil
 	}
