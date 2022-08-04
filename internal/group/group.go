@@ -206,7 +206,7 @@ func (g *Group) memberKickedNotification(msg *api.MsgData, operationID string) {
 }
 
 func (g *Group) memberInvitedNotification(msg *api.MsgData, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
+	log.NewWarn(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	detail := api.MemberInvitedTips{Group: &api.GroupInfo{}, OpUser: &api.GroupMemberFullInfo{}}
 	if err := comm.UnmarshalTips(msg, &detail); err != nil {
 		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
@@ -891,7 +891,7 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 		log.NewError(operationID, "getGroupAllMemberByGroupIDFromSvr failed ", err.Error(), groupID)
 		return
 	}
-	log.NewInfo(operationID, "getGroupAllMemberByGroupIDFromSvr ", svrList)
+	log.Warn(operationID, "getGroupAllMemberByGroupIDFromSvr ", len(svrList))
 	onServer := common.TransferToLocalGroupMember(svrList)
 	onLocal, err := g.db.GetGroupMemberListByGroupID(groupID)
 	if err != nil {
@@ -938,7 +938,8 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 		}
 		if remain > 0 {
 			sub := insertGroupMemberList[idx*split:]
-			log.Warn(operationID, "BatchInsertGroupMember len: ", len(sub))
+			log.Warn(operationID, "BatchInsertGroupMember len: ", len(sub), groupID)
+			err = g.db.BatchInsertGroupMember(sub)
 			if err != nil {
 				log.Error(operationID, "BatchInsertGroupMember failed ", err.Error(), len(sub))
 				for again := 0; again < len(sub); again++ {

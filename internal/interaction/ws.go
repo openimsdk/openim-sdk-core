@@ -93,7 +93,7 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 		connSend, err = w.writeBinaryMsg(wsReq)
 		if err != nil {
 			if !w.IsWriteTimeout(err) {
-				log.Error(operationID, "Not send timeout, failed, close conn, writeBinaryMsg again ", err.Error())
+				log.Error(operationID, "Not send timeout, failed, close conn, writeBinaryMsg again ", err.Error(), w.conn, reqIdentifier)
 				w.CloseConn()
 				time.Sleep(time.Duration(1) * time.Second)
 				continue
@@ -182,7 +182,7 @@ func (w *Ws) ReadData() {
 					return
 				}
 				log.Warn(operationID, "other cmd ...", r.Cmd)
-			case <-time.After(time.Microsecond * time.Duration(100)):
+			case <-time.After(time.Millisecond * time.Duration(100)):
 				log.Warn(operationID, "timeout(ms)... ", 100)
 			}
 		}
@@ -285,7 +285,7 @@ func (w *Ws) doWsMsg(message []byte) {
 func (w *Ws) Logout(operationID string) {
 	w.SetLoginState(constant.Logout)
 	w.CloseConn()
-	log.Warn(operationID, "TriggerCmdLogout ws...")
+	log.Warn(operationID, "TriggerCmdLogout ws...", w.conn)
 	err := common.TriggerCmdLogout(w.cmdCh)
 	if err != nil {
 		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
