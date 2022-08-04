@@ -679,6 +679,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 	common.CheckDBErrCallback(callback, err, operationID)
 	if len(list) < req.Count && sessionType == constant.SuperGroupChatType {
 		var minSeq uint32
+		var maxSeq uint32
 		resp, err := c.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 30, 3, c.loginUserID, operationID)
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, 30, c.loginUserID)
@@ -692,6 +693,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 			} else {
 				if value, ok := wsSeqResp.GroupMaxAndMinSeq[sourceID]; ok {
 					minSeq = value.MinSeq
+					maxSeq = value.MaxSeq
 				}
 			}
 		}
@@ -716,7 +718,15 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 				c.pullMessageAndReGetHistoryMessages(sourceID, seqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
 			}
 		} else {
-			messageListCallback.IsEnd = true
+			//local don't have messages,本地无消息，但是服务器最大消息不为0
+			if seq == 0 && maxSeq > 0 {
+				messageListCallback.IsEnd = false
+			} else {
+				if seq <= minSeq {
+					messageListCallback.IsEnd = true
+				}
+			}
+
 		}
 	} else if len(list) == req.Count && sessionType == constant.SuperGroupChatType {
 		maxSeq, minSeq, haveSeqList := func(messages []*model_struct.LocalChatLog) (max, min uint32, seqList []uint32) {
