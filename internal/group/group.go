@@ -886,9 +886,9 @@ func (g *Group) SyncJoinedGroupList(operationID string) {
 
 func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onGroupMemberNotification bool) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", groupID)
-	svrList, err := g.getGroupAllMemberByGroupIDFromSvr(groupID, operationID)
+	svrList, err := g.getGroupAllMemberSplitByGroupIDFromSvr(groupID, operationID)
 	if err != nil {
-		log.NewError(operationID, "getGroupAllMemberByGroupIDFromSvr failed ", err.Error(), groupID)
+		log.NewError(operationID, "getGroupAllMemberSplitByGroupIDFromSvr failed ", err.Error(), groupID)
 		return
 	}
 	log.Warn(operationID, "getGroupAllMemberByGroupIDFromSvr ", len(svrList))
@@ -1034,6 +1034,31 @@ func (g *Group) getGroupAllMemberByGroupIDFromSvr(groupID string, operationID st
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 	return realData, nil
+}
+
+func (g *Group) getGroupAllMemberSplitByGroupIDFromSvr(groupID string, operationID string) ([]*api.GroupMemberFullInfo, error) {
+	var apiReq api.GetGroupAllMemberReq
+	apiReq.OperationID = operationID
+	apiReq.GroupID = groupID
+	var result []*api.GroupMemberFullInfo
+	var page int32
+	for {
+		apiReq.Offset = page * constant.SplitGetGroupMemberNum
+		apiReq.Count = constant.SplitGetGroupMemberNum
+		var realData []*api.GroupMemberFullInfo
+		err := g.p.PostReturn(constant.GetGroupAllMemberListRouter, apiReq, &realData)
+		if err != nil {
+			log.Error(operationID, "GetGroupAllMemberListRouter failed ", constant.GetGroupAllMemberListRouter, apiReq)
+			return result, utils.Wrap(err, apiReq.OperationID)
+		}
+		log.Info(operationID, "GetGroupAllMemberListRouter result len: ", len(realData), groupID)
+		result = append(result, realData...)
+		if apiReq.Count > int32(len(realData)) {
+			break
+		}
+		page++
+	}
+	return result, nil
 }
 
 func (g *Group) setGroupMemberNickname(callback open_im_sdk_callback.Base, groupID, userID string, GroupMemberNickname string, operationID string) {

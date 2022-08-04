@@ -344,3 +344,5 @@ const (
 	PullMsgNumForReadDiffusion   = 100
 	NormalMsgMinNumReadDiffusion = 100
 )
+
+const SplitGetGroupMemberNum = 1000

@@ -56,7 +56,7 @@ const (
 	CancelMuteGroupRouter             = RouterGroup + "/cancel_mute_group"
 	SetGroupMemberNicknameRouter      = RouterGroup + "/set_group_member_nickname"
 	SetGroupMemberInfoRouter          = RouterGroup + "/set_group_member_info"
-
+	//GetGroupAllMemberListBySplitRouter = RouterGroup + "/get_group_all_member_list_by_split"
 	SetReceiveMessageOptRouter         = "/conversation/set_receive_message_opt"
 	GetReceiveMessageOptRouter         = "/conversation/get_receive_message_opt"
 	GetAllConversationMessageOptRouter = "/conversation/get_all_conversation_message_opt"
