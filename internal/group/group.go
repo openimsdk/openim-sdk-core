@@ -372,7 +372,7 @@ func (g *Group) quitGroup(groupID string, callback open_im_sdk_callback.Base, op
 	apiReq.OperationID = operationID
 	apiReq.GroupID = groupID
 	g.p.PostFatalCallback(callback, constant.QuitGroupRouter, apiReq, nil, apiReq.OperationID)
-	//	g.syncGroupMemberByGroupID(groupID, operationID, false) //todo
+	g.db.DeleteGroupAllMembers(groupID)
 	g.SyncJoinedGroupList(operationID)
 }
 
@@ -938,7 +938,7 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 	}
 	//log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
 	aInBNot, bInANot, sameA, _ := common.CheckGroupMemberDiff(onServer, onLocal)
-	log.Info(operationID, "getGroupAllMemberByGroupIDFromSvr  diff ", aInBNot, bInANot, sameA)
+	log.Debug(operationID, "getGroupAllMemberByGroupIDFromSvr  diff ", aInBNot, bInANot, sameA)
 	var insertGroupMemberList []*model_struct.LocalGroupMember
 	for _, index := range aInBNot {
 		if onGroupMemberNotification == false {
