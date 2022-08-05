@@ -339,7 +339,6 @@ func (c *Conversation) SyncConversations(operationID string) {
 	if len(conversationChangedList) > 0 {
 		if err = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedList}, c.GetCh()); err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
-			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.TotalUnreadMessageChanged, Args: ""}, c.GetCh())
 		}
 	}
 	// local有 server没有 代表没有修改公共字段
