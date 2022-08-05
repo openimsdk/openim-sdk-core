@@ -171,6 +171,12 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			c.DoNotification(v)
 		case v.ContentType == constant.SuperGroupUpdateNotification:
 			c.full.SuperGroup.DoNotification(v, c.GetCh())
+		case v.ContentType == constant.ConversationUnreadNotification:
+			var unreadArgs server_api_params.ConversationUpdateTips
+			_ = proto.Unmarshal(tips.Detail, &unreadArgs)
+			for _, v := range unreadArgs.ConversationIDList {
+				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: v, Action: constant.UnreadCountSetZero}})
+			}
 		}
 		switch v.SessionType {
 		case constant.SingleChatType:
@@ -540,6 +546,13 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 			c.DoNotification(v)
 		case v.ContentType == constant.SuperGroupUpdateNotification:
 			c.full.SuperGroup.DoNotification(v, c.GetCh())
+		case v.ContentType == constant.ConversationUnreadNotification:
+			var unreadArgs server_api_params.ConversationUpdateTips
+			_ = proto.Unmarshal(tips.Detail, &unreadArgs)
+			for _, v := range unreadArgs.ConversationIDList {
+				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: v, Action: constant.UnreadCountSetZero}})
+			}
+
 		}
 		switch v.SessionType {
 		case constant.SingleChatType:

@@ -250,6 +250,7 @@ func (c *Conversation) getServerConversationList(operationID string) (server_api
 	return resp, nil
 }
 func (c *Conversation) SyncConversations(operationID string) {
+	//log.Error(operationID,"SyncConversations start")
 	var newConversationList []*model_struct.LocalConversation
 	ccTime := time.Now()
 	log.NewInfo(operationID, utils.GetSelfFuncName())
@@ -309,7 +310,7 @@ func (c *Conversation) SyncConversations(operationID string) {
 		newConversation.IsNotInGroup = conversation.IsNotInGroup
 		newConversation.Ex = conversation.Ex
 		newConversation.AttachedInfo = conversation.AttachedInfo
-		newConversation.UnreadCount = conversation.UnreadCount
+		//newConversation.UnreadCount = conversation.UnreadCount
 		newConversationList = append(newConversationList, &newConversation)
 		//err := c.db.InsertConversation(&newConversation)
 		//if err != nil {
@@ -674,7 +675,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 	} else {
 		list, err = c.db.GetMessageListController(sourceID, sessionType, req.Count, startTime, isReverse)
 	}
-	log.Debug(operationID, "db cost time", time.Since(t))
+	log.Error(operationID, "db cost time", time.Since(t), len(list), err, sourceID)
 	t = time.Now()
 	common.CheckDBErrCallback(callback, err, operationID)
 	if len(list) < req.Count && sessionType == constant.SuperGroupChatType {
@@ -697,9 +698,12 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 				}
 			}
 		}
-		log.Debug(operationID, "from server min seq is", minSeq)
-		seq, _ := c.db.SuperGroupGetNormalMinSeq(sourceID)
-		log.Debug(operationID, sourceID+":table min seq is ", seq)
+		log.Error(operationID, "from server min seq is", minSeq, maxSeq)
+		seq, err := c.db.SuperGroupGetNormalMinSeq(sourceID)
+		if err != nil {
+			log.Error(operationID, "SuperGroupGetNormalMinSeq err:", err.Error())
+		}
+		log.Error(operationID, sourceID+":table min seq is ", seq)
 		if seq != 0 && seq != 1 && seq > minSeq {
 			seqList := func(seq uint32) (seqList []uint32) {
 				startSeq := int64(seq) - constant.PullMsgNumForReadDiffusion
@@ -938,13 +942,6 @@ func (c *Conversation) pullMessageIntoTable(pullMsgData []*server_api_params.Msg
 		if msg.ClientMsgID == "" {
 			exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
 			continue
-		}
-		switch {
-		case v.ContentType == constant.ConversationChangeNotification || v.ContentType == constant.ConversationPrivateChatNotification:
-			log.Info(operationID, utils.GetSelfFuncName(), v)
-			c.DoNotification(v)
-		case v.ContentType == constant.SuperGroupUpdateNotification:
-			c.full.SuperGroup.DoNotification(v, c.GetCh())
 		}
 		if v.SendID == c.loginUserID { //seq
 			// Messages sent by myself  //if  sent through  this terminal
@@ -1660,6 +1657,9 @@ func (c *Conversation) setConversationNotification(msg *server_api_params.MsgDat
 }
 
 func (c *Conversation) DoNotification(msg *server_api_params.MsgData) {
+	//if msg.SendTime < c.full.loginTime {
+	//	log.Warn("", "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
+	//}
 	operationID := utils.OperationIDGenerator()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg)
 	if c.msgListener == nil {
