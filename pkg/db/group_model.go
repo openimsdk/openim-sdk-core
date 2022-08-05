@@ -3,6 +3,7 @@ package db
 import (
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 )
@@ -68,4 +69,18 @@ func (d *DataBase) GetAllGroupInfoByGroupIDOrGroupName(keyword string, isSearchG
 		transfer = append(transfer, &v1)
 	}
 	return transfer, utils.Wrap(err, "GetAllGroupInfoByGroupIDOrGroupName failed ")
+}
+
+func (d *DataBase) AddMemberCount(groupID string) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	group := model_struct.LocalGroup{GroupID: groupID}
+	return utils.Wrap(d.conn.Model(&group).Updates(map[string]interface{}{"member_count": gorm.Expr("member_count+1")}).Error, "")
+}
+
+func (d *DataBase) SubtractMemberCount(groupID string) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	group := model_struct.LocalGroup{GroupID: groupID}
+	return utils.Wrap(d.conn.Model(&group).Updates(map[string]interface{}{"member_count": gorm.Expr("member_count-1")}).Error, "")
 }

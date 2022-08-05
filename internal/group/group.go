@@ -61,7 +61,7 @@ func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2
 		case constant.JoinGroupApplicationNotification:
 			g.joinGroupApplicationNotification(msg, operationID)
 		case constant.MemberQuitNotification:
-			g.memberQuitNotification(msg, operationID)
+			g.memberQuitNotification(msg, operationID) //1
 		case constant.GroupApplicationAcceptedNotification:
 			g.groupApplicationAcceptedNotification(msg, operationID)
 		case constant.GroupApplicationRejectedNotification:
@@ -69,11 +69,11 @@ func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2
 		case constant.GroupOwnerTransferredNotification:
 			g.groupOwnerTransferredNotification(msg, operationID)
 		case constant.MemberKickedNotification:
-			g.memberKickedNotification(msg, operationID)
+			g.memberKickedNotification(msg, operationID) //1
 		case constant.MemberInvitedNotification:
-			g.memberInvitedNotification(msg, operationID)
+			g.memberInvitedNotification(msg, operationID) //1
 		case constant.MemberEnterNotification:
-			g.memberEnterNotification(msg, operationID)
+			g.memberEnterNotification(msg, operationID) //1
 		case constant.GroupDismissedNotification:
 			g.groupDismissNotification(msg, operationID)
 		case constant.GroupMemberMutedNotification:
@@ -138,8 +138,36 @@ func (g *Group) memberQuitNotification(msg *api.MsgData, operationID string) {
 		g.SyncJoinedGroupList(operationID)
 		g.db.DeleteGroupAllMembers(detail.Group.GroupID)
 	} else {
+		log.Info(operationID, "deleteMemberImmediately ", detail.Group.GroupID, detail.QuitUser.UserID)
+		g.deleteMemberImmediately(detail.Group.GroupID, detail.QuitUser.UserID, operationID)
 		g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
 		g.updateMemberCount(detail.Group.GroupID, operationID)
+	}
+}
+
+func (g *Group) deleteMemberImmediately(groupID string, userID string, operationID string) {
+	err := g.db.DeleteGroupMember(groupID, userID)
+	if err != nil {
+		log.Error(operationID, "DeleteGroupMember failed ", err.Error(), groupID, userID)
+		return
+	}
+	err = g.db.SubtractMemberCount(groupID)
+	if err != nil {
+		log.Error(operationID, "SubtractMemberCount failed ", err.Error(), groupID)
+	}
+}
+
+func (g *Group) addMemberImmediately(member *api.GroupMemberFullInfo, operationID string) {
+	localMember := model_struct.LocalGroupMember{}
+	common.GroupMemberCopyToLocal(&localMember, member)
+	err := g.db.InsertGroupMember(&localMember)
+	if err != nil {
+		log.Error(operationID, "InsertGroupMember failed ", err.Error(), *member)
+		return
+	}
+	err = g.db.AddMemberCount(member.GroupID)
+	if err != nil {
+		log.Error(operationID, "AddMemberCount failed ", err.Error(), member.GroupID)
 	}
 }
 
@@ -201,6 +229,10 @@ func (g *Group) memberKickedNotification(msg *api.MsgData, operationID string) {
 			return
 		}
 	}
+	for _, v := range detail.KickedUserList {
+		log.Info(operationID, "deleteMemberImmediately ", detail.Group.GroupID, v.UserID, operationID)
+		g.deleteMemberImmediately(detail.Group.GroupID, v.UserID, operationID)
+	}
 	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
 	g.updateMemberCount(detail.Group.GroupID, operationID)
 }
@@ -220,6 +252,10 @@ func (g *Group) memberInvitedNotification(msg *api.MsgData, operationID string) 
 			return
 		}
 	}
+	for _, v := range detail.InvitedUserList {
+		log.Info(operationID, "addMemberImmediately ", *v)
+		g.addMemberImmediately(v, operationID)
+	}
 	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
 	g.updateMemberCount(detail.Group.GroupID, operationID)
 }
@@ -235,6 +271,8 @@ func (g *Group) memberEnterNotification(msg *api.MsgData, operationID string) {
 		g.SyncJoinedGroupList(operationID)
 		g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, false)
 	} else {
+		log.Info(operationID, "addMemberImmediately ", *detail.EntrantUser)
+		g.addMemberImmediately(detail.EntrantUser, operationID)
 		g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
 		g.updateMemberCount(detail.Group.GroupID, operationID)
 	}
@@ -334,7 +372,7 @@ func (g *Group) quitGroup(groupID string, callback open_im_sdk_callback.Base, op
 	apiReq.OperationID = operationID
 	apiReq.GroupID = groupID
 	g.p.PostFatalCallback(callback, constant.QuitGroupRouter, apiReq, nil, apiReq.OperationID)
-	//	g.syncGroupMemberByGroupID(groupID, operationID, false) //todo
+	g.db.DeleteGroupAllMembers(groupID)
 	g.SyncJoinedGroupList(operationID)
 }
 
@@ -900,7 +938,7 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 	}
 	//log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
 	aInBNot, bInANot, sameA, _ := common.CheckGroupMemberDiff(onServer, onLocal)
-	log.Info(operationID, "getGroupAllMemberByGroupIDFromSvr  diff ", aInBNot, bInANot, sameA)
+	log.Debug(operationID, "getGroupAllMemberByGroupIDFromSvr  diff ", aInBNot, bInANot, sameA)
 	var insertGroupMemberList []*model_struct.LocalGroupMember
 	for _, index := range aInBNot {
 		if onGroupMemberNotification == false {
