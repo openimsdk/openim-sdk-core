@@ -177,6 +177,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			for _, v := range unreadArgs.ConversationIDList {
 				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: v, Action: constant.UnreadCountSetZero}})
 			}
+			continue
 		}
 		switch v.SessionType {
 		case constant.SingleChatType:
@@ -552,7 +553,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 			for _, v := range unreadArgs.ConversationIDList {
 				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: v, Action: constant.UnreadCountSetZero}})
 			}
-
+			continue
 		}
 		switch v.SessionType {
 		case constant.SingleChatType:
