@@ -1111,7 +1111,7 @@ func (c *Conversation) GetAdvancedHistoryMessageList(callback open_im_sdk_callba
 	}
 	go func() {
 		t := time.Now()
-		log.NewInfo(operationID, "GetHistoryMessageList args: ", getMessageOptions)
+		log.NewInfo(operationID, "GetAdvancedHistoryMessageList args: ", getMessageOptions)
 		var unmarshalParams sdk_params_callback.GetAdvancedHistoryMessageListParams
 		common.JsonUnmarshalCallback(getMessageOptions, &unmarshalParams, callback, operationID)
 		result := c.getAdvancedHistoryMessageList(callback, unmarshalParams, operationID, false)
@@ -1120,7 +1120,7 @@ func (c *Conversation) GetAdvancedHistoryMessageList(callback open_im_sdk_callba
 			result.MessageList = s
 		}
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		log.NewInfo(operationID, "cost time", time.Since(t), "GetHistoryMessageList callback: ", utils.StructToJsonStringDefault(result))
+		log.Error(operationID, "length:", len(result.MessageList), "cost time", time.Since(t), "GetAdvancedHistoryMessageList callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
 
