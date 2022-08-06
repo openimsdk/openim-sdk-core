@@ -75,8 +75,8 @@ func (u *Heartbeat) Run() {
 			case r := <-u.cmdCh:
 				if r.Cmd == constant.CmdLogout {
 					log.Warn(operationID, "recv logout cmd, close conn,  set logout state, Goexit...")
-					u.SetLoginState(constant.Logout)
-					u.CloseConn()
+					u.SetLoginStatus(constant.Logout)
+					u.CloseConn(operationID)
 					log.Warn(operationID, "close heartbeat channel ", u.cmdCh)
 					runtime.Goexit()
 				}
@@ -89,7 +89,7 @@ func (u *Heartbeat) Run() {
 				log.Debug(operationID, "heartbeat waiting(ms)... ", u.heartbeatInterval*1000)
 			}
 		}
-		if u.LoginState() == constant.Logout {
+		if u.LoginStatus() == constant.Logout {
 			log.Warn(operationID, " logout state Goexit", u.cmdCh)
 			runtime.Goexit()
 		}
@@ -98,8 +98,8 @@ func (u *Heartbeat) Run() {
 		if u.IsTokenExp(operationID) {
 			log.Warn(operationID, "TokenExp, close heartbeat channel, call OnUserTokenExpired, set logout", u.cmdCh)
 			u.listener.OnUserTokenExpired()
-			u.SetLoginState(constant.Logout)
-			u.CloseConn()
+			u.SetLoginStatus(constant.Logout)
+			u.CloseConn(operationID)
 			runtime.Goexit()
 		}
 		var groupIDList []string
@@ -120,7 +120,7 @@ func (u *Heartbeat) Run() {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.LoginUserID)
 			if !errors.Is(err, constant.WsRecvConnSame) && !errors.Is(err, constant.WsRecvConnDiff) {
 				log.Error(operationID, "other err,  close conn", err.Error())
-				u.CloseConn()
+				u.CloseConn(operationID)
 			}
 			continue
 		}
@@ -129,7 +129,7 @@ func (u *Heartbeat) Run() {
 		err = proto.Unmarshal(resp.Data, &wsSeqResp)
 		if err != nil {
 			log.Error(operationID, "Unmarshal failed, close conn", err.Error())
-			u.CloseConn()
+			u.CloseConn(operationID)
 			continue
 		}
 

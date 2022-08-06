@@ -94,7 +94,7 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 		if err != nil {
 			if !w.IsWriteTimeout(err) {
 				log.Error(operationID, "Not send timeout, failed, close conn, writeBinaryMsg again ", err.Error(), w.conn, reqIdentifier)
-				w.CloseConn()
+				w.CloseConn(operationID)
 				time.Sleep(time.Duration(1) * time.Second)
 				continue
 			} else {
@@ -107,7 +107,7 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 	if flag == 1 {
 		log.Debug(operationID, "send ok wait resp")
 		r1, r2 := w.WaitResp(ch, timeout, wsReq.OperationID, connSend)
-		return r1, r2
+		return r1, utils.Wrap(r2, "")
 	} else {
 		log.Error(operationID, "send failed")
 		err := errors.New("send failed")
@@ -178,7 +178,7 @@ func (w *Ws) ReadData() {
 					log.Info(operationID, "recv CmdLogout, return, close conn")
 					log.Warn(operationID, "close ws read channel ", w.cmdCh)
 					//		close(w.cmdCh)
-					w.SetLoginState(constant.Logout)
+					w.SetLoginStatus(constant.Logout)
 					return
 				}
 				log.Warn(operationID, "other cmd ...", r.Cmd)
@@ -188,7 +188,8 @@ func (w *Ws) ReadData() {
 		}
 		isErrorOccurred = false
 		if w.WsConn.conn == nil {
-			log.Warn(operationID, "conn == nil, ReConn")
+			isErrorOccurred = true
+			log.Warn(operationID, "conn == nil, ReConn ")
 			err, isNeedReConnect := w.reConnSleep(operationID, 1)
 			if err != nil && isNeedReConnect == false {
 				log.Warn(operationID, "token failed, don't connect again")
@@ -202,7 +203,7 @@ func (w *Ws) ReadData() {
 		msgType, message, err := w.WsConn.conn.ReadMessage()
 		if err != nil {
 			isErrorOccurred = true
-			if w.loginState == constant.Logout {
+			if w.loginStatus == constant.Logout {
 				log.Warn(operationID, "loginState == logout ")
 				log.Warn(operationID, "close ws read channel ", w.cmdCh)
 				//	close(w.cmdCh)
@@ -283,8 +284,8 @@ func (w *Ws) doWsMsg(message []byte) {
 }
 
 func (w *Ws) Logout(operationID string) {
-	w.SetLoginState(constant.Logout)
-	w.CloseConn()
+	w.SetLoginStatus(constant.Logout)
+	w.CloseConn(operationID)
 	log.Warn(operationID, "TriggerCmdLogout ws...", w.conn)
 	err := common.TriggerCmdLogout(w.cmdCh)
 	if err != nil {

@@ -316,7 +316,7 @@ func (u *LoginMgr) GetLoginUser() string {
 }
 
 func (u *LoginMgr) GetLoginStatus() int32 {
-	return u.ws.LoginState()
+	return u.ws.LoginStatus()
 }
 
 func (u *LoginMgr) forcedSynchronization() {
