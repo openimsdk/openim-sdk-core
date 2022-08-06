@@ -279,30 +279,8 @@ func (c *Conversation) SyncConversations(operationID string) {
 		var newConversation model_struct.LocalConversation
 		newConversation.ConversationID = conversation.ConversationID
 		newConversation.ConversationType = conversation.ConversationType
-		switch conversation.ConversationType {
-		case constant.SingleChatType, constant.NotificationChatType:
-			newConversation.UserID = conversation.UserID
-			faceUrl, name, err, isFromSvr := c.friend.GetUserNameAndFaceUrlByUid(conversation.UserID, operationID)
-			if err != nil {
-				log.NewError(operationID, utils.GetSelfFuncName(), "GetUserNameAndFaceUrlByUid error", err.Error())
-				continue
-			}
-			if isFromSvr {
-				c.cache.Update(conversation.UserID, faceUrl, name)
-			}
-
-			newConversation.ShowName = name
-			newConversation.FaceURL = faceUrl
-		case constant.GroupChatType:
-			newConversation.GroupID = conversation.GroupID
-			g, err := c.group.GetGroupInfoFromLocal2Svr(conversation.GroupID)
-			if err != nil {
-				log.NewError(operationID, utils.GetSelfFuncName(), "GetGroupInfoFromLocal2Svr error", err.Error())
-				continue
-			}
-			newConversation.ShowName = g.GroupName
-			newConversation.FaceURL = g.FaceURL
-		}
+		newConversation.UserID = conversation.UserID
+		newConversation.GroupID = conversation.GroupID
 		newConversation.RecvMsgOpt = conversation.RecvMsgOpt
 		newConversation.IsPinned = conversation.IsPinned
 		newConversation.IsPrivateChat = conversation.IsPrivateChat
@@ -312,6 +290,7 @@ func (c *Conversation) SyncConversations(operationID string) {
 		newConversation.AttachedInfo = conversation.AttachedInfo
 		//newConversation.UnreadCount = conversation.UnreadCount
 		newConversationList = append(newConversationList, &newConversation)
+		c.addFaceURLAndName(&newConversation)
 		//err := c.db.InsertConversation(&newConversation)
 		//if err != nil {
 		//	log.NewError(operationID, utils.GetSelfFuncName(), "InsertConversation error", err.Error(), conversation)
@@ -703,31 +682,33 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 			log.Error(operationID, "SuperGroupGetNormalMinSeq err:", err.Error())
 		}
 		log.Error(operationID, sourceID+":table min seq is ", seq)
-		if seq != 0 && seq != 1 && seq > minSeq {
-			seqList := func(seq uint32) (seqList []uint32) {
-				startSeq := int64(seq) - constant.PullMsgNumForReadDiffusion
-				if startSeq <= 0 {
-					startSeq = 1
+		if seq != 0 {
+			if seq <= minSeq {
+				messageListCallback.IsEnd = true
+			} else {
+				seqList := func(seq uint32) (seqList []uint32) {
+					startSeq := int64(seq) - constant.PullMsgNumForReadDiffusion
+					if startSeq <= 0 {
+						startSeq = 1
+					}
+					log.Debug(operationID, "pull start is ", startSeq)
+					for i := startSeq; i < int64(seq); i++ {
+						seqList = append(seqList, uint32(i))
+					}
+					log.Debug(operationID, "pull seqList is ", seqList)
+					return seqList
+				}(seq)
+				log.Debug(operationID, "pull seqList is ", seqList, len(seqList))
+				if len(seqList) > 0 {
+					c.pullMessageAndReGetHistoryMessages(sourceID, seqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
 				}
-				log.Debug(operationID, "pull start is ", startSeq)
-				for i := startSeq; i < int64(seq); i++ {
-					seqList = append(seqList, uint32(i))
-				}
-				log.Debug(operationID, "pull seqList is ", seqList)
-				return seqList
-			}(seq)
-			log.Debug(operationID, "pull seqList is ", seqList, len(seqList))
-			if len(seqList) > 0 {
-				c.pullMessageAndReGetHistoryMessages(sourceID, seqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
 			}
 		} else {
 			//local don't have messages,本地无消息，但是服务器最大消息不为0
-			if seq == 0 && maxSeq > 0 {
+			if maxSeq-minSeq > 0 {
 				messageListCallback.IsEnd = false
 			} else {
-				if seq <= minSeq {
-					messageListCallback.IsEnd = true
-				}
+				messageListCallback.IsEnd = true
 			}
 
 		}
