@@ -275,3 +275,14 @@ type SetGroupMemberRoleLevelReq struct {
 type SetGroupMemberRoleLevelResp struct {
 	CommResp
 }
+
+type GetGroupAbstractInfoReq struct {
+	OperationID string `json:"operationID" binding:"required"`
+	GroupID     string `json:"groupID" binding:"required"`
+}
+
+type GetGroupAbstractInfoResp struct {
+	CommResp
+	GroupMemberNumber   int32  `json:"groupMemberNumber"`
+	GroupMemberListHash uint64 `json:"groupMemberListHash"`
+}

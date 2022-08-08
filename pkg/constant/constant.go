@@ -347,3 +347,4 @@ const (
 )
 
 const SplitGetGroupMemberNum = 1000
+const UseHashGroupMemberNum = 1000

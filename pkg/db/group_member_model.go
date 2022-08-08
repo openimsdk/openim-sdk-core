@@ -23,6 +23,12 @@ func (d *DataBase) GetAllGroupMemberList() ([]model_struct.LocalGroupMember, err
 	var groupMemberList []model_struct.LocalGroupMember
 	return groupMemberList, utils.Wrap(d.conn.Find(&groupMemberList).Error, "GetAllGroupMemberList failed")
 }
+func (d *DataBase) GetAllGroupMemberUserIDList() ([]model_struct.LocalGroupMember, error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var groupMemberList []model_struct.LocalGroupMember
+	return groupMemberList, utils.Wrap(d.conn.Find(&groupMemberList).Error, "GetAllGroupMemberList failed")
+}
 
 func (d *DataBase) GetGroupMemberCount(groupID string) (uint32, error) {
 	d.mRWMutex.Lock()
@@ -97,6 +103,14 @@ func (d *DataBase) GetGroupMemberOwnerAndAdmin(groupID string) ([]*model_struct.
 		transfer = append(transfer, &v1)
 	}
 	return transfer, utils.Wrap(err, "GetGroupMemberListSplit failed ")
+}
+
+func (d *DataBase) GetGroupMemberOwner(groupID string) (*model_struct.LocalGroupMember, error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var groupMember model_struct.LocalGroupMember
+	err := d.conn.Where("group_id = ? And role_level = ?", groupID, constant.GroupOwner).Find(&groupMember).Error
+	return &groupMember, utils.Wrap(err, "GetGroupMemberListSplit failed ")
 }
 
 func (d *DataBase) GetGroupMemberListSplitByJoinTimeFilter(groupID string, offset, count int, joinTimeBegin, joinTimeEnd int64, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
@@ -185,6 +199,17 @@ func (d *DataBase) UpdateGroupMember(groupMember *model_struct.LocalGroupMember)
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
 	return utils.Wrap(t.Error, "")
+}
+
+func (d *DataBase) UpdateGroupMemberField(groupID, userID string, args map[string]interface{}) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	c := model_struct.LocalGroupMember{GroupID: groupID, UserID: userID}
+	t := d.conn.Model(&c).Updates(args)
+	if t.RowsAffected == 0 {
+		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	}
+	return utils.Wrap(t.Error, "UpdateGroupMemberField failed")
 }
 
 func (d *DataBase) GetGroupMemberInfoIfOwnerOrAdmin() ([]*model_struct.LocalGroupMember, error) {
