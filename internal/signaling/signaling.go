@@ -170,6 +170,9 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 		log.Info(operationID, "signaling response ", payload.Invite.String())
 		if utils.IsContain(s.loginUserID, payload.Invite.Invitation.InviteeUserIDList) {
 			//	if s.loginUserID == payload.Invite.Invitation.InviterUserID {
+			if s.listener == nil {
+				log.Error(operationID, "signaling listener is null")
+			}
 			s.listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.Invite))
 		}
 
