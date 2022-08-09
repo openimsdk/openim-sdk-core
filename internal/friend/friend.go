@@ -663,7 +663,7 @@ func (f *Friend) friendInfoChangedNotification(msg *api.MsgData, conversationCh 
 	} else {
 		f.user.SyncLoginUserInfo(operationID)
 		go func() {
-			loginUserInfo, err := f.db.GetLoginUser()
+			loginUserInfo, err := f.db.GetLoginUser(f.loginUserID)
 			if err == nil {
 				_ = f.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.UserID, loginUserInfo.FaceURL, loginUserInfo.Nickname, constant.SingleChatType)
 			}

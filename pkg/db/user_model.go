@@ -6,11 +6,11 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func (d *DataBase) GetLoginUser() (*model_struct.LocalUser, error) {
+func (d *DataBase) GetLoginUser(userID string) (*model_struct.LocalUser, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var user model_struct.LocalUser
-	return &user, utils.Wrap(d.conn.First(&user).Error, "GetLoginUserInfo failed")
+	return &user, utils.Wrap(d.conn.Where("user_id = ? ", userID).Take(&user).Error, "GetLoginUserInfo failed")
 }
 
 func (d *DataBase) UpdateLoginUser(user *model_struct.LocalUser) error {

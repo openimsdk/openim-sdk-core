@@ -1494,7 +1494,7 @@ func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, con
 	message.IsRead = false
 	message.Status = constant.MsgStatusSending
 	message.SendID = c.loginUserID
-	userInfo, err := c.db.GetLoginUser()
+	userInfo, err := c.db.GetLoginUser(c.loginUserID)
 	if err != nil {
 		log.Error(operationID, "GetLoginUser", err.Error())
 	} else {

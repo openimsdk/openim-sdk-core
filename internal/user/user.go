@@ -1,7 +1,6 @@
 package user
 
 import (
-	"fmt"
 	"github.com/google/go-cmp/cmp"
 	comm "open_im_sdk/internal/common"
 	"open_im_sdk/pkg/db/model_struct"
@@ -55,7 +54,6 @@ func (u *User) DoNotification(msg *api.MsgData) {
 		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
 		return
 	}
-
 	go func() {
 		switch msg.ContentType {
 		case constant.UserInfoUpdatedNotification:
@@ -76,7 +74,7 @@ func (u *User) userInfoUpdatedNotification(msg *api.MsgData, operationID string)
 	if detail.UserID == u.loginUserID {
 		log.Info(operationID, "detail.UserID == u.loginUserID, SyncLoginUserInfo", detail.UserID)
 		u.SyncLoginUserInfo(operationID)
-		user, err := u.GetLoginUser()
+		user, err := u.GetLoginUser(u.loginUserID)
 		if err != nil {
 			go u.updateMsgSenderInfo(user.Nickname, user.FaceURL, operationID)
 		}
@@ -93,7 +91,7 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 		return
 	}
 	onServer := common.TransferToLocalUserInfo(svr)
-	onLocal, err := u.GetLoginUser()
+	onLocal, err := u.GetLoginUser(u.loginUserID)
 	if err != nil {
 		log.Warn(operationID, "GetLoginUser failed", err.Error())
 		onLocal = &model_struct.LocalUser{}
@@ -151,7 +149,7 @@ func (u *User) GetUsersInfoFromCacheSvr(UserIDList sdk.GetUsersInfoParam, operat
 }
 
 func (u *User) getSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) sdk.GetSelfUserInfoCallback {
-	userInfo, err := u.GetLoginUser()
+	userInfo, err := u.GetLoginUser(u.loginUserID)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return userInfo
 }
