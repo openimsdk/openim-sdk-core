@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"github.com/google/go-cmp/cmp"
 	comm "open_im_sdk/internal/common"
 	"open_im_sdk/pkg/db/model_struct"
@@ -93,21 +94,24 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 	onServer := common.TransferToLocalUserInfo(svr)
 	onLocal, err := u.GetLoginUser(u.loginUserID)
 	if err != nil {
-		log.Warn(operationID, "GetLoginUser failed ", err.Error())
+		log.Warn(operationID, "GetLoginUser failed", err.Error())
 		onLocal = &model_struct.LocalUser{}
 	}
 	if !cmp.Equal(onServer, onLocal) {
 		if onLocal.UserID == "" {
 			if err = u.InsertLoginUser(onServer); err != nil {
 				log.Error(operationID, "InsertLoginUser failed ", *onServer, err.Error())
+				return
 			}
-			return
-		}
-		err = u.UpdateLoginUserByMap(onServer, map[string]interface{}{"name": onServer.Nickname, "face_url": onServer.FaceURL,
-			"gender": onServer.Gender, "phone_number": onServer.PhoneNumber, "birth": onServer.Birth, "email": onServer.Email, "create_time": onServer.CreateTime, "app_manger_level": onServer.AppMangerLevel, "ex": onServer.Ex, "attached_info": onServer.AttachedInfo, "global_recv_msg_opt": onServer.GlobalRecvMsgOpt})
-		if err != nil {
-			log.Error(operationID, "UpdateLoginUser failed ", *onServer, err.Error())
-			return
+
+		} else {
+			err = u.UpdateLoginUserByMap(onServer, map[string]interface{}{"name": onServer.Nickname, "face_url": onServer.FaceURL,
+				"gender": onServer.Gender, "phone_number": onServer.PhoneNumber, "birth": onServer.Birth, "email": onServer.Email, "create_time": onServer.CreateTime, "app_manger_level": onServer.AppMangerLevel, "ex": onServer.Ex, "attached_info": onServer.AttachedInfo, "global_recv_msg_opt": onServer.GlobalRecvMsgOpt})
+			fmt.Println("UpdateLoginUser ", *onServer, svr)
+			if err != nil {
+				log.Error(operationID, "UpdateLoginUser failed ", *onServer, err.Error())
+				return
+			}
 		}
 		callbackData := sdk.SelfInfoUpdatedCallback(*onServer)
 		if u.listener == nil {

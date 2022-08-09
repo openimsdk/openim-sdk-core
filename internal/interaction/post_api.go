@@ -8,6 +8,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/network"
 	"open_im_sdk/pkg/utils"
+	"time"
 )
 
 //no share
@@ -53,4 +54,13 @@ func (p *PostApi) Post2UnmarshalRespReturn(url string, req interface{}, output i
 	}
 	err = json.Unmarshal(content, output)
 	return utils.Wrap(err, "Unmarshal failed ")
+}
+func (p *PostApi) PostReturnWithTimeOut(url string, req interface{}, output interface{}, timeOut time.Duration) error {
+	content, err := network.PostWithTimeOut(p.apiAddress+url, req, p.token, timeOut)
+
+	err1 := common.CheckErrAndResp(err, content, output)
+	if err1 != nil {
+		log.Error("", "PostReturn failed ", err1.Error(), "input: ", string(content), " req:", req)
+	}
+	return err1
 }
