@@ -190,7 +190,8 @@ const (
 )
 
 const (
-	SdkInit      = 0
+	SdkInit = 0
+
 	LoginSuccess = 101
 	Logining     = 102
 	LoginFailed  = 103

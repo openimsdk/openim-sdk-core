@@ -1009,8 +1009,8 @@ func InitOnce(config *sdk_struct.IMConfig) bool {
 	return true
 }
 
-func CheckToken(userID, token string) error {
-	err, _ := login.CheckToken(userID, token, "")
+func CheckToken(userID, token string, operationID string) error {
+	err, _ := login.CheckToken(userID, token, operationID)
 	return err
 }
 
