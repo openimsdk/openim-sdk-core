@@ -681,6 +681,9 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 			} else {
 				if value, ok := wsSeqResp.GroupMaxAndMinSeq[sourceID]; ok {
 					minSeq = value.MinSeq
+					if value.MinSeq == 0 {
+						minSeq = 1
+					}
 					maxSeq = value.MaxSeq
 				}
 			}
