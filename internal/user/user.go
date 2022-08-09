@@ -105,7 +105,6 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 		}
 		err = u.UpdateLoginUserByMap(onServer, map[string]interface{}{"name": onServer.Nickname, "face_url": onServer.FaceURL,
 			"gender": onServer.Gender, "phone_number": onServer.PhoneNumber, "birth": onServer.Birth, "email": onServer.Email, "create_time": onServer.CreateTime, "app_manger_level": onServer.AppMangerLevel, "ex": onServer.Ex, "attached_info": onServer.AttachedInfo, "global_recv_msg_opt": onServer.GlobalRecvMsgOpt})
-		//	fmt.Println("UpdateLoginUser ", *onServer, svr)
 		if err != nil {
 			log.Error(operationID, "UpdateLoginUser failed ", *onServer, err.Error())
 			return
