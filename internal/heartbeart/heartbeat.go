@@ -23,21 +23,21 @@ type Heartbeat struct {
 	heartbeatInterval int
 	token             string
 	listener          open_im_sdk_callback.OnConnListener
-	ExpireTimeSeconds uint32
-	id2MinSeq         map[string]uint32
-	full              *full.Full
+	//ExpireTimeSeconds uint32
+	id2MinSeq map[string]uint32
+	full      *full.Full
 }
 
 func (u *Heartbeat) SetHeartbeatInterval(heartbeatInterval int) {
 	u.heartbeatInterval = heartbeatInterval
 }
 
-func NewHeartbeat(msgSync *interaction.MsgSync, cmcCh chan common.Cmd2Value, listener open_im_sdk_callback.OnConnListener, token string, expireTimeSeconds uint32, id2MinSeq map[string]uint32, full *full.Full) *Heartbeat {
+func NewHeartbeat(msgSync *interaction.MsgSync, cmcCh chan common.Cmd2Value, listener open_im_sdk_callback.OnConnListener, token string, id2MinSeq map[string]uint32, full *full.Full) *Heartbeat {
 	p := Heartbeat{MsgSync: msgSync, cmdCh: cmcCh, full: full}
 	p.heartbeatInterval = constant.HeartbeatInterval
 	p.listener = listener
 	p.token = token
-	p.ExpireTimeSeconds = expireTimeSeconds
+	//p.ExpireTimeSeconds = expireTimeSeconds
 	p.id2MinSeq = id2MinSeq
 	go p.Run()
 	return &p
@@ -51,17 +51,17 @@ type ParseToken struct {
 	Iat      int    `json:"iat"`
 }
 
-func (u *Heartbeat) IsTokenExp(operationID string) bool {
-	if u.ExpireTimeSeconds == 0 {
-		return false
-	}
-	log.Debug(operationID, "ExpireTimeSeconds ", u.ExpireTimeSeconds, "now ", uint32(time.Now().Unix()))
-	if u.ExpireTimeSeconds < uint32(time.Now().Unix()) {
-		return true
-	} else {
-		return false
-	}
-}
+//func (u *Heartbeat) IsTokenExp(operationID string) bool {
+//	if u.ExpireTimeSeconds == 0 {
+//		return false
+//	}
+//	log.Debug(operationID, "ExpireTimeSeconds ", u.ExpireTimeSeconds, "now ", uint32(time.Now().Unix()))
+//	if u.ExpireTimeSeconds < uint32(time.Now().Unix()) {
+//		return true
+//	} else {
+//		return false
+//	}
+//}
 
 func (u *Heartbeat) Run() {
 	//	heartbeatInterval := 30
@@ -95,13 +95,13 @@ func (u *Heartbeat) Run() {
 		}
 		heartbeatNum++
 		log.Debug(operationID, "send heartbeat req")
-		if u.IsTokenExp(operationID) {
-			log.Warn(operationID, "TokenExp, close heartbeat channel, call OnUserTokenExpired, set logout", u.cmdCh)
-			u.listener.OnUserTokenExpired()
-			u.SetLoginStatus(constant.Logout)
-			u.CloseConn(operationID)
-			runtime.Goexit()
-		}
+		//if u.IsTokenExp(operationID) {
+		//	log.Warn(operationID, "TokenExp, close heartbeat channel, call OnUserTokenExpired, set logout", u.cmdCh)
+		//	u.listener.OnUserTokenExpired()
+		//	u.SetLoginStatus(constant.Logout)
+		//	u.CloseConn(operationID)
+		//	runtime.Goexit()
+		//}
 		var groupIDList []string
 		var err error
 		if heartbeatNum == 1 {

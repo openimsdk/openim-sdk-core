@@ -7,6 +7,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/network"
 	"open_im_sdk/pkg/utils"
+	"time"
 )
 
 //no share
@@ -38,6 +39,15 @@ type postErr struct {
 
 func (p *PostApi) PostReturn(url string, req interface{}, output interface{}) error {
 	content, err := network.Post2Api(p.apiAddress+url, req, p.token)
+
+	err1 := common.CheckErrAndResp(err, content, output)
+	if err1 != nil {
+		log.Error("", "PostReturn failed ", err1.Error(), "input: ", string(content), " req:", req)
+	}
+	return err1
+}
+func (p *PostApi) PostReturnWithTimeOut(url string, req interface{}, output interface{}, timeOut time.Duration) error {
+	content, err := network.PostWithTimeOut(p.apiAddress+url, req, p.token, timeOut)
 
 	err1 := common.CheckErrAndResp(err, content, output)
 	if err1 != nil {

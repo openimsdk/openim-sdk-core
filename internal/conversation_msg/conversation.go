@@ -60,7 +60,7 @@ func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callba
 	apiReq.Conversations = conversations
 	c.p.PostFatalCallback(callback, constant.BatchSetConversationRouter, apiReq, &apiResp, apiReq.OperationID)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "output: ", apiResp)
-	c.SyncConversations(operationID)
+	c.SyncConversations(operationID, 0)
 }
 
 func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiReq *server_api_params.ModifyConversationFieldReq, conversationID string, localConversation *model_struct.LocalConversation, operationID string) {
@@ -90,7 +90,7 @@ func (c *Conversation) setOneConversationRecvMessageOpt(callback open_im_sdk_cal
 	apiReq.RecvMsgOpt = int32(opt)
 	apiReq.FieldType = constant.FieldRecvMsgOpt
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
-	c.SyncConversations(operationID)
+	c.SyncConversations(operationID, 0)
 }
 func (c *Conversation) setOneConversationUnread(callback open_im_sdk_callback.Base, conversationID string, unreadCount int, operationID string) {
 	apiReq := &server_api_params.ModifyConversationFieldReq{}
@@ -111,7 +111,7 @@ func (c *Conversation) setOneConversationPrivateChat(callback open_im_sdk_callba
 	apiReq.IsPrivateChat = isPrivate
 	apiReq.FieldType = constant.FieldIsPrivateChat
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
-	c.SyncConversations(operationID)
+	c.SyncConversations(operationID, 0)
 }
 
 func (c *Conversation) setOneConversationPinned(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
@@ -121,7 +121,7 @@ func (c *Conversation) setOneConversationPinned(callback open_im_sdk_callback.Ba
 	apiReq.IsPinned = isPinned
 	apiReq.FieldType = constant.FieldIsPinned
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
-	c.SyncConversations(operationID)
+	c.SyncConversations(operationID, 0)
 }
 func (c *Conversation) setOneConversationGroupAtType(callback open_im_sdk_callback.Base, conversationID, operationID string) {
 	lc, err := c.db.GetConversation(conversationID)
@@ -135,7 +135,7 @@ func (c *Conversation) setOneConversationGroupAtType(callback open_im_sdk_callba
 	apiReq.GroupAtType = constant.AtNormal
 	apiReq.FieldType = constant.FieldGroupAtType
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
-	c.SyncConversations(operationID)
+	c.SyncConversations(operationID, 0)
 }
 func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) []server_api_params.GetConversationRecvMessageOptResp {
 	apiReq := server_api_params.GetConversationsReq{}
@@ -236,25 +236,34 @@ func (c *Conversation) pinConversation(callback open_im_sdk_callback.Base, conve
 	//	common.CheckDBErrCallback(callback, err, operationID)
 	//}
 }
-func (c *Conversation) getServerConversationList(operationID string) (server_api_params.GetAllConversationsResp, error) {
+func (c *Conversation) getServerConversationList(operationID string, timeout time.Duration) (server_api_params.GetAllConversationsResp, error) {
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	var req server_api_params.GetAllConversationsReq
 	var resp server_api_params.GetAllConversationsResp
 	req.OwnerUserID = c.loginUserID
 	req.OperationID = operationID
-	err := c.p.PostReturn(constant.GetAllConversationsRouter, req, &resp.Conversations)
-	if err != nil {
-		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
-		return resp, err
+	if timeout == 0 {
+		err := c.p.PostReturn(constant.GetAllConversationsRouter, req, &resp.Conversations)
+		if err != nil {
+			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
+			return resp, err
+		}
+	} else {
+		err := c.p.PostReturnWithTimeOut(constant.GetAllConversationsRouter, req, &resp.Conversations, timeout)
+		if err != nil {
+			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
+			return resp, err
+		}
 	}
+
 	return resp, nil
 }
-func (c *Conversation) SyncConversations(operationID string) {
+func (c *Conversation) SyncConversations(operationID string, timeout time.Duration) {
 	//log.Error(operationID,"SyncConversations start")
 	var newConversationList []*model_struct.LocalConversation
 	ccTime := time.Now()
 	log.NewInfo(operationID, utils.GetSelfFuncName())
-	conversationsOnServer, err := c.getServerConversationList(operationID)
+	conversationsOnServer, err := c.getServerConversationList(operationID, timeout)
 	if err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		return
@@ -1633,7 +1642,7 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 
 func (c *Conversation) setConversationNotification(msg *server_api_params.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	c.SyncConversations(operationID)
+	c.SyncConversations(operationID, 0)
 }
 
 func (c *Conversation) DoNotification(msg *server_api_params.MsgData) {

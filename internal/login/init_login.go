@@ -158,9 +158,9 @@ func (u *LoginMgr) wakeUp(cb open_im_sdk_callback.Base, operationID string) {
 func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
 	log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)
 	t1 := time.Now()
-	err, exp := CheckToken(userID, token, operationID)
-	common.CheckTokenErrCallback(cb, err, operationID)
-	log.Info(operationID, "checkToken ok ", userID, token, exp, "login cost time: ", time.Since(t1))
+	//err, exp := CheckToken(userID, token, operationID)
+	//common.CheckTokenErrCallback(cb, err, operationID)
+	//log.Info(operationID, "checkToken ok ", userID, token, exp, "login cost time: ", time.Since(t1))
 	u.token = token
 	u.loginUserID = userID
 
@@ -202,7 +202,6 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.workMoments = workMoments.NewWorkMoments(u.loginUserID, u.db, p)
 	u.workMoments.SetListener(u.workMomentsListener)
 	log.NewInfo(operationID, u.imConfig.ObjectStorage, "new obj login cost time: ", time.Since(t1))
-	u.user.SyncLoginUserInfo(operationID)
 	log.NewInfo(operationID, u.imConfig.ObjectStorage, "SyncLoginUserInfo login cost time: ", time.Since(t1))
 	u.loginTime = utils.GetCurrentTimestampByMill()
 	u.user.SetLoginTime(u.loginTime)
@@ -211,7 +210,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.superGroup.SetLoginTime(u.loginTime)
 	u.organization.SetLoginTime(u.loginTime)
 	go u.forcedSynchronization()
-	u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, token, exp, id2MinSeq, u.full)
+	u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, token, id2MinSeq, u.full)
 	log.Info(operationID, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	log.Info(operationID, "all channel ", u.pushMsgAndMaxSeqCh, u.conversationCh, u.heartbeatCmdCh, u.cmdWsCh)
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
@@ -237,7 +236,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		log.Info(operationID, "SetBatchMsgListener ", u.batchMsgListener)
 	}
 	log.Debug(operationID, "SyncConversations begin ")
-	u.conversation.SyncConversations(operationID)
+	u.conversation.SyncConversations(operationID, time.Second*2)
 	log.Debug(operationID, "SyncConversations end ")
 	go common.DoListener(u.conversation)
 	log.Info(operationID, "login success...", "login cost time: ", time.Since(t1))
@@ -324,6 +323,7 @@ func (u *LoginMgr) forcedSynchronization() {
 	var wg sync.WaitGroup
 	wg.Add(10)
 	go func() {
+		u.user.SyncLoginUserInfo(operationID)
 		u.friend.SyncFriendList(operationID)
 		wg.Done()
 	}()
