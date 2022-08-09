@@ -118,6 +118,10 @@ func (s *LiveSignaling) getSelfParticipant(groupID string, callback open_im_sdk_
 
 func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value, operationID string) {
 	log.Info(operationID, utils.GetSelfFuncName(), "args ", msg.String())
+	if s.listener == nil {
+		log.Error(operationID, "not set Signaling Listener")
+		return
+	}
 	var resp api.SignalReq
 	err := proto.Unmarshal(msg.Content, &resp)
 	if err != nil {
