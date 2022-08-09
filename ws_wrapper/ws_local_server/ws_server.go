@@ -144,7 +144,7 @@ func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 			go ws.readMsg(newConn)
 		}
 	} else {
-		log.Info(operationID, "headerCheck failed")
+		log.NewError(operationID, "headerCheck failed")
 	}
 }
 
