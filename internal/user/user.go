@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"github.com/google/go-cmp/cmp"
 	comm "open_im_sdk/internal/common"
 	"open_im_sdk/pkg/db/model_struct"
