@@ -21,6 +21,7 @@ import (
 	"time"
 )
 
+const WriteTimeoutSeconds = 30
 const POINTNUM = 10
 
 var (
@@ -110,7 +111,6 @@ func (ws *WServer) getMsgAndSend() {
 			}()
 		}
 	}
-
 }
 
 func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
@@ -187,6 +187,7 @@ func (ws *WServer) readMsg(conn *UserConn) {
 func (ws *WServer) writeMsg(conn *UserConn, a int, msg []byte) error {
 	conn.w.Lock()
 	defer conn.w.Unlock()
+	conn.SetWriteDeadline(time.Now().Add(time.Duration(WriteTimeoutSeconds) * time.Second))
 	return conn.WriteMessage(a, msg)
 
 }

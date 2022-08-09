@@ -282,6 +282,7 @@ func (g *Group) memberInvitedNotification(msg *api.MsgData, operationID string) 
 		return
 	}
 
+	log.Info(operationID, "detail InvitedUserList ", detail.InvitedUserList)
 	for _, v := range detail.InvitedUserList {
 		if v.UserID == g.loginUserID {
 			g.SyncJoinedGroupList(operationID)

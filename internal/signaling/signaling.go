@@ -109,7 +109,7 @@ func (s *LiveSignaling) getSelfParticipant(groupID string, callback open_im_sdk_
 		copier.Copy(p.GroupMemberInfo, mInfo)
 	}
 
-	sf, err := s.GetLoginUser()
+	sf, err := s.GetLoginUser(s.loginUserID)
 	common.CheckDBErrCallback(callback, err, operationID)
 	copier.Copy(p.UserInfo, sf)
 	log.Info(operationID, utils.GetSelfFuncName(), "return ", p)
