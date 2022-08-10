@@ -118,6 +118,10 @@ func (s *LiveSignaling) getSelfParticipant(groupID string, callback open_im_sdk_
 
 func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value, operationID string) {
 	log.Info(operationID, utils.GetSelfFuncName(), "args ", msg.String())
+	if s.listener == nil {
+		log.Error(operationID, "not set Signaling Listener")
+		return
+	}
 	var resp api.SignalReq
 	err := proto.Unmarshal(msg.Content, &resp)
 	if err != nil {
@@ -170,6 +174,9 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 		log.Info(operationID, "signaling response ", payload.Invite.String())
 		if utils.IsContain(s.loginUserID, payload.Invite.Invitation.InviteeUserIDList) {
 			//	if s.loginUserID == payload.Invite.Invitation.InviterUserID {
+			if s.listener == nil {
+				log.Error(operationID, "signaling listener is null")
+			}
 			s.listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.Invite))
 		}
 
