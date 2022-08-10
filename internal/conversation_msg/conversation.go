@@ -1384,10 +1384,10 @@ func (c *Conversation) clearC2CHistoryMessage(callback open_im_sdk_callback.Base
 
 func (c *Conversation) deleteMessageFromSvr(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
 	seq, err := c.db.GetMsgSeqByClientMsgIDController(s)
+	common.CheckDBErrCallback(callback, err, operationID)
 	switch s.SessionType {
 	case constant.SingleChatType, constant.GroupChatType:
 		var apiReq server_api_params.DeleteMsgReq
-		common.CheckDBErrCallback(callback, err, operationID)
 		apiReq.SeqList = []uint32{seq}
 		apiReq.OpUserID = c.loginUserID
 		apiReq.UserID = c.loginUserID

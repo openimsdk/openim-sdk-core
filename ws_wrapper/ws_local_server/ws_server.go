@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"net/http"
+	_ "net/http/pprof"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/log"
 	utils2 "open_im_sdk/pkg/utils"
@@ -63,6 +64,9 @@ func (ws *WServer) OnInit(wsPort int) {
 
 func (ws *WServer) Run() {
 	go ws.getMsgAndSend()
+	go func() {
+		http.ListenAndServe("0.0.0.0:45000", nil)
+	}()
 	http.HandleFunc("/", ws.wsHandler)         //Get request from client to handle by wsHandler
 	err := http.ListenAndServe(ws.wsAddr, nil) //Start listening
 	if err != nil {
