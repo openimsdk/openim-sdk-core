@@ -51,6 +51,7 @@ func (d *DataBase) GetGroupInfoByGroupID(groupID string) (*model_struct.LocalGro
 func (d *DataBase) GetAllGroupInfoByGroupIDOrGroupName(keyword string, isSearchGroupID bool, isSearchGroupName bool) ([]*model_struct.LocalGroup, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
+
 	var groupList []model_struct.LocalGroup
 	var condition string
 	if isSearchGroupID {

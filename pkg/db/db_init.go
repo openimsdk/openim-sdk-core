@@ -28,18 +28,17 @@ type DataBase struct {
 	mRWMutex    sync.RWMutex
 }
 
-//func (d *DataBase) CloseDB() error {
-//	d.mRWMutex.Lock()
-//	defer d.mRWMutex.Unlock()
-//	if d.conn != nil {
-//
-//		if err := d.conn.Close(); err != nil {
-//			log.Error("", "GetSendingMessageList failed ", err.Error())
-//			return err
-//		}
-//	}
-//	return nil
-//}
+func (d *DataBase) CloseDB() error {
+	UserDBLock.Lock()
+	defer UserDBLock.Unlock()
+	dbConn, err := d.conn.DB()
+	if err != nil {
+		dbConn.Close()
+	}
+	delete(UserDBMap, d.loginUserID)
+	UserDBLock.Unlock()
+	return nil
+}
 
 func NewDataBase(loginUserID string, dbDir string) (*DataBase, error) {
 	UserDBLock.Lock()
@@ -88,6 +87,7 @@ func (d *DataBase) initDB() error {
 	//  Logger: logger.Default.LogMode(logger.Silent),
 	//})
 	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+
 	log.Info("open db:", dbFileName)
 	if err != nil {
 		return utils.Wrap(err, "open db failed")
@@ -100,6 +100,7 @@ func (d *DataBase) initDB() error {
 	sqlDB.SetMaxOpenConns(10)
 	sqlDB.SetMaxIdleConns(2)
 	d.conn = db
+
 	//db, err := sql.Open("sqlite3", SvrConf.DbDir+"OpenIM_"+uid+".db")
 	//sdkLog("open db:", SvrConf.DbDir+"OpenIM_"+uid+".db")
 	//if err != nil {
