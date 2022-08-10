@@ -30,7 +30,6 @@ type DataBase struct {
 
 func (d *DataBase) CloseDB() error {
 	UserDBLock.Lock()
-	defer UserDBLock.Unlock()
 	dbConn, err := d.conn.DB()
 	if err != nil {
 		dbConn.Close()
