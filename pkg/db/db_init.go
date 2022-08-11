@@ -96,8 +96,8 @@ func (d *DataBase) initDB() error {
 		return utils.Wrap(err, "get sql db failed")
 	}
 	sqlDB.SetConnMaxLifetime(time.Hour * 1)
-	sqlDB.SetMaxOpenConns(10)
-	sqlDB.SetMaxIdleConns(2)
+	sqlDB.SetMaxOpenConns(1)
+	sqlDB.SetMaxIdleConns(0)
 	d.conn = db
 
 	//db, err := sql.Open("sqlite3", SvrConf.DbDir+"OpenIM_"+uid+".db")
