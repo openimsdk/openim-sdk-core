@@ -43,7 +43,7 @@ func (o *Organization) DoNotification(msg *api.MsgData, conversationCh chan comm
 	}
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 
-	if msg.SendTime < o.loginTime {
+	if msg.SendTime < o.loginTime || o.loginTime == 0 {
 		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
 		return
 	}
@@ -180,6 +180,7 @@ func (o *Organization) getDepartmentMemberFromSvr(departmentID string, operation
 }
 
 func (o *Organization) SyncDepartment(operationID string) {
+	return
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	svrList, err := o.getAllDepartmentFromSvr(operationID)
 	if err != nil {
@@ -294,6 +295,7 @@ func (o *Organization) organizationChangedNotification(msg *api.MsgData, operati
 
 }
 func (o *Organization) SyncAllDepartmentMember(operationID string) {
+	return
 	o.memberSyncMutex.Lock()
 	defer o.memberSyncMutex.Unlock()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")

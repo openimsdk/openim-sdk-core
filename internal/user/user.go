@@ -51,7 +51,7 @@ func (u *User) DoNotification(msg *api.MsgData) {
 		return
 	}
 
-	if msg.SendTime < u.loginTime {
+	if msg.SendTime < u.loginTime || u.loginTime == 0 {
 		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
 		return
 	}

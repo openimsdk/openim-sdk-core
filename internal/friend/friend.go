@@ -574,7 +574,7 @@ func (f *Friend) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd
 		log.Error(operationID, "f.friendListener == nil")
 		return
 	}
-	if msg.SendTime < f.loginTime {
+	if msg.SendTime < f.loginTime || f.loginTime == 0 {
 		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
 		return
 	}

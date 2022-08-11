@@ -204,12 +204,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.workMoments.SetListener(u.workMomentsListener)
 	log.NewInfo(operationID, u.imConfig.ObjectStorage, "new obj login cost time: ", time.Since(t1))
 	log.NewInfo(operationID, u.imConfig.ObjectStorage, "SyncLoginUserInfo login cost time: ", time.Since(t1))
-	u.loginTime = utils.GetCurrentTimestampByMill()
-	u.user.SetLoginTime(u.loginTime)
-	u.friend.SetLoginTime(u.loginTime)
-	u.group.SetLoginTime(u.loginTime)
-	u.superGroup.SetLoginTime(u.loginTime)
-	u.organization.SetLoginTime(u.loginTime)
+
 	go u.forcedSynchronization()
 
 	log.Info(operationID, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
@@ -299,6 +294,42 @@ func (u *LoginMgr) GetLoginStatus() int32 {
 
 func (u *LoginMgr) forcedSynchronization() {
 	operationID := utils.OperationIDGenerator()
+
+	wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID)
+	wsRespAsyn := ws.NewWsRespAsyn()
+	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
+	u.msgSync = ws.NewMsgSync(u.db, u.ws, u.loginUserID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
+	u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
+	log.NewInfo(operationID, u.imConfig.ObjectStorage)
+	var objStorage comm3.ObjectStorage
+	switch u.imConfig.ObjectStorage {
+	case "cos":
+		objStorage = comm2.NewCOS(u.postApi)
+	case "minio":
+		objStorage = comm2.NewMinio(u.postApi)
+	case "oss":
+		objStorage = comm2.NewOSS(u.postApi)
+	default:
+		objStorage = comm2.NewCOS(u.postApi)
+	}
+	u.signaling = signaling.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID, u.imConfig.Platform, u.db)
+
+	u.conversation = conv.NewConversation(u.ws, u.db, u.postApi, u.conversationCh,
+		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
+		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener,
+		u.organization, u.signaling, u.workMoments, u.cache, u.full, u.id2MinSeq)
+	if u.batchMsgListener != nil {
+		u.conversation.SetBatchMsgListener(u.batchMsgListener)
+		log.Info(operationID, "SetBatchMsgListener ", u.batchMsgListener)
+	}
+	log.Debug(operationID, "SyncConversations begin ")
+
+	u.conversation.SyncConversations(operationID, time.Second*2)
+	go common.DoListener(u.conversation)
+	log.Debug(operationID, "SyncConversations end ")
+
+	log.Info(operationID, "ws heartbeat end ")
+
 	log.Info(operationID, "sync all info begin")
 	var wg sync.WaitGroup
 	wg.Add(10)
@@ -354,42 +385,13 @@ func (u *LoginMgr) forcedSynchronization() {
 	}()
 	wg.Wait()
 
-	log.Info(operationID, "sync all info end ")
-	log.Info(operationID, "ws heartbeat start ")
-	wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID)
-	wsRespAsyn := ws.NewWsRespAsyn()
-	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
-	u.msgSync = ws.NewMsgSync(u.db, u.ws, u.loginUserID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
-	u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
-	log.NewInfo(operationID, u.imConfig.ObjectStorage)
-	var objStorage comm3.ObjectStorage
-	switch u.imConfig.ObjectStorage {
-	case "cos":
-		objStorage = comm2.NewCOS(u.postApi)
-	case "minio":
-		objStorage = comm2.NewMinio(u.postApi)
-	case "oss":
-		objStorage = comm2.NewOSS(u.postApi)
-	default:
-		objStorage = comm2.NewCOS(u.postApi)
-	}
-	u.signaling = signaling.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID, u.imConfig.Platform, u.db)
+	u.loginTime = utils.GetCurrentTimestampByMill()
+	u.user.SetLoginTime(u.loginTime)
+	u.friend.SetLoginTime(u.loginTime)
+	u.group.SetLoginTime(u.loginTime)
+	u.superGroup.SetLoginTime(u.loginTime)
+	u.organization.SetLoginTime(u.loginTime)
 
-	u.conversation = conv.NewConversation(u.ws, u.db, u.postApi, u.conversationCh,
-		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
-		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener,
-		u.organization, u.signaling, u.workMoments, u.cache, u.full, u.id2MinSeq)
-	if u.batchMsgListener != nil {
-		u.conversation.SetBatchMsgListener(u.batchMsgListener)
-		log.Info(operationID, "SetBatchMsgListener ", u.batchMsgListener)
-	}
-	log.Debug(operationID, "SyncConversations begin ")
-
-	u.conversation.SyncConversations(operationID, time.Second*2)
-	go common.DoListener(u.conversation)
-	log.Debug(operationID, "SyncConversations end ")
-
-	log.Info(operationID, "ws heartbeat end ")
 }
 
 func (u *LoginMgr) GetMinSeqSvr() int64 {
