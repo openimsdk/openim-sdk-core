@@ -22,7 +22,7 @@ type Organization struct {
 	p           *ws.PostApi
 	loginTime   int64
 
-	memberSyncMutex sync.RWMutex
+	//	memberSyncMutex sync.RWMutex
 }
 
 func (o *Organization) LoginTime() int64 {
@@ -180,7 +180,7 @@ func (o *Organization) getDepartmentMemberFromSvr(departmentID string, operation
 }
 
 func (o *Organization) SyncDepartment(operationID string) {
-	return
+	//	return
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	svrList, err := o.getAllDepartmentFromSvr(operationID)
 	if err != nil {
@@ -295,9 +295,9 @@ func (o *Organization) organizationChangedNotification(msg *api.MsgData, operati
 
 }
 func (o *Organization) SyncAllDepartmentMember(operationID string) {
-	return
-	o.memberSyncMutex.Lock()
-	defer o.memberSyncMutex.Unlock()
+	//	return
+	//	o.memberSyncMutex.Lock()
+	//defer o.memberSyncMutex.Unlock()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	svrList, err := o.getAllDepartmentMemberFromSvr(operationID)
 	if err != nil {

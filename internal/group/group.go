@@ -31,7 +31,7 @@ type Group struct {
 	joinedSuperGroupCh chan common.Cmd2Value
 	heartbeatCmdCh     chan common.Cmd2Value
 
-	memberSyncMutex sync.RWMutex
+	//	memberSyncMutex sync.RWMutex
 }
 
 func (g *Group) LoginTime() int64 {
@@ -1044,8 +1044,8 @@ func (g *Group) isContinueSyncGroupMember(groupID string, operationID string) bo
 }
 
 func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onGroupMemberNotification bool) {
-	g.memberSyncMutex.Lock()
-	defer g.memberSyncMutex.Unlock()
+	//	g.memberSyncMutex.Lock()
+	//	defer g.memberSyncMutex.Unlock()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", groupID)
 	conSync := g.isContinueSyncGroupMember(groupID, operationID)
 	if conSync == false {
