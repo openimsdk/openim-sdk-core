@@ -127,12 +127,12 @@ func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 			log.Info(operationID, "panic", "call", string(buf))
 		}
 	}()
-	var mem runtime.MemStats
-	runtime.ReadMemStats(&mem)
-	if mem.Alloc > 2*1024*1024*1024 {
-		panic("Memory leak " + int64ToString(int64(mem.Alloc)))
-	}
-	log.Info(operationID, "wsHandler ", r.URL.Query(), "js sdk svr mem: ", mem.Alloc, mem.TotalAlloc, "all: ", mem)
+	//var mem runtime.MemStats
+	//runtime.ReadMemStats(&mem)
+	//if mem.Alloc > 2*1024*1024*1024 {
+	//	panic("Memory leak " + int64ToString(int64(mem.Alloc)))
+	//}
+	//log.Info(operationID, "wsHandler ", r.URL.Query(), "js sdk svr mem: ", mem.Alloc, mem.TotalAlloc, "all: ", mem)
 
 	if ws.headerCheck(w, r, operationID) {
 		query := r.URL.Query()
