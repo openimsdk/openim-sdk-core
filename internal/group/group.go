@@ -30,6 +30,8 @@ type Group struct {
 	loginTime          int64
 	joinedSuperGroupCh chan common.Cmd2Value
 	heartbeatCmdCh     chan common.Cmd2Value
+
+	memberSyncMutex sync.RWMutex
 }
 
 func (g *Group) LoginTime() int64 {
@@ -1042,6 +1044,8 @@ func (g *Group) isContinueSyncGroupMember(groupID string, operationID string) bo
 }
 
 func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onGroupMemberNotification bool) {
+	g.memberSyncMutex.Lock()
+	defer g.memberSyncMutex.Unlock()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", groupID)
 	conSync := g.isContinueSyncGroupMember(groupID, operationID)
 	if conSync == false {
@@ -1138,29 +1142,29 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 	}
 }
 
-func (g *Group) SyncJoinedGroupMember(operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
-	groupListOnServer, err := g.getJoinedGroupListFromSvr(operationID)
-	if err != nil {
-		log.Error(operationID, "getJoinedGroupListFromSvr failed ", err.Error())
-		return
-	}
-	var wg sync.WaitGroup
-	if len(groupListOnServer) == 0 {
-		return
-	}
-	wg.Add(len(groupListOnServer))
-	log.Info(operationID, "syncGroupMemberByGroupID begin", len(groupListOnServer))
-	for _, v := range groupListOnServer {
-		go func(groupID, operationID string) {
-			g.syncGroupMemberByGroupID(groupID, operationID, true)
-			wg.Done()
-		}(v.GroupID, operationID)
-	}
-
-	wg.Wait()
-	log.Info(operationID, "syncGroupMemberByGroupID end")
-}
+//func (g *Group) SyncJoinedGroupMember(operationID string) {
+//	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
+//	groupListOnServer, err := g.getJoinedGroupListFromSvr(operationID)
+//	if err != nil {
+//		log.Error(operationID, "getJoinedGroupListFromSvr failed ", err.Error())
+//		return
+//	}
+//	var wg sync.WaitGroup
+//	if len(groupListOnServer) == 0 {
+//		return
+//	}
+//	wg.Add(len(groupListOnServer))
+//	log.Info(operationID, "syncGroupMemberByGroupID begin", len(groupListOnServer))
+//	for _, v := range groupListOnServer {
+//		go func(groupID, operationID string) {
+//			g.syncGroupMemberByGroupID(groupID, operationID, true)
+//			wg.Done()
+//		}(v.GroupID, operationID)
+//	}
+//
+//	wg.Wait()
+//	log.Info(operationID, "syncGroupMemberByGroupID end")
+//}
 
 func (g *Group) SyncJoinedGroupMemberForFirstLogin(operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")

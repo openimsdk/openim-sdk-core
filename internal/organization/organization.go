@@ -21,6 +21,8 @@ type Organization struct {
 	db          *db.DataBase
 	p           *ws.PostApi
 	loginTime   int64
+
+	memberSyncMutex sync.RWMutex
 }
 
 func (o *Organization) LoginTime() int64 {
@@ -292,6 +294,8 @@ func (o *Organization) organizationChangedNotification(msg *api.MsgData, operati
 
 }
 func (o *Organization) SyncAllDepartmentMember(operationID string) {
+	o.memberSyncMutex.Lock()
+	defer o.memberSyncMutex.Unlock()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	svrList, err := o.getAllDepartmentMemberFromSvr(operationID)
 	if err != nil {
