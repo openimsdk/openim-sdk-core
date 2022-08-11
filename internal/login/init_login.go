@@ -215,7 +215,6 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	log.Info(operationID, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	log.Info(operationID, "all channel ", u.pushMsgAndMaxSeqCh, u.conversationCh, u.heartbeatCmdCh, u.cmdWsCh)
 
-	go common.DoListener(u.conversation)
 	log.Info(operationID, "login success...", "login cost time: ", time.Since(t1))
 	cb.OnSuccess("")
 }
@@ -387,6 +386,7 @@ func (u *LoginMgr) forcedSynchronization() {
 	log.Debug(operationID, "SyncConversations begin ")
 
 	u.conversation.SyncConversations(operationID, time.Second*2)
+	go common.DoListener(u.conversation)
 	log.Debug(operationID, "SyncConversations end ")
 
 	log.Info(operationID, "ws heartbeat end ")
