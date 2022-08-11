@@ -89,7 +89,7 @@ func (d *DataBase) initDB() error {
 
 	log.Info("open db:", dbFileName)
 	if err != nil {
-		return utils.Wrap(err, "open db failed")
+		return utils.Wrap(err, "open db failed "+dbFileName)
 	}
 	sqlDB, err := db.DB()
 	if err != nil {
