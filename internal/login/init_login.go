@@ -391,7 +391,7 @@ func (u *LoginMgr) forcedSynchronization() {
 	u.group.SetLoginTime(u.loginTime)
 	u.superGroup.SetLoginTime(u.loginTime)
 	u.organization.SetLoginTime(u.loginTime)
-
+	log.Warn(operationID, "login init sync finished")
 }
 
 func (u *LoginMgr) GetMinSeqSvr() int64 {
