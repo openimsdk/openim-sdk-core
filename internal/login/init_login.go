@@ -67,6 +67,8 @@ type LoginMgr struct {
 	pushMsgAndMaxSeqCh chan common.Cmd2Value
 	joinedSuperGroupCh chan common.Cmd2Value
 	imConfig           sdk_struct.IMConfig
+
+	id2MinSeq map[string]uint32
 }
 
 func (u *LoginMgr) Organization() *organization.Organization {
@@ -173,17 +175,15 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.db = db
 	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir, "login cost time: ", time.Since(t1))
 
-	wsRespAsyn := ws.NewWsRespAsyn()
-	wsConn := ws.NewWsConn(u.connListener, token, userID)
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
 	u.cmdWsCh = make(chan common.Cmd2Value, 10)
 
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
-	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
+
 	u.joinedSuperGroupCh = make(chan common.Cmd2Value, 10)
-	u.msgSync = ws.NewMsgSync(db, u.ws, userID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
-	id2MinSeq := make(map[string]uint32, 100)
+
+	u.id2MinSeq = make(map[string]uint32, 100)
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
 
 	u.user = user.NewUser(db, p, u.loginUserID)
@@ -210,7 +210,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.superGroup.SetLoginTime(u.loginTime)
 	u.organization.SetLoginTime(u.loginTime)
 	go u.forcedSynchronization()
-	u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, token, id2MinSeq, u.full)
+
 	log.Info(operationID, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	log.Info(operationID, "all channel ", u.pushMsgAndMaxSeqCh, u.conversationCh, u.heartbeatCmdCh, u.cmdWsCh)
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
@@ -230,7 +230,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.conversation = conv.NewConversation(u.ws, u.db, p, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir,
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener,
-		u.organization, u.signaling, u.workMoments, u.cache, u.full, id2MinSeq)
+		u.organization, u.signaling, u.workMoments, u.cache, u.full, u.id2MinSeq)
 	if u.batchMsgListener != nil {
 		u.conversation.SetBatchMsgListener(u.batchMsgListener)
 		log.Info(operationID, "SetBatchMsgListener ", u.batchMsgListener)
@@ -323,6 +323,7 @@ func (u *LoginMgr) GetLoginStatus() int32 {
 
 func (u *LoginMgr) forcedSynchronization() {
 	operationID := utils.OperationIDGenerator()
+	log.Info(operationID, "sync all info begin")
 	var wg sync.WaitGroup
 	wg.Add(10)
 	go func() {
@@ -376,6 +377,15 @@ func (u *LoginMgr) forcedSynchronization() {
 		wg.Done()
 	}()
 	wg.Wait()
+
+	log.Info(operationID, "sync all info end ")
+	log.Info(operationID, "ws heartbeat start ")
+	wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID)
+	wsRespAsyn := ws.NewWsRespAsyn()
+	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
+	u.msgSync = ws.NewMsgSync(u.db, u.ws, u.loginUserID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
+	u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
+	log.Info(operationID, "ws heartbeat end ")
 }
 
 func (u *LoginMgr) GetMinSeqSvr() int64 {
