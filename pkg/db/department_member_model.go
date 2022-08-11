@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 )
@@ -44,6 +45,16 @@ func (d *DataBase) InsertDepartmentMember(departmentMember *model_struct.LocalDe
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Create(departmentMember).Error, "InsertDepartmentMember failed")
+}
+
+func (d *DataBase) BatchInsertDepartmentMember(departmentMemberList []*model_struct.LocalDepartmentMember) error {
+	if departmentMemberList == nil {
+		return errors.New("nil")
+	}
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+
+	return utils.Wrap(d.conn.Create(departmentMemberList).Error, "BatchInsertDepartmentMember failed")
 }
 
 //func (d *DataBase) BatchInsertDepartmentMember(departmentMember *model_struct.LocalDepartmentMember) error {

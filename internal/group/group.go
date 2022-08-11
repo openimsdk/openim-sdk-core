@@ -1088,11 +1088,11 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 		split := 1000
 		idx := 0
 		remain := len(insertGroupMemberList) % split
-		log.Warn(operationID, "BatchInsertGroupMember all: ", len(insertGroupMemberList))
+		log.Info(operationID, "BatchInsertGroupMember all: ", len(insertGroupMemberList))
 		for idx = 0; idx < len(insertGroupMemberList)/split; idx++ {
 			sub := insertGroupMemberList[idx*split : (idx+1)*split]
 			err = g.db.BatchInsertGroupMember(sub)
-			log.Warn(operationID, "BatchInsertGroupMember len: ", len(sub))
+			log.Info(operationID, "BatchInsertGroupMember len: ", len(sub))
 			if err != nil {
 				log.Error(operationID, "BatchInsertGroupMember failed ", err.Error(), len(sub))
 				for again := 0; again < len(sub); again++ {
@@ -1104,7 +1104,7 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 		}
 		if remain > 0 {
 			sub := insertGroupMemberList[idx*split:]
-			log.Warn(operationID, "BatchInsertGroupMember len: ", len(sub), groupID)
+			log.Info(operationID, "BatchInsertGroupMember len: ", len(sub), groupID)
 			err = g.db.BatchInsertGroupMember(sub)
 			if err != nil {
 				log.Error(operationID, "BatchInsertGroupMember failed ", err.Error(), len(sub))

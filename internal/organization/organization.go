@@ -313,15 +313,47 @@ func (o *Organization) SyncAllDepartmentMember(operationID string) {
 	log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
 	aInBNot, bInANot, sameA, sameB := common.CheckDepartmentMemberDiff(onServer, onLocal)
 	log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
+
+	var insertGroupMemberList []*model_struct.LocalDepartmentMember
+
 	for _, index := range aInBNot {
-		err := o.db.InsertDepartmentMember(onServer[index])
-		if err != nil {
-			log.NewError(operationID, "InsertDepartmentMember failed ", err.Error(), *onServer[index])
-			continue
-		}
-		log.Info(operationID, "InsertDepartmentMember", onServer[index])
+		insertGroupMemberList = append(insertGroupMemberList, onServer[index])
 		flag = 1
 	}
+
+	if len(insertGroupMemberList) > 0 {
+		split := 1000
+		idx := 0
+		remain := len(insertGroupMemberList) % split
+		log.Info(operationID, "BatchInsertGroupMember all: ", len(insertGroupMemberList))
+		for idx = 0; idx < len(insertGroupMemberList)/split; idx++ {
+			sub := insertGroupMemberList[idx*split : (idx+1)*split]
+			err = o.db.BatchInsertDepartmentMember(sub)
+			log.Info(operationID, "BatchInsertDepartmentMember len: ", len(sub))
+			if err != nil {
+				log.Error(operationID, "BatchInsertDepartmentMember failed ", err.Error(), len(sub))
+				for again := 0; again < len(sub); again++ {
+					if err = o.db.InsertDepartmentMember(sub[again]); err != nil {
+						log.Error(operationID, "InsertDepartmentMember failed ", err.Error(), sub[again])
+					}
+				}
+			}
+		}
+		if remain > 0 {
+			sub := insertGroupMemberList[idx*split:]
+			log.Info(operationID, "BatchInsertDepartmentMember len: ", len(sub))
+			err = o.db.BatchInsertDepartmentMember(sub)
+			if err != nil {
+				log.Error(operationID, "BatchInsertDepartmentMember failed ", err.Error(), len(sub))
+				for again := 0; again < len(sub); again++ {
+					if err = o.db.InsertDepartmentMember(sub[again]); err != nil {
+						log.Error(operationID, "InsertDepartmentMember failed ", err.Error(), sub[again])
+					}
+				}
+			}
+		}
+	}
+
 	for _, index := range sameA {
 		err := o.db.UpdateDepartmentMember(onServer[index])
 		if err != nil {
