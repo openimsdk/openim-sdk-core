@@ -1057,7 +1057,7 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 		log.NewError(operationID, "getGroupAllMemberSplitByGroupIDFromSvr failed ", err.Error(), groupID)
 		return
 	}
-	log.Info(operationID, "getGroupAllMemberByGroupIDFromSvr ", len(svrList))
+	log.Info(operationID, "getGroupAllMemberByGroupIDFromSvr ", len(svrList), groupID)
 	onServer := common.TransferToLocalGroupMember(svrList)
 	onLocal, err := g.db.GetGroupMemberListByGroupID(groupID)
 	if err != nil {
@@ -1066,7 +1066,7 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 	}
 	//log.NewInfo(operationID, "svrList onServer onLocal", svrList, onServer, onLocal)
 	aInBNot, bInANot, sameA, _ := common.CheckGroupMemberDiff(onServer, onLocal)
-	log.Debug(operationID, "getGroupAllMemberByGroupIDFromSvr  diff ", aInBNot, bInANot, sameA)
+	log.Info(operationID, "getGroupAllMemberByGroupIDFromSvr  diff ", aInBNot, bInANot, sameA, len(onLocal), len(onServer))
 	var insertGroupMemberList []*model_struct.LocalGroupMember
 	for _, index := range aInBNot {
 		if onGroupMemberNotification == false {

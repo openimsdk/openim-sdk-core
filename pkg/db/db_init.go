@@ -82,11 +82,7 @@ func (d *DataBase) initDB() error {
 	defer d.mRWMutex.Unlock()
 
 	dbFileName := d.dbDir + "/OpenIM_" + constant.BigVersion + "_" + d.loginUserID + ".db"
-	//db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{
-	//  Logger: logger.Default.LogMode(logger.Silent),
-	//})
 	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
-
 	log.Info("open db:", dbFileName)
 	if err != nil {
 		return utils.Wrap(err, "open db failed "+dbFileName)
@@ -96,38 +92,12 @@ func (d *DataBase) initDB() error {
 		return utils.Wrap(err, "get sql db failed")
 	}
 	sqlDB.SetConnMaxLifetime(time.Hour * 1)
-	sqlDB.SetMaxOpenConns(1)
+	sqlDB.SetMaxOpenConns(2)
 	sqlDB.SetMaxIdleConns(0)
 	d.conn = db
 
-	//db, err := sql.Open("sqlite3", SvrConf.DbDir+"OpenIM_"+uid+".db")
-	//sdkLog("open db:", SvrConf.DbDir+"OpenIM_"+uid+".db")
-	//if err != nil {
-	//	sdkLog("failed open db:", SvrConf.DbDir+"OpenIM_"+uid+".db", err.Error())
-	//	return err
-	//}
-	//u.db = db
-
 	superGroup := &model_struct.LocalGroup{}
 	localGroup := &model_struct.LocalGroup{}
-	//err = db.Exec(`CREATE TABLE IF NOT EXISTS super_groups (
-	//   group_id  varchar(64),
-	//   name  text,
-	//   notification  varchar(255),
-	//   introduction  varchar(255),
-	//   face_url  varchar(255),
-	//   create_time  integer,
-	//   status  integer,
-	//   creator_user_id  varchar(64),
-	//   group_type  integer,
-	//   owner_user_id  varchar(64),
-	//   member_count  integer,
-	//   ex  varchar(1024),
-	//   attached_info  varchar(1024),
-	//   PRIMARY KEY ( group_id ))`).Error
-	//if err != nil {
-	//	log.Error("super_group","create super group failed",err.Error())
-	//}
 
 	db.AutoMigrate(&model_struct.LocalFriend{},
 		&model_struct.LocalFriendRequest{},
@@ -150,36 +120,29 @@ func (d *DataBase) initDB() error {
 	)
 	db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup)
 	if !db.Migrator().HasTable(&model_struct.LocalFriend{}) {
-		//log.NewInfo("CreateTable Friend")
 		db.Migrator().CreateTable(&model_struct.LocalFriend{})
 	}
 
 	if !db.Migrator().HasTable(&model_struct.LocalFriendRequest{}) {
-		//log.NewInfo("CreateTable FriendRequest")
 		db.Migrator().CreateTable(&model_struct.LocalFriendRequest{})
 	}
 
 	if !db.Migrator().HasTable(localGroup) {
-		//log.NewInfo("CreateTable Group")
 		db.Migrator().CreateTable(localGroup)
 	}
 	if !db.Migrator().HasTable(&model_struct.LocalGroupMember{}) {
-		//log.NewInfo("CreateTable GroupMember")
 		db.Migrator().CreateTable(&model_struct.LocalGroupMember{})
 	}
 
 	if !db.Migrator().HasTable(&model_struct.LocalGroupRequest{}) {
-		//log.NewInfo("CreateTable GroupRequest")
 		db.Migrator().CreateTable(&model_struct.LocalGroupRequest{})
 	}
 
 	if !db.Migrator().HasTable(&model_struct.LocalUser{}) {
-		//log.NewInfo("CreateTable User")
 		db.Migrator().CreateTable(&model_struct.LocalUser{})
 	}
 
 	if !db.Migrator().HasTable(&model_struct.LocalBlack{}) {
-		//log.NewInfo("CreateTable Black")
 		db.Migrator().CreateTable(&model_struct.LocalBlack{})
 	}
 
