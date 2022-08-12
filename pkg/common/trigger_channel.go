@@ -76,6 +76,14 @@ func TriggerCmdUpdateConversation(node UpdateConNode, conversationCh chan Cmd2Va
 
 	return sendCmd(conversationCh, c2v, 100)
 }
+func TriggerCmdUpdateMessage(node UpdateMessageNode, conversationCh chan Cmd2Value) error {
+	c2v := Cmd2Value{
+		Cmd:   constant.CmdUpdateMessage,
+		Value: node,
+	}
+
+	return sendCmd(conversationCh, c2v, 100)
+}
 
 func TriggerCmdPushMsg(msg sdk_struct.CmdPushMsgToMsgSync, ch chan Cmd2Value) error {
 	if ch == nil {
@@ -105,6 +113,10 @@ type UpdateConNode struct {
 	// 4 Cancel a conversation on the top, 5 Messages are not read and set to 0, 6 New conversations
 	Args interface{}
 }
+type UpdateMessageNode struct {
+	Action int
+	Args   interface{}
+}
 
 type Cmd2Value struct {
 	Cmd   string
@@ -113,6 +125,12 @@ type Cmd2Value struct {
 type SourceIDAndSessionType struct {
 	SourceID    string
 	SessionType int32
+}
+type UpdateMessageInfo struct {
+	SendID      string
+	FaceURL     string
+	Nickname    string
+	SessionType int
 }
 
 func UnInitAll(conversationCh chan Cmd2Value) error {

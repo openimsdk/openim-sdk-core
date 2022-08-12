@@ -20,6 +20,7 @@ const (
 	CmdAddFriend                  = "017"
 
 	CmdJoinedSuperGroup = "018"
+	CmdUpdateMessage    = "019"
 
 	CmdMaxSeq  = "maxSeq"
 	CmdPushMsg = "pushMsg"
@@ -212,13 +213,14 @@ const (
 	UnreadCountSetZero           = 3
 	IncrUnread                   = 5
 	TotalUnreadMessageChanged    = 6
-	UpdateFaceUrlAndNickName     = 7
+	UpdateConFaceUrlAndNickName  = 7
 	UpdateLatestMessageChange    = 8
 	ConChange                    = 9
 	NewCon                       = 10
 	ConChangeDirect              = 11
 	NewConDirect                 = 12
 	ConversationLatestMsgHasRead = 13
+	UpdateMsgFaceUrlAndNickName  = 14
 
 	HasRead = 1
 	NotRead = 0

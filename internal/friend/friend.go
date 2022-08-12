@@ -638,7 +638,7 @@ func (f *Friend) friendRemarkNotification(msg *api.MsgData, conversationCh chan 
 	if detail.FromToUserID.FromUserID == f.loginUserID {
 		f.SyncFriendList(operationID)
 		conversationID := utils.GetConversationIDBySessionType(detail.FromToUserID.ToUserID, constant.SingleChatType)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: detail.FromToUserID.ToUserID, SessionType: constant.SingleChatType}}, conversationCh)
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: detail.FromToUserID.ToUserID, SessionType: constant.SingleChatType}}, conversationCh)
 	}
 }
 
@@ -652,11 +652,12 @@ func (f *Friend) friendInfoChangedNotification(msg *api.MsgData, conversationCh 
 	if detail.UserID != f.loginUserID {
 		f.SyncFriendList(operationID)
 		conversationID := utils.GetConversationIDBySessionType(detail.UserID, constant.SingleChatType)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: detail.UserID, SessionType: constant.SingleChatType}}, conversationCh)
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: detail.UserID, SessionType: constant.SingleChatType}}, conversationCh)
 		go func() {
 			friendInfo, err := f.db.GetFriendInfoByFriendUserID(detail.UserID)
 			if err == nil {
-				_ = f.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.UserID, friendInfo.FaceURL, friendInfo.Nickname, constant.SingleChatType)
+				_ = common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{SendID: detail.UserID, FaceURL: friendInfo.FaceURL, Nickname: friendInfo.Nickname, SessionType: constant.SingleChatType}}, conversationCh)
+
 			}
 		}()
 

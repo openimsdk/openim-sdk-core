@@ -1292,7 +1292,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		} else {
 			c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
 		}
-	case constant.UpdateFaceUrlAndNickName:
+	case constant.UpdateConFaceUrlAndNickName:
 		var lc model_struct.LocalConversation
 		st := node.Args.(common.SourceIDAndSessionType)
 		lc.ConversationID = node.ConID
@@ -1409,6 +1409,22 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 
 	}
 }
+func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
+	if c.ConversationListener == nil {
+		log.Error("internal", "not set conversationListener")
+		return
+	}
+	node := c2v.Value.(common.UpdateMessageNode)
+	switch node.Action {
+	case constant.UpdateMsgFaceUrlAndNickName:
+		args := node.Args.(common.UpdateMessageInfo)
+		err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(args.SendID, args.FaceURL, args.Nickname, args.SessionType)
+		if err != nil {
+			log.Error("internal", "UpdateMsgSenderFaceURLAndSenderNickname err:", err.Error())
+		}
+	}
+
+}
 
 func (c *Conversation) Work(c2v common.Cmd2Value) {
 
@@ -1431,6 +1447,10 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 		log.Info("internal", "doUpdateConversation start ..", c2v.Cmd)
 		c.doUpdateConversation(c2v)
 		log.Info("internal", "doUpdateConversation end..", c2v.Cmd)
+	case constant.CmdUpdateMessage:
+		log.Info("internal", "doUpdateMessage start ..", c2v.Cmd)
+		c.doUpdateMessage(c2v)
+		log.Info("internal", "doUpdateMessage end..", c2v.Cmd)
 	}
 }
 func (c *Conversation) msgConvert(msg *sdk_struct.MsgStruct) (err error) {
