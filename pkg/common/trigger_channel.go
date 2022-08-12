@@ -122,16 +122,15 @@ type Cmd2Value struct {
 	Cmd   string
 	Value interface{}
 }
-type SourceIDAndSessionType struct {
-	SourceID    string
-	SessionType int32
+type UpdateConInfo struct {
+	UserID  string
+	GroupID string
 }
 type UpdateMessageInfo struct {
-	SendID      string
-	FaceURL     string
-	Nickname    string
-	GroupID     string
-	SessionType int
+	UserID   string
+	FaceURL  string
+	Nickname string
+	GroupID  string
 }
 
 func UnInitAll(conversationCh chan Cmd2Value) error {

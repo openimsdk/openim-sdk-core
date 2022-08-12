@@ -1086,7 +1086,7 @@ func (c *Conversation) FindMessageList(callback open_im_sdk_callback.Base, findM
 		log.NewInfo(operationID, "FindMessageList args: ", findMessageOptions)
 		var unmarshalParams sdk_params_callback.FindMessageListParams
 		common.JsonUnmarshalCallback(findMessageOptions, &unmarshalParams, callback, operationID)
-		result := c.findMessageList(callback, unmarshalParams, operationID, false)
+		result := c.findMessageList(unmarshalParams, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
 		log.NewInfo(operationID, "FindMessageList callback: ", utils.StructToJsonStringDefault(result), "cost time", time.Since(t))
 	}()

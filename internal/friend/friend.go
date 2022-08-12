@@ -637,8 +637,7 @@ func (f *Friend) friendRemarkNotification(msg *api.MsgData, conversationCh chan 
 	}
 	if detail.FromToUserID.FromUserID == f.loginUserID {
 		f.SyncFriendList(operationID)
-		conversationID := utils.GetConversationIDBySessionType(detail.FromToUserID.ToUserID, constant.SingleChatType)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: detail.FromToUserID.ToUserID, SessionType: constant.SingleChatType}}, conversationCh)
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.UpdateConInfo{UserID: detail.FromToUserID.ToUserID}}, conversationCh)
 	}
 }
 
@@ -651,12 +650,11 @@ func (f *Friend) friendInfoChangedNotification(msg *api.MsgData, conversationCh 
 	}
 	if detail.UserID != f.loginUserID {
 		f.SyncFriendList(operationID)
-		conversationID := utils.GetConversationIDBySessionType(detail.UserID, constant.SingleChatType)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: detail.UserID, SessionType: constant.SingleChatType}}, conversationCh)
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.UpdateConInfo{UserID: detail.UserID}}, conversationCh)
 		go func() {
 			friendInfo, err := f.db.GetFriendInfoByFriendUserID(detail.UserID)
 			if err == nil {
-				_ = common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{SendID: detail.UserID, FaceURL: friendInfo.FaceURL, Nickname: friendInfo.Nickname, SessionType: constant.SingleChatType}}, conversationCh)
+				_ = common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: detail.UserID, FaceURL: friendInfo.FaceURL, Nickname: friendInfo.Nickname}}, conversationCh)
 
 			}
 		}()

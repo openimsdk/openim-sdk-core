@@ -113,8 +113,7 @@ func (g *Group) groupInfoSetNotification(msg *api.MsgData, conversationCh chan c
 	detail := api.GroupInfoSetTips{Group: &api.GroupInfo{}}
 	comm.UnmarshalTips(msg, &detail)
 	g.SyncJoinedGroupList(operationID) //todo,  sync some group info
-	conversationID := utils.GetConversationIDBySessionType(detail.Group.GroupID, constant.GroupChatType)
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: detail.Group.GroupID, SessionType: constant.GroupChatType}}, conversationCh)
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.UpdateConInfo{GroupID: detail.Group.GroupID}}, conversationCh)
 }
 
 func (g *Group) joinGroupApplicationNotification(msg *api.MsgData, operationID string) {

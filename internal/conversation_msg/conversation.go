@@ -341,127 +341,74 @@ func (c *Conversation) SyncOneConversation(conversationID, operationID string) {
 	// todo
 }
 
-func (c *Conversation) findMessageList(callback open_im_sdk_callback.Base, req sdk.FindMessageListParams, operationID string, isReverse bool) sdk.FindMessageListCallback {
-	return sdk.FindMessageListCallback{}
-	//t := time.Now()
-	//var sourceID string
-	//var conversationID string
-	//var startTime int64
-	//var sessionType int
-	//var list []*model_struct.LocalChatLog
-	//var err error
-	//var messageList sdk_struct.NewMsgList
-	//var msg sdk_struct.MsgStruct
-	//var notStartTime bool
-	//if req.ConversationID != "" {
-	//	conversationID = req.ConversationID
-	//	lc, err := c.db.GetConversation(conversationID)
-	//	if err != nil {
-	//		return nil
-	//	}
-	//	switch lc.ConversationType {
-	//	case constant.SingleChatType, constant.NotificationChatType:
-	//		sourceID = lc.UserID
-	//	case constant.GroupChatType, constant.SuperGroupChatType:
-	//		sourceID = lc.GroupID
-	//		msg.GroupID = lc.GroupID
-	//	}
-	//	sessionType = int(lc.ConversationType)
-	//	if req.StartClientMsgID == "" {
-	//		//startTime = lc.LatestMsgSendTime + TimeOffset
-	//		////startTime = utils.GetCurrentTimestampByMill()
-	//		notStartTime = true
-	//	} else {
-	//		msg.SessionType = lc.ConversationType
-	//		msg.ClientMsgID = req.StartClientMsgID
-	//		m, err := c.db.GetMessageController(&msg)
-	//		common.CheckDBErrCallback(callback, err, operationID)
-	//		startTime = m.SendTime
-	//	}
-	//} else {
-	//	if req.UserID == "" {
-	//		newConversationID, newSessionType, err := c.getConversationTypeByGroupID(req.GroupID)
-	//		common.CheckDBErrCallback(callback, err, operationID)
-	//		sourceID = req.GroupID
-	//		sessionType = int(newSessionType)
-	//		conversationID = newConversationID
-	//		msg.GroupID = req.GroupID
-	//		msg.SessionType = newSessionType
-	//	} else {
-	//		sourceID = req.UserID
-	//		conversationID = utils.GetConversationIDBySessionType(sourceID, constant.SingleChatType)
-	//		sessionType = constant.SingleChatType
-	//	}
-	//	if req.StartClientMsgID == "" {
-	//		//lc, err := c.db.GetConversation(conversationID)
-	//		//if err != nil {
-	//		//	return nil
-	//		//}
-	//		//startTime = lc.LatestMsgSendTime + TimeOffset
-	//		//startTime = utils.GetCurrentTimestampByMill()
-	//		notStartTime = true
-	//	} else {
-	//		msg.ClientMsgID = req.StartClientMsgID
-	//		m, err := c.db.GetMessageController(&msg)
-	//		common.CheckDBErrCallback(callback, err, operationID)
-	//		startTime = m.SendTime
-	//	}
-	//}
-	//log.Debug(operationID, "Assembly parameters cost time", time.Since(t))
-	//t = time.Now()
-	//log.Info(operationID, "sourceID:", sourceID, "startTime:", startTime, "count:", req.Count, "not start_time", notStartTime)
-	//if notStartTime {
-	//	list, err = c.db.GetMessageListNoTimeController(sourceID, sessionType, req.Count, isReverse)
-	//} else {
-	//	list, err = c.db.GetMessageListController(sourceID, sessionType, req.Count, startTime, isReverse)
-	//}
-	//log.Debug(operationID, "db cost time", time.Since(t))
-	//common.CheckDBErrCallback(callback, err, operationID)
-	//t = time.Now()
-	//for _, v := range list {
-	//	temp := sdk_struct.MsgStruct{}
-	//	tt := time.Now()
-	//	temp.ClientMsgID = v.ClientMsgID
-	//	temp.ServerMsgID = v.ServerMsgID
-	//	temp.CreateTime = v.CreateTime
-	//	temp.SendTime = v.SendTime
-	//	temp.SessionType = v.SessionType
-	//	temp.SendID = v.SendID
-	//	temp.RecvID = v.RecvID
-	//	temp.MsgFrom = v.MsgFrom
-	//	temp.ContentType = v.ContentType
-	//	temp.SenderPlatformID = v.SenderPlatformID
-	//	temp.SenderNickname = v.SenderNickname
-	//	temp.SenderFaceURL = v.SenderFaceURL
-	//	temp.Content = v.Content
-	//	temp.Seq = v.Seq
-	//	temp.IsRead = v.IsRead
-	//	temp.Status = v.Status
-	//	temp.AttachedInfo = v.AttachedInfo
-	//	temp.Ex = v.Ex
-	//	err := c.msgHandleByContentType(&temp)
-	//	if err != nil {
-	//		log.Error(operationID, "Parsing data error:", err.Error(), temp)
-	//		continue
-	//	}
-	//	log.Debug(operationID, "internal unmarshal cost time", time.Since(tt))
-	//
-	//	switch sessionType {
-	//	case constant.GroupChatType:
-	//		fallthrough
-	//	case constant.SuperGroupChatType:
-	//		temp.GroupID = temp.RecvID
-	//		temp.RecvID = c.loginUserID
-	//	}
-	//	messageList = append(messageList, &temp)
-	//}
-	//log.Debug(operationID, "unmarshal cost time", time.Since(t))
-	//t = time.Now()
-	//if !isReverse {
-	//	sort.Sort(messageList)
-	//}
-	//log.Debug(operationID, "sort cost time", time.Since(t))
-	//return sdk.GetHistoryMessageListCallback(messageList)
+func (c *Conversation) findMessageList(req sdk.FindMessageListParams, operationID string) (r sdk.FindMessageListCallback) {
+	type tempConversationAndMessageList struct {
+		conversation *model_struct.LocalConversation
+		msgIDList    []string
+	}
+	var s []*tempConversationAndMessageList
+	for _, conversationsArgs := range req {
+		localConversation, err := c.db.GetConversation(conversationsArgs.ConversationID)
+		if err == nil {
+			t := new(tempConversationAndMessageList)
+			t.conversation = localConversation
+			t.msgIDList = conversationsArgs.ClientMsgIDList
+			s = append(s, t)
+		} else {
+			log.Error(operationID, "GetConversation err:", err.Error(), conversationsArgs.ConversationID)
+		}
+	}
+	for _, v := range s {
+		messages, err := c.db.GetMultipleMessageController(v.msgIDList, v.conversation.GroupID, v.conversation.ConversationType)
+		if err == nil {
+			var tempMessageList []*sdk_struct.MsgStruct
+			for _, message := range messages {
+				temp := sdk_struct.MsgStruct{}
+				temp.ClientMsgID = message.ClientMsgID
+				temp.ServerMsgID = message.ServerMsgID
+				temp.CreateTime = message.CreateTime
+				temp.SendTime = message.SendTime
+				temp.SessionType = message.SessionType
+				temp.SendID = message.SendID
+				temp.RecvID = message.RecvID
+				temp.MsgFrom = message.MsgFrom
+				temp.ContentType = message.ContentType
+				temp.SenderPlatformID = message.SenderPlatformID
+				temp.SenderNickname = message.SenderNickname
+				temp.SenderFaceURL = message.SenderFaceURL
+				temp.Content = message.Content
+				temp.Seq = message.Seq
+				temp.IsRead = message.IsRead
+				temp.Status = message.Status
+				temp.AttachedInfo = message.AttachedInfo
+				temp.Ex = message.Ex
+				err := c.msgHandleByContentType(&temp)
+				if err != nil {
+					log.Error(operationID, "Parsing data error:", err.Error(), temp)
+					continue
+				}
+				switch message.ContentType {
+				case constant.GroupChatType:
+					fallthrough
+				case constant.SuperGroupChatType:
+					temp.GroupID = temp.RecvID
+					temp.RecvID = c.loginUserID
+				}
+				tempMessageList = append(tempMessageList, &temp)
+			}
+			findResultItem := sdk.SearchByConversationResult{}
+			findResultItem.ConversationID = v.conversation.ConversationID
+			findResultItem.FaceURL = v.conversation.FaceURL
+			findResultItem.ShowName = v.conversation.ShowName
+			findResultItem.ConversationType = v.conversation.ConversationType
+			findResultItem.MessageList = tempMessageList
+			findResultItem.MessageCount = len(findResultItem.MessageList)
+			r.FindResultItems = append(r.FindResultItems, &findResultItem)
+			r.TotalCount += findResultItem.MessageCount
+		} else {
+			log.Error(operationID, "GetMultipleMessageController err:", err.Error(), v)
+		}
+	}
 }
 
 func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base, req sdk.GetHistoryMessageListParams, operationID string, isReverse bool) sdk.GetHistoryMessageListCallback {

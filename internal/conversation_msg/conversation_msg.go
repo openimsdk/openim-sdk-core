@@ -1294,14 +1294,14 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 	case constant.UpdateConFaceUrlAndNickName:
 		var lc model_struct.LocalConversation
-		st := node.Args.(common.SourceIDAndSessionType)
-		lc.ConversationID = node.ConID
-		lc.ConversationType = st.SessionType
-		if st.SessionType == constant.SingleChatType {
-			lc.UserID = st.SourceID
+		st := node.Args.(common.UpdateConInfo)
+		if st.GroupID == "" {
+			lc.UserID = st.UserID
+			lc.ConversationID = utils.GetConversationIDBySessionType(st.UserID, constant.SingleChatType)
+			lc.ConversationType = constant.SingleChatType
 		} else {
-			lc.GroupID = st.SourceID
-			conversationID, conversationType, err := c.getConversationTypeByGroupID(st.SourceID)
+			lc.GroupID = st.GroupID
+			conversationID, conversationType, err := c.getConversationTypeByGroupID(st.GroupID)
 			if err != nil {
 				log.Error("internal", "getConversationTypeByGroupID database err:", err.Error())
 				return
@@ -1418,7 +1418,7 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 	switch node.Action {
 	case constant.UpdateMsgFaceUrlAndNickName:
 		args := node.Args.(common.UpdateMessageInfo)
-		err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(args.SendID, args.FaceURL, args.Nickname, args.SessionType)
+		err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(args.UserID, args.FaceURL, args.Nickname, constant.SingleChatType)
 		if err != nil {
 			log.Error("internal", "UpdateMsgSenderFaceURLAndSenderNickname err:", err.Error())
 		}
