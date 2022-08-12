@@ -409,6 +409,7 @@ func (c *Conversation) findMessageList(req sdk.FindMessageListParams, operationI
 			log.Error(operationID, "GetMultipleMessageController err:", err.Error(), v)
 		}
 	}
+	return r
 }
 
 func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base, req sdk.GetHistoryMessageListParams, operationID string, isReverse bool) sdk.GetHistoryMessageListCallback {
