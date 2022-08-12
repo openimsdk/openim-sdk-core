@@ -72,7 +72,6 @@ func (m *ReadDiffusionGroupMsgSync) compareSeq(operationID string) {
 
 	defer m.superGroupMtx.Unlock()
 	for _, v := range m.SuperGroupIDList {
-
 		n, err := m.GetSuperGroupNormalMsgSeq(v)
 		if err != nil {
 			log.Error(operationID, "GetSuperGroupNormalMsgSeq failed ", err.Error(), v)

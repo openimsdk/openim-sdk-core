@@ -633,7 +633,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			}
 
 		}
-		log.Warn(operationID, "before insert  message is ", s)
+		log.Debug(operationID, "before insert  message is ", s)
 		oldMessage, err := c.db.GetMessageController(&s)
 		if err != nil {
 			msgStructToLocalChatLog(&localMessage, &s)
@@ -733,7 +733,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			if err != nil {
 				log.Warn(operationID, "get message err")
 			}
-			log.Warn(operationID, "before update database message is ", *oldMessage)
+			log.Debug(operationID, "before update database message is ", *oldMessage)
 			if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Voice, constant.Video, constant.File}) {
 				msgStructToLocalChatLog(&localMessage, &s)
 				log.Warn(operationID, "update message is ", s, localMessage)

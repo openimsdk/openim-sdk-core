@@ -257,7 +257,7 @@ func (m *SelfMsgSync) triggerCmdNewMsgCome(msgList []*server_api_params.MsgData,
 			log.Warn(operationID, "TriggerCmdNewMsgCome failed, try again ", err.Error(), m.loginUserID)
 			continue
 		}
-		log.Warn(operationID, "TriggerCmdNewMsgCome ok ", m.loginUserID)
+		log.Debug(operationID, "TriggerCmdNewMsgCome ok ", m.loginUserID)
 		return
 	}
 }
