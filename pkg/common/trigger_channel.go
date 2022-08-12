@@ -130,6 +130,7 @@ type UpdateMessageInfo struct {
 	SendID      string
 	FaceURL     string
 	Nickname    string
+	GroupID     string
 	SessionType int
 }
 
