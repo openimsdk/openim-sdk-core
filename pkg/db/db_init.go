@@ -39,7 +39,7 @@ func (d *DataBase) CloseDB() error {
 	return nil
 }
 
-func NewDataBase(loginUserID string, dbDir string) (*DataBase, error) {
+func NewDataBase(loginUserID string, dbDir string, operationID string) (*DataBase, error) {
 	UserDBLock.Lock()
 	defer UserDBLock.Unlock()
 	dataBase, ok := UserDBMap[loginUserID]
@@ -47,12 +47,12 @@ func NewDataBase(loginUserID string, dbDir string) (*DataBase, error) {
 		dataBase = &DataBase{loginUserID: loginUserID, dbDir: dbDir}
 		err := dataBase.initDB()
 		if err != nil {
-			return dataBase, utils.Wrap(err, "initDB failed")
+			return dataBase, utils.Wrap(err, "initDB failed "+dbDir)
 		}
 		UserDBMap[loginUserID] = dataBase
-		log.Info("", "open db", loginUserID)
+		log.Info(operationID, "open db", loginUserID)
 	} else {
-		log.Info("", "db in map", loginUserID)
+		log.Info(operationID, "db in map", loginUserID)
 	}
 	dataBase.setChatLogFailedStatus()
 	return dataBase, nil

@@ -161,13 +161,10 @@ func (u *LoginMgr) wakeUp(cb open_im_sdk_callback.Base, operationID string) {
 func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
 	log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)
 	t1 := time.Now()
-	//err, exp := CheckToken(userID, token, operationID)
-	//common.CheckTokenErrCallback(cb, err, operationID)
-	//log.Info(operationID, "checkToken ok ", userID, token, exp, "login cost time: ", time.Since(t1))
 	u.token = token
 	u.loginUserID = userID
 
-	db, err := db.NewDataBase(userID, sdk_struct.SvrConf.DataDir)
+	db, err := db.NewDataBase(userID, sdk_struct.SvrConf.DataDir, operationID)
 	if err != nil {
 		cb.OnError(constant.ErrDB.ErrCode, err.Error())
 		log.Error(operationID, "NewDataBase failed ", err.Error())
