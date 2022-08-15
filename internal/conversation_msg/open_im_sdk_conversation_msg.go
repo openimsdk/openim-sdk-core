@@ -1418,27 +1418,6 @@ func (c *Conversation) SetConversationStatus(callback open_im_sdk_callback.Base,
 	}()
 }
 
-//func (c *Conversation) FindMessages(callback common.Base, messageIDList string) {
-//	go func() {
-//		var c []string
-//		err := json.Unmarshal([]byte(messageIDList), &c)
-//		if err != nil {
-//			callback.OnError(200, err.Error())
-//			utils.sdkLog("Unmarshal failed, ", err.Error())
-//
-//		}
-//		err, list := u.getMultipleMessageModel(c)
-//		if err != nil {
-//			callback.OnError(203, err.Error())
-//		} else {
-//			if list != nil {
-//				callback.OnSuccess(utils.structToJsonString(list))
-//			} else {
-//				callback.OnSuccess(utils.structToJsonString([]utils.MsgStruct{}))
-//			}
-//		}
-//	}()
-//}
 func (c *Conversation) SearchLocalMessages(callback open_im_sdk_callback.Base, searchParam, operationID string) {
 	if callback == nil {
 		return

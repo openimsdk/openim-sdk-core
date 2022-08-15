@@ -78,15 +78,29 @@ func DoTestGetHistoryMessage(userID string) {
 	params.Count = 10
 	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
 }
+func DoTestFindMessageList() {
+	var testFindMessageListCallBack FindMessageListCallBack
+	testFindMessageListCallBack.OperationID = utils.OperationIDGenerator()
+	var params sdk_params_callback.FindMessageListParams
+	temp := sdk_params_callback.ConversationArgs{ConversationID: "super_group_1360287297", ClientMsgIDList: []string{"39203943c94e23630af69b21a7414852", "736f40f902046a6e879dc7257d3e81df"}}
+	temp1 := sdk_params_callback.ConversationArgs{ConversationID: "super_group_3320742908", ClientMsgIDList: []string{"acf09fcdda48bf2cb39faba31ac63b5c", "b121d3a7f269636afd255b6001d3fc80", "d8951d1c5192ad39f37f44de93a83302"}}
+	params = append(params, &temp)
+	params = append(params, &temp1)
+	open_im_sdk.FindMessageList(testFindMessageListCallBack, testFindMessageListCallBack.OperationID, utils.StructToJsonString(params))
+}
+func DoTestUpdateFcmToken() {
+	var testUpdateFcmTokenCallBack UpdateFcmTokenCallBack
+	testUpdateFcmTokenCallBack.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.UpdateFcmToken(testUpdateFcmTokenCallBack, "2132323", testUpdateFcmTokenCallBack.OperationID)
+}
 
-func DoTestGetAdvancedHistoryMessageList(userID string) {
-	var testGetHistoryCallBack GetHistoryCallBack
-	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
+func DoTestGetAdvancedHistoryMessageList(testGetHistoryCallBack GetHistoryCallBack, seq uint32) {
 	var params sdk_params_callback.GetAdvancedHistoryMessageListParams
-	params.UserID = userID
+	params.UserID = ""
 	params.ConversationID = "super_group_3907826375"
 	//params.StartClientMsgID = "97f12899778823019f13ea46b0c1e6dd"
-	params.Count = 10
+	params.Count = 30
+	params.LastMinSeq = seq
 	open_im_sdk.GetAdvancedHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
 }
 func DoTestGetHistoryMessageReverse(userID string) {
@@ -352,6 +366,7 @@ func (t TestSetConversationDraft) OnSuccess(data string) {
 
 type GetHistoryCallBack struct {
 	OperationID string
+	Data        string
 }
 
 func (g GetHistoryCallBack) OnError(errCode int32, errMsg string) {
@@ -359,7 +374,32 @@ func (g GetHistoryCallBack) OnError(errCode int32, errMsg string) {
 }
 
 func (g GetHistoryCallBack) OnSuccess(data string) {
+	g.Data = data
 	log.Info(g.OperationID, "get History success ", data)
+}
+
+type UpdateFcmTokenCallBack struct {
+	OperationID string
+}
+
+func (g UpdateFcmTokenCallBack) OnError(errCode int32, errMsg string) {
+	log.Info(g.OperationID, "UpdateFcmTokenCallBack err", errCode, errMsg)
+}
+
+func (g UpdateFcmTokenCallBack) OnSuccess(data string) {
+	log.Info(g.OperationID, "UpdateFcmTokenCallBack success ", data)
+}
+
+type FindMessageListCallBack struct {
+	OperationID string
+}
+
+func (g FindMessageListCallBack) OnError(errCode int32, errMsg string) {
+	log.Info(g.OperationID, "FindMessageListCallBack err", errCode, errMsg)
+}
+
+func (g FindMessageListCallBack) OnSuccess(data string) {
+	log.Info(g.OperationID, "FindMessageListCallBack success ", data)
 }
 
 type GetHistoryReverseCallBack struct {
