@@ -88,6 +88,11 @@ func DoTestFindMessageList() {
 	params = append(params, &temp1)
 	open_im_sdk.FindMessageList(testFindMessageListCallBack, testFindMessageListCallBack.OperationID, utils.StructToJsonString(params))
 }
+func DoTestUpdateFcmToken() {
+	var testUpdateFcmTokenCallBack UpdateFcmTokenCallBack
+	testUpdateFcmTokenCallBack.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.UpdateFcmToken(testUpdateFcmTokenCallBack, "2132323", testUpdateFcmTokenCallBack.OperationID)
+}
 
 func DoTestGetAdvancedHistoryMessageList(testGetHistoryCallBack GetHistoryCallBack, seq uint32) {
 	var params sdk_params_callback.GetAdvancedHistoryMessageListParams
@@ -371,6 +376,18 @@ func (g GetHistoryCallBack) OnError(errCode int32, errMsg string) {
 func (g GetHistoryCallBack) OnSuccess(data string) {
 	g.Data = data
 	log.Info(g.OperationID, "get History success ", data)
+}
+
+type UpdateFcmTokenCallBack struct {
+	OperationID string
+}
+
+func (g UpdateFcmTokenCallBack) OnError(errCode int32, errMsg string) {
+	log.Info(g.OperationID, "UpdateFcmTokenCallBack err", errCode, errMsg)
+}
+
+func (g UpdateFcmTokenCallBack) OnSuccess(data string) {
+	log.Info(g.OperationID, "UpdateFcmTokenCallBack success ", data)
 }
 
 type FindMessageListCallBack struct {
