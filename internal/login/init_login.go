@@ -42,6 +42,7 @@ type LoginMgr struct {
 	ws           *ws.Ws
 	msgSync      *ws.MsgSync
 	heartbeat    *heartbeart.Heartbeat
+	push         *comm2.Push
 	cache        *cache.Cache
 	token        string
 	loginUserID  string
@@ -70,6 +71,10 @@ type LoginMgr struct {
 
 	id2MinSeq map[string]uint32
 	postApi   *ws.PostApi
+}
+
+func (u *LoginMgr) Push() *comm2.Push {
+	return u.push
 }
 
 func (u *LoginMgr) Organization() *organization.Organization {
@@ -164,13 +169,13 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.token = token
 	u.loginUserID = userID
 
-	db, err := db.NewDataBase(userID, sdk_struct.SvrConf.DataDir, operationID)
+	sqliteConn, err := db.NewDataBase(userID, sdk_struct.SvrConf.DataDir, operationID)
 	if err != nil {
 		cb.OnError(constant.ErrDB.ErrCode, err.Error())
 		log.Error(operationID, "NewDataBase failed ", err.Error())
 		return
 	}
-	u.db = db
+	u.db = sqliteConn
 	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir, "login cost time: ", time.Since(t1))
 
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
@@ -184,7 +189,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.id2MinSeq = make(map[string]uint32, 100)
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
 	u.postApi = p
-	u.user = user.NewUser(db, p, u.loginUserID)
+	u.user = user.NewUser(sqliteConn, p, u.loginUserID)
 	u.user.SetListener(u.userListener)
 
 	u.friend = friend.NewFriend(u.loginUserID, u.db, u.user, p)
@@ -201,7 +206,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.workMoments.SetListener(u.workMomentsListener)
 	log.NewInfo(operationID, u.imConfig.ObjectStorage, "new obj login cost time: ", time.Since(t1))
 	log.NewInfo(operationID, u.imConfig.ObjectStorage, "SyncLoginUserInfo login cost time: ", time.Since(t1))
-
+	u.push = comm2.NewPush(p, u.imConfig.Platform)
 	go u.forcedSynchronization()
 
 	log.Info(operationID, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
@@ -213,6 +218,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.msgSync = ws.NewMsgSync(u.db, u.ws, u.loginUserID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
 	u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
+
 	var objStorage comm3.ObjectStorage
 	switch u.imConfig.ObjectStorage {
 	case "cos":

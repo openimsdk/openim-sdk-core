@@ -1206,3 +1206,11 @@ func ClearWorkMomentsNotification(callback open_im_sdk_callback.Base, operationI
 	}
 	userForSDK.WorkMoments().ClearWorkMomentsNotification(callback, operationID)
 }
+func UpdateFcmToken(callback open_im_sdk_callback.Base, fmcToken, operationID string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Push().UpdateFcmToken(callback, fmcToken, operationID)
+}

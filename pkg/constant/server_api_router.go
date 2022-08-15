@@ -76,6 +76,9 @@ const (
 	//super_group
 	GetJoinedSuperGroupListRouter = RouterSuperGroup + "/get_joined_group_list"
 	GetSuperGroupsInfoRouter      = RouterSuperGroup + "/get_groups_info"
+
+	//third
+	FcmUpdateTokenRouter = RouterThird + "/fcm_update_token"
 )
 const (
 	RouterGroup        = "/group"
@@ -84,4 +87,5 @@ const (
 	RouterAuth         = "/auth"
 	RouterSuperGroup   = "/super_group"
 	RouterMsg          = "/msg"
+	RouterThird        = "/third"
 )
