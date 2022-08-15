@@ -310,7 +310,7 @@ func (d *DataBase) SuperGroupGetMultipleMessage(conversationIDList []string, gro
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []model_struct.LocalChatLog
-	err = utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Where("client_msg_id IN ?", conversationIDList).Find(&messageList).Error, "GetMultipleMessage failed")
+	err = utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Where("client_msg_id IN ?", conversationIDList).Order("send_time DESC").Find(&messageList).Error, "GetMultipleMessage failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)
