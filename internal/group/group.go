@@ -522,6 +522,11 @@ func (g *Group) searchGroups(callback open_im_sdk_callback.Base, param sdk.Searc
 func (g *Group) getGroupsInfo(groupIDList sdk.GetGroupsInfoParam, callback open_im_sdk_callback.Base, operationID string) sdk.GetGroupsInfoCallback {
 	groupList, err := g.db.GetJoinedGroupList()
 	common.CheckDBErrCallback(callback, err, operationID)
+	superGroupList, err := g.db.GetJoinedSuperGroupList()
+	common.CheckDBErrCallback(callback, err, operationID)
+	if len(superGroupList) > 0 {
+		groupList = append(groupList, superGroupList...)
+	}
 	var result sdk.GetGroupsInfoCallback
 	var notInDB []string
 
