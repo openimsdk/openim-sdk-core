@@ -116,6 +116,10 @@ func (s *LiveSignaling) getSelfParticipant(groupID string, callback open_im_sdk_
 	return &p
 }
 
+func (s *LiveSignaling) handleGetRoomByGroupIDReq(i *api.SignalGetRoomByGroupIDReply) string {
+	return ""
+}
+
 func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value, operationID string) {
 	log.Info(operationID, utils.GetSelfFuncName(), "args ", msg.String())
 	if s.listener == nil {
@@ -221,6 +225,9 @@ func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk
 		s.isCanceled = false
 		log.Info(operationID, "signaling response ", payload.InviteInGroup.String())
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.InviteInGroupCallback(payload.InviteInGroup)))
+	case *api.SignalResp_GetRoomByGroupID:
+		log.Info(operationID, "signaling response ", payload.GetRoomByGroupID.String())
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GetRoomByGroupIDCallback(payload.GetRoomByGroupID)))
 	default:
 		log.Error(operationID, "resp payload type failed ", payload)
 		common.CheckAnyErrCallback(callback, 3002, errors.New("resp payload type failed"), operationID)

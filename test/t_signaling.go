@@ -132,3 +132,8 @@ func DoTestHungUp() {
 	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
 	open_im_sdk.SignalingHungUp(t, t.OperationID, s)
 }
+
+func DoTestSignalGetRoomByGroupID(groupID string) {
+	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
+	open_im_sdk.SignalGetRoomByGroupID(t, t.OperationID, groupID)
+}
