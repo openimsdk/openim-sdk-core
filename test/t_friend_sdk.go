@@ -504,7 +504,7 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	cf.WsAddr = ws
 	cf.Platform = 1
 	cf.DataDir = "./"
-	cf.LogLevel = 3
+	cf.LogLevel = uint32(LogLevel)
 	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
 
 	operationID := utils.OperationIDGenerator()

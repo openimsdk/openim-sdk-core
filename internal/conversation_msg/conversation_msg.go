@@ -169,9 +169,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		case v.ContentType == constant.ConversationChangeNotification || v.ContentType == constant.ConversationPrivateChatNotification:
 			log.Info(operationID, utils.GetSelfFuncName(), v)
 			c.DoNotification(v)
-		case v.ContentType > constant.SuperGroupNotificationBegin:
-			fallthrough
-		case v.ContentType < constant.SuperGroupNotificationEnd:
+		case v.ContentType == constant.MsgDeleteNotification:
 			c.full.SuperGroup.DoNotification(v, c.GetCh())
 		case v.ContentType == constant.ConversationUnreadNotification:
 			var unreadArgs server_api_params.ConversationUpdateTips
@@ -979,45 +977,46 @@ func (c *Conversation) tempCacheChatLog(messageList []*sdk_struct.MsgStruct) {
 func (c *Conversation) newRevokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 	var failedRevokeMessageList []*sdk_struct.MsgStruct
 	for _, w := range msgRevokeList {
-		if c.msgListener != nil {
-			var msg sdk_struct.MessageRevoked
-			err := json.Unmarshal([]byte(w.Content), &msg)
-			if err != nil {
-				log.Error("internal", "unmarshal failed, err : ", err.Error(), *w)
-				continue
+		var msg sdk_struct.MessageRevoked
+		err := json.Unmarshal([]byte(w.Content), &msg)
+		if err != nil {
+			log.Error("internal", "unmarshal failed, err : ", err.Error(), *w)
+			continue
+		}
+		t := new(model_struct.LocalChatLog)
+		t.ClientMsgID = msg.ClientMsgID
+		t.Status = constant.MsgStatusRevoked
+		t.SessionType = msg.SessionType
+		t.RecvID = w.GroupID
+		err = c.db.UpdateMessageController(t)
+		if err != nil {
+			log.Error("internal", "setLocalMessageStatus revokeMessage err:", err.Error(), "msg", w)
+			failedRevokeMessageList = append(failedRevokeMessageList, w)
+			switch msg.SessionType {
+			case constant.SuperGroupChatType:
+				err := c.db.InsertMessageController(t)
+				if err != nil {
+					log.Error("internal", "InsertMessageController preDefine Message err:", err.Error(), "msg", *t)
+				}
 			}
+		} else {
 			t := new(model_struct.LocalChatLog)
-			t.ClientMsgID = msg.ClientMsgID
-			t.Status = constant.MsgStatusRevoked
-			t.SessionType = msg.SessionType
+			t.ClientMsgID = w.ClientMsgID
+			t.SendTime = msg.SourceMessageSendTime
+			t.SessionType = w.SessionType
 			t.RecvID = w.GroupID
 			err = c.db.UpdateMessageController(t)
 			if err != nil {
 				log.Error("internal", "setLocalMessageStatus revokeMessage err:", err.Error(), "msg", w)
-				failedRevokeMessageList = append(failedRevokeMessageList, w)
-				switch msg.SessionType {
-				case constant.SuperGroupChatType:
-					err := c.db.InsertMessageController(t)
-					if err != nil {
-						log.Error("internal", "InsertMessageController preDefine Message err:", err.Error(), "msg", *t)
-					}
-				}
-			} else {
-				t := new(model_struct.LocalChatLog)
-				t.ClientMsgID = w.ClientMsgID
-				t.SendTime = msg.SourceMessageSendTime
-				t.SessionType = w.SessionType
-				t.RecvID = w.GroupID
-				err = c.db.UpdateMessageController(t)
-				if err != nil {
-					log.Error("internal", "setLocalMessageStatus revokeMessage err:", err.Error(), "msg", w)
-				}
-				log.Info("internal", "v.OnNewRecvMessageRevoked client_msg_id:", msg.ClientMsgID)
-				c.msgListener.OnNewRecvMessageRevoked(w.Content)
 			}
-		} else {
-			log.Error("internal", "set msgListener is err:")
+			log.Info("internal", "v.OnNewRecvMessageRevoked client_msg_id:", msg.ClientMsgID)
+			if c.msgListener != nil {
+				c.msgListener.OnNewRecvMessageRevoked(w.Content)
+			} else {
+				log.Error("internal", "set msgListener is err:")
+			}
 		}
+
 	}
 	if len(failedRevokeMessageList) > 0 {
 		//c.tempCacheChatLog(failedRevokeMessageList)

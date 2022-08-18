@@ -52,48 +52,50 @@ func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecon
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
 		go func(idx int) {
-			RegisterUserReliability(idx, timeStamp)
+			RegisterReliabilityUser(idx, timeStamp)
 			wg.Done()
 		}(i)
 	}
 	wg.Wait()
-	log.Info("", "RegisterUserReliability finish ", clientNum)
-
+	log.Warn("", "RegisterReliabilityUser finished, clientNum: ", clientNum)
+	log.Warn("", " init, login, send msg, start ")
 	rand.Seed(time.Now().UnixNano())
 
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
 		rdSleep := rand.Intn(randSleepMaxSecond) + 1
-		isSend := rand.Intn(2)
+		isSend := 0
 		if isSend == 0 {
 			go func(idx int) {
+				log.Warn("", " send msg flag true ", idx)
 				ReliabilityOne(idx, rdSleep, true, intervalSleepMS)
 				wg.Done()
 			}(i)
 			sendMsgClient++
 		} else {
 			go func(idx int) {
+				log.Warn("", " send msg flag false ", idx)
 				ReliabilityOne(idx, rdSleep, false, intervalSleepMS)
 				wg.Done()
 			}(i)
 		}
 	}
 	wg.Wait()
-	log.Warn("CheckReliabilityResult start, send msg client number: ", sendMsgClient, "total client number: ", clientNum)
+	log.Warn("send msg finish,  CheckReliabilityResult")
 
 	for {
-		if CheckReliabilityResult() {
+		if CheckReliabilityResult(msgNumOneClient, clientNum) {
 			log.Warn("", "CheckReliabilityResult ok, exit")
 			os.Exit(0)
 			return
 		} else {
 			log.Warn("", "CheckReliabilityResult failed , wait.... ")
 		}
-		time.Sleep(time.Duration(300) * time.Second)
+		time.Sleep(time.Duration(30) * time.Second)
 	}
 }
 
-func PressTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecond int, clientNum int) {
+func PressTest(msgNumOneClient int, intervalSleepMS int, clientNum int) {
 	msgNumInOneClient = msgNumOneClient
 	timeStamp := utils.Int64ToString(time.Now().Unix())
 
@@ -101,41 +103,33 @@ func PressTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecond int,
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
 		go func(idx int) {
-			RegisterUserReliability(idx, timeStamp)
+			RegisterPressUser(idx, timeStamp)
 			log.Warn("", "get user token finish ", idx)
 			wg.Done()
 		}(i)
 	}
 	wg.Wait()
-	log.Info("", "get all user token finish ", clientNum)
-
-	rand.Seed(time.Now().UnixNano())
+	log.Warn("", "get all user token finish ", clientNum)
 
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
-		rdSleep := rand.Intn(randSleepMaxSecond) + 1
-		isSend := rand.Intn(2)
-		isSend = 0
-		if isSend == 0 {
-			go func(idx int) {
-				PressOne(idx, rdSleep, true, intervalSleepMS)
-				wg.Done()
-			}(i)
-			sendMsgClient++
-		} else {
-			go func(idx int) {
-				PressOne(idx, rdSleep, false, intervalSleepMS)
-				wg.Done()
-			}(i)
-		}
+		go func(idx int) {
+			PressOne(idx, 0, true, intervalSleepMS)
+			wg.Done()
+		}(i)
 	}
 	wg.Wait()
-	log.Warn("CheckReliabilityResult start, send msg client number: ", sendMsgClient, "total client number: ", clientNum)
+	log.Warn("PressTest  send msg client number: ", clientNum, "total msg num: ", clientNum*msgNumOneClient)
 }
 
-func CheckReliabilityResult() bool {
+func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 	log.Info("", "start check map send -> map recv")
 	sameNum := 0
+
+	if len(SendSuccAllMsg)+len(SendFailedAllMsg) != msgNumOneClient*clientNum {
+		log.Warn("", utils.GetSelfFuncName(), " send succ, number :", len(SendSuccAllMsg), " send failed , number : ", len(SendFailedAllMsg), "all: ", msgNumOneClient*clientNum)
+		return false
+	}
 
 	for ksend, vsend := range SendSuccAllMsg {
 		krecv, ok := RecvAllMsg[ksend]
@@ -272,9 +266,7 @@ func PressOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS i
 					break
 				}
 			}
-
-			DoTestSendMsgPress(index, strMyUid, recvId, idx)
-
+			DoTestSendMsg(index, strMyUid, recvId, idx)
 		}
 		//Msgwg.Done()
 	}
