@@ -21,10 +21,11 @@ import (
 
 type User struct {
 	*db.DataBase
-	p           *ws.PostApi
-	loginUserID string
-	listener    open_im_sdk_callback.OnUserListener
-	loginTime   int64
+	p              *ws.PostApi
+	loginUserID    string
+	listener       open_im_sdk_callback.OnUserListener
+	loginTime      int64
+	conversationCh chan common.Cmd2Value
 }
 
 func (u *User) LoginTime() int64 {
@@ -39,8 +40,8 @@ func (u *User) SetListener(listener open_im_sdk_callback.OnUserListener) {
 	u.listener = listener
 }
 
-func NewUser(dataBase *db.DataBase, p *ws.PostApi, loginUserID string) *User {
-	return &User{DataBase: dataBase, p: p, loginUserID: loginUserID}
+func NewUser(dataBase *db.DataBase, p *ws.PostApi, loginUserID string, conversationCh chan common.Cmd2Value) *User {
+	return &User{DataBase: dataBase, p: p, loginUserID: loginUserID, conversationCh: conversationCh}
 }
 
 func (u *User) DoNotification(msg *api.MsgData) {

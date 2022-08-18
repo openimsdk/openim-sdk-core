@@ -37,6 +37,7 @@ type Friend struct {
 	user           *user.User
 	p              *ws.PostApi
 	loginTime      int64
+	conversationCh chan common.Cmd2Value
 }
 
 func (f *Friend) LoginTime() int64 {
@@ -51,8 +52,8 @@ func (f *Friend) Db() *db.DataBase {
 	return f.db
 }
 
-func NewFriend(loginUserID string, db *db.DataBase, user *user.User, p *ws.PostApi) *Friend {
-	return &Friend{loginUserID: loginUserID, db: db, user: user, p: p}
+func NewFriend(loginUserID string, db *db.DataBase, user *user.User, p *ws.PostApi, conversationCh chan common.Cmd2Value) *Friend {
+	return &Friend{loginUserID: loginUserID, db: db, user: user, p: p, conversationCh: conversationCh}
 }
 
 func (f *Friend) SetListener(listener open_im_sdk_callback.OnFriendshipListener) {
@@ -498,13 +499,14 @@ func (f *Friend) SyncFriendList(operationID string) {
 		if err != nil {
 			log.NewError(operationID, "UpdateFriendRequest failed ", err.Error(), *friendsInfoOnServer[index])
 			continue
-			//if !strings.Contains(err.Error(), "RowsAffected == 0") {
-			//
-			//}
-
 		} else {
 			callbackData := sdk.FriendInfoChangedCallback(*friendsInfoOnServer[index])
 			f.friendListener.OnFriendInfoChanged(utils.StructToJsonString(callbackData))
+			//	conID := utils.GetConversationIDBySessionType(callbackData.FriendUserID, constant.SingleChatType)
+			if friendsInfoOnServer[index].FaceURL != friendsInfoOnLocal[index].FaceURL || friendsInfoOnServer[index].Nickname != friendsInfoOnLocal[index].Nickname {
+				//	common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conID, Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: callbackData.FriendUserID, SessionType: constant.SingleChatType}}, f.conversationCh)
+				//	common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{SendID: callbackData.FriendUserID, FaceURL: callbackData.FaceURL, Nickname: callbackData.Nickname, SessionType: constant.SingleChatType}}, f.conversationCh)
+			}
 			log.Info(operationID, "OnFriendInfoChanged", utils.StructToJsonString(callbackData))
 		}
 	}

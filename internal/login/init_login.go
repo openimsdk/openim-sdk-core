@@ -189,13 +189,13 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.id2MinSeq = make(map[string]uint32, 100)
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
 	u.postApi = p
-	u.user = user.NewUser(sqliteConn, p, u.loginUserID)
+	u.user = user.NewUser(sqliteConn, p, u.loginUserID, u.conversationCh)
 	u.user.SetListener(u.userListener)
 
-	u.friend = friend.NewFriend(u.loginUserID, u.db, u.user, p)
+	u.friend = friend.NewFriend(u.loginUserID, u.db, u.user, p, u.conversationCh)
 	u.friend.SetFriendListener(u.friendListener)
 
-	u.group = group.NewGroup(u.loginUserID, u.db, p, u.joinedSuperGroupCh, u.heartbeatCmdCh)
+	u.group = group.NewGroup(u.loginUserID, u.db, p, u.joinedSuperGroupCh, u.heartbeatCmdCh, u.conversationCh)
 	u.group.SetGroupListener(u.groupListener)
 	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db, p, u.joinedSuperGroupCh, u.heartbeatCmdCh)
 	u.organization = organization.NewOrganization(u.loginUserID, u.db, p)
@@ -411,7 +411,7 @@ func CheckToken(userID, token string, operationID string) (error, uint32) {
 	}
 	log.Debug(operationID, utils.GetSelfFuncName(), userID, token)
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
-	user := user.NewUser(nil, p, userID)
+	user := user.NewUser(nil, p, userID, nil)
 	//_, err := user.GetSelfUserInfoFromSvr(operationID)
 	//if err != nil {
 	//	return utils.Wrap(err, "GetSelfUserInfoFromSvr failed "+operationID), 0

@@ -302,7 +302,7 @@ func DotestGetGroupMemberList() {
 	var test testGetGroupMemberList
 	test.OperationID = utils.OperationIDGenerator()
 	var groupId = TestgroupID
-	open_im_sdk.GetGroupMemberList(test, test.OperationID, groupId, 0, 0, 100)
+	open_im_sdk.GetGroupMemberList(test, test.OperationID, groupId, 4, 0, 100)
 }
 
 func DotestCos() {

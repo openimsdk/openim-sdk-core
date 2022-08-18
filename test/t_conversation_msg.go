@@ -600,6 +600,20 @@ func DoTestSendMsg2Group(sendId, groupID string, index int) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
 }
 
+func DoTestSendMsg2c2c(sendId, recvID string, index int) {
+	m := "test: " + sendId + " : " + recvID + " : " + utils.IntToString(index)
+	operationID := utils.OperationIDGenerator()
+	s := DoTestCreateTextMessage(m)
+	log.NewInfo(operationID, "send msg:", s)
+	var testSendMsg TestSendMsgCallBack
+	testSendMsg.OperationID = operationID
+	o := server_api_params.OfflinePushInfo{}
+	o.Title = "Title"
+	o.Desc = "Desc"
+	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
+}
+
 type TestMarkGroupMessageAsRead struct {
 	OperationID string
 }
@@ -624,9 +638,7 @@ func DoTestMarkGroupMessageAsRead() {
 func DoTestSendMsg(index int, sendId, recvID string, idx string) {
 	m := "test msg " + sendId + ":" + recvID + ":" + idx
 	operationID := utils.OperationIDGenerator()
-	//coreMgrLock.Lock()
 	s := DoTestCreateTextMessageReliability(allLoginMgr[index].mgr, m)
-	//coreMgrLock.Unlock()
 	var mstruct sdk_struct.MsgStruct
 	_ = json.Unmarshal([]byte(s), &mstruct)
 
@@ -638,42 +650,31 @@ func DoTestSendMsg(index int, sendId, recvID string, idx string) {
 	testSendMsg.sendID = sendId
 	testSendMsg.recvID = recvID
 	testSendMsg.msgID = mstruct.ClientMsgID
-
 	log.Info(operationID, "SendMessage", sendId, recvID, testSendMsg.msgID, index)
-	// SendMessage(callback open_im_sdk_callback.SendMsgCallBack, message, recvID,
-	//groupID string, offlinePushInfo string, operationID string) {
-
-	//coreMgrLock.Lock()
 	allLoginMgr[index].mgr.Conversation().SendMessage(&testSendMsg, s, recvID, "", utils.StructToJsonString(o), operationID)
-	//coreMgrLock.Unlock()
 }
 
-func DoTestSendMsgPress(index int, sendId, recvID string, idx string) {
-	m := "test msg " + sendId + ":" + recvID + ":" + idx
-	operationID := utils.OperationIDGenerator()
-	//coreMgrLock.Lock()
-	s := DoTestCreateTextMessageReliability(allLoginMgr[index].mgr, m)
-	//coreMgrLock.Unlock()
-	var mstruct sdk_struct.MsgStruct
-	_ = json.Unmarshal([]byte(s), &mstruct)
-
-	var testSendMsg TestSendMsgCallBackPress
-	testSendMsg.OperationID = operationID
-	o := server_api_params.OfflinePushInfo{}
-	o.Title = "title"
-	o.Desc = "desc"
-	testSendMsg.sendID = sendId
-	testSendMsg.recvID = recvID
-	testSendMsg.msgID = mstruct.ClientMsgID
-
-	log.Warn(operationID, "SendMessage", sendId, recvID, testSendMsg.msgID, index)
-	// SendMessage(callback open_im_sdk_callback.SendMsgCallBack, message, recvID,
-	//groupID string, offlinePushInfo string, operationID string) {
-
-	//coreMgrLock.Lock()
-	allLoginMgr[index].mgr.Conversation().SendMessage(&testSendMsg, s, recvID, "", utils.StructToJsonString(o), operationID)
-	//coreMgrLock.Unlock()
-}
+//
+//func DoTestSendMsgPress(index int, sendId, recvID string, idx string) {
+//	m := "test msg " + sendId + ":" + recvID + ":" + idx
+//	operationID := utils.OperationIDGenerator()
+//	s := DoTestCreateTextMessageReliability(allLoginMgr[index].mgr, m)
+//	var mstruct sdk_struct.MsgStruct
+//	_ = json.Unmarshal([]byte(s), &mstruct)
+//
+//	var testSendMsg TestSendMsgCallBackPress
+//	testSendMsg.OperationID = operationID
+//	o := server_api_params.OfflinePushInfo{}
+//	o.Title = "title"
+//	o.Desc = "desc"
+//	testSendMsg.sendID = sendId
+//	testSendMsg.recvID = recvID
+//	testSendMsg.msgID = mstruct.ClientMsgID
+//
+//	log.Warn(operationID, "SendMessage", sendId, recvID, testSendMsg.msgID, index)
+//
+//	allLoginMgr[index].mgr.Conversation().SendMessage(&testSendMsg, s, recvID, "", utils.StructToJsonString(o), operationID)
+//}
 
 func DoTestSendImageMsg(recvID string) {
 	operationID := utils.OperationIDGenerator()
