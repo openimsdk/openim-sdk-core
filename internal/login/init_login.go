@@ -376,12 +376,12 @@ func (u *LoginMgr) forcedSynchronization() {
 		u.group.SyncJoinedGroupMemberForFirstLogin(operationID)
 		wg.Done()
 	}()
-
-	go func() {
-		u.organization.SyncOrganization(operationID)
-		wg.Done()
-	}()
-
+	if u.organizationListener != nil {
+		go func() {
+			u.organization.SyncOrganization(operationID)
+			wg.Done()
+		}()
+	}
 	go func() {
 		u.superGroup.SyncJoinedGroupList(operationID)
 		wg.Done()

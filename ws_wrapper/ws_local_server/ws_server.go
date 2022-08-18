@@ -18,6 +18,7 @@ import (
 	"open_im_sdk/sdk_struct"
 	"open_im_sdk/ws_wrapper/utils"
 	"runtime"
+	"runtime/debug"
 	"sync"
 	"time"
 )
@@ -77,10 +78,7 @@ func (ws *WServer) Run() {
 func (ws *WServer) getMsgAndSend() {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Info("", "getMsgAndSend panic", " panic is ", r)
-			buf := make([]byte, 1<<20)
-			runtime.Stack(buf, true)
-			log.Info("", "panic", "call", string(buf))
+			log.Info("", "getMsgAndSend panic", " panic is ", r, debug.Stack())
 			ws.getMsgAndSend()
 			log.Info("", "goroutine getMsgAndSend restart")
 		}
