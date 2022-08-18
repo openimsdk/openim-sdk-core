@@ -78,26 +78,26 @@ func register(uid string) error {
 	getSelfUserInfoReq.OperationID = req.OperationID
 	getSelfUserInfoReq.UserID = uid
 
-	//var getSelfUserInfoResp server_api_params.GetSelfUserInfoResp
-	//
-	//for {
-	//	r, err := network.Post2Api(GETSELFUSERINFO, req, AdminToken)
-	//	if err != nil {
-	//		log.Error(req.OperationID, "post failed, continue ", err.Error(), REGISTERADDR, req)
-	//		continue
-	//	}
-	//	err = json.Unmarshal(r, &getSelfUserInfoResp)
-	//	if err != nil {
-	//		log.Error(req.OperationID, "Unmarshal failed ", err.Error())
-	//	}
-	//	if getSelfUserInfoResp.ErrCode == 0 {
-	//		log.Warn(req.OperationID, "Already registered ", uid, getSelfUserInfoResp)
-	//		return nil
-	//	} else {
-	//		log.Info(req.OperationID, "not registered ", uid, getSelfUserInfoResp.ErrCode)
-	//		break
-	//	}
-	//}
+	var getSelfUserInfoResp server_api_params.GetSelfUserInfoResp
+
+	for {
+		r, err := network.Post2Api(GETSELFUSERINFO, req, AdminToken)
+		if err != nil {
+			log.Error(req.OperationID, "post failed, continue ", err.Error(), REGISTERADDR, req)
+			continue
+		}
+		err = json.Unmarshal(r, &getSelfUserInfoResp)
+		if err != nil {
+			log.Error(req.OperationID, "Unmarshal failed ", err.Error())
+		}
+		if getSelfUserInfoResp.ErrCode == 0 {
+			log.Warn(req.OperationID, "Already registered ", uid, getSelfUserInfoResp)
+			return nil
+		} else {
+			log.Info(req.OperationID, "not registered ", uid, getSelfUserInfoResp.ErrCode)
+			break
+		}
+	}
 
 	for {
 		_, err := network.Post2Api(REGISTERADDR, req, "")
