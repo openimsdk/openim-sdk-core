@@ -12,5 +12,6 @@ func main() {
 	flag.Parse()
 	log.Warn("", "online test start, online num: ", *onlineNum)
 	test.OnlineTest(*onlineNum)
-	log.Warn("", "online test finish, number of online users: ", *onlineNum)
+	log.Warn("", "online test finish, online num: ", *onlineNum)
+	select {}
 }

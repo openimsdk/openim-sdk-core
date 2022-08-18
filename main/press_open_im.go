@@ -17,4 +17,6 @@ func main() {
 	log.NewPrivateLog("", uint32(test.LogLevel))
 	log.Warn("", "press test start, sender num: ", *senderNum, " single sender msg num: ", *singleSenderMsgNum, " send msg total num: ", *senderNum**singleSenderMsgNum)
 	test.PressTest(*singleSenderMsgNum, *intervalTime, *senderNum)
+	log.Warn("", "press test finish, sender num: ", *senderNum, " single sender msg num: ", *singleSenderMsgNum, " send msg total num: ", *senderNum**singleSenderMsgNum)
+	select {}
 }
