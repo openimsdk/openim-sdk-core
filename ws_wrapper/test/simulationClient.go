@@ -14,8 +14,8 @@ import (
 var totalConnNum int
 var lock sync.Mutex
 
-func StartSimulationJSClient(api, jssdkURL, userID string, num int, userIDList []string) {
-	user := client.NewIMClient("", userID, api, jssdkURL, 1)
+func StartSimulationJSClient(api, jssdkURL, userID string, i int, userIDList []string) {
+	user := client.NewIMClient("", userID, api, jssdkURL, 5)
 	var err error
 	user.Token, err = user.GetToken()
 	if err != nil {
@@ -24,21 +24,34 @@ func StartSimulationJSClient(api, jssdkURL, userID string, num int, userIDList [
 	v := url.Values{}
 	v.Set("sendID", userID)
 	v.Set("token", user.Token)
-	v.Set("platformID", utils.IntToString(1))
+	v.Set("platformID", utils.IntToString(5))
 	c, _, err := websocket.DefaultDialer.Dial(jssdkURL+"?"+v.Encode(), nil)
 	if err != nil {
-		log.Println("dial:", err.Error(), "userID", userID, "num: ", num)
+		log.Println("dial:", err.Error(), "userID", userID, "i: ", i)
 		return
 	}
 	lock.Lock()
 	totalConnNum += 1
 	log.Println("connect success", userID, "total conn num", totalConnNum)
-	user.Conn = c
 	lock.Unlock()
-	user.WsLogout()
+	user.Conn = c
+	// user.WsLogout()
 	user.WsLogin()
-	user.GetSelfUserInfo()
-	user.GetLoginStatus()
+	time.Sleep(time.Second * 2)
+
+	// 模拟同步
+	go func() {
+		user.GetSelfUserInfo()
+		user.GetAllConversationList()
+		user.GetBlackList()
+		user.GetFriendList()
+		user.GetRecvFriendApplicationList()
+		user.GetRecvGroupApplicationList()
+		user.GetSendFriendApplicationList()
+		user.GetSendGroupApplicationList()
+	}()
+
+	// 模拟监听回调
 	go func() {
 		for {
 			_, message, err := c.ReadMessage()
@@ -50,10 +63,18 @@ func StartSimulationJSClient(api, jssdkURL, userID string, num int, userIDList [
 		}
 	}()
 
+	// 模拟给随机用户发消息
 	go func() {
 		for {
 			user.SendMsg(userID)
 			time.Sleep(time.Second * 1)
+		}
+	}()
+
+	go func() {
+		for {
+			user.GetLoginStatus()
+			time.Sleep(time.Second * 10)
 		}
 	}()
 }
