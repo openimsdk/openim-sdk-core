@@ -83,7 +83,7 @@ func (i *IMClient) WsLogin() error {
 }
 
 func (i *IMClient) WsLogout() error {
-	return i.Conn.WriteMessage(1, i.getWsReq("Logout", 1, nil))
+	return i.Conn.WriteMessage(1, i.getWsReq("Logout", 0, nil))
 }
 
 func (i *IMClient) GetLoginStatus() error {

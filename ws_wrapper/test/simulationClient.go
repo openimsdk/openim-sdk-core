@@ -35,6 +35,7 @@ func StartSimulationJSClient(api, jssdkURL, userID string, num int, userIDList [
 	log.Println("connect success", userID, "total conn num", totalConnNum)
 	user.Conn = c
 	lock.Unlock()
+	user.WsLogout()
 	user.WsLogin()
 	user.GetSelfUserInfo()
 	user.GetLoginStatus()
