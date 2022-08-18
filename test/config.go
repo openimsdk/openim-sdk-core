@@ -4,19 +4,19 @@ import (
 	"sync"
 )
 
+var LogLevel = 3
+var PlatformID = int32(1)
+
 var (
-	//	TESTIP = "cjyy.zs.sjz.gov.cn"
-	//TESTIP = "43.128.5.63"
-	//TESTIP       = "cs.dxm122.com"
-	//TESTIP       = "103.116.45.174"
-	TESTIP       = "121.37.25.71"
-	APIADDR      = "http://" + TESTIP + ":10002"
-	WSADDR       = "ws://" + TESTIP + ":10001"
-	REGISTERADDR = APIADDR + "/auth/user_register"
-	TOKENADDR    = APIADDR + "/auth/user_token"
-	SECRET       = "tuoyun"
-	SENDINTERVAL = 20
-	ACCOUNTCHECK = APIADDR + "/manager/account_check"
+	TESTIP = "121.37.25.71"
+	//TESTIP       = "121.37.25.71"
+	APIADDR         = "http://" + TESTIP + ":10002"
+	WSADDR          = "ws://" + TESTIP + ":10001"
+	REGISTERADDR    = APIADDR + "/auth/user_register"
+	TOKENADDR       = APIADDR + "/auth/user_token"
+	SECRET          = "tuoyun"
+	SENDINTERVAL    = 20
+	GETSELFUSERINFO = APIADDR + "/user/get_self_user_info"
 )
 
 var coreMgrLock sync.RWMutex
