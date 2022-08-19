@@ -119,7 +119,13 @@ func PressTest(msgNumOneClient int, intervalSleepMS int, clientNum int) {
 		}(i)
 	}
 	wg.Wait()
-	log.Warn("PressTest  send msg client number: ", clientNum, "total msg num: ", clientNum*msgNumOneClient)
+	sendMsgTotalSuccessNum := uint32(0)
+	sendMsgTotalFailedNum := uint32(0)
+	for _, v := range allLoginMgr {
+		sendMsgTotalSuccessNum += v.sendMsgSuccessNum
+		sendMsgTotalFailedNum += v.sendMsgFailedNum
+	}
+	log.Warn("PressTest  send msg client number: ", clientNum, "send msg total num: ", clientNum*msgNumOneClient, "sendMsgTotalSuccessNum ", sendMsgTotalSuccessNum, "sendMsgTotalFailedNum ", sendMsgTotalFailedNum)
 }
 
 func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
@@ -266,7 +272,12 @@ func PressOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS i
 					break
 				}
 			}
-			DoTestSendMsg(index, strMyUid, recvId, idx)
+			//DoTestSendMsg(index, strMyUid, recvId, idx)
+			if sendPressMsg(index, strMyUid, recvId, idx) {
+				allLoginMgr[r].sendMsgSuccessNum++
+			} else {
+				allLoginMgr[r].sendMsgFailedNum++
+			}
 		}
 		//Msgwg.Done()
 	}
