@@ -246,7 +246,10 @@ func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSle
 }
 
 func PressOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS int) {
-	time.Sleep(time.Duration(beforeLoginSleep) * time.Second)
+	if intervalSleepMS != 0 {
+		time.Sleep(time.Duration(beforeLoginSleep) * time.Millisecond)
+	}
+
 	strMyUid := allLoginMgr[index].userID
 	token := allLoginMgr[index].token
 	//	ReliabilityInitAndLogin(index, strMyUid, token, WSADDR, APIADDR)
