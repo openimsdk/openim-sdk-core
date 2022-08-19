@@ -545,8 +545,8 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 			log.Info(operationID, "login ok ", uid)
 			return
 		}
-		log.Warn(operationID, "waiting login...", uid)
-		time.Sleep(100 * time.Millisecond)
+		//		log.Warn(operationID, "waiting login...", uid)
+		//	time.Sleep(100 * time.Millisecond)
 	}
 
 }
