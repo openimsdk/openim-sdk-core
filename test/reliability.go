@@ -246,7 +246,7 @@ func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSle
 }
 
 func PressOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS int) {
-	if intervalSleepMS != 0 {
+	if beforeLoginSleep != 0 {
 		time.Sleep(time.Duration(beforeLoginSleep) * time.Millisecond)
 	}
 
@@ -285,7 +285,7 @@ func PressOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS i
 			for {
 				if runtime.NumGoroutine() > MaxNumGoroutine {
 					time.Sleep(time.Duration(intervalSleepMS) * time.Millisecond)
-					log.Warn("", "NumGoroutine > max  ", runtime.NumGoroutine(), MaxNumGoroutine)
+					log.Warn("", " NumGoroutine > max ", runtime.NumGoroutine(), MaxNumGoroutine)
 					continue
 				} else {
 					break
