@@ -314,8 +314,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					lc.UserID = v.SendID
 				}
 				if isUnreadCount {
-					isTriggerUnReadCount = true
-					lc.UnreadCount = 1
+					cacheConversation := c.cache.GetConversation(lc.ConversationID)
+					if msg.SendTime > cacheConversation.UpdateUnreadCountTime {
+						isTriggerUnReadCount = true
+						lc.UnreadCount = 1
+					}
 				}
 				if isConversationUpdate {
 					c.updateConversation(&lc, conversationSet)
@@ -695,8 +698,11 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 					lc.UserID = v.SendID
 				}
 				if isUnreadCount {
-					isTriggerUnReadCount = true
-					lc.UnreadCount = 1
+					cacheConversation := c.cache.GetConversation(lc.ConversationID)
+					if msg.SendTime > cacheConversation.UpdateUnreadCountTime {
+						isTriggerUnReadCount = true
+						lc.UnreadCount = 1
+					}
 				}
 				if isConversationUpdate {
 					c.updateConversation(&lc, conversationSet)

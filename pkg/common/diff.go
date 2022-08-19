@@ -755,36 +755,38 @@ func TransferToLocalSendGroupRequest(apiData []*server_api_params.GroupRequest) 
 }
 
 type tempConversation struct {
-	RecvMsgOpt       int32
-	ConversationID   string
-	ConversationType int32
-	UserID           string
-	GroupID          string
-	IsPrivateChat    bool
-	IsPinned         bool
-	UnreadCount      int32
-	GroupAtType      int32
-	IsNotInGroup     bool
-	AttachedInfo     string
-	Ex               string
+	RecvMsgOpt            int32
+	ConversationID        string
+	ConversationType      int32
+	UserID                string
+	GroupID               string
+	IsPrivateChat         bool
+	IsPinned              bool
+	UnreadCount           int32
+	GroupAtType           int32
+	IsNotInGroup          bool
+	UpdateUnreadCountTime int64
+	AttachedInfo          string
+	Ex                    string
 }
 
 func ServerTransferToTempConversation(resp server_api_params.GetAllConversationsResp) []*tempConversation {
 	var tempConversations []*tempConversation
 	for _, serverConversation := range resp.Conversations {
 		tempConversations = append(tempConversations, &tempConversation{
-			RecvMsgOpt:       serverConversation.RecvMsgOpt,
-			ConversationID:   serverConversation.ConversationID,
-			ConversationType: serverConversation.ConversationType,
-			UserID:           serverConversation.UserID,
-			GroupID:          serverConversation.GroupID,
-			IsPrivateChat:    serverConversation.IsPrivateChat,
-			IsPinned:         serverConversation.IsPinned,
-			GroupAtType:      serverConversation.GroupAtType,
-			IsNotInGroup:     serverConversation.IsNotInGroup,
-			AttachedInfo:     serverConversation.AttachedInfo,
-			UnreadCount:      serverConversation.UnreadCount,
-			Ex:               serverConversation.Ex,
+			RecvMsgOpt:            serverConversation.RecvMsgOpt,
+			ConversationID:        serverConversation.ConversationID,
+			ConversationType:      serverConversation.ConversationType,
+			UserID:                serverConversation.UserID,
+			GroupID:               serverConversation.GroupID,
+			IsPrivateChat:         serverConversation.IsPrivateChat,
+			IsPinned:              serverConversation.IsPinned,
+			GroupAtType:           serverConversation.GroupAtType,
+			IsNotInGroup:          serverConversation.IsNotInGroup,
+			AttachedInfo:          serverConversation.AttachedInfo,
+			UnreadCount:           serverConversation.UnreadCount,
+			UpdateUnreadCountTime: serverConversation.UpdateUnreadCountTime,
+			Ex:                    serverConversation.Ex,
 		})
 	}
 	return tempConversations
@@ -794,18 +796,19 @@ func LocalTransferToTempConversation(local []*model_struct.LocalConversation) []
 	var tempConversations []*tempConversation
 	for _, localConversation := range local {
 		tempConversations = append(tempConversations, &tempConversation{
-			RecvMsgOpt:       localConversation.RecvMsgOpt,
-			ConversationID:   localConversation.ConversationID,
-			ConversationType: localConversation.ConversationType,
-			UserID:           localConversation.UserID,
-			GroupID:          localConversation.GroupID,
-			IsPrivateChat:    localConversation.IsPrivateChat,
-			IsPinned:         localConversation.IsPinned,
-			GroupAtType:      localConversation.GroupAtType,
-			IsNotInGroup:     localConversation.IsNotInGroup,
-			AttachedInfo:     localConversation.AttachedInfo,
-			UnreadCount:      localConversation.UnreadCount,
-			Ex:               localConversation.Ex,
+			RecvMsgOpt:            localConversation.RecvMsgOpt,
+			ConversationID:        localConversation.ConversationID,
+			ConversationType:      localConversation.ConversationType,
+			UserID:                localConversation.UserID,
+			GroupID:               localConversation.GroupID,
+			IsPrivateChat:         localConversation.IsPrivateChat,
+			IsPinned:              localConversation.IsPinned,
+			GroupAtType:           localConversation.GroupAtType,
+			IsNotInGroup:          localConversation.IsNotInGroup,
+			AttachedInfo:          localConversation.AttachedInfo,
+			UnreadCount:           localConversation.UnreadCount,
+			UpdateUnreadCountTime: localConversation.UpdateUnreadCountTime,
+			Ex:                    localConversation.Ex,
 		})
 	}
 	return tempConversations
@@ -815,18 +818,19 @@ func TransferToLocalConversation(resp server_api_params.GetAllConversationsResp)
 	var localConversations []*model_struct.LocalConversation
 	for _, serverConversation := range resp.Conversations {
 		localConversations = append(localConversations, &model_struct.LocalConversation{
-			RecvMsgOpt:       serverConversation.RecvMsgOpt,
-			ConversationID:   serverConversation.ConversationID,
-			ConversationType: serverConversation.ConversationType,
-			UserID:           serverConversation.UserID,
-			GroupID:          serverConversation.GroupID,
-			IsPrivateChat:    serverConversation.IsPrivateChat,
-			IsPinned:         serverConversation.IsPinned,
-			GroupAtType:      serverConversation.GroupAtType,
-			IsNotInGroup:     serverConversation.IsNotInGroup,
-			AttachedInfo:     serverConversation.AttachedInfo,
-			UnreadCount:      serverConversation.UnreadCount,
-			Ex:               serverConversation.Ex,
+			RecvMsgOpt:            serverConversation.RecvMsgOpt,
+			ConversationID:        serverConversation.ConversationID,
+			ConversationType:      serverConversation.ConversationType,
+			UserID:                serverConversation.UserID,
+			GroupID:               serverConversation.GroupID,
+			IsPrivateChat:         serverConversation.IsPrivateChat,
+			IsPinned:              serverConversation.IsPinned,
+			GroupAtType:           serverConversation.GroupAtType,
+			IsNotInGroup:          serverConversation.IsNotInGroup,
+			AttachedInfo:          serverConversation.AttachedInfo,
+			UnreadCount:           serverConversation.UnreadCount,
+			UpdateUnreadCountTime: serverConversation.UpdateUnreadCountTime,
+			Ex:                    serverConversation.Ex,
 		})
 	}
 	return localConversations
