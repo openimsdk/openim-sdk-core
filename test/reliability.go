@@ -249,7 +249,7 @@ func PressOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS i
 	time.Sleep(time.Duration(beforeLoginSleep) * time.Second)
 	strMyUid := allLoginMgr[index].userID
 	token := allLoginMgr[index].token
-	ReliabilityInitAndLogin(index, strMyUid, token, WSADDR, APIADDR)
+	//	ReliabilityInitAndLogin(index, strMyUid, token, WSADDR, APIADDR)
 	log.Info("", "login ok client num: ", len(allLoginMgr))
 	log.Info("start One", index, beforeLoginSleep, isSendMsg, strMyUid, token, WSADDR, APIADDR)
 	msgnum := msgNumInOneClient
