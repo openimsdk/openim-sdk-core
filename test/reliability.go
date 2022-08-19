@@ -104,7 +104,7 @@ func PressTest(msgNumOneClient int, intervalSleepMS int, clientNum int) {
 	for i := 0; i < clientNum; i++ {
 		go func(idx int) {
 			RegisterPressUser(idx, timeStamp)
-			log.Warn("", "get user token finish ", idx)
+			log.Info("", "get user token finish ", idx)
 			wg.Done()
 		}(i)
 	}
@@ -123,7 +123,7 @@ func PressTest(msgNumOneClient int, intervalSleepMS int, clientNum int) {
 		}(i)
 	}
 	wg.Wait()
-	log.Warn("", " init login end ", " cost time: ", "login cost time: ", time.Since(t1))
+	log.Warn("", "init and login end ", " cost time: ", time.Since(t1))
 
 	log.Warn("", "send msg begin ")
 	t1 = time.Now()
@@ -141,7 +141,7 @@ func PressTest(msgNumOneClient int, intervalSleepMS int, clientNum int) {
 		sendMsgTotalSuccessNum += v.sendMsgSuccessNum
 		sendMsgTotalFailedNum += v.sendMsgFailedNum
 	}
-	log.Warn("send msg end  ", "number of messages expected to be sent: ", clientNum*msgNumOneClient, " sendMsgTotalSuccessNum ", sendMsgTotalSuccessNum, " sendMsgTotalFailedNum ", sendMsgTotalFailedNum, "cost time: ", time.Since(t1))
+	log.Warn("send msg end  ", "number of messages expected to be sent: ", clientNum*msgNumOneClient, " sendMsgTotalSuccessNum: ", sendMsgTotalSuccessNum, " sendMsgTotalFailedNum: ", sendMsgTotalFailedNum, "cost time: ", time.Since(t1))
 }
 
 func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
