@@ -8,7 +8,7 @@ var LogLevel = 3
 var PlatformID = int32(1)
 
 var (
-	TESTIP = "121.37.25.71"
+	TESTIP = "43.128.5.63"
 	//TESTIP       = "121.37.25.71"
 	APIADDR         = "http://" + TESTIP + ":10002"
 	WSADDR          = "ws://" + TESTIP + ":10001"
