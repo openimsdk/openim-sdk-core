@@ -127,7 +127,7 @@ func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 	sameNum := 0
 
 	if len(SendSuccAllMsg)+len(SendFailedAllMsg) != msgNumOneClient*clientNum {
-		log.Warn("", utils.GetSelfFuncName(), " send succ, number :", len(SendSuccAllMsg), " send failed , number : ", len(SendFailedAllMsg), "all: ", msgNumOneClient*clientNum)
+		log.Warn("", utils.GetSelfFuncName(), " send msg succ number: ", len(SendSuccAllMsg), " send  msg failed number: ", len(SendFailedAllMsg), " all: ", msgNumOneClient*clientNum)
 		return false
 	}
 
