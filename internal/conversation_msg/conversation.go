@@ -297,8 +297,11 @@ func (c *Conversation) SyncConversations(operationID string, timeout time.Durati
 		newConversation.IsNotInGroup = conversation.IsNotInGroup
 		newConversation.Ex = conversation.Ex
 		newConversation.AttachedInfo = conversation.AttachedInfo
+		newConversation.AttachedInfo = conversation.AttachedInfo
+		newConversation.UpdateUnreadCountTime = conversation.UpdateUnreadCountTime
 		//newConversation.UnreadCount = conversation.UnreadCount
 		newConversationList = append(newConversationList, &newConversation)
+
 		c.addFaceURLAndName(&newConversation)
 		//err := c.db.InsertConversation(&newConversation)
 		//if err != nil {
@@ -334,6 +337,11 @@ func (c *Conversation) SyncConversations(operationID string, timeout time.Durati
 		log.NewDebug(operationID, utils.GetSelfFuncName(), index, conversationsOnLocal[index].ConversationID,
 			conversationsOnLocal[index].RecvMsgOpt, conversationsOnLocal[index].IsPinned, conversationsOnLocal[index].IsPrivateChat)
 	}
+	conversationsOnLocal, err = c.db.GetAllConversationListToSync()
+	if err != nil {
+		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
+	}
+	c.cache.UpdateConversations(conversationsOnLocal)
 }
 
 func (c *Conversation) SyncOneConversation(conversationID, operationID string) {
