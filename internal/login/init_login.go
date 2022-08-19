@@ -333,7 +333,7 @@ func (u *LoginMgr) GetLoginStatus() int32 {
 func (u *LoginMgr) forcedSynchronization() {
 	operationID := utils.OperationIDGenerator()
 
-	log.Warn(operationID, "sync all info begin")
+	log.Info(operationID, "sync all info begin")
 	var wg sync.WaitGroup
 	wg.Add(10)
 	go func() {
@@ -394,7 +394,7 @@ func (u *LoginMgr) forcedSynchronization() {
 	u.group.SetLoginTime(u.loginTime)
 	u.superGroup.SetLoginTime(u.loginTime)
 	u.organization.SetLoginTime(u.loginTime)
-	log.Warn(operationID, "login init sync finished")
+	log.Info(operationID, "login init sync finished")
 }
 
 func (u *LoginMgr) GetMinSeqSvr() int64 {
