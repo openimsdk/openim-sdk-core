@@ -290,9 +290,9 @@ func PressOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS i
 			}
 			//DoTestSendMsg(index, strMyUid, recvId, idx)
 			if sendPressMsg(index, strMyUid, recvId, idx) {
-				allLoginMgr[r].sendMsgSuccessNum++
+				allLoginMgr[index].sendMsgSuccessNum++
 			} else {
-				allLoginMgr[r].sendMsgFailedNum++
+				allLoginMgr[index].sendMsgFailedNum++
 			}
 		}
 		//Msgwg.Done()
