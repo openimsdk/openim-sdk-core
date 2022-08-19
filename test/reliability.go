@@ -111,6 +111,22 @@ func PressTest(msgNumOneClient int, intervalSleepMS int, clientNum int) {
 	wg.Wait()
 	log.Warn("", "get all user token finish ", clientNum)
 
+	log.Warn("", "init and login begin ")
+	t1 := time.Now()
+	wg.Add(clientNum)
+	for i := 0; i < clientNum; i++ {
+		go func(idx int) {
+			strMyUid := allLoginMgr[idx].userID
+			token := allLoginMgr[idx].token
+			ReliabilityInitAndLogin(idx, strMyUid, token, WSADDR, APIADDR)
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+	log.Warn("", " init login end ", " cost time: ", "login cost time: ", time.Since(t1))
+
+	log.Warn("", "send msg begin ")
+	t1 = time.Now()
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
 		go func(idx int) {
@@ -125,7 +141,7 @@ func PressTest(msgNumOneClient int, intervalSleepMS int, clientNum int) {
 		sendMsgTotalSuccessNum += v.sendMsgSuccessNum
 		sendMsgTotalFailedNum += v.sendMsgFailedNum
 	}
-	log.Warn("PressTest  send msg client number: ", clientNum, "send msg total num: ", clientNum*msgNumOneClient, "sendMsgTotalSuccessNum ", sendMsgTotalSuccessNum, "sendMsgTotalFailedNum ", sendMsgTotalFailedNum)
+	log.Warn("send msg end  ", "number of messages expected to be sent: ", clientNum*msgNumOneClient, " sendMsgTotalSuccessNum ", sendMsgTotalSuccessNum, " sendMsgTotalFailedNum ", sendMsgTotalFailedNum, "cost time: ", time.Since(t1))
 }
 
 func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
