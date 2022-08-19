@@ -604,6 +604,8 @@ type TestSendMsgCallBack struct {
 	sendID      string
 	recvID      string
 	msgID       string
+	sendTime    int64
+	recvTime    int64
 }
 
 func (t *TestSendMsgCallBack) OnError(errCode int32, errMsg string) {
@@ -618,7 +620,9 @@ func (t *TestSendMsgCallBack) OnSuccess(data string) {
 	log.Info(t.OperationID, "test_openim: send msg success: |", t.msgID, t.msg, data)
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
-	SendSuccAllMsg[t.msgID] = t.sendID + t.recvID
+	k, _ := SendSuccAllMsg[t.msgID]
+	k.SendIDRecvID = t.sendID + t.recvID
+
 }
 
 func (t *TestSendMsgCallBack) OnProgress(progress int) {

@@ -452,8 +452,8 @@ func (m *MsgListenerCallBak) OnRecvNewMessage(msg string) {
 		//		log.Info("", "recv time: ", time.Now().UnixNano(), "send_time: ", mm.SendTime, " client_msg_id: ", mm.ClientMsgID, "server_msg_id", mm.ServerMsgID)
 		RecvMsgMapLock.Lock()
 		defer RecvMsgMapLock.Unlock()
-
-		RecvAllMsg[mm.ClientMsgID] = mm.SendID + mm.RecvID
+		t := SendRecvTime{SendIDRecvID: mm.SendID + mm.RecvID, RecvTime: utils.GetCurrentTimestampByMill()}
+		RecvAllMsg[mm.ClientMsgID] = &t
 		log.Info("", "OnRecvNewMessage  callback", mm.ClientMsgID, mm.SendID, mm.RecvID)
 	}
 }
@@ -559,16 +559,22 @@ func (testMarkC2CMessageAsRead) OnError(code int32, msg string) {
 //	open_im_sdk.MarkC2CMessageAsRead(test, Friend_uid, string(jsonid))
 //}
 
-var SendSuccAllMsg map[string]string //msgid->send+recv:
+type SendRecvTime struct {
+	SendTime     int64
+	RecvTime     int64
+	SendIDRecvID string
+}
+
+var SendSuccAllMsg map[string]*SendRecvTime //msgid->send+recv:
 var SendFailedAllMsg map[string]string
-var RecvAllMsg map[string]string //msgid->send+recv
+var RecvAllMsg map[string]*SendRecvTime //msgid->send+recv
 var SendMsgMapLock sync.RWMutex
 var RecvMsgMapLock sync.RWMutex
 
 func init() {
-	SendSuccAllMsg = make(map[string]string)
+	SendSuccAllMsg = make(map[string]*SendRecvTime)
 	SendFailedAllMsg = make(map[string]string)
-	RecvAllMsg = make(map[string]string)
+	RecvAllMsg = make(map[string]*SendRecvTime)
 
 }
 
@@ -644,6 +650,7 @@ func DoTestSendMsg(index int, sendId, recvID string, idx string) {
 
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
+	testSendMsg.sendTime = utils.GetCurrentTimestampByMill()
 	o := server_api_params.OfflinePushInfo{}
 	o.Title = "title"
 	o.Desc = "desc"
@@ -652,6 +659,11 @@ func DoTestSendMsg(index int, sendId, recvID string, idx string) {
 	testSendMsg.msgID = mstruct.ClientMsgID
 	log.Info(operationID, "SendMessage", sendId, recvID, testSendMsg.msgID, index)
 	allLoginMgr[index].mgr.Conversation().SendMessage(&testSendMsg, s, recvID, "", utils.StructToJsonString(o), operationID)
+
+	SendMsgMapLock.Lock()
+	defer SendMsgMapLock.Unlock()
+	x := SendRecvTime{SendTime: utils.GetCurrentTimestampByMill()}
+	SendSuccAllMsg[testSendMsg.msgID] = &x
 }
 
 //

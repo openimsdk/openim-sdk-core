@@ -153,14 +153,14 @@ func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 		return false
 	}
 
-	for ksend, vsend := range SendSuccAllMsg {
-		krecv, ok := RecvAllMsg[ksend]
+	for ksend, _ := range SendSuccAllMsg {
+		_, ok := RecvAllMsg[ksend]
 		if ok {
 			sameNum++
-			x := vsend
-			y := krecv
-			x = x + x
-			y = y + y
+			//x := vsend
+			//y := krecv
+			//x = x + x
+			//y = y + y
 
 		} else {
 			log.Error("", "check failed  not in recv ", ksend, len(SendFailedAllMsg), len(SendSuccAllMsg), len(RecvAllMsg))
@@ -171,16 +171,34 @@ func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 	log.Info("", "start check map recv -> map send ")
 	sameNum = 0
 
-	for k1, v1 := range RecvAllMsg {
-		v2, ok := SendSuccAllMsg[k1]
+	for k1, _ := range RecvAllMsg {
+		_, ok := SendSuccAllMsg[k1]
 		if ok {
 			sameNum++
-			x := v1 + v2
-			x = x + x
+			//x := v1 + v2
+			//x = x + x
 
 		} else {
 			log.Error("", "check failed  not in send ", k1, len(SendFailedAllMsg), len(SendSuccAllMsg), len(RecvAllMsg))
 			//	return false
+		}
+	}
+
+	minCostTime := int64(1000000)
+	maxCostTime := int64(0)
+	totalCostTime := int64(0)
+	for ksend, vsend := range SendSuccAllMsg {
+		krecv, ok := RecvAllMsg[ksend]
+		if ok {
+			sameNum++
+			costTime := krecv.RecvTime - vsend.SendTime
+			totalCostTime += costTime
+			if costTime > maxCostTime {
+				maxCostTime = costTime
+			}
+			if minCostTime > costTime {
+				minCostTime = costTime
+			}
 		}
 	}
 
@@ -189,6 +207,7 @@ func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 	log.Warn("", "send msg failed num ", len(SendFailedAllMsg))
 	log.Warn("", "recv msg succ num ", len(RecvAllMsg))
 	log.Warn("", "msg in recv, and in send num ", sameNum)
+	log.Warn("", "minCostTime: ", minCostTime, "ms, maxCostTime: ", maxCostTime, "ms, average cost time: ", totalCostTime/(int64(sendMsgClient*msgNumInOneClient)), "ms")
 
 	return true
 }
