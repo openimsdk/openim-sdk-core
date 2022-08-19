@@ -1543,7 +1543,7 @@ func (c *Conversation) DeleteAllMsgFromLocal(callback open_im_sdk_callback.Base,
 		log.NewInfo(operationID, fName)
 		c.deleteAllMsgFromLocal(callback, operationID)
 		callback.OnSuccess("")
-		log.NewInfo(operationID, fName, "callback: ", "")
+		log.NewInfo(operationID, fName, "callback: ", "12")
 	}()
 }
 func (c *Conversation) getConversationTypeByGroupID(groupID string) (conversationID string, conversationType int32, err error) {
