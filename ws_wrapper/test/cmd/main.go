@@ -23,7 +23,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	uidList, err := admin.GetUserIDList()
+	uidList, err := admin.GetALLUserIDList()
 	if err != nil {
 		panic(err)
 	}

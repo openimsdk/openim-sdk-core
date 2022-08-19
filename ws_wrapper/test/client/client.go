@@ -56,7 +56,7 @@ func (i *IMClient) GetToken() (string, error) {
 	return resp.Data.Token, err
 }
 
-func (i *IMClient) GetUserIDList() ([]string, error) {
+func (i *IMClient) GetALLUserIDList() ([]string, error) {
 	req := struct {
 		OperationID string `json:"operationID"`
 	}{OperationID: utils.OperationIDGenerator()}
@@ -88,7 +88,7 @@ func (i *IMClient) GetLoginStatus() error {
 	return i.writeMessage(i.getWsReq("GetLoginStatus", 0, nil))
 }
 
-func (i *IMClient) SendMsg(userID string) error {
+func (i *IMClient) CreateTextMessage(userID string) error {
 	msg := server_api_params.MsgData{
 		SendID:           i.UserID,
 		RecvID:           "MTc3MjYzNzg0Mjg=",
@@ -102,10 +102,12 @@ func (i *IMClient) SendMsg(userID string) error {
 		ContentType:      101,
 		OfflinePushInfo:  &server_api_params.OfflinePushInfo{Title: "offlinePush"},
 	}
-	return i.writeMessage(i.getWsReq("SendMessage", 1, msg))
+	return i.writeMessage(i.getWsReq("CreateTextMessage", 1, msg))
 }
 
-// data: "{\"recvID\":\"4266290636\",\"groupID\":\"\",\"offlinePushInfo\":\"{\\\"title\\\":\\\"你有一条新消息\\\",\\\"desc\\\":\\\"\\\",\\\"ex\\\":\\\"\\\",\\\"iOSPushSound\\\":\\\"+1\\\",\\\"iOSBadgeCount\\\":true}\",\"message\":\"{\\\"clientMsgID\\\":\\\"f1dac895a848b1f2c1e061b14e62cf00\\\",\\\"createTime\\\":1660843983746,\\\"sendTime\\\":1660843983746,\\\"sessionType\\\":0,\\\"sendID\\\":\\\"4266290636\\\",\\\"msgFrom\\\":100,\\\"contentType\\\":101,\\\"platformID\\\":5,\\\"senderNickname\\\":\\\"kernal在\\\",\\\"senderFaceUrl\\\":\\\"ic_avatar_06\\\",\\\"content\\\":\\\"1\\\",\\\"seq\\\":0,\\\"isRead\\\":false,\\\"status\\\":1,\\\"offlinePush\\\":{},\\\"pictureElem\\\":{\\\"sourcePicture\\\":{\\\"size\\\":0,\\\"width\\\":0,\\\"height\\\":0},\\\"bigPicture\\\":{\\\"size\\\":0,\\\"width\\\":0,\\\"height\\\":0},\\\"snapshotPicture\\\":{\\\"size\\\":0,\\\"width\\\":0,\\\"height\\\":0}},\\\"soundElem\\\":{\\\"dataSize\\\":0,\\\"duration\\\":0},\\\"videoElem\\\":{\\\"videoSize\\\":0,\\\"duration\\\":0,\\\"snapshotSize\\\":0,\\\"snapshotWidth\\\":0,\\\"snapshotHeight\\\":0},\\\"fileElem\\\":{\\\"fileSize\\\":0},\\\"mergeElem\\\":{},\\\"atElem\\\":{\\\"isAtSelf\\\":false},\\\"faceElem\\\":{\\\"index\\\":0},\\\"locationElem\\\":{\\\"longitude\\\":0,\\\"latitude\\\":0},\\\"customElem\\\":{},\\\"quoteElem\\\":{},\\\"notificationElem\\\":{},\\\"messageEntityElem\\\":{},\\\"attachedInfoElem\\\":{\\\"groupHasReadInfo\\\":{\\\"hasReadCount\\\":0,\\\"groupMemberCount\\\":0},\\\"isPrivateChat\\\":false,\\\"hasReadTime\\\":0,\\\"notSenderNotificationPush\\\":false}}\"}"
+func (i *IMClient) SendMsg(userID string, msg interface{}) error {
+	return i.writeMessage(i.getWsReq("SendMessage", 1, msg))
+}
 
 func (i *IMClient) GetSelfUserInfo() error {
 	return i.writeMessage(i.getWsReq("GetSelfUserInfo", 0, nil))
