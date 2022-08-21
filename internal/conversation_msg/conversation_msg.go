@@ -343,6 +343,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					newMessages = append(newMessages, msg)
 				case constant.CustomMsgNotTriggerConversation:
 					newMessages = append(newMessages, msg)
+				case constant.OANotification:
+					if !isConversationUpdate {
+						newMessages = append(newMessages, msg)
+					}
 				case constant.AdvancedRevoke:
 					newMsgRevokeList = append(newMsgRevokeList, msg)
 					newMessages = removeElementInList(newMessages, msg)
@@ -729,6 +733,10 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 					newMessages = append(newMessages, msg)
 				case constant.CustomMsgNotTriggerConversation:
 					newMessages = append(newMessages, msg)
+				case constant.OANotification:
+					if !isConversationUpdate {
+						newMessages = append(newMessages, msg)
+					}
 				case constant.Typing:
 					newMessages = append(newMessages, msg)
 				case constant.AdvancedRevoke:
