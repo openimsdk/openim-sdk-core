@@ -54,7 +54,7 @@ type Conversation struct {
 	cache          *cache.Cache
 	full           *full.Full
 	tempMessageMap sync.Map
-	IsEncryption   bool
+	encryptionKey  string
 
 	id2MinSeq map[string]uint32
 }
@@ -80,15 +80,15 @@ func (c *Conversation) SetBatchMsgListener(batchMsgListener open_im_sdk_callback
 }
 
 func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
-	ch chan common.Cmd2Value, loginUserID string, platformID int32, dataDir string,
+	ch chan common.Cmd2Value, loginUserID string, platformID int32, dataDir, encryptionKey string,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener,
 	msgListener open_im_sdk_callback.OnAdvancedMsgListener, organization *organization.Organization, signaling *signaling.LiveSignaling,
-	workMoments *workMoments.WorkMoments, cache *cache.Cache, full *full.Full, id2MinSeq map[string]uint32, isEncryption bool) *Conversation {
+	workMoments *workMoments.WorkMoments, cache *cache.Cache, full *full.Full, id2MinSeq map[string]uint32) *Conversation {
 	n := &Conversation{Ws: ws, db: db, p: p, recvCH: ch, loginUserID: loginUserID, platformID: platformID,
 		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage,
 		signaling: signaling, organization: organization, workMoments: workMoments,
-		full: full, id2MinSeq: id2MinSeq, IsEncryption: isEncryption}
+		full: full, id2MinSeq: id2MinSeq, encryptionKey: encryptionKey}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
 	n.cache = cache
@@ -1507,13 +1507,12 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 		err = utils.JsonStringToStruct(msg.Content, &tips)
 		msg.NotificationElem.Detail = tips.JsonDetail
 		msg.NotificationElem.DefaultTips = tips.DefaultTips
-
 	} else {
 		switch msg.ContentType {
 		case constant.Text:
-			if c.IsEncryption {
+			if c.encryptionKey != "" {
 				var newContent []byte
-				newContent, err = utils.AesDecrypt([]byte(msg.Content), []byte(constant.KEY))
+				newContent, err = utils.AesDecrypt([]byte(msg.Content), []byte(c.encryptionKey))
 				msg.Content = string(newContent)
 			}
 		case constant.Picture:
