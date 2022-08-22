@@ -98,7 +98,7 @@ func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecon
 func PressTest(msgNumOneClient int, intervalSleepMS int, clientNum int) {
 	msgNumInOneClient = msgNumOneClient
 	timeStamp := utils.Int64ToString(time.Now().Unix())
-
+	t1 := time.Now()
 	var wg sync.WaitGroup
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
@@ -109,10 +109,10 @@ func PressTest(msgNumOneClient int, intervalSleepMS int, clientNum int) {
 		}(i)
 	}
 	wg.Wait()
-	log.Warn("", "get all user token finish ", clientNum)
+	log.Warn("", "get all user token finish ", clientNum, " cost time: ", time.Since(t1))
 
 	log.Warn("", "init and login begin ")
-	t1 := time.Now()
+	t1 = time.Now()
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
 		go func(idx int) {

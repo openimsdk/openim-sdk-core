@@ -45,19 +45,14 @@ func StartSimulationJSClient(api, jssdkURL, userID string, i int, userIDList []s
 	time.Sleep(time.Second * 2)
 
 	// 模拟登录同步
-	go func() {
-		err = user.GetSelfUserInfo()
-		err = user.GetAllConversationList()
-		err = user.GetBlackList()
-		err = user.GetFriendList()
-		err = user.GetRecvFriendApplicationList()
-		err = user.GetRecvGroupApplicationList()
-		err = user.GetSendFriendApplicationList()
-		err = user.GetSendGroupApplicationList()
-		if err != nil {
-			log.Println(err)
-		}
-	}()
+	go user.GetSelfUserInfo()
+	go user.GetAllConversationList()
+	go user.GetBlackList()
+	go user.GetFriendList()
+	go user.GetRecvFriendApplicationList()
+	go user.GetRecvGroupApplicationList()
+	go user.GetSendFriendApplicationList()
+	go user.GetSendGroupApplicationList()
 
 	// 模拟监听回调
 	go func() {
@@ -99,6 +94,7 @@ func StartSimulationJSClient(api, jssdkURL, userID string, i int, userIDList []s
 		}
 	}()
 
+	// 模拟获取登陆状态
 	go func() {
 		for {
 			if err = user.GetLoginStatus(); err != nil {

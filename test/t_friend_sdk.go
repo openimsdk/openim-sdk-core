@@ -496,8 +496,6 @@ func lllogin(uid, tk string) bool {
 }
 
 func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
-	coreMgrLock.Lock()
-	defer coreMgrLock.Unlock()
 
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
