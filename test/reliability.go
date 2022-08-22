@@ -91,7 +91,7 @@ func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecon
 		} else {
 			log.Warn("", "CheckReliabilityResult failed , wait.... ")
 		}
-		time.Sleep(time.Duration(30) * time.Second)
+		time.Sleep(time.Duration(5) * time.Second)
 	}
 }
 
