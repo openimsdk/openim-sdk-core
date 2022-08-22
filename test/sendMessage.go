@@ -88,7 +88,8 @@ func addSendFailed() {
 //}
 
 func sendPressMsg(index int, sendId, recvID string, idx string) bool {
-	return SendTextMessageOnlyForPress(idx, sendId, recvID, "opid", allLoginMgr[index].mgr.Ws())
+
+	return SendTextMessageOnlyForPress(idx, sendId, recvID, utils.OperationIDGenerator(), allLoginMgr[index].mgr.Ws())
 }
 func SendTextMessageOnlyForPress(text, senderID, recvID, operationID string, ws *interaction.Ws) bool {
 	var wsMsgData server_api_params.MsgData
