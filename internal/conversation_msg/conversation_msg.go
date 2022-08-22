@@ -84,7 +84,7 @@ func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener,
 	msgListener open_im_sdk_callback.OnAdvancedMsgListener, organization *organization.Organization, signaling *signaling.LiveSignaling,
-	workMoments *workMoments.WorkMoments, cache *cache.Cache, full *full.Full, id2MinSeq map[string]uint32, isEncryption bool) *Conversation {
+	workMoments *workMoments.WorkMoments, cache *cache.Cache, full *full.Full, id2MinSeq map[string]uint32) *Conversation {
 	n := &Conversation{Ws: ws, db: db, p: p, recvCH: ch, loginUserID: loginUserID, platformID: platformID,
 		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage,
 		signaling: signaling, organization: organization, workMoments: workMoments,
