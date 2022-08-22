@@ -24,7 +24,7 @@ type MsgSync struct {
 	selfMsgSync *SelfMsgSync
 	//selfMsgSyncLatestModel *SelfMsgSyncLatestModel
 	//superGroupMsgSync *SuperGroupMsgSync
-
+	isSyncFinished            bool
 	readDiffusionGroupMsgSync *ReadDiffusionGroupMsgSync
 }
 
@@ -35,8 +35,16 @@ func (m *MsgSync) compareSeq() {
 }
 
 func (m *MsgSync) doMaxSeq(cmd common.Cmd2Value) {
+	operationID := cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).OperationID
+	if !m.isSyncFinished {
+		m.readDiffusionGroupMsgSync.TriggerCmdNewMsgCome(nil, operationID, constant.MsgSyncBegin)
+	}
 	m.readDiffusionGroupMsgSync.doMaxSeq(cmd)
 	m.selfMsgSync.doMaxSeq(cmd)
+	if !m.isSyncFinished {
+		m.readDiffusionGroupMsgSync.TriggerCmdNewMsgCome(nil, operationID, constant.MsgSyncEnd)
+	}
+	m.isSyncFinished = true
 }
 
 func (m *MsgSync) doPushMsg(cmd common.Cmd2Value) {

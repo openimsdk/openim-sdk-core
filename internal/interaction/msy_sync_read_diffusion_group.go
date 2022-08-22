@@ -133,11 +133,11 @@ func (m *ReadDiffusionGroupMsgSync) syncLatestMsg(operationID string) {
 
 	if flag == 1 {
 		log.Info(operationID, "sync latest msg begin for read diffusion group: ", m.SuperGroupIDList)
-		m.TriggerCmdNewMsgCome(nil, operationID, constant.MsgSyncBegin)
+		//	m.TriggerCmdNewMsgCome(nil, operationID, constant.MsgSyncBegin)
 		for _, v := range m.SuperGroupIDList {
 			m.syncLatestMsgForGroup(v, operationID, constant.MsgSyncProcessing)
 		}
-		m.TriggerCmdNewMsgCome(nil, operationID, constant.MsgSyncEnd)
+		//	m.TriggerCmdNewMsgCome(nil, operationID, constant.MsgSyncEnd)
 		log.Info(operationID, "sync latest msg end for read diffusion group: ", m.SuperGroupIDList)
 	} else {
 		log.Info(operationID, "do nothing ")
@@ -160,13 +160,14 @@ func (m *ReadDiffusionGroupMsgSync) syncLatestMsgForGroup(groupID, operationID s
 		if int64(need)-int64(synchronized) > int64(constant.PullMsgNumForReadDiffusion) {
 			begin = need - uint32(constant.PullMsgNumForReadDiffusion) + 1
 		}
+		m.Group2SyncMsgFinished[groupID] = true
 		log.Debug(operationID, "syncLatestMsgForGroup seq: ", need, synchronized, begin)
 		if begin > need {
 			log.Debug(operationID, "do nothing syncLatestMsgForGroup seq: ", need, synchronized, begin)
 			return
 		}
 		m.syncMsgFromServer(begin, need, groupID, operationID, loginSync)
-		m.Group2SyncMsgFinished[groupID] = true
+
 		m.Group2SeqMaxSynchronized[groupID] = begin
 	}
 }

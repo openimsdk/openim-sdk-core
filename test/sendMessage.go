@@ -12,8 +12,11 @@ import (
 
 func init() {
 	sdk_struct.SvrConf = sdk_struct.IMConfig{Platform: 1, ApiAddr: APIADDR, WsAddr: WSADDR, DataDir: "./", LogLevel: 6, ObjectStorage: "cos"}
-	allLoginMgr = make(map[int]*CoreNode)
 
+}
+
+func InitMgr(num int) {
+	allLoginMgr = make(map[int]*CoreNode, num)
 }
 
 type CoreNode struct {
@@ -85,7 +88,8 @@ func addSendFailed() {
 //}
 
 func sendPressMsg(index int, sendId, recvID string, idx string) bool {
-	return SendTextMessageOnlyForPress(idx, sendId, recvID, "opid", allLoginMgr[index].mgr.Ws())
+
+	return SendTextMessageOnlyForPress(idx, sendId, recvID, utils.OperationIDGenerator(), allLoginMgr[index].mgr.Ws())
 }
 func SendTextMessageOnlyForPress(text, senderID, recvID, operationID string, ws *interaction.Ws) bool {
 	var wsMsgData server_api_params.MsgData

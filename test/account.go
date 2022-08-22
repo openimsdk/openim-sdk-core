@@ -174,10 +174,8 @@ func RegisterReliabilityUser(id int, timeStamp string) {
 	coreMgrLock.Lock()
 	defer coreMgrLock.Unlock()
 	userID := GenUid(id, "reliability_"+timeStamp+"_")
-
 	register(userID)
 	token := RunGetToken(userID)
-
 	allLoginMgr[id] = &CoreNode{token: token, userID: userID}
 }
 
@@ -185,9 +183,7 @@ func RegisterPressUser(id int, timeStamp string) {
 	coreMgrLock.Lock()
 	defer coreMgrLock.Unlock()
 	userID := GenUid(id, "press_"+timeStamp+"_")
-
 	register(userID)
 	token := RunGetToken(userID)
-
 	allLoginMgr[id] = &CoreNode{token: token, userID: userID}
 }
