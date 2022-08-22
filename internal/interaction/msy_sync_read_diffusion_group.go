@@ -133,11 +133,11 @@ func (m *ReadDiffusionGroupMsgSync) syncLatestMsg(operationID string) {
 
 	if flag == 1 {
 		log.Info(operationID, "sync latest msg begin for read diffusion group: ", m.SuperGroupIDList)
-		m.TriggerCmdNewMsgCome(nil, operationID, constant.MsgSyncBegin)
+		//	m.TriggerCmdNewMsgCome(nil, operationID, constant.MsgSyncBegin)
 		for _, v := range m.SuperGroupIDList {
 			m.syncLatestMsgForGroup(v, operationID, constant.MsgSyncProcessing)
 		}
-		m.TriggerCmdNewMsgCome(nil, operationID, constant.MsgSyncEnd)
+		//	m.TriggerCmdNewMsgCome(nil, operationID, constant.MsgSyncEnd)
 		log.Info(operationID, "sync latest msg end for read diffusion group: ", m.SuperGroupIDList)
 	} else {
 		log.Info(operationID, "do nothing ")
