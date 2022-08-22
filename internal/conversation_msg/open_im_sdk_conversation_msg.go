@@ -916,7 +916,7 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *model_st
 	//Protocol conversion
 	var wsMsgData server_api_params.MsgData
 	copier.Copy(&wsMsgData, s)
-	if wsMsgData.ContentType == constant.Text && c.IsEncryption {
+	if wsMsgData.ContentType == constant.Text && c.encryptionKey != "" {
 		key, _ := hex.DecodeString(constant.KEY)
 		ciphertext, _ := utils.AesEncrypt([]byte(s.Content), key)
 		wsMsgData.Content = ciphertext
