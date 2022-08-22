@@ -512,7 +512,7 @@ type conversationCallBack struct {
 }
 
 func (c conversationCallBack) OnSyncServerProgress(progress int) {
-	panic("implement me")
+	log.Info("", utils.GetSelfFuncName())
 }
 
 func (c conversationCallBack) OnSyncServerStart() {
@@ -520,11 +520,11 @@ func (c conversationCallBack) OnSyncServerStart() {
 }
 
 func (c conversationCallBack) OnSyncServerFinish() {
-	panic("implement me")
+	log.Info("", utils.GetSelfFuncName())
 }
 
 func (c conversationCallBack) OnSyncServerFailed() {
-	panic("implement me")
+	log.Info("", utils.GetSelfFuncName())
 }
 
 func (c conversationCallBack) OnNewConversation(conversationList string) {

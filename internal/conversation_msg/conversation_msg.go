@@ -885,10 +885,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	}
 	if syncFlag == constant.MsgSyncEnd {
 		log.Info(operationID, "OnSyncServerFinish() ")
-		if c.ConversationListener != nil {
-			c.ConversationListener.OnSyncServerFinish()
-		}
-
+		c.ConversationListener.OnSyncServerFinish()
 	}
 	log.Info(operationID, "insert msg, total cost time: ", utils.GetCurrentTimestampByMill()-b, "len:  ", len(allMsg))
 }
