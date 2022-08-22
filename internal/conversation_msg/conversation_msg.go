@@ -340,6 +340,14 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					groupMsgReadList = append(groupMsgReadList, msg)
 				case constant.Typing:
 					newMessages = append(newMessages, msg)
+				case constant.CustomMsgOnlineOnly:
+					newMessages = append(newMessages, msg)
+				case constant.CustomMsgNotTriggerConversation:
+					newMessages = append(newMessages, msg)
+				case constant.OANotification:
+					if !isConversationUpdate {
+						newMessages = append(newMessages, msg)
+					}
 				case constant.AdvancedRevoke:
 					newMsgRevokeList = append(newMsgRevokeList, msg)
 					newMessages = removeElementInList(newMessages, msg)
@@ -722,6 +730,14 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 					msgReadList = append(msgReadList, msg)
 				case constant.GroupHasReadReceipt:
 					groupMsgReadList = append(groupMsgReadList, msg)
+				case constant.CustomMsgOnlineOnly:
+					newMessages = append(newMessages, msg)
+				case constant.CustomMsgNotTriggerConversation:
+					newMessages = append(newMessages, msg)
+				case constant.OANotification:
+					if !isConversationUpdate {
+						newMessages = append(newMessages, msg)
+					}
 				case constant.Typing:
 					newMessages = append(newMessages, msg)
 				case constant.AdvancedRevoke:
