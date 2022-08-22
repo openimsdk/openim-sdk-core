@@ -11,7 +11,7 @@ import (
 	"open_im_sdk/internal/organization"
 	"open_im_sdk/internal/signaling"
 	"open_im_sdk/internal/user"
-	"open_im_sdk/internal/work_moments"
+	workMoments "open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -54,6 +54,7 @@ type Conversation struct {
 	cache          *cache.Cache
 	full           *full.Full
 	tempMessageMap sync.Map
+	IsEncryption   bool
 
 	id2MinSeq map[string]uint32
 }
@@ -83,11 +84,11 @@ func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener,
 	msgListener open_im_sdk_callback.OnAdvancedMsgListener, organization *organization.Organization, signaling *signaling.LiveSignaling,
-	workMoments *workMoments.WorkMoments, cache *cache.Cache, full *full.Full, id2MinSeq map[string]uint32) *Conversation {
+	workMoments *workMoments.WorkMoments, cache *cache.Cache, full *full.Full, id2MinSeq map[string]uint32, isEncryption bool) *Conversation {
 	n := &Conversation{Ws: ws, db: db, p: p, recvCH: ch, loginUserID: loginUserID, platformID: platformID,
 		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage,
 		signaling: signaling, organization: organization, workMoments: workMoments,
-		full: full, id2MinSeq: id2MinSeq}
+		full: full, id2MinSeq: id2MinSeq, IsEncryption: isEncryption}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
 	n.cache = cache
@@ -1484,6 +1485,11 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 	} else {
 		switch msg.ContentType {
 		case constant.Text:
+			if c.IsEncryption {
+				var newContent []byte
+				newContent, err = utils.AesDecrypt([]byte(msg.Content), []byte(constant.KEY))
+				msg.Content = string(newContent)
+			}
 		case constant.Picture:
 			err = utils.JsonStringToStruct(msg.Content, &msg.PictureElem)
 		case constant.Voice:

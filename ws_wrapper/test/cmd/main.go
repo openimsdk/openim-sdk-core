@@ -28,7 +28,7 @@ func main() {
 		panic(err)
 	}
 	l := uidList[0:*connNum]
-	l = []string{"MTc3MjYzNzg0Mjg="}
+	// l = []string{"MTc3MjYzNzg0Mjg="}
 	for num, userID := range l {
 		time.Sleep(time.Second * 1)
 		go test.StartSimulationJSClient(*imAPI, *jssdkURL, userID, num, l)

@@ -212,6 +212,7 @@ type IMConfig struct {
 	DataDir       string `json:"data_dir"`
 	LogLevel      uint32 `json:"log_level"`
 	ObjectStorage string `json:"object_storage"` //"cos"(default)  "oss"
+	IsEncryption  bool   `json:"is_encryption"`
 }
 
 var SvrConf IMConfig
