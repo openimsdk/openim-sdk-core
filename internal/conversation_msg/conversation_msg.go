@@ -478,7 +478,9 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	operationID := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).OperationID
 	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).MsgList
 	syncFlag := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).SyncFlag
+	log.Info(operationID, utils.GetSelfFuncName(), " args ", "syncFlag ", syncFlag)
 	if syncFlag == constant.MsgSyncBegin {
+		log.Info(operationID, "OnSyncServerStart() ")
 		c.ConversationListener.OnSyncServerStart()
 	}
 	if c.msgListener == nil {
@@ -865,7 +867,11 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 	}
 	if syncFlag == constant.MsgSyncEnd {
-		c.ConversationListener.OnSyncServerFinish()
+		log.Info(operationID, "OnSyncServerFinish() ")
+		if c.ConversationListener != nil {
+			c.ConversationListener.OnSyncServerFinish()
+		}
+
 	}
 	log.Info(operationID, "insert msg, total cost time: ", utils.GetCurrentTimestampByMill()-b, "len:  ", len(allMsg))
 }
