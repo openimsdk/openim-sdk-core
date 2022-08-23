@@ -183,7 +183,7 @@ func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 			//	return false
 		}
 	}
-
+	maxCostMsgID := ""
 	minCostTime := int64(1000000)
 	maxCostTime := int64(0)
 	totalCostTime := int64(0)
@@ -194,6 +194,7 @@ func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 			costTime := krecv.RecvTime - vsend.SendTime
 			totalCostTime += costTime
 			if costTime > maxCostTime {
+				maxCostMsgID = ksend
 				maxCostTime = costTime
 			}
 			if minCostTime > costTime {
@@ -207,7 +208,27 @@ func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 	log.Warn("", "send msg failed num ", len(SendFailedAllMsg))
 	log.Warn("", "recv msg succ num ", len(RecvAllMsg))
 	log.Warn("", "msg in recv, and in send num ", sameNum)
-	log.Warn("", "minCostTime: ", minCostTime, "ms, maxCostTime: ", maxCostTime, "ms, average cost time: ", totalCostTime/(int64(sendMsgClient*msgNumInOneClient)), "ms")
+	log.Warn("", "minCostTime: ", minCostTime, "ms, maxCostTime: ", maxCostTime, "ms, average cost time: ", totalCostTime/(int64(sendMsgClient*msgNumInOneClient)), "ms", " maxCostMsgID: ", maxCostMsgID)
+
+	minCostTime = 1000000
+	maxCostTime = int64(0)
+	totalCostTime = int64(0)
+
+	for ksend, vsend := range SendSuccAllMsg {
+		krecv, ok := RecvAllMsg[ksend]
+		if ok {
+			costTime := krecv.RecvTime - vsend.SendSeccCallbackTime
+			totalCostTime += costTime
+			if costTime > maxCostTime {
+				maxCostTime = costTime
+			}
+			if minCostTime > costTime {
+				minCostTime = costTime
+			}
+		}
+	}
+
+	log.Warn("", "RecvTime-SendSeccCallbackTime,  minCostTime: ", minCostTime, "ms, maxCostTime: ", maxCostTime, "ms, average cost time: ", totalCostTime/(int64(sendMsgClient*msgNumInOneClient)), "ms")
 
 	return true
 }

@@ -95,7 +95,7 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 	onServer := common.TransferToLocalUserInfo(svr)
 	onLocal, err := u.GetLoginUser(u.loginUserID)
 	if err != nil {
-		log.Warn(operationID, "GetLoginUser failed", err.Error())
+		log.Warn(operationID, "GetLoginUser failed ", err.Error())
 		onLocal = &model_struct.LocalUser{}
 	}
 	if !cmp.Equal(onServer, onLocal) {

@@ -4,12 +4,13 @@ import (
 	"sync"
 )
 
-var LogLevel = 6
+var LogLevel uint32 = 6
 var PlatformID = int32(1)
+var LogName = ""
 
 var (
-	//TESTIP = "43.155.69.205"
-	TESTIP          = "121.37.25.71"
+	TESTIP = "43.155.69.205"
+	//TESTIP          = "121.37.25.71"
 	APIADDR         = "http://" + TESTIP + ":10002"
 	WSADDR          = "ws://" + TESTIP + ":10001"
 	REGISTERADDR    = APIADDR + "/auth/user_register"
