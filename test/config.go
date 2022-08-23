@@ -4,7 +4,7 @@ import (
 	"sync"
 )
 
-var LogLevel uint32 = 6
+var LogLevel uint32 = 3
 var PlatformID = int32(1)
 var LogName = ""
 
@@ -22,6 +22,8 @@ var (
 
 var coreMgrLock sync.RWMutex
 var allLoginMgr map[int]*CoreNode
+
+var allLoginMgrtmp []*CoreNode
 
 var userLock sync.RWMutex
 

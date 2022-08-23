@@ -124,7 +124,7 @@ func getToken(uid string) string {
 	req.UserID = uid
 	req.Secret = SECRET
 	req.OperationID = utils.OperationIDGenerator()
-	r, err := network.Post2Api(url, req, "")
+	r, err := network.Post2Api(url, req, "a")
 	if err != nil {
 		log.Error(req.OperationID, "Post2Api failed ", err.Error(), url, req)
 		return ""
@@ -171,19 +171,19 @@ func getMyIP() string {
 }
 
 func RegisterReliabilityUser(id int, timeStamp string) {
-	coreMgrLock.Lock()
-	defer coreMgrLock.Unlock()
 	userID := GenUid(id, "reliability_"+timeStamp+"_")
 	register(userID)
 	token := RunGetToken(userID)
+	coreMgrLock.Lock()
+	defer coreMgrLock.Unlock()
 	allLoginMgr[id] = &CoreNode{token: token, userID: userID}
 }
 
 func RegisterPressUser(id int, timeStamp string) {
-	coreMgrLock.Lock()
-	defer coreMgrLock.Unlock()
 	userID := GenUid(id, "press_"+timeStamp+"_")
 	register(userID)
 	token := RunGetToken(userID)
+	coreMgrLock.Lock()
+	defer coreMgrLock.Unlock()
 	allLoginMgr[id] = &CoreNode{token: token, userID: userID}
 }
