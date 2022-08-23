@@ -560,9 +560,10 @@ func (testMarkC2CMessageAsRead) OnError(code int32, msg string) {
 //}
 
 type SendRecvTime struct {
-	SendTime     int64
-	RecvTime     int64
-	SendIDRecvID string
+	SendTime             int64
+	SendSeccCallbackTime int64
+	RecvTime             int64
+	SendIDRecvID         string
 }
 
 var SendSuccAllMsg map[string]*SendRecvTime //msgid->send+recv:

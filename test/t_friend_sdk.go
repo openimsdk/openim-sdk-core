@@ -427,7 +427,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	cf.Platform = 1
 	cf.WsAddr = ws
 	cf.DataDir = "./"
-	cf.LogLevel = 6
+	cf.LogLevel = LogLevel
 	cf.ObjectStorage = "minio"
 
 	var s string
@@ -619,8 +619,8 @@ func (t *TestSendMsgCallBack) OnSuccess(data string) {
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
 	k, _ := SendSuccAllMsg[t.msgID]
+	k.SendSeccCallbackTime = utils.GetCurrentTimestampByMill()
 	k.SendIDRecvID = t.sendID + t.recvID
-
 }
 
 func (t *TestSendMsgCallBack) OnProgress(progress int) {

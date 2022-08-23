@@ -1482,7 +1482,7 @@ func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, con
 	message.SendID = c.loginUserID
 	userInfo, err := c.db.GetLoginUser(c.loginUserID)
 	if err != nil {
-		log.Error(operationID, "GetLoginUser", err.Error())
+		log.Error(operationID, "GetLoginUser ", err.Error(), c.loginUserID)
 	} else {
 		message.SenderFaceURL = userInfo.FaceURL
 		message.SenderNickname = userInfo.Nickname
