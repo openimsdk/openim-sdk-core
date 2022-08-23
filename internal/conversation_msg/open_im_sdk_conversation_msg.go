@@ -564,6 +564,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 		return
 	}
 	go func() {
+		log.Debug(operationID, "SendMessage start ")
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 		s.SendID = c.loginUserID

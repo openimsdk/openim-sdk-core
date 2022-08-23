@@ -57,6 +57,7 @@ func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecon
 		}(i)
 	}
 	wg.Wait()
+
 	log.Warn("", "RegisterReliabilityUser finished, clientNum: ", clientNum)
 	log.Warn("", " init, login, send msg, start ")
 	rand.Seed(time.Now().UnixNano())
@@ -209,26 +210,6 @@ func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 	log.Warn("", "recv msg succ num ", len(RecvAllMsg))
 	log.Warn("", "msg in recv, and in send num ", sameNum)
 	log.Warn("", "minCostTime: ", minCostTime, "ms, maxCostTime: ", maxCostTime, "ms, average cost time: ", totalCostTime/(int64(sendMsgClient*msgNumInOneClient)), "ms", " maxCostMsgID: ", maxCostMsgID)
-
-	minCostTime = 1000000
-	maxCostTime = int64(0)
-	totalCostTime = int64(0)
-
-	for ksend, vsend := range SendSuccAllMsg {
-		krecv, ok := RecvAllMsg[ksend]
-		if ok {
-			costTime := krecv.RecvTime - vsend.SendSeccCallbackTime
-			totalCostTime += costTime
-			if costTime > maxCostTime {
-				maxCostTime = costTime
-			}
-			if minCostTime > costTime {
-				minCostTime = costTime
-			}
-		}
-	}
-
-	log.Warn("", "RecvTime-SendSeccCallbackTime,  minCostTime: ", minCostTime, "ms, maxCostTime: ", maxCostTime, "ms, average cost time: ", totalCostTime/(int64(sendMsgClient*msgNumInOneClient)), "ms")
 
 	return true
 }

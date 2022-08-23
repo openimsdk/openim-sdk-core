@@ -31,8 +31,6 @@ func (d *DataBase) BatchInsertMessageListController(MessageList []*model_struct.
 	}
 }
 func (d *DataBase) InsertMessage(Message *model_struct.LocalChatLog) error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Create(Message).Error, "InsertMessage failed")
 }
 func (d *DataBase) InsertMessageController(message *model_struct.LocalChatLog) error {
@@ -283,9 +281,8 @@ func (d *DataBase) MessageIfExistsBySeq(seq int64) (bool, error) {
 		return true, nil
 	}
 }
+
 func (d *DataBase) GetMessage(ClientMsgID string) (*model_struct.LocalChatLog, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
 	var c model_struct.LocalChatLog
 	return &c, utils.Wrap(d.conn.Where("client_msg_id = ?",
 		ClientMsgID).Take(&c).Error, "GetMessage failed")
