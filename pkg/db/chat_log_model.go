@@ -284,8 +284,6 @@ func (d *DataBase) MessageIfExistsBySeq(seq int64) (bool, error) {
 	}
 }
 func (d *DataBase) GetMessage(ClientMsgID string) (*model_struct.LocalChatLog, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
 	var c model_struct.LocalChatLog
 	return &c, utils.Wrap(d.conn.Where("client_msg_id = ?",
 		ClientMsgID).Take(&c).Error, "GetMessage failed")
