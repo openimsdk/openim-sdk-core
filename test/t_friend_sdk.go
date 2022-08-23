@@ -427,7 +427,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	cf.Platform = 1
 	cf.WsAddr = ws
 	cf.DataDir = "./"
-	cf.LogLevel = 6
+	cf.LogLevel = LogLevel
 	cf.ObjectStorage = "minio"
 
 	var s string
@@ -496,15 +496,13 @@ func lllogin(uid, tk string) bool {
 }
 
 func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
-	coreMgrLock.Lock()
-	defer coreMgrLock.Unlock()
 
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
 	cf.WsAddr = ws
 	cf.Platform = 1
 	cf.DataDir = "./"
-	cf.LogLevel = 3
+	cf.LogLevel = uint32(LogLevel)
 	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
 
 	operationID := utils.OperationIDGenerator()
@@ -545,8 +543,8 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 			log.Info(operationID, "login ok ", uid)
 			return
 		}
-		log.Warn(operationID, "waiting login...", uid)
-		time.Sleep(100 * time.Millisecond)
+		//		log.Warn(operationID, "waiting login...", uid)
+		//	time.Sleep(100 * time.Millisecond)
 	}
 
 }
@@ -604,6 +602,8 @@ type TestSendMsgCallBack struct {
 	sendID      string
 	recvID      string
 	msgID       string
+	sendTime    int64
+	recvTime    int64
 }
 
 func (t *TestSendMsgCallBack) OnError(errCode int32, errMsg string) {
@@ -618,7 +618,9 @@ func (t *TestSendMsgCallBack) OnSuccess(data string) {
 	log.Info(t.OperationID, "test_openim: send msg success: |", t.msgID, t.msg, data)
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
-	SendSuccAllMsg[t.msgID] = t.sendID + t.recvID
+	k, _ := SendSuccAllMsg[t.msgID]
+	k.SendSeccCallbackTime = utils.GetCurrentTimestampByMill()
+	k.SendIDRecvID = t.sendID + t.recvID
 }
 
 func (t *TestSendMsgCallBack) OnProgress(progress int) {

@@ -32,8 +32,17 @@ func (d *DataBase) CloseDB() error {
 	UserDBLock.Lock()
 	dbConn, err := d.conn.DB()
 	if err != nil {
-		dbConn.Close()
+		log.Error("", "get db conn failed ", err.Error())
+	} else {
+		if dbConn != nil {
+			err := dbConn.Close()
+			if err != nil {
+				log.Error("", "close db failed ", err.Error())
+			}
+		}
 	}
+
+	log.NewInfo("", "CloseDB ok, delete db map ", d.loginUserID)
 	delete(UserDBMap, d.loginUserID)
 	UserDBLock.Unlock()
 	return nil

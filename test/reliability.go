@@ -52,99 +52,115 @@ func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecon
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
 		go func(idx int) {
-			RegisterUserReliability(idx, timeStamp)
+			RegisterReliabilityUser(idx, timeStamp)
 			wg.Done()
 		}(i)
 	}
 	wg.Wait()
-	log.Info("", "RegisterUserReliability finish ", clientNum)
-
+	log.Warn("", "RegisterReliabilityUser finished, clientNum: ", clientNum)
+	log.Warn("", " init, login, send msg, start ")
 	rand.Seed(time.Now().UnixNano())
 
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
 		rdSleep := rand.Intn(randSleepMaxSecond) + 1
-		isSend := rand.Intn(2)
+		isSend := 0
 		if isSend == 0 {
 			go func(idx int) {
+				log.Warn("", " send msg flag true ", idx)
 				ReliabilityOne(idx, rdSleep, true, intervalSleepMS)
 				wg.Done()
 			}(i)
 			sendMsgClient++
 		} else {
 			go func(idx int) {
+				log.Warn("", " send msg flag false ", idx)
 				ReliabilityOne(idx, rdSleep, false, intervalSleepMS)
 				wg.Done()
 			}(i)
 		}
 	}
 	wg.Wait()
-	log.Warn("CheckReliabilityResult start, send msg client number: ", sendMsgClient, "total client number: ", clientNum)
+	log.Warn("send msg finish,  CheckReliabilityResult")
 
 	for {
-		if CheckReliabilityResult() {
+		if CheckReliabilityResult(msgNumOneClient, clientNum) {
 			log.Warn("", "CheckReliabilityResult ok, exit")
 			os.Exit(0)
 			return
 		} else {
 			log.Warn("", "CheckReliabilityResult failed , wait.... ")
 		}
-		time.Sleep(time.Duration(300) * time.Second)
+		time.Sleep(time.Duration(5) * time.Second)
 	}
 }
 
-func PressTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecond int, clientNum int) {
+func PressTest(msgNumOneClient int, intervalSleepMS int, clientNum int) {
 	msgNumInOneClient = msgNumOneClient
 	timeStamp := utils.Int64ToString(time.Now().Unix())
-
+	t1 := time.Now()
 	var wg sync.WaitGroup
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
 		go func(idx int) {
-			RegisterUserReliability(idx, timeStamp)
-			log.Warn("", "get user token finish ", idx)
+			RegisterPressUser(idx, timeStamp)
+			log.Info("", "get user token finish ", idx)
 			wg.Done()
 		}(i)
 	}
 	wg.Wait()
-	log.Info("", "get all user token finish ", clientNum)
+	log.Warn("", "get all user token finish ", clientNum, " cost time: ", time.Since(t1))
 
-	rand.Seed(time.Now().UnixNano())
-
+	log.Warn("", "init and login begin ")
+	t1 = time.Now()
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
-		rdSleep := rand.Intn(randSleepMaxSecond) + 1
-		isSend := rand.Intn(2)
-		isSend = 0
-		if isSend == 0 {
-			go func(idx int) {
-				PressOne(idx, rdSleep, true, intervalSleepMS)
-				wg.Done()
-			}(i)
-			sendMsgClient++
-		} else {
-			go func(idx int) {
-				PressOne(idx, rdSleep, false, intervalSleepMS)
-				wg.Done()
-			}(i)
-		}
+		go func(idx int) {
+			strMyUid := allLoginMgr[idx].userID
+			token := allLoginMgr[idx].token
+			ReliabilityInitAndLogin(idx, strMyUid, token, WSADDR, APIADDR)
+			wg.Done()
+		}(i)
 	}
 	wg.Wait()
-	log.Warn("CheckReliabilityResult start, send msg client number: ", sendMsgClient, "total client number: ", clientNum)
+	log.Warn("", "init and login end ", " cost time: ", time.Since(t1))
+
+	log.Warn("", "send msg begin ")
+	t1 = time.Now()
+	wg.Add(clientNum)
+	for i := 0; i < clientNum; i++ {
+		go func(idx int) {
+			PressOne(idx, 0, true, intervalSleepMS)
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+	sendMsgTotalSuccessNum := uint32(0)
+	sendMsgTotalFailedNum := uint32(0)
+	for _, v := range allLoginMgr {
+		sendMsgTotalSuccessNum += v.sendMsgSuccessNum
+		sendMsgTotalFailedNum += v.sendMsgFailedNum
+	}
+	log.Warn("send msg end  ", "number of messages expected to be sent: ", clientNum*msgNumOneClient, " sendMsgTotalSuccessNum: ", sendMsgTotalSuccessNum, " sendMsgTotalFailedNum: ", sendMsgTotalFailedNum, "cost time: ", time.Since(t1))
 }
 
-func CheckReliabilityResult() bool {
+func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 	log.Info("", "start check map send -> map recv")
 	sameNum := 0
 
-	for ksend, vsend := range SendSuccAllMsg {
-		krecv, ok := RecvAllMsg[ksend]
+	if len(SendSuccAllMsg)+len(SendFailedAllMsg) != msgNumOneClient*clientNum {
+		log.Warn("", utils.GetSelfFuncName(), " send msg succ number: ", len(SendSuccAllMsg), " send  msg failed number: ", len(SendFailedAllMsg), " all: ", msgNumOneClient*clientNum)
+		return false
+	}
+
+	for ksend, _ := range SendSuccAllMsg {
+		_, ok := RecvAllMsg[ksend]
 		if ok {
 			sameNum++
-			x := vsend
-			y := krecv
-			x = x + x
-			y = y + y
+			//x := vsend
+			//y := krecv
+			//x = x + x
+			//y = y + y
 
 		} else {
 			log.Error("", "check failed  not in recv ", ksend, len(SendFailedAllMsg), len(SendSuccAllMsg), len(RecvAllMsg))
@@ -155,16 +171,35 @@ func CheckReliabilityResult() bool {
 	log.Info("", "start check map recv -> map send ")
 	sameNum = 0
 
-	for k1, v1 := range RecvAllMsg {
-		v2, ok := SendSuccAllMsg[k1]
+	for k1, _ := range RecvAllMsg {
+		_, ok := SendSuccAllMsg[k1]
 		if ok {
 			sameNum++
-			x := v1 + v2
-			x = x + x
+			//x := v1 + v2
+			//x = x + x
 
 		} else {
 			log.Error("", "check failed  not in send ", k1, len(SendFailedAllMsg), len(SendSuccAllMsg), len(RecvAllMsg))
 			//	return false
+		}
+	}
+	maxCostMsgID := ""
+	minCostTime := int64(1000000)
+	maxCostTime := int64(0)
+	totalCostTime := int64(0)
+	for ksend, vsend := range SendSuccAllMsg {
+		krecv, ok := RecvAllMsg[ksend]
+		if ok {
+			sameNum++
+			costTime := krecv.RecvTime - vsend.SendTime
+			totalCostTime += costTime
+			if costTime > maxCostTime {
+				maxCostMsgID = ksend
+				maxCostTime = costTime
+			}
+			if minCostTime > costTime {
+				minCostTime = costTime
+			}
 		}
 	}
 
@@ -173,12 +208,33 @@ func CheckReliabilityResult() bool {
 	log.Warn("", "send msg failed num ", len(SendFailedAllMsg))
 	log.Warn("", "recv msg succ num ", len(RecvAllMsg))
 	log.Warn("", "msg in recv, and in send num ", sameNum)
+	log.Warn("", "minCostTime: ", minCostTime, "ms, maxCostTime: ", maxCostTime, "ms, average cost time: ", totalCostTime/(int64(sendMsgClient*msgNumInOneClient)), "ms", " maxCostMsgID: ", maxCostMsgID)
+
+	minCostTime = 1000000
+	maxCostTime = int64(0)
+	totalCostTime = int64(0)
+
+	for ksend, vsend := range SendSuccAllMsg {
+		krecv, ok := RecvAllMsg[ksend]
+		if ok {
+			costTime := krecv.RecvTime - vsend.SendSeccCallbackTime
+			totalCostTime += costTime
+			if costTime > maxCostTime {
+				maxCostTime = costTime
+			}
+			if minCostTime > costTime {
+				minCostTime = costTime
+			}
+		}
+	}
+
+	log.Warn("", "RecvTime-SendSeccCallbackTime,  minCostTime: ", minCostTime, "ms, maxCostTime: ", maxCostTime, "ms, average cost time: ", totalCostTime/(int64(sendMsgClient*msgNumInOneClient)), "ms")
 
 	return true
 }
 
 func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS int) {
-	time.Sleep(time.Duration(beforeLoginSleep) * time.Second)
+	//	time.Sleep(time.Duration(beforeLoginSleep) * time.Second)
 	strMyUid := allLoginMgr[index].userID
 	token := allLoginMgr[index].token
 	ReliabilityInitAndLogin(index, strMyUid, token, WSADDR, APIADDR)
@@ -230,10 +286,13 @@ func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSle
 }
 
 func PressOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS int) {
-	time.Sleep(time.Duration(beforeLoginSleep) * time.Second)
+	if beforeLoginSleep != 0 {
+		time.Sleep(time.Duration(beforeLoginSleep) * time.Millisecond)
+	}
+
 	strMyUid := allLoginMgr[index].userID
 	token := allLoginMgr[index].token
-	ReliabilityInitAndLogin(index, strMyUid, token, WSADDR, APIADDR)
+	//	ReliabilityInitAndLogin(index, strMyUid, token, WSADDR, APIADDR)
 	log.Info("", "login ok client num: ", len(allLoginMgr))
 	log.Info("start One", index, beforeLoginSleep, isSendMsg, strMyUid, token, WSADDR, APIADDR)
 	msgnum := msgNumInOneClient
@@ -266,15 +325,18 @@ func PressOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS i
 			for {
 				if runtime.NumGoroutine() > MaxNumGoroutine {
 					time.Sleep(time.Duration(intervalSleepMS) * time.Millisecond)
-					log.Warn("", "NumGoroutine > max  ", runtime.NumGoroutine(), MaxNumGoroutine)
+					log.Warn("", " NumGoroutine > max ", runtime.NumGoroutine(), MaxNumGoroutine)
 					continue
 				} else {
 					break
 				}
 			}
-
-			DoTestSendMsgPress(index, strMyUid, recvId, idx)
-
+			//DoTestSendMsg(index, strMyUid, recvId, idx)
+			if sendPressMsg(index, strMyUid, recvId, idx) {
+				allLoginMgr[index].sendMsgSuccessNum++
+			} else {
+				allLoginMgr[index].sendMsgFailedNum++
+			}
 		}
 		//Msgwg.Done()
 	}

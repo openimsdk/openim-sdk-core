@@ -62,7 +62,6 @@ const (
 	FriendRemarkSetNotification           = 1206 //set_friend_remark?
 	BlackAddedNotification                = 1207 //add_black
 	BlackDeletedNotification              = 1208 //remove_black
-	MsgDeleteNotification                 = 1209
 	FriendNotificationEnd                 = 1299
 	ConversationChangeNotification        = 1300
 
@@ -99,6 +98,7 @@ const (
 
 	SuperGroupNotificationBegin  = 1650
 	SuperGroupUpdateNotification = 1651
+	MsgDeleteNotification        = 1652
 	SuperGroupNotificationEnd    = 1699
 
 	ConversationPrivateChatNotification = 1701
@@ -351,3 +351,7 @@ const (
 
 const SplitGetGroupMemberNum = 1000
 const UseHashGroupMemberNum = 1000
+
+var OnlyForTest = 0
+
+var KEY = "openIMtest123456789"

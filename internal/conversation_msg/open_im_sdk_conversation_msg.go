@@ -1,6 +1,7 @@
 package conversation_msg
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"image"
@@ -613,6 +614,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			s.AttachedInfoElem.GroupHasReadInfo.GroupMemberCount = g.MemberCount
 			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 		} else {
+			log.Debug(operationID, "send msg single chat come here")
 			s.SessionType = constant.SingleChatType
 			s.RecvID = recvID
 			conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
@@ -626,15 +628,19 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 				s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 			}
 			if err != nil {
+				t := time.Now()
 				faceUrl, name, err := c.cache.GetUserNameAndFaceURL(recvID, operationID)
+				log.Debug(operationID, "GetUserNameAndFaceURL cost time:", time.Since(t))
 				common.CheckAnyErrCallback(callback, 301, err, operationID)
 				lc.FaceURL = faceUrl
 				lc.ShowName = name
 			}
 
 		}
+		t := time.Now()
 		log.Debug(operationID, "before insert  message is ", s)
 		oldMessage, err := c.db.GetMessageController(&s)
+		log.Debug(operationID, "GetMessageController cost time:", time.Since(t), err)
 		if err != nil {
 			msgStructToLocalChatLog(&localMessage, &s)
 			err := c.db.InsertMessageController(&localMessage)
@@ -915,7 +921,13 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *model_st
 	//Protocol conversion
 	var wsMsgData server_api_params.MsgData
 	copier.Copy(&wsMsgData, s)
-	wsMsgData.Content = []byte(s.Content)
+	if wsMsgData.ContentType == constant.Text && c.encryptionKey != "" {
+		key, _ := hex.DecodeString(constant.KEY)
+		ciphertext, _ := utils.AesEncrypt([]byte(s.Content), key)
+		wsMsgData.Content = ciphertext
+	} else {
+		wsMsgData.Content = []byte(s.Content)
+	}
 	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
 	wsMsgData.AtUserIDList = s.AtElem.AtUserList
@@ -1475,7 +1487,7 @@ func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, con
 	message.SendID = c.loginUserID
 	userInfo, err := c.db.GetLoginUser(c.loginUserID)
 	if err != nil {
-		log.Error(operationID, "GetLoginUser", err.Error())
+		log.Error(operationID, "GetLoginUser ", err.Error(), c.loginUserID)
 	} else {
 		message.SenderFaceURL = userInfo.FaceURL
 		message.SenderNickname = userInfo.Nickname
@@ -1543,7 +1555,7 @@ func (c *Conversation) DeleteAllMsgFromLocal(callback open_im_sdk_callback.Base,
 		log.NewInfo(operationID, fName)
 		c.deleteAllMsgFromLocal(callback, operationID)
 		callback.OnSuccess("")
-		log.NewInfo(operationID, fName, "callback: ", "")
+		log.NewInfo(operationID, fName, "callback: ", "12")
 	}()
 }
 func (c *Conversation) getConversationTypeByGroupID(groupID string) (conversationID string, conversationType int32, err error) {

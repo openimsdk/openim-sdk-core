@@ -452,8 +452,8 @@ func (m *MsgListenerCallBak) OnRecvNewMessage(msg string) {
 		//		log.Info("", "recv time: ", time.Now().UnixNano(), "send_time: ", mm.SendTime, " client_msg_id: ", mm.ClientMsgID, "server_msg_id", mm.ServerMsgID)
 		RecvMsgMapLock.Lock()
 		defer RecvMsgMapLock.Unlock()
-
-		RecvAllMsg[mm.ClientMsgID] = mm.SendID + mm.RecvID
+		t := SendRecvTime{SendIDRecvID: mm.SendID + mm.RecvID, RecvTime: utils.GetCurrentTimestampByMill()}
+		RecvAllMsg[mm.ClientMsgID] = &t
 		log.Info("", "OnRecvNewMessage  callback", mm.ClientMsgID, mm.SendID, mm.RecvID)
 	}
 }
@@ -512,7 +512,7 @@ type conversationCallBack struct {
 }
 
 func (c conversationCallBack) OnSyncServerProgress(progress int) {
-	panic("implement me")
+	log.Info("", utils.GetSelfFuncName())
 }
 
 func (c conversationCallBack) OnSyncServerStart() {
@@ -520,11 +520,11 @@ func (c conversationCallBack) OnSyncServerStart() {
 }
 
 func (c conversationCallBack) OnSyncServerFinish() {
-	panic("implement me")
+	log.Info("", utils.GetSelfFuncName())
 }
 
 func (c conversationCallBack) OnSyncServerFailed() {
-	panic("implement me")
+	log.Info("", utils.GetSelfFuncName())
 }
 
 func (c conversationCallBack) OnNewConversation(conversationList string) {
@@ -559,16 +559,23 @@ func (testMarkC2CMessageAsRead) OnError(code int32, msg string) {
 //	open_im_sdk.MarkC2CMessageAsRead(test, Friend_uid, string(jsonid))
 //}
 
-var SendSuccAllMsg map[string]string //msgid->send+recv:
+type SendRecvTime struct {
+	SendTime             int64
+	SendSeccCallbackTime int64
+	RecvTime             int64
+	SendIDRecvID         string
+}
+
+var SendSuccAllMsg map[string]*SendRecvTime //msgid->send+recv:
 var SendFailedAllMsg map[string]string
-var RecvAllMsg map[string]string //msgid->send+recv
+var RecvAllMsg map[string]*SendRecvTime //msgid->send+recv
 var SendMsgMapLock sync.RWMutex
 var RecvMsgMapLock sync.RWMutex
 
 func init() {
-	SendSuccAllMsg = make(map[string]string)
+	SendSuccAllMsg = make(map[string]*SendRecvTime)
 	SendFailedAllMsg = make(map[string]string)
-	RecvAllMsg = make(map[string]string)
+	RecvAllMsg = make(map[string]*SendRecvTime)
 
 }
 
@@ -600,6 +607,20 @@ func DoTestSendMsg2Group(sendId, groupID string, index int) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
 }
 
+func DoTestSendMsg2c2c(sendId, recvID string, index int) {
+	m := "test: " + sendId + " : " + recvID + " : " + utils.IntToString(index)
+	operationID := utils.OperationIDGenerator()
+	s := DoTestCreateTextMessage(m)
+	log.NewInfo(operationID, "send msg:", s)
+	var testSendMsg TestSendMsgCallBack
+	testSendMsg.OperationID = operationID
+	o := server_api_params.OfflinePushInfo{}
+	o.Title = "Title"
+	o.Desc = "Desc"
+	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
+}
+
 type TestMarkGroupMessageAsRead struct {
 	OperationID string
 }
@@ -624,56 +645,49 @@ func DoTestMarkGroupMessageAsRead() {
 func DoTestSendMsg(index int, sendId, recvID string, idx string) {
 	m := "test msg " + sendId + ":" + recvID + ":" + idx
 	operationID := utils.OperationIDGenerator()
-	//coreMgrLock.Lock()
 	s := DoTestCreateTextMessageReliability(allLoginMgr[index].mgr, m)
-	//coreMgrLock.Unlock()
 	var mstruct sdk_struct.MsgStruct
 	_ = json.Unmarshal([]byte(s), &mstruct)
 
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
+	testSendMsg.sendTime = utils.GetCurrentTimestampByMill()
 	o := server_api_params.OfflinePushInfo{}
 	o.Title = "title"
 	o.Desc = "desc"
 	testSendMsg.sendID = sendId
 	testSendMsg.recvID = recvID
 	testSendMsg.msgID = mstruct.ClientMsgID
-
 	log.Info(operationID, "SendMessage", sendId, recvID, testSendMsg.msgID, index)
-	// SendMessage(callback open_im_sdk_callback.SendMsgCallBack, message, recvID,
-	//groupID string, offlinePushInfo string, operationID string) {
-
-	//coreMgrLock.Lock()
 	allLoginMgr[index].mgr.Conversation().SendMessage(&testSendMsg, s, recvID, "", utils.StructToJsonString(o), operationID)
-	//coreMgrLock.Unlock()
+
+	SendMsgMapLock.Lock()
+	defer SendMsgMapLock.Unlock()
+	x := SendRecvTime{SendTime: utils.GetCurrentTimestampByMill()}
+	SendSuccAllMsg[testSendMsg.msgID] = &x
 }
 
-func DoTestSendMsgPress(index int, sendId, recvID string, idx string) {
-	m := "test msg " + sendId + ":" + recvID + ":" + idx
-	operationID := utils.OperationIDGenerator()
-	//coreMgrLock.Lock()
-	s := DoTestCreateTextMessageReliability(allLoginMgr[index].mgr, m)
-	//coreMgrLock.Unlock()
-	var mstruct sdk_struct.MsgStruct
-	_ = json.Unmarshal([]byte(s), &mstruct)
-
-	var testSendMsg TestSendMsgCallBackPress
-	testSendMsg.OperationID = operationID
-	o := server_api_params.OfflinePushInfo{}
-	o.Title = "title"
-	o.Desc = "desc"
-	testSendMsg.sendID = sendId
-	testSendMsg.recvID = recvID
-	testSendMsg.msgID = mstruct.ClientMsgID
-
-	log.Warn(operationID, "SendMessage", sendId, recvID, testSendMsg.msgID, index)
-	// SendMessage(callback open_im_sdk_callback.SendMsgCallBack, message, recvID,
-	//groupID string, offlinePushInfo string, operationID string) {
-
-	//coreMgrLock.Lock()
-	allLoginMgr[index].mgr.Conversation().SendMessage(&testSendMsg, s, recvID, "", utils.StructToJsonString(o), operationID)
-	//coreMgrLock.Unlock()
-}
+//
+//func DoTestSendMsgPress(index int, sendId, recvID string, idx string) {
+//	m := "test msg " + sendId + ":" + recvID + ":" + idx
+//	operationID := utils.OperationIDGenerator()
+//	s := DoTestCreateTextMessageReliability(allLoginMgr[index].mgr, m)
+//	var mstruct sdk_struct.MsgStruct
+//	_ = json.Unmarshal([]byte(s), &mstruct)
+//
+//	var testSendMsg TestSendMsgCallBackPress
+//	testSendMsg.OperationID = operationID
+//	o := server_api_params.OfflinePushInfo{}
+//	o.Title = "title"
+//	o.Desc = "desc"
+//	testSendMsg.sendID = sendId
+//	testSendMsg.recvID = recvID
+//	testSendMsg.msgID = mstruct.ClientMsgID
+//
+//	log.Warn(operationID, "SendMessage", sendId, recvID, testSendMsg.msgID, index)
+//
+//	allLoginMgr[index].mgr.Conversation().SendMessage(&testSendMsg, s, recvID, "", utils.StructToJsonString(o), operationID)
+//}
 
 func DoTestSendImageMsg(recvID string) {
 	operationID := utils.OperationIDGenerator()

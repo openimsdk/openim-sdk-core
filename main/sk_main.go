@@ -8,14 +8,17 @@ import (
 )
 
 func main() {
-
-	strMyUidx := "1087168938"
-	log.NewPrivateLog("", 6)
-	tokenx := test.GenToken(strMyUidx)
+	//strMyUidx := "1928715256"
+	strMyUidx := "3493949860"
+	//strMyUidx := "3380999461"
+	tokenx := test.RunGetToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
-	test.DotestGetGroupMemberList()
+
 	time.Sleep(100000 * time.Second)
+
+	//	test.DotestGetGroupMemberList()
+	//time.Sleep(100000 * time.Second)
 	//	test.DoTestCreateGroup()
 
 	//	test.DoTestJoinGroup()
@@ -25,12 +28,12 @@ func main() {
 	//	println("token ", tokenx)
 	//	time.Sleep(100000 * time.Second)
 	b := utils.GetCurrentTimestampBySecond()
-	i := 50
+	i := 0
 	for {
-		test.DoTestSendMsg2Group(strMyUidx, "1852143218", i)
+		test.DoTestSendMsg2c2c(strMyUidx, "3380999461", i)
 		i++
-		time.Sleep(1000 * time.Millisecond)
-		if i == 100 {
+		time.Sleep(100 * time.Millisecond)
+		if i == 10000 {
 			break
 		}
 		log.Warn("", "10 * time.Millisecond ###################waiting... msg: ", i)

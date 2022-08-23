@@ -69,6 +69,10 @@ func (u *Heartbeat) Run() {
 	retryTimes := 0
 	heartbeatNum := 0
 	for {
+		if constant.OnlyForTest == 1 {
+			time.Sleep(30 * time.Second)
+			continue
+		}
 		operationID := utils.OperationIDGenerator()
 		if heartbeatNum != 0 {
 			select {

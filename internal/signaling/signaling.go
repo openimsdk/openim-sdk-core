@@ -27,7 +27,7 @@ type LiveSignaling struct {
 
 func NewLiveSignaling(ws *ws.Ws, listener open_im_sdk_callback.OnSignalingListener, loginUserID string, platformID int32, db *db.DataBase) *LiveSignaling {
 	if ws == nil || listener == nil {
-		log.Error("", "ws or listener is nil")
+		log.Warn("", "ws or SignalingListener is nil")
 		return nil
 	}
 	return &LiveSignaling{Ws: ws, listener: listener, loginUserID: loginUserID, platformID: platformID, DataBase: db}
