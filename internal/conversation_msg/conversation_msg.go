@@ -23,6 +23,7 @@ import (
 	"open_im_sdk/sdk_struct"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
@@ -119,8 +120,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	conversationSet := make(map[string]*model_struct.LocalConversation)
 	phConversationChangedSet := make(map[string]*model_struct.LocalConversation)
 	phNewConversationSet := make(map[string]*model_struct.LocalConversation)
-	log.Info(operationID, "do Msg come here, len: ", len(allMsg))
-	b := utils.GetCurrentTimestampByMill()
+	log.Info(operationID, "do Msg come here, len: ", len(allMsg), len(c.GetCh()))
+	b := time.Now()
 
 	for _, v := range allMsg {
 		log.Info(operationID, "do Msg come here, msg detail ", v.RecvID, v.SendID, v.ClientMsgID, v.ServerMsgID, v.Seq, c.loginUserID)
@@ -366,7 +367,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	}
 	b1 := utils.GetCurrentTimestampByMill()
 	log.Info(operationID, "generate conversation map is :", conversationSet)
-	log.Debug(operationID, "before insert msg cost time : ", b1-b)
+	log.Debug(operationID, "before insert msg cost time : ", time.Since(b))
 
 	list, err := c.db.GetAllConversationList()
 	if err != nil {
@@ -488,7 +489,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	if syncFlag == constant.MsgSyncEnd {
 		c.ConversationListener.OnSyncServerFinish()
 	}
-	log.Debug(operationID, "insert msg, total cost time: ", utils.GetCurrentTimestampByMill()-b, "len:  ", len(allMsg))
+	log.Debug(operationID, "insert msg, total cost time: ", time.Since(b), "len:  ", len(allMsg))
 }
 func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	operationID := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).OperationID
