@@ -175,6 +175,7 @@ type AttachedInfoElem struct {
 	NotSenderNotificationPush bool             `json:"notSenderNotificationPush"`
 	MessageEntityList         []*MessageEntity `json:"messageEntityList,omitempty"`
 	IsEncryption              bool             `json:"isEncryption"`
+	InEncryptStatus           bool             `json:"inEncryptStatus"`
 }
 type MessageEntity struct {
 	Type   string `json:"type,omitempty"`
