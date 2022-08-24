@@ -491,6 +491,8 @@ func (g *Group) getJoinedGroupList(callback open_im_sdk_callback.Base, operation
 	groupList, err := g.db.GetJoinedGroupList()
 	log.Info(operationID, utils.GetSelfFuncName(), " args ", groupList)
 	common.CheckDBErrCallback(callback, err, operationID)
+	superGroupList, _ := g.db.GetJoinedSuperGroupList()
+	groupList = append(groupList, superGroupList...)
 	return groupList
 }
 
