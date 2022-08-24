@@ -39,6 +39,7 @@ func main() {
 	logLevel = flag.Int("openIM_log_level", 6, "control log output level")
 	openIMDbDir = flag.String("openIMDbDir", "../db/sdk/", "openIM db dir")
 	flag.Parse()
+	fmt.Println("sdk server init args is :", *openIMApiAddress, *openIMWsAddress, *sdkWsPort, *logLevel)
 	sysType := runtime.GOOS
 	log.NewPrivateLog(constant.LogFileName, uint32(*logLevel))
 	open_im_sdk.SetHeartbeatInterval(5)
