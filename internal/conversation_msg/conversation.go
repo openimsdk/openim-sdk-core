@@ -625,7 +625,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 	if len(list) < req.Count && sessionType == constant.SuperGroupChatType {
 		var minSeq uint32
 		var maxSeq uint32
-		resp, err := c.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 30, 3, c.loginUserID, operationID)
+		resp, err := c.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 2, c.loginUserID, operationID)
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, 30, c.loginUserID)
 		} else {
@@ -673,13 +673,10 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 				}
 			}
 		} else {
-			log.Debug(operationID, "local seq ==0")
 			//local don't have messages,本地无消息，但是服务器最大消息不为0
-			if maxSeq-minSeq > 0 {
-				log.Debug(operationID, "server have message")
+			if int64(maxSeq)-int64(minSeq) > 0 {
 				messageListCallback.IsEnd = false
 			} else {
-				log.Debug(operationID, "server not message")
 				messageListCallback.IsEnd = true
 			}
 
@@ -831,7 +828,7 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(sourceID string, seqLi
 
 	pullMsgReq.OperationID = operationID
 	log.Debug(operationID, "read diffusion group pull message, req: ", pullMsgReq)
-	resp, err := c.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 30, 3, c.loginUserID, operationID)
+	resp, err := c.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 1, 2, c.loginUserID, operationID)
 	if err != nil {
 		messageListCallback.ErrCode = 100
 		messageListCallback.ErrMsg = err.Error()
