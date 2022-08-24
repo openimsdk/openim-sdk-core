@@ -3,7 +3,6 @@ package conversation_msg
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"image"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -931,7 +930,6 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *model_st
 		attachInfo.InEncryptStatus = true
 		wsMsgData.Content = ciphertext
 		wsMsgData.AttachedInfo = utils.StructToJsonString(attachInfo)
-		fmt.Println(string(wsMsgData.Content))
 	} else {
 		wsMsgData.Content = []byte(s.Content)
 	}
