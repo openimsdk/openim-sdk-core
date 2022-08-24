@@ -924,10 +924,11 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *model_st
 	if wsMsgData.ContentType == constant.Text && c.encryptionKey != "" {
 		ciphertext, err := utils.AesEncrypt([]byte(s.Content), []byte(c.encryptionKey))
 		c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
+		attachInfo := sdk_struct.AttachedInfoElem{}
+		_ = utils.JsonStringToStruct(s.AttachedInfo, &attachInfo)
+		attachInfo.IsEncryption = true
 		wsMsgData.Content = ciphertext
-		attachedInfo, err := json.Marshal(sdk_struct.Encryption{IsEncryption: true})
-		c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
-		wsMsgData.AttachedInfo = string(attachedInfo)
+		wsMsgData.AttachedInfo = utils.StructToJsonString(attachInfo)
 	} else {
 		wsMsgData.Content = []byte(s.Content)
 	}

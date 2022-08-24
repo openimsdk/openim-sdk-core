@@ -174,6 +174,7 @@ type AttachedInfoElem struct {
 	HasReadTime               int64            `json:"hasReadTime"`
 	NotSenderNotificationPush bool             `json:"notSenderNotificationPush"`
 	MessageEntityList         []*MessageEntity `json:"messageEntityList,omitempty"`
+	IsEncryption              bool             `json:"isEncryption"`
 }
 type MessageEntity struct {
 	Type   string `json:"type,omitempty"`
@@ -270,8 +271,4 @@ type MsgDeleteNotificationElem struct {
 	GroupID     string   `json:"groupID"`
 	IsAllDelete bool     `json:"isAllDelete"`
 	SeqList     []string `json:"seqList"`
-}
-
-type Encryption struct {
-	IsEncryption bool `json:"isEncryption"`
 }
