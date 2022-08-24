@@ -4,49 +4,44 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"errors"
 )
 
-func AesEncrypt(data []byte, key []byte) ([]byte, error) {
+func PKCS5Padding(plaintext []byte, blockSize int) []byte {
+	padding := blockSize - len(plaintext)%blockSize
+	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(plaintext, padtext...)
+}
+
+func PKCS5UnPadding(origData []byte) []byte {
+	length := len(origData)
+	unpadding := int(origData[length-1])
+	return origData[:(length - unpadding)]
+}
+
+func AesEncrypt(origData, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
+
 	blockSize := block.BlockSize()
-	encryptBytes := pkcs7Padding(data, blockSize)
-	crypted := make([]byte, len(encryptBytes))
+	origData = PKCS5Padding(origData, blockSize)
 	blockMode := cipher.NewCBCEncrypter(block, key[:blockSize])
-	blockMode.CryptBlocks(crypted, encryptBytes)
+	crypted := make([]byte, len(origData))
+	blockMode.CryptBlocks(crypted, origData)
 	return crypted, nil
 }
 
-func AesDecrypt(data []byte, key []byte) ([]byte, error) {
+func AesDecrypt(crypted, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
+
 	blockSize := block.BlockSize()
-	blockMode := cipher.NewCBCDecrypter(block, key[:blockSize])
-	crypted := make([]byte, len(data))
-	blockMode.CryptBlocks(crypted, data)
-	crypted, err = pkcs7UnPadding(crypted)
-	if err != nil {
-		return nil, err
-	}
-	return crypted, nil
-}
-
-func pkcs7Padding(data []byte, blockSize int) []byte {
-	padding := blockSize - len(data)%blockSize
-	padText := bytes.Repeat([]byte{byte(padding)}, padding)
-	return append(data, padText...)
-}
-
-func pkcs7UnPadding(data []byte) ([]byte, error) {
-	length := len(data)
-	if length == 0 {
-		return nil, errors.New("encrypt error")
-	}
-	unPadding := int(data[length-1])
-	return data[:(length - unPadding)], nil
+	blockMode := cipher.NewCBCDecrypter(block, key[:blockSize]) //初始向量的长度必须等于块block的长度16字节
+	origData := make([]byte, len(crypted))
+	blockMode.CryptBlocks(origData, crypted)
+	origData = PKCS5UnPadding(origData)
+	return origData, nil
 }

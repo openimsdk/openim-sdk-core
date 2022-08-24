@@ -16,6 +16,7 @@ import (
 	_ "net/http/pprof"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/sdk_struct"
+
 	//"open_im_sdk/open_im_sdk"
 	log1 "log"
 	"open_im_sdk/pkg/log"
@@ -50,8 +51,8 @@ func main() {
 	//	openIMWsPort = flag.Int("openIM_ws_port", 0, "openIM ws listening port")
 	//	flag.Parse()
 	//}
-	APIADDR := "http://43.128.5.63:10000"
-	WSADDR := "ws://43.128.5.63:17778"
+	APIADDR := "http://43.155.69.205:10000"
+	WSADDR := "ws://43.155.69.205:17778"
 
 	sysType := runtime.GOOS
 	log.NewPrivateLog(constant.LogFileName, uint32(*logLevel))

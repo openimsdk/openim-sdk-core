@@ -9,14 +9,12 @@ import (
 	"time"
 )
 
-var jssdkURL = flag.String("url", "ws://43.128.5.63:10003/", "jssdk URL")
-var imAPI = flag.String("api", "http://43.128.5.63:10002", "openIM api")
-var connNum = flag.Int("connNum", 10, "conn num")
+var jssdkURL = flag.String("url", "ws://43.155.69.205:10003/", "jssdk URL")
+var imAPI = flag.String("api", "http://43.155.69.205:10002", "openIM api")
+var connNum = flag.Int("connNum", 100, "conn num")
 
 func main() {
-
 	fmt.Printf("simulation js client, user num: %d, jssdkURL:%s, apiURL:%s \n\n", *connNum, *jssdkURL, *imAPI)
-
 	admin := client.NewIMClient("", "openIMAdmin", *imAPI, *jssdkURL, 1)
 	var err error
 	admin.Token, err = admin.GetToken()
@@ -35,7 +33,7 @@ func main() {
 	}
 
 	for {
-		time.Sleep(time.Second * 100)
+		time.Sleep(time.Second * 150)
 		fmt.Println("jssdk simulation is running, total num:", test.TotalSendMsgNum)
 	}
 
