@@ -11,7 +11,7 @@ import (
 
 var jssdkURL = flag.String("url", "ws://43.155.69.205:10003/", "jssdk URL")
 var imAPI = flag.String("api", "http://43.155.69.205:10002", "openIM api")
-var connNum = flag.Int("connNum", 100, "conn num")
+var connNum = flag.Int("connNum", 400, "conn num")
 
 func main() {
 	fmt.Printf("simulation js client, user num: %d, jssdkURL:%s, apiURL:%s \n\n", *connNum, *jssdkURL, *imAPI)

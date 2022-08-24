@@ -2,7 +2,6 @@ package client
 
 import (
 	"encoding/json"
-	"log"
 	"open_im_sdk/pkg/network"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
@@ -171,6 +170,6 @@ func (i *IMClient) getWsReq(event string, batch int, data interface{}) []byte {
 		req.Data = string(bytes)
 	}
 	bytes, _ = json.Marshal(req)
-	log.Println("send:", string(bytes))
+	// log.Println("send:", string(bytes))
 	return bytes
 }

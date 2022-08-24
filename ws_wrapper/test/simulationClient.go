@@ -2,8 +2,8 @@ package test
 
 import (
 	"encoding/json"
-	"log"
 	"net/url"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
@@ -25,7 +25,12 @@ func StartSimulationJSClient(api, jssdkURL, userID string, i int, userIDList []s
 	var err error
 	user.Token, err = user.GetToken()
 	if err != nil {
-		log.Println("generate token failed", userID, api, err.Error())
+		log.NewError("", "generate token failed", userID, api, err.Error())
+		user.Token, err = user.GetToken()
+		if err != nil {
+			log.NewError("", "generate token failed", userID, api, err.Error())
+			return
+		}
 	}
 	v := url.Values{}
 	v.Set("sendID", userID)
@@ -33,12 +38,12 @@ func StartSimulationJSClient(api, jssdkURL, userID string, i int, userIDList []s
 	v.Set("platformID", utils.IntToString(5))
 	c, _, err := websocket.DefaultDialer.Dial(jssdkURL+"?"+v.Encode(), nil)
 	if err != nil {
-		log.Println("dial:", err.Error(), "userID", userID, "i: ", i)
+		log.NewInfo("", "dial:", err.Error(), "userID", userID, "i: ", i)
 		return
 	}
 	lock.Lock()
 	totalConnNum += 1
-	log.Println("connect success", userID, "total conn num", totalConnNum)
+	log.NewInfo("", "connect success", userID, "total conn num", totalConnNum)
 	lock.Unlock()
 	user.Conn = c
 	// user.WsLogout()
@@ -61,10 +66,10 @@ func StartSimulationJSClient(api, jssdkURL, userID string, i int, userIDList []s
 			resp := ws_local_server.EventData{}
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				log.Println("read:", err, "error an connet failed", userID)
+				log.NewError("", "read:", err, "error an connet failed", userID, i)
 				return
 			}
-			log.Printf("recv: %s", message)
+			// log.Printf("recv: %s", message)
 			_ = json.Unmarshal(message, &resp)
 			if resp.Event == "CreateTextMessage" {
 				msg := sdk_struct.MsgStruct{}
@@ -92,7 +97,7 @@ func StartSimulationJSClient(api, jssdkURL, userID string, i int, userIDList []s
 		for {
 			err = user.CreateTextMessage(userID)
 			if err != nil {
-				log.Println(err)
+				log.NewError("", err, i, userID)
 			}
 			time.Sleep(time.Second * 2)
 		}
@@ -102,7 +107,7 @@ func StartSimulationJSClient(api, jssdkURL, userID string, i int, userIDList []s
 	go func() {
 		for {
 			if err = user.GetLoginStatus(); err != nil {
-				log.Println(err)
+				log.NewError("", err, i, userID)
 			}
 			time.Sleep(time.Second * 10)
 		}
