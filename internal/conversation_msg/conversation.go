@@ -673,10 +673,13 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 				}
 			}
 		} else {
+			log.Debug(operationID, "local seq ==0")
 			//local don't have messages,本地无消息，但是服务器最大消息不为0
 			if maxSeq-minSeq > 0 {
+				log.Debug(operationID, "server have message")
 				messageListCallback.IsEnd = false
 			} else {
+				log.Debug(operationID, "server not message")
 				messageListCallback.IsEnd = true
 			}
 
