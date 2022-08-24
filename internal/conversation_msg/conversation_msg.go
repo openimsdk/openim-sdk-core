@@ -1511,7 +1511,7 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 	} else {
 		switch msg.ContentType {
 		case constant.Text:
-			if msg.AttachedInfoElem.IsEncryption {
+			if msg.AttachedInfoElem.IsEncryption && c.encryptionKey != "" {
 				var newContent []byte
 				newContent, err = utils.AesDecrypt([]byte(msg.Content), []byte(c.encryptionKey))
 				msg.Content = string(newContent)
