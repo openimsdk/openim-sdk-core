@@ -1513,7 +1513,7 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 		case constant.Text:
 			if msg.AttachedInfoElem.IsEncryption && c.encryptionKey != "" {
 				var newContent []byte
-				log.NewDebug("", utils.GetSelfFuncName(), "org content, key", msg.Content, c.encryptionKey)
+				log.NewDebug("", utils.GetSelfFuncName(), "org content, key", msg.Content, c.encryptionKey, []byte(msg.Content))
 				newContent, err = utils.AesDecrypt([]byte(msg.Content), []byte(c.encryptionKey))
 				msg.Content = string(newContent)
 				log.NewDebug("", utils.GetSelfFuncName(), "content", msg.Content)
