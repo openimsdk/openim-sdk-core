@@ -271,3 +271,7 @@ type MsgDeleteNotificationElem struct {
 	IsAllDelete bool     `json:"isAllDelete"`
 	SeqList     []string `json:"seqList"`
 }
+
+type Encryption struct {
+	IsEncryption bool `json:"isEncryption"`
+}

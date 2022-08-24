@@ -3,7 +3,6 @@ package conversation_msg
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"image"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -926,6 +925,9 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *model_st
 		ciphertext, err := utils.AesEncrypt([]byte(s.Content), []byte(c.encryptionKey))
 		c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
 		wsMsgData.Content = ciphertext
+		attachedInfo, err := json.Marshal(sdk_struct.Encryption{IsEncryption: true})
+		c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
+		wsMsgData.AttachedInfo = string(attachedInfo)
 	} else {
 		wsMsgData.Content = []byte(s.Content)
 	}
@@ -948,7 +950,6 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *model_st
 	s.Status = constant.MsgStatusSendSuccess
 	s.ServerMsgID = sendMsgResp.ServerMsgID
 	callback.OnProgress(100)
-	fmt.Println(s)
 	callback.OnSuccess(utils.StructToJsonString(s))
 	log.Debug(operationID, "callback OnSuccess", s.ClientMsgID, s.ServerMsgID)
 	//remove media cache file
