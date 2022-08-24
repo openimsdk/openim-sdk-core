@@ -31,48 +31,27 @@ func main() {
 
 		log1.Println(http.ListenAndServe("0.0.0.0:6060", nil))
 	}()
-	var sdkWsPort, openIMApiPort, openIMWsPort, logLevel *int
-	var openIMWsAddress, openIMApiAddress *string
-	//
-	//openIMTerminalType := flag.String("terminal_type", "web", "different terminal types")
+	var sdkWsPort, logLevel *int
+	var openIMWsAddress, openIMDbDir, openIMApiAddress *string
 
-	sdkWsPort = flag.Int("sdk_ws_port", 30000, "openIMSDK ws listening port")
-	openIMApiPort = flag.Int("openIM_api_port", 10000, "openIM api listening port")
-	openIMWsPort = flag.Int("openIM_ws_port", 17778, "openIM ws listening port")
+	openIMApiAddress = flag.String("openIM_api_address", "http://127.0.0.1:10002", "openIM api listening address")
+	openIMWsAddress = flag.String("openIM_ws_address", "ws://127.0.0.1:10001", "openIM ws listening address")
+	sdkWsPort = flag.Int("sdk_ws_port", 10003, "openIMSDK ws listening port")
 	logLevel = flag.Int("openIM_log_level", 6, "control log output level")
+	openIMDbDir = flag.String("openIMDbDir", "../db/sdk/", "openIM db dir")
 	flag.Parse()
-	//switch *openIMTerminalType {
-	//case "pc":
-	//	openIMWsAddress = flag.String("openIM_ws_address", "web", "different terminal types")
-	//	openIMApiAddress = flag.String("openIM_api_address", "web", "different terminal types")
-	//	flag.Parse()
-	//case "web":
-	//	openIMApiPort = flag.Int("openIM_api_port", 0, "openIM api listening port")
-	//	openIMWsPort = flag.Int("openIM_ws_port", 0, "openIM ws listening port")
-	//	flag.Parse()
-	//}
-	APIADDR := "http://43.155.69.205:10000"
-	WSADDR := "ws://43.155.69.205:17778"
-
+	fmt.Println("sdk server init args is :", "apiAddress:", *openIMApiAddress, "wsAddress:", *openIMWsAddress, *sdkWsPort, *logLevel)
 	sysType := runtime.GOOS
 	log.NewPrivateLog(constant.LogFileName, uint32(*logLevel))
 	open_im_sdk.SetHeartbeatInterval(5)
 	switch sysType {
-
 	case "darwin":
-		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: *openIMApiAddress,
-			WsAddr: *openIMWsAddress, Platform: utils.OSXPlatformID, DataDir: "./"})
+		fallthrough
 	case "linux":
-		//sdkDBDir:= flag.String("sdk_db_dir","","openIMSDK initialization path")
-
-		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: "http://" + utils.ServerIP + ":" + utils.IntToString(*openIMApiPort),
-			WsAddr: "ws://" + utils.ServerIP + ":" + utils.IntToString(*openIMWsPort), Platform: utils.WebPlatformID, DataDir: "../db/sdk/"})
-
+		fallthrough
 	case "windows":
-		//	sdkWsPort = flag.Int("sdk_ws_port", 7799, "openIM ws listening port")
-		//flag.Parse()
-		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: APIADDR,
-			WsAddr: WSADDR, Platform: utils.WebPlatformID, DataDir: "./"})
+		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: *openIMApiAddress,
+			WsAddr: *openIMWsAddress, Platform: utils.WebPlatformID, DataDir: *openIMDbDir})
 	default:
 		fmt.Println("this os not support", sysType)
 
