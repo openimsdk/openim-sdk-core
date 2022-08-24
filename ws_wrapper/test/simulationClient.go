@@ -17,6 +17,7 @@ import (
 
 var totalConnNum int
 var lock sync.Mutex
+var TotalSendMsgNum int
 
 func StartSimulationJSClient(api, jssdkURL, userID string, i int, userIDList []string) {
 	// 模拟登录 认证 ws连接初始化
@@ -79,6 +80,9 @@ func StartSimulationJSClient(api, jssdkURL, userID string, i int, userIDList []s
 				data := Data{RecvID: userID, OfflinePushInfo: string(offlinePushBytes), Message: string(messageBytes)}
 				err = user.SendMsg(userID, data)
 				//fmt.Println(msg)
+				lock.Lock()
+				TotalSendMsgNum += 1
+				lock.Unlock()
 			}
 		}
 	}()

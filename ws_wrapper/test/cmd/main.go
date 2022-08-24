@@ -11,7 +11,7 @@ import (
 
 var jssdkURL = flag.String("url", "ws://43.128.5.63:10003/", "jssdk URL")
 var imAPI = flag.String("api", "http://43.128.5.63:10002", "openIM api")
-var connNum = flag.Int("connNum", 1, "conn num")
+var connNum = flag.Int("connNum", 10, "conn num")
 
 func main() {
 
@@ -36,7 +36,7 @@ func main() {
 
 	for {
 		time.Sleep(time.Second * 100)
-		fmt.Println("jssdk simulation is running")
+		fmt.Println("jssdk simulation is running, total num:", test.TotalSendMsgNum)
 	}
 
 }
