@@ -3,6 +3,7 @@ package test
 import (
 	"open_im_sdk/internal/interaction"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	//	"open_im_sdk/internal/interaction"
@@ -16,7 +17,9 @@ func init() {
 }
 
 func InitMgr(num int) {
+	log.Warn("", "allLoginMgr cap:  ", num)
 	allLoginMgr = make(map[int]*CoreNode, num)
+	allLoginMgrtmp = make([]*CoreNode, 0, num)
 }
 
 type CoreNode struct {
@@ -25,6 +28,7 @@ type CoreNode struct {
 	mgr               *login.LoginMgr
 	sendMsgSuccessNum uint32
 	sendMsgFailedNum  uint32
+	idx               int
 }
 
 func addSendSuccess() {

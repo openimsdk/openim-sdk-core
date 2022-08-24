@@ -78,5 +78,5 @@ func (c *Cache) GetUserNameAndFaceURL(userID string, operationID string) (faceUR
 		c.userMap.Store(userID, UserInfo{faceURL: faceURL, Nickname: name})
 		return v.FaceURL, v.Nickname, nil
 	}
-	return "", "", errors.New("no user ")
+	return "", "", errors.New("no user " + userID)
 }

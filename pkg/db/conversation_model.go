@@ -87,8 +87,6 @@ func (d *DataBase) DeleteConversation(conversationID string) error {
 }
 
 func (d *DataBase) GetConversation(conversationID string) (*model_struct.LocalConversation, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
 	var c model_struct.LocalConversation
 	return &c, utils.Wrap(d.conn.Where("conversation_id = ?",
 		conversationID).Take(&c).Error, "GetConversation failed")

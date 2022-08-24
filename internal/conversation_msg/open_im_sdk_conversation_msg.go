@@ -564,6 +564,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 		return
 	}
 	go func() {
+		log.Debug(operationID, "SendMessage start ")
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 		s.SendID = c.loginUserID
@@ -614,6 +615,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			s.AttachedInfoElem.GroupHasReadInfo.GroupMemberCount = g.MemberCount
 			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 		} else {
+			log.Debug(operationID, "send msg single chat come here")
 			s.SessionType = constant.SingleChatType
 			s.RecvID = recvID
 			conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
@@ -627,15 +629,19 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 				s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 			}
 			if err != nil {
+				t := time.Now()
 				faceUrl, name, err := c.cache.GetUserNameAndFaceURL(recvID, operationID)
+				log.Debug(operationID, "GetUserNameAndFaceURL cost time:", time.Since(t))
 				common.CheckAnyErrCallback(callback, 301, err, operationID)
 				lc.FaceURL = faceUrl
 				lc.ShowName = name
 			}
 
 		}
+		t := time.Now()
 		log.Debug(operationID, "before insert  message is ", s)
 		oldMessage, err := c.db.GetMessageController(&s)
+		log.Debug(operationID, "GetMessageController cost time:", time.Since(t), err)
 		if err != nil {
 			msgStructToLocalChatLog(&localMessage, &s)
 			err := c.db.InsertMessageController(&localMessage)
@@ -1482,7 +1488,7 @@ func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, con
 	message.SendID = c.loginUserID
 	userInfo, err := c.db.GetLoginUser(c.loginUserID)
 	if err != nil {
-		log.Error(operationID, "GetLoginUser", err.Error())
+		log.Error(operationID, "GetLoginUser ", err.Error(), c.loginUserID)
 	} else {
 		message.SenderFaceURL = userInfo.FaceURL
 		message.SenderNickname = userInfo.Nickname
