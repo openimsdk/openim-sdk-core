@@ -28,7 +28,7 @@ func main() {
 	l := uidList[0:*connNum]
 	// l = []string{"MTc3MjYzNzg0Mjg="}
 	for num, userID := range l {
-		time.Sleep(time.Second * 1)
+		time.Sleep(time.Millisecond * 500)
 		go test.StartSimulationJSClient(*imAPI, *jssdkURL, userID, num, l)
 	}
 

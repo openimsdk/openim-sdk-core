@@ -1511,12 +1511,12 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 	} else {
 		switch msg.ContentType {
 		case constant.Text:
-			if msg.AttachedInfoElem.IsEncryption && c.encryptionKey != "" {
+			if msg.AttachedInfoElem.IsEncryption && c.encryptionKey != "" && msg.AttachedInfoElem.InEncryptStatus {
 				var newContent []byte
-				log.NewDebug("", utils.GetSelfFuncName(), "org content, key", msg.Content, c.encryptionKey, []byte(msg.Content))
+				log.NewDebug("", utils.GetSelfFuncName(), "org content, key", msg.Content, c.encryptionKey, []byte(msg.Content), msg.CreateTime)
 				newContent, err = utils.AesDecrypt([]byte(msg.Content), []byte(c.encryptionKey))
 				msg.Content = string(newContent)
-				log.NewDebug("", utils.GetSelfFuncName(), "content", msg.Content)
+				msg.AttachedInfoElem.InEncryptStatus = false
 			}
 		case constant.Picture:
 			err = utils.JsonStringToStruct(msg.Content, &msg.PictureElem)
