@@ -1,7 +1,6 @@
 package conversation_msg
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"image"
@@ -923,9 +922,14 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *model_st
 	var wsMsgData server_api_params.MsgData
 	copier.Copy(&wsMsgData, s)
 	if wsMsgData.ContentType == constant.Text && c.encryptionKey != "" {
-		key, _ := hex.DecodeString(constant.KEY)
-		ciphertext, _ := utils.AesEncrypt([]byte(s.Content), key)
+		ciphertext, err := utils.AesEncrypt([]byte(s.Content), []byte(c.encryptionKey))
+		c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
+		attachInfo := sdk_struct.AttachedInfoElem{}
+		_ = utils.JsonStringToStruct(s.AttachedInfo, &attachInfo)
+		attachInfo.IsEncryption = true
+		attachInfo.InEncryptStatus = true
 		wsMsgData.Content = ciphertext
+		wsMsgData.AttachedInfo = utils.StructToJsonString(attachInfo)
 	} else {
 		wsMsgData.Content = []byte(s.Content)
 	}

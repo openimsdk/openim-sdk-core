@@ -491,12 +491,14 @@ func (g *Group) getJoinedGroupList(callback open_im_sdk_callback.Base, operation
 	groupList, err := g.db.GetJoinedGroupList()
 	log.Info(operationID, utils.GetSelfFuncName(), " args ", groupList)
 	common.CheckDBErrCallback(callback, err, operationID)
+	superGroupList, _ := g.db.GetJoinedSuperGroupList()
+	groupList = append(groupList, superGroupList...)
 	return groupList
 }
 
 func (g *Group) GetGroupInfoFromLocal2Svr(groupID string) (*model_struct.LocalGroup, error) {
-	localGroup, err := g.db.GetGroupInfoByGroupID(groupID)
-	if err == nil {
+	localGroup, err1 := g.db.GetGroupInfoByGroupID(groupID)
+	if err1 == nil {
 		return localGroup, nil
 	}
 	groupIDList := []string{groupID}
@@ -505,11 +507,8 @@ func (g *Group) GetGroupInfoFromLocal2Svr(groupID string) (*model_struct.LocalGr
 	if err == nil && len(svrGroup) == 1 {
 		transfer := common.TransferToLocalGroupInfo(svrGroup)
 		return transfer[0], nil
-	}
-	if err != nil {
-		return nil, utils.Wrap(err, "")
 	} else {
-		return nil, utils.Wrap(errors.New("no group"), "")
+		return nil, utils.Wrap(err, "get groupInfo from server err")
 	}
 }
 

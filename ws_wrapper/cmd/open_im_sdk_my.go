@@ -19,8 +19,8 @@ import (
 func main() {
 	var sdkWsPort, openIMApiPort, openIMWsPort *int
 	//var openIMWsAddress, openIMApiAddress *string
-	APIADDR := "http://43.128.5.63:10001"
-	WSADDR := "ws://43.128.5.63:10002"
+	APIADDR := "http://43.155.69.205:10001"
+	WSADDR := "ws://43.155.69.205:10002"
 	sdkWsPort = flag.Int("sdk_ws_port", 30000, "openIM ws listening port")
 	//openIMApiAddress = flag.String("openIMApiAddress", "", "openIM api listening port")
 	//openIMWsAddress = flag.String("openIMWsAddress", "", "openIM ws listening port")
