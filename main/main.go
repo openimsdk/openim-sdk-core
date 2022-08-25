@@ -28,7 +28,7 @@ import (
 //}
 
 var (
-	TESTIP       = "43.128.5.63"
+	TESTIP       = "43.155.69.205"
 	APIADDR      = "http://" + TESTIP + ":10002"
 	WSADDR       = "ws://" + TESTIP + ":10001"
 	REGISTERADDR = APIADDR + "/user_register"
@@ -60,7 +60,7 @@ func main() {
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
 	test.SENDINTERVAL = SENDINTERVAL
-	strMyUidx := "18666662345"
+	strMyUidx := "3984071717"
 
 	//	var onlineNum *int          //Number of online users
 	//	var senderNum *int          //Number of users sending messages
@@ -128,7 +128,7 @@ func main() {
 	b := utils.GetCurrentTimestampBySecond()
 	i := 0
 	for {
-		test.DoTestSendMsg2Group(strMyUidx, "42c9f515cb84ee0e82b3f3ce71eb14d6", i)
+		//test.DoTestSendMsg2Group(strMyUidx, "42c9f515cb84ee0e82b3f3ce71eb14d6", i)
 		i++
 		time.Sleep(250 * time.Millisecond)
 		if i == 100 {
