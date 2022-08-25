@@ -383,6 +383,8 @@ func (u *LoginMgr) forcedSynchronization() {
 			u.organization.SyncOrganization(operationID)
 			wg.Done()
 		}()
+	} else {
+		wg.Done()
 	}
 	go func() {
 		u.superGroup.SyncJoinedGroupList(operationID)
