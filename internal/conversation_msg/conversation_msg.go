@@ -103,13 +103,18 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	operationID := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).OperationID
 	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).MsgList
 	syncFlag := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).SyncFlag
-	if syncFlag == constant.MsgSyncBegin {
-		c.ConversationListener.OnSyncServerStart()
-	}
 	if c.msgListener == nil {
 		log.Error(operationID, "not set c MsgListenerList")
 		return
 	}
+	if c.ConversationListener == nil {
+		log.Error(operationID, "not set c ConversationListener")
+		return
+	}
+	if syncFlag == constant.MsgSyncBegin {
+		c.ConversationListener.OnSyncServerStart()
+	}
+
 	var isTriggerUnReadCount bool
 	var insertMsg, updateMsg []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
@@ -496,13 +501,17 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).MsgList
 	syncFlag := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).SyncFlag
 	log.Info(operationID, utils.GetSelfFuncName(), " args ", "syncFlag ", syncFlag)
-	if syncFlag == constant.MsgSyncBegin {
-		log.Info(operationID, "OnSyncServerStart() ")
-		c.ConversationListener.OnSyncServerStart()
-	}
 	if c.msgListener == nil {
 		log.Error(operationID, "not set c MsgListenerList")
 		return
+	}
+	if c.ConversationListener == nil {
+		log.Error(operationID, "not set c ConversationListener")
+		return
+	}
+	if syncFlag == constant.MsgSyncBegin {
+		log.Info(operationID, "OnSyncServerStart() ")
+		c.ConversationListener.OnSyncServerStart()
 	}
 	var isTriggerUnReadCount bool
 	var insertMsg, updateMsg, specialUpdateMsg []*model_struct.LocalChatLog
