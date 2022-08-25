@@ -381,6 +381,7 @@ func (u *LoginMgr) forcedSynchronization() {
 	if u.organizationListener != nil {
 		go func() {
 			u.organization.SyncOrganization(operationID)
+			wg.Done()
 		}()
 	} else {
 		wg.Done()
