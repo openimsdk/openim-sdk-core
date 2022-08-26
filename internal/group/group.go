@@ -507,8 +507,12 @@ func (g *Group) GetGroupInfoFromLocal2Svr(groupID string) (*model_struct.LocalGr
 	if err == nil && len(svrGroup) == 1 {
 		transfer := common.TransferToLocalGroupInfo(svrGroup)
 		return transfer[0], nil
-	} else {
+	}
+
+	if err != nil {
 		return nil, utils.Wrap(err, "get groupInfo from server err")
+	} else {
+		return nil, utils.Wrap(errors.New("server not this group"), "")
 	}
 }
 
