@@ -3,9 +3,7 @@ package open_im_sdk
 import (
 	"encoding/json"
 	"errors"
-	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/login"
-	common2 "open_im_sdk/internal/obj_storage"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
@@ -1026,26 +1024,26 @@ func CheckResourceLoad(uSDK *login.LoginMgr) error {
 	return nil
 }
 
-func uploadImage(callback open_im_sdk_callback.Base, operationID string, filePath string, token, obj string) string {
-	if obj == "cos" {
-		p := ws.NewPostApi(token, userForSDK.ImConfig().ApiAddr)
-		o := common2.NewCOS(p)
-		url, _, err := o.UploadFile(filePath, func(progress int) {
-			if progress == 100 {
-				callback.OnSuccess("")
-			}
-		})
-
-		if err != nil {
-			callback.OnError(100, err.Error())
-			return ""
-		}
-		return url
-
-	} else {
-		return ""
-	}
-}
+//func uploadImage(callback open_im_sdk_callback.Base, operationID string, filePath string, token, obj string) string {
+//	if obj == "cos" {
+//		p := ws.NewPostApi(token, userForSDK.ImConfig().ApiAddr)
+//		o := common2.NewCOS(p)
+//		url, _, err := o.UploadFile(filePath, func(progress int) {
+//			if progress == 100 {
+//				callback.OnSuccess("")
+//			}
+//		})
+//
+//		if err != nil {
+//			callback.OnError(100, err.Error())
+//			return ""
+//		}
+//		return url
+//
+//	} else {
+//		return ""
+//	}
+//}
 func GetConversationIDBySessionType(sourceID string, sessionType int) string {
 	return utils.GetConversationIDBySessionType(sourceID, sessionType)
 }
