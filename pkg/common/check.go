@@ -3,7 +3,6 @@ package common
 import (
 	"encoding/json"
 	"errors"
-	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
@@ -13,11 +12,11 @@ import (
 	"runtime"
 )
 
-var validate *validator.Validate
-
-func init() {
-	validate = validator.New()
-}
+//var validate *validator.Validate
+//
+//func init() {
+//	validate = validator.New()
+//}
 
 func CheckAnyErrCallback(callback open_im_sdk_callback.Base, errCode int32, err error, operationID string) {
 	if err != nil {

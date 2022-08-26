@@ -1,13 +1,13 @@
 package server_api_params
 
-import sts "github.com/tencentyun/qcloud-cos-sts-sdk/go"
+//import sts "github.com/tencentyun/qcloud-cos-sts-sdk/go"
 
 type TencentCloudStorageCredentialReq struct {
 	OperationID string `json:"operationID"`
 }
 
 type TencentCloudStorageCredentialRespData struct {
-	*sts.CredentialResult
+	//*sts.CredentialResult
 	Region string `json:"region"`
 	Bucket string `json:"bucket"`
 }
