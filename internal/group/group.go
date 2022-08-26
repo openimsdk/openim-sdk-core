@@ -224,7 +224,7 @@ func (g *Group) groupOwnerTransferredNotification(msg *api.MsgData, operationID 
 		log.Error(operationID, "GetGroupMemberOwner failed ", err.Error(), detail.Group.GroupID)
 	}
 	g.updateMemberImmediately(detail.NewGroupOwner, operationID)
-	//	g.SyncJoinedGroupList(operationID)
+	g.SyncJoinedGroupList(operationID)
 	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
 	g.SyncAdminGroupApplication(operationID)
 }
@@ -668,6 +668,7 @@ func (g *Group) transferGroupOwner(callback open_im_sdk_callback.Base, groupID, 
 
 	g.updateLocalMemberImmediately(groupID, g.loginUserID, map[string]interface{}{"role_level": constant.GroupOrdinaryUsers}, operationID)
 	g.updateLocalMemberImmediately(groupID, newOwnerUserID, map[string]interface{}{"role_level": constant.GroupOwner}, operationID)
+	g.SyncJoinedGroupList(operationID)
 	g.syncGroupMemberByGroupID(groupID, operationID, true)
 }
 
