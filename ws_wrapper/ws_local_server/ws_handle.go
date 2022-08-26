@@ -140,6 +140,8 @@ func GenUserRouterNoLock(uid string, batchMsg int, operationID string) *RefRoute
 	wsRouter1.SetSignalingListener()
 	log.Info(operationID, "setWorkMomentsListener", uid)
 	wsRouter1.SetWorkMomentsListener()
+	log.Info(operationID, "SetOrganizationListener()", uid)
+	wsRouter1.SetOrganizationListener()
 	var rr RefRouter
 	rr.refName = RouteMap1
 	rr.wsRouter = &wsRouter1
