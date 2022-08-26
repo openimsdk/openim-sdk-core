@@ -13,14 +13,13 @@ import (
 
 func init() {
 	sdk_struct.SvrConf = sdk_struct.IMConfig{Platform: 1, ApiAddr: APIADDR, WsAddr: WSADDR, DataDir: "./", LogLevel: 6, ObjectStorage: "cos"}
-
+	allLoginMgr = make(map[int]*CoreNode)
 }
 
-func InitMgr(num int) {
-	log.Warn("", "allLoginMgr cap:  ", num)
-	allLoginMgr = make(map[int]*CoreNode, num)
-	allLoginMgrtmp = make([]*CoreNode, 0, num)
-}
+//func InitMgr(num int) {
+//	log.Warn("", "allLoginMgr cap:  ", num)
+//	allLoginMgr = make(map[int]*CoreNode, num)
+//}
 
 type CoreNode struct {
 	token             string
@@ -91,18 +90,25 @@ func addSendFailed() {
 //	}
 //}
 
-func sendPressMsg(index int, sendId, recvID string, idx string) bool {
+func sendPressMsg(index int, sendId, recvID string, groupID string, idx string) bool {
 
-	return SendTextMessageOnlyForPress(idx, sendId, recvID, utils.OperationIDGenerator(), allLoginMgr[index].mgr.Ws())
+	return SendTextMessageOnlyForPress(idx, sendId, recvID, groupID, utils.OperationIDGenerator(), allLoginMgr[index].mgr.Ws())
 }
-func SendTextMessageOnlyForPress(text, senderID, recvID, operationID string, ws *interaction.Ws) bool {
+func SendTextMessageOnlyForPress(text, senderID, recvID, groupID, operationID string, ws *interaction.Ws) bool {
 	var wsMsgData server_api_params.MsgData
 	options := make(map[string]bool, 2)
 	wsMsgData.SendID = senderID
-	wsMsgData.RecvID = recvID
+	if groupID == "" {
+		wsMsgData.RecvID = recvID
+		wsMsgData.SessionType = constant.SingleChatType
+	} else {
+		wsMsgData.GroupID = groupID
+		wsMsgData.SessionType = constant.SuperGroupChatType
+	}
+
 	wsMsgData.ClientMsgID = utils.GetMsgID(senderID)
 	wsMsgData.SenderPlatformID = 1
-	wsMsgData.SessionType = constant.SingleChatType
+
 	wsMsgData.MsgFrom = constant.UserMsgType
 	wsMsgData.ContentType = constant.Text
 	wsMsgData.Content = []byte(text)
@@ -110,5 +116,6 @@ func SendTextMessageOnlyForPress(text, senderID, recvID, operationID string, ws 
 	wsMsgData.Options = options
 	wsMsgData.OfflinePushInfo = nil
 	timeout := 300
+	log.Info(operationID, "SendReqTest begin ", wsMsgData)
 	return ws.SendReqTest(&wsMsgData, constant.WSSendMsg, timeout, senderID, operationID)
 }

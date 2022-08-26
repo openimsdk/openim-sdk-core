@@ -92,6 +92,9 @@ func register(uid string) error {
 		}
 		if getSelfUserInfoResp.ErrCode == 0 {
 			log.Warn(req.OperationID, "Already registered ", uid, getSelfUserInfoResp)
+			userLock.Lock()
+			allUserID = append(allUserID, uid)
+			userLock.Unlock()
 			return nil
 		} else {
 			log.Info(req.OperationID, "not registered ", uid, getSelfUserInfoResp.ErrCode)
@@ -112,6 +115,9 @@ func register(uid string) error {
 			continue
 		} else {
 			log.Info(req.OperationID, "register ok ", REGISTERADDR, req)
+			userLock.Lock()
+			allUserID = append(allUserID, uid)
+			userLock.Unlock()
 			return nil
 		}
 	}
@@ -176,6 +182,16 @@ func RegisterReliabilityUser(id int, timeStamp string) {
 	token := RunGetToken(userID)
 	coreMgrLock.Lock()
 	defer coreMgrLock.Unlock()
+	allLoginMgr[id] = &CoreNode{token: token, userID: userID}
+}
+
+func WorkGroupRegisterReliabilityUser(id int) {
+	userID := GenUid(id, "workgroup")
+	//	register(userID)
+	token := RunGetToken(userID)
+	coreMgrLock.Lock()
+	defer coreMgrLock.Unlock()
+	log.Info("", "WorkGroupRegisterReliabilityUser userID: ", userID, "token: ", token)
 	allLoginMgr[id] = &CoreNode{token: token, userID: userID}
 }
 

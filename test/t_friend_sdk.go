@@ -496,7 +496,6 @@ func lllogin(uid, tk string) bool {
 }
 
 func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
-
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
 	cf.WsAddr = ws
@@ -604,6 +603,7 @@ type TestSendMsgCallBack struct {
 	msgID       string
 	sendTime    int64
 	recvTime    int64
+	groupID     string
 }
 
 func (t *TestSendMsgCallBack) OnError(errCode int32, errMsg string) {

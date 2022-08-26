@@ -1,13 +1,16 @@
 package test
 
 import (
+	"open_im_sdk/pkg/constant"
 	"sync"
 )
 
-var LogLevel uint32 = 3
+var LogLevel uint32 = 6
 var PlatformID = int32(1)
 var LogName = ""
 
+var ReliabilityUserA = 1234567
+var ReliabilityUserB = 1234567
 var (
 	TESTIP = "43.155.69.205"
 	//TESTIP          = "121.37.25.71"
@@ -18,6 +21,7 @@ var (
 	SECRET          = "tuoyun"
 	SENDINTERVAL    = 20
 	GETSELFUSERINFO = APIADDR + "/user/get_self_user_info"
+	CREATEGROUP     = APIADDR + constant.CreateGroupRouter
 )
 
 var coreMgrLock sync.RWMutex

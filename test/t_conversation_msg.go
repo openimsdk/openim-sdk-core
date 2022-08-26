@@ -642,7 +642,7 @@ func DoTestMarkGroupMessageAsRead() {
 
 }
 
-func DoTestSendMsg(index int, sendId, recvID string, idx string) {
+func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string) {
 	m := "test msg " + sendId + ":" + recvID + ":" + idx
 	operationID := utils.OperationIDGenerator()
 	s := DoTestCreateTextMessageReliability(allLoginMgr[index].mgr, m)
@@ -657,10 +657,14 @@ func DoTestSendMsg(index int, sendId, recvID string, idx string) {
 	o.Desc = "desc"
 	testSendMsg.sendID = sendId
 	testSendMsg.recvID = recvID
+	testSendMsg.groupID = groupID
 	testSendMsg.msgID = mstruct.ClientMsgID
-	log.Info(operationID, "SendMessage", sendId, recvID, testSendMsg.msgID, index)
-	allLoginMgr[index].mgr.Conversation().SendMessage(&testSendMsg, s, recvID, "", utils.StructToJsonString(o), operationID)
-
+	log.Info(operationID, "SendMessage", sendId, recvID, groupID, testSendMsg.msgID, index)
+	if recvID != "" {
+		allLoginMgr[index].mgr.Conversation().SendMessage(&testSendMsg, s, recvID, "", utils.StructToJsonString(o), operationID)
+	} else {
+		allLoginMgr[index].mgr.Conversation().SendMessage(&testSendMsg, s, "", groupID, utils.StructToJsonString(o), operationID)
+	}
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
 	x := SendRecvTime{SendTime: utils.GetCurrentTimestampByMill()}
