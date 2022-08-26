@@ -512,7 +512,7 @@ func (g *Group) GetGroupInfoFromLocal2Svr(groupID string) (*model_struct.LocalGr
 	if err != nil {
 		return nil, utils.Wrap(err, "get groupInfo from server err")
 	} else {
-		return nil, utils.Wrap(errors.New("server no this group"), "")
+		return nil, utils.Wrap(errors.New("server not this group"), "")
 	}
 }
 
