@@ -15,7 +15,6 @@ func main() {
 	singleSenderMsgNum = flag.Int("mn", 100, "single sender msg num")
 	intervalTime = flag.Int("t", 1000, "interval time mill second")
 	flag.Parse()
-	test.InitMgr(*senderNum)
 	log.NewPrivateLog(test.LogName, test.LogLevel)
 	log.Warn("", "reliability test start, sender num: ", *senderNum, " single sender msg num: ", *singleSenderMsgNum, " send msg total num: ", *senderNum**singleSenderMsgNum)
 	test.ReliabilityTest(*singleSenderMsgNum, *intervalTime, 10, *senderNum)
