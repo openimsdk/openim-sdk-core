@@ -16,8 +16,6 @@ func main() {
 	intervalTime = flag.Int("t", 0, "interval time mill second")
 	flag.Parse()
 	constant.OnlyForTest = 1
-	test.InitMgr(*senderNum)
-
 	log.NewPrivateLog("", uint32(test.LogLevel))
 	log.Warn("", "press test begin, sender num: ", *senderNum, " single sender msg num: ", *singleSenderMsgNum, " send msg total num: ", *senderNum**singleSenderMsgNum)
 	test.PressTest(*singleSenderMsgNum, *intervalTime, *senderNum)
