@@ -103,6 +103,15 @@ func (m *ReadDiffusionGroupMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 	//同步最新消息，内部保证只调用一次
 	m.syncLatestMsg(operationID)
 
+	var groupIDList []string
+	for groupID, _ := range cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).GroupID2MinMaxSeqOnSvr {
+		groupIDList = append(groupIDList, groupID)
+	}
+	m.superGroupMtx.Lock()
+	m.SuperGroupIDList = m.SuperGroupIDList[0:0]
+	m.SuperGroupIDList = groupIDList
+	m.superGroupMtx.Unlock()
+
 	//更新需要同步的最大seq
 	for groupID, MinMaxSeqOnSvr := range cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).GroupID2MinMaxSeqOnSvr {
 		if MinMaxSeqOnSvr.MinSeq > MinMaxSeqOnSvr.MaxSeq {
