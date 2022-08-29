@@ -168,13 +168,23 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	t1 := time.Now()
 	u.token = token
 	u.loginUserID = userID
+	var sqliteConn *db.DataBase
+	var err error
+	if constant.OnlyForTest == 1 {
+		wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID)
+		wsRespAsyn := ws.NewWsRespAsyn()
+		u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
+		cb.OnSuccess("")
+		return
+	}
 
-	sqliteConn, err := db.NewDataBase(userID, sdk_struct.SvrConf.DataDir, operationID)
+	sqliteConn, err = db.NewDataBase(userID, sdk_struct.SvrConf.DataDir, operationID)
 	if err != nil {
 		cb.OnError(constant.ErrDB.ErrCode, err.Error())
 		log.Error(operationID, "NewDataBase failed ", err.Error())
 		return
 	}
+
 	u.db = sqliteConn
 	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir, "login cost time: ", time.Since(t1))
 

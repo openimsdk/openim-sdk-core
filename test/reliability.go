@@ -203,13 +203,13 @@ func WorkGroupMsgDelayTest(msgNumOneClient int, intervalSleepMS int, randSleepMa
 
 func PressTest(msgNumOneClient int, intervalSleepMS int, clientNum int) {
 	msgNumInOneClient = msgNumOneClient
-	timeStamp := utils.Int64ToString(time.Now().Unix())
+	//timeStamp := utils.Int64ToString(time.Now().Unix())
 	t1 := time.Now()
 	var wg sync.WaitGroup
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
 		go func(idx int) {
-			RegisterPressUser(idx, timeStamp)
+			RegisterPressUser(idx)
 			log.Info("", "get user token finish ", idx)
 			wg.Done()
 		}(i)

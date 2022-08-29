@@ -51,6 +51,7 @@ func (d *DataBase) CloseDB() error {
 func NewDataBase(loginUserID string, dbDir string, operationID string) (*DataBase, error) {
 	UserDBLock.Lock()
 	defer UserDBLock.Unlock()
+
 	dataBase, ok := UserDBMap[loginUserID]
 	if !ok {
 		dataBase = &DataBase{loginUserID: loginUserID, dbDir: dbDir}

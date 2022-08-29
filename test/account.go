@@ -195,8 +195,8 @@ func WorkGroupRegisterReliabilityUser(id int) {
 	allLoginMgr[id] = &CoreNode{token: token, userID: userID}
 }
 
-func RegisterPressUser(id int, timeStamp string) {
-	userID := GenUid(id, "press_"+timeStamp+"_")
+func RegisterPressUser(id int) {
+	userID := GenUid(id, "press_")
 	register(userID)
 	token := RunGetToken(userID)
 	coreMgrLock.Lock()

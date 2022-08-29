@@ -69,10 +69,6 @@ func (u *Heartbeat) Run() {
 	retryTimes := 0
 	heartbeatNum := 0
 	for {
-		if constant.OnlyForTest == 1 {
-			time.Sleep(30 * time.Second)
-			continue
-		}
 		operationID := utils.OperationIDGenerator()
 		if heartbeatNum != 0 {
 			select {
@@ -140,6 +136,9 @@ func (u *Heartbeat) Run() {
 		u.id2MinSeq[utils.GetUserIDForMinSeq(u.LoginUserID)] = wsSeqResp.MinSeq
 		for g, v := range wsSeqResp.GroupMaxAndMinSeq {
 			u.id2MinSeq[utils.GetGroupIDForMinSeq(g)] = v.MinSeq
+		}
+		if constant.OnlyForTest == 1 {
+			continue
 		}
 		//server_api_params.MaxAndMinSeq
 		log.Debug(operationID, "recv heartbeat resp,  seq on svr: ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)
