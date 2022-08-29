@@ -69,11 +69,11 @@ func (d *DataBase) GetAllDepartmentList() ([]*model_struct.LocalDepartment, erro
 
 func (d *DataBase) GetParentDepartmentList(departmentID string) ([]*model_struct.LocalDepartment, error) {
 	var departmentList []*model_struct.LocalDepartment
-	err := d.getDepartmentList(&departmentList, departmentID)
+	err := d.GetDepartmentList(&departmentList, departmentID)
 	return departmentList, err
 }
 
-func (d *DataBase) getDepartmentList(departmentList *[]*model_struct.LocalDepartment, departmentID string) error {
+func (d *DataBase) GetDepartmentList(departmentList *[]*model_struct.LocalDepartment, departmentID string) error {
 	if len(*departmentList) == 0 {
 		department, err := d.GetDepartmentInfo(departmentID)
 		if err != nil {
@@ -81,13 +81,13 @@ func (d *DataBase) getDepartmentList(departmentList *[]*model_struct.LocalDepart
 		}
 		*departmentList = append(*departmentList, department)
 	}
-	department, err := d.getParentDepartment(departmentID)
+	department, err := d.GetParentDepartment(departmentID)
 	if err != nil {
 		return utils.Wrap(err, "getParentDepartment failed")
 	}
 	if department.DepartmentID != "" {
 		*departmentList = append([]*model_struct.LocalDepartment{&department}, *departmentList...)
-		err := d.getDepartmentList(departmentList, department.DepartmentID)
+		err := d.GetDepartmentList(departmentList, department.DepartmentID)
 		if err != nil {
 			return utils.Wrap(err, "getParentDepartmentList failed")
 		}
@@ -95,7 +95,7 @@ func (d *DataBase) getDepartmentList(departmentList *[]*model_struct.LocalDepart
 	return nil
 }
 
-func (d *DataBase) getParentDepartment(departmentID string) (model_struct.LocalDepartment, error) {
+func (d *DataBase) GetParentDepartment(departmentID string) (model_struct.LocalDepartment, error) {
 	d.mRWMutex.RLock()
 	defer d.mRWMutex.RUnlock()
 	var department model_struct.LocalDepartment

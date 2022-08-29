@@ -19,6 +19,7 @@ import (
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
@@ -38,7 +39,7 @@ type LoginMgr struct {
 	//advancedFunction advanced_interface.AdvancedFunction
 	workMoments  *workMoments.WorkMoments
 	full         *full.Full
-	db           *db.DataBase
+	db           db_interface.DataBase
 	ws           *ws.Ws
 	msgSync      *ws.MsgSync
 	heartbeat    *heartbeart.Heartbeat
@@ -168,14 +169,17 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	t1 := time.Now()
 	u.token = token
 	u.loginUserID = userID
-
-	sqliteConn, err := db.NewDataBase(userID, sdk_struct.SvrConf.DataDir, operationID)
-	if err != nil {
-		cb.OnError(constant.ErrDB.ErrCode, err.Error())
-		log.Error(operationID, "NewDataBase failed ", err.Error())
-		return
+	if sdk_struct.SvrConf.Platform == constant.WebPlatformID {
+		u.db = db.NewIndexDB()
+	} else {
+		sqliteConn, err := db.NewDataBase(userID, sdk_struct.SvrConf.DataDir, operationID)
+		if err != nil {
+			cb.OnError(constant.ErrDB.ErrCode, err.Error())
+			log.Error(operationID, "NewDataBase failed ", err.Error())
+			return
+		}
+		u.db = sqliteConn
 	}
-	u.db = sqliteConn
 	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir, "login cost time: ", time.Since(t1))
 
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
@@ -189,7 +193,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.id2MinSeq = make(map[string]uint32, 100)
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
 	u.postApi = p
-	u.user = user.NewUser(sqliteConn, p, u.loginUserID, u.conversationCh)
+	u.user = user.NewUser(u.db, p, u.loginUserID, u.conversationCh)
 	u.user.SetListener(u.userListener)
 
 	u.friend = friend.NewFriend(u.loginUserID, u.db, u.user, p, u.conversationCh)

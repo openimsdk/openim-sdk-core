@@ -6,7 +6,7 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func (d *DataBase) initSuperLocalErrChatLog(groupID string) {
+func (d *DataBase) InitSuperLocalErrChatLog(groupID string) {
 	if !d.conn.Migrator().HasTable(utils.GetErrSuperGroupTableName(groupID)) {
 		d.conn.Table(utils.GetErrSuperGroupTableName(groupID)).AutoMigrate(&model_struct.LocalErrChatLog{})
 	}
@@ -15,7 +15,7 @@ func (d *DataBase) SuperBatchInsertExceptionMsg(MessageList []*model_struct.Loca
 	if MessageList == nil {
 		return nil
 	}
-	d.initSuperLocalErrChatLog(groupID)
+	d.InitSuperLocalErrChatLog(groupID)
 	return utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Create(MessageList).Error, "BatchInsertMessageList failed")
 }
 func (d *DataBase) GetAbnormalMsgSeq() (uint32, error) {

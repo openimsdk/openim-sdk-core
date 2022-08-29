@@ -54,7 +54,7 @@ func NewDataBase(loginUserID string, dbDir string, operationID string) (*DataBas
 	dataBase, ok := UserDBMap[loginUserID]
 	if !ok {
 		dataBase = &DataBase{loginUserID: loginUserID, dbDir: dbDir}
-		err := dataBase.initDB()
+		err := dataBase.InitDB()
 		if err != nil {
 			return dataBase, utils.Wrap(err, "initDB failed "+dbDir)
 		}
@@ -63,11 +63,11 @@ func NewDataBase(loginUserID string, dbDir string, operationID string) (*DataBas
 	} else {
 		log.Info(operationID, "db in map", loginUserID)
 	}
-	dataBase.setChatLogFailedStatus()
+	dataBase.SetChatLogFailedStatus()
 	return dataBase, nil
 }
 
-func (d *DataBase) setChatLogFailedStatus() {
+func (d *DataBase) SetChatLogFailedStatus() {
 	msgList, err := d.GetSendingMessageList()
 	if err != nil {
 		log.Error("", "GetSendingMessageList failed ", err.Error())
@@ -83,7 +83,7 @@ func (d *DataBase) setChatLogFailedStatus() {
 	}
 }
 
-func (d *DataBase) initDB() error {
+func (d *DataBase) InitDB() error {
 	if d.loginUserID == "" {
 		return errors.New("no uid")
 	}

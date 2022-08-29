@@ -8,7 +8,7 @@ import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
@@ -20,12 +20,12 @@ type LiveSignaling struct {
 	*ws.Ws
 	listener    open_im_sdk_callback.OnSignalingListener
 	loginUserID string
-	*db.DataBase
+	db_interface.DataBase
 	platformID int32
 	isCanceled bool
 }
 
-func NewLiveSignaling(ws *ws.Ws, listener open_im_sdk_callback.OnSignalingListener, loginUserID string, platformID int32, db *db.DataBase) *LiveSignaling {
+func NewLiveSignaling(ws *ws.Ws, listener open_im_sdk_callback.OnSignalingListener, loginUserID string, platformID int32, db db_interface.DataBase) *LiveSignaling {
 	if ws == nil || listener == nil {
 		log.Warn("", "ws or SignalingListener is nil")
 		return nil

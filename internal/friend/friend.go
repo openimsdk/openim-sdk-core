@@ -22,7 +22,7 @@ import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
@@ -33,7 +33,7 @@ import (
 type Friend struct {
 	friendListener open_im_sdk_callback.OnFriendshipListener
 	loginUserID    string
-	db             *db.DataBase
+	db             db_interface.DataBase
 	user           *user.User
 	p              *ws.PostApi
 	loginTime      int64
@@ -48,11 +48,11 @@ func (f *Friend) SetLoginTime(loginTime int64) {
 	f.loginTime = loginTime
 }
 
-func (f *Friend) Db() *db.DataBase {
+func (f *Friend) Db() db_interface.DataBase {
 	return f.db
 }
 
-func NewFriend(loginUserID string, db *db.DataBase, user *user.User, p *ws.PostApi, conversationCh chan common.Cmd2Value) *Friend {
+func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, p *ws.PostApi, conversationCh chan common.Cmd2Value) *Friend {
 	return &Friend{loginUserID: loginUserID, db: db, user: user, p: p, conversationCh: conversationCh}
 }
 

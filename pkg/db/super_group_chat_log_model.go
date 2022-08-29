@@ -11,7 +11,7 @@ import (
 	"open_im_sdk/sdk_struct"
 )
 
-func (d *DataBase) initSuperLocalChatLog(groupID string) {
+func (d *DataBase) InitSuperLocalChatLog(groupID string) {
 	if !d.conn.Migrator().HasTable(utils.GetSuperGroupTableName(groupID)) {
 		d.conn.Table(utils.GetSuperGroupTableName(groupID)).AutoMigrate(&model_struct.LocalChatLog{})
 	}
@@ -178,7 +178,7 @@ func (d *DataBase) SuperGroupMessageIfExistsBySeq(seq int64) (bool, error) {
 	}
 }
 func (d *DataBase) SuperGroupGetMessage(msg *sdk_struct.MsgStruct) (*model_struct.LocalChatLog, error) {
-	d.initSuperLocalChatLog(msg.GroupID)
+	d.InitSuperLocalChatLog(msg.GroupID)
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var c model_struct.LocalChatLog
@@ -266,7 +266,7 @@ func (d *DataBase) SuperGroupGetMessageList(sourceID string, sessionType, count 
 	return result, err
 }
 func (d *DataBase) SuperGroupGetMessageListNoTime(sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	d.initSuperLocalChatLog(sourceID)
+	d.InitSuperLocalChatLog(sourceID)
 	var messageList []model_struct.LocalChatLog
 	var condition, timeOrder string
 	if isReverse {
