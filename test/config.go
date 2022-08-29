@@ -22,6 +22,7 @@ var (
 	SENDINTERVAL    = 20
 	GETSELFUSERINFO = APIADDR + "/user/get_self_user_info"
 	CREATEGROUP     = APIADDR + constant.CreateGroupRouter
+	ACCOUNTCHECK    = APIADDR + "/user/account_check"
 )
 
 var coreMgrLock sync.RWMutex

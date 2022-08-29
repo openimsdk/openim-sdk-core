@@ -11,7 +11,7 @@ func main() {
 	var senderNum *int          //Number of users sending messages
 	var singleSenderMsgNum *int //Number of single user send messages
 	var intervalTime *int       //Sending time interval, in millisecond
-	senderNum = flag.Int("sn", 100, "sender num")
+	senderNum = flag.Int("sn", 10000, "sender num")
 	singleSenderMsgNum = flag.Int("mn", 100, "single sender msg num")
 	intervalTime = flag.Int("t", 0, "interval time mill second")
 	flag.Parse()

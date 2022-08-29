@@ -67,21 +67,19 @@ func init() {
 	AdminToken = getToken("openIM123456")
 }
 func register(uid string) error {
-	var req server_api_params.UserRegisterReq
+	//ACCOUNTCHECK
+	var req server_api_params.AccountCheckReq
 	req.OperationID = utils.OperationIDGenerator()
-	req.Platform = 1
-	req.UserID = uid
-	req.Secret = SECRET
-	req.Nickname = uid
+	req.CheckUserIDList = []string{uid}
 
 	var getSelfUserInfoReq server_api_params.GetSelfUserInfoReq
 	getSelfUserInfoReq.OperationID = req.OperationID
 	getSelfUserInfoReq.UserID = uid
 
-	var getSelfUserInfoResp server_api_params.GetSelfUserInfoResp
+	var getSelfUserInfoResp server_api_params.AccountCheckResp
 
 	for {
-		r, err := network.Post2Api(GETSELFUSERINFO, req, AdminToken)
+		r, err := network.Post2Api(ACCOUNTCHECK, req, AdminToken)
 		if err != nil {
 			log.Error(req.OperationID, "post failed, continue ", err.Error(), REGISTERADDR, req)
 			continue
@@ -90,20 +88,30 @@ func register(uid string) error {
 		if err != nil {
 			log.Error(req.OperationID, "Unmarshal failed ", err.Error())
 		}
-		if getSelfUserInfoResp.ErrCode == 0 {
+		if getSelfUserInfoResp.ErrCode == 0 && len(getSelfUserInfoResp.ResultList) == 1 && getSelfUserInfoResp.ResultList[0].AccountStatus == "registered" {
 			log.Warn(req.OperationID, "Already registered ", uid, getSelfUserInfoResp)
 			userLock.Lock()
 			allUserID = append(allUserID, uid)
 			userLock.Unlock()
 			return nil
-		} else {
+		} else if getSelfUserInfoResp.ErrCode == 0 && len(getSelfUserInfoResp.ResultList) == 1 && getSelfUserInfoResp.ResultList[0].AccountStatus == "unregistered" {
 			log.Info(req.OperationID, "not registered ", uid, getSelfUserInfoResp.ErrCode)
 			break
+		} else {
+			log.Error(req.OperationID, " failed, continue ", err.Error(), REGISTERADDR, req)
+			continue
 		}
 	}
 
 	for {
-		_, err := network.Post2Api(REGISTERADDR, req, "")
+		var rreq server_api_params.UserRegisterReq
+		rreq.UserID = uid
+		rreq.Secret = SECRET
+		rreq.UserID = uid
+		rreq.Platform = 1
+		rreq.OperationID = req.OperationID
+		rreq.OperationID = req.OperationID
+		_, err := network.Post2Api(REGISTERADDR, rreq, "")
 		//if err != nil && !strings.Contains(err.Error(), "status code failed") {
 		//	log.Error(req.OperationID, "post failed ,continue ", err.Error(), REGISTERADDR, req)
 		//	time.Sleep(100 * time.Millisecond)
@@ -196,7 +204,7 @@ func WorkGroupRegisterReliabilityUser(id int) {
 }
 
 func RegisterPressUser(id int) {
-	userID := GenUid(id, "press_")
+	userID := GenUid(id, "press")
 	register(userID)
 	token := RunGetToken(userID)
 	coreMgrLock.Lock()
