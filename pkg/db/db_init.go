@@ -101,8 +101,9 @@ func (d *DataBase) initDB() error {
 		return utils.Wrap(err, "get sql db failed")
 	}
 	sqlDB.SetConnMaxLifetime(time.Hour * 1)
-	sqlDB.SetMaxOpenConns(2)
-	sqlDB.SetMaxIdleConns(1)
+	sqlDB.SetMaxOpenConns(3)
+	sqlDB.SetMaxIdleConns(2)
+	sqlDB.SetConnMaxIdleTime(time.Minute * 10)
 	d.conn = db
 
 	superGroup := &model_struct.LocalGroup{}
