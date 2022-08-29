@@ -35,6 +35,7 @@ func (d *DataBase) CloseDB() error {
 		log.Error("", "get db conn failed ", err.Error())
 	} else {
 		if dbConn != nil {
+			log.Info("", "close db finished")
 			err := dbConn.Close()
 			if err != nil {
 				log.Error("", "close db failed ", err.Error())
