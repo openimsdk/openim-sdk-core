@@ -613,6 +613,7 @@ func PressOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS i
 					break
 				}
 			}
+			time.Sleep(time.Duration(intervalSleepMS) * time.Millisecond)
 			//DoTestSendMsg(index, strMyUid, recvId, idx)
 			if sendPressMsg(index, strMyUid, recvId, "", idx) {
 				allLoginMgr[index].sendMsgSuccessNum++
