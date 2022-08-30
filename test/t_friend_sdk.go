@@ -539,7 +539,7 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 
 	for {
 		if callback.errCode == 1 {
-			log.Info(operationID, "login ok ", uid)
+			log.Warn(operationID, "login ok ", uid)
 			return
 		}
 		//		log.Warn(operationID, "waiting login...", uid)
