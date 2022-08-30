@@ -323,21 +323,21 @@ func CheckReliabilityResult(msgNumOneClient int, clientNum int) bool {
 		}
 	}
 	log.Info("", "check map send -> map recv ok ", sameNum)
-	log.Info("", "start check map recv -> map send ")
-	sameNum = 0
+	//log.Info("", "start check map recv -> map send ")
+	//sameNum = 0
 
-	for k1, _ := range RecvAllMsg {
-		_, ok := SendSuccAllMsg[k1]
-		if ok {
-			sameNum++
-			//x := v1 + v2
-			//x = x + x
-
-		} else {
-			log.Error("", "check failed  not in send ", k1, len(SendFailedAllMsg), len(SendSuccAllMsg), len(RecvAllMsg))
-			//	return false
-		}
-	}
+	//for k1, _ := range RecvAllMsg {
+	//	_, ok := SendSuccAllMsg[k1]
+	//	if ok {
+	//		sameNum++
+	//		//x := v1 + v2
+	//		//x = x + x
+	//
+	//	} else {
+	//		log.Error("", "check failed  not in send ", k1, len(SendFailedAllMsg), len(SendSuccAllMsg), len(RecvAllMsg))
+	//		//	return false
+	//	}
+	//}
 	maxCostMsgID := ""
 	minCostTime := int64(1000000)
 	maxCostTime := int64(0)
