@@ -98,7 +98,7 @@ func register(uid string) error {
 			log.Info(req.OperationID, "not registered ", uid, getSelfUserInfoResp.ErrCode)
 			break
 		} else {
-			log.Error(req.OperationID, " failed, continue ", err.Error(), REGISTERADDR, req)
+			log.Error(req.OperationID, " failed, continue ", err, REGISTERADDR, req)
 			continue
 		}
 	}
