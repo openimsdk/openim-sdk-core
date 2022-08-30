@@ -237,7 +237,7 @@ func PressTest(msgNumOneClient int, intervalSleepMS int, clientNum int) {
 	for i := 0; i < clientNum; i++ {
 		go func(idx int) {
 			PressOne(idx, 0, true, intervalSleepMS)
-			log.Warn("", "press finished  ", i)
+			log.Warn("", "press finished  ", idx)
 			wg.Done()
 		}(i)
 	}
