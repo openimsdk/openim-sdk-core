@@ -620,7 +620,6 @@ func PressOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSleepMS i
 				allLoginMgr[index].sendMsgSuccessNum++
 			} else {
 				allLoginMgr[index].sendMsgFailedNum++
-
 			}
 		}
 		//Msgwg.Done()

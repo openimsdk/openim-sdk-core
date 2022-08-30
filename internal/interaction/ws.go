@@ -144,7 +144,7 @@ func (w *Ws) WaitTest(ch chan GeneralWsResp, timeout int, operationID string, co
 	select {
 	case r := <-ch:
 		if r.ErrCode != 0 {
-			log.Debug(operationID, "ws ch recvMsg success, code ", r.ErrCode, r.ErrMsg, m.String(), senderID)
+			log.Error(operationID, "ws ch recvMsg success, code ", r.ErrCode, r.ErrMsg, m.String(), senderID)
 			return false
 		} else {
 			log.Debug(operationID, "ws ch recvMsg send success, code ", m.String(), senderID)
@@ -153,7 +153,7 @@ func (w *Ws) WaitTest(ch chan GeneralWsResp, timeout int, operationID string, co
 		}
 
 	case <-time.After(time.Second * time.Duration(timeout)):
-		log.Debug(operationID, "ws ch recvMsg err, timeout ", m.String(), senderID)
+		log.Error(operationID, "ws ch recvMsg err, timeout ", m.String(), senderID)
 
 		return false
 	}
