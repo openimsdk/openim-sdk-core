@@ -739,7 +739,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 					msg.Status = constant.MsgStatusFiltered
 				}
 				if isHistory {
-					log.Warn("test", "trigger msg is ", msg.SenderNickname, msg.SenderFaceURL)
+					log.Debug(operationID, "trigger msg is ", msg.SenderNickname, msg.SenderFaceURL)
 					insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
 				}
 				switch msg.ContentType {

@@ -230,6 +230,6 @@ func GetGroupMemberNum(groupID string) uint32 {
 		log.Error("", "CheckErrAndResp failed ", err.Error(), string(r))
 		return 0
 	}
-	log.Info("", "group info", groupInfoList[0])
+	log.Warn("", "group info", groupInfoList)
 	return groupInfoList[0].MemberCount
 }
