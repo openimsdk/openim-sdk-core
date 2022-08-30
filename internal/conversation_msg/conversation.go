@@ -269,21 +269,26 @@ func (c *Conversation) SyncConversations(operationID string, timeout time.Durati
 		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		return
 	}
+	log.Info(operationID, "get server cost time", time.Since(ccTime))
+	cTime := time.Now()
 	conversationsOnLocal, err := c.db.GetAllConversationListToSync()
 	if err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 	}
-	log.Info(operationID, "get server cost time", time.Since(ccTime))
+	log.Info(operationID, "get local cost time", time.Since(cTime))
+	cTime = time.Now()
 	conversationsOnLocalTempFormat := common.LocalTransferToTempConversation(conversationsOnLocal)
 	conversationsOnServerTempFormat := common.ServerTransferToTempConversation(conversationsOnServer)
 	conversationsOnServerLocalFormat := common.TransferToLocalConversation(conversationsOnServer)
 
 	aInBNot, bInANot, sameA, sameB := common.CheckConversationListDiff(conversationsOnServerTempFormat, conversationsOnLocalTempFormat)
-	log.Info(operationID, "diff server cost time", time.Since(ccTime))
+	log.Info(operationID, "diff server cost time", time.Since(cTime))
 
 	log.NewInfo(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
+	log.NewInfo(operationID, "server have", len(aInBNot), "local have", len(bInANot))
 	// server有 local没有
 	// 可能是其他点开一下生成会话设置免打扰 插入到本地 不回调..
+	cTime = time.Now()
 	for _, index := range aInBNot {
 		conversation := conversationsOnServerLocalFormat[index]
 		var newConversation model_struct.LocalConversation
@@ -302,7 +307,6 @@ func (c *Conversation) SyncConversations(operationID string, timeout time.Durati
 		newConversation.UpdateUnreadCountTime = conversation.UpdateUnreadCountTime
 		//newConversation.UnreadCount = conversation.UnreadCount
 		newConversationList = append(newConversationList, &newConversation)
-
 		c.addFaceURLAndName(&newConversation)
 		//err := c.db.InsertConversation(&newConversation)
 		//if err != nil {
@@ -310,14 +314,16 @@ func (c *Conversation) SyncConversations(operationID string, timeout time.Durati
 		//	continue
 		//}
 	}
-	log.Info(operationID, "addFaceURLAndName cost time", time.Since(ccTime))
+	log.Info(operationID, "Assemble a new conversations cost time", time.Since(cTime))
 	//New conversation storage
+	cTime = time.Now()
 	err2 := c.db.BatchInsertConversationList(newConversationList)
 	if err2 != nil {
 		log.Error(operationID, "insert new conversation err:", err2.Error(), newConversationList)
 	}
-	log.Info(operationID, "insert cost time", time.Since(ccTime))
+	log.Info(operationID, "batch insert cost time", time.Since(cTime))
 	// 本地服务器有的会话 以服务器为准更新
+	cTime = time.Now()
 	var conversationChangedList []string
 	for _, index := range sameA {
 		log.NewInfo(operationID, utils.GetSelfFuncName(), "server and client both have", *conversationsOnServerLocalFormat[index])
@@ -334,16 +340,21 @@ func (c *Conversation) SyncConversations(operationID string, timeout time.Durati
 			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		}
 	}
+	log.Info(operationID, "batch update cost time", time.Since(cTime))
+
 	// local有 server没有 代表没有修改公共字段
 	for _, index := range bInANot {
 		log.NewDebug(operationID, utils.GetSelfFuncName(), index, conversationsOnLocal[index].ConversationID,
 			conversationsOnLocal[index].RecvMsgOpt, conversationsOnLocal[index].IsPinned, conversationsOnLocal[index].IsPrivateChat)
 	}
+	cTime = time.Now()
 	conversationsOnLocal, err = c.db.GetAllConversationListToSync()
 	if err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 	}
 	c.cache.UpdateConversations(conversationsOnLocal)
+	log.Info(operationID, "cache update cost time", time.Since(cTime))
+	log.Info(operationID, utils.GetSelfFuncName(), "all  cost time", time.Since(ccTime))
 }
 
 func (c *Conversation) SyncOneConversation(conversationID, operationID string) {
@@ -1607,9 +1618,10 @@ func (c *Conversation) setConversationNotification(msg *server_api_params.MsgDat
 }
 
 func (c *Conversation) DoNotification(msg *server_api_params.MsgData) {
-	//if msg.SendTime < c.full.loginTime {
-	//	log.Warn("", "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
-	//}
+	if msg.SendTime < c.full.Group().LoginTime() || c.full.Group().LoginTime() == 0 {
+		log.Warn("", "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
+		return
+	}
 	operationID := utils.OperationIDGenerator()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg)
 	if c.msgListener == nil {

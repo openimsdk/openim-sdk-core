@@ -27,6 +27,10 @@ type Full struct {
 	SuperGroup *super_group.SuperGroup
 }
 
+func (u *Full) Group() *group.Group {
+	return u.group
+}
+
 func NewFull(user *user.User, friend *friend.Friend, group *group.Group, ch chan common.Cmd2Value, userCache *cache.Cache, db *db.DataBase, superGroup *super_group.SuperGroup) *Full {
 	return &Full{user: user, friend: friend, group: group, ch: ch, userCache: userCache, db: db, SuperGroup: superGroup}
 }
