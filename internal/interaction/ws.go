@@ -130,7 +130,7 @@ func (w *Ws) SendReqTest(m proto.Message, reqIdentifier int32, timeout int, send
 	}
 	connSend, err = w.writeBinaryMsg(wsReq)
 	if err != nil {
-		log.Debug(operationID, "writeBinaryMsg timeout", m.String(), senderID, err.Error())
+		log.Error(operationID, "writeBinaryMsg timeout", m.String(), senderID, err.Error())
 		return false
 	} else {
 		log.Debug(operationID, "writeBinaryMsg success", m.String(), senderID)
