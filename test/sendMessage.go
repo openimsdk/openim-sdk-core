@@ -117,5 +117,10 @@ func SendTextMessageOnlyForPress(text, senderID, recvID, groupID, operationID st
 	wsMsgData.OfflinePushInfo = nil
 	timeout := 300
 	log.Info(operationID, "SendReqTest begin ", wsMsgData)
-	return ws.SendReqTest(&wsMsgData, constant.WSSendMsg, timeout, senderID, operationID)
+	flag := ws.SendReqTest(&wsMsgData, constant.WSSendMsg, timeout, senderID, operationID)
+
+	if flag != true {
+		log.Warn(operationID, "SendReqTest failed ", wsMsgData)
+	}
+	return flag
 }
