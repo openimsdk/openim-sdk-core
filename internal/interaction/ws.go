@@ -148,7 +148,6 @@ func (w *Ws) WaitTest(ch chan GeneralWsResp, timeout int, operationID string, co
 			return false
 		} else {
 			log.Debug(operationID, "ws ch recvMsg send success, code ", m.String(), senderID)
-
 			return true
 		}
 
