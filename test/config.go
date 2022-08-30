@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-var LogLevel uint32 = 3
+var LogLevel uint32 = 6
 var PlatformID = int32(1)
 var LogName = ""
 
@@ -13,16 +13,17 @@ var ReliabilityUserA = 1234567
 var ReliabilityUserB = 1234567
 var (
 	//TESTIP = "43.155.69.205"
-	TESTIP          = "121.37.25.71"
-	APIADDR         = "http://" + TESTIP + ":10002"
-	WSADDR          = "ws://" + TESTIP + ":10001"
-	REGISTERADDR    = APIADDR + "/auth/user_register"
-	TOKENADDR       = APIADDR + "/auth/user_token"
-	SECRET          = "tuoyun"
-	SENDINTERVAL    = 20
-	GETSELFUSERINFO = APIADDR + "/user/get_self_user_info"
-	CREATEGROUP     = APIADDR + constant.CreateGroupRouter
-	ACCOUNTCHECK    = APIADDR + "/user/account_check"
+	TESTIP              = "121.37.25.71"
+	APIADDR             = "http://" + TESTIP + ":10002"
+	WSADDR              = "ws://" + TESTIP + ":10001"
+	REGISTERADDR        = APIADDR + "/auth/user_register"
+	TOKENADDR           = APIADDR + "/auth/user_token"
+	SECRET              = "tuoyun"
+	SENDINTERVAL        = 20
+	GETSELFUSERINFO     = APIADDR + "/user/get_self_user_info"
+	CREATEGROUP         = APIADDR + constant.CreateGroupRouter
+	ACCOUNTCHECK        = APIADDR + "/user/account_check"
+	GETGROUPSINFOROUTER = APIADDR + constant.GetGroupsInfoRouter
 )
 
 var coreMgrLock sync.RWMutex

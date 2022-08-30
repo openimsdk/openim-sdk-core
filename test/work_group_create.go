@@ -16,8 +16,6 @@ func CreateWorkGroup(number int) string {
 	RegisterWorkGroupAccounts(number)
 	log.Info("", "RegisterAccounts  cost time: ", time.Since(t1), "Online client number ", number)
 
-	//CREATEGROUP
-
 	var req server_api_params.CreateGroupReq
 	req.OperationID = utils.OperationIDGenerator()
 	req.GroupType = constant.WorkingGroup

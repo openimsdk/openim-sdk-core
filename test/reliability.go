@@ -662,6 +662,7 @@ func WorkGroupPressOne(index int, beforeLoginSleep int, isSendMsg bool, interval
 				allLoginMgr[index].sendMsgFailedNum++
 			}
 			log.Info("sendPressMsg end")
+			time.Sleep(time.Duration(intervalSleepMS) * time.Millisecond)
 		}
 	}
 }

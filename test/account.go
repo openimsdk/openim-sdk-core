@@ -3,6 +3,7 @@ package test
 import (
 	"encoding/json"
 	"net"
+	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/network"
 	"open_im_sdk/pkg/server_api_params"
@@ -210,4 +211,25 @@ func RegisterPressUser(id int) {
 	coreMgrLock.Lock()
 	defer coreMgrLock.Unlock()
 	allLoginMgr[id] = &CoreNode{token: token, userID: userID}
+}
+
+func GetGroupMemberNum(groupID string) uint32 {
+	var req server_api_params.GetGroupInfoReq
+	req.OperationID = utils.OperationIDGenerator()
+	req.GroupIDList = []string{groupID}
+
+	var groupInfoList []*server_api_params.GroupInfo
+
+	r, err := network.Post2Api(GETGROUPSINFOROUTER, req, AdminToken)
+	if err != nil {
+		log.Error("", "post failed ", GETGROUPSINFOROUTER, req)
+		return 0
+	}
+	err = common.CheckErrAndResp(nil, r, &groupInfoList)
+	if err != nil {
+		log.Error("", "CheckErrAndResp failed ", err.Error(), string(r))
+		return 0
+	}
+	log.Info("", "group info", groupInfoList[0])
+	return groupInfoList[0].MemberCount
 }

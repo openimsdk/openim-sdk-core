@@ -310,6 +310,7 @@ func (c *Conversation) SyncConversations(operationID string, timeout time.Durati
 		//	continue
 		//}
 	}
+	log.Info(operationID, "addFaceURLAndName cost time", time.Since(ccTime))
 	//New conversation storage
 	err2 := c.db.BatchInsertConversationList(newConversationList)
 	if err2 != nil {

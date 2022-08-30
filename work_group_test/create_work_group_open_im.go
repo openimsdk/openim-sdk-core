@@ -7,11 +7,11 @@ import (
 )
 
 func main() {
-	var onlineNum *int
-	onlineNum = flag.Int("gmn", 10, "group member number ")
+	var groupMemberNumber *int
+	groupMemberNumber = flag.Int("gmn", 1000, "group member number ")
 	flag.Parse()
-	log.Warn("", "CreateWorkGroup  start, group member number: ", *onlineNum)
-	*onlineNum = *onlineNum + 2
-	groupID := test.CreateWorkGroup(*onlineNum)
-	log.Warn("", "CreateWorkGroup finish, group member number: ", *onlineNum, groupID)
+	log.Warn("", "CreateWorkGroup  start, group member number: ", *groupMemberNumber)
+	*groupMemberNumber = *groupMemberNumber + 2
+	groupID := test.CreateWorkGroup(*groupMemberNumber)
+	log.Warn("", "CreateWorkGroup finish, group member number: ", *groupMemberNumber, groupID)
 }
