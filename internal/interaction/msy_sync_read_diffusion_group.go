@@ -9,6 +9,7 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"runtime"
 	"sync"
 )
 
@@ -40,17 +41,23 @@ func (m *ReadDiffusionGroupMsgSync) updateJoinedSuperGroup() {
 		select {
 		case cmd := <-m.joinedSuperGroupCh:
 			operationID := cmd.Value.(sdk_struct.CmdJoinedSuperGroup).OperationID
-			log.Info(operationID, "updateJoinedSuperGroup cmd: ", cmd)
-			g, err := m.GetReadDiffusionGroupIDList()
-			if err == nil {
-				log.Info(operationID, "GetReadDiffusionGroupIDList, group id list: ", g)
-				m.superGroupMtx.Lock()
-				m.SuperGroupIDList = g
-				m.superGroupMtx.Unlock()
-				m.compareSeq(operationID)
+			if cmd.Cmd == constant.CmdLogout {
+				log.Warn(operationID, "close updateJoinedSuperGroup channel ")
+				runtime.Goexit()
 			} else {
-				log.Error(operationID, "GetReadDiffusionGroupIDList failed ", err.Error())
+				log.Info(operationID, "updateJoinedSuperGroup cmd: ", cmd)
+				g, err := m.GetReadDiffusionGroupIDList()
+				if err == nil {
+					log.Info(operationID, "GetReadDiffusionGroupIDList, group id list: ", g)
+					m.superGroupMtx.Lock()
+					m.SuperGroupIDList = g
+					m.superGroupMtx.Unlock()
+					m.compareSeq(operationID)
+				} else {
+					log.Error(operationID, "GetReadDiffusionGroupIDList failed ", err.Error())
+				}
 			}
+
 		}
 	}
 }
