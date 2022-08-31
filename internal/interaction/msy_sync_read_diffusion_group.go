@@ -40,11 +40,11 @@ func (m *ReadDiffusionGroupMsgSync) updateJoinedSuperGroup() {
 	for {
 		select {
 		case cmd := <-m.joinedSuperGroupCh:
-			operationID := cmd.Value.(sdk_struct.CmdJoinedSuperGroup).OperationID
 			if cmd.Cmd == constant.CmdLogout {
-				log.Warn(operationID, "close updateJoinedSuperGroup channel ")
+				log.Warn("logout", "close updateJoinedSuperGroup channel ")
 				runtime.Goexit()
 			} else {
+				operationID := cmd.Value.(sdk_struct.CmdJoinedSuperGroup).OperationID
 				log.Info(operationID, "updateJoinedSuperGroup cmd: ", cmd)
 				g, err := m.GetReadDiffusionGroupIDList()
 				if err == nil {
