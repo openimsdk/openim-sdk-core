@@ -11,8 +11,8 @@ func main() {
 	var singleSenderMsgNum *int //Number of single user send messages
 	var intervalTime *int       //Sending time interval, in millisecond
 
-	senderNum = flag.Int("sn", 2, "sender num")
-	singleSenderMsgNum = flag.Int("mn", 1000, "single sender msg num")
+	senderNum = flag.Int("sn", 10, "sender num")
+	singleSenderMsgNum = flag.Int("mn", 100, "single sender msg num")
 	intervalTime = flag.Int("t", 10, "interval time mill second")
 	flag.Parse()
 	log.NewPrivateLog(test.LogName, test.LogLevel)
