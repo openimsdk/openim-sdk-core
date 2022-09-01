@@ -149,7 +149,7 @@ func (d *DataBase) GetGroupMemberUIDListByGroupID(groupID string) (result []stri
 	defer d.groupMtx.Unlock()
 	var g model_struct.LocalGroupMember
 	g.GroupID = groupID
-	err = d.conn.Model(&g).Pluck("user_id", &result).Error
+	err = d.conn.Model(&g).Debug().Where("group_id = ?", groupID).Pluck("user_id", &result).Error
 	return result, utils.Wrap(err, "GetGroupMemberListByGroupID failed ")
 }
 
