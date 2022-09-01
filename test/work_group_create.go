@@ -26,8 +26,13 @@ func CreateWorkGroup(number int) string {
 	}
 	req.MemberList = memberList
 	req.OwnerUserID = "openIM123456"
-	resp, err := network.Post2Api(CREATEGROUP, req, AdminToken)
-	log.Warn(req.OperationID, "CREATE GROUP ", string(resp), "err: ", err)
+	for {
+		resp, err := network.Post2Api(CREATEGROUP, req, AdminToken)
+		if err != nil {
+			log.Warn(req.OperationID, "CREATE GROUP failed", string(resp), "err: ", err)
+			continue
+		}
+	}
 
 	var result server_api_params.CreateGroupResp
 	json.Unmarshal(resp, result)
