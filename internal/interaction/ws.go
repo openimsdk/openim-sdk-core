@@ -158,8 +158,13 @@ func (w *Ws) WaitTest(ch chan GeneralWsResp, timeout int, operationID string, co
 	}
 }
 func (w *Ws) reConnSleep(operationID string, sleep int32) (error, bool) {
-	_, err, isNeedReConn := w.WsConn.ReConn(operationID)
+	_, err, isNeedReConn, isKicked := w.WsConn.ReConn(operationID)
 	if err != nil {
+		if isKicked {
+			log.Warn(operationID, "kicked, when re conn ")
+			w.kickOnline(GeneralWsResp{})
+			w.Logout(operationID)
+		}
 		log.Error(operationID, "ReConn failed ", err.Error(), "is need re connect ", isNeedReConn)
 		time.Sleep(time.Duration(sleep) * time.Second)
 	}
@@ -182,7 +187,7 @@ func (w *Ws) ReadData() {
 				}
 				log.Warn(operationID, "other cmd ...", r.Cmd)
 			case <-time.After(time.Millisecond * time.Duration(100)):
-				log.Warn(operationID, "timeout(ms)... ", 100)
+				log.Info(operationID, "timeout(ms)... ", 100)
 			}
 		}
 		isErrorOccurred = false
@@ -212,7 +217,7 @@ func (w *Ws) ReadData() {
 				log.Error(operationID, "IsFatalError ", err.Error(), "ReConn")
 				err, isNeedReConnect := w.reConnSleep(operationID, 5)
 				if err != nil && isNeedReConnect == false {
-					log.Warn(operationID, "token failed, don't connect again")
+					log.Warn(operationID, "token failed, don't connect again ")
 					return
 				}
 			} else {
