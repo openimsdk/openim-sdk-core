@@ -17,9 +17,7 @@ func CreateWorkGroup(number int) string {
 	log.Info("", "RegisterAccounts  cost time: ", time.Since(t1), "Online client number ", number)
 
 	var req server_api_params.CreateGroupReq
-	req.OperationID = utils.OperationIDGenerator()
-	req.GroupType = constant.WorkingGroup
-	req.OperationID = utils.OperationIDGenerator()
+
 	var memberList []*server_api_params.GroupAddMemberInfo
 	for _, v := range allUserID {
 		memberList = append(memberList, &server_api_params.GroupAddMemberInfo{UserID: v, RoleLevel: 1})
@@ -27,6 +25,9 @@ func CreateWorkGroup(number int) string {
 	req.MemberList = memberList
 	req.OwnerUserID = "openIM123456"
 	for {
+		req.OperationID = utils.OperationIDGenerator()
+		req.GroupType = constant.WorkingGroup
+		req.OperationID = utils.OperationIDGenerator()
 		resp, err := network.Post2Api(CREATEGROUP, req, AdminToken)
 		if err != nil {
 			log.Warn(req.OperationID, "CREATE GROUP failed", string(resp), "err: ", err)
