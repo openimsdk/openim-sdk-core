@@ -22,10 +22,15 @@ func init() {
 }
 
 type DataBase struct {
-	loginUserID string
-	dbDir       string
-	conn        *gorm.DB
-	mRWMutex    sync.RWMutex
+	loginUserID   string
+	dbDir         string
+	conn          *gorm.DB
+	mRWMutex      sync.RWMutex
+	groupMtx      sync.RWMutex
+	friendMtx     sync.RWMutex
+	departmentMtx sync.RWMutex
+	userMtx       sync.RWMutex
+	superGroupMtx sync.RWMutex
 }
 
 func (d *DataBase) CloseDB() error {

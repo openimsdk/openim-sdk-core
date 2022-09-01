@@ -9,19 +9,19 @@ import (
 )
 
 func (d *DataBase) InsertGroup(groupInfo *model_struct.LocalGroup) error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.groupMtx.Lock()
+	defer d.groupMtx.Unlock()
 	return utils.Wrap(d.conn.Create(groupInfo).Error, "InsertGroup failed")
 }
 func (d *DataBase) DeleteGroup(groupID string) error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.groupMtx.Lock()
+	defer d.groupMtx.Unlock()
 	localGroup := model_struct.LocalGroup{GroupID: groupID}
 	return utils.Wrap(d.conn.Delete(&localGroup).Error, "DeleteGroup failed")
 }
 func (d *DataBase) UpdateGroup(groupInfo *model_struct.LocalGroup) error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.groupMtx.Lock()
+	defer d.groupMtx.Unlock()
 
 	t := d.conn.Model(groupInfo).Select("*").Updates(*groupInfo)
 	if t.RowsAffected == 0 {
@@ -31,8 +31,8 @@ func (d *DataBase) UpdateGroup(groupInfo *model_struct.LocalGroup) error {
 
 }
 func (d *DataBase) GetJoinedGroupList() ([]*model_struct.LocalGroup, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.groupMtx.Lock()
+	defer d.groupMtx.Unlock()
 	var groupList []model_struct.LocalGroup
 	err := d.conn.Find(&groupList).Error
 	var transfer []*model_struct.LocalGroup
@@ -43,14 +43,14 @@ func (d *DataBase) GetJoinedGroupList() ([]*model_struct.LocalGroup, error) {
 	return transfer, utils.Wrap(err, "GetJoinedGroupList failed ")
 }
 func (d *DataBase) GetGroupInfoByGroupID(groupID string) (*model_struct.LocalGroup, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.groupMtx.Lock()
+	defer d.groupMtx.Unlock()
 	var g model_struct.LocalGroup
 	return &g, utils.Wrap(d.conn.Where("group_id = ?", groupID).Take(&g).Error, "GetGroupList failed")
 }
 func (d *DataBase) GetAllGroupInfoByGroupIDOrGroupName(keyword string, isSearchGroupID bool, isSearchGroupName bool) ([]*model_struct.LocalGroup, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.groupMtx.Lock()
+	defer d.groupMtx.Unlock()
 
 	var groupList []model_struct.LocalGroup
 	var condition string
@@ -73,15 +73,15 @@ func (d *DataBase) GetAllGroupInfoByGroupIDOrGroupName(keyword string, isSearchG
 }
 
 func (d *DataBase) AddMemberCount(groupID string) error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.groupMtx.Lock()
+	defer d.groupMtx.Unlock()
 	group := model_struct.LocalGroup{GroupID: groupID}
 	return utils.Wrap(d.conn.Model(&group).Updates(map[string]interface{}{"member_count": gorm.Expr("member_count+1")}).Error, "")
 }
 
 func (d *DataBase) SubtractMemberCount(groupID string) error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
+	d.groupMtx.Lock()
+	defer d.groupMtx.Unlock()
 	group := model_struct.LocalGroup{GroupID: groupID}
 	return utils.Wrap(d.conn.Model(&group).Updates(map[string]interface{}{"member_count": gorm.Expr("member_count-1")}).Error, "")
 }

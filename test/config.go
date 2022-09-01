@@ -13,9 +13,13 @@ var ReliabilityUserA = 1234567
 var ReliabilityUserB = 1234567
 var (
 	//TESTIP = "43.155.69.205"
-	TESTIP              = "121.37.25.71"
-	APIADDR             = "http://" + TESTIP + ":10002"
-	WSADDR              = "ws://" + TESTIP + ":10001"
+	//TESTIP              = "121.37.25.71"
+	//APIADDR = "http://43.155.69.205" + ":10002"
+	//WSADDR              = "wss://" + TESTIP + ":10001"
+	TESTIP  = "open-im-test.rentsoft.cn"
+	APIADDR = "https://" + TESTIP + ":50002"
+
+	WSADDR              = "wss://" + TESTIP + ":50001"
 	REGISTERADDR        = APIADDR + "/auth/user_register"
 	TOKENADDR           = APIADDR + "/auth/user_token"
 	SECRET              = "tuoyun"

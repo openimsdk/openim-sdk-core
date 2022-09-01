@@ -31,6 +31,8 @@ func (d *DataBase) BatchInsertMessageListController(MessageList []*model_struct.
 	}
 }
 func (d *DataBase) InsertMessage(Message *model_struct.LocalChatLog) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Create(Message).Error, "InsertMessage failed")
 }
 func (d *DataBase) InsertMessageController(message *model_struct.LocalChatLog) error {
