@@ -100,6 +100,7 @@ func (c *Conversation) setOneConversationUnread(callback open_im_sdk_callback.Ba
 	if localConversation.UnreadCount == 0 {
 		return
 	}
+	apiReq.UpdateUnreadCountTime = localConversation.LatestMsgSendTime
 	apiReq.UnreadCount = int32(unreadCount)
 	apiReq.FieldType = constant.FieldUnread
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)

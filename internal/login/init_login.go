@@ -294,6 +294,10 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 	if err != nil {
 		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
 	}
+	err = common.TriggerCmdLogout(u.joinedSuperGroupCh)
+	if err != nil {
+		log.Error(operationID, "TriggerCmdLogout  joinedSuperGroupCh failed ", err.Error())
+	}
 	log.Info(operationID, "TriggerCmd conversationCh UnInit...")
 	common.UnInitAll(u.conversationCh)
 	if err != nil {
