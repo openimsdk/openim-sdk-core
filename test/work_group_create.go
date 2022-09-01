@@ -31,12 +31,12 @@ func CreateWorkGroup(number int) string {
 		if err != nil {
 			log.Warn(req.OperationID, "CREATE GROUP failed", string(resp), "err: ", err)
 			continue
+		} else {
+			var result server_api_params.CreateGroupResp
+			json.Unmarshal(resp, result)
+			return result.GroupInfo.GroupID
 		}
 	}
-
-	var result server_api_params.CreateGroupResp
-	json.Unmarshal(resp, result)
-	return result.GroupInfo.GroupID
 }
 
 func RegisterWorkGroupAccounts(number int) {
