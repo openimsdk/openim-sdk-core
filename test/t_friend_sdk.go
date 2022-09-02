@@ -443,7 +443,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	}
 
 	var testConversation conversationCallBack
-	open_im_sdk.SetConversationListener(testConversation)
+	open_im_sdk.SetConversationListener(&testConversation)
 
 	var testUser userCallback
 	open_im_sdk.SetUserListener(testUser)
@@ -516,7 +516,7 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	log.Info(operationID, "InitSDK ", sdk_struct.SvrConf)
 
 	var testConversation conversationCallBack
-	lg.SetConversationListener(testConversation)
+	lg.SetConversationListener(&testConversation)
 
 	var testUser userCallback
 	lg.SetUserListener(testUser)
@@ -538,8 +538,8 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	lg.Login(&callback, uid, tk, operationID)
 
 	for {
-		if callback.errCode == 1 {
-			log.Warn(operationID, "login ok ", uid)
+		if callback.errCode == 1 && testConversation.SyncFlag == 1 {
+			log.Warn(operationID, "login ok, and sync finished ", uid)
 			return
 		}
 		//		log.Warn(operationID, "waiting login...", uid)
@@ -568,7 +568,7 @@ func DoTest(uid, tk, ws, api string) {
 	}
 
 	var testConversation conversationCallBack
-	open_im_sdk.SetConversationListener(testConversation)
+	open_im_sdk.SetConversationListener(&testConversation)
 
 	var testUser userCallback
 	open_im_sdk.SetUserListener(testUser)
