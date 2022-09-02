@@ -509,33 +509,36 @@ func (m MsgListenerCallBak) OnRecvMessageRevoked(msgId string) {
 }
 
 type conversationCallBack struct {
+	SyncFlag int
 }
 
-func (c conversationCallBack) OnSyncServerProgress(progress int) {
+func (c *conversationCallBack) OnSyncServerProgress(progress int) {
 	log.Info("", utils.GetSelfFuncName())
 }
 
-func (c conversationCallBack) OnSyncServerStart() {
+func (c *conversationCallBack) OnSyncServerStart() {
 
 }
 
-func (c conversationCallBack) OnSyncServerFinish() {
+func (c *conversationCallBack) OnSyncServerFinish() {
+	c.SyncFlag = 1
+	log.Info("", utils.GetSelfFuncName())
+
+}
+
+func (c *conversationCallBack) OnSyncServerFailed() {
 	log.Info("", utils.GetSelfFuncName())
 }
 
-func (c conversationCallBack) OnSyncServerFailed() {
-	log.Info("", utils.GetSelfFuncName())
-}
-
-func (c conversationCallBack) OnNewConversation(conversationList string) {
+func (c *conversationCallBack) OnNewConversation(conversationList string) {
 	log.Info("", "OnNewConversation returnList is ", conversationList)
 }
 
-func (c conversationCallBack) OnConversationChanged(conversationList string) {
+func (c *conversationCallBack) OnConversationChanged(conversationList string) {
 	log.Info("", "OnConversationChanged returnList is", conversationList)
 }
 
-func (c conversationCallBack) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
+func (c *conversationCallBack) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
 	log.Info("", "OnTotalUnreadMessageCountChanged returnTotalUnreadCount is ", totalUnreadCount)
 }
 

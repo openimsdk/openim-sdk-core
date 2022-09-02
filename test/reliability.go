@@ -164,7 +164,6 @@ func WorkGroupMsgDelayTest(msgNumOneClient int, intervalSleepMS int, randSleepMa
 
 	log.Warn("", "RegisterReliabilityUser finished, client: ", clientBegin, clientEnd)
 	log.Warn("", " init, login, send msg, start ")
-	time.Sleep(time.Duration(10) * time.Second)
 	rand.Seed(time.Now().UnixNano())
 
 	wg.Add(clientEnd - clientBegin + 1)
