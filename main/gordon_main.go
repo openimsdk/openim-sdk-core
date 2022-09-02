@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	APIADDR = "http://43.155.69.205"
-	WSADDR  = "ws://43.155.69.205"
+	APIADDR = "http://43.155.69.205:10002"
+	WSADDR  = "ws://43.155.69.205:10001"
 	//APIADDR      = "https://chat-api-dev.opencord.so"
 	//WSADDR       = "wss://chat-ws-dev.opencord.so"
 	REGISTERADDR = APIADDR + "/user_register"
