@@ -285,11 +285,11 @@ func (d *DataBase) SuperGroupGetMessageListNoTime(sourceID string, sessionType, 
 	return result, err
 }
 
-func (d *DataBase) SuperGroupGetSendingMessageList() (result []*model_struct.LocalChatLog, err error) {
+func (d *DataBase) SuperGroupGetSendingMessageList(groupID string) (result []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []model_struct.LocalChatLog
-	err = utils.Wrap(d.conn.Where("status = ?", constant.MsgStatusSending).Find(&messageList).Error, "GetMessageList failed")
+	err = utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Where("status = ?", constant.MsgStatusSending).Find(&messageList).Error, "GetMessageList failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)

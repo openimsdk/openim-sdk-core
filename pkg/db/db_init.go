@@ -70,7 +70,9 @@ func NewDataBase(loginUserID string, dbDir string, operationID string) (*DataBas
 	} else {
 		log.Info(operationID, "db in map", loginUserID)
 	}
-	dataBase.setChatLogFailedStatus()
+	go func() {
+		dataBase.setChatLogFailedStatus()
+	}()
 	return dataBase, nil
 }
 
@@ -88,6 +90,30 @@ func (d *DataBase) setChatLogFailedStatus() {
 			continue
 		}
 	}
+	groupIDList, err := d.GetReadDiffusionGroupIDList()
+	if err != nil {
+		log.Error("", "GetReadDiffusionGroupIDList failed ", err.Error())
+		return
+	}
+	for _, v := range groupIDList {
+		msgList, err := d.SuperGroupGetSendingMessageList(v)
+		if err != nil {
+			log.Error("", "GetSendingMessageList failed ", err.Error())
+			return
+		}
+		if len(msgList) > 0 {
+			for _, v := range msgList {
+				v.Status = constant.MsgStatusSendFailed
+				err := d.SuperGroupUpdateMessage(v)
+				if err != nil {
+					log.Error("", "UpdateMessage failed ", err.Error(), v)
+					continue
+				}
+			}
+		}
+
+	}
+
 }
 
 func (d *DataBase) initDB() error {
