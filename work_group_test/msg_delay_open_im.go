@@ -14,7 +14,7 @@ func main() {
 	//senderNum = flag.Int("sn", 10, "sender num")
 	singleSenderMsgNum = flag.Int("mn", 100, "single sender msg num")
 	intervalTime = flag.Int("t", 100, "interval time mill second")
-	groupID = flag.String("gid", "1607724699", "groupID")
+	groupID = flag.String("gid", "3282359177", "groupID")
 	//	pressClientNum = flag.Int("pcn", 8, "press client number ")
 	flag.Parse()
 	//test.InitMgr(*senderNum)

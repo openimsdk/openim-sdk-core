@@ -87,7 +87,7 @@ func (m *ReadDiffusionGroupMsgSync) compareSeq(operationID string) {
 		if err != nil {
 			log.Error(operationID, "GetSuperGroupAbnormalMsgSeq failed ", err.Error(), v)
 		}
-		log.Debug(operationID, "GetSuperGroupNormalMsgSeq GetSuperGroupAbnormalMsgSeq ", n, a)
+		log.Debug(operationID, "GetSuperGroupNormalMsgSeq GetSuperGroupAbnormalMsgSeq ", n, a, "groupID: ", v)
 		var seqMaxSynchronized uint32
 		if n > a {
 			seqMaxSynchronized = n
@@ -107,20 +107,10 @@ func (m *ReadDiffusionGroupMsgSync) compareSeq(operationID string) {
 //处理最大seq消息
 func (m *ReadDiffusionGroupMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 	operationID := cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).OperationID
-	//同步最新消息，内部保证只调用一次
-	m.syncLatestMsg(operationID)
-
 	var groupIDList []string
-	for groupID, _ := range cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).GroupID2MinMaxSeqOnSvr {
-		groupIDList = append(groupIDList, groupID)
-	}
-	m.superGroupMtx.Lock()
-	m.SuperGroupIDList = m.SuperGroupIDList[0:0]
-	m.SuperGroupIDList = groupIDList
-	m.superGroupMtx.Unlock()
-
-	//更新需要同步的最大seq
+	//更新需要同步的最大seq 以及SuperGroupIDList
 	for groupID, MinMaxSeqOnSvr := range cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).GroupID2MinMaxSeqOnSvr {
+		groupIDList = append(groupIDList, groupID)
 		if MinMaxSeqOnSvr.MinSeq > MinMaxSeqOnSvr.MaxSeq {
 			log.Warn(operationID, "MinMaxSeqOnSvr.MinSeq > MinMaxSeqOnSvr.MaxSeq", MinMaxSeqOnSvr.MinSeq, MinMaxSeqOnSvr.MaxSeq)
 			return
@@ -132,6 +122,14 @@ func (m *ReadDiffusionGroupMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 			m.Group2SeqMaxSynchronized[groupID] = MinMaxSeqOnSvr.MinSeq - 1
 		}
 	}
+	m.superGroupMtx.Lock()
+	m.SuperGroupIDList = m.SuperGroupIDList[0:0]
+	m.SuperGroupIDList = groupIDList
+	m.superGroupMtx.Unlock()
+
+	//同步最新消息，内部保证只调用一次
+	m.syncLatestMsg(operationID)
+
 	//同步所有群的新消息
 	m.syncMsgFroAllGroup(operationID)
 }
