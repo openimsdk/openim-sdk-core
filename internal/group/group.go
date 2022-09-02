@@ -1015,7 +1015,7 @@ func (g *Group) calculateGroupMemberHash(groupID string, operationID string) (ui
 	if err != nil {
 		return 0, utils.Wrap(err, "GetGroupMemberUIDListByGroupID")
 	}
-	log.NewInfo(operationID, "calculateGroupMemberHash userIDList len: ", len(userIDList))
+	log.NewInfo(operationID, "calculateGroupMemberHash userIDList len: ", len(userIDList), " groupID: ", groupID)
 	if len(userIDList) == 0 {
 		return 0, nil
 	}

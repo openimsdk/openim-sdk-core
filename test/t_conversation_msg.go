@@ -440,7 +440,7 @@ type BatchMsg struct {
 }
 
 func (m *BatchMsg) OnRecvNewMessages(groupMsgReceiptList string) {
-	fmt.Println("OnRecvNewMessages , ", groupMsgReceiptList)
+	log.Info("OnRecvNewMessages , ", groupMsgReceiptList)
 }
 
 func (m *MsgListenerCallBak) OnRecvNewMessage(msg string) {
