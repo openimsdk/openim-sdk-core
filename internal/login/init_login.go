@@ -218,7 +218,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	}
 	log.NewInfo(operationID, u.imConfig.ObjectStorage, "new obj login cost time: ", time.Since(t1))
 	log.NewInfo(operationID, u.imConfig.ObjectStorage, "SyncLoginUserInfo login cost time: ", time.Since(t1))
-	u.push = comm2.NewPush(p, u.imConfig.Platform)
+	u.push = comm2.NewPush(p, u.imConfig.Platform, u.loginUserID)
 	go u.forcedSynchronization()
 
 	log.Info(operationID, "forcedSynchronization success...", "login cost time: ", time.Since(t1))

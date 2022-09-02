@@ -100,12 +100,9 @@ func (c *Conversation) setOneConversationUnread(callback open_im_sdk_callback.Ba
 	if localConversation.UnreadCount == 0 {
 		return
 	}
-	totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
-	common.CheckDBErrCallback(callback, err, operationID)
 	apiReq.UpdateUnreadCountTime = localConversation.LatestMsgSendTime
 	apiReq.UnreadCount = int32(unreadCount)
 	apiReq.FieldType = constant.FieldUnread
-	apiReq.BadgeUnreadCountSum = totalUnreadCount
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
 }
 
