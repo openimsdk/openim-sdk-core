@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	APIADDR = "http://43.128.5.63"
-	WSADDR  = "ws://43.128.5.63"
+	APIADDR = "http://43.155.69.205"
+	WSADDR  = "ws://43.155.69.205"
 	//APIADDR      = "https://chat-api-dev.opencord.so"
 	//WSADDR       = "wss://chat-ws-dev.opencord.so"
 	REGISTERADDR = APIADDR + "/user_register"
@@ -34,7 +34,7 @@ type ResToken struct {
 	ErrMsg  string `json:"errMsg"`
 }
 
-func getToken(uid string) string {
+func ggetToken(uid string) string {
 	url := TOKENADDR
 	var req server_api_params.UserTokenReq
 	req.Platform = PlatformID
@@ -56,10 +56,10 @@ func getToken(uid string) string {
 	return stcResp.Data.Token
 }
 
-func RunGetToken(strMyUid string) string {
+func gRunGetToken(strMyUid string) string {
 	var token string
 	for true {
-		token = getToken(strMyUid)
+		token = ggetToken(strMyUid)
 		if token == "" {
 			time.Sleep(time.Duration(100) * time.Millisecond)
 			continue
@@ -73,9 +73,10 @@ func main() {
 	uid_43 := "3984071717"
 	//uid_cord:="1554321956297519104"
 	//uid_121:="1212"
-	tokenx := RunGetToken(uid_43)
+	tokenx := gRunGetToken(uid_43)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(uid_43, tokenx, WSADDR, APIADDR)
+	test.DoTestSetAppBadge()
 	println("start")
 	//test.DoTestGetUserInDepartment()
 	//test.DoTestGetDepartmentMemberAndSubDepartment()
