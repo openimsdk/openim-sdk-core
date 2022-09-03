@@ -223,7 +223,7 @@ func PressTest(msgNumOneClient int, intervalSleepMS int, clientNum int) {
 		go func(idx int) {
 			strMyUid := allLoginMgr[idx].userID
 			token := allLoginMgr[idx].token
-			ReliabilityInitAndLogin(idx, strMyUid, token, WSADDR, APIADDR)
+			PressInitAndLogin(idx, strMyUid, token, WSADDR, APIADDR)
 			wg.Done()
 		}(i)
 	}
