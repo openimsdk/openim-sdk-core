@@ -79,6 +79,7 @@ const (
 
 	//third
 	FcmUpdateTokenRouter = RouterThird + "/fcm_update_token"
+	SetAppBadgeRouter    = RouterThird + "/set_app_badge"
 )
 const (
 	RouterGroup        = "/group"
