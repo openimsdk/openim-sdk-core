@@ -6,6 +6,7 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"open_im_sdk/test"
+	"syscall/js"
 )
 
 type BaseSuccessFailed struct {
@@ -63,6 +64,14 @@ var (
 	WSADDR  = "ws://" + TESTIP + ":10001"
 )
 
+func readUserAgent() string {
+	return js.Global().Get("navigator").Get("userAgent").String()
+}
+
+func alert(str string) {
+	js.Global().Get("alert")
+	//js.Get("alert").Invoke(str)
+}
 func main() {
 	config := sdk_struct.IMConfig{
 		Platform: 1,
@@ -78,5 +87,7 @@ func main() {
 	strMyUidx := "3984071717"
 	tokenx := test.RunGetToken(strMyUidx)
 	open_im_sdk.Login(&base, operationID, strMyUidx, tokenx)
+	userAgent := readUserAgent()
+	alert(userAgent)
 	<-make(chan bool)
 }

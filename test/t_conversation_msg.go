@@ -93,6 +93,11 @@ func DoTestUpdateFcmToken() {
 	testUpdateFcmTokenCallBack.OperationID = utils.OperationIDGenerator()
 	open_im_sdk.UpdateFcmToken(testUpdateFcmTokenCallBack, "2132323", testUpdateFcmTokenCallBack.OperationID)
 }
+func DoTestSetAppBadge() {
+	var testSetAppBadgeCallBack SetAppBadgeCallBack
+	testSetAppBadgeCallBack.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.SetAppBadge(testSetAppBadgeCallBack, 100, testSetAppBadgeCallBack.OperationID)
+}
 
 func DoTestGetAdvancedHistoryMessageList(testGetHistoryCallBack GetHistoryCallBack, seq uint32) {
 	var params sdk_params_callback.GetAdvancedHistoryMessageListParams
@@ -378,6 +383,18 @@ func (g GetHistoryCallBack) OnSuccess(data string) {
 	log.Info(g.OperationID, "get History success ", data)
 }
 
+type SetAppBadgeCallBack struct {
+	OperationID string
+}
+
+func (g SetAppBadgeCallBack) OnError(errCode int32, errMsg string) {
+	log.Info(g.OperationID, "SetAppBadgeCallBack err", errCode, errMsg)
+}
+
+func (g SetAppBadgeCallBack) OnSuccess(data string) {
+	log.Info(g.OperationID, "SetAppBadgeCallBack success ", data)
+}
+
 type UpdateFcmTokenCallBack struct {
 	OperationID string
 }
@@ -430,10 +447,10 @@ type MsgListenerCallBak struct {
 }
 
 func (m *MsgListenerCallBak) OnRecvGroupReadReceipt(groupMsgReceiptList string) {
-	fmt.Println("OnRecvC2CReadReceipt , ", groupMsgReceiptList)
+	//fmt.Println("OnRecvC2CReadReceipt , ", groupMsgReceiptList)
 }
 func (m *MsgListenerCallBak) OnNewRecvMessageRevoked(messageRevoked string) {
-	fmt.Println("OnNewRecvMessageRevoked , ", messageRevoked)
+	//fmt.Println("OnNewRecvMessageRevoked , ", messageRevoked)
 }
 
 type BatchMsg struct {
