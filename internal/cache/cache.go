@@ -4,6 +4,7 @@ import (
 	"errors"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/user"
+	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 	"sync"
 )
@@ -13,9 +14,10 @@ type UserInfo struct {
 	faceURL  string
 }
 type Cache struct {
-	user    *user.User
-	friend  *friend.Friend
-	userMap sync.Map
+	user            *user.User
+	friend          *friend.Friend
+	userMap         sync.Map
+	conversationMap sync.Map
 }
 
 func NewCache(user *user.User, friend *friend.Friend) *Cache {
@@ -25,7 +27,22 @@ func NewCache(user *user.User, friend *friend.Friend) *Cache {
 func (c *Cache) Update(userID, faceURL, nickname string) {
 	c.userMap.Store(userID, UserInfo{faceURL: faceURL, Nickname: nickname})
 }
-
+func (c *Cache) UpdateConversation(conversation model_struct.LocalConversation) {
+	c.userMap.Store(conversation.ConversationID, conversation)
+}
+func (c *Cache) UpdateConversations(conversations []*model_struct.LocalConversation) {
+	for _, conversation := range conversations {
+		c.userMap.Store(conversation.ConversationID, *conversation)
+	}
+}
+func (c *Cache) GetConversation(conversationID string) model_struct.LocalConversation {
+	var result model_struct.LocalConversation
+	conversation, ok := c.userMap.Load(conversationID)
+	if ok {
+		result = conversation.(model_struct.LocalConversation)
+	}
+	return result
+}
 func (c *Cache) GetUserNameAndFaceURL(userID string, operationID string) (faceURL, name string, err error) {
 	//find in cache
 	user, ok := c.userMap.Load(userID)
@@ -61,5 +78,5 @@ func (c *Cache) GetUserNameAndFaceURL(userID string, operationID string) (faceUR
 		c.userMap.Store(userID, UserInfo{faceURL: faceURL, Nickname: name})
 		return v.FaceURL, v.Nickname, nil
 	}
-	return "", "", errors.New("no user ")
+	return "", "", errors.New("no user " + userID)
 }

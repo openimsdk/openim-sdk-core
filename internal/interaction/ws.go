@@ -93,8 +93,8 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 		connSend, err = w.writeBinaryMsg(wsReq)
 		if err != nil {
 			if !w.IsWriteTimeout(err) {
-				log.Error(operationID, "Not send timeout, failed, close conn, writeBinaryMsg again ", err.Error())
-				w.CloseConn()
+				log.Error(operationID, "Not send timeout, failed, close conn, writeBinaryMsg again ", err.Error(), w.conn, reqIdentifier)
+				w.CloseConn(operationID)
 				time.Sleep(time.Duration(1) * time.Second)
 				continue
 			} else {
@@ -107,7 +107,7 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 	if flag == 1 {
 		log.Debug(operationID, "send ok wait resp")
 		r1, r2 := w.WaitResp(ch, timeout, wsReq.OperationID, connSend)
-		return r1, r2
+		return r1, utils.Wrap(r2, "")
 	} else {
 		log.Error(operationID, "send failed")
 		err := errors.New("send failed")
@@ -130,7 +130,7 @@ func (w *Ws) SendReqTest(m proto.Message, reqIdentifier int32, timeout int, send
 	}
 	connSend, err = w.writeBinaryMsg(wsReq)
 	if err != nil {
-		log.Debug(operationID, "writeBinaryMsg timeout", m.String(), senderID, err.Error())
+		log.Error(operationID, "writeBinaryMsg timeout", m.String(), senderID, err.Error())
 		return false
 	} else {
 		log.Debug(operationID, "writeBinaryMsg success", m.String(), senderID)
@@ -144,23 +144,27 @@ func (w *Ws) WaitTest(ch chan GeneralWsResp, timeout int, operationID string, co
 	select {
 	case r := <-ch:
 		if r.ErrCode != 0 {
-			log.Debug(operationID, "ws ch recvMsg success, code ", r.ErrCode, r.ErrMsg, m.String(), senderID)
+			log.Error(operationID, "ws ch recvMsg success, code ", r.ErrCode, r.ErrMsg, m.String(), senderID)
 			return false
 		} else {
 			log.Debug(operationID, "ws ch recvMsg send success, code ", m.String(), senderID)
-
 			return true
 		}
 
 	case <-time.After(time.Second * time.Duration(timeout)):
-		log.Debug(operationID, "ws ch recvMsg err, timeout ", m.String(), senderID)
+		log.Error(operationID, "ws ch recvMsg err, timeout ", m.String(), senderID)
 
 		return false
 	}
 }
 func (w *Ws) reConnSleep(operationID string, sleep int32) (error, bool) {
-	_, err, isNeedReConn := w.WsConn.ReConn()
+	_, err, isNeedReConn, isKicked := w.WsConn.ReConn(operationID)
 	if err != nil {
+		if isKicked {
+			log.Warn(operationID, "kicked, when re conn ")
+			w.kickOnline(GeneralWsResp{})
+			w.Logout(operationID)
+		}
 		log.Error(operationID, "ReConn failed ", err.Error(), "is need re connect ", isNeedReConn)
 		time.Sleep(time.Duration(sleep) * time.Second)
 	}
@@ -178,17 +182,18 @@ func (w *Ws) ReadData() {
 					log.Info(operationID, "recv CmdLogout, return, close conn")
 					log.Warn(operationID, "close ws read channel ", w.cmdCh)
 					//		close(w.cmdCh)
-					w.SetLoginState(constant.Logout)
+					w.SetLoginStatus(constant.Logout)
 					return
 				}
 				log.Warn(operationID, "other cmd ...", r.Cmd)
-			case <-time.After(time.Microsecond * time.Duration(100)):
-				log.Warn(operationID, "timeout(ms)... ", 100)
+			case <-time.After(time.Millisecond * time.Duration(100)):
+				log.Info(operationID, "timeout(ms)... ", 100)
 			}
 		}
 		isErrorOccurred = false
 		if w.WsConn.conn == nil {
-			log.Warn(operationID, "conn == nil, ReConn")
+			isErrorOccurred = true
+			log.Warn(operationID, "conn == nil, ReConn ")
 			err, isNeedReConnect := w.reConnSleep(operationID, 1)
 			if err != nil && isNeedReConnect == false {
 				log.Warn(operationID, "token failed, don't connect again")
@@ -202,7 +207,7 @@ func (w *Ws) ReadData() {
 		msgType, message, err := w.WsConn.conn.ReadMessage()
 		if err != nil {
 			isErrorOccurred = true
-			if w.loginState == constant.Logout {
+			if w.loginStatus == constant.Logout {
 				log.Warn(operationID, "loginState == logout ")
 				log.Warn(operationID, "close ws read channel ", w.cmdCh)
 				//	close(w.cmdCh)
@@ -212,7 +217,7 @@ func (w *Ws) ReadData() {
 				log.Error(operationID, "IsFatalError ", err.Error(), "ReConn")
 				err, isNeedReConnect := w.reConnSleep(operationID, 5)
 				if err != nil && isNeedReConnect == false {
-					log.Warn(operationID, "token failed, don't connect again")
+					log.Warn(operationID, "token failed, don't connect again ")
 					return
 				}
 			} else {
@@ -255,6 +260,9 @@ func (w *Ws) doWsMsg(message []byte) {
 			log.Error(wsResp.OperationID, "doWSPullMsg failed ", err.Error())
 		}
 	case constant.WSPushMsg:
+		if constant.OnlyForTest == 1 {
+			return
+		}
 		if err = w.doWSPushMsg(*wsResp); err != nil {
 			log.Error(wsResp.OperationID, "doWSPushMsg failed ", err.Error())
 		}
@@ -283,9 +291,9 @@ func (w *Ws) doWsMsg(message []byte) {
 }
 
 func (w *Ws) Logout(operationID string) {
-	w.SetLoginState(constant.Logout)
-	w.CloseConn()
-	log.Warn(operationID, "TriggerCmdLogout ws...")
+	w.SetLoginStatus(constant.Logout)
+	w.CloseConn(operationID)
+	log.Warn(operationID, "TriggerCmdLogout ws...", w.conn)
 	err := common.TriggerCmdLogout(w.cmdCh)
 	if err != nil {
 		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())

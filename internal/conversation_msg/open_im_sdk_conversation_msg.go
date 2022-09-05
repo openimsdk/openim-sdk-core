@@ -563,6 +563,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 		return
 	}
 	go func() {
+		log.Debug(operationID, "SendMessage start ")
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 		s.SendID = c.loginUserID
@@ -613,6 +614,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			s.AttachedInfoElem.GroupHasReadInfo.GroupMemberCount = g.MemberCount
 			s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 		} else {
+			log.Debug(operationID, "send msg single chat come here")
 			s.SessionType = constant.SingleChatType
 			s.RecvID = recvID
 			conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
@@ -626,15 +628,19 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 				s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 			}
 			if err != nil {
+				t := time.Now()
 				faceUrl, name, err := c.cache.GetUserNameAndFaceURL(recvID, operationID)
+				log.Debug(operationID, "GetUserNameAndFaceURL cost time:", time.Since(t))
 				common.CheckAnyErrCallback(callback, 301, err, operationID)
 				lc.FaceURL = faceUrl
 				lc.ShowName = name
 			}
 
 		}
-		log.Warn(operationID, "before insert  message is ", s)
+		t := time.Now()
+		log.Debug(operationID, "before insert  message is ", s)
 		oldMessage, err := c.db.GetMessageController(&s)
+		log.Debug(operationID, "GetMessageController cost time:", time.Since(t), err)
 		if err != nil {
 			msgStructToLocalChatLog(&localMessage, &s)
 			err := c.db.InsertMessageController(&localMessage)
@@ -733,7 +739,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			if err != nil {
 				log.Warn(operationID, "get message err")
 			}
-			log.Warn(operationID, "before update database message is ", *oldMessage)
+			log.Debug(operationID, "before update database message is ", *oldMessage)
 			if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Voice, constant.Video, constant.File}) {
 				msgStructToLocalChatLog(&localMessage, &s)
 				log.Warn(operationID, "update message is ", s, localMessage)
@@ -915,7 +921,18 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *model_st
 	//Protocol conversion
 	var wsMsgData server_api_params.MsgData
 	copier.Copy(&wsMsgData, s)
-	wsMsgData.Content = []byte(s.Content)
+	if wsMsgData.ContentType == constant.Text && c.encryptionKey != "" {
+		ciphertext, err := utils.AesEncrypt([]byte(s.Content), []byte(c.encryptionKey))
+		c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
+		attachInfo := sdk_struct.AttachedInfoElem{}
+		_ = utils.JsonStringToStruct(s.AttachedInfo, &attachInfo)
+		attachInfo.IsEncryption = true
+		attachInfo.InEncryptStatus = true
+		wsMsgData.Content = ciphertext
+		wsMsgData.AttachedInfo = utils.StructToJsonString(attachInfo)
+	} else {
+		wsMsgData.Content = []byte(s.Content)
+	}
 	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
 	wsMsgData.AtUserIDList = s.AtElem.AtUserList
@@ -1086,7 +1103,7 @@ func (c *Conversation) FindMessageList(callback open_im_sdk_callback.Base, findM
 		log.NewInfo(operationID, "FindMessageList args: ", findMessageOptions)
 		var unmarshalParams sdk_params_callback.FindMessageListParams
 		common.JsonUnmarshalCallback(findMessageOptions, &unmarshalParams, callback, operationID)
-		result := c.findMessageList(callback, unmarshalParams, operationID, false)
+		result := c.findMessageList(unmarshalParams, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
 		log.NewInfo(operationID, "FindMessageList callback: ", utils.StructToJsonStringDefault(result), "cost time", time.Since(t))
 	}()
@@ -1111,7 +1128,7 @@ func (c *Conversation) GetAdvancedHistoryMessageList(callback open_im_sdk_callba
 	}
 	go func() {
 		t := time.Now()
-		log.NewInfo(operationID, "GetHistoryMessageList args: ", getMessageOptions)
+		log.NewInfo(operationID, "GetAdvancedHistoryMessageList args: ", getMessageOptions)
 		var unmarshalParams sdk_params_callback.GetAdvancedHistoryMessageListParams
 		common.JsonUnmarshalCallback(getMessageOptions, &unmarshalParams, callback, operationID)
 		result := c.getAdvancedHistoryMessageList(callback, unmarshalParams, operationID, false)
@@ -1120,7 +1137,7 @@ func (c *Conversation) GetAdvancedHistoryMessageList(callback open_im_sdk_callba
 			result.MessageList = s
 		}
 		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		log.NewInfo(operationID, "cost time", time.Since(t), "GetHistoryMessageList callback: ", utils.StructToJsonStringDefault(result))
+		log.Error(operationID, "length:", len(result.MessageList), "cost time", time.Since(t), "GetAdvancedHistoryMessageList callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
 
@@ -1418,27 +1435,6 @@ func (c *Conversation) SetConversationStatus(callback open_im_sdk_callback.Base,
 	}()
 }
 
-//func (c *Conversation) FindMessages(callback common.Base, messageIDList string) {
-//	go func() {
-//		var c []string
-//		err := json.Unmarshal([]byte(messageIDList), &c)
-//		if err != nil {
-//			callback.OnError(200, err.Error())
-//			utils.sdkLog("Unmarshal failed, ", err.Error())
-//
-//		}
-//		err, list := u.getMultipleMessageModel(c)
-//		if err != nil {
-//			callback.OnError(203, err.Error())
-//		} else {
-//			if list != nil {
-//				callback.OnSuccess(utils.structToJsonString(list))
-//			} else {
-//				callback.OnSuccess(utils.structToJsonString([]utils.MsgStruct{}))
-//			}
-//		}
-//	}()
-//}
 func (c *Conversation) SearchLocalMessages(callback open_im_sdk_callback.Base, searchParam, operationID string) {
 	if callback == nil {
 		return
@@ -1494,9 +1490,9 @@ func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, con
 	message.IsRead = false
 	message.Status = constant.MsgStatusSending
 	message.SendID = c.loginUserID
-	userInfo, err := c.db.GetLoginUser()
+	userInfo, err := c.db.GetLoginUser(c.loginUserID)
 	if err != nil {
-		log.Error(operationID, "GetLoginUser", err.Error())
+		log.Error(operationID, "GetLoginUser ", err.Error(), c.loginUserID)
 	} else {
 		message.SenderFaceURL = userInfo.FaceURL
 		message.SenderNickname = userInfo.Nickname
@@ -1564,7 +1560,7 @@ func (c *Conversation) DeleteAllMsgFromLocal(callback open_im_sdk_callback.Base,
 		log.NewInfo(operationID, fName)
 		c.deleteAllMsgFromLocal(callback, operationID)
 		callback.OnSuccess("")
-		log.NewInfo(operationID, fName, "callback: ", "")
+		log.NewInfo(operationID, fName, "callback: ", "12")
 	}()
 }
 func (c *Conversation) getConversationTypeByGroupID(groupID string) (conversationID string, conversationType int32, err error) {

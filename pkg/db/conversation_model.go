@@ -87,8 +87,6 @@ func (d *DataBase) DeleteConversation(conversationID string) error {
 }
 
 func (d *DataBase) GetConversation(conversationID string) (*model_struct.LocalConversation, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
 	var c model_struct.LocalConversation
 	return &c, utils.Wrap(d.conn.Where("conversation_id = ?",
 		conversationID).Take(&c).Error, "GetConversation failed")
@@ -108,7 +106,9 @@ func (d *DataBase) UpdateConversation(c *model_struct.LocalConversation) error {
 func (d *DataBase) UpdateConversationForSync(c *model_struct.LocalConversation) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Model(&model_struct.LocalConversation{}).Where("conversation_id = ?", c.ConversationID).Updates(map[string]interface{}{"recv_msg_opt": c.RecvMsgOpt, "is_pinned": c.IsPinned, "is_private_chat": c.IsPrivateChat, "group_at_type": c.GroupAtType, "is_not_in_group": c.IsNotInGroup, "ex": c.Ex, "attached_info": c.AttachedInfo, "unread_count": c.UnreadCount})
+	t := d.conn.Model(&model_struct.LocalConversation{}).Where("conversation_id = ?", c.ConversationID).
+		Updates(map[string]interface{}{"recv_msg_opt": c.RecvMsgOpt, "is_pinned": c.IsPinned, "is_private_chat": c.IsPrivateChat,
+			"group_at_type": c.GroupAtType, "is_not_in_group": c.IsNotInGroup, "update_unread_count_time": c.UpdateUnreadCountTime, "ex": c.Ex, "attached_info": c.AttachedInfo})
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}

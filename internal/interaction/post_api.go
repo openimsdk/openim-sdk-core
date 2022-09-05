@@ -1,12 +1,14 @@
 package interaction
 
 import (
+	"encoding/json"
 	"errors"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/network"
 	"open_im_sdk/pkg/utils"
+	"time"
 )
 
 //no share
@@ -38,6 +40,23 @@ type postErr struct {
 
 func (p *PostApi) PostReturn(url string, req interface{}, output interface{}) error {
 	content, err := network.Post2Api(p.apiAddress+url, req, p.token)
+	if err != nil {
+		utils.Wrap(err, "post failed "+p.apiAddress+url)
+	}
+	err = common.CheckErrAndResp(err, content, output)
+	return utils.Wrap(err, "CheckErrAndResp failed ")
+}
+
+func (p *PostApi) Post2UnmarshalRespReturn(url string, req interface{}, output interface{}) error {
+	content, err := network.Post2Api(p.apiAddress+url, req, p.token)
+	if err != nil {
+		utils.Wrap(err, "post failed "+p.apiAddress+url)
+	}
+	err = json.Unmarshal(content, output)
+	return utils.Wrap(err, "Unmarshal failed ")
+}
+func (p *PostApi) PostReturnWithTimeOut(url string, req interface{}, output interface{}, timeOut time.Duration) error {
+	content, err := network.PostWithTimeOut(p.apiAddress+url, req, p.token, timeOut)
 
 	err1 := common.CheckErrAndResp(err, content, output)
 	if err1 != nil {

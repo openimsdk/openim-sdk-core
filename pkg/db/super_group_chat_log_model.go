@@ -285,11 +285,11 @@ func (d *DataBase) SuperGroupGetMessageListNoTime(sourceID string, sessionType, 
 	return result, err
 }
 
-func (d *DataBase) SuperGroupGetSendingMessageList() (result []*model_struct.LocalChatLog, err error) {
+func (d *DataBase) SuperGroupGetSendingMessageList(groupID string) (result []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []model_struct.LocalChatLog
-	err = utils.Wrap(d.conn.Where("status = ?", constant.MsgStatusSending).Find(&messageList).Error, "GetMessageList failed")
+	err = utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Where("status = ?", constant.MsgStatusSending).Find(&messageList).Error, "GetMessageList failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)
@@ -310,7 +310,7 @@ func (d *DataBase) SuperGroupGetMultipleMessage(conversationIDList []string, gro
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []model_struct.LocalChatLog
-	err = utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Where("client_msg_id IN ?", conversationIDList).Find(&messageList).Error, "GetMultipleMessage failed")
+	err = utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Where("client_msg_id IN ?", conversationIDList).Order("send_time DESC").Find(&messageList).Error, "GetMultipleMessage failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)
@@ -327,7 +327,7 @@ func (d *DataBase) SuperGroupGetNormalMsgSeq() (uint32, error) {
 }
 func (d *DataBase) SuperGroupGetNormalMinSeq(groupID string) (uint32, error) {
 	var seq uint32
-	err := d.conn.Table(utils.GetSuperGroupTableName(groupID)).Select("min(seq)").Where("seq >?", 0).Find(&seq).Error
+	err := d.conn.Table(utils.GetSuperGroupTableName(groupID)).Select("IFNULL(min(seq),0)").Where("seq >?", 0).Find(&seq).Error
 	return seq, utils.Wrap(err, "SuperGroupGetNormalMinSeq")
 }
 func (d *DataBase) SuperGroupGetTestMessage(seq uint32) (*model_struct.LocalChatLog, error) {

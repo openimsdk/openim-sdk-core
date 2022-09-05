@@ -20,6 +20,7 @@ const (
 	CmdAddFriend                  = "017"
 
 	CmdJoinedSuperGroup = "018"
+	CmdUpdateMessage    = "019"
 
 	CmdMaxSeq  = "maxSeq"
 	CmdPushMsg = "pushMsg"
@@ -61,7 +62,6 @@ const (
 	FriendRemarkSetNotification           = 1206 //set_friend_remark?
 	BlackAddedNotification                = 1207 //add_black
 	BlackDeletedNotification              = 1208 //remove_black
-	MsgDeleteNotification                 = 1209
 	FriendNotificationEnd                 = 1299
 	ConversationChangeNotification        = 1300
 
@@ -98,9 +98,11 @@ const (
 
 	SuperGroupNotificationBegin  = 1650
 	SuperGroupUpdateNotification = 1651
+	MsgDeleteNotification        = 1652
 	SuperGroupNotificationEnd    = 1699
 
 	ConversationPrivateChatNotification = 1701
+	ConversationUnreadNotification      = 1702
 	OrganizationChangedNotification     = 1801
 
 	WorkMomentNotificationBegin = 1900
@@ -189,7 +191,8 @@ const (
 )
 
 const (
-	SdkInit      = 0
+	SdkInit = 0
+
 	LoginSuccess = 101
 	Logining     = 102
 	LoginFailed  = 103
@@ -210,13 +213,14 @@ const (
 	UnreadCountSetZero           = 3
 	IncrUnread                   = 5
 	TotalUnreadMessageChanged    = 6
-	UpdateFaceUrlAndNickName     = 7
+	UpdateConFaceUrlAndNickName  = 7
 	UpdateLatestMessageChange    = 8
 	ConChange                    = 9
 	NewCon                       = 10
 	ConChangeDirect              = 11
 	NewConDirect                 = 12
 	ConversationLatestMsgHasRead = 13
+	UpdateMsgFaceUrlAndNickName  = 14
 
 	HasRead = 1
 	NotRead = 0
@@ -344,3 +348,10 @@ const (
 	PullMsgNumForReadDiffusion   = 100
 	NormalMsgMinNumReadDiffusion = 100
 )
+
+const SplitGetGroupMemberNum = 1000
+const UseHashGroupMemberNum = 1000
+
+var OnlyForTest = 0
+
+var KEY = "openIMtest123456789"

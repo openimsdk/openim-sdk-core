@@ -60,6 +60,10 @@ func int32ToString(i int32) string {
 	return strconv.FormatInt(int64(i), 10)
 }
 
+func int64ToString(i int64) string {
+	return strconv.FormatInt(i, 10)
+}
+
 //uid->funcname->func
 
 type WsFuncRouter struct {
@@ -134,8 +138,10 @@ func GenUserRouterNoLock(uid string, batchMsg int, operationID string) *RefRoute
 	wsRouter1.SetUserListener()
 	log.Info(operationID, "SetSignalingListener() ", uid)
 	wsRouter1.SetSignalingListener()
-	log.Info(operationID, "setWorkMomentsListener", uid)
+	log.Info(operationID, "setWorkMomentsListener()", uid)
 	wsRouter1.SetWorkMomentsListener()
+	log.Info(operationID, "SetOrganizationListener()", uid)
+	wsRouter1.SetOrganizationListener()
 	var rr RefRouter
 	rr.refName = RouteMap1
 	rr.wsRouter = &wsRouter1

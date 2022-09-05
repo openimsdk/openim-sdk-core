@@ -1009,8 +1009,8 @@ func InitOnce(config *sdk_struct.IMConfig) bool {
 	return true
 }
 
-func CheckToken(userID, token string) error {
-	err, _ := login.CheckToken(userID, token, "")
+func CheckToken(userID, token string, operationID string) error {
+	err, _ := login.CheckToken(userID, token, operationID)
 	return err
 }
 
@@ -1205,4 +1205,20 @@ func ClearWorkMomentsNotification(callback open_im_sdk_callback.Base, operationI
 		return
 	}
 	userForSDK.WorkMoments().ClearWorkMomentsNotification(callback, operationID)
+}
+func UpdateFcmToken(callback open_im_sdk_callback.Base, fmcToken, operationID string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Push().UpdateFcmToken(callback, fmcToken, operationID)
+}
+func SetAppBadge(callback open_im_sdk_callback.Base, appUnreadCount int32, operationID string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Push().SetAppBadge(callback, appUnreadCount, operationID)
 }

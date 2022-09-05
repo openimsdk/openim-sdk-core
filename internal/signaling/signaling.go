@@ -27,7 +27,7 @@ type LiveSignaling struct {
 
 func NewLiveSignaling(ws *ws.Ws, listener open_im_sdk_callback.OnSignalingListener, loginUserID string, platformID int32, db *db.DataBase) *LiveSignaling {
 	if ws == nil || listener == nil {
-		log.Error("", "ws or listener is nil")
+		log.Warn("", "ws or SignalingListener is nil")
 		return nil
 	}
 	return &LiveSignaling{Ws: ws, listener: listener, loginUserID: loginUserID, platformID: platformID, DataBase: db}
@@ -109,7 +109,7 @@ func (s *LiveSignaling) getSelfParticipant(groupID string, callback open_im_sdk_
 		copier.Copy(p.GroupMemberInfo, mInfo)
 	}
 
-	sf, err := s.GetLoginUser()
+	sf, err := s.GetLoginUser(s.loginUserID)
 	common.CheckDBErrCallback(callback, err, operationID)
 	copier.Copy(p.UserInfo, sf)
 	log.Info(operationID, utils.GetSelfFuncName(), "return ", p)
@@ -118,6 +118,10 @@ func (s *LiveSignaling) getSelfParticipant(groupID string, callback open_im_sdk_
 
 func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value, operationID string) {
 	log.Info(operationID, utils.GetSelfFuncName(), "args ", msg.String())
+	if s.listener == nil {
+		log.Error(operationID, "not set Signaling Listener")
+		return
+	}
 	var resp api.SignalReq
 	err := proto.Unmarshal(msg.Content, &resp)
 	if err != nil {
@@ -170,6 +174,9 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 		log.Info(operationID, "signaling response ", payload.Invite.String())
 		if utils.IsContain(s.loginUserID, payload.Invite.Invitation.InviteeUserIDList) {
 			//	if s.loginUserID == payload.Invite.Invitation.InviterUserID {
+			if s.listener == nil {
+				log.Error(operationID, "signaling listener is null")
+			}
 			s.listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.Invite))
 		}
 

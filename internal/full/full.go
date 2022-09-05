@@ -27,6 +27,10 @@ type Full struct {
 	SuperGroup *super_group.SuperGroup
 }
 
+func (u *Full) Group() *group.Group {
+	return u.group
+}
+
 func NewFull(user *user.User, friend *friend.Friend, group *group.Group, ch chan common.Cmd2Value, userCache *cache.Cache, db *db.DataBase, superGroup *super_group.SuperGroup) *Full {
 	return &Full{user: user, friend: friend, group: group, ch: ch, userCache: userCache, db: db, SuperGroup: superGroup}
 }
@@ -62,12 +66,9 @@ func (u *Full) getUsersInfo(callback open_im_sdk_callback.Base, userIDList sdk.G
 				u.userCache.Update(v.UserID, v.FaceURL, v.Nickname)
 				//Update the faceURL and nickname information of the local chat history with non-friends
 				_ = u.user.UpdateMsgSenderFaceURLAndSenderNickname(v.UserID, v.FaceURL, v.Nickname, constant.SingleChatType)
-				conversationID := utils.GetConversationIDBySessionType(v.UserID, constant.SingleChatType)
 				//Update session information of local non-friends
-				_, err := u.user.GetConversation(conversationID)
-				if err == nil {
-					_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: v.UserID, SessionType: constant.SingleChatType}}, u.ch)
-				}
+				_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.UpdateConInfo{UserID: v.UserID}}, u.ch)
+
 			}
 		}()
 	}

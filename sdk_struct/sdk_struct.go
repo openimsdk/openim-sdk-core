@@ -174,6 +174,8 @@ type AttachedInfoElem struct {
 	HasReadTime               int64            `json:"hasReadTime"`
 	NotSenderNotificationPush bool             `json:"notSenderNotificationPush"`
 	MessageEntityList         []*MessageEntity `json:"messageEntityList,omitempty"`
+	IsEncryption              bool             `json:"isEncryption"`
+	InEncryptStatus           bool             `json:"inEncryptStatus"`
 }
 type MessageEntity struct {
 	Type   string `json:"type,omitempty"`
@@ -212,6 +214,7 @@ type IMConfig struct {
 	DataDir       string `json:"data_dir"`
 	LogLevel      uint32 `json:"log_level"`
 	ObjectStorage string `json:"object_storage"` //"cos"(default)  "oss"
+	EncryptionKey string `json:"encryption_key"`
 }
 
 var SvrConf IMConfig

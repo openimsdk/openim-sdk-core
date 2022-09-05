@@ -9,6 +9,7 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"runtime"
 	"sync"
 )
 
@@ -39,18 +40,24 @@ func (m *ReadDiffusionGroupMsgSync) updateJoinedSuperGroup() {
 	for {
 		select {
 		case cmd := <-m.joinedSuperGroupCh:
-			operationID := cmd.Value.(sdk_struct.CmdJoinedSuperGroup).OperationID
-			log.Info(operationID, "updateJoinedSuperGroup cmd: ", cmd)
-			g, err := m.GetReadDiffusionGroupIDList()
-			if err == nil {
-				log.Info(operationID, "GetReadDiffusionGroupIDList, group id list: ", g)
-				m.superGroupMtx.Lock()
-				m.SuperGroupIDList = g
-				m.superGroupMtx.Unlock()
-				m.compareSeq(operationID)
+			if cmd.Cmd == constant.CmdLogout {
+				log.Warn("logout", "close updateJoinedSuperGroup channel ")
+				runtime.Goexit()
 			} else {
-				log.Error(operationID, "GetReadDiffusionGroupIDList failed ", err.Error())
+				operationID := cmd.Value.(sdk_struct.CmdJoinedSuperGroup).OperationID
+				log.Info(operationID, "updateJoinedSuperGroup cmd: ", cmd)
+				g, err := m.GetReadDiffusionGroupIDList()
+				if err == nil {
+					log.Info(operationID, "GetReadDiffusionGroupIDList, group id list: ", g)
+					m.superGroupMtx.Lock()
+					m.SuperGroupIDList = g
+					m.superGroupMtx.Unlock()
+					m.compareSeq(operationID)
+				} else {
+					log.Error(operationID, "GetReadDiffusionGroupIDList failed ", err.Error())
+				}
 			}
+
 		}
 	}
 }
@@ -72,7 +79,6 @@ func (m *ReadDiffusionGroupMsgSync) compareSeq(operationID string) {
 
 	defer m.superGroupMtx.Unlock()
 	for _, v := range m.SuperGroupIDList {
-
 		n, err := m.GetSuperGroupNormalMsgSeq(v)
 		if err != nil {
 			log.Error(operationID, "GetSuperGroupNormalMsgSeq failed ", err.Error(), v)
@@ -81,7 +87,7 @@ func (m *ReadDiffusionGroupMsgSync) compareSeq(operationID string) {
 		if err != nil {
 			log.Error(operationID, "GetSuperGroupAbnormalMsgSeq failed ", err.Error(), v)
 		}
-		log.Debug(operationID, "GetSuperGroupNormalMsgSeq GetSuperGroupAbnormalMsgSeq ", n, a)
+		log.Debug(operationID, "GetSuperGroupNormalMsgSeq GetSuperGroupAbnormalMsgSeq ", n, a, "groupID: ", v)
 		var seqMaxSynchronized uint32
 		if n > a {
 			seqMaxSynchronized = n
@@ -101,11 +107,10 @@ func (m *ReadDiffusionGroupMsgSync) compareSeq(operationID string) {
 //处理最大seq消息
 func (m *ReadDiffusionGroupMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 	operationID := cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).OperationID
-	//同步最新消息，内部保证只调用一次
-	m.syncLatestMsg(operationID)
-
-	//更新需要同步的最大seq
+	var groupIDList []string
+	//更新需要同步的最大seq 以及SuperGroupIDList
 	for groupID, MinMaxSeqOnSvr := range cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).GroupID2MinMaxSeqOnSvr {
+		groupIDList = append(groupIDList, groupID)
 		if MinMaxSeqOnSvr.MinSeq > MinMaxSeqOnSvr.MaxSeq {
 			log.Warn(operationID, "MinMaxSeqOnSvr.MinSeq > MinMaxSeqOnSvr.MaxSeq", MinMaxSeqOnSvr.MinSeq, MinMaxSeqOnSvr.MaxSeq)
 			return
@@ -117,6 +122,14 @@ func (m *ReadDiffusionGroupMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 			m.Group2SeqMaxSynchronized[groupID] = MinMaxSeqOnSvr.MinSeq - 1
 		}
 	}
+	m.superGroupMtx.Lock()
+	m.SuperGroupIDList = m.SuperGroupIDList[0:0]
+	m.SuperGroupIDList = groupIDList
+	m.superGroupMtx.Unlock()
+
+	//同步最新消息，内部保证只调用一次
+	m.syncLatestMsg(operationID)
+
 	//同步所有群的新消息
 	m.syncMsgFroAllGroup(operationID)
 }
@@ -134,11 +147,11 @@ func (m *ReadDiffusionGroupMsgSync) syncLatestMsg(operationID string) {
 
 	if flag == 1 {
 		log.Info(operationID, "sync latest msg begin for read diffusion group: ", m.SuperGroupIDList)
-		m.TriggerCmdNewMsgCome(nil, operationID, constant.MsgSyncBegin)
+		//	m.TriggerCmdNewMsgCome(nil, operationID, constant.MsgSyncBegin)
 		for _, v := range m.SuperGroupIDList {
 			m.syncLatestMsgForGroup(v, operationID, constant.MsgSyncProcessing)
 		}
-		m.TriggerCmdNewMsgCome(nil, operationID, constant.MsgSyncEnd)
+		//	m.TriggerCmdNewMsgCome(nil, operationID, constant.MsgSyncEnd)
 		log.Info(operationID, "sync latest msg end for read diffusion group: ", m.SuperGroupIDList)
 	} else {
 		log.Info(operationID, "do nothing ")
@@ -161,13 +174,14 @@ func (m *ReadDiffusionGroupMsgSync) syncLatestMsgForGroup(groupID, operationID s
 		if int64(need)-int64(synchronized) > int64(constant.PullMsgNumForReadDiffusion) {
 			begin = need - uint32(constant.PullMsgNumForReadDiffusion) + 1
 		}
+		m.Group2SyncMsgFinished[groupID] = true
 		log.Debug(operationID, "syncLatestMsgForGroup seq: ", need, synchronized, begin)
 		if begin > need {
 			log.Debug(operationID, "do nothing syncLatestMsgForGroup seq: ", need, synchronized, begin)
 			return
 		}
 		m.syncMsgFromServer(begin, need, groupID, operationID, loginSync)
-		m.Group2SyncMsgFinished[groupID] = true
+
 		m.Group2SeqMaxSynchronized[groupID] = begin
 	}
 }
@@ -267,6 +281,10 @@ func (m *ReadDiffusionGroupMsgSync) syncMsgFromServerSplit(needSyncSeqList []uin
 		pullMsgReq.OperationID = operationID
 		log.Debug(operationID, "read diffusion group pull message, req: ", pullMsgReq)
 		resp, err := m.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 30, 2, m.loginUserID, operationID)
+		if err != nil && m.LoginStatus() == constant.Logout {
+			log.Error(operationID, "SendReqWaitResp failed  Logout status ", err.Error(), m.LoginStatus())
+			return
+		}
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 30, 2, m.loginUserID)
 			continue

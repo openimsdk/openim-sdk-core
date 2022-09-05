@@ -283,9 +283,8 @@ func (d *DataBase) MessageIfExistsBySeq(seq int64) (bool, error) {
 		return true, nil
 	}
 }
+
 func (d *DataBase) GetMessage(ClientMsgID string) (*model_struct.LocalChatLog, error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
 	var c model_struct.LocalChatLog
 	return &c, utils.Wrap(d.conn.Where("client_msg_id = ?",
 		ClientMsgID).Take(&c).Error, "GetMessage failed")
@@ -506,7 +505,7 @@ func (d *DataBase) UpdateGroupMessageHasReadController(msgIDList []string, group
 }
 func (d *DataBase) GetMultipleMessage(msgIDList []string) (result []*model_struct.LocalChatLog, err error) {
 	var messageList []model_struct.LocalChatLog
-	err = utils.Wrap(d.conn.Where("client_msg_id IN ?", msgIDList).Find(&messageList).Error, "GetMultipleMessage failed")
+	err = utils.Wrap(d.conn.Where("client_msg_id IN ?", msgIDList).Order("send_time DESC").Find(&messageList).Error, "GetMultipleMessage failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)

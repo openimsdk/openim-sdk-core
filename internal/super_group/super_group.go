@@ -2,6 +2,7 @@ package super_group
 
 import (
 	"errors"
+	"github.com/golang/protobuf/proto"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -33,7 +34,7 @@ func NewSuperGroup(loginUserID string, db *db.DataBase, p *ws.PostApi, joinedSup
 func (s *SuperGroup) DoNotification(msg *api.MsgData, _ chan common.Cmd2Value) {
 	operationID := utils.OperationIDGenerator()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID, msg.String())
-	if msg.SendTime < s.loginTime {
+	if msg.SendTime < s.loginTime || s.loginTime == 0 {
 		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
 		return
 	}
@@ -53,6 +54,15 @@ func (s *SuperGroup) DoNotification(msg *api.MsgData, _ chan common.Cmd2Value) {
 			}
 
 			log.Info(operationID, "constant.SuperGroupUpdateNotification", msg.String())
+
+		case constant.MsgDeleteNotification:
+			var tips api.TipsComm
+			var elem api.MsgDeleteNotificationElem
+			_ = proto.Unmarshal(msg.Content, &tips)
+			_ = utils.JsonStringToStruct(tips.JsonDetail, &elem)
+			//if elem.GroupID != nil {
+			//
+			//}
 		default:
 			log.Error(operationID, "ContentType tip failed ", msg.ContentType)
 		}

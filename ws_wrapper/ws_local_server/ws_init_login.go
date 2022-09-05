@@ -172,4 +172,5 @@ func InitServer(config *sdk_struct.IMConfig) {
 	ConfigSvr = string(data)
 	UserRouteMap = make(map[string]RefRouter, 0)
 	open_im_sdk.InitOnce(config)
+	log.Info("", "InitServer ", ConfigSvr)
 }

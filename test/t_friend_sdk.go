@@ -427,7 +427,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	cf.Platform = 1
 	cf.WsAddr = ws
 	cf.DataDir = "./"
-	cf.LogLevel = 6
+	cf.LogLevel = LogLevel
 	cf.ObjectStorage = "minio"
 
 	var s string
@@ -443,7 +443,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	}
 
 	var testConversation conversationCallBack
-	open_im_sdk.SetConversationListener(testConversation)
+	open_im_sdk.SetConversationListener(&testConversation)
 
 	var testUser userCallback
 	open_im_sdk.SetUserListener(testUser)
@@ -496,15 +496,12 @@ func lllogin(uid, tk string) bool {
 }
 
 func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
-	coreMgrLock.Lock()
-	defer coreMgrLock.Unlock()
-
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
 	cf.WsAddr = ws
 	cf.Platform = 1
 	cf.DataDir = "./"
-	cf.LogLevel = 3
+	cf.LogLevel = uint32(LogLevel)
 	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
 
 	operationID := utils.OperationIDGenerator()
@@ -519,7 +516,62 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	log.Info(operationID, "InitSDK ", sdk_struct.SvrConf)
 
 	var testConversation conversationCallBack
-	lg.SetConversationListener(testConversation)
+	lg.SetConversationListener(&testConversation)
+
+	var testUser userCallback
+	lg.SetUserListener(testUser)
+
+	var msgCallBack MsgListenerCallBak
+	lg.SetAdvancedMsgListener(&msgCallBack)
+
+	var friendListener testFriendListener
+	lg.SetFriendListener(friendListener)
+
+	var groupListener testGroupListener
+	lg.SetGroupListener(groupListener)
+
+	var organizationListener testOrganizationListener
+	lg.SetOrganizationListener(organizationListener)
+
+	var callback BaseSuccessFailed
+	callback.funcName = utils.GetSelfFuncName()
+	lg.Login(&callback, uid, tk, operationID)
+
+	for {
+		if callback.errCode == 1 && testConversation.SyncFlag == 1 {
+			log.Warn(operationID, "login ok, and sync finished ", uid)
+			return
+		} else {
+			log.Warn(operationID, "waiting login...", uid, callback.errCode, testConversation.SyncFlag)
+		}
+		//		log.Warn(operationID, "waiting login...", uid)
+		//	time.Sleep(100 * time.Millisecond)
+	}
+
+}
+
+func PressInitAndLogin(index int, uid, tk, ws, api string) {
+	var cf sdk_struct.IMConfig
+	cf.ApiAddr = api
+	cf.WsAddr = ws
+	cf.Platform = 1
+	cf.DataDir = "./"
+	cf.LogLevel = uint32(LogLevel)
+	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
+
+	operationID := utils.OperationIDGenerator()
+	var testinit testInitLister
+	lg := new(login.LoginMgr)
+	log.Info(operationID, "new login ", lg)
+
+	sdk_struct.SvrConf = cf
+	allLoginMgr[index].mgr = lg
+	lg.InitSDK(sdk_struct.SvrConf, &testinit, operationID)
+
+	log.Info(operationID, "InitSDK ", sdk_struct.SvrConf)
+
+	var testConversation conversationCallBack
+	lg.SetConversationListener(&testConversation)
 
 	var testUser userCallback
 	lg.SetUserListener(testUser)
@@ -542,11 +594,13 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 
 	for {
 		if callback.errCode == 1 {
-			log.Info(operationID, "login ok ", uid)
+			log.Warn(operationID, "login ok ", uid)
 			return
+		} else {
+			log.Warn(operationID, "waiting login...", uid, callback.errCode)
 		}
-		log.Warn(operationID, "waiting login...", uid)
-		time.Sleep(100 * time.Millisecond)
+		//		log.Warn(operationID, "waiting login...", uid)
+		//	time.Sleep(100 * time.Millisecond)
 	}
 
 }
@@ -571,7 +625,7 @@ func DoTest(uid, tk, ws, api string) {
 	}
 
 	var testConversation conversationCallBack
-	open_im_sdk.SetConversationListener(testConversation)
+	open_im_sdk.SetConversationListener(&testConversation)
 
 	var testUser userCallback
 	open_im_sdk.SetUserListener(testUser)
@@ -604,6 +658,9 @@ type TestSendMsgCallBack struct {
 	sendID      string
 	recvID      string
 	msgID       string
+	sendTime    int64
+	recvTime    int64
+	groupID     string
 }
 
 func (t *TestSendMsgCallBack) OnError(errCode int32, errMsg string) {
@@ -618,7 +675,9 @@ func (t *TestSendMsgCallBack) OnSuccess(data string) {
 	log.Info(t.OperationID, "test_openim: send msg success: |", t.msgID, t.msg, data)
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
-	SendSuccAllMsg[t.msgID] = t.sendID + t.recvID
+	k, _ := SendSuccAllMsg[t.msgID]
+	k.SendSeccCallbackTime = utils.GetCurrentTimestampByMill()
+	k.SendIDRecvID = t.sendID + t.recvID
 }
 
 func (t *TestSendMsgCallBack) OnProgress(progress int) {

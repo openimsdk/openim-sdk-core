@@ -33,9 +33,9 @@ func TriggerCmdSuperGroupMsgCome(msg sdk_struct.CmdNewMsgComeToConversation, con
 	if conversationCh == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
-	if len(msg.MsgList) == 0 {
-		return nil
-	}
+	//if len(msg.MsgList) == 0 {
+	//	return nil
+	//}
 
 	c2v := Cmd2Value{Cmd: constant.CmdSuperGroupMsgCome, Value: msg}
 	return sendCmd(conversationCh, c2v, 100)
@@ -76,6 +76,14 @@ func TriggerCmdUpdateConversation(node UpdateConNode, conversationCh chan Cmd2Va
 
 	return sendCmd(conversationCh, c2v, 100)
 }
+func TriggerCmdUpdateMessage(node UpdateMessageNode, conversationCh chan Cmd2Value) error {
+	c2v := Cmd2Value{
+		Cmd:   constant.CmdUpdateMessage,
+		Value: node,
+	}
+
+	return sendCmd(conversationCh, c2v, 100)
+}
 
 func TriggerCmdPushMsg(msg sdk_struct.CmdPushMsgToMsgSync, ch chan Cmd2Value) error {
 	if ch == nil {
@@ -105,14 +113,24 @@ type UpdateConNode struct {
 	// 4 Cancel a conversation on the top, 5 Messages are not read and set to 0, 6 New conversations
 	Args interface{}
 }
+type UpdateMessageNode struct {
+	Action int
+	Args   interface{}
+}
 
 type Cmd2Value struct {
 	Cmd   string
 	Value interface{}
 }
-type SourceIDAndSessionType struct {
-	SourceID    string
-	SessionType int32
+type UpdateConInfo struct {
+	UserID  string
+	GroupID string
+}
+type UpdateMessageInfo struct {
+	UserID   string
+	FaceURL  string
+	Nickname string
+	GroupID  string
 }
 
 func UnInitAll(conversationCh chan Cmd2Value) error {

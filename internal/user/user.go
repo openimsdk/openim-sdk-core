@@ -21,10 +21,11 @@ import (
 
 type User struct {
 	*db.DataBase
-	p           *ws.PostApi
-	loginUserID string
-	listener    open_im_sdk_callback.OnUserListener
-	loginTime   int64
+	p              *ws.PostApi
+	loginUserID    string
+	listener       open_im_sdk_callback.OnUserListener
+	loginTime      int64
+	conversationCh chan common.Cmd2Value
 }
 
 func (u *User) LoginTime() int64 {
@@ -39,8 +40,8 @@ func (u *User) SetListener(listener open_im_sdk_callback.OnUserListener) {
 	u.listener = listener
 }
 
-func NewUser(dataBase *db.DataBase, p *ws.PostApi, loginUserID string) *User {
-	return &User{DataBase: dataBase, p: p, loginUserID: loginUserID}
+func NewUser(dataBase *db.DataBase, p *ws.PostApi, loginUserID string, conversationCh chan common.Cmd2Value) *User {
+	return &User{DataBase: dataBase, p: p, loginUserID: loginUserID, conversationCh: conversationCh}
 }
 
 func (u *User) DoNotification(msg *api.MsgData) {
@@ -55,7 +56,6 @@ func (u *User) DoNotification(msg *api.MsgData) {
 		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
 		return
 	}
-
 	go func() {
 		switch msg.ContentType {
 		case constant.UserInfoUpdatedNotification:
@@ -76,7 +76,7 @@ func (u *User) userInfoUpdatedNotification(msg *api.MsgData, operationID string)
 	if detail.UserID == u.loginUserID {
 		log.Info(operationID, "detail.UserID == u.loginUserID, SyncLoginUserInfo", detail.UserID)
 		u.SyncLoginUserInfo(operationID)
-		user, err := u.GetLoginUser()
+		user, err := u.GetLoginUser(u.loginUserID)
 		if err != nil {
 			go u.updateMsgSenderInfo(user.Nickname, user.FaceURL, operationID)
 		}
@@ -93,24 +93,26 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 		return
 	}
 	onServer := common.TransferToLocalUserInfo(svr)
-	onLocal, err := u.GetLoginUser()
+	onLocal, err := u.GetLoginUser(u.loginUserID)
 	if err != nil {
-		log.Warn(operationID, "GetLoginUser failed", err.Error())
+		log.Warn(operationID, "GetLoginUser failed ", err.Error())
 		onLocal = &model_struct.LocalUser{}
 	}
 	if !cmp.Equal(onServer, onLocal) {
 		if onLocal.UserID == "" {
 			if err = u.InsertLoginUser(onServer); err != nil {
 				log.Error(operationID, "InsertLoginUser failed ", *onServer, err.Error())
+				return
 			}
-			return
-		}
-		err = u.UpdateLoginUserByMap(onServer, map[string]interface{}{"name": onServer.Nickname, "face_url": onServer.FaceURL,
-			"gender": onServer.Gender, "phone_number": onServer.PhoneNumber, "birth": onServer.Birth, "email": onServer.Email, "create_time": onServer.CreateTime, "app_manger_level": onServer.AppMangerLevel, "ex": onServer.Ex, "attached_info": onServer.AttachedInfo, "global_recv_msg_opt": onServer.GlobalRecvMsgOpt})
-		fmt.Println("UpdateLoginUser ", *onServer, svr)
-		if err != nil {
-			log.Error(operationID, "UpdateLoginUser failed ", *onServer, err.Error())
-			return
+
+		} else {
+			err = u.UpdateLoginUserByMap(onServer, map[string]interface{}{"name": onServer.Nickname, "face_url": onServer.FaceURL,
+				"gender": onServer.Gender, "phone_number": onServer.PhoneNumber, "birth": onServer.Birth, "email": onServer.Email, "create_time": onServer.CreateTime, "app_manger_level": onServer.AppMangerLevel, "ex": onServer.Ex, "attached_info": onServer.AttachedInfo, "global_recv_msg_opt": onServer.GlobalRecvMsgOpt})
+			fmt.Println("UpdateLoginUser ", *onServer, svr)
+			if err != nil {
+				log.Error(operationID, "UpdateLoginUser failed ", *onServer, err.Error())
+				return
+			}
 		}
 		callbackData := sdk.SelfInfoUpdatedCallback(*onServer)
 		if u.listener == nil {
@@ -149,7 +151,7 @@ func (u *User) GetUsersInfoFromCacheSvr(UserIDList sdk.GetUsersInfoParam, operat
 }
 
 func (u *User) getSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) sdk.GetSelfUserInfoCallback {
-	userInfo, err := u.GetLoginUser()
+	userInfo, err := u.GetLoginUser(u.loginUserID)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return userInfo
 }

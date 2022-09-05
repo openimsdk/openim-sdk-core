@@ -21,7 +21,7 @@ const writeTimeoutSeconds = 30
 type WsConn struct {
 	stateMutex  sync.Mutex
 	conn        *websocket.Conn
-	loginState  int32
+	loginStatus int32
 	listener    open_im_sdk_callback.OnConnListener
 	token       string
 	loginUserID string
@@ -29,29 +29,30 @@ type WsConn struct {
 
 func NewWsConn(listener open_im_sdk_callback.OnConnListener, token string, loginUserID string) *WsConn {
 	p := WsConn{listener: listener, token: token, loginUserID: loginUserID}
-	go func() {
-		p.conn, _, _ = p.ReConn()
-	}()
+	//	go func() {
+	p.conn, _, _, _ = p.ReConn("init:" + utils.OperationIDGenerator())
+	//	}()
 	return &p
 }
 
-func (u *WsConn) CloseConn() error {
+func (u *WsConn) CloseConn(operationID string) error {
 	u.Lock()
 	defer u.Unlock()
 	if u.conn != nil {
 		err := u.conn.Close()
+		log.NewWarn(operationID, "close conn, ", u.conn)
 		u.conn = nil
 		return utils.Wrap(err, "")
 	}
 	return nil
 }
 
-func (u *WsConn) LoginState() int32 {
-	return u.loginState
+func (u *WsConn) LoginStatus() int32 {
+	return u.loginStatus
 }
 
-func (u *WsConn) SetLoginState(loginState int32) {
-	u.loginState = loginState
+func (u *WsConn) SetLoginStatus(loginState int32) {
+	u.loginStatus = loginState
 }
 
 func (u *WsConn) Lock() {
@@ -145,17 +146,17 @@ func (u *WsConn) IsFatalError(err error) bool {
 	return true
 }
 
-func (u *WsConn) ReConn() (*websocket.Conn, error, bool) {
+func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool, bool) {
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
 	if u.conn != nil {
+		log.NewWarn(operationID, "close conn, ", u.conn)
 		u.conn.Close()
 		u.conn = nil
 	}
-	if u.loginState == constant.TokenFailedKickedOffline {
-		return nil, utils.Wrap(errors.New("don't re conn"), "TokenFailedKickedOffline"), false
+	if u.loginStatus == constant.TokenFailedKickedOffline {
+		return nil, utils.Wrap(errors.New("don't re conn"), "TokenFailedKickedOffline"), false, false
 	}
-	operationID := utils.OperationIDGenerator()
 	u.listener.OnConnecting()
 
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s", sdk_struct.SvrConf.WsAddr, u.loginUserID, u.token, sdk_struct.SvrConf.Platform, operationID)
@@ -164,7 +165,7 @@ func (u *WsConn) ReConn() (*websocket.Conn, error, bool) {
 	log.Info(operationID, "ws connect end, dail : ", url)
 	if err != nil {
 		log.Error(operationID, "ws connect failed ", url, err.Error())
-		u.loginState = constant.LoginFailed
+		u.loginStatus = constant.LoginFailed
 		if httpResp != nil {
 			errMsg := httpResp.Header.Get("ws_err_msg") + " operationID " + operationID + err.Error()
 			log.Error(operationID, "websocket.DefaultDialer.Dial failed ", errMsg, httpResp.StatusCode)
@@ -172,36 +173,40 @@ func (u *WsConn) ReConn() (*websocket.Conn, error, bool) {
 			switch int32(httpResp.StatusCode) {
 			case constant.ErrTokenExpired.ErrCode:
 				u.listener.OnUserTokenExpired()
-				return nil, utils.Wrap(err, errMsg), false
+				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenInvalid.ErrCode:
-				return nil, utils.Wrap(err, errMsg), false
+				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenMalformed.ErrCode:
-				return nil, utils.Wrap(err, errMsg), false
+				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenNotValidYet.ErrCode:
-				return nil, utils.Wrap(err, errMsg), false
+				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenUnknown.ErrCode:
-				return nil, utils.Wrap(err, errMsg), false
+				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenDifferentPlatformID.ErrCode:
-				return nil, utils.Wrap(err, errMsg), false
+				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenDifferentUserID.ErrCode:
-				return nil, utils.Wrap(err, errMsg), false
+				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenKicked.ErrCode:
-				u.listener.OnKickedOffline()
-				return nil, utils.Wrap(err, errMsg), false
+				//if u.loginStatus != constant.Logout {
+				//	u.listener.OnKickedOffline()
+				//	u.SetLoginStatus(constant.Logout)
+				//}
+
+				return nil, utils.Wrap(err, errMsg), false, true
 			default:
 				errMsg = err.Error() + " operationID " + operationID
 				u.listener.OnConnectFailed(1001, errMsg)
-				return nil, utils.Wrap(err, errMsg), true
+				return nil, utils.Wrap(err, errMsg), true, false
 			}
 		} else {
 			errMsg := err.Error() + " operationID " + operationID
 			u.listener.OnConnectFailed(1001, errMsg)
 			log.Error(operationID, "websocket.DefaultDialer.Dial failed ", errMsg, "url ", url)
-			return nil, utils.Wrap(err, errMsg), true
+			return nil, utils.Wrap(err, errMsg), true, false
 		}
 	}
 	u.listener.OnConnectSuccess()
-	u.loginState = constant.LoginSuccess
+	u.loginStatus = constant.LoginSuccess
 	u.conn = conn
-	return conn, nil, true
+	return conn, nil, true, false
 }
