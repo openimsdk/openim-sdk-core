@@ -318,7 +318,7 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 		log.Warn(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
 	}
 	log.Info(operationID, "close db ")
-	u.db.CloseDB()
+	u.db.CloseDB(operationID)
 
 	if callback != nil {
 		callback.OnSuccess("")

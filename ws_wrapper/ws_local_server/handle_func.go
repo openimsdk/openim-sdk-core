@@ -27,7 +27,7 @@ func (ws *WServer) DoLogin(m Req, conn *UserConn) {
 	defer UserRouteRwLock.RUnlock()
 	urm, ok := UserRouteMap[m.UserID]
 	if !ok {
-		log.Info("", "login", "user first login: ", m)
+		log.Info(m.OperationID, "login", "user first login: ", m)
 		refR := GenUserRouterNoLock(m.UserID, m.Batch, m.OperationID)
 		params := []reflect.Value{reflect.ValueOf(m.Data), reflect.ValueOf(m.OperationID)}
 		vf, ok := (refR.refName)[m.ReqFuncName]
@@ -71,7 +71,7 @@ func (ws *WServer) msgParse(conn *UserConn, jsonMsg []byte) {
 	if m.ReqFuncName == "Login" {
 		//	rwLock.Lock()
 		ws.DoLogin(m, conn)
-		log.Info("", "msgParse", m)
+		log.Info(m.OperationID, "msgParse", m)
 		//	rwLock.Unlock()
 		return
 	}
