@@ -357,6 +357,26 @@ func (c *Conversation) SyncConversations(operationID string, timeout time.Durati
 	log.Info(operationID, "cache update cost time", time.Since(cTime))
 	log.Info(operationID, utils.GetSelfFuncName(), "all  cost time", time.Since(ccTime))
 }
+func (c *Conversation) SyncConversationUnreadCount(operationID string) {
+	var conversationChangedList []string
+	allConversations := c.cache.GetAllHasUnreadMessageConversations()
+	for _, conversation := range allConversations {
+		if deleteRows := c.db.DeleteConversationUnreadMessageList(conversation.ConversationID, conversation.UpdateUnreadCountTime); deleteRows > 0 {
+			log.Debug(operationID, conversation.ConversationID, conversation.UpdateUnreadCountTime, "delete rows:", deleteRows)
+			if err := c.db.DecrConversationUnreadCount(conversation.ConversationID, deleteRows); err != nil {
+				log.Debug(operationID, conversation.ConversationID, conversation.UpdateUnreadCountTime, "decr unread count err:", err.Error())
+			} else {
+				conversationChangedList = append(conversationChangedList, conversation.ConversationID)
+			}
+		}
+	}
+	if len(conversationChangedList) > 0 {
+		if err := common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedList}, c.GetCh()); err != nil {
+			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
+		}
+	}
+
+}
 
 func (c *Conversation) SyncOneConversation(conversationID, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "conversationID: ", conversationID)

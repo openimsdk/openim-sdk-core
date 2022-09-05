@@ -189,6 +189,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			log.Debug(operationID, "ConversationUnreadNotification come here", unreadArgs.String())
 			for _, v := range unreadArgs.ConversationIDList {
 				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: v, Action: constant.UnreadCountSetZero}})
+				c.db.DeleteConversationUnreadMessageList(v, unreadArgs.UpdateUnreadCountTime)
 			}
 			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: unreadArgs.ConversationIDList}})
 			continue
@@ -252,23 +253,12 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				case constant.SingleChatType:
 					lc.ConversationID = utils.GetConversationIDBySessionType(v.RecvID, constant.SingleChatType)
 					lc.UserID = v.RecvID
-					//localUserInfo,_ := c.user.GetLoginUser()
-					//c.FaceURL = localUserInfo.FaceUrl
-					//c.ShowName = localUserInfo.Nickname
 				case constant.GroupChatType:
 					lc.GroupID = v.GroupID
 					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
 				case constant.SuperGroupChatType:
 					lc.GroupID = v.GroupID
 					lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.SuperGroupChatType)
-					//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
-					//if err != nil {
-					//	utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
-					//} else {
-					//	c.ShowName = name
-					//	c.FaceURL = faceUrl
-					//}
-
 				}
 				if isConversationUpdate {
 					if isSenderConversationUpdate {
@@ -592,6 +582,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 			_ = proto.Unmarshal(tips.Detail, &unreadArgs)
 			for _, v := range unreadArgs.ConversationIDList {
 				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: v, Action: constant.UnreadCountSetZero}})
+				c.db.DeleteConversationUnreadMessageList(v, unreadArgs.UpdateUnreadCountTime)
 			}
 			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: unreadArgs.ConversationIDList}})
 			continue
