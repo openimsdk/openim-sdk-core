@@ -162,7 +162,7 @@ func (ws *WServer) readMsg(conn *UserConn) {
 	for {
 		msgType, msg, err := conn.ReadMessage()
 		if err != nil {
-			log.Info("", "ReadMessage error", "", "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn), "error", err)
+			log.Info("", "ReadMessage error", "", "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn), "error", err.Error())
 
 			//log.Info("debug memory delUserConn begin ")
 			//time.Sleep(1 * time.Second)
@@ -253,29 +253,27 @@ func (ws *WServer) getConnNum(uid string) int {
 }
 
 func (ws *WServer) delUserConn(conn *UserConn) {
-
+	operationID := utils2.OperationIDGenerator()
 	rwLock.Lock()
 	var uidPlatform string
-	//	log.Info("", "before del, wsConnToUser map ", ws.wsConnToUser)
-	//	log.Info("", "before del, wsUserToConn  map ", ws.wsUserToConn)
 	if oldStringMap, ok := ws.wsConnToUser[conn]; ok {
 		uidPlatform = oldStringMap[conn.RemoteAddr().String()]
 		if oldConnMap, ok := ws.wsUserToConn[uidPlatform]; ok {
 
-			log.Info("old map : ", oldConnMap, "conn: ", conn.RemoteAddr().String())
+			log.Info(operationID, "old map : ", oldConnMap, "conn: ", conn.RemoteAddr().String())
 			delete(oldConnMap, conn.RemoteAddr().String())
 
 			ws.wsUserToConn[uidPlatform] = oldConnMap
-			log.Info("WS delete operation", "", "wsUser deleted", ws.wsUserToConn, "uid", uidPlatform, "online_num", len(ws.wsUserToConn))
+			log.Info(operationID, "WS delete operation", "", "wsUser deleted", ws.wsUserToConn, "uid", uidPlatform, "online_num", len(ws.wsUserToConn))
 			if len(oldConnMap) == 0 {
-				log.Info("no conn delete user router ", uidPlatform)
-				log.Info("DelUserRouter ", uidPlatform)
-				DelUserRouter(uidPlatform)
+				log.Info(operationID, "no conn delete user router ", uidPlatform)
+				log.Info(operationID, "DelUserRouter ", uidPlatform)
+				DelUserRouter(uidPlatform, operationID)
 				ws.wsUserToConn[uidPlatform] = make(map[string]*UserConn)
 				delete(ws.wsUserToConn, uidPlatform)
 			}
 		} else {
-			log.Info("uid not exist", "", "wsUser deleted", ws.wsUserToConn, "uid", uidPlatform, "online_num", len(ws.wsUserToConn))
+			log.Info(operationID, "uid not exist", "", "wsUser deleted", ws.wsUserToConn, "uid", uidPlatform, "online_num", len(ws.wsUserToConn))
 		}
 		oldStringMap = make(map[string]string)
 		delete(ws.wsConnToUser, conn)
@@ -283,11 +281,8 @@ func (ws *WServer) delUserConn(conn *UserConn) {
 	}
 	err := conn.Close()
 	if err != nil {
-		log.Info("close err", "", "uid", uidPlatform, "conn", conn)
+		log.Info(operationID, "close err", "", "uid", uidPlatform, "conn", conn)
 	}
-	//	log.Info("after del, wsConnToUser map ", ws.wsConnToUser)
-	//	log.Info("after del, wsUserToConn  map ", ws.wsUserToConn)
-
 	rwLock.Unlock()
 }
 
