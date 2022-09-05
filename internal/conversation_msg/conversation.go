@@ -104,6 +104,10 @@ func (c *Conversation) setOneConversationUnread(callback open_im_sdk_callback.Ba
 	apiReq.UnreadCount = int32(unreadCount)
 	apiReq.FieldType = constant.FieldUnread
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
+	deleteRows := c.db.DeleteConversationUnreadMessageList(localConversation.ConversationID, localConversation.LatestMsgSendTime)
+	if deleteRows == 0 {
+		log.Error(operationID, "DeleteConversationUnreadMessageList err", localConversation.ConversationID, localConversation.LatestMsgSendTime)
+	}
 }
 
 func (c *Conversation) setOneConversationPrivateChat(callback open_im_sdk_callback.Base, conversationID string, isPrivate bool, operationID string) {
