@@ -118,6 +118,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	var isTriggerUnReadCount bool
 	var insertMsg, updateMsg []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
+	var unreadMessages []*model_struct.LocalConversationUnreadMessage
 	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate, isSenderNotificationPush bool
 	conversationChangedSet := make(map[string]*model_struct.LocalConversation)
@@ -329,6 +330,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					if msg.SendTime > cacheConversation.UpdateUnreadCountTime {
 						isTriggerUnReadCount = true
 						lc.UnreadCount = 1
+						tempUnreadMessages := model_struct.LocalConversationUnreadMessage{ConversationID: lc.ConversationID, ClientMsgID: msg.ClientMsgID, SendTime: msg.SendTime}
+						unreadMessages = append(unreadMessages, &tempUnreadMessages)
 					}
 				}
 				if isConversationUpdate {
@@ -456,7 +459,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	}
 	b7 := utils.GetCurrentTimestampByMill()
 	log.Debug(operationID, "BatchInsertConversationList, cost time : ", b7-b6)
-
+	unreadMessageErr := c.db.BatchInsertConversationUnreadMessageList(unreadMessages)
+	if unreadMessageErr != nil {
+		log.Error(operationID, "insert BatchInsertConversationUnreadMessageList err:", err4.Error())
+	}
 	c.doMsgReadState(msgReadList)
 	b8 := utils.GetCurrentTimestampByMill()
 	log.Debug(operationID, "doMsgReadState  cost time : ", b8-b7)
@@ -516,6 +522,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	var isTriggerUnReadCount bool
 	var insertMsg, updateMsg, specialUpdateMsg []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
+	var unreadMessages []*model_struct.LocalConversationUnreadMessage
 	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate, isSenderNotificationPush bool
 	conversationChangedSet := make(map[string]*model_struct.LocalConversation)
@@ -730,6 +737,8 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 					if msg.SendTime > cacheConversation.UpdateUnreadCountTime {
 						isTriggerUnReadCount = true
 						lc.UnreadCount = 1
+						tempUnreadMessages := model_struct.LocalConversationUnreadMessage{ConversationID: lc.ConversationID, ClientMsgID: msg.ClientMsgID, SendTime: msg.SendTime}
+						unreadMessages = append(unreadMessages, &tempUnreadMessages)
 					}
 				}
 				if isConversationUpdate {
@@ -865,7 +874,10 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	}
 	b7 := utils.GetCurrentTimestampByMill()
 	log.Debug(operationID, "BatchInsertConversationList, cost time : ", b7-b6)
-
+	unreadMessageErr := c.db.BatchInsertConversationUnreadMessageList(unreadMessages)
+	if unreadMessageErr != nil {
+		log.Error(operationID, "insert BatchInsertConversationUnreadMessageList err:", err4.Error())
+	}
 	c.doMsgReadState(msgReadList)
 	b8 := utils.GetCurrentTimestampByMill()
 	log.Debug(operationID, "doMsgReadState  cost time : ", b8-b7)
