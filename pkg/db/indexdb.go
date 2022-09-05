@@ -1,8 +1,11 @@
 package db
 
 import (
+	"fmt"
 	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"syscall/js"
 )
 
 type IndexDB struct {
@@ -141,7 +144,14 @@ func (i IndexDB) MessageIfExistsBySeq(seq int64) (bool, error) {
 }
 
 func (i IndexDB) GetMessage(ClientMsgID string) (*model_struct.LocalChatLog, error) {
-	panic("implement me")
+	var msg model_struct.LocalChatLog
+	js.Global().Call("getMessage", "client_msg_id_123").Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		fmt.Println("=> (main go context) getMessage with respone ", args[0].String())
+		utils.JsonStringToStruct(args[0].String(), &msg)
+
+		return nil
+	}))
+	return &msg, nil
 }
 
 func (i IndexDB) GetMessageController(msg *sdk_struct.MsgStruct) (*model_struct.LocalChatLog, error) {
