@@ -150,6 +150,7 @@ func (d *DataBase) initDB() error {
 		&model_struct.LocalErrChatLog{},
 		&model_struct.LocalUser{},
 		&model_struct.LocalBlack{},
+		&model_struct.LocalConversationUnreadMessage{},
 		//&model_struct.LocalSeqData{},
 		//&model_struct.LocalSeq{},
 		&model_struct.LocalConversation{},
@@ -169,7 +170,9 @@ func (d *DataBase) initDB() error {
 	if !db.Migrator().HasTable(&model_struct.LocalFriendRequest{}) {
 		db.Migrator().CreateTable(&model_struct.LocalFriendRequest{})
 	}
-
+	if !db.Migrator().HasTable(&model_struct.LocalConversationUnreadMessage{}) {
+		db.Migrator().CreateTable(&model_struct.LocalConversationUnreadMessage{})
+	}
 	if !db.Migrator().HasTable(localGroup) {
 		db.Migrator().CreateTable(localGroup)
 	}
