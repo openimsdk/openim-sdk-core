@@ -867,7 +867,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	log.Debug(operationID, "BatchInsertConversationList, cost time : ", b7-b6)
 	unreadMessageErr := c.db.BatchInsertConversationUnreadMessageList(unreadMessages)
 	if unreadMessageErr != nil {
-		log.Error(operationID, "insert BatchInsertConversationUnreadMessageList err:", err4.Error())
+		log.Error(operationID, "insert BatchInsertConversationUnreadMessageList err:", unreadMessageErr.Error())
 	}
 	c.doMsgReadState(msgReadList)
 	b8 := utils.GetCurrentTimestampByMill()
