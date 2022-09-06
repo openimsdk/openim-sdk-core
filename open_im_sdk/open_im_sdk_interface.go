@@ -41,6 +41,11 @@ func SetHeartbeatInterval(heartbeatInterval int) {
 }
 
 func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, config string) bool {
+	log.NewPrivateLog("", sdk_struct.SvrConf.LogLevel)
+	if userForSDK != nil {
+		log.Warn(operationID, "Initialize multiple times, use the existing ", userForSDK)
+		return true
+	}
 	if err := json.Unmarshal([]byte(config), &sdk_struct.SvrConf); err != nil {
 		log.Error(operationID, "Unmarshal failed ", err.Error(), config)
 		return false
@@ -54,17 +59,13 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		return false
 	}
 
-	log.NewPrivateLog("", sdk_struct.SvrConf.LogLevel)
 	log.Info(operationID, "config ", config, sdk_struct.SvrConf)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), config, SdkVersion())
 	if listener == nil || config == "" {
 		log.Error(operationID, "listener or config is nil")
 		return false
 	}
-	if userForSDK != nil {
-		log.Warn(operationID, "Initialize multiple times, call logout")
-		userForSDK.Logout(nil, utils.OperationIDGenerator())
-	}
+
 	userForSDK = new(login.LoginMgr)
 
 	return userForSDK.InitSDK(sdk_struct.SvrConf, listener, operationID)
