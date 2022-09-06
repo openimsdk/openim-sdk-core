@@ -364,6 +364,7 @@ func (c *Conversation) SyncConversations(operationID string, timeout time.Durati
 func (c *Conversation) SyncConversationUnreadCount(operationID string) {
 	var conversationChangedList []string
 	allConversations := c.cache.GetAllHasUnreadMessageConversations()
+	log.Debug(operationID, "get unread message length is ", len(allConversations))
 	for _, conversation := range allConversations {
 		if deleteRows := c.db.DeleteConversationUnreadMessageList(conversation.ConversationID, conversation.UpdateUnreadCountTime); deleteRows > 0 {
 			log.Debug(operationID, conversation.ConversationID, conversation.UpdateUnreadCountTime, "delete rows:", deleteRows)
