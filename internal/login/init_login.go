@@ -255,6 +255,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	log.Debug(operationID, "SyncConversations begin ")
 	if constant.OnlyForTest == 0 {
 		u.conversation.SyncConversations(operationID, time.Second*2)
+		go u.conversation.SyncConversationUnreadCount(operationID)
 	}
 
 	go common.DoListener(u.conversation)

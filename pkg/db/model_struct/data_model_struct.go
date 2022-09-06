@@ -384,6 +384,12 @@ type LocalConversation struct {
 	AttachedInfo          string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 	Ex                    string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
+type LocalConversationUnreadMessage struct {
+	ConversationID string `gorm:"column:conversation_id;primary_key;type:char(128)" json:"conversationID"`
+	ClientMsgID    string `gorm:"column:client_msg_id;primary_key;type:char(64)" json:"clientMsgID"`
+	SendTime       int64  `gorm:"column:send_time" json:"sendTime"`
+	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+}
 
 //message GroupRequest{
 //string UserID = 1;
