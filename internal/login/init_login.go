@@ -149,7 +149,11 @@ func (u *LoginMgr) SetUserListener(userListener open_im_sdk_callback.OnUserListe
 }
 
 func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalingListener) {
-	u.signalingListener = listener
+	if u.signaling != nil {
+		u.signaling.SetListener(listener)
+	} else {
+		u.signalingListener = listener
+	}
 }
 
 func (u *LoginMgr) SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMomentsListener) {
@@ -242,7 +246,10 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	default:
 		objStorage = comm2.NewCOS(u.postApi)
 	}
-	u.signaling = signaling.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID, u.imConfig.Platform, u.db)
+	u.signaling = signaling.NewLiveSignaling(u.ws, u.loginUserID, u.imConfig.Platform, u.db)
+	if u.signalingListener != nil {
+		u.signaling.SetListener(u.signalingListener)
+	}
 
 	u.conversation = conv.NewConversation(u.ws, u.db, u.postApi, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir, u.imConfig.EncryptionKey,

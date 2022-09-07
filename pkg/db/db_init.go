@@ -2,7 +2,9 @@ package db
 
 import (
 	"errors"
+	//"github.com/glebarez/sqlite"
 	"gorm.io/driver/sqlite"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"open_im_sdk/pkg/constant"
@@ -51,6 +53,7 @@ func (d *DataBase) CloseDB(operationID string) error {
 	log.NewInfo(operationID, "CloseDB ok, delete db map ", d.loginUserID)
 	delete(UserDBMap, d.loginUserID)
 	UserDBLock.Unlock()
+	d.conn = nil
 	return nil
 }
 
@@ -70,9 +73,7 @@ func NewDataBase(loginUserID string, dbDir string, operationID string) (*DataBas
 	} else {
 		log.Info(operationID, "db in map", loginUserID)
 	}
-	go func() {
-		dataBase.setChatLogFailedStatus()
-	}()
+	dataBase.setChatLogFailedStatus()
 	return dataBase, nil
 }
 
@@ -123,7 +124,9 @@ func (d *DataBase) initDB() error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 
+	//cxn := "memdb1?mode=memory&cache=shared"
 	dbFileName := d.dbDir + "/OpenIM_" + constant.BigVersion + "_" + d.loginUserID + ".db"
+
 	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	log.Info("open db:", dbFileName)
 	if err != nil {

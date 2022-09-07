@@ -18,19 +18,19 @@ import (
 
 type LiveSignaling struct {
 	*ws.Ws
-	listener    open_im_sdk_callback.OnSignalingListener
-	loginUserID string
+	listenerList []open_im_sdk_callback.OnSignalingListener
+	loginUserID  string
 	*db.DataBase
 	platformID int32
 	isCanceled bool
 }
 
-func NewLiveSignaling(ws *ws.Ws, listener open_im_sdk_callback.OnSignalingListener, loginUserID string, platformID int32, db *db.DataBase) *LiveSignaling {
-	if ws == nil || listener == nil {
-		log.Warn("", "ws or SignalingListener is nil")
+func NewLiveSignaling(ws *ws.Ws, loginUserID string, platformID int32, db *db.DataBase) *LiveSignaling {
+	if ws == nil {
+		log.Warn("", " ws is nil")
 		return nil
 	}
-	return &LiveSignaling{Ws: ws, listener: listener, loginUserID: loginUserID, platformID: platformID, DataBase: db}
+	return &LiveSignaling{Ws: ws, loginUserID: loginUserID, platformID: platformID, DataBase: db}
 }
 
 func (s *LiveSignaling) waitPush(req *api.SignalReq, operationID string) {
@@ -51,11 +51,15 @@ func (s *LiveSignaling) waitPush(req *api.SignalReq, operationID string) {
 					switch payload := req.Payload.(type) {
 					case *api.SignalReq_Invite:
 						if !s.isCanceled {
-							s.listener.OnInvitationTimeout(utils.StructToJsonString(payload.Invite))
+							for _, listener := range s.listenerList {
+								listener.OnInvitationTimeout(utils.StructToJsonString(payload.Invite))
+							}
 						}
 					case *api.SignalReq_InviteInGroup:
 						if !s.isCanceled {
-							s.listener.OnInvitationTimeout(utils.StructToJsonString(payload.InviteInGroup))
+							for _, listener := range s.listenerList {
+								listener.OnInvitationTimeout(utils.StructToJsonString(payload.InviteInGroup))
+							}
 						}
 					}
 
@@ -76,10 +80,16 @@ func (s *LiveSignaling) doSignalPush(req *api.SignalReq, operationID string) {
 	//	s.listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.Invite))
 	case *api.SignalReq_Accept:
 		log.Info(operationID, "recv signal push Accept ", payload.Accept.String())
-		s.listener.OnInviteeAccepted(utils.StructToJsonString(payload.Accept))
+		for _, listener := range s.listenerList {
+			listener.OnInviteeAccepted(utils.StructToJsonString(payload.Accept))
+		}
+
 	case *api.SignalReq_Reject:
 		log.Info(operationID, "recv signal push Reject ", payload.Reject.String())
-		s.listener.OnInviteeRejected(utils.StructToJsonString(payload.Reject))
+		for _, listener := range s.listenerList {
+			listener.OnInviteeRejected(utils.StructToJsonString(payload.Reject))
+		}
+
 	//case *api.SignalReq_HungUp:
 	//	log.Info(operationID, "recv signal push HungUp ", payload.HungUp.String())
 	//	s.listener.OnHangUp(utils.StructToJsonString(payload.HungUp))
@@ -93,8 +103,8 @@ func (s *LiveSignaling) doSignalPush(req *api.SignalReq, operationID string) {
 	}
 }
 
-func (s *LiveSignaling) SetListener(listener open_im_sdk_callback.OnSignalingListener, operationID string) {
-	s.listener = listener
+func (s *LiveSignaling) SetListener(listener open_im_sdk_callback.OnSignalingListener) {
+	s.listenerList = append(s.listenerList, listener)
 }
 
 func (s *LiveSignaling) getSelfParticipant(groupID string, callback open_im_sdk_callback.Base, operationID string) *api.ParticipantMetaData {
@@ -118,7 +128,7 @@ func (s *LiveSignaling) getSelfParticipant(groupID string, callback open_im_sdk_
 
 func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value, operationID string) {
 	log.Info(operationID, utils.GetSelfFuncName(), "args ", msg.String())
-	if s.listener == nil {
+	if len(s.listenerList) == 0 {
 		log.Error(operationID, "not set Signaling Listener")
 		return
 	}
@@ -141,7 +151,10 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 			return
 		}
 		if payload.Accept.OpUserPlatformID != s.platformID && payload.Accept.OpUserID == s.loginUserID {
-			s.listener.OnInviteeAcceptedByOtherDevice(utils.StructToJsonString(payload.Accept))
+			for _, listener := range s.listenerList {
+				listener.OnInviteeAcceptedByOtherDevice(utils.StructToJsonString(payload.Accept))
+			}
+
 			return
 		}
 	case *api.SignalReq_Reject:
@@ -156,35 +169,44 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 			return
 		}
 		if payload.Reject.OpUserPlatformID != s.platformID && payload.Reject.OpUserID == s.loginUserID {
-			s.listener.OnInviteeRejectedByOtherDevice(utils.StructToJsonString(payload.Reject))
+			for _, listener := range s.listenerList {
+				listener.OnInviteeRejectedByOtherDevice(utils.StructToJsonString(payload.Reject))
+			}
+
 			return
 		}
 
 	case *api.SignalReq_HungUp:
 		log.Info(operationID, "signaling response HungUp", payload.HungUp.String())
 		if s.loginUserID != payload.HungUp.OpUserID {
-			s.listener.OnHangUp(utils.StructToJsonString(payload.HungUp))
+			for _, listener := range s.listenerList {
+				listener.OnHangUp(utils.StructToJsonString(payload.HungUp))
+			}
 		}
 	case *api.SignalReq_Cancel:
 		log.Info(operationID, "signaling response ", payload.Cancel.String())
 		if utils.IsContain(s.loginUserID, payload.Cancel.Invitation.InviteeUserIDList) {
-			s.listener.OnInvitationCancelled(utils.StructToJsonString(payload.Cancel))
+
+			for _, listener := range s.listenerList {
+				listener.OnInvitationCancelled(utils.StructToJsonString(payload.Cancel))
+			}
 		}
 	case *api.SignalReq_Invite:
 		log.Info(operationID, "signaling response ", payload.Invite.String())
 		if utils.IsContain(s.loginUserID, payload.Invite.Invitation.InviteeUserIDList) {
 			//	if s.loginUserID == payload.Invite.Invitation.InviterUserID {
-			if s.listener == nil {
-				log.Error(operationID, "signaling listener is null")
+			for _, listener := range s.listenerList {
+				listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.Invite))
 			}
-			s.listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.Invite))
 		}
 
 	case *api.SignalReq_InviteInGroup:
 		log.Info(operationID, "signaling response ", payload.InviteInGroup.String())
 		if utils.IsContain(s.loginUserID, payload.InviteInGroup.Invitation.InviteeUserIDList) {
 			//	if s.loginUserID == payload.InviteInGroup.Invitation.InviterUserID {
-			s.listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.InviteInGroup))
+			for _, listener := range s.listenerList {
+				listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.InviteInGroup))
+			}
 		}
 	default:
 		log.Error(operationID, "resp payload type failed ", payload)
