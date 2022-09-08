@@ -122,30 +122,64 @@ func (u *LoginMgr) WorkMoments() *workMoments.WorkMoments {
 }
 
 func (u *LoginMgr) SetConversationListener(conversationListener open_im_sdk_callback.OnConversationListener) {
-	u.conversationListener = conversationListener
+	if u.conversation != nil {
+		u.conversation.SetConversationListener(conversationListener)
+	} else {
+		u.conversationListener = conversationListener
+	}
 }
 
 func (u *LoginMgr) SetAdvancedMsgListener(advancedMsgListener open_im_sdk_callback.OnAdvancedMsgListener) {
-	u.advancedMsgListener = advancedMsgListener
+	if u.conversation != nil {
+		u.conversation.SetMsgListener(advancedMsgListener)
+	} else {
+		u.advancedMsgListener = advancedMsgListener
+	}
 }
 
 func (u *LoginMgr) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnBatchMsgListener) {
-	u.batchMsgListener = batchMsgListener
+	if u.conversation != nil {
+		u.conversation.SetBatchMsgListener(batchMsgListener)
+	} else {
+		u.batchMsgListener = batchMsgListener
+	}
 }
 func (u *LoginMgr) SetFriendListener(friendListener open_im_sdk_callback.OnFriendshipListener) {
-	u.friendListener = friendListener
+	if u.friend != nil {
+		u.friend.SetFriendListener(friendListener)
+	} else {
+		u.friendListener = friendListener
+	}
 }
 
 func (u *LoginMgr) SetGroupListener(groupListener open_im_sdk_callback.OnGroupListener) {
-	u.groupListener = groupListener
+	if u.group != nil {
+		u.group.SetGroupListener(groupListener)
+	} else {
+		u.groupListener = groupListener
+	}
 }
 
 func (u *LoginMgr) SetOrganizationListener(listener open_im_sdk_callback.OnOrganizationListener) {
-	u.organizationListener = listener
+	if u.organization != nil {
+		u.organization.SetListener(listener)
+	} else {
+		u.organizationListener = listener
+	}
 }
 
 func (u *LoginMgr) SetUserListener(userListener open_im_sdk_callback.OnUserListener) {
-	u.userListener = userListener
+	//if u.signaling != nil {
+	//		u.signaling.SetListener(listener)
+	//	} else {
+	//		u.signalingListener = listener
+	//	}
+
+	if u.user != nil {
+		u.user.SetListener(userListener)
+	} else {
+		u.userListener = userListener
+	}
 }
 
 func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalingListener) {
@@ -157,7 +191,12 @@ func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalin
 }
 
 func (u *LoginMgr) SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMomentsListener) {
-	u.workMomentsListener = listener
+	if u.workMoments != nil {
+		u.workMoments.SetListener(listener)
+	} else {
+		u.workMomentsListener = listener
+	}
+
 }
 
 func (u *LoginMgr) wakeUp(cb open_im_sdk_callback.Base, operationID string) {
