@@ -24,8 +24,10 @@ type Heartbeat struct {
 	token             string
 	listener          open_im_sdk_callback.OnConnListener
 	//ExpireTimeSeconds uint32
-	id2MinSeq map[string]uint32
-	full      *full.Full
+	id2MinSeq          map[string]uint32
+	full               *full.Full
+	WsForTest          *interaction.Ws
+	LoginUserIDForTest string
 }
 
 func (u *Heartbeat) SetHeartbeatInterval(heartbeatInterval int) {
@@ -70,6 +72,30 @@ func (u *Heartbeat) Run() {
 	heartbeatNum := 0
 	for {
 		operationID := utils.OperationIDGenerator()
+		if constant.OnlyForTest == 1 {
+			time.Sleep(5 * time.Second)
+			var groupIDList []string
+			resp, err := u.WsForTest.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: u.LoginUserIDForTest, GroupIDList: groupIDList}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.LoginUserIDForTest, operationID)
+			if err != nil {
+				log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.LoginUserIDForTest)
+				if !errors.Is(err, constant.WsRecvConnSame) && !errors.Is(err, constant.WsRecvConnDiff) {
+					log.Error(operationID, "other err,  close conn", err.Error())
+					u.CloseConn(operationID)
+				}
+				continue
+			}
+
+			var wsSeqResp server_api_params.GetMaxAndMinSeqResp
+			err = proto.Unmarshal(resp.Data, &wsSeqResp)
+			if err != nil {
+				log.Error(operationID, "Unmarshal failed, close conn", err.Error())
+				u.CloseConn(operationID)
+				continue
+			}
+			log.Debug(operationID, "heartbeat req -> resp ")
+			continue
+		}
+
 		if heartbeatNum != 0 {
 			select {
 			case r := <-u.cmdCh:

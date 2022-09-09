@@ -11,18 +11,53 @@ import (
 	"time"
 )
 
+func InviteListToGroup(userIDList []string, groupID string) {
+	var inviteReq server_api_params.InviteUserToGroupReq
+	inviteReq.OperationID = utils.OperationIDGenerator()
+	inviteReq.GroupID = groupID
+	inviteReq.InvitedUserIDList = userIDList
+	for {
+		resp, err := network.Post2Api(INVITEUSERTOGROUP, inviteReq, AdminToken)
+		if err != nil {
+			log.Warn(inviteReq.OperationID, " INVITE USER TO GROUP failed", inviteReq, "err: ", err)
+			continue
+		} else {
+			log.Info(inviteReq.OperationID, " invite resp : ", string(resp))
+			return
+		}
+	}
+}
+
+func InviteToGroup(userID string, groupID string) {
+	var inviteReq server_api_params.InviteUserToGroupReq
+	inviteReq.OperationID = utils.OperationIDGenerator()
+	inviteReq.GroupID = groupID
+	inviteReq.InvitedUserIDList = []string{userID}
+	for {
+		resp, err := network.Post2Api(INVITEUSERTOGROUP, inviteReq, AdminToken)
+		if err != nil {
+			log.Warn(inviteReq.OperationID, " INVITE USER TO GROUP failed", inviteReq, "err: ", err)
+			continue
+		} else {
+			log.Info(inviteReq.OperationID, " invite resp : ", string(resp))
+			return
+		}
+	}
+}
+
 func CreateWorkGroup(number int) string {
 	t1 := time.Now()
 	RegisterWorkGroupAccounts(number)
 	log.Info("", "RegisterAccounts  cost time: ", time.Since(t1), "Online client number ", number)
 
+	groupID := ""
 	var req server_api_params.CreateGroupReq
 
-	var memberList []*server_api_params.GroupAddMemberInfo
-	for _, v := range allUserID {
-		memberList = append(memberList, &server_api_params.GroupAddMemberInfo{UserID: v, RoleLevel: 1})
-	}
-	req.MemberList = memberList
+	//var memberList []*server_api_params.GroupAddMemberInfo
+	//for _, v := range allUserID {
+	//	memberList = append(memberList, &server_api_params.GroupAddMemberInfo{UserID: v, RoleLevel: 1})
+	//}
+	//	req.MemberList = memberList
 	req.OwnerUserID = "openIM123456"
 	for {
 		req.OperationID = utils.OperationIDGenerator()
@@ -33,11 +68,47 @@ func CreateWorkGroup(number int) string {
 			log.Warn(req.OperationID, "CREATE GROUP failed", string(resp), "err: ", err)
 			continue
 		} else {
-			var result server_api_params.CreateGroupResp
-			json.Unmarshal(resp, result)
-			return result.GroupInfo.GroupID
+			type CreateGroupResp struct {
+				server_api_params.CommResp
+				GroupInfo server_api_params.GroupInfo `json:"data"`
+			}
+
+			var result CreateGroupResp
+			err := json.Unmarshal(resp, &result)
+			if err != nil {
+				log.Error(req.OperationID, "Unmarshal failed ", err.Error(), string(resp))
+			}
+			log.Info(req.OperationID, "Unmarshal  ", string(resp), result)
+			groupID = result.GroupInfo.GroupID
+			log.Info(req.OperationID, "create groupID:", groupID)
+			break
 		}
 	}
+
+	split := 100
+	idx := 0
+	remain := len(allUserID) % split
+	for idx = 0; idx < len(allUserID)/split; idx++ {
+		sub := allUserID[idx*split : (idx+1)*split]
+		log.Warn(req.OperationID, "invite to groupID:", groupID)
+		InviteListToGroup(sub, groupID)
+	}
+	if remain > 0 {
+		sub := allUserID[idx*split:]
+		log.Warn(req.OperationID, "invite to groupID:", groupID)
+		InviteListToGroup(sub, groupID)
+	}
+
+	//var wg sync.WaitGroup
+	//for _, v := range allUserID {
+	//	wg.Add(1)
+	//	go func(uID, gID string) {
+	//		InviteToGroup(uID, gID)
+	//		wg.Done()
+	//	}(v, groupID)
+	//}
+	//wg.Wait()
+	return groupID
 }
 
 func RegisterWorkGroupAccounts(number int) {
