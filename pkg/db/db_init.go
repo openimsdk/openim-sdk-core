@@ -53,7 +53,6 @@ func (d *DataBase) CloseDB(operationID string) error {
 	log.NewInfo(operationID, "CloseDB ok, delete db map ", d.loginUserID)
 	delete(UserDBMap, d.loginUserID)
 	UserDBLock.Unlock()
-	d.conn = nil
 	return nil
 }
 

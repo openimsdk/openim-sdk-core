@@ -103,6 +103,16 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	operationID := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).OperationID
 	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).MsgList
 	syncFlag := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).SyncFlag
+	if c.msgListener == nil || c.ConversationListener == nil {
+		for _, v := range allMsg {
+			if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
+				log.Info(operationID, "signaling DoNotification ", v, "signaling:", c.signaling)
+				c.signaling.DoNotification(v, c.GetCh(), operationID)
+			} else {
+				log.Info(operationID, "listener is nil, do nothing ", v)
+			}
+		}
+	}
 	if c.msgListener == nil {
 		log.Error(operationID, "not set c MsgListenerList")
 		return
