@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/log"
 
 	//	_ "net/http/pprof"
 	"net/http"
@@ -39,6 +41,8 @@ func main() {
 	openIMDbDir = flag.String("openIMDbDir", "../db/sdk/", "openIM db dir")
 	flag.Parse()
 	fmt.Println("sdk server init args is :", "apiAddress:", *openIMApiAddress, "wsAddress:", *openIMWsAddress, *sdkWsPort, *logLevel)
+	log.NewPrivateLog(constant.LogFileName, uint32(*logLevel))
+
 	sysType := runtime.GOOS
 	open_im_sdk.SetHeartbeatInterval(5)
 	switch sysType {
@@ -48,7 +52,7 @@ func main() {
 		fallthrough
 	case "windows":
 		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: *openIMApiAddress,
-			WsAddr: *openIMWsAddress, Platform: utils.WebPlatformID, DataDir: *openIMDbDir})
+			WsAddr: *openIMWsAddress, Platform: utils.WebPlatformID, DataDir: *openIMDbDir, LogLevel: uint32(*logLevel)})
 	default:
 		fmt.Println("this os not support", sysType)
 
