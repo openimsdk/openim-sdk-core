@@ -1,24 +1,28 @@
-package db
+package indexdb
 
 import (
 	"errors"
-	"fmt"
+	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"runtime"
+	"sync"
 	"syscall/js"
 )
 
 type IndexDB struct {
+	LocalUsers
 }
+
 type CallbackData struct {
 	ErrCode int32       `json:"errCode"`
 	ErrMsg  string      `json:"errMsg"`
 	Data    interface{} `json:"data"`
 }
 
-func (i IndexDB) Exec(args ...interface{}) (output interface{}, err error) {
+func Exec(args ...interface{}) (output interface{}, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			switch x := r.(type) {
@@ -34,16 +38,20 @@ func (i IndexDB) Exec(args ...interface{}) (output interface{}, err error) {
 	pc, _, _, _ := runtime.Caller(1)
 	funcName := utils.CleanUpfuncName(runtime.FuncForPC(pc).Name())
 	data := CallbackData{}
-
+	wg := sync.WaitGroup{}
+	wg.Add(1)
 	js.Global().Call(funcName, args...).Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		fmt.Println("=> (main go context) getMessage with respone ", args[0].String())
+		log.Debug("js", "=> (main go context) "+funcName+" with respone ", args[0].String())
 		interErr := utils.JsonStringToStruct(args[0].String(), &data)
 		if interErr != nil {
 			err = utils.Wrap(err, "return json unmarshal err from javascript")
+			wg.Done()
 			return nil
 		}
+		wg.Done()
 		return nil
 	}))
+	wg.Wait()
 	if data.ErrCode != 0 {
 		return nil, errors.New(data.ErrMsg)
 	}
@@ -183,14 +191,17 @@ func (i IndexDB) MessageIfExistsBySeq(seq int64) (bool, error) {
 }
 
 func (i IndexDB) GetMessage(ClientMsgID string) (*model_struct.LocalChatLog, error) {
-	var msg model_struct.LocalChatLog
-	js.Global().Call("getMessage", "client_msg_id_123").Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		fmt.Println("=> (main go context) getMessage with respone ", args[0].String())
-		utils.JsonStringToStruct(args[0].String(), &msg)
-
-		return nil
-	}))
-	return &msg, nil
+	msg, err := Exec(ClientMsgID)
+	if err != nil {
+		return nil, err
+	} else {
+		v, ok := msg.(model_struct.LocalChatLog)
+		if ok {
+			return &v, nil
+		} else {
+			return nil, errors.New("type err")
+		}
+	}
 }
 
 func (i IndexDB) GetMessageController(msg *sdk_struct.MsgStruct) (*model_struct.LocalChatLog, error) {
@@ -673,22 +684,6 @@ func (i IndexDB) InsertTempCacheMessage(Message *model_struct.TempCacheLocalChat
 	panic("implement me")
 }
 
-func (i IndexDB) GetLoginUser(userID string) (*model_struct.LocalUser, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateLoginUser(user *model_struct.LocalUser) error {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateLoginUserByMap(user *model_struct.LocalUser, args map[string]interface{}) error {
-	panic("implement me")
-}
-
-func (i IndexDB) InsertLoginUser(user *model_struct.LocalUser) error {
-	panic("implement me")
-}
-
 func (i IndexDB) InsertFriend(friend *model_struct.LocalFriend) error {
 	panic("implement me")
 }
@@ -873,11 +868,11 @@ func (i IndexDB) InsertWorkMomentsNotification(jsonDetail string) error {
 	panic("implement me")
 }
 
-func (i IndexDB) GetWorkMomentsNotification(offset, count int) (WorkMomentsNotifications []*LocalWorkMomentsNotification, err error) {
+func (i IndexDB) GetWorkMomentsNotification(offset, count int) (WorkMomentsNotifications []*db.LocalWorkMomentsNotification, err error) {
 	panic("implement me")
 }
 
-func (i IndexDB) GetWorkMomentsNotificationLimit(pageNumber, showNumber int) (WorkMomentsNotifications []*LocalWorkMomentsNotification, err error) {
+func (i IndexDB) GetWorkMomentsNotificationLimit(pageNumber, showNumber int) (WorkMomentsNotifications []*db.LocalWorkMomentsNotification, err error) {
 	panic("implement me")
 }
 
@@ -893,7 +888,7 @@ func (i IndexDB) MarkAllWorkMomentsNotificationAsRead() (err error) {
 	panic("implement me")
 }
 
-func (i IndexDB) GetWorkMomentsUnReadCount() (workMomentsNotificationUnReadCount LocalWorkMomentsNotificationUnreadCount, err error) {
+func (i IndexDB) GetWorkMomentsUnReadCount() (workMomentsNotificationUnReadCount db.LocalWorkMomentsNotificationUnreadCount, err error) {
 	panic("implement me")
 }
 

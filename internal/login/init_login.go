@@ -24,6 +24,7 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"open_im_sdk/wasm/indexdb"
 	"sync"
 	"time"
 )
@@ -170,7 +171,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.token = token
 	u.loginUserID = userID
 	if sdk_struct.SvrConf.Platform == constant.WebPlatformID {
-		u.db = db.NewIndexDB()
+		u.db = indexdb.NewIndexDB()
 	} else {
 		sqliteConn, err := db.NewDataBase(userID, sdk_struct.SvrConf.DataDir, operationID)
 		if err != nil {

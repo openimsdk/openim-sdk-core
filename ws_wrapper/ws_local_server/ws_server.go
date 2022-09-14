@@ -313,7 +313,7 @@ func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request, operation
 
 	status := http.StatusUnauthorized
 	query := r.URL.Query()
-	log.Info(operationID, "headerCheck: ", query["token"], query["platformID"], query["sendID"])
+	log.Info(operationID, "headerCheck: ", query["token"], query["platformID"], query["sendID"], r.RemoteAddr)
 	if len(query["token"]) != 0 && len(query["sendID"]) != 0 && len(query["platformID"]) != 0 {
 		SendID := query["sendID"][0] + " " + utils.PlatformIDToName(int32(utils.StringToInt64(query["platformID"][0])))
 		if ws.getConnNum(SendID) >= POINTNUM {
