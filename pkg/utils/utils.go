@@ -97,7 +97,7 @@ func StringToInt(i string) int {
 
 func RunFuncName() string {
 	pc, _, _, _ := runtime.Caller(2)
-	return cleanUpfuncName(runtime.FuncForPC(pc).Name())
+	return CleanUpfuncName(runtime.FuncForPC(pc).Name())
 }
 
 func LogBegin(v ...interface{}) {
@@ -255,9 +255,9 @@ func WithMessage(err error, message string) error {
 
 func GetSelfFuncName() string {
 	pc, _, _, _ := runtime.Caller(1)
-	return cleanUpfuncName(runtime.FuncForPC(pc).Name())
+	return CleanUpfuncName(runtime.FuncForPC(pc).Name())
 }
-func cleanUpfuncName(funcName string) string {
+func CleanUpfuncName(funcName string) string {
 	end := strings.LastIndex(funcName, ".")
 	if end == -1 {
 		return ""

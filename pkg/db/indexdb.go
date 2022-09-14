@@ -1,16 +1,55 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"runtime"
 	"syscall/js"
 )
 
 type IndexDB struct {
 }
+type CallbackData struct {
+	ErrCode int32       `json:"errCode"`
+	ErrMsg  string      `json:"errMsg"`
+	Data    interface{} `json:"data"`
+}
 
+func (i IndexDB) Exec(args ...interface{}) (output interface{}, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			switch x := r.(type) {
+			case string:
+				err = errors.New(x)
+			case error:
+				err = x
+			default:
+				err = errors.New("unknow panic")
+			}
+		}
+	}()
+	pc, _, _, _ := runtime.Caller(1)
+	funcName := utils.CleanUpfuncName(runtime.FuncForPC(pc).Name())
+	data := CallbackData{}
+
+	js.Global().Call(funcName, args...).Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		fmt.Println("=> (main go context) getMessage with respone ", args[0].String())
+		interErr := utils.JsonStringToStruct(args[0].String(), &data)
+		if interErr != nil {
+			err = utils.Wrap(err, "return json unmarshal err from javascript")
+			return nil
+		}
+		return nil
+	}))
+	if data.ErrCode != 0 {
+		return nil, errors.New(data.ErrMsg)
+	}
+	return data.Data, err
+
+}
 func (i IndexDB) InsertGroup(groupInfo *model_struct.LocalGroup) error {
 	panic("implement me")
 }

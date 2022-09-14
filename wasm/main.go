@@ -9,6 +9,8 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"open_im_sdk/test"
+	"open_im_sdk/wasm"
+	"syscall/js"
 )
 
 type BaseSuccessFailed struct {
@@ -81,5 +83,17 @@ func main() {
 	strMyUidx := "3984071717"
 	tokenx := test.RunGetToken(strMyUidx)
 	open_im_sdk.Login(&base, operationID, strMyUidx, tokenx)
+	registerFunc()
 	<-make(chan bool)
+}
+
+
+
+
+func registerFunc()  {
+	js.Global().Set(wasm.COMMONEVENTFUNC, js.FuncOf(wasm.CommonEventFunc))
+	js.Global().Set("initSDK", js.FuncOf(wasm.InitSDK))
+	js.Global().Set("login", js.FuncOf(wasm.Login))
+
+
 }
