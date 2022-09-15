@@ -16,5 +16,5 @@ func (d *DataBase) BatchInsertConversationUnreadMessageList(messageList []*model
 func (d *DataBase) DeleteConversationUnreadMessageList(conversationID string, sendTime int64) int64 {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return d.conn.Debug().Where("conversation_id = ? and send_time <= ?", conversationID, sendTime).Delete(&model_struct.LocalConversationUnreadMessage{}).RowsAffected
+	return d.conn.Where("conversation_id = ? and send_time <= ?", conversationID, sendTime).Delete(&model_struct.LocalConversationUnreadMessage{}).RowsAffected
 }
