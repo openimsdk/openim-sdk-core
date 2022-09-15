@@ -27,7 +27,7 @@ func (l *LocalUsers) UpdateLoginUser(user *model_struct.LocalUser) error {
 
 }
 func (l *LocalUsers) UpdateLoginUserByMap(user *model_struct.LocalUser, args map[string]interface{}) error {
-	_, err := Exec(user, args)
+	_, err := Exec(user.UserID, args)
 	return err
 }
 func (l *LocalUsers) InsertLoginUser(user *model_struct.LocalUser) error {
