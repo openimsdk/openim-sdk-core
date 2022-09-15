@@ -18,7 +18,6 @@ import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
@@ -173,13 +172,13 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	if sdk_struct.SvrConf.Platform == constant.WebPlatformID {
 		u.db = indexdb.NewIndexDB()
 	} else {
-		sqliteConn, err := db.NewDataBase(userID, sdk_struct.SvrConf.DataDir, operationID)
-		if err != nil {
-			cb.OnError(constant.ErrDB.ErrCode, err.Error())
-			log.Error(operationID, "NewDataBase failed ", err.Error())
-			return
-		}
-		u.db = sqliteConn
+		//sqliteConn, err := db.NewDataBase(userID, sdk_struct.SvrConf.DataDir, operationID)
+		//if err != nil {
+		//	cb.OnError(constant.ErrDB.ErrCode, err.Error())
+		//	log.Error(operationID, "NewDataBase failed ", err.Error())
+		//	return
+		//}
+		//u.db = sqliteConn
 	}
 	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir, "login cost time: ", time.Since(t1))
 
@@ -227,16 +226,16 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
 
 	var objStorage comm3.ObjectStorage
-	switch u.imConfig.ObjectStorage {
-	case "cos":
-		objStorage = comm2.NewCOS(u.postApi)
-	case "minio":
-		objStorage = comm2.NewMinio(u.postApi)
-	case "oss":
-		objStorage = comm2.NewOSS(u.postApi)
-	default:
-		objStorage = comm2.NewCOS(u.postApi)
-	}
+	//switch u.imConfig.ObjectStorage {
+	//case "cos":
+	//	objStorage = comm2.NewCOS(u.postApi)
+	//case "minio":
+	//	objStorage = comm2.NewMinio(u.postApi)
+	//case "oss":
+	//	objStorage = comm2.NewOSS(u.postApi)
+	//default:
+	//	objStorage = comm2.NewCOS(u.postApi)
+	//}
 	u.signaling = signaling.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID, u.imConfig.Platform, u.db)
 
 	u.conversation = conv.NewConversation(u.ws, u.db, u.postApi, u.conversationCh,
@@ -430,16 +429,16 @@ func CheckToken(userID, token string, operationID string) (error, uint32) {
 }
 
 func (u *LoginMgr) uploadImage(callback open_im_sdk_callback.Base, filePath string, token, obj string, operationID string) string {
-	p := ws.NewPostApi(token, u.ImConfig().ApiAddr)
+	//p := ws.NewPostApi(token, u.ImConfig().ApiAddr)
 	var o comm3.ObjectStorage
-	switch obj {
-	case "cos":
-		o = comm2.NewCOS(p)
-	case "minio":
-		o = comm2.NewMinio(p)
-	default:
-		o = comm2.NewCOS(p)
-	}
+	//switch obj {
+	//case "cos":
+	//	o = comm2.NewCOS(p)
+	//case "minio":
+	//	o = comm2.NewMinio(p)
+	//default:
+	//	o = comm2.NewCOS(p)
+	//}
 	url, _, err := o.UploadImage(filePath, func(progress int) {
 		if progress == 100 {
 			callback.OnSuccess("")

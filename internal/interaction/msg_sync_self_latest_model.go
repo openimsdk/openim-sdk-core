@@ -4,7 +4,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
@@ -12,7 +12,7 @@ import (
 )
 
 type SelfMsgSyncLatestModel struct {
-	*db.DataBase
+	db_interface.DataBase
 	*Ws
 	loginUserID        string
 	conversationCh     chan common.Cmd2Value
@@ -25,7 +25,7 @@ type SelfMsgSyncLatestModel struct {
 	maxSeqOnLocal   uint32
 }
 
-func NewSelfMsgSyncLatestModel(dataBase *db.DataBase, ws *Ws, loginUserID string, conversationCh chan common.Cmd2Value) *SelfMsgSyncLatestModel {
+func NewSelfMsgSyncLatestModel(dataBase db_interface.DataBase, ws *Ws, loginUserID string, conversationCh chan common.Cmd2Value) *SelfMsgSyncLatestModel {
 	p := &SelfMsgSyncLatestModel{DataBase: dataBase, Ws: ws, loginUserID: loginUserID, conversationCh: conversationCh}
 	p.pushMsgCache = make(map[uint32]*server_api_params.MsgData, 0)
 	return p

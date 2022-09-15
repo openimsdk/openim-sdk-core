@@ -4,7 +4,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/sdk_struct"
@@ -12,7 +12,7 @@ import (
 )
 
 type SuperGroupMsgSync struct {
-	*db.DataBase
+	db_interface.DataBase
 	*Ws
 	loginUserID              string
 	conversationCh           chan common.Cmd2Value
@@ -23,7 +23,7 @@ type SuperGroupMsgSync struct {
 	joinedSuperGroupCh       chan common.Cmd2Value
 }
 
-func NewSuperGroupMsgSync(dataBase *db.DataBase, ws *Ws, loginUserID string, conversationCh chan common.Cmd2Value, joinedSuperGroupCh chan common.Cmd2Value) *SuperGroupMsgSync {
+func NewSuperGroupMsgSync(dataBase db_interface.DataBase, ws *Ws, loginUserID string, conversationCh chan common.Cmd2Value, joinedSuperGroupCh chan common.Cmd2Value) *SuperGroupMsgSync {
 	p := &SuperGroupMsgSync{DataBase: dataBase, Ws: ws, loginUserID: loginUserID, conversationCh: conversationCh, joinedSuperGroupCh: joinedSuperGroupCh}
 	p.Group2SeqMaxNeedSync = make(map[string]uint32, 0)
 	p.Group2SeqMaxSynchronized = make(map[string]uint32, 0)
