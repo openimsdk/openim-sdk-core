@@ -140,10 +140,10 @@ func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		} else {
 
-			SendID := query["sendID"][0] + " " + utils.PlatformIDToName(int32(utils.StringToInt64(query["platformID"][0])))
+			sendIDAndPlatformID := query["sendID"][0] + " " + utils.PlatformIDToName(int32(utils.StringToInt64(query["platformID"][0])))
 			newConn := &UserConn{conn, new(sync.Mutex)}
-			ws.addUserConn(SendID, newConn, operationID)
-			go ws.readMsg(newConn)
+			ws.addUserConn(sendIDAndPlatformID, newConn, operationID)
+			go ws.readMsg(newConn, sendIDAndPlatformID)
 		}
 	} else {
 		log.NewError(operationID, "headerCheck failed")
@@ -158,11 +158,11 @@ func pMem() {
 	fmt.Println("mem for test os ", m.Sys)
 	fmt.Println("mem for test HeapAlloc ", m.HeapAlloc)
 }
-func (ws *WServer) readMsg(conn *UserConn) {
+func (ws *WServer) readMsg(conn *UserConn, sendIDAndPlatformID string) {
 	for {
 		msgType, msg, err := conn.ReadMessage()
 		if err != nil {
-			log.Info("", "ReadMessage error", "", "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn), "error", err.Error())
+			log.Info("", "ReadMessage error", "", "userIP", conn.RemoteAddr().String(), "userUid", sendIDAndPlatformID, "error", err.Error())
 
 			//log.Info("debug memory delUserConn begin ")
 			//time.Sleep(1 * time.Second)
@@ -172,7 +172,7 @@ func (ws *WServer) readMsg(conn *UserConn) {
 			//time.Sleep(1 * time.Second)
 			return
 		} else {
-			log.Info("", "ReadMessage ok ", "", "msgType", msgType, "userIP", conn.RemoteAddr().String(), "userUid", ws.getUserUid(conn))
+			log.Info("", "ReadMessage ok ", "", "msgType", msgType, "userIP", conn.RemoteAddr().String(), "userUid", sendIDAndPlatformID)
 		}
 		m := Req{}
 		json.Unmarshal(msg, &m)
