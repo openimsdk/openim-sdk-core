@@ -24,7 +24,7 @@ func InitSDK(_ js.Value, args []js.Value) interface{} {
 	return js.ValueOf(open_im_sdk.InitSDK(callback, args[0].String(), args[1].String()))
 }
 func Login(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.GetSelfFuncName(), args[0].String(), commonFunc)
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), args[0].String(), commonFunc)
 	if len(args) < 3 {
 		callback.OnError(100, "args err")
 		return nil

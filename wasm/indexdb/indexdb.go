@@ -27,13 +27,11 @@ func Exec(args ...interface{}) (output string, err error) {
 		if r := recover(); r != nil {
 			switch x := r.(type) {
 			case string:
-				err = errors.New(x)
-				log.Error("", "panic info is here", err.Error())
+				err = utils.Wrap(errors.New(x), "")
 			case error:
 				err = x
-				log.Error("", "panic info is here", err.Error())
 			default:
-				err = errors.New("unknow panic")
+				err = utils.Wrap(errors.New("unknow panic"), "")
 			}
 		}
 	}()
@@ -42,7 +40,7 @@ func Exec(args ...interface{}) (output string, err error) {
 	data := CallbackData{}
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	js.Global().Call(funcName, args...).Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+	js.Global().Call(utils.FirstLower(funcName), args...).Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		log.Debug("js", "=> (main go context) "+funcName+" with respone ", args[0].String())
 		interErr := utils.JsonStringToStruct(args[0].String(), &data)
 		if interErr != nil {

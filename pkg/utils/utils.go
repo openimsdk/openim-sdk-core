@@ -70,6 +70,12 @@ func StructToJsonStringDefault(param interface{}) string {
 func JsonStringToStruct(s string, args interface{}) error {
 	return Wrap(json.Unmarshal([]byte(s), args), "json Unmarshal failed")
 }
+func FirstLower(s string) string {
+	if s == "" {
+		return ""
+	}
+	return strings.ToLower(s[:1]) + s[1:]
+}
 
 //Convert timestamp to time.Time type
 
