@@ -1,8 +1,9 @@
-package wasm
+package wrapper
 
 import (
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/wasm/event_listener"
 	"syscall/js"
 )
 
@@ -19,13 +20,13 @@ func CommonEventFunc(_ js.Value, args []js.Value) interface{} {
 	}
 }
 func InitSDK(_ js.Value, args []js.Value) interface{} {
-	callback := NewInitCallback(commonFunc)
+	callback := event_listener.NewInitCallback(commonFunc)
 	return js.ValueOf(open_im_sdk.InitSDK(callback, args[0].String(), args[1].String()))
 }
 func Login(_ js.Value, args []js.Value) interface{} {
-	callback := NewBaseCallback(utils.GetSelfFuncName(), args[0].String(), commonFunc)
-	if len(args) <3 {
-		callback.OnError(100,"args err")
+	callback := event_listener.NewBaseCallback(utils.GetSelfFuncName(), args[0].String(), commonFunc)
+	if len(args) < 3 {
+		callback.OnError(100, "args err")
 		return nil
 	}
 	open_im_sdk.Login(callback, args[0].String(), args[1].String(), args[2].String())

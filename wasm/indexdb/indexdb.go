@@ -17,19 +17,21 @@ type IndexDB struct {
 }
 
 type CallbackData struct {
-	ErrCode int32       `json:"errCode"`
-	ErrMsg  string      `json:"errMsg"`
-	Data    interface{} `json:"data"`
+	ErrCode int32  `json:"errCode"`
+	ErrMsg  string `json:"errMsg"`
+	Data    string `json:"data"`
 }
 
-func Exec(args ...interface{}) (output interface{}, err error) {
+func Exec(args ...interface{}) (output string, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			switch x := r.(type) {
 			case string:
 				err = errors.New(x)
+				log.Error("", "panic info is here", err.Error())
 			case error:
 				err = x
+				log.Error("", "panic info is here", err.Error())
 			default:
 				err = errors.New("unknow panic")
 			}
@@ -53,7 +55,7 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 	}))
 	wg.Wait()
 	if data.ErrCode != 0 {
-		return nil, errors.New(data.ErrMsg)
+		return "", errors.New(data.ErrMsg)
 	}
 	return data.Data, err
 
@@ -190,17 +192,24 @@ func (i IndexDB) MessageIfExistsBySeq(seq int64) (bool, error) {
 	panic("implement me")
 }
 
+//1,使用wasm原生的方式，tinygo应用于go的嵌入式领域，支持的功能有限，甚至json序列化都无法支持
+//2.函数命名遵从驼峰还是帕斯卡命名法需要确定一下
+//3.提供的sql生成语句中，关于bool值需要特殊处理，create语句的设计的到bool值的我会在创建语句中单独说明，这是因为在原有的sqlite中并不支持bool，用整数1或者0替代，gorm对其做了转换。
+//4.提供的sql生成语句中，字段名是下划线方式 例如：recv_id，但是接口转换的数据json tag字段的风格是recvID，类似的所有的字段需要做个map映射
+
 func (i IndexDB) GetMessage(ClientMsgID string) (*model_struct.LocalChatLog, error) {
 	msg, err := Exec(ClientMsgID)
+	log.Info("test", msg)
 	if err != nil {
 		return nil, err
 	} else {
-		v, ok := msg.(model_struct.LocalChatLog)
-		if ok {
-			return &v, nil
-		} else {
-			return nil, errors.New("type err")
+		result := model_struct.LocalChatLog{}
+		err := utils.JsonStringToStruct(msg, &result)
+		if err != nil {
+			return nil, err
 		}
+		return &result, err
+
 	}
 }
 

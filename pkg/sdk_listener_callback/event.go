@@ -25,6 +25,7 @@ func (e *EventData) SetEvent(event string) *EventData {
 	e.Event = event
 	return e
 }
+
 func (e *EventData) SetData(data interface{}) *EventData {
 	e.Data = data
 	return e
