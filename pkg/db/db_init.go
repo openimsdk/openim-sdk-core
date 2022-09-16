@@ -2,7 +2,9 @@ package db
 
 import (
 	"errors"
+	//"github.com/glebarez/sqlite"
 	"gorm.io/driver/sqlite"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"open_im_sdk/pkg/constant"
@@ -33,22 +35,22 @@ type DataBase struct {
 	superGroupMtx sync.RWMutex
 }
 
-func (d *DataBase) CloseDB() error {
+func (d *DataBase) CloseDB(operationID string) error {
 	UserDBLock.Lock()
 	dbConn, err := d.conn.DB()
 	if err != nil {
-		log.Error("", "get db conn failed ", err.Error())
+		log.Error(operationID, "get db conn failed ", err.Error())
 	} else {
 		if dbConn != nil {
-			log.Info("", "close db finished")
+			log.Info(operationID, "close db finished")
 			err := dbConn.Close()
 			if err != nil {
-				log.Error("", "close db failed ", err.Error())
+				log.Error(operationID, "close db failed ", err.Error())
 			}
 		}
 	}
 
-	log.NewInfo("", "CloseDB ok, delete db map ", d.loginUserID)
+	log.NewInfo(operationID, "CloseDB ok, delete db map ", d.loginUserID)
 	delete(UserDBMap, d.loginUserID)
 	UserDBLock.Unlock()
 	return nil
@@ -70,9 +72,7 @@ func NewDataBase(loginUserID string, dbDir string, operationID string) (*DataBas
 	} else {
 		log.Info(operationID, "db in map", loginUserID)
 	}
-	go func() {
-		dataBase.setChatLogFailedStatus()
-	}()
+	dataBase.setChatLogFailedStatus()
 	return dataBase, nil
 }
 
@@ -123,7 +123,9 @@ func (d *DataBase) initDB() error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 
+	//cxn := "memdb1?mode=memory&cache=shared"
 	dbFileName := d.dbDir + "/OpenIM_" + constant.BigVersion + "_" + d.loginUserID + ".db"
+
 	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	log.Info("open db:", dbFileName)
 	if err != nil {
@@ -150,6 +152,7 @@ func (d *DataBase) initDB() error {
 		&model_struct.LocalErrChatLog{},
 		&model_struct.LocalUser{},
 		&model_struct.LocalBlack{},
+		&model_struct.LocalConversationUnreadMessage{},
 		//&model_struct.LocalSeqData{},
 		//&model_struct.LocalSeq{},
 		&model_struct.LocalConversation{},
@@ -169,7 +172,9 @@ func (d *DataBase) initDB() error {
 	if !db.Migrator().HasTable(&model_struct.LocalFriendRequest{}) {
 		db.Migrator().CreateTable(&model_struct.LocalFriendRequest{})
 	}
-
+	if !db.Migrator().HasTable(&model_struct.LocalConversationUnreadMessage{}) {
+		db.Migrator().CreateTable(&model_struct.LocalConversationUnreadMessage{})
+	}
 	if !db.Migrator().HasTable(localGroup) {
 		db.Migrator().CreateTable(localGroup)
 	}

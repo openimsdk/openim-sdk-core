@@ -104,6 +104,10 @@ func (c *Conversation) setOneConversationUnread(callback open_im_sdk_callback.Ba
 	apiReq.UnreadCount = int32(unreadCount)
 	apiReq.FieldType = constant.FieldUnread
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
+	deleteRows := c.db.DeleteConversationUnreadMessageList(localConversation.ConversationID, localConversation.LatestMsgSendTime)
+	if deleteRows == 0 {
+		log.Error(operationID, "DeleteConversationUnreadMessageList err", localConversation.ConversationID, localConversation.LatestMsgSendTime)
+	}
 }
 
 func (c *Conversation) setOneConversationPrivateChat(callback open_im_sdk_callback.Base, conversationID string, isPrivate bool, operationID string) {
@@ -356,6 +360,28 @@ func (c *Conversation) SyncConversations(operationID string, timeout time.Durati
 	c.cache.UpdateConversations(conversationsOnLocal)
 	log.Info(operationID, "cache update cost time", time.Since(cTime))
 	log.Info(operationID, utils.GetSelfFuncName(), "all  cost time", time.Since(ccTime))
+}
+func (c *Conversation) SyncConversationUnreadCount(operationID string) {
+	var conversationChangedList []string
+	allConversations := c.cache.GetAllHasUnreadMessageConversations()
+	log.Debug(operationID, "get unread message length is ", len(allConversations))
+	for _, conversation := range allConversations {
+		log.Debug(operationID, "has unread message conversation is:", *conversation)
+		if deleteRows := c.db.DeleteConversationUnreadMessageList(conversation.ConversationID, conversation.UpdateUnreadCountTime); deleteRows > 0 {
+			log.Debug(operationID, conversation.ConversationID, conversation.UpdateUnreadCountTime, "delete rows:", deleteRows)
+			if err := c.db.DecrConversationUnreadCount(conversation.ConversationID, deleteRows); err != nil {
+				log.Debug(operationID, conversation.ConversationID, conversation.UpdateUnreadCountTime, "decr unread count err:", err.Error())
+			} else {
+				conversationChangedList = append(conversationChangedList, conversation.ConversationID)
+			}
+		}
+	}
+	if len(conversationChangedList) > 0 {
+		if err := common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedList}, c.GetCh()); err != nil {
+			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
+		}
+	}
+
 }
 
 func (c *Conversation) SyncOneConversation(conversationID, operationID string) {

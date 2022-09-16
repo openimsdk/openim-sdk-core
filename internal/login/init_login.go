@@ -52,15 +52,16 @@ type LoginMgr struct {
 
 	justOnceFlag bool
 
-	groupListener        open_im_sdk_callback.OnGroupListener
-	friendListener       open_im_sdk_callback.OnFriendshipListener
-	conversationListener open_im_sdk_callback.OnConversationListener
-	advancedMsgListener  open_im_sdk_callback.OnAdvancedMsgListener
-	batchMsgListener     open_im_sdk_callback.OnBatchMsgListener
-	userListener         open_im_sdk_callback.OnUserListener
-	signalingListener    open_im_sdk_callback.OnSignalingListener
-	organizationListener open_im_sdk_callback.OnOrganizationListener
-	workMomentsListener  open_im_sdk_callback.OnWorkMomentsListener
+	groupListener               open_im_sdk_callback.OnGroupListener
+	friendListener              open_im_sdk_callback.OnFriendshipListener
+	conversationListener        open_im_sdk_callback.OnConversationListener
+	advancedMsgListener         open_im_sdk_callback.OnAdvancedMsgListener
+	batchMsgListener            open_im_sdk_callback.OnBatchMsgListener
+	userListener                open_im_sdk_callback.OnUserListener
+	signalingListener           open_im_sdk_callback.OnSignalingListener
+	signalingListenerFroService open_im_sdk_callback.OnSignalingListener
+	organizationListener        open_im_sdk_callback.OnOrganizationListener
+	workMomentsListener         open_im_sdk_callback.OnWorkMomentsListener
 
 	conversationCh     chan common.Cmd2Value
 	cmdWsCh            chan common.Cmd2Value
@@ -122,38 +123,89 @@ func (u *LoginMgr) WorkMoments() *workMoments.WorkMoments {
 }
 
 func (u *LoginMgr) SetConversationListener(conversationListener open_im_sdk_callback.OnConversationListener) {
-	u.conversationListener = conversationListener
+	if u.conversation != nil {
+		u.conversation.SetConversationListener(conversationListener)
+	} else {
+		u.conversationListener = conversationListener
+	}
 }
 
 func (u *LoginMgr) SetAdvancedMsgListener(advancedMsgListener open_im_sdk_callback.OnAdvancedMsgListener) {
-	u.advancedMsgListener = advancedMsgListener
+	if u.conversation != nil {
+		u.conversation.SetMsgListener(advancedMsgListener)
+	} else {
+		u.advancedMsgListener = advancedMsgListener
+	}
 }
 
 func (u *LoginMgr) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnBatchMsgListener) {
-	u.batchMsgListener = batchMsgListener
+	if u.conversation != nil {
+		u.conversation.SetBatchMsgListener(batchMsgListener)
+	} else {
+		u.batchMsgListener = batchMsgListener
+	}
 }
 func (u *LoginMgr) SetFriendListener(friendListener open_im_sdk_callback.OnFriendshipListener) {
-	u.friendListener = friendListener
+	if u.friend != nil {
+		u.friend.SetFriendListener(friendListener)
+	} else {
+		u.friendListener = friendListener
+	}
 }
 
 func (u *LoginMgr) SetGroupListener(groupListener open_im_sdk_callback.OnGroupListener) {
-	u.groupListener = groupListener
+	if u.group != nil {
+		u.group.SetGroupListener(groupListener)
+	} else {
+		u.groupListener = groupListener
+	}
 }
 
 func (u *LoginMgr) SetOrganizationListener(listener open_im_sdk_callback.OnOrganizationListener) {
-	u.organizationListener = listener
+	if u.organization != nil {
+		u.organization.SetListener(listener)
+	} else {
+		u.organizationListener = listener
+	}
 }
 
 func (u *LoginMgr) SetUserListener(userListener open_im_sdk_callback.OnUserListener) {
-	u.userListener = userListener
+	//if u.signaling != nil {
+	//		u.signaling.SetListener(listener)
+	//	} else {
+	//		u.signalingListener = listener
+	//	}
+
+	if u.user != nil {
+		u.user.SetListener(userListener)
+	} else {
+		u.userListener = userListener
+	}
 }
 
 func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalingListener) {
-	u.signalingListener = listener
+	if u.signaling != nil {
+		u.signaling.SetListener(listener)
+	} else {
+		u.signalingListener = listener
+	}
+}
+
+func (u *LoginMgr) SetSignalingListenerForService(listener open_im_sdk_callback.OnSignalingListener) {
+	if u.signaling != nil {
+		u.signaling.SetListenerForService(listener)
+	} else {
+		u.signalingListenerFroService = listener
+	}
 }
 
 func (u *LoginMgr) SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMomentsListener) {
-	u.workMomentsListener = listener
+	if u.workMoments != nil {
+		u.workMoments.SetListener(listener)
+	} else {
+		u.workMomentsListener = listener
+	}
+
 }
 
 func (u *LoginMgr) wakeUp(cb open_im_sdk_callback.Base, operationID string) {
@@ -174,6 +226,9 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID)
 		wsRespAsyn := ws.NewWsRespAsyn()
 		u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
+		u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
+		u.heartbeat.WsForTest = u.ws
+		u.heartbeat.LoginUserIDForTest = u.loginUserID
 		cb.OnSuccess("")
 		return
 	}
@@ -244,8 +299,13 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	default:
 		objStorage = comm2.NewCOS(u.postApi)
 	}
-	u.signaling = signaling.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID, u.imConfig.Platform, u.db)
-
+	u.signaling = signaling.NewLiveSignaling(u.ws, u.loginUserID, u.imConfig.Platform, u.db)
+	if u.signalingListener != nil {
+		u.signaling.SetListener(u.signalingListener)
+	}
+	if u.signalingListenerFroService != nil {
+		u.signaling.SetListenerForService(u.signalingListenerFroService)
+	}
 	u.conversation = conv.NewConversation(u.ws, u.db, u.postApi, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir, u.imConfig.EncryptionKey,
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener,
@@ -255,10 +315,8 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		log.Info(operationID, "SetBatchMsgListener ", u.batchMsgListener)
 	}
 	log.Debug(operationID, "SyncConversations begin ")
-	if constant.OnlyForTest == 0 {
-		u.conversation.SyncConversations(operationID, time.Second*2)
-	}
-
+	u.conversation.SyncConversations(operationID, time.Second*2)
+	go u.conversation.SyncConversationUnreadCount(operationID)
 	go common.DoListener(u.conversation)
 	log.Debug(operationID, "SyncConversations end ")
 
@@ -320,7 +378,7 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 		log.Warn(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
 	}
 	log.Info(operationID, "close db ")
-	u.db.CloseDB()
+	u.db.CloseDB(operationID)
 
 	if callback != nil {
 		callback.OnSuccess("")

@@ -1,20 +1,89 @@
 package main
 
 import (
+	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/test"
 	"time"
 )
 
+var allDB []*db.DataBase
+
+func TestDB(loginUserID string) {
+	operationID := utils.OperationIDGenerator()
+	dbUser, err := db.NewDataBase(loginUserID, "/data/test/Open-IM-Server/db/sdk/", operationID)
+	if err != nil {
+		log.Error(operationID, "NewDataBase failed ", err.Error(), loginUserID)
+		return
+	}
+	conversationList, err := dbUser.GetAllConversationList()
+	if err != nil {
+		log.Error(operationID, "GetAllConversationList failed ", err.Error())
+	}
+	log.Info(operationID, "GetAllConversationList len: ", len(conversationList))
+
+	groupIDList, err := dbUser.GetJoinedGroupList()
+	if err != nil {
+		log.Error(operationID, "GetJoinedGroupList failed ", err.Error())
+	}
+	log.Info(operationID, "GetJoinedGroupList len: ", len(groupIDList))
+
+	groupMemberList, err := dbUser.GetAllGroupMemberList()
+	if err != nil {
+		log.Error(operationID, "GetAllGroupMemberList failed ", err.Error())
+	}
+	log.Info(operationID, "GetAllGroupMemberList len: ", len(groupMemberList))
+	//GetAllMessageForTest
+	msgList, err := dbUser.GetAllMessageForTest()
+	if err != nil {
+		log.Error(operationID, "GetAllMessageForTest failed ", err.Error())
+	}
+	log.Info(operationID, "GetAllMessageForTest len: ", len(msgList))
+	allDB = append(allDB, dbUser)
+
+	dbUser.CloseDB(operationID)
+	log.Info(operationID, "close db finished ")
+
+}
+
 func main() {
-	//strMyUidx := "1928715256"
-	//strMyUidx := "3798435312"
-	strMyUidx := "192.168.0.112_workgroup_10000"
+	//var userIDList []string
+	//f, err := os.Open("/data/test/Open-IM-Server/db/sdk")
+	//if err != nil {
+	//	log.Error("", "open failed ", err.Error())
+	//	return
+	//}
+	//files, err := f.Readdir(-1)
+	//f.Close()
+	//if err != nil {
+	//	log.Error("", "Readdir failed ", err.Error())
+	//	return
+	//}
+	//
+	//for _, file := range files {
+	//	begin := strings.Index(file.Name(), "OpenIM_v2_")
+	//	end := strings.Index(file.Name(), ".db")
+	//	userID := file.Name()[begin+len("OpenIM_v2_") : end]
+	//	// OpenIM_v2_3380999461.db
+	//	log.Info("", "file name: ", file.Name(), userID)
+	//	TestDB(userID)
+	//}
+	//log.Info("", "files: ", len(allDB))
+	////for _, v := range allDB {
+	////	v.CloseDB("aa")
+	////}
+	//
+	//log.Info("", "gc begin ")
+	//runtime.GC()
+	//log.Info("", "gc end ")
+	//time.Sleep(100000 * time.Second)
+	//return
+	strMyUidx := "2165082675"
 	tokenx := test.RunGetToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
-
+	//	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
 	time.Sleep(100000 * time.Second)
 
 	//	test.DotestGetGroupMemberList()

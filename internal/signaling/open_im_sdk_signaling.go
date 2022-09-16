@@ -22,9 +22,19 @@ func (s *LiveSignaling) InviteInGroup(callback open_im_sdk_callback.Base, signal
 		log.Error(operationID, "callback is nil")
 		return
 	}
-	if s.listener == nil {
-		log.Error(operationID, "listener is nil")
-		callback.OnError(3004, "listener is nil")
+	var listenerList []open_im_sdk_callback.OnSignalingListener
+	if s.listener != nil {
+		listenerList = append(listenerList, s.listener)
+		log.Info(operationID, "listenerList ", listenerList, "listener ", s.listener)
+	}
+	if s.listenerForService != nil {
+		listenerList = append(listenerList, s.listenerForService)
+		log.Info(operationID, "listenerList ", listenerList, "listenerForService ", s.listenerForService)
+	}
+
+	if len(listenerList) == 0 {
+		log.Error(operationID, "not set signaling listener ")
+		callback.OnError(3004, "not set signaling listener ")
 	}
 	fName := utils.GetSelfFuncName()
 	go func() {
@@ -48,7 +58,18 @@ func (s *LiveSignaling) Invite(callback open_im_sdk_callback.Base, signalInviteR
 		log.Error(operationID, "callback is nil")
 		return
 	}
-	if s.listener == nil {
+
+	var listenerList []open_im_sdk_callback.OnSignalingListener
+	if s.listener != nil {
+		listenerList = append(listenerList, s.listener)
+		log.Info(operationID, "listenerList ", listenerList, "listener ", s.listener)
+	}
+	if s.listenerForService != nil {
+		listenerList = append(listenerList, s.listenerForService)
+		log.Info(operationID, "listenerList ", listenerList, "listenerForService ", s.listenerForService)
+	}
+
+	if len(listenerList) == 0 {
 		log.Error(operationID, "listener is nil")
 		callback.OnError(3004, "listener is nil")
 	}
@@ -74,9 +95,19 @@ func (s *LiveSignaling) Accept(callback open_im_sdk_callback.Base, signalAcceptR
 		log.Error(operationID, "callback is nil")
 		return
 	}
-	if s.listener == nil {
-		log.Error(operationID, "listener is nil")
-		callback.OnError(3004, "listener is nil")
+	var listenerList []open_im_sdk_callback.OnSignalingListener
+	if s.listener != nil {
+		listenerList = append(listenerList, s.listener)
+		log.Info(operationID, "listenerList ", listenerList, "listener ", s.listener)
+	}
+	if s.listenerForService != nil {
+		listenerList = append(listenerList, s.listenerForService)
+		log.Info(operationID, "listenerList ", listenerList, "listenerForService ", s.listenerForService)
+	}
+
+	if len(listenerList) == 0 {
+		log.Error(operationID, "not set signaling listener")
+		callback.OnError(3004, "not set signaling listener")
 	}
 	fName := utils.GetSelfFuncName()
 	go func() {
@@ -100,9 +131,19 @@ func (s *LiveSignaling) Reject(callback open_im_sdk_callback.Base, signalRejectR
 		log.NewError(operationID, "callback is nil")
 		return
 	}
-	if s.listener == nil {
-		log.Error(operationID, "listener is nil")
-		callback.OnError(3004, "listener is nil")
+	var listenerList []open_im_sdk_callback.OnSignalingListener
+	if s.listener != nil {
+		listenerList = append(listenerList, s.listener)
+		log.Info(operationID, "listenerList ", listenerList, "listener ", s.listener)
+	}
+	if s.listenerForService != nil {
+		listenerList = append(listenerList, s.listenerForService)
+		log.Info(operationID, "listenerList ", listenerList, "listenerForService ", s.listenerForService)
+	}
+
+	if len(listenerList) == 0 {
+		log.Error(operationID, "not set signaling listener")
+		callback.OnError(3004, "not set signaling listener")
 	}
 	fName := utils.GetSelfFuncName()
 	go func() {
@@ -125,9 +166,19 @@ func (s *LiveSignaling) Cancel(callback open_im_sdk_callback.Base, signalCancelR
 	if callback == nil {
 		log.NewError(operationID, "callback is nil")
 	}
-	if s.listener == nil {
-		log.Error(operationID, "listener is nil")
-		callback.OnError(3004, "listener is nil")
+	var listenerList []open_im_sdk_callback.OnSignalingListener
+	if s.listener != nil {
+		listenerList = append(listenerList, s.listener)
+		log.Info(operationID, "listenerList ", listenerList, "listener ", s.listener)
+	}
+	if s.listenerForService != nil {
+		listenerList = append(listenerList, s.listenerForService)
+		log.Info(operationID, "listenerList ", listenerList, "listenerForService ", s.listenerForService)
+	}
+
+	if len(listenerList) == 0 {
+		log.Error(operationID, "not set signaling listener")
+		callback.OnError(3004, "not set signaling listener")
 	}
 	fName := utils.GetSelfFuncName()
 	go func() {
@@ -148,9 +199,19 @@ func (s *LiveSignaling) HungUp(callback open_im_sdk_callback.Base, signalHungUpR
 	if callback == nil {
 		log.NewError(operationID, "callback is nil")
 	}
-	if s.listener == nil {
-		log.Error(operationID, "listener is nil")
-		callback.OnError(3004, "listener is nil")
+	var listenerList []open_im_sdk_callback.OnSignalingListener
+	if s.listener != nil {
+		listenerList = append(listenerList, s.listener)
+		log.Info(operationID, "listenerList ", listenerList, "listener ", s.listener)
+	}
+	if s.listenerForService != nil {
+		listenerList = append(listenerList, s.listenerForService)
+		log.Info(operationID, "listenerList ", listenerList, "listenerForService ", s.listenerForService)
+	}
+
+	if len(listenerList) == 0 {
+		log.Error(operationID, "not set signaling listener")
+		callback.OnError(3004, "not set signaling listener")
 	}
 	fName := utils.GetSelfFuncName()
 	go func() {

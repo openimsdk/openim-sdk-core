@@ -16,6 +16,7 @@ type OnConnListener interface {
 	OnKickedOffline()
 	OnUserTokenExpired()
 }
+
 type OnGroupListener interface {
 	OnJoinedGroupAdded(groupInfo string)
 	OnJoinedGroupDeleted(groupInfo string)

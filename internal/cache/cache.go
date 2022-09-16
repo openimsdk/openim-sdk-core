@@ -28,16 +28,35 @@ func (c *Cache) Update(userID, faceURL, nickname string) {
 	c.userMap.Store(userID, UserInfo{faceURL: faceURL, Nickname: nickname})
 }
 func (c *Cache) UpdateConversation(conversation model_struct.LocalConversation) {
-	c.userMap.Store(conversation.ConversationID, conversation)
+	c.conversationMap.Store(conversation.ConversationID, conversation)
 }
 func (c *Cache) UpdateConversations(conversations []*model_struct.LocalConversation) {
 	for _, conversation := range conversations {
-		c.userMap.Store(conversation.ConversationID, *conversation)
+		c.conversationMap.Store(conversation.ConversationID, *conversation)
 	}
 }
+func (c *Cache) GetAllConversations() (conversations []*model_struct.LocalConversation) {
+	c.conversationMap.Range(func(key, value interface{}) bool {
+		temp := value.(model_struct.LocalConversation)
+		conversations = append(conversations, &temp)
+		return true
+	})
+	return conversations
+}
+func (c *Cache) GetAllHasUnreadMessageConversations() (conversations []*model_struct.LocalConversation) {
+	c.conversationMap.Range(func(key, value interface{}) bool {
+		temp := value.(model_struct.LocalConversation)
+		if temp.UnreadCount > 0 {
+			conversations = append(conversations, &temp)
+		}
+		return true
+	})
+	return conversations
+}
+
 func (c *Cache) GetConversation(conversationID string) model_struct.LocalConversation {
 	var result model_struct.LocalConversation
-	conversation, ok := c.userMap.Load(conversationID)
+	conversation, ok := c.conversationMap.Load(conversationID)
 	if ok {
 		result = conversation.(model_struct.LocalConversation)
 	}

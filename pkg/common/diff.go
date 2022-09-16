@@ -1,7 +1,6 @@
 package common
 
 import (
-	"fmt"
 	"open_im_sdk/pkg/db/model_struct"
 
 	"github.com/google/go-cmp/cmp"
@@ -634,7 +633,7 @@ func CheckConversationListDiff(conversationsOnServer, conversationsOnLocal []*te
 			//fmt.Println("test result is v", v)
 			//fmt.Println("test result is ia", ia)
 			if !cmp.Equal(v, ia) {
-				fmt.Println(v, ia)
+				//fmt.Println(v, ia)
 				// key of a and b is equal, but value different
 				//fmt.Println("sameA", conversationsOnServer[i], ia)
 				sameA = append(sameA, i)

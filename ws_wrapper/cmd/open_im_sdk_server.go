@@ -1,25 +1,20 @@
-/*
-** description("").
-** copyright('open-im,www.open-im.io').
-** author("fg,Gordon@tuoyun.net").
-** time(2021/9/8 14:35).
- */
 package main
 
 import (
 	"flag"
 	"fmt"
-	"net/http"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/log"
 
 	//	_ "net/http/pprof"
+	"net/http"
 	_ "net/http/pprof"
-	"open_im_sdk/pkg/constant"
 	"open_im_sdk/sdk_struct"
 
 	//"open_im_sdk/open_im_sdk"
+
 	log1 "log"
-	"open_im_sdk/pkg/log"
 	"open_im_sdk/ws_wrapper/utils"
 	"open_im_sdk/ws_wrapper/ws_local_server"
 	"runtime"
@@ -32,7 +27,12 @@ func main() {
 		log1.Println(http.ListenAndServe("0.0.0.0:6060", nil))
 	}()
 	var sdkWsPort, logLevel *int
-	var openIMWsAddress, openIMDbDir, openIMApiAddress *string
+	var openIMWsAddress, openIMApiAddress, openIMDbDir *string
+
+	// 	log1.Println(http.ListenAndServe("0.0.0.0:6060", nil))
+	// }()
+	// var sdkWsPort, logLevel *int
+	// var openIMWsAddress, openIMDbDir, openIMApiAddress *string
 
 	openIMApiAddress = flag.String("openIM_api_address", "http://127.0.0.1:10002", "openIM api listening address")
 	openIMWsAddress = flag.String("openIM_ws_address", "ws://127.0.0.1:10001", "openIM ws listening address")
@@ -41,8 +41,9 @@ func main() {
 	openIMDbDir = flag.String("openIMDbDir", "../db/sdk/", "openIM db dir")
 	flag.Parse()
 	fmt.Println("sdk server init args is :", "apiAddress:", *openIMApiAddress, "wsAddress:", *openIMWsAddress, *sdkWsPort, *logLevel)
-	sysType := runtime.GOOS
 	log.NewPrivateLog(constant.LogFileName, uint32(*logLevel))
+
+	sysType := runtime.GOOS
 	open_im_sdk.SetHeartbeatInterval(5)
 	switch sysType {
 	case "darwin":
@@ -51,7 +52,7 @@ func main() {
 		fallthrough
 	case "windows":
 		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: *openIMApiAddress,
-			WsAddr: *openIMWsAddress, Platform: utils.WebPlatformID, DataDir: *openIMDbDir})
+			WsAddr: *openIMWsAddress, Platform: utils.WebPlatformID, DataDir: *openIMDbDir, LogLevel: uint32(*logLevel)})
 	default:
 		fmt.Println("this os not support", sysType)
 
