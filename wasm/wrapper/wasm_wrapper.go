@@ -19,6 +19,7 @@ func CommonEventFunc(_ js.Value, args []js.Value) interface{} {
 		return js.ValueOf(false)
 	}
 }
+
 func InitSDK(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewInitCallback(commonFunc)
 	return js.ValueOf(open_im_sdk.InitSDK(callback, args[0].String(), args[1].String()))
