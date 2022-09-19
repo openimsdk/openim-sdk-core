@@ -4,7 +4,7 @@ import (
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
-	"open_im_sdk/wasm/wrapper"
+	"open_im_sdk/wasm/wasm_wrapper"
 
 	"open_im_sdk/wasm/indexdb"
 	"syscall/js"
@@ -109,8 +109,8 @@ func main() {
 }
 
 func registerFunc() {
-	js.Global().Set(wrapper.COMMONEVENTFUNC, js.FuncOf(wrapper.CommonEventFunc))
-	js.Global().Set("initSDK", js.FuncOf(wrapper.InitSDK))
-	js.Global().Set("login", js.FuncOf(wrapper.Login))
+	js.Global().Set(wasm_wrapper.COMMONEVENTFUNC, js.FuncOf(wasm_wrapper.CommonEventFunc))
+	js.Global().Set("initSDK", js.FuncOf(wasm_wrapper.InitSDK))
+	js.Global().Set("login", js.FuncOf(wasm_wrapper.Login))
 
 }

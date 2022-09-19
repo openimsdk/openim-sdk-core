@@ -1,4 +1,4 @@
-package wrapper
+package wasm_wrapper
 
 import (
 	"open_im_sdk/open_im_sdk"
