@@ -15,12 +15,15 @@ func (i IndexDB) GetMessage(clientMsgID string) (*model_struct.LocalChatLog, err
 	if err != nil {
 		return nil, err
 	} else {
-		result := model_struct.LocalChatLog{}
-		err := utils.JsonStringToStruct(msg, &result)
-		if err != nil {
-			return nil, err
+		if v, ok := msg.(string); ok {
+			result := model_struct.LocalChatLog{}
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
+			}
+			return &result, err
+		} else {
+			return nil, ErrType
 		}
-		return &result, err
-
 	}
 }

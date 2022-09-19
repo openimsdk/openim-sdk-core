@@ -17,12 +17,12 @@ type IndexDB struct {
 }
 
 type CallbackData struct {
-	ErrCode int32  `json:"errCode"`
-	ErrMsg  string `json:"errMsg"`
-	Data    string `json:"data"`
+	ErrCode int32       `json:"errCode"`
+	ErrMsg  string      `json:"errMsg"`
+	Data    interface{} `json:"data"`
 }
 
-func Exec(args ...interface{}) (output string, err error) {
+func Exec(args ...interface{}) (output interface{}, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			switch x := r.(type) {
@@ -31,7 +31,7 @@ func Exec(args ...interface{}) (output string, err error) {
 			case error:
 				err = x
 			default:
-				err = utils.Wrap(errors.New("unknow panic"), "")
+				err = utils.Wrap(errors.New("unknown panic"), "")
 			}
 		}
 	}()

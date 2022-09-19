@@ -22,7 +22,6 @@ func (i *InitCallback) OnConnectSuccess() {
 	i.eventData.SetSelfCallerFuncName().SendMessage()
 
 }
-
 func (i *InitCallback) OnConnectFailed(errCode int32, errMsg string) {
 	i.eventData.SetSelfCallerFuncName().SetErrCode(errCode).SetErrMsg(errMsg).SendMessage()
 }

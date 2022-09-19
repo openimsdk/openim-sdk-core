@@ -1,9 +1,12 @@
 package indexdb
 
 import (
+	"errors"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 )
+
+var ErrType = errors.New("from js data type err")
 
 type LocalUsers struct {
 }
@@ -13,12 +16,17 @@ func (l *LocalUsers) GetLoginUser(userID string) (*model_struct.LocalUser, error
 	if err != nil {
 		return nil, err
 	} else {
-		result := model_struct.LocalUser{}
-		err := utils.JsonStringToStruct(user, &result)
-		if err != nil {
-			return nil, err
+		if v, ok := user.(string); ok {
+			result := model_struct.LocalUser{}
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
+			}
+			return &result, err
+		} else {
+			return nil, ErrType
 		}
-		return &result, err
+
 	}
 }
 
