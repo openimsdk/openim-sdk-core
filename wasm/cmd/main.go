@@ -103,6 +103,12 @@ func main() {
 	} else {
 		log.Info(opid, "UpdateLoginUserByMap success:")
 	}
+	seq, err := db.GetNormalMsgSeq()
+	if err != nil {
+		log.Error(opid, "GetNormalMsgSeq:", err.Error())
+	} else {
+		log.Info(opid, "GetNormalMsgSeq seq  success:", seq)
+	}
 
 	registerFunc()
 	<-make(chan bool)

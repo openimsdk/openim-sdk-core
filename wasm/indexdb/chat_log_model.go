@@ -84,8 +84,10 @@ func (i *LocalChatLogs) GetNormalMsgSeq() (uint32, error) {
 	if err != nil {
 		return 0, err
 	} else {
-		if v, ok := seq.(uint32); ok {
-			return v, err
+		if v, ok := seq.(float64); ok {
+			var result uint32
+			result = uint32(v)
+			return result, err
 		} else {
 			return 0, ErrType
 		}
