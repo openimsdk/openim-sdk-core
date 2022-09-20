@@ -12,7 +12,10 @@ import (
 //3.提供的sql生成语句中，关于bool值需要特殊处理，create语句的设计的到bool值的我会在创建语句中单独说明，这是因为在原有的sqlite中并不支持bool，用整数1或者0替代，gorm对其做了转换。
 //4.提供的sql生成语句中，字段名是下划线方式 例如：recv_id，但是接口转换的数据json tag字段的风格是recvID，类似的所有的字段需要做个map映射
 
-func (i IndexDB) GetMessage(clientMsgID string) (*model_struct.LocalChatLog, error) {
+type LocalChatLogs struct {
+}
+
+func (i *LocalChatLogs) GetMessage(clientMsgID string) (*model_struct.LocalChatLog, error) {
 	msg, err := Exec(clientMsgID)
 	if err != nil {
 		return nil, err
@@ -29,7 +32,7 @@ func (i IndexDB) GetMessage(clientMsgID string) (*model_struct.LocalChatLog, err
 		}
 	}
 }
-func (i IndexDB) GetSendingMessageList() (result []*model_struct.LocalChatLog, err error) {
+func (i *LocalChatLogs) GetSendingMessageList() (result []*model_struct.LocalChatLog, err error) {
 	msgList, err := Exec()
 	if err != nil {
 		return nil, err
@@ -50,7 +53,7 @@ func (i IndexDB) GetSendingMessageList() (result []*model_struct.LocalChatLog, e
 		}
 	}
 }
-func (i IndexDB) UpdateMessage(c *model_struct.LocalChatLog) error {
+func (i *LocalChatLogs) UpdateMessage(c *model_struct.LocalChatLog) error {
 	if c.ClientMsgID == "" {
 		return PrimaryKeyNull
 	}
@@ -76,7 +79,7 @@ func (i IndexDB) UpdateMessage(c *model_struct.LocalChatLog) error {
 	_, err := Exec(c.ClientMsgID, utils.StructToJsonString(tempLocalChatLog))
 	return err
 }
-func (i IndexDB) GetNormalMsgSeq() (uint32, error) {
+func (i *LocalChatLogs) GetNormalMsgSeq() (uint32, error) {
 	seq, err := Exec()
 	if err != nil {
 		return 0, err
@@ -88,71 +91,71 @@ func (i IndexDB) GetNormalMsgSeq() (uint32, error) {
 		}
 	}
 }
-func (i IndexDB) BatchInsertMessageList(messageList []*model_struct.LocalChatLog) error {
+func (i *LocalChatLogs) BatchInsertMessageList(messageList []*model_struct.LocalChatLog) error {
 	_, err := Exec(utils.StructToJsonString(messageList))
 	return err
 }
-func (i IndexDB) InsertMessage(message *model_struct.LocalChatLog) error {
+func (i *LocalChatLogs) InsertMessage(message *model_struct.LocalChatLog) error {
 	_, err := Exec(utils.StructToJsonString(message))
 	return err
 }
-func (i IndexDB) GetAllUnDeleteMessageSeqList() ([]uint32, error) {
+func (i *LocalChatLogs) GetAllUnDeleteMessageSeqList() ([]uint32, error) {
 	panic("implement me")
 }
 
-func (i IndexDB) UpdateColumnsMessageList(clientMsgIDList []string, args map[string]interface{}) error {
+func (i *LocalChatLogs) UpdateColumnsMessageList(clientMsgIDList []string, args map[string]interface{}) error {
 	panic("implement me")
 }
 
-func (i IndexDB) UpdateColumnsMessage(ClientMsgID string, args map[string]interface{}) error {
+func (i *LocalChatLogs) UpdateColumnsMessage(ClientMsgID string, args map[string]interface{}) error {
 	panic("implement me")
 }
 
-func (i IndexDB) UpdateColumnsMessageController(ClientMsgID string, groupID string, sessionType int32, args map[string]interface{}) error {
+func (i *LocalChatLogs) UpdateColumnsMessageController(ClientMsgID string, groupID string, sessionType int32, args map[string]interface{}) error {
 	panic("implement me")
 }
 
-func (i IndexDB) UpdateMessageController(c *model_struct.LocalChatLog) error {
+func (i *LocalChatLogs) UpdateMessageController(c *model_struct.LocalChatLog) error {
 	panic("implement me")
 }
 
-func (i IndexDB) DeleteAllMessage() error {
+func (i *LocalChatLogs) DeleteAllMessage() error {
 	panic("implement me")
 }
 
-func (i IndexDB) UpdateMessageStatusBySourceID(sourceID string, status, sessionType int32) error {
+func (i *LocalChatLogs) UpdateMessageStatusBySourceID(sourceID string, status, sessionType int32) error {
 	panic("implement me")
 }
 
-func (i IndexDB) UpdateMessageStatusBySourceIDController(sourceID string, status, sessionType int32) error {
+func (i *LocalChatLogs) UpdateMessageStatusBySourceIDController(sourceID string, status, sessionType int32) error {
 	panic("implement me")
 }
 
-func (i IndexDB) UpdateMessageTimeAndStatus(clientMsgID string, serverMsgID string, sendTime int64, status int32) error {
+func (i *LocalChatLogs) UpdateMessageTimeAndStatus(clientMsgID string, serverMsgID string, sendTime int64, status int32) error {
 	_, err := Exec(clientMsgID, serverMsgID, sendTime, status)
 	return err
 }
 
-func (i IndexDB) UpdateMessageTimeAndStatusController(msg *sdk_struct.MsgStruct) error {
+func (i *LocalChatLogs) UpdateMessageTimeAndStatusController(msg *sdk_struct.MsgStruct) error {
 	panic("implement me")
 }
 
-func (i IndexDB) GetMessageList(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+func (i *LocalChatLogs) GetMessageList(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	panic("implement me")
 }
 
-func (i IndexDB) GetMessageListController(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+func (i *LocalChatLogs) GetMessageListController(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	panic("implement me")
 }
 
-func (i IndexDB) GetMessageListNoTime(sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+func (i *LocalChatLogs) GetMessageListNoTime(sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	panic("implement me")
 }
 
-func (i IndexDB) GetMessageListNoTimeController(sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+func (i *LocalChatLogs) GetMessageListNoTimeController(sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	panic("implement me")
 }
 
-func (i IndexDB) UpdateSingleMessageHasRead(sendID string, msgIDList []string) error {
+func (i *LocalChatLogs) UpdateSingleMessageHasRead(sendID string, msgIDList []string) error {
 	panic("implement me")
 }

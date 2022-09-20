@@ -14,6 +14,8 @@ import (
 
 type IndexDB struct {
 	LocalUsers
+	LocalConversations
+	LocalChatLogs
 }
 
 type CallbackData struct {
@@ -56,7 +58,6 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 		return "", errors.New(data.ErrMsg)
 	}
 	return data.Data, err
-
 }
 func (i IndexDB) InsertGroup(groupInfo *model_struct.LocalGroup) error {
 	panic("implement me")
