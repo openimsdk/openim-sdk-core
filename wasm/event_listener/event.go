@@ -1,4 +1,4 @@
-package sdk_listener_callback
+package event_listener
 
 import (
 	"open_im_sdk/pkg/utils"

@@ -1,17 +1,16 @@
 package event_listener
 
 import (
-	"open_im_sdk/pkg/sdk_listener_callback"
 	"syscall/js"
 )
 
 type InitCallback struct {
 	uid       string
-	eventData *sdk_listener_callback.EventData
+	eventData *EventData
 }
 
 func NewInitCallback(callback js.Value) *InitCallback {
-	return &InitCallback{eventData: sdk_listener_callback.NewEventData(callback)}
+	return &InitCallback{eventData: NewEventData(callback)}
 }
 
 func (i *InitCallback) OnConnecting() {
@@ -41,11 +40,11 @@ func (i *InitCallback) OnSelfInfoUpdated(userInfo string) {
 type BaseCallback struct {
 	funcName    string
 	operationID string
-	eventData   *sdk_listener_callback.EventData
+	eventData   *EventData
 }
 
 func NewBaseCallback(funcName string, operationID string, callback js.Value) *BaseCallback {
-	return &BaseCallback{funcName: funcName, operationID: operationID, eventData: sdk_listener_callback.NewEventData(callback)}
+	return &BaseCallback{funcName: funcName, operationID: operationID, eventData: NewEventData(callback)}
 }
 
 func (b *BaseCallback) OnError(errCode int32, errMsg string) {
