@@ -130,15 +130,7 @@ func (i IndexDB) GetAdminGroupApplication() ([]*model_struct.LocalAdminGroupRequ
 	panic("implement me")
 }
 
-func (i IndexDB) BatchInsertMessageList(MessageList []*model_struct.LocalChatLog) error {
-	panic("implement me")
-}
-
 func (i IndexDB) BatchInsertMessageListController(MessageList []*model_struct.LocalChatLog) error {
-	panic("implement me")
-}
-
-func (i IndexDB) InsertMessage(Message *model_struct.LocalChatLog) error {
 	panic("implement me")
 }
 
@@ -207,10 +199,6 @@ func (i IndexDB) GetMultipleMessage(msgIDList []string) (result []*model_struct.
 }
 
 func (i IndexDB) GetMultipleMessageController(msgIDList []string, groupID string, sessionType int32) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetNormalMsgSeq() (uint32, error) {
 	panic("implement me")
 }
 
@@ -322,18 +310,6 @@ func (i IndexDB) GetConversationByUserID(userID string) (*model_struct.LocalConv
 	panic("implement me")
 }
 
-func (i IndexDB) GetAllConversationList() ([]*model_struct.LocalConversation, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetHiddenConversationList() ([]*model_struct.LocalConversation, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetAllConversationListToSync() ([]*model_struct.LocalConversation, error) {
-	panic("implement me")
-}
-
 func (i IndexDB) GetConversationListSplit(offset, count int) ([]*model_struct.LocalConversation, error) {
 	panic("implement me")
 }
@@ -347,10 +323,6 @@ func (i IndexDB) InsertConversation(conversationList *model_struct.LocalConversa
 }
 
 func (i IndexDB) DeleteConversation(conversationID string) error {
-	panic("implement me")
-}
-
-func (i IndexDB) GetConversation(conversationID string) (*model_struct.LocalConversation, error) {
 	panic("implement me")
 }
 
@@ -395,10 +367,6 @@ func (i IndexDB) RemoveConversationDraft(conversationID, draftText string) error
 }
 
 func (i IndexDB) UnPinConversation(conversationID string, isPinned int) error {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateColumnsConversation(conversationID string, args map[string]interface{}) error {
 	panic("implement me")
 }
 

@@ -6,7 +6,8 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-var ErrType = errors.New("from js data type err")
+var ErrType = errors.New("from javascript data type err")
+var PrimaryKeyNull = errors.New("primary key is null err")
 
 type LocalUsers struct {
 }

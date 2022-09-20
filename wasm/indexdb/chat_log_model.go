@@ -4,6 +4,7 @@ import (
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"open_im_sdk/wasm/indexdb/temp_struct"
 )
 
 //1,使用wasm原生的方式，tinygo应用于go的嵌入式领域，支持的功能有限，甚至json序列化都无法支持
@@ -28,7 +29,73 @@ func (i IndexDB) GetMessage(clientMsgID string) (*model_struct.LocalChatLog, err
 		}
 	}
 }
-
+func (i IndexDB) GetSendingMessageList() (result []*model_struct.LocalChatLog, err error) {
+	msgList, err := Exec()
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := msgList.(string); ok {
+			var temp []model_struct.LocalChatLog
+			err := utils.JsonStringToStruct(v, &temp)
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range temp {
+				v1 := v
+				result = append(result, &v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}
+func (i IndexDB) UpdateMessage(c *model_struct.LocalChatLog) error {
+	if c.ClientMsgID == "" {
+		return PrimaryKeyNull
+	}
+	tempLocalChatLog := temp_struct.LocalChatLog{
+		ServerMsgID:      c.ServerMsgID,
+		SendID:           c.SendID,
+		RecvID:           c.RecvID,
+		SenderPlatformID: c.SenderPlatformID,
+		SenderNickname:   c.SenderNickname,
+		SenderFaceURL:    c.SenderFaceURL,
+		SessionType:      c.SessionType,
+		MsgFrom:          c.MsgFrom,
+		ContentType:      c.ContentType,
+		Content:          c.Content,
+		IsRead:           c.IsRead,
+		Status:           c.Status,
+		Seq:              c.Seq,
+		SendTime:         c.SendTime,
+		CreateTime:       c.CreateTime,
+		AttachedInfo:     c.AttachedInfo,
+		Ex:               c.Ex,
+	}
+	_, err := Exec(c.ClientMsgID, utils.StructToJsonString(tempLocalChatLog))
+	return err
+}
+func (i IndexDB) GetNormalMsgSeq() (uint32, error) {
+	seq, err := Exec()
+	if err != nil {
+		return 0, err
+	} else {
+		if v, ok := seq.(uint32); ok {
+			return v, err
+		} else {
+			return 0, ErrType
+		}
+	}
+}
+func (i IndexDB) BatchInsertMessageList(messageList []*model_struct.LocalChatLog) error {
+	_, err := Exec(utils.StructToJsonString(messageList))
+	return err
+}
+func (i IndexDB) InsertMessage(message *model_struct.LocalChatLog) error {
+	_, err := Exec(utils.StructToJsonString(message))
+	return err
+}
 func (i IndexDB) GetAllUnDeleteMessageSeqList() ([]uint32, error) {
 	panic("implement me")
 }
@@ -42,10 +109,6 @@ func (i IndexDB) UpdateColumnsMessage(ClientMsgID string, args map[string]interf
 }
 
 func (i IndexDB) UpdateColumnsMessageController(ClientMsgID string, groupID string, sessionType int32, args map[string]interface{}) error {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateMessage(c *model_struct.LocalChatLog) error {
 	panic("implement me")
 }
 
@@ -66,7 +129,8 @@ func (i IndexDB) UpdateMessageStatusBySourceIDController(sourceID string, status
 }
 
 func (i IndexDB) UpdateMessageTimeAndStatus(clientMsgID string, serverMsgID string, sendTime int64, status int32) error {
-	panic("implement me")
+	_, err := Exec(clientMsgID, serverMsgID, sendTime, status)
+	return err
 }
 
 func (i IndexDB) UpdateMessageTimeAndStatusController(msg *sdk_struct.MsgStruct) error {
@@ -86,10 +150,6 @@ func (i IndexDB) GetMessageListNoTime(sourceID string, sessionType, count int, i
 }
 
 func (i IndexDB) GetMessageListNoTimeController(sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetSendingMessageList() (result []*model_struct.LocalChatLog, err error) {
 	panic("implement me")
 }
 
