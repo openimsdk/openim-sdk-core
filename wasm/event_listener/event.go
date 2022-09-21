@@ -12,10 +12,10 @@ type EventData struct {
 	ErrMsg      string      `json:"errMsg"`
 	Data        interface{} `json:"data"`
 	OperationID string      `json:"operationID"`
-	callback    js.Value
+	callback    *js.Value
 }
 
-func NewEventData(callback js.Value) *EventData {
+func NewEventData(callback *js.Value) *EventData {
 	return &EventData{callback: callback}
 }
 func (e *EventData) SendMessage() {

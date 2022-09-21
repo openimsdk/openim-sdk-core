@@ -9,11 +9,11 @@ import (
 
 const COMMONEVENTFUNC = "commonEventFunc"
 
-var commonFunc js.Value
+var commonFunc *js.Value
 
 func CommonEventFunc(_ js.Value, args []js.Value) interface{} {
 	if len(args) >= 1 {
-		commonFunc = args[len(args)-1]
+		commonFunc = &args[len(args)-1]
 		return js.ValueOf(true)
 	} else {
 		return js.ValueOf(false)

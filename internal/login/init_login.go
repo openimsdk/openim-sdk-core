@@ -213,16 +213,16 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	log.NewInfo(operationID, u.imConfig.ObjectStorage, "new obj login cost time: ", time.Since(t1))
 	log.NewInfo(operationID, u.imConfig.ObjectStorage, "SyncLoginUserInfo login cost time: ", time.Since(t1))
 	u.push = comm2.NewPush(p, u.imConfig.Platform)
-	go u.forcedSynchronization()
+	go u.forcedSynchronization() //db
 
 	log.Info(operationID, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	log.Info(operationID, "all channel ", u.pushMsgAndMaxSeqCh, u.conversationCh, u.heartbeatCmdCh, u.cmdWsCh)
 
 	wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID)
 	wsRespAsyn := ws.NewWsRespAsyn()
-	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
-	u.msgSync = ws.NewMsgSync(u.db, u.ws, u.loginUserID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
-	u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
+	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh)                             //db
+	u.msgSync = ws.NewMsgSync(u.db, u.ws, u.loginUserID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh) //db
+	u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)   //db
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
 
 	var objStorage comm3.ObjectStorage
@@ -248,8 +248,8 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	}
 	log.Debug(operationID, "SyncConversations begin ")
 
-	u.conversation.SyncConversations(operationID, time.Second*2)
-	go common.DoListener(u.conversation)
+	u.conversation.SyncConversations(operationID, time.Second*2) //db
+	go common.DoListener(u.conversation)                         //db
 	log.Debug(operationID, "SyncConversations end ")
 
 	log.Info(operationID, "ws heartbeat end ")

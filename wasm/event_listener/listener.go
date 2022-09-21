@@ -9,7 +9,7 @@ type InitCallback struct {
 	eventData *EventData
 }
 
-func NewInitCallback(callback js.Value) *InitCallback {
+func NewInitCallback(callback *js.Value) *InitCallback {
 	return &InitCallback{eventData: NewEventData(callback)}
 }
 
@@ -43,7 +43,7 @@ type BaseCallback struct {
 	eventData   *EventData
 }
 
-func NewBaseCallback(funcName string, operationID string, callback js.Value) *BaseCallback {
+func NewBaseCallback(funcName string, operationID string, callback *js.Value) *BaseCallback {
 	return &BaseCallback{funcName: funcName, operationID: operationID, eventData: NewEventData(callback)}
 }
 
