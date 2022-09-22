@@ -71,7 +71,7 @@ func gRunGetToken(strMyUid string) string {
 }
 func main() {
 	//uid := "3984071717"
-	//uid_cord:="1554321956297519104"
+	//uid:="1554321956297519104"
 	uid := "3045326383"
 	tokenx := gRunGetToken(uid)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
