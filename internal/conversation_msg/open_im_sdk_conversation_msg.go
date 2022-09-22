@@ -34,7 +34,6 @@ func (c *Conversation) GetAllConversationList(callback open_im_sdk_callback.Base
 		log.NewInfo(operationID, "GetAllConversationList callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
-
 func (c *Conversation) GetConversationListSplit(callback open_im_sdk_callback.Base, offset, count int, operationID string) {
 	if callback == nil {
 		return
@@ -46,7 +45,6 @@ func (c *Conversation) GetConversationListSplit(callback open_im_sdk_callback.Ba
 		log.NewInfo(operationID, "GetConversationListSplit callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
-
 func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList string, opt int, operationID string) {
 	if callback == nil {
 		return
@@ -71,7 +69,6 @@ func (c *Conversation) SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Bas
 		log.NewInfo(operationID, "SetGlobalRecvMessageOpt callback: ", sdk_params_callback.SetGlobalRecvMessageOptCallback)
 	}()
 }
-
 //deprecated
 func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList, operationID string) {
 	if callback == nil {
@@ -86,7 +83,6 @@ func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callba
 		log.NewInfo(operationID, "GetConversationRecvMessageOpt callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
-
 func (c *Conversation) GetOneConversation(callback open_im_sdk_callback.Base, sessionType int32, sourceID, operationID string) {
 	if callback == nil {
 		return
@@ -98,7 +94,6 @@ func (c *Conversation) GetOneConversation(callback open_im_sdk_callback.Base, se
 		log.NewInfo(operationID, "GetOneConversation callback: ", utils.StructToJsonString(result))
 	}()
 }
-
 func (c *Conversation) GetMultipleConversation(callback open_im_sdk_callback.Base, conversationIDList string, operationID string) {
 	if callback == nil {
 		return

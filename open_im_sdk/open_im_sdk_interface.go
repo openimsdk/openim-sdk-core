@@ -41,7 +41,6 @@ func SetHeartbeatInterval(heartbeatInterval int) {
 }
 
 func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, config string) bool {
-	log.NewPrivateLog("", sdk_struct.SvrConf.LogLevel)
 	if userForSDK != nil {
 		log.Warn(operationID, "Initialize multiple times, use the existing ", userForSDK)
 		return true
@@ -50,6 +49,7 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		log.Error(operationID, "Unmarshal failed ", err.Error(), config)
 		return false
 	}
+	log.NewPrivateLog("", sdk_struct.SvrConf.LogLevel)
 	if !strings.Contains(sdk_struct.SvrConf.ApiAddr, "http") {
 		log.Error(operationID, "api is http protocol", sdk_struct.SvrConf.ApiAddr)
 		return false
