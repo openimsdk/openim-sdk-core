@@ -178,7 +178,26 @@ func (i IndexDB) UpdateConversation(c *model_struct.LocalConversation) error {
 }
 
 func (i IndexDB) UpdateConversationForSync(c *model_struct.LocalConversation) error {
-	panic("implement me")
+	if c.ConversationID == "" {
+		return PrimaryKeyNull
+	}
+	tempLocalConversation := temp_struct.LocalConversation{
+		RecvMsgOpt:            c.RecvMsgOpt,
+		UnreadCount:           c.UnreadCount,
+		GroupAtType:           c.GroupAtType,
+		LatestMsg:             c.LatestMsg,
+		LatestMsgSendTime:     c.LatestMsgSendTime,
+		DraftText:             c.DraftText,
+		DraftTextTime:         c.DraftTextTime,
+		IsPinned:              c.IsPinned,
+		IsPrivateChat:         c.IsPrivateChat,
+		IsNotInGroup:          c.IsNotInGroup,
+		UpdateUnreadCountTime: c.UpdateUnreadCountTime,
+		AttachedInfo:          c.AttachedInfo,
+		Ex:                    c.Ex,
+	}
+	_, err := Exec(c.ConversationID, utils.StructToJsonString(tempLocalConversation))
+	return err
 }
 
 func (i IndexDB) BatchUpdateConversationList(conversationList []*model_struct.LocalConversation) error {
