@@ -209,49 +209,88 @@ func (i IndexDB) ConversationIfExists(conversationID string) (bool, error) {
 }
 
 func (i IndexDB) ResetConversation(conversationID string) error {
-	panic("implement me")
+	_, err := Exec(conversationID)
+	return err
 }
 
 func (i IndexDB) ResetAllConversation() error {
-	panic("implement me")
+	_, err := Exec()
+	return err
 }
 
 func (i IndexDB) ClearConversation(conversationID string) error {
-	panic("implement me")
+	_, err := Exec(conversationID)
+	return err
 }
 
 func (i IndexDB) CleaAllConversation() error {
-	panic("implement me")
+	_, err := Exec()
+	return err
 }
 
 func (i IndexDB) SetConversationDraft(conversationID, draftText string) error {
-	panic("implement me")
+	_, err := Exec(conversationID, draftText)
+	return err
 }
 
 func (i IndexDB) RemoveConversationDraft(conversationID, draftText string) error {
-	panic("implement me")
+	_, err := Exec(conversationID, draftText)
+	return err
 }
 
 func (i IndexDB) UnPinConversation(conversationID string, isPinned int) error {
-	panic("implement me")
+	_, err := Exec(conversationID, isPinned)
+	return err
 }
 
 func (i IndexDB) UpdateAllConversation(conversation *model_struct.LocalConversation) error {
-	panic("implement me")
+	_, err := Exec()
+	return err
 }
 
 func (i IndexDB) IncrConversationUnreadCount(conversationID string) error {
-	panic("implement me")
+	_, err := Exec(conversationID)
+	return err
 }
 
 func (i IndexDB) GetTotalUnreadMsgCount() (totalUnreadCount int32, err error) {
-	panic("implement me")
+	count, err := Exec()
+	if err != nil {
+		return 0, err
+	} else {
+		if v, ok := count.(float64); ok {
+			var result int32
+			result = int32(v)
+			return result, err
+		} else {
+			return 0, ErrType
+		}
+	}
 }
 
 func (i IndexDB) SetMultipleConversationRecvMsgOpt(conversationIDList []string, opt int) (err error) {
-	panic("implement me")
+	_, err = Exec(utils.StructToJsonString(conversationIDList), opt)
+	return err
 }
 
 func (i IndexDB) GetMultipleConversation(conversationIDList []string) (result []*model_struct.LocalConversation, err error) {
-	panic("implement me")
+	cList, err := Exec(utils.StructToJsonString(conversationIDList))
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := cList.(string); ok {
+			var temp []model_struct.LocalConversation
+			err := utils.JsonStringToStruct(v, &temp)
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range temp {
+				v1 := v
+				result = append(result, &v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
 }

@@ -51,7 +51,6 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		log.Error(operationID, "ws is ws protocol", sdk_struct.SvrConf.ApiAddr)
 		return false
 	}
-
 	log.NewPrivateLog("", sdk_struct.SvrConf.LogLevel)
 	log.Info(operationID, "config ", config, sdk_struct.SvrConf)
 	log.NewInfo(operationID, utils.GetSelfFuncName(), config, SdkVersion())
