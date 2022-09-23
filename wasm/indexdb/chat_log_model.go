@@ -106,11 +106,13 @@ func (i *LocalChatLogs) GetAllUnDeleteMessageSeqList() ([]uint32, error) {
 }
 
 func (i *LocalChatLogs) UpdateColumnsMessageList(clientMsgIDList []string, args map[string]interface{}) error {
-	panic("implement me")
+	_, err := Exec(utils.StructToJsonString(clientMsgIDList), args)
+	return err
 }
 
-func (i *LocalChatLogs) UpdateColumnsMessage(ClientMsgID string, args map[string]interface{}) error {
-	panic("implement me")
+func (i *LocalChatLogs) UpdateColumnsMessage(clientMsgID string, args map[string]interface{}) error {
+	_, err := Exec(clientMsgID, args)
+	return err
 }
 
 func (i *LocalChatLogs) UpdateColumnsMessageController(ClientMsgID string, groupID string, sessionType int32, args map[string]interface{}) error {
@@ -126,7 +128,8 @@ func (i *LocalChatLogs) DeleteAllMessage() error {
 }
 
 func (i *LocalChatLogs) UpdateMessageStatusBySourceID(sourceID string, status, sessionType int32) error {
-	panic("implement me")
+	_, err := Exec(sourceID, status, sessionType)
+	return err
 }
 
 func (i *LocalChatLogs) UpdateMessageStatusBySourceIDController(sourceID string, status, sessionType int32) error {
