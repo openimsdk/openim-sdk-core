@@ -38,13 +38,16 @@ func (i *InitCallback) OnSelfInfoUpdated(userInfo string) {
 }
 
 type BaseCallback struct {
-	funcName    string
-	operationID string
-	eventData   *EventData
+	funcName  string
+	eventData *EventData
 }
 
-func NewBaseCallback(funcName string, operationID string, callback *js.Value) *BaseCallback {
-	return &BaseCallback{funcName: funcName, operationID: operationID, eventData: NewEventData(callback)}
+func (b *BaseCallback) EventData() *EventData {
+	return b.eventData
+}
+
+func NewBaseCallback(funcName string, callback *js.Value) *BaseCallback {
+	return &BaseCallback{funcName: funcName, eventData: NewEventData(callback)}
 }
 
 func (b *BaseCallback) OnError(errCode int32, errMsg string) {
@@ -52,4 +55,20 @@ func (b *BaseCallback) OnError(errCode int32, errMsg string) {
 }
 func (b *BaseCallback) OnSuccess(data string) {
 	b.eventData.SetEvent(b.funcName).SetData(data).SendMessage()
+}
+
+type SendMessageCallback struct {
+	BaseCallback
+	clientMsgID string
+}
+
+func (s *SendMessageCallback) SetClientMsgID(clientMsgID string) {
+	s.clientMsgID = clientMsgID
+}
+func NewSendMessageCallback(funcName string, callback *js.Value) *SendMessageCallback {
+	return &SendMessageCallback{BaseCallback: BaseCallback{funcName: funcName, eventData: NewEventData(callback)}}
+}
+
+func (s SendMessageCallback) OnProgress(progress int) {
+	panic("implement me")
 }

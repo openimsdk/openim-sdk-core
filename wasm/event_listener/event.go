@@ -34,6 +34,10 @@ func (e *EventData) SetErrCode(errCode int32) *EventData {
 	e.ErrCode = errCode
 	return e
 }
+func (e *EventData) SetOperationID(operationID string) *EventData {
+	e.OperationID = operationID
+	return e
+}
 func (e *EventData) SetErrMsg(errMsg string) *EventData {
 	e.ErrMsg = errMsg
 	return e

@@ -36,8 +36,9 @@ func InitSDK(_ js.Value, args []js.Value) interface{} {
 	return js.ValueOf(open_im_sdk.InitSDK(callback, args[0].String(), args[1].String()))
 }
 func Login(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), args[0].String(), commonFunc)
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
 	checker(callback, &args, 3)
+	callback.EventData().SetOperationID(args[0].String())
 	open_im_sdk.Login(callback, args[0].String(), args[1].String(), args[2].String())
 	return nil
 }
