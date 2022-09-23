@@ -69,6 +69,7 @@ func (c *Conversation) SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Bas
 		log.NewInfo(operationID, "SetGlobalRecvMessageOpt callback: ", sdk_params_callback.SetGlobalRecvMessageOptCallback)
 	}()
 }
+
 //deprecated
 func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList, operationID string) {
 	if callback == nil {
@@ -280,6 +281,9 @@ func (c *Conversation) CreateAdvancedTextMessage(text, messageEntityList, operat
 func (c *Conversation) CreateTextAtMessage(text, atUserList, atUsersInfo, message, operationID string) string {
 	var usersInfo []*sdk_struct.AtInfo
 	var userIDList []string
+	if text == "" {
+		return ""
+	}
 	_ = json.Unmarshal([]byte(atUsersInfo), &usersInfo)
 	_ = json.Unmarshal([]byte(atUserList), &userIDList)
 	s, qs := sdk_struct.MsgStruct{}, sdk_struct.MsgStruct{}
