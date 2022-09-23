@@ -15,6 +15,10 @@ const COMMONEVENTFUNC = "commonEventFunc"
 var commonFunc *js.Value
 var ErrArgsLength = errors.New("from javascript args length err")
 
+func setConversationListener() {
+	callback := event_listener.NewConversationCallback(commonFunc)
+	open_im_sdk.SetConversationListener(callback)
+}
 func checker(callback open_im_sdk_callback.Base, args *[]js.Value, count int) {
 	if len(*args) != count {
 		callback.OnError(100, ErrArgsLength.Error())
@@ -32,7 +36,7 @@ func CommonEventFunc(_ js.Value, args []js.Value) interface{} {
 }
 
 func InitSDK(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewInitCallback(commonFunc)
+	callback := event_listener.NewConnCallback(commonFunc)
 	return js.ValueOf(open_im_sdk.InitSDK(callback, args[0].String(), args[1].String()))
 }
 func Login(_ js.Value, args []js.Value) interface{} {

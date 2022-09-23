@@ -7,20 +7,50 @@ import (
 	"syscall/js"
 )
 
-func GetAllConversationList(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
-	checker(callback, &args, 1)
+//------------------------------------message---------------------------
+func CreateTextMessage(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
+	checker(callback, &args, 2)
 	callback.EventData().SetOperationID(args[0].String())
-	open_im_sdk.GetAllConversationList(callback, args[0].String())
-	return nil
+	return js.ValueOf(open_im_sdk.CreateTextMessage(args[0].String(), args[1].String()))
 }
-func GetOneConversation(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
+func CreateImageMessage(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
+	checker(callback, &args, 2)
+	callback.EventData().SetOperationID(args[0].String())
+	return js.ValueOf(open_im_sdk.CreateImageMessage(args[0].String(), args[1].String()))
+}
+func CreateImageMessageByURL(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
+	checker(callback, &args, 4)
+	callback.EventData().SetOperationID(args[0].String())
+	return js.ValueOf(open_im_sdk.CreateImageMessageByURL(args[0].String(), args[1].String(), args[2].String(), args[3].String()))
+}
+func CreateCustomMessage(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
+	checker(callback, &args, 4)
+	callback.EventData().SetOperationID(args[0].String())
+	return js.ValueOf(open_im_sdk.CreateCustomMessage(args[0].String(), args[1].String(), args[2].String(), args[3].String()))
+}
+func CreateQuoteMessage(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
 	checker(callback, &args, 3)
 	callback.EventData().SetOperationID(args[0].String())
-	open_im_sdk.GetOneConversation(callback, args[0].String(), args[1].Int(), args[2].String())
-	return nil
+	return js.ValueOf(open_im_sdk.CreateQuoteMessage(args[0].String(), args[1].String(), args[2].String()))
 }
+func CreateAdvancedQuoteMessage(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
+	checker(callback, &args, 4)
+	callback.EventData().SetOperationID(args[0].String())
+	return js.ValueOf(open_im_sdk.CreateAdvancedQuoteMessage(args[0].String(), args[1].String(), args[2].String(), args[3].String()))
+}
+func CreateAdvancedTextMessage(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
+	checker(callback, &args, 3)
+	callback.EventData().SetOperationID(args[0].String())
+	return js.ValueOf(open_im_sdk.CreateAdvancedTextMessage(args[0].String(), args[1].String(), args[2].String()))
+}
+
 func MarkC2CMessageAsRead(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
 	checker(callback, &args, 3)
@@ -33,13 +63,6 @@ func MarkMessageAsReadByConID(_ js.Value, args []js.Value) interface{} {
 	checker(callback, &args, 3)
 	callback.EventData().SetOperationID(args[0].String())
 	open_im_sdk.MarkMessageAsReadByConID(callback, args[0].String(), args[1].String(), args[2].String())
-	return nil
-}
-func DeleteConversationFromLocalAndSvr(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
-	checker(callback, &args, 2)
-	callback.EventData().SetOperationID(args[0].String())
-	open_im_sdk.DeleteConversationFromLocalAndSvr(callback, args[0].String(), args[1].String())
 	return nil
 }
 func SendMessage(_ js.Value, args []js.Value) interface{} {
@@ -56,9 +79,40 @@ func SendMessageNotOss(_ js.Value, args []js.Value) interface{} {
 	open_im_sdk.SendMessageNotOss(callback, args[0].String(), args[1].String(), args[2].String(), args[3].String(), args[4].String())
 	return nil
 }
-func CreateTextMessage(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
+
+//------------------------------------conversation---------------------------
+func GetAllConversationList(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
+	checker(callback, &args, 1)
+	callback.EventData().SetOperationID(args[0].String())
+	open_im_sdk.GetAllConversationList(callback, args[0].String())
+	return nil
+}
+func GetOneConversation(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
+	checker(callback, &args, 3)
+	callback.EventData().SetOperationID(args[0].String())
+	open_im_sdk.GetOneConversation(callback, args[0].String(), args[1].Int(), args[2].String())
+	return nil
+}
+func DeleteConversationFromLocalAndSvr(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
 	checker(callback, &args, 2)
 	callback.EventData().SetOperationID(args[0].String())
-	return open_im_sdk.CreateTextMessage(args[0].String(), args[1].String())
+	open_im_sdk.DeleteConversationFromLocalAndSvr(callback, args[0].String(), args[1].String())
+	return nil
+}
+func GetAdvancedHistoryMessageList(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
+	checker(callback, &args, 2)
+	callback.EventData().SetOperationID(args[0].String())
+	open_im_sdk.GetAdvancedHistoryMessageList(callback, args[0].String(), args[1].String())
+	return nil
+}
+func GetHistoryMessageList(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
+	checker(callback, &args, 2)
+	callback.EventData().SetOperationID(args[0].String())
+	open_im_sdk.GetHistoryMessageList(callback, args[0].String(), args[1].String())
+	return nil
 }

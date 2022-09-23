@@ -4,37 +4,72 @@ import (
 	"syscall/js"
 )
 
-type InitCallback struct {
+type ConnCallback struct {
 	uid       string
 	eventData *EventData
 }
 
-func NewInitCallback(callback *js.Value) *InitCallback {
-	return &InitCallback{eventData: NewEventData(callback)}
+func NewConnCallback(callback *js.Value) *ConnCallback {
+	return &ConnCallback{eventData: NewEventData(callback)}
 }
 
-func (i *InitCallback) OnConnecting() {
+func (i *ConnCallback) OnConnecting() {
 	i.eventData.SetSelfCallerFuncName().SendMessage()
 }
 
-func (i *InitCallback) OnConnectSuccess() {
+func (i *ConnCallback) OnConnectSuccess() {
 	i.eventData.SetSelfCallerFuncName().SendMessage()
 
 }
-func (i *InitCallback) OnConnectFailed(errCode int32, errMsg string) {
+func (i *ConnCallback) OnConnectFailed(errCode int32, errMsg string) {
 	i.eventData.SetSelfCallerFuncName().SetErrCode(errCode).SetErrMsg(errMsg).SendMessage()
 }
 
-func (i *InitCallback) OnKickedOffline() {
+func (i *ConnCallback) OnKickedOffline() {
 	i.eventData.SetSelfCallerFuncName().SendMessage()
 }
 
-func (i *InitCallback) OnUserTokenExpired() {
+func (i *ConnCallback) OnUserTokenExpired() {
 	i.eventData.SetSelfCallerFuncName().SendMessage()
 }
 
-func (i *InitCallback) OnSelfInfoUpdated(userInfo string) {
+func (i *ConnCallback) OnSelfInfoUpdated(userInfo string) {
 	i.eventData.SetSelfCallerFuncName().SetData(userInfo).SendMessage()
+}
+
+type ConversationCallback struct {
+	uid       string
+	eventData *EventData
+}
+
+func NewConversationCallback(callback *js.Value) *ConversationCallback {
+	return &ConversationCallback{eventData: NewEventData(callback)}
+}
+func (c ConversationCallback) OnSyncServerStart() {
+	c.eventData.SetSelfCallerFuncName().SendMessage()
+}
+
+func (c ConversationCallback) OnSyncServerFinish() {
+	c.eventData.SetSelfCallerFuncName().SendMessage()
+}
+
+func (c ConversationCallback) OnSyncServerFailed() {
+	c.eventData.SetSelfCallerFuncName().SendMessage()
+
+}
+
+func (c ConversationCallback) OnNewConversation(conversationList string) {
+	c.eventData.SetSelfCallerFuncName().SetData(conversationList).SendMessage()
+
+}
+
+func (c ConversationCallback) OnConversationChanged(conversationList string) {
+	c.eventData.SetSelfCallerFuncName().SetData(conversationList).SendMessage()
+
+}
+
+func (c ConversationCallback) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
+	c.eventData.SetSelfCallerFuncName().SetData(totalUnreadCount).SendMessage()
 }
 
 type BaseCallback struct {
