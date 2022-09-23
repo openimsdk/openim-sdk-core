@@ -149,7 +149,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		isSenderNotificationPush = utils.GetSwitchFromOptions(v.Options, constant.IsSenderNotificationPush)
 		msg := new(sdk_struct.MsgStruct)
 		copier.Copy(msg, v)
-		log.Info(operationID, "after copy msg result is", *msg.OfflinePush)
+		msg.OfflinePush = *v.OfflinePushInfo
+		log.Info(operationID, "after copy msg result is", msg.OfflinePush)
 		var tips server_api_params.TipsComm
 		if v.ContentType >= constant.NotificationBegin && v.ContentType <= constant.NotificationEnd {
 			_ = proto.Unmarshal(v.Content, &tips)
