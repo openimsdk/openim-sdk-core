@@ -1,9 +1,10 @@
 package interaction
 
 import (
+	"context"
 	"errors"
 	"github.com/golang/protobuf/proto"
-	"github.com/gorilla/websocket"
+	"nhooyr.io/websocket"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
@@ -200,7 +201,7 @@ func (w *Ws) ReadData() {
 
 		//	timeout := 5
 		//	u.WsConn.SetReadTimeout(timeout)
-		msgType, message, err := w.WsConn.conn.ReadMessage()
+		msgType, message, err := w.WsConn.conn.Read(context.Background())
 		if err != nil {
 			isErrorOccurred = true
 			if w.loginStatus == constant.Logout {
@@ -221,17 +222,18 @@ func (w *Ws) ReadData() {
 			}
 			continue
 		}
-		if msgType == websocket.CloseMessage {
-			log.Error(operationID, "type websocket.CloseMessage, ReConn")
-			err, isNeedReConnect := w.reConnSleep(operationID, 1)
-			if err != nil && isNeedReConnect == false {
-				log.Warn(operationID, "token failed, don't connect again")
-				return
-			}
-			continue
-		} else if msgType == websocket.TextMessage {
+		//if msgType == websocket.CloseMessage {
+		//	log.Error(operationID, "type websocket.CloseMessage, ReConn")
+		//	err, isNeedReConnect := w.reConnSleep(operationID, 1)
+		//	if err != nil && isNeedReConnect == false {
+		//		log.Warn(operationID, "token failed, don't connect again")
+		//		return
+		//	}
+		//	continue
+		//} else
+		if msgType == websocket.MessageText {
 			log.Warn(operationID, "type websocket.TextMessage")
-		} else if msgType == websocket.BinaryMessage {
+		} else if msgType == websocket.MessageBinary {
 			go w.doWsMsg(message)
 		} else {
 			log.Warn(operationID, "recv other type ", msgType)

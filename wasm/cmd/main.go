@@ -115,10 +115,31 @@ func main() {
 }
 
 func registerFunc() {
+	//register global listener func
 	globalFuc := wasm_wrapper.NewWrapperCommon()
 	js.Global().Set(wasm_wrapper.COMMONEVENTFUNC, js.FuncOf(globalFuc.CommonEventFunc))
-	wrapperInitLogin := wasm_wrapper.NewWrapperInitLogin(globalFuc, wasm_wrapper.ReflectCall{})
+	//register init login func
+	wrapperInitLogin := wasm_wrapper.NewWrapperInitLogin(globalFuc)
 	js.Global().Set("initSDK", js.FuncOf(wrapperInitLogin.InitSDK))
 	js.Global().Set("login", js.FuncOf(wrapperInitLogin.Login))
+	//register conversation and message func
+	wrapperConMsg := wasm_wrapper.NewWrapperConMsg(globalFuc)
+	js.Global().Set("createTextMessage", js.FuncOf(wrapperConMsg.CreateTextMessage))
+	js.Global().Set("createImageMessage", js.FuncOf(wrapperConMsg.CreateImageMessage))
+	js.Global().Set("createImageMessageByURL", js.FuncOf(wrapperConMsg.CreateImageMessageByURL))
+	js.Global().Set("createCustomMessage", js.FuncOf(wrapperConMsg.CreateCustomMessage))
+	js.Global().Set("createQuoteMessage", js.FuncOf(wrapperConMsg.CreateQuoteMessage))
+	js.Global().Set("createAdvancedQuoteMessage", js.FuncOf(wrapperConMsg.CreateAdvancedQuoteMessage))
+	js.Global().Set("createAdvancedTextMessage", js.FuncOf(wrapperConMsg.CreateAdvancedTextMessage))
+	js.Global().Set("markC2CMessageAsRead", js.FuncOf(wrapperConMsg.MarkC2CMessageAsRead))
+	js.Global().Set("markMessageAsReadByConID", js.FuncOf(wrapperConMsg.MarkMessageAsReadByConID))
+	js.Global().Set("sendMessage", js.FuncOf(wrapperConMsg.SendMessage))
+	js.Global().Set("sendMessageNotOss", js.FuncOf(wrapperConMsg.SendMessageNotOss))
+
+	js.Global().Set("getAllConversationList", js.FuncOf(wrapperConMsg.GetAllConversationList))
+	js.Global().Set("getOneConversation", js.FuncOf(wrapperConMsg.GetOneConversation))
+	js.Global().Set("deleteConversationFromLocalAndSvr", js.FuncOf(wrapperConMsg.DeleteConversationFromLocalAndSvr))
+	js.Global().Set("getAdvancedHistoryMessageList", js.FuncOf(wrapperConMsg.GetAdvancedHistoryMessageList))
+	js.Global().Set("getHistoryMessageList", js.FuncOf(wrapperConMsg.GetHistoryMessageList))
 
 }

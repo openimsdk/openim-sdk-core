@@ -3,7 +3,6 @@ package wasm_wrapper
 import (
 	"errors"
 	"open_im_sdk/open_im_sdk"
-	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/wasm/event_listener"
@@ -25,12 +24,6 @@ type setListener struct {
 func (s *setListener) setConversationListener() {
 	callback := event_listener.NewConversationCallback(s.commonFunc)
 	open_im_sdk.SetConversationListener(callback)
-}
-func checker(callback open_im_sdk_callback.Base, args *[]js.Value, count int) {
-	if len(*args) != count {
-		callback.OnError(100, ErrArgsLength.Error())
-		runtime.Goexit()
-	}
 }
 
 type WrapperCommon struct {
@@ -153,11 +146,11 @@ func (r *ReflectCall) ErrHandle(recover interface{}) []string {
 
 type WrapperInitLogin struct {
 	*WrapperCommon
-	caller ReflectCall
+	caller *ReflectCall
 }
 
-func NewWrapperInitLogin(wrapperCommon *WrapperCommon, caller ReflectCall) *WrapperInitLogin {
-	return &WrapperInitLogin{WrapperCommon: wrapperCommon, caller: caller}
+func NewWrapperInitLogin(wrapperCommon *WrapperCommon) *WrapperInitLogin {
+	return &WrapperInitLogin{WrapperCommon: wrapperCommon, caller: &ReflectCall{}}
 }
 func (w *WrapperInitLogin) InitSDK(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewConnCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)

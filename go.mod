@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/antonfisher/nested-logrus-formatter v1.3.1
 	github.com/golang/protobuf v1.5.2
-	github.com/google/go-cmp v0.5.5
+	github.com/google/go-cmp v0.5.8
 	github.com/gorilla/websocket v1.4.2
 	github.com/jinzhu/copier v0.3.4
 	github.com/jonboulle/clockwork v0.2.2 // indirect
@@ -19,9 +19,9 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0 // indirect
 	golang.org/x/sys v0.0.0-20220405052023-b1e9470b6e64 // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	nhooyr.io/websocket v1.8.7
 
 )

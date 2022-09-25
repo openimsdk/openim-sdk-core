@@ -2,10 +2,11 @@ package interaction
 
 import (
 	"bytes"
+	"context"
 	"encoding/gob"
 	"errors"
 	"fmt"
-	"github.com/gorilla/websocket"
+	"nhooyr.io/websocket"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
@@ -39,7 +40,7 @@ func (u *WsConn) CloseConn(operationID string) error {
 	u.Lock()
 	defer u.Unlock()
 	if u.conn != nil {
-		err := u.conn.Close()
+		err := u.conn.Close(websocket.StatusGoingAway, "Actively close the connection")
 		log.NewWarn(operationID, "close conn, ", u.conn)
 		u.conn = nil
 		return utils.Wrap(err, "")
@@ -69,12 +70,12 @@ func (u *WsConn) SendPingMsg() error {
 	if u.conn == nil {
 		return utils.Wrap(errors.New("conn == nil"), "")
 	}
-	ping := "try ping"
+	//ping := "try ping"
 	err := u.SetWriteTimeout(writeTimeoutSeconds)
 	if err != nil {
 		return utils.Wrap(err, "SetWriteDeadline failed")
 	}
-	err = u.conn.WriteMessage(websocket.PingMessage, []byte(ping))
+	err = u.conn.Ping(context.Background())
 	if err != nil {
 		return utils.Wrap(err, "WriteMessage failed")
 	}
@@ -82,11 +83,12 @@ func (u *WsConn) SendPingMsg() error {
 }
 
 func (u *WsConn) SetWriteTimeout(timeout int) error {
-	return u.conn.SetWriteDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
+	//return u.conn.SetWriteDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
+	return nil
 }
 
-func (u *WsConn) SetReadTimeout(timeout int) error {
-	return u.conn.SetReadDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
+func (u *WsConn) SetReadTimeout(timeout int) {
+	//u.conn.SetReadLimit(time.Now().Add(time.Duration(timeout) * time.Second).Unix())
 }
 
 func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (*websocket.Conn, error) {
@@ -108,7 +110,7 @@ func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (*websocket.Conn, error) {
 		if len(buff.Bytes()) > constant.MaxTotalMsgLen {
 			return nil, utils.Wrap(errors.New("msg too long"), utils.IntToString(len(buff.Bytes())))
 		}
-		return u.conn, utils.Wrap(u.conn.WriteMessage(websocket.BinaryMessage, buff.Bytes()), "")
+		return u.conn, utils.Wrap(u.conn.Write(context.Background(), websocket.MessageBinary, buff.Bytes()), "")
 	} else {
 		return nil, utils.Wrap(errors.New("conn==nil"), "")
 	}
@@ -151,7 +153,7 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool) {
 	defer u.stateMutex.Unlock()
 	if u.conn != nil {
 		log.NewWarn(operationID, "close conn, ", u.conn)
-		u.conn.Close()
+		_ = u.conn.Close(websocket.StatusGoingAway, "Actively close the connection")
 		u.conn = nil
 	}
 	if u.loginStatus == constant.TokenFailedKickedOffline {
@@ -161,7 +163,10 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool) {
 
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s", sdk_struct.SvrConf.WsAddr, u.loginUserID, u.token, sdk_struct.SvrConf.Platform, operationID)
 	log.Info(operationID, "ws connect begin, dail: ", url)
-	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	conn, httpResp, err := websocket.Dial(ctx, url, nil)
 	log.Info(operationID, "ws connect end, dail : ", url)
 	if err != nil {
 		log.Error(operationID, "ws connect failed ", url, err.Error())
