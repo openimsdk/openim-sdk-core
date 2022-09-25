@@ -2,7 +2,6 @@ package event_listener
 
 import (
 	"open_im_sdk/pkg/utils"
-	"runtime"
 	"syscall/js"
 )
 
@@ -44,10 +43,5 @@ func (e *EventData) SetOperationID(operationID string) CallbackWriter {
 }
 func (e *EventData) SetErrMsg(errMsg string) CallbackWriter {
 	e.ErrMsg = errMsg
-	return e
-}
-func (e *EventData) SetSelfCallerFuncName() CallbackWriter {
-	pc, _, _, _ := runtime.Caller(1)
-	e.Event = utils.CleanUpfuncName(runtime.FuncForPC(pc).Name())
 	return e
 }

@@ -72,11 +72,11 @@ func (i IndexDB) UpdateGroup(groupInfo *model_struct.LocalGroup) error {
 }
 
 func (i IndexDB) GetJoinedGroupList() ([]*model_struct.LocalGroup, error) {
-	panic("implement me")
+	return nil, nil
 }
 
 func (i IndexDB) GetGroupInfoByGroupID(groupID string) (*model_struct.LocalGroup, error) {
-	panic("implement me")
+	return nil, nil
 }
 
 func (i IndexDB) GetAllGroupInfoByGroupIDOrGroupName(keyword string, isSearchGroupID bool, isSearchGroupName bool) ([]*model_struct.LocalGroup, error) {
@@ -128,7 +128,7 @@ func (i IndexDB) UpdateAdminGroupRequest(groupRequest *model_struct.LocalAdminGr
 }
 
 func (i IndexDB) GetAdminGroupApplication() ([]*model_struct.LocalAdminGroupRequest, error) {
-	panic("implement me")
+	return nil, nil
 }
 
 func (i IndexDB) BatchInsertMessageListController(MessageList []*model_struct.LocalChatLog) error {
@@ -304,11 +304,11 @@ func (i IndexDB) UpdateGroupRequest(groupRequest *model_struct.LocalGroupRequest
 }
 
 func (i IndexDB) GetSendGroupApplication() ([]*model_struct.LocalGroupRequest, error) {
-	panic("implement me")
+	return nil, nil
 }
 
 func (i IndexDB) GetJoinedSuperGroupList() ([]*model_struct.LocalGroup, error) {
-	panic("implement me")
+	return nil, nil
 }
 
 func (i IndexDB) GetJoinedSuperGroupIDList() ([]string, error) {
@@ -336,7 +336,7 @@ func (i IndexDB) DeleteSuperGroup(groupID string) error {
 }
 
 func (i IndexDB) GetReadDiffusionGroupIDList() ([]string, error) {
-	panic("implement me")
+	return []string{}, nil
 }
 
 func (i IndexDB) GetGroupMemberInfoByGroupIDUserID(groupID, userID string) (*model_struct.LocalGroupMember, error) {
@@ -432,7 +432,7 @@ func (i IndexDB) SuperBatchInsertExceptionMsg(MessageList []*model_struct.LocalE
 }
 
 func (i IndexDB) GetAbnormalMsgSeq() (uint32, error) {
-	panic("implement me")
+	return 0, nil
 }
 
 func (i IndexDB) GetAbnormalMsgSeqList() ([]uint32, error) {
@@ -508,7 +508,7 @@ func (i IndexDB) SearchFriendList(keyword string, isSearchUserID, isSearchNickna
 }
 
 func (i IndexDB) GetFriendInfoByFriendUserID(FriendUserID string) (*model_struct.LocalFriend, error) {
-	panic("implement me")
+	return &model_struct.LocalFriend{}, nil
 }
 
 func (i IndexDB) GetFriendInfoList(friendUserIDList []string) ([]*model_struct.LocalFriend, error) {
@@ -532,7 +532,7 @@ func (i IndexDB) GetRecvFriendApplication() ([]*model_struct.LocalFriendRequest,
 }
 
 func (i IndexDB) GetSendFriendApplication() ([]*model_struct.LocalFriendRequest, error) {
-	panic("implement me")
+	return nil, nil
 }
 
 func (i IndexDB) GetFriendApplicationByBothID(fromUserID, toUserID string) (*model_struct.LocalFriendRequest, error) {

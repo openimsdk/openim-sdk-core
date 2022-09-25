@@ -7,6 +7,5 @@ type CallbackWriter interface {
 	SetErrCode(errCode int32) CallbackWriter
 	SetOperationID(operationID string) CallbackWriter
 	SetErrMsg(errMsg string) CallbackWriter
-	SetSelfCallerFuncName() CallbackWriter
 	GetOperationID() string
 }

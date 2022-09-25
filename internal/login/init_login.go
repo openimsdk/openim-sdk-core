@@ -169,7 +169,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	t1 := time.Now()
 	u.token = token
 	u.loginUserID = userID
-	if sdk_struct.SvrConf.Platform == constant.WebPlatformID {
+	if sdk_struct.SvrConf.Platform == constant.AndroidPlatformID {
 		u.db = indexdb.NewIndexDB()
 	} else {
 		//sqliteConn, err := db.NewDataBase(userID, sdk_struct.SvrConf.DataDir, operationID)
@@ -344,42 +344,42 @@ func (u *LoginMgr) forcedSynchronization() {
 	wg.Add(10)
 	go func() {
 		u.user.SyncLoginUserInfo(operationID)
-		u.friend.SyncFriendList(operationID)
+		//u.friend.SyncFriendList(operationID)
 		wg.Done()
 	}()
 
 	go func() {
-		u.friend.SyncBlackList(operationID)
+		//u.friend.SyncBlackList(operationID)
 		wg.Done()
 	}()
 
 	go func() {
-		u.friend.SyncFriendApplication(operationID)
+		//u.friend.SyncFriendApplication(operationID)
 		wg.Done()
 	}()
 
 	go func() {
-		u.friend.SyncSelfFriendApplication(operationID)
+		//u.friend.SyncSelfFriendApplication(operationID)
 		wg.Done()
 	}()
 
 	go func() {
-		u.group.SyncJoinedGroupList(operationID)
+		//u.group.SyncJoinedGroupList(operationID)
 		wg.Done()
 	}()
 
 	go func() {
-		u.group.SyncAdminGroupApplication(operationID)
+		//u.group.SyncAdminGroupApplication(operationID)
 		wg.Done()
 	}()
 
 	go func() {
-		u.group.SyncSelfGroupApplication(operationID)
+		//u.group.SyncSelfGroupApplication(operationID)
 		wg.Done()
 	}()
 
 	go func() {
-		u.group.SyncJoinedGroupMemberForFirstLogin(operationID)
+		//u.group.SyncJoinedGroupMemberForFirstLogin(operationID)
 		wg.Done()
 	}()
 	if u.organizationListener != nil {

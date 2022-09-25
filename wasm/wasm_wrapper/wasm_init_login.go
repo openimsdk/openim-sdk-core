@@ -65,10 +65,13 @@ func (r *ReflectCall) InitData(funcName interface{}, callback event_listener.Cal
 	return r
 }
 
-func (r *ReflectCall) Call() (result string) {
+func (r *ReflectCall) Call() (result []interface{}) {
 	defer func() {
 		if rc := recover(); rc != nil {
-			result = r.ErrHandle(rc)
+			temp := r.ErrHandle(rc)
+			for _, v := range temp {
+				result = append(result, v)
+			}
 		}
 	}()
 	var funcName reflect.Value
@@ -76,7 +79,7 @@ func (r *ReflectCall) Call() (result string) {
 	var hasCallback bool
 	var temp int
 	if r.funcName == nil {
-		return ""
+		return nil
 	} else {
 		funcName = reflect.ValueOf(r.funcName)
 		typeFuncName = reflect.TypeOf(r.funcName)
@@ -111,13 +114,24 @@ func (r *ReflectCall) Call() (result string) {
 	}
 	returnValues := funcName.Call(values)
 	if len(returnValues) != 0 {
-		return returnValues[0].String()
+		for _, v := range returnValues {
+			switch v.Kind() {
+			case reflect.String:
+				result = append(result, v.String())
+			case reflect.Bool:
+				result = append(result, v.Bool())
+			default:
+				panic("not support type")
+			}
+		}
+		return result
+
 	} else {
-		return ""
+		return nil
 	}
 
 }
-func (r *ReflectCall) ErrHandle(recover interface{}) string {
+func (r *ReflectCall) ErrHandle(recover interface{}) []string {
 	var temp string
 	switch x := recover.(type) {
 	case string:
@@ -131,9 +145,9 @@ func (r *ReflectCall) ErrHandle(recover interface{}) string {
 	}
 	if r.callback != nil {
 		r.callback.SetErrCode(100).SetErrMsg(temp).SendMessage()
-		return ""
+		return []string{}
 	} else {
-		return temp
+		return []string{temp}
 	}
 }
 
@@ -146,8 +160,8 @@ func NewWrapperInitLogin(wrapperCommon *WrapperCommon, caller ReflectCall) *Wrap
 	return &WrapperInitLogin{WrapperCommon: wrapperCommon, caller: caller}
 }
 func (w *WrapperInitLogin) InitSDK(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewConnCallback(w.commonFunc)
-	return js.ValueOf(w.caller.InitData(open_im_sdk.InitSDK, callback, &args).callback)
+	callback := event_listener.NewConnCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return js.ValueOf(w.caller.InitData(open_im_sdk.InitSDK, callback, &args).Call())
 }
 func (w *WrapperInitLogin) Login(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)

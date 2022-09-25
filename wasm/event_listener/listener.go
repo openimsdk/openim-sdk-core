@@ -1,6 +1,7 @@
 package event_listener
 
 import (
+	"open_im_sdk/pkg/utils"
 	"syscall/js"
 )
 
@@ -9,32 +10,32 @@ type ConnCallback struct {
 	CallbackWriter
 }
 
-func NewConnCallback(callback *js.Value) *ConnCallback {
-	return &ConnCallback{CallbackWriter: NewEventData(callback)}
+func NewConnCallback(funcName string, callback *js.Value) *ConnCallback {
+	return &ConnCallback{CallbackWriter: NewEventData(callback).SetEvent(funcName)}
 }
 
 func (i *ConnCallback) OnConnecting() {
-	i.CallbackWriter.SetSelfCallerFuncName().SendMessage()
+	i.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SendMessage()
 }
 
 func (i *ConnCallback) OnConnectSuccess() {
-	i.CallbackWriter.SetSelfCallerFuncName().SendMessage()
+	i.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SendMessage()
 
 }
 func (i *ConnCallback) OnConnectFailed(errCode int32, errMsg string) {
-	i.CallbackWriter.SetSelfCallerFuncName().SetErrCode(errCode).SetErrMsg(errMsg).SendMessage()
+	i.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetErrCode(errCode).SetErrMsg(errMsg).SendMessage()
 }
 
 func (i *ConnCallback) OnKickedOffline() {
-	i.CallbackWriter.SetSelfCallerFuncName().SendMessage()
+	i.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SendMessage()
 }
 
 func (i *ConnCallback) OnUserTokenExpired() {
-	i.CallbackWriter.SetSelfCallerFuncName().SendMessage()
+	i.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SendMessage()
 }
 
 func (i *ConnCallback) OnSelfInfoUpdated(userInfo string) {
-	i.CallbackWriter.SetSelfCallerFuncName().SetData(userInfo).SendMessage()
+	i.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
 }
 
 type ConversationCallback struct {
@@ -46,30 +47,30 @@ func NewConversationCallback(callback *js.Value) *ConversationCallback {
 	return &ConversationCallback{CallbackWriter: NewEventData(callback)}
 }
 func (c ConversationCallback) OnSyncServerStart() {
-	c.CallbackWriter.SetSelfCallerFuncName().SendMessage()
+	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SendMessage()
 }
 
 func (c ConversationCallback) OnSyncServerFinish() {
-	c.CallbackWriter.SetSelfCallerFuncName().SendMessage()
+	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SendMessage()
 }
 
 func (c ConversationCallback) OnSyncServerFailed() {
-	c.CallbackWriter.SetSelfCallerFuncName().SendMessage()
+	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SendMessage()
 
 }
 
 func (c ConversationCallback) OnNewConversation(conversationList string) {
-	c.CallbackWriter.SetSelfCallerFuncName().SetData(conversationList).SendMessage()
+	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(conversationList).SendMessage()
 
 }
 
 func (c ConversationCallback) OnConversationChanged(conversationList string) {
-	c.CallbackWriter.SetSelfCallerFuncName().SetData(conversationList).SendMessage()
+	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(conversationList).SendMessage()
 
 }
 
 func (c ConversationCallback) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
-	c.CallbackWriter.SetSelfCallerFuncName().SetData(totalUnreadCount).SendMessage()
+	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(totalUnreadCount).SendMessage()
 }
 
 type BaseCallback struct {
