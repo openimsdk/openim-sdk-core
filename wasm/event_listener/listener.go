@@ -5,91 +5,90 @@ import (
 )
 
 type ConnCallback struct {
-	uid       string
-	eventData *EventData
+	uid string
+	CallbackWriter
 }
 
 func NewConnCallback(callback *js.Value) *ConnCallback {
-	return &ConnCallback{eventData: NewEventData(callback)}
+	return &ConnCallback{CallbackWriter: NewEventData(callback)}
 }
 
 func (i *ConnCallback) OnConnecting() {
-	i.eventData.SetSelfCallerFuncName().SendMessage()
+	i.CallbackWriter.SetSelfCallerFuncName().SendMessage()
 }
 
 func (i *ConnCallback) OnConnectSuccess() {
-	i.eventData.SetSelfCallerFuncName().SendMessage()
+	i.CallbackWriter.SetSelfCallerFuncName().SendMessage()
 
 }
 func (i *ConnCallback) OnConnectFailed(errCode int32, errMsg string) {
-	i.eventData.SetSelfCallerFuncName().SetErrCode(errCode).SetErrMsg(errMsg).SendMessage()
+	i.CallbackWriter.SetSelfCallerFuncName().SetErrCode(errCode).SetErrMsg(errMsg).SendMessage()
 }
 
 func (i *ConnCallback) OnKickedOffline() {
-	i.eventData.SetSelfCallerFuncName().SendMessage()
+	i.CallbackWriter.SetSelfCallerFuncName().SendMessage()
 }
 
 func (i *ConnCallback) OnUserTokenExpired() {
-	i.eventData.SetSelfCallerFuncName().SendMessage()
+	i.CallbackWriter.SetSelfCallerFuncName().SendMessage()
 }
 
 func (i *ConnCallback) OnSelfInfoUpdated(userInfo string) {
-	i.eventData.SetSelfCallerFuncName().SetData(userInfo).SendMessage()
+	i.CallbackWriter.SetSelfCallerFuncName().SetData(userInfo).SendMessage()
 }
 
 type ConversationCallback struct {
-	uid       string
-	eventData *EventData
+	uid string
+	CallbackWriter
 }
 
 func NewConversationCallback(callback *js.Value) *ConversationCallback {
-	return &ConversationCallback{eventData: NewEventData(callback)}
+	return &ConversationCallback{CallbackWriter: NewEventData(callback)}
 }
 func (c ConversationCallback) OnSyncServerStart() {
-	c.eventData.SetSelfCallerFuncName().SendMessage()
+	c.CallbackWriter.SetSelfCallerFuncName().SendMessage()
 }
 
 func (c ConversationCallback) OnSyncServerFinish() {
-	c.eventData.SetSelfCallerFuncName().SendMessage()
+	c.CallbackWriter.SetSelfCallerFuncName().SendMessage()
 }
 
 func (c ConversationCallback) OnSyncServerFailed() {
-	c.eventData.SetSelfCallerFuncName().SendMessage()
+	c.CallbackWriter.SetSelfCallerFuncName().SendMessage()
 
 }
 
 func (c ConversationCallback) OnNewConversation(conversationList string) {
-	c.eventData.SetSelfCallerFuncName().SetData(conversationList).SendMessage()
+	c.CallbackWriter.SetSelfCallerFuncName().SetData(conversationList).SendMessage()
 
 }
 
 func (c ConversationCallback) OnConversationChanged(conversationList string) {
-	c.eventData.SetSelfCallerFuncName().SetData(conversationList).SendMessage()
+	c.CallbackWriter.SetSelfCallerFuncName().SetData(conversationList).SendMessage()
 
 }
 
 func (c ConversationCallback) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
-	c.eventData.SetSelfCallerFuncName().SetData(totalUnreadCount).SendMessage()
+	c.CallbackWriter.SetSelfCallerFuncName().SetData(totalUnreadCount).SendMessage()
 }
 
 type BaseCallback struct {
-	funcName  string
-	eventData *EventData
+	CallbackWriter
 }
 
-func (b *BaseCallback) EventData() *EventData {
-	return b.eventData
+func (b *BaseCallback) EventData() CallbackWriter {
+	return b.CallbackWriter
 }
 
 func NewBaseCallback(funcName string, callback *js.Value) *BaseCallback {
-	return &BaseCallback{funcName: funcName, eventData: NewEventData(callback)}
+	return &BaseCallback{CallbackWriter: NewEventData(callback).SetEvent(funcName)}
 }
 
 func (b *BaseCallback) OnError(errCode int32, errMsg string) {
-	b.eventData.SetEvent(b.funcName).SetErrCode(errCode).SetErrMsg(errMsg).SendMessage()
+	b.CallbackWriter.SetErrCode(errCode).SetErrMsg(errMsg).SendMessage()
 }
 func (b *BaseCallback) OnSuccess(data string) {
-	b.eventData.SetEvent(b.funcName).SetData(data).SendMessage()
+	b.CallbackWriter.SetData(data).SendMessage()
 }
 
 type SendMessageCallback struct {
@@ -101,7 +100,7 @@ func (s *SendMessageCallback) SetClientMsgID(clientMsgID string) {
 	s.clientMsgID = clientMsgID
 }
 func NewSendMessageCallback(funcName string, callback *js.Value) *SendMessageCallback {
-	return &SendMessageCallback{BaseCallback: BaseCallback{funcName: funcName, eventData: NewEventData(callback)}}
+	return &SendMessageCallback{BaseCallback: BaseCallback{CallbackWriter: NewEventData(callback).SetEvent(funcName)}}
 }
 
 func (s SendMessageCallback) OnProgress(progress int) {

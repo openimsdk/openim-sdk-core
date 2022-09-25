@@ -8,111 +8,76 @@ import (
 )
 
 //------------------------------------message---------------------------
-func CreateTextMessage(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
-	checker(callback, &args, 2)
-	callback.EventData().SetOperationID(args[0].String())
-	return js.ValueOf(open_im_sdk.CreateTextMessage(args[0].String(), args[1].String()))
-}
-func CreateImageMessage(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
-	checker(callback, &args, 2)
-	callback.EventData().SetOperationID(args[0].String())
-	return js.ValueOf(open_im_sdk.CreateImageMessage(args[0].String(), args[1].String()))
-}
-func CreateImageMessageByURL(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
-	checker(callback, &args, 4)
-	callback.EventData().SetOperationID(args[0].String())
-	return js.ValueOf(open_im_sdk.CreateImageMessageByURL(args[0].String(), args[1].String(), args[2].String(), args[3].String()))
-}
-func CreateCustomMessage(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
-	checker(callback, &args, 4)
-	callback.EventData().SetOperationID(args[0].String())
-	return js.ValueOf(open_im_sdk.CreateCustomMessage(args[0].String(), args[1].String(), args[2].String(), args[3].String()))
-}
-func CreateQuoteMessage(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
-	checker(callback, &args, 3)
-	callback.EventData().SetOperationID(args[0].String())
-	return js.ValueOf(open_im_sdk.CreateQuoteMessage(args[0].String(), args[1].String(), args[2].String()))
-}
-func CreateAdvancedQuoteMessage(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
-	checker(callback, &args, 4)
-	callback.EventData().SetOperationID(args[0].String())
-	return js.ValueOf(open_im_sdk.CreateAdvancedQuoteMessage(args[0].String(), args[1].String(), args[2].String(), args[3].String()))
-}
-func CreateAdvancedTextMessage(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
-	checker(callback, &args, 3)
-	callback.EventData().SetOperationID(args[0].String())
-	return js.ValueOf(open_im_sdk.CreateAdvancedTextMessage(args[0].String(), args[1].String(), args[2].String()))
+type WrapperConMsg struct {
+	*WrapperCommon
+	caller ReflectCall
 }
 
-func MarkC2CMessageAsRead(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
-	checker(callback, &args, 3)
-	callback.EventData().SetOperationID(args[0].String())
-	open_im_sdk.MarkC2CMessageAsRead(callback, args[0].String(), args[1].String(), args[2].String())
-	return nil
+func (w *WrapperConMsg) CreateTextMessage(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return js.ValueOf(w.caller.InitData(open_im_sdk.CreateTextMessage, callback, &args).Call())
 }
-func MarkMessageAsReadByConID(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
-	checker(callback, &args, 3)
-	callback.EventData().SetOperationID(args[0].String())
-	open_im_sdk.MarkMessageAsReadByConID(callback, args[0].String(), args[1].String(), args[2].String())
-	return nil
+func (w *WrapperConMsg) CreateImageMessage(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return js.ValueOf(w.caller.InitData(open_im_sdk.CreateImageMessage, callback, &args).Call())
 }
-func SendMessage(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
-	checker(callback, &args, 5)
-	callback.EventData().SetOperationID(args[0].String())
-	open_im_sdk.SendMessage(callback, args[0].String(), args[1].String(), args[2].String(), args[3].String(), args[4].String())
-	return nil
+func (w *WrapperConMsg) CreateImageMessageByURL(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return js.ValueOf(w.caller.InitData(open_im_sdk.CreateImageMessageByURL, callback, &args).Call())
 }
-func SendMessageNotOss(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
-	checker(callback, &args, 5)
-	callback.EventData().SetOperationID(args[0].String())
-	open_im_sdk.SendMessageNotOss(callback, args[0].String(), args[1].String(), args[2].String(), args[3].String(), args[4].String())
-	return nil
+func (w *WrapperConMsg) CreateCustomMessage(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return js.ValueOf(w.caller.InitData(open_im_sdk.CreateCustomMessage, callback, &args).Call())
+}
+func (w *WrapperConMsg) CreateQuoteMessage(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return js.ValueOf(w.caller.InitData(open_im_sdk.CreateQuoteMessage, callback, &args).Call())
+}
+func (w *WrapperConMsg) CreateAdvancedQuoteMessage(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return js.ValueOf(w.caller.InitData(open_im_sdk.CreateAdvancedQuoteMessage, callback, &args).Call())
+}
+func (w *WrapperConMsg) CreateAdvancedTextMessage(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return js.ValueOf(w.caller.InitData(open_im_sdk.CreateAdvancedTextMessage, callback, &args).Call())
+}
+
+func (w *WrapperConMsg) MarkC2CMessageAsRead(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return js.ValueOf(w.caller.InitData(open_im_sdk.MarkC2CMessageAsRead, callback, &args).Call())
+}
+func (w *WrapperConMsg) MarkMessageAsReadByConID(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return js.ValueOf(w.caller.InitData(open_im_sdk.MarkMessageAsReadByConID, callback, &args).Call())
+}
+func (w *WrapperConMsg) SendMessage(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return js.ValueOf(w.caller.InitData(open_im_sdk.SendMessage, callback, &args).Call())
+}
+func (w *WrapperConMsg) SendMessageNotOss(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return js.ValueOf(w.caller.InitData(open_im_sdk.SendMessageNotOss, callback, &args).Call())
 }
 
 //------------------------------------conversation---------------------------
-func GetAllConversationList(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
-	checker(callback, &args, 1)
-	callback.EventData().SetOperationID(args[0].String())
-	open_im_sdk.GetAllConversationList(callback, args[0].String())
-	return nil
+
+func (w *WrapperConMsg) GetAllConversationList(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return js.ValueOf(w.caller.InitData(open_im_sdk.GetAllConversationList, callback, &args).Call())
 }
-func GetOneConversation(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
-	checker(callback, &args, 3)
-	callback.EventData().SetOperationID(args[0].String())
-	open_im_sdk.GetOneConversation(callback, args[0].String(), args[1].Int(), args[2].String())
-	return nil
+func (w *WrapperConMsg) GetOneConversation(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return js.ValueOf(w.caller.InitData(open_im_sdk.GetOneConversation, callback, &args).Call())
 }
-func DeleteConversationFromLocalAndSvr(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
-	checker(callback, &args, 2)
-	callback.EventData().SetOperationID(args[0].String())
-	open_im_sdk.DeleteConversationFromLocalAndSvr(callback, args[0].String(), args[1].String())
-	return nil
+func (w *WrapperConMsg) DeleteConversationFromLocalAndSvr(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return js.ValueOf(w.caller.InitData(open_im_sdk.DeleteConversationFromLocalAndSvr, callback, &args).Call())
 }
-func GetAdvancedHistoryMessageList(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
-	checker(callback, &args, 2)
-	callback.EventData().SetOperationID(args[0].String())
-	open_im_sdk.GetAdvancedHistoryMessageList(callback, args[0].String(), args[1].String())
-	return nil
+func (w *WrapperConMsg) GetAdvancedHistoryMessageList(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return js.ValueOf(w.caller.InitData(open_im_sdk.GetAdvancedHistoryMessageList, callback, &args).Call())
 }
-func GetHistoryMessageList(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), commonFunc)
-	checker(callback, &args, 2)
-	callback.EventData().SetOperationID(args[0].String())
-	open_im_sdk.GetHistoryMessageList(callback, args[0].String(), args[1].String())
-	return nil
+func (w *WrapperConMsg) GetHistoryMessageList(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return js.ValueOf(w.caller.InitData(open_im_sdk.GetHistoryMessageList, callback, &args).Call())
 }

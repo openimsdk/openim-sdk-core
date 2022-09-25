@@ -115,8 +115,10 @@ func main() {
 }
 
 func registerFunc() {
-	js.Global().Set(wasm_wrapper.COMMONEVENTFUNC, js.FuncOf(wasm_wrapper.CommonEventFunc))
-	js.Global().Set("initSDK", js.FuncOf(wasm_wrapper.InitSDK))
-	js.Global().Set("login", js.FuncOf(wasm_wrapper.Login))
+	globalFuc := wasm_wrapper.NewWrapperCommon()
+	js.Global().Set(wasm_wrapper.COMMONEVENTFUNC, js.FuncOf(globalFuc.CommonEventFunc))
+	wrapperInitLogin := wasm_wrapper.NewWrapperInitLogin(globalFuc, wasm_wrapper.ReflectCall{})
+	js.Global().Set("initSDK", js.FuncOf(wrapperInitLogin.InitSDK))
+	js.Global().Set("login", js.FuncOf(wrapperInitLogin.Login))
 
 }
