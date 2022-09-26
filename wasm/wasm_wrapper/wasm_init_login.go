@@ -17,13 +17,26 @@ const COMMONEVENTFUNC = "commonEventFunc"
 var ErrArgsLength = errors.New("from javascript args length err")
 var ErrFunNameNotSet = errors.New("reflect func not to set")
 
-type setListener struct {
+type SetListener struct {
 	*WrapperCommon
 }
 
-func (s *setListener) setConversationListener() {
+func NewSetListener(wrapperCommon *WrapperCommon) *SetListener {
+	return &SetListener{WrapperCommon: wrapperCommon}
+}
+
+func (s *SetListener) setConversationListener() {
 	callback := event_listener.NewConversationCallback(s.commonFunc)
 	open_im_sdk.SetConversationListener(callback)
+}
+func (s *SetListener) setAdvancedMsgListener() {
+	callback := event_listener.NewAdvancedMsgCallback(s.commonFunc)
+	open_im_sdk.SetAdvancedMsgListener(callback)
+}
+
+func (s *SetListener) SetAllListener() {
+	s.setConversationListener()
+	s.setAdvancedMsgListener()
 }
 
 type WrapperCommon struct {
@@ -157,6 +170,8 @@ func (w *WrapperInitLogin) InitSDK(_ js.Value, args []js.Value) interface{} {
 	return js.ValueOf(w.caller.InitData(open_im_sdk.InitSDK, callback, &args).Call())
 }
 func (w *WrapperInitLogin) Login(_ js.Value, args []js.Value) interface{} {
+	listener := NewSetListener(w.WrapperCommon)
+	listener.SetAllListener()
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return js.ValueOf(w.caller.InitData(open_im_sdk.Login, callback, &args).Call())
 }

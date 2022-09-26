@@ -73,6 +73,33 @@ func (c ConversationCallback) OnTotalUnreadMessageCountChanged(totalUnreadCount 
 	c.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(totalUnreadCount).SendMessage()
 }
 
+type AdvancedMsgCallback struct {
+	CallbackWriter
+}
+
+func NewAdvancedMsgCallback(callback *js.Value) *AdvancedMsgCallback {
+	return &AdvancedMsgCallback{CallbackWriter: NewEventData(callback)}
+}
+func (a AdvancedMsgCallback) OnRecvNewMessage(message string) {
+	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(message).SendMessage()
+}
+
+func (a AdvancedMsgCallback) OnRecvC2CReadReceipt(msgReceiptList string) {
+	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(msgReceiptList).SendMessage()
+}
+
+func (a AdvancedMsgCallback) OnRecvGroupReadReceipt(groupMsgReceiptList string) {
+	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(groupMsgReceiptList).SendMessage()
+}
+
+func (a AdvancedMsgCallback) OnRecvMessageRevoked(msgID string) {
+	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(msgID).SendMessage()
+}
+
+func (a AdvancedMsgCallback) OnNewRecvMessageRevoked(messageRevoked string) {
+	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(messageRevoked).SendMessage()
+}
+
 type BaseCallback struct {
 	CallbackWriter
 }
