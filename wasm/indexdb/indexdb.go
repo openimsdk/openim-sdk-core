@@ -76,7 +76,7 @@ func (i IndexDB) GetJoinedGroupList() ([]*model_struct.LocalGroup, error) {
 }
 
 func (i IndexDB) GetGroupInfoByGroupID(groupID string) (*model_struct.LocalGroup, error) {
-	return nil, nil
+	return &model_struct.LocalGroup{}, nil
 }
 
 func (i IndexDB) GetAllGroupInfoByGroupIDOrGroupName(keyword string, isSearchGroupID bool, isSearchGroupName bool) ([]*model_struct.LocalGroup, error) {
