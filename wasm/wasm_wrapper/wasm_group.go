@@ -7,7 +7,7 @@ import (
 	"syscall/js"
 )
 
-//------------------------------------message---------------------------
+//------------------------------------group---------------------------
 type WrapperGroup struct {
 	*WrapperCommon
 	caller *ReflectCall
