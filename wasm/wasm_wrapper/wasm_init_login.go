@@ -89,7 +89,7 @@ func (r *ReflectCall) Call() (result []interface{}) {
 		} else {
 			temp = i
 		}
-		log.NewDebug(r.callback.GetOperationID(), "type is ", typeFuncName.In(temp).Kind(), r.arguments[i].IsNaN())
+		//log.NewDebug(r.callback.GetOperationID(), "type is ", typeFuncName.In(temp).Kind(), r.arguments[i].IsNaN())
 		switch typeFuncName.In(temp).Kind() {
 		case reflect.String:
 			convertValue := r.arguments[i].String()
