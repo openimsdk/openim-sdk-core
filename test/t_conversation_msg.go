@@ -57,14 +57,14 @@ func DoTestSearchLocalMessages() {
 	var testSearchLocalMessagesCallBack SearchLocalMessagesCallBack
 	testSearchLocalMessagesCallBack.OperationID = utils.OperationIDGenerator()
 	var params sdk_params_callback.SearchLocalMessagesParams
-	params.KeywordList = []string{"3"}
-	//params.ConversationID = "single_1195727294"
+	params.KeywordList = []string{"发送"}
+	params.ConversationID = "single_707011701"
 	params.Count = 200
 	params.PageIndex = 1
 	//s:=strings.Trim(params.KeywordList[0],"")
 	//fmt.Println(len(s),s)
 	//params.KeywordListMatchType = 1
-	//params.MessageTypeList = []int{105}
+	params.MessageTypeList = []int{101, 106}
 	open_im_sdk.SearchLocalMessages(testSearchLocalMessagesCallBack, testSearchLocalMessagesCallBack.OperationID, utils.StructToJsonString(params))
 }
 
