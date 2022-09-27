@@ -119,3 +119,7 @@ func (c *Conversation) getMaxAndMinHaveSeqList(messages []*model_struct.LocalCha
 	}
 	return max, min, seqList
 }
+
+//拉取的消息都需要经过块内部连续性检测以及块和上一块之间的连续性检测不连续则补，补齐的过程中如果出现任何异常只给seq从大到小到断层
+//拉取消息不满量，获取服务器中该群最大seq以及用户对于此群最小seq，本地该群的最小seq，如果本地的不为0并且小于等于服务器最小的，说明已经到底部
+//如果本地的为0，可以理解为初始化的时候，数据还未同步，或者异常情况，如果服务器最大seq>0说明还未到底部，否则到底部
