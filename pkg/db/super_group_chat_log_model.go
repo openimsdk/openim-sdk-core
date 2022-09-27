@@ -365,7 +365,7 @@ func (d *DataBase) SuperGroupGetMsgSeqByClientMsgID(clientMsgID string, groupID 
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var seq uint32
-	err := utils.Wrap(d.conn.Debug().Table(utils.GetSuperGroupTableName(groupID)).Select("seq").Where("client_msg_id=?", clientMsgID).Take(&seq).Error, utils.GetSelfFuncName()+" failed")
+	err := utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Select("seq").Where("client_msg_id=?", clientMsgID).Take(&seq).Error, utils.GetSelfFuncName()+" failed")
 	return seq, err
 }
 
