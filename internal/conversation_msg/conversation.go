@@ -45,6 +45,9 @@ func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callba
 			log.NewError(operationID, utils.GetSelfFuncName(), "GetConversation failed", err.Error())
 			continue
 		}
+		if localConversation.ConversationType == constant.SuperGroupChatType && opt == constant.NotReceiveMessage {
+			common.CheckAnyErrCallback(callback, 100, errors.New("super group not support this opt"), operationID)
+		}
 		conversations = append(conversations, server_api_params.Conversation{
 			OwnerUserID:      c.loginUserID,
 			ConversationID:   conversationID,

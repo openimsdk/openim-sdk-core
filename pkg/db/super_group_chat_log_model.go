@@ -62,7 +62,7 @@ func (d *DataBase) SuperGroupSearchMessageByKeyword(contentType []int, keywordLi
 			}
 		}
 	}
-	condition = fmt.Sprintf("session_type=%d And recv_id=%q And send_time between %d and %d AND status <=%d  And content_type IN ? ", constant.GroupChatType, sourceID, startTime, endTime, constant.MsgStatusSendFailed)
+	condition = fmt.Sprintf("recv_id=%q And send_time between %d and %d AND status <=%d  And content_type IN ? ", sourceID, startTime, endTime, constant.MsgStatusSendFailed)
 
 	condition += subCondition
 	err = utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(sourceID)).Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&messageList).Error, "InsertMessage failed")
@@ -365,7 +365,7 @@ func (d *DataBase) SuperGroupGetMsgSeqByClientMsgID(clientMsgID string, groupID 
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var seq uint32
-	err := utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Select("seq").Where("client_msg_id=?", clientMsgID).First(&seq).Error, utils.GetSelfFuncName()+" failed")
+	err := utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Select("seq").Where("client_msg_id=?", clientMsgID).Take(&seq).Error, utils.GetSelfFuncName()+" failed")
 	return seq, err
 }
 
