@@ -245,6 +245,7 @@ func (s *LiveSignaling) SignalGetRoomByGroupID(callback open_im_sdk_callback.Bas
 		}}
 		var signalReq api.SignalReq
 		signalReq.Payload = req
+		log.NewDebug(operationID, "SignalGetRoomByGroupID", req.GetRoomByGroupID.String(), signalReq.Payload)
 		s.handleSignaling(&signalReq, callback, operationID)
 		log.NewInfo(operationID, fName, " callback finished")
 	}()

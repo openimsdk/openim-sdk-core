@@ -63,10 +63,10 @@ func DoTestInviteInGroup() {
 func SetTestInviteInfo() *api.InvitationInfo {
 	req := &api.InvitationInfo{}
 	req.Timeout = 1000
-	req.InviteeUserIDList = append(req.InviteeUserIDList, MemberUserID)
+	req.InviteeUserIDList = []string{"3495023045"}
 	req.MediaType = "video"
-	req.RoomID = TestRoomID
-	req.GroupID = TestgroupID
+	req.RoomID = "1826384574"
+	req.GroupID = "1826384574"
 	req.SessionType = 2
 	return req
 }

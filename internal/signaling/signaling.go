@@ -253,8 +253,10 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 		log.Info(operationID, "signaling response ", payload.Invite.String())
 		if utils.IsContain(s.loginUserID, payload.Invite.Invitation.InviteeUserIDList) {
 			for _, listener := range listenerList {
-				listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.Invite))
-				log.Info(operationID, "OnReceiveNewInvitation ", utils.StructToJsonString(payload.Invite), listener)
+				if !utils.IsContain(s.loginUserID, payload.Invite.Invitation.BusyLineUserIDList) {
+					listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.Invite))
+					log.Info(operationID, "OnReceiveNewInvitation ", utils.StructToJsonString(payload.Invite), listener)
+				}
 			}
 		}
 
@@ -262,8 +264,10 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 		log.Info(operationID, "signaling response ", payload.InviteInGroup.String())
 		if utils.IsContain(s.loginUserID, payload.InviteInGroup.Invitation.InviteeUserIDList) {
 			for _, listener := range listenerList {
-				listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.InviteInGroup))
-				log.Info(operationID, "OnReceiveNewInvitation ", utils.StructToJsonString(payload.InviteInGroup), listener)
+				if !utils.IsContain(s.loginUserID, payload.InviteInGroup.Invitation.BusyLineUserIDList) {
+					listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.InviteInGroup))
+					log.Info(operationID, "OnReceiveNewInvitation ", utils.StructToJsonString(payload.InviteInGroup), listener)
+				}
 			}
 		}
 	default:
