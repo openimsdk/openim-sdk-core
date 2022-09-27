@@ -37,7 +37,7 @@ func NewLiveSignaling(ws *ws.Ws, loginUserID string, platformID int32, db *db.Da
 	return &LiveSignaling{Ws: ws, loginUserID: loginUserID, platformID: platformID, DataBase: db}
 }
 
-func (s *LiveSignaling) waitPush(req *api.SignalReq, operationID string) {
+func (s *LiveSignaling) waitPush(req *api.SignalReq, busyLineUserList []string, operationID string) {
 	var invt *api.InvitationInfo
 	switch payload := req.Payload.(type) {
 	case *api.SignalReq_Invite:
@@ -59,7 +59,13 @@ func (s *LiveSignaling) waitPush(req *api.SignalReq, operationID string) {
 		log.Error(operationID, "len (listenerList) == 0 ")
 		return
 	}
-	for _, v := range invt.InviteeUserIDList {
+	var inviteeUserIDList []string
+	for _, inviteUser := range invt.InviteeUserIDList {
+		if !utils.IsContain(inviteUser, busyLineUserList) {
+			inviteeUserIDList = append(inviteeUserIDList, inviteUser)
+		}
+	}
+	for _, v := range inviteeUserIDList {
 		go func(invitee string) {
 			push, err := s.SignalingWaitPush(invt.InviterUserID, invitee, invt.RoomID, invt.Timeout, operationID)
 			if err != nil {
@@ -273,6 +279,7 @@ func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk
 		common.CheckAnyErrCallback(callback, 3003, errors.New("timeout"), operationID)
 	}
 	common.CheckAnyErrCallback(callback, 3001, err, operationID)
+	var busyLineUserIDList []string
 	switch payload := resp.Payload.(type) {
 	case *api.SignalResp_Accept:
 		log.Info(operationID, "signaling response ", payload.Accept.String())
@@ -289,12 +296,17 @@ func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.CancelCallback(payload.Cancel)))
 	case *api.SignalResp_Invite:
 		s.isCanceled = false
+		busyLineUserIDList = payload.Invite.BusyLineUserIDList
 		log.Info(operationID, "signaling response ", payload.Invite.String())
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.InviteCallback(payload.Invite)))
 	case *api.SignalResp_InviteInGroup:
 		s.isCanceled = false
+		busyLineUserIDList = payload.InviteInGroup.BusyLineUserIDList
 		log.Info(operationID, "signaling response ", payload.InviteInGroup.String())
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.InviteInGroupCallback(payload.InviteInGroup)))
+	case *api.SignalResp_GetRoomByGroupID:
+		log.Info(operationID, "signaling response ", payload.GetRoomByGroupID.String())
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GetRoomByGroupIDCallback(payload.GetRoomByGroupID)))
 	default:
 		log.Error(operationID, "resp payload type failed ", payload)
 		common.CheckAnyErrCallback(callback, 3002, errors.New("resp payload type failed"), operationID)
@@ -302,9 +314,9 @@ func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk
 	switch req.Payload.(type) {
 	case *api.SignalReq_Invite:
 		log.Info(operationID, "wait push ", req.String())
-		s.waitPush(req, operationID)
+		s.waitPush(req, busyLineUserIDList, operationID)
 	case *api.SignalReq_InviteInGroup:
 		log.Info(operationID, "wait push ", req.String())
-		s.waitPush(req, operationID)
+		s.waitPush(req, busyLineUserIDList, operationID)
 	}
 }

@@ -119,8 +119,8 @@ func DoTestCreateGroup() {
 	test.OperationID = utils.OperationIDGenerator()
 
 	var groupInfo sdk_params_callback.CreateGroupBaseInfoParam
-	groupInfo.GroupName = "normal tttttt"
-	groupInfo.GroupType = 0
+	groupInfo.GroupName = "聊聊大群测试"
+	groupInfo.GroupType = 1
 
 	var memberlist []server_api_params.GroupAddMemberInfo
 	memberlist = append(memberlist, server_api_params.GroupAddMemberInfo{UserID: MemberUserID, RoleLevel: 1})

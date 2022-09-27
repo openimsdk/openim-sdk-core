@@ -28,14 +28,14 @@ import (
 //}
 
 var (
-	TESTIP       = "43.128.5.63"
-	APIADDR      = "http://" + TESTIP + ":10002"
-	WSADDR       = "ws://" + TESTIP + ":10001"
-	REGISTERADDR = APIADDR + "/user_register"
-	ACCOUNTCHECK = APIADDR + "/manager/account_check"
-	TOKENADDR    = APIADDR + "/auth/user_token"
-	SECRET       = "tuoyun"
-	SENDINTERVAL = 20
+	TESTIP = "43.128.5.63"
+	//APIADDR      = "http://" + TESTIP + ":10002"
+	//WSADDR       = "ws://" + TESTIP + ":10001"
+	//REGISTERADDR = APIADDR + "/user_register"
+	//ACCOUNTCHECK = APIADDR + "/manager/account_check"
+	//TOKENADDR    = APIADDR + "/auth/user_token"
+	//SECRET       = "tuoyun"
+	//SENDINTERVAL = 20
 )
 
 type ChanMsg struct {
@@ -60,7 +60,7 @@ func main() {
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
 	test.SENDINTERVAL = SENDINTERVAL
-	strMyUidx := "18666662345"
+	strMyUidx := "3433303585"
 
 	//	var onlineNum *int          //Number of online users
 	//	var senderNum *int          //Number of users sending messages
@@ -79,6 +79,9 @@ func main() {
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
 	println("start")
+	//test.DoTestCreateGroup()
+	//test.DoTestSearchLocalMessages()
+	test.DoTestSignalGetRoomByGroupID("1826384574")
 	//test.DoTestGetUserInDepartment()
 	//test.DoTestGetDepartmentMemberAndSubDepartment()
 	//test.DoTestDeleteAllMsgFromLocalAndSvr()

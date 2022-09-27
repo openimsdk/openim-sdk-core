@@ -13,3 +13,5 @@ type RejectCallback *server_api_params.SignalRejectReply
 type AcceptCallback *server_api_params.SignalAcceptReply
 
 type HungUpCallback *server_api_params.SignalHungUpReply
+
+type GetRoomByGroupIDCallback *server_api_params.SignalGetRoomByGroupIDReply
