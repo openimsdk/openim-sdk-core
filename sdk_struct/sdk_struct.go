@@ -23,6 +23,7 @@ type MessageRevoked struct {
 	SourceMessageSendID         string `json:"sourceMessageSendID"`
 	SourceMessageSenderNickname string `json:"sourceMessageSenderNickname"`
 	SessionType                 int32  `json:"sessionType"`
+	Seq                         uint32 `json:"seq"`
 }
 type ImageInfo struct {
 	Width  int32  `json:"x"`
