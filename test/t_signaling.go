@@ -12,7 +12,7 @@ type testSignalingListener struct {
 }
 
 func (s *testSignalingListener) OnHangUp(hangUpCallback string) {
-	panic("implement me")
+	//panic("implement me")
 }
 
 func (s *testSignalingListener) OnReceiveNewInvitation(receiveNewInvitationCallback string) {
@@ -43,6 +43,10 @@ func (s *testSignalingListener) OnInviteeAcceptedByOtherDevice(inviteeAcceptedCa
 
 func (s *testSignalingListener) OnInviteeRejectedByOtherDevice(inviteeRejectedCallback string) {
 	log.Info("", utils.GetSelfFuncName(), "listener ", inviteeRejectedCallback)
+}
+
+func (s *testSignalingListener) OnRoomChange(onRoomChangeCallback string) {
+	log.Info("", utils.GetSelfFuncName(), "listener ", onRoomChangeCallback)
 }
 
 type testSingaling struct {
@@ -110,14 +114,12 @@ func DoTestReject() {
 func DoTestCancel() {
 	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
 	req := &api.SignalCancelReq{Invitation: &api.InvitationInfo{}}
-
 	req.Invitation = SetTestInviteInfo()
 	req.Invitation.GroupID = ""
 	req.Invitation.SessionType = 1
 	req.Invitation.PlatformID = 1
 	req.Invitation.Timeout = 10
 	req.Invitation.InviterUserID = "18666662412"
-
 	req.OpUserID = "18666662412"
 	s := utils.StructToJsonString(req)
 	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)

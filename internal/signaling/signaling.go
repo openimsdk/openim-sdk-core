@@ -270,6 +270,13 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 				}
 			}
 		}
+	case *api.SignalReq_SignalOnRoomChangeReq:
+		log.Info(operationID, "signaling response ", payload.SignalOnRoomChangeReq.String())
+		for _, listener := range listenerList {
+			listener.OnRoomChange(utils.StructToJsonString(payload.SignalOnRoomChangeReq))
+			log.Info(operationID, "OnReceiveNewInvitation ", utils.StructToJsonString(payload.SignalOnRoomChangeReq), listener)
+		}
+
 	default:
 		log.Error(operationID, "resp payload type failed ", payload)
 	}
