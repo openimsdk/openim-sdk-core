@@ -1542,7 +1542,7 @@ func (c *Conversation) DeleteAllMsgFromLocalAndSvr(callback open_im_sdk_callback
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName)
-		//	c.deleteAllMsgFromSvr(callback, operationID)
+		//c.deleteAllMsgFromSvr(callback, operationID)
 		c.clearMessageFromSvr(callback, operationID)
 		c.deleteAllMsgFromLocal(callback, operationID)
 		callback.OnSuccess("")
