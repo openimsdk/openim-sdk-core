@@ -45,7 +45,11 @@ func (s *testSignalingListener) OnInviteeRejectedByOtherDevice(inviteeRejectedCa
 	log.Info("", utils.GetSelfFuncName(), "listener ", inviteeRejectedCallback)
 }
 
-func (s *testSignalingListener) OnRoomChange(onRoomChangeCallback string) {
+func (s *testSignalingListener) OnRoomParticipantConnected(onRoomChangeCallback string) {
+	log.Info("", utils.GetSelfFuncName(), "listener ", onRoomChangeCallback)
+}
+
+func (s *testSignalingListener) OnRoomParticipantDisconnected(onRoomChangeCallback string) {
 	log.Info("", utils.GetSelfFuncName(), "listener ", onRoomChangeCallback)
 }
 

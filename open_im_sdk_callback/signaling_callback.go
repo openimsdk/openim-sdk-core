@@ -17,5 +17,7 @@ type OnSignalingListener interface {
 	//
 	OnHangUp(hangUpCallback string)
 
-	OnRoomChange(onRoomChangeCallback string)
+	OnRoomParticipantConnected(onRoomParticipantConnectedCallback string)
+
+	OnRoomParticipantDisconnected(onRoomParticipantDisconnectedCallback string)
 }

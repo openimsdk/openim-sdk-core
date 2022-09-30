@@ -270,11 +270,17 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 				}
 			}
 		}
-	case *api.SignalReq_SignalOnRoomChangeReq:
-		log.Info(operationID, "signaling response ", payload.SignalOnRoomChangeReq.String())
+	case *api.SignalReq_SignalOnRoomParticipantConnectedReq:
+		log.Info(operationID, "signaling response ", payload.SignalOnRoomParticipantConnectedReq.String())
 		for _, listener := range listenerList {
-			listener.OnRoomChange(utils.StructToJsonString(payload.SignalOnRoomChangeReq))
-			log.Info(operationID, "OnReceiveNewInvitation ", utils.StructToJsonString(payload.SignalOnRoomChangeReq), listener)
+			listener.OnRoomParticipantConnected(utils.StructToJsonString(payload.SignalOnRoomParticipantConnectedReq))
+			log.Info(operationID, "SignalOnRoomParticipantConnectedReq", utils.StructToJsonString(payload.SignalOnRoomParticipantConnectedReq), listener)
+		}
+	case *api.SignalReq_SignalOnRoomParticipantDisconnectedReq:
+		log.Info(operationID, "signaling response ", payload.SignalOnRoomParticipantDisconnectedReq.String())
+		for _, listener := range listenerList {
+			listener.OnRoomParticipantDisconnected(utils.StructToJsonString(payload.SignalOnRoomParticipantDisconnectedReq))
+			log.Info(operationID, "SignalOnRoomParticipantDisconnectedReq", utils.StructToJsonString(payload.SignalOnRoomParticipantDisconnectedReq), listener)
 		}
 
 	default:
