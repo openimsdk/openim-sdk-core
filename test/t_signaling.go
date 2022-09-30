@@ -141,5 +141,5 @@ func DoTestHungUp() {
 
 func DoTestSignalGetRoomByGroupID(groupID string) {
 	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
-	open_im_sdk.SignalGetRoomByGroupID(t, t.OperationID, groupID)
+	open_im_sdk.SignalingGetRoomByGroupID(t, t.OperationID, groupID)
 }

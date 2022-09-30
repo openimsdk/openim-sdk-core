@@ -228,7 +228,7 @@ func (s *LiveSignaling) HungUp(callback open_im_sdk_callback.Base, signalHungUpR
 	}()
 }
 
-func (s *LiveSignaling) SignalGetRoomByGroupID(callback open_im_sdk_callback.Base, groupID, operationID string) {
+func (s *LiveSignaling) SignalingGetRoomByGroupID(callback open_im_sdk_callback.Base, groupID, operationID string) {
 	if callback == nil {
 		log.NewError(operationID, "callback is nil")
 	}
