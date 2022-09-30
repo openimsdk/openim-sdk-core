@@ -243,6 +243,7 @@ func (s *LiveSignaling) SignalGetRoomByGroupID(callback open_im_sdk_callback.Bas
 			OpUserID: s.loginUserID,
 			GroupID:  groupID,
 		}}
+		req.GetRoomByGroupID.Participant = s.getSelfParticipant(req.GetRoomByGroupID.GroupID, callback, operationID)
 		var signalReq api.SignalReq
 		signalReq.Payload = req
 		log.NewDebug(operationID, "SignalGetRoomByGroupID", req.GetRoomByGroupID.String(), signalReq.Payload)

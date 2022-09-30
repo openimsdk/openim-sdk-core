@@ -43,7 +43,7 @@ func main() {
 	//test.DoTestSearchLocalMessages()
 	//test.DoTestInviteInGroup()
 	//time.Sleep(time.Second*6)
-	test.DoTestSignalGetRoomByGroupID("9843fb78-4014-4df0-806f-154a0a805334")
+	test.DoTestSignalGetRoomByGroupID("1826384574")
 	//test.DoTestGetUserInDepartment()
 	//test.DoTestGetDepartmentMemberAndSubDepartment()
 	//test.DoTestDeleteAllMsgFromLocalAndSvr()
