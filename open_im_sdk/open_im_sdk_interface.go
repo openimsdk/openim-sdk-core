@@ -1134,6 +1134,15 @@ func SignalingGetRoomByGroupID(callback open_im_sdk_callback.Base, operationID s
 	userForSDK.Signaling().SignalingGetRoomByGroupID(callback, groupID, operationID)
 }
 
+func SignalingGetTokenByRoomID(callback open_im_sdk_callback.Base, operationID, groupID string) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Signaling().SignalingGetTokenByRoomID(callback, groupID, operationID)
+}
+
 func GetSubDepartment(callback open_im_sdk_callback.Base, operationID string, departmentID string, offset, count int) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())

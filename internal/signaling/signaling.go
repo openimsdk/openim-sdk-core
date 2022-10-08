@@ -270,17 +270,17 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 				}
 			}
 		}
-	case *api.SignalReq_SignalOnRoomParticipantConnectedReq:
-		log.Info(operationID, "signaling response ", payload.SignalOnRoomParticipantConnectedReq.String())
+	case *api.SignalReq_OnRoomParticipantConnectedReq:
+		log.Info(operationID, "signaling response ", payload.OnRoomParticipantConnectedReq.String())
 		for _, listener := range listenerList {
-			listener.OnRoomParticipantConnected(utils.StructToJsonString(payload.SignalOnRoomParticipantConnectedReq))
-			log.Info(operationID, "SignalOnRoomParticipantConnectedReq", utils.StructToJsonString(payload.SignalOnRoomParticipantConnectedReq), listener)
+			listener.OnRoomParticipantConnected(utils.StructToJsonString(payload.OnRoomParticipantConnectedReq))
+			log.Info(operationID, "SignalOnRoomParticipantConnectedReq", utils.StructToJsonString(payload.OnRoomParticipantConnectedReq), listener)
 		}
-	case *api.SignalReq_SignalOnRoomParticipantDisconnectedReq:
-		log.Info(operationID, "signaling response ", payload.SignalOnRoomParticipantDisconnectedReq.String())
+	case *api.SignalReq_OnRoomParticipantDisconnectedReq:
+		log.Info(operationID, "signaling response ", payload.OnRoomParticipantDisconnectedReq.String())
 		for _, listener := range listenerList {
-			listener.OnRoomParticipantDisconnected(utils.StructToJsonString(payload.SignalOnRoomParticipantDisconnectedReq))
-			log.Info(operationID, "SignalOnRoomParticipantDisconnectedReq", utils.StructToJsonString(payload.SignalOnRoomParticipantDisconnectedReq), listener)
+			listener.OnRoomParticipantDisconnected(utils.StructToJsonString(payload.OnRoomParticipantDisconnectedReq))
+			log.Info(operationID, "SignalOnRoomParticipantDisconnectedReq", utils.StructToJsonString(payload.OnRoomParticipantDisconnectedReq), listener)
 		}
 
 	default:
@@ -324,6 +324,9 @@ func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk
 	case *api.SignalResp_GetRoomByGroupID:
 		log.Info(operationID, "signaling response ", payload.GetRoomByGroupID.String())
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GetRoomByGroupIDCallback(payload.GetRoomByGroupID)))
+	case *api.SignalResp_GetTokenByRoomID:
+		log.Info(operationID, "signaling response", payload.GetTokenByRoomID.String())
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GetTokenByRoomID(payload.GetTokenByRoomID)))
 	default:
 		log.Error(operationID, "resp payload type failed ", payload)
 		common.CheckAnyErrCallback(callback, 3002, errors.New("resp payload type failed"), operationID)

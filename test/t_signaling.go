@@ -143,3 +143,8 @@ func DoTestSignalGetRoomByGroupID(groupID string) {
 	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
 	open_im_sdk.SignalingGetRoomByGroupID(t, t.OperationID, groupID)
 }
+
+func DoTestSignalGetTokenByRoomID(roomID string) {
+	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
+	open_im_sdk.SignalingGetTokenByRoomID(t, t.OperationID, roomID)
+}

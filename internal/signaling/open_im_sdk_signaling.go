@@ -251,3 +251,27 @@ func (s *LiveSignaling) SignalingGetRoomByGroupID(callback open_im_sdk_callback.
 		log.NewInfo(operationID, fName, " callback finished")
 	}()
 }
+
+func (s *LiveSignaling) SignalingGetTokenByRoomID(callback open_im_sdk_callback.Base, groupID, operationID string) {
+	if callback == nil {
+		log.NewError(operationID, "callback is nil")
+	}
+	if s.listener == nil {
+		log.Error(operationID, "listener is nil")
+		callback.OnError(3004, "listener is nil")
+	}
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args groupID:", groupID)
+		req := &api.SignalReq_GetTokenByRoomID{GetTokenByRoomID: &api.SignalGetTokenByRoomIDReq{
+			OpUserID: s.loginUserID,
+			RoomID:   groupID,
+		}}
+		req.GetTokenByRoomID.Participant = s.getSelfParticipant(req.GetTokenByRoomID.RoomID, callback, operationID)
+		var signalReq api.SignalReq
+		signalReq.Payload = req
+		log.NewDebug(operationID, "SignalGetRoomByGroupID", req.GetTokenByRoomID.String(), signalReq.Payload)
+		s.handleSignaling(&signalReq, callback, operationID)
+		log.NewInfo(operationID, fName, " callback finished")
+	}()
+}
