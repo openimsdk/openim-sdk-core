@@ -1566,7 +1566,7 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","3434"))
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","F3434"))
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","SDF3"))
-	log.Debug("get raw data length is", len(list))
+	log.Debug(operationID, "get raw data length is", len(list))
 	for _, v := range list {
 		temp := sdk_struct.MsgStruct{}
 		temp.ClientMsgID = v.ClientMsgID

@@ -57,9 +57,9 @@ func DoTestSearchLocalMessages() {
 	var testSearchLocalMessagesCallBack SearchLocalMessagesCallBack
 	testSearchLocalMessagesCallBack.OperationID = utils.OperationIDGenerator()
 	var params sdk_params_callback.SearchLocalMessagesParams
-	params.KeywordList = []string{"发送"}
-	params.ConversationID = "single_707011701"
-	params.Count = 200
+	params.KeywordList = []string{"1"}
+	params.ConversationID = "super_group_3907826375"
+	params.Count = 20
 	params.PageIndex = 1
 	//s:=strings.Trim(params.KeywordList[0],"")
 	//fmt.Println(len(s),s)
