@@ -413,6 +413,20 @@ func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, start
 	}
 	return result, err
 }
+
+func (d *DataBase) GetAllMessageForTest() (result []*model_struct.LocalChatLog, err error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var messageList []model_struct.LocalChatLog
+
+	err = utils.Wrap(d.conn.Find(&messageList).Error, "GetMessageList failed")
+	for _, v := range messageList {
+		v1 := v
+		result = append(result, &v1)
+	}
+	return result, err
+}
+
 func (d *DataBase) GetMessageListController(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	switch sessionType {
 	case constant.SuperGroupChatType:
