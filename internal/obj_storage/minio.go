@@ -64,7 +64,7 @@ func (m *Minio) upload(filePath, fileType string, onProgressFun func(int)) (stri
 	case "https":
 		opts.Secure = true
 	}
-	client, err := minio.New(endPoint.Host, opts)
+	client, err := minio.New(minioResp.StsEndpointURL, opts)
 	if err != nil {
 		log.NewError("", utils.GetSelfFuncName(), "generate filename and filetype failed", err.Error(), endPoint.Host)
 		return "", "", utils.Wrap(err, "")
