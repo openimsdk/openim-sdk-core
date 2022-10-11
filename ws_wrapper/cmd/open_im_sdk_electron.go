@@ -26,7 +26,7 @@ func main() {
 	openIMWsAddress = flag.String("openIMWsAddress", "", "openIM ws listening port")
 	openIMDbDir = flag.String("openIMDbDir", "./", "openIM db dir")
 	objectStorage = flag.String("objectStorage", "cos", "openIM objectStorage")
-	encryptionKey = flag.String("encryptionKey", "encryptionKey", "openIM encryptionKey")
+	encryptionKey = flag.String("encryptionKey", "", "openIM encryptionKey")
 	flag.Parse()
 
 	sysType := runtime.GOOS
@@ -40,7 +40,6 @@ func main() {
 	case "linux":
 		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: *openIMApiAddress,
 			WsAddr: *openIMWsAddress, Platform: utils.LinuxPlatformID, DataDir: *openIMDbDir, ObjectStorage: *objectStorage, EncryptionKey: *encryptionKey})
-
 	case "windows":
 		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: *openIMApiAddress,
 			WsAddr: *openIMWsAddress, Platform: utils.WindowsPlatformID, DataDir: *openIMDbDir, ObjectStorage: *objectStorage, EncryptionKey: *encryptionKey})
