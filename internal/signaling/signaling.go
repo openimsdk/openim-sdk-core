@@ -293,7 +293,7 @@ func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk
 	resp, err := s.SendSignalingReqWaitResp(req, operationID)
 	if err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), "SendSignalingReqWaitResp error", err.Error())
-		common.CheckAnyErrCallback(callback, 3003, errors.New("timeout"), operationID)
+		common.CheckAnyErrCallback(callback, 3003, err, operationID)
 	}
 	common.CheckAnyErrCallback(callback, 3001, err, operationID)
 	var busyLineUserIDList []string
