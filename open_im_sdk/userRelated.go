@@ -12,8 +12,11 @@ func init() {
 }
 
 var UserSDKRwLock sync.RWMutex
+
+//用于web和pc的userMap
 var UserRouterMap map[string]*login.LoginMgr
 
+//客户端独立的user类
 var userForSDK *login.LoginMgr
 
 func GetUserWorker(uid string) *login.LoginMgr {
