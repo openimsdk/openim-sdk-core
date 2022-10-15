@@ -2,6 +2,7 @@ package indexdb
 
 import (
 	"errors"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
@@ -134,11 +135,24 @@ func (i IndexDB) GetAdminGroupApplication() ([]*model_struct.LocalAdminGroupRequ
 }
 
 func (i IndexDB) BatchInsertMessageListController(MessageList []*model_struct.LocalChatLog) error {
-	panic("implement me")
+	if len(MessageList) == 0 {
+		return nil
+	}
+	switch MessageList[len(MessageList)-1].SessionType {
+	case constant.SuperGroupChatType:
+		return i.SuperGroupBatchInsertMessageList(MessageList, MessageList[len(MessageList)-1].RecvID)
+	default:
+		return i.BatchInsertMessageList(MessageList)
+	}
 }
 
 func (i IndexDB) InsertMessageController(message *model_struct.LocalChatLog) error {
-	panic("implement me")
+	switch message.SessionType {
+	case constant.SuperGroupChatType:
+		return i.SuperGroupInsertMessage(message, message.RecvID)
+	default:
+		return i.InsertMessage(message)
+	}
 }
 
 func (i IndexDB) SearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
@@ -186,15 +200,73 @@ func (i IndexDB) MessageIfExistsBySeq(seq int64) (bool, error) {
 }
 
 func (i IndexDB) GetMessageController(msg *sdk_struct.MsgStruct) (*model_struct.LocalChatLog, error) {
-	panic("implement me")
+	switch msg.SessionType {
+	case constant.SuperGroupChatType:
+		return i.SuperGroupGetMessage(msg)
+	default:
+		return i.GetMessage(msg.ClientMsgID)
+	}
+}
+func (i IndexDB) UpdateColumnsMessageController(ClientMsgID string, groupID string, sessionType int32, args map[string]interface{}) error {
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return utils.Wrap(i.SuperGroupUpdateColumnsMessage(ClientMsgID, groupID, args), "")
+	default:
+		return utils.Wrap(i.UpdateColumnsMessage(ClientMsgID, args), "")
+	}
+}
+func (i IndexDB) UpdateMessageController(c *model_struct.LocalChatLog) error {
+	switch c.SessionType {
+	case constant.SuperGroupChatType:
+		return utils.Wrap(i.SuperGroupUpdateMessage(c), "")
+	default:
+		return utils.Wrap(i.UpdateMessage(c), "")
+	}
 }
 
+func (i IndexDB) UpdateMessageStatusBySourceIDController(sourceID string, status, sessionType int32) error {
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return i.SuperGroupUpdateMessageStatusBySourceID(sourceID, status, sessionType)
+	default:
+		return i.UpdateMessageStatusBySourceID(sourceID, status, sessionType)
+	}
+}
+func (i IndexDB) UpdateMessageTimeAndStatusController(msg *sdk_struct.MsgStruct) error {
+	switch msg.SessionType {
+	case constant.SuperGroupChatType:
+		return i.SuperGroupUpdateMessageTimeAndStatus(msg)
+	default:
+		return i.UpdateMessageTimeAndStatus(msg.ClientMsgID, msg.ServerMsgID, msg.SendTime, msg.Status)
+	}
+}
+func (i IndexDB) GetMessageListController(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return i.SuperGroupGetMessageList(sourceID, sessionType, count, startTime, isReverse)
+	default:
+		return i.GetMessageList(sourceID, sessionType, count, startTime, isReverse)
+	}
+}
+func (i IndexDB) GetMessageListNoTimeController(sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return i.SuperGroupGetMessageListNoTime(sourceID, sessionType, count, isReverse)
+	default:
+		return i.GetMessageListNoTime(sourceID, sessionType, count, isReverse)
+	}
+}
 func (i IndexDB) UpdateGroupMessageHasRead(msgIDList []string, sessionType int32) error {
 	panic("implement me")
 }
 
 func (i IndexDB) UpdateGroupMessageHasReadController(msgIDList []string, groupID string, sessionType int32) error {
-	panic("implement me")
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return i.SuperGroupUpdateGroupMessageHasRead(msgIDList, groupID)
+	default:
+		return i.UpdateGroupMessageHasRead(msgIDList, sessionType)
+	}
 }
 
 func (i IndexDB) GetMultipleMessage(msgIDList []string) (result []*model_struct.LocalChatLog, err error) {
@@ -202,7 +274,12 @@ func (i IndexDB) GetMultipleMessage(msgIDList []string) (result []*model_struct.
 }
 
 func (i IndexDB) GetMultipleMessageController(msgIDList []string, groupID string, sessionType int32) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return i.SuperGroupGetMultipleMessage(msgIDList, groupID)
+	default:
+		return i.GetMultipleMessage(msgIDList)
+	}
 }
 
 func (i IndexDB) GetLostMsgSeqList(minSeqInSvr uint32) ([]uint32, error) {
@@ -230,7 +307,12 @@ func (i IndexDB) GetMsgSeqByClientMsgID(clientMsgID string) (uint32, error) {
 }
 
 func (i IndexDB) GetMsgSeqByClientMsgIDController(m *sdk_struct.MsgStruct) (uint32, error) {
-	panic("implement me")
+	switch m.SessionType {
+	case constant.SuperGroupChatType:
+		return i.SuperGroupGetMsgSeqByClientMsgID(m.ClientMsgID, m.GroupID)
+	default:
+		return i.GetMsgSeqByClientMsgID(m.ClientMsgID)
+	}
 }
 
 func (i IndexDB) GetMsgSeqListByGroupID(groupID string) ([]uint32, error) {
@@ -422,7 +504,15 @@ func (i IndexDB) BatchInsertExceptionMsg(MessageList []*model_struct.LocalErrCha
 }
 
 func (i IndexDB) BatchInsertExceptionMsgController(MessageList []*model_struct.LocalErrChatLog) error {
-	panic("implement me")
+	if len(MessageList) == 0 {
+		return nil
+	}
+	switch MessageList[len(MessageList)-1].SessionType {
+	case constant.SuperGroupChatType:
+		return i.SuperBatchInsertExceptionMsg(MessageList, MessageList[len(MessageList)-1].RecvID)
+	default:
+		return i.BatchInsertExceptionMsg(MessageList)
+	}
 }
 
 func (i IndexDB) GetSuperGroupAbnormalMsgSeq(groupID string) (uint32, error) {

@@ -3,7 +3,6 @@ package indexdb
 import (
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
 	"open_im_sdk/wasm/indexdb/temp_struct"
 )
 
@@ -114,14 +113,6 @@ func (i *LocalChatLogs) UpdateColumnsMessage(clientMsgID string, args map[string
 	return err
 }
 
-func (i *LocalChatLogs) UpdateColumnsMessageController(ClientMsgID string, groupID string, sessionType int32, args map[string]interface{}) error {
-	panic("implement me")
-}
-
-func (i *LocalChatLogs) UpdateMessageController(c *model_struct.LocalChatLog) error {
-	panic("implement me")
-}
-
 func (i *LocalChatLogs) DeleteAllMessage() error {
 	panic("implement me")
 }
@@ -131,32 +122,16 @@ func (i *LocalChatLogs) UpdateMessageStatusBySourceID(sourceID string, status, s
 	return err
 }
 
-func (i *LocalChatLogs) UpdateMessageStatusBySourceIDController(sourceID string, status, sessionType int32) error {
-	panic("implement me")
-}
-
 func (i *LocalChatLogs) UpdateMessageTimeAndStatus(clientMsgID string, serverMsgID string, sendTime int64, status int32) error {
 	_, err := Exec(clientMsgID, serverMsgID, sendTime, status)
 	return err
-}
-
-func (i *LocalChatLogs) UpdateMessageTimeAndStatusController(msg *sdk_struct.MsgStruct) error {
-	panic("implement me")
 }
 
 func (i *LocalChatLogs) GetMessageList(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	panic("implement me")
 }
 
-func (i *LocalChatLogs) GetMessageListController(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
 func (i *LocalChatLogs) GetMessageListNoTime(sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
-func (i *LocalChatLogs) GetMessageListNoTimeController(sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	panic("implement me")
 }
 
