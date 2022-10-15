@@ -169,7 +169,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	t1 := time.Now()
 	u.token = token
 	u.loginUserID = userID
-	if sdk_struct.SvrConf.Platform == constant.AndroidPlatformID {
+	if sdk_struct.SvrConf.Platform == constant.WebPlatformID {
 		u.db = indexdb.NewIndexDB()
 		err := u.db.InitDB(userID, sdk_struct.SvrConf.DataDir)
 		common.CheckAnyErrCallback(cb, 201, err, operationID)
