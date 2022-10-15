@@ -40,3 +40,23 @@ type LocalConversation struct {
 	AttachedInfo          string ` json:"attachedInfo,omitempty"`
 	Ex                    string ` json:"ex,omitempty"`
 }
+type LocalSuperGroup struct {
+	GroupID                string `json:"groupID,omitempty"`
+	GroupName              string `json:"groupName,omitempty"`
+	Notification           string `json:"notification,omitempty"`
+	Introduction           string `json:"introduction,omitempty"`
+	FaceURL                string `json:"faceURL,omitempty"`
+	CreateTime             uint32 `json:"createTime,omitempty"`
+	Status                 int32  `json:"status,omitempty"`
+	CreatorUserID          string `json:"creatorUserID,omitempty"`
+	GroupType              int32  `json:"groupType,omitempty"`
+	OwnerUserID            string `json:"ownerUserID,omitempty"`
+	MemberCount            int32  `json:"memberCount,omitempty"`
+	Ex                     string `json:"ex,omitempty"`
+	AttachedInfo           string `json:"attachedInfo,omitempty"`
+	NeedVerification       int32  `json:"needVerification,omitempty"`
+	LookMemberInfo         int32  `json:"lookMemberInfo,omitempty"`
+	ApplyMemberFriend      int32  `json:"applyMemberFriend,omitempty"`
+	NotificationUpdateTime uint32 `json:"notificationUpdateTime,omitempty"`
+	NotificationUserID     string `json:"notificationUserID,omitempty"`
+}

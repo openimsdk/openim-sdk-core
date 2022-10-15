@@ -16,6 +16,8 @@ type IndexDB struct {
 	LocalUsers
 	LocalConversations
 	LocalChatLogs
+	LocalSuperGroupChatLogs
+	LocalSuperGroup
 }
 
 type CallbackData struct {
@@ -207,10 +209,6 @@ func (i IndexDB) GetLostMsgSeqList(minSeqInSvr uint32) ([]uint32, error) {
 	panic("implement me")
 }
 
-func (i IndexDB) GetSuperGroupNormalMsgSeq(groupID string) (uint32, error) {
-	panic("implement me")
-}
-
 func (i IndexDB) GetTestMessage(seq uint32) (*model_struct.LocalChatLog, error) {
 	panic("implement me")
 }
@@ -307,31 +305,11 @@ func (i IndexDB) GetSendGroupApplication() ([]*model_struct.LocalGroupRequest, e
 	return nil, nil
 }
 
-func (i IndexDB) GetJoinedSuperGroupList() ([]*model_struct.LocalGroup, error) {
-	return nil, nil
-}
-
 func (i IndexDB) GetJoinedSuperGroupIDList() ([]string, error) {
 	panic("implement me")
 }
 
-func (i IndexDB) InsertSuperGroup(groupInfo *model_struct.LocalGroup) error {
-	panic("implement me")
-}
-
 func (i IndexDB) DeleteAllSuperGroup() error {
-	panic("implement me")
-}
-
-func (i IndexDB) GetSuperGroupInfoByGroupID(groupID string) (*model_struct.LocalGroup, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateSuperGroup(groupInfo *model_struct.LocalGroup) error {
-	panic("implement me")
-}
-
-func (i IndexDB) DeleteSuperGroup(groupID string) error {
 	panic("implement me")
 }
 
@@ -543,14 +521,6 @@ func (i IndexDB) InitSuperLocalChatLog(groupID string) {
 	panic("implement me")
 }
 
-func (i IndexDB) SuperGroupBatchInsertMessageList(MessageList []*model_struct.LocalChatLog, groupID string) error {
-	panic("implement me")
-}
-
-func (i IndexDB) SuperGroupInsertMessage(Message *model_struct.LocalChatLog, groupID string) error {
-	panic("implement me")
-}
-
 func (i IndexDB) SuperGroupDeleteAllMessage(groupID string) error {
 	panic("implement me")
 }
@@ -583,10 +553,6 @@ func (i IndexDB) SuperGroupMessageIfExistsBySeq(seq int64) (bool, error) {
 	panic("implement me")
 }
 
-func (i IndexDB) SuperGroupGetMessage(msg *sdk_struct.MsgStruct) (*model_struct.LocalChatLog, error) {
-	panic("implement me")
-}
-
 func (i IndexDB) SuperGroupGetAllUnDeleteMessageSeqList() ([]uint32, error) {
 	panic("implement me")
 }
@@ -595,15 +561,7 @@ func (i IndexDB) SuperGroupUpdateColumnsMessage(ClientMsgID, groupID string, arg
 	panic("implement me")
 }
 
-func (i IndexDB) SuperGroupUpdateMessage(c *model_struct.LocalChatLog) error {
-	panic("implement me")
-}
-
 func (i IndexDB) SuperGroupUpdateMessageStatusBySourceID(sourceID string, status, sessionType int32) error {
-	panic("implement me")
-}
-
-func (i IndexDB) SuperGroupUpdateMessageTimeAndStatus(msg *sdk_struct.MsgStruct) error {
 	panic("implement me")
 }
 
@@ -620,10 +578,6 @@ func (i IndexDB) SuperGroupGetSendingMessageList() (result []*model_struct.Local
 }
 
 func (i IndexDB) SuperGroupUpdateGroupMessageHasRead(msgIDList []string, groupID string) error {
-	panic("implement me")
-}
-
-func (i IndexDB) SuperGroupGetMultipleMessage(conversationIDList []string, groupID string) (result []*model_struct.LocalChatLog, err error) {
 	panic("implement me")
 }
 
