@@ -752,7 +752,8 @@ func (i IndexDB) SetChatLogFailedStatus() {
 }
 
 func (i IndexDB) InitDB(userID string, dataDir string) error {
-	panic("implement me")
+	_, err := Exec(userID, dataDir)
+	return err
 }
 
 func (i IndexDB) GetBlackList() ([]*model_struct.LocalBlack, error) {
