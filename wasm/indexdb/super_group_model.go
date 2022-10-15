@@ -65,7 +65,7 @@ func (i *LocalSuperGroup) DeleteSuperGroup(groupID string) error {
 	return err
 }
 
-func (i IndexDB) GetSuperGroupInfoByGroupID(groupID string) (*model_struct.LocalGroup, error) {
+func (i *LocalSuperGroup) GetSuperGroupInfoByGroupID(groupID string) (*model_struct.LocalGroup, error) {
 	groupInfo, err := Exec(groupID)
 	if err != nil {
 		return nil, err
