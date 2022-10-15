@@ -220,7 +220,7 @@ type DataBase interface {
 	ClearWorkMomentsNotification() (err error)
 	CloseDB() error
 	SetChatLogFailedStatus()
-	InitDB() error
+	InitDB(userID string, dataDir string) error
 	GetBlackList() ([]*model_struct.LocalBlack, error)
 	GetBlackListUserID() (blackListUid []string, err error)
 	GetBlackInfoByBlockUserID(blockUserID string) (*model_struct.LocalBlack, error)

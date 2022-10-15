@@ -171,6 +171,9 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.loginUserID = userID
 	if sdk_struct.SvrConf.Platform == constant.AndroidPlatformID {
 		u.db = indexdb.NewIndexDB()
+		err := u.db.InitDB(userID, sdk_struct.SvrConf.DataDir)
+		common.CheckAnyErrCallback(cb, 201, err, operationID)
+
 	} else {
 		//sqliteConn, err := db.NewDataBase(userID, sdk_struct.SvrConf.DataDir, operationID)
 		//if err != nil {

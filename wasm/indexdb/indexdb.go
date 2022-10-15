@@ -661,7 +661,7 @@ func (i IndexDB) SetChatLogFailedStatus() {
 	panic("implement me")
 }
 
-func (i IndexDB) InitDB() error {
+func (i IndexDB) InitDB(userID string, dataDir string) error {
 	panic("implement me")
 }
 

@@ -1,12 +1,8 @@
 package main
 
 import (
-	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/utils"
 	"open_im_sdk/wasm/wasm_wrapper"
 
-	"open_im_sdk/wasm/indexdb"
 	"syscall/js"
 )
 
@@ -80,35 +76,35 @@ func main() {
 	//strMyUidx := "3984071717"
 	//tokenx := test.RunGetToken(strMyUidx)
 	//open_im_sdk.Login(&base, operationID, strMyUidx, tokenx)
-	opid := utils.OperationIDGenerator()
-	db := indexdb.NewIndexDB()
-	msg, err := db.GetMessage("client_msg_id_123")
-	if err != nil {
-		log.Error(opid, "get message err:", err.Error())
-	} else {
-		log.Info(opid, "get message is :", *msg, "get args is :", msg.ClientMsgID, msg.ServerMsgID)
-	}
-	var user model_struct.LocalUser
-	user.UserID = "111"
-	user.CreateTime = 1232
-	err = db.InsertLoginUser(&user)
-	if err != nil {
-		log.Error(opid, "InsertLoginUser:", err.Error())
-	} else {
-		log.Info(opid, "InsertLoginUser success:")
-	}
-	err = db.UpdateLoginUserByMap(&user, map[string]interface{}{"1": 3})
-	if err != nil {
-		log.Error(opid, "UpdateLoginUserByMap:", err.Error())
-	} else {
-		log.Info(opid, "UpdateLoginUserByMap success:")
-	}
-	seq, err := db.GetNormalMsgSeq()
-	if err != nil {
-		log.Error(opid, "GetNormalMsgSeq:", err.Error())
-	} else {
-		log.Info(opid, "GetNormalMsgSeq seq  success:", seq)
-	}
+	//opid := utils.OperationIDGenerator()
+	//db := indexdb.NewIndexDB()
+	//msg, err := db.GetMessage("client_msg_id_123")
+	//if err != nil {
+	//	log.Error(opid, "get message err:", err.Error())
+	//} else {
+	//	log.Info(opid, "get message is :", *msg, "get args is :", msg.ClientMsgID, msg.ServerMsgID)
+	//}
+	//var user model_struct.LocalUser
+	//user.UserID = "111"
+	//user.CreateTime = 1232
+	//err = db.InsertLoginUser(&user)
+	//if err != nil {
+	//	log.Error(opid, "InsertLoginUser:", err.Error())
+	//} else {
+	//	log.Info(opid, "InsertLoginUser success:")
+	//}
+	//err = db.UpdateLoginUserByMap(&user, map[string]interface{}{"1": 3})
+	//if err != nil {
+	//	log.Error(opid, "UpdateLoginUserByMap:", err.Error())
+	//} else {
+	//	log.Info(opid, "UpdateLoginUserByMap success:")
+	//}
+	//seq, err := db.GetNormalMsgSeq()
+	//if err != nil {
+	//	log.Error(opid, "GetNormalMsgSeq:", err.Error())
+	//} else {
+	//	log.Info(opid, "GetNormalMsgSeq seq  success:", seq)
+	//}
 
 	registerFunc()
 	<-make(chan bool)
