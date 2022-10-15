@@ -180,7 +180,24 @@ func (i IndexDB) SearchMessageByContentTypeAndKeywordController(contentType []in
 }
 
 func (i IndexDB) BatchUpdateMessageList(MessageList []*model_struct.LocalChatLog) error {
-	panic("implement me")
+	if MessageList == nil {
+		return nil
+	}
+	for _, v := range MessageList {
+		v1 := new(model_struct.LocalChatLog)
+		v1.ClientMsgID = v.ClientMsgID
+		v1.Seq = v.Seq
+		v1.Status = v.Status
+		v1.RecvID = v.RecvID
+		v1.SessionType = v.SessionType
+		v1.ServerMsgID = v.ServerMsgID
+		err := i.UpdateMessageController(v1)
+		if err != nil {
+			return utils.Wrap(err, "BatchUpdateMessageList failed")
+		}
+
+	}
+	return nil
 }
 
 func (i IndexDB) BatchSpecialUpdateMessageList(MessageList []*model_struct.LocalChatLog) error {
