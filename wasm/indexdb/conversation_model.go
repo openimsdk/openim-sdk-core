@@ -201,7 +201,14 @@ func (i IndexDB) UpdateConversationForSync(c *model_struct.LocalConversation) er
 }
 
 func (i IndexDB) BatchUpdateConversationList(conversationList []*model_struct.LocalConversation) error {
-	panic("implement me")
+	for _, v := range conversationList {
+		err := i.UpdateConversation(v)
+		if err != nil {
+			return utils.Wrap(err, "BatchUpdateConversationList failed")
+		}
+
+	}
+	return nil
 }
 
 func (i IndexDB) ConversationIfExists(conversationID string) (bool, error) {
