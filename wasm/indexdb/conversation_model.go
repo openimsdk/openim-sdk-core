@@ -181,17 +181,7 @@ func (i IndexDB) UpdateConversationForSync(c *model_struct.LocalConversation) er
 	if c.ConversationID == "" {
 		return PrimaryKeyNull
 	}
-	tempLocalConversation := model_struct.LocalConversation{
-		RecvMsgOpt:            c.RecvMsgOpt,
-		GroupAtType:           c.GroupAtType,
-		IsPinned:              c.IsPinned,
-		IsPrivateChat:         c.IsPrivateChat,
-		IsNotInGroup:          c.IsNotInGroup,
-		UpdateUnreadCountTime: c.UpdateUnreadCountTime,
-		AttachedInfo:          c.AttachedInfo,
-		Ex:                    c.Ex,
-	}
-	_, err := Exec(c.ConversationID, utils.StructToJsonString(tempLocalConversation))
+	_, err := Exec(c.ConversationID, utils.StructToJsonString(c))
 	return err
 }
 
