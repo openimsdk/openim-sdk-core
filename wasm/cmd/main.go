@@ -106,7 +106,7 @@ func main() {
 	//	log.Info(opid, "GetNormalMsgSeq seq  success:", seq)
 	//}
 
-	go registerFunc()
+	registerFunc()
 	<-make(chan bool)
 }
 

@@ -14,6 +14,10 @@ type EventData struct {
 	callback    *js.Value
 }
 
+func (e *EventData) HandlerFunc() interface{} {
+	panic("implement me")
+}
+
 func (e *EventData) GetOperationID() string {
 	return e.OperationID
 }
@@ -44,4 +48,63 @@ func (e *EventData) SetOperationID(operationID string) CallbackWriter {
 func (e *EventData) SetErrMsg(errMsg string) CallbackWriter {
 	e.ErrMsg = errMsg
 	return e
+}
+
+var (
+	jsErr     = js.Global().Get("Error")
+	jsPromise = js.Global().Get("Promise")
+)
+
+type PromiseHandler struct {
+	Event       string      `json:"event"`
+	ErrCode     int32       `json:"errCode"`
+	ErrMsg      string      `json:"errMsg"`
+	Data        interface{} `json:"data,omitempty"`
+	OperationID string      `json:"operationID"`
+	resolve     *js.Value
+	reject      *js.Value
+}
+
+func NewPromiseHandler() *PromiseHandler {
+	return &PromiseHandler{}
+}
+func (p *PromiseHandler) HandlerFunc() interface{} {
+	handler := js.FuncOf(func(_ js.Value, promFn []js.Value) interface{} {
+		p.resolve, p.reject = &promFn[0], &promFn[1]
+		return nil
+	})
+	return jsPromise.New(handler)
+}
+
+func (p *PromiseHandler) GetOperationID() string {
+	return p.OperationID
+}
+
+func (p *PromiseHandler) SendMessage() {
+	if p.Data != nil {
+		p.resolve.Invoke(p.Data)
+	} else {
+		p.reject.Invoke(jsErr.New(p.ErrCode, p.ErrMsg))
+	}
+}
+func (p *PromiseHandler) SetEvent(event string) CallbackWriter {
+	p.Event = event
+	return p
+}
+
+func (p *PromiseHandler) SetData(data interface{}) CallbackWriter {
+	p.Data = data
+	return p
+}
+func (p *PromiseHandler) SetErrCode(errCode int32) CallbackWriter {
+	p.ErrCode = errCode
+	return p
+}
+func (p *PromiseHandler) SetOperationID(operationID string) CallbackWriter {
+	p.OperationID = operationID
+	return p
+}
+func (p *PromiseHandler) SetErrMsg(errMsg string) CallbackWriter {
+	p.ErrMsg = errMsg
+	return p
 }

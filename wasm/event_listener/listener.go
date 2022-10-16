@@ -108,8 +108,8 @@ func (b *BaseCallback) EventData() CallbackWriter {
 	return b.CallbackWriter
 }
 
-func NewBaseCallback(funcName string, callback *js.Value) *BaseCallback {
-	return &BaseCallback{CallbackWriter: NewEventData(callback).SetEvent(funcName)}
+func NewBaseCallback(funcName string, _ *js.Value) *BaseCallback {
+	return &BaseCallback{CallbackWriter: NewPromiseHandler().SetEvent(funcName)}
 }
 
 func (b *BaseCallback) OnError(errCode int32, errMsg string) {

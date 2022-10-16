@@ -71,6 +71,8 @@ func (r *ReflectCall) InitData(funcName interface{}, callback event_listener.Cal
 	return r
 }
 
+type fn func(this js.Value, args []js.Value) interface{}
+
 func (r *ReflectCall) Call() (result []interface{}) {
 	defer func() {
 		if rc := recover(); rc != nil {
@@ -173,5 +175,6 @@ func (w *WrapperInitLogin) Login(_ js.Value, args []js.Value) interface{} {
 	listener := NewSetListener(w.WrapperCommon)
 	listener.SetAllListener()
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return js.ValueOf(w.caller.InitData(open_im_sdk.Login, callback, &args).Call())
+	w.caller.InitData(open_im_sdk.Login, callback, &args).Call()
+	return callback.HandlerFunc()
 }

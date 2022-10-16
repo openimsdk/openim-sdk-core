@@ -8,4 +8,5 @@ type CallbackWriter interface {
 	SetOperationID(operationID string) CallbackWriter
 	SetErrMsg(errMsg string) CallbackWriter
 	GetOperationID() string
+	HandlerFunc() interface{}
 }
