@@ -183,12 +183,7 @@ func (i IndexDB) UpdateConversationForSync(c *model_struct.LocalConversation) er
 	}
 	tempLocalConversation := temp_struct.LocalConversation{
 		RecvMsgOpt:            c.RecvMsgOpt,
-		UnreadCount:           c.UnreadCount,
 		GroupAtType:           c.GroupAtType,
-		LatestMsg:             c.LatestMsg,
-		LatestMsgSendTime:     c.LatestMsgSendTime,
-		DraftText:             c.DraftText,
-		DraftTextTime:         c.DraftTextTime,
 		IsPinned:              c.IsPinned,
 		IsPrivateChat:         c.IsPrivateChat,
 		IsNotInGroup:          c.IsNotInGroup,
