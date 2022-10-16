@@ -181,7 +181,7 @@ func (i IndexDB) UpdateConversationForSync(c *model_struct.LocalConversation) er
 	if c.ConversationID == "" {
 		return PrimaryKeyNull
 	}
-	tempLocalConversation := temp_struct.LocalConversation{
+	tempLocalConversation := model_struct.LocalConversation{
 		RecvMsgOpt:            c.RecvMsgOpt,
 		GroupAtType:           c.GroupAtType,
 		IsPinned:              c.IsPinned,
