@@ -221,7 +221,7 @@ func (c *Conversation) GetConversationsByUserID(callback open_im_sdk_callback.Ba
 	}
 	go func() {
 		log.NewInfo(operationID, utils.GetSelfFuncName())
-		conversations, err := c.db.GetAllConversationList()
+		conversations, err := c.db.GetAllConversationListDB()
 		if err != nil {
 			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		}

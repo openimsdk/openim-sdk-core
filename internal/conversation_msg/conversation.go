@@ -21,7 +21,7 @@ import (
 )
 
 func (c *Conversation) getAllConversationList(callback open_im_sdk_callback.Base, operationID string) sdk.GetAllConversationListCallback {
-	conversationList, err := c.db.GetAllConversationList()
+	conversationList, err := c.db.GetAllConversationListDB()
 	common.CheckDBErrCallback(callback, err, operationID)
 	return conversationList
 }
@@ -1718,7 +1718,7 @@ func (c *Conversation) deleteAllMsgFromLocal(callback open_im_sdk_callback.Base,
 	}
 	err = c.db.CleaAllConversation()
 	common.CheckDBErrCallback(callback, err, operationID)
-	conversationList, err := c.db.GetAllConversationList()
+	conversationList, err := c.db.GetAllConversationListDB()
 	common.CheckDBErrCallback(callback, err, operationID)
 	var cidList []string
 	for _, conversation := range conversationList {

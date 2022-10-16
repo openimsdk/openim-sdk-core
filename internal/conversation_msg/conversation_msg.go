@@ -374,9 +374,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	log.Info(operationID, "generate conversation map is :", conversationSet)
 	log.Debug(operationID, "before insert msg cost time : ", time.Since(b))
 
-	list, err := c.db.GetAllConversationList()
+	list, err := c.db.GetAllConversationListDB()
 	if err != nil {
-		log.Error(operationID, "GetAllConversationList", "error", err.Error())
+		log.Error(operationID, "GetAllConversationListDB", "error", err.Error())
 	}
 	m := make(map[string]*model_struct.LocalConversation)
 	listToMap(list, m)
@@ -779,9 +779,9 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	log.Info(operationID, "generate conversation map is :", conversationSet)
 	log.Debug(operationID, "before insert msg cost time : ", b1-b)
 
-	list, err := c.db.GetAllConversationList()
+	list, err := c.db.GetAllConversationListDB()
 	if err != nil {
-		log.Error(operationID, "GetAllConversationList", "error", err.Error())
+		log.Error(operationID, "GetAllConversationListDB", "error", err.Error())
 	}
 	m := make(map[string]*model_struct.LocalConversation)
 	listToMap(list, m)
