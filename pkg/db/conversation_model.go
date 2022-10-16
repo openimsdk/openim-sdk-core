@@ -16,7 +16,7 @@ package db
 //	return &conversation, err
 //}
 //
-//func (d *DataBase) GetAllConversationList() ([]*model_struct.LocalConversation, error) {
+//func (d *DataBase) GetAllConversationListDB() ([]*model_struct.LocalConversation, error) {
 //	d.mRWMutex.Lock()
 //	defer d.mRWMutex.Unlock()
 //	var conversationList []model_struct.LocalConversation

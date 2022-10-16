@@ -91,7 +91,7 @@ type DataBase interface {
 	UpdateGroupRequest(groupRequest *model_struct.LocalGroupRequest) error
 	GetSendGroupApplication() ([]*model_struct.LocalGroupRequest, error)
 	GetConversationByUserID(userID string) (*model_struct.LocalConversation, error)
-	GetAllConversationList() ([]*model_struct.LocalConversation, error)
+	GetAllConversationListDB() ([]*model_struct.LocalConversation, error)
 	GetHiddenConversationList() ([]*model_struct.LocalConversation, error)
 	GetAllConversationListToSync() ([]*model_struct.LocalConversation, error)
 	GetConversationListSplit(offset, count int) ([]*model_struct.LocalConversation, error)

@@ -9,7 +9,7 @@ import (
 type LocalConversations struct {
 }
 
-func (i *LocalConversations) GetAllConversationList() (result []*model_struct.LocalConversation, err error) {
+func (i *LocalConversations) GetAllConversationListDB() (result []*model_struct.LocalConversation, err error) {
 	cList, err := Exec()
 	if err != nil {
 		return nil, err
