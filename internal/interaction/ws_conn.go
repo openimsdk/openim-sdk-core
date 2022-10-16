@@ -209,5 +209,6 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool) {
 	u.listener.OnConnectSuccess()
 	u.loginStatus = constant.LoginSuccess
 	u.conn = conn
+	u.conn.SetReadLimit(1024 * 1024 * 30)
 	return conn, nil, true
 }

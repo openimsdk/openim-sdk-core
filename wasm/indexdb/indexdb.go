@@ -533,7 +533,7 @@ func (i IndexDB) InitSuperLocalErrChatLog(groupID string) {
 }
 
 func (i IndexDB) SuperBatchInsertExceptionMsg(MessageList []*model_struct.LocalErrChatLog, groupID string) error {
-	panic("implement me")
+	return nil
 }
 
 func (i IndexDB) GetAbnormalMsgSeq() (uint32, error) {
