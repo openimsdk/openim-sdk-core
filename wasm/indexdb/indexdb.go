@@ -591,7 +591,7 @@ func (i IndexDB) BatchInsertExceptionMsgController(MessageList []*model_struct.L
 }
 
 func (i IndexDB) GetSuperGroupAbnormalMsgSeq(groupID string) (uint32, error) {
-	panic("implement me")
+	return 0, nil
 }
 
 func (i IndexDB) GetDepartmentMemberListByDepartmentID(departmentID string, args ...int) ([]*model_struct.LocalDepartmentMember, error) {
