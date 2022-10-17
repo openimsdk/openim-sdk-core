@@ -95,7 +95,7 @@ func (i IndexDB) SubtractMemberCount(groupID string) error {
 }
 
 func (i IndexDB) GetJoinedWorkingGroupIDList() ([]string, error) {
-	panic("implement me")
+	return []string{}, nil
 }
 
 func (i IndexDB) GetJoinedWorkingGroupList() ([]*model_struct.LocalGroup, error) {
@@ -433,7 +433,21 @@ func (i IndexDB) GetSendGroupApplication() ([]*model_struct.LocalGroupRequest, e
 }
 
 func (i IndexDB) GetJoinedSuperGroupIDList() ([]string, error) {
-	panic("implement me")
+	groupIDList, err := Exec()
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := groupIDList.(string); ok {
+			var result []string
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
 }
 
 func (i IndexDB) DeleteAllSuperGroup() error {
@@ -441,7 +455,23 @@ func (i IndexDB) DeleteAllSuperGroup() error {
 }
 
 func (i IndexDB) GetReadDiffusionGroupIDList() ([]string, error) {
-	return []string{}, nil
+	g1, err1 := i.GetJoinedSuperGroupIDList()
+	g2, err2 := i.GetJoinedWorkingGroupIDList()
+	var groupIDList []string
+	if err1 == nil {
+		groupIDList = append(groupIDList, g1...)
+	}
+	if err2 == nil {
+		groupIDList = append(groupIDList, g2...)
+	}
+	var err error
+	if err1 != nil {
+		err = err1
+	}
+	if err2 != nil {
+		err = err2
+	}
+	return groupIDList, err
 }
 
 func (i IndexDB) GetGroupMemberInfoByGroupIDUserID(groupID, userID string) (*model_struct.LocalGroupMember, error) {
