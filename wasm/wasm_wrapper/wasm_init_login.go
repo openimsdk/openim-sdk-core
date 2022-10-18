@@ -69,7 +69,7 @@ type ReflectCall struct {
 	arguments []js.Value
 }
 
-func (r *ReflectCall) NewCaller(funcName interface{}, callback event_listener.CallbackWriter, arguments *[]js.Value) *ReflectCall {
+func (r *ReflectCall) NewCaller(funcName interface{}, callback event_listener.CallbackWriter, arguments *[]js.Value) event_listener.Caller {
 	r.funcName = funcName
 	r.callback = callback
 	r.arguments = *arguments

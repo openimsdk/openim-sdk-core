@@ -1,7 +1,6 @@
 package event_listener
 
 import (
-	"open_im_sdk/wasm/wasm_wrapper"
 	"syscall/js"
 )
 
@@ -16,7 +15,7 @@ type CallbackWriter interface {
 	HandlerFunc() interface{}
 }
 type Caller interface {
-	NewCaller(funcName interface{}, callback CallbackWriter, arguments *[]js.Value) *wasm_wrapper.ReflectCall
+	NewCaller(funcName interface{}, callback CallbackWriter, arguments *[]js.Value) Caller
 	AsyncCallWithCallback() (result []interface{})
 	AsyncCallWithOutCallback() (fn func() interface{})
 }
