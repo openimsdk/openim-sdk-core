@@ -144,9 +144,9 @@ func (r *ReflectCall) AsyncCallWithOutCallback() interface{} {
 		}
 	}
 	go func() {
-		var result []interface{}
 		returnValues := funcName.Call(values)
 		if len(returnValues) != 0 {
+			var result []interface{}
 			for _, v := range returnValues {
 				switch v.Kind() {
 				case reflect.String:
