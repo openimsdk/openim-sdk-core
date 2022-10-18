@@ -162,7 +162,7 @@ func (r *ReflectCall) AsyncCallWithOutCallback() interface{} {
 			r.callback.SetErrCode(200).SetErrMsg(errors.New("null string").Error()).SendMessage()
 		}
 	}()
-	return r.callback.HandlerFunc
+	return r.callback.HandlerFunc()
 
 }
 
