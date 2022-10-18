@@ -10,7 +10,7 @@ import (
 //------------------------------------message---------------------------
 type WrapperConMsg struct {
 	*WrapperCommon
-	caller *ReflectCall
+	caller event_listener.Caller
 }
 
 func NewWrapperConMsg(wrapperCommon *WrapperCommon) *WrapperConMsg {
@@ -18,45 +18,45 @@ func NewWrapperConMsg(wrapperCommon *WrapperCommon) *WrapperConMsg {
 }
 
 func (w *WrapperConMsg) CreateTextMessage(_ js.Value, args []js.Value) interface{} {
-	return js.ValueOf(w.caller.InitData(open_im_sdk.CreateTextMessage, nil, &args).Call())
+	return w.caller.NewCaller(open_im_sdk.CreateTextMessage, nil, &args).AsyncCallWithOutCallback()
 }
 func (w *WrapperConMsg) CreateImageMessage(_ js.Value, args []js.Value) interface{} {
-	return js.ValueOf(w.caller.InitData(open_im_sdk.CreateImageMessage, nil, &args).Call())
+	return w.caller.NewCaller(open_im_sdk.CreateImageMessage, nil, &args).AsyncCallWithOutCallback()
 }
 func (w *WrapperConMsg) CreateImageMessageByURL(_ js.Value, args []js.Value) interface{} {
-	return js.ValueOf(w.caller.InitData(open_im_sdk.CreateImageMessageByURL, nil, &args).Call())
+	return w.caller.NewCaller(open_im_sdk.CreateImageMessageByURL, nil, &args).AsyncCallWithOutCallback()
 }
 func (w *WrapperConMsg) CreateCustomMessage(_ js.Value, args []js.Value) interface{} {
-	return js.ValueOf(w.caller.InitData(open_im_sdk.CreateCustomMessage, nil, &args).Call())
+	return w.caller.NewCaller(open_im_sdk.CreateCustomMessage, nil, &args).AsyncCallWithOutCallback()
 }
 func (w *WrapperConMsg) CreateQuoteMessage(_ js.Value, args []js.Value) interface{} {
-	return js.ValueOf(w.caller.InitData(open_im_sdk.CreateQuoteMessage, nil, &args).Call())
+	return w.caller.NewCaller(open_im_sdk.CreateQuoteMessage, nil, &args).AsyncCallWithOutCallback()
 }
 func (w *WrapperConMsg) CreateAdvancedQuoteMessage(_ js.Value, args []js.Value) interface{} {
-	return js.ValueOf(w.caller.InitData(open_im_sdk.CreateAdvancedQuoteMessage, nil, &args).Call())
+	return w.caller.NewCaller(open_im_sdk.CreateAdvancedQuoteMessage, nil, &args).AsyncCallWithOutCallback()
 }
 func (w *WrapperConMsg) CreateAdvancedTextMessage(_ js.Value, args []js.Value) interface{} {
-	return js.ValueOf(w.caller.InitData(open_im_sdk.CreateAdvancedTextMessage, nil, &args).Call())
+	return w.caller.NewCaller(open_im_sdk.CreateAdvancedTextMessage, nil, &args).AsyncCallWithOutCallback()
 }
 
 func (w *WrapperConMsg) MarkC2CMessageAsRead(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	w.caller.InitData(open_im_sdk.MarkC2CMessageAsRead, callback, &args).Call()
+	w.caller.NewCaller(open_im_sdk.MarkC2CMessageAsRead, callback, &args).AsyncCallWithCallback()
 	return callback.HandlerFunc()
 }
 func (w *WrapperConMsg) MarkMessageAsReadByConID(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	w.caller.InitData(open_im_sdk.MarkMessageAsReadByConID, callback, &args).Call()
+	w.caller.NewCaller(open_im_sdk.MarkMessageAsReadByConID, callback, &args).AsyncCallWithCallback()
 	return callback.HandlerFunc()
 }
 func (w *WrapperConMsg) SendMessage(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	w.caller.InitData(open_im_sdk.SendMessage, callback, &args).Call()
+	w.caller.NewCaller(open_im_sdk.SendMessage, callback, &args).AsyncCallWithCallback()
 	return callback.HandlerFunc()
 }
 func (w *WrapperConMsg) SendMessageNotOss(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	w.caller.InitData(open_im_sdk.SendMessageNotOss, callback, &args).Call()
+	w.caller.NewCaller(open_im_sdk.SendMessageNotOss, callback, &args).AsyncCallWithCallback()
 	return callback.HandlerFunc()
 }
 
@@ -64,26 +64,26 @@ func (w *WrapperConMsg) SendMessageNotOss(_ js.Value, args []js.Value) interface
 
 func (w *WrapperConMsg) GetAllConversationList(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	w.caller.InitData(open_im_sdk.GetAllConversationList, callback, &args).Call()
+	w.caller.NewCaller(open_im_sdk.GetAllConversationList, callback, &args).AsyncCallWithCallback()
 	return callback.HandlerFunc()
 }
 func (w *WrapperConMsg) GetOneConversation(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	w.caller.InitData(open_im_sdk.GetOneConversation, callback, &args).Call()
+	w.caller.NewCaller(open_im_sdk.GetOneConversation, callback, &args).AsyncCallWithCallback()
 	return callback.HandlerFunc()
 }
 func (w *WrapperConMsg) DeleteConversationFromLocalAndSvr(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	w.caller.InitData(open_im_sdk.DeleteConversationFromLocalAndSvr, callback, &args).Call()
+	w.caller.NewCaller(open_im_sdk.DeleteConversationFromLocalAndSvr, callback, &args).AsyncCallWithCallback()
 	return callback.HandlerFunc()
 }
 func (w *WrapperConMsg) GetAdvancedHistoryMessageList(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	w.caller.InitData(open_im_sdk.GetAdvancedHistoryMessageList, callback, &args).Call()
+	w.caller.NewCaller(open_im_sdk.GetAdvancedHistoryMessageList, callback, &args).AsyncCallWithCallback()
 	return callback.HandlerFunc()
 }
 func (w *WrapperConMsg) GetHistoryMessageList(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	w.caller.InitData(open_im_sdk.GetHistoryMessageList, callback, &args).Call()
+	w.caller.NewCaller(open_im_sdk.GetHistoryMessageList, callback, &args).AsyncCallWithCallback()
 	return callback.HandlerFunc()
 }

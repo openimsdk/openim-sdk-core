@@ -34,6 +34,11 @@ func (s *SetListener) setAdvancedMsgListener() {
 	open_im_sdk.SetAdvancedMsgListener(callback)
 }
 
+//func (s *SetListener) setAdvancedMsgListener() {
+//	callback := event_listener.NewAdvancedMsgCallback(s.commonFunc)
+//	open_im_sdk.SetAdvancedMsgListener(callback)
+//}
+
 func (s *SetListener) SetAllListener() {
 	s.setConversationListener()
 	s.setAdvancedMsgListener()
@@ -64,7 +69,7 @@ type ReflectCall struct {
 	arguments []js.Value
 }
 
-func (r *ReflectCall) InitData(funcName interface{}, callback event_listener.CallbackWriter, arguments *[]js.Value) *ReflectCall {
+func (r *ReflectCall) NewCaller(funcName interface{}, callback event_listener.CallbackWriter, arguments *[]js.Value) *ReflectCall {
 	r.funcName = funcName
 	r.callback = callback
 	r.arguments = *arguments
@@ -73,7 +78,7 @@ func (r *ReflectCall) InitData(funcName interface{}, callback event_listener.Cal
 
 type fn func(this js.Value, args []js.Value) interface{}
 
-func (r *ReflectCall) Call() (result []interface{}) {
+func (r *ReflectCall) AsyncCallWithCallback() (result []interface{}) {
 	defer func() {
 		if rc := recover(); rc != nil {
 			temp := r.ErrHandle(rc)
@@ -139,6 +144,66 @@ func (r *ReflectCall) Call() (result []interface{}) {
 	}
 
 }
+func (r *ReflectCall) AsyncCallWithOutCallback() (fn func() interface{}) {
+	defer func() {
+		if rc := recover(); rc != nil {
+			r.ErrHandle(rc)
+		}
+	}()
+	var funcName reflect.Value
+	var typeFuncName reflect.Type
+	var temp int
+	if r.funcName == nil {
+		return nil
+	} else {
+		funcName = reflect.ValueOf(r.funcName)
+		typeFuncName = reflect.TypeOf(r.funcName)
+	}
+	var values []reflect.Value
+	if r.callback == nil {
+		r.callback = event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), nil)
+	}
+	r.callback.SetOperationID(r.arguments[0].String())
+	for i := 0; i < len(r.arguments); i++ {
+		//log.NewDebug(r.callback.GetOperationID(), "type is ", typeFuncName.In(temp).Kind(), r.arguments[i].IsNaN())
+		switch typeFuncName.In(temp).Kind() {
+		case reflect.String:
+			convertValue := r.arguments[i].String()
+			if !strings.HasPrefix(convertValue, "<number: ") {
+				values = append(values, reflect.ValueOf(convertValue))
+			} else {
+				panic("input args type err index:" + utils.IntToString(i))
+			}
+		case reflect.Int, reflect.Int32:
+			log.NewDebug("", "type is ", r.arguments[i].Int())
+			values = append(values, reflect.ValueOf(r.arguments[i].Int()))
+		default:
+			panic("implement me")
+		}
+	}
+	go func() {
+		var result []interface{}
+		returnValues := funcName.Call(values)
+		if len(returnValues) != 0 {
+			for _, v := range returnValues {
+				switch v.Kind() {
+				case reflect.String:
+					result = append(result, v.String())
+				case reflect.Bool:
+					result = append(result, v.Bool())
+				default:
+					panic("not support type")
+				}
+			}
+			r.callback.SetData(returnValues).SendMessage()
+		} else {
+			r.callback.SetErrCode(200).SetErrMsg(errors.New("null string").Error()).SendMessage()
+		}
+	}()
+	return r.callback.HandlerFunc
+
+}
+
 func (r *ReflectCall) ErrHandle(recover interface{}) []string {
 	var temp string
 	switch x := recover.(type) {
@@ -169,12 +234,12 @@ func NewWrapperInitLogin(wrapperCommon *WrapperCommon) *WrapperInitLogin {
 }
 func (w *WrapperInitLogin) InitSDK(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewConnCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return js.ValueOf(w.caller.InitData(open_im_sdk.InitSDK, callback, &args).Call())
+	return js.ValueOf(w.caller.NewCaller(open_im_sdk.InitSDK, callback, &args).AsyncCallWithCallback())
 }
 func (w *WrapperInitLogin) Login(_ js.Value, args []js.Value) interface{} {
 	listener := NewSetListener(w.WrapperCommon)
 	listener.SetAllListener()
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	w.caller.InitData(open_im_sdk.Login, callback, &args).Call()
+	w.caller.NewCaller(open_im_sdk.Login, callback, &args).AsyncCallWithCallback()
 	return callback.HandlerFunc()
 }
