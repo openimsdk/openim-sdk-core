@@ -102,39 +102,31 @@ func (i *LocalChatLogs) InsertMessage(message *model_struct.LocalChatLog) error 
 func (i *LocalChatLogs) GetAllUnDeleteMessageSeqList() ([]uint32, error) {
 	panic("implement me")
 }
-
 func (i *LocalChatLogs) UpdateColumnsMessageList(clientMsgIDList []string, args map[string]interface{}) error {
 	_, err := Exec(utils.StructToJsonString(clientMsgIDList), args)
 	return err
 }
-
 func (i *LocalChatLogs) UpdateColumnsMessage(clientMsgID string, args map[string]interface{}) error {
 	_, err := Exec(clientMsgID, args)
 	return err
 }
-
 func (i *LocalChatLogs) DeleteAllMessage() error {
 	panic("implement me")
 }
-
 func (i *LocalChatLogs) UpdateMessageStatusBySourceID(sourceID string, status, sessionType int32) error {
 	_, err := Exec(sourceID, status, sessionType)
 	return err
 }
-
 func (i *LocalChatLogs) UpdateMessageTimeAndStatus(clientMsgID string, serverMsgID string, sendTime int64, status int32) error {
 	_, err := Exec(clientMsgID, serverMsgID, sendTime, status)
 	return err
 }
-
 func (i *LocalChatLogs) GetMessageList(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	panic("implement me")
 }
-
 func (i *LocalChatLogs) GetMessageListNoTime(sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	panic("implement me")
 }
-
 func (i *LocalChatLogs) UpdateSingleMessageHasRead(sendID string, msgIDList []string) error {
 	panic("implement me")
 }

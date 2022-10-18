@@ -14,7 +14,7 @@ type WrapperConMsg struct {
 }
 
 func NewWrapperConMsg(wrapperCommon *WrapperCommon) *WrapperConMsg {
-	return &WrapperConMsg{WrapperCommon: wrapperCommon, caller: &ReflectCall{}}
+	return &WrapperConMsg{WrapperCommon: wrapperCommon, caller: &event_listener.ReflectCall{}}
 }
 
 func (w *WrapperConMsg) CreateTextMessage(_ js.Value, args []js.Value) interface{} {

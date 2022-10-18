@@ -10,11 +10,11 @@ import (
 //------------------------------------group---------------------------
 type WrapperGroup struct {
 	*WrapperCommon
-	caller *ReflectCall
+	caller event_listener.Caller
 }
 
 func NewWrapperGroup(wrapperCommon *WrapperCommon) *WrapperGroup {
-	return &WrapperGroup{WrapperCommon: wrapperCommon, caller: &ReflectCall{}}
+	return &WrapperGroup{WrapperCommon: wrapperCommon, caller: &event_listener.ReflectCall{}}
 }
 func (w *WrapperGroup) GetGroupsInfo(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
