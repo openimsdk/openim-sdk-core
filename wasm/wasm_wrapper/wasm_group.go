@@ -18,6 +18,6 @@ func NewWrapperGroup(wrapperCommon *WrapperCommon) *WrapperGroup {
 }
 func (w *WrapperGroup) GetGroupsInfo(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	w.caller.NewCaller(open_im_sdk.GetAdvancedHistoryMessageList, callback, &args).AsyncCallWithCallback()
+	w.caller.NewCaller(open_im_sdk.GetGroupsInfo, callback, &args).AsyncCallWithCallback()
 	return callback.HandlerFunc()
 }

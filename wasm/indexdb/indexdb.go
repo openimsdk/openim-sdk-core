@@ -730,14 +730,6 @@ func (i IndexDB) SuperGroupUpdateMessageStatusBySourceID(sourceID string, status
 	panic("implement me")
 }
 
-func (i IndexDB) SuperGroupGetMessageList(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) SuperGroupGetMessageListNoTime(sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
 func (i IndexDB) SuperGroupGetSendingMessageList() (result []*model_struct.LocalChatLog, err error) {
 	panic("implement me")
 }
