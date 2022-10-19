@@ -742,10 +742,6 @@ func (i IndexDB) SuperGroupGetNormalMsgSeq() (uint32, error) {
 	return 0, nil
 }
 
-func (i IndexDB) SuperGroupGetNormalMinSeq(groupID string) (uint32, error) {
-	panic("implement me")
-}
-
 func (i IndexDB) SuperGroupGetTestMessage(seq uint32) (*model_struct.LocalChatLog, error) {
 	panic("implement me")
 }

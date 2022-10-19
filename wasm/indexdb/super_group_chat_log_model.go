@@ -23,6 +23,20 @@ func (i *LocalSuperGroupChatLogs) GetSuperGroupNormalMsgSeq(groupID string) (uin
 		}
 	}
 }
+func (i *LocalSuperGroupChatLogs) SuperGroupGetNormalMinSeq(groupID string) (uint32, error) {
+	seq, err := Exec(groupID)
+	if err != nil {
+		return 0, err
+	} else {
+		if v, ok := seq.(float64); ok {
+			var result uint32
+			result = uint32(v)
+			return result, err
+		} else {
+			return 0, ErrType
+		}
+	}
+}
 
 func (i *LocalSuperGroupChatLogs) SuperGroupGetMessage(message *sdk_struct.MsgStruct) (*model_struct.LocalChatLog, error) {
 	msg, err := Exec(message.GroupID, message.ClientMsgID)
