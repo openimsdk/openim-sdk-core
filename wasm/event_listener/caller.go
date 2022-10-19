@@ -13,24 +13,71 @@ import (
 type Caller interface {
 	NewCaller(funcName interface{}, callback CallbackWriter, arguments *[]js.Value) Caller
 	// AsyncCallWithCallback has promise object return
-	AsyncCallWithCallback() (result []interface{})
+	AsyncCallWithCallback() interface{}
 	// AsyncCallWithOutCallback has promise object return
 	AsyncCallWithOutCallback() interface{}
 	// SyncCall has not promise
 	SyncCall() (result []interface{})
 }
 
-//
+var ErrNotSetCallback = errors.New("not set callback to call")
+
 type ReflectCall struct {
 	funcName  interface{}
 	callback  CallbackWriter
 	arguments []js.Value
 }
 
-func (r *ReflectCall) SyncCall() (result []interface{}) {
-	panic("implement me")
-}
+func (r *ReflectCall) AsyncCallWithCallback() interface{} {
+	defer func() {
+		if rc := recover(); rc != nil {
+			r.ErrHandle(rc)
+		}
+	}()
+	var funcName reflect.Value
+	var typeFuncName reflect.Type
+	var hasCallback bool
+	var temp int
+	if r.funcName == nil {
+		return nil
+	} else {
+		funcName = reflect.ValueOf(r.funcName)
+		typeFuncName = reflect.TypeOf(r.funcName)
+	}
+	var values []reflect.Value
+	if r.callback != nil {
+		hasCallback = true
+		r.callback.SetOperationID(r.arguments[0].String())
+		values = append(values, reflect.ValueOf(r.callback))
+	} else {
+		panic(ErrNotSetCallback)
+	}
+	for i := 0; i < len(r.arguments); i++ {
+		if hasCallback {
+			temp++
+		} else {
+			temp = i
+		}
+		//log.NewDebug(r.callback.GetOperationID(), "type is ", typeFuncName.In(temp).Kind(), r.arguments[i].IsNaN())
+		switch typeFuncName.In(temp).Kind() {
+		case reflect.String:
+			convertValue := r.arguments[i].String()
+			if !strings.HasPrefix(convertValue, "<number: ") {
+				values = append(values, reflect.ValueOf(convertValue))
+			} else {
+				panic("input args type err index:" + utils.IntToString(i))
+			}
+		case reflect.Int, reflect.Int32:
+			log.NewDebug("", "type is ", r.arguments[i].Int())
+			values = append(values, reflect.ValueOf(r.arguments[i].Int()))
+		default:
+			panic("implement me")
+		}
+	}
+	funcName.Call(values)
+	return r.callback.HandlerFunc()
 
+}
 func (r *ReflectCall) NewCaller(funcName interface{}, callback CallbackWriter, arguments *[]js.Value) Caller {
 	r.funcName = funcName
 	r.callback = callback
@@ -40,7 +87,7 @@ func (r *ReflectCall) NewCaller(funcName interface{}, callback CallbackWriter, a
 
 type fn func(this js.Value, args []js.Value) interface{}
 
-func (r *ReflectCall) AsyncCallWithCallback() (result []interface{}) {
+func (r *ReflectCall) SyncCall() (result []interface{}) {
 	defer func() {
 		if rc := recover(); rc != nil {
 			temp := r.ErrHandle(rc)

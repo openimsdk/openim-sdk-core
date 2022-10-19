@@ -739,7 +739,7 @@ func (i IndexDB) SuperGroupUpdateGroupMessageHasRead(msgIDList []string, groupID
 }
 
 func (i IndexDB) SuperGroupGetNormalMsgSeq() (uint32, error) {
-	panic("implement me")
+	return 0, nil
 }
 
 func (i IndexDB) SuperGroupGetNormalMinSeq(groupID string) (uint32, error) {

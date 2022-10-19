@@ -69,12 +69,11 @@ func NewWrapperInitLogin(wrapperCommon *WrapperCommon) *WrapperInitLogin {
 }
 func (w *WrapperInitLogin) InitSDK(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewConnCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return js.ValueOf(w.caller.NewCaller(open_im_sdk.InitSDK, callback, &args).AsyncCallWithCallback())
+	return js.ValueOf(w.caller.NewCaller(open_im_sdk.InitSDK, callback, &args).SyncCall())
 }
 func (w *WrapperInitLogin) Login(_ js.Value, args []js.Value) interface{} {
 	listener := NewSetListener(w.WrapperCommon)
 	listener.SetAllListener()
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	w.caller.NewCaller(open_im_sdk.Login, callback, &args).AsyncCallWithCallback()
-	return callback.HandlerFunc()
+	return w.caller.NewCaller(open_im_sdk.Login, callback, &args).AsyncCallWithCallback()
 }
