@@ -184,7 +184,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	}
 	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir, "login cost time: ", time.Since(t1))
 
-	u.conversationCh = make(chan common.Cmd2Value, 1000)
+	u.conversationCh = make(chan common.Cmd2Value)
 	u.cmdWsCh = make(chan common.Cmd2Value, 10)
 
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
