@@ -475,7 +475,7 @@ func (i IndexDB) GetReadDiffusionGroupIDList() ([]string, error) {
 }
 
 func (i IndexDB) GetGroupMemberInfoByGroupIDUserID(groupID, userID string) (*model_struct.LocalGroupMember, error) {
-	panic("implement me")
+	return nil, nil
 }
 
 func (i IndexDB) GetAllGroupMemberList() ([]model_struct.LocalGroupMember, error) {

@@ -26,6 +26,15 @@ func (w *WrapperConMsg) CreateImageMessage(_ js.Value, args []js.Value) interfac
 func (w *WrapperConMsg) CreateImageMessageByURL(_ js.Value, args []js.Value) interface{} {
 	return w.caller.NewCaller(open_im_sdk.CreateImageMessageByURL, nil, &args).AsyncCallWithOutCallback()
 }
+func (w *WrapperConMsg) CreateSoundMessageByURL(_ js.Value, args []js.Value) interface{} {
+	return w.caller.NewCaller(open_im_sdk.CreateSoundMessageByURL, nil, &args).AsyncCallWithOutCallback()
+}
+func (w *WrapperConMsg) CreateVideoMessageByURL(_ js.Value, args []js.Value) interface{} {
+	return w.caller.NewCaller(open_im_sdk.CreateVideoMessageByURL, nil, &args).AsyncCallWithOutCallback()
+}
+func (w *WrapperConMsg) CreateFileMessageByURL(_ js.Value, args []js.Value) interface{} {
+	return w.caller.NewCaller(open_im_sdk.CreateFileMessageByURL, nil, &args).AsyncCallWithOutCallback()
+}
 func (w *WrapperConMsg) CreateCustomMessage(_ js.Value, args []js.Value) interface{} {
 	return w.caller.NewCaller(open_im_sdk.CreateCustomMessage, nil, &args).AsyncCallWithOutCallback()
 }

@@ -134,3 +134,15 @@ func NewSendMessageCallback(funcName string, callback *js.Value) *SendMessageCal
 func (s SendMessageCallback) OnProgress(progress int) {
 	panic("implement me")
 }
+
+type BatchMessageCallback struct {
+	CallbackWriter
+}
+
+func NewBatchMessageCallback(callback *js.Value) *BatchMessageCallback {
+	return &BatchMessageCallback{CallbackWriter: NewEventData(callback)}
+}
+
+func (b BatchMessageCallback) OnRecvNewMessages(messageList string) {
+	b.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(messageList).SendMessage()
+}
