@@ -6,6 +6,7 @@ import (
 	"open_im_sdk/pkg/utils"
 	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall/js"
 )
@@ -71,7 +72,7 @@ func (r *ReflectCall) AsyncCallWithCallback() interface{} {
 			log.NewDebug("", "type is ", r.arguments[i].Int())
 			values = append(values, reflect.ValueOf(r.arguments[i].Int()))
 		default:
-			panic("implement me")
+			panic("input args type not support:" + strconv.Itoa(int(typeFuncName.In(temp).Kind())))
 		}
 	}
 	funcName.Call(values)
@@ -187,7 +188,7 @@ func (r *ReflectCall) AsyncCallWithOutCallback() interface{} {
 			log.NewDebug("", "type is ", r.arguments[i].Int())
 			values = append(values, reflect.ValueOf(r.arguments[i].Int()))
 		default:
-			panic("implement me")
+			panic("input args type not support:" + strconv.Itoa(int(typeFuncName.In(temp).Kind())))
 		}
 	}
 	go func() {

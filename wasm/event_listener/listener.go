@@ -127,8 +127,8 @@ type SendMessageCallback struct {
 func (s *SendMessageCallback) SetClientMsgID(clientMsgID string) {
 	s.clientMsgID = clientMsgID
 }
-func NewSendMessageCallback(funcName string, callback *js.Value) *SendMessageCallback {
-	return &SendMessageCallback{BaseCallback: BaseCallback{CallbackWriter: NewEventData(callback).SetEvent(funcName)}}
+func NewSendMessageCallback(funcName string, _ *js.Value) *SendMessageCallback {
+	return &SendMessageCallback{BaseCallback: BaseCallback{CallbackWriter: NewPromiseHandler().SetEvent(funcName)}}
 }
 
 func (s SendMessageCallback) OnProgress(progress int) {
