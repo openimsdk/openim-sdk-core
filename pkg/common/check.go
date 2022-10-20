@@ -129,7 +129,7 @@ func CheckErrAndResp(err error, resp []byte, output interface{}, code *int32) er
 	if err == nil {
 		if c.ErrCode != 0 {
 			if code != nil {
-				code = &c.ErrCode
+				*code = c.ErrCode
 			}
 			return utils.Wrap(errors.New(c.ErrMsg), "")
 		}
