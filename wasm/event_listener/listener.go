@@ -2,6 +2,7 @@ package event_listener
 
 import (
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 	"syscall/js"
 )
 
@@ -121,18 +122,25 @@ func (b *BaseCallback) OnSuccess(data string) {
 
 type SendMessageCallback struct {
 	BaseCallback
+	globalEvent CallbackWriter
 	clientMsgID string
 }
 
-func (s *SendMessageCallback) SetClientMsgID(clientMsgID string) {
-	s.clientMsgID = clientMsgID
+func (s *SendMessageCallback) SetClientMsgID(args *[]js.Value) *SendMessageCallback {
+	m := sdk_struct.MsgStruct{}
+	utils.JsonStringToStruct((*args)[1].String(), &m)
+	s.clientMsgID = m.ClientMsgID
+	return s
 }
-func NewSendMessageCallback(funcName string, _ *js.Value) *SendMessageCallback {
-	return &SendMessageCallback{BaseCallback: BaseCallback{CallbackWriter: NewPromiseHandler().SetEvent(funcName)}}
+func NewSendMessageCallback(funcName string, callback *js.Value) *SendMessageCallback {
+	return &SendMessageCallback{BaseCallback: BaseCallback{CallbackWriter: NewPromiseHandler().SetEvent(funcName)}, globalEvent: NewEventData(callback).SetEvent(funcName)}
 }
 
-func (s SendMessageCallback) OnProgress(progress int) {
-	panic("implement me")
+func (s *SendMessageCallback) OnProgress(progress int) {
+	mReply := make(map[string]interface{})
+	mReply["progress"] = progress
+	mReply["clientMsgID"] = s.clientMsgID
+	s.globalEvent.SetEvent(utils.GetSelfFuncName()).SetData(utils.StructToJsonString(mReply)).SendMessage()
 }
 
 type BatchMessageCallback struct {
@@ -143,6 +151,6 @@ func NewBatchMessageCallback(callback *js.Value) *BatchMessageCallback {
 	return &BatchMessageCallback{CallbackWriter: NewEventData(callback)}
 }
 
-func (b BatchMessageCallback) OnRecvNewMessages(messageList string) {
+func (b *BatchMessageCallback) OnRecvNewMessages(messageList string) {
 	b.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(messageList).SendMessage()
 }

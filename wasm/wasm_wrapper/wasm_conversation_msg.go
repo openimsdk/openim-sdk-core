@@ -57,11 +57,11 @@ func (w *WrapperConMsg) MarkMessageAsReadByConID(_ js.Value, args []js.Value) in
 	return w.caller.NewCaller(open_im_sdk.MarkMessageAsReadByConID, callback, &args).AsyncCallWithCallback()
 }
 func (w *WrapperConMsg) SendMessage(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc).SetClientMsgID(&args)
 	return w.caller.NewCaller(open_im_sdk.SendMessage, callback, &args).AsyncCallWithCallback()
 }
 func (w *WrapperConMsg) SendMessageNotOss(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	callback := event_listener.NewSendMessageCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc).SetClientMsgID(&args)
 	return w.caller.NewCaller(open_im_sdk.SendMessageNotOss, callback, &args).AsyncCallWithCallback()
 }
 
