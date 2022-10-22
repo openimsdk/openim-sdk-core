@@ -398,7 +398,7 @@ func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.Create
 	copier.Copy(&apiReq, &group)
 	realData := api.CreateGroupResp{}
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "api req args: ", apiReq)
-	g.p.PostFatalCallback(callback, constant.CreateGroupRouter, apiReq, &realData.GroupInfo, apiReq.OperationID)
+	g.p.PostFatalCallbackPenetrate(callback, constant.CreateGroupRouter, apiReq, &realData.GroupInfo, apiReq.OperationID)
 	m := utils.JsonDataOne(&realData.GroupInfo)
 	g.SyncJoinedGroupList(operationID)
 	g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID, operationID, false)

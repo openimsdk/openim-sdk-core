@@ -338,7 +338,7 @@ func DoTestCreateTextMessageReliability(mgr *login.LoginMgr, text string) string
 
 func DoTestCreateImageMessageFromFullPath() string {
 	operationID := utils.OperationIDGenerator()
-	return open_im_sdk.CreateImageMessageFromFullPath(operationID, "C:\\Users\\Administrator\\Desktop\\1.jpg")
+	return open_im_sdk.CreateImageMessageFromFullPath(operationID, "C:\\Users\\Administrator\\Desktop\\rtc.proto")
 	//open_im_sdk.SendMessage(&testSendMsg, operationID, s, , "", utils.StructToJsonString(o))
 }
 
