@@ -9,8 +9,8 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"runtime"
-	"sync"
 	"syscall/js"
+	"time"
 )
 
 type IndexDB struct {
@@ -27,6 +27,10 @@ type CallbackData struct {
 	Data    interface{} `json:"data"`
 }
 
+const TIMEOUT = 2
+
+var ErrTimoutFromJavaScript = errors.New("invoke javascript timeout，maybe should check  function from javascript")
+
 func Exec(args ...interface{}) (output interface{}, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -40,23 +44,26 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 			}
 		}
 	}()
+	cmd := make(chan bool)
 	pc, _, _, _ := runtime.Caller(1)
 	funcName := utils.CleanUpfuncName(runtime.FuncForPC(pc).Name())
 	data := CallbackData{}
-	wg := sync.WaitGroup{}
-	wg.Add(1)
 	js.Global().Call(utils.FirstLower(funcName), args...).Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		log.Debug("js", "=> (main go context) "+funcName+" with respone ", args[0].String())
+		cmd <- true
 		interErr := utils.JsonStringToStruct(args[0].String(), &data)
 		if interErr != nil {
 			err = utils.Wrap(err, "return json unmarshal err from javascript")
-			wg.Done()
 			return nil
 		}
-		wg.Done()
 		return nil
 	}))
-	wg.Wait()
+	select {
+	case <-cmd:
+		break
+	case <-time.After(TIMEOUT * time.Second):
+		panic(ErrTimoutFromJavaScript)
+	}
 	if data.ErrCode != 0 {
 		return "", errors.New(data.ErrMsg)
 	}

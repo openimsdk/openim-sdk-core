@@ -78,3 +78,7 @@ func (w *WrapperInitLogin) Login(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return w.caller.NewCaller(open_im_sdk.Login, callback, &args).AsyncCallWithCallback()
 }
+func (w *WrapperInitLogin) Logout(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return w.caller.NewCaller(open_im_sdk.Logout, callback, &args).AsyncCallWithCallback()
+}

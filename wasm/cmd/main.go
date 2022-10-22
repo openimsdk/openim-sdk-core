@@ -118,6 +118,7 @@ func registerFunc() {
 	wrapperInitLogin := wasm_wrapper.NewWrapperInitLogin(globalFuc)
 	js.Global().Set("initSDK", js.FuncOf(wrapperInitLogin.InitSDK))
 	js.Global().Set("login", js.FuncOf(wrapperInitLogin.Login))
+	js.Global().Set("logout", js.FuncOf(wrapperInitLogin.Logout))
 	//register conversation and message func
 	wrapperConMsg := wasm_wrapper.NewWrapperConMsg(globalFuc)
 	js.Global().Set("createTextMessage", js.FuncOf(wrapperConMsg.CreateTextMessage))
