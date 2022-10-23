@@ -180,8 +180,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		case v.ContentType == constant.ConversationChangeNotification || v.ContentType == constant.ConversationPrivateChatNotification:
 			log.Info(operationID, utils.GetSelfFuncName(), v)
 			c.DoNotification(v)
-		case v.ContentType == constant.MsgDeleteNotification || v.ContentType == constant.SuperGroupUpdateNotification:
+		case v.ContentType == constant.MsgDeleteNotification:
 			c.full.SuperGroup.DoNotification(v, c.GetCh())
+		case v.ContentType == constant.SuperGroupUpdateNotification:
+			c.full.SuperGroup.DoNotification(v, c.GetCh())
+			continue
 		case v.ContentType == constant.ConversationUnreadNotification:
 			var unreadArgs server_api_params.ConversationUpdateTips
 			_ = proto.Unmarshal(tips.Detail, &unreadArgs)

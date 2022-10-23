@@ -38,35 +38,33 @@ func (s *SuperGroup) DoNotification(msg *api.MsgData, _ chan common.Cmd2Value) {
 		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
 		return
 	}
-	go func() {
-		switch msg.ContentType {
-		case constant.SuperGroupUpdateNotification:
-			s.SyncJoinedGroupList(operationID)
-			cmd := sdk_struct.CmdJoinedSuperGroup{OperationID: operationID}
-			err := common.TriggerCmdJoinedSuperGroup(cmd, s.joinedSuperGroupCh)
-			if err != nil {
-				log.Error(operationID, "TriggerCmdJoinedSuperGroup failed ", err.Error(), cmd)
-				return
-			}
-			err = common.TriggerCmdWakeUp(s.heartbeatCmdCh)
-			if err != nil {
-				log.Error(operationID, "TriggerCmdWakeUp failed ", err.Error())
-			}
-
-			log.Info(operationID, "constant.SuperGroupUpdateNotification", msg.String())
-
-		case constant.MsgDeleteNotification:
-			var tips api.TipsComm
-			var elem api.MsgDeleteNotificationElem
-			_ = proto.Unmarshal(msg.Content, &tips)
-			_ = utils.JsonStringToStruct(tips.JsonDetail, &elem)
-			//if elem.GroupID != nil {
-			//
-			//}
-		default:
-			log.Error(operationID, "ContentType tip failed ", msg.ContentType)
+	switch msg.ContentType {
+	case constant.SuperGroupUpdateNotification:
+		s.SyncJoinedGroupList(operationID)
+		cmd := sdk_struct.CmdJoinedSuperGroup{OperationID: operationID}
+		err := common.TriggerCmdJoinedSuperGroup(cmd, s.joinedSuperGroupCh)
+		if err != nil {
+			log.Error(operationID, "TriggerCmdJoinedSuperGroup failed ", err.Error(), cmd)
+			return
 		}
-	}()
+		err = common.TriggerCmdWakeUp(s.heartbeatCmdCh)
+		if err != nil {
+			log.Error(operationID, "TriggerCmdWakeUp failed ", err.Error())
+		}
+
+		log.Info(operationID, "constant.SuperGroupUpdateNotification", msg.String())
+
+	case constant.MsgDeleteNotification:
+		var tips api.TipsComm
+		var elem api.MsgDeleteNotificationElem
+		_ = proto.Unmarshal(msg.Content, &tips)
+		_ = utils.JsonStringToStruct(tips.JsonDetail, &elem)
+		//if elem.GroupID != nil {
+		//
+		//}
+	default:
+		log.Error(operationID, "ContentType tip failed ", msg.ContentType)
+	}
 }
 
 func (s *SuperGroup) getJoinedGroupListFromSvr(operationID string) ([]*api.GroupInfo, error) {
