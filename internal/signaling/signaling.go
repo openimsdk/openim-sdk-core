@@ -93,7 +93,7 @@ func (s *LiveSignaling) doSignalPush(req *api.SignalReq, operationID string) {
 	}
 }
 
-func (s *LiveSignaling) SetListener(listener open_im_sdk_callback.OnSignalingListener, operationID string) {
+func (s *LiveSignaling) SetListener(listener open_im_sdk_callback.OnSignalingListener) {
 	s.listener = listener
 }
 

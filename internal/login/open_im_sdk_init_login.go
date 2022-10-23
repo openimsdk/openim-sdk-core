@@ -18,6 +18,10 @@ func (u *LoginMgr) WakeUp(callback open_im_sdk_callback.Base, operationID string
 }
 
 func (u *LoginMgr) Logout(callback open_im_sdk_callback.Base, operationID string) {
+	if callback == nil {
+		u.logout(callback, operationID)
+		return
+	}
 	go func() {
 		u.logout(callback, operationID)
 	}()

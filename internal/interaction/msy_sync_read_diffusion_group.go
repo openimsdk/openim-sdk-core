@@ -9,6 +9,7 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"runtime"
 	"sync"
 )
 
@@ -39,18 +40,24 @@ func (m *ReadDiffusionGroupMsgSync) updateJoinedSuperGroup() {
 	for {
 		select {
 		case cmd := <-m.joinedSuperGroupCh:
-			operationID := cmd.Value.(sdk_struct.CmdJoinedSuperGroup).OperationID
-			log.Info(operationID, "updateJoinedSuperGroup cmd: ", cmd)
-			g, err := m.GetReadDiffusionGroupIDList()
-			if err == nil {
-				log.Info(operationID, "GetReadDiffusionGroupIDList, group id list: ", g)
-				m.superGroupMtx.Lock()
-				m.SuperGroupIDList = g
-				m.superGroupMtx.Unlock()
-				m.compareSeq(operationID)
+			if cmd.Cmd == constant.CmdLogout {
+				log.Warn("logout", "close updateJoinedSuperGroup channel ")
+				runtime.Goexit()
 			} else {
-				log.Error(operationID, "GetReadDiffusionGroupIDList failed ", err.Error())
+				operationID := cmd.Value.(sdk_struct.CmdJoinedSuperGroup).OperationID
+				log.Info(operationID, "updateJoinedSuperGroup cmd: ", cmd)
+				g, err := m.GetReadDiffusionGroupIDList()
+				if err == nil {
+					log.Info(operationID, "GetReadDiffusionGroupIDList, group id list: ", g)
+					m.superGroupMtx.Lock()
+					m.SuperGroupIDList = g
+					m.superGroupMtx.Unlock()
+					m.compareSeq(operationID)
+				} else {
+					log.Error(operationID, "GetReadDiffusionGroupIDList failed ", err.Error())
+				}
 			}
+
 		}
 	}
 }
@@ -80,7 +87,7 @@ func (m *ReadDiffusionGroupMsgSync) compareSeq(operationID string) {
 		if err != nil {
 			log.Error(operationID, "GetSuperGroupAbnormalMsgSeq failed ", err.Error(), v)
 		}
-		log.Debug(operationID, "GetSuperGroupNormalMsgSeq GetSuperGroupAbnormalMsgSeq ", n, a)
+		log.Debug(operationID, "GetSuperGroupNormalMsgSeq GetSuperGroupAbnormalMsgSeq ", n, a, "groupID: ", v)
 		var seqMaxSynchronized uint32
 		if n > a {
 			seqMaxSynchronized = n
@@ -100,11 +107,10 @@ func (m *ReadDiffusionGroupMsgSync) compareSeq(operationID string) {
 //处理最大seq消息
 func (m *ReadDiffusionGroupMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 	operationID := cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).OperationID
-	//同步最新消息，内部保证只调用一次
-	m.syncLatestMsg(operationID)
-
-	//更新需要同步的最大seq
+	var groupIDList []string
+	//更新需要同步的最大seq 以及SuperGroupIDList
 	for groupID, MinMaxSeqOnSvr := range cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).GroupID2MinMaxSeqOnSvr {
+		groupIDList = append(groupIDList, groupID)
 		if MinMaxSeqOnSvr.MinSeq > MinMaxSeqOnSvr.MaxSeq {
 			log.Warn(operationID, "MinMaxSeqOnSvr.MinSeq > MinMaxSeqOnSvr.MaxSeq", MinMaxSeqOnSvr.MinSeq, MinMaxSeqOnSvr.MaxSeq)
 			return
@@ -116,6 +122,14 @@ func (m *ReadDiffusionGroupMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 			m.Group2SeqMaxSynchronized[groupID] = MinMaxSeqOnSvr.MinSeq - 1
 		}
 	}
+	m.superGroupMtx.Lock()
+	m.SuperGroupIDList = m.SuperGroupIDList[0:0]
+	m.SuperGroupIDList = groupIDList
+	m.superGroupMtx.Unlock()
+
+	//同步最新消息，内部保证只调用一次
+	m.syncLatestMsg(operationID)
+
 	//同步所有群的新消息
 	m.syncMsgFroAllGroup(operationID)
 }

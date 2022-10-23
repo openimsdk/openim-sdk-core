@@ -113,6 +113,7 @@ type DataBase interface {
 	UpdateColumnsConversation(conversationID string, args map[string]interface{}) error
 	UpdateAllConversation(conversation *model_struct.LocalConversation) error
 	IncrConversationUnreadCount(conversationID string) error
+	DecrConversationUnreadCount(conversationID string, count int64) (err error)
 	GetTotalUnreadMsgCount() (totalUnreadCount int32, err error)
 	SetMultipleConversationRecvMsgOpt(conversationIDList []string, opt int) (err error)
 	GetMultipleConversation(conversationIDList []string) (result []*model_struct.LocalConversation, err error)
@@ -228,4 +229,6 @@ type DataBase interface {
 	InsertBlack(black *model_struct.LocalBlack) error
 	UpdateBlack(black *model_struct.LocalBlack) error
 	DeleteBlack(blockUserID string) error
+	BatchInsertConversationUnreadMessageList(messageList []*model_struct.LocalConversationUnreadMessage) error
+	DeleteConversationUnreadMessageList(conversationID string, sendTime int64) int64
 }
