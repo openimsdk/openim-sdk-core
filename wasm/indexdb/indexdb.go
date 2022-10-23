@@ -30,6 +30,7 @@ type CallbackData struct {
 const TIMEOUT = 2
 
 var ErrTimoutFromJavaScript = errors.New("invoke javascript timeout，maybe should check  function from javascript")
+var jsErr = js.Global().Get("Error")
 
 func Exec(args ...interface{}) (output interface{}, err error) {
 	defer func() {
@@ -44,23 +45,38 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 			}
 		}
 	}()
-	cmd := make(chan bool)
+	thenChannel := make(chan []js.Value)
+	defer close(thenChannel)
+	catchChannel := make(chan []js.Value)
+	defer close(catchChannel)
 	pc, _, _, _ := runtime.Caller(1)
 	funcName := utils.CleanUpfuncName(runtime.FuncForPC(pc).Name())
 	data := CallbackData{}
-	js.Global().Call(utils.FirstLower(funcName), args...).Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+	thenFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		log.Debug("js then func", "=> (main go context) "+funcName+" with respone ", args[0].String())
+		thenChannel <- args
+		return nil
+	})
+	defer thenFunc.Release()
+	catchFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		log.Debug("js", "=> (main go context) "+funcName+" with respone ", args[0].String())
-		cmd <- true
-		interErr := utils.JsonStringToStruct(args[0].String(), &data)
+		catchChannel <- args
+		return nil
+	})
+	defer catchFunc.Release()
+	js.Global().Call(utils.FirstLower(funcName), args...).Call("then", thenFunc).Call("catch", catchFunc)
+	select {
+	case result := <-thenChannel:
+		interErr := utils.JsonStringToStruct(result[0].String(), &data)
 		if interErr != nil {
 			err = utils.Wrap(err, "return json unmarshal err from javascript")
-			return nil
 		}
-		return nil
-	}))
-	select {
-	case <-cmd:
-		break
+	case catch := <-catchChannel:
+		if catch[0].InstanceOf(jsErr) {
+			return nil, js.Error{Value: catch[0]}
+		} else {
+			panic("unknown javascript exception")
+		}
 	case <-time.After(TIMEOUT * time.Second):
 		panic(ErrTimoutFromJavaScript)
 	}
