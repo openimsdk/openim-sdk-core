@@ -59,7 +59,7 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 	})
 	defer thenFunc.Release()
 	catchFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		log.Debug("js", "=> (main go context) "+funcName+" with respone ", args[0].String())
+		log.Debug("js catch func", "=> (main go context) "+funcName+" with respone ", args[0].String())
 		catchChannel <- args
 		return nil
 	})
