@@ -218,7 +218,7 @@ type DataBase interface {
 	MarkAllWorkMomentsNotificationAsRead() (err error)
 	GetWorkMomentsUnReadCount() (workMomentsNotificationUnReadCount db.LocalWorkMomentsNotificationUnreadCount, err error)
 	ClearWorkMomentsNotification() (err error)
-	CloseDB() error
+	Close() error
 	SetChatLogFailedStatus()
 	InitDB(userID string, dataDir string) error
 	GetBlackList() ([]*model_struct.LocalBlack, error)

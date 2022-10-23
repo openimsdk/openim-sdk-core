@@ -813,8 +813,9 @@ func (i IndexDB) ClearWorkMomentsNotification() (err error) {
 	panic("implement me")
 }
 
-func (i IndexDB) CloseDB() error {
-	panic("implement me")
+func (i IndexDB) Close() error {
+	_, err := Exec()
+	return err
 }
 
 func (i IndexDB) SetChatLogFailedStatus() {
