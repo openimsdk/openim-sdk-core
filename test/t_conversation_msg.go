@@ -99,13 +99,14 @@ func DoTestSetAppBadge() {
 	open_im_sdk.SetAppBadge(testSetAppBadgeCallBack, 100, testSetAppBadgeCallBack.OperationID)
 }
 
-func DoTestGetAdvancedHistoryMessageList(testGetHistoryCallBack GetHistoryCallBack, seq uint32) {
+func DoTestGetAdvancedHistoryMessageList() {
+	var testGetHistoryCallBack GetHistoryCallBack
 	var params sdk_params_callback.GetAdvancedHistoryMessageListParams
 	params.UserID = ""
-	params.ConversationID = "super_group_3907826375"
-	//params.StartClientMsgID = "97f12899778823019f13ea46b0c1e6dd"
+	params.ConversationID = "super_group_812146266"
+	params.StartClientMsgID = "83ca933d559d0374258550dd656a661c"
 	params.Count = 30
-	params.LastMinSeq = seq
+	//params.LastMinSeq = seq
 	open_im_sdk.GetAdvancedHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
 }
 func DoTestGetHistoryMessageReverse(userID string) {
