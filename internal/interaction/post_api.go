@@ -39,12 +39,13 @@ type postErr struct {
 }
 
 func (p *PostApi) PostReturn(url string, req interface{}, output interface{}) error {
-	content, err := network.Post2Api(p.apiAddress+url, req, p.token)
-	if err != nil {
-		utils.Wrap(err, "post failed "+p.apiAddress+url)
-	}
-	err = common.CheckErrAndResp(err, content, output)
-	return utils.Wrap(err, "CheckErrAndResp failed ")
+	//content, err := network.Post2Api(p.apiAddress+url, req, p.token)
+	//if err != nil {
+	//	utils.Wrap(err, "post failed "+p.apiAddress+url)
+	//}
+	//err = common.CheckErrAndResp(err, content, output)
+	//return utils.Wrap(err, "CheckErrAndResp failed ")
+	return p.PostReturnWithTimeOut(url, req, output, 10*time.Second)
 }
 
 func (p *PostApi) Post2UnmarshalRespReturn(url string, req interface{}, output interface{}) error {
