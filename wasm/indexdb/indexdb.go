@@ -19,18 +19,7 @@ type IndexDB struct {
 	LocalChatLogs
 	LocalSuperGroupChatLogs
 	LocalSuperGroup
-}
-
-func (i IndexDB) DecrConversationUnreadCount(conversationID string, count int64) (err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) BatchInsertConversationUnreadMessageList(messageList []*model_struct.LocalConversationUnreadMessage) error {
-	panic("implement me")
-}
-
-func (i IndexDB) DeleteConversationUnreadMessageList(conversationID string, sendTime int64) int64 {
-	panic("implement me")
+	LocalConversationUnreadMessages
 }
 
 type CallbackData struct {
