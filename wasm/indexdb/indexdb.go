@@ -28,7 +28,7 @@ type CallbackData struct {
 	Data    interface{} `json:"data"`
 }
 
-const TIMEOUT = 2
+const TIMEOUT = 5
 
 var ErrTimoutFromJavaScript = errors.New("invoke javascript timeout，maybe should check  function from javascript")
 var jsErr = js.Global().Get("Error")
