@@ -221,6 +221,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	t1 := time.Now()
 	u.token = token
 	u.loginUserID = userID
+	log.NewDebug(operationID, "platform is ", sdk_struct.SvrConf.Platform)
 	if sdk_struct.SvrConf.Platform == constant.WebPlatformID {
 		log.Debug(operationID, "index db init")
 		u.db = indexdb.NewIndexDB()
