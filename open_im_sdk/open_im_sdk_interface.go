@@ -49,7 +49,7 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		log.Error(operationID, "Unmarshal failed ", err.Error(), config)
 		return false
 	}
-	log.NewPrivateLog("test", sdk_struct.SvrConf.LogLevel)
+	log.NewPrivateLog("", sdk_struct.SvrConf.LogLevel)
 	if !strings.Contains(sdk_struct.SvrConf.ApiAddr, "http") {
 		log.Error(operationID, "api is http protocol", sdk_struct.SvrConf.ApiAddr)
 		return false
@@ -1248,4 +1248,13 @@ func SetAppBadge(callback open_im_sdk_callback.Base, appUnreadCount int32, opera
 		return
 	}
 	userForSDK.Push().SetAppBadge(callback, appUnreadCount, operationID)
+}
+
+func SqlTest(callback open_im_sdk_callback.Base) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error("operationID", "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.WorkMoments().TestSQL()
 }

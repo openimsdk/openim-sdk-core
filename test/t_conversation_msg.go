@@ -57,8 +57,8 @@ func DoTestSearchLocalMessages() {
 	var testSearchLocalMessagesCallBack SearchLocalMessagesCallBack
 	testSearchLocalMessagesCallBack.OperationID = utils.OperationIDGenerator()
 	var params sdk_params_callback.SearchLocalMessagesParams
-	params.KeywordList = []string{"1"}
-	params.ConversationID = "super_group_3907826375"
+	//params.KeywordList = []string{"1"}
+	//params.ConversationID = "super_group_748402675"
 	params.Count = 20
 	params.PageIndex = 1
 	//s:=strings.Trim(params.KeywordList[0],"")
@@ -654,13 +654,32 @@ func (t TestMarkGroupMessageAsRead) OnSuccess(data string) {
 	log.Info(t.OperationID, "TestMarkGroupMessageAsRead , OnSuccess %v \n", data)
 }
 func DoTestMarkGroupMessageAsRead() {
-	groupID := "769129589"
-	msgIDList := []string{"b4602c5a9f261c3832f6513a21cf55d6"}
+	groupID := "1826384574"
+	msgIDList := []string{"a43fe26849cf4f9225262297967979f1"}
 	operationID := utils.OperationIDGenerator()
 	var testMarkGroupMessageAsRead TestMarkGroupMessageAsRead
 	testMarkGroupMessageAsRead.OperationID = operationID
 	open_im_sdk.MarkGroupMessageAsRead(&testMarkGroupMessageAsRead, operationID, groupID, utils.StructToJsonString(msgIDList))
 
+}
+
+type TestMarkC2C struct {
+	OperationID string
+}
+
+func (t TestMarkC2C) OnError(errCode int32, errMsg string) {
+	log.Info(t.OperationID, "TestMarkC2C , OnError %v\n", errMsg)
+}
+
+func (t TestMarkC2C) OnSuccess(data string) {
+	log.Info(t.OperationID, "TestMarkC2C , OnSuccess %v \n", data)
+}
+
+func DoTestMarkC2C() {
+	var cb TestMarkC2C
+	operationID := utils.OperationIDGenerator()
+	cb.OperationID = operationID
+	open_im_sdk.MarkC2CMessageAsRead(cb, operationID, "1889848740", utils.StructToJsonString([]string{"47b52e3b4e221a3cc46f09bc2d7fb0da"}))
 }
 
 func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string) {
