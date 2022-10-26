@@ -126,7 +126,7 @@ func (d *DataBase) initDB() error {
 	//cxn := "memdb1?mode=memory&cache=shared"
 	dbFileName := d.dbDir + "/OpenIM_" + constant.BigVersion + "_" + d.loginUserID + ".db"
 
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: logger.Default.LogMode(logger.Info)})
 	log.Info("open db:", dbFileName)
 	if err != nil {
 		return utils.Wrap(err, "open db failed "+dbFileName)

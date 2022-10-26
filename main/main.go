@@ -8,8 +8,8 @@ import (
 )
 
 func main() {
-	APIADDR := "http://43.155.69.205:10002"
-	WSADDR := "ws://43.155.69.205:10001"
+	APIADDR := "http://43.154.157.177:10002"
+	WSADDR := "ws://43.154.157.177:10001"
 	REGISTERADDR := APIADDR + "/user_register"
 	ACCOUNTCHECK := APIADDR + "/manager/account_check"
 	TOKENADDR := APIADDR + "/auth/user_token"
@@ -43,10 +43,10 @@ func main() {
 	//test.DoTestSearchLocalMessages()
 	//test.DoTestInviteInGroup()
 	//time.Sleep(time.Second*6)
-	test.DoTestSignalGetRoomByGroupID("1826384574")
-	test.DoTestSignalGetTokenByRoomID("1826384574")
-	test.DoTestSendImageMsg("3433303585")
-	//test.DoTestGetUserInDepartment()
+	//test.DoTestSignalGetRoomByGroupID("1826384574")
+	//test.DoTestSignalGetTokenByRoomID("1826384574")
+	//test.DoTestSendImageMsg("3433303585")
+	test.DoTestGetUserInDepartment()
 	//test.DoTestGetDepartmentMemberAndSubDepartment()
 	//test.DoTestDeleteAllMsgFromLocalAndSvr()
 	//	test.DoTestGetDepartmentMemberAndSubDepartment()
