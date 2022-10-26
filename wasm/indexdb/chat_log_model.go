@@ -167,50 +167,6 @@ func (i *LocalChatLogs) UpdateSingleMessageHasRead(sendID string, msgIDList []st
 	panic("implement me")
 }
 
-func (i *LocalChatLogs) SuperGroupSearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	msgList, err := Exec(contentType, keywordList, keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
-	if err != nil {
-		return nil, err
-	} else {
-		if v, ok := msgList.(string); ok {
-			var temp []model_struct.LocalChatLog
-			err := utils.JsonStringToStruct(v, &temp)
-			if err != nil {
-				return nil, err
-			}
-			for _, v := range temp {
-				v1 := v
-				result = append(result, &v1)
-			}
-			return result, err
-		} else {
-			return nil, ErrType
-		}
-	}
-}
-
-func (i *LocalChatLogs) SearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (messages []*model_struct.LocalChatLog, err error) {
-	msgList, err := Exec(contentType, keywordList, keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
-	if err != nil {
-		return nil, err
-	} else {
-		if v, ok := msgList.(string); ok {
-			var temp []model_struct.LocalChatLog
-			err := utils.JsonStringToStruct(v, &temp)
-			if err != nil {
-				return nil, err
-			}
-			for _, v := range temp {
-				v1 := v
-				messages = append(messages, &v1)
-			}
-			return messages, err
-		} else {
-			return nil, ErrType
-		}
-	}
-}
-
 func (i *LocalChatLogs) SearchMessageByContentType(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (messages []*model_struct.LocalChatLog, err error) {
 	msgList, err := Exec(contentType, sourceID, startTime, endTime, sessionType, offset, count)
 	if err != nil {
@@ -374,17 +330,78 @@ func (i *LocalChatLogs) GetTestMessage(seq uint32) (*model_struct.LocalChatLog, 
 }
 
 func (i *LocalChatLogs) UpdateMsgSenderNickname(sendID, nickname string, sType int) error {
-	panic("implement me")
+	_, err := Exec(sendID, nickname, sType)
+	return err
 }
 
 func (i *LocalChatLogs) UpdateMsgSenderFaceURL(sendID, faceURL string, sType int) error {
-	panic("implement me")
+	_, err := Exec(sendID, faceURL, sType)
+	return err
 }
 
 func (i *LocalChatLogs) UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int) error {
-	panic("implement me")
+	_, err := Exec(sendID, faceURL, nickname, sessionType)
+	return err
 }
 
 func (i *LocalChatLogs) GetMsgSeqByClientMsgID(clientMsgID string) (uint32, error) {
-	panic("implement me")
+	result, err := Exec(clientMsgID)
+	if err != nil {
+		return 0, err
+	}
+	if v, ok := result.(float64); ok {
+		return uint32(v), nil
+	}
+	return 0, ErrType
+}
+
+func (i *LocalChatLogs) GetMsgSeqListByGroupID(groupID string) (result []uint32, err error) {
+	l, err := Exec(groupID)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := l.([]float64); ok {
+			for _, v := range v {
+				v1 := uint32(v)
+				result = append(result, v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}
+
+func (i *LocalChatLogs) GetMsgSeqListByPeerUserID(userID string) (result []uint32, err error) {
+	l, err := Exec(userID)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := l.([]float64); ok {
+			for _, v := range v {
+				v1 := uint32(v)
+				result = append(result, v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}
+
+func (i *LocalChatLogs) GetMsgSeqListBySelfUserID(userID string) (result []uint32, err error) {
+	l, err := Exec(userID)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := l.([]float64); ok {
+			for _, v := range v {
+				v1 := uint32(v)
+				result = append(result, v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
 }

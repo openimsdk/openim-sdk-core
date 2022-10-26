@@ -20,6 +20,7 @@ type IndexDB struct {
 	LocalSuperGroupChatLogs
 	LocalSuperGroup
 	LocalConversationUnreadMessages
+	LocalGroupMember
 }
 
 type CallbackData struct {
@@ -367,18 +368,6 @@ func (i IndexDB) GetMsgSeqByClientMsgIDController(m *sdk_struct.MsgStruct) (uint
 	}
 }
 
-func (i IndexDB) GetMsgSeqListByGroupID(groupID string) ([]uint32, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetMsgSeqListByPeerUserID(userID string) ([]uint32, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetMsgSeqListBySelfUserID(userID string) ([]uint32, error) {
-	panic("implement me")
-}
-
 func (i IndexDB) GetSubDepartmentList(departmentID string, args ...int) ([]*model_struct.LocalDepartment, error) {
 	panic("implement me")
 }
@@ -455,10 +444,6 @@ func (i IndexDB) GetJoinedSuperGroupIDList() ([]string, error) {
 			return nil, ErrType
 		}
 	}
-}
-
-func (i IndexDB) DeleteAllSuperGroup() error {
-	panic("implement me")
 }
 
 func (i IndexDB) GetReadDiffusionGroupIDList() ([]string, error) {

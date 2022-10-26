@@ -60,8 +60,14 @@ func (i *LocalSuperGroup) UpdateSuperGroup(g *model_struct.LocalGroup) error {
 	_, err := Exec(g.GroupID, utils.StructToJsonString(tempLocalSuperGroup))
 	return err
 }
+
 func (i *LocalSuperGroup) DeleteSuperGroup(groupID string) error {
 	_, err := Exec(groupID)
+	return err
+}
+
+func (i *LocalSuperGroup) DeleteAllSuperGroup() error {
+	_, err := Exec()
 	return err
 }
 
