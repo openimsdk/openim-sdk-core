@@ -179,28 +179,54 @@ func (i IndexDB) InsertMessageController(message *model_struct.LocalChatLog) err
 	}
 }
 
-func (i IndexDB) SearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
 func (i IndexDB) SearchMessageByKeywordController(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) SearchMessageByContentType(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return i.SuperGroupSearchMessageByKeyword(contentType, keywordList, keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
+	default:
+		return i.SearchMessageByKeyword(contentType, keywordList, keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
+	}
 }
 
 func (i IndexDB) SearchMessageByContentTypeController(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) SearchMessageByContentTypeAndKeyword(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return i.SuperGroupSearchMessageByContentType(contentType, sourceID, startTime, endTime, sessionType, offset, count)
+	default:
+		return i.SearchMessageByContentType(contentType, sourceID, startTime, endTime, sessionType, offset, count)
+	}
 }
 
 func (i IndexDB) SearchMessageByContentTypeAndKeywordController(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64, operationID string) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
+	list, err := i.SearchMessageByContentTypeAndKeyword(contentType, keywordList, keywordListMatchType, startTime, endTime)
+	if err != nil {
+		return nil, err
+	}
+	superGroupIDList, err := i.GetJoinedSuperGroupIDList()
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range superGroupIDList {
+		sList, err := i.SuperGroupSearchMessageByContentTypeAndKeyword(contentType, keywordList, keywordListMatchType, startTime, endTime, v)
+		if err != nil {
+			log.Error(operationID, "search message in group err", err.Error(), v)
+			continue
+		}
+		list = append(list, sList...)
+	}
+	workingGroupIDList, err := i.GetJoinedWorkingGroupIDList()
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range workingGroupIDList {
+		sList, err := i.SuperGroupSearchMessageByContentTypeAndKeyword(contentType, keywordList, keywordListMatchType, startTime, endTime, v)
+		if err != nil {
+			log.Error(operationID, "search message in group err", err.Error(), v)
+			continue
+		}
+		list = append(list, sList...)
+	}
+	return list, nil
 }
 
 func (i IndexDB) BatchUpdateMessageList(MessageList []*model_struct.LocalChatLog) error {
@@ -254,18 +280,6 @@ func (i IndexDB) BatchSpecialUpdateMessageList(MessageList []*model_struct.Local
 
 	}
 	return nil
-}
-
-func (i IndexDB) MessageIfExists(ClientMsgID string) (bool, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) IsExistsInErrChatLogBySeq(seq int64) bool {
-	panic("implement me")
-}
-
-func (i IndexDB) MessageIfExistsBySeq(seq int64) (bool, error) {
-	panic("implement me")
 }
 
 func (i IndexDB) GetMessageController(msg *sdk_struct.MsgStruct) (*model_struct.LocalChatLog, error) {
@@ -325,9 +339,6 @@ func (i IndexDB) GetMessageListNoTimeController(sourceID string, sessionType, co
 		return i.GetMessageListNoTime(sourceID, sessionType, count, isReverse)
 	}
 }
-func (i IndexDB) UpdateGroupMessageHasRead(msgIDList []string, sessionType int32) error {
-	panic("implement me")
-}
 
 func (i IndexDB) UpdateGroupMessageHasReadController(msgIDList []string, groupID string, sessionType int32) error {
 	switch sessionType {
@@ -338,10 +349,6 @@ func (i IndexDB) UpdateGroupMessageHasReadController(msgIDList []string, groupID
 	}
 }
 
-func (i IndexDB) GetMultipleMessage(msgIDList []string) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
 func (i IndexDB) GetMultipleMessageController(msgIDList []string, groupID string, sessionType int32) (result []*model_struct.LocalChatLog, err error) {
 	switch sessionType {
 	case constant.SuperGroupChatType:
@@ -349,30 +356,6 @@ func (i IndexDB) GetMultipleMessageController(msgIDList []string, groupID string
 	default:
 		return i.GetMultipleMessage(msgIDList)
 	}
-}
-
-func (i IndexDB) GetLostMsgSeqList(minSeqInSvr uint32) ([]uint32, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetTestMessage(seq uint32) (*model_struct.LocalChatLog, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateMsgSenderNickname(sendID, nickname string, sType int) error {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateMsgSenderFaceURL(sendID, faceURL string, sType int) error {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int) error {
-	panic("implement me")
-}
-
-func (i IndexDB) GetMsgSeqByClientMsgID(clientMsgID string) (uint32, error) {
-	panic("implement me")
 }
 
 func (i IndexDB) GetMsgSeqByClientMsgIDController(m *sdk_struct.MsgStruct) (uint32, error) {
@@ -711,14 +694,6 @@ func (i IndexDB) InitSuperLocalChatLog(groupID string) {
 }
 
 func (i IndexDB) SuperGroupDeleteAllMessage(groupID string) error {
-	panic("implement me")
-}
-
-func (i IndexDB) SuperGroupSearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) SuperGroupSearchMessageByContentType(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
 	panic("implement me")
 }
 

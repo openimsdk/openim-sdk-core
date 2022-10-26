@@ -166,3 +166,225 @@ func (i *LocalChatLogs) GetMessageListNoTime(sourceID string, sessionType, count
 func (i *LocalChatLogs) UpdateSingleMessageHasRead(sendID string, msgIDList []string) error {
 	panic("implement me")
 }
+
+func (i *LocalChatLogs) SuperGroupSearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
+	msgList, err := Exec(contentType, keywordList, keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := msgList.(string); ok {
+			var temp []model_struct.LocalChatLog
+			err := utils.JsonStringToStruct(v, &temp)
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range temp {
+				v1 := v
+				result = append(result, &v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}
+
+func (i *LocalChatLogs) SearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (messages []*model_struct.LocalChatLog, err error) {
+	msgList, err := Exec(contentType, keywordList, keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := msgList.(string); ok {
+			var temp []model_struct.LocalChatLog
+			err := utils.JsonStringToStruct(v, &temp)
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range temp {
+				v1 := v
+				messages = append(messages, &v1)
+			}
+			return messages, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}
+
+func (i *LocalChatLogs) SearchMessageByContentType(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (messages []*model_struct.LocalChatLog, err error) {
+	msgList, err := Exec(contentType, sourceID, startTime, endTime, sessionType, offset, count)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := msgList.(string); ok {
+			var temp []model_struct.LocalChatLog
+			err := utils.JsonStringToStruct(v, &temp)
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range temp {
+				v1 := v
+				messages = append(messages, &v1)
+			}
+			return messages, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}
+
+func (i *LocalChatLogs) SuperGroupSearchMessageByContentType(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (messages []*model_struct.LocalChatLog, err error) {
+	msgList, err := Exec(contentType, sourceID, startTime, endTime, sessionType, offset, count)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := msgList.(string); ok {
+			var temp []model_struct.LocalChatLog
+			err := utils.JsonStringToStruct(v, &temp)
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range temp {
+				v1 := v
+				messages = append(messages, &v1)
+			}
+			return messages, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}
+
+func (i *LocalChatLogs) SearchMessageByContentTypeAndKeyword(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
+	msgList, err := Exec(contentType, keywordList, keywordListMatchType, startTime, endTime)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := msgList.(string); ok {
+			var temp []model_struct.LocalChatLog
+			err := utils.JsonStringToStruct(v, &temp)
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range temp {
+				v1 := v
+				result = append(result, &v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}
+
+func (i *LocalChatLogs) MessageIfExists(clientMsgID string) (bool, error) {
+	isExist, err := Exec(clientMsgID)
+	if err != nil {
+		return false, err
+	} else {
+		if v, ok := isExist.(bool); ok {
+			return v, nil
+		} else {
+			return false, ErrType
+		}
+	}
+}
+
+func (i *LocalChatLogs) IsExistsInErrChatLogBySeq(seq int64) bool {
+	isExist, err := Exec(seq)
+	if err != nil {
+		return false
+	} else {
+		if v, ok := isExist.(bool); ok {
+			return v
+		} else {
+			return false
+		}
+	}
+}
+
+func (i *LocalChatLogs) MessageIfExistsBySeq(seq int64) (bool, error) {
+	isExist, err := Exec(seq)
+	if err != nil {
+		return false, err
+	} else {
+		if v, ok := isExist.(bool); ok {
+			return v, nil
+		} else {
+			return false, ErrType
+		}
+	}
+}
+
+func (i *LocalChatLogs) UpdateGroupMessageHasRead(msgIDList []string, sessionType int32) error {
+	_, err := Exec(msgIDList, sessionType)
+	return err
+}
+
+func (i *LocalChatLogs) GetMultipleMessage(msgIDList []string) (result []*model_struct.LocalChatLog, err error) {
+	msgList, err := Exec(msgIDList)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := msgList.(string); ok {
+			var temp []model_struct.LocalChatLog
+			err := utils.JsonStringToStruct(v, &temp)
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range temp {
+				v1 := v
+				result = append(result, &v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}
+
+func (i *LocalChatLogs) GetLostMsgSeqList(minSeqInSvr uint32) (result []uint32, err error) {
+	l, err := Exec(minSeqInSvr)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := l.([]float64); ok {
+			for _, v := range v {
+				v1 := uint32(v)
+				result = append(result, v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}
+
+func (i *LocalChatLogs) GetTestMessage(seq uint32) (*model_struct.LocalChatLog, error) {
+	msg, err := Exec(seq)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := msg.(model_struct.LocalChatLog); ok {
+			return &v, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}
+
+func (i *LocalChatLogs) UpdateMsgSenderNickname(sendID, nickname string, sType int) error {
+	panic("implement me")
+}
+
+func (i *LocalChatLogs) UpdateMsgSenderFaceURL(sendID, faceURL string, sType int) error {
+	panic("implement me")
+}
+
+func (i *LocalChatLogs) UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int) error {
+	panic("implement me")
+}
+
+func (i *LocalChatLogs) GetMsgSeqByClientMsgID(clientMsgID string) (uint32, error) {
+	panic("implement me")
+}
