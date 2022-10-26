@@ -16,7 +16,7 @@ import (
 type IndexDB struct {
 	LocalUsers
 	LocalConversations
-	LocalChatLogs
+	*LocalChatLogs
 	LocalSuperGroupChatLogs
 	LocalSuperGroup
 	LocalConversationUnreadMessages
@@ -847,6 +847,8 @@ func (i IndexDB) DeleteBlack(blockUserID string) error {
 	panic("implement me")
 }
 
-func NewIndexDB() *IndexDB {
-	return &IndexDB{}
+func NewIndexDB(loginUserID string) *IndexDB {
+	return &IndexDB{
+		LocalChatLogs: NewLocalChatLogs(loginUserID),
+	}
 }

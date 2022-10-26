@@ -224,7 +224,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	log.NewDebug(operationID, "platform is ", sdk_struct.SvrConf.Platform)
 	if sdk_struct.SvrConf.Platform == constant.WebPlatformID {
 		log.Debug(operationID, "index db init")
-		u.db = indexdb.NewIndexDB()
+		u.db = indexdb.NewIndexDB(u.loginUserID)
 		err := u.db.InitDB(userID, sdk_struct.SvrConf.DataDir)
 		common.CheckAnyErrCallback(cb, 201, err, operationID)
 	} else {
