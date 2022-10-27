@@ -3,10 +3,8 @@ package main
 import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
-	"open_im_sdk/pkg/utils"
 	"open_im_sdk/test"
 	"open_im_sdk/ws_wrapper/ws_local_server"
-	"time"
 )
 
 //func reliabilityTest() {
@@ -28,7 +26,7 @@ import (
 //}
 
 var (
-	TESTIP       = "43.155.69.205"
+	TESTIP       = "43.154.157.177"
 	APIADDR      = "http://" + TESTIP + ":10002"
 	WSADDR       = "ws://" + TESTIP + ":10001"
 	REGISTERADDR = APIADDR + "/user_register"
@@ -79,9 +77,11 @@ func main() {
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
 	println("start")
+
 	//test.DoTestGetUserInDepartment()
 	//test.DoTestGetDepartmentMemberAndSubDepartment()
 	//test.DoTestDeleteAllMsgFromLocalAndSvr()
+	//test.
 	//	test.DoTestGetDepartmentMemberAndSubDepartment()
 	//test.DotestUploadFile()
 	//test.DotestMinio()
@@ -124,39 +124,39 @@ func main() {
 	//test.DoTestMarkGroupMessageAsRead()
 	//test.DoTestGetGroupHistoryMessage()
 	//test.DoTestGetHistoryMessage("17396220460")
-	time.Sleep(250000 * time.Millisecond)
-	b := utils.GetCurrentTimestampBySecond()
-	i := 0
-	for {
-		//test.DoTestSendMsg2Group(strMyUidx, "42c9f515cb84ee0e82b3f3ce71eb14d6", i)
-		i++
-		time.Sleep(250 * time.Millisecond)
-		if i == 100 {
-			break
-		}
-		log.Warn("", "10 * time.Millisecond ###################waiting... msg: ", i)
-	}
-
-	log.Warn("", "cost time: ", utils.GetCurrentTimestampBySecond()-b)
-	return
-	i = 0
-	for {
-		test.DoTestSendMsg2Group(strMyUidx, "42c9f515cb84ee0e82b3f3ce71eb14d6", i)
-		i++
-		time.Sleep(1000 * time.Millisecond)
-		if i == 10 {
-			break
-		}
-		log.Warn("", "1000 * time.Millisecond ###################waiting... msg: ", i)
-	}
-
-	i = 0
-	for {
-		test.DoTestSendMsg2Group(strMyUidx, "42c9f515cb84ee0e82b3f3ce71eb14d6", i)
-		i++
-		time.Sleep(10000 * time.Millisecond)
-		log.Warn("", "10000 * time.Millisecond ###################waiting... msg: ", i)
-	}
+	//time.Sleep(250000 * time.Millisecond)
+	//b := utils.GetCurrentTimestampBySecond()
+	//i := 0
+	//for {
+	//	//test.DoTestSendMsg2Group(strMyUidx, "42c9f515cb84ee0e82b3f3ce71eb14d6", i)
+	//	i++
+	//	time.Sleep(250 * time.Millisecond)
+	//	if i == 100 {
+	//		break
+	//	}
+	//	log.Warn("", "10 * time.Millisecond ###################waiting... msg: ", i)
+	//}
+	//
+	//log.Warn("", "cost time: ", utils.GetCurrentTimestampBySecond()-b)
+	//return
+	//i = 0
+	//for {
+	//	test.DoTestSendMsg2Group(strMyUidx, "42c9f515cb84ee0e82b3f3ce71eb14d6", i)
+	//	i++
+	//	time.Sleep(1000 * time.Millisecond)
+	//	if i == 10 {
+	//		break
+	//	}
+	//	log.Warn("", "1000 * time.Millisecond ###################waiting... msg: ", i)
+	//}
+	//
+	//i = 0
+	//for {
+	//	test.DoTestSendMsg2Group(strMyUidx, "42c9f515cb84ee0e82b3f3ce71eb14d6", i)
+	//	i++
+	//	time.Sleep(10000 * time.Millisecond)
+	//	log.Warn("", "10000 * time.Millisecond ###################waiting... msg: ", i)
+	//}
 
 	//reliabilityTest()
 	//	test.PressTest(testClientNum, intervalSleep, imIP)

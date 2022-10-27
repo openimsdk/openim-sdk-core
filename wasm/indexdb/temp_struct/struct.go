@@ -60,3 +60,43 @@ type LocalSuperGroup struct {
 	NotificationUpdateTime uint32 `json:"notificationUpdateTime,omitempty"`
 	NotificationUserID     string `json:"notificationUserID,omitempty"`
 }
+
+type LocalGroup struct {
+	GroupID                string `json:"groupID,omitempty"`
+	GroupName              string `json:"groupName,omitempty"`
+	Notification           string `json:"notification,omitempty"`
+	Introduction           string `json:"introduction,omitempty"`
+	FaceURL                string `json:"faceURL,omitempty"`
+	CreateTime             uint32 `json:"createTime,omitempty"`
+	Status                 int32  `json:"status,omitempty"`
+	CreatorUserID          string `json:"creatorUserID,omitempty"`
+	GroupType              int32  `json:"groupType,omitempty"`
+	OwnerUserID            string `json:"ownerUserID,omitempty"`
+	MemberCount            int32  `json:"memberCount,omitempty"`
+	Ex                     string `json:"ex,omitempty"`
+	AttachedInfo           string `json:"attachedInfo,omitempty"`
+	NeedVerification       int32  `json:"needVerification,omitempty"`
+	LookMemberInfo         int32  `json:"lookMemberInfo,omitempty"`
+	ApplyMemberFriend      int32  `json:"applyMemberFriend,omitempty"`
+	NotificationUpdateTime uint32 `json:"notificationUpdateTime,omitempty"`
+	NotificationUserID     string `json:"notificationUserID,omitempty"`
+}
+
+type LocalFriendRequest struct {
+	FromUserID    string `json:"fromUserID,omitempty"`
+	FromNickname  string `json:"fromNickname,omitempty"`
+	FromFaceURL   string `json:"fromFaceURL,omitempty"`
+	FromGender    int32  `json:"fromGender,omitempty"`
+	ToUserID      string `json:"toUserID,omitempty"`
+	ToNickname    string `json:"toNickname,omitempty"`
+	ToFaceURL     string `json:"toFaceURL,omitempty"`
+	ToGender      int32  `json:"toGender,omitempty"`
+	HandleResult  int32  `json:"handleResult,omitempty"`
+	ReqMsg        string `json:"reqMsg,omitempty"`
+	CreateTime    uint32 `json:"createTime,omitempty"`
+	HandlerUserID string `json:"handlerUserID,omitempty"`
+	HandleMsg     string `json:"handleMsg,omitempty"`
+	HandleTime    uint32 `json:"handleTime,omitempty"`
+	Ex            string `json:"ex,omitempty"`
+	AttachedInfo  string `json:"attachedInfo,omitempty"`
+}

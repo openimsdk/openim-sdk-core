@@ -20,6 +20,7 @@ type IndexDB struct {
 	LocalSuperGroupChatLogs
 	LocalSuperGroup
 	LocalConversationUnreadMessages
+	LocalGroups
 }
 
 type CallbackData struct {
@@ -85,17 +86,6 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 		return "", errors.New(data.ErrMsg)
 	}
 	return data.Data, err
-}
-func (i IndexDB) InsertGroup(groupInfo *model_struct.LocalGroup) error {
-	panic("implement me")
-}
-
-func (i IndexDB) DeleteGroup(groupID string) error {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateGroup(groupInfo *model_struct.LocalGroup) error {
-	panic("implement me")
 }
 
 func (i IndexDB) GetJoinedGroupList() ([]*model_struct.LocalGroup, error) {
@@ -679,30 +669,6 @@ func (i IndexDB) GetFriendInfoByFriendUserID(FriendUserID string) (*model_struct
 }
 
 func (i IndexDB) GetFriendInfoList(friendUserIDList []string) ([]*model_struct.LocalFriend, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) InsertFriendRequest(friendRequest *model_struct.LocalFriendRequest) error {
-	panic("implement me")
-}
-
-func (i IndexDB) DeleteFriendRequestBothUserID(fromUserID, toUserID string) error {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateFriendRequest(friendRequest *model_struct.LocalFriendRequest) error {
-	panic("implement me")
-}
-
-func (i IndexDB) GetRecvFriendApplication() ([]*model_struct.LocalFriendRequest, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetSendFriendApplication() ([]*model_struct.LocalFriendRequest, error) {
-	return nil, nil
-}
-
-func (i IndexDB) GetFriendApplicationByBothID(fromUserID, toUserID string) (*model_struct.LocalFriendRequest, error) {
 	panic("implement me")
 }
 
