@@ -24,6 +24,7 @@ type IndexDB struct {
 	LocalGroupMember
 	LocalGroupRequest
 	LocalCacheMessage
+	Black
 }
 
 type CallbackData struct {
@@ -709,33 +710,33 @@ func (i IndexDB) InitDB(userID string, dataDir string) error {
 	return err
 }
 
-func (i IndexDB) GetBlackList() ([]*model_struct.LocalBlack, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetBlackListUserID() (blackListUid []string, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetBlackInfoByBlockUserID(blockUserID string) (*model_struct.LocalBlack, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetBlackInfoList(blockUserIDList []string) ([]*model_struct.LocalBlack, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) InsertBlack(black *model_struct.LocalBlack) error {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateBlack(black *model_struct.LocalBlack) error {
-	panic("implement me")
-}
-
-func (i IndexDB) DeleteBlack(blockUserID string) error {
-	panic("implement me")
-}
+//func (i IndexDB) GetBlackList() ([]*model_struct.LocalBlack, error) {
+//	panic("implement me")
+//}
+//
+//func (i IndexDB) GetBlackListUserID() (blackListUid []string, err error) {
+//	panic("implement me")
+//}
+//
+//func (i IndexDB) GetBlackInfoByBlockUserID(blockUserID string) (*model_struct.LocalBlack, error) {
+//	panic("implement me")
+//}
+//
+//func (i IndexDB) GetBlackInfoList(blockUserIDList []string) ([]*model_struct.LocalBlack, error) {
+//	panic("implement me")
+//}
+//
+//func (i IndexDB) InsertBlack(black *model_struct.LocalBlack) error {
+//	panic("implement me")
+//}
+//
+//func (i IndexDB) UpdateBlack(black *model_struct.LocalBlack) error {
+//	panic("implement me")
+//}
+//
+//func (i IndexDB) DeleteBlack(blockUserID string) error {
+//	panic("implement me")
+//}
 
 func NewIndexDB(loginUserID string) *IndexDB {
 	return &IndexDB{
