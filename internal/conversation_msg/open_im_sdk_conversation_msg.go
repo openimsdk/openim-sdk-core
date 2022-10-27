@@ -21,6 +21,9 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 	imgtype "github.com/shamsher31/goimgtype"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 )
 
 func (c *Conversation) GetAllConversationList(callback open_im_sdk_callback.Base, operationID string) {
