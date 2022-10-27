@@ -56,5 +56,7 @@ func (w *WorkMoments) ClearWorkMomentsNotification(callback open_im_sdk_callback
 }
 
 func (w *WorkMoments) TestSQL() {
-	w.db.GetMsgSeqListByGroupID("ss")
+	//w.db.InsertAdminGroupRequest()
+
+	w.db.GetJoinedWorkingGroupList()
 }
