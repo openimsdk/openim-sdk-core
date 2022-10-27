@@ -26,6 +26,30 @@ type IndexDB struct {
 	LocalCacheMessage
 }
 
+func (i IndexDB) InsertFriendRequest(friendRequest *model_struct.LocalFriendRequest) error {
+	panic("implement me")
+}
+
+func (i IndexDB) DeleteFriendRequestBothUserID(fromUserID, toUserID string) error {
+	panic("implement me")
+}
+
+func (i IndexDB) UpdateFriendRequest(friendRequest *model_struct.LocalFriendRequest) error {
+	panic("implement me")
+}
+
+func (i IndexDB) GetRecvFriendApplication() ([]*model_struct.LocalFriendRequest, error) {
+	panic("implement me")
+}
+
+func (i IndexDB) GetSendFriendApplication() ([]*model_struct.LocalFriendRequest, error) {
+	panic("implement me")
+}
+
+func (i IndexDB) GetFriendApplicationByBothID(fromUserID, toUserID string) (*model_struct.LocalFriendRequest, error) {
+	panic("implement me")
+}
+
 type CallbackData struct {
 	ErrCode int32       `json:"errCode"`
 	ErrMsg  string      `json:"errMsg"`
