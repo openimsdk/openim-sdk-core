@@ -198,7 +198,7 @@ type DataBase interface {
 	SuperGroupUpdateMessageTimeAndStatus(msg *sdk_struct.MsgStruct) error
 	SuperGroupGetMessageList(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error)
 	SuperGroupGetMessageListNoTime(sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error)
-	SuperGroupGetSendingMessageList() (result []*model_struct.LocalChatLog, err error)
+	SuperGroupGetSendingMessageList(groupID string) (result []*model_struct.LocalChatLog, err error)
 	SuperGroupUpdateGroupMessageHasRead(msgIDList []string, groupID string) error
 	SuperGroupGetMultipleMessage(conversationIDList []string, groupID string) (result []*model_struct.LocalChatLog, err error)
 	SuperGroupGetNormalMsgSeq() (uint32, error)

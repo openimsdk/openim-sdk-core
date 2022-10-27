@@ -413,17 +413,34 @@ func (i *LocalChatLogs) GetMsgSeqListBySelfUserID(userID string) (result []uint3
 }
 
 func (i *LocalChatLogs) GetAbnormalMsgSeq() (uint32, error) {
-	return 0, nil
+	result, err := Exec()
+	if err != nil {
+		return 0, err
+	}
+	if v, ok := result.(float64); ok {
+		return uint32(v), nil
+	}
+	return 0, ErrType
 }
 
-func (i *LocalChatLogs) GetAbnormalMsgSeqList() ([]uint32, error) {
-	panic("implement me")
+func (i *LocalChatLogs) GetAbnormalMsgSeqList() (result []uint32, err error) {
+	l, err := Exec()
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := l.([]float64); ok {
+			for _, v := range v {
+				v1 := uint32(v)
+				result = append(result, v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
 }
 
 func (i *LocalChatLogs) BatchInsertExceptionMsg(MessageList []*model_struct.LocalErrChatLog) error {
-	panic("implement me")
-}
-
-func (i *LocalChatLogs) SetChatLogFailedStatus() {
-	panic("implement me")
+	_, err := Exec(utils.StructToJsonString(MessageList))
+	return err
 }

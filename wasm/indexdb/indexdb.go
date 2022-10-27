@@ -92,18 +92,6 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 	return data.Data, err
 }
 
-func (i IndexDB) GetJoinedGroupList() ([]*model_struct.LocalGroup, error) {
-	return nil, nil
-}
-
-func (i IndexDB) GetGroupInfoByGroupID(groupID string) (*model_struct.LocalGroup, error) {
-	return &model_struct.LocalGroup{}, nil
-}
-
-func (i IndexDB) GetAllGroupInfoByGroupIDOrGroupName(keyword string, isSearchGroupID bool, isSearchGroupName bool) ([]*model_struct.LocalGroup, error) {
-	panic("implement me")
-}
-
 func (i IndexDB) AddMemberCount(groupID string) error {
 	panic("implement me")
 }
@@ -121,19 +109,44 @@ func (i IndexDB) GetJoinedWorkingGroupList() ([]*model_struct.LocalGroup, error)
 }
 
 func (i IndexDB) GetMinSeq(ID string) (uint32, error) {
-	panic("implement me")
+	result, err := Exec(ID)
+	if err != nil {
+		return 0, err
+	}
+	if v, ok := result.(float64); ok {
+		return uint32(v), nil
+	} else {
+		return 0, ErrType
+	}
 }
 
 func (i IndexDB) SetMinSeq(ID string, minSeq uint32) error {
-	panic("implement me")
+	_, err := Exec(ID, minSeq)
+	return err
 }
 
 func (i IndexDB) GetUserMinSeq() (uint32, error) {
-	panic("implement me")
+	result, err := Exec()
+	if err != nil {
+		return 0, err
+	}
+	if v, ok := result.(float64); ok {
+		return uint32(v), nil
+	} else {
+		return 0, ErrType
+	}
 }
 
 func (i IndexDB) GetGroupMinSeq(groupID string) (uint32, error) {
-	panic("implement me")
+	result, err := Exec(groupID)
+	if err != nil {
+		return 0, err
+	}
+	if v, ok := result.(float64); ok {
+		return uint32(v), nil
+	} else {
+		return 0, ErrType
+	}
 }
 
 func (i IndexDB) BatchInsertMessageListController(MessageList []*model_struct.LocalChatLog) error {
@@ -155,30 +168,6 @@ func (i IndexDB) InsertMessageController(message *model_struct.LocalChatLog) err
 	default:
 		return i.InsertMessage(message)
 	}
-}
-
-func (i IndexDB) SearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) SearchMessageByKeywordController(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) SearchMessageByContentType(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) SearchMessageByContentTypeController(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) SearchMessageByContentTypeAndKeyword(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) SearchMessageByContentTypeAndKeywordController(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64, operationID string) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
 }
 
 func (i IndexDB) BatchUpdateMessageList(MessageList []*model_struct.LocalChatLog) error {
@@ -232,18 +221,6 @@ func (i IndexDB) BatchSpecialUpdateMessageList(MessageList []*model_struct.Local
 
 	}
 	return nil
-}
-
-func (i IndexDB) MessageIfExists(ClientMsgID string) (bool, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) IsExistsInErrChatLogBySeq(seq int64) bool {
-	panic("implement me")
-}
-
-func (i IndexDB) MessageIfExistsBySeq(seq int64) (bool, error) {
-	panic("implement me")
 }
 
 func (i IndexDB) GetMessageController(msg *sdk_struct.MsgStruct) (*model_struct.LocalChatLog, error) {
@@ -316,10 +293,6 @@ func (i IndexDB) UpdateGroupMessageHasReadController(msgIDList []string, groupID
 	}
 }
 
-func (i IndexDB) GetMultipleMessage(msgIDList []string) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
 func (i IndexDB) GetMultipleMessageController(msgIDList []string, groupID string, sessionType int32) (result []*model_struct.LocalChatLog, err error) {
 	switch sessionType {
 	case constant.SuperGroupChatType:
@@ -329,30 +302,6 @@ func (i IndexDB) GetMultipleMessageController(msgIDList []string, groupID string
 	}
 }
 
-func (i IndexDB) GetLostMsgSeqList(minSeqInSvr uint32) ([]uint32, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetTestMessage(seq uint32) (*model_struct.LocalChatLog, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateMsgSenderNickname(sendID, nickname string, sType int) error {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateMsgSenderFaceURL(sendID, faceURL string, sType int) error {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int) error {
-	panic("implement me")
-}
-
-func (i IndexDB) GetMsgSeqByClientMsgID(clientMsgID string) (uint32, error) {
-	panic("implement me")
-}
-
 func (i IndexDB) GetMsgSeqByClientMsgIDController(m *sdk_struct.MsgStruct) (uint32, error) {
 	switch m.SessionType {
 	case constant.SuperGroupChatType:
@@ -360,18 +309,6 @@ func (i IndexDB) GetMsgSeqByClientMsgIDController(m *sdk_struct.MsgStruct) (uint
 	default:
 		return i.GetMsgSeqByClientMsgID(m.ClientMsgID)
 	}
-}
-
-func (i IndexDB) GetMsgSeqListByGroupID(groupID string) ([]uint32, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetMsgSeqListByPeerUserID(userID string) ([]uint32, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetMsgSeqListBySelfUserID(userID string) ([]uint32, error) {
-	panic("implement me")
 }
 
 func (i IndexDB) GetSubDepartmentList(departmentID string, args ...int) ([]*model_struct.LocalDepartment, error) {
@@ -418,22 +355,6 @@ func (i IndexDB) SearchDepartment(keyWord string, offset, count int) ([]*model_s
 	panic("implement me")
 }
 
-func (i IndexDB) InsertGroupRequest(groupRequest *model_struct.LocalGroupRequest) error {
-	panic("implement me")
-}
-
-func (i IndexDB) DeleteGroupRequest(groupID, userID string) error {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateGroupRequest(groupRequest *model_struct.LocalGroupRequest) error {
-	panic("implement me")
-}
-
-func (i IndexDB) GetSendGroupApplication() ([]*model_struct.LocalGroupRequest, error) {
-	return nil, nil
-}
-
 func (i IndexDB) GetJoinedSuperGroupIDList() ([]string, error) {
 	groupIDList, err := Exec()
 	if err != nil {
@@ -450,10 +371,6 @@ func (i IndexDB) GetJoinedSuperGroupIDList() ([]string, error) {
 			return nil, ErrType
 		}
 	}
-}
-
-func (i IndexDB) DeleteAllSuperGroup() error {
-	panic("implement me")
 }
 
 func (i IndexDB) GetReadDiffusionGroupIDList() ([]string, error) {
@@ -476,110 +393,6 @@ func (i IndexDB) GetReadDiffusionGroupIDList() ([]string, error) {
 	return groupIDList, err
 }
 
-func (i IndexDB) GetGroupMemberInfoByGroupIDUserID(groupID, userID string) (*model_struct.LocalGroupMember, error) {
-	return nil, nil
-}
-
-func (i IndexDB) GetAllGroupMemberList() ([]model_struct.LocalGroupMember, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetAllGroupMemberUserIDList() ([]model_struct.LocalGroupMember, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetGroupMemberCount(groupID string) (uint32, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetGroupSomeMemberInfo(groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetGroupAdminID(groupID string) ([]string, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetGroupMemberListByGroupID(groupID string) ([]*model_struct.LocalGroupMember, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetGroupMemberListSplit(groupID string, filter int32, offset, count int) ([]*model_struct.LocalGroupMember, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetGroupMemberOwnerAndAdmin(groupID string) ([]*model_struct.LocalGroupMember, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetGroupMemberOwner(groupID string) (*model_struct.LocalGroupMember, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetGroupMemberListSplitByJoinTimeFilter(groupID string, offset, count int, joinTimeBegin, joinTimeEnd int64, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetGroupOwnerAndAdminByGroupID(groupID string) ([]*model_struct.LocalGroupMember, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetGroupMemberUIDListByGroupID(groupID string) (result []string, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) InsertGroupMember(groupMember *model_struct.LocalGroupMember) error {
-	panic("implement me")
-}
-
-func (i IndexDB) BatchInsertGroupMember(groupMemberList []*model_struct.LocalGroupMember) error {
-	panic("implement me")
-}
-
-func (i IndexDB) DeleteGroupMember(groupID, userID string) error {
-	panic("implement me")
-}
-
-func (i IndexDB) DeleteGroupAllMembers(groupID string) error {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateGroupMember(groupMember *model_struct.LocalGroupMember) error {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateGroupMemberField(groupID, userID string, args map[string]interface{}) error {
-	panic("implement me")
-}
-
-func (i IndexDB) GetGroupMemberInfoIfOwnerOrAdmin() ([]*model_struct.LocalGroupMember, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) SearchGroupMembers(keyword string, groupID string, isSearchMemberNickname, isSearchUserID bool, offset, count int) (result []*model_struct.LocalGroupMember, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) InitSuperLocalErrChatLog(groupID string) {
-	panic("implement me")
-}
-
-func (i IndexDB) SuperBatchInsertExceptionMsg(MessageList []*model_struct.LocalErrChatLog, groupID string) error {
-	return nil
-}
-
-func (i IndexDB) GetAbnormalMsgSeq() (uint32, error) {
-	return 0, nil
-}
-
-func (i IndexDB) GetAbnormalMsgSeqList() ([]uint32, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) BatchInsertExceptionMsg(MessageList []*model_struct.LocalErrChatLog) error {
-	panic("implement me")
-}
-
 func (i IndexDB) BatchInsertExceptionMsgController(MessageList []*model_struct.LocalErrChatLog) error {
 	if len(MessageList) == 0 {
 		return nil
@@ -590,10 +403,6 @@ func (i IndexDB) BatchInsertExceptionMsgController(MessageList []*model_struct.L
 	default:
 		return i.BatchInsertExceptionMsg(MessageList)
 	}
-}
-
-func (i IndexDB) GetSuperGroupAbnormalMsgSeq(groupID string) (uint32, error) {
-	return 0, nil
 }
 
 func (i IndexDB) GetDepartmentMemberListByDepartmentID(departmentID string, args ...int) ([]*model_struct.LocalDepartmentMember, error) {
@@ -624,14 +433,6 @@ func (i IndexDB) GetDepartmentMemberListByUserID(userID string) ([]*model_struct
 	panic("implement me")
 }
 
-func (i IndexDB) BatchInsertTempCacheMessageList(MessageList []*model_struct.TempCacheLocalChatLog) error {
-	panic("implement me")
-}
-
-func (i IndexDB) InsertTempCacheMessage(Message *model_struct.TempCacheLocalChatLog) error {
-	panic("implement me")
-}
-
 func (i IndexDB) InsertFriend(friend *model_struct.LocalFriend) error {
 	panic("implement me")
 }
@@ -657,14 +458,6 @@ func (i IndexDB) GetFriendInfoByFriendUserID(FriendUserID string) (*model_struct
 }
 
 func (i IndexDB) GetFriendInfoList(friendUserIDList []string) ([]*model_struct.LocalFriend, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) SuperGroupSearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) SuperGroupSearchMessageByContentType(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
 	panic("implement me")
 }
 
@@ -741,5 +534,44 @@ func (i IndexDB) InitDB(userID string, dataDir string) error {
 func NewIndexDB(loginUserID string) *IndexDB {
 	return &IndexDB{
 		LocalChatLogs: NewLocalChatLogs(loginUserID),
+	}
+}
+
+func (i IndexDB) SetChatLogFailedStatus() {
+	msgList, err := i.GetSendingMessageList()
+	if err != nil {
+		log.Error("", "GetSendingMessageList failed ", err.Error())
+		return
+	}
+	for _, v := range msgList {
+		v.Status = constant.MsgStatusSendFailed
+		err := i.UpdateMessage(v)
+		if err != nil {
+			log.Error("", "UpdateMessage failed ", err.Error(), v)
+			continue
+		}
+	}
+	groupIDList, err := i.GetReadDiffusionGroupIDList()
+	if err != nil {
+		log.Error("", "GetReadDiffusionGroupIDList failed ", err.Error())
+		return
+	}
+	for _, v := range groupIDList {
+		msgList, err := i.SuperGroupGetSendingMessageList(v)
+		if err != nil {
+			log.Error("", "GetSendingMessageList failed ", err.Error())
+			return
+		}
+		if len(msgList) > 0 {
+			for _, v := range msgList {
+				v.Status = constant.MsgStatusSendFailed
+				err := i.SuperGroupUpdateMessage(v)
+				if err != nil {
+					log.Error("", "UpdateMessage failed ", err.Error(), v)
+					continue
+				}
+			}
+		}
+
 	}
 }

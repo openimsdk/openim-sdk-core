@@ -254,7 +254,7 @@ func (i IndexDB) SuperGroupUpdateMessageStatusBySourceID(sourceID string, status
 	panic("implement me")
 }
 
-func (i IndexDB) SuperGroupGetSendingMessageList() (result []*model_struct.LocalChatLog, err error) {
+func (i IndexDB) SuperGroupGetSendingMessageList(groupID string) (result []*model_struct.LocalChatLog, err error) {
 	panic("implement me")
 }
 
