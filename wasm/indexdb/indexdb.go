@@ -432,14 +432,6 @@ func (i IndexDB) GetDepartmentMemberListByUserID(userID string) ([]*model_struct
 	panic("implement me")
 }
 
-func (i IndexDB) BatchInsertTempCacheMessageList(MessageList []*model_struct.TempCacheLocalChatLog) error {
-	panic("implement me")
-}
-
-func (i IndexDB) InsertTempCacheMessage(Message *model_struct.TempCacheLocalChatLog) error {
-	panic("implement me")
-}
-
 func (i IndexDB) InsertFriend(friend *model_struct.LocalFriend) error {
 	panic("implement me")
 }
