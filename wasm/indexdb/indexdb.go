@@ -16,11 +16,14 @@ import (
 type IndexDB struct {
 	LocalUsers
 	LocalConversations
-	LocalChatLogs
+	*LocalChatLogs
 	LocalSuperGroupChatLogs
 	LocalSuperGroup
 	LocalConversationUnreadMessages
 	LocalGroups
+	LocalGroupMember
+	LocalGroupRequest
+	LocalCacheMessage
 }
 
 type CallbackData struct {
@@ -801,10 +804,6 @@ func (i IndexDB) Close() error {
 	return err
 }
 
-func (i IndexDB) SetChatLogFailedStatus() {
-	panic("implement me")
-}
-
 func (i IndexDB) InitDB(userID string, dataDir string) error {
 	_, err := Exec(userID, dataDir)
 	return err
@@ -838,6 +837,8 @@ func (i IndexDB) DeleteBlack(blockUserID string) error {
 	panic("implement me")
 }
 
-func NewIndexDB() *IndexDB {
-	return &IndexDB{}
+func NewIndexDB(loginUserID string) *IndexDB {
+	return &IndexDB{
+		LocalChatLogs: NewLocalChatLogs(loginUserID),
+	}
 }
