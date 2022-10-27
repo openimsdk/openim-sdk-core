@@ -202,11 +202,12 @@ func (w *Ws) ReadData() {
 
 		//	timeout := 5
 		//	u.WsConn.SetReadTimeout(timeout)
+		log.Warn(operationID, "first", w.WsConn.conn)
 		msgType, message, err := w.WsConn.conn.Read(context.Background())
 		if err != nil {
 			isErrorOccurred = true
 			if w.loginStatus == constant.Logout {
-				log.Warn(operationID, "loginState == logout ")
+				log.Warn(operationID, "loginState == logout ", w.WsConn.conn)
 				log.Warn(operationID, "close ws read channel ", w.cmdCh)
 				//	close(w.cmdCh)
 				return
