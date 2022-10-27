@@ -45,6 +45,7 @@ func main() {
 	//time.Sleep(time.Second*6)
 	test.DoTestSignalGetRoomByGroupID("1826384574")
 	test.DoTestSignalGetTokenByRoomID("1826384574")
+	test.DoTestSendImageMsg("3433303585")
 	//test.DoTestGetUserInDepartment()
 	//test.DoTestGetDepartmentMemberAndSubDepartment()
 	//test.DoTestDeleteAllMsgFromLocalAndSvr()

@@ -80,6 +80,7 @@ func main() {
 	test.InOutDoTest(uid, tokenx, WSADDR, APIADDR)
 	//test.DoTestSetAppBadge()
 	//test.DoTestSearchLocalMessages()
+	test.DoTestGetAdvancedHistoryMessageList()
 	println("start")
 	//test.DoTestGetUserInDepartment()
 	//test.DoTestGetDepartmentMemberAndSubDepartment()

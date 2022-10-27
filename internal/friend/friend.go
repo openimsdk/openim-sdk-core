@@ -122,7 +122,7 @@ func (f *Friend) addFriend(callback open_im_sdk_callback.Base, userIDReqMsg sdk.
 	apiReq.FromUserID = f.loginUserID
 	apiReq.ReqMsg = userIDReqMsg.ReqMsg
 	apiReq.OperationID = operationID
-	f.p.PostFatalCallback(callback, constant.AddFriendRouter, apiReq, nil, operationID)
+	f.p.PostFatalCallbackPenetrate(callback, constant.AddFriendRouter, apiReq, nil, operationID)
 	f.SyncFriendApplication(operationID)
 }
 
