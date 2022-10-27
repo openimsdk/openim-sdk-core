@@ -202,3 +202,98 @@ func (i *LocalChatLogs) SearchMessageByKeyword(contentType []int, keywordList []
 		}
 	}
 }
+
+func (i *LocalChatLogs) GetSuperGroupAbnormalMsgSeq(groupID string) (uint32, error) {
+	return 0, nil
+}
+
+func (i *LocalChatLogs) InitSuperLocalErrChatLog(groupID string) {
+	panic("implement me")
+}
+func (i *LocalChatLogs) SuperBatchInsertExceptionMsg(MessageList []*model_struct.LocalErrChatLog, groupID string) error {
+	return nil
+}
+
+func (i IndexDB) InitSuperLocalChatLog(groupID string) {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupDeleteAllMessage(groupID string) error {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupSearchMessageByContentTypeAndKeyword(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64, groupID string) (result []*model_struct.LocalChatLog, err error) {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupBatchUpdateMessageList(MessageList []*model_struct.LocalChatLog) error {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupMessageIfExists(ClientMsgID string) (bool, error) {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupIsExistsInErrChatLogBySeq(seq int64) bool {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupMessageIfExistsBySeq(seq int64) (bool, error) {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupGetAllUnDeleteMessageSeqList() ([]uint32, error) {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupUpdateColumnsMessage(ClientMsgID, groupID string, args map[string]interface{}) error {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupUpdateMessageStatusBySourceID(sourceID string, status, sessionType int32) error {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupGetSendingMessageList() (result []*model_struct.LocalChatLog, err error) {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupUpdateGroupMessageHasRead(msgIDList []string, groupID string) error {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupGetNormalMsgSeq() (uint32, error) {
+	return 0, nil
+}
+
+func (i IndexDB) SuperGroupGetTestMessage(seq uint32) (*model_struct.LocalChatLog, error) {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupUpdateMsgSenderNickname(sendID, nickname string, sType int) error {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupUpdateMsgSenderFaceURL(sendID, faceURL string, sType int) error {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int) error {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupGetMsgSeqByClientMsgID(clientMsgID string, groupID string) (uint32, error) {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupGetMsgSeqListByGroupID(groupID string) ([]uint32, error) {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupGetMsgSeqListByPeerUserID(userID string) ([]uint32, error) {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupGetMsgSeqListBySelfUserID(userID string) ([]uint32, error) {
+	panic("implement me")
+}

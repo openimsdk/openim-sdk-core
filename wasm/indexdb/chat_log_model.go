@@ -405,3 +405,19 @@ func (i *LocalChatLogs) GetMsgSeqListBySelfUserID(userID string) (result []uint3
 		}
 	}
 }
+
+func (i *LocalChatLogs) GetAbnormalMsgSeq() (uint32, error) {
+	return 0, nil
+}
+
+func (i *LocalChatLogs) GetAbnormalMsgSeqList() ([]uint32, error) {
+	panic("implement me")
+}
+
+func (i *LocalChatLogs) BatchInsertExceptionMsg(MessageList []*model_struct.LocalErrChatLog) error {
+	panic("implement me")
+}
+
+func (i *LocalChatLogs) SetChatLogFailedStatus() {
+	panic("implement me")
+}
