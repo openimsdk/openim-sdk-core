@@ -414,34 +414,6 @@ func (i IndexDB) GetDepartmentMemberListByUserID(userID string) ([]*model_struct
 	panic("implement me")
 }
 
-func (i IndexDB) InsertFriend(friend *model_struct.LocalFriend) error {
-	panic("implement me")
-}
-
-func (i IndexDB) DeleteFriend(friendUserID string) error {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateFriend(friend *model_struct.LocalFriend) error {
-	panic("implement me")
-}
-
-func (i IndexDB) GetAllFriendList() ([]*model_struct.LocalFriend, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) SearchFriendList(keyword string, isSearchUserID, isSearchNickname, isSearchRemark bool) ([]*model_struct.LocalFriend, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetFriendInfoByFriendUserID(FriendUserID string) (*model_struct.LocalFriend, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetFriendInfoList(friendUserIDList []string) ([]*model_struct.LocalFriend, error) {
-	panic("implement me")
-}
-
 func (i IndexDB) InsertWorkMomentsNotification(jsonDetail string) error {
 	panic("implement me")
 }
