@@ -105,8 +105,21 @@ func (i *LocalChatLogs) InsertMessage(message *model_struct.LocalChatLog) error 
 	_, err := Exec(utils.StructToJsonString(message))
 	return err
 }
-func (i *LocalChatLogs) GetAllUnDeleteMessageSeqList() ([]uint32, error) {
-	panic("implement me")
+func (i *LocalChatLogs) GetAllUnDeleteMessageSeqList() (result []uint32, err error) {
+	l, err := Exec()
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := l.([]float64); ok {
+			for _, v := range v {
+				v1 := uint32(v)
+				result = append(result, v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
 }
 func (i *LocalChatLogs) UpdateColumnsMessageList(clientMsgIDList []string, args map[string]interface{}) error {
 	_, err := Exec(utils.StructToJsonString(clientMsgIDList), args)
@@ -117,7 +130,8 @@ func (i *LocalChatLogs) UpdateColumnsMessage(clientMsgID string, args map[string
 	return err
 }
 func (i *LocalChatLogs) DeleteAllMessage() error {
-	panic("implement me")
+	_, err := Exec()
+	return err
 }
 func (i *LocalChatLogs) UpdateMessageStatusBySourceID(sourceID string, status, sessionType int32) error {
 	_, err := Exec(sourceID, status, sessionType)
@@ -170,7 +184,8 @@ func (i *LocalChatLogs) GetMessageListNoTime(sourceID string, sessionType, count
 	}
 }
 func (i *LocalChatLogs) UpdateSingleMessageHasRead(sendID string, msgIDList []string) error {
-	panic("implement me")
+	_, err := Exec(sendID, msgIDList)
+	return err
 }
 
 func (i *LocalChatLogs) SearchMessageByContentType(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (messages []*model_struct.LocalChatLog, err error) {
