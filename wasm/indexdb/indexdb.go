@@ -92,22 +92,6 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 	return data.Data, err
 }
 
-func (i IndexDB) AddMemberCount(groupID string) error {
-	panic("implement me")
-}
-
-func (i IndexDB) SubtractMemberCount(groupID string) error {
-	panic("implement me")
-}
-
-func (i IndexDB) GetJoinedWorkingGroupIDList() ([]string, error) {
-	return []string{}, nil
-}
-
-func (i IndexDB) GetJoinedWorkingGroupList() ([]*model_struct.LocalGroup, error) {
-	panic("implement me")
-}
-
 func (i IndexDB) GetMinSeq(ID string) (uint32, error) {
 	result, err := Exec(ID)
 	if err != nil {
@@ -280,9 +264,6 @@ func (i IndexDB) GetMessageListNoTimeController(sourceID string, sessionType, co
 		return i.GetMessageListNoTime(sourceID, sessionType, count, isReverse)
 	}
 }
-func (i IndexDB) UpdateGroupMessageHasRead(msgIDList []string, sessionType int32) error {
-	panic("implement me")
-}
 
 func (i IndexDB) UpdateGroupMessageHasReadController(msgIDList []string, groupID string, sessionType int32) error {
 	switch sessionType {
@@ -454,7 +435,7 @@ func (i IndexDB) SearchFriendList(keyword string, isSearchUserID, isSearchNickna
 }
 
 func (i IndexDB) GetFriendInfoByFriendUserID(FriendUserID string) (*model_struct.LocalFriend, error) {
-	return &model_struct.LocalFriend{}, nil
+	panic("implement me")
 }
 
 func (i IndexDB) GetFriendInfoList(friendUserIDList []string) ([]*model_struct.LocalFriend, error) {
