@@ -197,7 +197,16 @@ func (i IndexDB) BatchUpdateConversationList(conversationList []*model_struct.Lo
 }
 
 func (i IndexDB) ConversationIfExists(conversationID string) (bool, error) {
-	panic("implement me")
+	seq, err := Exec(conversationID)
+	if err != nil {
+		return false, err
+	} else {
+		if v, ok := seq.(bool); ok {
+			return v, err
+		} else {
+			return false, ErrType
+		}
+	}
 }
 
 func (i IndexDB) ResetConversation(conversationID string) error {

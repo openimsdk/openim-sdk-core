@@ -180,6 +180,7 @@ func (w *Ws) ReadData() {
 					log.Warn(operationID, "close ws read channel ", w.cmdCh)
 					//		close(w.cmdCh)
 					w.SetLoginStatus(constant.Logout)
+					w.CloseConn(operationID)
 					return
 				}
 				log.Warn(operationID, "other cmd ...", r.Cmd)
