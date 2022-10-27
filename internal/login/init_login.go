@@ -221,22 +221,10 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	t1 := time.Now()
 	u.token = token
 	u.loginUserID = userID
-	log.NewDebug(operationID, "platform is ", sdk_struct.SvrConf.Platform)
-	if sdk_struct.SvrConf.Platform == constant.WebPlatformID {
-		log.Debug(operationID, "index db init")
-		u.db = indexdb.NewIndexDB()
-		err := u.db.InitDB(userID, sdk_struct.SvrConf.DataDir)
-		common.CheckAnyErrCallback(cb, 201, err, operationID)
-	} else {
-		//sqliteConn, err := db.NewDataBase(userID, sdk_struct.SvrConf.DataDir, operationID)
-		//if err != nil {
-		//	cb.OnError(constant.ErrDB.ErrCode, err.Error())
-		//	log.Error(operationID, "NewDataBase failed ", err.Error())
-		//	return
-		//}
-		//u.db = sqliteConn
-	}
-	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir, "login cost time: ", time.Since(t1))
+	u.db = indexdb.NewIndexDB(u.loginUserID)
+	err := u.db.InitDB(userID, sdk_struct.SvrConf.DataDir)
+	common.CheckAnyErrCallback(cb, 201, err, operationID)
+	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir, "login init db cost time: ", time.Since(t1))
 
 	u.conversationCh = make(chan common.Cmd2Value, 200)
 	u.cmdWsCh = make(chan common.Cmd2Value, 10)
