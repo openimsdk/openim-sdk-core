@@ -113,6 +113,7 @@ func Logout(callback open_im_sdk_callback.Base, operationID string) {
 	}
 
 	userForSDK.Logout(callback, operationID)
+	userForSDK = nil
 }
 
 func GetLoginStatus() int32 {
