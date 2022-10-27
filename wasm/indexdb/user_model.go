@@ -32,7 +32,8 @@ func (l *LocalUsers) GetLoginUser(userID string) (*model_struct.LocalUser, error
 }
 
 func (l *LocalUsers) UpdateLoginUser(user *model_struct.LocalUser) error {
-	panic("implement me")
+	_, err := Exec(user)
+	return err
 
 }
 func (l *LocalUsers) UpdateLoginUserByMap(user *model_struct.LocalUser, args map[string]interface{}) error {

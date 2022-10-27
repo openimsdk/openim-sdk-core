@@ -206,7 +206,6 @@ func (u *LoginMgr) SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMo
 	} else {
 		u.workMomentsListener = listener
 	}
-
 }
 
 func (u *LoginMgr) wakeUp(cb open_im_sdk_callback.Base, operationID string) {

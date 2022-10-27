@@ -40,17 +40,32 @@ func (i *LocalGroupRequest) GetSendGroupApplication() ([]*model_struct.LocalGrou
 }
 
 func (i IndexDB) InsertAdminGroupRequest(groupRequest *model_struct.LocalAdminGroupRequest) error {
-	panic("implement me")
+	_, err := Exec(utils.StructToJsonString(groupRequest))
+	return err
 }
 
 func (i IndexDB) DeleteAdminGroupRequest(groupID, userID string) error {
-	panic("implement me")
+	_, err := Exec(groupID, userID)
+	return err
 }
 
 func (i IndexDB) UpdateAdminGroupRequest(groupRequest *model_struct.LocalAdminGroupRequest) error {
-	panic("implement me")
+	_, err := Exec(utils.StructToJsonString(groupRequest))
+	return err
 }
 
 func (i IndexDB) GetAdminGroupApplication() ([]*model_struct.LocalAdminGroupRequest, error) {
-	return nil, nil
+	result, err := Exec()
+	if err != nil {
+		return nil, err
+	}
+	if v, ok := result.(string); ok {
+		var request []*model_struct.LocalAdminGroupRequest
+		if err := utils.JsonStringToStruct(v, &request); err != nil {
+			return nil, err
+		}
+		return request, nil
+	} else {
+		return nil, ErrType
+	}
 }

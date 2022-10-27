@@ -130,19 +130,44 @@ func (i IndexDB) GetJoinedWorkingGroupList() ([]*model_struct.LocalGroup, error)
 }
 
 func (i IndexDB) GetMinSeq(ID string) (uint32, error) {
-	panic("implement me")
+	result, err := Exec(ID)
+	if err != nil {
+		return 0, err
+	}
+	if v, ok := result.(float64); ok {
+		return uint32(v), nil
+	} else {
+		return 0, ErrType
+	}
 }
 
 func (i IndexDB) SetMinSeq(ID string, minSeq uint32) error {
-	panic("implement me")
+	_, err := Exec(ID, minSeq)
+	return err
 }
 
 func (i IndexDB) GetUserMinSeq() (uint32, error) {
-	panic("implement me")
+	result, err := Exec()
+	if err != nil {
+		return 0, err
+	}
+	if v, ok := result.(float64); ok {
+		return uint32(v), nil
+	} else {
+		return 0, ErrType
+	}
 }
 
 func (i IndexDB) GetGroupMinSeq(groupID string) (uint32, error) {
-	panic("implement me")
+	result, err := Exec(groupID)
+	if err != nil {
+		return 0, err
+	}
+	if v, ok := result.(float64); ok {
+		return uint32(v), nil
+	} else {
+		return 0, ErrType
+	}
 }
 
 func (i IndexDB) BatchInsertMessageListController(MessageList []*model_struct.LocalChatLog) error {
@@ -604,5 +629,44 @@ func (i IndexDB) DeleteBlack(blockUserID string) error {
 func NewIndexDB(loginUserID string) *IndexDB {
 	return &IndexDB{
 		LocalChatLogs: NewLocalChatLogs(loginUserID),
+	}
+}
+
+func (i IndexDB) SetChatLogFailedStatus() {
+	msgList, err := i.GetSendingMessageList()
+	if err != nil {
+		log.Error("", "GetSendingMessageList failed ", err.Error())
+		return
+	}
+	for _, v := range msgList {
+		v.Status = constant.MsgStatusSendFailed
+		err := i.UpdateMessage(v)
+		if err != nil {
+			log.Error("", "UpdateMessage failed ", err.Error(), v)
+			continue
+		}
+	}
+	groupIDList, err := i.GetReadDiffusionGroupIDList()
+	if err != nil {
+		log.Error("", "GetReadDiffusionGroupIDList failed ", err.Error())
+		return
+	}
+	for _, v := range groupIDList {
+		msgList, err := i.SuperGroupGetSendingMessageList(v)
+		if err != nil {
+			log.Error("", "GetSendingMessageList failed ", err.Error())
+			return
+		}
+		if len(msgList) > 0 {
+			for _, v := range msgList {
+				v.Status = constant.MsgStatusSendFailed
+				err := i.SuperGroupUpdateMessage(v)
+				if err != nil {
+					log.Error("", "UpdateMessage failed ", err.Error(), v)
+					continue
+				}
+			}
+		}
+
 	}
 }
