@@ -100,3 +100,16 @@ type LocalFriendRequest struct {
 	Ex            string `json:"ex,omitempty"`
 	AttachedInfo  string `json:"attachedInfo,omitempty"`
 }
+
+type LocalBlack struct {
+	OwnerUserID    string `json:"ownerUserID,omitempty"`
+	BlockUserID    string `json:"blockUserID,omitempty"`
+	Nickname       string `json:"nickname,omitempty"`
+	FaceURL        string `json:"faceURL,omitempty"`
+	Gender         int32  `json:"gender,omitempty"`
+	CreateTime     uint32 `json:"createTime,omitempty"`
+	AddSource      int32  `json:"addSource,omitempty"`
+	OperatorUserID string `json:"operatorUserID,omitempty"`
+	Ex             string `json:"ex,omitempty"`
+	AttachedInfo   string `json:"attachedInfo,omitempty"`
+}
