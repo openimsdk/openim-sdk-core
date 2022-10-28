@@ -209,8 +209,8 @@ func (w *Ws) ReadData() {
 		if err != nil {
 			isErrorOccurred = true
 			if w.loginStatus == constant.Logout {
-				log.Warn(operationID, "loginState == logout ", w.WsConn.conn)
-				log.Warn(operationID, "close ws read channel ", w.cmdCh)
+				log.Warn(operationID, "loginState == logout ", w.WsConn.conn, err.Error())
+				log.Warn(operationID, "close ws read channel ", w.cmdCh, err.Error())
 				//	close(w.cmdCh)
 				return
 			}
