@@ -134,7 +134,7 @@ func (i *LocalChatLogs) DeleteAllMessage() error {
 	return err
 }
 func (i *LocalChatLogs) UpdateMessageStatusBySourceID(sourceID string, status, sessionType int32) error {
-	_, err := Exec(sourceID, status, sessionType)
+	_, err := Exec(sourceID, status, sessionType, i.loginUserID)
 	return err
 }
 func (i *LocalChatLogs) UpdateMessageTimeAndStatus(clientMsgID string, serverMsgID string, sendTime int64, status int32) error {

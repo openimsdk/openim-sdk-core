@@ -24,7 +24,9 @@ type IndexDB struct {
 	LocalGroupMember
 	LocalGroupRequest
 	LocalCacheMessage
-	Black
+	*FriendRequest
+	*Black
+	loginUserID string
 }
 
 type CallbackData struct {
@@ -487,6 +489,9 @@ func (i IndexDB) InitDB(userID string, dataDir string) error {
 func NewIndexDB(loginUserID string) *IndexDB {
 	return &IndexDB{
 		LocalChatLogs: NewLocalChatLogs(loginUserID),
+		FriendRequest: NewFriendRequest(loginUserID),
+		Black:         NewBlack(loginUserID),
+		loginUserID:   loginUserID,
 	}
 }
 
