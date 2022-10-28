@@ -11,6 +11,7 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"runtime"
 	"time"
 )
 
@@ -181,7 +182,7 @@ func (w *Ws) ReadData() {
 					//		close(w.cmdCh)
 					w.SetLoginStatus(constant.Logout)
 					w.CloseConn(operationID)
-					return
+					runtime.Goexit()
 				}
 				log.Warn(operationID, "other cmd ...", r.Cmd)
 			case <-time.After(time.Millisecond * time.Duration(100)):
