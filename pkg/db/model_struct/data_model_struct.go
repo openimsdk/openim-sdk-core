@@ -1,5 +1,7 @@
 package model_struct
 
+import "time"
+
 //
 //message FriendInfo{
 //string OwnerUserID = 1;
@@ -219,18 +221,19 @@ type LocalGroupRequest struct {
 //int32 AppMangerLevel = 10;
 //open_im_sdk.User == imdb.User
 type LocalUser struct {
-	UserID           string `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
-	Nickname         string `gorm:"column:name;type:varchar(255)" json:"nickname"`
-	FaceURL          string `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
-	Gender           int32  `gorm:"column:gender" json:"gender"`
-	PhoneNumber      string `gorm:"column:phone_number;type:varchar(32)" json:"phoneNumber"`
-	Birth            uint32 `gorm:"column:birth" json:"birth"`
-	Email            string `gorm:"column:email;type:varchar(64)" json:"email"`
-	CreateTime       uint32 `gorm:"column:create_time" json:"createTime"`
-	AppMangerLevel   int32  `gorm:"column:app_manger_level" json:"-"`
-	Ex               string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
-	AttachedInfo     string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
-	GlobalRecvMsgOpt int32  `gorm:"column:global_recv_msg_opt" json:"globalRecvMsgOpt"`
+	UserID           string    `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
+	Nickname         string    `gorm:"column:name;type:varchar(255)" json:"nickname"`
+	FaceURL          string    `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
+	Gender           int32     `gorm:"column:gender" json:"gender"`
+	PhoneNumber      string    `gorm:"column:phone_number;type:varchar(32)" json:"phoneNumber"`
+	Birth            uint32    `gorm:"column:birth" json:"birth"`
+	Email            string    `gorm:"column:email;type:varchar(64)" json:"email"`
+	CreateTime       uint32    `gorm:"column:create_time" json:"createTime"`
+	AppMangerLevel   int32     `gorm:"column:app_manger_level" json:"-"`
+	Ex               string    `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	AttachedInfo     string    `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+	GlobalRecvMsgOpt int32     `gorm:"column:global_recv_msg_opt" json:"globalRecvMsgOpt"`
+	BirthTime        time.Time `gorm:"column:birth_time"`
 }
 
 //message BlackInfo{

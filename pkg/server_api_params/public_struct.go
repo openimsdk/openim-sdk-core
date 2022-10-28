@@ -14,6 +14,7 @@ type ApiUserInfo struct {
 	Email            string `json:"email" binding:"omitempty,max=64"`
 	GlobalRecvMsgOpt int32  `json:"globalRecvMsgOpt" binding:"omitempty,oneof=0 1 2"`
 	Ex               string `json:"ex" binding:"omitempty,max=1024"`
+	BirthStr         string `json:"birthStr" binding:"omitempty"`
 }
 
 type GroupAddMemberInfo struct {
