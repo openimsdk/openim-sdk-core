@@ -106,3 +106,13 @@ func (i *LocalGroups) GetAllGroupInfoByGroupIDOrGroupName(keyword string, isSear
 		}
 	}
 }
+
+func (i *LocalGroups) AddMemberCount(groupID string) error {
+	_, err := Exec(groupID)
+	return err
+}
+
+func (i *LocalGroups) SubtractMemberCount(groupID string) error {
+	_, err := Exec(groupID)
+	return err
+}

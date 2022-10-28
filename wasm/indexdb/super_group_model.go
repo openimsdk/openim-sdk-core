@@ -88,3 +88,41 @@ func (i *LocalSuperGroup) GetSuperGroupInfoByGroupID(groupID string) (*model_str
 		}
 	}
 }
+
+func (i *LocalSuperGroup) GetJoinedWorkingGroupIDList() ([]string, error) {
+	IDList, err := Exec()
+	if err != nil {
+		return nil, err
+	}
+	if v, ok := IDList.(string); ok {
+		var temp []string
+		err := utils.JsonStringToStruct(v, &temp)
+		if err != nil {
+			return nil, err
+		}
+		return temp, nil
+	}
+	return nil, ErrType
+}
+
+func (i *LocalSuperGroup) GetJoinedWorkingGroupList() (result []*model_struct.LocalGroup, err error) {
+	groupList, err := Exec()
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := groupList.(string); ok {
+			var temp []model_struct.LocalGroup
+			err := utils.JsonStringToStruct(v, &temp)
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range temp {
+				v1 := v
+				result = append(result, &v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}
