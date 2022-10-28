@@ -204,96 +204,260 @@ func (i *LocalChatLogs) SearchMessageByKeyword(contentType []int, keywordList []
 }
 
 func (i *LocalChatLogs) GetSuperGroupAbnormalMsgSeq(groupID string) (uint32, error) {
-	return 0, nil
+	isExist, err := Exec(groupID)
+	if err != nil {
+		return 0, err
+	} else {
+		if v, ok := isExist.(uint32); ok {
+			return v, nil
+		} else {
+			return 0, ErrType
+		}
+	}
 }
 
 func (i *LocalChatLogs) InitSuperLocalErrChatLog(groupID string) {
-	panic("implement me")
+	_, _ = Exec(groupID)
 }
 func (i *LocalChatLogs) SuperBatchInsertExceptionMsg(MessageList []*model_struct.LocalErrChatLog, groupID string) error {
-	return nil
+	_, err := Exec(utils.StructToJsonString(MessageList), groupID)
+	return err
 }
 
 func (i IndexDB) InitSuperLocalChatLog(groupID string) {
-	panic("implement me")
+	_, _ = Exec(groupID)
 }
 
 func (i IndexDB) SuperGroupDeleteAllMessage(groupID string) error {
-	panic("implement me")
+	_, err := Exec(groupID)
+	return err
 }
 
 func (i IndexDB) SuperGroupSearchMessageByContentTypeAndKeyword(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64, groupID string) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
+	gList, err := Exec(utils.StructToJsonString(contentType), utils.StructToJsonString(keywordList), keywordListMatchType, startTime, endTime, groupID)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := gList.(string); ok {
+			var temp []model_struct.LocalChatLog
+			err := utils.JsonStringToStruct(v, &temp)
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range temp {
+				v1 := v
+				result = append(result, &v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
 }
 
 func (i IndexDB) SuperGroupBatchUpdateMessageList(MessageList []*model_struct.LocalChatLog) error {
-	panic("implement me")
+	_, err := Exec(utils.StructToJsonString(MessageList))
+	return err
 }
 
 func (i IndexDB) SuperGroupMessageIfExists(ClientMsgID string) (bool, error) {
-	panic("implement me")
+	isExist, err := Exec(ClientMsgID)
+	if err != nil {
+		return false, err
+	} else {
+		if v, ok := isExist.(bool); ok {
+			return v, nil
+		} else {
+			return false, ErrType
+		}
+	}
 }
 
 func (i IndexDB) SuperGroupIsExistsInErrChatLogBySeq(seq int64) bool {
-	panic("implement me")
+	isExist, err := Exec(seq)
+	if err != nil {
+		return false
+	} else {
+		if v, ok := isExist.(bool); ok {
+			return v
+		} else {
+			return false
+		}
+	}
 }
 
 func (i IndexDB) SuperGroupMessageIfExistsBySeq(seq int64) (bool, error) {
-	panic("implement me")
+	isExist, err := Exec(seq)
+	if err != nil {
+		return false, err
+	} else {
+		if v, ok := isExist.(bool); ok {
+			return v, nil
+		} else {
+			return false, ErrType
+		}
+	}
 }
 
 func (i IndexDB) SuperGroupGetAllUnDeleteMessageSeqList() ([]uint32, error) {
-	panic("implement me")
+	gList, err := Exec()
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := gList.(string); ok {
+			var result []uint32
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
 }
 
 func (i IndexDB) SuperGroupUpdateColumnsMessage(ClientMsgID, groupID string, args map[string]interface{}) error {
-	panic("implement me")
+	_, err := Exec(ClientMsgID, groupID, utils.StructToJsonString(utils.StructToJsonString(args)))
+	return err
 }
 
 func (i IndexDB) SuperGroupUpdateMessageStatusBySourceID(sourceID string, status, sessionType int32) error {
-	panic("implement me")
+	_, err := Exec(sourceID, status, sessionType)
+	return err
 }
 
 func (i IndexDB) SuperGroupGetSendingMessageList(groupID string) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
+	gList, err := Exec(groupID)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := gList.(string); ok {
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
 }
 
 func (i IndexDB) SuperGroupUpdateGroupMessageHasRead(msgIDList []string, groupID string) error {
-	panic("implement me")
+	_, err := Exec(utils.StructToJsonString(msgIDList), groupID)
+	return err
 }
 
 func (i IndexDB) SuperGroupGetNormalMsgSeq() (uint32, error) {
-	return 0, nil
+	isExist, err := Exec()
+	if err != nil {
+		return 0, err
+	} else {
+		if v, ok := isExist.(uint32); ok {
+			return v, nil
+		} else {
+			return 0, ErrType
+		}
+	}
 }
 
 func (i IndexDB) SuperGroupGetTestMessage(seq uint32) (*model_struct.LocalChatLog, error) {
-	panic("implement me")
+	c, err := Exec(seq)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := c.(string); ok {
+			result := model_struct.LocalChatLog{}
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
+			}
+			return &result, err
+		} else {
+			return nil, ErrType
+		}
+	}
 }
 
 func (i IndexDB) SuperGroupUpdateMsgSenderNickname(sendID, nickname string, sType int) error {
-	panic("implement me")
+	_, err := Exec(sendID, nickname, sType)
+	return err
 }
 
 func (i IndexDB) SuperGroupUpdateMsgSenderFaceURL(sendID, faceURL string, sType int) error {
-	panic("implement me")
+	_, err := Exec(sendID, faceURL, sType)
+	return err
 }
 
 func (i IndexDB) SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int) error {
-	panic("implement me")
+	_, err := Exec(sendID, faceURL, nickname, sessionType)
+	return err
 }
 
 func (i IndexDB) SuperGroupGetMsgSeqByClientMsgID(clientMsgID string, groupID string) (uint32, error) {
-	panic("implement me")
+	isExist, err := Exec(clientMsgID, groupID)
+	if err != nil {
+		return 0, err
+	} else {
+		if v, ok := isExist.(uint32); ok {
+			return v, nil
+		} else {
+			return 0, ErrType
+		}
+	}
 }
 
 func (i IndexDB) SuperGroupGetMsgSeqListByGroupID(groupID string) ([]uint32, error) {
-	panic("implement me")
+	gList, err := Exec(groupID)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := gList.(string); ok {
+			var result []uint32
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
 }
 
 func (i IndexDB) SuperGroupGetMsgSeqListByPeerUserID(userID string) ([]uint32, error) {
-	panic("implement me")
+	gList, err := Exec(userID)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := gList.(string); ok {
+			var result []uint32
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
 }
 
 func (i IndexDB) SuperGroupGetMsgSeqListBySelfUserID(userID string) ([]uint32, error) {
-	panic("implement me")
+	gList, err := Exec(userID)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := gList.(string); ok {
+			var result []uint32
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
 }
