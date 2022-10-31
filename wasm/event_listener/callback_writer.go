@@ -75,17 +75,21 @@ type PromiseHandler struct {
 	OperationID string      `json:"operationID"`
 	resolve     *js.Value
 	reject      *js.Value
+	PromiseFunc *js.Value
 }
 
 func NewPromiseHandler() *PromiseHandler {
-	return &PromiseHandler{}
-}
-func (p *PromiseHandler) HandlerFunc() interface{} {
+	p := PromiseHandler{}
 	handler := js.FuncOf(func(_ js.Value, promFn []js.Value) interface{} {
 		p.resolve, p.reject = &promFn[0], &promFn[1]
 		return nil
 	})
-	return jsPromise.New(handler)
+	v := jsPromise.New(handler)
+	p.PromiseFunc = &v
+	return &p
+}
+func (p *PromiseHandler) HandlerFunc() interface{} {
+	return p.PromiseFunc
 }
 
 func (p *PromiseHandler) GetOperationID() string {

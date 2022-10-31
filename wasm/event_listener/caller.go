@@ -51,6 +51,7 @@ func (r *ReflectCall) AsyncCallWithCallback() interface{} {
 		r.callback.SetOperationID(r.arguments[0].String())
 		values = append(values, reflect.ValueOf(r.callback))
 	} else {
+		log.Error("AsyncCallWithCallback", "not set callback")
 		panic(ErrNotSetCallback)
 	}
 	for i := 0; i < len(r.arguments); i++ {
@@ -66,12 +67,14 @@ func (r *ReflectCall) AsyncCallWithCallback() interface{} {
 			if !strings.HasPrefix(convertValue, "<number: ") {
 				values = append(values, reflect.ValueOf(convertValue))
 			} else {
+				log.Error("AsyncCallWithCallback", "input args type err index:", utils.IntToString(i))
 				panic("input args type err index:" + utils.IntToString(i))
 			}
 		case reflect.Int, reflect.Int32:
 			log.NewDebug("", "type is ", r.arguments[i].Int())
 			values = append(values, reflect.ValueOf(r.arguments[i].Int()))
 		default:
+			log.Error("AsyncCallWithCallback", "input args type not support:", strconv.Itoa(int(typeFuncName.In(temp).Kind())))
 			panic("input args type not support:" + strconv.Itoa(int(typeFuncName.In(temp).Kind())))
 		}
 	}
