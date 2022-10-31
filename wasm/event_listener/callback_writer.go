@@ -89,7 +89,7 @@ func NewPromiseHandler() *PromiseHandler {
 	return &p
 }
 func (p *PromiseHandler) HandlerFunc() interface{} {
-	return p.PromiseFunc
+	return *p.PromiseFunc
 }
 
 func (p *PromiseHandler) GetOperationID() string {

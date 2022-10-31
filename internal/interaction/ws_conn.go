@@ -167,7 +167,6 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool) {
 	defer cancel()
 
 	conn, httpResp, err := websocket.Dial(ctx, url, nil)
-	log.Info(operationID, "ws connect end, dail : ", url)
 	if err != nil {
 		log.Error(operationID, "ws connect failed ", url, err.Error())
 		u.loginStatus = constant.LoginFailed
@@ -206,6 +205,7 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool) {
 			return nil, utils.Wrap(err, errMsg), true
 		}
 	}
+	log.Info(operationID, "ws connect end, dail : ", url, conn)
 	u.listener.OnConnectSuccess()
 	u.loginStatus = constant.LoginSuccess
 	u.conn = conn
