@@ -36,20 +36,15 @@ func (i Black) GetBlackList() (result []*model_struct.LocalBlack, err error) {
 	}
 }
 
-func (i Black) GetBlackListUserID() (result []*model_struct.LocalBlack, err error) {
+func (i Black) GetBlackListUserID() (result []string, err error) {
 	gList, err := Exec()
 	if err != nil {
 		return nil, err
 	} else {
 		if v, ok := gList.(string); ok {
-			var temp []model_struct.LocalBlack
-			err := utils.JsonStringToStruct(v, &temp)
+			err := utils.JsonStringToStruct(v, &result)
 			if err != nil {
 				return nil, err
-			}
-			for _, v := range temp {
-				v1 := v
-				result = append(result, &v1)
 			}
 			return result, err
 		} else {
@@ -58,22 +53,18 @@ func (i Black) GetBlackListUserID() (result []*model_struct.LocalBlack, err erro
 	}
 }
 
-func (i Black) GetBlackInfoByBlockUserID(blockUserID string) (result []*model_struct.LocalBlack, err error) {
+func (i Black) GetBlackInfoByBlockUserID(blockUserID string) (result *model_struct.LocalBlack, err error) {
 	gList, err := Exec(blockUserID, i.loginUserID)
 	if err != nil {
 		return nil, err
 	} else {
 		if v, ok := gList.(string); ok {
-			var temp []model_struct.LocalBlack
+			var temp model_struct.LocalBlack
 			err := utils.JsonStringToStruct(v, &temp)
 			if err != nil {
 				return nil, err
 			}
-			for _, v := range temp {
-				v1 := v
-				result = append(result, &v1)
-			}
-			return result, err
+			return &temp, err
 		} else {
 			return nil, ErrType
 		}
