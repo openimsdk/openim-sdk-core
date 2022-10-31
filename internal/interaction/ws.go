@@ -184,6 +184,7 @@ func (w *Ws) ReadData() {
 					w.SetLoginStatus(constant.Logout)
 					w.CloseConn(operationID)
 					runtime.Goexit()
+					log.Warn(operationID, "go", w.cmdCh)
 				}
 				log.Warn(operationID, "other cmd ...", r.Cmd)
 			case <-time.After(time.Millisecond * time.Duration(100)):
@@ -238,7 +239,7 @@ func (w *Ws) ReadData() {
 		if msgType == websocket.MessageText {
 			log.Warn(operationID, "type websocket.TextMessage")
 		} else if msgType == websocket.MessageBinary {
-			go w.doWsMsg(message)
+			w.doWsMsg(message)
 		} else {
 			log.Warn(operationID, "recv other type ", msgType)
 		}
@@ -283,6 +284,7 @@ func (w *Ws) doWsMsg(message []byte) {
 
 	case constant.WsLogoutMsg:
 		log.Warn(wsResp.OperationID, "logout... ")
+		runtime.Goexit()
 	case constant.WSSendSignalMsg:
 		log.Info(wsResp.OperationID, "signaling...")
 		w.DoWSSignal(*wsResp)
