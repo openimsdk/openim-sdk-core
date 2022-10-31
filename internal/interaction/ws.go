@@ -284,6 +284,9 @@ func (w *Ws) doWsMsg(message []byte) {
 
 	case constant.WsLogoutMsg:
 		log.Warn(wsResp.OperationID, "WsLogoutMsg... Ws goroutine exit")
+		if err = w.doWSLogoutMsg(*wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSLogoutMsg failed ", err.Error())
+		}
 		runtime.Goexit()
 	case constant.WSSendSignalMsg:
 		log.Info(wsResp.OperationID, "signaling...")
@@ -336,7 +339,12 @@ func (w *Ws) DoWSSignal(wsResp GeneralWsResp) error {
 	}
 	return nil
 }
-
+func (w *Ws) doWSLogoutMsg(wsResp GeneralWsResp) error {
+	if err := w.notifyResp(wsResp); err != nil {
+		return utils.Wrap(err, "")
+	}
+	return nil
+}
 func (w *Ws) doWSPushMsg(wsResp GeneralWsResp) error {
 	if wsResp.ErrCode != 0 {
 		return utils.Wrap(errors.New("errCode"), wsResp.ErrMsg)
