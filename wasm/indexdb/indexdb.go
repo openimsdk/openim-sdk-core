@@ -26,6 +26,7 @@ type IndexDB struct {
 	LocalCacheMessage
 	*FriendRequest
 	*Black
+	Friend
 	loginUserID string
 }
 
@@ -38,66 +39,6 @@ func (i IndexDB) SearchMessageByContentTypeController(contentType []int, sourceI
 }
 
 func (i IndexDB) SearchMessageByContentTypeAndKeywordController(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64, operationID string) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) InsertFriend(friend *model_struct.LocalFriend) error {
-	panic("implement me")
-}
-
-func (i IndexDB) DeleteFriend(friendUserID string) error {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateFriend(friend *model_struct.LocalFriend) error {
-	panic("implement me")
-}
-
-func (i IndexDB) GetAllFriendList() ([]*model_struct.LocalFriend, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) SearchFriendList(keyword string, isSearchUserID, isSearchNickname, isSearchRemark bool) ([]*model_struct.LocalFriend, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetFriendInfoByFriendUserID(FriendUserID string) (*model_struct.LocalFriend, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetFriendInfoList(friendUserIDList []string) ([]*model_struct.LocalFriend, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) InsertFriendRequest(friendRequest *model_struct.LocalFriendRequest) error {
-	panic("implement me")
-}
-
-func (i IndexDB) DeleteFriendRequestBothUserID(fromUserID, toUserID string) error {
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateFriendRequest(friendRequest *model_struct.LocalFriendRequest) error {
-	panic("implement me")
-}
-
-func (i IndexDB) GetRecvFriendApplication() ([]*model_struct.LocalFriendRequest, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetSendFriendApplication() ([]*model_struct.LocalFriendRequest, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetFriendApplicationByBothID(fromUserID, toUserID string) (*model_struct.LocalFriendRequest, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetBlackListUserID() (blackListUid []string, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetBlackInfoByBlockUserID(blockUserID string) (*model_struct.LocalBlack, error) {
 	panic("implement me")
 }
 
