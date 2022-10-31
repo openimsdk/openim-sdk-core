@@ -283,7 +283,7 @@ func (w *Ws) doWsMsg(message []byte) {
 		w.Logout(wsResp.OperationID)
 
 	case constant.WsLogoutMsg:
-		log.Warn(wsResp.OperationID, "logout... ")
+		log.Warn(wsResp.OperationID, "WsLogoutMsg... Ws goroutine exit")
 		runtime.Goexit()
 	case constant.WSSendSignalMsg:
 		log.Info(wsResp.OperationID, "signaling...")
