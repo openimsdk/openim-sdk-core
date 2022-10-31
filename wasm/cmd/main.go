@@ -1,12 +1,19 @@
 package main
 
 import (
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/wasm/wasm_wrapper"
+	"runtime/debug"
 
 	"syscall/js"
 )
 
 func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("MAIN", "panic info is:", r, string(debug.Stack()))
+		}
+	}()
 	registerFunc()
 	<-make(chan bool)
 }
