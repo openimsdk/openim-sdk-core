@@ -3,13 +3,14 @@ package indexdb
 import "open_im_sdk/pkg/db/model_struct"
 
 type LocalFriend struct {
+	loginUserID string
 }
 
 func (i *LocalFriend) InsertFriend(friend *model_struct.LocalFriend) error {
 	panic("implement me")
 }
 
-func (i *LocalFriend) DeleteFriend(friendUserID string) error {
+func (i *LocalFriend) DeleteFriend(friendUserID string, ownerUserID string) error {
 	panic("implement me")
 }
 

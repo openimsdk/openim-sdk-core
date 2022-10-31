@@ -24,7 +24,9 @@ type IndexDB struct {
 	LocalGroupMember
 	LocalGroupRequest
 	LocalCacheMessage
-	Black
+	*FriendRequest
+	*Black
+	loginUserID string
 }
 
 func (i IndexDB) SearchMessageByKeywordController(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
@@ -559,6 +561,9 @@ func (i IndexDB) InitDB(userID string, dataDir string) error {
 func NewIndexDB(loginUserID string) *IndexDB {
 	return &IndexDB{
 		LocalChatLogs: NewLocalChatLogs(loginUserID),
+		FriendRequest: NewFriendRequest(loginUserID),
+		Black:         NewBlack(loginUserID),
+		loginUserID:   loginUserID,
 	}
 }
 
