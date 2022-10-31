@@ -6,7 +6,13 @@ import (
 	"open_im_sdk/wasm/indexdb/temp_struct"
 )
 
-type Black struct{}
+type Black struct {
+	loginUserID string
+}
+
+func NewBlack(loginUserID string) *Black {
+	return &Black{loginUserID: loginUserID}
+}
 
 func (i Black) GetBlackList() (result []*model_struct.LocalBlack, err error) {
 	gList, err := Exec()
@@ -53,7 +59,7 @@ func (i Black) GetBlackListUserID() (result []*model_struct.LocalBlack, err erro
 }
 
 func (i Black) GetBlackInfoByBlockUserID(blockUserID string) (result []*model_struct.LocalBlack, err error) {
-	gList, err := Exec(blockUserID)
+	gList, err := Exec(blockUserID, i.loginUserID)
 	if err != nil {
 		return nil, err
 	} else {
@@ -117,6 +123,6 @@ func (i Black) UpdateBlack(black *model_struct.LocalBlack) error {
 }
 
 func (i Black) DeleteBlack(blockUserID string) error {
-	_, err := Exec(blockUserID)
+	_, err := Exec(blockUserID, i.loginUserID)
 	return err
 }
