@@ -196,3 +196,42 @@ func (f *FriendCallback) OnBlackAdded(blackInfo string) {
 func (f *FriendCallback) OnBlackDeleted(blackInfo string) {
 	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(blackInfo).SendMessage()
 }
+
+type GroupCallback struct {
+	CallbackWriter
+}
+
+func NewGroupCallback(callback *js.Value) *GroupCallback {
+	return &GroupCallback{CallbackWriter: NewEventData(callback)}
+}
+
+func (f *GroupCallback) OnJoinedGroupAdded(groupInfo string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(groupInfo).SendMessage()
+}
+func (f *GroupCallback) OnJoinedGroupDeleted(groupInfo string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(groupInfo).SendMessage()
+}
+func (f *GroupCallback) OnGroupMemberAdded(groupMemberInfo string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(groupMemberInfo).SendMessage()
+}
+func (f *GroupCallback) OnGroupMemberDeleted(groupMemberInfo string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(groupMemberInfo).SendMessage()
+}
+func (f *GroupCallback) OnGroupApplicationAdded(groupApplication string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(groupApplication).SendMessage()
+}
+func (f *GroupCallback) OnGroupApplicationDeleted(groupApplication string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(groupApplication).SendMessage()
+}
+func (f *GroupCallback) OnGroupInfoChanged(groupInfo string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(groupInfo).SendMessage()
+}
+func (f *GroupCallback) OnGroupMemberInfoChanged(groupMemberInfo string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(groupMemberInfo).SendMessage()
+}
+func (f *GroupCallback) OnGroupApplicationAccepted(groupApplication string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(groupApplication).SendMessage()
+}
+func (f *GroupCallback) OnGroupApplicationRejected(groupApplication string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(groupApplication).SendMessage()
+}
