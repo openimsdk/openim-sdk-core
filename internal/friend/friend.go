@@ -204,7 +204,7 @@ func (f *Friend) deleteFriend(friendUserID sdk.DeleteFriendParams, callback open
 func (f *Friend) getFriendList(callback open_im_sdk_callback.Base, operationID string) sdk.GetFriendListCallback {
 	localFriendList, err := f.db.GetAllFriendList()
 	common.CheckDBErrCallback(callback, err, operationID)
-	localBlackList, err := f.db.GetBlackList()
+	localBlackList, err := f.db.GetBlackListDB()
 	common.CheckDBErrCallback(callback, err, operationID)
 	return common.MergeFriendBlackResult(localFriendList, localBlackList)
 }
@@ -214,7 +214,7 @@ func (f *Friend) searchFriends(callback open_im_sdk_callback.Base, param sdk.Sea
 	}
 	localFriendList, err := f.db.SearchFriendList(param.KeywordList[0], param.IsSearchUserID, param.IsSearchNickname, param.IsSearchRemark)
 	common.CheckDBErrCallback(callback, err, operationID)
-	localBlackList, err := f.db.GetBlackList()
+	localBlackList, err := f.db.GetBlackListDB()
 	common.CheckDBErrCallback(callback, err, operationID)
 	return mergeFriendBlackSearchResult(localFriendList, localBlackList)
 }
@@ -249,7 +249,7 @@ func mergeFriendBlackSearchResult(base []*model_struct.LocalFriend, add []*model
 	return result
 }
 func (f *Friend) getBlackList(callback open_im_sdk_callback.Base, operationID string) sdk.GetBlackListCallback {
-	localBlackList, err := f.db.GetBlackList()
+	localBlackList, err := f.db.GetBlackListDB()
 	common.CheckDBErrCallback(callback, err, operationID)
 
 	localFriendList, err := f.db.GetAllFriendList()
@@ -294,7 +294,7 @@ func (f *Friend) getServerBlackList(operationID string) ([]*api.PublicUserInfo, 
 	return realData.BlackUserInfoList, nil
 }
 
-//recv
+// recv
 func (f *Friend) getFriendApplicationFromServer(operationID string) ([]*api.FriendRequest, error) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	apiReq := api.GetFriendApplyListReq{OperationID: operationID, FromUserID: f.loginUserID}
@@ -307,7 +307,7 @@ func (f *Friend) getFriendApplicationFromServer(operationID string) ([]*api.Frie
 	return realData.FriendRequestList, nil
 }
 
-//send
+// send
 func (f *Friend) getSelfFriendApplicationFromServer(operationID string) ([]*api.FriendRequest, error) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	apiReq := api.GetSelfFriendApplyListReq{OperationID: operationID, FromUserID: f.loginUserID}
@@ -403,7 +403,7 @@ func (f *Friend) SyncSelfFriendApplication(operationID string) {
 	}
 }
 
-//recv
+// recv
 func (f *Friend) SyncFriendApplication(operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	svrList, err := f.getFriendApplicationFromServer(operationID)
@@ -530,7 +530,7 @@ func (f *Friend) SyncBlackList(operationID string) {
 		return
 	}
 	blackListOnServer := common.TransferToLocalBlack(svrList, f.loginUserID)
-	blackListOnLocal, err := f.db.GetBlackList()
+	blackListOnLocal, err := f.db.GetBlackListDB()
 	if err != nil {
 		log.NewError(operationID, "_getBlackList failed ", err.Error())
 		return

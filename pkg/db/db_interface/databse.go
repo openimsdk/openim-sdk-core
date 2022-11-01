@@ -10,7 +10,7 @@ type DataBase interface {
 	InsertGroup(groupInfo *model_struct.LocalGroup) error
 	DeleteGroup(groupID string) error
 	UpdateGroup(groupInfo *model_struct.LocalGroup) error
-	GetJoinedGroupList() ([]*model_struct.LocalGroup, error)
+	GetJoinedGroupListDB() ([]*model_struct.LocalGroup, error)
 	GetGroupInfoByGroupID(groupID string) (*model_struct.LocalGroup, error)
 	GetAllGroupInfoByGroupIDOrGroupName(keyword string, isSearchGroupID bool, isSearchGroupName bool) ([]*model_struct.LocalGroup, error)
 	AddMemberCount(groupID string) error
@@ -222,7 +222,7 @@ type DataBase interface {
 	Close() error
 	SetChatLogFailedStatus()
 	InitDB(userID string, dataDir string) error
-	GetBlackList() ([]*model_struct.LocalBlack, error)
+	GetBlackListDB() ([]*model_struct.LocalBlack, error)
 	GetBlackListUserID() (blackListUid []string, err error)
 	GetBlackInfoByBlockUserID(blockUserID string) (*model_struct.LocalBlack, error)
 	GetBlackInfoList(blockUserIDList []string) ([]*model_struct.LocalBlack, error)

@@ -2,7 +2,6 @@ package group
 
 import (
 	"errors"
-	"github.com/jinzhu/copier"
 	"math/big"
 	comm "open_im_sdk/internal/common"
 	ws "open_im_sdk/internal/interaction"
@@ -19,9 +18,11 @@ import (
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/jinzhu/copier"
 )
 
-//	//utils.GetCurrentTimestampByMill()
+// //utils.GetCurrentTimestampByMill()
 type Group struct {
 	listener           open_im_sdk_callback.OnGroupListener
 	loginUserID        string
@@ -416,7 +417,6 @@ func (g *Group) GetGroupOwnerIDAndAdminIDList(groupID, operationID string) (owne
 	return localGroup.OwnerUserID, adminIDList, nil
 }
 
-//
 func (g *Group) quitGroup(groupID string, callback open_im_sdk_callback.Base, operationID string) {
 	apiReq := api.QuitGroupReq{}
 	apiReq.OperationID = operationID
@@ -434,7 +434,6 @@ func (g *Group) dismissGroup(groupID string, callback open_im_sdk_callback.Base,
 	g.SyncJoinedGroupList(operationID)
 }
 
-//
 func (g *Group) changeGroupMute(groupID string, isMute bool, callback open_im_sdk_callback.Base, operationID string) {
 	if isMute {
 		apiReq := api.MuteGroupReq{}
@@ -469,10 +468,10 @@ func (g *Group) changeGroupMemberMute(groupID, userID string, mutedSeconds uint3
 	g.syncGroupMemberByGroupID(groupID, operationID, true)
 }
 
-//func (g *Group) updateGroup(groupID, userID string, updateField map[string]interface{}, operationID string) {
+// func (g *Group) updateGroup(groupID, userID string, updateField map[string]interface{}, operationID string) {
 //
-//	g.updateLocalMemberImmediately(member, operationID)
-//}
+//		g.updateLocalMemberImmediately(member, operationID)
+//	}
 func (g *Group) setGroupMemberRoleLevel(callback open_im_sdk_callback.Base, groupID, userID string, roleLevel int, operationID string) {
 	apiReq := api.SetGroupMemberRoleLevelReq{
 		SetGroupMemberInfoReq: api.SetGroupMemberInfoReq{
@@ -488,7 +487,7 @@ func (g *Group) setGroupMemberRoleLevel(callback open_im_sdk_callback.Base, grou
 }
 
 func (g *Group) getJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) sdk.GetJoinedGroupListCallback {
-	groupList, err := g.db.GetJoinedGroupList()
+	groupList, err := g.db.GetJoinedGroupListDB()
 	log.Info(operationID, utils.GetSelfFuncName(), " args ", groupList)
 	common.CheckDBErrCallback(callback, err, operationID)
 	superGroupList, _ := g.db.GetJoinedSuperGroupList()
@@ -522,7 +521,7 @@ func (g *Group) searchGroups(callback open_im_sdk_callback.Base, param sdk.Searc
 }
 
 func (g *Group) getGroupsInfo(groupIDList sdk.GetGroupsInfoParam, callback open_im_sdk_callback.Base, operationID string) sdk.GetGroupsInfoCallback {
-	groupList, err := g.db.GetJoinedGroupList()
+	groupList, err := g.db.GetJoinedGroupListDB()
 	common.CheckDBErrCallback(callback, err, operationID)
 	superGroupList, err := g.db.GetJoinedSuperGroupList()
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -613,7 +612,7 @@ func (g *Group) modifyGroupInfo(callback open_im_sdk_callback.Base, apiReq api.S
 	g.SyncJoinedGroupList(operationID)
 }
 
-//todo
+// todo
 func (g *Group) getGroupMemberList(callback open_im_sdk_callback.Base, groupID string, filter, offset, count int32, operationID string) sdk.GetGroupMemberListCallback {
 	groupInfoList, err := g.db.GetGroupMemberListSplit(groupID, filter, int(offset), int(count))
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -635,7 +634,7 @@ func (g *Group) getGroupMemberListByJoinTimeFilter(callback open_im_sdk_callback
 	return groupInfoList
 }
 
-//todo
+// todo
 func (g *Group) getGroupMembersInfo(callback open_im_sdk_callback.Base, groupID string, userIDList sdk.GetGroupMembersInfoParam, operationID string) sdk.GetGroupMembersInfoCallback {
 	groupInfoList, err := g.db.GetGroupSomeMemberInfo(groupID, userIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -684,8 +683,7 @@ func (g *Group) inviteUserToGroup(callback open_im_sdk_callback.Base, groupID, r
 	return realData
 }
 
-//
-////1
+// //1
 func (g *Group) getRecvGroupApplicationList(callback open_im_sdk_callback.Base, operationID string) sdk.GetGroupApplicationListCallback {
 	applicationList, err := g.db.GetAdminGroupApplication()
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -918,18 +916,18 @@ func (g *Group) SyncAdminGroupApplication(operationID string) {
 	}
 }
 
-//func transferGroupInfo(input []*api.GroupInfo) []*api.GroupInfo{
-//	var result []*api.GroupInfo
-//	for _, v := range input {
-//		t := &api.GroupInfo{}
-//		copier.Copy(t, &v)
-//		if v.NeedVerification != nil {
-//			t.NeedVerification = v.NeedVerification.Value
+//	func transferGroupInfo(input []*api.GroupInfo) []*api.GroupInfo{
+//		var result []*api.GroupInfo
+//		for _, v := range input {
+//			t := &api.GroupInfo{}
+//			copier.Copy(t, &v)
+//			if v.NeedVerification != nil {
+//				t.NeedVerification = v.NeedVerification.Value
+//			}
+//			result = append(result, t)
 //		}
-//		result = append(result, t)
+//		return result
 //	}
-//	return result
-//}
 func (g *Group) SyncJoinedGroupList(operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	svrList, err := g.getJoinedGroupListFromSvr(operationID)
@@ -939,7 +937,7 @@ func (g *Group) SyncJoinedGroupList(operationID string) {
 		return
 	}
 	onServer := common.TransferToLocalGroupInfo(svrList)
-	onLocal, err := g.db.GetJoinedGroupList()
+	onLocal, err := g.db.GetJoinedGroupListDB()
 	if err != nil {
 		log.NewError(operationID, "GetJoinedGroupList failed ", err.Error())
 		return
