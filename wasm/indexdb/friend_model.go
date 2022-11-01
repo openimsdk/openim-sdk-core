@@ -6,7 +6,13 @@ import (
 	"open_im_sdk/wasm/indexdb/temp_struct"
 )
 
-type Friend struct{}
+type Friend struct {
+	loginUserID string
+}
+
+func NewFriend(loginUserID string) *Friend {
+	return &Friend{loginUserID: loginUserID}
+}
 
 func (i Friend) InsertFriend(friend *model_struct.LocalFriend) error {
 	_, err := Exec(utils.StructToJsonString(friend))
@@ -40,7 +46,7 @@ func (i Friend) UpdateFriend(friend *model_struct.LocalFriend) error {
 }
 
 func (i Friend) GetAllFriendList() (result []*model_struct.LocalFriend, err error) {
-	gList, err := Exec()
+	gList, err := Exec(i.loginUserID)
 	if err != nil {
 		return nil, err
 	} else {

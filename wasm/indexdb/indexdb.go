@@ -26,7 +26,7 @@ type IndexDB struct {
 	LocalCacheMessage
 	*FriendRequest
 	*Black
-	Friend
+	*Friend
 	loginUserID string
 }
 
@@ -528,6 +528,7 @@ func NewIndexDB(loginUserID string) *IndexDB {
 		LocalChatLogs: NewLocalChatLogs(loginUserID),
 		FriendRequest: NewFriendRequest(loginUserID),
 		Black:         NewBlack(loginUserID),
+		Friend:        NewFriend(loginUserID),
 		loginUserID:   loginUserID,
 	}
 }
