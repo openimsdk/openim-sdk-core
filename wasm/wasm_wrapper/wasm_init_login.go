@@ -38,10 +38,16 @@ func (s *SetListener) setBatchMessageListener() {
 	open_im_sdk.SetBatchMsgListener(callback)
 }
 
+func (s *SetListener) setFriendListener() {
+	callback := event_listener.NewFriendCallback(s.commonFunc)
+	open_im_sdk.SetFriendListener(callback)
+}
+
 func (s *SetListener) SetAllListener() {
 	s.setConversationListener()
 	s.setAdvancedMsgListener()
 	s.setBatchMessageListener()
+	s.setFriendListener()
 }
 
 type WrapperCommon struct {

@@ -154,3 +154,45 @@ func NewBatchMessageCallback(callback *js.Value) *BatchMessageCallback {
 func (b *BatchMessageCallback) OnRecvNewMessages(messageList string) {
 	b.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(messageList).SendMessage()
 }
+
+type FriendCallback struct {
+	CallbackWriter
+}
+
+func NewFriendCallback(callback *js.Value) *FriendCallback {
+	return &FriendCallback{CallbackWriter: NewEventData(callback)}
+}
+
+func (f *FriendCallback) OnFriendApplicationAdded(friendApplication string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(friendApplication).SendMessage()
+}
+
+func (f *FriendCallback) OnFriendApplicationDeleted(friendApplication string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(friendApplication).SendMessage()
+}
+
+func (f *FriendCallback) OnFriendApplicationAccepted(groupApplication string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(groupApplication).SendMessage()
+
+}
+func (f *FriendCallback) OnFriendApplicationRejected(friendApplication string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(friendApplication).SendMessage()
+}
+
+func (f *FriendCallback) OnFriendAdded(friendInfo string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(friendInfo).SendMessage()
+}
+
+func (f *FriendCallback) OnFriendDeleted(friendInfo string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(friendInfo).SendMessage()
+}
+func (f *FriendCallback) OnFriendInfoChanged(friendInfo string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(friendInfo).SendMessage()
+}
+func (f *FriendCallback) OnBlackAdded(blackInfo string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(blackInfo).SendMessage()
+}
+
+func (f *FriendCallback) OnBlackDeleted(blackInfo string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(blackInfo).SendMessage()
+}
