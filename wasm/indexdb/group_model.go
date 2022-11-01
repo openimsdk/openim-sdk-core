@@ -45,7 +45,7 @@ func (i *LocalGroups) UpdateGroup(groupInfo *model_struct.LocalGroup) error {
 	return err
 }
 
-func (i *LocalGroups) GetJoinedGroupList() (result []*model_struct.LocalGroup, err error) {
+func (i *LocalGroups) GetJoinedGroupListDB() (result []*model_struct.LocalGroup, err error) {
 	gList, err := Exec()
 	if err != nil {
 		return nil, err

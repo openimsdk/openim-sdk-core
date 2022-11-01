@@ -14,7 +14,7 @@ func NewBlack(loginUserID string) *Black {
 	return &Black{loginUserID: loginUserID}
 }
 
-func (i Black) GetBlackList() (result []*model_struct.LocalBlack, err error) {
+func (i Black) GetBlackListDB() (result []*model_struct.LocalBlack, err error) {
 	gList, err := Exec()
 	if err != nil {
 		return nil, err
