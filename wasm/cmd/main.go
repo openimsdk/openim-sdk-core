@@ -9,6 +9,7 @@ import (
 )
 
 func main() {
+
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error("MAIN", "panic info is:", r, string(debug.Stack()))

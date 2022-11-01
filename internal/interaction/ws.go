@@ -28,6 +28,7 @@ type Ws struct {
 
 func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, cmdCh chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value, cmdHeartbeatCh chan common.Cmd2Value) *Ws {
 	p := Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn, cmdCh: cmdCh, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh, cmdHeartbeatCh: cmdHeartbeatCh}
+	log.NewDebug("init:", "ws goroutine starting!!!!!")
 	go p.ReadData()
 	return &p
 }
@@ -183,6 +184,7 @@ func (w *Ws) ReadData() {
 					w.SetLoginStatus(constant.Logout)
 					w.CloseConn(operationID)
 					runtime.Goexit()
+					log.Warn(operationID, "go", w.cmdCh)
 				}
 				log.Warn(operationID, "other cmd ...", r.Cmd)
 			case <-time.After(time.Millisecond * time.Duration(100)):
@@ -203,12 +205,13 @@ func (w *Ws) ReadData() {
 
 		//	timeout := 5
 		//	u.WsConn.SetReadTimeout(timeout)
+		log.Warn(operationID, "first", w.WsConn.conn)
 		msgType, message, err := w.WsConn.conn.Read(context.Background())
 		if err != nil {
 			isErrorOccurred = true
 			if w.loginStatus == constant.Logout {
-				log.Warn(operationID, "loginState == logout ")
-				log.Warn(operationID, "close ws read channel ", w.cmdCh)
+				log.Warn(operationID, "loginState == logout ", w.WsConn.conn, err.Error())
+				log.Warn(operationID, "close ws read channel ", w.cmdCh, err.Error())
 				//	close(w.cmdCh)
 				return
 			}
@@ -236,7 +239,7 @@ func (w *Ws) ReadData() {
 		if msgType == websocket.MessageText {
 			log.Warn(operationID, "type websocket.TextMessage")
 		} else if msgType == websocket.MessageBinary {
-			go w.doWsMsg(message)
+			w.doWsMsg(message)
 		} else {
 			log.Warn(operationID, "recv other type ", msgType)
 		}
@@ -280,7 +283,11 @@ func (w *Ws) doWsMsg(message []byte) {
 		w.Logout(wsResp.OperationID)
 
 	case constant.WsLogoutMsg:
-		log.Warn(wsResp.OperationID, "logout... ")
+		log.Warn(wsResp.OperationID, "WsLogoutMsg... Ws goroutine exit")
+		if err = w.doWSLogoutMsg(*wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSLogoutMsg failed ", err.Error())
+		}
+		runtime.Goexit()
 	case constant.WSSendSignalMsg:
 		log.Info(wsResp.OperationID, "signaling...")
 		w.DoWSSignal(*wsResp)
@@ -332,7 +339,12 @@ func (w *Ws) DoWSSignal(wsResp GeneralWsResp) error {
 	}
 	return nil
 }
-
+func (w *Ws) doWSLogoutMsg(wsResp GeneralWsResp) error {
+	if err := w.notifyResp(wsResp); err != nil {
+		return utils.Wrap(err, "")
+	}
+	return nil
+}
 func (w *Ws) doWSPushMsg(wsResp GeneralWsResp) error {
 	if wsResp.ErrCode != 0 {
 		return utils.Wrap(errors.New("errCode"), wsResp.ErrMsg)

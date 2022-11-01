@@ -74,12 +74,36 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 	funcName := utils.CleanUpfuncName(runtime.FuncForPC(pc).Name())
 	data := CallbackData{}
 	thenFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		defer func() {
+			if r := recover(); r != nil {
+				switch x := r.(type) {
+				case string:
+					err = utils.Wrap(errors.New(x), "")
+				case error:
+					err = x
+				default:
+					err = utils.Wrap(errors.New("unknown panic"), "")
+				}
+			}
+		}()
 		log.Debug("js then func", "=> (main go context) "+funcName+" with respone ", args[0].String())
 		thenChannel <- args
 		return nil
 	})
 	defer thenFunc.Release()
 	catchFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		defer func() {
+			if r := recover(); r != nil {
+				switch x := r.(type) {
+				case string:
+					err = utils.Wrap(errors.New(x), "")
+				case error:
+					err = x
+				default:
+					err = utils.Wrap(errors.New("unknown panic"), "")
+				}
+			}
+		}()
 		log.Debug("js catch func", "=> (main go context) "+funcName+" with respone ", args[0].String())
 		catchChannel <- args
 		return nil
