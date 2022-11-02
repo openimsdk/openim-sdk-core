@@ -116,7 +116,7 @@ type DataBase interface {
 	DecrConversationUnreadCount(conversationID string, count int64) (err error)
 	GetTotalUnreadMsgCountDB() (totalUnreadCount int32, err error)
 	SetMultipleConversationRecvMsgOpt(conversationIDList []string, opt int) (err error)
-	GetMultipleConversation(conversationIDList []string) (result []*model_struct.LocalConversation, err error)
+	GetMultipleConversationDB(conversationIDList []string) (result []*model_struct.LocalConversation, err error)
 	GetJoinedSuperGroupList() ([]*model_struct.LocalGroup, error)
 	GetJoinedSuperGroupIDList() ([]string, error)
 	InsertSuperGroup(groupInfo *model_struct.LocalGroup) error
@@ -167,7 +167,7 @@ type DataBase interface {
 	UpdateLoginUserByMap(user *model_struct.LocalUser, args map[string]interface{}) error
 	InsertLoginUser(user *model_struct.LocalUser) error
 	InsertFriend(friend *model_struct.LocalFriend) error
-	DeleteFriend(friendUserID string) error
+	DeleteFriendDB(friendUserID string) error
 	UpdateFriend(friend *model_struct.LocalFriend) error
 	GetAllFriendList() ([]*model_struct.LocalFriend, error)
 	SearchFriendList(keyword string, isSearchUserID, isSearchNickname, isSearchRemark bool) ([]*model_struct.LocalFriend, error)

@@ -277,7 +277,7 @@ func (i IndexDB) SetMultipleConversationRecvMsgOpt(conversationIDList []string, 
 	return err
 }
 
-func (i IndexDB) GetMultipleConversation(conversationIDList []string) (result []*model_struct.LocalConversation, err error) {
+func (i IndexDB) GetMultipleConversationDB(conversationIDList []string) (result []*model_struct.LocalConversation, err error) {
 	cList, err := Exec(utils.StructToJsonString(conversationIDList))
 	if err != nil {
 		return nil, err

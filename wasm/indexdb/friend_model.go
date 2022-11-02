@@ -19,7 +19,7 @@ func (i Friend) InsertFriend(friend *model_struct.LocalFriend) error {
 	return err
 }
 
-func (i Friend) DeleteFriend(friendUserID string) error {
+func (i Friend) DeleteFriendDB(friendUserID string) error {
 	_, err := Exec(utils.StructToJsonString(friendUserID))
 	return err
 }

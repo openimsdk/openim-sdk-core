@@ -196,7 +196,7 @@ func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, so
 	}
 }
 func (c *Conversation) getMultipleConversation(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) sdk.GetMultipleConversationCallback {
-	conversationList, err := c.db.GetMultipleConversation(conversationIDList)
+	conversationList, err := c.db.GetMultipleConversationDB(conversationIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return conversationList
 }

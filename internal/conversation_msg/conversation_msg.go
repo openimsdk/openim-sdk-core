@@ -1395,7 +1395,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 	case constant.ConChange:
 		cidList := node.Args.([]string)
-		cLists, err := c.db.GetMultipleConversation(cidList)
+		cLists, err := c.db.GetMultipleConversationDB(cidList)
 		if err != nil {
 			log.Error("internal", "getMultipleConversationModel err :", err.Error())
 		} else {
@@ -1411,7 +1411,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 	case constant.NewCon:
 		cidList := node.Args.([]string)
-		cLists, err := c.db.GetMultipleConversation(cidList)
+		cLists, err := c.db.GetMultipleConversationDB(cidList)
 		if err != nil {
 			log.Error("internal", "getMultipleConversationModel err :", err.Error())
 		} else {

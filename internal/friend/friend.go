@@ -511,7 +511,7 @@ func (f *Friend) SyncFriendList(operationID string) {
 		}
 	}
 	for _, index := range bInANot {
-		err := f.db.DeleteFriend(friendsInfoOnLocal[index].FriendUserID)
+		err := f.db.DeleteFriendDB(friendsInfoOnLocal[index].FriendUserID)
 		if err != nil {
 			log.NewError(operationID, "_deleteFriend failed ", err.Error())
 			continue
