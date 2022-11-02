@@ -205,7 +205,9 @@ func (f *Friend) getFriendList(callback open_im_sdk_callback.Base, operationID s
 	localFriendList, err := f.db.GetAllFriendList()
 	common.CheckDBErrCallback(callback, err, operationID)
 	localBlackList, err := f.db.GetBlackListDB()
+	log.Debug(operationID, "length is:", len(localFriendList), len(localFriendList))
 	common.CheckDBErrCallback(callback, err, operationID)
+	log.Debug(operationID, "length2 is:", common.MergeFriendBlackResult(localFriendList, localBlackList))
 	return common.MergeFriendBlackResult(localFriendList, localBlackList)
 }
 func (f *Friend) searchFriends(callback open_im_sdk_callback.Base, param sdk.SearchFriendsParam, operationID string) sdk.SearchFriendsCallback {
