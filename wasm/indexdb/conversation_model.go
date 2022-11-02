@@ -112,7 +112,7 @@ func (i IndexDB) GetConversationByUserID(userID string) (*model_struct.LocalConv
 	}
 }
 
-func (i IndexDB) GetConversationListSplit(offset, count int) (result []*model_struct.LocalConversation, err error) {
+func (i IndexDB) GetConversationListSplitDB(offset, count int) (result []*model_struct.LocalConversation, err error) {
 	cList, err := Exec(offset, count)
 	if err != nil {
 		return nil, err
@@ -257,7 +257,7 @@ func (i IndexDB) DecrConversationUnreadCount(conversationID string, count int64)
 	_, err := Exec(conversationID, count)
 	return err
 }
-func (i IndexDB) GetTotalUnreadMsgCount() (totalUnreadCount int32, err error) {
+func (i IndexDB) GetTotalUnreadMsgCountDB() (totalUnreadCount int32, err error) {
 	count, err := Exec()
 	if err != nil {
 		return 0, err

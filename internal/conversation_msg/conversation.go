@@ -27,7 +27,7 @@ func (c *Conversation) getAllConversationList(callback open_im_sdk_callback.Base
 }
 
 func (c *Conversation) getConversationListSplit(callback open_im_sdk_callback.Base, offset, count int, operationID string) sdk.GetConversationListSplitCallback {
-	conversationList, err := c.db.GetConversationListSplit(offset, count)
+	conversationList, err := c.db.GetConversationListSplitDB(offset, count)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return conversationList
 }

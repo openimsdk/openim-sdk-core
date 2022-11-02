@@ -94,7 +94,7 @@ type DataBase interface {
 	GetAllConversationListDB() ([]*model_struct.LocalConversation, error)
 	GetHiddenConversationList() ([]*model_struct.LocalConversation, error)
 	GetAllConversationListToSync() ([]*model_struct.LocalConversation, error)
-	GetConversationListSplit(offset, count int) ([]*model_struct.LocalConversation, error)
+	GetConversationListSplitDB(offset, count int) ([]*model_struct.LocalConversation, error)
 	BatchInsertConversationList(conversationList []*model_struct.LocalConversation) error
 	InsertConversation(conversationList *model_struct.LocalConversation) error
 	DeleteConversation(conversationID string) error
@@ -114,7 +114,7 @@ type DataBase interface {
 	UpdateAllConversation(conversation *model_struct.LocalConversation) error
 	IncrConversationUnreadCount(conversationID string) error
 	DecrConversationUnreadCount(conversationID string, count int64) (err error)
-	GetTotalUnreadMsgCount() (totalUnreadCount int32, err error)
+	GetTotalUnreadMsgCountDB() (totalUnreadCount int32, err error)
 	SetMultipleConversationRecvMsgOpt(conversationIDList []string, opt int) (err error)
 	GetMultipleConversation(conversationIDList []string) (result []*model_struct.LocalConversation, err error)
 	GetJoinedSuperGroupList() ([]*model_struct.LocalGroup, error)
