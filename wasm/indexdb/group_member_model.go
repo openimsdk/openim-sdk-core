@@ -74,7 +74,7 @@ func (i *LocalGroupMember) GetGroupMemberCount(groupID string) (uint32, error) {
 }
 
 func (i *LocalGroupMember) GetGroupSomeMemberInfo(groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
-	member, err := Exec(groupID, userIDList)
+	member, err := Exec(groupID, utils.StructToJsonString(userIDList))
 	if err != nil {
 		return nil, err
 	} else {

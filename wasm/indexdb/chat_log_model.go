@@ -184,7 +184,7 @@ func (i *LocalChatLogs) GetMessageListNoTime(sourceID string, sessionType, count
 	}
 }
 func (i *LocalChatLogs) UpdateSingleMessageHasRead(sendID string, msgIDList []string) error {
-	_, err := Exec(sendID, msgIDList)
+	_, err := Exec(sendID, utils.StructToJsonString(msgIDList))
 	return err
 }
 
@@ -299,7 +299,7 @@ func (i *LocalChatLogs) UpdateGroupMessageHasRead(msgIDList []string, sessionTyp
 }
 
 func (i *LocalChatLogs) GetMultipleMessage(msgIDList []string) (result []*model_struct.LocalChatLog, err error) {
-	msgList, err := Exec(msgIDList)
+	msgList, err := Exec(utils.StructToJsonString(msgIDList))
 	if err != nil {
 		return nil, err
 	} else {
