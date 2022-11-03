@@ -3,7 +3,6 @@ package indexdb
 import (
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
-	"open_im_sdk/wasm/indexdb/temp_struct"
 )
 
 type LocalSuperGroup struct{}
@@ -34,30 +33,7 @@ func (i *LocalSuperGroup) InsertSuperGroup(groupInfo *model_struct.LocalGroup) e
 	return err
 }
 func (i *LocalSuperGroup) UpdateSuperGroup(g *model_struct.LocalGroup) error {
-	if g.GroupID == "" {
-		return PrimaryKeyNull
-	}
-	tempLocalSuperGroup := temp_struct.LocalSuperGroup{
-		GroupID:                g.GroupID,
-		GroupName:              g.GroupName,
-		Notification:           g.Notification,
-		Introduction:           g.Introduction,
-		FaceURL:                g.FaceURL,
-		CreateTime:             g.CreateTime,
-		Status:                 g.Status,
-		CreatorUserID:          g.CreatorUserID,
-		GroupType:              g.GroupType,
-		OwnerUserID:            g.OwnerUserID,
-		MemberCount:            g.MemberCount,
-		Ex:                     g.Ex,
-		AttachedInfo:           g.AttachedInfo,
-		NeedVerification:       g.NeedVerification,
-		LookMemberInfo:         g.LookMemberInfo,
-		ApplyMemberFriend:      g.ApplyMemberFriend,
-		NotificationUpdateTime: g.NotificationUpdateTime,
-		NotificationUserID:     g.NotificationUserID,
-	}
-	_, err := Exec(g.GroupID, utils.StructToJsonString(tempLocalSuperGroup))
+	_, err := Exec(g.GroupID, utils.StructToJsonString(g))
 	return err
 }
 
