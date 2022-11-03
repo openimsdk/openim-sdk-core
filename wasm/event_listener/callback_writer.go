@@ -14,7 +14,7 @@ type CallbackWriter interface {
 	SetOperationID(operationID string) CallbackWriter
 	SetErrMsg(errMsg string) CallbackWriter
 	GetOperationID() string
-	HandlerFunc() interface{}
+	HandlerFunc(fn FuncLogic) interface{}
 }
 
 type EventData struct {
@@ -26,7 +26,7 @@ type EventData struct {
 	callback    *js.Value
 }
 
-func (e *EventData) HandlerFunc() interface{} {
+func (e *EventData) HandlerFunc(fn FuncLogic) interface{} {
 	panic("implement me")
 }
 
@@ -75,21 +75,18 @@ type PromiseHandler struct {
 	OperationID string      `json:"operationID"`
 	resolve     *js.Value
 	reject      *js.Value
-	PromiseFunc *js.Value
 }
 
 func NewPromiseHandler() *PromiseHandler {
-	p := PromiseHandler{}
+	return &PromiseHandler{}
+}
+func (p *PromiseHandler) HandlerFunc(fn FuncLogic) interface{} {
 	handler := js.FuncOf(func(_ js.Value, promFn []js.Value) interface{} {
 		p.resolve, p.reject = &promFn[0], &promFn[1]
+		fn()
 		return nil
 	})
-	v := jsPromise.New(handler)
-	p.PromiseFunc = &v
-	return &p
-}
-func (p *PromiseHandler) HandlerFunc() interface{} {
-	return *p.PromiseFunc
+	return jsPromise.New(handler)
 }
 
 func (p *PromiseHandler) GetOperationID() string {

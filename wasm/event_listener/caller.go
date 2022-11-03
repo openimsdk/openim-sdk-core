@@ -5,7 +5,6 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"reflect"
-	"runtime"
 	"strconv"
 	"strings"
 	"syscall/js"
@@ -21,7 +20,10 @@ type Caller interface {
 	SyncCall() (result []interface{})
 }
 
+type FuncLogic func()
+
 var ErrNotSetCallback = errors.New("not set callback to call")
+var ErrNotSetFunc = errors.New("not set func to call")
 
 type ReflectCall struct {
 	funcName  interface{}
@@ -29,7 +31,17 @@ type ReflectCall struct {
 	arguments []js.Value
 }
 
+func (r *ReflectCall) NewCaller(funcName interface{}, callback CallbackWriter, arguments *[]js.Value) Caller {
+	r.funcName = funcName
+	r.callback = callback
+	r.arguments = *arguments
+	return r
+}
 func (r *ReflectCall) AsyncCallWithCallback() interface{} {
+	return r.callback.HandlerFunc(r.asyncCallWithCallback)
+
+}
+func (r *ReflectCall) asyncCallWithCallback() {
 	defer func() {
 		if rc := recover(); rc != nil {
 			r.ErrHandle(rc)
@@ -40,7 +52,7 @@ func (r *ReflectCall) AsyncCallWithCallback() interface{} {
 	var hasCallback bool
 	var temp int
 	if r.funcName == nil {
-		return nil
+		panic(ErrNotSetFunc)
 	} else {
 		funcName = reflect.ValueOf(r.funcName)
 		typeFuncName = reflect.TypeOf(r.funcName)
@@ -70,27 +82,86 @@ func (r *ReflectCall) AsyncCallWithCallback() interface{} {
 				log.Error("AsyncCallWithCallback", "input args type err index:", utils.IntToString(i))
 				panic("input args type err index:" + utils.IntToString(i))
 			}
-		case reflect.Int, reflect.Int32:
+		case reflect.Int:
 			log.NewDebug("", "type is ", r.arguments[i].Int())
 			values = append(values, reflect.ValueOf(r.arguments[i].Int()))
+		case reflect.Int32:
+			values = append(values, reflect.ValueOf(int32(r.arguments[i].Int())))
+		case reflect.Bool:
+			values = append(values, reflect.ValueOf(r.arguments[i].Bool()))
 		default:
 			log.Error("AsyncCallWithCallback", "input args type not support:", strconv.Itoa(int(typeFuncName.In(temp).Kind())))
 			panic("input args type not support:" + strconv.Itoa(int(typeFuncName.In(temp).Kind())))
 		}
 	}
 	funcName.Call(values)
-	return r.callback.HandlerFunc()
 
 }
-func (r *ReflectCall) NewCaller(funcName interface{}, callback CallbackWriter, arguments *[]js.Value) Caller {
-	r.funcName = funcName
-	r.callback = callback
-	r.arguments = *arguments
-	return r
+func (r *ReflectCall) AsyncCallWithOutCallback() interface{} {
+	return r.callback.HandlerFunc(r.asyncCallWithOutCallback)
 }
+func (r *ReflectCall) asyncCallWithOutCallback() {
+	defer func() {
+		if rc := recover(); rc != nil {
+			r.ErrHandle(rc)
+		}
+	}()
+	var funcName reflect.Value
+	var typeFuncName reflect.Type
+	var temp int
+	if r.funcName == nil {
+		panic(ErrNotSetFunc)
+	} else {
+		funcName = reflect.ValueOf(r.funcName)
+		typeFuncName = reflect.TypeOf(r.funcName)
+	}
+	var values []reflect.Value
+	if r.callback == nil {
+		r.callback = NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), nil)
+	}
+	r.callback.SetOperationID(r.arguments[0].String())
+	for i := 0; i < len(r.arguments); i++ {
+		//log.NewDebug(r.callback.GetOperationID(), "type is ", typeFuncName.In(temp).Kind(), r.arguments[i].IsNaN())
+		switch typeFuncName.In(temp).Kind() {
+		case reflect.String:
+			convertValue := r.arguments[i].String()
+			if !strings.HasPrefix(convertValue, "<number: ") {
+				values = append(values, reflect.ValueOf(convertValue))
+			} else {
+				panic("input args type err index:" + utils.IntToString(i))
+			}
+		case reflect.Int:
+			log.NewDebug("", "type is ", r.arguments[i].Int())
+			values = append(values, reflect.ValueOf(r.arguments[i].Int()))
+		case reflect.Int32:
+			values = append(values, reflect.ValueOf(int32(r.arguments[i].Int())))
+		case reflect.Bool:
+			values = append(values, reflect.ValueOf(r.arguments[i].Bool()))
+		default:
+			panic("input args type not support:" + strconv.Itoa(int(typeFuncName.In(temp).Kind())))
+		}
+	}
+	go func() {
+		returnValues := funcName.Call(values)
+		if len(returnValues) != 0 {
+			var result []interface{}
+			for _, v := range returnValues {
+				switch v.Kind() {
+				case reflect.String:
+					result = append(result, v.String())
+				case reflect.Bool:
+					result = append(result, v.Bool())
+				default:
+					panic("not support type")
+				}
+			}
+			r.callback.SetData(result).SendMessage()
+		} else {
+			r.callback.SetErrCode(200).SetErrMsg(errors.New("null string").Error()).SendMessage()
+		}
+	}()
 
-type fn func(this js.Value, args []js.Value) interface{}
-
+}
 func (r *ReflectCall) SyncCall() (result []interface{}) {
 	defer func() {
 		if rc := recover(); rc != nil {
@@ -131,9 +202,13 @@ func (r *ReflectCall) SyncCall() (result []interface{}) {
 			} else {
 				panic("input args type err index:" + utils.IntToString(i))
 			}
-		case reflect.Int, reflect.Int32:
+		case reflect.Int:
 			log.NewDebug("", "type is ", r.arguments[i].Int())
 			values = append(values, reflect.ValueOf(r.arguments[i].Int()))
+		case reflect.Int32:
+			values = append(values, reflect.ValueOf(int32(r.arguments[i].Int())))
+		case reflect.Bool:
+			values = append(values, reflect.ValueOf(r.arguments[i].Bool()))
 		default:
 			panic("implement me")
 		}
@@ -157,75 +232,15 @@ func (r *ReflectCall) SyncCall() (result []interface{}) {
 	}
 
 }
-func (r *ReflectCall) AsyncCallWithOutCallback() interface{} {
-	defer func() {
-		if rc := recover(); rc != nil {
-			r.ErrHandle(rc)
-		}
-	}()
-	var funcName reflect.Value
-	var typeFuncName reflect.Type
-	var temp int
-	if r.funcName == nil {
-		return nil
-	} else {
-		funcName = reflect.ValueOf(r.funcName)
-		typeFuncName = reflect.TypeOf(r.funcName)
-	}
-	var values []reflect.Value
-	if r.callback == nil {
-		r.callback = NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), nil)
-	}
-	r.callback.SetOperationID(r.arguments[0].String())
-	for i := 0; i < len(r.arguments); i++ {
-		//log.NewDebug(r.callback.GetOperationID(), "type is ", typeFuncName.In(temp).Kind(), r.arguments[i].IsNaN())
-		switch typeFuncName.In(temp).Kind() {
-		case reflect.String:
-			convertValue := r.arguments[i].String()
-			if !strings.HasPrefix(convertValue, "<number: ") {
-				values = append(values, reflect.ValueOf(convertValue))
-			} else {
-				panic("input args type err index:" + utils.IntToString(i))
-			}
-		case reflect.Int, reflect.Int32:
-			log.NewDebug("", "type is ", r.arguments[i].Int())
-			values = append(values, reflect.ValueOf(r.arguments[i].Int()))
-		default:
-			panic("input args type not support:" + strconv.Itoa(int(typeFuncName.In(temp).Kind())))
-		}
-	}
-	go func() {
-		returnValues := funcName.Call(values)
-		if len(returnValues) != 0 {
-			var result []interface{}
-			for _, v := range returnValues {
-				switch v.Kind() {
-				case reflect.String:
-					result = append(result, v.String())
-				case reflect.Bool:
-					result = append(result, v.Bool())
-				default:
-					panic("not support type")
-				}
-			}
-			r.callback.SetData(result).SendMessage()
-		} else {
-			r.callback.SetErrCode(200).SetErrMsg(errors.New("null string").Error()).SendMessage()
-		}
-	}()
-	return r.callback.HandlerFunc()
-
-}
-
 func (r *ReflectCall) ErrHandle(recover interface{}) []string {
 	var temp string
 	switch x := recover.(type) {
 	case string:
 		temp = utils.Wrap(errors.New(x), "").Error()
 	case error:
-		buf := make([]byte, 1<<20)
-		runtime.Stack(buf, true)
-		temp = string(buf)
+		//buf := make([]byte, 1<<20)
+		//runtime.Stack(buf, true)
+		temp = x.Error()
 	default:
 		temp = utils.Wrap(errors.New("unknown panic"), "").Error()
 	}
