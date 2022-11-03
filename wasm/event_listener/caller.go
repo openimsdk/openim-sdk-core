@@ -70,9 +70,11 @@ func (r *ReflectCall) AsyncCallWithCallback() interface{} {
 				log.Error("AsyncCallWithCallback", "input args type err index:", utils.IntToString(i))
 				panic("input args type err index:" + utils.IntToString(i))
 			}
-		case reflect.Int, reflect.Int32:
+		case reflect.Int:
 			log.NewDebug("", "type is ", r.arguments[i].Int())
 			values = append(values, reflect.ValueOf(r.arguments[i].Int()))
+		case reflect.Int32:
+			values = append(values, reflect.ValueOf(int32(r.arguments[i].Int())))
 		default:
 			log.Error("AsyncCallWithCallback", "input args type not support:", strconv.Itoa(int(typeFuncName.In(temp).Kind())))
 			panic("input args type not support:" + strconv.Itoa(int(typeFuncName.In(temp).Kind())))
