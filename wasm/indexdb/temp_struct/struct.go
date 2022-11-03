@@ -40,6 +40,17 @@ type LocalConversation struct {
 	AttachedInfo          string ` json:"attachedInfo,omitempty"`
 	Ex                    string ` json:"ex,omitempty"`
 }
+type LocalPartConversation struct {
+	RecvMsgOpt            int32  ` json:"recvMsgOpt"`
+	GroupAtType           int32  ` json:"groupAtType"`
+	IsPinned              bool   ` json:"isPinned,"`
+	IsPrivateChat         bool   ` json:"isPrivateChat"`
+	IsNotInGroup          bool   ` json:"isNotInGroup"`
+	UpdateUnreadCountTime int64  ` json:"updateUnreadCountTime"`
+	AttachedInfo          string ` json:"attachedInfo"`
+	Ex                    string ` json:"ex"`
+}
+
 type LocalSuperGroup struct {
 	GroupID                string `json:"groupID,omitempty"`
 	GroupName              string `json:"groupName,omitempty"`
