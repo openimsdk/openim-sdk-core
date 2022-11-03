@@ -98,6 +98,9 @@ func (r *ReflectCall) asyncCallWithCallback() {
 
 }
 func (r *ReflectCall) AsyncCallWithOutCallback() interface{} {
+	if r.callback == nil {
+		r.callback = NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), nil)
+	}
 	return r.callback.HandlerFunc(r.asyncCallWithOutCallback)
 }
 func (r *ReflectCall) asyncCallWithOutCallback() {
