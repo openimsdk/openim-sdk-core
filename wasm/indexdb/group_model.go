@@ -3,7 +3,6 @@ package indexdb
 import (
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
-	"open_im_sdk/wasm/indexdb/temp_struct"
 )
 
 type LocalGroups struct{}
@@ -18,30 +17,9 @@ func (i *LocalGroups) DeleteGroup(groupID string) error {
 	return err
 }
 
+//该函数需要全更新
 func (i *LocalGroups) UpdateGroup(groupInfo *model_struct.LocalGroup) error {
-	if groupInfo.GroupID == "" {
-		return PrimaryKeyNull
-	}
-	tempLocalGroup := temp_struct.LocalGroup{
-		GroupName:              groupInfo.GroupName,
-		Notification:           groupInfo.Notification,
-		Introduction:           groupInfo.Introduction,
-		FaceURL:                groupInfo.FaceURL,
-		CreateTime:             groupInfo.CreateTime,
-		Status:                 groupInfo.Status,
-		CreatorUserID:          groupInfo.CreatorUserID,
-		GroupType:              groupInfo.GroupType,
-		OwnerUserID:            groupInfo.OwnerUserID,
-		MemberCount:            groupInfo.MemberCount,
-		Ex:                     groupInfo.Ex,
-		AttachedInfo:           groupInfo.AttachedInfo,
-		NeedVerification:       groupInfo.NeedVerification,
-		LookMemberInfo:         groupInfo.LookMemberInfo,
-		ApplyMemberFriend:      groupInfo.ApplyMemberFriend,
-		NotificationUpdateTime: groupInfo.NotificationUpdateTime,
-		NotificationUserID:     groupInfo.NotificationUserID,
-	}
-	_, err := Exec(groupInfo.GroupID, utils.StructToJsonString(tempLocalGroup))
+	_, err := Exec(groupInfo.GroupID, utils.StructToJsonString(groupInfo))
 	return err
 }
 
