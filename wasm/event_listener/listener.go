@@ -154,3 +154,14 @@ func NewBatchMessageCallback(callback *js.Value) *BatchMessageCallback {
 func (b *BatchMessageCallback) OnRecvNewMessages(messageList string) {
 	b.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(messageList).SendMessage()
 }
+
+type UserCallback struct {
+	CallbackWriter
+}
+
+func NewUserCallback(callback *js.Value) *UserCallback {
+	return &UserCallback{CallbackWriter: NewEventData(callback)}
+}
+func (u UserCallback) OnSelfInfoUpdated(userInfo string) {
+	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
+}
