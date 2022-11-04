@@ -256,7 +256,7 @@ func (i *LocalGroupMember) UpdateGroupMember(groupMember *model_struct.LocalGrou
 }
 
 func (i *LocalGroupMember) UpdateGroupMemberField(groupID, userID string, args map[string]interface{}) error {
-	_, err := Exec(groupID, userID, args)
+	_, err := Exec(groupID, userID, utils.StructToJsonString(args))
 	return err
 }
 
