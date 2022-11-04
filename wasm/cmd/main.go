@@ -146,6 +146,7 @@ func registerFunc() {
 	js.Global().Set("refuseFriendApplication", js.FuncOf(wrapperFriend.RefuseFriendApplication))
 	js.Global().Set("getBlackList", js.FuncOf(wrapperFriend.GetBlackList))
 	js.Global().Set("removeBlack", js.FuncOf(wrapperFriend.RemoveBlack))
+	js.Global().Set("addBlack", js.FuncOf(wrapperFriend.AddBlack))
 
 	wrapperSignaling := wasm_wrapper.NewWrapperSignaling(globalFuc)
 	js.Global().Set("signalingInviteInGroup", js.FuncOf(wrapperSignaling.SignalingInviteInGroup))
