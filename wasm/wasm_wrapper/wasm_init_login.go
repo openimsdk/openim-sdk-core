@@ -48,12 +48,18 @@ func (s *SetListener) setGroupListener() {
 	open_im_sdk.SetGroupListener(callback)
 }
 
+func (s *SetListener) setUserListener() {
+	callback := event_listener.NewUserCallback(s.commonFunc)
+	open_im_sdk.SetUserListener(callback)
+}
+
 func (s *SetListener) SetAllListener() {
 	s.setConversationListener()
 	s.setAdvancedMsgListener()
 	s.setBatchMessageListener()
 	s.setFriendListener()
 	s.setGroupListener()
+	s.setUserListener()
 }
 
 type WrapperCommon struct {

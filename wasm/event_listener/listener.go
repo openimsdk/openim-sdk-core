@@ -235,3 +235,14 @@ func (f *GroupCallback) OnGroupApplicationAccepted(groupApplication string) {
 func (f *GroupCallback) OnGroupApplicationRejected(groupApplication string) {
 	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(groupApplication).SendMessage()
 }
+
+type UserCallback struct {
+	CallbackWriter
+}
+
+func NewUserCallback(callback *js.Value) *UserCallback {
+	return &UserCallback{CallbackWriter: NewEventData(callback)}
+}
+func (u UserCallback) OnSelfInfoUpdated(userInfo string) {
+	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
+}
