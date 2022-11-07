@@ -11,7 +11,6 @@ import (
 )
 
 type Caller interface {
-	NewCaller(funcName interface{}, callback CallbackWriter, arguments *[]js.Value) Caller
 	// AsyncCallWithCallback has promise object return
 	AsyncCallWithCallback() interface{}
 	// AsyncCallWithOutCallback has promise object return
@@ -31,12 +30,16 @@ type ReflectCall struct {
 	arguments []js.Value
 }
 
-func (r *ReflectCall) NewCaller(funcName interface{}, callback CallbackWriter, arguments *[]js.Value) Caller {
-	r.funcName = funcName
-	r.callback = callback
-	r.arguments = *arguments
-	return r
+func NewCaller(funcName interface{}, callback CallbackWriter, arguments *[]js.Value) Caller {
+	return &ReflectCall{funcName: funcName, callback: callback, arguments: *arguments}
 }
+
+//func (r *ReflectCall) NewCaller(funcName interface{}, callback CallbackWriter, arguments *[]js.Value) Caller {
+//	r.funcName = funcName
+//	r.callback = callback
+//	r.arguments = *arguments
+//	return r
+//}
 func (r *ReflectCall) AsyncCallWithCallback() interface{} {
 	return r.callback.HandlerFunc(r.asyncCallWithCallback)
 
