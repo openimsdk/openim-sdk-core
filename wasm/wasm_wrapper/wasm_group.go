@@ -12,13 +12,12 @@ import (
 //------------------------------------group---------------------------
 type WrapperGroup struct {
 	*WrapperCommon
-	caller event_listener.Caller
 }
 
 func NewWrapperGroup(wrapperCommon *WrapperCommon) *WrapperGroup {
-	return &WrapperGroup{WrapperCommon: wrapperCommon, caller: &event_listener.ReflectCall{}}
+	return &WrapperGroup{WrapperCommon: wrapperCommon}
 }
 func (w *WrapperGroup) GetGroupsInfo(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return w.caller.NewCaller(open_im_sdk.GetGroupsInfo, callback, &args).AsyncCallWithCallback()
+	return event_listener.NewCaller(open_im_sdk.GetGroupsInfo, callback, &args).AsyncCallWithCallback()
 }

@@ -69,23 +69,22 @@ func (w *WrapperCommon) CommonEventFunc(_ js.Value, args []js.Value) interface{}
 
 type WrapperInitLogin struct {
 	*WrapperCommon
-	caller event_listener.Caller
 }
 
 func NewWrapperInitLogin(wrapperCommon *WrapperCommon) *WrapperInitLogin {
-	return &WrapperInitLogin{WrapperCommon: wrapperCommon, caller: &event_listener.ReflectCall{}}
+	return &WrapperInitLogin{WrapperCommon: wrapperCommon}
 }
 func (w *WrapperInitLogin) InitSDK(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewConnCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return js.ValueOf(w.caller.NewCaller(open_im_sdk.InitSDK, callback, &args).SyncCall())
+	return js.ValueOf(event_listener.NewCaller(open_im_sdk.InitSDK, callback, &args).SyncCall())
 }
 func (w *WrapperInitLogin) Login(_ js.Value, args []js.Value) interface{} {
 	listener := NewSetListener(w.WrapperCommon)
 	listener.SetAllListener()
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return w.caller.NewCaller(open_im_sdk.Login, callback, &args).AsyncCallWithCallback()
+	return event_listener.NewCaller(open_im_sdk.Login, callback, &args).AsyncCallWithCallback()
 }
 func (w *WrapperInitLogin) Logout(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return w.caller.NewCaller(open_im_sdk.Logout, callback, &args).AsyncCallWithCallback()
+	return event_listener.NewCaller(open_im_sdk.Logout, callback, &args).AsyncCallWithCallback()
 }
