@@ -184,7 +184,7 @@ func (i *LocalChatLogs) UpdateSingleMessageHasRead(sendID string, msgIDList []st
 }
 
 func (i *LocalChatLogs) SearchMessageByContentType(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (messages []*model_struct.LocalChatLog, err error) {
-	msgList, err := Exec(contentType, sourceID, startTime, endTime, sessionType, offset, count)
+	msgList, err := Exec(utils.StructToJsonString(contentType), sourceID, startTime, endTime, sessionType, offset, count)
 	if err != nil {
 		return nil, err
 	} else {
