@@ -1526,7 +1526,8 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 			common.CheckAnyErrCallback(callback, 201, errors.New("page or count is null"), operationID)
 		}
 		offset := (searchParam.PageIndex - 1) * searchParam.Count
-		localConversation, err := c.db.GetConversation(searchParam.ConversationID)
+		var localConversation *model_struct.LocalConversation
+		localConversation, err = c.db.GetConversation(searchParam.ConversationID)
 		common.CheckDBErrCallback(callback, err, operationID)
 		switch localConversation.ConversationType {
 		case constant.SingleChatType:

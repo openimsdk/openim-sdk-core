@@ -459,3 +459,38 @@ func (i IndexDB) UpdateGroupMessageHasRead(msgIDList []string, sessionType int32
 	_, err := Exec(msgIDList, sessionType)
 	return err
 }
+
+func (i *LocalChatLogs) SearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (messages []*model_struct.LocalChatLog, err error) {
+	msgList, err := Exec(utils.StructToJsonString(contentType), utils.StructToJsonString(keywordList), keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := msgList.(string); ok {
+			var temp []model_struct.LocalChatLog
+			err := utils.JsonStringToStruct(v, &temp)
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range temp {
+				v1 := v
+				messages = append(messages, &v1)
+			}
+			return messages, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}
+
+func (i *LocalChatLogs) GetSuperGroupAbnormalMsgSeq(groupID string) (uint32, error) {
+	isExist, err := Exec(groupID)
+	if err != nil {
+		return 0, err
+	} else {
+		if v, ok := isExist.(uint32); ok {
+			return v, nil
+		} else {
+			return 0, ErrType
+		}
+	}
+}

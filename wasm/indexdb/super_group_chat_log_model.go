@@ -159,7 +159,7 @@ func (i *LocalSuperGroupChatLogs) SuperGroupGetMessageList(sourceID string, sess
 	}
 }
 
-func (i *LocalChatLogs) SuperGroupSearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
+func (i *LocalSuperGroupChatLogs) SuperGroupSearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
 	msgList, err := Exec(contentType, keywordList, keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
 	if err != nil {
 		return nil, err
@@ -181,41 +181,6 @@ func (i *LocalChatLogs) SuperGroupSearchMessageByKeyword(contentType []int, keyw
 	}
 }
 
-func (i *LocalChatLogs) SearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (messages []*model_struct.LocalChatLog, err error) {
-	msgList, err := Exec(utils.StructToJsonString(contentType), utils.StructToJsonString(keywordList), keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
-	if err != nil {
-		return nil, err
-	} else {
-		if v, ok := msgList.(string); ok {
-			var temp []model_struct.LocalChatLog
-			err := utils.JsonStringToStruct(v, &temp)
-			if err != nil {
-				return nil, err
-			}
-			for _, v := range temp {
-				v1 := v
-				messages = append(messages, &v1)
-			}
-			return messages, err
-		} else {
-			return nil, ErrType
-		}
-	}
-}
-
-func (i *LocalChatLogs) GetSuperGroupAbnormalMsgSeq(groupID string) (uint32, error) {
-	isExist, err := Exec(groupID)
-	if err != nil {
-		return 0, err
-	} else {
-		if v, ok := isExist.(uint32); ok {
-			return v, nil
-		} else {
-			return 0, ErrType
-		}
-	}
-}
-
 func (i *LocalChatLogs) InitSuperLocalErrChatLog(groupID string) {
 	_, _ = Exec(groupID)
 }
@@ -233,7 +198,7 @@ func (i IndexDB) SuperGroupDeleteAllMessage(groupID string) error {
 	return err
 }
 
-func (i IndexDB) SuperGroupSearchMessageByContentTypeAndKeyword(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64, groupID string) (result []*model_struct.LocalChatLog, err error) {
+func (i *LocalSuperGroupChatLogs) SuperGroupSearchMessageByContentTypeAndKeyword(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64, groupID string) (result []*model_struct.LocalChatLog, err error) {
 	gList, err := Exec(utils.StructToJsonString(contentType), utils.StructToJsonString(keywordList), keywordListMatchType, startTime, endTime, groupID)
 	if err != nil {
 		return nil, err
@@ -255,12 +220,12 @@ func (i IndexDB) SuperGroupSearchMessageByContentTypeAndKeyword(contentType []in
 	}
 }
 
-func (i IndexDB) SuperGroupBatchUpdateMessageList(MessageList []*model_struct.LocalChatLog) error {
+func (i *LocalSuperGroupChatLogs) SuperGroupBatchUpdateMessageList(MessageList []*model_struct.LocalChatLog) error {
 	_, err := Exec(utils.StructToJsonString(MessageList))
 	return err
 }
 
-func (i IndexDB) SuperGroupMessageIfExists(ClientMsgID string) (bool, error) {
+func (i *LocalSuperGroupChatLogs) SuperGroupMessageIfExists(ClientMsgID string) (bool, error) {
 	isExist, err := Exec(ClientMsgID)
 	if err != nil {
 		return false, err
@@ -273,7 +238,7 @@ func (i IndexDB) SuperGroupMessageIfExists(ClientMsgID string) (bool, error) {
 	}
 }
 
-func (i IndexDB) SuperGroupIsExistsInErrChatLogBySeq(seq int64) bool {
+func (i *LocalSuperGroupChatLogs) SuperGroupIsExistsInErrChatLogBySeq(seq int64) bool {
 	isExist, err := Exec(seq)
 	if err != nil {
 		return false
