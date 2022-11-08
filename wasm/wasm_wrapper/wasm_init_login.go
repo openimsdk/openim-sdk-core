@@ -108,11 +108,9 @@ func (w *WrapperInitLogin) WakeUp(_ js.Value, args []js.Value) interface{} {
 }
 
 func (w *WrapperInitLogin) GetLoginStatus(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.GetLoginStatus, callback, &args).SyncCall()
+	return event_listener.NewCaller(open_im_sdk.GetLoginStatus, nil, &args).AsyncCallWithOutCallback()
 }
 
 func (w *WrapperInitLogin) GetLoginUser(_ js.Value, args []js.Value) interface{} {
-	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.GetLoginUser, callback, &args).SyncCall()
+	return event_listener.NewCaller(open_im_sdk.GetLoginUser, nil, &args).AsyncCallWithOutCallback()
 }

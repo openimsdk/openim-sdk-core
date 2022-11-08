@@ -40,15 +40,53 @@ type IndexDB struct {
 }
 
 func (i IndexDB) SearchMessageByKeywordController(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return i.SuperGroupSearchMessageByKeyword(contentType, keywordList, keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
+	default:
+		return i.SearchMessageByKeyword(contentType, keywordList, keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
+	}
 }
 
 func (i IndexDB) SearchMessageByContentTypeController(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return i.SuperGroupSearchMessageByContentType(contentType, sourceID, startTime, endTime, sessionType, offset, count)
+	default:
+		return i.SearchMessageByContentType(contentType, sourceID, startTime, endTime, sessionType, offset, count)
+	}
 }
 
 func (i IndexDB) SearchMessageByContentTypeAndKeywordController(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64, operationID string) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
+	list, err := i.SearchMessageByContentTypeAndKeyword(contentType, keywordList, keywordListMatchType, startTime, endTime)
+	if err != nil {
+		return nil, err
+	}
+	superGroupIDList, err := i.GetJoinedSuperGroupIDList()
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range superGroupIDList {
+		sList, err := i.SuperGroupSearchMessageByContentTypeAndKeyword(contentType, keywordList, keywordListMatchType, startTime, endTime, v)
+		if err != nil {
+			log.Error(operationID, "search message in group err", err.Error(), v)
+			continue
+		}
+		list = append(list, sList...)
+	}
+	workingGroupIDList, err := i.GetJoinedWorkingGroupIDList()
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range workingGroupIDList {
+		sList, err := i.SuperGroupSearchMessageByContentTypeAndKeyword(contentType, keywordList, keywordListMatchType, startTime, endTime, v)
+		if err != nil {
+			log.Error(operationID, "search message in group err", err.Error(), v)
+			continue
+		}
+		list = append(list, sList...)
+	}
+	return list, nil
 }
 
 type CallbackData struct {

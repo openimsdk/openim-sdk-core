@@ -182,7 +182,7 @@ func (i *LocalChatLogs) SuperGroupSearchMessageByKeyword(contentType []int, keyw
 }
 
 func (i *LocalChatLogs) SearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (messages []*model_struct.LocalChatLog, err error) {
-	msgList, err := Exec(contentType, keywordList, keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
+	msgList, err := Exec(utils.StructToJsonString(contentType), utils.StructToJsonString(keywordList), keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
 	if err != nil {
 		return nil, err
 	} else {
