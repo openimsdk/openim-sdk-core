@@ -1172,7 +1172,7 @@ func (c *Conversation) newRevokeOneMessage(callback open_im_sdk_callback.Base, r
 	}
 	err = c.db.UpdateColumnsMessageController(message.ClientMsgID, groupID, message.SessionType, map[string]interface{}{"status": constant.MsgStatusRevoked})
 	if err != nil {
-		log.Error(operationID, "update revoke message err", localMessage, message)
+		log.Error(operationID, "update revoke message err", localMessage, message, err.Error())
 	}
 	s.SendTime = resp.SendTime
 	lc.LatestMsg = utils.StructToJsonString(s)

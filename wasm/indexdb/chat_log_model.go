@@ -121,7 +121,7 @@ func (i *LocalChatLogs) UpdateColumnsMessageList(clientMsgIDList []string, args 
 	return err
 }
 func (i *LocalChatLogs) UpdateColumnsMessage(clientMsgID string, args map[string]interface{}) error {
-	_, err := Exec(clientMsgID, args)
+	_, err := Exec(clientMsgID, utils.StructToJsonString(args))
 	return err
 }
 func (i *LocalChatLogs) DeleteAllMessage() error {
