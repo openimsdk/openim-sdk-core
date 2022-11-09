@@ -151,7 +151,6 @@ func registerFunc() {
 	wrapperSignaling := wasm_wrapper.NewWrapperSignaling(globalFuc)
 	js.Global().Set("signalingInviteInGroup", js.FuncOf(wrapperSignaling.SignalingInviteInGroup))
 	js.Global().Set("signalingInvite", js.FuncOf(wrapperSignaling.SignalingInvite))
-	js.Global().Set("signalingInvite", js.FuncOf(wrapperSignaling.SignalingInvite))
 	js.Global().Set("signalingReject", js.FuncOf(wrapperSignaling.SignalingReject))
 	js.Global().Set("signalingCancel", js.FuncOf(wrapperSignaling.SignalingCancel))
 	js.Global().Set("signalingHungUp", js.FuncOf(wrapperSignaling.SignalingHungUp))
