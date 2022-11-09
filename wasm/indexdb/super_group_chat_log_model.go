@@ -361,12 +361,12 @@ func (i IndexDB) SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(sendID, faceU
 }
 
 func (i IndexDB) SuperGroupGetMsgSeqByClientMsgID(clientMsgID string, groupID string) (uint32, error) {
-	isExist, err := Exec(clientMsgID, groupID)
+	seq, err := Exec(clientMsgID, groupID)
 	if err != nil {
 		return 0, err
 	} else {
-		if v, ok := isExist.(uint32); ok {
-			return v, nil
+		if v, ok := seq.(float64); ok {
+			return uint32(v), nil
 		} else {
 			return 0, ErrType
 		}
