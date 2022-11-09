@@ -244,12 +244,15 @@ func (r *ReflectCall) ErrHandle(recover interface{}) []string {
 	var temp string
 	switch x := recover.(type) {
 	case string:
+		log.Error("STRINGERR", x)
 		temp = utils.Wrap(errors.New(x), "").Error()
 	case error:
 		//buf := make([]byte, 1<<20)
 		//runtime.Stack(buf, true)
+		log.Error("ERR", x.Error())
 		temp = x.Error()
 	default:
+		log.Error("unknown panic")
 		temp = utils.Wrap(errors.New("unknown panic"), "").Error()
 	}
 	if r.callback != nil {
