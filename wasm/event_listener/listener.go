@@ -246,3 +246,43 @@ func NewUserCallback(callback *js.Value) *UserCallback {
 func (u UserCallback) OnSelfInfoUpdated(userInfo string) {
 	u.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(userInfo).SendMessage()
 }
+
+type SignalingCallback struct {
+	CallbackWriter
+}
+
+func (s SignalingCallback) OnReceiveNewInvitation(receiveNewInvitationCallback string) {
+	s.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(receiveNewInvitationCallback).SendMessage()
+}
+
+func (s SignalingCallback) OnInviteeAccepted(inviteeAcceptedCallback string) {
+	s.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(inviteeAcceptedCallback).SendMessage()
+
+}
+func (s SignalingCallback) OnInviteeAcceptedByOtherDevice(inviteeAcceptedCallback string) {
+	s.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(inviteeAcceptedCallback).SendMessage()
+}
+
+func (s SignalingCallback) OnInviteeRejected(inviteeRejectedCallback string) {
+	s.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(inviteeRejectedCallback).SendMessage()
+}
+
+func (s SignalingCallback) OnInviteeRejectedByOtherDevice(inviteeRejectedCallback string) {
+	s.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(inviteeRejectedCallback).SendMessage()
+}
+
+func (s SignalingCallback) OnInvitationCancelled(invitationCancelledCallback string) {
+	s.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(invitationCancelledCallback).SendMessage()
+}
+
+func (s SignalingCallback) OnInvitationTimeout(invitationTimeoutCallback string) {
+	s.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(invitationTimeoutCallback).SendMessage()
+}
+
+func (s SignalingCallback) OnHangUp(hangUpCallback string) {
+	s.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(hangUpCallback).SendMessage()
+}
+
+func NewSignalingCallback(callback *js.Value) *SignalingCallback {
+	return &SignalingCallback{CallbackWriter: NewEventData(callback)}
+}
