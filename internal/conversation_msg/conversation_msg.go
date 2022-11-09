@@ -1366,9 +1366,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			lc.ConversationID = conversationID
 			lc.ConversationType = conversationType
 		}
-		log.Debug("come herer", lc)
 		c.addFaceURLAndName(&lc)
-		log.Debug("come herer2", lc)
 		err := c.db.UpdateConversation(&lc)
 		if err != nil {
 			log.Error("internal", "setConversationFaceUrlAndNickName database err:", err.Error())
