@@ -90,7 +90,7 @@ func (i Friend) SearchFriendList(keyword string, isSearchUserID, isSearchNicknam
 }
 
 func (i Friend) GetFriendInfoByFriendUserID(FriendUserID string) (*model_struct.LocalFriend, error) {
-	c, err := Exec(FriendUserID)
+	c, err := Exec(FriendUserID, i.loginUserID)
 	if err != nil {
 		return nil, err
 	} else {
