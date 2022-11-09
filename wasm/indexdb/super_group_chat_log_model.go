@@ -160,7 +160,7 @@ func (i *LocalSuperGroupChatLogs) SuperGroupGetMessageList(sourceID string, sess
 }
 
 func (i *LocalSuperGroupChatLogs) SuperGroupSearchMessageByKeyword(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	msgList, err := Exec(contentType, keywordList, keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
+	msgList, err := Exec(utils.StructToJsonString(contentType), utils.StructToJsonString(keywordList), keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
 	if err != nil {
 		return nil, err
 	} else {
@@ -283,7 +283,7 @@ func (i IndexDB) SuperGroupGetAllUnDeleteMessageSeqList() ([]uint32, error) {
 }
 
 func (i IndexDB) SuperGroupUpdateColumnsMessage(clientMsgID, groupID string, args map[string]interface{}) error {
-	_, err := Exec(clientMsgID, groupID, utils.StructToJsonString(utils.StructToJsonString(args)))
+	_, err := Exec(clientMsgID, groupID, utils.StructToJsonString(args))
 	return err
 }
 
