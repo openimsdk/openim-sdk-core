@@ -100,7 +100,7 @@ func registerFunc() {
 	wrapperGroup := wasm_wrapper.NewWrapperGroup(globalFuc)
 	js.Global().Set("createGroup", js.FuncOf(wrapperGroup.CreateGroup))
 	js.Global().Set("getGroupsInfo", js.FuncOf(wrapperGroup.GetGroupsInfo))
-	js.Global().Set("JoinGroup", js.FuncOf(wrapperGroup.JoinGroup))
+	js.Global().Set("joinGroup", js.FuncOf(wrapperGroup.JoinGroup))
 	js.Global().Set("quitGroup", js.FuncOf(wrapperGroup.QuitGroup))
 	js.Global().Set("dismissGroup", js.FuncOf(wrapperGroup.DismissGroup))
 	js.Global().Set("changeGroupMute", js.FuncOf(wrapperGroup.ChangeGroupMute))
