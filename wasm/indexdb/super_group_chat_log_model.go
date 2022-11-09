@@ -282,8 +282,8 @@ func (i IndexDB) SuperGroupGetAllUnDeleteMessageSeqList() ([]uint32, error) {
 	}
 }
 
-func (i IndexDB) SuperGroupUpdateColumnsMessage(ClientMsgID, groupID string, args map[string]interface{}) error {
-	_, err := Exec(ClientMsgID, groupID, utils.StructToJsonString(utils.StructToJsonString(args)))
+func (i IndexDB) SuperGroupUpdateColumnsMessage(clientMsgID, groupID string, args map[string]interface{}) error {
+	_, err := Exec(clientMsgID, groupID, utils.StructToJsonString(utils.StructToJsonString(args)))
 	return err
 }
 
