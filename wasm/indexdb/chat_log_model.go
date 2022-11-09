@@ -456,7 +456,7 @@ func (i *LocalChatLogs) BatchInsertExceptionMsg(MessageList []*model_struct.Loca
 }
 
 func (i IndexDB) UpdateGroupMessageHasRead(msgIDList []string, sessionType int32) error {
-	_, err := Exec(msgIDList, sessionType)
+	_, err := Exec(utils.StructToJsonString(msgIDList), sessionType)
 	return err
 }
 
