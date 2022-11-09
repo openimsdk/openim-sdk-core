@@ -180,7 +180,7 @@ func (i *LocalGroupMember) GetGroupMemberOwner(groupID string) (*model_struct.Lo
 }
 
 func (i *LocalGroupMember) GetGroupMemberListSplitByJoinTimeFilter(groupID string, offset, count int, joinTimeBegin, joinTimeEnd int64, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
-	member, err := Exec(groupID, offset, count, joinTimeBegin, joinTimeEnd, userIDList)
+	member, err := Exec(groupID, offset, count, joinTimeBegin, joinTimeEnd, utils.StructToJsonString(userIDList))
 	if err != nil {
 		return nil, err
 	} else {
