@@ -82,6 +82,7 @@ func (f *Friend) GetUserNameAndFaceUrlByUid(friendUserID, operationID string) (f
 	friendInfo, err := f.db.GetFriendInfoByFriendUserID(friendUserID)
 	if err == nil {
 		if friendInfo.Remark != "" {
+			log.Debug("GetUserNameAndFaceUrlByUid", friendInfo.Remark)
 			return friendInfo.FaceURL, friendInfo.Remark, nil, isFromSvr
 		} else {
 			return friendInfo.FaceURL, friendInfo.Nickname, nil, isFromSvr
