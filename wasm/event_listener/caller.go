@@ -127,7 +127,9 @@ func (r *ReflectCall) asyncCallWithOutCallback() {
 	if r.callback == nil {
 		r.callback = NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), nil)
 	}
+	log.Error("test", "asyncCallWithOutCallback", len(r.arguments))
 	r.callback.SetOperationID(r.arguments[0].String())
+	//strings.SplitAfter()
 	for i := 0; i < len(r.arguments); i++ {
 		//log.NewDebug(r.callback.GetOperationID(), "type is ", typeFuncName.In(temp).Kind(), r.arguments[i].IsNaN())
 		switch typeFuncName.In(temp).Kind() {
@@ -150,6 +152,7 @@ func (r *ReflectCall) asyncCallWithOutCallback() {
 		}
 	}
 	go func() {
+
 		returnValues := funcName.Call(values)
 		if len(returnValues) != 0 {
 			var result []interface{}
