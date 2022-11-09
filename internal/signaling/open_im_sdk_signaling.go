@@ -58,6 +58,7 @@ func (s *LiveSignaling) Invite(callback open_im_sdk_callback.Base, signalInviteR
 		req := &api.SignalReq_Invite{Invite: &api.SignalInviteReq{Invitation: &api.InvitationInfo{}, OfflinePushInfo: &api.OfflinePushInfo{}}}
 		var signalReq api.SignalReq
 		common.JsonUnmarshalCallback(signalInviteReq, req.Invite, callback, operationID)
+		log.Debug(operationID, "test log is ", req.Invite.Invitation.String())
 		s.SetDefaultReq(req.Invite.Invitation)
 		req.Invite.Invitation.InviterUserID = s.loginUserID
 		req.Invite.OpUserID = s.loginUserID
