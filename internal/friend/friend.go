@@ -88,6 +88,7 @@ func (f *Friend) GetUserNameAndFaceUrlByUid(friendUserID, operationID string) (f
 			return friendInfo.FaceURL, friendInfo.Nickname, nil, isFromSvr
 		}
 	} else {
+		log.Debug("GetUserNameAndFaceUrlByUid", err.Error())
 		if operationID == "" {
 			operationID = utils.OperationIDGenerator()
 		}
