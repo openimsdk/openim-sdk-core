@@ -92,7 +92,7 @@ func (i *LocalSuperGroupChatLogs) SuperGroupInsertMessage(message *model_struct.
 	return err
 }
 func (i *LocalSuperGroupChatLogs) SuperGroupGetMultipleMessage(msgIDList []string, groupID string) (result []*model_struct.LocalChatLog, err error) {
-	msgList, err := Exec(msgIDList, groupID)
+	msgList, err := Exec(utils.StructToJsonString(msgIDList), groupID)
 	if err != nil {
 		return nil, err
 	} else {
