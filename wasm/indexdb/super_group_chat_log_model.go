@@ -315,12 +315,12 @@ func (i IndexDB) SuperGroupUpdateGroupMessageHasRead(msgIDList []string, groupID
 }
 
 func (i IndexDB) SuperGroupGetNormalMsgSeq() (uint32, error) {
-	isExist, err := Exec()
+	seq, err := Exec()
 	if err != nil {
 		return 0, err
 	} else {
-		if v, ok := isExist.(uint32); ok {
-			return v, nil
+		if v, ok := seq.(float64); ok {
+			return uint32(v), nil
 		} else {
 			return 0, ErrType
 		}
