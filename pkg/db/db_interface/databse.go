@@ -145,7 +145,7 @@ type DataBase interface {
 	UpdateGroupMember(groupMember *model_struct.LocalGroupMember) error
 	UpdateGroupMemberField(groupID, userID string, args map[string]interface{}) error
 	GetGroupMemberInfoIfOwnerOrAdmin() ([]*model_struct.LocalGroupMember, error)
-	SearchGroupMembers(keyword string, groupID string, isSearchMemberNickname, isSearchUserID bool, offset, count int) (result []*model_struct.LocalGroupMember, err error)
+	SearchGroupMembersDB(keyword string, groupID string, isSearchMemberNickname, isSearchUserID bool, offset, count int) (result []*model_struct.LocalGroupMember, err error)
 	InitSuperLocalErrChatLog(groupID string)
 	SuperBatchInsertExceptionMsg(MessageList []*model_struct.LocalErrChatLog, groupID string) error
 	GetAbnormalMsgSeq() (uint32, error)

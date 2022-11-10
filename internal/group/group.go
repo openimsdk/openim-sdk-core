@@ -1250,7 +1250,7 @@ func (g *Group) searchGroupMembers(callback open_im_sdk_callback.Base, searchPar
 		log.Error(operationID, "len keywordList == 0")
 		common.CheckArgsErrCallback(callback, errors.New("no keyword"), operationID)
 	}
-	members, err := g.db.SearchGroupMembers(searchParam.KeywordList[0], searchParam.GroupID, searchParam.IsSearchMemberNickname, searchParam.IsSearchUserID, searchParam.Offset, searchParam.Count)
+	members, err := g.db.SearchGroupMembersDB(searchParam.KeywordList[0], searchParam.GroupID, searchParam.IsSearchMemberNickname, searchParam.IsSearchUserID, searchParam.Offset, searchParam.Count)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return members
 }

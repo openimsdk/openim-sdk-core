@@ -278,7 +278,7 @@ func (i *LocalGroupMember) GetGroupMemberInfoIfOwnerOrAdmin() ([]*model_struct.L
 	}
 }
 
-func (i *LocalGroupMember) SearchGroupMembers(keyword string, groupID string, isSearchMemberNickname, isSearchUserID bool, offset, count int) (result []*model_struct.LocalGroupMember, err error) {
+func (i *LocalGroupMember) SearchGroupMembersDB(keyword string, groupID string, isSearchMemberNickname, isSearchUserID bool, offset, count int) (result []*model_struct.LocalGroupMember, err error) {
 	member, err := Exec(keyword, groupID, isSearchMemberNickname, isSearchUserID, offset, count)
 	if err != nil {
 		return nil, err
