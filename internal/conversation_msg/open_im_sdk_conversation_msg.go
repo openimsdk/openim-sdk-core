@@ -3,7 +3,8 @@ package conversation_msg
 import (
 	"encoding/json"
 	"errors"
-
+	imgtype "github.com/shamsher31/goimgtype"
+	"image"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -1455,34 +1456,34 @@ func (c *Conversation) SearchLocalMessages(callback open_im_sdk_callback.Base, s
 	}()
 }
 func getImageInfo(filePath string) (*sdk_struct.ImageInfo, error) {
-	//file, err := os.Open(filePath)
-	//if err != nil {
-	//	return nil, utils.Wrap(err, "open file err")
-	//}
-	//defer func() {
-	//	if file != nil {
-	//		file.Close()
-	//	}
-	//}()
-	//
-	//img, _, err := image.Decode(file)
-	//if err != nil {
-	//	return nil, utils.Wrap(err, "image file  Decode err")
-	//}
-	//
-	//datatype, err := imgtype.Get(filePath)
-	//if err != nil {
-	//	return nil, utils.Wrap(err, "image file  get type err")
-	//}
-	//fi, err := os.Stat(filePath)
-	//if err != nil {
-	//	return nil, utils.Wrap(err, "image file  Stat err")
-	//}
-	//
-	//b := img.Bounds()
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, utils.Wrap(err, "open file err")
+	}
+	defer func() {
+		if file != nil {
+			file.Close()
+		}
+	}()
 
-	//return &sdk_struct.ImageInfo{int32(b.Max.X), int32(b.Max.Y), datatype, fi.Size()}, nil
-	return nil, nil
+	img, _, err := image.Decode(file)
+	if err != nil {
+		return nil, utils.Wrap(err, "image file  Decode err")
+	}
+
+	datatype, err := imgtype.Get(filePath)
+	if err != nil {
+		return nil, utils.Wrap(err, "image file  get type err")
+	}
+	fi, err := os.Stat(filePath)
+	if err != nil {
+		return nil, utils.Wrap(err, "image file  Stat err")
+	}
+
+	b := img.Bounds()
+
+	return &sdk_struct.ImageInfo{Width: int32(b.Max.X), Height: int32(b.Max.Y), Type: datatype, Size: fi.Size()}, nil
+	//return nil, nil
 }
 
 const TimeOffset = 5
