@@ -28,7 +28,6 @@ type Ws struct {
 
 func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, cmdCh chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value, cmdHeartbeatCh chan common.Cmd2Value) *Ws {
 	p := Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn, cmdCh: cmdCh, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh, cmdHeartbeatCh: cmdHeartbeatCh}
-	log.NewDebug("init:", "ws goroutine starting!!!!!")
 	go p.ReadData()
 	return &p
 }
@@ -110,7 +109,7 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 	if flag == 1 {
 		log.Debug(operationID, "send ok wait resp")
 		r1, r2 := w.WaitResp(ch, timeout, wsReq.OperationID, connSend)
-		return r1, utils.Wrap(r2, "")
+		return r1, r2
 	} else {
 		log.Error(operationID, "send failed")
 		err := errors.New("send failed")
