@@ -858,7 +858,7 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 		c.sendMessageToServer(&s, lc, callback, delFile, p, options, operationID)
 	}()
 }
-func (c *Conversation) SendMessageByBuffer(callback open_im_sdk_callback.SendMsgCallBack, message, recvID, groupID string, offlinePushInfo string, operationID string,buffer bytes.Buffer) {
+func (c *Conversation) SendMessageByBuffer(callback open_im_sdk_callback.SendMsgCallBack, message, recvID, groupID string, offlinePushInfo string, operationID string, buffer bytes.Buffer) {
 	if callback == nil {
 		return
 	}
@@ -1050,6 +1050,7 @@ func (c *Conversation) SendMessageByBuffer(callback open_im_sdk_callback.SendMsg
 		}
 		c.sendMessageToServer(&s, lc, callback, delFile, p, options, operationID)
 	}()
+}
 
 func (c *Conversation) InternalSendMessage(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, recvID, groupID, operationID string, p *server_api_params.OfflinePushInfo, onlineUserOnly bool, options map[string]bool) (*server_api_params.UserSendMsgResp, error) {
 	if recvID == "" && groupID == "" {
