@@ -221,6 +221,7 @@ const (
 	NewConDirect                 = 12
 	ConversationLatestMsgHasRead = 13
 	UpdateMsgFaceUrlAndNickName  = 14
+	SyncConversation             = 15
 
 	HasRead = 1
 	NotRead = 0

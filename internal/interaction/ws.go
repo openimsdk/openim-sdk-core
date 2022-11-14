@@ -23,11 +23,12 @@ type Ws struct {
 	cmdCh              chan common.Cmd2Value //waiting logout cmd
 	pushMsgAndMaxSeqCh chan common.Cmd2Value //recv push msg  -> channel
 	cmdHeartbeatCh     chan common.Cmd2Value //
+	conversationCH     chan common.Cmd2Value
 	JustOnceFlag       bool
 }
 
-func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, cmdCh chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value, cmdHeartbeatCh chan common.Cmd2Value) *Ws {
-	p := Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn, cmdCh: cmdCh, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh, cmdHeartbeatCh: cmdHeartbeatCh}
+func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, cmdCh chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value, cmdHeartbeatCh, conversationCH chan common.Cmd2Value) *Ws {
+	p := Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn, cmdCh: cmdCh, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh, cmdHeartbeatCh: cmdHeartbeatCh, conversationCH: conversationCH}
 	log.NewDebug("init:", "ws goroutine starting!!!!!")
 	go p.ReadData()
 	return &p
@@ -166,6 +167,8 @@ func (w *Ws) reConnSleep(operationID string, sleep int32) (error, bool) {
 	if err != nil {
 		log.Error(operationID, "ReConn failed ", err.Error(), "is need re connect ", isNeedReConn)
 		time.Sleep(time.Duration(sleep) * time.Second)
+	} else {
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.SyncConversation, Args: operationID}, w.conversationCH)
 	}
 	return err, isNeedReConn
 }
@@ -202,10 +205,6 @@ func (w *Ws) ReadData() {
 			}
 			continue
 		}
-
-		//	timeout := 5
-		//	u.WsConn.SetReadTimeout(timeout)
-		log.Warn(operationID, "first", w.WsConn.conn)
 		msgType, message, err := w.WsConn.conn.Read(context.Background())
 		if err != nil {
 			isErrorOccurred = true
