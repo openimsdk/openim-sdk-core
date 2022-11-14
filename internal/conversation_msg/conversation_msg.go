@@ -1463,6 +1463,11 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			log.Info("internal", "getMultipleConversationModel success :", result)
 			c.ConversationListener.OnNewConversation(utils.StructToJsonString(result))
 		}
+	case constant.SyncConversation:
+		operationID := node.Args.(string)
+		log.Debug(operationID, "reconn sync conversation start")
+		c.SyncConversations(operationID, 0)
+		c.SyncConversationUnreadCount(operationID)
 
 	}
 }
