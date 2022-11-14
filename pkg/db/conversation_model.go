@@ -259,13 +259,13 @@ package db
 //	}
 //	return utils.Wrap(t.Error, "IncrConversationUnreadCount failed")
 //}
-//func (d *DataBase) GetTotalUnreadMsgCount() (totalUnreadCount int32, err error) {
+//func (d *DataBase) GetTotalUnreadMsgCountDB() (totalUnreadCount int32, err error) {
 //	d.mRWMutex.Lock()
 //	defer d.mRWMutex.Unlock()
 //	var result []int64
 //	err = d.conn.Model(&model_struct.LocalConversation{}).Where("recv_msg_opt < ?", constant.ReceiveNotNotifyMessage).Pluck("unread_count", &result).Error
 //	if err != nil {
-//		return totalUnreadCount, utils.Wrap(errors.New("GetTotalUnreadMsgCount err"), "GetTotalUnreadMsgCount err")
+//		return totalUnreadCount, utils.Wrap(errors.New("GetTotalUnreadMsgCountDB err"), "GetTotalUnreadMsgCountDB err")
 //	}
 //	for _, v := range result {
 //		totalUnreadCount += int32(v)

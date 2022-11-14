@@ -198,11 +198,11 @@ func (c *Conversation) GetTotalUnreadMsgCount(callback open_im_sdk_callback.Base
 		return
 	}
 	go func() {
-		log.NewInfo(operationID, "GetTotalUnreadMsgCount args: ")
-		count, err := c.db.GetTotalUnreadMsgCount()
+		log.NewInfo(operationID, "GetTotalUnreadMsgCountDB args: ")
+		count, err := c.db.GetTotalUnreadMsgCountDB()
 		common.CheckDBErrCallback(callback, err, operationID)
 		callback.OnSuccess(utils.Int32ToString(count))
-		log.NewInfo(operationID, "GetTotalUnreadMsgCount callback: ", utils.Int32ToString(count))
+		log.NewInfo(operationID, "GetTotalUnreadMsgCountDB callback: ", utils.Int32ToString(count))
 	}()
 }
 

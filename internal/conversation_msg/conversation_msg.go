@@ -1316,7 +1316,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		if err := c.db.UpdateColumnsConversation(node.ConID, map[string]interface{}{"unread_count": 0}); err != nil {
 			log.Error("internal", "UpdateColumnsConversation err", err.Error(), node.ConID)
 		} else {
-			totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
+			totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB()
 			if err == nil {
 				c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
 			} else {
@@ -1343,7 +1343,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			return
 		}
 	case constant.TotalUnreadMessageChanged:
-		totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
+		totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB()
 		if err != nil {
 			log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
 		} else {
@@ -1468,6 +1468,12 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		log.Debug(operationID, "reconn sync conversation start")
 		c.SyncConversations(operationID, 0)
 		c.SyncConversationUnreadCount(operationID)
+		totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB()
+		if err != nil {
+			log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
+		} else {
+			c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
+		}
 	}
 }
 func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {

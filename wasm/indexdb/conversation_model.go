@@ -267,7 +267,7 @@ func (i IndexDB) DecrConversationUnreadCount(conversationID string, count int64)
 	_, err := Exec(conversationID, count)
 	return err
 }
-func (i IndexDB) GetTotalUnreadMsgCount() (totalUnreadCount int32, err error) {
+func (i IndexDB) GetTotalUnreadMsgCountDB() (totalUnreadCount int32, err error) {
 	count, err := Exec()
 	if err != nil {
 		return 0, err
