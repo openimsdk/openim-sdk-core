@@ -1468,6 +1468,12 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		log.Debug(operationID, "reconn sync conversation start")
 		c.SyncConversations(operationID, 0)
 		c.SyncConversationUnreadCount(operationID)
+		totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB()
+		if err != nil {
+			log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
+		} else {
+			c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
+		}
 
 	}
 }
