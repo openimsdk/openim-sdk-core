@@ -55,6 +55,7 @@ func (m *Minio) UploadImageByBuffer(buffer bytes.Buffer, size int64, onProgressF
 	opts := &minio.Options{
 		Creds: credentials.NewStaticV4(minioResp.AccessKeyID, minioResp.SecretAccessKey, minioResp.SessionToken),
 	}
+	log.NewDebug("buffer length", buffer.Len())
 	switch endPoint.Scheme {
 	case "http":
 		opts.Secure = false
