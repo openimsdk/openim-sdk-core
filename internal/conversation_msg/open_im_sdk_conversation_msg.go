@@ -961,16 +961,7 @@ func (c *Conversation) SendMessageByBuffer(callback open_im_sdk_callback.SendMsg
 		if s.Status != constant.MsgStatusSendSuccess { //filter forward message
 			switch s.ContentType {
 			case constant.Picture:
-				var sourcePath string
-				if utils.FileExist(s.PictureElem.SourcePath) {
-					sourcePath = s.PictureElem.SourcePath
-					delFile = append(delFile, utils.FileTmpPath(s.PictureElem.SourcePath, c.DataDir))
-				} else {
-					sourcePath = utils.FileTmpPath(s.PictureElem.SourcePath, c.DataDir)
-					delFile = append(delFile, sourcePath)
-				}
-				log.Info(operationID, "file", sourcePath, delFile)
-				sourceUrl, uuid, err := c.UploadImage(sourcePath, callback.OnProgress)
+				sourceUrl, uuid, err := c.UploadImageByBuffer(buffer, s.PictureElem.SourcePicture.Size, callback.OnProgress)
 				c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
 				s.PictureElem.SourcePicture.Url = sourceUrl
 				s.PictureElem.SourcePicture.UUID = uuid

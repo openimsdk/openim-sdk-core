@@ -1,6 +1,7 @@
 package event_listener
 
 import (
+	"bytes"
 	"errors"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
@@ -17,6 +18,13 @@ type Caller interface {
 	AsyncCallWithOutCallback() interface{}
 	// SyncCall has not promise
 	SyncCall() (result []interface{})
+}
+
+func extractArrayBuffer(arrayBuffer js.Value) []byte {
+	uint8Array := js.Global().Get("Uint8Array").New(arrayBuffer)
+	dst := make([]byte, uint8Array.Length())
+	js.CopyBytesToGo(dst, uint8Array)
+	return dst
 }
 
 type FuncLogic func()
@@ -94,6 +102,8 @@ func (r *ReflectCall) asyncCallWithCallback() {
 			values = append(values, reflect.ValueOf(r.arguments[i].Bool()))
 		case reflect.Int64:
 			values = append(values, reflect.ValueOf(int64(r.arguments[i].Int())))
+		case reflect.Struct:
+			values = append(values, reflect.ValueOf(bytes.NewBuffer(extractArrayBuffer(r.arguments[i]))))
 		default:
 			log.Error("AsyncCallWithCallback", "input args type not support:", strconv.Itoa(int(typeFuncName.In(temp).Kind())))
 			panic("input args type not support:" + strconv.Itoa(int(typeFuncName.In(temp).Kind())))

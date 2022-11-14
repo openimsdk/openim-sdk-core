@@ -270,16 +270,16 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
 
 	var objStorage comm3.ObjectStorage
-	//switch u.imConfig.ObjectStorage {
-	//case "cos":
-	//	objStorage = comm2.NewCOS(u.postApi)
-	//case "minio":
-	//	objStorage = comm2.NewMinio(u.postApi)
-	//case "oss":
-	//	objStorage = comm2.NewOSS(u.postApi)
-	//default:
-	//	objStorage = comm2.NewCOS(u.postApi)
-	//}
+	switch u.imConfig.ObjectStorage {
+	case "cos":
+		//objStorage = comm2.NewCOS(u.postApi)
+	case "minio":
+		objStorage = comm2.NewMinio(u.postApi)
+	case "oss":
+		//objStorage = comm2.NewOSS(u.postApi)
+	default:
+		//objStorage = comm2.NewCOS(u.postApi)
+	}
 	u.signaling = signaling.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID, u.imConfig.Platform, u.db)
 
 	u.conversation = conv.NewConversation(u.ws, u.db, u.postApi, u.conversationCh,

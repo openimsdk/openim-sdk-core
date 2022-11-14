@@ -1,6 +1,7 @@
 package open_im_sdk
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"open_im_sdk/internal/login"
@@ -800,6 +801,14 @@ func SendMessageNotOss(callback open_im_sdk_callback.SendMsgCallBack, operationI
 		return
 	}
 	userForSDK.Conversation().SendMessageNotOss(callback, message, recvID, groupID, offlinePushInfo, operationID)
+}
+func SendMessageByBuffer(callback open_im_sdk_callback.SendMsgCallBack, operationID string, message, recvID, groupID string, offlinePushInfo string, buffer bytes.Buffer) {
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	userForSDK.Conversation().SendMessageByBuffer(callback, message, recvID, groupID, offlinePushInfo, operationID, buffer)
 }
 func FindMessageList(callback open_im_sdk_callback.Base, operationID string, findMessageOptions string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
