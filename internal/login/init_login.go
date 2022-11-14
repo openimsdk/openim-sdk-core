@@ -279,6 +279,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		//objStorage = comm2.NewOSS(u.postApi)
 	default:
 		//objStorage = comm2.NewCOS(u.postApi)
+		objStorage = comm2.NewMinio(u.postApi)
 	}
 	u.signaling = signaling.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID, u.imConfig.Platform, u.db)
 
