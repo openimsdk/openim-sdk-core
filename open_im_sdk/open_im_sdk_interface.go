@@ -3,6 +3,7 @@ package open_im_sdk
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/login"
 	common2 "open_im_sdk/internal/obj_storage"
@@ -42,11 +43,11 @@ func SetHeartbeatInterval(heartbeatInterval int) {
 
 func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, config string) bool {
 	if userForSDK != nil {
-		log.Warn(operationID, "Initialize multiple times, use the existing ", userForSDK)
+		fmt.Println(operationID, "Initialize multiple times, use the existing ", userForSDK)
 		return true
 	}
 	if err := json.Unmarshal([]byte(config), &sdk_struct.SvrConf); err != nil {
-		log.Error(operationID, "Unmarshal failed ", err.Error(), config)
+		fmt.Println(operationID, "Unmarshal failed ", err.Error(), config)
 		return false
 	}
 	log.NewPrivateLog("", sdk_struct.SvrConf.LogLevel)
@@ -558,6 +559,10 @@ func RemoveBlack(callback open_im_sdk_callback.Base, operationID string, removeU
 }
 
 func SetFriendListener(listener open_im_sdk_callback.OnFriendshipListener) {
+	if listener == nil || userForSDK == nil {
+		log.Error("callback or userForSDK is nil")
+		return
+	}
 	userForSDK.SetFriendListener(listener)
 }
 
@@ -697,20 +702,40 @@ func GetTotalUnreadMsgCount(callback open_im_sdk_callback.Base, operationID stri
 
 //
 func SetConversationListener(listener open_im_sdk_callback.OnConversationListener) {
+	if listener == nil || userForSDK == nil {
+		log.Error("callback or userForSDK is nil")
+		return
+	}
 	userForSDK.SetConversationListener(listener)
 }
 func SetAdvancedMsgListener(listener open_im_sdk_callback.OnAdvancedMsgListener) {
+	if listener == nil || userForSDK == nil {
+		log.Error("callback or userForSDK is nil")
+		return
+	}
 	userForSDK.SetAdvancedMsgListener(listener)
 }
 func SetBatchMsgListener(listener open_im_sdk_callback.OnBatchMsgListener) {
+	if listener == nil || userForSDK == nil {
+		log.Error("callback or userForSDK is nil")
+		return
+	}
 	userForSDK.SetBatchMsgListener(listener)
 }
 
 func SetUserListener(listener open_im_sdk_callback.OnUserListener) {
+	if listener == nil || userForSDK == nil {
+		log.Error("callback or userForSDK is nil")
+		return
+	}
 	userForSDK.SetUserListener(listener)
 }
 
 func SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMomentsListener) {
+	if listener == nil || userForSDK == nil {
+		log.Error("callback or userForSDK is nil")
+		return
+	}
 	userForSDK.SetWorkMomentsListener(listener)
 }
 func CreateAdvancedTextMessage(operationID string, text, messageEntityList string) string {
