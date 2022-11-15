@@ -73,7 +73,7 @@ func (m *Minio) uploadByBuffer(buffer *bytes.Buffer, size int64, fileType string
 		log.NewError("", utils.GetSelfFuncName(), "url parse failed, pleace check config/config.yaml", err.Error())
 		return "", "", utils.Wrap(err, "")
 	}
-	newName := fmt.Sprintf("%d-%d%s", time.Now().UnixNano(), rand.Int(), fileType)
+	newName := fmt.Sprintf("%d-%d%s", time.Now().UnixNano(), rand.Int(), ".png")
 	tmepType := "image/png"
 	opts := &minio.Options{
 		Creds: credentials.NewStaticV4(minioResp.AccessKeyID, minioResp.SecretAccessKey, minioResp.SessionToken),
