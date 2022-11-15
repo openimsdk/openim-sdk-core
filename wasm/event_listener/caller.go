@@ -106,8 +106,8 @@ func (r *ReflectCall) asyncCallWithCallback() {
 			values = append(values, reflect.ValueOf(r.arguments[i].Bool()))
 		case reflect.Int64:
 			values = append(values, reflect.ValueOf(int64(r.arguments[i].Int())))
-		case reflect.Ptr:
-			values = append(values, reflect.ValueOf(bytes.NewBuffer(extractArrayBuffer(r.arguments[i]))))
+		case reflect.Struct:
+			values = append(values, reflect.ValueOf(*bytes.NewBuffer(extractArrayBuffer(r.arguments[i]))))
 		default:
 			log.Error("AsyncCallWithCallback", "input args type not support:", strconv.Itoa(int(typeFuncName.In(temp).Kind())))
 			panic("input args type not support:" + strconv.Itoa(int(typeFuncName.In(temp).Kind())))
