@@ -38,18 +38,18 @@ func (m *Minio) getMinioCredentials() (*server_api_params.MinioStorageCredential
 	}
 	return &resp, nil
 }
-func (m *Minio) UploadImageByBuffer(buffer bytes.Buffer, size int64, imageType string, onProgressFun func(int)) (string, string, error) {
+func (m *Minio) UploadImageByBuffer(buffer *bytes.Buffer, size int64, imageType string, onProgressFun func(int)) (string, string, error) {
 	return m.uploadByBuffer(buffer, size, imageType, onProgressFun)
 }
-func (m *Minio) UploadSoundByBuffer(buffer bytes.Buffer, size int64, fileType string, onProgressFun func(int)) (string, string, error) {
+func (m *Minio) UploadSoundByBuffer(buffer *bytes.Buffer, size int64, fileType string, onProgressFun func(int)) (string, string, error) {
 	return m.uploadByBuffer(buffer, size, fileType, onProgressFun)
 }
 
-func (m *Minio) UploadFileByBuffer(buffer bytes.Buffer, size int64, fileType string, onProgressFun func(int)) (string, string, error) {
+func (m *Minio) UploadFileByBuffer(buffer *bytes.Buffer, size int64, fileType string, onProgressFun func(int)) (string, string, error) {
 	return m.uploadByBuffer(buffer, size, fileType, onProgressFun)
 }
 
-func (m *Minio) UploadVideoByBuffer(videoBuffer, snapshotBuffer bytes.Buffer, videoSize, snapshotSize int64, videoType string, onProgressFun func(int)) (string, string, string, string, error) {
+func (m *Minio) UploadVideoByBuffer(videoBuffer, snapshotBuffer *bytes.Buffer, videoSize, snapshotSize int64, videoType string, onProgressFun func(int)) (string, string, string, string, error) {
 	videoURL, videoName, err := m.uploadByBuffer(videoBuffer, videoSize, videoType, onProgressFun)
 	if err != nil {
 		return "", "", "", "", utils.Wrap(err, "")
@@ -61,7 +61,7 @@ func (m *Minio) UploadVideoByBuffer(videoBuffer, snapshotBuffer bytes.Buffer, vi
 	return snapshotURL, snapshotUUID, videoURL, videoName, nil
 }
 
-func (m *Minio) uploadByBuffer(buffer bytes.Buffer, size int64, fileType string, onProgressFun func(int)) (string, string, error) {
+func (m *Minio) uploadByBuffer(buffer *bytes.Buffer, size int64, fileType string, onProgressFun func(int)) (string, string, error) {
 	minioResp, err := m.getMinioCredentials()
 	if err != nil {
 		log.NewError("", utils.GetSelfFuncName(), "getMinioCredentials from server failed, please check server log", err.Error(), "resp: ")
@@ -93,7 +93,7 @@ func (m *Minio) uploadByBuffer(buffer bytes.Buffer, size int64, fileType string,
 	progressBar := NewUploadProgress(size, onProgressFun)
 	//_, err = client.FPutObject(context.Background(), minioResp.BucketName, newName, filePath, minio.PutObjectOptions{ContentType: newType,
 	//	Progress: progressBar, RetainUntilDate:time.Now().Add(time.Duration(minioResp.StorageTime)*time.Hour*24), Mode: "", Rente})
-	_, err = client.PutObject(context.Background(), minioResp.BucketName, newName, &buffer, size, minio.PutObjectOptions{ContentType: tmepType,
+	_, err = client.PutObject(context.Background(), minioResp.BucketName, newName, buffer, size, minio.PutObjectOptions{ContentType: tmepType,
 		Progress: progressBar})
 	if err != nil {
 		log.NewError("0", utils.GetSelfFuncName(), "FPutObject failed", err.Error(), newName, size, fileType)

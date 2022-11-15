@@ -858,7 +858,7 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 		c.sendMessageToServer(&s, lc, callback, delFile, p, options, operationID)
 	}()
 }
-func (c *Conversation) SendMessageByBuffer(callback open_im_sdk_callback.SendMsgCallBack, message, recvID, groupID string, offlinePushInfo string, operationID string, buffer1, buffer2 bytes.Buffer) {
+func (c *Conversation) SendMessageByBuffer(callback open_im_sdk_callback.SendMsgCallBack, message, recvID, groupID string, offlinePushInfo string, operationID string, buffer1, buffer2 *bytes.Buffer) {
 	if callback == nil {
 		return
 	}
