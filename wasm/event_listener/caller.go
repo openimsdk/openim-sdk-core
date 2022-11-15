@@ -77,10 +77,10 @@ func (r *ReflectCall) asyncCallWithCallback() {
 		log.Error("AsyncCallWithCallback", "not set callback")
 		panic(ErrNotSetCallback)
 	}
-	funcFieldsNum := typeFuncName.NumIn()
-	if funcFieldsNum-len(r.arguments) > 1 {
-		r.arguments = append(r.arguments, js.Value{})
-	}
+	//funcFieldsNum := typeFuncName.NumIn()
+	//if funcFieldsNum-len(r.arguments) > 1 {
+	//	r.arguments = append(r.arguments, js.Value{})
+	//}
 	for i := 0; i < len(r.arguments); i++ {
 		if hasCallback {
 			temp++
