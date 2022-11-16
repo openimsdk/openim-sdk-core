@@ -16,6 +16,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/jinzhu/copier v0.3.4
 	github.com/jonboulle/clockwork v0.2.2 // indirect
+	github.com/klauspost/compress v1.15.9
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
 	github.com/minio/minio-go/v7 v7.0.43

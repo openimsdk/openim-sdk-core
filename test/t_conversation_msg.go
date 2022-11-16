@@ -271,7 +271,7 @@ func DoTestSetOneConversationPrivateChat(conversationID string, privateChat bool
 func DoTestSetBurnDuration(conversationID string) {
 	var test TestSetConversationPinnedCallback
 	test.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.SetOneConversationBurnDuration(test, test.OperationID, conversationID, 80)
+	open_im_sdk.SetOneConversationBurnDuration(test, test.OperationID, conversationID, 180)
 }
 
 func DoTestSetOneConversationRecvMessageOpt(conversationID string, opt int) {

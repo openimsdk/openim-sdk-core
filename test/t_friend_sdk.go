@@ -675,9 +675,9 @@ func (t *TestSendMsgCallBack) OnSuccess(data string) {
 	log.Info(t.OperationID, "test_openim: send msg success: |", t.msgID, t.msg, data)
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
-	k, _ := SendSuccAllMsg[t.msgID]
-	k.SendSeccCallbackTime = utils.GetCurrentTimestampByMill()
-	k.SendIDRecvID = t.sendID + t.recvID
+	//k, _ := SendSuccAllMsg[t.msgID]
+	//k.SendSeccCallbackTime = utils.GetCurrentTimestampByMill()
+	//k.SendIDRecvID = t.sendID + t.recvID
 }
 
 func (t *TestSendMsgCallBack) OnProgress(progress int) {

@@ -2,10 +2,12 @@ package interaction
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/gob"
 	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"net/http"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
@@ -108,7 +110,15 @@ func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (*websocket.Conn, error) {
 		if len(buff.Bytes()) > constant.MaxTotalMsgLen {
 			return nil, utils.Wrap(errors.New("msg too long"), utils.IntToString(len(buff.Bytes())))
 		}
-		return u.conn, utils.Wrap(u.conn.WriteMessage(websocket.BinaryMessage, buff.Bytes()), "")
+		var gzipBuffer bytes.Buffer
+		gz := gzip.NewWriter(&gzipBuffer)
+		if _, err := gz.Write(buff.Bytes()); err != nil {
+			return nil, utils.Wrap(err, "")
+		}
+		if err := gz.Close(); err != nil {
+			return nil, utils.Wrap(err, "")
+		}
+		return u.conn, utils.Wrap(u.conn.WriteMessage(websocket.BinaryMessage, gzipBuffer.Bytes()), "")
 	} else {
 		return nil, utils.Wrap(errors.New("conn==nil"), "")
 	}
@@ -161,7 +171,7 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool, bool)
 
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s", sdk_struct.SvrConf.WsAddr, u.loginUserID, u.token, sdk_struct.SvrConf.Platform, operationID)
 	log.Info(operationID, "ws connect begin, dail: ", url)
-	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
+	conn, httpResp, err := websocket.DefaultDialer.Dial(url, http.Header{"compression": []string{"gzip"}})
 	log.Info(operationID, "ws connect end, dail : ", url)
 	if err != nil {
 		log.Error(operationID, "ws connect failed ", url, err.Error())
