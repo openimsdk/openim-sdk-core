@@ -14,7 +14,7 @@ func main() {
 	log.Warn("", "CreateWorkGroup  start, group member number: ", *groupMemberNumber)
 	*groupMemberNumber = *groupMemberNumber + 2
 
-	//test.CreateWorkGroup(*groupMemberNumber)
+	test.CreateWorkGroup(*groupMemberNumber)
 	log.Warn("", "CreateWorkGroup finish, group member number: ", *groupMemberNumber+1)
 
 }

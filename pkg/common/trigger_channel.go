@@ -133,6 +133,11 @@ type UpdateMessageInfo struct {
 	GroupID  string
 }
 
+type SourceIDAndSessionType struct {
+	SourceID    string
+	SessionType int
+}
+
 func UnInitAll(conversationCh chan Cmd2Value) error {
 	c2v := Cmd2Value{Cmd: constant.CmdUnInit}
 	return sendCmd(conversationCh, c2v, 100)

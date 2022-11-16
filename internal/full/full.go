@@ -68,7 +68,6 @@ func (u *Full) getUsersInfo(callback open_im_sdk_callback.Base, userIDList sdk.G
 				_ = u.user.UpdateMsgSenderFaceURLAndSenderNickname(v.UserID, v.FaceURL, v.Nickname, constant.SingleChatType)
 				//Update session information of local non-friends
 				_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.UpdateConInfo{UserID: v.UserID}}, u.ch)
-
 			}
 		}()
 	}

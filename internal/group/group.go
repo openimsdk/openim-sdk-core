@@ -1012,8 +1012,8 @@ func (g *Group) SyncJoinedGroupList(operationID string) {
 		callbackData := sdk.GroupInfoChangedCallback(*onServer[index])
 		if g.listener != nil {
 			g.listener.OnGroupInfoChanged(utils.StructToJsonString(callbackData))
-			//	conversationID := utils.GetConversationIDBySessionType(callbackData.GroupID, constant.GroupChatType)
-			//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: detail.Group.GroupID, SessionType: constant.GroupChatType}}, conversationCh)
+			conID := utils.GetConversationIDBySessionType(callbackData.GroupID, constant.GroupChatType)
+			common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conID, Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: callbackData.GroupID, SessionType: constant.GroupChatType}}, g.conversationCh)
 			log.Info(operationID, "OnGroupInfoChanged", utils.StructToJsonString(callbackData))
 		}
 	}
