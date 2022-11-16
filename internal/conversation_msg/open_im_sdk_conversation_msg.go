@@ -181,6 +181,18 @@ func (c *Conversation) SetOneConversationPrivateChat(callback open_im_sdk_callba
 	}()
 }
 
+func (c *Conversation) SetOneConversationBurnDuration(callback open_im_sdk_callback.Base, conversationID string, burnDuration int32, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", conversationID, burnDuration)
+		c.setOneConversationBurnDuration(callback, conversationID, burnDuration, operationID)
+		callback.OnSuccess(sdk_params_callback.SetConversationBurnDurationOptCallback)
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", sdk_params_callback.SetConversationBurnDurationOptCallback)
+	}()
+}
+
 func (c *Conversation) SetOneConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationID string, opt int, operationID string) {
 	if callback == nil {
 		return
@@ -627,6 +639,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			if err == nil && oldLc.IsPrivateChat {
 				options[constant.IsNotPrivate] = false
 				s.AttachedInfoElem.IsPrivateChat = true
+				s.AttachedInfoElem.BurnDuration = oldLc.BurnDuration
 				s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 			}
 			if err != nil {
@@ -819,6 +832,7 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 			if err == nil && oldLc.IsPrivateChat {
 				options[constant.IsNotPrivate] = false
 				s.AttachedInfoElem.IsPrivateChat = true
+				s.AttachedInfoElem.BurnDuration = oldLc.BurnDuration
 				s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 			}
 			if err != nil {

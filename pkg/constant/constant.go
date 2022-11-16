@@ -314,6 +314,7 @@ const (
 	FieldIsNotInGroup  = 6
 	FieldEx            = 7
 	FieldUnread        = 8
+	FieldBurnDuration  = 9
 )
 const (
 	KeywordMatchOr  = 0
