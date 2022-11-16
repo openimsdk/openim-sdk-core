@@ -73,8 +73,7 @@ func (m *Minio) uploadByBuffer(buffer *bytes.Buffer, size int64, fileType string
 		log.NewError("", utils.GetSelfFuncName(), "url parse failed, pleace check config/config.yaml", err.Error())
 		return "", "", utils.Wrap(err, "")
 	}
-	newName := fmt.Sprintf("%d-%d%s", time.Now().UnixNano(), rand.Int(), ".png")
-	tmepType := "image/png"
+	newName := fmt.Sprintf("%d-%d%s", time.Now().UnixNano(), rand.Int(), fileType)
 	opts := &minio.Options{
 		Creds: credentials.NewStaticV4(minioResp.AccessKeyID, minioResp.SecretAccessKey, minioResp.SessionToken),
 	}
@@ -93,7 +92,7 @@ func (m *Minio) uploadByBuffer(buffer *bytes.Buffer, size int64, fileType string
 	progressBar := NewUploadProgress(size, onProgressFun)
 	//_, err = client.FPutObject(context.Background(), minioResp.BucketName, newName, filePath, minio.PutObjectOptions{ContentType: newType,
 	//	Progress: progressBar, RetainUntilDate:time.Now().Add(time.Duration(minioResp.StorageTime)*time.Hour*24), Mode: "", Rente})
-	_, err = client.PutObject(context.Background(), minioResp.BucketName, newName, buffer, size, minio.PutObjectOptions{ContentType: tmepType,
+	_, err = client.PutObject(context.Background(), minioResp.BucketName, newName, buffer, size, minio.PutObjectOptions{ContentType: fileType,
 		Progress: progressBar})
 	if err != nil {
 		log.NewError("0", utils.GetSelfFuncName(), "FPutObject failed", err.Error(), newName, size, fileType)
