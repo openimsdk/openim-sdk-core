@@ -8,12 +8,12 @@ import (
 )
 
 func main() {
-	APIADDR := "http://43.155.69.205:10002"
-	WSADDR := "ws://43.155.69.205:10001"
+	APIADDR := "http://43.154.157.177:10002"
+	WSADDR := "ws://43.154.157.177:10001"
 	REGISTERADDR := APIADDR + "/user_register"
 	ACCOUNTCHECK := APIADDR + "/manager/account_check"
 	TOKENADDR := APIADDR + "/auth/user_token"
-	SECRET := "tuoyun"
+	SECRET := "openIM123"
 	SENDINTERVAL := 20
 	test.REGISTERADDR = REGISTERADDR
 	test.TOKENADDR = TOKENADDR
@@ -21,7 +21,7 @@ func main() {
 	test.SENDINTERVAL = SENDINTERVAL
 	test.WSADDR = WSADDR
 	test.ACCOUNTCHECK = ACCOUNTCHECK
-	strMyUidx := "3433303585"
+	strMyUidx := "2346196870"
 
 	//	var onlineNum *int          //Number of online users
 	//	var senderNum *int          //Number of users sending messages
@@ -43,9 +43,10 @@ func main() {
 	//test.DoTestSearchLocalMessages()
 	//test.DoTestInviteInGroup()
 	//time.Sleep(time.Second*6)
-	test.DoTestSignalGetRoomByGroupID("1826384574")
-	test.DoTestSignalGetTokenByRoomID("1826384574")
-	test.DoTestSendImageMsg("3433303585")
+	test.DoTestSetBurnDuration("single_2861383134")
+	//test.DoTestSignalGetRoomByGroupID("1826384574")
+	//test.DoTestSignalGetTokenByRoomID("1826384574")
+	//test.DoTestSendImageMsg("3433303585")
 	//test.DoTestGetUserInDepartment()
 	//test.DoTestGetDepartmentMemberAndSubDepartment()
 	//test.DoTestDeleteAllMsgFromLocalAndSvr()

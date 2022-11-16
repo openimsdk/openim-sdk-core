@@ -172,6 +172,7 @@ type AtInfo struct {
 type AttachedInfoElem struct {
 	GroupHasReadInfo          GroupHasReadInfo `json:"groupHasReadInfo,omitempty"`
 	IsPrivateChat             bool             `json:"isPrivateChat"`
+	BurnDuration              int32            `json:"burnDuration"`
 	HasReadTime               int64            `json:"hasReadTime"`
 	NotSenderNotificationPush bool             `json:"notSenderNotificationPush"`
 	MessageEntityList         []*MessageEntity `json:"messageEntityList,omitempty"`

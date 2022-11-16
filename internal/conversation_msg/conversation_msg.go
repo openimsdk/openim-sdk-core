@@ -436,6 +436,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			nc.GroupAtType = v.GroupAtType
 			nc.IsPinned = v.IsPinned
 			nc.IsPrivateChat = v.IsPrivateChat
+			if nc.IsPrivateChat {
+				nc.BurnDuration = v.BurnDuration
+			}
 			nc.IsNotInGroup = v.IsNotInGroup
 			nc.AttachedInfo = v.AttachedInfo
 			nc.Ex = v.Ex
@@ -855,6 +858,9 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 			nc.GroupAtType = v.GroupAtType
 			nc.IsPinned = v.IsPinned
 			nc.IsPrivateChat = v.IsPrivateChat
+			if nc.IsPrivateChat {
+				nc.BurnDuration = v.BurnDuration
+			}
 			nc.IsNotInGroup = v.IsNotInGroup
 			nc.AttachedInfo = v.AttachedInfo
 			nc.Ex = v.Ex

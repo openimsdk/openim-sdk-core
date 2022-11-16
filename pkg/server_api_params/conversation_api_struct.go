@@ -7,10 +7,11 @@ type Conversation struct {
 	UserID                string `json:"userID"`
 	GroupID               string `json:"groupID"`
 	RecvMsgOpt            int32  `json:"recvMsgOpt"`
-	UnreadCount           int32  `json:"unreadCount" `
+	UnreadCount           int32  `json:"unreadCount"`
 	DraftTextTime         int64  `json:"draftTextTime"`
 	IsPinned              bool   `json:"isPinned"`
 	IsPrivateChat         bool   `json:"isPrivateChat"`
+	BurnDuration          int32  `json:"burnDuration"`
 	GroupAtType           int32  `json:"groupAtType"`
 	IsNotInGroup          bool   `json:"isNotInGroup"`
 	UpdateUnreadCountTime int64  ` json:"updateUnreadCountTime"`

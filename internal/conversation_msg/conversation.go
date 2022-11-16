@@ -122,6 +122,16 @@ func (c *Conversation) setOneConversationPrivateChat(callback open_im_sdk_callba
 	c.SyncConversations(operationID, 0)
 }
 
+func (c *Conversation) setOneConversationBurnDuration(callback open_im_sdk_callback.Base, conversationID string, burnDuration int32, operationID string) {
+	apiReq := &server_api_params.ModifyConversationFieldReq{}
+	localConversation, err := c.db.GetConversation(conversationID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	apiReq.BurnDuration = burnDuration
+	apiReq.FieldType = constant.FieldBurnDuration
+	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
+	c.SyncConversations(operationID, 0)
+}
+
 func (c *Conversation) setOneConversationPinned(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
 	apiReq := &server_api_params.ModifyConversationFieldReq{}
 	localConversation, err := c.db.GetConversation(conversationID)
@@ -131,6 +141,7 @@ func (c *Conversation) setOneConversationPinned(callback open_im_sdk_callback.Ba
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
 	c.SyncConversations(operationID, 0)
 }
+
 func (c *Conversation) setOneConversationGroupAtType(callback open_im_sdk_callback.Base, conversationID, operationID string) {
 	lc, err := c.db.GetConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -306,6 +317,7 @@ func (c *Conversation) SyncConversations(operationID string, timeout time.Durati
 		newConversation.RecvMsgOpt = conversation.RecvMsgOpt
 		newConversation.IsPinned = conversation.IsPinned
 		newConversation.IsPrivateChat = conversation.IsPrivateChat
+		newConversation.BurnDuration = conversation.BurnDuration
 		newConversation.GroupAtType = conversation.GroupAtType
 		newConversation.IsNotInGroup = conversation.IsNotInGroup
 		newConversation.Ex = conversation.Ex
