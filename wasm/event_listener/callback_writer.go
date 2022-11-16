@@ -97,7 +97,7 @@ func (p *PromiseHandler) SendMessage() {
 	if p.Data != nil {
 		p.resolve.Invoke(p.Data)
 	} else {
-		p.reject.Invoke(jsErr.New(fmt.Sprintf("erCode:%d,errMsg:%s", p.ErrCode, p.ErrMsg)))
+		p.reject.Invoke(jsErr.New(fmt.Sprintf("erCode:%d,errMsg:%s,operationID:%s", p.ErrCode, p.ErrMsg, p.OperationID)))
 	}
 }
 func (p *PromiseHandler) SetEvent(event string) CallbackWriter {
