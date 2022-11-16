@@ -12,6 +12,7 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
@@ -63,6 +64,15 @@ func (u *Full) getUsersInfo(callback open_im_sdk_callback.Base, userIDList sdk.G
 		publicList = u.user.GetUsersInfoFromSvr(callback, notIn, operationID)
 		go func() {
 			for _, v := range publicList {
+				localFriend, err := u.db.GetFriendInfoByFriendUserID(v.UserID)
+				if err != nil {
+					log.NewError(operationID, "GetUserNameAndFaceURL failed ", err.Error(), v.UserID)
+					continue
+				}
+				if v.FaceURL == localFriend.FaceURL && v.Nickname == localFriend.Nickname {
+					log.NewInfo(operationID, "getUsersInfo unchanged", v.UserID, v)
+					continue
+				}
 				u.userCache.Update(v.UserID, v.FaceURL, v.Nickname)
 				//Update the faceURL and nickname information of the local chat history with non-friends
 				_ = u.user.UpdateMsgSenderFaceURLAndSenderNickname(v.UserID, v.FaceURL, v.Nickname, constant.SingleChatType)

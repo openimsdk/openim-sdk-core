@@ -535,13 +535,13 @@ func (f *Friend) SyncFriendList(operationID string) {
 			callbackData := sdk.FriendInfoChangedCallback(*friendsInfoOnServer[index])
 			if f.friendListener != nil {
 				f.friendListener.OnFriendInfoChanged(utils.StructToJsonString(callbackData))
-				localUser, err := f.db.GetLoginUser(callbackData.FriendUserID)
+				localFriend, err := f.db.GetFriendInfoByFriendUserID(callbackData.FriendUserID)
 				if err != nil {
-					log.NewError(operationID, "GetLoginUser failed ", err.Error(), "userID", callbackData.FriendUserID)
+					log.NewError(operationID, "GetFriendInfoByFriendUserID failed ", err.Error(), "userID", callbackData.FriendUserID)
 					continue
 				}
-				if localUser.Nickname == callbackData.Nickname && localUser.FaceURL == callbackData.FaceURL {
-					log.NewInfo(operationID, "OnFriendInfoChanged nickname faceURL unchanged", callbackData.FriendUserID, localUser.Nickname, localUser.FaceURL)
+				if localFriend.Nickname == callbackData.Nickname && localFriend.FaceURL == callbackData.FaceURL && localFriend.Remark == callbackData.Remark {
+					log.NewInfo(operationID, "OnFriendInfoChanged nickname faceURL unchanged", callbackData.FriendUserID, localFriend.Nickname, localFriend.FaceURL)
 					continue
 				}
 				conID := utils.GetConversationIDBySessionType(callbackData.FriendUserID, constant.SingleChatType)
