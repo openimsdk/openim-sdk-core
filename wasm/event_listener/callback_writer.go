@@ -98,7 +98,7 @@ func (p *PromiseHandler) SendMessage() {
 	} else {
 		//p.reject.Invoke(jsErr.New(fmt.Sprintf("erCode:%d,errMsg:%s,operationID:%s", p.ErrCode, p.ErrMsg, p.OperationID)))
 		errInfo := make(map[string]interface{})
-		errInfo["erCode"] = p.ErrCode
+		errInfo["errCode"] = p.ErrCode
 		errInfo["errMsg"] = p.ErrMsg
 		errInfo["operationID"] = p.OperationID
 		p.reject.Invoke(errInfo)
