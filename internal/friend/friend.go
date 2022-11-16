@@ -294,7 +294,7 @@ func (f *Friend) getServerBlackList(operationID string) ([]*api.PublicUserInfo, 
 	return realData.BlackUserInfoList, nil
 }
 
-//recv
+// recv
 func (f *Friend) getFriendApplicationFromServer(operationID string) ([]*api.FriendRequest, error) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	apiReq := api.GetFriendApplyListReq{OperationID: operationID, FromUserID: f.loginUserID}
@@ -307,7 +307,7 @@ func (f *Friend) getFriendApplicationFromServer(operationID string) ([]*api.Frie
 	return realData.FriendRequestList, nil
 }
 
-//send
+// send
 func (f *Friend) getSelfFriendApplicationFromServer(operationID string) ([]*api.FriendRequest, error) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	apiReq := api.GetSelfFriendApplyListReq{OperationID: operationID, FromUserID: f.loginUserID}
@@ -417,7 +417,7 @@ func (f *Friend) SyncSelfFriendApplication(operationID string) {
 	}
 }
 
-//recv
+// recv
 func (f *Friend) SyncFriendApplication(operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	svrList, err := f.getFriendApplicationFromServer(operationID)
@@ -535,6 +535,15 @@ func (f *Friend) SyncFriendList(operationID string) {
 			callbackData := sdk.FriendInfoChangedCallback(*friendsInfoOnServer[index])
 			if f.friendListener != nil {
 				f.friendListener.OnFriendInfoChanged(utils.StructToJsonString(callbackData))
+				localUser, err := f.db.GetLoginUser(callbackData.FriendUserID)
+				if err != nil {
+					log.NewError(operationID, "GetLoginUser failed ", err.Error(), "userID", callbackData.FriendUserID)
+					continue
+				}
+				if localUser.Nickname == callbackData.Nickname && localUser.FaceURL == callbackData.FaceURL {
+					log.NewInfo(operationID, "OnFriendInfoChanged nickname faceURL unchanged", callbackData.FriendUserID, localUser.Nickname, localUser.FaceURL)
+					continue
+				}
 				conID := utils.GetConversationIDBySessionType(callbackData.FriendUserID, constant.SingleChatType)
 				common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conID, Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: callbackData.FriendUserID, SessionType: constant.SingleChatType}}, f.conversationCh)
 				common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: callbackData.FriendUserID, FaceURL: callbackData.FaceURL, Nickname: callbackData.Nickname}}, f.conversationCh)
