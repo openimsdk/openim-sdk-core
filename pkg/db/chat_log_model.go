@@ -117,6 +117,11 @@ func (d *DataBase) SearchMessageByContentType(contentType []int, sourceID string
 	return result, err
 }
 
+func (d *DataBase) SearchAllMessageByContentType(contentType int) (result []*model_struct.LocalChatLog, err error) {
+	err = d.conn.Model(&model_struct.LocalChatLog{}).Where("content_type = ?", contentType).Find(&result).Error
+	return result, err
+}
+
 func (d *DataBase) SearchMessageByContentTypeController(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
 	switch sessionType {
 	case constant.SuperGroupChatType:

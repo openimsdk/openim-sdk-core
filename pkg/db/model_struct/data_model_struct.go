@@ -298,7 +298,7 @@ type LocalChatLog struct {
 	SenderFaceURL    string `gorm:"column:sender_face_url;type:varchar(255)" json:"senderFaceURL"`
 	SessionType      int32  `gorm:"column:session_type" json:"sessionType"`
 	MsgFrom          int32  `gorm:"column:msg_from" json:"msgFrom"`
-	ContentType      int32  `gorm:"column:content_type" json:"contentType"`
+	ContentType      int32  `gorm:"column:content_type;index:content_type_alone" json:"contentType"`
 	Content          string `gorm:"column:content;type:varchar(1000)" json:"content"`
 	IsRead           bool   `gorm:"column:is_read" json:"isRead"`
 	Status           int32  `gorm:"column:status" json:"status"`

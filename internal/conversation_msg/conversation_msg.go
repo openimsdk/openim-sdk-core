@@ -1045,7 +1045,11 @@ func (c *Conversation) tempCacheChatLog(messageList []*sdk_struct.MsgStruct) {
 }
 func (c *Conversation) newRevokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 	var failedRevokeMessageList []*sdk_struct.MsgStruct
+	var superGroupIDList []string
+	var revokeMsgIDList []string
+	var superGroupRevokeMsgIDList []string
 	for _, w := range msgRevokeList {
+		log.NewDebug("ssd", w)
 		var msg sdk_struct.MessageRevoked
 		err := json.Unmarshal([]byte(w.Content), &msg)
 		if err != nil {
@@ -1084,11 +1088,55 @@ func (c *Conversation) newRevokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 			} else {
 				log.Error("internal", "set msgListener is err:")
 			}
+			if msg.SessionType != constant.SuperGroupChatType {
+				revokeMsgIDList = append(revokeMsgIDList, msg.ClientMsgID)
+			} else {
+				if !utils.IsContain(w.RecvID, superGroupIDList) {
+					superGroupIDList = append(superGroupIDList, w.GroupID)
+				}
+				superGroupRevokeMsgIDList = append(superGroupRevokeMsgIDList, msg.ClientMsgID)
+			}
 		}
-
+	}
+	log.NewDebug("internal, quoteRevoke Info", superGroupIDList, revokeMsgIDList, superGroupRevokeMsgIDList)
+	if len(revokeMsgIDList) > 0 {
+		msgList, err := c.db.SearchAllMessageByContentType(constant.Quote)
+		if err != nil {
+			log.NewError("internal", "SearchMessageIDsByContentType failed", err.Error())
+		}
+		for _, v := range msgList {
+			c.QuoteMsgRevokeHandle(v, revokeMsgIDList)
+		}
+	}
+	for _, superGroupID := range superGroupIDList {
+		msgList, err := c.db.SuperGroupSearchAllMessageByContentType(superGroupID, constant.Quote)
+		if err != nil {
+			log.NewError("internal", "SuperGroupSearchMessageByContentTypeNotOffset failed", superGroupID, err.Error())
+		}
+		for _, v := range msgList {
+			c.QuoteMsgRevokeHandle(v, superGroupRevokeMsgIDList)
+		}
 	}
 	if len(failedRevokeMessageList) > 0 {
 		//c.tempCacheChatLog(failedRevokeMessageList)
+	}
+}
+
+func (c *Conversation) QuoteMsgRevokeHandle(v *model_struct.LocalChatLog, revokeMsgIDList []string) {
+	s := sdk_struct.MsgStruct{}
+	err := utils.JsonStringToStruct(v.Content, &s.QuoteElem)
+	if err != nil {
+		log.NewError("internal", "unmarshall failed", s.Content)
+	}
+	if !utils.IsContain(s.QuoteElem.QuoteMessage.ClientMsgID, revokeMsgIDList) {
+		return
+	}
+	s.QuoteElem.QuoteMessage.Content = ""
+	s.QuoteElem.QuoteMessage.Status = constant.MsgStatusRevoked
+	v.Content = utils.StructToJsonString(s.QuoteElem)
+	err = c.db.UpdateMessageController(v)
+	if err != nil {
+		log.NewError("internal", "unmarshall failed", v)
 	}
 }
 
