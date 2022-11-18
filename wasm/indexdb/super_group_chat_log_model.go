@@ -202,7 +202,10 @@ func (i *LocalChatLogs) SearchMessageByKeyword(contentType []int, keywordList []
 		}
 	}
 }
-
+func (i *LocalChatLogs) SuperGroupUpdateColumnsMessage(clientMsgID, groupID string, args map[string]interface{}) error {
+	_, err := Exec(clientMsgID, groupID, utils.StructToJsonString(args))
+	return err
+}
 func (i *LocalChatLogs) GetSuperGroupAbnormalMsgSeq(groupID string) (uint32, error) {
 	return 0, nil
 }
@@ -243,10 +246,6 @@ func (i IndexDB) SuperGroupMessageIfExistsBySeq(seq int64) (bool, error) {
 }
 
 func (i IndexDB) SuperGroupGetAllUnDeleteMessageSeqList() ([]uint32, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) SuperGroupUpdateColumnsMessage(ClientMsgID, groupID string, args map[string]interface{}) error {
 	panic("implement me")
 }
 
