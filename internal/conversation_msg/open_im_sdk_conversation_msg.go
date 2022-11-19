@@ -1594,3 +1594,6 @@ func (c *Conversation) getConversationTypeByGroupID(groupID string) (conversatio
 		return "", 0, utils.Wrap(errors.New("err groupType"), "group type err")
 	}
 }
+func (c *Conversation) ModifyGroupMessageReaction(callback open_im_sdk_callback.Base, counter int32, reactionType, operationType int, groupID, msgID, operationID string) {
+	c.modifyGroupMessageReaction(callback, counter, reactionType, operationType, groupID, msgID, operationID)
+}

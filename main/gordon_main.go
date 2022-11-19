@@ -11,12 +11,12 @@ import (
 )
 
 var (
-	APIADDR = "http://43.155.69.205:10002"
-	WSADDR  = "ws://43.155.69.205:10001"
+	//APIADDR = "http://43.155.69.205:10002"
+	//WSADDR  = "ws://43.155.69.205:10001"
 	//APIADDR      = "https://chat-api-dev.opencord.so"
 	//WSADDR       = "wss://chat-ws-dev.opencord.so"
-	//APIADDR = "http://121.37.25.71:10002"
-	//WSADDR  = "ws://121.37.25.71:10001"
+	APIADDR      = "http://121.37.25.71:10002"
+	WSADDR       = "ws://121.37.25.71:10001"
 	REGISTERADDR = APIADDR + "/user_register"
 	ACCOUNTCHECK = APIADDR + "/manager/account_check"
 	TOKENADDR    = APIADDR + "/auth/user_token"

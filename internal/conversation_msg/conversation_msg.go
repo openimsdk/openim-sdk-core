@@ -530,7 +530,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	var insertMsg, updateMsg, specialUpdateMsg []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
 	var unreadMessages []*model_struct.LocalConversationUnreadMessage
-	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList sdk_struct.NewMsgList
+	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList, msgReactionList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate, isSenderNotificationPush bool
 	conversationChangedSet := make(map[string]*model_struct.LocalConversation)
 	newConversationSet := make(map[string]*model_struct.LocalConversation)
@@ -710,6 +710,8 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 				case constant.AdvancedRevoke:
 					newMsgRevokeList = append(newMsgRevokeList, msg)
 					newMessages = removeElementInList(newMessages, msg)
+				case constant.ReactionMessageModifier:
+					msgReactionList = append(msgReactionList, msg)
 				default:
 				}
 			}
@@ -782,6 +784,8 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 				case constant.AdvancedRevoke:
 					newMsgRevokeList = append(newMsgRevokeList, msg)
 					newMessages = removeElementInList(newMessages, msg)
+				case constant.ReactionMessageModifier:
+					msgReactionList = append(msgReactionList, msg)
 				default:
 				}
 
@@ -902,6 +906,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 
 	c.revokeMessage(msgRevokeList)
 	c.newRevokeMessage(newMsgRevokeList)
+	c.DoMsgReaction(msgReactionList)
 	b10 := utils.GetCurrentTimestampByMill()
 	log.Debug(operationID, "revokeMessage  cost time : ", b10-b9)
 	if c.batchMsgListener != nil {
@@ -1089,6 +1094,99 @@ func (c *Conversation) newRevokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 	}
 	if len(failedRevokeMessageList) > 0 {
 		//c.tempCacheChatLog(failedRevokeMessageList)
+	}
+}
+func (c *Conversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
+
+	for _, v := range msgReactionList {
+		var msg sdk_struct.MessageReaction
+		err := json.Unmarshal([]byte(v.Content), &msg)
+		if err != nil {
+			log.Error("internal", "unmarshal failed, err : ", err.Error(), *v)
+			continue
+		}
+		s := sdk_struct.MsgStruct{GroupID: msg.GroupID, ClientMsgID: msg.ClientMsgID, SessionType: msg.SessionType}
+		message, err := c.db.GetMessageController(&s)
+		if err != nil {
+			log.Error("internal", "GetMessageController, err : ", err.Error(), s)
+			continue
+		}
+		t := new(model_struct.LocalChatLog)
+		attachInfo := sdk_struct.AttachedInfoElem{}
+		_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
+
+		if attachInfo.MessageReactionElem == nil {
+			log.Debug("internal", "attachInfo.MessageReactionElem is nil", msg)
+			t := new(sdk_struct.ReactionElem)
+			t.Counter = msg.Counter
+			t.Type = msg.ReactionType
+			u := new(sdk_struct.UserReactionElem)
+			u.UserID = msg.UserID
+			u.Counter = msg.Counter
+			t.UserReactionList = append(t.UserReactionList, u)
+			attachInfo.MessageReactionElem = append(attachInfo.MessageReactionElem, t)
+
+		} else {
+			contain, v := isContainMessageReaction(msg.ReactionType, attachInfo.MessageReactionElem)
+			if contain {
+				userContain, userReaction := isContainUserReactionElem(msg.UserID, v.UserReactionList)
+				if userContain {
+					if !v.CanRepeat && userReaction.Counter > 0 {
+						// to do nothing
+					} else {
+						userReaction.Counter += msg.Counter
+						v.Counter += msg.Counter
+						if v.Counter < 0 {
+							log.Debug("internal", "after operate all counter  < 0", v.Type, v.Counter, msg.Counter)
+							v.Counter = 0
+						}
+						if userReaction.Counter <= 0 {
+							log.Debug("internal", "after operate userReaction counter < 0", v.Type, userReaction.Counter, msg.Counter)
+							v.UserReactionList = DeleteUserReactionElem(v.UserReactionList, c.loginUserID)
+						}
+					}
+				} else {
+					log.Debug("internal", "attachInfo.MessageReactionElem is nil", msg)
+					u := new(sdk_struct.UserReactionElem)
+					u.UserID = msg.UserID
+					u.Counter = msg.Counter
+					v.Counter += msg.Counter
+					if v.Counter < 0 {
+						log.Debug("internal", "after operate all counter  < 0", v.Type, v.Counter, msg.Counter)
+						v.Counter = 0
+					}
+					if u.Counter <= 0 {
+						log.Debug("internal", "after operate userReaction counter < 0", v.Type, u.Counter, msg.Counter)
+						v.UserReactionList = DeleteUserReactionElem(v.UserReactionList, msg.UserID)
+					}
+					v.UserReactionList = append(v.UserReactionList, u)
+
+				}
+
+			} else {
+				log.Debug("internal", "attachInfo.MessageReactionElem is nil", msg)
+				t := new(sdk_struct.ReactionElem)
+				t.Counter = msg.Counter
+				t.Type = msg.ReactionType
+				u := new(sdk_struct.UserReactionElem)
+				u.UserID = msg.UserID
+				u.Counter = msg.Counter
+				t.UserReactionList = append(t.UserReactionList, u)
+				attachInfo.MessageReactionElem = append(attachInfo.MessageReactionElem, t)
+
+			}
+		}
+		t.AttachedInfo = utils.StructToJsonString(attachInfo)
+		t.ClientMsgID = message.ClientMsgID
+
+		t.SessionType = message.SessionType
+		t.RecvID = message.RecvID
+		err1 := c.db.UpdateMessageController(t)
+		if err1 != nil {
+			log.Error("internal", "UpdateMessageController err:", err1, "ClientMsgID", *t, message)
+		}
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.MessageChange, &s}})
+
 	}
 }
 
