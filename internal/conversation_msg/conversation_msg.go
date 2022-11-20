@@ -1097,6 +1097,7 @@ func (c *Conversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
 			if userContain {
 				if !v.CanRepeat && userReaction.Counter > 0 {
 					// to do nothing
+					continue
 				} else {
 					userReaction.Counter += msg.Counter
 					v.Counter += msg.Counter
