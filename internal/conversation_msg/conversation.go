@@ -1845,6 +1845,59 @@ func (c *Conversation) modifyGroupMessageReaction(callback open_im_sdk_callback.
 	if message.Status != constant.MsgStatusSendSuccess {
 		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can be modified"), operationID)
 	}
+
+	t := new(model_struct.LocalChatLog)
+	attachInfo := sdk_struct.AttachedInfoElem{}
+	_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
+
+	contain, v := isContainMessageReaction(reactionType, attachInfo.MessageReactionElem)
+	if contain {
+		userContain, userReaction := isContainUserReactionElem(c.loginUserID, v.UserReactionList)
+		if userContain {
+			if !v.CanRepeat && userReaction.Counter > 0 {
+				// to do nothing
+				return
+			} else {
+				userReaction.Counter += counter
+				v.Counter += counter
+				if v.Counter < 0 {
+					log.Debug(operationID, "after operate all counter  < 0", v.Type, v.Counter, counter)
+					v.Counter = 0
+				}
+				if userReaction.Counter <= 0 {
+					log.Debug(operationID, "after operate userReaction counter < 0", v.Type, userReaction.Counter, counter)
+					v.UserReactionList = DeleteUserReactionElem(v.UserReactionList, c.loginUserID)
+				}
+			}
+		} else {
+			log.Debug(operationID, "attachInfo.MessageReactionElem is nil", counter, reactionType, groupID, msgID)
+			u := new(sdk_struct.UserReactionElem)
+			u.UserID = c.loginUserID
+			u.Counter = counter
+			v.Counter += counter
+			if v.Counter < 0 {
+				log.Debug(operationID, "after operate all counter  < 0", v.Type, v.Counter, counter)
+				v.Counter = 0
+			}
+			if u.Counter <= 0 {
+				log.Debug(operationID, "after operate userReaction counter < 0", v.Type, u.Counter, counter)
+				v.UserReactionList = DeleteUserReactionElem(v.UserReactionList, c.loginUserID)
+			}
+			v.UserReactionList = append(v.UserReactionList, u)
+		}
+
+	} else {
+		log.Debug(operationID, "attachInfo.MessageReactionElem is nil", counter, reactionType, groupID, msgID)
+		t := new(sdk_struct.ReactionElem)
+		t.Counter = counter
+		t.Type = reactionType
+		u := new(sdk_struct.UserReactionElem)
+		u.UserID = c.loginUserID
+		u.Counter = counter
+		t.UserReactionList = append(t.UserReactionList, u)
+		attachInfo.MessageReactionElem = append(attachInfo.MessageReactionElem, t)
+
+	}
 	var localMessage model_struct.LocalChatLog
 	reactionMessage := sdk_struct.MessageReaction{ClientMsgID: msgID, ReactionType: reactionType, Counter: counter, UserID: c.loginUserID, GroupID: groupID, SessionType: conversationType}
 	s := sdk_struct.MsgStruct{}
@@ -1866,73 +1919,8 @@ func (c *Conversation) modifyGroupMessageReaction(callback open_im_sdk_callback.
 	if err != nil {
 		log.Error(operationID, "inset into chat log err", localMessage, s, err.Error())
 	}
-	t := new(model_struct.LocalChatLog)
-	attachInfo := sdk_struct.AttachedInfoElem{}
-	_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
-
-	if attachInfo.MessageReactionElem == nil {
-		log.Debug(operationID, "attachInfo.MessageReactionElem is nil", counter, reactionType, groupID, msgID)
-		t := new(sdk_struct.ReactionElem)
-		t.Counter = counter
-		t.Type = reactionType
-		u := new(sdk_struct.UserReactionElem)
-		u.UserID = c.loginUserID
-		u.Counter = counter
-		t.UserReactionList = append(t.UserReactionList, u)
-		attachInfo.MessageReactionElem = append(attachInfo.MessageReactionElem, t)
-
-	} else {
-		contain, v := isContainMessageReaction(reactionType, attachInfo.MessageReactionElem)
-		if contain {
-			userContain, userReaction := isContainUserReactionElem(c.loginUserID, v.UserReactionList)
-			if userContain {
-				if !v.CanRepeat && userReaction.Counter > 0 {
-					// to do nothing
-				} else {
-					userReaction.Counter += counter
-					v.Counter += counter
-					if v.Counter < 0 {
-						log.Debug(operationID, "after operate all counter  < 0", v.Type, v.Counter, counter)
-						v.Counter = 0
-					}
-					if userReaction.Counter <= 0 {
-						log.Debug(operationID, "after operate userReaction counter < 0", v.Type, userReaction.Counter, counter)
-						v.UserReactionList = DeleteUserReactionElem(v.UserReactionList, c.loginUserID)
-					}
-				}
-			} else {
-				log.Debug(operationID, "attachInfo.MessageReactionElem is nil", counter, reactionType, groupID, msgID)
-				u := new(sdk_struct.UserReactionElem)
-				u.UserID = c.loginUserID
-				u.Counter = counter
-				v.Counter += counter
-				if v.Counter < 0 {
-					log.Debug(operationID, "after operate all counter  < 0", v.Type, v.Counter, counter)
-					v.Counter = 0
-				}
-				if userReaction.Counter <= 0 {
-					log.Debug(operationID, "after operate userReaction counter < 0", v.Type, userReaction.Counter, counter)
-					v.UserReactionList = DeleteUserReactionElem(v.UserReactionList, c.loginUserID)
-				}
-				v.UserReactionList = append(v.UserReactionList, u)
-			}
-
-		} else {
-			log.Debug(operationID, "attachInfo.MessageReactionElem is nil", counter, reactionType, groupID, msgID)
-			t := new(sdk_struct.ReactionElem)
-			t.Counter = counter
-			t.Type = reactionType
-			u := new(sdk_struct.UserReactionElem)
-			u.UserID = c.loginUserID
-			u.Counter = counter
-			t.UserReactionList = append(t.UserReactionList, u)
-			attachInfo.MessageReactionElem = append(attachInfo.MessageReactionElem, t)
-
-		}
-	}
 	t.AttachedInfo = utils.StructToJsonString(attachInfo)
 	t.ClientMsgID = message.ClientMsgID
-
 	t.SessionType = message.SessionType
 	t.RecvID = message.RecvID
 	err1 := c.db.UpdateMessageController(t)

@@ -1115,7 +1115,43 @@ func (c *Conversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
 		attachInfo := sdk_struct.AttachedInfoElem{}
 		_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
 
-		if attachInfo.MessageReactionElem == nil {
+		contain, v := isContainMessageReaction(msg.ReactionType, attachInfo.MessageReactionElem)
+		if contain {
+			userContain, userReaction := isContainUserReactionElem(msg.UserID, v.UserReactionList)
+			if userContain {
+				if !v.CanRepeat && userReaction.Counter > 0 {
+					// to do nothing
+				} else {
+					userReaction.Counter += msg.Counter
+					v.Counter += msg.Counter
+					if v.Counter < 0 {
+						log.Debug("internal", "after operate all counter  < 0", v.Type, v.Counter, msg.Counter)
+						v.Counter = 0
+					}
+					if userReaction.Counter <= 0 {
+						log.Debug("internal", "after operate userReaction counter < 0", v.Type, userReaction.Counter, msg.Counter)
+						v.UserReactionList = DeleteUserReactionElem(v.UserReactionList, c.loginUserID)
+					}
+				}
+			} else {
+				log.Debug("internal", "attachInfo.MessageReactionElem is nil", msg)
+				u := new(sdk_struct.UserReactionElem)
+				u.UserID = msg.UserID
+				u.Counter = msg.Counter
+				v.Counter += msg.Counter
+				if v.Counter < 0 {
+					log.Debug("internal", "after operate all counter  < 0", v.Type, v.Counter, msg.Counter)
+					v.Counter = 0
+				}
+				if u.Counter <= 0 {
+					log.Debug("internal", "after operate userReaction counter < 0", v.Type, u.Counter, msg.Counter)
+					v.UserReactionList = DeleteUserReactionElem(v.UserReactionList, msg.UserID)
+				}
+				v.UserReactionList = append(v.UserReactionList, u)
+
+			}
+
+		} else {
 			log.Debug("internal", "attachInfo.MessageReactionElem is nil", msg)
 			t := new(sdk_struct.ReactionElem)
 			t.Counter = msg.Counter
@@ -1126,56 +1162,8 @@ func (c *Conversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
 			t.UserReactionList = append(t.UserReactionList, u)
 			attachInfo.MessageReactionElem = append(attachInfo.MessageReactionElem, t)
 
-		} else {
-			contain, v := isContainMessageReaction(msg.ReactionType, attachInfo.MessageReactionElem)
-			if contain {
-				userContain, userReaction := isContainUserReactionElem(msg.UserID, v.UserReactionList)
-				if userContain {
-					if !v.CanRepeat && userReaction.Counter > 0 {
-						// to do nothing
-					} else {
-						userReaction.Counter += msg.Counter
-						v.Counter += msg.Counter
-						if v.Counter < 0 {
-							log.Debug("internal", "after operate all counter  < 0", v.Type, v.Counter, msg.Counter)
-							v.Counter = 0
-						}
-						if userReaction.Counter <= 0 {
-							log.Debug("internal", "after operate userReaction counter < 0", v.Type, userReaction.Counter, msg.Counter)
-							v.UserReactionList = DeleteUserReactionElem(v.UserReactionList, c.loginUserID)
-						}
-					}
-				} else {
-					log.Debug("internal", "attachInfo.MessageReactionElem is nil", msg)
-					u := new(sdk_struct.UserReactionElem)
-					u.UserID = msg.UserID
-					u.Counter = msg.Counter
-					v.Counter += msg.Counter
-					if v.Counter < 0 {
-						log.Debug("internal", "after operate all counter  < 0", v.Type, v.Counter, msg.Counter)
-						v.Counter = 0
-					}
-					if u.Counter <= 0 {
-						log.Debug("internal", "after operate userReaction counter < 0", v.Type, u.Counter, msg.Counter)
-						v.UserReactionList = DeleteUserReactionElem(v.UserReactionList, msg.UserID)
-					}
-					v.UserReactionList = append(v.UserReactionList, u)
-
-				}
-
-			} else {
-				log.Debug("internal", "attachInfo.MessageReactionElem is nil", msg)
-				t := new(sdk_struct.ReactionElem)
-				t.Counter = msg.Counter
-				t.Type = msg.ReactionType
-				u := new(sdk_struct.UserReactionElem)
-				u.UserID = msg.UserID
-				u.Counter = msg.Counter
-				t.UserReactionList = append(t.UserReactionList, u)
-				attachInfo.MessageReactionElem = append(attachInfo.MessageReactionElem, t)
-
-			}
 		}
+
 		t.AttachedInfo = utils.StructToJsonString(attachInfo)
 		t.ClientMsgID = message.ClientMsgID
 
