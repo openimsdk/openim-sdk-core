@@ -50,6 +50,7 @@ const (
 	AdvancedRevoke                  = 118 //影响前者消息
 	CustomMsgNotTriggerConversation = 119
 	CustomMsgOnlineOnly             = 120
+	ReactionMessageModifier         = 121
 	//////////////////////////////////////////
 	NotificationBegin       = 1000
 	FriendNotificationBegin = 1200
@@ -222,6 +223,7 @@ const (
 	ConversationLatestMsgHasRead = 13
 	UpdateMsgFaceUrlAndNickName  = 14
 	SyncConversation             = 15
+	MessageChange                = 16
 
 	HasRead = 1
 	NotRead = 0

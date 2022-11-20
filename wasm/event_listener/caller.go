@@ -5,6 +5,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall/js"
@@ -238,8 +239,8 @@ func (r *ReflectCall) ErrHandle(recover interface{}) []string {
 	case string:
 		temp = utils.Wrap(errors.New(x), "").Error()
 	case error:
-		//buf := make([]byte, 1<<20)
-		//runtime.Stack(buf, true)
+		buf := make([]byte, 1<<20)
+		runtime.Stack(buf, true)
 		temp = x.Error()
 	default:
 		temp = utils.Wrap(errors.New("unknown panic"), "").Error()
