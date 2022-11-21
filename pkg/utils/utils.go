@@ -446,3 +446,10 @@ func GetUserIDForMinSeq(userID string) string {
 func GetGroupIDForMinSeq(groupID string) string {
 	return "g_" + groupID
 }
+func CleanUpfuncName(funcName string) string {
+	end := strings.LastIndex(funcName, ".")
+	if end == -1 {
+		return ""
+	}
+	return funcName[end+1:]
+}

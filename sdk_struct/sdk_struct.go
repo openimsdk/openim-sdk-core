@@ -189,13 +189,7 @@ type AttachedInfoElem struct {
 	InEncryptStatus           bool             `json:"inEncryptStatus"`
 	MessageReactionElem       []*ReactionElem  `json:"messageReactionElem,omitempty"`
 }
-type MessageEntity struct {
-	Type   string `json:"type,omitempty"`
-	Offset int32  `json:"offset"`
-	Length int32  `json:"length"`
-	Url    string `json:"url,omitempty"`
-	Info   string `json:"info,omitempty"`
-}
+
 type ReactionElem struct {
 	Counter          int32               `json:"counter,omitempty"`
 	Type             int                 `json:"type,omitempty"`
@@ -208,7 +202,13 @@ type UserReactionElem struct {
 	Counter int32  `json:"counter,omitempty"`
 	Info    string `json:"info,omitempty"`
 }
-
+type MessageEntity struct {
+	Type   string `json:"type,omitempty"`
+	Offset int32  `json:"offset"`
+	Length int32  `json:"length"`
+	Url    string `json:"url,omitempty"`
+	Info   string `json:"info,omitempty"`
+}
 type GroupHasReadInfo struct {
 	HasReadUserIDList []string `json:"hasReadUserIDList,omitempty"`
 	HasReadCount      int32    `json:"hasReadCount"`
