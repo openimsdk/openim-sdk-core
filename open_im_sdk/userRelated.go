@@ -9,6 +9,7 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"reflect"
+	"runtime"
 	"sync"
 )
 
@@ -104,7 +105,9 @@ func BaseCaller(funcName interface{}, callback open_im_sdk_callback.Base, args .
 	for i := 0; i < len(args); i++ {
 		values = append(values, reflect.ValueOf(args[i]))
 	}
-	log.NewDebug(operationID, refFuncName.String(), "input args:", args)
+	pc, _, _, _ := runtime.Caller(1)
+	funcNameString := utils.CleanUpfuncName(runtime.FuncForPC(pc).Name())
+	log.Debug(operationID, funcNameString, "input args:", args)
 	go refFuncName.Call(values)
 }
 func SendMessageCaller(funcName interface{}, callback open_im_sdk_callback.SendMsgCallBack, args ...interface{}) {
