@@ -237,13 +237,13 @@ func (r *ReflectCall) ErrHandle(recover interface{}) []string {
 	var temp string
 	switch x := recover.(type) {
 	case string:
-		temp = utils.Wrap(errors.New(x), "").Error()
+		temp = errors.New(x).Error()
 	case error:
 		buf := make([]byte, 1<<20)
 		runtime.Stack(buf, true)
 		temp = x.Error()
 	default:
-		temp = utils.Wrap(errors.New("unknown panic"), "").Error()
+		temp = errors.New("unknown panic").Error()
 	}
 	if r.callback != nil {
 		r.callback.SetErrCode(100).SetErrMsg(temp).SendMessage()

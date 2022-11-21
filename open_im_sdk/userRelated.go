@@ -88,6 +88,18 @@ func BaseCaller(funcName interface{}, callback open_im_sdk_callback.Base, args .
 	defer func() {
 		if rc := recover(); rc != nil {
 			log.Error(operationID, "err:", rc)
+			var temp string
+			switch x := rc.(type) {
+			case string:
+				temp = errors.New(x).Error()
+			case error:
+				buf := make([]byte, 1<<20)
+				runtime.Stack(buf, true)
+				temp = x.Error()
+			default:
+				temp = errors.New("unknown panic").Error()
+			}
+			callback.OnError(constant.ErrArgs.ErrCode, temp)
 		}
 	}()
 	if funcName == nil {
