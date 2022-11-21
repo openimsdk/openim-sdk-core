@@ -104,7 +104,7 @@ func BaseCaller(funcName interface{}, callback open_im_sdk_callback.Base, args .
 	for i := 0; i < len(args); i++ {
 		values = append(values, reflect.ValueOf(args[i]))
 	}
-	log.NewDebug(operationID)
+	log.NewDebug(operationID, refFuncName.String(), "input args:", args)
 	go refFuncName.Call(values)
 }
 func SendMessageCaller(funcName interface{}, callback open_im_sdk_callback.SendMsgCallBack, args ...interface{}) {
