@@ -432,6 +432,6 @@ func GetConversationIDBySessionType(sourceID string, sessionType int) string {
 func GetAtAllTag() string {
 	return constant.AtAllString
 }
-func ModifyGroupMessageReaction(callback open_im_sdk_callback.Base, operationID string, counter int32, reactionType int, operationType int, groupID, msgID string) {
-	BaseCaller(userForSDK.Conversation().ModifyGroupMessageReaction, callback, counter, reactionType, operationType, groupID, msgID, operationID)
+func ModifyGroupMessageReaction(callback open_im_sdk_callback.Base, operationID string, counter int32, reactionType int, groupID, msgID string) {
+	BaseCaller(userForSDK.Conversation().ModifyGroupMessageReaction, callback, counter, reactionType, groupID, msgID, operationID)
 }

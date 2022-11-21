@@ -1784,7 +1784,7 @@ func (c *Conversation) deleteAllMsgFromSvr(callback open_im_sdk_callback.Base, o
 	apiReq.SeqList = seqList
 	c.p.PostFatalCallback(callback, constant.DeleteMsgRouter, apiReq, nil, apiReq.OperationID)
 }
-func (c *Conversation) modifyGroupMessageReaction(callback open_im_sdk_callback.Base, counter int32, reactionType, operationType int, groupID, msgID, operationID string) {
+func (c *Conversation) modifyGroupMessageReaction(callback open_im_sdk_callback.Base, counter int32, reactionType int, groupID, msgID, operationID string) {
 	_, conversationType, err := c.getConversationTypeByGroupID(groupID)
 	common.CheckAnyErrCallback(callback, 202, err, operationID)
 	msg := sdk_struct.MsgStruct{GroupID: groupID, ClientMsgID: msgID, SessionType: conversationType}

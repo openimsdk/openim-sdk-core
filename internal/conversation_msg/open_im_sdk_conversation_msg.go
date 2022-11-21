@@ -1581,6 +1581,6 @@ func (c *Conversation) getConversationTypeByGroupID(groupID string) (conversatio
 	}
 }
 
-func (c *Conversation) ModifyGroupMessageReaction(callback open_im_sdk_callback.Base, counter int32, reactionType, operationType int, groupID, msgID, operationID string) {
-	c.modifyGroupMessageReaction(callback, counter, reactionType, operationType, groupID, msgID, operationID)
+func (c *Conversation) ModifyGroupMessageReaction(callback open_im_sdk_callback.Base, counter int32, reactionType int, groupID, msgID, operationID string) {
+	c.modifyGroupMessageReaction(callback, counter, reactionType, groupID, msgID, operationID)
 }
