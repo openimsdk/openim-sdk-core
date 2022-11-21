@@ -6,7 +6,7 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func (d *DataBase) GetBlackList() ([]*model_struct.LocalBlack, error) {
+func (d *DataBase) GetBlackListDB() ([]*model_struct.LocalBlack, error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	if d == nil {

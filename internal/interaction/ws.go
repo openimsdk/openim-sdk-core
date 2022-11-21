@@ -13,6 +13,7 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"runtime"
 	"time"
 )
 
@@ -255,7 +256,7 @@ func (w *Ws) ReadData() {
 			if err != nil {
 				log.NewWarn(operationID, "reader close failed", err.Error())
 			}
-			go w.doWsMsg(message)
+			w.doWsMsg(message)
 		} else {
 			log.Warn(operationID, "recv other type ", msgType)
 		}
@@ -299,7 +300,11 @@ func (w *Ws) doWsMsg(message []byte) {
 		w.Logout(wsResp.OperationID)
 
 	case constant.WsLogoutMsg:
-		log.Warn(wsResp.OperationID, "logout... ")
+		log.Warn(wsResp.OperationID, "WsLogoutMsg... Ws goroutine exit")
+		if err = w.doWSLogoutMsg(*wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSLogoutMsg failed ", err.Error())
+		}
+		runtime.Goexit()
 	case constant.WSSendSignalMsg:
 		log.Info(wsResp.OperationID, "signaling...")
 		w.DoWSSignal(*wsResp)
@@ -351,7 +356,12 @@ func (w *Ws) DoWSSignal(wsResp GeneralWsResp) error {
 	}
 	return nil
 }
-
+func (w *Ws) doWSLogoutMsg(wsResp GeneralWsResp) error {
+	if err := w.notifyResp(wsResp); err != nil {
+		return utils.Wrap(err, "")
+	}
+	return nil
+}
 func (w *Ws) doWSPushMsg(wsResp GeneralWsResp) error {
 	if wsResp.ErrCode != 0 {
 		return utils.Wrap(errors.New("errCode"), wsResp.ErrMsg)

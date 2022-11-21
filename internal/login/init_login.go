@@ -19,6 +19,7 @@ import (
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
@@ -38,7 +39,7 @@ type LoginMgr struct {
 	//advancedFunction advanced_interface.AdvancedFunction
 	workMoments  *workMoments.WorkMoments
 	full         *full.Full
-	db           *db.DataBase
+	db           db_interface.DataBase
 	ws           *ws.Ws
 	msgSync      *ws.MsgSync
 	heartbeat    *heartbeart.Heartbeat
@@ -205,7 +206,6 @@ func (u *LoginMgr) SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMo
 	} else {
 		u.workMomentsListener = listener
 	}
-
 }
 
 func (u *LoginMgr) wakeUp(cb open_im_sdk_callback.Base, operationID string) {
@@ -345,7 +345,15 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 		return
 	}
 
-	err := common.TriggerCmdLogout(u.cmdWsCh)
+	timeout := 2
+	retryTimes := 0
+	log.Info(operationID, "send to svr logout ...", u.loginUserID)
+	resp, err := u.ws.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID, operationID)
+	if err != nil {
+		log.Warn(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
+	}
+
+	err = common.TriggerCmdLogout(u.cmdWsCh)
 	if err != nil {
 		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
 	}
@@ -370,15 +378,8 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 		log.Error(operationID, "TriggerCmd UnInit pushMsgAndMaxSeqCh failed ", err.Error())
 	}
 
-	timeout := 2
-	retryTimes := 0
-	log.Info(operationID, "send to svr logout ...", u.loginUserID)
-	resp, err := u.ws.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID, operationID)
-	if err != nil {
-		log.Warn(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
-	}
 	log.Info(operationID, "close db ")
-	u.db.CloseDB(operationID)
+	u.db.Close()
 
 	if callback != nil {
 		callback.OnSuccess("")

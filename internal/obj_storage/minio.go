@@ -1,6 +1,7 @@
 package obj_storage
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -21,6 +22,22 @@ import (
 
 type Minio struct {
 	p *ws.PostApi
+}
+
+func (m *Minio) UploadImageByBuffer(buffer *bytes.Buffer, size int64, imageType string, onProgressFun func(int)) (string, string, error) {
+	panic("implement me")
+}
+
+func (m *Minio) UploadSoundByBuffer(buffer *bytes.Buffer, size int64, fileType string, onProgressFun func(int)) (string, string, error) {
+	panic("implement me")
+}
+
+func (m *Minio) UploadFileByBuffer(buffer *bytes.Buffer, size int64, fileType string, onProgressFun func(int)) (string, string, error) {
+	panic("implement me")
+}
+
+func (m *Minio) UploadVideoByBuffer(videoBuffer, snapshotBuffer *bytes.Buffer, videoSize, snapshotSize int64, videoType string, onProgressFun func(int)) (string, string, string, string, error) {
+	panic("implement me")
 }
 
 func NewMinio(p *ws.PostApi) *Minio {

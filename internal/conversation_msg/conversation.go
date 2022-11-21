@@ -20,13 +20,13 @@ import (
 )
 
 func (c *Conversation) getAllConversationList(callback open_im_sdk_callback.Base, operationID string) sdk.GetAllConversationListCallback {
-	conversationList, err := c.db.GetAllConversationList()
+	conversationList, err := c.db.GetAllConversationListDB()
 	common.CheckDBErrCallback(callback, err, operationID)
 	return conversationList
 }
 
 func (c *Conversation) getConversationListSplit(callback open_im_sdk_callback.Base, offset, count int, operationID string) sdk.GetConversationListSplitCallback {
-	conversationList, err := c.db.GetConversationListSplit(offset, count)
+	conversationList, err := c.db.GetConversationListSplitDB(offset, count)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return conversationList
 }
@@ -206,7 +206,7 @@ func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, so
 	}
 }
 func (c *Conversation) getMultipleConversation(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) sdk.GetMultipleConversationCallback {
-	conversationList, err := c.db.GetMultipleConversation(conversationIDList)
+	conversationList, err := c.db.GetMultipleConversationDB(conversationIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return conversationList
 }
@@ -1224,7 +1224,7 @@ func (c *Conversation) newRevokeOneMessage(callback open_im_sdk_callback.Base, r
 	}
 	err = c.db.UpdateColumnsMessageController(message.ClientMsgID, groupID, message.SessionType, map[string]interface{}{"status": constant.MsgStatusRevoked})
 	if err != nil {
-		log.Error(operationID, "update revoke message err", localMessage, message)
+		log.Error(operationID, "update revoke message err", localMessage, message, err.Error())
 	}
 	s.SendTime = resp.SendTime
 	lc.LatestMsg = utils.StructToJsonString(s)
@@ -1813,7 +1813,7 @@ func (c *Conversation) deleteAllMsgFromLocal(callback open_im_sdk_callback.Base,
 	}
 	err = c.db.CleaAllConversation()
 	common.CheckDBErrCallback(callback, err, operationID)
-	conversationList, err := c.db.GetAllConversationList()
+	conversationList, err := c.db.GetAllConversationListDB()
 	common.CheckDBErrCallback(callback, err, operationID)
 	var cidList []string
 	for _, conversation := range conversationList {

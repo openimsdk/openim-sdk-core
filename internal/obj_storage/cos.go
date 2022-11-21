@@ -1,6 +1,7 @@
 package obj_storage
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -21,6 +22,22 @@ import (
 
 type COS struct {
 	p *ws.PostApi
+}
+
+func (c *COS) UploadImageByBuffer(buffer *bytes.Buffer, size int64, imageType string, onProgressFun func(int)) (string, string, error) {
+	panic("implement me")
+}
+
+func (c *COS) UploadSoundByBuffer(buffer *bytes.Buffer, size int64, fileType string, onProgressFun func(int)) (string, string, error) {
+	panic("implement me")
+}
+
+func (c *COS) UploadFileByBuffer(buffer *bytes.Buffer, size int64, fileType string, onProgressFun func(int)) (string, string, error) {
+	panic("implement me")
+}
+
+func (c *COS) UploadVideoByBuffer(videoBuffer, snapshotBuffer *bytes.Buffer, videoSize, snapshotSize int64, videoType string, onProgressFun func(int)) (string, string, string, string, error) {
+	panic("implement me")
 }
 
 func NewCOS(p *ws.PostApi) *COS {

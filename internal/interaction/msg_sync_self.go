@@ -2,10 +2,9 @@ package interaction
 
 import (
 	"github.com/golang/protobuf/proto"
-	//"open_im_sdk/internal/encryption"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
@@ -13,17 +12,16 @@ import (
 )
 
 type SelfMsgSync struct {
-	*db.DataBase
+	db_interface.DataBase
 	*Ws
 	loginUserID        string
 	conversationCh     chan common.Cmd2Value
 	seqMaxSynchronized uint32
 	seqMaxNeedSync     uint32 //max seq in push or max seq in redis
 	pushMsgCache       map[uint32]*server_api_params.MsgData
-	//encryption         *encryption.Encryption
 }
 
-func NewSelfMsgSync(dataBase *db.DataBase, ws *Ws, loginUserID string, conversationCh chan common.Cmd2Value) *SelfMsgSync {
+func NewSelfMsgSync(dataBase db_interface.DataBase, ws *Ws, loginUserID string, conversationCh chan common.Cmd2Value) *SelfMsgSync {
 	p := &SelfMsgSync{DataBase: dataBase, Ws: ws, loginUserID: loginUserID, conversationCh: conversationCh}
 	p.pushMsgCache = make(map[uint32]*server_api_params.MsgData, 0)
 	return p

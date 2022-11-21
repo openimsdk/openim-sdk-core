@@ -144,10 +144,10 @@ func (u *Heartbeat) Run() {
 		resp, err := u.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: u.LoginUserID, GroupIDList: groupIDList}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.LoginUserID, operationID)
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.LoginUserID)
-			if !errors.Is(err, constant.WsRecvConnSame) && !errors.Is(err, constant.WsRecvConnDiff) {
-				log.Error(operationID, "other err,  close conn", err.Error())
-				u.CloseConn(operationID)
-			}
+			//if !errors.Is(err, constant.WsRecvConnSame) && !errors.Is(err, constant.WsRecvConnDiff) {
+			//	log.Error(operationID, "other err,  close conn", err.Error())
+			u.CloseConn(operationID)
+			//}
 			continue
 		}
 

@@ -35,22 +35,46 @@ type DataBase struct {
 	superGroupMtx sync.RWMutex
 }
 
-func (d *DataBase) CloseDB(operationID string) error {
+func (d *DataBase) GetDepartmentList(departmentList *[]*model_struct.LocalDepartment, departmentID string) error {
+	panic("implement me")
+}
+
+func (d *DataBase) GetParentDepartment(departmentID string) (model_struct.LocalDepartment, error) {
+	panic("implement me")
+}
+
+func (d *DataBase) InitSuperLocalErrChatLog(groupID string) {
+	panic("implement me")
+}
+
+func (d *DataBase) InitSuperLocalChatLog(groupID string) {
+	panic("implement me")
+}
+
+func (d *DataBase) SetChatLogFailedStatus() {
+	panic("implement me")
+}
+
+func (d *DataBase) InitDB(userID string, dataDir string) error {
+	panic("implement me")
+}
+
+func (d *DataBase) Close() error {
 	UserDBLock.Lock()
 	dbConn, err := d.conn.DB()
 	if err != nil {
-		log.Error(operationID, "get db conn failed ", err.Error())
+		log.Error("", "get db conn failed ", err.Error())
 	} else {
 		if dbConn != nil {
-			log.Info(operationID, "close db finished")
+			log.Info("", "close db finished")
 			err := dbConn.Close()
 			if err != nil {
-				log.Error(operationID, "close db failed ", err.Error())
+				log.Error("", "close db failed ", err.Error())
 			}
 		}
 	}
 
-	log.NewInfo(operationID, "CloseDB ok, delete db map ", d.loginUserID)
+	log.NewInfo("", "CloseDB ok, delete db map ", d.loginUserID)
 	delete(UserDBMap, d.loginUserID)
 	UserDBLock.Unlock()
 	return nil

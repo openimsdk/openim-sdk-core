@@ -22,7 +22,7 @@ import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
@@ -33,7 +33,7 @@ import (
 type Friend struct {
 	friendListener open_im_sdk_callback.OnFriendshipListener
 	loginUserID    string
-	db             *db.DataBase
+	db             db_interface.DataBase
 	user           *user.User
 	p              *ws.PostApi
 	loginTime      int64
@@ -48,11 +48,11 @@ func (f *Friend) SetLoginTime(loginTime int64) {
 	f.loginTime = loginTime
 }
 
-func (f *Friend) Db() *db.DataBase {
+func (f *Friend) Db() db_interface.DataBase {
 	return f.db
 }
 
-func NewFriend(loginUserID string, db *db.DataBase, user *user.User, p *ws.PostApi, conversationCh chan common.Cmd2Value) *Friend {
+func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, p *ws.PostApi, conversationCh chan common.Cmd2Value) *Friend {
 	return &Friend{loginUserID: loginUserID, db: db, user: user, p: p, conversationCh: conversationCh}
 }
 
@@ -204,7 +204,7 @@ func (f *Friend) deleteFriend(friendUserID sdk.DeleteFriendParams, callback open
 func (f *Friend) getFriendList(callback open_im_sdk_callback.Base, operationID string) sdk.GetFriendListCallback {
 	localFriendList, err := f.db.GetAllFriendList()
 	common.CheckDBErrCallback(callback, err, operationID)
-	localBlackList, err := f.db.GetBlackList()
+	localBlackList, err := f.db.GetBlackListDB()
 	common.CheckDBErrCallback(callback, err, operationID)
 	return common.MergeFriendBlackResult(localFriendList, localBlackList)
 }
@@ -214,7 +214,7 @@ func (f *Friend) searchFriends(callback open_im_sdk_callback.Base, param sdk.Sea
 	}
 	localFriendList, err := f.db.SearchFriendList(param.KeywordList[0], param.IsSearchUserID, param.IsSearchNickname, param.IsSearchRemark)
 	common.CheckDBErrCallback(callback, err, operationID)
-	localBlackList, err := f.db.GetBlackList()
+	localBlackList, err := f.db.GetBlackListDB()
 	common.CheckDBErrCallback(callback, err, operationID)
 	return mergeFriendBlackSearchResult(localFriendList, localBlackList)
 }
@@ -249,7 +249,7 @@ func mergeFriendBlackSearchResult(base []*model_struct.LocalFriend, add []*model
 	return result
 }
 func (f *Friend) getBlackList(callback open_im_sdk_callback.Base, operationID string) sdk.GetBlackListCallback {
-	localBlackList, err := f.db.GetBlackList()
+	localBlackList, err := f.db.GetBlackListDB()
 	common.CheckDBErrCallback(callback, err, operationID)
 
 	localFriendList, err := f.db.GetAllFriendList()
@@ -552,7 +552,7 @@ func (f *Friend) SyncFriendList(operationID string) {
 		}
 	}
 	for _, index := range bInANot {
-		err := f.db.DeleteFriend(friendsInfoOnLocal[index].FriendUserID)
+		err := f.db.DeleteFriendDB(friendsInfoOnLocal[index].FriendUserID)
 		if err != nil {
 			log.NewError(operationID, "_deleteFriend failed ", err.Error())
 			continue
@@ -574,7 +574,7 @@ func (f *Friend) SyncBlackList(operationID string) {
 		return
 	}
 	blackListOnServer := common.TransferToLocalBlack(svrList, f.loginUserID)
-	blackListOnLocal, err := f.db.GetBlackList()
+	blackListOnLocal, err := f.db.GetBlackListDB()
 	if err != nil {
 		log.NewError(operationID, "_getBlackList failed ", err.Error())
 		return
