@@ -45,6 +45,7 @@ func registerFunc() {
 	js.Global().Set("sendMessage", js.FuncOf(wrapperConMsg.SendMessage))
 	js.Global().Set("sendMessageNotOss", js.FuncOf(wrapperConMsg.SendMessageNotOss))
 	js.Global().Set("newRevokeMessage", js.FuncOf(wrapperConMsg.NewRevokeMessage))
+	js.Global().Set("modifyGroupMessageReaction", js.FuncOf(wrapperConMsg.ModifyGroupMessageReaction))
 
 	js.Global().Set("getAllConversationList", js.FuncOf(wrapperConMsg.GetAllConversationList))
 	js.Global().Set("getOneConversation", js.FuncOf(wrapperConMsg.GetOneConversation))

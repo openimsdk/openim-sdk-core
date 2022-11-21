@@ -67,6 +67,11 @@ func (w *WrapperConMsg) SendMessageNotOss(_ js.Value, args []js.Value) interface
 	return event_listener.NewCaller(open_im_sdk.SendMessageNotOss, callback, &args).AsyncCallWithCallback()
 }
 
+func (w *WrapperConMsg) ModifyGroupMessageReaction(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.ModifyGroupMessageReaction, callback, &args).AsyncCallWithCallback()
+}
+
 //------------------------------------conversation---------------------------
 
 func (w *WrapperConMsg) GetAllConversationList(_ js.Value, args []js.Value) interface{} {
