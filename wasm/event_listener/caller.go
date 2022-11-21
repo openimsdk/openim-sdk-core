@@ -130,7 +130,6 @@ func (r *ReflectCall) asyncCallWithOutCallback() {
 	}()
 	var funcName reflect.Value
 	var typeFuncName reflect.Type
-	var temp int
 	if r.funcName == nil {
 		panic(ErrNotSetFunc)
 	} else {
@@ -146,7 +145,7 @@ func (r *ReflectCall) asyncCallWithOutCallback() {
 	//strings.SplitAfter()
 	for i := 0; i < len(r.arguments); i++ {
 		//log.NewDebug(r.callback.GetOperationID(), "type is ", typeFuncName.In(temp).Kind(), r.arguments[i].IsNaN())
-		switch typeFuncName.In(temp).Kind() {
+		switch typeFuncName.In(i).Kind() {
 		case reflect.String:
 			convertValue := r.arguments[i].String()
 			if !strings.HasPrefix(convertValue, "<number: ") {
@@ -162,7 +161,7 @@ func (r *ReflectCall) asyncCallWithOutCallback() {
 		case reflect.Bool:
 			values = append(values, reflect.ValueOf(r.arguments[i].Bool()))
 		default:
-			panic("input args type not support:" + strconv.Itoa(int(typeFuncName.In(temp).Kind())))
+			panic("input args type not support:" + strconv.Itoa(int(typeFuncName.In(i).Kind())))
 		}
 	}
 	go func() {
