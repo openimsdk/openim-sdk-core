@@ -143,3 +143,19 @@ type LocalFriend struct {
 	Ex             string `json:"ex,omitempty"`
 	AttachedInfo   string `json:"attachedInfo,omitempty"`
 }
+
+type LocalUser struct {
+	UserID           string `json:"userID,omitempty"`
+	Nickname         string `json:"nickname,omitempty"`
+	FaceURL          string `json:"faceURL,omitempty"`
+	Gender           int32  `json:"gender,omitempty"`
+	PhoneNumber      string `json:"phoneNumber,omitempty"`
+	Birth            uint32 `json:"birth,omitempty"`
+	Email            string `json:"email,omitempty"`
+	CreateTime       uint32 `json:"createTime,omitempty"`
+	AppMangerLevel   int32  `json:"-,omitempty"`
+	Ex               string `json:"ex,omitempty"`
+	AttachedInfo     string `json:"attachedInfo,omitempty"`
+	GlobalRecvMsgOpt int32  `json:"globalRecvMsgOpt,omitempty"`
+	BirthTime        string `json:"birthTime,omitempty"`
+}
