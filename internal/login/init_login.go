@@ -192,13 +192,13 @@ func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalin
 	}
 }
 
-//func (u *LoginMgr) SetSignalingListenerForService(listener open_im_sdk_callback.OnSignalingListener) {
-//	if u.signaling != nil {
-//		u.signaling.SetListenerForService(listener)
-//	} else {
-//		u.signalingListenerFroService = listener
-//	}
-//}
+func (u *LoginMgr) SetSignalingListenerForService(listener open_im_sdk_callback.OnSignalingListener) {
+	if u.signaling != nil {
+		u.signaling.SetListenerForService(listener)
+	} else {
+		u.signalingListenerFroService = listener
+	}
+}
 
 func (u *LoginMgr) SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMomentsListener) {
 	if u.workMoments != nil {
@@ -255,7 +255,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	}
 	log.NewInfo(operationID, u.imConfig.ObjectStorage, "new obj login cost time: ", time.Since(t1))
 	log.NewInfo(operationID, u.imConfig.ObjectStorage, "SyncLoginUserInfo login cost time: ", time.Since(t1))
-	u.push = comm2.NewPush(p, u.imConfig.Platform)
+	u.push = comm2.NewPush(p, u.imConfig.Platform, u.loginUserID)
 	go u.forcedSynchronization() //db
 
 	log.Info(operationID, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
@@ -281,8 +281,13 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		//objStorage = comm2.NewCOS(u.postApi)
 		objStorage = comm2.NewMinio(u.postApi)
 	}
-	u.signaling = signaling.NewLiveSignaling(u.ws, u.signalingListener, u.loginUserID, u.imConfig.Platform, u.db)
-
+	u.signaling = signaling.NewLiveSignaling(u.ws, u.loginUserID, u.imConfig.Platform, u.db)
+	if u.signalingListener != nil {
+		u.signaling.SetListener(u.signalingListener)
+	}
+	if u.signalingListenerFroService != nil {
+		u.signaling.SetListenerForService(u.signalingListenerFroService)
+	}
 	u.conversation = conv.NewConversation(u.ws, u.db, u.postApi, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir, u.imConfig.EncryptionKey,
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener,

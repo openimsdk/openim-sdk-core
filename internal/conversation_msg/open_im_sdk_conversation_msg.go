@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	imgtype "github.com/shamsher31/goimgtype"
+
 	"image"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -22,6 +22,10 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
+	imgtype "github.com/shamsher31/goimgtype"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 )
 
 func (c *Conversation) GetAllConversationList(callback open_im_sdk_callback.Base, operationID string) {
@@ -180,6 +184,18 @@ func (c *Conversation) SetOneConversationPrivateChat(callback open_im_sdk_callba
 		c.setOneConversationPrivateChat(callback, conversationID, isPrivate, operationID)
 		callback.OnSuccess(sdk_params_callback.SetConversationMessageOptCallback)
 		log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", sdk_params_callback.SetConversationMessageOptCallback)
+	}()
+}
+
+func (c *Conversation) SetOneConversationBurnDuration(callback open_im_sdk_callback.Base, conversationID string, burnDuration int32, operationID string) {
+	if callback == nil {
+		return
+	}
+	go func() {
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", conversationID, burnDuration)
+		c.setOneConversationBurnDuration(callback, conversationID, burnDuration, operationID)
+		callback.OnSuccess(sdk_params_callback.SetConversationBurnDurationOptCallback)
+		log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", sdk_params_callback.SetConversationBurnDurationOptCallback)
 	}()
 }
 
@@ -629,6 +645,7 @@ func (c *Conversation) SendMessage(callback open_im_sdk_callback.SendMsgCallBack
 			if err == nil && oldLc.IsPrivateChat {
 				options[constant.IsNotPrivate] = false
 				s.AttachedInfoElem.IsPrivateChat = true
+				s.AttachedInfoElem.BurnDuration = oldLc.BurnDuration
 				s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 			}
 			if err != nil {
@@ -821,6 +838,7 @@ func (c *Conversation) SendMessageNotOss(callback open_im_sdk_callback.SendMsgCa
 			if err == nil && oldLc.IsPrivateChat {
 				options[constant.IsNotPrivate] = false
 				s.AttachedInfoElem.IsPrivateChat = true
+				s.AttachedInfoElem.BurnDuration = oldLc.BurnDuration
 				s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 			}
 			if err != nil {
@@ -1646,8 +1664,8 @@ func getImageInfo(filePath string) (*sdk_struct.ImageInfo, error) {
 
 	b := img.Bounds()
 
-	return &sdk_struct.ImageInfo{Width: int32(b.Max.X), Height: int32(b.Max.Y), Type: datatype, Size: fi.Size()}, nil
-	//return nil, nil
+	return &sdk_struct.ImageInfo{int32(b.Max.X), int32(b.Max.Y), datatype, fi.Size()}, nil
+
 }
 
 const TimeOffset = 5
@@ -1711,7 +1729,7 @@ func (c *Conversation) DeleteAllMsgFromLocalAndSvr(callback open_im_sdk_callback
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName)
-		//	c.deleteAllMsgFromSvr(callback, operationID)
+		//c.deleteAllMsgFromSvr(callback, operationID)
 		c.clearMessageFromSvr(callback, operationID)
 		c.deleteAllMsgFromLocal(callback, operationID)
 		callback.OnSuccess("")
@@ -1744,4 +1762,7 @@ func (c *Conversation) getConversationTypeByGroupID(groupID string) (conversatio
 	default:
 		return "", 0, utils.Wrap(errors.New("err groupType"), "group type err")
 	}
+}
+func (c *Conversation) ModifyGroupMessageReaction(callback open_im_sdk_callback.Base, counter int32, reactionType, operationType int, groupID, msgID, operationID string) {
+	c.modifyGroupMessageReaction(callback, counter, reactionType, operationType, groupID, msgID, operationID)
 }

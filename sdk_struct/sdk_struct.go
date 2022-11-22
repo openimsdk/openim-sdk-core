@@ -25,6 +25,15 @@ type MessageRevoked struct {
 	SessionType                 int32  `json:"sessionType"`
 	Seq                         uint32 `json:"seq"`
 }
+type MessageReaction struct {
+	ClientMsgID  string `json:"clientMsgID"`
+	ReactionType int    `json:"reactionType"`
+	Counter      int32  `json:"counter,omitempty"`
+	UserID       string `json:"userID"`
+	GroupID      string `json:"groupID"`
+	SessionType  int32  `json:"sessionType"`
+	Info         string `json:"info,omitempty"`
+}
 type ImageInfo struct {
 	Width  int32  `json:"x"`
 	Height int32  `json:"y"`
@@ -172,11 +181,26 @@ type AtInfo struct {
 type AttachedInfoElem struct {
 	GroupHasReadInfo          GroupHasReadInfo `json:"groupHasReadInfo,omitempty"`
 	IsPrivateChat             bool             `json:"isPrivateChat"`
+	BurnDuration              int32            `json:"burnDuration"`
 	HasReadTime               int64            `json:"hasReadTime"`
 	NotSenderNotificationPush bool             `json:"notSenderNotificationPush"`
 	MessageEntityList         []*MessageEntity `json:"messageEntityList,omitempty"`
 	IsEncryption              bool             `json:"isEncryption"`
 	InEncryptStatus           bool             `json:"inEncryptStatus"`
+	MessageReactionElem       []*ReactionElem  `json:"messageReactionElem,omitempty"`
+}
+
+type ReactionElem struct {
+	Counter          int32               `json:"counter,omitempty"`
+	Type             int                 `json:"type,omitempty"`
+	UserReactionList []*UserReactionElem `json:"userReactionList,omitempty"`
+	CanRepeat        bool                `json:"canRepeat,omitempty"`
+	Info             string              `json:"info,omitempty"`
+}
+type UserReactionElem struct {
+	UserID  string `json:"userID,omitempty"`
+	Counter int32  `json:"counter,omitempty"`
+	Info    string `json:"info,omitempty"`
 }
 type MessageEntity struct {
 	Type   string `json:"type,omitempty"`

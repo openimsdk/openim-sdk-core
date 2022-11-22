@@ -122,7 +122,7 @@ func (f *Friend) addFriend(callback open_im_sdk_callback.Base, userIDReqMsg sdk.
 	apiReq.FromUserID = f.loginUserID
 	apiReq.ReqMsg = userIDReqMsg.ReqMsg
 	apiReq.OperationID = operationID
-	f.p.PostFatalCallback(callback, constant.AddFriendRouter, apiReq, nil, operationID)
+	f.p.PostFatalCallbackPenetrate(callback, constant.AddFriendRouter, apiReq, nil, operationID)
 	f.SyncFriendApplication(operationID)
 }
 
@@ -366,8 +366,10 @@ func (f *Friend) SyncSelfFriendApplication(operationID string) {
 			continue
 		}
 		callbackData := sdk.FriendApplicationAddedCallback(*onServer[index])
-		f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
-		log.Info(operationID, "OnFriendApplicationAdded", utils.StructToJsonString(callbackData))
+		if f.friendListener != nil {
+			f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
+			log.Info(operationID, "OnFriendApplicationAdded", utils.StructToJsonString(callbackData))
+		}
 	}
 	for _, index := range sameA {
 		err := f.db.UpdateFriendRequest(onServer[index])
@@ -377,17 +379,26 @@ func (f *Friend) SyncSelfFriendApplication(operationID string) {
 		} else {
 			if onServer[index].HandleResult == constant.FriendResponseRefuse {
 				callbackData := sdk.FriendApplicationRejectCallback(*onServer[index])
-				f.friendListener.OnFriendApplicationRejected(utils.StructToJsonString(callbackData))
-				log.Info(operationID, "OnFriendApplicationRejected", utils.StructToJsonString(callbackData))
+				if f.friendListener != nil {
+
+					f.friendListener.OnFriendApplicationRejected(utils.StructToJsonString(callbackData))
+					log.Info(operationID, "OnFriendApplicationRejected", utils.StructToJsonString(callbackData))
+				}
 
 			} else if onServer[index].HandleResult == constant.FriendResponseAgree {
 				callbackData := sdk.FriendApplicationAcceptCallback(*onServer[index])
-				f.friendListener.OnFriendApplicationAccepted(utils.StructToJsonString(callbackData))
-				log.Info(operationID, "OnFriendApplicationAccepted", utils.StructToJsonString(callbackData))
+				if f.friendListener != nil {
+
+					f.friendListener.OnFriendApplicationAccepted(utils.StructToJsonString(callbackData))
+					log.Info(operationID, "OnFriendApplicationAccepted", utils.StructToJsonString(callbackData))
+				}
 			} else {
 				callbackData := sdk.FriendApplicationAddedCallback(*onServer[index])
-				f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
-				log.Info(operationID, "OnFriendApplicationAdded", utils.StructToJsonString(callbackData))
+				if f.friendListener != nil {
+
+					f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
+					log.Info(operationID, "OnFriendApplicationAdded", utils.StructToJsonString(callbackData))
+				}
 			}
 		}
 	}
@@ -398,8 +409,11 @@ func (f *Friend) SyncSelfFriendApplication(operationID string) {
 			continue
 		}
 		callbackData := sdk.FriendApplicationDeletedCallback(*onLocal[index])
-		f.friendListener.OnFriendApplicationDeleted(utils.StructToJsonString(callbackData))
-		log.Info(operationID, "OnFriendApplicationDeleted", utils.StructToJsonString(callbackData))
+		if f.friendListener != nil {
+
+			f.friendListener.OnFriendApplicationDeleted(utils.StructToJsonString(callbackData))
+			log.Info(operationID, "OnFriendApplicationDeleted", utils.StructToJsonString(callbackData))
+		}
 	}
 }
 
@@ -429,8 +443,11 @@ func (f *Friend) SyncFriendApplication(operationID string) {
 		}
 		callbackData := sdk.FriendApplicationAddedCallback(*onServer[index])
 		//f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
-		f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
-		log.Info(operationID, "OnReceiveFriendApplicationAdded", utils.StructToJsonString(callbackData))
+		if f.friendListener != nil {
+
+			f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
+			log.Info(operationID, "OnReceiveFriendApplicationAdded", utils.StructToJsonString(callbackData))
+		}
 	}
 	for _, index := range sameA {
 		err := f.db.UpdateFriendRequest(onServer[index])
@@ -440,16 +457,25 @@ func (f *Friend) SyncFriendApplication(operationID string) {
 		} else {
 			if onServer[index].HandleResult == constant.FriendResponseRefuse {
 				callbackData := sdk.FriendApplicationRejectCallback(*onServer[index])
-				f.friendListener.OnFriendApplicationRejected(utils.StructToJsonString(callbackData))
-				log.Info(operationID, "OnFriendApplicationRejected", utils.StructToJsonString(callbackData))
+				if f.friendListener != nil {
+
+					f.friendListener.OnFriendApplicationRejected(utils.StructToJsonString(callbackData))
+					log.Info(operationID, "OnFriendApplicationRejected", utils.StructToJsonString(callbackData))
+				}
 			} else if onServer[index].HandleResult == constant.FriendResponseAgree {
 				callbackData := sdk.FriendApplicationAcceptCallback(*onServer[index])
-				f.friendListener.OnFriendApplicationAccepted(utils.StructToJsonString(callbackData))
-				log.Info(operationID, "OnFriendApplicationAccepted", utils.StructToJsonString(callbackData))
+				if f.friendListener != nil {
+
+					f.friendListener.OnFriendApplicationAccepted(utils.StructToJsonString(callbackData))
+					log.Info(operationID, "OnFriendApplicationAccepted", utils.StructToJsonString(callbackData))
+				}
 			} else {
 				callbackData := sdk.FriendApplicationAddedCallback(*onServer[index])
-				f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
-				log.Info(operationID, "OnReceiveFriendApplicationAdded", utils.StructToJsonString(callbackData))
+				if f.friendListener != nil {
+
+					f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
+					log.Info(operationID, "OnReceiveFriendApplicationAdded", utils.StructToJsonString(callbackData))
+				}
 			}
 		}
 	}
@@ -460,8 +486,11 @@ func (f *Friend) SyncFriendApplication(operationID string) {
 			continue
 		}
 		callbackData := sdk.FriendApplicationDeletedCallback(*onLocal[index])
-		f.friendListener.OnFriendApplicationDeleted(utils.StructToJsonString(callbackData))
-		log.Info(operationID, "OnReceiveFriendApplicationDeleted", utils.StructToJsonString(callbackData))
+		if f.friendListener != nil {
+
+			f.friendListener.OnFriendApplicationDeleted(utils.StructToJsonString(callbackData))
+			log.Info(operationID, "OnReceiveFriendApplicationDeleted", utils.StructToJsonString(callbackData))
+		}
 	}
 }
 
@@ -491,8 +520,11 @@ func (f *Friend) SyncFriendList(operationID string) {
 			continue
 		}
 		callbackData := sdk.FriendAddedCallback(*friendsInfoOnServer[index])
-		f.friendListener.OnFriendAdded(utils.StructToJsonString(callbackData))
-		log.Info(operationID, "OnFriendAdded", utils.StructToJsonString(callbackData))
+		if f.friendListener != nil {
+
+			f.friendListener.OnFriendAdded(utils.StructToJsonString(callbackData))
+			log.Info(operationID, "OnFriendAdded", utils.StructToJsonString(callbackData))
+		}
 	}
 	for _, index := range sameA {
 		err := f.db.UpdateFriend(friendsInfoOnServer[index])
@@ -501,13 +533,22 @@ func (f *Friend) SyncFriendList(operationID string) {
 			continue
 		} else {
 			callbackData := sdk.FriendInfoChangedCallback(*friendsInfoOnServer[index])
-			f.friendListener.OnFriendInfoChanged(utils.StructToJsonString(callbackData))
-			//	conID := utils.GetConversationIDBySessionType(callbackData.FriendUserID, constant.SingleChatType)
-			if friendsInfoOnServer[index].FaceURL != friendsInfoOnLocal[index].FaceURL || friendsInfoOnServer[index].Nickname != friendsInfoOnLocal[index].Nickname {
-				//	common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conID, Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: callbackData.FriendUserID, SessionType: constant.SingleChatType}}, f.conversationCh)
-				//	common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{SendID: callbackData.FriendUserID, FaceURL: callbackData.FaceURL, Nickname: callbackData.Nickname, SessionType: constant.SingleChatType}}, f.conversationCh)
+			if f.friendListener != nil {
+				f.friendListener.OnFriendInfoChanged(utils.StructToJsonString(callbackData))
+				localFriend, err := f.db.GetFriendInfoByFriendUserID(callbackData.FriendUserID)
+				if err != nil {
+					log.NewError(operationID, "GetFriendInfoByFriendUserID failed ", err.Error(), "userID", callbackData.FriendUserID)
+					continue
+				}
+				if localFriend.Nickname == callbackData.Nickname && localFriend.FaceURL == callbackData.FaceURL && localFriend.Remark == callbackData.Remark {
+					log.NewInfo(operationID, "OnFriendInfoChanged nickname faceURL unchanged", callbackData.FriendUserID, localFriend.Nickname, localFriend.FaceURL)
+					continue
+				}
+				conID := utils.GetConversationIDBySessionType(callbackData.FriendUserID, constant.SingleChatType)
+				common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conID, Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: callbackData.FriendUserID, SessionType: constant.SingleChatType}}, f.conversationCh)
+				common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: callbackData.FriendUserID, FaceURL: callbackData.FaceURL, Nickname: callbackData.Nickname}}, f.conversationCh)
+				log.Info(operationID, "OnFriendInfoChanged", utils.StructToJsonString(callbackData))
 			}
-			log.Info(operationID, "OnFriendInfoChanged", utils.StructToJsonString(callbackData))
 		}
 	}
 	for _, index := range bInANot {
@@ -517,8 +558,11 @@ func (f *Friend) SyncFriendList(operationID string) {
 			continue
 		}
 		callbackData := sdk.FriendDeletedCallback(*friendsInfoOnLocal[index])
-		f.friendListener.OnFriendDeleted(utils.StructToJsonString(callbackData))
-		log.Info(operationID, "OnFriendDeleted", utils.StructToJsonString(callbackData))
+		if f.friendListener != nil {
+
+			f.friendListener.OnFriendDeleted(utils.StructToJsonString(callbackData))
+			log.Info(operationID, "OnFriendDeleted", utils.StructToJsonString(callbackData))
+		}
 	}
 }
 
@@ -545,8 +589,11 @@ func (f *Friend) SyncBlackList(operationID string) {
 			continue
 		}
 		callbackData := sdk.BlackAddCallback(*blackListOnServer[index])
-		f.friendListener.OnBlackAdded(utils.StructToJsonString(callbackData))
-		log.Info(operationID, "OnBlackAdded", utils.StructToJsonString(callbackData))
+		if f.friendListener != nil {
+
+			f.friendListener.OnBlackAdded(utils.StructToJsonString(callbackData))
+			log.Info(operationID, "OnBlackAdded", utils.StructToJsonString(callbackData))
+		}
 	}
 	for _, index := range sameA {
 		err := f.db.UpdateBlack(blackListOnServer[index])
@@ -564,8 +611,10 @@ func (f *Friend) SyncBlackList(operationID string) {
 			continue
 		}
 		callbackData := sdk.BlackDeletedCallback(*blackListOnLocal[index])
-		f.friendListener.OnBlackDeleted(utils.StructToJsonString(callbackData))
-		log.Info(operationID, "OnBlackDeleted", utils.StructToJsonString(callbackData))
+		if f.friendListener != nil {
+			f.friendListener.OnBlackDeleted(utils.StructToJsonString(callbackData))
+			log.Info(operationID, "OnBlackDeleted", utils.StructToJsonString(callbackData))
+		}
 	}
 }
 

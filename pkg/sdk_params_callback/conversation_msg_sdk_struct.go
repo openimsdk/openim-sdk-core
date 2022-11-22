@@ -34,6 +34,8 @@ const SetConversationMessageOptCallback = constant.SuccessCallbackDefault
 
 const SetConversationPrivateChatOptCallback = constant.SuccessCallbackDefault
 
+const SetConversationBurnDurationOptCallback = constant.SuccessCallbackDefault
+
 type FindMessageListParams []*ConversationArgs
 type ConversationArgs struct {
 	ConversationID  string   `json:"conversationID"`

@@ -40,6 +40,14 @@ func (s *SignalingCallback) OnHangUp(hangUpCallback string) {
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", hangUpCallback, "0"}, s.uid)
 }
 
+func (s *SignalingCallback) OnRoomParticipantConnected(onRoomParticipantConnected string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", onRoomParticipantConnected, "0"}, s.uid)
+}
+
+func (s *SignalingCallback) OnRoomParticipantDisconnected(onRoomParticipantDisconnected string) {
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", onRoomParticipantDisconnected, "0"}, s.uid)
+}
+
 func (wsRouter *WsFuncRouter) SetSignalingListener() {
 	var sr SignalingCallback
 	sr.uid = wsRouter.uId

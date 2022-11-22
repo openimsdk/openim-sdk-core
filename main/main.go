@@ -1,64 +1,27 @@
 package main
 
 import (
+	"fmt"
 	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/test"
-	"open_im_sdk/ws_wrapper/ws_local_server"
+	"time"
 )
-
-//func reliabilityTest() {
-//	intervalSleepMs := 1
-//	randSleepMaxSecond := 30
-//	imIP := "43.128.5.63"
-//	oneClientSendMsgNum := 1
-//	testClientNum := 100
-//	test.ReliabilityTest(oneClientSendMsgNum, intervalSleepMs, imIP, randSleepMaxSecond, testClientNum)
-//
-//	for {
-//		if test.CheckReliabilityResult() {
-//			log.Warn("", "CheckReliabilityResult ok, again")
-//		} else {
-//			log.Warn("", "CheckReliabilityResult failed , wait.... ")
-//		}
-//		time.Sleep(time.Duration(10) * time.Second)
-//	}
-//}
-
-var (
-	TESTIP       = "43.154.157.177"
-	APIADDR      = "http://" + TESTIP + ":10002"
-	WSADDR       = "ws://" + TESTIP + ":10001"
-	REGISTERADDR = APIADDR + "/user_register"
-	ACCOUNTCHECK = APIADDR + "/manager/account_check"
-	TOKENADDR    = APIADDR + "/auth/user_token"
-	SECRET       = "tuoyun"
-	SENDINTERVAL = 20
-)
-
-type ChanMsg struct {
-	data []byte
-	uid  string
-}
-
-func testMem() {
-	s := server_api_params.MsgData{}
-	s.RecvID = "11111111sdfaaaaaaaaaaaaaaaaa11111"
-	s.RecvID = "222222222afsddddddddddddddddddddddd22"
-	s.ClientMsgID = "aaaaaaaaaaaadfsaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-	s.SenderNickname = "asdfafdassssssssssssssssssssssfds"
-	s.SenderFaceURL = "bbbbbbbbbbbbbbbbsfdaaaaaaaaaaaaaaaaaaaaaaaaa"
-
-	ws_local_server.SendOneUserMessageForTest(s, "aaaa")
-}
 
 func main() {
-
+	APIADDR := "http://43.154.157.177:10002"
+	WSADDR := "ws://43.154.157.177:10001"
+	REGISTERADDR := APIADDR + "/user_register"
+	ACCOUNTCHECK := APIADDR + "/manager/account_check"
+	TOKENADDR := APIADDR + "/auth/user_token"
+	SECRET := "openIM123"
+	SENDINTERVAL := 20
 	test.REGISTERADDR = REGISTERADDR
 	test.TOKENADDR = TOKENADDR
 	test.SECRET = SECRET
 	test.SENDINTERVAL = SENDINTERVAL
-	strMyUidx := "3984071717"
+	test.WSADDR = WSADDR
+	test.ACCOUNTCHECK = ACCOUNTCHECK
+	strMyUidx := "2346196870"
 
 	//	var onlineNum *int          //Number of online users
 	//	var senderNum *int          //Number of users sending messages
@@ -71,17 +34,26 @@ func main() {
 	//	flag.Parse()
 	//strMyUidx := "13900000000"
 
-	//friendID := "17726378428"
 	log.NewPrivateLog("", 6)
 	tokenx := test.RunGetToken(strMyUidx)
-	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
+	fmt.Println(tokenx)
 	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
 	println("start")
-
+	//test.DoTestCreateGroup()
+	//test.DoTestSearchLocalMessages()
+	//test.DoTestInviteInGroup()
+	//time.Sleep(time.Second*6)
+	//test.DoTestSetBurnDuration("single_2861383134")
+	for {
+		test.DoTestSendMsg2("2346196870", "2861383134")
+		time.Sleep(time.Second * 10)
+	}
+	//test.DoTestSignalGetRoomByGroupID("1826384574")
+	//test.DoTestSignalGetTokenByRoomID("1826384574")
+	//test.DoTestSendImageMsg("3433303585")
 	//test.DoTestGetUserInDepartment()
 	//test.DoTestGetDepartmentMemberAndSubDepartment()
 	//test.DoTestDeleteAllMsgFromLocalAndSvr()
-	//test.
 	//	test.DoTestGetDepartmentMemberAndSubDepartment()
 	//test.DotestUploadFile()
 	//test.DotestMinio()
@@ -124,74 +96,11 @@ func main() {
 	//test.DoTestMarkGroupMessageAsRead()
 	//test.DoTestGetGroupHistoryMessage()
 	//test.DoTestGetHistoryMessage("17396220460")
-	//time.Sleep(250000 * time.Millisecond)
-	//b := utils.GetCurrentTimestampBySecond()
-	//i := 0
-	//for {
-	//	//test.DoTestSendMsg2Group(strMyUidx, "42c9f515cb84ee0e82b3f3ce71eb14d6", i)
-	//	i++
-	//	time.Sleep(250 * time.Millisecond)
-	//	if i == 100 {
-	//		break
-	//	}
-	//	log.Warn("", "10 * time.Millisecond ###################waiting... msg: ", i)
-	//}
-	//
-	//log.Warn("", "cost time: ", utils.GetCurrentTimestampBySecond()-b)
-	//return
-	//i = 0
-	//for {
-	//	test.DoTestSendMsg2Group(strMyUidx, "42c9f515cb84ee0e82b3f3ce71eb14d6", i)
-	//	i++
-	//	time.Sleep(1000 * time.Millisecond)
-	//	if i == 10 {
-	//		break
-	//	}
-	//	log.Warn("", "1000 * time.Millisecond ###################waiting... msg: ", i)
-	//}
-	//
-	//i = 0
-	//for {
-	//	test.DoTestSendMsg2Group(strMyUidx, "42c9f515cb84ee0e82b3f3ce71eb14d6", i)
-	//	i++
-	//	time.Sleep(10000 * time.Millisecond)
-	//	log.Warn("", "10000 * time.Millisecond ###################waiting... msg: ", i)
-	//}
+	for {
+		time.Sleep(10000 * time.Millisecond)
+		log.Warn("", "10000 * time.Millisecond ###################waiting... msg: ")
+	}
 
 	//reliabilityTest()
 	//	test.PressTest(testClientNum, intervalSleep, imIP)
 }
-
-//
-//func main() {
-//	testClientNum := 100
-//	intervalSleep := 2
-//	imIP := "43.128.5.63"
-
-//
-//	msgNum := 1000
-//	test.ReliabilityTest(msgNum, intervalSleep, imIP)
-//	for i := 0; i < 6; i++ {
-//		test.Msgwg.Wait()
-//	}
-//
-//	for {
-//
-//		if test.CheckReliabilityResult() {
-//			log.Warn("CheckReliabilityResult ok, again")
-//
-//		} else {
-//			log.Warn("CheckReliabilityResult failed , wait.... ")
-//		}
-//
-//		time.Sleep(time.Duration(10) * time.Second)
-//	}
-//
-//}
-
-//func printCallerNameAndLine() string {
-//	pc, _, line, _ := runtime.Caller(2)
-//	return runtime.FuncForPC(pc).Name() + "()@" + strconv.Itoa(line) + ": "
-//}
-
-// myuid,  maxuid,  msgnum

@@ -16,4 +16,8 @@ type OnSignalingListener interface {
 	OnInvitationTimeout(invitationTimeoutCallback string)
 	//
 	OnHangUp(hangUpCallback string)
+
+	OnRoomParticipantConnected(onRoomParticipantConnectedCallback string)
+
+	OnRoomParticipantDisconnected(onRoomParticipantDisconnectedCallback string)
 }

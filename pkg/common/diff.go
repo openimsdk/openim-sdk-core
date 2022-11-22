@@ -1,7 +1,6 @@
 package common
 
 import (
-	"fmt"
 	"open_im_sdk/pkg/db/model_struct"
 
 	"github.com/google/go-cmp/cmp"
@@ -635,7 +634,7 @@ func CheckConversationListDiff(conversationsOnServer, conversationsOnLocal []*te
 			//fmt.Println("test result is v", v)
 			//fmt.Println("test result is ia", ia)
 			if !cmp.Equal(v, ia) {
-				fmt.Println(v, ia)
+				//fmt.Println(v, ia)
 				// key of a and b is equal, but value different
 				//fmt.Println("sameA", conversationsOnServer[i], ia)
 				sameA = append(sameA, i)
@@ -762,6 +761,7 @@ type tempConversation struct {
 	UserID                string
 	GroupID               string
 	IsPrivateChat         bool
+	BurnDuration          int32
 	IsPinned              bool
 	UnreadCount           int32
 	GroupAtType           int32
@@ -781,6 +781,7 @@ func ServerTransferToTempConversation(resp server_api_params.GetAllConversations
 			UserID:                serverConversation.UserID,
 			GroupID:               serverConversation.GroupID,
 			IsPrivateChat:         serverConversation.IsPrivateChat,
+			BurnDuration:          serverConversation.BurnDuration,
 			IsPinned:              serverConversation.IsPinned,
 			GroupAtType:           serverConversation.GroupAtType,
 			IsNotInGroup:          serverConversation.IsNotInGroup,
@@ -803,6 +804,7 @@ func LocalTransferToTempConversation(local []*model_struct.LocalConversation) []
 			UserID:                localConversation.UserID,
 			GroupID:               localConversation.GroupID,
 			IsPrivateChat:         localConversation.IsPrivateChat,
+			BurnDuration:          localConversation.BurnDuration,
 			IsPinned:              localConversation.IsPinned,
 			GroupAtType:           localConversation.GroupAtType,
 			IsNotInGroup:          localConversation.IsNotInGroup,
@@ -825,6 +827,7 @@ func TransferToLocalConversation(resp server_api_params.GetAllConversationsResp)
 			UserID:                serverConversation.UserID,
 			GroupID:               serverConversation.GroupID,
 			IsPrivateChat:         serverConversation.IsPrivateChat,
+			BurnDuration:          serverConversation.BurnDuration,
 			IsPinned:              serverConversation.IsPinned,
 			GroupAtType:           serverConversation.GroupAtType,
 			IsNotInGroup:          serverConversation.IsNotInGroup,
