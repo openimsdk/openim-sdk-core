@@ -283,3 +283,8 @@ func (w *WrapperConMsg) GetTotalUnreadMsgCount(_ js.Value, args []js.Value) inte
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.GetTotalUnreadMsgCount, callback, &args).AsyncCallWithCallback()
 }
+
+func (w *WrapperConMsg) SetOneConversationBurnDuration(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.SetOneConversationBurnDuration, callback, &args).AsyncCallWithCallback()
+}

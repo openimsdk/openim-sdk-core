@@ -80,6 +80,7 @@ func registerFunc() {
 	js.Global().Set("resetConversationGroupAtType", js.FuncOf(wrapperConMsg.ResetConversationGroupAtType))
 	js.Global().Set("pinConversation", js.FuncOf(wrapperConMsg.PinConversation))
 	js.Global().Set("getTotalUnreadMsgCount", js.FuncOf(wrapperConMsg.GetTotalUnreadMsgCount))
+	js.Global().Set("setOneConversationBurnDuration", js.FuncOf(wrapperConMsg.SetOneConversationBurnDuration))
 	js.Global().Set("findMessageList", js.FuncOf(wrapperConMsg.FindMessageList))
 	js.Global().Set("getHistoryMessageListReverse", js.FuncOf(wrapperConMsg.GetHistoryMessageListReverse))
 	js.Global().Set("newRevokeMessage", js.FuncOf(wrapperConMsg.NewRevokeMessage))

@@ -168,6 +168,7 @@ func (i IndexDB) UpdateConversation(c *model_struct.LocalConversation) error {
 		DraftTextTime:         c.DraftTextTime,
 		IsPinned:              c.IsPinned,
 		IsPrivateChat:         c.IsPrivateChat,
+		BurnDuration:          c.BurnDuration,
 		IsNotInGroup:          c.IsNotInGroup,
 		UpdateUnreadCountTime: c.UpdateUnreadCountTime,
 		AttachedInfo:          c.AttachedInfo,
@@ -188,6 +189,7 @@ func (i IndexDB) UpdateConversationForSync(c *model_struct.LocalConversation) er
 		IsPrivateChat:         c.IsPrivateChat,
 		IsNotInGroup:          c.IsNotInGroup,
 		UpdateUnreadCountTime: c.UpdateUnreadCountTime,
+		BurnDuration:          c.BurnDuration,
 		AttachedInfo:          c.AttachedInfo,
 		Ex:                    c.Ex,
 	}

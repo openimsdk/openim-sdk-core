@@ -35,6 +35,7 @@ type LocalConversation struct {
 	DraftTextTime         int64  ` json:"draftTextTime,omitempty"`
 	IsPinned              bool   ` json:"isPinned,omitempty"`
 	IsPrivateChat         bool   ` json:"isPrivateChat,omitempty"`
+	BurnDuration          int32  ` json:"burnDuration,omitempty"`
 	IsNotInGroup          bool   ` json:"isNotInGroup,omitempty"`
 	UpdateUnreadCountTime int64  ` json:"updateUnreadCountTime,omitempty"`
 	AttachedInfo          string ` json:"attachedInfo,omitempty"`
@@ -47,6 +48,7 @@ type LocalPartConversation struct {
 	IsPrivateChat         bool   ` json:"isPrivateChat"`
 	IsNotInGroup          bool   ` json:"isNotInGroup"`
 	UpdateUnreadCountTime int64  ` json:"updateUnreadCountTime"`
+	BurnDuration          int32  ` json:"burnDuration,omitempty"`
 	AttachedInfo          string ` json:"attachedInfo"`
 	Ex                    string ` json:"ex"`
 }
