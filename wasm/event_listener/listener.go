@@ -251,6 +251,14 @@ type SignalingCallback struct {
 	CallbackWriter
 }
 
+func (s SignalingCallback) OnRoomParticipantConnected(onRoomParticipantConnectedCallback string) {
+	s.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(onRoomParticipantConnectedCallback).SendMessage()
+}
+
+func (s SignalingCallback) OnRoomParticipantDisconnected(onRoomParticipantDisconnectedCallback string) {
+	s.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(onRoomParticipantDisconnectedCallback).SendMessage()
+}
+
 func (s SignalingCallback) OnReceiveNewInvitation(receiveNewInvitationCallback string) {
 	s.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(receiveNewInvitationCallback).SendMessage()
 }
