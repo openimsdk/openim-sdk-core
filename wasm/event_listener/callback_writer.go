@@ -1,7 +1,6 @@
 package event_listener
 
 import (
-	"fmt"
 	"open_im_sdk/pkg/utils"
 	"syscall/js"
 )
@@ -97,7 +96,13 @@ func (p *PromiseHandler) SendMessage() {
 	if p.Data != nil {
 		p.resolve.Invoke(p.Data)
 	} else {
-		p.reject.Invoke(jsErr.New(fmt.Sprintf("erCode:%d,errMsg:%s", p.ErrCode, p.ErrMsg)))
+		//p.reject.Invoke(jsErr.New(fmt.Sprintf("erCode:%d,errMsg:%s", p.ErrCode, p.ErrMsg)))
+		errInfo := make(map[string]interface{})
+		errInfo["errCode"] = p.ErrCode
+		errInfo["errMsg"] = p.ErrMsg
+		errInfo["operationID"] = p.OperationID
+		p.reject.Invoke(errInfo)
+
 	}
 }
 func (p *PromiseHandler) SetEvent(event string) CallbackWriter {
