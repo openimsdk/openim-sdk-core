@@ -544,8 +544,10 @@ func (f *Friend) SyncFriendList(operationID string) {
 					log.NewInfo(operationID, "OnFriendInfoChanged nickname faceURL unchanged", callbackData.FriendUserID, localFriend.Nickname, localFriend.FaceURL)
 					continue
 				}
-				conID := utils.GetConversationIDBySessionType(callbackData.FriendUserID, constant.SingleChatType)
-				common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conID, Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: callbackData.FriendUserID, SessionType: constant.SingleChatType}}, f.conversationCh)
+				if callbackData.Remark != "" {
+					callbackData.Nickname = callbackData.Remark
+				}
+				common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: callbackData.FriendUserID, SessionType: constant.SingleChatType}}, f.conversationCh)
 				common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: callbackData.FriendUserID, FaceURL: callbackData.FaceURL, Nickname: callbackData.Nickname}}, f.conversationCh)
 				log.Info(operationID, "OnFriendInfoChanged", utils.StructToJsonString(callbackData))
 			}
@@ -688,7 +690,6 @@ func (f *Friend) friendRemarkNotification(msg *api.MsgData, conversationCh chan 
 	}
 	if detail.FromToUserID.FromUserID == f.loginUserID {
 		f.SyncFriendList(operationID)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.UpdateConInfo{UserID: detail.FromToUserID.ToUserID}}, conversationCh)
 	}
 }
 
@@ -701,21 +702,14 @@ func (f *Friend) friendInfoChangedNotification(msg *api.MsgData, conversationCh 
 	}
 	if detail.UserID != f.loginUserID {
 		f.SyncFriendList(operationID)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.UpdateConInfo{UserID: detail.UserID}}, conversationCh)
-		go func() {
-			friendInfo, err := f.db.GetFriendInfoByFriendUserID(detail.UserID)
-			if err == nil {
-				_ = common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: detail.UserID, FaceURL: friendInfo.FaceURL, Nickname: friendInfo.Nickname}}, conversationCh)
-
-			}
-		}()
-
 	} else {
 		f.user.SyncLoginUserInfo(operationID)
 		go func() {
 			loginUserInfo, err := f.db.GetLoginUser(f.loginUserID)
 			if err == nil {
-				_ = f.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.UserID, loginUserInfo.FaceURL, loginUserInfo.Nickname, constant.SingleChatType)
+				//_ = f.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.UserID, loginUserInfo.FaceURL, loginUserInfo.Nickname, constant.SingleChatType)
+				_ = common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: detail.UserID, FaceURL: loginUserInfo.FaceURL, Nickname: loginUserInfo.Nickname}}, conversationCh)
+
 			}
 		}()
 	}
