@@ -82,10 +82,10 @@ func DoTestFindMessageList() {
 	var testFindMessageListCallBack FindMessageListCallBack
 	testFindMessageListCallBack.OperationID = utils.OperationIDGenerator()
 	var params sdk_params_callback.FindMessageListParams
-	temp := sdk_params_callback.ConversationArgs{ConversationID: "super_group_1360287297", ClientMsgIDList: []string{"39203943c94e23630af69b21a7414852", "736f40f902046a6e879dc7257d3e81df"}}
-	temp1 := sdk_params_callback.ConversationArgs{ConversationID: "super_group_3320742908", ClientMsgIDList: []string{"acf09fcdda48bf2cb39faba31ac63b5c", "b121d3a7f269636afd255b6001d3fc80", "d8951d1c5192ad39f37f44de93a83302"}}
+	temp := sdk_params_callback.ConversationArgs{ConversationID: "super_group_4205679980", ClientMsgIDList: []string{"eee68d85a43991d6b2e7354c52c5321d", "736f40f902046a6e879dc7257d3e81df"}}
+	//temp1 := sdk_params_callback.ConversationArgs{ConversationID: "super_group_3320742908", ClientMsgIDList: []string{"acf09fcdda48bf2cb39faba31ac63b5c", "b121d3a7f269636afd255b6001d3fc80", "d8951d1c5192ad39f37f44de93a83302"}}
 	params = append(params, &temp)
-	params = append(params, &temp1)
+	//params = append(params, &temp1)
 	open_im_sdk.FindMessageList(testFindMessageListCallBack, testFindMessageListCallBack.OperationID, utils.StructToJsonString(params))
 }
 func DoTestUpdateFcmToken() {
