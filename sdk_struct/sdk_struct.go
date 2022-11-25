@@ -136,7 +136,7 @@ type MsgStruct struct {
 		SourceURL string `json:"sourceUrl,omitempty"`
 		FileName  string `json:"fileName,omitempty"`
 		FileSize  int64  `json:"fileSize"`
-		FileType  string `json:"FileType,omitempty"`
+		FileType  string `json:"fileType,omitempty"`
 	} `json:"fileElem,omitempty"`
 	MergeElem struct {
 		Title             string           `json:"title,omitempty"`
