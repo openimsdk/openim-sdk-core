@@ -2,10 +2,10 @@ package interaction
 
 import (
 	"bytes"
+	"compress/gzip"
 	"errors"
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
-	"github.com/klauspost/compress/gzip"
 	"io/ioutil"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -240,20 +240,22 @@ func (w *Ws) ReadData() {
 		} else if msgType == websocket.TextMessage {
 			log.Warn(operationID, "type websocket.TextMessage")
 		} else if msgType == websocket.BinaryMessage {
-			buff := bytes.NewBuffer(message)
-			reader, err := gzip.NewReader(buff)
-			if err != nil {
-				log.NewWarn(operationID, "NewReader failed", err.Error())
-				continue
-			}
-			message, err = ioutil.ReadAll(reader)
-			if err != nil {
-				log.NewWarn(operationID, "ReadAll failed", err.Error())
-				continue
-			}
-			err = reader.Close()
-			if err != nil {
-				log.NewWarn(operationID, "reader close failed", err.Error())
+			if w.IsCompression {
+				buff := bytes.NewBuffer(message)
+				reader, err := gzip.NewReader(buff)
+				if err != nil {
+					log.NewWarn(operationID, "NewReader failed", err.Error())
+					continue
+				}
+				message, err = ioutil.ReadAll(reader)
+				if err != nil {
+					log.NewWarn(operationID, "ReadAll failed", err.Error())
+					continue
+				}
+				err = reader.Close()
+				if err != nil {
+					log.NewWarn(operationID, "reader close failed", err.Error())
+				}
 			}
 			go w.doWsMsg(message)
 		} else {

@@ -30,7 +30,7 @@ func GenWsConn(id int) {
 	userID := GenUid(id, "online")
 	token := RunGetToken(userID)
 	wsRespAsyn := interaction.NewWsRespAsyn()
-	wsConn := interaction.NewWsConn(new(testInitLister), token, userID)
+	wsConn := interaction.NewWsConn(new(testInitLister), token, userID, false)
 	cmdWsCh := make(chan common.Cmd2Value, 10)
 	pushMsgAndMaxSeqCh := make(chan common.Cmd2Value, 1000)
 	interaction.NewWs(wsRespAsyn, wsConn, cmdWsCh, pushMsgAndMaxSeqCh, nil)

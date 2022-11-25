@@ -21,16 +21,17 @@ import (
 const writeTimeoutSeconds = 30
 
 type WsConn struct {
-	stateMutex  sync.Mutex
-	conn        *websocket.Conn
-	loginStatus int32
-	listener    open_im_sdk_callback.OnConnListener
-	token       string
-	loginUserID string
+	stateMutex    sync.Mutex
+	conn          *websocket.Conn
+	loginStatus   int32
+	listener      open_im_sdk_callback.OnConnListener
+	token         string
+	loginUserID   string
+	IsCompression bool
 }
 
-func NewWsConn(listener open_im_sdk_callback.OnConnListener, token string, loginUserID string) *WsConn {
-	p := WsConn{listener: listener, token: token, loginUserID: loginUserID}
+func NewWsConn(listener open_im_sdk_callback.OnConnListener, token string, loginUserID string, isCompression bool) *WsConn {
+	p := WsConn{listener: listener, token: token, loginUserID: loginUserID, IsCompression: isCompression}
 	//	go func() {
 	p.conn, _, _, _ = p.ReConn("init:" + utils.OperationIDGenerator())
 	//	}()
@@ -110,15 +111,21 @@ func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (*websocket.Conn, error) {
 		if len(buff.Bytes()) > constant.MaxTotalMsgLen {
 			return nil, utils.Wrap(errors.New("msg too long"), utils.IntToString(len(buff.Bytes())))
 		}
-		var gzipBuffer bytes.Buffer
-		gz := gzip.NewWriter(&gzipBuffer)
-		if _, err := gz.Write(buff.Bytes()); err != nil {
-			return nil, utils.Wrap(err, "")
+		var data []byte
+		if u.IsCompression {
+			var gzipBuffer bytes.Buffer
+			gz := gzip.NewWriter(&gzipBuffer)
+			if _, err := gz.Write(buff.Bytes()); err != nil {
+				return nil, utils.Wrap(err, "")
+			}
+			if err := gz.Close(); err != nil {
+				return nil, utils.Wrap(err, "")
+			}
+			data = gzipBuffer.Bytes()
+		} else {
+			data = buff.Bytes()
 		}
-		if err := gz.Close(); err != nil {
-			return nil, utils.Wrap(err, "")
-		}
-		return u.conn, utils.Wrap(u.conn.WriteMessage(websocket.BinaryMessage, gzipBuffer.Bytes()), "")
+		return u.conn, utils.Wrap(u.conn.WriteMessage(websocket.BinaryMessage, data), "")
 	} else {
 		return nil, utils.Wrap(errors.New("conn==nil"), "")
 	}
@@ -171,7 +178,11 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool, bool)
 
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s", sdk_struct.SvrConf.WsAddr, u.loginUserID, u.token, sdk_struct.SvrConf.Platform, operationID)
 	log.Info(operationID, "ws connect begin, dail: ", url)
-	conn, httpResp, err := websocket.DefaultDialer.Dial(url, http.Header{"compression": []string{"gzip"}})
+	var header http.Header
+	if u.IsCompression {
+		header = http.Header{"compression": []string{"gzip"}}
+	}
+	conn, httpResp, err := websocket.DefaultDialer.Dial(url, header)
 	log.Info(operationID, "ws connect end, dail : ", url)
 	if err != nil {
 		log.Error(operationID, "ws connect failed ", url, err.Error())

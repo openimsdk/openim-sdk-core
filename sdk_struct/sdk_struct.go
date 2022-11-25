@@ -178,7 +178,9 @@ type AttachedInfoElem struct {
 	MessageEntityList         []*MessageEntity `json:"messageEntityList,omitempty"`
 	IsEncryption              bool             `json:"isEncryption"`
 	InEncryptStatus           bool             `json:"inEncryptStatus"`
+	AnonymousName             string           `json:"anonymous"`
 }
+
 type MessageEntity struct {
 	Type   string `json:"type,omitempty"`
 	Offset int32  `json:"offset"`
@@ -217,6 +219,7 @@ type IMConfig struct {
 	LogLevel      uint32 `json:"log_level"`
 	ObjectStorage string `json:"object_storage"` //"cos"(default)  "oss"
 	EncryptionKey string `json:"encryption_key"`
+	IsCompression bool   `json:"is_compression"`
 }
 
 var SvrConf IMConfig

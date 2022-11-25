@@ -74,11 +74,12 @@ func alert(str string) {
 }
 func main() {
 	config := sdk_struct.IMConfig{
-		Platform: 1,
-		ApiAddr:  APIADDR,
-		WsAddr:   WSADDR,
-		DataDir:  "./",
-		LogLevel: 6,
+		Platform:      1,
+		ApiAddr:       APIADDR,
+		WsAddr:        WSADDR,
+		DataDir:       "./",
+		LogLevel:      6,
+		IsCompression: true,
 	}
 	var listener InitCallback
 	var base BaseSuccessFailed
