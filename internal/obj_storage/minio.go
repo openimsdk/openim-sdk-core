@@ -49,12 +49,12 @@ func (m *Minio) UploadFileByBuffer(buffer *bytes.Buffer, size int64, fileType st
 	return m.uploadByBuffer(buffer, size, fileType, onProgressFun)
 }
 
-func (m *Minio) UploadVideoByBuffer(videoBuffer, snapshotBuffer *bytes.Buffer, videoSize, snapshotSize int64, videoType string, onProgressFun func(int)) (string, string, string, string, error) {
+func (m *Minio) UploadVideoByBuffer(videoBuffer, snapshotBuffer *bytes.Buffer, videoSize, snapshotSize int64, videoType, snapshotType string, onProgressFun func(int)) (string, string, string, string, error) {
 	videoURL, videoName, err := m.uploadByBuffer(videoBuffer, videoSize, videoType, onProgressFun)
 	if err != nil {
 		return "", "", "", "", utils.Wrap(err, "")
 	}
-	snapshotURL, snapshotUUID, err := m.uploadByBuffer(snapshotBuffer, snapshotSize, "img", onProgressFun)
+	snapshotURL, snapshotUUID, err := m.uploadByBuffer(snapshotBuffer, snapshotSize, snapshotType, onProgressFun)
 	if err != nil {
 		return "", "", "", "", utils.Wrap(err, "")
 	}
@@ -73,7 +73,7 @@ func (m *Minio) uploadByBuffer(buffer *bytes.Buffer, size int64, fileType string
 		log.NewError("", utils.GetSelfFuncName(), "url parse failed, pleace check config/config.yaml", err.Error())
 		return "", "", utils.Wrap(err, "")
 	}
-	newName := fmt.Sprintf("%d-%d%s", time.Now().UnixNano(), rand.Int(), fileType)
+	newName := fmt.Sprintf("%d-%d.%s", time.Now().UnixNano(), rand.Int(), fileType)
 	opts := &minio.Options{
 		Creds: credentials.NewStaticV4(minioResp.AccessKeyID, minioResp.SecretAccessKey, minioResp.SessionToken),
 	}

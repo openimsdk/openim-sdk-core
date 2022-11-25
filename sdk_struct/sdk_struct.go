@@ -54,6 +54,7 @@ type SoundBaseInfo struct {
 	SourceURL string `json:"sourceUrl,omitempty"`
 	DataSize  int64  `json:"dataSize"`
 	Duration  int64  `json:"duration"`
+	SoundType string `json:"soundType,omitempty"`
 }
 type VideoBaseInfo struct {
 	VideoPath      string `json:"videoPath,omitempty"`
@@ -68,6 +69,7 @@ type VideoBaseInfo struct {
 	SnapshotURL    string `json:"snapshotUrl,omitempty"`
 	SnapshotWidth  int32  `json:"snapshotWidth"`
 	SnapshotHeight int32  `json:"snapshotHeight"`
+	SnapshotType   string `json:"snapshotType,omitempty"`
 }
 type FileBaseInfo struct {
 	FilePath  string `json:"filePath,omitempty"`
@@ -75,6 +77,7 @@ type FileBaseInfo struct {
 	SourceURL string `json:"sourceUrl,omitempty"`
 	FileName  string `json:"fileName,omitempty"`
 	FileSize  int64  `json:"fileSize"`
+	FileType  string `json:"FileType,omitempty"`
 }
 
 type MsgStruct struct {
@@ -110,6 +113,7 @@ type MsgStruct struct {
 		SourceURL string `json:"sourceUrl,omitempty"`
 		DataSize  int64  `json:"dataSize"`
 		Duration  int64  `json:"duration"`
+		SoundType string `json:"soundType,omitempty"`
 	} `json:"soundElem,omitempty"`
 	VideoElem struct {
 		VideoPath      string `json:"videoPath,omitempty"`
@@ -124,6 +128,7 @@ type MsgStruct struct {
 		SnapshotURL    string `json:"snapshotUrl,omitempty"`
 		SnapshotWidth  int32  `json:"snapshotWidth"`
 		SnapshotHeight int32  `json:"snapshotHeight"`
+		SnapshotType   string `json:"snapshotType,omitempty"`
 	} `json:"videoElem,omitempty"`
 	FileElem struct {
 		FilePath  string `json:"filePath,omitempty"`
@@ -131,6 +136,7 @@ type MsgStruct struct {
 		SourceURL string `json:"sourceUrl,omitempty"`
 		FileName  string `json:"fileName,omitempty"`
 		FileSize  int64  `json:"fileSize"`
+		FileType  string `json:"FileType,omitempty"`
 	} `json:"fileElem,omitempty"`
 	MergeElem struct {
 		Title             string           `json:"title,omitempty"`

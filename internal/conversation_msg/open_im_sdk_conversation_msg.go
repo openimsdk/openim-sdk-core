@@ -989,7 +989,7 @@ func (c *Conversation) SendMessageByBuffer(callback open_im_sdk_callback.SendMsg
 				s.Content = utils.StructToJsonString(s.PictureElem)
 
 			case constant.Voice:
-				soundURL, uuid, err := c.UploadSoundByBuffer(buffer1, s.SoundElem.DataSize, "sound", callback.OnProgress)
+				soundURL, uuid, err := c.UploadSoundByBuffer(buffer1, s.SoundElem.DataSize, s.SoundElem.SoundType, callback.OnProgress)
 				c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
 				s.SoundElem.SourceURL = soundURL
 				s.SoundElem.UUID = uuid
@@ -998,7 +998,7 @@ func (c *Conversation) SendMessageByBuffer(callback open_im_sdk_callback.SendMsg
 			case constant.Video:
 
 				snapshotURL, snapshotUUID, videoURL, videoUUID, err := c.UploadVideoByBuffer(buffer1, buffer2, s.VideoElem.VideoSize,
-					s.VideoElem.SnapshotSize, s.VideoElem.VideoType, callback.OnProgress)
+					s.VideoElem.SnapshotSize, s.VideoElem.VideoType, s.VideoElem.SnapshotType, callback.OnProgress)
 				c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
 				s.VideoElem.VideoURL = videoURL
 				s.VideoElem.SnapshotUUID = snapshotUUID
@@ -1006,7 +1006,7 @@ func (c *Conversation) SendMessageByBuffer(callback open_im_sdk_callback.SendMsg
 				s.VideoElem.VideoUUID = videoUUID
 				s.Content = utils.StructToJsonString(s.VideoElem)
 			case constant.File:
-				fileURL, fileUUID, err := c.UploadFileByBuffer(buffer1, s.FileElem.FileSize, "file", callback.OnProgress)
+				fileURL, fileUUID, err := c.UploadFileByBuffer(buffer1, s.FileElem.FileSize, s.FileElem.FileType, callback.OnProgress)
 				c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
 				s.FileElem.SourceURL = fileURL
 				s.FileElem.UUID = fileUUID
