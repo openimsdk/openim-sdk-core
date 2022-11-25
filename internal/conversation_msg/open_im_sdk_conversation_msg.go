@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 
-	"image"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -22,7 +21,6 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
-	imgtype "github.com/shamsher31/goimgtype"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
@@ -1638,33 +1636,34 @@ func (c *Conversation) SearchLocalMessages(callback open_im_sdk_callback.Base, s
 	}()
 }
 func getImageInfo(filePath string) (*sdk_struct.ImageInfo, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, utils.Wrap(err, "open file err")
-	}
-	defer func() {
-		if file != nil {
-			file.Close()
-		}
-	}()
+	return nil, nil
+	//file, err := os.Open(filePath)
+	//if err != nil {
+	//	return nil, utils.Wrap(err, "open file err")
+	//}
+	//defer func() {
+	//	if file != nil {
+	//		file.Close()
+	//	}
+	//}()
+	//
+	//img, _, err := image.Decode(file)
+	//if err != nil {
+	//	return nil, utils.Wrap(err, "image file  Decode err")
+	//}
+	//
+	//datatype, err := imgtype.Get(filePath)
+	//if err != nil {
+	//	return nil, utils.Wrap(err, "image file  get type err")
+	//}
+	//fi, err := os.Stat(filePath)
+	//if err != nil {
+	//	return nil, utils.Wrap(err, "image file  Stat err")
+	//}
+	//
+	//b := img.Bounds()
 
-	img, _, err := image.Decode(file)
-	if err != nil {
-		return nil, utils.Wrap(err, "image file  Decode err")
-	}
-
-	datatype, err := imgtype.Get(filePath)
-	if err != nil {
-		return nil, utils.Wrap(err, "image file  get type err")
-	}
-	fi, err := os.Stat(filePath)
-	if err != nil {
-		return nil, utils.Wrap(err, "image file  Stat err")
-	}
-
-	b := img.Bounds()
-
-	return &sdk_struct.ImageInfo{int32(b.Max.X), int32(b.Max.Y), datatype, fi.Size()}, nil
+	//return &sdk_struct.ImageInfo{int32(b.Max.X), int32(b.Max.Y), datatype, fi.Size()}, nil
 
 }
 
