@@ -15,7 +15,7 @@ import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
@@ -34,7 +34,7 @@ var SearchContentType = []int{constant.Text, constant.AtText, constant.File}
 
 type Conversation struct {
 	*ws.Ws
-	db                   *db.DataBase
+	db                   db_interface.DataBase
 	p                    *ws.PostApi
 	ConversationListener open_im_sdk_callback.OnConversationListener
 	msgListener          open_im_sdk_callback.OnAdvancedMsgListener
@@ -80,7 +80,7 @@ func (c *Conversation) SetBatchMsgListener(batchMsgListener open_im_sdk_callback
 	c.batchMsgListener = batchMsgListener
 }
 
-func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
+func NewConversation(ws *ws.Ws, db db_interface.DataBase, p *ws.PostApi,
 	ch chan common.Cmd2Value, loginUserID string, platformID int32, dataDir, encryptionKey string,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener,
@@ -195,8 +195,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		case v.ContentType == constant.ConversationChangeNotification || v.ContentType == constant.ConversationPrivateChatNotification:
 			log.Info(operationID, utils.GetSelfFuncName(), v)
 			c.DoNotification(v)
-		case v.ContentType == constant.MsgDeleteNotification || v.ContentType == constant.SuperGroupUpdateNotification:
+		case v.ContentType == constant.MsgDeleteNotification:
 			c.full.SuperGroup.DoNotification(v, c.GetCh())
+		case v.ContentType == constant.SuperGroupUpdateNotification:
+			c.full.SuperGroup.DoNotification(v, c.GetCh())
+			continue
 		case v.ContentType == constant.ConversationUnreadNotification:
 			var unreadArgs server_api_params.ConversationUpdateTips
 			_ = proto.Unmarshal(tips.Detail, &unreadArgs)
@@ -381,9 +384,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	log.Info(operationID, "generate conversation map is :", conversationSet)
 	log.Debug(operationID, "before insert msg cost time : ", time.Since(b))
 
-	list, err := c.db.GetAllConversationList()
+	list, err := c.db.GetAllConversationListDB()
 	if err != nil {
-		log.Error(operationID, "GetAllConversationList", "error", err.Error())
+		log.Error(operationID, "GetAllConversationListDB", "error", err.Error())
 	}
 	m := make(map[string]*model_struct.LocalConversation)
 	listToMap(list, m)
@@ -530,7 +533,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	var insertMsg, updateMsg, specialUpdateMsg []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
 	var unreadMessages []*model_struct.LocalConversationUnreadMessage
-	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList sdk_struct.NewMsgList
+	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList, msgReactionList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate, isSenderNotificationPush bool
 	conversationChangedSet := make(map[string]*model_struct.LocalConversation)
 	newConversationSet := make(map[string]*model_struct.LocalConversation)
@@ -710,6 +713,8 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 				case constant.AdvancedRevoke:
 					newMsgRevokeList = append(newMsgRevokeList, msg)
 					newMessages = removeElementInList(newMessages, msg)
+				case constant.ReactionMessageModifier:
+					msgReactionList = append(msgReactionList, msg)
 				default:
 				}
 			}
@@ -782,6 +787,8 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 				case constant.AdvancedRevoke:
 					newMsgRevokeList = append(newMsgRevokeList, msg)
 					newMessages = removeElementInList(newMessages, msg)
+				case constant.ReactionMessageModifier:
+					msgReactionList = append(msgReactionList, msg)
 				default:
 				}
 
@@ -799,9 +806,9 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	log.Info(operationID, "generate conversation map is :", conversationSet)
 	log.Debug(operationID, "before insert msg cost time : ", b1-b)
 
-	list, err := c.db.GetAllConversationList()
+	list, err := c.db.GetAllConversationListDB()
 	if err != nil {
-		log.Error(operationID, "GetAllConversationList", "error", err.Error())
+		log.Error(operationID, "GetAllConversationListDB", "error", err.Error())
 	}
 	m := make(map[string]*model_struct.LocalConversation)
 	listToMap(list, m)
@@ -902,6 +909,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 
 	c.revokeMessage(msgRevokeList)
 	c.newRevokeMessage(newMsgRevokeList)
+	c.DoMsgReaction(msgReactionList)
 	b10 := utils.GetCurrentTimestampByMill()
 	log.Debug(operationID, "revokeMessage  cost time : ", b10-b9)
 	if c.batchMsgListener != nil {
@@ -1119,6 +1127,88 @@ func (c *Conversation) newRevokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 	}
 	if len(failedRevokeMessageList) > 0 {
 		//c.tempCacheChatLog(failedRevokeMessageList)
+	}
+}
+func (c *Conversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
+
+	for _, v := range msgReactionList {
+		var msg sdk_struct.MessageReaction
+		err := json.Unmarshal([]byte(v.Content), &msg)
+		if err != nil {
+			log.Error("internal", "unmarshal failed, err : ", err.Error(), *v)
+			continue
+		}
+		s := sdk_struct.MsgStruct{GroupID: msg.GroupID, ClientMsgID: msg.ClientMsgID, SessionType: msg.SessionType}
+		message, err := c.db.GetMessageController(&s)
+		if err != nil {
+			log.Error("internal", "GetMessageController, err : ", err.Error(), s)
+			continue
+		}
+		t := new(model_struct.LocalChatLog)
+		attachInfo := sdk_struct.AttachedInfoElem{}
+		_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
+
+		contain, v := isContainMessageReaction(msg.ReactionType, attachInfo.MessageReactionElem)
+		if contain {
+			userContain, userReaction := isContainUserReactionElem(msg.UserID, v.UserReactionList)
+			if userContain {
+				if !v.CanRepeat && userReaction.Counter > 0 {
+					// to do nothing
+					continue
+				} else {
+					userReaction.Counter += msg.Counter
+					v.Counter += msg.Counter
+					if v.Counter < 0 {
+						log.Debug("internal", "after operate all counter  < 0", v.Type, v.Counter, msg.Counter)
+						v.Counter = 0
+					}
+					if userReaction.Counter <= 0 {
+						log.Debug("internal", "after operate userReaction counter < 0", v.Type, userReaction.Counter, msg.Counter)
+						v.UserReactionList = DeleteUserReactionElem(v.UserReactionList, c.loginUserID)
+					}
+				}
+			} else {
+				log.Debug("internal", "attachInfo.MessageReactionElem is nil", msg)
+				u := new(sdk_struct.UserReactionElem)
+				u.UserID = msg.UserID
+				u.Counter = msg.Counter
+				v.Counter += msg.Counter
+				if v.Counter < 0 {
+					log.Debug("internal", "after operate all counter  < 0", v.Type, v.Counter, msg.Counter)
+					v.Counter = 0
+				}
+				if u.Counter <= 0 {
+					log.Debug("internal", "after operate userReaction counter < 0", v.Type, u.Counter, msg.Counter)
+					v.UserReactionList = DeleteUserReactionElem(v.UserReactionList, msg.UserID)
+				}
+				v.UserReactionList = append(v.UserReactionList, u)
+
+			}
+
+		} else {
+			log.Debug("internal", "attachInfo.MessageReactionElem is nil", msg)
+			t := new(sdk_struct.ReactionElem)
+			t.Counter = msg.Counter
+			t.Type = msg.ReactionType
+			u := new(sdk_struct.UserReactionElem)
+			u.UserID = msg.UserID
+			u.Counter = msg.Counter
+			t.UserReactionList = append(t.UserReactionList, u)
+			attachInfo.MessageReactionElem = append(attachInfo.MessageReactionElem, t)
+
+		}
+
+		t.AttachedInfo = utils.StructToJsonString(attachInfo)
+		t.ClientMsgID = message.ClientMsgID
+
+		t.SessionType = message.SessionType
+		t.RecvID = message.RecvID
+		err1 := c.db.UpdateMessageController(t)
+		if err1 != nil {
+			log.Error("internal", "UpdateMessageController err:", err1, "ClientMsgID", *t, message)
+		}
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.MessageChange, &s}})
+
 	}
 }
 
@@ -1377,7 +1467,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		if err := c.db.UpdateColumnsConversation(node.ConID, map[string]interface{}{"unread_count": 0}); err != nil {
 			log.Error("internal", "UpdateColumnsConversation err", err.Error(), node.ConID)
 		} else {
-			totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
+			totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB()
 			if err == nil {
 				c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
 			} else {
@@ -1404,7 +1494,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			return
 		}
 	case constant.TotalUnreadMessageChanged:
-		totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
+		totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB()
 		if err != nil {
 			log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
 		} else {
@@ -1412,14 +1502,14 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 	case constant.UpdateConFaceUrlAndNickName:
 		var lc model_struct.LocalConversation
-		st := node.Args.(common.UpdateConInfo)
-		if st.GroupID == "" {
-			lc.UserID = st.UserID
-			lc.ConversationID = utils.GetConversationIDBySessionType(st.UserID, constant.SingleChatType)
+		st := node.Args.(common.SourceIDAndSessionType)
+		switch st.SessionType {
+		case constant.SingleChatType:
+			lc.UserID = st.SourceID
+			lc.ConversationID = utils.GetConversationIDBySessionType(st.SourceID, constant.SingleChatType)
 			lc.ConversationType = constant.SingleChatType
-		} else {
-			lc.GroupID = st.GroupID
-			conversationID, conversationType, err := c.getConversationTypeByGroupID(st.GroupID)
+		case constant.GroupChatType:
+			conversationID, conversationType, err := c.getConversationTypeByGroupID(st.SourceID)
 			if err != nil {
 				log.Error("internal", "getConversationTypeByGroupID database err:", err.Error())
 				return
@@ -1433,7 +1523,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			log.Error("internal", "setConversationFaceUrlAndNickName database err:", err.Error())
 			return
 		}
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.ConChange, Args: []string{lc.ConversationID}}, c.GetCh())
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: lc.ConversationID, Action: constant.ConChange, Args: []string{lc.ConversationID}}})
 
 	case constant.UpdateLatestMessageChange:
 		conversationID := node.ConID
@@ -1456,7 +1546,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 	case constant.ConChange:
 		cidList := node.Args.([]string)
-		cLists, err := c.db.GetMultipleConversation(cidList)
+		cLists, err := c.db.GetMultipleConversationDB(cidList)
 		if err != nil {
 			log.Error("internal", "getMultipleConversationModel err :", err.Error())
 		} else {
@@ -1472,7 +1562,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 	case constant.NewCon:
 		cidList := node.Args.([]string)
-		cLists, err := c.db.GetMultipleConversation(cidList)
+		cLists, err := c.db.GetMultipleConversationDB(cidList)
 		if err != nil {
 			log.Error("internal", "getMultipleConversationModel err :", err.Error())
 		} else {
@@ -1524,6 +1614,17 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			log.Info("internal", "getMultipleConversationModel success :", result)
 			c.ConversationListener.OnNewConversation(utils.StructToJsonString(result))
 		}
+	case constant.SyncConversation:
+		operationID := node.Args.(string)
+		log.Debug(operationID, "reconn sync conversation start")
+		c.SyncConversations(operationID, 0)
+		c.SyncConversationUnreadCount(operationID)
+		totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB()
+		if err != nil {
+			log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
+		} else {
+			c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
+		}
 
 	}
 }
@@ -1532,14 +1633,27 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 		log.Error("internal", "not set conversationListener")
 		return
 	}
+
 	node := c2v.Value.(common.UpdateMessageNode)
 	switch node.Action {
 	case constant.UpdateMsgFaceUrlAndNickName:
 		args := node.Args.(common.UpdateMessageInfo)
-		err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(args.UserID, args.FaceURL, args.Nickname, constant.SingleChatType)
+		var conversationType int32
+		if args.GroupID == "" {
+			conversationType = constant.SingleChatType
+		} else {
+			var err error
+			_, conversationType, err = c.getConversationTypeByGroupID(args.GroupID)
+			if err != nil {
+				log.Error("internal", "getConversationTypeByGroupID database err:", err.Error())
+				return
+			}
+		}
+		err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(args.UserID, args.FaceURL, args.Nickname, int(conversationType))
 		if err != nil {
 			log.Error("internal", "UpdateMsgSenderFaceURLAndSenderNickname err:", err.Error())
 		}
+
 	}
 
 }

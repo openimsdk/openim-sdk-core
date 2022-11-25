@@ -178,6 +178,7 @@ func SendGroupRequestCopyToLocal(dst *model_struct.LocalGroupRequest, src *serve
 func TransferToLocalUserInfo(apiData *server_api_params.UserInfo) *model_struct.LocalUser {
 	var localNode model_struct.LocalUser
 	copier.Copy(&localNode, apiData)
+	localNode.AppMangerLevel = 0
 	return &localNode
 }
 

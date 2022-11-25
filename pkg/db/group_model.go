@@ -30,7 +30,7 @@ func (d *DataBase) UpdateGroup(groupInfo *model_struct.LocalGroup) error {
 	return utils.Wrap(t.Error, "")
 
 }
-func (d *DataBase) GetJoinedGroupList() ([]*model_struct.LocalGroup, error) {
+func (d *DataBase) GetJoinedGroupListDB() ([]*model_struct.LocalGroup, error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var groupList []model_struct.LocalGroup

@@ -23,7 +23,7 @@ func NewPostApi(token string, apiAddress string) *PostApi {
 
 func (p *PostApi) PostFatalCallback(callback open_im_sdk_callback.Base, url string, data interface{}, output interface{}, operationID string) {
 	log.Info(operationID, utils.GetSelfFuncName(), p.apiAddress, url, data)
-	content, err := network.Post2Api(p.apiAddress+url, data, p.token)
+	content, err := network.PostWithTimeOut(p.apiAddress+url, data, p.token, 10*time.Second)
 	common.CheckErrAndRespCallback(callback, err, content, output, operationID)
 }
 
@@ -45,16 +45,17 @@ type postErr struct {
 }
 
 func (p *PostApi) PostReturn(url string, req interface{}, output interface{}) error {
-	content, err := network.Post2Api(p.apiAddress+url, req, p.token)
-	if err != nil {
-		utils.Wrap(err, "post failed "+p.apiAddress+url)
-	}
-	err = common.CheckErrAndResp(err, content, output, nil)
-	return utils.Wrap(err, "CheckErrAndResp failed ")
+	//content, err := network.Post2Api(p.apiAddress+url, req, p.token)
+	//if err != nil {
+	//	utils.Wrap(err, "post failed "+p.apiAddress+url)
+	//}
+	//err = common.CheckErrAndResp(err, content, output)
+	//return utils.Wrap(err, "CheckErrAndResp failed ")
+	return p.PostReturnWithTimeOut(url, req, output, 10*time.Second)
 }
 
 func (p *PostApi) Post2UnmarshalRespReturn(url string, req interface{}, output interface{}) error {
-	content, err := network.Post2Api(p.apiAddress+url, req, p.token)
+	content, err := network.PostWithTimeOut(p.apiAddress+url, req, p.token, 10*time.Second)
 	if err != nil {
 		utils.Wrap(err, "post failed "+p.apiAddress+url)
 	}

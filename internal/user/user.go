@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 	comm "open_im_sdk/internal/common"
+	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
 
 	//"github.com/mitchellh/mapstructure"
@@ -11,7 +12,6 @@ import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
@@ -20,7 +20,7 @@ import (
 )
 
 type User struct {
-	*db.DataBase
+	db_interface.DataBase
 	p              *ws.PostApi
 	loginUserID    string
 	listener       open_im_sdk_callback.OnUserListener
@@ -40,7 +40,7 @@ func (u *User) SetListener(listener open_im_sdk_callback.OnUserListener) {
 	u.listener = listener
 }
 
-func NewUser(dataBase *db.DataBase, p *ws.PostApi, loginUserID string, conversationCh chan common.Cmd2Value) *User {
+func NewUser(dataBase db_interface.DataBase, p *ws.PostApi, loginUserID string, conversationCh chan common.Cmd2Value) *User {
 	return &User{DataBase: dataBase, p: p, loginUserID: loginUserID, conversationCh: conversationCh}
 }
 
@@ -76,10 +76,6 @@ func (u *User) userInfoUpdatedNotification(msg *api.MsgData, operationID string)
 	if detail.UserID == u.loginUserID {
 		log.Info(operationID, "detail.UserID == u.loginUserID, SyncLoginUserInfo", detail.UserID)
 		u.SyncLoginUserInfo(operationID)
-		user, err := u.GetLoginUser(u.loginUserID)
-		if err != nil {
-			go u.updateMsgSenderInfo(user.Nickname, user.FaceURL, operationID)
-		}
 	} else {
 		log.Info(operationID, "detail.UserID != u.loginUserID, do nothing", detail.UserID, u.loginUserID)
 	}
@@ -120,6 +116,13 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 			return
 		}
 		u.listener.OnSelfInfoUpdated(utils.StructToJsonString(callbackData))
+		log.Info(operationID, "OnSelfInfoUpdated", utils.StructToJsonString(callbackData))
+		if onLocal.Nickname == onServer.Nickname && onLocal.FaceURL == onServer.FaceURL {
+			log.NewInfo(operationID, "OnSelfInfoUpdated nickname faceURL unchanged", callbackData)
+			return
+		}
+		_ = common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: callbackData.UserID, FaceURL: callbackData.FaceURL, Nickname: callbackData.Nickname}}, u.conversationCh)
+
 	}
 }
 

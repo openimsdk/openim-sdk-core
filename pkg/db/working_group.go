@@ -7,7 +7,7 @@ import (
 )
 
 func (d *DataBase) GetJoinedWorkingGroupIDList() ([]string, error) {
-	groupList, err := d.GetJoinedGroupList()
+	groupList, err := d.GetJoinedGroupListDB()
 	if err != nil {
 		return nil, utils.Wrap(err, "")
 	}
@@ -21,7 +21,7 @@ func (d *DataBase) GetJoinedWorkingGroupIDList() ([]string, error) {
 }
 
 func (d *DataBase) GetJoinedWorkingGroupList() ([]*model_struct.LocalGroup, error) {
-	groupList, err := d.GetJoinedGroupList()
+	groupList, err := d.GetJoinedGroupListDB()
 	var transfer []*model_struct.LocalGroup
 	for _, v := range groupList {
 		if v.GroupType == constant.WorkingGroup {

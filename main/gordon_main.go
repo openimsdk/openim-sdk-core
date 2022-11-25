@@ -11,12 +11,12 @@ import (
 )
 
 var (
-	APIADDR = "http://43.155.69.205:10002"
-	WSADDR  = "ws://43.155.69.205:10001"
+	//APIADDR = "http://43.155.69.205:10002"
+	//WSADDR  = "ws://43.155.69.205:10001"
 	//APIADDR      = "https://chat-api-dev.opencord.so"
 	//WSADDR       = "wss://chat-ws-dev.opencord.so"
-	//APIADDR = "http://121.37.25.71:10002"
-	//WSADDR  = "ws://121.37.25.71:10001"
+	APIADDR      = "http://121.5.182.23:10002"
+	WSADDR       = "ws://121.5.182.23:10001"
 	REGISTERADDR = APIADDR + "/user_register"
 	ACCOUNTCHECK = APIADDR + "/manager/account_check"
 	TOKENADDR    = APIADDR + "/auth/user_token"
@@ -74,13 +74,13 @@ func gRunGetToken(strMyUid string) string {
 func main() {
 	//uid := "3984071717"
 	//uid:="1554321956297519104"
-	uid := "3359303407"
+	uid := "2304726291"
 	tokenx := gRunGetToken(uid)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(uid, tokenx, WSADDR, APIADDR)
 	//test.DoTestSetAppBadge()
 	//test.DoTestSearchLocalMessages()
-	test.DoTestGetAdvancedHistoryMessageList()
+	//test.DoTestGetAdvancedHistoryMessageList()
 	println("start")
 	//test.DoTestGetUserInDepartment()
 	//test.DoTestGetDepartmentMemberAndSubDepartment()
@@ -134,9 +134,9 @@ func main() {
 		//test.DoTestSendMsg2Group(strMyUidx, "42c9f515cb84ee0e82b3f3ce71eb14d6", i)
 		i++
 		time.Sleep(250 * time.Millisecond)
-		if i == 100 {
-			break
-		}
+		//if i == 100 {
+		//	break
+		//}
 		log.Warn("", "10 * time.Millisecond ###################waiting... msg: ", i)
 	}
 	//

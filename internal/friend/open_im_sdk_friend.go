@@ -215,7 +215,7 @@ func (f *Friend) GetBlackList(callback open_im_sdk_callback.Base, operationID st
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ")
-		localBlackList, err := f.db.GetBlackList()
+		localBlackList, err := f.db.GetBlackListDB()
 		common.CheckDBErrCallback(callback, err, operationID)
 		callback.OnSuccess(utils.StructToJsonStringDefault(localBlackList))
 		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(localBlackList))

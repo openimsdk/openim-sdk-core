@@ -22,6 +22,7 @@ reset_remote_branch:
 
 ios:
 	go get golang.org/x/mobile
+	rm -rf build/ open_im_sdk/t_friend_sdk.go open_im_sdk/t_group_sdk.go  open_im_sdk/ws_wrapper/
 	go mod download golang.org/x/exp
 	GOARCH=arm64 gomobile bind -v -trimpath -ldflags "-s -w" -o build/OpenIMCore.xcframework -target=ios ./open_im_sdk/ ./open_im_sdk_callback/	
 #注：windows下打包成aar，保证gomobile,android studio以及NDK安装成功，NDK版本在window上官方测试为r20b,然后可以使用类似下面的命令生成aar

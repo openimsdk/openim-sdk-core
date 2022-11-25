@@ -15,7 +15,7 @@ func (d *DataBase) GetConversationByUserID(userID string) (*model_struct.LocalCo
 	return &conversation, err
 }
 
-func (d *DataBase) GetAllConversationList() ([]*model_struct.LocalConversation, error) {
+func (d *DataBase) GetAllConversationListDB() ([]*model_struct.LocalConversation, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var conversationList []model_struct.LocalConversation
@@ -53,7 +53,7 @@ func (d *DataBase) GetAllConversationListToSync() ([]*model_struct.LocalConversa
 	return transfer, err
 }
 
-func (d *DataBase) GetConversationListSplit(offset, count int) ([]*model_struct.LocalConversation, error) {
+func (d *DataBase) GetConversationListSplitDB(offset, count int) ([]*model_struct.LocalConversation, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var conversationList []model_struct.LocalConversation
@@ -259,7 +259,7 @@ func (d *DataBase) IncrConversationUnreadCount(conversationID string) error {
 	}
 	return utils.Wrap(t.Error, "IncrConversationUnreadCount failed")
 }
-func (d *DataBase) GetTotalUnreadMsgCount() (totalUnreadCount int32, err error) {
+func (d *DataBase) GetTotalUnreadMsgCountDB() (totalUnreadCount int32, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var result []int64
@@ -283,7 +283,7 @@ func (d *DataBase) SetMultipleConversationRecvMsgOpt(conversationIDList []string
 	return utils.Wrap(t.Error, "SetMultipleConversationRecvMsgOpt failed")
 }
 
-func (d *DataBase) GetMultipleConversation(conversationIDList []string) (result []*model_struct.LocalConversation, err error) {
+func (d *DataBase) GetMultipleConversationDB(conversationIDList []string) (result []*model_struct.LocalConversation, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var conversationList []model_struct.LocalConversation

@@ -2,14 +2,13 @@ package group
 
 import (
 	"errors"
-	"github.com/jinzhu/copier"
 	"math/big"
 	comm "open_im_sdk/internal/common"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
@@ -19,13 +18,15 @@ import (
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/jinzhu/copier"
 )
 
 // //utils.GetCurrentTimestampByMill()
 type Group struct {
 	listener           open_im_sdk_callback.OnGroupListener
 	loginUserID        string
-	db                 *db.DataBase
+	db                 db_interface.DataBase
 	p                  *ws.PostApi
 	loginTime          int64
 	joinedSuperGroupCh chan common.Cmd2Value
@@ -43,7 +44,7 @@ func (g *Group) SetLoginTime(loginTime int64) {
 	g.loginTime = loginTime
 }
 
-func NewGroup(loginUserID string, db *db.DataBase, p *ws.PostApi,
+func NewGroup(loginUserID string, db db_interface.DataBase, p *ws.PostApi,
 	joinedSuperGroupCh chan common.Cmd2Value, heartbeatCmdCh chan common.Cmd2Value,
 	conversationCh chan common.Cmd2Value) *Group {
 	return &Group{loginUserID: loginUserID, db: db, p: p, joinedSuperGroupCh: joinedSuperGroupCh, heartbeatCmdCh: heartbeatCmdCh, conversationCh: conversationCh}
@@ -116,7 +117,7 @@ func (g *Group) groupInfoSetNotification(msg *api.MsgData, conversationCh chan c
 	detail := api.GroupInfoSetTips{Group: &api.GroupInfo{}}
 	comm.UnmarshalTips(msg, &detail)
 	g.SyncJoinedGroupList(operationID) //todo,  sync some group info
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.UpdateConInfo{GroupID: detail.Group.GroupID}}, conversationCh)
+
 }
 
 func (g *Group) joinGroupApplicationNotification(msg *api.MsgData, operationID string) {
@@ -382,7 +383,6 @@ func (g *Group) groupMemberInfoSetNotification(msg *api.MsgData, operationID str
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID, msg.String(), "detail : ", detail.String())
 	g.updateMemberImmediately(detail.ChangedUser, operationID)
 	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
-	_ = g.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.ChangedUser.UserID, detail.ChangedUser.FaceURL, detail.ChangedUser.Nickname, constant.GroupChatType)
 }
 
 func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam, memberList sdk.CreateGroupMemberRoleParam, operationID string) *sdk.CreateGroupCallback {
@@ -497,7 +497,7 @@ func (g *Group) setGroupMemberRoleLevel(callback open_im_sdk_callback.Base, grou
 }
 
 func (g *Group) getJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) sdk.GetJoinedGroupListCallback {
-	groupList, err := g.db.GetJoinedGroupList()
+	groupList, err := g.db.GetJoinedGroupListDB()
 	log.Info(operationID, utils.GetSelfFuncName(), " args ", groupList)
 	common.CheckDBErrCallback(callback, err, operationID)
 	superGroupList, _ := g.db.GetJoinedSuperGroupList()
@@ -535,7 +535,7 @@ func (g *Group) searchGroups(callback open_im_sdk_callback.Base, param sdk.Searc
 }
 
 func (g *Group) getGroupsInfo(groupIDList sdk.GetGroupsInfoParam, callback open_im_sdk_callback.Base, operationID string) sdk.GetGroupsInfoCallback {
-	groupList, err := g.db.GetJoinedGroupList()
+	groupList, err := g.db.GetJoinedGroupListDB()
 	common.CheckDBErrCallback(callback, err, operationID)
 	superGroupList, err := g.db.GetJoinedSuperGroupList()
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -974,7 +974,7 @@ func (g *Group) SyncJoinedGroupList(operationID string) {
 		return
 	}
 	onServer := common.TransferToLocalGroupInfo(svrList)
-	onLocal, err := g.db.GetJoinedGroupList()
+	onLocal, err := g.db.GetJoinedGroupListDB()
 	if err != nil {
 		log.NewError(operationID, "GetJoinedGroupList failed ", err.Error())
 		return
@@ -1019,8 +1019,7 @@ func (g *Group) SyncJoinedGroupList(operationID string) {
 				log.NewInfo(operationID, "OnGroupInfoChanged nickname faceURL unchanged", callbackData.GroupID, callbackData.GroupName, callbackData.FaceURL)
 				continue
 			}
-			conID := utils.GetConversationIDBySessionType(callbackData.GroupID, constant.GroupChatType)
-			common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conID, Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: callbackData.GroupID, SessionType: constant.GroupChatType}}, g.conversationCh)
+			common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: callbackData.GroupID, SessionType: constant.GroupChatType}}, g.conversationCh)
 		}
 	}
 
@@ -1197,6 +1196,9 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 				log.NewInfo(operationID, "OnGroupMemberInfoChanged nickname faceURL unchanged", callbackData.GroupID, callbackData.UserID, callbackData.Nickname, callbackData.FaceURL)
 				continue
 			}
+			_ = common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: callbackData.UserID, FaceURL: callbackData.FaceURL,
+				Nickname: callbackData.Nickname, GroupID: callbackData.GroupID}}, g.conversationCh)
+
 		}
 	}
 	for _, index := range bInANot {
@@ -1316,7 +1318,7 @@ func (g *Group) searchGroupMembers(callback open_im_sdk_callback.Base, searchPar
 		log.Error(operationID, "len keywordList == 0")
 		common.CheckArgsErrCallback(callback, errors.New("no keyword"), operationID)
 	}
-	members, err := g.db.SearchGroupMembers(searchParam.KeywordList[0], searchParam.GroupID, searchParam.IsSearchMemberNickname, searchParam.IsSearchUserID, searchParam.Offset, searchParam.Count)
+	members, err := g.db.SearchGroupMembersDB(searchParam.KeywordList[0], searchParam.GroupID, searchParam.IsSearchMemberNickname, searchParam.IsSearchUserID, searchParam.Offset, searchParam.Count)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return members
 }

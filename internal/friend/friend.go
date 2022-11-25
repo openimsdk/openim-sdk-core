@@ -22,7 +22,7 @@ import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
@@ -33,7 +33,7 @@ import (
 type Friend struct {
 	friendListener open_im_sdk_callback.OnFriendshipListener
 	loginUserID    string
-	db             *db.DataBase
+	db             db_interface.DataBase
 	user           *user.User
 	p              *ws.PostApi
 	loginTime      int64
@@ -48,11 +48,11 @@ func (f *Friend) SetLoginTime(loginTime int64) {
 	f.loginTime = loginTime
 }
 
-func (f *Friend) Db() *db.DataBase {
+func (f *Friend) Db() db_interface.DataBase {
 	return f.db
 }
 
-func NewFriend(loginUserID string, db *db.DataBase, user *user.User, p *ws.PostApi, conversationCh chan common.Cmd2Value) *Friend {
+func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, p *ws.PostApi, conversationCh chan common.Cmd2Value) *Friend {
 	return &Friend{loginUserID: loginUserID, db: db, user: user, p: p, conversationCh: conversationCh}
 }
 
@@ -204,7 +204,7 @@ func (f *Friend) deleteFriend(friendUserID sdk.DeleteFriendParams, callback open
 func (f *Friend) getFriendList(callback open_im_sdk_callback.Base, operationID string) sdk.GetFriendListCallback {
 	localFriendList, err := f.db.GetAllFriendList()
 	common.CheckDBErrCallback(callback, err, operationID)
-	localBlackList, err := f.db.GetBlackList()
+	localBlackList, err := f.db.GetBlackListDB()
 	common.CheckDBErrCallback(callback, err, operationID)
 	return common.MergeFriendBlackResult(localFriendList, localBlackList)
 }
@@ -214,7 +214,7 @@ func (f *Friend) searchFriends(callback open_im_sdk_callback.Base, param sdk.Sea
 	}
 	localFriendList, err := f.db.SearchFriendList(param.KeywordList[0], param.IsSearchUserID, param.IsSearchNickname, param.IsSearchRemark)
 	common.CheckDBErrCallback(callback, err, operationID)
-	localBlackList, err := f.db.GetBlackList()
+	localBlackList, err := f.db.GetBlackListDB()
 	common.CheckDBErrCallback(callback, err, operationID)
 	return mergeFriendBlackSearchResult(localFriendList, localBlackList)
 }
@@ -249,7 +249,7 @@ func mergeFriendBlackSearchResult(base []*model_struct.LocalFriend, add []*model
 	return result
 }
 func (f *Friend) getBlackList(callback open_im_sdk_callback.Base, operationID string) sdk.GetBlackListCallback {
-	localBlackList, err := f.db.GetBlackList()
+	localBlackList, err := f.db.GetBlackListDB()
 	common.CheckDBErrCallback(callback, err, operationID)
 
 	localFriendList, err := f.db.GetAllFriendList()
@@ -544,15 +544,17 @@ func (f *Friend) SyncFriendList(operationID string) {
 					log.NewInfo(operationID, "OnFriendInfoChanged nickname faceURL unchanged", callbackData.FriendUserID, localFriend.Nickname, localFriend.FaceURL)
 					continue
 				}
-				conID := utils.GetConversationIDBySessionType(callbackData.FriendUserID, constant.SingleChatType)
-				common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conID, Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: callbackData.FriendUserID, SessionType: constant.SingleChatType}}, f.conversationCh)
+				if callbackData.Remark != "" {
+					callbackData.Nickname = callbackData.Remark
+				}
+				common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: callbackData.FriendUserID, SessionType: constant.SingleChatType}}, f.conversationCh)
 				common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: callbackData.FriendUserID, FaceURL: callbackData.FaceURL, Nickname: callbackData.Nickname}}, f.conversationCh)
 				log.Info(operationID, "OnFriendInfoChanged", utils.StructToJsonString(callbackData))
 			}
 		}
 	}
 	for _, index := range bInANot {
-		err := f.db.DeleteFriend(friendsInfoOnLocal[index].FriendUserID)
+		err := f.db.DeleteFriendDB(friendsInfoOnLocal[index].FriendUserID)
 		if err != nil {
 			log.NewError(operationID, "_deleteFriend failed ", err.Error())
 			continue
@@ -574,7 +576,7 @@ func (f *Friend) SyncBlackList(operationID string) {
 		return
 	}
 	blackListOnServer := common.TransferToLocalBlack(svrList, f.loginUserID)
-	blackListOnLocal, err := f.db.GetBlackList()
+	blackListOnLocal, err := f.db.GetBlackListDB()
 	if err != nil {
 		log.NewError(operationID, "_getBlackList failed ", err.Error())
 		return
@@ -688,7 +690,6 @@ func (f *Friend) friendRemarkNotification(msg *api.MsgData, conversationCh chan 
 	}
 	if detail.FromToUserID.FromUserID == f.loginUserID {
 		f.SyncFriendList(operationID)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.UpdateConInfo{UserID: detail.FromToUserID.ToUserID}}, conversationCh)
 	}
 }
 
@@ -701,21 +702,14 @@ func (f *Friend) friendInfoChangedNotification(msg *api.MsgData, conversationCh 
 	}
 	if detail.UserID != f.loginUserID {
 		f.SyncFriendList(operationID)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.UpdateConInfo{UserID: detail.UserID}}, conversationCh)
-		go func() {
-			friendInfo, err := f.db.GetFriendInfoByFriendUserID(detail.UserID)
-			if err == nil {
-				_ = common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: detail.UserID, FaceURL: friendInfo.FaceURL, Nickname: friendInfo.Nickname}}, conversationCh)
-
-			}
-		}()
-
 	} else {
 		f.user.SyncLoginUserInfo(operationID)
 		go func() {
 			loginUserInfo, err := f.db.GetLoginUser(f.loginUserID)
 			if err == nil {
-				_ = f.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.UserID, loginUserInfo.FaceURL, loginUserInfo.Nickname, constant.SingleChatType)
+				//_ = f.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.UserID, loginUserInfo.FaceURL, loginUserInfo.Nickname, constant.SingleChatType)
+				_ = common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: detail.UserID, FaceURL: loginUserInfo.FaceURL, Nickname: loginUserInfo.Nickname}}, conversationCh)
+
 			}
 		}()
 	}

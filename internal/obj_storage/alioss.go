@@ -1,6 +1,7 @@
 package obj_storage
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
@@ -19,6 +20,22 @@ import (
 // OSS 阿里云对象存储
 type OSS struct {
 	p *ws.PostApi
+}
+
+func (c *OSS) UploadImageByBuffer(buffer *bytes.Buffer, size int64, imageType string, onProgressFun func(int)) (string, string, error) {
+	panic("implement me")
+}
+
+func (c *OSS) UploadSoundByBuffer(buffer *bytes.Buffer, size int64, fileType string, onProgressFun func(int)) (string, string, error) {
+	panic("implement me")
+}
+
+func (c *OSS) UploadFileByBuffer(buffer *bytes.Buffer, size int64, fileType string, onProgressFun func(int)) (string, string, error) {
+	panic("implement me")
+}
+
+func (c *OSS) UploadVideoByBuffer(videoBuffer, snapshotBuffer *bytes.Buffer, videoSize, snapshotSize int64, videoType string, onProgressFun func(int)) (string, string, string, string, error) {
+	panic("implement me")
 }
 
 func NewOSS(p *ws.PostApi) *OSS {

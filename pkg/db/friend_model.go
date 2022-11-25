@@ -14,7 +14,7 @@ func (d *DataBase) InsertFriend(friend *model_struct.LocalFriend) error {
 	return utils.Wrap(d.conn.Create(friend).Error, "InsertFriend failed")
 }
 
-func (d *DataBase) DeleteFriend(friendUserID string) error {
+func (d *DataBase) DeleteFriendDB(friendUserID string) error {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	return utils.Wrap(d.conn.Where("owner_user_id=? and friend_user_id=?", d.loginUserID, friendUserID).Delete(&model_struct.LocalFriend{}).Error, "DeleteFriend failed")
