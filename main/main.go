@@ -46,7 +46,7 @@ func main() {
 	//test.DoTestSetBurnDuration("single_2861383134")
 	for {
 		//test.DotestDeleteFriend()
-		//test.DoTestSendMsg2("2346196870", "2861383134")
+		test.DoTestSendMsg2("2346196870", "2861383134")
 		time.Sleep(time.Second * 10)
 	}
 	//test.DoTestSignalGetRoomByGroupID("1826384574")
