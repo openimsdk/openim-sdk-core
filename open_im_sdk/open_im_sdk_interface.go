@@ -121,6 +121,21 @@ func Logout(callback open_im_sdk_callback.Base, operationID string) {
 	userForSDK.Logout(callback, operationID)
 }
 
+func SetAppBackgroundStatus(callback open_im_sdk_callback.Base, operationID string, isBackground bool) {
+	if callback == nil {
+		log.Error("callback is nil")
+		return
+	}
+
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		log.Error(operationID, "resource loading is not completed ", err.Error())
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+
+	userForSDK.SetAppBackgroundStatus(callback, isBackground, operationID)
+}
+
 func GetLoginStatus() int32 {
 	if userForSDK == nil {
 		log.Error("", "userForSDK == nil")

@@ -401,6 +401,19 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 	//}(u)
 }
 
+func (u *LoginMgr) setAppBackgroundStatus(callback open_im_sdk_callback.Base, isBackground bool, operationID string) {
+	timeout := 2
+	retryTimes := 0
+	log.Info(operationID, "send to svr WsSetBackgroundStatus ...", u.loginUserID)
+
+	resp, err := u.ws.SendReqWaitResp(&server_api_params.SetAppBackgroundStatusReq{UserID: u.loginUserID, IsBackground: isBackground}, constant.WsSetBackgroundStatus, timeout, retryTimes, u.loginUserID, operationID)
+	if err != nil {
+		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsSetBackgroundStatus, timeout, u.loginUserID, resp)
+	}
+	common.CheckAnyErrCallback(callback, constant.ErrInternal.ErrCode, err, operationID)
+	callback.OnSuccess("")
+}
+
 func (u *LoginMgr) GetLoginUser() string {
 	return u.loginUserID
 }

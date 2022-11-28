@@ -606,6 +606,12 @@ func init() {
 
 }
 
+func DoTestSetAppBackgroundStatus(isBackground bool) {
+	var testSendMsg TestSendMsgCallBack
+	operationID := utils.OperationIDGenerator()
+	open_im_sdk.SetAppBackgroundStatus(&testSendMsg, operationID, isBackground)
+}
+
 func DoTestSendMsg2(sendId, recvID string) {
 	m := "Single chat test" + sendId + ":" + recvID + ":"
 	operationID := utils.OperationIDGenerator()
