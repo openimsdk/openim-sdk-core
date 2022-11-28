@@ -186,7 +186,9 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool) {
 	if u.IsCompression {
 		header = http.Header{"compression": []string{"gzip"}}
 	}
-	conn, httpResp, err := websocket.Dial(ctx, url, header)
+	conn, httpResp, err := websocket.Dial(ctx, url, &websocket.DialOptions{
+		HTTPHeader: header,
+	})
 	if err != nil {
 		log.Error(operationID, "ws connect failed ", url, err.Error())
 		u.loginStatus = constant.LoginFailed
