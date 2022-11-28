@@ -1051,7 +1051,11 @@ func (c *Conversation) tempCacheChatLog(messageList []*sdk_struct.MsgStruct) {
 }
 func (c *Conversation) newRevokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 	var failedRevokeMessageList []*sdk_struct.MsgStruct
+	var superGroupIDList []string
+	var revokeMsgIDList []string
+	var superGroupRevokeMsgIDList []string
 	for _, w := range msgRevokeList {
+		log.NewDebug("ssd", w)
 		var msg sdk_struct.MessageRevoked
 		err := json.Unmarshal([]byte(w.Content), &msg)
 		if err != nil {
@@ -1090,8 +1094,34 @@ func (c *Conversation) newRevokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 			} else {
 				log.Error("internal", "set msgListener is err:")
 			}
+			if msg.SessionType != constant.SuperGroupChatType {
+				revokeMsgIDList = append(revokeMsgIDList, msg.ClientMsgID)
+			} else {
+				if !utils.IsContain(w.RecvID, superGroupIDList) {
+					superGroupIDList = append(superGroupIDList, w.GroupID)
+				}
+				superGroupRevokeMsgIDList = append(superGroupRevokeMsgIDList, msg.ClientMsgID)
+			}
 		}
-
+	}
+	log.NewDebug("internal, quoteRevoke Info", superGroupIDList, revokeMsgIDList, superGroupRevokeMsgIDList)
+	if len(revokeMsgIDList) > 0 {
+		msgList, err := c.db.SearchAllMessageByContentType(constant.Quote)
+		if err != nil {
+			log.NewError("internal", "SearchMessageIDsByContentType failed", err.Error())
+		}
+		for _, v := range msgList {
+			c.QuoteMsgRevokeHandle(v, revokeMsgIDList)
+		}
+	}
+	for _, superGroupID := range superGroupIDList {
+		msgList, err := c.db.SuperGroupSearchAllMessageByContentType(superGroupID, constant.Quote)
+		if err != nil {
+			log.NewError("internal", "SuperGroupSearchMessageByContentTypeNotOffset failed", superGroupID, err.Error())
+		}
+		for _, v := range msgList {
+			c.QuoteMsgRevokeHandle(v, superGroupRevokeMsgIDList)
+		}
 	}
 	if len(failedRevokeMessageList) > 0 {
 		//c.tempCacheChatLog(failedRevokeMessageList)
@@ -1177,6 +1207,24 @@ func (c *Conversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
 		}
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.MessageChange, &s}})
 
+	}
+}
+
+func (c *Conversation) QuoteMsgRevokeHandle(v *model_struct.LocalChatLog, revokeMsgIDList []string) {
+	s := sdk_struct.MsgStruct{}
+	err := utils.JsonStringToStruct(v.Content, &s.QuoteElem)
+	if err != nil {
+		log.NewError("internal", "unmarshall failed", s.Content)
+	}
+	if !utils.IsContain(s.QuoteElem.QuoteMessage.ClientMsgID, revokeMsgIDList) {
+		return
+	}
+	s.QuoteElem.QuoteMessage.Content = ""
+	s.QuoteElem.QuoteMessage.Status = constant.MsgStatusRevoked
+	v.Content = utils.StructToJsonString(s.QuoteElem)
+	err = c.db.UpdateMessageController(v)
+	if err != nil {
+		log.NewError("internal", "unmarshall failed", v)
 	}
 }
 
@@ -1452,14 +1500,14 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 	case constant.UpdateConFaceUrlAndNickName:
 		var lc model_struct.LocalConversation
-		st := node.Args.(common.UpdateConInfo)
-		if st.GroupID == "" {
-			lc.UserID = st.UserID
-			lc.ConversationID = utils.GetConversationIDBySessionType(st.UserID, constant.SingleChatType)
+		st := node.Args.(common.SourceIDAndSessionType)
+		switch st.SessionType {
+		case constant.SingleChatType:
+			lc.UserID = st.SourceID
+			lc.ConversationID = utils.GetConversationIDBySessionType(st.SourceID, constant.SingleChatType)
 			lc.ConversationType = constant.SingleChatType
-		} else {
-			lc.GroupID = st.GroupID
-			conversationID, conversationType, err := c.getConversationTypeByGroupID(st.GroupID)
+		case constant.GroupChatType:
+			conversationID, conversationType, err := c.getConversationTypeByGroupID(st.SourceID)
 			if err != nil {
 				log.Error("internal", "getConversationTypeByGroupID database err:", err.Error())
 				return
@@ -1473,7 +1521,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			log.Error("internal", "setConversationFaceUrlAndNickName database err:", err.Error())
 			return
 		}
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.ConChange, Args: []string{lc.ConversationID}}, c.GetCh())
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: lc.ConversationID, Action: constant.ConChange, Args: []string{lc.ConversationID}}})
 
 	case constant.UpdateLatestMessageChange:
 		conversationID := node.ConID
@@ -1583,14 +1631,27 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 		log.Error("internal", "not set conversationListener")
 		return
 	}
+
 	node := c2v.Value.(common.UpdateMessageNode)
 	switch node.Action {
 	case constant.UpdateMsgFaceUrlAndNickName:
 		args := node.Args.(common.UpdateMessageInfo)
-		err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(args.UserID, args.FaceURL, args.Nickname, constant.SingleChatType)
+		var conversationType int32
+		if args.GroupID == "" {
+			conversationType = constant.SingleChatType
+		} else {
+			var err error
+			_, conversationType, err = c.getConversationTypeByGroupID(args.GroupID)
+			if err != nil {
+				log.Error("internal", "getConversationTypeByGroupID database err:", err.Error())
+				return
+			}
+		}
+		err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(args.UserID, args.FaceURL, args.Nickname, int(conversationType))
 		if err != nil {
 			log.Error("internal", "UpdateMsgSenderFaceURLAndSenderNickname err:", err.Error())
 		}
+
 	}
 
 }

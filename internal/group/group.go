@@ -117,7 +117,7 @@ func (g *Group) groupInfoSetNotification(msg *api.MsgData, conversationCh chan c
 	detail := api.GroupInfoSetTips{Group: &api.GroupInfo{}}
 	comm.UnmarshalTips(msg, &detail)
 	g.SyncJoinedGroupList(operationID) //todo,  sync some group info
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.UpdateConInfo{GroupID: detail.Group.GroupID}}, conversationCh)
+
 }
 
 func (g *Group) joinGroupApplicationNotification(msg *api.MsgData, operationID string) {
@@ -383,7 +383,6 @@ func (g *Group) groupMemberInfoSetNotification(msg *api.MsgData, operationID str
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID, msg.String(), "detail : ", detail.String())
 	g.updateMemberImmediately(detail.ChangedUser, operationID)
 	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
-	_ = g.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.ChangedUser.UserID, detail.ChangedUser.FaceURL, detail.ChangedUser.Nickname, constant.GroupChatType)
 }
 
 func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam, memberList sdk.CreateGroupMemberRoleParam, operationID string) *sdk.CreateGroupCallback {
@@ -1020,8 +1019,7 @@ func (g *Group) SyncJoinedGroupList(operationID string) {
 				log.NewInfo(operationID, "OnGroupInfoChanged nickname faceURL unchanged", callbackData.GroupID, callbackData.GroupName, callbackData.FaceURL)
 				continue
 			}
-			conID := utils.GetConversationIDBySessionType(callbackData.GroupID, constant.GroupChatType)
-			common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conID, Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: callbackData.GroupID, SessionType: constant.GroupChatType}}, g.conversationCh)
+			common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: callbackData.GroupID, SessionType: constant.GroupChatType}}, g.conversationCh)
 		}
 	}
 
@@ -1198,6 +1196,9 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 				log.NewInfo(operationID, "OnGroupMemberInfoChanged nickname faceURL unchanged", callbackData.GroupID, callbackData.UserID, callbackData.Nickname, callbackData.FaceURL)
 				continue
 			}
+			_ = common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: callbackData.UserID, FaceURL: callbackData.FaceURL,
+				Nickname: callbackData.Nickname, GroupID: callbackData.GroupID}}, g.conversationCh)
+
 		}
 	}
 	for _, index := range bInANot {

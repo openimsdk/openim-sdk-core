@@ -74,6 +74,11 @@ func (d *DataBase) SuperGroupSearchMessageByKeyword(contentType []int, keywordLi
 	return result, err
 }
 
+func (d *DataBase) SuperGroupSearchAllMessageByContentType(groupID string, contentType int32) (result []*model_struct.LocalChatLog, err error) {
+	err = d.conn.Table(utils.GetSuperGroupTableName(groupID)).Where("content_type = ?", contentType).Find(&result).Error
+	return result, err
+}
+
 func (d *DataBase) SuperGroupSearchMessageByContentType(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
 	var messageList []model_struct.LocalChatLog
 	var condition string

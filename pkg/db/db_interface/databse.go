@@ -231,4 +231,6 @@ type DataBase interface {
 	DeleteBlack(blockUserID string) error
 	BatchInsertConversationUnreadMessageList(messageList []*model_struct.LocalConversationUnreadMessage) error
 	DeleteConversationUnreadMessageList(conversationID string, sendTime int64) int64
+	SearchAllMessageByContentType(contentType int) ([]*model_struct.LocalChatLog, error)
+	SuperGroupSearchAllMessageByContentType(superGroupID string, contentType int32) ([]*model_struct.LocalChatLog, error)
 }

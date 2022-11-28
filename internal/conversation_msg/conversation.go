@@ -449,7 +449,7 @@ func (c *Conversation) findMessageList(req sdk.FindMessageListParams, operationI
 					log.Error(operationID, "Parsing data error:", err.Error(), temp)
 					continue
 				}
-				switch message.ContentType {
+				switch message.SessionType {
 				case constant.GroupChatType:
 					fallthrough
 				case constant.SuperGroupChatType:
