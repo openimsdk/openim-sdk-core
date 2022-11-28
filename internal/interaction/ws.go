@@ -1,9 +1,12 @@
 package interaction
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"errors"
 	"github.com/golang/protobuf/proto"
+	"io/ioutil"
 	"nhooyr.io/websocket"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -238,6 +241,23 @@ func (w *Ws) ReadData() {
 		if msgType == websocket.MessageText {
 			log.Warn(operationID, "type websocket.TextMessage")
 		} else if msgType == websocket.MessageBinary {
+			if w.IsCompression {
+				buff := bytes.NewBuffer(message)
+				reader, err := gzip.NewReader(buff)
+				if err != nil {
+					log.NewWarn(operationID, "NewReader failed", err.Error())
+					continue
+				}
+				message, err = ioutil.ReadAll(reader)
+				if err != nil {
+					log.NewWarn(operationID, "ReadAll failed", err.Error())
+					continue
+				}
+				err = reader.Close()
+				if err != nil {
+					log.NewWarn(operationID, "reader close failed", err.Error())
+				}
+			}
 			w.doWsMsg(message)
 		} else {
 			log.Warn(operationID, "recv other type ", msgType)

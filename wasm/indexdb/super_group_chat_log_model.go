@@ -202,6 +202,29 @@ func (i *LocalChatLogs) SearchMessageByKeyword(contentType []int, keywordList []
 		}
 	}
 }
+
+func (i *LocalChatLogs) SuperGroupSearchAllMessageByContentType(superGroupID string, contentType int32) (result []*model_struct.LocalChatLog, err error) {
+	msgList, err := Exec(contentType)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := msgList.(string); ok {
+			var temp []*model_struct.LocalChatLog
+			err := utils.JsonStringToStruct(v, &temp)
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range temp {
+				v1 := v
+				result = append(result, v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}
+
 func (i *LocalChatLogs) SuperGroupUpdateColumnsMessage(clientMsgID, groupID string, args map[string]interface{}) error {
 	_, err := Exec(clientMsgID, groupID, utils.StructToJsonString(args))
 	return err
