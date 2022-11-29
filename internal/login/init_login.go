@@ -405,7 +405,6 @@ func (u *LoginMgr) setAppBackgroundStatus(callback open_im_sdk_callback.Base, is
 	timeout := 2
 	retryTimes := 0
 	log.Info(operationID, "send to svr WsSetBackgroundStatus ...", u.loginUserID)
-
 	resp, err := u.ws.SendReqWaitResp(&server_api_params.SetAppBackgroundStatusReq{UserID: u.loginUserID, IsBackground: isBackground}, constant.WsSetBackgroundStatus, timeout, retryTimes, u.loginUserID, operationID)
 	if err != nil {
 		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsSetBackgroundStatus, timeout, u.loginUserID, resp)

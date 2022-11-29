@@ -8,8 +8,8 @@ import (
 )
 
 func main() {
-	APIADDR := "http://43.154.157.177:10002"
-	WSADDR := "ws://43.154.157.177:10001"
+	APIADDR := "https://test-web.rentsoft.cn/api"
+	WSADDR := "wss://test-web.rentsoft.cn/msg_gateway"
 	REGISTERADDR := APIADDR + "/user_register"
 	ACCOUNTCHECK := APIADDR + "/manager/account_check"
 	TOKENADDR := APIADDR + "/auth/user_token"
@@ -46,7 +46,7 @@ func main() {
 	//test.DoTestSetBurnDuration("single_2861383134")
 	for {
 		//test.DotestDeleteFriend()
-		test.DoTestSendMsg2("", "1443506268")
+		//test.DoTestSendMsg2("", "1443506268")
 		test.DoTestSetAppBackgroundStatus(true)
 		time.Sleep(time.Second * 10)
 	}
