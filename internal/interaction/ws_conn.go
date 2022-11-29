@@ -184,6 +184,7 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool) {
 	if u.IsCompression {
 		url += fmt.Sprintf("&compression=%s", "gzip")
 	}
+	log.Debug(operationID, "last url:", url, u.IsCompression)
 	conn, httpResp, err := websocket.Dial(ctx, url, nil)
 	if err != nil {
 		log.Error(operationID, "ws connect failed ", url, err.Error())
