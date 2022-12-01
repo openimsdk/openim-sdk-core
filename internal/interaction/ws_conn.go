@@ -7,7 +7,6 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
-	"net/http"
 	"nhooyr.io/websocket"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
@@ -182,13 +181,11 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool) {
 	log.Info(operationID, "ws connect begin, dail: ", url)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	var header http.Header
 	if u.IsCompression {
-		header = http.Header{"compression": []string{"gzip"}}
+		url += fmt.Sprintf("&compression=%s", "gzip")
 	}
-	conn, httpResp, err := websocket.Dial(ctx, url, &websocket.DialOptions{
-		HTTPHeader: header,
-	})
+	log.Debug(operationID, "last url:", url, u.IsCompression)
+	conn, httpResp, err := websocket.Dial(ctx, url, nil)
 	if err != nil {
 		log.Error(operationID, "ws connect failed ", url, err.Error())
 		u.loginStatus = constant.LoginFailed

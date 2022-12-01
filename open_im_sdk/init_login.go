@@ -20,6 +20,7 @@ func SetHeartbeatInterval(heartbeatInterval int) {
 }
 
 func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, config string) bool {
+	log.Debug(operationID, "init sdk args:", config)
 	if err := json.Unmarshal([]byte(config), &sdk_struct.SvrConf); err != nil {
 		log.Error(operationID, "Unmarshal failed ", err.Error(), config)
 		return false

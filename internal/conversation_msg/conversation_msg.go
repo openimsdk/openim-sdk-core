@@ -1537,8 +1537,9 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 				}
 			}
 			log.Info("internal", "getMultipleConversationModel success :", newCList)
-
-			c.ConversationListener.OnConversationChanged(utils.StructToJsonStringDefault(newCList))
+			if len(newCList) > 0 {
+				c.ConversationListener.OnConversationChanged(utils.StructToJsonStringDefault(newCList))
+			}
 		}
 	case constant.NewCon:
 		cidList := node.Args.([]string)
