@@ -338,6 +338,7 @@ const (
 	MsgSyncBegin      = 1001 //
 	MsgSyncProcessing = 1002 //
 	MsgSyncEnd        = 1003 //
+	MsgSyncFailed     = 1004
 )
 
 const (

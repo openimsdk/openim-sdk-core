@@ -114,6 +114,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	if syncFlag == constant.MsgSyncBegin {
 		c.ConversationListener.OnSyncServerStart()
 	}
+	if syncFlag == constant.MsgSyncFailed {
+		c.ConversationListener.OnSyncServerFailed()
+	}
 
 	var isTriggerUnReadCount bool
 	var insertMsg, updateMsg []*model_struct.LocalChatLog
@@ -515,6 +518,9 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	if syncFlag == constant.MsgSyncBegin {
 		log.Info(operationID, "OnSyncServerStart() ")
 		c.ConversationListener.OnSyncServerStart()
+	}
+	if syncFlag == constant.MsgSyncFailed {
+		c.ConversationListener.OnSyncServerFailed()
 	}
 	var isTriggerUnReadCount bool
 	var insertMsg, updateMsg, specialUpdateMsg []*model_struct.LocalChatLog

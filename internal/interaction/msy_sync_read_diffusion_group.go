@@ -286,7 +286,8 @@ func (m *ReadDiffusionGroupMsgSync) syncMsgFromServerSplit(needSyncSeqList []uin
 			return
 		}
 		if err != nil {
-			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 30, 2, m.loginUserID)
+			log.Error(operationID, "SendReqWaitResp failed  constant.MsgSyncFailed ", err.Error(), constant.WSPullMsgBySeqList, 30, 2, m.loginUserID)
+			m.TriggerCmdNewMsgCome(nil, operationID, constant.MsgSyncFailed)
 			continue
 		}
 
