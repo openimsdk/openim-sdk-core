@@ -92,7 +92,7 @@ func (m *Minio) uploadByBuffer(buffer *bytes.Buffer, size int64, fileType string
 	progressBar := NewUploadProgress(size, onProgressFun)
 	//_, err = client.FPutObject(context.Background(), minioResp.BucketName, newName, filePath, minio.PutObjectOptions{ContentType: newType,
 	//	Progress: progressBar, RetainUntilDate:time.Now().Add(time.Duration(minioResp.StorageTime)*time.Hour*24), Mode: "", Rente})
-	_, err = client.PutObject(context.Background(), minioResp.BucketName, newName, buffer, size, minio.PutObjectOptions{ContentType: fileType,
+	_, err = client.PutObject(context.Background(), minioResp.BucketName, newName, buffer, size, minio.PutObjectOptions{ContentType: "",
 		Progress: progressBar})
 	if err != nil {
 		log.NewError("0", utils.GetSelfFuncName(), "FPutObject failed", err.Error(), newName, size, fileType)
