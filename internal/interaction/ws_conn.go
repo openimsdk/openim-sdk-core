@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"nhooyr.io/websocket"
 	"open_im_sdk/open_im_sdk_callback"
+	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
@@ -21,17 +22,18 @@ import (
 const writeTimeoutSeconds = 30
 
 type WsConn struct {
-	stateMutex    sync.Mutex
-	conn          *websocket.Conn
-	loginStatus   int32
-	listener      open_im_sdk_callback.OnConnListener
-	token         string
-	loginUserID   string
-	IsCompression bool
+	stateMutex     sync.Mutex
+	conn           *websocket.Conn
+	loginStatus    int32
+	listener       open_im_sdk_callback.OnConnListener
+	token          string
+	loginUserID    string
+	IsCompression  bool
+	ConversationCh chan common.Cmd2Value
 }
 
-func NewWsConn(listener open_im_sdk_callback.OnConnListener, token string, loginUserID string, isCompression bool) *WsConn {
-	p := WsConn{listener: listener, token: token, loginUserID: loginUserID, IsCompression: isCompression}
+func NewWsConn(listener open_im_sdk_callback.OnConnListener, token string, loginUserID string, isCompression bool, conversationCh chan common.Cmd2Value) *WsConn {
+	p := WsConn{listener: listener, token: token, loginUserID: loginUserID, IsCompression: isCompression, ConversationCh: conversationCh}
 	//	go func() {
 	p.conn, _, _ = p.ReConn("init:" + utils.OperationIDGenerator())
 	//	}()
@@ -220,6 +222,10 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool) {
 		} else {
 			errMsg := err.Error() + " operationID " + operationID
 			u.listener.OnConnectFailed(1001, errMsg)
+			if u.ConversationCh != nil {
+				common.TriggerCmdSuperGroupMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: nil, OperationID: operationID, SyncFlag: constant.MsgSyncBegin}, u.ConversationCh)
+				common.TriggerCmdSuperGroupMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: nil, OperationID: operationID, SyncFlag: constant.MsgSyncFailed}, u.ConversationCh)
+			}
 			log.Error(operationID, "websocket.DefaultDialer.Dial failed ", errMsg, "url ", url)
 			return nil, utils.Wrap(err, errMsg), true
 		}
