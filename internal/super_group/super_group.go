@@ -31,7 +31,7 @@ func NewSuperGroup(loginUserID string, db db_interface.DataBase, p *ws.PostApi, 
 	return &SuperGroup{loginUserID: loginUserID, db: db, p: p, joinedSuperGroupCh: joinedSuperGroupCh, heartbeatCmdCh: heartbeatCmdCh}
 }
 
-func (s *SuperGroup) DoNotification(msg *api.MsgData, _ chan common.Cmd2Value) {
+func (s *SuperGroup) DoNotification(msg *api.MsgData, ch chan common.Cmd2Value) {
 	operationID := utils.OperationIDGenerator()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID, msg.String())
 	if msg.SendTime < s.loginTime || s.loginTime == 0 {
@@ -40,6 +40,7 @@ func (s *SuperGroup) DoNotification(msg *api.MsgData, _ chan common.Cmd2Value) {
 	}
 	switch msg.ContentType {
 	case constant.SuperGroupUpdateNotification:
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.SyncConversation, Args: operationID}, ch)
 		s.SyncJoinedGroupList(operationID)
 		cmd := sdk_struct.CmdJoinedSuperGroup{OperationID: operationID}
 		err := common.TriggerCmdJoinedSuperGroup(cmd, s.joinedSuperGroupCh)
