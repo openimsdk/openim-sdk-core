@@ -223,9 +223,9 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	var sqliteConn *db.DataBase
 	var err error
 	if constant.OnlyForTest == 1 {
-		wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID, u.imConfig.IsCompression)
+		wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID, u.imConfig.IsCompression, u.conversationCh)
 		wsRespAsyn := ws.NewWsRespAsyn()
-		u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
+		u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh, u.conversationCh)
 		u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
 		u.heartbeat.WsForTest = u.ws
 		u.heartbeat.LoginUserIDForTest = u.loginUserID
@@ -279,9 +279,9 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	log.Info(operationID, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	log.Info(operationID, "all channel ", u.pushMsgAndMaxSeqCh, u.conversationCh, u.heartbeatCmdCh, u.cmdWsCh)
 
-	wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID, u.imConfig.IsCompression)
+	wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID, u.imConfig.IsCompression, u.conversationCh)
 	wsRespAsyn := ws.NewWsRespAsyn()
-	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
+	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh, u.conversationCh)
 	u.msgSync = ws.NewMsgSync(u.db, u.ws, u.loginUserID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
 	u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
