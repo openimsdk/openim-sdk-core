@@ -160,11 +160,12 @@ func (s *LiveSignaling) getSelfParticipant(groupID string, callback open_im_sdk_
 			log.NewError(operationID, "GetGroupInfoByGroupID failed", err.Error())
 			if !strings.Contains(err.Error(), "record not found") {
 				common.CheckDBErrCallback(callback, err, operationID)
-				copier.Copy(p.GroupInfo, g)
-				mInfo, err := s.GetGroupMemberInfoByGroupIDUserID(groupID, s.loginUserID)
-				common.CheckDBErrCallback(callback, err, operationID)
-				copier.Copy(p.GroupMemberInfo, mInfo)
 			}
+		} else {
+			copier.Copy(p.GroupInfo, g)
+			mInfo, err := s.GetGroupMemberInfoByGroupIDUserID(groupID, s.loginUserID)
+			common.CheckDBErrCallback(callback, err, operationID)
+			copier.Copy(p.GroupMemberInfo, mInfo)
 		}
 	}
 
