@@ -21,7 +21,7 @@ func main() {
 	test.SENDINTERVAL = SENDINTERVAL
 	test.WSADDR = WSADDR
 	test.ACCOUNTCHECK = ACCOUNTCHECK
-	strMyUidx := "2425371866"
+	strMyUidx := "3248521183"
 
 	//	var onlineNum *int          //Number of online users
 	//	var senderNum *int          //Number of users sending messages
@@ -47,7 +47,7 @@ func main() {
 	for {
 		//test.DotestDeleteFriend()
 		//test.DoTestSendMsg2("", "1443506268")
-		test.DoTestSetAppBackgroundStatus(true)
+		//test.DoTestSetAppBackgroundStatus(false)
 		time.Sleep(time.Second * 10)
 	}
 	//test.DoTestSignalGetRoomByGroupID("1826384574")

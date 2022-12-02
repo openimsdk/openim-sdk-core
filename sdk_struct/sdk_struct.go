@@ -24,6 +24,7 @@ type MessageRevoked struct {
 	SourceMessageSenderNickname string `json:"sourceMessageSenderNickname"`
 	SessionType                 int32  `json:"sessionType"`
 	Seq                         uint32 `json:"seq"`
+	Ex                          string `json:"ex"`
 }
 type MessageReaction struct {
 	ClientMsgID  string `json:"clientMsgID"`

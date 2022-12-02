@@ -1160,6 +1160,7 @@ func (c *Conversation) newRevokeOneMessage(callback open_im_sdk_callback.Base, r
 	revokeMessage.SourceMessageSendID = message.SendID
 	revokeMessage.SourceMessageSenderNickname = message.SenderNickname
 	revokeMessage.Seq = message.Seq
+	revokeMessage.Ex = message.Ex
 	//Send message internally
 	switch message.SessionType {
 	case constant.SingleChatType:
