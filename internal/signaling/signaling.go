@@ -156,11 +156,16 @@ func (s *LiveSignaling) getSelfParticipant(groupID string, callback open_im_sdk_
 	p := api.ParticipantMetaData{GroupInfo: &api.GroupInfo{}, GroupMemberInfo: &api.GroupMemberFullInfo{}, UserInfo: &api.PublicUserInfo{}}
 	if groupID != "" {
 		g, err := s.GetGroupInfoByGroupID(groupID)
-		common.CheckDBErrCallback(callback, err, operationID)
-		copier.Copy(p.GroupInfo, g)
-		mInfo, err := s.GetGroupMemberInfoByGroupIDUserID(groupID, s.loginUserID)
-		common.CheckDBErrCallback(callback, err, operationID)
-		copier.Copy(p.GroupMemberInfo, mInfo)
+		if err != nil {
+			log.NewError(operationID, "GetGroupInfoByGroupID failed", err.Error())
+			if !strings.Contains(err.Error(), "record not found") {
+				common.CheckDBErrCallback(callback, err, operationID)
+				copier.Copy(p.GroupInfo, g)
+				mInfo, err := s.GetGroupMemberInfoByGroupIDUserID(groupID, s.loginUserID)
+				common.CheckDBErrCallback(callback, err, operationID)
+				copier.Copy(p.GroupMemberInfo, mInfo)
+			}
+		}
 	}
 
 	sf, err := s.GetLoginUser(s.loginUserID)
