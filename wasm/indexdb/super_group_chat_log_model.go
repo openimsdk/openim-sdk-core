@@ -204,7 +204,7 @@ func (i *LocalChatLogs) SearchMessageByKeyword(contentType []int, keywordList []
 }
 
 func (i *LocalChatLogs) SuperGroupSearchAllMessageByContentType(superGroupID string, contentType int32) (result []*model_struct.LocalChatLog, err error) {
-	msgList, err := Exec(contentType)
+	msgList, err := Exec(superGroupID, contentType)
 	if err != nil {
 		return nil, err
 	} else {
