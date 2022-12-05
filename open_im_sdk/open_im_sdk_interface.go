@@ -1115,6 +1115,27 @@ func ModifyGroupMessageReaction(callback open_im_sdk_callback.Base, operationID 
 	BaseCaller(userForSDK.Conversation().ModifyGroupMessageReaction, callback, counter, reactionType, operationType, groupID, msgID, operationID)
 }
 
+type MessageType struct {
+	TypeKey     string `json:"typeKey"`
+	CanRepeat   bool   `json:"canRepeat,omitempty"`
+	NeedToCount bool   `json:"needToCount,omitempty"`
+	Counter     int32  `json:"counter,omitempty"`
+}
+
+//修改
+func SetMessageReactionExtensions() {
+
+}
+func AddMessageReactionExtensions() {
+
+}
+func DeleteMessageReactionExtensions() {
+
+}
+func GetMessageListReactionExtensions() {
+
+}
+
 //////////////////////////signaling//////////////////////////////////////////
 func SetSignalingListener(callback open_im_sdk_callback.OnSignalingListener) {
 	if callback == nil || userForSDK == nil {
