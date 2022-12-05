@@ -239,13 +239,25 @@ func (g *Group) groupOwnerTransferredNotification(msg *api.MsgData, operationID 
 func (g *Group) updateMemberImmediately(memberInfo *api.GroupMemberFullInfo, operationID string) {
 	localMember := model_struct.LocalGroupMember{}
 	common.GroupMemberCopyToLocal(&localMember, memberInfo)
-	err := g.db.UpdateGroupMember(&localMember)
+	localMemberGroup, err := g.db.GetGroupMemberInfoByGroupIDUserID(memberInfo.GroupID, memberInfo.UserID)
+	if err != nil {
+		log.NewError(operationID, "GetGroupMemberInfoByGroupIDUserID failed ", err.Error(), "groupID", memberInfo.GroupID, "userID", memberInfo.UserID)
+		return
+	}
+	err = g.db.UpdateGroupMember(&localMember)
 	if err != nil {
 		log.Error(operationID, "UpdateGroupMember failed ", err.Error(), localMember)
 		return
 	}
 	if g.listener != nil {
 		g.listener.OnGroupMemberInfoChanged(utils.StructToJsonString(localMember))
+		log.Info(operationID, "OnGroupMemberInfoChanged", utils.StructToJsonString(localMember))
+		if localMemberGroup.Nickname == localMember.Nickname && localMemberGroup.FaceURL == localMember.FaceURL {
+			log.NewInfo(operationID, "OnGroupMemberInfoChanged nickname faceURL unchanged", localMember.GroupID, localMember.UserID, localMember.Nickname, localMember.FaceURL)
+			return
+		}
+		_ = common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: localMember.UserID, FaceURL: localMember.FaceURL,
+			Nickname: localMember.Nickname, GroupID: localMember.GroupID}}, g.conversationCh)
 	}
 
 }
@@ -1001,20 +1013,21 @@ func (g *Group) SyncJoinedGroupList(operationID string) {
 		}
 	}
 	for _, index := range sameA {
-		err := g.db.UpdateGroup(onServer[index])
+		callbackData := sdk.GroupInfoChangedCallback(*onServer[index])
+		localGroup, err := g.db.GetGroupInfoByGroupID(callbackData.GroupID)
+		if err != nil {
+			log.NewError(operationID, "GetGroupInfoByGroupID failed ", err.Error(), callbackData.GroupID)
+			continue
+		}
+		err = g.db.UpdateGroup(onServer[index])
 		if err != nil {
 			log.NewError(operationID, "UpdateGroup failed ", err.Error(), onServer[index])
 			continue
 		}
-		callbackData := sdk.GroupInfoChangedCallback(*onServer[index])
 		if g.listener != nil {
 			g.listener.OnGroupInfoChanged(utils.StructToJsonString(callbackData))
 			log.Info(operationID, "OnGroupInfoChanged", utils.StructToJsonString(callbackData))
-			localGroup, err := g.db.GetGroupInfoByGroupID(callbackData.GroupID)
-			if err != nil {
-				log.NewError(operationID, "GetGroupInfoByGroupID failed ", err.Error(), callbackData.GroupID)
-				continue
-			}
+
 			if localGroup.GroupName == callbackData.GroupName && localGroup.FaceURL == callbackData.FaceURL {
 				log.NewInfo(operationID, "OnGroupInfoChanged nickname faceURL unchanged", callbackData.GroupID, callbackData.GroupName, callbackData.FaceURL)
 				continue
@@ -1177,28 +1190,27 @@ func (g *Group) syncGroupMemberByGroupID(groupID string, operationID string, onG
 	}
 
 	for _, index := range sameA {
-		err := g.db.UpdateGroupMember(onServer[index])
+		callbackData := sdk.GroupMemberInfoChangedCallback(*onServer[index])
+		localMemberGroup, err := g.db.GetGroupMemberInfoByGroupIDUserID(callbackData.GroupID, callbackData.UserID)
+		if err != nil {
+			log.NewError(operationID, "GetGroupMemberInfoByGroupIDUserID failed ", err.Error(), "groupID", callbackData.GroupID, "userID", callbackData.UserID)
+			continue
+		}
+		err = g.db.UpdateGroupMember(onServer[index])
 		if err != nil {
 			log.NewError(operationID, "UpdateGroupMember failed ", err.Error(), *onServer[index])
 			continue
 		}
-
-		callbackData := sdk.GroupMemberInfoChangedCallback(*onServer[index])
+		callbackData = sdk.GroupMemberInfoChangedCallback(*onServer[index])
 		if g.listener != nil {
 			g.listener.OnGroupMemberInfoChanged(utils.StructToJsonString(callbackData))
 			log.Info(operationID, "OnGroupMemberInfoChanged", utils.StructToJsonString(callbackData))
-			localMemberGroup, err := g.db.GetGroupMemberInfoByGroupIDUserID(callbackData.GroupID, callbackData.UserID)
-			if err != nil {
-				log.NewError(operationID, "GetGroupMemberInfoByGroupIDUserID failed ", err.Error(), "groupID", callbackData.GroupID, "userID", callbackData.UserID)
-				continue
-			}
 			if localMemberGroup.Nickname == callbackData.Nickname && localMemberGroup.FaceURL == callbackData.FaceURL {
 				log.NewInfo(operationID, "OnGroupMemberInfoChanged nickname faceURL unchanged", callbackData.GroupID, callbackData.UserID, callbackData.Nickname, callbackData.FaceURL)
 				continue
 			}
 			_ = common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: callbackData.UserID, FaceURL: callbackData.FaceURL,
 				Nickname: callbackData.Nickname, GroupID: callbackData.GroupID}}, g.conversationCh)
-
 		}
 	}
 	for _, index := range bInANot {

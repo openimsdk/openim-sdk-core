@@ -1518,6 +1518,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 				log.Error("internal", "getConversationTypeByGroupID database err:", err.Error())
 				return
 			}
+			lc.GroupID = st.SourceID
 			lc.ConversationID = conversationID
 			lc.ConversationType = conversationType
 		}
@@ -1653,7 +1654,7 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 				return
 			}
 		}
-		err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(args.UserID, args.FaceURL, args.Nickname, int(conversationType))
+		err := c.db.UpdateMsgSenderFaceURLAndSenderNicknameController(args.UserID, args.FaceURL, args.Nickname, int(conversationType), args.GroupID)
 		if err != nil {
 			log.Error("internal", "UpdateMsgSenderFaceURLAndSenderNickname err:", err.Error())
 		}

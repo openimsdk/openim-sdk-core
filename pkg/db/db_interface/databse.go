@@ -70,6 +70,7 @@ type DataBase interface {
 	UpdateMsgSenderNickname(sendID, nickname string, sType int) error
 	UpdateMsgSenderFaceURL(sendID, faceURL string, sType int) error
 	UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int) error
+	UpdateMsgSenderFaceURLAndSenderNicknameController(sendID, faceURL, nickname string, sessionType int, groupID string) error
 	GetMsgSeqByClientMsgID(clientMsgID string) (uint32, error)
 	GetMsgSeqByClientMsgIDController(m *sdk_struct.MsgStruct) (uint32, error)
 	GetMsgSeqListByGroupID(groupID string) ([]uint32, error)
@@ -206,7 +207,7 @@ type DataBase interface {
 	SuperGroupGetTestMessage(seq uint32) (*model_struct.LocalChatLog, error)
 	SuperGroupUpdateMsgSenderNickname(sendID, nickname string, sType int) error
 	SuperGroupUpdateMsgSenderFaceURL(sendID, faceURL string, sType int) error
-	SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int) error
+	SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int, groupID string) error
 	SuperGroupGetMsgSeqByClientMsgID(clientMsgID string, groupID string) (uint32, error)
 	SuperGroupGetMsgSeqListByGroupID(groupID string) ([]uint32, error)
 	SuperGroupGetMsgSeqListByPeerUserID(userID string) ([]uint32, error)

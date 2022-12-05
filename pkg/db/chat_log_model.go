@@ -606,6 +606,14 @@ func (d *DataBase) UpdateMsgSenderFaceURL(sendID, faceURL string, sType int) err
 		"send_id = ? and session_type = ? and sender_face_url != ? ", sendID, sType, faceURL).Updates(
 		map[string]interface{}{"sender_face_url": faceURL}).Error, utils.GetSelfFuncName()+" failed")
 }
+func (d *DataBase) UpdateMsgSenderFaceURLAndSenderNicknameController(sendID, faceURL, nickname string, sessionType int, groupID string) error {
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return d.SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname, sessionType, groupID)
+	default:
+		return d.UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname, sessionType)
+	}
+}
 func (d *DataBase) UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
