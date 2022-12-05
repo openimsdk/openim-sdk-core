@@ -472,7 +472,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	log.Debug(operationID, "DoGroupMsgReadState  cost time : ", b9-b8, "len: ", len(groupMsgReadList))
 
 	c.revokeMessage(msgRevokeList)
-	c.newRevokeMessage(newMsgRevokeList)
 	b10 := utils.GetCurrentTimestampByMill()
 	log.Debug(operationID, "revokeMessage  cost time : ", b10-b9)
 	if c.batchMsgListener != nil {
@@ -484,6 +483,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		b12 := utils.GetCurrentTimestampByMill()
 		log.Debug(operationID, "newMessage  cost time : ", b12-b10)
 	}
+	c.newRevokeMessage(newMsgRevokeList)
 
 	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	if len(newConversationSet) > 0 {
@@ -887,7 +887,6 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	log.Debug(operationID, "DoGroupMsgReadState  cost time : ", b9-b8, "len: ", len(groupMsgReadList))
 
 	c.revokeMessage(msgRevokeList)
-	c.newRevokeMessage(newMsgRevokeList)
 	c.DoMsgReaction(msgReactionList)
 	b10 := utils.GetCurrentTimestampByMill()
 	log.Debug(operationID, "revokeMessage  cost time : ", b10-b9)
@@ -900,7 +899,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 		b12 := utils.GetCurrentTimestampByMill()
 		log.Debug(operationID, "newMessage  cost time : ", b12-b10)
 	}
-
+	c.newRevokeMessage(newMsgRevokeList)
 	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	if len(newConversationSet) > 0 {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.NewConDirect, utils.StructToJsonString(mapConversationToList(newConversationSet))}})
