@@ -24,5 +24,5 @@ func (b *Business) DoNotification(jsonDetailStr string, operationID string) {
 		return
 	}
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "json_detail: ", jsonDetailStr)
-	b.listener.OnRecvCustomBusiness(jsonDetailStr)
+	b.listener.OnRecvCustomBusinessMessage(jsonDetailStr)
 }

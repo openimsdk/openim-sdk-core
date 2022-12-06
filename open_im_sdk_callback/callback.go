@@ -75,5 +75,5 @@ type OnWorkMomentsListener interface {
 }
 
 type OnCustomBusinessListener interface {
-	OnRecvCustomBusiness(businessMessage string)
+	OnRecvCustomBusinessMessage(businessMessage string)
 }
