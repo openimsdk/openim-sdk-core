@@ -409,31 +409,6 @@ func (i IndexDB) GetMsgSeqByClientMsgIDController(m *sdk_struct.MsgStruct) (uint
 	}
 }
 
-func (i IndexDB) GetMsgSeqListByGroupID(groupID string) ([]uint32, error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetMsgSeqListByPeerUserID(userID string) (result []uint32, err error) {
-	l, err := Exec(userID)
-	if err != nil {
-		return nil, err
-	} else {
-		if v, ok := l.([]float64); ok {
-			for _, v := range v {
-				v1 := uint32(v)
-				result = append(result, v1)
-			}
-			return result, err
-		} else {
-			return nil, ErrType
-		}
-	}
-}
-
-func (i IndexDB) GetMsgSeqListBySelfUserID(userID string) ([]uint32, error) {
-	panic("implement me")
-}
-
 func (i IndexDB) GetSubDepartmentList(departmentID string, args ...int) ([]*model_struct.LocalDepartment, error) {
 	panic("implement me")
 }
