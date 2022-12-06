@@ -91,7 +91,7 @@ func (i *LocalConversations) GetAllConversationListToSync() (result []*model_str
 	}
 }
 func (i *LocalConversations) UpdateColumnsConversation(conversationID string, args map[string]interface{}) error {
-	_, err := Exec(conversationID, utils.StructToJsonString(args))
+	_, err := Exec(conversationID, args)
 	return err
 }
 func (i IndexDB) GetConversationByUserID(userID string) (*model_struct.LocalConversation, error) {
