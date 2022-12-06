@@ -214,6 +214,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: unreadArgs.ConversationIDList}})
 			continue
 		}
+
 		switch v.SessionType {
 		case constant.SingleChatType:
 			if v.ContentType > constant.FriendNotificationBegin && v.ContentType < constant.FriendNotificationEnd {
@@ -306,6 +307,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				}
 			}
 		} else { //Sent by others
+			log.NewDebug("internal4", v)
 			if _, err := c.db.GetMessageController(msg); err != nil { //Deduplication operation
 				lc := model_struct.LocalConversation{
 					ConversationType:  v.SessionType,
@@ -383,6 +385,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			}
 		}
 	}
+	log.NewDebug("internal", newMsgRevokeList)
+
 	b1 := utils.GetCurrentTimestampByMill()
 	log.Info(operationID, "generate conversation map is :", conversationSet)
 	log.Debug(operationID, "before insert msg cost time : ", time.Since(b))
@@ -925,6 +929,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 		b12 := utils.GetCurrentTimestampByMill()
 		log.Debug(operationID, "newMessage  cost time : ", b12-b10)
 	}
+
 	c.newRevokeMessage(newMsgRevokeList)
 	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	if len(newConversationSet) > 0 {
@@ -1060,8 +1065,9 @@ func (c *Conversation) newRevokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 	var superGroupIDList []string
 	var revokeMsgIDList []string
 	var superGroupRevokeMsgIDList []string
+	log.NewDebug("revoke msg", msgRevokeList)
 	for _, w := range msgRevokeList {
-		log.NewDebug("ssd", w)
+		log.NewDebug("msg revoke", w)
 		var msg sdk_struct.MessageRevoked
 		err := json.Unmarshal([]byte(w.Content), &msg)
 		if err != nil {

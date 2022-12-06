@@ -1231,6 +1231,9 @@ func (c *Conversation) newRevokeOneMessage(callback open_im_sdk_callback.Base, r
 	lc.LatestMsg = utils.StructToJsonString(s)
 	lc.LatestMsgSendTime = s.SendTime
 	lc.ConversationID = conversationID
+	s.GroupID = groupID
+	s.RecvID = recvID
+	c.newRevokeMessage([]*sdk_struct.MsgStruct{&s})
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.GetCh())
 }
 
