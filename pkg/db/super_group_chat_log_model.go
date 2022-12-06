@@ -358,10 +358,10 @@ func (d *DataBase) SuperGroupUpdateMsgSenderFaceURL(sendID, faceURL string, sTyp
 		"send_id = ? and session_type = ? and sender_face_url != ? ", sendID, sType, faceURL).Updates(
 		map[string]interface{}{"sender_face_url": faceURL}).Error, utils.GetSelfFuncName()+" failed")
 }
-func (d *DataBase) SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int) error {
+func (d *DataBase) SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int, groupID string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.Model(model_struct.LocalChatLog{}).Where(
+	return utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Where(
 		"send_id = ? and session_type = ?", sendID, sessionType).Updates(
 		map[string]interface{}{"sender_face_url": faceURL, "sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
 }

@@ -527,7 +527,13 @@ func (f *Friend) SyncFriendList(operationID string) {
 		}
 	}
 	for _, index := range sameA {
-		err := f.db.UpdateFriend(friendsInfoOnServer[index])
+		callbackData := sdk.FriendInfoChangedCallback(*friendsInfoOnServer[index])
+		localFriend, err := f.db.GetFriendInfoByFriendUserID(callbackData.FriendUserID)
+		if err != nil {
+			log.NewError(operationID, "GetFriendInfoByFriendUserID failed ", err.Error(), "userID", callbackData.FriendUserID)
+			continue
+		}
+		err = f.db.UpdateFriend(friendsInfoOnServer[index])
 		if err != nil {
 			log.NewError(operationID, "UpdateFriendRequest failed ", err.Error(), *friendsInfoOnServer[index])
 			continue
@@ -535,11 +541,6 @@ func (f *Friend) SyncFriendList(operationID string) {
 			callbackData := sdk.FriendInfoChangedCallback(*friendsInfoOnServer[index])
 			if f.friendListener != nil {
 				f.friendListener.OnFriendInfoChanged(utils.StructToJsonString(callbackData))
-				localFriend, err := f.db.GetFriendInfoByFriendUserID(callbackData.FriendUserID)
-				if err != nil {
-					log.NewError(operationID, "GetFriendInfoByFriendUserID failed ", err.Error(), "userID", callbackData.FriendUserID)
-					continue
-				}
 				if localFriend.Nickname == callbackData.Nickname && localFriend.FaceURL == callbackData.FaceURL && localFriend.Remark == callbackData.Remark {
 					log.NewInfo(operationID, "OnFriendInfoChanged nickname faceURL unchanged", callbackData.FriendUserID, localFriend.Nickname, localFriend.FaceURL)
 					continue
