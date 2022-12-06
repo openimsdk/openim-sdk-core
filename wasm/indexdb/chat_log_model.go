@@ -376,10 +376,10 @@ func (i *LocalChatLogs) GetMsgSeqListByGroupID(groupID string) (result []uint32,
 	if err != nil {
 		return nil, err
 	} else {
-		if v, ok := l.([]float64); ok {
-			for _, v := range v {
-				v1 := uint32(v)
-				result = append(result, v1)
+		if v, ok := l.(string); ok {
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
 			}
 			return result, err
 		} else {
@@ -393,10 +393,10 @@ func (i IndexDB) GetMsgSeqListByPeerUserID(userID string) (result []uint32, err 
 	if err != nil {
 		return nil, err
 	} else {
-		if v, ok := l.([]float64); ok {
-			for _, v := range v {
-				v1 := uint32(v)
-				result = append(result, v1)
+		if v, ok := l.(string); ok {
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
 			}
 			return result, err
 		} else {
@@ -410,10 +410,10 @@ func (i *LocalChatLogs) GetMsgSeqListBySelfUserID(userID string) (result []uint3
 	if err != nil {
 		return nil, err
 	} else {
-		if v, ok := l.([]float64); ok {
-			for _, v := range v {
-				v1 := uint32(v)
-				result = append(result, v1)
+		if v, ok := l.(string); ok {
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
 			}
 			return result, err
 		} else {
