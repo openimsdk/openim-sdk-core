@@ -1063,8 +1063,8 @@ func (c *Conversation) tempCacheChatLog(messageList []*sdk_struct.MsgStruct) {
 func (c *Conversation) newRevokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 	var failedRevokeMessageList []*sdk_struct.MsgStruct
 	var superGroupIDList []string
-	var revokeMsgIDList []string
-	var superGroupRevokeMsgIDList []string
+	var revokeMessageRevoked []*sdk_struct.MessageRevoked
+	var superGroupRevokeMessageRevoked []*sdk_struct.MessageRevoked
 	log.NewDebug("revoke msg", msgRevokeList)
 	for _, w := range msgRevokeList {
 		log.NewDebug("msg revoke", w)
@@ -1107,23 +1107,23 @@ func (c *Conversation) newRevokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 				log.Error("internal", "set msgListener is err:")
 			}
 			if msg.SessionType != constant.SuperGroupChatType {
-				revokeMsgIDList = append(revokeMsgIDList, msg.ClientMsgID)
+				revokeMessageRevoked = append(revokeMessageRevoked, &msg)
 			} else {
 				if !utils.IsContain(w.RecvID, superGroupIDList) {
 					superGroupIDList = append(superGroupIDList, w.GroupID)
 				}
-				superGroupRevokeMsgIDList = append(superGroupRevokeMsgIDList, msg.ClientMsgID)
+				superGroupRevokeMessageRevoked = append(superGroupRevokeMessageRevoked, &msg)
 			}
 		}
 	}
-	log.NewDebug("internal, quoteRevoke Info", superGroupIDList, revokeMsgIDList, superGroupRevokeMsgIDList)
-	if len(revokeMsgIDList) > 0 {
+	log.NewDebug("internal, quoteRevoke Info", superGroupIDList, len(revokeMessageRevoked), len(superGroupRevokeMessageRevoked))
+	if len(revokeMessageRevoked) > 0 {
 		msgList, err := c.db.SearchAllMessageByContentType(constant.Quote)
 		if err != nil {
 			log.NewError("internal", "SearchMessageIDsByContentType failed", err.Error())
 		}
 		for _, v := range msgList {
-			c.QuoteMsgRevokeHandle(v, revokeMsgIDList)
+			c.QuoteMsgRevokeHandle(v, revokeMessageRevoked)
 		}
 	}
 	for _, superGroupID := range superGroupIDList {
@@ -1132,7 +1132,7 @@ func (c *Conversation) newRevokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 			log.NewError("internal", "SuperGroupSearchMessageByContentTypeNotOffset failed", superGroupID, err.Error())
 		}
 		for _, v := range msgList {
-			c.QuoteMsgRevokeHandle(v, superGroupRevokeMsgIDList)
+			c.QuoteMsgRevokeHandle(v, superGroupRevokeMessageRevoked)
 		}
 	}
 	if len(failedRevokeMessageList) > 0 {
@@ -1222,22 +1222,31 @@ func (c *Conversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
 	}
 }
 
-func (c *Conversation) QuoteMsgRevokeHandle(v *model_struct.LocalChatLog, revokeMsgIDList []string) {
+func (c *Conversation) QuoteMsgRevokeHandle(v *model_struct.LocalChatLog, revokeMsgIDList []*sdk_struct.MessageRevoked) {
 	s := sdk_struct.MsgStruct{}
 	err := utils.JsonStringToStruct(v.Content, &s.QuoteElem)
 	if err != nil {
 		log.NewError("internal", "unmarshall failed", s.Content)
 	}
-	if !utils.IsContain(s.QuoteElem.QuoteMessage.ClientMsgID, revokeMsgIDList) {
+	ok, revokeMessage := IsContainRevokedList(s.QuoteElem.QuoteMessage.ClientMsgID, revokeMsgIDList)
+	if !ok {
 		return
 	}
-	s.QuoteElem.QuoteMessage.Content = ""
-	s.QuoteElem.QuoteMessage.Status = constant.MsgStatusRevoked
+	s.QuoteElem.QuoteMessage.Content = utils.StructToJsonString(revokeMessage)
+	s.QuoteElem.QuoteMessage.ContentType = constant.AdvancedRevoke
 	v.Content = utils.StructToJsonString(s.QuoteElem)
 	err = c.db.UpdateMessageController(v)
 	if err != nil {
 		log.NewError("internal", "unmarshall failed", v)
 	}
+}
+func IsContainRevokedList(target string, List []*sdk_struct.MessageRevoked) (bool, *sdk_struct.MessageRevoked) {
+	for _, element := range List {
+		if target == element.ClientMsgID {
+			return true, element
+		}
+	}
+	return false, nil
 }
 
 func (c *Conversation) DoGroupMsgReadState(groupMsgReadList []*sdk_struct.MsgStruct) {
