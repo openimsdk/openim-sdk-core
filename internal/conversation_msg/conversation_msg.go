@@ -2,6 +2,7 @@ package conversation_msg
 
 import (
 	"encoding/json"
+	"open_im_sdk/internal/business"
 	"open_im_sdk/internal/cache"
 	common2 "open_im_sdk/internal/common"
 	"open_im_sdk/internal/friend"
@@ -11,6 +12,7 @@ import (
 	"open_im_sdk/internal/organization"
 	"open_im_sdk/internal/signaling"
 	"open_im_sdk/internal/user"
+
 	workMoments "open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -50,6 +52,7 @@ type Conversation struct {
 	//advancedFunction     advanced_interface.AdvancedFunction
 	organization *organization.Organization
 	workMoments  *workMoments.WorkMoments
+	business     *business.Business
 	common2.ObjectStorage
 
 	cache          *cache.Cache
@@ -85,11 +88,11 @@ func NewConversation(ws *ws.Ws, db db_interface.DataBase, p *ws.PostApi,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener,
 	msgListener open_im_sdk_callback.OnAdvancedMsgListener, organization *organization.Organization, signaling *signaling.LiveSignaling,
-	workMoments *workMoments.WorkMoments, cache *cache.Cache, full *full.Full, id2MinSeq map[string]uint32) *Conversation {
+	workMoments *workMoments.WorkMoments, business *business.Business, cache *cache.Cache, full *full.Full, id2MinSeq map[string]uint32) *Conversation {
 	n := &Conversation{Ws: ws, db: db, p: p, recvCH: ch, loginUserID: loginUserID, platformID: platformID,
 		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage,
 		signaling: signaling, organization: organization, workMoments: workMoments,
-		full: full, id2MinSeq: id2MinSeq, encryptionKey: encryptionKey}
+		full: full, id2MinSeq: id2MinSeq, encryptionKey: encryptionKey, business: business}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
 	n.cache = cache
@@ -212,6 +215,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				c.db.DeleteConversationUnreadMessageList(v, unreadArgs.UpdateUnreadCountTime)
 			}
 			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: unreadArgs.ConversationIDList}})
+			continue
+		case v.ContentType == constant.BusinessNotification:
+			log.NewInfo(operationID, utils.GetSelfFuncName(), "recv businessNotification", tips.JsonDetail)
+			c.business.DoNotification(tips.JsonDetail, operationID)
 			continue
 		}
 
@@ -617,6 +624,10 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 				c.db.DeleteConversationUnreadMessageList(v, unreadArgs.UpdateUnreadCountTime)
 			}
 			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: unreadArgs.ConversationIDList}})
+			continue
+		case v.ContentType == constant.BusinessNotification:
+			log.NewInfo(operationID, utils.GetSelfFuncName(), "recv businessNotification", tips.JsonDetail)
+			c.business.DoNotification(tips.JsonDetail, operationID)
 			continue
 		}
 		switch v.SessionType {

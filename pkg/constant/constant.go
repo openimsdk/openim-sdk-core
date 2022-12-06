@@ -110,7 +110,11 @@ const (
 	WorkMomentNotificationBegin = 1900
 	WorkMomentNotification      = 1901
 
-	NotificationEnd = 2000
+	BusinessNotificationBegin = 2000
+	BusinessNotification      = 2001
+	BusinessNotificationEnd   = 2099
+
+	NotificationEnd = 2200
 
 	////////////////////////////////////////
 

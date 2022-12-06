@@ -763,6 +763,15 @@ func SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMomentsListener)
 	}
 	userForSDK.SetWorkMomentsListener(listener)
 }
+
+func SetCustomBusinessListener(listener open_im_sdk_callback.OnCustomBusinessListener) {
+	if listener == nil || userForSDK == nil {
+		log.Error("callback or userForSDK is nil")
+		return
+	}
+	userForSDK.SetBusinessListener(listener)
+}
+
 func CreateAdvancedTextMessage(operationID string, text, messageEntityList string) string {
 	return userForSDK.Conversation().CreateAdvancedTextMessage(text, messageEntityList, operationID)
 }

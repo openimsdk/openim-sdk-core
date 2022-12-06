@@ -1,6 +1,7 @@
 package login
 
 import (
+	"open_im_sdk/internal/business"
 	"open_im_sdk/internal/cache"
 	comm3 "open_im_sdk/internal/common"
 	conv "open_im_sdk/internal/conversation_msg"
@@ -37,7 +38,9 @@ type LoginMgr struct {
 	user         *user.User
 	signaling    *signaling.LiveSignaling
 	//advancedFunction advanced_interface.AdvancedFunction
-	workMoments  *workMoments.WorkMoments
+	workMoments *workMoments.WorkMoments
+	business    *business.Business
+
 	full         *full.Full
 	db           db_interface.DataBase
 	ws           *ws.Ws
@@ -63,6 +66,7 @@ type LoginMgr struct {
 	signalingListenerFroService open_im_sdk_callback.OnSignalingListener
 	organizationListener        open_im_sdk_callback.OnOrganizationListener
 	workMomentsListener         open_im_sdk_callback.OnWorkMomentsListener
+	businessListener            open_im_sdk_callback.OnCustomBusinessListener
 
 	conversationCh     chan common.Cmd2Value
 	cmdWsCh            chan common.Cmd2Value
@@ -208,6 +212,14 @@ func (u *LoginMgr) SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMo
 	}
 }
 
+func (u *LoginMgr) SetBusinessListener(listener open_im_sdk_callback.OnCustomBusinessListener) {
+	if u.business != nil {
+		u.business.SetListener(listener)
+	} else {
+		u.businessListener = listener
+	}
+}
+
 func (u *LoginMgr) wakeUp(cb open_im_sdk_callback.Base, operationID string) {
 	log.Info(operationID, utils.GetSelfFuncName(), "args ")
 	err := common.TriggerCmdWakeUp(u.heartbeatCmdCh)
@@ -271,6 +283,10 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	if u.workMomentsListener != nil {
 		u.workMoments.SetListener(u.workMomentsListener)
 	}
+	u.business = business.NewBusiness(u.db)
+	if u.businessListener != nil {
+		u.business.SetListener(u.businessListener)
+	}
 	log.NewInfo(operationID, u.imConfig.ObjectStorage, "new obj login cost time: ", time.Since(t1))
 	log.NewInfo(operationID, u.imConfig.ObjectStorage, "SyncLoginUserInfo login cost time: ", time.Since(t1))
 	u.push = comm2.NewPush(p, u.imConfig.Platform, u.loginUserID)
@@ -309,7 +325,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.conversation = conv.NewConversation(u.ws, u.db, u.postApi, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir, u.imConfig.EncryptionKey,
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener,
-		u.organization, u.signaling, u.workMoments, u.cache, u.full, u.id2MinSeq)
+		u.organization, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq)
 	if u.batchMsgListener != nil {
 		u.conversation.SetBatchMsgListener(u.batchMsgListener)
 		log.Info(operationID, "SetBatchMsgListener ", u.batchMsgListener)
