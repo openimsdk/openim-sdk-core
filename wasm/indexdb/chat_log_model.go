@@ -361,57 +361,6 @@ func (i *LocalChatLogs) GetMsgSeqByClientMsgID(clientMsgID string) (uint32, erro
 	return 0, ErrType
 }
 
-func (i *LocalChatLogs) GetMsgSeqListByGroupID(groupID string) (result []uint32, err error) {
-	l, err := Exec(groupID)
-	if err != nil {
-		return nil, err
-	} else {
-		if v, ok := l.([]float64); ok {
-			for _, v := range v {
-				v1 := uint32(v)
-				result = append(result, v1)
-			}
-			return result, err
-		} else {
-			return nil, ErrType
-		}
-	}
-}
-
-func (i *LocalChatLogs) GetMsgSeqListByPeerUserID(userID string) (result []uint32, err error) {
-	l, err := Exec(userID)
-	if err != nil {
-		return nil, err
-	} else {
-		if v, ok := l.([]float64); ok {
-			for _, v := range v {
-				v1 := uint32(v)
-				result = append(result, v1)
-			}
-			return result, err
-		} else {
-			return nil, ErrType
-		}
-	}
-}
-
-func (i *LocalChatLogs) GetMsgSeqListBySelfUserID(userID string) (result []uint32, err error) {
-	l, err := Exec(userID)
-	if err != nil {
-		return nil, err
-	} else {
-		if v, ok := l.([]float64); ok {
-			for _, v := range v {
-				v1 := uint32(v)
-				result = append(result, v1)
-			}
-			return result, err
-		} else {
-			return nil, ErrType
-		}
-	}
-}
-
 func (i *LocalChatLogs) SearchAllMessageByContentType(contentType int) (result []*model_struct.LocalChatLog, err error) {
 	msgList, err := Exec(contentType)
 	if err != nil {
@@ -448,4 +397,54 @@ func (i *LocalChatLogs) BatchInsertExceptionMsg(MessageList []*model_struct.Loca
 
 func (i *LocalChatLogs) SetChatLogFailedStatus() {
 	panic("implement me")
+}
+
+func (i *LocalChatLogs) GetMsgSeqListByGroupID(groupID string) (result []uint32, err error) {
+	l, err := Exec(groupID)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := l.([]float64); ok {
+			for _, v := range v {
+				v1 := uint32(v)
+				result = append(result, v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}
+func (i *LocalChatLogs) GetMsgSeqListByPeerUserID(userID string) (result []uint32, err error) {
+	l, err := Exec(userID)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := l.([]float64); ok {
+			for _, v := range v {
+				v1 := uint32(v)
+				result = append(result, v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}
+
+func (i *LocalChatLogs) GetMsgSeqListBySelfUserID(userID string) (result []uint32, err error) {
+	l, err := Exec(userID)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := l.([]float64); ok {
+			for _, v := range v {
+				v1 := uint32(v)
+				result = append(result, v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
 }
