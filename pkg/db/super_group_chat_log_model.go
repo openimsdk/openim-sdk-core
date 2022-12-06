@@ -362,6 +362,13 @@ package db
 //		map[string]interface{}{"sender_face_url": faceURL, "sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
 //}
 //
+//func (d *DataBase) SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int, groupID string) error {
+//	d.mRWMutex.Lock()
+//	defer d.mRWMutex.Unlock()
+//	return utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Where(
+//		"send_id = ? and session_type = ?", sendID, sessionType).Updates(
+//		map[string]interface{}{"sender_face_url": faceURL, "sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
+//}
 //func (d *DataBase) SuperGroupGetMsgSeqByClientMsgID(clientMsgID string, groupID string) (uint32, error) {
 //	d.mRWMutex.Lock()
 //	defer d.mRWMutex.Unlock()
