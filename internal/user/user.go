@@ -76,10 +76,6 @@ func (u *User) userInfoUpdatedNotification(msg *api.MsgData, operationID string)
 	if detail.UserID == u.loginUserID {
 		log.Info(operationID, "detail.UserID == u.loginUserID, SyncLoginUserInfo", detail.UserID)
 		u.SyncLoginUserInfo(operationID)
-		user, err := u.GetLoginUser(u.loginUserID)
-		if err != nil {
-			go u.updateMsgSenderInfo(user.Nickname, user.FaceURL, operationID)
-		}
 	} else {
 		log.Info(operationID, "detail.UserID != u.loginUserID, do nothing", detail.UserID, u.loginUserID)
 	}
@@ -120,6 +116,13 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 			return
 		}
 		u.listener.OnSelfInfoUpdated(utils.StructToJsonString(callbackData))
+		log.Info(operationID, "OnSelfInfoUpdated", utils.StructToJsonString(callbackData))
+		if onLocal.Nickname == onServer.Nickname && onLocal.FaceURL == onServer.FaceURL {
+			log.NewInfo(operationID, "OnSelfInfoUpdated nickname faceURL unchanged", callbackData)
+			return
+		}
+		_ = common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: callbackData.UserID, FaceURL: callbackData.FaceURL, Nickname: callbackData.Nickname}}, u.conversationCh)
+
 	}
 }
 

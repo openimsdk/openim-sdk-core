@@ -88,6 +88,14 @@ func (i IndexDB) SearchMessageByContentTypeAndKeywordController(contentType []in
 	}
 	return list, nil
 }
+func (i IndexDB) UpdateMsgSenderFaceURLAndSenderNicknameController(sendID, faceURL, nickname string, sessionType int, groupID string) error {
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return i.SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname, sessionType, groupID)
+	default:
+		return i.UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname, sessionType)
+	}
+}
 
 type CallbackData struct {
 	ErrCode int32       `json:"errCode"`
