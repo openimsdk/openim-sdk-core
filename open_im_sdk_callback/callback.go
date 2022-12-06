@@ -73,3 +73,7 @@ type OnOrganizationListener interface {
 type OnWorkMomentsListener interface {
 	OnRecvNewNotification()
 }
+
+type OnCustomBusinessListener interface {
+	OnRecvCustomBusiness(businessMessage string)
+}
