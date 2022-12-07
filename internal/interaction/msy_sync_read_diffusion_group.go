@@ -19,8 +19,8 @@ type ReadDiffusionGroupMsgSync struct {
 	loginUserID              string
 	conversationCh           chan common.Cmd2Value
 	superGroupMtx            sync.Mutex
-	Group2SeqMaxNeedSync     map[string]uint32
-	Group2SeqMaxSynchronized map[string]uint32
+	Group2SeqMaxNeedSync     map[string]uint32 //需要同步的seq  可能来自于心跳max，也可能来自于push
+	Group2SeqMaxSynchronized map[string]uint32 //已经同步的最大seq
 	SuperGroupIDList         []string
 	joinedSuperGroupCh       chan common.Cmd2Value
 	Group2SyncMsgFinished    map[string]bool
@@ -57,7 +57,6 @@ func (m *ReadDiffusionGroupMsgSync) updateJoinedSuperGroup() {
 					log.Error(operationID, "GetReadDiffusionGroupIDList failed ", err.Error())
 				}
 			}
-
 		}
 	}
 }
