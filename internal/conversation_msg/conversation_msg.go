@@ -1239,7 +1239,7 @@ func (c *Conversation) QuoteMsgRevokeHandle(v *model_struct.LocalChatLog, revoke
 	if err != nil {
 		log.NewError("internal", "unmarshall failed", s.Content)
 	}
-	ok, revokeMessage := IsContainRevokedList(s.QuoteElem.QuoteMessage.ClientMsgID, revokeMsgIDList)
+	ok, revokeMessage := isContainRevokedList(s.QuoteElem.QuoteMessage.ClientMsgID, revokeMsgIDList)
 	if !ok {
 		return
 	}
@@ -1251,7 +1251,7 @@ func (c *Conversation) QuoteMsgRevokeHandle(v *model_struct.LocalChatLog, revoke
 		log.NewError("internal", "unmarshall failed", v)
 	}
 }
-func IsContainRevokedList(target string, List []*sdk_struct.MessageRevoked) (bool, *sdk_struct.MessageRevoked) {
+func isContainRevokedList(target string, List []*sdk_struct.MessageRevoked) (bool, *sdk_struct.MessageRevoked) {
 	for _, element := range List {
 		if target == element.ClientMsgID {
 			return true, element
