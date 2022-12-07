@@ -704,15 +704,17 @@ func (f *Friend) friendInfoChangedNotification(msg *api.MsgData, conversationCh 
 	if detail.UserID != f.loginUserID {
 		f.SyncFriendList(operationID)
 	} else {
-		f.user.SyncLoginUserInfo(operationID)
-		go func() {
-			loginUserInfo, err := f.db.GetLoginUser(f.loginUserID)
-			if err == nil {
-				//_ = f.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.UserID, loginUserInfo.FaceURL, loginUserInfo.Nickname, constant.SingleChatType)
-				_ = common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: detail.UserID, FaceURL: loginUserInfo.FaceURL, Nickname: loginUserInfo.Nickname}}, conversationCh)
-
-			}
-		}()
+		log.Warn(operationID, "detail failed,  detail.UserID == f.loginUserID ", detail.UserID)
+		f.SyncFriendList(operationID)
+		//f.user.SyncLoginUserInfo(operationID)
+		//go func() {
+		//	loginUserInfo, err := f.db.GetLoginUser(f.loginUserID)
+		//	if err == nil {
+		//		//_ = f.db.UpdateMsgSenderFaceURLAndSenderNickname(detail.UserID, loginUserInfo.FaceURL, loginUserInfo.Nickname, constant.SingleChatType)
+		//		_ = common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: detail.UserID, FaceURL: loginUserInfo.FaceURL, Nickname: loginUserInfo.Nickname}}, conversationCh)
+		//
+		//	}
+		//}()
 	}
 }
 
