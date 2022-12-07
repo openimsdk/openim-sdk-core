@@ -646,7 +646,7 @@ func (f *Friend) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd
 			f.friendDeletedNotification(msg, operationID)
 		case constant.FriendRemarkSetNotification:
 			f.friendRemarkNotification(msg, conversationCh, operationID)
-		case constant.UserInfoUpdatedNotification:
+		case constant.FriendInfoUpdatedNotification:
 			f.friendInfoChangedNotification(msg, conversationCh, operationID)
 		case constant.BlackAddedNotification:
 			f.blackAddedNotification(msg, operationID)
