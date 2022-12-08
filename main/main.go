@@ -43,6 +43,7 @@ func main() {
 	//test.DoTestSearchLocalMessages()
 	//test.DoTestInviteInGroup()
 	//time.Sleep(time.Second*6)
+	test.DoTestGetSelfUserInfo()
 	//test.DoTestSetBurnDuration("single_2861383134")
 	for {
 		//test.DotestDeleteFriend()
