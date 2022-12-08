@@ -232,6 +232,22 @@ func (m *ReadDiffusionGroupMsgSync) syncMsgFroAllGroup(operationID string) {
 //同步某个群的新消息 ok
 func (m *ReadDiffusionGroupMsgSync) syncMsgForOneGroup(operationID string, groupID string) {
 	log.NewDebug(operationID, utils.GetSelfFuncName(), "syncMsgForOneGroup start", groupID)
+
+	inGroup := false
+	for _, v := range m.SuperGroupIDList {
+		if groupID != "" && v != groupID {
+			continue
+		} else {
+			inGroup = true
+			break
+		}
+	}
+	if !inGroup {
+		m.superGroupMtx.Lock()
+		m.SuperGroupIDList = append(m.SuperGroupIDList, groupID)
+		m.superGroupMtx.Unlock()
+	}
+
 	m.superGroupMtx.Lock()
 	for _, v := range m.SuperGroupIDList {
 		if groupID != "" && v != groupID {
