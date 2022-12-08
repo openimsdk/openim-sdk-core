@@ -236,7 +236,7 @@ func (c *Conversation) deleteConversation(callback open_im_sdk_callback.Base, co
 }
 func (c *Conversation) setConversationDraft(callback open_im_sdk_callback.Base, conversationID, draftText, operationID string) {
 	if draftText != "" {
-		err := c.db.SetConversationDraft(conversationID, draftText)
+		err := c.db.SetConversationDraftDB(conversationID, draftText)
 		common.CheckDBErrCallback(callback, err, operationID)
 	} else {
 		err := c.db.RemoveConversationDraft(conversationID, draftText)
