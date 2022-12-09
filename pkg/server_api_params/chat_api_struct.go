@@ -1,5 +1,7 @@
 package server_api_params
 
+import "open_im_sdk/sdk_struct"
+
 type DeleteMsgReq struct {
 	OpUserID    string   `json:"opUserID"`
 	UserID      string   `json:"userID"`
@@ -56,4 +58,39 @@ type SetMessageReactionExtensionsResp struct {
 type ExtensionResult struct {
 	CommResp
 	KeyValue
+}
+
+type GetMessageListReactionExtensionsReq struct {
+	OperationID            string                                               `json:"operationID" binding:"required"`
+	SourceID               string                                               `json:"sourceID"  binding:"required"`
+	SessionType            int32                                                `json:"sessionType" binding:"required"`
+	MessageReactionKeyList []sdk_struct.OperateMessageListReactionExtensionsReq `json:"messageReactionKeyList" binding:"required"`
+}
+
+type KeyValueResp struct {
+	KeyValue             *KeyValue `protobuf:"bytes,1,opt,name=keyValue" json:"keyValue,omitempty"`
+	ErrCode              int32     `protobuf:"varint,2,opt,name=errCode" json:"errCode,omitempty"`
+	ErrMsg               string    `protobuf:"bytes,3,opt,name=errMsg" json:"errMsg,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
+	XXX_unrecognized     []byte    `json:"-"`
+	XXX_sizecache        int32     `json:"-"`
+}
+
+type ExtendMsg struct {
+	ReactionExtensionList map[string]*KeyValueResp `protobuf:"bytes,1,rep,name=reactionExtensionList" json:"reactionExtensionList,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	ClientMsgID           string                   `protobuf:"bytes,2,opt,name=clientMsgID" json:"clientMsgID,omitempty"`
+	MsgFirstModifyTime    int64                    `protobuf:"varint,3,opt,name=msgFirstModifyTime" json:"msgFirstModifyTime,omitempty"`
+	AttachedInfo          string                   `protobuf:"bytes,4,opt,name=attachedInfo" json:"attachedInfo,omitempty"`
+	Ex                    string                   `protobuf:"bytes,5,opt,name=ex" json:"ex,omitempty"`
+}
+
+type ExtendMsgResp struct {
+	ExtendMsg *ExtendMsg `protobuf:"bytes,1,opt,name=extendMsg" json:"extendMsg,omitempty"`
+	ErrCode   int32      `protobuf:"varint,2,opt,name=errCode" json:"errCode,omitempty"`
+	ErrMsg    string     `protobuf:"bytes,3,opt,name=errMsg" json:"errMsg,omitempty"`
+}
+
+type GetMessageListReactionExtensionsResp struct {
+	SuccessList []*ExtendMsgResp `json:"successList"`
+	FailedList  []*ExtendMsgResp `json:"failedList"`
 }

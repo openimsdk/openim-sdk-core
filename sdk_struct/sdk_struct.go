@@ -305,3 +305,8 @@ type MsgDeleteNotificationElem struct {
 	IsAllDelete bool     `json:"isAllDelete"`
 	SeqList     []string `json:"seqList"`
 }
+
+type OperateMessageListReactionExtensionsReq struct {
+	ClientMsgID        string `json:"clientMsgID"`
+	MsgFirstModifyTime int64  `json:"msgFirstModifyTime"`
+}

@@ -1124,9 +1124,6 @@ func GetConversationIDBySessionType(sourceID string, sessionType int) string {
 func GetAtAllTag() string {
 	return constant.AtAllString
 }
-func ModifyGroupMessageReaction(callback open_im_sdk_callback.Base, operationID string, counter int32, reactionType int, operationType int, groupID, msgID string) {
-	BaseCaller(userForSDK.Conversation().ModifyGroupMessageReaction, callback, counter, reactionType, operationType, groupID, msgID, operationID)
-}
 
 type MessageType struct {
 	TypeKey     string `json:"typeKey"`
@@ -1143,12 +1140,14 @@ func SetMessageReactionExtensions(callback open_im_sdk_callback.Base, operationI
 //func AddMessageReactionExtensions() {
 //	BaseCaller(userForSDK.Conversation().AddMessageReactionExtensions, callback, counter, reactionType, operationType, groupID, msgID, operationID)
 //}
+
 //func DeleteMessageReactionExtensions() {
 //	BaseCaller(userForSDK.Conversation().DeleteMessageReactionExtensions, callback, counter, reactionType, operationType, groupID, msgID, operationID)
 //}
-//func GetMessageListReactionExtensions() {
-//	BaseCaller(userForSDK.Conversation().GetMessageListReactionExtensions, callback, counter, reactionType, operationType, groupID, msgID, operationID)
-//}
+
+func GetMessageListReactionExtensions(callback open_im_sdk_callback.Base, operationID, OperateMessageListReactionExtensionsReq, sourceID string, sessionType int32) {
+	BaseCaller(userForSDK.Conversation().GetMessageListReactionExtensions, callback, OperateMessageListReactionExtensionsReq, sourceID, sessionType, operationID)
+}
 
 //////////////////////////signaling//////////////////////////////////////////
 func SetSignalingListener(callback open_im_sdk_callback.OnSignalingListener) {

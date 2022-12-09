@@ -2006,6 +2006,16 @@ func (c *Conversation) setMessageReactionExtensions(callback open_im_sdk_callbac
 	return apiResp.ReactionExtensionListResult
 }
 
+func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_callback.Base, req []sdk_struct.OperateMessageListReactionExtensionsReq, sourceID string, sessionType int32, operationID string) server_api_params.GetMessageListReactionExtensionsResp {
+	var apiReq server_api_params.GetMessageListReactionExtensionsReq
+	apiReq.SourceID = sourceID
+	apiReq.SessionType = sessionType
+	apiReq.MessageReactionKeyList = req
+	var apiResp server_api_params.GetMessageListReactionExtensionsResp
+	c.p.PostFatalCallback(callback, constant.SetMessageReactionExtensionsRouter, apiReq, &apiResp, apiReq.OperationID)
+	return apiResp
+}
+
 //func (c *Conversation) SetMessageReactionExtensions(callback open_im_sdk_callback.Base, operationID string) {
 //	log.NewInfo(operationID, utils.GetSelfFuncName())
 //	seqList, err := c.db.GetAllUnDeleteMessageSeqList()

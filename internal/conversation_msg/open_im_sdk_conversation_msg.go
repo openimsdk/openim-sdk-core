@@ -1758,9 +1758,7 @@ func (c *Conversation) getConversationTypeByGroupID(groupID string) (conversatio
 		return "", 0, utils.Wrap(errors.New("err groupType"), "group type err")
 	}
 }
-func (c *Conversation) ModifyGroupMessageReaction(callback open_im_sdk_callback.Base, counter int32, reactionType, operationType int, groupID, msgID, operationID string) {
-	//c.modifyGroupMessageReaction(callback, counter, reactionType, operationType, groupID, msgID, operationID)
-}
+
 func (c *Conversation) SetMessageReactionExtensions(callback open_im_sdk_callback.Base, message, reactionExtensionList, operationID string) {
 	s := sdk_struct.MsgStruct{}
 	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
@@ -1775,9 +1773,15 @@ func (c *Conversation) SetMessageReactionExtensions(callback open_im_sdk_callbac
 //func (c *Conversation) AddMessageReactionExtensions(callback open_im_sdk_callback.Base, counter int32, reactionType, operationType int, groupID, msgID, operationID string) {
 //	c.modifyGroupMessageReaction(callback, counter, reactionType, operationType, groupID, msgID, operationID)
 //}
+
 //func (c *Conversation) DeleteMessageReactionExtensions(callback open_im_sdk_callback.Base, counter int32, reactionType, operationType int, groupID, msgID, operationID string) {
 //	c.modifyGroupMessageReaction(callback, counter, reactionType, operationType, groupID, msgID, operationID)
 //}
-//func (c *Conversation) GetMessageListReactionExtensions(callback open_im_sdk_callback.Base, counter int32, reactionType, operationType int, groupID, msgID, operationID string) {
-//	c.modifyGroupMessageReaction(callback, counter, reactionType, operationType, groupID, msgID, operationID)
-//}
+
+func (c *Conversation) GetMessageListReactionExtensions(callback open_im_sdk_callback.Base, OperateMessageListReactionExtensionsReq, sourceID string, sessionType int32, operationID string) {
+	var l []sdk_struct.OperateMessageListReactionExtensionsReq
+	common.JsonUnmarshalAndArgsValidate(OperateMessageListReactionExtensionsReq, l, callback, operationID)
+	result := c.getMessageListReactionExtensions(callback, l, sourceID, sessionType, operationID)
+	callback.OnSuccess(utils.StructToJsonString(result))
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+}
