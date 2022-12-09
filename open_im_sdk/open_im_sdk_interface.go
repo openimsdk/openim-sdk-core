@@ -1132,18 +1132,19 @@ type MessageType struct {
 }
 
 //修改
-func SetMessageReactionExtensions() {
-
+func SetMessageReactionExtensions(callback open_im_sdk_callback.Base, operationID, message, reactionExtensionList string) {
+	BaseCaller(userForSDK.Conversation().SetMessageReactionExtensions, callback, message, reactionExtensionList, operationID)
 }
-func AddMessageReactionExtensions() {
 
-}
-func DeleteMessageReactionExtensions() {
-
-}
-func GetMessageListReactionExtensions() {
-
-}
+//func AddMessageReactionExtensions() {
+//	BaseCaller(userForSDK.Conversation().AddMessageReactionExtensions, callback, counter, reactionType, operationType, groupID, msgID, operationID)
+//}
+//func DeleteMessageReactionExtensions() {
+//	BaseCaller(userForSDK.Conversation().DeleteMessageReactionExtensions, callback, counter, reactionType, operationType, groupID, msgID, operationID)
+//}
+//func GetMessageListReactionExtensions() {
+//	BaseCaller(userForSDK.Conversation().GetMessageListReactionExtensions, callback, counter, reactionType, operationType, groupID, msgID, operationID)
+//}
 
 //////////////////////////signaling//////////////////////////////////////////
 func SetSignalingListener(callback open_im_sdk_callback.OnSignalingListener) {
