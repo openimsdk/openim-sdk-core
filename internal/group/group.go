@@ -496,7 +496,7 @@ func (g *Group) changeGroupMemberMute(groupID, userID string, mutedSeconds uint3
 //	}
 func (g *Group) setGroupMemberRoleLevel(callback open_im_sdk_callback.Base, groupID, userID string, roleLevel int, operationID string) {
 	apiReq := api.SetGroupMemberRoleLevelReq{
-		SetGroupMemberInfoReq: api.SetGroupMemberInfoReq{
+		SetGroupMemberBaseInfoReq: api.SetGroupMemberBaseInfoReq{
 			OperationID: operationID,
 			UserID:      userID,
 			GroupID:     groupID,
@@ -506,6 +506,17 @@ func (g *Group) setGroupMemberRoleLevel(callback open_im_sdk_callback.Base, grou
 	g.p.PostFatalCallback(callback, constant.SetGroupMemberInfoRouter, apiReq, nil, apiReq.OperationID)
 	g.updateLocalMemberImmediately(groupID, userID, map[string]interface{}{"role_level": int32(roleLevel)}, operationID)
 	g.syncGroupMemberByGroupID(groupID, operationID, true)
+}
+
+func (g *Group) setGroupMemberInfo(callback open_im_sdk_callback.Base, param sdk.SetGroupMemberInfoParam, operationID string) {
+	apiReq := api.SetGroupMemberInfoReq{OperationID: operationID, Ex: param.Ex, UserID: param.UserID, GroupID: param.GroupID}
+	g.p.PostFatalCallback(callback, constant.SetGroupMemberInfoRouter, apiReq, nil, apiReq.OperationID)
+	if param.Ex != nil {
+		g.updateLocalMemberImmediately(param.GroupID, param.UserID, map[string]interface{}{"ex": *param.Ex}, operationID)
+	} else {
+		g.updateLocalMemberImmediately(param.GroupID, param.UserID, map[string]interface{}{"ex": ""}, operationID)
+	}
+	g.syncGroupMemberByGroupID(param.GroupID, operationID, true)
 }
 
 func (g *Group) getJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) sdk.GetJoinedGroupListCallback {
