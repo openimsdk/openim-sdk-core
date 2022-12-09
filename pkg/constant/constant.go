@@ -102,7 +102,7 @@ const (
 	SuperGroupUpdateNotification        = 1651
 	MsgDeleteNotification               = 1652
 	ReactionMessageModifierNotification = 1653
-	ReactionMessageDeleteNotification   = 1653
+	ReactionMessageDeleteNotification   = 1654
 	SuperGroupNotificationEnd           = 1699
 
 	ConversationPrivateChatNotification = 1701
