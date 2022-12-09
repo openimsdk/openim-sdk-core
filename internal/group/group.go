@@ -509,7 +509,7 @@ func (g *Group) setGroupMemberRoleLevel(callback open_im_sdk_callback.Base, grou
 }
 
 func (g *Group) setGroupMemberInfo(callback open_im_sdk_callback.Base, param sdk.SetGroupMemberInfoParam, operationID string) {
-	apiReq := api.SetGroupMemberInfoReq{OperationID: operationID, Ex: param.Ex, UserID: param.UserID}
+	apiReq := api.SetGroupMemberInfoReq{OperationID: operationID, Ex: param.Ex, UserID: param.UserID, GroupID: param.GroupID}
 	g.p.PostFatalCallback(callback, constant.SetGroupMemberInfoRouter, apiReq, nil, apiReq.OperationID)
 	if param.Ex != nil {
 		g.updateLocalMemberImmediately(param.GroupID, param.UserID, map[string]interface{}{"ex": *param.Ex}, operationID)
