@@ -272,6 +272,10 @@ func SetGroupMemberRoleLevel(callback open_im_sdk_callback.Base, operationID str
 	userForSDK.Group().SetGroupMemberRoleLevel(callback, groupID, userID, roleLevel, operationID)
 }
 
+func SetGroupMemberInfo(callback open_im_sdk_callback.Base, operationID string, groupMemberInfo string) {
+	BaseCaller(userForSDK.Group().SetGroupMemberInfo, callback, groupMemberInfo, operationID)
+}
+
 func GetJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())

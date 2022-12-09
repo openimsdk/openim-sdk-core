@@ -112,6 +112,13 @@ func (g *Group) SetGroupMemberRoleLevel(callback open_im_sdk_callback.Base, grou
 	}()
 }
 
+func (g *Group) SetGroupMemberInfo(callback open_im_sdk_callback.Base, groupMemberInfo string, operationID string) {
+	var unmarshalSetGroupMemberInfoParam sdk_params_callback.SetGroupMemberInfoParam
+	common.JsonUnmarshalAndArgsValidate(groupMemberInfo, &unmarshalSetGroupMemberInfoParam, callback, operationID)
+	g.setGroupMemberInfo(callback, unmarshalSetGroupMemberInfoParam, operationID)
+	callback.OnSuccess(utils.StructToJsonStringDefault(sdk_params_callback.SetGroupMemberInfoCallback))
+}
+
 func (g *Group) GetJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) {
 	if callback == nil {
 		return
