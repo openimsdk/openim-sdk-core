@@ -1779,7 +1779,7 @@ func (c *Conversation) SetMessageReactionExtensions(callback open_im_sdk_callbac
 //}
 
 func (c *Conversation) GetMessageListReactionExtensions(callback open_im_sdk_callback.Base, OperateMessageListReactionExtensionsReq, sourceID string, sessionType int32, operationID string) {
-	var l []sdk_struct.OperateMessageListReactionExtensionsReq
+	var l []server_api_params.OperateMessageListReactionExtensionsReq
 	common.JsonUnmarshalAndArgsValidate(OperateMessageListReactionExtensionsReq, l, callback, operationID)
 	result := c.getMessageListReactionExtensions(callback, l, sourceID, sessionType, operationID)
 	callback.OnSuccess(utils.StructToJsonString(result))

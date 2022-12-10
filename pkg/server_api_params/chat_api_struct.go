@@ -1,7 +1,5 @@
 package server_api_params
 
-import "open_im_sdk/sdk_struct"
-
 type DeleteMsgReq struct {
 	OpUserID    string   `json:"opUserID"`
 	UserID      string   `json:"userID"`
@@ -61,10 +59,10 @@ type ExtensionResult struct {
 }
 
 type GetMessageListReactionExtensionsReq struct {
-	OperationID            string                                               `json:"operationID" binding:"required"`
-	SourceID               string                                               `json:"sourceID"  binding:"required"`
-	SessionType            int32                                                `json:"sessionType" binding:"required"`
-	MessageReactionKeyList []sdk_struct.OperateMessageListReactionExtensionsReq `json:"messageReactionKeyList" binding:"required"`
+	OperationID            string                                    `json:"operationID" binding:"required"`
+	SourceID               string                                    `json:"sourceID"  binding:"required"`
+	SessionType            int32                                     `json:"sessionType" binding:"required"`
+	MessageReactionKeyList []OperateMessageListReactionExtensionsReq `json:"messageReactionKeyList" binding:"required"`
 }
 
 type KeyValueResp struct {
@@ -93,4 +91,9 @@ type ExtendMsgResp struct {
 type GetMessageListReactionExtensionsResp struct {
 	SuccessList []*ExtendMsgResp `json:"successList"`
 	FailedList  []*ExtendMsgResp `json:"failedList"`
+}
+
+type OperateMessageListReactionExtensionsReq struct {
+	ClientMsgID        string `json:"clientMsgID"`
+	MsgFirstModifyTime int64  `json:"msgFirstModifyTime"`
 }

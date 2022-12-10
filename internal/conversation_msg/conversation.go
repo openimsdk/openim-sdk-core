@@ -2006,7 +2006,7 @@ func (c *Conversation) setMessageReactionExtensions(callback open_im_sdk_callbac
 	return apiResp.ReactionExtensionListResult
 }
 
-func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_callback.Base, req []sdk_struct.OperateMessageListReactionExtensionsReq, sourceID string, sessionType int32, operationID string) server_api_params.GetMessageListReactionExtensionsResp {
+func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_callback.Base, req []server_api_params.OperateMessageListReactionExtensionsReq, sourceID string, sessionType int32, operationID string) server_api_params.GetMessageListReactionExtensionsResp {
 	var apiReq server_api_params.GetMessageListReactionExtensionsReq
 	apiReq.SourceID = sourceID
 	apiReq.SessionType = sessionType
