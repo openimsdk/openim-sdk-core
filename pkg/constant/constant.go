@@ -50,6 +50,8 @@ const (
 	AdvancedRevoke                  = 118 //影响前者消息
 	CustomMsgNotTriggerConversation = 119
 	CustomMsgOnlineOnly             = 120
+	ReactionMessageModifier         = 121
+	ReactionMessageDeleter          = 122
 
 	//////////////////////////////////////////
 	NotificationBegin       = 1000
