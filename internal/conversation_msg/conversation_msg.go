@@ -135,7 +135,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	var insertMsg, updateMsg []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
 	var unreadMessages []*model_struct.LocalConversationUnreadMessage
-	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList sdk_struct.NewMsgList
+	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList, reactionMsgModifierList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate, isSenderNotificationPush bool
 	conversationChangedSet := make(map[string]*model_struct.LocalConversation)
 	newConversationSet := make(map[string]*model_struct.LocalConversation)
@@ -310,6 +310,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				case constant.AdvancedRevoke:
 					newMsgRevokeList = append(newMsgRevokeList, msg)
 					newMessages = removeElementInList(newMessages, msg)
+				case constant.ReactionMessageModifier:
+					reactionMsgModifierList = append(reactionMsgModifierList, msg)
 				default:
 				}
 			}
@@ -383,6 +385,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				case constant.AdvancedRevoke:
 					newMsgRevokeList = append(newMsgRevokeList, msg)
 					newMessages = removeElementInList(newMessages, msg)
+				case constant.ReactionMessageModifier:
+					reactionMsgModifierList = append(reactionMsgModifierList, msg)
 				default:
 				}
 
@@ -508,6 +512,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		log.Debug(operationID, "newMessage  cost time : ", b12-b10)
 	}
 	c.newRevokeMessage(newMsgRevokeList)
+	c.doReactionMsgModifier(reactionMsgModifierList)
 	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	if len(newConversationSet) > 0 {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.NewConDirect, Args: utils.StructToJsonString(mapConversationToList(newConversationSet))}})
@@ -549,7 +554,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	var insertMsg, updateMsg, specialUpdateMsg []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
 	var unreadMessages []*model_struct.LocalConversationUnreadMessage
-	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList, msgReactionList sdk_struct.NewMsgList
+	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList, reactionMsgModifierList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate, isSenderNotificationPush bool
 	conversationChangedSet := make(map[string]*model_struct.LocalConversation)
 	newConversationSet := make(map[string]*model_struct.LocalConversation)
@@ -733,8 +738,8 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 				case constant.AdvancedRevoke:
 					newMsgRevokeList = append(newMsgRevokeList, msg)
 					newMessages = removeElementInList(newMessages, msg)
-				case constant.ReactionMessageModifierNotification:
-					msgReactionList = append(msgReactionList, msg)
+				case constant.ReactionMessageModifier:
+					reactionMsgModifierList = append(reactionMsgModifierList, msg)
 				default:
 				}
 			}
@@ -807,8 +812,8 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 				case constant.AdvancedRevoke:
 					newMsgRevokeList = append(newMsgRevokeList, msg)
 					newMessages = removeElementInList(newMessages, msg)
-				case constant.ReactionMessageModifierNotification:
-					msgReactionList = append(msgReactionList, msg)
+				case constant.ReactionMessageModifier:
+					reactionMsgModifierList = append(reactionMsgModifierList, msg)
 				default:
 				}
 
@@ -928,7 +933,6 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	log.Debug(operationID, "DoGroupMsgReadState  cost time : ", b9-b8, "len: ", len(groupMsgReadList))
 
 	c.revokeMessage(msgRevokeList)
-	c.DoMsgReaction(msgReactionList)
 	b10 := utils.GetCurrentTimestampByMill()
 	log.Debug(operationID, "revokeMessage  cost time : ", b10-b9)
 	if c.batchMsgListener != nil {
@@ -940,8 +944,8 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 		b12 := utils.GetCurrentTimestampByMill()
 		log.Debug(operationID, "newMessage  cost time : ", b12-b10)
 	}
-
 	c.newRevokeMessage(newMsgRevokeList)
+	c.doReactionMsgModifier(reactionMsgModifierList)
 	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	if len(newConversationSet) > 0 {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.NewConDirect, utils.StructToJsonString(mapConversationToList(newConversationSet))}})
@@ -1233,6 +1237,9 @@ func (c *Conversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
 	//}
 }
 
+func (c *Conversation) doReactionMsgModifier(msgReactionList []*sdk_struct.MsgStruct) {
+
+}
 func (c *Conversation) QuoteMsgRevokeHandle(v *model_struct.LocalChatLog, revokeMsgIDList []*sdk_struct.MessageRevoked) {
 	s := sdk_struct.MsgStruct{}
 	err := utils.JsonStringToStruct(v.Content, &s.QuoteElem)

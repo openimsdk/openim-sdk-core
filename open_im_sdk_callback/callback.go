@@ -56,6 +56,8 @@ type OnAdvancedMsgListener interface {
 	//deprecated
 	OnRecvMessageRevoked(msgID string)
 	OnNewRecvMessageRevoked(messageRevoked string)
+	OnRecvMessageExtensionsChanged(msgID, messageExtensionList string)
+	OnRecvMessageExtensionsDeleted(msgID, extensionKeys string)
 }
 
 type OnBatchMsgListener interface {
