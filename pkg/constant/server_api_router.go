@@ -30,6 +30,8 @@ const (
 	DeleteSuperGroupMsgRouter          = RouterMsg + "/del_super_group_msg"
 	SetMessageReactionExtensionsRouter = RouterMsg + "/set_message_reaction_extensions"
 
+	GetMessageListReactionExtensionsRouter = RouterMsg + "/get_message_list_reaction_extensions"
+
 	TencentCloudStorageCredentialRouter = "/third/tencent_cloud_storage_credential"
 	AliOSSCredentialRouter              = "/third/ali_oss_credential"
 	MinioStorageCredentialRouter        = "/third/minio_storage_credential"

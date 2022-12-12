@@ -1778,10 +1778,10 @@ func (c *Conversation) SetMessageReactionExtensions(callback open_im_sdk_callbac
 //	c.modifyGroupMessageReaction(callback, counter, reactionType, operationType, groupID, msgID, operationID)
 //}
 
-func (c *Conversation) GetMessageListReactionExtensions(callback open_im_sdk_callback.Base, OperateMessageListReactionExtensionsReq, sourceID string, sessionType int32, operationID string) {
-	var l []server_api_params.OperateMessageListReactionExtensionsReq
-	common.JsonUnmarshalAndArgsValidate(OperateMessageListReactionExtensionsReq, l, callback, operationID)
-	result := c.getMessageListReactionExtensions(callback, l, sourceID, sessionType, operationID)
+func (c *Conversation) GetMessageListReactionExtensions(callback open_im_sdk_callback.Base, messageList, operationID string) {
+	var list []*sdk_struct.MsgStruct
+	common.JsonUnmarshalAndArgsValidate(messageList, &list, callback, operationID)
+	result := c.getMessageListReactionExtensions(callback, list, operationID)
 	callback.OnSuccess(utils.StructToJsonString(result))
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
 }

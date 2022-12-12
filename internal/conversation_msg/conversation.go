@@ -2005,13 +2005,37 @@ func (c *Conversation) setMessageReactionExtensions(callback open_im_sdk_callbac
 	return apiResp.ReactionExtensionListResult
 }
 
-func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_callback.Base, req []server_api_params.OperateMessageListReactionExtensionsReq, sourceID string, sessionType int32, operationID string) server_api_params.GetMessageListReactionExtensionsResp {
+func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_callback.Base, messageList []*sdk_struct.MsgStruct, operationID string) server_api_params.GetMessageListReactionExtensionsResp {
+	if len(messageList) == 0 {
+		common.CheckAnyErrCallback(callback, 201, errors.New("messagelist is null"), operationID)
+	}
+	var sourceID string
+	var sessionType int32
+	var reqList []server_api_params.OperateMessageListReactionExtensionsReq
+	for _, v := range messageList {
+		message, err := c.db.GetMessageController(v)
+		common.CheckDBErrCallback(callback, err, operationID)
+		var temp server_api_params.OperateMessageListReactionExtensionsReq
+		temp.ClientMsgID = message.ClientMsgID
+		temp.MsgFirstModifyTime = message.MsgFirstModifyTime
+		reqList = append(reqList, temp)
+		switch message.SessionType {
+		case constant.SingleChatType:
+			sourceID = message.SendID + message.RecvID
+		case constant.NotificationChatType:
+			sourceID = message.RecvID
+		case constant.GroupChatType, constant.SuperGroupChatType:
+			sourceID = message.RecvID
+		}
+		sessionType = message.SessionType
+	}
 	var apiReq server_api_params.GetMessageListReactionExtensionsReq
 	apiReq.SourceID = sourceID
 	apiReq.SessionType = sessionType
-	apiReq.MessageReactionKeyList = req
+	apiReq.MessageReactionKeyList = reqList
+	apiReq.OperationID = operationID
 	var apiResp server_api_params.GetMessageListReactionExtensionsResp
-	c.p.PostFatalCallback(callback, constant.SetMessageReactionExtensionsRouter, apiReq, &apiResp, apiReq.OperationID)
+	c.p.PostFatalCallback(callback, constant.GetMessageListReactionExtensionsRouter, apiReq, &apiResp, apiReq.OperationID)
 	return apiResp
 }
 

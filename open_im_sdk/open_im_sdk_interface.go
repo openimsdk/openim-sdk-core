@@ -1145,8 +1145,8 @@ func SetMessageReactionExtensions(callback open_im_sdk_callback.Base, operationI
 //	BaseCaller(userForSDK.Conversation().DeleteMessageReactionExtensions, callback, counter, reactionType, operationType, groupID, msgID, operationID)
 //}
 
-func GetMessageListReactionExtensions(callback open_im_sdk_callback.Base, operationID, OperateMessageListReactionExtensionsReq, sourceID string, sessionType int32) {
-	BaseCaller(userForSDK.Conversation().GetMessageListReactionExtensions, callback, OperateMessageListReactionExtensionsReq, sourceID, sessionType, operationID)
+func GetMessageListReactionExtensions(callback open_im_sdk_callback.Base, operationID, messageList string) {
+	BaseCaller(userForSDK.Conversation().GetMessageListReactionExtensions, callback, messageList, operationID)
 }
 
 //////////////////////////signaling//////////////////////////////////////////
