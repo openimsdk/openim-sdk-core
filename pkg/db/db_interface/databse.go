@@ -3,6 +3,7 @@ package db_interface
 import (
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/sdk_struct"
 )
 
@@ -236,4 +237,5 @@ type DataBase interface {
 	SuperGroupSearchAllMessageByContentType(superGroupID string, contentType int32) ([]*model_struct.LocalChatLog, error)
 	GetMessageReactionExtension(msgID string) (result *model_struct.LocalChatLogReactionExtensions, err error)
 	InsertMessageReactionExtension(messageReactionExtension *model_struct.LocalChatLogReactionExtensions) error
+	GetAndUpdateMessageReactionExtension(msgID string, m map[string]*server_api_params.KeyValue) error
 }

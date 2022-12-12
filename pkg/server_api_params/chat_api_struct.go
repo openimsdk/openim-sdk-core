@@ -50,8 +50,12 @@ type KeyValue struct {
 }
 type SetMessageReactionExtensionsResp struct {
 	CommResp
-	ReactionExtensionListResult []*ExtensionResult
-	Data                        map[string]interface{} `json:"data"`
+	ApiResult struct {
+		Result             []*ExtensionResult `json:"result"`
+		MsgFirstModifyTime int64              `json:"msgFirstModifyTime"`
+		IsReact            bool               `json:"isReact"`
+	}
+	Data map[string]interface{} `json:"data"`
 }
 type ExtensionResult struct {
 	CommResp
@@ -96,4 +100,14 @@ type GetMessageListReactionExtensionsResp struct {
 type OperateMessageListReactionExtensionsReq struct {
 	ClientMsgID        string `json:"clientMsgID"`
 	MsgFirstModifyTime int64  `json:"msgFirstModifyTime"`
+}
+type ReactionMessageModifierNotification struct {
+	SourceID                     string               `json:"sourceID"  binding:"required"`
+	OpUserID                     string               `json:"opUserID"  binding:"required"`
+	SessionType                  int32                `json:"sessionType" binding:"required"`
+	SuccessReactionExtensionList map[string]*KeyValue `json:"reactionExtensionList,omitempty" binding:"required"`
+	ClientMsgID                  string               `json:"clientMsgID" binding:"required"`
+	IsReact                      bool                 `json:"isReact"`
+	IsExternalExtensions         bool                 `json:"isExternalExtensions"`
+	MsgFirstModifyTime           int64                `json:"msgFirstModifyTime"`
 }

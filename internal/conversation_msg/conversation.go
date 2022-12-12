@@ -2003,13 +2003,38 @@ func (c *Conversation) setMessageReactionExtensions(callback open_im_sdk_callbac
 	apiReq.OperationID = operationID
 	apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
 	var apiResp server_api_params.SetMessageReactionExtensionsResp
-	c.p.PostFatalCallback(callback, constant.SetMessageReactionExtensionsRouter, apiReq, &apiResp.ReactionExtensionListResult, apiReq.OperationID)
-	return apiResp.ReactionExtensionListResult
+	c.p.PostFatalCallback(callback, constant.SetMessageReactionExtensionsRouter, apiReq, &apiResp.ApiResult, apiReq.OperationID)
+	var msg model_struct.LocalChatLogReactionExtensions
+	msg.ClientMsgID = message.ClientMsgID
+	resultKeyMap := make(map[string]*server_api_params.KeyValue)
+	for _, v := range apiResp.ApiResult.Result {
+		if v.ErrCode == 0 {
+			temp := new(server_api_params.KeyValue)
+			temp.TypeKey = v.TypeKey
+			temp.Value = v.Value
+			temp.LatestUpdateTime = v.LatestUpdateTime
+			resultKeyMap[v.TypeKey] = temp
+		}
+	}
+	err = c.db.GetAndUpdateMessageReactionExtension(message.ClientMsgID, resultKeyMap)
+	if err != nil {
+		log.Error(operationID, "GetAndUpdateMessageReactionExtension err:", err.Error())
+	}
+	if !message.IsReact {
+		message.IsReact = apiResp.ApiResult.IsReact
+		message.MsgFirstModifyTime = apiResp.ApiResult.MsgFirstModifyTime
+		err = c.db.UpdateMessageController(message)
+		if err != nil {
+			log.Error(operationID, "UpdateMessageController err:", err.Error(), message)
+
+		}
+	}
+	return apiResp.ApiResult.Result
 }
 
 func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_callback.Base, messageList []*sdk_struct.MsgStruct, operationID string) server_api_params.GetMessageListReactionExtensionsResp {
 	if len(messageList) == 0 {
-		common.CheckAnyErrCallback(callback, 201, errors.New("messagelist is null"), operationID)
+		common.CheckAnyErrCallback(callback, 201, errors.New("message list is null"), operationID)
 	}
 	var sourceID string
 	var sessionType int32
