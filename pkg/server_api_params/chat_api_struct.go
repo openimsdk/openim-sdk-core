@@ -130,3 +130,11 @@ type SingleMessageExtensionResult struct {
 	XXX_unrecognized      []byte               `json:"-"`
 	XXX_sizecache         int32                `json:"-"`
 }
+type ReactionMessageDeleteNotification struct {
+	SourceID                     string               `json:"sourceID"  binding:"required"`
+	OpUserID                     string               `json:"opUserID"  binding:"required"`
+	SessionType                  int32                `json:"sessionType" binding:"required"`
+	SuccessReactionExtensionList map[string]*KeyValue `json:"reactionExtensionList,omitempty" binding:"required"`
+	ClientMsgID                  string               `json:"clientMsgID" binding:"required"`
+	MsgFirstModifyTime           int64                `json:"msgFirstModifyTime"`
+}

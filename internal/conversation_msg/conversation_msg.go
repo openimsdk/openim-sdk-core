@@ -135,7 +135,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	var insertMsg, updateMsg []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
 	var unreadMessages []*model_struct.LocalConversationUnreadMessage
-	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList, reactionMsgModifierList sdk_struct.NewMsgList
+	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList, reactionMsgModifierList, reactionMsgDeleterList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate, isSenderNotificationPush bool
 	conversationChangedSet := make(map[string]*model_struct.LocalConversation)
 	newConversationSet := make(map[string]*model_struct.LocalConversation)
@@ -312,6 +312,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					newMessages = removeElementInList(newMessages, msg)
 				case constant.ReactionMessageModifier:
 					reactionMsgModifierList = append(reactionMsgModifierList, msg)
+				case constant.ReactionMessageDeleter:
+					reactionMsgDeleterList = append(reactionMsgDeleterList, msg)
 				default:
 				}
 			}
@@ -387,6 +389,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					newMessages = removeElementInList(newMessages, msg)
 				case constant.ReactionMessageModifier:
 					reactionMsgModifierList = append(reactionMsgModifierList, msg)
+				case constant.ReactionMessageDeleter:
+					reactionMsgDeleterList = append(reactionMsgDeleterList, msg)
 				default:
 				}
 
@@ -513,6 +517,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	}
 	c.newRevokeMessage(newMsgRevokeList)
 	c.doReactionMsgModifier(reactionMsgModifierList)
+	c.doReactionMsgDeleter(reactionMsgDeleterList)
 	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	if len(newConversationSet) > 0 {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.NewConDirect, Args: utils.StructToJsonString(mapConversationToList(newConversationSet))}})
@@ -554,7 +559,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	var insertMsg, updateMsg, specialUpdateMsg []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
 	var unreadMessages []*model_struct.LocalConversationUnreadMessage
-	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList, reactionMsgModifierList sdk_struct.NewMsgList
+	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList, reactionMsgModifierList, reactionMsgDeleterList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate, isSenderNotificationPush bool
 	conversationChangedSet := make(map[string]*model_struct.LocalConversation)
 	newConversationSet := make(map[string]*model_struct.LocalConversation)
@@ -740,6 +745,8 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 					newMessages = removeElementInList(newMessages, msg)
 				case constant.ReactionMessageModifier:
 					reactionMsgModifierList = append(reactionMsgModifierList, msg)
+				case constant.ReactionMessageDeleter:
+					reactionMsgDeleterList = append(reactionMsgDeleterList, msg)
 				default:
 				}
 			}
@@ -814,6 +821,8 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 					newMessages = removeElementInList(newMessages, msg)
 				case constant.ReactionMessageModifier:
 					reactionMsgModifierList = append(reactionMsgModifierList, msg)
+				case constant.ReactionMessageDeleter:
+					reactionMsgDeleterList = append(reactionMsgDeleterList, msg)
 				default:
 				}
 
@@ -946,6 +955,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	}
 	c.newRevokeMessage(newMsgRevokeList)
 	c.doReactionMsgModifier(reactionMsgModifierList)
+	c.doReactionMsgDeleter(reactionMsgDeleterList)
 	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	if len(newConversationSet) > 0 {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.NewConDirect, utils.StructToJsonString(mapConversationToList(newConversationSet))}})
@@ -1269,6 +1279,28 @@ func (c *Conversation) doReactionMsgModifier(msgReactionList []*sdk_struct.MsgSt
 			log.Error("internal", "unmarshal failed err:", err2.Error(), t)
 			continue
 		}
+
+	}
+
+}
+func (c *Conversation) doReactionMsgDeleter(msgReactionList []*sdk_struct.MsgStruct) {
+	for _, msgStruct := range msgReactionList {
+		var n server_api_params.ReactionMessageDeleteNotification
+		err := json.Unmarshal([]byte(msgStruct.Content), &n)
+		if err != nil {
+			log.Error("internal", "unmarshal failed err:", err.Error(), *msgStruct)
+			continue
+		}
+		err = c.db.DeleteAndUpdateMessageReactionExtension(n.ClientMsgID, n.SuccessReactionExtensionList)
+		if err != nil {
+			log.Error("internal", "GetAndUpdateMessageReactionExtension err:", err.Error())
+			continue
+		}
+		var deleteKeyList []string
+		for _, value := range n.SuccessReactionExtensionList {
+			deleteKeyList = append(deleteKeyList, value.TypeKey)
+		}
+		c.msgListener.OnRecvMessageExtensionsChanged(n.ClientMsgID, utils.StructToJsonString(deleteKeyList))
 
 	}
 
