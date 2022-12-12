@@ -1,7 +1,6 @@
 package conversation_msg
 
 import (
-	"encoding/json"
 	"errors"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/open_im_sdk_callback"
@@ -1974,7 +1973,7 @@ func (c *Conversation) setMessageReactionExtensions(callback open_im_sdk_callbac
 
 	}
 	temp := make(map[string]*server_api_params.KeyValue)
-	_ = json.Unmarshal(message.LocalReactionExtensions, &temp)
+	//_ = json.Unmarshal(message.LocalReactionExtensions, &temp)
 	reqTemp := make(map[string]*server_api_params.KeyValue)
 	for _, v := range req {
 		if value, ok := temp[v.TypeKey]; ok {
