@@ -1238,6 +1238,39 @@ func (c *Conversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
 }
 
 func (c *Conversation) doReactionMsgModifier(msgReactionList []*sdk_struct.MsgStruct) {
+	for _, msgStruct := range msgReactionList {
+		var n server_api_params.ReactionMessageModifierNotification
+		err := json.Unmarshal([]byte(msgStruct.Content), &n)
+		if err != nil {
+			log.Error("internal", "unmarshal failed err:", err.Error(), *msgStruct)
+			continue
+		}
+		err = c.db.GetAndUpdateMessageReactionExtension(n.ClientMsgID, n.SuccessReactionExtensionList)
+		if err != nil {
+			log.Error("internal", "GetAndUpdateMessageReactionExtension err:", err.Error())
+			continue
+		}
+		var reactionExtensionList []*server_api_params.KeyValue
+		for _, value := range n.SuccessReactionExtensionList {
+			reactionExtensionList = append(reactionExtensionList, value)
+		}
+		c.msgListener.OnRecvMessageExtensionsChanged(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
+		t := model_struct.LocalChatLog{}
+		t.ClientMsgID = n.ClientMsgID
+		t.SessionType = n.SessionType
+		t.IsExternalExtensions = n.IsExternalExtensions
+		t.IsReact = n.IsReact
+		t.MsgFirstModifyTime = n.MsgFirstModifyTime
+		if n.SessionType == constant.GroupChatType || n.SessionType == constant.SuperGroupChatType {
+			t.RecvID = n.SourceID
+		}
+		err2 := c.db.UpdateMessageController(&t)
+		if err2 != nil {
+			log.Error("internal", "unmarshal failed err:", err2.Error(), t)
+			continue
+		}
+
+	}
 
 }
 func (c *Conversation) QuoteMsgRevokeHandle(v *model_struct.LocalChatLog, revokeMsgIDList []*sdk_struct.MessageRevoked) {

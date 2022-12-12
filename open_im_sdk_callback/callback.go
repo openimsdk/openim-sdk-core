@@ -48,8 +48,6 @@ type OnConversationListener interface {
 	OnNewConversation(conversationList string)
 	OnConversationChanged(conversationList string)
 	OnTotalUnreadMessageCountChanged(totalUnreadCount int32)
-	OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string)
-	OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string)
 }
 type OnAdvancedMsgListener interface {
 	OnRecvNewMessage(message string)
@@ -58,6 +56,8 @@ type OnAdvancedMsgListener interface {
 	//deprecated
 	OnRecvMessageRevoked(msgID string)
 	OnNewRecvMessageRevoked(messageRevoked string)
+	OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string)
+	OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string)
 }
 
 type OnBatchMsgListener interface {
