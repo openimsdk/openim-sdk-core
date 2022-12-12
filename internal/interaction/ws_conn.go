@@ -152,7 +152,7 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool) {
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
 	if u.conn != nil {
-		log.NewWarn(operationID, "close conn, ", u.conn)
+		log.NewWarn(operationID, "have conn firstly close conn, ", u.conn)
 		_ = u.conn.Close(websocket.StatusGoingAway, "Actively close the connection")
 		u.conn = nil
 	}
