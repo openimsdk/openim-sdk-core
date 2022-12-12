@@ -92,10 +92,7 @@ type ExtendMsgResp struct {
 	ErrMsg    string     `protobuf:"bytes,3,opt,name=errMsg" json:"errMsg,omitempty"`
 }
 
-type GetMessageListReactionExtensionsResp struct {
-	SuccessList []*ExtendMsgResp `json:"successList"`
-	FailedList  []*ExtendMsgResp `json:"failedList"`
-}
+type GetMessageListReactionExtensionsResp []*SingleMessageExtensionResult
 
 type OperateMessageListReactionExtensionsReq struct {
 	ClientMsgID        string `json:"clientMsgID"`
@@ -110,4 +107,13 @@ type ReactionMessageModifierNotification struct {
 	IsReact                      bool                 `json:"isReact"`
 	IsExternalExtensions         bool                 `json:"isExternalExtensions"`
 	MsgFirstModifyTime           int64                `json:"msgFirstModifyTime"`
+}
+type SingleMessageExtensionResult struct {
+	ErrCode               int32                `protobuf:"varint,1,opt,name=errCode" json:"errCode,omitempty"`
+	ErrMsg                string               `protobuf:"bytes,2,opt,name=errMsg" json:"errMsg,omitempty"`
+	ReactionExtensionList map[string]*KeyValue `protobuf:"bytes,3,rep,name=reactionExtensionList" json:"reactionExtensionList,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	ClientMsgID           string               `protobuf:"bytes,4,opt,name=clientMsgID" json:"clientMsgID,omitempty"`
+	XXX_NoUnkeyedLiteral  struct{}             `json:"-"`
+	XXX_unrecognized      []byte               `json:"-"`
+	XXX_sizecache         int32                `json:"-"`
 }
