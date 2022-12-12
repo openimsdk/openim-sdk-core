@@ -234,4 +234,6 @@ type DataBase interface {
 	DeleteConversationUnreadMessageList(conversationID string, sendTime int64) int64
 	SearchAllMessageByContentType(contentType int) ([]*model_struct.LocalChatLog, error)
 	SuperGroupSearchAllMessageByContentType(superGroupID string, contentType int32) ([]*model_struct.LocalChatLog, error)
+	GetMessageReactionExtension(msgID string) (result *model_struct.LocalChatLogReactionExtensions, err error)
+	InsertMessageReactionExtension(messageReactionExtension *model_struct.LocalChatLogReactionExtensions) error
 }
