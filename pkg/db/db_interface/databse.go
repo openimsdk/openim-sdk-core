@@ -238,4 +238,5 @@ type DataBase interface {
 	GetMessageReactionExtension(msgID string) (result *model_struct.LocalChatLogReactionExtensions, err error)
 	InsertMessageReactionExtension(messageReactionExtension *model_struct.LocalChatLogReactionExtensions) error
 	GetAndUpdateMessageReactionExtension(msgID string, m map[string]*server_api_params.KeyValue) error
+	DeleteAndUpdateMessageReactionExtension(msgID string, m map[string]*server_api_params.KeyValue) error
 }

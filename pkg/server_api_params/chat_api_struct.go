@@ -43,6 +43,19 @@ type SetMessageReactionExtensionsReq struct {
 	IsExternalExtensions  bool                 `json:"isExternalExtensions,omitempty"`
 	MsgFirstModifyTime    int64                `json:"msgFirstModifyTime,omitempty"`
 }
+type DeleteMessageReactionExtensionsReq struct {
+	OperationID           string      `json:"operationID" binding:"required"`
+	SourceID              string      `json:"sourceID" binding:"required"`
+	SessionType           int32       `json:"sessionType" binding:"required"`
+	ClientMsgID           string      `json:"clientMsgID" binding:"required"`
+	MsgFirstModifyTime    int64       `json:"msgFirstModifyTime" binding:"required"`
+	ReactionExtensionList []*KeyValue `json:"reactionExtensionList" binding:"required"`
+}
+type DeleteMessageReactionExtensionsResp struct {
+	CommResp
+	Result []*ExtensionResult
+	Data   map[string]interface{} `json:"data"`
+}
 type KeyValue struct {
 	TypeKey          string `json:"typeKey" validate:"required"`
 	Value            string `json:"value" validate:"required"`

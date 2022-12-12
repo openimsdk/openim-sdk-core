@@ -125,3 +125,4 @@ type SetMessageReactionExtensionsCallback struct {
 	ErrCode int32  `json:"errCode"`
 	ErrMsg  string `json:"errMsg"`
 }
+type DeleteMessageReactionExtensionsParams []string

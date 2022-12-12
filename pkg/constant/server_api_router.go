@@ -31,6 +31,7 @@ const (
 	SetMessageReactionExtensionsRouter = RouterMsg + "/set_message_reaction_extensions"
 
 	GetMessageListReactionExtensionsRouter = RouterMsg + "/get_message_list_reaction_extensions"
+	DeleteMessageReactionExtensionsRouter  = RouterMsg + "//delete_message_reaction_extensions"
 
 	TencentCloudStorageCredentialRouter = "/third/tencent_cloud_storage_credential"
 	AliOSSCredentialRouter              = "/third/ali_oss_credential"

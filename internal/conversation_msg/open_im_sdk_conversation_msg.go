@@ -1774,9 +1774,15 @@ func (c *Conversation) SetMessageReactionExtensions(callback open_im_sdk_callbac
 //	c.modifyGroupMessageReaction(callback, counter, reactionType, operationType, groupID, msgID, operationID)
 //}
 
-//func (c *Conversation) DeleteMessageReactionExtensions(callback open_im_sdk_callback.Base, counter int32, reactionType, operationType int, groupID, msgID, operationID string) {
-//	c.modifyGroupMessageReaction(callback, counter, reactionType, operationType, groupID, msgID, operationID)
-//}
+func (c *Conversation) DeleteMessageReactionExtensions(callback open_im_sdk_callback.Base, message, reactionExtensionKeyList, operationID string) {
+	s := sdk_struct.MsgStruct{}
+	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+	var unmarshalParams sdk_params_callback.DeleteMessageReactionExtensionsParams
+	common.JsonUnmarshalCallback(reactionExtensionKeyList, &unmarshalParams, callback, operationID)
+	result := c.deleteMessageReactionExtensions(callback, &s, unmarshalParams, operationID)
+	callback.OnSuccess(utils.StructToJsonString(result))
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+}
 
 func (c *Conversation) GetMessageListReactionExtensions(callback open_im_sdk_callback.Base, messageList, operationID string) {
 	var list []*sdk_struct.MsgStruct

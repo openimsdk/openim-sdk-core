@@ -88,6 +88,25 @@ func DoTestFindMessageList() {
 	//params = append(params, &temp1)
 	open_im_sdk.FindMessageList(testFindMessageListCallBack, testFindMessageListCallBack.OperationID, utils.StructToJsonString(params))
 }
+func DoTestSetMessageReactionExtensions() {
+	var testSetMessageReactionExtensionsCallBack SetMessageReactionExtensionsCallBack
+	testSetMessageReactionExtensionsCallBack.OperationID = utils.OperationIDGenerator()
+	var params sdk_params_callback.SetMessageReactionExtensionsParams
+	var data server_api_params.KeyValue
+	data.TypeKey = "7788"
+	m := make(map[string]interface{})
+	m["test1"] = "hello1"
+	m["test2"] = "hello2"
+	data.Value = utils.StructToJsonString(m)
+	params = append(params, &data)
+	s := sdk_struct.MsgStruct{}
+	s.SessionType = 3
+	s.GroupID = "1420026997"
+	s.ClientMsgID = "831c270ae1d7472dc633e7be06b37db5"
+	//params = append(params, &temp1)
+	open_im_sdk.SetMessageReactionExtensions(testSetMessageReactionExtensionsCallBack, testSetMessageReactionExtensionsCallBack.OperationID, utils.StructToJsonString(s),
+		utils.StructToJsonString(params))
+}
 func DoTestUpdateFcmToken() {
 	var testUpdateFcmTokenCallBack UpdateFcmTokenCallBack
 	testUpdateFcmTokenCallBack.OperationID = utils.OperationIDGenerator()
@@ -426,6 +445,18 @@ func (g FindMessageListCallBack) OnSuccess(data string) {
 	log.Info(g.OperationID, "FindMessageListCallBack success ", data)
 }
 
+type SetMessageReactionExtensionsCallBack struct {
+	OperationID string
+}
+
+func (g SetMessageReactionExtensionsCallBack) OnError(errCode int32, errMsg string) {
+	log.Info(g.OperationID, "SetMessageReactionExtensionsCallBack err", errCode, errMsg)
+}
+
+func (g SetMessageReactionExtensionsCallBack) OnSuccess(data string) {
+	log.Info(g.OperationID, "SetMessageReactionExtensionsCallBack success ", data)
+}
+
 type GetHistoryReverseCallBack struct {
 	OperationID string
 }
@@ -534,6 +565,14 @@ func (m MsgListenerCallBak) OnRecvMessageRevoked(msgId string) {
 
 type conversationCallBack struct {
 	SyncFlag int
+}
+
+func (c *conversationCallBack) OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string) {
+	panic("implement me")
+}
+
+func (c *conversationCallBack) OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string) {
+	panic("implement me")
 }
 
 func (c *conversationCallBack) OnSyncServerProgress(progress int) {

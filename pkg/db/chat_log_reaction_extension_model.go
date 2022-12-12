@@ -44,9 +44,33 @@ func (d *DataBase) GetAndUpdateMessageReactionExtension(msgID string, m map[stri
 	} else {
 		oldKeyValue := make(map[string]*server_api_params.KeyValue)
 		_ = json.Unmarshal(temp.LocalReactionExtensions, &oldKeyValue)
-		for k, _ := range oldKeyValue {
-			if subValue, ok := m[k]; ok {
-				oldKeyValue[k] = subValue
+		for k, newValue := range m {
+			if _, ok := oldKeyValue[k]; ok {
+				oldKeyValue[k] = newValue
+			}
+		}
+		temp.LocalReactionExtensions = []byte(utils.StructToJsonString(oldKeyValue))
+		t := d.conn.Updates(temp)
+		if t.RowsAffected == 0 {
+			return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+		}
+	}
+	return nil
+}
+func (d *DataBase) DeleteAndUpdateMessageReactionExtension(msgID string, m map[string]*server_api_params.KeyValue) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var temp model_struct.LocalChatLogReactionExtensions
+	err := d.conn.Where("client_msg_id = ?",
+		msgID).Take(&temp).Error
+	if err != nil {
+		return err
+	} else {
+		oldKeyValue := make(map[string]*server_api_params.KeyValue)
+		_ = json.Unmarshal(temp.LocalReactionExtensions, &oldKeyValue)
+		for k, _ := range m {
+			if _, ok := oldKeyValue[k]; ok {
+				delete(oldKeyValue, k)
 			}
 		}
 		temp.LocalReactionExtensions = []byte(utils.StructToJsonString(oldKeyValue))
