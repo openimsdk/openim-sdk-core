@@ -1,6 +1,7 @@
 package conversation_msg
 
 import (
+	"encoding/json"
 	"errors"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/open_im_sdk_callback"
@@ -1907,4 +1908,162 @@ func DeleteUserReactionElem(a []*sdk_struct.UserReactionElem, userID string) []*
 		}
 	}
 	return a[:j]
+}
+
+func (c *Conversation) setMessageReactionExtensions(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, req sdk.SetMessageReactionExtensionsParams, operationID string) []*server_api_params.ExtensionResult {
+	message, err := c.db.GetMessageController(s)
+	common.CheckDBErrCallback(callback, err, operationID)
+	if message.Status != constant.MsgStatusSendSuccess {
+		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
+	}
+	if message.SessionType != constant.SuperGroupChatType {
+		common.CheckAnyErrCallback(callback, 202, errors.New("currently only support super group message"), operationID)
+
+	}
+	extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
+	temp := make(map[string]*server_api_params.KeyValue)
+	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
+	reqTemp := make(map[string]*server_api_params.KeyValue)
+	for _, v := range req {
+		if value, ok := temp[v.TypeKey]; ok {
+			v.LatestUpdateTime = value.LatestUpdateTime
+		}
+		reqTemp[v.TypeKey] = v
+	}
+	var sourceID string
+	switch message.SessionType {
+	case constant.SingleChatType:
+		sourceID = message.SendID + message.RecvID
+	case constant.NotificationChatType:
+		sourceID = message.RecvID
+	case constant.GroupChatType, constant.SuperGroupChatType:
+		sourceID = message.RecvID
+	}
+	var apiReq server_api_params.SetMessageReactionExtensionsReq
+	apiReq.IsReact = message.IsReact
+	apiReq.ClientMsgID = message.ClientMsgID
+	apiReq.SourceID = sourceID
+	apiReq.SessionType = message.SessionType
+	apiReq.IsExternalExtensions = message.IsExternalExtensions
+	apiReq.ReactionExtensionList = reqTemp
+	apiReq.OperationID = operationID
+	apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
+	var apiResp server_api_params.SetMessageReactionExtensionsResp
+	c.p.PostFatalCallback(callback, constant.SetMessageReactionExtensionsRouter, apiReq, &apiResp.ApiResult, apiReq.OperationID)
+	var msg model_struct.LocalChatLogReactionExtensions
+	msg.ClientMsgID = message.ClientMsgID
+	resultKeyMap := make(map[string]*server_api_params.KeyValue)
+	for _, v := range apiResp.ApiResult.Result {
+		if v.ErrCode == 0 {
+			temp := new(server_api_params.KeyValue)
+			temp.TypeKey = v.TypeKey
+			temp.Value = v.Value
+			temp.LatestUpdateTime = v.LatestUpdateTime
+			resultKeyMap[v.TypeKey] = temp
+		}
+	}
+	err = c.db.GetAndUpdateMessageReactionExtension(message.ClientMsgID, resultKeyMap)
+	if err != nil {
+		log.Error(operationID, "GetAndUpdateMessageReactionExtension err:", err.Error())
+	}
+	if !message.IsReact {
+		message.IsReact = apiResp.ApiResult.IsReact
+		message.MsgFirstModifyTime = apiResp.ApiResult.MsgFirstModifyTime
+		err = c.db.UpdateMessageController(message)
+		if err != nil {
+			log.Error(operationID, "UpdateMessageController err:", err.Error(), message)
+
+		}
+	}
+	return apiResp.ApiResult.Result
+}
+
+func (c *Conversation) deleteMessageReactionExtensions(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, req sdk.DeleteMessageReactionExtensionsParams, operationID string) []*server_api_params.ExtensionResult {
+	message, err := c.db.GetMessageController(s)
+	common.CheckDBErrCallback(callback, err, operationID)
+	if message.Status != constant.MsgStatusSendSuccess {
+		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
+	}
+	if message.SessionType != constant.SuperGroupChatType {
+		common.CheckAnyErrCallback(callback, 202, errors.New("currently only support super group message"), operationID)
+
+	}
+	extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
+	temp := make(map[string]*server_api_params.KeyValue)
+	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
+	var reqTemp []*server_api_params.KeyValue
+	for _, v := range req {
+		if value, ok := temp[v]; ok {
+			var tt server_api_params.KeyValue
+			tt.LatestUpdateTime = value.LatestUpdateTime
+			tt.TypeKey = v
+			reqTemp = append(reqTemp, &tt)
+		}
+	}
+	var sourceID string
+	switch message.SessionType {
+	case constant.SingleChatType:
+		sourceID = message.SendID + message.RecvID
+	case constant.NotificationChatType:
+		sourceID = message.RecvID
+	case constant.GroupChatType, constant.SuperGroupChatType:
+		sourceID = message.RecvID
+	}
+	var apiReq server_api_params.DeleteMessageReactionExtensionsReq
+	apiReq.ClientMsgID = message.ClientMsgID
+	apiReq.SourceID = sourceID
+	apiReq.SessionType = message.SessionType
+	apiReq.ReactionExtensionList = reqTemp
+	apiReq.OperationID = operationID
+	apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
+	var apiResp server_api_params.DeleteMessageReactionExtensionsResp
+	c.p.PostFatalCallback(callback, constant.DeleteMessageReactionExtensionsRouter, apiReq, &apiResp.Result, apiReq.OperationID)
+	var msg model_struct.LocalChatLogReactionExtensions
+	msg.ClientMsgID = message.ClientMsgID
+	resultKeyMap := make(map[string]*server_api_params.KeyValue)
+	for _, v := range apiResp.Result {
+		if v.ErrCode == 0 {
+			temp := new(server_api_params.KeyValue)
+			temp.TypeKey = v.TypeKey
+			resultKeyMap[v.TypeKey] = temp
+		}
+	}
+	err = c.db.DeleteAndUpdateMessageReactionExtension(message.ClientMsgID, resultKeyMap)
+	if err != nil {
+		log.Error(operationID, "GetAndUpdateMessageReactionExtension err:", err.Error())
+	}
+	return apiResp.Result
+}
+func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_callback.Base, messageList []*sdk_struct.MsgStruct, operationID string) server_api_params.GetMessageListReactionExtensionsResp {
+	if len(messageList) == 0 {
+		common.CheckAnyErrCallback(callback, 201, errors.New("message list is null"), operationID)
+	}
+	var sourceID string
+	var sessionType int32
+	var reqList []server_api_params.OperateMessageListReactionExtensionsReq
+	for _, v := range messageList {
+		message, err := c.db.GetMessageController(v)
+		common.CheckDBErrCallback(callback, err, operationID)
+		var temp server_api_params.OperateMessageListReactionExtensionsReq
+		temp.ClientMsgID = message.ClientMsgID
+		temp.MsgFirstModifyTime = message.MsgFirstModifyTime
+		reqList = append(reqList, temp)
+		switch message.SessionType {
+		case constant.SingleChatType:
+			sourceID = message.SendID + message.RecvID
+		case constant.NotificationChatType:
+			sourceID = message.RecvID
+		case constant.GroupChatType, constant.SuperGroupChatType:
+			sourceID = message.RecvID
+		}
+		sessionType = message.SessionType
+	}
+	var apiReq server_api_params.GetMessageListReactionExtensionsReq
+	apiReq.SourceID = sourceID
+	apiReq.SessionType = sessionType
+	apiReq.MessageReactionKeyList = reqList
+	apiReq.OperationID = operationID
+	var apiResp server_api_params.GetMessageListReactionExtensionsResp
+	c.p.PostFatalCallback(callback, constant.GetMessageListReactionExtensionsRouter, apiReq, &apiResp, apiReq.OperationID)
+	return apiResp
 }

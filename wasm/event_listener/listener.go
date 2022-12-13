@@ -103,6 +103,19 @@ func (a AdvancedMsgCallback) OnNewRecvMessageRevoked(messageRevoked string) {
 func (a AdvancedMsgCallback) OnRecvMessageModified(message string) {
 	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(message).SendMessage()
 }
+func (a AdvancedMsgCallback) OnRecvMessageExtensionsChanged(clientMsgID string, reactionExtensionList string) {
+	m := make(map[string]interface{})
+	m["clientMsgID"] = clientMsgID
+	m["reactionExtensionList"] = reactionExtensionList
+	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(utils.StructToJsonString(m)).SendMessage()
+}
+
+func (a AdvancedMsgCallback) OnRecvMessageExtensionsDeleted(clientMsgID string, reactionExtensionKeyList string) {
+	m := make(map[string]interface{})
+	m["clientMsgID"] = clientMsgID
+	m["reactionExtensionKeyList"] = reactionExtensionKeyList
+	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(utils.StructToJsonString(m)).SendMessage()
+}
 
 type BaseCallback struct {
 	CallbackWriter

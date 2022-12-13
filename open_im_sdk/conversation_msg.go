@@ -432,6 +432,25 @@ func GetConversationIDBySessionType(sourceID string, sessionType int) string {
 func GetAtAllTag() string {
 	return constant.AtAllString
 }
+
+//deprecated
 func ModifyGroupMessageReaction(callback open_im_sdk_callback.Base, operationID string, counter int32, reactionType int, groupID, msgID string) {
 	BaseCaller(userForSDK.Conversation().ModifyGroupMessageReaction, callback, counter, reactionType, groupID, msgID, operationID)
+}
+
+//修改
+func SetMessageReactionExtensions(callback open_im_sdk_callback.Base, operationID, message, reactionExtensionList string) {
+	BaseCaller(userForSDK.Conversation().SetMessageReactionExtensions, callback, message, reactionExtensionList, operationID)
+}
+
+//func AddMessageReactionExtensions() {
+//	BaseCaller(userForSDK.Conversation().AddMessageReactionExtensions, callback, counter, reactionType, operationType, groupID, msgID, operationID)
+//}
+
+func DeleteMessageReactionExtensions(callback open_im_sdk_callback.Base, operationID, message, reactionExtensionKeyList string) {
+	BaseCaller(userForSDK.Conversation().DeleteMessageReactionExtensions, callback, message, reactionExtensionKeyList, operationID)
+}
+
+func GetMessageListReactionExtensions(callback open_im_sdk_callback.Base, operationID, messageList string) {
+	BaseCaller(userForSDK.Conversation().GetMessageListReactionExtensions, callback, messageList, operationID)
 }

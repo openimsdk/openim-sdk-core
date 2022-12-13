@@ -51,6 +51,7 @@ const (
 	CustomMsgNotTriggerConversation = 119
 	CustomMsgOnlineOnly             = 120
 	ReactionMessageModifier         = 121
+	ReactionMessageDeleter          = 122
 	//////////////////////////////////////////
 	NotificationBegin       = 1000
 	FriendNotificationBegin = 1200

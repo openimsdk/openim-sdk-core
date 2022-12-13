@@ -122,7 +122,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	var insertMsg, updateMsg []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
 	var unreadMessages []*model_struct.LocalConversationUnreadMessage
-	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList sdk_struct.NewMsgList
+	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList, reactionMsgModifierList, reactionMsgDeleterList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate, isSenderNotificationPush bool
 	conversationChangedSet := make(map[string]*model_struct.LocalConversation)
 	newConversationSet := make(map[string]*model_struct.LocalConversation)
@@ -292,6 +292,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				case constant.AdvancedRevoke:
 					newMsgRevokeList = append(newMsgRevokeList, msg)
 					newMessages = removeElementInList(newMessages, msg)
+				case constant.ReactionMessageModifier:
+					reactionMsgModifierList = append(reactionMsgModifierList, msg)
+				case constant.ReactionMessageDeleter:
+					reactionMsgDeleterList = append(reactionMsgDeleterList, msg)
 				default:
 				}
 			}
@@ -364,6 +368,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				case constant.AdvancedRevoke:
 					newMsgRevokeList = append(newMsgRevokeList, msg)
 					newMessages = removeElementInList(newMessages, msg)
+				case constant.ReactionMessageModifier:
+					reactionMsgModifierList = append(reactionMsgModifierList, msg)
+				case constant.ReactionMessageDeleter:
+					reactionMsgDeleterList = append(reactionMsgDeleterList, msg)
 				default:
 				}
 
@@ -484,7 +492,8 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		log.Debug(operationID, "newMessage  cost time : ", b12-b10)
 	}
 	c.newRevokeMessage(newMsgRevokeList)
-
+	c.doReactionMsgModifier(reactionMsgModifierList)
+	c.doReactionMsgDeleter(reactionMsgDeleterList)
 	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	if len(newConversationSet) > 0 {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.NewConDirect, Args: utils.StructToJsonString(mapConversationToList(newConversationSet))}})
@@ -526,7 +535,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	var insertMsg, updateMsg, specialUpdateMsg []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
 	var unreadMessages []*model_struct.LocalConversationUnreadMessage
-	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList, msgReactionList sdk_struct.NewMsgList
+	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList, msgReactionList, reactionMsgModifierList, reactionMsgDeleterList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate, isSenderNotificationPush bool
 	conversationChangedSet := make(map[string]*model_struct.LocalConversation)
 	newConversationSet := make(map[string]*model_struct.LocalConversation)
@@ -696,7 +705,9 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 					newMsgRevokeList = append(newMsgRevokeList, msg)
 					newMessages = removeElementInList(newMessages, msg)
 				case constant.ReactionMessageModifier:
-					msgReactionList = append(msgReactionList, msg)
+					reactionMsgModifierList = append(reactionMsgModifierList, msg)
+				case constant.ReactionMessageDeleter:
+					reactionMsgDeleterList = append(reactionMsgDeleterList, msg)
 				default:
 				}
 			}
@@ -770,7 +781,9 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 					newMsgRevokeList = append(newMsgRevokeList, msg)
 					newMessages = removeElementInList(newMessages, msg)
 				case constant.ReactionMessageModifier:
-					msgReactionList = append(msgReactionList, msg)
+					reactionMsgModifierList = append(reactionMsgModifierList, msg)
+				case constant.ReactionMessageDeleter:
+					reactionMsgDeleterList = append(reactionMsgDeleterList, msg)
 				default:
 				}
 
@@ -900,6 +913,8 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 		log.Debug(operationID, "newMessage  cost time : ", b12-b10)
 	}
 	c.newRevokeMessage(newMsgRevokeList)
+	c.doReactionMsgModifier(reactionMsgModifierList)
+	c.doReactionMsgDeleter(reactionMsgDeleterList)
 	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	if len(newConversationSet) > 0 {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.NewConDirect, utils.StructToJsonString(mapConversationToList(newConversationSet))}})
@@ -1189,6 +1204,64 @@ func (c *Conversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.MessageChange, &s}})
 
 	}
+}
+func (c *Conversation) doReactionMsgModifier(msgReactionList []*sdk_struct.MsgStruct) {
+	for _, msgStruct := range msgReactionList {
+		var n server_api_params.ReactionMessageModifierNotification
+		err := json.Unmarshal([]byte(msgStruct.Content), &n)
+		if err != nil {
+			log.Error("internal", "unmarshal failed err:", err.Error(), *msgStruct)
+			continue
+		}
+		err = c.db.GetAndUpdateMessageReactionExtension(n.ClientMsgID, n.SuccessReactionExtensionList)
+		if err != nil {
+			log.Error("internal", "GetAndUpdateMessageReactionExtension err:", err.Error())
+			continue
+		}
+		var reactionExtensionList []*server_api_params.KeyValue
+		for _, value := range n.SuccessReactionExtensionList {
+			reactionExtensionList = append(reactionExtensionList, value)
+		}
+		c.msgListener.OnRecvMessageExtensionsChanged(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
+		t := model_struct.LocalChatLog{}
+		t.ClientMsgID = n.ClientMsgID
+		t.SessionType = n.SessionType
+		t.IsExternalExtensions = n.IsExternalExtensions
+		t.IsReact = n.IsReact
+		t.MsgFirstModifyTime = n.MsgFirstModifyTime
+		if n.SessionType == constant.GroupChatType || n.SessionType == constant.SuperGroupChatType {
+			t.RecvID = n.SourceID
+		}
+		err2 := c.db.UpdateMessageController(&t)
+		if err2 != nil {
+			log.Error("internal", "unmarshal failed err:", err2.Error(), t)
+			continue
+		}
+
+	}
+
+}
+func (c *Conversation) doReactionMsgDeleter(msgReactionList []*sdk_struct.MsgStruct) {
+	for _, msgStruct := range msgReactionList {
+		var n server_api_params.ReactionMessageDeleteNotification
+		err := json.Unmarshal([]byte(msgStruct.Content), &n)
+		if err != nil {
+			log.Error("internal", "unmarshal failed err:", err.Error(), *msgStruct)
+			continue
+		}
+		err = c.db.DeleteAndUpdateMessageReactionExtension(n.ClientMsgID, n.SuccessReactionExtensionList)
+		if err != nil {
+			log.Error("internal", "GetAndUpdateMessageReactionExtension err:", err.Error())
+			continue
+		}
+		var deleteKeyList []string
+		for _, value := range n.SuccessReactionExtensionList {
+			deleteKeyList = append(deleteKeyList, value.TypeKey)
+		}
+		c.msgListener.OnRecvMessageExtensionsChanged(n.ClientMsgID, utils.StructToJsonString(deleteKeyList))
+
+	}
+
 }
 
 func (c *Conversation) QuoteMsgRevokeHandle(v *model_struct.LocalChatLog, revokeMsgIDList []*sdk_struct.MessageRevoked) {
@@ -1615,13 +1688,13 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
 		}
 	case constant.MessageChange:
-		msg := node.Args.(*sdk_struct.MsgStruct)
-		message, err := c.db.GetMessageController(msg)
-		if err != nil {
-			log.Error("internal", "GetMessageController database err:", err.Error())
-		} else {
-			c.MsgListener().OnRecvMessageModified(utils.StructToJsonString(message))
-		}
+		//msg := node.Args.(*sdk_struct.MsgStruct)
+		//message, err := c.db.GetMessageController(msg)
+		//if err != nil {
+		//	log.Error("internal", "GetMessageController database err:", err.Error())
+		//} else {
+		//	c.MsgListener().OnRecvMessageModified(utils.StructToJsonString(message))
+		//}
 	}
 }
 func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
