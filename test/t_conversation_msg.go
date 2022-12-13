@@ -798,17 +798,6 @@ func (t *TestModifyGroupMessageReaction) OnSuccess(data string) {
 	log.Info(t.OperationID, "TestModifyGroupMessageReaction , OnSuccess ", data)
 }
 
-func DoTestModifyGroupMessageReaction() {
-	var test TestModifyGroupMessageReaction
-	test.OperationID = utils.OperationIDGenerator()
-	counter := 1
-	groupID := ""
-	reactionType := 1
-	operationType := 0
-	msgID := "232323"
-	open_im_sdk.ModifyGroupMessageReaction(&test, test.OperationID, int32(counter), reactionType, operationType, groupID, msgID)
-}
-
 func DoTestGetSelfUserInfo() {
 	var test TestModifyGroupMessageReaction
 	open_im_sdk.GetSelfUserInfo(&test, "s")
