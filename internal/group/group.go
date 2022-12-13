@@ -186,35 +186,43 @@ func (g *Group) addMemberImmediately(member *api.GroupMemberFullInfo, operationI
 	}
 
 }
-
 func (g *Group) groupApplicationAcceptedNotification(msg *api.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	detail := api.GroupApplicationAcceptedTips{Group: &api.GroupInfo{}, OpUser: &api.GroupMemberFullInfo{}}
 	if err := comm.UnmarshalTips(msg, &detail); err != nil {
-		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
+		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg.String())
 		return
 	}
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "detail: ", msg.String())
 	if detail.OpUser.UserID == g.loginUserID {
 		g.SyncAdminGroupApplication(operationID)
-	} else {
-		g.SyncSelfGroupApplication(operationID)
-		g.SyncJoinedGroupList(operationID)
+		return
 	}
-	//g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID)
+	if detail.ReceiverAs == 1 {
+		g.SyncAdminGroupApplication(operationID)
+		return
+	}
+	g.SyncSelfGroupApplication(operationID)
+	g.SyncJoinedGroupList(operationID)
 }
 
 func (g *Group) groupApplicationRejectedNotification(msg *api.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	detail := api.GroupApplicationRejectedTips{Group: &api.GroupInfo{}, OpUser: &api.GroupMemberFullInfo{}}
 	if err := comm.UnmarshalTips(msg, &detail); err != nil {
-		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
+		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg.String())
 		return
 	}
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "detail: ", msg.String())
 	if detail.OpUser.UserID == g.loginUserID {
 		g.SyncAdminGroupApplication(operationID)
-	} else {
-		g.SyncSelfGroupApplication(operationID)
+		return
 	}
+	if detail.ReceiverAs == 1 {
+		g.SyncAdminGroupApplication(operationID)
+		return
+	}
+	g.SyncSelfGroupApplication(operationID)
 }
 
 func (g *Group) groupOwnerTransferredNotification(msg *api.MsgData, operationID string) {
