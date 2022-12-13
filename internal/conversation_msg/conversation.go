@@ -1980,7 +1980,6 @@ func (c *Conversation) setMessageReactionExtensions(callback open_im_sdk_callbac
 	for _, v := range req {
 		if value, ok := temp[v.TypeKey]; ok {
 			v.LatestUpdateTime = value.LatestUpdateTime
-			v.Value = value.Value
 		}
 		reqTemp[v.TypeKey] = v
 	}

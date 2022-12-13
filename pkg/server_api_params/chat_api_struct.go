@@ -122,8 +122,8 @@ type ReactionMessageModifierNotification struct {
 	MsgFirstModifyTime           int64                `json:"msgFirstModifyTime"`
 }
 type SingleMessageExtensionResult struct {
-	ErrCode               int32                `protobuf:"varint,1,opt,name=errCode" json:"errCode,omitempty"`
-	ErrMsg                string               `protobuf:"bytes,2,opt,name=errMsg" json:"errMsg,omitempty"`
+	ErrCode               int32                `protobuf:"varint,1,opt,name=errCode" json:"errCode"`
+	ErrMsg                string               `protobuf:"bytes,2,opt,name=errMsg" json:"errMsg"`
 	ReactionExtensionList map[string]*KeyValue `protobuf:"bytes,3,rep,name=reactionExtensionList" json:"reactionExtensionList,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	ClientMsgID           string               `protobuf:"bytes,4,opt,name=clientMsgID" json:"clientMsgID,omitempty"`
 	XXX_NoUnkeyedLiteral  struct{}             `json:"-"`
