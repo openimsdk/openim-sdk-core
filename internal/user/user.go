@@ -76,10 +76,6 @@ func (u *User) userInfoUpdatedNotification(msg *api.MsgData, operationID string)
 	if detail.UserID == u.loginUserID {
 		log.Info(operationID, "detail.UserID == u.loginUserID, SyncLoginUserInfo", detail.UserID)
 		u.SyncLoginUserInfo(operationID)
-		user, err := u.GetLoginUser(u.loginUserID)
-		if err != nil {
-			go u.updateMsgSenderInfo(user.Nickname, user.FaceURL, operationID)
-		}
 	} else {
 		log.Info(operationID, "detail.UserID != u.loginUserID, do nothing", detail.UserID, u.loginUserID)
 	}
