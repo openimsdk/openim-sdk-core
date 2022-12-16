@@ -189,6 +189,19 @@ func (d *DataBase) initDB() error {
 		&model_struct.TempCacheLocalChatLog{},
 	)
 	db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup)
+	groupIDList, err := d.GetJoinedSuperGroupIDList()
+	if err != nil {
+		log.Error("auto migrate super db err:", err.Error())
+	}
+	wkGroupIDList, err2 := d.GetJoinedWorkingGroupIDList()
+	if err2 != nil {
+		log.Error("auto migrate working group  db err:", err2)
+
+	}
+	groupIDList = append(groupIDList, wkGroupIDList...)
+	for _, v := range groupIDList {
+		d.conn.Table(utils.GetSuperGroupTableName(v)).AutoMigrate(&model_struct.LocalChatLog{})
+	}
 	if !db.Migrator().HasTable(&model_struct.LocalFriend{}) {
 		db.Migrator().CreateTable(&model_struct.LocalFriend{})
 	}
