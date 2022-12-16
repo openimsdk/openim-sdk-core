@@ -24,6 +24,7 @@ type IndexDB struct {
 	LocalGroupMember
 	LocalGroupRequest
 	LocalCacheMessage
+	LocalChatLogReactionExtensions
 }
 
 func (i IndexDB) InsertFriendRequest(friendRequest *model_struct.LocalFriendRequest) error {
