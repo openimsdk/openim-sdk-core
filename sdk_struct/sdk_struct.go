@@ -78,27 +78,29 @@ type FileBaseInfo struct {
 }
 
 type MsgStruct struct {
-	ClientMsgID      string                            `json:"clientMsgID,omitempty"`
-	ServerMsgID      string                            `json:"serverMsgID,omitempty"`
-	CreateTime       int64                             `json:"createTime"`
-	SendTime         int64                             `json:"sendTime"`
-	SessionType      int32                             `json:"sessionType"`
-	SendID           string                            `json:"sendID,omitempty"`
-	RecvID           string                            `json:"recvID,omitempty"`
-	MsgFrom          int32                             `json:"msgFrom"`
-	ContentType      int32                             `json:"contentType"`
-	SenderPlatformID int32                             `json:"platformID"`
-	SenderNickname   string                            `json:"senderNickname,omitempty"`
-	SenderFaceURL    string                            `json:"senderFaceUrl,omitempty"`
-	GroupID          string                            `json:"groupID,omitempty"`
-	Content          string                            `json:"content,omitempty"`
-	Seq              uint32                            `json:"seq"`
-	IsRead           bool                              `json:"isRead"`
-	Status           int32                             `json:"status"`
-	OfflinePush      server_api_params.OfflinePushInfo `json:"offlinePush,omitempty"`
-	AttachedInfo     string                            `json:"attachedInfo,omitempty"`
-	Ex               string                            `json:"ex,omitempty"`
-	PictureElem      struct {
+	ClientMsgID          string                            `json:"clientMsgID,omitempty"`
+	ServerMsgID          string                            `json:"serverMsgID,omitempty"`
+	CreateTime           int64                             `json:"createTime"`
+	SendTime             int64                             `json:"sendTime"`
+	SessionType          int32                             `json:"sessionType"`
+	SendID               string                            `json:"sendID,omitempty"`
+	RecvID               string                            `json:"recvID,omitempty"`
+	MsgFrom              int32                             `json:"msgFrom"`
+	ContentType          int32                             `json:"contentType"`
+	SenderPlatformID     int32                             `json:"platformID"`
+	SenderNickname       string                            `json:"senderNickname,omitempty"`
+	SenderFaceURL        string                            `json:"senderFaceUrl,omitempty"`
+	GroupID              string                            `json:"groupID,omitempty"`
+	Content              string                            `json:"content,omitempty"`
+	Seq                  uint32                            `json:"seq"`
+	IsRead               bool                              `json:"isRead"`
+	Status               int32                             `json:"status"`
+	IsReact              bool                              `json:"isReact,omitempty"`
+	IsExternalExtensions bool                              `json:"isExternalExtensions,omitempty"`
+	OfflinePush          server_api_params.OfflinePushInfo `json:"offlinePush,omitempty"`
+	AttachedInfo         string                            `json:"attachedInfo,omitempty"`
+	Ex                   string                            `json:"ex,omitempty"`
+	PictureElem          struct {
 		SourcePath      string          `json:"sourcePath,omitempty"`
 		SourcePicture   PictureBaseInfo `json:"sourcePicture,omitempty"`
 		BigPicture      PictureBaseInfo `json:"bigPicture,omitempty"`
