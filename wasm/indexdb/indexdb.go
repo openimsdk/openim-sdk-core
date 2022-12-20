@@ -613,7 +613,7 @@ func (i IndexDB) GetAbnormalMsgSeqList() ([]uint32, error) {
 }
 
 func (i IndexDB) BatchInsertExceptionMsg(MessageList []*model_struct.LocalErrChatLog) error {
-	panic("implement me")
+	return nil
 }
 
 func (i IndexDB) BatchInsertExceptionMsgController(MessageList []*model_struct.LocalErrChatLog) error {
