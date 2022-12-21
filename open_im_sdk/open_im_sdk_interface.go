@@ -1149,6 +1149,16 @@ func GetMessageListReactionExtensions(callback open_im_sdk_callback.Base, operat
 	BaseCaller(userForSDK.Conversation().GetMessageListReactionExtensions, callback, messageList, operationID)
 }
 
+func SetTypeKeyInfo(callback open_im_sdk_callback.Base, operationID, message, typeKey, ex string, isCanRepeat bool) {
+	BaseCaller(userForSDK.Conversation().SetTypeKeyInfo, callback, message, typeKey, ex, isCanRepeat, operationID)
+}
+func GetTypeKeyListInfo(callback open_im_sdk_callback.Base, operationID, message, typeKeyList string) {
+	BaseCaller(userForSDK.Conversation().GetTypeKeyListInfo, callback, message, typeKeyList, operationID)
+}
+func GetAllTypeKeyInfo(callback open_im_sdk_callback.Base, message, operationID string) {
+	BaseCaller(userForSDK.Conversation().GetAllTypeKeyInfo, callback, message, operationID)
+}
+
 //////////////////////////signaling//////////////////////////////////////////
 func SetSignalingListener(callback open_im_sdk_callback.OnSignalingListener) {
 	if callback == nil || userForSDK == nil {

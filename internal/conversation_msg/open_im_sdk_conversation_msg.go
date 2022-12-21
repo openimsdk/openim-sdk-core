@@ -1791,3 +1791,26 @@ func (c *Conversation) GetMessageListReactionExtensions(callback open_im_sdk_cal
 	callback.OnSuccess(utils.StructToJsonString(result))
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
 }
+func (c *Conversation) SetTypeKeyInfo(callback open_im_sdk_callback.Base, message, typeKey, ex string, isCanRepeat bool, operationID string) {
+	s := sdk_struct.MsgStruct{}
+	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+	result := c.setTypeKeyInfo(callback, &s, typeKey, ex, isCanRepeat, operationID)
+	callback.OnSuccess(utils.StructToJsonString(result))
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+}
+func (c *Conversation) GetTypeKeyListInfo(callback open_im_sdk_callback.Base, message, typeKeyList, operationID string) {
+	s := sdk_struct.MsgStruct{}
+	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+	var list []string
+	common.JsonUnmarshalAndArgsValidate(typeKeyList, &list, callback, operationID)
+	result := c.getTypeKeyListInfo(callback, &s, list, operationID)
+	callback.OnSuccess(utils.StructToJsonString(result))
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+}
+func (c *Conversation) GetAllTypeKeyInfo(callback open_im_sdk_callback.Base, message, operationID string) {
+	s := sdk_struct.MsgStruct{}
+	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+	result := c.getAllTypeKeyInfo(callback, &s, operationID)
+	callback.OnSuccess(utils.StructToJsonString(result))
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+}
