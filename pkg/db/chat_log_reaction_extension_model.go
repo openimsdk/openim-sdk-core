@@ -24,7 +24,6 @@ func (d *DataBase) InsertMessageReactionExtension(messageReactionExtension *mode
 func (d *DataBase) UpdateMessageReactionExtension(c *model_struct.LocalChatLogReactionExtensions) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	d.conn.Logger.LogMode(6)
 	t := d.conn.Updates(c)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")

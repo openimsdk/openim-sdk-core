@@ -237,6 +237,7 @@ type DataBase interface {
 	SuperGroupSearchAllMessageByContentType(superGroupID string, contentType int32) ([]*model_struct.LocalChatLog, error)
 	GetMessageReactionExtension(msgID string) (result *model_struct.LocalChatLogReactionExtensions, err error)
 	InsertMessageReactionExtension(messageReactionExtension *model_struct.LocalChatLogReactionExtensions) error
+	UpdateMessageReactionExtension(c *model_struct.LocalChatLogReactionExtensions) error
 	GetAndUpdateMessageReactionExtension(msgID string, m map[string]*server_api_params.KeyValue) error
 	DeleteAndUpdateMessageReactionExtension(msgID string, m map[string]*server_api_params.KeyValue) error
 }

@@ -2262,7 +2262,11 @@ func getIndexTypeKey(typeKey string, index int) string {
 	return typeKey + "$" + utils.IntToString(index)
 }
 func getPrefixTypeKey(typeKey string) string {
-	return strings.Split(typeKey, "$")[0]
+	list := strings.Split(typeKey, "$")
+	if len(list) > 0 {
+		return list[0]
+	}
+	return ""
 }
 func (c *Conversation) getTypeKeyListInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, keyList []string, operationID string) (result []*sdk.SingleTypeKeyInfoSum) {
 	message, err := c.db.GetMessageController(s)
@@ -2295,6 +2299,9 @@ func (c *Conversation) getTypeKeyListInfo(callback open_im_sdk_callback.Base, s 
 		}
 		result = append(result, singleResult)
 	}
+	messageList := []*sdk_struct.MsgStruct{s}
+	_ = common.TriggerCmdSyncReactionExtensions(operationID, messageList, c.GetCh())
+
 	return result
 }
 

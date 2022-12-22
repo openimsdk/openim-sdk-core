@@ -79,3 +79,6 @@ type OnWorkMomentsListener interface {
 type OnCustomBusinessListener interface {
 	OnRecvCustomBusinessMessage(businessMessage string)
 }
+type OnMessageKvInfoListener interface {
+	OnMessageKvInfoChanged(messageChangedList string)
+}

@@ -744,6 +744,13 @@ func SetAdvancedMsgListener(listener open_im_sdk_callback.OnAdvancedMsgListener)
 	}
 	userForSDK.SetAdvancedMsgListener(listener)
 }
+func SetMessageKvInfoListener(listener open_im_sdk_callback.OnMessageKvInfoListener) {
+	if listener == nil || userForSDK == nil {
+		log.Error("callback or userForSDK is nil")
+		return
+	}
+	userForSDK.SetMessageKvInfoListener(listener)
+}
 func SetBatchMsgListener(listener open_im_sdk_callback.OnBatchMsgListener) {
 	if listener == nil || userForSDK == nil {
 		log.Error("callback or userForSDK is nil")

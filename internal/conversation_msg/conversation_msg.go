@@ -2,6 +2,7 @@ package conversation_msg
 
 import (
 	"encoding/json"
+	"github.com/google/go-cmp/cmp"
 	"open_im_sdk/internal/business"
 	"open_im_sdk/internal/cache"
 	common2 "open_im_sdk/internal/common"
@@ -12,6 +13,8 @@ import (
 	"open_im_sdk/internal/organization"
 	"open_im_sdk/internal/signaling"
 	"open_im_sdk/internal/user"
+	sdk "open_im_sdk/pkg/sdk_params_callback"
+	"strings"
 
 	workMoments "open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
@@ -40,6 +43,7 @@ type Conversation struct {
 	p                    *ws.PostApi
 	ConversationListener open_im_sdk_callback.OnConversationListener
 	msgListener          open_im_sdk_callback.OnAdvancedMsgListener
+	msgKvListener        open_im_sdk_callback.OnMessageKvInfoListener
 	batchMsgListener     open_im_sdk_callback.OnBatchMsgListener
 	recvCH               chan common.Cmd2Value
 	loginUserID          string
@@ -78,7 +82,9 @@ func (c *Conversation) SetSignaling(signaling *signaling.LiveSignaling) {
 func (c *Conversation) SetMsgListener(msgListener open_im_sdk_callback.OnAdvancedMsgListener) {
 	c.msgListener = msgListener
 }
-
+func (c *Conversation) SetMsgKvListener(msgKvListener open_im_sdk_callback.OnMessageKvInfoListener) {
+	c.msgKvListener = msgKvListener
+}
 func (c *Conversation) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnBatchMsgListener) {
 	c.batchMsgListener = batchMsgListener
 }
@@ -1300,7 +1306,7 @@ func (c *Conversation) doReactionMsgDeleter(msgReactionList []*sdk_struct.MsgStr
 		for _, value := range n.SuccessReactionExtensionList {
 			deleteKeyList = append(deleteKeyList, value.TypeKey)
 		}
-		c.msgListener.OnRecvMessageExtensionsChanged(n.ClientMsgID, utils.StructToJsonString(deleteKeyList))
+		c.msgListener.OnRecvMessageExtensionsDeleted(n.ClientMsgID, utils.StructToJsonString(deleteKeyList))
 
 	}
 
@@ -1761,6 +1767,118 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 
 }
 
+func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
+	if c.ConversationListener == nil {
+		log.Error("internal", "not set conversationListener")
+		return
+	}
+	node := c2v.Value.(common.SyncReactionExtensionsNode)
+	var sourceID string
+	var sessionType int32
+	var reqList []server_api_params.OperateMessageListReactionExtensionsReq
+	var temp server_api_params.OperateMessageListReactionExtensionsReq
+	for _, v := range node.MessageList {
+		message, err := c.db.GetMessageController(v)
+		if err != nil {
+			log.Error(node.OperationID, "GetMessageController err:", err.Error(), *v)
+			continue
+		}
+		temp.ClientMsgID = message.ClientMsgID
+		temp.MsgFirstModifyTime = message.MsgFirstModifyTime
+		reqList = append(reqList, temp)
+		switch message.SessionType {
+		case constant.SingleChatType:
+			sourceID = message.SendID + message.RecvID
+		case constant.NotificationChatType:
+			sourceID = message.RecvID
+		case constant.GroupChatType, constant.SuperGroupChatType:
+			sourceID = message.RecvID
+		}
+		sessionType = message.SessionType
+	}
+	var apiReq server_api_params.GetMessageListReactionExtensionsReq
+	apiReq.SourceID = sourceID
+	apiReq.SessionType = sessionType
+	apiReq.MessageReactionKeyList = reqList
+	apiReq.OperationID = node.OperationID
+	var apiResp server_api_params.GetMessageListReactionExtensionsResp
+	err := c.p.PostReturnWithTimeOut(constant.GetMessageListReactionExtensionsRouter, apiReq, &apiResp, time.Second*2)
+	if err != nil {
+		log.Error(node.OperationID, "GetMessageListReactionExtensions from server err:", err.Error(), apiReq)
+		return
+	}
+	var messageChangedList []*messageKvList
+	for _, v := range apiResp {
+		if v.ErrCode == 0 {
+			var changedKv []*server_api_params.KeyValue
+			var prefixTypeKey []string
+			extendMsg, _ := c.db.GetMessageReactionExtension(v.ClientMsgID)
+			localKV := make(map[string]*server_api_params.KeyValue)
+			_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &localKV)
+			for typeKey, value := range v.ReactionExtensionList {
+				oldValue, ok := localKV[typeKey]
+				if ok {
+					if !cmp.Equal(value, oldValue) {
+						localKV[typeKey] = value
+						prefixTypeKey = append(prefixTypeKey, getPrefixTypeKey(typeKey))
+						changedKv = append(changedKv, value)
+					}
+				} else {
+					localKV[typeKey] = value
+					prefixTypeKey = append(prefixTypeKey, getPrefixTypeKey(typeKey))
+					changedKv = append(changedKv, value)
+
+				}
+
+			}
+			extendMsg.LocalReactionExtensions = []byte(utils.StructToJsonString(localKV))
+			_ = c.db.UpdateMessageReactionExtension(extendMsg)
+			if len(changedKv) > 0 {
+				c.msgListener.OnRecvMessageExtensionsChanged(extendMsg.ClientMsgID, utils.StructToJsonString(changedKv))
+			}
+			prefixTypeKey = utils.RemoveRepeatedStringInList(prefixTypeKey)
+			if len(prefixTypeKey) > 0 {
+				var result []*sdk.SingleTypeKeyInfoSum
+				oneMessageChaned := new(messageKvList)
+				oneMessageChaned.ClientMsgID = extendMsg.ClientMsgID
+				for _, v := range prefixTypeKey {
+					singleResult := new(sdk.SingleTypeKeyInfoSum)
+					singleResult.TypeKey = v
+					for typeKey, value := range localKV {
+						if strings.HasPrefix(typeKey, v) {
+							singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
+							err := json.Unmarshal([]byte(value.Value), singleTypeKeyInfo)
+							if err != nil {
+								continue
+							}
+							if _, ok := singleTypeKeyInfo.InfoList[c.loginUserID]; ok {
+								singleResult.IsContainSelf = true
+							}
+							for _, info := range singleTypeKeyInfo.InfoList {
+								v := *info
+								singleResult.InfoList = append(singleResult.InfoList, &v)
+							}
+							singleResult.Counter += singleTypeKeyInfo.Counter
+						}
+					}
+					result = append(result, singleResult)
+				}
+				oneMessageChaned.ChangedKvList = result
+				messageChangedList = append(messageChangedList, oneMessageChaned)
+			}
+		}
+	}
+	if len(messageChangedList) > 0 && c.msgKvListener != nil {
+		c.msgKvListener.OnMessageKvInfoChanged(utils.StructToJsonString(messageChangedList))
+	}
+
+}
+
+type messageKvList struct {
+	ClientMsgID   string                      `json:"clientMsgID"`
+	ChangedKvList []*sdk.SingleTypeKeyInfoSum `json:"changedKvList"`
+}
+
 func (c *Conversation) Work(c2v common.Cmd2Value) {
 
 	log.Info("internal", "doListener work..", c2v.Cmd)
@@ -1786,6 +1904,11 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 		log.Info("internal", "doUpdateMessage start ..", c2v.Cmd)
 		c.doUpdateMessage(c2v)
 		log.Info("internal", "doUpdateMessage end..", c2v.Cmd)
+	case constant.CmSyncReactionExtensions:
+		log.Info("internal", "doSyncReactionExtensions start ..", c2v.Cmd)
+		c.doSyncReactionExtensions(c2v)
+		log.Info("internal", "doSyncReactionExtensions end..", c2v.Cmd)
+
 	}
 }
 func (c *Conversation) msgConvert(msg *sdk_struct.MsgStruct) (err error) {
