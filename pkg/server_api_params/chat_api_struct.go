@@ -92,19 +92,19 @@ type KeyValueResp struct {
 	XXX_sizecache        int32     `json:"-"`
 }
 
-type ExtendMsg struct {
-	ReactionExtensionList map[string]*KeyValueResp `protobuf:"bytes,1,rep,name=reactionExtensionList" json:"reactionExtensionList,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	ClientMsgID           string                   `protobuf:"bytes,2,opt,name=clientMsgID" json:"clientMsgID,omitempty"`
-	MsgFirstModifyTime    int64                    `protobuf:"varint,3,opt,name=msgFirstModifyTime" json:"msgFirstModifyTime,omitempty"`
-	AttachedInfo          string                   `protobuf:"bytes,4,opt,name=attachedInfo" json:"attachedInfo,omitempty"`
-	Ex                    string                   `protobuf:"bytes,5,opt,name=ex" json:"ex,omitempty"`
-}
-
-type ExtendMsgResp struct {
-	ExtendMsg *ExtendMsg `protobuf:"bytes,1,opt,name=extendMsg" json:"extendMsg,omitempty"`
-	ErrCode   int32      `protobuf:"varint,2,opt,name=errCode" json:"errCode,omitempty"`
-	ErrMsg    string     `protobuf:"bytes,3,opt,name=errMsg" json:"errMsg,omitempty"`
-}
+//type ExtendMsg struct {
+//	ReactionExtensionList map[string]*KeyValueResp `protobuf:"bytes,1,rep,name=reactionExtensionList" json:"reactionExtensionList,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+//	ClientMsgID           string                   `protobuf:"bytes,2,opt,name=clientMsgID" json:"clientMsgID,omitempty"`
+//	MsgFirstModifyTime    int64                    `protobuf:"varint,3,opt,name=msgFirstModifyTime" json:"msgFirstModifyTime,omitempty"`
+//	AttachedInfo          string                   `protobuf:"bytes,4,opt,name=attachedInfo" json:"attachedInfo,omitempty"`
+//	Ex                    string                   `protobuf:"bytes,5,opt,name=ex" json:"ex,omitempty"`
+//}
+//
+//type ExtendMsgResp struct {
+//	ExtendMsg *ExtendMsg `protobuf:"bytes,1,opt,name=extendMsg" json:"extendMsg,omitempty"`
+//	ErrCode   int32      `protobuf:"varint,2,opt,name=errCode" json:"errCode,omitempty"`
+//	ErrMsg    string     `protobuf:"bytes,3,opt,name=errMsg" json:"errMsg,omitempty"`
+//}
 
 type GetMessageListReactionExtensionsResp []*SingleMessageExtensionResult
 
