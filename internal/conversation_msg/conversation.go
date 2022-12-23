@@ -2068,6 +2068,7 @@ func (c *Conversation) deleteMessageReactionExtensions(callback open_im_sdk_call
 	apiReq.SessionType = message.SessionType
 	apiReq.ReactionExtensionList = reqTemp
 	apiReq.OperationID = operationID
+	apiReq.IsExternalExtensions = message.IsExternalExtensions
 	apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
 	var apiResp server_api_params.DeleteMessageReactionExtensionsResp
 	c.p.PostFatalCallback(callback, constant.DeleteMessageReactionExtensionsRouter, apiReq, &apiResp.Result, apiReq.OperationID)
