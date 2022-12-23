@@ -125,3 +125,26 @@ type SetMessageReactionExtensionsCallback struct {
 	ErrCode int32  `json:"errCode"`
 	ErrMsg  string `json:"errMsg"`
 }
+type DeleteMessageReactionExtensionsParams []string
+
+type GetTypekeyListResp struct {
+	TypeKeyInfoList []*SingleTypeKeyInfoSum `json:"TypeKeyListInfo"`
+}
+type SingleTypeKeyInfoSum struct {
+	TypeKey       string  `json:"typeKey"`
+	Counter       int64   `json:"counter"`
+	InfoList      []*Info `json:"infoList"`
+	IsContainSelf bool    `json:"isContainSelf"`
+}
+
+type SingleTypeKeyInfo struct {
+	TypeKey     string           `json:"typeKey"`
+	Counter     int64            `json:"counter"`
+	IsCanRepeat bool             `json:"isCanRepeat"`
+	Index       int              `json:"index"`
+	InfoList    map[string]*Info `json:"infoList"`
+}
+type Info struct {
+	UserID string `json:"userID"`
+	Ex     string `json:"ex"`
+}

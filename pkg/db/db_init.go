@@ -187,6 +187,7 @@ func (d *DataBase) initDB() error {
 		&LocalWorkMomentsNotification{},
 		&LocalWorkMomentsNotificationUnreadCount{},
 		&model_struct.TempCacheLocalChatLog{},
+		&model_struct.LocalChatLogReactionExtensions{},
 	)
 	db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup)
 	groupIDList, err := d.GetJoinedSuperGroupIDList()
@@ -254,6 +255,9 @@ func (d *DataBase) initDB() error {
 	}
 	if !db.Migrator().HasTable(&LocalWorkMomentsNotificationUnreadCount{}) {
 		db.Migrator().CreateTable(&LocalWorkMomentsNotificationUnreadCount{})
+	}
+	if !db.Migrator().HasTable(&model_struct.LocalChatLogReactionExtensions{}) {
+		db.Migrator().CreateTable(&model_struct.LocalChatLogReactionExtensions{})
 	}
 	log.NewInfo("init db", "startInitWorkMomentsNotificationUnreadCount ")
 	if err := d.InitWorkMomentsNotificationUnreadCount(); err != nil {

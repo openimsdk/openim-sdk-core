@@ -68,6 +68,18 @@ func TriggerCmdDeleteConversationAndMessage(sourceID, conversationID string, ses
 
 	return sendCmd(conversationCh, c2v, 100)
 }
+
+func TriggerCmdSyncReactionExtensions(operationID string, messageList []*sdk_struct.MsgStruct, conversationCh chan Cmd2Value) error {
+	if conversationCh == nil {
+		return utils.Wrap(errors.New("ch == nil"), "")
+	}
+	c2v := Cmd2Value{
+		Cmd:   constant.CmSyncReactionExtensions,
+		Value: SyncReactionExtensionsNode{operationID, messageList},
+	}
+
+	return sendCmd(conversationCh, c2v, 100)
+}
 func TriggerCmdUpdateConversation(node UpdateConNode, conversationCh chan Cmd2Value) error {
 	c2v := Cmd2Value{
 		Cmd:   constant.CmdUpdateConversation,
@@ -106,6 +118,10 @@ type DeleteConNode struct {
 	SourceID       string
 	ConversationID string
 	SessionType    int
+}
+type SyncReactionExtensionsNode struct {
+	OperationID string
+	MessageList []*sdk_struct.MsgStruct
 }
 type UpdateConNode struct {
 	ConID  string

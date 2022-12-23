@@ -452,3 +452,7 @@ type SearchDepartmentMemberResult struct {
 	LocalDepartmentMember
 	DepartmentName string `gorm:"column:name;size:256" json:"departmentName"`
 }
+type LocalChatLogReactionExtensions struct {
+	ClientMsgID             string `gorm:"column:client_msg_id;primary_key;type:char(64)" json:"clientMsgID"`
+	LocalReactionExtensions []byte `gorm:"column:local_reaction_extensions" json:"localReactionExtensions"`
+}

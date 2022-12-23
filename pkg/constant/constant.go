@@ -8,7 +8,7 @@ const (
 	CmdNewMsgCome                 = "005"
 	CmdSuperGroupMsgCome          = "006"
 	CmdUpdateConversation         = "007"
-	CmdForceSyncFriend            = "008"
+	CmSyncReactionExtensions      = "008"
 	CmdFroceSyncBlackList         = "009"
 	CmdForceSyncFriendApplication = "010"
 	CmdForceSyncMsg               = "011"
