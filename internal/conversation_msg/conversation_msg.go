@@ -2,7 +2,6 @@ package conversation_msg
 
 import (
 	"encoding/json"
-	"github.com/google/go-cmp/cmp"
 	"open_im_sdk/internal/business"
 	"open_im_sdk/internal/cache"
 	common2 "open_im_sdk/internal/common"
@@ -15,6 +14,8 @@ import (
 	"open_im_sdk/internal/user"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"strings"
+
+	"github.com/google/go-cmp/cmp"
 
 	workMoments "open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
@@ -1186,7 +1187,7 @@ func (c *Conversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
 	//		continue
 	//	}
 	//	t := new(model_struct.LocalChatLog)
-	//	attachInfo := sdk_struct.AttachedInfoElem{}
+	attachInfo := sdk_struct.AttachedInfoElem{}
 	//	_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
 	//
 	//	contain, v := isContainMessageReaction(msg.ReactionType, attachInfo.MessageReactionElem)
