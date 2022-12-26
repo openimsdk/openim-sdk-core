@@ -108,6 +108,7 @@ func (u *Heartbeat) Run() {
 					runtime.Goexit()
 				}
 				if r.Cmd == constant.CmdWakeUp {
+					u.full.SuperGroup.SyncJoinedGroupList(operationID)
 					u.full.Group().SyncJoinedGroupList(operationID)
 					log.Info(operationID, "recv wake up cmd, start heartbeat ", r.Cmd)
 					break
