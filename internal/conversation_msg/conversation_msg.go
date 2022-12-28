@@ -12,6 +12,7 @@ import (
 	"open_im_sdk/internal/organization"
 	"open_im_sdk/internal/signaling"
 	"open_im_sdk/internal/user"
+	"runtime"
 
 	workMoments "open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
@@ -1702,22 +1703,42 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 
 	switch c2v.Cmd {
 	case constant.CmdDeleteConversation:
+		if c.LoginStatus() == constant.Logout {
+			log.Warn("", "m.LoginStatus() == constant.Logout, Goexit()")
+			runtime.Goexit()
+		}
 		log.Info("internal", "CmdDeleteConversation start ..", c2v.Cmd)
 		c.doDeleteConversation(c2v)
 		log.Info("internal", "CmdDeleteConversation end..", c2v.Cmd)
 	case constant.CmdNewMsgCome:
+		if c.LoginStatus() == constant.Logout {
+			log.Warn("", "m.LoginStatus() == constant.Logout, Goexit()")
+			runtime.Goexit()
+		}
 		log.Info("internal", "doMsgNew start..", c2v.Cmd)
 		c.doMsgNew(c2v)
 		log.Info("internal", "doMsgNew end..", c2v.Cmd)
 	case constant.CmdSuperGroupMsgCome:
+		if c.LoginStatus() == constant.Logout {
+			log.Warn("", "m.LoginStatus() == constant.Logout, Goexit()")
+			runtime.Goexit()
+		}
 		log.Info("internal", "doSuperGroupMsgNew start..", c2v.Cmd)
 		c.doSuperGroupMsgNew(c2v)
 		log.Info("internal", "doSuperGroupMsgNew end..", c2v.Cmd)
 	case constant.CmdUpdateConversation:
+		if c.LoginStatus() == constant.Logout {
+			log.Warn("", "m.LoginStatus() == constant.Logout, Goexit()")
+			runtime.Goexit()
+		}
 		log.Info("internal", "doUpdateConversation start ..", c2v.Cmd)
 		c.doUpdateConversation(c2v)
 		log.Info("internal", "doUpdateConversation end..", c2v.Cmd)
 	case constant.CmdUpdateMessage:
+		if c.LoginStatus() == constant.Logout {
+			log.Warn("", "m.LoginStatus() == constant.Logout, Goexit()")
+			runtime.Goexit()
+		}
 		log.Info("internal", "doUpdateMessage start ..", c2v.Cmd)
 		c.doUpdateMessage(c2v)
 		log.Info("internal", "doUpdateMessage end..", c2v.Cmd)

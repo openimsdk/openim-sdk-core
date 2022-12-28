@@ -9,6 +9,7 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"runtime"
 )
 
 type SelfMsgSync struct {
@@ -226,6 +227,8 @@ func (m *SelfMsgSync) syncMsgFromCache2ServerSplit(needSyncSeqList []uint32, ope
 		resp, err := m.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 60, 2, m.loginUserID, operationID)
 		if err != nil && m.LoginStatus() == constant.Logout {
 			log.Error(operationID, "SendReqWaitResp failed  Logout status ", err.Error(), m.LoginStatus())
+			log.Warn("", "m.LoginStatus() == constant.Logout, Goexit()")
+			runtime.Goexit()
 			return
 		}
 		if err != nil {

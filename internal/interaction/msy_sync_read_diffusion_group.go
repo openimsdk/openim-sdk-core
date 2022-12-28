@@ -298,7 +298,8 @@ func (m *ReadDiffusionGroupMsgSync) syncMsgFromServerSplit(needSyncSeqList []uin
 		resp, err := m.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 30, 2, m.loginUserID, operationID)
 		if err != nil && m.LoginStatus() == constant.Logout {
 			log.Error(operationID, "SendReqWaitResp failed  Logout status ", err.Error(), m.LoginStatus())
-			return
+			log.Warn("", "m.LoginStatus() == constant.Logout, Goexit()")
+			runtime.Goexit()
 		}
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed,  constant.MsgSyncFailed ", err.Error(), constant.WSPullMsgBySeqList, 30, 2, m.loginUserID)

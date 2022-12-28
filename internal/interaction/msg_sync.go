@@ -7,6 +7,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"runtime"
 )
 
 type SeqPair struct {
@@ -60,8 +61,16 @@ func (m *MsgSync) doPushMsg(cmd common.Cmd2Value) {
 func (m *MsgSync) Work(cmd common.Cmd2Value) {
 	switch cmd.Cmd {
 	case constant.CmdPushMsg:
+		if m.LoginStatus() == constant.Logout {
+			log.Warn("", "m.LoginStatus() == constant.Logout, Goexit()")
+			runtime.Goexit()
+		}
 		m.doPushMsg(cmd)
 	case constant.CmdMaxSeq:
+		if m.LoginStatus() == constant.Logout {
+			log.Warn("", "m.LoginStatus() == constant.Logout, Goexit()")
+			runtime.Goexit()
+		}
 		m.doMaxSeq(cmd)
 	default:
 		log.Error("", "cmd failed ", cmd.Cmd)
