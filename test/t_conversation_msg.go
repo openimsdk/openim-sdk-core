@@ -491,6 +491,13 @@ func (m *MsgListenerCallBak) OnNewRecvMessageRevoked(messageRevoked string) {
 	//fmt.Println("OnNewRecvMessageRevoked , ", messageRevoked)
 }
 
+func (m *MsgListenerCallBak) OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string) {
+
+}
+func (m *MsgListenerCallBak) OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string) {
+
+}
+
 type BatchMsg struct {
 }
 

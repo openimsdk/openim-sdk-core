@@ -1188,7 +1188,7 @@ func (c *Conversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
 	//		continue
 	//	}
 	//	t := new(model_struct.LocalChatLog)
-	attachInfo := sdk_struct.AttachedInfoElem{}
+	//  attachInfo := sdk_struct.AttachedInfoElem{}
 	//	_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
 	//
 	//	contain, v := isContainMessageReaction(msg.ReactionType, attachInfo.MessageReactionElem)
