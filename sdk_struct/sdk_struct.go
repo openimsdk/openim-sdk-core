@@ -79,30 +79,29 @@ type FileBaseInfo struct {
 }
 
 type MsgStruct struct {
-	ClientMsgID             string                            `json:"clientMsgID,omitempty"`
-	ServerMsgID             string                            `json:"serverMsgID,omitempty"`
-	CreateTime              int64                             `json:"createTime"`
-	SendTime                int64                             `json:"sendTime"`
-	SessionType             int32                             `json:"sessionType"`
-	SendID                  string                            `json:"sendID,omitempty"`
-	RecvID                  string                            `json:"recvID,omitempty"`
-	MsgFrom                 int32                             `json:"msgFrom"`
-	ContentType             int32                             `json:"contentType"`
-	SenderPlatformID        int32                             `json:"platformID"`
-	SenderNickname          string                            `json:"senderNickname,omitempty"`
-	SenderFaceURL           string                            `json:"senderFaceUrl,omitempty"`
-	GroupID                 string                            `json:"groupID,omitempty"`
-	Content                 string                            `json:"content,omitempty"`
-	Seq                     uint32                            `json:"seq"`
-	IsRead                  bool                              `json:"isRead"`
-	Status                  int32                             `json:"status"`
-	IsReact                 bool                              `json:"isReact,omitempty"`
-	IsExternalExtensions    bool                              `json:"isExternalExtensions,omitempty"`
-	OfflinePush             server_api_params.OfflinePushInfo `json:"offlinePush,omitempty"`
-	AttachedInfo            string                            `json:"attachedInfo,omitempty"`
-	Ex                      string                            `json:"ex,omitempty"`
-	LocalReactionExtensions []byte                            `json:"localReactionExtensions,omitempty"`
-	PictureElem             struct {
+	ClientMsgID          string                            `json:"clientMsgID,omitempty"`
+	ServerMsgID          string                            `json:"serverMsgID,omitempty"`
+	CreateTime           int64                             `json:"createTime"`
+	SendTime             int64                             `json:"sendTime"`
+	SessionType          int32                             `json:"sessionType"`
+	SendID               string                            `json:"sendID,omitempty"`
+	RecvID               string                            `json:"recvID,omitempty"`
+	MsgFrom              int32                             `json:"msgFrom"`
+	ContentType          int32                             `json:"contentType"`
+	SenderPlatformID     int32                             `json:"platformID"`
+	SenderNickname       string                            `json:"senderNickname,omitempty"`
+	SenderFaceURL        string                            `json:"senderFaceUrl,omitempty"`
+	GroupID              string                            `json:"groupID,omitempty"`
+	Content              string                            `json:"content,omitempty"`
+	Seq                  uint32                            `json:"seq"`
+	IsRead               bool                              `json:"isRead"`
+	Status               int32                             `json:"status"`
+	IsReact              bool                              `json:"isReact,omitempty"`
+	IsExternalExtensions bool                              `json:"isExternalExtensions,omitempty"`
+	OfflinePush          server_api_params.OfflinePushInfo `json:"offlinePush,omitempty"`
+	AttachedInfo         string                            `json:"attachedInfo,omitempty"`
+	Ex                   string                            `json:"ex,omitempty"`
+	PictureElem          struct {
 		SourcePath      string          `json:"sourcePath,omitempty"`
 		SourcePicture   PictureBaseInfo `json:"sourcePicture,omitempty"`
 		BigPicture      PictureBaseInfo `json:"bigPicture,omitempty"`
@@ -176,8 +175,7 @@ type MsgStruct struct {
 		Text              string           `json:"text,omitempty"`
 		MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
 	} `json:"messageEntityElem,omitempty"`
-	AttachedInfoElem            AttachedInfoElem                       `json:"attachedInfoElem,omitempty"`
-	LocalReactionExtensionsElem map[string]*server_api_params.KeyValue `json:"localReactionExtensionsElem,omitempty"`
+	AttachedInfoElem AttachedInfoElem `json:"attachedInfoElem,omitempty"`
 }
 
 type AtInfo struct {

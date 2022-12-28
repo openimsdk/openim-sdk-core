@@ -187,8 +187,22 @@ func (d *DataBase) initDB() error {
 		&LocalWorkMomentsNotification{},
 		&LocalWorkMomentsNotificationUnreadCount{},
 		&model_struct.TempCacheLocalChatLog{},
+		&model_struct.LocalChatLogReactionExtensions{},
 	)
 	db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup)
+	groupIDList, err := d.GetJoinedSuperGroupIDList()
+	if err != nil {
+		log.Error("auto migrate super db err:", err.Error())
+	}
+	wkGroupIDList, err2 := d.GetJoinedWorkingGroupIDList()
+	if err2 != nil {
+		log.Error("auto migrate working group  db err:", err2)
+
+	}
+	groupIDList = append(groupIDList, wkGroupIDList...)
+	for _, v := range groupIDList {
+		d.conn.Table(utils.GetSuperGroupTableName(v)).AutoMigrate(&model_struct.LocalChatLog{})
+	}
 	if !db.Migrator().HasTable(&model_struct.LocalFriend{}) {
 		db.Migrator().CreateTable(&model_struct.LocalFriend{})
 	}
@@ -241,6 +255,9 @@ func (d *DataBase) initDB() error {
 	}
 	if !db.Migrator().HasTable(&LocalWorkMomentsNotificationUnreadCount{}) {
 		db.Migrator().CreateTable(&LocalWorkMomentsNotificationUnreadCount{})
+	}
+	if !db.Migrator().HasTable(&model_struct.LocalChatLogReactionExtensions{}) {
+		db.Migrator().CreateTable(&model_struct.LocalChatLogReactionExtensions{})
 	}
 	log.NewInfo("init db", "startInitWorkMomentsNotificationUnreadCount ")
 	if err := d.InitWorkMomentsNotificationUnreadCount(); err != nil {

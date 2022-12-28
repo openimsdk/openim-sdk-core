@@ -56,6 +56,8 @@ type OnAdvancedMsgListener interface {
 	//deprecated
 	OnRecvMessageRevoked(msgID string)
 	OnNewRecvMessageRevoked(messageRevoked string)
+	OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string)
+	OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string)
 }
 
 type OnBatchMsgListener interface {
@@ -76,4 +78,7 @@ type OnWorkMomentsListener interface {
 
 type OnCustomBusinessListener interface {
 	OnRecvCustomBusinessMessage(businessMessage string)
+}
+type OnMessageKvInfoListener interface {
+	OnMessageKvInfoChanged(messageChangedList string)
 }

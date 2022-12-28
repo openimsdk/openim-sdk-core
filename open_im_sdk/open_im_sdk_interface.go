@@ -744,6 +744,13 @@ func SetAdvancedMsgListener(listener open_im_sdk_callback.OnAdvancedMsgListener)
 	}
 	userForSDK.SetAdvancedMsgListener(listener)
 }
+func SetMessageKvInfoListener(listener open_im_sdk_callback.OnMessageKvInfoListener) {
+	if listener == nil || userForSDK == nil {
+		log.Error("callback or userForSDK is nil")
+		return
+	}
+	userForSDK.SetMessageKvInfoListener(listener)
+}
 func SetBatchMsgListener(listener open_im_sdk_callback.OnBatchMsgListener) {
 	if listener == nil || userForSDK == nil {
 		log.Error("callback or userForSDK is nil")
@@ -1141,12 +1148,22 @@ func SetMessageReactionExtensions(callback open_im_sdk_callback.Base, operationI
 //	BaseCaller(userForSDK.Conversation().AddMessageReactionExtensions, callback, counter, reactionType, operationType, groupID, msgID, operationID)
 //}
 
-//func DeleteMessageReactionExtensions() {
-//	BaseCaller(userForSDK.Conversation().DeleteMessageReactionExtensions, callback, counter, reactionType, operationType, groupID, msgID, operationID)
-//}
+func DeleteMessageReactionExtensions(callback open_im_sdk_callback.Base, operationID, message, reactionExtensionKeyList string) {
+	BaseCaller(userForSDK.Conversation().DeleteMessageReactionExtensions, callback, message, reactionExtensionKeyList, operationID)
+}
 
 func GetMessageListReactionExtensions(callback open_im_sdk_callback.Base, operationID, messageList string) {
 	BaseCaller(userForSDK.Conversation().GetMessageListReactionExtensions, callback, messageList, operationID)
+}
+
+func SetTypeKeyInfo(callback open_im_sdk_callback.Base, operationID, message, typeKey, ex string, isCanRepeat bool) {
+	BaseCaller(userForSDK.Conversation().SetTypeKeyInfo, callback, message, typeKey, ex, isCanRepeat, operationID)
+}
+func GetTypeKeyListInfo(callback open_im_sdk_callback.Base, operationID, message, typeKeyList string) {
+	BaseCaller(userForSDK.Conversation().GetTypeKeyListInfo, callback, message, typeKeyList, operationID)
+}
+func GetAllTypeKeyInfo(callback open_im_sdk_callback.Base, message, operationID string) {
+	BaseCaller(userForSDK.Conversation().GetAllTypeKeyInfo, callback, message, operationID)
 }
 
 //////////////////////////signaling//////////////////////////////////////////

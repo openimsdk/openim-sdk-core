@@ -142,7 +142,11 @@ func (u *LoginMgr) SetAdvancedMsgListener(advancedMsgListener open_im_sdk_callba
 		u.advancedMsgListener = advancedMsgListener
 	}
 }
-
+func (u *LoginMgr) SetMessageKvInfoListener(messageKvInfoListener open_im_sdk_callback.OnMessageKvInfoListener) {
+	if u.conversation != nil {
+		u.conversation.SetMsgKvListener(messageKvInfoListener)
+	}
+}
 func (u *LoginMgr) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnBatchMsgListener) {
 	if u.conversation != nil {
 		u.conversation.SetBatchMsgListener(batchMsgListener)
@@ -367,6 +371,8 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 	resp, err := u.ws.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID, operationID)
 	if err != nil {
 		log.Warn(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
+		callback.OnError(100, err.Error())
+		return
 	}
 
 	err = common.TriggerCmdLogout(u.cmdWsCh)
@@ -418,8 +424,8 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 }
 
 func (u *LoginMgr) setAppBackgroundStatus(callback open_im_sdk_callback.Base, isBackground bool, operationID string) {
-	timeout := 2
-	retryTimes := 0
+	timeout := 5
+	retryTimes := 2
 	log.Info(operationID, "send to svr WsSetBackgroundStatus ...", u.loginUserID)
 	resp, err := u.ws.SendReqWaitResp(&server_api_params.SetAppBackgroundStatusReq{UserID: u.loginUserID, IsBackground: isBackground}, constant.WsSetBackgroundStatus, timeout, retryTimes, u.loginUserID, operationID)
 	if err != nil {

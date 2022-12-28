@@ -2,7 +2,6 @@ package heartbeart
 
 import (
 	"errors"
-	"github.com/golang/protobuf/proto"
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
@@ -14,6 +13,8 @@ import (
 	"open_im_sdk/sdk_struct"
 	"runtime"
 	"time"
+
+	"github.com/golang/protobuf/proto"
 )
 
 type Heartbeat struct {
@@ -107,6 +108,8 @@ func (u *Heartbeat) Run() {
 					runtime.Goexit()
 				}
 				if r.Cmd == constant.CmdWakeUp {
+					u.full.SuperGroup.SyncJoinedGroupList(operationID)
+					u.full.Group().SyncJoinedGroupList(operationID)
 					log.Info(operationID, "recv wake up cmd, start heartbeat ", r.Cmd)
 					break
 				}
