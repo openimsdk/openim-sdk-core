@@ -1,3 +1,4 @@
+//go:build js && wasm
 // +build js,wasm
 
 package wasm_wrapper
@@ -182,6 +183,10 @@ func (w *WrapperConMsg) FindMessageList(_ js.Value, args []js.Value) interface{}
 func (w *WrapperConMsg) GetHistoryMessageListReverse(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.GetHistoryMessageListReverse, callback, &args).AsyncCallWithCallback()
+}
+func (w *WrapperConMsg) RevokeMessage(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.RevokeMessage, callback, &args).AsyncCallWithCallback()
 }
 
 func (w *WrapperConMsg) NewRevokeMessage(_ js.Value, args []js.Value) interface{} {
