@@ -80,6 +80,7 @@ type GetMessageListReactionExtensionsReq struct {
 	OperationID            string                                    `json:"operationID" binding:"required"`
 	SourceID               string                                    `json:"sourceID"  binding:"required"`
 	SessionType            int32                                     `json:"sessionType" binding:"required"`
+	IsExternalExtensions   bool                                      `json:"isExternalExtensions"`
 	MessageReactionKeyList []OperateMessageListReactionExtensionsReq `json:"messageReactionKeyList" binding:"required"`
 }
 

@@ -2094,6 +2094,7 @@ func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_cal
 	}
 	var sourceID string
 	var sessionType int32
+	var isExternalExtension bool
 	var reqList []server_api_params.OperateMessageListReactionExtensionsReq
 	for _, v := range messageList {
 		message, err := c.db.GetMessageController(v)
@@ -2111,11 +2112,13 @@ func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_cal
 			sourceID = message.RecvID
 		}
 		sessionType = message.SessionType
+		isExternalExtension = message.IsExternalExtensions
 	}
 	var apiReq server_api_params.GetMessageListReactionExtensionsReq
 	apiReq.SourceID = sourceID
 	apiReq.SessionType = sessionType
 	apiReq.MessageReactionKeyList = reqList
+	apiReq.IsExternalExtensions = isExternalExtension
 	apiReq.OperationID = operationID
 	var apiResp server_api_params.GetMessageListReactionExtensionsResp
 	c.p.PostFatalCallback(callback, constant.GetMessageListReactionExtensionsRouter, apiReq, &apiResp, apiReq.OperationID)
