@@ -1,3 +1,4 @@
+//go:build js && wasm
 // +build js,wasm
 
 package wasm_wrapper
@@ -87,4 +88,8 @@ func (w *WrapperInitLogin) Login(_ js.Value, args []js.Value) interface{} {
 func (w *WrapperInitLogin) Logout(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.Logout, callback, &args).AsyncCallWithCallback()
+}
+func (w *WrapperInitLogin) SetAppBackgroundStatus(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.SetAppBackgroundStatus, callback, &args).AsyncCallWithCallback()
 }

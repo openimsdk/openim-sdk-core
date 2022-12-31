@@ -693,5 +693,14 @@ message DelMsgListResp{
   int32 errCode = 1;
   string errMsg = 2;
 }
+message SetAppBackgroundStatusReq {
+  string userID = 1;
+  bool isBackground = 2;
+}
+
+message SetAppBackgroundStatusResp {
+  int32 errCode = 1;
+  string errMsg = 2;
+}
 
 
