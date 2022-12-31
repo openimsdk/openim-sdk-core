@@ -62,4 +62,7 @@ func registerFunc() {
 	wrapperUser := wasm_wrapper.NewWrapperUser(globalFuc)
 	js.Global().Set("getSelfUserInfo", js.FuncOf(wrapperUser.GetSelfUserInfo))
 
+	wrapperThird := wasm_wrapper.NewWrapperThird(globalFuc)
+	js.Global().Set("updateFcmToken", js.FuncOf(wrapperThird.UpdateFcmToken))
+
 }
