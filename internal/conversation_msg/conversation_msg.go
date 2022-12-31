@@ -1258,7 +1258,7 @@ func (c *Conversation) doReactionMsgDeleter(msgReactionList []*sdk_struct.MsgStr
 		for _, value := range n.SuccessReactionExtensionList {
 			deleteKeyList = append(deleteKeyList, value.TypeKey)
 		}
-		c.msgListener.OnRecvMessageExtensionsChanged(n.ClientMsgID, utils.StructToJsonString(deleteKeyList))
+		c.msgListener.OnRecvMessageExtensionsDeleted(n.ClientMsgID, utils.StructToJsonString(deleteKeyList))
 
 	}
 
