@@ -28,6 +28,7 @@ type Ws struct {
 	cmdHeartbeatCh     chan common.Cmd2Value //
 	conversationCH     chan common.Cmd2Value
 	JustOnceFlag       bool
+	IsBackground       bool
 }
 
 func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, cmdCh chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value, cmdHeartbeatCh, conversationCH chan common.Cmd2Value) *Ws {
@@ -80,6 +81,12 @@ func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, co
 }
 
 func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retryTimes int, senderID, operationID string) (*GeneralWsResp, error) {
+	switch reqIdentifier {
+	case constant.WsSetBackgroundStatus:
+		if v, ok := m.(*server_api_params.SetAppBackgroundStatusReq); ok {
+			w.IsBackground = v.IsBackground
+		}
+	}
 	var wsReq GeneralWsReq
 	var connSend *websocket.Conn
 	var err error
@@ -171,6 +178,10 @@ func (w *Ws) reConnSleep(operationID string, sleep int32) (error, bool) {
 		log.Error(operationID, "ReConn failed ", err.Error(), "is need re connect ", isNeedReConn)
 		time.Sleep(time.Duration(sleep) * time.Second)
 	} else {
+		resp, err := w.SendReqWaitResp(&server_api_params.SetAppBackgroundStatusReq{UserID: w.loginUserID, IsBackground: w.IsBackground}, constant.WsSetBackgroundStatus, 5, 2, w.loginUserID, operationID)
+		if err != nil {
+			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsSetBackgroundStatus, 5, w.loginUserID, resp)
+		}
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.SyncConversation, Args: operationID}, w.conversationCH)
 	}
 	return err, isNeedReConn

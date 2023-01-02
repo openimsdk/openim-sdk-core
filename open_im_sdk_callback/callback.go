@@ -61,6 +61,7 @@ type OnAdvancedMsgListener interface {
 
 type OnBatchMsgListener interface {
 	OnRecvNewMessages(messageList string)
+	OnRecvOfflineNewMessages(messageList string)
 }
 
 type OnUserListener interface {

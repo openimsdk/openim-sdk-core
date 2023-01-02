@@ -1404,6 +1404,9 @@ func (c *Conversation) batchNewMessages(newMessagesList sdk_struct.NewMsgList) {
 				log.Info("internal", "trigger msg is ", v.SenderFaceURL, v.SenderNickname)
 			}
 			c.batchMsgListener.OnRecvNewMessages(utils.StructToJsonString(newMessagesList))
+			if c.IsBackground {
+				c.batchMsgListener.OnRecvOfflineNewMessages(utils.StructToJsonString(newMessagesList))
+			}
 		}
 	} else {
 		log.Warn("internal", "not set batchMsgListener ")

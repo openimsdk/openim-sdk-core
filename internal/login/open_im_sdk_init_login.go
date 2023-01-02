@@ -2,7 +2,6 @@ package login
 
 import (
 	"open_im_sdk/open_im_sdk_callback"
-	"open_im_sdk/pkg/log"
 	"sync"
 )
 
@@ -28,10 +27,8 @@ func (u *LoginMgr) Logout(callback open_im_sdk_callback.Base, operationID string
 	}()
 }
 func (u *LoginMgr) SetAppBackgroundStatus(callback open_im_sdk_callback.Base, isBackground bool, operationID string) {
-	go func() {
-		log.NewInfo(operationID, "SetAppBackgroundStatus", "isBackground", isBackground)
-		u.setAppBackgroundStatus(callback, isBackground, operationID)
-	}()
+	u.setAppBackgroundStatus(callback, isBackground, operationID)
+
 }
 
 func (u *LoginMgr) UploadImage(callback open_im_sdk_callback.Base, filePath string, token, obj string, operationID string) string {
