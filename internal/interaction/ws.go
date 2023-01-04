@@ -321,6 +321,12 @@ func (w *Ws) doWsMsg(message []byte) {
 	case constant.WSSendSignalMsg:
 		log.Info(wsResp.OperationID, "signaling...")
 		w.DoWSSignal(*wsResp)
+	case constant.WsSetBackgroundStatus:
+		log.Info(wsResp.OperationID, "WsSetBackgroundStatus...")
+		if err = w.setAppBackgroundStatus(*wsResp); err != nil {
+			log.Error(wsResp.OperationID, "WsSetBackgroundStatus failed ", err.Error(), wsResp.ReqIdentifier, wsResp.MsgIncr)
+		}
+		log.NewDebug(wsResp.OperationID, *wsResp)
 	default:
 		log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
 		return
@@ -385,6 +391,12 @@ func (w *Ws) doWSPushMsg(wsResp GeneralWsResp) error {
 		return utils.Wrap(err, "Unmarshal failed")
 	}
 	return utils.Wrap(common.TriggerCmdPushMsg(sdk_struct.CmdPushMsgToMsgSync{Msg: &msg, OperationID: wsResp.OperationID}, w.pushMsgAndMaxSeqCh), "")
+}
+func (w *Ws) setAppBackgroundStatus(wsResp GeneralWsResp) error {
+	if err := w.notifyResp(wsResp); err != nil {
+		return utils.Wrap(err, "")
+	}
+	return nil
 }
 
 func (w *Ws) doWSPushMsgForTest(wsResp GeneralWsResp) error {
