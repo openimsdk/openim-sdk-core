@@ -715,6 +715,9 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 						startSeq = 1
 					}
 					log.Debug(operationID, "pull start is ", startSeq)
+					if startSeq < int64(minSeq) {
+						startSeq = int64(minSeq)
+					}
 					for i := startSeq; i < int64(seq); i++ {
 						seqList = append(seqList, uint32(i))
 					}
