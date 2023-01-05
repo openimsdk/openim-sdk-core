@@ -236,7 +236,7 @@ func (i IndexDB) ClearConversation(conversationID string) error {
 	return err
 }
 
-func (i IndexDB) CleaAllConversation() error {
+func (i IndexDB) ClearAllConversation() error {
 	_, err := Exec()
 	return err
 }

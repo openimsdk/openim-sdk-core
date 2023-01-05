@@ -1811,7 +1811,7 @@ func (c *Conversation) deleteAllMsgFromLocal(callback open_im_sdk_callback.Base,
 			continue
 		}
 	}
-	err = c.db.CleaAllConversation()
+	err = c.db.ClearAllConversation()
 	common.CheckDBErrCallback(callback, err, operationID)
 	conversationList, err := c.db.GetAllConversationListDB()
 	common.CheckDBErrCallback(callback, err, operationID)

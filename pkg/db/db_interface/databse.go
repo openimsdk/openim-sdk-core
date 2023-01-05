@@ -107,7 +107,7 @@ type DataBase interface {
 	ResetConversation(conversationID string) error
 	ResetAllConversation() error
 	ClearConversation(conversationID string) error
-	CleaAllConversation() error
+	ClearAllConversation() error
 	SetConversationDraftDB(conversationID, draftText string) error
 	RemoveConversationDraft(conversationID, draftText string) error
 	UnPinConversation(conversationID string, isPinned int) error
