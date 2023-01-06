@@ -116,6 +116,12 @@ func (a AdvancedMsgCallback) OnRecvMessageExtensionsDeleted(clientMsgID string, 
 	m["reactionExtensionKeyList"] = reactionExtensionKeyList
 	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(utils.StructToJsonString(m)).SendMessage()
 }
+func (a AdvancedMsgCallback) OnRecvMessageExtensionsAdded(clientMsgID string, reactionExtensionList string) {
+	m := make(map[string]interface{})
+	m["clientMsgID"] = clientMsgID
+	m["reactionExtensionList"] = reactionExtensionList
+	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(utils.StructToJsonString(m)).SendMessage()
+}
 
 type BaseCallback struct {
 	CallbackWriter

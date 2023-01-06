@@ -57,6 +57,7 @@ type OnAdvancedMsgListener interface {
 	OnNewRecvMessageRevoked(messageRevoked string)
 	OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string)
 	OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string)
+	OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string)
 }
 
 type OnBatchMsgListener interface {

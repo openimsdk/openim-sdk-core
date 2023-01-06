@@ -1596,9 +1596,15 @@ func (c *Conversation) SetMessageReactionExtensions(callback open_im_sdk_callbac
 	//c.modifyGroupMessageReaction(callback, counter, reactionType, operationType, groupID, msgID, operationID)
 }
 
-//func (c *Conversation) AddMessageReactionExtensions(callback open_im_sdk_callback.Base, counter int32, reactionType, operationType int, groupID, msgID, operationID string) {
-//	c.modifyGroupMessageReaction(callback, counter, reactionType, operationType, groupID, msgID, operationID)
-//}
+func (c *Conversation) AddMessageReactionExtensions(callback open_im_sdk_callback.Base, message, reactionExtensionList, operationID string) {
+	s := sdk_struct.MsgStruct{}
+	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+	var unmarshalParams sdk_params_callback.AddMessageReactionExtensionsParams
+	common.JsonUnmarshalCallback(reactionExtensionList, &unmarshalParams, callback, operationID)
+	result := c.addMessageReactionExtensions(callback, &s, unmarshalParams, operationID)
+	callback.OnSuccess(utils.StructToJsonString(result))
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+}
 
 func (c *Conversation) DeleteMessageReactionExtensions(callback open_im_sdk_callback.Base, message, reactionExtensionKeyList, operationID string) {
 	s := sdk_struct.MsgStruct{}
@@ -1614,6 +1620,19 @@ func (c *Conversation) GetMessageListReactionExtensions(callback open_im_sdk_cal
 	var list []*sdk_struct.MsgStruct
 	common.JsonUnmarshalAndArgsValidate(messageList, &list, callback, operationID)
 	result := c.getMessageListReactionExtensions(callback, list, operationID)
+	callback.OnSuccess(utils.StructToJsonString(result))
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+}
+
+/**
+**Get some reaction extensions in reactionExtensionKeyList of message list
+ */
+func (c *Conversation) GetMessageListSomeReactionExtensions(callback open_im_sdk_callback.Base, messageList, reactionExtensionKeyList, operationID string) {
+	var messagelist []*sdk_struct.MsgStruct
+	common.JsonUnmarshalAndArgsValidate(messageList, &messagelist, callback, operationID)
+	var list []string
+	common.JsonUnmarshalAndArgsValidate(reactionExtensionKeyList, &list, callback, operationID)
+	result := c.getMessageListSomeReactionExtensions(callback, messagelist, list, operationID)
 	callback.OnSuccess(utils.StructToJsonString(result))
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
 }

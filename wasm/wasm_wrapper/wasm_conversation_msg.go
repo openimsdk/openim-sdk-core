@@ -75,6 +75,11 @@ func (w *WrapperConMsg) SetMessageReactionExtensions(_ js.Value, args []js.Value
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.SetMessageReactionExtensions, callback, &args).AsyncCallWithCallback()
 }
+func (w *WrapperConMsg) AddMessageReactionExtensions(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.AddMessageReactionExtensions, callback, &args).AsyncCallWithCallback()
+}
+
 func (w *WrapperConMsg) DeleteMessageReactionExtensions(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.DeleteMessageReactionExtensions, callback, &args).AsyncCallWithCallback()
@@ -82,6 +87,10 @@ func (w *WrapperConMsg) DeleteMessageReactionExtensions(_ js.Value, args []js.Va
 func (w *WrapperConMsg) GetMessageListReactionExtensions(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.GetMessageListReactionExtensions, callback, &args).AsyncCallWithCallback()
+}
+func (w *WrapperConMsg) GetMessageListSomeReactionExtensions(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.GetMessageListSomeReactionExtensions, callback, &args).AsyncCallWithCallback()
 }
 
 //------------------------------------conversation---------------------------

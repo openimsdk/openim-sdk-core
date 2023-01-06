@@ -1213,16 +1213,26 @@ func (c *Conversation) doReactionMsgModifier(msgReactionList []*sdk_struct.MsgSt
 			log.Error("internal", "unmarshal failed err:", err.Error(), *msgStruct)
 			continue
 		}
-		err = c.db.GetAndUpdateMessageReactionExtension(n.ClientMsgID, n.SuccessReactionExtensionList)
-		if err != nil {
-			log.Error("internal", "GetAndUpdateMessageReactionExtension err:", err.Error())
-			continue
+		switch n.Operation {
+		case constant.AddMessageExtensions:
+			var reactionExtensionList []*server_api_params.KeyValue
+			for _, value := range n.SuccessReactionExtensionList {
+				reactionExtensionList = append(reactionExtensionList, value)
+			}
+			c.msgListener.OnRecvMessageExtensionsAdded(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
+		case constant.SetMessageExtensions:
+			err = c.db.GetAndUpdateMessageReactionExtension(n.ClientMsgID, n.SuccessReactionExtensionList)
+			if err != nil {
+				log.Error("internal", "GetAndUpdateMessageReactionExtension err:", err.Error())
+				continue
+			}
+			var reactionExtensionList []*server_api_params.KeyValue
+			for _, value := range n.SuccessReactionExtensionList {
+				reactionExtensionList = append(reactionExtensionList, value)
+			}
+			c.msgListener.OnRecvMessageExtensionsChanged(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
+
 		}
-		var reactionExtensionList []*server_api_params.KeyValue
-		for _, value := range n.SuccessReactionExtensionList {
-			reactionExtensionList = append(reactionExtensionList, value)
-		}
-		c.msgListener.OnRecvMessageExtensionsChanged(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
 		t := model_struct.LocalChatLog{}
 		t.ClientMsgID = n.ClientMsgID
 		t.SessionType = n.SessionType
