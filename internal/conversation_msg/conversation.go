@@ -1819,7 +1819,7 @@ func (c *Conversation) deleteAllMsgFromLocal(callback open_im_sdk_callback.Base,
 			continue
 		}
 	}
-	err = c.db.CleaAllConversation()
+	err = c.db.ClearAllConversation()
 	common.CheckDBErrCallback(callback, err, operationID)
 	conversationList, err := c.db.GetAllConversationListDB()
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -1844,128 +1844,6 @@ func (c *Conversation) deleteAllMsgFromSvr(callback open_im_sdk_callback.Base, o
 	apiReq.SeqList = seqList
 	c.p.PostFatalCallback(callback, constant.DeleteMsgRouter, apiReq, nil, apiReq.OperationID)
 }
-
-//func (c *Conversation) modifyGroupMessageReaction(callback open_im_sdk_callback.Base, counter int32, reactionType, operationType int, groupID, msgID, operationID string) {
-//	_, conversationType, err := c.getConversationTypeByGroupID(groupID)
-//	common.CheckAnyErrCallback(callback, 202, err, operationID)
-//	msg := sdk_struct.MsgStruct{GroupID: groupID, ClientMsgID: msgID, SessionType: conversationType}
-//	message, err := c.db.GetMessageController(&msg)
-//	common.CheckDBErrCallback(callback, err, operationID)
-//	if message.Status != constant.MsgStatusSendSuccess {
-//		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can be modified"), operationID)
-//	}
-//
-//	t := new(model_struct.LocalChatLog)
-//	attachInfo := sdk_struct.AttachedInfoElem{}
-//	_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
-//
-//	contain, v := isContainMessageReaction(reactionType, attachInfo.MessageReactionElem)
-//	if contain {
-//		userContain, userReaction := isContainUserReactionElem(c.loginUserID, v.UserReactionList)
-//		if userContain {
-//			if !v.CanRepeat && userReaction.Counter > 0 {
-//				// to do nothing
-//				return
-//			} else {
-//				userReaction.Counter += counter
-//				v.Counter += counter
-//				if v.Counter < 0 {
-//					log.Debug(operationID, "after operate all counter  < 0", v.Type, v.Counter, counter)
-//					v.Counter = 0
-//				}
-//				if userReaction.Counter <= 0 {
-//					log.Debug(operationID, "after operate userReaction counter < 0", v.Type, userReaction.Counter, counter)
-//					v.UserReactionList = DeleteUserReactionElem(v.UserReactionList, c.loginUserID)
-//				}
-//			}
-//		} else {
-//			log.Debug(operationID, "attachInfo.MessageReactionElem is nil", counter, reactionType, groupID, msgID)
-//			u := new(sdk_struct.UserReactionElem)
-//			u.UserID = c.loginUserID
-//			u.Counter = counter
-//			v.Counter += counter
-//			if v.Counter < 0 {
-//				log.Debug(operationID, "after operate all counter  < 0", v.Type, v.Counter, counter)
-//				v.Counter = 0
-//			}
-//			if u.Counter <= 0 {
-//				log.Debug(operationID, "after operate userReaction counter < 0", v.Type, u.Counter, counter)
-//				v.UserReactionList = DeleteUserReactionElem(v.UserReactionList, c.loginUserID)
-//			}
-//			v.UserReactionList = append(v.UserReactionList, u)
-//		}
-//
-//	} else {
-//		log.Debug(operationID, "attachInfo.MessageReactionElem is nil", counter, reactionType, groupID, msgID)
-//		t := new(sdk_struct.ReactionElem)
-//		t.Counter = counter
-//		t.Type = reactionType
-//		u := new(sdk_struct.UserReactionElem)
-//		u.UserID = c.loginUserID
-//		u.Counter = counter
-//		t.UserReactionList = append(t.UserReactionList, u)
-//		attachInfo.MessageReactionElem = append(attachInfo.MessageReactionElem, t)
-//
-//	}
-//	var localMessage model_struct.LocalChatLog
-//	reactionMessage := sdk_struct.MessageReaction{ClientMsgID: msgID, ReactionType: reactionType, Counter: counter, UserID: c.loginUserID, GroupID: groupID, SessionType: conversationType}
-//	s := sdk_struct.MsgStruct{}
-//	c.initBasicInfo(&s, constant.UserMsgType, constant.ReactionMessageModifier, operationID)
-//	s.GroupID = groupID
-//	s.Content = utils.StructToJsonString(reactionMessage)
-//	options := make(map[string]bool, 5)
-//	utils.SetSwitchFromOptions(options, constant.IsConversationUpdate, false)
-//	utils.SetSwitchFromOptions(options, constant.IsSenderConversationUpdate, false)
-//	utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
-//	utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
-//	//If there is an error, the coroutine ends, so judgment is not  required
-//	resp, _ := c.InternalSendMessage(callback, &s, "", groupID, operationID, &server_api_params.OfflinePushInfo{}, false, options)
-//	s.ServerMsgID = resp.ServerMsgID
-//	s.SendTime = resp.SendTime
-//	s.Status = constant.MsgStatusFiltered
-//	msgStructToLocalChatLog(&localMessage, &s)
-//	err = c.db.InsertMessageController(&localMessage)
-//	if err != nil {
-//		log.Error(operationID, "inset into chat log err", localMessage, s, err.Error())
-//	}
-//	t.AttachedInfo = utils.StructToJsonString(attachInfo)
-//	t.ClientMsgID = message.ClientMsgID
-//	t.SessionType = message.SessionType
-//	t.RecvID = message.RecvID
-//	err1 := c.db.UpdateMessageController(t)
-//	if err1 != nil {
-//		log.Error(operationID, "UpdateMessageController err:", err1, "ClientMsgID", *t, message)
-//	}
-//	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.MessageChange, &msg}})
-//
-//}
-//func isContainMessageReaction(reactionType int, list []*sdk_struct.ReactionElem) (bool, *sdk_struct.ReactionElem) {
-//	for _, v := range list {
-//		if v.Type == reactionType {
-//			return true, v
-//		}
-//	}
-//	return false, nil
-//}
-//func isContainUserReactionElem(useID string, list []*sdk_struct.UserReactionElem) (bool, *sdk_struct.UserReactionElem) {
-//	for _, v := range list {
-//		if v.UserID == useID {
-//			return true, v
-//		}
-//	}
-//	return false, nil
-//}
-//
-//func DeleteUserReactionElem(a []*sdk_struct.UserReactionElem, userID string) []*sdk_struct.UserReactionElem {
-//	j := 0
-//	for _, v := range a {
-//		if v.UserID != userID {
-//			a[j] = v
-//			j++
-//		}
-//	}
-//	return a[:j]
-//}
 func (c *Conversation) setMessageReactionExtensions(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, req sdk.SetMessageReactionExtensionsParams, operationID string) []*server_api_params.ExtensionResult {
 	message, err := c.db.GetMessageController(s)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -2022,6 +1900,57 @@ func (c *Conversation) setMessageReactionExtensions(callback open_im_sdk_callbac
 	if err != nil {
 		log.Error(operationID, "GetAndUpdateMessageReactionExtension err:", err.Error())
 	}
+	if !message.IsReact {
+		message.IsReact = apiResp.ApiResult.IsReact
+		message.MsgFirstModifyTime = apiResp.ApiResult.MsgFirstModifyTime
+		err = c.db.UpdateMessageController(message)
+		if err != nil {
+			log.Error(operationID, "UpdateMessageController err:", err.Error(), message)
+
+		}
+	}
+	return apiResp.ApiResult.Result
+}
+func (c *Conversation) addMessageReactionExtensions(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, req sdk.AddMessageReactionExtensionsParams, operationID string) []*server_api_params.ExtensionResult {
+	message, err := c.db.GetMessageController(s)
+	common.CheckDBErrCallback(callback, err, operationID)
+	if message.Status != constant.MsgStatusSendSuccess {
+		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
+	}
+	if !message.IsExternalExtensions {
+		common.CheckAnyErrCallback(callback, 202, errors.New(" only externalExtensions message can use this interface"), operationID)
+
+	}
+	extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
+	temp := make(map[string]*server_api_params.KeyValue)
+	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
+	reqTemp := make(map[string]*server_api_params.KeyValue)
+	for _, v := range req {
+		if value, ok := temp[v.TypeKey]; ok {
+			v.LatestUpdateTime = value.LatestUpdateTime
+		}
+		reqTemp[v.TypeKey] = v
+	}
+	var sourceID string
+	switch message.SessionType {
+	case constant.SingleChatType:
+		sourceID = message.SendID + message.RecvID
+	case constant.NotificationChatType:
+		sourceID = message.RecvID
+	case constant.GroupChatType, constant.SuperGroupChatType:
+		sourceID = message.RecvID
+	}
+	var apiReq server_api_params.AddMessageReactionExtensionsReq
+	apiReq.IsReact = message.IsReact
+	apiReq.ClientMsgID = message.ClientMsgID
+	apiReq.SourceID = sourceID
+	apiReq.SessionType = message.SessionType
+	apiReq.IsExternalExtensions = message.IsExternalExtensions
+	apiReq.ReactionExtensionList = reqTemp
+	apiReq.OperationID = operationID
+	apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
+	var apiResp server_api_params.AddMessageReactionExtensionsResp
+	c.p.PostFatalCallback(callback, constant.AddMessageReactionExtensionsRouter, apiReq, &apiResp.ApiResult, apiReq.OperationID)
 	if !message.IsReact {
 		message.IsReact = apiResp.ApiResult.IsReact
 		message.MsgFirstModifyTime = apiResp.ApiResult.MsgFirstModifyTime
@@ -2119,6 +2048,43 @@ func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_cal
 	}
 	var apiReq server_api_params.GetMessageListReactionExtensionsReq
 	apiReq.SourceID = sourceID
+	apiReq.SessionType = sessionType
+	apiReq.MessageReactionKeyList = reqList
+	apiReq.IsExternalExtensions = isExternalExtension
+	apiReq.OperationID = operationID
+	var apiResp server_api_params.GetMessageListReactionExtensionsResp
+	c.p.PostFatalCallback(callback, constant.GetMessageListReactionExtensionsRouter, apiReq, &apiResp, apiReq.OperationID)
+	return apiResp
+}
+func (c *Conversation) getMessageListSomeReactionExtensions(callback open_im_sdk_callback.Base, messageList []*sdk_struct.MsgStruct, keyList []string, operationID string) server_api_params.GetMessageListReactionExtensionsResp {
+	if len(messageList) == 0 {
+		common.CheckAnyErrCallback(callback, 201, errors.New("message list is null"), operationID)
+	}
+	var sourceID string
+	var sessionType int32
+	var isExternalExtension bool
+	var reqList []server_api_params.OperateMessageListReactionExtensionsReq
+	for _, v := range messageList {
+		message, err := c.db.GetMessageController(v)
+		common.CheckDBErrCallback(callback, err, operationID)
+		var temp server_api_params.OperateMessageListReactionExtensionsReq
+		temp.ClientMsgID = message.ClientMsgID
+		temp.MsgFirstModifyTime = message.MsgFirstModifyTime
+		reqList = append(reqList, temp)
+		switch message.SessionType {
+		case constant.SingleChatType:
+			sourceID = message.SendID + message.RecvID
+		case constant.NotificationChatType:
+			sourceID = message.RecvID
+		case constant.GroupChatType, constant.SuperGroupChatType:
+			sourceID = message.RecvID
+		}
+		sessionType = message.SessionType
+		isExternalExtension = message.IsExternalExtensions
+	}
+	var apiReq server_api_params.GetMessageListReactionExtensionsReq
+	apiReq.SourceID = sourceID
+	apiReq.TypeKeyList = keyList
 	apiReq.SessionType = sessionType
 	apiReq.MessageReactionKeyList = reqList
 	apiReq.IsExternalExtensions = isExternalExtension
@@ -2362,28 +2328,3 @@ func (c *Conversation) getAllTypeKeyInfo(callback open_im_sdk_callback.Base, s *
 	}
 	return result
 }
-
-//func (c *Conversation) SetMessageReactionExtensions(callback open_im_sdk_callback.Base, operationID string) {
-//	log.NewInfo(operationID, utils.GetSelfFuncName())
-//	seqList, err := c.db.GetAllUnDeleteMessageSeqList()
-//	log.NewInfo(operationID, utils.GetSelfFuncName(), seqList)
-//	common.CheckDBErrCallback(callback, err, operationID)
-//	var apiReq server_api_params.DeleteMsgReq
-//	apiReq.OpUserID = c.loginUserID
-//	apiReq.UserID = c.loginUserID
-//	apiReq.OperationID = operationID
-//	apiReq.SeqList = seqList
-//	c.p.PostFatalCallback(callback, constant.DeleteMsgRouter, apiReq, nil, apiReq.OperationID)
-//}
-//func (c *Conversation) SetMessageReactionExtensions(callback open_im_sdk_callback.Base, operationID string) {
-//	log.NewInfo(operationID, utils.GetSelfFuncName())
-//	seqList, err := c.db.GetAllUnDeleteMessageSeqList()
-//	log.NewInfo(operationID, utils.GetSelfFuncName(), seqList)
-//	common.CheckDBErrCallback(callback, err, operationID)
-//	var apiReq server_api_params.DeleteMsgReq
-//	apiReq.OpUserID = c.loginUserID
-//	apiReq.UserID = c.loginUserID
-//	apiReq.OperationID = operationID
-//	apiReq.SeqList = seqList
-//	c.p.PostFatalCallback(callback, constant.DeleteMsgRouter, apiReq, nil, apiReq.OperationID)
-//}

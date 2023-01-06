@@ -43,6 +43,16 @@ type SetMessageReactionExtensionsReq struct {
 	IsExternalExtensions  bool                 `json:"isExternalExtensions,omitempty"`
 	MsgFirstModifyTime    int64                `json:"msgFirstModifyTime,omitempty"`
 }
+type AddMessageReactionExtensionsReq struct {
+	OperationID           string               `json:"operationID" validate:"required"`
+	ClientMsgID           string               `json:"clientMsgID" validate:"required"`
+	SourceID              string               `json:"sourceID" validate:"required"`
+	SessionType           int32                `json:"sessionType" validate:"required"`
+	ReactionExtensionList map[string]*KeyValue `json:"reactionExtensionList"`
+	IsReact               bool                 `json:"isReact,omitempty"`
+	IsExternalExtensions  bool                 `json:"isExternalExtensions,omitempty"`
+	MsgFirstModifyTime    int64                `json:"msgFirstModifyTime,omitempty"`
+}
 type DeleteMessageReactionExtensionsReq struct {
 	OperationID           string      `json:"operationID" binding:"required"`
 	SourceID              string      `json:"sourceID" binding:"required"`
@@ -71,6 +81,15 @@ type SetMessageReactionExtensionsResp struct {
 	}
 	Data map[string]interface{} `json:"data"`
 }
+type AddMessageReactionExtensionsResp struct {
+	CommResp
+	ApiResult struct {
+		Result             []*ExtensionResult `json:"result"`
+		MsgFirstModifyTime int64              `json:"msgFirstModifyTime"`
+		IsReact            bool               `json:"isReact"`
+	}
+	Data map[string]interface{} `json:"data"`
+}
 type ExtensionResult struct {
 	CommResp
 	KeyValue
@@ -81,6 +100,7 @@ type GetMessageListReactionExtensionsReq struct {
 	SourceID               string                                    `json:"sourceID"  binding:"required"`
 	SessionType            int32                                     `json:"sessionType" binding:"required"`
 	IsExternalExtensions   bool                                      `json:"isExternalExtensions"`
+	TypeKeyList            []string                                  `json:"typeKeyList"`
 	MessageReactionKeyList []OperateMessageListReactionExtensionsReq `json:"messageReactionKeyList" binding:"required"`
 }
 
@@ -114,6 +134,7 @@ type OperateMessageListReactionExtensionsReq struct {
 	MsgFirstModifyTime int64  `json:"msgFirstModifyTime"`
 }
 type ReactionMessageModifierNotification struct {
+	Operation                    int                  `json:"operation" binding:"required"`
 	SourceID                     string               `json:"sourceID"  binding:"required"`
 	OpUserID                     string               `json:"opUserID"  binding:"required"`
 	SessionType                  int32                `json:"sessionType" binding:"required"`

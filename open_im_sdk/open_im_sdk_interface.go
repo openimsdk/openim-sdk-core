@@ -1144,9 +1144,9 @@ func SetMessageReactionExtensions(callback open_im_sdk_callback.Base, operationI
 	BaseCaller(userForSDK.Conversation().SetMessageReactionExtensions, callback, message, reactionExtensionList, operationID)
 }
 
-//func AddMessageReactionExtensions() {
-//	BaseCaller(userForSDK.Conversation().AddMessageReactionExtensions, callback, counter, reactionType, operationType, groupID, msgID, operationID)
-//}
+func AddMessageReactionExtensions(callback open_im_sdk_callback.Base, operationID, message, reactionExtensionList string) {
+	BaseCaller(userForSDK.Conversation().AddMessageReactionExtensions, callback, message, reactionExtensionList, operationID)
+}
 
 func DeleteMessageReactionExtensions(callback open_im_sdk_callback.Base, operationID, message, reactionExtensionKeyList string) {
 	BaseCaller(userForSDK.Conversation().DeleteMessageReactionExtensions, callback, message, reactionExtensionKeyList, operationID)
@@ -1154,6 +1154,9 @@ func DeleteMessageReactionExtensions(callback open_im_sdk_callback.Base, operati
 
 func GetMessageListReactionExtensions(callback open_im_sdk_callback.Base, operationID, messageList string) {
 	BaseCaller(userForSDK.Conversation().GetMessageListReactionExtensions, callback, messageList, operationID)
+}
+func GetMessageListSomeReactionExtensions(callback open_im_sdk_callback.Base, operationID, messageList, reactionExtensionKeyList string) {
+	BaseCaller(userForSDK.Conversation().GetMessageListSomeReactionExtensions, callback, messageList, reactionExtensionKeyList, operationID)
 }
 
 func SetTypeKeyInfo(callback open_im_sdk_callback.Base, operationID, message, typeKey, ex string, isCanRepeat bool) {

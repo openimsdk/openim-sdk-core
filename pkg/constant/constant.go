@@ -330,6 +330,10 @@ const (
 	FieldBurnDuration  = 9
 )
 const (
+	SetMessageExtensions = 1
+	AddMessageExtensions = 2
+)
+const (
 	KeywordMatchOr  = 0
 	KeywordMatchAnd = 1
 )
