@@ -1,6 +1,7 @@
 package login
 
 import (
+	"fmt"
 	"open_im_sdk/internal/cache"
 	comm3 "open_im_sdk/internal/common"
 	conv "open_im_sdk/internal/conversation_msg"
@@ -24,6 +25,7 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"open_im_sdk/wasm/indexdb"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -217,6 +219,7 @@ func (u *LoginMgr) wakeUp(cb open_im_sdk_callback.Base, operationID string) {
 
 func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
 	log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)
+	fmt.Println("runtime env", runtime.GOARCH, runtime.GOOS)
 	t1 := time.Now()
 	u.token = token
 	u.loginUserID = userID
