@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/wasm/wasm_wrapper"
+	"runtime"
 	"runtime/debug"
 
 	"syscall/js"
@@ -14,6 +16,7 @@ func main() {
 			log.Error("MAIN", "panic info is:", r, string(debug.Stack()))
 		}
 	}()
+	fmt.Println("runtime env", runtime.GOARCH, runtime.GOOS)
 	registerFunc()
 	<-make(chan bool)
 }
