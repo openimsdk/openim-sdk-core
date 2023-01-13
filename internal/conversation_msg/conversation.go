@@ -1983,19 +1983,25 @@ func (c *Conversation) addMessageReactionExtensions(callback open_im_sdk_callbac
 	if message.Status != constant.MsgStatusSendSuccess {
 		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
 	}
-	if !message.IsExternalExtensions {
-		common.CheckAnyErrCallback(callback, 202, errors.New(" only externalExtensions message can use this interface"), operationID)
-
-	}
-	extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
-	temp := make(map[string]*server_api_params.KeyValue)
-	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
+	//if !message.IsExternalExtensions {
+	//	common.CheckAnyErrCallback(callback, 202, errors.New(" only externalExtensions message can use this interface"), operationID)
+	//
+	//}
 	reqTemp := make(map[string]*server_api_params.KeyValue)
-	for _, v := range req {
-		if value, ok := temp[v.TypeKey]; ok {
-			v.LatestUpdateTime = value.LatestUpdateTime
+	extendMsg, err := c.db.GetMessageReactionExtension(message.ClientMsgID)
+	if err == nil && extendMsg != nil {
+		temp := make(map[string]*server_api_params.KeyValue)
+		_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
+		for _, v := range req {
+			if value, ok := temp[v.TypeKey]; ok {
+				v.LatestUpdateTime = value.LatestUpdateTime
+			}
+			reqTemp[v.TypeKey] = v
 		}
-		reqTemp[v.TypeKey] = v
+	} else {
+		for _, v := range req {
+			reqTemp[v.TypeKey] = v
+		}
 	}
 	var sourceID string
 	switch message.SessionType {
