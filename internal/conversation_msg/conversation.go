@@ -2029,7 +2029,6 @@ func (c *Conversation) addMessageReactionExtensions(callback open_im_sdk_callbac
 		err = c.db.UpdateMessageController(message)
 		if err != nil {
 			log.Error(operationID, "UpdateMessageController err:", err.Error(), message)
-
 		}
 	}
 	return apiResp.ApiResult.Result
@@ -2093,7 +2092,7 @@ func (c *Conversation) deleteMessageReactionExtensions(callback open_im_sdk_call
 }
 
 type syncReactionExtensionParams struct {
-	MsgIDList           []string
+	MessageList         []*model_struct.LocalChatLog
 	SessionType         int32
 	SourceID            string
 	IsExternalExtension bool
@@ -2122,7 +2121,8 @@ func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_cal
 		isExternalExtension = msgStruct.IsExternalExtensions
 		msgIDList = append(msgIDList, msgStruct.ClientMsgID)
 	}
-
+	localMessageList, err := c.db.GetMultipleMessageController(msgIDList, sourceID, sessionType)
+	common.CheckDBErrCallback(callback, err, operationID)
 	var result server_api_params.GetMessageListReactionExtensionsResp
 	extendMsgs, _ := c.db.GetMultipleMessageReactionExtension(msgIDList)
 	for _, v := range extendMsgs {
@@ -2134,7 +2134,7 @@ func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_cal
 		result = append(result, &singleResult)
 	}
 	args := syncReactionExtensionParams{}
-	args.MsgIDList = msgIDList
+	args.MessageList = localMessageList
 	args.SourceID = sourceID
 	args.SessionType = sessionType
 	args.ExtendMessageList = extendMsgs

@@ -2,6 +2,7 @@ package conversation_msg
 
 import (
 	"encoding/json"
+	"github.com/google/go-cmp/cmp"
 	"open_im_sdk/internal/cache"
 	common2 "open_im_sdk/internal/common"
 	"open_im_sdk/internal/friend"
@@ -1728,59 +1729,61 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 	node := c2v.Value.(common.SyncReactionExtensionsNode)
 	switch node.Action {
 	case constant.SyncMessageListReactionExtensions:
-		//args:=node.Args.(syncReactionExtensionParams)
-		//err := c.p.PostReturn(constant.GetAllConversationsRouter, req, &resp.Conversations)
-		//if err != nil {
-		//	log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
-		//	return resp, err
-		//}
-		//var apiReq server_api_params.GetMessageListReactionExtensionsReq
-		//apiReq.SourceID = args.SourceID
-		//apiReq.TypeKeyList = args.TypeKeyList
-		//apiReq.SessionType = args.SessionType
-		//apiReq.MessageReactionKeyList = reqList
-		//apiReq.IsExternalExtensions = isExternalExtension
-		//apiReq.OperationID = operationID
-		//var apiResp server_api_params.GetMessageListReactionExtensionsResp
-		//c.p.PostFatalCallback(callback, constant.GetMessageListReactionExtensionsRouter, apiReq, &apiResp, apiReq.OperationID)
-		//return apiResp
-		//func (c *Conversation ) sycnMessageReactionExtensions()  {
-		//if err == nil && extendMsg != nil {
-		//	temp := make(map[string]*server_api_params.KeyValue)
-		//	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
-		//	for _, v := range req {
-		//		if value, ok := temp[v.TypeKey]; ok {
-		//			v.LatestUpdateTime = value.LatestUpdateTime
-		//		}
-		//		reqTemp[v.TypeKey] = v
-		//	}
-		//} else {
-		//	for _, v := range req {
-		//		reqTemp[v.TypeKey] = v
-		//	}
-		//}
-		//messageStructList,err:=c.db.GetMultipleMessageController(msgIDList,sourceID,sessionType)
-		//common.CheckDBErrCallback(callback, err, operationID)
-		//var reqList []server_api_params.OperateMessageListReactionExtensionsReq
-		//for _, v := range messageStructList {
-		//	var temp server_api_params.OperateMessageListReactionExtensionsReq
-		//	temp.ClientMsgID = v.ClientMsgID
-		//	temp.MsgFirstModifyTime = v.MsgFirstModifyTime
-		//	reqList = append(reqList, temp)
-		//
-		//}
-		//var apiReq server_api_params.GetMessageListReactionExtensionsReq
-		//apiReq.SourceID = sourceID
-		//apiReq.SessionType = sessionType
-		//apiReq.MessageReactionKeyList = reqList
-		//apiReq.IsExternalExtensions = isExternalExtension
-		//apiReq.OperationID = operationID
-		//var apiResp server_api_params.GetMessageListReactionExtensionsResp
-		//c.p.PostFatalCallback(callback, constant.GetMessageListReactionExtensionsRouter, apiReq, &apiResp, apiReq.OperationID)
-		//return apiResp
-
+		args := node.Args.(syncReactionExtensionParams)
+		var reqList []server_api_params.OperateMessageListReactionExtensionsReq
+		for _, v := range args.MessageList {
+			var temp server_api_params.OperateMessageListReactionExtensionsReq
+			temp.ClientMsgID = v.ClientMsgID
+			temp.MsgFirstModifyTime = v.MsgFirstModifyTime
+			reqList = append(reqList, temp)
+		}
+		var apiReq server_api_params.GetMessageListReactionExtensionsReq
+		apiReq.SourceID = args.SourceID
+		apiReq.TypeKeyList = args.TypeKeyList
+		apiReq.SessionType = args.SessionType
+		apiReq.MessageReactionKeyList = reqList
+		apiReq.IsExternalExtensions = args.IsExternalExtension
+		apiReq.OperationID = node.OperationID
+		var apiResp server_api_params.GetMessageListReactionExtensionsResp
+		err := c.p.PostReturn(constant.GetMessageListReactionExtensionsRouter, apiReq, &apiResp)
+		if err != nil {
+			log.NewError(node.OperationID, utils.GetSelfFuncName(), "getMessageListReactionExtensions err:", err.Error())
+			return
+		}
+		for _, i := range args.ExtendMessageList {
+			for _, j := range apiResp {
+				if j.ErrCode == 0 && j.ClientMsgID == i.ClientMsgID {
+					localKV := make(map[string]*server_api_params.KeyValue)
+					newKV := make(map[string]*server_api_params.KeyValue)
+					_ = json.Unmarshal(i.LocalReactionExtensions, &localKV)
+					for _, v := range args.TypeKeyList {
+						if oldValue, ok := localKV[v]; ok {
+							newKV[v] = oldValue
+						}
+					}
+					c.checkAndTriggerReactionExtension(j.ReactionExtensionList, newKV, i.ClientMsgID)
+				}
+			}
+		}
 	case constant.SyncMessageListTypeKeyInfo:
 
+	}
+
+}
+func (c *Conversation) checkAndTriggerReactionExtension(onServer, onLocal map[string]*server_api_params.KeyValue, clientMsgID string) {
+	var changedKv []*server_api_params.KeyValue
+	for k, v := range onServer {
+		oldValue, ok := onLocal[k]
+		if ok {
+			if !cmp.Equal(v, oldValue) {
+				changedKv = append(changedKv, v)
+			}
+		} else {
+			changedKv = append(changedKv, v)
+		}
+	}
+	if len(changedKv) > 0 {
+		c.msgListener.OnRecvMessageExtensionsChanged(clientMsgID, utils.StructToJsonString(changedKv))
 	}
 
 }
