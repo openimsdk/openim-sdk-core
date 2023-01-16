@@ -18,10 +18,12 @@ import (
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
+
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sort"
+
 	"sync"
 	"time"
 
@@ -1201,7 +1203,6 @@ func (c *Conversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
 		if err1 != nil {
 			log.Error("internal", "UpdateMessageController err:", err1, "ClientMsgID", *t, message)
 		}
-		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.MessageChange, &s}})
 
 	}
 }
@@ -1700,14 +1701,6 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		} else {
 			c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
 		}
-	case constant.MessageChange:
-		//msg := node.Args.(*sdk_struct.MsgStruct)
-		//message, err := c.db.GetMessageController(msg)
-		//if err != nil {
-		//	log.Error("internal", "GetMessageController database err:", err.Error())
-		//} else {
-		//	c.MsgListener().OnRecvMessageModified(utils.StructToJsonString(message))
-		//}
 	}
 }
 func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
@@ -1723,6 +1716,70 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 		if err != nil {
 			log.Error("internal", "UpdateMsgSenderFaceURLAndSenderNickname err:", err.Error())
 		}
+
+	}
+
+}
+func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
+	if c.ConversationListener == nil {
+		log.Error("internal", "not set conversationListener")
+		return
+	}
+	node := c2v.Value.(common.SyncReactionExtensionsNode)
+	switch node.Action {
+	case constant.SyncMessageListReactionExtensions:
+		//args:=node.Args.(syncReactionExtensionParams)
+		//err := c.p.PostReturn(constant.GetAllConversationsRouter, req, &resp.Conversations)
+		//if err != nil {
+		//	log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
+		//	return resp, err
+		//}
+		//var apiReq server_api_params.GetMessageListReactionExtensionsReq
+		//apiReq.SourceID = args.SourceID
+		//apiReq.TypeKeyList = args.TypeKeyList
+		//apiReq.SessionType = args.SessionType
+		//apiReq.MessageReactionKeyList = reqList
+		//apiReq.IsExternalExtensions = isExternalExtension
+		//apiReq.OperationID = operationID
+		//var apiResp server_api_params.GetMessageListReactionExtensionsResp
+		//c.p.PostFatalCallback(callback, constant.GetMessageListReactionExtensionsRouter, apiReq, &apiResp, apiReq.OperationID)
+		//return apiResp
+		//func (c *Conversation ) sycnMessageReactionExtensions()  {
+		//if err == nil && extendMsg != nil {
+		//	temp := make(map[string]*server_api_params.KeyValue)
+		//	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
+		//	for _, v := range req {
+		//		if value, ok := temp[v.TypeKey]; ok {
+		//			v.LatestUpdateTime = value.LatestUpdateTime
+		//		}
+		//		reqTemp[v.TypeKey] = v
+		//	}
+		//} else {
+		//	for _, v := range req {
+		//		reqTemp[v.TypeKey] = v
+		//	}
+		//}
+		//messageStructList,err:=c.db.GetMultipleMessageController(msgIDList,sourceID,sessionType)
+		//common.CheckDBErrCallback(callback, err, operationID)
+		//var reqList []server_api_params.OperateMessageListReactionExtensionsReq
+		//for _, v := range messageStructList {
+		//	var temp server_api_params.OperateMessageListReactionExtensionsReq
+		//	temp.ClientMsgID = v.ClientMsgID
+		//	temp.MsgFirstModifyTime = v.MsgFirstModifyTime
+		//	reqList = append(reqList, temp)
+		//
+		//}
+		//var apiReq server_api_params.GetMessageListReactionExtensionsReq
+		//apiReq.SourceID = sourceID
+		//apiReq.SessionType = sessionType
+		//apiReq.MessageReactionKeyList = reqList
+		//apiReq.IsExternalExtensions = isExternalExtension
+		//apiReq.OperationID = operationID
+		//var apiResp server_api_params.GetMessageListReactionExtensionsResp
+		//c.p.PostFatalCallback(callback, constant.GetMessageListReactionExtensionsRouter, apiReq, &apiResp, apiReq.OperationID)
+		//return apiResp
+
+	case constant.SyncMessageListTypeKeyInfo:
 
 	}
 
@@ -1753,6 +1810,10 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 		log.Info("internal", "doUpdateMessage start ..", c2v.Cmd)
 		c.doUpdateMessage(c2v)
 		log.Info("internal", "doUpdateMessage end..", c2v.Cmd)
+	case constant.CmSyncReactionExtensions:
+		log.Info("internal", "doSyncReactionExtensions start ..", c2v.Cmd)
+		c.doSyncReactionExtensions(c2v)
+		log.Info("internal", "doSyncReactionExtensions end..", c2v.Cmd)
 	}
 }
 func (c *Conversation) msgConvert(msg *sdk_struct.MsgStruct) (err error) {

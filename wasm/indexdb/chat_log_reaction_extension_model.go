@@ -39,3 +39,24 @@ func (i *LocalChatLogReactionExtensions) DeleteAndUpdateMessageReactionExtension
 	_, err := Exec(clientMsgID, utils.StructToJsonString(m))
 	return err
 }
+func (i *LocalChatLogReactionExtensions) GetMultipleMessageReactionExtension(msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error) {
+	msgReactionExtensionList, err := Exec(utils.StructToJsonString(msgIDList))
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := msgReactionExtensionList.(string); ok {
+			var temp []model_struct.LocalChatLogReactionExtensions
+			err := utils.JsonStringToStruct(v, &temp)
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range temp {
+				v1 := v
+				result = append(result, &v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}

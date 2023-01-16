@@ -8,7 +8,7 @@ const (
 	CmdNewMsgCome                 = "005"
 	CmdSuperGroupMsgCome          = "006"
 	CmdUpdateConversation         = "007"
-	CmdForceSyncFriend            = "008"
+	CmSyncReactionExtensions      = "008"
 	CmdFroceSyncBlackList         = "009"
 	CmdForceSyncFriendApplication = "010"
 	CmdForceSyncMsg               = "011"
@@ -211,20 +211,22 @@ const (
 )
 
 const (
-	AddConOrUpLatMsg             = 2
-	UnreadCountSetZero           = 3
-	IncrUnread                   = 5
-	TotalUnreadMessageChanged    = 6
-	UpdateConFaceUrlAndNickName  = 7
-	UpdateLatestMessageChange    = 8
-	ConChange                    = 9
-	NewCon                       = 10
-	ConChangeDirect              = 11
-	NewConDirect                 = 12
-	ConversationLatestMsgHasRead = 13
-	UpdateMsgFaceUrlAndNickName  = 14
-	SyncConversation             = 15
-	MessageChange                = 16
+	AddConOrUpLatMsg                  = 2
+	UnreadCountSetZero                = 3
+	IncrUnread                        = 5
+	TotalUnreadMessageChanged         = 6
+	UpdateConFaceUrlAndNickName       = 7
+	UpdateLatestMessageChange         = 8
+	ConChange                         = 9
+	NewCon                            = 10
+	ConChangeDirect                   = 11
+	NewConDirect                      = 12
+	ConversationLatestMsgHasRead      = 13
+	UpdateMsgFaceUrlAndNickName       = 14
+	SyncConversation                  = 15
+	MessageChange                     = 16
+	SyncMessageListReactionExtensions = 16
+	SyncMessageListTypeKeyInfo        = 17
 
 	HasRead = 1
 	NotRead = 0
