@@ -2126,8 +2126,8 @@ func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_cal
 	localMessageList, err := c.db.GetMultipleMessageController(msgIDList, sourceID, sessionType)
 	common.CheckDBErrCallback(callback, err, operationID)
 	var result server_api_params.GetMessageListReactionExtensionsResp
-	extendMsgs, _ := c.db.GetMultipleMessageReactionExtension(msgIDList)
-	for _, v := range extendMsgs {
+	extendMessage, _ := c.db.GetMultipleMessageReactionExtension(msgIDList)
+	for _, v := range extendMessage {
 		var singleResult server_api_params.SingleMessageExtensionResult
 		temp := make(map[string]*server_api_params.KeyValue)
 		_ = json.Unmarshal(v.LocalReactionExtensions, &temp)
@@ -2139,7 +2139,7 @@ func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_cal
 	args.MessageList = localMessageList
 	args.SourceID = sourceID
 	args.SessionType = sessionType
-	args.ExtendMessageList = extendMsgs
+	args.ExtendMessageList = extendMessage
 	args.IsExternalExtension = isExternalExtension
 	_ = common.TriggerCmdSyncReactionExtensions(common.SyncReactionExtensionsNode{
 		OperationID: operationID,
@@ -2154,36 +2154,51 @@ func (c *Conversation) getMessageListSomeReactionExtensions(callback open_im_sdk
 	if len(messageList) == 0 {
 		common.CheckAnyErrCallback(callback, 201, errors.New("message list is null"), operationID)
 	}
+	var msgIDList []string
 	var sourceID string
 	var sessionType int32
 	var isExternalExtension bool
-	var reqList []server_api_params.OperateMessageListReactionExtensionsReq
-	for _, v := range messageList {
-		message, err := c.db.GetMessageController(v)
-		common.CheckDBErrCallback(callback, err, operationID)
-		var temp server_api_params.OperateMessageListReactionExtensionsReq
-		temp.ClientMsgID = message.ClientMsgID
-		temp.MsgFirstModifyTime = message.MsgFirstModifyTime
-		reqList = append(reqList, temp)
-		switch message.SessionType {
+	for _, msgStruct := range messageList {
+		switch msgStruct.SessionType {
 		case constant.SingleChatType:
-			sourceID = message.SendID + message.RecvID
+			sourceID = msgStruct.SendID + msgStruct.RecvID
 		case constant.NotificationChatType:
-			sourceID = message.RecvID
+			sourceID = msgStruct.RecvID
 		case constant.GroupChatType, constant.SuperGroupChatType:
-			sourceID = message.RecvID
+			sourceID = msgStruct.RecvID
 		}
-		sessionType = message.SessionType
-		isExternalExtension = message.IsExternalExtensions
+		sessionType = msgStruct.SessionType
+		isExternalExtension = msgStruct.IsExternalExtensions
+		msgIDList = append(msgIDList, msgStruct.ClientMsgID)
 	}
-	var apiReq server_api_params.GetMessageListReactionExtensionsReq
-	apiReq.SourceID = sourceID
-	apiReq.TypeKeyList = keyList
-	apiReq.SessionType = sessionType
-	apiReq.MessageReactionKeyList = reqList
-	apiReq.IsExternalExtensions = isExternalExtension
-	apiReq.OperationID = operationID
-	var apiResp server_api_params.GetMessageListReactionExtensionsResp
-	c.p.PostFatalCallback(callback, constant.GetMessageListReactionExtensionsRouter, apiReq, &apiResp, apiReq.OperationID)
-	return apiResp
+	localMessageList, err := c.db.GetMultipleMessageController(msgIDList, sourceID, sessionType)
+	common.CheckDBErrCallback(callback, err, operationID)
+	var result server_api_params.GetMessageListReactionExtensionsResp
+	extendMsgs, _ := c.db.GetMultipleMessageReactionExtension(msgIDList)
+	for _, v := range extendMsgs {
+		var singleResult server_api_params.SingleMessageExtensionResult
+		temp := make(map[string]*server_api_params.KeyValue)
+		_ = json.Unmarshal(v.LocalReactionExtensions, &temp)
+		for s, _ := range temp {
+			if !utils.IsContain(s, keyList) {
+				delete(temp, s)
+			}
+		}
+		singleResult.ClientMsgID = v.ClientMsgID
+		singleResult.ReactionExtensionList = temp
+		result = append(result, &singleResult)
+	}
+	args := syncReactionExtensionParams{}
+	args.MessageList = localMessageList
+	args.SourceID = sourceID
+	args.TypeKeyList = keyList
+	args.SessionType = sessionType
+	args.ExtendMessageList = extendMsgs
+	args.IsExternalExtension = isExternalExtension
+	_ = common.TriggerCmdSyncReactionExtensions(common.SyncReactionExtensionsNode{
+		OperationID: operationID,
+		Action:      constant.SyncMessageListReactionExtensions,
+		Args:        args,
+	}, c.GetCh())
+	return result
 }
