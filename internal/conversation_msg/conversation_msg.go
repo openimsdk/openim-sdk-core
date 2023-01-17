@@ -1761,7 +1761,7 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 							newKV[v] = oldValue
 						}
 					}
-					c.checkAndTriggerReactionExtension(j.ReactionExtensionList, newKV, i.ClientMsgID)
+					c.checkAndTriggerReactionExtension(j.ReactionExtensionList, newKV, i.ClientMsgID, node.OperationID)
 				}
 			}
 		}
@@ -1770,19 +1770,26 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 	}
 
 }
-func (c *Conversation) checkAndTriggerReactionExtension(onServer, onLocal map[string]*server_api_params.KeyValue, clientMsgID string) {
+func (c *Conversation) checkAndTriggerReactionExtension(onServer, onLocal map[string]*server_api_params.KeyValue, clientMsgID, operationID string) {
 	var changedKv []*server_api_params.KeyValue
 	for k, v := range onServer {
 		oldValue, ok := onLocal[k]
 		if ok {
 			if !cmp.Equal(v, oldValue) {
+				onLocal[k] = v
 				changedKv = append(changedKv, v)
 			}
 		} else {
+			onLocal[k] = v
 			changedKv = append(changedKv, v)
 		}
 	}
 	if len(changedKv) > 0 {
+		err := c.db.GetAndUpdateMessageReactionExtension(clientMsgID, onLocal)
+		if err != nil {
+			log.Error(operationID, "GetAndUpdateMessageReactionExtension err:", err.Error())
+			return
+		}
 		c.msgListener.OnRecvMessageExtensionsChanged(clientMsgID, utils.StructToJsonString(changedKv))
 	}
 
