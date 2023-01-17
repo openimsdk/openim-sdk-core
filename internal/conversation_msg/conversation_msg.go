@@ -1761,7 +1761,11 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 							newKV[v] = oldValue
 						}
 					}
-					c.checkAndTriggerReactionExtension(j.ReactionExtensionList, newKV, i.ClientMsgID, node.OperationID)
+					if len(args.TypeKeyList) != 0 {
+						c.checkAndTriggerReactionExtension(j.ReactionExtensionList, newKV, i.ClientMsgID, node.OperationID)
+					} else {
+						c.checkAndTriggerReactionExtension(j.ReactionExtensionList, localKV, i.ClientMsgID, node.OperationID)
+					}
 				}
 			}
 		}
