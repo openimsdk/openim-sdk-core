@@ -1,3 +1,5 @@
+// +build js,wasm
+
 package temp_struct
 
 type LocalChatLog struct {
