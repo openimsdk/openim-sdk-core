@@ -2117,7 +2117,7 @@ func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_cal
 		case constant.NotificationChatType:
 			sourceID = msgStruct.RecvID
 		case constant.GroupChatType, constant.SuperGroupChatType:
-			sourceID = msgStruct.RecvID
+			sourceID = msgStruct.GroupID
 		}
 		sessionType = msgStruct.SessionType
 		isExternalExtension = msgStruct.IsExternalExtensions
@@ -2165,7 +2165,7 @@ func (c *Conversation) getMessageListSomeReactionExtensions(callback open_im_sdk
 		case constant.NotificationChatType:
 			sourceID = msgStruct.RecvID
 		case constant.GroupChatType, constant.SuperGroupChatType:
-			sourceID = msgStruct.RecvID
+			sourceID = msgStruct.GroupID
 		}
 		sessionType = msgStruct.SessionType
 		isExternalExtension = msgStruct.IsExternalExtensions
