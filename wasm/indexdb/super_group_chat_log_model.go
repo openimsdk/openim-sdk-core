@@ -355,8 +355,8 @@ func (i IndexDB) SuperGroupUpdateMsgSenderFaceURL(sendID, faceURL string, sType 
 	return err
 }
 
-func (i IndexDB) SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int) error {
-	_, err := Exec(sendID, faceURL, nickname, sessionType)
+func (i IndexDB) SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int, groupID string) error {
+	_, err := Exec(sendID, faceURL, nickname, sessionType, groupID)
 	return err
 }
 

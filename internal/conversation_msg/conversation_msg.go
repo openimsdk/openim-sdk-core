@@ -2,6 +2,7 @@ package conversation_msg
 
 import (
 	"encoding/json"
+	"github.com/google/go-cmp/cmp"
 	"open_im_sdk/internal/business"
 	"open_im_sdk/internal/cache"
 	common2 "open_im_sdk/internal/common"
@@ -13,10 +14,8 @@ import (
 	"open_im_sdk/internal/signaling"
 	"open_im_sdk/internal/user"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
-	"strings"
-
-	"github.com/google/go-cmp/cmp"
 	"runtime"
+	"strings"
 
 	workMoments "open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
@@ -1785,103 +1784,112 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 		return
 	}
 	node := c2v.Value.(common.SyncReactionExtensionsNode)
-	var sourceID string
-	var sessionType int32
-	var reqList []server_api_params.OperateMessageListReactionExtensionsReq
-	var temp server_api_params.OperateMessageListReactionExtensionsReq
-	for _, v := range node.MessageList {
-		message, err := c.db.GetMessageController(v)
+	switch node.Action {
+	case constant.SyncMessageListReactionExtensions:
+	case constant.SyncMessageListTypeKeyInfo:
+		var messages []*sdk_struct.MsgStruct
+		var ok bool
+		if messages, ok = node.Args.([]*sdk_struct.MsgStruct); !ok {
+			return
+		}
+		var sourceID string
+		var sessionType int32
+		var reqList []server_api_params.OperateMessageListReactionExtensionsReq
+		var temp server_api_params.OperateMessageListReactionExtensionsReq
+		for _, v := range messages {
+			message, err := c.db.GetMessageController(v)
+			if err != nil {
+				log.Error(node.OperationID, "GetMessageController err:", err.Error(), *v)
+				continue
+			}
+			temp.ClientMsgID = message.ClientMsgID
+			temp.MsgFirstModifyTime = message.MsgFirstModifyTime
+			reqList = append(reqList, temp)
+			switch message.SessionType {
+			case constant.SingleChatType:
+				sourceID = message.SendID + message.RecvID
+			case constant.NotificationChatType:
+				sourceID = message.RecvID
+			case constant.GroupChatType, constant.SuperGroupChatType:
+				sourceID = message.RecvID
+			}
+			sessionType = message.SessionType
+		}
+		var apiReq server_api_params.GetMessageListReactionExtensionsReq
+		apiReq.SourceID = sourceID
+		apiReq.SessionType = sessionType
+		apiReq.MessageReactionKeyList = reqList
+		apiReq.OperationID = node.OperationID
+		var apiResp server_api_params.GetMessageListReactionExtensionsResp
+		err := c.p.PostReturnWithTimeOut(constant.GetMessageListReactionExtensionsRouter, apiReq, &apiResp, time.Second*2)
 		if err != nil {
-			log.Error(node.OperationID, "GetMessageController err:", err.Error(), *v)
-			continue
+			log.Error(node.OperationID, "GetMessageListReactionExtensions from server err:", err.Error(), apiReq)
+			return
 		}
-		temp.ClientMsgID = message.ClientMsgID
-		temp.MsgFirstModifyTime = message.MsgFirstModifyTime
-		reqList = append(reqList, temp)
-		switch message.SessionType {
-		case constant.SingleChatType:
-			sourceID = message.SendID + message.RecvID
-		case constant.NotificationChatType:
-			sourceID = message.RecvID
-		case constant.GroupChatType, constant.SuperGroupChatType:
-			sourceID = message.RecvID
-		}
-		sessionType = message.SessionType
-	}
-	var apiReq server_api_params.GetMessageListReactionExtensionsReq
-	apiReq.SourceID = sourceID
-	apiReq.SessionType = sessionType
-	apiReq.MessageReactionKeyList = reqList
-	apiReq.OperationID = node.OperationID
-	var apiResp server_api_params.GetMessageListReactionExtensionsResp
-	err := c.p.PostReturnWithTimeOut(constant.GetMessageListReactionExtensionsRouter, apiReq, &apiResp, time.Second*2)
-	if err != nil {
-		log.Error(node.OperationID, "GetMessageListReactionExtensions from server err:", err.Error(), apiReq)
-		return
-	}
-	var messageChangedList []*messageKvList
-	for _, v := range apiResp {
-		if v.ErrCode == 0 {
-			var changedKv []*server_api_params.KeyValue
-			var prefixTypeKey []string
-			extendMsg, _ := c.db.GetMessageReactionExtension(v.ClientMsgID)
-			localKV := make(map[string]*server_api_params.KeyValue)
-			_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &localKV)
-			for typeKey, value := range v.ReactionExtensionList {
-				oldValue, ok := localKV[typeKey]
-				if ok {
-					if !cmp.Equal(value, oldValue) {
+		var messageChangedList []*messageKvList
+		for _, v := range apiResp {
+			if v.ErrCode == 0 {
+				var changedKv []*server_api_params.KeyValue
+				var prefixTypeKey []string
+				extendMsg, _ := c.db.GetMessageReactionExtension(v.ClientMsgID)
+				localKV := make(map[string]*server_api_params.KeyValue)
+				_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &localKV)
+				for typeKey, value := range v.ReactionExtensionList {
+					oldValue, ok := localKV[typeKey]
+					if ok {
+						if !cmp.Equal(value, oldValue) {
+							localKV[typeKey] = value
+							prefixTypeKey = append(prefixTypeKey, getPrefixTypeKey(typeKey))
+							changedKv = append(changedKv, value)
+						}
+					} else {
 						localKV[typeKey] = value
 						prefixTypeKey = append(prefixTypeKey, getPrefixTypeKey(typeKey))
 						changedKv = append(changedKv, value)
+
 					}
-				} else {
-					localKV[typeKey] = value
-					prefixTypeKey = append(prefixTypeKey, getPrefixTypeKey(typeKey))
-					changedKv = append(changedKv, value)
 
 				}
-
-			}
-			extendMsg.LocalReactionExtensions = []byte(utils.StructToJsonString(localKV))
-			_ = c.db.UpdateMessageReactionExtension(extendMsg)
-			if len(changedKv) > 0 {
-				c.msgListener.OnRecvMessageExtensionsChanged(extendMsg.ClientMsgID, utils.StructToJsonString(changedKv))
-			}
-			prefixTypeKey = utils.RemoveRepeatedStringInList(prefixTypeKey)
-			if len(prefixTypeKey) > 0 && c.msgKvListener != nil {
-				var result []*sdk.SingleTypeKeyInfoSum
-				oneMessageChanged := new(messageKvList)
-				oneMessageChanged.ClientMsgID = extendMsg.ClientMsgID
-				for _, v := range prefixTypeKey {
-					singleResult := new(sdk.SingleTypeKeyInfoSum)
-					singleResult.TypeKey = v
-					for typeKey, value := range localKV {
-						if strings.HasPrefix(typeKey, v) {
-							singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
-							err := json.Unmarshal([]byte(value.Value), singleTypeKeyInfo)
-							if err != nil {
-								continue
+				extendMsg.LocalReactionExtensions = []byte(utils.StructToJsonString(localKV))
+				_ = c.db.UpdateMessageReactionExtension(extendMsg)
+				if len(changedKv) > 0 {
+					c.msgListener.OnRecvMessageExtensionsChanged(extendMsg.ClientMsgID, utils.StructToJsonString(changedKv))
+				}
+				prefixTypeKey = utils.RemoveRepeatedStringInList(prefixTypeKey)
+				if len(prefixTypeKey) > 0 && c.msgKvListener != nil {
+					var result []*sdk.SingleTypeKeyInfoSum
+					oneMessageChanged := new(messageKvList)
+					oneMessageChanged.ClientMsgID = extendMsg.ClientMsgID
+					for _, v := range prefixTypeKey {
+						singleResult := new(sdk.SingleTypeKeyInfoSum)
+						singleResult.TypeKey = v
+						for typeKey, value := range localKV {
+							if strings.HasPrefix(typeKey, v) {
+								singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
+								err := json.Unmarshal([]byte(value.Value), singleTypeKeyInfo)
+								if err != nil {
+									continue
+								}
+								if _, ok := singleTypeKeyInfo.InfoList[c.loginUserID]; ok {
+									singleResult.IsContainSelf = true
+								}
+								for _, info := range singleTypeKeyInfo.InfoList {
+									v := *info
+									singleResult.InfoList = append(singleResult.InfoList, &v)
+								}
+								singleResult.Counter += singleTypeKeyInfo.Counter
 							}
-							if _, ok := singleTypeKeyInfo.InfoList[c.loginUserID]; ok {
-								singleResult.IsContainSelf = true
-							}
-							for _, info := range singleTypeKeyInfo.InfoList {
-								v := *info
-								singleResult.InfoList = append(singleResult.InfoList, &v)
-							}
-							singleResult.Counter += singleTypeKeyInfo.Counter
 						}
+						result = append(result, singleResult)
 					}
-					result = append(result, singleResult)
+					oneMessageChanged.ChangedKvList = result
+					messageChangedList = append(messageChangedList, oneMessageChanged)
 				}
-				oneMessageChanged.ChangedKvList = result
-				messageChangedList = append(messageChangedList, oneMessageChanged)
 			}
 		}
-	}
-	if len(messageChangedList) > 0 && c.msgKvListener != nil {
-		c.msgKvListener.OnMessageKvInfoChanged(utils.StructToJsonString(messageChangedList))
+		if len(messageChangedList) > 0 && c.msgKvListener != nil {
+			c.msgKvListener.OnMessageKvInfoChanged(utils.StructToJsonString(messageChangedList))
+		}
 	}
 
 }

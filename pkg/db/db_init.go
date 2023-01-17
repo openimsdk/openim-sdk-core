@@ -80,7 +80,7 @@ func (d *DataBase) Close() error {
 	return nil
 }
 
-func NewDataBase(loginUserID string, dbDir string, operationID string) (*DataBase, error) {
+func NewSqlite(loginUserID string, dbDir string, operationID string) (*DataBase, error) {
 	UserDBLock.Lock()
 	defer UserDBLock.Unlock()
 

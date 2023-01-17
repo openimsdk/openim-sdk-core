@@ -96,8 +96,8 @@ type MsgStruct struct {
 	Seq                  uint32                            `json:"seq"`
 	IsRead               bool                              `json:"isRead"`
 	Status               int32                             `json:"status"`
-	IsReact              bool                              `json:"isReact,omitempty"`
-	IsExternalExtensions bool                              `json:"isExternalExtensions,omitempty"`
+	IsReact              bool                              `json:"isReact"`
+	IsExternalExtensions bool                              `json:"isExternalExtensions"`
 	OfflinePush          server_api_params.OfflinePushInfo `json:"offlinePush,omitempty"`
 	AttachedInfo         string                            `json:"attachedInfo,omitempty"`
 	Ex                   string                            `json:"ex,omitempty"`

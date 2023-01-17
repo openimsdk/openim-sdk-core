@@ -2,7 +2,6 @@ package interaction
 
 import (
 	"bytes"
-	"compress/gzip"
 	"encoding/gob"
 	"errors"
 	"fmt"
@@ -14,18 +13,20 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"runtime"
 	"strings"
 	"sync"
-	"time"
 )
 
 const writeTimeoutSeconds = 30
 
 type WsConn struct {
 	stateMutex     sync.Mutex
-	conn           *websocket.Conn
+	conn           LongConn
 	loginStatus    int32
 	listener       open_im_sdk_callback.OnConnListener
+	encoder        Encoder
+	compressor     Compressor
 	token          string
 	loginUserID    string
 	IsCompression  bool
@@ -33,20 +34,25 @@ type WsConn struct {
 }
 
 func NewWsConn(listener open_im_sdk_callback.OnConnListener, token string, loginUserID string, isCompression bool, conversationCh chan common.Cmd2Value) *WsConn {
-	p := WsConn{listener: listener, token: token, loginUserID: loginUserID, IsCompression: isCompression, ConversationCh: conversationCh}
-	//	go func() {
-	p.conn, _, _, _ = p.ReConn("init:" + utils.OperationIDGenerator())
-	//	}()
+	p := WsConn{listener: listener, token: token, loginUserID: loginUserID, IsCompression: isCompression, ConversationCh: conversationCh,
+		encoder: NewGobEncoder(), compressor: NewGzipCompressor()}
+	switch runtime.GOOS {
+	case "js":
+		p.conn = NewWebSocketJS(constant.WebSocket)
+	default:
+		p.conn = NewDefault(constant.WebSocket)
+	}
+	_, _, _ = p.ReConn("init:" + utils.OperationIDGenerator())
 	return &p
 }
 
 func (u *WsConn) CloseConn(operationID string) error {
 	u.Lock()
 	defer u.Unlock()
-	if u.conn != nil {
+	if !u.conn.IsNil() {
 		err := u.conn.Close()
 		log.NewWarn(operationID, "close conn, ", u.conn)
-		u.conn = nil
+		u.conn.SetConnNil()
 		return utils.Wrap(err, "")
 	}
 	return nil
@@ -71,7 +77,7 @@ func (u *WsConn) Unlock() {
 func (u *WsConn) SendPingMsg() error {
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
-	if u.conn == nil {
+	if u.conn.IsNil() {
 		return utils.Wrap(errors.New("conn == nil"), "")
 	}
 	ping := "try ping"
@@ -87,49 +93,43 @@ func (u *WsConn) SendPingMsg() error {
 }
 
 func (u *WsConn) SetWriteTimeout(timeout int) error {
-	return u.conn.SetWriteDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
+	//return u.conn.SetWriteDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
+	return u.conn.SetWriteTimeout(timeout)
 }
 
 func (u *WsConn) SetReadTimeout(timeout int) error {
-	return u.conn.SetReadDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
+	//return u.conn.SetReadDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
+	return u.conn.SetReadTimeout(timeout)
 }
 
-func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (*websocket.Conn, error) {
-	var buff bytes.Buffer
-	enc := gob.NewEncoder(&buff)
-	err := enc.Encode(msg)
+func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) error {
+	data, err := u.encoder.Encode(msg)
 	if err != nil {
-		return nil, utils.Wrap(err, "Encode error")
+		return utils.Wrap(err, "Encode error")
 	}
-
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
-	if u.conn != nil {
+	if !u.conn.IsNil() {
 		err := u.SetWriteTimeout(writeTimeoutSeconds)
 		if err != nil {
-			return nil, utils.Wrap(err, "SetWriteTimeout")
+			return utils.Wrap(err, "SetWriteTimeout")
 		}
-		log.Debug("this msg length is :", float32(len(buff.Bytes()))/float32(1024), "kb")
-		if len(buff.Bytes()) > constant.MaxTotalMsgLen {
-			return nil, utils.Wrap(errors.New("msg too long"), utils.IntToString(len(buff.Bytes())))
+		log.Debug("this msg length is :", float32(len(data))/float32(1024), "kb")
+		if len(data) > constant.MaxTotalMsgLen {
+			return utils.Wrap(errors.New("msg too long"), utils.IntToString(len(data)))
 		}
-		var data []byte
+		var compressData []byte
 		if u.IsCompression {
-			var gzipBuffer bytes.Buffer
-			gz := gzip.NewWriter(&gzipBuffer)
-			if _, err := gz.Write(buff.Bytes()); err != nil {
-				return nil, utils.Wrap(err, "")
+			compressData, err = u.compressor.Compress(data)
+			if err != nil {
+				return utils.Wrap(err, "")
 			}
-			if err := gz.Close(); err != nil {
-				return nil, utils.Wrap(err, "")
-			}
-			data = gzipBuffer.Bytes()
 		} else {
-			data = buff.Bytes()
+			compressData = data
 		}
-		return u.conn, utils.Wrap(u.conn.WriteMessage(websocket.BinaryMessage, data), "")
+		return utils.Wrap(u.conn.WriteMessage(websocket.BinaryMessage, compressData), "")
 	} else {
-		return nil, utils.Wrap(errors.New("conn==nil"), "")
+		return utils.Wrap(errors.New("conn==nil"), "")
 	}
 }
 
@@ -165,16 +165,16 @@ func (u *WsConn) IsFatalError(err error) bool {
 	return true
 }
 
-func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool, bool) {
+func (u *WsConn) ReConn(operationID string) (error, bool, bool) {
 	u.stateMutex.Lock()
 	defer u.stateMutex.Unlock()
-	if u.conn != nil {
+	if !u.conn.IsNil() {
 		log.NewWarn(operationID, "close conn, ", u.conn)
 		u.conn.Close()
-		u.conn = nil
+		u.conn.SetConnNil()
 	}
 	if u.loginStatus == constant.TokenFailedKickedOffline {
-		return nil, utils.Wrap(errors.New("don't re conn"), "TokenFailedKickedOffline"), false, false
+		return utils.Wrap(errors.New("don't re conn"), "TokenFailedKickedOffline"), false, false
 	}
 	u.listener.OnConnecting()
 
@@ -184,7 +184,8 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool, bool)
 	if u.IsCompression {
 		header = http.Header{"compression": []string{"gzip"}}
 	}
-	conn, httpResp, err := websocket.DefaultDialer.Dial(url, header)
+	//conn, httpResp, err := u.websocket.DefaultDialer.Dial(url, header)
+	httpResp, err := u.conn.Dial(url, header)
 	log.Info(operationID, "ws connect end, dail : ", url)
 	if err != nil {
 		log.Error(operationID, "ws connect failed ", url, err.Error())
@@ -196,30 +197,30 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool, bool)
 			switch int32(httpResp.StatusCode) {
 			case constant.ErrTokenExpired.ErrCode:
 				u.listener.OnUserTokenExpired()
-				return nil, utils.Wrap(err, errMsg), false, false
+				return utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenInvalid.ErrCode:
-				return nil, utils.Wrap(err, errMsg), false, false
+				return utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenMalformed.ErrCode:
-				return nil, utils.Wrap(err, errMsg), false, false
+				return utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenNotValidYet.ErrCode:
-				return nil, utils.Wrap(err, errMsg), false, false
+				return utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenUnknown.ErrCode:
-				return nil, utils.Wrap(err, errMsg), false, false
+				return utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenDifferentPlatformID.ErrCode:
-				return nil, utils.Wrap(err, errMsg), false, false
+				return utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenDifferentUserID.ErrCode:
-				return nil, utils.Wrap(err, errMsg), false, false
+				return utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenKicked.ErrCode:
 				//if u.loginStatus != constant.Logout {
 				//	u.listener.OnKickedOffline()
 				//	u.SetLoginStatus(constant.Logout)
 				//}
 
-				return nil, utils.Wrap(err, errMsg), false, true
+				return utils.Wrap(err, errMsg), false, true
 			default:
 				errMsg = err.Error() + " operationID " + operationID
 				u.listener.OnConnectFailed(1001, errMsg)
-				return nil, utils.Wrap(err, errMsg), true, false
+				return utils.Wrap(err, errMsg), true, false
 			}
 		} else {
 			errMsg := err.Error() + " operationID " + operationID
@@ -230,11 +231,10 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool, bool)
 			}
 
 			log.Error(operationID, "websocket.DefaultDialer.Dial failed ", errMsg, "url ", url)
-			return nil, utils.Wrap(err, errMsg), true, false
+			return utils.Wrap(err, errMsg), true, false
 		}
 	}
 	u.listener.OnConnectSuccess()
 	u.loginStatus = constant.LoginSuccess
-	u.conn = conn
-	return conn, nil, true, false
+	return nil, true, false
 }

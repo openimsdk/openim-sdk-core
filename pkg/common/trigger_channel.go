@@ -75,7 +75,7 @@ func TriggerCmdSyncReactionExtensions(operationID string, messageList []*sdk_str
 	}
 	c2v := Cmd2Value{
 		Cmd:   constant.CmSyncReactionExtensions,
-		Value: SyncReactionExtensionsNode{operationID, messageList},
+		Value: SyncReactionExtensionsNode{operationID, constant.SyncMessageListTypeKeyInfo, messageList},
 	}
 
 	return sendCmd(conversationCh, c2v, 100)
@@ -121,7 +121,8 @@ type DeleteConNode struct {
 }
 type SyncReactionExtensionsNode struct {
 	OperationID string
-	MessageList []*sdk_struct.MsgStruct
+	Action      int
+	Args        interface{}
 }
 type UpdateConNode struct {
 	ConID  string

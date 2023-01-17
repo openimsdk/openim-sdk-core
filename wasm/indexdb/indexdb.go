@@ -6,6 +6,7 @@ import (
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"runtime"
@@ -37,6 +38,47 @@ type IndexDB struct {
 	*Black
 	*Friend
 	loginUserID string
+}
+
+func (i IndexDB) UpdateMsgSenderFaceURLAndSenderNicknameController(sendID, faceURL, nickname string, sessionType int, groupID string) error {
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return i.SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname, sessionType, groupID)
+	default:
+		return i.UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname, sessionType)
+	}
+}
+
+func (i IndexDB) ClearAllConversation() error {
+	panic("implement me")
+}
+
+func (i IndexDB) SearchAllMessageByContentType(contentType int) ([]*model_struct.LocalChatLog, error) {
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupSearchAllMessageByContentType(superGroupID string, contentType int32) ([]*model_struct.LocalChatLog, error) {
+	panic("implement me")
+}
+
+func (i IndexDB) GetMessageReactionExtension(msgID string) (result *model_struct.LocalChatLogReactionExtensions, err error) {
+	panic("implement me")
+}
+
+func (i IndexDB) InsertMessageReactionExtension(messageReactionExtension *model_struct.LocalChatLogReactionExtensions) error {
+	panic("implement me")
+}
+
+func (i IndexDB) UpdateMessageReactionExtension(c *model_struct.LocalChatLogReactionExtensions) error {
+	panic("implement me")
+}
+
+func (i IndexDB) GetAndUpdateMessageReactionExtension(msgID string, m map[string]*server_api_params.KeyValue) error {
+	panic("implement me")
+}
+
+func (i IndexDB) DeleteAndUpdateMessageReactionExtension(msgID string, m map[string]*server_api_params.KeyValue) error {
+	panic("implement me")
 }
 
 func (i IndexDB) SearchMessageByKeywordController(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
