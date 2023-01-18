@@ -658,6 +658,52 @@ func CheckConversationListDiff(conversationsOnServer, conversationsOnLocal []*te
 
 	return aInBNot, bInANot, sameA, sameB
 }
+func CheckReactionExtensionsDiff(onServer, onLocal []*server_api_params.SingleMessageExtensionResult) (aInBNot, bInANot, sameA, sameB []*server_api_params.SingleMessageExtensionResult) {
+	mapA := make(map[string]*server_api_params.SingleMessageExtensionResult)
+	mapB := make(map[string]*server_api_params.SingleMessageExtensionResult)
+	for _, v := range onServer {
+		mapA[v.ClientMsgID] = v
+	}
+	for _, v := range onLocal {
+		mapB[v.ClientMsgID] = v
+	}
+	aInBNot = make([]*server_api_params.SingleMessageExtensionResult, 0)
+	bInANot = make([]*server_api_params.SingleMessageExtensionResult, 0)
+	sameA = make([]*server_api_params.SingleMessageExtensionResult, 0)
+	sameB = make([]*server_api_params.SingleMessageExtensionResult, 0)
+	for _, v := range onServer {
+		ia, ok := mapB[v.ClientMsgID]
+		if !ok {
+			//in a, but not in b
+			//fmt.Println("aInBNot", conversationsOnServer[i], ia)
+			aInBNot = append(aInBNot, v)
+		} else {
+			//fmt.Println("test result is v", v)
+			//fmt.Println("test result is ia", ia)
+			if !cmp.Equal(v.ReactionExtensionList, ia.ReactionExtensionList) {
+				fmt.Println(v, ia)
+				// key of a and b is equal, but value different
+				//fmt.Println("sameA", conversationsOnServer[i], ia)
+				sameA = append(sameA, v)
+			}
+		}
+	}
+
+	for _, v := range onLocal {
+		ib, ok := mapA[v.ClientMsgID]
+		if !ok {
+			//fmt.Println("bInANot", conversationsOnLocal[i], ib)
+			bInANot = append(bInANot, v)
+		} else {
+			if !cmp.Equal(v.ReactionExtensionList, ib.ReactionExtensionList) {
+				//	fmt.Println("sameB", conversationsOnLocal[i], ib)
+				sameB = append(sameB, v)
+			}
+		}
+	}
+
+	return aInBNot, bInANot, sameA, sameB
+}
 
 //
 //func CheckSendGroupRequestDiff(a []*db.LocalGroupRequest, b []*db.LocalGroupRequest) (aInBNot, bInANot, sameA, sameB []int) {

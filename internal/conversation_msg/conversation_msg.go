@@ -1751,24 +1751,57 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 			log.NewError(node.OperationID, utils.GetSelfFuncName(), "getMessageListReactionExtensions err:", err.Error())
 			return
 		}
-		for _, i := range args.ExtendMessageList {
-			for _, j := range apiResp {
-				if j.ErrCode == 0 && j.ClientMsgID == i.ClientMsgID {
-					localKV := make(map[string]*server_api_params.KeyValue)
-					newKV := make(map[string]*server_api_params.KeyValue)
-					_ = json.Unmarshal(i.LocalReactionExtensions, &localKV)
-					for _, v := range args.TypeKeyList {
-						if oldValue, ok := localKV[v]; ok {
-							newKV[v] = oldValue
+		onLocal := func(data []*model_struct.LocalChatLogReactionExtensions) []*server_api_params.SingleMessageExtensionResult {
+			var result []*server_api_params.SingleMessageExtensionResult
+			for _, v := range data {
+				temp := new(server_api_params.SingleMessageExtensionResult)
+				tempMap := make(map[string]*server_api_params.KeyValue)
+				_ = json.Unmarshal(v.LocalReactionExtensions, &tempMap)
+				if len(args.TypeKeyList) != 0 {
+					for s, _ := range tempMap {
+						if !utils.IsContain(s, args.TypeKeyList) {
+							delete(tempMap, s)
 						}
 					}
-					if len(args.TypeKeyList) != 0 {
-						c.checkAndTriggerReactionExtension(j.ReactionExtensionList, newKV, i.ClientMsgID, node.OperationID)
-					} else {
-						c.checkAndTriggerReactionExtension(j.ReactionExtensionList, localKV, i.ClientMsgID, node.OperationID)
-					}
 				}
+
+				temp.ReactionExtensionList = tempMap
+				temp.ClientMsgID = v.ClientMsgID
+				result = append(result, temp)
 			}
+			return result
+		}(args.ExtendMessageList)
+		var onServer []*server_api_params.SingleMessageExtensionResult
+		for _, v := range apiResp {
+			if v.ErrCode == 0 {
+				onServer = append(onServer, v)
+			}
+		}
+		aInBNot, _, sameA, _ := common.CheckReactionExtensionsDiff(onServer, onLocal)
+		for _, v := range aInBNot {
+			temp := model_struct.LocalChatLogReactionExtensions{ClientMsgID: v.ClientMsgID, LocalReactionExtensions: []byte(utils.StructToJsonString(v.ReactionExtensionList))}
+			err := c.db.InsertMessageReactionExtension(&temp)
+			if err != nil {
+				log.Error(node.OperationID, "InsertMessageReactionExtension err:", err.Error())
+				continue
+			}
+			var changedKv []*server_api_params.KeyValue
+			for _, value := range v.ReactionExtensionList {
+				changedKv = append(changedKv, value)
+			}
+			c.msgListener.OnRecvMessageExtensionsChanged(v.ClientMsgID, utils.StructToJsonString(changedKv))
+		}
+		for _, v := range sameA {
+			err := c.db.GetAndUpdateMessageReactionExtension(v.ClientMsgID, v.ReactionExtensionList)
+			if err != nil {
+				log.Error(node.OperationID, "GetAndUpdateMessageReactionExtension err:", err.Error())
+				continue
+			}
+			var changedKv []*server_api_params.KeyValue
+			for _, value := range v.ReactionExtensionList {
+				changedKv = append(changedKv, value)
+			}
+			c.msgListener.OnRecvMessageExtensionsChanged(v.ClientMsgID, utils.StructToJsonString(changedKv))
 		}
 	case constant.SyncMessageListTypeKeyInfo:
 
