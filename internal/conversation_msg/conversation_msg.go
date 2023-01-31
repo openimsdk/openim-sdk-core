@@ -1789,7 +1789,9 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 			for _, value := range v.ReactionExtensionList {
 				changedKv = append(changedKv, value)
 			}
-			c.msgListener.OnRecvMessageExtensionsChanged(v.ClientMsgID, utils.StructToJsonString(changedKv))
+			if len(changedKv) > 0 {
+				c.msgListener.OnRecvMessageExtensionsChanged(v.ClientMsgID, utils.StructToJsonString(changedKv))
+			}
 		}
 		for _, v := range sameA {
 			err := c.db.GetAndUpdateMessageReactionExtension(v.ClientMsgID, v.ReactionExtensionList)
@@ -1801,7 +1803,9 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 			for _, value := range v.ReactionExtensionList {
 				changedKv = append(changedKv, value)
 			}
-			c.msgListener.OnRecvMessageExtensionsChanged(v.ClientMsgID, utils.StructToJsonString(changedKv))
+			if len(changedKv) > 0 {
+				c.msgListener.OnRecvMessageExtensionsChanged(v.ClientMsgID, utils.StructToJsonString(changedKv))
+			}
 		}
 	case constant.SyncMessageListTypeKeyInfo:
 
