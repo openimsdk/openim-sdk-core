@@ -44,9 +44,7 @@ func (d *DataBase) GetAndUpdateMessageReactionExtension(msgID string, m map[stri
 		oldKeyValue := make(map[string]*server_api_params.KeyValue)
 		_ = json.Unmarshal(temp.LocalReactionExtensions, &oldKeyValue)
 		for k, newValue := range m {
-			if _, ok := oldKeyValue[k]; ok {
-				oldKeyValue[k] = newValue
-			}
+			oldKeyValue[k] = newValue
 		}
 		temp.LocalReactionExtensions = []byte(utils.StructToJsonString(oldKeyValue))
 		t := d.conn.Updates(temp)
