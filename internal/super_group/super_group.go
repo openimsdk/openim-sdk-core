@@ -31,8 +31,7 @@ func NewSuperGroup(loginUserID string, db db_interface.DataBase, p *ws.PostApi, 
 	return &SuperGroup{loginUserID: loginUserID, db: db, p: p, joinedSuperGroupCh: joinedSuperGroupCh, heartbeatCmdCh: heartbeatCmdCh}
 }
 
-func (s *SuperGroup) DoNotification(msg *api.MsgData, ch chan common.Cmd2Value) {
-	operationID := utils.OperationIDGenerator()
+func (s *SuperGroup) DoNotification(msg *api.MsgData, ch chan common.Cmd2Value, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID, msg.String())
 	if msg.SendTime < s.loginTime || s.loginTime == 0 {
 		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)

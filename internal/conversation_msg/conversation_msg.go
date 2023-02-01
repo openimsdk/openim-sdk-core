@@ -193,9 +193,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			log.Info(operationID, utils.GetSelfFuncName(), v)
 			c.DoNotification(v)
 		case v.ContentType == constant.MsgDeleteNotification:
-			c.full.SuperGroup.DoNotification(v, c.GetCh())
+			c.full.SuperGroup.DoNotification(v, c.GetCh(), operationID)
 		case v.ContentType == constant.SuperGroupUpdateNotification:
-			c.full.SuperGroup.DoNotification(v, c.GetCh())
+			log.Debug(operationID, "SuperGroupUpdateNotification come here", *v)
+			c.full.SuperGroup.DoNotification(v, c.GetCh(), operationID)
 			continue
 		case v.ContentType == constant.ConversationUnreadNotification:
 			var unreadArgs server_api_params.ConversationUpdateTips
@@ -605,7 +606,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 			log.Info(operationID, utils.GetSelfFuncName(), v)
 			c.DoNotification(v)
 		case v.ContentType == constant.SuperGroupUpdateNotification:
-			c.full.SuperGroup.DoNotification(v, c.GetCh())
+			c.full.SuperGroup.DoNotification(v, c.GetCh(), operationID)
 		case v.ContentType == constant.ConversationUnreadNotification:
 			var unreadArgs server_api_params.ConversationUpdateTips
 			_ = proto.Unmarshal(tips.Detail, &unreadArgs)
