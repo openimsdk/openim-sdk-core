@@ -80,3 +80,14 @@ func (d *DataBase) DeleteAndUpdateMessageReactionExtension(msgID string, m map[s
 	}
 	return nil
 }
+func (d *DataBase) GetMultipleMessageReactionExtension(msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var messageList []model_struct.LocalChatLogReactionExtensions
+	err = utils.Wrap(d.conn.Where("client_msg_id IN ?", msgIDList).Find(&messageList).Error, "GetMultipleMessageReactionExtension failed")
+	for _, v := range messageList {
+		v1 := v
+		result = append(result, &v1)
+	}
+	return result, err
+}
