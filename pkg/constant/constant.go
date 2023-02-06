@@ -224,7 +224,6 @@ const (
 	ConversationLatestMsgHasRead      = 13
 	UpdateMsgFaceUrlAndNickName       = 14
 	SyncConversation                  = 15
-	MessageChange                     = 16
 	SyncMessageListReactionExtensions = 16
 	SyncMessageListTypeKeyInfo        = 17
 
