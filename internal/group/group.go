@@ -153,7 +153,12 @@ func (g *Group) memberQuitNotification(msg *api.MsgData, operationID string) {
 }
 
 func (g *Group) deleteMemberImmediately(groupID string, userID string, operationID string) {
-	err := g.db.DeleteGroupMember(groupID, userID)
+	localMember, err := g.db.GetGroupMemberInfoByGroupIDUserID(groupID, userID)
+	if err != nil {
+		log.Error(operationID, "GetGroupMemberInfoByGroupIDUserID failed ", err.Error(), groupID, userID)
+		return
+	}
+	err = g.db.DeleteGroupMember(groupID, userID)
 	if err != nil {
 		log.Error(operationID, "DeleteGroupMember failed ", err.Error(), groupID, userID)
 		return
@@ -162,7 +167,7 @@ func (g *Group) deleteMemberImmediately(groupID string, userID string, operation
 	//if err != nil {
 	//	log.Error(operationID, "SubtractMemberCount failed ", err.Error(), groupID)
 	//}
-	localMember := model_struct.LocalGroupMember{GroupID: groupID, UserID: userID}
+	//localMember := model_struct.LocalGroupMember{GroupID: groupID, UserID: userID}
 	if g.listener != nil {
 		g.listener.OnGroupMemberDeleted(utils.StructToJsonString(localMember))
 	}

@@ -299,11 +299,11 @@ func (d *DataBase) DecrConversationUnreadCount(conversationID string, count int6
 	defer d.mRWMutex.Unlock()
 	tx := d.conn.Begin()
 	c := model_struct.LocalConversation{ConversationID: conversationID}
-	t := d.conn.Debug().Model(&c).Update("unread_count", gorm.Expr("unread_count-?", count))
+	t := tx.Debug().Model(&c).Update("unread_count", gorm.Expr("unread_count-?", count))
 	if t.Error != nil {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
-	if err := d.conn.Where("conversation_id = ?",
+	if err := tx.Where("conversation_id = ?",
 		conversationID).Take(&c).Error; err != nil {
 		tx.Rollback()
 		return utils.Wrap(errors.New("get conversation err"), "")

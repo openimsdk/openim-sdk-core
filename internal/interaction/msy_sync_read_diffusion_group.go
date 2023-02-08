@@ -111,8 +111,8 @@ func (m *ReadDiffusionGroupMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 	for groupID, MinMaxSeqOnSvr := range cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).GroupID2MinMaxSeqOnSvr {
 		groupIDList = append(groupIDList, groupID)
 		if MinMaxSeqOnSvr.MinSeq > MinMaxSeqOnSvr.MaxSeq {
-			log.Warn(operationID, "MinMaxSeqOnSvr.MinSeq > MinMaxSeqOnSvr.MaxSeq", MinMaxSeqOnSvr.MinSeq, MinMaxSeqOnSvr.MaxSeq)
-			return
+			log.Error(operationID, "MinMaxSeqOnSvr.MinSeq > MinMaxSeqOnSvr.MaxSeq", MinMaxSeqOnSvr.MinSeq, MinMaxSeqOnSvr.MaxSeq, groupID)
+			continue
 		}
 		if MinMaxSeqOnSvr.MaxSeq > m.Group2SeqMaxNeedSync[groupID] {
 			m.Group2SeqMaxNeedSync[groupID] = MinMaxSeqOnSvr.MaxSeq
