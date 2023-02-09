@@ -1269,7 +1269,9 @@ func (c *Conversation) doReactionMsgModifier(msgReactionList []*sdk_struct.MsgSt
 			for _, value := range n.SuccessReactionExtensionList {
 				reactionExtensionList = append(reactionExtensionList, value)
 			}
-			c.msgListener.OnRecvMessageExtensionsAdded(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
+			if !(msgStruct.SendID == c.loginUserID && msgStruct.SenderPlatformID == c.platformID) {
+				c.msgListener.OnRecvMessageExtensionsAdded(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
+			}
 		case constant.SetMessageExtensions:
 			err = c.db.GetAndUpdateMessageReactionExtension(n.ClientMsgID, n.SuccessReactionExtensionList)
 			if err != nil {
@@ -1280,7 +1282,9 @@ func (c *Conversation) doReactionMsgModifier(msgReactionList []*sdk_struct.MsgSt
 			for _, value := range n.SuccessReactionExtensionList {
 				reactionExtensionList = append(reactionExtensionList, value)
 			}
-			c.msgListener.OnRecvMessageExtensionsChanged(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
+			if !(msgStruct.SendID == c.loginUserID && msgStruct.SenderPlatformID == c.platformID) {
+				c.msgListener.OnRecvMessageExtensionsChanged(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
+			}
 
 		}
 		t := model_struct.LocalChatLog{}
