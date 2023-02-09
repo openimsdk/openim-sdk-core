@@ -562,6 +562,8 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 		temp.Status = v.Status
 		temp.AttachedInfo = v.AttachedInfo
 		temp.Ex = v.Ex
+		temp.IsReact = v.IsReact
+		temp.IsExternalExtensions = v.IsExternalExtensions
 		err := c.msgHandleByContentType(&temp)
 		if err != nil {
 			log.Error(operationID, "Parsing data error:", err.Error(), temp)
