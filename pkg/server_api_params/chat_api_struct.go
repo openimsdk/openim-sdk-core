@@ -67,11 +67,6 @@ type DeleteMessageReactionExtensionsResp struct {
 	Result []*ExtensionResult
 	Data   map[string]interface{} `json:"data"`
 }
-type KeyValue struct {
-	TypeKey          string `json:"typeKey" validate:"required"`
-	Value            string `json:"value" validate:"required"`
-	LatestUpdateTime int64  `json:"latestUpdateTime"`
-}
 type SetMessageReactionExtensionsResp struct {
 	CommResp
 	ApiResult struct {
