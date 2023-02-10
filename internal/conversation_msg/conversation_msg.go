@@ -65,7 +65,8 @@ type Conversation struct {
 	tempMessageMap sync.Map
 	encryptionKey  string
 
-	id2MinSeq map[string]uint32
+	id2MinSeq            map[string]uint32
+	IsExternalExtensions bool
 }
 
 //func (c *Conversation) SetAdvancedFunction(advancedFunction advanced_interface.AdvancedFunction) {
@@ -95,11 +96,11 @@ func NewConversation(ws *ws.Ws, db db_interface.DataBase, p *ws.PostApi,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener,
 	msgListener open_im_sdk_callback.OnAdvancedMsgListener, organization *organization.Organization, signaling *signaling.LiveSignaling,
-	workMoments *workMoments.WorkMoments, business *business.Business, cache *cache.Cache, full *full.Full, id2MinSeq map[string]uint32) *Conversation {
+	workMoments *workMoments.WorkMoments, business *business.Business, cache *cache.Cache, full *full.Full, id2MinSeq map[string]uint32, isExternalExtensions bool) *Conversation {
 	n := &Conversation{Ws: ws, db: db, p: p, recvCH: ch, loginUserID: loginUserID, platformID: platformID,
 		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage,
 		signaling: signaling, organization: organization, workMoments: workMoments,
-		full: full, id2MinSeq: id2MinSeq, encryptionKey: encryptionKey, business: business}
+		full: full, id2MinSeq: id2MinSeq, encryptionKey: encryptionKey, business: business, IsExternalExtensions: isExternalExtensions}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
 	n.cache = cache
@@ -1268,7 +1269,9 @@ func (c *Conversation) doReactionMsgModifier(msgReactionList []*sdk_struct.MsgSt
 			for _, value := range n.SuccessReactionExtensionList {
 				reactionExtensionList = append(reactionExtensionList, value)
 			}
-			c.msgListener.OnRecvMessageExtensionsAdded(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
+			if !(msgStruct.SendID == c.loginUserID && msgStruct.SenderPlatformID == c.platformID) {
+				c.msgListener.OnRecvMessageExtensionsAdded(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
+			}
 		case constant.SetMessageExtensions:
 			err = c.db.GetAndUpdateMessageReactionExtension(n.ClientMsgID, n.SuccessReactionExtensionList)
 			if err != nil {
@@ -1279,7 +1282,9 @@ func (c *Conversation) doReactionMsgModifier(msgReactionList []*sdk_struct.MsgSt
 			for _, value := range n.SuccessReactionExtensionList {
 				reactionExtensionList = append(reactionExtensionList, value)
 			}
-			c.msgListener.OnRecvMessageExtensionsChanged(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
+			if !(msgStruct.SendID == c.loginUserID && msgStruct.SenderPlatformID == c.platformID) {
+				c.msgListener.OnRecvMessageExtensionsChanged(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
+			}
 
 		}
 		t := model_struct.LocalChatLog{}

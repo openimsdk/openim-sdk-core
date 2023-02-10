@@ -1683,7 +1683,7 @@ func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, con
 	message.MsgFrom = msgFrom
 	message.ContentType = contentType
 	message.SenderPlatformID = c.platformID
-
+	message.IsExternalExtensions = c.IsExternalExtensions
 }
 
 func (c *Conversation) DeleteConversationFromLocalAndSvr(callback open_im_sdk_callback.Base, conversationID string, operationID string) {
