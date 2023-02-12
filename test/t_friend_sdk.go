@@ -430,6 +430,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	cf.LogLevel = LogLevel
 	cf.ObjectStorage = "minio"
 	cf.IsCompression = true
+	cf.IsExternalExtensions = true
 
 	var s string
 	b, _ := json.Marshal(cf)
