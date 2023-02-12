@@ -364,10 +364,6 @@ func (i IndexDB) UpdateGroupMessageHasReadController(msgIDList []string, groupID
 	}
 }
 
-func (i IndexDB) GetMultipleMessage(msgIDList []string) (result []*model_struct.LocalChatLog, err error) {
-	panic("implement me")
-}
-
 func (i IndexDB) GetMultipleMessageController(msgIDList []string, groupID string, sessionType int32) (result []*model_struct.LocalChatLog, err error) {
 	switch sessionType {
 	case constant.SuperGroupChatType:

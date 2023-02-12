@@ -2122,11 +2122,16 @@ func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_cal
 			sourceID = msgStruct.GroupID
 		}
 		sessionType = msgStruct.SessionType
-		isExternalExtension = msgStruct.IsExternalExtensions
 		msgIDList = append(msgIDList, msgStruct.ClientMsgID)
 	}
+	isExternalExtension = c.IsExternalExtensions
 	localMessageList, err := c.db.GetMultipleMessageController(msgIDList, sourceID, sessionType)
 	common.CheckDBErrCallback(callback, err, operationID)
+	for _, v := range localMessageList {
+		if v.IsReact != true {
+			common.CheckAnyErrCallback(callback, 208, errors.New("have not reaction message in message list:"+v.ClientMsgID), operationID)
+		}
+	}
 	var result server_api_params.GetMessageListReactionExtensionsResp
 	extendMessage, _ := c.db.GetMultipleMessageReactionExtension(msgIDList)
 	for _, v := range extendMessage {

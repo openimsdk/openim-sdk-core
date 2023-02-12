@@ -60,3 +60,11 @@ func (i *LocalChatLogReactionExtensions) GetMultipleMessageReactionExtension(msg
 		}
 	}
 }
+func (i *LocalChatLogReactionExtensions) DeleteMessageReactionExtension(msgID string) error {
+	_, err := Exec(msgID)
+	return err
+}
+func (i *LocalChatLogReactionExtensions) UpdateMessageReactionExtension(c *model_struct.LocalChatLogReactionExtensions) error {
+	_, err := Exec(c.ClientMsgID, utils.StructToJsonString(c))
+	return err
+}

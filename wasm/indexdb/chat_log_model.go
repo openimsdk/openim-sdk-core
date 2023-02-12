@@ -287,7 +287,7 @@ func (i *LocalChatLogs) UpdateGroupMessageHasRead(msgIDList []string, sessionTyp
 }
 
 func (i *LocalChatLogs) GetMultipleMessage(msgIDList []string) (result []*model_struct.LocalChatLog, err error) {
-	msgList, err := Exec(msgIDList)
+	msgList, err := Exec(utils.StructToJsonString(msgIDList))
 	if err != nil {
 		return nil, err
 	} else {

@@ -1732,6 +1732,7 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 	switch node.Action {
 	case constant.SyncMessageListReactionExtensions:
 		args := node.Args.(syncReactionExtensionParams)
+		log.Warn(node.OperationID, "come SyncMessageListReactionExtensions", args)
 		var reqList []server_api_params.OperateMessageListReactionExtensionsReq
 		for _, v := range args.MessageList {
 			var temp server_api_params.OperateMessageListReactionExtensionsReq
@@ -1751,6 +1752,10 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 		if err != nil {
 			log.NewError(node.OperationID, utils.GetSelfFuncName(), "getMessageListReactionExtensions err:", err.Error())
 			return
+		}
+		for _, result := range apiResp {
+			log.Warn(node.OperationID, "api return reslut is:", result.ClientMsgID, result.ReactionExtensionList)
+
 		}
 		onLocal := func(data []*model_struct.LocalChatLogReactionExtensions) []*server_api_params.SingleMessageExtensionResult {
 			var result []*server_api_params.SingleMessageExtensionResult
@@ -1780,11 +1785,14 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 		}
 		aInBNot, _, sameA, _ := common.CheckReactionExtensionsDiff(onServer, onLocal)
 		for _, v := range aInBNot {
-			temp := model_struct.LocalChatLogReactionExtensions{ClientMsgID: v.ClientMsgID, LocalReactionExtensions: []byte(utils.StructToJsonString(v.ReactionExtensionList))}
-			err := c.db.InsertMessageReactionExtension(&temp)
-			if err != nil {
-				log.Error(node.OperationID, "InsertMessageReactionExtension err:", err.Error())
-				continue
+			log.Warn(node.OperationID, "come InsertMessageReactionExtension", args, v.ClientMsgID)
+			if len(v.ReactionExtensionList) > 0 {
+				temp := model_struct.LocalChatLogReactionExtensions{ClientMsgID: v.ClientMsgID, LocalReactionExtensions: []byte(utils.StructToJsonString(v.ReactionExtensionList))}
+				err := c.db.InsertMessageReactionExtension(&temp)
+				if err != nil {
+					log.Error(node.OperationID, "InsertMessageReactionExtension err:", err.Error())
+					continue
+				}
 			}
 			var changedKv []*server_api_params.KeyValue
 			for _, value := range v.ReactionExtensionList {
@@ -1794,19 +1802,82 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 				c.msgListener.OnRecvMessageExtensionsChanged(v.ClientMsgID, utils.StructToJsonString(changedKv))
 			}
 		}
+		for _, result := range sameA {
+			log.Warn(node.OperationID, "result is ", result.ReactionExtensionList, result.ClientMsgID)
+		}
 		for _, v := range sameA {
-			err := c.db.GetAndUpdateMessageReactionExtension(v.ClientMsgID, v.ReactionExtensionList)
-			if err != nil {
-				log.Error(node.OperationID, "GetAndUpdateMessageReactionExtension err:", err.Error())
-				continue
+			log.Warn(node.OperationID, "come sameA", v.ClientMsgID, v.ReactionExtensionList)
+			tempMap := make(map[string]*server_api_params.KeyValue)
+			for _, extensions := range args.ExtendMessageList {
+				if v.ClientMsgID == extensions.ClientMsgID {
+					_ = json.Unmarshal(extensions.LocalReactionExtensions, &tempMap)
+					break
+				}
 			}
-			var changedKv []*server_api_params.KeyValue
-			for _, value := range v.ReactionExtensionList {
-				changedKv = append(changedKv, value)
+			if len(v.ReactionExtensionList) == 0 {
+				err := c.db.DeleteMessageReactionExtension(v.ClientMsgID)
+				if err != nil {
+					log.Error(node.OperationID, "DeleteMessageReactionExtension err:", err.Error())
+					continue
+				}
+				var deleteKeyList []string
+				for key, _ := range tempMap {
+					deleteKeyList = append(deleteKeyList, key)
+				}
+				if len(deleteKeyList) > 0 {
+					c.msgListener.OnRecvMessageExtensionsDeleted(v.ClientMsgID, utils.StructToJsonString(deleteKeyList))
+				}
+			} else {
+				deleteKeyList, changedKv := func(local, server map[string]*server_api_params.KeyValue) ([]string, []*server_api_params.KeyValue) {
+					var deleteKeyList []string
+					var changedKv []*server_api_params.KeyValue
+					for k, v := range local {
+						ia, ok := server[k]
+						if ok {
+							//服务器不同的kv
+							if ia.Value != v.Value {
+								changedKv = append(changedKv, ia)
+							}
+						} else {
+							//服务器已经没有kv
+							deleteKeyList = append(deleteKeyList, k)
+						}
+					}
+					//从服务器新增的kv
+					for k, v := range server {
+						_, ok := local[k]
+						if !ok {
+							changedKv = append(changedKv, v)
+
+						}
+					}
+					return deleteKeyList, changedKv
+				}(tempMap, v.ReactionExtensionList)
+				extendMsg := model_struct.LocalChatLogReactionExtensions{ClientMsgID: v.ClientMsgID, LocalReactionExtensions: []byte(utils.StructToJsonString(v.ReactionExtensionList))}
+				err = c.db.UpdateMessageReactionExtension(&extendMsg)
+				if err != nil {
+					log.Error(node.OperationID, "UpdateMessageReactionExtension err:", err.Error())
+					continue
+				}
+				if len(deleteKeyList) > 0 {
+					c.msgListener.OnRecvMessageExtensionsDeleted(v.ClientMsgID, utils.StructToJsonString(deleteKeyList))
+				}
+				if len(changedKv) > 0 {
+					c.msgListener.OnRecvMessageExtensionsChanged(v.ClientMsgID, utils.StructToJsonString(changedKv))
+				}
 			}
-			if len(changedKv) > 0 {
-				c.msgListener.OnRecvMessageExtensionsChanged(v.ClientMsgID, utils.StructToJsonString(changedKv))
-			}
+			//err := c.db.GetAndUpdateMessageReactionExtension(v.ClientMsgID, v.ReactionExtensionList)
+			//if err != nil {
+			//	log.Error(node.OperationID, "GetAndUpdateMessageReactionExtension err:", err.Error())
+			//	continue
+			//}
+			//var changedKv []*server_api_params.KeyValue
+			//for _, value := range v.ReactionExtensionList {
+			//	changedKv = append(changedKv, value)
+			//}
+			//if len(changedKv) > 0 {
+			//	c.msgListener.OnRecvMessageExtensionsChanged(v.ClientMsgID, utils.StructToJsonString(changedKv))
+			//}
 		}
 	case constant.SyncMessageListTypeKeyInfo:
 
