@@ -2006,19 +2006,10 @@ func (c *Conversation) addMessageReactionExtensions(callback open_im_sdk_callbac
 			reqTemp[v.TypeKey] = v
 		}
 	}
-	var sourceID string
-	switch message.SessionType {
-	case constant.SingleChatType:
-		sourceID = message.SendID + message.RecvID
-	case constant.NotificationChatType:
-		sourceID = message.RecvID
-	case constant.GroupChatType, constant.SuperGroupChatType:
-		sourceID = message.RecvID
-	}
 	var apiReq server_api_params.AddMessageReactionExtensionsReq
 	apiReq.IsReact = message.IsReact
 	apiReq.ClientMsgID = message.ClientMsgID
-	apiReq.SourceID = sourceID
+	apiReq.SourceID = message.RecvID
 	apiReq.SessionType = message.SessionType
 	apiReq.IsExternalExtensions = message.IsExternalExtensions
 	apiReq.ReactionExtensionList = reqTemp
