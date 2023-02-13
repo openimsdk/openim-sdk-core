@@ -1936,7 +1936,11 @@ func (c *Conversation) setMessageReactionExtensions(callback open_im_sdk_callbac
 	var sourceID string
 	switch message.SessionType {
 	case constant.SingleChatType:
-		sourceID = message.SendID + message.RecvID
+		if message.SendID == c.loginUserID {
+			sourceID = message.RecvID
+		} else {
+			sourceID = message.SendID
+		}
 	case constant.NotificationChatType:
 		sourceID = message.RecvID
 	case constant.GroupChatType, constant.SuperGroupChatType:
@@ -2006,10 +2010,23 @@ func (c *Conversation) addMessageReactionExtensions(callback open_im_sdk_callbac
 			reqTemp[v.TypeKey] = v
 		}
 	}
+	var sourceID string
+	switch message.SessionType {
+	case constant.SingleChatType:
+		if message.SendID == c.loginUserID {
+			sourceID = message.RecvID
+		} else {
+			sourceID = message.SendID
+		}
+	case constant.NotificationChatType:
+		sourceID = message.RecvID
+	case constant.GroupChatType, constant.SuperGroupChatType:
+		sourceID = message.RecvID
+	}
 	var apiReq server_api_params.AddMessageReactionExtensionsReq
 	apiReq.IsReact = message.IsReact
 	apiReq.ClientMsgID = message.ClientMsgID
-	apiReq.SourceID = message.RecvID
+	apiReq.SourceID = sourceID
 	apiReq.SessionType = message.SessionType
 	apiReq.IsExternalExtensions = message.IsExternalExtensions
 	apiReq.ReactionExtensionList = reqTemp
@@ -2054,7 +2071,11 @@ func (c *Conversation) deleteMessageReactionExtensions(callback open_im_sdk_call
 	var sourceID string
 	switch message.SessionType {
 	case constant.SingleChatType:
-		sourceID = message.SendID + message.RecvID
+		if message.SendID == c.loginUserID {
+			sourceID = message.RecvID
+		} else {
+			sourceID = message.SendID
+		}
 	case constant.NotificationChatType:
 		sourceID = message.RecvID
 	case constant.GroupChatType, constant.SuperGroupChatType:
@@ -2106,7 +2127,11 @@ func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_cal
 	for _, msgStruct := range messageList {
 		switch msgStruct.SessionType {
 		case constant.SingleChatType:
-			sourceID = msgStruct.SendID + msgStruct.RecvID
+			if msgStruct.SendID == c.loginUserID {
+				sourceID = msgStruct.RecvID
+			} else {
+				sourceID = msgStruct.SendID
+			}
 		case constant.NotificationChatType:
 			sourceID = msgStruct.RecvID
 		case constant.GroupChatType, constant.SuperGroupChatType:
@@ -2159,7 +2184,11 @@ func (c *Conversation) getMessageListSomeReactionExtensions(callback open_im_sdk
 	for _, msgStruct := range messageList {
 		switch msgStruct.SessionType {
 		case constant.SingleChatType:
-			sourceID = msgStruct.SendID + msgStruct.RecvID
+			if msgStruct.SendID == c.loginUserID {
+				sourceID = msgStruct.RecvID
+			} else {
+				sourceID = msgStruct.SendID
+			}
 		case constant.NotificationChatType:
 			sourceID = msgStruct.RecvID
 		case constant.GroupChatType, constant.SuperGroupChatType:
