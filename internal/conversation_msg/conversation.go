@@ -201,6 +201,10 @@ func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, so
 			newConversation.ShowName = g.GroupName
 			newConversation.FaceURL = g.FaceURL
 		}
+		lc, errTemp := c.db.GetConversation(conversationID)
+		if errTemp == nil {
+			return lc
+		}
 		err := c.db.InsertConversation(&newConversation)
 		common.CheckDBErrCallback(callback, err, operationID)
 		return &newConversation
