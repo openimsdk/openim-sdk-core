@@ -191,6 +191,10 @@ func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, so
 			newConversation.ShowName = g.GroupName
 			newConversation.FaceURL = g.FaceURL
 		}
+		lc, errTemp := c.db.GetConversation(conversationID)
+		if errTemp == nil {
+			return lc
+		}
 		err := c.db.InsertConversation(&newConversation)
 		common.CheckDBErrCallback(callback, err, operationID)
 		return &newConversation
@@ -2033,7 +2037,7 @@ func (c *Conversation) addMessageReactionExtensions(callback open_im_sdk_callbac
 	apiReq.OperationID = operationID
 	apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
 	var apiResp server_api_params.AddMessageReactionExtensionsResp
-	c.p.PostFatalCallback(callback, constant.AddMessageReactionExtensionsRouter, apiReq, &apiResp.ApiResult, apiReq.OperationID)
+	c.p.PostFatalCallbackPenetrate(callback, constant.AddMessageReactionExtensionsRouter, apiReq, &apiResp.ApiResult, apiReq.OperationID)
 	log.Debug(operationID, "api return:", message.IsReact, apiResp.ApiResult)
 	if !message.IsReact {
 		message.IsReact = apiResp.ApiResult.IsReact

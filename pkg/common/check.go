@@ -48,9 +48,18 @@ func CheckArgsErrCallback(callback open_im_sdk_callback.Base, err error, operati
 
 func CheckErrAndRespCallback(callback open_im_sdk_callback.Base, err error, resp []byte, output interface{}, operationID string) {
 	log.Debug(operationID, utils.GetSelfFuncName(), "args: ", string(resp))
-	if err = CheckErrAndResp(err, resp, output); err != nil {
+	if err = CheckErrAndResp(err, resp, output, nil); err != nil {
 		log.Error(operationID, "CheckErrAndResp failed ", err.Error(), "input: ", string(resp))
 		callback.OnError(constant.ErrServerReturn.ErrCode, err.Error())
+		runtime.Goexit()
+	}
+}
+func CheckErrAndRespCallbackPenetrate(callback open_im_sdk_callback.Base, err error, resp []byte, output interface{}, operationID string) {
+	log.Debug(operationID, utils.GetSelfFuncName(), "args: ", string(resp))
+	var penetrateErrCode int32
+	if err = CheckErrAndResp(err, resp, output, &penetrateErrCode); err != nil {
+		log.Error(operationID, "CheckErrAndResp failed ", err.Error(), "input: ", string(resp))
+		callback.OnError(penetrateErrCode, err.Error())
 		runtime.Goexit()
 	}
 }
@@ -109,7 +118,7 @@ func CheckErrAndRespCallback(callback open_im_sdk_callback.Base, err error, resp
 //	return nil
 //}
 
-func CheckErrAndResp(err error, resp []byte, output interface{}) error {
+func CheckErrAndResp(err error, resp []byte, output interface{}, code *int32) error {
 	if err != nil {
 		return utils.Wrap(err, "api resp failed")
 	}
@@ -117,6 +126,9 @@ func CheckErrAndResp(err error, resp []byte, output interface{}) error {
 	err = json.Unmarshal(resp, &c)
 	if err == nil {
 		if c.ErrCode != 0 {
+			if code != nil {
+				*code = c.ErrCode
+			}
 			return utils.Wrap(errors.New(c.ErrMsg), "")
 		}
 		if output != nil {
@@ -152,7 +164,6 @@ one:
 	}
 	return nil
 }
-
 func JsonUnmarshalAndArgsValidate(s string, args interface{}, callback open_im_sdk_callback.Base, operationID string) error {
 	err := json.Unmarshal([]byte(s), args)
 	if err != nil {
