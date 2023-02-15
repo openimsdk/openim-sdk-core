@@ -154,6 +154,9 @@ one:
 		return utils.Wrap(err, "")
 	}
 	if c2.ErrCode != 0 {
+		if code != nil {
+			*code = c.ErrCode
+		}
 		return utils.Wrap(errors.New(c2.ErrMsg), "")
 	}
 	if output != nil {
