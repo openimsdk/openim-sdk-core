@@ -254,6 +254,18 @@ func SetSwitchFromOptions(Options map[string]bool, key string, value bool) {
 func Wrap(err error, message string) error {
 	return errors.Wrap(err, "==> "+printCallerNameAndLine()+message)
 }
+func Unwrap(err error) error {
+	for err != nil {
+		unwrap, ok := err.(interface {
+			Unwrap() error
+		})
+		if !ok {
+			break
+		}
+		err = unwrap.Unwrap()
+	}
+	return err
+}
 
 func WithMessage(err error, message string) error {
 	return errors.WithMessage(err, "==> "+printCallerNameAndLine()+message)
