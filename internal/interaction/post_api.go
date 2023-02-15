@@ -28,7 +28,7 @@ func (p *PostApi) PostFatalCallback(callback open_im_sdk_callback.Base, url stri
 }
 func (p *PostApi) PostFatalCallbackPenetrate(callback open_im_sdk_callback.Base, url string, data interface{}, output interface{}, operationID string) {
 	log.Info(operationID, utils.GetSelfFuncName(), p.apiAddress, url, data)
-	content, err := network.Post2Api(p.apiAddress+url, data, p.token)
+	content, err := network.PostWithTimeOut(p.apiAddress+url, data, p.token, 10*time.Second)
 	common.CheckErrAndRespCallbackPenetrate(callback, err, content, output, operationID)
 }
 
