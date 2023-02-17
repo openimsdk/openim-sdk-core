@@ -1522,7 +1522,8 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_ca
 		if recvID == "" || sendID == "" {
 			common.CheckAnyErrCallback(callback, 208, errors.New("recvID or sendID is null"), operationID)
 		}
-		var sourceID string
+		var conversation model_struct.LocalConversation
+
 		s := sdk_struct.MsgStruct{}
 		common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 		if sendID != c.loginUserID {
@@ -1530,14 +1531,26 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_ca
 			if err != nil {
 				log.Error(operationID, "GetUserNameAndFaceURL err", err.Error(), sendID)
 			}
-			sourceID = sendID
 			s.SenderFaceURL = faceUrl
 			s.SenderNickname = name
+			conversation.FaceURL = faceUrl
+			conversation.ShowName = name
+			conversation.UserID = sendID
+			conversation.ConversationID = utils.GetConversationIDBySessionType(sendID, constant.SingleChatType)
+
 		} else {
-			sourceID = recvID
+			conversation.UserID = recvID
+			conversation.ConversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
+			_, err := c.db.GetConversation(conversation.ConversationID)
+			if err != nil {
+				faceUrl, name, err := c.cache.GetUserNameAndFaceURL(recvID, operationID)
+				if err != nil {
+					common.CheckAnyErrCallback(callback, 208, err, operationID)
+				}
+				conversation.FaceURL = faceUrl
+				conversation.ShowName = name
+			}
 		}
-		var conversation model_struct.LocalConversation
-		conversation.ConversationID = utils.GetConversationIDBySessionType(sourceID, constant.SingleChatType)
 
 		localMessage := model_struct.LocalChatLog{}
 		s.SendID = sendID
@@ -1548,9 +1561,8 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(callback open_im_sdk_ca
 		s.Status = constant.MsgStatusSendSuccess
 		msgStructToLocalChatLog(&localMessage, &s)
 		conversation.LatestMsg = utils.StructToJsonString(s)
+		conversation.ConversationType = constant.SingleChatType
 		conversation.LatestMsgSendTime = s.SendTime
-		conversation.FaceURL = s.SenderFaceURL
-		conversation.ShowName = s.SenderNickname
 		_ = c.insertMessageToLocalStorage(callback, &localMessage, operationID)
 		callback.OnSuccess(utils.StructToJsonString(&s))
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.GetCh())
