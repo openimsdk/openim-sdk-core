@@ -1246,6 +1246,7 @@ func (c *Conversation) doReactionMsgModifier(msgReactionList []*sdk_struct.MsgSt
 		if n.SessionType == constant.GroupChatType || n.SessionType == constant.SuperGroupChatType {
 			t.RecvID = n.SourceID
 		}
+		log.Warn("add message test", t)
 		err2 := c.db.UpdateMessageController(&t)
 		if err2 != nil {
 			log.Error("internal", "unmarshal failed err:", err2.Error(), t)
