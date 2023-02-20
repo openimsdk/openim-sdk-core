@@ -154,8 +154,15 @@ func (u *User) GetUsersInfoFromCacheSvr(UserIDList sdk.GetUsersInfoParam, operat
 }
 
 func (u *User) getSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) sdk.GetSelfUserInfoCallback {
-	userInfo, err := u.GetLoginUser(u.loginUserID)
-	common.CheckDBErrCallback(callback, err, operationID)
+	userInfo, errLocal := u.GetLoginUser(u.loginUserID)
+	if errLocal != nil {
+		svr, errServer := u.GetSelfUserInfoFromSvr(operationID)
+		if errServer != nil {
+			log.Error(operationID, "GetSelfUserInfoFromSvr failed", errServer.Error())
+			common.CheckDBErrCallback(callback, errServer, operationID)
+		}
+		userInfo = common.TransferToLocalUserInfo(svr)
+	}
 	return userInfo
 }
 
