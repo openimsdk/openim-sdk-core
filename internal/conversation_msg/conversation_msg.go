@@ -578,7 +578,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	b := utils.GetCurrentTimestampByMill()
 
 	for _, v := range allMsg {
-		log.Info(operationID, "do Msg come here, msg detail ", v.RecvID, v.SendID, v.ClientMsgID, v.ServerMsgID, v.Seq, c.loginUserID)
+		log.Info(operationID, "do Msg come here, msg detail ", *v, c.loginUserID)
 		isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
 		isUnreadCount = utils.GetSwitchFromOptions(v.Options, constant.IsUnreadCount)
 		isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
@@ -1056,7 +1056,7 @@ func (c *Conversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *mode
 	return &lc
 }
 
-//deprecated
+// deprecated
 func (c *Conversation) revokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 	for _, w := range msgRevokeList {
 		if c.msgListener != nil {
