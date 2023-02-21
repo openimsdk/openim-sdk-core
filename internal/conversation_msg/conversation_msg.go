@@ -1737,7 +1737,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 		if result != nil {
 			log.Info("internal", "getMultipleConversationModel success :", result)
-			c.ConversationListener.OnNewConversation(utils.StructToJsonString(result))
+			c.ConversationListener.OnConversationChanged(utils.StructToJsonString(result))
 		}
 	case constant.SyncConversation:
 		operationID := node.Args.(string)
