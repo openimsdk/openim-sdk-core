@@ -125,6 +125,15 @@ type SetMessageReactionExtensionsCallback struct {
 	ErrCode int32  `json:"errCode"`
 	ErrMsg  string `json:"errMsg"`
 }
+
+type AddMessageReactionExtensionsParams []*server_api_params.KeyValue
+
+type AddMessageReactionExtensionsCallback struct {
+	Key     string `json:"key" validate:"required"`
+	Value   string `json:"value" validate:"required"`
+	ErrCode int32  `json:"errCode"`
+	ErrMsg  string `json:"errMsg"`
+}
 type DeleteMessageReactionExtensionsParams []string
 
 type GetTypekeyListResp struct {

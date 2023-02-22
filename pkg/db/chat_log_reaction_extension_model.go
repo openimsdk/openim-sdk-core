@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 )
@@ -42,11 +43,13 @@ func (d *DataBase) GetAndUpdateMessageReactionExtension(msgID string, m map[stri
 		return d.conn.Create(&temp).Error
 	} else {
 		oldKeyValue := make(map[string]*server_api_params.KeyValue)
-		_ = json.Unmarshal(temp.LocalReactionExtensions, &oldKeyValue)
+		err = json.Unmarshal(temp.LocalReactionExtensions, &oldKeyValue)
+		if err != nil {
+			log.Error("special handle", err.Error())
+		}
+		log.Warn("special handle", oldKeyValue)
 		for k, newValue := range m {
-			if _, ok := oldKeyValue[k]; ok {
-				oldKeyValue[k] = newValue
-			}
+			oldKeyValue[k] = newValue
 		}
 		temp.LocalReactionExtensions = []byte(utils.StructToJsonString(oldKeyValue))
 		t := d.conn.Updates(temp)
@@ -55,6 +58,13 @@ func (d *DataBase) GetAndUpdateMessageReactionExtension(msgID string, m map[stri
 		}
 	}
 	return nil
+}
+func (d *DataBase) DeleteMessageReactionExtension(msgID string) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	temp := model_struct.LocalChatLogReactionExtensions{ClientMsgID: msgID}
+	return d.conn.Delete(&temp).Error
+
 }
 func (d *DataBase) DeleteAndUpdateMessageReactionExtension(msgID string, m map[string]*server_api_params.KeyValue) error {
 	d.mRWMutex.Lock()
@@ -79,4 +89,15 @@ func (d *DataBase) DeleteAndUpdateMessageReactionExtension(msgID string, m map[s
 		}
 	}
 	return nil
+}
+func (d *DataBase) GetMultipleMessageReactionExtension(msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var messageList []model_struct.LocalChatLogReactionExtensions
+	err = utils.Wrap(d.conn.Where("client_msg_id IN ?", msgIDList).Find(&messageList).Error, "GetMultipleMessageReactionExtension failed")
+	for _, v := range messageList {
+		v1 := v
+		result = append(result, &v1)
+	}
+	return result, err
 }

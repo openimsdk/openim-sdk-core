@@ -119,6 +119,12 @@ func (a *AddAdvancedMsgListenerCallback) OnRecvMessageExtensionsDeleted(msgID st
 	m["reactionExtensionKeyList"] = reactionExtensionKeyList
 	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", utils.StructToJsonString(m), "0"}, a.uid)
 }
+func (a *AddAdvancedMsgListenerCallback) OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string) {
+	m := make(map[string]interface{})
+	m["msgID"] = msgID
+	m["reactionExtensionKeyList"] = reactionExtensionList
+	SendOneUserMessage(EventData{cleanUpfuncName(runFuncName()), 0, "", utils.StructToJsonString(m), "0"}, a.uid)
+}
 func (wsRouter *WsFuncRouter) SetAdvancedMsgListener() {
 	var msgCallback AddAdvancedMsgListenerCallback
 	msgCallback.uid = wsRouter.uId

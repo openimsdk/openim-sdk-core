@@ -78,6 +78,18 @@ type AdvancedMsgCallback struct {
 	CallbackWriter
 }
 
+func (a AdvancedMsgCallback) OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string) {
+	panic("implement me")
+}
+
+func (a AdvancedMsgCallback) OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string) {
+	panic("implement me")
+}
+
+func (a AdvancedMsgCallback) OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string) {
+	panic("implement me")
+}
+
 func NewAdvancedMsgCallback(callback *js.Value) *AdvancedMsgCallback {
 	return &AdvancedMsgCallback{CallbackWriter: NewEventData(callback)}
 }

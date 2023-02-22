@@ -227,6 +227,7 @@ func (c *Conversation) pullMessageIntoTable(pullMsgData []*server_api_params.Msg
 	b := utils.GetCurrentTimestampByMill()
 
 	for _, v := range pullMsgData {
+		isConversationUpdate := utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
 		log.Info(operationID, "do Msg come here, msg detail ", v.RecvID, v.SendID, v.ClientMsgID, v.ServerMsgID, v.Seq, c.loginUserID)
 		msg := new(sdk_struct.MsgStruct)
 		copier.Copy(msg, v)
@@ -246,6 +247,9 @@ func (c *Conversation) pullMessageIntoTable(pullMsgData []*server_api_params.Msg
 		if msg.Status == constant.MsgStatusHasDeleted {
 			insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
 			continue
+		}
+		if !isConversationUpdate {
+			msg.Status = constant.MsgStatusFiltered
 		}
 		msg.Status = constant.MsgStatusSendSuccess
 		msg.IsRead = false

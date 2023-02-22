@@ -60,7 +60,7 @@ func CheckErrAndRespCallbackPenetrate(callback open_im_sdk_callback.Base, err er
 	var penetrateErrCode int32
 	if err = CheckErrAndResp(err, resp, output, &penetrateErrCode); err != nil {
 		log.Error(operationID, "CheckErrAndResp failed ", err.Error(), "input: ", string(resp))
-		callback.OnError(penetrateErrCode, err.Error())
+		callback.OnError(penetrateErrCode, utils.Unwrap(err).Error())
 		runtime.Goexit()
 	}
 }
@@ -154,6 +154,9 @@ one:
 		return utils.Wrap(err, "")
 	}
 	if c2.ErrCode != 0 {
+		if code != nil {
+			*code = c.ErrCode
+		}
 		return utils.Wrap(errors.New(c2.ErrMsg), "")
 	}
 	if output != nil {

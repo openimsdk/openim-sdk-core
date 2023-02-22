@@ -185,7 +185,7 @@ func (d *DataBase) ClearConversation(conversationID string) error {
 //Clear All conversation, which is used to delete the conversation history message and clear the conversation at the same time.
 //The GetAllConversation or GetConversationListSplit interface can still be obtained,
 //but there is no latest message.
-func (d *DataBase) CleaAllConversation() error {
+func (d *DataBase) ClearAllConversation() error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	c := model_struct.LocalConversation{UnreadCount: 0, LatestMsg: "", DraftText: "", DraftTextTime: 0}
@@ -299,11 +299,11 @@ func (d *DataBase) DecrConversationUnreadCount(conversationID string, count int6
 	defer d.mRWMutex.Unlock()
 	tx := d.conn.Begin()
 	c := model_struct.LocalConversation{ConversationID: conversationID}
-	t := d.conn.Debug().Model(&c).Update("unread_count", gorm.Expr("unread_count-?", count))
+	t := tx.Debug().Model(&c).Update("unread_count", gorm.Expr("unread_count-?", count))
 	if t.Error != nil {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
-	if err := d.conn.Where("conversation_id = ?",
+	if err := tx.Where("conversation_id = ?",
 		conversationID).Take(&c).Error; err != nil {
 		tx.Rollback()
 		return utils.Wrap(errors.New("get conversation err"), "")

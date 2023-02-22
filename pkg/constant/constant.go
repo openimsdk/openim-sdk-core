@@ -219,20 +219,21 @@ const (
 )
 
 const (
-	AddConOrUpLatMsg             = 2
-	UnreadCountSetZero           = 3
-	IncrUnread                   = 5
-	TotalUnreadMessageChanged    = 6
-	UpdateConFaceUrlAndNickName  = 7
-	UpdateLatestMessageChange    = 8
-	ConChange                    = 9
-	NewCon                       = 10
-	ConChangeDirect              = 11
-	NewConDirect                 = 12
-	ConversationLatestMsgHasRead = 13
-	UpdateMsgFaceUrlAndNickName  = 14
-	SyncConversation             = 15
-	MessageChange                = 16
+	AddConOrUpLatMsg                  = 2
+	UnreadCountSetZero                = 3
+	IncrUnread                        = 5
+	TotalUnreadMessageChanged         = 6
+	UpdateConFaceUrlAndNickName       = 7
+	UpdateLatestMessageChange         = 8
+	ConChange                         = 9
+	NewCon                            = 10
+	ConChangeDirect                   = 11
+	NewConDirect                      = 12
+	ConversationLatestMsgHasRead      = 13
+	UpdateMsgFaceUrlAndNickName       = 14
+	SyncConversation                  = 15
+	SyncMessageListReactionExtensions = 16
+	SyncMessageListTypeKeyInfo        = 17
 
 	HasRead = 1
 	NotRead = 0
@@ -328,6 +329,10 @@ const (
 	FieldEx            = 7
 	FieldUnread        = 8
 	FieldBurnDuration  = 9
+)
+const (
+	SetMessageExtensions = 1
+	AddMessageExtensions = 2
 )
 const (
 	KeywordMatchOr  = 0

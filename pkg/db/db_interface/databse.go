@@ -108,7 +108,7 @@ type DataBase interface {
 	ResetConversation(conversationID string) error
 	ResetAllConversation() error
 	ClearConversation(conversationID string) error
-	CleaAllConversation() error
+	ClearAllConversation() error
 	SetConversationDraft(conversationID, draftText string) error
 	RemoveConversationDraft(conversationID, draftText string) error
 	UnPinConversation(conversationID string, isPinned int) error
@@ -240,4 +240,6 @@ type DataBase interface {
 	UpdateMessageReactionExtension(c *model_struct.LocalChatLogReactionExtensions) error
 	GetAndUpdateMessageReactionExtension(msgID string, m map[string]*server_api_params.KeyValue) error
 	DeleteAndUpdateMessageReactionExtension(msgID string, m map[string]*server_api_params.KeyValue) error
+	GetMultipleMessageReactionExtension(msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error)
+	DeleteMessageReactionExtension(msgID string) error
 }
