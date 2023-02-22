@@ -208,6 +208,16 @@ func (u *LoginMgr) SetSignalingListenerForService(listener open_im_sdk_callback.
 	}
 }
 
+func (u *LoginMgr) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
+	if u.friend == nil || u.group == nil || u.conversation == nil {
+		log.Error("", "is nil ", u.friend, u.group, u.conversation)
+		return
+	}
+	u.friend.SetListenerForService(listener)
+	u.group.SetListenerForService(listener)
+	u.conversation.SetListenerForService(listener)
+}
+
 func (u *LoginMgr) SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMomentsListener) {
 	if u.workMoments != nil {
 		u.workMoments.SetListener(listener)

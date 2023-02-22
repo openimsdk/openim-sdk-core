@@ -66,7 +66,7 @@ func DoTestGetFriendApplicationList() {
 
 }
 
-//////////////////////////////////////////////////////////`
+// ////////////////////////////////////////////////////////`
 type testSetSelfInfo struct {
 	baseCallback
 }
@@ -81,7 +81,7 @@ func DoTestSetSelfInfo() {
 	open_im_sdk.SetSelfInfo(test, test.OperationID, jsonString)
 }
 
-/////////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////
 type testGetUsersInfo struct {
 	baseCallback
 }
@@ -95,7 +95,7 @@ func DoTestGetUsersInfo() {
 	open_im_sdk.GetUsersInfo(test, test.OperationID, list)
 }
 
-/////////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////
 type testGetFriendsInfo struct {
 	uid []string //`json:"uidList"`
 }
@@ -117,8 +117,7 @@ func DoTestGetDesignatedFriendsInfo() {
 	open_im_sdk.GetDesignatedFriendsInfo(test, "xxxxxxxxxxx", string(jsontest))
 }
 
-///////////////////////////////////////////////////////
-//
+// /////////////////////////////////////////////////////
 type testAddToBlackList struct {
 	OperationID string
 }
@@ -138,7 +137,7 @@ func DoTestAddToBlackList() {
 	open_im_sdk.AddBlack(test, test.OperationID, Friend_uid)
 }
 
-///////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////
 type testDeleteFromBlackList struct {
 	baseCallback
 }
@@ -150,7 +149,7 @@ func DoTestDeleteFromBlackList() {
 	open_im_sdk.RemoveBlack(test, test.OperationID, Friend_uid)
 }
 
-//////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////
 type testGetBlackList struct {
 	OperationID string
 }
@@ -188,7 +187,7 @@ func DoTestCheckFriend() {
 	open_im_sdk.CheckFriend(test, test.OperationID, list)
 }
 
-///////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////
 type testSetFriendRemark struct {
 	baseCallback
 }
@@ -220,8 +219,8 @@ func DotestDeleteFriend() {
 	open_im_sdk.DeleteFriend(test, test.OperationID, Friend_uid)
 }
 
-///////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////
 type testaddFriend struct {
 	OperationID string
 }
@@ -247,7 +246,7 @@ func DoTestAddFriend() {
 
 ////////////////////////////////////////////////////////////////////
 
-/////////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////
 type testGetSendFriendApplicationList struct {
 	OperationID string
 }
@@ -472,6 +471,39 @@ func InOutDoTest(uid, tk, ws, api string) {
 	InOutlllogin(uid, tk)
 
 	log.Warn("", "InOutDoTest fin")
+}
+
+func SetListenerAndLogin(uid, tk string) {
+	//
+	//var testConversation conversationCallBack
+	//open_im_sdk.SetConversationListener(&testConversation)
+	//
+	//var testUser userCallback
+	//open_im_sdk.SetUserListener(testUser)
+	//
+	//var msgCallBack MsgListenerCallBak
+	//open_im_sdk.SetAdvancedMsgListener(&msgCallBack)
+	//
+	//var batchMsg BatchMsg
+	//open_im_sdk.SetBatchMsgListener(&batchMsg)
+	//
+	//var friendListener testFriendListener
+	//open_im_sdk.SetFriendListener(friendListener)
+	//
+	//var groupListener testGroupListener
+	//open_im_sdk.SetGroupListener(groupListener)
+	//var signalingListener testSignalingListener
+	//open_im_sdk.SetSignalingListener(&signalingListener)
+	//
+	//var organizationListener testOrganizationListener
+	//open_im_sdk.SetOrganizationListener(organizationListener)
+	//
+	//var workMomentsListener testWorkMomentsListener
+	//open_im_sdk.SetWorkMomentsListener(workMomentsListener)
+
+	InOutlllogin(uid, tk)
+
+	log.Warn("", "SetListenerAndLogin fin")
 }
 
 func lllogin(uid, tk string) bool {
@@ -745,7 +777,7 @@ func (userCallback) OnSelfInfoUpdated(callbackData string) {
 	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackData)
 }
 
-////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////
 type testInitLister struct {
 }
 

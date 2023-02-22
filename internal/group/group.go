@@ -34,6 +34,8 @@ type Group struct {
 
 	conversationCh chan common.Cmd2Value
 	//	memberSyncMutex sync.RWMutex
+
+	listenerForService open_im_sdk_callback.OnListenerForService
 }
 
 func (g *Group) LoginTime() int64 {
@@ -44,6 +46,10 @@ func (g *Group) SetLoginTime(loginTime int64) {
 	g.loginTime = loginTime
 }
 
+func (g *Group) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
+	g.listenerForService = listener
+}
+
 func NewGroup(loginUserID string, db db_interface.DataBase, p *ws.PostApi,
 	joinedSuperGroupCh chan common.Cmd2Value, heartbeatCmdCh chan common.Cmd2Value,
 	conversationCh chan common.Cmd2Value) *Group {
@@ -51,9 +57,6 @@ func NewGroup(loginUserID string, db db_interface.DataBase, p *ws.PostApi,
 }
 
 func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value) {
-	if g.listener == nil {
-		return
-	}
 	operationID := utils.OperationIDGenerator()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID, msg.ContentType)
 	if msg.SendTime < g.loginTime || g.loginTime == 0 {
@@ -891,13 +894,16 @@ func (g *Group) SyncSelfGroupApplication(operationID string) {
 				g.listener.OnGroupApplicationAccepted(utils.StructToJsonString(callbackData))
 				log.Info(operationID, "OnGroupApplicationAccepted", utils.StructToJsonString(callbackData))
 			}
+			if g.listenerForService != nil {
+				g.listenerForService.OnGroupApplicationAccepted(utils.StructToJsonString(callbackData))
+				log.Info(operationID, "OnGroupApplicationAccepted", utils.StructToJsonString(callbackData))
+			}
 		} else {
 			callbackData := *onServer[index]
 			if g.listener != nil {
 				g.listener.OnGroupApplicationAdded(utils.StructToJsonString(callbackData))
 				log.Info(operationID, "OnGroupApplicationAdded", utils.StructToJsonString(callbackData))
 			}
-
 		}
 	}
 	for _, index := range bInANot {
@@ -940,7 +946,11 @@ func (g *Group) SyncAdminGroupApplication(operationID string) {
 		callbackData := sdk.GroupApplicationAddedCallback(*onServer[index])
 		if g.listener != nil {
 			g.listener.OnGroupApplicationAdded(utils.StructToJsonString(callbackData))
-			log.Info(operationID, "OnReceiveJoinGroupApplicationAdded", utils.StructToJsonString(callbackData))
+			log.Info(operationID, "OnGroupApplicationAdded", utils.StructToJsonString(callbackData))
+		}
+		if g.listenerForService != nil {
+			g.listenerForService.OnGroupApplicationAdded(utils.StructToJsonString(callbackData))
+			log.Info(operationID, "OnGroupApplicationAdded ", utils.StructToJsonString(callbackData))
 		}
 	}
 	for _, index := range sameA {
@@ -962,11 +972,19 @@ func (g *Group) SyncAdminGroupApplication(operationID string) {
 				g.listener.OnGroupApplicationAccepted(utils.StructToJsonString(callbackData))
 				log.Info(operationID, "OnGroupApplicationAccepted", utils.StructToJsonString(callbackData))
 			}
+			if g.listenerForService != nil {
+				g.listenerForService.OnGroupApplicationAccepted(utils.StructToJsonString(callbackData))
+				log.Info(operationID, "OnGroupApplicationAccepted", utils.StructToJsonString(callbackData))
+			}
 		} else {
 			callbackData := sdk.GroupApplicationAcceptCallback(*onServer[index])
 			if g.listener != nil {
 				g.listener.OnGroupApplicationAdded(utils.StructToJsonString(callbackData))
-				log.Info(operationID, "OnReceiveJoinGroupApplicationAdded", utils.StructToJsonString(callbackData))
+				log.Info(operationID, "OnGroupApplicationAdded", utils.StructToJsonString(callbackData))
+			}
+			if g.listenerForService != nil {
+				g.listenerForService.OnGroupApplicationAdded(utils.StructToJsonString(callbackData))
+				log.Info(operationID, "OnGroupApplicationAdded ", utils.StructToJsonString(callbackData))
 			}
 		}
 	}

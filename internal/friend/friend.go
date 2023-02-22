@@ -38,6 +38,8 @@ type Friend struct {
 	p              *ws.PostApi
 	loginTime      int64
 	conversationCh chan common.Cmd2Value
+
+	listenerForService open_im_sdk_callback.OnListenerForService
 }
 
 func (f *Friend) LoginTime() int64 {
@@ -58,6 +60,10 @@ func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, p 
 
 func (f *Friend) SetListener(listener open_im_sdk_callback.OnFriendshipListener) {
 	f.friendListener = listener
+}
+
+func (f *Friend) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
+	f.listenerForService = listener
 }
 
 func (f *Friend) getDesignatedFriendsInfo(callback open_im_sdk_callback.Base, friendUserIDList sdk.GetDesignatedFriendsInfoParams, operationID string) sdk.GetDesignatedFriendsInfoCallback {
@@ -444,8 +450,11 @@ func (f *Friend) SyncFriendApplication(operationID string) {
 		callbackData := sdk.FriendApplicationAddedCallback(*onServer[index])
 		//f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
 		if f.friendListener != nil {
-
 			f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
+			log.Info(operationID, "OnReceiveFriendApplicationAdded", utils.StructToJsonString(callbackData))
+		}
+		if f.listenerForService != nil {
+			f.listenerForService.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
 			log.Info(operationID, "OnReceiveFriendApplicationAdded", utils.StructToJsonString(callbackData))
 		}
 	}
@@ -472,8 +481,11 @@ func (f *Friend) SyncFriendApplication(operationID string) {
 			} else {
 				callbackData := sdk.FriendApplicationAddedCallback(*onServer[index])
 				if f.friendListener != nil {
-
 					f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
+					log.Info(operationID, "OnReceiveFriendApplicationAdded", utils.StructToJsonString(callbackData))
+				}
+				if f.listenerForService != nil {
+					f.listenerForService.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
 					log.Info(operationID, "OnReceiveFriendApplicationAdded", utils.StructToJsonString(callbackData))
 				}
 			}

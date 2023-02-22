@@ -156,7 +156,7 @@ func GetLoginUser() string {
 	return userForSDK.GetLoginUser()
 }
 
-///////////////////////user/////////////////////
+// /////////////////////user/////////////////////
 func GetUsersInfo(callback open_im_sdk_callback.Base, operationID string, userIDList string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
@@ -184,7 +184,7 @@ func GetSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) {
 	userForSDK.User().GetSelfUserInfo(callback, operationID)
 }
 
-//////////////////////////group//////////////////////////////////////////
+// ////////////////////////group//////////////////////////////////////////
 func SetGroupListener(callback open_im_sdk_callback.OnGroupListener) {
 	if callback == nil || userForSDK == nil {
 		log.Error("callback or userForSDK is nil")
@@ -443,7 +443,7 @@ func SetGroupMemberNickname(callback open_im_sdk_callback.Base, operationID stri
 	userForSDK.Group().SetGroupMemberNickname(callback, groupID, userID, groupMemberNickname, operationID)
 }
 
-//SearchGroupMembers
+// SearchGroupMembers
 func SearchGroupMembers(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
@@ -668,7 +668,7 @@ func SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, operationID str
 	userForSDK.Conversation().SetGlobalRecvMessageOpt(callback, opt, operationID)
 }
 
-//deprecated
+// deprecated
 func GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, conversationIDList string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
@@ -729,7 +729,6 @@ func GetTotalUnreadMsgCount(callback open_im_sdk_callback.Base, operationID stri
 	userForSDK.Conversation().GetTotalUnreadMsgCount(callback, operationID)
 }
 
-//
 func SetConversationListener(listener open_im_sdk_callback.OnConversationListener) {
 	if listener == nil || userForSDK == nil {
 		log.Error("callback or userForSDK is nil")
@@ -790,7 +789,6 @@ func CreateTextAtMessage(operationID string, text, atUserList, atUsersInfo, mess
 	return userForSDK.Conversation().CreateTextAtMessage(text, atUserList, atUsersInfo, message, operationID)
 }
 
-//
 func CreateTextMessage(operationID string, text string) string {
 	return userForSDK.Conversation().CreateTextMessage(text, operationID)
 }
@@ -915,7 +913,7 @@ func GetHistoryMessageListReverse(callback open_im_sdk_callback.Base, operationI
 	userForSDK.Conversation().GetHistoryMessageListReverse(callback, getMessageOptions, operationID)
 }
 
-//deprecated
+// deprecated
 func RevokeMessage(callback open_im_sdk_callback.Base, operationID string, message string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
@@ -958,7 +956,7 @@ func MarkMessageAsReadByConID(callback open_im_sdk_callback.Base, operationID st
 	userForSDK.Conversation().MarkMessageAsReadByConID(callback, conversationID, msgIDList, operationID)
 }
 
-//deprecated
+// deprecated
 func MarkGroupMessageHasRead(callback open_im_sdk_callback.Base, operationID string, groupID string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
@@ -1139,7 +1137,7 @@ type MessageType struct {
 	Counter     int32  `json:"counter,omitempty"`
 }
 
-//修改
+// 修改
 func SetMessageReactionExtensions(callback open_im_sdk_callback.Base, operationID, message, reactionExtensionList string) {
 	BaseCaller(userForSDK.Conversation().SetMessageReactionExtensions, callback, message, reactionExtensionList, operationID)
 }
@@ -1166,7 +1164,7 @@ func GetAllTypeKeyInfo(callback open_im_sdk_callback.Base, message, operationID 
 	BaseCaller(userForSDK.Conversation().GetAllTypeKeyInfo, callback, message, operationID)
 }
 
-//////////////////////////signaling//////////////////////////////////////////
+// ////////////////////////signaling//////////////////////////////////////////
 func SetSignalingListener(callback open_im_sdk_callback.OnSignalingListener) {
 	if callback == nil || userForSDK == nil {
 		log.Error("callback or userForSDK is nil")
@@ -1181,6 +1179,14 @@ func SetSignalingListenerForService(callback open_im_sdk_callback.OnSignalingLis
 		return
 	}
 	userForSDK.SetSignalingListenerForService(callback)
+}
+
+func SetListenerForService(callback open_im_sdk_callback.OnListenerForService) {
+	if callback == nil || userForSDK == nil {
+		log.Error("callback or userForSDK is nil")
+		return
+	}
+	userForSDK.SetListenerForService(callback)
 }
 
 func SignalingInviteInGroup(callback open_im_sdk_callback.Base, operationID string, signalInviteInGroupReq string) {

@@ -67,11 +67,17 @@ type Conversation struct {
 	encryptionKey  string
 
 	id2MinSeq map[string]uint32
+
+	listenerForService open_im_sdk_callback.OnListenerForService
 }
 
 //func (c *Conversation) SetAdvancedFunction(advancedFunction advanced_interface.AdvancedFunction) {
 //	c.advancedFunction = advancedFunction
 //}
+
+func (c *Conversation) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
+	c.listenerForService = listener
+}
 
 func (c *Conversation) MsgListener() open_im_sdk_callback.OnAdvancedMsgListener {
 	return c.msgListener
@@ -1056,7 +1062,7 @@ func (c *Conversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *mode
 	return &lc
 }
 
-//deprecated
+// deprecated
 func (c *Conversation) revokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 	for _, w := range msgRevokeList {
 		if c.msgListener != nil {
@@ -1441,6 +1447,10 @@ func (c *Conversation) newMessage(newMessagesList sdk_struct.NewMsgList) {
 			c.msgListener.OnRecvNewMessage(utils.StructToJsonString(w))
 		} else {
 			log.Error("internal", "set msgListener is err ")
+		}
+		if c.listenerForService != nil {
+			log.Info("internal", "msgListener,OnRecvNewMessage")
+			c.listenerForService.OnRecvNewMessage(utils.StructToJsonString(w))
 		}
 	}
 }
