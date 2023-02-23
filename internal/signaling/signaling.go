@@ -27,6 +27,8 @@ type LiveSignaling struct {
 	listener open_im_sdk_callback.OnSignalingListener
 
 	listenerForService open_im_sdk_callback.OnSignalingListener
+
+	acceptRoomIDs map[string]interface{}
 }
 
 func NewLiveSignaling(ws *ws.Ws, loginUserID string, platformID int32, db *db.DataBase) *LiveSignaling {
@@ -34,7 +36,8 @@ func NewLiveSignaling(ws *ws.Ws, loginUserID string, platformID int32, db *db.Da
 		log.Warn("", " ws is nil")
 		return nil
 	}
-	return &LiveSignaling{Ws: ws, loginUserID: loginUserID, platformID: platformID, DataBase: db}
+	m := make(map[string]interface{}, 0)
+	return &LiveSignaling{Ws: ws, loginUserID: loginUserID, platformID: platformID, DataBase: db, acceptRoomIDs: m}
 }
 
 func (s *LiveSignaling) waitPush(req *api.SignalReq, busyLineUserList []string, operationID string) {
@@ -197,38 +200,52 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 	case *api.SignalReq_Accept:
 		log.Info(operationID, "signaling response ", payload.Accept.String())
 		if payload.Accept.Invitation.InviterUserID == s.loginUserID && payload.Accept.Invitation.PlatformID == s.platformID {
-			var wsResp ws.GeneralWsResp
-			wsResp.ReqIdentifier = constant.WSSendSignalMsg
-			wsResp.Data = msg.Content
-			wsResp.MsgIncr = s.loginUserID + payload.Accept.OpUserID + payload.Accept.Invitation.RoomID
-			log.Info(operationID, "search msgIncr: ", wsResp.MsgIncr)
-			s.DoWSSignal(wsResp)
-			return
+			if _, ok := s.acceptRoomIDs[payload.Accept.Invitation.RoomID]; ok {
+				var wsResp ws.GeneralWsResp
+				wsResp.ReqIdentifier = constant.WSSendSignalMsg
+				wsResp.Data = msg.Content
+				wsResp.MsgIncr = s.loginUserID + payload.Accept.OpUserID + payload.Accept.Invitation.RoomID
+				log.Info(operationID, "search msgIncr: ", wsResp.MsgIncr)
+				s.DoWSSignal(wsResp)
+				return
+			} else {
+				for _, listener := range listenerList {
+					listener.OnInviteeAcceptedByOtherDevice(utils.StructToJsonString(payload.Accept))
+					log.Info(operationID, "OnInviteeAcceptedByOtherDevice same platform", utils.StructToJsonString(payload.Accept), listener)
+				}
+				return
+			}
 		}
 		if payload.Accept.OpUserPlatformID != s.platformID && payload.Accept.OpUserID == s.loginUserID {
-
 			for _, listener := range listenerList {
 				listener.OnInviteeAcceptedByOtherDevice(utils.StructToJsonString(payload.Accept))
 				log.Info(operationID, "OnInviteeAcceptedByOtherDevice ", utils.StructToJsonString(payload.Accept), listener)
 			}
-
 			return
 		}
 	case *api.SignalReq_Reject:
 		log.Info(operationID, "signaling response ", payload.Reject.String())
 		if payload.Reject.Invitation.InviterUserID == s.loginUserID && payload.Reject.Invitation.PlatformID == s.platformID {
-			var wsResp ws.GeneralWsResp
-			wsResp.ReqIdentifier = constant.WSSendSignalMsg
-			wsResp.Data = msg.Content
-			wsResp.MsgIncr = s.loginUserID + payload.Reject.OpUserID + payload.Reject.Invitation.RoomID
-			log.Info(operationID, "search msgIncr: ", wsResp.MsgIncr)
-			s.DoWSSignal(wsResp)
-			return
+			if _, ok := s.acceptRoomIDs[payload.Reject.Invitation.RoomID]; ok {
+				var wsResp ws.GeneralWsResp
+				wsResp.ReqIdentifier = constant.WSSendSignalMsg
+				wsResp.Data = msg.Content
+				wsResp.MsgIncr = s.loginUserID + payload.Reject.OpUserID + payload.Reject.Invitation.RoomID
+				log.Info(operationID, "search msgIncr: ", wsResp.MsgIncr)
+				s.DoWSSignal(wsResp)
+				return
+			} else {
+				for _, listener := range listenerList {
+					listener.OnInviteeRejectedByOtherDevice(utils.StructToJsonString(payload.Reject))
+					log.Info(operationID, "OnInviteeRejectedByOtherDevice ", utils.StructToJsonString(payload.Reject), listener)
+				}
+				return
+			}
 		}
 		if payload.Reject.OpUserPlatformID != s.platformID && payload.Reject.OpUserID == s.loginUserID {
 			for _, listener := range listenerList {
 				listener.OnInviteeRejectedByOtherDevice(utils.StructToJsonString(payload.Reject))
-				log.Info(operationID, "OnInviteeRejectedByOtherDevice ", utils.StructToJsonString(payload.Reject), listener)
+				log.Info(operationID, "OnInviteeRejectedByOtherDevice same platform", utils.StructToJsonString(payload.Reject), listener)
 			}
 			return
 		}
