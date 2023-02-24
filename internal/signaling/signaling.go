@@ -321,7 +321,6 @@ func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk
 	switch payload := resp.Payload.(type) {
 	case *api.SignalResp_Accept:
 		log.Info(operationID, "signaling response ", payload.Accept.String())
-		s.acceptRoomIDs[payload.Accept.RoomID] = nil
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.AcceptCallback(payload.Accept)))
 	case *api.SignalResp_Reject:
 		log.Info(operationID, "signaling response ", payload.Reject.String())
@@ -337,11 +336,13 @@ func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk
 		s.isCanceled = false
 		busyLineUserIDList = payload.Invite.BusyLineUserIDList
 		log.Info(operationID, "signaling response ", payload.Invite.String())
+		s.acceptRoomIDs[payload.Invite.RoomID] = nil
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.InviteCallback(payload.Invite)))
 	case *api.SignalResp_InviteInGroup:
 		s.isCanceled = false
 		busyLineUserIDList = payload.InviteInGroup.BusyLineUserIDList
 		log.Info(operationID, "signaling response ", payload.InviteInGroup.String())
+		s.acceptRoomIDs[payload.InviteInGroup.RoomID] = nil
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.InviteInGroupCallback(payload.InviteInGroup)))
 	case *api.SignalResp_GetRoomByGroupID:
 		log.Info(operationID, "signaling response ", payload.GetRoomByGroupID.String())
