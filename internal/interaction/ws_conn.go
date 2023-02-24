@@ -46,7 +46,7 @@ func (u *WsConn) CloseConn(operationID string) error {
 	if u.conn != nil {
 		err := u.conn.Close()
 		log.NewWarn(operationID, "close conn, ", u.conn)
-		u.conn = nil
+		//	u.conn = nil
 		return utils.Wrap(err, "")
 	}
 	return nil
