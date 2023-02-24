@@ -30,6 +30,14 @@ type WsConn struct {
 	loginUserID    string
 	IsCompression  bool
 	ConversationCh chan common.Cmd2Value
+	tokenErrCode   int32
+}
+
+func (u *WsConn) IsInterruptReconnection() bool {
+	if u.tokenErrCode != 0 {
+		return true
+	}
+	return false
 }
 
 func NewWsConn(listener open_im_sdk_callback.OnConnListener, token string, loginUserID string, isCompression bool, conversationCh chan common.Cmd2Value) *WsConn {
@@ -167,6 +175,7 @@ func (u *WsConn) IsFatalError(err error) bool {
 
 func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool, bool) {
 	u.stateMutex.Lock()
+	u.tokenErrCode = 0
 	defer u.stateMutex.Unlock()
 	if u.conn != nil {
 		log.NewWarn(operationID, "close conn, ", u.conn)
@@ -196,20 +205,28 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool, bool)
 			switch int32(httpResp.StatusCode) {
 			case constant.ErrTokenExpired.ErrCode:
 				u.listener.OnUserTokenExpired()
+				u.tokenErrCode = constant.ErrTokenExpired.ErrCode
 				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenInvalid.ErrCode:
+				u.tokenErrCode = constant.ErrTokenInvalid.ErrCode
 				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenMalformed.ErrCode:
+				u.tokenErrCode = constant.ErrTokenMalformed.ErrCode
 				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenNotValidYet.ErrCode:
+				u.tokenErrCode = constant.ErrTokenNotValidYet.ErrCode
 				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenUnknown.ErrCode:
+				u.tokenErrCode = constant.ErrTokenUnknown.ErrCode
 				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenDifferentPlatformID.ErrCode:
+				u.tokenErrCode = constant.ErrTokenDifferentPlatformID.ErrCode
 				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenDifferentUserID.ErrCode:
+				u.tokenErrCode = constant.ErrTokenDifferentUserID.ErrCode
 				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenKicked.ErrCode:
+				u.tokenErrCode = constant.ErrTokenKicked.ErrCode
 				//if u.loginStatus != constant.Logout {
 				//	u.listener.OnKickedOffline()
 				//	u.SetLoginStatus(constant.Logout)
