@@ -248,10 +248,10 @@ func (c *Conversation) pullMessageIntoTable(pullMsgData []*server_api_params.Msg
 			insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
 			continue
 		}
+		msg.Status = constant.MsgStatusSendSuccess
 		if !isConversationUpdate {
 			msg.Status = constant.MsgStatusFiltered
 		}
-		msg.Status = constant.MsgStatusSendSuccess
 		msg.IsRead = false
 		//		log.Info(operationID, "new msg, seq, ServerMsgID, ClientMsgID", msg.Seq, msg.ServerMsgID, msg.ClientMsgID)
 		//De-analyze data
