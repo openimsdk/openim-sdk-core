@@ -402,6 +402,50 @@ func (c *Conversation) SyncConversationUnreadCount(operationID string) {
 	}
 
 }
+func (c *Conversation) FixVersionData() {
+	switch constant.SdkVersion + constant.BigVersion + constant.UpdateVersion {
+	case "v2.0.0":
+		groupIDList, err := c.db.GetReadDiffusionGroupIDList()
+		if err != nil {
+			log.Error("", "GetReadDiffusionGroupIDList failed ", err.Error())
+			return
+		}
+		for _, v := range groupIDList {
+			err := c.db.SuperGroupUpdateSpecificContentTypeMessage(constant.ReactionMessageModifier, v, map[string]interface{}{"status": constant.MsgStatusFiltered})
+			if err != nil {
+				log.Error("", "SuperGroupUpdateSpecificContentTypeMessage failed ", err.Error())
+				continue
+			}
+			msgList, err := c.db.SuperGroupSearchAllMessageByContentType(v, constant.ReactionMessageModifier)
+			if err != nil {
+				log.NewError("internal", "SuperGroupSearchMessageByContentTypeNotOffset failed", v, err.Error())
+				continue
+			}
+			var reactionMsgIDList []string
+			for _, value := range msgList {
+				var n server_api_params.ReactionMessageModifierNotification
+				err := json.Unmarshal([]byte(value.Content), &n)
+				if err != nil {
+					log.Error("internal", "unmarshal failed err:", err.Error(), *value)
+					continue
+				}
+				reactionMsgIDList = append(reactionMsgIDList, n.ClientMsgID)
+			}
+			if len(reactionMsgIDList) > 0 {
+				err := c.db.SuperGroupUpdateGroupMessageFields(reactionMsgIDList, v, map[string]interface{}{"is_react": true})
+				if err != nil {
+					log.Error("internal", "unmarshal failed err:", err.Error(), reactionMsgIDList, v)
+					continue
+				}
+			}
+
+		}
+
+	default:
+
+	}
+
+}
 
 func (c *Conversation) SyncOneConversation(conversationID, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "conversationID: ", conversationID)
@@ -1926,7 +1970,7 @@ func (c *Conversation) setMessageReactionExtensions(callback open_im_sdk_callbac
 func (c *Conversation) addMessageReactionExtensions(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, req sdk.AddMessageReactionExtensionsParams, operationID string) []*server_api_params.ExtensionResult {
 	message, err := c.db.GetMessageController(s)
 	common.CheckDBErrCallback(callback, err, operationID)
-	if message.Status != constant.MsgStatusSendSuccess {
+	if message.Status != constant.MsgStatusSendSuccess || message.Seq == 0 {
 		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
 	}
 	//if !message.IsExternalExtensions {

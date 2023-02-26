@@ -215,6 +215,15 @@ func (d *DataBase) SuperGroupUpdateMessage(c *model_struct.LocalChatLog) error {
 	}
 	return utils.Wrap(t.Error, "UpdateMessage failed")
 }
+func (d *DataBase) SuperGroupUpdateSpecificContentTypeMessage(contentType int, groupID string, args map[string]interface{}) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	t := d.conn.Table(utils.GetSuperGroupTableName(groupID)).Where("content_type = ?", contentType).Updates(args)
+	if t.RowsAffected == 0 {
+		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	}
+	return utils.Wrap(t.Error, "UpdateMessage failed")
+}
 
 //func (d *DataBase) SuperGroupDeleteAllMessage() error {
 //	d.mRWMutex.Lock()
@@ -306,6 +315,15 @@ func (d *DataBase) SuperGroupUpdateGroupMessageHasRead(msgIDList []string, group
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	t := d.conn.Table(utils.GetSuperGroupTableName(groupID)).Where(" client_msg_id in ?", msgIDList).Update("is_read", constant.HasRead)
+	if t.RowsAffected == 0 {
+		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	}
+	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
+}
+func (d *DataBase) SuperGroupUpdateGroupMessageFields(msgIDList []string, groupID string, args map[string]interface{}) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	t := d.conn.Table(utils.GetSuperGroupTableName(groupID)).Where(" client_msg_id in ?", msgIDList).Updates(args)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}

@@ -196,12 +196,14 @@ type DataBase interface {
 	SuperGroupGetAllUnDeleteMessageSeqList() ([]uint32, error)
 	SuperGroupUpdateColumnsMessage(ClientMsgID, groupID string, args map[string]interface{}) error
 	SuperGroupUpdateMessage(c *model_struct.LocalChatLog) error
+	SuperGroupUpdateSpecificContentTypeMessage(contentType int, groupID string, args map[string]interface{}) error
 	SuperGroupUpdateMessageStatusBySourceID(sourceID string, status, sessionType int32) error
 	SuperGroupUpdateMessageTimeAndStatus(msg *sdk_struct.MsgStruct) error
 	SuperGroupGetMessageList(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error)
 	SuperGroupGetMessageListNoTime(sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error)
 	SuperGroupGetSendingMessageList(groupID string) (result []*model_struct.LocalChatLog, err error)
 	SuperGroupUpdateGroupMessageHasRead(msgIDList []string, groupID string) error
+	SuperGroupUpdateGroupMessageFields(msgIDList []string, groupID string, args map[string]interface{}) error
 	SuperGroupGetMultipleMessage(conversationIDList []string, groupID string) (result []*model_struct.LocalChatLog, err error)
 	SuperGroupGetNormalMsgSeq() (uint32, error)
 	SuperGroupGetNormalMinSeq(groupID string) (uint32, error)

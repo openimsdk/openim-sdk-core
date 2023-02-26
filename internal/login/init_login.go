@@ -349,7 +349,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	go u.conversation.SyncConversationUnreadCount(operationID)
 	go common.DoListener(u.conversation)
 	log.Debug(operationID, "SyncConversations end ")
-
+	go u.conversation.FixVersionData()
 	log.Info(operationID, "ws heartbeat end ")
 
 	log.Info(operationID, "login success...", "login cost time: ", time.Since(t1))
