@@ -44,9 +44,9 @@ func (u *WsConn) CloseConn(operationID string) error {
 	u.Lock()
 	defer u.Unlock()
 	if u.conn != nil {
-		err := u.conn.Close(websocket.StatusGoingAway, "Actively close the connection")
+		err := u.conn.Close(websocket.StatusNormalClosure, "Actively close the connection")
 		log.NewWarn(operationID, "close conn, ", u.conn)
-		u.conn = nil
+		//u.conn = nil
 		return utils.Wrap(err, "")
 	}
 	return nil
@@ -171,7 +171,7 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool) {
 	defer u.stateMutex.Unlock()
 	if u.conn != nil {
 		log.NewWarn(operationID, "close conn, ", u.conn)
-		_ = u.conn.Close(websocket.StatusGoingAway, "Actively close the connection")
+		_ = u.conn.Close(websocket.StatusNormalClosure, "Actively close the connection")
 		u.conn = nil
 	}
 	if u.loginStatus == constant.TokenFailedKickedOffline {
