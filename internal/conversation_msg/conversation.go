@@ -916,7 +916,8 @@ func (c *Conversation) pullMessageIntoTable(pullMsgData []*server_api_params.Msg
 	b := utils.GetCurrentTimestampByMill()
 
 	for _, v := range pullMsgData {
-		log.Info(operationID, "do Msg come here, msg detail ", v.RecvID, v.SendID, v.ClientMsgID, v.ServerMsgID, v.Seq, c.loginUserID)
+		isConversationUpdate := utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
+		log.Info(operationID, "do Msg come here, msg detail ", v.RecvID, v.SendID, v.ClientMsgID, v.ServerMsgID, v.Seq, v.ContentType, isConversationUpdate, c.loginUserID)
 		msg := new(sdk_struct.MsgStruct)
 		copier.Copy(msg, v)
 		var tips server_api_params.TipsComm
@@ -937,6 +938,9 @@ func (c *Conversation) pullMessageIntoTable(pullMsgData []*server_api_params.Msg
 			continue
 		}
 		msg.Status = constant.MsgStatusSendSuccess
+		if !isConversationUpdate {
+			msg.Status = constant.MsgStatusFiltered
+		}
 		msg.IsRead = false
 		//		log.Info(operationID, "new msg, seq, ServerMsgID, ClientMsgID", msg.Seq, msg.ServerMsgID, msg.ClientMsgID)
 		//De-analyze data
