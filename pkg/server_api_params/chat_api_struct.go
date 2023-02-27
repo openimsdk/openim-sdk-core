@@ -52,6 +52,7 @@ type AddMessageReactionExtensionsReq struct {
 	IsReact               bool                 `json:"isReact,omitempty"`
 	IsExternalExtensions  bool                 `json:"isExternalExtensions,omitempty"`
 	MsgFirstModifyTime    int64                `json:"msgFirstModifyTime,omitempty"`
+	Seq                   uint32               `json:"seq"`
 }
 type DeleteMessageReactionExtensionsReq struct {
 	OperationID           string      `json:"operationID" binding:"required"`
@@ -138,6 +139,7 @@ type ReactionMessageModifierNotification struct {
 	IsReact                      bool                 `json:"isReact"`
 	IsExternalExtensions         bool                 `json:"isExternalExtensions"`
 	MsgFirstModifyTime           int64                `json:"msgFirstModifyTime"`
+	Seq                          uint32               `json:"seq"`
 }
 type SingleMessageExtensionResult struct {
 	ErrCode               int32                `protobuf:"varint,1,opt,name=errCode" json:"errCode"`

@@ -405,11 +405,13 @@ func (c *Conversation) SyncConversationUnreadCount(operationID string) {
 func (c *Conversation) FixVersionData() {
 	switch constant.SdkVersion + constant.BigVersion + constant.UpdateVersion {
 	case "v2.0.0":
+		t := time.Now()
 		groupIDList, err := c.db.GetReadDiffusionGroupIDList()
 		if err != nil {
 			log.Error("", "GetReadDiffusionGroupIDList failed ", err.Error())
 			return
 		}
+		log.Info("", "fix version data start", groupIDList)
 		for _, v := range groupIDList {
 			err := c.db.SuperGroupUpdateSpecificContentTypeMessage(constant.ReactionMessageModifier, v, map[string]interface{}{"status": constant.MsgStatusFiltered})
 			if err != nil {
@@ -440,6 +442,7 @@ func (c *Conversation) FixVersionData() {
 			}
 
 		}
+		log.Info("", "fix version data end", groupIDList, "cost time:", time.Since(t))
 
 	default:
 
@@ -1420,45 +1423,45 @@ func (c *Conversation) markGroupMessageAsRead(callback open_im_sdk_callback.Base
 	}
 }
 
-//func (c *Conversation) markMessageAsReadByConID(callback open_im_sdk_callback.Base, msgIDList sdk.MarkMessageAsReadByConIDParams, conversationID, operationID string) {
-//	var localMessage db.LocalChatLog
-//	var newMessageIDList []string
-//	messages, err := c.db.GetMultipleMessage(msgIDList)
-//	common.CheckDBErrCallback(callback, err, operationID)
-//	for _, v := range messages {
-//		if v.IsRead == false && v.ContentType < constant.NotificationBegin && v.SendID != c.loginUserID {
-//			newMessageIDList = append(newMessageIDList, v.ClientMsgID)
+//	func (c *Conversation) markMessageAsReadByConID(callback open_im_sdk_callback.Base, msgIDList sdk.MarkMessageAsReadByConIDParams, conversationID, operationID string) {
+//		var localMessage db.LocalChatLog
+//		var newMessageIDList []string
+//		messages, err := c.db.GetMultipleMessage(msgIDList)
+//		common.CheckDBErrCallback(callback, err, operationID)
+//		for _, v := range messages {
+//			if v.IsRead == false && v.ContentType < constant.NotificationBegin && v.SendID != c.loginUserID {
+//				newMessageIDList = append(newMessageIDList, v.ClientMsgID)
+//			}
 //		}
+//		if len(newMessageIDList) == 0 {
+//			common.CheckAnyErrCallback(callback, 201, errors.New("message has been marked read or sender is yourself"), operationID)
+//		}
+//		conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
+//		s := sdk_struct.MsgStruct{}
+//		c.initBasicInfo(&s, constant.UserMsgType, constant.HasReadReceipt, operationID)
+//		s.Content = utils.StructToJsonString(newMessageIDList)
+//		options := make(map[string]bool, 5)
+//		utils.SetSwitchFromOptions(options, constant.IsConversationUpdate, false)
+//		utils.SetSwitchFromOptions(options, constant.IsSenderConversationUpdate, false)
+//		utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
+//		utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
+//		//If there is an error, the coroutine ends, so judgment is not  required
+//		resp, _ := c.InternalSendMessage(callback, &s, userID, "", operationID, &server_api_params.OfflinePushInfo{}, false, options)
+//		s.ServerMsgID = resp.ServerMsgID
+//		s.SendTime = resp.SendTime
+//		s.Status = constant.MsgStatusFiltered
+//		msgStructToLocalChatLog(&localMessage, &s)
+//		err = c.db.InsertMessage(&localMessage)
+//		if err != nil {
+//			log.Error(operationID, "inset into chat log err", localMessage, s, err.Error())
+//		}
+//		err2 := c.db.UpdateMessageHasRead(userID, newMessageIDList, constant.SingleChatType)
+//		if err2 != nil {
+//			log.Error(operationID, "update message has read error", newMessageIDList, userID, err2.Error())
+//		}
+//		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.ch)
+//		//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 //	}
-//	if len(newMessageIDList) == 0 {
-//		common.CheckAnyErrCallback(callback, 201, errors.New("message has been marked read or sender is yourself"), operationID)
-//	}
-//	conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
-//	s := sdk_struct.MsgStruct{}
-//	c.initBasicInfo(&s, constant.UserMsgType, constant.HasReadReceipt, operationID)
-//	s.Content = utils.StructToJsonString(newMessageIDList)
-//	options := make(map[string]bool, 5)
-//	utils.SetSwitchFromOptions(options, constant.IsConversationUpdate, false)
-//	utils.SetSwitchFromOptions(options, constant.IsSenderConversationUpdate, false)
-//	utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
-//	utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
-//	//If there is an error, the coroutine ends, so judgment is not  required
-//	resp, _ := c.InternalSendMessage(callback, &s, userID, "", operationID, &server_api_params.OfflinePushInfo{}, false, options)
-//	s.ServerMsgID = resp.ServerMsgID
-//	s.SendTime = resp.SendTime
-//	s.Status = constant.MsgStatusFiltered
-//	msgStructToLocalChatLog(&localMessage, &s)
-//	err = c.db.InsertMessage(&localMessage)
-//	if err != nil {
-//		log.Error(operationID, "inset into chat log err", localMessage, s, err.Error())
-//	}
-//	err2 := c.db.UpdateMessageHasRead(userID, newMessageIDList, constant.SingleChatType)
-//	if err2 != nil {
-//		log.Error(operationID, "update message has read error", newMessageIDList, userID, err2.Error())
-//	}
-//	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.ch)
-//	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
-//}
 func (c *Conversation) insertMessageToLocalStorage(callback open_im_sdk_callback.Base, s *model_struct.LocalChatLog, operationID string) string {
 	err := c.db.InsertMessageController(s)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -2015,6 +2018,7 @@ func (c *Conversation) addMessageReactionExtensions(callback open_im_sdk_callbac
 	apiReq.ReactionExtensionList = reqTemp
 	apiReq.OperationID = operationID
 	apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
+	apiReq.Seq = message.Seq
 	var apiResp server_api_params.AddMessageReactionExtensionsResp
 	c.p.PostFatalCallbackPenetrate(callback, constant.AddMessageReactionExtensionsRouter, apiReq, &apiResp.ApiResult, apiReq.OperationID)
 	log.Debug(operationID, "api return:", message.IsReact, apiResp.ApiResult)
