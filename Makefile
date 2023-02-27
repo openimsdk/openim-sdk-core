@@ -9,7 +9,7 @@ ARCH:=$(or $(arch),amd64)
 
 
 build:
-	CGO_ENABLED=1 GOOS=${OS} GOARCH=${ARCH}go build -o ${BINARY_NAME}  ${GO_FILE}
+	CGO_ENABLED=1 GOOS=${OS} GOARCH=${ARCH} go build -o ${BINARY_NAME}  ${GO_FILE}
 install:
 	make build
 	mv ${BINARY_NAME} ${BIN_DIR}
