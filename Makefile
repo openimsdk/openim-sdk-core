@@ -1,17 +1,22 @@
 .PHONY: ios build install android
 
-BINARY_NAME=ws_wrapper/cmd/open_im_sdk_server
+NAME=ws_wrapper/cmd/open_im_sdk_server
 BIN_DIR=../../bin/
 LAN_FILE=.go
-GO_FILE:=${BINARY_NAME}${LAN_FILE}
+GO_FILE:=${NAME}${LAN_FILE}
 OS:= $(or $(os),linux)
 ARCH:=$(or $(arch),amd64)
+
+ifeq ($(OS),windows)
+
+BINARY_NAME=${NAME}.exe
+
+endif
 
 
 build:
 	CGO_ENABLED=1 GOOS=${OS} GOARCH=${ARCH} go build -o ${BINARY_NAME}  ${GO_FILE}
-install:
-	make build
+install:build
 	mv ${BINARY_NAME} ${BIN_DIR}
 clean:
 	env GO111MODULE=on go clean -cache
