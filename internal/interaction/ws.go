@@ -221,7 +221,9 @@ func (w *Ws) ReadData() {
 				return
 			}
 			if w.WsConn.IsFatalError(err) {
-				log.Error(operationID, "IsFatalError ", err.Error(), "ReConn")
+				log.Error(operationID, "IsFatalError ", err.Error(), "ReConn", w.WsConn.conn.LocalAddr())
+				//sleep 500 millisecond,waiting for network reconn,when network switch
+				time.Sleep(time.Millisecond * 500)
 				err, isNeedReConnect := w.reConnSleep(operationID, 5)
 				if err != nil && isNeedReConnect == false {
 					log.Warn(operationID, "token failed, don't connect again ")
