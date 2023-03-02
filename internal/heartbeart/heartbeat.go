@@ -68,7 +68,7 @@ type ParseToken struct {
 
 func (u *Heartbeat) Run() {
 	//	heartbeatInterval := 30
-	reqTimeout := 30
+	reqTimeout := 5
 	retryTimes := 0
 	heartbeatNum := 0
 	for {
