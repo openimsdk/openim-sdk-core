@@ -67,11 +67,13 @@ type ParseToken struct {
 //}
 
 func (u *Heartbeat) Run() {
-	//	heartbeatInterval := 30
-	reqTimeout := 5
+	defaultTimeout := 5
+	wakeUpTimeout := 1
+	reqTimeout := defaultTimeout
 	retryTimes := 0
 	heartbeatNum := 0
 	for {
+		reqTimeout = defaultTimeout
 		operationID := utils.OperationIDGenerator()
 		if constant.OnlyForTest == 1 {
 			time.Sleep(5 * time.Second)
@@ -111,6 +113,7 @@ func (u *Heartbeat) Run() {
 					u.full.SuperGroup.SyncJoinedGroupList(operationID)
 					u.full.Group().SyncJoinedGroupList(operationID)
 					log.Info(operationID, "recv wake up cmd, start heartbeat ", r.Cmd)
+					reqTimeout = wakeUpTimeout
 					break
 				}
 				log.Warn(operationID, "other cmd...", r.Cmd)
@@ -153,7 +156,6 @@ func (u *Heartbeat) Run() {
 			//}
 			continue
 		}
-
 		var wsSeqResp server_api_params.GetMaxAndMinSeqResp
 		err = proto.Unmarshal(resp.Data, &wsSeqResp)
 		if err != nil {
