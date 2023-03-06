@@ -1012,7 +1012,7 @@ func (c *Conversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *mode
 	return &lc
 }
 
-//deprecated
+// deprecated
 func (c *Conversation) revokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 	for _, w := range msgRevokeList {
 		if c.msgListener != nil {
@@ -1284,6 +1284,9 @@ func (c *Conversation) QuoteMsgRevokeHandle(v *model_struct.LocalChatLog, revoke
 	err := utils.JsonStringToStruct(v.Content, &s.QuoteElem)
 	if err != nil {
 		log.NewError("internal", "unmarshall failed", s.Content)
+	}
+	if s.QuoteElem.QuoteMessage == nil {
+		return
 	}
 	ok, revokeMessage := isContainRevokedList(s.QuoteElem.QuoteMessage.ClientMsgID, revokeMsgIDList)
 	if !ok {
