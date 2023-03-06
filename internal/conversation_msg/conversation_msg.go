@@ -1339,6 +1339,9 @@ func (c *Conversation) QuoteMsgRevokeHandle(v *model_struct.LocalChatLog, revoke
 	if err != nil {
 		log.NewError("internal", "unmarshall failed", s.Content)
 	}
+	if s.QuoteElem.QuoteMessage == nil {
+		return
+	}
 	ok, revokeMessage := isContainRevokedList(s.QuoteElem.QuoteMessage.ClientMsgID, revokeMsgIDList)
 	if !ok {
 		return
