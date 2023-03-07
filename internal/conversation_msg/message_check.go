@@ -169,22 +169,36 @@ func (c *Conversation) getMaxAndMinHaveSeqList(messages []*model_struct.LocalCha
 // 2、块中连续性检测
 // 3、块之间连续性检测
 func (c *Conversation) pullMessageAndReGetHistoryMessages(sourceID string, seqList []uint32, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback, operationID string) {
+	existedSeqList, err := c.db.SuperGroupGetAlreadyExistSeqList(sourceID, seqList)
+	if err != nil {
+		log.Error(operationID, "SuperGroupGetAlreadyExistSeqList err", err.Error(), sourceID, seqList)
+		return
+	}
+	if len(existedSeqList) == len(seqList) {
+		log.Debug(operationID, "do not pull message")
+		return
+	}
+	newSeqList := utils.DifferenceSubset(seqList, existedSeqList)
+	if len(newSeqList) == 0 {
+		log.Debug(operationID, "do not pull message")
+		return
+	}
 	var pullMsgReq server_api_params.PullMessageBySeqListReq
 	pullMsgReq.UserID = c.loginUserID
 	pullMsgReq.GroupSeqList = make(map[string]*server_api_params.SeqList, 0)
-	pullMsgReq.GroupSeqList[sourceID] = &server_api_params.SeqList{SeqList: seqList}
+	pullMsgReq.GroupSeqList[sourceID] = &server_api_params.SeqList{SeqList: newSeqList}
 
 	pullMsgReq.OperationID = operationID
 	log.Debug(operationID, "read diffusion group pull message, req: ", pullMsgReq)
-	resp, err := c.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 1, 1, c.loginUserID, operationID)
+	resp, err := c.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 2, 1, c.loginUserID, operationID)
 	if err != nil {
-		errHandle(seqList, list, err, messageListCallback)
+		errHandle(newSeqList, list, err, messageListCallback)
 		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 1, 2, c.loginUserID)
 	} else {
 		var pullMsgResp server_api_params.PullMessageBySeqListResp
 		err = proto.Unmarshal(resp.Data, &pullMsgResp)
 		if err != nil {
-			errHandle(seqList, list, err, messageListCallback)
+			errHandle(newSeqList, list, err, messageListCallback)
 			log.Error(operationID, "pullMsgResp Unmarshal failed ", err.Error())
 		} else {
 			log.Debug(operationID, "syncMsgFromServerSplit pull msg ", pullMsgReq.String(), pullMsgResp.String())
