@@ -190,7 +190,7 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(sourceID string, seqLi
 
 	pullMsgReq.OperationID = operationID
 	log.Debug(operationID, "read diffusion group pull message, req: ", pullMsgReq)
-	resp, err := c.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 2, 1, c.loginUserID, operationID)
+	resp, err := c.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 1, 1, c.loginUserID, operationID)
 	if err != nil {
 		errHandle(newSeqList, list, err, messageListCallback)
 		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 1, 2, c.loginUserID)
