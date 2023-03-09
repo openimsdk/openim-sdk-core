@@ -680,6 +680,10 @@ func SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, operationID str
 	userForSDK.Conversation().SetGlobalRecvMessageOpt(callback, opt, operationID)
 }
 
+func HideConversation(callback open_im_sdk_callback.Base, operationID, conversationID string) {
+	BaseCaller(userForSDK.Conversation().HideConversation, callback, conversationID, operationID)
+}
+
 // deprecated
 func GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, conversationIDList string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {

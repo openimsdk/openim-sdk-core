@@ -73,6 +73,12 @@ func (c *Conversation) SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Bas
 		log.NewInfo(operationID, "SetGlobalRecvMessageOpt callback: ", sdk_params_callback.SetGlobalRecvMessageOptCallback)
 	}()
 }
+func (c *Conversation) HideConversation(callback open_im_sdk_callback.Base, conversationID string, operationID string) {
+	c.hideConversation(callback, conversationID, operationID)
+	callback.OnSuccess(sdk_params_callback.HideConversationCallback)
+	log.NewInfo(operationID, "HideConversation callback: ", sdk_params_callback.HideConversationCallback)
+
+}
 
 // deprecated
 func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList, operationID string) {

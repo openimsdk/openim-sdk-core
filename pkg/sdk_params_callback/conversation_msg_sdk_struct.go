@@ -7,10 +7,10 @@ import (
 	"open_im_sdk/sdk_struct"
 )
 
-//type GetAllConversationListParam null
+// type GetAllConversationListParam null
 type GetAllConversationListCallback []*model_struct.LocalConversation
 
-//type GetAllConversationListParam offset count
+// type GetAllConversationListParam offset count
 type GetConversationListSplitCallback []*model_struct.LocalConversation
 
 type SetConversationRecvMessageOptParams []string
@@ -30,7 +30,7 @@ const SetConversationDraftCallback = constant.SuccessCallbackDefault
 const ResetConversationGroupAtTypeCallback = constant.SuccessCallbackDefault
 
 const PinConversationDraftCallback = constant.SuccessCallbackDefault
-
+const HideConversationCallback = constant.SuccessCallbackDefault
 const SetConversationMessageOptCallback = constant.SuccessCallbackDefault
 
 const SetConversationPrivateChatOptCallback = constant.SuccessCallbackDefault

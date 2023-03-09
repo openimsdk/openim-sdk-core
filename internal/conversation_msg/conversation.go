@@ -25,6 +25,10 @@ func (c *Conversation) getAllConversationList(callback open_im_sdk_callback.Base
 	common.CheckDBErrCallback(callback, err, operationID)
 	return conversationList
 }
+func (c *Conversation) hideConversation(callback open_im_sdk_callback.Base, conversationID string, operationID string) {
+	err := c.db.UpdateColumnsConversation(conversationID, map[string]interface{}{"latest_msg_send_time": 0})
+	common.CheckDBErrCallback(callback, err, operationID)
+}
 
 func (c *Conversation) getConversationListSplit(callback open_im_sdk_callback.Base, offset, count int, operationID string) sdk.GetConversationListSplitCallback {
 	conversationList, err := c.db.GetConversationListSplitDB(offset, count)
