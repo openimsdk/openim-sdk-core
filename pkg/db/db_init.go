@@ -2,6 +2,7 @@ package db
 
 import (
 	"errors"
+	"fmt"
 	//"github.com/glebarez/sqlite"
 	"gorm.io/driver/sqlite"
 
@@ -202,6 +203,25 @@ func (d *DataBase) initDB() error {
 	groupIDList = append(groupIDList, wkGroupIDList...)
 	for _, v := range groupIDList {
 		d.conn.Table(utils.GetSuperGroupTableName(v)).AutoMigrate(&model_struct.LocalChatLog{})
+		var count int64
+		_ = db.Raw(fmt.Sprintf("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'index' AND name ='%s' AND tbl_name = '%s'",
+			"index_seq_"+v, utils.GetSuperGroupTableName(v))).Row().Scan(&count)
+		if count == 0 {
+			result := db.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (seq)", "index_seq_"+v, utils.GetSuperGroupTableName(v)))
+			if result.Error != nil {
+				log.Error("create super group index failed:", result.Error.Error(), v)
+			}
+		}
+		var count2 int64
+		_ = db.Raw(fmt.Sprintf("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'index' AND name ='%s' AND tbl_name = '%s'",
+			"index_send_time_"+v, utils.GetSuperGroupTableName(v))).Row().Scan(&count)
+		if count2 == 0 {
+			result := db.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (send_time)", "index_send_time_"+v, utils.GetSuperGroupTableName(v)))
+			if result.Error != nil {
+				log.Error("create super group index failed:", result.Error.Error(), v)
+			}
+		}
+
 	}
 	if !db.Migrator().HasTable(&model_struct.LocalFriend{}) {
 		db.Migrator().CreateTable(&model_struct.LocalFriend{})

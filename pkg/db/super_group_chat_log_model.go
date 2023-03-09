@@ -418,7 +418,7 @@ func (d *DataBase) SuperGroupGetMsgSeqListBySelfUserID(userID string) ([]uint32,
 func (d *DataBase) SuperGroupGetAlreadyExistSeqList(groupID string, lostSeqList []uint32) (seqList []uint32, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	err = utils.Wrap(d.conn.Debug().Table(utils.GetSuperGroupTableName(groupID)).Where("seq IN ?", lostSeqList).Pluck("seq", &seqList).Error, utils.GetSelfFuncName()+" failed")
+	err = utils.Wrap(d.conn.Table(utils.GetSuperGroupTableName(groupID)).Where("seq IN ?", lostSeqList).Pluck("seq", &seqList).Error, utils.GetSelfFuncName()+" failed")
 	if err != nil {
 		return nil, err
 	}

@@ -74,7 +74,7 @@ func (c *Conversation) SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Bas
 	}()
 }
 
-//deprecated
+// deprecated
 func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList, operationID string) {
 	if callback == nil {
 		return
@@ -219,7 +219,6 @@ func (c *Conversation) GetTotalUnreadMsgCount(callback open_im_sdk_callback.Base
 	}()
 }
 
-//
 func (c *Conversation) SetConversationListener(listener open_im_sdk_callback.OnConversationListener) {
 	if c.ConversationListener != nil {
 		log.Error("internal", "just only set on listener")
@@ -1321,6 +1320,13 @@ func (c *Conversation) GetAdvancedHistoryMessageList(callback open_im_sdk_callba
 		log.Error(operationID, "length:", len(result.MessageList), "cost time", time.Since(t), "GetAdvancedHistoryMessageList callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
+func (c *Conversation) GetAdvancedHistoryMessageListReverse(callback open_im_sdk_callback.Base, getMessageOptions, operationID string) {
+	var unmarshalParams sdk_params_callback.GetAdvancedHistoryMessageListParams
+	common.JsonUnmarshalCallback(getMessageOptions, &unmarshalParams, callback, operationID)
+	result := c.getAdvancedHistoryMessageList(callback, unmarshalParams, operationID, true)
+	callback.OnSuccess(utils.StructToJsonStringDefault(result))
+	log.NewInfo(operationID, "GetAdvancedHistoryMessageListReverse callback: ", utils.StructToJsonStringDefault(result))
+}
 
 func (c *Conversation) GetHistoryMessageListReverse(callback open_im_sdk_callback.Base, getMessageOptions, operationID string) {
 	if callback == nil {
@@ -1433,7 +1439,7 @@ func (c *Conversation) MarkAllConversationHasRead(callback open_im_sdk_callback.
 	}()
 }
 
-//deprecated
+// deprecated
 func (c *Conversation) MarkGroupMessageHasRead(callback open_im_sdk_callback.Base, groupID string, operationID string) {
 	if callback == nil {
 		return
@@ -1497,7 +1503,7 @@ func (c *Conversation) ClearC2CHistoryMessageFromLocalAndSvr(callback open_im_sd
 	}()
 }
 
-//fixme
+// fixme
 func (c *Conversation) ClearGroupHistoryMessageFromLocalAndSvr(callback open_im_sdk_callback.Base, groupID string, operationID string) {
 	if callback == nil {
 		return

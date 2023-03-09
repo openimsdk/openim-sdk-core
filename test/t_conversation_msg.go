@@ -158,11 +158,12 @@ func DoTestSetAppBadge() {
 
 func DoTestGetAdvancedHistoryMessageList() {
 	var testGetHistoryCallBack GetHistoryCallBack
+	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
 	var params sdk_params_callback.GetAdvancedHistoryMessageListParams
 	params.UserID = ""
-	params.ConversationID = "super_group_812146266"
-	params.StartClientMsgID = "83ca933d559d0374258550dd656a661c"
-	params.Count = 30
+	params.ConversationID = "super_group_1420026997"
+	//params.StartClientMsgID = "83ca933d559d0374258550dd656a661c"
+	params.Count = 3
 	//params.LastMinSeq = seq
 	open_im_sdk.GetAdvancedHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
 }
@@ -383,12 +384,12 @@ func (t TestGetConversationRecvMessageOpt) OnSuccess(data string) {
 	fmt.Printf("TestGetConversationRecvMessageOpt , success,data:%v\n", data)
 }
 
-//func DoTestGetOneConversation(sourceID string, sessionType int) {
-//	var test TestGetOneConversationCallBack
-//	//GetOneConversation(Friend_uid, SingleChatType, test)
-//	open_im_sdk.GetOneConversation(sourceID, sessionType, test)
+//	func DoTestGetOneConversation(sourceID string, sessionType int) {
+//		var test TestGetOneConversationCallBack
+//		//GetOneConversation(Friend_uid, SingleChatType, test)
+//		open_im_sdk.GetOneConversation(sourceID, sessionType, test)
 //
-//}
+// }
 func DoTestCreateTextMessage(text string) string {
 	operationID := utils.OperationIDGenerator()
 	return open_im_sdk.CreateTextMessage(operationID, text)
@@ -417,11 +418,11 @@ func DoTestCreateVideoMessageFromFullPath() string {
 	return open_im_sdk.CreateVideoMessageFromFullPath(operationID, "C:\\Users\\Administrator\\Desktop\\video_test.mp4", "mp4", 5, "C:\\Users\\Administrator\\Desktop\\shot.jpg")
 }
 
-//func DoTestSetConversationDraft() {
-//	var test TestSetConversationDraft
-//	open_im_sdk.SetConversationDraft("single_c93bc8b171cce7b9d1befb389abfe52f", "hah", test)
+//	func DoTestSetConversationDraft() {
+//		var test TestSetConversationDraft
+//		open_im_sdk.SetConversationDraft("single_c93bc8b171cce7b9d1befb389abfe52f", "hah", test)
 //
-//}
+// }
 type TestSetConversationDraft struct {
 }
 

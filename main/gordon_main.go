@@ -13,17 +13,17 @@ import (
 var (
 	//APIADDR = "http://43.155.69.205:10002"
 	//WSADDR  = "ws://43.155.69.205:10001"
-	APIADDR = "https://chat-api-dev.opencord.so"
-	WSADDR  = "wss://chat-ws-dev.opencord.so"
-	//APIADDR      = "http://121.5.182.23:10002"
-	//WSADDR       = "ws://121.5.182.23:10001"
+	//APIADDR = "https://chat-api-dev.opencord.so"
+	//WSADDR  = "wss://chat-ws-dev.opencord.so"
+	APIADDR = "http://125.124.195.201:10002"
+	WSADDR  = "ws://125.124.195.201:10001"
 	//APIADDR      = "http://113.108.8.93:10002"
 	//WSADDR       = "ws://113.108.8.93:10001"
 	REGISTERADDR = APIADDR + "/user_register"
 	ACCOUNTCHECK = APIADDR + "/manager/account_check"
 	TOKENADDR    = APIADDR + "/auth/user_token"
-	//SECRET       = "tuoyun"
-	SECRET       = "4zbF9Y6Fs1QJ0hsmpC3B676txZcCnjcZ"
+	SECRET       = "tuoyun"
+	//SECRET       = "4zbF9Y6Fs1QJ0hsmpC3B676txZcCnjcZ"
 	SENDINTERVAL = 20
 )
 
@@ -75,21 +75,22 @@ func gRunGetToken(strMyUid string) string {
 	return token
 }
 func main() {
-	//uid := "3984071717"
+	uid := "7788"
 	//Gordon
 	//uid:="1554321956297519104"
 	//Gordon2
-	uid := "1583984945064968192"
+	//uid := "1583984945064968192"
 	//uid := "3734595565"
 	tokenx := gRunGetToken(uid)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(uid, tokenx, WSADDR, APIADDR)
+	test.DoTestGetAdvancedHistoryMessageList()
 	//test.DoTestSendMsg2GroupWithMessage(uid, "1623878302774460418", "2")
 	//test.DoTestAddMessageReactionExtensions(1,"special handle")
 	//time.Sleep(time.Second*5)
 	//test.DoTestAddMessageReactionExtensions(2,"special handle")
 	//time.Sleep(time.Second*5)
-	test.DoTestGetMessageListReactionExtensions("special handle")
+	//test.DoTestGetMessageListReactionExtensions("special handle")
 	//test.DoTestSetAppBadge()
 	//test.DoTestSearchLocalMessages()
 	//test.DoTestGetAdvancedHistoryMessageList()
