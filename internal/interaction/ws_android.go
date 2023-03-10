@@ -15,7 +15,7 @@ type Default struct {
 	sendConn *websocket.Conn
 }
 
-func NewDefault(connType int) *Default {
+func NewWebSocket(connType int) *Default {
 	return &Default{ConnType: connType}
 }
 func (d *Default) Close() error {

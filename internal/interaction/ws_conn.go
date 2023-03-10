@@ -38,9 +38,9 @@ func NewWsConn(listener open_im_sdk_callback.OnConnListener, token string, login
 		encoder: NewGobEncoder(), compressor: NewGzipCompressor()}
 	switch runtime.GOOS {
 	case "js":
-		p.conn = NewWebSocketJS(constant.WebSocket)
+		p.conn = NewWebSocket(constant.WebSocket)
 	default:
-		p.conn = NewDefault(constant.WebSocket)
+		p.conn = NewWebSocket(constant.WebSocket)
 	}
 	_, _, _ = p.ReConn("init:" + utils.OperationIDGenerator())
 	return &p
