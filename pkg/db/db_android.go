@@ -187,8 +187,8 @@ func (d *DataBase) initDB() error {
 		&model_struct.LocalAdminGroupRequest{},
 		&model_struct.LocalDepartment{},
 		&model_struct.LocalDepartmentMember{},
-		&LocalWorkMomentsNotification{},
-		&LocalWorkMomentsNotificationUnreadCount{},
+		&model_struct.LocalWorkMomentsNotification{},
+		&model_struct.LocalWorkMomentsNotificationUnreadCount{},
 		&model_struct.TempCacheLocalChatLog{},
 		&model_struct.LocalChatLogReactionExtensions{},
 	)
@@ -253,11 +253,11 @@ func (d *DataBase) initDB() error {
 	if !db.Migrator().HasTable(&model_struct.LocalDepartmentMember{}) {
 		db.Migrator().CreateTable(&model_struct.LocalDepartmentMember{})
 	}
-	if !db.Migrator().HasTable(&LocalWorkMomentsNotification{}) {
-		db.Migrator().CreateTable(&LocalWorkMomentsNotification{})
+	if !db.Migrator().HasTable(&model_struct.LocalWorkMomentsNotification{}) {
+		db.Migrator().CreateTable(&model_struct.LocalWorkMomentsNotification{})
 	}
-	if !db.Migrator().HasTable(&LocalWorkMomentsNotificationUnreadCount{}) {
-		db.Migrator().CreateTable(&LocalWorkMomentsNotificationUnreadCount{})
+	if !db.Migrator().HasTable(&model_struct.LocalWorkMomentsNotificationUnreadCount{}) {
+		db.Migrator().CreateTable(&model_struct.LocalWorkMomentsNotificationUnreadCount{})
 	}
 	if !db.Migrator().HasTable(&model_struct.LocalChatLogReactionExtensions{}) {
 		db.Migrator().CreateTable(&model_struct.LocalChatLogReactionExtensions{})
