@@ -550,11 +550,11 @@ func (i IndexDB) InsertWorkMomentsNotification(jsonDetail string) error {
 	panic("implement me")
 }
 
-func (i IndexDB) GetWorkMomentsNotification(offset, count int) (WorkMomentsNotifications []*LocalWorkMomentsNotification, err error) {
+func (i IndexDB) GetWorkMomentsNotification(offset, count int) (WorkMomentsNotifications []*model_struct.LocalWorkMomentsNotification, err error) {
 	panic("implement me")
 }
 
-func (i IndexDB) GetWorkMomentsNotificationLimit(pageNumber, showNumber int) (WorkMomentsNotifications []*LocalWorkMomentsNotification, err error) {
+func (i IndexDB) GetWorkMomentsNotificationLimit(pageNumber, showNumber int) (WorkMomentsNotifications []*model_struct.LocalWorkMomentsNotification, err error) {
 	panic("implement me")
 }
 
@@ -570,7 +570,7 @@ func (i IndexDB) MarkAllWorkMomentsNotificationAsRead() (err error) {
 	panic("implement me")
 }
 
-func (i IndexDB) GetWorkMomentsUnReadCount() (workMomentsNotificationUnReadCount LocalWorkMomentsNotificationUnreadCount, err error) {
+func (i IndexDB) GetWorkMomentsUnReadCount() (workMomentsNotificationUnReadCount model_struct.LocalWorkMomentsNotificationUnreadCount, err error) {
 	panic("implement me")
 }
 
