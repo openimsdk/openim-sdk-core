@@ -28,19 +28,19 @@ import (
 var ErrType = errors.New("from javascript data type err")
 
 type IndexDB struct {
-	indexdb.LocalUsers
-	indexdb.LocalConversations
+	*indexdb.LocalUsers
+	*indexdb.LocalConversations
 	*indexdb.LocalChatLogs
-	indexdb.LocalSuperGroupChatLogs
-	indexdb.LocalSuperGroup
-	indexdb.LocalConversationUnreadMessages
-	indexdb.LocalGroups
-	model_struct.LocalGroupMember
-	model_struct.LocalGroupRequest
-	indexdb.LocalCacheMessage
+	*indexdb.LocalSuperGroupChatLogs
+	*indexdb.LocalSuperGroup
+	*indexdb.LocalConversationUnreadMessages
+	*indexdb.LocalGroups
+	*indexdb.LocalGroupMember
+	*indexdb.LocalCacheMessage
 	*indexdb.FriendRequest
 	*indexdb.Black
 	*indexdb.Friend
+	*indexdb.LocalGroupRequest
 	loginUserID string
 }
 
@@ -590,11 +590,20 @@ func (i IndexDB) InitDB(userID string, dataDir string) error {
 
 func NewDataBase(loginUserID string, dbDir string, operationID string) (*IndexDB, error) {
 	return &IndexDB{
-		LocalChatLogs: indexdb.NewLocalChatLogs(loginUserID),
-		FriendRequest: indexdb.NewFriendRequest(loginUserID),
-		Black:         indexdb.NewBlack(loginUserID),
-		Friend:        indexdb.NewFriend(loginUserID),
-		loginUserID:   loginUserID,
+		LocalUsers:                      indexdb.NewLocalUsers(),
+		LocalConversations:              indexdb.NewLocalConversations(),
+		LocalChatLogs:                   indexdb.NewLocalChatLogs(loginUserID),
+		LocalSuperGroupChatLogs:         indexdb.NewLocalSuperGroupChatLogs(),
+		LocalSuperGroup:                 indexdb.NewLocalSuperGroup(),
+		LocalConversationUnreadMessages: indexdb.NewLocalConversationUnreadMessages(),
+		LocalGroups:                     indexdb.NewLocalGroups(),
+		LocalGroupMember:                indexdb.NewLocalGroupMember(),
+		LocalCacheMessage:               indexdb.NewLocalCacheMessage(),
+		FriendRequest:                   indexdb.NewFriendRequest(loginUserID),
+		Black:                           indexdb.NewBlack(loginUserID),
+		Friend:                          indexdb.NewFriend(loginUserID),
+		LocalGroupRequest:               indexdb.NewLocalGroupRequest(),
+		loginUserID:                     loginUserID,
 	}, nil
 }
 

@@ -23,6 +23,11 @@ var jsErr = js.Global().Get("Error")
 
 type LocalUsers struct {
 }
+
+func NewLocalUsers() *LocalUsers {
+	return &LocalUsers{}
+}
+
 type CallbackData struct {
 	ErrCode int32       `json:"errCode"`
 	ErrMsg  string      `json:"errMsg"`

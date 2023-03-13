@@ -1,3 +1,4 @@
+//go:build js && wasm
 // +build js,wasm
 
 package indexdb
@@ -8,6 +9,10 @@ import (
 )
 
 type LocalGroupMember struct {
+}
+
+func NewLocalGroupMember() *LocalGroupMember {
+	return &LocalGroupMember{}
 }
 
 func (i *LocalGroupMember) GetGroupMemberInfoByGroupIDUserID(groupID, userID string) (*model_struct.LocalGroupMember, error) {

@@ -11,6 +11,10 @@ import (
 type LocalGroupRequest struct {
 }
 
+func NewLocalGroupRequest() *LocalGroupRequest {
+	return &LocalGroupRequest{}
+}
+
 func (i *LocalGroupRequest) InsertGroupRequest(groupRequest *model_struct.LocalGroupRequest) error {
 	_, err := Exec(utils.StructToJsonString(groupRequest))
 	return err

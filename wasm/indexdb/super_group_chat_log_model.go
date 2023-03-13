@@ -12,6 +12,10 @@ import (
 
 type LocalSuperGroupChatLogs struct{}
 
+func NewLocalSuperGroupChatLogs() *LocalSuperGroupChatLogs {
+	return &LocalSuperGroupChatLogs{}
+}
+
 func (i *LocalSuperGroupChatLogs) GetSuperGroupNormalMsgSeq(groupID string) (uint32, error) {
 	seq, err := Exec(groupID)
 	if err != nil {

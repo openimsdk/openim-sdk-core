@@ -25,8 +25,6 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
-	"open_im_sdk/wasm/indexdb"
-	"runtime"
 	"sync"
 	"time"
 )
@@ -249,17 +247,13 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		cb.OnSuccess("")
 		return
 	}
-	switch runtime.GOOS {
-	case "js":
-		u.db = indexdb.NewIndexDB(u.loginUserID)
-	default:
-		u.db, err = db.NewSqlite(userID, sdk_struct.SvrConf.DataDir, operationID)
-		if err != nil {
-			cb.OnError(constant.ErrDB.ErrCode, err.Error())
-			log.Error(operationID, "NewDataBase failed ", err.Error())
-			return
-		}
+	u.db, err = db.NewDataBase(userID, sdk_struct.SvrConf.DataDir, operationID)
+	if err != nil {
+		cb.OnError(constant.ErrDB.ErrCode, err.Error())
+		log.Error(operationID, "NewDataBase failed ", err.Error())
+		return
 	}
+
 	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir, "login cost time: ", time.Since(t1))
 
 	u.conversationCh = make(chan common.Cmd2Value, 1000)

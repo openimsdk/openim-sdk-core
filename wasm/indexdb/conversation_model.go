@@ -12,6 +12,10 @@ import (
 type LocalConversations struct {
 }
 
+func NewLocalConversations() *LocalConversations {
+	return &LocalConversations{}
+}
+
 func (i *LocalConversations) GetAllConversationListDB() (result []*model_struct.LocalConversation, err error) {
 	cList, err := Exec()
 	if err != nil {

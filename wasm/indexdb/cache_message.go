@@ -1,3 +1,4 @@
+//go:build js && wasm
 // +build js,wasm
 
 package indexdb
@@ -8,6 +9,10 @@ import (
 )
 
 type LocalCacheMessage struct {
+}
+
+func NewLocalCacheMessage() *LocalCacheMessage {
+	return &LocalCacheMessage{}
 }
 
 func (i *LocalCacheMessage) BatchInsertTempCacheMessageList(MessageList []*model_struct.TempCacheLocalChatLog) error {

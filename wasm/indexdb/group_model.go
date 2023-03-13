@@ -1,3 +1,4 @@
+//go:build js && wasm
 // +build js,wasm
 
 package indexdb
@@ -9,6 +10,10 @@ import (
 
 type LocalGroups struct{}
 
+func NewLocalGroups() *LocalGroups {
+	return &LocalGroups{}
+}
+
 func (i *LocalGroups) InsertGroup(groupInfo *model_struct.LocalGroup) error {
 	_, err := Exec(utils.StructToJsonString(groupInfo))
 	return err
@@ -19,7 +24,7 @@ func (i *LocalGroups) DeleteGroup(groupID string) error {
 	return err
 }
 
-//该函数需要全更新
+// 该函数需要全更新
 func (i *LocalGroups) UpdateGroup(groupInfo *model_struct.LocalGroup) error {
 	_, err := Exec(groupInfo.GroupID, utils.StructToJsonString(groupInfo))
 	return err

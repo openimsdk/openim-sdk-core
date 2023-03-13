@@ -1,3 +1,4 @@
+//go:build js && wasm
 // +build js,wasm
 
 package indexdb
@@ -8,6 +9,10 @@ import (
 )
 
 type LocalConversationUnreadMessages struct {
+}
+
+func NewLocalConversationUnreadMessages() *LocalConversationUnreadMessages {
+	return &LocalConversationUnreadMessages{}
 }
 
 func (i *LocalConversationUnreadMessages) BatchInsertConversationUnreadMessageList(messageList []*model_struct.LocalConversationUnreadMessage) error {
