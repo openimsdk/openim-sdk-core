@@ -1,3 +1,6 @@
+//go:build !js
+// +build !js
+
 package db
 
 import (
@@ -392,7 +395,7 @@ func (d *DataBase) UpdateMessageTimeAndStatusController(msg *sdk_struct.MsgStruc
 	}
 }
 
-//group ,index_recv_id and index_send_time only one can be used,when index_recv_id be used,temp B tree use for order by,Query speed decrease
+// group ,index_recv_id and index_send_time only one can be used,when index_recv_id be used,temp B tree use for order by,Query speed decrease
 func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()

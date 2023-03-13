@@ -1,3 +1,6 @@
+//go:build !js
+// +build !js
+
 package db
 
 import (
@@ -6,23 +9,6 @@ import (
 	"open_im_sdk/pkg/utils"
 	"time"
 )
-
-type LocalWorkMomentsNotification struct {
-	JsonDetail string `gorm:"column:json_detail"`
-	CreateTime int64  `gorm:"create_time"`
-}
-
-func (LocalWorkMomentsNotification) TableName() string {
-	return "local_work_moments_notification"
-}
-
-type LocalWorkMomentsNotificationUnreadCount struct {
-	UnreadCount int `gorm:"unread_count" json:"unreadCount"`
-}
-
-func (LocalWorkMomentsNotificationUnreadCount) TableName() string {
-	return "local_work_moments_notification_unread_count"
-}
 
 func (d *DataBase) InsertWorkMomentsNotification(jsonDetail string) error {
 	d.mRWMutex.Lock()
