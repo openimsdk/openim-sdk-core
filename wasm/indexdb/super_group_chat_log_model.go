@@ -1,3 +1,4 @@
+//go:build js && wasm
 // +build js,wasm
 
 package indexdb
@@ -191,11 +192,11 @@ func (i *LocalChatLogs) SuperBatchInsertExceptionMsg(MessageList []*model_struct
 	return err
 }
 
-func (i IndexDB) InitSuperLocalChatLog(groupID string) {
+func (i *LocalSuperGroupChatLogs) InitSuperLocalChatLog(groupID string) {
 	_, _ = Exec(groupID)
 }
 
-func (i IndexDB) SuperGroupDeleteAllMessage(groupID string) error {
+func (i *LocalSuperGroupChatLogs) SuperGroupDeleteAllMessage(groupID string) error {
 	_, err := Exec(groupID)
 	return err
 }
@@ -253,7 +254,7 @@ func (i *LocalSuperGroupChatLogs) SuperGroupIsExistsInErrChatLogBySeq(seq int64)
 	}
 }
 
-func (i IndexDB) SuperGroupMessageIfExistsBySeq(seq int64) (bool, error) {
+func (i *LocalSuperGroupChatLogs) SuperGroupMessageIfExistsBySeq(seq int64) (bool, error) {
 	isExist, err := Exec(seq)
 	if err != nil {
 		return false, err
@@ -266,7 +267,7 @@ func (i IndexDB) SuperGroupMessageIfExistsBySeq(seq int64) (bool, error) {
 	}
 }
 
-func (i IndexDB) SuperGroupGetAllUnDeleteMessageSeqList() ([]uint32, error) {
+func (i *LocalSuperGroupChatLogs) SuperGroupGetAllUnDeleteMessageSeqList() ([]uint32, error) {
 	gList, err := Exec()
 	if err != nil {
 		return nil, err
@@ -284,17 +285,17 @@ func (i IndexDB) SuperGroupGetAllUnDeleteMessageSeqList() ([]uint32, error) {
 	}
 }
 
-func (i IndexDB) SuperGroupUpdateColumnsMessage(clientMsgID, groupID string, args map[string]interface{}) error {
+func (i *LocalSuperGroupChatLogs) SuperGroupUpdateColumnsMessage(clientMsgID, groupID string, args map[string]interface{}) error {
 	_, err := Exec(clientMsgID, groupID, utils.StructToJsonString(args))
 	return err
 }
 
-func (i IndexDB) SuperGroupUpdateMessageStatusBySourceID(sourceID string, status, sessionType int32) error {
+func (i *LocalSuperGroupChatLogs) SuperGroupUpdateMessageStatusBySourceID(sourceID string, status, sessionType int32) error {
 	_, err := Exec(sourceID, status, sessionType)
 	return err
 }
 
-func (i IndexDB) SuperGroupGetSendingMessageList(groupID string) (result []*model_struct.LocalChatLog, err error) {
+func (i *LocalSuperGroupChatLogs) SuperGroupGetSendingMessageList(groupID string) (result []*model_struct.LocalChatLog, err error) {
 	gList, err := Exec(groupID)
 	if err != nil {
 		return nil, err
@@ -311,12 +312,12 @@ func (i IndexDB) SuperGroupGetSendingMessageList(groupID string) (result []*mode
 	}
 }
 
-func (i IndexDB) SuperGroupUpdateGroupMessageHasRead(msgIDList []string, groupID string) error {
+func (i *LocalSuperGroupChatLogs) SuperGroupUpdateGroupMessageHasRead(msgIDList []string, groupID string) error {
 	_, err := Exec(utils.StructToJsonString(msgIDList), groupID)
 	return err
 }
 
-func (i IndexDB) SuperGroupGetNormalMsgSeq() (uint32, error) {
+func (i *LocalSuperGroupChatLogs) SuperGroupGetNormalMsgSeq() (uint32, error) {
 	seq, err := Exec()
 	if err != nil {
 		return 0, err
@@ -329,7 +330,7 @@ func (i IndexDB) SuperGroupGetNormalMsgSeq() (uint32, error) {
 	}
 }
 
-func (i IndexDB) SuperGroupGetTestMessage(seq uint32) (*model_struct.LocalChatLog, error) {
+func (i *LocalSuperGroupChatLogs) SuperGroupGetTestMessage(seq uint32) (*model_struct.LocalChatLog, error) {
 	c, err := Exec(seq)
 	if err != nil {
 		return nil, err
@@ -347,22 +348,22 @@ func (i IndexDB) SuperGroupGetTestMessage(seq uint32) (*model_struct.LocalChatLo
 	}
 }
 
-func (i IndexDB) SuperGroupUpdateMsgSenderNickname(sendID, nickname string, sType int) error {
+func (i *LocalSuperGroupChatLogs) SuperGroupUpdateMsgSenderNickname(sendID, nickname string, sType int) error {
 	_, err := Exec(sendID, nickname, sType)
 	return err
 }
 
-func (i IndexDB) SuperGroupUpdateMsgSenderFaceURL(sendID, faceURL string, sType int) error {
+func (i *LocalSuperGroupChatLogs) SuperGroupUpdateMsgSenderFaceURL(sendID, faceURL string, sType int) error {
 	_, err := Exec(sendID, faceURL, sType)
 	return err
 }
 
-func (i IndexDB) SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int, groupID string) error {
+func (i *LocalSuperGroupChatLogs) SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int, groupID string) error {
 	_, err := Exec(sendID, faceURL, nickname, sessionType, groupID)
 	return err
 }
 
-func (i IndexDB) SuperGroupGetMsgSeqByClientMsgID(clientMsgID string, groupID string) (uint32, error) {
+func (i *LocalSuperGroupChatLogs) SuperGroupGetMsgSeqByClientMsgID(clientMsgID string, groupID string) (uint32, error) {
 	seq, err := Exec(clientMsgID, groupID)
 	if err != nil {
 		return 0, err
@@ -375,7 +376,7 @@ func (i IndexDB) SuperGroupGetMsgSeqByClientMsgID(clientMsgID string, groupID st
 	}
 }
 
-func (i IndexDB) SuperGroupGetMsgSeqListByGroupID(groupID string) ([]uint32, error) {
+func (i *LocalSuperGroupChatLogs) SuperGroupGetMsgSeqListByGroupID(groupID string) ([]uint32, error) {
 	gList, err := Exec(groupID)
 	if err != nil {
 		return nil, err
@@ -393,7 +394,7 @@ func (i IndexDB) SuperGroupGetMsgSeqListByGroupID(groupID string) ([]uint32, err
 	}
 }
 
-func (i IndexDB) SuperGroupGetMsgSeqListByPeerUserID(userID string) ([]uint32, error) {
+func (i *LocalSuperGroupChatLogs) SuperGroupGetMsgSeqListByPeerUserID(userID string) ([]uint32, error) {
 	gList, err := Exec(userID)
 	if err != nil {
 		return nil, err
@@ -411,7 +412,7 @@ func (i IndexDB) SuperGroupGetMsgSeqListByPeerUserID(userID string) ([]uint32, e
 	}
 }
 
-func (i IndexDB) SuperGroupGetMsgSeqListBySelfUserID(userID string) ([]uint32, error) {
+func (i *LocalSuperGroupChatLogs) SuperGroupGetMsgSeqListBySelfUserID(userID string) ([]uint32, error) {
 	gList, err := Exec(userID)
 	if err != nil {
 		return nil, err

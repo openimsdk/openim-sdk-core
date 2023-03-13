@@ -1,3 +1,4 @@
+//go:build js && wasm
 // +build js,wasm
 
 package indexdb
@@ -290,11 +291,6 @@ func (i *LocalChatLogs) MessageIfExistsBySeq(seq int64) (bool, error) {
 	}
 }
 
-func (i *LocalChatLogs) UpdateGroupMessageHasRead(msgIDList []string, sessionType int32) error {
-	_, err := Exec(msgIDList, sessionType)
-	return err
-}
-
 func (i *LocalChatLogs) GetMultipleMessage(msgIDList []string) (result []*model_struct.LocalChatLog, err error) {
 	msgList, err := Exec(utils.StructToJsonString(msgIDList))
 	if err != nil {
@@ -457,7 +453,7 @@ func (i *LocalChatLogs) BatchInsertExceptionMsg(MessageList []*model_struct.Loca
 	return err
 }
 
-func (i IndexDB) UpdateGroupMessageHasRead(msgIDList []string, sessionType int32) error {
+func (i *LocalChatLogs) UpdateGroupMessageHasRead(msgIDList []string, sessionType int32) error {
 	_, err := Exec(utils.StructToJsonString(msgIDList), sessionType)
 	return err
 }

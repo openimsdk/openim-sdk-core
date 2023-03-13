@@ -13,7 +13,6 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
-	"runtime"
 	"strings"
 	"sync"
 )
@@ -36,12 +35,7 @@ type WsConn struct {
 func NewWsConn(listener open_im_sdk_callback.OnConnListener, token string, loginUserID string, isCompression bool, conversationCh chan common.Cmd2Value) *WsConn {
 	p := WsConn{listener: listener, token: token, loginUserID: loginUserID, IsCompression: isCompression, ConversationCh: conversationCh,
 		encoder: NewGobEncoder(), compressor: NewGzipCompressor()}
-	switch runtime.GOOS {
-	case "js":
-		p.conn = NewWebSocket(constant.WebSocket)
-	default:
-		p.conn = NewWebSocket(constant.WebSocket)
-	}
+	p.conn = NewWebSocket(constant.WebSocket)
 	_, _, _ = p.ReConn("init:" + utils.OperationIDGenerator())
 	return &p
 }

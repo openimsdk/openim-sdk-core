@@ -1,44 +1,46 @@
+//go:build js && wasm
 // +build js,wasm
 
-package indexdb
+package db
 
 import (
 	"errors"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"open_im_sdk/wasm/indexdb"
 	"runtime"
 	"syscall/js"
 	"time"
 )
 
-//1,使用wasm原生的方式，tinygo应用于go的嵌入式领域，支持的功能有限，支持go语言的子集,甚至json序列化都无法支持
-//2.函数命名遵从驼峰命名
-//3.提供的sql生成语句中，关于bool值需要特殊处理，create语句的设计的到bool值的需要在创建语句中单独说明，这是因为在原有的sqlite中并不支持bool，用整数1或者0替代，gorm对其做了转换。
-//4.提供的sql生成语句中，字段名是下划线方式 例如：recv_id，但是接口转换的数据json tag字段的风格是 recvID，类似的所有的字段需要做个map映射
-//5.任何涉及到gorm获取的是否需要返回错误，比如take和find都需要在文档上说明
-//6.任何涉及到update的操作，一定要看gorm原型中实现，如果有select(*)则不需要用temp_struct中的结构体
-//7.任何和接口重名的时候，db接口统一加上后缀DB
-//8.任何map类型统一使用json字符串转换，文档说明
+// 1,使用wasm原生的方式，tinygo应用于go的嵌入式领域，支持的功能有限，支持go语言的子集,甚至json序列化都无法支持
+// 2.函数命名遵从驼峰命名
+// 3.提供的sql生成语句中，关于bool值需要特殊处理，create语句的设计的到bool值的需要在创建语句中单独说明，这是因为在原有的sqlite中并不支持bool，用整数1或者0替代，gorm对其做了转换。
+// 4.提供的sql生成语句中，字段名是下划线方式 例如：recv_id，但是接口转换的数据json tag字段的风格是 recvID，类似的所有的字段需要做个map映射
+// 5.任何涉及到gorm获取的是否需要返回错误，比如take和find都需要在文档上说明
+// 6.任何涉及到update的操作，一定要看gorm原型中实现，如果有select(*)则不需要用temp_struct中的结构体
+// 7.任何和接口重名的时候，db接口统一加上后缀DB
+// 8.任何map类型统一使用json字符串转换，文档说明
+var ErrType = errors.New("from javascript data type err")
 
 type IndexDB struct {
-	LocalUsers
-	LocalConversations
-	*LocalChatLogs
-	LocalSuperGroupChatLogs
-	LocalSuperGroup
-	LocalConversationUnreadMessages
-	LocalGroups
-	LocalGroupMember
-	LocalGroupRequest
-	LocalCacheMessage
-	*FriendRequest
-	*Black
-	*Friend
+	indexdb.LocalUsers
+	indexdb.LocalConversations
+	*indexdb.LocalChatLogs
+	indexdb.LocalSuperGroupChatLogs
+	indexdb.LocalSuperGroup
+	indexdb.LocalConversationUnreadMessages
+	indexdb.LocalGroups
+	model_struct.LocalGroupMember
+	model_struct.LocalGroupRequest
+	indexdb.LocalCacheMessage
+	*indexdb.FriendRequest
+	*indexdb.Black
+	*indexdb.Friend
 	loginUserID string
 }
 
@@ -548,11 +550,11 @@ func (i IndexDB) InsertWorkMomentsNotification(jsonDetail string) error {
 	panic("implement me")
 }
 
-func (i IndexDB) GetWorkMomentsNotification(offset, count int) (WorkMomentsNotifications []*db.LocalWorkMomentsNotification, err error) {
+func (i IndexDB) GetWorkMomentsNotification(offset, count int) (WorkMomentsNotifications []*LocalWorkMomentsNotification, err error) {
 	panic("implement me")
 }
 
-func (i IndexDB) GetWorkMomentsNotificationLimit(pageNumber, showNumber int) (WorkMomentsNotifications []*db.LocalWorkMomentsNotification, err error) {
+func (i IndexDB) GetWorkMomentsNotificationLimit(pageNumber, showNumber int) (WorkMomentsNotifications []*LocalWorkMomentsNotification, err error) {
 	panic("implement me")
 }
 
@@ -568,7 +570,7 @@ func (i IndexDB) MarkAllWorkMomentsNotificationAsRead() (err error) {
 	panic("implement me")
 }
 
-func (i IndexDB) GetWorkMomentsUnReadCount() (workMomentsNotificationUnReadCount db.LocalWorkMomentsNotificationUnreadCount, err error) {
+func (i IndexDB) GetWorkMomentsUnReadCount() (workMomentsNotificationUnReadCount LocalWorkMomentsNotificationUnreadCount, err error) {
 	panic("implement me")
 }
 
@@ -586,42 +588,14 @@ func (i IndexDB) InitDB(userID string, dataDir string) error {
 	return err
 }
 
-//func (i IndexDB) GetBlackList() ([]*model_struct.LocalBlack, error) {
-//	panic("implement me")
-//}
-//
-//func (i IndexDB) GetBlackListUserID() (blackListUid []string, err error) {
-//	panic("implement me")
-//}
-//
-//func (i IndexDB) GetBlackInfoByBlockUserID(blockUserID string) (*model_struct.LocalBlack, error) {
-//	panic("implement me")
-//}
-//
-//func (i IndexDB) GetBlackInfoList(blockUserIDList []string) ([]*model_struct.LocalBlack, error) {
-//	panic("implement me")
-//}
-//
-//func (i IndexDB) InsertBlack(black *model_struct.LocalBlack) error {
-//	panic("implement me")
-//}
-//
-//func (i IndexDB) UpdateBlack(black *model_struct.LocalBlack) error {
-//	panic("implement me")
-//}
-//
-//func (i IndexDB) DeleteBlack(blockUserID string) error {
-//	panic("implement me")
-//}
-
-func NewIndexDB(loginUserID string) *IndexDB {
+func NewDataBase(loginUserID string, dbDir string, operationID string) (*IndexDB, error) {
 	return &IndexDB{
-		LocalChatLogs: NewLocalChatLogs(loginUserID),
-		FriendRequest: NewFriendRequest(loginUserID),
-		Black:         NewBlack(loginUserID),
-		Friend:        NewFriend(loginUserID),
+		LocalChatLogs: indexdb.NewLocalChatLogs(loginUserID),
+		FriendRequest: indexdb.NewFriendRequest(loginUserID),
+		Black:         indexdb.NewBlack(loginUserID),
+		Friend:        indexdb.NewFriend(loginUserID),
 		loginUserID:   loginUserID,
-	}
+	}, nil
 }
 
 func (i IndexDB) SetChatLogFailedStatus() {
