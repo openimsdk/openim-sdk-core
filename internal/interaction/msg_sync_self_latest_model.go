@@ -1,24 +1,24 @@
 package interaction
 
-import (
-	"open_im_sdk/pkg/common"
-	"open_im_sdk/pkg/db"
-	"open_im_sdk/pkg/server_api_params"
-)
-
-type SelfMsgSyncLatestModel struct {
-	*db.DataBase
-	*Ws
-	loginUserID        string
-	conversationCh     chan common.Cmd2Value
-	seqMaxSynchronized uint32
-	seqMaxNeedSync     uint32 //max seq in push or max seq in redis
-	pushMsgCache       map[uint32]*server_api_params.MsgData
-
-	lostMsgSeqList  []uint32
-	syncMsgFinished bool
-	maxSeqOnLocal   uint32
-}
+//import (
+//	"open_im_sdk/pkg/common"
+//	"open_im_sdk/pkg/db"
+//	"open_im_sdk/pkg/server_api_params"
+//)
+//
+//type SelfMsgSyncLatestModel struct {
+//	*db.DataBase
+//	*Ws
+//	loginUserID        string
+//	conversationCh     chan common.Cmd2Value
+//	seqMaxSynchronized uint32
+//	seqMaxNeedSync     uint32 //max seq in push or max seq in redis
+//	pushMsgCache       map[uint32]*server_api_params.MsgData
+//
+//	lostMsgSeqList  []uint32
+//	syncMsgFinished bool
+//	maxSeqOnLocal   uint32
+//}
 
 //
 //func NewSelfMsgSyncLatestModel(dataBase *db.DataBase, ws *Ws, loginUserID string, conversationCh chan common.Cmd2Value) *SelfMsgSyncLatestModel {

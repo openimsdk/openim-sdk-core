@@ -1,22 +1,16 @@
 package interaction
 
-import (
-	"open_im_sdk/pkg/common"
-	"open_im_sdk/pkg/db"
-	"sync"
-)
-
-type SuperGroupMsgSync struct {
-	*db.DataBase
-	*Ws
-	loginUserID              string
-	conversationCh           chan common.Cmd2Value
-	superGroupMtx            sync.Mutex
-	Group2SeqMaxNeedSync     map[string]uint32
-	Group2SeqMaxSynchronized map[string]uint32
-	SuperGroupIDList         []string
-	joinedSuperGroupCh       chan common.Cmd2Value
-}
+//type SuperGroupMsgSync struct {
+//	*db.DataBase
+//	*Ws
+//	loginUserID              string
+//	conversationCh           chan common.Cmd2Value
+//	superGroupMtx            sync.Mutex
+//	Group2SeqMaxNeedSync     map[string]uint32
+//	Group2SeqMaxSynchronized map[string]uint32
+//	SuperGroupIDList         []string
+//	joinedSuperGroupCh       chan common.Cmd2Value
+//}
 
 //
 //func NewSuperGroupMsgSync(dataBase *db.DataBase, ws *Ws, loginUserID string, conversationCh chan common.Cmd2Value, joinedSuperGroupCh chan common.Cmd2Value) *SuperGroupMsgSync {
