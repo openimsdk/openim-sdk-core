@@ -241,6 +241,7 @@ func (i IndexDB) BatchUpdateMessageList(MessageList []*model_struct.LocalChatLog
 		v1.RecvID = v.RecvID
 		v1.SessionType = v.SessionType
 		v1.ServerMsgID = v.ServerMsgID
+		v1.Ex = v.Ex
 		err := i.UpdateMessageController(v1)
 		if err != nil {
 			return utils.Wrap(err, "BatchUpdateMessageList failed")
