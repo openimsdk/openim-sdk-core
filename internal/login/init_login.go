@@ -381,7 +381,7 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 	resp, err := u.ws.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID, operationID)
 	if err != nil {
 		log.Warn(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
-		if !u.ws.IsInterruptReconnection() {
+		if callback != nil && !u.ws.IsInterruptReconnection() {
 			callback.OnError(100, err.Error())
 			return
 		} else {
