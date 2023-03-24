@@ -71,7 +71,7 @@ func (c *Conversation) SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Bas
 	}()
 }
 
-//deprecated
+// deprecated
 func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList, operationID string) {
 	if callback == nil {
 		return
@@ -206,7 +206,6 @@ func (c *Conversation) GetTotalUnreadMsgCount(callback open_im_sdk_callback.Base
 	}()
 }
 
-//
 func (c *Conversation) SetConversationListener(listener open_im_sdk_callback.OnConversationListener) {
 	if c.ConversationListener != nil {
 		log.Error("internal", "just only set on listener")
@@ -443,9 +442,9 @@ func (c *Conversation) CreateImageMessageFromFullPath(imageFullPath, operationID
 	go func() {
 		dstFile := utils.FileTmpPath(imageFullPath, c.DataDir) //a->b
 		_, err := utils.CopyFile(imageFullPath, dstFile)
-		log.Info("internal", "copy file, ", imageFullPath, dstFile)
+		log.Info(operationID, "copy file, ", imageFullPath, dstFile)
 		if err != nil {
-			log.Error("internal", "open file failed: ", err, imageFullPath)
+			log.Error(operationID, "open file failed: ", err, imageFullPath)
 		}
 		wg.Done()
 	}()
@@ -453,10 +452,10 @@ func (c *Conversation) CreateImageMessageFromFullPath(imageFullPath, operationID
 	s := sdk_struct.MsgStruct{}
 	c.initBasicInfo(&s, constant.UserMsgType, constant.Picture, operationID)
 	s.PictureElem.SourcePath = imageFullPath
-	log.Info("internal", "ImageMessage  path:", s.PictureElem.SourcePath)
+	log.Info(operationID, "ImageMessage  path:", s.PictureElem.SourcePath)
 	imageInfo, err := getImageInfo(s.PictureElem.SourcePath)
 	if err != nil {
-		log.Error("internal", "getImageInfo err:", err.Error())
+		log.Error(operationID, "getImageInfo err:", err.Error())
 		return ""
 	}
 	s.PictureElem.SourcePicture.Width = imageInfo.Width
@@ -1255,7 +1254,7 @@ func (c *Conversation) MarkAllConversationHasRead(callback open_im_sdk_callback.
 	}()
 }
 
-//deprecated
+// deprecated
 func (c *Conversation) MarkGroupMessageHasRead(callback open_im_sdk_callback.Base, groupID string, operationID string) {
 	if callback == nil {
 		return
@@ -1319,7 +1318,7 @@ func (c *Conversation) ClearC2CHistoryMessageFromLocalAndSvr(callback open_im_sd
 	}()
 }
 
-//fixme
+// fixme
 func (c *Conversation) ClearGroupHistoryMessageFromLocalAndSvr(callback open_im_sdk_callback.Base, groupID string, operationID string) {
 	if callback == nil {
 		return
