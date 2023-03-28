@@ -672,143 +672,160 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 	log.Error(operationID, "db cost time", time.Since(t), len(list), err, sourceID)
 	t = time.Now()
 	common.CheckDBErrCallback(callback, err, operationID)
-	if len(list) < req.Count && sessionType == constant.SuperGroupChatType {
-		var minSeq uint32
-		var maxSeq uint32
-		resp, err := c.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 2, c.loginUserID, operationID)
-		if err != nil {
-			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, 30, c.loginUserID)
-		} else {
-			var wsSeqResp server_api_params.GetMaxAndMinSeqResp
-			err = proto.Unmarshal(resp.Data, &wsSeqResp)
-			if err != nil {
-				log.Error(operationID, "Unmarshal failed", err.Error())
-			} else if wsSeqResp.ErrCode != 0 {
-				log.Error(operationID, "GetMaxAndMinSeqReq failed ", wsSeqResp.ErrCode, wsSeqResp.ErrMsg)
-			} else {
-				if value, ok := wsSeqResp.GroupMaxAndMinSeq[sourceID]; ok {
-					minSeq = value.MinSeq
-					if value.MinSeq == 0 {
-						minSeq = 1
-					}
-					maxSeq = value.MaxSeq
-				}
-			}
+	if isReverse {
+		if len(list) < req.Count {
+			messageListCallback.IsEnd = true
 		}
-		log.Error(operationID, "from server min seq is", minSeq, maxSeq)
-		seq, err := c.db.SuperGroupGetNormalMinSeq(sourceID)
-		if err != nil {
-			log.Error(operationID, "SuperGroupGetNormalMinSeq err:", err.Error())
-		}
-		log.Error(operationID, sourceID+":table min seq is ", seq)
-		if seq != 0 {
-			if seq <= minSeq {
-				messageListCallback.IsEnd = true
-			} else {
-				seqList := func(seq uint32) (seqList []uint32) {
-					startSeq := int64(seq) - constant.PullMsgNumForReadDiffusion
-					if startSeq <= 0 {
-						startSeq = 1
-					}
-					log.Debug(operationID, "pull start is ", startSeq)
-					for i := startSeq; i < int64(seq); i++ {
-						seqList = append(seqList, uint32(i))
-					}
-					log.Debug(operationID, "pull seqList is ", seqList)
-					return seqList
-				}(seq)
-				log.Debug(operationID, "pull seqList is ", seqList, len(seqList))
-				if len(seqList) > 0 {
-					c.pullMessageAndReGetHistoryMessages(sourceID, seqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
-				}
-			}
-		} else {
-			//local don't have messages,本地无消息，但是服务器最大消息不为0
-			if int64(maxSeq)-int64(minSeq) > 0 {
-				messageListCallback.IsEnd = false
-			} else {
-				messageListCallback.IsEnd = true
-			}
-
-		}
-	} else if len(list) == req.Count && sessionType == constant.SuperGroupChatType {
-		maxSeq, minSeq, haveSeqList := func(messages []*model_struct.LocalChatLog) (max, min uint32, seqList []uint32) {
-			for _, message := range messages {
-				if message.Seq != 0 {
-					max = message.Seq
-					min = message.Seq
-					break
-				}
-			}
-			for i := 0; i < len(messages); i++ {
-				if messages[i].Seq != 0 {
-					seqList = append(seqList, messages[i].Seq)
-				}
-				if messages[i].Seq > max {
-					max = messages[i].Seq
-
-				}
-				if messages[i].Seq < min {
-					min = messages[i].Seq
-				}
-			}
-			return max, min, seqList
-		}(list)
-		log.Debug(operationID, "get message from local db max seq:", maxSeq, "minSeq:", minSeq, "haveSeqList:", haveSeqList, "length:", len(haveSeqList))
-		if maxSeq != 0 && minSeq != 0 {
-			successiveSeqList := func(max, min uint32) (seqList []uint32) {
-				for i := min; i <= max; i++ {
-					seqList = append(seqList, i)
-				}
-				return seqList
-			}(maxSeq, minSeq)
-			lostSeqList := utils.DifferenceSubset(successiveSeqList, haveSeqList)
-			lostSeqListLength := len(lostSeqList)
-			log.Debug(operationID, "get lost seqList is :", lostSeqList, "length:", lostSeqListLength)
-			if lostSeqListLength > 0 {
-				var pullSeqList []uint32
-				if lostSeqListLength <= constant.PullMsgNumForReadDiffusion {
-					pullSeqList = lostSeqList
+	} else {
+		switch sessionType {
+		case constant.SuperGroupChatType:
+			if len(list) < req.Count {
+				var minSeq uint32
+				var maxSeq uint32
+				resp, err := c.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 2, c.loginUserID, operationID)
+				if err != nil {
+					log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, 30, c.loginUserID)
 				} else {
-					pullSeqList = lostSeqList[lostSeqListLength-constant.PullMsgNumForReadDiffusion : lostSeqListLength]
-				}
-				c.pullMessageAndReGetHistoryMessages(sourceID, pullSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
-			} else {
-				if req.LastMinSeq != 0 {
-					var thisMaxSeq uint32
-					for i := 0; i < len(list); i++ {
-						if list[i].Seq != 0 && thisMaxSeq == 0 {
-							thisMaxSeq = list[i].Seq
-						}
-						if list[i].Seq > thisMaxSeq {
-							thisMaxSeq = list[i].Seq
+					var wsSeqResp server_api_params.GetMaxAndMinSeqResp
+					err = proto.Unmarshal(resp.Data, &wsSeqResp)
+					if err != nil {
+						log.Error(operationID, "Unmarshal failed", err.Error())
+					} else if wsSeqResp.ErrCode != 0 {
+						log.Error(operationID, "GetMaxAndMinSeqReq failed ", wsSeqResp.ErrCode, wsSeqResp.ErrMsg)
+					} else {
+						if value, ok := wsSeqResp.GroupMaxAndMinSeq[sourceID]; ok {
+							minSeq = value.MinSeq
+							if value.MinSeq == 0 {
+								minSeq = 1
+							}
+							maxSeq = value.MaxSeq
 						}
 					}
-					log.Debug(operationID, "get lost LastMinSeq is :", req.LastMinSeq, "thisMaxSeq is :", thisMaxSeq)
-					if thisMaxSeq != 0 {
-						if thisMaxSeq+1 != req.LastMinSeq {
-							startSeq := int64(req.LastMinSeq) - constant.PullMsgNumForReadDiffusion
-							if startSeq <= int64(thisMaxSeq) {
-								startSeq = int64(thisMaxSeq) + 1
+				}
+				log.Error(operationID, "from server min seq is", minSeq, maxSeq)
+				seq, err := c.db.SuperGroupGetNormalMinSeq(sourceID)
+				if err != nil {
+					log.Error(operationID, "SuperGroupGetNormalMinSeq err:", err.Error())
+				}
+				log.Error(operationID, sourceID+":table min seq is ", seq)
+				if seq != 0 {
+					if seq <= minSeq {
+						messageListCallback.IsEnd = true
+					} else {
+						seqList := func(seq uint32) (seqList []uint32) {
+							startSeq := int64(seq) - constant.PullMsgNumForReadDiffusion
+							if startSeq <= 0 {
+								startSeq = 1
 							}
-							successiveSeqList := func(max, min uint32) (seqList []uint32) {
-								for i := min; i <= max; i++ {
-									seqList = append(seqList, i)
-								}
-								return seqList
-							}(req.LastMinSeq-1, uint32(startSeq))
-							log.Debug(operationID, "get lost successiveSeqList is :", successiveSeqList, len(successiveSeqList))
-							if len(successiveSeqList) > 0 {
-								c.pullMessageAndReGetHistoryMessages(sourceID, successiveSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+							log.Debug(operationID, "pull start is ", startSeq)
+							if startSeq < int64(minSeq) {
+								startSeq = int64(minSeq)
 							}
+							for i := startSeq; i < int64(seq); i++ {
+								seqList = append(seqList, uint32(i))
+							}
+							log.Debug(operationID, "pull seqList is ", seqList)
+							return seqList
+						}(seq)
+						log.Debug(operationID, "pull seqList is ", seqList, len(seqList))
+						if len(seqList) > 0 {
+							c.pullMessageAndReGetHistoryMessages(sourceID, seqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
 						}
+					}
+				} else {
+					//local don't have messages,本地无消息，但是服务器最大消息不为0
+					if int64(maxSeq)-int64(minSeq) > 0 {
+						messageListCallback.IsEnd = false
+					} else {
+						messageListCallback.IsEnd = true
+					}
 
+				}
+			} else if len(list) == req.Count {
+				maxSeq, minSeq, haveSeqList := func(messages []*model_struct.LocalChatLog) (max, min uint32, seqList []uint32) {
+					for _, message := range messages {
+						if message.Seq != 0 {
+							max = message.Seq
+							min = message.Seq
+							break
+						}
+					}
+					for i := 0; i < len(messages); i++ {
+						if messages[i].Seq != 0 {
+							seqList = append(seqList, messages[i].Seq)
+						}
+						if messages[i].Seq > max {
+							max = messages[i].Seq
+
+						}
+						if messages[i].Seq < min {
+							min = messages[i].Seq
+						}
+					}
+					return max, min, seqList
+				}(list)
+				log.Debug(operationID, "get message from local db max seq:", maxSeq, "minSeq:", minSeq, "haveSeqList:", haveSeqList, "length:", len(haveSeqList))
+				if maxSeq != 0 && minSeq != 0 {
+					successiveSeqList := func(max, min uint32) (seqList []uint32) {
+						for i := min; i <= max; i++ {
+							seqList = append(seqList, i)
+						}
+						return seqList
+					}(maxSeq, minSeq)
+					lostSeqList := utils.DifferenceSubset(successiveSeqList, haveSeqList)
+					lostSeqListLength := len(lostSeqList)
+					log.Debug(operationID, "get lost seqList is :", lostSeqList, "length:", lostSeqListLength)
+					if lostSeqListLength > 0 {
+						var pullSeqList []uint32
+						if lostSeqListLength <= constant.PullMsgNumForReadDiffusion {
+							pullSeqList = lostSeqList
+						} else {
+							pullSeqList = lostSeqList[lostSeqListLength-constant.PullMsgNumForReadDiffusion : lostSeqListLength]
+						}
+						c.pullMessageAndReGetHistoryMessages(sourceID, pullSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+					} else {
+						if req.LastMinSeq != 0 {
+							var thisMaxSeq uint32
+							for i := 0; i < len(list); i++ {
+								if list[i].Seq != 0 && thisMaxSeq == 0 {
+									thisMaxSeq = list[i].Seq
+								}
+								if list[i].Seq > thisMaxSeq {
+									thisMaxSeq = list[i].Seq
+								}
+							}
+							log.Debug(operationID, "get lost LastMinSeq is :", req.LastMinSeq, "thisMaxSeq is :", thisMaxSeq)
+							if thisMaxSeq != 0 {
+								if thisMaxSeq+1 != req.LastMinSeq {
+									startSeq := int64(req.LastMinSeq) - constant.PullMsgNumForReadDiffusion
+									if startSeq <= int64(thisMaxSeq) {
+										startSeq = int64(thisMaxSeq) + 1
+									}
+									successiveSeqList := func(max, min uint32) (seqList []uint32) {
+										for i := min; i <= max; i++ {
+											seqList = append(seqList, i)
+										}
+										return seqList
+									}(req.LastMinSeq-1, uint32(startSeq))
+									log.Debug(operationID, "get lost successiveSeqList is :", successiveSeqList, len(successiveSeqList))
+									if len(successiveSeqList) > 0 {
+										c.pullMessageAndReGetHistoryMessages(sourceID, successiveSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+									}
+								}
+
+							}
+
+						}
 					}
 
 				}
 			}
-
+		default:
+			if len(list) < req.Count {
+				messageListCallback.IsEnd = true
+			}
 		}
+
 	}
 	log.Debug(operationID, "pull cost time", time.Since(t))
 	t = time.Now()

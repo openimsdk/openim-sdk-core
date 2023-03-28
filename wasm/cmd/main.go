@@ -57,6 +57,7 @@ func registerFunc() {
 	js.Global().Set("getOneConversation", js.FuncOf(wrapperConMsg.GetOneConversation))
 	js.Global().Set("deleteConversationFromLocalAndSvr", js.FuncOf(wrapperConMsg.DeleteConversationFromLocalAndSvr))
 	js.Global().Set("getAdvancedHistoryMessageList", js.FuncOf(wrapperConMsg.GetAdvancedHistoryMessageList))
+	js.Global().Set("getAdvancedHistoryMessageListReverse", js.FuncOf(wrapperConMsg.GetAdvancedHistoryMessageListReverse))
 	js.Global().Set("getHistoryMessageList", js.FuncOf(wrapperConMsg.GetHistoryMessageList))
 	//register group func
 	wrapperGroup := wasm_wrapper.NewWrapperGroup(globalFuc)

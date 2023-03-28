@@ -1142,6 +1142,13 @@ func (c *Conversation) GetAdvancedHistoryMessageList(callback open_im_sdk_callba
 		log.Error(operationID, "length:", len(result.MessageList), "cost time", time.Since(t), "GetAdvancedHistoryMessageList callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
+func (c *Conversation) GetAdvancedHistoryMessageListReverse(callback open_im_sdk_callback.Base, getMessageOptions, operationID string) {
+	var unmarshalParams sdk_params_callback.GetAdvancedHistoryMessageListParams
+	common.JsonUnmarshalCallback(getMessageOptions, &unmarshalParams, callback, operationID)
+	result := c.getAdvancedHistoryMessageList(callback, unmarshalParams, operationID, true)
+	callback.OnSuccess(utils.StructToJsonStringDefault(result))
+	log.NewInfo(operationID, "GetAdvancedHistoryMessageListReverse callback: ", utils.StructToJsonStringDefault(result))
+}
 
 func (c *Conversation) GetHistoryMessageListReverse(callback open_im_sdk_callback.Base, getMessageOptions, operationID string) {
 	if callback == nil {
