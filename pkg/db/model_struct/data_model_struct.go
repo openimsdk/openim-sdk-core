@@ -1,5 +1,7 @@
 package model_struct
 
+import "time"
+
 //
 //message FriendInfo{
 //string OwnerUserID = 1;
@@ -219,18 +221,19 @@ type LocalGroupRequest struct {
 //int32 AppMangerLevel = 10;
 //open_im_sdk.User == imdb.User
 type LocalUser struct {
-	UserID           string `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
-	Nickname         string `gorm:"column:name;type:varchar(255)" json:"nickname"`
-	FaceURL          string `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
-	Gender           int32  `gorm:"column:gender" json:"gender"`
-	PhoneNumber      string `gorm:"column:phone_number;type:varchar(32)" json:"phoneNumber"`
-	Birth            uint32 `gorm:"column:birth" json:"birth"`
-	Email            string `gorm:"column:email;type:varchar(64)" json:"email"`
-	CreateTime       uint32 `gorm:"column:create_time" json:"createTime"`
-	AppMangerLevel   int32  `gorm:"column:app_manger_level" json:"-"`
-	Ex               string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
-	AttachedInfo     string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
-	GlobalRecvMsgOpt int32  `gorm:"column:global_recv_msg_opt" json:"globalRecvMsgOpt"`
+	UserID           string    `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
+	Nickname         string    `gorm:"column:name;type:varchar(255)" json:"nickname"`
+	FaceURL          string    `gorm:"column:face_url;type:varchar(255)" json:"faceURL"`
+	Gender           int32     `gorm:"column:gender" json:"gender"`
+	PhoneNumber      string    `gorm:"column:phone_number;type:varchar(32)" json:"phoneNumber"`
+	Birth            uint32    `gorm:"column:birth" json:"birth"`
+	Email            string    `gorm:"column:email;type:varchar(64)" json:"email"`
+	CreateTime       uint32    `gorm:"column:create_time" json:"createTime"`
+	AppMangerLevel   int32     `gorm:"column:app_manger_level" json:"-"`
+	Ex               string    `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	AttachedInfo     string    `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+	GlobalRecvMsgOpt int32     `gorm:"column:global_recv_msg_opt" json:"globalRecvMsgOpt"`
+	BirthTime        time.Time `gorm:"column:birth_time" json:"birthTime"`
 }
 
 //message BlackInfo{
@@ -286,24 +289,27 @@ type LocalSeq struct {
 //	  PRIMARY KEY (client_msg_id)
 //	)`
 type LocalChatLog struct {
-	ClientMsgID      string `gorm:"column:client_msg_id;primary_key;type:char(64)" json:"clientMsgID"`
-	ServerMsgID      string `gorm:"column:server_msg_id;type:char(64)" json:"serverMsgID"`
-	SendID           string `gorm:"column:send_id;type:char(64)" json:"sendID"`
-	RecvID           string `gorm:"column:recv_id;index:index_recv_id;type:char(64)" json:"recvID"`
-	SenderPlatformID int32  `gorm:"column:sender_platform_id" json:"senderPlatformID"`
-	SenderNickname   string `gorm:"column:sender_nick_name;type:varchar(255)" json:"senderNickname"`
-	SenderFaceURL    string `gorm:"column:sender_face_url;type:varchar(255)" json:"senderFaceURL"`
-	SessionType      int32  `gorm:"column:session_type" json:"sessionType"`
-	MsgFrom          int32  `gorm:"column:msg_from" json:"msgFrom"`
-	ContentType      int32  `gorm:"column:content_type" json:"contentType"`
-	Content          string `gorm:"column:content;type:varchar(1000)" json:"content"`
-	IsRead           bool   `gorm:"column:is_read" json:"isRead"`
-	Status           int32  `gorm:"column:status" json:"status"`
-	Seq              uint32 `gorm:"column:seq;index:index_seq;default:0" json:"seq"`
-	SendTime         int64  `gorm:"column:send_time;index:index_send_time;" json:"sendTime"`
-	CreateTime       int64  `gorm:"column:create_time" json:"createTime"`
-	AttachedInfo     string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
-	Ex               string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	ClientMsgID          string `gorm:"column:client_msg_id;primary_key;type:char(64)" json:"clientMsgID"`
+	ServerMsgID          string `gorm:"column:server_msg_id;type:char(64)" json:"serverMsgID"`
+	SendID               string `gorm:"column:send_id;type:char(64)" json:"sendID"`
+	RecvID               string `gorm:"column:recv_id;index:index_recv_id;type:char(64)" json:"recvID"`
+	SenderPlatformID     int32  `gorm:"column:sender_platform_id" json:"senderPlatformID"`
+	SenderNickname       string `gorm:"column:sender_nick_name;type:varchar(255)" json:"senderNickname"`
+	SenderFaceURL        string `gorm:"column:sender_face_url;type:varchar(255)" json:"senderFaceURL"`
+	SessionType          int32  `gorm:"column:session_type" json:"sessionType"`
+	MsgFrom              int32  `gorm:"column:msg_from" json:"msgFrom"`
+	ContentType          int32  `gorm:"column:content_type;index:content_type_alone" json:"contentType"`
+	Content              string `gorm:"column:content;type:varchar(1000)" json:"content"`
+	IsRead               bool   `gorm:"column:is_read" json:"isRead"`
+	Status               int32  `gorm:"column:status" json:"status"`
+	Seq                  uint32 `gorm:"column:seq;index:index_seq;default:0" json:"seq"`
+	SendTime             int64  `gorm:"column:send_time;index:index_send_time;" json:"sendTime"`
+	CreateTime           int64  `gorm:"column:create_time" json:"createTime"`
+	AttachedInfo         string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
+	Ex                   string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	IsReact              bool   `gorm:"column:is_react" json:"isReact"`
+	IsExternalExtensions bool   `gorm:"column:is_external_extensions" json:"isExternalExtensions"`
+	MsgFirstModifyTime   int64  `gorm:"column:msg_first_modify_time" json:"msgFirstModifyTime"`
 }
 
 type LocalErrChatLog struct {
@@ -379,6 +385,7 @@ type LocalConversation struct {
 	DraftTextTime         int64  `gorm:"column:draft_text_time" json:"draftTextTime"`
 	IsPinned              bool   `gorm:"column:is_pinned" json:"isPinned"`
 	IsPrivateChat         bool   `gorm:"column:is_private_chat" json:"isPrivateChat"`
+	BurnDuration          int32  `gorm:"column:burn_duration;default:30" json:"burnDuration"`
 	IsNotInGroup          bool   `gorm:"column:is_not_in_group" json:"isNotInGroup"`
 	UpdateUnreadCountTime int64  `gorm:"column:update_unread_count_time" json:"updateUnreadCountTime"`
 	AttachedInfo          string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
@@ -444,4 +451,8 @@ type LocalDepartmentMember struct {
 type SearchDepartmentMemberResult struct {
 	LocalDepartmentMember
 	DepartmentName string `gorm:"column:name;size:256" json:"departmentName"`
+}
+type LocalChatLogReactionExtensions struct {
+	ClientMsgID             string `gorm:"column:client_msg_id;primary_key;type:char(64)" json:"clientMsgID"`
+	LocalReactionExtensions []byte `gorm:"column:local_reaction_extensions" json:"localReactionExtensions"`
 }

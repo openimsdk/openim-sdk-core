@@ -3,7 +3,6 @@ package common
 import (
 	"encoding/json"
 	"errors"
-	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
@@ -13,11 +12,11 @@ import (
 	"runtime"
 )
 
-var validate *validator.Validate
+//var validate *validator.Validate
 
-func init() {
-	validate = validator.New()
-}
+//func init() {
+//	validate = validator.New()
+//}
 
 func CheckAnyErrCallback(callback open_im_sdk_callback.Base, errCode int32, err error, operationID string) {
 	if err != nil {
@@ -49,9 +48,19 @@ func CheckArgsErrCallback(callback open_im_sdk_callback.Base, err error, operati
 
 func CheckErrAndRespCallback(callback open_im_sdk_callback.Base, err error, resp []byte, output interface{}, operationID string) {
 	log.Debug(operationID, utils.GetSelfFuncName(), "args: ", string(resp))
-	if err = CheckErrAndResp(err, resp, output); err != nil {
+	if err = CheckErrAndResp(err, resp, output, nil); err != nil {
 		log.Error(operationID, "CheckErrAndResp failed ", err.Error(), "input: ", string(resp))
 		callback.OnError(constant.ErrServerReturn.ErrCode, err.Error())
+		runtime.Goexit()
+	}
+}
+
+func CheckErrAndRespCallbackPenetrate(callback open_im_sdk_callback.Base, err error, resp []byte, output interface{}, operationID string) {
+	log.Debug(operationID, utils.GetSelfFuncName(), "args: ", string(resp))
+	var penetrateErrCode int32
+	if err = CheckErrAndResp(err, resp, output, &penetrateErrCode); err != nil {
+		log.Error(operationID, "CheckErrAndResp failed ", err.Error(), "input: ", string(resp))
+		callback.OnError(penetrateErrCode, utils.Unwrap(err).Error())
 		runtime.Goexit()
 	}
 }
@@ -110,7 +119,7 @@ func CheckErrAndRespCallback(callback open_im_sdk_callback.Base, err error, resp
 //	return nil
 //}
 
-func CheckErrAndResp(err error, resp []byte, output interface{}) error {
+func CheckErrAndResp(err error, resp []byte, output interface{}, code *int32) error {
 	if err != nil {
 		return utils.Wrap(err, "api resp failed")
 	}
@@ -118,6 +127,9 @@ func CheckErrAndResp(err error, resp []byte, output interface{}) error {
 	err = json.Unmarshal(resp, &c)
 	if err == nil {
 		if c.ErrCode != 0 {
+			if code != nil {
+				*code = c.ErrCode
+			}
 			return utils.Wrap(errors.New(c.ErrMsg), "")
 		}
 		if output != nil {
@@ -142,6 +154,9 @@ one:
 		return utils.Wrap(err, "")
 	}
 	if c2.ErrCode != 0 {
+		if code != nil {
+			*code = c.ErrCode
+		}
 		return utils.Wrap(errors.New(c2.ErrMsg), "")
 	}
 	if output != nil {

@@ -6,7 +6,7 @@ import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
@@ -18,7 +18,7 @@ import (
 type Organization struct {
 	listener    open_im_sdk_callback.OnOrganizationListener
 	loginUserID string
-	db          *db.DataBase
+	db          db_interface.DataBase
 	p           *ws.PostApi
 	loginTime   int64
 
@@ -33,7 +33,7 @@ func (o *Organization) SetLoginTime(loginTime int64) {
 	o.loginTime = loginTime
 }
 
-func NewOrganization(loginUserID string, db *db.DataBase, p *ws.PostApi) *Organization {
+func NewOrganization(loginUserID string, db db_interface.DataBase, p *ws.PostApi) *Organization {
 	return &Organization{loginUserID: loginUserID, db: db, p: p}
 }
 

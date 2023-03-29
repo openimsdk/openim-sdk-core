@@ -2,7 +2,6 @@ package heartbeart
 
 import (
 	"errors"
-	"github.com/golang/protobuf/proto"
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
@@ -14,6 +13,8 @@ import (
 	"open_im_sdk/sdk_struct"
 	"runtime"
 	"time"
+
+	"github.com/golang/protobuf/proto"
 )
 
 type Heartbeat struct {
@@ -66,11 +67,13 @@ type ParseToken struct {
 //}
 
 func (u *Heartbeat) Run() {
-	//	heartbeatInterval := 30
-	reqTimeout := 30
+	defaultTimeout := 5
+	wakeUpTimeout := 1
+	reqTimeout := defaultTimeout
 	retryTimes := 0
 	heartbeatNum := 0
 	for {
+		reqTimeout = defaultTimeout
 		operationID := utils.OperationIDGenerator()
 		if constant.OnlyForTest == 1 {
 			time.Sleep(5 * time.Second)
@@ -107,7 +110,10 @@ func (u *Heartbeat) Run() {
 					runtime.Goexit()
 				}
 				if r.Cmd == constant.CmdWakeUp {
+					u.full.SuperGroup.SyncJoinedGroupList(operationID)
+					u.full.Group().SyncJoinedGroupList(operationID)
 					log.Info(operationID, "recv wake up cmd, start heartbeat ", r.Cmd)
+					reqTimeout = wakeUpTimeout
 					break
 				}
 				log.Warn(operationID, "other cmd...", r.Cmd)
@@ -144,13 +150,12 @@ func (u *Heartbeat) Run() {
 		resp, err := u.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: u.LoginUserID, GroupIDList: groupIDList}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.LoginUserID, operationID)
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.LoginUserID)
-			if !errors.Is(err, constant.WsRecvConnSame) && !errors.Is(err, constant.WsRecvConnDiff) {
-				log.Error(operationID, "other err,  close conn", err.Error())
-				u.CloseConn(operationID)
-			}
+			//if !errors.Is(err, constant.WsRecvConnSame) && !errors.Is(err, constant.WsRecvConnDiff) {
+			//	log.Error(operationID, "other err,  close conn", err.Error())
+			u.CloseConn(operationID)
+			//}
 			continue
 		}
-
 		var wsSeqResp server_api_params.GetMaxAndMinSeqResp
 		err = proto.Unmarshal(resp.Data, &wsSeqResp)
 		if err != nil {
@@ -169,7 +174,7 @@ func (u *Heartbeat) Run() {
 		//server_api_params.MaxAndMinSeq
 		log.Debug(operationID, "recv heartbeat resp,  seq on svr: ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)
 		for {
-			err = common.TriggerCmdMaxSeq(sdk_struct.CmdMaxSeqToMsgSync{OperationID: operationID, MaxSeqOnSvr: wsSeqResp.MaxSeq, GroupID2MinMaxSeqOnSvr: wsSeqResp.GroupMaxAndMinSeq}, u.PushMsgAndMaxSeqCh)
+			err = common.TriggerCmdMaxSeq(sdk_struct.CmdMaxSeqToMsgSync{OperationID: operationID, MaxSeqOnSvr: wsSeqResp.MaxSeq, MinSeqOnSvr: wsSeqResp.MinSeq, GroupID2MinMaxSeqOnSvr: wsSeqResp.GroupMaxAndMinSeq}, u.PushMsgAndMaxSeqCh)
 			if err != nil {
 				log.Error(operationID, "TriggerMaxSeq failed ", err.Error(), "seq ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)
 				continue

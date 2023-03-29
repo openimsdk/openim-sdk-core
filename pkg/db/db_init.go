@@ -2,6 +2,7 @@ package db
 
 import (
 	"errors"
+	"fmt"
 	//"github.com/glebarez/sqlite"
 	"gorm.io/driver/sqlite"
 
@@ -35,22 +36,46 @@ type DataBase struct {
 	superGroupMtx sync.RWMutex
 }
 
-func (d *DataBase) CloseDB(operationID string) error {
+func (d *DataBase) GetDepartmentList(departmentList *[]*model_struct.LocalDepartment, departmentID string) error {
+	panic("implement me")
+}
+
+func (d *DataBase) GetParentDepartment(departmentID string) (model_struct.LocalDepartment, error) {
+	panic("implement me")
+}
+
+func (d *DataBase) InitSuperLocalErrChatLog(groupID string) {
+	panic("implement me")
+}
+
+func (d *DataBase) InitSuperLocalChatLog(groupID string) {
+	panic("implement me")
+}
+
+func (d *DataBase) SetChatLogFailedStatus() {
+	panic("implement me")
+}
+
+func (d *DataBase) InitDB(userID string, dataDir string) error {
+	panic("implement me")
+}
+
+func (d *DataBase) Close() error {
 	UserDBLock.Lock()
 	dbConn, err := d.conn.DB()
 	if err != nil {
-		log.Error(operationID, "get db conn failed ", err.Error())
+		log.Error("", "get db conn failed ", err.Error())
 	} else {
 		if dbConn != nil {
-			log.Info(operationID, "close db finished")
+			log.Info("", "close db finished")
 			err := dbConn.Close()
 			if err != nil {
-				log.Error(operationID, "close db failed ", err.Error())
+				log.Error("", "close db failed ", err.Error())
 			}
 		}
 	}
 
-	log.NewInfo(operationID, "CloseDB ok, delete db map ", d.loginUserID)
+	log.NewInfo("", "CloseDB ok, delete db map ", d.loginUserID)
 	delete(UserDBMap, d.loginUserID)
 	UserDBLock.Unlock()
 	return nil
@@ -163,8 +188,41 @@ func (d *DataBase) initDB() error {
 		&LocalWorkMomentsNotification{},
 		&LocalWorkMomentsNotificationUnreadCount{},
 		&model_struct.TempCacheLocalChatLog{},
+		&model_struct.LocalChatLogReactionExtensions{},
 	)
 	db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup)
+	groupIDList, err := d.GetJoinedSuperGroupIDList()
+	if err != nil {
+		log.Error("auto migrate super db err:", err.Error())
+	}
+	wkGroupIDList, err2 := d.GetJoinedWorkingGroupIDList()
+	if err2 != nil {
+		log.Error("auto migrate working group  db err:", err2)
+
+	}
+	groupIDList = append(groupIDList, wkGroupIDList...)
+	for _, v := range groupIDList {
+		d.conn.Table(utils.GetSuperGroupTableName(v)).AutoMigrate(&model_struct.LocalChatLog{})
+		var count int64
+		_ = db.Raw(fmt.Sprintf("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'index' AND name ='%s' AND tbl_name = '%s'",
+			"index_seq_"+v, utils.GetSuperGroupTableName(v))).Row().Scan(&count)
+		if count == 0 {
+			result := db.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (seq)", "index_seq_"+v, utils.GetSuperGroupTableName(v)))
+			if result.Error != nil {
+				log.Error("create super group index failed:", result.Error.Error(), v)
+			}
+		}
+		var count2 int64
+		_ = db.Raw(fmt.Sprintf("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'index' AND name ='%s' AND tbl_name = '%s'",
+			"index_send_time_"+v, utils.GetSuperGroupTableName(v))).Row().Scan(&count)
+		if count2 == 0 {
+			result := db.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (send_time)", "index_send_time_"+v, utils.GetSuperGroupTableName(v)))
+			if result.Error != nil {
+				log.Error("create super group index failed:", result.Error.Error(), v)
+			}
+		}
+
+	}
 	if !db.Migrator().HasTable(&model_struct.LocalFriend{}) {
 		db.Migrator().CreateTable(&model_struct.LocalFriend{})
 	}
@@ -217,6 +275,9 @@ func (d *DataBase) initDB() error {
 	}
 	if !db.Migrator().HasTable(&LocalWorkMomentsNotificationUnreadCount{}) {
 		db.Migrator().CreateTable(&LocalWorkMomentsNotificationUnreadCount{})
+	}
+	if !db.Migrator().HasTable(&model_struct.LocalChatLogReactionExtensions{}) {
+		db.Migrator().CreateTable(&model_struct.LocalChatLogReactionExtensions{})
 	}
 	log.NewInfo("init db", "startInitWorkMomentsNotificationUnreadCount ")
 	if err := d.InitWorkMomentsNotificationUnreadCount(); err != nil {

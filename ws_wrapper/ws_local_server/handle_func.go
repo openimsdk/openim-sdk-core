@@ -30,7 +30,7 @@ func (ws *WServer) DoLogin(m Req, conn *UserConn) {
 		log.Info(m.OperationID, "login", "user first login: ", m)
 		refR := GenUserRouterNoLock(m.UserID, m.Batch, m.OperationID)
 		params := []reflect.Value{reflect.ValueOf(m.Data), reflect.ValueOf(m.OperationID)}
-		vf, ok := (refR.refName)[m.ReqFuncName]
+		vf, ok := refR.refName[m.ReqFuncName]
 		if ok {
 			vf.Call(params)
 		} else {

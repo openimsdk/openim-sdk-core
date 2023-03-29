@@ -1,16 +1,21 @@
 package interaction
 
 import (
+	"bytes"
+	"compress/gzip"
 	"errors"
-	"github.com/golang/protobuf/proto"
-	"github.com/gorilla/websocket"
+	"io/ioutil"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"runtime"
 	"time"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/gorilla/websocket"
 )
 
 type Ws struct {
@@ -21,11 +26,13 @@ type Ws struct {
 	cmdCh              chan common.Cmd2Value //waiting logout cmd
 	pushMsgAndMaxSeqCh chan common.Cmd2Value //recv push msg  -> channel
 	cmdHeartbeatCh     chan common.Cmd2Value //
+	conversationCH     chan common.Cmd2Value
 	JustOnceFlag       bool
+	IsBackground       bool
 }
 
-func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, cmdCh chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value, cmdHeartbeatCh chan common.Cmd2Value) *Ws {
-	p := Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn, cmdCh: cmdCh, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh, cmdHeartbeatCh: cmdHeartbeatCh}
+func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, cmdCh chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value, cmdHeartbeatCh, conversationCH chan common.Cmd2Value) *Ws {
+	p := Ws{WsRespAsyn: wsRespAsyn, WsConn: wsConn, cmdCh: cmdCh, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh, cmdHeartbeatCh: cmdHeartbeatCh, conversationCH: conversationCH}
 	go p.ReadData()
 	return &p
 }
@@ -73,6 +80,12 @@ func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, co
 }
 
 func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retryTimes int, senderID, operationID string) (*GeneralWsResp, error) {
+	switch reqIdentifier {
+	case constant.WsSetBackgroundStatus:
+		if v, ok := m.(*server_api_params.SetAppBackgroundStatusReq); ok {
+			w.IsBackground = v.IsBackground
+		}
+	}
 	var wsReq GeneralWsReq
 	var connSend *websocket.Conn
 	var err error
@@ -107,7 +120,7 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 	if flag == 1 {
 		log.Debug(operationID, "send ok wait resp")
 		r1, r2 := w.WaitResp(ch, timeout, wsReq.OperationID, connSend)
-		return r1, utils.Wrap(r2, "")
+		return r1, r2
 	} else {
 		log.Error(operationID, "send failed")
 		err := errors.New("send failed")
@@ -167,6 +180,12 @@ func (w *Ws) reConnSleep(operationID string, sleep int32) (error, bool) {
 		}
 		log.Error(operationID, "ReConn failed ", err.Error(), "is need re connect ", isNeedReConn)
 		time.Sleep(time.Duration(sleep) * time.Second)
+	} else {
+		resp, err := w.SendReqWaitResp(&server_api_params.SetAppBackgroundStatusReq{UserID: w.loginUserID, IsBackground: w.IsBackground}, constant.WsSetBackgroundStatus, 5, 2, w.loginUserID, operationID)
+		if err != nil {
+			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsSetBackgroundStatus, 5, w.loginUserID, resp)
+		}
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.SyncConversation, Args: operationID}, w.conversationCH)
 	}
 	return err, isNeedReConn
 }
@@ -214,7 +233,9 @@ func (w *Ws) ReadData() {
 				return
 			}
 			if w.WsConn.IsFatalError(err) {
-				log.Error(operationID, "IsFatalError ", err.Error(), "ReConn")
+				log.Error(operationID, "IsFatalError ", err.Error(), "ReConn", w.WsConn.conn.LocalAddr())
+				//sleep 500 millisecond,waiting for network reconn,when network switch
+				time.Sleep(time.Millisecond * 500)
 				err, isNeedReConnect := w.reConnSleep(operationID, 5)
 				if err != nil && isNeedReConnect == false {
 					log.Warn(operationID, "token failed, don't connect again ")
@@ -228,6 +249,7 @@ func (w *Ws) ReadData() {
 		if msgType == websocket.CloseMessage {
 			log.Error(operationID, "type websocket.CloseMessage, ReConn")
 			err, isNeedReConnect := w.reConnSleep(operationID, 1)
+
 			if err != nil && isNeedReConnect == false {
 				log.Warn(operationID, "token failed, don't connect again")
 				return
@@ -236,7 +258,24 @@ func (w *Ws) ReadData() {
 		} else if msgType == websocket.TextMessage {
 			log.Warn(operationID, "type websocket.TextMessage")
 		} else if msgType == websocket.BinaryMessage {
-			go w.doWsMsg(message)
+			if w.IsCompression {
+				buff := bytes.NewBuffer(message)
+				reader, err := gzip.NewReader(buff)
+				if err != nil {
+					log.NewWarn(operationID, "NewReader failed", err.Error())
+					continue
+				}
+				message, err = ioutil.ReadAll(reader)
+				if err != nil {
+					log.NewWarn(operationID, "ReadAll failed", err.Error())
+					continue
+				}
+				err = reader.Close()
+				if err != nil {
+					log.NewWarn(operationID, "reader close failed", err.Error())
+				}
+			}
+			w.doWsMsg(message)
 		} else {
 			log.Warn(operationID, "recv other type ", msgType)
 		}
@@ -280,10 +319,20 @@ func (w *Ws) doWsMsg(message []byte) {
 		w.Logout(wsResp.OperationID)
 
 	case constant.WsLogoutMsg:
-		log.Warn(wsResp.OperationID, "logout... ")
+		log.Warn(wsResp.OperationID, "WsLogoutMsg... Ws goroutine exit")
+		if err = w.doWSLogoutMsg(*wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSLogoutMsg failed ", err.Error())
+		}
+		runtime.Goexit()
 	case constant.WSSendSignalMsg:
 		log.Info(wsResp.OperationID, "signaling...")
 		w.DoWSSignal(*wsResp)
+	case constant.WsSetBackgroundStatus:
+		log.Info(wsResp.OperationID, "WsSetBackgroundStatus...")
+		if err = w.setAppBackgroundStatus(*wsResp); err != nil {
+			log.Error(wsResp.OperationID, "WsSetBackgroundStatus failed ", err.Error(), wsResp.ReqIdentifier, wsResp.MsgIncr)
+		}
+		log.NewDebug(wsResp.OperationID, *wsResp)
 	default:
 		log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
 		return
@@ -332,7 +381,12 @@ func (w *Ws) DoWSSignal(wsResp GeneralWsResp) error {
 	}
 	return nil
 }
-
+func (w *Ws) doWSLogoutMsg(wsResp GeneralWsResp) error {
+	if err := w.notifyResp(wsResp); err != nil {
+		return utils.Wrap(err, "")
+	}
+	return nil
+}
 func (w *Ws) doWSPushMsg(wsResp GeneralWsResp) error {
 	if wsResp.ErrCode != 0 {
 		return utils.Wrap(errors.New("errCode"), wsResp.ErrMsg)
@@ -343,6 +397,13 @@ func (w *Ws) doWSPushMsg(wsResp GeneralWsResp) error {
 		return utils.Wrap(err, "Unmarshal failed")
 	}
 	return utils.Wrap(common.TriggerCmdPushMsg(sdk_struct.CmdPushMsgToMsgSync{Msg: &msg, OperationID: wsResp.OperationID}, w.pushMsgAndMaxSeqCh), "")
+}
+
+func (w *Ws) setAppBackgroundStatus(wsResp GeneralWsResp) error {
+	if err := w.notifyResp(wsResp); err != nil {
+		return utils.Wrap(err, "")
+	}
+	return nil
 }
 
 func (w *Ws) doWSPushMsgForTest(wsResp GeneralWsResp) error {

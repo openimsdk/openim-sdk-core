@@ -2,6 +2,8 @@ package conversation_msg
 
 import (
 	"encoding/json"
+	"github.com/google/go-cmp/cmp"
+	"open_im_sdk/internal/business"
 	"open_im_sdk/internal/cache"
 	common2 "open_im_sdk/internal/common"
 	"open_im_sdk/internal/friend"
@@ -11,11 +13,15 @@ import (
 	"open_im_sdk/internal/organization"
 	"open_im_sdk/internal/signaling"
 	"open_im_sdk/internal/user"
+	sdk "open_im_sdk/pkg/sdk_params_callback"
+	"runtime"
+	"strings"
+
 	workMoments "open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
@@ -34,10 +40,11 @@ var SearchContentType = []int{constant.Text, constant.AtText, constant.File}
 
 type Conversation struct {
 	*ws.Ws
-	db                   *db.DataBase
+	db                   db_interface.DataBase
 	p                    *ws.PostApi
 	ConversationListener open_im_sdk_callback.OnConversationListener
 	msgListener          open_im_sdk_callback.OnAdvancedMsgListener
+	msgKvListener        open_im_sdk_callback.OnMessageKvInfoListener
 	batchMsgListener     open_im_sdk_callback.OnBatchMsgListener
 	recvCH               chan common.Cmd2Value
 	loginUserID          string
@@ -50,6 +57,7 @@ type Conversation struct {
 	//advancedFunction     advanced_interface.AdvancedFunction
 	organization *organization.Organization
 	workMoments  *workMoments.WorkMoments
+	business     *business.Business
 	common2.ObjectStorage
 
 	cache          *cache.Cache
@@ -57,12 +65,19 @@ type Conversation struct {
 	tempMessageMap sync.Map
 	encryptionKey  string
 
-	id2MinSeq map[string]uint32
+	id2MinSeq            map[string]uint32
+	IsExternalExtensions bool
+
+	listenerForService open_im_sdk_callback.OnListenerForService
 }
 
 //func (c *Conversation) SetAdvancedFunction(advancedFunction advanced_interface.AdvancedFunction) {
 //	c.advancedFunction = advancedFunction
 //}
+
+func (c *Conversation) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
+	c.listenerForService = listener
+}
 
 func (c *Conversation) MsgListener() open_im_sdk_callback.OnAdvancedMsgListener {
 	return c.msgListener
@@ -75,21 +90,23 @@ func (c *Conversation) SetSignaling(signaling *signaling.LiveSignaling) {
 func (c *Conversation) SetMsgListener(msgListener open_im_sdk_callback.OnAdvancedMsgListener) {
 	c.msgListener = msgListener
 }
-
+func (c *Conversation) SetMsgKvListener(msgKvListener open_im_sdk_callback.OnMessageKvInfoListener) {
+	c.msgKvListener = msgKvListener
+}
 func (c *Conversation) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnBatchMsgListener) {
 	c.batchMsgListener = batchMsgListener
 }
 
-func NewConversation(ws *ws.Ws, db *db.DataBase, p *ws.PostApi,
+func NewConversation(ws *ws.Ws, db db_interface.DataBase, p *ws.PostApi,
 	ch chan common.Cmd2Value, loginUserID string, platformID int32, dataDir, encryptionKey string,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener,
 	msgListener open_im_sdk_callback.OnAdvancedMsgListener, organization *organization.Organization, signaling *signaling.LiveSignaling,
-	workMoments *workMoments.WorkMoments, cache *cache.Cache, full *full.Full, id2MinSeq map[string]uint32) *Conversation {
+	workMoments *workMoments.WorkMoments, business *business.Business, cache *cache.Cache, full *full.Full, id2MinSeq map[string]uint32, isExternalExtensions bool) *Conversation {
 	n := &Conversation{Ws: ws, db: db, p: p, recvCH: ch, loginUserID: loginUserID, platformID: platformID,
 		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage,
 		signaling: signaling, organization: organization, workMoments: workMoments,
-		full: full, id2MinSeq: id2MinSeq, encryptionKey: encryptionKey}
+		full: full, id2MinSeq: id2MinSeq, encryptionKey: encryptionKey, business: business, IsExternalExtensions: isExternalExtensions}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
 	n.cache = cache
@@ -124,12 +141,15 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	if syncFlag == constant.MsgSyncBegin {
 		c.ConversationListener.OnSyncServerStart()
 	}
+	if syncFlag == constant.MsgSyncFailed {
+		c.ConversationListener.OnSyncServerFailed()
+	}
 
 	var isTriggerUnReadCount bool
 	var insertMsg, updateMsg []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
 	var unreadMessages []*model_struct.LocalConversationUnreadMessage
-	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList sdk_struct.NewMsgList
+	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList, reactionMsgModifierList, reactionMsgDeleterList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate, isSenderNotificationPush bool
 	conversationChangedSet := make(map[string]*model_struct.LocalConversation)
 	newConversationSet := make(map[string]*model_struct.LocalConversation)
@@ -195,8 +215,11 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		case v.ContentType == constant.ConversationChangeNotification || v.ContentType == constant.ConversationPrivateChatNotification:
 			log.Info(operationID, utils.GetSelfFuncName(), v)
 			c.DoNotification(v)
-		case v.ContentType == constant.MsgDeleteNotification || v.ContentType == constant.SuperGroupUpdateNotification:
+		case v.ContentType == constant.MsgDeleteNotification:
 			c.full.SuperGroup.DoNotification(v, c.GetCh())
+		case v.ContentType == constant.SuperGroupUpdateNotification:
+			c.full.SuperGroup.DoNotification(v, c.GetCh())
+			continue
 		case v.ContentType == constant.ConversationUnreadNotification:
 			var unreadArgs server_api_params.ConversationUpdateTips
 			_ = proto.Unmarshal(tips.Detail, &unreadArgs)
@@ -207,7 +230,12 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			}
 			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: unreadArgs.ConversationIDList}})
 			continue
+		case v.ContentType == constant.BusinessNotification:
+			log.NewInfo(operationID, utils.GetSelfFuncName(), "recv businessNotification", tips.JsonDetail)
+			c.business.DoNotification(tips.JsonDetail, operationID)
+			continue
 		}
+
 		switch v.SessionType {
 		case constant.SingleChatType:
 			if v.ContentType > constant.FriendNotificationBegin && v.ContentType < constant.FriendNotificationEnd {
@@ -216,7 +244,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			} else if v.ContentType > constant.UserNotificationBegin && v.ContentType < constant.UserNotificationEnd {
 				log.Info(operationID, "DoFriendMsg  DoUserMsg SingleChatType", v)
 				c.user.DoNotification(v)
-				c.friend.DoNotification(v, c.GetCh())
+				//	c.friend.DoNotification(v, c.GetCh())
 			} else if v.ContentType == constant.GroupApplicationRejectedNotification ||
 				v.ContentType == constant.GroupApplicationAcceptedNotification ||
 				v.ContentType == constant.JoinGroupApplicationNotification {
@@ -296,10 +324,15 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				case constant.AdvancedRevoke:
 					newMsgRevokeList = append(newMsgRevokeList, msg)
 					newMessages = removeElementInList(newMessages, msg)
+				case constant.ReactionMessageModifier:
+					reactionMsgModifierList = append(reactionMsgModifierList, msg)
+				case constant.ReactionMessageDeleter:
+					reactionMsgDeleterList = append(reactionMsgDeleterList, msg)
 				default:
 				}
 			}
 		} else { //Sent by others
+			log.NewDebug("internal4", v)
 			if _, err := c.db.GetMessageController(msg); err != nil { //Deduplication operation
 				lc := model_struct.LocalConversation{
 					ConversationType:  v.SessionType,
@@ -368,6 +401,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				case constant.AdvancedRevoke:
 					newMsgRevokeList = append(newMsgRevokeList, msg)
 					newMessages = removeElementInList(newMessages, msg)
+				case constant.ReactionMessageModifier:
+					reactionMsgModifierList = append(reactionMsgModifierList, msg)
+				case constant.ReactionMessageDeleter:
+					reactionMsgDeleterList = append(reactionMsgDeleterList, msg)
 				default:
 				}
 
@@ -377,13 +414,15 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			}
 		}
 	}
+	log.NewDebug("internal", newMsgRevokeList)
+
 	b1 := utils.GetCurrentTimestampByMill()
 	log.Info(operationID, "generate conversation map is :", conversationSet)
 	log.Debug(operationID, "before insert msg cost time : ", time.Since(b))
 
-	list, err := c.db.GetAllConversationList()
+	list, err := c.db.GetAllConversationListDB()
 	if err != nil {
-		log.Error(operationID, "GetAllConversationList", "error", err.Error())
+		log.Error(operationID, "GetAllConversationListDB", "error", err.Error())
 	}
 	m := make(map[string]*model_struct.LocalConversation)
 	listToMap(list, m)
@@ -436,6 +475,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			nc.GroupAtType = v.GroupAtType
 			nc.IsPinned = v.IsPinned
 			nc.IsPrivateChat = v.IsPrivateChat
+			if nc.IsPrivateChat {
+				nc.BurnDuration = v.BurnDuration
+			}
 			nc.IsNotInGroup = v.IsNotInGroup
 			nc.AttachedInfo = v.AttachedInfo
 			nc.Ex = v.Ex
@@ -476,7 +518,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	log.Debug(operationID, "DoGroupMsgReadState  cost time : ", b9-b8, "len: ", len(groupMsgReadList))
 
 	c.revokeMessage(msgRevokeList)
-	c.newRevokeMessage(newMsgRevokeList)
 	b10 := utils.GetCurrentTimestampByMill()
 	log.Debug(operationID, "revokeMessage  cost time : ", b10-b9)
 	if c.batchMsgListener != nil {
@@ -488,7 +529,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		b12 := utils.GetCurrentTimestampByMill()
 		log.Debug(operationID, "newMessage  cost time : ", b12-b10)
 	}
-
+	c.newRevokeMessage(newMsgRevokeList)
+	c.doReactionMsgModifier(reactionMsgModifierList)
+	c.doReactionMsgDeleter(reactionMsgDeleterList)
 	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	if len(newConversationSet) > 0 {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.NewConDirect, Args: utils.StructToJsonString(mapConversationToList(newConversationSet))}})
@@ -523,11 +566,14 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 		log.Info(operationID, "OnSyncServerStart() ")
 		c.ConversationListener.OnSyncServerStart()
 	}
+	if syncFlag == constant.MsgSyncFailed {
+		c.ConversationListener.OnSyncServerFailed()
+	}
 	var isTriggerUnReadCount bool
 	var insertMsg, updateMsg, specialUpdateMsg []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
 	var unreadMessages []*model_struct.LocalConversationUnreadMessage
-	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList sdk_struct.NewMsgList
+	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList, reactionMsgModifierList, reactionMsgDeleterList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate, isSenderNotificationPush bool
 	conversationChangedSet := make(map[string]*model_struct.LocalConversation)
 	newConversationSet := make(map[string]*model_struct.LocalConversation)
@@ -538,7 +584,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	b := utils.GetCurrentTimestampByMill()
 
 	for _, v := range allMsg {
-		log.Info(operationID, "do Msg come here, msg detail ", v.RecvID, v.SendID, v.ClientMsgID, v.ServerMsgID, v.Seq, c.loginUserID)
+		log.Info(operationID, "do Msg come here, msg detail ", *v, c.loginUserID)
 		isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
 		isUnreadCount = utils.GetSwitchFromOptions(v.Options, constant.IsUnreadCount)
 		isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
@@ -603,6 +649,10 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 			}
 			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: unreadArgs.ConversationIDList}})
 			continue
+		case v.ContentType == constant.BusinessNotification:
+			log.NewInfo(operationID, utils.GetSelfFuncName(), "recv businessNotification", tips.JsonDetail)
+			c.business.DoNotification(tips.JsonDetail, operationID)
+			continue
 		}
 		switch v.SessionType {
 		case constant.SingleChatType:
@@ -612,7 +662,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 			} else if v.ContentType > constant.UserNotificationBegin && v.ContentType < constant.UserNotificationEnd {
 				log.Info(operationID, "DoFriendMsg  DoUserMsg SingleChatType", v)
 				c.user.DoNotification(v)
-				c.friend.DoNotification(v, c.GetCh())
+				//c.friend.DoNotification(v, c.GetCh())
 			} else if v.ContentType == constant.GroupApplicationRejectedNotification ||
 				v.ContentType == constant.GroupApplicationAcceptedNotification ||
 				v.ContentType == constant.JoinGroupApplicationNotification {
@@ -707,6 +757,10 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 				case constant.AdvancedRevoke:
 					newMsgRevokeList = append(newMsgRevokeList, msg)
 					newMessages = removeElementInList(newMessages, msg)
+				case constant.ReactionMessageModifier:
+					reactionMsgModifierList = append(reactionMsgModifierList, msg)
+				case constant.ReactionMessageDeleter:
+					reactionMsgDeleterList = append(reactionMsgDeleterList, msg)
 				default:
 				}
 			}
@@ -779,6 +833,10 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 				case constant.AdvancedRevoke:
 					newMsgRevokeList = append(newMsgRevokeList, msg)
 					newMessages = removeElementInList(newMessages, msg)
+				case constant.ReactionMessageModifier:
+					reactionMsgModifierList = append(reactionMsgModifierList, msg)
+				case constant.ReactionMessageDeleter:
+					reactionMsgDeleterList = append(reactionMsgDeleterList, msg)
 				default:
 				}
 
@@ -796,9 +854,9 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	log.Info(operationID, "generate conversation map is :", conversationSet)
 	log.Debug(operationID, "before insert msg cost time : ", b1-b)
 
-	list, err := c.db.GetAllConversationList()
+	list, err := c.db.GetAllConversationListDB()
 	if err != nil {
-		log.Error(operationID, "GetAllConversationList", "error", err.Error())
+		log.Error(operationID, "GetAllConversationListDB", "error", err.Error())
 	}
 	m := make(map[string]*model_struct.LocalConversation)
 	listToMap(list, m)
@@ -855,6 +913,9 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 			nc.GroupAtType = v.GroupAtType
 			nc.IsPinned = v.IsPinned
 			nc.IsPrivateChat = v.IsPrivateChat
+			if nc.IsPrivateChat {
+				nc.BurnDuration = v.BurnDuration
+			}
 			nc.IsNotInGroup = v.IsNotInGroup
 			nc.AttachedInfo = v.AttachedInfo
 			nc.Ex = v.Ex
@@ -895,7 +956,6 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	log.Debug(operationID, "DoGroupMsgReadState  cost time : ", b9-b8, "len: ", len(groupMsgReadList))
 
 	c.revokeMessage(msgRevokeList)
-	c.newRevokeMessage(newMsgRevokeList)
 	b10 := utils.GetCurrentTimestampByMill()
 	log.Debug(operationID, "revokeMessage  cost time : ", b10-b9)
 	if c.batchMsgListener != nil {
@@ -907,7 +967,9 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 		b12 := utils.GetCurrentTimestampByMill()
 		log.Debug(operationID, "newMessage  cost time : ", b12-b10)
 	}
-
+	c.newRevokeMessage(newMsgRevokeList)
+	c.doReactionMsgModifier(reactionMsgModifierList)
+	c.doReactionMsgDeleter(reactionMsgDeleterList)
 	//log.Info(operationID, "trigger map is :", newConversationSet, conversationChangedSet)
 	if len(newConversationSet) > 0 {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.NewConDirect, utils.StructToJsonString(mapConversationToList(newConversationSet))}})
@@ -1000,7 +1062,7 @@ func (c *Conversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *mode
 	return &lc
 }
 
-//deprecated
+// deprecated
 func (c *Conversation) revokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 	for _, w := range msgRevokeList {
 		if c.msgListener != nil {
@@ -1039,7 +1101,12 @@ func (c *Conversation) tempCacheChatLog(messageList []*sdk_struct.MsgStruct) {
 }
 func (c *Conversation) newRevokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 	var failedRevokeMessageList []*sdk_struct.MsgStruct
+	var superGroupIDList []string
+	var revokeMessageRevoked []*sdk_struct.MessageRevoked
+	var superGroupRevokeMessageRevoked []*sdk_struct.MessageRevoked
+	log.NewDebug("revoke msg", msgRevokeList)
 	for _, w := range msgRevokeList {
+		log.NewDebug("msg revoke", w)
 		var msg sdk_struct.MessageRevoked
 		err := json.Unmarshal([]byte(w.Content), &msg)
 		if err != nil {
@@ -1078,12 +1145,222 @@ func (c *Conversation) newRevokeMessage(msgRevokeList []*sdk_struct.MsgStruct) {
 			} else {
 				log.Error("internal", "set msgListener is err:")
 			}
+			if msg.SessionType != constant.SuperGroupChatType {
+				revokeMessageRevoked = append(revokeMessageRevoked, &msg)
+			} else {
+				if !utils.IsContain(w.RecvID, superGroupIDList) {
+					superGroupIDList = append(superGroupIDList, w.GroupID)
+				}
+				superGroupRevokeMessageRevoked = append(superGroupRevokeMessageRevoked, &msg)
+			}
 		}
-
+	}
+	log.NewDebug("internal, quoteRevoke Info", superGroupIDList, len(revokeMessageRevoked), len(superGroupRevokeMessageRevoked))
+	if len(revokeMessageRevoked) > 0 {
+		msgList, err := c.db.SearchAllMessageByContentType(constant.Quote)
+		if err != nil {
+			log.NewError("internal", "SearchMessageIDsByContentType failed", err.Error())
+		}
+		for _, v := range msgList {
+			c.QuoteMsgRevokeHandle(v, revokeMessageRevoked)
+		}
+	}
+	for _, superGroupID := range superGroupIDList {
+		msgList, err := c.db.SuperGroupSearchAllMessageByContentType(superGroupID, constant.Quote)
+		if err != nil {
+			log.NewError("internal", "SuperGroupSearchMessageByContentTypeNotOffset failed", superGroupID, err.Error())
+		}
+		for _, v := range msgList {
+			c.QuoteMsgRevokeHandle(v, superGroupRevokeMessageRevoked)
+		}
 	}
 	if len(failedRevokeMessageList) > 0 {
 		//c.tempCacheChatLog(failedRevokeMessageList)
 	}
+}
+func (c *Conversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
+
+	//for _, v := range msgReactionList {
+	//	var msg sdk_struct.MessageReaction
+	//	err := json.Unmarshal([]byte(v.Content), &msg)
+	//	if err != nil {
+	//		log.Error("internal", "unmarshal failed, err : ", err.Error(), *v)
+	//		continue
+	//	}
+	//	s := sdk_struct.MsgStruct{GroupID: msg.GroupID, ClientMsgID: msg.ClientMsgID, SessionType: msg.SessionType}
+	//	message, err := c.db.GetMessageController(&s)
+	//	if err != nil {
+	//		log.Error("internal", "GetMessageController, err : ", err.Error(), s)
+	//		continue
+	//	}
+	//	t := new(model_struct.LocalChatLog)
+	//  attachInfo := sdk_struct.AttachedInfoElem{}
+	//	_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
+	//
+	//	contain, v := isContainMessageReaction(msg.ReactionType, attachInfo.MessageReactionElem)
+	//	if contain {
+	//		userContain, userReaction := isContainUserReactionElem(msg.UserID, v.UserReactionList)
+	//		if userContain {
+	//			if !v.CanRepeat && userReaction.Counter > 0 {
+	//				// to do nothing
+	//				continue
+	//			} else {
+	//				userReaction.Counter += msg.Counter
+	//				v.Counter += msg.Counter
+	//				if v.Counter < 0 {
+	//					log.Debug("internal", "after operate all counter  < 0", v.Type, v.Counter, msg.Counter)
+	//					v.Counter = 0
+	//				}
+	//				if userReaction.Counter <= 0 {
+	//					log.Debug("internal", "after operate userReaction counter < 0", v.Type, userReaction.Counter, msg.Counter)
+	//					v.UserReactionList = DeleteUserReactionElem(v.UserReactionList, c.loginUserID)
+	//				}
+	//			}
+	//		} else {
+	//			log.Debug("internal", "attachInfo.MessageReactionElem is nil", msg)
+	//			u := new(sdk_struct.UserReactionElem)
+	//			u.UserID = msg.UserID
+	//			u.Counter = msg.Counter
+	//			v.Counter += msg.Counter
+	//			if v.Counter < 0 {
+	//				log.Debug("internal", "after operate all counter  < 0", v.Type, v.Counter, msg.Counter)
+	//				v.Counter = 0
+	//			}
+	//			if u.Counter <= 0 {
+	//				log.Debug("internal", "after operate userReaction counter < 0", v.Type, u.Counter, msg.Counter)
+	//				v.UserReactionList = DeleteUserReactionElem(v.UserReactionList, msg.UserID)
+	//			}
+	//			v.UserReactionList = append(v.UserReactionList, u)
+	//
+	//		}
+	//
+	//	} else {
+	//		log.Debug("internal", "attachInfo.MessageReactionElem is nil", msg)
+	//		t := new(sdk_struct.ReactionElem)
+	//		t.Counter = msg.Counter
+	//		t.Type = msg.ReactionType
+	//		u := new(sdk_struct.UserReactionElem)
+	//		u.UserID = msg.UserID
+	//		u.Counter = msg.Counter
+	//		t.UserReactionList = append(t.UserReactionList, u)
+	//		attachInfo.MessageReactionElem = append(attachInfo.MessageReactionElem, t)
+	//
+	//	}
+	//
+	//	t.AttachedInfo = utils.StructToJsonString(attachInfo)
+	//	t.ClientMsgID = message.ClientMsgID
+	//
+	//	t.SessionType = message.SessionType
+	//	t.RecvID = message.RecvID
+	//	err1 := c.db.UpdateMessageController(t)
+	//	if err1 != nil {
+	//		log.Error("internal", "UpdateMessageController err:", err1, "ClientMsgID", *t, message)
+	//	}
+	//	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.MessageChange, &s}})
+	//
+	//}
+}
+
+func (c *Conversation) doReactionMsgModifier(msgReactionList []*sdk_struct.MsgStruct) {
+	for _, msgStruct := range msgReactionList {
+		var n server_api_params.ReactionMessageModifierNotification
+		err := json.Unmarshal([]byte(msgStruct.Content), &n)
+		if err != nil {
+			log.Error("internal", "unmarshal failed err:", err.Error(), *msgStruct)
+			continue
+		}
+		switch n.Operation {
+		case constant.AddMessageExtensions:
+			var reactionExtensionList []*server_api_params.KeyValue
+			for _, value := range n.SuccessReactionExtensionList {
+				reactionExtensionList = append(reactionExtensionList, value)
+			}
+			if !(msgStruct.SendID == c.loginUserID && msgStruct.SenderPlatformID == c.platformID) {
+				c.msgListener.OnRecvMessageExtensionsAdded(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
+			}
+		case constant.SetMessageExtensions:
+			err = c.db.GetAndUpdateMessageReactionExtension(n.ClientMsgID, n.SuccessReactionExtensionList)
+			if err != nil {
+				log.Error("internal", "GetAndUpdateMessageReactionExtension err:", err.Error())
+				continue
+			}
+			var reactionExtensionList []*server_api_params.KeyValue
+			for _, value := range n.SuccessReactionExtensionList {
+				reactionExtensionList = append(reactionExtensionList, value)
+			}
+			if !(msgStruct.SendID == c.loginUserID && msgStruct.SenderPlatformID == c.platformID) {
+				c.msgListener.OnRecvMessageExtensionsChanged(n.ClientMsgID, utils.StructToJsonString(reactionExtensionList))
+			}
+
+		}
+		t := model_struct.LocalChatLog{}
+		t.ClientMsgID = n.ClientMsgID
+		t.SessionType = n.SessionType
+		t.IsExternalExtensions = n.IsExternalExtensions
+		t.IsReact = n.IsReact
+		t.MsgFirstModifyTime = n.MsgFirstModifyTime
+		if n.SessionType == constant.GroupChatType || n.SessionType == constant.SuperGroupChatType {
+			t.RecvID = n.SourceID
+		}
+		err2 := c.db.UpdateMessageController(&t)
+		if err2 != nil {
+			log.Error("internal", "unmarshal failed err:", err2.Error(), t)
+			continue
+		}
+
+	}
+
+}
+func (c *Conversation) doReactionMsgDeleter(msgReactionList []*sdk_struct.MsgStruct) {
+	for _, msgStruct := range msgReactionList {
+		var n server_api_params.ReactionMessageDeleteNotification
+		err := json.Unmarshal([]byte(msgStruct.Content), &n)
+		if err != nil {
+			log.Error("internal", "unmarshal failed err:", err.Error(), *msgStruct)
+			continue
+		}
+		err = c.db.DeleteAndUpdateMessageReactionExtension(n.ClientMsgID, n.SuccessReactionExtensionList)
+		if err != nil {
+			log.Error("internal", "GetAndUpdateMessageReactionExtension err:", err.Error())
+			continue
+		}
+		var deleteKeyList []string
+		for _, value := range n.SuccessReactionExtensionList {
+			deleteKeyList = append(deleteKeyList, value.TypeKey)
+		}
+		c.msgListener.OnRecvMessageExtensionsDeleted(n.ClientMsgID, utils.StructToJsonString(deleteKeyList))
+
+	}
+
+}
+func (c *Conversation) QuoteMsgRevokeHandle(v *model_struct.LocalChatLog, revokeMsgIDList []*sdk_struct.MessageRevoked) {
+	s := sdk_struct.MsgStruct{}
+	err := utils.JsonStringToStruct(v.Content, &s.QuoteElem)
+	if err != nil {
+		log.NewError("internal", "unmarshall failed", s.Content)
+	}
+	if s.QuoteElem.QuoteMessage == nil {
+		return
+	}
+	ok, revokeMessage := isContainRevokedList(s.QuoteElem.QuoteMessage.ClientMsgID, revokeMsgIDList)
+	if !ok {
+		return
+	}
+	s.QuoteElem.QuoteMessage.Content = utils.StructToJsonString(revokeMessage)
+	s.QuoteElem.QuoteMessage.ContentType = constant.AdvancedRevoke
+	v.Content = utils.StructToJsonString(s.QuoteElem)
+	err = c.db.UpdateMessageController(v)
+	if err != nil {
+		log.NewError("internal", "unmarshall failed", v)
+	}
+}
+func isContainRevokedList(target string, List []*sdk_struct.MessageRevoked) (bool, *sdk_struct.MessageRevoked) {
+	for _, element := range List {
+		if target == element.ClientMsgID {
+			return true, element
+		}
+	}
+	return false, nil
 }
 
 func (c *Conversation) DoGroupMsgReadState(groupMsgReadList []*sdk_struct.MsgStruct) {
@@ -1187,6 +1464,10 @@ func (c *Conversation) newMessage(newMessagesList sdk_struct.NewMsgList) {
 			c.msgListener.OnRecvNewMessage(utils.StructToJsonString(w))
 		} else {
 			log.Error("internal", "set msgListener is err ")
+		}
+		if c.listenerForService != nil {
+			log.Info("internal", "msgListener,OnRecvNewMessage")
+			c.listenerForService.OnRecvNewMessage(utils.StructToJsonString(w))
 		}
 	}
 }
@@ -1323,7 +1604,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		if err := c.db.UpdateColumnsConversation(node.ConID, map[string]interface{}{"unread_count": 0}); err != nil {
 			log.Error("internal", "UpdateColumnsConversation err", err.Error(), node.ConID)
 		} else {
-			totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
+			totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB()
 			if err == nil {
 				c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
 			} else {
@@ -1350,7 +1631,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			return
 		}
 	case constant.TotalUnreadMessageChanged:
-		totalUnreadCount, err := c.db.GetTotalUnreadMsgCount()
+		totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB()
 		if err != nil {
 			log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
 		} else {
@@ -1358,18 +1639,19 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 	case constant.UpdateConFaceUrlAndNickName:
 		var lc model_struct.LocalConversation
-		st := node.Args.(common.UpdateConInfo)
-		if st.GroupID == "" {
-			lc.UserID = st.UserID
-			lc.ConversationID = utils.GetConversationIDBySessionType(st.UserID, constant.SingleChatType)
+		st := node.Args.(common.SourceIDAndSessionType)
+		switch st.SessionType {
+		case constant.SingleChatType:
+			lc.UserID = st.SourceID
+			lc.ConversationID = utils.GetConversationIDBySessionType(st.SourceID, constant.SingleChatType)
 			lc.ConversationType = constant.SingleChatType
-		} else {
-			lc.GroupID = st.GroupID
-			conversationID, conversationType, err := c.getConversationTypeByGroupID(st.GroupID)
+		case constant.GroupChatType:
+			conversationID, conversationType, err := c.getConversationTypeByGroupID(st.SourceID)
 			if err != nil {
 				log.Error("internal", "getConversationTypeByGroupID database err:", err.Error())
 				return
 			}
+			lc.GroupID = st.SourceID
 			lc.ConversationID = conversationID
 			lc.ConversationType = conversationType
 		}
@@ -1379,7 +1661,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			log.Error("internal", "setConversationFaceUrlAndNickName database err:", err.Error())
 			return
 		}
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.ConChange, Args: []string{lc.ConversationID}}, c.GetCh())
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: lc.ConversationID, Action: constant.ConChange, Args: []string{lc.ConversationID}}})
 
 	case constant.UpdateLatestMessageChange:
 		conversationID := node.ConID
@@ -1402,7 +1684,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 	case constant.ConChange:
 		cidList := node.Args.([]string)
-		cLists, err := c.db.GetMultipleConversation(cidList)
+		cLists, err := c.db.GetMultipleConversationDB(cidList)
 		if err != nil {
 			log.Error("internal", "getMultipleConversationModel err :", err.Error())
 		} else {
@@ -1418,7 +1700,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		}
 	case constant.NewCon:
 		cidList := node.Args.([]string)
-		cLists, err := c.db.GetMultipleConversation(cidList)
+		cLists, err := c.db.GetMultipleConversationDB(cidList)
 		if err != nil {
 			log.Error("internal", "getMultipleConversationModel err :", err.Error())
 		} else {
@@ -1470,6 +1752,17 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			log.Info("internal", "getMultipleConversationModel success :", result)
 			c.ConversationListener.OnNewConversation(utils.StructToJsonString(result))
 		}
+	case constant.SyncConversation:
+		operationID := node.Args.(string)
+		log.Debug(operationID, "reconn sync conversation start")
+		c.SyncConversations(operationID, 0)
+		c.SyncConversationUnreadCount(operationID)
+		totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB()
+		if err != nil {
+			log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
+		} else {
+			c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
+		}
 
 	}
 }
@@ -1478,16 +1771,294 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 		log.Error("internal", "not set conversationListener")
 		return
 	}
+
 	node := c2v.Value.(common.UpdateMessageNode)
 	switch node.Action {
 	case constant.UpdateMsgFaceUrlAndNickName:
 		args := node.Args.(common.UpdateMessageInfo)
-		err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(args.UserID, args.FaceURL, args.Nickname, constant.SingleChatType)
+		var conversationType int32
+		if args.GroupID == "" {
+			conversationType = constant.SingleChatType
+		} else {
+			var err error
+			_, conversationType, err = c.getConversationTypeByGroupID(args.GroupID)
+			if err != nil {
+				log.Error("internal", "getConversationTypeByGroupID database err:", err.Error())
+				return
+			}
+		}
+		err := c.db.UpdateMsgSenderFaceURLAndSenderNicknameController(args.UserID, args.FaceURL, args.Nickname, int(conversationType), args.GroupID)
 		if err != nil {
 			log.Error("internal", "UpdateMsgSenderFaceURLAndSenderNickname err:", err.Error())
 		}
+
 	}
 
+}
+func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
+	if c.ConversationListener == nil {
+		log.Error("internal", "not set conversationListener")
+		return
+	}
+	node := c2v.Value.(common.SyncReactionExtensionsNode)
+	switch node.Action {
+	case constant.SyncMessageListReactionExtensions:
+		args := node.Args.(syncReactionExtensionParams)
+		log.Error(node.OperationID, "come SyncMessageListReactionExtensions", args)
+		var reqList []server_api_params.OperateMessageListReactionExtensionsReq
+		for _, v := range args.MessageList {
+			var temp server_api_params.OperateMessageListReactionExtensionsReq
+			temp.ClientMsgID = v.ClientMsgID
+			temp.MsgFirstModifyTime = v.MsgFirstModifyTime
+			reqList = append(reqList, temp)
+		}
+		var apiReq server_api_params.GetMessageListReactionExtensionsReq
+		apiReq.SourceID = args.SourceID
+		apiReq.TypeKeyList = args.TypeKeyList
+		apiReq.SessionType = args.SessionType
+		apiReq.MessageReactionKeyList = reqList
+		apiReq.IsExternalExtensions = args.IsExternalExtension
+		apiReq.OperationID = node.OperationID
+		var apiResp server_api_params.GetMessageListReactionExtensionsResp
+		err := c.p.PostReturn(constant.GetMessageListReactionExtensionsRouter, apiReq, &apiResp)
+		if err != nil {
+			log.NewError(node.OperationID, utils.GetSelfFuncName(), "getMessageListReactionExtensions err:", err.Error())
+			return
+		}
+		for _, result := range apiResp {
+			log.Warn(node.OperationID, "api return reslut is:", result.ClientMsgID, result.ReactionExtensionList)
+
+		}
+		onLocal := func(data []*model_struct.LocalChatLogReactionExtensions) []*server_api_params.SingleMessageExtensionResult {
+			var result []*server_api_params.SingleMessageExtensionResult
+			for _, v := range data {
+				temp := new(server_api_params.SingleMessageExtensionResult)
+				tempMap := make(map[string]*server_api_params.KeyValue)
+				_ = json.Unmarshal(v.LocalReactionExtensions, &tempMap)
+				if len(args.TypeKeyList) != 0 {
+					for s, _ := range tempMap {
+						if !utils.IsContain(s, args.TypeKeyList) {
+							delete(tempMap, s)
+						}
+					}
+				}
+
+				temp.ReactionExtensionList = tempMap
+				temp.ClientMsgID = v.ClientMsgID
+				result = append(result, temp)
+			}
+			return result
+		}(args.ExtendMessageList)
+		var onServer []*server_api_params.SingleMessageExtensionResult
+		for _, v := range apiResp {
+			if v.ErrCode == 0 {
+				onServer = append(onServer, v)
+			}
+		}
+		aInBNot, _, sameA, _ := common.CheckReactionExtensionsDiff(onServer, onLocal)
+		for _, v := range aInBNot {
+			log.Error(node.OperationID, "come InsertMessageReactionExtension", args, v.ClientMsgID)
+			if len(v.ReactionExtensionList) > 0 {
+				temp := model_struct.LocalChatLogReactionExtensions{ClientMsgID: v.ClientMsgID, LocalReactionExtensions: []byte(utils.StructToJsonString(v.ReactionExtensionList))}
+				err := c.db.InsertMessageReactionExtension(&temp)
+				if err != nil {
+					log.Error(node.OperationID, "InsertMessageReactionExtension err:", err.Error())
+					continue
+				}
+			}
+			var changedKv []*server_api_params.KeyValue
+			for _, value := range v.ReactionExtensionList {
+				changedKv = append(changedKv, value)
+			}
+			if len(changedKv) > 0 {
+				c.msgListener.OnRecvMessageExtensionsChanged(v.ClientMsgID, utils.StructToJsonString(changedKv))
+			}
+		}
+		for _, result := range sameA {
+			log.Warn(node.OperationID, "result is ", result.ReactionExtensionList, result.ClientMsgID)
+		}
+		for _, v := range sameA {
+			log.Error(node.OperationID, "come sameA", v.ClientMsgID, v.ReactionExtensionList)
+			tempMap := make(map[string]*server_api_params.KeyValue)
+			for _, extensions := range args.ExtendMessageList {
+				if v.ClientMsgID == extensions.ClientMsgID {
+					_ = json.Unmarshal(extensions.LocalReactionExtensions, &tempMap)
+					break
+				}
+			}
+			if len(v.ReactionExtensionList) == 0 {
+				err := c.db.DeleteMessageReactionExtension(v.ClientMsgID)
+				if err != nil {
+					log.Error(node.OperationID, "DeleteMessageReactionExtension err:", err.Error())
+					continue
+				}
+				var deleteKeyList []string
+				for key, _ := range tempMap {
+					deleteKeyList = append(deleteKeyList, key)
+				}
+				if len(deleteKeyList) > 0 {
+					c.msgListener.OnRecvMessageExtensionsDeleted(v.ClientMsgID, utils.StructToJsonString(deleteKeyList))
+				}
+			} else {
+				deleteKeyList, changedKv := func(local, server map[string]*server_api_params.KeyValue) ([]string, []*server_api_params.KeyValue) {
+					var deleteKeyList []string
+					var changedKv []*server_api_params.KeyValue
+					for k, v := range local {
+						ia, ok := server[k]
+						if ok {
+							//服务器不同的kv
+							if ia.Value != v.Value {
+								changedKv = append(changedKv, ia)
+							}
+						} else {
+							//服务器已经没有kv
+							deleteKeyList = append(deleteKeyList, k)
+						}
+					}
+					//从服务器新增的kv
+					for k, v := range server {
+						_, ok := local[k]
+						if !ok {
+							changedKv = append(changedKv, v)
+
+						}
+					}
+					return deleteKeyList, changedKv
+				}(tempMap, v.ReactionExtensionList)
+				extendMsg := model_struct.LocalChatLogReactionExtensions{ClientMsgID: v.ClientMsgID, LocalReactionExtensions: []byte(utils.StructToJsonString(v.ReactionExtensionList))}
+				err = c.db.UpdateMessageReactionExtension(&extendMsg)
+				if err != nil {
+					log.Error(node.OperationID, "UpdateMessageReactionExtension err:", err.Error())
+					continue
+				}
+				if len(deleteKeyList) > 0 {
+					c.msgListener.OnRecvMessageExtensionsDeleted(v.ClientMsgID, utils.StructToJsonString(deleteKeyList))
+				}
+				if len(changedKv) > 0 {
+					c.msgListener.OnRecvMessageExtensionsChanged(v.ClientMsgID, utils.StructToJsonString(changedKv))
+				}
+			}
+			//err := c.db.GetAndUpdateMessageReactionExtension(v.ClientMsgID, v.ReactionExtensionList)
+			//if err != nil {
+			//	log.Error(node.OperationID, "GetAndUpdateMessageReactionExtension err:", err.Error())
+			//	continue
+			//}
+			//var changedKv []*server_api_params.KeyValue
+			//for _, value := range v.ReactionExtensionList {
+			//	changedKv = append(changedKv, value)
+			//}
+			//if len(changedKv) > 0 {
+			//	c.msgListener.OnRecvMessageExtensionsChanged(v.ClientMsgID, utils.StructToJsonString(changedKv))
+			//}
+		}
+	case constant.SyncMessageListTypeKeyInfo:
+		messageList := node.Args.([]*sdk_struct.MsgStruct)
+		var sourceID string
+		var sessionType int32
+		var reqList []server_api_params.OperateMessageListReactionExtensionsReq
+		var temp server_api_params.OperateMessageListReactionExtensionsReq
+		for _, v := range messageList {
+			message, err := c.db.GetMessageController(v)
+			if err != nil {
+				log.Error(node.OperationID, "GetMessageController err:", err.Error(), *v)
+				continue
+			}
+			temp.ClientMsgID = message.ClientMsgID
+			temp.MsgFirstModifyTime = message.MsgFirstModifyTime
+			reqList = append(reqList, temp)
+			switch message.SessionType {
+			case constant.SingleChatType:
+				sourceID = message.SendID + message.RecvID
+			case constant.NotificationChatType:
+				sourceID = message.RecvID
+			case constant.GroupChatType, constant.SuperGroupChatType:
+				sourceID = message.RecvID
+			}
+			sessionType = message.SessionType
+		}
+		var apiReq server_api_params.GetMessageListReactionExtensionsReq
+		apiReq.SourceID = sourceID
+		apiReq.SessionType = sessionType
+		apiReq.MessageReactionKeyList = reqList
+		apiReq.OperationID = node.OperationID
+		var apiResp server_api_params.GetMessageListReactionExtensionsResp
+		err := c.p.PostReturnWithTimeOut(constant.GetMessageListReactionExtensionsRouter, apiReq, &apiResp, time.Second*2)
+		if err != nil {
+			log.Error(node.OperationID, "GetMessageListReactionExtensions from server err:", err.Error(), apiReq)
+			return
+		}
+		var messageChangedList []*messageKvList
+		for _, v := range apiResp {
+			if v.ErrCode == 0 {
+				var changedKv []*server_api_params.KeyValue
+				var prefixTypeKey []string
+				extendMsg, _ := c.db.GetMessageReactionExtension(v.ClientMsgID)
+				localKV := make(map[string]*server_api_params.KeyValue)
+				_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &localKV)
+				for typeKey, value := range v.ReactionExtensionList {
+					oldValue, ok := localKV[typeKey]
+					if ok {
+						if !cmp.Equal(value, oldValue) {
+							localKV[typeKey] = value
+							prefixTypeKey = append(prefixTypeKey, getPrefixTypeKey(typeKey))
+							changedKv = append(changedKv, value)
+						}
+					} else {
+						localKV[typeKey] = value
+						prefixTypeKey = append(prefixTypeKey, getPrefixTypeKey(typeKey))
+						changedKv = append(changedKv, value)
+
+					}
+
+				}
+				extendMsg.LocalReactionExtensions = []byte(utils.StructToJsonString(localKV))
+				_ = c.db.UpdateMessageReactionExtension(extendMsg)
+				if len(changedKv) > 0 {
+					c.msgListener.OnRecvMessageExtensionsChanged(extendMsg.ClientMsgID, utils.StructToJsonString(changedKv))
+				}
+				prefixTypeKey = utils.RemoveRepeatedStringInList(prefixTypeKey)
+				if len(prefixTypeKey) > 0 && c.msgKvListener != nil {
+					var result []*sdk.SingleTypeKeyInfoSum
+					oneMessageChanged := new(messageKvList)
+					oneMessageChanged.ClientMsgID = extendMsg.ClientMsgID
+					for _, v := range prefixTypeKey {
+						singleResult := new(sdk.SingleTypeKeyInfoSum)
+						singleResult.TypeKey = v
+						for typeKey, value := range localKV {
+							if strings.HasPrefix(typeKey, v) {
+								singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
+								err := json.Unmarshal([]byte(value.Value), singleTypeKeyInfo)
+								if err != nil {
+									continue
+								}
+								if _, ok := singleTypeKeyInfo.InfoList[c.loginUserID]; ok {
+									singleResult.IsContainSelf = true
+								}
+								for _, info := range singleTypeKeyInfo.InfoList {
+									v := *info
+									singleResult.InfoList = append(singleResult.InfoList, &v)
+								}
+								singleResult.Counter += singleTypeKeyInfo.Counter
+							}
+						}
+						result = append(result, singleResult)
+					}
+					oneMessageChanged.ChangedKvList = result
+					messageChangedList = append(messageChangedList, oneMessageChanged)
+				}
+			}
+		}
+		if len(messageChangedList) > 0 && c.msgKvListener != nil {
+			c.msgKvListener.OnMessageKvInfoChanged(utils.StructToJsonString(messageChangedList))
+		}
+
+	}
+
+}
+
+type messageKvList struct {
+	ClientMsgID   string                      `json:"clientMsgID"`
+	ChangedKvList []*sdk.SingleTypeKeyInfoSum `json:"changedKvList"`
 }
 
 func (c *Conversation) Work(c2v common.Cmd2Value) {
@@ -1496,25 +2067,50 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 
 	switch c2v.Cmd {
 	case constant.CmdDeleteConversation:
+		if c.LoginStatus() == constant.Logout {
+			log.Warn("", "m.LoginStatus() == constant.Logout, Goexit()")
+			runtime.Goexit()
+		}
 		log.Info("internal", "CmdDeleteConversation start ..", c2v.Cmd)
 		c.doDeleteConversation(c2v)
 		log.Info("internal", "CmdDeleteConversation end..", c2v.Cmd)
 	case constant.CmdNewMsgCome:
+		if c.LoginStatus() == constant.Logout {
+			log.Warn("", "m.LoginStatus() == constant.Logout, Goexit()")
+			runtime.Goexit()
+		}
 		log.Info("internal", "doMsgNew start..", c2v.Cmd)
 		c.doMsgNew(c2v)
 		log.Info("internal", "doMsgNew end..", c2v.Cmd)
 	case constant.CmdSuperGroupMsgCome:
+		if c.LoginStatus() == constant.Logout {
+			log.Warn("", "m.LoginStatus() == constant.Logout, Goexit()")
+			runtime.Goexit()
+		}
 		log.Info("internal", "doSuperGroupMsgNew start..", c2v.Cmd)
 		c.doSuperGroupMsgNew(c2v)
 		log.Info("internal", "doSuperGroupMsgNew end..", c2v.Cmd)
 	case constant.CmdUpdateConversation:
+		if c.LoginStatus() == constant.Logout {
+			log.Warn("", "m.LoginStatus() == constant.Logout, Goexit()")
+			runtime.Goexit()
+		}
 		log.Info("internal", "doUpdateConversation start ..", c2v.Cmd)
 		c.doUpdateConversation(c2v)
 		log.Info("internal", "doUpdateConversation end..", c2v.Cmd)
 	case constant.CmdUpdateMessage:
+		if c.LoginStatus() == constant.Logout {
+			log.Warn("", "m.LoginStatus() == constant.Logout, Goexit()")
+			runtime.Goexit()
+		}
 		log.Info("internal", "doUpdateMessage start ..", c2v.Cmd)
 		c.doUpdateMessage(c2v)
 		log.Info("internal", "doUpdateMessage end..", c2v.Cmd)
+	case constant.CmSyncReactionExtensions:
+		log.Info("internal", "doSyncReactionExtensions start ..", c2v.Cmd)
+		c.doSyncReactionExtensions(c2v)
+		log.Info("internal", "doSyncReactionExtensions end..", c2v.Cmd)
+
 	}
 }
 func (c *Conversation) msgConvert(msg *sdk_struct.MsgStruct) (err error) {

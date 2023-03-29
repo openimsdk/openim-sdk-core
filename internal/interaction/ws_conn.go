@@ -2,11 +2,14 @@ package interaction
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/gob"
 	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"net/http"
 	"open_im_sdk/open_im_sdk_callback"
+	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
@@ -19,16 +22,26 @@ import (
 const writeTimeoutSeconds = 30
 
 type WsConn struct {
-	stateMutex  sync.Mutex
-	conn        *websocket.Conn
-	loginStatus int32
-	listener    open_im_sdk_callback.OnConnListener
-	token       string
-	loginUserID string
+	stateMutex     sync.Mutex
+	conn           *websocket.Conn
+	loginStatus    int32
+	listener       open_im_sdk_callback.OnConnListener
+	token          string
+	loginUserID    string
+	IsCompression  bool
+	ConversationCh chan common.Cmd2Value
+	tokenErrCode   int32
 }
 
-func NewWsConn(listener open_im_sdk_callback.OnConnListener, token string, loginUserID string) *WsConn {
-	p := WsConn{listener: listener, token: token, loginUserID: loginUserID}
+func (u *WsConn) IsInterruptReconnection() bool {
+	if u.tokenErrCode != 0 {
+		return true
+	}
+	return false
+}
+
+func NewWsConn(listener open_im_sdk_callback.OnConnListener, token string, loginUserID string, isCompression bool, conversationCh chan common.Cmd2Value) *WsConn {
+	p := WsConn{listener: listener, token: token, loginUserID: loginUserID, IsCompression: isCompression, ConversationCh: conversationCh}
 	//	go func() {
 	p.conn, _, _, _ = p.ReConn("init:" + utils.OperationIDGenerator())
 	//	}()
@@ -40,8 +53,10 @@ func (u *WsConn) CloseConn(operationID string) error {
 	defer u.Unlock()
 	if u.conn != nil {
 		err := u.conn.Close()
-		log.NewWarn(operationID, "close conn, ", u.conn)
-		u.conn = nil
+		if err != nil {
+			log.NewWarn(operationID, "close conn, ", u.conn, err.Error())
+		}
+		//	u.conn = nil
 		return utils.Wrap(err, "")
 	}
 	return nil
@@ -108,7 +123,21 @@ func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (*websocket.Conn, error) {
 		if len(buff.Bytes()) > constant.MaxTotalMsgLen {
 			return nil, utils.Wrap(errors.New("msg too long"), utils.IntToString(len(buff.Bytes())))
 		}
-		return u.conn, utils.Wrap(u.conn.WriteMessage(websocket.BinaryMessage, buff.Bytes()), "")
+		var data []byte
+		if u.IsCompression {
+			var gzipBuffer bytes.Buffer
+			gz := gzip.NewWriter(&gzipBuffer)
+			if _, err := gz.Write(buff.Bytes()); err != nil {
+				return nil, utils.Wrap(err, "")
+			}
+			if err := gz.Close(); err != nil {
+				return nil, utils.Wrap(err, "")
+			}
+			data = gzipBuffer.Bytes()
+		} else {
+			data = buff.Bytes()
+		}
+		return u.conn, utils.Wrap(u.conn.WriteMessage(websocket.BinaryMessage, data), "")
 	} else {
 		return nil, utils.Wrap(errors.New("conn==nil"), "")
 	}
@@ -148,10 +177,14 @@ func (u *WsConn) IsFatalError(err error) bool {
 
 func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool, bool) {
 	u.stateMutex.Lock()
+	u.tokenErrCode = 0
 	defer u.stateMutex.Unlock()
 	if u.conn != nil {
-		log.NewWarn(operationID, "close conn, ", u.conn)
-		u.conn.Close()
+		log.NewInfo(operationID, "close old conn", u.conn.LocalAddr())
+		err := u.conn.Close()
+		if err != nil {
+			log.NewWarn(operationID, "close old conn", u.conn.LocalAddr(), err.Error())
+		}
 		u.conn = nil
 	}
 	if u.loginStatus == constant.TokenFailedKickedOffline {
@@ -161,7 +194,11 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool, bool)
 
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s", sdk_struct.SvrConf.WsAddr, u.loginUserID, u.token, sdk_struct.SvrConf.Platform, operationID)
 	log.Info(operationID, "ws connect begin, dail: ", url)
-	conn, httpResp, err := websocket.DefaultDialer.Dial(url, nil)
+	var header http.Header
+	if u.IsCompression {
+		header = http.Header{"compression": []string{"gzip"}}
+	}
+	conn, httpResp, err := websocket.DefaultDialer.Dial(url, header)
 	log.Info(operationID, "ws connect end, dail : ", url)
 	if err != nil {
 		log.Error(operationID, "ws connect failed ", url, err.Error())
@@ -173,20 +210,28 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool, bool)
 			switch int32(httpResp.StatusCode) {
 			case constant.ErrTokenExpired.ErrCode:
 				u.listener.OnUserTokenExpired()
+				u.tokenErrCode = constant.ErrTokenExpired.ErrCode
 				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenInvalid.ErrCode:
+				u.tokenErrCode = constant.ErrTokenInvalid.ErrCode
 				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenMalformed.ErrCode:
+				u.tokenErrCode = constant.ErrTokenMalformed.ErrCode
 				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenNotValidYet.ErrCode:
+				u.tokenErrCode = constant.ErrTokenNotValidYet.ErrCode
 				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenUnknown.ErrCode:
+				u.tokenErrCode = constant.ErrTokenUnknown.ErrCode
 				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenDifferentPlatformID.ErrCode:
+				u.tokenErrCode = constant.ErrTokenDifferentPlatformID.ErrCode
 				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenDifferentUserID.ErrCode:
+				u.tokenErrCode = constant.ErrTokenDifferentUserID.ErrCode
 				return nil, utils.Wrap(err, errMsg), false, false
 			case constant.ErrTokenKicked.ErrCode:
+				u.tokenErrCode = constant.ErrTokenKicked.ErrCode
 				//if u.loginStatus != constant.Logout {
 				//	u.listener.OnKickedOffline()
 				//	u.SetLoginStatus(constant.Logout)
@@ -201,6 +246,11 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool, bool)
 		} else {
 			errMsg := err.Error() + " operationID " + operationID
 			u.listener.OnConnectFailed(1001, errMsg)
+			if u.ConversationCh != nil {
+				common.TriggerCmdSuperGroupMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: nil, OperationID: operationID, SyncFlag: constant.MsgSyncBegin}, u.ConversationCh)
+				common.TriggerCmdSuperGroupMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: nil, OperationID: operationID, SyncFlag: constant.MsgSyncFailed}, u.ConversationCh)
+			}
+
 			log.Error(operationID, "websocket.DefaultDialer.Dial failed ", errMsg, "url ", url)
 			return nil, utils.Wrap(err, errMsg), true, false
 		}

@@ -15,7 +15,7 @@ func (d *DataBase) GetConversationByUserID(userID string) (*model_struct.LocalCo
 	return &conversation, err
 }
 
-func (d *DataBase) GetAllConversationList() ([]*model_struct.LocalConversation, error) {
+func (d *DataBase) GetAllConversationListDB() ([]*model_struct.LocalConversation, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var conversationList []model_struct.LocalConversation
@@ -53,7 +53,7 @@ func (d *DataBase) GetAllConversationListToSync() ([]*model_struct.LocalConversa
 	return transfer, err
 }
 
-func (d *DataBase) GetConversationListSplit(offset, count int) ([]*model_struct.LocalConversation, error) {
+func (d *DataBase) GetConversationListSplitDB(offset, count int) ([]*model_struct.LocalConversation, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var conversationList []model_struct.LocalConversation
@@ -108,7 +108,8 @@ func (d *DataBase) UpdateConversationForSync(c *model_struct.LocalConversation) 
 	defer d.mRWMutex.Unlock()
 	t := d.conn.Model(&model_struct.LocalConversation{}).Where("conversation_id = ?", c.ConversationID).
 		Updates(map[string]interface{}{"recv_msg_opt": c.RecvMsgOpt, "is_pinned": c.IsPinned, "is_private_chat": c.IsPrivateChat,
-			"group_at_type": c.GroupAtType, "is_not_in_group": c.IsNotInGroup, "update_unread_count_time": c.UpdateUnreadCountTime, "ex": c.Ex, "attached_info": c.AttachedInfo})
+			"group_at_type": c.GroupAtType, "is_not_in_group": c.IsNotInGroup, "update_unread_count_time": c.UpdateUnreadCountTime, "ex": c.Ex, "attached_info": c.AttachedInfo,
+			"burn_duration": c.BurnDuration})
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
@@ -184,7 +185,7 @@ func (d *DataBase) ClearConversation(conversationID string) error {
 //Clear All conversation, which is used to delete the conversation history message and clear the conversation at the same time.
 //The GetAllConversation or GetConversationListSplit interface can still be obtained,
 //but there is no latest message.
-func (d *DataBase) CleaAllConversation() error {
+func (d *DataBase) ClearAllConversation() error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	c := model_struct.LocalConversation{UnreadCount: 0, LatestMsg: "", DraftText: "", DraftTextTime: 0}
@@ -258,7 +259,7 @@ func (d *DataBase) IncrConversationUnreadCount(conversationID string) error {
 	}
 	return utils.Wrap(t.Error, "IncrConversationUnreadCount failed")
 }
-func (d *DataBase) GetTotalUnreadMsgCount() (totalUnreadCount int32, err error) {
+func (d *DataBase) GetTotalUnreadMsgCountDB() (totalUnreadCount int32, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var result []int64
@@ -282,7 +283,7 @@ func (d *DataBase) SetMultipleConversationRecvMsgOpt(conversationIDList []string
 	return utils.Wrap(t.Error, "SetMultipleConversationRecvMsgOpt failed")
 }
 
-func (d *DataBase) GetMultipleConversation(conversationIDList []string) (result []*model_struct.LocalConversation, err error) {
+func (d *DataBase) GetMultipleConversationDB(conversationIDList []string) (result []*model_struct.LocalConversation, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var conversationList []model_struct.LocalConversation
@@ -298,11 +299,11 @@ func (d *DataBase) DecrConversationUnreadCount(conversationID string, count int6
 	defer d.mRWMutex.Unlock()
 	tx := d.conn.Begin()
 	c := model_struct.LocalConversation{ConversationID: conversationID}
-	t := d.conn.Debug().Model(&c).Update("unread_count", gorm.Expr("unread_count-?", count))
+	t := tx.Debug().Model(&c).Update("unread_count", gorm.Expr("unread_count-?", count))
 	if t.Error != nil {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
-	if err := d.conn.Where("conversation_id = ?",
+	if err := tx.Where("conversation_id = ?",
 		conversationID).Take(&c).Error; err != nil {
 		tx.Rollback()
 		return utils.Wrap(errors.New("get conversation err"), "")

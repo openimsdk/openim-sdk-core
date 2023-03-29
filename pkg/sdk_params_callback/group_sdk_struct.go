@@ -60,6 +60,14 @@ type SetGroupInfoParam struct {
 	NeedVerification *int32 `json:"needVerification" binding "oneof=0 1 2"`
 }
 
+type SetGroupMemberInfoParam struct {
+	GroupID string  `json:"groupID"`
+	UserID  string  `json:"userID"`
+	Ex      *string `json:"ex"`
+}
+
+const SetGroupMemberInfoCallback = constant.SuccessCallbackDefault
+
 const SetGroupInfoCallback = constant.SuccessCallbackDefault
 
 //type GetGroupMemberListParam groupID ...

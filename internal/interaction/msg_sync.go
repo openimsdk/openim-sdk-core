@@ -3,10 +3,11 @@ package interaction
 import (
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"runtime"
 )
 
 type SeqPair struct {
@@ -15,7 +16,7 @@ type SeqPair struct {
 }
 
 type MsgSync struct {
-	*db.DataBase
+	db_interface.DataBase
 	*Ws
 	LoginUserID        string
 	conversationCh     chan common.Cmd2Value
@@ -60,8 +61,16 @@ func (m *MsgSync) doPushMsg(cmd common.Cmd2Value) {
 func (m *MsgSync) Work(cmd common.Cmd2Value) {
 	switch cmd.Cmd {
 	case constant.CmdPushMsg:
+		if m.LoginStatus() == constant.Logout {
+			log.Warn("", "m.LoginStatus() == constant.Logout, Goexit()")
+			runtime.Goexit()
+		}
 		m.doPushMsg(cmd)
 	case constant.CmdMaxSeq:
+		if m.LoginStatus() == constant.Logout {
+			log.Warn("", "m.LoginStatus() == constant.Logout, Goexit()")
+			runtime.Goexit()
+		}
 		m.doMaxSeq(cmd)
 	default:
 		log.Error("", "cmd failed ", cmd.Cmd)
@@ -72,7 +81,7 @@ func (m *MsgSync) GetCh() chan common.Cmd2Value {
 	return m.PushMsgAndMaxSeqCh
 }
 
-func NewMsgSync(dataBase *db.DataBase, ws *Ws, loginUserID string, ch chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value, joinedSuperGroupCh chan common.Cmd2Value) *MsgSync {
+func NewMsgSync(dataBase db_interface.DataBase, ws *Ws, loginUserID string, ch chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value, joinedSuperGroupCh chan common.Cmd2Value) *MsgSync {
 	p := &MsgSync{DataBase: dataBase, Ws: ws, LoginUserID: loginUserID, conversationCh: ch, PushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh}
 	//	p.superGroupMsgSync = NewSuperGroupMsgSync(dataBase, ws, loginUserID, ch, joinedSuperGroupCh)
 	p.selfMsgSync = NewSelfMsgSync(dataBase, ws, loginUserID, ch)

@@ -8,7 +8,7 @@ const (
 	CmdNewMsgCome                 = "005"
 	CmdSuperGroupMsgCome          = "006"
 	CmdUpdateConversation         = "007"
-	CmdForceSyncFriend            = "008"
+	CmSyncReactionExtensions      = "008"
 	CmdFroceSyncBlackList         = "009"
 	CmdForceSyncFriendApplication = "010"
 	CmdForceSyncMsg               = "011"
@@ -50,6 +50,9 @@ const (
 	AdvancedRevoke                  = 118 //影响前者消息
 	CustomMsgNotTriggerConversation = 119
 	CustomMsgOnlineOnly             = 120
+	ReactionMessageModifier         = 121
+	ReactionMessageDeleter          = 122
+
 	//////////////////////////////////////////
 	NotificationBegin       = 1000
 	FriendNotificationBegin = 1200
@@ -62,6 +65,7 @@ const (
 	FriendRemarkSetNotification           = 1206 //set_friend_remark?
 	BlackAddedNotification                = 1207 //add_black
 	BlackDeletedNotification              = 1208 //remove_black
+	FriendInfoUpdatedNotification         = 1209
 	FriendNotificationEnd                 = 1299
 	ConversationChangeNotification        = 1300
 
@@ -96,10 +100,12 @@ const (
 	SignalingNotification      = 1601
 	SignalingNotificationEnd   = 1649
 
-	SuperGroupNotificationBegin  = 1650
-	SuperGroupUpdateNotification = 1651
-	MsgDeleteNotification        = 1652
-	SuperGroupNotificationEnd    = 1699
+	SuperGroupNotificationBegin         = 1650
+	SuperGroupUpdateNotification        = 1651
+	MsgDeleteNotification               = 1652
+	ReactionMessageModifierNotification = 1653
+	ReactionMessageDeleteNotification   = 1654
+	SuperGroupNotificationEnd           = 1699
 
 	ConversationPrivateChatNotification = 1701
 	ConversationUnreadNotification      = 1702
@@ -108,7 +114,11 @@ const (
 	WorkMomentNotificationBegin = 1900
 	WorkMomentNotification      = 1901
 
-	NotificationEnd = 2000
+	BusinessNotificationBegin = 2000
+	BusinessNotification      = 2001
+	BusinessNotificationEnd   = 2099
+
+	NotificationEnd = 2200
 
 	////////////////////////////////////////
 
@@ -209,18 +219,21 @@ const (
 )
 
 const (
-	AddConOrUpLatMsg             = 2
-	UnreadCountSetZero           = 3
-	IncrUnread                   = 5
-	TotalUnreadMessageChanged    = 6
-	UpdateConFaceUrlAndNickName  = 7
-	UpdateLatestMessageChange    = 8
-	ConChange                    = 9
-	NewCon                       = 10
-	ConChangeDirect              = 11
-	NewConDirect                 = 12
-	ConversationLatestMsgHasRead = 13
-	UpdateMsgFaceUrlAndNickName  = 14
+	AddConOrUpLatMsg                  = 2
+	UnreadCountSetZero                = 3
+	IncrUnread                        = 5
+	TotalUnreadMessageChanged         = 6
+	UpdateConFaceUrlAndNickName       = 7
+	UpdateLatestMessageChange         = 8
+	ConChange                         = 9
+	NewCon                            = 10
+	ConChangeDirect                   = 11
+	NewConDirect                      = 12
+	ConversationLatestMsgHasRead      = 13
+	UpdateMsgFaceUrlAndNickName       = 14
+	SyncConversation                  = 15
+	SyncMessageListReactionExtensions = 16
+	SyncMessageListTypeKeyInfo        = 17
 
 	HasRead = 1
 	NotRead = 0
@@ -251,14 +264,15 @@ const (
 )
 
 const (
-	WSGetNewestSeq     = 1001
-	WSPullMsgBySeqList = 1002
-	WSSendMsg          = 1003
-	WSSendSignalMsg    = 1004
-	WsDelMsg           = 1005
-	WSPushMsg          = 2001
-	WSKickOnlineMsg    = 2002
-	WsLogoutMsg        = 2003
+	WSGetNewestSeq        = 1001
+	WSPullMsgBySeqList    = 1002
+	WSSendMsg             = 1003
+	WSSendSignalMsg       = 1004
+	WsDelMsg              = 1005
+	WSPushMsg             = 2001
+	WSKickOnlineMsg       = 2002
+	WsLogoutMsg           = 2003
+	WsSetBackgroundStatus = 2004
 
 	WSDataError = 3001
 )
@@ -314,6 +328,11 @@ const (
 	FieldIsNotInGroup  = 6
 	FieldEx            = 7
 	FieldUnread        = 8
+	FieldBurnDuration  = 9
+)
+const (
+	SetMessageExtensions = 1
+	AddMessageExtensions = 2
 )
 const (
 	KeywordMatchOr  = 0
@@ -335,6 +354,7 @@ const (
 	MsgSyncBegin      = 1001 //
 	MsgSyncProcessing = 1002 //
 	MsgSyncEnd        = 1003 //
+	MsgSyncFailed     = 1004
 )
 
 const (

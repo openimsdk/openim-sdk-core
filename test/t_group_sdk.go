@@ -91,7 +91,6 @@ func (testWorkMomentsListener) OnRecvNewNotification() {
 	log.NewInfo(utils.OperationIDGenerator(), utils.GetSelfFuncName(), "on listener callback ")
 }
 
-//
 type testCreateGroup struct {
 	OperationID string
 }
@@ -180,7 +179,6 @@ func DoSetGroupApplyMemberFriend() {
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ", TestgroupID, 1)
 }
 
-//
 type testGetGroupsInfo struct {
 	OperationID string
 }
@@ -267,8 +265,8 @@ type testGetJoinedGroupList struct {
 }
 
 /*
-	OnError(errCode int, errMsg string)
-	OnSuccess(data string)
+OnError(errCode int, errMsg string)
+OnSuccess(data string)
 */
 func (t testGetJoinedGroupList) OnError(errCode int32, errMsg string) {
 	log.Info(t.OperationID, "testGetJoinedGroupList OnError", errCode, errMsg)
@@ -278,7 +276,6 @@ func (t testGetJoinedGroupList) OnSuccess(data string) {
 	log.Info(t.OperationID, "testGetJoinedGroupList OnSuccess, output", data)
 }
 
-//
 func DoTestGetJoinedGroupList() {
 	var test testGetJoinedGroupList
 	test.OperationID = utils.OperationIDGenerator()
@@ -438,11 +435,11 @@ func DotestGetRecvGroupApplicationList() string {
 	return ""
 }
 
-//func DoGroupApplicationList() {
-//	var test testGroupX
-//	fmt.Println("test DoGetGroupApplicationList....")
-//	sdk_interface.GetGroupApplicationList(test)
-//}
+//	func DoGroupApplicationList() {
+//		var test testGroupX
+//		fmt.Println("test DoGetGroupApplicationList....")
+//		sdk_interface.GetGroupApplicationList(test)
+//	}
 type testTransferGroupOwner struct {
 	baseCallback
 }
@@ -505,4 +502,17 @@ func DoTestSetGroupMemberRoleLevel(groupID, userID string, roleLevel int) {
 	test.OperationID = utils.OperationIDGenerator()
 	fmt.Println(test.OperationID, utils.GetSelfFuncName(), "inputx: ")
 	open_im_sdk.SetGroupMemberRoleLevel(test, test.OperationID, groupID, userID, roleLevel)
+}
+
+func DoTestSetGroupMemberInfo(groupID, userID string, ex string) {
+	var test testSetGroupMemberNickname
+	test.OperationID = utils.OperationIDGenerator()
+	param := sdk_params_callback.SetGroupMemberInfoParam{GroupID: groupID, UserID: userID}
+	if ex != "" {
+		param.Ex = &ex
+	}
+	g1 := utils.StructToJsonString(param)
+	fmt.Println(test.OperationID, utils.GetSelfFuncName(), "inputx: ", g1)
+
+	open_im_sdk.SetGroupMemberInfo(test, test.OperationID, g1)
 }

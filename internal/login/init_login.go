@@ -1,6 +1,7 @@
 package login
 
 import (
+	"open_im_sdk/internal/business"
 	"open_im_sdk/internal/cache"
 	comm3 "open_im_sdk/internal/common"
 	conv "open_im_sdk/internal/conversation_msg"
@@ -19,6 +20,7 @@ import (
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
@@ -36,9 +38,11 @@ type LoginMgr struct {
 	user         *user.User
 	signaling    *signaling.LiveSignaling
 	//advancedFunction advanced_interface.AdvancedFunction
-	workMoments  *workMoments.WorkMoments
+	workMoments *workMoments.WorkMoments
+	business    *business.Business
+
 	full         *full.Full
-	db           *db.DataBase
+	db           db_interface.DataBase
 	ws           *ws.Ws
 	msgSync      *ws.MsgSync
 	heartbeat    *heartbeart.Heartbeat
@@ -62,6 +66,7 @@ type LoginMgr struct {
 	signalingListenerFroService open_im_sdk_callback.OnSignalingListener
 	organizationListener        open_im_sdk_callback.OnOrganizationListener
 	workMomentsListener         open_im_sdk_callback.OnWorkMomentsListener
+	businessListener            open_im_sdk_callback.OnCustomBusinessListener
 
 	conversationCh     chan common.Cmd2Value
 	cmdWsCh            chan common.Cmd2Value
@@ -137,7 +142,11 @@ func (u *LoginMgr) SetAdvancedMsgListener(advancedMsgListener open_im_sdk_callba
 		u.advancedMsgListener = advancedMsgListener
 	}
 }
-
+func (u *LoginMgr) SetMessageKvInfoListener(messageKvInfoListener open_im_sdk_callback.OnMessageKvInfoListener) {
+	if u.conversation != nil {
+		u.conversation.SetMsgKvListener(messageKvInfoListener)
+	}
+}
 func (u *LoginMgr) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnBatchMsgListener) {
 	if u.conversation != nil {
 		u.conversation.SetBatchMsgListener(batchMsgListener)
@@ -199,13 +208,30 @@ func (u *LoginMgr) SetSignalingListenerForService(listener open_im_sdk_callback.
 	}
 }
 
+func (u *LoginMgr) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
+	if u.friend == nil || u.group == nil || u.conversation == nil {
+		log.Error("", "is nil ", u.friend, u.group, u.conversation)
+		return
+	}
+	u.friend.SetListenerForService(listener)
+	u.group.SetListenerForService(listener)
+	u.conversation.SetListenerForService(listener)
+}
+
 func (u *LoginMgr) SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMomentsListener) {
 	if u.workMoments != nil {
 		u.workMoments.SetListener(listener)
 	} else {
 		u.workMomentsListener = listener
 	}
+}
 
+func (u *LoginMgr) SetBusinessListener(listener open_im_sdk_callback.OnCustomBusinessListener) {
+	if u.business != nil {
+		u.business.SetListener(listener)
+	} else {
+		u.businessListener = listener
+	}
 }
 
 func (u *LoginMgr) wakeUp(cb open_im_sdk_callback.Base, operationID string) {
@@ -223,9 +249,9 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	var sqliteConn *db.DataBase
 	var err error
 	if constant.OnlyForTest == 1 {
-		wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID)
+		wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID, u.imConfig.IsCompression, u.conversationCh)
 		wsRespAsyn := ws.NewWsRespAsyn()
-		u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
+		u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh, u.conversationCh)
 		u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
 		u.heartbeat.WsForTest = u.ws
 		u.heartbeat.LoginUserIDForTest = u.loginUserID
@@ -271,6 +297,10 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	if u.workMomentsListener != nil {
 		u.workMoments.SetListener(u.workMomentsListener)
 	}
+	u.business = business.NewBusiness(u.db)
+	if u.businessListener != nil {
+		u.business.SetListener(u.businessListener)
+	}
 	log.NewInfo(operationID, u.imConfig.ObjectStorage, "new obj login cost time: ", time.Since(t1))
 	log.NewInfo(operationID, u.imConfig.ObjectStorage, "SyncLoginUserInfo login cost time: ", time.Since(t1))
 	u.push = comm2.NewPush(p, u.imConfig.Platform, u.loginUserID)
@@ -279,9 +309,9 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	log.Info(operationID, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	log.Info(operationID, "all channel ", u.pushMsgAndMaxSeqCh, u.conversationCh, u.heartbeatCmdCh, u.cmdWsCh)
 
-	wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID)
+	wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID, u.imConfig.IsCompression, u.conversationCh)
 	wsRespAsyn := ws.NewWsRespAsyn()
-	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh)
+	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh, u.conversationCh)
 	u.msgSync = ws.NewMsgSync(u.db, u.ws, u.loginUserID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
 	u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
 	log.NewInfo(operationID, u.imConfig.ObjectStorage)
@@ -309,7 +339,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.conversation = conv.NewConversation(u.ws, u.db, u.postApi, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir, u.imConfig.EncryptionKey,
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener,
-		u.organization, u.signaling, u.workMoments, u.cache, u.full, u.id2MinSeq)
+		u.organization, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq, u.imConfig.IsExternalExtensions)
 	if u.batchMsgListener != nil {
 		u.conversation.SetBatchMsgListener(u.batchMsgListener)
 		log.Info(operationID, "SetBatchMsgListener ", u.batchMsgListener)
@@ -319,7 +349,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	go u.conversation.SyncConversationUnreadCount(operationID)
 	go common.DoListener(u.conversation)
 	log.Debug(operationID, "SyncConversations end ")
-
+	go u.conversation.FixVersionData()
 	log.Info(operationID, "ws heartbeat end ")
 
 	log.Info(operationID, "login success...", "login cost time: ", time.Since(t1))
@@ -345,7 +375,21 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 		return
 	}
 
-	err := common.TriggerCmdLogout(u.cmdWsCh)
+	timeout := 2
+	retryTimes := 0
+	log.Info(operationID, "send to svr logout ...", u.loginUserID)
+	resp, err := u.ws.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID, operationID)
+	if err != nil {
+		log.Warn(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
+		if !u.ws.IsInterruptReconnection() {
+			callback.OnError(100, err.Error())
+			return
+		} else {
+			log.Warn(operationID, "SendReqWaitResp failed, but interrupt reconnection ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
+		}
+	}
+
+	err = common.TriggerCmdLogout(u.cmdWsCh)
 	if err != nil {
 		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
 	}
@@ -370,15 +414,8 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 		log.Error(operationID, "TriggerCmd UnInit pushMsgAndMaxSeqCh failed ", err.Error())
 	}
 
-	timeout := 2
-	retryTimes := 0
-	log.Info(operationID, "send to svr logout ...", u.loginUserID)
-	resp, err := u.ws.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID, operationID)
-	if err != nil {
-		log.Warn(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
-	}
 	log.Info(operationID, "close db ")
-	u.db.CloseDB(operationID)
+	u.db.Close()
 
 	if callback != nil {
 		callback.OnSuccess("")
@@ -398,6 +435,18 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 	//	close(mgr.conversationCh)
 	//	mgr = nil
 	//}(u)
+}
+
+func (u *LoginMgr) setAppBackgroundStatus(callback open_im_sdk_callback.Base, isBackground bool, operationID string) {
+	timeout := 5
+	retryTimes := 2
+	log.Info(operationID, "send to svr WsSetBackgroundStatus ...", u.loginUserID)
+	resp, err := u.ws.SendReqWaitResp(&server_api_params.SetAppBackgroundStatusReq{UserID: u.loginUserID, IsBackground: isBackground}, constant.WsSetBackgroundStatus, timeout, retryTimes, u.loginUserID, operationID)
+	if err != nil {
+		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsSetBackgroundStatus, timeout, u.loginUserID, resp)
+	}
+	common.CheckAnyErrCallback(callback, constant.ErrInternal.ErrCode, err, operationID)
+	callback.OnSuccess("")
 }
 
 func (u *LoginMgr) GetLoginUser() string {

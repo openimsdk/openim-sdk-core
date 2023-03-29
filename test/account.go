@@ -225,7 +225,7 @@ func GetGroupMemberNum(groupID string) uint32 {
 		log.Error("", "post failed ", GETGROUPSINFOROUTER, req)
 		return 0
 	}
-	err = common.CheckErrAndResp(nil, r, &groupInfoList)
+	err = common.CheckErrAndResp(nil, r, &groupInfoList, nil)
 	if err != nil {
 		log.Error("", "CheckErrAndResp failed ", err.Error(), string(r))
 		return 0

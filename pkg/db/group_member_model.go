@@ -214,7 +214,7 @@ func (d *DataBase) UpdateGroupMemberField(groupID, userID string, args map[strin
 
 func (d *DataBase) GetGroupMemberInfoIfOwnerOrAdmin() ([]*model_struct.LocalGroupMember, error) {
 	var ownerAndAdminList []*model_struct.LocalGroupMember
-	groupList, err := d.GetJoinedGroupList()
+	groupList, err := d.GetJoinedGroupListDB()
 	if err != nil {
 		return nil, utils.Wrap(err, "")
 	}
@@ -228,7 +228,7 @@ func (d *DataBase) GetGroupMemberInfoIfOwnerOrAdmin() ([]*model_struct.LocalGrou
 	return ownerAndAdminList, nil
 }
 
-func (d *DataBase) SearchGroupMembers(keyword string, groupID string, isSearchMemberNickname, isSearchUserID bool, offset, count int) (result []*model_struct.LocalGroupMember, err error) {
+func (d *DataBase) SearchGroupMembersDB(keyword string, groupID string, isSearchMemberNickname, isSearchUserID bool, offset, count int) (result []*model_struct.LocalGroupMember, err error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	if !isSearchMemberNickname && !isSearchUserID {

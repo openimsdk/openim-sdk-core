@@ -3,13 +3,14 @@ package sdk_params_callback
 import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/sdk_struct"
 )
 
-//type GetAllConversationListParam null
+// type GetAllConversationListParam null
 type GetAllConversationListCallback []*model_struct.LocalConversation
 
-//type GetAllConversationListParam offset count
+// type GetAllConversationListParam offset count
 type GetConversationListSplitCallback []*model_struct.LocalConversation
 
 type SetConversationRecvMessageOptParams []string
@@ -29,10 +30,12 @@ const SetConversationDraftCallback = constant.SuccessCallbackDefault
 const ResetConversationGroupAtTypeCallback = constant.SuccessCallbackDefault
 
 const PinConversationDraftCallback = constant.SuccessCallbackDefault
-
+const HideConversationCallback = constant.SuccessCallbackDefault
 const SetConversationMessageOptCallback = constant.SuccessCallbackDefault
 
 const SetConversationPrivateChatOptCallback = constant.SuccessCallbackDefault
+
+const SetConversationBurnDurationOptCallback = constant.SuccessCallbackDefault
 
 type FindMessageListParams []*ConversationArgs
 type ConversationArgs struct {
@@ -113,4 +116,44 @@ type SearchByConversationResult struct {
 	FaceURL          string                  `json:"faceURL"`
 	MessageCount     int                     `json:"messageCount"`
 	MessageList      []*sdk_struct.MsgStruct `json:"messageList"`
+}
+type SetMessageReactionExtensionsParams []*server_api_params.KeyValue
+
+type SetMessageReactionExtensionsCallback struct {
+	Key     string `json:"key" validate:"required"`
+	Value   string `json:"value" validate:"required"`
+	ErrCode int32  `json:"errCode"`
+	ErrMsg  string `json:"errMsg"`
+}
+
+type AddMessageReactionExtensionsParams []*server_api_params.KeyValue
+
+type AddMessageReactionExtensionsCallback struct {
+	Key     string `json:"key" validate:"required"`
+	Value   string `json:"value" validate:"required"`
+	ErrCode int32  `json:"errCode"`
+	ErrMsg  string `json:"errMsg"`
+}
+type DeleteMessageReactionExtensionsParams []string
+
+type GetTypekeyListResp struct {
+	TypeKeyInfoList []*SingleTypeKeyInfoSum `json:"TypeKeyListInfo"`
+}
+type SingleTypeKeyInfoSum struct {
+	TypeKey       string  `json:"typeKey"`
+	Counter       int64   `json:"counter"`
+	InfoList      []*Info `json:"infoList"`
+	IsContainSelf bool    `json:"isContainSelf"`
+}
+
+type SingleTypeKeyInfo struct {
+	TypeKey     string           `json:"typeKey"`
+	Counter     int64            `json:"counter"`
+	IsCanRepeat bool             `json:"isCanRepeat"`
+	Index       int              `json:"index"`
+	InfoList    map[string]*Info `json:"infoList"`
+}
+type Info struct {
+	UserID string `json:"userID"`
+	Ex     string `json:"ex"`
 }

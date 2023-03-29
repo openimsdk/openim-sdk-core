@@ -117,6 +117,11 @@ func (d *DataBase) SearchMessageByContentType(contentType []int, sourceID string
 	return result, err
 }
 
+func (d *DataBase) SearchAllMessageByContentType(contentType int) (result []*model_struct.LocalChatLog, err error) {
+	err = d.conn.Model(&model_struct.LocalChatLog{}).Where("content_type = ?", contentType).Find(&result).Error
+	return result, err
+}
+
 func (d *DataBase) SearchMessageByContentTypeController(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
 	switch sessionType {
 	case constant.SuperGroupChatType:
@@ -413,6 +418,20 @@ func (d *DataBase) GetMessageList(sourceID string, sessionType, count int, start
 	}
 	return result, err
 }
+
+func (d *DataBase) GetAllMessageForTest() (result []*model_struct.LocalChatLog, err error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	var messageList []model_struct.LocalChatLog
+
+	err = utils.Wrap(d.conn.Find(&messageList).Error, "GetMessageList failed")
+	for _, v := range messageList {
+		v1 := v
+		result = append(result, &v1)
+	}
+	return result, err
+}
+
 func (d *DataBase) GetMessageListController(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	switch sessionType {
 	case constant.SuperGroupChatType:
@@ -586,6 +605,14 @@ func (d *DataBase) UpdateMsgSenderFaceURL(sendID, faceURL string, sType int) err
 	return utils.Wrap(d.conn.Model(model_struct.LocalChatLog{}).Where(
 		"send_id = ? and session_type = ? and sender_face_url != ? ", sendID, sType, faceURL).Updates(
 		map[string]interface{}{"sender_face_url": faceURL}).Error, utils.GetSelfFuncName()+" failed")
+}
+func (d *DataBase) UpdateMsgSenderFaceURLAndSenderNicknameController(sendID, faceURL, nickname string, sessionType int, groupID string) error {
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return d.SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname, sessionType, groupID)
+	default:
+		return d.UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname, sessionType)
+	}
 }
 func (d *DataBase) UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname string, sessionType int) error {
 	d.mRWMutex.Lock()

@@ -1,7 +1,10 @@
 package conversation_msg
 
 import (
+	"encoding/json"
 	"errors"
+	"github.com/golang/protobuf/proto"
+	"github.com/jinzhu/copier"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -13,21 +16,22 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sort"
+	"strings"
 	"time"
-
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
-	"github.com/jinzhu/copier"
 )
 
 func (c *Conversation) getAllConversationList(callback open_im_sdk_callback.Base, operationID string) sdk.GetAllConversationListCallback {
-	conversationList, err := c.db.GetAllConversationList()
+	conversationList, err := c.db.GetAllConversationListDB()
 	common.CheckDBErrCallback(callback, err, operationID)
 	return conversationList
 }
+func (c *Conversation) hideConversation(callback open_im_sdk_callback.Base, conversationID string, operationID string) {
+	err := c.db.UpdateColumnsConversation(conversationID, map[string]interface{}{"latest_msg_send_time": 0})
+	common.CheckDBErrCallback(callback, err, operationID)
+}
 
 func (c *Conversation) getConversationListSplit(callback open_im_sdk_callback.Base, offset, count int, operationID string) sdk.GetConversationListSplitCallback {
-	conversationList, err := c.db.GetConversationListSplit(offset, count)
+	conversationList, err := c.db.GetConversationListSplitDB(offset, count)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return conversationList
 }
@@ -123,6 +127,16 @@ func (c *Conversation) setOneConversationPrivateChat(callback open_im_sdk_callba
 	c.SyncConversations(operationID, 0)
 }
 
+func (c *Conversation) setOneConversationBurnDuration(callback open_im_sdk_callback.Base, conversationID string, burnDuration int32, operationID string) {
+	apiReq := &server_api_params.ModifyConversationFieldReq{}
+	localConversation, err := c.db.GetConversation(conversationID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	apiReq.BurnDuration = burnDuration
+	apiReq.FieldType = constant.FieldBurnDuration
+	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
+	c.SyncConversations(operationID, 0)
+}
+
 func (c *Conversation) setOneConversationPinned(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
 	apiReq := &server_api_params.ModifyConversationFieldReq{}
 	localConversation, err := c.db.GetConversation(conversationID)
@@ -132,6 +146,7 @@ func (c *Conversation) setOneConversationPinned(callback open_im_sdk_callback.Ba
 	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
 	c.SyncConversations(operationID, 0)
 }
+
 func (c *Conversation) setOneConversationGroupAtType(callback open_im_sdk_callback.Base, conversationID, operationID string) {
 	lc, err := c.db.GetConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -190,13 +205,17 @@ func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, so
 			newConversation.ShowName = g.GroupName
 			newConversation.FaceURL = g.FaceURL
 		}
+		lc, errTemp := c.db.GetConversation(conversationID)
+		if errTemp == nil {
+			return lc
+		}
 		err := c.db.InsertConversation(&newConversation)
 		common.CheckDBErrCallback(callback, err, operationID)
 		return &newConversation
 	}
 }
 func (c *Conversation) getMultipleConversation(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) sdk.GetMultipleConversationCallback {
-	conversationList, err := c.db.GetMultipleConversation(conversationIDList)
+	conversationList, err := c.db.GetMultipleConversationDB(conversationIDList)
 	common.CheckDBErrCallback(callback, err, operationID)
 	return conversationList
 }
@@ -307,6 +326,7 @@ func (c *Conversation) SyncConversations(operationID string, timeout time.Durati
 		newConversation.RecvMsgOpt = conversation.RecvMsgOpt
 		newConversation.IsPinned = conversation.IsPinned
 		newConversation.IsPrivateChat = conversation.IsPrivateChat
+		newConversation.BurnDuration = conversation.BurnDuration
 		newConversation.GroupAtType = conversation.GroupAtType
 		newConversation.IsNotInGroup = conversation.IsNotInGroup
 		newConversation.Ex = conversation.Ex
@@ -386,6 +406,53 @@ func (c *Conversation) SyncConversationUnreadCount(operationID string) {
 	}
 
 }
+func (c *Conversation) FixVersionData() {
+	switch constant.SdkVersion + constant.BigVersion + constant.UpdateVersion {
+	case "v2.0.0":
+		t := time.Now()
+		groupIDList, err := c.db.GetReadDiffusionGroupIDList()
+		if err != nil {
+			log.Error("", "GetReadDiffusionGroupIDList failed ", err.Error())
+			return
+		}
+		log.Info("", "fix version data start", groupIDList)
+		for _, v := range groupIDList {
+			err := c.db.SuperGroupUpdateSpecificContentTypeMessage(constant.ReactionMessageModifier, v, map[string]interface{}{"status": constant.MsgStatusFiltered})
+			if err != nil {
+				log.Error("", "SuperGroupUpdateSpecificContentTypeMessage failed ", err.Error())
+				continue
+			}
+			msgList, err := c.db.SuperGroupSearchAllMessageByContentType(v, constant.ReactionMessageModifier)
+			if err != nil {
+				log.NewError("internal", "SuperGroupSearchMessageByContentTypeNotOffset failed", v, err.Error())
+				continue
+			}
+			var reactionMsgIDList []string
+			for _, value := range msgList {
+				var n server_api_params.ReactionMessageModifierNotification
+				err := json.Unmarshal([]byte(value.Content), &n)
+				if err != nil {
+					log.Error("internal", "unmarshal failed err:", err.Error(), *value)
+					continue
+				}
+				reactionMsgIDList = append(reactionMsgIDList, n.ClientMsgID)
+			}
+			if len(reactionMsgIDList) > 0 {
+				err := c.db.SuperGroupUpdateGroupMessageFields(reactionMsgIDList, v, map[string]interface{}{"is_react": true})
+				if err != nil {
+					log.Error("internal", "unmarshal failed err:", err.Error(), reactionMsgIDList, v)
+					continue
+				}
+			}
+
+		}
+		log.Info("", "fix version data end", groupIDList, "cost time:", time.Since(t))
+
+	default:
+
+	}
+
+}
 
 func (c *Conversation) SyncOneConversation(conversationID, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "conversationID: ", conversationID)
@@ -438,7 +505,7 @@ func (c *Conversation) findMessageList(req sdk.FindMessageListParams, operationI
 					log.Error(operationID, "Parsing data error:", err.Error(), temp)
 					continue
 				}
-				switch message.ContentType {
+				switch message.SessionType {
 				case constant.GroupChatType:
 					fallthrough
 				case constant.SuperGroupChatType:
@@ -560,6 +627,8 @@ func (c *Conversation) getHistoryMessageList(callback open_im_sdk_callback.Base,
 		temp.Status = v.Status
 		temp.AttachedInfo = v.AttachedInfo
 		temp.Ex = v.Ex
+		temp.IsReact = v.IsReact
+		temp.IsExternalExtensions = v.IsExternalExtensions
 		err := c.msgHandleByContentType(&temp)
 		if err != nil {
 			log.Error(operationID, "Parsing data error:", err.Error(), temp)
@@ -664,144 +733,376 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 	log.Error(operationID, "db cost time", time.Since(t), len(list), err, sourceID)
 	t = time.Now()
 	common.CheckDBErrCallback(callback, err, operationID)
-	if len(list) < req.Count && sessionType == constant.SuperGroupChatType {
-		var minSeq uint32
-		var maxSeq uint32
-		resp, err := c.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 2, c.loginUserID, operationID)
-		if err != nil {
-			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, 30, c.loginUserID)
-		} else {
-			var wsSeqResp server_api_params.GetMaxAndMinSeqResp
-			err = proto.Unmarshal(resp.Data, &wsSeqResp)
-			if err != nil {
-				log.Error(operationID, "Unmarshal failed", err.Error())
-			} else if wsSeqResp.ErrCode != 0 {
-				log.Error(operationID, "GetMaxAndMinSeqReq failed ", wsSeqResp.ErrCode, wsSeqResp.ErrMsg)
-			} else {
-				if value, ok := wsSeqResp.GroupMaxAndMinSeq[sourceID]; ok {
-					minSeq = value.MinSeq
-					if value.MinSeq == 0 {
-						minSeq = 1
-					}
-					maxSeq = value.MaxSeq
-				}
-			}
+	if isReverse {
+		if len(list) < req.Count {
+			messageListCallback.IsEnd = true
 		}
-		log.Error(operationID, "from server min seq is", minSeq, maxSeq)
-		seq, err := c.db.SuperGroupGetNormalMinSeq(sourceID)
-		if err != nil {
-			log.Error(operationID, "SuperGroupGetNormalMinSeq err:", err.Error())
-		}
-		log.Error(operationID, sourceID+":table min seq is ", seq)
-		if seq != 0 {
-			if seq <= minSeq {
-				messageListCallback.IsEnd = true
-			} else {
-				seqList := func(seq uint32) (seqList []uint32) {
-					startSeq := int64(seq) - constant.PullMsgNumForReadDiffusion
-					if startSeq <= 0 {
-						startSeq = 1
-					}
-					log.Debug(operationID, "pull start is ", startSeq)
-					for i := startSeq; i < int64(seq); i++ {
-						seqList = append(seqList, uint32(i))
-					}
-					log.Debug(operationID, "pull seqList is ", seqList)
-					return seqList
-				}(seq)
-				log.Debug(operationID, "pull seqList is ", seqList, len(seqList))
-				if len(seqList) > 0 {
-					c.pullMessageAndReGetHistoryMessages(sourceID, seqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
-				}
-			}
-		} else {
-			//local don't have messages,本地无消息，但是服务器最大消息不为0
-			if int64(maxSeq)-int64(minSeq) > 0 {
-				messageListCallback.IsEnd = false
-			} else {
-				messageListCallback.IsEnd = true
-			}
-
-		}
-	} else if len(list) == req.Count && sessionType == constant.SuperGroupChatType {
-		maxSeq, minSeq, haveSeqList := func(messages []*model_struct.LocalChatLog) (max, min uint32, seqList []uint32) {
-			for _, message := range messages {
-				if message.Seq != 0 {
-					max = message.Seq
-					min = message.Seq
-					break
-				}
-			}
-			for i := 0; i < len(messages); i++ {
-				if messages[i].Seq != 0 {
-					seqList = append(seqList, messages[i].Seq)
-				}
-				if messages[i].Seq > max {
-					max = messages[i].Seq
-
-				}
-				if messages[i].Seq < min {
-					min = messages[i].Seq
-				}
-			}
-			return max, min, seqList
-		}(list)
-		log.Debug(operationID, "get message from local db max seq:", maxSeq, "minSeq:", minSeq, "haveSeqList:", haveSeqList, "length:", len(haveSeqList))
-		if maxSeq != 0 && minSeq != 0 {
-			successiveSeqList := func(max, min uint32) (seqList []uint32) {
-				for i := min; i <= max; i++ {
-					seqList = append(seqList, i)
-				}
-				return seqList
-			}(maxSeq, minSeq)
-			lostSeqList := utils.DifferenceSubset(successiveSeqList, haveSeqList)
-			lostSeqListLength := len(lostSeqList)
-			log.Debug(operationID, "get lost seqList is :", lostSeqList, "length:", lostSeqListLength)
-			if lostSeqListLength > 0 {
-				var pullSeqList []uint32
-				if lostSeqListLength <= constant.PullMsgNumForReadDiffusion {
-					pullSeqList = lostSeqList
+	} else {
+		switch sessionType {
+		case constant.SuperGroupChatType:
+			if len(list) < req.Count {
+				var minSeq uint32
+				var maxSeq uint32
+				resp, err := c.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 2, c.loginUserID, operationID)
+				if err != nil {
+					log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, 30, c.loginUserID)
 				} else {
-					pullSeqList = lostSeqList[lostSeqListLength-constant.PullMsgNumForReadDiffusion : lostSeqListLength]
-				}
-				c.pullMessageAndReGetHistoryMessages(sourceID, pullSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
-			} else {
-				if req.LastMinSeq != 0 {
-					var thisMaxSeq uint32
-					for i := 0; i < len(list); i++ {
-						if list[i].Seq != 0 && thisMaxSeq == 0 {
-							thisMaxSeq = list[i].Seq
-						}
-						if list[i].Seq > thisMaxSeq {
-							thisMaxSeq = list[i].Seq
+					var wsSeqResp server_api_params.GetMaxAndMinSeqResp
+					err = proto.Unmarshal(resp.Data, &wsSeqResp)
+					if err != nil {
+						log.Error(operationID, "Unmarshal failed", err.Error())
+					} else if wsSeqResp.ErrCode != 0 {
+						log.Error(operationID, "GetMaxAndMinSeqReq failed ", wsSeqResp.ErrCode, wsSeqResp.ErrMsg)
+					} else {
+						if value, ok := wsSeqResp.GroupMaxAndMinSeq[sourceID]; ok {
+							minSeq = value.MinSeq
+							if value.MinSeq == 0 {
+								minSeq = 1
+							}
+							maxSeq = value.MaxSeq
 						}
 					}
-					log.Debug(operationID, "get lost LastMinSeq is :", req.LastMinSeq, "thisMaxSeq is :", thisMaxSeq)
-					if thisMaxSeq != 0 {
-						if thisMaxSeq+1 != req.LastMinSeq {
-							startSeq := int64(req.LastMinSeq) - constant.PullMsgNumForReadDiffusion
-							if startSeq <= int64(thisMaxSeq) {
-								startSeq = int64(thisMaxSeq) + 1
+				}
+				log.Error(operationID, "from server min seq is", minSeq, maxSeq)
+				seq, err := c.db.SuperGroupGetNormalMinSeq(sourceID)
+				if err != nil {
+					log.Error(operationID, "SuperGroupGetNormalMinSeq err:", err.Error())
+				}
+				log.Error(operationID, sourceID+":table min seq is ", seq)
+				if seq != 0 {
+					if seq <= minSeq {
+						messageListCallback.IsEnd = true
+					} else {
+						seqList := func(seq uint32) (seqList []uint32) {
+							startSeq := int64(seq) - constant.PullMsgNumForReadDiffusion
+							if startSeq <= 0 {
+								startSeq = 1
 							}
-							successiveSeqList := func(max, min uint32) (seqList []uint32) {
-								for i := min; i <= max; i++ {
-									seqList = append(seqList, i)
-								}
-								return seqList
-							}(req.LastMinSeq-1, uint32(startSeq))
-							log.Debug(operationID, "get lost successiveSeqList is :", successiveSeqList, len(successiveSeqList))
-							if len(successiveSeqList) > 0 {
-								c.pullMessageAndReGetHistoryMessages(sourceID, successiveSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+							log.Debug(operationID, "pull start is ", startSeq)
+							if startSeq < int64(minSeq) {
+								startSeq = int64(minSeq)
 							}
+							for i := startSeq; i < int64(seq); i++ {
+								seqList = append(seqList, uint32(i))
+							}
+							log.Debug(operationID, "pull seqList is ", seqList)
+							return seqList
+						}(seq)
+						log.Debug(operationID, "pull seqList is ", seqList, len(seqList))
+						if len(seqList) > 0 {
+							c.pullMessageAndReGetHistoryMessages(sourceID, seqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
 						}
+					}
+				} else {
+					//local don't have messages,本地无消息，但是服务器最大消息不为0
+					if int64(maxSeq)-int64(minSeq) > 0 {
+						messageListCallback.IsEnd = false
+					} else {
+						messageListCallback.IsEnd = true
+					}
 
+				}
+			} else if len(list) == req.Count {
+				maxSeq, minSeq, haveSeqList := func(messages []*model_struct.LocalChatLog) (max, min uint32, seqList []uint32) {
+					for _, message := range messages {
+						if message.Seq != 0 {
+							max = message.Seq
+							min = message.Seq
+							break
+						}
+					}
+					for i := 0; i < len(messages); i++ {
+						if messages[i].Seq != 0 {
+							seqList = append(seqList, messages[i].Seq)
+						}
+						if messages[i].Seq > max {
+							max = messages[i].Seq
+
+						}
+						if messages[i].Seq < min {
+							min = messages[i].Seq
+						}
+					}
+					return max, min, seqList
+				}(list)
+				log.Debug(operationID, "get message from local db max seq:", maxSeq, "minSeq:", minSeq, "haveSeqList:", haveSeqList, "length:", len(haveSeqList))
+				if maxSeq != 0 && minSeq != 0 {
+					successiveSeqList := func(max, min uint32) (seqList []uint32) {
+						for i := min; i <= max; i++ {
+							seqList = append(seqList, i)
+						}
+						return seqList
+					}(maxSeq, minSeq)
+					lostSeqList := utils.DifferenceSubset(successiveSeqList, haveSeqList)
+					lostSeqListLength := len(lostSeqList)
+					log.Debug(operationID, "get lost seqList is :", lostSeqList, "length:", lostSeqListLength)
+					if lostSeqListLength > 0 {
+						var pullSeqList []uint32
+						if lostSeqListLength <= constant.PullMsgNumForReadDiffusion {
+							pullSeqList = lostSeqList
+						} else {
+							pullSeqList = lostSeqList[lostSeqListLength-constant.PullMsgNumForReadDiffusion : lostSeqListLength]
+						}
+						c.pullMessageAndReGetHistoryMessages(sourceID, pullSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+					} else {
+						if req.LastMinSeq != 0 {
+							var thisMaxSeq uint32
+							for i := 0; i < len(list); i++ {
+								if list[i].Seq != 0 && thisMaxSeq == 0 {
+									thisMaxSeq = list[i].Seq
+								}
+								if list[i].Seq > thisMaxSeq {
+									thisMaxSeq = list[i].Seq
+								}
+							}
+							log.Debug(operationID, "get lost LastMinSeq is :", req.LastMinSeq, "thisMaxSeq is :", thisMaxSeq)
+							if thisMaxSeq != 0 {
+								if thisMaxSeq+1 != req.LastMinSeq {
+									startSeq := int64(req.LastMinSeq) - constant.PullMsgNumForReadDiffusion
+									if startSeq <= int64(thisMaxSeq) {
+										startSeq = int64(thisMaxSeq) + 1
+									}
+									successiveSeqList := func(max, min uint32) (seqList []uint32) {
+										for i := min; i <= max; i++ {
+											seqList = append(seqList, i)
+										}
+										return seqList
+									}(req.LastMinSeq-1, uint32(startSeq))
+									log.Debug(operationID, "get lost successiveSeqList is :", successiveSeqList, len(successiveSeqList))
+									if len(successiveSeqList) > 0 {
+										c.pullMessageAndReGetHistoryMessages(sourceID, successiveSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+									}
+								}
+
+							}
+
+						}
 					}
 
 				}
 			}
+		default:
+			if len(list) < req.Count {
+				messageListCallback.IsEnd = true
+			}
+		}
 
+	}
+
+	log.Debug(operationID, "pull cost time", time.Since(t))
+	t = time.Now()
+	var thisMinSeq uint32
+	for _, v := range list {
+		if v.Seq != 0 && thisMinSeq == 0 {
+			thisMinSeq = v.Seq
+		}
+		if v.Seq < thisMinSeq {
+			thisMinSeq = v.Seq
+		}
+		temp := sdk_struct.MsgStruct{}
+		tt := time.Now()
+		temp.ClientMsgID = v.ClientMsgID
+		temp.ServerMsgID = v.ServerMsgID
+		temp.CreateTime = v.CreateTime
+		temp.SendTime = v.SendTime
+		temp.SessionType = v.SessionType
+		temp.SendID = v.SendID
+		temp.RecvID = v.RecvID
+		temp.MsgFrom = v.MsgFrom
+		temp.ContentType = v.ContentType
+		temp.SenderPlatformID = v.SenderPlatformID
+		temp.SenderNickname = v.SenderNickname
+		temp.SenderFaceURL = v.SenderFaceURL
+		temp.Content = v.Content
+		temp.Seq = v.Seq
+		temp.IsRead = v.IsRead
+		temp.Status = v.Status
+		temp.AttachedInfo = v.AttachedInfo
+		temp.Ex = v.Ex
+		temp.IsReact = v.IsReact
+		temp.IsExternalExtensions = v.IsExternalExtensions
+		err := c.msgHandleByContentType(&temp)
+		if err != nil {
+			log.Error(operationID, "Parsing data error:", err.Error(), temp)
+			continue
+		}
+		log.Debug(operationID, "internal unmarshal cost time", time.Since(tt))
+
+		switch sessionType {
+		case constant.GroupChatType:
+			fallthrough
+		case constant.SuperGroupChatType:
+			temp.GroupID = temp.RecvID
+			temp.RecvID = c.loginUserID
+		}
+		messageList = append(messageList, &temp)
+	}
+	log.Debug(operationID, "unmarshal cost time", time.Since(t))
+	t = time.Now()
+	if !isReverse {
+		sort.Sort(messageList)
+	}
+	log.Debug(operationID, "sort cost time", time.Since(t))
+	messageListCallback.MessageList = messageList
+	messageListCallback.LastMinSeq = thisMinSeq
+	return messageListCallback
+}
+
+func (c *Conversation) getAdvancedHistoryMessageList2(callback open_im_sdk_callback.Base, req sdk.GetAdvancedHistoryMessageListParams, operationID string, isReverse bool) sdk.GetAdvancedHistoryMessageListCallback {
+	t := time.Now()
+	var messageListCallback sdk.GetAdvancedHistoryMessageListCallback
+	var sourceID string
+	var conversationID string
+	var startTime int64
+
+	var sessionType int
+	var list []*model_struct.LocalChatLog
+	var err error
+	var messageList sdk_struct.NewMsgList
+	var msg sdk_struct.MsgStruct
+	var notStartTime bool
+	if req.ConversationID != "" {
+		conversationID = req.ConversationID
+		lc, err := c.db.GetConversation(conversationID)
+		if err != nil {
+			messageListCallback.ErrCode = 100
+			messageListCallback.ErrMsg = "conversation get err"
+			return messageListCallback
+		}
+		switch lc.ConversationType {
+		case constant.SingleChatType, constant.NotificationChatType:
+			sourceID = lc.UserID
+		case constant.GroupChatType, constant.SuperGroupChatType:
+			sourceID = lc.GroupID
+			msg.GroupID = lc.GroupID
+		}
+		sessionType = int(lc.ConversationType)
+		if req.StartClientMsgID == "" {
+			//startTime = lc.LatestMsgSendTime + TimeOffset
+			////startTime = utils.GetCurrentTimestampByMill()
+			notStartTime = true
+		} else {
+			msg.SessionType = lc.ConversationType
+			msg.ClientMsgID = req.StartClientMsgID
+			m, err := c.db.GetMessageController(&msg)
+			common.CheckDBErrCallback(callback, err, operationID)
+			startTime = m.SendTime
+		}
+	} else {
+		if req.UserID == "" {
+			newConversationID, newSessionType, err := c.getConversationTypeByGroupID(req.GroupID)
+			common.CheckDBErrCallback(callback, err, operationID)
+			sourceID = req.GroupID
+			sessionType = int(newSessionType)
+			conversationID = newConversationID
+			msg.GroupID = req.GroupID
+			msg.SessionType = newSessionType
+		} else {
+			sourceID = req.UserID
+			conversationID = utils.GetConversationIDBySessionType(sourceID, constant.SingleChatType)
+			sessionType = constant.SingleChatType
+		}
+		if req.StartClientMsgID == "" {
+			//lc, err := c.db.GetConversation(conversationID)
+			//if err != nil {
+			//	return nil
+			//}
+			//startTime = lc.LatestMsgSendTime + TimeOffset
+			//startTime = utils.GetCurrentTimestampByMill()
+			notStartTime = true
+		} else {
+			msg.ClientMsgID = req.StartClientMsgID
+			m, err := c.db.GetMessageController(&msg)
+			common.CheckDBErrCallback(callback, err, operationID)
+			startTime = m.SendTime
 		}
 	}
+	log.Debug(operationID, "Assembly parameters cost time", time.Since(t))
+	t = time.Now()
+	log.Info(operationID, "sourceID:", sourceID, "startTime:", startTime, "count:", req.Count, "not start_time", notStartTime)
+	if notStartTime {
+		list, err = c.db.GetMessageListNoTimeController(sourceID, sessionType, req.Count, isReverse)
+	} else {
+		list, err = c.db.GetMessageListController(sourceID, sessionType, req.Count, startTime, isReverse)
+	}
+	log.Error(operationID, "db cost time", time.Since(t), len(list), err, sourceID)
+	t = time.Now()
+	common.CheckDBErrCallback(callback, err, operationID)
+	if sessionType == constant.SuperGroupChatType {
+		rawMessageLength := len(list)
+		if rawMessageLength < req.Count {
+			maxSeq, minSeq, lostSeqListLength := c.messageBlocksInternalContinuityCheck(sourceID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+			_ = c.messageBlocksBetweenContinuityCheck(req.LastMinSeq, maxSeq, sourceID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+			if minSeq == 1 && lostSeqListLength == 0 {
+				messageListCallback.IsEnd = true
+			} else {
+				c.messageBlocksEndContinuityCheck(minSeq, sourceID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+			}
+		} else {
+			maxSeq, _, _ := c.messageBlocksInternalContinuityCheck(sourceID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+			c.messageBlocksBetweenContinuityCheck(req.LastMinSeq, maxSeq, sourceID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+
+		}
+
+	}
+	//if len(list) < req.Count && sessionType == constant.SuperGroupChatType {
+	//
+	//} else if len(list) == req.Count && sessionType == constant.SuperGroupChatType {
+	//	if maxSeq != 0 && minSeq != 0 {
+	//		successiveSeqList := func(max, min uint32) (seqList []uint32) {
+	//			for i := min; i <= max; i++ {
+	//				seqList = append(seqList, i)
+	//			}
+	//			return seqList
+	//		}(maxSeq, minSeq)
+	//		lostSeqList := utils.DifferenceSubset(successiveSeqList, haveSeqList)
+	//		lostSeqListLength := len(lostSeqList)
+	//		log.Debug(operationID, "get lost seqList is :", lostSeqList, "length:", lostSeqListLength)
+	//		if lostSeqListLength > 0 {
+	//			var pullSeqList []uint32
+	//			if lostSeqListLength <= constant.PullMsgNumForReadDiffusion {
+	//				pullSeqList = lostSeqList
+	//			} else {
+	//				pullSeqList = lostSeqList[lostSeqListLength-constant.PullMsgNumForReadDiffusion : lostSeqListLength]
+	//			}
+	//			c.pullMessageAndReGetHistoryMessages(sourceID, pullSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+	//		} else {
+	//			if req.LastMinSeq != 0 {
+	//				var thisMaxSeq uint32
+	//				for i := 0; i < len(list); i++ {
+	//					if list[i].Seq != 0 && thisMaxSeq == 0 {
+	//						thisMaxSeq = list[i].Seq
+	//					}
+	//					if list[i].Seq > thisMaxSeq {
+	//						thisMaxSeq = list[i].Seq
+	//					}
+	//				}
+	//				log.Debug(operationID, "get lost LastMinSeq is :", req.LastMinSeq, "thisMaxSeq is :", thisMaxSeq)
+	//				if thisMaxSeq != 0 {
+	//					if thisMaxSeq+1 != req.LastMinSeq {
+	//						startSeq := int64(req.LastMinSeq) - constant.PullMsgNumForReadDiffusion
+	//						if startSeq <= int64(thisMaxSeq) {
+	//							startSeq = int64(thisMaxSeq) + 1
+	//						}
+	//						successiveSeqList := func(max, min uint32) (seqList []uint32) {
+	//							for i := min; i <= max; i++ {
+	//								seqList = append(seqList, i)
+	//							}
+	//							return seqList
+	//						}(req.LastMinSeq-1, uint32(startSeq))
+	//						log.Debug(operationID, "get lost successiveSeqList is :", successiveSeqList, len(successiveSeqList))
+	//						if len(successiveSeqList) > 0 {
+	//							c.pullMessageAndReGetHistoryMessages(sourceID, successiveSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+	//						}
+	//					}
+	//
+	//				}
+	//
+	//			}
+	//		}
+	//
+	//	}
+	//}
 	log.Debug(operationID, "pull cost time", time.Since(t))
 	t = time.Now()
 	var thisMinSeq uint32
@@ -855,182 +1156,11 @@ func (c *Conversation) getAdvancedHistoryMessageList(callback open_im_sdk_callba
 	}
 	log.Debug(operationID, "sort cost time", time.Since(t))
 	messageListCallback.MessageList = messageList
+	if thisMinSeq == 0 {
+		thisMinSeq = req.LastMinSeq
+	}
 	messageListCallback.LastMinSeq = thisMinSeq
 	return messageListCallback
-}
-
-//1、保证单次拉取消息量低于sdk单次从服务器拉取量
-//2、块中连续性检测
-//3、块之间连续性检测
-func (c *Conversation) pullMessageAndReGetHistoryMessages(sourceID string, seqList []uint32, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback, operationID string) {
-	var pullMsgReq server_api_params.PullMessageBySeqListReq
-	pullMsgReq.UserID = c.loginUserID
-	pullMsgReq.GroupSeqList = make(map[string]*server_api_params.SeqList, 0)
-	pullMsgReq.GroupSeqList[sourceID] = &server_api_params.SeqList{SeqList: seqList}
-
-	pullMsgReq.OperationID = operationID
-	log.Debug(operationID, "read diffusion group pull message, req: ", pullMsgReq)
-	resp, err := c.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 1, 2, c.loginUserID, operationID)
-	if err != nil {
-		messageListCallback.ErrCode = 100
-		messageListCallback.ErrMsg = err.Error()
-		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 30, 3, c.loginUserID)
-	} else {
-		var pullMsgResp server_api_params.PullMessageBySeqListResp
-		err = proto.Unmarshal(resp.Data, &pullMsgResp)
-		if err != nil {
-			messageListCallback.ErrCode = 100
-			messageListCallback.ErrMsg = err.Error()
-			log.Error(operationID, "pullMsgResp Unmarshal failed ", err.Error())
-		} else {
-			log.Debug(operationID, "syncMsgFromServerSplit pull msg ", pullMsgReq.String(), pullMsgResp.String())
-			if v, ok := pullMsgResp.GroupMsgDataList[sourceID]; ok {
-				c.pullMessageIntoTable(v.MsgDataList, operationID)
-			}
-			if notStartTime {
-				*list, err = c.db.GetMessageListNoTimeController(sourceID, sessionType, count, isReverse)
-			} else {
-				*list, err = c.db.GetMessageListController(sourceID, sessionType, count, startTime, isReverse)
-			}
-		}
-
-	}
-}
-func (c *Conversation) pullMessageIntoTable(pullMsgData []*server_api_params.MsgData, operationID string) {
-
-	var insertMsg, specialUpdateMsg []*model_struct.LocalChatLog
-	var exceptionMsg []*model_struct.LocalErrChatLog
-	var msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList sdk_struct.NewMsgList
-
-	log.Info(operationID, "do Msg come here, len: ", len(pullMsgData))
-	b := utils.GetCurrentTimestampByMill()
-
-	for _, v := range pullMsgData {
-		log.Info(operationID, "do Msg come here, msg detail ", v.RecvID, v.SendID, v.ClientMsgID, v.ServerMsgID, v.Seq, c.loginUserID)
-		msg := new(sdk_struct.MsgStruct)
-		copier.Copy(msg, v)
-		var tips server_api_params.TipsComm
-		if v.ContentType >= constant.NotificationBegin && v.ContentType <= constant.NotificationEnd {
-			_ = proto.Unmarshal(v.Content, &tips)
-			marshaler := jsonpb.Marshaler{
-				OrigName:     true,
-				EnumsAsInts:  false,
-				EmitDefaults: false,
-			}
-			msg.Content, _ = marshaler.MarshalToString(&tips)
-		} else {
-			msg.Content = string(v.Content)
-		}
-		//When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
-		if msg.Status == constant.MsgStatusHasDeleted {
-			insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
-			continue
-		}
-		msg.Status = constant.MsgStatusSendSuccess
-		msg.IsRead = false
-		//		log.Info(operationID, "new msg, seq, ServerMsgID, ClientMsgID", msg.Seq, msg.ServerMsgID, msg.ClientMsgID)
-		//De-analyze data
-		if msg.ClientMsgID == "" {
-			exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
-			continue
-		}
-		if v.SendID == c.loginUserID { //seq
-			// Messages sent by myself  //if  sent through  this terminal
-			m, err := c.db.GetMessageController(msg)
-			if err == nil {
-				log.Info(operationID, "have message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
-				if m.Seq == 0 {
-					specialUpdateMsg = append(specialUpdateMsg, c.msgStructToLocalChatLog(msg))
-
-				} else {
-					exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
-				}
-			} else { //      send through  other terminal
-				log.Info(operationID, "sync message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
-				insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
-				switch msg.ContentType {
-				case constant.Revoke:
-					msgRevokeList = append(msgRevokeList, msg)
-				case constant.HasReadReceipt:
-					msgReadList = append(msgReadList, msg)
-				case constant.GroupHasReadReceipt:
-					groupMsgReadList = append(groupMsgReadList, msg)
-				case constant.AdvancedRevoke:
-					newMsgRevokeList = append(newMsgRevokeList, msg)
-				default:
-				}
-			}
-		} else { //Sent by others
-			if oldMessage, err := c.db.GetMessageController(msg); err != nil { //Deduplication operation
-				log.Warn("test", "trigger msg is ", msg.SenderNickname, msg.SenderFaceURL)
-				insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
-				switch msg.ContentType {
-				case constant.Revoke:
-					msgRevokeList = append(msgRevokeList, msg)
-				case constant.HasReadReceipt:
-					msgReadList = append(msgReadList, msg)
-				case constant.GroupHasReadReceipt:
-					groupMsgReadList = append(groupMsgReadList, msg)
-				case constant.AdvancedRevoke:
-					newMsgRevokeList = append(newMsgRevokeList, msg)
-
-				default:
-				}
-
-			} else {
-				if oldMessage.Seq == 0 {
-					specialUpdateMsg = append(specialUpdateMsg, c.msgStructToLocalChatLog(msg))
-				} else {
-					exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
-					log.Warn(operationID, "Deduplication operation ", *c.msgStructToLocalErrChatLog(msg))
-				}
-			}
-		}
-	}
-
-	//update message
-	err6 := c.db.BatchSpecialUpdateMessageList(specialUpdateMsg)
-	if err6 != nil {
-		log.Error(operationID, "sync seq normal message err  :", err6.Error())
-	}
-	b3 := utils.GetCurrentTimestampByMill()
-	//Normal message storage
-	err1 := c.db.BatchInsertMessageListController(insertMsg)
-	if err1 != nil {
-		log.Error(operationID, "insert GetMessage detail err:", err1.Error(), len(insertMsg))
-		for _, v := range insertMsg {
-			e := c.db.InsertMessageController(v)
-			if e != nil {
-				errChatLog := &model_struct.LocalErrChatLog{}
-				copier.Copy(errChatLog, v)
-				exceptionMsg = append(exceptionMsg, errChatLog)
-				log.Warn(operationID, "InsertMessage operation ", "chat err log: ", errChatLog, "chat log: ", v, e.Error())
-			}
-		}
-	}
-	b4 := utils.GetCurrentTimestampByMill()
-	log.Debug(operationID, "BatchInsertMessageListController, cost time : ", b4-b3)
-
-	//Exception message storage
-	for _, v := range exceptionMsg {
-		log.Warn(operationID, "exceptionMsg show: ", *v)
-	}
-
-	err2 := c.db.BatchInsertExceptionMsgController(exceptionMsg)
-	if err2 != nil {
-		log.Error(operationID, "BatchInsertExceptionMsgController err message err  :", err2.Error())
-
-	}
-	b8 := utils.GetCurrentTimestampByMill()
-	c.DoGroupMsgReadState(groupMsgReadList)
-	b9 := utils.GetCurrentTimestampByMill()
-	log.Debug(operationID, "DoGroupMsgReadState  cost time : ", b9-b8, "len: ", len(groupMsgReadList))
-
-	c.revokeMessage(msgRevokeList)
-	c.newRevokeMessage(newMsgRevokeList)
-	b10 := utils.GetCurrentTimestampByMill()
-	log.Debug(operationID, "revokeMessage  cost time : ", b10-b9)
-	log.Info(operationID, "insert msg, total cost time: ", utils.GetCurrentTimestampByMill()-b, "len:  ", len(pullMsgData))
 }
 
 func (c *Conversation) revokeOneMessage(callback open_im_sdk_callback.Base, req sdk.RevokeMessageParams, operationID string) {
@@ -1108,6 +1238,7 @@ func (c *Conversation) newRevokeOneMessage(callback open_im_sdk_callback.Base, r
 	revokeMessage.SourceMessageSendID = message.SendID
 	revokeMessage.SourceMessageSenderNickname = message.SenderNickname
 	revokeMessage.Seq = message.Seq
+	revokeMessage.Ex = message.Ex
 	//Send message internally
 	switch message.SessionType {
 	case constant.SingleChatType:
@@ -1172,12 +1303,15 @@ func (c *Conversation) newRevokeOneMessage(callback open_im_sdk_callback.Base, r
 	}
 	err = c.db.UpdateColumnsMessageController(message.ClientMsgID, groupID, message.SessionType, map[string]interface{}{"status": constant.MsgStatusRevoked})
 	if err != nil {
-		log.Error(operationID, "update revoke message err", localMessage, message)
+		log.Error(operationID, "update revoke message err", localMessage, message, err.Error())
 	}
 	s.SendTime = resp.SendTime
 	lc.LatestMsg = utils.StructToJsonString(s)
 	lc.LatestMsgSendTime = s.SendTime
 	lc.ConversationID = conversationID
+	s.GroupID = groupID
+	s.RecvID = recvID
+	c.newRevokeMessage([]*sdk_struct.MsgStruct{&s})
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.GetCh())
 }
 
@@ -1308,45 +1442,45 @@ func (c *Conversation) markGroupMessageAsRead(callback open_im_sdk_callback.Base
 	}
 }
 
-//func (c *Conversation) markMessageAsReadByConID(callback open_im_sdk_callback.Base, msgIDList sdk.MarkMessageAsReadByConIDParams, conversationID, operationID string) {
-//	var localMessage db.LocalChatLog
-//	var newMessageIDList []string
-//	messages, err := c.db.GetMultipleMessage(msgIDList)
-//	common.CheckDBErrCallback(callback, err, operationID)
-//	for _, v := range messages {
-//		if v.IsRead == false && v.ContentType < constant.NotificationBegin && v.SendID != c.loginUserID {
-//			newMessageIDList = append(newMessageIDList, v.ClientMsgID)
+//	func (c *Conversation) markMessageAsReadByConID(callback open_im_sdk_callback.Base, msgIDList sdk.MarkMessageAsReadByConIDParams, conversationID, operationID string) {
+//		var localMessage db.LocalChatLog
+//		var newMessageIDList []string
+//		messages, err := c.db.GetMultipleMessage(msgIDList)
+//		common.CheckDBErrCallback(callback, err, operationID)
+//		for _, v := range messages {
+//			if v.IsRead == false && v.ContentType < constant.NotificationBegin && v.SendID != c.loginUserID {
+//				newMessageIDList = append(newMessageIDList, v.ClientMsgID)
+//			}
 //		}
+//		if len(newMessageIDList) == 0 {
+//			common.CheckAnyErrCallback(callback, 201, errors.New("message has been marked read or sender is yourself"), operationID)
+//		}
+//		conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
+//		s := sdk_struct.MsgStruct{}
+//		c.initBasicInfo(&s, constant.UserMsgType, constant.HasReadReceipt, operationID)
+//		s.Content = utils.StructToJsonString(newMessageIDList)
+//		options := make(map[string]bool, 5)
+//		utils.SetSwitchFromOptions(options, constant.IsConversationUpdate, false)
+//		utils.SetSwitchFromOptions(options, constant.IsSenderConversationUpdate, false)
+//		utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
+//		utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
+//		//If there is an error, the coroutine ends, so judgment is not  required
+//		resp, _ := c.InternalSendMessage(callback, &s, userID, "", operationID, &server_api_params.OfflinePushInfo{}, false, options)
+//		s.ServerMsgID = resp.ServerMsgID
+//		s.SendTime = resp.SendTime
+//		s.Status = constant.MsgStatusFiltered
+//		msgStructToLocalChatLog(&localMessage, &s)
+//		err = c.db.InsertMessage(&localMessage)
+//		if err != nil {
+//			log.Error(operationID, "inset into chat log err", localMessage, s, err.Error())
+//		}
+//		err2 := c.db.UpdateMessageHasRead(userID, newMessageIDList, constant.SingleChatType)
+//		if err2 != nil {
+//			log.Error(operationID, "update message has read error", newMessageIDList, userID, err2.Error())
+//		}
+//		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.ch)
+//		//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 //	}
-//	if len(newMessageIDList) == 0 {
-//		common.CheckAnyErrCallback(callback, 201, errors.New("message has been marked read or sender is yourself"), operationID)
-//	}
-//	conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
-//	s := sdk_struct.MsgStruct{}
-//	c.initBasicInfo(&s, constant.UserMsgType, constant.HasReadReceipt, operationID)
-//	s.Content = utils.StructToJsonString(newMessageIDList)
-//	options := make(map[string]bool, 5)
-//	utils.SetSwitchFromOptions(options, constant.IsConversationUpdate, false)
-//	utils.SetSwitchFromOptions(options, constant.IsSenderConversationUpdate, false)
-//	utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
-//	utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
-//	//If there is an error, the coroutine ends, so judgment is not  required
-//	resp, _ := c.InternalSendMessage(callback, &s, userID, "", operationID, &server_api_params.OfflinePushInfo{}, false, options)
-//	s.ServerMsgID = resp.ServerMsgID
-//	s.SendTime = resp.SendTime
-//	s.Status = constant.MsgStatusFiltered
-//	msgStructToLocalChatLog(&localMessage, &s)
-//	err = c.db.InsertMessage(&localMessage)
-//	if err != nil {
-//		log.Error(operationID, "inset into chat log err", localMessage, s, err.Error())
-//	}
-//	err2 := c.db.UpdateMessageHasRead(userID, newMessageIDList, constant.SingleChatType)
-//	if err2 != nil {
-//		log.Error(operationID, "update message has read error", newMessageIDList, userID, err2.Error())
-//	}
-//	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.ch)
-//	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
-//}
 func (c *Conversation) insertMessageToLocalStorage(callback open_im_sdk_callback.Base, s *model_struct.LocalChatLog, operationID string) string {
 	err := c.db.InsertMessageController(s)
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -1566,7 +1700,7 @@ func (c *Conversation) searchLocalMessages(callback open_im_sdk_callback.Base, s
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","3434"))
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","F3434"))
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","SDF3"))
-	log.Debug("get raw data length is", len(list))
+	log.Debug(operationID, "get raw data length is", len(list))
 	for _, v := range list {
 		temp := sdk_struct.MsgStruct{}
 		temp.ClientMsgID = v.ClientMsgID
@@ -1759,9 +1893,9 @@ func (c *Conversation) deleteAllMsgFromLocal(callback open_im_sdk_callback.Base,
 			continue
 		}
 	}
-	err = c.db.CleaAllConversation()
+	err = c.db.ClearAllConversation()
 	common.CheckDBErrCallback(callback, err, operationID)
-	conversationList, err := c.db.GetAllConversationList()
+	conversationList, err := c.db.GetAllConversationListDB()
 	common.CheckDBErrCallback(callback, err, operationID)
 	var cidList []string
 	for _, conversation := range conversationList {
@@ -1783,4 +1917,561 @@ func (c *Conversation) deleteAllMsgFromSvr(callback open_im_sdk_callback.Base, o
 	apiReq.OperationID = operationID
 	apiReq.SeqList = seqList
 	c.p.PostFatalCallback(callback, constant.DeleteMsgRouter, apiReq, nil, apiReq.OperationID)
+}
+func (c *Conversation) setMessageReactionExtensions(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, req sdk.SetMessageReactionExtensionsParams, operationID string) []*server_api_params.ExtensionResult {
+	message, err := c.db.GetMessageController(s)
+	common.CheckDBErrCallback(callback, err, operationID)
+	if message.Status != constant.MsgStatusSendSuccess {
+		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
+	}
+	if message.SessionType != constant.SuperGroupChatType {
+		common.CheckAnyErrCallback(callback, 202, errors.New("currently only support super group message"), operationID)
+
+	}
+	extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
+	temp := make(map[string]*server_api_params.KeyValue)
+	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
+	reqTemp := make(map[string]*server_api_params.KeyValue)
+	for _, v := range req {
+		if value, ok := temp[v.TypeKey]; ok {
+			v.LatestUpdateTime = value.LatestUpdateTime
+		}
+		reqTemp[v.TypeKey] = v
+	}
+	var sourceID string
+	switch message.SessionType {
+	case constant.SingleChatType:
+		if message.SendID == c.loginUserID {
+			sourceID = message.RecvID
+		} else {
+			sourceID = message.SendID
+		}
+	case constant.NotificationChatType:
+		sourceID = message.RecvID
+	case constant.GroupChatType, constant.SuperGroupChatType:
+		sourceID = message.RecvID
+	}
+	var apiReq server_api_params.SetMessageReactionExtensionsReq
+	apiReq.IsReact = message.IsReact
+	apiReq.ClientMsgID = message.ClientMsgID
+	apiReq.SourceID = sourceID
+	apiReq.SessionType = message.SessionType
+	apiReq.IsExternalExtensions = message.IsExternalExtensions
+	apiReq.ReactionExtensionList = reqTemp
+	apiReq.OperationID = operationID
+	apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
+	var apiResp server_api_params.SetMessageReactionExtensionsResp
+	c.p.PostFatalCallback(callback, constant.SetMessageReactionExtensionsRouter, apiReq, &apiResp.ApiResult, apiReq.OperationID)
+	var msg model_struct.LocalChatLogReactionExtensions
+	msg.ClientMsgID = message.ClientMsgID
+	resultKeyMap := make(map[string]*server_api_params.KeyValue)
+	for _, v := range apiResp.ApiResult.Result {
+		if v.ErrCode == 0 {
+			temp := new(server_api_params.KeyValue)
+			temp.TypeKey = v.TypeKey
+			temp.Value = v.Value
+			temp.LatestUpdateTime = v.LatestUpdateTime
+			resultKeyMap[v.TypeKey] = temp
+		}
+	}
+	err = c.db.GetAndUpdateMessageReactionExtension(message.ClientMsgID, resultKeyMap)
+	if err != nil {
+		log.Error(operationID, "GetAndUpdateMessageReactionExtension err:", err.Error())
+	}
+	if !message.IsReact {
+		message.IsReact = apiResp.ApiResult.IsReact
+		message.MsgFirstModifyTime = apiResp.ApiResult.MsgFirstModifyTime
+		err = c.db.UpdateMessageController(message)
+		if err != nil {
+			log.Error(operationID, "UpdateMessageController err:", err.Error(), message)
+
+		}
+	}
+	return apiResp.ApiResult.Result
+}
+func (c *Conversation) addMessageReactionExtensions(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, req sdk.AddMessageReactionExtensionsParams, operationID string) []*server_api_params.ExtensionResult {
+	message, err := c.db.GetMessageController(s)
+	common.CheckDBErrCallback(callback, err, operationID)
+	if message.Status != constant.MsgStatusSendSuccess || message.Seq == 0 {
+		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
+	}
+	//if !message.IsExternalExtensions {
+	//	common.CheckAnyErrCallback(callback, 202, errors.New(" only externalExtensions message can use this interface"), operationID)
+	//
+	//}
+	reqTemp := make(map[string]*server_api_params.KeyValue)
+	extendMsg, err := c.db.GetMessageReactionExtension(message.ClientMsgID)
+	if err == nil && extendMsg != nil {
+		temp := make(map[string]*server_api_params.KeyValue)
+		_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
+		for _, v := range req {
+			if value, ok := temp[v.TypeKey]; ok {
+				v.LatestUpdateTime = value.LatestUpdateTime
+			}
+			reqTemp[v.TypeKey] = v
+		}
+	} else {
+		for _, v := range req {
+			reqTemp[v.TypeKey] = v
+		}
+	}
+	var sourceID string
+	switch message.SessionType {
+	case constant.SingleChatType:
+		if message.SendID == c.loginUserID {
+			sourceID = message.RecvID
+		} else {
+			sourceID = message.SendID
+		}
+	case constant.NotificationChatType:
+		sourceID = message.RecvID
+	case constant.GroupChatType, constant.SuperGroupChatType:
+		sourceID = message.RecvID
+	}
+	var apiReq server_api_params.AddMessageReactionExtensionsReq
+	apiReq.IsReact = message.IsReact
+	apiReq.ClientMsgID = message.ClientMsgID
+	apiReq.SourceID = sourceID
+	apiReq.SessionType = message.SessionType
+	apiReq.IsExternalExtensions = message.IsExternalExtensions
+	apiReq.ReactionExtensionList = reqTemp
+	apiReq.OperationID = operationID
+	apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
+	apiReq.Seq = message.Seq
+	var apiResp server_api_params.AddMessageReactionExtensionsResp
+	c.p.PostFatalCallbackPenetrate(callback, constant.AddMessageReactionExtensionsRouter, apiReq, &apiResp.ApiResult, apiReq.OperationID)
+	log.Debug(operationID, "api return:", message.IsReact, apiResp.ApiResult)
+	if !message.IsReact {
+		message.IsReact = apiResp.ApiResult.IsReact
+		message.MsgFirstModifyTime = apiResp.ApiResult.MsgFirstModifyTime
+		err = c.db.UpdateMessageController(message)
+		if err != nil {
+			log.Error(operationID, "UpdateMessageController err:", err.Error(), message)
+		}
+	}
+	return apiResp.ApiResult.Result
+}
+
+func (c *Conversation) deleteMessageReactionExtensions(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, req sdk.DeleteMessageReactionExtensionsParams, operationID string) []*server_api_params.ExtensionResult {
+	message, err := c.db.GetMessageController(s)
+	common.CheckDBErrCallback(callback, err, operationID)
+	if message.Status != constant.MsgStatusSendSuccess {
+		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
+	}
+	if message.SessionType != constant.SuperGroupChatType {
+		common.CheckAnyErrCallback(callback, 202, errors.New("currently only support super group message"), operationID)
+
+	}
+	extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
+	temp := make(map[string]*server_api_params.KeyValue)
+	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
+	var reqTemp []*server_api_params.KeyValue
+	for _, v := range req {
+		if value, ok := temp[v]; ok {
+			var tt server_api_params.KeyValue
+			tt.LatestUpdateTime = value.LatestUpdateTime
+			tt.TypeKey = v
+			reqTemp = append(reqTemp, &tt)
+		}
+	}
+	var sourceID string
+	switch message.SessionType {
+	case constant.SingleChatType:
+		if message.SendID == c.loginUserID {
+			sourceID = message.RecvID
+		} else {
+			sourceID = message.SendID
+		}
+	case constant.NotificationChatType:
+		sourceID = message.RecvID
+	case constant.GroupChatType, constant.SuperGroupChatType:
+		sourceID = message.RecvID
+	}
+	var apiReq server_api_params.DeleteMessageReactionExtensionsReq
+	apiReq.ClientMsgID = message.ClientMsgID
+	apiReq.SourceID = sourceID
+	apiReq.SessionType = message.SessionType
+	apiReq.ReactionExtensionList = reqTemp
+	apiReq.OperationID = operationID
+	apiReq.IsExternalExtensions = message.IsExternalExtensions
+	apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
+	var apiResp server_api_params.DeleteMessageReactionExtensionsResp
+	c.p.PostFatalCallback(callback, constant.DeleteMessageReactionExtensionsRouter, apiReq, &apiResp.Result, apiReq.OperationID)
+	var msg model_struct.LocalChatLogReactionExtensions
+	msg.ClientMsgID = message.ClientMsgID
+	resultKeyMap := make(map[string]*server_api_params.KeyValue)
+	for _, v := range apiResp.Result {
+		if v.ErrCode == 0 {
+			temp := new(server_api_params.KeyValue)
+			temp.TypeKey = v.TypeKey
+			resultKeyMap[v.TypeKey] = temp
+		}
+	}
+	err = c.db.DeleteAndUpdateMessageReactionExtension(message.ClientMsgID, resultKeyMap)
+	if err != nil {
+		log.Error(operationID, "GetAndUpdateMessageReactionExtension err:", err.Error())
+	}
+	return apiResp.Result
+}
+
+type syncReactionExtensionParams struct {
+	MessageList         []*model_struct.LocalChatLog
+	SessionType         int32
+	SourceID            string
+	IsExternalExtension bool
+	ExtendMessageList   []*model_struct.LocalChatLogReactionExtensions
+	TypeKeyList         []string
+}
+
+func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_callback.Base, messageList []*sdk_struct.MsgStruct, operationID string) server_api_params.GetMessageListReactionExtensionsResp {
+	if len(messageList) == 0 {
+		common.CheckAnyErrCallback(callback, 201, errors.New("message list is null"), operationID)
+	}
+	var msgIDList []string
+	var sourceID string
+	var sessionType int32
+	var isExternalExtension bool
+	for _, msgStruct := range messageList {
+		switch msgStruct.SessionType {
+		case constant.SingleChatType:
+			if msgStruct.SendID == c.loginUserID {
+				sourceID = msgStruct.RecvID
+			} else {
+				sourceID = msgStruct.SendID
+			}
+		case constant.NotificationChatType:
+			sourceID = msgStruct.RecvID
+		case constant.GroupChatType, constant.SuperGroupChatType:
+			sourceID = msgStruct.GroupID
+		}
+		sessionType = msgStruct.SessionType
+		msgIDList = append(msgIDList, msgStruct.ClientMsgID)
+	}
+	isExternalExtension = c.IsExternalExtensions
+	localMessageList, err := c.db.GetMultipleMessageController(msgIDList, sourceID, sessionType)
+	common.CheckDBErrCallback(callback, err, operationID)
+	for _, v := range localMessageList {
+		if v.IsReact != true {
+			common.CheckAnyErrCallback(callback, 208, errors.New("have not reaction message in message list:"+v.ClientMsgID), operationID)
+		}
+	}
+	var result server_api_params.GetMessageListReactionExtensionsResp
+	extendMessage, _ := c.db.GetMultipleMessageReactionExtension(msgIDList)
+	for _, v := range extendMessage {
+		var singleResult server_api_params.SingleMessageExtensionResult
+		temp := make(map[string]*server_api_params.KeyValue)
+		_ = json.Unmarshal(v.LocalReactionExtensions, &temp)
+		singleResult.ClientMsgID = v.ClientMsgID
+		singleResult.ReactionExtensionList = temp
+		result = append(result, &singleResult)
+	}
+	args := syncReactionExtensionParams{}
+	args.MessageList = localMessageList
+	args.SourceID = sourceID
+	args.SessionType = sessionType
+	args.ExtendMessageList = extendMessage
+	args.IsExternalExtension = isExternalExtension
+	_ = common.TriggerCmdSyncReactionExtensions(common.SyncReactionExtensionsNode{
+		OperationID: operationID,
+		Action:      constant.SyncMessageListReactionExtensions,
+		Args:        args,
+	}, c.GetCh())
+	return result
+
+}
+
+func (c *Conversation) getMessageListSomeReactionExtensions(callback open_im_sdk_callback.Base, messageList []*sdk_struct.MsgStruct, keyList []string, operationID string) server_api_params.GetMessageListReactionExtensionsResp {
+	if len(messageList) == 0 {
+		common.CheckAnyErrCallback(callback, 201, errors.New("message list is null"), operationID)
+	}
+	var msgIDList []string
+	var sourceID string
+	var sessionType int32
+	var isExternalExtension bool
+	for _, msgStruct := range messageList {
+		switch msgStruct.SessionType {
+		case constant.SingleChatType:
+			if msgStruct.SendID == c.loginUserID {
+				sourceID = msgStruct.RecvID
+			} else {
+				sourceID = msgStruct.SendID
+			}
+		case constant.NotificationChatType:
+			sourceID = msgStruct.RecvID
+		case constant.GroupChatType, constant.SuperGroupChatType:
+			sourceID = msgStruct.GroupID
+		}
+		sessionType = msgStruct.SessionType
+		isExternalExtension = msgStruct.IsExternalExtensions
+		msgIDList = append(msgIDList, msgStruct.ClientMsgID)
+	}
+	localMessageList, err := c.db.GetMultipleMessageController(msgIDList, sourceID, sessionType)
+	common.CheckDBErrCallback(callback, err, operationID)
+	var result server_api_params.GetMessageListReactionExtensionsResp
+	extendMsgs, _ := c.db.GetMultipleMessageReactionExtension(msgIDList)
+	for _, v := range extendMsgs {
+		var singleResult server_api_params.SingleMessageExtensionResult
+		temp := make(map[string]*server_api_params.KeyValue)
+		_ = json.Unmarshal(v.LocalReactionExtensions, &temp)
+		for s, _ := range temp {
+			if !utils.IsContain(s, keyList) {
+				delete(temp, s)
+			}
+		}
+		singleResult.ClientMsgID = v.ClientMsgID
+		singleResult.ReactionExtensionList = temp
+		result = append(result, &singleResult)
+	}
+	args := syncReactionExtensionParams{}
+	args.MessageList = localMessageList
+	args.SourceID = sourceID
+	args.TypeKeyList = keyList
+	args.SessionType = sessionType
+	args.ExtendMessageList = extendMsgs
+	args.IsExternalExtension = isExternalExtension
+	_ = common.TriggerCmdSyncReactionExtensions(common.SyncReactionExtensionsNode{
+		OperationID: operationID,
+		Action:      constant.SyncMessageListReactionExtensions,
+		Args:        args,
+	}, c.GetCh())
+	return result
+}
+
+func (c *Conversation) setTypeKeyInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, typeKey, ex string, isCanRepeat bool, operationID string) []*server_api_params.ExtensionResult {
+	message, err := c.db.GetMessageController(s)
+	common.CheckDBErrCallback(callback, err, operationID)
+	if message.Status != constant.MsgStatusSendSuccess {
+		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
+	}
+	extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
+	temp := make(map[string]*server_api_params.KeyValue)
+	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
+	var flag bool
+	var isContainSelfK string
+	var dbIsCanRepeat bool
+	var deletedKeyValue server_api_params.KeyValue
+	var maxTypeKey string
+	var maxTypeKeyValue server_api_params.KeyValue
+	reqTemp := make(map[string]*server_api_params.KeyValue)
+	for k, v := range temp {
+		if strings.HasPrefix(k, typeKey) {
+			flag = true
+			singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
+			_ = json.Unmarshal([]byte(v.Value), singleTypeKeyInfo)
+			if _, ok := singleTypeKeyInfo.InfoList[c.loginUserID]; ok {
+				isContainSelfK = k
+				dbIsCanRepeat = singleTypeKeyInfo.IsCanRepeat
+				delete(singleTypeKeyInfo.InfoList, c.loginUserID)
+				singleTypeKeyInfo.Counter--
+				deletedKeyValue.TypeKey = v.TypeKey
+				deletedKeyValue.Value = utils.StructToJsonString(singleTypeKeyInfo)
+				deletedKeyValue.LatestUpdateTime = v.LatestUpdateTime
+			}
+			if k > maxTypeKey {
+				maxTypeKey = k
+				maxTypeKeyValue = *v
+			}
+		}
+	}
+	if !flag {
+		if len(temp) >= 300 {
+			common.CheckAnyErrCallback(callback, 202, errors.New("number of keys only can support 300"), operationID)
+		}
+		singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
+		singleTypeKeyInfo.TypeKey = getIndexTypeKey(typeKey, 0)
+		singleTypeKeyInfo.Counter = 1
+		singleTypeKeyInfo.IsCanRepeat = isCanRepeat
+		singleTypeKeyInfo.Index = 0
+		userInfo := new(sdk.Info)
+		userInfo.UserID = c.loginUserID
+		userInfo.Ex = ex
+		singleTypeKeyInfo.InfoList[c.loginUserID] = userInfo
+		keyValue := new(server_api_params.KeyValue)
+		keyValue.TypeKey = singleTypeKeyInfo.TypeKey
+		keyValue.Value = utils.StructToJsonString(singleTypeKeyInfo)
+		reqTemp[singleTypeKeyInfo.TypeKey] = keyValue
+	} else {
+		if isContainSelfK != "" && !dbIsCanRepeat {
+			//删除操作
+			reqTemp[isContainSelfK] = &deletedKeyValue
+		} else {
+			singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
+			_ = json.Unmarshal([]byte(maxTypeKeyValue.Value), singleTypeKeyInfo)
+			userInfo := new(sdk.Info)
+			userInfo.UserID = c.loginUserID
+			userInfo.Ex = ex
+			singleTypeKeyInfo.Counter++
+			singleTypeKeyInfo.InfoList[c.loginUserID] = userInfo
+			maxTypeKeyValue.Value = utils.StructToJsonString(singleTypeKeyInfo)
+			data, _ := json.Marshal(maxTypeKeyValue)
+			if len(data) > 1000 { //单key超过了1kb
+				if len(temp) >= 300 {
+					common.CheckAnyErrCallback(callback, 202, errors.New("number of keys only can support 300"), operationID)
+				}
+				newSingleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
+				newSingleTypeKeyInfo.TypeKey = getIndexTypeKey(typeKey, singleTypeKeyInfo.Index+1)
+				newSingleTypeKeyInfo.Counter = 1
+				newSingleTypeKeyInfo.IsCanRepeat = singleTypeKeyInfo.IsCanRepeat
+				newSingleTypeKeyInfo.Index = singleTypeKeyInfo.Index + 1
+				userInfo := new(sdk.Info)
+				userInfo.UserID = c.loginUserID
+				userInfo.Ex = ex
+				newSingleTypeKeyInfo.InfoList[c.loginUserID] = userInfo
+				keyValue := new(server_api_params.KeyValue)
+				keyValue.TypeKey = newSingleTypeKeyInfo.TypeKey
+				keyValue.Value = utils.StructToJsonString(newSingleTypeKeyInfo)
+				reqTemp[singleTypeKeyInfo.TypeKey] = keyValue
+			} else {
+				reqTemp[maxTypeKey] = &maxTypeKeyValue
+			}
+
+		}
+	}
+	var sourceID string
+	switch message.SessionType {
+	case constant.SingleChatType:
+		sourceID = message.SendID + message.RecvID
+	case constant.NotificationChatType:
+		sourceID = message.RecvID
+	case constant.GroupChatType, constant.SuperGroupChatType:
+		sourceID = message.RecvID
+	}
+	var apiReq server_api_params.SetMessageReactionExtensionsReq
+	apiReq.IsReact = message.IsReact
+	apiReq.ClientMsgID = message.ClientMsgID
+	apiReq.SourceID = sourceID
+	apiReq.SessionType = message.SessionType
+	apiReq.IsExternalExtensions = message.IsExternalExtensions
+	apiReq.ReactionExtensionList = reqTemp
+	apiReq.OperationID = operationID
+	apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
+	var apiResp server_api_params.SetMessageReactionExtensionsResp
+	c.p.PostFatalCallback(callback, constant.SetMessageReactionExtensionsRouter, apiReq, &apiResp.ApiResult, apiReq.OperationID)
+	var msg model_struct.LocalChatLogReactionExtensions
+	msg.ClientMsgID = message.ClientMsgID
+	resultKeyMap := make(map[string]*server_api_params.KeyValue)
+	for _, v := range apiResp.ApiResult.Result {
+		if v.ErrCode == 0 {
+			temp := new(server_api_params.KeyValue)
+			temp.TypeKey = v.TypeKey
+			temp.Value = v.Value
+			temp.LatestUpdateTime = v.LatestUpdateTime
+			resultKeyMap[v.TypeKey] = temp
+		}
+	}
+	err = c.db.GetAndUpdateMessageReactionExtension(message.ClientMsgID, resultKeyMap)
+	if err != nil {
+		log.Error(operationID, "GetAndUpdateMessageReactionExtension err:", err.Error())
+	}
+	if !message.IsReact {
+		message.IsReact = apiResp.ApiResult.IsReact
+		message.MsgFirstModifyTime = apiResp.ApiResult.MsgFirstModifyTime
+		err = c.db.UpdateMessageController(message)
+		if err != nil {
+			log.Error(operationID, "UpdateMessageController err:", err.Error(), message)
+
+		}
+	}
+	return apiResp.ApiResult.Result
+}
+func getIndexTypeKey(typeKey string, index int) string {
+	return typeKey + "$" + utils.IntToString(index)
+}
+func getPrefixTypeKey(typeKey string) string {
+	list := strings.Split(typeKey, "$")
+	if len(list) > 0 {
+		return list[0]
+	}
+	return ""
+}
+func (c *Conversation) getTypeKeyListInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, keyList []string, operationID string) (result []*sdk.SingleTypeKeyInfoSum) {
+	message, err := c.db.GetMessageController(s)
+	common.CheckDBErrCallback(callback, err, operationID)
+	if message.Status != constant.MsgStatusSendSuccess {
+		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
+	}
+	if !message.IsReact {
+		common.CheckAnyErrCallback(callback, 202, errors.New("can get message reaction ex"), operationID)
+	}
+	extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
+	temp := make(map[string]*server_api_params.KeyValue)
+	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
+	for _, v := range keyList {
+		singleResult := new(sdk.SingleTypeKeyInfoSum)
+		singleResult.TypeKey = v
+		for typeKey, value := range temp {
+			if strings.HasPrefix(typeKey, v) {
+				singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
+				_ = json.Unmarshal([]byte(value.Value), singleTypeKeyInfo)
+				if _, ok := singleTypeKeyInfo.InfoList[c.loginUserID]; ok {
+					singleResult.IsContainSelf = true
+				}
+				for _, info := range singleTypeKeyInfo.InfoList {
+					v := *info
+					singleResult.InfoList = append(singleResult.InfoList, &v)
+				}
+				singleResult.Counter += singleTypeKeyInfo.Counter
+			}
+		}
+		result = append(result, singleResult)
+	}
+	messageList := []*sdk_struct.MsgStruct{s}
+	_ = common.TriggerCmdSyncReactionExtensions(common.SyncReactionExtensionsNode{
+		OperationID: operationID,
+		Action:      constant.SyncMessageListTypeKeyInfo,
+		Args:        messageList,
+	}, c.GetCh())
+
+	return result
+}
+
+func (c *Conversation) getAllTypeKeyInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) (result []*sdk.SingleTypeKeyInfoSum) {
+	message, err := c.db.GetMessageController(s)
+	common.CheckDBErrCallback(callback, err, operationID)
+	if message.Status != constant.MsgStatusSendSuccess {
+		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
+	}
+	if !message.IsReact {
+		common.CheckAnyErrCallback(callback, 202, errors.New("can get message reaction ex"), operationID)
+	}
+	extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
+	temp := make(map[string]*server_api_params.KeyValue)
+	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
+	mapResult := make(map[string]*sdk.SingleTypeKeyInfoSum)
+	for typeKey, value := range temp {
+		singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
+		err := json.Unmarshal([]byte(value.Value), singleTypeKeyInfo)
+		if err != nil {
+			log.Warn(operationID, "not this type ", value.Value)
+			continue
+		}
+		prefixKey := getPrefixTypeKey(typeKey)
+		if v, ok := mapResult[prefixKey]; ok {
+			for _, info := range singleTypeKeyInfo.InfoList {
+				t := *info
+				v.InfoList = append(v.InfoList, &t)
+			}
+			if _, ok := singleTypeKeyInfo.InfoList[c.loginUserID]; ok {
+				v.IsContainSelf = true
+			}
+			v.Counter += singleTypeKeyInfo.Counter
+		} else {
+			v := new(sdk.SingleTypeKeyInfoSum)
+			v.TypeKey = prefixKey
+			v.Counter = singleTypeKeyInfo.Counter
+			for _, info := range singleTypeKeyInfo.InfoList {
+				t := *info
+				v.InfoList = append(v.InfoList, &t)
+			}
+			if _, ok := singleTypeKeyInfo.InfoList[c.loginUserID]; ok {
+				v.IsContainSelf = true
+			}
+			mapResult[prefixKey] = v
+		}
+	}
+	for _, v := range mapResult {
+		result = append(result, v)
+
+	}
+	return result
 }

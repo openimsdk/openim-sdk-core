@@ -8,7 +8,7 @@ import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
@@ -18,23 +18,24 @@ import (
 
 type LiveSignaling struct {
 	*ws.Ws
-	//	listenerList []open_im_sdk_callback.OnSignalingListener
+	listener    open_im_sdk_callback.OnSignalingListener
 	loginUserID string
-	*db.DataBase
+	db_interface.DataBase
 	platformID int32
 	isCanceled bool
 
-	listener open_im_sdk_callback.OnSignalingListener
-
 	listenerForService open_im_sdk_callback.OnSignalingListener
+
+	acceptRoomIDs map[string]interface{}
 }
 
-func NewLiveSignaling(ws *ws.Ws, loginUserID string, platformID int32, db *db.DataBase) *LiveSignaling {
+func NewLiveSignaling(ws *ws.Ws, loginUserID string, platformID int32, db db_interface.DataBase) *LiveSignaling {
 	if ws == nil {
 		log.Warn("", " ws is nil")
 		return nil
 	}
-	return &LiveSignaling{Ws: ws, loginUserID: loginUserID, platformID: platformID, DataBase: db}
+	m := make(map[string]interface{}, 0)
+	return &LiveSignaling{Ws: ws, loginUserID: loginUserID, platformID: platformID, DataBase: db, acceptRoomIDs: m}
 }
 
 func (s *LiveSignaling) waitPush(req *api.SignalReq, busyLineUserList []string, operationID string) {
@@ -158,11 +159,17 @@ func (s *LiveSignaling) getSelfParticipant(groupID string, callback open_im_sdk_
 	p := api.ParticipantMetaData{GroupInfo: &api.GroupInfo{}, GroupMemberInfo: &api.GroupMemberFullInfo{}, UserInfo: &api.PublicUserInfo{}}
 	if groupID != "" {
 		g, err := s.GetGroupInfoByGroupID(groupID)
-		common.CheckDBErrCallback(callback, err, operationID)
-		copier.Copy(p.GroupInfo, g)
-		mInfo, err := s.GetGroupMemberInfoByGroupIDUserID(groupID, s.loginUserID)
-		common.CheckDBErrCallback(callback, err, operationID)
-		copier.Copy(p.GroupMemberInfo, mInfo)
+		if err != nil {
+			log.NewError(operationID, "GetGroupInfoByGroupID failed", err.Error())
+			if !strings.Contains(err.Error(), "record not found") {
+				common.CheckDBErrCallback(callback, err, operationID)
+			}
+		} else {
+			copier.Copy(p.GroupInfo, g)
+			mInfo, err := s.GetGroupMemberInfoByGroupIDUserID(groupID, s.loginUserID)
+			common.CheckDBErrCallback(callback, err, operationID)
+			copier.Copy(p.GroupMemberInfo, mInfo)
+		}
 	}
 
 	sf, err := s.GetLoginUser(s.loginUserID)
@@ -197,38 +204,52 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 	case *api.SignalReq_Accept:
 		log.Info(operationID, "signaling response ", payload.Accept.String())
 		if payload.Accept.Invitation.InviterUserID == s.loginUserID && payload.Accept.Invitation.PlatformID == s.platformID {
-			var wsResp ws.GeneralWsResp
-			wsResp.ReqIdentifier = constant.WSSendSignalMsg
-			wsResp.Data = msg.Content
-			wsResp.MsgIncr = s.loginUserID + payload.Accept.OpUserID + payload.Accept.Invitation.RoomID
-			log.Info(operationID, "search msgIncr: ", wsResp.MsgIncr)
-			s.DoWSSignal(wsResp)
-			return
+			if _, ok := s.acceptRoomIDs[payload.Accept.Invitation.RoomID]; ok {
+				var wsResp ws.GeneralWsResp
+				wsResp.ReqIdentifier = constant.WSSendSignalMsg
+				wsResp.Data = msg.Content
+				wsResp.MsgIncr = s.loginUserID + payload.Accept.OpUserID + payload.Accept.Invitation.RoomID
+				log.Info(operationID, "search msgIncr: ", wsResp.MsgIncr)
+				s.DoWSSignal(wsResp)
+				return
+			} else {
+				for _, listener := range listenerList {
+					listener.OnInviteeAcceptedByOtherDevice(utils.StructToJsonString(payload.Accept))
+					log.Info(operationID, "OnInviteeAcceptedByOtherDevice same platform", utils.StructToJsonString(payload.Accept), listener)
+				}
+				return
+			}
 		}
 		if payload.Accept.OpUserPlatformID != s.platformID && payload.Accept.OpUserID == s.loginUserID {
-
 			for _, listener := range listenerList {
 				listener.OnInviteeAcceptedByOtherDevice(utils.StructToJsonString(payload.Accept))
 				log.Info(operationID, "OnInviteeAcceptedByOtherDevice ", utils.StructToJsonString(payload.Accept), listener)
 			}
-
 			return
 		}
 	case *api.SignalReq_Reject:
 		log.Info(operationID, "signaling response ", payload.Reject.String())
 		if payload.Reject.Invitation.InviterUserID == s.loginUserID && payload.Reject.Invitation.PlatformID == s.platformID {
-			var wsResp ws.GeneralWsResp
-			wsResp.ReqIdentifier = constant.WSSendSignalMsg
-			wsResp.Data = msg.Content
-			wsResp.MsgIncr = s.loginUserID + payload.Reject.OpUserID + payload.Reject.Invitation.RoomID
-			log.Info(operationID, "search msgIncr: ", wsResp.MsgIncr)
-			s.DoWSSignal(wsResp)
-			return
+			if _, ok := s.acceptRoomIDs[payload.Reject.Invitation.RoomID]; ok {
+				var wsResp ws.GeneralWsResp
+				wsResp.ReqIdentifier = constant.WSSendSignalMsg
+				wsResp.Data = msg.Content
+				wsResp.MsgIncr = s.loginUserID + payload.Reject.OpUserID + payload.Reject.Invitation.RoomID
+				log.Info(operationID, "search msgIncr: ", wsResp.MsgIncr)
+				s.DoWSSignal(wsResp)
+				return
+			} else {
+				for _, listener := range listenerList {
+					listener.OnInviteeRejectedByOtherDevice(utils.StructToJsonString(payload.Reject))
+					log.Info(operationID, "OnInviteeRejectedByOtherDevice ", utils.StructToJsonString(payload.Reject), listener)
+				}
+				return
+			}
 		}
 		if payload.Reject.OpUserPlatformID != s.platformID && payload.Reject.OpUserID == s.loginUserID {
 			for _, listener := range listenerList {
 				listener.OnInviteeRejectedByOtherDevice(utils.StructToJsonString(payload.Reject))
-				log.Info(operationID, "OnInviteeRejectedByOtherDevice ", utils.StructToJsonString(payload.Reject), listener)
+				log.Info(operationID, "OnInviteeRejectedByOtherDevice same platform", utils.StructToJsonString(payload.Reject), listener)
 			}
 			return
 		}
@@ -270,17 +291,17 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 				}
 			}
 		}
-	case *api.SignalReq_SignalOnRoomParticipantConnectedReq:
-		log.Info(operationID, "signaling response ", payload.SignalOnRoomParticipantConnectedReq.String())
+	case *api.SignalReq_OnRoomParticipantConnectedReq:
+		log.Info(operationID, "signaling response ", payload.OnRoomParticipantConnectedReq.String())
 		for _, listener := range listenerList {
-			listener.OnRoomParticipantConnected(utils.StructToJsonString(payload.SignalOnRoomParticipantConnectedReq))
-			log.Info(operationID, "SignalOnRoomParticipantConnectedReq", utils.StructToJsonString(payload.SignalOnRoomParticipantConnectedReq), listener)
+			listener.OnRoomParticipantConnected(utils.StructToJsonString(payload.OnRoomParticipantConnectedReq))
+			log.Info(operationID, "SignalOnRoomParticipantConnectedReq", utils.StructToJsonString(payload.OnRoomParticipantConnectedReq), listener)
 		}
-	case *api.SignalReq_SignalOnRoomParticipantDisconnectedReq:
-		log.Info(operationID, "signaling response ", payload.SignalOnRoomParticipantDisconnectedReq.String())
+	case *api.SignalReq_OnRoomParticipantDisconnectedReq:
+		log.Info(operationID, "signaling response ", payload.OnRoomParticipantDisconnectedReq.String())
 		for _, listener := range listenerList {
-			listener.OnRoomParticipantDisconnected(utils.StructToJsonString(payload.SignalOnRoomParticipantDisconnectedReq))
-			log.Info(operationID, "SignalOnRoomParticipantDisconnectedReq", utils.StructToJsonString(payload.SignalOnRoomParticipantDisconnectedReq), listener)
+			listener.OnRoomParticipantDisconnected(utils.StructToJsonString(payload.OnRoomParticipantDisconnectedReq))
+			log.Info(operationID, "SignalOnRoomParticipantDisconnectedReq", utils.StructToJsonString(payload.OnRoomParticipantDisconnectedReq), listener)
 		}
 
 	default:
@@ -293,7 +314,7 @@ func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk
 	resp, err := s.SendSignalingReqWaitResp(req, operationID)
 	if err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), "SendSignalingReqWaitResp error", err.Error())
-		common.CheckAnyErrCallback(callback, 3003, errors.New("timeout"), operationID)
+		common.CheckAnyErrCallback(callback, 3003, err, operationID)
 	}
 	common.CheckAnyErrCallback(callback, 3001, err, operationID)
 	var busyLineUserIDList []string
@@ -315,15 +336,20 @@ func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk
 		s.isCanceled = false
 		busyLineUserIDList = payload.Invite.BusyLineUserIDList
 		log.Info(operationID, "signaling response ", payload.Invite.String())
+		s.acceptRoomIDs[payload.Invite.RoomID] = nil
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.InviteCallback(payload.Invite)))
 	case *api.SignalResp_InviteInGroup:
 		s.isCanceled = false
 		busyLineUserIDList = payload.InviteInGroup.BusyLineUserIDList
 		log.Info(operationID, "signaling response ", payload.InviteInGroup.String())
+		s.acceptRoomIDs[payload.InviteInGroup.RoomID] = nil
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.InviteInGroupCallback(payload.InviteInGroup)))
 	case *api.SignalResp_GetRoomByGroupID:
 		log.Info(operationID, "signaling response ", payload.GetRoomByGroupID.String())
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GetRoomByGroupIDCallback(payload.GetRoomByGroupID)))
+	case *api.SignalResp_GetTokenByRoomID:
+		log.Info(operationID, "signaling response", payload.GetTokenByRoomID.String())
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GetTokenByRoomID(payload.GetTokenByRoomID)))
 	default:
 		log.Error(operationID, "resp payload type failed ", payload)
 		common.CheckAnyErrCallback(callback, 3002, errors.New("resp payload type failed"), operationID)

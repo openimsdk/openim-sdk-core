@@ -68,6 +68,18 @@ func TriggerCmdDeleteConversationAndMessage(sourceID, conversationID string, ses
 
 	return sendCmd(conversationCh, c2v, 100)
 }
+
+func TriggerCmdSyncReactionExtensions(node SyncReactionExtensionsNode, conversationCh chan Cmd2Value) error {
+	if conversationCh == nil {
+		return utils.Wrap(errors.New("ch == nil"), "")
+	}
+	c2v := Cmd2Value{
+		Cmd:   constant.CmSyncReactionExtensions,
+		Value: node,
+	}
+
+	return sendCmd(conversationCh, c2v, 100)
+}
 func TriggerCmdUpdateConversation(node UpdateConNode, conversationCh chan Cmd2Value) error {
 	c2v := Cmd2Value{
 		Cmd:   constant.CmdUpdateConversation,
@@ -107,6 +119,11 @@ type DeleteConNode struct {
 	ConversationID string
 	SessionType    int
 }
+type SyncReactionExtensionsNode struct {
+	OperationID string
+	Action      int
+	Args        interface{}
+}
 type UpdateConNode struct {
 	ConID  string
 	Action int //1 Delete the conversation; 2 Update the latest news in the conversation or add a conversation; 3 Put a conversation on the top;
@@ -122,15 +139,17 @@ type Cmd2Value struct {
 	Cmd   string
 	Value interface{}
 }
-type UpdateConInfo struct {
-	UserID  string
-	GroupID string
-}
+
 type UpdateMessageInfo struct {
 	UserID   string
 	FaceURL  string
 	Nickname string
 	GroupID  string
+}
+
+type SourceIDAndSessionType struct {
+	SourceID    string
+	SessionType int
 }
 
 func UnInitAll(conversationCh chan Cmd2Value) error {

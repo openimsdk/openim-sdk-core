@@ -10,42 +10,42 @@ import (
 
 var allDB []*db.DataBase
 
-func TestDB(loginUserID string) {
-	operationID := utils.OperationIDGenerator()
-	dbUser, err := db.NewDataBase(loginUserID, "/data/test/Open-IM-Server/db/sdk/", operationID)
-	if err != nil {
-		log.Error(operationID, "NewDataBase failed ", err.Error(), loginUserID)
-		return
-	}
-	conversationList, err := dbUser.GetAllConversationList()
-	if err != nil {
-		log.Error(operationID, "GetAllConversationList failed ", err.Error())
-	}
-	log.Info(operationID, "GetAllConversationList len: ", len(conversationList))
-
-	groupIDList, err := dbUser.GetJoinedGroupList()
-	if err != nil {
-		log.Error(operationID, "GetJoinedGroupList failed ", err.Error())
-	}
-	log.Info(operationID, "GetJoinedGroupList len: ", len(groupIDList))
-
-	groupMemberList, err := dbUser.GetAllGroupMemberList()
-	if err != nil {
-		log.Error(operationID, "GetAllGroupMemberList failed ", err.Error())
-	}
-	log.Info(operationID, "GetAllGroupMemberList len: ", len(groupMemberList))
-	//GetAllMessageForTest
-	msgList, err := dbUser.GetAllMessageForTest()
-	if err != nil {
-		log.Error(operationID, "GetAllMessageForTest failed ", err.Error())
-	}
-	log.Info(operationID, "GetAllMessageForTest len: ", len(msgList))
-	allDB = append(allDB, dbUser)
-
-	dbUser.CloseDB(operationID)
-	log.Info(operationID, "close db finished ")
-
-}
+//func TestDB(loginUserID string) {
+//	operationID := utils.OperationIDGenerator()
+//	dbUser, err := db.NewDataBase(loginUserID, "/data/test/Open-IM-Server/db/sdk/", operationID)
+//	if err != nil {
+//		log.Error(operationID, "NewDataBase failed ", err.Error(), loginUserID)
+//		return
+//	}
+//	conversationList, err := dbUser.GetAllConversationList()
+//	if err != nil {
+//		log.Error(operationID, "GetAllConversationList failed ", err.Error())
+//	}
+//	log.Info(operationID, "GetAllConversationList len: ", len(conversationList))
+//
+//	groupIDList, err := dbUser.GetJoinedGroupList()
+//	if err != nil {
+//		log.Error(operationID, "GetJoinedGroupList failed ", err.Error())
+//	}
+//	log.Info(operationID, "GetJoinedGroupList len: ", len(groupIDList))
+//
+//	groupMemberList, err := dbUser.GetAllGroupMemberList()
+//	if err != nil {
+//		log.Error(operationID, "GetAllGroupMemberList failed ", err.Error())
+//	}
+//	log.Info(operationID, "GetAllGroupMemberList len: ", len(groupMemberList))
+//	//GetAllMessageForTest
+//	msgList, err := dbUser.GetAllMessageForTest()
+//	if err != nil {
+//		log.Error(operationID, "GetAllMessageForTest failed ", err.Error())
+//	}
+//	log.Info(operationID, "GetAllMessageForTest len: ", len(msgList))
+//	allDB = append(allDB, dbUser)
+//
+//	dbUser.CloseDB(operationID)
+//	log.Info(operationID, "close db finished ")
+//
+//}
 
 func main() {
 	//var userIDList []string
@@ -79,12 +79,20 @@ func main() {
 	//log.Info("", "gc end ")
 	//time.Sleep(100000 * time.Second)
 	//return
-	strMyUidx := "2165082675"
+	strMyUidx := "3370431052"
 	tokenx := test.RunGetToken(strMyUidx)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
+	//go func() {
+	//	time.Sleep(2 * time.Second)
+	//	test.InOutLogou()
+	//}()
+
 	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
 	//	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
-	time.Sleep(100000 * time.Second)
+
+	//	time.Sleep(5 * time.Second)
+	//	test.SetListenerAndLogin(strMyUidx, tokenx)
+	//test.DoTestSetGroupMemberInfo("1104164664", "3188816039", "set ex")
 
 	//	test.DotestGetGroupMemberList()
 	//time.Sleep(100000 * time.Second)
@@ -95,7 +103,7 @@ func main() {
 	//	test.DoTestDeleteAllMsgFromLocalAndSvr()
 
 	//	println("token ", tokenx)
-	//	time.Sleep(100000 * time.Second)
+	time.Sleep(100000 * time.Second)
 	b := utils.GetCurrentTimestampBySecond()
 	i := 0
 	for {

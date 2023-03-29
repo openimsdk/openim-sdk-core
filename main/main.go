@@ -8,12 +8,14 @@ import (
 )
 
 func main() {
-	APIADDR := "http://43.155.69.205:10002"
-	WSADDR := "ws://43.155.69.205:10001"
+	//APIADDR := "https://test-web.rentsoft.cn/api"
+	//WSADDR := "wss://test-web.rentsoft.cn/msg_gateway"
+	APIADDR := "http://59.36.173.89:10002"
+	WSADDR := "ws://59.36.173.89:10001"
 	REGISTERADDR := APIADDR + "/user_register"
 	ACCOUNTCHECK := APIADDR + "/manager/account_check"
 	TOKENADDR := APIADDR + "/auth/user_token"
-	SECRET := "tuoyun"
+	SECRET := "openIM123"
 	SENDINTERVAL := 20
 	test.REGISTERADDR = REGISTERADDR
 	test.TOKENADDR = TOKENADDR
@@ -21,7 +23,7 @@ func main() {
 	test.SENDINTERVAL = SENDINTERVAL
 	test.WSADDR = WSADDR
 	test.ACCOUNTCHECK = ACCOUNTCHECK
-	strMyUidx := "3433303585"
+	strMyUidx := "1010930629"
 
 	//	var onlineNum *int          //Number of online users
 	//	var senderNum *int          //Number of users sending messages
@@ -41,9 +43,20 @@ func main() {
 	println("start")
 	//test.DoTestCreateGroup()
 	//test.DoTestSearchLocalMessages()
-	//test.DoTestInviteInGroup()
+	// test.DoTestInviteInGroup()
 	//time.Sleep(time.Second*6)
-	test.DoTestSignalGetRoomByGroupID("1826384574")
+	//test.DoTestGetSelfUserInfo()
+	//test.DoTestSetBurnDuration("single_2861383134")
+	//test.DoTestInvite("123123")
+	test.DoTestSetAppBackgroundStatus(true)
+	for {
+		//test.DotestDeleteFriend()
+		//test.DoTestSendMsg2("", "1443506268")
+		time.Sleep(time.Second * 10)
+	}
+	//test.DoTestSignalGetRoomByGroupID("1826384574")
+	//test.DoTestSignalGetTokenByRoomID("1826384574")
+	//test.DoTestSendImageMsg("3433303585")
 	//test.DoTestGetUserInDepartment()
 	//test.DoTestGetDepartmentMemberAndSubDepartment()
 	//test.DoTestDeleteAllMsgFromLocalAndSvr()

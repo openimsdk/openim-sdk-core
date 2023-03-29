@@ -24,6 +24,16 @@ type MessageRevoked struct {
 	SourceMessageSenderNickname string `json:"sourceMessageSenderNickname"`
 	SessionType                 int32  `json:"sessionType"`
 	Seq                         uint32 `json:"seq"`
+	Ex                          string `json:"ex"`
+}
+type MessageReaction struct {
+	ClientMsgID  string `json:"clientMsgID"`
+	ReactionType int    `json:"reactionType"`
+	Counter      int32  `json:"counter,omitempty"`
+	UserID       string `json:"userID"`
+	GroupID      string `json:"groupID"`
+	SessionType  int32  `json:"sessionType"`
+	Info         string `json:"info,omitempty"`
 }
 type ImageInfo struct {
 	Width  int32  `json:"x"`
@@ -69,27 +79,29 @@ type FileBaseInfo struct {
 }
 
 type MsgStruct struct {
-	ClientMsgID      string                            `json:"clientMsgID,omitempty"`
-	ServerMsgID      string                            `json:"serverMsgID,omitempty"`
-	CreateTime       int64                             `json:"createTime"`
-	SendTime         int64                             `json:"sendTime"`
-	SessionType      int32                             `json:"sessionType"`
-	SendID           string                            `json:"sendID,omitempty"`
-	RecvID           string                            `json:"recvID,omitempty"`
-	MsgFrom          int32                             `json:"msgFrom"`
-	ContentType      int32                             `json:"contentType"`
-	SenderPlatformID int32                             `json:"platformID"`
-	SenderNickname   string                            `json:"senderNickname,omitempty"`
-	SenderFaceURL    string                            `json:"senderFaceUrl,omitempty"`
-	GroupID          string                            `json:"groupID,omitempty"`
-	Content          string                            `json:"content,omitempty"`
-	Seq              uint32                            `json:"seq"`
-	IsRead           bool                              `json:"isRead"`
-	Status           int32                             `json:"status"`
-	OfflinePush      server_api_params.OfflinePushInfo `json:"offlinePush,omitempty"`
-	AttachedInfo     string                            `json:"attachedInfo,omitempty"`
-	Ex               string                            `json:"ex,omitempty"`
-	PictureElem      struct {
+	ClientMsgID          string                            `json:"clientMsgID,omitempty"`
+	ServerMsgID          string                            `json:"serverMsgID,omitempty"`
+	CreateTime           int64                             `json:"createTime"`
+	SendTime             int64                             `json:"sendTime"`
+	SessionType          int32                             `json:"sessionType"`
+	SendID               string                            `json:"sendID,omitempty"`
+	RecvID               string                            `json:"recvID,omitempty"`
+	MsgFrom              int32                             `json:"msgFrom"`
+	ContentType          int32                             `json:"contentType"`
+	SenderPlatformID     int32                             `json:"platformID"`
+	SenderNickname       string                            `json:"senderNickname,omitempty"`
+	SenderFaceURL        string                            `json:"senderFaceUrl,omitempty"`
+	GroupID              string                            `json:"groupID,omitempty"`
+	Content              string                            `json:"content,omitempty"`
+	Seq                  uint32                            `json:"seq"`
+	IsRead               bool                              `json:"isRead"`
+	Status               int32                             `json:"status"`
+	IsReact              bool                              `json:"isReact,omitempty"`
+	IsExternalExtensions bool                              `json:"isExternalExtensions,omitempty"`
+	OfflinePush          server_api_params.OfflinePushInfo `json:"offlinePush,omitempty"`
+	AttachedInfo         string                            `json:"attachedInfo,omitempty"`
+	Ex                   string                            `json:"ex,omitempty"`
+	PictureElem          struct {
 		SourcePath      string          `json:"sourcePath,omitempty"`
 		SourcePicture   PictureBaseInfo `json:"sourcePicture,omitempty"`
 		BigPicture      PictureBaseInfo `json:"bigPicture,omitempty"`
@@ -165,6 +177,7 @@ type MsgStruct struct {
 	} `json:"messageEntityElem,omitempty"`
 	AttachedInfoElem AttachedInfoElem `json:"attachedInfoElem,omitempty"`
 }
+
 type AtInfo struct {
 	AtUserID      string `json:"atUserID,omitempty"`
 	GroupNickname string `json:"groupNickname,omitempty"`
@@ -172,12 +185,28 @@ type AtInfo struct {
 type AttachedInfoElem struct {
 	GroupHasReadInfo          GroupHasReadInfo `json:"groupHasReadInfo,omitempty"`
 	IsPrivateChat             bool             `json:"isPrivateChat"`
+	BurnDuration              int32            `json:"burnDuration"`
 	HasReadTime               int64            `json:"hasReadTime"`
 	NotSenderNotificationPush bool             `json:"notSenderNotificationPush"`
 	MessageEntityList         []*MessageEntity `json:"messageEntityList,omitempty"`
 	IsEncryption              bool             `json:"isEncryption"`
 	InEncryptStatus           bool             `json:"inEncryptStatus"`
+	//MessageReactionElem       []*ReactionElem  `json:"messageReactionElem,omitempty"`
 }
+
+//type ReactionElem struct {
+//	Counter          int32               `json:"counter,omitempty"`
+//	Type             int                 `json:"type,omitempty"`
+//	UserReactionList []*UserReactionElem `json:"userReactionList,omitempty"`
+//	CanRepeat        bool                `json:"canRepeat,omitempty"`
+//	Info             string              `json:"info,omitempty"`
+//}
+//type UserReactionElem struct {
+//	UserID  string `json:"userID,omitempty"`
+//	Counter int32  `json:"counter,omitempty"`
+//	Info    string `json:"info,omitempty"`
+//}
+
 type MessageEntity struct {
 	Type   string `json:"type,omitempty"`
 	Offset int32  `json:"offset"`
@@ -185,7 +214,6 @@ type MessageEntity struct {
 	Url    string `json:"url,omitempty"`
 	Info   string `json:"info,omitempty"`
 }
-
 type GroupHasReadInfo struct {
 	HasReadUserIDList []string `json:"hasReadUserIDList,omitempty"`
 	HasReadCount      int32    `json:"hasReadCount"`
@@ -209,13 +237,15 @@ func (n NewMsgList) Swap(i, j int) {
 }
 
 type IMConfig struct {
-	Platform      int32  `json:"platform"`
-	ApiAddr       string `json:"api_addr"`
-	WsAddr        string `json:"ws_addr"`
-	DataDir       string `json:"data_dir"`
-	LogLevel      uint32 `json:"log_level"`
-	ObjectStorage string `json:"object_storage"` //"cos"(default)  "oss"
-	EncryptionKey string `json:"encryption_key"`
+	Platform             int32  `json:"platform"`
+	ApiAddr              string `json:"api_addr"`
+	WsAddr               string `json:"ws_addr"`
+	DataDir              string `json:"data_dir"`
+	LogLevel             uint32 `json:"log_level"`
+	ObjectStorage        string `json:"object_storage"` //"cos"(default)  "oss"
+	EncryptionKey        string `json:"encryption_key"`
+	IsCompression        bool   `json:"is_compression"`
+	IsExternalExtensions bool   `json:"is_external_extensions"`
 }
 
 var SvrConf IMConfig
