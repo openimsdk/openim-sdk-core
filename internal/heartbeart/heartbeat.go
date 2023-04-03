@@ -66,11 +66,12 @@ type ParseToken struct {
 //}
 
 func (u *Heartbeat) Run() {
-	//	heartbeatInterval := 30
-	reqTimeout := 30
+	defaultTimeout := 5
+	reqTimeout := defaultTimeout
 	retryTimes := 0
 	heartbeatNum := 0
 	for {
+		reqTimeout = defaultTimeout
 		operationID := utils.OperationIDGenerator()
 		if constant.OnlyForTest == 1 {
 			time.Sleep(5 * time.Second)
