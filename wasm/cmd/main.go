@@ -35,7 +35,7 @@ func registerFunc() {
 	js.Global().Set("createImageMessage", js.FuncOf(wrapperConMsg.CreateImageMessage))
 	js.Global().Set("createImageMessageByURL", js.FuncOf(wrapperConMsg.CreateImageMessageByURL))
 	js.Global().Set("createSoundMessageByURL", js.FuncOf(wrapperConMsg.CreateSoundMessageByURL))
-	js.Global().Set("CreateVideoMessageByURL", js.FuncOf(wrapperConMsg.CreateVideoMessageByURL))
+	js.Global().Set("createVideoMessageByURL", js.FuncOf(wrapperConMsg.CreateVideoMessageByURL))
 	js.Global().Set("createFileMessageByURL", js.FuncOf(wrapperConMsg.CreateFileMessageByURL))
 	js.Global().Set("createCustomMessage", js.FuncOf(wrapperConMsg.CreateCustomMessage))
 	js.Global().Set("createQuoteMessage", js.FuncOf(wrapperConMsg.CreateQuoteMessage))
