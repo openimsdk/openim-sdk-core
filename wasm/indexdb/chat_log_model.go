@@ -57,23 +57,26 @@ func (i *LocalChatLogs) UpdateMessage(c *model_struct.LocalChatLog) error {
 		return PrimaryKeyNull
 	}
 	tempLocalChatLog := temp_struct.LocalChatLog{
-		ServerMsgID:      c.ServerMsgID,
-		SendID:           c.SendID,
-		RecvID:           c.RecvID,
-		SenderPlatformID: c.SenderPlatformID,
-		SenderNickname:   c.SenderNickname,
-		SenderFaceURL:    c.SenderFaceURL,
-		SessionType:      c.SessionType,
-		MsgFrom:          c.MsgFrom,
-		ContentType:      c.ContentType,
-		Content:          c.Content,
-		IsRead:           c.IsRead,
-		Status:           c.Status,
-		Seq:              c.Seq,
-		SendTime:         c.SendTime,
-		CreateTime:       c.CreateTime,
-		AttachedInfo:     c.AttachedInfo,
-		Ex:               c.Ex,
+		ServerMsgID:          c.ServerMsgID,
+		SendID:               c.SendID,
+		RecvID:               c.RecvID,
+		SenderPlatformID:     c.SenderPlatformID,
+		SenderNickname:       c.SenderNickname,
+		SenderFaceURL:        c.SenderFaceURL,
+		SessionType:          c.SessionType,
+		MsgFrom:              c.MsgFrom,
+		ContentType:          c.ContentType,
+		Content:              c.Content,
+		IsRead:               c.IsRead,
+		Status:               c.Status,
+		Seq:                  c.Seq,
+		SendTime:             c.SendTime,
+		CreateTime:           c.CreateTime,
+		AttachedInfo:         c.AttachedInfo,
+		Ex:                   c.Ex,
+		IsReact:              c.IsReact,
+		IsExternalExtensions: c.IsExternalExtensions,
+		MsgFirstModifyTime:   c.MsgFirstModifyTime,
 	}
 	_, err := Exec(c.ClientMsgID, utils.StructToJsonString(tempLocalChatLog))
 	return err
@@ -369,6 +372,27 @@ func (i *LocalChatLogs) GetMsgSeqByClientMsgID(clientMsgID string) (uint32, erro
 		return uint32(v), nil
 	}
 	return 0, ErrType
+}
+func (i *LocalChatLogs) SearchAllMessageByContentType(contentType int) (result []*model_struct.LocalChatLog, err error) {
+	msgList, err := Exec(contentType)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := msgList.(string); ok {
+			var temp []*model_struct.LocalChatLog
+			err := utils.JsonStringToStruct(v, &temp)
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range temp {
+				v1 := v
+				result = append(result, v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
 }
 
 func (i *LocalChatLogs) GetMsgSeqListByGroupID(groupID string) (result []uint32, err error) {

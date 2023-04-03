@@ -8,7 +8,7 @@ const (
 	CmdNewMsgCome                 = "005"
 	CmdSuperGroupMsgCome          = "006"
 	CmdUpdateConversation         = "007"
-	CmdForceSyncFriend            = "008"
+	CmSyncReactionExtensions      = "008"
 	CmdFroceSyncBlackList         = "009"
 	CmdForceSyncFriendApplication = "010"
 	CmdForceSyncMsg               = "011"
@@ -51,7 +51,7 @@ const (
 	CustomMsgNotTriggerConversation = 119
 	CustomMsgOnlineOnly             = 120
 	ReactionMessageModifier         = 121
-
+	ReactionMessageDeleter          = 122
 	//////////////////////////////////////////
 	NotificationBegin       = 1000
 	FriendNotificationBegin = 1200
@@ -176,13 +176,15 @@ const (
 	FriendRelationship = 1
 )
 
-//const (
+// const (
+//
 //	ErrCodeInitLogin    = 1001
 //	ErrCodeFriend       = 2001
 //	ErrCodeConversation = 3001
 //	ErrCodeUserInfo     = 4001
 //	ErrCodeGroup        = 5001
-//)
+//
+// )
 const (
 	NormalGroup                       = 0
 	SuperGroup                        = 1
@@ -211,20 +213,21 @@ const (
 )
 
 const (
-	AddConOrUpLatMsg             = 2
-	UnreadCountSetZero           = 3
-	IncrUnread                   = 5
-	TotalUnreadMessageChanged    = 6
-	UpdateConFaceUrlAndNickName  = 7
-	UpdateLatestMessageChange    = 8
-	ConChange                    = 9
-	NewCon                       = 10
-	ConChangeDirect              = 11
-	NewConDirect                 = 12
-	ConversationLatestMsgHasRead = 13
-	UpdateMsgFaceUrlAndNickName  = 14
-	SyncConversation             = 15
-	MessageChange                = 16
+	AddConOrUpLatMsg                  = 2
+	UnreadCountSetZero                = 3
+	IncrUnread                        = 5
+	TotalUnreadMessageChanged         = 6
+	UpdateConFaceUrlAndNickName       = 7
+	UpdateLatestMessageChange         = 8
+	ConChange                         = 9
+	NewCon                            = 10
+	ConChangeDirect                   = 11
+	NewConDirect                      = 12
+	ConversationLatestMsgHasRead      = 13
+	UpdateMsgFaceUrlAndNickName       = 14
+	SyncConversation                  = 15
+	SyncMessageListReactionExtensions = 16
+	SyncMessageListTypeKeyInfo        = 17
 
 	HasRead = 1
 	NotRead = 0
@@ -247,7 +250,7 @@ const (
 const ZoomScale = "200"
 const MaxTotalMsgLen = 51200
 
-//const MaxTotalMsgLen = 20480
+// const MaxTotalMsgLen = 20480
 const (
 	FriendAcceptTip  = "You have successfully become friends, so start chatting"
 	TransferGroupTip = "The owner of the group is transferred!"
@@ -255,14 +258,15 @@ const (
 )
 
 const (
-	WSGetNewestSeq     = 1001
-	WSPullMsgBySeqList = 1002
-	WSSendMsg          = 1003
-	WSSendSignalMsg    = 1004
-	WsDelMsg           = 1005
-	WSPushMsg          = 2001
-	WSKickOnlineMsg    = 2002
-	WsLogoutMsg        = 2003
+	WSGetNewestSeq        = 1001
+	WSPullMsgBySeqList    = 1002
+	WSSendMsg             = 1003
+	WSSendSignalMsg       = 1004
+	WsDelMsg              = 1005
+	WSPushMsg             = 2001
+	WSKickOnlineMsg       = 2002
+	WsLogoutMsg           = 2003
+	WsSetBackgroundStatus = 2004
 
 	WSDataError = 3001
 )
@@ -321,6 +325,10 @@ const (
 	FieldBurnDuration  = 9
 )
 const (
+	SetMessageExtensions = 1
+	AddMessageExtensions = 2
+)
+const (
 	KeywordMatchOr  = 0
 	KeywordMatchAnd = 1
 )
@@ -340,6 +348,7 @@ const (
 	MsgSyncBegin      = 1001 //
 	MsgSyncProcessing = 1002 //
 	MsgSyncEnd        = 1003 //
+	MsgSyncFailed     = 1004
 )
 
 const (

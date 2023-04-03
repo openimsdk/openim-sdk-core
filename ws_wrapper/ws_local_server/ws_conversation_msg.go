@@ -10,12 +10,12 @@ import (
 	"open_im_sdk/sdk_struct"
 )
 
+// import (
 //
-//import (
 //	"encoding/json"
 //	"open_im_sdk/open_im_sdk"
-//)
 //
+// )
 func (wsRouter *WsFuncRouter) CreateTextMessage(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
@@ -81,8 +81,28 @@ type AddAdvancedMsgListenerCallback struct {
 	uid string
 }
 
+func (a *AddAdvancedMsgListenerCallback) OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (a *AddAdvancedMsgListenerCallback) OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (a *AddAdvancedMsgListenerCallback) OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string) {
+	//TODO implement me
+	panic("implement me")
+}
+
 type BatchMsgListenerCallback struct {
 	uid string
+}
+
+func (b *BatchMsgListenerCallback) OnRecvOfflineNewMessages(messageList string) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (b *BatchMsgListenerCallback) OnRecvNewMessages(messageList string) {
@@ -560,7 +580,7 @@ func (wsRouter *WsFuncRouter) GetHistoryMessageListReverse(getMessageOptions str
 	userWorker.Conversation().GetHistoryMessageListReverse(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, getMessageOptions, operationID)
 }
 
-//deprecated
+// deprecated
 func (wsRouter *WsFuncRouter) RevokeMessage(message string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, message, operationID, runFuncName(), nil) {
@@ -850,19 +870,19 @@ func (wsRouter *WsFuncRouter) ClearGroupHistoryMessageFromLocalAndSvr(input stri
 	userWorker.Conversation().ClearGroupHistoryMessageFromLocalAndSvr(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, input, operationID)
 }
 
-//func (wsRouter *WsFuncRouter) SetSdkLog(input string, operationID string) {
-//	m := make(map[string]interface{})
-//	if err := json.Unmarshal([]byte(input), &m); err != nil {
-//		log.Info("unmarshal failed")
-//		wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
-//		return
+//	func (wsRouter *WsFuncRouter) SetSdkLog(input string, operationID string) {
+//		m := make(map[string]interface{})
+//		if err := json.Unmarshal([]byte(input), &m); err != nil {
+//			log.Info("unmarshal failed")
+//			wsRouter.GlobalSendMessage(EventData{cleanUpfuncName(runFuncName()), StatusBadParameter, "unmarshal failed", "", operationID})
+//			return
+//		}
+//		if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "flag") {
+//			return
+//		}
+//		userWorker := init.GetUserWorker(wsRouter.uId)
+//		userWorker.SetSdkLog(m["flag"].(int32))
 //	}
-//	if !wsRouter.checkKeysIn(input, operationID, runFuncName(), m, "flag") {
-//		return
-//	}
-//	userWorker := init.GetUserWorker(wsRouter.uId)
-//	userWorker.SetSdkLog(m["flag"].(int32))
-//}
 func (wsRouter *WsFuncRouter) GetAtAllTag(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {

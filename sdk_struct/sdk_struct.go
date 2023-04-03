@@ -81,27 +81,29 @@ type FileBaseInfo struct {
 }
 
 type MsgStruct struct {
-	ClientMsgID      string                            `json:"clientMsgID,omitempty"`
-	ServerMsgID      string                            `json:"serverMsgID,omitempty"`
-	CreateTime       int64                             `json:"createTime"`
-	SendTime         int64                             `json:"sendTime"`
-	SessionType      int32                             `json:"sessionType"`
-	SendID           string                            `json:"sendID,omitempty"`
-	RecvID           string                            `json:"recvID,omitempty"`
-	MsgFrom          int32                             `json:"msgFrom"`
-	ContentType      int32                             `json:"contentType"`
-	SenderPlatformID int32                             `json:"platformID"`
-	SenderNickname   string                            `json:"senderNickname,omitempty"`
-	SenderFaceURL    string                            `json:"senderFaceUrl,omitempty"`
-	GroupID          string                            `json:"groupID,omitempty"`
-	Content          string                            `json:"content,omitempty"`
-	Seq              uint32                            `json:"seq"`
-	IsRead           bool                              `json:"isRead"`
-	Status           int32                             `json:"status"`
-	OfflinePush      server_api_params.OfflinePushInfo `json:"offlinePush,omitempty"`
-	AttachedInfo     string                            `json:"attachedInfo,omitempty"`
-	Ex               string                            `json:"ex,omitempty"`
-	PictureElem      struct {
+	ClientMsgID          string                            `json:"clientMsgID,omitempty"`
+	ServerMsgID          string                            `json:"serverMsgID,omitempty"`
+	CreateTime           int64                             `json:"createTime"`
+	SendTime             int64                             `json:"sendTime"`
+	SessionType          int32                             `json:"sessionType"`
+	SendID               string                            `json:"sendID,omitempty"`
+	RecvID               string                            `json:"recvID,omitempty"`
+	MsgFrom              int32                             `json:"msgFrom"`
+	ContentType          int32                             `json:"contentType"`
+	SenderPlatformID     int32                             `json:"platformID"`
+	SenderNickname       string                            `json:"senderNickname,omitempty"`
+	SenderFaceURL        string                            `json:"senderFaceUrl,omitempty"`
+	GroupID              string                            `json:"groupID,omitempty"`
+	Content              string                            `json:"content,omitempty"`
+	Seq                  uint32                            `json:"seq"`
+	IsRead               bool                              `json:"isRead"`
+	Status               int32                             `json:"status"`
+	IsReact              bool                              `json:"isReact,omitempty"`
+	IsExternalExtensions bool                              `json:"isExternalExtensions,omitempty"`
+	OfflinePush          server_api_params.OfflinePushInfo `json:"offlinePush,omitempty"`
+	AttachedInfo         string                            `json:"attachedInfo,omitempty"`
+	Ex                   string                            `json:"ex,omitempty"`
+	PictureElem          struct {
 		SourcePath      string          `json:"sourcePath,omitempty"`
 		SourcePicture   PictureBaseInfo `json:"sourcePicture,omitempty"`
 		BigPicture      PictureBaseInfo `json:"bigPicture,omitempty"`
@@ -228,24 +230,26 @@ func (n NewMsgList) Len() int {
 	return len(n)
 }
 
-//Implement the sort.Interface interface comparison element method
+// Implement the sort.Interface interface comparison element method
 func (n NewMsgList) Less(i, j int) bool {
 	return n[i].SendTime < n[j].SendTime
 }
 
-//Implement the sort.Interface interface exchange element method
+// Implement the sort.Interface interface exchange element method
 func (n NewMsgList) Swap(i, j int) {
 	n[i], n[j] = n[j], n[i]
 }
 
 type IMConfig struct {
-	Platform      int32  `json:"platform"`
-	ApiAddr       string `json:"api_addr"`
-	WsAddr        string `json:"ws_addr"`
-	DataDir       string `json:"data_dir"`
-	LogLevel      uint32 `json:"log_level"`
-	ObjectStorage string `json:"object_storage"` //"cos"(default)  "oss"
-	EncryptionKey string `json:"encryption_key"`
+	Platform             int32  `json:"platform"`
+	ApiAddr              string `json:"api_addr"`
+	WsAddr               string `json:"ws_addr"`
+	DataDir              string `json:"data_dir"`
+	LogLevel             uint32 `json:"log_level"`
+	ObjectStorage        string `json:"object_storage"` //"cos"(default)  "oss"
+	EncryptionKey        string `json:"encryption_key"`
+	IsCompression        bool   `json:"is_compression"`
+	IsExternalExtensions bool   `json:"is_external_extensions"`
 }
 
 var SvrConf IMConfig

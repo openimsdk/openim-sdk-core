@@ -100,6 +100,28 @@ func (a AdvancedMsgCallback) OnRecvMessageRevoked(msgID string) {
 func (a AdvancedMsgCallback) OnNewRecvMessageRevoked(messageRevoked string) {
 	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(messageRevoked).SendMessage()
 }
+func (a AdvancedMsgCallback) OnRecvMessageModified(message string) {
+	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(message).SendMessage()
+}
+func (a AdvancedMsgCallback) OnRecvMessageExtensionsChanged(clientMsgID string, reactionExtensionList string) {
+	m := make(map[string]interface{})
+	m["clientMsgID"] = clientMsgID
+	m["reactionExtensionList"] = reactionExtensionList
+	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(utils.StructToJsonString(m)).SendMessage()
+}
+
+func (a AdvancedMsgCallback) OnRecvMessageExtensionsDeleted(clientMsgID string, reactionExtensionKeyList string) {
+	m := make(map[string]interface{})
+	m["clientMsgID"] = clientMsgID
+	m["reactionExtensionKeyList"] = reactionExtensionKeyList
+	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(utils.StructToJsonString(m)).SendMessage()
+}
+func (a AdvancedMsgCallback) OnRecvMessageExtensionsAdded(clientMsgID string, reactionExtensionList string) {
+	m := make(map[string]interface{})
+	m["clientMsgID"] = clientMsgID
+	m["reactionExtensionList"] = reactionExtensionList
+	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(utils.StructToJsonString(m)).SendMessage()
+}
 
 type BaseCallback struct {
 	CallbackWriter
@@ -152,6 +174,9 @@ func NewBatchMessageCallback(callback *js.Value) *BatchMessageCallback {
 }
 
 func (b *BatchMessageCallback) OnRecvNewMessages(messageList string) {
+	b.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(messageList).SendMessage()
+}
+func (b *BatchMessageCallback) OnRecvOfflineNewMessages(messageList string) {
 	b.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(messageList).SendMessage()
 }
 

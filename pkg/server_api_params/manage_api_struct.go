@@ -30,13 +30,8 @@ type AccountCheckReq struct {
 
 type AccountCheckResp struct {
 	CommResp
-	ResultList []*AccountCheckResp_SingleUserStatus `json:"data"`
+	ResultList AccountcheckrespSingleuserstatus `json:"data"`
 }
-type AccountCheckResp_SingleUserStatus struct {
-	UserID        string `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
-	AccountStatus string `protobuf:"bytes,2,opt,name=accountStatus" json:"accountStatus,omitempty"`
-}
-
 type GetusersonlinestatusrespSuccessdetail struct {
 	Platform             string   `protobuf:"bytes,1,opt,name=platform" json:"platform,omitempty"`
 	Status               string   `protobuf:"bytes,2,opt,name=status" json:"status,omitempty"`

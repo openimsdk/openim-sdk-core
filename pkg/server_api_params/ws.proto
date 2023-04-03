@@ -264,6 +264,9 @@ message MsgData {
   bytes msgDataList = 21;
   string attachedInfo = 22;
   string  ex = 23;
+  bool   isReact = 24;
+  bool isExternalExtensions = 25;
+  int64 msgFirstModifyTime = 26;
 
 }
 message OfflinePushInfo{
@@ -690,6 +693,15 @@ message DelMsgListReq{
 }
 
 message DelMsgListResp{
+  int32 errCode = 1;
+  string errMsg = 2;
+}
+message SetAppBackgroundStatusReq {
+  string userID = 1;
+  bool isBackground = 2;
+}
+
+message SetAppBackgroundStatusResp {
   int32 errCode = 1;
   string errMsg = 2;
 }

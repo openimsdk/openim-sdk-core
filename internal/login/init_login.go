@@ -264,7 +264,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	log.Info(operationID, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	log.Info(operationID, "all channel ", u.pushMsgAndMaxSeqCh, u.conversationCh, u.heartbeatCmdCh, u.cmdWsCh)
 
-	wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID)
+	wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID, u.imConfig.IsCompression, u.conversationCh)
 	wsRespAsyn := ws.NewWsRespAsyn()
 
 	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh, u.conversationCh)           //db
@@ -294,7 +294,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.conversation = conv.NewConversation(u.ws, u.db, u.postApi, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir, u.imConfig.EncryptionKey,
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener,
-		u.organization, u.signaling, u.workMoments, u.cache, u.full, u.id2MinSeq)
+		u.organization, u.signaling, u.workMoments, u.cache, u.full, u.id2MinSeq, u.imConfig.IsExternalExtensions)
 	if u.batchMsgListener != nil {
 		u.conversation.SetBatchMsgListener(u.batchMsgListener)
 		log.Info(operationID, "SetBatchMsgListener ", u.batchMsgListener)
@@ -385,7 +385,17 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 	//	mgr = nil
 	//}(u)
 }
-
+func (u *LoginMgr) setAppBackgroundStatus(callback open_im_sdk_callback.Base, isBackground bool, operationID string) {
+	timeout := 5
+	retryTimes := 2
+	log.Info(operationID, "send to svr WsSetBackgroundStatus ...", u.loginUserID)
+	resp, err := u.ws.SendReqWaitResp(&server_api_params.SetAppBackgroundStatusReq{UserID: u.loginUserID, IsBackground: isBackground}, constant.WsSetBackgroundStatus, timeout, retryTimes, u.loginUserID, operationID)
+	if err != nil {
+		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsSetBackgroundStatus, timeout, u.loginUserID, resp)
+	}
+	common.CheckAnyErrCallback(callback, constant.ErrInternal.ErrCode, err, operationID)
+	callback.OnSuccess("")
+}
 func (u *LoginMgr) GetLoginUser() string {
 	return u.loginUserID
 }

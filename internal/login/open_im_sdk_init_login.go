@@ -26,6 +26,10 @@ func (u *LoginMgr) Logout(callback open_im_sdk_callback.Base, operationID string
 		u.logout(callback, operationID)
 	}()
 }
+func (u *LoginMgr) SetAppBackgroundStatus(callback open_im_sdk_callback.Base, isBackground bool, operationID string) {
+	u.setAppBackgroundStatus(callback, isBackground, operationID)
+
+}
 
 func (u *LoginMgr) UploadImage(callback open_im_sdk_callback.Base, filePath string, token, obj string, operationID string) string {
 	var wg sync.WaitGroup

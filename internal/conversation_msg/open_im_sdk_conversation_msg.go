@@ -75,7 +75,7 @@ func (c *Conversation) SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Bas
 	}()
 }
 
-//deprecated
+// deprecated
 func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList, operationID string) {
 	if callback == nil {
 		return
@@ -214,15 +214,14 @@ func (c *Conversation) GetTotalUnreadMsgCount(callback open_im_sdk_callback.Base
 		return
 	}
 	go func() {
-		log.NewInfo(operationID, "GetTotalUnreadMsgCount args: ")
+		log.NewInfo(operationID, "GetTotalUnreadMsgCountDB args: ")
 		count, err := c.db.GetTotalUnreadMsgCountDB()
 		common.CheckDBErrCallback(callback, err, operationID)
 		callback.OnSuccess(utils.Int32ToString(count))
-		log.NewInfo(operationID, "GetTotalUnreadMsgCount callback: ", utils.Int32ToString(count))
+		log.NewInfo(operationID, "GetTotalUnreadMsgCountDB callback: ", utils.Int32ToString(count))
 	}()
 }
 
-//
 func (c *Conversation) SetConversationListener(listener open_im_sdk_callback.OnConversationListener) {
 	if c.ConversationListener != nil {
 		log.Error("internal", "just only set on listener")
@@ -459,9 +458,9 @@ func (c *Conversation) CreateImageMessageFromFullPath(imageFullPath, operationID
 	go func() {
 		dstFile := utils.FileTmpPath(imageFullPath, c.DataDir) //a->b
 		_, err := utils.CopyFile(imageFullPath, dstFile)
-		log.Info("internal", "copy file, ", imageFullPath, dstFile)
+		log.Info(operationID, "copy file, ", imageFullPath, dstFile)
 		if err != nil {
-			log.Error("internal", "open file failed: ", err, imageFullPath)
+			log.Error(operationID, "open file failed: ", err, imageFullPath)
 		}
 		wg.Done()
 	}()
@@ -469,10 +468,10 @@ func (c *Conversation) CreateImageMessageFromFullPath(imageFullPath, operationID
 	s := sdk_struct.MsgStruct{}
 	c.initBasicInfo(&s, constant.UserMsgType, constant.Picture, operationID)
 	s.PictureElem.SourcePath = imageFullPath
-	log.Info("internal", "ImageMessage  path:", s.PictureElem.SourcePath)
+	log.Info(operationID, "ImageMessage  path:", s.PictureElem.SourcePath)
 	imageInfo, err := getImageInfo(s.PictureElem.SourcePath)
 	if err != nil {
-		log.Error("internal", "getImageInfo err:", err.Error())
+		log.Error(operationID, "getImageInfo err:", err.Error())
 		return ""
 	}
 	s.PictureElem.SourcePicture.Width = imageInfo.Width
@@ -1324,6 +1323,13 @@ func (c *Conversation) GetAdvancedHistoryMessageList(callback open_im_sdk_callba
 		log.Error(operationID, "length:", len(result.MessageList), "cost time", time.Since(t), "GetAdvancedHistoryMessageList callback: ", utils.StructToJsonStringDefault(result))
 	}()
 }
+func (c *Conversation) GetAdvancedHistoryMessageListReverse(callback open_im_sdk_callback.Base, getMessageOptions, operationID string) {
+	var unmarshalParams sdk_params_callback.GetAdvancedHistoryMessageListParams
+	common.JsonUnmarshalCallback(getMessageOptions, &unmarshalParams, callback, operationID)
+	result := c.getAdvancedHistoryMessageList(callback, unmarshalParams, operationID, true)
+	callback.OnSuccess(utils.StructToJsonStringDefault(result))
+	log.NewInfo(operationID, "GetAdvancedHistoryMessageListReverse callback: ", utils.StructToJsonStringDefault(result))
+}
 
 func (c *Conversation) GetHistoryMessageListReverse(callback open_im_sdk_callback.Base, getMessageOptions, operationID string) {
 	if callback == nil {
@@ -1436,7 +1442,7 @@ func (c *Conversation) MarkAllConversationHasRead(callback open_im_sdk_callback.
 	}()
 }
 
-//deprecated
+// deprecated
 func (c *Conversation) MarkGroupMessageHasRead(callback open_im_sdk_callback.Base, groupID string, operationID string) {
 	if callback == nil {
 		return
@@ -1500,7 +1506,7 @@ func (c *Conversation) ClearC2CHistoryMessageFromLocalAndSvr(callback open_im_sd
 	}()
 }
 
-//fixme
+// fixme
 func (c *Conversation) ClearGroupHistoryMessageFromLocalAndSvr(callback open_im_sdk_callback.Base, groupID string, operationID string) {
 	if callback == nil {
 		return
@@ -1699,7 +1705,7 @@ func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, con
 	message.MsgFrom = msgFrom
 	message.ContentType = contentType
 	message.SenderPlatformID = c.platformID
-
+	message.IsExternalExtensions = c.IsExternalExtensions
 }
 
 func (c *Conversation) DeleteConversationFromLocalAndSvr(callback open_im_sdk_callback.Base, conversationID string, operationID string) {
@@ -1774,6 +1780,59 @@ func (c *Conversation) getConversationTypeByGroupID(groupID string) (conversatio
 		return "", 0, utils.Wrap(errors.New("err groupType"), "group type err")
 	}
 }
-func (c *Conversation) ModifyGroupMessageReaction(callback open_im_sdk_callback.Base, counter int32, reactionType, operationType int, groupID, msgID, operationID string) {
-	c.modifyGroupMessageReaction(callback, counter, reactionType, operationType, groupID, msgID, operationID)
+
+func (c *Conversation) ModifyGroupMessageReaction(callback open_im_sdk_callback.Base, counter int32, reactionType int, groupID, msgID, operationID string) {
+	//c.modifyGroupMessageReaction(callback, counter, reactionType, groupID, msgID, operationID)
+}
+
+func (c *Conversation) SetMessageReactionExtensions(callback open_im_sdk_callback.Base, message, reactionExtensionList, operationID string) {
+	s := sdk_struct.MsgStruct{}
+	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+	var unmarshalParams sdk_params_callback.SetMessageReactionExtensionsParams
+	common.JsonUnmarshalCallback(reactionExtensionList, &unmarshalParams, callback, operationID)
+	result := c.setMessageReactionExtensions(callback, &s, unmarshalParams, operationID)
+	callback.OnSuccess(utils.StructToJsonString(result))
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+	//c.modifyGroupMessageReaction(callback, counter, reactionType, operationType, groupID, msgID, operationID)
+}
+
+func (c *Conversation) AddMessageReactionExtensions(callback open_im_sdk_callback.Base, message, reactionExtensionList, operationID string) {
+	s := sdk_struct.MsgStruct{}
+	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+	var unmarshalParams sdk_params_callback.AddMessageReactionExtensionsParams
+	common.JsonUnmarshalCallback(reactionExtensionList, &unmarshalParams, callback, operationID)
+	result := c.addMessageReactionExtensions(callback, &s, unmarshalParams, operationID)
+	callback.OnSuccess(utils.StructToJsonString(result))
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+}
+
+func (c *Conversation) DeleteMessageReactionExtensions(callback open_im_sdk_callback.Base, message, reactionExtensionKeyList, operationID string) {
+	s := sdk_struct.MsgStruct{}
+	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+	var unmarshalParams sdk_params_callback.DeleteMessageReactionExtensionsParams
+	common.JsonUnmarshalCallback(reactionExtensionKeyList, &unmarshalParams, callback, operationID)
+	result := c.deleteMessageReactionExtensions(callback, &s, unmarshalParams, operationID)
+	callback.OnSuccess(utils.StructToJsonString(result))
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+}
+
+func (c *Conversation) GetMessageListReactionExtensions(callback open_im_sdk_callback.Base, messageList, operationID string) {
+	var list []*sdk_struct.MsgStruct
+	common.JsonUnmarshalAndArgsValidate(messageList, &list, callback, operationID)
+	result := c.getMessageListReactionExtensions(callback, list, operationID)
+	callback.OnSuccess(utils.StructToJsonString(result))
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+}
+
+/**
+**Get some reaction extensions in reactionExtensionKeyList of message list
+ */
+func (c *Conversation) GetMessageListSomeReactionExtensions(callback open_im_sdk_callback.Base, messageList, reactionExtensionKeyList, operationID string) {
+	var messagelist []*sdk_struct.MsgStruct
+	common.JsonUnmarshalAndArgsValidate(messageList, &messagelist, callback, operationID)
+	var list []string
+	common.JsonUnmarshalAndArgsValidate(reactionExtensionKeyList, &list, callback, operationID)
+	result := c.getMessageListSomeReactionExtensions(callback, messagelist, list, operationID)
+	callback.OnSuccess(utils.StructToJsonString(result))
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
 }

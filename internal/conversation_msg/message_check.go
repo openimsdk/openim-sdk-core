@@ -13,7 +13,7 @@ import (
 	"open_im_sdk/sdk_struct"
 )
 
-//检测其内部连续性，如果不连续，则向前补齐,获取这一组消息的最大最小seq，以及需要补齐的seq列表长度
+// 检测其内部连续性，如果不连续，则向前补齐,获取这一组消息的最大最小seq，以及需要补齐的seq列表长度
 func (c *Conversation) messageBlocksInternalContinuityCheck(sourceID string, notStartTime, isReverse bool, count,
 	sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback,
 	operationID string) (max, min uint32, length int) {
@@ -44,7 +44,7 @@ func (c *Conversation) messageBlocksInternalContinuityCheck(sourceID string, not
 	return maxSeq, minSeq, lostSeqListLength
 }
 
-//检测消息块之间的连续性，如果不连续，则向前补齐,返回块之间是否连续，bool
+// 检测消息块之间的连续性，如果不连续，则向前补齐,返回块之间是否连续，bool
 func (c *Conversation) messageBlocksBetweenContinuityCheck(lastMinSeq, maxSeq uint32, sourceID string, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback, operationID string) bool {
 	if lastMinSeq != 0 {
 		log.Debug(operationID, "get lost LastMinSeq is :", lastMinSeq, "thisMaxSeq is :", maxSeq)
@@ -79,7 +79,7 @@ func (c *Conversation) messageBlocksBetweenContinuityCheck(lastMinSeq, maxSeq ui
 	return false
 }
 
-//检测其内部连续性，如果不连续，则向前补齐,获取这一组消息的最大最小seq，以及需要补齐的seq列表长度
+// 检测其内部连续性，如果不连续，则向前补齐,获取这一组消息的最大最小seq，以及需要补齐的seq列表长度
 func (c *Conversation) messageBlocksEndContinuityCheck(minSeq uint32, sourceID string, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback, operationID string) {
 	var minSeqServer uint32
 	var maxSeqServer uint32
@@ -165,9 +165,9 @@ func (m *Conversation) getMaxAndMinHaveSeqList(messages []*model_struct.LocalCha
 	return max, min, seqList
 }
 
-//1、保证单次拉取消息量低于sdk单次从服务器拉取量
-//2、块中连续性检测
-//3、块之间连续性检测
+// 1、保证单次拉取消息量低于sdk单次从服务器拉取量
+// 2、块中连续性检测
+// 3、块之间连续性检测
 func (c *Conversation) pullMessageAndReGetHistoryMessages(sourceID string, seqList []uint32, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback, operationID string) {
 	var pullMsgReq server_api_params.PullMessageBySeqListReq
 	pullMsgReq.UserID = c.loginUserID
@@ -227,7 +227,8 @@ func (c *Conversation) pullMessageIntoTable(pullMsgData []*server_api_params.Msg
 	b := utils.GetCurrentTimestampByMill()
 
 	for _, v := range pullMsgData {
-		log.Info(operationID, "do Msg come here, msg detail ", v.RecvID, v.SendID, v.ClientMsgID, v.ServerMsgID, v.Seq, c.loginUserID)
+		isConversationUpdate := utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
+		log.Info(operationID, "do Msg come here, msg detail ", v.RecvID, v.SendID, v.ClientMsgID, v.ServerMsgID, v.Seq, v.ContentType, isConversationUpdate, c.loginUserID)
 		msg := new(sdk_struct.MsgStruct)
 		copier.Copy(msg, v)
 		var tips server_api_params.TipsComm
@@ -248,6 +249,9 @@ func (c *Conversation) pullMessageIntoTable(pullMsgData []*server_api_params.Msg
 			continue
 		}
 		msg.Status = constant.MsgStatusSendSuccess
+		if !isConversationUpdate {
+			msg.Status = constant.MsgStatusFiltered
+		}
 		msg.IsRead = false
 		//		log.Info(operationID, "new msg, seq, ServerMsgID, ClientMsgID", msg.Seq, msg.ServerMsgID, msg.ClientMsgID)
 		//De-analyze data

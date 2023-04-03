@@ -42,12 +42,6 @@ func NewCaller(funcName interface{}, callback CallbackWriter, arguments *[]js.Va
 	return &ReflectCall{funcName: funcName, callback: callback, arguments: *arguments}
 }
 
-//func (r *ReflectCall) NewCaller(funcName interface{}, callback CallbackWriter, arguments *[]js.Value) Caller {
-//	r.funcName = funcName
-//	r.callback = callback
-//	r.arguments = *arguments
-//	return r
-//}
 func (r *ReflectCall) AsyncCallWithCallback() interface{} {
 	return r.callback.HandlerFunc(r.asyncCallWithCallback)
 
