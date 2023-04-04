@@ -10,6 +10,10 @@ import (
 
 type LocalSuperGroup struct{}
 
+func NewLocalSuperGroup() *LocalSuperGroup {
+	return &LocalSuperGroup{}
+}
+
 func (i *LocalSuperGroup) GetJoinedSuperGroupList() (result []*model_struct.LocalGroup, err error) {
 	groupList, err := Exec()
 	if err != nil {

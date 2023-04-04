@@ -11,6 +11,10 @@ import (
 type LocalConversationUnreadMessages struct {
 }
 
+func NewLocalConversationUnreadMessages() *LocalConversationUnreadMessages {
+	return &LocalConversationUnreadMessages{}
+}
+
 func (i *LocalConversationUnreadMessages) BatchInsertConversationUnreadMessageList(messageList []*model_struct.LocalConversationUnreadMessage) error {
 	if messageList == nil {
 		return nil

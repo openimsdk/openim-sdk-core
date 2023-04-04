@@ -17,6 +17,10 @@ var PrimaryKeyNull = errors.New("primary key is null err")
 type LocalUsers struct {
 }
 
+func NewLocalUsers() *LocalUsers {
+	return &LocalUsers{}
+}
+
 func (l *LocalUsers) GetLoginUser(userID string) (*model_struct.LocalUser, error) {
 	user, err := Exec(userID)
 	if err != nil {

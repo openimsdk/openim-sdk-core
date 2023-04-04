@@ -11,6 +11,10 @@ import (
 type LocalCacheMessage struct {
 }
 
+func NewLocalCacheMessage() *LocalCacheMessage {
+	return &LocalCacheMessage{}
+}
+
 func (i *LocalCacheMessage) BatchInsertTempCacheMessageList(MessageList []*model_struct.TempCacheLocalChatLog) error {
 	_, err := Exec(utils.StructToJsonString(MessageList))
 	return err

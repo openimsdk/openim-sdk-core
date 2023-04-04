@@ -1,17 +1,9 @@
 package group
 
 import (
-	"context"
-	"fmt"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/wrapperspb"
-	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
@@ -25,166 +17,120 @@ func (g *Group) SetGroupListener(callback open_im_sdk_callback.OnGroupListener) 
 	g.listener = callback
 }
 
-// deprecated use CreateGroupV2
-func (g *Group) CreateGroup(ctx context.Context, groupBaseInfo sdk_params_callback.CreateGroupBaseInfoParam, memberList sdk_params_callback.CreateGroupMemberRoleParam) (*sdkws.GroupInfo, error) {
-	req := &group.CreateGroupReq{
-		GroupInfo: &sdkws.GroupInfo{
-			GroupName:    groupBaseInfo.GroupName,
-			Notification: groupBaseInfo.Notification,
-			Introduction: groupBaseInfo.Introduction,
-			FaceURL:      groupBaseInfo.FaceURL,
-			Ex:           groupBaseInfo.Ex,
-			GroupType:    groupBaseInfo.GroupType,
-		},
+func (g *Group) CreateGroup(callback open_im_sdk_callback.Base, groupBaseInfo string, memberList string, operationID string) {
+	if callback == nil {
+		return
 	}
-	if groupBaseInfo.NeedVerification != nil {
-		req.GroupInfo.NeedVerification = *groupBaseInfo.NeedVerification
-	}
-	for _, info := range memberList {
-		switch info.RoleLevel {
-		case constant.GroupOrdinaryUsers:
-			req.InitMembers = append(req.InitMembers, info.UserID)
-		case constant.GroupOwner:
-			req.OwnerUserID = info.UserID
-		case constant.GroupAdmin:
-			req.AdminUserIDs = append(req.AdminUserIDs, info.UserID)
-		default:
-			return nil, errs.ErrArgs.Wrap(fmt.Sprintf("CreateGroupV2: invalid role level %d", info.RoleLevel))
-		}
-	}
-	return g.CreateGroupV2(ctx, req)
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, groupBaseInfo, memberList)
+		var unmarshalCreateGroupBaseInfoParam sdk_params_callback.CreateGroupBaseInfoParam
+		common.JsonUnmarshalAndArgsValidate(groupBaseInfo, &unmarshalCreateGroupBaseInfoParam, callback, operationID)
+		var unmarshalCreateGroupMemberRoleParam sdk_params_callback.CreateGroupMemberRoleParam
+		common.JsonUnmarshalAndArgsValidate(memberList, &unmarshalCreateGroupMemberRoleParam, callback, operationID)
+		result := g.createGroup(callback, unmarshalCreateGroupBaseInfoParam, unmarshalCreateGroupMemberRoleParam, operationID)
+		callback.OnSuccess(utils.StructToJsonString(result))
+		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonString(result))
+	}()
 }
 
-func (g *Group) CreateGroupV2(ctx context.Context, req *group.CreateGroupReq) (*sdkws.GroupInfo, error) {
-	resp, err := util.CallApi[group.CreateGroupResp](ctx, constant.CreateGroupRouter, req)
-	if err != nil {
-		return nil, err
+func (g *Group) JoinGroup(callback open_im_sdk_callback.Base, groupID, reqMsg string, joinSource int32, operationID string) {
+	if callback == nil {
+		return
 	}
-	//g.SyncJoinedGroupList(operationID)
-	//g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID, operationID, false)
-	return resp.GroupInfo, nil
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", groupID, reqMsg, joinSource)
+		g.joinGroup(groupID, reqMsg, joinSource, callback, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.JoinGroupCallback))
+		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonString(sdk_params_callback.JoinGroupCallback))
+	}()
 }
 
-//func (g *Group) createGroupV2(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam, memberList sdk.CreateGroupMemberRoleParam, operationID string) *sdk.CreateGroupCallback {
-//	apiReq := api.CreateGroupReq{}
-//	apiReq.OperationID = operationID
-//	apiReq.OwnerUserID = g.loginUserID
-//	apiReq.MemberList = memberList
-//	for _, v := range apiReq.MemberList {
-//		if v.RoleLevel == 0 {
-//			v.RoleLevel = 1
-//		}
-//	}
-//
-//	copier.Copy(&apiReq, &group)
-//	realData := api.CreateGroupResp{}
-//	log.NewInfo(operationID, utils.GetSelfFuncName(), "api req args: ", apiReq)
-//	g.p.PostFatalCallbackPenetrate(callback, constant.CreateGroupRouter, apiReq, &realData.GroupInfo, apiReq.OperationID)
-//	m := utils.JsonDataOne(&realData.GroupInfo)
-//	g.SyncJoinedGroupList(operationID)
-//	g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID, operationID, false)
-//	return (*sdk.CreateGroupCallback)(&m)
-//}
-
-func (g *Group) JoinGroup(ctx context.Context, groupID, reqMsg string, joinSource int32) error {
-	if err := util.ApiPost(ctx, constant.JoinGroupRouter, &group.JoinGroupReq{GroupID: groupID, ReqMessage: reqMsg, JoinSource: joinSource}, nil); err != nil {
-		return err
+func (g *Group) QuitGroup(callback open_im_sdk_callback.Base, groupID string, operationID string) {
+	if callback == nil {
+		return
 	}
-	//g.p.PostFatalCallback(callback, constant.JoinGroupRouter, apiReq, nil, apiReq.OperationID)
-	//g.SyncSelfGroupApplication(operationID)
-	return nil
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", groupID)
+		g.quitGroup(groupID, callback, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.QuitGroupCallback))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk_params_callback.QuitGroupCallback))
+	}()
 }
 
-func (g *Group) QuitGroup(ctx context.Context, groupID string) error {
-	if err := util.ApiPost(ctx, constant.QuitGroupRouter, &group.QuitGroupReq{GroupID: groupID}, nil); err != nil {
-		return err
+func (g *Group) DismissGroup(callback open_im_sdk_callback.Base, groupID string, operationID string) {
+	if callback == nil {
+		return
 	}
-	//g.quitGroup(groupID, callback, operationID)
-	//callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.QuitGroupCallback))
-	return nil
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", groupID)
+		g.dismissGroup(groupID, callback, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.DismissGroupCallback))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk_params_callback.DismissGroupCallback))
+	}()
 }
 
-func (g *Group) DismissGroup(ctx context.Context, groupID string) error {
-	if err := util.ApiPost(ctx, constant.DismissGroupRouter, &group.DismissGroupReq{GroupID: groupID}, nil); err != nil {
-		return err
+func (g *Group) ChangeGroupMute(callback open_im_sdk_callback.Base, groupID string, isMute bool, operationID string) {
+	if callback == nil {
+		return
 	}
-	//g.dismissGroup(groupID, callback, operationID)
-	//callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.DismissGroupCallback))
-	return nil
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", groupID, isMute)
+		g.changeGroupMute(groupID, isMute, callback, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GroupMuteChangeCallback))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk_params_callback.GroupMuteChangeCallback))
+	}()
 }
 
-func (g *Group) ChangeGroupMute(ctx context.Context, groupID string, isMute bool) (err error) {
-	if isMute {
-		err = util.ApiPost(ctx, constant.MuteGroupRouter, &group.MuteGroupReq{GroupID: groupID}, nil)
-	} else {
-		err = util.ApiPost(ctx, constant.CancelMuteGroupRouter, &group.CancelMuteGroupReq{GroupID: groupID}, nil)
+func (g *Group) ChangeGroupMemberMute(callback open_im_sdk_callback.Base, groupID, userID string, mutedSeconds uint32, operationID string) {
+	if callback == nil {
+		return
 	}
-	if err != nil {
-		return err
-	}
-	//if callback == nil {
-	//	return
-	//}
-	//fName := utils.GetSelfFuncName()
-	//go func() {
-	//	log.NewInfo(operationID, fName, "args: ", groupID, isMute)
-	//	g.changeGroupMute(groupID, isMute, callback, operationID)
-	//	callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GroupMuteChangeCallback))
-	//	log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk_params_callback.GroupMuteChangeCallback))
-	//}()
-	return nil
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", groupID, userID, mutedSeconds)
+		g.changeGroupMemberMute(groupID, userID, mutedSeconds, callback, operationID)
+		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GroupMemberMuteChangeCallback))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk_params_callback.GroupMemberMuteChangeCallback))
+	}()
 }
 
-func (g *Group) ChangeGroupMemberMute(ctx context.Context, groupID, userID string, mutedSeconds uint32) (err error) {
-	if mutedSeconds == 0 {
-		err = util.ApiPost(ctx, constant.CancelMuteGroupMemberRouter, &group.CancelMuteGroupMemberReq{GroupID: groupID, UserID: userID}, nil)
-	} else {
-		err = util.ApiPost(ctx, constant.MuteGroupMemberRouter, &group.MuteGroupMemberReq{GroupID: groupID, UserID: userID, MutedSeconds: mutedSeconds}, nil)
+func (g *Group) SetGroupMemberRoleLevel(callback open_im_sdk_callback.Base, groupID, userID string, roleLevel int, operationID string) {
+	if callback == nil {
+		return
 	}
-	if err != nil {
-		return err
-	}
-
-	//fName := utils.GetSelfFuncName()
-	//go func() {
-	//	log.NewInfo(operationID, fName, "args: ", groupID, userID, mutedSeconds)
-	//	g.changeGroupMemberMute(groupID, userID, mutedSeconds, callback, operationID)
-	//	callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GroupMemberMuteChangeCallback))
-	//	log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk_params_callback.GroupMemberMuteChangeCallback))
-	//}()
-	return nil
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", groupID, userID, roleLevel)
+		g.setGroupMemberRoleLevel(callback, groupID, userID, roleLevel, operationID)
+		callback.OnSuccess(constant.SuccessCallbackDefault)
+		log.NewInfo(operationID, fName, " callback: ", constant.SuccessCallbackDefault)
+	}()
 }
 
-func (g *Group) SetGroupMemberRoleLevel(ctx context.Context, groupID, userID string, roleLevel int) error {
-	//fName := utils.GetSelfFuncName()
-	//go func() {
-	//	log.NewInfo(operationID, fName, "args: ", groupID, userID, roleLevel)
-	//	g.setGroupMemberRoleLevel(callback, groupID, userID, roleLevel, operationID)
-	//	callback.OnSuccess(constant.SuccessCallbackDefault)
-	//	log.NewInfo(operationID, fName, " callback: ", constant.SuccessCallbackDefault)
-	//}()
-	//if err := util.ApiPost(ctx, constant.SetGroupMemberInfoRouter, &group.SetGroupMemberInfoReq{Members:[]*group.SetGroupMemberInfo{{GroupID: groupID, UserID: userID, RoleLevel: wrapperspb.Int32(int32(roleLevel))}}}, nil);err != nil {
-	//	return err
-	//}
-
-	return g.SetGroupMemberInfo(ctx, &group.SetGroupMemberInfo{GroupID: groupID, UserID: userID, RoleLevel: wrapperspb.Int32(int32(roleLevel))})
+func (g *Group) SetGroupMemberInfo(callback open_im_sdk_callback.Base, groupMemberInfo string, operationID string) {
+	var unmarshalSetGroupMemberInfoParam sdk_params_callback.SetGroupMemberInfoParam
+	common.JsonUnmarshalAndArgsValidate(groupMemberInfo, &unmarshalSetGroupMemberInfoParam, callback, operationID)
+	g.setGroupMemberInfo(callback, unmarshalSetGroupMemberInfoParam, operationID)
+	callback.OnSuccess(utils.StructToJsonStringDefault(sdk_params_callback.SetGroupMemberInfoCallback))
 }
 
-func (g *Group) SetGroupMemberInfo(ctx context.Context, groupMemberInfo *group.SetGroupMemberInfo) error {
-	//var unmarshalSetGroupMemberInfoParam sdk_params_callback.SetGroupMemberInfoParam
-	//common.JsonUnmarshalAndArgsValidate(groupMemberInfo, &unmarshalSetGroupMemberInfoParam, callback, operationID)
-	//g.setGroupMemberInfo(callback, unmarshalSetGroupMemberInfoParam, operationID)
-	//callback.OnSuccess(utils.StructToJsonStringDefault(sdk_params_callback.SetGroupMemberInfoCallback))
-
-	if err := util.ApiPost(ctx, constant.SetGroupMemberInfoRouter, &group.SetGroupMemberInfoReq{Members: []*group.SetGroupMemberInfo{groupMemberInfo}}, nil); err != nil {
-		return err
+func (g *Group) GetJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) {
+	if callback == nil {
+		return
 	}
-
-	return nil
-}
-
-func (g *Group) GetJoinedGroupList(ctx context.Context) ([]*model_struct.LocalGroup, error) {
-	return g.db.GetJoinedGroupListDB()
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ")
+		groupList := g.getJoinedGroupList(callback, operationID)
+		log.Debug(operationID, "this is a dbd test", groupList)
+		callback.OnSuccess(utils.StructToJsonStringDefault(groupList))
+		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonStringDefault(groupList))
+	}()
 }
 
 func (g *Group) GetGroupsInfo(callback open_im_sdk_callback.Base, groupIDList string, operationID string) {
