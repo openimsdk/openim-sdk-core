@@ -47,18 +47,18 @@ type LocalFriend struct {
 	AttachedInfo   string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 }
 
-//message FriendRequest{
-//string  FromUserID = 1;
-//string ToUserID = 2;
-//int32 HandleResult = 3;
-//string ReqMsg = 4;
-//int64 CreateTime = 5;
-//string HandlerUserID = 6;
-//string HandleMsg = 7;
-//int64 HandleTime = 8;
-//string Ex = 9;
-//}
-//open_im_sdk.FriendRequest == imdb.FriendRequest
+// message FriendRequest{
+// string  FromUserID = 1;
+// string ToUserID = 2;
+// int32 HandleResult = 3;
+// string ReqMsg = 4;
+// int64 CreateTime = 5;
+// string HandlerUserID = 6;
+// string HandleMsg = 7;
+// int64 HandleTime = 8;
+// string Ex = 9;
+// }
+// open_im_sdk.FriendRequest == imdb.FriendRequest
 type LocalFriendRequest struct {
 	FromUserID   string `gorm:"column:from_user_id;primary_key;type:varchar(64)" json:"fromUserID"`
 	FromNickname string `gorm:"column:from_nickname;type:varchar;type:varchar(255)" json:"fromNickname"`
@@ -168,17 +168,17 @@ type LocalGroupMember struct {
 	AttachedInfo   string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 }
 
-//message GroupRequest{
-//string UserID = 1;
-//string GroupID = 2;
-//string HandleResult = 3;
-//string ReqMsg = 4;
-//string  HandleMsg = 5;
-//int64 ReqTime = 6;
-//string HandleUserID = 7;
-//int64 HandleTime = 8;
-//string Ex = 9;
-//}open_im_sdk.GroupRequest == imdb.GroupRequest
+// message GroupRequest{
+// string UserID = 1;
+// string GroupID = 2;
+// string HandleResult = 3;
+// string ReqMsg = 4;
+// string  HandleMsg = 5;
+// int64 ReqTime = 6;
+// string HandleUserID = 7;
+// int64 HandleTime = 8;
+// string Ex = 9;
+// }open_im_sdk.GroupRequest == imdb.GroupRequest
 type LocalGroupRequest struct {
 	GroupID       string `gorm:"column:group_id;primary_key;type:varchar(64)" json:"groupID"`
 	GroupName     string `gorm:"column:group_name;size:255" json:"groupName"`
@@ -209,17 +209,17 @@ type LocalGroupRequest struct {
 	InviterUserID string `gorm:"column:inviter_user_id;size:64"  json:"inviterUserID"`
 }
 
-//string UserID = 1;
-//string Nickname = 2;
-//string FaceUrl = 3;
-//int32 Gender = 4;
-//string PhoneNumber = 5;
-//string Birth = 6;
-//string Email = 7;
-//string Ex = 8;
-//int64 CreateTime = 9;
-//int32 AppMangerLevel = 10;
-//open_im_sdk.User == imdb.User
+// string UserID = 1;
+// string Nickname = 2;
+// string FaceUrl = 3;
+// int32 Gender = 4;
+// string PhoneNumber = 5;
+// string Birth = 6;
+// string Email = 7;
+// string Ex = 8;
+// int64 CreateTime = 9;
+// int32 AppMangerLevel = 10;
+// open_im_sdk.User == imdb.User
 type LocalUser struct {
 	UserID           string    `gorm:"column:user_id;primary_key;type:varchar(64)" json:"userID"`
 	Nickname         string    `gorm:"column:name;type:varchar(255)" json:"nickname"`
@@ -236,14 +236,14 @@ type LocalUser struct {
 	BirthTime        time.Time `gorm:"column:birth_time" json:"birthTime"`
 }
 
-//message BlackInfo{
-//string OwnerUserID = 1;
-//int64 CreateTime = 2;
-//PublicUserInfo BlackUserInfo = 4;
-//int32 AddSource = 5;
-//string OperatorUserID = 6;
-//string Ex = 7;
-//}
+// message BlackInfo{
+// string OwnerUserID = 1;
+// int64 CreateTime = 2;
+// PublicUserInfo BlackUserInfo = 4;
+// int32 AddSource = 5;
+// string OperatorUserID = 6;
+// string Ex = 7;
+// }
 // open_im_sdk.BlackInfo(BlackUserInfo) != imdb.Black (BlockUserID)
 type LocalBlack struct {
 	OwnerUserID    string `gorm:"column:owner_user_id;primary_key;type:varchar(64)" json:"ownerUserID"`
@@ -268,26 +268,27 @@ type LocalSeq struct {
 	MinSeq uint32 `gorm:"column:min_seq"`
 }
 
-//`create table if not exists  chat_log (
-//      client_msg_id char(64)   NOT NULL,
-//      server_msg_id char(64)   DEFAULT NULL,
-//	  send_id char(64)   NOT NULL ,
-//	  is_read int NOT NULL ,
-//	  seq INTEGER DEFAULT NULL ,
-//	  status int NOT NULL ,
-//	  session_type int NOT NULL ,
-//	  recv_id char(64)   NOT NULL ,
-//	  content_type int NOT NULL ,
-//      sender_face_url varchar(100) DEFAULT NULL,
-//      sender_nick_name varchar(64) DEFAULT NULL,
-//	  msg_from int NOT NULL ,
-//	  content varchar(1000)   NOT NULL ,
-//	  sender_platform_id int NOT NULL ,
-//	  send_time INTEGER DEFAULT NULL ,
-//	  create_time INTEGER  DEFAULT NULL,
-//      ex varchar(1024) DEFAULT NULL,
-//	  PRIMARY KEY (client_msg_id)
-//	)`
+// `create table if not exists  chat_log (
+//
+//	     client_msg_id char(64)   NOT NULL,
+//	     server_msg_id char(64)   DEFAULT NULL,
+//		  send_id char(64)   NOT NULL ,
+//		  is_read int NOT NULL ,
+//		  seq INTEGER DEFAULT NULL ,
+//		  status int NOT NULL ,
+//		  session_type int NOT NULL ,
+//		  recv_id char(64)   NOT NULL ,
+//		  content_type int NOT NULL ,
+//	     sender_face_url varchar(100) DEFAULT NULL,
+//	     sender_nick_name varchar(64) DEFAULT NULL,
+//		  msg_from int NOT NULL ,
+//		  content varchar(1000)   NOT NULL ,
+//		  sender_platform_id int NOT NULL ,
+//		  send_time INTEGER DEFAULT NULL ,
+//		  create_time INTEGER  DEFAULT NULL,
+//	     ex varchar(1024) DEFAULT NULL,
+//		  PRIMARY KEY (client_msg_id)
+//		)`
 type LocalChatLog struct {
 	ClientMsgID          string `gorm:"column:client_msg_id;primary_key;type:char(64)" json:"clientMsgID"`
 	ServerMsgID          string `gorm:"column:server_msg_id;type:char(64)" json:"serverMsgID"`
@@ -353,22 +354,24 @@ type TempCacheLocalChatLog struct {
 	Ex               string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 
-//`create table if not exists  conversation (
-//  conversation_id char(128) NOT NULL,
-//  conversation_type int(11) NOT NULL,
-//  user_id varchar(128)  DEFAULT NULL,
-//  group_id varchar(128)  DEFAULT NULL,
-//  show_name varchar(128)  NOT NULL,
-//  face_url varchar(128)  NOT NULL,
-//  recv_msg_opt int(11) NOT NULL ,
-//  unread_count int(11) NOT NULL ,
-//  latest_msg varchar(255)  NOT NULL ,
-//  latest_msg_send_time INTEGER(255)  NOT NULL ,
-//  draft_text varchar(255)  DEFAULT NULL ,
-//  draft_timestamp INTEGER(255)  DEFAULT NULL ,
-//  is_pinned int(10) NOT NULL ,
-//  PRIMARY KEY (conversation_id)
-//)
+// `create table if not exists  conversation (
+//
+//	conversation_id char(128) NOT NULL,
+//	conversation_type int(11) NOT NULL,
+//	user_id varchar(128)  DEFAULT NULL,
+//	group_id varchar(128)  DEFAULT NULL,
+//	show_name varchar(128)  NOT NULL,
+//	face_url varchar(128)  NOT NULL,
+//	recv_msg_opt int(11) NOT NULL ,
+//	unread_count int(11) NOT NULL ,
+//	latest_msg varchar(255)  NOT NULL ,
+//	latest_msg_send_time INTEGER(255)  NOT NULL ,
+//	draft_text varchar(255)  DEFAULT NULL ,
+//	draft_timestamp INTEGER(255)  DEFAULT NULL ,
+//	is_pinned int(10) NOT NULL ,
+//	PRIMARY KEY (conversation_id)
+//
+// )
 type LocalConversation struct {
 	ConversationID        string `gorm:"column:conversation_id;primary_key;type:char(128)" json:"conversationID"`
 	ConversationType      int32  `gorm:"column:conversation_type" json:"conversationType"`
@@ -398,17 +401,17 @@ type LocalConversationUnreadMessage struct {
 	Ex             string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
 }
 
-//message GroupRequest{
-//string UserID = 1;
-//string GroupID = 2;
-//string HandleResult = 3;
-//string ReqMsg = 4;
-//string  HandleMsg = 5;
-//int64 ReqTime = 6;
-//string HandleUserID = 7;
-//int64 HandleTime = 8;
-//string Ex = 9;
-//}open_im_sdk.GroupRequest == imdb.GroupRequest
+// message GroupRequest{
+// string UserID = 1;
+// string GroupID = 2;
+// string HandleResult = 3;
+// string ReqMsg = 4;
+// string  HandleMsg = 5;
+// int64 ReqTime = 6;
+// string HandleUserID = 7;
+// int64 HandleTime = 8;
+// string Ex = 9;
+// }open_im_sdk.GroupRequest == imdb.GroupRequest
 type LocalAdminGroupRequest struct {
 	LocalGroupRequest
 }
@@ -455,4 +458,20 @@ type SearchDepartmentMemberResult struct {
 type LocalChatLogReactionExtensions struct {
 	ClientMsgID             string `gorm:"column:client_msg_id;primary_key;type:char(64)" json:"clientMsgID"`
 	LocalReactionExtensions []byte `gorm:"column:local_reaction_extensions" json:"localReactionExtensions"`
+}
+type LocalWorkMomentsNotification struct {
+	JsonDetail string `gorm:"column:json_detail"`
+	CreateTime int64  `gorm:"create_time"`
+}
+
+func (LocalWorkMomentsNotification) TableName() string {
+	return "local_work_moments_notification"
+}
+
+type LocalWorkMomentsNotificationUnreadCount struct {
+	UnreadCount int `gorm:"unread_count" json:"unreadCount"`
+}
+
+func (LocalWorkMomentsNotificationUnreadCount) TableName() string {
+	return "local_work_moments_notification_unread_count"
 }

@@ -1,3 +1,6 @@
+//go:build js && wasm
+// +build js,wasm
+
 package indexdb
 
 import (
@@ -91,7 +94,7 @@ func (i *LocalConversations) GetAllConversationListToSync() (result []*model_str
 	}
 }
 func (i *LocalConversations) UpdateColumnsConversation(conversationID string, args map[string]interface{}) error {
-	_, err := Exec(conversationID, args)
+	_, err := Exec(conversationID, utils.StructToJsonString(args))
 	return err
 }
 func (i IndexDB) GetConversationByUserID(userID string) (*model_struct.LocalConversation, error) {
@@ -168,6 +171,7 @@ func (i IndexDB) UpdateConversation(c *model_struct.LocalConversation) error {
 		DraftTextTime:         c.DraftTextTime,
 		IsPinned:              c.IsPinned,
 		IsPrivateChat:         c.IsPrivateChat,
+		BurnDuration:          c.BurnDuration,
 		IsNotInGroup:          c.IsNotInGroup,
 		UpdateUnreadCountTime: c.UpdateUnreadCountTime,
 		AttachedInfo:          c.AttachedInfo,
@@ -188,6 +192,7 @@ func (i IndexDB) UpdateConversationForSync(c *model_struct.LocalConversation) er
 		IsPrivateChat:         c.IsPrivateChat,
 		IsNotInGroup:          c.IsNotInGroup,
 		UpdateUnreadCountTime: c.UpdateUnreadCountTime,
+		BurnDuration:          c.BurnDuration,
 		AttachedInfo:          c.AttachedInfo,
 		Ex:                    c.Ex,
 	}
@@ -234,12 +239,12 @@ func (i IndexDB) ClearConversation(conversationID string) error {
 	return err
 }
 
-func (i IndexDB) CleaAllConversation() error {
+func (i IndexDB) ClearAllConversation() error {
 	_, err := Exec()
 	return err
 }
 
-func (i IndexDB) SetConversationDraft(conversationID, draftText string) error {
+func (i IndexDB) SetConversationDraftDB(conversationID, draftText string) error {
 	_, err := Exec(conversationID, draftText)
 	return err
 }

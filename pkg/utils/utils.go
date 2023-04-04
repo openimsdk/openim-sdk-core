@@ -464,3 +464,12 @@ func GetUserIDForMinSeq(userID string) string {
 func GetGroupIDForMinSeq(groupID string) string {
 	return "g_" + groupID
 }
+
+func TimeStringToTime(timeString string) (time.Time, error) {
+	t, err := time.Parse("2006-01-02", timeString)
+	return t, err
+}
+
+func TimeToString(t time.Time) string {
+	return t.Format("2006-01-02")
+}

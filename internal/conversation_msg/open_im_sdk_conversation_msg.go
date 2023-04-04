@@ -217,11 +217,11 @@ func (c *Conversation) GetTotalUnreadMsgCount(callback open_im_sdk_callback.Base
 		return
 	}
 	go func() {
-		log.NewInfo(operationID, "GetTotalUnreadMsgCount args: ")
+		log.NewInfo(operationID, "GetTotalUnreadMsgCountDB args: ")
 		count, err := c.db.GetTotalUnreadMsgCountDB()
 		common.CheckDBErrCallback(callback, err, operationID)
 		callback.OnSuccess(utils.Int32ToString(count))
-		log.NewInfo(operationID, "GetTotalUnreadMsgCount callback: ", utils.Int32ToString(count))
+		log.NewInfo(operationID, "GetTotalUnreadMsgCountDB callback: ", utils.Int32ToString(count))
 	}()
 }
 
@@ -461,9 +461,9 @@ func (c *Conversation) CreateImageMessageFromFullPath(imageFullPath, operationID
 	go func() {
 		dstFile := utils.FileTmpPath(imageFullPath, c.DataDir) //a->b
 		_, err := utils.CopyFile(imageFullPath, dstFile)
-		log.Info("internal", "copy file, ", imageFullPath, dstFile)
+		log.Info(operationID, "copy file, ", imageFullPath, dstFile)
 		if err != nil {
-			log.Error("internal", "open file failed: ", err, imageFullPath)
+			log.Error(operationID, "open file failed: ", err, imageFullPath)
 		}
 		wg.Done()
 	}()
@@ -471,10 +471,10 @@ func (c *Conversation) CreateImageMessageFromFullPath(imageFullPath, operationID
 	s := sdk_struct.MsgStruct{}
 	c.initBasicInfo(&s, constant.UserMsgType, constant.Picture, operationID)
 	s.PictureElem.SourcePath = imageFullPath
-	log.Info("internal", "ImageMessage  path:", s.PictureElem.SourcePath)
+	log.Info(operationID, "ImageMessage  path:", s.PictureElem.SourcePath)
 	imageInfo, err := getImageInfo(s.PictureElem.SourcePath)
 	if err != nil {
-		log.Error("internal", "getImageInfo err:", err.Error())
+		log.Error(operationID, "getImageInfo err:", err.Error())
 		return ""
 	}
 	s.PictureElem.SourcePicture.Width = imageInfo.Width
@@ -989,7 +989,7 @@ func (c *Conversation) SendMessageByBuffer(callback open_im_sdk_callback.SendMsg
 				s.Content = utils.StructToJsonString(s.PictureElem)
 
 			case constant.Voice:
-				soundURL, uuid, err := c.UploadSoundByBuffer(buffer1, s.SoundElem.DataSize, "sound", callback.OnProgress)
+				soundURL, uuid, err := c.UploadSoundByBuffer(buffer1, s.SoundElem.DataSize, s.SoundElem.SoundType, callback.OnProgress)
 				c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
 				s.SoundElem.SourceURL = soundURL
 				s.SoundElem.UUID = uuid
@@ -998,7 +998,7 @@ func (c *Conversation) SendMessageByBuffer(callback open_im_sdk_callback.SendMsg
 			case constant.Video:
 
 				snapshotURL, snapshotUUID, videoURL, videoUUID, err := c.UploadVideoByBuffer(buffer1, buffer2, s.VideoElem.VideoSize,
-					s.VideoElem.SnapshotSize, s.VideoElem.VideoType, callback.OnProgress)
+					s.VideoElem.SnapshotSize, s.VideoElem.VideoType, s.VideoElem.SnapshotType, callback.OnProgress)
 				c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
 				s.VideoElem.VideoURL = videoURL
 				s.VideoElem.SnapshotUUID = snapshotUUID
@@ -1006,7 +1006,7 @@ func (c *Conversation) SendMessageByBuffer(callback open_im_sdk_callback.SendMsg
 				s.VideoElem.VideoUUID = videoUUID
 				s.Content = utils.StructToJsonString(s.VideoElem)
 			case constant.File:
-				fileURL, fileUUID, err := c.UploadFileByBuffer(buffer1, s.FileElem.FileSize, "file", callback.OnProgress)
+				fileURL, fileUUID, err := c.UploadFileByBuffer(buffer1, s.FileElem.FileSize, s.FileElem.FileType, callback.OnProgress)
 				c.checkErrAndUpdateMessage(callback, 301, err, &s, lc, operationID)
 				s.FileElem.SourceURL = fileURL
 				s.FileElem.UUID = fileUUID

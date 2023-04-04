@@ -1,8 +1,13 @@
+//go:build js && wasm
+// +build js,wasm
+
 package main
 
 import (
+	"fmt"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/wasm/wasm_wrapper"
+	"runtime"
 	"runtime/debug"
 
 	"syscall/js"
@@ -14,6 +19,7 @@ func main() {
 			log.Error("MAIN", "panic info is:", r, string(debug.Stack()))
 		}
 	}()
+	fmt.Println("runtime env", runtime.GOARCH, runtime.GOOS)
 	registerFunc()
 	<-make(chan bool)
 }
@@ -29,6 +35,7 @@ func registerFunc() {
 	js.Global().Set("logout", js.FuncOf(wrapperInitLogin.Logout))
 	js.Global().Set("wakeUp", js.FuncOf(wrapperInitLogin.WakeUp))
 	js.Global().Set("getLoginStatus", js.FuncOf(wrapperInitLogin.GetLoginStatus))
+	js.Global().Set("setAppBackgroundStatus", js.FuncOf(wrapperInitLogin.SetAppBackgroundStatus))
 	//register conversation and message func
 	wrapperConMsg := wasm_wrapper.NewWrapperConMsg(globalFuc)
 	js.Global().Set("createTextMessage", js.FuncOf(wrapperConMsg.CreateTextMessage))
@@ -63,12 +70,19 @@ func registerFunc() {
 	js.Global().Set("markMessageAsReadByConID", js.FuncOf(wrapperConMsg.MarkMessageAsReadByConID))
 	js.Global().Set("sendMessage", js.FuncOf(wrapperConMsg.SendMessage))
 	js.Global().Set("sendMessageNotOss", js.FuncOf(wrapperConMsg.SendMessageNotOss))
+	js.Global().Set("newRevokeMessage", js.FuncOf(wrapperConMsg.NewRevokeMessage))
 	js.Global().Set("sendMessageByBuffer", js.FuncOf(wrapperConMsg.SendMessageByBuffer))
+	js.Global().Set("setMessageReactionExtensions", js.FuncOf(wrapperConMsg.SetMessageReactionExtensions))
+	js.Global().Set("addMessageReactionExtensions", js.FuncOf(wrapperConMsg.AddMessageReactionExtensions))
+	js.Global().Set("deleteMessageReactionExtensions", js.FuncOf(wrapperConMsg.DeleteMessageReactionExtensions))
+	js.Global().Set("getMessageListReactionExtensions", js.FuncOf(wrapperConMsg.GetMessageListReactionExtensions))
+	js.Global().Set("getMessageListSomeReactionExtensions", js.FuncOf(wrapperConMsg.GetMessageListSomeReactionExtensions))
 	js.Global().Set("getAllConversationList", js.FuncOf(wrapperConMsg.GetAllConversationList))
 	js.Global().Set("getConversationListSplit", js.FuncOf(wrapperConMsg.GetConversationListSplit))
 	js.Global().Set("getOneConversation", js.FuncOf(wrapperConMsg.GetOneConversation))
 	js.Global().Set("deleteConversationFromLocalAndSvr", js.FuncOf(wrapperConMsg.DeleteConversationFromLocalAndSvr))
 	js.Global().Set("getAdvancedHistoryMessageList", js.FuncOf(wrapperConMsg.GetAdvancedHistoryMessageList))
+	js.Global().Set("getAdvancedHistoryMessageListReverse", js.FuncOf(wrapperConMsg.GetAdvancedHistoryMessageListReverse))
 	js.Global().Set("getHistoryMessageList", js.FuncOf(wrapperConMsg.GetHistoryMessageList))
 	js.Global().Set("getMultipleConversation", js.FuncOf(wrapperConMsg.GetMultipleConversation))
 	js.Global().Set("setOneConversationPrivateChat", js.FuncOf(wrapperConMsg.SetOneConversationPrivateChat))
@@ -80,9 +94,11 @@ func registerFunc() {
 	js.Global().Set("resetConversationGroupAtType", js.FuncOf(wrapperConMsg.ResetConversationGroupAtType))
 	js.Global().Set("pinConversation", js.FuncOf(wrapperConMsg.PinConversation))
 	js.Global().Set("getTotalUnreadMsgCount", js.FuncOf(wrapperConMsg.GetTotalUnreadMsgCount))
+	js.Global().Set("setOneConversationBurnDuration", js.FuncOf(wrapperConMsg.SetOneConversationBurnDuration))
 	js.Global().Set("findMessageList", js.FuncOf(wrapperConMsg.FindMessageList))
 	js.Global().Set("getHistoryMessageListReverse", js.FuncOf(wrapperConMsg.GetHistoryMessageListReverse))
-	js.Global().Set("newRevokeMessage", js.FuncOf(wrapperConMsg.NewRevokeMessage))
+
+	js.Global().Set("revokeMessage", js.FuncOf(wrapperConMsg.RevokeMessage))
 	js.Global().Set("typingStatusUpdate", js.FuncOf(wrapperConMsg.TypingStatusUpdate))
 	js.Global().Set("markGroupMessageAsRead", js.FuncOf(wrapperConMsg.MarkGroupMessageAsRead))
 	js.Global().Set("deleteMessageFromLocalStorage", js.FuncOf(wrapperConMsg.DeleteMessageFromLocalStorage))
@@ -156,4 +172,7 @@ func registerFunc() {
 	js.Global().Set("signalingReject", js.FuncOf(wrapperSignaling.SignalingReject))
 	js.Global().Set("signalingCancel", js.FuncOf(wrapperSignaling.SignalingCancel))
 	js.Global().Set("signalingHungUp", js.FuncOf(wrapperSignaling.SignalingHungUp))
+
+	wrapperThird := wasm_wrapper.NewWrapperThird(globalFuc)
+	js.Global().Set("updateFcmToken", js.FuncOf(wrapperThird.UpdateFcmToken))
 }

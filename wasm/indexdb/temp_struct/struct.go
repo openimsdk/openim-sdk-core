@@ -1,23 +1,29 @@
+//go:build js && wasm
+// +build js,wasm
+
 package temp_struct
 
 type LocalChatLog struct {
-	ServerMsgID      string ` json:"serverMsgID,omitempty"`
-	SendID           string ` json:"sendID,omitempty"`
-	RecvID           string ` json:"recvID,omitempty"`
-	SenderPlatformID int32  ` json:"senderPlatformID,omitempty"`
-	SenderNickname   string ` json:"senderNickname,omitempty"`
-	SenderFaceURL    string ` json:"senderFaceURL,omitempty"`
-	SessionType      int32  ` json:"sessionType,omitempty"`
-	MsgFrom          int32  ` json:"msgFrom,omitempty"`
-	ContentType      int32  ` json:"contentType,omitempty"`
-	Content          string ` json:"content,omitempty"`
-	IsRead           bool   ` json:"isRead,omitempty"`
-	Status           int32  ` json:"status,omitempty"`
-	Seq              uint32 ` json:"seq,omitempty"`
-	SendTime         int64  ` json:"sendTime,omitempty"`
-	CreateTime       int64  ` json:"createTime,omitempty"`
-	AttachedInfo     string ` json:"attachedInfo,omitempty"`
-	Ex               string ` json:"ex,omitempty"`
+	ServerMsgID          string ` json:"serverMsgID,omitempty"`
+	SendID               string ` json:"sendID,omitempty"`
+	RecvID               string ` json:"recvID,omitempty"`
+	SenderPlatformID     int32  ` json:"senderPlatformID,omitempty"`
+	SenderNickname       string ` json:"senderNickname,omitempty"`
+	SenderFaceURL        string ` json:"senderFaceURL,omitempty"`
+	SessionType          int32  ` json:"sessionType,omitempty"`
+	MsgFrom              int32  ` json:"msgFrom,omitempty"`
+	ContentType          int32  ` json:"contentType,omitempty"`
+	Content              string ` json:"content,omitempty"`
+	IsRead               bool   ` json:"isRead,omitempty"`
+	Status               int32  ` json:"status,omitempty"`
+	Seq                  uint32 ` json:"seq,omitempty"`
+	SendTime             int64  ` json:"sendTime,omitempty"`
+	CreateTime           int64  ` json:"createTime,omitempty"`
+	AttachedInfo         string ` json:"attachedInfo,omitempty"`
+	Ex                   string ` json:"ex,omitempty"`
+	IsReact              bool   ` json:"isReact,omitempty"`
+	IsExternalExtensions bool   ` json:"isExternalExtensions,omitempty"`
+	MsgFirstModifyTime   int64  ` json:"msgFirstModifyTime,omitempty"`
 }
 type LocalConversation struct {
 	ConversationID        string ` json:"conversationID,omitempty"`
@@ -35,6 +41,7 @@ type LocalConversation struct {
 	DraftTextTime         int64  ` json:"draftTextTime,omitempty"`
 	IsPinned              bool   ` json:"isPinned,omitempty"`
 	IsPrivateChat         bool   ` json:"isPrivateChat,omitempty"`
+	BurnDuration          int32  ` json:"burnDuration,omitempty"`
 	IsNotInGroup          bool   ` json:"isNotInGroup,omitempty"`
 	UpdateUnreadCountTime int64  ` json:"updateUnreadCountTime,omitempty"`
 	AttachedInfo          string ` json:"attachedInfo,omitempty"`
@@ -47,6 +54,7 @@ type LocalPartConversation struct {
 	IsPrivateChat         bool   ` json:"isPrivateChat"`
 	IsNotInGroup          bool   ` json:"isNotInGroup"`
 	UpdateUnreadCountTime int64  ` json:"updateUnreadCountTime"`
+	BurnDuration          int32  ` json:"burnDuration,omitempty"`
 	AttachedInfo          string ` json:"attachedInfo"`
 	Ex                    string ` json:"ex"`
 }
@@ -140,4 +148,20 @@ type LocalFriend struct {
 	Email          string `json:"email,omitempty"`
 	Ex             string `json:"ex,omitempty"`
 	AttachedInfo   string `json:"attachedInfo,omitempty"`
+}
+
+type LocalUser struct {
+	UserID           string `json:"userID,omitempty"`
+	Nickname         string `json:"nickname,omitempty"`
+	FaceURL          string `json:"faceURL,omitempty"`
+	Gender           int32  `json:"gender,omitempty"`
+	PhoneNumber      string `json:"phoneNumber,omitempty"`
+	Birth            uint32 `json:"birth,omitempty"`
+	Email            string `json:"email,omitempty"`
+	CreateTime       uint32 `json:"createTime,omitempty"`
+	AppMangerLevel   int32  `json:"-,omitempty"`
+	Ex               string `json:"ex,omitempty"`
+	AttachedInfo     string `json:"attachedInfo,omitempty"`
+	GlobalRecvMsgOpt int32  `json:"globalRecvMsgOpt,omitempty"`
+	BirthTime        string `json:"birthTime,omitempty"`
 }

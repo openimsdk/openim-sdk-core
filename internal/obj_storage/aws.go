@@ -37,7 +37,7 @@ func (m *AWS) UploadFileByBuffer(buffer *bytes.Buffer, size int64, fileType stri
 	panic("implement me")
 }
 
-func (m *AWS) UploadVideoByBuffer(videoBuffer, snapshotBuffer *bytes.Buffer, videoSize, snapshotSize int64, videoType string, onProgressFun func(int)) (string, string, string, string, error) {
+func (m *AWS) UploadVideoByBuffer(videoBuffer, snapshotBuffer *bytes.Buffer, videoSize, snapshotSize int64, videoType, snapshotType string, onProgressFun func(int)) (string, string, string, string, error) {
 	panic("implement me")
 }
 

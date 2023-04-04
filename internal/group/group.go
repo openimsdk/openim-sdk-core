@@ -57,6 +57,9 @@ func NewGroup(loginUserID string, db db_interface.DataBase, p *ws.PostApi,
 }
 
 func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value) {
+	if g.listener == nil {
+		return
+	}
 	operationID := utils.OperationIDGenerator()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID, msg.ContentType)
 	if msg.SendTime < g.loginTime || g.loginTime == 0 {

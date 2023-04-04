@@ -1,7 +1,6 @@
 package db_interface
 
 import (
-	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/sdk_struct"
@@ -109,7 +108,7 @@ type DataBase interface {
 	ResetAllConversation() error
 	ClearConversation(conversationID string) error
 	ClearAllConversation() error
-	SetConversationDraft(conversationID, draftText string) error
+	SetConversationDraftDB(conversationID, draftText string) error
 	RemoveConversationDraft(conversationID, draftText string) error
 	UnPinConversation(conversationID string, isPinned int) error
 	UpdateColumnsConversation(conversationID string, args map[string]interface{}) error
@@ -217,12 +216,12 @@ type DataBase interface {
 	SuperGroupGetMsgSeqListBySelfUserID(userID string) ([]uint32, error)
 	SuperGroupGetAlreadyExistSeqList(groupID string, lostSeqList []uint32) (seqList []uint32, err error)
 	InsertWorkMomentsNotification(jsonDetail string) error
-	GetWorkMomentsNotification(offset, count int) (WorkMomentsNotifications []*db.LocalWorkMomentsNotification, err error)
-	GetWorkMomentsNotificationLimit(pageNumber, showNumber int) (WorkMomentsNotifications []*db.LocalWorkMomentsNotification, err error)
+	GetWorkMomentsNotification(offset, count int) (WorkMomentsNotifications []*model_struct.LocalWorkMomentsNotification, err error)
+	GetWorkMomentsNotificationLimit(pageNumber, showNumber int) (WorkMomentsNotifications []*model_struct.LocalWorkMomentsNotification, err error)
 	InitWorkMomentsNotificationUnreadCount() error
 	IncrWorkMomentsNotificationUnreadCount() error
 	MarkAllWorkMomentsNotificationAsRead() (err error)
-	GetWorkMomentsUnReadCount() (workMomentsNotificationUnReadCount db.LocalWorkMomentsNotificationUnreadCount, err error)
+	GetWorkMomentsUnReadCount() (workMomentsNotificationUnReadCount model_struct.LocalWorkMomentsNotificationUnreadCount, err error)
 	ClearWorkMomentsNotification() (err error)
 	Close() error
 	SetChatLogFailedStatus()

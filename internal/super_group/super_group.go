@@ -31,43 +31,40 @@ func NewSuperGroup(loginUserID string, db db_interface.DataBase, p *ws.PostApi, 
 	return &SuperGroup{loginUserID: loginUserID, db: db, p: p, joinedSuperGroupCh: joinedSuperGroupCh, heartbeatCmdCh: heartbeatCmdCh}
 }
 
-func (s *SuperGroup) DoNotification(msg *api.MsgData, ch chan common.Cmd2Value) {
-	operationID := utils.OperationIDGenerator()
+func (s *SuperGroup) DoNotification(msg *api.MsgData, ch chan common.Cmd2Value, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID, msg.String())
 	if msg.SendTime < s.loginTime || s.loginTime == 0 {
 		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
 		return
 	}
-	go func() {
-		switch msg.ContentType {
-		case constant.SuperGroupUpdateNotification:
-			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.SyncConversation, Args: operationID}, ch)
-			s.SyncJoinedGroupList(operationID)
-			cmd := sdk_struct.CmdJoinedSuperGroup{OperationID: operationID}
-			err := common.TriggerCmdJoinedSuperGroup(cmd, s.joinedSuperGroupCh)
-			if err != nil {
-				log.Error(operationID, "TriggerCmdJoinedSuperGroup failed ", err.Error(), cmd)
-				return
-			}
-			err = common.TriggerCmdWakeUp(s.heartbeatCmdCh)
-			if err != nil {
-				log.Error(operationID, "TriggerCmdWakeUp failed ", err.Error())
-			}
-
-			log.Info(operationID, "constant.SuperGroupUpdateNotification", msg.String())
-
-		case constant.MsgDeleteNotification:
-			var tips api.TipsComm
-			var elem api.MsgDeleteNotificationElem
-			_ = proto.Unmarshal(msg.Content, &tips)
-			_ = utils.JsonStringToStruct(tips.JsonDetail, &elem)
-			//if elem.GroupID != nil {
-			//
-			//}
-		default:
-			log.Error(operationID, "ContentType tip failed ", msg.ContentType)
+	switch msg.ContentType {
+	case constant.SuperGroupUpdateNotification:
+		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.SyncConversation, Args: operationID}, ch)
+		s.SyncJoinedGroupList(operationID)
+		cmd := sdk_struct.CmdJoinedSuperGroup{OperationID: operationID}
+		err := common.TriggerCmdJoinedSuperGroup(cmd, s.joinedSuperGroupCh)
+		if err != nil {
+			log.Error(operationID, "TriggerCmdJoinedSuperGroup failed ", err.Error(), cmd)
+			return
 		}
-	}()
+		err = common.TriggerCmdWakeUp(s.heartbeatCmdCh)
+		if err != nil {
+			log.Error(operationID, "TriggerCmdWakeUp failed ", err.Error())
+		}
+
+		log.Info(operationID, "constant.SuperGroupUpdateNotification", msg.String())
+
+	case constant.MsgDeleteNotification:
+		var tips api.TipsComm
+		var elem api.MsgDeleteNotificationElem
+		_ = proto.Unmarshal(msg.Content, &tips)
+		_ = utils.JsonStringToStruct(tips.JsonDetail, &elem)
+		//if elem.GroupID != nil {
+		//
+		//}
+	default:
+		log.Error(operationID, "ContentType tip failed ", msg.ContentType)
+	}
 }
 
 func (s *SuperGroup) getJoinedGroupListFromSvr(operationID string) ([]*api.GroupInfo, error) {

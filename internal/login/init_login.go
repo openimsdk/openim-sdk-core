@@ -246,7 +246,6 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	t1 := time.Now()
 	u.token = token
 	u.loginUserID = userID
-	var sqliteConn *db.DataBase
 	var err error
 	if constant.OnlyForTest == 1 {
 		wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID, u.imConfig.IsCompression, u.conversationCh)
@@ -258,15 +257,13 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 		cb.OnSuccess("")
 		return
 	}
-
-	sqliteConn, err = db.NewDataBase(userID, sdk_struct.SvrConf.DataDir, operationID)
+	u.db, err = db.NewDataBase(userID, sdk_struct.SvrConf.DataDir, operationID)
 	if err != nil {
 		cb.OnError(constant.ErrDB.ErrCode, err.Error())
 		log.Error(operationID, "NewDataBase failed ", err.Error())
 		return
 	}
 
-	u.db = sqliteConn
 	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir, "login cost time: ", time.Since(t1))
 
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
@@ -280,7 +277,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.id2MinSeq = make(map[string]uint32, 100)
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
 	u.postApi = p
-	u.user = user.NewUser(sqliteConn, p, u.loginUserID, u.conversationCh)
+	u.user = user.NewUser(u.db, p, u.loginUserID, u.conversationCh)
 	u.user.SetListener(u.userListener)
 
 	u.friend = friend.NewFriend(u.loginUserID, u.db, u.user, p, u.conversationCh)

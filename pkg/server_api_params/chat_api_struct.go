@@ -68,6 +68,11 @@ type DeleteMessageReactionExtensionsResp struct {
 	Result []*ExtensionResult
 	Data   map[string]interface{} `json:"data"`
 }
+type KeyValue struct {
+	TypeKey          string `json:"typeKey" validate:"required"`
+	Value            string `json:"value" validate:"required"`
+	LatestUpdateTime int64  `json:"latestUpdateTime"`
+}
 type SetMessageReactionExtensionsResp struct {
 	CommResp
 	ApiResult struct {
@@ -142,8 +147,8 @@ type ReactionMessageModifierNotification struct {
 	Seq                          uint32               `json:"seq"`
 }
 type SingleMessageExtensionResult struct {
-	ErrCode               int32                `protobuf:"varint,1,opt,name=errCode" json:"errCode"`
-	ErrMsg                string               `protobuf:"bytes,2,opt,name=errMsg" json:"errMsg"`
+	ErrCode               int32                `protobuf:"varint,1,opt,name=errCode" json:"errCode,omitempty"`
+	ErrMsg                string               `protobuf:"bytes,2,opt,name=errMsg" json:"errMsg,omitempty"`
 	ReactionExtensionList map[string]*KeyValue `protobuf:"bytes,3,rep,name=reactionExtensionList" json:"reactionExtensionList,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	ClientMsgID           string               `protobuf:"bytes,4,opt,name=clientMsgID" json:"clientMsgID,omitempty"`
 	XXX_NoUnkeyedLiteral  struct{}             `json:"-"`

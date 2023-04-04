@@ -3,7 +3,6 @@ package indexdb
 import (
 	"errors"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
@@ -36,6 +35,7 @@ type IndexDB struct {
 	*FriendRequest
 	*Black
 	*Friend
+	LocalChatLogReactionExtensions
 	loginUserID string
 }
 
@@ -87,6 +87,14 @@ func (i IndexDB) SearchMessageByContentTypeAndKeywordController(contentType []in
 		list = append(list, sList...)
 	}
 	return list, nil
+}
+func (i IndexDB) UpdateMsgSenderFaceURLAndSenderNicknameController(sendID, faceURL, nickname string, sessionType int, groupID string) error {
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		return i.SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname, sessionType, groupID)
+	default:
+		return i.UpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname, sessionType)
+	}
 }
 
 type CallbackData struct {
@@ -252,6 +260,7 @@ func (i IndexDB) BatchUpdateMessageList(MessageList []*model_struct.LocalChatLog
 		v1.RecvID = v.RecvID
 		v1.SessionType = v.SessionType
 		v1.ServerMsgID = v.ServerMsgID
+		v1.Ex = v.Ex
 		err := i.UpdateMessageController(v1)
 		if err != nil {
 			return utils.Wrap(err, "BatchUpdateMessageList failed")
@@ -504,11 +513,11 @@ func (i IndexDB) InsertWorkMomentsNotification(jsonDetail string) error {
 	panic("implement me")
 }
 
-func (i IndexDB) GetWorkMomentsNotification(offset, count int) (WorkMomentsNotifications []*db.LocalWorkMomentsNotification, err error) {
+func (i IndexDB) GetWorkMomentsNotification(offset, count int) (WorkMomentsNotifications []*model_struct.LocalWorkMomentsNotification, err error) {
 	panic("implement me")
 }
 
-func (i IndexDB) GetWorkMomentsNotificationLimit(pageNumber, showNumber int) (WorkMomentsNotifications []*db.LocalWorkMomentsNotification, err error) {
+func (i IndexDB) GetWorkMomentsNotificationLimit(pageNumber, showNumber int) (WorkMomentsNotifications []*model_struct.LocalWorkMomentsNotification, err error) {
 	panic("implement me")
 }
 
@@ -524,7 +533,7 @@ func (i IndexDB) MarkAllWorkMomentsNotificationAsRead() (err error) {
 	panic("implement me")
 }
 
-func (i IndexDB) GetWorkMomentsUnReadCount() (workMomentsNotificationUnReadCount db.LocalWorkMomentsNotificationUnreadCount, err error) {
+func (i IndexDB) GetWorkMomentsUnReadCount() (workMomentsNotificationUnReadCount model_struct.LocalWorkMomentsNotificationUnreadCount, err error) {
 	panic("implement me")
 }
 

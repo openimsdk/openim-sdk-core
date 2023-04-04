@@ -139,7 +139,10 @@ type Cmd2Value struct {
 	Cmd   string
 	Value interface{}
 }
-
+type UpdateConInfo struct {
+	UserID  string
+	GroupID string
+}
 type UpdateMessageInfo struct {
 	UserID   string
 	FaceURL  string

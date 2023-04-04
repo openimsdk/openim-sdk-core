@@ -22,9 +22,7 @@ type MsgSync struct {
 	conversationCh     chan common.Cmd2Value
 	PushMsgAndMaxSeqCh chan common.Cmd2Value
 
-	selfMsgSync *SelfMsgSync
-	//selfMsgSyncLatestModel *SelfMsgSyncLatestModel
-	//superGroupMsgSync *SuperGroupMsgSync
+	selfMsgSync               *SelfMsgSync
 	isSyncFinished            bool
 	readDiffusionGroupMsgSync *ReadDiffusionGroupMsgSync
 }

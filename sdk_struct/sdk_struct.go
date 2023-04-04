@@ -55,6 +55,7 @@ type SoundBaseInfo struct {
 	SourceURL string `json:"sourceUrl,omitempty"`
 	DataSize  int64  `json:"dataSize"`
 	Duration  int64  `json:"duration"`
+	SoundType string `json:"soundType,omitempty"`
 }
 type VideoBaseInfo struct {
 	VideoPath      string `json:"videoPath,omitempty"`
@@ -69,6 +70,7 @@ type VideoBaseInfo struct {
 	SnapshotURL    string `json:"snapshotUrl,omitempty"`
 	SnapshotWidth  int32  `json:"snapshotWidth"`
 	SnapshotHeight int32  `json:"snapshotHeight"`
+	SnapshotType   string `json:"snapshotType,omitempty"`
 }
 type FileBaseInfo struct {
 	FilePath  string `json:"filePath,omitempty"`
@@ -76,6 +78,7 @@ type FileBaseInfo struct {
 	SourceURL string `json:"sourceUrl,omitempty"`
 	FileName  string `json:"fileName,omitempty"`
 	FileSize  int64  `json:"fileSize"`
+	FileType  string `json:"fileType,omitempty"`
 }
 
 type MsgStruct struct {
@@ -113,6 +116,7 @@ type MsgStruct struct {
 		SourceURL string `json:"sourceUrl,omitempty"`
 		DataSize  int64  `json:"dataSize"`
 		Duration  int64  `json:"duration"`
+		SoundType string `json:"soundType,omitempty"`
 	} `json:"soundElem,omitempty"`
 	VideoElem struct {
 		VideoPath      string `json:"videoPath,omitempty"`
@@ -127,6 +131,7 @@ type MsgStruct struct {
 		SnapshotURL    string `json:"snapshotUrl,omitempty"`
 		SnapshotWidth  int32  `json:"snapshotWidth"`
 		SnapshotHeight int32  `json:"snapshotHeight"`
+		SnapshotType   string `json:"snapshotType,omitempty"`
 	} `json:"videoElem,omitempty"`
 	FileElem struct {
 		FilePath  string `json:"filePath,omitempty"`
@@ -134,6 +139,7 @@ type MsgStruct struct {
 		SourceURL string `json:"sourceUrl,omitempty"`
 		FileName  string `json:"fileName,omitempty"`
 		FileSize  int64  `json:"fileSize"`
+		FileType  string `json:"fileType,omitempty"`
 	} `json:"fileElem,omitempty"`
 	MergeElem struct {
 		Title             string           `json:"title,omitempty"`
@@ -194,19 +200,18 @@ type AttachedInfoElem struct {
 	//MessageReactionElem       []*ReactionElem  `json:"messageReactionElem,omitempty"`
 }
 
-//type ReactionElem struct {
-//	Counter          int32               `json:"counter,omitempty"`
-//	Type             int                 `json:"type,omitempty"`
-//	UserReactionList []*UserReactionElem `json:"userReactionList,omitempty"`
-//	CanRepeat        bool                `json:"canRepeat,omitempty"`
-//	Info             string              `json:"info,omitempty"`
-//}
-//type UserReactionElem struct {
-//	UserID  string `json:"userID,omitempty"`
-//	Counter int32  `json:"counter,omitempty"`
-//	Info    string `json:"info,omitempty"`
-//}
-
+type ReactionElem struct {
+	Counter          int32               `json:"counter,omitempty"`
+	Type             int                 `json:"type,omitempty"`
+	UserReactionList []*UserReactionElem `json:"userReactionList,omitempty"`
+	CanRepeat        bool                `json:"canRepeat,omitempty"`
+	Info             string              `json:"info,omitempty"`
+}
+type UserReactionElem struct {
+	UserID  string `json:"userID,omitempty"`
+	Counter int32  `json:"counter,omitempty"`
+	Info    string `json:"info,omitempty"`
+}
 type MessageEntity struct {
 	Type   string `json:"type,omitempty"`
 	Offset int32  `json:"offset"`

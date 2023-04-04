@@ -246,7 +246,7 @@ func (c *Conversation) deleteConversation(callback open_im_sdk_callback.Base, co
 }
 func (c *Conversation) setConversationDraft(callback open_im_sdk_callback.Base, conversationID, draftText, operationID string) {
 	if draftText != "" {
-		err := c.db.SetConversationDraft(conversationID, draftText)
+		err := c.db.SetConversationDraftDB(conversationID, draftText)
 		common.CheckDBErrCallback(callback, err, operationID)
 	} else {
 		err := c.db.RemoveConversationDraft(conversationID, draftText)
@@ -1553,7 +1553,8 @@ func (c *Conversation) clearMessageFromSvr(callback open_im_sdk_callback.Base, o
 	for _, v := range groupIDList {
 		superGroupApiReq.GroupID = v
 		superGroupApiReq.OperationID = operationID
-		c.p.PostFatalCallback(callback, constant.DeleteSuperGroupMsgRouter, superGroupApiReq, nil, apiReq.OperationID)
+		c.p.PostFatalCallback(callback, constant.DeleteSuperGroupMsgRouter, apiReq, nil, apiReq.OperationID)
+		return
 	}
 }
 
@@ -1917,6 +1918,33 @@ func (c *Conversation) deleteAllMsgFromSvr(callback open_im_sdk_callback.Base, o
 	apiReq.OperationID = operationID
 	apiReq.SeqList = seqList
 	c.p.PostFatalCallback(callback, constant.DeleteMsgRouter, apiReq, nil, apiReq.OperationID)
+}
+func isContainMessageReaction(reactionType int, list []*sdk_struct.ReactionElem) (bool, *sdk_struct.ReactionElem) {
+	for _, v := range list {
+		if v.Type == reactionType {
+			return true, v
+		}
+	}
+	return false, nil
+}
+func isContainUserReactionElem(useID string, list []*sdk_struct.UserReactionElem) (bool, *sdk_struct.UserReactionElem) {
+	for _, v := range list {
+		if v.UserID == useID {
+			return true, v
+		}
+	}
+	return false, nil
+}
+
+func DeleteUserReactionElem(a []*sdk_struct.UserReactionElem, userID string) []*sdk_struct.UserReactionElem {
+	j := 0
+	for _, v := range a {
+		if v.UserID != userID {
+			a[j] = v
+			j++
+		}
+	}
+	return a[:j]
 }
 func (c *Conversation) setMessageReactionExtensions(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, req sdk.SetMessageReactionExtensionsParams, operationID string) []*server_api_params.ExtensionResult {
 	message, err := c.db.GetMessageController(s)

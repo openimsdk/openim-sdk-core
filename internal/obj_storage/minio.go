@@ -24,22 +24,6 @@ type Minio struct {
 	p *ws.PostApi
 }
 
-func (m *Minio) UploadImageByBuffer(buffer *bytes.Buffer, size int64, imageType string, onProgressFun func(int)) (string, string, error) {
-	panic("implement me")
-}
-
-func (m *Minio) UploadSoundByBuffer(buffer *bytes.Buffer, size int64, fileType string, onProgressFun func(int)) (string, string, error) {
-	panic("implement me")
-}
-
-func (m *Minio) UploadFileByBuffer(buffer *bytes.Buffer, size int64, fileType string, onProgressFun func(int)) (string, string, error) {
-	panic("implement me")
-}
-
-func (m *Minio) UploadVideoByBuffer(videoBuffer, snapshotBuffer *bytes.Buffer, videoSize, snapshotSize int64, videoType string, onProgressFun func(int)) (string, string, string, string, error) {
-	panic("implement me")
-}
-
 func NewMinio(p *ws.PostApi) *Minio {
 	return &Minio{p: p}
 }
@@ -54,7 +38,69 @@ func (m *Minio) getMinioCredentials() (*server_api_params.MinioStorageCredential
 	}
 	return &resp, nil
 }
+func (m *Minio) UploadImageByBuffer(buffer *bytes.Buffer, size int64, imageType string, onProgressFun func(int)) (string, string, error) {
+	return m.uploadByBuffer(buffer, size, imageType, onProgressFun)
+}
+func (m *Minio) UploadSoundByBuffer(buffer *bytes.Buffer, size int64, fileType string, onProgressFun func(int)) (string, string, error) {
+	return m.uploadByBuffer(buffer, size, fileType, onProgressFun)
+}
 
+func (m *Minio) UploadFileByBuffer(buffer *bytes.Buffer, size int64, fileType string, onProgressFun func(int)) (string, string, error) {
+	return m.uploadByBuffer(buffer, size, fileType, onProgressFun)
+}
+
+func (m *Minio) UploadVideoByBuffer(videoBuffer, snapshotBuffer *bytes.Buffer, videoSize, snapshotSize int64, videoType, snapshotType string, onProgressFun func(int)) (string, string, string, string, error) {
+	videoURL, videoName, err := m.uploadByBuffer(videoBuffer, videoSize, videoType, onProgressFun)
+	if err != nil {
+		return "", "", "", "", utils.Wrap(err, "")
+	}
+	snapshotURL, snapshotUUID, err := m.uploadByBuffer(snapshotBuffer, snapshotSize, snapshotType, onProgressFun)
+	if err != nil {
+		return "", "", "", "", utils.Wrap(err, "")
+	}
+	return snapshotURL, snapshotUUID, videoURL, videoName, nil
+}
+
+func (m *Minio) uploadByBuffer(buffer *bytes.Buffer, size int64, fileType string, onProgressFun func(int)) (string, string, error) {
+	minioResp, err := m.getMinioCredentials()
+	if err != nil {
+		log.NewError("", utils.GetSelfFuncName(), "getMinioCredentials from server failed, please check server log", err.Error(), "resp: ")
+		return "", "", utils.Wrap(err, "")
+	}
+	log.NewInfo("", utils.GetSelfFuncName(), "recv minio credentials", *minioResp)
+	endPoint, err := url.Parse(minioResp.StsEndpointURL)
+	if err != nil {
+		log.NewError("", utils.GetSelfFuncName(), "url parse failed, pleace check config/config.yaml", err.Error())
+		return "", "", utils.Wrap(err, "")
+	}
+	newName := fmt.Sprintf("%d-%d.%s", time.Now().UnixNano(), rand.Int(), fileType)
+	opts := &minio.Options{
+		Creds: credentials.NewStaticV4(minioResp.AccessKeyID, minioResp.SecretAccessKey, minioResp.SessionToken),
+	}
+	log.NewDebug("buffer length", buffer.Len(), size)
+	switch endPoint.Scheme {
+	case "http":
+		opts.Secure = false
+	case "https":
+		opts.Secure = true
+	}
+	client, err := minio.New(endPoint.Host, opts)
+	if err != nil {
+		log.NewError("", utils.GetSelfFuncName(), "generate filename and filetype failed", err.Error(), endPoint.Host)
+		return "", "", utils.Wrap(err, "")
+	}
+	progressBar := NewUploadProgress(size, onProgressFun)
+	//_, err = client.FPutObject(context.Background(), minioResp.BucketName, newName, filePath, minio.PutObjectOptions{ContentType: newType,
+	//	Progress: progressBar, RetainUntilDate:time.Now().Add(time.Duration(minioResp.StorageTime)*time.Hour*24), Mode: "", Rente})
+	_, err = client.PutObject(context.Background(), minioResp.BucketName, newName, buffer, size, minio.PutObjectOptions{ContentType: "",
+		Progress: progressBar})
+	if err != nil {
+		log.NewError("0", utils.GetSelfFuncName(), "FPutObject failed", err.Error(), newName, size, fileType)
+		return "", "", utils.Wrap(err, "")
+	}
+	presignedURL := endPoint.String() + "/" + minioResp.BucketName + "/" + newName
+	return presignedURL, newName, nil
+}
 func (m *Minio) upload(filePath, fileType string, onProgressFun func(int)) (string, string, error) {
 	minioResp, err := m.getMinioCredentials()
 	if err != nil {

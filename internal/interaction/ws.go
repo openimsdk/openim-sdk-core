@@ -1,10 +1,7 @@
 package interaction
 
 import (
-	"bytes"
-	"compress/gzip"
 	"errors"
-	"io/ioutil"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
@@ -49,7 +46,7 @@ func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, cmdCh chan common.Cmd2Value, 
 //	w.seqMsg = seqMsg
 //}
 
-func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, connSend *websocket.Conn) (*GeneralWsResp, error) {
+func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string) (*GeneralWsResp, error) {
 	select {
 	case r := <-ch:
 		log.Debug(operationID, "ws ch recvMsg success, code ", r.ErrCode)
@@ -68,10 +65,10 @@ func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string, co
 
 	case <-time.After(time.Second * time.Duration(timeout)):
 		log.Error(operationID, "ws ch recvMsg err, timeout")
-		if connSend == nil {
-			return nil, errors.New("ws ch recvMsg err, timeout")
+		if w.conn.IsNil() {
+			return nil, errors.New("ws ch recvMsg err, timeout,conn is nil")
 		}
-		if connSend != w.WsConn.conn {
+		if w.conn.CheckSendConnDiffNow() {
 			return nil, constant.WsRecvConnDiff
 		} else {
 			return nil, constant.WsRecvConnSame
@@ -87,7 +84,6 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 		}
 	}
 	var wsReq GeneralWsReq
-	var connSend *websocket.Conn
 	var err error
 	wsReq.ReqIdentifier = reqIdentifier
 	wsReq.OperationID = operationID
@@ -103,7 +99,7 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 	}
 	flag := 0
 	for i := 0; i < retryTimes+1; i++ {
-		connSend, err = w.writeBinaryMsg(wsReq)
+		err = w.writeBinaryMsg(wsReq)
 		if err != nil {
 			if !w.IsWriteTimeout(err) {
 				log.Error(operationID, "Not send timeout, failed, close conn, writeBinaryMsg again ", err.Error(), w.conn, reqIdentifier)
@@ -119,7 +115,7 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 	}
 	if flag == 1 {
 		log.Debug(operationID, "send ok wait resp")
-		r1, r2 := w.WaitResp(ch, timeout, wsReq.OperationID, connSend)
+		r1, r2 := w.WaitResp(ch, timeout, wsReq.OperationID)
 		return r1, r2
 	} else {
 		log.Error(operationID, "send failed")
@@ -129,7 +125,7 @@ func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retr
 }
 func (w *Ws) SendReqTest(m proto.Message, reqIdentifier int32, timeout int, senderID, operationID string) bool {
 	var wsReq GeneralWsReq
-	var connSend *websocket.Conn
+
 	var err error
 	wsReq.ReqIdentifier = reqIdentifier
 	wsReq.OperationID = operationID
@@ -141,7 +137,7 @@ func (w *Ws) SendReqTest(m proto.Message, reqIdentifier int32, timeout int, send
 	if err != nil {
 		return false
 	}
-	connSend, err = w.writeBinaryMsg(wsReq)
+	err = w.writeBinaryMsg(wsReq)
 	if err != nil {
 		log.Error(operationID, "writeBinaryMsg timeout", m.String(), senderID, err.Error())
 		return false
@@ -149,11 +145,11 @@ func (w *Ws) SendReqTest(m proto.Message, reqIdentifier int32, timeout int, send
 		log.Debug(operationID, "writeBinaryMsg success", m.String(), senderID)
 	}
 	startTime := time.Now()
-	result := w.WaitTest(ch, timeout, wsReq.OperationID, connSend, m, senderID)
+	result := w.WaitTest(ch, timeout, wsReq.OperationID, m, senderID)
 	log.Debug(operationID, "ws Response time：", time.Since(startTime), m.String(), senderID, result)
 	return result
 }
-func (w *Ws) WaitTest(ch chan GeneralWsResp, timeout int, operationID string, connSend *websocket.Conn, m proto.Message, senderID string) bool {
+func (w *Ws) WaitTest(ch chan GeneralWsResp, timeout int, operationID string, m proto.Message, senderID string) bool {
 	select {
 	case r := <-ch:
 		if r.ErrCode != 0 {
@@ -171,7 +167,7 @@ func (w *Ws) WaitTest(ch chan GeneralWsResp, timeout int, operationID string, co
 	}
 }
 func (w *Ws) reConnSleep(operationID string, sleep int32) (error, bool) {
-	_, err, isNeedReConn, isKicked := w.WsConn.ReConn(operationID)
+	err, isNeedReConn, isKicked := w.WsConn.ReConn(operationID)
 	if err != nil {
 		if isKicked {
 			log.Warn(operationID, "kicked, when re conn ")
@@ -210,7 +206,7 @@ func (w *Ws) ReadData() {
 			}
 		}
 		isErrorOccurred = false
-		if w.WsConn.conn == nil {
+		if w.WsConn.conn.IsNil() {
 			isErrorOccurred = true
 			log.Warn(operationID, "conn == nil, ReConn ")
 			err, isNeedReConnect := w.reConnSleep(operationID, 1)
@@ -259,20 +255,11 @@ func (w *Ws) ReadData() {
 			log.Warn(operationID, "type websocket.TextMessage")
 		} else if msgType == websocket.BinaryMessage {
 			if w.IsCompression {
-				buff := bytes.NewBuffer(message)
-				reader, err := gzip.NewReader(buff)
-				if err != nil {
-					log.NewWarn(operationID, "NewReader failed", err.Error())
+				var decompressErr error
+				message, decompressErr = w.compressor.DeCompress(message)
+				if decompressErr != nil {
+					log.NewWarn(operationID, "decompress failed", decompressErr.Error())
 					continue
-				}
-				message, err = ioutil.ReadAll(reader)
-				if err != nil {
-					log.NewWarn(operationID, "ReadAll failed", err.Error())
-					continue
-				}
-				err = reader.Close()
-				if err != nil {
-					log.NewWarn(operationID, "reader close failed", err.Error())
 				}
 			}
 			w.doWsMsg(message)
@@ -283,7 +270,8 @@ func (w *Ws) ReadData() {
 }
 
 func (w *Ws) doWsMsg(message []byte) {
-	wsResp, err := w.decodeBinaryWs(message)
+	var wsResp GeneralWsResp
+	err := w.encoder.Decode(message, &wsResp)
 	if err != nil {
 		log.Error("decodeBinaryWs err", err.Error())
 		return
@@ -291,18 +279,18 @@ func (w *Ws) doWsMsg(message []byte) {
 	log.Debug(wsResp.OperationID, "ws recv msg, code: ", wsResp.ErrCode, wsResp.ReqIdentifier)
 	switch wsResp.ReqIdentifier {
 	case constant.WSGetNewestSeq:
-		if err = w.doWSGetNewestSeq(*wsResp); err != nil {
+		if err = w.doWSGetNewestSeq(wsResp); err != nil {
 			log.Error(wsResp.OperationID, "doWSGetNewestSeq failed ", err.Error(), wsResp.ReqIdentifier, wsResp.MsgIncr)
 		}
 	case constant.WSPullMsgBySeqList:
-		if err = w.doWSPullMsg(*wsResp); err != nil {
+		if err = w.doWSPullMsg(wsResp); err != nil {
 			log.Error(wsResp.OperationID, "doWSPullMsg failed ", err.Error())
 		}
 	case constant.WSPushMsg:
 		if constant.OnlyForTest == 1 {
 			return
 		}
-		if err = w.doWSPushMsg(*wsResp); err != nil {
+		if err = w.doWSPushMsg(wsResp); err != nil {
 			log.Error(wsResp.OperationID, "doWSPushMsg failed ", err.Error())
 		}
 		//if err = w.doWSPushMsgForTest(*wsResp); err != nil {
@@ -310,29 +298,29 @@ func (w *Ws) doWsMsg(message []byte) {
 		//}
 
 	case constant.WSSendMsg:
-		if err = w.doWSSendMsg(*wsResp); err != nil {
+		if err = w.doWSSendMsg(wsResp); err != nil {
 			log.Error(wsResp.OperationID, "doWSSendMsg failed ", err.Error(), wsResp.ReqIdentifier, wsResp.MsgIncr)
 		}
 	case constant.WSKickOnlineMsg:
 		log.Warn(wsResp.OperationID, "kick...  logout")
-		w.kickOnline(*wsResp)
+		w.kickOnline(wsResp)
 		w.Logout(wsResp.OperationID)
 
 	case constant.WsLogoutMsg:
 		log.Warn(wsResp.OperationID, "WsLogoutMsg... Ws goroutine exit")
-		if err = w.doWSLogoutMsg(*wsResp); err != nil {
+		if err = w.doWSLogoutMsg(wsResp); err != nil {
 			log.Error(wsResp.OperationID, "doWSLogoutMsg failed ", err.Error())
 		}
 		runtime.Goexit()
 	case constant.WSSendSignalMsg:
 		log.Info(wsResp.OperationID, "signaling...")
-		w.DoWSSignal(*wsResp)
+		w.DoWSSignal(wsResp)
 	case constant.WsSetBackgroundStatus:
 		log.Info(wsResp.OperationID, "WsSetBackgroundStatus...")
-		if err = w.setAppBackgroundStatus(*wsResp); err != nil {
+		if err = w.setAppBackgroundStatus(wsResp); err != nil {
 			log.Error(wsResp.OperationID, "WsSetBackgroundStatus failed ", err.Error(), wsResp.ReqIdentifier, wsResp.MsgIncr)
 		}
-		log.NewDebug(wsResp.OperationID, *wsResp)
+		log.NewDebug(wsResp.OperationID, wsResp)
 	default:
 		log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
 		return
@@ -443,7 +431,7 @@ func (w *Ws) SignalingWaitPush(inviterUserID, inviteeUserID, roomID string, time
 	ch := w.AddChByIncr(msgIncr)
 	defer w.DelCh(msgIncr)
 
-	resp, err := w.WaitResp(ch, int(timeout), operationID, nil)
+	resp, err := w.WaitResp(ch, int(timeout), operationID)
 	if err != nil {
 		return nil, utils.Wrap(err, "")
 	}

@@ -1,3 +1,6 @@
+//go:build js && wasm
+// +build js,wasm
+
 package wasm_wrapper
 
 import (
@@ -7,7 +10,7 @@ import (
 	"syscall/js"
 )
 
-//------------------------------------group---------------------------
+// ------------------------------------group---------------------------
 type WrapperUser struct {
 	*WrapperCommon
 }
