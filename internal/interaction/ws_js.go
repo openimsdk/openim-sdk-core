@@ -17,8 +17,7 @@ type JSWebSocket struct {
 }
 
 func (w *JSWebSocket) LocalAddr() string {
-	//TODO implement me
-	panic("implement me")
+	return ""
 }
 
 func NewWebSocket(connType int) *JSWebSocket {
