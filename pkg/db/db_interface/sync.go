@@ -21,8 +21,8 @@ func SyncDB[T any](db *gorm.DB, changes []T, deletes []T) ([]uint8, []uint8, err
 		return nil, nil, errors.New("not struct slice")
 	}
 	var (
-		primaryKey = make(map[int]string) // go field name -> db column name
-		fieldName  = make(map[int]string) // go field name -> db column name
+		primaryKey = make(map[int]string) // go field index -> db column name
+		fieldName  = make(map[int]string) // go field index -> db column name
 	)
 	for i := 0; i < modelType.NumField(); i++ {
 		modelTypeField := modelType.Field(i)
@@ -60,6 +60,19 @@ func SyncDB[T any](db *gorm.DB, changes []T, deletes []T) ([]uint8, []uint8, err
 		}
 		return whereDb
 	}
+	equal := func(a, b reflect.Value) bool {
+		for a.Kind() == reflect.Ptr {
+			if a.IsNil() && b.IsNil() {
+				return true
+			}
+			if a.IsNil() || b.IsNil() {
+				return false
+			}
+			a = a.Elem()
+			b = b.Elem()
+		}
+		return a.Interface() == b.Interface()
+	}
 	changeStates := make([]uint8, len(changes)) // 0: no change, 1: update, 2: insert
 	for i, model := range changes {
 		var t T
@@ -74,10 +87,12 @@ func SyncDB[T any](db *gorm.DB, changes []T, deletes []T) ([]uint8, []uint8, err
 			}
 			update := make(map[string]any)
 			for index, column := range fieldName {
-				newValue := changeValue.Field(index).Interface()
-				if dbValue.Field(index).Interface() != newValue {
-					update[column] = newValue
+				dbFieldValue := dbValue.Field(index)
+				changeFieldValue := changeValue.Field(index)
+				if equal(dbFieldValue, changeFieldValue) {
+					continue
 				}
+				update[column] = changeFieldValue.Interface()
 			}
 			if len(update) == 0 {
 				changeStates[i] = 0
