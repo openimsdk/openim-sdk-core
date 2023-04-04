@@ -1,6 +1,11 @@
 package group
 
 import (
+	"context"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/jinzhu/copier"
+	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -17,21 +22,61 @@ func (g *Group) SetGroupListener(callback open_im_sdk_callback.OnGroupListener) 
 	g.listener = callback
 }
 
-func (g *Group) CreateGroup(callback open_im_sdk_callback.Base, groupBaseInfo string, memberList string, operationID string) {
-	if callback == nil {
-		return
+// deprecated use CreateGroupV2
+func (g *Group) CreateGroup(ctx context.Context, groupBaseInfo sdk_params_callback.CreateGroupBaseInfoParam, memberList sdk_params_callback.CreateGroupMemberRoleParam) {
+	req := &group.CreateGroupReq{
+		GroupInfo: &sdkws.GroupInfo{
+			GroupName:    groupBaseInfo.GroupName,
+			Notification: groupBaseInfo.Notification,
+			Introduction: groupBaseInfo.Introduction,
+			FaceURL:      groupBaseInfo.FaceURL,
+			Ex:           groupBaseInfo.Ex,
+			GroupType:    groupBaseInfo.GroupType,
+		},
 	}
-	fName := utils.GetSelfFuncName()
-	go func() {
-		log.NewInfo(operationID, fName, groupBaseInfo, memberList)
-		var unmarshalCreateGroupBaseInfoParam sdk_params_callback.CreateGroupBaseInfoParam
-		common.JsonUnmarshalAndArgsValidate(groupBaseInfo, &unmarshalCreateGroupBaseInfoParam, callback, operationID)
-		var unmarshalCreateGroupMemberRoleParam sdk_params_callback.CreateGroupMemberRoleParam
-		common.JsonUnmarshalAndArgsValidate(memberList, &unmarshalCreateGroupMemberRoleParam, callback, operationID)
-		result := g.createGroup(callback, unmarshalCreateGroupBaseInfoParam, unmarshalCreateGroupMemberRoleParam, operationID)
-		callback.OnSuccess(utils.StructToJsonString(result))
-		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonString(result))
-	}()
+	if groupBaseInfo.NeedVerification != nil {
+		req.GroupInfo.NeedVerification = *groupBaseInfo.NeedVerification
+	}
+	for _, info := range memberList {
+		switch info.RoleLevel {
+		case constant.GroupOrdinaryUsers:
+		case constant.GroupOwner:
+		case constant.GroupAdmin:
+
+		}
+	}
+
+}
+
+func (g *Group) CreateGroupV2(ctx context.Context, req *group.CreateGroupReq) (*sdkws.GroupInfo, error) {
+	resp, err := util.ApiFunc[group.CreateGroupResp](ctx, constant.CreateGroupRouter, req)
+	if err != nil {
+		return nil, err
+	}
+	//g.SyncJoinedGroupList(operationID)
+	//g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID, operationID, false)
+	return resp.GroupInfo, nil
+}
+
+func (g *Group) createGroupV2(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam, memberList sdk.CreateGroupMemberRoleParam, operationID string) *sdk.CreateGroupCallback {
+	apiReq := api.CreateGroupReq{}
+	apiReq.OperationID = operationID
+	apiReq.OwnerUserID = g.loginUserID
+	apiReq.MemberList = memberList
+	for _, v := range apiReq.MemberList {
+		if v.RoleLevel == 0 {
+			v.RoleLevel = 1
+		}
+	}
+
+	copier.Copy(&apiReq, &group)
+	realData := api.CreateGroupResp{}
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "api req args: ", apiReq)
+	g.p.PostFatalCallbackPenetrate(callback, constant.CreateGroupRouter, apiReq, &realData.GroupInfo, apiReq.OperationID)
+	m := utils.JsonDataOne(&realData.GroupInfo)
+	g.SyncJoinedGroupList(operationID)
+	g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID, operationID, false)
+	return (*sdk.CreateGroupCallback)(&m)
 }
 
 func (g *Group) JoinGroup(callback open_im_sdk_callback.Base, groupID, reqMsg string, joinSource int32, operationID string) {
@@ -255,7 +300,7 @@ func (g *Group) GetGroupMemberOwnerAndAdmin(callback open_im_sdk_callback.Base, 
 	}()
 }
 
-//getGroupMemberListByJoinTimeFilter
+// getGroupMemberListByJoinTimeFilter
 func (g *Group) GetGroupMemberListByJoinTimeFilter(callback open_im_sdk_callback.Base, groupID string, offset, count int32, joinTimeBegin, joinTimeEnd int64, filterUserID, operationID string) {
 	if callback == nil {
 		return
