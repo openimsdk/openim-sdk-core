@@ -239,7 +239,7 @@ func (i IndexDB) ClearAllConversation() error {
 	return err
 }
 
-func (i IndexDB) SetConversationDraft(conversationID, draftText string) error {
+func (i IndexDB) SetConversationDraftDB(conversationID, draftText string) error {
 	_, err := Exec(conversationID, draftText)
 	return err
 }
