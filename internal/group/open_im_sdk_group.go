@@ -85,8 +85,7 @@ func (g *Group) CreateGroupV2(ctx context.Context, req *group.CreateGroupReq) (*
 //}
 
 func (g *Group) JoinGroup(ctx context.Context, groupID, reqMsg string, joinSource int32) error {
-	_, err := util.CallApi[struct{}](ctx, constant.JoinGroupRouter, &group.JoinGroupReq{GroupID: groupID, ReqMessage: reqMsg, JoinSource: joinSource})
-	if err != nil {
+	if err := util.ApiPost(ctx, constant.JoinGroupRouter, &group.JoinGroupReq{GroupID: groupID, ReqMessage: reqMsg, JoinSource: joinSource}, nil); err != nil {
 		return err
 	}
 	//g.p.PostFatalCallback(callback, constant.JoinGroupRouter, apiReq, nil, apiReq.OperationID)
@@ -95,8 +94,7 @@ func (g *Group) JoinGroup(ctx context.Context, groupID, reqMsg string, joinSourc
 }
 
 func (g *Group) QuitGroup(ctx context.Context, groupID string) error {
-	_, err := util.CallApi[struct{}](ctx, constant.QuitGroupRouter, &group.QuitGroupReq{GroupID: groupID})
-	if err != nil {
+	if err := util.ApiPost(ctx, constant.QuitGroupRouter, &group.QuitGroupReq{GroupID: groupID}, nil); err != nil {
 		return err
 	}
 	//g.quitGroup(groupID, callback, operationID)
@@ -105,8 +103,7 @@ func (g *Group) QuitGroup(ctx context.Context, groupID string) error {
 }
 
 func (g *Group) DismissGroup(ctx context.Context, groupID string) error {
-	_, err := util.CallApi[struct{}](ctx, constant.DismissGroupRouter, &group.DismissGroupReq{GroupID: groupID})
-	if err != nil {
+	if err := util.ApiPost(ctx, constant.DismissGroupRouter, &group.DismissGroupReq{GroupID: groupID}, nil); err != nil {
 		return err
 	}
 	//g.dismissGroup(groupID, callback, operationID)
@@ -114,23 +111,33 @@ func (g *Group) DismissGroup(ctx context.Context, groupID string) error {
 	return nil
 }
 
-func (g *Group) ChangeGroupMute(callback open_im_sdk_callback.Base, groupID string, isMute bool, operationID string) {
-	if callback == nil {
-		return
+func (g *Group) ChangeGroupMute(ctx context.Context, groupID string, isMute bool) (err error) {
+	if isMute {
+		err = util.ApiPost(ctx, constant.MuteGroupRouter, &group.MuteGroupReq{GroupID: groupID}, nil)
+	} else {
+		err = util.ApiPost(ctx, constant.CancelMuteGroupRouter, &group.CancelMuteGroupReq{GroupID: groupID}, nil)
 	}
-	fName := utils.GetSelfFuncName()
-	go func() {
-		log.NewInfo(operationID, fName, "args: ", groupID, isMute)
-		g.changeGroupMute(groupID, isMute, callback, operationID)
-		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GroupMuteChangeCallback))
-		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk_params_callback.GroupMuteChangeCallback))
-	}()
+	if err != nil {
+		return err
+	}
+	//if callback == nil {
+	//	return
+	//}
+	//fName := utils.GetSelfFuncName()
+	//go func() {
+	//	log.NewInfo(operationID, fName, "args: ", groupID, isMute)
+	//	g.changeGroupMute(groupID, isMute, callback, operationID)
+	//	callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GroupMuteChangeCallback))
+	//	log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk_params_callback.GroupMuteChangeCallback))
+	//}()
+	return nil
 }
 
-func (g *Group) ChangeGroupMemberMute(callback open_im_sdk_callback.Base, groupID, userID string, mutedSeconds uint32, operationID string) {
+func (g *Group) ChangeGroupMemberMute(callback open_im_sdk_callback.Base, groupID, userID string, mutedSeconds uint32, operationID string) (err error) {
 	if callback == nil {
 		return
 	}
+
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ", groupID, userID, mutedSeconds)
