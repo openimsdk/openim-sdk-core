@@ -1,138 +1,59 @@
 package open_im_sdk
 
-import (
-	"open_im_sdk/open_im_sdk_callback"
-	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/log"
-)
+import "open_im_sdk/open_im_sdk_callback"
 
 func GetDesignatedFriendsInfo(callback open_im_sdk_callback.Base, operationID string, userIDList string) {
-	if err := CheckResourceLoad(userForSDK); err != nil {
-		log.Error(operationID, "resource loading is not completed ", err.Error())
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
-		return
-	}
-	userForSDK.Friend().GetDesignatedFriendsInfo(callback, userIDList, operationID)
+	call(callback, operationID, userForSDK.Friend().GetDesignatedFriendsInfo, userIDList)
 }
 
 func GetFriendList(callback open_im_sdk_callback.Base, operationID string) {
-	if err := CheckResourceLoad(userForSDK); err != nil {
-		log.Error(operationID, "resource loading is not completed ", err.Error())
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
-		return
-	}
-	userForSDK.Friend().GetFriendList(callback, operationID)
+	call(callback, operationID, userForSDK.Friend().GetFriendList)
 }
+
 func SearchFriends(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
-	if err := CheckResourceLoad(userForSDK); err != nil {
-		log.Error(operationID, "resource loading is not completed ", err.Error())
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
-		return
-	}
-	userForSDK.Friend().SearchFriends(callback, searchParam, operationID)
+	call(callback, operationID, userForSDK.Friend().SearchFriends, searchParam)
 }
+
 func CheckFriend(callback open_im_sdk_callback.Base, operationID string, userIDList string) {
-	if err := CheckResourceLoad(userForSDK); err != nil {
-		log.Error(operationID, "resource loading is not completed ", err.Error())
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
-		return
-	}
-	userForSDK.Friend().CheckFriend(callback, userIDList, operationID)
+	call(callback, operationID, userForSDK.Friend().CheckFriend, userIDList)
 }
 
 func AddFriend(callback open_im_sdk_callback.Base, operationID string, userIDReqMsg string) {
-	if err := CheckResourceLoad(userForSDK); err != nil {
-		log.Error(operationID, "resource loading is not completed ", err.Error())
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
-		return
-	}
-	userForSDK.Friend().AddFriend(callback, userIDReqMsg, operationID)
+	call(callback, operationID, userForSDK.Friend().AddFriend, userIDReqMsg)
 }
 
 func SetFriendRemark(callback open_im_sdk_callback.Base, operationID string, userIDRemark string) {
-	if err := CheckResourceLoad(userForSDK); err != nil {
-		log.Error(operationID, "resource loading is not completed ", err.Error())
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
-		return
-	}
-	userForSDK.Friend().SetFriendRemark(callback, userIDRemark, operationID)
+	call(callback, operationID, userForSDK.Friend().SetFriendRemark, userIDRemark)
 }
+
 func DeleteFriend(callback open_im_sdk_callback.Base, operationID string, friendUserID string) {
-	if err := CheckResourceLoad(userForSDK); err != nil {
-		log.Error(operationID, "resource loading is not completed ", err.Error())
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
-		return
-	}
-	userForSDK.Friend().DeleteFriend(callback, friendUserID, operationID)
+	call(callback, operationID, userForSDK.Friend().DeleteFriend, friendUserID)
 }
 
 func GetRecvFriendApplicationList(callback open_im_sdk_callback.Base, operationID string) {
-	if err := CheckResourceLoad(userForSDK); err != nil {
-		log.Error(operationID, "resource loading is not completed ", err.Error())
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
-		return
-	}
-	userForSDK.Friend().GetRecvFriendApplicationList(callback, operationID)
+	call(callback, operationID, userForSDK.Friend().GetRecvFriendApplicationList)
 }
 
 func GetSendFriendApplicationList(callback open_im_sdk_callback.Base, operationID string) {
-	if err := CheckResourceLoad(userForSDK); err != nil {
-		log.Error(operationID, "resource loading is not completed ", err.Error())
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
-		return
-	}
-	userForSDK.Friend().GetSendFriendApplicationList(callback, operationID)
+	call(callback, operationID, userForSDK.Friend().GetSendFriendApplicationList)
 }
 
 func AcceptFriendApplication(callback open_im_sdk_callback.Base, operationID string, userIDHandleMsg string) {
-	if err := CheckResourceLoad(userForSDK); err != nil {
-		log.Error(operationID, "resource loading is not completed ", err.Error())
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
-		return
-	}
-	userForSDK.Friend().AcceptFriendApplication(callback, userIDHandleMsg, operationID)
+	call(callback, operationID, userForSDK.Friend().AcceptFriendApplication, userIDHandleMsg)
 }
 
 func RefuseFriendApplication(callback open_im_sdk_callback.Base, operationID string, userIDHandleMsg string) {
-	if err := CheckResourceLoad(userForSDK); err != nil {
-		log.Error(operationID, "resource loading is not completed ", err.Error())
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
-		return
-	}
-	userForSDK.Friend().RefuseFriendApplication(callback, userIDHandleMsg, operationID)
+	call(callback, operationID, userForSDK.Friend().RefuseFriendApplication, userIDHandleMsg)
 }
 
 func AddBlack(callback open_im_sdk_callback.Base, operationID string, blackUserID string) {
-	if err := CheckResourceLoad(userForSDK); err != nil {
-		log.Error(operationID, "resource loading is not completed ", err.Error())
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
-		return
-	}
-	userForSDK.Friend().AddBlack(callback, blackUserID, operationID)
+	call(callback, operationID, userForSDK.Friend().AddBlack, blackUserID)
 }
 
 func GetBlackList(callback open_im_sdk_callback.Base, operationID string) {
-	if err := CheckResourceLoad(userForSDK); err != nil {
-		log.Error(operationID, "resource loading is not completed ", err.Error())
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
-		return
-	}
-	userForSDK.Friend().GetBlackList(callback, operationID)
+	call(callback, operationID, userForSDK.Friend().GetBlackList)
 }
 
 func RemoveBlack(callback open_im_sdk_callback.Base, operationID string, removeUserID string) {
-	if err := CheckResourceLoad(userForSDK); err != nil {
-		log.Error(operationID, "resource loading is not completed ", err.Error())
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
-		return
-	}
-	userForSDK.Friend().RemoveBlack(callback, removeUserID, operationID)
-}
-
-func SetFriendListener(listener open_im_sdk_callback.OnFriendshipListener) {
-	if listener == nil || userForSDK == nil {
-		log.Error("callback or userForSDK is nil")
-		return
-	}
-	userForSDK.SetFriendListener(listener)
+	call(callback, operationID, userForSDK.Friend().RemoveBlack, removeUserID)
 }
