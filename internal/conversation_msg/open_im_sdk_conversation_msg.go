@@ -339,10 +339,10 @@ func (c *Conversation) CreateQuoteMessage(text string, message, operationID stri
 	return utils.StructToJsonString(s)
 }
 func (c *Conversation) CreateAdvancedQuoteMessage(text string, message, messageEntityList, operationID string) string {
-	var messageEntitys []*sdk_struct.MessageEntity
+	var messageEntities []*sdk_struct.MessageEntity
 	s, qs := sdk_struct.MsgStruct{}, sdk_struct.MsgStruct{}
 	_ = json.Unmarshal([]byte(message), &qs)
-	_ = json.Unmarshal([]byte(messageEntityList), &messageEntitys)
+	_ = json.Unmarshal([]byte(messageEntityList), &messageEntities)
 	c.initBasicInfo(&s, constant.UserMsgType, constant.Quote, operationID)
 	//Avoid nested references
 	if qs.ContentType == constant.Quote {
@@ -350,7 +350,7 @@ func (c *Conversation) CreateAdvancedQuoteMessage(text string, message, messageE
 		qs.ContentType = constant.Text
 	}
 	s.QuoteElem.Text = text
-	s.QuoteElem.MessageEntityList = messageEntitys
+	s.QuoteElem.MessageEntityList = messageEntities
 	s.QuoteElem.QuoteMessage = &qs
 	s.Content = utils.StructToJsonString(s.QuoteElem)
 	return utils.StructToJsonString(s)
@@ -1600,7 +1600,7 @@ func (c *Conversation) getConversationTypeByGroupID(groupID string) (conversatio
 }
 
 func (c *Conversation) ModifyGroupMessageReaction(callback open_im_sdk_callback.Base, counter int32, reactionType int, groupID, msgID, operationID string) {
-	c.modifyGroupMessageReaction(callback, counter, reactionType, groupID, msgID, operationID)
+	//c.modifyGroupMessageReaction(callback, counter, reactionType, groupID, msgID, operationID)
 }
 
 func (c *Conversation) SetMessageReactionExtensions(callback open_im_sdk_callback.Base, message, reactionExtensionList, operationID string) {
