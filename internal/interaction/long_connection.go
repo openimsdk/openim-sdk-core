@@ -12,7 +12,7 @@ type LongConn interface {
 	//SetReadTimeout sets the read deadline on the underlying network connection,
 	//after a read has timed out, will return an error.
 	SetReadTimeout(timeout int) error
-	//SetWriteTimeout sets the write deadline when send message,when read has timed out,will return error.
+	//SetWriteTimeout sets to write deadline when send message,when read has timed out,will return error.
 	SetWriteTimeout(timeout int) error
 	//Try to dial a connection,url must set auth args,header can control compress data
 	Dial(urlStr string, requestHeader http.Header) (*http.Response, error)

@@ -3,7 +3,7 @@ package interaction
 import (
 	"bytes"
 	"compress/gzip"
-	"io/ioutil"
+	"io"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -35,7 +35,7 @@ func (g *GzipCompressor) DeCompress(compressedData []byte) ([]byte, error) {
 	if err != nil {
 		return nil, utils.Wrap(err, "NewReader failed")
 	}
-	compressedData, err = ioutil.ReadAll(reader)
+	compressedData, err = io.ReadAll(reader)
 	if err != nil {
 		return nil, utils.Wrap(err, "ReadAll failed")
 	}
