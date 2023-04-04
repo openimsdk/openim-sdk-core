@@ -201,8 +201,8 @@ func (i IndexDB) SetChatLogFailedStatus() {
 }
 
 func (i IndexDB) InitDB(userID string, dataDir string) error {
-	//TODO implement me
-	panic("implement me")
+	_, err := indexdb.Exec(userID, dataDir)
+	return err
 }
 
 func NewDataBase(loginUserID string, dbDir string, operationID string) (*IndexDB, error) {

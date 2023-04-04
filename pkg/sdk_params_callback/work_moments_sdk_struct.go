@@ -2,14 +2,14 @@ package sdk_params_callback
 
 import (
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db"
+	"open_im_sdk/pkg/db/model_struct"
 )
 
 type WorkMomentsNotificationCallback string
 
 const ClearWorkMomentsMessageCallback = constant.SuccessCallbackDefault
 
-type GetWorkMomentsUnReadCountCallback db.LocalWorkMomentsNotificationUnreadCount
+type GetWorkMomentsUnReadCountCallback model_struct.LocalWorkMomentsNotificationUnreadCount
 
 type Comment struct {
 	UserID        string `json:"userID"`
