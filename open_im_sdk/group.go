@@ -7,16 +7,7 @@ import (
 )
 
 func CreateGroup(callback open_im_sdk_callback.Base, operationID string, groupBaseInfo string, memberList string) {
-	if callback == nil {
-		log.Error("callback is nil")
-		return
-	}
-	if err := CheckResourceLoad(userForSDK); err != nil {
-		log.Error(operationID, "resource loading is not completed ", err.Error())
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
-		return
-	}
-	userForSDK.Group().CreateGroup(callback, groupBaseInfo, memberList, operationID)
+	call(callback, operationID, userForSDK.Group().CreateGroup, groupBaseInfo, memberList)
 }
 
 func JoinGroup(callback open_im_sdk_callback.Base, operationID string, groupID, reqMsg string, joinSource int32) {
