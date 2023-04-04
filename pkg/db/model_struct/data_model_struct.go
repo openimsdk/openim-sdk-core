@@ -1,6 +1,10 @@
 package model_struct
 
-import "time"
+import (
+	"context"
+	"gorm.io/gorm"
+	"time"
+)
 
 //
 //message FriendInfo{
@@ -234,6 +238,11 @@ type LocalUser struct {
 	AttachedInfo     string    `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 	GlobalRecvMsgOpt int32     `gorm:"column:global_recv_msg_opt" json:"globalRecvMsgOpt"`
 	BirthTime        time.Time `gorm:"column:birth_time" json:"birthTime"`
+}
+
+func SyncDB[T any](ctx context.Context, db *gorm.DB, set []*T, deletes []*T) ([]bool, []bool, error) {
+
+	return nil, nil, nil
 }
 
 // message BlackInfo{
