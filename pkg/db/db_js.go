@@ -196,8 +196,42 @@ func (i IndexDB) Close() error {
 }
 
 func (i IndexDB) SetChatLogFailedStatus() {
-	//TODO implement me
-	panic("implement me")
+	msgList, err := i.GetSendingMessageList()
+	if err != nil {
+		log.Error("", "GetSendingMessageList failed ", err.Error())
+		return
+	}
+	for _, v := range msgList {
+		v.Status = constant.MsgStatusSendFailed
+		err := i.UpdateMessage(v)
+		if err != nil {
+			log.Error("", "UpdateMessage failed ", err.Error(), v)
+			continue
+		}
+	}
+	groupIDList, err := i.GetReadDiffusionGroupIDList()
+	if err != nil {
+		log.Error("", "GetReadDiffusionGroupIDList failed ", err.Error())
+		return
+	}
+	for _, v := range groupIDList {
+		msgList, err := i.SuperGroupGetSendingMessageList(v)
+		if err != nil {
+			log.Error("", "GetSendingMessageList failed ", err.Error())
+			return
+		}
+		if len(msgList) > 0 {
+			for _, v := range msgList {
+				v.Status = constant.MsgStatusSendFailed
+				err := i.SuperGroupUpdateMessage(v)
+				if err != nil {
+					log.Error("", "UpdateMessage failed ", err.Error(), v)
+					continue
+				}
+			}
+		}
+
+	}
 }
 
 func (i IndexDB) InitDB(userID string, dataDir string) error {
