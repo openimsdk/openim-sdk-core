@@ -2,9 +2,10 @@ package group
 
 import (
 	"context"
+	"fmt"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	"github.com/jinzhu/copier"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -23,7 +24,7 @@ func (g *Group) SetGroupListener(callback open_im_sdk_callback.OnGroupListener) 
 }
 
 // deprecated use CreateGroupV2
-func (g *Group) CreateGroup(ctx context.Context, groupBaseInfo sdk_params_callback.CreateGroupBaseInfoParam, memberList sdk_params_callback.CreateGroupMemberRoleParam) {
+func (g *Group) CreateGroup(ctx context.Context, groupBaseInfo sdk_params_callback.CreateGroupBaseInfoParam, memberList sdk_params_callback.CreateGroupMemberRoleParam) (*sdkws.GroupInfo, error) {
 	req := &group.CreateGroupReq{
 		GroupInfo: &sdkws.GroupInfo{
 			GroupName:    groupBaseInfo.GroupName,
@@ -40,16 +41,20 @@ func (g *Group) CreateGroup(ctx context.Context, groupBaseInfo sdk_params_callba
 	for _, info := range memberList {
 		switch info.RoleLevel {
 		case constant.GroupOrdinaryUsers:
+			req.InitMembers = append(req.InitMembers, info.UserID)
 		case constant.GroupOwner:
+			req.OwnerUserID = info.UserID
 		case constant.GroupAdmin:
-
+			req.AdminUserIDs = append(req.AdminUserIDs, info.UserID)
+		default:
+			return nil, errs.ErrArgs.Wrap(fmt.Sprintf("CreateGroupV2: invalid role level %d", info.RoleLevel))
 		}
 	}
-
+	return g.CreateGroupV2(ctx, req)
 }
 
 func (g *Group) CreateGroupV2(ctx context.Context, req *group.CreateGroupReq) (*sdkws.GroupInfo, error) {
-	resp, err := util.ApiFunc[group.CreateGroupResp](ctx, constant.CreateGroupRouter, req)
+	resp, err := util.CallApi[group.CreateGroupResp](ctx, constant.CreateGroupRouter, req)
 	if err != nil {
 		return nil, err
 	}
@@ -58,64 +63,55 @@ func (g *Group) CreateGroupV2(ctx context.Context, req *group.CreateGroupReq) (*
 	return resp.GroupInfo, nil
 }
 
-func (g *Group) createGroupV2(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam, memberList sdk.CreateGroupMemberRoleParam, operationID string) *sdk.CreateGroupCallback {
-	apiReq := api.CreateGroupReq{}
-	apiReq.OperationID = operationID
-	apiReq.OwnerUserID = g.loginUserID
-	apiReq.MemberList = memberList
-	for _, v := range apiReq.MemberList {
-		if v.RoleLevel == 0 {
-			v.RoleLevel = 1
-		}
-	}
+//func (g *Group) createGroupV2(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam, memberList sdk.CreateGroupMemberRoleParam, operationID string) *sdk.CreateGroupCallback {
+//	apiReq := api.CreateGroupReq{}
+//	apiReq.OperationID = operationID
+//	apiReq.OwnerUserID = g.loginUserID
+//	apiReq.MemberList = memberList
+//	for _, v := range apiReq.MemberList {
+//		if v.RoleLevel == 0 {
+//			v.RoleLevel = 1
+//		}
+//	}
+//
+//	copier.Copy(&apiReq, &group)
+//	realData := api.CreateGroupResp{}
+//	log.NewInfo(operationID, utils.GetSelfFuncName(), "api req args: ", apiReq)
+//	g.p.PostFatalCallbackPenetrate(callback, constant.CreateGroupRouter, apiReq, &realData.GroupInfo, apiReq.OperationID)
+//	m := utils.JsonDataOne(&realData.GroupInfo)
+//	g.SyncJoinedGroupList(operationID)
+//	g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID, operationID, false)
+//	return (*sdk.CreateGroupCallback)(&m)
+//}
 
-	copier.Copy(&apiReq, &group)
-	realData := api.CreateGroupResp{}
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "api req args: ", apiReq)
-	g.p.PostFatalCallbackPenetrate(callback, constant.CreateGroupRouter, apiReq, &realData.GroupInfo, apiReq.OperationID)
-	m := utils.JsonDataOne(&realData.GroupInfo)
-	g.SyncJoinedGroupList(operationID)
-	g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID, operationID, false)
-	return (*sdk.CreateGroupCallback)(&m)
+func (g *Group) JoinGroup(ctx context.Context, groupID, reqMsg string, joinSource int32) error {
+	_, err := util.CallApi[struct{}](ctx, constant.JoinGroupRouter, &group.JoinGroupReq{GroupID: groupID, ReqMessage: reqMsg, JoinSource: joinSource})
+	if err != nil {
+		return err
+	}
+	//g.p.PostFatalCallback(callback, constant.JoinGroupRouter, apiReq, nil, apiReq.OperationID)
+	//g.SyncSelfGroupApplication(operationID)
+	return nil
 }
 
-func (g *Group) JoinGroup(callback open_im_sdk_callback.Base, groupID, reqMsg string, joinSource int32, operationID string) {
-	if callback == nil {
-		return
+func (g *Group) QuitGroup(ctx context.Context, groupID string) error {
+	_, err := util.CallApi[struct{}](ctx, constant.QuitGroupRouter, &group.QuitGroupReq{GroupID: groupID})
+	if err != nil {
+		return err
 	}
-	fName := utils.GetSelfFuncName()
-	go func() {
-		log.NewInfo(operationID, fName, "args: ", groupID, reqMsg, joinSource)
-		g.joinGroup(groupID, reqMsg, joinSource, callback, operationID)
-		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.JoinGroupCallback))
-		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonString(sdk_params_callback.JoinGroupCallback))
-	}()
+	//g.quitGroup(groupID, callback, operationID)
+	//callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.QuitGroupCallback))
+	return nil
 }
 
-func (g *Group) QuitGroup(callback open_im_sdk_callback.Base, groupID string, operationID string) {
-	if callback == nil {
-		return
+func (g *Group) DismissGroup(ctx context.Context, groupID string) error {
+	_, err := util.CallApi[struct{}](ctx, constant.DismissGroupRouter, &group.DismissGroupReq{GroupID: groupID})
+	if err != nil {
+		return err
 	}
-	fName := utils.GetSelfFuncName()
-	go func() {
-		log.NewInfo(operationID, fName, "args: ", groupID)
-		g.quitGroup(groupID, callback, operationID)
-		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.QuitGroupCallback))
-		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk_params_callback.QuitGroupCallback))
-	}()
-}
-
-func (g *Group) DismissGroup(callback open_im_sdk_callback.Base, groupID string, operationID string) {
-	if callback == nil {
-		return
-	}
-	fName := utils.GetSelfFuncName()
-	go func() {
-		log.NewInfo(operationID, fName, "args: ", groupID)
-		g.dismissGroup(groupID, callback, operationID)
-		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.DismissGroupCallback))
-		log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk_params_callback.DismissGroupCallback))
-	}()
+	//g.dismissGroup(groupID, callback, operationID)
+	//callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.DismissGroupCallback))
+	return nil
 }
 
 func (g *Group) ChangeGroupMute(callback open_im_sdk_callback.Base, groupID string, isMute bool, operationID string) {

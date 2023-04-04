@@ -55,15 +55,17 @@ func ApiPost(ctx context.Context, api string, req, resp any) error {
 	return nil
 }
 
-func ApiFunc[T any](ctx context.Context, api string, req any) (*T, error) {
+func CallApi[T any](ctx context.Context, api string, req any) (*T, error) {
 	var (
 		t    T
+		v    any
 		resp *T
 	)
 	if _, ok := any(t).(struct{}); !ok {
+		v = &t
 		resp = &t
 	}
-	if err := ApiPost(ctx, api, req, resp); err != nil {
+	if err := ApiPost(ctx, api, req, v); err != nil {
 		return nil, err
 	}
 	return resp, nil
