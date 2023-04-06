@@ -1814,6 +1814,7 @@ type UserSendMsgResp struct {
 	ServerMsgID          string   `protobuf:"bytes,1,opt,name=serverMsgID" json:"serverMsgID,omitempty"`
 	ClientMsgID          string   `protobuf:"bytes,2,opt,name=clientMsgID" json:"clientMsgID,omitempty"`
 	SendTime             int64    `protobuf:"varint,3,opt,name=sendTime" json:"sendTime,omitempty"`
+	Ex                   string   `protobuf:"bytes,4,opt,name=ex" json:"ex,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1862,6 +1863,13 @@ func (m *UserSendMsgResp) GetSendTime() int64 {
 		return m.SendTime
 	}
 	return 0
+}
+
+func (m *UserSendMsgResp) GetEx() string {
+	if m != nil {
+		return m.Ex
+	}
+	return ""
 }
 
 type MsgData struct {

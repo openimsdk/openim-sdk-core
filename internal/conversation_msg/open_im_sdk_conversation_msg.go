@@ -953,6 +953,7 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *model_st
 	s.SendTime = sendMsgResp.SendTime
 	s.Status = constant.MsgStatusSendSuccess
 	s.ServerMsgID = sendMsgResp.ServerMsgID
+	s.Ex = sendMsgResp.Ex
 	callback.OnProgress(100)
 	callback.OnSuccess(utils.StructToJsonString(s))
 	log.Debug(operationID, "callback OnSuccess", s.ClientMsgID, s.ServerMsgID)
