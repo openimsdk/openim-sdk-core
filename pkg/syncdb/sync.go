@@ -75,8 +75,8 @@ func syncDB(db *gorm.DB, changes []any, deletes []any) (changeStates []SyncState
 	}
 	// model对应的主键和字段
 	type ModelKey struct {
-		PrimaryKey map[int]string // go model field index -> db column name
-		FieldName  map[int]string // go model field index -> db column name
+		PrimaryKey   map[int]string // go model field index -> db column name
+		UpdateColumn map[int]string // go model field index -> db column name
 	}
 	// model字段缓存信息
 	modelCache := make(map[string]*ModelKey)
@@ -95,8 +95,8 @@ func syncDB(db *gorm.DB, changes []any, deletes []any) (changeStates []SyncState
 			return res, nil
 		}
 		var (
-			primaryKey = make(map[int]string)
-			fieldName  = make(map[int]string)
+			primaryKey   = make(map[int]string)
+			updateColumn = make(map[int]string)
 		)
 		for i := 0; i < typeOf.NumField(); i++ {
 			modelTypeField := typeOf.Field(i)
@@ -125,10 +125,16 @@ func syncDB(db *gorm.DB, changes []any, deletes []any) (changeStates []SyncState
 			if key {
 				primaryKey[i] = column
 			} else {
-				fieldName[i] = column
+				updateColumn[i] = column
 			}
 		}
-		res := &ModelKey{PrimaryKey: primaryKey, FieldName: fieldName}
+		if len(primaryKey) == 0 {
+			return nil, errors.New("no primary key")
+		}
+		if len(updateColumn) == 0 {
+			return nil, errors.New("no update column")
+		}
+		res := &ModelKey{PrimaryKey: primaryKey, UpdateColumn: updateColumn}
 		modelCache[typeStr] = res
 		return res, nil
 	}
@@ -178,7 +184,7 @@ func syncDB(db *gorm.DB, changes []any, deletes []any) (changeStates []SyncState
 				changeData = changeData.Elem()
 			}
 			update := make(map[string]any)
-			for index, column := range keyInfo.FieldName {
+			for index, column := range keyInfo.UpdateColumn {
 				changeField := changeData.Field(index)
 				if equal(dbData.Field(index), changeField) {
 					changeStates[i] = StateNoChange
