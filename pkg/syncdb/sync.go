@@ -1,4 +1,4 @@
-package db_interface
+package syncdb
 
 import (
 	"errors"
@@ -8,13 +8,39 @@ import (
 	"strings"
 )
 
-func SyncDB[T any](db *gorm.DB, changes []T, deletes []T) ([]uint8, []uint8, error) {
+type SyncState uint8
+
+func (s SyncState) String() string {
+	switch s {
+	case StateNoChange:
+		return "NoChange"
+	case StateInsert:
+		return "Insert"
+	case StateUpdate:
+		return "Update"
+	case StateDelete:
+		return "Delete"
+	default:
+		return "Unknown"
+	}
+}
+
+const (
+	StateNoChange SyncState = 0
+	StateInsert   SyncState = 1
+	StateUpdate   SyncState = 2
+	StateDelete   SyncState = 3
+)
+
+func SyncDB[T any](db *gorm.DB, changes []*T, deletes []*T) (changeStates []SyncState, deleteStates []SyncState, err error) {
+	changeStates = make([]SyncState, len(changes))
+	deleteStates = make([]SyncState, len(deletes))
 	if len(changes) == 0 && len(deletes) == 0 {
-		return []uint8{}, []uint8{}, nil
+		return
 	}
 	var zero T
 	modelType := reflect.TypeOf(&zero)
-	for modelType.Kind() == reflect.Ptr {
+	for modelType.Kind() == reflect.Pointer {
 		modelType = modelType.Elem()
 	}
 	if modelType.Kind() != reflect.Struct {
@@ -49,9 +75,9 @@ func SyncDB[T any](db *gorm.DB, changes []T, deletes []T) ([]uint8, []uint8, err
 	if len(primaryKey) == 0 {
 		return nil, nil, errors.New("no primary key")
 	}
-	where := func(model T) *gorm.DB {
+	where := func(model *T) *gorm.DB {
 		value := reflect.ValueOf(model)
-		for value.Kind() == reflect.Ptr {
+		for value.Kind() == reflect.Pointer {
 			value = value.Elem()
 		}
 		whereDb := db
@@ -61,7 +87,7 @@ func SyncDB[T any](db *gorm.DB, changes []T, deletes []T) ([]uint8, []uint8, err
 		return whereDb
 	}
 	equal := func(a, b reflect.Value) bool {
-		for a.Kind() == reflect.Ptr {
+		for a.Kind() == reflect.Pointer {
 			if a.IsNil() && b.IsNil() {
 				return true
 			}
@@ -73,16 +99,15 @@ func SyncDB[T any](db *gorm.DB, changes []T, deletes []T) ([]uint8, []uint8, err
 		}
 		return a.Interface() == b.Interface()
 	}
-	changeStates := make([]uint8, len(changes)) // 0: no change, 1: update, 2: insert
 	for i, model := range changes {
 		var t T
 		if err := where(model).Take(&t).Error; err == nil {
 			dbValue := reflect.ValueOf(t)
-			for dbValue.Kind() == reflect.Ptr {
+			for dbValue.Kind() == reflect.Pointer {
 				dbValue = dbValue.Elem()
 			}
 			changeValue := reflect.ValueOf(model)
-			for dbValue.Kind() == reflect.Ptr {
+			for changeValue.Kind() == reflect.Pointer {
 				changeValue = changeValue.Elem()
 			}
 			update := make(map[string]any)
@@ -95,23 +120,22 @@ func SyncDB[T any](db *gorm.DB, changes []T, deletes []T) ([]uint8, []uint8, err
 				update[column] = changeFieldValue.Interface()
 			}
 			if len(update) == 0 {
-				changeStates[i] = 0
+				changeStates[i] = StateNoChange
 				continue
 			}
 			if err := where(model).Model(t).Updates(update).Error; err != nil {
 				return nil, nil, err
 			}
-			changeStates[i] = 1
+			changeStates[i] = StateUpdate
 		} else if err == gorm.ErrRecordNotFound {
 			if err := where(model).Create(model).Error; err != nil {
 				return nil, nil, err
 			}
-			changeStates[i] = 2
+			changeStates[i] = StateInsert
 		} else {
 			return nil, nil, err
 		}
 	}
-	deleteStates := make([]uint8, len(deletes)) // 0: no change, 1: delete
 	for i, model := range deletes {
 		var t T
 		res := where(model).Delete(&t)
@@ -119,10 +143,18 @@ func SyncDB[T any](db *gorm.DB, changes []T, deletes []T) ([]uint8, []uint8, err
 			return nil, nil, res.Error
 		}
 		if res.RowsAffected == 0 {
-			deleteStates[i] = 0
+			deleteStates[i] = StateNoChange
 		} else {
-			deleteStates[i] = 1
+			deleteStates[i] = StateDelete
 		}
 	}
 	return changeStates, deleteStates, nil
+}
+
+func SyncTxDB[T any](db *gorm.DB, changes []*T, deletes []*T) (changeStates []SyncState, deleteStates []SyncState, err error) {
+	err = db.Transaction(func(tx *gorm.DB) (err_ error) {
+		changeStates, deleteStates, err_ = SyncDB(tx, changes, deletes)
+		return
+	})
+	return
 }
