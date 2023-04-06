@@ -7,6 +7,7 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/wrapperspb"
+	"math"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -15,6 +16,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
+	"open_im_sdk/pkg/syncdb"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -60,8 +62,56 @@ func (g *Group) CreateGroupV2(ctx context.Context, req *group.CreateGroupReq) (*
 	if err != nil {
 		return nil, err
 	}
-	//g.SyncJoinedGroupList(operationID)
-	//g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID, operationID, false)
+	memberReq := &group.GetGroupMemberListReq{GroupID: resp.GroupInfo.GroupID, Pagination: &sdkws.RequestPagination{ShowNumber: math.MaxInt32}}
+	memberResp, err := util.CallApi[group.GetGroupMemberListResp](ctx, constant.GetGroupAllMemberListRouter, memberReq)
+	if err != nil {
+		return nil, err
+	}
+	var changes []any
+	changes = append(changes, &model_struct.LocalGroup{
+		GroupID:       resp.GroupInfo.GroupID,
+		GroupName:     resp.GroupInfo.GroupName,
+		Notification:  resp.GroupInfo.Notification,
+		Introduction:  resp.GroupInfo.Introduction,
+		FaceURL:       resp.GroupInfo.FaceURL,
+		CreateTime:    resp.GroupInfo.CreateTime,
+		Status:        resp.GroupInfo.Status,
+		CreatorUserID: resp.GroupInfo.CreatorUserID,
+		GroupType:     resp.GroupInfo.GroupType,
+		OwnerUserID:   resp.GroupInfo.OwnerUserID,
+		MemberCount:   int32(resp.GroupInfo.MemberCount),
+		Ex:            resp.GroupInfo.Ex,
+		//AttachedInfo:           resp.GroupInfo.AttachedInfo, // TODO
+		NeedVerification:       resp.GroupInfo.NeedVerification,
+		LookMemberInfo:         resp.GroupInfo.LookMemberInfo,
+		ApplyMemberFriend:      resp.GroupInfo.ApplyMemberFriend,
+		NotificationUpdateTime: resp.GroupInfo.NotificationUpdateTime,
+		NotificationUserID:     resp.GroupInfo.NotificationUserID,
+	})
+	for _, member := range memberResp.Members {
+		changes = append(changes, &model_struct.LocalGroupMember{
+			GroupID:        member.GroupID,
+			UserID:         member.UserID,
+			Nickname:       member.Nickname,
+			FaceURL:        member.FaceURL,
+			RoleLevel:      member.RoleLevel,
+			JoinTime:       member.JoinTime,
+			JoinSource:     member.JoinSource,
+			InviterUserID:  member.InviterUserID,
+			MuteEndTime:    member.MuteEndTime,
+			OperatorUserID: member.OperatorUserID,
+			Ex:             member.Ex,
+			//AttachedInfo:   member.AttachedInfo, // todo
+		})
+	}
+	if _, err := g.db.Sync(ctx, &syncdb.Data{Change: changes}); err != nil {
+		return nil, err
+	}
+	g.listener.OnGroupInfoChanged(utils.StructToJsonString(changes[0]))
+	for _, member := range changes[1:] {
+		g.listener.OnGroupMemberInfoChanged(utils.StructToJsonString(member))
+	}
+	g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID, operationID, false)
 	return resp.GroupInfo, nil
 }
 
@@ -90,6 +140,7 @@ func (g *Group) JoinGroup(ctx context.Context, groupID, reqMsg string, joinSourc
 	if err := util.ApiPost(ctx, constant.JoinGroupRouter, &group.JoinGroupReq{GroupID: groupID, ReqMessage: reqMsg, JoinSource: joinSource}, nil); err != nil {
 		return err
 	}
+	g.SyncSelfGroupApplication(operationID)
 	//g.p.PostFatalCallback(callback, constant.JoinGroupRouter, apiReq, nil, apiReq.OperationID)
 	//g.SyncSelfGroupApplication(operationID)
 	return nil
@@ -99,8 +150,9 @@ func (g *Group) QuitGroup(ctx context.Context, groupID string) error {
 	if err := util.ApiPost(ctx, constant.QuitGroupRouter, &group.QuitGroupReq{GroupID: groupID}, nil); err != nil {
 		return err
 	}
-	//g.quitGroup(groupID, callback, operationID)
-	//callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.QuitGroupCallback))
+	if _, _, err := syncdb.SyncTxDB(g.db.DB(ctx), nil, []*model_struct.LocalGroupMember{{GroupID: groupID, UserID: g.loginUserID}}); err != nil {
+		return nil
+	}
 	return nil
 }
 
@@ -108,7 +160,7 @@ func (g *Group) DismissGroup(ctx context.Context, groupID string) error {
 	if err := util.ApiPost(ctx, constant.DismissGroupRouter, &group.DismissGroupReq{GroupID: groupID}, nil); err != nil {
 		return err
 	}
-	//g.dismissGroup(groupID, callback, operationID)
+	g.dismissGroup(groupID, callback, operationID)
 	//callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.DismissGroupCallback))
 	return nil
 }
