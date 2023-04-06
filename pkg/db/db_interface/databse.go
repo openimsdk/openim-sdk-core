@@ -4,6 +4,7 @@ import (
 	"context"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/server_api_params"
+	"open_im_sdk/pkg/syncdb"
 	"open_im_sdk/sdk_struct"
 )
 
@@ -248,4 +249,5 @@ type DataBase interface {
 	DeleteAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*server_api_params.KeyValue) error
 	GetMultipleMessageReactionExtension(ctx context.Context, msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error)
 	DeleteMessageReactionExtension(ctx context.Context, msgID string) error
+	Sync(ctx context.Context, data *syncdb.Data) (*syncdb.Result, error)
 }
