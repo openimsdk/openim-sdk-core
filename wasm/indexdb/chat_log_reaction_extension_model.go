@@ -12,6 +12,10 @@ import (
 type LocalChatLogReactionExtensions struct {
 }
 
+func NewLocalChatLogReactionExtensions() *LocalChatLogReactionExtensions {
+	return &LocalChatLogReactionExtensions{}
+}
+
 func (i *LocalChatLogReactionExtensions) GetMessageReactionExtension(clientMsgID string) (result *model_struct.LocalChatLogReactionExtensions, err error) {
 	msg, err := Exec(clientMsgID)
 	if err != nil {

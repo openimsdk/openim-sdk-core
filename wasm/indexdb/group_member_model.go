@@ -11,6 +11,10 @@ import (
 type LocalGroupMember struct {
 }
 
+func NewLocalGroupMember() *LocalGroupMember {
+	return &LocalGroupMember{}
+}
+
 func (i *LocalGroupMember) GetGroupMemberInfoByGroupIDUserID(groupID, userID string) (*model_struct.LocalGroupMember, error) {
 	member, err := Exec(groupID, userID)
 	if err != nil {

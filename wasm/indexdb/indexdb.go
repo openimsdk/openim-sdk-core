@@ -186,47 +186,6 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 	return data.Data, err
 }
 
-func (i IndexDB) GetMinSeq(ID string) (uint32, error) {
-	result, err := Exec(ID)
-	if err != nil {
-		return 0, err
-	}
-	if v, ok := result.(float64); ok {
-		return uint32(v), nil
-	} else {
-		return 0, ErrType
-	}
-}
-
-func (i IndexDB) SetMinSeq(ID string, minSeq uint32) error {
-	_, err := Exec(ID, minSeq)
-	return err
-}
-
-func (i IndexDB) GetUserMinSeq() (uint32, error) {
-	result, err := Exec()
-	if err != nil {
-		return 0, err
-	}
-	if v, ok := result.(float64); ok {
-		return uint32(v), nil
-	} else {
-		return 0, ErrType
-	}
-}
-
-func (i IndexDB) GetGroupMinSeq(groupID string) (uint32, error) {
-	result, err := Exec(groupID)
-	if err != nil {
-		return 0, err
-	}
-	if v, ok := result.(float64); ok {
-		return uint32(v), nil
-	} else {
-		return 0, ErrType
-	}
-}
-
 func (i IndexDB) BatchInsertMessageListController(MessageList []*model_struct.LocalChatLog) error {
 	if len(MessageList) == 0 {
 		return nil

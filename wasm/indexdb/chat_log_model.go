@@ -294,11 +294,6 @@ func (i *LocalChatLogs) MessageIfExistsBySeq(seq int64) (bool, error) {
 	}
 }
 
-func (i *LocalChatLogs) UpdateGroupMessageHasRead(msgIDList []string, sessionType int32) error {
-	_, err := Exec(msgIDList, sessionType)
-	return err
-}
-
 func (i *LocalChatLogs) GetMultipleMessage(msgIDList []string) (result []*model_struct.LocalChatLog, err error) {
 	msgList, err := Exec(utils.StructToJsonString(msgIDList))
 	if err != nil {
@@ -415,7 +410,7 @@ func (i *LocalChatLogs) GetMsgSeqListByGroupID(groupID string) (result []uint32,
 	}
 }
 
-func (i IndexDB) GetMsgSeqListByPeerUserID(userID string) (result []uint32, err error) {
+func (i *LocalChatLogs) GetMsgSeqListByPeerUserID(userID string) (result []uint32, err error) {
 	l, err := Exec(userID)
 	if err != nil {
 		return nil, err
@@ -482,7 +477,7 @@ func (i *LocalChatLogs) BatchInsertExceptionMsg(MessageList []*model_struct.Loca
 	return err
 }
 
-func (i IndexDB) UpdateGroupMessageHasRead(msgIDList []string, sessionType int32) error {
+func (i *LocalChatLogs) UpdateGroupMessageHasRead(msgIDList []string, sessionType int32) error {
 	_, err := Exec(utils.StructToJsonString(msgIDList), sessionType)
 	return err
 }
