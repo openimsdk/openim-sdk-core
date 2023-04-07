@@ -2,8 +2,9 @@ module open_im_sdk
 
 go 1.18
 
+// go get -u github.com/OpenIMSDK/Open-IM-Server@errcode
 require (
-	github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230403034959-a83b4fc5d891
+	github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230407040754-c81fb9ceca01
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.1+incompatible
 	github.com/antonfisher/nested-logrus-formatter v1.3.1
 	github.com/aws/aws-sdk-go-v2 v1.16.7

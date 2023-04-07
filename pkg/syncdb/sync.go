@@ -11,9 +11,9 @@ import (
 	"strings"
 )
 
-type SyncState uint8
+type State uint8
 
-func (s SyncState) String() string {
+func (s State) String() string {
 	switch s {
 	case StateNoChange:
 		return "NoChange"
@@ -29,24 +29,25 @@ func (s SyncState) String() string {
 }
 
 const (
-	StateNoChange SyncState = 0
-	StateInsert   SyncState = 1
-	StateUpdate   SyncState = 2
-	StateDelete   SyncState = 3
+	StateNoChange State = 0
+	StateInsert   State = 1
+	StateUpdate   State = 2
+	StateDelete   State = 3
 )
 
 type Result struct {
-	Change []SyncState
-	Delete []SyncState
+	Change []State
+	Delete []State
 }
 
 func (r Result) String() string {
 	return fmt.Sprintf("Change: %s, Delete: %s", r.Change, r.Delete)
 }
 
-type Complete struct {
+type complete struct {
 	Key  []string
 	Data []any
+	on   func(state State, data any)
 }
 
 // modelKey model对应的主键和字段
@@ -55,9 +56,9 @@ type modelKey struct {
 	UpdateColumn map[int]string // go model field index -> db column name
 }
 
-func NewSync(db *gorm.DB) *Sync {
+func NewSync(db any) *Sync {
 	return &Sync{
-		db:         db,
+		db:         db.(*gorm.DB),
 		modelCache: make(map[string]modelKey),
 	}
 }
@@ -66,20 +67,23 @@ type Sync struct {
 	db         *gorm.DB
 	change     []any
 	delete     []any
-	complete   []Complete
+	complete   []complete
 	modelCache map[string]modelKey
 }
 
-func (s *Sync) AddChange(data any) {
-	s.change = append(s.change, data)
+func (s *Sync) AddChange(data ...any) *Sync {
+	s.change = append(s.change, data...)
+	return s
 }
 
-func (s *Sync) AddDelete(data any) {
-	s.delete = append(s.delete, data)
+func (s *Sync) AddDelete(data ...any) *Sync {
+	s.delete = append(s.delete, data...)
+	return s
 }
 
-func (s *Sync) AddComplete(key []string, data []any) {
-	s.complete = append(s.complete, Complete{Key: key, Data: data})
+func (s *Sync) AddComplete(key []string, data []any) *Sync {
+	s.complete = append(s.complete, complete{Key: key, Data: data})
+	return s
 }
 
 // equal 比较是否相等
@@ -176,8 +180,8 @@ func (s *Sync) getModelInfo(m any) (*modelKey, error) {
 }
 
 // Change 变更数据
-func (s *Sync) Change() ([]SyncState, error) {
-	state := make([]SyncState, 0, len(s.change))
+func (s *Sync) Change() ([]State, error) {
+	state := make([]State, 0, len(s.change))
 	for i := range s.change {
 		change := s.change[i]
 		keyInfo, err := s.getModelInfo(change)
@@ -224,8 +228,8 @@ func (s *Sync) Change() ([]SyncState, error) {
 }
 
 // Delete 删除数据
-func (s *Sync) Delete() ([]SyncState, error) {
-	state := make([]SyncState, 0, len(s.delete))
+func (s *Sync) Delete() ([]State, error) {
+	state := make([]State, 0, len(s.delete))
 	for i := range s.delete {
 		del := s.delete[i]
 		keyInfo, err := s.getModelInfo(del)
@@ -352,7 +356,7 @@ func (s *Sync) Complete() error {
 }
 
 // completeBy 传入完成的数据，根据指定主键列新增,删除,修改数据
-func (s *Sync) completeBy(c *Complete) error {
+func (s *Sync) completeBy(c *complete) error {
 	if len(c.Data) == 0 {
 		return nil
 	}
@@ -360,7 +364,6 @@ func (s *Sync) completeBy(c *Complete) error {
 	if err != nil {
 		return err
 	}
-	// Column
 	whereColumn, err := s.checkKey(c.Key, info.PrimaryKey)
 	if err != nil {
 		return err
@@ -450,7 +453,7 @@ func (s *Sync) completeBy(c *Complete) error {
 	return nil
 }
 
-func (s *Sync) Start() error {
+func (s *Sync) start() error {
 	if _, err := s.Change(); err != nil {
 		return err
 	}
@@ -461,4 +464,17 @@ func (s *Sync) Start() error {
 		return err
 	}
 	return nil
+}
+
+func (s *Sync) Start() error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		newSync := &Sync{
+			db:         tx,
+			change:     s.change,
+			delete:     s.delete,
+			complete:   s.complete,
+			modelCache: s.modelCache,
+		}
+		return newSync.start()
+	})
 }

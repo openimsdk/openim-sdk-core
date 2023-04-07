@@ -7,7 +7,6 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/wrapperspb"
-	"math"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -16,7 +15,6 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
-	"open_im_sdk/pkg/syncdb"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -62,87 +60,22 @@ func (g *Group) CreateGroupV2(ctx context.Context, req *group.CreateGroupReq) (*
 	if err != nil {
 		return nil, err
 	}
-	memberReq := &group.GetGroupMemberListReq{GroupID: resp.GroupInfo.GroupID, Pagination: &sdkws.RequestPagination{ShowNumber: math.MaxInt32}}
-	memberResp, err := util.CallApi[group.GetGroupMemberListResp](ctx, constant.GetGroupAllMemberListRouter, memberReq)
-	if err != nil {
+	if err := g.SyncGroup(ctx, resp.GroupInfo.GroupID); err != nil {
 		return nil, err
 	}
-	var changes []any
-	changes = append(changes, &model_struct.LocalGroup{
-		GroupID:       resp.GroupInfo.GroupID,
-		GroupName:     resp.GroupInfo.GroupName,
-		Notification:  resp.GroupInfo.Notification,
-		Introduction:  resp.GroupInfo.Introduction,
-		FaceURL:       resp.GroupInfo.FaceURL,
-		CreateTime:    resp.GroupInfo.CreateTime,
-		Status:        resp.GroupInfo.Status,
-		CreatorUserID: resp.GroupInfo.CreatorUserID,
-		GroupType:     resp.GroupInfo.GroupType,
-		OwnerUserID:   resp.GroupInfo.OwnerUserID,
-		MemberCount:   int32(resp.GroupInfo.MemberCount),
-		Ex:            resp.GroupInfo.Ex,
-		//AttachedInfo:           resp.GroupInfo.AttachedInfo, // TODO
-		NeedVerification:       resp.GroupInfo.NeedVerification,
-		LookMemberInfo:         resp.GroupInfo.LookMemberInfo,
-		ApplyMemberFriend:      resp.GroupInfo.ApplyMemberFriend,
-		NotificationUpdateTime: resp.GroupInfo.NotificationUpdateTime,
-		NotificationUserID:     resp.GroupInfo.NotificationUserID,
-	})
-	for _, member := range memberResp.Members {
-		changes = append(changes, &model_struct.LocalGroupMember{
-			GroupID:        member.GroupID,
-			UserID:         member.UserID,
-			Nickname:       member.Nickname,
-			FaceURL:        member.FaceURL,
-			RoleLevel:      member.RoleLevel,
-			JoinTime:       member.JoinTime,
-			JoinSource:     member.JoinSource,
-			InviterUserID:  member.InviterUserID,
-			MuteEndTime:    member.MuteEndTime,
-			OperatorUserID: member.OperatorUserID,
-			Ex:             member.Ex,
-			//AttachedInfo:   member.AttachedInfo, // todo
-		})
-	}
-	if _, err := g.db.Sync(ctx, &syncdb.Data{Change: changes}); err != nil {
-		return nil, err
-	}
-	g.listener.OnGroupInfoChanged(utils.StructToJsonString(changes[0]))
-	for _, member := range changes[1:] {
-		g.listener.OnGroupMemberInfoChanged(utils.StructToJsonString(member))
-	}
-	g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID, operationID, false)
 	return resp.GroupInfo, nil
 }
-
-//func (g *Group) createGroupV2(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam, memberList sdk.CreateGroupMemberRoleParam, operationID string) *sdk.CreateGroupCallback {
-//	apiReq := api.CreateGroupReq{}
-//	apiReq.OperationID = operationID
-//	apiReq.OwnerUserID = g.loginUserID
-//	apiReq.MemberList = memberList
-//	for _, v := range apiReq.MemberList {
-//		if v.RoleLevel == 0 {
-//			v.RoleLevel = 1
-//		}
-//	}
-//
-//	copier.Copy(&apiReq, &group)
-//	realData := api.CreateGroupResp{}
-//	log.NewInfo(operationID, utils.GetSelfFuncName(), "api req args: ", apiReq)
-//	g.p.PostFatalCallbackPenetrate(callback, constant.CreateGroupRouter, apiReq, &realData.GroupInfo, apiReq.OperationID)
-//	m := utils.JsonDataOne(&realData.GroupInfo)
-//	g.SyncJoinedGroupList(operationID)
-//	g.syncGroupMemberByGroupID(realData.GroupInfo.GroupID, operationID, false)
-//	return (*sdk.CreateGroupCallback)(&m)
-//}
 
 func (g *Group) JoinGroup(ctx context.Context, groupID, reqMsg string, joinSource int32) error {
 	if err := util.ApiPost(ctx, constant.JoinGroupRouter, &group.JoinGroupReq{GroupID: groupID, ReqMessage: reqMsg, JoinSource: joinSource}, nil); err != nil {
 		return err
 	}
-	g.SyncSelfGroupApplication(operationID)
-	//g.p.PostFatalCallback(callback, constant.JoinGroupRouter, apiReq, nil, apiReq.OperationID)
-	//g.SyncSelfGroupApplication(operationID)
+	if err := g.SyncSelfGroupApplication(ctx); err != nil {
+		return err
+	}
+	if err := g.SyncGroup(ctx, groupID); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -150,8 +83,8 @@ func (g *Group) QuitGroup(ctx context.Context, groupID string) error {
 	if err := util.ApiPost(ctx, constant.QuitGroupRouter, &group.QuitGroupReq{GroupID: groupID}, nil); err != nil {
 		return err
 	}
-	if _, _, err := syncdb.SyncTxDB(g.db.DB(ctx), nil, []*model_struct.LocalGroupMember{{GroupID: groupID, UserID: g.loginUserID}}); err != nil {
-		return nil
+	if err := g.SyncGroup(ctx, groupID); err != nil {
+		return err
 	}
 	return nil
 }
@@ -160,8 +93,9 @@ func (g *Group) DismissGroup(ctx context.Context, groupID string) error {
 	if err := util.ApiPost(ctx, constant.DismissGroupRouter, &group.DismissGroupReq{GroupID: groupID}, nil); err != nil {
 		return err
 	}
-	g.dismissGroup(groupID, callback, operationID)
-	//callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.DismissGroupCallback))
+	if err := g.SyncGroup(ctx, groupID); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -196,53 +130,73 @@ func (g *Group) ChangeGroupMemberMute(ctx context.Context, groupID, userID strin
 	if err != nil {
 		return err
 	}
-
-	//fName := utils.GetSelfFuncName()
-	//go func() {
-	//	log.NewInfo(operationID, fName, "args: ", groupID, userID, mutedSeconds)
-	//	g.changeGroupMemberMute(groupID, userID, mutedSeconds, callback, operationID)
-	//	callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GroupMemberMuteChangeCallback))
-	//	log.NewInfo(operationID, fName, " callback: ", utils.StructToJsonString(sdk_params_callback.GroupMemberMuteChangeCallback))
-	//}()
+	if err := g.SyncGroup(ctx, groupID); err != nil {
+		return err
+	}
 	return nil
 }
 
 func (g *Group) SetGroupMemberRoleLevel(ctx context.Context, groupID, userID string, roleLevel int) error {
-	//fName := utils.GetSelfFuncName()
-	//go func() {
-	//	log.NewInfo(operationID, fName, "args: ", groupID, userID, roleLevel)
-	//	g.setGroupMemberRoleLevel(callback, groupID, userID, roleLevel, operationID)
-	//	callback.OnSuccess(constant.SuccessCallbackDefault)
-	//	log.NewInfo(operationID, fName, " callback: ", constant.SuccessCallbackDefault)
-	//}()
-	//if err := util.ApiPost(ctx, constant.SetGroupMemberInfoRouter, &group.SetGroupMemberInfoReq{Members:[]*group.SetGroupMemberInfo{{GroupID: groupID, UserID: userID, RoleLevel: wrapperspb.Int32(int32(roleLevel))}}}, nil);err != nil {
-	//	return err
-	//}
-
 	return g.SetGroupMemberInfo(ctx, &group.SetGroupMemberInfo{GroupID: groupID, UserID: userID, RoleLevel: wrapperspb.Int32(int32(roleLevel))})
 }
 
 func (g *Group) SetGroupMemberInfo(ctx context.Context, groupMemberInfo *group.SetGroupMemberInfo) error {
-	//var unmarshalSetGroupMemberInfoParam sdk_params_callback.SetGroupMemberInfoParam
-	//common.JsonUnmarshalAndArgsValidate(groupMemberInfo, &unmarshalSetGroupMemberInfoParam, callback, operationID)
-	//g.setGroupMemberInfo(callback, unmarshalSetGroupMemberInfoParam, operationID)
-	//callback.OnSuccess(utils.StructToJsonStringDefault(sdk_params_callback.SetGroupMemberInfoCallback))
-
 	if err := util.ApiPost(ctx, constant.SetGroupMemberInfoRouter, &group.SetGroupMemberInfoReq{Members: []*group.SetGroupMemberInfo{groupMemberInfo}}, nil); err != nil {
 		return err
 	}
-
-	return nil
+	return g.SyncGroupMember(ctx, groupMemberInfo.GroupID, []string{groupMemberInfo.UserID})
 }
 
 func (g *Group) GetJoinedGroupList(ctx context.Context) ([]*model_struct.LocalGroup, error) {
-	return g.db.GetJoinedGroupListDB()
+	return g.db.GetJoinedGroupListDB(ctx)
 }
 
-func (g *Group) GetGroupsInfo(callback open_im_sdk_callback.Base, groupIDList string, operationID string) {
-	if callback == nil {
-		return
+func (g *Group) GetGroupsInfo(ctx context.Context, groupIDList []string) ([]*model_struct.LocalGroup, error) {
+	groupList, err := g.db.GetJoinedGroupListDB(ctx)
+	common.CheckDBErrCallback(callback, err, operationID)
+	superGroupList, err := g.db.GetJoinedSuperGroupList()
+	common.CheckDBErrCallback(callback, err, operationID)
+	if len(superGroupList) > 0 {
+		groupList = append(groupList, superGroupList...)
 	}
+	var result sdk.GetGroupsInfoCallback
+	var notInDB []string
+
+	for _, v := range groupList {
+		in := false
+		for _, k := range groupIDList {
+			if v.GroupID == k {
+				in = true
+				break
+			}
+		}
+		if in {
+			result = append(result, v)
+		}
+	}
+
+	for _, v := range groupIDList {
+		in := false
+		for _, k := range result {
+			if v == k.GroupID {
+				in = true
+				break
+			}
+		}
+		if !in {
+			notInDB = append(notInDB, v)
+		}
+	}
+	if len(notInDB) > 0 {
+		groupsInfoSvr, err := g.getGroupsInfoFromSvr(notInDB, operationID)
+		log.Info(operationID, "getGroupsInfoFromSvr groupsInfoSvr", groupsInfoSvr)
+		common.CheckArgsErrCallback(callback, err, operationID)
+		transfer := common.TransferToLocalGroupInfo(groupsInfoSvr)
+		result = append(result, transfer...)
+	}
+
+	return result
+
 	fName := utils.GetSelfFuncName()
 	go func() {
 		log.NewInfo(operationID, fName, "args: ", groupIDList)

@@ -8,9 +8,9 @@ package syncdb
 //	"strings"
 //)
 //
-//type SyncState uint8
+//type State uint8
 //
-//func (s SyncState) String() string {
+//func (s State) String() string {
 //	switch s {
 //	case StateNoChange:
 //		return "NoChange"
@@ -26,22 +26,22 @@ package syncdb
 //}
 //
 //const (
-//	StateNoChange SyncState = 0
-//	StateInsert   SyncState = 1
-//	StateUpdate   SyncState = 2
-//	StateDelete   SyncState = 3
+//	StateNoChange State = 0
+//	StateInsert   State = 1
+//	StateUpdate   State = 2
+//	StateDelete   State = 3
 //)
 //
 //type Result struct {
-//	Change []SyncState
-//	Delete []SyncState
+//	Change []State
+//	Delete []State
 //}
 //
 //func (r Result) String() string {
 //	return fmt.Sprintf("Change: %s, Delete: %s", r.Change, r.Delete)
 //}
 //
-//type Complete struct {
+//type complete struct {
 //	Key  []string
 //	Data []any
 //}
@@ -50,7 +50,7 @@ package syncdb
 //type Data struct {
 //	Change   []any       // 更新的数据
 //	Delete   []any       // 删除的数据
-//	Complete []*Complete // 完整的数据
+//	complete []*complete // 完整的数据
 //}
 //
 //func SyncTxDB(db *gorm.DB, data *Data) (res *Result, err error) {
@@ -63,7 +63,7 @@ package syncdb
 //
 //// SyncDB 同步数据库 1. 通过主键判断是否存在 2. 通过主键判断是否需要更新
 //func SyncDB(db *gorm.DB, data *Data) (res *Result, err error) {
-//	res = &Result{Change: make([]SyncState, len(data.Change)), Delete: make([]SyncState, len(data.Change))}
+//	res = &Result{Change: make([]State, len(data.Change)), Delete: make([]State, len(data.Change))}
 //	if len(res.Change) == 0 && len(res.Delete) == 0 {
 //		return
 //	}
@@ -223,7 +223,7 @@ package syncdb
 //		}
 //	}
 //	// 完整性检测
-//	for i := range data.Complete {
+//	for i := range data.complete {
 //		_ = i
 //
 //	}
@@ -231,9 +231,9 @@ package syncdb
 //	return
 //}
 
-//func syncDB[T any](db *gorm.DB, changes []*T, deletes []*T) (changeStates []SyncState, deleteStates []SyncState, err error) {
-//	changeStates = make([]SyncState, len(changes))
-//	deleteStates = make([]SyncState, len(deletes))
+//func syncDB[T any](db *gorm.DB, changes []*T, deletes []*T) (changeStates []State, deleteStates []State, err error) {
+//	changeStates = make([]State, len(changes))
+//	deleteStates = make([]State, len(deletes))
 //	if len(changes) == 0 && len(deletes) == 0 {
 //		return
 //	}
@@ -350,7 +350,7 @@ package syncdb
 //	return changeStates, deleteStates, nil
 //}
 //
-//func syncTxDB[T any](db *gorm.DB, changes []*T, deletes []*T) (changeStates []SyncState, deleteStates []SyncState, err error) {
+//func syncTxDB[T any](db *gorm.DB, changes []*T, deletes []*T) (changeStates []State, deleteStates []State, err error) {
 //	err = db.Transaction(func(tx *gorm.DB) (err_ error) {
 //		changeStates, deleteStates, err_ = syncDB(tx, changes, deletes)
 //		return
@@ -358,6 +358,6 @@ package syncdb
 //	return
 //}
 //
-//func SyncTxDB[T any](db any, changes []*T, deletes []*T) (changeStates []SyncState, deleteStates []SyncState, err error) {
+//func SyncTxDB[T any](db any, changes []*T, deletes []*T) (changeStates []State, deleteStates []State, err error) {
 //	return syncTxDB(db.(*gorm.DB), changes, deletes)
 //}
