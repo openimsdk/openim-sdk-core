@@ -54,6 +54,10 @@ func SetGroupInfo(callback open_im_sdk_callback.Base, operationID string, groupI
 	call(callback, operationID, userForSDK.Group().SetGroupInfo, groupID, groupInfo)
 }
 
+func SetGroupInfoV2(callback open_im_sdk_callback.Base, operationID string, groupID string, groupInfo string) {
+	call(callback, operationID, userForSDK.Group().SetGroupInfoV2, groupID, groupInfo)
+}
+
 func SetGroupVerification(callback open_im_sdk_callback.Base, operationID string, groupID string, verification int32) {
 	call(callback, operationID, userForSDK.Group().SetGroupVerification, groupID, verification)
 }

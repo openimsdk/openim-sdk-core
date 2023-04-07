@@ -1338,6 +1338,42 @@ func (g *Group) SyncGroupMember(ctx context.Context, groupID string, userIDs []s
 }
 
 func (g *Group) SyncGroup(ctx context.Context, groupID string) error {
+	resp, err := util.CallApi[group.GetGroupsInfoResp](ctx, constant.GetGroupsInfoRouter, &group.GetGroupsInfoReq{GroupIDs: []string{groupID}})
+	if err != nil {
+		return err
+	}
+	if len(resp.GroupInfos) == 0 {
+		return errs.ErrGroupIDNotFound.Wrap(groupID)
+	}
+	groupInfo := resp.GroupInfos[0]
+	groupModel := &model_struct.LocalGroup{
+		GroupID:                groupInfo.GroupID,
+		GroupName:              groupInfo.GroupName,
+		Notification:           groupInfo.Notification,
+		Introduction:           groupInfo.Introduction,
+		FaceURL:                groupInfo.FaceURL,
+		CreateTime:             groupInfo.CreateTime,
+		Status:                 groupInfo.Status,
+		CreatorUserID:          groupInfo.CreatorUserID,
+		GroupType:              groupInfo.GroupType,
+		OwnerUserID:            groupInfo.OwnerUserID,
+		MemberCount:            int32(groupInfo.MemberCount),
+		Ex:                     groupInfo.Ex,
+		NeedVerification:       groupInfo.NeedVerification,
+		LookMemberInfo:         groupInfo.LookMemberInfo,
+		ApplyMemberFriend:      groupInfo.ApplyMemberFriend,
+		NotificationUpdateTime: groupInfo.NotificationUpdateTime,
+		NotificationUserID:     groupInfo.NotificationUserID,
+		//AttachedInfo:           groupInfo.AttachedInfo, // TODO
+	}
+	if err := syncdb.NewSync(g.db.GetDB(ctx)).AddChange(groupModel).Start(); err != nil {
+		return err
+	}
+	g.listener.OnGroupInfoChanged(utils.StructToJsonString(groupModel))
+	return nil
+}
+
+func (g *Group) SyncGroupAndMember(ctx context.Context, groupID string) error {
 	groupResp, err := util.CallApi[group.GetGroupsInfoResp](ctx, constant.GetGroupsInfoRouter, &group.GetGroupsInfoReq{GroupIDs: []string{groupID}})
 	if err != nil {
 		return err

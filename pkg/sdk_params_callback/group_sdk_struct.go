@@ -14,10 +14,10 @@ type CreateGroupBaseInfoParam struct {
 type CreateGroupMemberRoleParam []*server_api_params.GroupAddMemberInfo
 type CreateGroupCallback map[string]interface{}
 
-//param groupID reqMsg
+// param groupID reqMsg
 const JoinGroupCallback = constant.SuccessCallbackDefault
 
-//type QuitGroupParam // groupID
+// type QuitGroupParam // groupID
 const QuitGroupCallback = constant.SuccessCallbackDefault
 
 const DismissGroupCallback = constant.SuccessCallbackDefault
@@ -28,7 +28,7 @@ const GroupMemberMuteChangeCallback = constant.SuccessCallbackDefault
 
 const SetGroupMemberNicknameCallback = constant.SuccessCallbackDefault
 
-//type GetJoinedGroupListParam null
+// type GetJoinedGroupListParam null
 type GetJoinedGroupListCallback []*model_struct.LocalGroup
 
 type GetGroupsInfoParam []string
@@ -57,7 +57,7 @@ type SetGroupInfoParam struct {
 	Introduction     string `json:"introduction"`
 	FaceURL          string `json:"faceURL"`
 	Ex               string `json:"ex"`
-	NeedVerification *int32 `json:"needVerification" binding "oneof=0 1 2"`
+	NeedVerification *int32 `json:"needVerification" binding:"oneof=0 1 2"`
 }
 
 type SetGroupMemberInfoParam struct {
@@ -70,7 +70,7 @@ const SetGroupMemberInfoCallback = constant.SuccessCallbackDefault
 
 const SetGroupInfoCallback = constant.SuccessCallbackDefault
 
-//type GetGroupMemberListParam groupID ...
+// type GetGroupMemberListParam groupID ...
 type GetGroupMemberListCallback []*model_struct.LocalGroupMember
 
 type GetGroupMembersInfoParam []string
@@ -79,19 +79,19 @@ type GetGroupMembersInfoCallback []*model_struct.LocalGroupMember
 type KickGroupMemberParam []string
 type KickGroupMemberCallback []*server_api_params.UserIDResult
 
-//type TransferGroupOwnerParam
+// type TransferGroupOwnerParam
 const TransferGroupOwnerCallback = constant.SuccessCallbackDefault
 
 type InviteUserToGroupParam []string
 type InviteUserToGroupCallback []*server_api_params.UserIDResult
 
-//type GetGroupApplicationListParam
+// type GetGroupApplicationListParam
 type GetGroupApplicationListCallback []*model_struct.LocalAdminGroupRequest
 
 type GetSendGroupApplicationListCallback []*model_struct.LocalGroupRequest
 
-//type AcceptGroupApplicationParam
+// type AcceptGroupApplicationParam
 const AcceptGroupApplicationCallback = constant.SuccessCallbackDefault
 
-//type RefuseGroupApplicationParam
+// type RefuseGroupApplicationParam
 const RefuseGroupApplicationCallback = constant.SuccessCallbackDefault
