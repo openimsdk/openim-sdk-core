@@ -49,15 +49,8 @@ type Complete struct {
 	Data []any
 }
 
-// Data 切片中必须是model结构体,字段包含gorm主键和column信息
-type Data struct {
-	Change   []any       // 更新的数据
-	Delete   []any       // 删除的数据
-	Complete []*Complete // 完整的数据
-}
-
-// model对应的主键和字段
-type ModelKey struct {
+// modelKey model对应的主键和字段
+type modelKey struct {
 	PrimaryKey   map[int]string // go model field index -> db column name
 	UpdateColumn map[int]string // go model field index -> db column name
 }
@@ -65,7 +58,7 @@ type ModelKey struct {
 func NewSync(db *gorm.DB) *Sync {
 	return &Sync{
 		db:         db,
-		modelCache: make(map[string]ModelKey),
+		modelCache: make(map[string]modelKey),
 	}
 }
 
@@ -74,7 +67,7 @@ type Sync struct {
 	change     []any
 	delete     []any
 	complete   []Complete
-	modelCache map[string]ModelKey
+	modelCache map[string]modelKey
 }
 
 func (s *Sync) AddChange(data any) {
@@ -89,6 +82,7 @@ func (s *Sync) AddComplete(key []string, data []any) {
 	s.complete = append(s.complete, Complete{Key: key, Data: data})
 }
 
+// equal 比较是否相等
 func (s *Sync) equal(a, b reflect.Value) bool {
 	for a.Kind() == reflect.Pointer {
 		if a.IsNil() && b.IsNil() {
@@ -103,6 +97,7 @@ func (s *Sync) equal(a, b reflect.Value) bool {
 	return a.Interface() == b.Interface()
 }
 
+// where gorm查询条件
 func (s *Sync) where(m any, primaryKeys map[int]string) *gorm.DB {
 	if len(primaryKeys) == 0 {
 		panic("no primary key")
@@ -118,9 +113,10 @@ func (s *Sync) where(m any, primaryKeys map[int]string) *gorm.DB {
 	return whereDb
 }
 
-func (s *Sync) getModelInfo(m any) (*ModelKey, error) {
+// getModelInfo 获取model对应的主键和字段
+func (s *Sync) getModelInfo(m any) (*modelKey, error) {
 	if s.modelCache == nil {
-		s.modelCache = make(map[string]ModelKey)
+		s.modelCache = make(map[string]modelKey)
 	}
 	valueOf := reflect.ValueOf(m)
 	for valueOf.Kind() == reflect.Pointer {
@@ -174,11 +170,12 @@ func (s *Sync) getModelInfo(m any) (*ModelKey, error) {
 	if len(updateColumn) == 0 {
 		return nil, errors.New("no update column")
 	}
-	res := ModelKey{PrimaryKey: primaryKey, UpdateColumn: updateColumn}
+	res := modelKey{PrimaryKey: primaryKey, UpdateColumn: updateColumn}
 	s.modelCache[typeStr] = res
 	return &res, nil
 }
 
+// Change 变更数据
 func (s *Sync) Change() ([]SyncState, error) {
 	state := make([]SyncState, 0, len(s.change))
 	for i := range s.change {
@@ -226,6 +223,7 @@ func (s *Sync) Change() ([]SyncState, error) {
 	return state, nil
 }
 
+// Delete 删除数据
 func (s *Sync) Delete() ([]SyncState, error) {
 	state := make([]SyncState, 0, len(s.delete))
 	for i := range s.delete {
@@ -252,6 +250,7 @@ func (s *Sync) Delete() ([]SyncState, error) {
 	return state, nil
 }
 
+// checkColumn 比较切片类型是否相等,对应的值是否相等
 func (s *Sync) checkColumn(cs []any, colIndex []int) error {
 	var (
 		typeStr string
@@ -289,6 +288,7 @@ func (s *Sync) checkColumn(cs []any, colIndex []int) error {
 	return nil
 }
 
+// mapKey map key
 func (s *Sync) mapKey(m map[int]string) []int {
 	ks := make([]int, 0, len(m))
 	for k := range m {
@@ -297,6 +297,7 @@ func (s *Sync) mapKey(m map[int]string) []int {
 	return ks
 }
 
+// checkKey 检查key是否存在，且只能为逐渐key，比主键数量少1
 func (s *Sync) checkKey(key []string, primaryKey map[int]string) (map[int]string, error) {
 	if len(key)+1 != len(primaryKey) {
 		return nil, errors.New("key error")
@@ -323,7 +324,8 @@ func (s *Sync) checkKey(key []string, primaryKey map[int]string) (map[int]string
 	return col, nil
 }
 
-func (s *Sync) getRecID(m any, indexs []int) string {
+// getRecordID 获取记录多个主键生成的唯一ID
+func (s *Sync) getRecordID(m any, indexs []int) string {
 	valueOf := reflect.ValueOf(m)
 	for valueOf.Kind() == reflect.Pointer {
 		valueOf = valueOf.Elem()
@@ -349,6 +351,7 @@ func (s *Sync) Complete() error {
 	return nil
 }
 
+// completeBy 传入完成的数据，根据指定主键列新增,删除,修改数据
 func (s *Sync) completeBy(c *Complete) error {
 	if len(c.Data) == 0 {
 		return nil
@@ -374,7 +377,7 @@ func (s *Sync) completeBy(c *Complete) error {
 	idIndex := make(map[string]int)
 	for i := range c.Data {
 		val := c.Data[i]
-		idIndex[s.getRecID(val, indexs)] = i
+		idIndex[s.getRecordID(val, indexs)] = i
 	}
 	if len(idIndex) != len(c.Data) {
 		return errors.New("duplicate primary key")
@@ -390,7 +393,7 @@ func (s *Sync) completeBy(c *Complete) error {
 		dbLen := dbList.Elem().Len()
 		for i := 0; i < dbLen; i++ {
 			item := dbList.Elem().Index(i)
-			id := s.getRecID(item.Interface(), indexs)
+			id := s.getRecordID(item.Interface(), indexs)
 			idx, ok := idIndex[id]
 			if !ok {
 				if err := s.where(item.Interface(), info.PrimaryKey).Delete(reflect.New(elemType).Interface()).Error; err != nil {
@@ -447,7 +450,15 @@ func (s *Sync) completeBy(c *Complete) error {
 	return nil
 }
 
-func (s *Sync) Data() error {
-
+func (s *Sync) Start() error {
+	if _, err := s.Change(); err != nil {
+		return err
+	}
+	if _, err := s.Delete(); err != nil {
+		return err
+	}
+	if err := s.Complete(); err != nil {
+		return err
+	}
 	return nil
 }
