@@ -9,19 +9,11 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/wrapperspb"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
 	"open_im_sdk/internal/util"
-	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"time"
 )
-
-func (g *Group) SetGroupListener(callback open_im_sdk_callback.OnGroupListener) {
-	if callback == nil {
-		return
-	}
-	g.listener = callback
-}
 
 // deprecated use CreateGroupV2
 func (g *Group) CreateGroup(ctx context.Context, groupBaseInfo sdk_params_callback.CreateGroupBaseInfoParam, memberList sdk_params_callback.CreateGroupMemberRoleParam) (*sdkws.GroupInfo, error) {

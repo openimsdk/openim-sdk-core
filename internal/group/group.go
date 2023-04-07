@@ -1,15 +1,9 @@
 package group
 
 import (
-	"context"
 	"errors"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"math/big"
-	comm "open_im_sdk/internal/common"
 	ws "open_im_sdk/internal/interaction"
-	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -18,7 +12,6 @@ import (
 	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
-	"open_im_sdk/pkg/syncdb"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sort"
@@ -44,6 +37,13 @@ type Group struct {
 	listenerForService open_im_sdk_callback.OnListenerForService
 }
 
+func (g *Group) SetGroupListener(callback open_im_sdk_callback.OnGroupListener) {
+	if callback == nil {
+		return
+	}
+	g.listener = callback
+}
+
 func (g *Group) LoginTime() int64 {
 	return g.loginTime
 }
@@ -60,108 +60,6 @@ func NewGroup(loginUserID string, db db_interface.DataBase, p *ws.PostApi,
 	joinedSuperGroupCh chan common.Cmd2Value, heartbeatCmdCh chan common.Cmd2Value,
 	conversationCh chan common.Cmd2Value) *Group {
 	return &Group{loginUserID: loginUserID, db: db, p: p, joinedSuperGroupCh: joinedSuperGroupCh, heartbeatCmdCh: heartbeatCmdCh, conversationCh: conversationCh}
-}
-
-func (g *Group) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value) {
-	if g.listener == nil {
-		return
-	}
-	operationID := utils.OperationIDGenerator()
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID, msg.ContentType)
-	if msg.SendTime < g.loginTime || g.loginTime == 0 {
-		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType, "msg.SendTime: ", msg.SendTime, "g.loginTime: ", g.loginTime)
-		return
-	}
-	go func() {
-		switch msg.ContentType {
-		case constant.GroupCreatedNotification:
-			g.groupCreatedNotification(msg, operationID)
-		case constant.GroupInfoSetNotification:
-			g.groupInfoSetNotification(msg, conversationCh, operationID)
-		case constant.JoinGroupApplicationNotification:
-			g.joinGroupApplicationNotification(msg, operationID)
-		case constant.MemberQuitNotification:
-			g.memberQuitNotification(msg, operationID) //1
-		case constant.GroupApplicationAcceptedNotification:
-			g.groupApplicationAcceptedNotification(msg, operationID)
-		case constant.GroupApplicationRejectedNotification:
-			g.groupApplicationRejectedNotification(msg, operationID)
-		case constant.GroupOwnerTransferredNotification:
-			g.groupOwnerTransferredNotification(msg, operationID) //ok
-		case constant.MemberKickedNotification:
-			g.memberKickedNotification(msg, operationID) //1
-		case constant.MemberInvitedNotification:
-			g.memberInvitedNotification(msg, operationID) //1
-		case constant.MemberEnterNotification:
-			g.memberEnterNotification(msg, operationID) //1
-		case constant.GroupDismissedNotification:
-			g.groupDismissNotification(msg, operationID)
-		case constant.GroupMemberMutedNotification:
-			g.groupMemberMuteChangedNotification(msg, false, operationID) //ok
-		case constant.GroupMemberCancelMutedNotification:
-			g.groupMemberMuteChangedNotification(msg, true, operationID) //ok
-		case constant.GroupMutedNotification:
-			fallthrough
-		case constant.GroupCancelMutedNotification:
-			g.groupMuteChangedNotification(msg, operationID)
-		case constant.GroupMemberInfoSetNotification:
-			g.groupMemberInfoSetNotification(msg, operationID) //ok
-		case constant.GroupMemberSetToAdminNotification:
-			g.groupMemberInfoSetNotification(msg, operationID) //ok
-		case constant.GroupMemberSetToOrdinaryUserNotification:
-			g.groupMemberInfoSetNotification(msg, operationID) //ok
-		default:
-			log.Error(operationID, "ContentType tip failed ", msg.ContentType)
-		}
-	}()
-}
-
-func (g *Group) groupCreatedNotification(msg *api.MsgData, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	detail := api.GroupCreatedTips{Group: &api.GroupInfo{}}
-	comm.UnmarshalTips(msg, &detail)
-	g.SyncJoinedGroupList(operationID)
-	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, false)
-}
-
-func (g *Group) groupInfoSetNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	detail := api.GroupInfoSetTips{Group: &api.GroupInfo{}}
-	comm.UnmarshalTips(msg, &detail)
-	g.SyncJoinedGroupList(operationID) //todo,  sync some group info
-
-}
-
-func (g *Group) joinGroupApplicationNotification(msg *api.MsgData, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	detail := api.JoinGroupApplicationTips{Group: &api.GroupInfo{}, Applicant: &api.PublicUserInfo{}}
-	if err := comm.UnmarshalTips(msg, &detail); err != nil {
-		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
-		return
-	}
-	if detail.Applicant.UserID == g.loginUserID {
-		g.SyncSelfGroupApplication(operationID)
-	} else {
-		g.SyncAdminGroupApplication(operationID)
-	}
-}
-
-func (g *Group) memberQuitNotification(msg *api.MsgData, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	detail := api.MemberQuitTips{Group: &api.GroupInfo{}, QuitUser: &api.GroupMemberFullInfo{}}
-	if err := comm.UnmarshalTips(msg, &detail); err != nil {
-		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
-		return
-	}
-	if detail.QuitUser.UserID == g.loginUserID {
-		g.SyncJoinedGroupList(operationID)
-		g.db.DeleteGroupAllMembers(detail.Group.GroupID)
-	} else {
-		log.Info(operationID, "deleteMemberImmediately ", detail.Group.GroupID, detail.QuitUser.UserID)
-		g.deleteMemberImmediately(detail.Group.GroupID, detail.QuitUser.UserID, operationID)
-		g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
-		g.updateMemberCount(detail.Group.GroupID, operationID)
-	}
 }
 
 func (g *Group) deleteMemberImmediately(groupID string, userID string, operationID string) {
@@ -202,63 +100,6 @@ func (g *Group) addMemberImmediately(member *api.GroupMemberFullInfo, operationI
 		g.listener.OnGroupMemberAdded(utils.StructToJsonString(localMember))
 	}
 
-}
-func (g *Group) groupApplicationAcceptedNotification(msg *api.MsgData, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	detail := api.GroupApplicationAcceptedTips{Group: &api.GroupInfo{}, OpUser: &api.GroupMemberFullInfo{}}
-	if err := comm.UnmarshalTips(msg, &detail); err != nil {
-		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg.String())
-		return
-	}
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "detail: ", msg.String())
-	if detail.OpUser.UserID == g.loginUserID {
-		g.SyncAdminGroupApplication(operationID)
-		return
-	}
-	if detail.ReceiverAs == 1 {
-		g.SyncAdminGroupApplication(operationID)
-		return
-	}
-	g.SyncSelfGroupApplication(operationID)
-	g.SyncJoinedGroupList(operationID)
-}
-
-func (g *Group) groupApplicationRejectedNotification(msg *api.MsgData, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	detail := api.GroupApplicationRejectedTips{Group: &api.GroupInfo{}, OpUser: &api.GroupMemberFullInfo{}}
-	if err := comm.UnmarshalTips(msg, &detail); err != nil {
-		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg.String())
-		return
-	}
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "detail: ", msg.String())
-	if detail.OpUser.UserID == g.loginUserID {
-		g.SyncAdminGroupApplication(operationID)
-		return
-	}
-	if detail.ReceiverAs == 1 {
-		g.SyncAdminGroupApplication(operationID)
-		return
-	}
-	g.SyncSelfGroupApplication(operationID)
-}
-
-func (g *Group) groupOwnerTransferredNotification(msg *api.MsgData, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	detail := api.GroupOwnerTransferredTips{Group: &api.GroupInfo{}}
-	if err := comm.UnmarshalTips(msg, &detail); err != nil {
-		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
-		return
-	}
-	oldOwner, err := g.db.GetGroupMemberOwner(detail.Group.GroupID)
-	if err == nil {
-		g.updateLocalMemberImmediately(detail.Group.GroupID, oldOwner.UserID, map[string]interface{}{"role_level": constant.GroupOrdinaryUsers}, operationID)
-	} else {
-		log.Error(operationID, "GetGroupMemberOwner failed ", err.Error(), detail.Group.GroupID)
-	}
-	g.updateMemberImmediately(detail.NewGroupOwner, operationID)
-	g.SyncJoinedGroupList(operationID)
-	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
-	g.SyncAdminGroupApplication(operationID)
 }
 
 func (g *Group) updateMemberImmediately(memberInfo *api.GroupMemberFullInfo, operationID string) {
@@ -301,125 +142,6 @@ func (g *Group) updateLocalMemberImmediately(groupID, userID string, args map[st
 	if g.listener != nil {
 		g.listener.OnGroupMemberInfoChanged(utils.StructToJsonString(member))
 	}
-}
-
-func (g *Group) memberKickedNotification(msg *api.MsgData, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	detail := api.MemberKickedTips{Group: &api.GroupInfo{}, OpUser: &api.GroupMemberFullInfo{}}
-	if err := comm.UnmarshalTips(msg, &detail); err != nil {
-		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
-		return
-	}
-
-	log.Info(operationID, "KickedUserList ", detail.KickedUserList)
-	for _, v := range detail.KickedUserList {
-		if v.UserID == g.loginUserID {
-			g.SyncJoinedGroupList(operationID)
-			g.db.DeleteGroupAllMembers(detail.Group.GroupID)
-			return
-		}
-	}
-	for _, v := range detail.KickedUserList {
-		log.Info(operationID, "deleteMemberImmediately ", detail.Group.GroupID, v.UserID, operationID)
-		g.deleteMemberImmediately(detail.Group.GroupID, v.UserID, operationID)
-	}
-	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
-	g.updateMemberCount(detail.Group.GroupID, operationID)
-}
-
-func (g *Group) memberInvitedNotification(msg *api.MsgData, operationID string) {
-	log.NewWarn(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	detail := api.MemberInvitedTips{Group: &api.GroupInfo{}, OpUser: &api.GroupMemberFullInfo{}}
-	if err := comm.UnmarshalTips(msg, &detail); err != nil {
-		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
-		return
-	}
-
-	log.Info(operationID, "detail InvitedUserList ", detail.InvitedUserList)
-	for _, v := range detail.InvitedUserList {
-		if v.UserID == g.loginUserID {
-			g.SyncJoinedGroupList(operationID)
-			g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, false)
-			return
-		}
-	}
-	for _, v := range detail.InvitedUserList {
-		log.Info(operationID, "addMemberImmediately ", *v)
-		g.addMemberImmediately(v, operationID)
-	}
-	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
-	g.updateMemberCount(detail.Group.GroupID, operationID)
-}
-
-func (g *Group) memberEnterNotification(msg *api.MsgData, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	detail := api.MemberEnterTips{Group: &api.GroupInfo{}, EntrantUser: &api.GroupMemberFullInfo{}}
-	if err := comm.UnmarshalTips(msg, &detail); err != nil {
-		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
-		return
-	}
-	if detail.EntrantUser.UserID == g.loginUserID {
-		g.SyncJoinedGroupList(operationID)
-		g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, false)
-	} else {
-		log.Info(operationID, "addMemberImmediately ", *detail.EntrantUser)
-		g.addMemberImmediately(detail.EntrantUser, operationID)
-		g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
-		g.updateMemberCount(detail.Group.GroupID, operationID)
-	}
-}
-
-func (g *Group) groupDismissNotification(msg *api.MsgData, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	detail := api.GroupDismissedTips{Group: &api.GroupInfo{}, OpUser: &api.GroupMemberFullInfo{}}
-	if err := comm.UnmarshalTips(msg, &detail); err != nil {
-		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
-		return
-	}
-	g.SyncJoinedGroupList(operationID)
-	g.db.DeleteGroupAllMembers(detail.Group.GroupID)
-}
-
-func (g *Group) groupMemberMuteChangedNotification(msg *api.MsgData, isCancel bool, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	var syncGroupID string
-	MutedUser := &api.GroupMemberFullInfo{}
-	if isCancel {
-		detail := api.GroupMemberCancelMutedTips{Group: &api.GroupInfo{}}
-		if err := comm.UnmarshalTips(msg, &detail); err != nil {
-			log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
-			return
-		}
-		syncGroupID = detail.Group.GroupID
-		MutedUser = detail.MutedUser
-	} else {
-		detail := api.GroupMemberMutedTips{Group: &api.GroupInfo{}}
-		if err := comm.UnmarshalTips(msg, &detail); err != nil {
-			log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
-			return
-		}
-		syncGroupID = detail.Group.GroupID
-		MutedUser = detail.MutedUser
-	}
-	log.Info(operationID, "muted user ", *MutedUser)
-	g.updateMemberImmediately(MutedUser, operationID)
-	g.syncGroupMemberByGroupID(syncGroupID, operationID, true)
-}
-
-func (g *Group) groupMuteChangedNotification(msg *api.MsgData, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	g.SyncJoinedGroupList(operationID)
-}
-
-func (g *Group) groupMemberInfoSetNotification(msg *api.MsgData, operationID string) {
-	detail := api.GroupMemberInfoSetTips{Group: &api.GroupInfo{}}
-	if err := comm.UnmarshalTips(msg, &detail); err != nil {
-		log.Error(operationID, "UnmarshalTips failed ", err.Error(), msg)
-		return
-	}
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID, msg.String(), "detail : ", detail.String())
-	g.updateMemberImmediately(detail.ChangedUser, operationID)
-	g.syncGroupMemberByGroupID(detail.Group.GroupID, operationID, true)
 }
 
 func (g *Group) createGroup(callback open_im_sdk_callback.Base, group sdk.CreateGroupBaseInfoParam, memberList sdk.CreateGroupMemberRoleParam, operationID string) *sdk.CreateGroupCallback {
@@ -1289,228 +1011,4 @@ func (g *Group) getGroupAllMemberSplitByGroupIDFromSvr(groupID string, operation
 		page++
 	}
 	return result, nil
-}
-
-func (g *Group) setGroupMemberNickname(callback open_im_sdk_callback.Base, groupID, userID string, GroupMemberNickname string, operationID string) {
-	var apiReq api.SetGroupMemberNicknameReq
-	apiReq.OperationID = operationID
-	apiReq.GroupID = groupID
-	apiReq.UserID = userID
-	apiReq.Nickname = GroupMemberNickname
-	g.p.PostFatalCallback(callback, constant.SetGroupMemberNicknameRouter, apiReq, nil, apiReq.OperationID)
-
-	g.syncGroupMemberByGroupID(groupID, operationID, true)
-}
-
-func (g *Group) searchGroupMembers(callback open_im_sdk_callback.Base, searchParam sdk.SearchGroupMembersParam, operationID string) sdk.SearchGroupMembersCallback {
-	if len(searchParam.KeywordList) == 0 {
-		log.Error(operationID, "len keywordList == 0")
-		common.CheckArgsErrCallback(callback, errors.New("no keyword"), operationID)
-	}
-	members, err := g.db.SearchGroupMembersDB(searchParam.KeywordList[0], searchParam.GroupID, searchParam.IsSearchMemberNickname, searchParam.IsSearchUserID, searchParam.Offset, searchParam.Count)
-	common.CheckDBErrCallback(callback, err, operationID)
-	return members
-}
-
-func (g *Group) SyncGroupMember(ctx context.Context, groupID string, userIDs []string) error {
-	resp, err := util.CallApi[group.GetGroupMembersInfoResp](ctx, constant.GetGroupMembersInfoRouter, &group.GetGroupMembersInfoReq{GroupID: groupID, UserIDs: userIDs})
-	if err != nil {
-		return err
-	}
-	var members []any
-	for _, member := range resp.Members {
-		members = append(members, &model_struct.LocalGroupMember{
-			GroupID:        member.GroupID,
-			UserID:         member.UserID,
-			Nickname:       member.Nickname,
-			FaceURL:        member.FaceURL,
-			RoleLevel:      member.RoleLevel,
-			JoinTime:       member.JoinTime,
-			JoinSource:     member.JoinSource,
-			InviterUserID:  member.InviterUserID,
-			MuteEndTime:    member.MuteEndTime,
-			OperatorUserID: member.OperatorUserID,
-			Ex:             member.Ex,
-			//AttachedInfo:   member.AttachedInfo, // todo
-		})
-	}
-	return syncdb.NewSync(g.db.GetDB(ctx)).AddChange(members).Start()
-}
-
-func (g *Group) SyncGroup(ctx context.Context, groupID string) error {
-	resp, err := util.CallApi[group.GetGroupsInfoResp](ctx, constant.GetGroupsInfoRouter, &group.GetGroupsInfoReq{GroupIDs: []string{groupID}})
-	if err != nil {
-		return err
-	}
-	if len(resp.GroupInfos) == 0 {
-		return errs.ErrGroupIDNotFound.Wrap(groupID)
-	}
-	groupInfo := resp.GroupInfos[0]
-	groupModel := &model_struct.LocalGroup{
-		GroupID:                groupInfo.GroupID,
-		GroupName:              groupInfo.GroupName,
-		Notification:           groupInfo.Notification,
-		Introduction:           groupInfo.Introduction,
-		FaceURL:                groupInfo.FaceURL,
-		CreateTime:             groupInfo.CreateTime,
-		Status:                 groupInfo.Status,
-		CreatorUserID:          groupInfo.CreatorUserID,
-		GroupType:              groupInfo.GroupType,
-		OwnerUserID:            groupInfo.OwnerUserID,
-		MemberCount:            int32(groupInfo.MemberCount),
-		Ex:                     groupInfo.Ex,
-		NeedVerification:       groupInfo.NeedVerification,
-		LookMemberInfo:         groupInfo.LookMemberInfo,
-		ApplyMemberFriend:      groupInfo.ApplyMemberFriend,
-		NotificationUpdateTime: groupInfo.NotificationUpdateTime,
-		NotificationUserID:     groupInfo.NotificationUserID,
-		//AttachedInfo:           groupInfo.AttachedInfo, // TODO
-	}
-	if err := syncdb.NewSync(g.db.GetDB(ctx)).AddChange(groupModel).Start(); err != nil {
-		return err
-	}
-	g.listener.OnGroupInfoChanged(utils.StructToJsonString(groupModel))
-	return nil
-}
-
-func (g *Group) SyncGroupAndMember(ctx context.Context, groupID string) error {
-	groupResp, err := util.CallApi[group.GetGroupsInfoResp](ctx, constant.GetGroupsInfoRouter, &group.GetGroupsInfoReq{GroupIDs: []string{groupID}})
-	if err != nil {
-		return err
-	}
-	if len(groupResp.GroupInfos) == 0 {
-		return errs.ErrGroupIDNotFound.Wrap(groupID)
-	}
-	groupInfo := groupResp.GroupInfos[0]
-	showNumber := int32(20)
-	var members []any
-	for i := int32(0); ; i++ {
-		memberReq := &group.GetGroupMemberListReq{GroupID: groupInfo.GroupID, Pagination: &sdkws.RequestPagination{PageNumber: i, ShowNumber: showNumber}}
-		memberResp, err := util.CallApi[group.GetGroupMemberListResp](ctx, constant.GetGroupAllMemberListRouter, memberReq)
-		if err != nil {
-			return err
-		}
-		for _, member := range memberResp.Members {
-			members = append(members, &model_struct.LocalGroupMember{
-				GroupID:        member.GroupID,
-				UserID:         member.UserID,
-				Nickname:       member.Nickname,
-				FaceURL:        member.FaceURL,
-				RoleLevel:      member.RoleLevel,
-				JoinTime:       member.JoinTime,
-				JoinSource:     member.JoinSource,
-				InviterUserID:  member.InviterUserID,
-				MuteEndTime:    member.MuteEndTime,
-				OperatorUserID: member.OperatorUserID,
-				Ex:             member.Ex,
-				//AttachedInfo:   member.AttachedInfo, // todo
-			})
-		}
-		if int32(len(memberResp.Members)) < showNumber {
-			break
-		}
-	}
-	groupModel := &model_struct.LocalGroup{
-		GroupID:       groupInfo.GroupID,
-		GroupName:     groupInfo.GroupName,
-		Notification:  groupInfo.Notification,
-		Introduction:  groupInfo.Introduction,
-		FaceURL:       groupInfo.FaceURL,
-		CreateTime:    groupInfo.CreateTime,
-		Status:        groupInfo.Status,
-		CreatorUserID: groupInfo.CreatorUserID,
-		GroupType:     groupInfo.GroupType,
-		OwnerUserID:   groupInfo.OwnerUserID,
-		MemberCount:   int32(groupInfo.MemberCount),
-		Ex:            groupInfo.Ex,
-		//AttachedInfo:           groupInfo.AttachedInfo, // TODO
-		NeedVerification:       groupInfo.NeedVerification,
-		LookMemberInfo:         groupInfo.LookMemberInfo,
-		ApplyMemberFriend:      groupInfo.ApplyMemberFriend,
-		NotificationUpdateTime: groupInfo.NotificationUpdateTime,
-		NotificationUserID:     groupInfo.NotificationUserID,
-	}
-	s := syncdb.NewSync(g.db.GetDB(ctx)).AddChange(groupModel).AddComplete([]string{"group_id"}, members)
-	if err := s.Start(); err != nil {
-		return err
-	}
-	g.listener.OnGroupInfoChanged(utils.StructToJsonString(groupModel))
-	for _, member := range members {
-		g.listener.OnGroupMemberInfoChanged(utils.StructToJsonString(member))
-	}
-	return nil
-}
-
-func (g *Group) SyncSelfGroupApplication(ctx context.Context) error {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
-	svrList, err := g.getSendGroupApplicationListFromSvr(operationID)
-	if err != nil {
-		log.NewError(operationID, "getSendGroupApplicationListFromSvr failed ", err.Error())
-		return
-	}
-	onServer := common.TransferToLocalSendGroupRequest(svrList)
-	onLocal, err := g.db.GetSendGroupApplication()
-	if err != nil {
-		log.NewError(operationID, "GetSendGroupApplication failed ", err.Error())
-		return
-	}
-
-	log.NewInfo(operationID, "svrList onServer onLocal ", svrList, onServer, onLocal)
-	aInBNot, bInANot, sameA, sameB := common.CheckGroupRequestDiff(onServer, onLocal)
-	log.Info(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
-	for _, index := range aInBNot {
-		err := g.db.InsertGroupRequest(onServer[index])
-		if err != nil {
-			log.NewError(operationID, "InsertGroupRequest failed ", err.Error(), *onServer[index])
-			continue
-		}
-		callbackData := *onServer[index]
-		if g.listener != nil {
-			g.listener.OnGroupApplicationAdded(utils.StructToJsonString(callbackData))
-			log.Info(operationID, "OnGroupApplicationAdded ", utils.StructToJsonString(callbackData))
-		}
-	}
-	for _, index := range sameA {
-		err := g.db.UpdateGroupRequest(onServer[index])
-		if err != nil {
-			log.NewError(operationID, "UpdateGroupRequest failed ", err.Error())
-			continue
-		}
-		if onServer[index].HandleResult == constant.GroupResponseRefuse {
-			callbackData := *onServer[index]
-			if g.listener != nil {
-				g.listener.OnGroupApplicationRejected(utils.StructToJsonString(callbackData))
-				log.Info(operationID, "OnGroupApplicationRejected", utils.StructToJsonString(callbackData))
-			}
-
-		} else if onServer[index].HandleResult == constant.GroupResponseAgree {
-			callbackData := *onServer[index]
-			if g.listener != nil {
-				g.listener.OnGroupApplicationAccepted(utils.StructToJsonString(callbackData))
-				log.Info(operationID, "OnGroupApplicationAccepted", utils.StructToJsonString(callbackData))
-			}
-			if g.listenerForService != nil {
-				g.listenerForService.OnGroupApplicationAccepted(utils.StructToJsonString(callbackData))
-				log.Info(operationID, "OnGroupApplicationAccepted", utils.StructToJsonString(callbackData))
-			}
-		} else {
-			callbackData := *onServer[index]
-			if g.listener != nil {
-				g.listener.OnGroupApplicationAdded(utils.StructToJsonString(callbackData))
-				log.Info(operationID, "OnGroupApplicationAdded", utils.StructToJsonString(callbackData))
-			}
-		}
-	}
-	for _, index := range bInANot {
-		err := g.db.DeleteGroupRequest(onLocal[index].GroupID, onLocal[index].UserID)
-		if err != nil {
-			log.NewError(operationID, "DeleteGroupRequest failed ", err.Error())
-			continue
-		}
-		callbackData := *onLocal[index]
-		if g.listener != nil {
-			g.listener.OnGroupApplicationDeleted(utils.StructToJsonString(callbackData))
-		}
-		log.Info(operationID, "OnGroupApplicationDeleted", utils.StructToJsonString(callbackData))
-	}
 }
