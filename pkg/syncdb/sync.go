@@ -71,12 +71,12 @@ type Sync struct {
 	modelCache map[string]modelKey
 }
 
-func (s *Sync) AddChange(data ...any) *Sync {
+func (s *Sync) AddChange(data []any) *Sync {
 	s.change = append(s.change, data...)
 	return s
 }
 
-func (s *Sync) AddDelete(data ...any) *Sync {
+func (s *Sync) AddDelete(data []any) *Sync {
 	s.delete = append(s.delete, data...)
 	return s
 }
@@ -451,6 +451,10 @@ func (s *Sync) completeBy(c *complete) error {
 		}
 	}
 	return nil
+}
+
+func (s *Sync) OnSync(fn func(state State, v any)) {
+
 }
 
 func (s *Sync) start() error {
