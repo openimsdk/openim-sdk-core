@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
@@ -71,8 +72,8 @@ func call_(callback open_im_sdk_callback.Base, operationID string, fn any, args 
 			return
 		}
 	}()
-	if userForSDK == nil {
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+	if operationID == "" {
+		callback.OnError(constant.ErrArgs.ErrCode, errs.ErrArgs.Wrap("operationID is empty").Error())
 		return
 	}
 	if err := CheckResourceLoad(userForSDK); err != nil {
