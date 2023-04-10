@@ -1,6 +1,7 @@
 package conversation_msg
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/golang/protobuf/proto"
@@ -20,11 +21,6 @@ import (
 	"time"
 )
 
-func (c *Conversation) getAllConversationList(callback open_im_sdk_callback.Base, operationID string) sdk.GetAllConversationListCallback {
-	conversationList, err := c.db.GetAllConversationListDB()
-	common.CheckDBErrCallback(callback, err, operationID)
-	return conversationList
-}
 func (c *Conversation) hideConversation(callback open_im_sdk_callback.Base, conversationID string, operationID string) {
 	err := c.db.UpdateColumnsConversation(conversationID, map[string]interface{}{"latest_msg_send_time": 0})
 	common.CheckDBErrCallback(callback, err, operationID)
@@ -220,7 +216,7 @@ func (c *Conversation) getMultipleConversation(callback open_im_sdk_callback.Bas
 	return conversationList
 }
 
-func (c *Conversation) deleteConversation(callback open_im_sdk_callback.Base, conversationID, operationID string) {
+func (c *Conversation) deleteConversation(ctx context.Context, conversationID) {
 	lc, err := c.db.GetConversation(conversationID)
 	common.CheckDBErrCallback(callback, err, operationID)
 	var sourceID string
@@ -286,7 +282,7 @@ func (c *Conversation) getServerConversationList(operationID string, timeout tim
 
 	return resp, nil
 }
-func (c *Conversation) SyncConversations(operationID string, timeout time.Duration) {
+func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Duration) {
 	//log.Error(operationID,"SyncConversations start")
 	var newConversationList []*model_struct.LocalConversation
 	ccTime := time.Now()

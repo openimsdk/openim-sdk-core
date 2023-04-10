@@ -158,7 +158,7 @@ func (d *DataBase) ResetConversation(conversationID string) error {
 	return utils.Wrap(t.Error, "ResetConversation failed")
 }
 
-// Reset ALL conversation is equivalent to deleting the conversation,
+// ResetAllConversation Reset ALL conversation is equivalent to deleting the conversation,
 // and the GetAllConversation or GetConversationListSplit interface will no longer be obtained.
 func (d *DataBase) ResetAllConversation() error {
 	d.mRWMutex.Lock()

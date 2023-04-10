@@ -2,9 +2,14 @@ package conversation_msg
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
+	pbConversation "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
+	pbUser "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/user"
+
 	"image"
+	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -27,144 +32,202 @@ import (
 	_ "image/png"
 )
 
-func (c *Conversation) GetAllConversationList(callback open_im_sdk_callback.Base, operationID string) {
-	if callback == nil {
-		return
-	}
-	go func() {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "GetAllConversationList args: ")
-		result := c.getAllConversationList(callback, operationID)
-		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		log.NewInfo(operationID, "GetAllConversationList callback: ", utils.StructToJsonStringDefault(result))
-	}()
+func (c *Conversation) GetAllConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error) {
+	return c.db.GetAllConversationListDB(ctx)
 }
-func (c *Conversation) GetConversationListSplit(callback open_im_sdk_callback.Base, offset, count int, operationID string) {
-	if callback == nil {
-		return
-	}
-	go func() {
-		log.NewInfo(operationID, "GetConversationListSplit args: ", offset, count)
-		result := c.getConversationListSplit(callback, offset, count, operationID)
-		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		log.NewInfo(operationID, "GetConversationListSplit callback: ", utils.StructToJsonStringDefault(result))
-	}()
+func (c *Conversation) GetConversationListSplit(ctx context.Context, offset, count int) ([]*model_struct.LocalConversation, error) {
+	return c.db.GetConversationListSplitDB(ctx, offset, count)
 }
-func (c *Conversation) SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList string, opt int, operationID string) {
-	if callback == nil {
-		return
+func (c *Conversation) SetConversationRecvMessageOpt(ctx context.Context, conversationIDList []string, opt int) error {
+	var conversations []*pbConversation.Conversation
+	for _, conversationID := range conversationIDList {
+		localConversation, err := c.db.GetConversation(ctx, conversationID)
+		if err != nil {
+			//log.NewError(operationID, utils.GetSelfFuncName(), "GetConversation failed", err.Error())
+			continue
+		}
+		if localConversation.ConversationType == constant.SuperGroupChatType && opt == constant.NotReceiveMessage {
+			return errors.New("super group not support this opt")
+		}
+		conversations = append(conversations, &pbConversation.Conversation{
+			OwnerUserID:      c.loginUserID,
+			ConversationID:   conversationID,
+			ConversationType: localConversation.ConversationType,
+			UserID:           localConversation.UserID,
+			GroupID:          localConversation.GroupID,
+			RecvMsgOpt:       int32(opt),
+			IsPinned:         localConversation.IsPinned,
+			IsPrivateChat:    localConversation.IsPrivateChat,
+			AttachedInfo:     localConversation.AttachedInfo,
+			Ex:               localConversation.Ex,
+		})
 	}
-	go func() {
-		log.NewInfo(operationID, "SetConversationRecvMessageOpt args: ", conversationIDList, opt)
-		var unmarshalParams sdk_params_callback.SetConversationRecvMessageOptParams
-		common.JsonUnmarshalCallback(conversationIDList, &unmarshalParams, callback, operationID)
-		c.setConversationRecvMessageOpt(callback, unmarshalParams, opt, operationID)
-		callback.OnSuccess(sdk_params_callback.SetConversationRecvMessageOptCallback)
-		log.NewInfo(operationID, "SetConversationRecvMessageOpt callback: ", sdk_params_callback.SetConversationRecvMessageOptCallback)
-	}()
-}
-func (c *Conversation) SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, opt int, operationID string) {
-	if callback == nil {
-		return
+	req := &pbConversation.BatchSetConversationsReq{
+		Conversations: conversations,
+		OwnerUserID:   c.loginUserID,
 	}
-	go func() {
-		log.NewInfo(operationID, "SetGlobalRecvMessageOpt args: ", opt)
-		c.setGlobalRecvMessageOpt(callback, int32(opt), operationID)
-		callback.OnSuccess(sdk_params_callback.SetGlobalRecvMessageOptCallback)
-		log.NewInfo(operationID, "SetGlobalRecvMessageOpt callback: ", sdk_params_callback.SetGlobalRecvMessageOptCallback)
-	}()
+	_, err := util.CallApi[pbConversation.BatchSetConversationsResp](ctx, constant.BatchSetConversationRouter, req)
+	if err != nil {
+		return err
+	}
+	c.SyncConversations(ctx, 0)
+	return nil
 }
-func (c *Conversation) HideConversation(callback open_im_sdk_callback.Base, conversationID string, operationID string) {
-	c.hideConversation(callback, conversationID, operationID)
-	callback.OnSuccess(sdk_params_callback.HideConversationCallback)
-	log.NewInfo(operationID, "HideConversation callback: ", sdk_params_callback.HideConversationCallback)
+func (c *Conversation) SetGlobalRecvMessageOpt(ctx context.Context, opt int) error {
+	if err := util.ApiPost(ctx, constant.SetGlobalRecvMessageOptRouter, &pbUser.SetGlobalRecvMessageOptReq{UserID: c.loginUserID, GlobalRecvMsgOpt: int32(opt)}, nil); err != nil {
+		return err
+	}
+	c.user.SyncLoginUserInfo(ctx)
+	return nil
 
+}
+func (c *Conversation) HideConversation(ctx context.Context, conversationID string) error {
+	return c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"latest_msg_send_time": 0})
 }
 
 // deprecated
-func (c *Conversation) GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList, operationID string) {
-	if callback == nil {
-		return
+func (c *Conversation) GetConversationRecvMessageOpt(ctx context.Context, conversationIDList []string) (resp []*server_api_params.GetConversationRecvMessageOptResp, err error) {
+	conversations, err := c.db.GetMultipleConversationDB(ctx, conversationIDList)
+	if err != nil {
+		return nil, err
 	}
-	go func() {
-		log.NewInfo(operationID, "GetConversationRecvMessageOpt args: ", conversationIDList)
-		var unmarshalParams sdk_params_callback.GetConversationRecvMessageOptParams
-		common.JsonUnmarshalCallback(conversationIDList, &unmarshalParams, callback, operationID)
-		result := c.getConversationRecvMessageOpt(callback, unmarshalParams, operationID)
-		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		log.NewInfo(operationID, "GetConversationRecvMessageOpt callback: ", utils.StructToJsonStringDefault(result))
-	}()
-}
-func (c *Conversation) GetOneConversation(callback open_im_sdk_callback.Base, sessionType int32, sourceID, operationID string) {
-	if callback == nil {
-		return
+	for _, conversation := range conversations {
+		resp = append(resp, &server_api_params.GetConversationRecvMessageOptResp{
+			ConversationID: conversation.ConversationID,
+			Result:         &conversation.RecvMsgOpt,
+		})
 	}
-	go func() {
-		log.NewInfo(operationID, "GetOneConversation args: ", sessionType, sourceID)
-		result := c.getOneConversation(callback, sourceID, sessionType, operationID)
-		callback.OnSuccess(utils.StructToJsonString(result))
-		log.NewInfo(operationID, "GetOneConversation callback: ", utils.StructToJsonString(result))
-	}()
+	return resp, nil
+
 }
-func (c *Conversation) GetMultipleConversation(callback open_im_sdk_callback.Base, conversationIDList string, operationID string) {
-	if callback == nil {
-		return
+func (c *Conversation) GetOneConversation(ctx context.Context, sessionType int32, sourceID string) (*model_struct.LocalConversation, error) {
+	conversationID := utils.GetConversationIDBySessionType(sourceID, int(sessionType))
+	lc, err := c.db.GetConversation(ctx, conversationID)
+	if err == nil {
+		return lc, nil
+	} else {
+		var newConversation model_struct.LocalConversation
+		newConversation.ConversationID = conversationID
+		newConversation.ConversationType = sessionType
+		switch sessionType {
+		case constant.SingleChatType:
+			newConversation.UserID = sourceID
+			faceUrl, name, err, isFromSvr := c.friend.GetUserNameAndFaceUrlByUid(ctx, sourceID)
+			if err != nil {
+				return nil, err
+			}
+			if isFromSvr {
+				c.cache.Update(sourceID, faceUrl, name)
+			}
+			newConversation.ShowName = name
+			newConversation.FaceURL = faceUrl
+		case constant.GroupChatType, constant.SuperGroupChatType:
+			newConversation.GroupID = sourceID
+			g, err := c.full.GetGroupInfoFromLocal2Svr(sourceID, sessionType)
+			if err != nil {
+				return nil, err
+			}
+			newConversation.ShowName = g.GroupName
+			newConversation.FaceURL = g.FaceURL
+		}
+		lc, errTemp := c.db.GetConversation(ctx, conversationID)
+		if errTemp == nil {
+			return lc, nil
+		}
+		err := c.db.InsertConversation(ctx, &newConversation)
+		if err != nil {
+			return nil, err
+		}
+		return &newConversation, nil
 	}
-	go func() {
-		log.NewInfo(operationID, "GetMultipleConversation args: ", conversationIDList)
-		var unmarshalParams sdk_params_callback.GetMultipleConversationParams
-		common.JsonUnmarshalCallback(conversationIDList, &unmarshalParams, callback, operationID)
-		result := c.getMultipleConversation(callback, unmarshalParams, operationID)
-		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-		log.NewInfo(operationID, "GetMultipleConversation callback: ", utils.StructToJsonStringDefault(result))
-	}()
+
 }
-func (c *Conversation) DeleteConversation(callback open_im_sdk_callback.Base, conversationID string, operationID string) {
-	if callback == nil {
-		return
+func (c *Conversation) GetMultipleConversation(ctx context.Context, conversationIDList []string) ([]*model_struct.LocalConversation, error) {
+	conversations, err := c.db.GetMultipleConversationDB(ctx, conversationIDList)
+	if err != nil {
+		return nil, err
 	}
-	go func() {
-		log.NewInfo(operationID, "DeleteConversation args: ", conversationID)
-		c.deleteConversation(callback, conversationID, operationID)
-		callback.OnSuccess(sdk_params_callback.DeleteConversationCallback)
-		log.NewInfo(operationID, "DeleteConversation callback: ", sdk_params_callback.DeleteConversationCallback)
-	}()
+	return conversations, nil
+
 }
-func (c *Conversation) DeleteAllConversationFromLocal(callback open_im_sdk_callback.Base, operationID string) {
-	if callback == nil {
-		return
+func (c *Conversation) DeleteConversation(ctx context.Context, conversationID string) error {
+	lc, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		return err
 	}
-	go func() {
-		log.NewInfo(operationID, "DeleteAllConversationFromLocal args: ")
-		err := c.db.ResetAllConversation()
-		common.CheckDBErrCallback(callback, err, operationID)
-		callback.OnSuccess(sdk_params_callback.DeleteAllConversationFromLocalCallback)
-		log.NewInfo(operationID, "DeleteConversation callback: ", sdk_params_callback.DeleteAllConversationFromLocalCallback)
-	}()
-}
-func (c *Conversation) SetConversationDraft(callback open_im_sdk_callback.Base, conversationID, draftText string, operationID string) {
-	if callback == nil {
-		return
+	var sourceID string
+	switch lc.ConversationType {
+	case constant.SingleChatType, constant.NotificationChatType:
+		sourceID = lc.UserID
+	case constant.GroupChatType, constant.SuperGroupChatType:
+		sourceID = lc.GroupID
 	}
-	go func() {
-		log.NewInfo(operationID, "SetConversationDraft args: ", conversationID)
-		c.setConversationDraft(callback, conversationID, draftText, operationID)
-		callback.OnSuccess(sdk_params_callback.SetConversationDraftCallback)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
-		log.NewInfo(operationID, "SetConversationDraft callback: ", sdk_params_callback.SetConversationDraftCallback)
-	}()
-}
-func (c *Conversation) ResetConversationGroupAtType(callback open_im_sdk_callback.Base, conversationID, operationID string) {
-	if callback == nil {
-		return
+	if lc.ConversationType == constant.SuperGroupChatType {
+		err = c.db.SuperGroupDeleteAllMessage(ctx, lc.GroupID)
+		if err != nil {
+			return err
+		}
+	} else {
+		//Mark messages related to this conversation for deletion
+		err = c.db.UpdateMessageStatusBySourceIDController(ctx, sourceID, constant.MsgStatusHasDeleted, lc.ConversationType)
+		if err != nil {
+			return err
+		}
 	}
-	go func() {
-		log.NewInfo(operationID, "ResetConversationGroupAtType args: ", conversationID)
-		c.setOneConversationGroupAtType(callback, conversationID, operationID)
-		callback.OnSuccess(sdk_params_callback.ResetConversationGroupAtTypeCallback)
-		log.NewInfo(operationID, "ResetConversationGroupAtType callback: ", sdk_params_callback.ResetConversationGroupAtTypeCallback)
-	}()
+	//Reset the conversation information, empty conversation
+	err = c.db.ResetConversation(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
+	return nil
+
 }
-func (c *Conversation) PinConversation(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
+func (c *Conversation) DeleteAllConversationFromLocal(ctx context.Context, operationID string) error {
+	err := c.db.ResetAllConversation(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+func (c *Conversation) SetConversationDraft(ctx context.Context, conversationID, draftText string) error {
+	if draftText != "" {
+		err := c.db.SetConversationDraftDB(ctx, conversationID, draftText)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := c.db.RemoveConversationDraft(ctx, conversationID, draftText)
+		if err != nil {
+			return err
+		}
+	}
+	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+	return nil
+
+}
+func (c *Conversation) ResetConversationGroupAtType(ctx context.Context, conversationID string) error {
+	lc, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	if lc.GroupAtType == constant.AtNormal || lc.ConversationType != constant.GroupChatType {
+		return errors.New("conversation don't need to reset")
+	}
+	apiReq := &server_api_params.ModifyConversationFieldReq{}
+	localConversation, err := c.db.GetConversation(ctx, conversationID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	apiReq.GroupAtType = constant.AtNormal
+	apiReq.FieldType = constant.FieldGroupAtType
+	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
+	c.SyncConversations(ctx, 0)
+
+	c.setOneConversationGroupAtType(callback, conversationID, operationID)
+	callback.OnSuccess(sdk_params_callback.ResetConversationGroupAtTypeCallback)
+
+}
+func (c *Conversation) PinConversation(ctx context.Context, conversationID string, isPinned bool) {
 	if callback == nil {
 		return
 	}
@@ -176,7 +239,7 @@ func (c *Conversation) PinConversation(callback open_im_sdk_callback.Base, conve
 	}()
 }
 
-func (c *Conversation) SetOneConversationPrivateChat(callback open_im_sdk_callback.Base, conversationID string, isPrivate bool, operationID string) {
+func (c *Conversation) SetOneConversationPrivateChat(ctx context.Context, conversationID string, isPrivate bool) {
 	if callback == nil {
 		return
 	}
@@ -188,7 +251,7 @@ func (c *Conversation) SetOneConversationPrivateChat(callback open_im_sdk_callba
 	}()
 }
 
-func (c *Conversation) SetOneConversationBurnDuration(callback open_im_sdk_callback.Base, conversationID string, burnDuration int32, operationID string) {
+func (c *Conversation) SetOneConversationBurnDuration(ctx context.Context, conversationID string, burnDuration int32, operationID string) {
 	if callback == nil {
 		return
 	}
@@ -200,7 +263,7 @@ func (c *Conversation) SetOneConversationBurnDuration(callback open_im_sdk_callb
 	}()
 }
 
-func (c *Conversation) SetOneConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationID string, opt int, operationID string) {
+func (c *Conversation) SetOneConversationRecvMessageOpt(ctx context.Context, conversationID string, opt int) {
 	if callback == nil {
 		return
 	}

@@ -15,6 +15,7 @@
 package friend
 
 import (
+	"context"
 	"errors"
 	comm "open_im_sdk/internal/common"
 	ws "open_im_sdk/internal/interaction"
@@ -83,7 +84,7 @@ func (f *Friend) getDesignatedFriendsInfo(callback open_im_sdk_callback.Base, fr
 	return r
 }
 
-func (f *Friend) GetUserNameAndFaceUrlByUid(friendUserID, operationID string) (faceUrl, name string, err error, isFromSvr bool) {
+func (f *Friend) GetUserNameAndFaceUrlByUid(ctx context.Context, friendUserID) (faceUrl, name string, err error, isFromSvr bool) {
 	isFromSvr = false
 	friendInfo, err := f.db.GetFriendInfoByFriendUserID(friendUserID)
 	if err == nil {
