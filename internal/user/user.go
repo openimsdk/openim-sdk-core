@@ -81,7 +81,7 @@ func (u *User) userInfoUpdatedNotification(msg *api.MsgData, operationID string)
 	}
 }
 
-func (u *User) SyncLoginUserInfo(operationID string) {
+func (u *User) SyncLoginUserInfo(ctx context.Context) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	svr, err := u.GetSelfUserInfoFromSvr(operationID)
 	if err != nil {
