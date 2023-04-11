@@ -2,294 +2,124 @@ package friend
 
 import (
 	"context"
-	"open_im_sdk/pkg/common"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/friend"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
-	sdk "open_im_sdk/pkg/sdk_params_callback"
+	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/syncer"
 )
 
-func (f *Friend) SyncSelfFriendApplication(operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
-	svrList, err := f.getSelfFriendApplicationFromServer(operationID)
+func (f *Friend) SyncSelfFriendApplication(ctx context.Context) error {
+	req := &friend.GetPaginationFriendsApplyFromReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{PageNumber: 0, ShowNumber: 30}}
+	fn := func(resp *friend.GetPaginationFriendsApplyFromResp) []*sdkws.FriendRequest {
+		return resp.FriendRequests
+	}
+	requests, err := util.GetPageAll(ctx, constant.GetSelfFriendApplicationListRouter, req, fn)
 	if err != nil {
-		log.NewError(operationID, "getSelfFriendApplicationFromServer failed ", err.Error())
-		return
+		return err
 	}
-	onServer := common.TransferToLocalFriendRequest(svrList)
-	onLocal, err := f.db.GetSendFriendApplication()
-	if err != nil {
-		log.NewError(operationID, "GetSendFriendApplication failed ", err.Error())
-		return
+	ls := make([]*model_struct.LocalFriendRequest, 0, len(requests))
+	for _, info := range requests {
+		ls = append(ls, &model_struct.LocalFriendRequest{
+			FromUserID:    info.FromUserID,
+			FromNickname:  info.FromNickname,
+			FromFaceURL:   info.FromFaceURL,
+			FromGender:    info.FromGender,
+			ToUserID:      info.ToUserID,
+			ToNickname:    info.ToNickname,
+			ToFaceURL:     info.ToFaceURL,
+			ToGender:      info.ToGender,
+			HandleResult:  info.HandleResult,
+			ReqMsg:        info.ReqMsg,
+			CreateTime:    info.CreateTime,
+			HandlerUserID: info.HandlerUserID,
+			HandleMsg:     info.HandleMsg,
+			HandleTime:    info.HandleTime,
+			Ex:            info.Ex,
+			//AttachedInfo:  info.AttachedInfo,
+		})
 	}
-	log.NewInfo(operationID, "list", svrList, onServer, onLocal)
-
-	aInBNot, bInANot, sameA, sameB := common.CheckFriendRequestDiff(onServer, onLocal)
-	log.Debug(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
-	for _, index := range aInBNot {
-		err := f.db.InsertFriendRequest(onServer[index])
-		if err != nil {
-			log.NewError(operationID, "InsertFriendRequest failed ", err.Error())
-			continue
-		}
-		callbackData := sdk.FriendApplicationAddedCallback(*onServer[index])
-		if f.friendListener != nil {
-			f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
-			log.Info(operationID, "OnFriendApplicationAdded", utils.StructToJsonString(callbackData))
-		}
-	}
-	for _, index := range sameA {
-		err := f.db.UpdateFriendRequest(onServer[index])
-		if err != nil {
-			log.NewError(operationID, "UpdateFriendRequest failed ", err.Error(), *onServer[index])
-			continue
-		} else {
-			if onServer[index].HandleResult == constant.FriendResponseRefuse {
-				callbackData := sdk.FriendApplicationRejectCallback(*onServer[index])
-				if f.friendListener != nil {
-
-					f.friendListener.OnFriendApplicationRejected(utils.StructToJsonString(callbackData))
-					log.Info(operationID, "OnFriendApplicationRejected", utils.StructToJsonString(callbackData))
-				}
-
-			} else if onServer[index].HandleResult == constant.FriendResponseAgree {
-				callbackData := sdk.FriendApplicationAcceptCallback(*onServer[index])
-				if f.friendListener != nil {
-					f.friendListener.OnFriendApplicationAccepted(utils.StructToJsonString(callbackData))
-					log.Info(operationID, "OnFriendApplicationAccepted", utils.StructToJsonString(callbackData))
-				}
-				if f.listenerForService != nil {
-					f.listenerForService.OnFriendApplicationAccepted(utils.StructToJsonString(callbackData))
-					log.Info(operationID, "OnFriendApplicationAccepted", utils.StructToJsonString(callbackData))
-				}
-			} else {
-				callbackData := sdk.FriendApplicationAddedCallback(*onServer[index])
-				if f.friendListener != nil {
-					f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
-					log.Info(operationID, "OnFriendApplicationAdded", utils.StructToJsonString(callbackData))
-				}
-			}
-		}
-	}
-	for _, index := range bInANot {
-		err := f.db.DeleteFriendRequestBothUserID(onLocal[index].FromUserID, onLocal[index].ToUserID)
-		if err != nil {
-			log.NewError(operationID, "_deleteFriendRequestBothUserID failed ", err.Error(), onLocal[index].FromUserID, onLocal[index].ToUserID)
-			continue
-		}
-		callbackData := sdk.FriendApplicationDeletedCallback(*onLocal[index])
-		if f.friendListener != nil {
-
-			f.friendListener.OnFriendApplicationDeleted(utils.StructToJsonString(callbackData))
-			log.Info(operationID, "OnFriendApplicationDeleted", utils.StructToJsonString(callbackData))
-		}
-	}
+	return syncer.New(nil).AddComplete([]string{"friend_user_id"}, &model_struct.LocalFriend{FriendUserID: f.loginUserID}, syncer.ToAnySlice(ls)).Start()
 }
 
 // recv
 func (f *Friend) SyncFriendApplication(ctx context.Context) error {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
-	svrList, err := f.getFriendApplicationFromServer(operationID)
+	req := &friend.GetPaginationFriendsApplyToReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{PageNumber: 0, ShowNumber: 30}}
+	fn := func(resp *friend.GetPaginationFriendsApplyToResp) []*sdkws.FriendRequest { return resp.FriendRequests }
+	requests, err := util.GetPageAll(ctx, constant.GetFriendApplicationListRouter, req, fn)
 	if err != nil {
-		log.NewError(operationID, "getFriendApplicationFromServer failed ", err.Error())
-		return
+		return err
 	}
-	onServer := common.TransferToLocalFriendRequest(svrList)
-	onLocal, err := f.db.GetRecvFriendApplication()
-	if err != nil {
-		log.NewError(operationID, "GetRecvFriendApplication failed ", err.Error())
-		return
+	ls := make([]*model_struct.LocalFriendRequest, 0, len(requests))
+	for _, info := range requests {
+		ls = append(ls, &model_struct.LocalFriendRequest{
+			FromUserID:    info.FromUserID,
+			FromNickname:  info.FromNickname,
+			FromFaceURL:   info.FromFaceURL,
+			FromGender:    info.FromGender,
+			ToUserID:      info.ToUserID,
+			ToNickname:    info.ToNickname,
+			ToFaceURL:     info.ToFaceURL,
+			ToGender:      info.ToGender,
+			HandleResult:  info.HandleResult,
+			ReqMsg:        info.ReqMsg,
+			CreateTime:    info.CreateTime,
+			HandlerUserID: info.HandlerUserID,
+			HandleMsg:     info.HandleMsg,
+			HandleTime:    info.HandleTime,
+			Ex:            info.Ex,
+			//AttachedInfo:  info.AttachedInfo,
+		})
 	}
-	log.NewInfo(operationID, "list", svrList, onServer, onLocal)
-
-	aInBNot, bInANot, sameA, sameB := common.CheckFriendRequestDiff(onServer, onLocal)
-	log.Debug(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
-	for _, index := range aInBNot {
-		err := f.db.InsertFriendRequest(onServer[index])
-		if err != nil {
-			log.NewError(operationID, "InsertFriendRequest failed ", err.Error())
-			continue
-		}
-		callbackData := sdk.FriendApplicationAddedCallback(*onServer[index])
-		//f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
-		if f.friendListener != nil {
-			f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
-			log.Info(operationID, "OnReceiveFriendApplicationAdded", utils.StructToJsonString(callbackData))
-		}
-		if f.listenerForService != nil {
-			f.listenerForService.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
-			log.Info(operationID, "OnReceiveFriendApplicationAdded", utils.StructToJsonString(callbackData))
-		}
-	}
-	for _, index := range sameA {
-		err := f.db.UpdateFriendRequest(onServer[index])
-		if err != nil {
-			log.NewError(operationID, "UpdateFriendRequest failed ", err.Error(), *onServer[index])
-			continue
-		} else {
-			if onServer[index].HandleResult == constant.FriendResponseRefuse {
-				callbackData := sdk.FriendApplicationRejectCallback(*onServer[index])
-				if f.friendListener != nil {
-
-					f.friendListener.OnFriendApplicationRejected(utils.StructToJsonString(callbackData))
-					log.Info(operationID, "OnFriendApplicationRejected", utils.StructToJsonString(callbackData))
-				}
-			} else if onServer[index].HandleResult == constant.FriendResponseAgree {
-				callbackData := sdk.FriendApplicationAcceptCallback(*onServer[index])
-				if f.friendListener != nil {
-
-					f.friendListener.OnFriendApplicationAccepted(utils.StructToJsonString(callbackData))
-					log.Info(operationID, "OnFriendApplicationAccepted", utils.StructToJsonString(callbackData))
-				}
-			} else {
-				callbackData := sdk.FriendApplicationAddedCallback(*onServer[index])
-				if f.friendListener != nil {
-					f.friendListener.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
-					log.Info(operationID, "OnReceiveFriendApplicationAdded", utils.StructToJsonString(callbackData))
-				}
-				if f.listenerForService != nil {
-					f.listenerForService.OnFriendApplicationAdded(utils.StructToJsonString(callbackData))
-					log.Info(operationID, "OnReceiveFriendApplicationAdded", utils.StructToJsonString(callbackData))
-				}
-			}
-		}
-	}
-	for _, index := range bInANot {
-		err := f.db.DeleteFriendRequestBothUserID(onLocal[index].FromUserID, onLocal[index].ToUserID)
-		if err != nil {
-			log.NewError(operationID, "_deleteFriendRequestBothUserID failed ", err.Error(), onLocal[index].FromUserID, onLocal[index].ToUserID)
-			continue
-		}
-		callbackData := sdk.FriendApplicationDeletedCallback(*onLocal[index])
-		if f.friendListener != nil {
-
-			f.friendListener.OnFriendApplicationDeleted(utils.StructToJsonString(callbackData))
-			log.Info(operationID, "OnReceiveFriendApplicationDeleted", utils.StructToJsonString(callbackData))
-		}
-	}
+	return syncer.New(nil).AddComplete([]string{"owner_user_id"}, &model_struct.LocalFriend{OwnerUserID: f.loginUserID}, syncer.ToAnySlice(ls)).Start()
 }
 
 func (f *Friend) SyncFriendList(ctx context.Context) error {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
-	svrList, err := f.getServerFriendList(operationID)
+	req := &friend.GetPaginationFriendsReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{PageNumber: 0, ShowNumber: 30}}
+	fn := func(resp *friend.GetPaginationFriendsResp) []*sdkws.FriendInfo { return resp.FriendsInfo }
+	friends, err := util.GetPageAll(ctx, constant.GetFriendListRouter, req, fn)
 	if err != nil {
-		log.NewError(operationID, "getServerFriendList failed ", err.Error())
-		return
+		return err
 	}
-	friendsInfoOnServer := common.TransferToLocalFriend(svrList)
-	friendsInfoOnLocal, err := f.db.GetAllFriendList()
-	if err != nil {
-		log.NewError(operationID, "_getAllFriendList failed ", err.Error())
-		return
+	ls := make([]*model_struct.LocalFriend, 0, len(friends))
+	for _, info := range friends {
+		ls = append(ls, &model_struct.LocalFriend{
+			OwnerUserID:    info.OwnerUserID,
+			FriendUserID:   info.FriendUser.UserID,
+			Remark:         info.Remark,
+			CreateTime:     info.CreateTime,
+			AddSource:      info.AddSource,
+			OperatorUserID: info.OperatorUserID,
+			Nickname:       info.FriendUser.Nickname,
+			FaceURL:        info.FriendUser.FaceURL,
+			Ex:             info.Ex,
+			//AttachedInfo:   info.FriendUser.AttachedInfo,
+		})
 	}
-	log.NewInfo(operationID, "list ", svrList, friendsInfoOnServer, friendsInfoOnLocal)
-	for _, v := range friendsInfoOnServer {
-		log.NewDebug(operationID, "friendsInfoOnServer ", *v)
-	}
-	aInBNot, bInANot, sameA, sameB := common.CheckFriendListDiff(friendsInfoOnServer, friendsInfoOnLocal)
-	log.NewInfo(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
-	for _, index := range aInBNot {
-		err := f.db.InsertFriend(friendsInfoOnServer[index])
-		if err != nil {
-			log.NewError(operationID, "_insertFriend failed ", err.Error())
-			continue
-		}
-		callbackData := sdk.FriendAddedCallback(*friendsInfoOnServer[index])
-		if f.friendListener != nil {
-
-			f.friendListener.OnFriendAdded(utils.StructToJsonString(callbackData))
-			log.Info(operationID, "OnFriendAdded", utils.StructToJsonString(callbackData))
-		}
-	}
-	for _, index := range sameA {
-		callbackData := sdk.FriendInfoChangedCallback(*friendsInfoOnServer[index])
-		localFriend, err := f.db.GetFriendInfoByFriendUserID(callbackData.FriendUserID)
-		if err != nil {
-			log.NewError(operationID, "GetFriendInfoByFriendUserID failed ", err.Error(), "userID", callbackData.FriendUserID)
-			continue
-		}
-		err = f.db.UpdateFriend(friendsInfoOnServer[index])
-		if err != nil {
-			log.NewError(operationID, "UpdateFriendRequest failed ", err.Error(), *friendsInfoOnServer[index])
-			continue
-		} else {
-			callbackData := sdk.FriendInfoChangedCallback(*friendsInfoOnServer[index])
-			if f.friendListener != nil {
-				f.friendListener.OnFriendInfoChanged(utils.StructToJsonString(callbackData))
-				if localFriend.Nickname == callbackData.Nickname && localFriend.FaceURL == callbackData.FaceURL && localFriend.Remark == callbackData.Remark {
-					log.NewInfo(operationID, "OnFriendInfoChanged nickname faceURL unchanged", callbackData.FriendUserID, localFriend.Nickname, localFriend.FaceURL)
-					continue
-				}
-				if callbackData.Remark != "" {
-					callbackData.Nickname = callbackData.Remark
-				}
-				common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: callbackData.FriendUserID, SessionType: constant.SingleChatType}}, f.conversationCh)
-				common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: callbackData.FriendUserID, FaceURL: callbackData.FaceURL, Nickname: callbackData.Nickname}}, f.conversationCh)
-				log.Info(operationID, "OnFriendInfoChanged", utils.StructToJsonString(callbackData))
-			}
-		}
-	}
-	for _, index := range bInANot {
-		err := f.db.DeleteFriendDB(friendsInfoOnLocal[index].FriendUserID)
-		if err != nil {
-			log.NewError(operationID, "_deleteFriend failed ", err.Error())
-			continue
-		}
-		callbackData := sdk.FriendDeletedCallback(*friendsInfoOnLocal[index])
-		if f.friendListener != nil {
-
-			f.friendListener.OnFriendDeleted(utils.StructToJsonString(callbackData))
-			log.Info(operationID, "OnFriendDeleted", utils.StructToJsonString(callbackData))
-		}
-	}
+	return syncer.New(nil).AddComplete([]string{"owner_user_id"}, &model_struct.LocalFriend{OwnerUserID: f.loginUserID}, syncer.ToAnySlice(ls)).Start()
 }
 
 func (f *Friend) SyncBlackList(ctx context.Context) error {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
-	svrList, err := f.getServerBlackList(operationID)
+	req := &friend.GetPaginationBlacksReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{PageNumber: 0, ShowNumber: 30}}
+	fn := func(resp *friend.GetPaginationBlacksResp) []*sdkws.BlackInfo { return resp.Blacks }
+	blacks, err := util.GetPageAll(ctx, constant.GetBlackListRouter, req, fn)
 	if err != nil {
-		log.NewError(operationID, "getServerBlackList failed ", err.Error())
-		return
+		return err
 	}
-	blackListOnServer := common.TransferToLocalBlack(svrList, f.loginUserID)
-	blackListOnLocal, err := f.db.GetBlackListDB()
-	if err != nil {
-		log.NewError(operationID, "_getBlackList failed ", err.Error())
-		return
+	ls := make([]*model_struct.LocalBlack, 0, len(blacks))
+	for _, info := range blacks {
+		ls = append(ls, &model_struct.LocalBlack{
+			OwnerUserID:    info.OwnerUserID,
+			BlockUserID:    info.BlackUserInfo.UserID,
+			CreateTime:     info.CreateTime,
+			AddSource:      info.AddSource,
+			OperatorUserID: info.OperatorUserID,
+			Nickname:       info.BlackUserInfo.Nickname,
+			FaceURL:        info.BlackUserInfo.FaceURL,
+			Ex:             info.Ex,
+			//AttachedInfo:   info.FriendUser.AttachedInfo,
+		})
 	}
-	log.NewInfo(operationID, "list ", svrList, blackListOnServer, blackListOnLocal)
-	aInBNot, bInANot, sameA, sameB := common.CheckBlackListDiff(blackListOnServer, blackListOnLocal)
-	log.NewInfo(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
-	for _, index := range aInBNot {
-		err := f.db.InsertBlack(blackListOnServer[index])
-		if err != nil {
-			log.NewError(operationID, "_insertFriend failed ", err.Error())
-			continue
-		}
-		callbackData := sdk.BlackAddCallback(*blackListOnServer[index])
-		if f.friendListener != nil {
-
-			f.friendListener.OnBlackAdded(utils.StructToJsonString(callbackData))
-			log.Info(operationID, "OnBlackAdded", utils.StructToJsonString(callbackData))
-		}
-	}
-	for _, index := range sameA {
-		err := f.db.UpdateBlack(blackListOnServer[index])
-		if err != nil {
-			log.NewError(operationID, "_updateFriend failed ", err.Error())
-			continue
-		}
-		//todo : add black info update callback
-		log.Info(operationID, "black info update, do nothing ", blackListOnServer[index])
-	}
-	for _, index := range bInANot {
-		err := f.db.DeleteBlack(blackListOnLocal[index].BlockUserID)
-		if err != nil {
-			log.NewError(operationID, "_deleteFriend failed ", err.Error())
-			continue
-		}
-		callbackData := sdk.BlackDeletedCallback(*blackListOnLocal[index])
-		if f.friendListener != nil {
-			f.friendListener.OnBlackDeleted(utils.StructToJsonString(callbackData))
-			log.Info(operationID, "OnBlackDeleted", utils.StructToJsonString(callbackData))
-		}
-	}
+	return syncer.New(nil).AddComplete([]string{"owner_user_id"}, &model_struct.LocalFriend{OwnerUserID: f.loginUserID}, syncer.ToAnySlice(ls)).Start()
 }

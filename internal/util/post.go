@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"io"
 	"net/http"
 )
@@ -69,4 +70,26 @@ func CallApi[T any](ctx context.Context, api string, req any) (*T, error) {
 		return nil, err
 	}
 	return resp, nil
+}
+
+func GetPageAll[A interface {
+	GetPagination() *sdkws.RequestPagination
+}, B, C any](ctx context.Context, router string, req A, fn func(resp *B) []C) ([]C, error) {
+	if req.GetPagination().ShowNumber == 0 {
+		req.GetPagination().ShowNumber = 50
+	}
+	var res []C
+	for i := int32(0); ; i++ {
+		req.GetPagination().PageNumber = i
+		memberResp, err := CallApi[B](ctx, router, req)
+		if err != nil {
+			return nil, err
+		}
+		list := fn(memberResp)
+		res = append(res, list...)
+		if len(list) < int(req.GetPagination().ShowNumber) {
+			break
+		}
+	}
+	return res, nil
 }

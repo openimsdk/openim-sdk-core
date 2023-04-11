@@ -1,4 +1,4 @@
-package syncdb
+package syncer
 
 //import (
 //	"errors"

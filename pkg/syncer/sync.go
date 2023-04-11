@@ -1,4 +1,4 @@
-package syncdb
+package syncer
 
 import (
 	"crypto/md5"
@@ -87,7 +87,7 @@ type modelColumnInfo struct {
 	UpdateColumn map[int]string // go model field index -> db column name
 }
 
-func NewSync(db DBInterface) *Syncer {
+func New(db DBInterface) *Syncer {
 	return &Syncer{
 		db:             db,
 		size:           50,

@@ -1,4 +1,4 @@
-package syncdb
+package syncer
 
 //
 //import (
@@ -57,7 +57,7 @@ package syncdb
 //	UpdateColumn map[int]string // go model field index -> db column name
 //}
 //
-//func NewSync(db any) *Sync {
+//func New(db any) *Sync {
 //	return &Sync{
 //		db:         db.(*gorm.DB),
 //		modelCache: make(map[string]modelKey),

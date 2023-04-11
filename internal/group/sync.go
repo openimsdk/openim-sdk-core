@@ -8,7 +8,7 @@ import (
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/syncdb"
+	"open_im_sdk/pkg/syncer"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -34,7 +34,7 @@ func (g *Group) SyncGroupMember(ctx context.Context, groupID string, userIDs []s
 			//AttachedInfo:   member.AttachedInfo, // todo
 		})
 	}
-	return syncdb.NewSync(nil).AddChange([]any{members}).Start()
+	return syncer.New(nil).AddChange([]any{members}).Start()
 }
 
 func (g *Group) SyncGroup(ctx context.Context, groupID string) error {
@@ -66,7 +66,7 @@ func (g *Group) SyncGroup(ctx context.Context, groupID string) error {
 		NotificationUserID:     groupInfo.NotificationUserID,
 		//AttachedInfo:           groupInfo.AttachedInfo, // TODO
 	}
-	if err := syncdb.NewSync(nil).AddChange([]any{groupModel}).Start(); err != nil {
+	if err := syncer.New(nil).AddChange([]any{groupModel}).Start(); err != nil {
 		return err
 	}
 	g.listener.OnGroupInfoChanged(utils.StructToJsonString(groupModel))
@@ -82,33 +82,10 @@ func (g *Group) SyncGroupAndMember(ctx context.Context, groupID string) error {
 		return errs.ErrGroupIDNotFound.Wrap(groupID)
 	}
 	groupInfo := groupResp.GroupInfos[0]
-	showNumber := int32(20)
-	var members []any
-	for i := int32(0); ; i++ {
-		memberReq := &group.GetGroupMemberListReq{GroupID: groupInfo.GroupID, Pagination: &sdkws.RequestPagination{PageNumber: i, ShowNumber: showNumber}}
-		memberResp, err := util.CallApi[group.GetGroupMemberListResp](ctx, constant.GetGroupAllMemberListRouter, memberReq)
-		if err != nil {
-			return err
-		}
-		for _, member := range memberResp.Members {
-			members = append(members, &model_struct.LocalGroupMember{
-				GroupID:        member.GroupID,
-				UserID:         member.UserID,
-				Nickname:       member.Nickname,
-				FaceURL:        member.FaceURL,
-				RoleLevel:      member.RoleLevel,
-				JoinTime:       member.JoinTime,
-				JoinSource:     member.JoinSource,
-				InviterUserID:  member.InviterUserID,
-				MuteEndTime:    member.MuteEndTime,
-				OperatorUserID: member.OperatorUserID,
-				Ex:             member.Ex,
-				//AttachedInfo:   member.AttachedInfo, // todo
-			})
-		}
-		if int32(len(memberResp.Members)) < showNumber {
-			break
-		}
+	req := &group.GetGroupMemberListReq{GroupID: groupInfo.GroupID, Pagination: &sdkws.RequestPagination{PageNumber: 0, ShowNumber: 20}}
+	members, err := util.GetPageAll(ctx, constant.GetGroupAllMemberListRouter, req, func(resp *group.GetGroupMemberListResp) []*sdkws.GroupMemberFullInfo { return resp.Members })
+	if err != nil {
+		return err
 	}
 	groupModel := &model_struct.LocalGroup{
 		GroupID:       groupInfo.GroupID,
@@ -130,7 +107,7 @@ func (g *Group) SyncGroupAndMember(ctx context.Context, groupID string) error {
 		NotificationUpdateTime: groupInfo.NotificationUpdateTime,
 		NotificationUserID:     groupInfo.NotificationUserID,
 	}
-	s := syncdb.NewSync(nil).AddChange([]any{groupModel}).AddComplete([]string{"group_id"}, &model_struct.LocalGroup{GroupID: groupID}, members)
+	s := syncer.New(nil).AddChange([]any{groupModel}).AddComplete([]string{"group_id"}, &model_struct.LocalGroup{GroupID: groupID}, syncer.ToAnySlice(members))
 	if err := s.Start(); err != nil {
 		return err
 	}
@@ -142,7 +119,7 @@ func (g *Group) SyncGroupAndMember(ctx context.Context, groupID string) error {
 }
 
 func (g *Group) SyncSelfGroupApplication(ctx context.Context) error {
-	list, err := GetPageAll(ctx, constant.GetSendGroupApplicationListRouter, &group.GetUserReqApplicationListReq{UserID: g.loginUserID, Pagination: &sdkws.RequestPagination{}}, func(resp *group.GetGroupApplicationListResp) []*sdkws.GroupRequest { return resp.GroupRequests })
+	list, err := util.GetPageAll(ctx, constant.GetSendGroupApplicationListRouter, &group.GetUserReqApplicationListReq{UserID: g.loginUserID, Pagination: &sdkws.RequestPagination{}}, func(resp *group.GetGroupApplicationListResp) []*sdkws.GroupRequest { return resp.GroupRequests })
 	if err != nil {
 		return err
 	}
@@ -176,7 +153,7 @@ func (g *Group) SyncSelfGroupApplication(ctx context.Context) error {
 			InviterUserID: request.InviterUserID,
 		})
 	}
-	s := syncdb.NewSync(nil).AddComplete([]string{"user_id"}, &model_struct.LocalGroupRequest{UserID: g.loginUserID}, ToAnySlice(ms))
+	s := syncer.New(nil).AddComplete([]string{"user_id"}, &model_struct.LocalGroupRequest{UserID: g.loginUserID}, syncer.ToAnySlice(ms))
 	if err := s.Start(); err != nil {
 		return err
 	}
@@ -253,37 +230,4 @@ func (g *Group) SyncSelfGroupApplication(ctx context.Context) error {
 	//	}
 	//	log.Info(operationID, "OnGroupApplicationDeleted", utils.StructToJsonString(callbackData))
 	//}
-}
-
-func GetPageAll[A interface {
-	GetPagination() *sdkws.RequestPagination
-}, B, C any](ctx context.Context, router string, req A, fn func(resp *B) []C) ([]C, error) {
-	if req.GetPagination().ShowNumber == 0 {
-		req.GetPagination().ShowNumber = 50
-	}
-	var res []C
-	for i := int32(0); ; i++ {
-		req.GetPagination().PageNumber = i
-		memberResp, err := util.CallApi[B](ctx, router, req)
-		if err != nil {
-			return nil, err
-		}
-		list := fn(memberResp)
-		res = append(res, list...)
-		if len(list) < int(req.GetPagination().ShowNumber) {
-			break
-		}
-	}
-	return res, nil
-}
-
-func ToAnySlice[T any](ts []T) []any {
-	if ts == nil {
-		return nil
-	}
-	res := make([]any, len(ts))
-	for i := range ts {
-		res = append(res, ts[i])
-	}
-	return res
 }
