@@ -125,7 +125,7 @@ func call_(callback open_im_sdk_callback.Base, operationID string, fn any, args 
 	}
 	var lastErr bool
 	if numOut := fnt.NumOut(); numOut > 0 {
-		lastErr = fnt.Out(numOut - 1).Implements(reflect.TypeOf((*error)(nil)).Elem())
+		lastErr = fnt.Out(numOut - 1).Implements(reflect.TypeOf(error(nil)).Elem())
 	}
 	//fmt.Println("fnv:", fnv.Interface(), "ins:", ins)
 	outs := fnv.Call(ins)
