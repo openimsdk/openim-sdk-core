@@ -40,6 +40,7 @@ var (
 	ErrWsSendTimeout           = ErrInfo{ErrCode: 904, ErrMsg: WsSendTimeout.Error()}
 	ErrResourceLoadNotComplete = ErrInfo{ErrCode: 905, ErrMsg: ResourceLoadNotComplete.Error()}
 	ErrNotSupportFunction      = ErrInfo{ErrCode: 906, ErrMsg: NotSupportFunction.Error()}
+	ErrNetWorkChange           = ErrInfo{ErrCode: 907, ErrMsg: NetWorkChange.Error()}
 )
 
 var (
@@ -69,8 +70,9 @@ var (
 	ResourceLoadNotComplete = errors.New("resource loading is not complete")
 	NotSupportFunction      = errors.New("unsupported function")
 
-	NotFriend   = errors.New("not friend")
-	InBlackList = errors.New("in blackList")
+	NotFriend     = errors.New("not friend")
+	InBlackList   = errors.New("in blackList")
+	NetWorkChange = errors.New("network change")
 )
 
 func (e *ErrInfo) Error() string {

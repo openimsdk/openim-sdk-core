@@ -115,3 +115,12 @@ func (u *WsRespAsyn) notifyResp(wsResp GeneralWsResp) error {
 	}
 	return nil
 }
+
+// NotifyAllChNetWorkChanged  when ws network recon, close all  message ch
+func (u *WsRespAsyn) closeAllCh() {
+	u.wsMutex.Lock()
+	defer u.wsMutex.Unlock()
+	for _, ch := range u.wsNotification {
+		close(ch)
+	}
+}
