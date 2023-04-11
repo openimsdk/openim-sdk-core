@@ -1,6 +1,7 @@
 package syncer
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
@@ -22,8 +23,9 @@ type modelColumnInfo struct {
 	UpdateColumn map[int]string // go model field index -> db column name
 }
 
-func New(db DBInterface) *Syncer {
+func New(ctx context.Context, db DBInterface) *Syncer {
 	return &Syncer{
+		ctx:            ctx,
 		db:             db,
 		size:           50,
 		modelColumnMap: make(map[string]modelColumnInfo),
@@ -31,6 +33,7 @@ func New(db DBInterface) *Syncer {
 }
 
 type Syncer struct {
+	ctx            context.Context
 	db             DBInterface
 	locally        []any
 	deletes        []any
@@ -170,7 +173,7 @@ func (s *Syncer) Locally() error {
 			valueOf = valueOf.Elem()
 		}
 		where := s.getColumnWhere(valueOf, keyInfo.PrimaryKey)
-		models, err := s.db.FindOffset(valueOf.Type(), where, 0, 1) // 根据主键查询 返回值是一个切片
+		models, err := s.db.FindOffset(s.ctx, valueOf.Type(), where, 0, 1) // 根据主键查询 返回值是一个切片
 		if err != nil {
 			return err
 		}
@@ -188,14 +191,14 @@ func (s *Syncer) Locally() error {
 		if dbRes.Len() == 0 { // 不存在
 			slice := reflect.MakeSlice(reflect.SliceOf(valueOf.Type()), 1, 1) // 创建一个切片
 			slice.Index(0).Set(valueOf)
-			if err := s.db.Insert(slice.Interface()); err != nil {
+			if err := s.db.Insert(s.ctx, slice.Interface()); err != nil {
 				return err
 			}
 			s.on(MethodLocally, StateInsert, srvItem)
 		} else { // 存在
 			update := s.getModelStructUpdate(dbRes.Index(0), valueOf, keyInfo.UpdateColumn)
 			if len(update) > 0 {
-				if err := s.db.Update(valueOf.Type(), where, update); err != nil {
+				if err := s.db.Update(s.ctx, valueOf.Type(), where, update); err != nil {
 					return err
 				}
 				s.on(MethodLocally, StateUpdate, srvItem)
@@ -220,7 +223,7 @@ func (s *Syncer) Delete() error {
 			valueOf = valueOf.Elem()
 		}
 		where := s.getColumnWhere(valueOf, keyInfo.PrimaryKey)
-		dbRes, err := s.db.FindOffset(valueOf.Type(), where, 0, 1)
+		dbRes, err := s.db.FindOffset(s.ctx, valueOf.Type(), where, 0, 1)
 		if err != nil {
 			return err
 		}
@@ -234,7 +237,7 @@ func (s *Syncer) Delete() error {
 		if dbResValueOf.Len() == 0 {
 			s.on(MethodDelete, StateUnchanged, del) // 不存在
 		} else {
-			if err := s.db.Delete(valueOf.Type(), []*Where{where}); err != nil {
+			if err := s.db.Delete(s.ctx, valueOf.Type(), []*Where{where}); err != nil {
 				return err
 			}
 			itemValueOf := dbResValueOf.Index(0)
@@ -400,7 +403,7 @@ func (s *Syncer) globalItem(c *globalItem) error {
 		srvRecordIDIndexMap[s.getRecordID(itemValueOf, primaryKeyIndexes)] = i
 	}
 	for page := 0; ; page++ {
-		dbRes, err := s.db.FindOffset(elemTypeOf, where, page*s.size, s.size) // 查询数据库中的数据 返回值为切片
+		dbRes, err := s.db.FindOffset(s.ctx, elemTypeOf, where, page*s.size, s.size) // 查询数据库中的数据 返回值为切片
 		if err != nil {
 			return err
 		}
@@ -427,7 +430,7 @@ func (s *Syncer) globalItem(c *globalItem) error {
 			id := s.getRecordID(dbDataValueOf, primaryKeyIndexes)
 			idx, ok := srvRecordIDIndexMap[id]
 			if !ok {
-				if err := s.db.Delete(elemTypeOf, []*Where{s.getColumnWhere(dbDataValueOf, columnInfo.PrimaryKey)}); err != nil {
+				if err := s.db.Delete(s.ctx, elemTypeOf, []*Where{s.getColumnWhere(dbDataValueOf, columnInfo.PrimaryKey)}); err != nil {
 					return err
 				}
 				continue
@@ -438,10 +441,10 @@ func (s *Syncer) globalItem(c *globalItem) error {
 			}
 			update := s.getModelStructUpdate(dbDataValueOf, srvData, columnInfo.UpdateColumn)
 			if len(update) == 0 {
-				s.on(MethodGlobal, StateUnchanged, dbDataValueOf.Interface())
+				s.on(MethodGlobal, StateUnchanged, srvData.Interface())
 				continue
 			}
-			if err := s.db.Update(elemTypeOf, s.getColumnWhere(dbDataValueOf, columnInfo.PrimaryKey), update); err != nil {
+			if err := s.db.Update(s.ctx, elemTypeOf, s.getColumnWhere(dbDataValueOf, columnInfo.PrimaryKey), update); err != nil {
 				return err
 			}
 			delete(srvRecordIDIndexMap, id) // 删除已经更新的数据索引
@@ -456,14 +459,14 @@ func (s *Syncer) globalItem(c *globalItem) error {
 		for _, index := range srvRecordIDIndexMap {
 			inserts = reflect.Append(inserts, svrValueOf.Index(index))
 			if inserts.Len() >= s.size {
-				if err := s.db.Insert(inserts.Interface()); err != nil {
+				if err := s.db.Insert(s.ctx, inserts.Interface()); err != nil {
 					return err
 				}
 				inserts = reflect.MakeSlice(reflect.SliceOf(elemTypeOf), 0, s.size)
 			}
 		}
 		if inserts.Len() > 0 {
-			if err := s.db.Insert(inserts.Interface()); err != nil {
+			if err := s.db.Insert(s.ctx, inserts.Interface()); err != nil {
 				return err
 			}
 		}

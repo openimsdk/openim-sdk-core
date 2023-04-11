@@ -87,7 +87,7 @@ func call_(callback open_im_sdk_callback.Base, operationID string, fn any, args 
 	}
 	fnt := fnv.Type()
 	numIn := fnt.NumIn()
-	if len(args)+1 != numIn {
+	if len(args) != numIn+1 {
 		callback.OnError(10000, "go code error: fn in args num is not match")
 		return
 	}
@@ -95,8 +95,8 @@ func call_(callback open_im_sdk_callback.Base, operationID string, fn any, args 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "operationID", operationID)
 	ins = append(ins, reflect.ValueOf(ctx))
-	for i := 0; i < len(args); i++ {
-		tag := fnt.In(i + 1)
+	for i := 2; i < len(args); i++ { // callback open_im_sdk_callback.Base, operationID string, ...
+		tag := fnt.In(i - 1) // ctx context.Context, ...
 		arg := reflect.TypeOf(args[i])
 		if arg.String() == tag.String() || tag.Kind() == reflect.Interface {
 			ins = append(ins, reflect.ValueOf(args[i]))
@@ -127,7 +127,7 @@ func call_(callback open_im_sdk_callback.Base, operationID string, fn any, args 
 	if numOut := fnt.NumOut(); numOut > 0 {
 		lastErr = fnt.Out(numOut - 1).Implements(reflect.TypeOf((*error)(nil)).Elem())
 	}
-	fmt.Println("fnv:", fnv.Interface(), "ins:", ins)
+	//fmt.Println("fnv:", fnv.Interface(), "ins:", ins)
 	outs := fnv.Call(ins)
 	if len(outs) == 0 {
 		callback.OnSuccess("")
