@@ -17,7 +17,7 @@ func (g *Group) SyncGroupMember(ctx context.Context, groupID string, userIDs []s
 	if err != nil {
 		return err
 	}
-	var members []any
+	var members []*model_struct.LocalGroupMember
 	for _, member := range resp.Members {
 		members = append(members, &model_struct.LocalGroupMember{
 			GroupID:        member.GroupID,
