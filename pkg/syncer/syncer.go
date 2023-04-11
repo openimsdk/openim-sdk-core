@@ -10,75 +10,10 @@ import (
 	"strings"
 )
 
-type State uint8
-
-func (s State) String() string {
-	switch s {
-	case StateNoChange:
-		return "NoChange"
-	case StateInsert:
-		return "Insert"
-	case StateUpdate:
-		return "Update"
-	case StateDelete:
-		return "Delete"
-	default:
-		return "Unknown"
-	}
-}
-
-const (
-	StateNoChange State = 0
-	StateInsert   State = 1
-	StateUpdate   State = 2
-	StateDelete   State = 3
-)
-
-type Method uint8
-
-func (s Method) String() string {
-	switch s {
-	case MethodChange:
-		return "Change"
-	case MethodDelete:
-		return "Delete"
-	case MethodComplete:
-		return "complete"
-	default:
-		return "Unknown"
-	}
-}
-
-const (
-	MethodChange   = 1
-	MethodDelete   = 2
-	MethodComplete = 3
-)
-
-type Column struct {
-	Name  string
-	Value any
-}
-
-type Where struct {
-	Columns []*Column
-}
-
-type DBInterface interface {
-	// Insert 插入数据 ms 是model层的结构体切片
-	Insert(ms any) error // []Struct
-	// Delete reflect.Type 返回的是最底层的结构体类型
-	Delete(m reflect.Type, where []*Where) error
-	// Update reflect.Type 返回的是最底层的结构体类型
-	Update(m reflect.Type, where *Where, data map[string]any) error
-	// FindOffset reflect.Type 返回的是最底层的结构体类型
-	FindOffset(m reflect.Type, where *Where, offset int, limit int) (any, error) // []Struct
-}
-
 type complete struct {
-	Key   []string // 同于的key
-	Data  []any    // 同步的数据
-	Value any      // 同步的值
+	Key  map[string]any // 同于的key
+	Data any            // 同步的数据
+	Safe bool           // 为true是,会检查key中指定列的值与data中的值是否相等,如果不相等,则会返回error
 }
 
 // modelColumnInfo model对应的主键和字段
@@ -120,8 +55,8 @@ func (s *Syncer) AddDelete(data []any) *Syncer {
 	return s
 }
 
-func (s *Syncer) AddComplete(key []string, value any, data []any) *Syncer {
-	s.completes = append(s.completes, complete{Key: key, Value: value, Data: data})
+func (s *Syncer) AddComplete(key map[string]any, data any) *Syncer {
+	s.completes = append(s.completes, complete{Key: key, Data: data, Safe: true})
 	return s
 }
 
@@ -377,141 +312,6 @@ func (s *Syncer) Complete() error {
 	return nil
 }
 
-// checkColumn 全量同步, 检查类型是否一致, 指定的列的值是否相等
-func (s *Syncer) checkColumn(value reflect.Value, cs []any, columnFieldIndex []int) error {
-	getColumnValue := func(valueOf reflect.Value) []reflect.Value {
-		column := make([]reflect.Value, 0, len(columnFieldIndex))
-		for _, index := range columnFieldIndex {
-			column = append(column, valueOf.Field(index))
-		}
-		return column
-	}
-	typeStr := value.Type().String()
-	firstColumnValue := getColumnValue(value)
-	for i := range cs {
-		valueOf := reflect.ValueOf(cs[i])
-		if valueOf.Kind() == reflect.Pointer {
-			valueOf = valueOf.Elem()
-		}
-		if valueOf.Kind() != reflect.Struct {
-			return errors.New("not struct")
-		}
-		if valueOf.Type().String() != typeStr {
-			return errors.New("not same type")
-		}
-		for i, value := range getColumnValue(valueOf) {
-			if !s.equal(value, firstColumnValue[i]) {
-				return errors.New("not same value")
-			}
-		}
-	}
-	return nil
-}
-
-// completeBy 传入完成的数据，根据指定主键列新增,删除,修改数据
-func (s *Syncer) completeBy(c *complete) error {
-	if c.Value == nil {
-		return errors.New("value is nil")
-	}
-	baseValueOf := reflect.ValueOf(c.Value)
-	for baseValueOf.Kind() == reflect.Pointer {
-		baseValueOf = baseValueOf.Elem()
-	}
-	if baseValueOf.Kind() != reflect.Struct {
-		return fmt.Errorf("not struct %s", baseValueOf.Kind().String())
-	}
-	columnInfo, err := s.getModelColumnInfo(baseValueOf.Interface())
-	if err != nil {
-		return err
-	}
-	whereColumnInfo, err := s.getWhereKey(c.Key, columnInfo.PrimaryKey)
-	if err != nil {
-		return err
-	}
-	if err := s.checkColumn(baseValueOf, c.Data, s.mapKey(whereColumnInfo)); err != nil {
-		return err
-	}
-	elemTypeOf := baseValueOf.Type()
-	primaryKeyIndexes := s.mapKey(columnInfo.PrimaryKey) // 主键的索引
-	recordIDIndexMap := make(map[string]int)             // 记录主键生成的唯一ID 和 数据在Data中的索引
-	for i := range c.Data {
-		recordIDIndexMap[s.getRecordID(reflect.ValueOf(c.Data[i]), primaryKeyIndexes)] = i
-	}
-	if len(recordIDIndexMap) != len(c.Data) {
-		return errors.New("gen primary key not unique")
-	}
-	where := s.getColumnWhere(baseValueOf, whereColumnInfo) // 需要同步的查询条件
-	for page := 0; ; page++ {
-		dbRes, err := s.db.FindOffset(elemTypeOf, where, page*s.size, s.size) // 查询数据库中的数据 返回值为切片
-		if err != nil {
-			return err
-		}
-		dbResValueOf := reflect.ValueOf(dbRes)
-		for dbResValueOf.Kind() == reflect.Pointer {
-			dbResValueOf = dbResValueOf.Elem()
-		}
-		if dbResValueOf.Kind() != reflect.Slice {
-			return fmt.Errorf("not slice %s", dbResValueOf.Kind().String())
-		}
-		n := dbResValueOf.Len() // 查询的数量
-		for i := 0; i < n; i++ {
-			dbDataValueOf := dbResValueOf.Index(i)
-			for dbDataValueOf.Kind() == reflect.Pointer {
-				dbDataValueOf = dbDataValueOf.Elem()
-			}
-			if elemTypeOf.String() != dbDataValueOf.Type().String() {
-				return fmt.Errorf("not same type %s %s", elemTypeOf.String(), dbDataValueOf.Type().String()) // 类型不匹配
-			}
-			id := s.getRecordID(dbDataValueOf, primaryKeyIndexes)
-			idx, ok := recordIDIndexMap[id]
-			if !ok {
-				if err := s.db.Delete(elemTypeOf, []*Where{s.getColumnWhere(dbDataValueOf, columnInfo.PrimaryKey)}); err != nil {
-					return err
-				}
-				continue
-			}
-			srvData := reflect.ValueOf(c.Data[idx])
-			for srvData.Kind() == reflect.Pointer {
-				srvData = srvData.Elem()
-			}
-			update := s.getModelStructUpdate(dbDataValueOf, srvData, columnInfo.UpdateColumn)
-			if len(update) == 0 {
-				s.on(MethodComplete, StateNoChange, dbDataValueOf.Interface())
-				continue
-			}
-			if err := s.db.Update(elemTypeOf, s.getColumnWhere(dbDataValueOf, columnInfo.PrimaryKey), update); err != nil {
-				return err
-			}
-			delete(recordIDIndexMap, id) // 删除已经更新的数据索引
-			s.on(MethodComplete, StateUpdate, dbDataValueOf.Interface())
-		}
-		if n < s.size {
-			break
-		}
-	}
-	if len(recordIDIndexMap) > 0 {
-		inserts := reflect.MakeSlice(reflect.SliceOf(elemTypeOf), 0, s.size) // 分批插入需要的切片
-		for _, index := range recordIDIndexMap {
-			inserts = reflect.Append(inserts, reflect.ValueOf(c.Data[index]))
-			if inserts.Len() >= s.size {
-				if err := s.db.Insert(inserts.Interface()); err != nil {
-					return err
-				}
-				inserts = reflect.MakeSlice(reflect.SliceOf(elemTypeOf), 0, s.size)
-			}
-		}
-		if inserts.Len() > 0 {
-			if err := s.db.Insert(inserts.Interface()); err != nil {
-				return err
-			}
-		}
-		for _, i := range recordIDIndexMap {
-			s.on(MethodComplete, StateInsert, c.Data[i])
-		}
-	}
-	return nil
-}
-
 func (s *Syncer) Start() error {
 	if err := s.Change(); err != nil {
 		return err
@@ -529,4 +329,147 @@ func (s *Syncer) on(method Method, state State, data any) {
 	if s.fn != nil {
 		s.fn(method, state, data)
 	}
+}
+
+func (s *Syncer) getWhere(key map[string]any, info *modelColumnInfo, typeOf reflect.Type) (map[int]string, error) {
+	if len(key) >= len(info.PrimaryKey) {
+		return nil, errors.New("key len error")
+	}
+	res := make(map[int]string)
+	if len(key) == 0 {
+		return res, nil
+	}
+	columns := make(map[string]int)
+	for index, column := range info.PrimaryKey {
+		columns[column] = index
+	}
+	for column, value := range key {
+		index, ok := columns[column]
+		if !ok {
+			return nil, fmt.Errorf("column %s not found", column)
+		}
+		fieldTypeOf := typeOf.Field(index)
+		if reflect.TypeOf(value).String() != fieldTypeOf.Type.String() {
+			return nil, fmt.Errorf("column %s type error", column)
+		}
+		res[index] = column
+	}
+	return res, nil
+}
+
+// completeBy 传入完成的数据，根据指定主键列新增,删除,修改数据
+func (s *Syncer) completeBy(c *complete) error {
+	svrValueOf := reflect.ValueOf(c.Data)
+	for svrValueOf.Kind() == reflect.Pointer {
+		svrValueOf = svrValueOf.Elem()
+	}
+	if svrValueOf.Kind() != reflect.Slice {
+		return errors.New("not slice")
+	}
+	elemTypeOf := svrValueOf.Type().Elem()
+	for elemTypeOf.Kind() == reflect.Pointer {
+		elemTypeOf = elemTypeOf.Elem()
+	}
+	elemValueOf := reflect.New(elemTypeOf).Elem()
+	columnInfo, err := s.getModelColumnInfo(elemValueOf.Interface())
+	if err != nil {
+		return err
+	}
+	if c.Key == nil {
+		c.Key = make(map[string]any)
+	}
+	whereColumnInfo, err := s.getWhere(c.Key, columnInfo, elemTypeOf)
+	if err != nil {
+		return err
+	}
+	for index, column := range whereColumnInfo {
+		elemValueOf.Field(index).Set(reflect.ValueOf(c.Key[column]))
+	}
+	where := s.getColumnWhere(elemValueOf, whereColumnInfo)
+	srvRecordIDIndexMap := make(map[string]int) // 记录主键生成的唯一ID 和 数据在Data中的索引
+	primaryKeyIndexes := s.mapKey(columnInfo.PrimaryKey)
+	for i := svrValueOf.Len() - 1; i >= 0; i-- {
+		itemValueOf := svrValueOf.Index(i)
+		if c.Safe && len(c.Key) > 0 {
+			for index := range whereColumnInfo {
+				if !s.equal(elemValueOf.Field(index), itemValueOf.Field(index)) { // 比较指定的key对应的值是否相等
+					return errors.New("safe key not equal")
+				}
+			}
+		}
+		srvRecordIDIndexMap[s.getRecordID(itemValueOf, primaryKeyIndexes)] = i
+	}
+	for page := 0; ; page++ {
+		dbRes, err := s.db.FindOffset(elemTypeOf, where, page*s.size, s.size) // 查询数据库中的数据 返回值为切片
+		if err != nil {
+			return err
+		}
+		dbResValueOf := reflect.ValueOf(dbRes)
+		for dbResValueOf.Kind() == reflect.Pointer {
+			dbResValueOf = dbResValueOf.Elem()
+		}
+		if dbResValueOf.Kind() != reflect.Slice {
+			return fmt.Errorf("not slice %s", dbResValueOf.Kind().String())
+		}
+		itemTypeOf := dbResValueOf.Type().Elem()
+		for elemTypeOf.Kind() == reflect.Pointer {
+			elemTypeOf = elemTypeOf.Elem()
+		}
+		if elemTypeOf.String() != itemTypeOf.String() {
+			return fmt.Errorf("not same type %s %s", elemTypeOf.String(), itemTypeOf.String()) // 类型不匹配
+		}
+		n := dbResValueOf.Len() // 查询的数量
+		for i := 0; i < n; i++ {
+			dbDataValueOf := dbResValueOf.Index(i)
+			for dbDataValueOf.Kind() == reflect.Pointer {
+				dbDataValueOf = dbDataValueOf.Elem()
+			}
+			id := s.getRecordID(dbDataValueOf, primaryKeyIndexes)
+			idx, ok := srvRecordIDIndexMap[id]
+			if !ok {
+				if err := s.db.Delete(elemTypeOf, []*Where{s.getColumnWhere(dbDataValueOf, columnInfo.PrimaryKey)}); err != nil {
+					return err
+				}
+				continue
+			}
+			srvData := svrValueOf.Index(idx)
+			for srvData.Kind() == reflect.Pointer {
+				srvData = srvData.Elem()
+			}
+			update := s.getModelStructUpdate(dbDataValueOf, srvData, columnInfo.UpdateColumn)
+			if len(update) == 0 {
+				s.on(MethodComplete, StateNoChange, dbDataValueOf.Interface())
+				continue
+			}
+			if err := s.db.Update(elemTypeOf, s.getColumnWhere(dbDataValueOf, columnInfo.PrimaryKey), update); err != nil {
+				return err
+			}
+			delete(srvRecordIDIndexMap, id) // 删除已经更新的数据索引
+			s.on(MethodComplete, StateUpdate, dbDataValueOf.Interface())
+		}
+		if n < s.size {
+			break
+		}
+	}
+	if len(srvRecordIDIndexMap) > 0 {
+		inserts := reflect.MakeSlice(reflect.SliceOf(elemTypeOf), 0, s.size) // 分批插入需要的切片
+		for _, index := range srvRecordIDIndexMap {
+			inserts = reflect.Append(inserts, svrValueOf.Index(index))
+			if inserts.Len() >= s.size {
+				if err := s.db.Insert(inserts.Interface()); err != nil {
+					return err
+				}
+				inserts = reflect.MakeSlice(reflect.SliceOf(elemTypeOf), 0, s.size)
+			}
+		}
+		if inserts.Len() > 0 {
+			if err := s.db.Insert(inserts.Interface()); err != nil {
+				return err
+			}
+		}
+		for _, i := range srvRecordIDIndexMap {
+			s.on(MethodComplete, StateInsert, svrValueOf.Index(i))
+		}
+	}
+	return nil
 }
