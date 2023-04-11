@@ -6,7 +6,6 @@ package indexdb
 import (
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
-	"open_im_sdk/wasm/indexdb/temp_struct"
 )
 
 type FriendRequest struct {
@@ -28,25 +27,25 @@ func (i FriendRequest) DeleteFriendRequestBothUserID(fromUserID, toUserID string
 }
 
 func (i FriendRequest) UpdateFriendRequest(friendRequest *model_struct.LocalFriendRequest) error {
-	tempLocalFriendRequest := temp_struct.LocalFriendRequest{
-		FromUserID:    friendRequest.FromUserID,
-		FromNickname:  friendRequest.FromNickname,
-		FromFaceURL:   friendRequest.FromFaceURL,
-		FromGender:    friendRequest.FromGender,
-		ToUserID:      friendRequest.ToUserID,
-		ToNickname:    friendRequest.ToNickname,
-		ToFaceURL:     friendRequest.ToFaceURL,
-		ToGender:      friendRequest.ToGender,
-		HandleResult:  friendRequest.HandleResult,
-		ReqMsg:        friendRequest.ReqMsg,
-		CreateTime:    friendRequest.CreateTime,
-		HandlerUserID: friendRequest.HandlerUserID,
-		HandleMsg:     friendRequest.HandleMsg,
-		HandleTime:    friendRequest.HandleTime,
-		Ex:            friendRequest.Ex,
-		AttachedInfo:  friendRequest.AttachedInfo,
-	}
-	_, err := Exec(utils.StructToJsonString(tempLocalFriendRequest))
+	//tempLocalFriendRequest := temp_struct.LocalFriendRequest{
+	//	FromUserID:    friendRequest.FromUserID,
+	//	FromNickname:  friendRequest.FromNickname,
+	//	FromFaceURL:   friendRequest.FromFaceURL,
+	//	FromGender:    friendRequest.FromGender,
+	//	ToUserID:      friendRequest.ToUserID,
+	//	ToNickname:    friendRequest.ToNickname,
+	//	ToFaceURL:     friendRequest.ToFaceURL,
+	//	ToGender:      friendRequest.ToGender,
+	//	HandleResult:  friendRequest.HandleResult,
+	//	ReqMsg:        friendRequest.ReqMsg,
+	//	CreateTime:    friendRequest.CreateTime,
+	//	HandlerUserID: friendRequest.HandlerUserID,
+	//	HandleMsg:     friendRequest.HandleMsg,
+	//	HandleTime:    friendRequest.HandleTime,
+	//	Ex:            friendRequest.Ex,
+	//	AttachedInfo:  friendRequest.AttachedInfo,
+	//}
+	_, err := Exec(utils.StructToJsonString(friendRequest))
 	return err
 }
 
