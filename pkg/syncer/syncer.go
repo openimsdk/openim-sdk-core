@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-type complete struct {
+type globalItem struct {
 	Key  map[string]any // 同于的key
 	Data any            // 同步的数据
 	Safe bool           // 为true是,会检查key中指定列的值与data中的值是否相等,如果不相等,则会返回error
@@ -32,9 +32,9 @@ func New(db DBInterface) *Syncer {
 
 type Syncer struct {
 	db             DBInterface
-	changes        []any
+	locally        []any
 	deletes        []any
-	completes      []complete
+	globals        []globalItem // 全局数据
 	modelColumnMap map[string]modelColumnInfo
 	size           int
 	fn             func(method Method, state State, data any)
@@ -45,8 +45,8 @@ func (s *Syncer) Listen(fn func(method Method, state State, data any)) *Syncer {
 	return s
 }
 
-func (s *Syncer) AddChange(data []any) *Syncer {
-	s.changes = append(s.changes, data...)
+func (s *Syncer) AddLocally(data []any) *Syncer {
+	s.locally = append(s.locally, data...)
 	return s
 }
 
@@ -55,8 +55,8 @@ func (s *Syncer) AddDelete(data []any) *Syncer {
 	return s
 }
 
-func (s *Syncer) AddComplete(key map[string]any, data any) *Syncer {
-	s.completes = append(s.completes, complete{Key: key, Data: data, Safe: true})
+func (s *Syncer) AddGlobal(key map[string]any, data any) *Syncer {
+	s.globals = append(s.globals, globalItem{Key: key, Data: data, Safe: true})
 	return s
 }
 
@@ -157,10 +157,10 @@ func (s *Syncer) getModelStructUpdate(dbStruct reflect.Value, srvStruct reflect.
 	return update
 }
 
-// Change 变更数据
-func (s *Syncer) Change() error {
-	for i := range s.changes {
-		srvItem := s.changes[i]
+// Locally 变更数据
+func (s *Syncer) Locally() error {
+	for i := range s.locally {
+		srvItem := s.locally[i]
 		keyInfo, err := s.getModelColumnInfo(srvItem)
 		if err != nil {
 			return err
@@ -191,16 +191,16 @@ func (s *Syncer) Change() error {
 			if err := s.db.Insert(slice.Interface()); err != nil {
 				return err
 			}
-			s.on(MethodChange, StateInsert, srvItem)
+			s.on(MethodLocally, StateInsert, srvItem)
 		} else { // 存在
 			update := s.getModelStructUpdate(dbRes.Index(0), valueOf, keyInfo.UpdateColumn)
 			if len(update) > 0 {
 				if err := s.db.Update(valueOf.Type(), where, update); err != nil {
 					return err
 				}
-				s.on(MethodChange, StateUpdate, srvItem)
+				s.on(MethodLocally, StateUpdate, srvItem)
 			} else {
-				s.on(MethodChange, StateNoChange, srvItem)
+				s.on(MethodLocally, StateUnchanged, srvItem)
 			}
 		}
 	}
@@ -232,7 +232,7 @@ func (s *Syncer) Delete() error {
 			return fmt.Errorf("model type not slice, %s", dbResValueOf.Kind().String())
 		}
 		if dbResValueOf.Len() == 0 {
-			s.on(MethodDelete, StateNoChange, del) // 不存在
+			s.on(MethodDelete, StateUnchanged, del) // 不存在
 		} else {
 			if err := s.db.Delete(valueOf.Type(), []*Where{where}); err != nil {
 				return err
@@ -300,12 +300,12 @@ func (s *Syncer) getRecordID(valueOf reflect.Value, indexes []int) string {
 	return hex.EncodeToString(t[:])
 }
 
-func (s *Syncer) Complete() error {
+func (s *Syncer) Global() error {
 	if s.size <= 0 {
 		return errors.New("size must > 0")
 	}
-	for i := range s.completes {
-		if err := s.completeBy(&s.completes[i]); err != nil {
+	for i := range s.globals {
+		if err := s.globalItem(&s.globals[i]); err != nil {
 			return err
 		}
 	}
@@ -313,13 +313,13 @@ func (s *Syncer) Complete() error {
 }
 
 func (s *Syncer) Start() error {
-	if err := s.Change(); err != nil {
+	if err := s.Locally(); err != nil {
 		return err
 	}
 	if err := s.Delete(); err != nil {
 		return err
 	}
-	if err := s.Complete(); err != nil {
+	if err := s.Global(); err != nil {
 		return err
 	}
 	return nil
@@ -357,8 +357,8 @@ func (s *Syncer) getWhere(key map[string]any, info *modelColumnInfo, typeOf refl
 	return res, nil
 }
 
-// completeBy 传入完成的数据，根据指定主键列新增,删除,修改数据
-func (s *Syncer) completeBy(c *complete) error {
+// globalItem 传入完成的数据，根据指定主键列新增,删除,修改数据
+func (s *Syncer) globalItem(c *globalItem) error {
 	svrValueOf := reflect.ValueOf(c.Data)
 	for svrValueOf.Kind() == reflect.Pointer {
 		svrValueOf = svrValueOf.Elem()
@@ -438,14 +438,14 @@ func (s *Syncer) completeBy(c *complete) error {
 			}
 			update := s.getModelStructUpdate(dbDataValueOf, srvData, columnInfo.UpdateColumn)
 			if len(update) == 0 {
-				s.on(MethodComplete, StateNoChange, dbDataValueOf.Interface())
+				s.on(MethodGlobal, StateUnchanged, dbDataValueOf.Interface())
 				continue
 			}
 			if err := s.db.Update(elemTypeOf, s.getColumnWhere(dbDataValueOf, columnInfo.PrimaryKey), update); err != nil {
 				return err
 			}
 			delete(srvRecordIDIndexMap, id) // 删除已经更新的数据索引
-			s.on(MethodComplete, StateUpdate, dbDataValueOf.Interface())
+			s.on(MethodGlobal, StateUpdate, dbDataValueOf.Interface())
 		}
 		if n < s.size {
 			break
@@ -468,7 +468,7 @@ func (s *Syncer) completeBy(c *complete) error {
 			}
 		}
 		for _, i := range srvRecordIDIndexMap {
-			s.on(MethodComplete, StateInsert, svrValueOf.Index(i))
+			s.on(MethodGlobal, StateInsert, svrValueOf.Index(i))
 		}
 	}
 	return nil

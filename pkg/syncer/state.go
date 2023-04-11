@@ -4,8 +4,8 @@ type State uint8
 
 func (s State) String() string {
 	switch s {
-	case StateNoChange:
-		return "NoChange"
+	case StateUnchanged:
+		return "Unchanged"
 	case StateInsert:
 		return "Insert"
 	case StateUpdate:
@@ -18,8 +18,8 @@ func (s State) String() string {
 }
 
 const (
-	StateNoChange State = 0
-	StateInsert   State = 1
-	StateUpdate   State = 2
-	StateDelete   State = 3
+	StateUnchanged State = 0
+	StateInsert    State = 1
+	StateUpdate    State = 2
+	StateDelete    State = 3
 )

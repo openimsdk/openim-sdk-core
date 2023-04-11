@@ -34,7 +34,7 @@ func (g *Group) SyncGroupMember(ctx context.Context, groupID string, userIDs []s
 			//AttachedInfo:   member.AttachedInfo, // todo
 		})
 	}
-	return syncer.New(nil).AddChange([]any{members}).Start()
+	return syncer.New(nil).AddLocally([]any{members}).Start()
 }
 
 func (g *Group) SyncGroup(ctx context.Context, groupID string) error {
@@ -66,7 +66,7 @@ func (g *Group) SyncGroup(ctx context.Context, groupID string) error {
 		NotificationUserID:     groupInfo.NotificationUserID,
 		//AttachedInfo:           groupInfo.AttachedInfo, // TODO
 	}
-	if err := syncer.New(nil).AddChange([]any{groupModel}).Start(); err != nil {
+	if err := syncer.New(nil).AddLocally([]any{groupModel}).Start(); err != nil {
 		return err
 	}
 	g.listener.OnGroupInfoChanged(utils.StructToJsonString(groupModel))
@@ -107,7 +107,7 @@ func (g *Group) SyncGroupAndMember(ctx context.Context, groupID string) error {
 		NotificationUpdateTime: groupInfo.NotificationUpdateTime,
 		NotificationUserID:     groupInfo.NotificationUserID,
 	}
-	s := syncer.New(nil).AddChange([]any{groupModel}).AddComplete([]string{"group_id"}, &model_struct.LocalGroup{GroupID: groupID}, syncer.ToAnySlice(members))
+	s := syncer.New(nil).AddLocally([]any{groupModel}).AddGlobal(map[string]any{"group_id": groupID}, members)
 	if err := s.Start(); err != nil {
 		return err
 	}
@@ -153,7 +153,7 @@ func (g *Group) SyncSelfGroupApplication(ctx context.Context) error {
 			InviterUserID: request.InviterUserID,
 		})
 	}
-	s := syncer.New(nil).AddComplete([]string{"user_id"}, &model_struct.LocalGroupRequest{UserID: g.loginUserID}, syncer.ToAnySlice(ms))
+	s := syncer.New(nil).AddGlobal(map[string]any{"user_id": g.loginUserID}, ms)
 	if err := s.Start(); err != nil {
 		return err
 	}

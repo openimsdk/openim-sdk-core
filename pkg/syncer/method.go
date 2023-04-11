@@ -4,19 +4,19 @@ type Method uint8
 
 func (s Method) String() string {
 	switch s {
-	case MethodChange:
-		return "Change"
+	case MethodLocally:
+		return "Locally"
 	case MethodDelete:
 		return "Delete"
-	case MethodComplete:
-		return "complete"
+	case MethodGlobal:
+		return "Global"
 	default:
 		return "Unknown"
 	}
 }
 
 const (
-	MethodChange   = 1
-	MethodDelete   = 2
-	MethodComplete = 3
+	MethodLocally = 1
+	MethodDelete  = 2
+	MethodGlobal  = 3
 )

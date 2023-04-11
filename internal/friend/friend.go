@@ -91,7 +91,7 @@ func (f *Friend) getDesignatedFriendsInfo(callback open_im_sdk_callback.Base, fr
 	return r
 }
 
-func (f *Friend) GetUserNameAndFaceUrlByUid(ctx context.Context, friendUserID) (faceUrl, name string, err error, isFromSvr bool) {
+func (f *Friend) GetUserNameAndFaceUrlByUid(ctx context.Context, friendUserID string) (faceUrl, name string, err error, isFromSvr bool) {
 	isFromSvr = false
 	friendInfo, err := f.db.GetFriendInfoByFriendUserID(friendUserID)
 	if err == nil {
