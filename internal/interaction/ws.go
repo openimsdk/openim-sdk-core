@@ -48,7 +48,11 @@ func NewWs(wsRespAsyn *WsRespAsyn, wsConn *WsConn, cmdCh chan common.Cmd2Value, 
 
 func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string) (*GeneralWsResp, error) {
 	select {
-	case r := <-ch:
+	case r, ok := <-ch:
+		if !ok { //ch has been closed
+			log.Debug(operationID, "ws network has been changed ")
+			return nil, &constant.ErrNetWorkChange
+		}
 		log.Debug(operationID, "ws ch recvMsg success, code ", r.ErrCode)
 		if r.ErrCode != 0 {
 			log.Error(operationID, "ws ch recvMsg failed, code, err msg: ", r.ErrCode, r.ErrMsg)
@@ -167,6 +171,7 @@ func (w *Ws) WaitTest(ch chan GeneralWsResp, timeout int, operationID string, m 
 	}
 }
 func (w *Ws) reConnSleep(operationID string, sleep int32) (error, bool) {
+	w.closeAllCh()
 	err, isNeedReConn, isKicked := w.WsConn.ReConn(operationID)
 	if err != nil {
 		if isKicked {

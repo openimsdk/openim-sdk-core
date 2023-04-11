@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"image"
+	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -1125,12 +1126,23 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *model_st
 	wsMsgData.OfflinePushInfo = offlinePushInfo
 	timeout := 300
 	retryTimes := 60
-	resp, err := c.SendReqWaitResp(&wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID, operationID)
-	switch e := err.(type) {
-	case *constant.ErrInfo:
-		c.checkErrAndUpdateMessage(callback, e.ErrCode, e, s, lc, operationID)
-	default:
-		c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
+	var resp *ws.GeneralWsResp
+	for i := 0; i < 3; i++ {
+		var err error
+		resp, err = c.SendReqWaitResp(&wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID, operationID)
+		if err == nil {
+			break
+		}
+		switch e := err.(type) {
+		case *constant.ErrInfo:
+			if e.ErrCode == constant.ErrNetWorkChange.ErrCode {
+				log.Warn(operationID, "network changed", wsMsgData, "retry", i+1)
+				continue
+			}
+			c.checkErrAndUpdateMessage(callback, e.ErrCode, e, s, lc, operationID)
+		default:
+			c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
+		}
 	}
 	var sendMsgResp server_api_params.UserSendMsgResp
 	_ = proto.Unmarshal(resp.Data, &sendMsgResp)
