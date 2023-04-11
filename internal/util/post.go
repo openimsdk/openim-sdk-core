@@ -48,6 +48,9 @@ func ApiPost(ctx context.Context, api string, req, resp any) error {
 	if err := json.Unmarshal(respBody, &baseApi); err != nil {
 		return errs.ErrInternalServer.Wrap("json.Unmarshal(apiResponse) " + err.Error())
 	}
+	if baseApi.ErrCode != 0 {
+		return errs.NewCodeError(baseApi.ErrCode, baseApi.ErrMsg+" "+baseApi.ErrDlt)
+	}
 	if resp != nil {
 		if err := json.Unmarshal(baseApi.Data, resp); err != nil {
 			return errs.ErrInternalServer.Wrap("json.Unmarshal(resp) " + err.Error())
