@@ -7,7 +7,6 @@ import (
 	"errors"
 	pbConversation "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
 	pbUser "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/user"
-
 	"image"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
@@ -183,7 +182,7 @@ func (c *Conversation) DeleteConversation(ctx context.Context, conversationID st
 	return nil
 
 }
-func (c *Conversation) DeleteAllConversationFromLocal(ctx context.Context, operationID string) error {
+func (c *Conversation) DeleteAllConversationFromLocal(ctx context.Context) error {
 	err := c.db.ResetAllConversation(ctx)
 	if err != nil {
 		return err
@@ -215,77 +214,83 @@ func (c *Conversation) ResetConversationGroupAtType(ctx context.Context, convers
 	if lc.GroupAtType == constant.AtNormal || lc.ConversationType != constant.GroupChatType {
 		return errors.New("conversation don't need to reset")
 	}
-	apiReq := &server_api_params.ModifyConversationFieldReq{}
-	localConversation, err := c.db.GetConversation(ctx, conversationID)
-	common.CheckDBErrCallback(callback, err, operationID)
-	apiReq.GroupAtType = constant.AtNormal
+	apiReq := &pbConversation.ModifyConversationFieldReq{}
+	apiReq.Conversation.GroupAtType = constant.AtNormal
 	apiReq.FieldType = constant.FieldGroupAtType
-	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
+	err = c.setConversation(ctx, apiReq, lc)
+	if err != nil {
+		return err
+	}
 	c.SyncConversations(ctx, 0)
-
-	c.setOneConversationGroupAtType(callback, conversationID, operationID)
-	callback.OnSuccess(sdk_params_callback.ResetConversationGroupAtTypeCallback)
+	return nil
 
 }
-func (c *Conversation) PinConversation(ctx context.Context, conversationID string, isPinned bool) {
-	if callback == nil {
-		return
+func (c *Conversation) PinConversation(ctx context.Context, conversationID string, isPinned bool) error {
+	lc, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		return err
 	}
-	go func() {
-		log.NewInfo(operationID, "PinConversation args: ", conversationID, isPinned)
-		c.pinConversation(callback, conversationID, isPinned, operationID)
-		callback.OnSuccess(sdk_params_callback.PinConversationDraftCallback)
-		log.NewInfo(operationID, "PinConversation callback: ", sdk_params_callback.PinConversationDraftCallback)
-	}()
+	apiReq := &pbConversation.ModifyConversationFieldReq{}
+	apiReq.Conversation.IsPinned = isPinned
+	apiReq.FieldType = constant.FieldIsPinned
+	err = c.setConversation(ctx, apiReq, lc)
+	if err != nil {
+		return err
+	}
+	c.SyncConversations(ctx, 0)
+	return nil
 }
 
-func (c *Conversation) SetOneConversationPrivateChat(ctx context.Context, conversationID string, isPrivate bool) {
-	if callback == nil {
-		return
+func (c *Conversation) SetOneConversationPrivateChat(ctx context.Context, conversationID string, isPrivate bool) error {
+	lc, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		return err
 	}
-	go func() {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", conversationID, isPrivate)
-		c.setOneConversationPrivateChat(callback, conversationID, isPrivate, operationID)
-		callback.OnSuccess(sdk_params_callback.SetConversationMessageOptCallback)
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", sdk_params_callback.SetConversationMessageOptCallback)
-	}()
+	apiReq := &pbConversation.ModifyConversationFieldReq{}
+	apiReq.Conversation.IsPrivateChat = isPrivate
+	apiReq.FieldType = constant.FieldIsPrivateChat
+	err = c.setConversation(ctx, apiReq, lc)
+	if err != nil {
+		return err
+	}
+	c.SyncConversations(ctx, 0)
+	return nil
 }
 
-func (c *Conversation) SetOneConversationBurnDuration(ctx context.Context, conversationID string, burnDuration int32, operationID string) {
-	if callback == nil {
-		return
+func (c *Conversation) SetOneConversationBurnDuration(ctx context.Context, conversationID string, burnDuration int32) error {
+	lc, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		return err
 	}
-	go func() {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", conversationID, burnDuration)
-		c.setOneConversationBurnDuration(callback, conversationID, burnDuration, operationID)
-		callback.OnSuccess(sdk_params_callback.SetConversationBurnDurationOptCallback)
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", sdk_params_callback.SetConversationBurnDurationOptCallback)
-	}()
+	apiReq := &pbConversation.ModifyConversationFieldReq{}
+	apiReq.Conversation.BurnDuration = burnDuration
+	apiReq.FieldType = constant.FieldBurnDuration
+	err = c.setConversation(ctx, apiReq, lc)
+	if err != nil {
+		return err
+	}
+	c.SyncConversations(ctx, 0)
+	return nil
 }
 
-func (c *Conversation) SetOneConversationRecvMessageOpt(ctx context.Context, conversationID string, opt int) {
-	if callback == nil {
-		return
+func (c *Conversation) SetOneConversationRecvMessageOpt(ctx context.Context, conversationID string, opt int) error {
+	lc, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		return err
 	}
-	go func() {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", conversationID, opt)
-		c.setOneConversationRecvMessageOpt(callback, conversationID, opt, operationID)
-		callback.OnSuccess(sdk_params_callback.SetConversationMessageOptCallback)
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", sdk_params_callback.SetConversationMessageOptCallback)
-	}()
+	apiReq := &pbConversation.ModifyConversationFieldReq{}
+	apiReq.Conversation.BurnDuration = int32(opt)
+	apiReq.FieldType = constant.FieldRecvMsgOpt
+	err = c.setConversation(ctx, apiReq, lc)
+	if err != nil {
+		return err
+	}
+	c.SyncConversations(ctx, 0)
+	return nil
 }
 
-func (c *Conversation) GetTotalUnreadMsgCount(callback open_im_sdk_callback.Base, operationID string) {
-	if callback == nil {
-		return
-	}
-	go func() {
-		log.NewInfo(operationID, "GetTotalUnreadMsgCountDB args: ")
-		count, err := c.db.GetTotalUnreadMsgCountDB()
-		common.CheckDBErrCallback(callback, err, operationID)
-		callback.OnSuccess(utils.Int32ToString(count))
-		log.NewInfo(operationID, "GetTotalUnreadMsgCountDB callback: ", utils.Int32ToString(count))
-	}()
+func (c *Conversation) GetTotalUnreadMsgCount(ctx context.Context) (totalUnreadCount int32, err error) {
+	return c.db.GetTotalUnreadMsgCountDB(ctx)
 }
 
 func (c *Conversation) SetConversationListener(listener open_im_sdk_callback.OnConversationListener) {
@@ -296,83 +301,35 @@ func (c *Conversation) SetConversationListener(listener open_im_sdk_callback.OnC
 	c.ConversationListener = listener
 }
 
-func (c *Conversation) GetConversationsByUserID(callback open_im_sdk_callback.Base, operationID string, UserID string) {
-	if callback == nil {
-		return
-	}
-	go func() {
-		log.NewInfo(operationID, utils.GetSelfFuncName())
-		conversations, err := c.db.GetAllConversationListDB()
-		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
-		}
-		var conversationIDs []string
-		for _, conversation := range conversations {
-			conversationIDs = append(conversationIDs, conversation.ConversationID)
-		}
-	}()
-}
-
-//
-
-////
-////func (c *Conversation) ForceSyncMsg() bool {
-////	if c.syncSeq2Msg() == nil {
-////		return true
-////	} else {
-////		return false
-////	}
-////}
-////
-////func (c *Conversation) ForceSyncJoinedGroup() {
-////	u.syncJoinedGroupInfo()
-////}
-////
-////func (c *Conversation) ForceSyncJoinedGroupMember() {
-////
-////	u.syncJoinedGroupMember()
-////}
-////
-////func (c *Conversation) ForceSyncGroupRequest() {
-////	u.syncGroupRequest()
-////}
-////
-////func (c *Conversation) ForceSyncSelfGroupRequest() {
-////	u.syncSelfGroupRequest()
-////}
-//
-
-func (c *Conversation) CreateTextMessage(text, operationID string) string {
+func (c *Conversation) CreateTextMessage(ctx context.Context, text string) (*sdk_struct.MsgStruct, error) {
 	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Text, operationID)
-	s.Content = text
-	return utils.StructToJsonString(s)
-}
-func (c *Conversation) CreateAdvancedTextMessage(text, messageEntityList, operationID string) string {
-	var messageEntitys []*sdk_struct.MessageEntity
-	s := sdk_struct.MsgStruct{}
-	err := json.Unmarshal([]byte(messageEntityList), &messageEntitys)
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Text)
 	if err != nil {
-		log.Error("internal", "messages unmarshal err", err.Error())
-		return ""
+		return nil, err
 	}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.AdvancedText, operationID)
+	s.Content = text
+	return &s, nil
+}
+func (c *Conversation) CreateAdvancedTextMessage(ctx context.Context, text string, messageEntitys []*sdk_struct.MessageEntity) (*sdk_struct.MsgStruct, error) {
+	s := sdk_struct.MsgStruct{}
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.AdvancedText)
+	if err != nil {
+		return nil, err
+	}
 	s.MessageEntityElem.Text = text
 	s.MessageEntityElem.MessageEntityList = messageEntitys
 	s.Content = utils.StructToJsonString(s.MessageEntityElem)
-	return utils.StructToJsonString(s)
+	return &s, nil
 }
-func (c *Conversation) CreateTextAtMessage(text, atUserList, atUsersInfo, message, operationID string) string {
-	var usersInfo []*sdk_struct.AtInfo
-	var userIDList []string
+func (c *Conversation) CreateTextAtMessage(ctx context.Context, text string, userIDList []string, usersInfo []*sdk_struct.AtInfo, qs *sdk_struct.MsgStruct) (*sdk_struct.MsgStruct, error) {
 	if text == "" {
-		return ""
+		return nil, errors.New("text can not be empty")
 	}
-	_ = json.Unmarshal([]byte(atUsersInfo), &usersInfo)
-	_ = json.Unmarshal([]byte(atUserList), &userIDList)
-	s, qs := sdk_struct.MsgStruct{}, sdk_struct.MsgStruct{}
-	_ = json.Unmarshal([]byte(message), &qs)
-	c.initBasicInfo(&s, constant.UserMsgType, constant.AtText, operationID)
+	s := sdk_struct.MsgStruct{}
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.AtText)
+	if err != nil {
+		return nil, err
+	}
 	//Avoid nested references
 	if qs.ContentType == constant.Quote {
 		qs.Content = qs.QuoteElem.Text
@@ -381,51 +338,59 @@ func (c *Conversation) CreateTextAtMessage(text, atUserList, atUsersInfo, messag
 	s.AtElem.Text = text
 	s.AtElem.AtUserList = userIDList
 	s.AtElem.AtUsersInfo = usersInfo
-	s.AtElem.QuoteMessage = &qs
-	if message == "" {
-		s.AtElem.QuoteMessage = nil
-	}
+	s.AtElem.QuoteMessage = qs
 	s.Content = utils.StructToJsonString(s.AtElem)
-	return utils.StructToJsonString(s)
+	return &s, nil
 }
-func (c *Conversation) CreateLocationMessage(description string, longitude, latitude float64, operationID string) string {
+func (c *Conversation) CreateLocationMessage(ctx context.Context, description string, longitude, latitude float64) (*sdk_struct.MsgStruct, error) {
 	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Location, operationID)
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Location)
+	if err != nil {
+		return nil, err
+	}
 	s.LocationElem.Description = description
 	s.LocationElem.Longitude = longitude
 	s.LocationElem.Latitude = latitude
 	s.Content = utils.StructToJsonString(s.LocationElem)
-	return utils.StructToJsonString(s)
+	return &s, nil
+
 }
-func (c *Conversation) CreateCustomMessage(data, extension string, description, operationID string) string {
+func (c *Conversation) CreateCustomMessage(ctx context.Context, data, extension string, description string) (*sdk_struct.MsgStruct, error) {
 	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Custom, operationID)
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Custom)
+	if err != nil {
+		return nil, err
+	}
 	s.CustomElem.Data = data
 	s.CustomElem.Extension = extension
 	s.CustomElem.Description = description
 	s.Content = utils.StructToJsonString(s.CustomElem)
-	return utils.StructToJsonString(s)
+	return &s, nil
+
 }
-func (c *Conversation) CreateQuoteMessage(text string, message, operationID string) string {
-	s, qs := sdk_struct.MsgStruct{}, sdk_struct.MsgStruct{}
-	_ = json.Unmarshal([]byte(message), &qs)
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Quote, operationID)
+func (c *Conversation) CreateQuoteMessage(ctx context.Context, text string, qs *sdk_struct.MsgStruct) (*sdk_struct.MsgStruct, error) {
+	s := sdk_struct.MsgStruct{}
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Quote)
+	if err != nil {
+		return nil, err
+	}
 	//Avoid nested references
 	if qs.ContentType == constant.Quote {
 		qs.Content = qs.QuoteElem.Text
 		qs.ContentType = constant.Text
 	}
 	s.QuoteElem.Text = text
-	s.QuoteElem.QuoteMessage = &qs
+	s.QuoteElem.QuoteMessage = qs
 	s.Content = utils.StructToJsonString(s.QuoteElem)
-	return utils.StructToJsonString(s)
+	return &s, nil
+
 }
-func (c *Conversation) CreateAdvancedQuoteMessage(text string, message, messageEntityList, operationID string) string {
-	var messageEntities []*sdk_struct.MessageEntity
-	s, qs := sdk_struct.MsgStruct{}, sdk_struct.MsgStruct{}
-	_ = json.Unmarshal([]byte(message), &qs)
-	_ = json.Unmarshal([]byte(messageEntityList), &messageEntities)
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Quote, operationID)
+func (c *Conversation) CreateAdvancedQuoteMessage(ctx context.Context, text string, qs *sdk_struct.MsgStruct, messageEntities []*sdk_struct.MessageEntity) (*sdk_struct.MsgStruct, error) {
+	s := sdk_struct.MsgStruct{}
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Quote)
+	if err != nil {
+		return nil, err
+	}
 	//Avoid nested references
 	if qs.ContentType == constant.Quote {
 		qs.Content = qs.QuoteElem.Text
@@ -433,18 +398,22 @@ func (c *Conversation) CreateAdvancedQuoteMessage(text string, message, messageE
 	}
 	s.QuoteElem.Text = text
 	s.QuoteElem.MessageEntityList = messageEntities
-	s.QuoteElem.QuoteMessage = &qs
+	s.QuoteElem.QuoteMessage = qs
 	s.Content = utils.StructToJsonString(s.QuoteElem)
-	return utils.StructToJsonString(s)
-}
-func (c *Conversation) CreateCardMessage(cardInfo, operationID string) string {
-	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Card, operationID)
-	s.Content = cardInfo
-	return utils.StructToJsonString(s)
+	return &s, nil
 
 }
-func (c *Conversation) CreateVideoMessageFromFullPath(videoFullPath string, videoType string, duration int64, snapshotFullPath, operationID string) string {
+func (c *Conversation) CreateCardMessage(ctx context.Context, cardInfo string) (*sdk_struct.MsgStruct, error) {
+	s := sdk_struct.MsgStruct{}
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Card)
+	if err != nil {
+		return nil, err
+	}
+	s.Content = cardInfo
+	return &s, nil
+
+}
+func (c *Conversation) CreateVideoMessageFromFullPath(ctx context.Context, videoFullPath string, videoType string, duration int64, snapshotFullPath string) (*sdk_struct.MsgStruct, error) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -464,7 +433,7 @@ func (c *Conversation) CreateVideoMessageFromFullPath(videoFullPath string, vide
 	}()
 
 	s := sdk_struct.MsgStruct{}
-	c.initBasicInfo(&s, constant.UserMsgType, constant.Video, operationID)
+	c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Video)
 	s.VideoElem.VideoPath = videoFullPath
 	s.VideoElem.VideoType = videoType
 	s.VideoElem.Duration = duration
@@ -493,7 +462,7 @@ func (c *Conversation) CreateVideoMessageFromFullPath(videoFullPath string, vide
 	s.Content = utils.StructToJsonString(s.VideoElem)
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateFileMessageFromFullPath(fileFullPath string, fileName, operationID string) string {
+func (c *Conversation) CreateFileMessageFromFullPath(ctx context.Context, fileFullPath string, fileName, operationID string) (*sdk_struct.MsgStruct, error) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -518,7 +487,7 @@ func (c *Conversation) CreateFileMessageFromFullPath(fileFullPath string, fileNa
 	s.Content = utils.StructToJsonString(s.FileElem)
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateImageMessageFromFullPath(imageFullPath, operationID string) string {
+func (c *Conversation) CreateImageMessageFromFullPath(ctx context.Context, imageFullPath, operationID string) (*sdk_struct.MsgStruct, error) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -548,7 +517,7 @@ func (c *Conversation) CreateImageMessageFromFullPath(imageFullPath, operationID
 	s.Content = utils.StructToJsonString(s.PictureElem)
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateSoundMessageFromFullPath(soundPath string, duration int64, operationID string) string {
+func (c *Conversation) CreateSoundMessageFromFullPath(ctx context.Context, soundPath string, duration int64, operationID string) (*sdk_struct.MsgStruct, error) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -574,7 +543,7 @@ func (c *Conversation) CreateSoundMessageFromFullPath(soundPath string, duration
 	s.Content = utils.StructToJsonString(s.SoundElem)
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateImageMessage(imagePath, operationID string) string {
+func (c *Conversation) CreateImageMessage(ctx context.Context, imagePath, operationID string) (*sdk_struct.MsgStruct, error) {
 	s := sdk_struct.MsgStruct{}
 	c.initBasicInfo(&s, constant.UserMsgType, constant.Picture, operationID)
 	s.PictureElem.SourcePath = c.DataDir + imagePath
@@ -591,7 +560,7 @@ func (c *Conversation) CreateImageMessage(imagePath, operationID string) string 
 	s.Content = utils.StructToJsonString(s.PictureElem)
 	return utils.StructToJsonString(s)
 }
-func (c *Conversation) CreateImageMessageByURL(sourcePicture, bigPicture, snapshotPicture, operationID string) string {
+func (c *Conversation) CreateImageMessageByURL(ctx context.Context, sourcePicture, bigPicture, snapshotPicture, operationID string) (*sdk_struct.MsgStruct, error) {
 	s := sdk_struct.MsgStruct{}
 	var p sdk_struct.PictureBaseInfo
 	_ = json.Unmarshal([]byte(sourcePicture), &p)
@@ -1752,15 +1721,15 @@ func getImageInfo(filePath string) (*sdk_struct.ImageInfo, error) {
 
 const TimeOffset = 5
 
-func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, contentType int32, operationID string) {
+func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.MsgStruct, msgFrom, contentType int32) error {
 	message.CreateTime = utils.GetCurrentTimestampByMill()
 	message.SendTime = message.CreateTime
 	message.IsRead = false
 	message.Status = constant.MsgStatusSending
 	message.SendID = c.loginUserID
-	userInfo, err := c.db.GetLoginUser(c.loginUserID)
+	userInfo, err := c.db.GetLoginUser(ctx, c.loginUserID)
 	if err != nil {
-		log.Error(operationID, "GetLoginUser ", err.Error(), c.loginUserID)
+		return err
 	} else {
 		message.SenderFaceURL = userInfo.FaceURL
 		message.SenderNickname = userInfo.Nickname
@@ -1771,6 +1740,7 @@ func (c *Conversation) initBasicInfo(message *sdk_struct.MsgStruct, msgFrom, con
 	message.ContentType = contentType
 	message.SenderPlatformID = c.platformID
 	message.IsExternalExtensions = c.IsExternalExtensions
+	return nil
 }
 
 func (c *Conversation) DeleteConversationFromLocalAndSvr(callback open_im_sdk_callback.Base, conversationID string, operationID string) {

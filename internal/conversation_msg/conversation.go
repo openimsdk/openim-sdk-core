@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	pbConversation "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 	_ "open_im_sdk/internal/common"
+	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -67,17 +69,17 @@ func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callba
 	c.SyncConversations(operationID, 0)
 }
 
-func (c *Conversation) setConversation(callback open_im_sdk_callback.Base, apiReq *server_api_params.ModifyConversationFieldReq, conversationID string, localConversation *model_struct.LocalConversation, operationID string) {
-	apiResp := server_api_params.ModifyConversationFieldResp{}
-	apiReq.OwnerUserID = c.loginUserID
-	apiReq.OperationID = operationID
-	apiReq.ConversationID = conversationID
-	apiReq.ConversationType = localConversation.ConversationType
-	apiReq.UserID = localConversation.UserID
-	apiReq.GroupID = localConversation.GroupID
+func (c *Conversation) setConversation(ctx context.Context, apiReq *pbConversation.ModifyConversationFieldReq, localConversation *model_struct.LocalConversation) error {
+	apiReq.Conversation.OwnerUserID = c.loginUserID
+	apiReq.Conversation.ConversationID = localConversation.ConversationID
+	apiReq.Conversation.ConversationType = localConversation.ConversationType
+	apiReq.Conversation.UserID = localConversation.UserID
+	apiReq.Conversation.GroupID = localConversation.GroupID
 	apiReq.UserIDList = []string{c.loginUserID}
-	c.p.PostFatalCallback(callback, constant.ModifyConversationFieldRouter, apiReq, nil, apiReq.OperationID)
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "request success, output: ", apiResp)
+	if err := util.ApiPost(ctx, constant.ModifyConversationFieldRouter, apiReq, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Conversation) setGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, opt int32, operationID string) {
