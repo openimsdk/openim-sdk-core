@@ -34,7 +34,7 @@ func (g *Group) SyncGroupMember(ctx context.Context, groupID string, userIDs []s
 			//AttachedInfo:   member.AttachedInfo, // todo
 		})
 	}
-	return syncer.New(nil).AddLocally([]any{members}).Start()
+	return syncer.New(nil).AddLocally(syncer.AnySlice(members)).Start()
 }
 
 func (g *Group) SyncGroup(ctx context.Context, groupID string) error {
