@@ -53,6 +53,78 @@ func PinConversation(callback open_im_sdk_callback.Base, operationID string, con
 func GetTotalUnreadMsgCount(callback open_im_sdk_callback.Base, operationID string) {
 	call(callback, operationID, userForSDK.Conversation().GetTotalUnreadMsgCount)
 }
+func CreateAdvancedTextMessage(operationID string, text, messageEntityList string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateAdvancedTextMessage, text, messageEntityList)
+}
+func CreateTextAtMessage(operationID string, text, atUserList, atUsersInfo, message string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateTextAtMessage, text, atUserList, atUsersInfo, message)
+}
+func CreateTextMessage(operationID string, text string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateTextMessage, text)
+}
+
+func CreateLocationMessage(operationID string, description string, longitude, latitude float64) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateLocationMessage, description, longitude, latitude)
+}
+func CreateCustomMessage(operationID string, data, extension string, description string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateCustomMessage, data, extension, description)
+}
+func CreateQuoteMessage(operationID string, text string, message string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateQuoteMessage, text, message)
+}
+func CreateAdvancedQuoteMessage(operationID string, text string, message, messageEntityList string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateAdvancedQuoteMessage, text, message, messageEntityList)
+}
+func CreateCardMessage(operationID string, cardInfo string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateCardMessage, cardInfo)
+
+}
+func CreateVideoMessageFromFullPath(operationID string, videoFullPath string, videoType string, duration int64, snapshotFullPath string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateVideoMessageFromFullPath, videoFullPath, videoType, duration, snapshotFullPath)
+}
+func CreateImageMessageFromFullPath(operationID string, imageFullPath string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateImageMessageFromFullPath, imageFullPath)
+}
+func CreateSoundMessageFromFullPath(operationID string, soundPath string, duration int64) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateSoundMessageFromFullPath, soundPath, duration)
+}
+func CreateFileMessageFromFullPath(operationID string, fileFullPath, fileName string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateFileMessageFromFullPath, fileFullPath, fileName)
+}
+func CreateImageMessage(operationID string, imagePath string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateImageMessage, imagePath)
+}
+func CreateImageMessageByURL(operationID string, sourcePicture, bigPicture, snapshotPicture string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateImageMessageByURL, sourcePicture, bigPicture, snapshotPicture)
+}
+
+func CreateSoundMessageByURL(operationID string, soundBaseInfo string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateSoundMessageByURL, soundBaseInfo)
+}
+func CreateSoundMessage(operationID string, soundPath string, duration int64) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateSoundMessage, soundPath, duration)
+}
+func CreateVideoMessageByURL(operationID string, videoBaseInfo string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateVideoMessageByURL, videoBaseInfo)
+}
+func CreateVideoMessage(operationID string, videoPath string, videoType string, duration int64, snapshotPath string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateVideoMessage, videoPath, videoType, duration, snapshotPath)
+}
+func CreateFileMessageByURL(operationID string, fileBaseInfo string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateFileMessageByURL, fileBaseInfo)
+}
+func CreateFileMessage(operationID string, filePath string, fileName string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateFileMessage, filePath, fileName)
+}
+func CreateMergerMessage(operationID string, messageList, title, summaryList string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateMergerMessage, messageList, title, summaryList)
+}
+func CreateFaceMessage(operationID string, index int, data string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateFaceMessage, index, data)
+}
+func CreateForwardMessage(operationID string, m string) string {
+	return syncCall(operationID, userForSDK.Conversation().CreateForwardMessage, m)
+}
 
 func FindMessageList(callback open_im_sdk_callback.Base, operationID string, findMessageOptions string) {
 	call(callback, operationID, userForSDK.Conversation().FindMessageList, findMessageOptions)

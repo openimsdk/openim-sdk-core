@@ -30,6 +30,17 @@ func (c *Conversation) CreateAdvancedTextMessage(ctx context.Context, text strin
 	s.Content = utils.StructToJsonString(s.MessageEntityElem)
 	return &s, nil
 }
+func (c *Conversation) messageEntity(ctx context.Context, text string, messageEntity []*sdk_struct.MessageEntity) (*sdk_struct.MsgStruct, error) {
+	s := sdk_struct.MsgStruct{}
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.AdvancedText)
+	if err != nil {
+		return nil, err
+	}
+	s.MessageEntityElem.Text = text
+	s.MessageEntityElem.MessageEntityList = messageEntity
+	s.Content = utils.StructToJsonString(s.MessageEntityElem)
+	return &s, nil
+}
 func (c *Conversation) CreateTextAtMessage(ctx context.Context, text string, userIDList []string, usersInfo []*sdk_struct.AtInfo, qs *sdk_struct.MsgStruct) (*sdk_struct.MsgStruct, error) {
 	if text == "" {
 		return nil, errors.New("text can not be empty")
