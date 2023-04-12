@@ -1,6 +1,10 @@
 package conversation_msg
 
 import (
+	"context"
+	"errors"
+	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"os"
@@ -218,5 +222,197 @@ func (c *Conversation) CreateImageMessageFromFullPath(ctx context.Context, image
 	s.PictureElem.SourcePicture.Size = imageInfo.Size
 	s.Content = utils.StructToJsonString(s.PictureElem)
 	return &s, nil
+}
+func (c *Conversation) CreateSoundMessageFromFullPath(ctx context.Context, soundPath string, duration int64) (*sdk_struct.MsgStruct, error) {
+	dstFile := utils.FileTmpPath(soundPath, c.DataDir) //a->b
+	_, err := utils.CopyFile(soundPath, dstFile)
+	//log.Info("internal", "copy file, ", soundPath, dstFile)
+	if err != nil {
+		//log.Error("internal", "open file failed: ", err, soundPath)
+		return nil, err
+	}
 
+	s := sdk_struct.MsgStruct{}
+	err = c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Voice)
+	if err != nil {
+		return nil, err
+	}
+	s.SoundElem.SoundPath = soundPath
+	s.SoundElem.Duration = duration
+	fi, err := os.Stat(s.SoundElem.SoundPath)
+	if err != nil {
+		//log.Error("internal", "getSoundInfo err:", err.Error(), s.SoundElem.SoundPath)
+		return nil, err
+	}
+	s.SoundElem.DataSize = fi.Size()
+	s.Content = utils.StructToJsonString(s.SoundElem)
+	return &s, nil
+}
+func (c *Conversation) CreateImageMessage(ctx context.Context, imagePath string) (*sdk_struct.MsgStruct, error) {
+	s := sdk_struct.MsgStruct{}
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Picture)
+	if err != nil {
+		return nil, err
+	}
+	s.PictureElem.SourcePath = c.DataDir + imagePath
+	//log.Debug("internal", "ImageMessage  path:", s.PictureElem.SourcePath)
+	imageInfo, err := getImageInfo(s.PictureElem.SourcePath)
+	if err != nil {
+		//log.Error("internal", "get imageInfo err", err.Error())
+		return nil, err
+	}
+	s.PictureElem.SourcePicture.Width = imageInfo.Width
+	s.PictureElem.SourcePicture.Height = imageInfo.Height
+	s.PictureElem.SourcePicture.Type = imageInfo.Type
+	s.PictureElem.SourcePicture.Size = imageInfo.Size
+	s.Content = utils.StructToJsonString(s.PictureElem)
+	return &s, nil
+
+}
+func (c *Conversation) CreateImageMessageByURL(ctx context.Context, sourcePicture, bigPicture, snapshotPicture sdk_struct.PictureBaseInfo) (*sdk_struct.MsgStruct, error) {
+	s := sdk_struct.MsgStruct{}
+	s.PictureElem.SourcePicture = sourcePicture
+	s.PictureElem.BigPicture = bigPicture
+	s.PictureElem.SnapshotPicture = snapshotPicture
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Picture)
+	if err != nil {
+		return nil, err
+	}
+	s.Content = utils.StructToJsonString(s.PictureElem)
+	return &s, nil
+}
+func (c *Conversation) CreateSoundMessageByURL(ctx context.Context, soundElem sdk_struct.SoundBaseInfo) (*sdk_struct.MsgStruct, error) {
+	s := sdk_struct.MsgStruct{}
+	s.SoundElem = soundElem
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Voice)
+	if err != nil {
+		return nil, err
+	}
+	s.Content = utils.StructToJsonString(s.SoundElem)
+	return &s, nil
+}
+func (c *Conversation) CreateSoundMessage(ctx context.Context, soundPath string, duration int64) (*sdk_struct.MsgStruct, error) {
+	s := sdk_struct.MsgStruct{}
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Voice)
+	if err != nil {
+		return nil, err
+	}
+	s.SoundElem.SoundPath = c.DataDir + soundPath
+	s.SoundElem.Duration = duration
+	fi, err := os.Stat(s.SoundElem.SoundPath)
+	if err != nil {
+		//log.Error("internal", "get sound info err", err.Error())
+		return nil, err
+	}
+	s.SoundElem.DataSize = fi.Size()
+	s.Content = utils.StructToJsonString(s.SoundElem)
+	return &s, nil
+}
+func (c *Conversation) CreateVideoMessageByURL(ctx context.Context, videoElem sdk_struct.VideoBaseInfo) (*sdk_struct.MsgStruct, error) {
+	s := sdk_struct.MsgStruct{}
+	s.VideoElem = videoElem
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Video)
+	if err != nil {
+		return nil, err
+	}
+	s.Content = utils.StructToJsonString(s.VideoElem)
+	return &s, nil
+}
+func (c *Conversation) CreateVideoMessage(ctx context.Context, videoPath string, videoType string, duration int64, snapshotPath string) (*sdk_struct.MsgStruct, error) {
+	s := sdk_struct.MsgStruct{}
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Video)
+	if err != nil {
+		return nil, err
+	}
+	s.VideoElem.VideoPath = c.DataDir + videoPath
+	s.VideoElem.VideoType = videoType
+	s.VideoElem.Duration = duration
+	if snapshotPath == "" {
+		s.VideoElem.SnapshotPath = ""
+	} else {
+		s.VideoElem.SnapshotPath = c.DataDir + snapshotPath
+	}
+	fi, err := os.Stat(s.VideoElem.VideoPath)
+	if err != nil {
+		log.Error("internal", "get video file error", err.Error())
+		return nil, err
+	}
+	s.VideoElem.VideoSize = fi.Size()
+	if snapshotPath != "" {
+		imageInfo, err := getImageInfo(s.VideoElem.SnapshotPath)
+		if err != nil {
+			//log.Error("internal", "get snapshot info ", err.Error())
+			return nil, err
+		}
+		s.VideoElem.SnapshotHeight = imageInfo.Height
+		s.VideoElem.SnapshotWidth = imageInfo.Width
+		s.VideoElem.SnapshotSize = imageInfo.Size
+	}
+	s.Content = utils.StructToJsonString(s.VideoElem)
+	return &s, nil
+}
+func (c *Conversation) CreateFileMessageByURL(ctx context.Context, fileElem sdk_struct.FileBaseInfo) (*sdk_struct.MsgStruct, error) {
+	s := sdk_struct.MsgStruct{}
+	s.FileElem = fileElem
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.File)
+	if err != nil {
+		return nil, err
+	}
+	s.Content = utils.StructToJsonString(s.FileElem)
+	return &s, nil
+}
+func (c *Conversation) CreateFileMessage(ctx context.Context, filePath string, fileName string) (*sdk_struct.MsgStruct, error) {
+	s := sdk_struct.MsgStruct{}
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.File)
+	if err != nil {
+		return nil, err
+	}
+	s.FileElem.FilePath = c.DataDir + filePath
+	s.FileElem.FileName = fileName
+	fi, err := os.Stat(s.FileElem.FilePath)
+	if err != nil {
+		//log.Error("internal", "get file message err", err.Error())
+		return nil, err
+	}
+	s.FileElem.FileSize = fi.Size()
+	s.Content = utils.StructToJsonString(s.FileElem)
+	return &s, nil
+}
+func (c *Conversation) CreateMergerMessage(ctx context.Context, messages []*sdk_struct.MsgStruct, title string, summaries []string) (*sdk_struct.MsgStruct, error) {
+	s := sdk_struct.MsgStruct{}
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Merger)
+	if err != nil {
+		return nil, err
+	}
+	s.MergeElem.AbstractList = summaries
+	s.MergeElem.Title = title
+	s.MergeElem.MultiMessage = messages
+	s.Content = utils.StructToJsonString(s.MergeElem)
+	return &s, nil
+}
+func (c *Conversation) CreateFaceMessage(ctx context.Context, index int, data string) (*sdk_struct.MsgStruct, error) {
+	s := sdk_struct.MsgStruct{}
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Face)
+	if err != nil {
+		return nil, err
+	}
+	s.FaceElem.Data = data
+	s.FaceElem.Index = index
+	s.Content = utils.StructToJsonString(s.FaceElem)
+	return &s, nil
+
+}
+func (c *Conversation) CreateForwardMessage(ctx context.Context, s sdk_struct.MsgStruct) (*sdk_struct.MsgStruct, error) {
+	if s.Status != constant.MsgStatusSendSuccess {
+		log.Error("internal", "only send success message can be Forward")
+		return nil, errors.New("only send success message can be Forward")
+	}
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, s.ContentType)
+	if err != nil {
+		return nil, err
+	}
+	//Forward message seq is set to 0
+	s.Seq = 0
+	s.Status = constant.MsgStatusSendSuccess
+	return &s, nil
 }
