@@ -28,27 +28,17 @@ import (
 	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
-	"open_im_sdk/pkg/syncer"
 	"open_im_sdk/pkg/utils"
 )
 
-func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, p *ws.PostApi, conversationCh chan common.Cmd2Value) *Friend {
-
-	return &Friend{loginUserID: loginUserID, db: db, user: user, p: p, conversationCh: conversationCh}
-}
-
 type Friend struct {
-	friendListener      open_im_sdk_callback.OnFriendshipListener
-	loginUserID         string
-	db                  db_interface.DataBase
-	user                *user.User
-	p                   *ws.PostApi
-	friendSyncer        *syncer.Syncer[*model_struct.LocalFriend, string]
-	blackSyncer         *syncer.Syncer[*model_struct.LocalBlack, [2]string]
-	friendRequestSyncer *syncer.Syncer[*model_struct.LocalFriendRequest, [2]string]
-	loginTime           int64
-	conversationCh      chan common.Cmd2Value
-
+	friendListener     open_im_sdk_callback.OnFriendshipListener
+	loginUserID        string
+	db                 db_interface.DataBase
+	user               *user.User
+	p                  *ws.PostApi
+	loginTime          int64
+	conversationCh     chan common.Cmd2Value
 	listenerForService open_im_sdk_callback.OnListenerForService
 }
 
@@ -71,6 +61,10 @@ func (f *Friend) Db() db_interface.DataBase {
 	return f.db
 }
 
+func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, p *ws.PostApi, conversationCh chan common.Cmd2Value) *Friend {
+	return &Friend{loginUserID: loginUserID, db: db, user: user, p: p, conversationCh: conversationCh}
+}
+
 func (f *Friend) SetListener(listener open_im_sdk_callback.OnFriendshipListener) {
 	f.friendListener = listener
 }
@@ -79,22 +73,22 @@ func (f *Friend) SetListenerForService(listener open_im_sdk_callback.OnListenerF
 	f.listenerForService = listener
 }
 
-//func (f *Friend) getDesignatedFriendsInfo(callback open_im_sdk_callback.Base, friendUserIDList sdk.GetDesignatedFriendsInfoParams, operationID string) sdk.GetDesignatedFriendsInfoCallback {
-//	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", friendUserIDList)
-//
-//	localFriendList, err := f.db.GetFriendInfoList(friendUserIDList)
-//	common.CheckDBErrCallback(callback, err, operationID)
-//
-//	blackList, err := f.db.GetBlackInfoList(friendUserIDList)
-//	common.CheckDBErrCallback(callback, err, operationID)
-//	for _, v := range blackList {
-//		log.Info(operationID, "GetBlackInfoList ", *v)
-//	}
-//
-//	r := common.MergeFriendBlackResult(localFriendList, blackList)
-//	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ", r)
-//	return r
-//}
+func (f *Friend) getDesignatedFriendsInfo(callback open_im_sdk_callback.Base, friendUserIDList sdk.GetDesignatedFriendsInfoParams, operationID string) sdk.GetDesignatedFriendsInfoCallback {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", friendUserIDList)
+
+	localFriendList, err := f.db.GetFriendInfoList(friendUserIDList)
+	common.CheckDBErrCallback(callback, err, operationID)
+
+	blackList, err := f.db.GetBlackInfoList(friendUserIDList)
+	common.CheckDBErrCallback(callback, err, operationID)
+	for _, v := range blackList {
+		log.Info(operationID, "GetBlackInfoList ", *v)
+	}
+
+	r := common.MergeFriendBlackResult(localFriendList, blackList)
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ", r)
+	return r
+}
 
 func (f *Friend) GetUserNameAndFaceUrlByUid(ctx context.Context, friendUserID string) (faceUrl, name string, err error, isFromSvr bool) {
 	isFromSvr = false
@@ -277,29 +271,29 @@ func (f *Friend) getBlackList(callback open_im_sdk_callback.Base, operationID st
 	return common.MergeBlackFriendResult(localBlackList, localFriendList)
 }
 
-//func (f *Friend) setFriendRemark(userIDRemark sdk.SetFriendRemarkParams, callback open_im_sdk_callback.Base, operationID string) {
-//	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", userIDRemark)
-//	apiReq := api.SetFriendRemarkReq{}
-//	apiReq.OperationID = operationID
-//	apiReq.ToUserID = userIDRemark.ToUserID
-//	apiReq.FromUserID = f.loginUserID
-//	apiReq.Remark = userIDRemark.Remark
-//	f.p.PostFatalCallback(callback, constant.SetFriendRemark, apiReq, nil, operationID)
-//	f.SyncFriendList(operationID)
-//	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ")
-//}
+func (f *Friend) setFriendRemark(userIDRemark sdk.SetFriendRemarkParams, callback open_im_sdk_callback.Base, operationID string) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", userIDRemark)
+	apiReq := api.SetFriendRemarkReq{}
+	apiReq.OperationID = operationID
+	apiReq.ToUserID = userIDRemark.ToUserID
+	apiReq.FromUserID = f.loginUserID
+	apiReq.Remark = userIDRemark.Remark
+	f.p.PostFatalCallback(callback, constant.SetFriendRemark, apiReq, nil, operationID)
+	f.SyncFriendList(operationID)
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ")
+}
 
-//func (f *Friend) getServerFriendList(operationID string) ([]*api.FriendInfo, error) {
-//	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
-//	apiReq := api.GetFriendListReq{OperationID: operationID, FromUserID: f.loginUserID}
-//	realData := api.GetFriendListResp{}
-//	err := f.p.PostReturn(constant.GetFriendListRouter, apiReq, &realData.FriendInfoList)
-//	if err != nil {
-//		return nil, utils.Wrap(err, apiReq.OperationID)
-//	}
-//	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ", realData.FriendInfoList)
-//	return realData.FriendInfoList, nil
-//}
+func (f *Friend) getServerFriendList(operationID string) ([]*api.FriendInfo, error) {
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
+	apiReq := api.GetFriendListReq{OperationID: operationID, FromUserID: f.loginUserID}
+	realData := api.GetFriendListResp{}
+	err := f.p.PostReturn(constant.GetFriendListRouter, apiReq, &realData.FriendInfoList)
+	if err != nil {
+		return nil, utils.Wrap(err, apiReq.OperationID)
+	}
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ", realData.FriendInfoList)
+	return realData.FriendInfoList, nil
+}
 
 func (f *Friend) getServerBlackList(operationID string) ([]*api.PublicUserInfo, error) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
