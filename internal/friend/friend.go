@@ -32,14 +32,13 @@ import (
 )
 
 type Friend struct {
-	friendListener open_im_sdk_callback.OnFriendshipListener
-	loginUserID    string
-	db             db_interface.DataBase
-	user           *user.User
-	p              *ws.PostApi
-	loginTime      int64
-	conversationCh chan common.Cmd2Value
-
+	friendListener     open_im_sdk_callback.OnFriendshipListener
+	loginUserID        string
+	db                 db_interface.DataBase
+	user               *user.User
+	p                  *ws.PostApi
+	loginTime          int64
+	conversationCh     chan common.Cmd2Value
 	listenerForService open_im_sdk_callback.OnListenerForService
 }
 
