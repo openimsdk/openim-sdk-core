@@ -1,6 +1,7 @@
 package group
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	ws "open_im_sdk/internal/interaction"
@@ -12,6 +13,7 @@ import (
 	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
+	"open_im_sdk/pkg/syncer"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sort"
@@ -21,11 +23,61 @@ import (
 	"github.com/jinzhu/copier"
 )
 
+func NewGroup(loginUserID string, db db_interface.DataBase, p *ws.PostApi,
+	joinedSuperGroupCh chan common.Cmd2Value, heartbeatCmdCh chan common.Cmd2Value,
+	conversationCh chan common.Cmd2Value) *Group {
+
+	groupSyncer := syncer.New(func(ctx context.Context, value *model_struct.LocalGroup) error {
+		return db.InsertGroup(ctx, value)
+	}, func(ctx context.Context, value *model_struct.LocalGroup) error {
+		return db.DeleteGroup(ctx, value.GroupID)
+	}, func(ctx context.Context, server *model_struct.LocalGroup, local *model_struct.LocalGroup) error {
+		return db.UpdateGroup(ctx, server)
+	}, func(value *model_struct.LocalGroup) string {
+		return value.GroupID
+	}, nil, nil)
+
+	groupMemberSyncer := syncer.New(func(ctx context.Context, value *model_struct.LocalGroupMember) error {
+		return db.InsertGroupMember(ctx, value)
+	}, func(ctx context.Context, value *model_struct.LocalGroupMember) error {
+		return db.DeleteGroupMember(ctx, value.GroupID, value.UserID)
+	}, func(ctx context.Context, server *model_struct.LocalGroupMember, local *model_struct.LocalGroupMember) error {
+		return db.UpdateGroupMember(ctx, server)
+	}, func(value *model_struct.LocalGroupMember) [2]string {
+		return [...]string{value.GroupID, value.UserID}
+	}, nil, nil)
+
+	groupRequestSyncer := syncer.New(func(ctx context.Context, value *model_struct.LocalGroupRequest) error {
+		return db.InsertGroupRequest(ctx, value)
+	}, func(ctx context.Context, value *model_struct.LocalGroupRequest) error {
+		return db.DeleteGroupRequest(ctx, value.GroupID, value.UserID)
+	}, func(ctx context.Context, server *model_struct.LocalGroupRequest, local *model_struct.LocalGroupRequest) error {
+		return db.UpdateGroupRequest(ctx, server)
+	}, func(value *model_struct.LocalGroupRequest) [2]string {
+		return [...]string{value.GroupID, value.UserID}
+	}, nil, nil)
+
+	return &Group{
+		loginUserID:        loginUserID,
+		db:                 db,
+		p:                  p,
+		joinedSuperGroupCh: joinedSuperGroupCh,
+		heartbeatCmdCh:     heartbeatCmdCh,
+		conversationCh:     conversationCh,
+		groupSyncer:        groupSyncer,
+		groupMemberSyncer:  groupMemberSyncer,
+		groupRequestSyncer: groupRequestSyncer,
+	}
+}
+
 // //utils.GetCurrentTimestampByMill()
 type Group struct {
 	listener           open_im_sdk_callback.OnGroupListener
 	loginUserID        string
 	db                 db_interface.DataBase
+	groupSyncer        *syncer.Syncer[*model_struct.LocalGroup, string]
+	groupMemberSyncer  *syncer.Syncer[*model_struct.LocalGroupMember, [2]string]
+	groupRequestSyncer *syncer.Syncer[*model_struct.LocalGroupRequest, [2]string]
 	p                  *ws.PostApi
 	loginTime          int64
 	joinedSuperGroupCh chan common.Cmd2Value
@@ -54,12 +106,6 @@ func (g *Group) SetLoginTime(loginTime int64) {
 
 func (g *Group) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
 	g.listenerForService = listener
-}
-
-func NewGroup(loginUserID string, db db_interface.DataBase, p *ws.PostApi,
-	joinedSuperGroupCh chan common.Cmd2Value, heartbeatCmdCh chan common.Cmd2Value,
-	conversationCh chan common.Cmd2Value) *Group {
-	return &Group{loginUserID: loginUserID, db: db, p: p, joinedSuperGroupCh: joinedSuperGroupCh, heartbeatCmdCh: heartbeatCmdCh, conversationCh: conversationCh}
 }
 
 func (g *Group) deleteMemberImmediately(groupID string, userID string, operationID string) {

@@ -40,7 +40,10 @@ func (f *Friend) SyncSelfFriendApplication(ctx context.Context) error {
 			//AttachedInfo:  info.AttachedInfo,
 		})
 	}
-	return syncer.New(ctx, nil).AddGlobal(map[string]any{"friend_user_id": f.loginUserID}, ls).Start()
+	cb := func(method syncer.Method, state syncer.State, data any) {
+
+	}
+	return syncer.New(ctx, f.sync).Listen(cb).AddGlobal(map[string]any{"friend_user_id": f.loginUserID}, ls).Start()
 }
 
 // recv
@@ -72,7 +75,7 @@ func (f *Friend) SyncFriendApplication(ctx context.Context) error {
 			//AttachedInfo:  info.AttachedInfo,
 		})
 	}
-	return syncer.New(ctx, nil).AddGlobal(map[string]any{"owner_user_id": f.loginUserID}, ls).Start()
+	return syncer.New(ctx, f.sync).AddGlobal(map[string]any{"owner_user_id": f.loginUserID}, ls).Start()
 }
 
 func (f *Friend) SyncFriendList(ctx context.Context) error {
@@ -97,7 +100,7 @@ func (f *Friend) SyncFriendList(ctx context.Context) error {
 			//AttachedInfo:   info.FriendUser.AttachedInfo,
 		})
 	}
-	return syncer.New(ctx, nil).AddGlobal(map[string]any{"owner_user_id": f.loginUserID}, ls).Start()
+	return syncer.New(ctx, f.sync).AddGlobal(map[string]any{"owner_user_id": f.loginUserID}, ls).Start()
 }
 
 func (f *Friend) SyncBlackList(ctx context.Context) error {
@@ -121,5 +124,5 @@ func (f *Friend) SyncBlackList(ctx context.Context) error {
 			//AttachedInfo:   info.FriendUser.AttachedInfo,
 		})
 	}
-	return syncer.New(ctx, nil).AddGlobal(map[string]any{"owner_user_id": f.loginUserID}, ls).Start()
+	return syncer.New(ctx, f.sync).AddGlobal(map[string]any{"owner_user_id": f.loginUserID}, ls).Start()
 }

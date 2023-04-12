@@ -8,18 +8,29 @@ import (
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/syncer"
 	"open_im_sdk/pkg/utils"
 )
 
 func (g *Group) SyncGroupMember(ctx context.Context, groupID string, userIDs []string) error {
-	resp, err := util.CallApi[group.GetGroupMembersInfoResp](ctx, constant.GetGroupMembersInfoRouter, &group.GetGroupMembersInfoReq{GroupID: groupID, UserIDs: userIDs})
-	if err != nil {
-		return err
+	var members []*sdkws.GroupMemberFullInfo
+	if userIDs == nil {
+		req := &group.GetGroupMemberListReq{GroupID: groupID, Pagination: &sdkws.RequestPagination{}}
+		fn := func(resp *group.GetGroupMemberListResp) []*sdkws.GroupMemberFullInfo { return resp.Members }
+		resp, err := util.GetPageAll(ctx, constant.GetGroupAllMemberListRouter, req, fn)
+		if err != nil {
+			return err
+		}
+		members = resp
+	} else {
+		resp, err := util.CallApi[group.GetGroupMembersInfoResp](ctx, constant.GetGroupMembersInfoRouter, &group.GetGroupMembersInfoReq{GroupID: groupID, UserIDs: userIDs})
+		if err != nil {
+			return err
+		}
+		members = resp.Members
 	}
-	var members []*model_struct.LocalGroupMember
-	for _, member := range resp.Members {
-		members = append(members, &model_struct.LocalGroupMember{
+	var serverData []*model_struct.LocalGroupMember
+	for _, member := range members {
+		serverData = append(serverData, &model_struct.LocalGroupMember{
 			GroupID:        member.GroupID,
 			UserID:         member.UserID,
 			Nickname:       member.Nickname,
@@ -34,7 +45,11 @@ func (g *Group) SyncGroupMember(ctx context.Context, groupID string, userIDs []s
 			//AttachedInfo:   member.AttachedInfo, // todo
 		})
 	}
-	return syncer.New(nil).AddLocally(syncer.AnySlice(members)).Start()
+	localData, err := g.db.GetGroupMemberListSplit(ctx, groupID, 0, 0, 0)
+	if err != nil {
+		return err
+	}
+	return g.groupMemberSyncer.Sync(ctx, serverData, localData, nil)
 }
 
 func (g *Group) SyncGroup(ctx context.Context, groupID string) error {
@@ -46,7 +61,7 @@ func (g *Group) SyncGroup(ctx context.Context, groupID string) error {
 		return errs.ErrGroupIDNotFound.Wrap(groupID)
 	}
 	groupInfo := resp.GroupInfos[0]
-	groupModel := &model_struct.LocalGroup{
+	serverData := &model_struct.LocalGroup{
 		GroupID:                groupInfo.GroupID,
 		GroupName:              groupInfo.GroupName,
 		Notification:           groupInfo.Notification,
@@ -66,56 +81,23 @@ func (g *Group) SyncGroup(ctx context.Context, groupID string) error {
 		NotificationUserID:     groupInfo.NotificationUserID,
 		//AttachedInfo:           groupInfo.AttachedInfo, // TODO
 	}
-	if err := syncer.New(nil).AddLocally([]any{groupModel}).Start(); err != nil {
+	localData := make([]*model_struct.LocalGroup, 0, 1)
+	if dbGroup, err := g.db.GetGroupInfoByGroupID(ctx, groupID); err == nil {
+		localData = append(localData, dbGroup)
+	}
+	// todo
+	if err := g.groupSyncer.Sync(ctx, []*model_struct.LocalGroup{serverData}, localData, nil); err != nil {
 		return err
 	}
-	g.listener.OnGroupInfoChanged(utils.StructToJsonString(groupModel))
+	g.listener.OnGroupInfoChanged(utils.StructToJsonString(serverData))
 	return nil
 }
 
 func (g *Group) SyncGroupAndMember(ctx context.Context, groupID string) error {
-	groupResp, err := util.CallApi[group.GetGroupsInfoResp](ctx, constant.GetGroupsInfoRouter, &group.GetGroupsInfoReq{GroupIDs: []string{groupID}})
-	if err != nil {
+	if err := g.SyncGroup(ctx, groupID); err != nil {
 		return err
 	}
-	if len(groupResp.GroupInfos) == 0 {
-		return errs.ErrGroupIDNotFound.Wrap(groupID)
-	}
-	groupInfo := groupResp.GroupInfos[0]
-	req := &group.GetGroupMemberListReq{GroupID: groupInfo.GroupID, Pagination: &sdkws.RequestPagination{PageNumber: 0, ShowNumber: 20}}
-	members, err := util.GetPageAll(ctx, constant.GetGroupAllMemberListRouter, req, func(resp *group.GetGroupMemberListResp) []*sdkws.GroupMemberFullInfo { return resp.Members })
-	if err != nil {
-		return err
-	}
-	groupModel := &model_struct.LocalGroup{
-		GroupID:       groupInfo.GroupID,
-		GroupName:     groupInfo.GroupName,
-		Notification:  groupInfo.Notification,
-		Introduction:  groupInfo.Introduction,
-		FaceURL:       groupInfo.FaceURL,
-		CreateTime:    groupInfo.CreateTime,
-		Status:        groupInfo.Status,
-		CreatorUserID: groupInfo.CreatorUserID,
-		GroupType:     groupInfo.GroupType,
-		OwnerUserID:   groupInfo.OwnerUserID,
-		MemberCount:   int32(groupInfo.MemberCount),
-		Ex:            groupInfo.Ex,
-		//AttachedInfo:           groupInfo.AttachedInfo, // TODO
-		NeedVerification:       groupInfo.NeedVerification,
-		LookMemberInfo:         groupInfo.LookMemberInfo,
-		ApplyMemberFriend:      groupInfo.ApplyMemberFriend,
-		NotificationUpdateTime: groupInfo.NotificationUpdateTime,
-		NotificationUserID:     groupInfo.NotificationUserID,
-	}
-	s := syncer.New(nil).AddLocally([]any{groupModel}).AddGlobal(map[string]any{"group_id": groupID}, members)
-	if err := s.Start(); err != nil {
-		return err
-	}
-	g.listener.OnGroupInfoChanged(utils.StructToJsonString(groupModel))
-	for _, member := range members {
-		g.listener.OnGroupMemberInfoChanged(utils.StructToJsonString(member))
-	}
-	return nil
+	return g.SyncGroupMember(ctx, groupID, nil)
 }
 
 func (g *Group) SyncSelfGroupApplication(ctx context.Context) error {
@@ -123,9 +105,9 @@ func (g *Group) SyncSelfGroupApplication(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	ms := make([]*model_struct.LocalGroupRequest, 0, len(list))
+	serverData := make([]*model_struct.LocalGroupRequest, 0, len(list))
 	for _, request := range list {
-		ms = append(ms, &model_struct.LocalGroupRequest{
+		serverData = append(serverData, &model_struct.LocalGroupRequest{
 			GroupID:       request.GroupInfo.GroupID,
 			GroupName:     request.GroupInfo.GroupName,
 			Notification:  request.GroupInfo.Notification,
@@ -153,8 +135,11 @@ func (g *Group) SyncSelfGroupApplication(ctx context.Context) error {
 			InviterUserID: request.InviterUserID,
 		})
 	}
-	s := syncer.New(nil).AddGlobal(map[string]any{"user_id": g.loginUserID}, ms)
-	if err := s.Start(); err != nil {
+	localData, err := g.db.GetSendGroupApplication(ctx)
+	if err != nil {
+		return err
+	}
+	if err := g.groupRequestSyncer.Sync(ctx, serverData, localData, nil); err != nil {
 		return err
 	}
 	// todo
