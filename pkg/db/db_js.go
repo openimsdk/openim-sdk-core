@@ -86,18 +86,52 @@ func (i IndexDB) SearchDepartment(keyWord string, offset, count int) ([]*model_s
 }
 
 func (i IndexDB) GetJoinedSuperGroupIDList() ([]string, error) {
-	//TODO implement me
-	panic("implement me")
+	groupIDList, err := indexdb.Exec()
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := groupIDList.(string); ok {
+			var result []string
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
 }
 
 func (i IndexDB) GetReadDiffusionGroupIDList() ([]string, error) {
-	//TODO implement me
-	panic("implement me")
+	g1, err1 := i.GetJoinedSuperGroupIDList()
+	g2, err2 := i.GetJoinedWorkingGroupIDList()
+	var groupIDList []string
+	if err1 == nil {
+		groupIDList = append(groupIDList, g1...)
+	}
+	if err2 == nil {
+		groupIDList = append(groupIDList, g2...)
+	}
+	var err error
+	if err1 != nil {
+		err = err1
+	}
+	if err2 != nil {
+		err = err2
+	}
+	return groupIDList, err
 }
-
 func (i IndexDB) BatchInsertExceptionMsgController(MessageList []*model_struct.LocalErrChatLog) error {
-	//TODO implement me
-	panic("implement me")
+	if len(MessageList) == 0 {
+		return nil
+	}
+	switch MessageList[len(MessageList)-1].SessionType {
+	case constant.SuperGroupChatType:
+		return i.SuperBatchInsertExceptionMsg(MessageList, MessageList[len(MessageList)-1].RecvID)
+	default:
+		return i.BatchInsertExceptionMsg(MessageList)
+	}
 }
 
 func (i IndexDB) GetDepartmentMemberListByDepartmentID(departmentID string, args ...int) ([]*model_struct.LocalDepartmentMember, error) {
