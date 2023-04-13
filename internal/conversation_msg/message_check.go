@@ -1,6 +1,7 @@
 package conversation_msg
 
 import (
+	"context"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
@@ -168,8 +169,8 @@ func (c *Conversation) getMaxAndMinHaveSeqList(messages []*model_struct.LocalCha
 // 1、保证单次拉取消息量低于sdk单次从服务器拉取量
 // 2、块中连续性检测
 // 3、块之间连续性检测
-func (c *Conversation) pullMessageAndReGetHistoryMessages(sourceID string, seqList []uint32, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback, operationID string) {
-	existedSeqList, err := c.db.SuperGroupGetAlreadyExistSeqList(sourceID, seqList)
+func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, sourceID string, seqList []uint32, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback, operationID string) {
+	existedSeqList, err := c.db.SuperGroupGetAlreadyExistSeqList(ctx, sourceID, seqList)
 	if err != nil {
 		log.Error(operationID, "SuperGroupGetAlreadyExistSeqList err", err.Error(), sourceID, seqList)
 		return
@@ -203,12 +204,12 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(sourceID string, seqLi
 		} else {
 			log.Debug(operationID, "syncMsgFromServerSplit pull msg ", pullMsgReq.String(), pullMsgResp.String())
 			if v, ok := pullMsgResp.GroupMsgDataList[sourceID]; ok {
-				c.pullMessageIntoTable(v.MsgDataList, operationID)
+				c.pullMessageIntoTable(ctx, v.MsgDataList, operationID)
 			}
 			if notStartTime {
-				*list, err = c.db.GetMessageListNoTimeController(sourceID, sessionType, count, isReverse)
+				*list, err = c.db.GetMessageListNoTimeController(ctx, sourceID, sessionType, count, isReverse)
 			} else {
-				*list, err = c.db.GetMessageListController(sourceID, sessionType, count, startTime, isReverse)
+				*list, err = c.db.GetMessageListController(ctx, sourceID, sessionType, count, startTime, isReverse)
 			}
 		}
 
@@ -231,7 +232,7 @@ func errHandle(seqList []uint32, list *[]*model_struct.LocalChatLog, err error, 
 	}
 	*list = result
 }
-func (c *Conversation) pullMessageIntoTable(pullMsgData []*server_api_params.MsgData, operationID string) {
+func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData []*server_api_params.MsgData, operationID string) {
 
 	var insertMsg, specialUpdateMsg []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
@@ -275,7 +276,7 @@ func (c *Conversation) pullMessageIntoTable(pullMsgData []*server_api_params.Msg
 		}
 		if v.SendID == c.loginUserID { //seq
 			// Messages sent by myself  //if  sent through  this terminal
-			m, err := c.db.GetMessageController(msg)
+			m, err := c.db.GetMessageController(ctx, msg)
 			if err == nil {
 				log.Info(operationID, "have message", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, *msg)
 				if m.Seq == 0 {
@@ -300,7 +301,7 @@ func (c *Conversation) pullMessageIntoTable(pullMsgData []*server_api_params.Msg
 				}
 			}
 		} else { //Sent by others
-			if oldMessage, err := c.db.GetMessageController(msg); err != nil { //Deduplication operation
+			if oldMessage, err := c.db.GetMessageController(ctx, msg); err != nil { //Deduplication operation
 				log.Warn("test", "trigger msg is ", msg.SenderNickname, msg.SenderFaceURL)
 				insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
 				switch msg.ContentType {
@@ -328,17 +329,17 @@ func (c *Conversation) pullMessageIntoTable(pullMsgData []*server_api_params.Msg
 	}
 
 	//update message
-	err6 := c.db.BatchSpecialUpdateMessageList(specialUpdateMsg)
+	err6 := c.db.BatchSpecialUpdateMessageList(ctx, specialUpdateMsg)
 	if err6 != nil {
 		log.Error(operationID, "sync seq normal message err  :", err6.Error())
 	}
 	b3 := utils.GetCurrentTimestampByMill()
 	//Normal message storage
-	err1 := c.db.BatchInsertMessageListController(insertMsg)
+	err1 := c.db.BatchInsertMessageListController(ctx, insertMsg)
 	if err1 != nil {
 		log.Error(operationID, "insert GetMessage detail err:", err1.Error(), len(insertMsg))
 		for _, v := range insertMsg {
-			e := c.db.InsertMessageController(v)
+			e := c.db.InsertMessageController(ctx, v)
 			if e != nil {
 				errChatLog := &model_struct.LocalErrChatLog{}
 				copier.Copy(errChatLog, v)
@@ -355,7 +356,7 @@ func (c *Conversation) pullMessageIntoTable(pullMsgData []*server_api_params.Msg
 		log.Warn(operationID, "exceptionMsg show: ", *v)
 	}
 
-	err2 := c.db.BatchInsertExceptionMsgController(exceptionMsg)
+	err2 := c.db.BatchInsertExceptionMsgController(ctx, exceptionMsg)
 	if err2 != nil {
 		log.Error(operationID, "BatchInsertExceptionMsgController err message err  :", err2.Error())
 

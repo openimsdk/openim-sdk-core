@@ -478,3 +478,10 @@ func TimeStringToTime(timeString string) (time.Time, error) {
 func TimeToString(t time.Time) string {
 	return t.Format("2006-01-02")
 }
+func Uint32ListConvert(list []uint32) []int64 {
+	var result []int64
+	for _, v := range list {
+		result = append(result, int64(v))
+	}
+	return result
+}

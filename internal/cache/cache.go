@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"errors"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/user"
@@ -62,7 +63,7 @@ func (c *Cache) GetConversation(conversationID string) model_struct.LocalConvers
 	}
 	return result
 }
-func (c *Cache) GetUserNameAndFaceURL(userID string, operationID string) (faceURL, name string, err error) {
+func (c *Cache) GetUserNameAndFaceURL(ctx context.Context, userID string) (faceURL, name string, err error) {
 	//find in cache
 	user, ok := c.userMap.Load(userID)
 	if ok {
@@ -72,7 +73,7 @@ func (c *Cache) GetUserNameAndFaceURL(userID string, operationID string) (faceUR
 	}
 
 	//get from local db
-	friendInfo, err := c.friend.Db().GetFriendInfoByFriendUserID(userID)
+	friendInfo, err := c.friend.Db().GetFriendInfoByFriendUserID(ctx, userID)
 	if err == nil {
 		faceURL = friendInfo.FaceURL
 		if friendInfo.Remark != "" {
