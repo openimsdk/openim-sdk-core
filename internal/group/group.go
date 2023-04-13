@@ -5,7 +5,6 @@ import (
 	"errors"
 	"math/big"
 	ws "open_im_sdk/internal/interaction"
-	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -67,7 +66,7 @@ func (g *Group) initSyncer() {
 		return g.db.UpdateGroup(ctx, server)
 	}, func(value *model_struct.LocalGroup) string {
 		return value.GroupID
-	}, nil, util.NoticeChange[*model_struct.LocalGroup](g.listener.OnGroupInfoChanged))
+	}, nil, nil)
 
 	g.groupMemberSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalGroupMember) error {
 		return g.db.InsertGroupMember(ctx, value)
