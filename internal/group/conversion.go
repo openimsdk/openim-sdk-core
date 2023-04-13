@@ -28,6 +28,23 @@ func ServerGroupToLocalGroup(info *sdkws.GroupInfo) *model_struct.LocalGroup {
 	}
 }
 
+func ServerGroupMemberToLocalGroupMember(info *sdkws.GroupMemberFullInfo) *model_struct.LocalGroupMember {
+	return &model_struct.LocalGroupMember{
+		GroupID:        info.GroupID,
+		UserID:         info.UserID,
+		Nickname:       info.Nickname,
+		FaceURL:        info.FaceURL,
+		RoleLevel:      info.RoleLevel,
+		JoinTime:       info.JoinTime,
+		JoinSource:     info.JoinSource,
+		InviterUserID:  info.InviterUserID,
+		MuteEndTime:    info.MuteEndTime,
+		OperatorUserID: info.OperatorUserID,
+		Ex:             info.Ex,
+		//AttachedInfo:   info.AttachedInfo, // todo
+	}
+}
+
 func ServerGroupRequestToLocalGroupRequest(info *sdkws.GroupRequest) *model_struct.LocalGroupRequest {
 	return &model_struct.LocalGroupRequest{
 		GroupID:       info.GroupInfo.GroupID,
@@ -55,5 +72,11 @@ func ServerGroupRequestToLocalGroupRequest(info *sdkws.GroupRequest) *model_stru
 		//AttachedInfo:  info.AttachedInfo,
 		JoinSource:    info.JoinSource,
 		InviterUserID: info.InviterUserID,
+	}
+}
+
+func ServerGroupRequestToLocalAdminGroupRequest(info *sdkws.GroupRequest) *model_struct.LocalAdminGroupRequest {
+	return &model_struct.LocalAdminGroupRequest{
+		LocalGroupRequest: *ServerGroupRequestToLocalGroupRequest(info),
 	}
 }
