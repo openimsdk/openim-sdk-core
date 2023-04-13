@@ -3,6 +3,8 @@
 
 package indexdb
 
+import "context"
+
 import (
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
@@ -15,7 +17,7 @@ func NewLocalConversationUnreadMessages() *LocalConversationUnreadMessages {
 	return &LocalConversationUnreadMessages{}
 }
 
-func (i *LocalConversationUnreadMessages) BatchInsertConversationUnreadMessageList(messageList []*model_struct.LocalConversationUnreadMessage) error {
+func (i *LocalConversationUnreadMessages) BatchInsertConversationUnreadMessageList(ctx context.Context, messageList []*model_struct.LocalConversationUnreadMessage) error {
 	if messageList == nil {
 		return nil
 	}
@@ -23,7 +25,7 @@ func (i *LocalConversationUnreadMessages) BatchInsertConversationUnreadMessageLi
 	return err
 }
 
-func (i *LocalConversationUnreadMessages) DeleteConversationUnreadMessageList(conversationID string, sendTime int64) int64 {
+func (i *LocalConversationUnreadMessages) DeleteConversationUnreadMessageList(ctx context.Context, conversationID string, sendTime int64) int64 {
 	deleteRows, err := Exec(conversationID, sendTime)
 	if err != nil {
 		return 0

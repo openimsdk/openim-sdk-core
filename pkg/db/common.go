@@ -3,12 +3,14 @@
 
 package db
 
+import "context"
+
 //
 //import (
 //	"errors"
 //)
 //
-//func (d *DataBase) GetGroupType(groupID string) (int, error) {
+//func (d *DataBase) GetGroupType(ctx context.Context, groupID string) (int, error) {
 //	if g, err := d.GetGroupInfoByGroupID(groupID); err == nil {
 //		return int(g.GroupType), nil
 //	}

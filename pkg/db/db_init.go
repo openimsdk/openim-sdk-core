@@ -3,6 +3,8 @@
 
 package db
 
+import "context"
+
 import (
 	"errors"
 	"fmt"
@@ -39,31 +41,31 @@ type DataBase struct {
 	superGroupMtx sync.RWMutex
 }
 
-func (d *DataBase) GetDepartmentList(departmentList *[]*model_struct.LocalDepartment, departmentID string) error {
+func (d *DataBase) GetDepartmentList(ctx context.Context, departmentList *[]*model_struct.LocalDepartment, departmentID string) error {
 	panic("implement me")
 }
 
-func (d *DataBase) GetParentDepartment(departmentID string) (model_struct.LocalDepartment, error) {
+func (d *DataBase) GetParentDepartment(ctx context.Context, departmentID string) (model_struct.LocalDepartment, error) {
 	panic("implement me")
 }
 
-func (d *DataBase) InitSuperLocalErrChatLog(groupID string) {
+func (d *DataBase) InitSuperLocalErrChatLog(ctx context.Context, groupID string) {
 	panic("implement me")
 }
 
-func (d *DataBase) InitSuperLocalChatLog(groupID string) {
+func (d *DataBase) InitSuperLocalChatLog(ctx context.Context, groupID string) {
 	panic("implement me")
 }
 
-func (d *DataBase) SetChatLogFailedStatus() {
+func (d *DataBase) SetChatLogFailedStatus(ctx context.Context) {
 	panic("implement me")
 }
 
-func (d *DataBase) InitDB(userID string, dataDir string) error {
+func (d *DataBase) InitDB(ctx context.Context, userID string, dataDir string) error {
 	panic("implement me")
 }
 
-func (d *DataBase) Close() error {
+func (d *DataBase) Close(ctx context.Context) error {
 	UserDBLock.Lock()
 	dbConn, err := d.conn.DB()
 	if err != nil {
@@ -104,7 +106,7 @@ func NewDataBase(loginUserID string, dbDir string, operationID string) (*DataBas
 	return dataBase, nil
 }
 
-func (d *DataBase) setChatLogFailedStatus() {
+func (d *DataBase) setChatLogFailedStatus(ctx context.Context) {
 	msgList, err := d.GetSendingMessageList()
 	if err != nil {
 		log.Error("", "GetSendingMessageList failed ", err.Error())
@@ -144,7 +146,7 @@ func (d *DataBase) setChatLogFailedStatus() {
 
 }
 
-func (d *DataBase) initDB() error {
+func (d *DataBase) initDB(ctx context.Context) error {
 	if d.loginUserID == "" {
 		return errors.New("no uid")
 	}

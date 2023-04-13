@@ -3,6 +3,8 @@
 
 package indexdb
 
+import "context"
+
 import (
 	"errors"
 	"open_im_sdk/pkg/db/model_struct"
@@ -21,7 +23,7 @@ func NewLocalUsers() *LocalUsers {
 	return &LocalUsers{}
 }
 
-func (l *LocalUsers) GetLoginUser(userID string) (*model_struct.LocalUser, error) {
+func (l *LocalUsers) GetLoginUser(ctx context.Context, userID string) (*model_struct.LocalUser, error) {
 	user, err := Exec(userID)
 	if err != nil {
 		return nil, err
@@ -58,12 +60,12 @@ func (l *LocalUsers) GetLoginUser(userID string) (*model_struct.LocalUser, error
 	}
 }
 
-func (l *LocalUsers) UpdateLoginUser(user *model_struct.LocalUser) error {
+func (l *LocalUsers) UpdateLoginUser(ctx context.Context, user *model_struct.LocalUser) error {
 	_, err := Exec(user)
 	return err
 
 }
-func (l *LocalUsers) UpdateLoginUserByMap(user *model_struct.LocalUser, args map[string]interface{}) error {
+func (l *LocalUsers) UpdateLoginUserByMap(ctx context.Context, user *model_struct.LocalUser, args map[string]interface{}) error {
 	if v, ok := args["birth_time"]; ok {
 		if t, ok := v.(time.Time); ok {
 			args["birth_time"] = utils.TimeToString(t)
@@ -74,7 +76,7 @@ func (l *LocalUsers) UpdateLoginUserByMap(user *model_struct.LocalUser, args map
 	_, err := Exec(user.UserID, args)
 	return err
 }
-func (l *LocalUsers) InsertLoginUser(user *model_struct.LocalUser) error {
+func (l *LocalUsers) InsertLoginUser(ctx context.Context, user *model_struct.LocalUser) error {
 	temp := temp_struct.LocalUser{}
 	temp.UserID = user.UserID
 	temp.Nickname = user.Nickname

@@ -3,6 +3,8 @@
 
 package db
 
+import "context"
+
 import (
 	"encoding/json"
 	"errors"
@@ -12,7 +14,7 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func (d *DataBase) GetMessageReactionExtension(msgID string) (result *model_struct.LocalChatLogReactionExtensions, err error) {
+func (d *DataBase) GetMessageReactionExtension(ctx context.Context, msgID string) (result *model_struct.LocalChatLogReactionExtensions, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var l model_struct.LocalChatLogReactionExtensions
@@ -20,12 +22,12 @@ func (d *DataBase) GetMessageReactionExtension(msgID string) (result *model_stru
 		msgID).Take(&l).Error, "GetMessageReactionExtension failed")
 }
 
-func (d *DataBase) InsertMessageReactionExtension(messageReactionExtension *model_struct.LocalChatLogReactionExtensions) error {
+func (d *DataBase) InsertMessageReactionExtension(ctx context.Context, messageReactionExtension *model_struct.LocalChatLogReactionExtensions) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.Create(messageReactionExtension).Error, "InsertMessageReactionExtension failed")
 }
-func (d *DataBase) UpdateMessageReactionExtension(c *model_struct.LocalChatLogReactionExtensions) error {
+func (d *DataBase) UpdateMessageReactionExtension(ctx context.Context, c *model_struct.LocalChatLogReactionExtensions) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	t := d.conn.Updates(c)
@@ -34,7 +36,7 @@ func (d *DataBase) UpdateMessageReactionExtension(c *model_struct.LocalChatLogRe
 	}
 	return utils.Wrap(t.Error, "UpdateConversation failed")
 }
-func (d *DataBase) GetAndUpdateMessageReactionExtension(msgID string, m map[string]*server_api_params.KeyValue) error {
+func (d *DataBase) GetAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*server_api_params.KeyValue) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var temp model_struct.LocalChatLogReactionExtensions
@@ -62,14 +64,14 @@ func (d *DataBase) GetAndUpdateMessageReactionExtension(msgID string, m map[stri
 	}
 	return nil
 }
-func (d *DataBase) DeleteMessageReactionExtension(msgID string) error {
+func (d *DataBase) DeleteMessageReactionExtension(ctx context.Context, msgID string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	temp := model_struct.LocalChatLogReactionExtensions{ClientMsgID: msgID}
 	return d.conn.Delete(&temp).Error
 
 }
-func (d *DataBase) DeleteAndUpdateMessageReactionExtension(msgID string, m map[string]*server_api_params.KeyValue) error {
+func (d *DataBase) DeleteAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*server_api_params.KeyValue) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var temp model_struct.LocalChatLogReactionExtensions
@@ -93,7 +95,7 @@ func (d *DataBase) DeleteAndUpdateMessageReactionExtension(msgID string, m map[s
 	}
 	return nil
 }
-func (d *DataBase) GetMultipleMessageReactionExtension(msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error) {
+func (d *DataBase) GetMultipleMessageReactionExtension(ctx context.Context, msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []model_struct.LocalChatLogReactionExtensions
