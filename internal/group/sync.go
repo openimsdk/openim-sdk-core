@@ -64,10 +64,7 @@ func (g *Group) SyncGroup(ctx context.Context, groupID string) error {
 		// todo error
 	}
 	// todo
-	if err := g.groupSyncer.Sync(ctx, util.AppendNotNil(ServerGroupToLocalGroup(resp.GroupInfos[0])), util.AppendNotNil(dbGroup), g.groupSyncer.NewOption().Insert(func(ctx context.Context, value *model_struct.LocalGroup) error {
-		// todo
-		return nil
-	})); err != nil {
+	if err := g.groupSyncer.Sync(ctx, util.AppendNotNil(ServerGroupToLocalGroup(resp.GroupInfos[0])), util.AppendNotNil(dbGroup), nil); err != nil {
 		return err
 	}
 	//g.listener.OnGroupInfoChanged(utils.StructToJsonString(serverData))

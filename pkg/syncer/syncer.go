@@ -11,7 +11,7 @@ func New[T any, V comparable](
 	update func(ctx context.Context, server T, local T) error,
 	uuid func(value T) V,
 	equal func(a T, b T) bool,
-	opt *Option[T],
+	notice func(ctx context.Context, state int, value T) error,
 ) *Syncer[T, V] {
 	if insert == nil || update == nil || delete == nil || uuid == nil {
 		panic("invalid params")
@@ -22,7 +22,7 @@ func New[T any, V comparable](
 		delete: delete,
 		uuid:   uuid,
 		equal:  equal,
-		opt:    opt,
+		notice: notice,
 	}
 }
 
@@ -30,9 +30,9 @@ type Syncer[T any, V comparable] struct {
 	insert func(ctx context.Context, value T) error
 	update func(ctx context.Context, server T, local T) error
 	delete func(ctx context.Context, value T) error
+	notice func(ctx context.Context, state int, value T) error
 	equal  func(server T, local T) bool
 	uuid   func(value T) V
-	opt    *Option[T]
 }
 
 func (s *Syncer[T, V]) eq(server T, local T) bool {
@@ -42,21 +42,21 @@ func (s *Syncer[T, V]) eq(server T, local T) bool {
 	return reflect.DeepEqual(server, local)
 }
 
-func (s *Syncer[T, V]) onNotice(ctx context.Context, state int, server, local T, opt *Option[T]) error {
-	if s.opt != nil {
-		if err := s.opt.on(ctx, state, server, local); err != nil {
+func (s *Syncer[T, V]) onNotice(ctx context.Context, state int, value T, fn func(ctx context.Context, state int, value T) error) error {
+	if s.notice != nil {
+		if err := s.notice(ctx, state, value); err != nil {
 			return err
 		}
 	}
-	if opt != nil {
-		if err := opt.on(ctx, state, server, local); err != nil {
+	if fn != nil {
+		if err := fn(ctx, state, value); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, notice *Option[T]) error {
+func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, notice func(ctx context.Context, state int, value T) error) error {
 	if len(serverData) == 0 && len(localData) == 0 {
 		return nil
 	}
@@ -72,14 +72,14 @@ func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, 
 			if err := s.insert(ctx, server); err != nil {
 				return err
 			}
-			if err := s.onNotice(ctx, Insert, server, local, notice); err != nil {
+			if err := s.onNotice(ctx, Insert, server, notice); err != nil {
 				return err
 			}
 			continue
 		}
 		delete(localMap, id)
 		if s.eq(server, local) {
-			if err := s.onNotice(ctx, Unchanged, server, local, notice); err != nil {
+			if err := s.onNotice(ctx, Unchanged, server, notice); err != nil {
 				return err
 			}
 			continue
@@ -87,7 +87,7 @@ func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, 
 		if err := s.update(ctx, server, local); err != nil {
 			return err
 		}
-		if err := s.onNotice(ctx, Update, server, local, notice); err != nil {
+		if err := s.onNotice(ctx, Update, server, notice); err != nil {
 			return err
 		}
 	}
@@ -96,14 +96,9 @@ func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, 
 		if err := s.delete(ctx, local); err != nil {
 			return err
 		}
-		var server T
-		if err := s.onNotice(ctx, Delete, server, local, notice); err != nil {
+		if err := s.onNotice(ctx, Delete, local, notice); err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-func (s *Syncer[T, V]) NewOption() *Option[T] {
-	return &Option[T]{}
 }
