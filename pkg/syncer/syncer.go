@@ -2,6 +2,7 @@ package syncer
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
 )
 
@@ -101,4 +102,17 @@ func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, 
 		}
 	}
 	return nil
+}
+
+func (s *Syncer[T, V]) Notice(fn func(data string)) func(ctx context.Context, state int, value T) error {
+	return func(ctx context.Context, state int, value T) error {
+		if state != Unchanged {
+			data, err := json.Marshal(value)
+			if err != nil {
+				return err
+			}
+			fn(string(data))
+		}
+		return nil
+	}
 }
