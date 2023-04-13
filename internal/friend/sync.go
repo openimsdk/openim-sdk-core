@@ -6,8 +6,6 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/syncer"
 )
 
 func (f *Friend) SyncSelfFriendApplication(ctx context.Context) error {
@@ -19,31 +17,11 @@ func (f *Friend) SyncSelfFriendApplication(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	ls := make([]*model_struct.LocalFriendRequest, 0, len(requests))
-	for _, info := range requests {
-		ls = append(ls, &model_struct.LocalFriendRequest{
-			FromUserID:    info.FromUserID,
-			FromNickname:  info.FromNickname,
-			FromFaceURL:   info.FromFaceURL,
-			FromGender:    info.FromGender,
-			ToUserID:      info.ToUserID,
-			ToNickname:    info.ToNickname,
-			ToFaceURL:     info.ToFaceURL,
-			ToGender:      info.ToGender,
-			HandleResult:  info.HandleResult,
-			ReqMsg:        info.ReqMsg,
-			CreateTime:    info.CreateTime,
-			HandlerUserID: info.HandlerUserID,
-			HandleMsg:     info.HandleMsg,
-			HandleTime:    info.HandleTime,
-			Ex:            info.Ex,
-			//AttachedInfo:  info.AttachedInfo,
-		})
+	localData, err := f.db.GetSendFriendApplication(ctx)
+	if err != nil {
+		return err
 	}
-	cb := func(method syncer.Method, state syncer.State, data any) {
-
-	}
-	return syncer.New(ctx, f.sync).Listen(cb).AddGlobal(map[string]any{"friend_user_id": f.loginUserID}, ls).Start()
+	return f.requestSendSyncer.Sync(ctx, util.Batch(ServerFriendRequestToLocalFriendRequest, requests), localData, nil)
 }
 
 // recv
@@ -54,28 +32,11 @@ func (f *Friend) SyncFriendApplication(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	ls := make([]*model_struct.LocalFriendRequest, 0, len(requests))
-	for _, info := range requests {
-		ls = append(ls, &model_struct.LocalFriendRequest{
-			FromUserID:    info.FromUserID,
-			FromNickname:  info.FromNickname,
-			FromFaceURL:   info.FromFaceURL,
-			FromGender:    info.FromGender,
-			ToUserID:      info.ToUserID,
-			ToNickname:    info.ToNickname,
-			ToFaceURL:     info.ToFaceURL,
-			ToGender:      info.ToGender,
-			HandleResult:  info.HandleResult,
-			ReqMsg:        info.ReqMsg,
-			CreateTime:    info.CreateTime,
-			HandlerUserID: info.HandlerUserID,
-			HandleMsg:     info.HandleMsg,
-			HandleTime:    info.HandleTime,
-			Ex:            info.Ex,
-			//AttachedInfo:  info.AttachedInfo,
-		})
+	localData, err := f.db.GetRecvFriendApplication(ctx)
+	if err != nil {
+		return err
 	}
-	return syncer.New(ctx, f.sync).AddGlobal(map[string]any{"owner_user_id": f.loginUserID}, ls).Start()
+	return f.requestRecvSyncer.Sync(ctx, util.Batch(ServerFriendRequestToLocalFriendRequest, requests), localData, nil)
 }
 
 func (f *Friend) SyncFriendList(ctx context.Context) error {
@@ -85,22 +46,11 @@ func (f *Friend) SyncFriendList(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	ls := make([]*model_struct.LocalFriend, 0, len(friends))
-	for _, info := range friends {
-		ls = append(ls, &model_struct.LocalFriend{
-			OwnerUserID:    info.OwnerUserID,
-			FriendUserID:   info.FriendUser.UserID,
-			Remark:         info.Remark,
-			CreateTime:     info.CreateTime,
-			AddSource:      info.AddSource,
-			OperatorUserID: info.OperatorUserID,
-			Nickname:       info.FriendUser.Nickname,
-			FaceURL:        info.FriendUser.FaceURL,
-			Ex:             info.Ex,
-			//AttachedInfo:   info.FriendUser.AttachedInfo,
-		})
+	localData, err := f.db.GetAllFriendList(ctx)
+	if err != nil {
+		return err
 	}
-	return syncer.New(ctx, f.sync).AddGlobal(map[string]any{"owner_user_id": f.loginUserID}, ls).Start()
+	return f.friendSyncer.Sync(ctx, util.Batch(ServerFriendToLocalFriend, friends), localData, nil)
 }
 
 func (f *Friend) SyncBlackList(ctx context.Context) error {
@@ -110,19 +60,9 @@ func (f *Friend) SyncBlackList(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	ls := make([]*model_struct.LocalBlack, 0, len(blacks))
-	for _, info := range blacks {
-		ls = append(ls, &model_struct.LocalBlack{
-			OwnerUserID:    info.OwnerUserID,
-			BlockUserID:    info.BlackUserInfo.UserID,
-			CreateTime:     info.CreateTime,
-			AddSource:      info.AddSource,
-			OperatorUserID: info.OperatorUserID,
-			Nickname:       info.BlackUserInfo.Nickname,
-			FaceURL:        info.BlackUserInfo.FaceURL,
-			Ex:             info.Ex,
-			//AttachedInfo:   info.FriendUser.AttachedInfo,
-		})
+	localData, err := f.db.GetBlackListDB(ctx)
+	if err != nil {
+		return err
 	}
-	return syncer.New(ctx, f.sync).AddGlobal(map[string]any{"owner_user_id": f.loginUserID}, ls).Start()
+	return f.blockSyncer.Sync(ctx, util.Batch(ServerBlackToLocalBlack, blacks), localData, nil)
 }

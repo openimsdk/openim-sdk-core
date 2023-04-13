@@ -28,8 +28,15 @@ import (
 	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
+	"open_im_sdk/pkg/syncer"
 	"open_im_sdk/pkg/utils"
 )
+
+func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, p *ws.PostApi, conversationCh chan common.Cmd2Value) *Friend {
+	f := &Friend{loginUserID: loginUserID, db: db, user: user, p: p, conversationCh: conversationCh}
+	f.initSyncer()
+	return f
+}
 
 type Friend struct {
 	friendListener     open_im_sdk_callback.OnFriendshipListener
@@ -37,9 +44,56 @@ type Friend struct {
 	db                 db_interface.DataBase
 	user               *user.User
 	p                  *ws.PostApi
+	friendSyncer       *syncer.Syncer[*model_struct.LocalFriend, [2]string]
+	blockSyncer        *syncer.Syncer[*model_struct.LocalBlack, [2]string]
+	requestRecvSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, string]
+	requestSendSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, string]
 	loginTime          int64
 	conversationCh     chan common.Cmd2Value
 	listenerForService open_im_sdk_callback.OnListenerForService
+}
+
+func (f *Friend) initSyncer() {
+	f.friendSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalFriend) error {
+		return f.db.InsertFriend(ctx, value)
+	}, func(ctx context.Context, value *model_struct.LocalFriend) error {
+		return f.db.DeleteFriendDB(ctx, value.FriendUserID)
+	}, func(ctx context.Context, server *model_struct.LocalFriend, local *model_struct.LocalFriend) error {
+		return f.db.UpdateFriend(ctx, server)
+	}, func(value *model_struct.LocalFriend) [2]string {
+		return [...]string{value.OwnerUserID, value.FriendUserID}
+	}, nil, nil)
+
+	f.blockSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalBlack) error {
+		return f.db.InsertBlack(ctx, value)
+	}, func(ctx context.Context, value *model_struct.LocalBlack) error {
+		return f.db.DeleteBlack(ctx, value.BlockUserID)
+	}, func(ctx context.Context, server *model_struct.LocalBlack, local *model_struct.LocalBlack) error {
+		return f.db.UpdateBlack(ctx, server)
+	}, func(value *model_struct.LocalBlack) [2]string {
+		return [...]string{value.OwnerUserID, value.BlockUserID}
+	}, nil, nil)
+
+	f.requestRecvSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
+		return f.db.InsertFriendRequest(ctx, value)
+	}, func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
+		return f.db.DeleteFriendRequestBothUserID(ctx, value.FromUserID, value.ToUserID)
+	}, func(ctx context.Context, server *model_struct.LocalFriendRequest, local *model_struct.LocalFriendRequest) error {
+		return f.db.UpdateFriendRequest(ctx, server)
+	}, func(value *model_struct.LocalFriendRequest) string {
+		return value.FromUserID
+	}, nil, nil)
+
+	f.requestSendSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
+		return f.db.InsertFriendRequest(ctx, value)
+	}, func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
+		return f.db.DeleteFriendRequestBothUserID(ctx, value.FromUserID, value.ToUserID)
+	}, func(ctx context.Context, server *model_struct.LocalFriendRequest, local *model_struct.LocalFriendRequest) error {
+		return f.db.UpdateFriendRequest(ctx, server)
+	}, func(value *model_struct.LocalFriendRequest) string {
+		return value.ToUserID
+	}, nil, nil)
+
 }
 
 func (f *Friend) LoginTime() int64 {
@@ -61,10 +115,6 @@ func (f *Friend) Db() db_interface.DataBase {
 	return f.db
 }
 
-func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, p *ws.PostApi, conversationCh chan common.Cmd2Value) *Friend {
-	return &Friend{loginUserID: loginUserID, db: db, user: user, p: p, conversationCh: conversationCh}
-}
-
 func (f *Friend) SetListener(listener open_im_sdk_callback.OnFriendshipListener) {
 	f.friendListener = listener
 }
@@ -73,26 +123,26 @@ func (f *Friend) SetListenerForService(listener open_im_sdk_callback.OnListenerF
 	f.listenerForService = listener
 }
 
-func (f *Friend) getDesignatedFriendsInfo(callback open_im_sdk_callback.Base, friendUserIDList sdk.GetDesignatedFriendsInfoParams, operationID string) sdk.GetDesignatedFriendsInfoCallback {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", friendUserIDList)
-
-	localFriendList, err := f.db.GetFriendInfoList(friendUserIDList)
-	common.CheckDBErrCallback(callback, err, operationID)
-
-	blackList, err := f.db.GetBlackInfoList(friendUserIDList)
-	common.CheckDBErrCallback(callback, err, operationID)
-	for _, v := range blackList {
-		log.Info(operationID, "GetBlackInfoList ", *v)
-	}
-
-	r := common.MergeFriendBlackResult(localFriendList, blackList)
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ", r)
-	return r
-}
+//func (f *Friend) getDesignatedFriendsInfo(callback open_im_sdk_callback.Base, friendUserIDList sdk.GetDesignatedFriendsInfoParams, operationID string) sdk.GetDesignatedFriendsInfoCallback {
+//	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", friendUserIDList)
+//
+//	localFriendList, err := f.db.GetFriendInfoList(friendUserIDList)
+//	common.CheckDBErrCallback(callback, err, operationID)
+//
+//	blackList, err := f.db.GetBlackInfoList(friendUserIDList)
+//	common.CheckDBErrCallback(callback, err, operationID)
+//	for _, v := range blackList {
+//		log.Info(operationID, "GetBlackInfoList ", *v)
+//	}
+//
+//	r := common.MergeFriendBlackResult(localFriendList, blackList)
+//	log.NewInfo(operationID, utils.GetSelfFuncName(), "return: ", r)
+//	return r
+//}
 
 func (f *Friend) GetUserNameAndFaceUrlByUid(ctx context.Context, friendUserID string) (faceUrl, name string, err error, isFromSvr bool) {
 	isFromSvr = false
-	friendInfo, err := f.db.GetFriendInfoByFriendUserID(friendUserID)
+	friendInfo, err := f.db.GetFriendInfoByFriendUserID(ctx, friendUserID)
 	if err == nil {
 		if friendInfo.Remark != "" {
 			return friendInfo.FaceURL, friendInfo.Remark, nil, isFromSvr
