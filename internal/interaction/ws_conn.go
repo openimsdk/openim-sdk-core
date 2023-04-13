@@ -31,6 +31,7 @@ type WsConn struct {
 	IsCompression  bool
 	ConversationCh chan common.Cmd2Value
 	tokenErrCode   int32
+	*WsRespAsyn
 }
 
 func (u *WsConn) IsInterruptReconnection() bool {
@@ -40,9 +41,9 @@ func (u *WsConn) IsInterruptReconnection() bool {
 	return false
 }
 
-func NewWsConn(listener open_im_sdk_callback.OnConnListener, token string, loginUserID string, isCompression bool, conversationCh chan common.Cmd2Value) *WsConn {
+func NewWsConn(listener open_im_sdk_callback.OnConnListener, wsRespAsyn *WsRespAsyn, token string, loginUserID string, isCompression bool, conversationCh chan common.Cmd2Value) *WsConn {
 	p := WsConn{listener: listener, token: token, loginUserID: loginUserID, IsCompression: isCompression, ConversationCh: conversationCh,
-		encoder: NewGobEncoder(), compressor: NewGzipCompressor()}
+		encoder: NewGobEncoder(), compressor: NewGzipCompressor(), WsRespAsyn: wsRespAsyn}
 	p.conn = NewWebSocket(WebSocket)
 	_, _, _ = p.ReConn("init:" + utils.OperationIDGenerator())
 	return &p
@@ -52,6 +53,7 @@ func (u *WsConn) CloseConn(operationID string) error {
 	u.Lock()
 	defer u.Unlock()
 	if !u.conn.IsNil() {
+		u.WsRespAsyn.closeAllCh()
 		err := u.conn.Close()
 		if err != nil {
 			log.NewWarn(operationID, "close conn, ", u.conn, err.Error())
@@ -175,6 +177,7 @@ func (u *WsConn) ReConn(operationID string) (error, bool, bool) {
 	u.tokenErrCode = 0
 	defer u.stateMutex.Unlock()
 	if !u.conn.IsNil() {
+		u.WsRespAsyn.closeAllCh()
 		log.NewWarn(operationID, "close conn, ", u.conn, u.conn.LocalAddr())
 		err := u.conn.Close()
 		if err != nil {

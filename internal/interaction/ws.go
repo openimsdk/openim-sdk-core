@@ -171,7 +171,6 @@ func (w *Ws) WaitTest(ch chan GeneralWsResp, timeout int, operationID string, m 
 	}
 }
 func (w *Ws) reConnSleep(operationID string, sleep int32) (error, bool) {
-	w.closeAllCh()
 	err, isNeedReConn, isKicked := w.WsConn.ReConn(operationID)
 	if err != nil {
 		if isKicked {
