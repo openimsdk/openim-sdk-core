@@ -407,45 +407,6 @@ type LocalAdminGroupRequest struct {
 	LocalGroupRequest
 }
 
-type LocalDepartment struct {
-	DepartmentID     string `gorm:"column:department_id;primary_key;size:64" json:"departmentID"`
-	FaceURL          string `gorm:"column:face_url;size:255" json:"faceURL"`
-	Name             string `gorm:"column:name;size:256" json:"name" binding:"required"`
-	ParentID         string `gorm:"column:parent_id;size:64" json:"parentID" binding:"required"` // "0" or Real parent id
-	Order            int32  `gorm:"column:order_department" json:"order" `                       // 1, 2, ...
-	DepartmentType   int32  `gorm:"column:department_type" json:"departmentType"`                //1, 2...
-	CreateTime       int64  `gorm:"column:create_time" json:"createTime"`
-	SubDepartmentNum uint32 `gorm:"column:sub_department_num" json:"subDepartmentNum"`
-	MemberNum        uint32 `gorm:"column:member_num" json:"memberNum"`
-	Ex               string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
-	AttachedInfo     string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
-}
-
-type LocalDepartmentMember struct {
-	UserID      string `gorm:"column:user_id;primary_key;size:64" json:"userID"`
-	Nickname    string `gorm:"column:nickname;size:256" json:"nickname"`
-	EnglishName string `gorm:"column:english_name;size:256" json:"englishName"`
-	FaceURL     string `gorm:"column:face_url;size:256" json:"faceURL"`
-	Gender      int32  `gorm:"column:gender" json:"gender"` //1 ,2
-	Mobile      string `gorm:"column:mobile;size:32" json:"mobile"`
-	Telephone   string `gorm:"column:telephone;size:32" json:"telephone"`
-	Birth       uint32 `gorm:"column:birth" json:"birth"`
-	Email       string `gorm:"column:email;size:64" json:"email"`
-
-	DepartmentID string `gorm:"column:department_id;primary_key;size:64" json:"departmentID"`
-	Order        int32  `gorm:"column:order_member" json:"order"` //1,2
-	Position     string `gorm:"column:position;size:256" json:"position"`
-	Leader       int32  `gorm:"column:leader" json:"leader"` //-1, 1
-	Status       int32  `gorm:"column:status" json:"status"` //-1, 1
-	CreateTime   int64  `gorm:"column:create_time" json:"createTime"`
-	Ex           string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
-	AttachedInfo string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
-}
-
-type SearchDepartmentMemberResult struct {
-	LocalDepartmentMember
-	DepartmentName string `gorm:"column:name;size:256" json:"departmentName"`
-}
 type LocalChatLogReactionExtensions struct {
 	ClientMsgID             string `gorm:"column:client_msg_id;primary_key;type:char(64)" json:"clientMsgID"`
 	LocalReactionExtensions []byte `gorm:"column:local_reaction_extensions" json:"localReactionExtensions"`
@@ -453,6 +414,20 @@ type LocalChatLogReactionExtensions struct {
 type LocalWorkMomentsNotification struct {
 	JsonDetail string `gorm:"column:json_detail"`
 	CreateTime int64  `gorm:"create_time"`
+}
+
+type WorkMomentNotificationMsg struct {
+	NotificationMsgType int32  `json:"notificationMsgType"`
+	ReplyUserName       string `json:"replyUserName"`
+	ReplyUserID         string `json:"replyUserID"`
+	Content             string `json:"content"`
+	ContentID           string `json:"contentID"`
+	WorkMomentID        string `json:"workMomentID"`
+	UserID              string `json:"userID"`
+	UserName            string `json:"userName"`
+	FaceURL             string `json:"faceURL"`
+	WorkMomentContent   string `json:"workMomentContent"`
+	CreateTime          int32  `json:"createTime"`
 }
 
 func (LocalWorkMomentsNotification) TableName() string {

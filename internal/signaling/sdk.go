@@ -50,6 +50,7 @@ func (s *LiveSignaling) Invite(ctx context.Context, signalInviteReq *sdkws.Signa
 }
 
 func (s *LiveSignaling) Accept(ctx context.Context, signalAcceptReq *sdkws.SignalAcceptReq) (*sdkws.SignalAcceptReply, error) {
+	s.setDefaultReq(signalAcceptReq.Invitation)
 	signalAcceptReq.OpUserID = s.loginUserID
 	signalAcceptReq.Invitation.InitiateTime = int32(utils.GetCurrentTimestampBySecond())
 	participants, err := s.getSelfParticipant(context.Background(), signalAcceptReq.Invitation.GroupID)
@@ -67,6 +68,7 @@ func (s *LiveSignaling) Accept(ctx context.Context, signalAcceptReq *sdkws.Signa
 }
 
 func (s *LiveSignaling) Reject(ctx context.Context, signalRejectReq *sdkws.SignalRejectReq) error {
+	s.setDefaultReq(signalRejectReq.Invitation)
 	signalRejectReq.OpUserID = s.loginUserID
 	signalRejectReq.Invitation.InitiateTime = int32(utils.GetCurrentTimestampBySecond())
 	signalRejectReq.OpUserPlatformID = s.platformID
