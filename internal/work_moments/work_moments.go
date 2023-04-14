@@ -1,13 +1,15 @@
 package workMoments
 
 import (
+	"context"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
-	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/db/db_interface"
+	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 )
 
 type WorkMoments struct {
@@ -21,54 +23,47 @@ func NewWorkMoments(loginUserID string, db db_interface.DataBase, p *ws.PostApi)
 	return &WorkMoments{loginUserID: loginUserID, db: db, p: p}
 }
 
-func (w *WorkMoments) DoNotification(jsonDetailStr string, operationID string) {
+func (w *WorkMoments) DoNotification(jsonDetail string, operationID string) {
 	if w.listener == nil {
-		log.NewDebug(operationID, "WorkMoments listener is null", jsonDetailStr)
+		log.NewDebug(operationID, "WorkMoments listener is null", jsonDetail)
 		return
 	}
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "json_detail: ", jsonDetailStr)
-	if err := w.db.InsertWorkMomentsNotification(jsonDetailStr); err != nil {
+	ctx := mcontext.NewCtx(operationID)
+	if err := w.db.InsertWorkMomentsNotification(ctx, jsonDetail); err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), "InsertWorkMomentsNotification failed", err.Error())
 		return
 	}
-	if err := w.db.IncrWorkMomentsNotificationUnreadCount(); err != nil {
+	if err := w.db.IncrWorkMomentsNotificationUnreadCount(ctx); err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), "IncrWorkMomentsNotificationUnreadCount failed", err.Error())
 		return
 	}
 	w.listener.OnRecvNewNotification()
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "do notification callback success")
 }
 
-func (w *WorkMoments) getWorkMomentsNotification(offset, count int, callback open_im_sdk_callback.Base, operationID string) sdk_params_callback.GetWorkMomentsNotificationCallback {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), offset, count)
-	err := w.db.MarkAllWorkMomentsNotificationAsRead()
-	common.CheckDBErrCallback(callback, err, operationID)
-	workMomentsNotifications, err := w.db.GetWorkMomentsNotification(offset, count)
-	common.CheckDBErrCallback(callback, err, operationID)
-	msgs := make([]sdk_params_callback.WorkMomentNotificationMsg, len(workMomentsNotifications))
+func (w *WorkMoments) getWorkMomentsNotification(ctx context.Context, offset, count int) ([]*model_struct.WorkMomentNotificationMsg, error) {
+	if err := w.db.MarkAllWorkMomentsNotificationAsRead(ctx); err != nil {
+		return nil, err
+	}
+	workMomentsNotifications, err := w.db.GetWorkMomentsNotification(ctx, offset, count)
+	if err != nil {
+		return nil, err
+	}
+	msgs := make([]*model_struct.WorkMomentNotificationMsg, len(workMomentsNotifications))
 	for i, v := range workMomentsNotifications {
-		workMomentNotificationMsg := sdk_params_callback.WorkMomentNotificationMsg{}
+		workMomentNotificationMsg := model_struct.WorkMomentNotificationMsg{}
 		if err := utils.JsonStringToStruct(v.JsonDetail, &workMomentNotificationMsg); err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "JsonStringToStruct failed", err.Error())
+			// log.NewError(operationID, utils.GetSelfFuncName(), "JsonStringToStruct failed", err.Error())
 			continue
 		}
-		msgs[i] = workMomentNotificationMsg
+		msgs[i] = &workMomentNotificationMsg
 	}
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
-	return msgs
+	return msgs, nil
 }
 
-func (w *WorkMoments) clearWorkMomentsNotification(callback open_im_sdk_callback.Base, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName())
-	err := w.db.ClearWorkMomentsNotification()
-	common.CheckDBErrCallback(callback, err, operationID)
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
+func (w *WorkMoments) clearWorkMomentsNotification(ctx context.Context) error {
+	return w.db.ClearWorkMomentsNotification(ctx)
 }
 
-func (w *WorkMoments) getWorkMomentsNotificationUnReadCount(callback open_im_sdk_callback.Base, operationID string) sdk_params_callback.GetWorkMomentsUnReadCountCallback {
-	log.NewInfo(operationID, utils.GetSelfFuncName())
-	unreadCount, err := w.db.GetWorkMomentsUnReadCount()
-	common.CheckDBErrCallback(callback, err, operationID)
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "success")
-	return sdk_params_callback.GetWorkMomentsUnReadCountCallback(unreadCount)
+func (w *WorkMoments) getWorkMomentsNotificationUnReadCount(ctx context.Context) (model_struct.LocalWorkMomentsNotificationUnreadCount, error) {
+	return w.db.GetWorkMomentsUnReadCount(ctx)
 }

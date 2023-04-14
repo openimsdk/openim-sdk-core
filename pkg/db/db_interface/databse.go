@@ -77,18 +77,6 @@ type DataBase interface {
 	GetMsgSeqListByGroupID(ctx context.Context, groupID string) ([]uint32, error)
 	GetMsgSeqListByPeerUserID(ctx context.Context, userID string) ([]uint32, error)
 	GetMsgSeqListBySelfUserID(ctx context.Context, userID string) ([]uint32, error)
-	GetSubDepartmentList(ctx context.Context, departmentID string, args ...int) ([]*model_struct.LocalDepartment, error)
-	InsertDepartment(ctx context.Context, department *model_struct.LocalDepartment) error
-	UpdateDepartment(ctx context.Context, department *model_struct.LocalDepartment) error
-	DeleteDepartment(ctx context.Context, departmentID string) error
-
-	GetDepartmentInfo(ctx context.Context, departmentID string) (*model_struct.LocalDepartment, error)
-	GetAllDepartmentList(ctx context.Context) ([]*model_struct.LocalDepartment, error)
-	GetParentDepartmentList(ctx context.Context, departmentID string) ([]*model_struct.LocalDepartment, error)
-	GetDepartmentList(ctx context.Context, departmentList *[]*model_struct.LocalDepartment, departmentID string) error
-	GetParentDepartment(ctx context.Context, departmentID string) (model_struct.LocalDepartment, error)
-	SearchDepartmentMember(ctx context.Context, keyWord string, isSearchUserName, isSearchEmail, isSearchMobile, isSearchPosition, isSearchTelephone, isSearchUserEnglishName, isSearchUserID bool, offset, count int) ([]*model_struct.SearchDepartmentMemberResult, error)
-	SearchDepartment(ctx context.Context, keyWord string, offset, count int) ([]*model_struct.LocalDepartment, error)
 	InsertGroupRequest(ctx context.Context, groupRequest *model_struct.LocalGroupRequest) error
 	DeleteGroupRequest(ctx context.Context, groupID, userID string) error
 	UpdateGroupRequest(ctx context.Context, groupRequest *model_struct.LocalGroupRequest) error

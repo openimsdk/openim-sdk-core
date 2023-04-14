@@ -532,18 +532,14 @@ func (u *LoginMgr) SetMinSeqSvr(minSeqSvr int64) {
 	u.SetMinSeqSvr(minSeqSvr)
 }
 
-func CheckToken(userID, token string, operationID string) (error, uint32) {
+func CheckToken(userID, token string, operationID string) (error, int64) {
 	if operationID == "" {
 		operationID = utils.OperationIDGenerator()
 	}
 	log.Debug(operationID, utils.GetSelfFuncName(), userID, token)
-	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
-	user := user.NewUser(nil, p, userID, nil)
-	//_, err := user.GetSelfUserInfoFromSvr(operationID)
-	//if err != nil {
-	//	return utils.Wrap(err, "GetSelfUserInfoFromSvr failed "+operationID), 0
-	//}
-	exp, err := user.ParseTokenFromSvr(operationID)
+	user := user.NewUser(nil, userID, nil)
+	ctx := context.Background()
+	exp, err := user.ParseTokenFromSvr(ctx)
 	return err, exp
 }
 
