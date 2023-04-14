@@ -2,9 +2,6 @@ package conversation_msg
 
 import (
 	"context"
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
-	"github.com/jinzhu/copier"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
@@ -12,6 +9,11 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
+	"github.com/jinzhu/copier"
 )
 
 // 检测其内部连续性，如果不连续，则向前补齐,获取这一组消息的最大最小seq，以及需要补齐的seq列表长度
@@ -81,19 +83,19 @@ func (c *Conversation) messageBlocksBetweenContinuityCheck(lastMinSeq, maxSeq ui
 }
 
 // 检测其内部连续性，如果不连续，则向前补齐,获取这一组消息的最大最小seq，以及需要补齐的seq列表长度
-func (c *Conversation) messageBlocksEndContinuityCheck(minSeq uint32, sourceID string, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback, operationID string) {
+func (c *Conversation) messageBlocksEndContinuityCheck(ctx context.Context, minSeq uint32, sourceID string, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
 	var minSeqServer uint32
 	var maxSeqServer uint32
 	resp, err := c.SendReqWaitResp(context.Background(), &server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 1, c.loginUserID)
 	if err != nil {
-		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, 1, c.loginUserID)
+		// log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, 1, c.loginUserID)
 	} else {
 		var wsSeqResp server_api_params.GetMaxAndMinSeqResp
 		err = proto.Unmarshal(resp.Data, &wsSeqResp)
 		if err != nil {
-			log.Error(operationID, "Unmarshal failed", err.Error())
+			// log.Error(operationID, "Unmarshal failed", err.Error())
 		} else if wsSeqResp.ErrCode != 0 {
-			log.Error(operationID, "GetMaxAndMinSeqReq failed ", wsSeqResp.ErrCode, wsSeqResp.ErrMsg)
+			// log.Error(operationID, "GetMaxAndMinSeqReq failed ", wsSeqResp.ErrCode, wsSeqResp.ErrMsg)
 		} else {
 			if value, ok := wsSeqResp.GroupMaxAndMinSeq[sourceID]; ok {
 				minSeqServer = value.MinSeq
@@ -104,7 +106,7 @@ func (c *Conversation) messageBlocksEndContinuityCheck(minSeq uint32, sourceID s
 			}
 		}
 	}
-	log.Error(operationID, "from server min seq is", minSeqServer, maxSeqServer)
+	// log.Error(operationID, "from server min seq is", minSeqServer, maxSeqServer)
 	//seq, err := c.db.SuperGroupGetNormalMinSeq(sourceID)
 	//if err != nil {
 	//	log.Error(operationID, "SuperGroupGetNormalMinSeq err:", err.Error())
@@ -123,14 +125,14 @@ func (c *Conversation) messageBlocksEndContinuityCheck(minSeq uint32, sourceID s
 						startSeq = int64(minSeqServer)
 					}
 				}
-				log.Debug(operationID, "pull start is ", startSeq)
+				// log.Debug(operationID, "pull start is ", startSeq)
 				for i := startSeq; i < int64(seq); i++ {
 					seqList = append(seqList, uint32(i))
 				}
-				log.Debug(operationID, "pull seqList is ", seqList)
+				// log.Debug(operationID, "pull seqList is ", seqList)
 				return seqList
 			}(minSeq)
-			log.Debug(operationID, "pull seqList is ", seqList, len(seqList))
+			// log.Debug(operationID, "pull seqList is ", seqList, len(seqList))
 			if len(seqList) > 0 {
 				c.pullMessageAndReGetHistoryMessages(context.Background(), sourceID, seqList, notStartTime, isReverse, count, sessionType, startTime, list, messageListCallback, operationID)
 			}
@@ -169,31 +171,31 @@ func (c *Conversation) getMaxAndMinHaveSeqList(messages []*model_struct.LocalCha
 // 1、保证单次拉取消息量低于sdk单次从服务器拉取量
 // 2、块中连续性检测
 // 3、块之间连续性检测
-func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, sourceID string, seqList []uint32, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback, operationID string) {
+func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, sourceID string, seqList []uint32, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog) {
 	existedSeqList, err := c.db.SuperGroupGetAlreadyExistSeqList(ctx, sourceID, seqList)
 	if err != nil {
-		log.Error(operationID, "SuperGroupGetAlreadyExistSeqList err", err.Error(), sourceID, seqList)
+		// log.Error(operationID, "SuperGroupGetAlreadyExistSeqList err", err.Error(), sourceID, seqList)
 		return
 	}
 	if len(existedSeqList) == len(seqList) {
-		log.Debug(operationID, "do not pull message")
+		// log.Debug(operationID, "do not pull message")
 		return
 	}
 	newSeqList := utils.DifferenceSubset(seqList, existedSeqList)
 	if len(newSeqList) == 0 {
-		log.Debug(operationID, "do not pull message")
+		// log.Debug(operationID, "do not pull message")
 		return
 	}
 	var pullMsgReq server_api_params.PullMessageBySeqListReq
 	pullMsgReq.UserID = c.loginUserID
 	pullMsgReq.GroupSeqList = make(map[string]*server_api_params.SeqList, 0)
 	pullMsgReq.GroupSeqList[sourceID] = &server_api_params.SeqList{SeqList: newSeqList}
-
+	operationID := mcontext.GetOperationID(ctx)
 	pullMsgReq.OperationID = operationID
 	log.Debug(operationID, "read diffusion group pull message, req: ", pullMsgReq)
 	resp, err := c.SendReqWaitResp(ctx, &pullMsgReq, constant.WSPullMsgBySeqList, 2, 1, c.loginUserID)
 	if err != nil {
-		errHandle(newSeqList, list, err, messageListCallback)
+		errHandle(newSeqList, list, err)
 		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 1, 2, c.loginUserID)
 	} else {
 		var pullMsgResp server_api_params.PullMessageBySeqListResp

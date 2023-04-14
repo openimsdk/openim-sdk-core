@@ -2,9 +2,10 @@ package common
 
 import (
 	"fmt"
+	"open_im_sdk/pkg/db/model_struct"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/jinzhu/copier"
-	"open_im_sdk/pkg/db/model_struct"
 
 	//log2 "open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"

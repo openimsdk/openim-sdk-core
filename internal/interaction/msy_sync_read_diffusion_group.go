@@ -2,7 +2,6 @@ package interaction
 
 import (
 	"context"
-	"github.com/golang/protobuf/proto"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/db_interface"
@@ -12,6 +11,8 @@ import (
 	"open_im_sdk/sdk_struct"
 	"runtime"
 	"sync"
+
+	"github.com/golang/protobuf/proto"
 )
 
 type ReadDiffusionGroupMsgSync struct {
@@ -46,6 +47,7 @@ func (m *ReadDiffusionGroupMsgSync) updateJoinedSuperGroup() {
 				runtime.Goexit()
 			} else {
 				operationID := cmd.Value.(sdk_struct.CmdJoinedSuperGroup).OperationID
+				// ctx := mcontext.NewCtx(operationID)
 				log.Info(operationID, "updateJoinedSuperGroup cmd: ", cmd)
 				g, err := m.GetReadDiffusionGroupIDList(nil)
 				if err == nil {
@@ -66,14 +68,14 @@ func (m *ReadDiffusionGroupMsgSync) updateJoinedSuperGroup() {
 func (m *ReadDiffusionGroupMsgSync) compareSeq(operationID string) {
 	g, err := m.GetReadDiffusionGroupIDList(nil)
 	if err != nil {
-		log.Error(operationID, "GetReadDiffusionGroupIDList failed ", err.Error())
+		// log.Error(operationID, "GetReadDiffusionGroupIDList failed ", err.Error())
 		return
 	}
 	m.superGroupMtx.Lock()
 	m.SuperGroupIDList = m.SuperGroupIDList[0:0]
 	m.SuperGroupIDList = g
 	m.superGroupMtx.Unlock()
-	log.Debug(operationID, "compareSeq load groupID list ", m.SuperGroupIDList)
+	// log.Debug(operationID, "compareSeq load groupID list ", m.SuperGroupIDList)
 
 	m.superGroupMtx.Lock()
 
@@ -81,13 +83,13 @@ func (m *ReadDiffusionGroupMsgSync) compareSeq(operationID string) {
 	for _, v := range m.SuperGroupIDList {
 		n, err := m.GetSuperGroupNormalMsgSeq(nil, v)
 		if err != nil {
-			log.Error(operationID, "GetSuperGroupNormalMsgSeq failed ", err.Error(), v)
+			// log.Error(operationID, "GetSuperGroupNormalMsgSeq failed ", err.Error(), v)
 		}
 		a, err := m.GetSuperGroupAbnormalMsgSeq(nil, v)
 		if err != nil {
-			log.Error(operationID, "GetSuperGroupAbnormalMsgSeq failed ", err.Error(), v)
+			// log.Error(operationID, "GetSuperGroupAbnormalMsgSeq failed ", err.Error(), v)
 		}
-		log.Debug(operationID, "GetSuperGroupNormalMsgSeq GetSuperGroupAbnormalMsgSeq ", n, a, "groupID: ", v)
+		// log.Debug(operationID, "GetSuperGroupNormalMsgSeq GetSuperGroupAbnormalMsgSeq ", n, a, "groupID: ", v)
 		var seqMaxSynchronized uint32
 		if n > a {
 			seqMaxSynchronized = n
@@ -100,7 +102,7 @@ func (m *ReadDiffusionGroupMsgSync) compareSeq(operationID string) {
 		if seqMaxSynchronized > m.Group2SeqMaxSynchronized[v] {
 			m.Group2SeqMaxSynchronized[v] = seqMaxSynchronized
 		}
-		log.Info(operationID, "load seq, normal, abnormal, ", n, a, m.Group2SeqMaxNeedSync[v], m.Group2SeqMaxSynchronized[v])
+		// log.Info(operationID, "load seq, normal, abnormal, ", n, a, m.Group2SeqMaxNeedSync[v], m.Group2SeqMaxSynchronized[v])
 	}
 }
 

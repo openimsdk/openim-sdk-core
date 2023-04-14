@@ -113,5 +113,4 @@ func (u *WsRespAsyn) notifyResp(wsResp GeneralWsResp) error {
 		}
 		return nil
 	}
-	return nil
 }

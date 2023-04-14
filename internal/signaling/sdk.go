@@ -7,7 +7,7 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
-func (s *LiveSignaling) InviteInGroup(ctx context.Context, signalInviteInGroupReq *sdkws.SignalInviteInGroupReq) (*sdkws.SignalInviteInGroupReply, error) {
+func (s *LiveSignaling) SignalingInviteInGroup(ctx context.Context, signalInviteInGroupReq *sdkws.SignalInviteInGroupReq) (*sdkws.SignalInviteInGroupReply, error) {
 	s.setDefaultReq(signalInviteInGroupReq.Invitation)
 	signalInviteInGroupReq.Invitation.InviterUserID = s.loginUserID
 	signalInviteInGroupReq.OpUserID = s.loginUserID
@@ -28,7 +28,7 @@ func (s *LiveSignaling) InviteInGroup(ctx context.Context, signalInviteInGroupRe
 	return reply, nil
 }
 
-func (s *LiveSignaling) Invite(ctx context.Context, signalInviteReq *sdkws.SignalInviteReq) (*sdkws.SignalInviteReply, error) {
+func (s *LiveSignaling) SignalingInvite(ctx context.Context, signalInviteReq *sdkws.SignalInviteReq) (*sdkws.SignalInviteReply, error) {
 	s.setDefaultReq(signalInviteReq.Invitation)
 	signalInviteReq.Invitation.InviterUserID = s.loginUserID
 	signalInviteReq.OpUserID = s.loginUserID
@@ -49,7 +49,7 @@ func (s *LiveSignaling) Invite(ctx context.Context, signalInviteReq *sdkws.Signa
 	return reply, nil
 }
 
-func (s *LiveSignaling) Accept(ctx context.Context, signalAcceptReq *sdkws.SignalAcceptReq) (*sdkws.SignalAcceptReply, error) {
+func (s *LiveSignaling) SignalingAccept(ctx context.Context, signalAcceptReq *sdkws.SignalAcceptReq) (*sdkws.SignalAcceptReply, error) {
 	s.setDefaultReq(signalAcceptReq.Invitation)
 	signalAcceptReq.OpUserID = s.loginUserID
 	signalAcceptReq.Invitation.InitiateTime = int32(utils.GetCurrentTimestampBySecond())
@@ -67,7 +67,7 @@ func (s *LiveSignaling) Accept(ctx context.Context, signalAcceptReq *sdkws.Signa
 	return reply, nil
 }
 
-func (s *LiveSignaling) Reject(ctx context.Context, signalRejectReq *sdkws.SignalRejectReq) error {
+func (s *LiveSignaling) SignalingReject(ctx context.Context, signalRejectReq *sdkws.SignalRejectReq) error {
 	s.setDefaultReq(signalRejectReq.Invitation)
 	signalRejectReq.OpUserID = s.loginUserID
 	signalRejectReq.Invitation.InitiateTime = int32(utils.GetCurrentTimestampBySecond())
@@ -82,7 +82,7 @@ func (s *LiveSignaling) Reject(ctx context.Context, signalRejectReq *sdkws.Signa
 	return err
 }
 
-func (s *LiveSignaling) Cancel(ctx context.Context, signalCancelReq *sdkws.SignalCancelReq) error {
+func (s *LiveSignaling) SignalingCancel(ctx context.Context, signalCancelReq *sdkws.SignalCancelReq) error {
 	s.setDefaultReq(signalCancelReq.Invitation)
 	signalCancelReq.OpUserID = s.loginUserID
 	signalCancelReq.Invitation.InitiateTime = int32(utils.GetCurrentTimestampBySecond())
@@ -100,7 +100,7 @@ func (s *LiveSignaling) Cancel(ctx context.Context, signalCancelReq *sdkws.Signa
 	return nil
 }
 
-func (s *LiveSignaling) HungUp(ctx context.Context, signalHungUpReq *sdkws.SignalHungUpReq) error {
+func (s *LiveSignaling) SignalingHungUp(ctx context.Context, signalHungUpReq *sdkws.SignalHungUpReq) error {
 	s.setDefaultReq(signalHungUpReq.Invitation)
 	signalHungUpReq.OpUserID = s.loginUserID
 	signalHungUpReq.Invitation.InitiateTime = int32(utils.GetCurrentTimestampBySecond())

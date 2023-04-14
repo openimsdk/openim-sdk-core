@@ -11,6 +11,8 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
 func (d *DataBase) GetMessageReactionExtension(ctx context.Context, msgID string) (result *model_struct.LocalChatLogReactionExtensions, err error) {
@@ -35,7 +37,7 @@ func (d *DataBase) UpdateMessageReactionExtension(ctx context.Context, c *model_
 	}
 	return utils.Wrap(t.Error, "UpdateConversation failed")
 }
-func (d *DataBase) GetAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*server_api_params.KeyValue) error {
+func (d *DataBase) GetAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*sdkws.KeyValue) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var temp model_struct.LocalChatLogReactionExtensions
@@ -46,7 +48,7 @@ func (d *DataBase) GetAndUpdateMessageReactionExtension(ctx context.Context, msg
 		temp.LocalReactionExtensions = []byte(utils.StructToJsonString(m))
 		return d.conn.WithContext(ctx).Create(&temp).Error
 	} else {
-		oldKeyValue := make(map[string]*server_api_params.KeyValue)
+		oldKeyValue := make(map[string]*sdkws.KeyValue)
 		err = json.Unmarshal(temp.LocalReactionExtensions, &oldKeyValue)
 		if err != nil {
 			log.Error("special handle", err.Error())
@@ -70,7 +72,7 @@ func (d *DataBase) DeleteMessageReactionExtension(ctx context.Context, msgID str
 	return d.conn.WithContext(ctx).Delete(&temp).Error
 
 }
-func (d *DataBase) DeleteAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*server_api_params.KeyValue) error {
+func (d *DataBase) DeleteAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*sdkws.KeyValue) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var temp model_struct.LocalChatLogReactionExtensions

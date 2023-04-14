@@ -29,6 +29,9 @@ import (
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
 
+	// sdk "open_im_sdk/pkg/sdk_params_callback"
+	// "open_im_sdk/pkg/server_api_params"
+
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sort"
@@ -1266,7 +1269,7 @@ func (c *Conversation) doReactionMsgModifier(ctx context.Context, msgReactionLis
 		}
 		switch n.Operation {
 		case constant.AddMessageExtensions:
-			var reactionExtensionList []*server_api_params.KeyValue
+			var reactionExtensionList []*sdkws.KeyValue
 			for _, value := range n.SuccessReactionExtensionList {
 				reactionExtensionList = append(reactionExtensionList, value)
 			}
@@ -1279,7 +1282,7 @@ func (c *Conversation) doReactionMsgModifier(ctx context.Context, msgReactionLis
 				log.Error("internal", "GetAndUpdateMessageReactionExtension err:", err.Error())
 				continue
 			}
-			var reactionExtensionList []*server_api_params.KeyValue
+			var reactionExtensionList []*sdkws.KeyValue
 			for _, value := range n.SuccessReactionExtensionList {
 				reactionExtensionList = append(reactionExtensionList, value)
 			}
@@ -1490,6 +1493,7 @@ func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
 		return
 	}
 	node := c2v.Value.(common.DeleteConNode)
+	ctx := mcontext.NewCtx(utils.OperationIDGenerator())
 	//Mark messages related to this conversation for deletion
 	err := c.db.UpdateMessageStatusBySourceID(context.Background(), node.SourceID, constant.MsgStatusHasDeleted, int32(node.SessionType))
 	if err != nil {
@@ -1497,7 +1501,6 @@ func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
 		return
 	}
 	//Reset the session information, empty session
-	ctx := mcontext.NewCtx(utils.OperationIDGenerator())
 	err = c.db.ResetConversation(ctx, node.ConversationID)
 	if err != nil {
 		log.Error("internal", "ResetConversation err:", err.Error())
@@ -1835,7 +1838,7 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 			var result []*server_api_params.SingleMessageExtensionResult
 			for _, v := range data {
 				temp := new(server_api_params.SingleMessageExtensionResult)
-				tempMap := make(map[string]*server_api_params.KeyValue)
+				tempMap := make(map[string]*sdkws.KeyValue)
 				_ = json.Unmarshal(v.LocalReactionExtensions, &tempMap)
 				if len(args.TypeKeyList) != 0 {
 					for s, _ := range tempMap {
@@ -1868,7 +1871,7 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 					continue
 				}
 			}
-			var changedKv []*server_api_params.KeyValue
+			var changedKv []*sdkws.KeyValue
 			for _, value := range v.ReactionExtensionList {
 				changedKv = append(changedKv, value)
 			}
@@ -1881,7 +1884,7 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 		}
 		for _, v := range sameA {
 			log.Error(node.OperationID, "come sameA", v.ClientMsgID, v.ReactionExtensionList)
-			tempMap := make(map[string]*server_api_params.KeyValue)
+			tempMap := make(map[string]*sdkws.KeyValue)
 			for _, extensions := range args.ExtendMessageList {
 				if v.ClientMsgID == extensions.ClientMsgID {
 					_ = json.Unmarshal(extensions.LocalReactionExtensions, &tempMap)
@@ -1902,9 +1905,9 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 					c.msgListener.OnRecvMessageExtensionsDeleted(v.ClientMsgID, utils.StructToJsonString(deleteKeyList))
 				}
 			} else {
-				deleteKeyList, changedKv := func(local, server map[string]*server_api_params.KeyValue) ([]string, []*server_api_params.KeyValue) {
+				deleteKeyList, changedKv := func(local, server map[string]*sdkws.KeyValue) ([]string, []*sdkws.KeyValue) {
 					var deleteKeyList []string
-					var changedKv []*server_api_params.KeyValue
+					var changedKv []*sdkws.KeyValue
 					for k, v := range local {
 						ia, ok := server[k]
 						if ok {
@@ -1992,10 +1995,10 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 		var messageChangedList []*messageKvList
 		for _, v := range apiResp {
 			if v.ErrCode == 0 {
-				var changedKv []*server_api_params.KeyValue
+				var changedKv []*sdkws.KeyValue
 				var prefixTypeKey []string
 				extendMsg, _ := c.db.GetMessageReactionExtension(ctx, v.ClientMsgID)
-				localKV := make(map[string]*server_api_params.KeyValue)
+				localKV := make(map[string]*sdkws.KeyValue)
 				_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &localKV)
 				for typeKey, value := range v.ReactionExtensionList {
 					oldValue, ok := localKV[typeKey]
@@ -2131,7 +2134,7 @@ func (c *Conversation) msgConvert(msg *sdk_struct.MsgStruct) (err error) {
 func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err error) {
 	_ = utils.JsonStringToStruct(msg.AttachedInfo, &msg.AttachedInfoElem)
 	if msg.ContentType >= constant.NotificationBegin && msg.ContentType <= constant.NotificationEnd {
-		var tips server_api_params.TipsComm
+		var tips sdkws.TipsComm
 		err = utils.JsonStringToStruct(msg.Content, &tips)
 		msg.NotificationElem.Detail = tips.JsonDetail
 		msg.NotificationElem.DefaultTips = tips.DefaultTips

@@ -225,11 +225,14 @@ func (u *LoginMgr) SetBusinessListener(listener open_im_sdk_callback.OnCustomBus
 }
 
 func (u *LoginMgr) wakeUp(ctx context.Context) error {
+	// log.Info(operationID, utils.GetSelfFuncName(), "args ")
+	// common.CheckAnyErrCallback(cb, 2001, err, operationID)
 	return common.TriggerCmdWakeUp(u.heartbeatCmdCh)
 }
 
 func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	// log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)
+	// t1 := time.Now()
 	u.token = token
 	u.loginUserID = userID
 	var err error
@@ -238,7 +241,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 		return errs.ErrDatabase.Wrap(err.Error())
 	}
 
-	//log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir, "login cost time: ", time.Since(t1))
+	// log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir, "login cost time: ", time.Since(t1))
 
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
 	u.cmdWsCh = make(chan common.Cmd2Value, 10)
@@ -270,19 +273,20 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	if u.businessListener != nil {
 		u.business.SetListener(u.businessListener)
 	}
-	//log.NewInfo(operationID, u.imConfig.ObjectStorage, "new obj login cost time: ", time.Since(t1))
-	//log.NewInfo(operationID, u.imConfig.ObjectStorage, "SyncLoginUserInfo login cost time: ", time.Since(t1))
+	// log.NewInfo(operationID, u.imConfig.ObjectStorage, "new obj login cost time: ", time.Since(t1))
+	// log.NewInfo(operationID, u.imConfig.ObjectStorage, "SyncLoginUserInfo login cost time: ", time.Since(t1))
 	u.push = comm2.NewPush(p, u.imConfig.Platform, u.loginUserID)
 	go u.forcedSynchronization()
 
-	//log.Info(operationID, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
-	//log.Info(operationID, "all channel ", u.pushMsgAndMaxSeqCh, u.conversationCh, u.heartbeatCmdCh, u.cmdWsCh)
+	// log.Info(operationID, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
+	// log.Info(operationID, "all channel ", u.pushMsgAndMaxSeqCh, u.conversationCh, u.heartbeatCmdCh, u.cmdWsCh)
 
 	wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID, u.imConfig.IsCompression, u.conversationCh)
 	wsRespAsyn := ws.NewWsRespAsyn()
 	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh, u.conversationCh)
 	u.msgSync = ws.NewMsgSync(u.db, u.ws, u.loginUserID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
 	u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
+	// log.NewInfo(operationID, u.imConfig.ObjectStorage)
 
 	var objStorage comm3.ObjectStorage
 	switch u.imConfig.ObjectStorage {
@@ -309,11 +313,17 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq, u.imConfig.IsExternalExtensions)
 	if u.batchMsgListener != nil {
 		u.conversation.SetBatchMsgListener(u.batchMsgListener)
+		// log.Info(operationID, "SetBatchMsgListener ", u.batchMsgListener)
 	}
+	// log.Debug(operationID, "SyncConversations begin ")
 	u.conversation.SyncConversations(ctx, time.Second*2)
-	go u.conversation.SyncConversationUnreadCount(ctx)
+	go u.conversation.SyncConversationUnreadCount(mcontext.GetOperationID(ctx))
 	go common.DoListener(u.conversation)
-	go u.conversation.FixVersionData()
+	// log.Debug(operationID, "SyncConversations end ")
+	go u.conversation.FixVersionData(ctx)
+	// log.Info(operationID, "ws heartbeat end ")
+
+	// log.Info(operationID, "login success...", "login cost time: ", time.Since(t1))
 	return nil
 }
 
@@ -397,14 +407,11 @@ func (u *LoginMgr) logout(ctx context.Context) error {
 func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool) error {
 	timeout := 5
 	retryTimes := 2
-	//log.Info(operationID, "send to svr WsSetBackgroundStatus ...", u.loginUserID)
+	// log.Info(operationID, "send to svr WsSetBackgroundStatus ...", u.loginUserID)
 	_, err := u.ws.SendReqWaitResp(ctx, &server_api_params.SetAppBackgroundStatusReq{UserID: u.loginUserID, IsBackground: isBackground}, constant.WsSetBackgroundStatus, timeout, retryTimes, u.loginUserID)
-	//if err != nil {
-	//	//log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsSetBackgroundStatus, timeout, u.loginUserID, resp)
-	//	return err
-	//}
-	//common.CheckAnyErrCallback(callback, constant.ErrInternal.ErrCode, err, operationID)
-	//callback.OnSuccess("")
+	if err != nil {
+		// log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsSetBackgroundStatus, timeout, u.loginUserID, resp)
+	}
 	return err
 }
 
@@ -503,7 +510,7 @@ func CheckToken(userID, token string, operationID string) (error, int64) {
 	return err, exp
 }
 
-func (u *LoginMgr) uploadImage(callback open_im_sdk_callback.Base, filePath string, token, obj string, operationID string) string {
+func (u *LoginMgr) uploadImage(ctx context.Context, filePath string, token, obj string) (string, error) {
 	p := ws.NewPostApi(token, u.ImConfig().ApiAddr)
 	var o comm3.ObjectStorage
 	switch obj {
@@ -516,24 +523,30 @@ func (u *LoginMgr) uploadImage(callback open_im_sdk_callback.Base, filePath stri
 	default:
 		o = comm2.NewCOS(p)
 	}
-	url, _, err := o.UploadImage(filePath, func(progress int) {
+	ch := make(chan struct{}, 1)
+	f := func(progress int) {
 		if progress == 100 {
-			callback.OnSuccess("")
+			ch <- struct{}{}
 		}
-	})
-	if err != nil {
-		log.Error(operationID, "UploadImage failed ", err.Error(), filePath)
-		return ""
 	}
-	return url
+	url, _, err := o.UploadImage(filePath, f)
+	if err != nil {
+		return "", err
+	}
+	for {
+		_ = <-ch
+		break
+	}
+	return url, nil
 }
 
-func (u LoginMgr) uploadFile(callback open_im_sdk_callback.SendMsgCallBack, filePath, operationID string) {
-	url, _, err := u.conversation.UploadFile(filePath, callback.OnProgress)
-	log.NewInfo(operationID, utils.GetSelfFuncName(), url)
-	if err != nil {
-		log.Error(operationID, "UploadImage failed ", err.Error(), filePath)
-		callback.OnError(constant.ErrApi.ErrCode, err.Error())
-	}
-	callback.OnSuccess(url)
+func (u LoginMgr) uploadFile(ctx context.Context, filePath string) (string, error) {
+	// url, _, err := u.conversation.UploadFile(filePath, callback.OnProgress)
+	// // log.NewInfo(operationID, utils.GetSelfFuncName(), url)
+	// if err != nil {
+	// 	log.Error(operationID, "UploadImage failed ", err.Error(), filePath)
+	// 	callback.OnError(constant.ErrApi.ErrCode, err.Error())
+	// }
+	// callback.OnSuccess(url)
+	return "", nil
 }

@@ -40,7 +40,7 @@ func (d *DataBase) BatchInsertExceptionMsg(ctx context.Context, messageList []*m
 	}
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.WithContext(ctx).Create(MessageList).Error, "BatchInsertMessageList failed")
+	return utils.Wrap(d.conn.WithContext(ctx).Create(messageList).Error, "BatchInsertMessageList failed")
 }
 func (d *DataBase) BatchInsertExceptionMsgController(ctx context.Context, messageList []*model_struct.LocalErrChatLog) error {
 	if len(messageList) == 0 {
@@ -48,9 +48,9 @@ func (d *DataBase) BatchInsertExceptionMsgController(ctx context.Context, messag
 	}
 	switch messageList[len(messageList)-1].SessionType {
 	case constant.SuperGroupChatType:
-		return d.SuperBatchInsertExceptionMsg(ctx, MessageList, MessageList[len(MessageList)-1].RecvID)
+		return d.SuperBatchInsertExceptionMsg(ctx, messageList, messageList[len(messageList)-1].RecvID)
 	default:
-		return d.BatchInsertExceptionMsg(ctx, MessageList)
+		return d.BatchInsertExceptionMsg(ctx, messageList)
 	}
 }
 func (d *DataBase) GetSuperGroupAbnormalMsgSeq(ctx context.Context, groupID string) (uint32, error) {
