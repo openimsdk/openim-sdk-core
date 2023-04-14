@@ -121,14 +121,14 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 	var newConversationList []*model_struct.LocalConversation
 	ccTime := time.Now()
 	// log.NewInfo(operationID, utils.GetSelfFuncName())
-	conversationsOnServer, err := c.getServerConversationList(operationID, timeout)
+	conversationsOnServer, err := c.getServerConversationList("", timeout)
 	if err != nil {
 		// log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		return
 	}
-	// log.Info(operationID, "get server cost time", time.Since(ccTime))
+	log.Info("", "get server cost time", time.Since(ccTime))
 	cTime := time.Now()
-	conversationsOnLocal, err := c.db.GetAllConversationListToSync()
+	conversationsOnLocal, err := c.db.GetAllConversationListToSync(ctx)
 	if err != nil {
 		// log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 	}
@@ -141,8 +141,8 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 	aInBNot, bInANot, sameA, sameB := common.CheckConversationListDiff(conversationsOnServerTempFormat, conversationsOnLocalTempFormat)
 	// log.Info(operationID, "diff server cost time", time.Since(cTime))
 
-	// log.NewInfo(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
-	// log.NewInfo(operationID, "server have", len(aInBNot), "local have", len(bInANot))
+	log.NewInfo("", "diff ", aInBNot, bInANot, sameA, sameB)
+	log.NewInfo("", "server have", len(aInBNot), "local have", len(bInANot))
 	// server有 local没有
 	// 可能是其他点开一下生成会话设置免打扰 插入到本地 不回调..
 	cTime = time.Now()
@@ -172,22 +172,22 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 		//	continue
 		//}
 	}
-	log.Info(operationID, "Assemble a new conversations cost time", time.Since(cTime))
+	log.Info("", "Assemble a new conversations cost time", time.Since(cTime))
 	//New conversation storage
 	cTime = time.Now()
-	err2 := c.db.BatchInsertConversationList(newConversationList)
+	err2 := c.db.BatchInsertConversationList(ctx, newConversationList)
 	if err2 != nil {
-		log.Error(operationID, "insert new conversation err:", err2.Error(), newConversationList)
+		log.Error("", "insert new conversation err:", err2.Error(), newConversationList)
 	}
-	log.Info(operationID, "batch insert cost time", time.Since(cTime))
+	log.Info("", "batch insert cost time", time.Since(cTime))
 	// 本地服务器有的会话 以服务器为准更新
 	cTime = time.Now()
 	var conversationChangedList []string
 	for _, index := range sameA {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "server and client both have", *conversationsOnServerLocalFormat[index])
-		err := c.db.UpdateConversationForSync(conversationsOnServerLocalFormat[index])
+		log.NewInfo("", utils.GetSelfFuncName(), "server and client both have", *conversationsOnServerLocalFormat[index])
+		err := c.db.UpdateConversationForSync(ctx, conversationsOnServerLocalFormat[index])
 		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "UpdateConversation failed ", err.Error(), *conversationsOnServerLocalFormat[index])
+			log.NewError("", utils.GetSelfFuncName(), "UpdateConversation failed ", err.Error(), *conversationsOnServerLocalFormat[index])
 			continue
 		}
 		conversationChangedList = append(conversationChangedList, conversationsOnServerLocalFormat[index].ConversationID)
@@ -195,10 +195,10 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 	// callback
 	if len(conversationChangedList) > 0 {
 		if err = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedList}, c.GetCh()); err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
+			log.NewError("", utils.GetSelfFuncName(), err.Error())
 		}
 	}
-	log.Info(operationID, "batch update cost time", time.Since(cTime))
+	log.Info("", "batch update cost time", time.Since(cTime))
 
 	// local有 server没有 代表没有修改公共字段
 	// for _, index := range bInANot {
@@ -206,7 +206,7 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 	// conversationsOnLocal[index].RecvMsgOpt, conversationsOnLocal[index].IsPinned, conversationsOnLocal[index].IsPrivateChat)
 	// }
 	cTime = time.Now()
-	conversationsOnLocal, err = c.db.GetAllConversationListToSync()
+	conversationsOnLocal, err = c.db.GetAllConversationListToSync(ctx)
 	if err != nil {
 		// log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 	}
@@ -214,15 +214,16 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 	// log.Info(operationID, "cache update cost time", time.Since(cTime))
 	// log.Info(operationID, utils.GetSelfFuncName(), "all  cost time", time.Since(ccTime))
 }
-func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) {
+func (c *Conversation) SyncConversationUnreadCount(operationID string) {
+	ctx := context.Background()
 	var conversationChangedList []string
 	allConversations := c.cache.GetAllHasUnreadMessageConversations()
 	log.Debug(operationID, "get unread message length is ", len(allConversations))
 	for _, conversation := range allConversations {
 		log.Debug(operationID, "has unread message conversation is:", *conversation)
-		if deleteRows := c.db.DeleteConversationUnreadMessageList(conversation.ConversationID, conversation.UpdateUnreadCountTime); deleteRows > 0 {
+		if deleteRows := c.db.DeleteConversationUnreadMessageList(ctx, conversation.ConversationID, conversation.UpdateUnreadCountTime); deleteRows > 0 {
 			log.Debug(operationID, conversation.ConversationID, conversation.UpdateUnreadCountTime, "delete rows:", deleteRows)
-			if err := c.db.DecrConversationUnreadCount(conversation.ConversationID, deleteRows); err != nil {
+			if err := c.db.DecrConversationUnreadCount(ctx, conversation.ConversationID, deleteRows); err != nil {
 				log.Debug(operationID, conversation.ConversationID, conversation.UpdateUnreadCountTime, "decr unread count err:", err.Error())
 			} else {
 				conversationChangedList = append(conversationChangedList, conversation.ConversationID)
@@ -236,23 +237,23 @@ func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) {
 	}
 
 }
-func (c *Conversation) FixVersionData() {
+func (c *Conversation) FixVersionData(ctx context.Context) {
 	switch constant.SdkVersion + constant.BigVersion + constant.UpdateVersion {
 	case "v2.0.0":
 		t := time.Now()
-		groupIDList, err := c.db.GetReadDiffusionGroupIDList()
+		groupIDList, err := c.db.GetReadDiffusionGroupIDList(ctx)
 		if err != nil {
 			log.Error("", "GetReadDiffusionGroupIDList failed ", err.Error())
 			return
 		}
 		log.Info("", "fix version data start", groupIDList)
 		for _, v := range groupIDList {
-			err := c.db.SuperGroupUpdateSpecificContentTypeMessage(constant.ReactionMessageModifier, v, map[string]interface{}{"status": constant.MsgStatusFiltered})
+			err := c.db.SuperGroupUpdateSpecificContentTypeMessage(ctx, constant.ReactionMessageModifier, v, map[string]interface{}{"status": constant.MsgStatusFiltered})
 			if err != nil {
 				log.Error("", "SuperGroupUpdateSpecificContentTypeMessage failed ", err.Error())
 				continue
 			}
-			msgList, err := c.db.SuperGroupSearchAllMessageByContentType(v, constant.ReactionMessageModifier)
+			msgList, err := c.db.SuperGroupSearchAllMessageByContentType(ctx, v, constant.ReactionMessageModifier)
 			if err != nil {
 				log.NewError("internal", "SuperGroupSearchMessageByContentTypeNotOffset failed", v, err.Error())
 				continue
@@ -268,7 +269,7 @@ func (c *Conversation) FixVersionData() {
 				reactionMsgIDList = append(reactionMsgIDList, n.ClientMsgID)
 			}
 			if len(reactionMsgIDList) > 0 {
-				err := c.db.SuperGroupUpdateGroupMessageFields(reactionMsgIDList, v, map[string]interface{}{"is_react": true})
+				err := c.db.SuperGroupUpdateGroupMessageFields(ctx, reactionMsgIDList, v, map[string]interface{}{"is_react": true})
 				if err != nil {
 					log.Error("internal", "unmarshal failed err:", err.Error(), reactionMsgIDList, v)
 					continue
@@ -518,7 +519,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 			if len(list) < req.Count {
 				var minSeq uint32
 				var maxSeq uint32
-				resp, err := c.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 2, c.loginUserID, operationID)
+				resp, err := c.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 2, c.loginUserID, "")
 				if err != nil {
 					//log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, 30, c.loginUserID)
 				} else {
