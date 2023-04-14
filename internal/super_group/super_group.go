@@ -88,7 +88,7 @@ func (s *SuperGroup) DoNotification(msg *api.MsgData, ch chan common.Cmd2Value, 
 	}
 }
 
-func (s *SuperGroup) getJoinedGroupListFromSvr(operationID string) ([]*api.GroupInfo, error) {
+func (s *SuperGroup) getJoinedGroupListFromSvr(ctx context.Context) ([]*api.GroupInfo, error) {
 	apiReq := api.GetJoinedSuperGroupReq{}
 	apiReq.OperationID = operationID
 	apiReq.FromUserID = s.loginUserID

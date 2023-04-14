@@ -20,7 +20,7 @@ func (u *User) SetSelfInfo(ctx context.Context, userInfo *sdkws.UserInfo) error 
 	return u.updateSelfUserInfo(ctx, userInfo)
 }
 
-func (u *User) updateMsgSenderInfo(ctx context.Context, nickname, faceURL string) (err error) {
+func (u *User) UpdateMsgSenderInfo(ctx context.Context, nickname, faceURL string) (err error) {
 	if nickname != "" {
 		if err = u.DataBase.UpdateMsgSenderNickname(ctx, u.loginUserID, nickname, constant.SingleChatType); err != nil {
 			return err
