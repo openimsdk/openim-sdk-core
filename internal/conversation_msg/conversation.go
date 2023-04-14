@@ -1618,22 +1618,28 @@ func (c *Conversation) deleteMessageFromSvr(ctx context.Context, s *sdk_struct.M
 
 }
 
-func (c *Conversation) clearMessageFromSvr(callback open_im_sdk_callback.Base, operationID string) {
-	var apiReq server_api_params.CleanUpMsgReq
+func (c *Conversation) clearMessageFromSvr(ctx context.Context) error {
+	var apiReq pbMsg.ClearMsgReq
 	apiReq.UserID = c.loginUserID
-	apiReq.OperationID = operationID
-	c.p.PostFatalCallback(callback, constant.ClearMsgRouter, apiReq, nil, apiReq.OperationID)
-	groupIDList, err := c.full.GetReadDiffusionGroupIDList(operationID)
-	common.CheckDBErrCallback(callback, err, operationID)
-	var superGroupApiReq server_api_params.DelSuperGroupMsgReq
+	err := util.ApiPost(ctx, constant.ClearMsgRouter, &apiReq, nil)
+	if err != nil {
+		return err
+	}
+	groupIDList, err := c.full.GetReadDiffusionGroupIDList(ctx)
+	if err != nil {
+		return err
+	}
+	var superGroupApiReq pbMsg.DelSuperGroupMsgReq
 	superGroupApiReq.UserID = c.loginUserID
-	superGroupApiReq.IsAllDelete = true
 	for _, v := range groupIDList {
 		superGroupApiReq.GroupID = v
-		superGroupApiReq.OperationID = operationID
-		c.p.PostFatalCallback(callback, constant.DeleteSuperGroupMsgRouter, apiReq, nil, apiReq.OperationID)
-		return
+		err := util.ApiPost(ctx, constant.DeleteSuperGroupMsgRouter, &superGroupApiReq, nil)
+		if err != nil {
+			//log.
+		}
+
 	}
+	return nil
 }
 
 func (c *Conversation) deleteMessageFromLocalStorage(ctx context.Context, s *sdk_struct.MsgStruct) error {
@@ -1975,29 +1981,38 @@ func (c *Conversation) deleteConversationAndMsgFromSvr(ctx context.Context, conv
 
 }
 
-func (c *Conversation) deleteAllMsgFromLocal(callback open_im_sdk_callback.Base, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName())
-	err := c.db.DeleteAllMessage()
-	common.CheckDBErrCallback(callback, err, operationID)
-	groupIDList, err := c.full.GetReadDiffusionGroupIDList(operationID)
-	common.CheckDBErrCallback(callback, err, operationID)
+func (c *Conversation) deleteAllMsgFromLocal(ctx context.Context) error {
+	//log.NewInfo(operationID, utils.GetSelfFuncName())
+	err := c.db.DeleteAllMessage(ctx)
+	if err != nil {
+		return err
+	}
+	groupIDList, err := c.full.GetReadDiffusionGroupIDList(ctx)
+	if err != nil {
+		return err
+	}
 	for _, v := range groupIDList {
-		err = c.db.SuperGroupDeleteAllMessage(v)
+		err = c.db.SuperGroupDeleteAllMessage(ctx, v)
 		if err != nil {
-			log.Error(operationID, "SuperGroupDeleteAllMessage err", err.Error())
+			//log.Error(operationID, "SuperGroupDeleteAllMessage err", err.Error())
 			continue
 		}
 	}
-	err = c.db.ClearAllConversation()
-	common.CheckDBErrCallback(callback, err, operationID)
-	conversationList, err := c.db.GetAllConversationListDB()
-	common.CheckDBErrCallback(callback, err, operationID)
+	err = c.db.ClearAllConversation(ctx)
+	if err != nil {
+		return err
+	}
+	conversationList, err := c.db.GetAllConversationListDB(ctx)
+	if err != nil {
+		return err
+	}
 	var cidList []string
 	for _, conversation := range conversationList {
 		cidList = append(cidList, conversation.ConversationID)
 	}
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: cidList}, c.GetCh())
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
+	return nil
 
 }
 
@@ -2040,17 +2055,19 @@ func DeleteUserReactionElem(a []*sdk_struct.UserReactionElem, userID string) []*
 	}
 	return a[:j]
 }
-func (c *Conversation) setMessageReactionExtensions(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, req sdk.SetMessageReactionExtensionsParams, operationID string) []*server_api_params.ExtensionResult {
-	message, err := c.db.GetMessageController(s)
-	common.CheckDBErrCallback(callback, err, operationID)
+func (c *Conversation) setMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, req sdk.SetMessageReactionExtensionsParams) ([]*server_api_params.ExtensionResult, error) {
+	message, err := c.db.GetMessageController(ctx, s)
+	if err != nil {
+		return nil, err
+	}
 	if message.Status != constant.MsgStatusSendSuccess {
-		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
+		return nil, errors.New("only send success message can modify reaction extensions")
 	}
 	if message.SessionType != constant.SuperGroupChatType {
-		common.CheckAnyErrCallback(callback, 202, errors.New("currently only support super group message"), operationID)
+		return nil, errors.New("currently only support super group message")
 
 	}
-	extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
+	extendMsg, _ := c.db.GetMessageReactionExtension(ctx, message.ClientMsgID)
 	temp := make(map[string]*server_api_params.KeyValue)
 	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
 	reqTemp := make(map[string]*server_api_params.KeyValue)
@@ -2080,14 +2097,17 @@ func (c *Conversation) setMessageReactionExtensions(callback open_im_sdk_callbac
 	apiReq.SessionType = message.SessionType
 	apiReq.IsExternalExtensions = message.IsExternalExtensions
 	apiReq.ReactionExtensionList = reqTemp
-	apiReq.OperationID = operationID
+	apiReq.OperationID = ""
 	apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
 	var apiResp server_api_params.SetMessageReactionExtensionsResp
-	c.p.PostFatalCallback(callback, constant.SetMessageReactionExtensionsRouter, apiReq, &apiResp.ApiResult, apiReq.OperationID)
+	resp, err := util.CallApi[apiResp.ApiResult](ctx, constant.SetMessageReactionExtensionsRouter, &apiReq)
+	if err != nil {
+		return nil, err
+	}
 	var msg model_struct.LocalChatLogReactionExtensions
 	msg.ClientMsgID = message.ClientMsgID
 	resultKeyMap := make(map[string]*server_api_params.KeyValue)
-	for _, v := range apiResp.ApiResult.Result {
+	for _, v := range resp.Result {
 		if v.ErrCode == 0 {
 			temp := new(server_api_params.KeyValue)
 			temp.TypeKey = v.TypeKey
@@ -2096,7 +2116,7 @@ func (c *Conversation) setMessageReactionExtensions(callback open_im_sdk_callbac
 			resultKeyMap[v.TypeKey] = temp
 		}
 	}
-	err = c.db.GetAndUpdateMessageReactionExtension(message.ClientMsgID, resultKeyMap)
+	err = c.db.GetAndUpdateMessageReactionExtension(ctx, message.ClientMsgID, resultKeyMap)
 	if err != nil {
 		log.Error(operationID, "GetAndUpdateMessageReactionExtension err:", err.Error())
 	}

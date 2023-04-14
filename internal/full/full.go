@@ -90,7 +90,7 @@ func (u *Full) GetGroupInfoFromLocal2Svr(ctx context.Context, groupID string, se
 		return nil, fmt.Errorf("sessionType is not support %d", sessionType)
 	}
 }
-func (u *Full) GetReadDiffusionGroupIDList(operationID string) ([]string, error) {
+func (u *Full) GetReadDiffusionGroupIDList(ctx context.Context) ([]string, error) {
 	g1, err1 := u.group.GetJoinedDiffusionGroupIDListFromSvr(operationID)
 	g2, err2 := u.SuperGroup.GetJoinedGroupIDListFromSvr(operationID)
 	var groupIDList []string

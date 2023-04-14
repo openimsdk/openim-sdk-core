@@ -1,6 +1,9 @@
 package open_im_sdk
 
-import "open_im_sdk/open_im_sdk_callback"
+import (
+	"bytes"
+	"open_im_sdk/open_im_sdk_callback"
+)
 
 func GetAllConversationList(callback open_im_sdk_callback.Base, operationID string) {
 	call(callback, operationID, userForSDK.Conversation().GetAllConversationList)
@@ -124,6 +127,15 @@ func CreateFaceMessage(operationID string, index int, data string) string {
 }
 func CreateForwardMessage(operationID string, m string) string {
 	return syncCall(operationID, userForSDK.Conversation().CreateForwardMessage, m)
+}
+func SendMessage(callback open_im_sdk_callback.SendMsgCallBack, operationID, message, recvID, groupID, offlinePushInfo string) {
+	messageCall(callback, operationID, userForSDK.Conversation().SendMessage, message, recvID, groupID, offlinePushInfo)
+}
+func SendMessageNotOss(callback open_im_sdk_callback.SendMsgCallBack, operationID string, message, recvID, groupID string, offlinePushInfo string) {
+	messageCall(callback, operationID, userForSDK.Conversation().SendMessageNotOss, message, recvID, groupID, offlinePushInfo)
+}
+func SendMessageByBuffer(callback open_im_sdk_callback.SendMsgCallBack, operationID string, message, recvID, groupID string, offlinePushInfo string, buffer1, buffer2 *bytes.Buffer) {
+	messageCall(callback, operationID, userForSDK.Conversation().SendMessageByBuffer, message, recvID, groupID, offlinePushInfo, buffer1, buffer2)
 }
 
 func FindMessageList(callback open_im_sdk_callback.Base, operationID string, findMessageOptions string) {
