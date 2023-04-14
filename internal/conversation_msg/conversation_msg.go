@@ -238,7 +238,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		switch v.SessionType {
 		case constant.SingleChatType:
 			if v.ContentType > constant.FriendNotificationBegin && v.ContentType < constant.FriendNotificationEnd {
-				c.friend.DoNotification(v, c.GetCh())
+				c.friend.DoNotification(ctx, v)
 				log.Info(operationID, "DoFriendMsg SingleChatType", v)
 			} else if v.ContentType > constant.UserNotificationBegin && v.ContentType < constant.UserNotificationEnd {
 				log.Info(operationID, "DoFriendMsg  DoUserMsg SingleChatType", v)
@@ -248,7 +248,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				v.ContentType == constant.GroupApplicationAcceptedNotification ||
 				v.ContentType == constant.JoinGroupApplicationNotification {
 				log.Info(operationID, "DoGroupMsg SingleChatType", v)
-				c.group.DoNotification(ctx, v, c.GetCh())
+				c.group.DoNotification(ctx, v)
 			} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
 				log.Info(operationID, "signaling DoNotification ", v)
 				c.signaling.DoNotification(v, c.GetCh(), operationID)
@@ -259,7 +259,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			}
 		case constant.GroupChatType, constant.SuperGroupChatType:
 			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
-				c.group.DoNotification(ctx, v, c.GetCh())
+				c.group.DoNotification(ctx, v)
 				log.Info(operationID, "DoGroupMsg SingleChatType", v)
 			} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
 				log.Info(operationID, "signaling DoNotification ", v)
@@ -654,7 +654,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 		switch v.SessionType {
 		case constant.SingleChatType:
 			if v.ContentType > constant.FriendNotificationBegin && v.ContentType < constant.FriendNotificationEnd {
-				c.friend.DoNotification(v, c.GetCh())
+				c.friend.DoNotification(ctx, v)
 				log.Info(operationID, "DoFriendMsg SingleChatType", v)
 			} else if v.ContentType > constant.UserNotificationBegin && v.ContentType < constant.UserNotificationEnd {
 				log.Info(operationID, "DoFriendMsg  DoUserMsg SingleChatType", v)
@@ -664,7 +664,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 				v.ContentType == constant.GroupApplicationAcceptedNotification ||
 				v.ContentType == constant.JoinGroupApplicationNotification {
 				log.Info(operationID, "DoGroupMsg SingleChatType", v)
-				c.group.DoNotification(ctx, v, c.GetCh())
+				c.group.DoNotification(ctx, v)
 			} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
 				log.Info(operationID, "signaling DoNotification ", v)
 				c.signaling.DoNotification(v, c.GetCh(), operationID)
@@ -675,7 +675,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 			}
 		case constant.GroupChatType, constant.SuperGroupChatType:
 			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
-				c.group.DoNotification(ctx, v, c.GetCh())
+				c.group.DoNotification(ctx, v)
 				log.Info(operationID, "DoGroupMsg SingleChatType", v)
 			} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
 				log.Info(operationID, "signaling DoNotification ", v)
@@ -1491,7 +1491,7 @@ func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
 	}
 	node := c2v.Value.(common.DeleteConNode)
 	//Mark messages related to this conversation for deletion
-	err := c.db.UpdateMessageStatusBySourceID(node.SourceID, constant.MsgStatusHasDeleted, int32(node.SessionType))
+	err := c.db.UpdateMessageStatusBySourceID(context.Background(), node.SourceID, constant.MsgStatusHasDeleted, int32(node.SessionType))
 	if err != nil {
 		log.Error("internal", "setMessageStatusBySourceID err:", err.Error())
 		return
@@ -1579,7 +1579,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		if err == nil {
 			log.Info("this is old conversation", *oc)
 			if lc.LatestMsgSendTime >= oc.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
-				err := c.db.UpdateColumnsConversation(node.ConID, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
+				err := c.db.UpdateColumnsConversation(nil, node.ConID, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
 				if err != nil {
 					log.Error("internal", "updateConversationLatestMsgModel err: ", err)
 				} else {
@@ -1676,7 +1676,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			} else {
 				latestMsg.IsRead = true
 				newLatestMessage := utils.StructToJsonString(latestMsg)
-				err = c.db.UpdateColumnsConversation(node.ConID, map[string]interface{}{"latest_msg_send_time": latestMsg.SendTime, "latest_msg": newLatestMessage})
+				err = c.db.UpdateColumnsConversation(nil, node.ConID, map[string]interface{}{"latest_msg_send_time": latestMsg.SendTime, "latest_msg": newLatestMessage})
 				if err != nil {
 					log.Error("internal", "updateConversationLatestMsgModel err :", err.Error())
 				}
@@ -2258,7 +2258,7 @@ func (c *Conversation) addFaceURLAndName(lc *model_struct.LocalConversation) {
 		lc.ShowName = name
 
 	case constant.GroupChatType, constant.SuperGroupChatType:
-		g, err := c.full.GetGroupInfoFromLocal2Svr(lc.GroupID, lc.ConversationType)
+		g, err := c.full.GetGroupInfoFromLocal2Svr(nil, lc.GroupID, lc.ConversationType)
 		if err != nil {
 			log.Error(operationID, "GetGroupInfoByGroupID err", err.Error(), lc.GroupID, lc.ConversationType)
 			return

@@ -47,7 +47,7 @@ func (m *ReadDiffusionGroupMsgSync) updateJoinedSuperGroup() {
 			} else {
 				operationID := cmd.Value.(sdk_struct.CmdJoinedSuperGroup).OperationID
 				log.Info(operationID, "updateJoinedSuperGroup cmd: ", cmd)
-				g, err := m.GetReadDiffusionGroupIDList()
+				g, err := m.GetReadDiffusionGroupIDList(nil)
 				if err == nil {
 					log.Info(operationID, "GetReadDiffusionGroupIDList, group id list: ", g)
 					m.superGroupMtx.Lock()
@@ -64,7 +64,7 @@ func (m *ReadDiffusionGroupMsgSync) updateJoinedSuperGroup() {
 
 // 读取所有的读扩散群id，并加载seq到map中，初始化调用一次， 群列表变化时调用一次  ok
 func (m *ReadDiffusionGroupMsgSync) compareSeq(operationID string) {
-	g, err := m.GetReadDiffusionGroupIDList()
+	g, err := m.GetReadDiffusionGroupIDList(nil)
 	if err != nil {
 		log.Error(operationID, "GetReadDiffusionGroupIDList failed ", err.Error())
 		return
@@ -79,11 +79,11 @@ func (m *ReadDiffusionGroupMsgSync) compareSeq(operationID string) {
 
 	defer m.superGroupMtx.Unlock()
 	for _, v := range m.SuperGroupIDList {
-		n, err := m.GetSuperGroupNormalMsgSeq(v)
+		n, err := m.GetSuperGroupNormalMsgSeq(nil, v)
 		if err != nil {
 			log.Error(operationID, "GetSuperGroupNormalMsgSeq failed ", err.Error(), v)
 		}
-		a, err := m.GetSuperGroupAbnormalMsgSeq(v)
+		a, err := m.GetSuperGroupAbnormalMsgSeq(nil, v)
 		if err != nil {
 			log.Error(operationID, "GetSuperGroupAbnormalMsgSeq failed ", err.Error(), v)
 		}

@@ -16,6 +16,7 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sort"
+	"strings"
 	"time"
 
 	pbConversation "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
@@ -2069,210 +2070,212 @@ func (c *Conversation) getMessageListReactionExtensions(ctx context.Context, mes
 
 }
 
-//func (c *Conversation) getMessageListSomeReactionExtensions(callback open_im_sdk_callback.Base, messageList []*sdk_struct.MsgStruct, keyList []string, operationID string) server_api_params.GetMessageListReactionExtensionsResp {
-//	if len(messageList) == 0 {
-//		common.CheckAnyErrCallback(callback, 201, errors.New("message list is null"), operationID)
-//	}
-//	var msgIDList []string
-//	var sourceID string
-//	var sessionType int32
-//	var isExternalExtension bool
-//	for _, msgStruct := range messageList {
-//		switch msgStruct.SessionType {
-//		case constant.SingleChatType:
-//			if msgStruct.SendID == c.loginUserID {
+//	func (c *Conversation) getMessageListSomeReactionExtensions(callback open_im_sdk_callback.Base, messageList []*sdk_struct.MsgStruct, keyList []string, operationID string) server_api_params.GetMessageListReactionExtensionsResp {
+//		if len(messageList) == 0 {
+//			common.CheckAnyErrCallback(callback, 201, errors.New("message list is null"), operationID)
+//		}
+//		var msgIDList []string
+//		var sourceID string
+//		var sessionType int32
+//		var isExternalExtension bool
+//		for _, msgStruct := range messageList {
+//			switch msgStruct.SessionType {
+//			case constant.SingleChatType:
+//				if msgStruct.SendID == c.loginUserID {
+//					sourceID = msgStruct.RecvID
+//				} else {
+//					sourceID = msgStruct.SendID
+//				}
+//			case constant.NotificationChatType:
 //				sourceID = msgStruct.RecvID
-//			} else {
-//				sourceID = msgStruct.SendID
+//			case constant.GroupChatType, constant.SuperGroupChatType:
+//				sourceID = msgStruct.GroupID
 //			}
-//		case constant.NotificationChatType:
-//			sourceID = msgStruct.RecvID
-//		case constant.GroupChatType, constant.SuperGroupChatType:
-//			sourceID = msgStruct.GroupID
+//			sessionType = msgStruct.SessionType
+//			isExternalExtension = msgStruct.IsExternalExtensions
+//			msgIDList = append(msgIDList, msgStruct.ClientMsgID)
 //		}
-//		sessionType = msgStruct.SessionType
-//		isExternalExtension = msgStruct.IsExternalExtensions
-//		msgIDList = append(msgIDList, msgStruct.ClientMsgID)
-//	}
-//	localMessageList, err := c.db.GetMultipleMessageController(msgIDList, sourceID, sessionType)
-//	common.CheckDBErrCallback(callback, err, operationID)
-//	var result server_api_params.GetMessageListReactionExtensionsResp
-//	extendMsgs, _ := c.db.GetMultipleMessageReactionExtension(msgIDList)
-//	for _, v := range extendMsgs {
-//		var singleResult server_api_params.SingleMessageExtensionResult
-//		temp := make(map[string]*server_api_params.KeyValue)
-//		_ = json.Unmarshal(v.LocalReactionExtensions, &temp)
-//		for s, _ := range temp {
-//			if !utils.IsContain(s, keyList) {
-//				delete(temp, s)
+//		localMessageList, err := c.db.GetMultipleMessageController(msgIDList, sourceID, sessionType)
+//		common.CheckDBErrCallback(callback, err, operationID)
+//		var result server_api_params.GetMessageListReactionExtensionsResp
+//		extendMsgs, _ := c.db.GetMultipleMessageReactionExtension(msgIDList)
+//		for _, v := range extendMsgs {
+//			var singleResult server_api_params.SingleMessageExtensionResult
+//			temp := make(map[string]*server_api_params.KeyValue)
+//			_ = json.Unmarshal(v.LocalReactionExtensions, &temp)
+//			for s, _ := range temp {
+//				if !utils.IsContain(s, keyList) {
+//					delete(temp, s)
+//				}
 //			}
+//			singleResult.ClientMsgID = v.ClientMsgID
+//			singleResult.ReactionExtensionList = temp
+//			result = append(result, &singleResult)
 //		}
-//		singleResult.ClientMsgID = v.ClientMsgID
-//		singleResult.ReactionExtensionList = temp
-//		result = append(result, &singleResult)
+//		args := syncReactionExtensionParams{}
+//		args.MessageList = localMessageList
+//		args.SourceID = sourceID
+//		args.TypeKeyList = keyList
+//		args.SessionType = sessionType
+//		args.ExtendMessageList = extendMsgs
+//		args.IsExternalExtension = isExternalExtension
+//		_ = common.TriggerCmdSyncReactionExtensions(common.SyncReactionExtensionsNode{
+//			OperationID: operationID,
+//			Action:      constant.SyncMessageListReactionExtensions,
+//			Args:        args,
+//		}, c.GetCh())
+//		return result
 //	}
-//	args := syncReactionExtensionParams{}
-//	args.MessageList = localMessageList
-//	args.SourceID = sourceID
-//	args.TypeKeyList = keyList
-//	args.SessionType = sessionType
-//	args.ExtendMessageList = extendMsgs
-//	args.IsExternalExtension = isExternalExtension
-//	_ = common.TriggerCmdSyncReactionExtensions(common.SyncReactionExtensionsNode{
-//		OperationID: operationID,
-//		Action:      constant.SyncMessageListReactionExtensions,
-//		Args:        args,
-//	}, c.GetCh())
-//	return result
-//}
 //
-//func (c *Conversation) setTypeKeyInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, typeKey, ex string, isCanRepeat bool, operationID string) []*server_api_params.ExtensionResult {
-//	message, err := c.db.GetMessageController(s)
-//	common.CheckDBErrCallback(callback, err, operationID)
-//	if message.Status != constant.MsgStatusSendSuccess {
-//		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
-//	}
-//	extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
-//	temp := make(map[string]*server_api_params.KeyValue)
-//	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
-//	var flag bool
-//	var isContainSelfK string
-//	var dbIsCanRepeat bool
-//	var deletedKeyValue server_api_params.KeyValue
-//	var maxTypeKey string
-//	var maxTypeKeyValue server_api_params.KeyValue
-//	reqTemp := make(map[string]*server_api_params.KeyValue)
-//	for k, v := range temp {
-//		if strings.HasPrefix(k, typeKey) {
-//			flag = true
-//			singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
-//			_ = json.Unmarshal([]byte(v.Value), singleTypeKeyInfo)
-//			if _, ok := singleTypeKeyInfo.InfoList[c.loginUserID]; ok {
-//				isContainSelfK = k
-//				dbIsCanRepeat = singleTypeKeyInfo.IsCanRepeat
-//				delete(singleTypeKeyInfo.InfoList, c.loginUserID)
-//				singleTypeKeyInfo.Counter--
-//				deletedKeyValue.TypeKey = v.TypeKey
-//				deletedKeyValue.Value = utils.StructToJsonString(singleTypeKeyInfo)
-//				deletedKeyValue.LatestUpdateTime = v.LatestUpdateTime
-//			}
-//			if k > maxTypeKey {
-//				maxTypeKey = k
-//				maxTypeKeyValue = *v
+//	func (c *Conversation) setTypeKeyInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, typeKey, ex string, isCanRepeat bool, operationID string) []*server_api_params.ExtensionResult {
+//		message, err := c.db.GetMessageController(s)
+//		common.CheckDBErrCallback(callback, err, operationID)
+//		if message.Status != constant.MsgStatusSendSuccess {
+//			common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
+//		}
+//		extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
+//		temp := make(map[string]*server_api_params.KeyValue)
+//		_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
+//		var flag bool
+//		var isContainSelfK string
+//		var dbIsCanRepeat bool
+//		var deletedKeyValue server_api_params.KeyValue
+//		var maxTypeKey string
+//		var maxTypeKeyValue server_api_params.KeyValue
+//		reqTemp := make(map[string]*server_api_params.KeyValue)
+//		for k, v := range temp {
+//			if strings.HasPrefix(k, typeKey) {
+//				flag = true
+//				singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
+//				_ = json.Unmarshal([]byte(v.Value), singleTypeKeyInfo)
+//				if _, ok := singleTypeKeyInfo.InfoList[c.loginUserID]; ok {
+//					isContainSelfK = k
+//					dbIsCanRepeat = singleTypeKeyInfo.IsCanRepeat
+//					delete(singleTypeKeyInfo.InfoList, c.loginUserID)
+//					singleTypeKeyInfo.Counter--
+//					deletedKeyValue.TypeKey = v.TypeKey
+//					deletedKeyValue.Value = utils.StructToJsonString(singleTypeKeyInfo)
+//					deletedKeyValue.LatestUpdateTime = v.LatestUpdateTime
+//				}
+//				if k > maxTypeKey {
+//					maxTypeKey = k
+//					maxTypeKeyValue = *v
+//				}
 //			}
 //		}
-//	}
-//	if !flag {
-//		if len(temp) >= 300 {
-//			common.CheckAnyErrCallback(callback, 202, errors.New("number of keys only can support 300"), operationID)
-//		}
-//		singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
-//		singleTypeKeyInfo.TypeKey = getIndexTypeKey(typeKey, 0)
-//		singleTypeKeyInfo.Counter = 1
-//		singleTypeKeyInfo.IsCanRepeat = isCanRepeat
-//		singleTypeKeyInfo.Index = 0
-//		userInfo := new(sdk.Info)
-//		userInfo.UserID = c.loginUserID
-//		userInfo.Ex = ex
-//		singleTypeKeyInfo.InfoList[c.loginUserID] = userInfo
-//		keyValue := new(server_api_params.KeyValue)
-//		keyValue.TypeKey = singleTypeKeyInfo.TypeKey
-//		keyValue.Value = utils.StructToJsonString(singleTypeKeyInfo)
-//		reqTemp[singleTypeKeyInfo.TypeKey] = keyValue
-//	} else {
-//		if isContainSelfK != "" && !dbIsCanRepeat {
-//			//删除操作
-//			reqTemp[isContainSelfK] = &deletedKeyValue
-//		} else {
+//		if !flag {
+//			if len(temp) >= 300 {
+//				common.CheckAnyErrCallback(callback, 202, errors.New("number of keys only can support 300"), operationID)
+//			}
 //			singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
-//			_ = json.Unmarshal([]byte(maxTypeKeyValue.Value), singleTypeKeyInfo)
+//			singleTypeKeyInfo.TypeKey = getIndexTypeKey(typeKey, 0)
+//			singleTypeKeyInfo.Counter = 1
+//			singleTypeKeyInfo.IsCanRepeat = isCanRepeat
+//			singleTypeKeyInfo.Index = 0
 //			userInfo := new(sdk.Info)
 //			userInfo.UserID = c.loginUserID
 //			userInfo.Ex = ex
-//			singleTypeKeyInfo.Counter++
 //			singleTypeKeyInfo.InfoList[c.loginUserID] = userInfo
-//			maxTypeKeyValue.Value = utils.StructToJsonString(singleTypeKeyInfo)
-//			data, _ := json.Marshal(maxTypeKeyValue)
-//			if len(data) > 1000 { //单key超过了1kb
-//				if len(temp) >= 300 {
-//					common.CheckAnyErrCallback(callback, 202, errors.New("number of keys only can support 300"), operationID)
-//				}
-//				newSingleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
-//				newSingleTypeKeyInfo.TypeKey = getIndexTypeKey(typeKey, singleTypeKeyInfo.Index+1)
-//				newSingleTypeKeyInfo.Counter = 1
-//				newSingleTypeKeyInfo.IsCanRepeat = singleTypeKeyInfo.IsCanRepeat
-//				newSingleTypeKeyInfo.Index = singleTypeKeyInfo.Index + 1
+//			keyValue := new(server_api_params.KeyValue)
+//			keyValue.TypeKey = singleTypeKeyInfo.TypeKey
+//			keyValue.Value = utils.StructToJsonString(singleTypeKeyInfo)
+//			reqTemp[singleTypeKeyInfo.TypeKey] = keyValue
+//		} else {
+//			if isContainSelfK != "" && !dbIsCanRepeat {
+//				//删除操作
+//				reqTemp[isContainSelfK] = &deletedKeyValue
+//			} else {
+//				singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
+//				_ = json.Unmarshal([]byte(maxTypeKeyValue.Value), singleTypeKeyInfo)
 //				userInfo := new(sdk.Info)
 //				userInfo.UserID = c.loginUserID
 //				userInfo.Ex = ex
-//				newSingleTypeKeyInfo.InfoList[c.loginUserID] = userInfo
-//				keyValue := new(server_api_params.KeyValue)
-//				keyValue.TypeKey = newSingleTypeKeyInfo.TypeKey
-//				keyValue.Value = utils.StructToJsonString(newSingleTypeKeyInfo)
-//				reqTemp[singleTypeKeyInfo.TypeKey] = keyValue
-//			} else {
-//				reqTemp[maxTypeKey] = &maxTypeKeyValue
+//				singleTypeKeyInfo.Counter++
+//				singleTypeKeyInfo.InfoList[c.loginUserID] = userInfo
+//				maxTypeKeyValue.Value = utils.StructToJsonString(singleTypeKeyInfo)
+//				data, _ := json.Marshal(maxTypeKeyValue)
+//				if len(data) > 1000 { //单key超过了1kb
+//					if len(temp) >= 300 {
+//						common.CheckAnyErrCallback(callback, 202, errors.New("number of keys only can support 300"), operationID)
+//					}
+//					newSingleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
+//					newSingleTypeKeyInfo.TypeKey = getIndexTypeKey(typeKey, singleTypeKeyInfo.Index+1)
+//					newSingleTypeKeyInfo.Counter = 1
+//					newSingleTypeKeyInfo.IsCanRepeat = singleTypeKeyInfo.IsCanRepeat
+//					newSingleTypeKeyInfo.Index = singleTypeKeyInfo.Index + 1
+//					userInfo := new(sdk.Info)
+//					userInfo.UserID = c.loginUserID
+//					userInfo.Ex = ex
+//					newSingleTypeKeyInfo.InfoList[c.loginUserID] = userInfo
+//					keyValue := new(server_api_params.KeyValue)
+//					keyValue.TypeKey = newSingleTypeKeyInfo.TypeKey
+//					keyValue.Value = utils.StructToJsonString(newSingleTypeKeyInfo)
+//					reqTemp[singleTypeKeyInfo.TypeKey] = keyValue
+//				} else {
+//					reqTemp[maxTypeKey] = &maxTypeKeyValue
+//				}
+//
 //			}
-//
 //		}
-//	}
-//	var sourceID string
-//	switch message.SessionType {
-//	case constant.SingleChatType:
-//		sourceID = message.SendID + message.RecvID
-//	case constant.NotificationChatType:
-//		sourceID = message.RecvID
-//	case constant.GroupChatType, constant.SuperGroupChatType:
-//		sourceID = message.RecvID
-//	}
-//	var apiReq server_api_params.SetMessageReactionExtensionsReq
-//	apiReq.IsReact = message.IsReact
-//	apiReq.ClientMsgID = message.ClientMsgID
-//	apiReq.SourceID = sourceID
-//	apiReq.SessionType = message.SessionType
-//	apiReq.IsExternalExtensions = message.IsExternalExtensions
-//	apiReq.ReactionExtensionList = reqTemp
-//	apiReq.OperationID = operationID
-//	apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
-//	var apiResp server_api_params.SetMessageReactionExtensionsResp
-//	c.p.PostFatalCallback(callback, constant.SetMessageReactionExtensionsRouter, apiReq, &apiResp.ApiResult, apiReq.OperationID)
-//	var msg model_struct.LocalChatLogReactionExtensions
-//	msg.ClientMsgID = message.ClientMsgID
-//	resultKeyMap := make(map[string]*server_api_params.KeyValue)
-//	for _, v := range apiResp.ApiResult.Result {
-//		if v.ErrCode == 0 {
-//			temp := new(server_api_params.KeyValue)
-//			temp.TypeKey = v.TypeKey
-//			temp.Value = v.Value
-//			temp.LatestUpdateTime = v.LatestUpdateTime
-//			resultKeyMap[v.TypeKey] = temp
+//		var sourceID string
+//		switch message.SessionType {
+//		case constant.SingleChatType:
+//			sourceID = message.SendID + message.RecvID
+//		case constant.NotificationChatType:
+//			sourceID = message.RecvID
+//		case constant.GroupChatType, constant.SuperGroupChatType:
+//			sourceID = message.RecvID
 //		}
-//	}
-//	err = c.db.GetAndUpdateMessageReactionExtension(message.ClientMsgID, resultKeyMap)
-//	if err != nil {
-//		log.Error(operationID, "GetAndUpdateMessageReactionExtension err:", err.Error())
-//	}
-//	if !message.IsReact {
-//		message.IsReact = apiResp.ApiResult.IsReact
-//		message.MsgFirstModifyTime = apiResp.ApiResult.MsgFirstModifyTime
-//		err = c.db.UpdateMessageController(message)
+//		var apiReq server_api_params.SetMessageReactionExtensionsReq
+//		apiReq.IsReact = message.IsReact
+//		apiReq.ClientMsgID = message.ClientMsgID
+//		apiReq.SourceID = sourceID
+//		apiReq.SessionType = message.SessionType
+//		apiReq.IsExternalExtensions = message.IsExternalExtensions
+//		apiReq.ReactionExtensionList = reqTemp
+//		apiReq.OperationID = operationID
+//		apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
+//		var apiResp server_api_params.SetMessageReactionExtensionsResp
+//		c.p.PostFatalCallback(callback, constant.SetMessageReactionExtensionsRouter, apiReq, &apiResp.ApiResult, apiReq.OperationID)
+//		var msg model_struct.LocalChatLogReactionExtensions
+//		msg.ClientMsgID = message.ClientMsgID
+//		resultKeyMap := make(map[string]*server_api_params.KeyValue)
+//		for _, v := range apiResp.ApiResult.Result {
+//			if v.ErrCode == 0 {
+//				temp := new(server_api_params.KeyValue)
+//				temp.TypeKey = v.TypeKey
+//				temp.Value = v.Value
+//				temp.LatestUpdateTime = v.LatestUpdateTime
+//				resultKeyMap[v.TypeKey] = temp
+//			}
+//		}
+//		err = c.db.GetAndUpdateMessageReactionExtension(message.ClientMsgID, resultKeyMap)
 //		if err != nil {
-//			log.Error(operationID, "UpdateMessageController err:", err.Error(), message)
-//
+//			log.Error(operationID, "GetAndUpdateMessageReactionExtension err:", err.Error())
 //		}
+//		if !message.IsReact {
+//			message.IsReact = apiResp.ApiResult.IsReact
+//			message.MsgFirstModifyTime = apiResp.ApiResult.MsgFirstModifyTime
+//			err = c.db.UpdateMessageController(message)
+//			if err != nil {
+//				log.Error(operationID, "UpdateMessageController err:", err.Error(), message)
+//
+//			}
+//		}
+//		return apiResp.ApiResult.Result
 //	}
-//	return apiResp.ApiResult.Result
-//}
-//func getIndexTypeKey(typeKey string, index int) string {
-//	return typeKey + "$" + utils.IntToString(index)
-//}
-//func getPrefixTypeKey(typeKey string) string {
-//	list := strings.Split(typeKey, "$")
-//	if len(list) > 0 {
-//		return list[0]
+//
+//	func getIndexTypeKey(typeKey string, index int) string {
+//		return typeKey + "$" + utils.IntToString(index)
 //	}
-//	return ""
-//}
+func getPrefixTypeKey(typeKey string) string {
+	list := strings.Split(typeKey, "$")
+	if len(list) > 0 {
+		return list[0]
+	}
+	return ""
+}
+
 //func (c *Conversation) getTypeKeyListInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, keyList []string, operationID string) (result []*sdk.SingleTypeKeyInfoSum) {
 //	message, err := c.db.GetMessageController(s)
 //	common.CheckDBErrCallback(callback, err, operationID)
