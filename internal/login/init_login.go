@@ -317,10 +317,10 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	}
 	// log.Debug(operationID, "SyncConversations begin ")
 	u.conversation.SyncConversations(ctx, time.Second*2)
-	go u.conversation.SyncConversationUnreadCount(ctx)
+	go u.conversation.SyncConversationUnreadCount(mcontext.GetOperationID(ctx))
 	go common.DoListener(u.conversation)
 	// log.Debug(operationID, "SyncConversations end ")
-	go u.conversation.FixVersionData()
+	go u.conversation.FixVersionData(ctx)
 	// log.Info(operationID, "ws heartbeat end ")
 
 	// log.Info(operationID, "login success...", "login cost time: ", time.Since(t1))
@@ -408,7 +408,7 @@ func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool
 	timeout := 5
 	retryTimes := 2
 	// log.Info(operationID, "send to svr WsSetBackgroundStatus ...", u.loginUserID)
-	_, err := u.ws.SendReqWaitResp(&server_api_params.SetAppBackgroundStatusReq{UserID: u.loginUserID, IsBackground: isBackground}, constant.WsSetBackgroundStatus, timeout, retryTimes, u.loginUserID, mcontext.GetOperationID(ctx))
+	_, err := u.ws.SendReqWaitResp(ctx, &server_api_params.SetAppBackgroundStatusReq{UserID: u.loginUserID, IsBackground: isBackground}, constant.WsSetBackgroundStatus, timeout, retryTimes, u.loginUserID)
 	if err != nil {
 		// log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsSetBackgroundStatus, timeout, u.loginUserID, resp)
 	}
@@ -541,11 +541,12 @@ func (u *LoginMgr) uploadImage(ctx context.Context, filePath string, token, obj 
 }
 
 func (u LoginMgr) uploadFile(ctx context.Context, filePath string) (string, error) {
-	url, _, err := u.conversation.UploadFile(filePath, callback.OnProgress)
-	// log.NewInfo(operationID, utils.GetSelfFuncName(), url)
-	if err != nil {
-		log.Error(operationID, "UploadImage failed ", err.Error(), filePath)
-		callback.OnError(constant.ErrApi.ErrCode, err.Error())
-	}
-	callback.OnSuccess(url)
+	// url, _, err := u.conversation.UploadFile(filePath, callback.OnProgress)
+	// // log.NewInfo(operationID, utils.GetSelfFuncName(), url)
+	// if err != nil {
+	// 	log.Error(operationID, "UploadImage failed ", err.Error(), filePath)
+	// 	callback.OnError(constant.ErrApi.ErrCode, err.Error())
+	// }
+	// callback.OnSuccess(url)
+	return "", nil
 }
