@@ -68,7 +68,6 @@ func MergeUserResult(publicList []*api.PublicUserInfo, friendList []*model_struc
 			node.PublicInfo.UserID = v.FriendUserID
 			node.PublicInfo.FaceURL = v.FaceURL
 			node.PublicInfo.Nickname = v.Nickname
-			node.PublicInfo.Gender = v.Gender
 			node.PublicInfo.Ex = v.Ex
 			m[v.FriendUserID] = node
 		}

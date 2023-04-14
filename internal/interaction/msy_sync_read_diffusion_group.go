@@ -1,7 +1,7 @@
 package interaction
 
 import (
-	"github.com/golang/protobuf/proto"
+	"context"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/db_interface"
@@ -11,6 +11,9 @@ import (
 	"open_im_sdk/sdk_struct"
 	"runtime"
 	"sync"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
+	"github.com/golang/protobuf/proto"
 )
 
 type ReadDiffusionGroupMsgSync struct {
@@ -45,14 +48,15 @@ func (m *ReadDiffusionGroupMsgSync) updateJoinedSuperGroup() {
 				runtime.Goexit()
 			} else {
 				operationID := cmd.Value.(sdk_struct.CmdJoinedSuperGroup).OperationID
+				ctx := mcontext.NewCtx(operationID)
 				log.Info(operationID, "updateJoinedSuperGroup cmd: ", cmd)
-				g, err := m.GetReadDiffusionGroupIDList()
+				g, err := m.GetReadDiffusionGroupIDList(ctx)
 				if err == nil {
 					log.Info(operationID, "GetReadDiffusionGroupIDList, group id list: ", g)
 					m.superGroupMtx.Lock()
 					m.SuperGroupIDList = g
 					m.superGroupMtx.Unlock()
-					m.compareSeq(operationID)
+					m.compareSeq(ctx)
 				} else {
 					log.Error(operationID, "GetReadDiffusionGroupIDList failed ", err.Error())
 				}
@@ -62,31 +66,31 @@ func (m *ReadDiffusionGroupMsgSync) updateJoinedSuperGroup() {
 }
 
 // 读取所有的读扩散群id，并加载seq到map中，初始化调用一次， 群列表变化时调用一次  ok
-func (m *ReadDiffusionGroupMsgSync) compareSeq(operationID string) {
-	g, err := m.GetReadDiffusionGroupIDList()
+func (m *ReadDiffusionGroupMsgSync) compareSeq(ctx context.Context) {
+	g, err := m.GetReadDiffusionGroupIDList(ctx)
 	if err != nil {
-		log.Error(operationID, "GetReadDiffusionGroupIDList failed ", err.Error())
+		// log.Error(operationID, "GetReadDiffusionGroupIDList failed ", err.Error())
 		return
 	}
 	m.superGroupMtx.Lock()
 	m.SuperGroupIDList = m.SuperGroupIDList[0:0]
 	m.SuperGroupIDList = g
 	m.superGroupMtx.Unlock()
-	log.Debug(operationID, "compareSeq load groupID list ", m.SuperGroupIDList)
+	// log.Debug(operationID, "compareSeq load groupID list ", m.SuperGroupIDList)
 
 	m.superGroupMtx.Lock()
 
 	defer m.superGroupMtx.Unlock()
 	for _, v := range m.SuperGroupIDList {
-		n, err := m.GetSuperGroupNormalMsgSeq(v)
+		n, err := m.GetSuperGroupNormalMsgSeq(ctx, v)
 		if err != nil {
-			log.Error(operationID, "GetSuperGroupNormalMsgSeq failed ", err.Error(), v)
+			// log.Error(operationID, "GetSuperGroupNormalMsgSeq failed ", err.Error(), v)
 		}
-		a, err := m.GetSuperGroupAbnormalMsgSeq(v)
+		a, err := m.GetSuperGroupAbnormalMsgSeq(ctx, v)
 		if err != nil {
-			log.Error(operationID, "GetSuperGroupAbnormalMsgSeq failed ", err.Error(), v)
+			// log.Error(operationID, "GetSuperGroupAbnormalMsgSeq failed ", err.Error(), v)
 		}
-		log.Debug(operationID, "GetSuperGroupNormalMsgSeq GetSuperGroupAbnormalMsgSeq ", n, a, "groupID: ", v)
+		// log.Debug(operationID, "GetSuperGroupNormalMsgSeq GetSuperGroupAbnormalMsgSeq ", n, a, "groupID: ", v)
 		var seqMaxSynchronized uint32
 		if n > a {
 			seqMaxSynchronized = n
@@ -99,7 +103,7 @@ func (m *ReadDiffusionGroupMsgSync) compareSeq(operationID string) {
 		if seqMaxSynchronized > m.Group2SeqMaxSynchronized[v] {
 			m.Group2SeqMaxSynchronized[v] = seqMaxSynchronized
 		}
-		log.Info(operationID, "load seq, normal, abnormal, ", n, a, m.Group2SeqMaxNeedSync[v], m.Group2SeqMaxSynchronized[v])
+		// log.Info(operationID, "load seq, normal, abnormal, ", n, a, m.Group2SeqMaxNeedSync[v], m.Group2SeqMaxSynchronized[v])
 	}
 }
 

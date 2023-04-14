@@ -388,7 +388,7 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 	// conversationsOnLocal[index].RecvMsgOpt, conversationsOnLocal[index].IsPinned, conversationsOnLocal[index].IsPrivateChat)
 	// }
 	cTime = time.Now()
-	conversationsOnLocal, err = c.db.GetAllConversationListToSync()
+	conversationsOnLocal, err = c.db.GetAllConversationListToSync(ctx)
 	if err != nil {
 		// log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 	}
@@ -396,7 +396,7 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 	// log.Info(operationID, "cache update cost time", time.Since(cTime))
 	// log.Info(operationID, utils.GetSelfFuncName(), "all  cost time", time.Since(ccTime))
 }
-func (c *Conversation) SyncConversationUnreadCount(operationID string) {
+func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) {
 	var conversationChangedList []string
 	allConversations := c.cache.GetAllHasUnreadMessageConversations()
 	log.Debug(operationID, "get unread message length is ", len(allConversations))

@@ -3,12 +3,12 @@
 
 package indexdb
 
-import "context"
-
 import (
+	"context"
 	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
 type LocalChatLogReactionExtensions struct {
@@ -40,11 +40,11 @@ func (i *LocalChatLogReactionExtensions) InsertMessageReactionExtension(ctx cont
 	_, err := Exec(utils.StructToJsonString(messageReactionExtension))
 	return err
 }
-func (i *LocalChatLogReactionExtensions) GetAndUpdateMessageReactionExtension(ctx context.Context, clientMsgID string, m map[string]*server_api_params.KeyValue) error {
+func (i *LocalChatLogReactionExtensions) GetAndUpdateMessageReactionExtension(ctx context.Context, clientMsgID string, m map[string]*sdkws.KeyValue) error {
 	_, err := Exec(clientMsgID, utils.StructToJsonString(m))
 	return err
 }
-func (i *LocalChatLogReactionExtensions) DeleteAndUpdateMessageReactionExtension(ctx context.Context, clientMsgID string, m map[string]*server_api_params.KeyValue) error {
+func (i *LocalChatLogReactionExtensions) DeleteAndUpdateMessageReactionExtension(ctx context.Context, clientMsgID string, m map[string]*sdkws.KeyValue) error {
 	_, err := Exec(clientMsgID, utils.StructToJsonString(m))
 	return err
 }

@@ -54,6 +54,8 @@ func TestName(t *testing.T) {
 		"friend.go":           "Friend",
 		"group.go":            "Group",
 		"user.go":             "User",
+		"signaling.go":        "Signaling",
+		"workmoments.go":      "WorkMoments",
 	}
 
 	for name, val := range filemap {

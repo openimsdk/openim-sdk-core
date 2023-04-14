@@ -1,7 +1,6 @@
 package heartbeart
 
 import (
-	"errors"
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
@@ -14,6 +13,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -75,30 +75,7 @@ func (u *Heartbeat) Run() {
 	for {
 		reqTimeout = defaultTimeout
 		operationID := utils.OperationIDGenerator()
-		if constant.OnlyForTest == 1 {
-			time.Sleep(5 * time.Second)
-			var groupIDList []string
-			resp, err := u.WsForTest.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: u.LoginUserIDForTest, GroupIDList: groupIDList}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.LoginUserIDForTest, operationID)
-			if err != nil {
-				log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.LoginUserIDForTest)
-				if !errors.Is(err, constant.WsRecvConnSame) && !errors.Is(err, constant.WsRecvConnDiff) {
-					log.Error(operationID, "other err,  close conn", err.Error())
-					u.CloseConn(operationID)
-				}
-				continue
-			}
-
-			var wsSeqResp server_api_params.GetMaxAndMinSeqResp
-			err = proto.Unmarshal(resp.Data, &wsSeqResp)
-			if err != nil {
-				log.Error(operationID, "Unmarshal failed, close conn", err.Error())
-				u.CloseConn(operationID)
-				continue
-			}
-			log.Debug(operationID, "heartbeat req -> resp ")
-			continue
-		}
-
+		ctx := mcontext.NewCtx(operationID)
 		if heartbeatNum != 0 {
 			select {
 			case r := <-u.cmdCh:
@@ -110,8 +87,8 @@ func (u *Heartbeat) Run() {
 					runtime.Goexit()
 				}
 				if r.Cmd == constant.CmdWakeUp {
-					u.full.SuperGroup.SyncJoinedGroupList(operationID)
-					u.full.Group().SyncJoinedGroupList(operationID)
+					u.full.SuperGroup.SyncJoinedGroupList(ctx)
+					u.full.Group().SyncJoinedGroupList(ctx)
 					log.Info(operationID, "recv wake up cmd, start heartbeat ", r.Cmd)
 					reqTimeout = wakeUpTimeout
 					break
@@ -137,10 +114,10 @@ func (u *Heartbeat) Run() {
 		var groupIDList []string
 		var err error
 		if heartbeatNum == 1 {
-			groupIDList, err = u.full.GetReadDiffusionGroupIDList(operationID)
+			groupIDList, err = u.full.GetReadDiffusionGroupIDList(ctx)
 			log.NewInfo(operationID, "full.GetReadDiffusionGroupIDList ", heartbeatNum)
 		} else {
-			groupIDList, err = u.GetReadDiffusionGroupIDList()
+			groupIDList, err = u.GetReadDiffusionGroupIDList(ctx)
 			log.NewInfo(operationID, "db.GetReadDiffusionGroupIDList ", heartbeatNum)
 		}
 		if err != nil {
@@ -167,9 +144,6 @@ func (u *Heartbeat) Run() {
 		u.id2MinSeq[utils.GetUserIDForMinSeq(u.LoginUserID)] = wsSeqResp.MinSeq
 		for g, v := range wsSeqResp.GroupMaxAndMinSeq {
 			u.id2MinSeq[utils.GetGroupIDForMinSeq(g)] = v.MinSeq
-		}
-		if constant.OnlyForTest == 1 {
-			continue
 		}
 		//server_api_params.MaxAndMinSeq
 		log.Debug(operationID, "recv heartbeat resp,  seq on svr: ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)

@@ -33,7 +33,7 @@ func (m *MsgSync) compareSeq() {
 	operationID := utils.OperationIDGenerator()
 	ctx := mcontext.NewCtx(operationID)
 	m.selfMsgSync.compareSeq(ctx)
-	m.readDiffusionGroupMsgSync.compareSeq(operationID)
+	m.readDiffusionGroupMsgSync.compareSeq(ctx)
 }
 
 func (m *MsgSync) doMaxSeq(cmd common.Cmd2Value) {

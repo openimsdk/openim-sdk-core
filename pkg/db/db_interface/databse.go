@@ -3,8 +3,9 @@ package db_interface
 import (
 	"context"
 	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/sdk_struct"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
 type DataBase interface {
@@ -225,8 +226,8 @@ type DataBase interface {
 	GetMessageReactionExtension(ctx context.Context, msgID string) (result *model_struct.LocalChatLogReactionExtensions, err error)
 	InsertMessageReactionExtension(ctx context.Context, messageReactionExtension *model_struct.LocalChatLogReactionExtensions) error
 	UpdateMessageReactionExtension(ctx context.Context, c *model_struct.LocalChatLogReactionExtensions) error
-	GetAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*server_api_params.KeyValue) error
-	DeleteAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*server_api_params.KeyValue) error
+	GetAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*sdkws.KeyValue) error
+	DeleteAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*sdkws.KeyValue) error
 	GetMultipleMessageReactionExtension(ctx context.Context, msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error)
 	DeleteMessageReactionExtension(ctx context.Context, msgID string) error
 }

@@ -289,9 +289,6 @@ func (w *Ws) doWsMsg(message []byte) {
 			log.Error(wsResp.OperationID, "doWSPullMsg failed ", err.Error())
 		}
 	case constant.WSPushMsg:
-		if constant.OnlyForTest == 1 {
-			return
-		}
 		if err = w.doWSPushMsg(wsResp); err != nil {
 			log.Error(wsResp.OperationID, "doWSPushMsg failed ", err.Error())
 		}
