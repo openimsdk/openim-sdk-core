@@ -1,8 +1,8 @@
 package super_group
 
 import (
+	"context"
 	"errors"
-	"github.com/golang/protobuf/proto"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -12,6 +12,8 @@ import (
 	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+
+	"github.com/golang/protobuf/proto"
 )
 
 type SuperGroup struct {
@@ -81,8 +83,8 @@ func (s *SuperGroup) getJoinedGroupListFromSvr(operationID string) ([]*api.Group
 	return result, nil
 }
 
-func (s *SuperGroup) GetGroupInfoFromLocal2Svr(groupID string) (*model_struct.LocalGroup, error) {
-	localGroup, err := s.db.GetSuperGroupInfoByGroupID(groupID)
+func (s *SuperGroup) GetGroupInfoFromLocal2Svr(ctx context.Context, groupID string) (*model_struct.LocalGroup, error) {
+	localGroup, err := s.db.GetSuperGroupInfoByGroupID(ctx, groupID)
 	if err == nil {
 		return localGroup, nil
 	}

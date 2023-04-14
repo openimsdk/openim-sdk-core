@@ -175,7 +175,6 @@ func DoListener(Li goroutine) {
 				//	close(Li.GetCh())
 				runtime.Goexit()
 			}
-			//	log.Info("doListener work.")
 			Li.Work(cmd)
 		}
 	}

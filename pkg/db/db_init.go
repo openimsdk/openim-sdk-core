@@ -3,23 +3,23 @@
 
 package db
 
-import "context"
-
 import (
+	"context"
 	"errors"
 	"fmt"
-	//"github.com/glebarez/sqlite"
-	"gorm.io/driver/sqlite"
-
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"sync"
 	"time"
+
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
+
+//"github.com/glebarez/sqlite"
 
 var UserDBMap map[string]*DataBase
 
@@ -39,14 +39,6 @@ type DataBase struct {
 	departmentMtx sync.RWMutex
 	userMtx       sync.RWMutex
 	superGroupMtx sync.RWMutex
-}
-
-func (d *DataBase) GetDepartmentList(ctx context.Context, departmentList *[]*model_struct.LocalDepartment, departmentID string) error {
-	panic("implement me")
-}
-
-func (d *DataBase) GetParentDepartment(ctx context.Context, departmentID string) (model_struct.LocalDepartment, error) {
-	panic("implement me")
 }
 
 func (d *DataBase) InitSuperLocalErrChatLog(ctx context.Context, groupID string) {

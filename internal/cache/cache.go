@@ -6,12 +6,11 @@ import (
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/utils"
 	"sync"
 )
 
 type UserInfo struct {
-	Nickname string
+	nickname string
 	faceURL  string
 }
 type Cache struct {
@@ -26,7 +25,7 @@ func NewCache(user *user.User, friend *friend.Friend) *Cache {
 }
 
 func (c *Cache) Update(userID, faceURL, nickname string) {
-	c.userMap.Store(userID, UserInfo{faceURL: faceURL, Nickname: nickname})
+	c.userMap.Store(userID, UserInfo{faceURL: faceURL, nickname: nickname})
 }
 func (c *Cache) UpdateConversation(conversation model_struct.LocalConversation) {
 	c.conversationMap.Store(conversation.ConversationID, conversation)
@@ -63,15 +62,15 @@ func (c *Cache) GetConversation(conversationID string) model_struct.LocalConvers
 	}
 	return result
 }
+
 func (c *Cache) GetUserNameAndFaceURL(ctx context.Context, userID string) (faceURL, name string, err error) {
 	//find in cache
 	user, ok := c.userMap.Load(userID)
 	if ok {
 		faceURL = user.(UserInfo).faceURL
-		name = user.(UserInfo).Nickname
+		name = user.(UserInfo).nickname
 		return faceURL, name, nil
 	}
-
 	//get from local db
 	friendInfo, err := c.friend.Db().GetFriendInfoByFriendUserID(ctx, userID)
 	if err == nil {
@@ -83,20 +82,15 @@ func (c *Cache) GetUserNameAndFaceURL(ctx context.Context, userID string) (faceU
 		}
 		return faceURL, name, nil
 	}
-
-	if operationID == "" {
-		operationID = utils.OperationIDGenerator()
-	}
-
-	userInfos, err := c.user.GetUsersInfoFromCacheSvr([]string{userID}, operationID)
+	userInfos, err := c.user.GetUsersInfoFromSvr(ctx, []string{userID})
 	if err != nil {
 		return "", "", err
 	}
 	for _, v := range userInfos {
 		faceURL = v.FaceURL
 		name = v.Nickname
-		c.userMap.Store(userID, UserInfo{faceURL: faceURL, Nickname: name})
+		c.userMap.Store(userID, UserInfo{faceURL: faceURL, nickname: name})
 		return v.FaceURL, v.Nickname, nil
 	}
-	return "", "", errors.New("no user " + userID)
+	return "", "", errors.New("user not exist" + userID)
 }

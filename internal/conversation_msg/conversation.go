@@ -4,10 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	pbConversation "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
-	pbMsg "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/msg"
-	"github.com/golang/protobuf/proto"
-	"github.com/jinzhu/copier"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
@@ -22,6 +18,11 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	pbConversation "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
+	pbMsg "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/msg"
+	"github.com/golang/protobuf/proto"
+	"github.com/jinzhu/copier"
 )
 
 func (c *Conversation) hideConversation(callback open_im_sdk_callback.Base, conversationID string, operationID string) {
@@ -304,29 +305,29 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 	//log.Error(operationID,"SyncConversations start")
 	var newConversationList []*model_struct.LocalConversation
 	ccTime := time.Now()
-	log.NewInfo(operationID, utils.GetSelfFuncName())
+	// log.NewInfo(operationID, utils.GetSelfFuncName())
 	conversationsOnServer, err := c.getServerConversationList(operationID, timeout)
 	if err != nil {
-		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
+		// log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		return
 	}
-	log.Info(operationID, "get server cost time", time.Since(ccTime))
+	// log.Info(operationID, "get server cost time", time.Since(ccTime))
 	cTime := time.Now()
 	conversationsOnLocal, err := c.db.GetAllConversationListToSync()
 	if err != nil {
-		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
+		// log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 	}
-	log.Info(operationID, "get local cost time", time.Since(cTime))
+	// log.Info(operationID, "get local cost time", time.Since(cTime))
 	cTime = time.Now()
 	conversationsOnLocalTempFormat := common.LocalTransferToTempConversation(conversationsOnLocal)
 	conversationsOnServerTempFormat := common.ServerTransferToTempConversation(conversationsOnServer)
 	conversationsOnServerLocalFormat := common.TransferToLocalConversation(conversationsOnServer)
 
 	aInBNot, bInANot, sameA, sameB := common.CheckConversationListDiff(conversationsOnServerTempFormat, conversationsOnLocalTempFormat)
-	log.Info(operationID, "diff server cost time", time.Since(cTime))
+	// log.Info(operationID, "diff server cost time", time.Since(cTime))
 
-	log.NewInfo(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
-	log.NewInfo(operationID, "server have", len(aInBNot), "local have", len(bInANot))
+	// log.NewInfo(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
+	// log.NewInfo(operationID, "server have", len(aInBNot), "local have", len(bInANot))
 	// server有 local没有
 	// 可能是其他点开一下生成会话设置免打扰 插入到本地 不回调..
 	cTime = time.Now()
@@ -385,18 +386,18 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 	log.Info(operationID, "batch update cost time", time.Since(cTime))
 
 	// local有 server没有 代表没有修改公共字段
-	for _, index := range bInANot {
-		log.NewDebug(operationID, utils.GetSelfFuncName(), index, conversationsOnLocal[index].ConversationID,
-			conversationsOnLocal[index].RecvMsgOpt, conversationsOnLocal[index].IsPinned, conversationsOnLocal[index].IsPrivateChat)
-	}
+	// for _, index := range bInANot {
+	// log.NewDebug(operationID, utils.GetSelfFuncName(), index, conversationsOnLocal[index].ConversationID,
+	// conversationsOnLocal[index].RecvMsgOpt, conversationsOnLocal[index].IsPinned, conversationsOnLocal[index].IsPrivateChat)
+	// }
 	cTime = time.Now()
 	conversationsOnLocal, err = c.db.GetAllConversationListToSync()
 	if err != nil {
-		log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
+		// log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 	}
 	c.cache.UpdateConversations(conversationsOnLocal)
-	log.Info(operationID, "cache update cost time", time.Since(cTime))
-	log.Info(operationID, utils.GetSelfFuncName(), "all  cost time", time.Since(ccTime))
+	// log.Info(operationID, "cache update cost time", time.Since(cTime))
+	// log.Info(operationID, utils.GetSelfFuncName(), "all  cost time", time.Since(ccTime))
 }
 func (c *Conversation) SyncConversationUnreadCount(operationID string) {
 	var conversationChangedList []string

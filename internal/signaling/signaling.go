@@ -2,14 +2,12 @@ package signaling
 
 import (
 	"context"
-	"errors"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"strings"
@@ -38,7 +36,7 @@ func NewLiveSignaling(ws *ws.Ws, loginUserID string, platformID int32, db db_int
 	return &LiveSignaling{Ws: ws, loginUserID: loginUserID, platformID: platformID, DataBase: db}
 }
 
-func (s *LiveSignaling) setDefaultReq(req *api.InvitationInfo) {
+func (s *LiveSignaling) setDefaultReq(req *sdkws.InvitationInfo) {
 	if req.RoomID == "" {
 		req.RoomID = utils.OperationIDGenerator()
 	}
@@ -281,58 +279,5 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 
 	default:
 		log.Error(operationID, "resp payload type failed ", payload)
-	}
-}
-
-func (s *LiveSignaling) handleSignaling(ctx context.Context, req *sdkws.SignalReq) (resp *sdkws.SignalResp, err error) {
-	// log.Info(operationID, utils.GetSelfFuncName(), "args ", req.String())
-	resp, err = s.SendSignalingReqWaitResp(ctx, req)
-	if err != nil {
-		// log.NewError(operationID, utils.GetSelfFuncName(), "SendSignalingReqWaitResp error", err.Error())
-		return nil, err
-	}
-	var busyLineUserIDList []string
-	switch payload := resp.Payload.(type) {
-	case *sdkws.SignalResp_Accept:
-		return payload.Accept, nil
-		// log.Info(operationID, "signaling response ", payload.Accept.String())
-		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.AcceptCallback(payload.Accept)))
-	case *sdkws.SignalResp_Reject:
-		// log.Info(operationID, "signaling response ", payload.Reject.String())
-		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.RejectCallback(payload.Reject)))
-	case *sdkws.SignalResp_HungUp:
-		// log.Info(operationID, "signaling response ", payload.HungUp.String())
-		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.HungUpCallback(payload.HungUp)))
-	case *sdkws.SignalResp_Cancel:
-		s.isCanceled = true
-		log.Info(operationID, "signaling response ", payload.Cancel.String())
-		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.CancelCallback(payload.Cancel)))
-	case *sdkws.SignalResp_Invite:
-		s.isCanceled = false
-		busyLineUserIDList = payload.Invite.BusyLineUserIDList
-		log.Info(operationID, "signaling response ", payload.Invite.String())
-		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.InviteCallback(payload.Invite)))
-	case *sdkws.SignalResp_InviteInGroup:
-		s.isCanceled = false
-		busyLineUserIDList = payload.InviteInGroup.BusyLineUserIDList
-		log.Info(operationID, "signaling response ", payload.InviteInGroup.String())
-		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.InviteInGroupCallback(payload.InviteInGroup)))
-	case *sdkws.SignalResp_GetRoomByGroupID:
-		log.Info(operationID, "signaling response ", payload.GetRoomByGroupID.String())
-		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GetRoomByGroupIDCallback(payload.GetRoomByGroupID)))
-	case *sdkws.SignalResp_GetTokenByRoomID:
-		log.Info(operationID, "signaling response", payload.GetTokenByRoomID.String())
-		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GetTokenByRoomID(payload.GetTokenByRoomID)))
-	default:
-		log.Error(operationID, "resp payload type failed ", payload)
-		common.CheckAnyErrCallback(callback, 3002, errors.New("resp payload type failed"), operationID)
-	}
-	switch req.Payload.(type) {
-	case *api.SignalReq_Invite:
-		log.Info(operationID, "wait push ", req.String())
-		s.waitPush(req, busyLineUserIDList, operationID)
-	case *api.SignalReq_InviteInGroup:
-		log.Info(operationID, "wait push ", req.String())
-		s.waitPush(req, busyLineUserIDList, operationID)
 	}
 }
