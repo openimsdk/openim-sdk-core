@@ -2,17 +2,18 @@ package group
 
 import (
 	"context"
-	"errors"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	ws "open_im_sdk/internal/interaction"
+	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
-	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/syncer"
-	"open_im_sdk/pkg/utils"
 	"sync"
 )
 
@@ -130,69 +131,40 @@ func (g *Group) GetGroupInfoFromLocal2Svr(ctx context.Context, groupID string) (
 	if err == nil {
 		return localGroup, nil
 	}
-	groupIDList := []string{groupID}
-	operationID := utils.OperationIDGenerator()
-	svrGroup, err := g.getGroupsInfoFromSvr(groupIDList, operationID)
-	if err == nil && len(svrGroup) == 1 {
-		transfer := common.TransferToLocalGroupInfo(svrGroup)
-		return transfer[0], nil
-	}
+	svrGroup, err := g.getGroupsInfoFromSvr(ctx, []string{groupID})
 	if err != nil {
-		return nil, utils.Wrap(err, "get groupInfo from server err ")
-	} else {
-		return nil, utils.Wrap(errors.New("server not this group"), "")
+		return nil, err
 	}
+	if len(svrGroup) == 0 {
+		return nil, errs.ErrGroupIDNotFound.Wrap("server not this group")
+	}
+	return ServerGroupToLocalGroup(svrGroup[0]), nil
 }
 
-func (g *Group) getGroupsInfoFromSvr(groupIDList []string, operationID string) ([]*api.GroupInfo, error) {
-	apiReq := api.GetGroupInfoReq{}
-	apiReq.GroupIDList = groupIDList
-	apiReq.OperationID = operationID
-	var groupInfoList []*api.GroupInfo
-	err := g.p.PostReturn(constant.GetGroupsInfoRouter, apiReq, &groupInfoList)
+func (g *Group) getGroupsInfoFromSvr(ctx context.Context, groupIDs []string) ([]*sdkws.GroupInfo, error) {
+	resp, err := util.CallApi[group.GetGroupsInfoResp](ctx, constant.GetGroupsInfoRouter, &group.GetGroupsInfoReq{GroupIDs: groupIDs})
 	if err != nil {
-		return nil, utils.Wrap(err, apiReq.OperationID)
+		return nil, err
 	}
-	return groupInfoList, nil
+	return resp.GroupInfos, nil
 }
 
-func (g *Group) getGroupAbstractInfoFromSvr(groupID string, operationID string) (*api.GetGroupAbstractInfoResp, error) {
-	apiReq := api.GetGroupAbstractInfoReq{}
-	apiReq.GroupID = groupID
-	apiReq.OperationID = operationID
-	var groupAbstractInfoResp api.GetGroupAbstractInfoResp
-	err := g.p.Post2UnmarshalRespReturn(constant.GetGroupAbstractInfoRouter, apiReq, &groupAbstractInfoResp)
-	if err != nil {
-		return nil, utils.Wrap(err, apiReq.OperationID+" "+groupID)
-	}
-	return &groupAbstractInfoResp, nil
+func (g *Group) getGroupAbstractInfoFromSvr(ctx context.Context, groupIDs []string) (*group.GetGroupAbstractInfoResp, error) {
+	return util.CallApi[group.GetGroupAbstractInfoResp](ctx, constant.GetGroupAbstractInfoRouter, &group.GetGroupAbstractInfoReq{GroupIDs: groupIDs})
 }
 
-func (g *Group) getJoinedGroupListFromSvr(operationID string) ([]*api.GroupInfo, error) {
-	apiReq := api.GetJoinedGroupListReq{}
-	apiReq.OperationID = operationID
-	apiReq.FromUserID = g.loginUserID
-	var result []*api.GroupInfo
-	log.Debug(operationID, "api args: ", apiReq)
-	err := g.p.PostReturn(constant.GetJoinedGroupListRouter, apiReq, &result)
+func (g *Group) GetJoinedDiffusionGroupIDListFromSvr(ctx context.Context) ([]string, error) {
+	groups, err := g.GetServerJoinGroup(ctx)
 	if err != nil {
-		return nil, utils.Wrap(err, apiReq.OperationID)
+		return nil, err
 	}
-	return result, nil
-}
-
-func (g *Group) GetJoinedDiffusionGroupIDListFromSvr(operationID string) ([]string, error) {
-	result, err := g.getJoinedGroupListFromSvr(operationID)
-	if err != nil {
-		return nil, utils.Wrap(err, "working group get err")
-	}
-	var groupIDList []string
-	for _, v := range result {
-		if v.GroupType == constant.WorkingGroup {
-			groupIDList = append(groupIDList, v.GroupID)
+	var groupIDs []string
+	for _, g := range groups {
+		if g.GroupType == constant.WorkingGroup {
+			groupIDs = append(groupIDs, g.GroupID)
 		}
 	}
-	return groupIDList, nil
+	return groupIDs, nil
 }
 
 func (g *Group) SyncJoinedGroupList(ctx context.Context) {
@@ -218,29 +190,4 @@ func (g *Group) SyncJoinedGroupMemberForFirstLogin(ctx context.Context) {
 		}(group.GroupID)
 	}
 	wg.Wait()
-}
-
-func (g *Group) getGroupAllMemberSplitByGroupIDFromSvr(groupID string, operationID string) ([]*api.GroupMemberFullInfo, error) {
-	var apiReq api.GetGroupAllMemberReq
-	apiReq.OperationID = operationID
-	apiReq.GroupID = groupID
-	var result []*api.GroupMemberFullInfo
-	var page int32
-	for {
-		apiReq.Offset = page * constant.SplitGetGroupMemberNum
-		apiReq.Count = constant.SplitGetGroupMemberNum
-		var realData []*api.GroupMemberFullInfo
-		err := g.p.PostReturn(constant.GetGroupAllMemberListRouter, apiReq, &realData)
-		if err != nil {
-			log.Error(operationID, "GetGroupAllMemberListRouter failed ", constant.GetGroupAllMemberListRouter, apiReq)
-			return result, utils.Wrap(err, apiReq.OperationID)
-		}
-		log.Info(operationID, "GetGroupAllMemberListRouter result len: ", len(realData), groupID)
-		result = append(result, realData...)
-		if apiReq.Count > int32(len(realData)) {
-			break
-		}
-		page++
-	}
-	return result, nil
 }

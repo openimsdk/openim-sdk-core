@@ -462,38 +462,38 @@ func (u *LoginMgr) forcedSynchronization() {
 	var wg sync.WaitGroup
 	wg.Add(10)
 	go func() {
-		u.user.SyncLoginUserInfo(operationID)
-		u.friend.SyncFriendList(operationID)
+		u.user.SyncLoginUserInfo(ctx)
+		u.friend.SyncFriendList(ctx)
 		wg.Done()
 	}()
 
 	go func() {
-		u.friend.SyncBlackList(operationID)
+		u.friend.SyncBlackList(ctx)
 		wg.Done()
 	}()
 
 	go func() {
-		u.friend.SyncFriendApplication(operationID)
+		u.friend.SyncFriendApplication(ctx)
 		wg.Done()
 	}()
 
 	go func() {
-		u.friend.SyncSelfFriendApplication(operationID)
+		u.friend.SyncSelfFriendApplication(ctx)
 		wg.Done()
 	}()
 
 	go func() {
-		u.group.SyncJoinedGroupList(operationID)
+		u.group.SyncJoinedGroupList(ctx)
 		wg.Done()
 	}()
 
 	go func() {
-		u.group.SyncAdminGroupApplication(operationID)
+		u.group.SyncAdminGroupApplication(ctx)
 		wg.Done()
 	}()
 
 	go func() {
-		u.group.SyncSelfGroupApplication(operationID)
+		u.group.SyncSelfGroupApplication(ctx)
 		wg.Done()
 	}()
 
@@ -503,7 +503,7 @@ func (u *LoginMgr) forcedSynchronization() {
 	}()
 	if u.organizationListener != nil {
 		go func() {
-			u.organization.SyncOrganization(operationID)
+			//u.organization.SyncOrganization(operationID)
 			wg.Done()
 		}()
 	} else {
