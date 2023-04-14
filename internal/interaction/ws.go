@@ -78,7 +78,7 @@ func (w *Ws) WaitResp(ch chan GeneralWsResp, timeout int, operationID string) (*
 	}
 }
 
-func (w *Ws) SendReqWaitResp(m proto.Message, reqIdentifier int32, timeout, retryTimes int, senderID, operationID string) (*GeneralWsResp, error) {
+func (w *Ws) SendReqWaitResp(ctx context.Context, m proto.Message, reqIdentifier int32, timeout, retryTimes int, senderID string) (*GeneralWsResp, error) {
 	switch reqIdentifier {
 	case constant.WsSetBackgroundStatus:
 		if v, ok := m.(*server_api_params.SetAppBackgroundStatusReq); ok {
