@@ -2,7 +2,7 @@ package full
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"open_im_sdk/internal/cache"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/group"
@@ -14,7 +14,6 @@ import (
 	"open_im_sdk/pkg/db/model_struct"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
-	"open_im_sdk/pkg/utils"
 )
 
 type Full struct {
@@ -66,7 +65,7 @@ func (u *Full) getUsersInfo(ctx context.Context, userIDList sdk.GetUsersInfoPara
 	//from svr
 	publicList := make([]*api.PublicUserInfo, 0)
 	if len(notIn) > 0 {
-		publicList = u.user.GetUsersInfoFromSvr(callback, notIn, operationID)
+		publicList, err = u.user.GetUsersInfoFromSvr(ctx, notIn)
 		go func() {
 			for _, v := range publicList {
 				u.userCache.Update(v.UserID, v.FaceURL, v.Nickname)
@@ -81,14 +80,14 @@ func (u *Full) getUsersInfo(ctx context.Context, userIDList sdk.GetUsersInfoPara
 	return common.MergeUserResult(publicList, friendList, blackList), nil
 }
 
-func (u *Full) GetGroupInfoFromLocal2Svr(groupID string, sessionType int32) (*model_struct.LocalGroup, error) {
+func (u *Full) GetGroupInfoFromLocal2Svr(ctx context.Context, groupID string, sessionType int32) (*model_struct.LocalGroup, error) {
 	switch sessionType {
 	case constant.GroupChatType:
-		return u.group.GetGroupInfoFromLocal2Svr(groupID)
+		return u.group.GetGroupInfoFromLocal2Svr(ctx, groupID)
 	case constant.SuperGroupChatType:
 		return u.GetGroupInfoByGroupID(groupID)
 	default:
-		return nil, utils.Wrap(errors.New("err sessionType"), "")
+		return nil, fmt.Errorf("sessionType is not support %d", sessionType)
 	}
 }
 func (u *Full) GetReadDiffusionGroupIDList(operationID string) ([]string, error) {
