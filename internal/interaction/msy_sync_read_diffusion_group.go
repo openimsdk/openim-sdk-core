@@ -13,9 +13,6 @@ import (
 	"sync"
 
 	"github.com/golang/protobuf/proto"
-
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
-	"github.com/golang/protobuf/proto"
 )
 
 type ReadDiffusionGroupMsgSync struct {
@@ -50,7 +47,7 @@ func (m *ReadDiffusionGroupMsgSync) updateJoinedSuperGroup() {
 				runtime.Goexit()
 			} else {
 				operationID := cmd.Value.(sdk_struct.CmdJoinedSuperGroup).OperationID
-				ctx := mcontext.NewCtx(operationID)
+				// ctx := mcontext.NewCtx(operationID)
 				log.Info(operationID, "updateJoinedSuperGroup cmd: ", cmd)
 				g, err := m.GetReadDiffusionGroupIDList(nil)
 				if err == nil {
@@ -58,7 +55,7 @@ func (m *ReadDiffusionGroupMsgSync) updateJoinedSuperGroup() {
 					m.superGroupMtx.Lock()
 					m.SuperGroupIDList = g
 					m.superGroupMtx.Unlock()
-					m.compareSeq(ctx)
+					m.compareSeq(operationID)
 				} else {
 					log.Error(operationID, "GetReadDiffusionGroupIDList failed ", err.Error())
 				}

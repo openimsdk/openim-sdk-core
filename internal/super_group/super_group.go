@@ -3,8 +3,11 @@ package super_group
 import (
 	"context"
 	"errors"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"github.com/golang/protobuf/proto"
 	ws "open_im_sdk/internal/interaction"
+	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/db_interface"
@@ -85,18 +88,10 @@ func (s *SuperGroup) DoNotification(msg *api.MsgData, ch chan common.Cmd2Value, 
 	}
 }
 
-func (s *SuperGroup) getJoinedGroupListFromSvr(ctx context.Context) ([]*api.GroupInfo, error) {
-	apiReq := api.GetJoinedSuperGroupReq{}
-	apiReq.OperationID = ""
-	apiReq.FromUserID = s.loginUserID
-	var result []*api.GroupInfo
-	log.Debug("", "super group api args: ", apiReq)
-	err := s.p.PostReturn(constant.GetJoinedSuperGroupListRouter, apiReq, &result)
-	if err != nil {
-		return nil, utils.Wrap(err, apiReq.OperationID)
-	}
-	log.Debug("", "super group api result: ", result)
-	return result, nil
+func (g *SuperGroup) getJoinedGroupListFromSvr(ctx context.Context) ([]*sdkws.GroupInfo, error) {
+	fn := func(resp *group.GetJoinedGroupListResp) []*sdkws.GroupInfo { return resp.Groups }
+	req := &group.GetJoinedGroupListReq{FromUserID: g.loginUserID, Pagination: &sdkws.RequestPagination{}}
+	return util.GetPageAll(ctx, constant.GetJoinedGroupListRouter, req, fn)
 }
 
 func (s *SuperGroup) GetGroupInfoFromLocal2Svr(ctx context.Context, groupID string) (*model_struct.LocalGroup, error) {
@@ -105,29 +100,23 @@ func (s *SuperGroup) GetGroupInfoFromLocal2Svr(ctx context.Context, groupID stri
 		return localGroup, nil
 	}
 	groupIDList := []string{groupID}
-	operationID := utils.OperationIDGenerator()
-	svrGroup, err := s.getGroupsInfoFromSvr(groupIDList, operationID)
-	if err == nil && len(svrGroup) == 1 {
-		transfer := common.TransferToLocalGroupInfo(svrGroup)
-		return transfer[0], nil
-	}
+	//operationID := utils.OperationIDGenerator()
+	svrGroup, err := s.getGroupsInfoFromSvr(ctx, groupIDList)
 	if err != nil {
-		return nil, utils.Wrap(err, "")
-	} else {
+		return nil, err
+	}
+	if len(svrGroup) == 0 {
 		return nil, utils.Wrap(errors.New("no group"), "")
 	}
+	return ServerGroupToLocalGroup(svrGroup[0]), nil
 }
 
-func (s *SuperGroup) getGroupsInfoFromSvr(groupIDList []string, operationID string) ([]*api.GroupInfo, error) {
-	apiReq := api.GetSuperGroupsInfoReq{}
-	apiReq.GroupIDList = groupIDList
-	apiReq.OperationID = operationID
-	var groupInfoList []*api.GroupInfo
-	err := s.p.PostReturn(constant.GetSuperGroupsInfoRouter, apiReq, &groupInfoList)
+func (s *SuperGroup) getGroupsInfoFromSvr(ctx context.Context, groupIDList []string) ([]*sdkws.GroupInfo, error) {
+	resp, err := util.CallApi[group.GetGroupsInfoResp](ctx, constant.GetSuperGroupsInfoRouter, group.GetGroupsInfoReq{GroupIDs: groupIDList})
 	if err != nil {
-		return nil, utils.Wrap(err, apiReq.OperationID)
+		return nil, err
 	}
-	return groupInfoList, nil
+	return resp.GroupInfos, nil
 }
 
 func (s *SuperGroup) GetJoinedGroupIDListFromSvr(ctx context.Context) ([]string, error) {
