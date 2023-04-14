@@ -3,17 +3,17 @@
 
 package db
 
-import "context"
-
 import (
+	"context"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+
+	"gorm.io/gorm"
 )
 
 func (d *DataBase) BatchInsertMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error {
@@ -638,9 +638,9 @@ func (d *DataBase) GetMsgSeqByClientMsgID(ctx context.Context, clientMsgID strin
 func (d *DataBase) GetMsgSeqByClientMsgIDController(ctx context.Context, m *sdk_struct.MsgStruct) (uint32, error) {
 	switch m.SessionType {
 	case constant.SuperGroupChatType:
-		return d.SuperGroupGetMsgSeqByClientMsgID(m.ClientMsgID, m.GroupID)
+		return d.SuperGroupGetMsgSeqByClientMsgID(ctx, m.ClientMsgID, m.GroupID)
 	default:
-		return d.GetMsgSeqByClientMsgID(m.ClientMsgID)
+		return d.GetMsgSeqByClientMsgID(ctx, m.ClientMsgID)
 	}
 }
 
