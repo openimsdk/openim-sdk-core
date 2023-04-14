@@ -396,7 +396,7 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 	// log.Info(operationID, "cache update cost time", time.Since(cTime))
 	// log.Info(operationID, utils.GetSelfFuncName(), "all  cost time", time.Since(ccTime))
 }
-func (c *Conversation) SyncConversationUnreadCount(operationID string) {
+func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) {
 	var conversationChangedList []string
 	allConversations := c.cache.GetAllHasUnreadMessageConversations()
 	log.Debug(operationID, "get unread message length is ", len(allConversations))
