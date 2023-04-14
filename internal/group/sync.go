@@ -2,86 +2,46 @@ package group
 
 import (
 	"context"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/db/model_struct"
 )
 
-func (g *Group) SyncGroupMember(ctx context.Context, groupID string, userIDs []string) error {
-	var members []*sdkws.GroupMemberFullInfo
-	if userIDs == nil {
-		req := &group.GetGroupMemberListReq{GroupID: groupID, Pagination: &sdkws.RequestPagination{}}
-		fn := func(resp *group.GetGroupMemberListResp) []*sdkws.GroupMemberFullInfo { return resp.Members }
-		resp, err := util.GetPageAll(ctx, constant.GetGroupAllMemberListRouter, req, fn)
-		if err != nil {
-			return err
-		}
-		members = resp
-	} else {
-		resp, err := util.CallApi[group.GetGroupMembersInfoResp](ctx, constant.GetGroupMembersInfoRouter, &group.GetGroupMembersInfoReq{GroupID: groupID, UserIDs: userIDs})
-		if err != nil {
-			return err
-		}
-		members = resp.Members
-	}
-	var serverData []*model_struct.LocalGroupMember
-	for _, member := range members {
-		serverData = append(serverData, &model_struct.LocalGroupMember{
-			GroupID:        member.GroupID,
-			UserID:         member.UserID,
-			Nickname:       member.Nickname,
-			FaceURL:        member.FaceURL,
-			RoleLevel:      member.RoleLevel,
-			JoinTime:       member.JoinTime,
-			JoinSource:     member.JoinSource,
-			InviterUserID:  member.InviterUserID,
-			MuteEndTime:    member.MuteEndTime,
-			OperatorUserID: member.OperatorUserID,
-			Ex:             member.Ex,
-			//AttachedInfo:   member.AttachedInfo, // todo
-		})
-	}
-	localData, err := g.db.GetGroupMemberListSplit(ctx, groupID, 0, 0, 0)
+func (g *Group) SyncGroupMember(ctx context.Context, groupID string) error {
+	members, err := g.GetServerGroupMembers(ctx, groupID)
 	if err != nil {
 		return err
 	}
-	return g.groupMemberSyncer.Sync(ctx, serverData, localData, nil)
+	localData, err := g.db.GetGroupMemberListSplit(ctx, groupID, 0, 0, 9999999)
+	if err != nil {
+		return err
+	}
+	return g.groupMemberSyncer.Sync(ctx, util.Batch(ServerGroupMemberToLocalGroupMember, members), localData, nil)
 }
 
-func (g *Group) SyncGroup(ctx context.Context, groupID string) error {
-	resp, err := util.CallApi[group.GetGroupsInfoResp](ctx, constant.GetGroupsInfoRouter, &group.GetGroupsInfoReq{GroupIDs: []string{groupID}})
-	if err != nil {
-		return err
-	}
-	if len(resp.GroupInfos) == 0 {
-		return errs.ErrGroupIDNotFound.Wrap(groupID)
-	}
-	dbGroup, err := g.db.GetGroupInfoByGroupID(ctx, groupID)
-	if err != nil {
-		// todo error
-	}
-	// todo
-	if err := g.groupSyncer.Sync(ctx, util.AppendNotNil(ServerGroupToLocalGroup(resp.GroupInfos[0])), util.AppendNotNil(dbGroup), nil); err != nil {
-		return err
-	}
-	//g.listener.OnGroupInfoChanged(utils.StructToJsonString(serverData))
-	return nil
+func (g *Group) SyncJoinedGroup(ctx context.Context) error {
+	_, err := g.GetAndSyncJoinedGroup(ctx)
+	return err
 }
 
-func (g *Group) SyncGroupAndMember(ctx context.Context, groupID string) error {
-	if err := g.SyncGroup(ctx, groupID); err != nil {
-		return err
+func (g *Group) GetAndSyncJoinedGroup(ctx context.Context) ([]*sdkws.GroupInfo, error) {
+	groups, err := g.GetServerJoinGroup(ctx)
+	if err != nil {
+		return nil, err
 	}
-	return g.SyncGroupMember(ctx, groupID, nil)
+	localData, err := g.db.GetJoinedGroupListDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := g.groupSyncer.Sync(ctx, util.Batch(ServerGroupToLocalGroup, groups), localData, nil); err != nil {
+		return nil, err
+	}
+	return groups, nil
 }
 
 func (g *Group) SyncSelfGroupApplication(ctx context.Context) error {
-	fn := func(resp *group.GetGroupApplicationListResp) []*sdkws.GroupRequest { return resp.GroupRequests }
-	req := &group.GetUserReqApplicationListReq{UserID: g.loginUserID, Pagination: &sdkws.RequestPagination{}}
-	list, err := util.GetPageAll(ctx, constant.GetSendGroupApplicationListRouter, req, fn)
+	list, err := g.GetServerSelfGroupApplication(ctx)
 	if err != nil {
 		return err
 	}
@@ -94,4 +54,40 @@ func (g *Group) SyncSelfGroupApplication(ctx context.Context) error {
 	}
 	// todo
 	return nil
+}
+
+func (g *Group) SyncAdminGroupApplication(ctx context.Context) error {
+	requests, err := g.GetServerAdminGroupApplicationList(ctx)
+	if err != nil {
+		return err
+	}
+	localData, err := g.db.GetAdminGroupApplication(ctx)
+	if err != nil {
+		return err
+	}
+	return g.groupAdminRequestSyncer.Sync(ctx, util.Batch(ServerGroupRequestToLocalAdminGroupRequest, requests), localData, nil)
+}
+
+func (g *Group) GetServerJoinGroup(ctx context.Context) ([]*sdkws.GroupInfo, error) {
+	fn := func(resp *group.GetJoinedGroupListResp) []*sdkws.GroupInfo { return resp.Groups }
+	req := &group.GetJoinedGroupListReq{FromUserID: g.loginUserID, Pagination: &sdkws.RequestPagination{}}
+	return util.GetPageAll(ctx, constant.GetJoinedGroupListRouter, req, fn)
+}
+
+func (g *Group) GetServerAdminGroupApplicationList(ctx context.Context) ([]*sdkws.GroupRequest, error) {
+	fn := func(resp *group.GetGroupApplicationListResp) []*sdkws.GroupRequest { return resp.GroupRequests }
+	req := &group.GetGroupApplicationListReq{FromUserID: g.loginUserID, Pagination: &sdkws.RequestPagination{}}
+	return util.GetPageAll(ctx, constant.GetRecvGroupApplicationListRouter, req, fn)
+}
+
+func (g *Group) GetServerSelfGroupApplication(ctx context.Context) ([]*sdkws.GroupRequest, error) {
+	fn := func(resp *group.GetGroupApplicationListResp) []*sdkws.GroupRequest { return resp.GroupRequests }
+	req := &group.GetUserReqApplicationListReq{UserID: g.loginUserID, Pagination: &sdkws.RequestPagination{}}
+	return util.GetPageAll(ctx, constant.GetSendGroupApplicationListRouter, req, fn)
+}
+
+func (g *Group) GetServerGroupMembers(ctx context.Context, groupID string) ([]*sdkws.GroupMemberFullInfo, error) {
+	req := &group.GetGroupMemberListReq{GroupID: groupID, Pagination: &sdkws.RequestPagination{}}
+	fn := func(resp *group.GetGroupMemberListResp) []*sdkws.GroupMemberFullInfo { return resp.Members }
+	return util.GetPageAll(ctx, constant.GetGroupAllMemberListRouter, req, fn)
 }

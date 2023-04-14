@@ -3,13 +3,15 @@
 
 package db
 
+import "context"
+
 import (
 	"errors"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 )
 
-func (d *DataBase) GetBlackListDB() ([]*model_struct.LocalBlack, error) {
+func (d *DataBase) GetBlackListDB(ctx context.Context) ([]*model_struct.LocalBlack, error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	if d == nil {
@@ -25,13 +27,13 @@ func (d *DataBase) GetBlackListDB() ([]*model_struct.LocalBlack, error) {
 	}
 	return transfer, err
 }
-func (d *DataBase) GetBlackListUserID() (blackListUid []string, err error) {
+func (d *DataBase) GetBlackListUserID(ctx context.Context) (blackListUid []string, err error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	return blackListUid, utils.Wrap(d.conn.Model(&model_struct.LocalBlack{}).Select("block_user_id").Find(&blackListUid).Error, "GetBlackList failed")
 }
 
-func (d *DataBase) GetBlackInfoByBlockUserID(blockUserID string) (*model_struct.LocalBlack, error) {
+func (d *DataBase) GetBlackInfoByBlockUserID(ctx context.Context, blockUserID string) (*model_struct.LocalBlack, error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	var black model_struct.LocalBlack
@@ -39,7 +41,7 @@ func (d *DataBase) GetBlackInfoByBlockUserID(blockUserID string) (*model_struct.
 		d.loginUserID, blockUserID).Take(&black).Error, "GetBlackInfoByBlockUserID failed")
 }
 
-func (d *DataBase) GetBlackInfoList(blockUserIDList []string) ([]*model_struct.LocalBlack, error) {
+func (d *DataBase) GetBlackInfoList(ctx context.Context, blockUserIDList []string) ([]*model_struct.LocalBlack, error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	var blackList []model_struct.LocalBlack
@@ -55,13 +57,13 @@ func (d *DataBase) GetBlackInfoList(blockUserIDList []string) ([]*model_struct.L
 	return transfer, nil
 }
 
-func (d *DataBase) InsertBlack(black *model_struct.LocalBlack) error {
+func (d *DataBase) InsertBlack(ctx context.Context, black *model_struct.LocalBlack) error {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	return utils.Wrap(d.conn.Create(black).Error, "InsertBlack failed")
 }
 
-func (d *DataBase) UpdateBlack(black *model_struct.LocalBlack) error {
+func (d *DataBase) UpdateBlack(ctx context.Context, black *model_struct.LocalBlack) error {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	t := d.conn.Updates(black)
@@ -71,7 +73,7 @@ func (d *DataBase) UpdateBlack(black *model_struct.LocalBlack) error {
 	return utils.Wrap(t.Error, "UpdateBlack failed")
 }
 
-func (d *DataBase) DeleteBlack(blockUserID string) error {
+func (d *DataBase) DeleteBlack(ctx context.Context, blockUserID string) error {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	return utils.Wrap(d.conn.Where("owner_user_id=? and block_user_id=?", d.loginUserID, blockUserID).Delete(&model_struct.LocalBlack{}).Error, "DeleteBlack failed")

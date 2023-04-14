@@ -3,6 +3,8 @@
 
 package indexdb
 
+import "context"
+
 import (
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
@@ -16,7 +18,7 @@ func NewLocalConversations() *LocalConversations {
 	return &LocalConversations{}
 }
 
-func (i *LocalConversations) GetAllConversationListDB() (result []*model_struct.LocalConversation, err error) {
+func (i *LocalConversations) GetAllConversationListDB(ctx context.Context) (result []*model_struct.LocalConversation, err error) {
 	cList, err := Exec()
 	if err != nil {
 		return nil, err
@@ -37,7 +39,7 @@ func (i *LocalConversations) GetAllConversationListDB() (result []*model_struct.
 		}
 	}
 }
-func (i *LocalConversations) GetConversation(conversationID string) (*model_struct.LocalConversation, error) {
+func (i *LocalConversations) GetConversation(ctx context.Context, conversationID string) (*model_struct.LocalConversation, error) {
 	c, err := Exec(conversationID)
 	if err != nil {
 		return nil, err
@@ -55,7 +57,7 @@ func (i *LocalConversations) GetConversation(conversationID string) (*model_stru
 	}
 }
 
-func (i *LocalConversations) GetHiddenConversationList() (result []*model_struct.LocalConversation, err error) {
+func (i *LocalConversations) GetHiddenConversationList(ctx context.Context) (result []*model_struct.LocalConversation, err error) {
 	cList, err := Exec()
 	if err != nil {
 		return nil, err
@@ -76,7 +78,7 @@ func (i *LocalConversations) GetHiddenConversationList() (result []*model_struct
 		}
 	}
 }
-func (i *LocalConversations) GetAllConversationListToSync() (result []*model_struct.LocalConversation, err error) {
+func (i *LocalConversations) GetAllConversationListToSync(ctx context.Context) (result []*model_struct.LocalConversation, err error) {
 	cList, err := Exec()
 	if err != nil {
 		return nil, err
@@ -97,11 +99,11 @@ func (i *LocalConversations) GetAllConversationListToSync() (result []*model_str
 		}
 	}
 }
-func (i *LocalConversations) UpdateColumnsConversation(conversationID string, args map[string]interface{}) error {
+func (i *LocalConversations) UpdateColumnsConversation(ctx context.Context, conversationID string, args map[string]interface{}) error {
 	_, err := Exec(conversationID, utils.StructToJsonString(args))
 	return err
 }
-func (i *LocalConversations) GetConversationByUserID(userID string) (*model_struct.LocalConversation, error) {
+func (i *LocalConversations) GetConversationByUserID(ctx context.Context, userID string) (*model_struct.LocalConversation, error) {
 	c, err := Exec(userID)
 	if err != nil {
 		return nil, err
@@ -119,7 +121,7 @@ func (i *LocalConversations) GetConversationByUserID(userID string) (*model_stru
 	}
 }
 
-func (i *LocalConversations) GetConversationListSplitDB(offset, count int) (result []*model_struct.LocalConversation, err error) {
+func (i *LocalConversations) GetConversationListSplitDB(ctx context.Context, offset, count int) (result []*model_struct.LocalConversation, err error) {
 	cList, err := Exec(offset, count)
 	if err != nil {
 		return nil, err
@@ -141,22 +143,22 @@ func (i *LocalConversations) GetConversationListSplitDB(offset, count int) (resu
 	}
 }
 
-func (i *LocalConversations) BatchInsertConversationList(conversationList []*model_struct.LocalConversation) error {
+func (i *LocalConversations) BatchInsertConversationList(ctx context.Context, conversationList []*model_struct.LocalConversation) error {
 	_, err := Exec(utils.StructToJsonString(conversationList))
 	return err
 }
 
-func (i *LocalConversations) InsertConversation(conversationList *model_struct.LocalConversation) error {
+func (i *LocalConversations) InsertConversation(ctx context.Context, conversationList *model_struct.LocalConversation) error {
 	_, err := Exec(utils.StructToJsonString(conversationList))
 	return err
 }
 
-func (i *LocalConversations) DeleteConversation(conversationID string) error {
+func (i *LocalConversations) DeleteConversation(ctx context.Context, conversationID string) error {
 	_, err := Exec(conversationID)
 	return err
 }
 
-func (i *LocalConversations) UpdateConversation(c *model_struct.LocalConversation) error {
+func (i *LocalConversations) UpdateConversation(ctx context.Context, c *model_struct.LocalConversation) error {
 	if c.ConversationID == "" {
 		return PrimaryKeyNull
 	}
@@ -185,7 +187,7 @@ func (i *LocalConversations) UpdateConversation(c *model_struct.LocalConversatio
 	return err
 }
 
-func (i *LocalConversations) UpdateConversationForSync(c *model_struct.LocalConversation) error {
+func (i *LocalConversations) UpdateConversationForSync(ctx context.Context, c *model_struct.LocalConversation) error {
 	if c.ConversationID == "" {
 		return PrimaryKeyNull
 	}
@@ -204,7 +206,7 @@ func (i *LocalConversations) UpdateConversationForSync(c *model_struct.LocalConv
 	return err
 }
 
-func (i *LocalConversations) BatchUpdateConversationList(conversationList []*model_struct.LocalConversation) error {
+func (i *LocalConversations) BatchUpdateConversationList(ctx context.Context, conversationList []*model_struct.LocalConversation) error {
 	for _, v := range conversationList {
 		err := i.UpdateConversation(v)
 		if err != nil {
@@ -215,7 +217,7 @@ func (i *LocalConversations) BatchUpdateConversationList(conversationList []*mod
 	return nil
 }
 
-func (i *LocalConversations) ConversationIfExists(conversationID string) (bool, error) {
+func (i *LocalConversations) ConversationIfExists(ctx context.Context, conversationID string) (bool, error) {
 	seq, err := Exec(conversationID)
 	if err != nil {
 		return false, err
@@ -228,55 +230,55 @@ func (i *LocalConversations) ConversationIfExists(conversationID string) (bool, 
 	}
 }
 
-func (i *LocalConversations) ResetConversation(conversationID string) error {
+func (i *LocalConversations) ResetConversation(ctx context.Context, conversationID string) error {
 	_, err := Exec(conversationID)
 	return err
 }
 
-func (i *LocalConversations) ResetAllConversation() error {
+func (i *LocalConversations) ResetAllConversation(ctx context.Context) error {
 	_, err := Exec()
 	return err
 }
 
-func (i *LocalConversations) ClearConversation(conversationID string) error {
+func (i *LocalConversations) ClearConversation(ctx context.Context, conversationID string) error {
 	_, err := Exec(conversationID)
 	return err
 }
 
-func (i *LocalConversations) ClearAllConversation() error {
+func (i *LocalConversations) ClearAllConversation(ctx context.Context) error {
 	_, err := Exec()
 	return err
 }
 
-func (i *LocalConversations) SetConversationDraftDB(conversationID, draftText string) error {
+func (i *LocalConversations) SetConversationDraftDB(ctx context.Context, conversationID, draftText string) error {
 	_, err := Exec(conversationID, draftText)
 	return err
 }
 
-func (i *LocalConversations) RemoveConversationDraft(conversationID, draftText string) error {
+func (i *LocalConversations) RemoveConversationDraft(ctx context.Context, conversationID, draftText string) error {
 	_, err := Exec(conversationID, draftText)
 	return err
 }
 
-func (i *LocalConversations) UnPinConversation(conversationID string, isPinned int) error {
+func (i *LocalConversations) UnPinConversation(ctx context.Context, conversationID string, isPinned int) error {
 	_, err := Exec(conversationID, isPinned)
 	return err
 }
 
-func (i *LocalConversations) UpdateAllConversation(conversation *model_struct.LocalConversation) error {
+func (i *LocalConversations) UpdateAllConversation(ctx context.Context, conversation *model_struct.LocalConversation) error {
 	_, err := Exec()
 	return err
 }
 
-func (i *LocalConversations) IncrConversationUnreadCount(conversationID string) error {
+func (i *LocalConversations) IncrConversationUnreadCount(ctx context.Context, conversationID string) error {
 	_, err := Exec(conversationID)
 	return err
 }
-func (i *LocalConversations) DecrConversationUnreadCount(conversationID string, count int64) error {
+func (i *LocalConversations) DecrConversationUnreadCount(ctx context.Context, conversationID string, count int64) error {
 	_, err := Exec(conversationID, count)
 	return err
 }
-func (i *LocalConversations) GetTotalUnreadMsgCountDB() (totalUnreadCount int32, err error) {
+func (i *LocalConversations) GetTotalUnreadMsgCountDB(ctx context.Context) (totalUnreadCount int32, err error) {
 	count, err := Exec()
 	if err != nil {
 		return 0, err
@@ -291,12 +293,12 @@ func (i *LocalConversations) GetTotalUnreadMsgCountDB() (totalUnreadCount int32,
 	}
 }
 
-func (i *LocalConversations) SetMultipleConversationRecvMsgOpt(conversationIDList []string, opt int) (err error) {
+func (i *LocalConversations) SetMultipleConversationRecvMsgOpt(ctx context.Context, conversationIDList []string, opt int) (err error) {
 	_, err = Exec(utils.StructToJsonString(conversationIDList), opt)
 	return err
 }
 
-func (i *LocalConversations) GetMultipleConversationDB(conversationIDList []string) (result []*model_struct.LocalConversation, err error) {
+func (i *LocalConversations) GetMultipleConversationDB(ctx context.Context, conversationIDList []string) (result []*model_struct.LocalConversation, err error) {
 	cList, err := Exec(utils.StructToJsonString(conversationIDList))
 	if err != nil {
 		return nil, err

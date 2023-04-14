@@ -3,6 +3,8 @@
 
 package indexdb
 
+import "context"
+
 import (
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/server_api_params"
@@ -16,7 +18,7 @@ func NewLocalChatLogReactionExtensions() *LocalChatLogReactionExtensions {
 	return &LocalChatLogReactionExtensions{}
 }
 
-func (i *LocalChatLogReactionExtensions) GetMessageReactionExtension(clientMsgID string) (result *model_struct.LocalChatLogReactionExtensions, err error) {
+func (i *LocalChatLogReactionExtensions) GetMessageReactionExtension(ctx context.Context, clientMsgID string) (result *model_struct.LocalChatLogReactionExtensions, err error) {
 	msg, err := Exec(clientMsgID)
 	if err != nil {
 		return nil, err
@@ -34,19 +36,19 @@ func (i *LocalChatLogReactionExtensions) GetMessageReactionExtension(clientMsgID
 	}
 }
 
-func (i *LocalChatLogReactionExtensions) InsertMessageReactionExtension(messageReactionExtension *model_struct.LocalChatLogReactionExtensions) error {
+func (i *LocalChatLogReactionExtensions) InsertMessageReactionExtension(ctx context.Context, messageReactionExtension *model_struct.LocalChatLogReactionExtensions) error {
 	_, err := Exec(utils.StructToJsonString(messageReactionExtension))
 	return err
 }
-func (i *LocalChatLogReactionExtensions) GetAndUpdateMessageReactionExtension(clientMsgID string, m map[string]*server_api_params.KeyValue) error {
+func (i *LocalChatLogReactionExtensions) GetAndUpdateMessageReactionExtension(ctx context.Context, clientMsgID string, m map[string]*server_api_params.KeyValue) error {
 	_, err := Exec(clientMsgID, utils.StructToJsonString(m))
 	return err
 }
-func (i *LocalChatLogReactionExtensions) DeleteAndUpdateMessageReactionExtension(clientMsgID string, m map[string]*server_api_params.KeyValue) error {
+func (i *LocalChatLogReactionExtensions) DeleteAndUpdateMessageReactionExtension(ctx context.Context, clientMsgID string, m map[string]*server_api_params.KeyValue) error {
 	_, err := Exec(clientMsgID, utils.StructToJsonString(m))
 	return err
 }
-func (i *LocalChatLogReactionExtensions) GetMultipleMessageReactionExtension(msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error) {
+func (i *LocalChatLogReactionExtensions) GetMultipleMessageReactionExtension(ctx context.Context, msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error) {
 	msgReactionExtensionList, err := Exec(utils.StructToJsonString(msgIDList))
 	if err != nil {
 		return nil, err
@@ -67,11 +69,11 @@ func (i *LocalChatLogReactionExtensions) GetMultipleMessageReactionExtension(msg
 		}
 	}
 }
-func (i *LocalChatLogReactionExtensions) DeleteMessageReactionExtension(msgID string) error {
+func (i *LocalChatLogReactionExtensions) DeleteMessageReactionExtension(ctx context.Context, msgID string) error {
 	_, err := Exec(msgID)
 	return err
 }
-func (i *LocalChatLogReactionExtensions) UpdateMessageReactionExtension(c *model_struct.LocalChatLogReactionExtensions) error {
+func (i *LocalChatLogReactionExtensions) UpdateMessageReactionExtension(ctx context.Context, c *model_struct.LocalChatLogReactionExtensions) error {
 	_, err := Exec(c.ClientMsgID, utils.StructToJsonString(c))
 	return err
 }

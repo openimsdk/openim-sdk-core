@@ -3,6 +3,8 @@
 
 package indexdb
 
+import "context"
+
 import (
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
@@ -15,22 +17,22 @@ func NewLocalGroupRequest() *LocalGroupRequest {
 	return &LocalGroupRequest{}
 }
 
-func (i *LocalGroupRequest) InsertGroupRequest(groupRequest *model_struct.LocalGroupRequest) error {
+func (i *LocalGroupRequest) InsertGroupRequest(ctx context.Context, groupRequest *model_struct.LocalGroupRequest) error {
 	_, err := Exec(utils.StructToJsonString(groupRequest))
 	return err
 }
 
-func (i *LocalGroupRequest) DeleteGroupRequest(groupID, userID string) error {
+func (i *LocalGroupRequest) DeleteGroupRequest(ctx context.Context, groupID, userID string) error {
 	_, err := Exec(groupID, userID)
 	return err
 }
 
-func (i *LocalGroupRequest) UpdateGroupRequest(groupRequest *model_struct.LocalGroupRequest) error {
+func (i *LocalGroupRequest) UpdateGroupRequest(ctx context.Context, groupRequest *model_struct.LocalGroupRequest) error {
 	_, err := Exec(utils.StructToJsonString(groupRequest))
 	return err
 }
 
-func (i *LocalGroupRequest) GetSendGroupApplication() ([]*model_struct.LocalGroupRequest, error) {
+func (i *LocalGroupRequest) GetSendGroupApplication(ctx context.Context) ([]*model_struct.LocalGroupRequest, error) {
 	result, err := Exec()
 	if err != nil {
 		return nil, err
@@ -46,22 +48,22 @@ func (i *LocalGroupRequest) GetSendGroupApplication() ([]*model_struct.LocalGrou
 	}
 }
 
-func (i *LocalGroupRequest) InsertAdminGroupRequest(groupRequest *model_struct.LocalAdminGroupRequest) error {
+func (i *LocalGroupRequest) InsertAdminGroupRequest(ctx context.Context, groupRequest *model_struct.LocalAdminGroupRequest) error {
 	_, err := Exec(utils.StructToJsonString(groupRequest))
 	return err
 }
 
-func (i *LocalGroupRequest) DeleteAdminGroupRequest(groupID, userID string) error {
+func (i *LocalGroupRequest) DeleteAdminGroupRequest(ctx context.Context, groupID, userID string) error {
 	_, err := Exec(groupID, userID)
 	return err
 }
 
-func (i *LocalGroupRequest) UpdateAdminGroupRequest(groupRequest *model_struct.LocalAdminGroupRequest) error {
+func (i *LocalGroupRequest) UpdateAdminGroupRequest(ctx context.Context, groupRequest *model_struct.LocalAdminGroupRequest) error {
 	_, err := Exec(utils.StructToJsonString(groupRequest))
 	return err
 }
 
-func (i *LocalGroupRequest) GetAdminGroupApplication() ([]*model_struct.LocalAdminGroupRequest, error) {
+func (i *LocalGroupRequest) GetAdminGroupApplication(ctx context.Context) ([]*model_struct.LocalAdminGroupRequest, error) {
 	result, err := Exec()
 	if err != nil {
 		return nil, err

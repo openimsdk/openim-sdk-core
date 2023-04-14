@@ -3,6 +3,8 @@
 
 package db
 
+import "context"
+
 import (
 	_ "database/sql"
 	"errors"
@@ -11,19 +13,19 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func (d *DataBase) InsertFriend(friend *model_struct.LocalFriend) error {
+func (d *DataBase) InsertFriend(ctx context.Context, friend *model_struct.LocalFriend) error {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	return utils.Wrap(d.conn.Create(friend).Error, "InsertFriend failed")
 }
 
-func (d *DataBase) DeleteFriendDB(friendUserID string) error {
+func (d *DataBase) DeleteFriendDB(ctx context.Context, friendUserID string) error {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	return utils.Wrap(d.conn.Where("owner_user_id=? and friend_user_id=?", d.loginUserID, friendUserID).Delete(&model_struct.LocalFriend{}).Error, "DeleteFriend failed")
 }
 
-func (d *DataBase) UpdateFriend(friend *model_struct.LocalFriend) error {
+func (d *DataBase) UpdateFriend(ctx context.Context, friend *model_struct.LocalFriend) error {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 
@@ -35,7 +37,7 @@ func (d *DataBase) UpdateFriend(friend *model_struct.LocalFriend) error {
 
 }
 
-func (d *DataBase) GetAllFriendList() ([]*model_struct.LocalFriend, error) {
+func (d *DataBase) GetAllFriendList(ctx context.Context) ([]*model_struct.LocalFriend, error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	var friendList []model_struct.LocalFriend
@@ -48,7 +50,7 @@ func (d *DataBase) GetAllFriendList() ([]*model_struct.LocalFriend, error) {
 	}
 	return transfer, err
 }
-func (d *DataBase) SearchFriendList(keyword string, isSearchUserID, isSearchNickname, isSearchRemark bool) ([]*model_struct.LocalFriend, error) {
+func (d *DataBase) SearchFriendList(ctx context.Context, keyword string, isSearchUserID, isSearchNickname, isSearchRemark bool) ([]*model_struct.LocalFriend, error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	var count int
@@ -81,7 +83,7 @@ func (d *DataBase) SearchFriendList(keyword string, isSearchUserID, isSearchNick
 
 }
 
-func (d *DataBase) GetFriendInfoByFriendUserID(FriendUserID string) (*model_struct.LocalFriend, error) {
+func (d *DataBase) GetFriendInfoByFriendUserID(ctx context.Context, FriendUserID string) (*model_struct.LocalFriend, error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	var friend model_struct.LocalFriend
@@ -89,7 +91,7 @@ func (d *DataBase) GetFriendInfoByFriendUserID(FriendUserID string) (*model_stru
 		d.loginUserID, FriendUserID).Take(&friend).Error, "GetFriendInfoByFriendUserID failed")
 }
 
-func (d *DataBase) GetFriendInfoList(friendUserIDList []string) ([]*model_struct.LocalFriend, error) {
+func (d *DataBase) GetFriendInfoList(ctx context.Context, friendUserIDList []string) ([]*model_struct.LocalFriend, error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	var friendList []model_struct.LocalFriend

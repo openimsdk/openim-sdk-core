@@ -3,13 +3,15 @@
 
 package db
 
+import "context"
+
 import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 )
 
-func (d *DataBase) GetJoinedWorkingGroupIDList() ([]string, error) {
+func (d *DataBase) GetJoinedWorkingGroupIDList(ctx context.Context) ([]string, error) {
 	groupList, err := d.GetJoinedGroupListDB()
 	if err != nil {
 		return nil, utils.Wrap(err, "")
@@ -23,7 +25,7 @@ func (d *DataBase) GetJoinedWorkingGroupIDList() ([]string, error) {
 	return groupIDList, nil
 }
 
-func (d *DataBase) GetJoinedWorkingGroupList() ([]*model_struct.LocalGroup, error) {
+func (d *DataBase) GetJoinedWorkingGroupList(ctx context.Context) ([]*model_struct.LocalGroup, error) {
 	groupList, err := d.GetJoinedGroupListDB()
 	var transfer []*model_struct.LocalGroup
 	for _, v := range groupList {

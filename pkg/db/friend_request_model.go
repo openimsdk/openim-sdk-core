@@ -3,25 +3,27 @@
 
 package db
 
+import "context"
+
 import (
 	"errors"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 )
 
-func (d *DataBase) InsertFriendRequest(friendRequest *model_struct.LocalFriendRequest) error {
+func (d *DataBase) InsertFriendRequest(ctx context.Context, friendRequest *model_struct.LocalFriendRequest) error {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	return utils.Wrap(d.conn.Create(friendRequest).Error, "InsertFriendRequest failed")
 }
 
-func (d *DataBase) DeleteFriendRequestBothUserID(fromUserID, toUserID string) error {
+func (d *DataBase) DeleteFriendRequestBothUserID(ctx context.Context, fromUserID, toUserID string) error {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	return utils.Wrap(d.conn.Where("from_user_id=? and to_user_id=?", fromUserID, toUserID).Delete(&model_struct.LocalFriendRequest{}).Error, "DeleteFriendRequestBothUserID failed")
 }
 
-func (d *DataBase) UpdateFriendRequest(friendRequest *model_struct.LocalFriendRequest) error {
+func (d *DataBase) UpdateFriendRequest(ctx context.Context, friendRequest *model_struct.LocalFriendRequest) error {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	t := d.conn.Model(friendRequest).Select("*").Updates(*friendRequest)
@@ -31,7 +33,7 @@ func (d *DataBase) UpdateFriendRequest(friendRequest *model_struct.LocalFriendRe
 	return utils.Wrap(t.Error, "")
 }
 
-func (d *DataBase) GetRecvFriendApplication() ([]*model_struct.LocalFriendRequest, error) {
+func (d *DataBase) GetRecvFriendApplication(ctx context.Context) ([]*model_struct.LocalFriendRequest, error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	var friendRequestList []model_struct.LocalFriendRequest
@@ -45,7 +47,7 @@ func (d *DataBase) GetRecvFriendApplication() ([]*model_struct.LocalFriendReques
 	return transfer, utils.Wrap(err, "GetRecvFriendApplication failed")
 }
 
-func (d *DataBase) GetSendFriendApplication() ([]*model_struct.LocalFriendRequest, error) {
+func (d *DataBase) GetSendFriendApplication(ctx context.Context) ([]*model_struct.LocalFriendRequest, error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	var friendRequestList []model_struct.LocalFriendRequest
@@ -59,7 +61,7 @@ func (d *DataBase) GetSendFriendApplication() ([]*model_struct.LocalFriendReques
 	return transfer, utils.Wrap(err, "GetSendFriendApplication failed")
 }
 
-func (d *DataBase) GetFriendApplicationByBothID(fromUserID, toUserID string) (*model_struct.LocalFriendRequest, error) {
+func (d *DataBase) GetFriendApplicationByBothID(ctx context.Context, fromUserID, toUserID string) (*model_struct.LocalFriendRequest, error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 

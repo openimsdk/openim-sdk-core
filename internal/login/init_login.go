@@ -457,7 +457,7 @@ func (u *LoginMgr) GetLoginStatus() int32 {
 
 func (u *LoginMgr) forcedSynchronization() {
 	operationID := utils.OperationIDGenerator()
-
+	ctx := context.Background()
 	log.Info(operationID, "sync all info begin")
 	var wg sync.WaitGroup
 	wg.Add(10)
@@ -498,7 +498,7 @@ func (u *LoginMgr) forcedSynchronization() {
 	}()
 
 	go func() {
-		u.group.SyncJoinedGroupMemberForFirstLogin(operationID)
+		u.group.SyncJoinedGroupMemberForFirstLogin(ctx)
 		wg.Done()
 	}()
 	if u.organizationListener != nil {

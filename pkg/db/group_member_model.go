@@ -3,6 +3,8 @@
 
 package db
 
+import "context"
+
 import (
 	"errors"
 	"fmt"
@@ -12,7 +14,7 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func (d *DataBase) GetGroupMemberInfoByGroupIDUserID(groupID, userID string) (*model_struct.LocalGroupMember, error) {
+func (d *DataBase) GetGroupMemberInfoByGroupIDUserID(ctx context.Context, groupID, userID string) (*model_struct.LocalGroupMember, error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var groupMember model_struct.LocalGroupMember
@@ -20,20 +22,20 @@ func (d *DataBase) GetGroupMemberInfoByGroupIDUserID(groupID, userID string) (*m
 		groupID, userID).Take(&groupMember).Error, "GetGroupMemberInfoByGroupIDUserID failed")
 }
 
-func (d *DataBase) GetAllGroupMemberList() ([]model_struct.LocalGroupMember, error) {
+func (d *DataBase) GetAllGroupMemberList(ctx context.Context) ([]model_struct.LocalGroupMember, error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var groupMemberList []model_struct.LocalGroupMember
 	return groupMemberList, utils.Wrap(d.conn.Find(&groupMemberList).Error, "GetAllGroupMemberList failed")
 }
-func (d *DataBase) GetAllGroupMemberUserIDList() ([]model_struct.LocalGroupMember, error) {
+func (d *DataBase) GetAllGroupMemberUserIDList(ctx context.Context) ([]model_struct.LocalGroupMember, error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var groupMemberList []model_struct.LocalGroupMember
 	return groupMemberList, utils.Wrap(d.conn.Find(&groupMemberList).Error, "GetAllGroupMemberList failed")
 }
 
-func (d *DataBase) GetGroupMemberCount(groupID string) (uint32, error) {
+func (d *DataBase) GetGroupMemberCount(ctx context.Context, groupID string) (uint32, error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var count int64
@@ -41,7 +43,7 @@ func (d *DataBase) GetGroupMemberCount(groupID string) (uint32, error) {
 	return uint32(count), utils.Wrap(err, "GetGroupMemberCount failed")
 }
 
-func (d *DataBase) GetGroupSomeMemberInfo(groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
+func (d *DataBase) GetGroupSomeMemberInfo(ctx context.Context, groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var groupMemberList []model_struct.LocalGroupMember
@@ -53,14 +55,14 @@ func (d *DataBase) GetGroupSomeMemberInfo(groupID string, userIDList []string) (
 	}
 	return transfer, utils.Wrap(err, "GetGroupMemberListByGroupID failed ")
 }
-func (d *DataBase) GetGroupAdminID(groupID string) ([]string, error) {
+func (d *DataBase) GetGroupAdminID(ctx context.Context, groupID string) ([]string, error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var adminIDList []string
 	return adminIDList, utils.Wrap(d.conn.Model(&model_struct.LocalGroupMember{}).Select("user_id").Where("group_id = ? And role_level = ?", groupID, constant.GroupAdmin).Find(&adminIDList).Error, "")
 }
 
-func (d *DataBase) GetGroupMemberListByGroupID(groupID string) ([]*model_struct.LocalGroupMember, error) {
+func (d *DataBase) GetGroupMemberListByGroupID(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var groupMemberList []model_struct.LocalGroupMember
@@ -72,7 +74,7 @@ func (d *DataBase) GetGroupMemberListByGroupID(groupID string) ([]*model_struct.
 	}
 	return transfer, utils.Wrap(err, "GetGroupMemberListByGroupID failed ")
 }
-func (d *DataBase) GetGroupMemberListSplit(groupID string, filter int32, offset, count int) ([]*model_struct.LocalGroupMember, error) {
+func (d *DataBase) GetGroupMemberListSplit(ctx context.Context, groupID string, filter int32, offset, count int) ([]*model_struct.LocalGroupMember, error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var groupMemberList []model_struct.LocalGroupMember
@@ -95,7 +97,7 @@ func (d *DataBase) GetGroupMemberListSplit(groupID string, filter int32, offset,
 	return transfer, utils.Wrap(err, "GetGroupMemberListSplit failed ")
 }
 
-func (d *DataBase) GetGroupMemberOwnerAndAdmin(groupID string) ([]*model_struct.LocalGroupMember, error) {
+func (d *DataBase) GetGroupMemberOwnerAndAdmin(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var groupMemberList []model_struct.LocalGroupMember
@@ -108,7 +110,7 @@ func (d *DataBase) GetGroupMemberOwnerAndAdmin(groupID string) ([]*model_struct.
 	return transfer, utils.Wrap(err, "GetGroupMemberListSplit failed ")
 }
 
-func (d *DataBase) GetGroupMemberOwner(groupID string) (*model_struct.LocalGroupMember, error) {
+func (d *DataBase) GetGroupMemberOwner(ctx context.Context, groupID string) (*model_struct.LocalGroupMember, error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var groupMember model_struct.LocalGroupMember
@@ -116,7 +118,7 @@ func (d *DataBase) GetGroupMemberOwner(groupID string) (*model_struct.LocalGroup
 	return &groupMember, utils.Wrap(err, "GetGroupMemberListSplit failed ")
 }
 
-func (d *DataBase) GetGroupMemberListSplitByJoinTimeFilter(groupID string, offset, count int, joinTimeBegin, joinTimeEnd int64, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
+func (d *DataBase) GetGroupMemberListSplitByJoinTimeFilter(ctx context.Context, groupID string, offset, count int, joinTimeBegin, joinTimeEnd int64, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var groupMemberList []model_struct.LocalGroupMember
@@ -134,7 +136,7 @@ func (d *DataBase) GetGroupMemberListSplitByJoinTimeFilter(groupID string, offse
 	return transfer, utils.Wrap(err, "GetGroupMemberListSplitByJoinTimeFilter failed ")
 }
 
-func (d *DataBase) GetGroupOwnerAndAdminByGroupID(groupID string) ([]*model_struct.LocalGroupMember, error) {
+func (d *DataBase) GetGroupOwnerAndAdminByGroupID(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var groupMemberList []model_struct.LocalGroupMember
@@ -147,7 +149,7 @@ func (d *DataBase) GetGroupOwnerAndAdminByGroupID(groupID string) ([]*model_stru
 	return transfer, utils.Wrap(err, "GetGroupMemberListByGroupID failed ")
 }
 
-func (d *DataBase) GetGroupMemberUIDListByGroupID(groupID string) (result []string, err error) {
+func (d *DataBase) GetGroupMemberUIDListByGroupID(ctx context.Context, groupID string) (result []string, err error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var g model_struct.LocalGroupMember
@@ -156,13 +158,13 @@ func (d *DataBase) GetGroupMemberUIDListByGroupID(groupID string) (result []stri
 	return result, utils.Wrap(err, "GetGroupMemberListByGroupID failed ")
 }
 
-func (d *DataBase) InsertGroupMember(groupMember *model_struct.LocalGroupMember) error {
+func (d *DataBase) InsertGroupMember(ctx context.Context, groupMember *model_struct.LocalGroupMember) error {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	return utils.Wrap(d.conn.Create(groupMember).Error, "")
 }
 
-//func (d *DataBase) BatchInsertMessageList(MessageList []*model_struct.LocalChatLog) error {
+//func (d *DataBase) BatchInsertMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error {
 //	if MessageList == nil {
 //		return nil
 //	}
@@ -171,7 +173,7 @@ func (d *DataBase) InsertGroupMember(groupMember *model_struct.LocalGroupMember)
 //	return utils.Wrap(d.conn.Create(MessageList).Error, "BatchInsertMessageList failed")
 //}
 
-func (d *DataBase) BatchInsertGroupMember(groupMemberList []*model_struct.LocalGroupMember) error {
+func (d *DataBase) BatchInsertGroupMember(ctx context.Context, groupMemberList []*model_struct.LocalGroupMember) error {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	if groupMemberList == nil {
@@ -180,21 +182,21 @@ func (d *DataBase) BatchInsertGroupMember(groupMemberList []*model_struct.LocalG
 	return utils.Wrap(d.conn.Create(groupMemberList).Error, "BatchInsertMessageList failed")
 }
 
-func (d *DataBase) DeleteGroupMember(groupID, userID string) error {
+func (d *DataBase) DeleteGroupMember(ctx context.Context, groupID, userID string) error {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	groupMember := model_struct.LocalGroupMember{}
 	return d.conn.Where("group_id=? and user_id=?", groupID, userID).Delete(&groupMember).Error
 }
 
-func (d *DataBase) DeleteGroupAllMembers(groupID string) error {
+func (d *DataBase) DeleteGroupAllMembers(ctx context.Context, groupID string) error {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	groupMember := model_struct.LocalGroupMember{}
 	return d.conn.Where("group_id=? ", groupID).Delete(&groupMember).Error
 }
 
-func (d *DataBase) UpdateGroupMember(groupMember *model_struct.LocalGroupMember) error {
+func (d *DataBase) UpdateGroupMember(ctx context.Context, groupMember *model_struct.LocalGroupMember) error {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	t := d.conn.Model(groupMember).Select("*").Updates(*groupMember)
@@ -204,7 +206,7 @@ func (d *DataBase) UpdateGroupMember(groupMember *model_struct.LocalGroupMember)
 	return utils.Wrap(t.Error, "")
 }
 
-func (d *DataBase) UpdateGroupMemberField(groupID, userID string, args map[string]interface{}) error {
+func (d *DataBase) UpdateGroupMemberField(ctx context.Context, groupID, userID string, args map[string]interface{}) error {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	c := model_struct.LocalGroupMember{GroupID: groupID, UserID: userID}
@@ -215,7 +217,7 @@ func (d *DataBase) UpdateGroupMemberField(groupID, userID string, args map[strin
 	return utils.Wrap(t.Error, "UpdateGroupMemberField failed")
 }
 
-func (d *DataBase) GetGroupMemberInfoIfOwnerOrAdmin() ([]*model_struct.LocalGroupMember, error) {
+func (d *DataBase) GetGroupMemberInfoIfOwnerOrAdmin(ctx context.Context) ([]*model_struct.LocalGroupMember, error) {
 	var ownerAndAdminList []*model_struct.LocalGroupMember
 	groupList, err := d.GetJoinedGroupListDB()
 	if err != nil {
@@ -231,7 +233,7 @@ func (d *DataBase) GetGroupMemberInfoIfOwnerOrAdmin() ([]*model_struct.LocalGrou
 	return ownerAndAdminList, nil
 }
 
-func (d *DataBase) SearchGroupMembersDB(keyword string, groupID string, isSearchMemberNickname, isSearchUserID bool, offset, count int) (result []*model_struct.LocalGroupMember, err error) {
+func (d *DataBase) SearchGroupMembersDB(ctx context.Context, keyword string, groupID string, isSearchMemberNickname, isSearchUserID bool, offset, count int) (result []*model_struct.LocalGroupMember, err error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	if !isSearchMemberNickname && !isSearchUserID {

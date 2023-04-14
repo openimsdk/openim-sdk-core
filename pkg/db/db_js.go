@@ -1,5 +1,7 @@
 package db
 
+import "context"
+
 import (
 	"errors"
 	"open_im_sdk/pkg/constant"
@@ -30,172 +32,172 @@ type IndexDB struct {
 	loginUserID string
 }
 
-func (i IndexDB) GetSubDepartmentList(departmentID string, args ...int) ([]*model_struct.LocalDepartment, error) {
+func (i IndexDB) GetSubDepartmentList(ctx context.Context, departmentID string, args ...int) ([]*model_struct.LocalDepartment, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) InsertDepartment(department *model_struct.LocalDepartment) error {
+func (i IndexDB) InsertDepartment(ctx context.Context, department *model_struct.LocalDepartment) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) UpdateDepartment(department *model_struct.LocalDepartment) error {
+func (i IndexDB) UpdateDepartment(ctx context.Context, department *model_struct.LocalDepartment) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) DeleteDepartment(departmentID string) error {
+func (i IndexDB) DeleteDepartment(ctx context.Context, departmentID string) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) GetDepartmentInfo(departmentID string) (*model_struct.LocalDepartment, error) {
+func (i IndexDB) GetDepartmentInfo(ctx context.Context, departmentID string) (*model_struct.LocalDepartment, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) GetAllDepartmentList() ([]*model_struct.LocalDepartment, error) {
+func (i IndexDB) GetAllDepartmentList(ctx context.Context) ([]*model_struct.LocalDepartment, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) GetParentDepartmentList(departmentID string) ([]*model_struct.LocalDepartment, error) {
+func (i IndexDB) GetParentDepartmentList(ctx context.Context, departmentID string) ([]*model_struct.LocalDepartment, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) GetDepartmentList(departmentList *[]*model_struct.LocalDepartment, departmentID string) error {
+func (i IndexDB) GetDepartmentList(ctx context.Context, departmentList *[]*model_struct.LocalDepartment, departmentID string) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) GetParentDepartment(departmentID string) (model_struct.LocalDepartment, error) {
+func (i IndexDB) GetParentDepartment(ctx context.Context, departmentID string) (model_struct.LocalDepartment, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) SearchDepartmentMember(keyWord string, isSearchUserName, isSearchEmail, isSearchMobile, isSearchPosition, isSearchTelephone, isSearchUserEnglishName, isSearchUserID bool, offset, count int) ([]*model_struct.SearchDepartmentMemberResult, error) {
+func (i IndexDB) SearchDepartmentMember(ctx context.Context, keyWord string, isSearchUserName, isSearchEmail, isSearchMobile, isSearchPosition, isSearchTelephone, isSearchUserEnglishName, isSearchUserID bool, offset, count int) ([]*model_struct.SearchDepartmentMemberResult, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) SearchDepartment(keyWord string, offset, count int) ([]*model_struct.LocalDepartment, error) {
+func (i IndexDB) SearchDepartment(ctx context.Context, keyWord string, offset, count int) ([]*model_struct.LocalDepartment, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) GetJoinedSuperGroupIDList() ([]string, error) {
+func (i IndexDB) GetJoinedSuperGroupIDList(ctx context.Context) ([]string, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) GetReadDiffusionGroupIDList() ([]string, error) {
+func (i IndexDB) GetReadDiffusionGroupIDList(ctx context.Context) ([]string, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) BatchInsertExceptionMsgController(MessageList []*model_struct.LocalErrChatLog) error {
+func (i IndexDB) BatchInsertExceptionMsgController(ctx context.Context, MessageList []*model_struct.LocalErrChatLog) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) GetDepartmentMemberListByDepartmentID(departmentID string, args ...int) ([]*model_struct.LocalDepartmentMember, error) {
+func (i IndexDB) GetDepartmentMemberListByDepartmentID(ctx context.Context, departmentID string, args ...int) ([]*model_struct.LocalDepartmentMember, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) GetAllDepartmentMemberList() ([]*model_struct.LocalDepartmentMember, error) {
+func (i IndexDB) GetAllDepartmentMemberList(ctx context.Context) ([]*model_struct.LocalDepartmentMember, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) InsertDepartmentMember(departmentMember *model_struct.LocalDepartmentMember) error {
+func (i IndexDB) InsertDepartmentMember(ctx context.Context, departmentMember *model_struct.LocalDepartmentMember) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) BatchInsertDepartmentMember(departmentMemberList []*model_struct.LocalDepartmentMember) error {
+func (i IndexDB) BatchInsertDepartmentMember(ctx context.Context, departmentMemberList []*model_struct.LocalDepartmentMember) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) UpdateDepartmentMember(departmentMember *model_struct.LocalDepartmentMember) error {
+func (i IndexDB) UpdateDepartmentMember(ctx context.Context, departmentMember *model_struct.LocalDepartmentMember) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) DeleteDepartmentMember(departmentID string, userID string) error {
+func (i IndexDB) DeleteDepartmentMember(ctx context.Context, departmentID string, userID string) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) GetDepartmentMemberListByUserID(userID string) ([]*model_struct.LocalDepartmentMember, error) {
+func (i IndexDB) GetDepartmentMemberListByUserID(ctx context.Context, userID string) ([]*model_struct.LocalDepartmentMember, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) SuperGroupUpdateSpecificContentTypeMessage(contentType int, groupID string, args map[string]interface{}) error {
+func (i IndexDB) SuperGroupUpdateSpecificContentTypeMessage(ctx context.Context, contentType int, groupID string, args map[string]interface{}) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) SuperGroupUpdateGroupMessageFields(msgIDList []string, groupID string, args map[string]interface{}) error {
+func (i IndexDB) SuperGroupUpdateGroupMessageFields(ctx context.Context, msgIDList []string, groupID string, args map[string]interface{}) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) SuperGroupGetAlreadyExistSeqList(groupID string, lostSeqList []uint32) (seqList []uint32, err error) {
+func (i IndexDB) SuperGroupGetAlreadyExistSeqList(ctx context.Context, groupID string, lostSeqList []uint32) (seqList []uint32, err error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) InsertWorkMomentsNotification(jsonDetail string) error {
+func (i IndexDB) InsertWorkMomentsNotification(ctx context.Context, jsonDetail string) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) GetWorkMomentsNotification(offset, count int) (WorkMomentsNotifications []*model_struct.LocalWorkMomentsNotification, err error) {
+func (i IndexDB) GetWorkMomentsNotification(ctx context.Context, offset, count int) (WorkMomentsNotifications []*model_struct.LocalWorkMomentsNotification, err error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) GetWorkMomentsNotificationLimit(pageNumber, showNumber int) (WorkMomentsNotifications []*model_struct.LocalWorkMomentsNotification, err error) {
+func (i IndexDB) GetWorkMomentsNotificationLimit(ctx context.Context, pageNumber, showNumber int) (WorkMomentsNotifications []*model_struct.LocalWorkMomentsNotification, err error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) InitWorkMomentsNotificationUnreadCount() error {
+func (i IndexDB) InitWorkMomentsNotificationUnreadCount(ctx context.Context) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) IncrWorkMomentsNotificationUnreadCount() error {
+func (i IndexDB) IncrWorkMomentsNotificationUnreadCount(ctx context.Context) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) MarkAllWorkMomentsNotificationAsRead() (err error) {
+func (i IndexDB) MarkAllWorkMomentsNotificationAsRead(ctx context.Context) (err error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) GetWorkMomentsUnReadCount() (workMomentsNotificationUnReadCount model_struct.LocalWorkMomentsNotificationUnreadCount, err error) {
+func (i IndexDB) GetWorkMomentsUnReadCount(ctx context.Context) (workMomentsNotificationUnReadCount model_struct.LocalWorkMomentsNotificationUnreadCount, err error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) ClearWorkMomentsNotification() (err error) {
+func (i IndexDB) ClearWorkMomentsNotification(ctx context.Context) (err error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) Close() error {
+func (i IndexDB) Close(ctx context.Context) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (i IndexDB) SetChatLogFailedStatus() {
+func (i IndexDB) SetChatLogFailedStatus(ctx context.Context) {
 	msgList, err := i.GetSendingMessageList()
 	if err != nil {
 		log.Error("", "GetSendingMessageList failed ", err.Error())
@@ -234,7 +236,7 @@ func (i IndexDB) SetChatLogFailedStatus() {
 	}
 }
 
-func (i IndexDB) InitDB(userID string, dataDir string) error {
+func (i IndexDB) InitDB(ctx context.Context, userID string, dataDir string) error {
 	_, err := indexdb.Exec(userID, dataDir)
 	return err
 }
@@ -258,7 +260,7 @@ func NewDataBase(loginUserID string, dbDir string, operationID string) (*IndexDB
 		loginUserID:                     loginUserID,
 	}, nil
 }
-func (i IndexDB) BatchInsertMessageListController(MessageList []*model_struct.LocalChatLog) error {
+func (i IndexDB) BatchInsertMessageListController(ctx context.Context, MessageList []*model_struct.LocalChatLog) error {
 	if len(MessageList) == 0 {
 		return nil
 	}
@@ -270,7 +272,7 @@ func (i IndexDB) BatchInsertMessageListController(MessageList []*model_struct.Lo
 	}
 }
 
-func (i IndexDB) InsertMessageController(message *model_struct.LocalChatLog) error {
+func (i IndexDB) InsertMessageController(ctx context.Context, message *model_struct.LocalChatLog) error {
 	switch message.SessionType {
 	case constant.SuperGroupChatType:
 		return i.SuperGroupInsertMessage(message, message.RecvID)
@@ -279,7 +281,7 @@ func (i IndexDB) InsertMessageController(message *model_struct.LocalChatLog) err
 	}
 }
 
-func (i IndexDB) BatchUpdateMessageList(MessageList []*model_struct.LocalChatLog) error {
+func (i IndexDB) BatchUpdateMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error {
 	if MessageList == nil {
 		return nil
 	}
@@ -300,7 +302,7 @@ func (i IndexDB) BatchUpdateMessageList(MessageList []*model_struct.LocalChatLog
 	return nil
 }
 
-func (i IndexDB) BatchSpecialUpdateMessageList(MessageList []*model_struct.LocalChatLog) error {
+func (i IndexDB) BatchSpecialUpdateMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error {
 	if MessageList == nil {
 		return nil
 	}
@@ -332,7 +334,7 @@ func (i IndexDB) BatchSpecialUpdateMessageList(MessageList []*model_struct.Local
 	return nil
 }
 
-func (i IndexDB) GetMessageController(msg *sdk_struct.MsgStruct) (*model_struct.LocalChatLog, error) {
+func (i IndexDB) GetMessageController(ctx context.Context, msg *sdk_struct.MsgStruct) (*model_struct.LocalChatLog, error) {
 	switch msg.SessionType {
 	case constant.SuperGroupChatType:
 		return i.SuperGroupGetMessage(msg)
@@ -340,7 +342,7 @@ func (i IndexDB) GetMessageController(msg *sdk_struct.MsgStruct) (*model_struct.
 		return i.GetMessage(msg.ClientMsgID)
 	}
 }
-func (i IndexDB) UpdateColumnsMessageController(ClientMsgID string, groupID string, sessionType int32, args map[string]interface{}) error {
+func (i IndexDB) UpdateColumnsMessageController(ctx context.Context, ClientMsgID string, groupID string, sessionType int32, args map[string]interface{}) error {
 	switch sessionType {
 	case constant.SuperGroupChatType:
 		return utils.Wrap(i.SuperGroupUpdateColumnsMessage(ClientMsgID, groupID, args), "")
@@ -348,7 +350,7 @@ func (i IndexDB) UpdateColumnsMessageController(ClientMsgID string, groupID stri
 		return utils.Wrap(i.UpdateColumnsMessage(ClientMsgID, args), "")
 	}
 }
-func (i IndexDB) UpdateMessageController(c *model_struct.LocalChatLog) error {
+func (i IndexDB) UpdateMessageController(ctx context.Context, c *model_struct.LocalChatLog) error {
 	switch c.SessionType {
 	case constant.SuperGroupChatType:
 		return utils.Wrap(i.SuperGroupUpdateMessage(c), "")
@@ -357,7 +359,7 @@ func (i IndexDB) UpdateMessageController(c *model_struct.LocalChatLog) error {
 	}
 }
 
-func (i IndexDB) UpdateMessageStatusBySourceIDController(sourceID string, status, sessionType int32) error {
+func (i IndexDB) UpdateMessageStatusBySourceIDController(ctx context.Context, sourceID string, status, sessionType int32) error {
 	switch sessionType {
 	case constant.SuperGroupChatType:
 		return i.SuperGroupUpdateMessageStatusBySourceID(sourceID, status, sessionType)
@@ -365,7 +367,7 @@ func (i IndexDB) UpdateMessageStatusBySourceIDController(sourceID string, status
 		return i.UpdateMessageStatusBySourceID(sourceID, status, sessionType)
 	}
 }
-func (i IndexDB) UpdateMessageTimeAndStatusController(msg *sdk_struct.MsgStruct) error {
+func (i IndexDB) UpdateMessageTimeAndStatusController(ctx context.Context, msg *sdk_struct.MsgStruct) error {
 	switch msg.SessionType {
 	case constant.SuperGroupChatType:
 		return i.SuperGroupUpdateMessageTimeAndStatus(msg)
@@ -373,7 +375,7 @@ func (i IndexDB) UpdateMessageTimeAndStatusController(msg *sdk_struct.MsgStruct)
 		return i.UpdateMessageTimeAndStatus(msg.ClientMsgID, msg.ServerMsgID, msg.SendTime, msg.Status)
 	}
 }
-func (i IndexDB) GetMessageListController(sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+func (i IndexDB) GetMessageListController(ctx context.Context, sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	switch sessionType {
 	case constant.SuperGroupChatType:
 		return i.SuperGroupGetMessageList(sourceID, sessionType, count, startTime, isReverse)
@@ -381,7 +383,7 @@ func (i IndexDB) GetMessageListController(sourceID string, sessionType, count in
 		return i.GetMessageList(sourceID, sessionType, count, startTime, isReverse)
 	}
 }
-func (i IndexDB) GetMessageListNoTimeController(sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+func (i IndexDB) GetMessageListNoTimeController(ctx context.Context, sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	switch sessionType {
 	case constant.SuperGroupChatType:
 		return i.SuperGroupGetMessageListNoTime(sourceID, sessionType, count, isReverse)
@@ -390,7 +392,7 @@ func (i IndexDB) GetMessageListNoTimeController(sourceID string, sessionType, co
 	}
 }
 
-func (i IndexDB) UpdateGroupMessageHasReadController(msgIDList []string, groupID string, sessionType int32) error {
+func (i IndexDB) UpdateGroupMessageHasReadController(ctx context.Context, msgIDList []string, groupID string, sessionType int32) error {
 	switch sessionType {
 	case constant.SuperGroupChatType:
 		return i.SuperGroupUpdateGroupMessageHasRead(msgIDList, groupID)
@@ -399,7 +401,7 @@ func (i IndexDB) UpdateGroupMessageHasReadController(msgIDList []string, groupID
 	}
 }
 
-func (i IndexDB) GetMultipleMessageController(msgIDList []string, groupID string, sessionType int32) (result []*model_struct.LocalChatLog, err error) {
+func (i IndexDB) GetMultipleMessageController(ctx context.Context, msgIDList []string, groupID string, sessionType int32) (result []*model_struct.LocalChatLog, err error) {
 	switch sessionType {
 	case constant.SuperGroupChatType:
 		return i.SuperGroupGetMultipleMessage(msgIDList, groupID)
@@ -408,7 +410,7 @@ func (i IndexDB) GetMultipleMessageController(msgIDList []string, groupID string
 	}
 }
 
-func (i IndexDB) GetMsgSeqByClientMsgIDController(m *sdk_struct.MsgStruct) (uint32, error) {
+func (i IndexDB) GetMsgSeqByClientMsgIDController(ctx context.Context, m *sdk_struct.MsgStruct) (uint32, error) {
 	switch m.SessionType {
 	case constant.SuperGroupChatType:
 		return i.SuperGroupGetMsgSeqByClientMsgID(m.ClientMsgID, m.GroupID)
@@ -416,7 +418,7 @@ func (i IndexDB) GetMsgSeqByClientMsgIDController(m *sdk_struct.MsgStruct) (uint
 		return i.GetMsgSeqByClientMsgID(m.ClientMsgID)
 	}
 }
-func (i IndexDB) SearchMessageByKeywordController(contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
+func (i IndexDB) SearchMessageByKeywordController(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
 	switch sessionType {
 	case constant.SuperGroupChatType:
 		return i.SuperGroupSearchMessageByKeyword(contentType, keywordList, keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
@@ -425,7 +427,7 @@ func (i IndexDB) SearchMessageByKeywordController(contentType []int, keywordList
 	}
 }
 
-func (i IndexDB) SearchMessageByContentTypeController(contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
+func (i IndexDB) SearchMessageByContentTypeController(ctx context.Context, contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
 	switch sessionType {
 	case constant.SuperGroupChatType:
 		return i.SuperGroupSearchMessageByContentType(contentType, sourceID, startTime, endTime, sessionType, offset, count)
@@ -434,7 +436,7 @@ func (i IndexDB) SearchMessageByContentTypeController(contentType []int, sourceI
 	}
 }
 
-func (i IndexDB) SearchMessageByContentTypeAndKeywordController(contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64, operationID string) (result []*model_struct.LocalChatLog, err error) {
+func (i IndexDB) SearchMessageByContentTypeAndKeywordController(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64, operationID string) (result []*model_struct.LocalChatLog, err error) {
 	list, err := i.SearchMessageByContentTypeAndKeyword(contentType, keywordList, keywordListMatchType, startTime, endTime)
 	if err != nil {
 		return nil, err
@@ -465,7 +467,7 @@ func (i IndexDB) SearchMessageByContentTypeAndKeywordController(contentType []in
 	}
 	return list, nil
 }
-func (i IndexDB) UpdateMsgSenderFaceURLAndSenderNicknameController(sendID, faceURL, nickname string, sessionType int, groupID string) error {
+func (i IndexDB) UpdateMsgSenderFaceURLAndSenderNicknameController(ctx context.Context, sendID, faceURL, nickname string, sessionType int, groupID string) error {
 	switch sessionType {
 	case constant.SuperGroupChatType:
 		return i.SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(sendID, faceURL, nickname, sessionType, groupID)
