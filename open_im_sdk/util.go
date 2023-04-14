@@ -65,114 +65,92 @@ func setNumeric(in interface{}, out interface{}) {
 	}
 }
 
-func call_(callback open_im_sdk_callback.Base, operationID string, fn any, args ...any) {
+func call_(operationID string, fn any, args ...any) (res any, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			callback.OnError(10001, fmt.Sprintf("%+v", r))
-			return
+			err = fmt.Errorf("call panic: %+v", r)
 		}
 	}()
 	if operationID == "" {
-		callback.OnError(constant.ErrArgs.ErrCode, errs.ErrArgs.Wrap("operationID is empty").Error())
-		return
+		return nil, errs.ErrArgs.Wrap("call func operationID is empty")
 	}
 	if err := CheckResourceLoad(userForSDK); err != nil {
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
-		return
+		return nil, err
 	}
 	fnv := reflect.ValueOf(fn)
 	if fnv.Kind() != reflect.Func {
-		callback.OnError(10000, "go code error: fn is not func")
-		return
+		return nil, fmt.Errorf("call func fn is not func, is %T", fn)
 	}
 	fnt := fnv.Type()
-	numIn := fnt.NumIn()
-	if len(args) != numIn+1 {
-		callback.OnError(10000, "go code error: fn in args num is not match")
-		return
+	nin := fnt.NumIn()
+	if len(args)+1 != nin {
+		return nil, fmt.Errorf("go code error: fn in args num is not match")
 	}
-	ins := make([]reflect.Value, 0, numIn)
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, "operationID", operationID)
-	ins = append(ins, reflect.ValueOf(ctx))
-	for i := 2; i < len(args); i++ { // callback open_im_sdk_callback.Base, operationID string, ...
-		tag := fnt.In(i - 1) // ctx context.Context, ...
+	ins := make([]reflect.Value, 0, nin)
+	ins = append(ins, reflect.ValueOf(context.WithValue(context.Background(), "operationID", operationID)))
+	for i := 0; i < len(args); i++ {
+		inFnField := fnt.In(i + 1)
 		arg := reflect.TypeOf(args[i])
-		if arg.String() == tag.String() || tag.Kind() == reflect.Interface {
+		if arg.String() == inFnField.String() || inFnField.Kind() == reflect.Interface {
 			ins = append(ins, reflect.ValueOf(args[i]))
 			continue
 		}
 		if arg.Kind() == reflect.String { // json
-			switch tag.Kind() {
+			var ptr int
+			for inFnField.Kind() == reflect.Ptr {
+				inFnField = inFnField.Elem()
+				ptr++
+			}
+			switch inFnField.Kind() {
 			case reflect.Struct, reflect.Slice, reflect.Array, reflect.Map:
-				v := reflect.New(tag)
+				v := reflect.New(inFnField)
 				if err := json.Unmarshal([]byte(args[i].(string)), v.Interface()); err != nil {
-					callback.OnError(constant.ErrArgs.ErrCode, err.Error())
-					return
+					return nil, fmt.Errorf("go call json.Unmarshal error: %w", err)
 				}
-				ins = append(ins, v.Elem())
+				if ptr == 0 {
+					v = v.Elem()
+				} else if ptr != 1 {
+					for i := ptr - 1; i > 0; i-- {
+						temp := reflect.New(v.Type())
+						temp.Elem().Set(v)
+						v = temp
+					}
+				}
+				ins = append(ins, v)
 				continue
 			}
 		}
-		if isNumeric(arg.Kind()) && isNumeric(tag.Kind()) {
-			v := reflect.Zero(tag).Interface()
+		if isNumeric(arg.Kind()) && isNumeric(inFnField.Kind()) {
+			v := reflect.Zero(inFnField).Interface()
 			setNumeric(args[i], &v)
 			ins = append(ins, reflect.ValueOf(v))
 			continue
 		}
-		callback.OnError(constant.ErrArgs.ErrCode, "go code error: fn in args type is not match")
-		return
+		return nil, fmt.Errorf("go code error: fn in args type is not match")
 	}
-	var lastErr bool
-	if numOut := fnt.NumOut(); numOut > 0 {
-		lastErr = fnt.Out(numOut - 1).Implements(reflect.TypeOf(error(nil)).Elem())
-	}
-	//fmt.Println("fnv:", fnv.Interface(), "ins:", ins)
 	outs := fnv.Call(ins)
 	if len(outs) == 0 {
-		callback.OnSuccess("")
-		return
+		return "", nil
 	}
-	outVals := make([]any, 0, len(outs))
-	for i := 0; i < len(outs); i++ {
-		outVals = append(outVals, outs[i].Interface())
-	}
-	if lastErr {
-		if last := outVals[len(outVals)-1]; last != nil {
-			callback.OnError(10000, last.(error).Error())
-			return
-		}
-		if len(outs) == 1 {
-			callback.OnSuccess("") // 只有一个返回值为error，且error == nil
-			return
-		}
-		outVals = outVals[:len(outVals)-1]
-	}
-	// 将map和slice的nil转换为非nil
-	for i := 0; i < len(outVals); i++ {
-		switch outs[i].Kind() {
-		case reflect.Map:
-			if outs[i].IsNil() {
-				outVals[i] = reflect.MakeMap(outs[i].Type()).Interface()
-			}
-		case reflect.Slice:
-			if outs[i].IsNil() {
-				outVals[i] = reflect.MakeSlice(outs[i].Type(), 0, 0).Interface()
+	if fnt.Out(len(outs) - 1).Implements(reflect.ValueOf(new(error)).Elem().Type()) {
+		if errValueOf := outs[len(outs)-1]; !errValueOf.IsNil() {
+			if err := errValueOf.Interface().(error); err != nil {
+				return nil, err
 			}
 		}
+		switch len(outs) {
+		case 1:
+			return "", nil
+		case 2:
+			return outs[0].Interface(), nil
+		}
+		outs = outs[:len(outs)-1]
 	}
-	var jsonVal any
-	if len(outVals) == 1 {
-		jsonVal = outVals[0]
-	} else {
-		jsonVal = outVals
+	val := make([]any, 0, len(outs))
+	for i := range outs {
+		val = append(val, outs[i].Interface())
 	}
-	jsonData, err := json.Marshal(jsonVal)
-	if err != nil {
-		callback.OnError(constant.ErrArgs.ErrCode, err.Error())
-		return
-	}
-	callback.OnSuccess(string(jsonData))
+	return val, nil
 }
 
 func call(callback open_im_sdk_callback.Base, operationID string, fn any, args ...any) {
@@ -180,8 +158,21 @@ func call(callback open_im_sdk_callback.Base, operationID string, fn any, args .
 		log.Error("callback is nil")
 		return
 	}
-	go call_(callback, operationID, fn, args...)
+	go func() {
+		res, err := call_(operationID, fn, args...)
+		if err != nil {
+			callback.OnError(10000, err.Error())
+			return
+		}
+		data, err := json.Marshal(res)
+		if err != nil {
+			callback.OnError(10000, err.Error())
+			return
+		}
+		callback.OnSuccess(string(data))
+	}()
 }
+
 func syncCall(operationID string, fn any, args ...any) string {
 	defer func() {
 		if r := recover(); r != nil {
@@ -290,4 +281,115 @@ func syncCall(operationID string, fn any, args ...any) string {
 		return ""
 	}
 	return string(jsonData)
+}
+func messageCall(callback open_im_sdk_callback.SendMsgCallBack, operationID string, fn any, args ...any) {
+	if callback == nil {
+		log.Error("callback is nil")
+		return
+	}
+	go messageCall_(callback, operationID, fn, args...)
+}
+func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID string, fn any, args ...any) {
+	defer func() {
+		if r := recover(); r != nil {
+			callback.OnError(10001, fmt.Sprintf("%+v", r))
+			return
+		}
+	}()
+	if operationID == "" {
+		callback.OnError(constant.ErrArgs.ErrCode, errs.ErrArgs.Wrap("operationID is empty").Error())
+		return
+	}
+	if err := CheckResourceLoad(userForSDK); err != nil {
+		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		return
+	}
+	fnv := reflect.ValueOf(fn)
+	if fnv.Kind() != reflect.Func {
+		callback.OnError(10000, "go code error: fn is not func")
+		return
+	}
+	fnt := fnv.Type()
+	numIn := fnt.NumIn()
+	if len(args) != numIn+1 {
+		callback.OnError(10000, "go code error: fn in args num is not match")
+		return
+	}
+	ins := make([]reflect.Value, 0, numIn)
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "operationID", operationID)
+	ctx = context.WithValue(ctx, "callback", callback)
+	ins = append(ins, reflect.ValueOf(ctx))
+	for i := 2; i < len(args); i++ { // callback open_im_sdk_callback.Base, operationID string, ...
+		tag := fnt.In(i - 1) // ctx context.Context, ...
+		arg := reflect.TypeOf(args[i])
+		if arg.String() == tag.String() || tag.Kind() == reflect.Interface {
+			ins = append(ins, reflect.ValueOf(args[i]))
+			continue
+		}
+		if arg.Kind() == reflect.String { // json
+			switch tag.Kind() {
+			case reflect.Struct, reflect.Slice, reflect.Array, reflect.Map:
+				v := reflect.New(tag)
+				if err := json.Unmarshal([]byte(args[i].(string)), v.Interface()); err != nil {
+					callback.OnError(constant.ErrArgs.ErrCode, err.Error())
+					return
+				}
+				ins = append(ins, v.Elem())
+				continue
+			}
+		}
+		if isNumeric(arg.Kind()) && isNumeric(tag.Kind()) {
+			v := reflect.Zero(tag).Interface()
+			setNumeric(args[i], &v)
+			ins = append(ins, reflect.ValueOf(v))
+			continue
+		}
+		callback.OnError(constant.ErrArgs.ErrCode, "go code error: fn in args type is not match")
+		return
+	}
+	var lastErr bool
+	if numOut := fnt.NumOut(); numOut > 0 {
+		lastErr = fnt.Out(numOut - 1).Implements(reflect.TypeOf(error(nil)).Elem())
+	}
+	//fmt.Println("fnv:", fnv.Interface(), "ins:", ins)
+	outs := fnv.Call(ins)
+
+	outVals := make([]any, 0, len(outs))
+	for i := 0; i < len(outs); i++ {
+		outVals = append(outVals, outs[i].Interface())
+	}
+	if lastErr {
+		if last := outVals[len(outVals)-1]; last != nil {
+			callback.OnError(10000, last.(error).Error())
+			return
+		}
+
+		outVals = outVals[:len(outVals)-1]
+	}
+	// 将map和slice的nil转换为非nil
+	for i := 0; i < len(outVals); i++ {
+		switch outs[i].Kind() {
+		case reflect.Map:
+			if outs[i].IsNil() {
+				outVals[i] = reflect.MakeMap(outs[i].Type()).Interface()
+			}
+		case reflect.Slice:
+			if outs[i].IsNil() {
+				outVals[i] = reflect.MakeSlice(outs[i].Type(), 0, 0).Interface()
+			}
+		}
+	}
+	var jsonVal any
+	if len(outVals) == 1 {
+		jsonVal = outVals[0]
+	} else {
+		jsonVal = outVals
+	}
+	jsonData, err := json.Marshal(jsonVal)
+	if err != nil {
+		callback.OnError(constant.ErrArgs.ErrCode, err.Error())
+		return
+	}
+	callback.OnSuccess(string(jsonData))
 }

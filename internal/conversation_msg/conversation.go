@@ -25,52 +25,6 @@ import (
 	"github.com/jinzhu/copier"
 )
 
-func (c *Conversation) hideConversation(callback open_im_sdk_callback.Base, conversationID string, operationID string) {
-	err := c.db.UpdateColumnsConversation(conversationID, map[string]interface{}{"latest_msg_send_time": 0})
-	common.CheckDBErrCallback(callback, err, operationID)
-}
-
-func (c *Conversation) getConversationListSplit(callback open_im_sdk_callback.Base, offset, count int, operationID string) sdk.GetConversationListSplitCallback {
-	conversationList, err := c.db.GetConversationListSplitDB(offset, count)
-	common.CheckDBErrCallback(callback, err, operationID)
-	return conversationList
-}
-
-func (c *Conversation) setConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, opt int, operationID string) {
-	apiReq := server_api_params.BatchSetConversationsReq{}
-	apiResp := server_api_params.BatchSetConversationsResp{}
-	apiReq.OperationID = operationID
-	apiReq.OwnerUserID = c.loginUserID
-	apiReq.NotificationType = constant.ConversationChangeNotification
-	var conversations []server_api_params.Conversation
-	for _, conversationID := range conversationIDList {
-		localConversation, err := c.db.GetConversation(conversationID)
-		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "GetConversation failed", err.Error())
-			continue
-		}
-		if localConversation.ConversationType == constant.SuperGroupChatType && opt == constant.NotReceiveMessage {
-			common.CheckAnyErrCallback(callback, 100, errors.New("super group not support this opt"), operationID)
-		}
-		conversations = append(conversations, server_api_params.Conversation{
-			OwnerUserID:      c.loginUserID,
-			ConversationID:   conversationID,
-			ConversationType: localConversation.ConversationType,
-			UserID:           localConversation.UserID,
-			GroupID:          localConversation.GroupID,
-			RecvMsgOpt:       int32(opt),
-			IsPinned:         localConversation.IsPinned,
-			IsPrivateChat:    localConversation.IsPrivateChat,
-			AttachedInfo:     localConversation.AttachedInfo,
-			Ex:               localConversation.Ex,
-		})
-	}
-	apiReq.Conversations = conversations
-	c.p.PostFatalCallback(callback, constant.BatchSetConversationRouter, apiReq, &apiResp, apiReq.OperationID)
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "output: ", apiResp)
-	c.SyncConversations(operationID, 0)
-}
-
 func (c *Conversation) setConversation(ctx context.Context, apiReq *pbConversation.ModifyConversationFieldReq, localConversation *model_struct.LocalConversation) error {
 	apiReq.Conversation.OwnerUserID = c.loginUserID
 	apiReq.Conversation.ConversationID = localConversation.ConversationID
@@ -84,22 +38,6 @@ func (c *Conversation) setConversation(ctx context.Context, apiReq *pbConversati
 	return nil
 }
 
-func (c *Conversation) setGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, opt int32, operationID string) {
-	apiReq := server_api_params.SetGlobalRecvMessageOptReq{}
-	apiReq.OperationID = operationID
-	apiReq.GlobalRecvMsgOpt = &opt
-	c.p.PostFatalCallback(callback, constant.SetGlobalRecvMessageOptRouter, apiReq, nil, apiReq.OperationID)
-	c.user.SyncLoginUserInfo(operationID)
-}
-func (c *Conversation) setOneConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationID string, opt int, operationID string) {
-	apiReq := &server_api_params.ModifyConversationFieldReq{}
-	localConversation, err := c.db.GetConversation(conversationID)
-	common.CheckDBErrCallback(callback, err, operationID)
-	apiReq.RecvMsgOpt = int32(opt)
-	apiReq.FieldType = constant.FieldRecvMsgOpt
-	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
-	c.SyncConversations(operationID, 0)
-}
 func (c *Conversation) setOneConversationUnread(ctx context.Context, conversationID string, unreadCount int) error {
 	apiReq := &pbConversation.ModifyConversationFieldReq{}
 	localConversation, err := c.db.GetConversation(ctx, conversationID)
@@ -122,106 +60,6 @@ func (c *Conversation) setOneConversationUnread(ctx context.Context, conversatio
 		log.Error("", "DeleteConversationUnreadMessageList err", localConversation.ConversationID, localConversation.LatestMsgSendTime)
 	}
 	return nil
-}
-
-func (c *Conversation) setOneConversationPrivateChat(callback open_im_sdk_callback.Base, conversationID string, isPrivate bool, operationID string) {
-	apiReq := &server_api_params.ModifyConversationFieldReq{}
-	localConversation, err := c.db.GetConversation(conversationID)
-	common.CheckDBErrCallback(callback, err, operationID)
-	apiReq.IsPrivateChat = isPrivate
-	apiReq.FieldType = constant.FieldIsPrivateChat
-	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
-	c.SyncConversations(operationID, 0)
-}
-
-func (c *Conversation) setOneConversationBurnDuration(callback open_im_sdk_callback.Base, conversationID string, burnDuration int32, operationID string) {
-	apiReq := &server_api_params.ModifyConversationFieldReq{}
-	localConversation, err := c.db.GetConversation(conversationID)
-	common.CheckDBErrCallback(callback, err, operationID)
-	apiReq.BurnDuration = burnDuration
-	apiReq.FieldType = constant.FieldBurnDuration
-	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
-	c.SyncConversations(operationID, 0)
-}
-
-func (c *Conversation) setOneConversationPinned(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
-	apiReq := &server_api_params.ModifyConversationFieldReq{}
-	localConversation, err := c.db.GetConversation(conversationID)
-	common.CheckDBErrCallback(callback, err, operationID)
-	apiReq.IsPinned = isPinned
-	apiReq.FieldType = constant.FieldIsPinned
-	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
-	c.SyncConversations(operationID, 0)
-}
-
-func (c *Conversation) setOneConversationGroupAtType(callback open_im_sdk_callback.Base, conversationID, operationID string) {
-	lc, err := c.db.GetConversation(conversationID)
-	common.CheckDBErrCallback(callback, err, operationID)
-	if lc.GroupAtType == constant.AtNormal || lc.ConversationType != constant.GroupChatType {
-		common.CheckAnyErrCallback(callback, 201, errors.New("conversation don't need to reset"), operationID)
-	}
-	apiReq := &server_api_params.ModifyConversationFieldReq{}
-	localConversation, err := c.db.GetConversation(conversationID)
-	common.CheckDBErrCallback(callback, err, operationID)
-	apiReq.GroupAtType = constant.AtNormal
-	apiReq.FieldType = constant.FieldGroupAtType
-	c.setConversation(callback, apiReq, conversationID, localConversation, operationID)
-	c.SyncConversations(operationID, 0)
-}
-func (c *Conversation) getConversationRecvMessageOpt(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) []server_api_params.GetConversationRecvMessageOptResp {
-	apiReq := server_api_params.GetConversationsReq{}
-	apiReq.OperationID = operationID
-	apiReq.OwnerUserID = c.loginUserID
-	apiReq.ConversationIDs = conversationIDList
-	var resp []server_api_params.GetConversationRecvMessageOptResp
-	conversations := c.getMultipleConversation(callback, conversationIDList, operationID)
-	for _, conversation := range conversations {
-		resp = append(resp, server_api_params.GetConversationRecvMessageOptResp{
-			ConversationID: conversation.ConversationID,
-			Result:         &conversation.RecvMsgOpt,
-		})
-	}
-	return resp
-}
-
-func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, sourceID string, sessionType int32, operationID string) *model_struct.LocalConversation {
-	conversationID := utils.GetConversationIDBySessionType(sourceID, int(sessionType))
-	lc, err := c.db.GetConversation(conversationID)
-	if err == nil {
-		return lc
-	} else {
-		var newConversation model_struct.LocalConversation
-		newConversation.ConversationID = conversationID
-		newConversation.ConversationType = sessionType
-		switch sessionType {
-		case constant.SingleChatType:
-			newConversation.UserID = sourceID
-			faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, sourceID)
-			//	faceUrl, name, err := c.cache.GetUserNameAndFaceURL(sourceID, operationID)
-			common.CheckDBErrCallback(callback, err, operationID)
-			newConversation.ShowName = name
-			newConversation.FaceURL = faceUrl
-		case constant.GroupChatType, constant.SuperGroupChatType:
-			newConversation.GroupID = sourceID
-			g, err := c.full.GetGroupInfoFromLocal2Svr(sourceID, sessionType)
-			//g, err := c.db.GetGroupInfoByGroupID(sourceID)
-			common.CheckDBErrCallback(callback, err, operationID)
-			newConversation.ShowName = g.GroupName
-			newConversation.FaceURL = g.FaceURL
-		}
-		lc, errTemp := c.db.GetConversation(conversationID)
-		if errTemp == nil {
-			return lc
-		}
-		err := c.db.InsertConversation(&newConversation)
-		common.CheckDBErrCallback(callback, err, operationID)
-		return &newConversation
-	}
-}
-func (c *Conversation) getMultipleConversation(callback open_im_sdk_callback.Base, conversationIDList []string, operationID string) sdk.GetMultipleConversationCallback {
-	conversationList, err := c.db.GetMultipleConversationDB(conversationIDList)
-	common.CheckDBErrCallback(callback, err, operationID)
-	return conversationList
 }
 
 func (c *Conversation) deleteConversation(ctx context.Context, conversationID string) error {
@@ -254,28 +92,9 @@ func (c *Conversation) deleteConversation(ctx context.Context, conversationID st
 		return err
 	}
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
+	return nil
+}
 
-}
-func (c *Conversation) setConversationDraft(callback open_im_sdk_callback.Base, conversationID, draftText, operationID string) {
-	if draftText != "" {
-		err := c.db.SetConversationDraftDB(conversationID, draftText)
-		common.CheckDBErrCallback(callback, err, operationID)
-	} else {
-		err := c.db.RemoveConversationDraft(conversationID, draftText)
-		common.CheckDBErrCallback(callback, err, operationID)
-	}
-}
-func (c *Conversation) pinConversation(callback open_im_sdk_callback.Base, conversationID string, isPinned bool, operationID string) {
-	//lc := db.LocalConversation{ConversationID: conversationID, IsPinned: isPinned}
-	//if isPinned {
-	c.setOneConversationPinned(callback, conversationID, isPinned, operationID)
-	//err := c.db.UpdateConversation(&lc)
-	//common.CheckDBErrCallback(callback, err, operationID)
-	//} else {
-	//	err := c.db.UnPinConversation(conversationID, constant.NotPinned)
-	//	common.CheckDBErrCallback(callback, err, operationID)
-	//}
-}
 func (c *Conversation) getServerConversationList(operationID string, timeout time.Duration) (server_api_params.GetAllConversationsResp, error) {
 	log.NewInfo(operationID, utils.GetSelfFuncName())
 	var req server_api_params.GetAllConversationsReq
@@ -303,14 +122,14 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 	var newConversationList []*model_struct.LocalConversation
 	ccTime := time.Now()
 	// log.NewInfo(operationID, utils.GetSelfFuncName())
-	conversationsOnServer, err := c.getServerConversationList(operationID, timeout)
+	conversationsOnServer, err := c.getServerConversationList("", timeout)
 	if err != nil {
 		// log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		return
 	}
-	// log.Info(operationID, "get server cost time", time.Since(ccTime))
+	log.Info("", "get server cost time", time.Since(ccTime))
 	cTime := time.Now()
-	conversationsOnLocal, err := c.db.GetAllConversationListToSync()
+	conversationsOnLocal, err := c.db.GetAllConversationListToSync(ctx)
 	if err != nil {
 		// log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 	}
@@ -323,8 +142,8 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 	aInBNot, bInANot, sameA, sameB := common.CheckConversationListDiff(conversationsOnServerTempFormat, conversationsOnLocalTempFormat)
 	// log.Info(operationID, "diff server cost time", time.Since(cTime))
 
-	// log.NewInfo(operationID, "diff ", aInBNot, bInANot, sameA, sameB)
-	// log.NewInfo(operationID, "server have", len(aInBNot), "local have", len(bInANot))
+	log.NewInfo("", "diff ", aInBNot, bInANot, sameA, sameB)
+	log.NewInfo("", "server have", len(aInBNot), "local have", len(bInANot))
 	// server有 local没有
 	// 可能是其他点开一下生成会话设置免打扰 插入到本地 不回调..
 	cTime = time.Now()
@@ -354,22 +173,22 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 		//	continue
 		//}
 	}
-	log.Info(operationID, "Assemble a new conversations cost time", time.Since(cTime))
+	log.Info("", "Assemble a new conversations cost time", time.Since(cTime))
 	//New conversation storage
 	cTime = time.Now()
-	err2 := c.db.BatchInsertConversationList(newConversationList)
+	err2 := c.db.BatchInsertConversationList(ctx, newConversationList)
 	if err2 != nil {
-		log.Error(operationID, "insert new conversation err:", err2.Error(), newConversationList)
+		log.Error("", "insert new conversation err:", err2.Error(), newConversationList)
 	}
-	log.Info(operationID, "batch insert cost time", time.Since(cTime))
+	log.Info("", "batch insert cost time", time.Since(cTime))
 	// 本地服务器有的会话 以服务器为准更新
 	cTime = time.Now()
 	var conversationChangedList []string
 	for _, index := range sameA {
-		log.NewInfo(operationID, utils.GetSelfFuncName(), "server and client both have", *conversationsOnServerLocalFormat[index])
-		err := c.db.UpdateConversationForSync(conversationsOnServerLocalFormat[index])
+		log.NewInfo("", utils.GetSelfFuncName(), "server and client both have", *conversationsOnServerLocalFormat[index])
+		err := c.db.UpdateConversationForSync(ctx, conversationsOnServerLocalFormat[index])
 		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), "UpdateConversation failed ", err.Error(), *conversationsOnServerLocalFormat[index])
+			log.NewError("", utils.GetSelfFuncName(), "UpdateConversation failed ", err.Error(), *conversationsOnServerLocalFormat[index])
 			continue
 		}
 		conversationChangedList = append(conversationChangedList, conversationsOnServerLocalFormat[index].ConversationID)
@@ -377,10 +196,10 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 	// callback
 	if len(conversationChangedList) > 0 {
 		if err = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedList}, c.GetCh()); err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
+			log.NewError("", utils.GetSelfFuncName(), err.Error())
 		}
 	}
-	log.Info(operationID, "batch update cost time", time.Since(cTime))
+	log.Info("", "batch update cost time", time.Since(cTime))
 
 	// local有 server没有 代表没有修改公共字段
 	// for _, index := range bInANot {
@@ -396,15 +215,16 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 	// log.Info(operationID, "cache update cost time", time.Since(cTime))
 	// log.Info(operationID, utils.GetSelfFuncName(), "all  cost time", time.Since(ccTime))
 }
-func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) {
+func (c *Conversation) SyncConversationUnreadCount(operationID string) {
+	ctx := context.Background()
 	var conversationChangedList []string
 	allConversations := c.cache.GetAllHasUnreadMessageConversations()
 	log.Debug(operationID, "get unread message length is ", len(allConversations))
 	for _, conversation := range allConversations {
 		log.Debug(operationID, "has unread message conversation is:", *conversation)
-		if deleteRows := c.db.DeleteConversationUnreadMessageList(conversation.ConversationID, conversation.UpdateUnreadCountTime); deleteRows > 0 {
+		if deleteRows := c.db.DeleteConversationUnreadMessageList(ctx, conversation.ConversationID, conversation.UpdateUnreadCountTime); deleteRows > 0 {
 			log.Debug(operationID, conversation.ConversationID, conversation.UpdateUnreadCountTime, "delete rows:", deleteRows)
-			if err := c.db.DecrConversationUnreadCount(conversation.ConversationID, deleteRows); err != nil {
+			if err := c.db.DecrConversationUnreadCount(ctx, conversation.ConversationID, deleteRows); err != nil {
 				log.Debug(operationID, conversation.ConversationID, conversation.UpdateUnreadCountTime, "decr unread count err:", err.Error())
 			} else {
 				conversationChangedList = append(conversationChangedList, conversation.ConversationID)
@@ -418,23 +238,23 @@ func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) {
 	}
 
 }
-func (c *Conversation) FixVersionData() {
+func (c *Conversation) FixVersionData(ctx context.Context) {
 	switch constant.SdkVersion + constant.BigVersion + constant.UpdateVersion {
 	case "v2.0.0":
 		t := time.Now()
-		groupIDList, err := c.db.GetReadDiffusionGroupIDList()
+		groupIDList, err := c.db.GetReadDiffusionGroupIDList(ctx)
 		if err != nil {
 			log.Error("", "GetReadDiffusionGroupIDList failed ", err.Error())
 			return
 		}
 		log.Info("", "fix version data start", groupIDList)
 		for _, v := range groupIDList {
-			err := c.db.SuperGroupUpdateSpecificContentTypeMessage(constant.ReactionMessageModifier, v, map[string]interface{}{"status": constant.MsgStatusFiltered})
+			err := c.db.SuperGroupUpdateSpecificContentTypeMessage(ctx, constant.ReactionMessageModifier, v, map[string]interface{}{"status": constant.MsgStatusFiltered})
 			if err != nil {
 				log.Error("", "SuperGroupUpdateSpecificContentTypeMessage failed ", err.Error())
 				continue
 			}
-			msgList, err := c.db.SuperGroupSearchAllMessageByContentType(v, constant.ReactionMessageModifier)
+			msgList, err := c.db.SuperGroupSearchAllMessageByContentType(ctx, v, constant.ReactionMessageModifier)
 			if err != nil {
 				log.NewError("internal", "SuperGroupSearchMessageByContentTypeNotOffset failed", v, err.Error())
 				continue
@@ -450,7 +270,7 @@ func (c *Conversation) FixVersionData() {
 				reactionMsgIDList = append(reactionMsgIDList, n.ClientMsgID)
 			}
 			if len(reactionMsgIDList) > 0 {
-				err := c.db.SuperGroupUpdateGroupMessageFields(reactionMsgIDList, v, map[string]interface{}{"is_react": true})
+				err := c.db.SuperGroupUpdateGroupMessageFields(ctx, reactionMsgIDList, v, map[string]interface{}{"is_react": true})
 				if err != nil {
 					log.Error("internal", "unmarshal failed err:", err.Error(), reactionMsgIDList, v)
 					continue
@@ -469,77 +289,6 @@ func (c *Conversation) FixVersionData() {
 func (c *Conversation) SyncOneConversation(conversationID, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "conversationID: ", conversationID)
 	// todo
-}
-
-func (c *Conversation) findMessageList(req sdk.FindMessageListParams, operationID string) (r sdk.FindMessageListCallback) {
-	type tempConversationAndMessageList struct {
-		conversation *model_struct.LocalConversation
-		msgIDList    []string
-	}
-	var s []*tempConversationAndMessageList
-	for _, conversationsArgs := range req {
-		localConversation, err := c.db.GetConversation(conversationsArgs.ConversationID)
-		if err == nil {
-			t := new(tempConversationAndMessageList)
-			t.conversation = localConversation
-			t.msgIDList = conversationsArgs.ClientMsgIDList
-			s = append(s, t)
-		} else {
-			log.Error(operationID, "GetConversation err:", err.Error(), conversationsArgs.ConversationID)
-		}
-	}
-	for _, v := range s {
-		messages, err := c.db.GetMultipleMessageController(v.msgIDList, v.conversation.GroupID, v.conversation.ConversationType)
-		if err == nil {
-			var tempMessageList []*sdk_struct.MsgStruct
-			for _, message := range messages {
-				temp := sdk_struct.MsgStruct{}
-				temp.ClientMsgID = message.ClientMsgID
-				temp.ServerMsgID = message.ServerMsgID
-				temp.CreateTime = message.CreateTime
-				temp.SendTime = message.SendTime
-				temp.SessionType = message.SessionType
-				temp.SendID = message.SendID
-				temp.RecvID = message.RecvID
-				temp.MsgFrom = message.MsgFrom
-				temp.ContentType = message.ContentType
-				temp.SenderPlatformID = message.SenderPlatformID
-				temp.SenderNickname = message.SenderNickname
-				temp.SenderFaceURL = message.SenderFaceURL
-				temp.Content = message.Content
-				temp.Seq = message.Seq
-				temp.IsRead = message.IsRead
-				temp.Status = message.Status
-				temp.AttachedInfo = message.AttachedInfo
-				temp.Ex = message.Ex
-				err := c.msgHandleByContentType(&temp)
-				if err != nil {
-					log.Error(operationID, "Parsing data error:", err.Error(), temp)
-					continue
-				}
-				switch message.SessionType {
-				case constant.GroupChatType:
-					fallthrough
-				case constant.SuperGroupChatType:
-					temp.GroupID = temp.RecvID
-					temp.RecvID = c.loginUserID
-				}
-				tempMessageList = append(tempMessageList, &temp)
-			}
-			findResultItem := sdk.SearchByConversationResult{}
-			findResultItem.ConversationID = v.conversation.ConversationID
-			findResultItem.FaceURL = v.conversation.FaceURL
-			findResultItem.ShowName = v.conversation.ShowName
-			findResultItem.ConversationType = v.conversation.ConversationType
-			findResultItem.MessageList = tempMessageList
-			findResultItem.MessageCount = len(findResultItem.MessageList)
-			r.FindResultItems = append(r.FindResultItems, &findResultItem)
-			r.TotalCount += findResultItem.MessageCount
-		} else {
-			log.Error(operationID, "GetMultipleMessageController err:", err.Error(), v)
-		}
-	}
-	return r
 }
 
 func (c *Conversation) getHistoryMessageList(ctx context.Context, req sdk.GetHistoryMessageListParams, isReverse bool) ([]*sdk_struct.MsgStruct, error) {
@@ -771,7 +520,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 			if len(list) < req.Count {
 				var minSeq uint32
 				var maxSeq uint32
-				resp, err := c.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 2, c.loginUserID, operationID)
+				resp, err := c.SendReqWaitResp(ctx, &server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 2, c.loginUserID)
 				if err != nil {
 					//log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, 30, c.loginUserID)
 				} else {
@@ -991,7 +740,7 @@ func (c *Conversation) getAdvancedHistoryMessageList2(callback open_im_sdk_callb
 	var notStartTime bool
 	if req.ConversationID != "" {
 		conversationID = req.ConversationID
-		lc, err := c.db.GetConversation(conversationID)
+		lc, err := c.db.GetConversation(context.Background(), conversationID)
 		if err != nil {
 			messageListCallback.ErrCode = 100
 			messageListCallback.ErrMsg = "conversation get err"
@@ -1012,7 +761,7 @@ func (c *Conversation) getAdvancedHistoryMessageList2(callback open_im_sdk_callb
 		} else {
 			msg.SessionType = lc.ConversationType
 			msg.ClientMsgID = req.StartClientMsgID
-			m, err := c.db.GetMessageController(&msg)
+			m, err := c.db.GetMessageController(context.Background(), &msg)
 			common.CheckDBErrCallback(callback, err, operationID)
 			startTime = m.SendTime
 		}
@@ -1040,7 +789,7 @@ func (c *Conversation) getAdvancedHistoryMessageList2(callback open_im_sdk_callb
 			notStartTime = true
 		} else {
 			msg.ClientMsgID = req.StartClientMsgID
-			m, err := c.db.GetMessageController(&msg)
+			m, err := c.db.GetMessageController(context.Background(), &msg)
 			common.CheckDBErrCallback(callback, err, operationID)
 			startTime = m.SendTime
 		}
@@ -1049,9 +798,9 @@ func (c *Conversation) getAdvancedHistoryMessageList2(callback open_im_sdk_callb
 	t = time.Now()
 	log.Info(operationID, "sourceID:", sourceID, "startTime:", startTime, "count:", req.Count, "not start_time", notStartTime)
 	if notStartTime {
-		list, err = c.db.GetMessageListNoTimeController(sourceID, sessionType, req.Count, isReverse)
+		list, err = c.db.GetMessageListNoTimeController(context.Background(), sourceID, sessionType, req.Count, isReverse)
 	} else {
-		list, err = c.db.GetMessageListController(sourceID, sessionType, req.Count, startTime, isReverse)
+		list, err = c.db.GetMessageListController(context.Background(), sourceID, sessionType, req.Count, startTime, isReverse)
 	}
 	log.Error(operationID, "db cost time", time.Since(t), len(list), err, sourceID)
 	t = time.Now()
@@ -1357,8 +1106,9 @@ func (c *Conversation) newRevokeOneMessage(ctx context.Context, req *sdk_struct.
 	lc.ConversationID = conversationID
 	s.GroupID = groupID
 	s.RecvID = recvID
-	c.newRevokeMessage([]*sdk_struct.MsgStruct{&s})
+	c.newRevokeMessage(ctx, []*sdk_struct.MsgStruct{&s})
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.GetCh())
+	return nil
 }
 
 func (c *Conversation) typingStatusUpdate(ctx context.Context, recvID, msgTip string) error {
@@ -1442,6 +1192,7 @@ func (c *Conversation) markC2CMessageAsRead(ctx context.Context, msgIDList []str
 		}
 	}
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.GetCh())
+	return nil
 	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 }
 func (c *Conversation) markGroupMessageAsRead(ctx context.Context, msgIDList []string, groupID string) error {
@@ -1509,6 +1260,7 @@ func (c *Conversation) markGroupMessageAsRead(ctx context.Context, msgIDList []s
 			log.Error("", "update message has read err", list, userID, err2.Error())
 		}
 	}
+	return nil
 }
 
 //	func (c *Conversation) markMessageAsReadByConID(callback open_im_sdk_callback.Base, msgIDList sdk.MarkMessageAsReadByConIDParams, conversationID, operationID string) {
@@ -1619,22 +1371,28 @@ func (c *Conversation) deleteMessageFromSvr(ctx context.Context, s *sdk_struct.M
 
 }
 
-func (c *Conversation) clearMessageFromSvr(callback open_im_sdk_callback.Base, operationID string) {
-	var apiReq server_api_params.CleanUpMsgReq
+func (c *Conversation) clearMessageFromSvr(ctx context.Context) error {
+	var apiReq pbMsg.ClearMsgReq
 	apiReq.UserID = c.loginUserID
-	apiReq.OperationID = operationID
-	c.p.PostFatalCallback(callback, constant.ClearMsgRouter, apiReq, nil, apiReq.OperationID)
-	groupIDList, err := c.full.GetReadDiffusionGroupIDList(operationID)
-	common.CheckDBErrCallback(callback, err, operationID)
-	var superGroupApiReq server_api_params.DelSuperGroupMsgReq
+	err := util.ApiPost(ctx, constant.ClearMsgRouter, &apiReq, nil)
+	if err != nil {
+		return err
+	}
+	groupIDList, err := c.full.GetReadDiffusionGroupIDList(ctx)
+	if err != nil {
+		return err
+	}
+	var superGroupApiReq pbMsg.DelSuperGroupMsgReq
 	superGroupApiReq.UserID = c.loginUserID
-	superGroupApiReq.IsAllDelete = true
 	for _, v := range groupIDList {
 		superGroupApiReq.GroupID = v
-		superGroupApiReq.OperationID = operationID
-		c.p.PostFatalCallback(callback, constant.DeleteSuperGroupMsgRouter, apiReq, nil, apiReq.OperationID)
-		return
+		err := util.ApiPost(ctx, constant.DeleteSuperGroupMsgRouter, &superGroupApiReq, nil)
+		if err != nil {
+			//log.
+		}
+
 	}
+	return nil
 }
 
 func (c *Conversation) deleteMessageFromLocalStorage(ctx context.Context, s *sdk_struct.MsgStruct) error {
@@ -1699,6 +1457,7 @@ func (c *Conversation) deleteMessageFromLocalStorage(ctx context.Context, s *sdk
 			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 		}
 	}
+	return nil
 }
 func (c *Conversation) judgeMultipleSubString(keywordList []string, main string, keywordListMatchType int) bool {
 	if len(keywordList) == 0 {
@@ -1870,7 +1629,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 
 func (c *Conversation) setConversationNotification(msg *server_api_params.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	c.SyncConversations(operationID, 0)
+	c.SyncConversations(context.Background(), 0)
 }
 
 func (c *Conversation) DoNotification(msg *server_api_params.MsgData) {
@@ -1907,7 +1666,7 @@ func (c *Conversation) delMsgBySeqSplit(seqList []uint32) error {
 	req.UserID = c.loginUserID
 	operationID := req.OperationID
 
-	resp, err := c.Ws.SendReqWaitResp(&req, constant.WsDelMsg, 30, 5, c.loginUserID, req.OperationID)
+	resp, err := c.Ws.SendReqWaitResp(context.Background(), &req, constant.WsDelMsg, 30, 5, c.loginUserID)
 	if err != nil {
 		return utils.Wrap(err, "SendReqWaitResp failed")
 	}
@@ -1976,44 +1735,41 @@ func (c *Conversation) deleteConversationAndMsgFromSvr(ctx context.Context, conv
 
 }
 
-func (c *Conversation) deleteAllMsgFromLocal(callback open_im_sdk_callback.Base, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName())
-	err := c.db.DeleteAllMessage()
-	common.CheckDBErrCallback(callback, err, operationID)
-	groupIDList, err := c.full.GetReadDiffusionGroupIDList(operationID)
-	common.CheckDBErrCallback(callback, err, operationID)
+func (c *Conversation) deleteAllMsgFromLocal(ctx context.Context) error {
+	//log.NewInfo(operationID, utils.GetSelfFuncName())
+	err := c.db.DeleteAllMessage(ctx)
+	if err != nil {
+		return err
+	}
+	groupIDList, err := c.full.GetReadDiffusionGroupIDList(ctx)
+	if err != nil {
+		return err
+	}
 	for _, v := range groupIDList {
-		err = c.db.SuperGroupDeleteAllMessage(v)
+		err = c.db.SuperGroupDeleteAllMessage(ctx, v)
 		if err != nil {
-			log.Error(operationID, "SuperGroupDeleteAllMessage err", err.Error())
+			//log.Error(operationID, "SuperGroupDeleteAllMessage err", err.Error())
 			continue
 		}
 	}
-	err = c.db.ClearAllConversation()
-	common.CheckDBErrCallback(callback, err, operationID)
-	conversationList, err := c.db.GetAllConversationListDB()
-	common.CheckDBErrCallback(callback, err, operationID)
+	err = c.db.ClearAllConversation(ctx)
+	if err != nil {
+		return err
+	}
+	conversationList, err := c.db.GetAllConversationListDB(ctx)
+	if err != nil {
+		return err
+	}
 	var cidList []string
 	for _, conversation := range conversationList {
 		cidList = append(cidList, conversation.ConversationID)
 	}
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: cidList}, c.GetCh())
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
+	return nil
 
 }
 
-func (c *Conversation) deleteAllMsgFromSvr(callback open_im_sdk_callback.Base, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName())
-	seqList, err := c.db.GetAllUnDeleteMessageSeqList()
-	log.NewInfo(operationID, utils.GetSelfFuncName(), seqList)
-	common.CheckDBErrCallback(callback, err, operationID)
-	var apiReq server_api_params.DeleteMsgReq
-	apiReq.OpUserID = c.loginUserID
-	apiReq.UserID = c.loginUserID
-	apiReq.OperationID = operationID
-	apiReq.SeqList = seqList
-	c.p.PostFatalCallback(callback, constant.DeleteMsgRouter, apiReq, nil, apiReq.OperationID)
-}
 func isContainMessageReaction(reactionType int, list []*sdk_struct.ReactionElem) (bool, *sdk_struct.ReactionElem) {
 	for _, v := range list {
 		if v.Type == reactionType {
@@ -2041,17 +1797,19 @@ func DeleteUserReactionElem(a []*sdk_struct.UserReactionElem, userID string) []*
 	}
 	return a[:j]
 }
-func (c *Conversation) setMessageReactionExtensions(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, req sdk.SetMessageReactionExtensionsParams, operationID string) []*server_api_params.ExtensionResult {
-	message, err := c.db.GetMessageController(s)
-	common.CheckDBErrCallback(callback, err, operationID)
+func (c *Conversation) setMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, req sdk.SetMessageReactionExtensionsParams) ([]*server_api_params.ExtensionResult, error) {
+	message, err := c.db.GetMessageController(ctx, s)
+	if err != nil {
+		return nil, err
+	}
 	if message.Status != constant.MsgStatusSendSuccess {
-		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
+		return nil, errors.New("only send success message can modify reaction extensions")
 	}
 	if message.SessionType != constant.SuperGroupChatType {
-		common.CheckAnyErrCallback(callback, 202, errors.New("currently only support super group message"), operationID)
+		return nil, errors.New("currently only support super group message")
 
 	}
-	extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
+	extendMsg, _ := c.db.GetMessageReactionExtension(ctx, message.ClientMsgID)
 	temp := make(map[string]*server_api_params.KeyValue)
 	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
 	reqTemp := make(map[string]*server_api_params.KeyValue)
@@ -2081,14 +1839,16 @@ func (c *Conversation) setMessageReactionExtensions(callback open_im_sdk_callbac
 	apiReq.SessionType = message.SessionType
 	apiReq.IsExternalExtensions = message.IsExternalExtensions
 	apiReq.ReactionExtensionList = reqTemp
-	apiReq.OperationID = operationID
+	apiReq.OperationID = ""
 	apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
-	var apiResp server_api_params.SetMessageReactionExtensionsResp
-	c.p.PostFatalCallback(callback, constant.SetMessageReactionExtensionsRouter, apiReq, &apiResp.ApiResult, apiReq.OperationID)
+	resp, err := util.CallApi[server_api_params.ApiResult](ctx, constant.SetMessageReactionExtensionsRouter, &apiReq)
+	if err != nil {
+		return nil, err
+	}
 	var msg model_struct.LocalChatLogReactionExtensions
 	msg.ClientMsgID = message.ClientMsgID
 	resultKeyMap := make(map[string]*server_api_params.KeyValue)
-	for _, v := range apiResp.ApiResult.Result {
+	for _, v := range resp.Result {
 		if v.ErrCode == 0 {
 			temp := new(server_api_params.KeyValue)
 			temp.TypeKey = v.TypeKey
@@ -2097,33 +1857,31 @@ func (c *Conversation) setMessageReactionExtensions(callback open_im_sdk_callbac
 			resultKeyMap[v.TypeKey] = temp
 		}
 	}
-	err = c.db.GetAndUpdateMessageReactionExtension(message.ClientMsgID, resultKeyMap)
+	err = c.db.GetAndUpdateMessageReactionExtension(ctx, message.ClientMsgID, resultKeyMap)
 	if err != nil {
-		log.Error(operationID, "GetAndUpdateMessageReactionExtension err:", err.Error())
+		log.Error("", "GetAndUpdateMessageReactionExtension err:", err.Error())
 	}
 	if !message.IsReact {
-		message.IsReact = apiResp.ApiResult.IsReact
-		message.MsgFirstModifyTime = apiResp.ApiResult.MsgFirstModifyTime
-		err = c.db.UpdateMessageController(message)
+		message.IsReact = resp.IsReact
+		message.MsgFirstModifyTime = resp.MsgFirstModifyTime
+		err = c.db.UpdateMessageController(ctx, message)
 		if err != nil {
-			log.Error(operationID, "UpdateMessageController err:", err.Error(), message)
+			log.Error("", "UpdateMessageController err:", err.Error(), message)
 
 		}
 	}
-	return apiResp.ApiResult.Result
+	return resp.Result, nil
 }
-func (c *Conversation) addMessageReactionExtensions(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, req sdk.AddMessageReactionExtensionsParams, operationID string) []*server_api_params.ExtensionResult {
-	message, err := c.db.GetMessageController(s)
-	common.CheckDBErrCallback(callback, err, operationID)
-	if message.Status != constant.MsgStatusSendSuccess || message.Seq == 0 {
-		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
+func (c *Conversation) addMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, req sdk.AddMessageReactionExtensionsParams) ([]*server_api_params.ExtensionResult, error) {
+	message, err := c.db.GetMessageController(ctx, s)
+	if err != nil {
+		return nil, err
 	}
-	//if !message.IsExternalExtensions {
-	//	common.CheckAnyErrCallback(callback, 202, errors.New(" only externalExtensions message can use this interface"), operationID)
-	//
-	//}
+	if message.Status != constant.MsgStatusSendSuccess || message.Seq == 0 {
+		return nil, errors.New("only send success message can modify reaction extensions")
+	}
 	reqTemp := make(map[string]*server_api_params.KeyValue)
-	extendMsg, err := c.db.GetMessageReactionExtension(message.ClientMsgID)
+	extendMsg, err := c.db.GetMessageReactionExtension(ctx, message.ClientMsgID)
 	if err == nil && extendMsg != nil {
 		temp := make(map[string]*server_api_params.KeyValue)
 		_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
@@ -2158,34 +1916,39 @@ func (c *Conversation) addMessageReactionExtensions(callback open_im_sdk_callbac
 	apiReq.SessionType = message.SessionType
 	apiReq.IsExternalExtensions = message.IsExternalExtensions
 	apiReq.ReactionExtensionList = reqTemp
-	apiReq.OperationID = operationID
+	apiReq.OperationID = ""
 	apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
 	apiReq.Seq = message.Seq
-	var apiResp server_api_params.AddMessageReactionExtensionsResp
-	c.p.PostFatalCallbackPenetrate(callback, constant.AddMessageReactionExtensionsRouter, apiReq, &apiResp.ApiResult, apiReq.OperationID)
-	log.Debug(operationID, "api return:", message.IsReact, apiResp.ApiResult)
+
+	resp, err := util.CallApi[server_api_params.ApiResult](ctx, constant.AddMessageReactionExtensionsRouter, &apiReq)
+	if err != nil {
+		return nil, err
+	}
+	log.Debug("", "api return:", message.IsReact, resp)
 	if !message.IsReact {
-		message.IsReact = apiResp.ApiResult.IsReact
-		message.MsgFirstModifyTime = apiResp.ApiResult.MsgFirstModifyTime
-		err = c.db.UpdateMessageController(message)
+		message.IsReact = resp.IsReact
+		message.MsgFirstModifyTime = resp.MsgFirstModifyTime
+		err = c.db.UpdateMessageController(ctx, message)
 		if err != nil {
-			log.Error(operationID, "UpdateMessageController err:", err.Error(), message)
+			log.Error("", "UpdateMessageController err:", err.Error(), message)
 		}
 	}
-	return apiResp.ApiResult.Result
+	return resp.Result, nil
 }
 
-func (c *Conversation) deleteMessageReactionExtensions(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, req sdk.DeleteMessageReactionExtensionsParams, operationID string) []*server_api_params.ExtensionResult {
-	message, err := c.db.GetMessageController(s)
-	common.CheckDBErrCallback(callback, err, operationID)
+func (c *Conversation) deleteMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, req sdk.DeleteMessageReactionExtensionsParams) ([]*server_api_params.ExtensionResult, error) {
+	message, err := c.db.GetMessageController(ctx, s)
+	if err != nil {
+		return nil, err
+	}
 	if message.Status != constant.MsgStatusSendSuccess {
-		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
+		return nil, errors.New("only send success message can modify reaction extensions")
 	}
 	if message.SessionType != constant.SuperGroupChatType {
-		common.CheckAnyErrCallback(callback, 202, errors.New("currently only support super group message"), operationID)
+		return nil, errors.New("currently only support super group message")
 
 	}
-	extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
+	extendMsg, _ := c.db.GetMessageReactionExtension(ctx, message.ClientMsgID)
 	temp := make(map[string]*server_api_params.KeyValue)
 	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
 	var reqTemp []*server_api_params.KeyValue
@@ -2215,26 +1978,28 @@ func (c *Conversation) deleteMessageReactionExtensions(callback open_im_sdk_call
 	apiReq.SourceID = sourceID
 	apiReq.SessionType = message.SessionType
 	apiReq.ReactionExtensionList = reqTemp
-	apiReq.OperationID = operationID
+	apiReq.OperationID = ""
 	apiReq.IsExternalExtensions = message.IsExternalExtensions
 	apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
-	var apiResp server_api_params.DeleteMessageReactionExtensionsResp
-	c.p.PostFatalCallback(callback, constant.DeleteMessageReactionExtensionsRouter, apiReq, &apiResp.Result, apiReq.OperationID)
+	resp, err := util.CallApi[server_api_params.ApiResult](ctx, constant.AddMessageReactionExtensionsRouter, &apiReq)
+	if err != nil {
+		return nil, err
+	}
 	var msg model_struct.LocalChatLogReactionExtensions
 	msg.ClientMsgID = message.ClientMsgID
 	resultKeyMap := make(map[string]*server_api_params.KeyValue)
-	for _, v := range apiResp.Result {
+	for _, v := range resp.Result {
 		if v.ErrCode == 0 {
 			temp := new(server_api_params.KeyValue)
 			temp.TypeKey = v.TypeKey
 			resultKeyMap[v.TypeKey] = temp
 		}
 	}
-	err = c.db.DeleteAndUpdateMessageReactionExtension(message.ClientMsgID, resultKeyMap)
+	err = c.db.DeleteAndUpdateMessageReactionExtension(ctx, message.ClientMsgID, resultKeyMap)
 	if err != nil {
-		log.Error(operationID, "GetAndUpdateMessageReactionExtension err:", err.Error())
+		log.Error("", "GetAndUpdateMessageReactionExtension err:", err.Error())
 	}
-	return apiResp.Result
+	return resp.Result, nil
 }
 
 type syncReactionExtensionParams struct {
@@ -2246,9 +2011,9 @@ type syncReactionExtensionParams struct {
 	TypeKeyList         []string
 }
 
-func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_callback.Base, messageList []*sdk_struct.MsgStruct, operationID string) server_api_params.GetMessageListReactionExtensionsResp {
+func (c *Conversation) getMessageListReactionExtensions(ctx context.Context, messageList []*sdk_struct.MsgStruct) ([]*server_api_params.SingleMessageExtensionResult, error) {
 	if len(messageList) == 0 {
-		common.CheckAnyErrCallback(callback, 201, errors.New("message list is null"), operationID)
+		return nil, errors.New("message list is null")
 	}
 	var msgIDList []string
 	var sourceID string
@@ -2271,15 +2036,17 @@ func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_cal
 		msgIDList = append(msgIDList, msgStruct.ClientMsgID)
 	}
 	isExternalExtension = c.IsExternalExtensions
-	localMessageList, err := c.db.GetMultipleMessageController(msgIDList, sourceID, sessionType)
-	common.CheckDBErrCallback(callback, err, operationID)
+	localMessageList, err := c.db.GetMultipleMessageController(ctx, msgIDList, sourceID, sessionType)
+	if err != nil {
+		return nil, err
+	}
 	for _, v := range localMessageList {
 		if v.IsReact != true {
-			common.CheckAnyErrCallback(callback, 208, errors.New("have not reaction message in message list:"+v.ClientMsgID), operationID)
+			return nil, errors.New("have not reaction message in message list:" + v.ClientMsgID)
 		}
 	}
 	var result server_api_params.GetMessageListReactionExtensionsResp
-	extendMessage, _ := c.db.GetMultipleMessageReactionExtension(msgIDList)
+	extendMessage, _ := c.db.GetMultipleMessageReactionExtension(ctx, msgIDList)
 	for _, v := range extendMessage {
 		var singleResult server_api_params.SingleMessageExtensionResult
 		temp := make(map[string]*server_api_params.KeyValue)
@@ -2295,211 +2062,212 @@ func (c *Conversation) getMessageListReactionExtensions(callback open_im_sdk_cal
 	args.ExtendMessageList = extendMessage
 	args.IsExternalExtension = isExternalExtension
 	_ = common.TriggerCmdSyncReactionExtensions(common.SyncReactionExtensionsNode{
-		OperationID: operationID,
+		OperationID: "",
 		Action:      constant.SyncMessageListReactionExtensions,
 		Args:        args,
 	}, c.GetCh())
-	return result
+	return result, nil
 
 }
 
-func (c *Conversation) getMessageListSomeReactionExtensions(callback open_im_sdk_callback.Base, messageList []*sdk_struct.MsgStruct, keyList []string, operationID string) server_api_params.GetMessageListReactionExtensionsResp {
-	if len(messageList) == 0 {
-		common.CheckAnyErrCallback(callback, 201, errors.New("message list is null"), operationID)
-	}
-	var msgIDList []string
-	var sourceID string
-	var sessionType int32
-	var isExternalExtension bool
-	for _, msgStruct := range messageList {
-		switch msgStruct.SessionType {
-		case constant.SingleChatType:
-			if msgStruct.SendID == c.loginUserID {
-				sourceID = msgStruct.RecvID
-			} else {
-				sourceID = msgStruct.SendID
-			}
-		case constant.NotificationChatType:
-			sourceID = msgStruct.RecvID
-		case constant.GroupChatType, constant.SuperGroupChatType:
-			sourceID = msgStruct.GroupID
-		}
-		sessionType = msgStruct.SessionType
-		isExternalExtension = msgStruct.IsExternalExtensions
-		msgIDList = append(msgIDList, msgStruct.ClientMsgID)
-	}
-	localMessageList, err := c.db.GetMultipleMessageController(msgIDList, sourceID, sessionType)
-	common.CheckDBErrCallback(callback, err, operationID)
-	var result server_api_params.GetMessageListReactionExtensionsResp
-	extendMsgs, _ := c.db.GetMultipleMessageReactionExtension(msgIDList)
-	for _, v := range extendMsgs {
-		var singleResult server_api_params.SingleMessageExtensionResult
-		temp := make(map[string]*server_api_params.KeyValue)
-		_ = json.Unmarshal(v.LocalReactionExtensions, &temp)
-		for s, _ := range temp {
-			if !utils.IsContain(s, keyList) {
-				delete(temp, s)
-			}
-		}
-		singleResult.ClientMsgID = v.ClientMsgID
-		singleResult.ReactionExtensionList = temp
-		result = append(result, &singleResult)
-	}
-	args := syncReactionExtensionParams{}
-	args.MessageList = localMessageList
-	args.SourceID = sourceID
-	args.TypeKeyList = keyList
-	args.SessionType = sessionType
-	args.ExtendMessageList = extendMsgs
-	args.IsExternalExtension = isExternalExtension
-	_ = common.TriggerCmdSyncReactionExtensions(common.SyncReactionExtensionsNode{
-		OperationID: operationID,
-		Action:      constant.SyncMessageListReactionExtensions,
-		Args:        args,
-	}, c.GetCh())
-	return result
-}
-
-func (c *Conversation) setTypeKeyInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, typeKey, ex string, isCanRepeat bool, operationID string) []*server_api_params.ExtensionResult {
-	message, err := c.db.GetMessageController(s)
-	common.CheckDBErrCallback(callback, err, operationID)
-	if message.Status != constant.MsgStatusSendSuccess {
-		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
-	}
-	extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
-	temp := make(map[string]*server_api_params.KeyValue)
-	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
-	var flag bool
-	var isContainSelfK string
-	var dbIsCanRepeat bool
-	var deletedKeyValue server_api_params.KeyValue
-	var maxTypeKey string
-	var maxTypeKeyValue server_api_params.KeyValue
-	reqTemp := make(map[string]*server_api_params.KeyValue)
-	for k, v := range temp {
-		if strings.HasPrefix(k, typeKey) {
-			flag = true
-			singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
-			_ = json.Unmarshal([]byte(v.Value), singleTypeKeyInfo)
-			if _, ok := singleTypeKeyInfo.InfoList[c.loginUserID]; ok {
-				isContainSelfK = k
-				dbIsCanRepeat = singleTypeKeyInfo.IsCanRepeat
-				delete(singleTypeKeyInfo.InfoList, c.loginUserID)
-				singleTypeKeyInfo.Counter--
-				deletedKeyValue.TypeKey = v.TypeKey
-				deletedKeyValue.Value = utils.StructToJsonString(singleTypeKeyInfo)
-				deletedKeyValue.LatestUpdateTime = v.LatestUpdateTime
-			}
-			if k > maxTypeKey {
-				maxTypeKey = k
-				maxTypeKeyValue = *v
-			}
-		}
-	}
-	if !flag {
-		if len(temp) >= 300 {
-			common.CheckAnyErrCallback(callback, 202, errors.New("number of keys only can support 300"), operationID)
-		}
-		singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
-		singleTypeKeyInfo.TypeKey = getIndexTypeKey(typeKey, 0)
-		singleTypeKeyInfo.Counter = 1
-		singleTypeKeyInfo.IsCanRepeat = isCanRepeat
-		singleTypeKeyInfo.Index = 0
-		userInfo := new(sdk.Info)
-		userInfo.UserID = c.loginUserID
-		userInfo.Ex = ex
-		singleTypeKeyInfo.InfoList[c.loginUserID] = userInfo
-		keyValue := new(server_api_params.KeyValue)
-		keyValue.TypeKey = singleTypeKeyInfo.TypeKey
-		keyValue.Value = utils.StructToJsonString(singleTypeKeyInfo)
-		reqTemp[singleTypeKeyInfo.TypeKey] = keyValue
-	} else {
-		if isContainSelfK != "" && !dbIsCanRepeat {
-			//删除操作
-			reqTemp[isContainSelfK] = &deletedKeyValue
-		} else {
-			singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
-			_ = json.Unmarshal([]byte(maxTypeKeyValue.Value), singleTypeKeyInfo)
-			userInfo := new(sdk.Info)
-			userInfo.UserID = c.loginUserID
-			userInfo.Ex = ex
-			singleTypeKeyInfo.Counter++
-			singleTypeKeyInfo.InfoList[c.loginUserID] = userInfo
-			maxTypeKeyValue.Value = utils.StructToJsonString(singleTypeKeyInfo)
-			data, _ := json.Marshal(maxTypeKeyValue)
-			if len(data) > 1000 { //单key超过了1kb
-				if len(temp) >= 300 {
-					common.CheckAnyErrCallback(callback, 202, errors.New("number of keys only can support 300"), operationID)
-				}
-				newSingleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
-				newSingleTypeKeyInfo.TypeKey = getIndexTypeKey(typeKey, singleTypeKeyInfo.Index+1)
-				newSingleTypeKeyInfo.Counter = 1
-				newSingleTypeKeyInfo.IsCanRepeat = singleTypeKeyInfo.IsCanRepeat
-				newSingleTypeKeyInfo.Index = singleTypeKeyInfo.Index + 1
-				userInfo := new(sdk.Info)
-				userInfo.UserID = c.loginUserID
-				userInfo.Ex = ex
-				newSingleTypeKeyInfo.InfoList[c.loginUserID] = userInfo
-				keyValue := new(server_api_params.KeyValue)
-				keyValue.TypeKey = newSingleTypeKeyInfo.TypeKey
-				keyValue.Value = utils.StructToJsonString(newSingleTypeKeyInfo)
-				reqTemp[singleTypeKeyInfo.TypeKey] = keyValue
-			} else {
-				reqTemp[maxTypeKey] = &maxTypeKeyValue
-			}
-
-		}
-	}
-	var sourceID string
-	switch message.SessionType {
-	case constant.SingleChatType:
-		sourceID = message.SendID + message.RecvID
-	case constant.NotificationChatType:
-		sourceID = message.RecvID
-	case constant.GroupChatType, constant.SuperGroupChatType:
-		sourceID = message.RecvID
-	}
-	var apiReq server_api_params.SetMessageReactionExtensionsReq
-	apiReq.IsReact = message.IsReact
-	apiReq.ClientMsgID = message.ClientMsgID
-	apiReq.SourceID = sourceID
-	apiReq.SessionType = message.SessionType
-	apiReq.IsExternalExtensions = message.IsExternalExtensions
-	apiReq.ReactionExtensionList = reqTemp
-	apiReq.OperationID = operationID
-	apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
-	var apiResp server_api_params.SetMessageReactionExtensionsResp
-	c.p.PostFatalCallback(callback, constant.SetMessageReactionExtensionsRouter, apiReq, &apiResp.ApiResult, apiReq.OperationID)
-	var msg model_struct.LocalChatLogReactionExtensions
-	msg.ClientMsgID = message.ClientMsgID
-	resultKeyMap := make(map[string]*server_api_params.KeyValue)
-	for _, v := range apiResp.ApiResult.Result {
-		if v.ErrCode == 0 {
-			temp := new(server_api_params.KeyValue)
-			temp.TypeKey = v.TypeKey
-			temp.Value = v.Value
-			temp.LatestUpdateTime = v.LatestUpdateTime
-			resultKeyMap[v.TypeKey] = temp
-		}
-	}
-	err = c.db.GetAndUpdateMessageReactionExtension(message.ClientMsgID, resultKeyMap)
-	if err != nil {
-		log.Error(operationID, "GetAndUpdateMessageReactionExtension err:", err.Error())
-	}
-	if !message.IsReact {
-		message.IsReact = apiResp.ApiResult.IsReact
-		message.MsgFirstModifyTime = apiResp.ApiResult.MsgFirstModifyTime
-		err = c.db.UpdateMessageController(message)
-		if err != nil {
-			log.Error(operationID, "UpdateMessageController err:", err.Error(), message)
-
-		}
-	}
-	return apiResp.ApiResult.Result
-}
-func getIndexTypeKey(typeKey string, index int) string {
-	return typeKey + "$" + utils.IntToString(index)
-}
+//	func (c *Conversation) getMessageListSomeReactionExtensions(callback open_im_sdk_callback.Base, messageList []*sdk_struct.MsgStruct, keyList []string, operationID string) server_api_params.GetMessageListReactionExtensionsResp {
+//		if len(messageList) == 0 {
+//			common.CheckAnyErrCallback(callback, 201, errors.New("message list is null"), operationID)
+//		}
+//		var msgIDList []string
+//		var sourceID string
+//		var sessionType int32
+//		var isExternalExtension bool
+//		for _, msgStruct := range messageList {
+//			switch msgStruct.SessionType {
+//			case constant.SingleChatType:
+//				if msgStruct.SendID == c.loginUserID {
+//					sourceID = msgStruct.RecvID
+//				} else {
+//					sourceID = msgStruct.SendID
+//				}
+//			case constant.NotificationChatType:
+//				sourceID = msgStruct.RecvID
+//			case constant.GroupChatType, constant.SuperGroupChatType:
+//				sourceID = msgStruct.GroupID
+//			}
+//			sessionType = msgStruct.SessionType
+//			isExternalExtension = msgStruct.IsExternalExtensions
+//			msgIDList = append(msgIDList, msgStruct.ClientMsgID)
+//		}
+//		localMessageList, err := c.db.GetMultipleMessageController(msgIDList, sourceID, sessionType)
+//		common.CheckDBErrCallback(callback, err, operationID)
+//		var result server_api_params.GetMessageListReactionExtensionsResp
+//		extendMsgs, _ := c.db.GetMultipleMessageReactionExtension(msgIDList)
+//		for _, v := range extendMsgs {
+//			var singleResult server_api_params.SingleMessageExtensionResult
+//			temp := make(map[string]*server_api_params.KeyValue)
+//			_ = json.Unmarshal(v.LocalReactionExtensions, &temp)
+//			for s, _ := range temp {
+//				if !utils.IsContain(s, keyList) {
+//					delete(temp, s)
+//				}
+//			}
+//			singleResult.ClientMsgID = v.ClientMsgID
+//			singleResult.ReactionExtensionList = temp
+//			result = append(result, &singleResult)
+//		}
+//		args := syncReactionExtensionParams{}
+//		args.MessageList = localMessageList
+//		args.SourceID = sourceID
+//		args.TypeKeyList = keyList
+//		args.SessionType = sessionType
+//		args.ExtendMessageList = extendMsgs
+//		args.IsExternalExtension = isExternalExtension
+//		_ = common.TriggerCmdSyncReactionExtensions(common.SyncReactionExtensionsNode{
+//			OperationID: operationID,
+//			Action:      constant.SyncMessageListReactionExtensions,
+//			Args:        args,
+//		}, c.GetCh())
+//		return result
+//	}
+//
+//	func (c *Conversation) setTypeKeyInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, typeKey, ex string, isCanRepeat bool, operationID string) []*server_api_params.ExtensionResult {
+//		message, err := c.db.GetMessageController(s)
+//		common.CheckDBErrCallback(callback, err, operationID)
+//		if message.Status != constant.MsgStatusSendSuccess {
+//			common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
+//		}
+//		extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
+//		temp := make(map[string]*server_api_params.KeyValue)
+//		_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
+//		var flag bool
+//		var isContainSelfK string
+//		var dbIsCanRepeat bool
+//		var deletedKeyValue server_api_params.KeyValue
+//		var maxTypeKey string
+//		var maxTypeKeyValue server_api_params.KeyValue
+//		reqTemp := make(map[string]*server_api_params.KeyValue)
+//		for k, v := range temp {
+//			if strings.HasPrefix(k, typeKey) {
+//				flag = true
+//				singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
+//				_ = json.Unmarshal([]byte(v.Value), singleTypeKeyInfo)
+//				if _, ok := singleTypeKeyInfo.InfoList[c.loginUserID]; ok {
+//					isContainSelfK = k
+//					dbIsCanRepeat = singleTypeKeyInfo.IsCanRepeat
+//					delete(singleTypeKeyInfo.InfoList, c.loginUserID)
+//					singleTypeKeyInfo.Counter--
+//					deletedKeyValue.TypeKey = v.TypeKey
+//					deletedKeyValue.Value = utils.StructToJsonString(singleTypeKeyInfo)
+//					deletedKeyValue.LatestUpdateTime = v.LatestUpdateTime
+//				}
+//				if k > maxTypeKey {
+//					maxTypeKey = k
+//					maxTypeKeyValue = *v
+//				}
+//			}
+//		}
+//		if !flag {
+//			if len(temp) >= 300 {
+//				common.CheckAnyErrCallback(callback, 202, errors.New("number of keys only can support 300"), operationID)
+//			}
+//			singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
+//			singleTypeKeyInfo.TypeKey = getIndexTypeKey(typeKey, 0)
+//			singleTypeKeyInfo.Counter = 1
+//			singleTypeKeyInfo.IsCanRepeat = isCanRepeat
+//			singleTypeKeyInfo.Index = 0
+//			userInfo := new(sdk.Info)
+//			userInfo.UserID = c.loginUserID
+//			userInfo.Ex = ex
+//			singleTypeKeyInfo.InfoList[c.loginUserID] = userInfo
+//			keyValue := new(server_api_params.KeyValue)
+//			keyValue.TypeKey = singleTypeKeyInfo.TypeKey
+//			keyValue.Value = utils.StructToJsonString(singleTypeKeyInfo)
+//			reqTemp[singleTypeKeyInfo.TypeKey] = keyValue
+//		} else {
+//			if isContainSelfK != "" && !dbIsCanRepeat {
+//				//删除操作
+//				reqTemp[isContainSelfK] = &deletedKeyValue
+//			} else {
+//				singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
+//				_ = json.Unmarshal([]byte(maxTypeKeyValue.Value), singleTypeKeyInfo)
+//				userInfo := new(sdk.Info)
+//				userInfo.UserID = c.loginUserID
+//				userInfo.Ex = ex
+//				singleTypeKeyInfo.Counter++
+//				singleTypeKeyInfo.InfoList[c.loginUserID] = userInfo
+//				maxTypeKeyValue.Value = utils.StructToJsonString(singleTypeKeyInfo)
+//				data, _ := json.Marshal(maxTypeKeyValue)
+//				if len(data) > 1000 { //单key超过了1kb
+//					if len(temp) >= 300 {
+//						common.CheckAnyErrCallback(callback, 202, errors.New("number of keys only can support 300"), operationID)
+//					}
+//					newSingleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
+//					newSingleTypeKeyInfo.TypeKey = getIndexTypeKey(typeKey, singleTypeKeyInfo.Index+1)
+//					newSingleTypeKeyInfo.Counter = 1
+//					newSingleTypeKeyInfo.IsCanRepeat = singleTypeKeyInfo.IsCanRepeat
+//					newSingleTypeKeyInfo.Index = singleTypeKeyInfo.Index + 1
+//					userInfo := new(sdk.Info)
+//					userInfo.UserID = c.loginUserID
+//					userInfo.Ex = ex
+//					newSingleTypeKeyInfo.InfoList[c.loginUserID] = userInfo
+//					keyValue := new(server_api_params.KeyValue)
+//					keyValue.TypeKey = newSingleTypeKeyInfo.TypeKey
+//					keyValue.Value = utils.StructToJsonString(newSingleTypeKeyInfo)
+//					reqTemp[singleTypeKeyInfo.TypeKey] = keyValue
+//				} else {
+//					reqTemp[maxTypeKey] = &maxTypeKeyValue
+//				}
+//
+//			}
+//		}
+//		var sourceID string
+//		switch message.SessionType {
+//		case constant.SingleChatType:
+//			sourceID = message.SendID + message.RecvID
+//		case constant.NotificationChatType:
+//			sourceID = message.RecvID
+//		case constant.GroupChatType, constant.SuperGroupChatType:
+//			sourceID = message.RecvID
+//		}
+//		var apiReq server_api_params.SetMessageReactionExtensionsReq
+//		apiReq.IsReact = message.IsReact
+//		apiReq.ClientMsgID = message.ClientMsgID
+//		apiReq.SourceID = sourceID
+//		apiReq.SessionType = message.SessionType
+//		apiReq.IsExternalExtensions = message.IsExternalExtensions
+//		apiReq.ReactionExtensionList = reqTemp
+//		apiReq.OperationID = operationID
+//		apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
+//		var apiResp server_api_params.SetMessageReactionExtensionsResp
+//		c.p.PostFatalCallback(callback, constant.SetMessageReactionExtensionsRouter, apiReq, &apiResp.ApiResult, apiReq.OperationID)
+//		var msg model_struct.LocalChatLogReactionExtensions
+//		msg.ClientMsgID = message.ClientMsgID
+//		resultKeyMap := make(map[string]*server_api_params.KeyValue)
+//		for _, v := range apiResp.ApiResult.Result {
+//			if v.ErrCode == 0 {
+//				temp := new(server_api_params.KeyValue)
+//				temp.TypeKey = v.TypeKey
+//				temp.Value = v.Value
+//				temp.LatestUpdateTime = v.LatestUpdateTime
+//				resultKeyMap[v.TypeKey] = temp
+//			}
+//		}
+//		err = c.db.GetAndUpdateMessageReactionExtension(message.ClientMsgID, resultKeyMap)
+//		if err != nil {
+//			log.Error(operationID, "GetAndUpdateMessageReactionExtension err:", err.Error())
+//		}
+//		if !message.IsReact {
+//			message.IsReact = apiResp.ApiResult.IsReact
+//			message.MsgFirstModifyTime = apiResp.ApiResult.MsgFirstModifyTime
+//			err = c.db.UpdateMessageController(message)
+//			if err != nil {
+//				log.Error(operationID, "UpdateMessageController err:", err.Error(), message)
+//
+//			}
+//		}
+//		return apiResp.ApiResult.Result
+//	}
+//
+//	func getIndexTypeKey(typeKey string, index int) string {
+//		return typeKey + "$" + utils.IntToString(index)
+//	}
 func getPrefixTypeKey(typeKey string) string {
 	list := strings.Split(typeKey, "$")
 	if len(list) > 0 {
@@ -2507,94 +2275,95 @@ func getPrefixTypeKey(typeKey string) string {
 	}
 	return ""
 }
-func (c *Conversation) getTypeKeyListInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, keyList []string, operationID string) (result []*sdk.SingleTypeKeyInfoSum) {
-	message, err := c.db.GetMessageController(s)
-	common.CheckDBErrCallback(callback, err, operationID)
-	if message.Status != constant.MsgStatusSendSuccess {
-		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
-	}
-	if !message.IsReact {
-		common.CheckAnyErrCallback(callback, 202, errors.New("can get message reaction ex"), operationID)
-	}
-	extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
-	temp := make(map[string]*server_api_params.KeyValue)
-	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
-	for _, v := range keyList {
-		singleResult := new(sdk.SingleTypeKeyInfoSum)
-		singleResult.TypeKey = v
-		for typeKey, value := range temp {
-			if strings.HasPrefix(typeKey, v) {
-				singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
-				_ = json.Unmarshal([]byte(value.Value), singleTypeKeyInfo)
-				if _, ok := singleTypeKeyInfo.InfoList[c.loginUserID]; ok {
-					singleResult.IsContainSelf = true
-				}
-				for _, info := range singleTypeKeyInfo.InfoList {
-					v := *info
-					singleResult.InfoList = append(singleResult.InfoList, &v)
-				}
-				singleResult.Counter += singleTypeKeyInfo.Counter
-			}
-		}
-		result = append(result, singleResult)
-	}
-	messageList := []*sdk_struct.MsgStruct{s}
-	_ = common.TriggerCmdSyncReactionExtensions(common.SyncReactionExtensionsNode{
-		OperationID: operationID,
-		Action:      constant.SyncMessageListTypeKeyInfo,
-		Args:        messageList,
-	}, c.GetCh())
 
-	return result
-}
-
-func (c *Conversation) getAllTypeKeyInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) (result []*sdk.SingleTypeKeyInfoSum) {
-	message, err := c.db.GetMessageController(s)
-	common.CheckDBErrCallback(callback, err, operationID)
-	if message.Status != constant.MsgStatusSendSuccess {
-		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
-	}
-	if !message.IsReact {
-		common.CheckAnyErrCallback(callback, 202, errors.New("can get message reaction ex"), operationID)
-	}
-	extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
-	temp := make(map[string]*server_api_params.KeyValue)
-	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
-	mapResult := make(map[string]*sdk.SingleTypeKeyInfoSum)
-	for typeKey, value := range temp {
-		singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
-		err := json.Unmarshal([]byte(value.Value), singleTypeKeyInfo)
-		if err != nil {
-			log.Warn(operationID, "not this type ", value.Value)
-			continue
-		}
-		prefixKey := getPrefixTypeKey(typeKey)
-		if v, ok := mapResult[prefixKey]; ok {
-			for _, info := range singleTypeKeyInfo.InfoList {
-				t := *info
-				v.InfoList = append(v.InfoList, &t)
-			}
-			if _, ok := singleTypeKeyInfo.InfoList[c.loginUserID]; ok {
-				v.IsContainSelf = true
-			}
-			v.Counter += singleTypeKeyInfo.Counter
-		} else {
-			v := new(sdk.SingleTypeKeyInfoSum)
-			v.TypeKey = prefixKey
-			v.Counter = singleTypeKeyInfo.Counter
-			for _, info := range singleTypeKeyInfo.InfoList {
-				t := *info
-				v.InfoList = append(v.InfoList, &t)
-			}
-			if _, ok := singleTypeKeyInfo.InfoList[c.loginUserID]; ok {
-				v.IsContainSelf = true
-			}
-			mapResult[prefixKey] = v
-		}
-	}
-	for _, v := range mapResult {
-		result = append(result, v)
-
-	}
-	return result
-}
+//func (c *Conversation) getTypeKeyListInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, keyList []string, operationID string) (result []*sdk.SingleTypeKeyInfoSum) {
+//	message, err := c.db.GetMessageController(s)
+//	common.CheckDBErrCallback(callback, err, operationID)
+//	if message.Status != constant.MsgStatusSendSuccess {
+//		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
+//	}
+//	if !message.IsReact {
+//		common.CheckAnyErrCallback(callback, 202, errors.New("can get message reaction ex"), operationID)
+//	}
+//	extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
+//	temp := make(map[string]*server_api_params.KeyValue)
+//	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
+//	for _, v := range keyList {
+//		singleResult := new(sdk.SingleTypeKeyInfoSum)
+//		singleResult.TypeKey = v
+//		for typeKey, value := range temp {
+//			if strings.HasPrefix(typeKey, v) {
+//				singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
+//				_ = json.Unmarshal([]byte(value.Value), singleTypeKeyInfo)
+//				if _, ok := singleTypeKeyInfo.InfoList[c.loginUserID]; ok {
+//					singleResult.IsContainSelf = true
+//				}
+//				for _, info := range singleTypeKeyInfo.InfoList {
+//					v := *info
+//					singleResult.InfoList = append(singleResult.InfoList, &v)
+//				}
+//				singleResult.Counter += singleTypeKeyInfo.Counter
+//			}
+//		}
+//		result = append(result, singleResult)
+//	}
+//	messageList := []*sdk_struct.MsgStruct{s}
+//	_ = common.TriggerCmdSyncReactionExtensions(common.SyncReactionExtensionsNode{
+//		OperationID: operationID,
+//		Action:      constant.SyncMessageListTypeKeyInfo,
+//		Args:        messageList,
+//	}, c.GetCh())
+//
+//	return result
+//}
+//
+//func (c *Conversation) getAllTypeKeyInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) (result []*sdk.SingleTypeKeyInfoSum) {
+//	message, err := c.db.GetMessageController(s)
+//	common.CheckDBErrCallback(callback, err, operationID)
+//	if message.Status != constant.MsgStatusSendSuccess {
+//		common.CheckAnyErrCallback(callback, 201, errors.New("only send success message can modify reaction extensions"), operationID)
+//	}
+//	if !message.IsReact {
+//		common.CheckAnyErrCallback(callback, 202, errors.New("can get message reaction ex"), operationID)
+//	}
+//	extendMsg, _ := c.db.GetMessageReactionExtension(message.ClientMsgID)
+//	temp := make(map[string]*server_api_params.KeyValue)
+//	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
+//	mapResult := make(map[string]*sdk.SingleTypeKeyInfoSum)
+//	for typeKey, value := range temp {
+//		singleTypeKeyInfo := new(sdk.SingleTypeKeyInfo)
+//		err := json.Unmarshal([]byte(value.Value), singleTypeKeyInfo)
+//		if err != nil {
+//			log.Warn(operationID, "not this type ", value.Value)
+//			continue
+//		}
+//		prefixKey := getPrefixTypeKey(typeKey)
+//		if v, ok := mapResult[prefixKey]; ok {
+//			for _, info := range singleTypeKeyInfo.InfoList {
+//				t := *info
+//				v.InfoList = append(v.InfoList, &t)
+//			}
+//			if _, ok := singleTypeKeyInfo.InfoList[c.loginUserID]; ok {
+//				v.IsContainSelf = true
+//			}
+//			v.Counter += singleTypeKeyInfo.Counter
+//		} else {
+//			v := new(sdk.SingleTypeKeyInfoSum)
+//			v.TypeKey = prefixKey
+//			v.Counter = singleTypeKeyInfo.Counter
+//			for _, info := range singleTypeKeyInfo.InfoList {
+//				t := *info
+//				v.InfoList = append(v.InfoList, &t)
+//			}
+//			if _, ok := singleTypeKeyInfo.InfoList[c.loginUserID]; ok {
+//				v.IsContainSelf = true
+//			}
+//			mapResult[prefixKey] = v
+//		}
+//	}
+//	for _, v := range mapResult {
+//		result = append(result, v)
+//
+//	}
+//	return result
+//}

@@ -349,7 +349,7 @@ func (u *LoginMgr) logout(ctx context.Context) error {
 	timeout := 2
 	retryTimes := 0
 	// log.Info(operationID, "send to svr logout ...", u.loginUserID)
-	_, err := u.ws.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID, operationID)
+	_, err := u.ws.SendReqWaitResp(ctx, &server_api_params.GetMaxAndMinSeqReq{}, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID)
 	if err != nil {
 		// log.Warn(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
 		if !u.ws.IsInterruptReconnection() {

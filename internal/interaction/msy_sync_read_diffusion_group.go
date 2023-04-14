@@ -12,6 +12,8 @@ import (
 	"runtime"
 	"sync"
 
+	"github.com/golang/protobuf/proto"
+
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 	"github.com/golang/protobuf/proto"
 )
@@ -50,7 +52,7 @@ func (m *ReadDiffusionGroupMsgSync) updateJoinedSuperGroup() {
 				operationID := cmd.Value.(sdk_struct.CmdJoinedSuperGroup).OperationID
 				ctx := mcontext.NewCtx(operationID)
 				log.Info(operationID, "updateJoinedSuperGroup cmd: ", cmd)
-				g, err := m.GetReadDiffusionGroupIDList(ctx)
+				g, err := m.GetReadDiffusionGroupIDList(nil)
 				if err == nil {
 					log.Info(operationID, "GetReadDiffusionGroupIDList, group id list: ", g)
 					m.superGroupMtx.Lock()
@@ -66,8 +68,8 @@ func (m *ReadDiffusionGroupMsgSync) updateJoinedSuperGroup() {
 }
 
 // 读取所有的读扩散群id，并加载seq到map中，初始化调用一次， 群列表变化时调用一次  ok
-func (m *ReadDiffusionGroupMsgSync) compareSeq(ctx context.Context) {
-	g, err := m.GetReadDiffusionGroupIDList(ctx)
+func (m *ReadDiffusionGroupMsgSync) compareSeq(operationID string) {
+	g, err := m.GetReadDiffusionGroupIDList(nil)
 	if err != nil {
 		// log.Error(operationID, "GetReadDiffusionGroupIDList failed ", err.Error())
 		return
@@ -82,11 +84,11 @@ func (m *ReadDiffusionGroupMsgSync) compareSeq(ctx context.Context) {
 
 	defer m.superGroupMtx.Unlock()
 	for _, v := range m.SuperGroupIDList {
-		n, err := m.GetSuperGroupNormalMsgSeq(ctx, v)
+		n, err := m.GetSuperGroupNormalMsgSeq(nil, v)
 		if err != nil {
 			// log.Error(operationID, "GetSuperGroupNormalMsgSeq failed ", err.Error(), v)
 		}
-		a, err := m.GetSuperGroupAbnormalMsgSeq(ctx, v)
+		a, err := m.GetSuperGroupAbnormalMsgSeq(nil, v)
 		if err != nil {
 			// log.Error(operationID, "GetSuperGroupAbnormalMsgSeq failed ", err.Error(), v)
 		}
@@ -301,7 +303,7 @@ func (m *ReadDiffusionGroupMsgSync) syncMsgFromServerSplit(needSyncSeqList []uin
 	for {
 		pullMsgReq.OperationID = operationID
 		log.Debug(operationID, "read diffusion group pull message, req: ", pullMsgReq)
-		resp, err := m.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 30, 2, m.loginUserID, operationID)
+		resp, err := m.SendReqWaitResp(context.Background(), &pullMsgReq, constant.WSPullMsgBySeqList, 30, 2, m.loginUserID)
 		if err != nil && m.LoginStatus() == constant.Logout {
 			log.Error(operationID, "SendReqWaitResp failed  Logout status ", err.Error(), m.LoginStatus())
 			log.Warn("", "m.LoginStatus() == constant.Logout, Goexit()")

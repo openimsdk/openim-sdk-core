@@ -226,7 +226,7 @@ func (m *SelfMsgSync) syncMsgFromCache2ServerSplit(needSyncSeqList []uint32, ope
 	pullMsgReq.UserID = m.loginUserID
 	for {
 		pullMsgReq.OperationID = operationID
-		resp, err := m.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 60, 2, m.loginUserID, operationID)
+		resp, err := m.SendReqWaitResp(context.Background(), &pullMsgReq, constant.WSPullMsgBySeqList, 60, 2, m.loginUserID)
 		if err != nil && m.LoginStatus() == constant.Logout {
 			log.Error(operationID, "SendReqWaitResp failed  Logout status ", err.Error(), m.LoginStatus())
 			log.Warn("", "m.LoginStatus() == constant.Logout, Goexit()")

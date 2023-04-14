@@ -40,7 +40,7 @@ func (c *Conversation) messageBlocksInternalContinuityCheck(sourceID string, not
 			} else {
 				pullSeqList = lostSeqList[lostSeqListLength-constant.PullMsgNumForReadDiffusion : lostSeqListLength]
 			}
-			c.pullMessageAndReGetHistoryMessages(sourceID, pullSeqList, notStartTime, isReverse, count, sessionType, startTime, list, messageListCallback, operationID)
+			c.pullMessageAndReGetHistoryMessages(context.Background(), sourceID, pullSeqList, notStartTime, isReverse, count, sessionType, startTime, list, messageListCallback, operationID)
 		}
 
 	}
@@ -65,7 +65,7 @@ func (c *Conversation) messageBlocksBetweenContinuityCheck(lastMinSeq, maxSeq ui
 				}(lastMinSeq-1, uint32(startSeq))
 				log.Debug(operationID, "get lost successiveSeqList is :", successiveSeqList, len(successiveSeqList))
 				if len(successiveSeqList) > 0 {
-					c.pullMessageAndReGetHistoryMessages(sourceID, successiveSeqList, notStartTime, isReverse, count, sessionType, startTime, list, messageListCallback, operationID)
+					c.pullMessageAndReGetHistoryMessages(context.Background(), sourceID, successiveSeqList, notStartTime, isReverse, count, sessionType, startTime, list, messageListCallback, operationID)
 				}
 			} else {
 				return true
@@ -86,7 +86,7 @@ func (c *Conversation) messageBlocksBetweenContinuityCheck(lastMinSeq, maxSeq ui
 func (c *Conversation) messageBlocksEndContinuityCheck(ctx context.Context, minSeq uint32, sourceID string, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
 	var minSeqServer uint32
 	var maxSeqServer uint32
-	resp, err := c.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 1, c.loginUserID, operationID)
+	resp, err := c.SendReqWaitResp(context.Background(), &server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 1, c.loginUserID)
 	if err != nil {
 		// log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, 1, c.loginUserID)
 	} else {
@@ -134,7 +134,7 @@ func (c *Conversation) messageBlocksEndContinuityCheck(ctx context.Context, minS
 			}(minSeq)
 			// log.Debug(operationID, "pull seqList is ", seqList, len(seqList))
 			if len(seqList) > 0 {
-				c.pullMessageAndReGetHistoryMessages(ctx, sourceID, seqList, notStartTime, isReverse, count, sessionType, startTime, list)
+				c.pullMessageAndReGetHistoryMessages(context.Background(), sourceID, seqList, notStartTime, isReverse, count, sessionType, startTime, list, messageListCallback, operationID)
 			}
 		}
 	} else {
@@ -192,8 +192,8 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, s
 	pullMsgReq.GroupSeqList[sourceID] = &server_api_params.SeqList{SeqList: newSeqList}
 	operationID := mcontext.GetOperationID(ctx)
 	pullMsgReq.OperationID = operationID
-	// log.Debug(operationID, "read diffusion group pull message, req: ", pullMsgReq)
-	resp, err := c.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 2, 1, c.loginUserID, operationID)
+	log.Debug(operationID, "read diffusion group pull message, req: ", pullMsgReq)
+	resp, err := c.SendReqWaitResp(ctx, &pullMsgReq, constant.WSPullMsgBySeqList, 2, 1, c.loginUserID)
 	if err != nil {
 		errHandle(newSeqList, list, err)
 		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 1, 2, c.loginUserID)
@@ -364,12 +364,12 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData []*
 
 	}
 	b8 := utils.GetCurrentTimestampByMill()
-	c.DoGroupMsgReadState(ctx, groupMsgReadList)
+	c.DoGroupMsgReadState(context.Background(), groupMsgReadList)
 	b9 := utils.GetCurrentTimestampByMill()
 	log.Debug(operationID, "DoGroupMsgReadState  cost time : ", b9-b8, "len: ", len(groupMsgReadList))
 
-	c.revokeMessage(ctx, msgRevokeList)
-	c.newRevokeMessage(ctx, newMsgRevokeList)
+	c.revokeMessage(context.Background(), msgRevokeList)
+	c.newRevokeMessage(context.Background(), newMsgRevokeList)
 	b10 := utils.GetCurrentTimestampByMill()
 	log.Debug(operationID, "revokeMessage  cost time : ", b10-b9)
 	log.Info(operationID, "insert msg, total cost time: ", utils.GetCurrentTimestampByMill()-b, "len:  ", len(pullMsgData))

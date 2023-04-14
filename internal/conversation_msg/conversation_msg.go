@@ -1495,7 +1495,7 @@ func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
 	node := c2v.Value.(common.DeleteConNode)
 	ctx := mcontext.NewCtx(utils.OperationIDGenerator())
 	//Mark messages related to this conversation for deletion
-	err := c.db.UpdateMessageStatusBySourceID(ctx, node.SourceID, constant.MsgStatusHasDeleted, int32(node.SessionType))
+	err := c.db.UpdateMessageStatusBySourceID(context.Background(), node.SourceID, constant.MsgStatusHasDeleted, int32(node.SessionType))
 	if err != nil {
 		log.Error("internal", "setMessageStatusBySourceID err:", err.Error())
 		return
@@ -1582,7 +1582,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		if err == nil {
 			log.Info("this is old conversation", *oc)
 			if lc.LatestMsgSendTime >= oc.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
-				err := c.db.UpdateColumnsConversation(ctx, node.ConID, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
+				err := c.db.UpdateColumnsConversation(nil, node.ConID, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
 				if err != nil {
 					log.Error("internal", "updateConversationLatestMsgModel err: ", err)
 				} else {
@@ -1679,7 +1679,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			} else {
 				latestMsg.IsRead = true
 				newLatestMessage := utils.StructToJsonString(latestMsg)
-				err = c.db.UpdateColumnsConversation(ctx, node.ConID, map[string]interface{}{"latest_msg_send_time": latestMsg.SendTime, "latest_msg": newLatestMessage})
+				err = c.db.UpdateColumnsConversation(nil, node.ConID, map[string]interface{}{"latest_msg_send_time": latestMsg.SendTime, "latest_msg": newLatestMessage})
 				if err != nil {
 					log.Error("internal", "updateConversationLatestMsgModel err :", err.Error())
 				}
@@ -2261,7 +2261,7 @@ func (c *Conversation) addFaceURLAndName(lc *model_struct.LocalConversation) {
 		lc.ShowName = name
 
 	case constant.GroupChatType, constant.SuperGroupChatType:
-		g, err := c.full.GetGroupInfoFromLocal2Svr(ctx, lc.GroupID, lc.ConversationType)
+		g, err := c.full.GetGroupInfoFromLocal2Svr(nil, lc.GroupID, lc.ConversationType)
 		if err != nil {
 			log.Error(operationID, "GetGroupInfoByGroupID err", err.Error(), lc.GroupID, lc.ConversationType)
 			return

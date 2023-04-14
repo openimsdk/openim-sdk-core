@@ -75,6 +75,11 @@ type KeyValue struct {
 	Value            string `json:"value" validate:"required"`
 	LatestUpdateTime int64  `json:"latestUpdateTime"`
 }
+type ApiResult struct {
+	Result             []*ExtensionResult `json:"result"`
+	MsgFirstModifyTime int64              `json:"msgFirstModifyTime"`
+	IsReact            bool               `json:"isReact"`
+}
 type SetMessageReactionExtensionsResp struct {
 	CommResp
 	ApiResult struct {
