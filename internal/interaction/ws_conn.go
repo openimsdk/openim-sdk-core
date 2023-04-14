@@ -2,6 +2,7 @@ package interaction
 
 import (
 	"bytes"
+	"context"
 	"encoding/gob"
 	"errors"
 	"fmt"
@@ -41,20 +42,21 @@ func (u *WsConn) IsInterruptReconnection() bool {
 }
 
 func NewWsConn(listener open_im_sdk_callback.OnConnListener, token string, loginUserID string, isCompression bool, conversationCh chan common.Cmd2Value) *WsConn {
+	ctx := context.Background()
 	p := WsConn{listener: listener, token: token, loginUserID: loginUserID, IsCompression: isCompression, ConversationCh: conversationCh,
 		encoder: NewGobEncoder(), compressor: NewGzipCompressor()}
 	p.conn = NewWebSocket(WebSocket)
-	_, _, _ = p.ReConn("init:" + utils.OperationIDGenerator())
+	_, _, _ = p.ReConn(ctx)
 	return &p
 }
 
-func (u *WsConn) CloseConn(operationID string) error {
+func (u *WsConn) CloseConn(ctx context.Context) error {
 	u.Lock()
 	defer u.Unlock()
 	if !u.conn.IsNil() {
 		err := u.conn.Close()
 		if err != nil {
-			log.NewWarn(operationID, "close conn, ", u.conn, err.Error())
+			//log.NewWarn(operationID, "close conn, ", u.conn, err.Error())
 		}
 		//	u.conn = nil
 		return utils.Wrap(err, "")
@@ -170,62 +172,62 @@ func (u *WsConn) IsFatalError(err error) bool {
 	return true
 }
 
-func (u *WsConn) ReConn(operationID string) (error, bool, bool) {
+func (u *WsConn) ReConn(ctx context.Context) (bool, bool, error) {
 	u.stateMutex.Lock()
 	u.tokenErrCode = 0
 	defer u.stateMutex.Unlock()
 	if !u.conn.IsNil() {
-		log.NewWarn(operationID, "close conn, ", u.conn, u.conn.LocalAddr())
+		//log.NewWarn(operationID, "close conn, ", u.conn, u.conn.LocalAddr())
 		err := u.conn.Close()
 		if err != nil {
-			log.NewWarn(operationID, "close old conn", u.conn.LocalAddr(), err.Error())
+			//log.NewWarn(operationID, "close old conn", u.conn.LocalAddr(), err.Error())
 		}
 	}
 
 	if u.loginStatus == constant.TokenFailedKickedOffline {
-		return utils.Wrap(errors.New("don't re conn"), "TokenFailedKickedOffline"), false, false
+		return false, false, utils.Wrap(errors.New("don't re conn"), "TokenFailedKickedOffline")
 	}
 	u.listener.OnConnecting()
 
-	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s", sdk_struct.SvrConf.WsAddr, u.loginUserID, u.token, sdk_struct.SvrConf.Platform, operationID)
-	log.Info(operationID, "ws connect begin, dail: ", url)
+	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s", sdk_struct.SvrConf.WsAddr, u.loginUserID, u.token, sdk_struct.SvrConf.Platform, ctx.Value("operationID").(string))
+	//log.Info(operationID, "ws connect begin, dail: ", url)
 	var header http.Header
 	if u.IsCompression {
 		header = http.Header{"compression": []string{"gzip"}}
 	}
 	//conn, httpResp, err := u.websocket.DefaultDialer.Dial(url, header)
 	httpResp, err := u.conn.Dial(url, header)
-	log.Info(operationID, "ws connect end, dail : ", url)
+	//log.Info(operationID, "ws connect end, dail : ", url)
 	if err != nil {
-		log.Error(operationID, "ws connect failed ", url, err.Error())
+		//log.Error(operationID, "ws connect failed ", url, err.Error())
 		u.loginStatus = constant.LoginFailed
 		if httpResp != nil {
-			errMsg := httpResp.Header.Get("ws_err_msg") + " operationID " + operationID + err.Error()
-			log.Error(operationID, "websocket.DefaultDialer.Dial failed ", errMsg, httpResp.StatusCode)
+			errMsg := httpResp.Header.Get("ws_err_msg") + " operationID " + ctx.Value("operationID").(string) + err.Error()
+			//log.Error(operationID, "websocket.DefaultDialer.Dial failed ", errMsg, httpResp.StatusCode)
 			u.listener.OnConnectFailed(int32(httpResp.StatusCode), errMsg)
 			switch int32(httpResp.StatusCode) {
 			case constant.ErrTokenExpired.ErrCode:
 				u.listener.OnUserTokenExpired()
 				u.tokenErrCode = constant.ErrTokenExpired.ErrCode
-				return utils.Wrap(err, errMsg), false, false
+				return false, false, utils.Wrap(err, errMsg)
 			case constant.ErrTokenInvalid.ErrCode:
 				u.tokenErrCode = constant.ErrTokenInvalid.ErrCode
-				return utils.Wrap(err, errMsg), false, false
+				return false, false, utils.Wrap(err, errMsg)
 			case constant.ErrTokenMalformed.ErrCode:
 				u.tokenErrCode = constant.ErrTokenMalformed.ErrCode
-				return utils.Wrap(err, errMsg), false, false
+				return false, false, utils.Wrap(err, errMsg)
 			case constant.ErrTokenNotValidYet.ErrCode:
 				u.tokenErrCode = constant.ErrTokenNotValidYet.ErrCode
-				return utils.Wrap(err, errMsg), false, false
+				return false, false, utils.Wrap(err, errMsg)
 			case constant.ErrTokenUnknown.ErrCode:
 				u.tokenErrCode = constant.ErrTokenUnknown.ErrCode
-				return utils.Wrap(err, errMsg), false, false
+				return false, false, utils.Wrap(err, errMsg)
 			case constant.ErrTokenDifferentPlatformID.ErrCode:
 				u.tokenErrCode = constant.ErrTokenDifferentPlatformID.ErrCode
-				return utils.Wrap(err, errMsg), false, false
+				return false, false, utils.Wrap(err, errMsg)
 			case constant.ErrTokenDifferentUserID.ErrCode:
 				u.tokenErrCode = constant.ErrTokenDifferentUserID.ErrCode
-				return utils.Wrap(err, errMsg), false, false
+				return false, false, utils.Wrap(err, errMsg)
 			case constant.ErrTokenKicked.ErrCode:
 				u.tokenErrCode = constant.ErrTokenKicked.ErrCode
 				//if u.loginStatus != constant.Logout {
@@ -233,26 +235,27 @@ func (u *WsConn) ReConn(operationID string) (error, bool, bool) {
 				//	u.SetLoginStatus(constant.Logout)
 				//}
 
-				return utils.Wrap(err, errMsg), false, true
+				return false, true, utils.Wrap(err, errMsg)
 			default:
-				errMsg = err.Error() + " operationID " + operationID
+				//errMsg = err.Error() + " operationID " + operationID
+				errMsg = err.Error() + " operationID " + ctx.Value("operationID").(string)
 				u.listener.OnConnectFailed(1001, errMsg)
-				return utils.Wrap(err, errMsg), true, false
+				return true, false, utils.Wrap(err, errMsg)
 			}
 		} else {
-			errMsg := err.Error() + " operationID " + operationID
+			errMsg := err.Error() + " operationID " + ctx.Value("operationID").(string)
 			u.listener.OnConnectFailed(1001, errMsg)
 			if u.ConversationCh != nil {
-				common.TriggerCmdSuperGroupMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: nil, OperationID: operationID, SyncFlag: constant.MsgSyncBegin}, u.ConversationCh)
-				common.TriggerCmdSuperGroupMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: nil, OperationID: operationID, SyncFlag: constant.MsgSyncFailed}, u.ConversationCh)
+				common.TriggerCmdSuperGroupMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: nil, OperationID: ctx.Value("operationID").(string), SyncFlag: constant.MsgSyncBegin}, u.ConversationCh)
+				common.TriggerCmdSuperGroupMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: nil, OperationID: ctx.Value("operationID").(string), SyncFlag: constant.MsgSyncFailed}, u.ConversationCh)
 			}
 
-			log.Error(operationID, "websocket.DefaultDialer.Dial failed ", errMsg, "url ", url)
-			return utils.Wrap(err, errMsg), true, false
+			//log.Error(operationID, "websocket.DefaultDialer.Dial failed ", errMsg, "url ", url)
+			return true, false, utils.Wrap(err, errMsg)
 		}
 	}
 	u.listener.OnConnectSuccess()
 	u.loginStatus = constant.LoginSuccess
 
-	return nil, true, false
+	return true, false, nil
 }
