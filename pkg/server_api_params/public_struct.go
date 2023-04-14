@@ -1,6 +1,7 @@
 package server_api_params
 
 import (
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/pkg/db/model_struct"
 )
 
@@ -23,7 +24,7 @@ type GroupAddMemberInfo struct {
 }
 
 type FullUserInfo struct {
-	PublicInfo *PublicUserInfo           `json:"publicInfo"`
+	PublicInfo *sdkws.UserInfo           `json:"publicInfo"`
 	FriendInfo *model_struct.LocalFriend `json:"friendInfo"`
 	BlackInfo  *model_struct.LocalBlack  `json:"blackInfo"`
 }
