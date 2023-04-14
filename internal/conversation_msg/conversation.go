@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
@@ -567,7 +568,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 						}(seq)
 						log.Debug("", "pull seqList is ", seqList, len(seqList))
 						if len(seqList) > 0 {
-							c.pullMessageAndReGetHistoryMessages(ctx, sourceID, seqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, "1")
+							c.pullMessageAndReGetHistoryMessages(ctx, sourceID, seqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
 						}
 					}
 				} else {
@@ -620,7 +621,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 						} else {
 							pullSeqList = lostSeqList[lostSeqListLength-constant.PullMsgNumForReadDiffusion : lostSeqListLength]
 						}
-						c.pullMessageAndReGetHistoryMessages(ctx, sourceID, pullSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, "")
+						c.pullMessageAndReGetHistoryMessages(ctx, sourceID, pullSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
 					} else {
 						if req.LastMinSeq != 0 {
 							var thisMaxSeq uint32
@@ -647,7 +648,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 									}(req.LastMinSeq-1, uint32(startSeq))
 									log.Debug("", "get lost successiveSeqList is :", successiveSeqList, len(successiveSeqList))
 									if len(successiveSeqList) > 0 {
-										c.pullMessageAndReGetHistoryMessages(ctx, sourceID, successiveSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, "")
+										c.pullMessageAndReGetHistoryMessages(ctx, sourceID, successiveSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
 									}
 								}
 
@@ -813,7 +814,7 @@ func (c *Conversation) getAdvancedHistoryMessageList2(callback open_im_sdk_callb
 			if minSeq == 1 && lostSeqListLength == 0 {
 				messageListCallback.IsEnd = true
 			} else {
-				c.messageBlocksEndContinuityCheck(minSeq, sourceID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
+				c.messageBlocksEndContinuityCheck(nil, minSeq, sourceID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
 			}
 		} else {
 			maxSeq, _, _ := c.messageBlocksInternalContinuityCheck(sourceID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback, operationID)
@@ -1847,10 +1848,10 @@ func (c *Conversation) setMessageReactionExtensions(ctx context.Context, s *sdk_
 	}
 	var msg model_struct.LocalChatLogReactionExtensions
 	msg.ClientMsgID = message.ClientMsgID
-	resultKeyMap := make(map[string]*server_api_params.KeyValue)
+	resultKeyMap := make(map[string]*sdkws.KeyValue)
 	for _, v := range resp.Result {
 		if v.ErrCode == 0 {
-			temp := new(server_api_params.KeyValue)
+			temp := new(sdkws.KeyValue)
 			temp.TypeKey = v.TypeKey
 			temp.Value = v.Value
 			temp.LatestUpdateTime = v.LatestUpdateTime
@@ -1987,10 +1988,10 @@ func (c *Conversation) deleteMessageReactionExtensions(ctx context.Context, s *s
 	}
 	var msg model_struct.LocalChatLogReactionExtensions
 	msg.ClientMsgID = message.ClientMsgID
-	resultKeyMap := make(map[string]*server_api_params.KeyValue)
+	resultKeyMap := make(map[string]*sdkws.KeyValue)
 	for _, v := range resp.Result {
 		if v.ErrCode == 0 {
-			temp := new(server_api_params.KeyValue)
+			temp := new(sdkws.KeyValue)
 			temp.TypeKey = v.TypeKey
 			resultKeyMap[v.TypeKey] = temp
 		}
@@ -2049,7 +2050,7 @@ func (c *Conversation) getMessageListReactionExtensions(ctx context.Context, mes
 	extendMessage, _ := c.db.GetMultipleMessageReactionExtension(ctx, msgIDList)
 	for _, v := range extendMessage {
 		var singleResult server_api_params.SingleMessageExtensionResult
-		temp := make(map[string]*server_api_params.KeyValue)
+		temp := make(map[string]*sdkws.KeyValue)
 		_ = json.Unmarshal(v.LocalReactionExtensions, &temp)
 		singleResult.ClientMsgID = v.ClientMsgID
 		singleResult.ReactionExtensionList = temp

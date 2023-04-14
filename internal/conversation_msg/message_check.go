@@ -40,7 +40,7 @@ func (c *Conversation) messageBlocksInternalContinuityCheck(sourceID string, not
 			} else {
 				pullSeqList = lostSeqList[lostSeqListLength-constant.PullMsgNumForReadDiffusion : lostSeqListLength]
 			}
-			c.pullMessageAndReGetHistoryMessages(context.Background(), sourceID, pullSeqList, notStartTime, isReverse, count, sessionType, startTime, list, messageListCallback, operationID)
+			c.pullMessageAndReGetHistoryMessages(context.Background(), sourceID, pullSeqList, notStartTime, isReverse, count, sessionType, startTime, list, messageListCallback)
 		}
 
 	}
@@ -65,7 +65,7 @@ func (c *Conversation) messageBlocksBetweenContinuityCheck(lastMinSeq, maxSeq ui
 				}(lastMinSeq-1, uint32(startSeq))
 				log.Debug(operationID, "get lost successiveSeqList is :", successiveSeqList, len(successiveSeqList))
 				if len(successiveSeqList) > 0 {
-					c.pullMessageAndReGetHistoryMessages(context.Background(), sourceID, successiveSeqList, notStartTime, isReverse, count, sessionType, startTime, list, messageListCallback, operationID)
+					c.pullMessageAndReGetHistoryMessages(context.Background(), sourceID, successiveSeqList, notStartTime, isReverse, count, sessionType, startTime, list, messageListCallback)
 				}
 			} else {
 				return true
@@ -134,7 +134,7 @@ func (c *Conversation) messageBlocksEndContinuityCheck(ctx context.Context, minS
 			}(minSeq)
 			// log.Debug(operationID, "pull seqList is ", seqList, len(seqList))
 			if len(seqList) > 0 {
-				c.pullMessageAndReGetHistoryMessages(context.Background(), sourceID, seqList, notStartTime, isReverse, count, sessionType, startTime, list, messageListCallback, operationID)
+				c.pullMessageAndReGetHistoryMessages(context.Background(), sourceID, seqList, notStartTime, isReverse, count, sessionType, startTime, list, messageListCallback)
 			}
 		}
 	} else {
@@ -171,7 +171,8 @@ func (c *Conversation) getMaxAndMinHaveSeqList(messages []*model_struct.LocalCha
 // 1、保证单次拉取消息量低于sdk单次从服务器拉取量
 // 2、块中连续性检测
 // 3、块之间连续性检测
-func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, sourceID string, seqList []uint32, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog) {
+func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, sourceID string, seqList []uint32, notStartTime,
+	isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
 	existedSeqList, err := c.db.SuperGroupGetAlreadyExistSeqList(ctx, sourceID, seqList)
 	if err != nil {
 		// log.Error(operationID, "SuperGroupGetAlreadyExistSeqList err", err.Error(), sourceID, seqList)
@@ -195,7 +196,7 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, s
 	log.Debug(operationID, "read diffusion group pull message, req: ", pullMsgReq)
 	resp, err := c.SendReqWaitResp(ctx, &pullMsgReq, constant.WSPullMsgBySeqList, 2, 1, c.loginUserID)
 	if err != nil {
-		errHandle(newSeqList, list, err)
+		errHandle(newSeqList, list, err, messageListCallback)
 		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 1, 2, c.loginUserID)
 	} else {
 		var pullMsgResp server_api_params.PullMessageBySeqListResp
