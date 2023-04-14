@@ -2,7 +2,6 @@ package heartbeart
 
 import (
 	"context"
-	"errors"
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
@@ -73,33 +72,33 @@ func (u *Heartbeat) Run() {
 	reqTimeout := defaultTimeout
 	retryTimes := 0
 	heartbeatNum := 0
-	ctx := context.Background()
 	for {
 		reqTimeout = defaultTimeout
 		operationID := utils.OperationIDGenerator()
-		if constant.OnlyForTest == 1 {
-			time.Sleep(5 * time.Second)
-			var groupIDList []string
-			resp, err := u.WsForTest.SendReqWaitResp(ctx, &server_api_params.GetMaxAndMinSeqReq{UserID: u.LoginUserIDForTest, GroupIDList: groupIDList}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.LoginUserIDForTest)
-			if err != nil {
-				log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.LoginUserIDForTest)
-				if !errors.Is(err, constant.WsRecvConnSame) && !errors.Is(err, constant.WsRecvConnDiff) {
-					log.Error(operationID, "other err,  close conn", err.Error())
-					u.CloseConn(operationID)
-				}
-				continue
-			}
-
-			var wsSeqResp server_api_params.GetMaxAndMinSeqResp
-			err = proto.Unmarshal(resp.Data, &wsSeqResp)
-			if err != nil {
-				log.Error(operationID, "Unmarshal failed, close conn", err.Error())
-				u.CloseConn(operationID)
-				continue
-			}
-			log.Debug(operationID, "heartbeat req -> resp ")
-			continue
-		}
+		ctx := context.WithValue(context.Background(), "operationID", operationID)
+		//if constant.OnlyForTest == 1 {
+		//	time.Sleep(5 * time.Second)
+		//	var groupIDList []string
+		//	resp, err := u.WsForTest.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: u.LoginUserIDForTest, GroupIDList: groupIDList}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.LoginUserIDForTest, operationID)
+		//	if err != nil {
+		//		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.LoginUserIDForTest)
+		//		if !errors.Is(err, constant.WsRecvConnSame) && !errors.Is(err, constant.WsRecvConnDiff) {
+		//			log.Error(operationID, "other err,  close conn", err.Error())
+		//			u.CloseConn(operationID)
+		//		}
+		//		continue
+		//	}
+		//
+		//	var wsSeqResp server_api_params.GetMaxAndMinSeqResp
+		//	err = proto.Unmarshal(resp.Data, &wsSeqResp)
+		//	if err != nil {
+		//		log.Error(operationID, "Unmarshal failed, close conn", err.Error())
+		//		u.CloseConn(operationID)
+		//		continue
+		//	}
+		//	log.Debug(operationID, "heartbeat req -> resp ")
+		//	continue
+		//}
 
 		if heartbeatNum != 0 {
 			select {
@@ -107,7 +106,7 @@ func (u *Heartbeat) Run() {
 				if r.Cmd == constant.CmdLogout {
 					log.Warn(operationID, "recv logout cmd, close conn,  set logout state, Goexit...")
 					u.SetLoginStatus(constant.Logout)
-					u.CloseConn(operationID)
+					u.CloseConn(ctx)
 					log.Warn(operationID, "close heartbeat channel ", u.cmdCh)
 					runtime.Goexit()
 				}
@@ -154,7 +153,7 @@ func (u *Heartbeat) Run() {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.LoginUserID)
 			//if !errors.Is(err, constant.WsRecvConnSame) && !errors.Is(err, constant.WsRecvConnDiff) {
 			//	log.Error(operationID, "other err,  close conn", err.Error())
-			u.CloseConn(operationID)
+			u.CloseConn(ctx)
 			//}
 			continue
 		}
@@ -162,7 +161,7 @@ func (u *Heartbeat) Run() {
 		err = proto.Unmarshal(resp.Data, &wsSeqResp)
 		if err != nil {
 			log.Error(operationID, "Unmarshal failed, close conn", err.Error())
-			u.CloseConn(operationID)
+			u.CloseConn(ctx)
 			continue
 		}
 
@@ -170,9 +169,9 @@ func (u *Heartbeat) Run() {
 		for g, v := range wsSeqResp.GroupMaxAndMinSeq {
 			u.id2MinSeq[utils.GetGroupIDForMinSeq(g)] = v.MinSeq
 		}
-		if constant.OnlyForTest == 1 {
-			continue
-		}
+		//if constant.OnlyForTest == 1 {
+		//	continue
+		//}
 		//server_api_params.MaxAndMinSeq
 		log.Debug(operationID, "recv heartbeat resp,  seq on svr: ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)
 		for {
