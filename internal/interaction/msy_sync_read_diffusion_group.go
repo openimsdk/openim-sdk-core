@@ -1,6 +1,7 @@
 package interaction
 
 import (
+	"context"
 	"github.com/golang/protobuf/proto"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -297,7 +298,7 @@ func (m *ReadDiffusionGroupMsgSync) syncMsgFromServerSplit(needSyncSeqList []uin
 	for {
 		pullMsgReq.OperationID = operationID
 		log.Debug(operationID, "read diffusion group pull message, req: ", pullMsgReq)
-		resp, err := m.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 30, 2, m.loginUserID, operationID)
+		resp, err := m.SendReqWaitResp(context.Background(), &pullMsgReq, constant.WSPullMsgBySeqList, 30, 2, m.loginUserID)
 		if err != nil && m.LoginStatus() == constant.Logout {
 			log.Error(operationID, "SendReqWaitResp failed  Logout status ", err.Error(), m.LoginStatus())
 			log.Warn("", "m.LoginStatus() == constant.Logout, Goexit()")

@@ -179,7 +179,7 @@ func (w *Ws) reConnSleep(operationID string, sleep int32) (error, bool) {
 		log.Error(operationID, "ReConn failed ", err.Error(), "is need re connect ", isNeedReConn)
 		time.Sleep(time.Duration(sleep) * time.Second)
 	} else {
-		resp, err := w.SendReqWaitResp(&server_api_params.SetAppBackgroundStatusReq{UserID: w.loginUserID, IsBackground: w.IsBackground}, constant.WsSetBackgroundStatus, 5, 2, w.loginUserID, operationID)
+		resp, err := w.SendReqWaitResp(context.Background(), &server_api_params.SetAppBackgroundStatusReq{UserID: w.loginUserID, IsBackground: w.IsBackground}, constant.WsSetBackgroundStatus, 5, 2, w.loginUserID)
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsSetBackgroundStatus, 5, w.loginUserID, resp)
 		}
@@ -415,7 +415,7 @@ func (w *Ws) kickOnline(msg GeneralWsResp) {
 }
 
 func (w *Ws) SendSignalingReqWaitResp(ctx context.Context, req *sdkws.SignalReq) (*sdkws.SignalResp, error) {
-	resp, err := w.SendReqWaitResp(req, constant.WSSendSignalMsg, 10, 12, w.loginUserID, mcontext.GetOperationID(ctx))
+	resp, err := w.SendReqWaitResp(ctx, req, constant.WSSendSignalMsg, 10, 12, w.loginUserID)
 	if err != nil {
 		return nil, utils.Wrap(err, "")
 	}

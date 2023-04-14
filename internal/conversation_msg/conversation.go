@@ -519,7 +519,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 			if len(list) < req.Count {
 				var minSeq uint32
 				var maxSeq uint32
-				resp, err := c.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 2, c.loginUserID, "")
+				resp, err := c.SendReqWaitResp(ctx, &server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 2, c.loginUserID)
 				if err != nil {
 					//log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, 30, c.loginUserID)
 				} else {
@@ -1665,7 +1665,7 @@ func (c *Conversation) delMsgBySeqSplit(seqList []uint32) error {
 	req.UserID = c.loginUserID
 	operationID := req.OperationID
 
-	resp, err := c.Ws.SendReqWaitResp(&req, constant.WsDelMsg, 30, 5, c.loginUserID, req.OperationID)
+	resp, err := c.Ws.SendReqWaitResp(context.Background(), &req, constant.WsDelMsg, 30, 5, c.loginUserID)
 	if err != nil {
 		return utils.Wrap(err, "SendReqWaitResp failed")
 	}

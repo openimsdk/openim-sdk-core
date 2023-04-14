@@ -1,6 +1,7 @@
 package heartbeart
 
 import (
+	"context"
 	"errors"
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/interaction"
@@ -72,13 +73,14 @@ func (u *Heartbeat) Run() {
 	reqTimeout := defaultTimeout
 	retryTimes := 0
 	heartbeatNum := 0
+	ctx := context.Background()
 	for {
 		reqTimeout = defaultTimeout
 		operationID := utils.OperationIDGenerator()
 		if constant.OnlyForTest == 1 {
 			time.Sleep(5 * time.Second)
 			var groupIDList []string
-			resp, err := u.WsForTest.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: u.LoginUserIDForTest, GroupIDList: groupIDList}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.LoginUserIDForTest, operationID)
+			resp, err := u.WsForTest.SendReqWaitResp(ctx, &server_api_params.GetMaxAndMinSeqReq{UserID: u.LoginUserIDForTest, GroupIDList: groupIDList}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.LoginUserIDForTest)
 			if err != nil {
 				log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.LoginUserIDForTest)
 				if !errors.Is(err, constant.WsRecvConnSame) && !errors.Is(err, constant.WsRecvConnDiff) {
@@ -110,8 +112,8 @@ func (u *Heartbeat) Run() {
 					runtime.Goexit()
 				}
 				if r.Cmd == constant.CmdWakeUp {
-					u.full.SuperGroup.SyncJoinedGroupList(operationID)
-					u.full.Group().SyncJoinedGroupList(operationID)
+					u.full.SuperGroup.SyncJoinedGroupList(ctx)
+					u.full.Group().SyncJoinedGroupList(ctx)
 					log.Info(operationID, "recv wake up cmd, start heartbeat ", r.Cmd)
 					reqTimeout = wakeUpTimeout
 					break
@@ -137,17 +139,17 @@ func (u *Heartbeat) Run() {
 		var groupIDList []string
 		var err error
 		if heartbeatNum == 1 {
-			groupIDList, err = u.full.GetReadDiffusionGroupIDList(operationID)
+			groupIDList, err = u.full.GetReadDiffusionGroupIDList(ctx)
 			log.NewInfo(operationID, "full.GetReadDiffusionGroupIDList ", heartbeatNum)
 		} else {
-			groupIDList, err = u.GetReadDiffusionGroupIDList()
+			groupIDList, err = u.GetReadDiffusionGroupIDList(ctx)
 			log.NewInfo(operationID, "db.GetReadDiffusionGroupIDList ", heartbeatNum)
 		}
 		if err != nil {
 			log.Error(operationID, "GetReadDiffusionGroupIDList failed ", err.Error())
 		}
 		log.Debug(operationID, "get GetJoinedSuperGroupIDList ", groupIDList)
-		resp, err := u.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{UserID: u.LoginUserID, GroupIDList: groupIDList}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.LoginUserID, operationID)
+		resp, err := u.SendReqWaitResp(ctx, &server_api_params.GetMaxAndMinSeqReq{UserID: u.LoginUserID, GroupIDList: groupIDList}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.LoginUserID)
 		if err != nil {
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.LoginUserID)
 			//if !errors.Is(err, constant.WsRecvConnSame) && !errors.Is(err, constant.WsRecvConnDiff) {
