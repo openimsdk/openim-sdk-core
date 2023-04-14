@@ -144,13 +144,6 @@ type DataBase interface {
 	BatchInsertExceptionMsg(ctx context.Context, MessageList []*model_struct.LocalErrChatLog) error
 	BatchInsertExceptionMsgController(ctx context.Context, MessageList []*model_struct.LocalErrChatLog) error
 	GetSuperGroupAbnormalMsgSeq(ctx context.Context, groupID string) (uint32, error)
-	GetDepartmentMemberListByDepartmentID(ctx context.Context, departmentID string, args ...int) ([]*model_struct.LocalDepartmentMember, error)
-	GetAllDepartmentMemberList(ctx context.Context) ([]*model_struct.LocalDepartmentMember, error)
-	InsertDepartmentMember(ctx context.Context, departmentMember *model_struct.LocalDepartmentMember) error
-	BatchInsertDepartmentMember(ctx context.Context, departmentMemberList []*model_struct.LocalDepartmentMember) error
-	UpdateDepartmentMember(ctx context.Context, departmentMember *model_struct.LocalDepartmentMember) error
-	DeleteDepartmentMember(ctx context.Context, departmentID string, userID string) error
-	GetDepartmentMemberListByUserID(ctx context.Context, userID string) ([]*model_struct.LocalDepartmentMember, error)
 	BatchInsertTempCacheMessageList(ctx context.Context, MessageList []*model_struct.TempCacheLocalChatLog) error
 	InsertTempCacheMessage(ctx context.Context, Message *model_struct.TempCacheLocalChatLog) error
 	GetLoginUser(ctx context.Context, userID string) (*model_struct.LocalUser, error)
@@ -236,5 +229,4 @@ type DataBase interface {
 	DeleteAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*server_api_params.KeyValue) error
 	GetMultipleMessageReactionExtension(ctx context.Context, msgIDList []string) (result []*model_struct.LocalChatLogReactionExtensions, err error)
 	DeleteMessageReactionExtension(ctx context.Context, msgID string) error
-	GetDB(ctx context.Context) any
 }

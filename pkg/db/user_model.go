@@ -3,9 +3,8 @@
 
 package db
 
-import "context"
-
 import (
+	"context"
 	"errors"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
@@ -15,13 +14,13 @@ func (d *DataBase) GetLoginUser(ctx context.Context, userID string) (*model_stru
 	d.userMtx.RLock()
 	defer d.userMtx.RUnlock()
 	var user model_struct.LocalUser
-	return &user, utils.Wrap(d.conn.Where("user_id = ? ", userID).Take(&user).Error, "GetLoginUserInfo failed")
+	return &user, utils.Wrap(d.conn.WithContext(ctx).Where("user_id = ? ", userID).Take(&user).Error, "GetLoginUserInfo failed")
 }
 
 func (d *DataBase) UpdateLoginUser(ctx context.Context, user *model_struct.LocalUser) error {
 	d.userMtx.Lock()
 	defer d.userMtx.Unlock()
-	t := d.conn.Updates(user)
+	t := d.conn.WithContext(ctx).Updates(user)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
@@ -30,7 +29,7 @@ func (d *DataBase) UpdateLoginUser(ctx context.Context, user *model_struct.Local
 func (d *DataBase) UpdateLoginUserByMap(ctx context.Context, user *model_struct.LocalUser, args map[string]interface{}) error {
 	d.userMtx.Lock()
 	defer d.userMtx.Unlock()
-	t := d.conn.Model(&user).Updates(args)
+	t := d.conn.WithContext(ctx).Model(&user).Updates(args)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
@@ -39,5 +38,5 @@ func (d *DataBase) UpdateLoginUserByMap(ctx context.Context, user *model_struct.
 func (d *DataBase) InsertLoginUser(ctx context.Context, user *model_struct.LocalUser) error {
 	d.userMtx.Lock()
 	defer d.userMtx.Unlock()
-	return utils.Wrap(d.conn.Create(user).Error, "InsertLoginUser failed")
+	return utils.Wrap(d.conn.WithContext(ctx).Create(user).Error, "InsertLoginUser failed")
 }

@@ -3,9 +3,8 @@
 
 package db
 
-import "context"
-
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"open_im_sdk/pkg/db/model_struct"
@@ -18,19 +17,19 @@ func (d *DataBase) GetMessageReactionExtension(ctx context.Context, msgID string
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var l model_struct.LocalChatLogReactionExtensions
-	return &l, utils.Wrap(d.conn.Where("client_msg_id = ?",
+	return &l, utils.Wrap(d.conn.WithContext(ctx).Where("client_msg_id = ?",
 		msgID).Take(&l).Error, "GetMessageReactionExtension failed")
 }
 
 func (d *DataBase) InsertMessageReactionExtension(ctx context.Context, messageReactionExtension *model_struct.LocalChatLogReactionExtensions) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.Create(messageReactionExtension).Error, "InsertMessageReactionExtension failed")
+	return utils.Wrap(d.conn.WithContext(ctx).Create(messageReactionExtension).Error, "InsertMessageReactionExtension failed")
 }
 func (d *DataBase) UpdateMessageReactionExtension(ctx context.Context, c *model_struct.LocalChatLogReactionExtensions) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Updates(c)
+	t := d.conn.WithContext(ctx).Updates(c)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
@@ -40,12 +39,12 @@ func (d *DataBase) GetAndUpdateMessageReactionExtension(ctx context.Context, msg
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var temp model_struct.LocalChatLogReactionExtensions
-	err := d.conn.Where("client_msg_id = ?",
+	err := d.conn.WithContext(ctx).Where("client_msg_id = ?",
 		msgID).Take(&temp).Error
 	if err != nil {
 		temp.ClientMsgID = msgID
 		temp.LocalReactionExtensions = []byte(utils.StructToJsonString(m))
-		return d.conn.Create(&temp).Error
+		return d.conn.WithContext(ctx).Create(&temp).Error
 	} else {
 		oldKeyValue := make(map[string]*server_api_params.KeyValue)
 		err = json.Unmarshal(temp.LocalReactionExtensions, &oldKeyValue)
@@ -57,7 +56,7 @@ func (d *DataBase) GetAndUpdateMessageReactionExtension(ctx context.Context, msg
 			oldKeyValue[k] = newValue
 		}
 		temp.LocalReactionExtensions = []byte(utils.StructToJsonString(oldKeyValue))
-		t := d.conn.Updates(temp)
+		t := d.conn.WithContext(ctx).Updates(temp)
 		if t.RowsAffected == 0 {
 			return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 		}
@@ -68,14 +67,14 @@ func (d *DataBase) DeleteMessageReactionExtension(ctx context.Context, msgID str
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	temp := model_struct.LocalChatLogReactionExtensions{ClientMsgID: msgID}
-	return d.conn.Delete(&temp).Error
+	return d.conn.WithContext(ctx).Delete(&temp).Error
 
 }
 func (d *DataBase) DeleteAndUpdateMessageReactionExtension(ctx context.Context, msgID string, m map[string]*server_api_params.KeyValue) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var temp model_struct.LocalChatLogReactionExtensions
-	err := d.conn.Where("client_msg_id = ?",
+	err := d.conn.WithContext(ctx).Where("client_msg_id = ?",
 		msgID).Take(&temp).Error
 	if err != nil {
 		return err
@@ -88,7 +87,7 @@ func (d *DataBase) DeleteAndUpdateMessageReactionExtension(ctx context.Context, 
 			}
 		}
 		temp.LocalReactionExtensions = []byte(utils.StructToJsonString(oldKeyValue))
-		t := d.conn.Updates(temp)
+		t := d.conn.WithContext(ctx).Updates(temp)
 		if t.RowsAffected == 0 {
 			return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 		}
@@ -99,7 +98,7 @@ func (d *DataBase) GetMultipleMessageReactionExtension(ctx context.Context, msgI
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var messageList []model_struct.LocalChatLogReactionExtensions
-	err = utils.Wrap(d.conn.Where("client_msg_id IN ?", msgIDList).Find(&messageList).Error, "GetMultipleMessageReactionExtension failed")
+	err = utils.Wrap(d.conn.WithContext(ctx).Where("client_msg_id IN ?", msgIDList).Find(&messageList).Error, "GetMultipleMessageReactionExtension failed")
 	for _, v := range messageList {
 		v1 := v
 		result = append(result, &v1)

@@ -10,7 +10,6 @@ import (
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/group"
 	ws "open_im_sdk/internal/interaction"
-	"open_im_sdk/internal/organization"
 	"open_im_sdk/internal/signaling"
 	"open_im_sdk/internal/user"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
@@ -54,10 +53,8 @@ type Conversation struct {
 	group                *group.Group
 	user                 *user.User
 	signaling            *signaling.LiveSignaling
-	//advancedFunction     advanced_interface.AdvancedFunction
-	organization *organization.Organization
-	workMoments  *workMoments.WorkMoments
-	business     *business.Business
+	workMoments          *workMoments.WorkMoments
+	business             *business.Business
 	common2.ObjectStorage
 
 	cache          *cache.Cache
@@ -101,11 +98,11 @@ func NewConversation(ws *ws.Ws, db db_interface.DataBase, p *ws.PostApi,
 	ch chan common.Cmd2Value, loginUserID string, platformID int32, dataDir, encryptionKey string,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener,
-	msgListener open_im_sdk_callback.OnAdvancedMsgListener, organization *organization.Organization, signaling *signaling.LiveSignaling,
+	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling *signaling.LiveSignaling,
 	workMoments *workMoments.WorkMoments, business *business.Business, cache *cache.Cache, full *full.Full, id2MinSeq map[string]uint32, isExternalExtensions bool) *Conversation {
 	n := &Conversation{Ws: ws, db: db, p: p, recvCH: ch, loginUserID: loginUserID, platformID: platformID,
 		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage,
-		signaling: signaling, organization: organization, workMoments: workMoments,
+		signaling: signaling, workMoments: workMoments,
 		full: full, id2MinSeq: id2MinSeq, encryptionKey: encryptionKey, business: business, IsExternalExtensions: isExternalExtensions}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
