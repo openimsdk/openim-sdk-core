@@ -1,7 +1,7 @@
 package interaction
 
 import (
-	"github.com/golang/protobuf/proto"
+	"context"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/db_interface"
@@ -10,6 +10,8 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"runtime"
+
+	"github.com/golang/protobuf/proto"
 )
 
 type SelfMsgSync struct {
@@ -28,15 +30,15 @@ func NewSelfMsgSync(dataBase db_interface.DataBase, ws *Ws, loginUserID string, 
 	return p
 }
 
-//计算最大seq，初始化时调用一次
-func (m *SelfMsgSync) compareSeq(operationID string) {
-	n, err := m.GetNormalMsgSeq()
+// 计算最大seq，初始化时调用一次
+func (m *SelfMsgSync) compareSeq(ctx context.Context) {
+	n, err := m.GetNormalMsgSeq(ctx)
 	if err != nil {
-		log.Error(operationID, "GetNormalMsgSeq failed ", err.Error())
+		// log.Error(operationID, "GetNormalMsgSeq failed ", err.Error())
 	}
-	a, err := m.GetAbnormalMsgSeq()
+	a, err := m.GetAbnormalMsgSeq(ctx)
 	if err != nil {
-		log.Error(operationID, "GetAbnormalMsgSeq failed ", err.Error())
+		// log.Error(operationID, "GetAbnormalMsgSeq failed ", err.Error())
 	}
 	if n > a {
 		m.seqMaxSynchronized = n
@@ -44,10 +46,10 @@ func (m *SelfMsgSync) compareSeq(operationID string) {
 		m.seqMaxSynchronized = a
 	}
 	m.seqMaxNeedSync = m.seqMaxSynchronized
-	log.Info(operationID, "load seq, normal, abnormal, ", n, a, m.seqMaxNeedSync, m.seqMaxSynchronized)
+	// log.Info(operationID, "load seq, normal, abnormal, ", n, a, m.seqMaxNeedSync, m.seqMaxSynchronized)
 }
 
-//处理心跳最大seq
+// 处理心跳最大seq
 func (m *SelfMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 	var maxSeqOnSvr = cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).MaxSeqOnSvr
 	var minSeqOnSvr = cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).MinSeqOnSvr
@@ -69,7 +71,7 @@ func (m *SelfMsgSync) doMaxSeq(cmd common.Cmd2Value) {
 	m.syncMsg(operationID)
 }
 
-//暂未启用
+// 暂未启用
 func (m *SelfMsgSync) doPushBatchMsg(cmd common.Cmd2Value) {
 	msg := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).Msg
 	operationID := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).OperationID
@@ -131,7 +133,7 @@ func (m *SelfMsgSync) doPushBatchMsg(cmd common.Cmd2Value) {
 	m.syncMsg(operationID)
 }
 
-//处理消息推送，兼容单条和批量推送
+// 处理消息推送，兼容单条和批量推送
 func (m *SelfMsgSync) doPushMsg(cmd common.Cmd2Value) {
 	msg := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).Msg
 	operationID := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).OperationID
@@ -144,7 +146,7 @@ func (m *SelfMsgSync) doPushMsg(cmd common.Cmd2Value) {
 	}
 }
 
-//处理单条消息推送
+// 处理单条消息推送
 func (m *SelfMsgSync) doPushSingleMsg(cmd common.Cmd2Value) {
 	msg := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).Msg
 	operationID := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).OperationID
@@ -167,7 +169,7 @@ func (m *SelfMsgSync) doPushSingleMsg(cmd common.Cmd2Value) {
 	m.syncMsg(operationID)
 }
 
-//从服务端同步消息，通过seqMaxSynchronized  seqMaxNeedSync 来同步中间的seq，同步完设置这两个值
+// 从服务端同步消息，通过seqMaxSynchronized  seqMaxNeedSync 来同步中间的seq，同步完设置这两个值
 func (m *SelfMsgSync) syncMsg(operationID string) {
 	if m.seqMaxNeedSync > m.seqMaxSynchronized {
 		log.Info(operationID, "do syncMsgFromServer ", m.seqMaxSynchronized+1, m.seqMaxNeedSync)
@@ -178,7 +180,7 @@ func (m *SelfMsgSync) syncMsg(operationID string) {
 	}
 }
 
-//从本地缓存+服务端获取消息，内部对seq列表做了拆分
+// 从本地缓存+服务端获取消息，内部对seq列表做了拆分
 func (m *SelfMsgSync) syncMsgFromServer(beginSeq, endSeq uint32, operationID string) {
 	log.Debug(operationID, utils.GetSelfFuncName(), " args ", beginSeq, endSeq)
 	if beginSeq > endSeq {
@@ -196,7 +198,7 @@ func (m *SelfMsgSync) syncMsgFromServer(beginSeq, endSeq uint32, operationID str
 	m.syncMsgFromServerSplit(needSyncSeqList[SPLIT*(len(needSyncSeqList)/SPLIT):], operationID)
 }
 
-//先从本地缓存读取消息，如果不存在，再从服务端读取， 上层把seq列表拆分
+// 先从本地缓存读取消息，如果不存在，再从服务端读取， 上层把seq列表拆分
 func (m *SelfMsgSync) syncMsgFromCache2ServerSplit(needSyncSeqList []uint32, operationID string) {
 	if len(needSyncSeqList) > constant.SplitPullMsgNum {
 		log.Error(operationID, "seq list too large ", len(needSyncSeqList))
@@ -252,7 +254,7 @@ func (m *SelfMsgSync) syncMsgFromServerSplit(needSyncSeqList []uint32, operation
 	m.syncMsgFromCache2ServerSplit(needSyncSeqList, operationID)
 }
 
-//触发新消息
+// 触发新消息
 func (m *SelfMsgSync) triggerCmdNewMsgCome(msgList []*server_api_params.MsgData, operationID string) {
 	for {
 		err := common.TriggerCmdNewMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: msgList, OperationID: operationID}, m.conversationCh)

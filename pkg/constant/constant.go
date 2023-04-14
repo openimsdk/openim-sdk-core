@@ -109,7 +109,6 @@ const (
 
 	ConversationPrivateChatNotification = 1701
 	ConversationUnreadNotification      = 1702
-	OrganizationChangedNotification     = 1801
 
 	WorkMomentNotificationBegin = 1900
 	WorkMomentNotification      = 1901
@@ -184,13 +183,15 @@ const (
 	FriendRelationship = 1
 )
 
-//const (
+// const (
+//
 //	ErrCodeInitLogin    = 1001
 //	ErrCodeFriend       = 2001
 //	ErrCodeConversation = 3001
 //	ErrCodeUserInfo     = 4001
 //	ErrCodeGroup        = 5001
-//)
+//
+// )
 const (
 	NormalGroup                       = 0
 	SuperGroup                        = 1
@@ -256,7 +257,7 @@ const (
 const ZoomScale = "200"
 const MaxTotalMsgLen = 51200
 
-//const MaxTotalMsgLen = 20480
+// const MaxTotalMsgLen = 20480
 const (
 	FriendAcceptTip  = "You have successfully become friends, so start chatting"
 	TransferGroupTip = "The owner of the group is transferred!"
@@ -371,7 +372,5 @@ const (
 
 const SplitGetGroupMemberNum = 1000
 const UseHashGroupMemberNum = 1000
-
-var OnlyForTest = 0
 
 var KEY = "openIMtest123456789"

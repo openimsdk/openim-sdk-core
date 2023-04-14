@@ -3,9 +3,8 @@
 
 package db
 
-import "context"
-
 import (
+	"context"
 	"errors"
 	"gorm.io/gorm"
 	"open_im_sdk/pkg/db/model_struct"
@@ -20,14 +19,14 @@ func (d *DataBase) InsertWorkMomentsNotification(ctx context.Context, jsonDetail
 		JsonDetail: jsonDetail,
 		CreateTime: time.Now().Unix(),
 	}
-	return utils.Wrap(d.conn.Create(workMomentsNotification).Error, "")
+	return utils.Wrap(d.conn.WithContext(ctx).Create(workMomentsNotification).Error, "")
 }
 
 func (d *DataBase) GetWorkMomentsNotification(ctx context.Context, offset, count int) (WorkMomentsNotifications []*model_struct.LocalWorkMomentsNotification, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	WorkMomentsNotifications = []*model_struct.LocalWorkMomentsNotification{}
-	err = utils.Wrap(d.conn.Table("local_work_moments_notification").Order("create_time DESC").Offset(offset).Limit(count).Find(&WorkMomentsNotifications).Error, "")
+	err = utils.Wrap(d.conn.WithContext(ctx).Table("local_work_moments_notification").Order("create_time DESC").Offset(offset).Limit(count).Find(&WorkMomentsNotifications).Error, "")
 	return WorkMomentsNotifications, err
 }
 
@@ -35,17 +34,17 @@ func (d *DataBase) GetWorkMomentsNotificationLimit(ctx context.Context, pageNumb
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	WorkMomentsNotifications = []*model_struct.LocalWorkMomentsNotification{}
-	err = utils.Wrap(d.conn.Table("local_work_moments_notification").Select("json_detail").Find(WorkMomentsNotifications).Error, "")
+	err = utils.Wrap(d.conn.WithContext(ctx).Table("local_work_moments_notification").Select("json_detail").Find(WorkMomentsNotifications).Error, "")
 	return WorkMomentsNotifications, err
 }
 
 func (d *DataBase) InitWorkMomentsNotificationUnreadCount(ctx context.Context) error {
 	var n int64
-	err := utils.Wrap(d.conn.Model(&model_struct.LocalWorkMomentsNotificationUnreadCount{}).Count(&n).Error, "")
+	err := utils.Wrap(d.conn.WithContext(ctx).Model(&model_struct.LocalWorkMomentsNotificationUnreadCount{}).Count(&n).Error, "")
 	if err == nil {
 		if n == 0 {
 			c := model_struct.LocalWorkMomentsNotificationUnreadCount{UnreadCount: 0}
-			return utils.Wrap(d.conn.Model(&model_struct.LocalWorkMomentsNotificationUnreadCount{}).Create(c).Error, "IncrConversationUnreadCount failed")
+			return utils.Wrap(d.conn.WithContext(ctx).Model(&model_struct.LocalWorkMomentsNotificationUnreadCount{}).Create(c).Error, "IncrConversationUnreadCount failed")
 		}
 	}
 	return err
@@ -55,7 +54,7 @@ func (d *DataBase) IncrWorkMomentsNotificationUnreadCount(ctx context.Context) e
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	c := model_struct.LocalWorkMomentsNotificationUnreadCount{}
-	t := d.conn.Model(&c).Where("1=1").Update("unread_count", gorm.Expr("unread_count+?", 1))
+	t := d.conn.WithContext(ctx).Model(&c).Where("1=1").Update("unread_count", gorm.Expr("unread_count+?", 1))
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
@@ -65,19 +64,19 @@ func (d *DataBase) IncrWorkMomentsNotificationUnreadCount(ctx context.Context) e
 func (d *DataBase) MarkAllWorkMomentsNotificationAsRead(ctx context.Context) (err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.Model(&model_struct.LocalWorkMomentsNotificationUnreadCount{}).Where("1=1").Updates(map[string]interface{}{"unread_count": 0}).Error, "")
+	return utils.Wrap(d.conn.WithContext(ctx).Model(&model_struct.LocalWorkMomentsNotificationUnreadCount{}).Where("1=1").Updates(map[string]interface{}{"unread_count": 0}).Error, "")
 }
 
 func (d *DataBase) GetWorkMomentsUnReadCount(ctx context.Context) (workMomentsNotificationUnReadCount model_struct.LocalWorkMomentsNotificationUnreadCount, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	workMomentsNotificationUnReadCount = model_struct.LocalWorkMomentsNotificationUnreadCount{}
-	err = utils.Wrap(d.conn.Model(&model_struct.LocalWorkMomentsNotificationUnreadCount{}).First(&workMomentsNotificationUnReadCount).Error, "")
+	err = utils.Wrap(d.conn.WithContext(ctx).Model(&model_struct.LocalWorkMomentsNotificationUnreadCount{}).First(&workMomentsNotificationUnReadCount).Error, "")
 	return workMomentsNotificationUnReadCount, err
 }
 
 func (d *DataBase) ClearWorkMomentsNotification(ctx context.Context) (err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.Table("local_work_moments_notification").Where("1=1").Delete(&model_struct.LocalWorkMomentsNotification{}).Error, "")
+	return utils.Wrap(d.conn.WithContext(ctx).Table("local_work_moments_notification").Where("1=1").Delete(&model_struct.LocalWorkMomentsNotification{}).Error, "")
 }

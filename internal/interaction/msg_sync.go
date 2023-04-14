@@ -8,6 +8,8 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"runtime"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 )
 
 type SeqPair struct {
@@ -29,7 +31,8 @@ type MsgSync struct {
 
 func (m *MsgSync) compareSeq() {
 	operationID := utils.OperationIDGenerator()
-	m.selfMsgSync.compareSeq(operationID)
+	ctx := mcontext.NewCtx(operationID)
+	m.selfMsgSync.compareSeq(ctx)
 	m.readDiffusionGroupMsgSync.compareSeq(operationID)
 }
 

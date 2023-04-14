@@ -91,8 +91,8 @@ func (u *Full) GetGroupInfoFromLocal2Svr(ctx context.Context, groupID string, se
 	}
 }
 func (u *Full) GetReadDiffusionGroupIDList(ctx context.Context) ([]string, error) {
-	g1, err1 := u.group.GetJoinedDiffusionGroupIDListFromSvr(operationID)
-	g2, err2 := u.SuperGroup.GetJoinedGroupIDListFromSvr(operationID)
+	g1, err1 := u.group.GetJoinedDiffusionGroupIDListFromSvr(ctx)
+	g2, err2 := u.SuperGroup.GetJoinedGroupIDListFromSvr(ctx)
 	var groupIDList []string
 	if err1 == nil {
 		groupIDList = append(groupIDList, g1...)

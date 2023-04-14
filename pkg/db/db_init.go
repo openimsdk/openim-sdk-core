@@ -3,23 +3,23 @@
 
 package db
 
-import "context"
-
 import (
+	"context"
 	"errors"
 	"fmt"
-	//"github.com/glebarez/sqlite"
-	"gorm.io/driver/sqlite"
-
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"sync"
 	"time"
+
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
+
+//"github.com/glebarez/sqlite"
 
 var UserDBMap map[string]*DataBase
 
@@ -41,14 +41,6 @@ type DataBase struct {
 	superGroupMtx sync.RWMutex
 }
 
-func (d *DataBase) GetDepartmentList(ctx context.Context, departmentList *[]*model_struct.LocalDepartment, departmentID string) error {
-	panic("implement me")
-}
-
-func (d *DataBase) GetParentDepartment(ctx context.Context, departmentID string) (model_struct.LocalDepartment, error) {
-	panic("implement me")
-}
-
 func (d *DataBase) InitSuperLocalErrChatLog(ctx context.Context, groupID string) {
 	panic("implement me")
 }
@@ -67,7 +59,7 @@ func (d *DataBase) InitDB(ctx context.Context, userID string, dataDir string) er
 
 func (d *DataBase) Close(ctx context.Context) error {
 	UserDBLock.Lock()
-	dbConn, err := d.conn.DB()
+	dbConn, err := d.conn.WithContext(ctx).DB()
 	if err != nil {
 		log.Error("", "get db conn failed ", err.Error())
 	} else {
@@ -86,14 +78,14 @@ func (d *DataBase) Close(ctx context.Context) error {
 	return nil
 }
 
-func NewDataBase(loginUserID string, dbDir string, operationID string) (*DataBase, error) {
+func NewDataBase(ctx context.Context, loginUserID string, dbDir string, operationID string) (*DataBase, error) {
 	UserDBLock.Lock()
 	defer UserDBLock.Unlock()
 
 	dataBase, ok := UserDBMap[loginUserID]
 	if !ok {
 		dataBase = &DataBase{loginUserID: loginUserID, dbDir: dbDir}
-		err := dataBase.initDB()
+		err := dataBase.initDB(ctx)
 		if err != nil {
 			return dataBase, utils.Wrap(err, "initDB failed "+dbDir)
 		}
@@ -102,31 +94,31 @@ func NewDataBase(loginUserID string, dbDir string, operationID string) (*DataBas
 	} else {
 		log.Info(operationID, "db in map", loginUserID)
 	}
-	dataBase.setChatLogFailedStatus()
+	dataBase.setChatLogFailedStatus(ctx)
 	return dataBase, nil
 }
 
 func (d *DataBase) setChatLogFailedStatus(ctx context.Context) {
-	msgList, err := d.GetSendingMessageList()
+	msgList, err := d.GetSendingMessageList(ctx)
 	if err != nil {
 		log.Error("", "GetSendingMessageList failed ", err.Error())
 		return
 	}
 	for _, v := range msgList {
 		v.Status = constant.MsgStatusSendFailed
-		err := d.UpdateMessage(v)
+		err := d.UpdateMessage(ctx, v)
 		if err != nil {
 			log.Error("", "UpdateMessage failed ", err.Error(), v)
 			continue
 		}
 	}
-	groupIDList, err := d.GetReadDiffusionGroupIDList()
+	groupIDList, err := d.GetReadDiffusionGroupIDList(ctx)
 	if err != nil {
 		log.Error("", "GetReadDiffusionGroupIDList failed ", err.Error())
 		return
 	}
 	for _, v := range groupIDList {
-		msgList, err := d.SuperGroupGetSendingMessageList(v)
+		msgList, err := d.SuperGroupGetSendingMessageList(ctx, v)
 		if err != nil {
 			log.Error("", "GetSendingMessageList failed ", err.Error())
 			return
@@ -134,7 +126,7 @@ func (d *DataBase) setChatLogFailedStatus(ctx context.Context) {
 		if len(msgList) > 0 {
 			for _, v := range msgList {
 				v.Status = constant.MsgStatusSendFailed
-				err := d.SuperGroupUpdateMessage(v)
+				err := d.SuperGroupUpdateMessage(ctx, v)
 				if err != nil {
 					log.Error("", "UpdateMessage failed ", err.Error(), v)
 					continue
@@ -188,26 +180,24 @@ func (d *DataBase) initDB(ctx context.Context) error {
 		&model_struct.LocalConversation{},
 		&model_struct.LocalChatLog{},
 		&model_struct.LocalAdminGroupRequest{},
-		&model_struct.LocalDepartment{},
-		&model_struct.LocalDepartmentMember{},
 		&model_struct.LocalWorkMomentsNotification{},
 		&model_struct.LocalWorkMomentsNotificationUnreadCount{},
 		&model_struct.TempCacheLocalChatLog{},
 		&model_struct.LocalChatLogReactionExtensions{},
 	)
 	db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup)
-	groupIDList, err := d.GetJoinedSuperGroupIDList()
+	groupIDList, err := d.GetJoinedSuperGroupIDList(ctx)
 	if err != nil {
 		log.Error("auto migrate super db err:", err.Error())
 	}
-	wkGroupIDList, err2 := d.GetJoinedWorkingGroupIDList()
+	wkGroupIDList, err2 := d.GetJoinedWorkingGroupIDList(ctx)
 	if err2 != nil {
 		log.Error("auto migrate working group  db err:", err2)
 
 	}
 	groupIDList = append(groupIDList, wkGroupIDList...)
 	for _, v := range groupIDList {
-		d.conn.Table(utils.GetSuperGroupTableName(v)).AutoMigrate(&model_struct.LocalChatLog{})
+		d.conn.WithContext(ctx).Table(utils.GetSuperGroupTableName(v)).AutoMigrate(&model_struct.LocalChatLog{})
 		var count int64
 		_ = db.Raw(fmt.Sprintf("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'index' AND name ='%s' AND tbl_name = '%s'",
 			"index_seq_"+v, utils.GetSuperGroupTableName(v))).Row().Scan(&count)
@@ -269,12 +259,6 @@ func (d *DataBase) initDB(ctx context.Context) error {
 	if !db.Migrator().HasTable(&model_struct.LocalAdminGroupRequest{}) {
 		db.Migrator().CreateTable(&model_struct.LocalAdminGroupRequest{})
 	}
-	if !db.Migrator().HasTable(&model_struct.LocalDepartment{}) {
-		db.Migrator().CreateTable(&model_struct.LocalDepartment{})
-	}
-	if !db.Migrator().HasTable(&model_struct.LocalDepartmentMember{}) {
-		db.Migrator().CreateTable(&model_struct.LocalDepartmentMember{})
-	}
 	if !db.Migrator().HasTable(&model_struct.LocalWorkMomentsNotification{}) {
 		db.Migrator().CreateTable(&model_struct.LocalWorkMomentsNotification{})
 	}
@@ -285,7 +269,7 @@ func (d *DataBase) initDB(ctx context.Context) error {
 		db.Migrator().CreateTable(&model_struct.LocalChatLogReactionExtensions{})
 	}
 	log.NewInfo("init db", "startInitWorkMomentsNotificationUnreadCount ")
-	if err := d.InitWorkMomentsNotificationUnreadCount(); err != nil {
+	if err := d.InitWorkMomentsNotificationUnreadCount(ctx); err != nil {
 		log.NewError("init InitWorkMomentsNotificationUnreadCount:", utils.GetSelfFuncName(), err.Error())
 	}
 	return nil

@@ -2,11 +2,12 @@ package cache
 
 import (
 	"context"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/pkg/db/model_struct"
 	"sync"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 )
 
 type UserInfo struct {
@@ -62,6 +63,7 @@ func (c *Cache) GetConversation(conversationID string) model_struct.LocalConvers
 	}
 	return result
 }
+
 func (c *Cache) GetUserNameAndFaceURL(ctx context.Context, userID string) (faceURL, name string, err error) {
 	//find in cache
 	if value, ok := c.userMap.Load(userID); ok {

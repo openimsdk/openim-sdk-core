@@ -12,7 +12,6 @@ import (
 	"open_im_sdk/internal/heartbeart"
 	ws "open_im_sdk/internal/interaction"
 	comm2 "open_im_sdk/internal/obj_storage"
-	"open_im_sdk/internal/organization"
 	"open_im_sdk/internal/signaling"
 	"open_im_sdk/internal/super_group"
 	"open_im_sdk/internal/user"
@@ -28,10 +27,12 @@ import (
 	"open_im_sdk/sdk_struct"
 	"sync"
 	"time"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 )
 
 type LoginMgr struct {
-	organization *organization.Organization
 	friend       *friend.Friend
 	group        *group.Group
 	superGroup   *super_group.SuperGroup
@@ -82,10 +83,6 @@ type LoginMgr struct {
 
 func (u *LoginMgr) Push() *comm2.Push {
 	return u.push
-}
-
-func (u *LoginMgr) Organization() *organization.Organization {
-	return u.organization
 }
 
 func (u *LoginMgr) Heartbeat() *heartbeart.Heartbeat {
@@ -171,14 +168,6 @@ func (u *LoginMgr) SetGroupListener(groupListener open_im_sdk_callback.OnGroupLi
 	}
 }
 
-func (u *LoginMgr) SetOrganizationListener(listener open_im_sdk_callback.OnOrganizationListener) {
-	if u.organization != nil {
-		u.organization.SetListener(listener)
-	} else {
-		u.organizationListener = listener
-	}
-}
-
 func (u *LoginMgr) SetUserListener(userListener open_im_sdk_callback.OnUserListener) {
 	//if u.signaling != nil {
 	//		u.signaling.SetListener(listener)
@@ -242,27 +231,15 @@ func (u *LoginMgr) wakeUp(cb open_im_sdk_callback.Base, operationID string) {
 	cb.OnSuccess("")
 }
 
-func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, operationID string) {
-	log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)
+func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
+	// log.Info(operationID, "login start... ", userID, token, sdk_struct.SvrConf)
 	t1 := time.Now()
 	u.token = token
 	u.loginUserID = userID
 	var err error
-	if constant.OnlyForTest == 1 {
-		wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID, u.imConfig.IsCompression, u.conversationCh)
-		wsRespAsyn := ws.NewWsRespAsyn()
-		u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh, u.conversationCh)
-		u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
-		u.heartbeat.WsForTest = u.ws
-		u.heartbeat.LoginUserIDForTest = u.loginUserID
-		cb.OnSuccess("")
-		return
-	}
 	u.db, err = db.NewDataBase(userID, sdk_struct.SvrConf.DataDir, operationID)
 	if err != nil {
-		cb.OnError(constant.ErrDB.ErrCode, err.Error())
-		log.Error(operationID, "NewDataBase failed ", err.Error())
-		return
+		return errs.ErrDatabase.Wrap(err.Error())
 	}
 
 	log.Info(operationID, "NewDataBase ok ", userID, sdk_struct.SvrConf.DataDir, "login cost time: ", time.Since(t1))
@@ -278,7 +255,7 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.id2MinSeq = make(map[string]uint32, 100)
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
 	u.postApi = p
-	u.user = user.NewUser(u.db, p, u.loginUserID, u.conversationCh)
+	u.user = user.NewUser(u.db, u.loginUserID, u.conversationCh)
 	u.user.SetListener(u.userListener)
 
 	u.friend = friend.NewFriend(u.loginUserID, u.db, u.user, p, u.conversationCh)
@@ -287,7 +264,6 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	u.group = group.NewGroup(u.loginUserID, u.db, p, u.joinedSuperGroupCh, u.heartbeatCmdCh, u.conversationCh)
 	u.group.SetGroupListener(u.groupListener)
 	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db, p, u.joinedSuperGroupCh, u.heartbeatCmdCh)
-	u.organization = organization.NewOrganization(u.loginUserID, u.db, p)
 	u.organization.SetListener(u.organizationListener)
 	u.cache = cache.NewCache(u.user, u.friend)
 	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache, u.db, u.superGroup)
@@ -336,14 +312,13 @@ func (u *LoginMgr) login(userID, token string, cb open_im_sdk_callback.Base, ope
 	}
 	u.conversation = conv.NewConversation(u.ws, u.db, u.postApi, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir, u.imConfig.EncryptionKey,
-		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener,
-		u.organization, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq, u.imConfig.IsExternalExtensions)
+		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq, u.imConfig.IsExternalExtensions)
 	if u.batchMsgListener != nil {
 		u.conversation.SetBatchMsgListener(u.batchMsgListener)
 		log.Info(operationID, "SetBatchMsgListener ", u.batchMsgListener)
 	}
 	log.Debug(operationID, "SyncConversations begin ")
-	u.conversation.SyncConversations(operationID, time.Second*2)
+	u.conversation.SyncConversations(ctx, time.Second*2)
 	go u.conversation.SyncConversationUnreadCount(operationID)
 	go common.DoListener(u.conversation)
 	log.Debug(operationID, "SyncConversations end ")
@@ -364,26 +339,26 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_call
 	return true
 }
 
-func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string) {
-	log.Info(operationID, "TriggerCmdLogout ws...")
+func (u *LoginMgr) logout(ctx context.Context) error {
+	// log.Info(operationID, "TriggerCmdLogout ws...")
 
 	if u.friend == nil || u.conversation == nil || u.user == nil || u.full == nil ||
 		u.db == nil || u.ws == nil || u.msgSync == nil || u.heartbeat == nil {
-		log.Info(operationID, "nil, no TriggerCmdLogout ", *u)
-		return
+		// log.Info(operationID, "nil, no TriggerCmdLogout ", *u)
+		return nil
 	}
-
+	operationID := mcontext.GetOperationID(ctx)
 	timeout := 2
 	retryTimes := 0
-	log.Info(operationID, "send to svr logout ...", u.loginUserID)
-	resp, err := u.ws.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID, operationID)
+	// log.Info(operationID, "send to svr logout ...", u.loginUserID)
+	_, err := u.ws.SendReqWaitResp(&server_api_params.GetMaxAndMinSeqReq{}, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID, operationID)
 	if err != nil {
-		log.Warn(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
+		// log.Warn(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
 		if !u.ws.IsInterruptReconnection() {
-			callback.OnError(100, err.Error())
-			return
+			// callback.OnError(100, err.Error())
+			return err
 		} else {
-			log.Warn(operationID, "SendReqWaitResp failed, but interrupt reconnection ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
+			// log.Warn(operationID, "SendReqWaitResp failed, but interrupt reconnection ", err.Error(), constant.WsLogoutMsg, timeout, u.loginUserID, resp)
 		}
 	}
 
@@ -413,13 +388,9 @@ func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string
 	}
 
 	log.Info(operationID, "close db ")
-	u.db.Close()
-
-	if callback != nil {
-		callback.OnSuccess("")
-	}
+	u.db.Close(ctx)
 	u.justOnceFlag = false
-
+	return nil
 	//go func(mgr *LoginMgr) {
 	//	time.Sleep(5 * time.Second)
 	//	if mgr == nil {
@@ -457,7 +428,7 @@ func (u *LoginMgr) GetLoginStatus() int32 {
 
 func (u *LoginMgr) forcedSynchronization() {
 	operationID := utils.OperationIDGenerator()
-	ctx := context.Background()
+	ctx := mcontext.NewCtx(operationID)
 	log.Info(operationID, "sync all info begin")
 	var wg sync.WaitGroup
 	wg.Add(10)
@@ -520,7 +491,6 @@ func (u *LoginMgr) forcedSynchronization() {
 	u.friend.SetLoginTime(u.loginTime)
 	u.group.SetLoginTime(u.loginTime)
 	u.superGroup.SetLoginTime(u.loginTime)
-	u.organization.SetLoginTime(u.loginTime)
 	log.Info(operationID, "login init sync finished")
 }
 
