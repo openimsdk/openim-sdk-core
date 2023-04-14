@@ -463,9 +463,6 @@ func InOutDoTest(uid, tk, ws, api string) {
 	var signalingListener testSignalingListener
 	open_im_sdk.SetSignalingListener(&signalingListener)
 
-	var organizationListener testOrganizationListener
-	open_im_sdk.SetOrganizationListener(organizationListener)
-
 	var workMomentsListener testWorkMomentsListener
 	open_im_sdk.SetWorkMomentsListener(workMomentsListener)
 

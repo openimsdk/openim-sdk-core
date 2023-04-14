@@ -1,9 +1,8 @@
 package signaling
 
 import (
+	"context"
 	"errors"
-	"github.com/golang/protobuf/proto"
-	"github.com/jinzhu/copier"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -14,6 +13,10 @@ import (
 	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"strings"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/golang/protobuf/proto"
+	"github.com/jinzhu/copier"
 )
 
 type LiveSignaling struct {
@@ -35,26 +38,34 @@ func NewLiveSignaling(ws *ws.Ws, loginUserID string, platformID int32, db db_int
 	return &LiveSignaling{Ws: ws, loginUserID: loginUserID, platformID: platformID, DataBase: db}
 }
 
-func (s *LiveSignaling) waitPush(req *api.SignalReq, busyLineUserList []string, operationID string) {
-	var invt *api.InvitationInfo
+func (s *LiveSignaling) setDefaultReq(req *api.InvitationInfo) {
+	if req.RoomID == "" {
+		req.RoomID = utils.OperationIDGenerator()
+	}
+	if req.Timeout == 0 {
+		req.Timeout = 60 * 60
+	}
+}
+
+func (s *LiveSignaling) waitPush(ctx context.Context, req *sdkws.SignalReq, busyLineUserList []string) {
+	var invt *sdkws.InvitationInfo
 	switch payload := req.Payload.(type) {
-	case *api.SignalReq_Invite:
+	case *sdkws.SignalReq_Invite:
 		invt = payload.Invite.Invitation
-	case *api.SignalReq_InviteInGroup:
+	case *sdkws.SignalReq_InviteInGroup:
 		invt = payload.InviteInGroup.Invitation
 	}
-
 	var listenerList []open_im_sdk_callback.OnSignalingListener
 	if s.listener != nil {
 		listenerList = append(listenerList, s.listener)
-		log.Info(operationID, "listenerList ", listenerList, "listener ", s.listener)
+		// log.Info(operationID, "listenerList ", listenerList, "listener ", s.listener)
 	}
 	if s.listenerForService != nil {
 		listenerList = append(listenerList, s.listenerForService)
-		log.Info(operationID, "listenerList ", listenerList, "listenerForService ", s.listenerForService)
+		// log.Info(operationID, "listenerList ", listenerList, "listenerForService ", s.listenerForService)
 	}
 	if len(listenerList) == 0 {
-		log.Error(operationID, "len (listenerList) == 0 ")
+		// log.Error(operationID, "len (listenerList) == 0 ")
 		return
 	}
 	var inviteeUserIDList []string
@@ -65,109 +76,98 @@ func (s *LiveSignaling) waitPush(req *api.SignalReq, busyLineUserList []string, 
 	}
 	for _, v := range inviteeUserIDList {
 		go func(invitee string) {
-			push, err := s.SignalingWaitPush(invt.InviterUserID, invitee, invt.RoomID, invt.Timeout, operationID)
+			push, err := s.SignalingWaitPush(ctx, invt.InviterUserID, invitee, invt.RoomID, invt.Timeout)
 			if err != nil {
 				if strings.Contains(err.Error(), "timeout") {
-					log.Error(operationID, "wait push timeout ", err.Error(), invt.InviterUserID, v, invt.RoomID, invt.Timeout)
+					// log.Error(operationID, "wait push timeout ", err.Error(), invt.InviterUserID, v, invt.RoomID, invt.Timeout)
 					switch payload := req.Payload.(type) {
-					case *api.SignalReq_Invite:
+					case *sdkws.SignalReq_Invite:
 						if !s.isCanceled {
 							for _, listener := range listenerList {
 								listener.OnInvitationTimeout(utils.StructToJsonString(payload.Invite))
-								log.Info(operationID, "OnInvitationTimeout ", utils.StructToJsonString(payload.Invite), listener)
+								// log.Info(operationID, "OnInvitationTimeout ", utils.StructToJsonString(payload.Invite), listener)
 							}
 						}
-					case *api.SignalReq_InviteInGroup:
+					case *sdkws.SignalReq_InviteInGroup:
 						if !s.isCanceled {
 							for _, listener := range listenerList {
 								listener.OnInvitationTimeout(utils.StructToJsonString(payload.InviteInGroup))
-								log.Info(operationID, "OnInvitationTimeout ", utils.StructToJsonString(payload.InviteInGroup), listener)
+								// log.Info(operationID, "OnInvitationTimeout ", utils.StructToJsonString(payload.InviteInGroup), listener)
 							}
 						}
 					}
 
 				} else {
-					log.Error(operationID, "other failed ", err.Error(), invt.InviterUserID, v, invt.RoomID, invt.Timeout)
+					// log.Error(operationID, "other failed ", err.Error(), invt.InviterUserID, v, invt.RoomID, invt.Timeout)
 				}
 				return
 			}
-			log.Info(operationID, "SignalingWaitPush ", push.String(), invt.InviterUserID, v, invt.RoomID, invt.Timeout)
-			s.doSignalPush(push, operationID)
+			// log.Info(operationID, "SignalingWaitPush ", push.String(), invt.InviterUserID, v, invt.RoomID, invt.Timeout)
+			s.doSignalPush(ctx, push)
 		}(v)
 	}
 }
-func (s *LiveSignaling) doSignalPush(req *api.SignalReq, operationID string) {
+func (s *LiveSignaling) doSignalPush(ctx context.Context, req *api.SignalReq) {
 	var listenerList []open_im_sdk_callback.OnSignalingListener
 	if s.listener != nil {
 		listenerList = append(listenerList, s.listener)
-		log.Info(operationID, "listenerList ", listenerList, "listener ", s.listener)
+		// log.Info(operationID, "listenerList ", listenerList, "listener ", s.listener)
 	}
 	if s.listenerForService != nil {
 		listenerList = append(listenerList, s.listenerForService)
-		log.Info(operationID, "listenerList ", listenerList, "listenerForService ", s.listenerForService)
+		// log.Info(operationID, "listenerList ", listenerList, "listenerForService ", s.listenerForService)
 	}
 	if len(listenerList) == 0 {
-		log.Error(operationID, "len (listenerList) == 0 ")
+		// log.Error(operationID, "len (listenerList) == 0 ")
 		return
 	}
 	switch payload := req.Payload.(type) {
-	//case *api.SignalReq_Invite:
-	//	log.Info(operationID, "recv signal push ", payload.Invite.String())
-	//	s.listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.Invite))
 	case *api.SignalReq_Accept:
-		log.Info(operationID, "recv signal push Accept ", payload.Accept.String())
+		// log.Info(operationID, "recv signal push Accept ", payload.Accept.String())
 		for _, listener := range listenerList {
 			listener.OnInviteeAccepted(utils.StructToJsonString(payload.Accept))
-			log.Info(operationID, "OnInviteeAccepted ", utils.StructToJsonString(payload.Accept), listener)
+			// log.Info(operationID, "OnInviteeAccepted ", utils.StructToJsonString(payload.Accept), listener)
 		}
 
 	case *api.SignalReq_Reject:
-		log.Info(operationID, "recv signal push Reject ", payload.Reject.String())
+		// log.Info(operationID, "recv signal push Reject ", payload.Reject.String())
 		for _, listener := range listenerList {
 			listener.OnInviteeRejected(utils.StructToJsonString(payload.Reject))
-			log.Info(operationID, "OnInviteeRejected ", utils.StructToJsonString(payload.Reject), listener)
+			// log.Info(operationID, "OnInviteeRejected ", utils.StructToJsonString(payload.Reject), listener)
 		}
-
-	//case *api.SignalReq_HungUp:
-	//	log.Info(operationID, "recv signal push HungUp ", payload.HungUp.String())
-	//	s.listener.OnHangUp(utils.StructToJsonString(payload.HungUp))
-	//case *api.SignalReq_Cancel:
-	//	log.Info(operationID, "recv signal push ", payload.Cancel.String())
-	//	s.listener.OnInvitationCancelled(utils.StructToJsonString(payload.Cancel))
-	//case *api.SignalReq_InviteInGroup:
-	//	log.Info(operationID, "recv signal push ", payload.InviteInGroup.String())
 	default:
-		log.Error(operationID, "payload type failed ", payload)
+		// log.Error(operationID, "payload type failed ", payload)
 	}
 }
 
 func (s *LiveSignaling) SetListener(listener open_im_sdk_callback.OnSignalingListener) {
-	log.Info("", utils.GetSelfFuncName(), "args ", listener)
 	s.listener = listener
 }
 
 func (s *LiveSignaling) SetListenerForService(listener open_im_sdk_callback.OnSignalingListener) {
-	log.Info("", utils.GetSelfFuncName(), "args ", listener)
 	s.listenerForService = listener
 }
 
-func (s *LiveSignaling) getSelfParticipant(groupID string, callback open_im_sdk_callback.Base, operationID string) *api.ParticipantMetaData {
-	log.Info(operationID, utils.GetSelfFuncName(), "args ", groupID)
-	p := api.ParticipantMetaData{GroupInfo: &api.GroupInfo{}, GroupMemberInfo: &api.GroupMemberFullInfo{}, UserInfo: &api.PublicUserInfo{}}
+func (s *LiveSignaling) getSelfParticipant(ctx context.Context, groupID string) (*sdkws.ParticipantMetaData, error) {
+	p := sdkws.ParticipantMetaData{GroupInfo: &sdkws.GroupInfo{}, GroupMemberInfo: &sdkws.GroupMemberFullInfo{}, UserInfo: &sdkws.PublicUserInfo{}}
 	if groupID != "" {
-		g, err := s.GetGroupInfoByGroupID(groupID)
-		common.CheckDBErrCallback(callback, err, operationID)
-		copier.Copy(p.GroupInfo, g)
-		mInfo, err := s.GetGroupMemberInfoByGroupIDUserID(groupID, s.loginUserID)
-		common.CheckDBErrCallback(callback, err, operationID)
-		copier.Copy(p.GroupMemberInfo, mInfo)
+		group, err := s.GetGroupInfoByGroupID(ctx, groupID)
+		if err != nil {
+			return nil, err
+		}
+		copier.Copy(p.GroupInfo, group)
+		groupMemberInfo, err := s.GetGroupMemberInfoByGroupIDUserID(ctx, groupID, s.loginUserID)
+		if err != nil {
+			return nil, err
+		}
+		copier.Copy(p.GroupMemberInfo, groupMemberInfo)
 	}
-
-	sf, err := s.GetLoginUser(s.loginUserID)
-	common.CheckDBErrCallback(callback, err, operationID)
-	copier.Copy(p.UserInfo, sf)
-	log.Info(operationID, utils.GetSelfFuncName(), "return ", p)
-	return &p
+	user, err := s.GetLoginUser(ctx, s.loginUserID)
+	if err != nil {
+		return nil, err
+	}
+	copier.Copy(p.UserInfo, user)
+	return &p, nil
 }
 
 func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan common.Cmd2Value, operationID string) {
@@ -284,43 +284,43 @@ func (s *LiveSignaling) DoNotification(msg *api.MsgData, conversationCh chan com
 	}
 }
 
-func (s *LiveSignaling) handleSignaling(req *api.SignalReq, callback open_im_sdk_callback.Base, operationID string) {
-	log.Info(operationID, utils.GetSelfFuncName(), "args ", req.String())
-	resp, err := s.SendSignalingReqWaitResp(req, operationID)
+func (s *LiveSignaling) handleSignaling(ctx context.Context, req *sdkws.SignalReq) (resp *sdkws.SignalResp, err error) {
+	// log.Info(operationID, utils.GetSelfFuncName(), "args ", req.String())
+	resp, err = s.SendSignalingReqWaitResp(ctx, req)
 	if err != nil {
-		log.NewError(operationID, utils.GetSelfFuncName(), "SendSignalingReqWaitResp error", err.Error())
-		common.CheckAnyErrCallback(callback, 3003, err, operationID)
+		// log.NewError(operationID, utils.GetSelfFuncName(), "SendSignalingReqWaitResp error", err.Error())
+		return nil, err
 	}
-	common.CheckAnyErrCallback(callback, 3001, err, operationID)
 	var busyLineUserIDList []string
 	switch payload := resp.Payload.(type) {
-	case *api.SignalResp_Accept:
-		log.Info(operationID, "signaling response ", payload.Accept.String())
+	case *sdkws.SignalResp_Accept:
+		return payload.Accept, nil
+		// log.Info(operationID, "signaling response ", payload.Accept.String())
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.AcceptCallback(payload.Accept)))
-	case *api.SignalResp_Reject:
-		log.Info(operationID, "signaling response ", payload.Reject.String())
+	case *sdkws.SignalResp_Reject:
+		// log.Info(operationID, "signaling response ", payload.Reject.String())
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.RejectCallback(payload.Reject)))
-	case *api.SignalResp_HungUp:
-		log.Info(operationID, "signaling response ", payload.HungUp.String())
+	case *sdkws.SignalResp_HungUp:
+		// log.Info(operationID, "signaling response ", payload.HungUp.String())
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.HungUpCallback(payload.HungUp)))
-	case *api.SignalResp_Cancel:
+	case *sdkws.SignalResp_Cancel:
 		s.isCanceled = true
 		log.Info(operationID, "signaling response ", payload.Cancel.String())
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.CancelCallback(payload.Cancel)))
-	case *api.SignalResp_Invite:
+	case *sdkws.SignalResp_Invite:
 		s.isCanceled = false
 		busyLineUserIDList = payload.Invite.BusyLineUserIDList
 		log.Info(operationID, "signaling response ", payload.Invite.String())
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.InviteCallback(payload.Invite)))
-	case *api.SignalResp_InviteInGroup:
+	case *sdkws.SignalResp_InviteInGroup:
 		s.isCanceled = false
 		busyLineUserIDList = payload.InviteInGroup.BusyLineUserIDList
 		log.Info(operationID, "signaling response ", payload.InviteInGroup.String())
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.InviteInGroupCallback(payload.InviteInGroup)))
-	case *api.SignalResp_GetRoomByGroupID:
+	case *sdkws.SignalResp_GetRoomByGroupID:
 		log.Info(operationID, "signaling response ", payload.GetRoomByGroupID.String())
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GetRoomByGroupIDCallback(payload.GetRoomByGroupID)))
-	case *api.SignalResp_GetTokenByRoomID:
+	case *sdkws.SignalResp_GetTokenByRoomID:
 		log.Info(operationID, "signaling response", payload.GetTokenByRoomID.String())
 		callback.OnSuccess(utils.StructToJsonString(sdk_params_callback.GetTokenByRoomID(payload.GetTokenByRoomID)))
 	default:

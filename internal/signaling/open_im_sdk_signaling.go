@@ -6,9 +6,11 @@ import (
 	"open_im_sdk/pkg/log"
 	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
-func (s *LiveSignaling) setDefaultReq(req *api.InvitationInfo) {
+func (s *LiveSignaling) setDefaultReq(req *sdkws.InvitationInfo) {
 	if req.RoomID == "" {
 		req.RoomID = utils.OperationIDGenerator()
 	}

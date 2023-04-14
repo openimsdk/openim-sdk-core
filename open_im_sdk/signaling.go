@@ -6,30 +6,6 @@ import (
 	"open_im_sdk/pkg/log"
 )
 
-func SetSignalingListener(callback open_im_sdk_callback.OnSignalingListener) {
-	if callback == nil || userForSDK == nil {
-		log.Error("callback or userForSDK is nil")
-		return
-	}
-	userForSDK.SetSignalingListener(callback)
-}
-
-func SetSignalingListenerForService(callback open_im_sdk_callback.OnSignalingListener) {
-	if callback == nil || userForSDK == nil {
-		log.Error("callback or userForSDK is nil")
-		return
-	}
-	userForSDK.SetSignalingListenerForService(callback)
-}
-
-func SetListenerForService(callback open_im_sdk_callback.OnListenerForService) {
-	if callback == nil || userForSDK == nil {
-		log.Error("callback or userForSDK is nil")
-		return
-	}
-	userForSDK.SetListenerForService(callback)
-}
-
 func SignalingInviteInGroup(callback open_im_sdk_callback.Base, operationID string, signalInviteInGroupReq string) {
 	if err := CheckResourceLoad(userForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())

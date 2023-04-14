@@ -1,6 +1,7 @@
 package interaction
 
 import (
+	"context"
 	"errors"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -11,6 +12,8 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 )
@@ -18,7 +21,6 @@ import (
 type Ws struct {
 	*WsRespAsyn
 	*WsConn
-	//*db.DataBase
 	//conversationCh chan common.Cmd2Value
 	cmdCh              chan common.Cmd2Value //waiting logout cmd
 	pushMsgAndMaxSeqCh chan common.Cmd2Value //recv push msg  -> channel
@@ -412,12 +414,12 @@ func (w *Ws) kickOnline(msg GeneralWsResp) {
 	w.listener.OnKickedOffline()
 }
 
-func (w *Ws) SendSignalingReqWaitResp(req *server_api_params.SignalReq, operationID string) (*server_api_params.SignalResp, error) {
-	resp, err := w.SendReqWaitResp(req, constant.WSSendSignalMsg, 10, 12, w.loginUserID, operationID)
+func (w *Ws) SendSignalingReqWaitResp(ctx context.Context, req *sdkws.SignalReq) (*sdkws.SignalResp, error) {
+	resp, err := w.SendReqWaitResp(req, constant.WSSendSignalMsg, 10, 12, w.loginUserID, mcontext.GetOperationID(ctx))
 	if err != nil {
 		return nil, utils.Wrap(err, "")
 	}
-	var signalResp server_api_params.SignalResp
+	var signalResp sdkws.SignalResp
 	err = proto.Unmarshal(resp.Data, &signalResp)
 	if err != nil {
 		return nil, utils.Wrap(err, "")
@@ -425,13 +427,12 @@ func (w *Ws) SendSignalingReqWaitResp(req *server_api_params.SignalReq, operatio
 	return &signalResp, nil
 }
 
-func (w *Ws) SignalingWaitPush(inviterUserID, inviteeUserID, roomID string, timeout int32, operationID string) (*server_api_params.SignalReq, error) {
+func (w *Ws) SignalingWaitPush(ctx context.Context, inviterUserID, inviteeUserID, roomID string, timeout int32) (*server_api_params.SignalReq, error) {
 	msgIncr := inviterUserID + inviteeUserID + roomID
-	log.Info(operationID, "add msgIncr: ", msgIncr)
+	// log.Info(operationID, "add msgIncr: ", msgIncr)
 	ch := w.AddChByIncr(msgIncr)
 	defer w.DelCh(msgIncr)
-
-	resp, err := w.WaitResp(ch, int(timeout), operationID)
+	resp, err := w.WaitResp(ch, int(timeout), mcontext.GetOperationID(ctx))
 	if err != nil {
 		return nil, utils.Wrap(err, "")
 	}
