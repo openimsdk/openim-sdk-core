@@ -1,13 +1,13 @@
 package full
 
 import (
+	"context"
 	"errors"
 	"open_im_sdk/internal/cache"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/group"
 	"open_im_sdk/internal/super_group"
 	"open_im_sdk/internal/user"
-	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/db_interface"
@@ -34,9 +34,15 @@ func (u *Full) Group() *group.Group {
 func NewFull(user *user.User, friend *friend.Friend, group *group.Group, ch chan common.Cmd2Value, userCache *cache.Cache, db db_interface.DataBase, superGroup *super_group.SuperGroup) *Full {
 	return &Full{user: user, friend: friend, group: group, ch: ch, userCache: userCache, db: db, SuperGroup: superGroup}
 }
-func (u *Full) getUsersInfo(callback open_im_sdk_callback.Base, userIDList sdk.GetUsersInfoParam, operationID string) sdk.GetUsersInfoCallback {
-	friendList := u.friend.GetDesignatedFriendListInfo(callback, userIDList, operationID)
-	blackList := u.friend.GetDesignatedBlackListInfo(callback, userIDList, operationID)
+func (u *Full) getUsersInfo(ctx context.Context, userIDList sdk.GetUsersInfoParam) (sdk.GetUsersInfoCallback, error) {
+	friendList, err := u.db.GetFriendInfoList(ctx, userIDList)
+	if err != nil {
+		return nil, err
+	}
+	blackList, err := u.db.GetBlackInfoList(ctx, userIDList)
+	if err != nil {
+		return nil, err
+	}
 	notIn := make([]string, 0)
 	for _, v := range userIDList {
 		inFriendList := 0
@@ -72,7 +78,7 @@ func (u *Full) getUsersInfo(callback open_im_sdk_callback.Base, userIDList sdk.G
 			}
 		}()
 	}
-	return common.MergeUserResult(publicList, friendList, blackList)
+	return common.MergeUserResult(publicList, friendList, blackList), nil
 }
 
 func (u *Full) GetGroupInfoFromLocal2Svr(groupID string, sessionType int32) (*model_struct.LocalGroup, error) {

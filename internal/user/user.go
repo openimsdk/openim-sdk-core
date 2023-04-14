@@ -1,9 +1,13 @@
 package user
 
 import (
+	"context"
 	"fmt"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/user"
 	"github.com/google/go-cmp/cmp"
 	comm "open_im_sdk/internal/common"
+	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
 
@@ -16,7 +20,6 @@ import (
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
 )
 
 type User struct {
@@ -153,6 +156,14 @@ func (u *User) GetUsersInfoFromCacheSvr(UserIDList sdk.GetUsersInfoParam, operat
 	return apiResp.UserInfoList, err
 }
 
+func (u *User) GetServerUserInfo(ctx context.Context, userIDs []string) ([]*sdkws.UserInfo, error) {
+	resp, err := util.CallApi[user.GetDesignateUsersResp](ctx, constant.GetUsersInfoRouter, &user.GetDesignateUsersReq{UserIDs: userIDs})
+	if err != nil {
+		return nil, err
+	}
+	return resp.UsersInfo, nil
+}
+
 func (u *User) getSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) sdk.GetSelfUserInfoCallback {
 	userInfo, errLocal := u.GetLoginUser(u.loginUserID)
 	if errLocal != nil {
@@ -186,12 +197,6 @@ func (u *User) GetSelfUserInfoFromSvr(operationID string) (*api.UserInfo, error)
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
 	return apiResp.UserInfo, nil
-}
-
-func (u *User) DoUserNotification(msg *api.MsgData) {
-	if msg.SendID == u.loginUserID && msg.SenderPlatformID == sdk_struct.SvrConf.Platform {
-		return
-	}
 }
 
 func (u *User) ParseTokenFromSvr(operationID string) (uint32, error) {

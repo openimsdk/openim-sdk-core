@@ -109,12 +109,9 @@ func (c *Conversation) GetOneConversation(ctx context.Context, sessionType int32
 		switch sessionType {
 		case constant.SingleChatType:
 			newConversation.UserID = sourceID
-			faceUrl, name, err, isFromSvr := c.friend.GetUserNameAndFaceUrlByUid(ctx, sourceID)
+			faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, sourceID)
 			if err != nil {
 				return nil, err
-			}
-			if isFromSvr {
-				c.cache.Update(sourceID, faceUrl, name)
 			}
 			newConversation.ShowName = name
 			newConversation.FaceURL = faceUrl
@@ -1166,15 +1163,12 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(ctx context.Context, s *
 
 	conversation.ConversationID = utils.GetConversationIDBySessionType(groupID, int(conversation.ConversationType))
 	if sendID != c.loginUserID {
-		faceUrl, name, err, isFromSvr := c.friend.GetUserNameAndFaceUrlByUid(ctx, sendID)
+		faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, sendID)
 		if err != nil {
 			log.Error("", "getUserNameAndFaceUrlByUid err", err.Error(), sendID)
 		}
 		s.SenderFaceURL = faceUrl
 		s.SenderNickname = name
-		if isFromSvr {
-			c.cache.Update(sendID, faceUrl, name)
-		}
 	}
 	localMessage := model_struct.LocalChatLog{}
 	s.SendID = sendID
