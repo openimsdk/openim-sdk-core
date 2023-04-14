@@ -196,12 +196,9 @@ func (c *Conversation) getOneConversation(callback open_im_sdk_callback.Base, so
 		switch sessionType {
 		case constant.SingleChatType:
 			newConversation.UserID = sourceID
-			faceUrl, name, err, isFromSvr := c.friend.GetUserNameAndFaceUrlByUid(sourceID, operationID)
+			faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, sourceID)
 			//	faceUrl, name, err := c.cache.GetUserNameAndFaceURL(sourceID, operationID)
 			common.CheckDBErrCallback(callback, err, operationID)
-			if isFromSvr {
-				c.cache.Update(sourceID, faceUrl, name)
-			}
 			newConversation.ShowName = name
 			newConversation.FaceURL = faceUrl
 		case constant.GroupChatType, constant.SuperGroupChatType:

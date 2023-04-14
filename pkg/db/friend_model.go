@@ -3,10 +3,8 @@
 
 package db
 
-import "context"
-
 import (
-	_ "database/sql"
+	"context"
 	"errors"
 	"fmt"
 	"open_im_sdk/pkg/db/model_struct"
@@ -16,20 +14,20 @@ import (
 func (d *DataBase) InsertFriend(ctx context.Context, friend *model_struct.LocalFriend) error {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
-	return utils.Wrap(d.conn.Create(friend).Error, "InsertFriend failed")
+	return utils.Wrap(d.conn.WithContext(ctx).Create(friend).Error, "InsertFriend failed")
 }
 
 func (d *DataBase) DeleteFriendDB(ctx context.Context, friendUserID string) error {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
-	return utils.Wrap(d.conn.Where("owner_user_id=? and friend_user_id=?", d.loginUserID, friendUserID).Delete(&model_struct.LocalFriend{}).Error, "DeleteFriend failed")
+	return utils.Wrap(d.conn.WithContext(ctx).Where("owner_user_id=? and friend_user_id=?", d.loginUserID, friendUserID).Delete(&model_struct.LocalFriend{}).Error, "DeleteFriend failed")
 }
 
 func (d *DataBase) UpdateFriend(ctx context.Context, friend *model_struct.LocalFriend) error {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 
-	t := d.conn.Model(friend).Select("*").Updates(*friend)
+	t := d.conn.WithContext(ctx).Model(friend).Select("*").Updates(*friend)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
@@ -41,7 +39,7 @@ func (d *DataBase) GetAllFriendList(ctx context.Context) ([]*model_struct.LocalF
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	var friendList []model_struct.LocalFriend
-	err := utils.Wrap(d.conn.Where("owner_user_id = ?", d.loginUserID).Find(&friendList).Error,
+	err := utils.Wrap(d.conn.WithContext(ctx).Where("owner_user_id = ?", d.loginUserID).Find(&friendList).Error,
 		"GetFriendList failed")
 	var transfer []*model_struct.LocalFriend
 	for _, v := range friendList {
@@ -73,7 +71,7 @@ func (d *DataBase) SearchFriendList(ctx context.Context, keyword string, isSearc
 		}
 		condition += fmt.Sprintf("remark like %q ", "%"+keyword+"%")
 	}
-	err := d.conn.Where(condition).Order("create_time DESC").Find(&friendList).Error
+	err := d.conn.WithContext(ctx).Where(condition).Order("create_time DESC").Find(&friendList).Error
 	var transfer []*model_struct.LocalFriend
 	for _, v := range friendList {
 		v1 := v
@@ -87,7 +85,7 @@ func (d *DataBase) GetFriendInfoByFriendUserID(ctx context.Context, FriendUserID
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	var friend model_struct.LocalFriend
-	return &friend, utils.Wrap(d.conn.Where("owner_user_id = ? AND friend_user_id = ?",
+	return &friend, utils.Wrap(d.conn.WithContext(ctx).Where("owner_user_id = ? AND friend_user_id = ?",
 		d.loginUserID, FriendUserID).Take(&friend).Error, "GetFriendInfoByFriendUserID failed")
 }
 
@@ -95,7 +93,7 @@ func (d *DataBase) GetFriendInfoList(ctx context.Context, friendUserIDList []str
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	var friendList []model_struct.LocalFriend
-	err := utils.Wrap(d.conn.Where("friend_user_id IN ?", friendUserIDList).Find(&friendList).Error, "GetFriendInfoListByFriendUserID failed")
+	err := utils.Wrap(d.conn.WithContext(ctx).Where("friend_user_id IN ?", friendUserIDList).Find(&friendList).Error, "GetFriendInfoListByFriendUserID failed")
 	var transfer []*model_struct.LocalFriend
 	for _, v := range friendList {
 		v1 := v

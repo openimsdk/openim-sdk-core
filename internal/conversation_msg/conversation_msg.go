@@ -2249,16 +2249,13 @@ func (c *Conversation) addFaceURLAndName(lc *model_struct.LocalConversation) {
 	ctx := mcontext.NewCtx(operationID)
 	switch lc.ConversationType {
 	case constant.SingleChatType, constant.NotificationChatType:
-		faceUrl, name, err, isFromSvr := c.friend.GetUserNameAndFaceUrlByUid(ctx, lc.UserID)
+		faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, lc.UserID)
 		if err != nil {
 			log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error(), lc.UserID)
 			return
 		}
 		lc.FaceURL = faceUrl
 		lc.ShowName = name
-		if isFromSvr {
-			c.cache.Update(lc.UserID, faceUrl, name)
-		}
 
 	case constant.GroupChatType, constant.SuperGroupChatType:
 		g, err := c.full.GetGroupInfoFromLocal2Svr(lc.GroupID, lc.ConversationType)

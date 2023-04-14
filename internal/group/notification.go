@@ -6,20 +6,19 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	comm "open_im_sdk/internal/common"
-	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	api "open_im_sdk/pkg/server_api_params"
 )
 
-func (g *Group) DoNotification(ctx context.Context, msg *api.MsgData, conversationCh chan common.Cmd2Value) {
+func (g *Group) DoNotification(ctx context.Context, msg *api.MsgData) {
 	go func() {
-		if err := g.doNotification(ctx, msg, conversationCh); err != nil {
+		if err := g.doNotification(ctx, msg); err != nil {
 			// todo log
 		}
 	}()
 }
 
-func (g *Group) doNotification(ctx context.Context, msg *api.MsgData, conversationCh chan common.Cmd2Value) error {
+func (g *Group) doNotification(ctx context.Context, msg *api.MsgData) error {
 	if g.listener == nil {
 		return errors.New("listener is nil")
 	}

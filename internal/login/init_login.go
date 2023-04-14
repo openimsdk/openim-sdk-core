@@ -33,7 +33,6 @@ import (
 )
 
 type LoginMgr struct {
-	organization *organization.Organization
 	friend       *friend.Friend
 	group        *group.Group
 	superGroup   *super_group.SuperGroup
@@ -84,10 +83,6 @@ type LoginMgr struct {
 
 func (u *LoginMgr) Push() *comm2.Push {
 	return u.push
-}
-
-func (u *LoginMgr) Organization() *organization.Organization {
-	return u.organization
 }
 
 func (u *LoginMgr) Heartbeat() *heartbeart.Heartbeat {
@@ -170,14 +165,6 @@ func (u *LoginMgr) SetGroupListener(groupListener open_im_sdk_callback.OnGroupLi
 		u.group.SetGroupListener(groupListener)
 	} else {
 		u.groupListener = groupListener
-	}
-}
-
-func (u *LoginMgr) SetOrganizationListener(listener open_im_sdk_callback.OnOrganizationListener) {
-	if u.organization != nil {
-		u.organization.SetListener(listener)
-	} else {
-		u.organizationListener = listener
 	}
 }
 
@@ -325,14 +312,13 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	}
 	u.conversation = conv.NewConversation(u.ws, u.db, u.postApi, u.conversationCh,
 		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir, u.imConfig.EncryptionKey,
-		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener,
-		u.organization, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq, u.imConfig.IsExternalExtensions)
+		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq, u.imConfig.IsExternalExtensions)
 	if u.batchMsgListener != nil {
 		u.conversation.SetBatchMsgListener(u.batchMsgListener)
 		log.Info(operationID, "SetBatchMsgListener ", u.batchMsgListener)
 	}
 	log.Debug(operationID, "SyncConversations begin ")
-	u.conversation.SyncConversations(operationID, time.Second*2)
+	u.conversation.SyncConversations(ctx, time.Second*2)
 	go u.conversation.SyncConversationUnreadCount(operationID)
 	go common.DoListener(u.conversation)
 	log.Debug(operationID, "SyncConversations end ")
@@ -488,7 +474,7 @@ func (u *LoginMgr) forcedSynchronization() {
 	}()
 	if u.organizationListener != nil {
 		go func() {
-			u.organization.SyncOrganization(operationID)
+			//u.organization.SyncOrganization(operationID)
 			wg.Done()
 		}()
 	} else {
@@ -505,7 +491,6 @@ func (u *LoginMgr) forcedSynchronization() {
 	u.friend.SetLoginTime(u.loginTime)
 	u.group.SetLoginTime(u.loginTime)
 	u.superGroup.SetLoginTime(u.loginTime)
-	u.organization.SetLoginTime(u.loginTime)
 	log.Info(operationID, "login init sync finished")
 }
 

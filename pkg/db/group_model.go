@@ -3,9 +3,8 @@
 
 package db
 
-import "context"
-
 import (
+	"context"
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
@@ -16,19 +15,19 @@ import (
 func (d *DataBase) InsertGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
-	return utils.Wrap(d.conn.Create(groupInfo).Error, "InsertGroup failed")
+	return utils.Wrap(d.conn.WithContext(ctx).Create(groupInfo).Error, "InsertGroup failed")
 }
 func (d *DataBase) DeleteGroup(ctx context.Context, groupID string) error {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	localGroup := model_struct.LocalGroup{GroupID: groupID}
-	return utils.Wrap(d.conn.Delete(&localGroup).Error, "DeleteGroup failed")
+	return utils.Wrap(d.conn.WithContext(ctx).Delete(&localGroup).Error, "DeleteGroup failed")
 }
 func (d *DataBase) UpdateGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 
-	t := d.conn.Model(groupInfo).Select("*").Updates(*groupInfo)
+	t := d.conn.WithContext(ctx).Model(groupInfo).Select("*").Updates(*groupInfo)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
@@ -39,7 +38,7 @@ func (d *DataBase) GetJoinedGroupListDB(ctx context.Context) ([]*model_struct.Lo
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var groupList []model_struct.LocalGroup
-	err := d.conn.Find(&groupList).Error
+	err := d.conn.WithContext(ctx).Find(&groupList).Error
 	var transfer []*model_struct.LocalGroup
 	for _, v := range groupList {
 		v1 := v
@@ -51,7 +50,7 @@ func (d *DataBase) GetGroupInfoByGroupID(ctx context.Context, groupID string) (*
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var g model_struct.LocalGroup
-	return &g, utils.Wrap(d.conn.Where("group_id = ?", groupID).Take(&g).Error, "GetGroupList failed")
+	return &g, utils.Wrap(d.conn.WithContext(ctx).Where("group_id = ?", groupID).Take(&g).Error, "GetGroupList failed")
 }
 func (d *DataBase) GetAllGroupInfoByGroupIDOrGroupName(ctx context.Context, keyword string, isSearchGroupID bool, isSearchGroupName bool) ([]*model_struct.LocalGroup, error) {
 	d.groupMtx.Lock()
@@ -68,7 +67,7 @@ func (d *DataBase) GetAllGroupInfoByGroupIDOrGroupName(ctx context.Context, keyw
 	} else {
 		condition = fmt.Sprintf("name like %q ", "%"+keyword+"%")
 	}
-	err := d.conn.Where(condition).Order("create_time DESC").Find(&groupList).Error
+	err := d.conn.WithContext(ctx).Where(condition).Order("create_time DESC").Find(&groupList).Error
 	var transfer []*model_struct.LocalGroup
 	for _, v := range groupList {
 		v1 := v
@@ -81,12 +80,12 @@ func (d *DataBase) AddMemberCount(ctx context.Context, groupID string) error {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	group := model_struct.LocalGroup{GroupID: groupID}
-	return utils.Wrap(d.conn.Model(&group).Updates(map[string]interface{}{"member_count": gorm.Expr("member_count+1")}).Error, "")
+	return utils.Wrap(d.conn.WithContext(ctx).Model(&group).Updates(map[string]interface{}{"member_count": gorm.Expr("member_count+1")}).Error, "")
 }
 
 func (d *DataBase) SubtractMemberCount(ctx context.Context, groupID string) error {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	group := model_struct.LocalGroup{GroupID: groupID}
-	return utils.Wrap(d.conn.Model(&group).Updates(map[string]interface{}{"member_count": gorm.Expr("member_count-1")}).Error, "")
+	return utils.Wrap(d.conn.WithContext(ctx).Model(&group).Updates(map[string]interface{}{"member_count": gorm.Expr("member_count-1")}).Error, "")
 }

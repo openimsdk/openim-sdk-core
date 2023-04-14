@@ -3,9 +3,8 @@
 
 package db
 
-import "context"
-
 import (
+	"context"
 	"errors"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
@@ -16,7 +15,7 @@ func (d *DataBase) GetJoinedSuperGroupList(ctx context.Context) ([]*model_struct
 	d.superGroupMtx.Lock()
 	defer d.superGroupMtx.Unlock()
 	var groupList []model_struct.LocalGroup
-	err := d.conn.Table(constant.SuperGroupTableName).Find(&groupList).Error
+	err := d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Find(&groupList).Error
 	var transfer []*model_struct.LocalGroup
 	for _, v := range groupList {
 		v1 := v
@@ -26,7 +25,7 @@ func (d *DataBase) GetJoinedSuperGroupList(ctx context.Context) ([]*model_struct
 }
 
 func (d *DataBase) GetJoinedSuperGroupIDList(ctx context.Context) ([]string, error) {
-	groupList, err := d.GetJoinedSuperGroupList()
+	groupList, err := d.GetJoinedSuperGroupList(ctx)
 	if err != nil {
 		return nil, utils.Wrap(err, "")
 	}
@@ -40,27 +39,27 @@ func (d *DataBase) GetJoinedSuperGroupIDList(ctx context.Context) ([]string, err
 func (d *DataBase) InsertSuperGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error {
 	d.superGroupMtx.Lock()
 	defer d.superGroupMtx.Unlock()
-	return utils.Wrap(d.conn.Table(constant.SuperGroupTableName).Create(groupInfo).Error, "InsertSuperGroup failed")
+	return utils.Wrap(d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Create(groupInfo).Error, "InsertSuperGroup failed")
 }
 
 func (d *DataBase) DeleteAllSuperGroup(ctx context.Context) error {
 	d.superGroupMtx.Lock()
 	defer d.superGroupMtx.Unlock()
-	return utils.Wrap(d.conn.Table(constant.SuperGroupTableName).Delete(&model_struct.LocalGroup{}).Error, "DeleteAllSuperGroup failed")
+	return utils.Wrap(d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Delete(&model_struct.LocalGroup{}).Error, "DeleteAllSuperGroup failed")
 }
 
 func (d *DataBase) GetSuperGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error) {
 	d.superGroupMtx.Lock()
 	defer d.superGroupMtx.Unlock()
 	var g model_struct.LocalGroup
-	return &g, utils.Wrap(d.conn.Table(constant.SuperGroupTableName).Where("group_id = ?", groupID).Take(&g).Error, "GetGroupList failed")
+	return &g, utils.Wrap(d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Where("group_id = ?", groupID).Take(&g).Error, "GetGroupList failed")
 }
 
 func (d *DataBase) UpdateSuperGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error {
 	d.superGroupMtx.Lock()
 	defer d.superGroupMtx.Unlock()
 
-	t := d.conn.Table(constant.SuperGroupTableName).Select("*").Updates(*groupInfo)
+	t := d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Select("*").Updates(*groupInfo)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
@@ -71,25 +70,17 @@ func (d *DataBase) DeleteSuperGroup(ctx context.Context, groupID string) error {
 	d.superGroupMtx.Lock()
 	defer d.superGroupMtx.Unlock()
 	localGroup := model_struct.LocalGroup{GroupID: groupID}
-	return utils.Wrap(d.conn.Table(constant.SuperGroupTableName).Delete(&localGroup).Error, "DeleteSuperGroup failed")
+	return utils.Wrap(d.conn.WithContext(ctx).Table(constant.SuperGroupTableName).Delete(&localGroup).Error, "DeleteSuperGroup failed")
 }
 
 func (d *DataBase) GetReadDiffusionGroupIDList(ctx context.Context) ([]string, error) {
-	g1, err1 := d.GetJoinedSuperGroupIDList()
-	g2, err2 := d.GetJoinedWorkingGroupIDList()
-	var groupIDList []string
-	if err1 == nil {
-		groupIDList = append(groupIDList, g1...)
+	sg, err := d.GetJoinedSuperGroupIDList(ctx)
+	if err != nil {
+		return nil, err
 	}
-	if err2 == nil {
-		groupIDList = append(groupIDList, g2...)
+	wg, err := d.GetJoinedWorkingGroupIDList(ctx)
+	if err != nil {
+		return nil, err
 	}
-	var err error
-	if err1 != nil {
-		err = err1
-	}
-	if err2 != nil {
-		err = err2
-	}
-	return groupIDList, err
+	return append(sg, wg...), err
 }

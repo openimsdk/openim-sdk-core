@@ -140,3 +140,11 @@ func (u *User) ParseTokenFromSvr(ctx context.Context) (int64, error) {
 	resp, err := util.CallApi[authPb.ParseTokenResp](ctx, constant.ParseTokenRouter, authPb.ParseTokenReq{})
 	return resp.ExpireTimeSeconds, err
 }
+
+func (u *User) GetServerUserInfo(ctx context.Context, userIDs []string) ([]*sdkws.UserInfo, error) {
+	resp, err := util.CallApi[userPb.GetDesignateUsersResp](ctx, constant.GetUsersInfoRouter, &userPb.GetDesignateUsersReq{UserIDs: userIDs})
+	if err != nil {
+		return nil, err
+	}
+	return resp.UsersInfo, nil
+}

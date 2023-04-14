@@ -32,61 +32,6 @@ type IndexDB struct {
 	loginUserID string
 }
 
-func (i IndexDB) GetSubDepartmentList(ctx context.Context, departmentID string, args ...int) ([]*model_struct.LocalDepartment, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (i IndexDB) InsertDepartment(ctx context.Context, department *model_struct.LocalDepartment) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (i IndexDB) UpdateDepartment(ctx context.Context, department *model_struct.LocalDepartment) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (i IndexDB) DeleteDepartment(ctx context.Context, departmentID string) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (i IndexDB) GetDepartmentInfo(ctx context.Context, departmentID string) (*model_struct.LocalDepartment, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (i IndexDB) GetAllDepartmentList(ctx context.Context) ([]*model_struct.LocalDepartment, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (i IndexDB) GetParentDepartmentList(ctx context.Context, departmentID string) ([]*model_struct.LocalDepartment, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (i IndexDB) GetDepartmentList(ctx context.Context, departmentList *[]*model_struct.LocalDepartment, departmentID string) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (i IndexDB) GetParentDepartment(ctx context.Context, departmentID string) (model_struct.LocalDepartment, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (i IndexDB) SearchDepartmentMember(ctx context.Context, keyWord string, isSearchUserName, isSearchEmail, isSearchMobile, isSearchPosition, isSearchTelephone, isSearchUserEnglishName, isSearchUserID bool, offset, count int) ([]*model_struct.SearchDepartmentMemberResult, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (i IndexDB) SearchDepartment(ctx context.Context, keyWord string, offset, count int) ([]*model_struct.LocalDepartment, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (i IndexDB) GetJoinedSuperGroupIDList(ctx context.Context) ([]string, error) {
 	//TODO implement me
 	panic("implement me")
