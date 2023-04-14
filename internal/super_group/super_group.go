@@ -3,6 +3,7 @@ package super_group
 import (
 	"context"
 	"errors"
+	"github.com/golang/protobuf/proto"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -13,10 +14,6 @@ import (
 	"open_im_sdk/pkg/syncer"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
-
-	"github.com/golang/protobuf/proto"
-
-	"github.com/golang/protobuf/proto"
 )
 
 func NewSuperGroup(loginUserID string, db db_interface.DataBase, p *ws.PostApi, joinedSuperGroupCh chan common.Cmd2Value, heartbeatCmdCh chan common.Cmd2Value) *SuperGroup {
@@ -90,15 +87,15 @@ func (s *SuperGroup) DoNotification(msg *api.MsgData, ch chan common.Cmd2Value, 
 
 func (s *SuperGroup) getJoinedGroupListFromSvr(ctx context.Context) ([]*api.GroupInfo, error) {
 	apiReq := api.GetJoinedSuperGroupReq{}
-	apiReq.OperationID = operationID
+	apiReq.OperationID = ""
 	apiReq.FromUserID = s.loginUserID
 	var result []*api.GroupInfo
-	log.Debug(operationID, "super group api args: ", apiReq)
+	log.Debug("", "super group api args: ", apiReq)
 	err := s.p.PostReturn(constant.GetJoinedSuperGroupListRouter, apiReq, &result)
 	if err != nil {
 		return nil, utils.Wrap(err, apiReq.OperationID)
 	}
-	log.Debug(operationID, "super group api result: ", result)
+	log.Debug("", "super group api result: ", result)
 	return result, nil
 }
 
