@@ -348,7 +348,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 	lc := &model_struct.LocalConversation{LatestMsgSendTime: s.CreateTime}
 	//根据单聊群聊类型组装消息和会话
 	if recvID == "" {
-		g, err := c.full.GetGroupInfoByGroupID(groupID)
+		g, err := c.full.GetGroupInfoByGroupID(ctx, groupID)
 		if err != nil {
 			return nil, err
 		}
@@ -549,7 +549,7 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 	lc := &model_struct.LocalConversation{LatestMsgSendTime: s.CreateTime}
 	//根据单聊群聊类型组装消息和会话
 	if recvID == "" {
-		g, err := c.full.GetGroupInfoByGroupID(groupID)
+		g, err := c.full.GetGroupInfoByGroupID(ctx, groupID)
 		if err != nil {
 			return nil, err
 		}
@@ -653,7 +653,7 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 	lc := &model_struct.LocalConversation{LatestMsgSendTime: s.CreateTime}
 	//根据单聊群聊类型组装消息和会话
 	if recvID == "" {
-		g, err := c.full.GetGroupInfoByGroupID(groupID)
+		g, err := c.full.GetGroupInfoByGroupID(ctx, groupID)
 		if err != nil {
 			return nil, err
 		}
@@ -813,7 +813,7 @@ func (c *Conversation) InternalSendMessage(ctx context.Context, s *sdk_struct.Ms
 		return nil, errors.New("recvID && groupID not both null")
 	}
 	if recvID == "" {
-		g, err := c.full.GetGroupInfoByGroupID(groupID)
+		g, err := c.full.GetGroupInfoByGroupID(ctx, groupID)
 		if err != nil {
 			return nil, err
 		}
@@ -862,7 +862,7 @@ func (c *Conversation) InternalSendMessage(ctx context.Context, s *sdk_struct.Ms
 	wsMsgData.OfflinePushInfo = p
 	timeout := 10
 	retryTimes := 0
-	g, err := c.SendReqWaitResp(&wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID, operationID)
+	g, err := c.SendReqWaitResp(&wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID, "")
 	if err != nil {
 		return nil, err
 	}
@@ -1303,7 +1303,7 @@ func (c *Conversation) DeleteAllMsgFromLocal(ctx context.Context) error {
 
 }
 func (c *Conversation) getConversationTypeByGroupID(groupID string) (conversationID string, conversationType int32, err error) {
-	g, err := c.full.GetGroupInfoByGroupID(groupID)
+	g, err := c.full.GetGroupInfoByGroupID(context.Background(), groupID)
 	if err != nil {
 		return "", 0, utils.Wrap(err, "get group info error")
 	}
@@ -1322,66 +1322,52 @@ func (c *Conversation) SetMessageReactionExtensions(ctx context.Context, s *sdk_
 
 }
 
-func (c *Conversation) AddMessageReactionExtensions(ctx context.Context, message, reactionExtensionList, operationID string) {
-	s := sdk_struct.MsgStruct{}
-	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
-	var unmarshalParams sdk_params_callback.AddMessageReactionExtensionsParams
-	common.JsonUnmarshalCallback(reactionExtensionList, &unmarshalParams, callback, operationID)
-	result := c.addMessageReactionExtensions(callback, &s, unmarshalParams, operationID)
-	callback.OnSuccess(utils.StructToJsonString(result))
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+func (c *Conversation) AddMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, reactionExtensionList []*server_api_params.KeyValue) ([]*server_api_params.ExtensionResult, error) {
+	return c.addMessageReactionExtensions(ctx, s, reactionExtensionList)
+
 }
 
-func (c *Conversation) DeleteMessageReactionExtensions(ctx context.Context, message, reactionExtensionKeyList, operationID string) {
-	s := sdk_struct.MsgStruct{}
-	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
-	var unmarshalParams sdk_params_callback.DeleteMessageReactionExtensionsParams
-	common.JsonUnmarshalCallback(reactionExtensionKeyList, &unmarshalParams, callback, operationID)
-	result := c.deleteMessageReactionExtensions(callback, &s, unmarshalParams, operationID)
-	callback.OnSuccess(utils.StructToJsonString(result))
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+func (c *Conversation) DeleteMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, reactionExtensionKeyList []string) ([]*server_api_params.ExtensionResult, error) {
+	return c.deleteMessageReactionExtensions(ctx, s, reactionExtensionKeyList)
 }
 
-func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, messageList, operationID string) {
-	var list []*sdk_struct.MsgStruct
-	common.JsonUnmarshalAndArgsValidate(messageList, &list, callback, operationID)
-	result := c.getMessageListReactionExtensions(callback, list, operationID)
-	callback.OnSuccess(utils.StructToJsonString(result))
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, messageList []*sdk_struct.MsgStruct) ([]*server_api_params.SingleMessageExtensionResult, error) {
+	return c.getMessageListReactionExtensions(ctx, messageList)
+
 }
 
 /**
 **Get some reaction extensions in reactionExtensionKeyList of message list
  */
-func (c *Conversation) GetMessageListSomeReactionExtensions(ctx context.Context, messageList, reactionExtensionKeyList, operationID string) {
-	var messagelist []*sdk_struct.MsgStruct
-	common.JsonUnmarshalAndArgsValidate(messageList, &messagelist, callback, operationID)
-	var list []string
-	common.JsonUnmarshalAndArgsValidate(reactionExtensionKeyList, &list, callback, operationID)
-	result := c.getMessageListSomeReactionExtensions(callback, messagelist, list, operationID)
-	callback.OnSuccess(utils.StructToJsonString(result))
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
-}
-func (c *Conversation) SetTypeKeyInfo(ctx context.Context, message, typeKey, ex string, isCanRepeat bool, operationID string) {
-	s := sdk_struct.MsgStruct{}
-	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
-	result := c.setTypeKeyInfo(callback, &s, typeKey, ex, isCanRepeat, operationID)
-	callback.OnSuccess(utils.StructToJsonString(result))
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
-}
-func (c *Conversation) GetTypeKeyListInfo(ctx context.Context, message, typeKeyList, operationID string) {
-	s := sdk_struct.MsgStruct{}
-	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
-	var list []string
-	common.JsonUnmarshalAndArgsValidate(typeKeyList, &list, callback, operationID)
-	result := c.getTypeKeyListInfo(callback, &s, list, operationID)
-	callback.OnSuccess(utils.StructToJsonString(result))
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
-}
-func (c *Conversation) GetAllTypeKeyInfo(ctx context.Context, message, operationID string) {
-	s := sdk_struct.MsgStruct{}
-	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
-	result := c.getAllTypeKeyInfo(callback, &s, operationID)
-	callback.OnSuccess(utils.StructToJsonString(result))
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
-}
+//func (c *Conversation) GetMessageListSomeReactionExtensions(ctx context.Context, messageList, reactionExtensionKeyList, operationID string) {
+//	var messagelist []*sdk_struct.MsgStruct
+//	common.JsonUnmarshalAndArgsValidate(messageList, &messagelist, callback, operationID)
+//	var list []string
+//	common.JsonUnmarshalAndArgsValidate(reactionExtensionKeyList, &list, callback, operationID)
+//	result := c.getMessageListSomeReactionExtensions(callback, messagelist, list, operationID)
+//	callback.OnSuccess(utils.StructToJsonString(result))
+//	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+//}
+//func (c *Conversation) SetTypeKeyInfo(ctx context.Context, message, typeKey, ex string, isCanRepeat bool, operationID string) {
+//	s := sdk_struct.MsgStruct{}
+//	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+//	result := c.setTypeKeyInfo(callback, &s, typeKey, ex, isCanRepeat, operationID)
+//	callback.OnSuccess(utils.StructToJsonString(result))
+//	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+//}
+//func (c *Conversation) GetTypeKeyListInfo(ctx context.Context, message, typeKeyList, operationID string) {
+//	s := sdk_struct.MsgStruct{}
+//	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+//	var list []string
+//	common.JsonUnmarshalAndArgsValidate(typeKeyList, &list, callback, operationID)
+//	result := c.getTypeKeyListInfo(callback, &s, list, operationID)
+//	callback.OnSuccess(utils.StructToJsonString(result))
+//	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+//}
+//func (c *Conversation) GetAllTypeKeyInfo(ctx context.Context, message, operationID string) {
+//	s := sdk_struct.MsgStruct{}
+//	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
+//	result := c.getAllTypeKeyInfo(callback, &s, operationID)
+//	callback.OnSuccess(utils.StructToJsonString(result))
+//	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
+//}
