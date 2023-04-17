@@ -52,7 +52,7 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 }
 
 func Login(callback open_im_sdk_callback.Base, operationID string, userID, token string) {
-	call(callback, operationID, userForSDK.WakeUp, userID, token)
+	call(callback, operationID, userForSDK.Login, userID, token)
 }
 
 func WakeUp(callback open_im_sdk_callback.Base, operationID string) {

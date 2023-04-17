@@ -56,7 +56,9 @@ func (u *User) initSyncer() {
 		func(ctx context.Context, value *model_struct.LocalUser) error {
 			return u.InsertLoginUser(ctx, value)
 		},
-		nil,
+		func(ctx context.Context, value *model_struct.LocalUser) error {
+			return fmt.Errorf("not support delete user %s", value.UserID)
+		},
 		func(ctx context.Context, serverUser, localUser *model_struct.LocalUser) error {
 			return u.DataBase.UpdateLoginUser(context.Background(), serverUser)
 		},
@@ -106,7 +108,10 @@ func (u *User) userInfoUpdatedNotification(msg *api.MsgData, operationID string)
 
 func (u *User) GetUsersInfoFromSvr(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
 	resp, err := util.CallApi[userPb.GetDesignateUsersResp](ctx, constant.GetUsersInfoRouter, userPb.GetDesignateUsersReq{UserIDs: userIDs})
-	return util.Batch(ServerUserToLocalUser, resp.UsersInfo), err
+	if err != nil {
+		return nil, err
+	}
+	return util.Batch(ServerUserToLocalUser, resp.UsersInfo), nil
 }
 
 func (u *User) GetSingleUserFromSvr(ctx context.Context, userID string) (*model_struct.LocalUser, error) {

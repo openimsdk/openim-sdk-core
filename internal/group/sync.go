@@ -89,5 +89,5 @@ func (g *Group) GetServerSelfGroupApplication(ctx context.Context) ([]*sdkws.Gro
 func (g *Group) GetServerGroupMembers(ctx context.Context, groupID string) ([]*sdkws.GroupMemberFullInfo, error) {
 	req := &group.GetGroupMemberListReq{GroupID: groupID, Pagination: &sdkws.RequestPagination{}}
 	fn := func(resp *group.GetGroupMemberListResp) []*sdkws.GroupMemberFullInfo { return resp.Members }
-	return util.GetPageAll(ctx, constant.GetGroupAllMemberListRouter, req, fn)
+	return util.GetPageAll(ctx, constant.GetGroupMemberListRouter, req, fn)
 }
