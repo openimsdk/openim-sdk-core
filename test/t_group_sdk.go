@@ -304,7 +304,7 @@ func DotestGetGroupMemberList() {
 
 func DotestCos() {
 	//var callback baseCallback
-	//p := ws.NewPostApi(token, userForSDK.ImConfig().ApiAddr)
+	//p := ws.NewPostApi(token, UserForSDK.ImConfig().ApiAddr)
 	//var storage common.ObjectStorage = common.NewCOS(p)
 	//test(storage, callback)
 }

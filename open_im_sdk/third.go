@@ -7,18 +7,18 @@ import (
 )
 
 func UpdateFcmToken(callback open_im_sdk_callback.Base, operationID, fmcToken string) {
-	if err := CheckResourceLoad(userForSDK); err != nil {
+	if err := CheckResourceLoad(UserForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
 		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
 		return
 	}
-	userForSDK.Push().UpdateFcmToken(callback, fmcToken, operationID)
+	UserForSDK.Push().UpdateFcmToken(callback, fmcToken, operationID)
 }
 func SetAppBadge(callback open_im_sdk_callback.Base, operationID string, appUnreadCount int32) {
-	if err := CheckResourceLoad(userForSDK); err != nil {
+	if err := CheckResourceLoad(UserForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
 		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
 		return
 	}
-	userForSDK.Push().SetAppBadge(callback, appUnreadCount, operationID)
+	UserForSDK.Push().SetAppBadge(callback, appUnreadCount, operationID)
 }

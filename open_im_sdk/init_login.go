@@ -24,8 +24,8 @@ func SetHeartbeatInterval(heartbeatInterval int) {
 }
 
 func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, config string) bool {
-	if userForSDK != nil {
-		fmt.Println(operationID, "Initialize multiple times, use the existing ", userForSDK, " Previous configuration ", userForSDK.ImConfig(), " now configuration: ", config)
+	if UserForSDK != nil {
+		fmt.Println(operationID, "Initialize multiple times, use the existing ", UserForSDK, " Previous configuration ", UserForSDK.ImConfig(), " now configuration: ", config)
 		return true
 	}
 	if err := json.Unmarshal([]byte(config), &sdk_struct.SvrConf); err != nil {
@@ -53,55 +53,55 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		log.ZError(ctx, "listener or config is nil", nil)
 		return false
 	}
-	userForSDK = new(login.LoginMgr)
-	return userForSDK.InitSDK(sdk_struct.SvrConf, listener, operationID)
+	UserForSDK = new(login.LoginMgr)
+	return UserForSDK.InitSDK(sdk_struct.SvrConf, listener, operationID)
 }
 
 func Login(callback open_im_sdk_callback.Base, operationID string, userID, token string) {
-	call(callback, operationID, userForSDK.Login, userID, token)
+	call(callback, operationID, UserForSDK.Login, userID, token)
 }
 
 func WakeUp(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, userForSDK.WakeUp)
+	call(callback, operationID, UserForSDK.WakeUp)
 }
 
 func NetworkChanged(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, userForSDK.WakeUp)
+	call(callback, operationID, UserForSDK.WakeUp)
 }
 
 func UploadImage(callback open_im_sdk_callback.Base, operationID string, filePath string, token, obj string) string {
-	//return userForSDK.UploadImage(callback, filePath, token, obj, operationID)
+	//return UserForSDK.UploadImage(callback, filePath, token, obj, operationID)
 	return ""
 }
 
 func UploadFile(callback open_im_sdk_callback.SendMsgCallBack, operationID string, filePath string) {
-	//userForSDK.UploadFile(callback, filePath, operationID)
+	//UserForSDK.UploadFile(callback, filePath, operationID)
 }
 
 func Logout(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, userForSDK.Logout)
+	call(callback, operationID, UserForSDK.Logout)
 }
 
 func SetAppBackgroundStatus(callback open_im_sdk_callback.Base, operationID string, isBackground bool) {
-	BaseCaller(userForSDK.SetAppBackgroundStatus, callback, isBackground, operationID)
+	BaseCaller(UserForSDK.SetAppBackgroundStatus, callback, isBackground, operationID)
 }
 
 func GetLoginStatus() int32 {
-	if userForSDK == nil {
-		log.Error("", "userForSDK == nil")
+	if UserForSDK == nil {
+		log.Error("", "UserForSDK == nil")
 		return -1
 	}
-	if userForSDK.Ws() == nil {
-		log.Error("", "userForSDK.Ws() == nil")
+	if UserForSDK.Ws() == nil {
+		log.Error("", "UserForSDK.Ws() == nil")
 		return -2
 	}
-	return userForSDK.GetLoginStatus()
+	return UserForSDK.GetLoginStatus()
 }
 
 func GetLoginUser() string {
-	if userForSDK == nil {
-		log.Error("", "userForSDK == nil")
+	if UserForSDK == nil {
+		log.Error("", "UserForSDK == nil")
 		return ""
 	}
-	return userForSDK.GetLoginUser()
+	return UserForSDK.GetLoginUser()
 }

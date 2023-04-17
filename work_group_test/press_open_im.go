@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/test"
 )
@@ -17,7 +16,6 @@ func main() {
 	intervalTime = flag.Int("t", 0, "interval time mill second")
 	groupID = flag.String("gid", "1607724699", "groupID")
 	flag.Parse()
-	constant.OnlyForTest = 1
 	log.NewPrivateLog("", test.LogLevel)
 	n := test.GetGroupMemberNum(*groupID)
 	if n-3 < uint32(*senderNum) {

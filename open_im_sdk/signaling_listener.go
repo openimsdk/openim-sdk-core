@@ -6,25 +6,25 @@ import (
 )
 
 func SetSignalingListener(callback open_im_sdk_callback.OnSignalingListener) {
-	if callback == nil || userForSDK == nil {
-		log.Error("callback or userForSDK is nil")
+	if callback == nil || UserForSDK == nil {
+		log.Error("callback or UserForSDK is nil")
 		return
 	}
-	userForSDK.SetSignalingListener(callback)
+	UserForSDK.SetSignalingListener(callback)
 }
 
 func SetSignalingListenerForService(callback open_im_sdk_callback.OnSignalingListener) {
-	if callback == nil || userForSDK == nil {
-		log.Error("callback or userForSDK is nil")
+	if callback == nil || UserForSDK == nil {
+		log.Error("callback or UserForSDK is nil")
 		return
 	}
-	userForSDK.SetSignalingListenerForService(callback)
+	UserForSDK.SetSignalingListenerForService(callback)
 }
 
 func SetListenerForService(callback open_im_sdk_callback.OnListenerForService) {
-	if callback == nil || userForSDK == nil {
-		log.Error("callback or userForSDK is nil")
+	if callback == nil || UserForSDK == nil {
+		log.Error("callback or UserForSDK is nil")
 		return
 	}
-	userForSDK.SetListenerForService(callback)
+	UserForSDK.SetListenerForService(callback)
 }

@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"reflect"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 )
 
 func isNumeric(kind reflect.Kind) bool {
@@ -74,7 +75,7 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 	if operationID == "" {
 		return nil, errs.ErrArgs.Wrap("call func operationID is empty")
 	}
-	//if err := CheckResourceLoad(userForSDK); err != nil {
+	//if err := CheckResourceLoad(UserForSDK); err != nil {
 	//	return nil, err
 	//}
 	fnv := reflect.ValueOf(fn)
@@ -88,8 +89,8 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 	}
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "operationID", operationID)
-	ctx = context.WithValue(ctx, "token", userForSDK.GetToken())
-	ctx = context.WithValue(ctx, "apiHost", userForSDK.GetConfig().ApiAddr)
+	ctx = context.WithValue(ctx, "token", UserForSDK.GetToken())
+	ctx = context.WithValue(ctx, "apiHost", UserForSDK.GetConfig().ApiAddr)
 
 	ins := make([]reflect.Value, 0, nin)
 	ins = append(ins, reflect.ValueOf(ctx))
@@ -189,7 +190,7 @@ func syncCall(operationID string, fn any, args ...any) string {
 		//callback.OnError(constant.ErrArgs.ErrCode, errs.ErrArgs.Wrap("operationID is empty").Error())
 		return ""
 	}
-	if err := CheckResourceLoad(userForSDK); err != nil {
+	if err := CheckResourceLoad(UserForSDK); err != nil {
 		//callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
 		return ""
 	}
@@ -207,8 +208,8 @@ func syncCall(operationID string, fn any, args ...any) string {
 	ins := make([]reflect.Value, 0, numIn)
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "operationID", operationID)
-	ctx = context.WithValue(ctx, "token", userForSDK.GetToken())
-	ctx = context.WithValue(ctx, "apiHost", userForSDK.GetConfig().ApiAddr)
+	ctx = context.WithValue(ctx, "token", UserForSDK.GetToken())
+	ctx = context.WithValue(ctx, "apiHost", UserForSDK.GetConfig().ApiAddr)
 
 	ins = append(ins, reflect.ValueOf(ctx))
 	for i := 0; i < len(args); i++ {
@@ -308,7 +309,7 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 		callback.OnError(constant.ErrArgs.ErrCode, errs.ErrArgs.Wrap("operationID is empty").Error())
 		return
 	}
-	if err := CheckResourceLoad(userForSDK); err != nil {
+	if err := CheckResourceLoad(UserForSDK); err != nil {
 		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
 		return
 	}

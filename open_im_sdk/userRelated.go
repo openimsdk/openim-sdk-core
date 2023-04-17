@@ -25,7 +25,7 @@ var UserSDKRwLock sync.RWMutex
 var UserRouterMap map[string]*login.LoginMgr
 
 // 客户端独立的user类
-var userForSDK *login.LoginMgr
+var UserForSDK *login.LoginMgr
 
 func GetUserWorker(uid string) *login.LoginMgr {
 	UserSDKRwLock.Lock()
@@ -80,7 +80,7 @@ func BaseCaller(funcName interface{}, callback open_im_sdk_callback.Base, args .
 		callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
 		return
 	}
-	if err := CheckResourceLoad(userForSDK); err != nil {
+	if err := CheckResourceLoad(UserForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
 		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
 		return
@@ -134,7 +134,7 @@ func SendMessageCaller(funcName interface{}, callback open_im_sdk_callback.SendM
 		callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
 		return
 	}
-	if err := CheckResourceLoad(userForSDK); err != nil {
+	if err := CheckResourceLoad(UserForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
 		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
 		return

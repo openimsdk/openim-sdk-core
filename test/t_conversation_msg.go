@@ -12,6 +12,8 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sync"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 )
 
 //func DotestSetConversationRecvMessageOpt() {
@@ -796,9 +798,12 @@ func DoTestMarkGroupMessageAsRead() {
 func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string) {
 	m := "test msg " + sendId + ":" + recvID + ":" + idx
 	operationID := utils.OperationIDGenerator()
-	s := DoTestCreateTextMessageReliability(allLoginMgr[index].mgr, m)
-	var mstruct sdk_struct.MsgStruct
-	_ = json.Unmarshal([]byte(s), &mstruct)
+	ctx := mcontext.NewCtx(operationID)
+	s, err := allLoginMgr[index].mgr.Conversation().CreateTextMessage(ctx, m)
+	if err != nil {
+		log.Error(operationID, "CreateTextMessage", err)
+		return
+	}
 
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
@@ -809,12 +814,12 @@ func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string)
 	testSendMsg.sendID = sendId
 	testSendMsg.recvID = recvID
 	testSendMsg.groupID = groupID
-	testSendMsg.msgID = mstruct.ClientMsgID
+	testSendMsg.msgID = s.ClientMsgID
 	log.Info(operationID, "SendMessage", sendId, recvID, groupID, testSendMsg.msgID, index)
 	if recvID != "" {
-		allLoginMgr[index].mgr.Conversation().SendMessage(&testSendMsg, s, recvID, "", utils.StructToJsonString(o), operationID)
+		allLoginMgr[index].mgr.Conversation().SendMessage(ctx, s, recvID, "", &o)
 	} else {
-		allLoginMgr[index].mgr.Conversation().SendMessage(&testSendMsg, s, "", groupID, utils.StructToJsonString(o), operationID)
+		allLoginMgr[index].mgr.Conversation().SendMessage(ctx, s, "", groupID, &o)
 	}
 	SendMsgMapLock.Lock()
 	defer SendMsgMapLock.Unlock()
