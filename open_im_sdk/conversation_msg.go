@@ -53,6 +53,18 @@ func PinConversation(callback open_im_sdk_callback.Base, operationID string, con
 	call(callback, operationID, userForSDK.Conversation().PinConversation, conversationID, isPinned)
 }
 
+func SetOneConversationPrivateChat(callback open_im_sdk_callback.Base, operationID string, conversationID string, isPrivate bool) {
+	call(callback, operationID, userForSDK.Conversation().SetOneConversationPrivateChat, conversationID, isPrivate)
+}
+
+func SetOneConversationBurnDuration(callback open_im_sdk_callback.Base, operationID string, conversationID string, duration int) {
+	call(callback, operationID, userForSDK.Conversation().SetOneConversationBurnDuration, conversationID, duration)
+}
+
+func SetOneConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, conversationID string, opt int) {
+	call(callback, operationID, userForSDK.Conversation().SetOneConversationRecvMessageOpt, conversationID, opt)
+}
+
 func GetTotalUnreadMsgCount(callback open_im_sdk_callback.Base, operationID string) {
 	call(callback, operationID, userForSDK.Conversation().GetTotalUnreadMsgCount)
 }

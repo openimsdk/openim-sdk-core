@@ -3,61 +3,60 @@ package test
 import (
 	"fmt"
 	"open_im_sdk/open_im_sdk"
-	"open_im_sdk/pkg/log"
 	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"golang.org/x/net/context"
 )
 
 type testSignalingListener struct {
+	ctx context.Context
 }
 
 func (s *testSignalingListener) OnHangUp(hangUpCallback string) {
-	//panic("implement me")
+	log.ZInfo(s.ctx, utils.GetSelfFuncName(), "OnHangUp ", hangUpCallback)
 }
 
 func (s *testSignalingListener) OnReceiveNewInvitation(receiveNewInvitationCallback string) {
-	log.Info("", utils.GetSelfFuncName(), "listener ", receiveNewInvitationCallback)
+	log.ZInfo(s.ctx, utils.GetSelfFuncName(), "OnReceiveNewInvitation ", receiveNewInvitationCallback)
 }
 
 func (s *testSignalingListener) OnInviteeAccepted(inviteeAcceptedCallback string) {
-	log.Info("", utils.GetSelfFuncName(), "listener ", inviteeAcceptedCallback)
+	log.ZInfo(s.ctx, utils.GetSelfFuncName(), "OnInviteeAccepted ", inviteeAcceptedCallback)
 }
 
 func (s *testSignalingListener) OnInviteeRejected(inviteeRejectedCallback string) {
-	log.Info("", utils.GetSelfFuncName(), "listener ", inviteeRejectedCallback)
+	log.ZInfo(s.ctx, utils.GetSelfFuncName(), "OnInviteeRejected ", inviteeRejectedCallback)
 }
 
-//
 func (s *testSignalingListener) OnInvitationCancelled(invitationCancelledCallback string) {
-	log.Info("", utils.GetSelfFuncName(), "listener ", invitationCancelledCallback)
+	log.ZInfo(s.ctx, utils.GetSelfFuncName(), "OnInvitationCancelled ", invitationCancelledCallback)
 }
 
-//
 func (s *testSignalingListener) OnInvitationTimeout(invitationTimeoutCallback string) {
-	log.Info("", utils.GetSelfFuncName(), "listener ", invitationTimeoutCallback)
+	log.ZInfo(s.ctx, utils.GetSelfFuncName(), "OnInvitationTimeout ", invitationTimeoutCallback)
 }
 
 func (s *testSignalingListener) OnInviteeAcceptedByOtherDevice(inviteeAcceptedCallback string) {
-	log.Info("", utils.GetSelfFuncName(), "listener ", inviteeAcceptedCallback)
+	log.ZInfo(s.ctx, utils.GetSelfFuncName(), "OnInviteeAcceptedByOtherDevice ", inviteeAcceptedCallback)
 }
 
 func (s *testSignalingListener) OnInviteeRejectedByOtherDevice(inviteeRejectedCallback string) {
-	log.Info("", utils.GetSelfFuncName(), "listener ", inviteeRejectedCallback)
+	log.ZInfo(s.ctx, utils.GetSelfFuncName(), "OnInviteeRejectedByOtherDevice ", inviteeRejectedCallback)
 }
 
 func (s *testSignalingListener) OnRoomParticipantConnected(onRoomChangeCallback string) {
-	log.Info("", utils.GetSelfFuncName(), "listener ", onRoomChangeCallback)
+	log.ZInfo(s.ctx, utils.GetSelfFuncName(), "onRoomChangeCallback", onRoomChangeCallback)
 }
 
 func (s *testSignalingListener) OnRoomParticipantDisconnected(onRoomChangeCallback string) {
-	log.Info("", utils.GetSelfFuncName(), "listener ", onRoomChangeCallback)
+	log.ZInfo(s.ctx, utils.GetSelfFuncName(), "onRoomChangeCallback", onRoomChangeCallback)
 }
 
 type testSingaling struct {
 	baseCallback
 }
-
-var TestRoomID = "room_id_111"
 
 func DoTestInviteInGroup() {
 	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}

@@ -31,3 +31,7 @@ func SignalingHungUp(callback open_im_sdk_callback.Base, operationID string, sig
 func SignalingGetRoomByGroupID(callback open_im_sdk_callback.Base, operationID string, groupID string) {
 	call(callback, operationID, userForSDK.Signaling().SignalingGetRoomByGroupID, groupID)
 }
+
+func SignalingGetTokenByRoomID(callback open_im_sdk_callback.Base, operationID string, roomID string) {
+	call(callback, operationID, userForSDK.Signaling().SignalingGetTokenByRoomID, roomID)
+}

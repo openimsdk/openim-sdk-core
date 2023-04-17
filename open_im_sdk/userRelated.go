@@ -65,9 +65,6 @@ type Caller interface {
 	SendMessageCaller(funcName interface{}, messageCallback open_im_sdk_callback.SendMsgCallBack, args ...interface{})
 }
 
-type name struct {
-}
-
 var ErrNotSetCallback = errors.New("not set callback to call")
 var ErrNotSetFunc = errors.New("not set func to call")
 

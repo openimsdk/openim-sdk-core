@@ -15,6 +15,8 @@ import (
 	"os"
 	"runtime"
 	"time"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 )
 
 var loggerf *X.Logger
@@ -438,6 +440,7 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
 
 	operationID := utils.OperationIDGenerator()
+	ctx := mcontext.NewCtx(operationID)
 	var testinit testInitLister
 	lg := new(login.LoginMgr)
 	log.Info(operationID, "new login ", lg)
@@ -465,7 +468,7 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 
 	var callback BaseSuccessFailed
 	callback.funcName = utils.GetSelfFuncName()
-	lg.Login(&callback, uid, tk, operationID)
+	lg.Login(ctx, uid, tk)
 
 	for {
 		if callback.errCode == 1 && testConversation.SyncFlag == 1 {
@@ -474,8 +477,6 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 		} else {
 			log.Warn(operationID, "waiting login...", uid, callback.errCode, testConversation.SyncFlag)
 		}
-		//		log.Warn(operationID, "waiting login...", uid)
-		//	time.Sleep(100 * time.Millisecond)
 	}
 
 }
@@ -490,6 +491,7 @@ func PressInitAndLogin(index int, uid, tk, ws, api string) {
 	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
 
 	operationID := utils.OperationIDGenerator()
+	ctx := mcontext.NewCtx(operationID)
 	var testinit testInitLister
 	lg := new(login.LoginMgr)
 	log.Info(operationID, "new login ", lg)
@@ -515,31 +517,16 @@ func PressInitAndLogin(index int, uid, tk, ws, api string) {
 	var groupListener testGroupListener
 	lg.SetGroupListener(groupListener)
 
-	var organizationListener testOrganizationListener
-	lg.SetOrganizationListener(organizationListener)
-
-	var callback BaseSuccessFailed
-	callback.funcName = utils.GetSelfFuncName()
-	lg.Login(&callback, uid, tk, operationID)
-
-	for {
-		if callback.errCode == 1 {
-			log.Warn(operationID, "login ok ", uid)
-			return
-		} else {
-			log.Warn(operationID, "waiting login...", uid, callback.errCode)
-		}
-		//		log.Warn(operationID, "waiting login...", uid)
-		//	time.Sleep(100 * time.Millisecond)
+	err := lg.Login(ctx, uid, tk)
+	if err != nil {
+		log.Error(operationID, "login failed", err)
 	}
-
 }
 
 func DoTest(uid, tk, ws, api string) {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api // "http://120.24.45.199:10000"
-	//	cf.IpWsAddr = "wss://open-im.rentsoft.cn/wss"
-	cf.WsAddr = ws //"ws://120.24.45.199:17778"
+	cf.WsAddr = ws   //"ws://120.24.45.199:17778"
 	cf.Platform = 1
 	cf.DataDir = "./"
 

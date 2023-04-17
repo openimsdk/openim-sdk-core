@@ -3,7 +3,6 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	"open_im_sdk/internal/login"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
@@ -104,8 +103,8 @@ func DoTestSetMessageReactionExtensions() {
 	s.GroupID = "1420026997"
 	s.ClientMsgID = "831c270ae1d7472dc633e7be06b37db5"
 	//params = append(params, &temp1)
-	open_im_sdk.SetMessageReactionExtensions(testSetMessageReactionExtensionsCallBack, testSetMessageReactionExtensionsCallBack.OperationID, utils.StructToJsonString(s),
-		utils.StructToJsonString(params))
+	// open_im_sdk.SetMessageReactionExtensions(testSetMessageReactionExtensionsCallBack, testSetMessageReactionExtensionsCallBack.OperationID, utils.StructToJsonString(s),
+	// 	utils.StructToJsonString(params))
 }
 func DoTestAddMessageReactionExtensions(index int, operationID string) {
 	var testAddMessageReactionExtensionsCallBack AddMessageReactionExtensionsCallBack
@@ -124,8 +123,8 @@ func DoTestAddMessageReactionExtensions(index int, operationID string) {
 	s.GroupID = "1623878302774460418"
 	s.ClientMsgID = "7ca152a836a0f784c07a3b74d4e2a97d"
 	//params = append(params, &temp1)
-	open_im_sdk.AddMessageReactionExtensions(testAddMessageReactionExtensionsCallBack, testAddMessageReactionExtensionsCallBack.OperationID, utils.StructToJsonString(s),
-		utils.StructToJsonString(params))
+	// open_im_sdk.AddMessageReactionExtensions(testAddMessageReactionExtensionsCallBack, testAddMessageReactionExtensionsCallBack.OperationID, utils.StructToJsonString(s),
+	// 	utils.StructToJsonString(params))
 }
 func DoTestGetMessageListReactionExtensions(operationID string) {
 	var testGetMessageReactionExtensionsCallBack GetMessageListReactionExtensionsCallBack
@@ -143,7 +142,7 @@ func DoTestGetMessageListReactionExtensions(operationID string) {
 	ss = append(ss, s)
 	ss = append(ss, s1)
 	//params = append(params, &temp1)
-	open_im_sdk.GetMessageListReactionExtensions(testGetMessageReactionExtensionsCallBack, testGetMessageReactionExtensionsCallBack.OperationID, utils.StructToJsonString(ss))
+	// open_im_sdk.GetMessageListReactionExtensions(testGetMessageReactionExtensionsCallBack, testGetMessageReactionExtensionsCallBack.OperationID, utils.StructToJsonString(ss))
 }
 func DoTestUpdateFcmToken() {
 	var testUpdateFcmTokenCallBack UpdateFcmTokenCallBack
@@ -384,21 +383,9 @@ func (t TestGetConversationRecvMessageOpt) OnSuccess(data string) {
 	fmt.Printf("TestGetConversationRecvMessageOpt , success,data:%v\n", data)
 }
 
-//	func DoTestGetOneConversation(sourceID string, sessionType int) {
-//		var test TestGetOneConversationCallBack
-//		//GetOneConversation(Friend_uid, SingleChatType, test)
-//		open_im_sdk.GetOneConversation(sourceID, sessionType, test)
-//
-// }
 func DoTestCreateTextMessage(text string) string {
 	operationID := utils.OperationIDGenerator()
 	return open_im_sdk.CreateTextMessage(operationID, text)
-}
-
-func DoTestCreateTextMessageReliability(mgr *login.LoginMgr, text string) string {
-	operationID := utils.OperationIDGenerator()
-	return mgr.Conversation().CreateTextMessage(text, operationID)
-
 }
 
 func DoTestCreateImageMessageFromFullPath() string {
