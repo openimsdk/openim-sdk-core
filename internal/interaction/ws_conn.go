@@ -42,7 +42,7 @@ func (u *WsConn) IsInterruptReconnection() bool {
 }
 
 func NewWsConn(listener open_im_sdk_callback.OnConnListener, token string, loginUserID string, isCompression bool, conversationCh chan common.Cmd2Value) *WsConn {
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), "operationID", utils.OperationIDGenerator()) // todo
 	p := WsConn{listener: listener, token: token, loginUserID: loginUserID, IsCompression: isCompression, ConversationCh: conversationCh,
 		encoder: NewGobEncoder(), compressor: NewGzipCompressor()}
 	p.conn = NewWebSocket(WebSocket)

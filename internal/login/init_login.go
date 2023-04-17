@@ -81,6 +81,14 @@ type LoginMgr struct {
 	postApi   *ws.PostApi
 }
 
+func (u *LoginMgr) GetToken() string {
+	return u.token
+}
+
+func (u *LoginMgr) GetConfig() sdk_struct.IMConfig {
+	return u.imConfig
+}
+
 func (u *LoginMgr) Push() *comm2.Push {
 	return u.push
 }

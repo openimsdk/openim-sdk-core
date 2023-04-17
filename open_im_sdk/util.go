@@ -66,17 +66,17 @@ func setNumeric(in interface{}, out interface{}) {
 }
 
 func call_(operationID string, fn any, args ...any) (res any, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("call panic: %+v", r)
-		}
-	}()
+	//defer func() {
+	//	if r := recover(); r != nil {
+	//		err = fmt.Errorf("call panic: %+v", r)
+	//	}
+	//}()
 	if operationID == "" {
 		return nil, errs.ErrArgs.Wrap("call func operationID is empty")
 	}
-	if err := CheckResourceLoad(userForSDK); err != nil {
-		return nil, err
-	}
+	//if err := CheckResourceLoad(userForSDK); err != nil {
+	//	return nil, err
+	//}
 	fnv := reflect.ValueOf(fn)
 	if fnv.Kind() != reflect.Func {
 		return nil, fmt.Errorf("call func fn is not func, is %T", fn)
@@ -86,8 +86,13 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 	if len(args)+1 != nin {
 		return nil, fmt.Errorf("go code error: fn in args num is not match")
 	}
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "operationID", operationID)
+	ctx = context.WithValue(ctx, "token", userForSDK.GetToken())
+	ctx = context.WithValue(ctx, "apiHost", userForSDK.GetConfig().ApiAddr)
+
 	ins := make([]reflect.Value, 0, nin)
-	ins = append(ins, reflect.ValueOf(context.WithValue(context.Background(), "operationID", operationID)))
+	ins = append(ins, reflect.ValueOf(ctx))
 	for i := 0; i < len(args); i++ {
 		inFnField := fnt.In(i + 1)
 		arg := reflect.TypeOf(args[i])
@@ -174,12 +179,12 @@ func call(callback open_im_sdk_callback.Base, operationID string, fn any, args .
 }
 
 func syncCall(operationID string, fn any, args ...any) string {
-	defer func() {
-		if r := recover(); r != nil {
-			//callback.OnError(10001, fmt.Sprintf("%+v", r))
-			return
-		}
-	}()
+	//defer func() {
+	//	if r := recover(); r != nil {
+	//		//callback.OnError(10001, fmt.Sprintf("%+v", r))
+	//		return
+	//	}
+	//}()
 	if operationID == "" {
 		//callback.OnError(constant.ErrArgs.ErrCode, errs.ErrArgs.Wrap("operationID is empty").Error())
 		return ""
@@ -202,6 +207,9 @@ func syncCall(operationID string, fn any, args ...any) string {
 	ins := make([]reflect.Value, 0, numIn)
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "operationID", operationID)
+	ctx = context.WithValue(ctx, "token", userForSDK.GetToken())
+	ctx = context.WithValue(ctx, "apiHost", userForSDK.GetConfig().ApiAddr)
+
 	ins = append(ins, reflect.ValueOf(ctx))
 	for i := 0; i < len(args); i++ {
 		tag := fnt.In(i + 1)

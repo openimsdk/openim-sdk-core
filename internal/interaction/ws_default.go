@@ -17,7 +17,8 @@ type Default struct {
 
 func (d *Default) LocalAddr() string {
 	//TODO implement me
-	panic("implement me")
+	//panic("implement me")
+	return ""
 }
 
 func NewWebSocket(connType int) *Default {
