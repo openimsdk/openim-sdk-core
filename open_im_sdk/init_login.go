@@ -6,10 +6,13 @@ import (
 	"open_im_sdk/internal/login"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/utils"
+
+	localLog "open_im_sdk/pkg/log"
 	"open_im_sdk/sdk_struct"
 	"strings"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 )
 
 func SdkVersion() string {
@@ -29,30 +32,33 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		fmt.Println(operationID, "Unmarshal failed ", err.Error(), config)
 		return false
 	}
-	log.NewPrivateLog("", sdk_struct.SvrConf.LogLevel)
+	if err := log.InitFromConfig("open_im_sdk"); err != nil {
+		fmt.Println(operationID, "log init failed ", err.Error())
+		return false
+	}
+
+	localLog.NewPrivateLog("", sdk_struct.SvrConf.LogLevel)
+	ctx := mcontext.NewCtx(operationID)
 	if !strings.Contains(sdk_struct.SvrConf.ApiAddr, "http") {
-		log.Error(operationID, "api is http protocol", sdk_struct.SvrConf.ApiAddr)
+		log.ZError(ctx, "api is http protocol, api format is invalid", nil)
 		return false
 	}
 	if !strings.Contains(sdk_struct.SvrConf.WsAddr, "ws") {
-		log.Error(operationID, "ws is ws protocol", sdk_struct.SvrConf.ApiAddr)
+		log.ZError(ctx, "ws is ws protocol, ws format is invalid", nil)
 		return false
 	}
 
-	log.Info(operationID, "config ", config, sdk_struct.SvrConf)
-	log.NewInfo(operationID, utils.GetSelfFuncName(), config, SdkVersion())
+	log.ZInfo(ctx, "config", sdk_struct.SvrConf, "sdkVersion", SdkVersion())
 	if listener == nil || config == "" {
-		log.Error(operationID, "listener or config is nil")
+		log.ZError(ctx, "listener or config is nil", nil)
 		return false
 	}
-
 	userForSDK = new(login.LoginMgr)
-
 	return userForSDK.InitSDK(sdk_struct.SvrConf, listener, operationID)
 }
 
 func Login(callback open_im_sdk_callback.Base, operationID string, userID, token string) {
-	call(callback, operationID, userForSDK.WakeUp, userID, token)
+	call(callback, operationID, userForSDK.Login, userID, token)
 }
 
 func WakeUp(callback open_im_sdk_callback.Base, operationID string) {

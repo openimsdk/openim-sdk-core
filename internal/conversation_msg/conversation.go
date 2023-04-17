@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
@@ -19,6 +18,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 
 	pbConversation "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
 	pbMsg "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/msg"
@@ -289,7 +290,6 @@ func (c *Conversation) FixVersionData(ctx context.Context) {
 
 func (c *Conversation) SyncOneConversation(conversationID, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "conversationID: ", conversationID)
-	// todo
 }
 
 func (c *Conversation) getHistoryMessageList(ctx context.Context, req sdk.GetHistoryMessageListParams, isReverse bool) ([]*sdk_struct.MsgStruct, error) {

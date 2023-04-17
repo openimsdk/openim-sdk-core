@@ -97,6 +97,7 @@ func notifyCh(ch chan GeneralWsResp, value GeneralWsResp, timeout int64) error {
 	}
 }
 
+// write a unit test for this function
 func (u *WsRespAsyn) notifyResp(wsResp GeneralWsResp) error {
 	u.wsMutex.Lock()
 	defer u.wsMutex.Unlock()

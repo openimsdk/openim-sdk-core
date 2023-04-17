@@ -30,6 +30,7 @@ var (
 )
 
 var coreMgrLock sync.RWMutex
+
 var allLoginMgr map[int]*CoreNode
 
 var allLoginMgrtmp []*CoreNode
