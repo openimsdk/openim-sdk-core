@@ -44,7 +44,7 @@ func InitOnce(config *sdk_struct.IMConfig) bool {
 }
 
 func CheckToken(userID, token string, operationID string) error {
-	err, _ := login.CheckToken(userID, token, operationID)
+	_, err := login.CheckToken(userID, token, operationID)
 	return err
 }
 

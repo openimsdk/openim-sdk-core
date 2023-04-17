@@ -575,13 +575,16 @@ func (m *BatchMsg) OnRecvNewMessages(groupMsgReceiptList string) {
 	log.Info("OnRecvNewMessages , ", groupMsgReceiptList)
 }
 
+func (m *BatchMsg) OnRecvOfflineNewMessages(messageList string) {
+	log.Info("OnRecvOfflineNewMessages , ", messageList)
+}
+
 func (m *MsgListenerCallBak) OnRecvNewMessage(msg string) {
 	var mm sdk_struct.MsgStruct
 	err := json.Unmarshal([]byte(msg), &mm)
 	if err != nil {
 		log.Error("", "Unmarshal failed", err.Error())
 	} else {
-		//		log.Info("", "recv time: ", time.Now().UnixNano(), "send_time: ", mm.SendTime, " client_msg_id: ", mm.ClientMsgID, "server_msg_id", mm.ServerMsgID)
 		RecvMsgMapLock.Lock()
 		defer RecvMsgMapLock.Unlock()
 		t := SendRecvTime{SendIDRecvID: mm.SendID + mm.RecvID, RecvTime: utils.GetCurrentTimestampByMill()}

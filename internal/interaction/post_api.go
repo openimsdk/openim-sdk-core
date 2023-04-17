@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-//no share
+// no share
 type PostApi struct {
 	token      string
 	apiAddress string

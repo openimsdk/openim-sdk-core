@@ -1,7 +1,6 @@
 package heartbeart
 
 import (
-	"context"
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
@@ -14,6 +13,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -75,7 +75,7 @@ func (u *Heartbeat) Run() {
 	for {
 		reqTimeout = defaultTimeout
 		operationID := utils.OperationIDGenerator()
-		ctx := context.WithValue(context.Background(), "operationID", operationID)
+		ctx := mcontext.NewCtx(operationID)
 		//if constant.OnlyForTest == 1 {
 		//	time.Sleep(5 * time.Second)
 		//	var groupIDList []string

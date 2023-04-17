@@ -10,8 +10,8 @@ import (
 func main() {
 	//APIADDR := "https://test-web.rentsoft.cn/api"
 	//WSADDR := "wss://test-web.rentsoft.cn/msg_gateway"
-	APIADDR := "http://59.36.173.89:10002"
-	WSADDR := "ws://59.36.173.89:10001"
+	APIADDR := "http://43.154.157.177:10002"
+	WSADDR := "ws://43.154.157.177:10001"
 	REGISTERADDR := APIADDR + "/user_register"
 	ACCOUNTCHECK := APIADDR + "/manager/account_check"
 	TOKENADDR := APIADDR + "/auth/user_token"
@@ -23,7 +23,7 @@ func main() {
 	test.SENDINTERVAL = SENDINTERVAL
 	test.WSADDR = WSADDR
 	test.ACCOUNTCHECK = ACCOUNTCHECK
-	strMyUidx := "1010930629"
+	strMyUidx := "kernaltestuid2"
 
 	//	var onlineNum *int          //Number of online users
 	//	var senderNum *int          //Number of users sending messages
@@ -40,7 +40,7 @@ func main() {
 	tokenx := test.RunGetToken(strMyUidx)
 	fmt.Println(tokenx)
 	test.InOutDoTest(strMyUidx, tokenx, test.WSADDR, test.APIADDR)
-	println("start")
+	// println("start")
 	//test.DoTestCreateGroup()
 	//test.DoTestSearchLocalMessages()
 	// test.DoTestInviteInGroup()

@@ -43,6 +43,14 @@ func SetUserListener(listener open_im_sdk_callback.OnUserListener) {
 	userForSDK.SetUserListener(listener)
 }
 
+func SetFriendListener(listener open_im_sdk_callback.OnFriendshipListener) {
+	if listener == nil || userForSDK == nil {
+		log.Error("callback or userForSDK is nil")
+		return
+	}
+	userForSDK.SetFriendListener(listener)
+}
+
 func SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMomentsListener) {
 	if listener == nil || userForSDK == nil {
 		log.Error("callback or userForSDK is nil")
