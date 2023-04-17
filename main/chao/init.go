@@ -2,6 +2,10 @@ package chao
 
 import "open_im_sdk/sdk_struct"
 
+var HOST = "192.168.44.128"
+var APIADDR = "http://" + HOST + ":10002"
+var WSADDR = "ws://" + HOST + ":10001"
+
 func GetConf() sdk_struct.IMConfig {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = APIADDR
