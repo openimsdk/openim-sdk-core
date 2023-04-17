@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk"
 	"time"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 )
 
@@ -19,8 +19,10 @@ var (
 )
 
 func init() {
+	fmt.Println(ctx, "login success ssss")
 	listner := &Listener{}
 	config := getConf(APIADDR, WSADDR)
+	util.BaseURL = APIADDR
 	isInit := open_im_sdk.InitSDK(listner, "test", string(GetResValue(json.Marshal(config))))
 	if !isInit {
 		panic("init sdk failed")
@@ -30,7 +32,8 @@ func init() {
 	if err := open_im_sdk.UserForSDK.Login(ctx, UserID, token); err != nil {
 		panic(err)
 	}
-	log.ZDebug(ctx, "login success")
+	util.Token = token
+	fmt.Println(ctx, "login success")
 }
 
 func GetUserToken(ctx context.Context, userID string) (string, error) {
