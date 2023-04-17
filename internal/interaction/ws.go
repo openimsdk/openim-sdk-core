@@ -178,11 +178,13 @@ func (w *Ws) reConnSleep(operationID string, sleep int32) (error, bool) {
 		log.Error(operationID, "ReConn failed ", err.Error(), "is need re connect ", isNeedReConn)
 		time.Sleep(time.Duration(sleep) * time.Second)
 	} else {
-		resp, err := w.SendReqWaitResp(&server_api_params.SetAppBackgroundStatusReq{UserID: w.loginUserID, IsBackground: w.IsBackground}, constant.WsSetBackgroundStatus, 5, 2, w.loginUserID, operationID)
-		if err != nil {
-			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsSetBackgroundStatus, 5, w.loginUserID, resp)
-		}
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.SyncConversation, Args: operationID}, w.conversationCH)
+		go func() {
+			resp, err := w.SendReqWaitResp(&server_api_params.SetAppBackgroundStatusReq{UserID: w.loginUserID, IsBackground: w.IsBackground}, constant.WsSetBackgroundStatus, 5, 2, w.loginUserID, operationID)
+			if err != nil {
+				log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WsSetBackgroundStatus, 5, w.loginUserID, resp)
+			}
+			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.SyncConversation, Args: operationID}, w.conversationCH)
+		}()
 	}
 	return err, isNeedReConn
 }
