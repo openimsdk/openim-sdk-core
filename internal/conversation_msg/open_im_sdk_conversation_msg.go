@@ -1144,6 +1144,9 @@ func (c *Conversation) sendMessageToServer(s *sdk_struct.MsgStruct, lc *model_st
 			c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
 		}
 	}
+	if resp == nil {
+		c.checkErrAndUpdateMessage(callback, 302, errors.New("send message failed"), s, lc, operationID)
+	}
 	var sendMsgResp server_api_params.UserSendMsgResp
 	_ = proto.Unmarshal(resp.Data, &sendMsgResp)
 	s.SendTime = sendMsgResp.SendTime

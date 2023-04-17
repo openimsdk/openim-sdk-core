@@ -139,7 +139,7 @@ func (u *WsConn) writeBinaryMsg(msg GeneralWsReq) (*websocket.Conn, error) {
 		} else {
 			data = buff.Bytes()
 		}
-		return u.conn, utils.Wrap(u.conn.WriteMessage(websocket.BinaryMessage, data), "")
+		return u.conn, utils.Wrap(u.conn.WriteMessage(websocket.BinaryMessage, data), u.conn.LocalAddr().String())
 	} else {
 		return nil, utils.Wrap(errors.New("conn==nil"), "")
 	}
@@ -258,6 +258,7 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool, bool)
 			return nil, utils.Wrap(err, errMsg), true, false
 		}
 	}
+	log.Info(operationID, "ws connect end, success : ", conn.LocalAddr())
 	u.listener.OnConnectSuccess()
 	u.loginStatus = constant.LoginSuccess
 	u.conn = conn
