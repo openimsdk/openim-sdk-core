@@ -2,9 +2,6 @@ package group
 
 import (
 	"context"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
@@ -12,9 +9,13 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/syncer"
 	"sync"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
 func NewGroup(loginUserID string, db db_interface.DataBase, p *ws.PostApi,
@@ -169,14 +170,14 @@ func (g *Group) GetJoinedDiffusionGroupIDListFromSvr(ctx context.Context) ([]str
 
 func (g *Group) SyncJoinedGroupList(ctx context.Context) {
 	if err := g.SyncJoinedGroup(ctx); err != nil {
-		// tood log
+		log.ZError(ctx, "SyncJoinedGroup failed", err)
 	}
 }
 
 func (g *Group) SyncJoinedGroupMemberForFirstLogin(ctx context.Context) {
 	groups, err := g.GetAndSyncJoinedGroup(ctx)
 	if err != nil {
-		log.Error("SyncJoinedGroupMemberForFirstLogin", "GetAndSyncJoinedGroup failed", err.Error())
+		log.ZError(ctx, "GetAndSyncJoinedGroup failed", err)
 		return
 	}
 	var wg sync.WaitGroup
@@ -185,7 +186,7 @@ func (g *Group) SyncJoinedGroupMemberForFirstLogin(ctx context.Context) {
 		go func(groupID string) {
 			defer wg.Done()
 			if err := g.SyncGroupMember(ctx, groupID); err != nil {
-				log.Error("SyncJoinedGroupMemberForFirstLogin", "SyncGroupMember failed", err.Error())
+				log.ZError(ctx, "SyncGroupMember failed", err)
 			}
 		}(group.GroupID)
 	}
