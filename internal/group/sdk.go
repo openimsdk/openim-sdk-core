@@ -60,7 +60,7 @@ func (g *Group) CreateGroupV2(ctx context.Context, req *group.CreateGroupReq) (*
 }
 
 func (g *Group) JoinGroup(ctx context.Context, groupID, reqMsg string, joinSource int32) error {
-	if err := util.ApiPost(ctx, constant.JoinGroupRouter, &group.JoinGroupReq{GroupID: groupID, ReqMessage: reqMsg, JoinSource: joinSource}, nil); err != nil {
+	if err := util.ApiPost(ctx, constant.JoinGroupRouter, &group.JoinGroupReq{GroupID: groupID, ReqMessage: reqMsg, JoinSource: joinSource, InviterUserID: g.loginUserID}, nil); err != nil {
 		return err
 	}
 	if err := g.SyncSelfGroupApplication(ctx); err != nil {

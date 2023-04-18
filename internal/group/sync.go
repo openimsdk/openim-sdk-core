@@ -21,11 +21,14 @@ func (g *Group) SyncGroupMember(ctx context.Context, groupID string) error {
 }
 
 func (g *Group) SyncJoinedGroup(ctx context.Context) error {
-	_, err := g.GetAndSyncJoinedGroup(ctx)
+	_, err := g.syncJoinedGroup(ctx)
+	if err != nil {
+		return err
+	}
 	return err
 }
 
-func (g *Group) GetAndSyncJoinedGroup(ctx context.Context) ([]*sdkws.GroupInfo, error) {
+func (g *Group) syncJoinedGroup(ctx context.Context) ([]*sdkws.GroupInfo, error) {
 	groups, err := g.GetServerJoinGroup(ctx)
 	if err != nil {
 		return nil, err
@@ -54,6 +57,12 @@ func (g *Group) SyncSelfGroupApplication(ctx context.Context) error {
 	}
 	// todo
 	return nil
+}
+
+func (g *Group) SyncJoinedGroupList(ctx context.Context) {
+	if err := g.SyncJoinedGroup(ctx); err != nil {
+		// tood log
+	}
 }
 
 func (g *Group) SyncAdminGroupApplication(ctx context.Context) error {
