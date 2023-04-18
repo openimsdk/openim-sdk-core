@@ -14,13 +14,10 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	userPb "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/user"
 
-	//"github.com/mitchellh/mapstructure"
-
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
-	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -70,7 +67,7 @@ func (u *User) initSyncer() {
 	)
 }
 
-func (u *User) DoNotification(msg *api.MsgData) {
+func (u *User) DoNotification(msg *sdkws.MsgData) {
 	operationID := utils.OperationIDGenerator()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg)
 	if u.listener == nil {
@@ -128,6 +125,7 @@ func (u *User) GetSingleUserFromSvr(ctx context.Context, userID string) (*model_
 func (u *User) getSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, error) {
 	userInfo, err := u.GetLoginUser(ctx, u.loginUserID)
 	if err != nil {
+		log.ZDebug(ctx, "GetLoginUser failed, userID: %s, err: %s", u.loginUserID, err.Error())
 		return u.GetSingleUserFromSvr(ctx, u.loginUserID)
 	}
 	return userInfo, nil

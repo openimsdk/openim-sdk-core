@@ -239,7 +239,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	if err != nil {
 		return errs.ErrDatabase.Wrap(err.Error())
 	}
-	log.ZInfo(ctx, "NewDataBase ok ", "userID", userID, "dataDir", sdk_struct.SvrConf.DataDir, "login cost time: ", time.Since(t1))
+	log.ZDebug(ctx, "NewDataBase ok ", "userID", userID, "dataDir", sdk_struct.SvrConf.DataDir, "login cost time: ", time.Since(t1))
 
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
 	u.cmdWsCh = make(chan common.Cmd2Value, 10)
@@ -271,11 +271,10 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	if u.businessListener != nil {
 		u.business.SetListener(u.businessListener)
 	}
-	log.ZInfo(ctx, u.imConfig.ObjectStorage, "SyncLoginUserInfo login cost time: ", time.Since(t1))
 	u.push = comm2.NewPush(p, u.imConfig.Platform, u.loginUserID)
 	go u.forcedSynchronization()
-	log.ZInfo(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
-	log.ZInfo(ctx, "all channel ", "pushMsgAndMaxSeqCh", u.pushMsgAndMaxSeqCh, "conversationCh", u.conversationCh, "heartbeatCmdCh", u.heartbeatCmdCh, "cmdWsCh", u.cmdWsCh)
+	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
+	log.ZDebug(ctx, "all channel ", "pushMsgAndMaxSeqCh", u.pushMsgAndMaxSeqCh, "conversationCh", u.conversationCh, "heartbeatCmdCh", u.heartbeatCmdCh, "cmdWsCh", u.cmdWsCh)
 	wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID, u.imConfig.IsCompression, u.conversationCh)
 	wsRespAsyn := ws.NewWsRespAsyn()
 	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh, u.conversationCh)
@@ -306,9 +305,9 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq, u.imConfig.IsExternalExtensions)
 	if u.batchMsgListener != nil {
 		u.conversation.SetBatchMsgListener(u.batchMsgListener)
-		log.ZInfo(ctx, "SetBatchMsgListener", "batchMsgListener", u.batchMsgListener)
+		log.ZDebug(ctx, "SetBatchMsgListener", "batchMsgListener", u.batchMsgListener)
 	}
-	log.ZDebug(ctx, "SyncConversations begin ")
+	log.ZDebug(ctx, "SyncConversations begin")
 	u.conversation.SyncConversations(ctx, time.Second*2)
 	go u.conversation.SyncConversationUnreadCount(mcontext.GetOperationID(ctx))
 	go common.DoListener(u.conversation)

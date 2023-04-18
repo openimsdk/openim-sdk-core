@@ -33,7 +33,6 @@ func init() {
 		panic(err)
 	}
 	util.Token = token
-	fmt.Println(ctx, "login success")
 }
 
 func GetUserToken(ctx context.Context, userID string) (string, error) {
