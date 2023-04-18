@@ -1,7 +1,7 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230417035738-1578176f3986 h1:TkMWD/Zs1iz2dyumNzxP1mSQctWCTdpD8nQlWxiP/gk=
-github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230417035738-1578176f3986/go.mod h1:+3Rx56k7kWCa++H30DIrVQtqlZKxQ8ttJP5ozQTNB0w=
+github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230418025029-bf86c53915a4 h1:4mLV1NCSnVMiphBEz1SQnwvy3ckQfsMmPXGFlexCXOE=
+github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230418025029-bf86c53915a4/go.mod h1:+3Rx56k7kWCa++H30DIrVQtqlZKxQ8ttJP5ozQTNB0w=
 github.com/QcloudApi/qcloud_sign_golang v0.0.0-20141224014652-e4130a326409/go.mod h1:1pk82RBxDY/JZnPQrtqHlUFfCctgdorsd9M06fMynOM=
 github.com/aliyun/aliyun-oss-go-sdk v2.2.1+incompatible h1:uuJIwCFhbZy+zdvLy5zrcIToPEQP0s5CFOZ0Zj03O/w=
 github.com/aliyun/aliyun-oss-go-sdk v2.2.1+incompatible/go.mod h1:T/Aws4fEfogEE9v+HPhhw+CntffsBHJ8nXQCwKr0/g8=

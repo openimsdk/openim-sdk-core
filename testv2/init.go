@@ -12,14 +12,14 @@ import (
 	"time"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
 )
 
 var (
-	ctx = mcontext.NewCtx("test")
+	ctx = mcontext.NewCtx(utils.GetFuncName(1) + ":test")
 )
 
 func init() {
-	fmt.Println(ctx, "login success ssss")
 	listner := &Listener{}
 	config := getConf(APIADDR, WSADDR)
 	util.BaseURL = APIADDR

@@ -1,27 +1,23 @@
 package testv2
 
-import (
-	"fmt"
-)
-
 type Listener struct{}
 
 func (c *Listener) OnConnecting() {
-	fmt.Println("OnConnecting")
+	// fmt.Println("OnConnecting")
 }
 
 func (c *Listener) OnConnectSuccess() {
-	fmt.Println("OnConnectSuccess")
+	// fmt.Println("OnConnectSuccess")
 }
 
 func (c *Listener) OnConnectFailed(errCode int32, errMsg string) {
-	fmt.Println("OnConnectFailed")
+	// fmt.Println("OnConnectFailed")
 }
 
 func (c *Listener) OnKickedOffline() {
-	fmt.Println("OnKickedOffline")
+	// fmt.Println("OnKickedOffline")
 }
 
 func (c *Listener) OnUserTokenExpired() {
-	fmt.Println("OnUserTokenExpired")
+	// fmt.Println("OnUserTokenExpired")
 }

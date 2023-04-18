@@ -6,7 +6,8 @@ logs
 out-test
 .github
 .idea
-
+.vscode
+*.db
 
 deploy/open_im_api
 deploy/open_im_msg_gateway
