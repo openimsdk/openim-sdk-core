@@ -59,12 +59,6 @@ func (g *Group) SyncSelfGroupApplication(ctx context.Context) error {
 	return nil
 }
 
-func (g *Group) SyncJoinedGroupList(ctx context.Context) {
-	if err := g.SyncJoinedGroup(ctx); err != nil {
-		// tood log
-	}
-}
-
 func (g *Group) SyncAdminGroupApplication(ctx context.Context) error {
 	requests, err := g.GetServerAdminGroupApplicationList(ctx)
 	if err != nil {

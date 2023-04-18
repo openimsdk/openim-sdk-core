@@ -175,7 +175,7 @@ func (g *Group) SyncJoinedGroupList(ctx context.Context) {
 }
 
 func (g *Group) SyncJoinedGroupMemberForFirstLogin(ctx context.Context) {
-	groups, err := g.GetAndSyncJoinedGroup(ctx)
+	groups, err := g.syncJoinedGroup(ctx)
 	if err != nil {
 		log.ZError(ctx, "GetAndSyncJoinedGroup failed", err)
 		return
