@@ -10,8 +10,9 @@ import (
 
 type LocalWorkMomentsNotification struct {
 	ClientMsgID string `gorm:"column:client_msg_id;primary_key;type:varchar(64)" json:"clientMsgID"`
-	JsonDetail  string `gorm:"column:json_detail"`
-	CreateTime  int64  `gorm:"create_time"`
+	// ClientMsgID string `gorm:"-"`
+	JsonDetail string `gorm:"column:json_detail"`
+	CreateTime int64  `gorm:"create_time"`
 }
 
 func (LocalWorkMomentsNotification) TableName() string {

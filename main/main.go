@@ -48,7 +48,7 @@ func main() {
 	//test.DoTestGetSelfUserInfo()
 	//test.DoTestSetBurnDuration("single_2861383134")
 	//test.DoTestInvite("123123")
-	test.DoTestSetAppBackgroundStatus(true)
+	// test.DoTestSetAppBackgroundStatus(true)
 	test.TestGetWorkMomentsNotification()
 	for {
 		//test.DotestDeleteFriend()
