@@ -9,6 +9,7 @@ import (
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/syncer"
 
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	authPb "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/auth"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
@@ -17,7 +18,6 @@ import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -67,7 +67,7 @@ func (u *User) initSyncer() {
 	)
 }
 
-func (u *User) DoNotification(msg *sdkws.MsgData) {
+func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	operationID := utils.OperationIDGenerator()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg)
 	if u.listener == nil {
@@ -75,7 +75,7 @@ func (u *User) DoNotification(msg *sdkws.MsgData) {
 		return
 	}
 	if msg.SendTime < u.loginTime {
-		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
+		log.ZWarn(ctx, "ignore notification ", nil, "msg", *msg)
 		return
 	}
 	go func() {
@@ -88,9 +88,9 @@ func (u *User) DoNotification(msg *sdkws.MsgData) {
 	}()
 }
 
-func (u *User) userInfoUpdatedNotification(msg *api.MsgData, operationID string) {
+func (u *User) userInfoUpdatedNotification(msg *sdkws.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	var detail api.UserInfoUpdatedTips
+	var detail sdkws.UserInfoUpdatedTips
 	if err := comm.UnmarshalTips(msg, &detail); err != nil {
 		log.Error(operationID, "comm.UnmarshalTips failed ", err.Error(), msg.Content)
 		return

@@ -1,6 +1,8 @@
 package sdk_struct
 
-import "open_im_sdk/pkg/server_api_params"
+import (
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+)
 
 ////////////////////////// message/////////////////////////
 
@@ -23,7 +25,7 @@ type MessageRevoked struct {
 	SourceMessageSendID         string `json:"sourceMessageSendID"`
 	SourceMessageSenderNickname string `json:"sourceMessageSenderNickname"`
 	SessionType                 int32  `json:"sessionType"`
-	Seq                         uint32 `json:"seq"`
+	Seq                         int64  `json:"seq"`
 	Ex                          string `json:"ex"`
 }
 type MessageReaction struct {
@@ -82,28 +84,28 @@ type FileBaseInfo struct {
 }
 
 type MsgStruct struct {
-	ClientMsgID          string                            `json:"clientMsgID,omitempty"`
-	ServerMsgID          string                            `json:"serverMsgID,omitempty"`
-	CreateTime           int64                             `json:"createTime"`
-	SendTime             int64                             `json:"sendTime"`
-	SessionType          int32                             `json:"sessionType"`
-	SendID               string                            `json:"sendID,omitempty"`
-	RecvID               string                            `json:"recvID,omitempty"`
-	MsgFrom              int32                             `json:"msgFrom"`
-	ContentType          int32                             `json:"contentType"`
-	SenderPlatformID     int32                             `json:"platformID"`
-	SenderNickname       string                            `json:"senderNickname,omitempty"`
-	SenderFaceURL        string                            `json:"senderFaceUrl,omitempty"`
-	GroupID              string                            `json:"groupID,omitempty"`
-	Content              string                            `json:"content,omitempty"`
-	Seq                  uint32                            `json:"seq"`
-	IsRead               bool                              `json:"isRead"`
-	Status               int32                             `json:"status"`
-	IsReact              bool                              `json:"isReact,omitempty"`
-	IsExternalExtensions bool                              `json:"isExternalExtensions,omitempty"`
-	OfflinePush          server_api_params.OfflinePushInfo `json:"offlinePush,omitempty"`
-	AttachedInfo         string                            `json:"attachedInfo,omitempty"`
-	Ex                   string                            `json:"ex,omitempty"`
+	ClientMsgID          string                `json:"clientMsgID,omitempty"`
+	ServerMsgID          string                `json:"serverMsgID,omitempty"`
+	CreateTime           int64                 `json:"createTime"`
+	SendTime             int64                 `json:"sendTime"`
+	SessionType          int32                 `json:"sessionType"`
+	SendID               string                `json:"sendID,omitempty"`
+	RecvID               string                `json:"recvID,omitempty"`
+	MsgFrom              int32                 `json:"msgFrom"`
+	ContentType          int32                 `json:"contentType"`
+	SenderPlatformID     int32                 `json:"platformID"`
+	SenderNickname       string                `json:"senderNickname,omitempty"`
+	SenderFaceURL        string                `json:"senderFaceUrl,omitempty"`
+	GroupID              string                `json:"groupID,omitempty"`
+	Content              string                `json:"content,omitempty"`
+	Seq                  int64                 `json:"seq"`
+	IsRead               bool                  `json:"isRead"`
+	Status               int32                 `json:"status"`
+	IsReact              bool                  `json:"isReact,omitempty"`
+	IsExternalExtensions bool                  `json:"isExternalExtensions,omitempty"`
+	OfflinePush          sdkws.OfflinePushInfo `json:"offlinePush,omitempty"`
+	AttachedInfo         string                `json:"attachedInfo,omitempty"`
+	Ex                   string                `json:"ex,omitempty"`
 	PictureElem          struct {
 		SourcePath      string          `json:"sourcePath,omitempty"`
 		SourcePicture   PictureBaseInfo `json:"sourcePicture,omitempty"`
@@ -231,12 +233,12 @@ func (n NewMsgList) Len() int {
 	return len(n)
 }
 
-//Implement the sort.Interface interface comparison element method
+// Implement the sort.Interface interface comparison element method
 func (n NewMsgList) Less(i, j int) bool {
 	return n[i].SendTime < n[j].SendTime
 }
 
-//Implement the sort.Interface interface exchange element method
+// Implement the sort.Interface interface exchange element method
 func (n NewMsgList) Swap(i, j int) {
 	n[i], n[j] = n[j], n[i]
 }
@@ -256,25 +258,25 @@ type IMConfig struct {
 var SvrConf IMConfig
 
 type CmdNewMsgComeToConversation struct {
-	MsgList       []*server_api_params.MsgData
+	MsgList       []*sdkws.MsgData
 	OperationID   string
 	SyncFlag      int
-	MaxSeqOnSvr   uint32
-	MaxSeqOnLocal uint32
-	CurrentMaxSeq uint32
+	MaxSeqOnSvr   int64
+	MaxSeqOnLocal int64
+	CurrentMaxSeq int64
 	PullMsgOrder  int
 }
 
 type CmdPushMsgToMsgSync struct {
-	Msg         *server_api_params.MsgData
+	Msg         *sdkws.MsgData
 	OperationID string
 }
 
 type CmdMaxSeqToMsgSync struct {
-	MaxSeqOnSvr            uint32
+	MaxSeqOnSvr            int64
 	OperationID            string
-	MinSeqOnSvr            uint32
-	GroupID2MinMaxSeqOnSvr map[string]*server_api_params.MaxAndMinSeq
+	MinSeqOnSvr            int64
+	GroupID2MinMaxSeqOnSvr map[string]*sdkws.MaxAndMinSeq
 }
 
 type CmdJoinedSuperGroup struct {

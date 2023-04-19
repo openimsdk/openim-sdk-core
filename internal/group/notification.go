@@ -4,13 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/golang/protobuf/proto"
 	comm "open_im_sdk/internal/common"
 	"open_im_sdk/pkg/constant"
 	api "open_im_sdk/pkg/server_api_params"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/golang/protobuf/proto"
 )
 
-func (g *Group) DoNotification(ctx context.Context, msg *api.MsgData) {
+func (g *Group) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	go func() {
 		if err := g.doNotification(ctx, msg); err != nil {
 			// todo log
@@ -18,7 +20,7 @@ func (g *Group) DoNotification(ctx context.Context, msg *api.MsgData) {
 	}()
 }
 
-func (g *Group) doNotification(ctx context.Context, msg *api.MsgData) error {
+func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 	if g.listener == nil {
 		return errors.New("listener is nil")
 	}

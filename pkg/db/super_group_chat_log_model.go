@@ -7,12 +7,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+
+	"gorm.io/gorm"
 )
 
 func (d *DataBase) initSuperLocalChatLog(ctx context.Context, groupID string) {
@@ -345,19 +346,19 @@ func (d *DataBase) SuperGroupGetMultipleMessage(ctx context.Context, conversatio
 	return result, err
 }
 
-func (d *DataBase) SuperGroupGetNormalMsgSeq(ctx context.Context) (uint32, error) {
+func (d *DataBase) SuperGroupGetNormalMsgSeq(ctx context.Context) (int64, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	var seq uint32
+	var seq int64
 	err := d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Select("IFNULL(max(seq),0)").Find(&seq).Error
 	return seq, utils.Wrap(err, "GetNormalMsgSeq")
 }
-func (d *DataBase) SuperGroupGetNormalMinSeq(ctx context.Context, groupID string) (uint32, error) {
-	var seq uint32
+func (d *DataBase) SuperGroupGetNormalMinSeq(ctx context.Context, groupID string) (int64, error) {
+	var seq int64
 	err := d.conn.WithContext(ctx).Table(utils.GetSuperGroupTableName(groupID)).Select("IFNULL(min(seq),0)").Where("seq >?", 0).Find(&seq).Error
 	return seq, utils.Wrap(err, "SuperGroupGetNormalMinSeq")
 }
-func (d *DataBase) SuperGroupGetTestMessage(ctx context.Context, seq uint32) (*model_struct.LocalChatLog, error) {
+func (d *DataBase) SuperGroupGetTestMessage(ctx context.Context, seq int64) (*model_struct.LocalChatLog, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var c model_struct.LocalChatLog
@@ -419,7 +420,7 @@ func (d *DataBase) SuperGroupGetMsgSeqListBySelfUserID(ctx context.Context, user
 	err := utils.Wrap(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Select("seq").Where("recv_id=? and send_id=?", userID, userID).Find(&seqList).Error, utils.GetSelfFuncName()+" failed")
 	return seqList, err
 }
-func (d *DataBase) SuperGroupGetAlreadyExistSeqList(ctx context.Context, groupID string, lostSeqList []uint32) (seqList []uint32, err error) {
+func (d *DataBase) SuperGroupGetAlreadyExistSeqList(ctx context.Context, groupID string, lostSeqList []int64) (seqList []int64, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	err = utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetSuperGroupTableName(groupID)).Where("seq IN ?", lostSeqList).Pluck("seq", &seqList).Error, utils.GetSelfFuncName()+" failed")

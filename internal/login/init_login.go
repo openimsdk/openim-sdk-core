@@ -77,7 +77,7 @@ type LoginMgr struct {
 	joinedSuperGroupCh chan common.Cmd2Value
 	imConfig           sdk_struct.IMConfig
 
-	id2MinSeq map[string]uint32
+	id2MinSeq map[string]int64
 	postApi   *ws.PostApi
 }
 
@@ -249,7 +249,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 
 	u.joinedSuperGroupCh = make(chan common.Cmd2Value, 10)
 
-	u.id2MinSeq = make(map[string]uint32, 100)
+	u.id2MinSeq = make(map[string]int64, 100)
 	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
 	u.postApi = p
 	u.user = user.NewUser(u.db, u.loginUserID, u.conversationCh)
@@ -293,7 +293,10 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	default:
 		objStorage = comm2.NewCOS(u.postApi)
 	}
-	u.signaling = signaling.NewLiveSignaling(u.ws, u.loginUserID, u.imConfig.Platform, u.db)
+	u.signaling, err = signaling.NewLiveSignaling(u.ws, u.loginUserID, u.imConfig.Platform, u.db)
+	if err != nil {
+		return err
+	}
 	if u.signalingListener != nil {
 		u.signaling.SetListener(u.signalingListener)
 	}

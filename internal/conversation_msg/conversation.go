@@ -10,7 +10,6 @@ import (
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/log"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
@@ -18,6 +17,9 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 
@@ -59,7 +61,7 @@ func (c *Conversation) setOneConversationUnread(ctx context.Context, conversatio
 	}
 	deleteRows := c.db.DeleteConversationUnreadMessageList(ctx, localConversation.ConversationID, localConversation.LatestMsgSendTime)
 	if deleteRows == 0 {
-		log.Error("", "DeleteConversationUnreadMessageList err", localConversation.ConversationID, localConversation.LatestMsgSendTime)
+		log.ZError(ctx, "DeleteConversationUnreadMessageList err", nil, "conversationID", localConversation.ConversationID, "latestMsgSendTime", localConversation.LatestMsgSendTime)
 	}
 	return nil
 }
@@ -97,22 +99,19 @@ func (c *Conversation) deleteConversation(ctx context.Context, conversationID st
 	return nil
 }
 
-func (c *Conversation) getServerConversationList(operationID string, timeout time.Duration) (server_api_params.GetAllConversationsResp, error) {
-	log.NewInfo(operationID, utils.GetSelfFuncName())
+func (c *Conversation) getServerConversationList(ctx context.Context, timeout time.Duration) (server_api_params.GetAllConversationsResp, error) {
 	var req server_api_params.GetAllConversationsReq
 	var resp server_api_params.GetAllConversationsResp
 	req.OwnerUserID = c.loginUserID
-	req.OperationID = operationID
+	req.OperationID = mcontext.GetOperationID(ctx)
 	if timeout == 0 {
 		err := c.p.PostReturn(constant.GetAllConversationsRouter, req, &resp.Conversations)
 		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 			return resp, err
 		}
 	} else {
 		err := c.p.PostReturnWithTimeOut(constant.GetAllConversationsRouter, req, &resp.Conversations, timeout)
 		if err != nil {
-			log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 			return resp, err
 		}
 	}
@@ -124,7 +123,7 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 	var newConversationList []*model_struct.LocalConversation
 	ccTime := time.Now()
 	// log.NewInfo(operationID, utils.GetSelfFuncName())
-	conversationsOnServer, err := c.getServerConversationList("", timeout)
+	conversationsOnServer, err := c.getServerConversationList(ctx, timeout)
 	if err != nil {
 		// log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		return
@@ -519,18 +518,16 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 		switch sessionType {
 		case constant.SuperGroupChatType:
 			if len(list) < req.Count {
-				var minSeq uint32
-				var maxSeq uint32
+				var minSeq int64
+				var maxSeq int64
 				resp, err := c.SendReqWaitResp(ctx, &server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 2, c.loginUserID)
 				if err != nil {
 					//log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, 30, c.loginUserID)
 				} else {
-					var wsSeqResp server_api_params.GetMaxAndMinSeqResp
+					var wsSeqResp sdkws.GetMaxAndMinSeqResp
 					err = proto.Unmarshal(resp.Data, &wsSeqResp)
 					if err != nil {
 						//log.Error(operationID, "Unmarshal failed", err.Error())
-					} else if wsSeqResp.ErrCode != 0 {
-						//log.Error(operationID, "GetMaxAndMinSeqReq failed ", wsSeqResp.ErrCode, wsSeqResp.ErrMsg)
 					} else {
 						if value, ok := wsSeqResp.GroupMaxAndMinSeq[sourceID]; ok {
 							minSeq = value.MinSeq
@@ -551,7 +548,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 					if seq <= minSeq {
 						messageListCallback.IsEnd = true
 					} else {
-						seqList := func(seq uint32) (seqList []uint32) {
+						seqList := func(seq int64) (seqList []int64) {
 							startSeq := int64(seq) - constant.PullMsgNumForReadDiffusion
 							if startSeq <= 0 {
 								startSeq = 1
@@ -561,7 +558,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 								startSeq = int64(minSeq)
 							}
 							for i := startSeq; i < int64(seq); i++ {
-								seqList = append(seqList, uint32(i))
+								seqList = append(seqList, i)
 							}
 							log.Debug("", "pull seqList is ", seqList)
 							return seqList
@@ -581,7 +578,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 
 				}
 			} else if len(list) == req.Count {
-				maxSeq, minSeq, haveSeqList := func(messages []*model_struct.LocalChatLog) (max, min uint32, seqList []uint32) {
+				maxSeq, minSeq, haveSeqList := func(messages []*model_struct.LocalChatLog) (max, min int64, seqList []int64) {
 					for _, message := range messages {
 						if message.Seq != 0 {
 							max = message.Seq
@@ -605,7 +602,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 				}(list)
 				log.Debug("", "get message from local db max seq:", maxSeq, "minSeq:", minSeq, "haveSeqList:", haveSeqList, "length:", len(haveSeqList))
 				if maxSeq != 0 && minSeq != 0 {
-					successiveSeqList := func(max, min uint32) (seqList []uint32) {
+					successiveSeqList := func(max, min int64) (seqList []int64) {
 						for i := min; i <= max; i++ {
 							seqList = append(seqList, i)
 						}
@@ -615,7 +612,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 					lostSeqListLength := len(lostSeqList)
 					log.Debug("", "get lost seqList is :", lostSeqList, "length:", lostSeqListLength)
 					if lostSeqListLength > 0 {
-						var pullSeqList []uint32
+						var pullSeqList []int64
 						if lostSeqListLength <= constant.PullMsgNumForReadDiffusion {
 							pullSeqList = lostSeqList
 						} else {
@@ -624,7 +621,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 						c.pullMessageAndReGetHistoryMessages(ctx, sourceID, pullSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
 					} else {
 						if req.LastMinSeq != 0 {
-							var thisMaxSeq uint32
+							var thisMaxSeq int64
 							for i := 0; i < len(list); i++ {
 								if list[i].Seq != 0 && thisMaxSeq == 0 {
 									thisMaxSeq = list[i].Seq
@@ -640,12 +637,12 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 									if startSeq <= int64(thisMaxSeq) {
 										startSeq = int64(thisMaxSeq) + 1
 									}
-									successiveSeqList := func(max, min uint32) (seqList []uint32) {
+									successiveSeqList := func(max, min int64) (seqList []int64) {
 										for i := min; i <= max; i++ {
 											seqList = append(seqList, i)
 										}
 										return seqList
-									}(req.LastMinSeq-1, uint32(startSeq))
+									}(req.LastMinSeq-1, startSeq)
 									log.Debug("", "get lost successiveSeqList is :", successiveSeqList, len(successiveSeqList))
 									if len(successiveSeqList) > 0 {
 										c.pullMessageAndReGetHistoryMessages(ctx, sourceID, successiveSeqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
@@ -669,7 +666,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 
 	log.Debug("", "pull cost time", time.Since(t))
 	t = time.Now()
-	var thisMinSeq uint32
+	var thisMinSeq int64
 	for _, v := range list {
 		if v.Seq != 0 && thisMinSeq == 0 {
 			thisMinSeq = v.Seq
@@ -883,7 +880,7 @@ func (c *Conversation) getAdvancedHistoryMessageList2(callback open_im_sdk_callb
 	//}
 	log.Debug(operationID, "pull cost time", time.Since(t))
 	t = time.Now()
-	var thisMinSeq uint32
+	var thisMinSeq int64
 	for _, v := range list {
 		if v.Seq != 0 && thisMinSeq == 0 {
 			thisMinSeq = v.Seq
@@ -1628,14 +1625,9 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 	return &r, nil
 }
 
-func (c *Conversation) setConversationNotification(msg *server_api_params.MsgData, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	c.SyncConversations(context.Background(), 0)
-}
-
-func (c *Conversation) DoNotification(msg *server_api_params.MsgData) {
+func (c *Conversation) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	if msg.SendTime < c.full.Group().LoginTime() || c.full.Group().LoginTime() == 0 {
-		log.Warn("", "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
+		log.ZWarn(ctx, "ignore notification", nil, "clientMsgID", msg.ClientMsgID, "serverMsgID", msg.ServerMsgID, "seq", msg.Seq, "contentType", msg.ContentType)
 		return
 	}
 	operationID := utils.OperationIDGenerator()
@@ -1645,7 +1637,7 @@ func (c *Conversation) DoNotification(msg *server_api_params.MsgData) {
 		return
 	}
 	go func() {
-		c.setConversationNotification(msg, operationID)
+		c.SyncConversations(ctx, 0)
 	}()
 }
 

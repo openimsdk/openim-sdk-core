@@ -6,11 +6,11 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"runtime"
 
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -19,14 +19,14 @@ type SelfMsgSync struct {
 	*Ws
 	loginUserID        string
 	conversationCh     chan common.Cmd2Value
-	seqMaxSynchronized uint32
-	seqMaxNeedSync     uint32 //max seq in push or max seq in redis
-	pushMsgCache       map[uint32]*server_api_params.MsgData
+	seqMaxSynchronized int64
+	seqMaxNeedSync     int64 //max seq in push or max seq in redis
+	pushMsgCache       map[int64]*sdkws.MsgData
 }
 
 func NewSelfMsgSync(dataBase db_interface.DataBase, ws *Ws, loginUserID string, conversationCh chan common.Cmd2Value) *SelfMsgSync {
 	p := &SelfMsgSync{DataBase: dataBase, Ws: ws, loginUserID: loginUserID, conversationCh: conversationCh}
-	p.pushMsgCache = make(map[uint32]*server_api_params.MsgData, 0)
+	p.pushMsgCache = make(map[int64]*sdkws.MsgData, 0)
 	return p
 }
 
@@ -77,7 +77,7 @@ func (m *SelfMsgSync) doPushBatchMsg(cmd common.Cmd2Value) {
 	operationID := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).OperationID
 	log.Warn(operationID, utils.GetSelfFuncName(), " not enabled ", "msgData len: ")
 	log.Debug(operationID, utils.GetSelfFuncName(), " args ", "msgData len: ", len(msg.MsgDataList))
-	msgDataWrap := server_api_params.MsgDataList{}
+	msgDataWrap := sdkws.MsgDataList{}
 	err := proto.Unmarshal(msg.MsgDataList, &msgDataWrap)
 	if err != nil {
 		log.Error(operationID, "proto Unmarshal err", err.Error())
@@ -86,12 +86,12 @@ func (m *SelfMsgSync) doPushBatchMsg(cmd common.Cmd2Value) {
 
 	if len(msgDataWrap.MsgDataList) == 1 && msgDataWrap.MsgDataList[0].Seq == 0 {
 		log.Debug(operationID, utils.GetSelfFuncName(), "seq ==0 TriggerCmdNewMsgCome", msgDataWrap.MsgDataList[0].String())
-		m.triggerCmdNewMsgCome([]*server_api_params.MsgData{msgDataWrap.MsgDataList[0]}, operationID)
+		m.triggerCmdNewMsgCome([]*sdkws.MsgData{msgDataWrap.MsgDataList[0]}, operationID)
 		return
 	}
 
 	//to cache
-	var maxSeq uint32
+	var maxSeq int64
 	for _, v := range msgDataWrap.MsgDataList {
 		if v.Seq > m.seqMaxSynchronized {
 			m.pushMsgCache[v.Seq] = v
@@ -111,7 +111,7 @@ func (m *SelfMsgSync) doPushBatchMsg(cmd common.Cmd2Value) {
 	}
 
 	seqMaxSynchronizedBegin := m.seqMaxSynchronized
-	var triggerMsgList []*server_api_params.MsgData
+	var triggerMsgList []*sdkws.MsgData
 	for {
 		seqMaxSynchronizedBegin++
 		cacheMsg, ok := m.pushMsgCache[seqMaxSynchronizedBegin]
@@ -153,14 +153,14 @@ func (m *SelfMsgSync) doPushSingleMsg(cmd common.Cmd2Value) {
 	log.Debug(operationID, utils.GetSelfFuncName(), " args: ", msg.Seq, msg.ServerMsgID, msg.ClientMsgID, m.seqMaxNeedSync, m.seqMaxSynchronized)
 	if msg.Seq == 0 {
 		log.Debug(operationID, "TriggerCmdNewMsgCome ", msg.ServerMsgID, msg.ClientMsgID, msg.Seq)
-		m.triggerCmdNewMsgCome([]*server_api_params.MsgData{msg}, operationID)
+		m.triggerCmdNewMsgCome([]*sdkws.MsgData{msg}, operationID)
 		return
 	}
 
 	//seq连续，则消息直接触发
 	if msg.Seq == m.seqMaxSynchronized+1 {
 		log.Debug(operationID, "TriggerCmdNewMsgCome ", msg.ServerMsgID, msg.ClientMsgID, msg.Seq)
-		m.triggerCmdNewMsgCome([]*server_api_params.MsgData{msg}, operationID)
+		m.triggerCmdNewMsgCome([]*sdkws.MsgData{msg}, operationID)
 		m.seqMaxSynchronized = msg.Seq
 	}
 	if msg.Seq > m.seqMaxNeedSync {
@@ -181,13 +181,13 @@ func (m *SelfMsgSync) syncMsg(operationID string) {
 }
 
 // 从本地缓存+服务端获取消息，内部对seq列表做了拆分
-func (m *SelfMsgSync) syncMsgFromServer(beginSeq, endSeq uint32, operationID string) {
+func (m *SelfMsgSync) syncMsgFromServer(beginSeq, endSeq int64, operationID string) {
 	log.Debug(operationID, utils.GetSelfFuncName(), " args ", beginSeq, endSeq)
 	if beginSeq > endSeq {
 		log.Error(operationID, "beginSeq > endSeq", beginSeq, endSeq)
 		return
 	}
-	var needSyncSeqList []uint32
+	var needSyncSeqList []int64
 	for i := beginSeq; i <= endSeq; i++ {
 		needSyncSeqList = append(needSyncSeqList, i)
 	}
@@ -199,14 +199,14 @@ func (m *SelfMsgSync) syncMsgFromServer(beginSeq, endSeq uint32, operationID str
 }
 
 // 先从本地缓存读取消息，如果不存在，再从服务端读取， 上层把seq列表拆分
-func (m *SelfMsgSync) syncMsgFromCache2ServerSplit(needSyncSeqList []uint32, operationID string) {
+func (m *SelfMsgSync) syncMsgFromCache2ServerSplit(needSyncSeqList []int64, operationID string) {
 	if len(needSyncSeqList) > constant.SplitPullMsgNum {
 		log.Error(operationID, "seq list too large ", len(needSyncSeqList))
 		return
 	}
 
-	var msgList []*server_api_params.MsgData
-	var noInCache []uint32
+	var msgList []*sdkws.MsgData
+	var noInCache []int64
 	for _, v := range needSyncSeqList {
 		cacheMsg, ok := m.pushMsgCache[v]
 		if !ok {
@@ -221,11 +221,10 @@ func (m *SelfMsgSync) syncMsgFromCache2ServerSplit(needSyncSeqList []uint32, ope
 		return
 	}
 	log.Debug(operationID, "seq no in cache num: ", len(noInCache), " all seq num: ", len(needSyncSeqList))
-	var pullMsgReq server_api_params.PullMessageBySeqListReq
-	pullMsgReq.SeqList = noInCache
+	var pullMsgReq sdkws.PullMessageBySeqsReq
+	pullMsgReq.Seqs = noInCache
 	pullMsgReq.UserID = m.loginUserID
 	for {
-		pullMsgReq.OperationID = operationID
 		resp, err := m.SendReqWaitResp(context.Background(), &pullMsgReq, constant.WSPullMsgBySeqList, 60, 2, m.loginUserID)
 		if err != nil && m.LoginStatus() == constant.Logout {
 			log.Error(operationID, "SendReqWaitResp failed  Logout status ", err.Error(), m.LoginStatus())
@@ -237,7 +236,7 @@ func (m *SelfMsgSync) syncMsgFromCache2ServerSplit(needSyncSeqList []uint32, ope
 			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 60, 2, m.loginUserID)
 			continue
 		}
-		var pullMsgResp server_api_params.PullMessageBySeqListResp
+		var pullMsgResp sdkws.PullMessageBySeqsResp
 		err = proto.Unmarshal(resp.Data, &pullMsgResp)
 		if err != nil {
 			log.Error(operationID, "Unmarshal failed ", err.Error())
@@ -250,12 +249,12 @@ func (m *SelfMsgSync) syncMsgFromCache2ServerSplit(needSyncSeqList []uint32, ope
 	}
 }
 
-func (m *SelfMsgSync) syncMsgFromServerSplit(needSyncSeqList []uint32, operationID string) {
+func (m *SelfMsgSync) syncMsgFromServerSplit(needSyncSeqList []int64, operationID string) {
 	m.syncMsgFromCache2ServerSplit(needSyncSeqList, operationID)
 }
 
 // 触发新消息
-func (m *SelfMsgSync) triggerCmdNewMsgCome(msgList []*server_api_params.MsgData, operationID string) {
+func (m *SelfMsgSync) triggerCmdNewMsgCome(msgList []*sdkws.MsgData, operationID string) {
 	for {
 		err := common.TriggerCmdNewMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: msgList, OperationID: operationID}, m.conversationCh)
 		if err != nil {

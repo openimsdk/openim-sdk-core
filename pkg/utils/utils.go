@@ -4,12 +4,14 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
 	"open_im_sdk/pkg/constant"
 
-	"github.com/pkg/errors"
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
+
 	"reflect"
+
+	"github.com/pkg/errors"
 
 	"math/rand"
 	"runtime"
@@ -398,9 +400,9 @@ func TrimStringList(list []string) (result []string) {
 }
 
 // Get the intersection of two slices
-func Intersect(slice1, slice2 []uint32) []uint32 {
-	m := make(map[uint32]bool)
-	n := make([]uint32, 0)
+func Intersect(slice1, slice2 []int64) []int64 {
+	m := make(map[int64]bool)
+	n := make([]int64, 0)
 	for _, v := range slice1 {
 		m[v] = true
 	}
@@ -414,9 +416,9 @@ func Intersect(slice1, slice2 []uint32) []uint32 {
 }
 
 // Get the diff of two slices
-func DifferenceSubset(mainSlice, subSlice []uint32) []uint32 {
-	m := make(map[uint32]bool)
-	n := make([]uint32, 0)
+func DifferenceSubset(mainSlice, subSlice []int64) []int64 {
+	m := make(map[int64]bool)
+	n := make([]int64, 0)
 	for _, v := range subSlice {
 		m[v] = true
 	}

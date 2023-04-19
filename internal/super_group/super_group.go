@@ -3,9 +3,6 @@ package super_group
 import (
 	"context"
 	"errors"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	"github.com/golang/protobuf/proto"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/common"
@@ -17,6 +14,10 @@ import (
 	"open_im_sdk/pkg/syncer"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/golang/protobuf/proto"
 )
 
 func NewSuperGroup(loginUserID string, db db_interface.DataBase, p *ws.PostApi, joinedSuperGroupCh chan common.Cmd2Value, heartbeatCmdCh chan common.Cmd2Value) *SuperGroup {
@@ -51,7 +52,7 @@ func (s *SuperGroup) SetLoginTime(loginTime int64) {
 	s.loginTime = loginTime
 }
 
-func (s *SuperGroup) DoNotification(msg *api.MsgData, ch chan common.Cmd2Value, operationID string) {
+func (s *SuperGroup) DoNotification(msg *sdkws.MsgData, ch chan common.Cmd2Value, operationID string) {
 	ctx := context.Background()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID, msg.String())
 	if msg.SendTime < s.loginTime || s.loginTime == 0 {

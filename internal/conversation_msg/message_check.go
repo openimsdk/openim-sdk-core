@@ -11,6 +11,7 @@ import (
 	"open_im_sdk/sdk_struct"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
@@ -19,12 +20,12 @@ import (
 // 检测其内部连续性，如果不连续，则向前补齐,获取这一组消息的最大最小seq，以及需要补齐的seq列表长度
 func (c *Conversation) messageBlocksInternalContinuityCheck(sourceID string, notStartTime, isReverse bool, count,
 	sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback,
-	operationID string) (max, min uint32, length int) {
+	operationID string) (max, min int64, length int) {
 	var lostSeqListLength int
 	maxSeq, minSeq, haveSeqList := c.getMaxAndMinHaveSeqList(*list)
 	log.Debug(operationID, utils.GetSelfFuncName(), "getMaxAndMinHaveSeqList is:", maxSeq, minSeq, haveSeqList)
 	if maxSeq != 0 && minSeq != 0 {
-		successiveSeqList := func(max, min uint32) (seqList []uint32) {
+		successiveSeqList := func(max, min int64) (seqList []int64) {
 			for i := min; i <= max; i++ {
 				seqList = append(seqList, i)
 			}
@@ -34,7 +35,7 @@ func (c *Conversation) messageBlocksInternalContinuityCheck(sourceID string, not
 		lostSeqListLength = len(lostSeqList)
 		log.Debug(operationID, "get lost seqList is :", maxSeq, minSeq, lostSeqList, "length:", lostSeqListLength)
 		if lostSeqListLength > 0 {
-			var pullSeqList []uint32
+			var pullSeqList []int64
 			if lostSeqListLength <= constant.PullMsgNumForReadDiffusion {
 				pullSeqList = lostSeqList
 			} else {
@@ -48,7 +49,7 @@ func (c *Conversation) messageBlocksInternalContinuityCheck(sourceID string, not
 }
 
 // 检测消息块之间的连续性，如果不连续，则向前补齐,返回块之间是否连续，bool
-func (c *Conversation) messageBlocksBetweenContinuityCheck(lastMinSeq, maxSeq uint32, sourceID string, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback, operationID string) bool {
+func (c *Conversation) messageBlocksBetweenContinuityCheck(lastMinSeq, maxSeq int64, sourceID string, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback, operationID string) bool {
 	if lastMinSeq != 0 {
 		log.Debug(operationID, "get lost LastMinSeq is :", lastMinSeq, "thisMaxSeq is :", maxSeq)
 		if maxSeq != 0 {
@@ -57,12 +58,12 @@ func (c *Conversation) messageBlocksBetweenContinuityCheck(lastMinSeq, maxSeq ui
 				if startSeq <= int64(maxSeq) {
 					startSeq = int64(maxSeq) + 1
 				}
-				successiveSeqList := func(max, min uint32) (seqList []uint32) {
+				successiveSeqList := func(max, min int64) (seqList []int64) {
 					for i := min; i <= max; i++ {
 						seqList = append(seqList, i)
 					}
 					return seqList
-				}(lastMinSeq-1, uint32(startSeq))
+				}(lastMinSeq-1, startSeq)
 				log.Debug(operationID, "get lost successiveSeqList is :", successiveSeqList, len(successiveSeqList))
 				if len(successiveSeqList) > 0 {
 					c.pullMessageAndReGetHistoryMessages(context.Background(), sourceID, successiveSeqList, notStartTime, isReverse, count, sessionType, startTime, list, messageListCallback)
@@ -83,19 +84,17 @@ func (c *Conversation) messageBlocksBetweenContinuityCheck(lastMinSeq, maxSeq ui
 }
 
 // 检测其内部连续性，如果不连续，则向前补齐,获取这一组消息的最大最小seq，以及需要补齐的seq列表长度
-func (c *Conversation) messageBlocksEndContinuityCheck(ctx context.Context, minSeq uint32, sourceID string, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
-	var minSeqServer uint32
-	var maxSeqServer uint32
+func (c *Conversation) messageBlocksEndContinuityCheck(ctx context.Context, minSeq int64, sourceID string, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
+	var minSeqServer int64
+	var maxSeqServer int64
 	resp, err := c.SendReqWaitResp(context.Background(), &server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 1, c.loginUserID)
 	if err != nil {
 		// log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, 1, c.loginUserID)
 	} else {
-		var wsSeqResp server_api_params.GetMaxAndMinSeqResp
+		var wsSeqResp sdkws.GetMaxAndMinSeqResp
 		err = proto.Unmarshal(resp.Data, &wsSeqResp)
 		if err != nil {
 			// log.Error(operationID, "Unmarshal failed", err.Error())
-		} else if wsSeqResp.ErrCode != 0 {
-			// log.Error(operationID, "GetMaxAndMinSeqReq failed ", wsSeqResp.ErrCode, wsSeqResp.ErrMsg)
 		} else {
 			if value, ok := wsSeqResp.GroupMaxAndMinSeq[sourceID]; ok {
 				minSeqServer = value.MinSeq
@@ -116,7 +115,7 @@ func (c *Conversation) messageBlocksEndContinuityCheck(ctx context.Context, minS
 		if minSeq <= minSeqServer {
 			messageListCallback.IsEnd = true
 		} else {
-			seqList := func(seq uint32) (seqList []uint32) {
+			seqList := func(seq int64) (seqList []int64) {
 				startSeq := int64(seq) - constant.PullMsgNumForReadDiffusion
 				if startSeq <= int64(minSeqServer) {
 					if minSeqServer == 0 {
@@ -127,7 +126,7 @@ func (c *Conversation) messageBlocksEndContinuityCheck(ctx context.Context, minS
 				}
 				// log.Debug(operationID, "pull start is ", startSeq)
 				for i := startSeq; i < int64(seq); i++ {
-					seqList = append(seqList, uint32(i))
+					seqList = append(seqList, i)
 				}
 				// log.Debug(operationID, "pull seqList is ", seqList)
 				return seqList
@@ -148,7 +147,7 @@ func (c *Conversation) messageBlocksEndContinuityCheck(ctx context.Context, minS
 	}
 
 }
-func (c *Conversation) getMaxAndMinHaveSeqList(messages []*model_struct.LocalChatLog) (max, min uint32, seqList []uint32) {
+func (c *Conversation) getMaxAndMinHaveSeqList(messages []*model_struct.LocalChatLog) (max, min int64, seqList []int64) {
 	for i := 0; i < len(messages); i++ {
 		if messages[i].Seq != 0 {
 			seqList = append(seqList, messages[i].Seq)
@@ -171,7 +170,7 @@ func (c *Conversation) getMaxAndMinHaveSeqList(messages []*model_struct.LocalCha
 // 1、保证单次拉取消息量低于sdk单次从服务器拉取量
 // 2、块中连续性检测
 // 3、块之间连续性检测
-func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, sourceID string, seqList []uint32, notStartTime,
+func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, sourceID string, seqList []int64, notStartTime,
 	isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
 	existedSeqList, err := c.db.SuperGroupGetAlreadyExistSeqList(ctx, sourceID, seqList)
 	if err != nil {
@@ -187,12 +186,11 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, s
 		// log.Debug(operationID, "do not pull message")
 		return
 	}
-	var pullMsgReq server_api_params.PullMessageBySeqListReq
+	var pullMsgReq sdkws.PullMessageBySeqsReq
 	pullMsgReq.UserID = c.loginUserID
-	pullMsgReq.GroupSeqList = make(map[string]*server_api_params.SeqList, 0)
-	pullMsgReq.GroupSeqList[sourceID] = &server_api_params.SeqList{SeqList: newSeqList}
+	pullMsgReq.GroupSeqs = make(map[string]*sdkws.Seqs, 0)
+	pullMsgReq.GroupSeqs[sourceID] = &sdkws.Seqs{Seqs: newSeqList}
 	operationID := mcontext.GetOperationID(ctx)
-	pullMsgReq.OperationID = operationID
 	log.Debug(operationID, "read diffusion group pull message, req: ", pullMsgReq)
 	resp, err := c.SendReqWaitResp(ctx, &pullMsgReq, constant.WSPullMsgBySeqList, 2, 1, c.loginUserID)
 	if err != nil {
@@ -218,7 +216,7 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, s
 
 	}
 }
-func errHandle(seqList []uint32, list *[]*model_struct.LocalChatLog, err error, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
+func errHandle(seqList []int64, list *[]*model_struct.LocalChatLog, err error, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
 	messageListCallback.ErrCode = 100
 	messageListCallback.ErrMsg = err.Error()
 	var result []*model_struct.LocalChatLog

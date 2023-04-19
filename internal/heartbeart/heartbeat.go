@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -25,7 +26,7 @@ type Heartbeat struct {
 	token             string
 	listener          open_im_sdk_callback.OnConnListener
 	//ExpireTimeSeconds uint32
-	id2MinSeq          map[string]uint32
+	id2MinSeq          map[string]int64
 	full               *full.Full
 	WsForTest          *interaction.Ws
 	LoginUserIDForTest string
@@ -35,7 +36,7 @@ func (u *Heartbeat) SetHeartbeatInterval(heartbeatInterval int) {
 	u.heartbeatInterval = heartbeatInterval
 }
 
-func NewHeartbeat(msgSync *interaction.MsgSync, cmcCh chan common.Cmd2Value, listener open_im_sdk_callback.OnConnListener, token string, id2MinSeq map[string]uint32, full *full.Full) *Heartbeat {
+func NewHeartbeat(msgSync *interaction.MsgSync, cmcCh chan common.Cmd2Value, listener open_im_sdk_callback.OnConnListener, token string, id2MinSeq map[string]int64, full *full.Full) *Heartbeat {
 	p := Heartbeat{MsgSync: msgSync, cmdCh: cmcCh, full: full}
 	p.heartbeatInterval = constant.HeartbeatInterval
 	p.listener = listener
@@ -157,7 +158,7 @@ func (u *Heartbeat) Run() {
 			//}
 			continue
 		}
-		var wsSeqResp server_api_params.GetMaxAndMinSeqResp
+		var wsSeqResp sdkws.GetMaxAndMinSeqResp
 		err = proto.Unmarshal(resp.Data, &wsSeqResp)
 		if err != nil {
 			log.Error(operationID, "Unmarshal failed, close conn", err.Error())

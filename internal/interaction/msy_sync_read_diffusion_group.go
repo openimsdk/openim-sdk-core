@@ -6,12 +6,12 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"runtime"
 	"sync"
 
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -21,8 +21,8 @@ type ReadDiffusionGroupMsgSync struct {
 	loginUserID              string
 	conversationCh           chan common.Cmd2Value
 	superGroupMtx            sync.Mutex
-	Group2SeqMaxNeedSync     map[string]uint32 //需要同步的seq  可能来自于心跳max，也可能来自于push
-	Group2SeqMaxSynchronized map[string]uint32 //已经同步的最大seq
+	Group2SeqMaxNeedSync     map[string]int64 //需要同步的seq  可能来自于心跳max，也可能来自于push
+	Group2SeqMaxSynchronized map[string]int64 //已经同步的最大seq
 	SuperGroupIDList         []string
 	joinedSuperGroupCh       chan common.Cmd2Value
 	Group2SyncMsgFinished    map[string]bool
@@ -30,8 +30,8 @@ type ReadDiffusionGroupMsgSync struct {
 
 func NewReadDiffusionGroupMsgSync(dataBase db_interface.DataBase, ws *Ws, loginUserID string, conversationCh chan common.Cmd2Value, joinedSuperGroupCh chan common.Cmd2Value) *ReadDiffusionGroupMsgSync {
 	p := &ReadDiffusionGroupMsgSync{DataBase: dataBase, Ws: ws, loginUserID: loginUserID, conversationCh: conversationCh, joinedSuperGroupCh: joinedSuperGroupCh}
-	p.Group2SeqMaxNeedSync = make(map[string]uint32, 0)
-	p.Group2SeqMaxSynchronized = make(map[string]uint32, 0)
+	p.Group2SeqMaxNeedSync = make(map[string]int64, 0)
+	p.Group2SeqMaxSynchronized = make(map[string]int64, 0)
 	p.Group2SyncMsgFinished = make(map[string]bool, 0)
 	go p.updateJoinedSuperGroup()
 	return p
@@ -90,7 +90,7 @@ func (m *ReadDiffusionGroupMsgSync) compareSeq(operationID string) {
 			// log.Error(operationID, "GetSuperGroupAbnormalMsgSeq failed ", err.Error(), v)
 		}
 		// log.Debug(operationID, "GetSuperGroupNormalMsgSeq GetSuperGroupAbnormalMsgSeq ", n, a, "groupID: ", v)
-		var seqMaxSynchronized uint32
+		var seqMaxSynchronized int64
 		if n > a {
 			seqMaxSynchronized = n
 		} else {
@@ -174,7 +174,7 @@ func (m *ReadDiffusionGroupMsgSync) syncLatestMsgForGroup(groupID, operationID s
 		synchronized := m.Group2SeqMaxSynchronized[groupID]
 		begin := synchronized + 1
 		if int64(need)-int64(synchronized) > int64(constant.PullMsgNumForReadDiffusion) {
-			begin = need - uint32(constant.PullMsgNumForReadDiffusion) + 1
+			begin = need - int64(constant.PullMsgNumForReadDiffusion) + 1
 		}
 		m.Group2SyncMsgFinished[groupID] = true
 		log.Debug(operationID, "syncLatestMsgForGroup seq: ", need, synchronized, begin)
@@ -195,12 +195,12 @@ func (m *ReadDiffusionGroupMsgSync) doPushMsg(cmd common.Cmd2Value) {
 	log.Debug(operationID, "detail msg doPushMsg ", *msg)
 
 	if msg.Seq == 0 {
-		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg}, operationID, 0)
+		m.TriggerCmdNewMsgCome([]*sdkws.MsgData{msg}, operationID, 0)
 		return
 	}
 	if msg.Seq == m.Group2SeqMaxSynchronized[msg.GroupID]+1 {
 		log.Debug(operationID, "TriggerCmdNewMsgCome ", msg.ServerMsgID, msg.ClientMsgID, msg.Seq)
-		m.TriggerCmdNewMsgCome([]*server_api_params.MsgData{msg}, operationID, 0)
+		m.TriggerCmdNewMsgCome([]*sdkws.MsgData{msg}, operationID, 0)
 		m.Group2SeqMaxSynchronized[msg.GroupID] = msg.Seq
 	}
 
@@ -273,14 +273,14 @@ func (m *ReadDiffusionGroupMsgSync) syncMsgForOneGroup(operationID string, group
 	log.NewDebug(operationID, utils.GetSelfFuncName(), "syncMsgForOneGroup end", groupID)
 }
 
-func (m *ReadDiffusionGroupMsgSync) syncMsgFromServer(beginSeq, endSeq uint32, groupID, operationID string, loginSync int) {
+func (m *ReadDiffusionGroupMsgSync) syncMsgFromServer(beginSeq, endSeq int64, groupID, operationID string, loginSync int) {
 	log.Debug(operationID, utils.GetSelfFuncName(), "args: ", beginSeq, endSeq, groupID)
 	if beginSeq > endSeq {
 		log.Error(operationID, "beginSeq > endSeq", beginSeq, endSeq)
 		return
 	}
 
-	var needSyncSeqList []uint32
+	var needSyncSeqList []int64
 	for i := beginSeq; i <= endSeq; i++ {
 		needSyncSeqList = append(needSyncSeqList, i)
 	}
@@ -291,14 +291,13 @@ func (m *ReadDiffusionGroupMsgSync) syncMsgFromServer(beginSeq, endSeq uint32, g
 	m.syncMsgFromServerSplit(needSyncSeqList[SPLIT*(len(needSyncSeqList)/SPLIT):], groupID, operationID, loginSync)
 }
 
-func (m *ReadDiffusionGroupMsgSync) syncMsgFromServerSplit(needSyncSeqList []uint32, groupID, operationID string, loginSync int) {
-	var pullMsgReq server_api_params.PullMessageBySeqListReq
+func (m *ReadDiffusionGroupMsgSync) syncMsgFromServerSplit(needSyncSeqList []int64, groupID, operationID string, loginSync int) {
+	var pullMsgReq sdkws.PullMessageBySeqsReq
 	pullMsgReq.UserID = m.loginUserID
-	pullMsgReq.GroupSeqList = make(map[string]*server_api_params.SeqList, 0)
-	pullMsgReq.GroupSeqList[groupID] = &server_api_params.SeqList{SeqList: needSyncSeqList}
+	pullMsgReq.GroupSeqs = make(map[string]*sdkws.Seqs, 0)
+	pullMsgReq.GroupSeqs[groupID] = &sdkws.Seqs{Seqs: needSyncSeqList}
 
 	for {
-		pullMsgReq.OperationID = operationID
 		log.Debug(operationID, "read diffusion group pull message, req: ", pullMsgReq)
 		resp, err := m.SendReqWaitResp(context.Background(), &pullMsgReq, constant.WSPullMsgBySeqList, 30, 2, m.loginUserID)
 		if err != nil && m.LoginStatus() == constant.Logout {
@@ -312,7 +311,7 @@ func (m *ReadDiffusionGroupMsgSync) syncMsgFromServerSplit(needSyncSeqList []uin
 			continue
 		}
 
-		var pullMsgResp server_api_params.PullMessageBySeqListResp
+		var pullMsgResp sdkws.PullMessageBySeqsResp
 		err = proto.Unmarshal(resp.Data, &pullMsgResp)
 		if err != nil {
 			log.Error(operationID, "pullMsgResp Unmarshal failed ", err.Error())
@@ -327,7 +326,7 @@ func (m *ReadDiffusionGroupMsgSync) syncMsgFromServerSplit(needSyncSeqList []uin
 	}
 }
 
-func (m *ReadDiffusionGroupMsgSync) TriggerCmdNewMsgCome(msgList []*server_api_params.MsgData, operationID string, loginSync int) {
+func (m *ReadDiffusionGroupMsgSync) TriggerCmdNewMsgCome(msgList []*sdkws.MsgData, operationID string, loginSync int) {
 	for {
 		err := common.TriggerCmdSuperGroupMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: msgList, OperationID: operationID, SyncFlag: loginSync}, m.conversationCh)
 		if err != nil {

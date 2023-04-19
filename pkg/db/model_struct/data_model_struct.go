@@ -294,7 +294,7 @@ type LocalChatLog struct {
 	Content              string `gorm:"column:content;type:varchar(1000)" json:"content"`
 	IsRead               bool   `gorm:"column:is_read" json:"isRead"`
 	Status               int32  `gorm:"column:status" json:"status"`
-	Seq                  uint32 `gorm:"column:seq;index:index_seq;default:0" json:"seq"`
+	Seq                  int64  `gorm:"column:seq;index:index_seq;default:0" json:"seq"`
 	SendTime             int64  `gorm:"column:send_time;index:index_send_time;" json:"sendTime"`
 	CreateTime           int64  `gorm:"column:create_time" json:"createTime"`
 	AttachedInfo         string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
@@ -305,7 +305,7 @@ type LocalChatLog struct {
 }
 
 type LocalErrChatLog struct {
-	Seq              uint32 `gorm:"column:seq;primary_key" json:"seq"`
+	Seq              int64  `gorm:"column:seq;primary_key" json:"seq"`
 	ClientMsgID      string `gorm:"column:client_msg_id;type:char(64)" json:"clientMsgID"`
 	ServerMsgID      string `gorm:"column:server_msg_id;type:char(64)" json:"serverMsgID"`
 	SendID           string `gorm:"column:send_id;type:char(64)" json:"sendID"`
@@ -338,7 +338,7 @@ type TempCacheLocalChatLog struct {
 	Content          string `gorm:"column:content;type:varchar(1000)" json:"content"`
 	IsRead           bool   `gorm:"column:is_read" json:"isRead"`
 	Status           int32  `gorm:"column:status" json:"status"`
-	Seq              uint32 `gorm:"column:seq;default:0" json:"seq"`
+	Seq              int64  `gorm:"column:seq;default:0" json:"seq"`
 	SendTime         int64  `gorm:"column:send_time;" json:"sendTime"`
 	CreateTime       int64  `gorm:"column:create_time" json:"createTime"`
 	AttachedInfo     string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`

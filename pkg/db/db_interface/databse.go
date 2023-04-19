@@ -65,9 +65,9 @@ type DataBase interface {
 	UpdateGroupMessageHasReadController(ctx context.Context, msgIDList []string, groupID string, sessionType int32) error
 	GetMultipleMessage(ctx context.Context, msgIDList []string) (result []*model_struct.LocalChatLog, err error)
 	GetMultipleMessageController(ctx context.Context, msgIDList []string, groupID string, sessionType int32) (result []*model_struct.LocalChatLog, err error)
-	GetNormalMsgSeq(ctx context.Context) (uint32, error)
-	GetLostMsgSeqList(ctx context.Context, minSeqInSvr uint32) ([]uint32, error)
-	GetSuperGroupNormalMsgSeq(ctx context.Context, groupID string) (uint32, error)
+	GetNormalMsgSeq(ctx context.Context) (int64, error)
+	GetLostMsgSeqList(ctx context.Context, minSeqInSvr int64) ([]int64, error)
+	GetSuperGroupNormalMsgSeq(ctx context.Context, groupID string) (int64, error)
 	GetTestMessage(ctx context.Context, seq uint32) (*model_struct.LocalChatLog, error)
 	UpdateMsgSenderNickname(ctx context.Context, sendID, nickname string, sType int) error
 	UpdateMsgSenderFaceURL(ctx context.Context, sendID, faceURL string, sType int) error
@@ -140,11 +140,11 @@ type DataBase interface {
 	SearchGroupMembersDB(ctx context.Context, keyword string, groupID string, isSearchMemberNickname, isSearchUserID bool, offset, count int) (result []*model_struct.LocalGroupMember, err error)
 	InitSuperLocalErrChatLog(ctx context.Context, groupID string)
 	SuperBatchInsertExceptionMsg(ctx context.Context, MessageList []*model_struct.LocalErrChatLog, groupID string) error
-	GetAbnormalMsgSeq(ctx context.Context) (uint32, error)
-	GetAbnormalMsgSeqList(ctx context.Context) ([]uint32, error)
+	GetAbnormalMsgSeq(ctx context.Context) (int64, error)
+	GetAbnormalMsgSeqList(ctx context.Context) ([]int64, error)
 	BatchInsertExceptionMsg(ctx context.Context, MessageList []*model_struct.LocalErrChatLog) error
 	BatchInsertExceptionMsgController(ctx context.Context, MessageList []*model_struct.LocalErrChatLog) error
-	GetSuperGroupAbnormalMsgSeq(ctx context.Context, groupID string) (uint32, error)
+	GetSuperGroupAbnormalMsgSeq(ctx context.Context, groupID string) (int64, error)
 	BatchInsertTempCacheMessageList(ctx context.Context, MessageList []*model_struct.TempCacheLocalChatLog) error
 	InsertTempCacheMessage(ctx context.Context, Message *model_struct.TempCacheLocalChatLog) error
 	GetLoginUser(ctx context.Context, userID string) (*model_struct.LocalUser, error)
@@ -189,10 +189,10 @@ type DataBase interface {
 	SuperGroupUpdateGroupMessageHasRead(ctx context.Context, msgIDList []string, groupID string) error
 	SuperGroupUpdateGroupMessageFields(ctx context.Context, msgIDList []string, groupID string, args map[string]interface{}) error
 	SuperGroupGetMultipleMessage(ctx context.Context, conversationIDList []string, groupID string) (result []*model_struct.LocalChatLog, err error)
-	SuperGroupGetNormalMsgSeq(ctx context.Context) (uint32, error)
+	SuperGroupGetNormalMsgSeq(ctx context.Context) (int64, error)
 
-	SuperGroupGetNormalMinSeq(ctx context.Context, groupID string) (uint32, error)
-	SuperGroupGetTestMessage(ctx context.Context, seq uint32) (*model_struct.LocalChatLog, error)
+	SuperGroupGetNormalMinSeq(ctx context.Context, groupID string) (int64, error)
+	SuperGroupGetTestMessage(ctx context.Context, seq int64) (*model_struct.LocalChatLog, error)
 	SuperGroupUpdateMsgSenderNickname(ctx context.Context, sendID, nickname string, sType int) error
 	SuperGroupUpdateMsgSenderFaceURL(ctx context.Context, sendID, faceURL string, sType int) error
 	SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(ctx context.Context, sendID, faceURL, nickname string, sessionType int, groupID string) error
@@ -200,7 +200,7 @@ type DataBase interface {
 	SuperGroupGetMsgSeqListByGroupID(ctx context.Context, groupID string) ([]uint32, error)
 	SuperGroupGetMsgSeqListByPeerUserID(ctx context.Context, userID string) ([]uint32, error)
 	SuperGroupGetMsgSeqListBySelfUserID(ctx context.Context, userID string) ([]uint32, error)
-	SuperGroupGetAlreadyExistSeqList(ctx context.Context, groupID string, lostSeqList []uint32) (seqList []uint32, err error)
+	SuperGroupGetAlreadyExistSeqList(ctx context.Context, groupID string, lostSeqList []int64) (seqList []int64, err error)
 	InsertWorkMomentsNotification(ctx context.Context, jsonDetail string) error
 	GetWorkMomentsNotification(ctx context.Context, offset, count int) (WorkMomentsNotifications []*model_struct.LocalWorkMomentsNotification, err error)
 	GetWorkMomentsNotificationLimit(ctx context.Context, pageNumber, showNumber int) (WorkMomentsNotifications []*model_struct.LocalWorkMomentsNotification, err error)

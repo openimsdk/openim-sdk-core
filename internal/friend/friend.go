@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/golang/protobuf/proto"
 	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/open_im_sdk_callback"
@@ -28,6 +27,9 @@ import (
 	"open_im_sdk/pkg/db/model_struct"
 	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/syncer"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/golang/protobuf/proto"
 )
 
 func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, p *ws.PostApi, conversationCh chan common.Cmd2Value) *Friend {
@@ -121,7 +123,7 @@ func (f *Friend) SetListenerForService(listener open_im_sdk_callback.OnListenerF
 	f.listenerForService = listener
 }
 
-func (f *Friend) DoNotification(ctx context.Context, msg *api.MsgData) {
+func (f *Friend) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	go func() {
 		if err := f.doNotification(ctx, msg); err != nil {
 			// todo log
@@ -129,7 +131,7 @@ func (f *Friend) DoNotification(ctx context.Context, msg *api.MsgData) {
 	}()
 }
 
-func (f *Friend) doNotification(ctx context.Context, msg *api.MsgData) error {
+func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 	if f.friendListener == nil {
 		return errors.New("f.friendListener == nil")
 	}

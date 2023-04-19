@@ -3,10 +3,10 @@ package server_api_params
 import "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 
 type DeleteMsgReq struct {
-	OpUserID    string   `json:"opUserID"`
-	UserID      string   `json:"userID"`
-	SeqList     []uint32 `json:"seqList"`
-	OperationID string   `json:"operationID"`
+	OpUserID    string  `json:"opUserID"`
+	UserID      string  `json:"userID"`
+	SeqList     []int64 `json:"seqList"`
+	OperationID string  `json:"operationID"`
 }
 
 type DeleteMsgResp struct {
@@ -21,19 +21,19 @@ type CleanUpMsgResp struct {
 	CommResp
 }
 type DelSuperGroupMsgReq struct {
-	UserID      string   `json:"userID,omitempty" binding:"required"`
-	GroupID     string   `json:"groupID,omitempty" binding:"required"`
-	SeqList     []uint32 `json:"seqList,omitempty"`
-	IsAllDelete bool     `json:"isAllDelete"`
-	OperationID string   `json:"operationID,omitempty" binding:"required"`
+	UserID      string  `json:"userID,omitempty" binding:"required"`
+	GroupID     string  `json:"groupID,omitempty" binding:"required"`
+	SeqList     []int64 `json:"seqList,omitempty"`
+	IsAllDelete bool    `json:"isAllDelete"`
+	OperationID string  `json:"operationID,omitempty" binding:"required"`
 }
 type DelSuperGroupMsgResp struct {
 	CommResp
 }
 type MsgDeleteNotificationElem struct {
-	GroupID     string   `json:"groupID"`
-	IsAllDelete bool     `json:"isAllDelete"`
-	SeqList     []uint32 `json:"seqList"`
+	GroupID     string  `json:"groupID"`
+	IsAllDelete bool    `json:"isAllDelete"`
+	SeqList     []int64 `json:"seqList"`
 }
 type SetMessageReactionExtensionsReq struct {
 	OperationID           string               `json:"operationID" validate:"required"`
@@ -54,7 +54,7 @@ type AddMessageReactionExtensionsReq struct {
 	IsReact               bool                 `json:"isReact,omitempty"`
 	IsExternalExtensions  bool                 `json:"isExternalExtensions,omitempty"`
 	MsgFirstModifyTime    int64                `json:"msgFirstModifyTime,omitempty"`
-	Seq                   uint32               `json:"seq"`
+	Seq                   int64                `json:"seq"`
 }
 type DeleteMessageReactionExtensionsReq struct {
 	OperationID           string      `json:"operationID" binding:"required"`

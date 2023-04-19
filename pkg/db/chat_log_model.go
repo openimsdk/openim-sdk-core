@@ -545,15 +545,15 @@ func (d *DataBase) GetMultipleMessageController(ctx context.Context, msgIDList [
 	}
 }
 
-func (d *DataBase) GetNormalMsgSeq(ctx context.Context) (uint32, error) {
+func (d *DataBase) GetNormalMsgSeq(ctx context.Context) (int64, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	var seq uint32
+	var seq int64
 	err := d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Select("IFNULL(max(seq),0)").Find(&seq).Error
 	return seq, utils.Wrap(err, "GetNormalMsgSeq")
 }
-func (d *DataBase) GetLostMsgSeqList(ctx context.Context, minSeqInSvr uint32) ([]uint32, error) {
-	var hasSeqList []uint32
+func (d *DataBase) GetLostMsgSeqList(ctx context.Context, minSeqInSvr int64) ([]int64, error) {
+	var hasSeqList []int64
 	err := d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Select("seq").Order("seq ASC").Find(&hasSeqList).Error
 	if err != nil {
 		return nil, err
@@ -562,9 +562,9 @@ func (d *DataBase) GetLostMsgSeqList(ctx context.Context, minSeqInSvr uint32) ([
 	if seqLength == 0 {
 		return nil, nil
 	}
-	var normalSeqList []uint32
+	var normalSeqList []int64
 
-	var i uint32
+	var i int64
 	for i = 1; i <= hasSeqList[seqLength-1]; i++ {
 		normalSeqList = append(normalSeqList, i)
 	}
@@ -582,8 +582,8 @@ func (d *DataBase) GetLostMsgSeqList(ctx context.Context, minSeqInSvr uint32) ([
 	return utils.DifferenceSubset(lostSeqList, utils.Intersect(lostSeqList, abnormalSeqList)), nil
 
 }
-func (d *DataBase) GetSuperGroupNormalMsgSeq(ctx context.Context, groupID string) (uint32, error) {
-	var seq uint32
+func (d *DataBase) GetSuperGroupNormalMsgSeq(ctx context.Context, groupID string) (int64, error) {
+	var seq int64
 	err := d.conn.WithContext(ctx).Table(utils.GetSuperGroupTableName(groupID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
 	return seq, utils.Wrap(err, "GetSuperGroupNormalMsgSeq")
 }

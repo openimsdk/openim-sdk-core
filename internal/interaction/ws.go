@@ -388,7 +388,7 @@ func (w *Ws) doWSPushMsg(wsResp GeneralWsResp) error {
 	if wsResp.ErrCode != 0 {
 		return utils.Wrap(errors.New("errCode"), wsResp.ErrMsg)
 	}
-	var msg server_api_params.MsgData
+	var msg sdkws.MsgData
 	err := proto.Unmarshal(wsResp.Data, &msg)
 	if err != nil {
 		return utils.Wrap(err, "Unmarshal failed")
@@ -434,7 +434,7 @@ func (w *Ws) SendSignalingReqWaitResp(ctx context.Context, req *sdkws.SignalReq)
 	return &signalResp, nil
 }
 
-func (w *Ws) SignalingWaitPush(ctx context.Context, inviterUserID, inviteeUserID, roomID string, timeout int32) (*server_api_params.SignalReq, error) {
+func (w *Ws) SignalingWaitPush(ctx context.Context, inviterUserID, inviteeUserID, roomID string, timeout int32) (*sdkws.SignalReq, error) {
 	msgIncr := inviterUserID + inviteeUserID + roomID
 	ch := w.AddChByIncr(msgIncr)
 	defer w.DelCh(msgIncr)
@@ -442,7 +442,7 @@ func (w *Ws) SignalingWaitPush(ctx context.Context, inviterUserID, inviteeUserID
 	if err != nil {
 		return nil, utils.Wrap(err, "")
 	}
-	var signalReq server_api_params.SignalReq
+	var signalReq sdkws.SignalReq
 	err = proto.Unmarshal(resp.Data, &signalReq)
 	if err != nil {
 		return nil, utils.Wrap(err, "")
