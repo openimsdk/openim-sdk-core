@@ -10,12 +10,12 @@ import (
 func main() {
 	//APIADDR := "https://test-web.rentsoft.cn/api"
 	//WSADDR := "wss://test-web.rentsoft.cn/msg_gateway"
-	APIADDR := "http://59.36.173.89:10002"
-	WSADDR := "ws://59.36.173.89:10001"
+	APIADDR := "http://121.5.182.23:10002"
+	WSADDR := "ws://121.5.182.23:10001"
 	REGISTERADDR := APIADDR + "/user_register"
 	ACCOUNTCHECK := APIADDR + "/manager/account_check"
 	TOKENADDR := APIADDR + "/auth/user_token"
-	SECRET := "openIM123"
+	SECRET := "tuoyuntuoyun"
 	SENDINTERVAL := 20
 	test.REGISTERADDR = REGISTERADDR
 	test.TOKENADDR = TOKENADDR
@@ -23,7 +23,7 @@ func main() {
 	test.SENDINTERVAL = SENDINTERVAL
 	test.WSADDR = WSADDR
 	test.ACCOUNTCHECK = ACCOUNTCHECK
-	strMyUidx := "1010930629"
+	strMyUidx := "4266290636"
 
 	//	var onlineNum *int          //Number of online users
 	//	var senderNum *int          //Number of users sending messages
@@ -49,6 +49,7 @@ func main() {
 	//test.DoTestSetBurnDuration("single_2861383134")
 	//test.DoTestInvite("123123")
 	test.DoTestSetAppBackgroundStatus(true)
+	test.TestGetWorkMomentsNotification()
 	for {
 		//test.DotestDeleteFriend()
 		//test.DoTestSendMsg2("", "1443506268")
