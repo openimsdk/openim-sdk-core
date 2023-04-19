@@ -112,8 +112,14 @@ func (u *Heartbeat) Run() {
 					runtime.Goexit()
 				}
 				if r.Cmd == constant.CmdWakeUp {
-					u.full.SuperGroup.SyncJoinedGroupList(ctx)
-					u.full.Group().SyncJoinedGroupList(ctx)
+					err := u.full.SuperGroup.SyncJoinedGroupList(ctx)
+					if err != nil {
+						log.Error(operationID, "SyncJoinedGroupList failed ", err.Error())
+					}
+					err = u.full.Group().SyncJoinedGroupList(ctx)
+					if err != nil {
+						log.Error(operationID, "SyncJoinedGroupList failed ", err.Error())
+					}
 					log.Info(operationID, "recv wake up cmd, start heartbeat ", r.Cmd)
 					reqTimeout = wakeUpTimeout
 					break
@@ -128,7 +134,6 @@ func (u *Heartbeat) Run() {
 			runtime.Goexit()
 		}
 		heartbeatNum++
-		log.Debug(operationID, "send heartbeat req")
 		//if u.IsTokenExp(operationID) {
 		//	log.Warn(operationID, "TokenExp, close heartbeat channel, call OnUserTokenExpired, set logout", u.cmdCh)
 		//	u.listener.OnUserTokenExpired()

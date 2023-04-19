@@ -1,13 +1,15 @@
 package common
 
 import (
+	"context"
 	"errors"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"runtime"
 	"time"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 )
 
 func TriggerCmdJoinedSuperGroup(cmd sdk_struct.CmdJoinedSuperGroup, joinedSuperGroupCh chan Cmd2Value) error {
@@ -166,13 +168,11 @@ type goroutine interface {
 }
 
 func DoListener(Li goroutine) {
-	log.Info("internal", "doListener start.", Li.GetCh())
 	for {
 		select {
 		case cmd := <-Li.GetCh():
 			if cmd.Cmd == constant.CmdUnInit {
-				log.Warn("", "close doListener channel ", Li.GetCh())
-				//	close(Li.GetCh())
+				log.ZWarn(context.Background(), "close doListener channel ", nil, "ch", Li.GetCh())
 				runtime.Goexit()
 			}
 			Li.Work(cmd)

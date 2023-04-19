@@ -32,7 +32,7 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		fmt.Println(operationID, "Unmarshal failed ", err.Error(), config)
 		return false
 	}
-	if err := log.InitFromConfig("open_im_sdk", int(sdk_struct.SvrConf.LogLevel), true, false, "", 0); err != nil {
+	if err := log.InitFromConfig("", int(sdk_struct.SvrConf.LogLevel), true, false, "", 0); err != nil {
 		fmt.Println(operationID, "log init failed ", err.Error())
 		return false
 	}
@@ -48,7 +48,7 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		return false
 	}
 
-	log.ZInfo(ctx, "config", sdk_struct.SvrConf, "sdkVersion", SdkVersion())
+	log.ZInfo(ctx, "InitSDK info", "config", sdk_struct.SvrConf, "sdkVersion", SdkVersion())
 	if listener == nil || config == "" {
 		log.ZError(ctx, "listener or config is nil", nil)
 		return false

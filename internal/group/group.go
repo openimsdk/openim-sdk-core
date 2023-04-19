@@ -168,17 +168,14 @@ func (g *Group) GetJoinedDiffusionGroupIDListFromSvr(ctx context.Context) ([]str
 	return groupIDs, nil
 }
 
-func (g *Group) SyncJoinedGroupList(ctx context.Context) {
-	if err := g.SyncJoinedGroup(ctx); err != nil {
-		log.ZError(ctx, "SyncJoinedGroup failed", err)
-	}
+func (g *Group) SyncJoinedGroupList(ctx context.Context) error {
+	return g.SyncJoinedGroup(ctx)
 }
 
-func (g *Group) SyncJoinedGroupMemberForFirstLogin(ctx context.Context) {
+func (g *Group) SyncJoinedGroupMemberForFirstLogin(ctx context.Context) error {
 	groups, err := g.syncJoinedGroup(ctx)
 	if err != nil {
-		log.ZError(ctx, "GetAndSyncJoinedGroup failed", err)
-		return
+		return err
 	}
 	var wg sync.WaitGroup
 	for _, group := range groups {
@@ -191,4 +188,5 @@ func (g *Group) SyncJoinedGroupMemberForFirstLogin(ctx context.Context) {
 		}(group.GroupID)
 	}
 	wg.Wait()
+	return nil
 }

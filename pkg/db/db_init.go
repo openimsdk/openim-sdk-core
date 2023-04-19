@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"sync"
 	"time"
 
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -101,26 +101,26 @@ func NewDataBase(ctx context.Context, loginUserID string, dbDir string) (*DataBa
 func (d *DataBase) setChatLogFailedStatus(ctx context.Context) {
 	msgList, err := d.GetSendingMessageList(ctx)
 	if err != nil {
-		log.Error("", "GetSendingMessageList failed ", err.Error())
+		log.ZError(ctx, "GetSendingMessageList failed", err)
 		return
 	}
 	for _, v := range msgList {
 		v.Status = constant.MsgStatusSendFailed
 		err := d.UpdateMessage(ctx, v)
 		if err != nil {
-			log.Error("", "UpdateMessage failed ", err.Error(), v)
+			log.ZError(ctx, "UpdateMessage failed", err, "msg", v)
 			continue
 		}
 	}
 	groupIDList, err := d.GetReadDiffusionGroupIDList(ctx)
 	if err != nil {
-		log.Error("", "GetReadDiffusionGroupIDList failed ", err.Error())
+		log.ZError(ctx, "GetReadDiffusionGroupIDList failed", err)
 		return
 	}
 	for _, v := range groupIDList {
 		msgList, err := d.SuperGroupGetSendingMessageList(ctx, v)
 		if err != nil {
-			log.Error("", "GetSendingMessageList failed ", err.Error())
+			log.ZError(ctx, "GetSendingMessageList failed", err)
 			return
 		}
 		if len(msgList) > 0 {
@@ -128,7 +128,7 @@ func (d *DataBase) setChatLogFailedStatus(ctx context.Context) {
 				v.Status = constant.MsgStatusSendFailed
 				err := d.SuperGroupUpdateMessage(ctx, v)
 				if err != nil {
-					log.Error("", "UpdateMessage failed ", err.Error(), v)
+					log.ZError(ctx, "UpdateMessage failed", err, "msg", v)
 					continue
 				}
 			}
@@ -145,14 +145,12 @@ func (d *DataBase) initDB(ctx context.Context) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 
-	//cxn := "memdb1?mode=memory&cache=shared"
 	dbFileName := d.dbDir + "/OpenIM_" + constant.BigVersion + "_" + d.loginUserID + ".db"
-
 	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
-	log.Info("open db:", dbFileName)
 	if err != nil {
 		return utils.Wrap(err, "open db failed "+dbFileName)
 	}
+	log.ZDebug(ctx, "open db success", "db", db, "dbFileName", dbFileName)
 	sqlDB, err := db.DB()
 	if err != nil {
 		return utils.Wrap(err, "get sql db failed")
@@ -188,12 +186,11 @@ func (d *DataBase) initDB(ctx context.Context) error {
 	db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup)
 	groupIDList, err := d.GetJoinedSuperGroupIDList(ctx)
 	if err != nil {
-		log.Error("auto migrate super db err:", err.Error())
+		log.ZError(ctx, "auto migrate super db err:", err)
 	}
-	wkGroupIDList, err2 := d.GetJoinedWorkingGroupIDList(ctx)
-	if err2 != nil {
-		log.Error("auto migrate working group  db err:", err2)
-
+	wkGroupIDList, err := d.GetJoinedWorkingGroupIDList(ctx)
+	if err != nil {
+		log.ZError(ctx, "auto migrate working group  db err:", err)
 	}
 	groupIDList = append(groupIDList, wkGroupIDList...)
 	for _, v := range groupIDList {
@@ -268,9 +265,8 @@ func (d *DataBase) initDB(ctx context.Context) error {
 	if !db.Migrator().HasTable(&model_struct.LocalChatLogReactionExtensions{}) {
 		db.Migrator().CreateTable(&model_struct.LocalChatLogReactionExtensions{})
 	}
-	log.NewInfo("init db", "startInitWorkMomentsNotificationUnreadCount ")
 	if err := d.InitWorkMomentsNotificationUnreadCount(ctx); err != nil {
-		log.NewError("init InitWorkMomentsNotificationUnreadCount:", utils.GetSelfFuncName(), err.Error())
+		log.ZError(ctx, "init InitWorkMomentsNotificationUnreadCount failed", err)
 	}
 	return nil
 }

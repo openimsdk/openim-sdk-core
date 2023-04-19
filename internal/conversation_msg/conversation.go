@@ -207,14 +207,12 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 	// log.NewDebug(operationID, utils.GetSelfFuncName(), index, conversationsOnLocal[index].ConversationID,
 	// conversationsOnLocal[index].RecvMsgOpt, conversationsOnLocal[index].IsPinned, conversationsOnLocal[index].IsPrivateChat)
 	// }
-	cTime = time.Now()
+	// cTime = time.Now()
 	conversationsOnLocal, err = c.db.GetAllConversationListToSync(ctx)
 	if err != nil {
 		// log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 	}
 	c.cache.UpdateConversations(conversationsOnLocal)
-	// log.Info(operationID, "cache update cost time", time.Since(cTime))
-	// log.Info(operationID, utils.GetSelfFuncName(), "all  cost time", time.Since(ccTime))
 }
 func (c *Conversation) SyncConversationUnreadCount(operationID string) {
 	ctx := context.Background()

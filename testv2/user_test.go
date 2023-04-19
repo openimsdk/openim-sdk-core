@@ -12,6 +12,7 @@ func Test_GetSelfUserInfo(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
 	t.Log(userInfo)
 }
 
@@ -20,13 +21,15 @@ func Test_GetUsersInfo(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(userInfo)
+	t.Log(userInfo[0])
 }
 
 func Test_SetSelfInfo(t *testing.T) {
+	newNickName := "test"
+	newFaceURL := "http://test.com"
 	err := open_im_sdk.UserForSDK.User().SetSelfInfo(ctx, &sdkws.UserInfo{
-		Nickname: "test",
-		FaceURL:  "http://test.com",
+		Nickname: newNickName,
+		FaceURL:  newFaceURL,
 	})
 	if err != nil {
 		t.Error(err)
@@ -35,7 +38,7 @@ func Test_SetSelfInfo(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if userInfo.UserID != UserID {
+	if userInfo.UserID != UserID && userInfo.Nickname != newNickName && userInfo.FaceURL != newFaceURL {
 		t.Error("user id not match")
 	}
 	t.Log(userInfo)

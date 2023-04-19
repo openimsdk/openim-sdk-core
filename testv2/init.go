@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	ctx = mcontext.NewCtx(utils.GetFuncName(1) + ":test")
+	ctx = mcontext.NewCtx(utils.GetFuncName(2) + ":test")
 )
 
 func init() {
@@ -27,12 +27,14 @@ func init() {
 	if !isInit {
 		panic("init sdk failed")
 	}
-	ctx := mcontext.NewCtx("test get token")
+	ctx := mcontext.NewCtx("testInitLogin")
 	token := GetResValue(GetUserToken(ctx, UserID))
+	util.Token = token
+
 	if err := open_im_sdk.UserForSDK.Login(ctx, UserID, token); err != nil {
 		panic(err)
 	}
-	util.Token = token
+	fmt.Println(util.Token)
 }
 
 func GetUserToken(ctx context.Context, userID string) (string, error) {

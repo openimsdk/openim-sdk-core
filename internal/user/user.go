@@ -106,7 +106,7 @@ func (u *User) userInfoUpdatedNotification(msg *sdkws.MsgData, operationID strin
 func (u *User) GetUsersInfoFromSvr(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
 	resp, err := util.CallApi[userPb.GetDesignateUsersResp](ctx, constant.GetUsersInfoRouter, userPb.GetDesignateUsersReq{UserIDs: userIDs})
 	if err != nil {
-		return nil, err
+		return nil, errs.Wrap(err, "GetUsersInfoFromSvr failed")
 	}
 	return util.Batch(ServerUserToLocalUser, resp.UsersInfo), nil
 }
@@ -123,15 +123,11 @@ func (u *User) GetSingleUserFromSvr(ctx context.Context, userID string) (*model_
 }
 
 func (u *User) getSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, error) {
-	userInfo, err := u.GetLoginUser(ctx, u.loginUserID)
-	if err != nil {
-		log.ZDebug(ctx, "GetLoginUser failed, userID: %s, err: %s", u.loginUserID, err.Error())
-		return u.GetSingleUserFromSvr(ctx, u.loginUserID)
-	}
-	return userInfo, nil
+	return u.GetLoginUser(ctx, u.loginUserID)
 }
 
 func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfo) error {
+	userInfo.UserID = u.loginUserID
 	if err := util.ApiPost(ctx, constant.UpdateSelfUserInfoRouter, userPb.UpdateUserInfoReq{UserInfo: userInfo}, nil); err != nil {
 		return err
 	}

@@ -239,8 +239,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	if err != nil {
 		return errs.ErrDatabase.Wrap(err.Error())
 	}
-	log.ZDebug(ctx, "NewDataBase ok ", "userID", userID, "dataDir", sdk_struct.SvrConf.DataDir, "login cost time: ", time.Since(t1))
-
+	log.ZDebug(ctx, "NewDataBase ok", "userID", userID, "dataDir", sdk_struct.SvrConf.DataDir, "login cost time", time.Since(t1))
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
 	u.cmdWsCh = make(chan common.Cmd2Value, 10)
 
@@ -272,7 +271,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 		u.business.SetListener(u.businessListener)
 	}
 	u.push = comm2.NewPush(p, u.imConfig.Platform, u.loginUserID)
-	go u.forcedSynchronization()
+	go u.forcedSynchronization(ctx)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	log.ZDebug(ctx, "all channel ", "pushMsgAndMaxSeqCh", u.pushMsgAndMaxSeqCh, "conversationCh", u.conversationCh, "heartbeatCmdCh", u.heartbeatCmdCh, "cmdWsCh", u.cmdWsCh)
 	wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID, u.imConfig.IsCompression, u.conversationCh)
@@ -391,58 +390,88 @@ func (u *LoginMgr) GetLoginStatus() int32 {
 	return u.ws.LoginStatus()
 }
 
-func (u *LoginMgr) forcedSynchronization() {
-	operationID := utils.OperationIDGenerator()
-	ctx := mcontext.NewCtx(operationID)
+func (u *LoginMgr) forcedSynchronization(ctx context.Context) {
 	log.ZInfo(ctx, "sync all info begin")
 	var wg sync.WaitGroup
-	wg.Add(9)
+	var errCh = make(chan error, 10)
+	wg.Add(10)
 	go func() {
-		u.user.SyncLoginUserInfo(ctx)
-		u.friend.SyncFriendList(ctx)
-		wg.Done()
+		defer wg.Done()
+		if err := u.user.SyncLoginUserInfo(ctx); err != nil {
+			errCh <- err
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		if err := u.friend.SyncFriendList(ctx); err != nil {
+			errCh <- err
+		}
 	}()
 
 	go func() {
-		u.friend.SyncBlackList(ctx)
-		wg.Done()
+		defer wg.Done()
+		if err := u.friend.SyncBlackList(ctx); err != nil {
+			errCh <- err
+		}
 	}()
 
 	go func() {
-		u.friend.SyncFriendApplication(ctx)
-		wg.Done()
+		defer wg.Done()
+		if err := u.friend.SyncFriendApplication(ctx); err != nil {
+			errCh <- err
+		}
 	}()
 
 	go func() {
-		u.friend.SyncSelfFriendApplication(ctx)
-		wg.Done()
+		defer wg.Done()
+		if err := u.friend.SyncSelfFriendApplication(ctx); err != nil {
+			errCh <- err
+		}
 	}()
 
 	go func() {
-		u.group.SyncJoinedGroupList(ctx)
-		wg.Done()
+		defer wg.Done()
+		if err := u.group.SyncJoinedGroupList(ctx); err != nil {
+			errCh <- err
+		}
 	}()
 
 	go func() {
-		u.group.SyncAdminGroupApplication(ctx)
-		wg.Done()
+		defer wg.Done()
+		if err := u.group.SyncAdminGroupApplication(ctx); err != nil {
+			errCh <- err
+		}
 	}()
 
 	go func() {
-		u.group.SyncSelfGroupApplication(ctx)
-		wg.Done()
+		defer wg.Done()
+		if err := u.group.SyncSelfGroupApplication(ctx); err != nil {
+			errCh <- err
+		}
 	}()
 
 	go func() {
-		u.group.SyncJoinedGroupMemberForFirstLogin(ctx)
-		wg.Done()
+		defer wg.Done()
+		if err := u.group.SyncJoinedGroupMemberForFirstLogin(ctx); err != nil {
+			errCh <- err
+		}
 	}()
 	go func() {
-		u.superGroup.SyncJoinedGroupList(ctx)
-		wg.Done()
+		defer wg.Done()
+		if err := u.superGroup.SyncJoinedGroupList(ctx); err != nil {
+			errCh <- err
+		}
 	}()
-	wg.Wait()
 
+	go func() {
+		wg.Wait()
+		close(errCh)
+	}()
+	for err := range errCh {
+		if err != nil {
+			log.ZError(ctx, "sync info failed", err)
+		}
+	}
 	u.loginTime = utils.GetCurrentTimestampByMill()
 	u.user.SetLoginTime(u.loginTime)
 	u.friend.SetLoginTime(u.loginTime)
