@@ -16,13 +16,15 @@ package friend
 
 import (
 	"context"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/friend"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/friend"
 )
 
 func (f *Friend) GetDesignatedFriendsInfo(ctx context.Context, friendUserIDList []string) ([]*server_api_params.FullUserInfo, error) {
@@ -30,10 +32,12 @@ func (f *Friend) GetDesignatedFriendsInfo(ctx context.Context, friendUserIDList 
 	if err != nil {
 		return nil, err
 	}
+	log.ZDebug(ctx, "GetDesignatedFriendsInfo", "localFriendList", localFriendList)
 	blackList, err := f.db.GetBlackInfoList(ctx, friendUserIDList)
 	if err != nil {
 		return nil, err
 	}
+	log.ZDebug(ctx, "GetDesignatedFriendsInfo", "blackList", blackList)
 	m := make(map[string]*model_struct.LocalBlack)
 	for i, black := range blackList {
 		m[black.BlockUserID] = blackList[i]
