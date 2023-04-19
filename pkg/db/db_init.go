@@ -3,17 +3,19 @@ package db
 import (
 	"errors"
 	"fmt"
+
 	//"github.com/glebarez/sqlite"
 	"gorm.io/driver/sqlite"
 
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"sync"
 	"time"
+
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var UserDBMap map[string]*DataBase
@@ -185,7 +187,7 @@ func (d *DataBase) initDB() error {
 		&model_struct.LocalAdminGroupRequest{},
 		&model_struct.LocalDepartment{},
 		&model_struct.LocalDepartmentMember{},
-		&LocalWorkMomentsNotification{},
+		// &LocalWorkMomentsNotification{},
 		&LocalWorkMomentsNotificationUnreadCount{},
 		&model_struct.TempCacheLocalChatLog{},
 		&model_struct.LocalChatLogReactionExtensions{},
@@ -279,9 +281,22 @@ func (d *DataBase) initDB() error {
 	if !db.Migrator().HasTable(&model_struct.LocalChatLogReactionExtensions{}) {
 		db.Migrator().CreateTable(&model_struct.LocalChatLogReactionExtensions{})
 	}
-	log.NewInfo("init db", "startInitWorkMomentsNotificationUnreadCount ")
-	if err := d.InitWorkMomentsNotificationUnreadCount(); err != nil {
-		log.NewError("init InitWorkMomentsNotificationUnreadCount:", utils.GetSelfFuncName(), err.Error())
+	if err := d.InitWorkMoment(); err != nil {
+		log.NewError("init work moment:", utils.GetSelfFuncName(), err.Error())
 	}
+	// log.NewInfo("init db", "startInitWorkMomentsNotificationUnreadCount ")
+	// if err := d.InitWorkMomentsNotificationUnreadCount(); err != nil {
+	// 	log.NewError("init InitWorkMomentsNotificationUnreadCount:", utils.GetSelfFuncName(), err.Error())
+	// }
 	return nil
+}
+
+// 判断表中是否存在某个字段
+func (d *DataBase) HasTableColumn(tableName string, columnName string) (bool, error) {
+	var count int64
+	err := d.conn.Raw("SELECT COUNT(*) FROM pragma_table_info(?) WHERE name = ?", tableName, columnName).Count(&count).Error
+	// fmt.Println(count)
+	// panic("s")
+	return count > 0, err
+
 }

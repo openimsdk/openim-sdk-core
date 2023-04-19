@@ -21,13 +21,13 @@ func NewWorkMoments(loginUserID string, db db_interface.DataBase, p *ws.PostApi)
 	return &WorkMoments{loginUserID: loginUserID, db: db, p: p}
 }
 
-func (w *WorkMoments) DoNotification(jsonDetailStr string, operationID string) {
+func (w *WorkMoments) DoNotification(jsonDetailStr string, operationID string, clientMsgID string) {
 	if w.listener == nil {
 		log.NewDebug(operationID, "WorkMoments listener is null", jsonDetailStr)
 		return
 	}
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "json_detail: ", jsonDetailStr)
-	if err := w.db.InsertWorkMomentsNotification(jsonDetailStr); err != nil {
+	if err := w.db.InsertWorkMomentsNotification(jsonDetailStr, clientMsgID); err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), "InsertWorkMomentsNotification failed", err.Error())
 		return
 	}

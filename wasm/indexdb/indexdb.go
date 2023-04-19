@@ -500,7 +500,7 @@ func (i IndexDB) GetDepartmentMemberListByUserID(userID string) ([]*model_struct
 	panic("implement me")
 }
 
-func (i IndexDB) InsertWorkMomentsNotification(jsonDetail string) error {
+func (i IndexDB) InsertWorkMomentsNotification(jsonDetail, clientMsgID string) error {
 	panic("implement me")
 }
 

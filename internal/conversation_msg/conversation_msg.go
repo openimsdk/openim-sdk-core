@@ -2,7 +2,6 @@ package conversation_msg
 
 import (
 	"encoding/json"
-	"github.com/google/go-cmp/cmp"
 	"open_im_sdk/internal/business"
 	"open_im_sdk/internal/cache"
 	common2 "open_im_sdk/internal/common"
@@ -16,6 +15,8 @@ import (
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"runtime"
 	"strings"
+
+	"github.com/google/go-cmp/cmp"
 
 	workMoments "open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
@@ -259,7 +260,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				c.organization.DoNotification(v, c.GetCh(), operationID)
 			} else if v.ContentType == constant.WorkMomentNotification {
 				log.Info(operationID, "WorkMoment New Notification")
-				c.workMoments.DoNotification(tips.JsonDetail, operationID)
+				c.workMoments.DoNotification(tips.JsonDetail, operationID, v.ClientMsgID)
 			}
 		case constant.GroupChatType, constant.SuperGroupChatType:
 			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
@@ -677,7 +678,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 				c.organization.DoNotification(v, c.GetCh(), operationID)
 			} else if v.ContentType == constant.WorkMomentNotification {
 				log.Info(operationID, "WorkMoment New Notification")
-				c.workMoments.DoNotification(tips.JsonDetail, operationID)
+				c.workMoments.DoNotification(tips.JsonDetail, operationID, v.ClientMsgID)
 			}
 		case constant.GroupChatType, constant.SuperGroupChatType:
 			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {

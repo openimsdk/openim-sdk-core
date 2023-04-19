@@ -216,7 +216,7 @@ type DataBase interface {
 	SuperGroupGetMsgSeqListByPeerUserID(userID string) ([]uint32, error)
 	SuperGroupGetMsgSeqListBySelfUserID(userID string) ([]uint32, error)
 	SuperGroupGetAlreadyExistSeqList(groupID string, lostSeqList []uint32) (seqList []uint32, err error)
-	InsertWorkMomentsNotification(jsonDetail string) error
+	InsertWorkMomentsNotification(jsonDetail, clientMsgID string) error
 	GetWorkMomentsNotification(offset, count int) (WorkMomentsNotifications []*db.LocalWorkMomentsNotification, err error)
 	GetWorkMomentsNotificationLimit(pageNumber, showNumber int) (WorkMomentsNotifications []*db.LocalWorkMomentsNotification, err error)
 	InitWorkMomentsNotificationUnreadCount() error

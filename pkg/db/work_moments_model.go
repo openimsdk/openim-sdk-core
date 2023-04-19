@@ -2,14 +2,16 @@ package db
 
 import (
 	"errors"
-	"gorm.io/gorm"
 	"open_im_sdk/pkg/utils"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type LocalWorkMomentsNotification struct {
-	JsonDetail string `gorm:"column:json_detail"`
-	CreateTime int64  `gorm:"create_time"`
+	ClientMsgID string `gorm:"column:client_msg_id;primary_key;type:varchar(64)" json:"clientMsgID"`
+	JsonDetail  string `gorm:"column:json_detail"`
+	CreateTime  int64  `gorm:"create_time"`
 }
 
 func (LocalWorkMomentsNotification) TableName() string {
@@ -24,12 +26,13 @@ func (LocalWorkMomentsNotificationUnreadCount) TableName() string {
 	return "local_work_moments_notification_unread_count"
 }
 
-func (d *DataBase) InsertWorkMomentsNotification(jsonDetail string) error {
+func (d *DataBase) InsertWorkMomentsNotification(jsonDetail, clientMsgID string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	workMomentsNotification := LocalWorkMomentsNotification{
-		JsonDetail: jsonDetail,
-		CreateTime: time.Now().Unix(),
+		ClientMsgID: clientMsgID,
+		JsonDetail:  jsonDetail,
+		CreateTime:  time.Now().Unix(),
 	}
 	return utils.Wrap(d.conn.Create(workMomentsNotification).Error, "")
 }
@@ -62,6 +65,27 @@ func (d *DataBase) InitWorkMomentsNotificationUnreadCount() error {
 	return err
 }
 
+func (d *DataBase) InitWorkMoment() error {
+	err := d.InitWorkMomentsNotificationUnreadCount()
+	if err != nil {
+		return err
+	}
+	// exist, err := d.HasTableColumn("local_work_moments_notification", "client_msg_id")
+	// if err != nil {
+	// 	return utils.Wrap(err, "HasTableColumn failed")
+	// }
+
+	// if !exist {
+	// 	if err := d.ClearWorkMomentsNotification(); err != nil {
+	// 		return utils.Wrap(err, "ClearWorkMomentsNotification failed")
+	// 	}
+	// }
+	// panic(exist)
+	if err := d.conn.AutoMigrate(&LocalWorkMomentsNotification{}); err != nil {
+		return utils.Wrap(err, "AutoMigrate failed")
+	}
+	return nil
+}
 func (d *DataBase) IncrWorkMomentsNotificationUnreadCount() error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
