@@ -2,7 +2,6 @@ package group
 
 import (
 	"context"
-	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -18,13 +17,12 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
-func NewGroup(loginUserID string, db db_interface.DataBase, p *ws.PostApi,
+func NewGroup(loginUserID string, db db_interface.DataBase,
 	joinedSuperGroupCh chan common.Cmd2Value, heartbeatCmdCh chan common.Cmd2Value,
 	conversationCh chan common.Cmd2Value) *Group {
 	g := &Group{
 		loginUserID:        loginUserID,
 		db:                 db,
-		p:                  p,
 		joinedSuperGroupCh: joinedSuperGroupCh,
 		heartbeatCmdCh:     heartbeatCmdCh,
 		conversationCh:     conversationCh,
@@ -42,7 +40,6 @@ type Group struct {
 	groupMemberSyncer       *syncer.Syncer[*model_struct.LocalGroupMember, [2]string]
 	groupRequestSyncer      *syncer.Syncer[*model_struct.LocalGroupRequest, [2]string]
 	groupAdminRequestSyncer *syncer.Syncer[*model_struct.LocalAdminGroupRequest, [2]string]
-	p                       *ws.PostApi
 	loginTime               int64
 	joinedSuperGroupCh      chan common.Cmd2Value
 	heartbeatCmdCh          chan common.Cmd2Value
@@ -166,10 +163,6 @@ func (g *Group) GetJoinedDiffusionGroupIDListFromSvr(ctx context.Context) ([]str
 		}
 	}
 	return groupIDs, nil
-}
-
-func (g *Group) SyncJoinedGroupList(ctx context.Context) error {
-	return g.SyncJoinedGroup(ctx)
 }
 
 func (g *Group) SyncJoinedGroupMemberForFirstLogin(ctx context.Context) error {

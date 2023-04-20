@@ -257,7 +257,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.friend = friend.NewFriend(u.loginUserID, u.db, u.user, p, u.conversationCh)
 	u.friend.SetFriendListener(u.friendListener)
 
-	u.group = group.NewGroup(u.loginUserID, u.db, p, u.joinedSuperGroupCh, u.heartbeatCmdCh, u.conversationCh)
+	u.group = group.NewGroup(u.loginUserID, u.db, u.joinedSuperGroupCh, u.heartbeatCmdCh, u.conversationCh)
 	u.group.SetGroupListener(u.groupListener)
 	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db, p, u.joinedSuperGroupCh, u.heartbeatCmdCh)
 	u.cache = cache.NewCache(u.user, u.friend)
@@ -431,7 +431,7 @@ func (u *LoginMgr) forcedSynchronization(ctx context.Context) {
 
 	go func() {
 		defer wg.Done()
-		if err := u.group.SyncJoinedGroupList(ctx); err != nil {
+		if err := u.group.SyncJoinedGroup(ctx); err != nil {
 			errCh <- err
 		}
 	}()
