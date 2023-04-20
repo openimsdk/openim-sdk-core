@@ -27,6 +27,7 @@ import (
 	"open_im_sdk/pkg/db/model_struct"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
+	"open_im_sdk/pkg/syncer"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 
@@ -44,6 +45,7 @@ import (
 var SearchContentType = []int{constant.Text, constant.AtText, constant.File}
 
 type Conversation struct {
+	conversationSyncer *syncer.Syncer[*model_struct.LocalConversation, string]
 	*ws.Ws
 	db                   db_interface.DataBase
 	p                    *ws.PostApi
@@ -108,8 +110,28 @@ func NewConversation(ws *ws.Ws, db db_interface.DataBase, p *ws.PostApi,
 		full: full, id2MinSeq: id2MinSeq, encryptionKey: encryptionKey, business: business, IsExternalExtensions: isExternalExtensions}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)
+	n.initSyncer()
 	n.cache = cache
 	return n
+}
+
+func (c *Conversation) initSyncer() {
+	c.conversationSyncer = syncer.New(
+		func(ctx context.Context, value *model_struct.LocalConversation) error {
+			return c.db.InsertConversation(ctx, value)
+		},
+		func(ctx context.Context, value *model_struct.LocalConversation) error {
+			return c.db.DeleteConversation(ctx, value.ConversationID)
+		},
+		func(ctx context.Context, serverConversation, localConversation *model_struct.LocalConversation) error {
+			return c.db.UpdateConversation(ctx, serverConversation)
+		},
+		func(value *model_struct.LocalConversation) string {
+			return value.ConversationID
+		},
+		nil,
+		nil,
+	)
 }
 
 func (c *Conversation) GetCh() chan common.Cmd2Value {
@@ -232,7 +254,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			continue
 		case v.ContentType == constant.BusinessNotification:
 			log.NewInfo(operationID, utils.GetSelfFuncName(), "recv businessNotification", tips.JsonDetail)
-			c.business.DoNotification(tips.JsonDetail, operationID)
+			c.business.DoNotification(ctx, tips.JsonDetail)
 			continue
 		}
 
@@ -421,7 +443,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	m := make(map[string]*model_struct.LocalConversation)
 	listToMap(list, m)
 	log.Debug(operationID, "listToMap: ", list, conversationSet)
-	c.diff(m, conversationSet, conversationChangedSet, newConversationSet)
+	c.diff(ctx, m, conversationSet, conversationChangedSet, newConversationSet)
 	log.Info(operationID, "trigger map is :", "newConversations", newConversationSet, "changedConversations", conversationChangedSet)
 	b2 := utils.GetCurrentTimestampByMill()
 	log.Debug(operationID, "listToMap diff, cost time : ", b2-b1)
@@ -644,7 +666,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 			continue
 		case v.ContentType == constant.BusinessNotification:
 			log.NewInfo(operationID, utils.GetSelfFuncName(), "recv businessNotification", tips.JsonDetail)
-			c.business.DoNotification(tips.JsonDetail, operationID)
+			c.business.DoNotification(ctx, tips.JsonDetail)
 			continue
 		}
 		switch v.SessionType {
@@ -851,7 +873,7 @@ func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	m := make(map[string]*model_struct.LocalConversation)
 	listToMap(list, m)
 	log.Debug(operationID, "listToMap: ", list, conversationSet)
-	c.diff(m, conversationSet, conversationChangedSet, newConversationSet)
+	c.diff(ctx, m, conversationSet, conversationChangedSet, newConversationSet)
 	log.Info(operationID, "trigger map is :", "newConversations", newConversationSet, "changedConversations", conversationChangedSet)
 	b2 := utils.GetCurrentTimestampByMill()
 	log.Debug(operationID, "listToMap diff, cost time : ", b2-b1)
@@ -989,7 +1011,7 @@ func removeElementInList(a sdk_struct.NewMsgList, e *sdk_struct.MsgStruct) (b sd
 	}
 	return b
 }
-func (c *Conversation) diff(local, generated, cc, nc map[string]*model_struct.LocalConversation) {
+func (c *Conversation) diff(ctx context.Context, local, generated, cc, nc map[string]*model_struct.LocalConversation) {
 	for _, v := range generated {
 		log.Debug("node diff", *v)
 		if localC, ok := local[v.ConversationID]; ok {
@@ -1007,7 +1029,7 @@ func (c *Conversation) diff(local, generated, cc, nc map[string]*model_struct.Lo
 			}
 
 		} else {
-			c.addFaceURLAndName(v)
+			c.addFaceURLAndName(ctx, v)
 			nc[v.ConversationID] = v
 			log.Debug("", "diff3 ", *v)
 		}
@@ -1643,7 +1665,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			lc.ConversationID = conversationID
 			lc.ConversationType = conversationType
 		}
-		c.addFaceURLAndName(&lc)
+		c.addFaceURLAndName(ctx, &lc)
 		err := c.db.UpdateConversation(ctx, &lc)
 		if err != nil {
 			log.Error("internal", "setConversationFaceUrlAndNickName database err:", err.Error())
@@ -1744,7 +1766,10 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		operationID := node.Args.(string)
 		log.Debug(operationID, "reconn sync conversation start")
 		c.SyncConversations(ctx, 0)
-		c.SyncConversationUnreadCount(operationID)
+		err := c.SyncConversationUnreadCount(ctx)
+		if err != nil {
+			log.Error(operationID, "reconn sync conversation unread count err", err.Error())
+		}
 		totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB(ctx)
 		if err != nil {
 			log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
@@ -2230,15 +2255,12 @@ func mapConversationToList(m map[string]*model_struct.LocalConversation) (cs []*
 	}
 	return cs
 }
-func (c *Conversation) addFaceURLAndName(lc *model_struct.LocalConversation) {
-	operationID := utils.OperationIDGenerator()
-	ctx := mcontext.NewCtx(operationID)
+func (c *Conversation) addFaceURLAndName(ctx context.Context, lc *model_struct.LocalConversation) error {
 	switch lc.ConversationType {
 	case constant.SingleChatType, constant.NotificationChatType:
 		faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, lc.UserID)
 		if err != nil {
-			log.Error(operationID, "getUserNameAndFaceUrlByUid err", err.Error(), lc.UserID)
-			return
+			return err
 		}
 		lc.FaceURL = faceUrl
 		lc.ShowName = name
@@ -2246,11 +2268,10 @@ func (c *Conversation) addFaceURLAndName(lc *model_struct.LocalConversation) {
 	case constant.GroupChatType, constant.SuperGroupChatType:
 		g, err := c.full.GetGroupInfoFromLocal2Svr(nil, lc.GroupID, lc.ConversationType)
 		if err != nil {
-			log.Error(operationID, "GetGroupInfoByGroupID err", err.Error(), lc.GroupID, lc.ConversationType)
-			return
+			return err
 		}
 		lc.ShowName = g.GroupName
 		lc.FaceURL = g.FaceURL
-
 	}
+	return nil
 }

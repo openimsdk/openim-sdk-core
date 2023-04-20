@@ -10,7 +10,6 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
 	"sync"
 	"time"
 
@@ -147,9 +146,9 @@ func (d *DataBase) initDB(ctx context.Context) error {
 	defer d.mRWMutex.Unlock()
 
 	dbFileName := d.dbDir + "/OpenIM_" + constant.BigVersion + "_" + d.loginUserID + ".db"
-	slowThreshold := 500
-	sqlLogger := log.NewSqlLogger(logger.LogLevel(sdk_struct.SvrConf.LogLevel), true, time.Duration(slowThreshold)*time.Millisecond)
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: sqlLogger})
+	// slowThreshold := 500
+	// sqlLogger := log.NewSqlLogger(logger.LogLevel(sdk_struct.SvrConf.LogLevel), true, time.Duration(slowThreshold)*time.Millisecond)
+	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
 		return utils.Wrap(err, "open db failed "+dbFileName)
 	}

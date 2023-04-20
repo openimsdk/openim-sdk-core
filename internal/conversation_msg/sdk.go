@@ -4,15 +4,13 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	pbConversation "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
-	pbUser "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/user"
 	"image"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/log"
+
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
@@ -20,12 +18,14 @@ import (
 	"os"
 	"time"
 
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+
+	pbConversation "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
+	pbUser "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/user"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 	imgtype "github.com/shamsher31/goimgtype"
-	_ "image/gif"
-	_ "image/jpeg"
-	_ "image/png"
 )
 
 func (c *Conversation) GetAllConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error) {
@@ -39,7 +39,7 @@ func (c *Conversation) SetConversationRecvMessageOpt(ctx context.Context, conver
 	for _, conversationID := range conversationIDList {
 		localConversation, err := c.db.GetConversation(ctx, conversationID)
 		if err != nil {
-			//log.NewError(operationID, utils.GetSelfFuncName(), "GetConversation failed", err.Error())
+			log.ZError(ctx, "GetConversation failed", err, "conversationID", conversationID)
 			continue
 		}
 		if localConversation.ConversationType == constant.SuperGroupChatType && opt == constant.NotReceiveMessage {
@@ -516,13 +516,13 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		}
 		oldMessage, err := c.db.GetMessageController(ctx, s)
 		if err != nil {
-			log.Warn("", "get message err")
+			log.ZWarn(ctx, "get message err", err)
 		} else {
 			log.Debug("", "before update database message is ", *oldMessage)
 		}
 		if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Voice, constant.Video, constant.File}) {
 			msgStructToLocalChatLog(&localMessage, s)
-			log.Warn("", "update message is ", s, localMessage)
+			log.ZDebug(ctx, "update message is ", s, localMessage)
 			err = c.db.UpdateMessageController(ctx, &localMessage)
 			if err != nil {
 				return nil, err
@@ -791,13 +791,13 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 		}
 		oldMessage, err := c.db.GetMessageController(ctx, s)
 		if err != nil {
-			log.Warn("", "get message err")
+			log.ZWarn(ctx, "get message err", err)
 		} else {
 			log.Debug("", "before update database message is ", *oldMessage)
 		}
 		if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Voice, constant.Video, constant.File}) {
 			msgStructToLocalChatLog(&localMessage, s)
-			log.Warn("", "update message is ", s, localMessage)
+			log.ZWarn(ctx, "update message is ", nil, s, localMessage)
 			err = c.db.UpdateMessageController(ctx, &localMessage)
 			if err != nil {
 				return nil, err

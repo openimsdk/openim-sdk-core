@@ -1,23 +1,23 @@
 package testv2
 
-type Listener struct{}
+type OnConnListener struct{}
 
-func (c *Listener) OnConnecting() {
+func (c *OnConnListener) OnConnecting() {
 	// fmt.Println("OnConnecting")
 }
 
-func (c *Listener) OnConnectSuccess() {
+func (c *OnConnListener) OnConnectSuccess() {
 	// fmt.Println("OnConnectSuccess")
 }
 
-func (c *Listener) OnConnectFailed(errCode int32, errMsg string) {
+func (c *OnConnListener) OnConnectFailed(errCode int32, errMsg string) {
 	// fmt.Println("OnConnectFailed")
 }
 
-func (c *Listener) OnKickedOffline() {
+func (c *OnConnListener) OnKickedOffline() {
 	// fmt.Println("OnKickedOffline")
 }
 
-func (c *Listener) OnUserTokenExpired() {
+func (c *OnConnListener) OnUserTokenExpired() {
 	// fmt.Println("OnUserTokenExpired")
 }

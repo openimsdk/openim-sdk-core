@@ -271,14 +271,6 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 		u.business.SetListener(u.businessListener)
 	}
 	u.push = comm2.NewPush(p, u.imConfig.Platform, u.loginUserID)
-	go u.forcedSynchronization(ctx)
-	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
-	log.ZDebug(ctx, "all channel ", "pushMsgAndMaxSeqCh", u.pushMsgAndMaxSeqCh, "conversationCh", u.conversationCh, "heartbeatCmdCh", u.heartbeatCmdCh, "cmdWsCh", u.cmdWsCh)
-	wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID, u.imConfig.IsCompression, u.conversationCh)
-	wsRespAsyn := ws.NewWsRespAsyn()
-	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh, u.conversationCh)
-	u.msgSync = ws.NewMsgSync(u.db, u.ws, u.loginUserID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
-	u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
 	var objStorage comm3.ObjectStorage
 	switch u.imConfig.ObjectStorage {
 	case "cos":
@@ -292,6 +284,18 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	default:
 		objStorage = comm2.NewCOS(u.postApi)
 	}
+	u.conversation = conv.NewConversation(u.ws, u.db, u.postApi, u.conversationCh,
+		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir, u.imConfig.EncryptionKey,
+		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq, u.imConfig.IsExternalExtensions)
+
+	go u.forcedSynchronization(ctx)
+	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
+	wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID, u.imConfig.IsCompression, u.conversationCh)
+	wsRespAsyn := ws.NewWsRespAsyn()
+	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh, u.conversationCh)
+	u.msgSync = ws.NewMsgSync(u.db, u.ws, u.loginUserID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
+	u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
+
 	u.signaling, err = signaling.NewLiveSignaling(u.ws, u.loginUserID, u.imConfig.Platform, u.db)
 	if err != nil {
 		return err
@@ -302,18 +306,12 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	if u.signalingListenerFroService != nil {
 		u.signaling.SetListenerForService(u.signalingListenerFroService)
 	}
-	u.conversation = conv.NewConversation(u.ws, u.db, u.postApi, u.conversationCh,
-		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir, u.imConfig.EncryptionKey,
-		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq, u.imConfig.IsExternalExtensions)
+
 	if u.batchMsgListener != nil {
 		u.conversation.SetBatchMsgListener(u.batchMsgListener)
 		log.ZDebug(ctx, "SetBatchMsgListener", "batchMsgListener", u.batchMsgListener)
 	}
-	log.ZDebug(ctx, "SyncConversations begin")
-	u.conversation.SyncConversations(ctx, time.Second*2)
-	go u.conversation.SyncConversationUnreadCount(mcontext.GetOperationID(ctx))
 	go common.DoListener(u.conversation)
-	log.ZDebug(ctx, "SyncConversations end ")
 	go u.conversation.FixVersionData(ctx)
 	log.ZInfo(ctx, "login success...", "login cost time: ", time.Since(t1))
 	return nil
@@ -393,8 +391,8 @@ func (u *LoginMgr) GetLoginStatus() int32 {
 func (u *LoginMgr) forcedSynchronization(ctx context.Context) {
 	log.ZInfo(ctx, "sync all info begin")
 	var wg sync.WaitGroup
-	var errCh = make(chan error, 10)
-	wg.Add(10)
+	var errCh = make(chan error, 12)
+	wg.Add(12)
 	go func() {
 		defer wg.Done()
 		if err := u.user.SyncLoginUserInfo(ctx); err != nil {
@@ -459,6 +457,18 @@ func (u *LoginMgr) forcedSynchronization(ctx context.Context) {
 	go func() {
 		defer wg.Done()
 		if err := u.superGroup.SyncJoinedGroupList(ctx); err != nil {
+			errCh <- err
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		if err := u.conversation.SyncConversations(ctx, time.Second*2); err != nil {
+			errCh <- err
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		if err := u.conversation.SyncConversationUnreadCount(ctx); err != nil {
 			errCh <- err
 		}
 	}()
