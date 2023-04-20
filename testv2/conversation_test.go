@@ -38,3 +38,10 @@ func Test_SetSetGlobalRecvMessageOpt(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func Test_HideConversation(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Conversation().HideConversation(ctx, "asdasd")
+	if err != nil {
+		t.Error(err)
+	}
+}

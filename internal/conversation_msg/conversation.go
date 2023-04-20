@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
@@ -12,6 +13,7 @@ import (
 	"open_im_sdk/pkg/db/model_struct"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
+	"open_im_sdk/pkg/syncer"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sort"
@@ -107,7 +109,6 @@ func (c *Conversation) getServerConversationList(ctx context.Context) ([]*model_
 }
 
 func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Duration) error {
-	// var newConversationList []*model_struct.LocalConversation
 	ccTime := time.Now()
 	conversationsOnServer, err := c.getServerConversationList(ctx)
 	if err != nil {
@@ -124,9 +125,12 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 		c.addFaceURLAndName(ctx, v)
 	}
 	log.ZDebug(ctx, "get local cost time", "cost time", time.Since(ccTime), "conversation on local", conversationsOnLocal)
-	//todo 回调update的会话，服务器有，本地没有的会话只需要插入本地数据库
-	err = c.conversationSyncer.Sync(ctx, conversationsOnServer, conversationsOnLocal, nil)
-	if err != nil {
+	if err = c.conversationSyncer.Sync(ctx, conversationsOnServer, conversationsOnLocal, func(ctx context.Context, state int, conversation *model_struct.LocalConversation) error {
+		if state == syncer.Update {
+			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.ConChange, Args: ""}})
+		}
+		return nil
+	}); err != nil {
 		return err
 	}
 	conversationsOnLocal, err = c.db.GetAllConversationListToSync(ctx)
@@ -138,7 +142,9 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 }
 func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) error {
 	var conversationChangedList []string
+	fmt.Println("test", c.cache)
 	allConversations := c.cache.GetAllHasUnreadMessageConversations()
+	allConversations = c.cache.GetAllHasUnreadMessageConversations()
 	log.ZDebug(ctx, "get unread message length", "len", len(allConversations))
 	for _, conversation := range allConversations {
 		if deleteRows := c.db.DeleteConversationUnreadMessageList(ctx, conversation.ConversationID, conversation.UpdateUnreadCountTime); deleteRows > 0 {
