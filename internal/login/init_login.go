@@ -249,20 +249,20 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.joinedSuperGroupCh = make(chan common.Cmd2Value, 10)
 
 	u.id2MinSeq = make(map[string]int64, 100)
-	p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
-	u.postApi = p
+	//p := ws.NewPostApi(token, sdk_struct.SvrConf.ApiAddr)
+	//u.postApi = p
 	u.user = user.NewUser(u.db, u.loginUserID, u.conversationCh)
 	u.user.SetListener(u.userListener)
 
-	u.friend = friend.NewFriend(u.loginUserID, u.db, u.user, p, u.conversationCh)
+	u.friend = friend.NewFriend(u.loginUserID, u.db, u.user, u.conversationCh)
 	u.friend.SetFriendListener(u.friendListener)
 
 	u.group = group.NewGroup(u.loginUserID, u.db, u.joinedSuperGroupCh, u.heartbeatCmdCh, u.conversationCh)
 	u.group.SetGroupListener(u.groupListener)
-	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db, p, u.joinedSuperGroupCh, u.heartbeatCmdCh)
+	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db, u.joinedSuperGroupCh, u.heartbeatCmdCh)
 	u.cache = cache.NewCache(u.user, u.friend)
 	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache, u.db, u.superGroup)
-	u.workMoments = workMoments.NewWorkMoments(u.loginUserID, u.db, p)
+	u.workMoments = workMoments.NewWorkMoments(u.loginUserID, u.db)
 	if u.workMomentsListener != nil {
 		u.workMoments.SetListener(u.workMomentsListener)
 	}
@@ -270,7 +270,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	if u.businessListener != nil {
 		u.business.SetListener(u.businessListener)
 	}
-	u.push = comm2.NewPush(p, u.imConfig.Platform, u.loginUserID)
+	u.push = comm2.NewPush(u.imConfig.Platform, u.loginUserID)
 	go u.forcedSynchronization(ctx)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	log.ZDebug(ctx, "all channel ", "pushMsgAndMaxSeqCh", u.pushMsgAndMaxSeqCh, "conversationCh", u.conversationCh, "heartbeatCmdCh", u.heartbeatCmdCh, "cmdWsCh", u.cmdWsCh)

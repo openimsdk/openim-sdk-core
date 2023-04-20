@@ -19,8 +19,8 @@ type WorkMoments struct {
 	p           *ws.PostApi
 }
 
-func NewWorkMoments(loginUserID string, db db_interface.DataBase, p *ws.PostApi) *WorkMoments {
-	return &WorkMoments{loginUserID: loginUserID, db: db, p: p}
+func NewWorkMoments(loginUserID string, db db_interface.DataBase) *WorkMoments {
+	return &WorkMoments{loginUserID: loginUserID, db: db}
 }
 
 func (w *WorkMoments) DoNotification(jsonDetail string, operationID string) {

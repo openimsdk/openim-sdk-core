@@ -538,7 +538,7 @@ type tempConversation struct {
 	Ex                    string
 }
 
-func ServerTransferToTempConversation(resp server_api_params.GetAllConversationsResp) []*tempConversation {
+func ServerTransferToTempConversation(resp *server_api_params.GetAllConversationsResp) []*tempConversation {
 	var tempConversations []*tempConversation
 	for _, serverConversation := range resp.Conversations {
 		tempConversations = append(tempConversations, &tempConversation{
@@ -584,7 +584,7 @@ func LocalTransferToTempConversation(local []*model_struct.LocalConversation) []
 	return tempConversations
 }
 
-func TransferToLocalConversation(resp server_api_params.GetAllConversationsResp) []*model_struct.LocalConversation {
+func TransferToLocalConversation(resp *server_api_params.GetAllConversationsResp) []*model_struct.LocalConversation {
 	var localConversations []*model_struct.LocalConversation
 	for _, serverConversation := range resp.Conversations {
 		localConversations = append(localConversations, &model_struct.LocalConversation{
