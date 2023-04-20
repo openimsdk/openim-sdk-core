@@ -20,7 +20,7 @@ var (
 )
 
 func init() {
-	listner := &Listener{}
+	listner := &OnConnListener{}
 	config := getConf(APIADDR, WSADDR)
 	util.BaseURL = APIADDR
 	isInit := open_im_sdk.InitSDK(listner, "test", string(GetResValue(json.Marshal(config))))

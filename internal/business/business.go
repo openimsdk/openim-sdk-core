@@ -1,10 +1,11 @@
 package business
 
 import (
+	"context"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/db/db_interface"
-	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/utils"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 )
 
 type Business struct {
@@ -18,11 +19,10 @@ func NewBusiness(db db_interface.DataBase) *Business {
 	}
 }
 
-func (b *Business) DoNotification(jsonDetailStr string, operationID string) {
+func (b *Business) DoNotification(ctx context.Context, jsonDetailStr string) {
 	if b.listener == nil {
-		log.NewDebug(operationID, "WorkMoments listener is null", jsonDetailStr)
+		log.ZWarn(ctx, "listener is nil", nil)
 		return
 	}
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "json_detail: ", jsonDetailStr)
 	b.listener.OnRecvCustomBusinessMessage(jsonDetailStr)
 }

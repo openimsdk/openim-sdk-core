@@ -17,7 +17,7 @@ func getConf(APIADDR, WSADDR string) sdk_struct.IMConfig {
 	cf.ApiAddr = APIADDR
 	cf.Platform = 1
 	cf.WsAddr = WSADDR
-	cf.DataDir = "./"
+	cf.DataDir = ".\\"
 	cf.LogLevel = 6
 	cf.ObjectStorage = "minio"
 	cf.IsCompression = true
