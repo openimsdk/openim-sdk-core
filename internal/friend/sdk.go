@@ -86,6 +86,9 @@ func (f *Friend) RespondFriendApply(ctx context.Context, req *friend.RespondFrie
 	if err := util.ApiPost(ctx, constant.AddFriendResponse, req, nil); err != nil {
 		return err
 	}
+	if req.HandleResult == constant.FriendResponseAgree {
+		_ = f.SyncFriendList(ctx)
+	}
 	_ = f.SyncFriendApplication(ctx)
 	return nil
 	//return f.SyncFriendApplication(ctx)
@@ -190,8 +193,8 @@ func (f *Friend) SearchFriends(ctx context.Context, param *sdk.SearchFriendsPara
 	return res, nil
 }
 
-func (f *Friend) SetFriendRemark(ctx context.Context, userIDRemark string) error {
-	if err := util.ApiPost(ctx, constant.SetFriendRemark, &friend.SetFriendRemarkReq{OwnerUserID: f.loginUserID, FriendUserID: userIDRemark, Remark: userIDRemark}, nil); err != nil {
+func (f *Friend) SetFriendRemark(ctx context.Context, userIDRemark *sdk.SetFriendRemarkParams) error {
+	if err := util.ApiPost(ctx, constant.SetFriendRemark, &friend.SetFriendRemarkReq{OwnerUserID: f.loginUserID, FriendUserID: userIDRemark.ToUserID, Remark: userIDRemark.Remark}, nil); err != nil {
 		return err
 	}
 	return f.SyncFriendList(ctx)

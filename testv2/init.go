@@ -23,17 +23,20 @@ func init() {
 	listner := &Listener{}
 	config := getConf(APIADDR, WSADDR)
 	util.BaseURL = APIADDR
+	fmt.Println("1---------------------------------------")
 	isInit := open_im_sdk.InitSDK(listner, "test", string(GetResValue(json.Marshal(config))))
 	if !isInit {
 		panic("init sdk failed")
 	}
+	fmt.Println("2---------------------------------------")
 	ctx := mcontext.NewCtx("testInitLogin")
 	token := GetResValue(GetUserToken(ctx, UserID))
 	util.Token = token
-
+	fmt.Println("3---------------------------------------")
 	if err := open_im_sdk.UserForSDK.Login(ctx, UserID, token); err != nil {
 		panic(err)
 	}
+	fmt.Println("4---------------------------------------")
 	fmt.Println(util.Token)
 }
 

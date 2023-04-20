@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -32,8 +31,8 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, p *ws.PostApi, conversationCh chan common.Cmd2Value) *Friend {
-	f := &Friend{loginUserID: loginUserID, db: db, user: user, p: p, conversationCh: conversationCh}
+func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, conversationCh chan common.Cmd2Value) *Friend {
+	f := &Friend{loginUserID: loginUserID, db: db, user: user, conversationCh: conversationCh}
 	f.initSyncer()
 	return f
 }
@@ -43,7 +42,6 @@ type Friend struct {
 	loginUserID        string
 	db                 db_interface.DataBase
 	user               *user.User
-	p                  *ws.PostApi
 	friendSyncer       *syncer.Syncer[*model_struct.LocalFriend, [2]string]
 	blockSyncer        *syncer.Syncer[*model_struct.LocalBlack, [2]string]
 	requestRecvSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, [2]string]

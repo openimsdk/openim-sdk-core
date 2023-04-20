@@ -99,31 +99,19 @@ func (c *Conversation) deleteConversation(ctx context.Context, conversationID st
 	return nil
 }
 
-func (c *Conversation) getServerConversationList(ctx context.Context, timeout time.Duration) (server_api_params.GetAllConversationsResp, error) {
+func (c *Conversation) getServerConversationList(ctx context.Context) (*server_api_params.GetAllConversationsResp, error) {
 	var req server_api_params.GetAllConversationsReq
-	var resp server_api_params.GetAllConversationsResp
 	req.OwnerUserID = c.loginUserID
 	req.OperationID = mcontext.GetOperationID(ctx)
-	if timeout == 0 {
-		err := c.p.PostReturn(constant.GetAllConversationsRouter, req, &resp.Conversations)
-		if err != nil {
-			return resp, err
-		}
-	} else {
-		err := c.p.PostReturnWithTimeOut(constant.GetAllConversationsRouter, req, &resp.Conversations, timeout)
-		if err != nil {
-			return resp, err
-		}
-	}
-
-	return resp, nil
+	return util.CallApi[server_api_params.GetAllConversationsResp](ctx, constant.GetAllConversationsRouter, req)
 }
+
 func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Duration) {
 	//log.Error(operationID,"SyncConversations start")
 	var newConversationList []*model_struct.LocalConversation
 	ccTime := time.Now()
 	// log.NewInfo(operationID, utils.GetSelfFuncName())
-	conversationsOnServer, err := c.getServerConversationList(ctx, timeout)
+	conversationsOnServer, err := c.getServerConversationList(ctx)
 	if err != nil {
 		// log.NewError(operationID, utils.GetSelfFuncName(), err.Error())
 		return

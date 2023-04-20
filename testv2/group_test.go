@@ -16,7 +16,6 @@ func Test_CreateGroupV2(t *testing.T) {
 		OwnerUserID:  UserID,
 		GroupInfo: &sdkws.GroupInfo{
 			GroupName: "test-gro2up",
-			GroupID:   "z",
 		},
 	}
 	info, err := open_im_sdk.UserForSDK.Group().CreateGroupV2(ctx, req)

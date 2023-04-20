@@ -218,56 +218,6 @@ func (d *DataBase) initDB(ctx context.Context) error {
 		}
 
 	}
-	if !db.Migrator().HasTable(&model_struct.LocalFriend{}) {
-		db.Migrator().CreateTable(&model_struct.LocalFriend{})
-	}
-
-	if !db.Migrator().HasTable(&model_struct.LocalFriendRequest{}) {
-		db.Migrator().CreateTable(&model_struct.LocalFriendRequest{})
-	}
-	if !db.Migrator().HasTable(&model_struct.LocalConversationUnreadMessage{}) {
-		db.Migrator().CreateTable(&model_struct.LocalConversationUnreadMessage{})
-	}
-	if !db.Migrator().HasTable(localGroup) {
-		db.Migrator().CreateTable(localGroup)
-	}
-	if !db.Migrator().HasTable(&model_struct.LocalGroupMember{}) {
-		db.Migrator().CreateTable(&model_struct.LocalGroupMember{})
-	}
-
-	if !db.Migrator().HasTable(&model_struct.LocalGroupRequest{}) {
-		db.Migrator().CreateTable(&model_struct.LocalGroupRequest{})
-	}
-
-	if !db.Migrator().HasTable(&model_struct.LocalUser{}) {
-		db.Migrator().CreateTable(&model_struct.LocalUser{})
-	}
-
-	if !db.Migrator().HasTable(&model_struct.LocalBlack{}) {
-		db.Migrator().CreateTable(&model_struct.LocalBlack{})
-	}
-
-	if !db.Migrator().HasTable(&model_struct.LocalSeqData{}) {
-		db.Migrator().CreateTable(&model_struct.LocalSeqData{})
-	}
-	if !db.Migrator().HasTable(&model_struct.LocalConversation{}) {
-		db.Migrator().CreateTable(&model_struct.LocalConversation{})
-	}
-	if !db.Migrator().HasTable(&model_struct.LocalChatLog{}) {
-		db.Migrator().CreateTable(&model_struct.LocalChatLog{})
-	}
-	if !db.Migrator().HasTable(&model_struct.LocalAdminGroupRequest{}) {
-		db.Migrator().CreateTable(&model_struct.LocalAdminGroupRequest{})
-	}
-	if !db.Migrator().HasTable(&model_struct.LocalWorkMomentsNotification{}) {
-		db.Migrator().CreateTable(&model_struct.LocalWorkMomentsNotification{})
-	}
-	if !db.Migrator().HasTable(&model_struct.LocalWorkMomentsNotificationUnreadCount{}) {
-		db.Migrator().CreateTable(&model_struct.LocalWorkMomentsNotificationUnreadCount{})
-	}
-	if !db.Migrator().HasTable(&model_struct.LocalChatLogReactionExtensions{}) {
-		db.Migrator().CreateTable(&model_struct.LocalChatLogReactionExtensions{})
-	}
 	if err := d.InitWorkMomentsNotificationUnreadCount(ctx); err != nil {
 		log.ZError(ctx, "init InitWorkMomentsNotificationUnreadCount failed", err)
 	}
