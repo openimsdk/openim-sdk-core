@@ -64,7 +64,7 @@ func (s *Syncer[T, V]) onNotice(ctx context.Context, state int, value T, fn func
 	return nil
 }
 
-func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, notice func(ctx context.Context, state int, value T) error) (err error) {
+func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, notice func(ctx context.Context, state int, value T) error, noDel ...bool) (err error) {
 	defer func() {
 		if err == nil {
 			log.ZDebug(ctx, "sync success", "type", s.ts)
@@ -111,6 +111,9 @@ func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, 
 			log.ZError(ctx, "sync notice update failed", err, "type", s.ts, "server", server, "local", local)
 			return err
 		}
+	}
+	if len(noDel) > 0 && noDel[0] {
+		return nil
 	}
 	for id := range localMap {
 		local := localMap[id]
