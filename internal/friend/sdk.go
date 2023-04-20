@@ -53,9 +53,11 @@ func (f *Friend) GetDesignatedFriendsInfo(ctx context.Context, friendUserIDList 
 	return res, nil
 }
 
-func (f *Friend) AddFriend(ctx context.Context, userIDReqMsg *sdk.AddFriendParams) error {
-	req := &friend.ApplyToAddFriendReq{FromUserID: f.loginUserID, ToUserID: userIDReqMsg.ToUserID, ReqMsg: userIDReqMsg.ReqMsg}
-	if err := util.ApiPost(ctx, constant.AddFriendRouter, req, nil); err != nil {
+func (f *Friend) AddFriend(ctx context.Context, userIDReqMsg *friend.ApplyToAddFriendReq) error {
+	if userIDReqMsg.FromUserID == "" {
+		userIDReqMsg.FromUserID = f.loginUserID
+	}
+	if err := util.ApiPost(ctx, constant.AddFriendRouter, userIDReqMsg, nil); err != nil {
 		return err
 	}
 	return f.SyncFriendApplication(ctx)
@@ -78,10 +80,18 @@ func (f *Friend) RefuseFriendApplication(ctx context.Context, userIDHandleMsg *s
 }
 
 func (f *Friend) RespondFriendApply(ctx context.Context, req *friend.RespondFriendApplyReq) error {
+	if req.ToUserID == "" {
+		req.ToUserID = f.loginUserID
+	}
 	if err := util.ApiPost(ctx, constant.AddFriendResponse, req, nil); err != nil {
 		return err
 	}
-	return f.SyncFriendApplication(ctx)
+	if req.HandleResult == constant.FriendResponseAgree {
+		_ = f.SyncFriendList(ctx)
+	}
+	_ = f.SyncFriendApplication(ctx)
+	return nil
+	//return f.SyncFriendApplication(ctx)
 }
 
 func (f *Friend) CheckFriend(ctx context.Context, friendUserIDList []string) ([]*server_api_params.UserIDResult, error) {
@@ -183,8 +193,8 @@ func (f *Friend) SearchFriends(ctx context.Context, param *sdk.SearchFriendsPara
 	return res, nil
 }
 
-func (f *Friend) SetFriendRemark(ctx context.Context, userIDRemark string) error {
-	if err := util.ApiPost(ctx, constant.SetFriendRemark, &friend.SetFriendRemarkReq{OwnerUserID: f.loginUserID, FriendUserID: userIDRemark, Remark: userIDRemark}, nil); err != nil {
+func (f *Friend) SetFriendRemark(ctx context.Context, userIDRemark *sdk.SetFriendRemarkParams) error {
+	if err := util.ApiPost(ctx, constant.SetFriendRemark, &friend.SetFriendRemarkReq{OwnerUserID: f.loginUserID, FriendUserID: userIDRemark.ToUserID, Remark: userIDRemark.Remark}, nil); err != nil {
 		return err
 	}
 	return f.SyncFriendList(ctx)

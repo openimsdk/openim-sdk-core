@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -32,8 +31,8 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, p *ws.PostApi, conversationCh chan common.Cmd2Value) *Friend {
-	f := &Friend{loginUserID: loginUserID, db: db, user: user, p: p, conversationCh: conversationCh}
+func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, conversationCh chan common.Cmd2Value) *Friend {
+	f := &Friend{loginUserID: loginUserID, db: db, user: user, conversationCh: conversationCh}
 	f.initSyncer()
 	return f
 }
@@ -43,11 +42,10 @@ type Friend struct {
 	loginUserID        string
 	db                 db_interface.DataBase
 	user               *user.User
-	p                  *ws.PostApi
 	friendSyncer       *syncer.Syncer[*model_struct.LocalFriend, [2]string]
 	blockSyncer        *syncer.Syncer[*model_struct.LocalBlack, [2]string]
-	requestRecvSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, string]
-	requestSendSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, string]
+	requestRecvSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, [2]string]
+	requestSendSyncer  *syncer.Syncer[*model_struct.LocalFriendRequest, [2]string]
 	loginTime          int64
 	conversationCh     chan common.Cmd2Value
 	listenerForService open_im_sdk_callback.OnListenerForService
@@ -80,8 +78,8 @@ func (f *Friend) initSyncer() {
 		return f.db.DeleteFriendRequestBothUserID(ctx, value.FromUserID, value.ToUserID)
 	}, func(ctx context.Context, server *model_struct.LocalFriendRequest, local *model_struct.LocalFriendRequest) error {
 		return f.db.UpdateFriendRequest(ctx, server)
-	}, func(value *model_struct.LocalFriendRequest) string {
-		return value.FromUserID
+	}, func(value *model_struct.LocalFriendRequest) [2]string {
+		return [...]string{value.FromUserID, value.ToUserID}
 	}, nil, nil)
 
 	f.requestSendSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
@@ -90,8 +88,8 @@ func (f *Friend) initSyncer() {
 		return f.db.DeleteFriendRequestBothUserID(ctx, value.FromUserID, value.ToUserID)
 	}, func(ctx context.Context, server *model_struct.LocalFriendRequest, local *model_struct.LocalFriendRequest) error {
 		return f.db.UpdateFriendRequest(ctx, server)
-	}, func(value *model_struct.LocalFriendRequest) string {
-		return value.ToUserID
+	}, func(value *model_struct.LocalFriendRequest) [2]string {
+		return [...]string{value.FromUserID, value.ToUserID}
 	}, nil, nil)
 
 }

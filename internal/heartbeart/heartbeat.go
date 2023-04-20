@@ -116,7 +116,7 @@ func (u *Heartbeat) Run() {
 					if err != nil {
 						log.Error(operationID, "SyncJoinedGroupList failed ", err.Error())
 					}
-					err = u.full.Group().SyncJoinedGroupList(ctx)
+					err = u.full.Group().SyncJoinedGroup(ctx)
 					if err != nil {
 						log.Error(operationID, "SyncJoinedGroupList failed ", err.Error())
 					}
