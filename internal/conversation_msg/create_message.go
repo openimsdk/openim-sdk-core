@@ -19,14 +19,14 @@ func (c *Conversation) CreateTextMessage(ctx context.Context, text string) (*sdk
 	s.Content = text
 	return &s, nil
 }
-func (c *Conversation) CreateAdvancedTextMessage(ctx context.Context, text string, messageEntitys []*sdk_struct.MessageEntity) (*sdk_struct.MsgStruct, error) {
+func (c *Conversation) CreateAdvancedTextMessage(ctx context.Context, text string, messageEntities []*sdk_struct.MessageEntity) (*sdk_struct.MsgStruct, error) {
 	s := sdk_struct.MsgStruct{}
 	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.AdvancedText)
 	if err != nil {
 		return nil, err
 	}
 	s.MessageEntityElem.Text = text
-	s.MessageEntityElem.MessageEntityList = messageEntitys
+	s.MessageEntityElem.MessageEntityList = messageEntities
 	s.Content = utils.StructToJsonString(s.MessageEntityElem)
 	return &s, nil
 }
