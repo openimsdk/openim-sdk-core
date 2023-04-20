@@ -34,8 +34,9 @@ func Test_CreateAdvancedTextMessage(t *testing.T) {
 	}
 	log.ZInfo(ctx, "CreateTextMessage success", "resp", resp)
 }
+
 func Test_CreateTextAtMessage(t *testing.T) {
-	resp, err := open_im_sdk.UserForSDK.Conversation().CreateTextAtMessage(ctx, "test message", []string{"test"})
+	resp, err := open_im_sdk.UserForSDK.Conversation().CreateTextAtMessage(ctx, "test message", []string{"test"}, []*sdk_struct.AtInfo{}, &sdk_struct.MsgStruct{})
 	if err != nil {
 		t.Error(err)
 	}
