@@ -79,29 +79,66 @@ func Test_CheckFriend(t *testing.T) {
 }
 
 func Test_DeleteFriend(t *testing.T) {
-	//open_im_sdk.UserForSDK.Friend().DeleteFriend()
+	err := open_im_sdk.UserForSDK.Friend().DeleteFriend(ctx, "863454357")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("DeleteFriend success", ctx.Value("operationID"))
 }
 
 func Test_GetFriendList(t *testing.T) {
-	//open_im_sdk.UserForSDK.Friend().GetFriendList()
+	infos, err := open_im_sdk.UserForSDK.Friend().GetFriendList(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("GetFriendList success", ctx.Value("operationID"))
+	for _, info := range infos {
+		t.Logf("PublicInfo: %#v, FriendInfo: %#v, BlackInfo: %#v", info.PublicInfo, info.FriendInfo, info.BlackInfo)
+	}
 }
 
 func Test_SearchFriends(t *testing.T) {
-	//open_im_sdk.UserForSDK.Friend().SearchFriends()
+	info, err := open_im_sdk.UserForSDK.Friend().SearchFriends(ctx, &sdk_params_callback.SearchFriendsParam{KeywordList: []string{"863454357"}, IsSearchUserID: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("SearchFriends success", ctx.Value("operationID"))
+	for _, item := range info {
+		t.Log(*item)
+	}
 }
 
 func Test_SetFriendRemark(t *testing.T) {
-	//open_im_sdk.UserForSDK.Friend().SetFriendRemark()
+	err := open_im_sdk.UserForSDK.Friend().SetFriendRemark(ctx, &sdk_params_callback.SetFriendRemarkParams{ToUserID: "863454357", Remark: "testRemark"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("SetFriendRemark success", ctx.Value("operationID"))
 }
 
 func Test_AddBlack(t *testing.T) {
-	//open_im_sdk.UserForSDK.Friend().AddBlack()
+	err := open_im_sdk.UserForSDK.Friend().AddBlack(ctx, "863454357")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("AddBlack success", ctx.Value("operationID"))
 }
 
 func Test_RemoveBlack(t *testing.T) {
-	//open_im_sdk.UserForSDK.Friend().RemoveBlack()
+	err := open_im_sdk.UserForSDK.Friend().RemoveBlack(ctx, "863454357")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("RemoveBlack success", ctx.Value("operationID"))
 }
 
 func Test_GetBlackList(t *testing.T) {
-	//open_im_sdk.UserForSDK.Friend().GetBlackList()
+	info, err := open_im_sdk.UserForSDK.Friend().GetBlackList(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("GetBlackList success", ctx.Value("operationID"))
+	for _, item := range info {
+		t.Log(*item)
+	}
 }
