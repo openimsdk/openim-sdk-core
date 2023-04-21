@@ -97,3 +97,11 @@ const (
 	RouterMsg          = "/msg"
 	RouterThird        = "/third"
 )
+
+const (
+	FileApplyPutRouter   = "/third/apply_put"
+	FileGetPutRouter     = "/third/get_put"
+	FileConfirmPutRouter = "/third/confirm_put"
+	FileGetHashRouter    = "/third/get_hash"
+	FileGetURLRouter     = "/third/object"
+)

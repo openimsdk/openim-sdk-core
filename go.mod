@@ -30,7 +30,7 @@ require (
 )
 
 require (
-	github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230418064734-fedee5584245
+	github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230421084548-d891a1ca8e50
 	golang.org/x/net v0.5.0
 )
 
