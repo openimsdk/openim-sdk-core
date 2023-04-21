@@ -6,6 +6,7 @@ import (
 	"open_im_sdk/internal/cache"
 	comm3 "open_im_sdk/internal/common"
 	conv "open_im_sdk/internal/conversation_msg"
+	"open_im_sdk/internal/file"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/group"
@@ -39,6 +40,7 @@ type LoginMgr struct {
 	superGroup   *super_group.SuperGroup
 	conversation *conv.Conversation
 	user         *user.User
+	file         *file.File
 	signaling    *signaling.LiveSignaling
 	//advancedFunction advanced_interface.AdvancedFunction
 	workMoments *workMoments.WorkMoments
@@ -111,6 +113,10 @@ func (u *LoginMgr) Conversation() *conv.Conversation {
 
 func (u *LoginMgr) User() *user.User {
 	return u.user
+}
+
+func (u *LoginMgr) File() *file.File {
+	return u.file
 }
 
 func (u *LoginMgr) Full() *full.Full {
@@ -251,6 +257,8 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.id2MinSeq = make(map[string]int64, 100)
 	u.user = user.NewUser(u.db, u.loginUserID, u.conversationCh)
 	u.user.SetListener(u.userListener)
+
+	u.file = file.NewFile(u.db, u.loginUserID)
 
 	u.friend = friend.NewFriend(u.loginUserID, u.db, u.user, u.conversationCh)
 	u.friend.SetFriendListener(u.friendListener)

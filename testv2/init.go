@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk"
@@ -20,6 +21,7 @@ var (
 )
 
 func init() {
+	rand.Seed(time.Now().UnixNano())
 	listner := &OnConnListener{}
 	config := getConf(APIADDR, WSADDR)
 	util.BaseURL = APIADDR
