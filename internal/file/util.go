@@ -57,3 +57,15 @@ func httpPut(ctx context.Context, url string, reader io.Reader, length int64) er
 	}
 	return errors.New(string(data))
 }
+
+func getFragmentSize(totalSize int64, fragmentSize int64) []int64 {
+	num := totalSize / fragmentSize
+	sizes := make([]int64, num, num+1)
+	for i := 0; i < len(sizes); i++ {
+		sizes[i] = fragmentSize
+	}
+	if totalSize%fragmentSize != 0 {
+		sizes = append(sizes, totalSize-num*fragmentSize)
+	}
+	return sizes
+}

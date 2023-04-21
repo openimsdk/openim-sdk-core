@@ -32,7 +32,7 @@ type Reader struct {
 func (r *Reader) Read(p []byte) (n int, err error) {
 	defer func() {
 		if temp == 2 {
-			time.Sleep(time.Second / 100)
+			time.Sleep(time.Second / 10)
 		}
 	}()
 	select {

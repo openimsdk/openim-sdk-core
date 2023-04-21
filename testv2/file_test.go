@@ -3,12 +3,10 @@ package testv2
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"open_im_sdk/internal/file"
 	"open_im_sdk/open_im_sdk"
-	"strconv"
+	"path/filepath"
 	"testing"
-	"time"
 )
 
 type FilePutCallback struct{}
@@ -30,7 +28,7 @@ func (c *FilePutCallback) PutStart(current, total int64) {
 }
 
 func (c *FilePutCallback) PutProgress(save int64, current, total int64) {
-	fmt.Printf("put progress [%d/%d] %d\n", current, total, save)
+	fmt.Printf("put progress [%d/%d] put %f%% save %f%%\n", current, total, float64(current)/float64(total)*100, float64(save)/float64(total)*100)
 }
 
 func (c *FilePutCallback) PutComplete(total int64, putType int) {
@@ -40,37 +38,19 @@ func (c *FilePutCallback) PutComplete(total int64, putType int) {
 func TestPut(t *testing.T) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	defer cancel()
+
 	go func() {
-		time.Sleep(time.Second * 2)
-		cancel()
-		fmt.Println("-----------------------------------cancel")
+		//time.Sleep(time.Second * 6)
+		//cancel()
+		//fmt.Println("-----------------------------------cancel")
 	}()
 
-	//req := &file.PutArgs{
-	//	Filepath:    "C:\\Users\\Admin\\Desktop\\landscape.png",
-	//	Name:        "landscape.png",
-	//	ContentType: "image/png",
-	//}
 	req := &file.PutArgs{
-		PutID:       strconv.FormatUint(rand.Uint64(), 10),
-		Filepath:    "C:\\Users\\Admin\\Desktop\\VMware-workstation-full-17.0.0-20800274.exe",
-		Name:        "VMware-workstation-full-17.0.0-20800274.exe",
-		ContentType: "app/exe",
+		PutID:    "1000",
+		Filepath: "C:\\Users\\Admin\\Desktop\\landscape.png",
 	}
-	str, err := open_im_sdk.UserForSDK.File().putFilePath(ctx, req, &FilePutCallback{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	fmt.Println("url", str)
-}
-
-func TestContinuePut(t *testing.T) {
-	req := &file.PutArgs{
-		PutID:       "127519572988560128231",
-		Filepath:    "C:\\Users\\Admin\\Desktop\\VMware-workstation-full-17.0.0-20800274.exe",
-		Name:        "VMware-workstation-full-17.0.0-20800274.exe",
-		ContentType: "app/exe",
-	}
+	req.Name = filepath.Base(req.Filepath)
 	str, err := open_im_sdk.UserForSDK.File().PutFile(ctx, req, &FilePutCallback{})
 	if err != nil {
 		t.Fatal(err)

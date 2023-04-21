@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/third"
@@ -51,22 +52,19 @@ func (f *File) apiGetPut(ctx context.Context, req *third.GetPutReq) (*third.GetP
 	return util.CallApi[third.GetPutResp](ctx, constant.FileGetPutRouter, req)
 }
 
-func (f *File) getFragmentSize(totalSize int64, fragmentSize int64) []int64 {
-	num := totalSize / fragmentSize
-	sizes := make([]int64, num, num+1)
-	for i := 0; i < len(sizes); i++ {
-		sizes[i] = fragmentSize
-	}
-	if totalSize%fragmentSize != 0 {
-		sizes = append(sizes, totalSize-num*fragmentSize)
-	}
-	return sizes
-}
+//func (f *File) getFragmentSize(totalSize int64, fragmentSize int64) []int64 {
+//	num := totalSize / fragmentSize
+//	sizes := make([]int64, num, num+1)
+//	for i := 0; i < len(sizes); i++ {
+//		sizes[i] = fragmentSize
+//	}
+//	if totalSize%fragmentSize != 0 {
+//		sizes = append(sizes, totalSize-num*fragmentSize)
+//	}
+//	return sizes
+//}
 
 func (f *File) putFilePath(ctx context.Context, req *PutArgs, cb PutFileCallback) (*PutResp, error) {
-	if req.PutID == "" {
-		return nil, fmt.Errorf("put id is empty")
-	}
 	file, err := os.Open(req.Filepath)
 	if err != nil {
 		return nil, err
@@ -81,9 +79,7 @@ func (f *File) putFilePath(ctx context.Context, req *PutArgs, cb PutFileCallback
 }
 
 func (f *File) putFile(ctx context.Context, file *os.File, size int64, req *PutArgs, cb PutFileCallback) (*PutResp, error) {
-	if req.PutID == "" {
-		return nil, fmt.Errorf("put id is empty")
-	}
+	fmt.Println("-------------------- putFile ---------------------")
 	if req.Hash == "" {
 		var err error
 		req.Hash, err = hashReader(NewReader(ctx, file, size, cb.HashProgress))
@@ -112,7 +108,7 @@ func (f *File) putFile(ctx context.Context, file *os.File, size int64, req *PutA
 	}
 	req.PutID = applyPutResp.PutID
 	cb.PutStart(0, size)
-	fragments := f.getFragmentSize(size, applyPutResp.FragmentSize)
+	fragments := getFragmentSize(size, applyPutResp.FragmentSize)
 	if len(fragments) != len(applyPutResp.PutURLs) {
 		return nil, fmt.Errorf("get fragment size error local %d server %d", len(fragments), len(applyPutResp.PutURLs))
 	}
@@ -141,6 +137,10 @@ func (f *File) PutFile(ctx context.Context, req *PutArgs, cb PutFileCallback) (*
 	resp, err := f.apiGetPut(ctx, &third.GetPutReq{PutID: req.PutID})
 	if errs.ErrRecordNotFound.Is(err) {
 		return f.putFilePath(ctx, req, cb) // 服务端不存在，重新上传
+	} else if errs.ErrFileUploadedComplete.Is(err) {
+		return f.putFilePath(ctx, req, cb) // 服务端已经上传完成
+	} else if errs.ErrFileUploadedExpired.Is(err) {
+		return f.putFilePath(ctx, req, cb) // 上传时间过期
 	} else if err != nil {
 		return nil, err // 其他错误
 	}
@@ -148,44 +148,50 @@ func (f *File) PutFile(ctx context.Context, req *PutArgs, cb PutFileCallback) (*
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 	info, err := file.Stat()
 	if err != nil {
 		return nil, err
 	}
-	fragmentSizes := f.getFragmentSize(resp.Size, resp.FragmentSize)
+	fragmentSizes := getFragmentSize(resp.Size, resp.FragmentSize)
 	hash, md5s, err := hashReaderList(NewReader(ctx, file, info.Size(), cb.HashProgress), fragmentSizes)
 	if err != nil {
 		return nil, err
 	}
 	if resp.Size != info.Size() || resp.Hash != hash {
-		return f.putFilePath(ctx, req, cb)
+		//if _, err := file.Seek(io.SeekStart, 0); err != nil {
+		//	return nil, err
+		//}
+		//return f.putFile(ctx, file, info.Size(), req, cb)
+		return nil, errors.New("file size or hash error")
 	}
 	if len(md5s) != len(resp.Fragments) {
 		return nil, fmt.Errorf("get fragment size error local %d server %d", len(md5s), len(resp.Fragments))
 	}
-	var putSize int64
-	puts := make([]bool, len(md5s))
+	var putSize int64               // 已上传的大小
+	puts := make([]bool, len(md5s)) // 已上传的片段
 	for i, fragment := range resp.Fragments {
 		if fragment.Hash == md5s[i] {
 			puts[i] = true
 			putSize += fragmentSizes[i]
 		}
 	}
-	var readSize int64
+	var readSize int64 // 已读取的大小
 	for i, fragment := range resp.Fragments {
 		if puts[i] {
-			readSize += fragmentSizes[i]
 			continue
 		}
 		if _, err := file.Seek(io.SeekStart, int(readSize)); err != nil {
 			return nil, err
 		}
 		reader := NewReader(ctx, io.LimitReader(file, fragmentSizes[i]), info.Size(), func(current, total int64) {
-			cb.PutProgress(current+readSize, total, putSize+readSize)
+			cb.PutProgress(putSize, current+putSize, info.Size())
 		})
 		if err := httpPut(ctx, fragment.Url, reader, fragmentSizes[i]); err != nil {
 			return nil, err
 		}
+		putSize += fragmentSizes[i]
+		readSize += fragmentSizes[i]
 	}
 	confirmPutResp, err := f.apiConfirmPut(ctx, &third.ConfirmPutReq{PutID: req.PutID})
 	if err != nil {
