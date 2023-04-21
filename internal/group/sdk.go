@@ -3,16 +3,17 @@ package group
 import (
 	"context"
 	"fmt"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/wrapperspb"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"time"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/wrapperspb"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
 )
 
 // deprecated use CreateGroupV2
@@ -153,7 +154,7 @@ func (g *Group) GetJoinedGroupList(ctx context.Context) ([]*model_struct.LocalGr
 	return g.db.GetJoinedGroupListDB(ctx)
 }
 
-func (g *Group) GetGroupsInfo(ctx context.Context, groupIDList []string) ([]*model_struct.LocalGroup, error) {
+func (g *Group) GetGroupsInfo(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
 	groupList, err := g.db.GetJoinedGroupListDB(ctx)
 	if err != nil {
 		return nil, err
@@ -162,9 +163,9 @@ func (g *Group) GetGroupsInfo(ctx context.Context, groupIDList []string) ([]*mod
 	if err != nil {
 		return nil, err
 	}
-	groupIDMap := utils.SliceSet(groupIDList)
+	groupIDMap := utils.SliceSet(groupIDs)
 	groups := append(groupList, superGroupList...)
-	res := make([]*model_struct.LocalGroup, 0, len(groupIDList))
+	res := make([]*model_struct.LocalGroup, 0, len(groupIDs))
 	for i, v := range groups {
 		if _, ok := groupIDMap[v.GroupID]; ok {
 			res = append(res, groups[i])

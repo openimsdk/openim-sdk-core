@@ -1,12 +1,13 @@
 package testv2
 
 import (
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/wrapperspb"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"testing"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/wrapperspb"
 )
 
 func Test_CreateGroupV2(t *testing.T) {
@@ -124,7 +125,7 @@ func Test_GetJoinedGroupList(t *testing.T) {
 }
 
 func Test_GetGroupsInfo(t *testing.T) {
-	info, err := open_im_sdk.UserForSDK.Group().GetGroupsInfo(ctx, []string{"3459296007"})
+	info, err := open_im_sdk.UserForSDK.Group().GetGroupsInfo(ctx, []string{})
 	if err != nil {
 		t.Fatal(err)
 	}

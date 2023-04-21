@@ -5,12 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
 var (
@@ -114,7 +115,7 @@ func GetPageAll[A interface {
 	}
 	var res []C
 	for i := int32(0); ; i++ {
-		req.GetPagination().PageNumber = i
+		req.GetPagination().PageNumber = i + 1
 		memberResp, err := CallApi[B](ctx, api, req)
 		if err != nil {
 			return nil, err
