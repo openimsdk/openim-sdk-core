@@ -21,6 +21,7 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 
 	pbConversation "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	pbUser "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/user"
 
 	"github.com/golang/protobuf/proto"
@@ -66,7 +67,7 @@ func (c *Conversation) SetConversationRecvMessageOpt(ctx context.Context, conver
 	if err != nil {
 		return err
 	}
-	c.SyncConversations(ctx, 0)
+	c.SyncConversations(ctx)
 	return nil
 }
 func (c *Conversation) SetGlobalRecvMessageOpt(ctx context.Context, opt int) error {
@@ -172,7 +173,7 @@ func (c *Conversation) DeleteConversation(ctx context.Context, conversationID st
 	if err != nil {
 		return err
 	}
-	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
+	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: "", Action: constant.TotalUnreadMessageChanged, Args: ""}})
 	return nil
 
 }
@@ -215,7 +216,7 @@ func (c *Conversation) ResetConversationGroupAtType(ctx context.Context, convers
 	if err != nil {
 		return err
 	}
-	c.SyncConversations(ctx, 0)
+	c.SyncConversations(ctx)
 	return nil
 
 }
@@ -224,14 +225,14 @@ func (c *Conversation) PinConversation(ctx context.Context, conversationID strin
 	if err != nil {
 		return err
 	}
-	apiReq := &pbConversation.ModifyConversationFieldReq{}
+	apiReq := &pbConversation.ModifyConversationFieldReq{Conversation: &pbConversation.Conversation{ConversationID: conversationID}}
 	apiReq.Conversation.IsPinned = isPinned
 	apiReq.FieldType = constant.FieldIsPinned
 	err = c.setConversation(ctx, apiReq, lc)
 	if err != nil {
 		return err
 	}
-	c.SyncConversations(ctx, 0)
+	c.SyncConversations(ctx)
 	return nil
 }
 
@@ -240,14 +241,14 @@ func (c *Conversation) SetOneConversationPrivateChat(ctx context.Context, conver
 	if err != nil {
 		return err
 	}
-	apiReq := &pbConversation.ModifyConversationFieldReq{}
+	apiReq := &pbConversation.ModifyConversationFieldReq{Conversation: &pbConversation.Conversation{ConversationID: conversationID}}
 	apiReq.Conversation.IsPrivateChat = isPrivate
 	apiReq.FieldType = constant.FieldIsPrivateChat
 	err = c.setConversation(ctx, apiReq, lc)
 	if err != nil {
 		return err
 	}
-	c.SyncConversations(ctx, 0)
+	c.SyncConversations(ctx)
 	return nil
 }
 
@@ -256,14 +257,14 @@ func (c *Conversation) SetOneConversationBurnDuration(ctx context.Context, conve
 	if err != nil {
 		return err
 	}
-	apiReq := &pbConversation.ModifyConversationFieldReq{}
+	apiReq := &pbConversation.ModifyConversationFieldReq{Conversation: &pbConversation.Conversation{ConversationID: conversationID}}
 	apiReq.Conversation.BurnDuration = burnDuration
 	apiReq.FieldType = constant.FieldBurnDuration
 	err = c.setConversation(ctx, apiReq, lc)
 	if err != nil {
 		return err
 	}
-	c.SyncConversations(ctx, 0)
+	c.SyncConversations(ctx)
 	return nil
 }
 
@@ -272,14 +273,14 @@ func (c *Conversation) SetOneConversationRecvMessageOpt(ctx context.Context, con
 	if err != nil {
 		return err
 	}
-	apiReq := &pbConversation.ModifyConversationFieldReq{}
-	apiReq.Conversation.BurnDuration = int32(opt)
+	apiReq := &pbConversation.ModifyConversationFieldReq{Conversation: &pbConversation.Conversation{ConversationID: conversationID}}
+	apiReq.Conversation.RecvMsgOpt = int32(opt)
 	apiReq.FieldType = constant.FieldRecvMsgOpt
 	err = c.setConversation(ctx, apiReq, lc)
 	if err != nil {
 		return err
 	}
-	c.SyncConversations(ctx, 0)
+	c.SyncConversations(ctx)
 	return nil
 }
 
@@ -332,7 +333,7 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(ctx context.Context
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
 
 }
-func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *server_api_params.OfflinePushInfo) (*sdk_struct.MsgStruct, error) {
+func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo) (*sdk_struct.MsgStruct, error) {
 	s.SendID = c.loginUserID
 	s.SenderPlatformID = c.platformID
 	if recvID == "" && groupID == "" {
@@ -482,7 +483,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				delFile = append(delFile, videoPath)
 				delFile = append(delFile, snapPath)
 			}
-			log.Info("", "file: ", videoPath, snapPath, delFile)
+			log.ZDebug(ctx, "file", "videoPath", videoPath, "snapPath", snapPath, "delFile", delFile)
 			snapshotURL, snapshotUUID, videoURL, videoUUID, err := c.UploadVideo(videoPath, snapPath, callback.OnProgress)
 			if err != nil {
 				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
@@ -532,7 +533,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 	return c.sendMessageToServer(ctx, s, lc, callback, delFile, p, options)
 
 }
-func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *server_api_params.OfflinePushInfo) (*sdk_struct.MsgStruct, error) {
+func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo) (*sdk_struct.MsgStruct, error) {
 
 	s.SendID = c.loginUserID
 	s.SenderPlatformID = c.platformID
@@ -637,7 +638,7 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 
 }
 func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string,
-	p *server_api_params.OfflinePushInfo, buffer1, buffer2 *bytes.Buffer) (*sdk_struct.MsgStruct, error) {
+	p *sdkws.OfflinePushInfo, buffer1, buffer2 *bytes.Buffer) (*sdk_struct.MsgStruct, error) {
 	s.SendID = c.loginUserID
 	s.SenderPlatformID = c.platformID
 	if recvID == "" && groupID == "" {
@@ -808,7 +809,7 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 
 }
 
-func (c *Conversation) InternalSendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *server_api_params.OfflinePushInfo, onlineUserOnly bool, options map[string]bool) (*server_api_params.UserSendMsgResp, error) {
+func (c *Conversation) InternalSendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *server_api_params.OfflinePushInfo, onlineUserOnly bool, options map[string]bool) (*sdkws.UserSendMsgResp, error) {
 	if recvID == "" && groupID == "" {
 		return nil, errors.New("recvID && groupID not both null")
 	}
@@ -872,17 +873,17 @@ func (c *Conversation) InternalSendMessage(ctx context.Context, s *sdk_struct.Ms
 	//default:
 	//	common.CheckAnyErrCallback(callback, 301, err, operationID)
 	//}
-	var sendMsgResp server_api_params.UserSendMsgResp
+	var sendMsgResp sdkws.UserSendMsgResp
 	_ = proto.Unmarshal(g.Data, &sendMsgResp)
 	return &sendMsgResp, nil
 
 }
 
 func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation, callback open_im_sdk_callback.SendMsgCallBack,
-	delFile []string, offlinePushInfo *server_api_params.OfflinePushInfo, options map[string]bool) (*sdk_struct.MsgStruct, error) {
+	delFile []string, offlinePushInfo *sdkws.OfflinePushInfo, options map[string]bool) (*sdk_struct.MsgStruct, error) {
 	log.Debug("", "sendMessageToServer ", s.ServerMsgID, " ", s.ClientMsgID)
 	//Protocol conversion
-	var wsMsgData server_api_params.MsgData
+	var wsMsgData sdkws.MsgData
 	copier.Copy(&wsMsgData, s)
 	if wsMsgData.ContentType == constant.Text && c.encryptionKey != "" {
 		ciphertext, err := utils.AesEncrypt([]byte(s.Content), []byte(c.encryptionKey))
@@ -1089,7 +1090,7 @@ func (c *Conversation) DeleteMessageFromLocalStorage(ctx context.Context, messag
 
 }
 
-func (c *Conversation) ClearC2CHistoryMessage(ctx context.Context, userID string, operationID string) error {
+func (c *Conversation) ClearC2CHistoryMessage(ctx context.Context, userID string) error {
 	return c.clearC2CHistoryMessage(ctx, userID)
 }
 func (c *Conversation) ClearGroupHistoryMessage(ctx context.Context, groupID string) error {
@@ -1097,7 +1098,6 @@ func (c *Conversation) ClearGroupHistoryMessage(ctx context.Context, groupID str
 
 }
 func (c *Conversation) ClearC2CHistoryMessageFromLocalAndSvr(ctx context.Context, userID string) error {
-
 	conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
 	err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
 	if err != nil {
@@ -1109,7 +1109,7 @@ func (c *Conversation) ClearC2CHistoryMessageFromLocalAndSvr(ctx context.Context
 
 // fixme
 func (c *Conversation) ClearGroupHistoryMessageFromLocalAndSvr(ctx context.Context, groupID string) error {
-	conversationID, _, err := c.getConversationTypeByGroupID(groupID)
+	conversationID, _, err := c.getConversationTypeByGroupID(ctx, groupID)
 	if err != nil {
 		return err
 	}
@@ -1177,7 +1177,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(ctx context.Context, s *
 	}
 	var conversation model_struct.LocalConversation
 	var err error
-	_, conversation.ConversationType, err = c.getConversationTypeByGroupID(groupID)
+	_, conversation.ConversationType, err = c.getConversationTypeByGroupID(ctx, groupID)
 	if err != nil {
 		return nil, err
 	}
@@ -1273,7 +1273,6 @@ func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.Ms
 }
 
 func (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
-
 	err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
 	if err != nil {
 		return err
@@ -1302,8 +1301,8 @@ func (c *Conversation) DeleteAllMsgFromLocal(ctx context.Context) error {
 	return c.deleteAllMsgFromLocal(ctx)
 
 }
-func (c *Conversation) getConversationTypeByGroupID(groupID string) (conversationID string, conversationType int32, err error) {
-	g, err := c.full.GetGroupInfoByGroupID(context.Background(), groupID)
+func (c *Conversation) getConversationTypeByGroupID(ctx context.Context, groupID string) (conversationID string, conversationType int32, err error) {
+	g, err := c.full.GetGroupInfoByGroupID(ctx, groupID)
 	if err != nil {
 		return "", 0, utils.Wrap(err, "get group info error")
 	}

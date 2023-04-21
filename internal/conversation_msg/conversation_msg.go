@@ -1403,7 +1403,7 @@ func (c *Conversation) DoGroupMsgReadState(ctx context.Context, groupMsgReadList
 			var successMsgIDlist []string
 			var failedMsgIDList []string
 			newMsgID := utils.RemoveRepeatedStringInList(msgIDList)
-			_, sessionType, err := c.getConversationTypeByGroupID(groupID)
+			_, sessionType, err := c.getConversationTypeByGroupID(ctx, groupID)
 			if err != nil {
 				log.Error("internal", "GetGroupInfoByGroupID err:", err.Error(), "groupID", groupID)
 				continue
@@ -1656,7 +1656,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			lc.ConversationID = utils.GetConversationIDBySessionType(st.SourceID, constant.SingleChatType)
 			lc.ConversationType = constant.SingleChatType
 		case constant.GroupChatType:
-			conversationID, conversationType, err := c.getConversationTypeByGroupID(st.SourceID)
+			conversationID, conversationType, err := c.getConversationTypeByGroupID(ctx, st.SourceID)
 			if err != nil {
 				log.Error("internal", "getConversationTypeByGroupID database err:", err.Error())
 				return
@@ -1765,7 +1765,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 	case constant.SyncConversation:
 		operationID := node.Args.(string)
 		log.Debug(operationID, "reconn sync conversation start")
-		c.SyncConversations(ctx, 0)
+		c.SyncConversations(ctx)
 		err := c.SyncConversationUnreadCount(ctx)
 		if err != nil {
 			log.Error(operationID, "reconn sync conversation unread count err", err.Error())
@@ -1795,7 +1795,7 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 			conversationType = constant.SingleChatType
 		} else {
 			var err error
-			_, conversationType, err = c.getConversationTypeByGroupID(args.GroupID)
+			_, conversationType, err = c.getConversationTypeByGroupID(ctx, args.GroupID)
 			if err != nil {
 				log.Error("internal", "getConversationTypeByGroupID database err:", err.Error())
 				return
@@ -2266,7 +2266,7 @@ func (c *Conversation) addFaceURLAndName(ctx context.Context, lc *model_struct.L
 		lc.ShowName = name
 
 	case constant.GroupChatType, constant.SuperGroupChatType:
-		g, err := c.full.GetGroupInfoFromLocal2Svr(nil, lc.GroupID, lc.ConversationType)
+		g, err := c.full.GetGroupInfoFromLocal2Svr(ctx, lc.GroupID, lc.ConversationType)
 		if err != nil {
 			return err
 		}
