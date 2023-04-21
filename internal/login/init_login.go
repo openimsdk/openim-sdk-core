@@ -471,7 +471,7 @@ func (u *LoginMgr) forcedSynchronization(ctx context.Context) {
 	}()
 	go func() {
 		defer wg.Done()
-		if err := u.conversation.SyncConversations(ctx, time.Second*2); err != nil {
+		if err := u.conversation.SyncConversations(ctx); err != nil {
 			errCh <- err
 		}
 	}()

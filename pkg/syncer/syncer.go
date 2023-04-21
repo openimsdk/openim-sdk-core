@@ -2,8 +2,9 @@ package syncer
 
 import (
 	"context"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"reflect"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 )
 
 func New[T any, V comparable](

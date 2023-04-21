@@ -108,7 +108,7 @@ func (c *Conversation) getServerConversationList(ctx context.Context) ([]*model_
 	return util.Batch(ServerConversationToLocal, resp.Conversations), nil
 }
 
-func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Duration) error {
+func (c *Conversation) SyncConversations(ctx context.Context) error {
 	ccTime := time.Now()
 	conversationsOnServer, err := c.getServerConversationList(ctx)
 	if err != nil {
@@ -130,7 +130,7 @@ func (c *Conversation) SyncConversations(ctx context.Context, timeout time.Durat
 			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.ConChange, Args: ""}})
 		}
 		return nil
-	}); err != nil {
+	}, true); err != nil {
 		return err
 	}
 	conversationsOnLocal, err = c.db.GetAllConversationListToSync(ctx)
@@ -247,7 +247,7 @@ func (c *Conversation) getHistoryMessageList(ctx context.Context, req sdk.GetHis
 		}
 	} else {
 		if req.UserID == "" {
-			newConversationID, newSessionType, err := c.getConversationTypeByGroupID(req.GroupID)
+			newConversationID, newSessionType, err := c.getConversationTypeByGroupID(ctx, req.GroupID)
 			if err != nil {
 				return nil, err
 			}
@@ -382,7 +382,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 		}
 	} else {
 		if req.UserID == "" {
-			newConversationID, newSessionType, err := c.getConversationTypeByGroupID(req.GroupID)
+			newConversationID, newSessionType, err := c.getConversationTypeByGroupID(ctx, req.GroupID)
 			if err != nil {
 				return nil, err
 			}
@@ -681,7 +681,7 @@ func (c *Conversation) getAdvancedHistoryMessageList2(callback open_im_sdk_callb
 		}
 	} else {
 		if req.UserID == "" {
-			newConversationID, newSessionType, err := c.getConversationTypeByGroupID(req.GroupID)
+			newConversationID, newSessionType, err := c.getConversationTypeByGroupID(context.Background(), req.GroupID)
 			common.CheckDBErrCallback(callback, err, operationID)
 			sourceID = req.GroupID
 			sessionType = int(newSessionType)
@@ -1110,7 +1110,7 @@ func (c *Conversation) markC2CMessageAsRead(ctx context.Context, msgIDList []str
 	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 }
 func (c *Conversation) markGroupMessageAsRead(ctx context.Context, msgIDList []string, groupID string) error {
-	conversationID, conversationType, err := c.getConversationTypeByGroupID(groupID)
+	conversationID, conversationType, err := c.getConversationTypeByGroupID(ctx, groupID)
 	if err != nil {
 		return err
 	}
@@ -1222,7 +1222,7 @@ func (c *Conversation) insertMessageToLocalStorage(ctx context.Context, s *model
 }
 
 func (c *Conversation) clearGroupHistoryMessage(ctx context.Context, groupID string) error {
-	_, sessionType, err := c.getConversationTypeByGroupID(groupID)
+	_, sessionType, err := c.getConversationTypeByGroupID(ctx, groupID)
 	if err != nil {
 		return err
 	}
@@ -1553,7 +1553,7 @@ func (c *Conversation) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 		return
 	}
 	go func() {
-		c.SyncConversations(ctx, 0)
+		c.SyncConversations(ctx)
 	}()
 }
 
@@ -1606,7 +1606,6 @@ func (c *Conversation) deleteConversationAndMsgFromSvr(ctx context.Context, conv
 	if err != nil {
 		return err
 	}
-	log.Debug("", utils.GetSelfFuncName(), *local)
 	var seqList []uint32
 	switch local.ConversationType {
 	case constant.SingleChatType, constant.NotificationChatType:
@@ -1616,14 +1615,14 @@ func (c *Conversation) deleteConversationAndMsgFromSvr(ctx context.Context, conv
 		} else {
 			seqList, err = c.db.GetMsgSeqListBySelfUserID(ctx, c.loginUserID)
 		}
-		log.NewDebug("", utils.GetSelfFuncName(), "seqList: ", seqList)
+		log.ZDebug(ctx, utils.GetSelfFuncName(), "seqList: ", seqList)
 		if err != nil {
 			return err
 		}
 	case constant.GroupChatType:
 		groupID := local.GroupID
 		seqList, err = c.db.GetMsgSeqListByGroupID(ctx, groupID)
-		log.NewDebug("", utils.GetSelfFuncName(), "seqList: ", seqList)
+		log.ZDebug(ctx, utils.GetSelfFuncName(), "seqList: ", seqList)
 		if err != nil {
 			return err
 		}
@@ -1637,7 +1636,6 @@ func (c *Conversation) deleteConversationAndMsgFromSvr(ctx context.Context, conv
 
 	}
 	var apiReq pbMsg.DelMsgsReq
-
 	apiReq.UserID = c.loginUserID
 	apiReq.Seqs = utils.Uint32ListConvert(seqList)
 	return util.ApiPost(ctx, constant.DeleteMsgRouter, &apiReq, nil)
