@@ -217,6 +217,6 @@ func (f *File) Cancel(ctx context.Context, putID string) {
 	cancel, ok := f.updating[putID]
 	if ok {
 		delete(f.updating, putID)
+		cancel()
 	}
-	cancel()
 }
