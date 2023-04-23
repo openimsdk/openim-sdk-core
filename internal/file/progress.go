@@ -3,13 +3,9 @@ package file
 import (
 	"context"
 	"io"
-	"time"
 )
 
-var temp int
-
 func NewReader(ctx context.Context, r io.Reader, totalSize int64, fn func(current, total int64)) io.Reader {
-	temp++
 	if r == nil || fn == nil {
 		return r
 	}
@@ -30,11 +26,6 @@ type Reader struct {
 }
 
 func (r *Reader) Read(p []byte) (n int, err error) {
-	defer func() {
-		if temp == 2 {
-			time.Sleep(time.Second / 10)
-		}
-	}()
 	select {
 	case <-r.done:
 		return 0, context.Canceled

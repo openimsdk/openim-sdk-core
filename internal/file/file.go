@@ -30,14 +30,13 @@ type PutResp struct {
 }
 
 func NewFile(dataBase db_interface.DataBase, loginUserID string) *File {
-	return &File{loginUserID: loginUserID}
+	return &File{loginUserID: loginUserID, lock: new(sync.Mutex), updating: make(map[string]func())}
 }
 
 type File struct {
 	loginUserID string
-
-	lock    *sync.Locker
-	chanMap map[string]chan struct{}
+	lock        sync.Locker
+	updating    map[string]func()
 }
 
 func (f *File) apiApplyPut(ctx context.Context, req *third.ApplyPutReq) (*third.ApplyPutResp, error) {
@@ -52,19 +51,7 @@ func (f *File) apiGetPut(ctx context.Context, req *third.GetPutReq) (*third.GetP
 	return util.CallApi[third.GetPutResp](ctx, constant.FileGetPutRouter, req)
 }
 
-//func (f *File) getFragmentSize(totalSize int64, fragmentSize int64) []int64 {
-//	num := totalSize / fragmentSize
-//	sizes := make([]int64, num, num+1)
-//	for i := 0; i < len(sizes); i++ {
-//		sizes[i] = fragmentSize
-//	}
-//	if totalSize%fragmentSize != 0 {
-//		sizes = append(sizes, totalSize-num*fragmentSize)
-//	}
-//	return sizes
-//}
-
-func (f *File) putFilePath(ctx context.Context, req *PutArgs, cb PutFileCallback) (*PutResp, error) {
+func (f *File) rePutFilePath(ctx context.Context, req *PutArgs, cb PutFileCallback) (*PutResp, error) {
 	file, err := os.Open(req.Filepath)
 	if err != nil {
 		return nil, err
@@ -75,11 +62,10 @@ func (f *File) putFilePath(ctx context.Context, req *PutArgs, cb PutFileCallback
 		return nil, err
 	}
 	cb.Open(info.Size())
-	return f.putFile(ctx, file, info.Size(), req, cb)
+	return f.rePutFile(ctx, file, info.Size(), req, cb)
 }
 
-func (f *File) putFile(ctx context.Context, file *os.File, size int64, req *PutArgs, cb PutFileCallback) (*PutResp, error) {
-	fmt.Println("-------------------- putFile ---------------------")
+func (f *File) rePutFile(ctx context.Context, file *os.File, size int64, req *PutArgs, cb PutFileCallback) (*PutResp, error) {
 	if req.Hash == "" {
 		var err error
 		req.Hash, err = hashReader(NewReader(ctx, file, size, cb.HashProgress))
@@ -115,13 +101,14 @@ func (f *File) putFile(ctx context.Context, file *os.File, size int64, req *PutA
 	var initSize int64
 	for i, url := range applyPutResp.PutURLs {
 		put := NewReader(ctx, io.LimitReader(file, fragments[i]), size, func(current, total int64) {
-			cb.PutProgress(current+initSize, total, initSize)
+			cb.PutProgress(initSize, current+initSize, size)
 		})
 		if err := httpPut(ctx, url, put, fragments[i]); err != nil {
 			return nil, err
 		}
 		initSize += fragments[i]
 	}
+	cb.PutProgress(size, size, size) // 100%
 	confirmPutResp, err := f.apiConfirmPut(ctx, &third.ConfirmPutReq{PutID: applyPutResp.PutID})
 	if err != nil {
 		return nil, err
@@ -130,17 +117,15 @@ func (f *File) putFile(ctx context.Context, file *os.File, size int64, req *PutA
 	return &PutResp{URL: confirmPutResp.Url}, nil
 }
 
-func (f *File) PutFile(ctx context.Context, req *PutArgs, cb PutFileCallback) (*PutResp, error) {
+func (f *File) putFile(ctx context.Context, req *PutArgs, cb PutFileCallback) (*PutResp, error) {
 	if req.PutID == "" {
-		return f.putFilePath(ctx, req, cb) // 没有putID
+		return f.rePutFilePath(ctx, req, cb) // 没有putID
 	}
 	resp, err := f.apiGetPut(ctx, &third.GetPutReq{PutID: req.PutID})
 	if errs.ErrRecordNotFound.Is(err) {
-		return f.putFilePath(ctx, req, cb) // 服务端不存在，重新上传
-	} else if errs.ErrFileUploadedComplete.Is(err) {
-		return f.putFilePath(ctx, req, cb) // 服务端已经上传完成
+		return f.rePutFilePath(ctx, req, cb) // 服务端不存在，重新上传
 	} else if errs.ErrFileUploadedExpired.Is(err) {
-		return f.putFilePath(ctx, req, cb) // 上传时间过期
+		return f.rePutFilePath(ctx, req, cb) // 上传时间过期
 	} else if err != nil {
 		return nil, err // 其他错误
 	}
@@ -159,10 +144,6 @@ func (f *File) PutFile(ctx context.Context, req *PutArgs, cb PutFileCallback) (*
 		return nil, err
 	}
 	if resp.Size != info.Size() || resp.Hash != hash {
-		//if _, err := file.Seek(io.SeekStart, 0); err != nil {
-		//	return nil, err
-		//}
-		//return f.putFile(ctx, file, info.Size(), req, cb)
 		return nil, errors.New("file size or hash error")
 	}
 	if len(md5s) != len(resp.Fragments) {
@@ -179,6 +160,7 @@ func (f *File) PutFile(ctx context.Context, req *PutArgs, cb PutFileCallback) (*
 	var readSize int64 // 已读取的大小
 	for i, fragment := range resp.Fragments {
 		if puts[i] {
+			readSize += fragmentSizes[i]
 			continue
 		}
 		if _, err := file.Seek(io.SeekStart, int(readSize)); err != nil {
@@ -193,10 +175,48 @@ func (f *File) PutFile(ctx context.Context, req *PutArgs, cb PutFileCallback) (*
 		putSize += fragmentSizes[i]
 		readSize += fragmentSizes[i]
 	}
+	cb.PutProgress(info.Size(), info.Size(), info.Size())
 	confirmPutResp, err := f.apiConfirmPut(ctx, &third.ConfirmPutReq{PutID: req.PutID})
 	if err != nil {
 		return nil, err
 	}
 	cb.PutComplete(info.Size(), 2)
 	return &PutResp{URL: confirmPutResp.Url}, nil
+}
+
+func (f *File) PutFile(ctx context.Context, req *PutArgs, cb PutFileCallback) (*PutResp, error) {
+	if req.PutID == "" {
+		return nil, fmt.Errorf("put id is empty")
+	}
+	f.lock.Lock()
+	if _, ok := f.updating[req.PutID]; ok {
+		f.lock.Unlock()
+		return nil, fmt.Errorf("put id is uploading")
+	}
+	done := ctx.Done()
+	ctx, cancel := context.WithCancel(ctx)
+	if done != nil {
+		go func() {
+			<-done
+			cancel()
+		}()
+	}
+	f.updating[req.PutID] = cancel
+	f.lock.Unlock()
+	defer func(putID string) {
+		f.lock.Lock()
+		delete(f.updating, putID)
+		f.lock.Unlock()
+	}(req.PutID)
+	return f.putFile(ctx, req, cb)
+}
+
+func (f *File) Cancel(ctx context.Context, putID string) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+	cancel, ok := f.updating[putID]
+	if ok {
+		delete(f.updating, putID)
+	}
+	cancel()
 }

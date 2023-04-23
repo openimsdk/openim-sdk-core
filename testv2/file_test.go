@@ -1,12 +1,13 @@
 package testv2
 
 import (
-	"context"
 	"fmt"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 	"open_im_sdk/internal/file"
 	"open_im_sdk/open_im_sdk"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 type FilePutCallback struct{}
@@ -36,19 +37,19 @@ func (c *FilePutCallback) PutComplete(total int64, putType int) {
 }
 
 func TestPut(t *testing.T) {
-	ctx, cancel := context.WithCancel(ctx)
+	ctx := mcontext.NewCtx("123456")
 
-	defer cancel()
+	putID := "1000"
 
 	go func() {
-		//time.Sleep(time.Second * 6)
-		//cancel()
-		//fmt.Println("-----------------------------------cancel")
+		time.Sleep(time.Second * 3)
+		fmt.Println("###################### CANCEL PUT ######################")
+		open_im_sdk.UserForSDK.File().Cancel(ctx, putID)
 	}()
 
 	req := &file.PutArgs{
-		PutID:    "1000",
-		Filepath: "C:\\Users\\Admin\\Desktop\\landscape.png",
+		PutID:    putID,
+		Filepath: "C:\\Users\\Admin\\Desktop\\VMware-workstation-full-17.0.0-20800274.exe",
 	}
 	req.Name = filepath.Base(req.Filepath)
 	str, err := open_im_sdk.UserForSDK.File().PutFile(ctx, req, &FilePutCallback{})
