@@ -18,10 +18,11 @@ import (
 )
 
 func main() {
-	var sdkWsPort *int
+	var sdkWsPort, logLevel *int
 	var openIMWsAddress, openIMApiAddress, openIMDbDir, objectStorage *string
 
 	sdkWsPort = flag.Int("sdkWsPort", 7788, "openIMSDK ws listening port")
+	logLevel = flag.Int("logLevel", 2, "openIMSDK ws listening port")
 	openIMApiAddress = flag.String("openIMApiAddress", "", "openIM api listening port")
 	openIMWsAddress = flag.String("openIMWsAddress", "", "openIM ws listening port")
 	openIMDbDir = flag.String("openIMDbDir", "./", "openIM db dir")
@@ -33,16 +34,12 @@ func main() {
 	switch sysType {
 
 	case "darwin":
-		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: *openIMApiAddress,
-			WsAddr: *openIMWsAddress, Platform: utils.LinuxPlatformID, DataDir: *openIMDbDir, ObjectStorage: *objectStorage})
-
+		fallthrough
 	case "linux":
-		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: *openIMApiAddress,
-			WsAddr: *openIMWsAddress, Platform: utils.LinuxPlatformID, DataDir: *openIMDbDir, ObjectStorage: *objectStorage})
-
+		fallthrough
 	case "windows":
 		ws_local_server.InitServer(&sdk_struct.IMConfig{ApiAddr: *openIMApiAddress,
-			WsAddr: *openIMWsAddress, Platform: utils.LinuxPlatformID, DataDir: *openIMDbDir, ObjectStorage: *objectStorage})
+			WsAddr: *openIMWsAddress, Platform: utils.LinuxPlatformID, DataDir: *openIMDbDir, ObjectStorage: *objectStorage, LogLevel: uint32(*logLevel)})
 	default:
 		fmt.Println("this os not support", sysType)
 
