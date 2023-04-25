@@ -20,7 +20,6 @@ import (
 	"open_im_sdk/internal/login"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
-
 	localLog "open_im_sdk/pkg/log"
 	"open_im_sdk/sdk_struct"
 	"strings"
