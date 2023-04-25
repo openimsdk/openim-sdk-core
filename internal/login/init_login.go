@@ -307,9 +307,6 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	}()
 	wg.Wait()
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
-	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh, u.conversationCh)
-	u.msgSync = ws.NewMsgSync(u.db, u.ws, u.loginUserID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
-	u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
 
 	u.signaling, err = signaling.NewLiveSignaling(u.ws, u.loginUserID, u.imConfig.Platform, u.db)
 	if err != nil {
