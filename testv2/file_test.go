@@ -39,7 +39,7 @@ func (c *FilePutCallback) PutComplete(total int64, putType int) {
 func TestPut(t *testing.T) {
 	ctx := mcontext.NewCtx("123456")
 
-	putID := "1000"
+	putID := "asdkmjakslaaa"
 
 	go func() {
 		time.Sleep(time.Second * 3)
