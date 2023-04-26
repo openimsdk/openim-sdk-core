@@ -22,7 +22,7 @@ type MsgSync struct {
 	*Ws
 	LoginUserID        string
 	conversationCh     chan common.Cmd2Value
-	PushMsgAndMaxSeqCh chan common.Cmd2Value
+	PushMsgAndMaxSeqCh chan common.Cmd2Value // ws ch
 
 	selfMsgSync               *SelfMsgSync
 	isSyncFinished            bool

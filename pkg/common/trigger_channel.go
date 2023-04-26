@@ -140,6 +140,7 @@ type UpdateMessageNode struct {
 type Cmd2Value struct {
 	Cmd   string
 	Value interface{}
+	Ctx   context.Context
 }
 type UpdateConInfo struct {
 	UserID  string
