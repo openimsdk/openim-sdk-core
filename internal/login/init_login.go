@@ -20,6 +20,7 @@ import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
+	ccontext "open_im_sdk/pkg/context"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/server_api_params"
@@ -77,14 +78,17 @@ type LoginMgr struct {
 	heartbeatCmdCh     chan common.Cmd2Value
 	pushMsgAndMaxSeqCh chan common.Cmd2Value
 	joinedSuperGroupCh chan common.Cmd2Value
-	imConfig           sdk_struct.IMConfig
-
-	id2MinSeq map[string]int64
-	postApi   *ws.PostApi
+	ctx                context.Context
+	cancel             context.CancelFunc
+	id2MinSeq          map[string]int64
+	postApi            *ws.PostApi
 }
 
 func (u *LoginMgr) GetToken() string {
 	return u.token
+}
+func (u *LoginMgr) Exit() {
+	u.cancel()
 }
 
 func (u *LoginMgr) GetConfig() sdk_struct.IMConfig {
@@ -236,16 +240,16 @@ func (u *LoginMgr) wakeUp(ctx context.Context) error {
 }
 
 func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
-	log.ZInfo(ctx, "login start... ", "userID", userID, "token", token, "config", sdk_struct.SvrConf)
+	log.ZInfo(ctx, "login start... ", "userID", userID, "token", token, "config", u.ctx)
 	t1 := time.Now()
 	u.token = token
 	u.loginUserID = userID
 	var err error
-	u.db, err = db.NewDataBase(ctx, userID, sdk_struct.SvrConf.DataDir)
+	u.db, err = db.NewDataBase(ctx, userID, ccontext.GetDataDir(ctx))
 	if err != nil {
 		return errs.ErrDatabase.Wrap(err.Error())
 	}
-	log.ZDebug(ctx, "NewDataBase ok", "userID", userID, "dataDir", sdk_struct.SvrConf.DataDir, "login cost time", time.Since(t1))
+	log.ZDebug(ctx, "NewDataBase ok", "userID", userID, "dataDir", ccontext.GetDataDir(ctx), "login cost time", time.Since(t1))
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
 	u.cmdWsCh = make(chan common.Cmd2Value, 10)
 
@@ -276,29 +280,29 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	if u.businessListener != nil {
 		u.business.SetListener(u.businessListener)
 	}
-	u.push = comm2.NewPush(u.imConfig.Platform, u.loginUserID)
+	u.push = comm2.NewPush(ccontext.GetPlatform(ctx), u.loginUserID)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
-	wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID, u.imConfig.IsCompression, u.conversationCh)
-	wsRespAsyn := ws.NewWsRespAsyn()
-	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh, u.conversationCh)
-	u.msgSync = ws.NewMsgSync(u.db, u.ws, u.loginUserID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
-	u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
-	var objStorage comm3.ObjectStorage
-	switch u.imConfig.ObjectStorage {
-	case "cos":
-		objStorage = comm2.NewCOS(u.postApi)
-	case "minio":
-		objStorage = comm2.NewMinio(u.postApi)
-	case "oss":
-		objStorage = comm2.NewOSS(u.postApi)
-	case "aws":
-		objStorage = comm2.NewAWS(u.postApi)
-	default:
-		objStorage = comm2.NewCOS(u.postApi)
-	}
-	u.conversation = conv.NewConversation(u.ws, u.db, u.postApi, u.conversationCh,
-		u.loginUserID, u.imConfig.Platform, u.imConfig.DataDir, u.imConfig.EncryptionKey,
-		u.friend, u.group, u.user, objStorage, u.conversationListener, u.advancedMsgListener, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq, u.imConfig.IsExternalExtensions)
+	ws.NewLongConnMgr(ctx, u.connListener, u.pushMsgAndMaxSeqCh)
+	//wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID, u.imConfig.IsCompression, u.conversationCh)
+	//wsRespAsyn := ws.NewWsRespAsyn()
+	//u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh, u.conversationCh)
+	u.msgSync = ws.NewMsgSync(ctx, u.db, u.conversationCh, u.pushMsgAndMaxSeqCh)
+	//u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
+	//var objStorage comm3.ObjectStorage
+	//switch u.imConfig.ObjectStorage {
+	//case "cos":
+	//	objStorage = comm2.NewCOS(u.postApi)
+	//case "minio":
+	//	objStorage = comm2.NewMinio(u.postApi)
+	//case "oss":
+	//	objStorage = comm2.NewOSS(u.postApi)
+	//case "aws":
+	//	objStorage = comm2.NewAWS(u.postApi)
+	//default:
+	//	objStorage = comm2.NewCOS(u.postApi)
+	//}
+	u.conversation = conv.NewConversation(ctx, u.db, u.conversationCh,
+		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq)
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -307,9 +311,9 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	}()
 	wg.Wait()
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
-	u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh, u.conversationCh)
-	u.msgSync = ws.NewMsgSync(u.db, u.ws, u.loginUserID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
-	u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
+	//u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh, u.conversationCh)
+	//u.msgSync = ws.NewMsgSync(u.db, u.ws, u.loginUserID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
+	//u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
 
 	u.signaling, err = signaling.NewLiveSignaling(u.ws, u.loginUserID, u.imConfig.Platform, u.db)
 	if err != nil {
@@ -333,7 +337,17 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 }
 
 func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_callback.OnConnListener, operationID string) bool {
-	u.imConfig = config
+	var values []interface{}
+	values = append(values, config.Platform)
+	values = append(values, config.ApiAddr)
+	values = append(values, config.WsAddr)
+	values = append(values, config.DataDir)
+	values = append(values, config.LogLevel)
+	values = append(values, config.ObjectStorage)
+	values = append(values, config.EncryptionKey)
+	values = append(values, config.IsCompression)
+	values = append(values, config.IsExternalExtensions)
+	u.ctx, u.cancel = ccontext.WithMustInfoCtx(values)
 	if listener == nil {
 		return false
 	}

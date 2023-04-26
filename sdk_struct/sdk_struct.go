@@ -255,7 +255,7 @@ type IMConfig struct {
 	IsExternalExtensions bool   `json:"is_external_extensions"`
 }
 
-var SvrConf IMConfig
+//var SvrConf IMConfig
 
 type CmdNewMsgComeToConversation struct {
 	MsgList       []*sdkws.MsgData
