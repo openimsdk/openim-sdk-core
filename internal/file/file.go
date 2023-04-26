@@ -193,20 +193,17 @@ func (f *File) PutFile(ctx context.Context, req *PutArgs, cb PutFileCallback) (*
 		f.lock.Unlock()
 		return nil, fmt.Errorf("put id is uploading")
 	}
-	done := ctx.Done()
 	ctx, cancel := context.WithCancel(ctx)
-	if done != nil {
-		go func() {
-			<-done
-			cancel()
-		}()
-	}
+	defer cancel()
 	f.updating[req.PutID] = cancel
 	f.lock.Unlock()
-	defer func(putID string) {
-		f.lock.Lock()
-		delete(f.updating, putID)
-		f.lock.Unlock()
+	go func(putID string) {
+		if done := ctx.Done(); done != nil {
+			<-done
+			f.lock.Lock()
+			delete(f.updating, putID)
+			f.lock.Unlock()
+		}
 	}(req.PutID)
 	return f.putFile(ctx, req, cb)
 }
