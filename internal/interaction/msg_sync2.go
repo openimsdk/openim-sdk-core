@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	timeout    = 60
-	retryTimes = 2
+	timeout         = 60
+	retryTimes      = 2
+	defaultPullNums = 1
 )
 
 type Seq struct {
@@ -23,6 +24,13 @@ type Seq struct {
 	sessionType int32
 }
 
+type SyncedSeq struct {
+	maxSeqSynced int64
+	minSeqSynced int64
+	sessionType  int32
+}
+
+// 回调同步开始 结束， 重连结束
 type MsgSyncer struct {
 	loginUserID string
 	// listen ch
@@ -33,7 +41,7 @@ type MsgSyncer struct {
 	conversationCh chan common.Cmd2Value // trigger conversation
 
 	ctx       context.Context
-	seqs      map[string]Seq
+	seqs      map[string]SyncedSeq
 	msgCache  map[string]map[int64]*sdkws.MsgData
 	db        db_interface.DataBase
 	syncTimes int
@@ -57,37 +65,58 @@ func NewMsgSyncer(ctx context.Context, conversationCh, recvMsgCh, recvSeqch chan
 
 // seq db读取到内存
 func (m *MsgSyncer) loadSeq(ctx context.Context) error {
-	m.seqs = make(map[string]Seq)
+	m.seqs = make(map[string]SyncedSeq)
 	groupIDs, err := m.db.GetReadDiffusionGroupIDList(ctx)
 	if err != nil {
+		log.ZError(ctx, "get group id list failed", err)
 		return err
 	}
 	for _, groupID := range groupIDs {
-		nSeq, err := m.db.GetSuperGroupNormalMsgSeq(ctx, groupID)
+		nMaxSeq, err := m.db.GetSuperGroupNormalMsgSeq(ctx, groupID)
 		if err != nil {
+			log.ZError(ctx, "get group normal seq failed", err, "groupID", groupID)
 			return err
 		}
-		aSeq, err := m.db.GetSuperGroupAbnormalMsgSeq(ctx, groupID)
+		aMaxSeq, err := m.db.GetSuperGroupAbnormalMsgSeq(ctx, groupID)
 		if err != nil {
+			log.ZError(ctx, "get group abnormal seq failed", err, "groupID", groupID)
 			return err
 		}
-		var maxSeq int64
-		maxSeq = nSeq
-		if aSeq > nSeq {
-			maxSeq = aSeq
+		var maxSeqSynced int64
+		maxSeqSynced = nMaxSeq
+		if aMaxSeq > nMaxSeq {
+			maxSeqSynced = aMaxSeq
 		}
-		m.seqs[groupID] = Seq{
-			maxSeq:      maxSeq,
-			sessionType: constant.GroupChatType,
+
+		nMinSeq, err := m.db.GetSuperGroupNormalMsgSeq(ctx, groupID)
+		if err != nil {
+			log.ZError(ctx, "get group normal seq failed", err, "groupID", groupID)
+		}
+		aMinSeq, err := m.db.GetSuperGroupAbnormalMsgSeq(ctx, groupID)
+		if err != nil {
+			log.ZError(ctx, "get group abnormal seq failed", err, "groupID", groupID)
+		}
+
+		var minSeqSynced int64
+		minSeqSynced = nMinSeq
+		if aMinSeq < nMinSeq {
+			minSeqSynced = aMinSeq
+		}
+
+		m.seqs[groupID] = SyncedSeq{
+			maxSeqSynced: maxSeqSynced,
+			minSeqSynced: minSeqSynced,
+			sessionType:  constant.SuperGroupChatType,
 		}
 	}
+	return nil
 }
 
 func (m *MsgSyncer) DoListener() {
 	for {
 		select {
 		case cmd := <-m.recvSeqch:
-			m.compareSeqsAndTrigger(cmd.Ctx, cmd.Value.(map[string]Seq))
+			m.compareSeqsAndTrigger(cmd.Ctx, cmd.Value.(map[string]Seq), cmd.Cmd)
 		case cmd := <-m.recvMsgCh:
 			m.handleRecvMsgAndSyncSeqs(cmd.Ctx, cmd.Value.(*sdkws.MsgData))
 		case <-m.ctx.Done():
@@ -97,33 +126,48 @@ func (m *MsgSyncer) DoListener() {
 	}
 }
 
-func (m *MsgSyncer) compareSeqsAndTrigger(ctx context.Context, newSeqMap map[string]Seq) {
-	if m.syncTimes == 0 {
-		// 同步开始回调
+// init, reconnect, sync by heartbeat
+func (m *MsgSyncer) compareSeqsAndTrigger(ctx context.Context, newSeqMap map[string]Seq, cmd string) {
+	// sync callback to conversation
+	switch cmd {
+	case constant.CmdInit:
+		m.triggerSync()
+		defer m.triggerSyncFinished()
+	case constant.CmdReconnect:
+		m.triggerReconnect()
+		defer m.triggerReconnectFinished()
 	}
 	for sourceID, newSeq := range newSeqMap {
-		if oldSeq, ok := m.seqs[sourceID]; ok {
-			if newSeq.maxSeq > oldSeq.maxSeq {
-				if err := m.syncAndTriggerMsgs(ctx, sourceID, newSeq.sessionType, m.getSeqsNeedSync(oldSeq.maxSeq, newSeq.maxSeq)); err == nil {
-					m.seqs[sourceID] = newSeq
-				}
+		if syncedSeq, ok := m.seqs[sourceID]; ok {
+			if newSeq.maxSeq > syncedSeq.maxSeqSynced {
+				_ = m.sync(ctx, sourceID, newSeq.sessionType, syncedSeq.maxSeqSynced, newSeq.maxSeq)
 			}
 		} else {
-			// 新的会话
-			if err := m.syncAndTriggerMsgs(ctx, sourceID, newSeq.sessionType, m.getSeqsNeedSync(0, newSeq.maxSeq)); err == nil {
-				m.seqs[sourceID] = newSeq
-			}
+			// new conversation
+			_ = m.sync(ctx, sourceID, newSeq.sessionType, 0, newSeq.maxSeq)
 		}
-	}
-	if m.syncTimes == 0 {
-		// 同步结束回调
 	}
 	m.syncTimes++
 }
 
-func (m *MsgSyncer) getSeqsNeedSync(oldMaxSeq, newMaxSeq int64) []int64 {
+func (m *MsgSyncer) sync(ctx context.Context, sourceID string, sessionType int32, syncedMaxSeq, maxSeq int64) (err error) {
+	minSyncedSeq, err := m.syncAndTriggerMsgs(ctx, sourceID, sessionType, syncedMaxSeq, maxSeq)
+	if err != nil {
+		log.ZError(ctx, "sync msgs failed", err, "sourceID", sourceID)
+		return err
+	}
+	m.seqs[sourceID] = SyncedSeq{
+		maxSeqSynced: maxSeq,
+		minSeqSynced: minSyncedSeq,
+		sessionType:  sessionType,
+	}
+	return nil
+}
+
+// get seqs need sync interval
+func (m *MsgSyncer) getSeqsNeedSync(syncedMaxSeq, maxSeq int64) []int64 {
 	var seqs []int64
-	for i := oldMaxSeq + 1; i <= newMaxSeq; i++ {
+	for i := syncedMaxSeq + 1; i <= maxSeq; i++ {
 		seqs = append(seqs, i)
 	}
 	return seqs
@@ -137,33 +181,32 @@ func (m *MsgSyncer) handleRecvMsgAndSyncSeqs(ctx context.Context, msg *sdkws.Msg
 		return
 	}
 	// 连续直接触发并且刷新seq
-	if msg.Seq == m.seqs[msg.GroupID].maxSeq+1 {
+	if msg.Seq == m.seqs[msg.GroupID].maxSeqSynced+1 {
 		_ = m.triggerConversation(ctx, []*sdkws.MsgData{msg})
 		oldSeq := m.seqs[msg.GroupID]
-		oldSeq.maxSeq = msg.Seq
+		oldSeq.maxSeqSynced = msg.Seq
 		m.seqs[msg.GroupID] = oldSeq
 	} else {
 		m.msgCache[msg.GroupID][msg.Seq] = msg
-		m.syncAndTriggerMsgs(ctx, msg.GroupID, msg.SessionType, m.getSeqsNeedSync(m.seqs[msg.GroupID].maxSeq, msg.Seq))
+		m.sync(ctx, msg.GroupID, msg.SessionType, m.seqs[msg.GroupID].maxSeqSynced, msg.Seq)
 	}
 }
 
 // 分片同步消息，触发成功后刷新seq
-func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, sourceID string, sessionType int32, seqsNeedSync []int64) error {
-	var seqsNeedSyncExcludeCached []int64
-	for _, seq := range seqsNeedSync {
-		if _, ok := m.msgCache[sourceID][seq]; !ok {
-			seqsNeedSyncExcludeCached = append(seqsNeedSyncExcludeCached, seq)
-		}
-	}
-	msgs, err := m.syncMsgFromSvr(ctx, sourceID, sessionType, seqsNeedSyncExcludeCached)
+func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, sourceID string, sessionType int32, syncedMaxSeq, maxSeq int64) (minSyncedSeq int64, err error) {
+	msgs, err := m.syncMsgBySeqsInterval(ctx, sourceID, sessionType, syncedMaxSeq, maxSeq)
 	if err != nil {
-		log.ZError(ctx, "syncMsgFromSvr err", err, "sourceID", sourceID, "sessionType", sessionType, "seqsNeedSync", seqsNeedSyncExcludeCached)
-		return err
+		log.ZError(ctx, "syncMsgFromSvr err", err, "sourceID", sourceID, "sessionType", sessionType, "syncedMaxSeq", syncedMaxSeq, "maxSeq", maxSeq)
+		return
 	}
-	delete(m.msgCache, sourceID)
 	_ = m.triggerConversation(ctx, msgs)
-	return nil
+	delete(m.msgCache, sourceID)
+	if len(msgs) == 0 {
+		minSyncedSeq = seqsNeedSync[0]
+	} else {
+		minSyncedSeq = msgs[0].Seq
+	}
+	return minSyncedSeq, nil
 }
 
 func (m *MsgSyncer) splitSeqs(split int, seqsNeedSync []int64) (splitSeqs [][]int64) {
@@ -181,7 +224,12 @@ func (m *MsgSyncer) splitSeqs(split int, seqsNeedSync []int64) (splitSeqs [][]in
 	return
 }
 
-func (m *MsgSyncer) syncMsgFromSvr(ctx context.Context, sourceID string, sessionType int32, seqsNeedSync []int64) (allMsgs []*sdkws.MsgData, err error) {
+// cached的不拉取
+func (m *MsgSyncer) syncMsgBySeqsInterval(ctx context.Context, sourceID string, sesstionType int32, syncedMaxSeq, syncedMinSeq int64) (partMsgs []*sdkws.MsgData, err error) {
+	return partMsgs, nil
+}
+
+func (m *MsgSyncer) syncMsgBySeqs(ctx context.Context, sourceID string, sessionType int32, seqsNeedSync []int64) (allMsgs []*sdkws.MsgData, err error) {
 	var pullMsgReq sdkws.PullMessageBySeqsReq
 	pullMsgReq.UserID = m.loginUserID
 	pullMsgReq.GroupSeqs = make(map[string]*sdkws.Seqs, 0)
@@ -212,4 +260,20 @@ func (m *MsgSyncer) triggerConversation(ctx context.Context, msgs []*sdkws.MsgDa
 		log.ZError(ctx, "triggerCmdNewMsgCome err", err, "msgs", msgs)
 	}
 	return err
+}
+
+func (m *MsgSyncer) triggerReconnect() {
+
+}
+
+func (m *MsgSyncer) triggerReconnectFinished() {
+
+}
+
+func (m *MsgSyncer) triggerSync() {
+
+}
+
+func (m *MsgSyncer) triggerSyncFinished() {
+
 }

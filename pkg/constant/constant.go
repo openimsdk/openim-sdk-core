@@ -36,6 +36,9 @@ const (
 	CmdJoinedSuperGroup = "018"
 	CmdUpdateMessage    = "019"
 
+	CmdReconnect = "020"
+	CmdInit      = "021"
+
 	CmdMaxSeq  = "maxSeq"
 	CmdPushMsg = "pushMsg"
 	CmdLogout  = "Logout"
