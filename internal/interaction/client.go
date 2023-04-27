@@ -2,8 +2,11 @@ package interaction
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 	"net/http"
@@ -71,12 +74,47 @@ type Client struct {
 	compressor     Compressor
 }
 type Message struct {
-	message    GeneralWsReq
-	resp    chan GeneralWsResp
+	Message    GeneralWsReq
+	Resp    chan GeneralWsResp
 }
 
-func  SendReqWaitResp[T any](ctx context.Context,m proto.Message,reqIdentifier int32, timeout, retryTimes int)( T, error)  {
-
+func (c *Client) SendReqWaitResp(ctx context.Context, m proto.Message, reqIdentifier int32, resp proto.Message) error {
+	data, err := proto.Marshal(m)
+	if err != nil {
+		return err
+	}
+	msg := Message{
+		Message: GeneralWsReq{
+			ReqIdentifier: reqIdentifier,
+			Token:         "",
+			SendID:        mcontext.GetOpUserID(ctx),
+			OperationID:   mcontext.GetOperationID(ctx),
+			MsgIncr:       "",
+			Data:          data,
+		},
+		Resp: make(chan GeneralWsResp, 1),
+	}
+	select {
+	case <-ctx.Done():
+		close(msg.Resp)
+		return errors.New("send message timeout")
+	case c.send <- msg:
+	}
+	select {
+	case <-ctx.Done():
+		return errors.New("wait response timeout")
+	case v, ok := <-msg.Resp:
+		if !ok {
+			return errors.New("response channel closed")
+		}
+		if v.ErrCode != 0 {
+			return errs.NewCodeError(v.ErrCode, v.ErrMsg)
+		}
+		if err := proto.Unmarshal(v.Data, resp);err != nil {
+			return err
+		}
+		return nil
+	}
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -95,8 +133,7 @@ func (c *Client) readPump(ctx context.Context) {
 	for {
 		messageType, message, err := c.conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.Close
-			AbnormalClosure) {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
 			}
 			break
