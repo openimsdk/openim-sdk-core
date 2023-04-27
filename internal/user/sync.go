@@ -2,14 +2,19 @@ package user
 
 import (
 	"context"
+	"open_im_sdk/pkg/common"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
+
+	sdk "open_im_sdk/pkg/sdk_params_callback"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"gorm.io/gorm"
 )
 
+// SyncLoginUserInfo synchronizes the user's information from the server.
 func (u *User) SyncLoginUserInfo(ctx context.Context) error {
 	log.NewInfo(utils.GetSelfFuncName(), "args: ")
 	remoteUser, err := u.GetSingleUserFromSvr(ctx, u.loginUserID)
@@ -25,5 +30,23 @@ func (u *User) SyncLoginUserInfo(ctx context.Context) error {
 		remoteUsers = []*model_struct.LocalUser{localUser}
 	}
 	log.ZDebug(ctx, "SyncLoginUserInfo", "remoteUser", remoteUser, "localUser", localUser)
-	return u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, remoteUsers, nil)
+
+	err = u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, remoteUsers, nil)
+	if err != nil {
+		return err
+	}
+	callbackData := sdk.SelfInfoUpdatedCallback(*remoteUser)
+	if u.listener == nil {
+		log.Error("u.listener == nil")
+		return nil
+	}
+	u.listener.OnSelfInfoUpdated(utils.StructToJsonString(callbackData))
+	log.Info("OnSelfInfoUpdated", utils.StructToJsonString(callbackData))
+	if localUser.Nickname == remoteUser.Nickname && localUser.FaceURL == remoteUser.FaceURL {
+		log.NewInfo("OnSelfInfoUpdated nickname faceURL unchanged", callbackData)
+		return nil
+	}
+	_ = common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: callbackData.UserID, FaceURL: callbackData.FaceURL, Nickname: callbackData.Nickname}}, u.conversationCh)
+
+	return nil
 }
