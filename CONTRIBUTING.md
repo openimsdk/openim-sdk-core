@@ -1,25 +1,3 @@
-
----
-**替换：**
-
-Open-IM-SDK-Core -> horizon
-
-OpenIMSDK/Open-IM-SDK-Core -> horizoncd/horizon
-
-https://doc.rentsoft.cn/ -> https://horizoncd.github.io/
-
-https://join.slack.com/t/openimsdk/shared_invite/zt-1tmoj26uf-_FDy3dowVHBiGvLk9e5Xkg -> https://join.slack.com/t/openimsdk/shared_invite/zt-1tmoj26uf-_FDy3dowVHBiGvLk9e5Xkg
-
-winxu81@gmail.com -> [4closetool3@gmail.com@gmail.com](mailto:4closetool3@gmail.com)
-
-https://github.com/OpenIMSDK/OpenIM-Docs/blob/main/docs/images/WechatIMG20.jpeg -> http://sm.nsddd.top/sm202304281050464.png
-
-{twitter} -> 
-
-4closetool3@gmail.com -> 4closetool3@gmail.com
----
-
-
 #  Contributing to Open-IM-SDK-Core
 
 So, you want to hack on Open-IM-SDK-Core? Yay!
