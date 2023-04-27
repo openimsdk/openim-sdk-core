@@ -26,7 +26,6 @@ type Seq struct {
 
 type SyncedSeq struct {
 	maxSeqSynced int64
-	minSeqSynced int64
 	sessionType  int32
 }
 
@@ -88,24 +87,8 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 			maxSeqSynced = aMaxSeq
 		}
 
-		nMinSeq, err := m.db.GetSuperGroupNormalMsgSeq(ctx, groupID)
-		if err != nil {
-			log.ZError(ctx, "get group normal seq failed", err, "groupID", groupID)
-		}
-		aMinSeq, err := m.db.GetSuperGroupAbnormalMsgSeq(ctx, groupID)
-		if err != nil {
-			log.ZError(ctx, "get group abnormal seq failed", err, "groupID", groupID)
-		}
-
-		var minSeqSynced int64
-		minSeqSynced = nMinSeq
-		if aMinSeq < nMinSeq {
-			minSeqSynced = aMinSeq
-		}
-
 		m.seqs[groupID] = SyncedSeq{
 			maxSeqSynced: maxSeqSynced,
-			minSeqSynced: minSeqSynced,
 			sessionType:  constant.SuperGroupChatType,
 		}
 	}
@@ -151,14 +134,12 @@ func (m *MsgSyncer) compareSeqsAndTrigger(ctx context.Context, newSeqMap map[str
 }
 
 func (m *MsgSyncer) sync(ctx context.Context, sourceID string, sessionType int32, syncedMaxSeq, maxSeq int64) (err error) {
-	minSyncedSeq, err := m.syncAndTriggerMsgs(ctx, sourceID, sessionType, syncedMaxSeq, maxSeq)
-	if err != nil {
+	if err = m.syncAndTriggerMsgs(ctx, sourceID, sessionType, syncedMaxSeq, maxSeq); err != nil {
 		log.ZError(ctx, "sync msgs failed", err, "sourceID", sourceID)
 		return err
 	}
 	m.seqs[sourceID] = SyncedSeq{
 		maxSeqSynced: maxSeq,
-		minSeqSynced: minSyncedSeq,
 		sessionType:  sessionType,
 	}
 	return nil
@@ -193,20 +174,15 @@ func (m *MsgSyncer) handleRecvMsgAndSyncSeqs(ctx context.Context, msg *sdkws.Msg
 }
 
 // 分片同步消息，触发成功后刷新seq
-func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, sourceID string, sessionType int32, syncedMaxSeq, maxSeq int64) (minSyncedSeq int64, err error) {
+func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, sourceID string, sessionType int32, syncedMaxSeq, maxSeq int64) error {
 	msgs, err := m.syncMsgBySeqsInterval(ctx, sourceID, sessionType, syncedMaxSeq, maxSeq)
 	if err != nil {
 		log.ZError(ctx, "syncMsgFromSvr err", err, "sourceID", sourceID, "sessionType", sessionType, "syncedMaxSeq", syncedMaxSeq, "maxSeq", maxSeq)
-		return
+		return err
 	}
 	_ = m.triggerConversation(ctx, msgs)
 	delete(m.msgCache, sourceID)
-	if len(msgs) == 0 {
-		minSyncedSeq = seqsNeedSync[0]
-	} else {
-		minSyncedSeq = msgs[0].Seq
-	}
-	return minSyncedSeq, nil
+	return err
 }
 
 func (m *MsgSyncer) splitSeqs(split int, seqsNeedSync []int64) (splitSeqs [][]int64) {
