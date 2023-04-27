@@ -116,6 +116,30 @@ android:
 	go get golang.org/x/mobile/bind
 	GOARCH=amd64 gomobile bind -v -trimpath -ldflags="-s -w" -o ./open_im_sdk.aar -target=android ./open_im_sdk/ ./open_im_sdk_callback/
 
+## tidy: tidy go.mod
+.PHONY: tidy
+tidy:
+	@$(GO) mod tidy
+
+## fmt: Run go fmt against code.
+.PHONY: fmt
+fmt:
+	@$(GO) fmt ./...
+
+## vet: Run go vet against code.
+.PHONY: vet
+vet:
+	@$(GO) vet ./...
+
+## generate: Run go generate against code.
+.PHONY: generate
+generate:
+	@$(GO) generate ./...
+
+## style: Code style -> fmt,vet,lint
+.PHONY: style
+style: fmt vet lint
+
 ## test: Run unit test
 .PHONY: test
 test: 
