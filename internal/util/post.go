@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"open_im_sdk/pkg/ccontext"
 	"time"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
@@ -14,10 +15,10 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
-var (
-	BaseURL = ""
-	Token   = ""
-)
+//var (
+//	BaseURL = ""
+//	Token   = ""
+//)
 
 type apiResponse struct {
 	ErrCode int             `json:"errCode"`
@@ -46,12 +47,14 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 		log.ZError(ctx, "ApiRequest", err, "type", "json.Marshal(req) failed")
 		return errs.ErrInternalServer.Wrap("json.Marshal(req) failed " + err.Error())
 	}
-	var reqUrl string
-	if host, _ := ctx.Value("apiHost").(string); host != "" {
-		reqUrl = host + api
-	} else {
-		reqUrl = BaseURL + api
-	}
+	//var reqUrl string
+	//if host, _ := ctx.Value("apiHost").(string); host != "" {
+	//	reqUrl = host + api
+	//} else {
+	//	reqUrl = BaseURL + api
+	//}
+	ctxInfo := ccontext.Info(ctx)
+	reqUrl := ctxInfo.ApiAddr() + api
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, reqUrl, bytes.NewReader(reqBody))
 	if err != nil {
 		log.ZError(ctx, "ApiRequest", err, "type", "http.NewRequestWithContext failed")
@@ -61,13 +64,14 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 	request.ContentLength = int64(len(reqBody))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("operationID", operationID)
-	if token, _ := ctx.Value("token").(string); token != "" {
-		request.Header.Set("token", token)
-		log.ZDebug(ctx, "ApiRequestToken", "source", "context", "token", token)
-	} else {
-		request.Header.Set("token", Token)
-		log.ZDebug(ctx, "ApiRequestToken", "source", "global", "token", token)
-	}
+	//if token, _ := ctx.Value("token").(string); token != "" {
+	//	request.Header.Set("token", token)
+	//	log.ZDebug(ctx, "ApiRequestToken", "source", "context", "token", token)
+	//} else {
+	//	request.Header.Set("token", Token)
+	//	log.ZDebug(ctx, "ApiRequestToken", "source", "global", "token", token)
+	//}
+	request.Header.Set("token", ctxInfo.Token())
 	response, err := new(http.Client).Do(request)
 	if err != nil {
 		log.ZError(ctx, "ApiRequest", err, "type", "network error")

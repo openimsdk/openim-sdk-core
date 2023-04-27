@@ -18,9 +18,9 @@ import (
 	"open_im_sdk/internal/user"
 	workMoments "open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
+	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	ccontext "open_im_sdk/pkg/context"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/server_api_params"
@@ -80,19 +80,21 @@ type LoginMgr struct {
 	joinedSuperGroupCh chan common.Cmd2Value
 	ctx                context.Context
 	cancel             context.CancelFunc
+	info               *ccontext.GlobalConfig
 	id2MinSeq          map[string]int64
 	postApi            *ws.PostApi
 }
 
-func (u *LoginMgr) GetToken() string {
-	return u.token
+func (u *LoginMgr) BaseCtx() context.Context {
+	return u.ctx
 }
+
 func (u *LoginMgr) Exit() {
 	u.cancel()
 }
 
-func (u *LoginMgr) GetConfig() sdk_struct.IMConfig {
-	return u.imConfig
+func (u *LoginMgr) GetToken() string {
+	return u.token
 }
 
 func (u *LoginMgr) Push() *comm2.Push {
@@ -240,6 +242,8 @@ func (u *LoginMgr) wakeUp(ctx context.Context) error {
 }
 
 func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
+	u.info.UserID = userID
+	u.info.Token = token
 	log.ZInfo(ctx, "login start... ", "userID", userID, "token", token, "config", u.ctx)
 	t1 := time.Now()
 	u.token = token
@@ -337,21 +341,23 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 }
 
 func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_callback.OnConnListener, operationID string) bool {
-	var values []interface{}
-	values = append(values, config.Platform)
-	values = append(values, config.ApiAddr)
-	values = append(values, config.WsAddr)
-	values = append(values, config.DataDir)
-	values = append(values, config.LogLevel)
-	values = append(values, config.ObjectStorage)
-	values = append(values, config.EncryptionKey)
-	values = append(values, config.IsCompression)
-	values = append(values, config.IsExternalExtensions)
-	u.ctx, u.cancel = ccontext.WithMustInfoCtx(values)
 	if listener == nil {
 		return false
 	}
+	u.info = &ccontext.GlobalConfig{
+		Platform:             config.Platform,
+		ApiAddr:              config.ApiAddr,
+		WsAddr:               config.WsAddr,
+		DataDir:              config.DataDir,
+		LogLevel:             config.LogLevel,
+		ObjectStorage:        config.ObjectStorage,
+		EncryptionKey:        config.EncryptionKey,
+		IsCompression:        config.IsCompression,
+		IsExternalExtensions: config.IsExternalExtensions,
+	}
 	u.connListener = listener
+	ctx := ccontext.WithInfo(context.Background(), u.info)
+	u.ctx, u.cancel = context.WithCancel(ctx)
 	return true
 }
 

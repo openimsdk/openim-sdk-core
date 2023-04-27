@@ -7,11 +7,11 @@ import (
 type GlobalConfig struct {
 	UserID               string
 	Token                string
-	Platform             string
+	Platform             int32
 	ApiAddr              string
 	WsAddr               string
 	DataDir              string
-	LogLevel             string
+	LogLevel             uint32
 	ObjectStorage        string
 	EncryptionKey        string
 	IsCompression        bool
@@ -21,11 +21,11 @@ type GlobalConfig struct {
 type ContextInfo interface {
 	UserID() string
 	Token() string
-	Platform() string
+	Platform() int32
 	ApiAddr() string
 	WsAddr() string
 	DataDir() string
-	LogLevel() string
+	LogLevel() uint32
 	ObjectStorage() string
 	EncryptionKey() string
 	OperationID() string
@@ -46,12 +46,12 @@ func WithInfo(ctx context.Context, conf *GlobalConfig) context.Context {
 }
 
 func WithOperationID(ctx context.Context, operationID string) context.Context {
-	return context.WithValue(ctx, operationIDKey{}, operationID)
+	return context.WithValue(ctx, operationIDKey, operationID)
 }
 
 type globalConfigKey struct{}
 
-type operationIDKey struct{}
+const operationIDKey = "operationID" // 兼容服务端
 
 type info struct {
 	conf *GlobalConfig
@@ -66,7 +66,7 @@ func (i *info) Token() string {
 	return i.conf.Token
 }
 
-func (i *info) Platform() string {
+func (i *info) Platform() int32 {
 	return i.conf.Platform
 }
 
@@ -82,7 +82,7 @@ func (i *info) DataDir() string {
 	return i.conf.DataDir
 }
 
-func (i *info) LogLevel() string {
+func (i *info) LogLevel() uint32 {
 	return i.conf.LogLevel
 }
 
@@ -95,7 +95,7 @@ func (i *info) EncryptionKey() string {
 }
 
 func (i *info) OperationID() string {
-	return i.ctx.Value(operationIDKey{}).(string)
+	return i.ctx.Value(operationIDKey).(string)
 }
 
 func (i *info) IsCompression() bool {

@@ -14,8 +14,8 @@ import (
 )
 
 func init() {
-	UserSDKRwLock.Lock()
-	defer UserSDKRwLock.Unlock()
+	//UserSDKRwLock.Lock()
+	//defer UserSDKRwLock.Unlock()
 	UserRouterMap = make(map[string]*login.LoginMgr, 0)
 }
 
@@ -39,7 +39,7 @@ func GetUserWorker(uid string) *login.LoginMgr {
 	return UserRouterMap[uid]
 }
 func InitOnce(config *sdk_struct.IMConfig) bool {
-	sdk_struct.SvrConf = *config
+	//sdk_struct.SvrConf = *config
 	return true
 }
 
