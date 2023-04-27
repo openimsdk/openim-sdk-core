@@ -28,14 +28,17 @@ func NewCache(user *user.User, friend *friend.Friend) *Cache {
 func (c *Cache) Update(userID, faceURL, nickname string) {
 	c.userMap.Store(userID, UserInfo{FaceURL: faceURL, Nickname: nickname})
 }
+
 func (c *Cache) UpdateConversation(conversation model_struct.LocalConversation) {
 	c.conversationMap.Store(conversation.ConversationID, conversation)
 }
+
 func (c *Cache) UpdateConversations(conversations []*model_struct.LocalConversation) {
 	for _, conversation := range conversations {
 		c.conversationMap.Store(conversation.ConversationID, *conversation)
 	}
 }
+
 func (c *Cache) GetAllConversations() (conversations []*model_struct.LocalConversation) {
 	c.conversationMap.Range(func(key, value interface{}) bool {
 		temp := value.(model_struct.LocalConversation)
@@ -44,6 +47,7 @@ func (c *Cache) GetAllConversations() (conversations []*model_struct.LocalConver
 	})
 	return conversations
 }
+
 func (c *Cache) GetAllHasUnreadMessageConversations() (conversations []*model_struct.LocalConversation) {
 	c.conversationMap.Range(func(key, value interface{}) bool {
 		temp := value.(model_struct.LocalConversation)

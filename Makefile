@@ -7,6 +7,8 @@ DIRS=$(shell ls)
 GO=go
 
 .PHONY: ios build install android
+.DEFAULT_GOAL := help
+
 
 # The NAME of the binary to build
 NAME=ws_wrapper/cmd/open_im_sdk_server
@@ -33,12 +35,20 @@ else
 	BINARY_NAME=${NAME}
 endif
 
+# ==============================================================================
+# Targets
+
+## all: Build all the necessary targets.
+.PHONY: all
+all: build
+
+
 ## build: Compile the binary
 build:
 	CGO_ENABLED=1 GOOS=${OS} GOARCH=${ARCH} go build -o ${BINARY_NAME}  ${GO_FILE}
 
 ## install: Install the binary to the BIN_DIR
-install:build
+install: build
 	mv ${BINARY_NAME} ${BIN_DIR}
 
 ## clean: Clean the build artifacts
@@ -67,6 +77,30 @@ ios:
 android:
 	go get golang.org/x/mobile/bind
 	GOARCH=amd64 gomobile bind -v -trimpath -ldflags="-s -w" -o ./open_im_sdk.aar -target=android ./open_im_sdk/ ./open_im_sdk_callback/
+
+## test: Run unit test
+.PHONY: test
+test: 
+	@$(GO) test ./... 
+
+## cover: Run unit test with coverage.
+.PHONY: cover
+cover: test
+	@$(GO) test -cover
+
+## copyright.verify: Validate boilerplate headers for assign files.
+.PHONY: copyright-verify
+copyright-verify: 
+	@echo "===========> Validate boilerplate headers for assign files starting in the $(ROOT_DIR) directory"
+	@addlicense -v -check -ignore **/test/** -f $(LICENSE_TEMPLATE) $(CODE_DIRS)
+	@echo "===========> End of boilerplate headers check..."
+
+## copyright-add: Add the boilerplate headers for all files.
+.PHONY: copyright-add
+copyright-add: 
+	@echo "===========> Adding $(LICENSE_TEMPLATE) the boilerplate headers for all files"
+	@addlicense -y $(shell date +"%Y") -v -c "KubeCub & Xinwei Xiong(cubxxw)." -f $(LICENSE_TEMPLATE) $(CODE_DIRS)
+	@echo "===========> End the copyright is added..."
 
 ## help: Show this help info.
 .PHONY: help
