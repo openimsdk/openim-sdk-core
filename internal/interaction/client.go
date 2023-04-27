@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 	"net/http"
 	"sync"
@@ -74,6 +75,10 @@ type Message struct {
 	resp    chan GeneralWsResp
 }
 
+func  SendReqWaitResp[T any](ctx context.Context,m proto.Message,reqIdentifier int32, timeout, retryTimes int)( T, error)  {
+
+}
+
 // readPump pumps messages from the websocket connection to the hub.
 //
 // The application runs readPump in a per-connection goroutine. The application
@@ -90,7 +95,8 @@ func (c *Client) readPump(ctx context.Context) {
 	for {
 		messageType, message, err := c.conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.Close
+			AbnormalClosure) {
 				log.Printf("error: %v", err)
 			}
 			break
