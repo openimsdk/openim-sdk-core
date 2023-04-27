@@ -4,7 +4,6 @@ import (
 	"context"
 	"open_im_sdk/internal/business"
 	"open_im_sdk/internal/cache"
-	comm3 "open_im_sdk/internal/common"
 	conv "open_im_sdk/internal/conversation_msg"
 	"open_im_sdk/internal/file"
 	"open_im_sdk/internal/friend"
@@ -18,9 +17,9 @@ import (
 	"open_im_sdk/internal/user"
 	workMoments "open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
+	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	ccontext "open_im_sdk/pkg/context"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/server_api_params"
@@ -80,19 +79,21 @@ type LoginMgr struct {
 	joinedSuperGroupCh chan common.Cmd2Value
 	ctx                context.Context
 	cancel             context.CancelFunc
+	info               *ccontext.GlobalConfig
 	id2MinSeq          map[string]int64
 	postApi            *ws.PostApi
 }
 
-func (u *LoginMgr) GetToken() string {
-	return u.token
+func (u *LoginMgr) BaseCtx() context.Context {
+	return u.ctx
 }
+
 func (u *LoginMgr) Exit() {
 	u.cancel()
 }
 
-func (u *LoginMgr) GetConfig() sdk_struct.IMConfig {
-	return u.imConfig
+func (u *LoginMgr) GetToken() string {
+	return u.token
 }
 
 func (u *LoginMgr) Push() *comm2.Push {
@@ -108,7 +109,16 @@ func (u *LoginMgr) Ws() *ws.Ws {
 }
 
 func (u *LoginMgr) ImConfig() sdk_struct.IMConfig {
-	return u.imConfig
+	return sdk_struct.IMConfig{
+		Platform:             u.info.Platform,
+		ApiAddr:              u.info.ApiAddr,
+		WsAddr:               u.info.WsAddr,
+		DataDir:              u.info.DataDir,
+		LogLevel:             u.info.LogLevel,
+		EncryptionKey:        u.info.EncryptionKey,
+		IsCompression:        u.info.IsCompression,
+		IsExternalExtensions: u.info.IsExternalExtensions,
+	}
 }
 
 func (u *LoginMgr) Conversation() *conv.Conversation {
@@ -240,16 +250,18 @@ func (u *LoginMgr) wakeUp(ctx context.Context) error {
 }
 
 func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
-	log.ZInfo(ctx, "login start... ", "userID", userID, "token", token, "config", u.ctx)
+	u.info.UserID = userID
+	u.info.Token = token
+	log.ZInfo(ctx, "login start... ", "userID", userID, "token", token)
 	t1 := time.Now()
 	u.token = token
 	u.loginUserID = userID
 	var err error
-	u.db, err = db.NewDataBase(ctx, userID, ccontext.GetDataDir(ctx))
+	u.db, err = db.NewDataBase(ctx, userID, u.info.DataDir)
 	if err != nil {
 		return errs.ErrDatabase.Wrap(err.Error())
 	}
-	log.ZDebug(ctx, "NewDataBase ok", "userID", userID, "dataDir", ccontext.GetDataDir(ctx), "login cost time", time.Since(t1))
+	log.ZDebug(ctx, "NewDataBase ok", "userID", userID, "dataDir", u.info.DataDir, "login cost time", time.Since(t1))
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
 	u.cmdWsCh = make(chan common.Cmd2Value, 10)
 
@@ -280,7 +292,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	if u.businessListener != nil {
 		u.business.SetListener(u.businessListener)
 	}
-	u.push = comm2.NewPush(ccontext.GetPlatform(ctx), u.loginUserID)
+	u.push = comm2.NewPush(u.info.Platform, u.loginUserID)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	ws.NewLongConnMgr(ctx, u.connListener, u.pushMsgAndMaxSeqCh)
 	//wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID, u.imConfig.IsCompression, u.conversationCh)
@@ -315,7 +327,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	//u.msgSync = ws.NewMsgSync(u.db, u.ws, u.loginUserID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
 	//u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
 
-	u.signaling, err = signaling.NewLiveSignaling(u.ws, u.loginUserID, u.imConfig.Platform, u.db)
+	u.signaling, err = signaling.NewLiveSignaling(u.ws, u.loginUserID, u.info.Platform, u.db)
 	if err != nil {
 		return err
 	}
@@ -337,21 +349,23 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 }
 
 func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_callback.OnConnListener, operationID string) bool {
-	var values []interface{}
-	values = append(values, config.Platform)
-	values = append(values, config.ApiAddr)
-	values = append(values, config.WsAddr)
-	values = append(values, config.DataDir)
-	values = append(values, config.LogLevel)
-	values = append(values, config.ObjectStorage)
-	values = append(values, config.EncryptionKey)
-	values = append(values, config.IsCompression)
-	values = append(values, config.IsExternalExtensions)
-	u.ctx, u.cancel = ccontext.WithMustInfoCtx(values)
 	if listener == nil {
 		return false
 	}
+	u.info = &ccontext.GlobalConfig{
+		Platform: config.Platform,
+		ApiAddr:  config.ApiAddr,
+		WsAddr:   config.WsAddr,
+		DataDir:  config.DataDir,
+		LogLevel: config.LogLevel,
+		//ObjectStorage:        config.ObjectStorage,
+		EncryptionKey:        config.EncryptionKey,
+		IsCompression:        config.IsCompression,
+		IsExternalExtensions: config.IsExternalExtensions,
+	}
 	u.connListener = listener
+	ctx := ccontext.WithInfo(context.Background(), u.info)
+	u.ctx, u.cancel = context.WithCancel(ctx)
 	return true
 }
 
@@ -528,45 +542,4 @@ func CheckToken(userID, token string, operationID string) (int64, error) {
 	user := user.NewUser(nil, userID, nil)
 	exp, err := user.ParseTokenFromSvr(ctx)
 	return exp, err
-}
-
-func (u *LoginMgr) uploadImage(ctx context.Context, filePath string, token, obj string) (string, error) {
-	p := ws.NewPostApi(token, u.ImConfig().ApiAddr)
-	var o comm3.ObjectStorage
-	switch obj {
-	case "cos":
-		o = comm2.NewCOS(p)
-	case "minio":
-		o = comm2.NewMinio(p)
-	case "aws":
-		o = comm2.NewAWS(p)
-	default:
-		o = comm2.NewCOS(p)
-	}
-	ch := make(chan struct{}, 1)
-	f := func(progress int) {
-		if progress == 100 {
-			ch <- struct{}{}
-		}
-	}
-	url, _, err := o.UploadImage(filePath, f)
-	if err != nil {
-		return "", err
-	}
-	for {
-		<-ch
-		break
-	}
-	return url, nil
-}
-
-func (u LoginMgr) uploadFile(ctx context.Context, filePath string) (string, error) {
-	// url, _, err := u.conversation.UploadFile(filePath, callback.OnProgress)
-	// // log.NewInfo(operationID, utils.GetSelfFuncName(), url)
-	// if err != nil {
-	// 	log.Error(operationID, "UploadImage failed ", err.Error(), filePath)
-	// 	callback.OnError(constant.ErrApi.ErrCode, err.Error())
-	// }
-	// callback.OnSuccess(url)
-	return "", nil
 }
