@@ -88,8 +88,8 @@ build:
 	CGO_ENABLED=1 GOOS=${OS} GOARCH=${ARCH} go build -o ${BINARY_NAME}  ${GO_FILE}
 
 ## install: Install the binary to the BIN_DIR
-install: build
 .PHONY: install
+install: build
 	mv ${BINARY_NAME} ${BIN_DIR}
 
 ## reset_remote_branch: Reset the remote branch
@@ -126,6 +126,12 @@ test:
 cover: test
 	@$(GO) test -cover
 
+## lint: Run go lint against code.
+.PHONY: lint
+lint:
+	@echo "===========> Run golangci to lint source codes"
+	@golangci-lint run -c $(ROOT_DIR)/.golangci.yaml $(ROOT_DIR)/...
+
 ## copyright.verify: Validate boilerplate headers for assign files.
 .PHONY: copyright-verify
 copyright-verify: 
@@ -141,8 +147,8 @@ copyright-add:
 	@echo "===========> End the copyright is added..."
 
 ## clean: Clean the build artifacts
-clean:
 .PHONY: clean
+clean:
 	env GO111MODULE=on go clean -cache
 	gomobile clean
 	-rm -fvr build
