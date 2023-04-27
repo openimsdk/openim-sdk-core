@@ -9,6 +9,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 	"net/http"
+	"open_im_sdk/pkg/constant"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -253,4 +255,66 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	// new goroutines.
 	go client.writePump()
 	go client.readPump()
+}
+func (c *Client) handleMessage(message []byte) {
+	var wsResp GeneralWsResp
+	err := c.encoder.Decode(message, &wsResp)
+	if err != nil {
+		log.Error("decodeBinaryWs err", err.Error())
+		return
+	}
+	ctx := context.WithValue(context.Background(), "operationID", wsResp.OperationID)
+	log.Debug(wsResp.OperationID, "ws recv msg, code: ", wsResp.ErrCode, wsResp.ReqIdentifier)
+	switch wsResp.ReqIdentifier {
+	case constant.WSGetNewestSeq:
+		if err := c.notifyResp(wsResp); err != nil {
+			return utils.Wrap(err, "")
+		}
+		if err = w.doWSGetNewestSeq(wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSGetNewestSeq failed ", err.Error(), wsResp.ReqIdentifier, wsResp.MsgIncr)
+		}
+	case constant.WSPullMsgBySeqList:
+		if err = w.doWSPullMsg(wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSPullMsg failed ", err.Error())
+		}
+	case constant.WSPushMsg:
+		// todo
+		//if constant.OnlyForTest == 1 {
+		//	return
+		//}
+		if err = w.doWSPushMsg(wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSPushMsg failed ", err.Error())
+		}
+		//if err = w.doWSPushMsgForTest(*wsResp); err != nil {
+		//	log.Error(wsResp.OperationID, "doWSPushMsgForTest failed ", err.Error())
+		//}
+
+	case constant.WSSendMsg:
+		if err = w.doWSSendMsg(wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSSendMsg failed ", err.Error(), wsResp.ReqIdentifier, wsResp.MsgIncr)
+		}
+	case constant.WSKickOnlineMsg:
+		log.Warn(wsResp.OperationID, "kick...  logout")
+		w.kickOnline(wsResp)
+		w.Logout(ctx)
+
+	case constant.WsLogoutMsg:
+		log.Warn(wsResp.OperationID, "WsLogoutMsg... Ws goroutine exit")
+		if err = w.doWSLogoutMsg(wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSLogoutMsg failed ", err.Error())
+		}
+		runtime.Goexit()
+	case constant.WSSendSignalMsg:
+		log.Info(wsResp.OperationID, "signaling...")
+		w.DoWSSignal(wsResp)
+	case constant.WsSetBackgroundStatus:
+		log.Info(wsResp.OperationID, "WsSetBackgroundStatus...")
+		if err = w.setAppBackgroundStatus(wsResp); err != nil {
+			log.Error(wsResp.OperationID, "WsSetBackgroundStatus failed ", err.Error(), wsResp.ReqIdentifier, wsResp.MsgIncr)
+		}
+		log.NewDebug(wsResp.OperationID, wsResp)
+	default:
+		log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
+		return
+	}
 }
