@@ -1,7 +1,16 @@
-// Copyright © 2023 OpenIM SDK. All rights reserved.
+// Copyright © 2023 OpenIM SDK.
 //
-// Licensed under the MIT License (the "License");
+// Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package ws_local_server
 
@@ -416,7 +425,7 @@ func (wsRouter *WsFuncRouter) SearchGroupMembers(input string, operationID strin
 		m["searchParam"].(string), operationID)
 }
 
-//SetGroupApplyMemberFriend
+// SetGroupApplyMemberFriend
 func (wsRouter *WsFuncRouter) SetGroupApplyMemberFriend(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {
@@ -432,7 +441,7 @@ func (wsRouter *WsFuncRouter) SetGroupApplyMemberFriend(input string, operationI
 		int32(m["rule"].(float64)), m["groupID"].(string), operationID)
 }
 
-//SetGroupApplyMemberFriend
+// SetGroupApplyMemberFriend
 func (wsRouter *WsFuncRouter) SetGroupLookMemberInfo(input string, operationID string) {
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(input), &m); err != nil {

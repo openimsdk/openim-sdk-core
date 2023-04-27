@@ -42,7 +42,7 @@ endif
 # Linux command settings
 FIND := find . ! -path './image/*' ! -path './vendor/*' ! -path './bin/*'
 XARGS := xargs -r
-LICENSE_TEMPLATE ?= $(ROOT_DIR)/boilerplate.txt
+LICENSE_TEMPLATE ?= $(ROOT_DIR)/LICENSE_TEMPLATE
 
 # The NAME of the binary to build
 NAME=ws_wrapper/cmd/open_im_sdk_server
