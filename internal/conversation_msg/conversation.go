@@ -911,6 +911,9 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(sourceID string, seqLi
 
 	pullMsgReq.OperationID = operationID
 	log.Debug(operationID, "read diffusion group pull message, req: ", pullMsgReq)
+	if !c.IsConnected {
+		return
+	}
 	resp, err := c.SendReqWaitResp(&pullMsgReq, constant.WSPullMsgBySeqList, 3, 2, c.loginUserID, operationID)
 	if err != nil {
 		messageListCallback.ErrCode = 100

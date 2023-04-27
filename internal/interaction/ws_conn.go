@@ -7,7 +7,6 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
-	"nhooyr.io/websocket"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -17,6 +16,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"nhooyr.io/websocket"
 )
 
 const writeTimeoutSeconds = 30
@@ -30,6 +31,7 @@ type WsConn struct {
 	loginUserID    string
 	IsCompression  bool
 	ConversationCh chan common.Cmd2Value
+	IsConnected    bool
 }
 
 func NewWsConn(listener open_im_sdk_callback.OnConnListener, token string, loginUserID string, isCompression bool, conversationCh chan common.Cmd2Value) *WsConn {
@@ -195,6 +197,8 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool) {
 			errMsg := httpResp.Header.Get("ws_err_msg") + " operationID " + operationID + err.Error()
 			log.Error(operationID, "websocket.DefaultDialer.Dial failed ", errMsg, httpResp.StatusCode)
 			u.listener.OnConnectFailed(int32(httpResp.StatusCode), errMsg)
+			u.IsConnected = false
+
 			switch int32(httpResp.StatusCode) {
 			case constant.ErrTokenExpired.ErrCode:
 				u.listener.OnUserTokenExpired()
@@ -217,11 +221,14 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool) {
 			default:
 				errMsg = err.Error() + " operationID " + operationID
 				u.listener.OnConnectFailed(1001, errMsg)
+				u.IsConnected = false
+
 				return nil, utils.Wrap(err, errMsg), true
 			}
 		} else {
 			errMsg := err.Error() + " operationID " + operationID
 			u.listener.OnConnectFailed(1001, errMsg)
+			u.IsConnected = false
 			if u.ConversationCh != nil {
 				common.TriggerCmdSuperGroupMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: nil, OperationID: operationID, SyncFlag: constant.MsgSyncBegin}, u.ConversationCh)
 				common.TriggerCmdSuperGroupMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: nil, OperationID: operationID, SyncFlag: constant.MsgSyncFailed}, u.ConversationCh)
@@ -232,6 +239,7 @@ func (u *WsConn) ReConn(operationID string) (*websocket.Conn, error, bool) {
 	}
 	log.Info(operationID, "ws connect end, dail : ", url, conn)
 	u.listener.OnConnectSuccess()
+	u.IsConnected = true
 	u.loginStatus = constant.LoginSuccess
 	u.conn = conn
 	u.conn.SetReadLimit(1024 * 1024 * 30)
