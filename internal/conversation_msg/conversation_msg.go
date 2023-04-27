@@ -98,12 +98,12 @@ func (c *Conversation) SetBatchMsgListener(batchMsgListener open_im_sdk_callback
 	c.batchMsgListener = batchMsgListener
 }
 
-func NewConversation(ws *ws.Ws, db db_interface.DataBase, p *ws.PostApi,
-	ch chan common.Cmd2Value, loginUserID string, platformID int32, dataDir, encryptionKey string,
+func NewConversation(ctx context.Context, db db_interface.DataBase,
+	ch chan common.Cmd2Value,
 	friend *friend.Friend, group *group.Group, user *user.User,
-	objectStorage common2.ObjectStorage, conversationListener open_im_sdk_callback.OnConversationListener,
+	conversationListener open_im_sdk_callback.OnConversationListener,
 	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling *signaling.LiveSignaling,
-	workMoments *workMoments.WorkMoments, business *business.Business, cache *cache.Cache, full *full.Full, id2MinSeq map[string]int64, isExternalExtensions bool) *Conversation {
+	workMoments *workMoments.WorkMoments, business *business.Business, cache *cache.Cache, full *full.Full, id2MinSeq map[string]int64) *Conversation {
 	n := &Conversation{Ws: ws, db: db, p: p, recvCH: ch, loginUserID: loginUserID, platformID: platformID,
 		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage,
 		signaling: signaling, workMoments: workMoments,

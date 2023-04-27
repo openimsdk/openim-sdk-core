@@ -189,7 +189,7 @@ func (w *Ws) reConnSleep(ctx context.Context, sleep int32) (error, bool) {
 	return err, isNeedReConn
 }
 
-func (w *Ws) ReadData() {
+func (w *Ws) ReadData(ctx context.Context) {
 	isErrorOccurred := false
 	for {
 		operationID := utils.OperationIDGenerator()

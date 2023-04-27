@@ -27,33 +27,34 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		fmt.Println(operationID, "Initialize multiple times, use the existing ", UserForSDK, " Previous configuration ", UserForSDK.ImConfig(), " now configuration: ", config)
 		return true
 	}
-	if err := json.Unmarshal([]byte(config), &sdk_struct.SvrConf); err != nil {
+	var configArgs sdk_struct.IMConfig
+	if err := json.Unmarshal([]byte(config), &configArgs); err != nil {
 		fmt.Println(operationID, "Unmarshal failed ", err.Error(), config)
 		return false
 	}
-	if err := log.InitFromConfig("", int(sdk_struct.SvrConf.LogLevel), true, false, "", 0); err != nil {
+	if err := log.InitFromConfig("", int(configArgs.LogLevel), true, false, "", 0); err != nil {
 		fmt.Println(operationID, "log init failed ", err.Error())
 		return false
 	}
 
-	localLog.NewPrivateLog("", sdk_struct.SvrConf.LogLevel)
+	localLog.NewPrivateLog("", configArgs.LogLevel)
 	ctx := mcontext.NewCtx(operationID)
-	if !strings.Contains(sdk_struct.SvrConf.ApiAddr, "http") {
+	if !strings.Contains(configArgs.ApiAddr, "http") {
 		log.ZError(ctx, "api is http protocol, api format is invalid", nil)
 		return false
 	}
-	if !strings.Contains(sdk_struct.SvrConf.WsAddr, "ws") {
+	if !strings.Contains(configArgs.WsAddr, "ws") {
 		log.ZError(ctx, "ws is ws protocol, ws format is invalid", nil)
 		return false
 	}
 
-	log.ZInfo(ctx, "InitSDK info", "config", sdk_struct.SvrConf, "sdkVersion", SdkVersion())
+	log.ZInfo(ctx, "InitSDK info", "config", configArgs, "sdkVersion", SdkVersion())
 	if listener == nil || config == "" {
 		log.ZError(ctx, "listener or config is nil", nil)
 		return false
 	}
 	UserForSDK = new(login.LoginMgr)
-	return UserForSDK.InitSDK(sdk_struct.SvrConf, listener, operationID)
+	return UserForSDK.InitSDK(configArgs, listener, operationID)
 }
 
 func Login(callback open_im_sdk_callback.Base, operationID string, userID, token string) {
