@@ -7,7 +7,7 @@ package constant
 
 import "errors"
 
-// key = errCode, string = errMsg
+// key = errCode, string = errMsg.
 type ErrInfo struct {
 	ErrCode int32
 	ErrMsg  string

@@ -30,8 +30,7 @@ type SetConversationReq struct {
 	OperationID      string `json:"operationID" binding:"required"`
 }
 
-type SetConversationResp struct {
-}
+type SetConversationResp struct{}
 type ModifyConversationFieldReq struct {
 	Conversation
 	FieldType   int32    `json:"fieldType" binding:"required"`

@@ -12,41 +12,53 @@ import (
 	"open_im_sdk/sdk_struct"
 )
 
-// type GetAllConversationListParam null
+// type GetAllConversationListParam null.
 type GetAllConversationListCallback []*model_struct.LocalConversation
 
-// type GetAllConversationListParam offset count
+// type GetAllConversationListParam offset count.
 type GetConversationListSplitCallback []*model_struct.LocalConversation
 
 type SetConversationRecvMessageOptParams []string
 
-const SetConversationRecvMessageOptCallback = constant.SuccessCallbackDefault
-const SetGlobalRecvMessageOptCallback = constant.SuccessCallbackDefault
+const (
+	SetConversationRecvMessageOptCallback = constant.SuccessCallbackDefault
+	SetGlobalRecvMessageOptCallback       = constant.SuccessCallbackDefault
+)
 
 type GetConversationRecvMessageOptParams []string
 
-type GetMultipleConversationParams []string
-type GetMultipleConversationCallback []*model_struct.LocalConversation
+type (
+	GetMultipleConversationParams   []string
+	GetMultipleConversationCallback []*model_struct.LocalConversation
+)
 
-const DeleteConversationCallback = constant.SuccessCallbackDefault
-const DeleteAllConversationFromLocalCallback = constant.SuccessCallbackDefault
+const (
+	DeleteConversationCallback             = constant.SuccessCallbackDefault
+	DeleteAllConversationFromLocalCallback = constant.SuccessCallbackDefault
+)
 
-const SetConversationDraftCallback = constant.SuccessCallbackDefault
-const ResetConversationGroupAtTypeCallback = constant.SuccessCallbackDefault
+const (
+	SetConversationDraftCallback         = constant.SuccessCallbackDefault
+	ResetConversationGroupAtTypeCallback = constant.SuccessCallbackDefault
+)
 
-const PinConversationDraftCallback = constant.SuccessCallbackDefault
-const HideConversationCallback = constant.SuccessCallbackDefault
-const SetConversationMessageOptCallback = constant.SuccessCallbackDefault
+const (
+	PinConversationDraftCallback      = constant.SuccessCallbackDefault
+	HideConversationCallback          = constant.SuccessCallbackDefault
+	SetConversationMessageOptCallback = constant.SuccessCallbackDefault
+)
 
 const SetConversationPrivateChatOptCallback = constant.SuccessCallbackDefault
 
 const SetConversationBurnDurationOptCallback = constant.SuccessCallbackDefault
 
-type FindMessageListParams []*ConversationArgs
-type ConversationArgs struct {
-	ConversationID  string   `json:"conversationID"`
-	ClientMsgIDList []string `json:"clientMsgIDList"`
-}
+type (
+	FindMessageListParams []*ConversationArgs
+	ConversationArgs      struct {
+		ConversationID  string   `json:"conversationID"`
+		ClientMsgIDList []string `json:"clientMsgIDList"`
+	}
+)
 type FindMessageListCallback struct {
 	TotalCount      int                           `json:"totalCount"`
 	FindResultItems []*SearchByConversationResult `json:"findResultItems"`
@@ -58,15 +70,17 @@ type GetHistoryMessageListParams struct {
 	StartClientMsgID string `json:"startClientMsgID"`
 	Count            int    `json:"count"`
 }
-type GetHistoryMessageListCallback []*sdk_struct.MsgStruct
-type GetAdvancedHistoryMessageListParams struct {
-	UserID           string `json:"userID"`
-	LastMinSeq       int64  `json:"lastMinSeq"`
-	GroupID          string `json:"groupID"`
-	ConversationID   string `json:"conversationID"`
-	StartClientMsgID string `json:"startClientMsgID"`
-	Count            int    `json:"count"`
-}
+type (
+	GetHistoryMessageListCallback       []*sdk_struct.MsgStruct
+	GetAdvancedHistoryMessageListParams struct {
+		UserID           string `json:"userID"`
+		LastMinSeq       int64  `json:"lastMinSeq"`
+		GroupID          string `json:"groupID"`
+		ConversationID   string `json:"conversationID"`
+		StartClientMsgID string `json:"startClientMsgID"`
+		Count            int    `json:"count"`
+	}
+)
 type GetAdvancedHistoryMessageListCallback struct {
 	MessageList []*sdk_struct.MsgStruct `json:"messageList"`
 	LastMinSeq  int64                   `json:"lastMinSeq"`

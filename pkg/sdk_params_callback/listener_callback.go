@@ -10,7 +10,7 @@ import (
 	api "open_im_sdk/pkg/server_api_params"
 )
 
-////////////////////////////////friend////////////////////////////////////
+////////////////////////////////friend////////////////////////////////////.
 type FriendApplicationAddedCallback model_struct.LocalFriendRequest
 type FriendApplicationAcceptCallback model_struct.LocalFriendRequest
 type FriendApplicationRejectCallback model_struct.LocalFriendRequest
@@ -23,25 +23,27 @@ type BlackDeletedCallback model_struct.LocalBlack
 
 ////////////////////////////////group////////////////////////////////////
 
-type JoinedGroupAddedCallback model_struct.LocalGroup
-type JoinedGroupDeletedCallback model_struct.LocalGroup
-type GroupMemberAddedCallback model_struct.LocalGroupMember
-type GroupMemberDeletedCallback model_struct.LocalGroupMember
-type GroupApplicationAddedCallback model_struct.LocalAdminGroupRequest
-type GroupApplicationDeletedCallback model_struct.LocalAdminGroupRequest
-type GroupApplicationAcceptCallback model_struct.LocalAdminGroupRequest
-type GroupApplicationRejectCallback model_struct.LocalAdminGroupRequest
-type GroupInfoChangedCallback model_struct.LocalGroup
-type GroupMemberInfoChangedCallback model_struct.LocalGroupMember
+type (
+	JoinedGroupAddedCallback        model_struct.LocalGroup
+	JoinedGroupDeletedCallback      model_struct.LocalGroup
+	GroupMemberAddedCallback        model_struct.LocalGroupMember
+	GroupMemberDeletedCallback      model_struct.LocalGroupMember
+	GroupApplicationAddedCallback   model_struct.LocalAdminGroupRequest
+	GroupApplicationDeletedCallback model_struct.LocalAdminGroupRequest
+	GroupApplicationAcceptCallback  model_struct.LocalAdminGroupRequest
+	GroupApplicationRejectCallback  model_struct.LocalAdminGroupRequest
+	GroupInfoChangedCallback        model_struct.LocalGroup
+	GroupMemberInfoChangedCallback  model_struct.LocalGroupMember
+)
 
-//////////////////////////////user////////////////////////////////////////
+//////////////////////////////user////////////////////////////////////////.
 type SelfInfoUpdatedCallback model_struct.LocalUser
 
-//////////////////////////////user////////////////////////////////////////
+//////////////////////////////user////////////////////////////////////////.
 type ConversationUpdateCallback model_struct.LocalConversation
 type ConversationDeleteCallback model_struct.LocalConversation
 
-/////////////////////////////signaling/////////////////////////////////////
+/////////////////////////////signaling/////////////////////////////////////.
 type InvitationInfo struct {
 	InviterUserID     string
 	InviteeUserIDList []string

@@ -48,7 +48,7 @@ type OnFriendshipListener interface {
 type OnConversationListener interface {
 	OnSyncServerStart()
 	OnSyncServerFinish()
-	//OnSyncServerProgress(progress int)
+	// OnSyncServerProgress(progress int)
 	OnSyncServerFailed()
 	OnNewConversation(conversationList string)
 	OnConversationChanged(conversationList string)
@@ -58,7 +58,7 @@ type OnAdvancedMsgListener interface {
 	OnRecvNewMessage(message string)
 	OnRecvC2CReadReceipt(msgReceiptList string)
 	OnRecvGroupReadReceipt(groupMsgReceiptList string)
-	//deprecated
+	// deprecated
 	OnRecvMessageRevoked(msgID string)
 	OnNewRecvMessageRevoked(messageRevoked string)
 	OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string)

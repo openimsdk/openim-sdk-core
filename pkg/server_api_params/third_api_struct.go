@@ -24,7 +24,7 @@ type TencentCloudStorageCredentialResp struct {
 }
 type FcmUpdateTokenReq struct {
 	OperationID string `json:"operationID" binding:"required"`
-	Platform    int    `json:"platform" binding:"required,min=1,max=2"` //only for ios + android
+	Platform    int    `json:"platform" binding:"required,min=1,max=2"` // only for ios + android
 	FcmToken    string `json:"fcmToken" binding:"required"`
 }
 

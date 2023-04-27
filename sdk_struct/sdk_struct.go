@@ -204,7 +204,7 @@ type AttachedInfoElem struct {
 	MessageEntityList         []*MessageEntity `json:"messageEntityList,omitempty"`
 	IsEncryption              bool             `json:"isEncryption"`
 	InEncryptStatus           bool             `json:"inEncryptStatus"`
-	//MessageReactionElem       []*ReactionElem  `json:"messageReactionElem,omitempty"`
+	// MessageReactionElem       []*ReactionElem  `json:"messageReactionElem,omitempty"`
 }
 
 type ReactionElem struct {
@@ -233,17 +233,17 @@ type GroupHasReadInfo struct {
 }
 type NewMsgList []*MsgStruct
 
-// Implement the sort.Interface interface to get the number of elements method
+// Implement the sort.Interface interface to get the number of elements method.
 func (n NewMsgList) Len() int {
 	return len(n)
 }
 
-// Implement the sort.Interface interface comparison element method
+// Implement the sort.Interface interface comparison element method.
 func (n NewMsgList) Less(i, j int) bool {
 	return n[i].SendTime < n[j].SendTime
 }
 
-// Implement the sort.Interface interface exchange element method
+// Implement the sort.Interface interface exchange element method.
 func (n NewMsgList) Swap(i, j int) {
 	n[i], n[j] = n[j], n[i]
 }
@@ -260,8 +260,7 @@ type IMConfig struct {
 	IsExternalExtensions bool   `json:"is_external_extensions"`
 }
 
-//var SvrConf IMConfig
-
+// var SvrConf IMConfig.
 type CmdNewMsgComeToConversation struct {
 	MsgList       []*sdkws.MsgData
 	OperationID   string

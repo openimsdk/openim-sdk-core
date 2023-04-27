@@ -14,8 +14,7 @@ type DeleteMsgReq struct {
 	OperationID string  `json:"operationID"`
 }
 
-type DeleteMsgResp struct {
-}
+type DeleteMsgResp struct{}
 
 type CleanUpMsgReq struct {
 	UserID      string `json:"userID"  binding:"required"`

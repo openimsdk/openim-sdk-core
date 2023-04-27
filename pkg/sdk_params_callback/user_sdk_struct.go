@@ -11,11 +11,11 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 )
 
-//other user
+//other user.
 type GetUsersInfoParam []string
 type GetUsersInfoCallback []server_api_params.FullUserInfo
 
-//type GetSelfUserInfoParam string
+//type GetSelfUserInfoParam string.
 type GetSelfUserInfoCallback *model_struct.LocalUser
 
 type SetSelfUserInfoParam server_api_params.ApiUserInfo

@@ -34,7 +34,7 @@ const (
 )
 
 const (
-	//ContentType
+	// ContentType.
 	Text                            = 101
 	Picture                         = 102
 	Voice                           = 103
@@ -45,37 +45,37 @@ const (
 	Card                            = 108
 	Location                        = 109
 	Custom                          = 110
-	Revoke                          = 111 //影响前者消息
-	HasReadReceipt                  = 112 //影响前者消息
+	Revoke                          = 111 // 影响前者消息
+	HasReadReceipt                  = 112 // 影响前者消息
 	Typing                          = 113
 	Quote                           = 114
 	Face                            = 115
-	GroupHasReadReceipt             = 116 //影响前者消息
+	GroupHasReadReceipt             = 116 // 影响前者消息
 	AdvancedText                    = 117
-	AdvancedRevoke                  = 118 //影响前者消息
+	AdvancedRevoke                  = 118 // 影响前者消息
 	CustomMsgNotTriggerConversation = 119
 	CustomMsgOnlineOnly             = 120
 	ReactionMessageModifier         = 121
 	ReactionMessageDeleter          = 122
 
-	//////////////////////////////////////////
+	////////////////////////////////////////.//.
 	NotificationBegin       = 1000
 	FriendNotificationBegin = 1200
 
-	FriendApplicationApprovedNotification = 1201 //add_friend_response
-	FriendApplicationRejectedNotification = 1202 //add_friend_response
-	FriendApplicationNotification         = 1203 //add_friend
+	FriendApplicationApprovedNotification = 1201 // add_friend_response
+	FriendApplicationRejectedNotification = 1202 // add_friend_response
+	FriendApplicationNotification         = 1203 // add_friend
 	FriendAddedNotification               = 1204
-	FriendDeletedNotification             = 1205 //delete_friend
-	FriendRemarkSetNotification           = 1206 //set_friend_remark?
-	BlackAddedNotification                = 1207 //add_black
-	BlackDeletedNotification              = 1208 //remove_black
+	FriendDeletedNotification             = 1205 // delete_friend
+	FriendRemarkSetNotification           = 1206 // set_friend_remark?
+	BlackAddedNotification                = 1207 // add_black
+	BlackDeletedNotification              = 1208 // remove_black
 	FriendInfoUpdatedNotification         = 1209
 	FriendNotificationEnd                 = 1299
 	ConversationChangeNotification        = 1300
 
 	UserNotificationBegin       = 1301
-	UserInfoUpdatedNotification = 1303 //SetSelfInfoTip             = 204
+	UserInfoUpdatedNotification = 1303 // SetSelfInfoTip             = 204
 	UserNotificationEnd         = 1399
 	OANotification              = 1400
 
@@ -124,20 +124,20 @@ const (
 
 	NotificationEnd = 2200
 
-	////////////////////////////////////////
+	//////////////////////////////////////.//.
 
-	//MsgFrom
+	// MsgFrom.
 	UserMsgType = 100
 	SysMsgType  = 200
 
 	/////////////////////////////////////
-	//SessionType
+	//SessionType.
 	SingleChatType       = 1
 	GroupChatType        = 2
 	SuperGroupChatType   = 3
 	NotificationChatType = 4
 
-	//MsgStatus
+	// MsgStatus.
 	MsgStatusDefault     = 0
 	MsgStatusSending     = 1
 	MsgStatusSendSuccess = 2
@@ -146,7 +146,7 @@ const (
 	MsgStatusRevoked     = 5
 	MsgStatusFiltered    = 6
 
-	//OptionsKey
+	// OptionsKey.
 	IsHistory                  = "history"
 	IsPersistent               = "persistent"
 	IsUnreadCount              = "unreadCount"
@@ -157,19 +157,19 @@ const (
 	IsSenderConversationUpdate = "senderConversationUpdate"
 	IsSenderNotificationPush   = "senderNotificationPush"
 
-	//GroupStatus
+	// GroupStatus.
 	GroupOk              = 0
 	GroupBanChat         = 1
 	GroupStatusDismissed = 2
 	GroupStatusMuted     = 3
 
-	// workMoment permission
+	// workMoment permission.
 	WorkMomentPublic            = 0
 	WorkMomentPrivate           = 1
 	WorkMomentPermissionCanSee  = 2
 	WorkMomentPermissionCantSee = 3
 
-	// workMoment sdk notification type
+	// workMoment sdk notification type.
 	WorkMomentCommentNotification = 0
 	WorkMomentLikeNotification    = 1
 	WorkMomentAtUserNotification  = 2
@@ -183,6 +183,7 @@ const (
 	ckTokenExpired      string = "token-expired"
 	ckSelfInfoUpdate    string = "self-info-update"
 )
+
 const (
 	BlackRelationship  = 0
 	FriendRelationship = 1
@@ -196,7 +197,7 @@ const (
 //	ErrCodeUserInfo     = 4001
 //	ErrCodeGroup        = 5001
 //
-// )
+// ).
 const (
 	NormalGroup                       = 0
 	SuperGroup                        = 1
@@ -259,10 +260,13 @@ const (
 	GroupActionAcceptGroupApplication = 8
 	GroupActionRefuseGroupApplication = 9
 )
-const ZoomScale = "200"
-const MaxTotalMsgLen = 51200
 
-// const MaxTotalMsgLen = 20480
+const (
+	ZoomScale      = "200"
+	MaxTotalMsgLen = 51200
+)
+
+// const MaxTotalMsgLen = 20480.
 const (
 	FriendAcceptTip  = "You have successfully become friends, so start chatting"
 	TransferGroupTip = "The owner of the group is transferred!"
@@ -283,18 +287,18 @@ const (
 	WSDataError = 3001
 )
 
-// conversation
+// conversation.
 const (
-	//MsgReceiveOpt
+	// MsgReceiveOpt.
 	ReceiveMessage          = 0
 	NotReceiveMessage       = 1
 	ReceiveNotNotifyMessage = 2
 
-	//pinned
+	// pinned.
 	Pinned    = 1
 	NotPinned = 0
 
-	//privateChat
+	// privateChat.
 	IsPrivateChat  = true
 	NotPrivateChat = false
 )
@@ -318,6 +322,7 @@ const (
 	Male   = 1
 	Female = 2
 )
+
 const (
 	AtAllString = "AtAllTag"
 	AtNormal    = 0
@@ -325,6 +330,7 @@ const (
 	AtAll       = 2
 	AtAllAtMe   = 3
 )
+
 const (
 	FieldRecvMsgOpt    = 1
 	FieldIsPinned      = 2
@@ -336,26 +342,30 @@ const (
 	FieldUnread        = 8
 	FieldBurnDuration  = 9
 )
+
 const (
 	SetMessageExtensions = 1
 	AddMessageExtensions = 2
 )
+
 const (
 	KeywordMatchOr  = 0
 	KeywordMatchAnd = 1
 )
 
-const BigVersion = "v2"
-const UpdateVersion = ".0.0"
-const SdkVersion = "Open-IM-SDK-Core-"
-const LogFileName = "sdk"
+const (
+	BigVersion    = "v2"
+	UpdateVersion = ".0.0"
+	SdkVersion    = "Open-IM-SDK-Core-"
+	LogFileName   = "sdk"
+)
 
 var HeartbeatInterval = 5
 
 const (
-	MsgSyncModelDefault  = 0   //SyncFlag
-	MsgSyncModelLogin    = 1   //SyncFlag
-	SyncOrderStartLatest = 101 //PullMsgOrder
+	MsgSyncModelDefault  = 0   // SyncFlag
+	MsgSyncModelLogin    = 1   // SyncFlag
+	SyncOrderStartLatest = 101 // PullMsgOrder
 
 	MsgSyncBegin      = 1001 //
 	MsgSyncProcessing = 1002 //
@@ -368,6 +378,7 @@ const (
 	JoinBySearch     = 3
 	JoinByQRCode     = 4
 )
+
 const (
 	SplitPullMsgNum              = 100
 	PullMsgNumWhenLogin          = 10000
@@ -375,7 +386,9 @@ const (
 	NormalMsgMinNumReadDiffusion = 100
 )
 
-const SplitGetGroupMemberNum = 1000
-const UseHashGroupMemberNum = 1000
+const (
+	SplitGetGroupMemberNum = 1000
+	UseHashGroupMemberNum  = 1000
+)
 
 var KEY = "openIMtest123456789"

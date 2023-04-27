@@ -6,8 +6,8 @@
 package server_api_params
 
 import (
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/pkg/db/model_struct"
+
 )
 
 type ApiUserInfo struct {
@@ -34,7 +34,7 @@ type FullUserInfo struct {
 	BlackInfo  *model_struct.LocalBlack  `json:"blackInfo"`
 }
 
-//GroupName    string                `json:"groupName"`
+// GroupName    string                `json:"groupName"`
 //	Introduction string                `json:"introduction"`
 //	Notification string                `json:"notification"`
 //	FaceUrl      string                `json:"faceUrl"`
