@@ -1,6 +1,7 @@
 package interaction
 
 import (
+	"context"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/db_interface"
@@ -82,7 +83,7 @@ func (m *MsgSync) GetCh() chan common.Cmd2Value {
 	return m.PushMsgAndMaxSeqCh
 }
 
-func NewMsgSync(dataBase db_interface.DataBase, ws *Ws, loginUserID string, ch chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value, joinedSuperGroupCh chan common.Cmd2Value) *MsgSync {
+func NewMsgSync(ctx context.Context, dataBase db_interface.DataBase, ch chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value) *MsgSync {
 	p := &MsgSync{DataBase: dataBase, Ws: ws, LoginUserID: loginUserID, conversationCh: ch, PushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh}
 	//	p.superGroupMsgSync = NewSuperGroupMsgSync(dataBase, ws, loginUserID, ch, joinedSuperGroupCh)
 	p.selfMsgSync = NewSelfMsgSync(dataBase, ws, loginUserID, ch)

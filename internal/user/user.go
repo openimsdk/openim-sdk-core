@@ -21,6 +21,7 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
+// User is a struct that represents a user in the system.
 type User struct {
 	db_interface.DataBase
 	loginUserID    string
@@ -30,18 +31,22 @@ type User struct {
 	conversationCh chan common.Cmd2Value
 }
 
+// LoginTime gets the login time of the user.
 func (u *User) LoginTime() int64 {
 	return u.loginTime
 }
 
+// SetLoginTime sets the login time of the user.
 func (u *User) SetLoginTime(loginTime int64) {
 	u.loginTime = loginTime
 }
 
+// SetListener sets the user's listener.
 func (u *User) SetListener(listener open_im_sdk_callback.OnUserListener) {
 	u.listener = listener
 }
 
+// NewUser creates a new User object.
 func NewUser(dataBase db_interface.DataBase, loginUserID string, conversationCh chan common.Cmd2Value) *User {
 	user := &User{DataBase: dataBase, loginUserID: loginUserID, conversationCh: conversationCh}
 	user.initSyncer()
@@ -67,6 +72,7 @@ func (u *User) initSyncer() {
 	)
 }
 
+// DoNotification handles incoming notifications for the user.
 func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	operationID := utils.OperationIDGenerator()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg)
@@ -88,6 +94,7 @@ func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	}()
 }
 
+// userInfoUpdatedNotification handles notifications about updated user information.
 func (u *User) userInfoUpdatedNotification(msg *sdkws.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	var detail sdkws.UserInfoUpdatedTips
@@ -103,6 +110,7 @@ func (u *User) userInfoUpdatedNotification(msg *sdkws.MsgData, operationID strin
 	}
 }
 
+// GetUsersInfoFromSvr retrieves user information from the server.
 func (u *User) GetUsersInfoFromSvr(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
 	resp, err := util.CallApi[userPb.GetDesignateUsersResp](ctx, constant.GetUsersInfoRouter, userPb.GetDesignateUsersReq{UserIDs: userIDs})
 	if err != nil {
@@ -111,6 +119,7 @@ func (u *User) GetUsersInfoFromSvr(ctx context.Context, userIDs []string) ([]*mo
 	return util.Batch(ServerUserToLocalUser, resp.UsersInfo), nil
 }
 
+// GetUsersInfoFromSvrNoCallback retrieves user information from the server.
 func (u *User) GetSingleUserFromSvr(ctx context.Context, userID string) (*model_struct.LocalUser, error) {
 	users, err := u.GetUsersInfoFromSvr(ctx, []string{userID})
 	if err != nil {
@@ -122,10 +131,12 @@ func (u *User) GetSingleUserFromSvr(ctx context.Context, userID string) (*model_
 	return nil, errs.ErrRecordNotFound.Wrap(fmt.Sprintf("getSelfUserInfo failed, userID: %s not exist", userID))
 }
 
+// getSelfUserInfo retrieves the user's information.
 func (u *User) getSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, error) {
 	return u.GetLoginUser(ctx, u.loginUserID)
 }
 
+// updateSelfUserInfo updates the user's information.
 func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfo) error {
 	userInfo.UserID = u.loginUserID
 	if err := util.ApiPost(ctx, constant.UpdateSelfUserInfoRouter, userPb.UpdateUserInfoReq{UserInfo: userInfo}, nil); err != nil {
@@ -135,11 +146,13 @@ func (u *User) updateSelfUserInfo(ctx context.Context, userInfo *sdkws.UserInfo)
 	return nil
 }
 
+// ParseTokenFromSvr parses a token from the server.
 func (u *User) ParseTokenFromSvr(ctx context.Context) (int64, error) {
 	resp, err := util.CallApi[authPb.ParseTokenResp](ctx, constant.ParseTokenRouter, authPb.ParseTokenReq{})
 	return resp.ExpireTimeSeconds, err
 }
 
+// GetServerUserInfo retrieves user information from the server.
 func (u *User) GetServerUserInfo(ctx context.Context, userIDs []string) ([]*sdkws.UserInfo, error) {
 	resp, err := util.CallApi[userPb.GetDesignateUsersResp](ctx, constant.GetUsersInfoRouter, &userPb.GetDesignateUsersReq{UserIDs: userIDs})
 	if err != nil {
