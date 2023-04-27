@@ -4,6 +4,7 @@ import (
 	"context"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/sdk_struct"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
@@ -31,14 +32,16 @@ type MsgSyncer struct {
 
 	conversationCh chan common.Cmd2Value // trigger conversation
 
-	ctx      context.Context
-	seqs     map[string]Seq
-	msgCache map[string]map[int64]*sdkws.MsgData
+	ctx       context.Context
+	seqs      map[string]Seq
+	msgCache  map[string]map[int64]*sdkws.MsgData
+	db        db_interface.DataBase
+	syncTimes int
 }
 
 func NewMsgSyncer(ctx context.Context, conversationCh, recvMsgCh, recvSeqch chan common.Cmd2Value,
-	loginUserID string, ws *Ws) *MsgSyncer {
-	return &MsgSyncer{
+	loginUserID string, ws *Ws) (*MsgSyncer, error) {
+	m := &MsgSyncer{
 		recvSeqch: recvSeqch,
 		recvMsgCh: recvMsgCh,
 
@@ -46,8 +49,37 @@ func NewMsgSyncer(ctx context.Context, conversationCh, recvMsgCh, recvSeqch chan
 		ws:             ws,
 		loginUserID:    loginUserID,
 		ctx:            ctx,
-		seqs:           make(map[string]Seq),
 		msgCache:       make(map[string]map[int64]*sdkws.MsgData),
+	}
+	err := m.loadSeq(ctx)
+	return m, err
+}
+
+// seq db读取到内存
+func (m *MsgSyncer) loadSeq(ctx context.Context) error {
+	m.seqs = make(map[string]Seq)
+	groupIDs, err := m.db.GetReadDiffusionGroupIDList(ctx)
+	if err != nil {
+		return err
+	}
+	for _, groupID := range groupIDs {
+		nSeq, err := m.db.GetSuperGroupNormalMsgSeq(ctx, groupID)
+		if err != nil {
+			return err
+		}
+		aSeq, err := m.db.GetSuperGroupAbnormalMsgSeq(ctx, groupID)
+		if err != nil {
+			return err
+		}
+		var maxSeq int64
+		maxSeq = nSeq
+		if aSeq > nSeq {
+			maxSeq = aSeq
+		}
+		m.seqs[groupID] = Seq{
+			maxSeq:      maxSeq,
+			sessionType: constant.GroupChatType,
+		}
 	}
 }
 
@@ -66,6 +98,9 @@ func (m *MsgSyncer) DoListener() {
 }
 
 func (m *MsgSyncer) compareSeqsAndTrigger(ctx context.Context, newSeqMap map[string]Seq) {
+	if m.syncTimes == 0 {
+		// 同步开始回调
+	}
 	for sourceID, newSeq := range newSeqMap {
 		if oldSeq, ok := m.seqs[sourceID]; ok {
 			if newSeq.maxSeq > oldSeq.maxSeq {
@@ -80,6 +115,10 @@ func (m *MsgSyncer) compareSeqsAndTrigger(ctx context.Context, newSeqMap map[str
 			}
 		}
 	}
+	if m.syncTimes == 0 {
+		// 同步结束回调
+	}
+	m.syncTimes++
 }
 
 func (m *MsgSyncer) getSeqsNeedSync(oldMaxSeq, newMaxSeq int64) []int64 {
