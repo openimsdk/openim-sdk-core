@@ -13,6 +13,11 @@ import (
 	"sync"
 )
 
+type Caller interface {
+	BaseCaller(funcName interface{}, base open_im_sdk_callback.Base, args ...interface{})
+	SendMessageCaller(funcName interface{}, messageCallback open_im_sdk_callback.SendMsgCallBack, args ...interface{})
+}
+
 func init() {
 	UserSDKRwLock.Lock()
 	defer UserSDKRwLock.Unlock()
@@ -38,6 +43,7 @@ func GetUserWorker(uid string) *login.LoginMgr {
 
 	return UserRouterMap[uid]
 }
+
 func InitOnce(config *sdk_struct.IMConfig) bool {
 	sdk_struct.SvrConf = *config
 	return true
@@ -58,11 +64,6 @@ func CheckResourceLoad(uSDK *login.LoginMgr) error {
 		return utils.Wrap(errors.New("CheckResourceLoad failed, resource nil "), "")
 	}
 	return nil
-}
-
-type Caller interface {
-	BaseCaller(funcName interface{}, base open_im_sdk_callback.Base, args ...interface{})
-	SendMessageCaller(funcName interface{}, messageCallback open_im_sdk_callback.SendMsgCallBack, args ...interface{})
 }
 
 type name struct {
@@ -125,6 +126,7 @@ func BaseCaller(funcName interface{}, callback open_im_sdk_callback.Base, args .
 	log.Debug(operationID, funcNameString, "input args:", args)
 	go refFuncName.Call(values)
 }
+
 func SendMessageCaller(funcName interface{}, callback open_im_sdk_callback.SendMsgCallBack, args ...interface{}) {
 	var operationID string
 	if len(args) <= 0 {

@@ -9,18 +9,20 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-//func (u *User) GetUsersInfo(callback open_im_sdk_callback.Base, userIDList string, operationID string) {
-//	fName := utils.GetSelfFuncName()
-//	go func() {
-//		log.NewInfo(operationID, fName, "args: ", userIDList)
-//		var unmarshalParam sdk_params_callback.GetUsersInfoParam
-//		common.JsonUnmarshalAndArgsValidate(userIDList, &unmarshalParam, callback, operationID)
-//		result := u.GetUsersInfoFromSvr(callback, unmarshalParam, operationID)
-//		callback.OnSuccess(utils.StructToJsonStringDefault(result))
-//		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonStringDefault(result))
-//	}()
-//}
+// GetUsersInfo
+func (u *User) GetUsersInfo(callback open_im_sdk_callback.Base, userIDList string, operationID string) {
+	fName := utils.GetSelfFuncName()
+	go func() {
+		log.NewInfo(operationID, fName, "args: ", userIDList)
+		var unmarshalParam sdk_params_callback.GetUsersInfoParam
+		common.JsonUnmarshalAndArgsValidate(userIDList, &unmarshalParam, callback, operationID)
+		result := u.GetUsersInfoFromSvr(callback, unmarshalParam, operationID)
+		callback.OnSuccess(utils.StructToJsonStringDefault(result))
+		log.NewInfo(operationID, fName, "callback: ", utils.StructToJsonStringDefault(result))
+	}()
+}
 
+// GetSelfUserInfo gets the user's own information.
 func (u *User) GetSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) {
 	fName := utils.GetSelfFuncName()
 	go func() {
@@ -31,6 +33,7 @@ func (u *User) GetSelfUserInfo(callback open_im_sdk_callback.Base, operationID s
 	}()
 }
 
+// SetSelfInfo updates the user's own information.
 func (u *User) SetSelfInfo(callback open_im_sdk_callback.Base, userInfo string, operationID string) {
 	fName := utils.GetSelfFuncName()
 	go func() {
@@ -43,6 +46,7 @@ func (u *User) SetSelfInfo(callback open_im_sdk_callback.Base, userInfo string, 
 	}()
 }
 
+// updateMsgSenderInfo updates the message sender's nickname and face URL.
 func (u *User) updateMsgSenderInfo(nickname, faceURL string, operationID string) {
 	if nickname != "" {
 		err := u.DataBase.UpdateMsgSenderNickname(u.loginUserID, nickname, constant.SingleChatType)

@@ -2,10 +2,11 @@ package user
 
 import (
 	"fmt"
-	"github.com/google/go-cmp/cmp"
 	comm "open_im_sdk/internal/common"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
+
+	"github.com/google/go-cmp/cmp"
 
 	//"github.com/mitchellh/mapstructure"
 	ws "open_im_sdk/internal/interaction"
@@ -16,9 +17,10 @@ import (
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
+	sdkstruct "open_im_sdk/sdk_struct"
 )
 
+// User is a struct that represents a user in the system.
 type User struct {
 	db_interface.DataBase
 	p              *ws.PostApi
@@ -28,22 +30,27 @@ type User struct {
 	conversationCh chan common.Cmd2Value
 }
 
+// LoginTime gets the login time of the user.
 func (u *User) LoginTime() int64 {
 	return u.loginTime
 }
 
+// SetLoginTime sets the login time of the user.
 func (u *User) SetLoginTime(loginTime int64) {
 	u.loginTime = loginTime
 }
 
+// SetListener sets the user's listener.
 func (u *User) SetListener(listener open_im_sdk_callback.OnUserListener) {
 	u.listener = listener
 }
 
+// NewUser creates a new User object.
 func NewUser(dataBase db_interface.DataBase, p *ws.PostApi, loginUserID string, conversationCh chan common.Cmd2Value) *User {
 	return &User{DataBase: dataBase, p: p, loginUserID: loginUserID, conversationCh: conversationCh}
 }
 
+// DoNotification handles incoming notifications for the user.
 func (u *User) DoNotification(msg *api.MsgData) {
 	operationID := utils.OperationIDGenerator()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg)
@@ -66,6 +73,7 @@ func (u *User) DoNotification(msg *api.MsgData) {
 	}()
 }
 
+// userInfoUpdatedNotification handles notifications about updated user information.
 func (u *User) userInfoUpdatedNotification(msg *api.MsgData, operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	var detail api.UserInfoUpdatedTips
@@ -81,6 +89,7 @@ func (u *User) userInfoUpdatedNotification(msg *api.MsgData, operationID string)
 	}
 }
 
+// SyncLoginUserInfo synchronizes the user's information from the server.
 func (u *User) SyncLoginUserInfo(operationID string) {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ")
 	svr, err := u.GetSelfUserInfoFromSvr(operationID)
@@ -126,33 +135,31 @@ func (u *User) SyncLoginUserInfo(operationID string) {
 	}
 }
 
+// GetUsersInfoFromSvr retrieves user information from the server.
 func (u *User) GetUsersInfoFromSvr(callback open_im_sdk_callback.Base, UserIDList sdk.GetUsersInfoParam, operationID string) []*api.PublicUserInfo {
-	apiReq := api.GetUsersInfoReq{}
-	apiReq.OperationID = operationID
-	apiReq.UserIDList = UserIDList
+	apiReq := api.GetUsersInfoReq{OperationID: operationID, UserIDList: UserIDList}
 	apiResp := api.GetUsersInfoResp{}
 	u.p.PostFatalCallback(callback, constant.GetUsersInfoRouter, apiReq, &apiResp.UserInfoList, apiReq.OperationID)
 	return apiResp.UserInfoList
 }
 
+// GetUsersInfoFromSvrNoCallback retrieves user information from the server.
 func (u *User) GetUsersInfoFromSvrNoCallback(UserIDList sdk.GetUsersInfoParam, operationID string) ([]*api.PublicUserInfo, error) {
-	apiReq := api.GetUsersInfoReq{}
-	apiReq.OperationID = operationID
-	apiReq.UserIDList = UserIDList
+	apiReq := api.GetUsersInfoReq{OperationID: operationID, UserIDList: UserIDList}
 	apiResp := api.GetUsersInfoResp{}
 	err := u.p.PostReturn(constant.GetUsersInfoRouter, apiReq, &apiResp.UserInfoList)
 	return apiResp.UserInfoList, err
 }
 
+// GetUsersInfoFromCacheSvr retrieves user information from the cache server.
 func (u *User) GetUsersInfoFromCacheSvr(UserIDList sdk.GetUsersInfoParam, operationID string) ([]*api.PublicUserInfo, error) {
-	apiReq := api.GetUsersInfoReq{}
-	apiReq.OperationID = operationID
-	apiReq.UserIDList = UserIDList
+	apiReq := api.GetUsersInfoReq{OperationID: operationID, UserIDList: UserIDList}
 	apiResp := api.GetUsersInfoResp{}
 	err := u.p.PostReturn(constant.GetUsersInfoFromCacheRouter, apiReq, &apiResp.UserInfoList)
 	return apiResp.UserInfoList, err
 }
 
+// getSelfUserInfo retrieves the user's information.
 func (u *User) getSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) sdk.GetSelfUserInfoCallback {
 	userInfo, errLocal := u.GetLoginUser(u.loginUserID)
 	if errLocal != nil {
@@ -166,6 +173,7 @@ func (u *User) getSelfUserInfo(callback open_im_sdk_callback.Base, operationID s
 	return userInfo
 }
 
+// updateSelfUserInfo updates the user's information.
 func (u *User) updateSelfUserInfo(callback open_im_sdk_callback.Base, userInfo sdk.SetSelfUserInfoParam, operationID string) {
 	apiReq := api.UpdateSelfUserInfoReq{}
 	apiReq.OperationID = operationID
@@ -175,11 +183,9 @@ func (u *User) updateSelfUserInfo(callback open_im_sdk_callback.Base, userInfo s
 	u.SyncLoginUserInfo(operationID)
 }
 
+// GetSelfUserInfoFromSvr retrieves the user's information from the server.
 func (u *User) GetSelfUserInfoFromSvr(operationID string) (*api.UserInfo, error) {
-	log.Debug(operationID, utils.GetSelfFuncName())
-	apiReq := api.GetSelfUserInfoReq{}
-	apiReq.OperationID = operationID
-	apiReq.UserID = u.loginUserID
+	apiReq := api.GetSelfUserInfoReq{OperationID: operationID, UserID: u.loginUserID}
 	apiResp := api.GetSelfUserInfoResp{UserInfo: &api.UserInfo{}}
 	err := u.p.PostReturn(constant.GetSelfUserInfoRouter, apiReq, &apiResp.UserInfo)
 	if err != nil {
@@ -188,15 +194,16 @@ func (u *User) GetSelfUserInfoFromSvr(operationID string) (*api.UserInfo, error)
 	return apiResp.UserInfo, nil
 }
 
+// DoUserNotification handles incoming notifications for the user.
 func (u *User) DoUserNotification(msg *api.MsgData) {
-	if msg.SendID == u.loginUserID && msg.SenderPlatformID == sdk_struct.SvrConf.Platform {
+	if msg.SendID == u.loginUserID && msg.SenderPlatformID == sdkstruct.SvrConf.Platform {
 		return
 	}
 }
 
+// ParseTokenFromSvr parses a token from the server.
 func (u *User) ParseTokenFromSvr(operationID string) (uint32, error) {
-	apiReq := api.ParseTokenReq{}
-	apiReq.OperationID = operationID
+	apiReq := api.ParseTokenReq{OperationID: operationID}
 	apiResp := api.ParseTokenResp{}
 	err := u.p.PostReturn(constant.ParseTokenRouter, apiReq, &apiResp.ExpireTime)
 	if err != nil {
