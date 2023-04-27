@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/utils"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
@@ -10,6 +11,7 @@ import (
 )
 
 func (u *User) SyncLoginUserInfo(ctx context.Context) error {
+	log.NewInfo(utils.GetSelfFuncName(), "args: ")
 	remoteUser, err := u.GetSingleUserFromSvr(ctx, u.loginUserID)
 	if err != nil {
 		return err
