@@ -12,7 +12,6 @@ type GlobalConfig struct {
 	WsAddr               string
 	DataDir              string
 	LogLevel             uint32
-	ObjectStorage        string
 	EncryptionKey        string
 	IsCompression        bool
 	IsExternalExtensions bool
@@ -26,7 +25,6 @@ type ContextInfo interface {
 	WsAddr() string
 	DataDir() string
 	LogLevel() uint32
-	ObjectStorage() string
 	EncryptionKey() string
 	OperationID() string
 	IsCompression() bool
@@ -84,10 +82,6 @@ func (i *info) DataDir() string {
 
 func (i *info) LogLevel() uint32 {
 	return i.conf.LogLevel
-}
-
-func (i *info) ObjectStorage() string {
-	return i.conf.ObjectStorage
 }
 
 func (i *info) EncryptionKey() string {

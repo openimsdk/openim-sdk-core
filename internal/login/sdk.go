@@ -19,11 +19,3 @@ func (u *LoginMgr) Logout(ctx context.Context) error {
 func (u *LoginMgr) SetAppBackgroundStatus(ctx context.Context, isBackground bool) error {
 	return u.setAppBackgroundStatus(ctx, isBackground)
 }
-
-func (u *LoginMgr) UploadImage(ctx context.Context, filePath string, token, obj string) (string, error) {
-	return u.uploadImage(ctx, filePath, token, obj)
-}
-
-func (u *LoginMgr) UploadFile(ctx context.Context, filePath string) (string, error) {
-	return u.uploadFile(ctx, filePath)
-}
