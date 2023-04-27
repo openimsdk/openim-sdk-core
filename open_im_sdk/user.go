@@ -2,18 +2,22 @@ package open_im_sdk
 
 import "open_im_sdk/open_im_sdk_callback"
 
+// GetUsersInfo obtains the information about multiple users.
 func GetUsersInfo(callback open_im_sdk_callback.Base, operationID string, userIDList string) {
 	call(callback, operationID, UserForSDK.User().GetUsersInfo, userIDList)
 }
 
+// SetSelfInfo sets the user's own information.
 func SetSelfInfo(callback open_im_sdk_callback.Base, operationID string, userInfo string) {
 	call(callback, operationID, UserForSDK.User().SetSelfInfo, userInfo)
 }
 
+// GetSelfUserInfo obtains the user's own information.
 func GetSelfUserInfo(callback open_im_sdk_callback.Base, operationID string) {
 	call(callback, operationID, UserForSDK.User().GetSelfUserInfo)
 }
 
+// UpdateMsgSenderInfo updates the message sender's nickname and face URL.
 func UpdateMsgSenderInfo(callback open_im_sdk_callback.Base, operationID string, nickname, faceURL string) {
 	call(callback, operationID, UserForSDK.User().UpdateMsgSenderInfo, nickname, faceURL)
 }
