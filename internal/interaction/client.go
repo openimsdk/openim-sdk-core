@@ -2,7 +2,6 @@ package interaction
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
@@ -14,13 +13,10 @@ import (
 	"time"
 )
 
-
-
-
-1.协程消息的收发模块一直运行，直到收到关闭信号（一般是用户退出登陆）
-2.消息调用模块传递channle，收到消息后，调用channel，将消息传递给协程消息收发模块
-3.消息通过ws发送后
-4.
+// 1.协程消息的收发模块一直运行，直到收到关闭信号（一般是用户退出登陆）
+// 2.消息调用模块传递channle，收到消息后，调用channel，将消息传递给协程消息收发模块
+// 3.消息通过ws发送后
+// 4.
 const (
 	// Time allowed to write a message to the peer.
 	writeWait = 10 * time.Second
@@ -35,11 +31,10 @@ const (
 	maxMessageSize = 51200
 )
 const (
-	Closed = iota+1
+	Closed = iota + 1
 	Connecting
 	Connected
 )
-
 
 var (
 	newline = []byte{'\n'}
@@ -58,23 +53,23 @@ var upgrader = websocket.Upgrader{
 
 // Client is a middleman between the websocket connection and the hub.
 type Client struct {
-	w              sync.Mutex
+	w sync.Mutex
 	// The long connection,can be set tcp or websocket.
 	conn LongConn
 
 	// Buffered channel of outbound messages.
 	send chan Message
 	//
-	closedErr      error
-	ctx            *ConnContext
-	isCompress     bool
+	closedErr  error
+	ctx        *ConnContext
+	isCompress bool
 	connStatus int
 	syncer     *WsRespAsyn
-	encoder        Encoder
-	compressor     Compressor
+	encoder    Encoder
+	compressor Compressor
 }
 type Message struct {
-	Message    GeneralWsReq
+	Message GeneralWsReq
 	Resp    chan GeneralWsResp
 }
 
@@ -110,7 +105,7 @@ func (c *Client) SendReqWaitResp(ctx context.Context, m proto.Message, reqIdenti
 		if v.ErrCode != 0 {
 			return errs.NewCodeError(v.ErrCode, v.ErrMsg)
 		}
-		if err := proto.Unmarshal(v.Data, resp);err != nil {
+		if err := proto.Unmarshal(v.Data, resp); err != nil {
 			return err
 		}
 		return nil
@@ -166,7 +161,7 @@ func (c *Client) readPump(ctx context.Context) {
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
 func (c *Client) writePump() {
-		ticker := time.NewTicker(pingPeriod)
+	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
 		c.conn.Close()
@@ -175,7 +170,7 @@ func (c *Client) writePump() {
 		select {
 		case <-c.ctx.Done():
 			c.closedErr = c.ctx.Err()
-          return
+			return
 		case message, ok := <-c.send:
 			_ = c.conn.SetWriteDeadline(writeWait)
 			if !ok {
@@ -187,29 +182,29 @@ func (c *Client) writePump() {
 				c.closedErr = ErrChanClosed
 				return
 			}
-			msgIncr,tempChan:=c.syncer.AddCh(message.message.SendID)
+			msgIncr, tempChan := c.syncer.AddCh(message.message.SendID)
 
-			for i := 0; i < 3; i++  {
+			for i := 0; i < 3; i++ {
 				err := c.writeBinaryMsg(message.message)
 				if err != nil {
-					log.ZError(c.ctx, "send binary message error", err,"local address",c.conn.LocalAddr(),"message",message.message)
+					log.ZError(c.ctx, "send binary message error", err, "local address", c.conn.LocalAddr(), "message", message.message)
 					_ = c.close()
 					continue
-				}else{
+				} else {
 					break
 				}
 			}
 			go func() {
 				select {
 				case <-time.After(time.Second * 3):
-					log.ZError(c.ctx, "send message timeout", "local address",c.conn.LocalAddr(),"message",message.message)
+					log.ZError(c.ctx, "send message timeout", "local address", c.conn.LocalAddr(), "message", message.message)
 					_ = c.close()
 				case resp := <-message.resp:
-					log.ZInfo(c.ctx, "receive response", "local address",c.conn.LocalAddr(),"message",message.message,"response",resp)
+					log.ZInfo(c.ctx, "receive response", "local address", c.conn.LocalAddr(), "message", message.message, "response", resp)
 					_ = c.close()
 				}
 			}()
-            c.syncer.DelCh(msgIncr)
+			c.syncer.DelCh(msgIncr)
 
 		case <-ticker.C:
 			_ = c.conn.SetWriteDeadline(writeWait)
@@ -223,7 +218,7 @@ func (c *Client) writePump() {
 func (c *Client) writeBinaryMsg(req GeneralWsReq) error {
 	encodeBuf, err := c.encoder.Encode(req)
 	if err != nil {
-    return err
+		return err
 	}
 	_ = c.conn.SetWriteDeadline(writeWait)
 	if c.isCompress {
@@ -236,12 +231,11 @@ func (c *Client) writeBinaryMsg(req GeneralWsReq) error {
 		return c.conn.WriteMessage(MessageBinary, encodeBuf)
 	}
 }
-func (c *Client) close()error {
+func (c *Client) close() error {
 	c.w.Lock()
 	defer c.w.Unlock()
-    c.connStatus = Closed
+	c.connStatus = Closed
 	return c.conn.Close()
-
 
 }
 
