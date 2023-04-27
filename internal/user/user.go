@@ -66,7 +66,9 @@ func (u *User) DoNotification(msg *api.MsgData) {
 	go func() {
 		switch msg.ContentType {
 		case constant.UserInfoUpdatedNotification:
-			u.userInfoUpdatedNotification(msg, operationID)
+			if err := u.userInfoUpdatedNotification(msg, operationID); err != nil {
+				log.Error(operationID, "userInfoUpdatedNotification failed ", err.Error())
+			}
 		default:
 			log.Error(operationID, "type failed ", msg.ClientMsgID, msg.ServerMsgID, msg.ContentType)
 		}
@@ -74,19 +76,19 @@ func (u *User) DoNotification(msg *api.MsgData) {
 }
 
 // userInfoUpdatedNotification handles notifications about updated user information.
-func (u *User) userInfoUpdatedNotification(msg *api.MsgData, operationID string) {
+func (u *User) userInfoUpdatedNotification(msg *api.MsgData, operationID string) error {
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	var detail api.UserInfoUpdatedTips
+	detail := api.UserInfoUpdatedTips{}
 	if err := comm.UnmarshalTips(msg, &detail); err != nil {
 		log.Error(operationID, "comm.UnmarshalTips failed ", err.Error(), msg.Content)
-		return
+		return err
 	}
 	if detail.UserID == u.loginUserID {
 		log.Info(operationID, "detail.UserID == u.loginUserID, SyncLoginUserInfo", detail.UserID)
 		u.SyncLoginUserInfo(operationID)
-	} else {
-		log.Info(operationID, "detail.UserID != u.loginUserID, do nothing", detail.UserID, u.loginUserID)
 	}
+	log.Info(operationID, "detail.UserID != u.loginUserID, do nothing", detail.UserID, u.loginUserID)
+	return nil
 }
 
 // SyncLoginUserInfo synchronizes the user's information from the server.

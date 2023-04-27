@@ -13,25 +13,28 @@ import (
 	"sync"
 )
 
+// Caller is an interface that defines the SDK's basic and message sending caller.
 type Caller interface {
 	BaseCaller(funcName interface{}, base open_im_sdk_callback.Base, args ...interface{})
 	SendMessageCaller(funcName interface{}, messageCallback open_im_sdk_callback.SendMsgCallBack, args ...interface{})
 }
 
+var (
+	UserSDKRwLock sync.RWMutex
+	// userMap for web and pc
+	UserRouterMap map[string]*login.LoginMgr
+	// Client-independent user class
+	userForSDK *login.LoginMgr
+)
+
+// init initializes the UserRouterMap to hold a map of string keys and *login.LoginMgr values.
 func init() {
 	UserSDKRwLock.Lock()
 	defer UserSDKRwLock.Unlock()
-	UserRouterMap = make(map[string]*login.LoginMgr, 0)
+	UserRouterMap = make(map[string]*login.LoginMgr)
 }
 
-var UserSDKRwLock sync.RWMutex
-
-// 用于web和pc的userMap
-var UserRouterMap map[string]*login.LoginMgr
-
-// 客户端独立的user类
-var userForSDK *login.LoginMgr
-
+// GetUserWorker returns a user's login manager by its ID.
 func GetUserWorker(uid string) *login.LoginMgr {
 	UserSDKRwLock.Lock()
 	defer UserSDKRwLock.Unlock()
@@ -40,23 +43,24 @@ func GetUserWorker(uid string) *login.LoginMgr {
 		return v
 	}
 	UserRouterMap[uid] = new(login.LoginMgr)
-
 	return UserRouterMap[uid]
 }
 
+// InitOnce initializes the SDK by setting the server configuration.
 func InitOnce(config *sdk_struct.IMConfig) bool {
 	sdk_struct.SvrConf = *config
 	return true
 }
 
+// CheckToken checks user authentication token.
 func CheckToken(userID, token string, operationID string) error {
 	err, _ := login.CheckToken(userID, token, operationID)
 	return err
 }
 
+// CheckResourceLoad checks the SDK's resource load status.
 func CheckResourceLoad(uSDK *login.LoginMgr) error {
 	if uSDK == nil {
-		//	callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
 		return utils.Wrap(errors.New("CheckResourceLoad failed uSDK == nil "), "")
 	}
 	if uSDK.Friend() == nil || uSDK.User() == nil || uSDK.Group() == nil || uSDK.Conversation() == nil ||
@@ -67,11 +71,17 @@ func CheckResourceLoad(uSDK *login.LoginMgr) error {
 }
 
 type name struct {
+	
 }
 
 var ErrNotSetCallback = errors.New("not set callback to call")
 var ErrNotSetFunc = errors.New("not set func to call")
 
+// BaseCaller calls the SDK's basic caller by checking the arguments and verifying the callback.
+// First, it checks that the number of arguments is correct and gets the operation ID.
+// Then, it checks that the resources have been loaded, and returns an error if they have not.
+// Finally, it uses reflection to call the function, passing in the callback and arguments, and runs the function in a different goroutine.
+// If a panic occurs, it converts the panic to a string and returns its error through the callback.
 func BaseCaller(funcName interface{}, callback open_im_sdk_callback.Base, args ...interface{}) {
 	var operationID string
 	if len(args) <= 0 {
@@ -127,6 +137,7 @@ func BaseCaller(funcName interface{}, callback open_im_sdk_callback.Base, args .
 	go refFuncName.Call(values)
 }
 
+// SendMessageCaller sends a message by calling the SDK's message sender.
 func SendMessageCaller(funcName interface{}, callback open_im_sdk_callback.SendMsgCallBack, args ...interface{}) {
 	var operationID string
 	if len(args) <= 0 {

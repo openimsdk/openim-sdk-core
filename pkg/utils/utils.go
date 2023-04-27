@@ -275,6 +275,8 @@ func GetSelfFuncName() string {
 	pc, _, _, _ := runtime.Caller(1)
 	return CleanUpfuncName(runtime.FuncForPC(pc).Name())
 }
+
+// The CleanUpfuncName function is used to obtain the name of a function by cleaning up its fully qualified name.
 func CleanUpfuncName(funcName string) string {
 	end := strings.LastIndex(funcName, ".")
 	if end == -1 {

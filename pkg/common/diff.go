@@ -177,8 +177,9 @@ func SendGroupRequestCopyToLocal(dst *model_struct.LocalGroupRequest, src *serve
 //	copier.Copy(dst, src)
 //}
 
+// TransferToLocalUserInfo transfer api data to local data
 func TransferToLocalUserInfo(apiData *server_api_params.UserInfo) *model_struct.LocalUser {
-	var localNode model_struct.LocalUser
+	localNode := model_struct.LocalUser{}
 	copier.Copy(&localNode, apiData)
 	t, _ := time.Parse("2006-01-02", apiData.BirthStr)
 	localNode.BirthTime = t
