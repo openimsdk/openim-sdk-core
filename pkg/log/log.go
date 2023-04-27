@@ -76,6 +76,7 @@ func NewLfsHook(rotationTime time.Duration, maxRemainNum uint, moduleName string
 	})
 	return lfsHook
 }
+
 func initRotateLogs(rotationTime time.Duration, maxRemainNum uint, level string, moduleName string) *rotatelogs.RotateLogs {
 	if moduleName != "" {
 		moduleName = moduleName + "."

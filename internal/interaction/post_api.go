@@ -62,6 +62,7 @@ func (p *PostApi) Post2UnmarshalRespReturn(url string, req interface{}, output i
 	err = json.Unmarshal(content, output)
 	return utils.Wrap(err, "Unmarshal failed ")
 }
+
 func (p *PostApi) PostReturnWithTimeOut(url string, req interface{}, output interface{}, timeOut time.Duration) error {
 	content, err := network.PostWithTimeOut(p.apiAddress+url, req, p.token, timeOut)
 

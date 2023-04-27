@@ -9,7 +9,7 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-// GetUsersInfo
+// GetUsersInfo gets the user's information.
 func (u *User) GetUsersInfo(callback open_im_sdk_callback.Base, userIDList string, operationID string) {
 	fName := utils.GetSelfFuncName()
 	go func() {

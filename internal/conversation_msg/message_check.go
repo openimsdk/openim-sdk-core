@@ -214,6 +214,7 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(sourceID string, seqLi
 
 	}
 }
+
 func errHandle(seqList []uint32, list *[]*model_struct.LocalChatLog, err error, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
 	messageListCallback.ErrCode = 100
 	messageListCallback.ErrMsg = err.Error()
@@ -231,6 +232,7 @@ func errHandle(seqList []uint32, list *[]*model_struct.LocalChatLog, err error, 
 	}
 	*list = result
 }
+
 func (c *Conversation) pullMessageIntoTable(pullMsgData []*server_api_params.MsgData, operationID string) {
 
 	var insertMsg, specialUpdateMsg []*model_struct.LocalChatLog
