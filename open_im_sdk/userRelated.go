@@ -58,7 +58,7 @@ func CheckToken(userID, token string, operationID string) error {
 	return err
 }
 
-// CheckResourceLoad checks the SDK's resource load status.
+// CheckResourceLoad checks the SDK is resource load status.
 func CheckResourceLoad(uSDK *login.LoginMgr) error {
 	if uSDK == nil {
 		return utils.Wrap(errors.New("CheckResourceLoad failed uSDK == nil "), "")
@@ -71,7 +71,6 @@ func CheckResourceLoad(uSDK *login.LoginMgr) error {
 }
 
 type name struct {
-	
 }
 
 var ErrNotSetCallback = errors.New("not set callback to call")
@@ -119,9 +118,8 @@ func BaseCaller(funcName interface{}, callback open_im_sdk_callback.Base, args .
 	if funcName == nil {
 		panic(utils.Wrap(ErrNotSetFunc, ""))
 	}
-	var refFuncName reflect.Value
 	var values []reflect.Value
-	refFuncName = reflect.ValueOf(funcName)
+	refFuncName := reflect.ValueOf(funcName)
 	if callback != nil {
 		values = append(values, reflect.ValueOf(callback))
 	} else {
@@ -163,9 +161,8 @@ func SendMessageCaller(funcName interface{}, callback open_im_sdk_callback.SendM
 	if funcName == nil {
 		panic(utils.Wrap(ErrNotSetFunc, ""))
 	}
-	var refFuncName reflect.Value
 	var values []reflect.Value
-	refFuncName = reflect.ValueOf(funcName)
+	refFuncName := reflect.ValueOf(funcName)
 	if callback != nil {
 		values = append(values, reflect.ValueOf(callback))
 	} else {

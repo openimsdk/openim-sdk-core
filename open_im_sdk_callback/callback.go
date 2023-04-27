@@ -4,6 +4,7 @@ type Base interface {
 	OnError(errCode int32, errMsg string)
 	OnSuccess(data string)
 }
+
 type SendMsgCallBack interface {
 	Base
 	OnProgress(progress int)
@@ -29,6 +30,7 @@ type OnGroupListener interface {
 	OnGroupApplicationAccepted(groupApplication string)
 	OnGroupApplicationRejected(groupApplication string)
 }
+
 type OnFriendshipListener interface {
 	OnFriendApplicationAdded(friendApplication string)
 	OnFriendApplicationDeleted(friendApplication string)
@@ -40,6 +42,7 @@ type OnFriendshipListener interface {
 	OnBlackAdded(blackInfo string)
 	OnBlackDeleted(blackInfo string)
 }
+
 type OnConversationListener interface {
 	OnSyncServerStart()
 	OnSyncServerFinish()
@@ -49,6 +52,7 @@ type OnConversationListener interface {
 	OnConversationChanged(conversationList string)
 	OnTotalUnreadMessageCountChanged(totalUnreadCount int32)
 }
+
 type OnAdvancedMsgListener interface {
 	OnRecvNewMessage(message string)
 	OnRecvC2CReadReceipt(msgReceiptList string)
