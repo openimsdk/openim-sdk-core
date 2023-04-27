@@ -1,3 +1,8 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the MIT License (the "License");
+// you may not use this file except in compliance with the License.
+
 syntax = "proto3";
 import "Open-IM-Server/pkg/proto/sdk_ws/wrappers.proto";
 option go_package = "Open_IM/pkg/proto/sdk_ws;server_api_params";

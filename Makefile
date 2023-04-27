@@ -2,13 +2,47 @@
 # define the default goal
 #
 
+ROOT_PACKAGE=github.com/OpenIMSDK/Open-IM-SDK-Core
+
 SHELL := /bin/bash
 DIRS=$(shell ls)
 GO=go
 
-.PHONY: ios build install android
-.DEFAULT_GOAL := help
+# include the common makefile
+COMMON_SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+# ROOT_DIR: root directory of the code base
+ifeq ($(origin ROOT_DIR),undefined)
+ROOT_DIR := $(abspath $(shell cd $(COMMON_SELF_DIR)/. && pwd -P))
+endif
+# OUTPUT_DIR: The directory where the build output is stored.
+ifeq ($(origin OUTPUT_DIR),undefined)
+OUTPUT_DIR := $(ROOT_DIR)/bin
+$(shell mkdir -p $(OUTPUT_DIR))
+endif
 
+ifeq ($(origin VERSION), undefined)
+VERSION := $(shell git describe --abbrev=0 --dirty --always --tags | sed 's/-/./g')
+endif
+
+# Check if the tree is dirty. default to dirty(maybe u should commit?)
+GIT_TREE_STATE:="dirty"
+ifeq (, $(shell git status --porcelain 2>/dev/null))
+	GIT_TREE_STATE="clean"
+endif
+GIT_COMMIT:=$(shell git rev-parse HEAD)
+
+# Define the directory you want to copyright
+CODE_DIRS := $(ROOT_DIR) #$(ROOT_DIR)/pkg $(ROOT_DIR)/core $(ROOT_DIR)/integrationtest $(ROOT_DIR)/lib $(ROOT_DIR)/mock $(ROOT_DIR)/db $(ROOT_DIR)/openapi
+FINDS := find $(CODE_DIRS)
+
+ifndef V
+MAKEFLAGS += --no-print-directory
+endif
+
+# Linux command settings
+FIND := find . ! -path './image/*' ! -path './vendor/*' ! -path './bin/*'
+XARGS := xargs -r
+LICENSE_TEMPLATE ?= $(ROOT_DIR)/boilerplate.txt
 
 # The NAME of the binary to build
 NAME=ws_wrapper/cmd/open_im_sdk_server
@@ -35,6 +69,12 @@ else
 	BINARY_NAME=${NAME}
 endif
 
+BUILDFILE = "./main.go"
+BUILDAPP = "$(OUTPUT_DIR)/"
+
+.PHONY: ios build install android
+.DEFAULT_GOAL := help
+
 # ==============================================================================
 # Targets
 
@@ -42,28 +82,25 @@ endif
 .PHONY: all
 all: build
 
-
 ## build: Compile the binary
+.PHONY: build
 build:
 	CGO_ENABLED=1 GOOS=${OS} GOARCH=${ARCH} go build -o ${BINARY_NAME}  ${GO_FILE}
 
 ## install: Install the binary to the BIN_DIR
 install: build
+.PHONY: install
 	mv ${BINARY_NAME} ${BIN_DIR}
 
-## clean: Clean the build artifacts
-clean:
-	env GO111MODULE=on go clean -cache
-	gomobile clean
-	rm -fr build
-
 ## reset_remote_branch: Reset the remote branch
+.PHONY: reset_remote_branch
 reset_remote_branch:
 	remote_branch=$(shell git rev-parse --abbrev-ref --symbolic-full-name @{u})
 	git reset --hard $(remote_branch)
 	git pull $(remote_branch)
 
 ## ios: Build the iOS framework
+.PHONY: ios
 ios:
 	go get golang.org/x/mobile
 	rm -rf build/ open_im_sdk/t_friend_sdk.go open_im_sdk/t_group_sdk.go  open_im_sdk/ws_wrapper/
@@ -74,6 +111,7 @@ ios:
 # Note: to build an AAR on Windows, gomobile, Android Studio, and the NDK must be installed.
 # The NDK version tested by the OpenIM team was r20b.
 # To build an AAR on Mac, gomobile, Android Studio, and the NDK version 20.0.5594570 must be installed.
+.PHONY: android
 android:
 	go get golang.org/x/mobile/bind
 	GOARCH=amd64 gomobile bind -v -trimpath -ldflags="-s -w" -o ./open_im_sdk.aar -target=android ./open_im_sdk/ ./open_im_sdk_callback/
@@ -99,8 +137,15 @@ copyright-verify:
 .PHONY: copyright-add
 copyright-add: 
 	@echo "===========> Adding $(LICENSE_TEMPLATE) the boilerplate headers for all files"
-	@addlicense -y $(shell date +"%Y") -v -c "KubeCub & Xinwei Xiong(cubxxw)." -f $(LICENSE_TEMPLATE) $(CODE_DIRS)
+	@addlicense -y $(shell date +"%Y") -v -c "OpenIM SDK." -f $(LICENSE_TEMPLATE) $(CODE_DIRS)
 	@echo "===========> End the copyright is added..."
+
+## clean: Clean the build artifacts
+clean:
+.PHONY: clean
+	env GO111MODULE=on go clean -cache
+	gomobile clean
+	-rm -fvr build
 
 ## help: Show this help info.
 .PHONY: help
