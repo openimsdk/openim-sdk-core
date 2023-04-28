@@ -287,27 +287,27 @@ func (c *LongConnMgr) handleMessage(message []byte) {
 		return
 	}
 	ctx := context.WithValue(c.ctx, "operationID", wsResp.OperationID)
-	log.ZInfo(ctx, "ws recv msg", "code", wsResp.ErrCode, "reqIdentifier", wsResp.ReqIdentifier)
+	log.ZInfo(ctx, "recv msg", "code", wsResp.ErrCode, "reqIdentifier", wsResp.ReqIdentifier)
 	switch wsResp.ReqIdentifier {
-	case constant.WSPushMsg:
-		if err = c.doWSPushMsg(ctx, wsResp); err != nil {
+	case constant.PushMsg:
+		if err = c.doPushMsg(ctx, wsResp); err != nil {
 			log.ZError(ctx, "doWSPushMsg failed", err, "wsResp", wsResp)
 		}
-	case constant.WSKickOnlineMsg:
+	case constant.KickOnlineMsg:
 		log.Warn(wsResp.OperationID, "kick...  logout")
 		w.kickOnline(wsResp)
 		w.Logout(ctx)
-	case constant.WSGetNewestSeq:
+	case constant.GetNewestSeq:
 		fallthrough
-	case constant.WSPullMsgBySeqList:
+	case constant.PullMsgBySeqList:
 		fallthrough
-	case constant.WSSendMsg:
+	case constant.SendMsg:
 		fallthrough
-	case constant.WsLogoutMsg:
+	case constant.LogoutMsg:
 		fallthrough
-	case constant.WSSendSignalMsg:
+	case constant.SendSignalMsg:
 		fallthrough
-	case constant.WsSetBackgroundStatus:
+	case constant.SetBackgroundStatus:
 		if err := c.syncer.notifyResp(ctx, wsResp); err != nil {
 			log.ZError(ctx, "notifyResp failed", err, "wsResp", wsResp)
 		}
@@ -408,7 +408,7 @@ func (c *LongConnMgr) reConn(ctx context.Context) error {
 
 	return nil
 }
-func (c *LongConnMgr) doWSPushMsg(ctx context.Context, wsResp GeneralWsResp) error {
+func (c *LongConnMgr) doPushMsg(ctx context.Context, wsResp GeneralWsResp) error {
 	var msg sdkws.MsgData
 	err := proto.Unmarshal(wsResp.Data, &msg)
 	if err != nil {
