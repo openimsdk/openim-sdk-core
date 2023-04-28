@@ -7,6 +7,7 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 	"net/http"
@@ -14,7 +15,6 @@ import (
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
-	"open_im_sdk/sdk_struct"
 	"sync"
 	"time"
 )
@@ -55,8 +55,8 @@ var upgrader = websocket.Upgrader{
 
 type LongConnMgr struct {
 	//conn status mutex
-	w sync.Mutex
-	connStatus         int
+	w          sync.Mutex
+	connStatus int
 	// The long connection,can be set tcp or websocket.
 	conn     LongConn
 	listener open_im_sdk_callback.OnConnListener
@@ -65,8 +65,8 @@ type LongConnMgr struct {
 	pushMsgAndMaxSeqCh chan common.Cmd2Value
 	conversationCh     chan common.Cmd2Value
 	closedErr          error
-	ctx                *ConnContext
-	IsCompression         bool
+	ctx                context.Context
+	IsCompression      bool
 	syncer             *WsRespAsyn
 	encoder            Encoder
 	compressor         Compressor
@@ -129,40 +129,37 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 // reads from this goroutine.
 func (c *LongConnMgr) readPump(ctx context.Context) {
 	defer func() {
-		c.hub.unregister <- c
+		//c.hub.unregister <- c
 		c.conn.Close()
 	}()
 	c.conn.SetReadLimit(maxMessageSize)
 	_ = c.conn.SetReadDeadline(pongWait)
 	//c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
-		err:=c.reConn(ctx)
-		if err!=nil{
-			log.ZError(c.ctx,"reConn",err)
-			time.Sleep(time.Second*1)
+		err := c.reConn(ctx)
+		if err != nil {
+			log.ZError(c.ctx, "reConn", err)
+			time.Sleep(time.Second * 1)
 			continue
 		}
 		messageType, message, err := c.conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
-			}
-			break
-			c.closedErr = err
+			//if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			//	log.Printf("error: %v", err)
+			//}
+			//break
+			//c.closedErr = err
+
 		}
 		switch messageType {
 		case MessageBinary:
-			parseDataErr := c.handleMessage(message)
-			if parseDataErr != nil {
-				c.closedErr = parseDataErr
-				return
-			}
+			c.handleMessage(message)
 		case MessageText:
 			c.closedErr = ErrNotSupportMessageProtocol
 			return
-		case PingMessage:
-			err := c.writePongMsg()
-			log.ZError(c.ctx, "writePongMsg", err)
+		//case PingMessage:
+		//	err := c.writePongMsg()
+		//	log.ZError(c.ctx, "writePongMsg", err)
 		case CloseMessage:
 			c.closedErr = ErrClientClosed
 			return
@@ -207,6 +204,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 				if err != nil {
 					log.ZError(c.ctx, "send binary message error", err, "local address", c.conn.LocalAddr(), "message", message.Message)
 					_ = c.close()
+					time.Sleep(time.Second * 1)
 					continue
 				} else {
 					break
@@ -219,12 +217,12 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 					err := c.syncer.notifyCh(tempChan, resp, 1)
 					if err != nil {
 						//log.Warn(wsResp.OperationID, "TriggerCmdNewMsgCome failed ", err.Error(), ch, wsResp.ReqIdentifier, wsResp.MsgIncr)
-				        log.ZError(c.ctx, "TriggerCmdNewMsgCome failed", err,"wsResp", resp)
+						log.ZError(c.ctx, "TriggerCmdNewMsgCome failed", err, "wsResp", resp)
 					}
 					log.ZInfo(c.ctx, "receive response", "local address", c.conn.LocalAddr(), "message", message.Message, "response", resp)
 					//_ = c.close()
 				case <-time.After(time.Second * 3):
-					resp:=GeneralWsResp{
+					resp := GeneralWsResp{
 						ReqIdentifier: message.Message.ReqIdentifier,
 						ErrCode:       0,
 						ErrMsg:        "",
@@ -234,7 +232,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 					err := c.syncer.notifyCh(tempChan, resp, 1)
 					if err != nil {
 						//log.Warn(wsResp.OperationID, "TriggerCmdNewMsgCome failed ", err.Error(), ch, wsResp.ReqIdentifier, wsResp.MsgIncr)
-						log.ZError(c.ctx, "TriggerCmdNewMsgCome failed", err,"wsResp", resp)
+						log.ZError(c.ctx, "TriggerCmdNewMsgCome failed", err, "wsResp", resp)
 					}
 				}
 			}()
@@ -255,7 +253,7 @@ func (c *LongConnMgr) writeBinaryMsg(req GeneralWsReq) error {
 		return err
 	}
 	_ = c.conn.SetWriteDeadline(writeWait)
-	if c.isCompress {
+	if c.IsCompression {
 		resultBuf, compressErr := c.compressor.Compress(encodeBuf)
 		if compressErr != nil {
 			return compressErr
@@ -274,25 +272,27 @@ func (c *LongConnMgr) close() error {
 }
 
 func (c *LongConnMgr) handleMessage(message []byte) {
+	if c.IsCompression {
+		var decompressErr error
+		message, decompressErr = c.compressor.DeCompress(message)
+		if decompressErr != nil {
+			log.ZError(c.ctx, "DeCompress failed", decompressErr, message)
+			return
+		}
+	}
 	var wsResp GeneralWsResp
 	err := c.encoder.Decode(message, &wsResp)
 	if err != nil {
-		log.Error("decodeBinaryWs err", err.Error())
+		log.ZError(c.ctx, "decodeBinaryWs err", err, "message", message)
 		return
 	}
-	ctx := context.WithValue(context.Background(), "operationID", wsResp.OperationID)
-	log.Debug(wsResp.OperationID, "ws recv msg, code: ", wsResp.ErrCode, wsResp.ReqIdentifier)
+	ctx := context.WithValue(c.ctx, "operationID", wsResp.OperationID)
+	log.ZInfo(ctx, "ws recv msg", "code", wsResp.ErrCode, "reqIdentifier", wsResp.ReqIdentifier)
 	switch wsResp.ReqIdentifier {
 	case constant.WSPushMsg:
-		// todo
-		/
-		if err = w.doWSPushMsg(wsResp); err != nil {
-			log.Error(wsResp.OperationID, "doWSPushMsg failed ", err.Error())
+		if err = c.doWSPushMsg(ctx, wsResp); err != nil {
+			log.ZError(ctx, "doWSPushMsg failed", err, "wsResp", wsResp)
 		}
-		//if err = w.doWSPushMsgForTest(*wsResp); err != nil {
-		//	log.Error(wsResp.OperationID, "doWSPushMsgForTest failed ", err.Error())
-		//}
-
 	case constant.WSKickOnlineMsg:
 		log.Warn(wsResp.OperationID, "kick...  logout")
 		w.kickOnline(wsResp)
@@ -316,7 +316,7 @@ func (c *LongConnMgr) handleMessage(message []byte) {
 		return
 	}
 }
-func (c *LongConnMgr) IsConnected()bool {
+func (c *LongConnMgr) IsConnected() bool {
 	c.w.Lock()
 	defer c.w.Unlock()
 	if c.connStatus == Connected {
@@ -325,16 +325,16 @@ func (c *LongConnMgr) IsConnected()bool {
 	return false
 
 }
-func (c *LongConnMgr)reConn(ctx context.Context) error {
+func (c *LongConnMgr) reConn(ctx context.Context) error {
 	if c.IsConnected() {
 		return nil
 	}
 	c.listener.OnConnecting()
 	c.w.Lock()
 	c.connStatus = Connecting
-    c.w.Unlock()
+	c.w.Unlock()
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s", ccontext.Info(ctx).WsAddr(),
-		ccontext.Info(ctx).UserID(),ccontext.Info(ctx).Token(), ccontext.Info(ctx).Platform(), ccontext.Info(ctx).OperationID())
+		ccontext.Info(ctx).UserID(), ccontext.Info(ctx).Token(), ccontext.Info(ctx).Platform(), ccontext.Info(ctx).OperationID())
 	var header http.Header
 	if c.IsCompression {
 		header = http.Header{"compression": []string{"gzip"}}
@@ -397,13 +397,22 @@ func (c *LongConnMgr)reConn(ctx context.Context) error {
 		c.w.Lock()
 		c.connStatus = Closed
 		c.w.Unlock()
-		return	err
+		return err
 	}
 	c.listener.OnConnectSuccess()
 	c.ctx = newContext(c.conn.LocalAddr())
+	c.ctx = context.WithValue(ctx, "ConnContext", c.ctx)
 	c.w.Lock()
 	c.connStatus = Connected
 	c.w.Unlock()
 
-return nil
+	return nil
+}
+func (c *LongConnMgr) doWSPushMsg(ctx context.Context, wsResp GeneralWsResp) error {
+	var msg sdkws.MsgData
+	err := proto.Unmarshal(wsResp.Data, &msg)
+	if err != nil {
+		return err
+	}
+	return common.TriggerCmdPushMsg(ctx, &msg, c.pushMsgAndMaxSeqCh)
 }

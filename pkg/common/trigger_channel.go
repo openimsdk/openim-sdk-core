@@ -3,6 +3,7 @@ package common
 import (
 	"context"
 	"errors"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
@@ -99,12 +100,12 @@ func TriggerCmdUpdateMessage(node UpdateMessageNode, conversationCh chan Cmd2Val
 	return sendCmd(conversationCh, c2v, 100)
 }
 
-func TriggerCmdPushMsg(msg sdk_struct.CmdPushMsgToMsgSync, ch chan Cmd2Value) error {
+func TriggerCmdPushMsg(ctx context.Context, msg *sdkws.MsgData, ch chan Cmd2Value) error {
 	if ch == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
 
-	c2v := Cmd2Value{Cmd: constant.CmdPushMsg, Value: msg}
+	c2v := Cmd2Value{Cmd: constant.CmdPushMsg, Value: msg, Ctx: ctx}
 	return sendCmd(ch, c2v, 100)
 }
 
