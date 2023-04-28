@@ -294,7 +294,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	}
 	u.push = comm2.NewPush(u.info.Platform, u.loginUserID)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
-	ws.NewLongConnMgr(ctx, u.connListener, u.pushMsgAndMaxSeqCh)
+	ws.NewLongConnMgr(ctx, u.connListener, u.pushMsgAndMaxSeqCh, u.conversationCh)
 	//wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID, u.imConfig.IsCompression, u.conversationCh)
 	//wsRespAsyn := ws.NewWsRespAsyn()
 	//u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh, u.conversationCh)

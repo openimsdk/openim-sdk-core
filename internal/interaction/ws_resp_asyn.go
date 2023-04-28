@@ -18,7 +18,7 @@ type GeneralWsResp struct {
 }
 
 type GeneralWsReq struct {
-	ReqIdentifier int32  `json:"reqIdentifier"`
+	ReqIdentifier int    `json:"reqIdentifier"`
 	Token         string `json:"token"`
 	SendID        string `json:"sendID"`
 	OperationID   string `json:"operationID"`
@@ -82,7 +82,7 @@ func (u *WsRespAsyn) DelCh(msgIncr string) {
 	}
 }
 
-func notifyCh(ch chan GeneralWsResp, value GeneralWsResp, timeout int64) error {
+func (u *WsRespAsyn) notifyCh(ch chan GeneralWsResp, value GeneralWsResp, timeout int64) error {
 	var flag = 0
 	select {
 	case ch <- value:
@@ -107,7 +107,7 @@ func (u *WsRespAsyn) notifyResp(wsResp GeneralWsResp) error {
 		return utils.Wrap(errors.New("no ch"), "GetCh failed "+wsResp.MsgIncr)
 	}
 	for {
-		err := notifyCh(ch, wsResp, 1)
+		err := u.notifyCh(ch, wsResp, 1)
 		if err != nil {
 			log.Warn(wsResp.OperationID, "TriggerCmdNewMsgCome failed ", err.Error(), ch, wsResp.ReqIdentifier, wsResp.MsgIncr)
 			continue
