@@ -308,7 +308,7 @@ func (c *LongConnMgr) handleMessage(message []byte) {
 	case constant.WSSendSignalMsg:
 		fallthrough
 	case constant.WsSetBackgroundStatus:
-		if err := c.syncer.notifyResp(wsResp); err != nil {
+		if err := c.syncer.notifyResp(ctx, wsResp); err != nil {
 			log.ZError(ctx, "notifyResp failed", err, "wsResp", wsResp)
 		}
 	default:

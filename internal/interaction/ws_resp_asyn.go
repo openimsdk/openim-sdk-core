@@ -1,8 +1,9 @@
 package interaction
 
 import (
+	"context"
 	"errors"
-	"open_im_sdk/pkg/log"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"open_im_sdk/pkg/utils"
 	"sync"
 	"time"
@@ -98,7 +99,7 @@ func (u *WsRespAsyn) notifyCh(ch chan GeneralWsResp, value GeneralWsResp, timeou
 }
 
 // write a unit test for this function
-func (u *WsRespAsyn) notifyResp(wsResp GeneralWsResp) error {
+func (u *WsRespAsyn) notifyResp(ctx context.Context, wsResp GeneralWsResp) error {
 	u.wsMutex.Lock()
 	defer u.wsMutex.Unlock()
 
@@ -109,8 +110,9 @@ func (u *WsRespAsyn) notifyResp(wsResp GeneralWsResp) error {
 	for {
 		err := u.notifyCh(ch, wsResp, 1)
 		if err != nil {
-			log.Warn(wsResp.OperationID, "TriggerCmdNewMsgCome failed ", err.Error(), ch, wsResp.ReqIdentifier, wsResp.MsgIncr)
+			log.ZWarn(ctx, "TriggerCmdNewMsgCome failed ", err, "ch", ch, "wsResp", wsResp)
 			continue
+
 		}
 		return nil
 	}
