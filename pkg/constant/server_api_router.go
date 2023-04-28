@@ -1,3 +1,8 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the MIT License (the "License");
+// you may not use this file except in compliance with the License.
+
 package constant
 
 const (
@@ -9,8 +14,8 @@ const (
 
 	AddFriendRouter                    = "/friend/add_friend"
 	DeleteFriendRouter                 = "/friend/delete_friend"
-	GetFriendApplicationListRouter     = "/friend/get_friend_apply_list"      //recv
-	GetSelfFriendApplicationListRouter = "/friend/get_self_friend_apply_list" //send
+	GetFriendApplicationListRouter     = "/friend/get_friend_apply_list"      // recv
+	GetSelfFriendApplicationListRouter = "/friend/get_self_friend_apply_list" // send
 	GetFriendListRouter                = "/friend/get_friend_list"
 	AddFriendResponse                  = "/friend/add_friend_response"
 	SetFriendRemark                    = "/friend/set_friend_remark"
@@ -24,7 +29,7 @@ const (
 	PullUserMsgBySeqRouter = "/chat/pull_msg_by_seq"
 	NewestSeqRouter        = "/chat/newest_seq"
 
-	//msg
+	// msg.
 	DeleteMsgRouter                    = RouterMsg + "/del_msg"
 	ClearMsgRouter                     = RouterMsg + "/clear_msg"
 	DeleteSuperGroupMsgRouter          = RouterMsg + "/del_super_group_msg"
@@ -39,7 +44,7 @@ const (
 	MinioStorageCredentialRouter        = "/third/minio_storage_credential"
 	AwsStorageCredentialRouter          = "/third/aws_storage_credential"
 
-	//group
+	// group.
 	CreateGroupRouter                 = RouterGroup + "/create_group"
 	SetGroupInfoRouter                = RouterGroup + "/set_group_info"
 	JoinGroupRouter                   = RouterGroup + "/join_group"
@@ -75,19 +80,20 @@ const (
 	BatchSetConversationRouter         = ConversationGroup + "/batch_set_conversation"
 	ModifyConversationFieldRouter      = ConversationGroup + "/modify_conversation_field"
 
-	//organization
+	// organization.
 	GetSubDepartmentRouter    = RouterOrganization + "/get_sub_department"
 	GetDepartmentMemberRouter = RouterOrganization + "/get_department_member"
 	ParseTokenRouter          = RouterAuth + "/parse_token"
 
-	//super_group
+	// super_group.
 	GetJoinedSuperGroupListRouter = RouterSuperGroup + "/get_joined_group_list"
 	GetSuperGroupsInfoRouter      = RouterSuperGroup + "/get_groups_info"
 
-	//third
+	// third.
 	FcmUpdateTokenRouter = RouterThird + "/fcm_update_token"
 	SetAppBadgeRouter    = RouterThird + "/set_app_badge"
 )
+
 const (
 	RouterGroup        = "/group"
 	ConversationGroup  = "/conversation"

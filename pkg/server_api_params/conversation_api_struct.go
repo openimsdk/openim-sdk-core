@@ -1,3 +1,8 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the MIT License (the "License");
+// you may not use this file except in compliance with the License.
+
 package server_api_params
 
 type Conversation struct {
@@ -25,8 +30,7 @@ type SetConversationReq struct {
 	OperationID      string `json:"operationID" binding:"required"`
 }
 
-type SetConversationResp struct {
-}
+type SetConversationResp struct{}
 type ModifyConversationFieldReq struct {
 	Conversation
 	FieldType   int32    `json:"fieldType" binding:"required"`

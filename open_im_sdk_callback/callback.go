@@ -1,3 +1,8 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the MIT License (the "License");
+// you may not use this file except in compliance with the License.
+
 package open_im_sdk_callback
 
 type Base interface {
@@ -43,7 +48,7 @@ type OnFriendshipListener interface {
 type OnConversationListener interface {
 	OnSyncServerStart()
 	OnSyncServerFinish()
-	//OnSyncServerProgress(progress int)
+	// OnSyncServerProgress(progress int)
 	OnSyncServerFailed()
 	OnNewConversation(conversationList string)
 	OnConversationChanged(conversationList string)
@@ -53,7 +58,7 @@ type OnAdvancedMsgListener interface {
 	OnRecvNewMessage(message string)
 	OnRecvC2CReadReceipt(msgReceiptList string)
 	OnRecvGroupReadReceipt(groupMsgReceiptList string)
-	//deprecated
+	// deprecated
 	OnRecvMessageRevoked(msgID string)
 	OnNewRecvMessageRevoked(messageRevoked string)
 	OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string)

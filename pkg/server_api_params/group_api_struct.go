@@ -1,3 +1,8 @@
+// Copyright © 2023 OpenIM SDK. All rights reserved.
+//
+// Licensed under the MIT License (the "License");
+// you may not use this file except in compliance with the License.
+
 package server_api_params
 
 type CommResp struct {
@@ -101,8 +106,9 @@ type CreateGroupResp struct {
 
 type GetGroupApplicationListReq struct {
 	OperationID string `json:"operationID" binding:"required"`
-	FromUserID  string `json:"fromUserID" binding:"required"` //作为管理员或群主收到的 进群申请
+	FromUserID  string `json:"fromUserID" binding:"required"` // 作为管理员或群主收到的 进群申请
 }
+
 type GetGroupApplicationListResp struct {
 	CommResp
 	GroupRequestList []*GroupRequest
@@ -152,7 +158,7 @@ type GetGroupInfoResp struct {
 type ApplicationGroupResponseReq struct {
 	OperationID  string `json:"operationID" binding:"required"`
 	GroupID      string `json:"groupID" binding:"required"`
-	FromUserID   string `json:"fromUserID" binding:"required"` //application from FromUserID
+	FromUserID   string `json:"fromUserID" binding:"required"` // application from FromUserID
 	HandledMsg   string `json:"handledMsg"`
 	HandleResult int32  `json:"handleResult" binding:"required,oneof=-1 1"`
 }
