@@ -39,9 +39,9 @@ type MsgSyncer struct {
 
 	conversationCh chan common.Cmd2Value // trigger conversation
 
-	ctx       context.Context
-	seqs      map[string]SyncedSeq
-	msgCache  map[string]map[int64]*sdkws.MsgData
+	ctx  context.Context
+	seqs map[string]SyncedSeq
+	// msgCache  map[string]map[int64]*sdkws.MsgData
 	db        db_interface.DataBase
 	syncTimes int
 }
@@ -56,7 +56,7 @@ func NewMsgSyncer(ctx context.Context, conversationCh, recvMsgCh, recvSeqch chan
 		ws:             ws,
 		loginUserID:    loginUserID,
 		ctx:            ctx,
-		msgCache:       make(map[string]map[int64]*sdkws.MsgData),
+		// msgCache:       make(map[string]map[int64]*sdkws.MsgData),
 	}
 	err := m.loadSeq(ctx)
 	return m, err
@@ -168,7 +168,7 @@ func (m *MsgSyncer) handleRecvMsgAndSyncSeqs(ctx context.Context, msg *sdkws.Msg
 		oldSeq.maxSeqSynced = msg.Seq
 		m.seqs[msg.GroupID] = oldSeq
 	} else {
-		m.msgCache[msg.GroupID][msg.Seq] = msg
+		// m.msgCache[msg.GroupID][msg.Seq] = msg
 		m.sync(ctx, msg.GroupID, msg.SessionType, m.seqs[msg.GroupID].maxSeqSynced, msg.Seq)
 	}
 }
@@ -181,7 +181,6 @@ func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, sourceID string, ses
 		return err
 	}
 	_ = m.triggerConversation(ctx, msgs)
-	delete(m.msgCache, sourceID)
 	return err
 }
 
