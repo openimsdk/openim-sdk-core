@@ -18,8 +18,7 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
-////////////////////////// message/////////////////////////
-
+// message
 type MessageReceipt struct {
 	GroupID     string   `json:"groupID"`
 	UserID      string   `json:"userID"`
@@ -29,6 +28,7 @@ type MessageReceipt struct {
 	ContentType int32    `json:"contentType"`
 	SessionType int32    `json:"sessionType"`
 }
+
 type MessageRevoked struct {
 	RevokerID                   string `json:"revokerID"`
 	RevokerRole                 int32  `json:"revokerRole"`
@@ -42,6 +42,7 @@ type MessageRevoked struct {
 	Seq                         int64  `json:"seq"`
 	Ex                          string `json:"ex"`
 }
+
 type MessageReaction struct {
 	ClientMsgID  string `json:"clientMsgID"`
 	ReactionType int    `json:"reactionType"`
@@ -51,12 +52,14 @@ type MessageReaction struct {
 	SessionType  int32  `json:"sessionType"`
 	Info         string `json:"info,omitempty"`
 }
+
 type ImageInfo struct {
 	Width  int32  `json:"x"`
 	Height int32  `json:"y"`
 	Type   string `json:"type,omitempty"`
 	Size   int64  `json:"size"`
 }
+
 type PictureBaseInfo struct {
 	UUID   string `json:"uuid,omitempty"`
 	Type   string `json:"type,omitempty"`
@@ -65,6 +68,7 @@ type PictureBaseInfo struct {
 	Height int32  `json:"height"`
 	Url    string `json:"url,omitempty"`
 }
+
 type SoundBaseInfo struct {
 	UUID      string `json:"uuid,omitempty"`
 	SoundPath string `json:"soundPath,omitempty"`
@@ -73,6 +77,7 @@ type SoundBaseInfo struct {
 	Duration  int64  `json:"duration"`
 	SoundType string `json:"soundType,omitempty"`
 }
+
 type VideoBaseInfo struct {
 	VideoPath      string `json:"videoPath,omitempty"`
 	VideoUUID      string `json:"videoUUID,omitempty"`
@@ -88,6 +93,7 @@ type VideoBaseInfo struct {
 	SnapshotHeight int32  `json:"snapshotHeight"`
 	SnapshotType   string `json:"snapshotType,omitempty"`
 }
+
 type FileBaseInfo struct {
 	FilePath  string `json:"filePath,omitempty"`
 	UUID      string `json:"uuid,omitempty"`
@@ -240,6 +246,7 @@ type GroupHasReadInfo struct {
 	HasReadCount      int32    `json:"hasReadCount"`
 	GroupMemberCount  int32    `json:"groupMemberCount"`
 }
+
 type NewMsgList []*MsgStruct
 
 // Implement the sort.Interface interface to get the number of elements method.

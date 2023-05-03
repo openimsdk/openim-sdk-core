@@ -55,7 +55,7 @@ func retry(url string, data interface{}, token string, attempts int, sleep time.
 func Post2Api(url string, data interface{}, token string) (content []byte, err error) {
 	c, err := postLogic(url, data, token)
 	return c, utils.Wrap(err, " post")
-	return retry(url, data, token, 1, 10*time.Second, postLogic)
+	// return retry(url, data, token, 1, 10*time.Second, postLogic)
 }
 
 func Post2ApiForRead(url string, data interface{}, token string) (content []byte, err error) {

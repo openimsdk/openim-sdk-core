@@ -34,6 +34,7 @@ func (f *fileHook) Levels() []logrus.Level {
 //		entry.Data["FilePath"] = s
 //		return nil
 //	}
+
 func (f *fileHook) Fire(entry *logrus.Entry) error {
 	var s string
 	_, b, c, _ := runtime.Caller(8)

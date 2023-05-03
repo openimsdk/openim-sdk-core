@@ -133,11 +133,6 @@ To propose PR for the Open-IM-SDK-Core item, we assume you have registered a Git
    ❯ git rebase upstream/main
    ❯ 
    ❯ git rebase -i	<commit-id> # rebase with interactive mode to squash your commits into a single one
-   ❯ git push # push to the remote repository, if it's a first time push, run git push --set-upstream origin <new-branch># sync up with upstream
-   ❯ git fetch upstream main
-   git rebase upstream/main
-   
-   ❯ git rebase -i	<commit-id> # rebase with interactive mode to squash your commits into a single one
    ❯ git push # push to the remote repository, if it's a first time push, run git push --set-upstream origin <new-branch>
    ```
 
