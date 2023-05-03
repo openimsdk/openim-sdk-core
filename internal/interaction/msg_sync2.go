@@ -214,7 +214,7 @@ func (m *MsgSyncer) syncMsgBySeqs(ctx context.Context, sourceID string, sessionT
 	pullMsgReq := sdkws.PullMessageBySeqsReq{}
 	pullMsgReq.UserID = m.loginUserID
 	pullMsgReq.GroupSeqs = make(map[string]*sdkws.Seqs, 0)
-	
+
 	split := constant.SplitPullMsgNum
 	seqsList := m.splitSeqs(split, seqsNeedSync)
 	for i := 0; i < len(seqsList); {
@@ -245,15 +245,41 @@ func (m *MsgSyncer) triggerConversation(ctx context.Context, msgs []*sdkws.MsgDa
 }
 
 func (m *MsgSyncer) triggerReconnect() {
-
+	m.ws.mutex.RLock()
+	defer m.ws.mutex.RUnlock()
+	for groupID, syncedSeq := range m.seqs {
+		if syncedSeq.maxSeqSynced == 0 {
+			continue
+		}
+		err := m.sync(m.ctx, groupID, syncedSeq.sessionType, 0, syncedSeq.maxSeqSynced)
+		if err != nil {
+			log.ZError(m.ctx, "sync failed", err, "groupID", groupID)
+		}
+	}
 }
 
 func (m *MsgSyncer) triggerReconnectFinished() {
-
+	for groupID, syncedSeq := range m.seqs {
+		if syncedSeq.maxSeqSynced == 0 {
+			continue
+		}
+		err := m.sync(m.ctx, groupID, syncedSeq.sessionType, 0, syncedSeq.maxSeqSynced)
+		if err != nil {
+			log.ZError(m.ctx, "sync failed", err, "groupID", groupID)
+		}
+	}
 }
 
 func (m *MsgSyncer) triggerSync() {
-
+	for groupID, syncedSeq := range m.seqs {
+		if syncedSeq.maxSeqSynced == 0 {
+			continue
+		}
+		err := m.sync(m.ctx, groupID, syncedSeq.sessionType, syncedSeq.maxSeqSynced, syncedSeq.maxSeqSynced+defaultPullNums)
+		if err != nil {
+			log.ZError(m.ctx, "sync failed", err, "groupID", groupID)
+		}
+	}
 }
 
 func (m *MsgSyncer) triggerSyncFinished() {
