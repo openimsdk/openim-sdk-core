@@ -210,6 +210,7 @@ func (m *MsgSyncer) syncMsgBySeqsInterval(ctx context.Context, sourceID string, 
 	return partMsgs, nil
 }
 
+// synchronizes messages by SEQs.
 func (m *MsgSyncer) syncMsgBySeqs(ctx context.Context, sourceID string, sessionType int32, seqsNeedSync []int64) (allMsgs []*sdkws.MsgData, err error) {
 	pullMsgReq := sdkws.PullMessageBySeqsReq{}
 	pullMsgReq.UserID = m.loginUserID
@@ -236,6 +237,7 @@ func (m *MsgSyncer) syncMsgBySeqs(ctx context.Context, sourceID string, sessionT
 	return allMsgs, nil
 }
 
+// triggers a conversation with a new message.
 func (m *MsgSyncer) triggerConversation(ctx context.Context, msgs []*sdkws.MsgData) error {
 	err := common.TriggerCmdNewMsgCome(sdk_struct.CmdNewMsgComeToConversation{Ctx: ctx, MsgList: msgs}, m.conversationCh)
 	if err != nil {
@@ -244,6 +246,7 @@ func (m *MsgSyncer) triggerConversation(ctx context.Context, msgs []*sdkws.MsgDa
 	return err
 }
 
+// triggers a reconnection.
 func (m *MsgSyncer) triggerReconnect() {
 	m.ws.mutex.RLock()
 	defer m.ws.mutex.RUnlock()
@@ -258,6 +261,7 @@ func (m *MsgSyncer) triggerReconnect() {
 	}
 }
 
+// finishes a reconnection.
 func (m *MsgSyncer) triggerReconnectFinished() {
 	for groupID, syncedSeq := range m.seqs {
 		if syncedSeq.maxSeqSynced == 0 {
@@ -270,6 +274,7 @@ func (m *MsgSyncer) triggerReconnectFinished() {
 	}
 }
 
+// triggers a synchronization.
 func (m *MsgSyncer) triggerSync() {
 	for groupID, syncedSeq := range m.seqs {
 		if syncedSeq.maxSeqSynced == 0 {
@@ -282,6 +287,7 @@ func (m *MsgSyncer) triggerSync() {
 	}
 }
 
+// finishes a synchronization.
 func (m *MsgSyncer) triggerSyncFinished() {
-
+	log.Logger("Synchronization complete")
 }
