@@ -24,7 +24,7 @@ type Ws struct {
 	//conversationCh chan common.Cmd2Value
 	cmdCh              chan common.Cmd2Value //waiting logout cmd
 	pushMsgAndMaxSeqCh chan common.Cmd2Value //recv push msg  -> channel
-	cmdHeartbeatCh     chan common.Cmd2Value //
+	cmdHeartbeatCh     chan common.Cmd2Value
 	conversationCH     chan common.Cmd2Value
 	JustOnceFlag       bool
 	IsBackground       bool

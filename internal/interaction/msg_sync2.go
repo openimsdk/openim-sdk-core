@@ -29,7 +29,7 @@ type SyncedSeq struct {
 	sessionType  int32
 }
 
-// 回调同步开始 结束， 重连结束
+// The callback synchronization starts. The reconnection ends
 type MsgSyncer struct {
 	loginUserID string
 	// listen ch
