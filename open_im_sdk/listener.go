@@ -19,6 +19,7 @@ import (
 	"open_im_sdk/pkg/log"
 )
 
+// SetGroupListener sets the group listener.
 func SetGroupListener(callback open_im_sdk_callback.OnGroupListener) {
 	if callback == nil || UserForSDK == nil {
 		log.Error("callback or UserForSDK is nil")
@@ -27,6 +28,7 @@ func SetGroupListener(callback open_im_sdk_callback.OnGroupListener) {
 	UserForSDK.SetGroupListener(callback)
 }
 
+// SetConversationListener sets the conversation listener.
 func SetConversationListener(listener open_im_sdk_callback.OnConversationListener) {
 	if listener == nil || UserForSDK == nil {
 		log.Error("callback or UserForSDK is nil")
@@ -34,6 +36,8 @@ func SetConversationListener(listener open_im_sdk_callback.OnConversationListene
 	}
 	UserForSDK.SetConversationListener(listener)
 }
+
+// SetSimpleMsgListener sets the simple message listener.
 func SetAdvancedMsgListener(listener open_im_sdk_callback.OnAdvancedMsgListener) {
 	if listener == nil || UserForSDK == nil {
 		log.Error("callback or UserForSDK is nil")
@@ -41,6 +45,8 @@ func SetAdvancedMsgListener(listener open_im_sdk_callback.OnAdvancedMsgListener)
 	}
 	UserForSDK.SetAdvancedMsgListener(listener)
 }
+
+// SetSimpleMsgListener sets the simple message listener.
 func SetBatchMsgListener(listener open_im_sdk_callback.OnBatchMsgListener) {
 	if listener == nil || UserForSDK == nil {
 		log.Error("callback or UserForSDK is nil")
@@ -49,6 +55,7 @@ func SetBatchMsgListener(listener open_im_sdk_callback.OnBatchMsgListener) {
 	UserForSDK.SetBatchMsgListener(listener)
 }
 
+// SetSimpleMsgListener sets the simple message listener.
 func SetUserListener(listener open_im_sdk_callback.OnUserListener) {
 	if listener == nil || UserForSDK == nil {
 		log.Error("callback or UserForSDK is nil")
@@ -57,6 +64,7 @@ func SetUserListener(listener open_im_sdk_callback.OnUserListener) {
 	UserForSDK.SetUserListener(listener)
 }
 
+// SetSimpleMsgListener sets the simple message listener.
 func SetFriendListener(listener open_im_sdk_callback.OnFriendshipListener) {
 	if listener == nil || UserForSDK == nil {
 		log.Error("callback or UserForSDK is nil")
@@ -65,6 +73,7 @@ func SetFriendListener(listener open_im_sdk_callback.OnFriendshipListener) {
 	UserForSDK.SetFriendListener(listener)
 }
 
+// SetSimpleMsgListener sets the simple message listener.
 func SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMomentsListener) {
 	if listener == nil || UserForSDK == nil {
 		log.Error("callback or UserForSDK is nil")
@@ -72,6 +81,8 @@ func SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMomentsListener)
 	}
 	UserForSDK.SetWorkMomentsListener(listener)
 }
+
+// SetSimpleMsgListener sets the simple message listener.
 func SetCustomBusinessListener(listener open_im_sdk_callback.OnCustomBusinessListener) {
 	if listener == nil || UserForSDK == nil {
 		log.Error("callback or UserForSDK is nil")
@@ -79,6 +90,8 @@ func SetCustomBusinessListener(listener open_im_sdk_callback.OnCustomBusinessLis
 	}
 	UserForSDK.SetBusinessListener(listener)
 }
+
+// SetSimpleMsgListener sets the simple message listener.
 func SetMessageKvInfoListener(listener open_im_sdk_callback.OnMessageKvInfoListener) {
 	if listener == nil || UserForSDK == nil {
 		log.Error("callback or UserForSDK is nil")
