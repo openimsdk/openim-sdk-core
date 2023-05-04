@@ -95,7 +95,7 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 	return nil
 }
 
-// DoListener Listen to the message pipe of the message synchronizer 
+// DoListener Listen to the message pipe of the message synchronizer
 // and process received and pushed messages
 func (m *MsgSyncer) DoListener() {
 	for {
@@ -105,7 +105,7 @@ func (m *MsgSyncer) DoListener() {
 		// case cmd := <-m.recvMsgCh:
 		// 	m.handleRecvMsgAndSyncSeqs(cmd.Ctx, cmd.Value.(*sdkws.MsgData))
 		case cmd := <-m.PushMsgAndMaxSeqCh:
-			m.handleRecvMsgAndSyncSeqs(cmd.Ctx, cmd.Value.(*sdkws.MsgData))
+			m.handleRecvMsgAndSyncSeqs(cmd.Ctx, cmd.Value.(*sdkws.MsgData), cmd.Cmd)
 		case <-m.ctx.Done():
 			log.ZInfo(m.ctx, "msg syncer done, sdk logout.....")
 			return
@@ -159,13 +159,17 @@ func (m *MsgSyncer) getSeqsNeedSync(syncedMaxSeq, maxSeq int64) []int64 {
 }
 
 // recv msg from
-func (m *MsgSyncer) handleRecvMsgAndSyncSeqs(ctx context.Context, msg *sdkws.MsgData) {
+func (m *MsgSyncer) handleRecvMsgAndSyncSeqs(ctx context.Context, msg *sdkws.MsgData, cmd string) {
+	// parsing cmd
+	if cmd == constant.CmdMaxSeq {
+		//...
+	}
 	// online msg
 	if msg.Seq == 0 {
 		_ = m.triggerConversation(ctx, []*sdkws.MsgData{msg})
 		return
 	}
-	// 连续直接触发并且刷新seq
+	// seq is triggered directly and refreshed continuously
 	if msg.Seq == m.seqs[msg.GroupID].maxSeqSynced+1 {
 		_ = m.triggerConversation(ctx, []*sdkws.MsgData{msg})
 		oldSeq := m.seqs[msg.GroupID]
@@ -245,8 +249,6 @@ func (m *MsgSyncer) triggerConversation(ctx context.Context, msgs []*sdkws.MsgDa
 
 // triggers a reconnection.
 func (m *MsgSyncer) triggerReconnect() {
-	m.longConnMgr.mutex.RLock()
-	defer m.longConnMgr.mutex.RUnlock()
 	for groupID, syncedSeq := range m.seqs {
 		if syncedSeq.maxSeqSynced == 0 {
 			continue
