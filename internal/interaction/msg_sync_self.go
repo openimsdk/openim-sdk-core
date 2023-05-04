@@ -16,7 +16,7 @@ import (
 
 type SelfMsgSync struct {
 	db_interface.DataBase
-	*Ws
+	longConnMgr *LongConnMgr
 	loginUserID        string
 	conversationCh     chan common.Cmd2Value
 	seqMaxSynchronized int64
@@ -24,8 +24,8 @@ type SelfMsgSync struct {
 	pushMsgCache       map[int64]*sdkws.MsgData
 }
 
-func NewSelfMsgSync(dataBase db_interface.DataBase, ws *Ws, loginUserID string, conversationCh chan common.Cmd2Value) *SelfMsgSync {
-	p := &SelfMsgSync{DataBase: dataBase, Ws: ws, loginUserID: loginUserID, conversationCh: conversationCh}
+func NewSelfMsgSync(dataBase db_interface.DataBase, longConnMgr *LongConnMgr, loginUserID string, conversationCh chan common.Cmd2Value) *SelfMsgSync {
+	p := &SelfMsgSync{DataBase: dataBase, longConnMgr: longConnMgr, loginUserID: loginUserID, conversationCh: conversationCh}
 	p.pushMsgCache = make(map[int64]*sdkws.MsgData, 0)
 	return p
 }

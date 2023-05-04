@@ -83,6 +83,7 @@ func TriggerCmdSyncReactionExtensions(node SyncReactionExtensionsNode, conversat
 
 	return sendCmd(conversationCh, c2v, 100)
 }
+
 func TriggerCmdUpdateConversation(node UpdateConNode, conversationCh chan<- Cmd2Value) error {
 	c2v := Cmd2Value{
 		Cmd:   constant.CmdUpdateConversation,
@@ -91,6 +92,7 @@ func TriggerCmdUpdateConversation(node UpdateConNode, conversationCh chan<- Cmd2
 
 	return sendCmd(conversationCh, c2v, 100)
 }
+
 func TriggerCmdUpdateMessage(node UpdateMessageNode, conversationCh chan Cmd2Value) error {
 	c2v := Cmd2Value{
 		Cmd:   constant.CmdUpdateMessage,

@@ -435,6 +435,7 @@ func (c *LongConnMgr) reConn(ctx context.Context) error {
 	_ = common.TriggerCmdConnected(ctx, c.pushMsgAndMaxSeqCh)
 	return nil
 }
+
 func (c *LongConnMgr) doPushMsg(ctx context.Context, wsResp GeneralWsResp) error {
 	var msg sdkws.MsgData
 	err := proto.Unmarshal(wsResp.Data, &msg)
