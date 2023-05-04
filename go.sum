@@ -1,7 +1,5 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230421115402-705ec6f65ecb h1:s4j0mKvnZkF/mcVNfWRid8IAUc6LFlhNyZmKVKvxWws=
-github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230421115402-705ec6f65ecb/go.mod h1:M2n3JOjtlSbRHEW0c/0QbwUHApNbsOZU6oP7rF8TVBU=
 github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230504080617-5d617cc2405b h1:ezUoHQdDPNHt+L8HdPNuZUTb+dhMJ/YzYtFTZCvHVc4=
 github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230504080617-5d617cc2405b/go.mod h1:P9NGHQzs4nT7XP+ur+ZRGlyj4+3TSxyqPY3eJqzWAzo=
 github.com/QcloudApi/qcloud_sign_golang v0.0.0-20141224014652-e4130a326409/go.mod h1:1pk82RBxDY/JZnPQrtqHlUFfCctgdorsd9M06fMynOM=
