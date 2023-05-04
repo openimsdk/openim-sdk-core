@@ -71,6 +71,7 @@ type LongConnMgr struct {
 	encoder            Encoder
 	compressor         Compressor
 }
+
 type Message struct {
 	Message GeneralWsReq
 	Resp    chan GeneralWsResp

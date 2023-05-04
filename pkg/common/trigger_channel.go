@@ -116,6 +116,7 @@ func TriggerCmdMaxSeq(seq sdk_struct.CmdMaxSeqToMsgSync, ch chan Cmd2Value) erro
 	c2v := Cmd2Value{Cmd: constant.CmdMaxSeq, Value: seq}
 	return sendCmd(ch, c2v, 100)
 }
+
 func TriggerCmdConnected(ctx context.Context, ch chan Cmd2Value) error {
 	if ch == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")

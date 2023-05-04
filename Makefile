@@ -6,8 +6,6 @@ SHELL := /bin/bash
 DIRS=$(shell ls)
 GO=go
 
-.PHONY: ios build install android
-
 # The NAME of the binary to build
 NAME=ws_wrapper/cmd/open_im_sdk_server
 
@@ -34,26 +32,31 @@ else
 endif
 
 ## build: Compile the binary
+.PHONY: build
 build:
 	CGO_ENABLED=1 GOOS=${OS} GOARCH=${ARCH} go build -o ${BINARY_NAME}  ${GO_FILE}
 
 ## install: Install the binary to the BIN_DIR
+.PHONY: install
 install:build
 	mv ${BINARY_NAME} ${BIN_DIR}
 
 ## clean: Clean the build artifacts
+.PHONY: clean
 clean:
 	env GO111MODULE=on go clean -cache
 	gomobile clean
 	rm -fr build
 
 ## reset_remote_branch: Reset the remote branch
+.PHONY: reset_remote_branch
 reset_remote_branch:
 	remote_branch=$(shell git rev-parse --abbrev-ref --symbolic-full-name @{u})
 	git reset --hard $(remote_branch)
 	git pull $(remote_branch)
 
 ## ios: Build the iOS framework
+.PHONY: ios
 ios:
 	go get golang.org/x/mobile
 	rm -rf build/ open_im_sdk/t_friend_sdk.go open_im_sdk/t_group_sdk.go  open_im_sdk/ws_wrapper/
@@ -64,6 +67,7 @@ ios:
 # Note: to build an AAR on Windows, gomobile, Android Studio, and the NDK must be installed.
 # The NDK version tested by the OpenIM team was r20b.
 # To build an AAR on Mac, gomobile, Android Studio, and the NDK version 20.0.5594570 must be installed.
+.PHONY: android
 android:
 	go get golang.org/x/mobile/bind
 	GOARCH=amd64 gomobile bind -v -trimpath -ldflags="-s -w" -o ./open_im_sdk.aar -target=android ./open_im_sdk/ ./open_im_sdk_callback/
