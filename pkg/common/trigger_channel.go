@@ -113,6 +113,7 @@ func TriggerCmdUpdateMessage(node UpdateMessageNode, conversationCh chan Cmd2Val
 	return sendCmd(conversationCh, c2v, 100)
 }
 
+// Push message, msg for msgData slice
 func TriggerCmdPushMsg(ctx context.Context, msg *sdkws.PushMessages, ch chan Cmd2Value) error {
 	if ch == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
@@ -122,7 +123,8 @@ func TriggerCmdPushMsg(ctx context.Context, msg *sdkws.PushMessages, ch chan Cmd
 	return sendCmd(ch, c2v, 100)
 }
 
-func TriggerCmdMaxSeq(ctx context.Context, seq sdk_struct.CmdMaxSeqToMsgSync, ch chan Cmd2Value) error {
+// seq trigger
+func TriggerCmdMaxSeq(seq sdk_struct.CmdMaxSeqToMsgSync, ch chan Cmd2Value) error {
 	if ch == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
@@ -130,6 +132,7 @@ func TriggerCmdMaxSeq(ctx context.Context, seq sdk_struct.CmdMaxSeqToMsgSync, ch
 	return sendCmd(ch, c2v, 100)
 }
 
+// Connection success trigger
 func TriggerCmdConnected(ctx context.Context, ch chan Cmd2Value) error {
 	if ch == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")

@@ -221,13 +221,11 @@ func (m *MsgSyncer) syncMsgBySeqsInterval(ctx context.Context, sourceID string, 
 func (m *MsgSyncer) syncMsgBySeqs(ctx context.Context, sourceID string, sessionType int32, seqsNeedSync []int64) (allMsgs []*sdkws.MsgData, err error) {
 	pullMsgReq := sdkws.PullMessageBySeqsReq{}
 	pullMsgReq.UserID = m.loginUserID
-	pullMsgReq.GroupSeqs = make(map[string]*sdkws.Seqs, 0)
 
 	split := constant.SplitPullMsgNum
 	seqsList := m.splitSeqs(split, seqsNeedSync)
 	for i := 0; i < len(seqsList); {
-		pullMsgReq.GroupSeqs[sourceID] = &sdkws.Seqs{Seqs: seqsList[i]}
-		resp, err := m.longConnMgr.SendReqWaitResp(ctx, &pullMsgReq, constant.WSPullMsgBySeqList, timeout, retryTimes, m.loginUserID)
+		resp, err := m.longConnMgr.SendReqWaitResp(ctx, &pullMsgReq, constant.WSPullMsgBySeqList, retryTimes, m.loginUserID)
 		if err != nil {
 			log.ZError(ctx, "syncMsgFromSvrSplit err", err, "pullMsgReq", pullMsgReq)
 			continue
@@ -294,5 +292,5 @@ func (m *MsgSyncer) triggerSync() {
 
 // finishes a synchronization.
 func (m *MsgSyncer) triggerSyncFinished() {
-	log.Logger("Synchronization complete")
+	log.Info("Synchronization complete")
 }
