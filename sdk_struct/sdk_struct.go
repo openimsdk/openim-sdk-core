@@ -1,6 +1,8 @@
 package sdk_struct
 
 import (
+	"context"
+
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
@@ -255,9 +257,10 @@ type IMConfig struct {
 	IsExternalExtensions bool   `json:"is_external_extensions"`
 }
 
-var SvrConf IMConfig
+//var SvrConf IMConfig
 
 type CmdNewMsgComeToConversation struct {
+	Ctx           context.Context
 	MsgList       []*sdkws.MsgData
 	OperationID   string
 	SyncFlag      int
@@ -273,10 +276,7 @@ type CmdPushMsgToMsgSync struct {
 }
 
 type CmdMaxSeqToMsgSync struct {
-	MaxSeqOnSvr            int64
-	OperationID            string
-	MinSeqOnSvr            int64
-	GroupID2MinMaxSeqOnSvr map[string]*sdkws.MaxAndMinSeq
+	ConversationMinMaxSeqOnSvr map[string]*sdkws.MaxAndMinSeq
 }
 
 type CmdJoinedSuperGroup struct {

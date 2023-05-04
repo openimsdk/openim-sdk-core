@@ -1,10 +1,10 @@
 package open_im_sdk
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"open_im_sdk/open_im_sdk_callback"
+	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"reflect"
@@ -87,11 +87,11 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 	if len(args)+1 != nin {
 		return nil, fmt.Errorf("go code error: fn in args num is not match")
 	}
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, "operationID", operationID)
-	ctx = context.WithValue(ctx, "token", UserForSDK.GetToken())
-	ctx = context.WithValue(ctx, "apiHost", UserForSDK.GetConfig().ApiAddr)
-
+	ctx := ccontext.WithOperationID(UserForSDK.BaseCtx(), operationID)
+	//ctx := context.Background()
+	//ctx = context.WithValue(ctx, "operationID", operationID)
+	//ctx = context.WithValue(ctx, "token", UserForSDK.GetToken())
+	//ctx = context.WithValue(ctx, "apiHost", UserForSDK.GetConfig().ApiAddr)
 	ins := make([]reflect.Value, 0, nin)
 	ins = append(ins, reflect.ValueOf(ctx))
 	for i := 0; i < len(args); i++ {
@@ -206,10 +206,12 @@ func syncCall(operationID string, fn any, args ...any) string {
 		return ""
 	}
 	ins := make([]reflect.Value, 0, numIn)
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, "operationID", operationID)
-	ctx = context.WithValue(ctx, "token", UserForSDK.GetToken())
-	ctx = context.WithValue(ctx, "apiHost", UserForSDK.GetConfig().ApiAddr)
+	//ctx := context.Background()
+	//ctx = context.WithValue(ctx, "operationID", operationID)
+	//ctx = context.WithValue(ctx, "token", UserForSDK.GetToken())
+	//ctx = context.WithValue(ctx, "apiHost", UserForSDK.GetConfig().ApiAddr)
+
+	ctx := ccontext.WithOperationID(UserForSDK.BaseCtx(), operationID)
 
 	ins = append(ins, reflect.ValueOf(ctx))
 	for i := 0; i < len(args); i++ {
@@ -325,9 +327,10 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 		return
 	}
 	ins := make([]reflect.Value, 0, numIn)
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, "operationID", operationID)
-	ctx = context.WithValue(ctx, "callback", callback)
+	//ctx := context.Background()
+	//ctx = context.WithValue(ctx, "operationID", operationID)
+	//ctx = context.WithValue(ctx, "callback", callback)
+	ctx := ccontext.WithOperationID(UserForSDK.BaseCtx(), operationID)
 	ins = append(ins, reflect.ValueOf(ctx))
 	for i := 2; i < len(args); i++ { // callback open_im_sdk_callback.Base, operationID string, ...
 		tag := fnt.In(i - 1) // ctx context.Context, ...

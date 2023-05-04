@@ -2,8 +2,7 @@ package signaling
 
 import (
 	"context"
-	"errors"
-	ws "open_im_sdk/internal/interaction"
+	"open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -12,15 +11,13 @@ import (
 	"strings"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
-
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 )
 
 type LiveSignaling struct {
-	*ws.Ws
+	*interaction.LongConnMgr
 	listener    open_im_sdk_callback.OnSignalingListener
 	loginUserID string
 	db_interface.DataBase
@@ -30,11 +27,8 @@ type LiveSignaling struct {
 	listenerForService open_im_sdk_callback.OnSignalingListener
 }
 
-func NewLiveSignaling(ws *ws.Ws, loginUserID string, platformID int32, db db_interface.DataBase) (*LiveSignaling, error) {
-	if ws == nil {
-		return nil, errs.Wrap(errors.New("ws is nil"))
-	}
-	return &LiveSignaling{Ws: ws, loginUserID: loginUserID, platformID: platformID, DataBase: db}, nil
+func NewLiveSignaling(longConnMgr *interaction.LongConnMgr, loginUserID string, platformID int32, db db_interface.DataBase) *LiveSignaling {
+	return &LiveSignaling{LongConnMgr: longConnMgr, loginUserID: loginUserID, platformID: platformID, DataBase: db}
 }
 
 func (s *LiveSignaling) setDefaultReq(req *sdkws.InvitationInfo) {
@@ -191,12 +185,15 @@ func (s *LiveSignaling) DoNotification(ctx context.Context, msg *sdkws.MsgData, 
 	switch payload := resp.Payload.(type) {
 	case *sdkws.SignalReq_Accept:
 		if payload.Accept.Invitation.InviterUserID == s.loginUserID && payload.Accept.Invitation.PlatformID == s.platformID {
-			var wsResp ws.GeneralWsResp
-			wsResp.ReqIdentifier = constant.WSSendSignalMsg
+			var wsResp interaction.GeneralWsResp
+			wsResp.ReqIdentifier = constant.SendSignalMsg
 			wsResp.Data = msg.Content
 			wsResp.MsgIncr = s.loginUserID + payload.Accept.OpUserID + payload.Accept.Invitation.RoomID
 			log.ZDebug(ctx, "search msgIncr", wsResp.MsgIncr)
-			s.DoWSSignal(wsResp)
+			//s.DoWSSignal(wsResp)
+			if err := s.LongConnMgr.Syncer.NotifyResp(ctx, wsResp); err != nil {
+				log.ZError(ctx, "notifyResp failed", err, "wsResp", wsResp)
+			}
 			return
 		}
 		if payload.Accept.OpUserPlatformID != s.platformID && payload.Accept.OpUserID == s.loginUserID {
@@ -208,12 +205,15 @@ func (s *LiveSignaling) DoNotification(ctx context.Context, msg *sdkws.MsgData, 
 		}
 	case *sdkws.SignalReq_Reject:
 		if payload.Reject.Invitation.InviterUserID == s.loginUserID && payload.Reject.Invitation.PlatformID == s.platformID {
-			var wsResp ws.GeneralWsResp
-			wsResp.ReqIdentifier = constant.WSSendSignalMsg
+			var wsResp interaction.GeneralWsResp
+			wsResp.ReqIdentifier = constant.SendSignalMsg
 			wsResp.Data = msg.Content
 			wsResp.MsgIncr = s.loginUserID + payload.Reject.OpUserID + payload.Reject.Invitation.RoomID
 			log.ZDebug(ctx, "search msgIncr: ", wsResp.MsgIncr)
-			s.DoWSSignal(wsResp)
+			//s.DoWSSignal(wsResp)
+			if err := s.LongConnMgr.Syncer.NotifyResp(ctx, wsResp); err != nil {
+				log.ZError(ctx, "notifyResp failed", err, "wsResp", wsResp)
+			}
 			return
 		}
 		if payload.Reject.OpUserPlatformID != s.platformID && payload.Reject.OpUserID == s.loginUserID {
@@ -271,4 +271,30 @@ func (s *LiveSignaling) DoNotification(ctx context.Context, msg *sdkws.MsgData, 
 	default:
 		log.ZError(ctx, "resp payload type failed", nil, "payload", payload)
 	}
+}
+func (s *LiveSignaling) SendSignalingReqWaitResp(ctx context.Context, req *sdkws.SignalReq) (*sdkws.SignalResp, error) {
+	var signalResp sdkws.SignalResp
+	err := s.LongConnMgr.SendReqWaitResp(ctx, req, constant.SendSignalMsg, &signalResp)
+	if err != nil {
+		return nil, err
+	}
+	return &signalResp, nil
+}
+func (s *LiveSignaling) SignalingWaitPush(ctx context.Context, inviterUserID, inviteeUserID, roomID string, timeout int32) (*sdkws.SignalReq, error) {
+	msgIncr := inviterUserID + inviteeUserID + roomID
+	//log.Info(operationID, "add msgIncr: ", msgIncr)
+	ch := s.LongConnMgr.Syncer.AddChByIncr(msgIncr)
+	defer s.LongConnMgr.Syncer.DelCh(msgIncr)
+
+	resp, err := s.LongConnMgr.Syncer.WaitResp(ctx, ch, int(timeout))
+	if err != nil {
+		return nil, utils.Wrap(err, "")
+	}
+	var signalReq sdkws.SignalReq
+	err = proto.Unmarshal(resp.Data, &signalReq)
+	if err != nil {
+		return nil, utils.Wrap(err, "")
+	}
+
+	return &signalReq, nil
 }

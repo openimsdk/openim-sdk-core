@@ -1,8 +1,10 @@
 package interaction
 
 import (
+	"context"
 	"errors"
-	"open_im_sdk/pkg/log"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 	"sync"
 	"time"
@@ -18,7 +20,7 @@ type GeneralWsResp struct {
 }
 
 type GeneralWsReq struct {
-	ReqIdentifier int32  `json:"reqIdentifier"`
+	ReqIdentifier int    `json:"reqIdentifier"`
 	Token         string `json:"token"`
 	SendID        string `json:"sendID"`
 	OperationID   string `json:"operationID"`
@@ -82,7 +84,7 @@ func (u *WsRespAsyn) DelCh(msgIncr string) {
 	}
 }
 
-func notifyCh(ch chan GeneralWsResp, value GeneralWsResp, timeout int64) error {
+func (u *WsRespAsyn) notifyCh(ch chan GeneralWsResp, value GeneralWsResp, timeout int64) error {
 	var flag = 0
 	select {
 	case ch <- value:
@@ -98,7 +100,7 @@ func notifyCh(ch chan GeneralWsResp, value GeneralWsResp, timeout int64) error {
 }
 
 // write a unit test for this function
-func (u *WsRespAsyn) notifyResp(wsResp GeneralWsResp) error {
+func (u *WsRespAsyn) NotifyResp(ctx context.Context, wsResp GeneralWsResp) error {
 	u.wsMutex.Lock()
 	defer u.wsMutex.Unlock()
 
@@ -107,11 +109,45 @@ func (u *WsRespAsyn) notifyResp(wsResp GeneralWsResp) error {
 		return utils.Wrap(errors.New("no ch"), "GetCh failed "+wsResp.MsgIncr)
 	}
 	for {
-		err := notifyCh(ch, wsResp, 1)
+		err := u.notifyCh(ch, wsResp, 1)
 		if err != nil {
-			log.Warn(wsResp.OperationID, "TriggerCmdNewMsgCome failed ", err.Error(), ch, wsResp.ReqIdentifier, wsResp.MsgIncr)
+			log.ZWarn(ctx, "TriggerCmdNewMsgCome failed ", err, "ch", ch, "wsResp", wsResp)
 			continue
+
 		}
 		return nil
+	}
+}
+func (u *WsRespAsyn) WaitResp(ctx context.Context, ch chan GeneralWsResp, timeout int) (*GeneralWsResp, error) {
+	select {
+	case r, ok := <-ch:
+		if !ok { //ch has been closed
+			//log.Debug(operationID, "ws network has been changed ")
+			return nil, nil
+		}
+		//log.Debug(operationID, "ws ch recvMsg success, code ", r.ErrCode)
+		if r.ErrCode != 0 {
+			//log.Error(operationID, "ws ch recvMsg failed, code, err msg: ", r.ErrCode, r.ErrMsg)
+			switch r.ErrCode {
+			case int(constant.ErrInBlackList.ErrCode):
+				return nil, &constant.ErrInBlackList
+			case int(constant.ErrNotFriend.ErrCode):
+				return nil, &constant.ErrNotFriend
+			}
+			return nil, errors.New(utils.IntToString(r.ErrCode) + ":" + r.ErrMsg)
+		} else {
+			return &r, nil
+		}
+
+	case <-time.After(time.Second * time.Duration(timeout)):
+		//log.Error(operationID, "ws ch recvMsg err, timeout")
+		//if w.conn.IsNil() {
+		//	return nil, errors.New("ws ch recvMsg err, timeout,conn is nil")
+		//}
+		//if w.conn.CheckSendConnDiffNow() {
+		//	return nil, constant.WsRecvConnDiff
+		//} else {
+		//	return nil, constant.WsRecvConnSame
+		//}
 	}
 }

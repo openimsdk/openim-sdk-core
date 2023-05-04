@@ -15,6 +15,31 @@ type Default struct {
 	sendConn *websocket.Conn
 }
 
+func (d *Default) SetReadDeadline(timeout time.Duration) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (d *Default) SetWriteDeadline(timeout time.Duration) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (d *Default) SetReadLimit(limit int64) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (d *Default) SetPongHandler(handler PongHandler) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (d *Default) GenerateLongConn(w http.ResponseWriter, r *http.Request) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (d *Default) LocalAddr() string {
 	//TODO implement me
 	//panic("implement me")
