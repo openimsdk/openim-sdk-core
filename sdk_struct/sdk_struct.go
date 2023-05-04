@@ -296,10 +296,7 @@ type CmdPushMsgToMsgSync struct {
 }
 
 type CmdMaxSeqToMsgSync struct {
-	MaxSeqOnSvr            int64
-	OperationID            string
-	MinSeqOnSvr            int64
-	GroupID2MinMaxSeqOnSvr map[string]*sdkws.MaxAndMinSeq
+	ConversationMinMaxSeqOnSvr map[string]*sdkws.MaxAndMinSeq
 }
 
 type CmdJoinedSuperGroup struct {
