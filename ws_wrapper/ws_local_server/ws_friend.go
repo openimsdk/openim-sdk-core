@@ -1,3 +1,17 @@
+// Copyright © 2023 OpenIM SDK.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package ws_local_server
 
 import (
@@ -46,7 +60,7 @@ func (wsRouter *WsFuncRouter) SetFriendListener() {
 	userWorker.SetFriendListener(&fr)
 }
 
-//1
+// 1
 func (wsRouter *WsFuncRouter) GetDesignatedFriendsInfo(userIDList string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, userIDList, operationID, runFuncName(), nil) {
@@ -55,7 +69,7 @@ func (wsRouter *WsFuncRouter) GetDesignatedFriendsInfo(userIDList string, operat
 	userWorker.Friend().GetDesignatedFriendsInfo(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, userIDList, operationID)
 }
 
-//1
+// 1
 func (wsRouter *WsFuncRouter) AddFriend(paramsReq string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, paramsReq, operationID, runFuncName(), nil) {
@@ -80,7 +94,7 @@ func (wsRouter *WsFuncRouter) GetSendFriendApplicationList(input string, operati
 	userWorker.Friend().GetSendFriendApplicationList(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, operationID)
 }
 
-//1
+// 1
 func (wsRouter *WsFuncRouter) AcceptFriendApplication(params string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, params, operationID, runFuncName(), nil) {
@@ -89,7 +103,7 @@ func (wsRouter *WsFuncRouter) AcceptFriendApplication(params string, operationID
 	userWorker.Friend().AcceptFriendApplication(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, params, operationID)
 }
 
-//1
+// 1
 func (wsRouter *WsFuncRouter) RefuseFriendApplication(params string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, params, operationID, runFuncName(), nil) {
@@ -98,7 +112,7 @@ func (wsRouter *WsFuncRouter) RefuseFriendApplication(params string, operationID
 	userWorker.Friend().RefuseFriendApplication(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, params, operationID)
 }
 
-//1
+// 1
 func (wsRouter *WsFuncRouter) CheckFriend(userIDList string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, userIDList, operationID, runFuncName(), nil) {
@@ -107,7 +121,7 @@ func (wsRouter *WsFuncRouter) CheckFriend(userIDList string, operationID string)
 	userWorker.Friend().CheckFriend(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, userIDList, operationID)
 }
 
-//1
+// 1
 func (wsRouter *WsFuncRouter) DeleteFriend(friendUserID string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, friendUserID, operationID, runFuncName(), nil) {
@@ -116,7 +130,7 @@ func (wsRouter *WsFuncRouter) DeleteFriend(friendUserID string, operationID stri
 	userWorker.Friend().DeleteFriend(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, friendUserID, operationID)
 }
 
-//1
+// 1
 func (wsRouter *WsFuncRouter) GetFriendList(input string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, input, operationID, runFuncName(), nil) {
@@ -139,7 +153,7 @@ func (wsRouter *WsFuncRouter) SearchFriends(input string, operationID string) {
 		input, operationID)
 }
 
-//1
+// 1
 func (wsRouter *WsFuncRouter) SetFriendRemark(remark string, operationID string) {
 	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 	if !wsRouter.checkResourceLoadingAndKeysIn(userWorker, remark, operationID, runFuncName(), nil) {

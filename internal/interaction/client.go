@@ -1,16 +1,34 @@
+// Copyright © 2023 OpenIM SDK.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package interaction
 
 import (
 	"context"
 	"errors"
+	"net/http"
+	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/utils"
+	"runtime"
+	"sync"
+	"time"
+
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
-	"net/http"
-	"sync"
-	"time"
 )
 
 // 1.协程消息的收发模块一直运行，直到收到关闭信号（一般是用户退出登陆）
@@ -253,4 +271,66 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	// new goroutines.
 	go client.writePump()
 	go client.readPump()
+}
+func (c *Client) handleMessage(message []byte) {
+	var wsResp GeneralWsResp
+	err := c.encoder.Decode(message, &wsResp)
+	if err != nil {
+		log.Error("decodeBinaryWs err", err.Error())
+		return
+	}
+	ctx := context.WithValue(context.Background(), "operationID", wsResp.OperationID)
+	log.Debug(wsResp.OperationID, "ws recv msg, code: ", wsResp.ErrCode, wsResp.ReqIdentifier)
+	switch wsResp.ReqIdentifier {
+	case constant.WSGetNewestSeq:
+		if err := c.notifyResp(wsResp); err != nil {
+			return utils.Wrap(err, "")
+		}
+		if err = w.doWSGetNewestSeq(wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSGetNewestSeq failed ", err.Error(), wsResp.ReqIdentifier, wsResp.MsgIncr)
+		}
+	case constant.WSPullMsgBySeqList:
+		if err = w.doWSPullMsg(wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSPullMsg failed ", err.Error())
+		}
+	case constant.WSPushMsg:
+		// todo
+		//if constant.OnlyForTest == 1 {
+		//	return
+		//}
+		if err = w.doWSPushMsg(wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSPushMsg failed ", err.Error())
+		}
+		//if err = w.doWSPushMsgForTest(*wsResp); err != nil {
+		//	log.Error(wsResp.OperationID, "doWSPushMsgForTest failed ", err.Error())
+		//}
+
+	case constant.WSSendMsg:
+		if err = w.doWSSendMsg(wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSSendMsg failed ", err.Error(), wsResp.ReqIdentifier, wsResp.MsgIncr)
+		}
+	case constant.WSKickOnlineMsg:
+		log.Warn(wsResp.OperationID, "kick...  logout")
+		w.kickOnline(wsResp)
+		w.Logout(ctx)
+
+	case constant.WsLogoutMsg:
+		log.Warn(wsResp.OperationID, "WsLogoutMsg... Ws goroutine exit")
+		if err = w.doWSLogoutMsg(wsResp); err != nil {
+			log.Error(wsResp.OperationID, "doWSLogoutMsg failed ", err.Error())
+		}
+		runtime.Goexit()
+	case constant.WSSendSignalMsg:
+		log.Info(wsResp.OperationID, "signaling...")
+		w.DoWSSignal(wsResp)
+	case constant.WsSetBackgroundStatus:
+		log.Info(wsResp.OperationID, "WsSetBackgroundStatus...")
+		if err = w.setAppBackgroundStatus(wsResp); err != nil {
+			log.Error(wsResp.OperationID, "WsSetBackgroundStatus failed ", err.Error(), wsResp.ReqIdentifier, wsResp.MsgIncr)
+		}
+		log.NewDebug(wsResp.OperationID, wsResp)
+	default:
+		log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
+		return
+	}
 }

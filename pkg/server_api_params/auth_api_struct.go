@@ -1,6 +1,20 @@
+// Copyright © 2023 OpenIM SDK.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package server_api_params
 
-//UserID               string   `protobuf:"bytes,1,opt,name=UserID" json:"UserID,omitempty"`
+// UserID               string   `protobuf:"bytes,1,opt,name=UserID" json:"UserID,omitempty"`
 //	Nickname             string   `protobuf:"bytes,2,opt,name=Nickname" json:"Nickname,omitempty"`
 //	FaceUrl              string   `protobuf:"bytes,3,opt,name=FaceUrl" json:"FaceUrl,omitempty"`
 //	Gender               int32    `protobuf:"varint,4,opt,name=Gender" json:"Gender,omitempty"`

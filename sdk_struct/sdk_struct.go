@@ -1,11 +1,24 @@
+// Copyright © 2023 OpenIM SDK.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package sdk_struct
 
 import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
-////////////////////////// message/////////////////////////
-
+// message
 type MessageReceipt struct {
 	GroupID     string   `json:"groupID"`
 	UserID      string   `json:"userID"`
@@ -15,6 +28,7 @@ type MessageReceipt struct {
 	ContentType int32    `json:"contentType"`
 	SessionType int32    `json:"sessionType"`
 }
+
 type MessageRevoked struct {
 	RevokerID                   string `json:"revokerID"`
 	RevokerRole                 int32  `json:"revokerRole"`
@@ -28,6 +42,7 @@ type MessageRevoked struct {
 	Seq                         int64  `json:"seq"`
 	Ex                          string `json:"ex"`
 }
+
 type MessageReaction struct {
 	ClientMsgID  string `json:"clientMsgID"`
 	ReactionType int    `json:"reactionType"`
@@ -37,12 +52,14 @@ type MessageReaction struct {
 	SessionType  int32  `json:"sessionType"`
 	Info         string `json:"info,omitempty"`
 }
+
 type ImageInfo struct {
 	Width  int32  `json:"x"`
 	Height int32  `json:"y"`
 	Type   string `json:"type,omitempty"`
 	Size   int64  `json:"size"`
 }
+
 type PictureBaseInfo struct {
 	UUID   string `json:"uuid,omitempty"`
 	Type   string `json:"type,omitempty"`
@@ -51,6 +68,7 @@ type PictureBaseInfo struct {
 	Height int32  `json:"height"`
 	Url    string `json:"url,omitempty"`
 }
+
 type SoundBaseInfo struct {
 	UUID      string `json:"uuid,omitempty"`
 	SoundPath string `json:"soundPath,omitempty"`
@@ -59,6 +77,7 @@ type SoundBaseInfo struct {
 	Duration  int64  `json:"duration"`
 	SoundType string `json:"soundType,omitempty"`
 }
+
 type VideoBaseInfo struct {
 	VideoPath      string `json:"videoPath,omitempty"`
 	VideoUUID      string `json:"videoUUID,omitempty"`
@@ -74,6 +93,7 @@ type VideoBaseInfo struct {
 	SnapshotHeight int32  `json:"snapshotHeight"`
 	SnapshotType   string `json:"snapshotType,omitempty"`
 }
+
 type FileBaseInfo struct {
 	FilePath  string `json:"filePath,omitempty"`
 	UUID      string `json:"uuid,omitempty"`
@@ -199,7 +219,7 @@ type AttachedInfoElem struct {
 	MessageEntityList         []*MessageEntity `json:"messageEntityList,omitempty"`
 	IsEncryption              bool             `json:"isEncryption"`
 	InEncryptStatus           bool             `json:"inEncryptStatus"`
-	//MessageReactionElem       []*ReactionElem  `json:"messageReactionElem,omitempty"`
+	// MessageReactionElem       []*ReactionElem  `json:"messageReactionElem,omitempty"`
 }
 
 type ReactionElem struct {
@@ -226,19 +246,20 @@ type GroupHasReadInfo struct {
 	HasReadCount      int32    `json:"hasReadCount"`
 	GroupMemberCount  int32    `json:"groupMemberCount"`
 }
+
 type NewMsgList []*MsgStruct
 
-// Implement the sort.Interface interface to get the number of elements method
+// Implement the sort.Interface interface to get the number of elements method.
 func (n NewMsgList) Len() int {
 	return len(n)
 }
 
-// Implement the sort.Interface interface comparison element method
+// Implement the sort.Interface interface comparison element method.
 func (n NewMsgList) Less(i, j int) bool {
 	return n[i].SendTime < n[j].SendTime
 }
 
-// Implement the sort.Interface interface exchange element method
+// Implement the sort.Interface interface exchange element method.
 func (n NewMsgList) Swap(i, j int) {
 	n[i], n[j] = n[j], n[i]
 }
@@ -255,8 +276,7 @@ type IMConfig struct {
 	IsExternalExtensions bool   `json:"is_external_extensions"`
 }
 
-//var SvrConf IMConfig
-
+// var SvrConf IMConfig.
 type CmdNewMsgComeToConversation struct {
 	MsgList       []*sdkws.MsgData
 	OperationID   string

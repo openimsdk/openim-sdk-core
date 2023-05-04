@@ -1,12 +1,25 @@
+// Copyright © 2023 OpenIM SDK.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package network
 
 import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"net"
-
 	"io/ioutil"
+	"net"
 	"net/http"
 	"open_im_sdk/pkg/utils"
 	"time"
@@ -25,6 +38,7 @@ func get(url string) (response []byte, err error) {
 	}
 	return body, nil
 }
+
 func retry(url string, data interface{}, token string, attempts int, sleep time.Duration, fn func(string, interface{}, string) ([]byte, error)) ([]byte, error) {
 	b, err := fn(url, data, token)
 	if err != nil {
@@ -37,11 +51,11 @@ func retry(url string, data interface{}, token string, attempts int, sleep time.
 	return b, nil
 }
 
-//application/json; charset=utf-8
+// application/json; charset=utf-8.
 func Post2Api(url string, data interface{}, token string) (content []byte, err error) {
 	c, err := postLogic(url, data, token)
 	return c, utils.Wrap(err, " post")
-	return retry(url, data, token, 1, 10*time.Second, postLogic)
+	// return retry(url, data, token, 1, 10*time.Second, postLogic)
 }
 
 func Post2ApiForRead(url string, data interface{}, token string) (content []byte, err error) {

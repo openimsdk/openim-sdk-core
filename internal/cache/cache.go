@@ -1,3 +1,17 @@
+// Copyright © 2023 OpenIM SDK.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package cache
 
 import (
@@ -28,14 +42,17 @@ func NewCache(user *user.User, friend *friend.Friend) *Cache {
 func (c *Cache) Update(userID, faceURL, nickname string) {
 	c.userMap.Store(userID, UserInfo{FaceURL: faceURL, Nickname: nickname})
 }
+
 func (c *Cache) UpdateConversation(conversation model_struct.LocalConversation) {
 	c.conversationMap.Store(conversation.ConversationID, conversation)
 }
+
 func (c *Cache) UpdateConversations(conversations []*model_struct.LocalConversation) {
 	for _, conversation := range conversations {
 		c.conversationMap.Store(conversation.ConversationID, *conversation)
 	}
 }
+
 func (c *Cache) GetAllConversations() (conversations []*model_struct.LocalConversation) {
 	c.conversationMap.Range(func(key, value interface{}) bool {
 		temp := value.(model_struct.LocalConversation)
@@ -44,6 +61,7 @@ func (c *Cache) GetAllConversations() (conversations []*model_struct.LocalConver
 	})
 	return conversations
 }
+
 func (c *Cache) GetAllHasUnreadMessageConversations() (conversations []*model_struct.LocalConversation) {
 	c.conversationMap.Range(func(key, value interface{}) bool {
 		temp := value.(model_struct.LocalConversation)
