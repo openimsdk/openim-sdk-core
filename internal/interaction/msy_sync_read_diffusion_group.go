@@ -17,7 +17,7 @@ import (
 
 type ReadDiffusionGroupMsgSync struct {
 	db_interface.DataBase
-	*Ws 
+	longConnMgr *LongConnMgr
 	loginUserID              string
 	conversationCh           chan common.Cmd2Value
 	superGroupMtx            sync.Mutex
@@ -28,8 +28,8 @@ type ReadDiffusionGroupMsgSync struct {
 	Group2SyncMsgFinished    map[string]bool
 }
 
-func NewReadDiffusionGroupMsgSync(dataBase db_interface.DataBase, ws *Ws, loginUserID string, conversationCh chan common.Cmd2Value, joinedSuperGroupCh chan common.Cmd2Value) *ReadDiffusionGroupMsgSync {
-	p := &ReadDiffusionGroupMsgSync{DataBase: dataBase, Ws: ws, loginUserID: loginUserID, conversationCh: conversationCh, joinedSuperGroupCh: joinedSuperGroupCh}
+func NewReadDiffusionGroupMsgSync(dataBase db_interface.DataBase, longConnMgr *LongConnMgr, loginUserID string, conversationCh chan common.Cmd2Value, joinedSuperGroupCh chan common.Cmd2Value) *ReadDiffusionGroupMsgSync {
+	p := &ReadDiffusionGroupMsgSync{DataBase: dataBase, longConnMgr: longConnMgr, loginUserID: loginUserID, conversationCh: conversationCh, joinedSuperGroupCh: joinedSuperGroupCh}
 	p.Group2SeqMaxNeedSync = make(map[string]int64, 0)
 	p.Group2SeqMaxSynchronized = make(map[string]int64, 0)
 	p.Group2SyncMsgFinished = make(map[string]bool, 0)
