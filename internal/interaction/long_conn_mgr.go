@@ -78,7 +78,10 @@ type Message struct {
 
 func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, pushMsgAndMaxSeqCh, conversationCh chan common.Cmd2Value) *LongConnMgr {
 	l := &LongConnMgr{listener: listener, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh,
-		conversationCh: conversationCh, syncer: NewWsRespAsyn(), encoder: NewGobEncoder(), compressor: NewGzipCompressor()}
+		conversationCh: conversationCh, IsCompression: ccontext.Info(ctx).IsCompression(),
+		syncer: NewWsRespAsyn(), encoder: NewGobEncoder(), compressor: NewGzipCompressor()}
+	l.send = make(chan Message, 10)
+	l.conn = NewWebSocket(WebSocket)
 	go l.readPump(ctx)
 	go l.writePump(ctx)
 	return l
@@ -99,12 +102,8 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 		},
 		Resp: make(chan GeneralWsResp, 1),
 	}
-	select {
-	case <-ctx.Done():
-		close(msg.Resp)
-		return errors.New("send message timeout")
-	case c.send <- msg:
-	}
+	c.send <- msg
+	log.ZDebug(ctx, "send message to send channel success", "msg", m, "reqIdentifier", reqIdentifier)
 	select {
 	case <-ctx.Done():
 		return errors.New("wait response timeout")
@@ -196,47 +195,51 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 				c.closedErr = ErrChanClosed
 				return
 			}
-			msgIncr, tempChan := c.syncer.AddCh(message.Message.SendID)
-			message.Message.MsgIncr = msgIncr
-
-			for i := 0; i < 3; i++ {
-				err := c.writeBinaryMsg(message.Message)
+			tempChan, err := c.writeBinaryMsgAndRetry(&message.Message)
+			if err != nil {
+				resp := GeneralWsResp{
+					ReqIdentifier: message.Message.ReqIdentifier,
+					ErrCode:       1,
+					ErrMsg:        "",
+					OperationID:   message.Message.OperationID,
+					Data:          nil,
+				}
+				err := c.syncer.notifyCh(message.Resp, resp, 1)
 				if err != nil {
-					log.ZError(c.ctx, "send binary message error", err, "local address", c.conn.LocalAddr(), "message", message.Message)
-					_ = c.close()
-					time.Sleep(time.Second * 1)
-					continue
-				} else {
-					break
+					//log.Warn(wsResp.OperationID, "TriggerCmdNewMsgCome failed ", err.Error(), ch, wsResp.ReqIdentifier, wsResp.MsgIncr)
+					log.ZError(c.ctx, "TriggerCmdNewMsgCome failed", err, "wsResp", resp)
 				}
+			} else {
+				go func() {
+					select {
+					case resp := <-tempChan:
+						log.ZInfo(c.ctx, "receive response", "local address", c.conn.LocalAddr(), "message", message.Message, "response", resp)
+						err := c.syncer.notifyCh(message.Resp, resp, 1)
+						if err != nil {
+							//log.Warn(wsResp.OperationID, "TriggerCmdNewMsgCome failed ", err.Error(), ch, wsResp.ReqIdentifier, wsResp.MsgIncr)
+							log.ZError(c.ctx, "TriggerCmdNewMsgCome failed", err, "wsResp", resp)
+						}
+						log.ZInfo(c.ctx, "receive response", "local address", c.conn.LocalAddr(), "message", message.Message, "response", resp)
+						//_ = c.close()
+					case <-time.After(time.Second * 3):
+						resp := GeneralWsResp{
+							ReqIdentifier: message.Message.ReqIdentifier,
+							ErrCode:       0,
+							ErrMsg:        "",
+							OperationID:   message.Message.OperationID,
+							Data:          nil,
+						}
+						err := c.syncer.notifyCh(message.Resp, resp, 1)
+						if err != nil {
+							//log.Warn(wsResp.OperationID, "TriggerCmdNewMsgCome failed ", err.Error(), ch, wsResp.ReqIdentifier, wsResp.MsgIncr)
+							log.ZError(c.ctx, "TriggerCmdNewMsgCome failed", err, "wsResp", resp)
+						}
+					}
+					c.syncer.DelCh(message.Message.MsgIncr)
+
+				}()
+
 			}
-			go func() {
-				select {
-				case resp := <-tempChan:
-					log.ZInfo(c.ctx, "receive response", "local address", c.conn.LocalAddr(), "message", message.Message, "response", resp)
-					err := c.syncer.notifyCh(tempChan, resp, 1)
-					if err != nil {
-						//log.Warn(wsResp.OperationID, "TriggerCmdNewMsgCome failed ", err.Error(), ch, wsResp.ReqIdentifier, wsResp.MsgIncr)
-						log.ZError(c.ctx, "TriggerCmdNewMsgCome failed", err, "wsResp", resp)
-					}
-					log.ZInfo(c.ctx, "receive response", "local address", c.conn.LocalAddr(), "message", message.Message, "response", resp)
-					//_ = c.close()
-				case <-time.After(time.Second * 3):
-					resp := GeneralWsResp{
-						ReqIdentifier: message.Message.ReqIdentifier,
-						ErrCode:       0,
-						ErrMsg:        "",
-						OperationID:   message.Message.OperationID,
-						Data:          nil,
-					}
-					err := c.syncer.notifyCh(tempChan, resp, 1)
-					if err != nil {
-						//log.Warn(wsResp.OperationID, "TriggerCmdNewMsgCome failed ", err.Error(), ch, wsResp.ReqIdentifier, wsResp.MsgIncr)
-						log.ZError(c.ctx, "TriggerCmdNewMsgCome failed", err, "wsResp", resp)
-					}
-				}
-			}()
-			c.syncer.DelCh(msgIncr)
 
 		case <-ticker.C:
 			_ = c.conn.SetWriteDeadline(writeWait)
@@ -245,6 +248,23 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 			}
 		}
 	}
+}
+
+func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan GeneralWsResp, error) {
+	msgIncr, tempChan := c.syncer.AddCh(msg.SendID)
+	msg.MsgIncr = msgIncr
+	for i := 0; i < 3; i++ {
+		err := c.writeBinaryMsg(*msg)
+		if err != nil {
+			log.ZError(c.ctx, "send binary message error", err, "local address", c.conn.LocalAddr(), "message", msg)
+			_ = c.close()
+			time.Sleep(time.Second * 1)
+			continue
+		} else {
+			return tempChan, nil
+		}
+	}
+	return nil, errors.New("send binary message error")
 }
 
 func (c *LongConnMgr) writeBinaryMsg(req GeneralWsReq) error {
@@ -294,9 +314,9 @@ func (c *LongConnMgr) handleMessage(message []byte) {
 			log.ZError(ctx, "doWSPushMsg failed", err, "wsResp", wsResp)
 		}
 	case constant.KickOnlineMsg:
-		log.Warn(wsResp.OperationID, "kick...  logout")
-		w.kickOnline(wsResp)
-		w.Logout(ctx)
+		//log.Warn(wsResp.OperationID, "kick...  logout")
+		//w.kickOnline(wsResp)
+		//w.Logout(ctx)
 	case constant.GetNewestSeq:
 		fallthrough
 	case constant.PullMsgBySeqList:
@@ -405,7 +425,7 @@ func (c *LongConnMgr) reConn(ctx context.Context) error {
 	c.w.Lock()
 	c.connStatus = Connected
 	c.w.Unlock()
-
+	_ = common.TriggerCmdConnected(ctx, c.pushMsgAndMaxSeqCh)
 	return nil
 }
 func (c *LongConnMgr) doPushMsg(ctx context.Context, wsResp GeneralWsResp) error {
