@@ -17,7 +17,7 @@ import (
 
 type ReadDiffusionGroupMsgSync struct {
 	db_interface.DataBase
-	*Ws
+	*Ws 
 	loginUserID              string
 	conversationCh           chan common.Cmd2Value
 	superGroupMtx            sync.Mutex
@@ -37,7 +37,7 @@ func NewReadDiffusionGroupMsgSync(dataBase db_interface.DataBase, ws *Ws, loginU
 	return p
 }
 
-// 协程方式加锁获取读扩散群列表 ok
+// Coroutine mode lock get read spread group list ok
 func (m *ReadDiffusionGroupMsgSync) updateJoinedSuperGroup() {
 	for {
 		select {
