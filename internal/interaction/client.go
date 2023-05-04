@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // Copyright © 2023 OpenIM SDK.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,10 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+=======
+>>>>>>> d6b2c12f (client)
 package interaction
 
 import (
 	"context"
+<<<<<<< HEAD
 	"errors"
 	"net/http"
 	"open_im_sdk/pkg/constant"
@@ -24,17 +28,33 @@ import (
 	"sync"
 	"time"
 
+=======
+	"encoding/json"
+	"errors"
+>>>>>>> d6b2c12f (client)
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
+<<<<<<< HEAD
 )
 
 // 1.协程消息的收发模块一直运行，直到收到关闭信号（一般是用户退出登陆）
 // 2.消息调用模块传递channle，收到消息后，调用channel，将消息传递给协程消息收发模块
 // 3.消息通过ws发送后
 // 4.
+=======
+	"net/http"
+	"sync"
+	"time"
+)
+
+1.协程消息的收发模块一直运行，直到收到关闭信号（一般是用户退出登陆）
+2.消息调用模块传递channle，收到消息后，调用channel，将消息传递给协程消息收发模块
+3.消息通过ws发送后
+4.
+>>>>>>> d6b2c12f (client)
 const (
 	// Time allowed to write a message to the peer.
 	writeWait = 10 * time.Second
@@ -91,8 +111,53 @@ type Message struct {
 	Resp    chan GeneralWsResp
 }
 
+<<<<<<< HEAD
 func (c *Client) SendReqWaitResp(ctx context.Context, m proto.Message, reqIdentifier int32, resp proto.Message) error {
 	data, err := proto.Marshal(m)
+=======
+func SendReqWaitResp[T any](ctx context.Context, m proto.Message, reqIdentifier int32, timeout time.Duration, retryTimes int) (T, error) {
+	var t T
+	data, err := json.Marshal(m)
+	if err != nil {
+		return t, err
+	}
+	msg := Message{
+		Message: GeneralWsReq{
+			ReqIdentifier: reqIdentifier,
+			Token:         "",
+			SendID:        mcontext.GetOpUserID(ctx),
+			OperationID:   mcontext.GetOperationID(ctx),
+			MsgIncr:       "m",
+			Data:          data,
+		},
+		Resp: make(chan GeneralWsResp, 1),
+	}
+	var send chan Message
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	select {
+	case <-ctx.Done():
+		close(msg.Resp)
+		return t, errors.New("send message timeout")
+	case send <- msg:
+	}
+	select {
+	case <-ctx.Done():
+		return t, errors.New("wait response timeout")
+	case v, ok := <-msg.Resp:
+		if !ok {
+			return t, errors.New("response channel closed")
+		}
+		if v.ErrCode != 0 {
+			return t, errs.NewCodeError(v.ErrCode, v.ErrMsg)
+		}
+		return t, json.Unmarshal(v.Data, &t)
+	}
+}
+
+func (c *Client) SendReqWaitResp(ctx context.Context, m proto.Message, reqIdentifier int32, resp any) error {
+	data, err := json.Marshal(m)
+>>>>>>> d6b2c12f (client)
 	if err != nil {
 		return err
 	}
@@ -107,11 +172,19 @@ func (c *Client) SendReqWaitResp(ctx context.Context, m proto.Message, reqIdenti
 		},
 		Resp: make(chan GeneralWsResp, 1),
 	}
+<<<<<<< HEAD
+=======
+	var send chan Message
+>>>>>>> d6b2c12f (client)
 	select {
 	case <-ctx.Done():
 		close(msg.Resp)
 		return errors.New("send message timeout")
+<<<<<<< HEAD
 	case c.send <- msg:
+=======
+	case send <- msg:
+>>>>>>> d6b2c12f (client)
 	}
 	select {
 	case <-ctx.Done():
@@ -123,7 +196,11 @@ func (c *Client) SendReqWaitResp(ctx context.Context, m proto.Message, reqIdenti
 		if v.ErrCode != 0 {
 			return errs.NewCodeError(v.ErrCode, v.ErrMsg)
 		}
+<<<<<<< HEAD
 		if err := proto.Unmarshal(v.Data, resp); err != nil {
+=======
+		if err := json.Unmarshal(v.Data, resp);err != nil {
+>>>>>>> d6b2c12f (client)
 			return err
 		}
 		return nil
@@ -146,7 +223,12 @@ func (c *Client) readPump(ctx context.Context) {
 	for {
 		messageType, message, err := c.conn.ReadMessage()
 		if err != nil {
+<<<<<<< HEAD
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+=======
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.Close
+				AbnormalClosure) {
+>>>>>>> d6b2c12f (client)
 				log.Printf("error: %v", err)
 			}
 			break
@@ -272,6 +354,7 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	go client.writePump()
 	go client.readPump()
 }
+<<<<<<< HEAD
 func (c *Client) handleMessage(message []byte) {
 	var wsResp GeneralWsResp
 	err := c.encoder.Decode(message, &wsResp)
@@ -334,3 +417,5 @@ func (c *Client) handleMessage(message []byte) {
 		return
 	}
 }
+=======
+>>>>>>> d6b2c12f (client)
