@@ -67,7 +67,7 @@ type LongConnMgr struct {
 	closedErr          error
 	ctx                context.Context
 	IsCompression      bool
-	syncer             *WsRespAsyn
+	Syncer             *WsRespAsyn
 	encoder            Encoder
 	compressor         Compressor
 }
@@ -79,7 +79,7 @@ type Message struct {
 func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, pushMsgAndMaxSeqCh, conversationCh chan common.Cmd2Value) *LongConnMgr {
 	l := &LongConnMgr{listener: listener, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh,
 		conversationCh: conversationCh, IsCompression: ccontext.Info(ctx).IsCompression(),
-		syncer: NewWsRespAsyn(), encoder: NewGobEncoder(), compressor: NewGzipCompressor()}
+		Syncer: NewWsRespAsyn(), encoder: NewGobEncoder(), compressor: NewGzipCompressor()}
 	l.send = make(chan Message, 10)
 	l.conn = NewWebSocket(WebSocket)
 	go l.readPump(ctx)
@@ -204,7 +204,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 					OperationID:   message.Message.OperationID,
 					Data:          nil,
 				}
-				err := c.syncer.notifyCh(message.Resp, resp, 1)
+				err := c.Syncer.notifyCh(message.Resp, resp, 1)
 				if err != nil {
 					//log.Warn(wsResp.OperationID, "TriggerCmdNewMsgCome failed ", err.Error(), ch, wsResp.ReqIdentifier, wsResp.MsgIncr)
 					log.ZError(c.ctx, "TriggerCmdNewMsgCome failed", err, "wsResp", resp)
@@ -214,7 +214,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 					select {
 					case resp := <-tempChan:
 						log.ZInfo(c.ctx, "receive response", "local address", c.conn.LocalAddr(), "message", message.Message, "response", resp)
-						err := c.syncer.notifyCh(message.Resp, resp, 1)
+						err := c.Syncer.notifyCh(message.Resp, resp, 1)
 						if err != nil {
 							//log.Warn(wsResp.OperationID, "TriggerCmdNewMsgCome failed ", err.Error(), ch, wsResp.ReqIdentifier, wsResp.MsgIncr)
 							log.ZError(c.ctx, "TriggerCmdNewMsgCome failed", err, "wsResp", resp)
@@ -229,13 +229,13 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 							OperationID:   message.Message.OperationID,
 							Data:          nil,
 						}
-						err := c.syncer.notifyCh(message.Resp, resp, 1)
+						err := c.Syncer.notifyCh(message.Resp, resp, 1)
 						if err != nil {
 							//log.Warn(wsResp.OperationID, "TriggerCmdNewMsgCome failed ", err.Error(), ch, wsResp.ReqIdentifier, wsResp.MsgIncr)
 							log.ZError(c.ctx, "TriggerCmdNewMsgCome failed", err, "wsResp", resp)
 						}
 					}
-					c.syncer.DelCh(message.Message.MsgIncr)
+					c.Syncer.DelCh(message.Message.MsgIncr)
 
 				}()
 
@@ -251,7 +251,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 }
 
 func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan GeneralWsResp, error) {
-	msgIncr, tempChan := c.syncer.AddCh(msg.SendID)
+	msgIncr, tempChan := c.Syncer.AddCh(msg.SendID)
 	msg.MsgIncr = msgIncr
 	for i := 0; i < 3; i++ {
 		err := c.writeBinaryMsg(*msg)
@@ -328,7 +328,7 @@ func (c *LongConnMgr) handleMessage(message []byte) {
 	case constant.SendSignalMsg:
 		fallthrough
 	case constant.SetBackgroundStatus:
-		if err := c.syncer.notifyResp(ctx, wsResp); err != nil {
+		if err := c.Syncer.NotifyResp(ctx, wsResp); err != nil {
 			log.ZError(ctx, "notifyResp failed", err, "wsResp", wsResp)
 		}
 	default:
@@ -344,6 +344,11 @@ func (c *LongConnMgr) IsConnected() bool {
 	}
 	return false
 
+}
+func (c *LongConnMgr) GetConnectionStatus() int {
+	c.w.Lock()
+	defer c.w.Unlock()
+	return c.connStatus
 }
 func (c *LongConnMgr) reConn(ctx context.Context) error {
 	if c.IsConnected() {

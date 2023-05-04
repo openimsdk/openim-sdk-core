@@ -9,8 +9,7 @@ import (
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/group"
-	"open_im_sdk/internal/heartbeart"
-	ws "open_im_sdk/internal/interaction"
+	"open_im_sdk/internal/interaction"
 	comm2 "open_im_sdk/internal/obj_storage"
 	"open_im_sdk/internal/signaling"
 	"open_im_sdk/internal/super_group"
@@ -48,9 +47,8 @@ type LoginMgr struct {
 
 	full         *full.Full
 	db           db_interface.DataBase
-	ws           *ws.Ws
-	msgSync      *ws.MsgSync
-	heartbeat    *heartbeart.Heartbeat
+	longConnMgr  *interaction.LongConnMgr
+	msgSync      *interaction.MsgSync
 	push         *comm2.Push
 	cache        *cache.Cache
 	token        string
@@ -81,7 +79,6 @@ type LoginMgr struct {
 	cancel             context.CancelFunc
 	info               *ccontext.GlobalConfig
 	id2MinSeq          map[string]int64
-	postApi            *ws.PostApi
 }
 
 func (u *LoginMgr) BaseCtx() context.Context {
@@ -98,14 +95,6 @@ func (u *LoginMgr) GetToken() string {
 
 func (u *LoginMgr) Push() *comm2.Push {
 	return u.push
-}
-
-func (u *LoginMgr) Heartbeat() *heartbeart.Heartbeat {
-	return u.heartbeat
-}
-
-func (u *LoginMgr) Ws() *ws.Ws {
-	return u.ws
 }
 
 func (u *LoginMgr) ImConfig() sdk_struct.IMConfig {
@@ -294,11 +283,11 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	}
 	u.push = comm2.NewPush(u.info.Platform, u.loginUserID)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
-	ws.NewLongConnMgr(ctx, u.connListener, u.pushMsgAndMaxSeqCh, u.conversationCh)
+	u.longConnMgr = interaction.NewLongConnMgr(ctx, u.connListener, u.pushMsgAndMaxSeqCh, u.conversationCh)
 	//wsConn := ws.NewWsConn(u.connListener, u.token, u.loginUserID, u.imConfig.IsCompression, u.conversationCh)
 	//wsRespAsyn := ws.NewWsRespAsyn()
 	//u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh, u.conversationCh)
-	u.msgSync = ws.NewMsgSync(ctx, u.db, u.conversationCh, u.pushMsgAndMaxSeqCh)
+	u.msgSync = interaction.NewMsgSync(ctx, u.db, u.conversationCh, u.pushMsgAndMaxSeqCh)
 	//u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
 	//var objStorage comm3.ObjectStorage
 	//switch u.imConfig.ObjectStorage {
@@ -315,22 +304,20 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	//}
 	u.conversation = conv.NewConversation(ctx, u.db, u.conversationCh,
 		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq)
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		u.forcedSynchronization(ctx)
-	}()
-	wg.Wait()
+	//var wg sync.WaitGroup
+	//wg.Add(1)
+	//go func() {
+	//	defer wg.Done()
+	//	u.forcedSynchronization(ctx)
+	//}()
+	//wg.Wait()
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	//u.ws = ws.NewWs(wsRespAsyn, wsConn, u.cmdWsCh, u.pushMsgAndMaxSeqCh, u.heartbeatCmdCh, u.conversationCh)
 	//u.msgSync = ws.NewMsgSync(u.db, u.ws, u.loginUserID, u.conversationCh, u.pushMsgAndMaxSeqCh, u.joinedSuperGroupCh)
 	//u.heartbeat = heartbeart.NewHeartbeat(u.msgSync, u.heartbeatCmdCh, u.connListener, u.token, u.id2MinSeq, u.full)
 
-	u.signaling, err = signaling.NewLiveSignaling(u.ws, u.loginUserID, u.info.Platform, u.db)
-	if err != nil {
-		return err
-	}
+	u.signaling = signaling.NewLiveSignaling(u.longConnMgr, u.loginUserID, u.info.Platform, u.db)
+
 	if u.signalingListener != nil {
 		u.signaling.SetListener(u.signalingListener)
 	}
@@ -370,65 +357,26 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_call
 }
 
 func (u *LoginMgr) logout(ctx context.Context) error {
-	log.ZInfo(ctx, "TriggerCmdLogout ws...")
-	if u.friend == nil || u.conversation == nil || u.user == nil || u.full == nil ||
-		u.db == nil || u.ws == nil || u.msgSync == nil || u.heartbeat == nil {
-		log.ZInfo(ctx, "nil, no TriggerCmdLogout ", "LoginMgr", *u)
-		return nil
-	}
-	operationID := mcontext.GetOperationID(ctx)
-	timeout := 2
-	retryTimes := 0
-	log.ZInfo(ctx, "send to svr logout ...", u.loginUserID)
-	resp, err := u.ws.SendReqWaitResp(ctx, &server_api_params.GetMaxAndMinSeqReq{}, constant.WsLogoutMsg, timeout, retryTimes, u.loginUserID)
+	err := u.longConnMgr.SendReqWaitResp(ctx, &server_api_params.GetMaxAndMinSeqReq{}, constant.LogoutMsg, nil)
 	if err != nil {
-		log.ZWarn(ctx, "SendReqWaitResp failed ", err, "timeout", timeout, "loginUserID", u.loginUserID, "resp", resp)
-		if !u.ws.IsInterruptReconnection() {
-			return err
-		} else {
-			log.ZWarn(ctx, "SendReqWaitResp failed, but interrupt reconnection ", err, "timeout", timeout, "loginUserID", u.loginUserID, "resp", resp)
-		}
+		return err
 	}
-	err = common.TriggerCmdLogout(u.cmdWsCh)
-	if err != nil {
-		log.ZError(ctx, "TriggerCmdLogout u.cmdWsCh failed ", err)
-	}
-	log.Info(operationID, "TriggerCmdLogout heartbeat...")
-	err = common.TriggerCmdLogout(u.heartbeatCmdCh)
-	if err != nil {
-		log.ZError(ctx, "TriggerCmdLogout u.heartbeatCmdCh failed ", err)
-	}
-	err = common.TriggerCmdLogout(u.joinedSuperGroupCh)
-	if err != nil {
-		log.ZError(ctx, "TriggerCmdLogout u.joinedSuperGroupCh failed ", err)
-	}
-	log.Info(operationID, "TriggerCmd conversationCh UnInit...")
-	common.UnInitAll(u.conversationCh)
-	if err != nil {
-		log.Error(operationID, "TriggerCmd UnInit conversationCh failed ", err.Error())
-	}
-	common.UnInitAll(u.pushMsgAndMaxSeqCh)
-	if err != nil {
-		log.Error(operationID, "TriggerCmd UnInit pushMsgAndMaxSeqCh failed ", err.Error())
-	}
-	u.db.Close(ctx)
-	u.justOnceFlag = false
+	u.Exit()
+	log.ZDebug(ctx, "TriggerCmdLogout success...")
 	return nil
 }
 
 func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool) error {
-	timeout := 5
-	retryTimes := 2
-	_, err := u.ws.SendReqWaitResp(ctx, &server_api_params.SetAppBackgroundStatusReq{UserID: u.loginUserID, IsBackground: isBackground}, constant.WsSetBackgroundStatus, timeout, retryTimes, u.loginUserID)
-	return err
+	return u.longConnMgr.SendReqWaitResp(ctx, &server_api_params.SetAppBackgroundStatusReq{UserID: u.loginUserID, IsBackground: isBackground}, constant.SetBackgroundStatus, nil)
+
 }
 
 func (u *LoginMgr) GetLoginUser() string {
 	return u.loginUserID
 }
 
-func (u *LoginMgr) GetLoginStatus() int32 {
-	return u.ws.LoginStatus()
+func (u *LoginMgr) GetLoginStatus() int {
+	return u.longConnMgr.GetConnectionStatus()
 }
 
 func (u *LoginMgr) forcedSynchronization(ctx context.Context) {
