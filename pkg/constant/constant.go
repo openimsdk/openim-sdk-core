@@ -25,10 +25,11 @@ const (
 	CmdReconnect = "020"
 	CmdInit      = "021"
 
-	CmdMaxSeq  = "maxSeq"
-	CmdPushMsg = "pushMsg"
-	CmdLogout  = "Logout"
-	CmdWakeUp  = "wakeUp"
+	CmdMaxSeq       = "maxSeq"
+	CmdPushMsg      = "pushMsg"
+	CmdConnSuccesss = "connSuccess"
+	CmdLogout       = "Logout"
+	CmdWakeUp       = "wakeUp"
 )
 
 const (
