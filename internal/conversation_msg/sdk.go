@@ -29,13 +29,13 @@ import (
 	imgtype "github.com/shamsher31/goimgtype"
 )
 
-func (c *Conversation) GetAllConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error) {
+func (c *MsgConversation) GetAllConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error) {
 	return c.db.GetAllConversationListDB(ctx)
 }
-func (c *Conversation) GetConversationListSplit(ctx context.Context, offset, count int) ([]*model_struct.LocalConversation, error) {
+func (c *MsgConversation) GetConversationListSplit(ctx context.Context, offset, count int) ([]*model_struct.LocalConversation, error) {
 	return c.db.GetConversationListSplitDB(ctx, offset, count)
 }
-func (c *Conversation) SetConversationRecvMessageOpt(ctx context.Context, conversationIDList []string, opt int) error {
+func (c *MsgConversation) SetConversationRecvMessageOpt(ctx context.Context, conversationIDList []string, opt int) error {
 	var conversations []*pbConversation.Conversation
 	for _, conversationID := range conversationIDList {
 		localConversation, err := c.db.GetConversation(ctx, conversationID)
@@ -70,7 +70,7 @@ func (c *Conversation) SetConversationRecvMessageOpt(ctx context.Context, conver
 	c.SyncConversations(ctx)
 	return nil
 }
-func (c *Conversation) SetGlobalRecvMessageOpt(ctx context.Context, opt int) error {
+func (c *MsgConversation) SetGlobalRecvMessageOpt(ctx context.Context, opt int) error {
 	if err := util.ApiPost(ctx, constant.SetGlobalRecvMessageOptRouter, &pbUser.SetGlobalRecvMessageOptReq{UserID: c.loginUserID, GlobalRecvMsgOpt: int32(opt)}, nil); err != nil {
 		return err
 	}
@@ -78,12 +78,12 @@ func (c *Conversation) SetGlobalRecvMessageOpt(ctx context.Context, opt int) err
 	return nil
 
 }
-func (c *Conversation) HideConversation(ctx context.Context, conversationID string) error {
+func (c *MsgConversation) HideConversation(ctx context.Context, conversationID string) error {
 	return c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"latest_msg_send_time": 0})
 }
 
 // deprecated
-func (c *Conversation) GetConversationRecvMessageOpt(ctx context.Context, conversationIDList []string) (resp []*server_api_params.GetConversationRecvMessageOptResp, err error) {
+func (c *MsgConversation) GetConversationRecvMessageOpt(ctx context.Context, conversationIDList []string) (resp []*server_api_params.GetConversationRecvMessageOptResp, err error) {
 	conversations, err := c.db.GetMultipleConversationDB(ctx, conversationIDList)
 	if err != nil {
 		return nil, err
@@ -97,7 +97,7 @@ func (c *Conversation) GetConversationRecvMessageOpt(ctx context.Context, conver
 	return resp, nil
 
 }
-func (c *Conversation) GetOneConversation(ctx context.Context, sessionType int32, sourceID string) (*model_struct.LocalConversation, error) {
+func (c *MsgConversation) GetOneConversation(ctx context.Context, sessionType int32, sourceID string) (*model_struct.LocalConversation, error) {
 	conversationID := utils.GetConversationIDBySessionType(sourceID, int(sessionType))
 	lc, err := c.db.GetConversation(ctx, conversationID)
 	if err == nil {
@@ -136,7 +136,7 @@ func (c *Conversation) GetOneConversation(ctx context.Context, sessionType int32
 	}
 
 }
-func (c *Conversation) GetMultipleConversation(ctx context.Context, conversationIDList []string) ([]*model_struct.LocalConversation, error) {
+func (c *MsgConversation) GetMultipleConversation(ctx context.Context, conversationIDList []string) ([]*model_struct.LocalConversation, error) {
 	conversations, err := c.db.GetMultipleConversationDB(ctx, conversationIDList)
 	if err != nil {
 		return nil, err
@@ -144,7 +144,7 @@ func (c *Conversation) GetMultipleConversation(ctx context.Context, conversation
 	return conversations, nil
 
 }
-func (c *Conversation) DeleteConversation(ctx context.Context, conversationID string) error {
+func (c *MsgConversation) DeleteConversation(ctx context.Context, conversationID string) error {
 	lc, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
@@ -177,7 +177,7 @@ func (c *Conversation) DeleteConversation(ctx context.Context, conversationID st
 	return nil
 
 }
-func (c *Conversation) DeleteAllConversationFromLocal(ctx context.Context) error {
+func (c *MsgConversation) DeleteAllConversationFromLocal(ctx context.Context) error {
 	err := c.db.ResetAllConversation(ctx)
 	if err != nil {
 		return err
@@ -185,7 +185,7 @@ func (c *Conversation) DeleteAllConversationFromLocal(ctx context.Context) error
 	return nil
 
 }
-func (c *Conversation) SetConversationDraft(ctx context.Context, conversationID, draftText string) error {
+func (c *MsgConversation) SetConversationDraft(ctx context.Context, conversationID, draftText string) error {
 	if draftText != "" {
 		err := c.db.SetConversationDraftDB(ctx, conversationID, draftText)
 		if err != nil {
@@ -201,7 +201,7 @@ func (c *Conversation) SetConversationDraft(ctx context.Context, conversationID,
 	return nil
 
 }
-func (c *Conversation) ResetConversationGroupAtType(ctx context.Context, conversationID string) error {
+func (c *MsgConversation) ResetConversationGroupAtType(ctx context.Context, conversationID string) error {
 	lc, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
@@ -220,7 +220,7 @@ func (c *Conversation) ResetConversationGroupAtType(ctx context.Context, convers
 	return nil
 
 }
-func (c *Conversation) PinConversation(ctx context.Context, conversationID string, isPinned bool) error {
+func (c *MsgConversation) PinConversation(ctx context.Context, conversationID string, isPinned bool) error {
 	lc, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
@@ -236,7 +236,7 @@ func (c *Conversation) PinConversation(ctx context.Context, conversationID strin
 	return nil
 }
 
-func (c *Conversation) SetOneConversationPrivateChat(ctx context.Context, conversationID string, isPrivate bool) error {
+func (c *MsgConversation) SetOneConversationPrivateChat(ctx context.Context, conversationID string, isPrivate bool) error {
 	lc, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
@@ -252,7 +252,7 @@ func (c *Conversation) SetOneConversationPrivateChat(ctx context.Context, conver
 	return nil
 }
 
-func (c *Conversation) SetOneConversationBurnDuration(ctx context.Context, conversationID string, burnDuration int32) error {
+func (c *MsgConversation) SetOneConversationBurnDuration(ctx context.Context, conversationID string, burnDuration int32) error {
 	lc, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
@@ -268,7 +268,7 @@ func (c *Conversation) SetOneConversationBurnDuration(ctx context.Context, conve
 	return nil
 }
 
-func (c *Conversation) SetOneConversationRecvMessageOpt(ctx context.Context, conversationID string, opt int) error {
+func (c *MsgConversation) SetOneConversationRecvMessageOpt(ctx context.Context, conversationID string, opt int) error {
 	lc, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
@@ -284,11 +284,11 @@ func (c *Conversation) SetOneConversationRecvMessageOpt(ctx context.Context, con
 	return nil
 }
 
-func (c *Conversation) GetTotalUnreadMsgCount(ctx context.Context) (totalUnreadCount int32, err error) {
+func (c *MsgConversation) GetTotalUnreadMsgCount(ctx context.Context) (totalUnreadCount int32, err error) {
 	return c.db.GetTotalUnreadMsgCountDB(ctx)
 }
 
-func (c *Conversation) SetConversationListener(listener open_im_sdk_callback.OnConversationListener) {
+func (c *MsgConversation) SetConversationListener(listener open_im_sdk_callback.OnConversationListener) {
 	if c.ConversationListener != nil {
 		log.Error("internal", "just only set on listener")
 		return
@@ -307,7 +307,7 @@ func localChatLogToMsgStruct(dst *sdk_struct.NewMsgList, src []*model_struct.Loc
 
 }
 
-//	func (c *Conversation) checkErrAndUpdateMessage(callback open_im_sdk_callback.SendMsgCallBack, errCode int32, err error, s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation, operationID string) {
+//	func (c *MsgConversation) checkErrAndUpdateMessage(callback open_im_sdk_callback.SendMsgCallBack, errCode int32, err error, s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation, operationID string) {
 //		if err != nil {
 //			if callback != nil {
 //				c.updateMsgStatusAndTriggerConversation(s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc, operationID)
@@ -318,7 +318,7 @@ func localChatLogToMsgStruct(dst *sdk_struct.NewMsgList, src []*model_struct.Loc
 //			}
 //		}
 //	}
-func (c *Conversation) updateMsgStatusAndTriggerConversation(ctx context.Context, clientMsgID, serverMsgID string, sendTime int64, status int32, s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation) {
+func (c *MsgConversation) updateMsgStatusAndTriggerConversation(ctx context.Context, clientMsgID, serverMsgID string, sendTime int64, status int32, s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation) {
 	//log.NewDebug(operationID, "this is test send message ", sendTime, status, clientMsgID, serverMsgID)
 	s.SendTime = sendTime
 	s.Status = status
@@ -333,7 +333,7 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(ctx context.Context
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
 
 }
-func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo) (*sdk_struct.MsgStruct, error) {
+func (c *MsgConversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo) (*sdk_struct.MsgStruct, error) {
 	s.SendID = c.loginUserID
 	s.SenderPlatformID = c.platformID
 	if recvID == "" && groupID == "" {
@@ -533,7 +533,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 	return c.sendMessageToServer(ctx, s, lc, callback, delFile, p, options)
 
 }
-func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo) (*sdk_struct.MsgStruct, error) {
+func (c *MsgConversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo) (*sdk_struct.MsgStruct, error) {
 
 	s.SendID = c.loginUserID
 	s.SenderPlatformID = c.platformID
@@ -637,7 +637,7 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 	return c.sendMessageToServer(ctx, s, lc, callback, delFile, p, options)
 
 }
-func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string,
+func (c *MsgConversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string,
 	p *sdkws.OfflinePushInfo, buffer1, buffer2 *bytes.Buffer) (*sdk_struct.MsgStruct, error) {
 	s.SendID = c.loginUserID
 	s.SenderPlatformID = c.platformID
@@ -809,7 +809,7 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 
 }
 
-func (c *Conversation) InternalSendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *server_api_params.OfflinePushInfo, onlineUserOnly bool, options map[string]bool) (*sdkws.UserSendMsgResp, error) {
+func (c *MsgConversation) InternalSendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *server_api_params.OfflinePushInfo, onlineUserOnly bool, options map[string]bool) (*sdkws.UserSendMsgResp, error) {
 	if recvID == "" && groupID == "" {
 		return nil, errors.New("recvID && groupID not both null")
 	}
@@ -879,7 +879,7 @@ func (c *Conversation) InternalSendMessage(ctx context.Context, s *sdk_struct.Ms
 
 }
 
-func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation, callback open_im_sdk_callback.SendMsgCallBack,
+func (c *MsgConversation) sendMessageToServer(ctx context.Context, s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation, callback open_im_sdk_callback.SendMsgCallBack,
 	delFile []string, offlinePushInfo *sdkws.OfflinePushInfo, options map[string]bool) (*sdk_struct.MsgStruct, error) {
 	log.Debug("", "sendMessageToServer ", s.ServerMsgID, " ", s.ClientMsgID)
 	//Protocol conversion
@@ -937,7 +937,7 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 
 }
 
-func (c *Conversation) FindMessageList(ctx context.Context, req []*sdk_params_callback.ConversationArgs) (*sdk_params_callback.FindMessageListCallback, error) {
+func (c *MsgConversation) FindMessageList(ctx context.Context, req []*sdk_params_callback.ConversationArgs) (*sdk_params_callback.FindMessageListCallback, error) {
 	var r sdk_params_callback.FindMessageListCallback
 	{
 	}
@@ -1011,10 +1011,10 @@ func (c *Conversation) FindMessageList(ctx context.Context, req []*sdk_params_ca
 	return &r, nil
 
 }
-func (c *Conversation) GetHistoryMessageList(ctx context.Context, req sdk_params_callback.GetHistoryMessageListParams) ([]*sdk_struct.MsgStruct, error) {
+func (c *MsgConversation) GetHistoryMessageList(ctx context.Context, req sdk_params_callback.GetHistoryMessageListParams) ([]*sdk_struct.MsgStruct, error) {
 	return c.getHistoryMessageList(ctx, req, false)
 }
-func (c *Conversation) GetAdvancedHistoryMessageList(ctx context.Context, req sdk_params_callback.GetAdvancedHistoryMessageListParams) (*sdk_params_callback.GetAdvancedHistoryMessageListCallback, error) {
+func (c *MsgConversation) GetAdvancedHistoryMessageList(ctx context.Context, req sdk_params_callback.GetAdvancedHistoryMessageListParams) (*sdk_params_callback.GetAdvancedHistoryMessageListCallback, error) {
 	result, err := c.getAdvancedHistoryMessageList(ctx, req, false)
 	if err != nil {
 		return nil, err
@@ -1025,7 +1025,7 @@ func (c *Conversation) GetAdvancedHistoryMessageList(ctx context.Context, req sd
 	}
 	return result, nil
 }
-func (c *Conversation) GetAdvancedHistoryMessageListReverse(ctx context.Context, req sdk_params_callback.GetAdvancedHistoryMessageListParams) (*sdk_params_callback.GetAdvancedHistoryMessageListCallback, error) {
+func (c *MsgConversation) GetAdvancedHistoryMessageListReverse(ctx context.Context, req sdk_params_callback.GetAdvancedHistoryMessageListParams) (*sdk_params_callback.GetAdvancedHistoryMessageListCallback, error) {
 	result, err := c.getAdvancedHistoryMessageList(ctx, req, true)
 	if err != nil {
 		return nil, err
@@ -1037,21 +1037,21 @@ func (c *Conversation) GetAdvancedHistoryMessageListReverse(ctx context.Context,
 	return result, nil
 }
 
-func (c *Conversation) GetHistoryMessageListReverse(ctx context.Context, req sdk_params_callback.GetHistoryMessageListParams) ([]*sdk_struct.MsgStruct, error) {
+func (c *MsgConversation) GetHistoryMessageListReverse(ctx context.Context, req sdk_params_callback.GetHistoryMessageListParams) ([]*sdk_struct.MsgStruct, error) {
 	return c.getHistoryMessageList(ctx, req, true)
 }
-func (c *Conversation) RevokeMessage(ctx context.Context, req *sdk_struct.MsgStruct) error {
+func (c *MsgConversation) RevokeMessage(ctx context.Context, req *sdk_struct.MsgStruct) error {
 	return c.revokeOneMessage(ctx, req)
 }
-func (c *Conversation) NewRevokeMessage(ctx context.Context, req *sdk_struct.MsgStruct) error {
+func (c *MsgConversation) NewRevokeMessage(ctx context.Context, req *sdk_struct.MsgStruct) error {
 	return c.newRevokeOneMessage(ctx, req)
 
 }
-func (c *Conversation) TypingStatusUpdate(ctx context.Context, recvID, msgTip string) error {
+func (c *MsgConversation) TypingStatusUpdate(ctx context.Context, recvID, msgTip string) error {
 	return c.typingStatusUpdate(ctx, recvID, msgTip)
 }
 
-func (c *Conversation) MarkC2CMessageAsRead(ctx context.Context, userID string, msgIDList []string) error {
+func (c *MsgConversation) MarkC2CMessageAsRead(ctx context.Context, userID string, msgIDList []string) error {
 	if len(msgIDList) == 0 {
 		conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
 		_ = c.setOneConversationUnread(ctx, conversationID, 0)
@@ -1062,7 +1062,7 @@ func (c *Conversation) MarkC2CMessageAsRead(ctx context.Context, userID string, 
 	return c.markC2CMessageAsRead(ctx, msgIDList, userID)
 }
 
-func (c *Conversation) MarkMessageAsReadByConID(ctx context.Context, conversationID string, msgIDList []string) error {
+func (c *MsgConversation) MarkMessageAsReadByConID(ctx context.Context, conversationID string, msgIDList []string) error {
 	if len(msgIDList) == 0 {
 		_ = c.setOneConversationUnread(ctx, conversationID, 0)
 		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
@@ -1074,30 +1074,30 @@ func (c *Conversation) MarkMessageAsReadByConID(ctx context.Context, conversatio
 }
 
 // deprecated
-func (c *Conversation) MarkGroupMessageHasRead(ctx context.Context, groupID string) {
+func (c *MsgConversation) MarkGroupMessageHasRead(ctx context.Context, groupID string) {
 	conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 	_ = c.setOneConversationUnread(ctx, conversationID, 0)
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 
 }
-func (c *Conversation) MarkGroupMessageAsRead(ctx context.Context, groupID string, msgIDList []string) error {
+func (c *MsgConversation) MarkGroupMessageAsRead(ctx context.Context, groupID string, msgIDList []string) error {
 	return c.markGroupMessageAsRead(ctx, msgIDList, groupID)
 
 }
-func (c *Conversation) DeleteMessageFromLocalStorage(ctx context.Context, message *sdk_struct.MsgStruct) error {
+func (c *MsgConversation) DeleteMessageFromLocalStorage(ctx context.Context, message *sdk_struct.MsgStruct) error {
 	return c.deleteMessageFromLocalStorage(ctx, message)
 
 }
 
-func (c *Conversation) ClearC2CHistoryMessage(ctx context.Context, userID string) error {
+func (c *MsgConversation) ClearC2CHistoryMessage(ctx context.Context, userID string) error {
 	return c.clearC2CHistoryMessage(ctx, userID)
 }
-func (c *Conversation) ClearGroupHistoryMessage(ctx context.Context, groupID string) error {
+func (c *MsgConversation) ClearGroupHistoryMessage(ctx context.Context, groupID string) error {
 	return c.clearGroupHistoryMessage(ctx, groupID)
 
 }
-func (c *Conversation) ClearC2CHistoryMessageFromLocalAndSvr(ctx context.Context, userID string) error {
+func (c *MsgConversation) ClearC2CHistoryMessageFromLocalAndSvr(ctx context.Context, userID string) error {
 	conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
 	err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
 	if err != nil {
@@ -1108,7 +1108,7 @@ func (c *Conversation) ClearC2CHistoryMessageFromLocalAndSvr(ctx context.Context
 }
 
 // fixme
-func (c *Conversation) ClearGroupHistoryMessageFromLocalAndSvr(ctx context.Context, groupID string) error {
+func (c *MsgConversation) ClearGroupHistoryMessageFromLocalAndSvr(ctx context.Context, groupID string) error {
 	conversationID, _, err := c.getConversationTypeByGroupID(ctx, groupID)
 	if err != nil {
 		return err
@@ -1120,7 +1120,7 @@ func (c *Conversation) ClearGroupHistoryMessageFromLocalAndSvr(ctx context.Conte
 	return c.clearGroupHistoryMessage(ctx, groupID)
 }
 
-func (c *Conversation) InsertSingleMessageToLocalStorage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, sendID string) (*sdk_struct.MsgStruct, error) {
+func (c *MsgConversation) InsertSingleMessageToLocalStorage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, sendID string) (*sdk_struct.MsgStruct, error) {
 	if recvID == "" || sendID == "" {
 		return nil, errors.New("recvID or sendID is null")
 	}
@@ -1171,7 +1171,7 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(ctx context.Context, s 
 
 }
 
-func (c *Conversation) InsertGroupMessageToLocalStorage(ctx context.Context, s *sdk_struct.MsgStruct, groupID, sendID string) (*sdk_struct.MsgStruct, error) {
+func (c *MsgConversation) InsertGroupMessageToLocalStorage(ctx context.Context, s *sdk_struct.MsgStruct, groupID, sendID string) (*sdk_struct.MsgStruct, error) {
 	if groupID == "" || sendID == "" {
 		return nil, errors.New("groupID or sendID is null")
 	}
@@ -1213,7 +1213,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(ctx context.Context, s *
 
 }
 
-func (c *Conversation) SearchLocalMessages(ctx context.Context, searchParam *sdk_params_callback.SearchLocalMessagesParams) (*sdk_params_callback.SearchLocalMessagesCallback, error) {
+func (c *MsgConversation) SearchLocalMessages(ctx context.Context, searchParam *sdk_params_callback.SearchLocalMessagesParams) (*sdk_params_callback.SearchLocalMessagesCallback, error) {
 
 	searchParam.KeywordList = utils.TrimStringList(searchParam.KeywordList)
 	return c.searchLocalMessages(ctx, searchParam)
@@ -1250,7 +1250,7 @@ func getImageInfo(filePath string) (*sdk_struct.ImageInfo, error) {
 
 }
 
-func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.MsgStruct, msgFrom, contentType int32) error {
+func (c *MsgConversation) initBasicInfo(ctx context.Context, message *sdk_struct.MsgStruct, msgFrom, contentType int32) error {
 	message.CreateTime = utils.GetCurrentTimestampByMill()
 	message.SendTime = message.CreateTime
 	message.IsRead = false
@@ -1272,7 +1272,7 @@ func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.Ms
 	return nil
 }
 
-func (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
+func (c *MsgConversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
 	err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
 	if err != nil {
 		return err
@@ -1281,7 +1281,7 @@ func (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, co
 
 }
 
-func (c *Conversation) DeleteMessageFromLocalAndSvr(ctx context.Context, s *sdk_struct.MsgStruct) error {
+func (c *MsgConversation) DeleteMessageFromLocalAndSvr(ctx context.Context, s *sdk_struct.MsgStruct) error {
 	err := c.deleteMessageFromSvr(ctx, s)
 	if err != nil {
 		return err
@@ -1289,7 +1289,7 @@ func (c *Conversation) DeleteMessageFromLocalAndSvr(ctx context.Context, s *sdk_
 	return c.deleteMessageFromLocalStorage(ctx, s)
 }
 
-func (c *Conversation) DeleteAllMsgFromLocalAndSvr(ctx context.Context) error {
+func (c *MsgConversation) DeleteAllMsgFromLocalAndSvr(ctx context.Context) error {
 	err := c.clearMessageFromSvr(ctx)
 	if err != nil {
 		return err
@@ -1297,11 +1297,11 @@ func (c *Conversation) DeleteAllMsgFromLocalAndSvr(ctx context.Context) error {
 	return c.deleteAllMsgFromLocal(ctx)
 }
 
-func (c *Conversation) DeleteAllMsgFromLocal(ctx context.Context) error {
+func (c *MsgConversation) DeleteAllMsgFromLocal(ctx context.Context) error {
 	return c.deleteAllMsgFromLocal(ctx)
 
 }
-func (c *Conversation) getConversationTypeByGroupID(ctx context.Context, groupID string) (conversationID string, conversationType int32, err error) {
+func (c *MsgConversation) getConversationTypeByGroupID(ctx context.Context, groupID string) (conversationID string, conversationType int32, err error) {
 	g, err := c.full.GetGroupInfoByGroupID(ctx, groupID)
 	if err != nil {
 		return "", 0, utils.Wrap(err, "get group info error")
@@ -1316,21 +1316,21 @@ func (c *Conversation) getConversationTypeByGroupID(ctx context.Context, groupID
 	}
 }
 
-func (c *Conversation) SetMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, req []*server_api_params.KeyValue) ([]*server_api_params.ExtensionResult, error) {
+func (c *MsgConversation) SetMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, req []*server_api_params.KeyValue) ([]*server_api_params.ExtensionResult, error) {
 	return c.setMessageReactionExtensions(ctx, s, req)
 
 }
 
-func (c *Conversation) AddMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, reactionExtensionList []*server_api_params.KeyValue) ([]*server_api_params.ExtensionResult, error) {
+func (c *MsgConversation) AddMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, reactionExtensionList []*server_api_params.KeyValue) ([]*server_api_params.ExtensionResult, error) {
 	return c.addMessageReactionExtensions(ctx, s, reactionExtensionList)
 
 }
 
-func (c *Conversation) DeleteMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, reactionExtensionKeyList []string) ([]*server_api_params.ExtensionResult, error) {
+func (c *MsgConversation) DeleteMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, reactionExtensionKeyList []string) ([]*server_api_params.ExtensionResult, error) {
 	return c.deleteMessageReactionExtensions(ctx, s, reactionExtensionKeyList)
 }
 
-func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, messageList []*sdk_struct.MsgStruct) ([]*server_api_params.SingleMessageExtensionResult, error) {
+func (c *MsgConversation) GetMessageListReactionExtensions(ctx context.Context, messageList []*sdk_struct.MsgStruct) ([]*server_api_params.SingleMessageExtensionResult, error) {
 	return c.getMessageListReactionExtensions(ctx, messageList)
 
 }
@@ -1338,7 +1338,7 @@ func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, mes
 /**
 **Get some reaction extensions in reactionExtensionKeyList of message list
  */
-//func (c *Conversation) GetMessageListSomeReactionExtensions(ctx context.Context, messageList, reactionExtensionKeyList, operationID string) {
+//func (c *MsgConversation) GetMessageListSomeReactionExtensions(ctx context.Context, messageList, reactionExtensionKeyList, operationID string) {
 //	var messagelist []*sdk_struct.MsgStruct
 //	common.JsonUnmarshalAndArgsValidate(messageList, &messagelist, callback, operationID)
 //	var list []string
@@ -1347,14 +1347,14 @@ func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, mes
 //	callback.OnSuccess(utils.StructToJsonString(result))
 //	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
 //}
-//func (c *Conversation) SetTypeKeyInfo(ctx context.Context, message, typeKey, ex string, isCanRepeat bool, operationID string) {
+//func (c *MsgConversation) SetTypeKeyInfo(ctx context.Context, message, typeKey, ex string, isCanRepeat bool, operationID string) {
 //	s := sdk_struct.MsgStruct{}
 //	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 //	result := c.setTypeKeyInfo(callback, &s, typeKey, ex, isCanRepeat, operationID)
 //	callback.OnSuccess(utils.StructToJsonString(result))
 //	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
 //}
-//func (c *Conversation) GetTypeKeyListInfo(ctx context.Context, message, typeKeyList, operationID string) {
+//func (c *MsgConversation) GetTypeKeyListInfo(ctx context.Context, message, typeKeyList, operationID string) {
 //	s := sdk_struct.MsgStruct{}
 //	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 //	var list []string
@@ -1363,7 +1363,7 @@ func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, mes
 //	callback.OnSuccess(utils.StructToJsonString(result))
 //	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
 //}
-//func (c *Conversation) GetAllTypeKeyInfo(ctx context.Context, message, operationID string) {
+//func (c *MsgConversation) GetAllTypeKeyInfo(ctx context.Context, message, operationID string) {
 //	s := sdk_struct.MsgStruct{}
 //	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 //	result := c.getAllTypeKeyInfo(callback, &s, operationID)

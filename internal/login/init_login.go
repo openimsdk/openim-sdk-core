@@ -38,7 +38,7 @@ type LoginMgr struct {
 	friend       *friend.Friend
 	group        *group.Group
 	superGroup   *super_group.SuperGroup
-	conversation *conv.Conversation
+	conversation *conv.MsgConversation
 	user         *user.User
 	file         *file.File
 	signaling    *signaling.LiveSignaling
@@ -121,7 +121,7 @@ func (u *LoginMgr) ImConfig() sdk_struct.IMConfig {
 	}
 }
 
-func (u *LoginMgr) Conversation() *conv.Conversation {
+func (u *LoginMgr) Conversation() *conv.MsgConversation {
 	return u.conversation
 }
 

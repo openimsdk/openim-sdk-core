@@ -44,7 +44,7 @@ import (
 
 var SearchContentType = []int{constant.Text, constant.AtText, constant.File}
 
-type Conversation struct {
+type MsgConversation struct {
 	conversationSyncer *syncer.Syncer[*model_struct.LocalConversation, string]
 	*ws.Ws
 	db                   db_interface.DataBase
@@ -76,25 +76,25 @@ type Conversation struct {
 	listenerForService open_im_sdk_callback.OnListenerForService
 }
 
-func (c *Conversation) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
+func (c *MsgConversation) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
 	c.listenerForService = listener
 }
 
-func (c *Conversation) MsgListener() open_im_sdk_callback.OnAdvancedMsgListener {
+func (c *MsgConversation) MsgListener() open_im_sdk_callback.OnAdvancedMsgListener {
 	return c.msgListener
 }
 
-func (c *Conversation) SetSignaling(signaling *signaling.LiveSignaling) {
+func (c *MsgConversation) SetSignaling(signaling *signaling.LiveSignaling) {
 	c.signaling = signaling
 }
 
-func (c *Conversation) SetMsgListener(msgListener open_im_sdk_callback.OnAdvancedMsgListener) {
+func (c *MsgConversation) SetMsgListener(msgListener open_im_sdk_callback.OnAdvancedMsgListener) {
 	c.msgListener = msgListener
 }
-func (c *Conversation) SetMsgKvListener(msgKvListener open_im_sdk_callback.OnMessageKvInfoListener) {
+func (c *MsgConversation) SetMsgKvListener(msgKvListener open_im_sdk_callback.OnMessageKvInfoListener) {
 	c.msgKvListener = msgKvListener
 }
-func (c *Conversation) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnBatchMsgListener) {
+func (c *MsgConversation) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnBatchMsgListener) {
 	c.batchMsgListener = batchMsgListener
 }
 
@@ -103,8 +103,8 @@ func NewConversation(ctx context.Context, db db_interface.DataBase,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	conversationListener open_im_sdk_callback.OnConversationListener,
 	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling *signaling.LiveSignaling,
-	workMoments *workMoments.WorkMoments, business *business.Business, cache *cache.Cache, full *full.Full, id2MinSeq map[string]int64) *Conversation {
-	n := &Conversation{Ws: ws, db: db, p: p, recvCH: ch, loginUserID: loginUserID, platformID: platformID,
+	workMoments *workMoments.WorkMoments, business *business.Business, cache *cache.Cache, full *full.Full, id2MinSeq map[string]int64) *MsgConversation {
+	n := &MsgConversation{Ws: ws, db: db, p: p, recvCH: ch, loginUserID: loginUserID, platformID: platformID,
 		DataDir: dataDir, friend: friend, group: group, user: user, ObjectStorage: objectStorage,
 		signaling: signaling, workMoments: workMoments,
 		full: full, id2MinSeq: id2MinSeq, encryptionKey: encryptionKey, business: business, IsExternalExtensions: isExternalExtensions}
@@ -115,7 +115,7 @@ func NewConversation(ctx context.Context, db db_interface.DataBase,
 	return n
 }
 
-func (c *Conversation) initSyncer() {
+func (c *MsgConversation) initSyncer() {
 	c.conversationSyncer = syncer.New(
 		func(ctx context.Context, value *model_struct.LocalConversation) error {
 			return c.db.InsertConversation(ctx, value)
@@ -134,10 +134,11 @@ func (c *Conversation) initSyncer() {
 	)
 }
 
-func (c *Conversation) GetCh() chan common.Cmd2Value {
+func (c *MsgConversation) GetCh() chan common.Cmd2Value {
 	return c.recvCH
 }
-func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
+
+func (c *MsgConversation) doMsgNew(c2v common.Cmd2Value) {
 	operationID := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).OperationID
 	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).MsgList
 	syncFlag := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).SyncFlag
@@ -230,8 +231,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
 			continue
 		}
-		ctx := context.Background()
-		mcontext.SetOperationID(ctx, operationID)
+		ctx := mcontext.SetOperationID(context.Background(), operationID)
 		switch {
 		case v.ContentType == constant.ConversationChangeNotification || v.ContentType == constant.ConversationPrivateChatNotification:
 			log.Info(operationID, utils.GetSelfFuncName(), v)
@@ -563,7 +563,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	log.Debug(operationID, "insert msg, total cost time: ", time.Since(b), "len:  ", len(allMsg))
 }
 
-func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
+func (c *MsgConversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
 	operationID := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).OperationID
 	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).MsgList
 	syncFlag := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).SyncFlag
@@ -1011,7 +1011,7 @@ func removeElementInList(a sdk_struct.NewMsgList, e *sdk_struct.MsgStruct) (b sd
 	}
 	return b
 }
-func (c *Conversation) diff(ctx context.Context, local, generated, cc, nc map[string]*model_struct.LocalConversation) {
+func (c *MsgConversation) diff(ctx context.Context, local, generated, cc, nc map[string]*model_struct.LocalConversation) {
 	for _, v := range generated {
 		log.Debug("node diff", *v)
 		if localC, ok := local[v.ConversationID]; ok {
@@ -1036,7 +1036,7 @@ func (c *Conversation) diff(ctx context.Context, local, generated, cc, nc map[st
 	}
 
 }
-func (c *Conversation) genConversationGroupAtType(lc *model_struct.LocalConversation, s *sdk_struct.MsgStruct) {
+func (c *MsgConversation) genConversationGroupAtType(lc *model_struct.LocalConversation, s *sdk_struct.MsgStruct) {
 	if s.ContentType == constant.AtText {
 		tagMe := utils.IsContain(c.loginUserID, s.AtElem.AtUserList)
 		tagAll := utils.IsContain(constant.AtAllString, s.AtElem.AtUserList)
@@ -1054,7 +1054,7 @@ func (c *Conversation) genConversationGroupAtType(lc *model_struct.LocalConversa
 	}
 
 }
-func (c *Conversation) msgStructToLocalChatLog(m *sdk_struct.MsgStruct) *model_struct.LocalChatLog {
+func (c *MsgConversation) msgStructToLocalChatLog(m *sdk_struct.MsgStruct) *model_struct.LocalChatLog {
 	var lc model_struct.LocalChatLog
 	copier.Copy(&lc, m)
 	if m.SessionType == constant.GroupChatType || m.SessionType == constant.SuperGroupChatType {
@@ -1062,7 +1062,7 @@ func (c *Conversation) msgStructToLocalChatLog(m *sdk_struct.MsgStruct) *model_s
 	}
 	return &lc
 }
-func (c *Conversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *model_struct.LocalErrChatLog {
+func (c *MsgConversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *model_struct.LocalErrChatLog {
 	var lc model_struct.LocalErrChatLog
 	copier.Copy(&lc, m)
 	if m.SessionType == constant.GroupChatType || m.SessionType == constant.SuperGroupChatType {
@@ -1072,7 +1072,7 @@ func (c *Conversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *mode
 }
 
 // deprecated
-func (c *Conversation) revokeMessage(ctx context.Context, msgRevokeList []*sdk_struct.MsgStruct) {
+func (c *MsgConversation) revokeMessage(ctx context.Context, msgRevokeList []*sdk_struct.MsgStruct) {
 	for _, w := range msgRevokeList {
 		if c.msgListener != nil {
 			t := new(model_struct.LocalChatLog)
@@ -1094,7 +1094,7 @@ func (c *Conversation) revokeMessage(ctx context.Context, msgRevokeList []*sdk_s
 
 }
 
-func (c *Conversation) tempCacheChatLog(ctx context.Context, messageList []*sdk_struct.MsgStruct) {
+func (c *MsgConversation) tempCacheChatLog(ctx context.Context, messageList []*sdk_struct.MsgStruct) {
 	var newMessageList []*model_struct.TempCacheLocalChatLog
 	copier.Copy(&newMessageList, &messageList)
 	err1 := c.db.BatchInsertTempCacheMessageList(ctx, newMessageList)
@@ -1108,7 +1108,7 @@ func (c *Conversation) tempCacheChatLog(ctx context.Context, messageList []*sdk_
 		}
 	}
 }
-func (c *Conversation) newRevokeMessage(ctx context.Context, msgRevokeList []*sdk_struct.MsgStruct) {
+func (c *MsgConversation) newRevokeMessage(ctx context.Context, msgRevokeList []*sdk_struct.MsgStruct) {
 	var failedRevokeMessageList []*sdk_struct.MsgStruct
 	var superGroupIDList []string
 	var revokeMessageRevoked []*sdk_struct.MessageRevoked
@@ -1187,7 +1187,7 @@ func (c *Conversation) newRevokeMessage(ctx context.Context, msgRevokeList []*sd
 		//c.tempCacheChatLog(failedRevokeMessageList)
 	}
 }
-func (c *Conversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
+func (c *MsgConversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
 
 	//for _, v := range msgReactionList {
 	//	var msg sdk_struct.MessageReaction
@@ -1270,7 +1270,7 @@ func (c *Conversation) DoMsgReaction(msgReactionList []*sdk_struct.MsgStruct) {
 	//}
 }
 
-func (c *Conversation) doReactionMsgModifier(ctx context.Context, msgReactionList []*sdk_struct.MsgStruct) {
+func (c *MsgConversation) doReactionMsgModifier(ctx context.Context, msgReactionList []*sdk_struct.MsgStruct) {
 	for _, msgStruct := range msgReactionList {
 		var n server_api_params.ReactionMessageModifierNotification
 		err := json.Unmarshal([]byte(msgStruct.Content), &n)
@@ -1320,7 +1320,7 @@ func (c *Conversation) doReactionMsgModifier(ctx context.Context, msgReactionLis
 	}
 
 }
-func (c *Conversation) doReactionMsgDeleter(ctx context.Context, msgReactionList []*sdk_struct.MsgStruct) {
+func (c *MsgConversation) doReactionMsgDeleter(ctx context.Context, msgReactionList []*sdk_struct.MsgStruct) {
 	for _, msgStruct := range msgReactionList {
 		var n server_api_params.ReactionMessageDeleteNotification
 		err := json.Unmarshal([]byte(msgStruct.Content), &n)
@@ -1342,7 +1342,7 @@ func (c *Conversation) doReactionMsgDeleter(ctx context.Context, msgReactionList
 	}
 
 }
-func (c *Conversation) QuoteMsgRevokeHandle(ctx context.Context, v *model_struct.LocalChatLog, revokeMsgIDList []*sdk_struct.MessageRevoked) {
+func (c *MsgConversation) QuoteMsgRevokeHandle(ctx context.Context, v *model_struct.LocalChatLog, revokeMsgIDList []*sdk_struct.MessageRevoked) {
 	s := sdk_struct.MsgStruct{}
 	err := utils.JsonStringToStruct(v.Content, &s.QuoteElem)
 	if err != nil {
@@ -1372,7 +1372,7 @@ func isContainRevokedList(target string, List []*sdk_struct.MessageRevoked) (boo
 	return false, nil
 }
 
-func (c *Conversation) DoGroupMsgReadState(ctx context.Context, groupMsgReadList []*sdk_struct.MsgStruct) {
+func (c *MsgConversation) DoGroupMsgReadState(ctx context.Context, groupMsgReadList []*sdk_struct.MsgStruct) {
 	var groupMessageReceiptResp []*sdk_struct.MessageReceipt
 	var failedMessageList []*sdk_struct.MsgStruct
 	userMsgMap := make(map[string]map[string][]string)
@@ -1464,7 +1464,7 @@ func (c *Conversation) DoGroupMsgReadState(ctx context.Context, groupMsgReadList
 		//c.tempCacheChatLog(failedMessageList)
 	}
 }
-func (c *Conversation) newMessage(newMessagesList sdk_struct.NewMsgList) {
+func (c *MsgConversation) newMessage(newMessagesList sdk_struct.NewMsgList) {
 	sort.Sort(newMessagesList)
 	for _, w := range newMessagesList {
 		log.Info("internal", "newMessage: ", w.ClientMsgID)
@@ -1480,7 +1480,7 @@ func (c *Conversation) newMessage(newMessagesList sdk_struct.NewMsgList) {
 		}
 	}
 }
-func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk_struct.NewMsgList) {
+func (c *MsgConversation) batchNewMessages(ctx context.Context, newMessagesList sdk_struct.NewMsgList) {
 	sort.Sort(newMessagesList)
 	if c.batchMsgListener != nil {
 		if len(newMessagesList) > 0 {
@@ -1494,7 +1494,7 @@ func (c *Conversation) batchNewMessages(ctx context.Context, newMessagesList sdk
 	}
 
 }
-func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
+func (c *MsgConversation) doDeleteConversation(c2v common.Cmd2Value) {
 	if c.ConversationListener == nil {
 		log.Error("internal", "not set conversationListener")
 		return
@@ -1514,7 +1514,7 @@ func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
 	}
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 }
-func (c *Conversation) doMsgReadState(ctx context.Context, msgReadList []*sdk_struct.MsgStruct) {
+func (c *MsgConversation) doMsgReadState(ctx context.Context, msgReadList []*sdk_struct.MsgStruct) {
 	var messageReceiptResp []*sdk_struct.MessageReceipt
 	var msgIdList []string
 	chrsList := make(map[string][]string)
@@ -1574,7 +1574,7 @@ func (c *Conversation) doMsgReadState(ctx context.Context, msgReadList []*sdk_st
 		c.msgListener.OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
 	}
 }
-func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
+func (c *MsgConversation) doUpdateConversation(c2v common.Cmd2Value) {
 	if c.ConversationListener == nil {
 		log.Error("internal", "not set conversationListener")
 		return
@@ -1779,7 +1779,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 
 	}
 }
-func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
+func (c *MsgConversation) doUpdateMessage(c2v common.Cmd2Value) {
 	if c.ConversationListener == nil {
 		log.Error("internal", "not set conversationListener")
 		return
@@ -1809,7 +1809,7 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 	}
 
 }
-func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
+func (c *MsgConversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 	if c.ConversationListener == nil {
 		log.Error("internal", "not set conversationListener")
 		return
@@ -2075,7 +2075,7 @@ type messageKvList struct {
 	ChangedKvList []*sdk.SingleTypeKeyInfoSum `json:"changedKvList"`
 }
 
-func (c *Conversation) Work(c2v common.Cmd2Value) {
+func (c *MsgConversation) Work(c2v common.Cmd2Value) {
 	log.Info("internal", "doListener work..", c2v.Cmd)
 	ctx := context.Background()
 	switch c2v.Cmd {
@@ -2126,7 +2126,7 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 
 	}
 }
-func (c *Conversation) msgConvert(msg *sdk_struct.MsgStruct) (err error) {
+func (c *MsgConversation) msgConvert(msg *sdk_struct.MsgStruct) (err error) {
 	err = c.msgHandleByContentType(msg)
 	if err != nil {
 		return err
@@ -2139,7 +2139,7 @@ func (c *Conversation) msgConvert(msg *sdk_struct.MsgStruct) (err error) {
 	}
 }
 
-func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err error) {
+func (c *MsgConversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err error) {
 	_ = utils.JsonStringToStruct(msg.AttachedInfo, &msg.AttachedInfoElem)
 	if msg.ContentType >= constant.NotificationBegin && msg.ContentType <= constant.NotificationEnd {
 		var tips sdkws.TipsComm
@@ -2193,7 +2193,7 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 
 	return utils.Wrap(err, "")
 }
-func (c *Conversation) updateConversation(lc *model_struct.LocalConversation, cs map[string]*model_struct.LocalConversation) {
+func (c *MsgConversation) updateConversation(lc *model_struct.LocalConversation, cs map[string]*model_struct.LocalConversation) {
 	if oldC, ok := cs[lc.ConversationID]; !ok {
 		cs[lc.ConversationID] = lc
 	} else {
@@ -2255,7 +2255,7 @@ func mapConversationToList(m map[string]*model_struct.LocalConversation) (cs []*
 	}
 	return cs
 }
-func (c *Conversation) addFaceURLAndName(ctx context.Context, lc *model_struct.LocalConversation) error {
+func (c *MsgConversation) addFaceURLAndName(ctx context.Context, lc *model_struct.LocalConversation) error {
 	switch lc.ConversationType {
 	case constant.SingleChatType, constant.NotificationChatType:
 		faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, lc.UserID)

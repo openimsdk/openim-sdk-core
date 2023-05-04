@@ -18,7 +18,7 @@ import (
 )
 
 // 检测其内部连续性，如果不连续，则向前补齐,获取这一组消息的最大最小seq，以及需要补齐的seq列表长度
-func (c *Conversation) messageBlocksInternalContinuityCheck(sourceID string, notStartTime, isReverse bool, count,
+func (c *MsgConversation) messageBlocksInternalContinuityCheck(sourceID string, notStartTime, isReverse bool, count,
 	sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback,
 	operationID string) (max, min int64, length int) {
 	var lostSeqListLength int
@@ -49,7 +49,7 @@ func (c *Conversation) messageBlocksInternalContinuityCheck(sourceID string, not
 }
 
 // 检测消息块之间的连续性，如果不连续，则向前补齐,返回块之间是否连续，bool
-func (c *Conversation) messageBlocksBetweenContinuityCheck(lastMinSeq, maxSeq int64, sourceID string, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback, operationID string) bool {
+func (c *MsgConversation) messageBlocksBetweenContinuityCheck(lastMinSeq, maxSeq int64, sourceID string, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback, operationID string) bool {
 	if lastMinSeq != 0 {
 		log.Debug(operationID, "get lost LastMinSeq is :", lastMinSeq, "thisMaxSeq is :", maxSeq)
 		if maxSeq != 0 {
@@ -84,7 +84,7 @@ func (c *Conversation) messageBlocksBetweenContinuityCheck(lastMinSeq, maxSeq in
 }
 
 // 检测其内部连续性，如果不连续，则向前补齐,获取这一组消息的最大最小seq，以及需要补齐的seq列表长度
-func (c *Conversation) messageBlocksEndContinuityCheck(ctx context.Context, minSeq int64, sourceID string, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
+func (c *MsgConversation) messageBlocksEndContinuityCheck(ctx context.Context, minSeq int64, sourceID string, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
 	var minSeqServer int64
 	var maxSeqServer int64
 	resp, err := c.SendReqWaitResp(context.Background(), &server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 1, c.loginUserID)
@@ -147,7 +147,7 @@ func (c *Conversation) messageBlocksEndContinuityCheck(ctx context.Context, minS
 	}
 
 }
-func (c *Conversation) getMaxAndMinHaveSeqList(messages []*model_struct.LocalChatLog) (max, min int64, seqList []int64) {
+func (c *MsgConversation) getMaxAndMinHaveSeqList(messages []*model_struct.LocalChatLog) (max, min int64, seqList []int64) {
 	for i := 0; i < len(messages); i++ {
 		if messages[i].Seq != 0 {
 			seqList = append(seqList, messages[i].Seq)
@@ -170,7 +170,7 @@ func (c *Conversation) getMaxAndMinHaveSeqList(messages []*model_struct.LocalCha
 // 1、保证单次拉取消息量低于sdk单次从服务器拉取量
 // 2、块中连续性检测
 // 3、块之间连续性检测
-func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, sourceID string, seqList []int64, notStartTime,
+func (c *MsgConversation) pullMessageAndReGetHistoryMessages(ctx context.Context, sourceID string, seqList []int64, notStartTime,
 	isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
 	existedSeqList, err := c.db.SuperGroupGetAlreadyExistSeqList(ctx, sourceID, seqList)
 	if err != nil {
@@ -233,7 +233,7 @@ func errHandle(seqList []int64, list *[]*model_struct.LocalChatLog, err error, m
 	}
 	*list = result
 }
-func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData []*server_api_params.MsgData, operationID string) {
+func (c *MsgConversation) pullMessageIntoTable(ctx context.Context, pullMsgData []*server_api_params.MsgData, operationID string) {
 
 	var insertMsg, specialUpdateMsg []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
