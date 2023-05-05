@@ -157,13 +157,14 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 		log.ZError(ctx, "not set c ConversationListener", nil)
 		return
 	}
-	if syncFlag == constant.MsgSyncBegin {
+	switch syncFlag {
+	case constant.MsgSyncBegin:
 		c.ConversationListener.OnSyncServerStart()
-	}
-	if syncFlag == constant.MsgSyncFailed {
+	case constant.MsgSyncFailed:
 		c.ConversationListener.OnSyncServerFailed()
+	case constant.MsgSyncEnd:
+		defer c.ConversationListener.OnSyncServerFinish()
 	}
-
 	var isTriggerUnReadCount bool
 	var insertMsg, updateMsg []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
@@ -554,9 +555,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	if isTriggerUnReadCount {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged, Args: ""}})
 	}
-	if syncFlag == constant.MsgSyncEnd {
-		c.ConversationListener.OnSyncServerFinish()
-	}
+
 	log.Debug(operationID, "insert msg, total cost time: ", time.Since(b), "len:  ", len(allMsg))
 }
 

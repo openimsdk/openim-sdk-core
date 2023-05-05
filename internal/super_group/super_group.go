@@ -50,8 +50,8 @@ func (s *SuperGroup) SetLoginTime(loginTime int64) {
 	s.loginTime = loginTime
 }
 
-func (s *SuperGroup) DoNotification(msg *sdkws.MsgData, ch chan<- common.Cmd2Value, operationID string) {
-	ctx := context.Background()
+func (s *SuperGroup) DoNotification(ctx context.Context, msg *sdkws.MsgData, ch chan<- common.Cmd2Value) {
+	var operationID string
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID, msg.String())
 	if msg.SendTime < s.loginTime || s.loginTime == 0 {
 		log.Warn(operationID, "ignore notification ", msg.ClientMsgID, msg.ServerMsgID, msg.Seq, msg.ContentType)
