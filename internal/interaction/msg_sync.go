@@ -30,6 +30,7 @@ type MsgSync struct {
 	readDiffusionGroupMsgSync *ReadDiffusionGroupMsgSync
 }
 
+// compareSeq compares the serial numbers of the client and server
 func (m *MsgSync) compareSeq() {
 	operationID := utils.OperationIDGenerator()
 	ctx := mcontext.NewCtx(operationID)
@@ -37,6 +38,7 @@ func (m *MsgSync) compareSeq() {
 	m.readDiffusionGroupMsgSync.compareSeq(operationID)
 }
 
+// doMaxSeq handles the maximum sequence number request sent by the client
 func (m *MsgSync) doMaxSeq(cmd common.Cmd2Value) {
 	operationID := cmd.Value.(sdk_struct.CmdMaxSeqToMsgSync).OperationID
 	if !m.isSyncFinished {
@@ -50,6 +52,7 @@ func (m *MsgSync) doMaxSeq(cmd common.Cmd2Value) {
 	m.isSyncFinished = true
 }
 
+// doPushMsg handles new messages pushed by the client
 func (m *MsgSync) doPushMsg(cmd common.Cmd2Value) {
 	msg := cmd.Value.(sdk_struct.CmdPushMsgToMsgSync).Msg
 	switch msg.SessionType {
@@ -60,6 +63,7 @@ func (m *MsgSync) doPushMsg(cmd common.Cmd2Value) {
 	}
 }
 
+// Work responds differently depending on the command
 func (m *MsgSync) Work(cmd common.Cmd2Value) {
 	switch cmd.Cmd {
 	case constant.CmdPushMsg:
@@ -79,10 +83,12 @@ func (m *MsgSync) Work(cmd common.Cmd2Value) {
 	}
 }
 
+// GetCh gets the message queue
 func (m *MsgSync) GetCh() chan common.Cmd2Value {
 	return m.PushMsgAndMaxSeqCh
 }
 
+// NewMsgSync creates an instance of the MsgSync structure
 func NewMsgSync(ctx context.Context, dataBase db_interface.DataBase, ch chan common.Cmd2Value, pushMsgAndMaxSeqCh chan common.Cmd2Value) *MsgSync {
 	p := &MsgSync{DataBase: dataBase, Ws: ws, LoginUserID: loginUserID, conversationCh: ch, PushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh}
 	//	p.superGroupMsgSync = NewSuperGroupMsgSync(dataBase, ws, loginUserID, ch, joinedSuperGroupCh)

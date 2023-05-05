@@ -33,7 +33,7 @@ type SyncedSeq struct {
 type MsgSyncer struct {
 	loginUserID string
 	// listen ch
-	ws *Ws
+	longConnMgr *LongConnMgr
 	// PushMsgAndMaxSeqCh is a channel for WebSocket channel that's used to push messages and maximum sequence number.
 	PushMsgAndMaxSeqCh chan common.Cmd2Value
 
@@ -43,24 +43,21 @@ type MsgSyncer struct {
 	conversationCh chan common.Cmd2Value
 
 	ctx context.Context
-
 	// The maximum number of SEQs that have been synchronized
-	seqs map[string]SyncedSeq
-
-	// msgCache  map[string]map[int64]*sdkws.MsgData
+	seqs      map[string]SyncedSeq
 	db        db_interface.DataBase
 	syncTimes int
 }
 
+// NewMsgSyncer creates a new instance of the message synchronizer.
 func NewMsgSyncer(ctx context.Context, conversationCh, PushMsgAndMaxSeqCh, recvSeqch chan common.Cmd2Value,
-	loginUserID string, ws *Ws) (*MsgSyncer, error) {
+	loginUserID string, longConnMgr *LongConnMgr) (*MsgSyncer, error) {
 	m := &MsgSyncer{
 		PushMsgAndMaxSeqCh: PushMsgAndMaxSeqCh,
 		conversationCh:     conversationCh,
-		ws:                 ws,
+		longConnMgr:        longConnMgr,
 		loginUserID:        loginUserID,
 		ctx:                ctx,
-		// msgCache:       make(map[string]map[int64]*sdkws.MsgData),
 	}
 	err := m.loadSeq(ctx)
 	return m, err
@@ -85,8 +82,7 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 			log.ZError(ctx, "get group abnormal seq failed", err, "groupID", groupID)
 			return err
 		}
-		var maxSeqSynced int64
-		maxSeqSynced = nMaxSeq
+		maxSeqSynced := nMaxSeq
 		if aMaxSeq > nMaxSeq {
 			maxSeqSynced = aMaxSeq
 		}
@@ -99,6 +95,8 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 	return nil
 }
 
+// DoListener Listen to the message pipe of the message synchronizer
+// and process received and pushed messages
 func (m *MsgSyncer) DoListener() {
 	for {
 		select {
@@ -107,7 +105,7 @@ func (m *MsgSyncer) DoListener() {
 		// case cmd := <-m.recvMsgCh:
 		// 	m.handleRecvMsgAndSyncSeqs(cmd.Ctx, cmd.Value.(*sdkws.MsgData))
 		case cmd := <-m.PushMsgAndMaxSeqCh:
-			m.handleRecvMsgAndSyncSeqs(cmd.Ctx, cmd.Value.(*sdkws.MsgData))
+			m.handleRecvMsgAndSyncSeqs(cmd.Ctx, cmd.Value.(*sdkws.MsgData), cmd.Cmd)
 		case <-m.ctx.Done():
 			log.ZInfo(m.ctx, "msg syncer done, sdk logout.....")
 			return
@@ -161,25 +159,28 @@ func (m *MsgSyncer) getSeqsNeedSync(syncedMaxSeq, maxSeq int64) []int64 {
 }
 
 // recv msg from
-func (m *MsgSyncer) handleRecvMsgAndSyncSeqs(ctx context.Context, msg *sdkws.MsgData) {
+func (m *MsgSyncer) handleRecvMsgAndSyncSeqs(ctx context.Context, msg *sdkws.MsgData, cmd string) {
+	// parsing cmd
+	if cmd == constant.CmdMaxSeq {
+		//...
+	}
 	// online msg
 	if msg.Seq == 0 {
 		_ = m.triggerConversation(ctx, []*sdkws.MsgData{msg})
 		return
 	}
-	// 连续直接触发并且刷新seq
+	// seq is triggered directly and refreshed continuously
 	if msg.Seq == m.seqs[msg.GroupID].maxSeqSynced+1 {
 		_ = m.triggerConversation(ctx, []*sdkws.MsgData{msg})
 		oldSeq := m.seqs[msg.GroupID]
 		oldSeq.maxSeqSynced = msg.Seq
 		m.seqs[msg.GroupID] = oldSeq
 	} else {
-		// m.msgCache[msg.GroupID][msg.Seq] = msg
 		m.sync(ctx, msg.GroupID, msg.SessionType, m.seqs[msg.GroupID].maxSeqSynced, msg.Seq)
 	}
 }
 
-// 分片同步消息，触发成功后刷新seq
+// Fragment synchronization message, seq refresh after successful trigger
 func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, sourceID string, sessionType int32, syncedMaxSeq, maxSeq int64) error {
 	msgs, err := m.syncMsgBySeqsInterval(ctx, sourceID, sessionType, syncedMaxSeq, maxSeq)
 	if err != nil {
@@ -220,7 +221,7 @@ func (m *MsgSyncer) syncMsgBySeqs(ctx context.Context, sourceID string, sessionT
 	seqsList := m.splitSeqs(split, seqsNeedSync)
 	for i := 0; i < len(seqsList); {
 		pullMsgReq.GroupSeqs[sourceID] = &sdkws.Seqs{Seqs: seqsList[i]}
-		resp, err := m.ws.SendReqWaitResp(ctx, &pullMsgReq, constant.WSPullMsgBySeqList, timeout, retryTimes, m.loginUserID)
+		resp, err := m.longConnMgr.SendReqWaitResp(ctx, &pullMsgReq, constant.WSPullMsgBySeqList, timeout, retryTimes, m.loginUserID)
 		if err != nil {
 			log.ZError(ctx, "syncMsgFromSvrSplit err", err, "pullMsgReq", pullMsgReq)
 			continue
@@ -248,8 +249,6 @@ func (m *MsgSyncer) triggerConversation(ctx context.Context, msgs []*sdkws.MsgDa
 
 // triggers a reconnection.
 func (m *MsgSyncer) triggerReconnect() {
-	m.ws.mutex.RLock()
-	defer m.ws.mutex.RUnlock()
 	for groupID, syncedSeq := range m.seqs {
 		if syncedSeq.maxSeqSynced == 0 {
 			continue

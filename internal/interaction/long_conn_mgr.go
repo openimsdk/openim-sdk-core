@@ -87,6 +87,7 @@ func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnLis
 	go l.writePump(ctx)
 	return l
 }
+
 func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqIdentifier int, resp proto.Message) error {
 	data, err := proto.Marshal(m)
 	if err != nil {
