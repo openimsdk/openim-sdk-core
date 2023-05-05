@@ -21,6 +21,7 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db"
 	"open_im_sdk/pkg/db/db_interface"
+	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
@@ -30,7 +31,6 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 )
 
 type LoginMgr struct {
@@ -248,7 +248,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	var err error
 	u.db, err = db.NewDataBase(ctx, userID, u.info.DataDir)
 	if err != nil {
-		return errs.ErrDatabase.Wrap(err.Error())
+		return sdkerrs.ErrSdkInternal.Wrap("init database " + err.Error())
 	}
 	log.ZDebug(ctx, "NewDataBase ok", "userID", userID, "dataDir", u.info.DataDir, "login cost time", time.Since(t1))
 	u.conversationCh = make(chan common.Cmd2Value, 1000)

@@ -7,10 +7,10 @@ import (
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/syncer"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	authPb "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/auth"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	userPb "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/user"
@@ -114,7 +114,7 @@ func (u *User) userInfoUpdatedNotification(msg *sdkws.MsgData, operationID strin
 func (u *User) GetUsersInfoFromSvr(ctx context.Context, userIDs []string) ([]*model_struct.LocalUser, error) {
 	resp, err := util.CallApi[userPb.GetDesignateUsersResp](ctx, constant.GetUsersInfoRouter, userPb.GetDesignateUsersReq{UserIDs: userIDs})
 	if err != nil {
-		return nil, errs.Wrap(err, "GetUsersInfoFromSvr failed")
+		return nil, sdkerrs.Warp(err, "GetUsersInfoFromSvr failed")
 	}
 	return util.Batch(ServerUserToLocalUser, resp.UsersInfo), nil
 }
@@ -128,7 +128,7 @@ func (u *User) GetSingleUserFromSvr(ctx context.Context, userID string) (*model_
 	if len(users) > 0 {
 		return users[0], nil
 	}
-	return nil, errs.ErrRecordNotFound.Wrap(fmt.Sprintf("getSelfUserInfo failed, userID: %s not exist", userID))
+	return nil, sdkerrs.ErrRecordNotFound.Wrap(fmt.Sprintf("getSelfUserInfo failed, userID: %s not exist", userID))
 }
 
 // getSelfUserInfo retrieves the user's information.

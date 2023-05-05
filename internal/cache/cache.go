@@ -5,9 +5,8 @@ import (
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/sdkerrs"
 	"sync"
-
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 )
 
 type UserInfo struct {
@@ -87,7 +86,7 @@ func (c *Cache) GetUserNameAndFaceURL(ctx context.Context, userID string) (faceU
 		return "", "", err
 	}
 	if len(users) == 0 {
-		return "", "", errs.ErrUserIDNotFound.Wrap(userID)
+		return "", "", sdkerrs.ErrUserIDNotFound.Wrap(userID)
 	}
 	c.userMap.Store(userID, UserInfo{FaceURL: users[0].FaceURL, Nickname: users[0].Nickname})
 	return users[0].FaceURL, users[0].Nickname, nil

@@ -2,7 +2,6 @@ package workMoments
 
 import (
 	"context"
-	ws "open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
@@ -14,7 +13,6 @@ type WorkMoments struct {
 	listener    open_im_sdk_callback.OnWorkMomentsListener
 	loginUserID string
 	db          db_interface.DataBase
-	p           *ws.PostApi
 }
 
 func NewWorkMoments(loginUserID string, db db_interface.DataBase) *WorkMoments {

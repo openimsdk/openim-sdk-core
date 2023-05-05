@@ -7,9 +7,9 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/sdk_params_callback"
+	"open_im_sdk/pkg/sdkerrs"
 	"time"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/wrapperspb"
@@ -40,7 +40,7 @@ func (g *Group) CreateGroup(ctx context.Context, groupBaseInfo sdk_params_callba
 		case constant.GroupAdmin:
 			req.AdminUserIDs = append(req.AdminUserIDs, info.UserID)
 		default:
-			return nil, errs.ErrArgs.Wrap(fmt.Sprintf("CreateGroupV2: invalid role level %d", info.RoleLevel))
+			return nil, sdkerrs.ErrArgs.Wrap(fmt.Sprintf("CreateGroupV2: invalid role level %d", info.RoleLevel))
 		}
 	}
 	return g.CreateGroupV2(ctx, req)
@@ -176,7 +176,7 @@ func (g *Group) GetGroupsInfo(ctx context.Context, groupIDs []string) ([]*model_
 
 func (g *Group) SearchGroups(ctx context.Context, param sdk_params_callback.SearchGroupsParam) ([]*model_struct.LocalGroup, error) {
 	if len(param.KeywordList) == 0 || (!param.IsSearchGroupName && !param.IsSearchGroupID) {
-		return nil, errs.NewCodeError(201, "keyword is null or search field all false")
+		return nil, sdkerrs.ErrArgs.Wrap("keyword is null or search field all false")
 	}
 	groups, err := g.db.GetAllGroupInfoByGroupIDOrGroupName(ctx, param.KeywordList[0], param.IsSearchGroupID, param.IsSearchGroupName) // todo	param.KeywordList[0]
 	if err != nil {

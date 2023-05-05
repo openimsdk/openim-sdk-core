@@ -20,10 +20,10 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
+	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/server_api_params"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/friend"
 )
 
@@ -163,7 +163,7 @@ func (f *Friend) GetFriendList(ctx context.Context) ([]*server_api_params.FullUs
 }
 func (f *Friend) SearchFriends(ctx context.Context, param *sdk.SearchFriendsParam) ([]*sdk.SearchFriendItem, error) {
 	if len(param.KeywordList) == 0 || (!param.IsSearchNickname && !param.IsSearchUserID && !param.IsSearchRemark) {
-		return nil, errs.NewCodeError(201, "keyword is null or search field all false")
+		return nil, sdkerrs.ErrArgs.Wrap("keyword is null or search field all false")
 	}
 	localFriendList, err := f.db.SearchFriendList(ctx, param.KeywordList[0], param.IsSearchUserID, param.IsSearchNickname, param.IsSearchRemark)
 	if err != nil {

@@ -4,9 +4,10 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
-	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"open_im_sdk/pkg/sdkerrs"
 	"strings"
 )
 
@@ -40,22 +41,22 @@ func hashStr(v ...string) string {
 func httpPut(ctx context.Context, url string, reader io.Reader, length int64) error {
 	request, err := http.NewRequestWithContext(ctx, http.MethodPut, url, reader)
 	if err != nil {
-		return err
+		return sdkerrs.ErrSdkInternal.WithDetail(err.Error()).Wrap()
 	}
 	request.ContentLength = length
 	response, err := new(http.Client).Do(request)
 	if err != nil {
-		return err
+		return sdkerrs.ErrNetwork.WithDetail(err.Error()).Wrap()
 	}
 	defer response.Body.Close()
 	data, err := io.ReadAll(response.Body)
 	if err != nil {
-		return err
+		return sdkerrs.ErrSdkInternal.WithDetail(err.Error()).Wrap()
 	}
 	if response.StatusCode >= 200 && response.StatusCode < 300 {
 		return nil
 	}
-	return errors.New(string(data))
+	return sdkerrs.ErrSdkInternal.WithDetail(fmt.Sprintf("put file %d -> %s", response.StatusCode, string(data))).Wrap()
 }
 
 func getFragmentSize(totalSize int64, fragmentSize int64) []int64 {

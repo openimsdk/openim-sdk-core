@@ -3,13 +3,13 @@ package open_im_sdk
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/sdkerrs"
 	"reflect"
-
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 )
 
 func isNumeric(kind reflect.Kind) bool {
@@ -73,19 +73,19 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 	//	}
 	//}()
 	if operationID == "" {
-		return nil, errs.ErrArgs.Wrap("call func operationID is empty")
+		return nil, sdkerrs.ErrArgs.Wrap("call func operationID is empty")
 	}
 	//if err := CheckResourceLoad(UserForSDK); err != nil {
 	//	return nil, err
 	//}
 	fnv := reflect.ValueOf(fn)
 	if fnv.Kind() != reflect.Func {
-		return nil, fmt.Errorf("call func fn is not func, is %T", fn)
+		return nil, sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("call func fn is not func, is %T", fn))
 	}
 	fnt := fnv.Type()
 	nin := fnt.NumIn()
 	if len(args)+1 != nin {
-		return nil, fmt.Errorf("go code error: fn in args num is not match")
+		return nil, sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("go code error: fn in args num is not match"))
 	}
 	ctx := ccontext.WithOperationID(UserForSDK.BaseCtx(), operationID)
 	//ctx := context.Background()
@@ -111,7 +111,7 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 			case reflect.Struct, reflect.Slice, reflect.Array, reflect.Map:
 				v := reflect.New(inFnField)
 				if err := json.Unmarshal([]byte(args[i].(string)), v.Interface()); err != nil {
-					return nil, fmt.Errorf("go call json.Unmarshal error: %w", err)
+					return nil, sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("go call json.Unmarshal error: %w", err))
 				}
 				if ptr == 0 {
 					v = v.Elem()
@@ -132,7 +132,7 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 			ins = append(ins, reflect.ValueOf(v))
 			continue
 		}
-		return nil, fmt.Errorf("go code error: fn in args type is not match")
+		return nil, sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("go code error: fn in args type is not match"))
 	}
 	outs := fnv.Call(ins)
 	if len(outs) == 0 {
@@ -167,12 +167,16 @@ func call(callback open_im_sdk_callback.Base, operationID string, fn any, args .
 	go func() {
 		res, err := call_(operationID, fn, args...)
 		if err != nil {
-			callback.OnError(10000, err.Error())
+			if code, ok := err.(errs.CodeError); ok {
+				callback.OnError(int32(code.Code()), code.Error())
+			} else {
+				callback.OnError(sdkerrs.UnknownCode, fmt.Sprintf("error %T not implement CodeError: %s", err, err))
+			}
 			return
 		}
 		data, err := json.Marshal(res)
 		if err != nil {
-			callback.OnError(10000, err.Error())
+			callback.OnError(sdkerrs.SdkInternalError, fmt.Sprintf("func res json.Marshal error: %s", err))
 			return
 		}
 		callback.OnSuccess(string(data))
@@ -303,27 +307,27 @@ func messageCall(callback open_im_sdk_callback.SendMsgCallBack, operationID stri
 func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID string, fn any, args ...any) {
 	defer func() {
 		if r := recover(); r != nil {
-			callback.OnError(10001, fmt.Sprintf("%+v", r))
+			callback.OnError(sdkerrs.SdkInternalError, fmt.Sprintf("recover: %+v", r))
 			return
 		}
 	}()
 	if operationID == "" {
-		callback.OnError(constant.ErrArgs.ErrCode, errs.ErrArgs.Wrap("operationID is empty").Error())
+		callback.OnError(sdkerrs.ArgsError, sdkerrs.ErrArgs.Wrap("operationID is empty").Error())
 		return
 	}
 	if err := CheckResourceLoad(UserForSDK); err != nil {
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		callback.OnError(sdkerrs.ResourceLoadNotCompleteError, "resource load error: "+err.Error())
 		return
 	}
 	fnv := reflect.ValueOf(fn)
 	if fnv.Kind() != reflect.Func {
-		callback.OnError(10000, "go code error: fn is not func")
+		callback.OnError(sdkerrs.SdkInternalError, "go code error: fn is not func")
 		return
 	}
 	fnt := fnv.Type()
 	numIn := fnt.NumIn()
 	if len(args) != numIn+1 {
-		callback.OnError(10000, "go code error: fn in args num is not match")
+		callback.OnError(sdkerrs.SdkInternalError, "go code error: fn in args num is not match")
 		return
 	}
 	ins := make([]reflect.Value, 0, numIn)
@@ -357,7 +361,7 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 			ins = append(ins, reflect.ValueOf(v))
 			continue
 		}
-		callback.OnError(constant.ErrArgs.ErrCode, "go code error: fn in args type is not match")
+		callback.OnError(sdkerrs.ArgsError, "go code error: fn in args type is not match")
 		return
 	}
 	var lastErr bool
@@ -400,7 +404,7 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 	}
 	jsonData, err := json.Marshal(jsonVal)
 	if err != nil {
-		callback.OnError(constant.ErrArgs.ErrCode, err.Error())
+		callback.OnError(sdkerrs.ArgsError, err.Error())
 		return
 	}
 	callback.OnSuccess(string(jsonData))

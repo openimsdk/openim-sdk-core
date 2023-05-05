@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/third"
@@ -12,6 +11,7 @@ import (
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/db_interface"
+	"open_im_sdk/pkg/sdkerrs"
 	"os"
 	"sync"
 )
@@ -54,7 +54,10 @@ func (f *File) apiGetPut(ctx context.Context, req *third.GetPutReq) (*third.GetP
 func (f *File) rePutFilePath(ctx context.Context, req *PutArgs, cb PutFileCallback) (*PutResp, error) {
 	file, err := os.Open(req.Filepath)
 	if err != nil {
-		return nil, err
+		if os.IsNotExist(err) {
+			return nil, sdkerrs.ErrRecordNotFound.WithDetail(err.Error()).Wrap()
+		}
+		return nil, sdkerrs.ErrSdkInternal.WithDetail(err.Error()).Wrap()
 	}
 	defer file.Close()
 	info, err := file.Stat()
@@ -70,17 +73,17 @@ func (f *File) rePutFile(ctx context.Context, file *os.File, size int64, req *Pu
 		var err error
 		req.Hash, err = hashReader(NewReader(ctx, file, size, cb.HashProgress))
 		if err != nil {
-			return nil, err
+			return nil, sdkerrs.ErrSdkInternal.WithDetail(err.Error()).Wrap()
 		}
 		cb.HashComplete(req.Hash, size)
 		if _, err := file.Seek(io.SeekStart, 0); err != nil {
-			return nil, err
+			return nil, sdkerrs.ErrSdkInternal.WithDetail(err.Error()).Wrap()
 		}
 	} else {
 		if v, err := hex.DecodeString(req.Hash); err != nil {
-			return nil, err
+			return nil, sdkerrs.ErrSdkInternal.WithDetail(err.Error()).Wrap()
 		} else if len(v) != md5.Size {
-			return nil, fmt.Errorf("hash length error")
+			return nil, sdkerrs.ErrArgs.Wrap("hash length error")
 		}
 	}
 	applyPutResp, err := f.apiApplyPut(ctx, &third.ApplyPutReq{PutID: req.PutID, Name: req.Name, ContentType: req.ContentType, ValidTime: req.ValidTime, Hash: req.Hash, Size: size})
@@ -96,7 +99,7 @@ func (f *File) rePutFile(ctx context.Context, file *os.File, size int64, req *Pu
 	cb.PutStart(0, size)
 	fragments := getFragmentSize(size, applyPutResp.FragmentSize)
 	if len(fragments) != len(applyPutResp.PutURLs) {
-		return nil, fmt.Errorf("get fragment size error local %d server %d", len(fragments), len(applyPutResp.PutURLs))
+		return nil, sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("get fragment size error local %d server %d", len(fragments), len(applyPutResp.PutURLs)))
 	}
 	var initSize int64
 	for i, url := range applyPutResp.PutURLs {
@@ -144,10 +147,10 @@ func (f *File) putFile(ctx context.Context, req *PutArgs, cb PutFileCallback) (*
 		return nil, err
 	}
 	if resp.Size != info.Size() || resp.Hash != hash {
-		return nil, errors.New("file size or hash error")
+		return nil, sdkerrs.ErrSdkInternal.Wrap("file size or hash error")
 	}
 	if len(md5s) != len(resp.Fragments) {
-		return nil, fmt.Errorf("get fragment size error local %d server %d", len(md5s), len(resp.Fragments))
+		return nil, sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("get fragment size error local %d server %d", len(md5s), len(resp.Fragments)))
 	}
 	var putSize int64               // 已上传的大小
 	puts := make([]bool, len(md5s)) // 已上传的片段

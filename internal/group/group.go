@@ -8,11 +8,11 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/syncer"
 	"sync"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
@@ -134,7 +134,7 @@ func (g *Group) GetGroupInfoFromLocal2Svr(ctx context.Context, groupID string) (
 		return nil, err
 	}
 	if len(svrGroup) == 0 {
-		return nil, errs.ErrGroupIDNotFound.Wrap("server not this group")
+		return nil, sdkerrs.ErrGroupIDNotFound.Wrap("server not this group")
 	}
 	return ServerGroupToLocalGroup(svrGroup[0]), nil
 }
