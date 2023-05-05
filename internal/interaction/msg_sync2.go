@@ -82,7 +82,7 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 			log.ZError(ctx, "get group abnormal seq failed", err, "groupID", groupID)
 			return err
 		}
-		maxSeqSynced := nMaxSeq
+		var maxSeqSynced int64 = nMaxSeq
 		if aMaxSeq > nMaxSeq {
 			maxSeqSynced = aMaxSeq
 		}
@@ -105,7 +105,7 @@ func (m *MsgSyncer) DoListener() {
 		// case cmd := <-m.recvMsgCh:
 		// 	m.handleRecvMsgAndSyncSeqs(cmd.Ctx, cmd.Value.(*sdkws.MsgData))
 		case cmd := <-m.PushMsgAndMaxSeqCh:
-			m.handleRecvMsgAndSyncSeqs(cmd.Ctx, cmd.Value.(*sdkws.MsgData), cmd.Cmd)
+			m.handleRecvMsgAndSyncSeqs(cmd)
 		case <-m.ctx.Done():
 			log.ZInfo(m.ctx, "msg syncer done, sdk logout.....")
 			return
@@ -114,9 +114,13 @@ func (m *MsgSyncer) DoListener() {
 }
 
 // init, reconnect, sync by heartbeat
-func (m *MsgSyncer) compareSeqsAndTrigger(ctx context.Context, newSeqMap map[string]Seq, cmd string) {
+// func (m *MsgSyncer) compareSeqsAndTrigger(ctx context.Context, newSeqMap map[string]Seq, cmd string) {
+func (m *MsgSyncer) compareSeqsAndTrigger(cmd common.Cmd2Value) {
+	ctx := cmd.Ctx
+	newSeqMap := cmd.Value.(map[string]Seq)
+
 	// sync callback to conversation
-	switch cmd {
+	switch cmd.Cmd {
 	case constant.CmdInit:
 		m.triggerSync()
 		defer m.triggerSyncFinished()
@@ -159,10 +163,12 @@ func (m *MsgSyncer) getSeqsNeedSync(syncedMaxSeq, maxSeq int64) []int64 {
 }
 
 // recv msg from
-func (m *MsgSyncer) handleRecvMsgAndSyncSeqs(ctx context.Context, msg *sdkws.MsgData, cmd string) {
+func (m *MsgSyncer) handleRecvMsgAndSyncSeqs(cmd common.Cmd2Value) {
+	ctx := cmd.Ctx
+	msg := cmd.Value.(*sdkws.MsgData)
 	// parsing cmd
-	if cmd == constant.CmdMaxSeq {
-		//...
+	if cmd.Cmd == constant.CmdMaxSeq {
+		m.compareSeqsAndTrigger(cmd)
 	}
 	// online msg
 	if msg.Seq == 0 {

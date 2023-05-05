@@ -157,11 +157,13 @@ func (u *LoginMgr) SetAdvancedMsgListener(advancedMsgListener open_im_sdk_callba
 		u.advancedMsgListener = advancedMsgListener
 	}
 }
+
 func (u *LoginMgr) SetMessageKvInfoListener(messageKvInfoListener open_im_sdk_callback.OnMessageKvInfoListener) {
 	if u.conversation != nil {
 		u.conversation.SetMsgKvListener(messageKvInfoListener)
 	}
 }
+
 func (u *LoginMgr) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnBatchMsgListener) {
 	if u.conversation != nil {
 		u.conversation.SetBatchMsgListener(batchMsgListener)
@@ -169,6 +171,7 @@ func (u *LoginMgr) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnB
 		u.batchMsgListener = batchMsgListener
 	}
 }
+
 func (u *LoginMgr) SetFriendListener(friendListener open_im_sdk_callback.OnFriendshipListener) {
 	if u.friend != nil {
 		u.friend.SetFriendListener(friendListener)

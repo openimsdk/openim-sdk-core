@@ -11,6 +11,7 @@ type Compressor interface {
 	Compress(rawData []byte) ([]byte, error)
 	DeCompress(compressedData []byte) ([]byte, error)
 }
+
 type GzipCompressor struct {
 	compressProtocol string
 }
@@ -18,6 +19,7 @@ type GzipCompressor struct {
 func NewGzipCompressor() *GzipCompressor {
 	return &GzipCompressor{compressProtocol: "gzip"}
 }
+
 func (g *GzipCompressor) Compress(rawData []byte) ([]byte, error) {
 	gzipBuffer := bytes.Buffer{}
 	gz := gzip.NewWriter(&gzipBuffer)
@@ -29,6 +31,7 @@ func (g *GzipCompressor) Compress(rawData []byte) ([]byte, error) {
 	}
 	return gzipBuffer.Bytes(), nil
 }
+
 func (g *GzipCompressor) DeCompress(compressedData []byte) ([]byte, error) {
 	buff := bytes.NewBuffer(compressedData)
 	reader, err := gzip.NewReader(buff)

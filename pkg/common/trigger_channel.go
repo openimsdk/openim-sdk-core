@@ -43,6 +43,17 @@ func TriggerCmdSuperGroupMsgCome(msg sdk_struct.CmdNewMsgComeToConversation, con
 	c2v := Cmd2Value{Cmd: constant.CmdSuperGroupMsgCome, Value: msg}
 	return sendCmd(conversationCh, c2v, 100)
 }
+func TriggerCmdNotification(ctx context.Context, msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
+	if conversationCh == nil {
+		return utils.Wrap(errors.New("ch == nil"), "")
+	}
+	//if len(msg.MsgList) == 0 {
+	//	return nil
+	//}
+
+	c2v := Cmd2Value{Cmd: constant.CmdNotification, Value: msg, Ctx: ctx}
+	return sendCmd(conversationCh, c2v, 100)
+}
 
 func TriggerCmdLogout(ch chan Cmd2Value) error {
 	if ch == nil {
@@ -83,6 +94,7 @@ func TriggerCmdSyncReactionExtensions(node SyncReactionExtensionsNode, conversat
 
 	return sendCmd(conversationCh, c2v, 100)
 }
+
 func TriggerCmdUpdateConversation(node UpdateConNode, conversationCh chan<- Cmd2Value) error {
 	c2v := Cmd2Value{
 		Cmd:   constant.CmdUpdateConversation,
@@ -91,6 +103,7 @@ func TriggerCmdUpdateConversation(node UpdateConNode, conversationCh chan<- Cmd2
 
 	return sendCmd(conversationCh, c2v, 100)
 }
+
 func TriggerCmdUpdateMessage(node UpdateMessageNode, conversationCh chan Cmd2Value) error {
 	c2v := Cmd2Value{
 		Cmd:   constant.CmdUpdateMessage,
@@ -100,7 +113,7 @@ func TriggerCmdUpdateMessage(node UpdateMessageNode, conversationCh chan Cmd2Val
 	return sendCmd(conversationCh, c2v, 100)
 }
 
-func TriggerCmdPushMsg(ctx context.Context, msg *sdkws.MsgData, ch chan Cmd2Value) error {
+func TriggerCmdPushMsg(ctx context.Context, msg *sdkws.PushMessages, ch chan Cmd2Value) error {
 	if ch == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
@@ -109,11 +122,11 @@ func TriggerCmdPushMsg(ctx context.Context, msg *sdkws.MsgData, ch chan Cmd2Valu
 	return sendCmd(ch, c2v, 100)
 }
 
-func TriggerCmdMaxSeq(seq sdk_struct.CmdMaxSeqToMsgSync, ch chan Cmd2Value) error {
+func TriggerCmdMaxSeq(ctx context.Context, seq sdk_struct.CmdMaxSeqToMsgSync, ch chan Cmd2Value) error {
 	if ch == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
-	c2v := Cmd2Value{Cmd: constant.CmdMaxSeq, Value: seq}
+	c2v := Cmd2Value{Cmd: constant.CmdMaxSeq, Value: seq, Ctx: ctx}
 	return sendCmd(ch, c2v, 100)
 }
 
