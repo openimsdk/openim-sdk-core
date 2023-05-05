@@ -32,6 +32,7 @@ const (
 	// Maximum message size allowed from peer.
 	maxMessageSize = 51200
 )
+
 const (
 	Closed = iota + 1
 	Connecting
@@ -42,11 +43,14 @@ var (
 	newline = []byte{'\n'}
 	space   = []byte{' '}
 )
-var ErrChanClosed = errors.New("send channel closed")
-var ErrConnClosed = errors.New("conn has closed")
-var ErrNotSupportMessageProtocol = errors.New("not support message protocol")
-var ErrClientClosed = errors.New("client actively close the connection")
-var ErrPanic = errors.New("panic error")
+
+var (
+	ErrChanClosed = errors.New("send channel closed")
+	ErrConnClosed = errors.New("conn has closed")
+	ErrNotSupportMessageProtocol = errors.New("not support message protocol")
+	ErrClientClosed = errors.New("client actively close the connection")
+	ErrPanic = errors.New("panic error")
+)
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
