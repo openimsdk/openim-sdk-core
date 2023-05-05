@@ -96,7 +96,7 @@ func TriggerCmdSyncReactionExtensions(node SyncReactionExtensionsNode, conversat
 
 	return sendCmd(conversationCh, c2v, 100)
 }
-func TriggerCmdUpdateConversation(node UpdateConNode, conversationCh chan Cmd2Value) error {
+func TriggerCmdUpdateConversation(node UpdateConNode, conversationCh chan<- Cmd2Value) error {
 	c2v := Cmd2Value{
 		Cmd:   constant.CmdUpdateConversation,
 		Value: node,
@@ -202,17 +202,11 @@ func DoListener(Li goroutine) {
 	}
 }
 
-func sendCmd(ch chan Cmd2Value, value Cmd2Value, timeout int64) error {
-	var flag = 0
+func sendCmd(ch chan<- Cmd2Value, value Cmd2Value, timeout int64) error {
 	select {
 	case ch <- value:
-		flag = 1
-	case <-time.After(time.Millisecond * time.Duration(timeout)):
-		flag = 2
-	}
-	if flag == 1 {
 		return nil
-	} else {
+	case <-time.After(time.Millisecond * time.Duration(timeout)):
 		return errors.New("send cmd timeout")
 	}
 }

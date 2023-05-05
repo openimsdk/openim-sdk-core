@@ -46,7 +46,7 @@ type FullUserInfo struct {
 
 // GroupName    string                `json:"groupName"`
 //	Introduction string                `json:"introduction"`
-//	Notification string                `json:"notification"`
+//	NotificationCmd string                `json:"notification"`
 //	FaceUrl      string                `json:"faceUrl"`
 //	OperationID  string                `json:"operationID" binding:"required"`
 //	GroupType    int32                 `json:"groupType"`
@@ -55,7 +55,7 @@ type FullUserInfo struct {
 //type GroupInfo struct {
 //	GroupID       string `json:"groupID"`
 //	GroupName     string `json:"groupName"`
-//	Notification  string `json:"notification"`
+//	NotificationCmd  string `json:"notification"`
 //	Introduction  string `json:"introduction"`
 //	FaceUrl       string `json:"faceUrl"`
 //	OwnerUserID   string `json:"ownerUserID"`

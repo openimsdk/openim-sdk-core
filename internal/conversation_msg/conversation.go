@@ -1555,22 +1555,6 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 	return &r, nil
 }
 
-func (c *Conversation) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
-	if msg.SendTime < c.full.Group().LoginTime() || c.full.Group().LoginTime() == 0 {
-		log.ZWarn(ctx, "ignore notification", nil, "clientMsgID", msg.ClientMsgID, "serverMsgID", msg.ServerMsgID, "seq", msg.Seq, "contentType", msg.ContentType)
-		return
-	}
-	operationID := utils.OperationIDGenerator()
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg)
-	if c.msgListener == nil {
-		log.Error(operationID, utils.GetSelfFuncName(), "listener == nil")
-		return
-	}
-	go func() {
-		c.SyncConversations(ctx)
-	}()
-}
-
 func (c *Conversation) delMsgBySeq(seqList []uint32) error {
 	var SPLIT = 1000
 	for i := 0; i < len(seqList)/SPLIT; i++ {

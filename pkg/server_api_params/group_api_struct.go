@@ -147,7 +147,7 @@ type GetGroupInfoResp struct {
 //type GroupInfoAlias struct {
 //	GroupID          string `protobuf:"bytes,1,opt,name=groupID" json:"groupID,omitempty"`
 //	GroupName        string `protobuf:"bytes,2,opt,name=groupName" json:"groupName,omitempty"`
-//	Notification     string `protobuf:"bytes,3,opt,name=notification" json:"notification,omitempty"`
+//	NotificationCmd     string `protobuf:"bytes,3,opt,name=notification" json:"notification,omitempty"`
 //	Introduction     string `protobuf:"bytes,4,opt,name=introduction" json:"introduction,omitempty"`
 //	FaceURL          string `protobuf:"bytes,5,opt,name=faceURL" json:"faceURL,omitempty"`
 //	OwnerUserID      string `protobuf:"bytes,6,opt,name=ownerUserID" json:"ownerUserID,omitempty"`
