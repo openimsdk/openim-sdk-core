@@ -16,6 +16,7 @@ package ccontext
 
 import (
 	"context"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 )
 
 type GlobalConfig struct {
@@ -58,7 +59,7 @@ func WithInfo(ctx context.Context, conf *GlobalConfig) context.Context {
 }
 
 func WithOperationID(ctx context.Context, operationID string) context.Context {
-	return context.WithValue(ctx, operationIDKey, operationID)
+	return mcontext.SetOperationID(ctx, operationID)
 }
 
 type globalConfigKey struct{}
@@ -103,7 +104,7 @@ func (i *info) EncryptionKey() string {
 }
 
 func (i *info) OperationID() string {
-	return i.ctx.Value(operationIDKey).(string)
+	return mcontext.GetOperationID(i.ctx)
 }
 
 func (i *info) IsCompression() bool {
