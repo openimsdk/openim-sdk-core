@@ -1,8 +1,6 @@
 package sdk_struct
 
 import (
-	"context"
-
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
@@ -260,14 +258,8 @@ type IMConfig struct {
 //var SvrConf IMConfig
 
 type CmdNewMsgComeToConversation struct {
-	Ctx           context.Context
-	MsgList       []*sdkws.MsgData
-	OperationID   string
-	SyncFlag      int
-	MaxSeqOnSvr   int64
-	MaxSeqOnLocal int64
-	CurrentMaxSeq int64
-	PullMsgOrder  int
+	MsgList  []*sdkws.MsgData
+	SyncFlag int
 }
 
 type CmdPushMsgToMsgSync struct {

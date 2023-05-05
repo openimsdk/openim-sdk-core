@@ -3,7 +3,7 @@ package constant
 const (
 	CmdFriend                     = "001"
 	CmdBlackList                  = "002"
-	CmdFriendApplication          = "003"
+	CmdNotification               = "003"
 	CmdDeleteConversation         = "004"
 	CmdNewMsgCome                 = "005"
 	CmdSuperGroupMsgCome          = "006"

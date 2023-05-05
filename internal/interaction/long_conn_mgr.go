@@ -437,7 +437,7 @@ func (c *LongConnMgr) reConn(ctx context.Context) error {
 }
 
 func (c *LongConnMgr) doPushMsg(ctx context.Context, wsResp GeneralWsResp) error {
-	var msg sdkws.MsgData
+	var msg sdkws.PushMessages
 	err := proto.Unmarshal(wsResp.Data, &msg)
 	if err != nil {
 		return err
