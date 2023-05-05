@@ -39,7 +39,7 @@ type MsgSyncer struct {
 
 	// chan for the message module trigger conversation
 	// 1. Stores synchronized messages
-	// 2. Notification of the start and end of synchronization
+	// 2. NotificationCmd of the start and end of synchronization
 	conversationCh chan common.Cmd2Value
 
 	ctx context.Context

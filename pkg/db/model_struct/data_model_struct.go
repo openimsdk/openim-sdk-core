@@ -82,7 +82,7 @@ type LocalFriendRequest struct {
 //message GroupInfo{
 //  string GroupID = 1;
 //  string GroupName = 2;
-//  string Notification = 3;
+//  string NotificationCmd = 3;
 //  string Introduction = 4;
 //  string FaceUrl = 5;
 //  string OwnerUserID = 6;

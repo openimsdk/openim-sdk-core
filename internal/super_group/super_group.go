@@ -50,7 +50,7 @@ func (s *SuperGroup) SetLoginTime(loginTime int64) {
 	s.loginTime = loginTime
 }
 
-func (s *SuperGroup) DoNotification(msg *sdkws.MsgData, ch chan common.Cmd2Value, operationID string) {
+func (s *SuperGroup) DoNotification(msg *sdkws.MsgData, ch chan<- common.Cmd2Value, operationID string) {
 	ctx := context.Background()
 	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID, msg.String())
 	if msg.SendTime < s.loginTime || s.loginTime == 0 {
