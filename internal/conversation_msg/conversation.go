@@ -27,7 +27,6 @@ import (
 
 	pbConversation "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
 	pbMsg "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/msg"
-	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 )
 
@@ -436,24 +435,24 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 			if len(list) < req.Count {
 				var minSeq int64
 				var maxSeq int64
-				resp, err := c.SendReqWaitResp(ctx, &server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 2, c.loginUserID)
-				if err != nil {
-					//log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, 30, c.loginUserID)
-				} else {
-					var wsSeqResp sdkws.GetMaxAndMinSeqResp
-					err = proto.Unmarshal(resp.Data, &wsSeqResp)
-					if err != nil {
-						//log.Error(operationID, "Unmarshal failed", err.Error())
-					} else {
-						if value, ok := wsSeqResp.GroupMaxAndMinSeq[sourceID]; ok {
-							minSeq = value.MinSeq
-							if value.MinSeq == 0 {
-								minSeq = 1
-							}
-							maxSeq = value.MaxSeq
-						}
-					}
-				}
+				//resp, err := c.SendReqWaitResp(ctx, &server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 2, c.loginUserID)
+				//if err != nil {
+				//	//log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, 30, c.loginUserID)
+				//} else {
+				//	var wsSeqResp sdkws.GetMaxAndMinSeqResp
+				//	err = proto.Unmarshal(resp.Data, &wsSeqResp)
+				//	if err != nil {
+				//		//log.Error(operationID, "Unmarshal failed", err.Error())
+				//	} else {
+				//		if value, ok := wsSeqResp.GroupMaxAndMinSeq[sourceID]; ok {
+				//			minSeq = value.MinSeq
+				//			if value.MinSeq == 0 {
+				//				minSeq = 1
+				//			}
+				//			maxSeq = value.MaxSeq
+				//		}
+				//	}
+				//}
 				log.Error("", "from server min seq is", minSeq, maxSeq)
 				seq, err := c.db.SuperGroupGetNormalMinSeq(ctx, sourceID)
 				if err != nil {
@@ -1552,23 +1551,23 @@ func (c *Conversation) delMsgBySeq(seqList []uint32) error {
 }
 
 func (c *Conversation) delMsgBySeqSplit(seqList []uint32) error {
-	var req server_api_params.DelMsgListReq
-	req.SeqList = seqList
-	req.OperationID = utils.OperationIDGenerator()
-	req.OpUserID = c.loginUserID
-	req.UserID = c.loginUserID
-	operationID := req.OperationID
-
-	resp, err := c.Ws.SendReqWaitResp(context.Background(), &req, constant.WsDelMsg, 30, 5, c.loginUserID)
-	if err != nil {
-		return utils.Wrap(err, "SendReqWaitResp failed")
-	}
-	var delResp server_api_params.DelMsgListResp
-	err = proto.Unmarshal(resp.Data, &delResp)
-	if err != nil {
-		log.Error(operationID, "Unmarshal failed ", err.Error())
-		return utils.Wrap(err, "Unmarshal failed")
-	}
+	//var req server_api_params.DelMsgListReq
+	//req.SeqList = seqList
+	//req.OperationID = utils.OperationIDGenerator()
+	//req.OpUserID = c.loginUserID
+	//req.UserID = c.loginUserID
+	//operationID := req.OperationID
+	//
+	//resp, err := c.Ws.SendReqWaitResp(context.Background(), &req, constant.WsDelMsg, 30, 5, c.loginUserID)
+	//if err != nil {
+	//	return utils.Wrap(err, "SendReqWaitResp failed")
+	//}
+	//var delResp server_api_params.DelMsgListResp
+	//err = proto.Unmarshal(resp.Data, &delResp)
+	//if err != nil {
+	//	log.Error(operationID, "Unmarshal failed ", err.Error())
+	//	return utils.Wrap(err, "Unmarshal failed")
+	//}
 	return nil
 }
 
