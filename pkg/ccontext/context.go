@@ -64,8 +64,6 @@ func WithOperationID(ctx context.Context, operationID string) context.Context {
 
 type globalConfigKey struct{}
 
-const operationIDKey = "operationID" // 兼容服务端
-
 type info struct {
 	conf *GlobalConfig
 	ctx  context.Context
