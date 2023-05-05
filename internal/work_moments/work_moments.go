@@ -22,8 +22,6 @@ import (
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
-
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 )
 
 type WorkMoments struct {
@@ -37,12 +35,13 @@ func NewWorkMoments(loginUserID string, db db_interface.DataBase) *WorkMoments {
 	return &WorkMoments{loginUserID: loginUserID, db: db}
 }
 
-func (w *WorkMoments) DoNotification(jsonDetail string, operationID string) {
+func (w *WorkMoments) DoNotification(ctx context.Context, jsonDetail string) {
+	var operationID string
 	if w.listener == nil {
 		log.NewDebug(operationID, "WorkMoments listener is null", jsonDetail)
 		return
 	}
-	ctx := mcontext.NewCtx(operationID)
+	//ctx := mcontext.NewCtx(operationID)
 	if err := w.db.InsertWorkMomentsNotification(ctx, jsonDetail); err != nil {
 		log.NewError(operationID, utils.GetSelfFuncName(), "InsertWorkMomentsNotification failed", err.Error())
 		return
