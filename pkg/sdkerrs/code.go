@@ -12,4 +12,5 @@ const (
 
 	UserIDNotFoundError  = 11101 //UserID不存在 或未注册
 	GroupIDNotFoundError = 11201 //GroupID不存在
+	TokenInvalidError    = 11502
 )

@@ -22,14 +22,14 @@ import (
 
 func ServerFriendRequestToLocalFriendRequest(info *sdkws.FriendRequest) *model_struct.LocalFriendRequest {
 	return &model_struct.LocalFriendRequest{
-		FromUserID:    info.FromUserID,
-		FromNickname:  info.FromNickname,
-		FromFaceURL:   info.FromFaceURL,
-		FromGender:    info.FromGender,
-		ToUserID:      info.ToUserID,
-		ToNickname:    info.ToNickname,
-		ToFaceURL:     info.ToFaceURL,
-		ToGender:      info.ToGender,
+		FromUserID:   info.FromUserID,
+		FromNickname: info.FromNickname,
+		FromFaceURL:  info.FromFaceURL,
+		//FromGender:    info.FromGender,
+		ToUserID:   info.ToUserID,
+		ToNickname: info.ToNickname,
+		ToFaceURL:  info.ToFaceURL,
+		//ToGender:      info.ToGender,
 		HandleResult:  info.HandleResult,
 		ReqMsg:        info.ReqMsg,
 		CreateTime:    info.CreateTime,

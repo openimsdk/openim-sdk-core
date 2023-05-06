@@ -21,15 +21,11 @@ import (
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
 	"runtime"
 	"time"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	"github.com/golang/protobuf/proto"
 )
 
 type Heartbeat struct {
@@ -40,9 +36,9 @@ type Heartbeat struct {
 	token             string
 	listener          open_im_sdk_callback.OnConnListener
 	//ExpireTimeSeconds uint32
-	id2MinSeq          map[string]int64
-	full               *full.Full
-	WsForTest          *interaction.Ws
+	id2MinSeq map[string]int64
+	full      *full.Full
+	//WsForTest          *interaction.Ws
 	LoginUserIDForTest string
 }
 
@@ -85,10 +81,11 @@ func (u *Heartbeat) Run() {
 	defaultTimeout := 5
 	wakeUpTimeout := 1
 	reqTimeout := defaultTimeout
-	retryTimes := 0
+	_ = reqTimeout
+	//retryTimes := 0
 	heartbeatNum := 0
 	for {
-		reqTimeout = defaultTimeout
+		//reqTimeout = defaultTimeout
 		operationID := utils.OperationIDGenerator()
 		ctx := mcontext.NewCtx(operationID)
 		//if constant.OnlyForTest == 1 {
@@ -120,8 +117,8 @@ func (u *Heartbeat) Run() {
 			case r := <-u.cmdCh:
 				if r.Cmd == constant.CmdLogout {
 					log.Warn(operationID, "recv logout cmd, close conn,  set logout state, Goexit...")
-					u.SetLoginStatus(constant.Logout)
-					u.CloseConn(ctx)
+					//u.SetLoginStatus(constant.Logout)
+					//u.CloseConn(ctx)
 					log.Warn(operationID, "close heartbeat channel ", u.cmdCh)
 					runtime.Goexit()
 				}
@@ -143,10 +140,10 @@ func (u *Heartbeat) Run() {
 				log.Debug(operationID, "heartbeat waiting(ms)... ", u.heartbeatInterval*1000)
 			}
 		}
-		if u.LoginStatus() == constant.Logout {
-			log.Warn(operationID, " logout state Goexit", u.cmdCh)
-			runtime.Goexit()
-		}
+		//if u.LoginStatus() == constant.Logout {
+		//	log.Warn(operationID, " logout state Goexit", u.cmdCh)
+		//	runtime.Goexit()
+		//}
 		heartbeatNum++
 		//if u.IsTokenExp(operationID) {
 		//	log.Warn(operationID, "TokenExp, close heartbeat channel, call OnUserTokenExpired, set logout", u.cmdCh)
@@ -168,41 +165,41 @@ func (u *Heartbeat) Run() {
 			log.Error(operationID, "GetReadDiffusionGroupIDList failed ", err.Error())
 		}
 		log.Debug(operationID, "get GetJoinedSuperGroupIDList ", groupIDList)
-		resp, err := u.SendReqWaitResp(ctx, &server_api_params.GetMaxAndMinSeqReq{UserID: u.LoginUserID, GroupIDList: groupIDList}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.LoginUserID)
-		if err != nil {
-			log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.LoginUserID)
-			//if !errors.Is(err, constant.WsRecvConnSame) && !errors.Is(err, constant.WsRecvConnDiff) {
-			//	log.Error(operationID, "other err,  close conn", err.Error())
-			u.CloseConn(ctx)
-			//}
-			continue
-		}
-		var wsSeqResp sdkws.GetMaxAndMinSeqResp
-		err = proto.Unmarshal(resp.Data, &wsSeqResp)
-		if err != nil {
-			log.Error(operationID, "Unmarshal failed, close conn", err.Error())
-			u.CloseConn(ctx)
-			continue
-		}
-
-		u.id2MinSeq[utils.GetUserIDForMinSeq(u.LoginUserID)] = wsSeqResp.MinSeq
-		for g, v := range wsSeqResp.GroupMaxAndMinSeq {
-			u.id2MinSeq[utils.GetGroupIDForMinSeq(g)] = v.MinSeq
-		}
+		//resp, err := u.SendReqWaitResp(ctx, &server_api_params.GetMaxAndMinSeqReq{UserID: u.LoginUserID, GroupIDList: groupIDList}, constant.WSGetNewestSeq, reqTimeout, retryTimes, u.LoginUserID)
+		//if err != nil {
+		//	log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, reqTimeout, u.LoginUserID)
+		//	//if !errors.Is(err, constant.WsRecvConnSame) && !errors.Is(err, constant.WsRecvConnDiff) {
+		//	//	log.Error(operationID, "other err,  close conn", err.Error())
+		//	u.CloseConn(ctx)
+		//	//}
+		//	continue
+		//}
+		//var wsSeqResp sdkws.GetMaxAndMinSeqResp
+		//err = proto.Unmarshal(resp.Data, &wsSeqResp)
+		//if err != nil {
+		//	log.Error(operationID, "Unmarshal failed, close conn", err.Error())
+		//	u.CloseConn(ctx)
+		//	continue
+		//}
+		//
+		//u.id2MinSeq[utils.GetUserIDForMinSeq(u.LoginUserID)] = wsSeqResp.MinSeq
+		//for g, v := range wsSeqResp.GroupMaxAndMinSeq {
+		//	u.id2MinSeq[utils.GetGroupIDForMinSeq(g)] = v.MinSeq
+		//}
 		//if constant.OnlyForTest == 1 {
 		//	continue
 		//}
 		//server_api_params.MaxAndMinSeq
-		log.Debug(operationID, "recv heartbeat resp,  seq on svr: ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)
-		for {
-			err = common.TriggerCmdMaxSeq(sdk_struct.CmdMaxSeqToMsgSync{OperationID: operationID, MaxSeqOnSvr: wsSeqResp.MaxSeq, MinSeqOnSvr: wsSeqResp.MinSeq, GroupID2MinMaxSeqOnSvr: wsSeqResp.GroupMaxAndMinSeq}, u.PushMsgAndMaxSeqCh)
-			if err != nil {
-				log.Error(operationID, "TriggerMaxSeq failed ", err.Error(), "seq ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)
-				continue
-			} else {
-				log.Debug(operationID, "TriggerMaxSeq  success ", "seq ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)
-				break
-			}
-		}
+		//log.Debug(operationID, "recv heartbeat resp,  seq on svr: ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)
+		//for {
+		//	err = common.TriggerCmdMaxSeq(sdk_struct.CmdMaxSeqToMsgSync{OperationID: operationID, MaxSeqOnSvr: wsSeqResp.MaxSeq, MinSeqOnSvr: wsSeqResp.MinSeq, GroupID2MinMaxSeqOnSvr: wsSeqResp.GroupMaxAndMinSeq}, u.PushMsgAndMaxSeqCh)
+		//	if err != nil {
+		//		log.Error(operationID, "TriggerMaxSeq failed ", err.Error(), "seq ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)
+		//		continue
+		//	} else {
+		//		log.Debug(operationID, "TriggerMaxSeq  success ", "seq ", wsSeqResp.MinSeq, wsSeqResp.MaxSeq, wsSeqResp.GroupMaxAndMinSeq)
+		//		break
+		//	}
+		//}
 	}
 }
