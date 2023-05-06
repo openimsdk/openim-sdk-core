@@ -17,7 +17,6 @@ package common
 import (
 	"context"
 	"errors"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
@@ -25,6 +24,7 @@ import (
 	"time"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
 func TriggerCmdJoinedSuperGroup(cmd sdk_struct.CmdJoinedSuperGroup, joinedSuperGroupCh chan Cmd2Value) error {
@@ -46,6 +46,7 @@ func TriggerCmdNewMsgCome(msg sdk_struct.CmdNewMsgComeToConversation, conversati
 	c2v := Cmd2Value{Cmd: constant.CmdNewMsgCome, Value: msg}
 	return sendCmd(conversationCh, c2v, 100)
 }
+
 func TriggerCmdSuperGroupMsgCome(msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
 	if conversationCh == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
@@ -57,6 +58,7 @@ func TriggerCmdSuperGroupMsgCome(msg sdk_struct.CmdNewMsgComeToConversation, con
 	c2v := Cmd2Value{Cmd: constant.CmdSuperGroupMsgCome, Value: msg}
 	return sendCmd(conversationCh, c2v, 100)
 }
+
 func TriggerCmdNotification(ctx context.Context, msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
 	if conversationCh == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
