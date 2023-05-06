@@ -99,7 +99,7 @@ func (u *WsRespAsyn) DelCh(msgIncr string) {
 	}
 }
 
-func (u *WsRespAsyn) notifyCh(ch chan GeneralWsResp, value GeneralWsResp, timeout int64) error {
+func (u *WsRespAsyn) notifyCh(ch chan *GeneralWsResp, value *GeneralWsResp, timeout int64) error {
 	var flag = 0
 	select {
 	case ch <- value:

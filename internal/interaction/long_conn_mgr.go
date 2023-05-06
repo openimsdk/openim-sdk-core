@@ -29,6 +29,7 @@ import (
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/sdkerrs"
 	"sync"
 	"time"
 )
@@ -59,11 +60,11 @@ var (
 )
 
 var (
-	ErrChanClosed = errors.New("send channel closed")
-	ErrConnClosed = errors.New("conn has closed")
+	ErrChanClosed                = errors.New("send channel closed")
+	ErrConnClosed                = errors.New("conn has closed")
 	ErrNotSupportMessageProtocol = errors.New("not support message protocol")
-	ErrClientClosed = errors.New("client actively close the connection")
-	ErrPanic = errors.New("panic error")
+	ErrClientClosed              = errors.New("client actively close the connection")
+	ErrPanic                     = errors.New("panic error")
 )
 
 var upgrader = websocket.Upgrader{
@@ -92,7 +93,7 @@ type LongConnMgr struct {
 
 type Message struct {
 	Message GeneralWsReq
-	Resp    chan GeneralWsResp
+	Resp    chan *GeneralWsResp
 }
 
 func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, pushMsgAndMaxSeqCh, conversationCh chan common.Cmd2Value) *LongConnMgr {
@@ -120,7 +121,7 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 			MsgIncr:       "",
 			Data:          data,
 		},
-		Resp: make(chan GeneralWsResp, 1),
+		Resp: make(chan *GeneralWsResp, 1),
 	}
 	c.send <- msg
 	log.ZDebug(ctx, "send message to send channel success", "msg", m, "reqIdentifier", reqIdentifier)
@@ -215,8 +216,32 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 				c.closedErr = ErrChanClosed
 				return
 			}
+			go func() {
+				resp, err := c.sendAndWaitResp(&message.Message)
+				if err != nil {
+					resp = &GeneralWsResp{
+						ReqIdentifier: message.Message.ReqIdentifier,
+						OperationID:   message.Message.OperationID,
+						Data:          nil,
+					}
+					if code, ok := err.(errs.CodeError); ok {
+                       resp.ErrCode = code.Code()
+					   resp.ErrMsg = code.Msg()
+					} else {
+						log.ZError(c.ctx, "writeBinaryMsgAndRetry failed", err, "wsReq", message.Message
+					}
+
+				}
+				nErr := c.Syncer.notifyCh(message.Resp, resp, 1)
+				if nErr != nil {
+					log.ZError(c.ctx, "TriggerCmdNewMsgCome failed", nErr, "wsResp", resp)
+				}
+
+			}()
+
 			tempChan, err := c.writeBinaryMsgAndRetry(&message.Message)
 			if err != nil {
+
 				resp := GeneralWsResp{
 					ReqIdentifier: message.Message.ReqIdentifier,
 					ErrCode:       1,
@@ -269,6 +294,21 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 		}
 	}
 }
+func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error) {
+	tempChan, err := c.writeBinaryMsgAndRetry(msg)
+	defer c.Syncer.DelCh(msg.MsgIncr)
+	if err != nil {
+		return nil, err
+	} else {
+		select {
+		case resp := <-tempChan:
+			return &resp, nil
+		case <-time.After(time.Second * 3):
+			return nil, sdkerrs.ErrNetworkTimeOut.WithDetail(err.Error()).Wrap()
+		}
+
+	}
+}
 
 func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan GeneralWsResp, error) {
 	msgIncr, tempChan := c.Syncer.AddCh(msg.SendID)
@@ -284,7 +324,7 @@ func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan GeneralWsR
 			return tempChan, nil
 		}
 	}
-	return nil, errors.New("send binary message error")
+	return nil, sdkerrs.ErrNetwork.Wrap("send binary message error")
 }
 
 func (c *LongConnMgr) writeBinaryMsg(req GeneralWsReq) error {

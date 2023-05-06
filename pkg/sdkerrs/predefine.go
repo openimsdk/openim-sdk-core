@@ -3,10 +3,11 @@ package sdkerrs
 import "github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 
 var (
-	ErrArgs         = errs.NewCodeError(ArgsError, "ArgsError")
-	ErrSdkInternal  = errs.NewCodeError(SdkInternalError, "SdkInternalError")
-	ErrNetwork      = errs.NewCodeError(NetworkError, "NetworkError")
-	ErrDuplicateKey = errs.NewCodeError(DuplicateKeyError, "DuplicateKeyError")
+	ErrArgs           = errs.NewCodeError(ArgsError, "ArgsError")
+	ErrSdkInternal    = errs.NewCodeError(SdkInternalError, "SdkInternalError")
+	ErrNetwork        = errs.NewCodeError(NetworkError, "NetworkError")
+	ErrNetworkTimeOut = errs.NewCodeError(NetworkTimeoutError, "NetworkTimeoutError")
+	ErrDuplicateKey   = errs.NewCodeError(DuplicateKeyError, "DuplicateKeyError")
 
 	ErrGroupIDNotFound = errs.NewCodeError(GroupIDNotFoundError, "GroupIDNotFoundError")
 	ErrUserIDNotFound  = errs.NewCodeError(UserIDNotFoundError, "UserIDNotFoundError")

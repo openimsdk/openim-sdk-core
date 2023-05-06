@@ -3,6 +3,7 @@ package sdkerrs
 // 通用错误码
 const (
 	NetworkError                 = 10000
+	NetworkTimeoutError          = 10001
 	ArgsError                    = 11001 //输入参数错误
 	DuplicateKeyError            = 11003
 	RecordNotFoundError          = 11004 //记录不存在
