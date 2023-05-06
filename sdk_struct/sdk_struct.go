@@ -272,17 +272,16 @@ type IMConfig struct {
 //var SvrConf IMConfig
 
 type CmdNewMsgComeToConversation struct {
-	MsgList  []*sdkws.MsgData
+	Msgs     map[string]*sdkws.PullMsgs
 	SyncFlag int
 }
 
 type CmdPushMsgToMsgSync struct {
-	Msg         *sdkws.MsgData
-	OperationID string
+	Msgs []*sdkws.PushMessages
 }
 
 type CmdMaxSeqToMsgSync struct {
-	ConversationMinMaxSeqOnSvr map[string]*sdkws.MaxAndMinSeq
+	ConversationMaxSeqOnSvr map[string]int64
 }
 
 type CmdJoinedSuperGroup struct {

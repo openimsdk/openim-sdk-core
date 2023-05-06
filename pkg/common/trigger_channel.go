@@ -39,9 +39,6 @@ func TriggerCmdNewMsgCome(msg sdk_struct.CmdNewMsgComeToConversation, conversati
 	if conversationCh == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
-	if len(msg.MsgList) == 0 {
-		return nil
-	}
 
 	c2v := Cmd2Value{Cmd: constant.CmdNewMsgCome, Value: msg}
 	return sendCmd(conversationCh, c2v, 100)
@@ -51,9 +48,6 @@ func TriggerCmdSuperGroupMsgCome(msg sdk_struct.CmdNewMsgComeToConversation, con
 	if conversationCh == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
-	//if len(msg.MsgList) == 0 {
-	//	return nil
-	//}
 
 	c2v := Cmd2Value{Cmd: constant.CmdSuperGroupMsgCome, Value: msg}
 	return sendCmd(conversationCh, c2v, 100)
@@ -63,9 +57,6 @@ func TriggerCmdNotification(ctx context.Context, msg sdk_struct.CmdNewMsgComeToC
 	if conversationCh == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
-	//if len(msg.MsgList) == 0 {
-	//	return nil
-	//}
 
 	c2v := Cmd2Value{Cmd: constant.CmdNotification, Value: msg, Ctx: ctx}
 	return sendCmd(conversationCh, c2v, 100)

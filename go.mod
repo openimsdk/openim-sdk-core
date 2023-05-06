@@ -2,7 +2,6 @@ module open_im_sdk
 
 go 1.18
 
-// go get -u github.com/OpenIMSDK/Open-IM-Server@errcode
 require (
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.1+incompatible
 	github.com/antonfisher/nested-logrus-formatter v1.3.1
@@ -29,10 +28,9 @@ require (
 	nhooyr.io/websocket v1.8.7
 )
 
-require (
-	github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230506024219-0fd38ece0a24
-	golang.org/x/net v0.8.0
-)
+require golang.org/x/net v0.8.0
+
+require github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230506112141-b34d1e7ee795
 
 require (
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.3 // indirect
