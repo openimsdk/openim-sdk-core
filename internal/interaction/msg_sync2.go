@@ -58,28 +58,32 @@ type MsgSyncer struct {
 
 	ctx context.Context
 	// The maximum number of SEQs that have been synchronized
-	seqs      map[string]SyncedSeq
-	db        db_interface.DataBase
-	syncTimes int
+	syncedMaxSeqs map[string]SyncedSeq
+	db            db_interface.DataBase
+	syncTimes     int
 }
 
 // NewMsgSyncer creates a new instance of the message synchronizer.
 func NewMsgSyncer(ctx context.Context, conversationCh, PushMsgAndMaxSeqCh, recvSeqch chan common.Cmd2Value,
-	loginUserID string, longConnMgr *LongConnMgr) (*MsgSyncer, error) {
+	loginUserID string, longConnMgr *LongConnMgr, db db_interface.DataBase, syncTimes int) (*MsgSyncer, error) {
 	m := &MsgSyncer{
+		loginUserID:        loginUserID,
+		longConnMgr:        longConnMgr,
 		PushMsgAndMaxSeqCh: PushMsgAndMaxSeqCh,
 		conversationCh:     conversationCh,
-		longConnMgr:        longConnMgr,
-		loginUserID:        loginUserID,
 		ctx:                ctx,
+		syncedMaxSeqs:      make(map[string]SyncedSeq),
+		db:                 db,
+		syncTimes:          syncTimes,
 	}
 	err := m.loadSeq(ctx)
+	go m.DoListener()
 	return m, err
 }
 
 // seq db读取到内存
 func (m *MsgSyncer) loadSeq(ctx context.Context) error {
-	m.seqs = make(map[string]SyncedSeq)
+	m.syncedMaxSeqs = make(map[string]SyncedSeq)
 	groupIDs, err := m.db.GetReadDiffusionGroupIDList(ctx)
 	if err != nil {
 		log.ZError(ctx, "get group id list failed", err)
@@ -101,7 +105,7 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 			maxSeqSynced = aMaxSeq
 		}
 
-		m.seqs[groupID] = SyncedSeq{
+		m.syncedMaxSeqs[groupID] = SyncedSeq{
 			maxSeqSynced: maxSeqSynced,
 			sessionType:  constant.SuperGroupChatType,
 		}
@@ -143,7 +147,7 @@ func (m *MsgSyncer) compareSeqsAndTrigger(cmd common.Cmd2Value) {
 		defer m.triggerReconnectFinished()
 	}
 	for sourceID, newSeq := range newSeqMap {
-		if syncedSeq, ok := m.seqs[sourceID]; ok {
+		if syncedSeq, ok := m.syncedMaxSeqs[sourceID]; ok {
 			if newSeq.maxSeq > syncedSeq.maxSeqSynced {
 				_ = m.sync(ctx, sourceID, newSeq.sessionType, syncedSeq.maxSeqSynced, newSeq.maxSeq)
 			}
@@ -160,7 +164,7 @@ func (m *MsgSyncer) sync(ctx context.Context, sourceID string, sessionType int32
 		log.ZError(ctx, "sync msgs failed", err, "sourceID", sourceID)
 		return err
 	}
-	m.seqs[sourceID] = SyncedSeq{
+	m.syncedMaxSeqs[sourceID] = SyncedSeq{
 		maxSeqSynced: maxSeq,
 		sessionType:  sessionType,
 	}
@@ -190,13 +194,13 @@ func (m *MsgSyncer) handleRecvMsgAndSyncSeqs(cmd common.Cmd2Value) {
 		return
 	}
 	// seq is triggered directly and refreshed continuously
-	if msg.Seq == m.seqs[msg.GroupID].maxSeqSynced+1 {
+	if msg.Seq == m.syncedMaxSeqs[msg.GroupID].maxSeqSynced+1 {
 		_ = m.triggerConversation(ctx, []*sdkws.MsgData{msg})
-		oldSeq := m.seqs[msg.GroupID]
+		oldSeq := m.syncedMaxSeqs[msg.GroupID]
 		oldSeq.maxSeqSynced = msg.Seq
-		m.seqs[msg.GroupID] = oldSeq
+		m.syncedMaxSeqs[msg.GroupID] = oldSeq
 	} else {
-		m.sync(ctx, msg.GroupID, msg.SessionType, m.seqs[msg.GroupID].maxSeqSynced, msg.Seq)
+		m.sync(ctx, msg.GroupID, msg.SessionType, m.syncedMaxSeqs[msg.GroupID].maxSeqSynced, msg.Seq)
 	}
 }
 
@@ -267,7 +271,7 @@ func (m *MsgSyncer) triggerConversation(ctx context.Context, msgs []*sdkws.MsgDa
 
 // triggers a reconnection.
 func (m *MsgSyncer) triggerReconnect() {
-	for groupID, syncedSeq := range m.seqs {
+	for groupID, syncedSeq := range m.syncedMaxSeqs {
 		if syncedSeq.maxSeqSynced == 0 {
 			continue
 		}
@@ -280,7 +284,7 @@ func (m *MsgSyncer) triggerReconnect() {
 
 // finishes a reconnection.
 func (m *MsgSyncer) triggerReconnectFinished() {
-	for groupID, syncedSeq := range m.seqs {
+	for groupID, syncedSeq := range m.syncedMaxSeqs {
 		if syncedSeq.maxSeqSynced == 0 {
 			continue
 		}
@@ -293,7 +297,7 @@ func (m *MsgSyncer) triggerReconnectFinished() {
 
 // triggers a synchronization.
 func (m *MsgSyncer) triggerSync() {
-	for groupID, syncedSeq := range m.seqs {
+	for groupID, syncedSeq := range m.syncedMaxSeqs {
 		if syncedSeq.maxSeqSynced == 0 {
 			continue
 		}
