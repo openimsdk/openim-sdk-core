@@ -45,22 +45,15 @@ type SyncedSeq struct {
 
 // The callback synchronization starts. The reconnection ends
 type MsgSyncer struct {
-	loginUserID string
-	// listen ch
-	longConnMgr *LongConnMgr
-	// PushMsgAndMaxSeqCh is a channel for WebSocket channel that's used to push messages and maximum sequence number.
-	PushMsgAndMaxSeqCh chan common.Cmd2Value
-
-	// chan for the message module trigger conversation
-	// 1. Stores synchronized messages
-	// 2. NotificationCmd of the start and end of synchronization
-	conversationCh chan common.Cmd2Value
-
-	ctx context.Context
-	// The maximum number of SEQs that have been synchronized
-	syncedMaxSeqs map[string]SyncedSeq
-	db            db_interface.DataBase
-	syncTimes     int
+	loginUserID        string                // login user ID
+	longConnMgr        *LongConnMgr          // long connection manager
+	PushMsgAndMaxSeqCh chan common.Cmd2Value // channel for receiving push messages and the maximum SEQ number
+	conversationCh     chan common.Cmd2Value // channel for triggering new message arriving in a conversation
+	syncedMaxSeqs      map[string]SyncedSeq  // map of the maximum synced SEQ numbers for all group IDs
+	db                 db_interface.DataBase // data store
+	syncTimes          int                   // times of sync
+	ctx                context.Context       // context
+	cancel             context.CancelFunc    // cancel function
 }
 
 // NewMsgSyncer creates a new instance of the message synchronizer.
@@ -81,7 +74,7 @@ func NewMsgSyncer(ctx context.Context, conversationCh, PushMsgAndMaxSeqCh, recvS
 	return m, err
 }
 
-// seq db读取到内存
+// seq The db reads the data to the memory,set syncedMaxSeqs
 func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 	m.syncedMaxSeqs = make(map[string]SyncedSeq)
 	groupIDs, err := m.db.GetReadDiffusionGroupIDList(ctx)
@@ -118,12 +111,8 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 func (m *MsgSyncer) DoListener() {
 	for {
 		select {
-		// case cmd := <-m.recvSeqch:
-		// 	m.compareSeqsAndTrigger(cmd.Ctx, cmd.Value.(map[string]Seq), cmd.Cmd)
-		// case cmd := <-m.recvMsgCh:
-		// 	m.handleRecvMsgAndSyncSeqs(cmd.Ctx, cmd.Value.(*sdkws.MsgData))
 		case cmd := <-m.PushMsgAndMaxSeqCh:
-			m.handleRecvMsgAndSyncSeqs(cmd)
+			m.handlePushMsgAndEvent(cmd)
 		case <-m.ctx.Done():
 			log.ZInfo(m.ctx, "msg syncer done, sdk logout.....")
 			return
@@ -181,13 +170,22 @@ func (m *MsgSyncer) getSeqsNeedSync(syncedMaxSeq, maxSeq int64) []int64 {
 }
 
 // recv msg from
-func (m *MsgSyncer) handleRecvMsgAndSyncSeqs(cmd common.Cmd2Value) {
+func (m *MsgSyncer) handlePushMsgAndEvent(cmd common.Cmd2Value) {
 	ctx := cmd.Ctx
 	msg := cmd.Value.(*sdkws.MsgData)
 	// parsing cmd
-	if cmd.Cmd == constant.CmdMaxSeq {
-		m.compareSeqsAndTrigger(cmd)
+	// if cmd.Cmd == constant.CmdMaxSeq {
+	// 	m.compareSeqsAndTrigger(cmd)
+	// }
+	switch cmd.Cmd {
+	case constant.CmdConnSuccesss:
+		m.doConnected()
+	case constant.CmdMaxSeq:
+		m.doMaxSeq(cmd.Value.(*sdk_struct.CmdMaxSeqToMsgSync))
+	case constant.CmdPushMsg:
+		m.doPushMsg(cmd.Value.(*sdkws.PushMessages))
 	}
+
 	// online msg
 	if msg.Seq == 0 {
 		_ = m.triggerConversation(ctx, []*sdkws.MsgData{msg})
