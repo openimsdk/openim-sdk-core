@@ -53,7 +53,7 @@ func (u *WsConn) CloseConn(operationID string) error {
 	u.Lock()
 	defer u.Unlock()
 	if !u.conn.IsNil() {
-		u.WsRespAsyn.closeAllCh()
+		//u.WsRespAsyn.closeAllCh()
 		err := u.conn.Close()
 		if err != nil {
 			log.NewWarn(operationID, "close conn, ", u.conn, err.Error())
@@ -177,7 +177,7 @@ func (u *WsConn) ReConn(operationID string) (error, bool, bool) {
 	u.tokenErrCode = 0
 	defer u.stateMutex.Unlock()
 	if !u.conn.IsNil() {
-		u.WsRespAsyn.closeAllCh()
+		//u.WsRespAsyn.closeAllCh()
 		log.NewWarn(operationID, "close conn, ", u.conn, u.conn.LocalAddr())
 		err := u.conn.Close()
 		if err != nil {
