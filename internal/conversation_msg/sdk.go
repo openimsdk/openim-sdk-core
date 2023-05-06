@@ -38,7 +38,6 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	pbUser "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/user"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 	imgtype "github.com/shamsher31/goimgtype"
 )
@@ -452,16 +451,16 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				delFile = append(delFile, sourcePath)
 			}
 			log.Info("", "file", sourcePath, delFile)
-			sourceUrl, uuid, err := c.UploadImage(sourcePath, callback.OnProgress)
-			if err != nil {
-				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-				return nil, err
-			}
-			s.PictureElem.SourcePicture.Url = sourceUrl
-			s.PictureElem.SourcePicture.UUID = uuid
-			s.PictureElem.SnapshotPicture.Url = sourceUrl + "?imageView2/2/w/" + constant.ZoomScale + "/h/" + constant.ZoomScale
-			s.PictureElem.SnapshotPicture.Width = int32(utils.StringToInt(constant.ZoomScale))
-			s.PictureElem.SnapshotPicture.Height = int32(utils.StringToInt(constant.ZoomScale))
+			//sourceUrl, uuid, err := c.UploadImage(sourcePath, callback.OnProgress)
+			//if err != nil {
+			//	c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
+			//	return nil, err
+			//}
+			//s.PictureElem.SourcePicture.Url = sourceUrl
+			//s.PictureElem.SourcePicture.UUID = uuid
+			//s.PictureElem.SnapshotPicture.Url = sourceUrl + "?imageView2/2/w/" + constant.ZoomScale + "/h/" + constant.ZoomScale
+			//s.PictureElem.SnapshotPicture.Width = int32(utils.StringToInt(constant.ZoomScale))
+			//s.PictureElem.SnapshotPicture.Height = int32(utils.StringToInt(constant.ZoomScale))
 			s.Content = utils.StructToJsonString(s.PictureElem)
 
 		case constant.Voice:
@@ -474,13 +473,14 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				delFile = append(delFile, sourcePath)
 			}
 			log.Info("", "file", sourcePath, delFile)
-			soundURL, uuid, err := c.UploadSound(sourcePath, callback.OnProgress)
-			if err != nil {
-				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-				return nil, err
-			}
-			s.SoundElem.SourceURL = soundURL
-			s.SoundElem.UUID = uuid
+			// todo: upload sound
+			//soundURL, uuid, err := c.UploadSound(sourcePath, callback.OnProgress)
+			//if err != nil {
+			//	c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
+			//	return nil, err
+			//}
+			//s.SoundElem.SourceURL = soundURL
+			//s.SoundElem.UUID = uuid
 			s.Content = utils.StructToJsonString(s.SoundElem)
 
 		case constant.Video:
@@ -498,24 +498,24 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				delFile = append(delFile, snapPath)
 			}
 			log.ZDebug(ctx, "file", "videoPath", videoPath, "snapPath", snapPath, "delFile", delFile)
-			snapshotURL, snapshotUUID, videoURL, videoUUID, err := c.UploadVideo(videoPath, snapPath, callback.OnProgress)
-			if err != nil {
-				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-				return nil, err
-			}
-			s.VideoElem.VideoURL = videoURL
-			s.VideoElem.SnapshotUUID = snapshotUUID
-			s.VideoElem.SnapshotURL = snapshotURL
-			s.VideoElem.VideoUUID = videoUUID
+			//snapshotURL, snapshotUUID, videoURL, videoUUID, err := c.UploadVideo(videoPath, snapPath, callback.OnProgress)
+			//if err != nil {
+			//	c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
+			//	return nil, err
+			//}
+			//s.VideoElem.VideoURL = videoURL
+			//s.VideoElem.SnapshotUUID = snapshotUUID
+			//s.VideoElem.SnapshotURL = snapshotURL
+			//s.VideoElem.VideoUUID = videoUUID
 			s.Content = utils.StructToJsonString(s.VideoElem)
 		case constant.File:
-			fileURL, fileUUID, err := c.UploadFile(s.FileElem.FilePath, callback.OnProgress)
-			if err != nil {
-				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-				return nil, err
-			}
-			s.FileElem.SourceURL = fileURL
-			s.FileElem.UUID = fileUUID
+			//fileURL, fileUUID, err := c.UploadFile(s.FileElem.FilePath, callback.OnProgress)
+			//if err != nil {
+			//	c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
+			//	return nil, err
+			//}
+			//s.FileElem.SourceURL = fileURL
+			//s.FileElem.UUID = fileUUID
 			s.Content = utils.StructToJsonString(s.FileElem)
 		case constant.Text:
 		case constant.AtText:
@@ -748,49 +748,49 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 	if s.Status != constant.MsgStatusSendSuccess { //filter forward message
 		switch s.ContentType {
 		case constant.Picture:
-			sourceUrl, uuid, err := c.UploadImageByBuffer(buffer1, s.PictureElem.SourcePicture.Size, s.PictureElem.SourcePicture.Type, callback.OnProgress)
-			if err != nil {
-				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-				return nil, err
-			}
-			s.PictureElem.SourcePicture.Url = sourceUrl
-			s.PictureElem.SourcePicture.UUID = uuid
-			s.PictureElem.SnapshotPicture.Url = sourceUrl + "?imageView2/2/w/" + constant.ZoomScale + "/h/" + constant.ZoomScale
-			s.PictureElem.SnapshotPicture.Width = int32(utils.StringToInt(constant.ZoomScale))
-			s.PictureElem.SnapshotPicture.Height = int32(utils.StringToInt(constant.ZoomScale))
+			//sourceUrl, uuid, err := c.UploadImageByBuffer(buffer1, s.PictureElem.SourcePicture.Size, s.PictureElem.SourcePicture.Type, callback.OnProgress)
+			//if err != nil {
+			//	c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
+			//	return nil, err
+			//}
+			//s.PictureElem.SourcePicture.Url = sourceUrl
+			//s.PictureElem.SourcePicture.UUID = uuid
+			//s.PictureElem.SnapshotPicture.Url = sourceUrl + "?imageView2/2/w/" + constant.ZoomScale + "/h/" + constant.ZoomScale
+			//s.PictureElem.SnapshotPicture.Width = int32(utils.StringToInt(constant.ZoomScale))
+			//s.PictureElem.SnapshotPicture.Height = int32(utils.StringToInt(constant.ZoomScale))
 			s.Content = utils.StructToJsonString(s.PictureElem)
 
 		case constant.Voice:
-			soundURL, uuid, err := c.UploadSoundByBuffer(buffer1, s.SoundElem.DataSize, s.SoundElem.SoundType, callback.OnProgress)
-			if err != nil {
-				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-				return nil, err
-			}
-			s.SoundElem.SourceURL = soundURL
-			s.SoundElem.UUID = uuid
+			//soundURL, uuid, err := c.UploadSoundByBuffer(buffer1, s.SoundElem.DataSize, s.SoundElem.SoundType, callback.OnProgress)
+			//if err != nil {
+			//	c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
+			//	return nil, err
+			//}
+			//s.SoundElem.SourceURL = soundURL
+			//s.SoundElem.UUID = uuid
 			s.Content = utils.StructToJsonString(s.SoundElem)
 
 		case constant.Video:
 
-			snapshotURL, snapshotUUID, videoURL, videoUUID, err := c.UploadVideoByBuffer(buffer1, buffer2, s.VideoElem.VideoSize,
-				s.VideoElem.SnapshotSize, s.VideoElem.VideoType, s.VideoElem.SnapshotType, callback.OnProgress)
-			if err != nil {
-				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-				return nil, err
-			}
-			s.VideoElem.VideoURL = videoURL
-			s.VideoElem.SnapshotUUID = snapshotUUID
-			s.VideoElem.SnapshotURL = snapshotURL
-			s.VideoElem.VideoUUID = videoUUID
+			//snapshotURL, snapshotUUID, videoURL, videoUUID, err := c.UploadVideoByBuffer(buffer1, buffer2, s.VideoElem.VideoSize,
+			//	s.VideoElem.SnapshotSize, s.VideoElem.VideoType, s.VideoElem.SnapshotType, callback.OnProgress)
+			//if err != nil {
+			//	c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
+			//	return nil, err
+			//}
+			//s.VideoElem.VideoURL = videoURL
+			//s.VideoElem.SnapshotUUID = snapshotUUID
+			//s.VideoElem.SnapshotURL = snapshotURL
+			//s.VideoElem.VideoUUID = videoUUID
 			s.Content = utils.StructToJsonString(s.VideoElem)
 		case constant.File:
-			fileURL, fileUUID, err := c.UploadFileByBuffer(buffer1, s.FileElem.FileSize, s.FileElem.FileType, callback.OnProgress)
-			if err != nil {
-				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-				return nil, err
-			}
-			s.FileElem.SourceURL = fileURL
-			s.FileElem.UUID = fileUUID
+			//fileURL, fileUUID, err := c.UploadFileByBuffer(buffer1, s.FileElem.FileSize, s.FileElem.FileType, callback.OnProgress)
+			//if err != nil {
+			//	c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
+			//	return nil, err
+			//}
+			//s.FileElem.SourceURL = fileURL
+			//s.FileElem.UUID = fileUUID
 			s.Content = utils.StructToJsonString(s.FileElem)
 		case constant.Text:
 		case constant.AtText:
@@ -875,12 +875,12 @@ func (c *Conversation) InternalSendMessage(ctx context.Context, s *sdk_struct.Ms
 	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
 	wsMsgData.OfflinePushInfo = p
-	timeout := 10
-	retryTimes := 0
-	g, err := c.SendReqWaitResp(ctx, &wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID)
-	if err != nil {
-		return nil, err
-	}
+	//timeout := 10
+	//retryTimes := 0
+	//g, err := c.SendReqWaitResp(ctx, &wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID)
+	//if err != nil {
+	//	return nil, err
+	//}
 	//switch e := err.(type) {
 	//case *constant.ErrInfo:
 	//	common.CheckAnyErrCallback(callback, e.ErrCode, e, operationID)
@@ -888,7 +888,7 @@ func (c *Conversation) InternalSendMessage(ctx context.Context, s *sdk_struct.Ms
 	//	common.CheckAnyErrCallback(callback, 301, err, operationID)
 	//}
 	var sendMsgResp sdkws.UserSendMsgResp
-	_ = proto.Unmarshal(g.Data, &sendMsgResp)
+	//_ = proto.Unmarshal(g.Data, &sendMsgResp)
 	return &sendMsgResp, nil
 
 }
@@ -917,13 +917,13 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	wsMsgData.Options = options
 	wsMsgData.AtUserIDList = s.AtElem.AtUserList
 	wsMsgData.OfflinePushInfo = offlinePushInfo
-	timeout := 300
-	retryTimes := 60
-	resp, err := c.SendReqWaitResp(ctx, &wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID)
-	if err != nil {
-		c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-		return nil, err
-	}
+	//timeout := 300
+	//retryTimes := 60
+	//resp, err := c.SendReqWaitResp(ctx, &wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID)
+	//if err != nil {
+	//	c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
+	//	return nil, err
+	//}
 	//switch e := err.(type) {
 	//case *constant.ErrInfo:
 	//	c.checkErrAndUpdateMessage(callback, e.ErrCode, e, s, lc, operationID)
@@ -931,7 +931,7 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	//	c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
 	//}
 	var sendMsgResp server_api_params.UserSendMsgResp
-	_ = proto.Unmarshal(resp.Data, &sendMsgResp)
+	//_ = proto.Unmarshal(resp.Data, &sendMsgResp)
 	s.SendTime = sendMsgResp.SendTime
 	s.Status = constant.MsgStatusSendSuccess
 	s.ServerMsgID = sendMsgResp.ServerMsgID
@@ -953,8 +953,6 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 
 func (c *Conversation) FindMessageList(ctx context.Context, req []*sdk_params_callback.ConversationArgs) (*sdk_params_callback.FindMessageListCallback, error) {
 	var r sdk_params_callback.FindMessageListCallback
-	{
-	}
 	type tempConversationAndMessageList struct {
 		conversation *model_struct.LocalConversation
 		msgIDList    []string

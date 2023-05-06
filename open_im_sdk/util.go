@@ -20,7 +20,6 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/ccontext"
-	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdkerrs"
 	"reflect"
@@ -362,7 +361,7 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 			case reflect.Struct, reflect.Slice, reflect.Array, reflect.Map:
 				v := reflect.New(tag)
 				if err := json.Unmarshal([]byte(args[i].(string)), v.Interface()); err != nil {
-					callback.OnError(constant.ErrArgs.ErrCode, err.Error())
+					callback.OnError(sdkerrs.ArgsError, err.Error())
 					return
 				}
 				ins = append(ins, v.Elem())
