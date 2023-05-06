@@ -26,38 +26,26 @@ import (
 type Default struct {
 	ConnType int
 	conn     *websocket.Conn
-	sendConn *websocket.Conn
 }
 
 func (d *Default) SetReadDeadline(timeout time.Duration) error {
-	//TODO implement me
-	panic("implement me")
+	return d.conn.SetReadDeadline(time.Now().Add(timeout))
 }
 
 func (d *Default) SetWriteDeadline(timeout time.Duration) error {
-	//TODO implement me
-	panic("implement me")
+	return d.conn.SetWriteDeadline(time.Now().Add(timeout))
 }
 
 func (d *Default) SetReadLimit(limit int64) {
-	//TODO implement me
-	panic("implement me")
+	d.conn.SetReadLimit(limit)
 }
 
 func (d *Default) SetPongHandler(handler PongHandler) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (d *Default) GenerateLongConn(w http.ResponseWriter, r *http.Request) error {
-	//TODO implement me
-	panic("implement me")
+	d.conn.SetPongHandler(handler)
 }
 
 func (d *Default) LocalAddr() string {
-	//TODO implement me
-	//panic("implement me")
-	return ""
+	return d.conn.LocalAddr().String()
 }
 
 func NewWebSocket(connType int) *Default {
@@ -68,23 +56,11 @@ func (d *Default) Close() error {
 }
 
 func (d *Default) WriteMessage(messageType int, message []byte) error {
-	d.setSendConn(d.conn)
 	return d.conn.WriteMessage(messageType, message)
-}
-
-func (d *Default) setSendConn(sendConn *websocket.Conn) {
-	d.sendConn = sendConn
 }
 
 func (d *Default) ReadMessage() (int, []byte, error) {
 	return d.conn.ReadMessage()
-}
-func (d *Default) SetReadTimeout(timeout int) error {
-	return d.conn.SetReadDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
-}
-
-func (d *Default) SetWriteTimeout(timeout int) error {
-	return d.conn.SetWriteDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
 }
 
 func (d *Default) Dial(urlStr string, requestHeader http.Header) (*http.Response, error) {
@@ -105,7 +81,4 @@ func (d *Default) IsNil() bool {
 
 func (d *Default) SetConnNil() {
 	d.conn = nil
-}
-func (d *Default) CheckSendConnDiffNow() bool {
-	return d.conn == d.sendConn
 }

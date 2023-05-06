@@ -58,14 +58,15 @@ type Conversation struct {
 	batchMsgListener     open_im_sdk_callback.OnBatchMsgListener
 	recvCH               chan common.Cmd2Value
 	loginUserID          string
-	platformID           int32
-	DataDir              string
-	friend               *friend.Friend
-	group                *group.Group
-	user                 *user.User
-	signaling            *signaling.LiveSignaling
-	workMoments          *workMoments.WorkMoments
-	business             *business.Business
+
+	platformID  int32
+	DataDir     string
+	friend      *friend.Friend
+	group       *group.Group
+	user        *user.User
+	signaling   *signaling.LiveSignaling
+	workMoments *workMoments.WorkMoments
+	business    *business.Business
 
 	cache          *cache.Cache
 	full           *full.Full
