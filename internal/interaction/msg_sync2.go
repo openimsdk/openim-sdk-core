@@ -170,12 +170,10 @@ func (m *MsgSyncer) doPushMsg(ctx context.Context, push *sdkws.PushMessages) {
 func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pullMsgs map[string]*sdkws.PullMsgs, triggerFunc func(ctx context.Context, msgs map[string]*sdkws.PullMsgs) error) {
 	needSyncSeqMap := make(map[string][2]int64)
 	var lastSeq int64
-	var onlineMsgNum int64
 	var storageMsgs []*sdkws.MsgData
 	for conversationID, msgs := range pullMsgs {
 		for _, msg := range msgs.Msgs {
 			if msg.Seq == 0 {
-				onlineMsgNum++
 				_ = triggerFunc(m.ctx, map[string]*sdkws.PullMsgs{conversationID: &sdkws.PullMsgs{Msgs: []*sdkws.MsgData{msg}}})
 				continue
 			}
