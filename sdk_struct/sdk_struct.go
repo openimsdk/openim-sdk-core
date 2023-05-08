@@ -101,11 +101,15 @@ type TextElem struct {
 	Content string `json:"content"`
 }
 
+type CardElem struct {
+	Content string `json:"content"`
+}
+
 type PictureElem struct {
-	SourcePath      string          `json:"sourcePath,omitempty"`
-	SourcePicture   PictureBaseInfo `json:"sourcePicture,omitempty"`
-	BigPicture      PictureBaseInfo `json:"bigPicture,omitempty"`
-	SnapshotPicture PictureBaseInfo `json:"snapshotPicture,omitempty"`
+	SourcePath      string           `json:"sourcePath,omitempty"`
+	SourcePicture   *PictureBaseInfo `json:"sourcePicture,omitempty"`
+	BigPicture      *PictureBaseInfo `json:"bigPicture,omitempty"`
+	SnapshotPicture *PictureBaseInfo `json:"snapshotPicture,omitempty"`
 }
 
 type SoundElem struct {
@@ -213,6 +217,8 @@ type MsgStruct struct {
 	OfflinePush          sdkws.OfflinePushInfo `json:"offlinePush,omitempty"`
 	AttachedInfo         string                `json:"attachedInfo,omitempty"`
 	Ex                   string                `json:"ex,omitempty"`
+	TextElem             *TextElem             `json:"textElem,omitempty"`
+	CardElem             *CardElem             `json:"cardElem,omitempty"`
 	PictureElem          *PictureElem          `json:"pictureElem,omitempty"`
 	SoundElem            *SoundElem            `json:"soundElem,omitempty"`
 	VideoElem            *VideoElem            `json:"videoElem,omitempty"`

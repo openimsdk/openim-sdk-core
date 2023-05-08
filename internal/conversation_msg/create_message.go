@@ -30,7 +30,7 @@ func (c *Conversation) CreateTextMessage(ctx context.Context, text string) (*sdk
 	if err != nil {
 		return nil, err
 	}
-	s.Content = text
+	s.TextElem = &sdk_struct.TextElem{Content: text}
 	return &s, nil
 }
 func (c *Conversation) CreateAdvancedTextMessage(ctx context.Context, text string, messageEntities []*sdk_struct.MessageEntity) (*sdk_struct.MsgStruct, error) {
@@ -39,22 +39,29 @@ func (c *Conversation) CreateAdvancedTextMessage(ctx context.Context, text strin
 	if err != nil {
 		return nil, err
 	}
-	s.MessageEntityElem.Text = text
-	s.MessageEntityElem.MessageEntityList = messageEntities
-	s.Content = utils.StructToJsonString(s.MessageEntityElem)
-	return &s, nil
-}
-func (c *Conversation) messageEntity(ctx context.Context, text string, messageEntity []*sdk_struct.MessageEntity) (*sdk_struct.MsgStruct, error) {
-	s := sdk_struct.MsgStruct{}
-	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.AdvancedText)
-	if err != nil {
-		return nil, err
+	s.MessageEntityElem = &sdk_struct.MessageEntityElem{
+		Text:              text,
+		MessageEntityList: messageEntities,
 	}
-	s.MessageEntityElem.Text = text
-	s.MessageEntityElem.MessageEntityList = messageEntity
-	s.Content = utils.StructToJsonString(s.MessageEntityElem)
 	return &s, nil
 }
+
+//func (c *Conversation) messageEntity(ctx context.Context, text string, messageEntity []*sdk_struct.MessageEntity) (*sdk_struct.MsgStruct, error) {
+//	s := sdk_struct.MsgStruct{}
+//	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.AdvancedText)
+//	if err != nil {
+//		return nil, err
+//	}
+//	//s.MessageEntityElem.Text = text
+//	//s.MessageEntityElem.MessageEntityList = messageEntity
+//	//s.Content = utils.StructToJsonString(s.MessageEntityElem)
+//	s.MessageEntityElem = &sdk_struct.MessageEntityElem{
+//		Text:              text,
+//		MessageEntityList: messageEntity,
+//	}
+//	return &s, nil
+//}
+
 func (c *Conversation) CreateTextAtMessage(ctx context.Context, text string, userIDList []string, usersInfo []*sdk_struct.AtInfo, qs *sdk_struct.MsgStruct) (*sdk_struct.MsgStruct, error) {
 	if text == "" {
 		return nil, errors.New("text can not be empty")
@@ -66,14 +73,21 @@ func (c *Conversation) CreateTextAtMessage(ctx context.Context, text string, use
 	}
 	//Avoid nested references
 	if qs.ContentType == constant.Quote {
-		qs.Content = qs.QuoteElem.Text
+		//qs.Content = qs.QuoteElem.Text
 		qs.ContentType = constant.Text
+		qs.TextElem = &sdk_struct.TextElem{Content: qs.QuoteElem.Text}
 	}
-	s.AtElem.Text = text
-	s.AtElem.AtUserList = userIDList
-	s.AtElem.AtUsersInfo = usersInfo
-	s.AtElem.QuoteMessage = qs
-	s.Content = utils.StructToJsonString(s.AtElem)
+	//s.AtElem.Text = text
+	//s.AtElem.AtUserList = userIDList
+	//s.AtElem.AtUsersInfo = usersInfo
+	//s.AtElem.QuoteMessage = qs
+	//s.Content = utils.StructToJsonString(s.AtElem)
+	s.AtElem = &sdk_struct.AtElem{
+		Text:         text,
+		AtUserList:   userIDList,
+		AtUsersInfo:  usersInfo,
+		QuoteMessage: qs,
+	}
 	return &s, nil
 }
 func (c *Conversation) CreateLocationMessage(ctx context.Context, description string, longitude, latitude float64) (*sdk_struct.MsgStruct, error) {
@@ -82,10 +96,15 @@ func (c *Conversation) CreateLocationMessage(ctx context.Context, description st
 	if err != nil {
 		return nil, err
 	}
-	s.LocationElem.Description = description
-	s.LocationElem.Longitude = longitude
-	s.LocationElem.Latitude = latitude
-	s.Content = utils.StructToJsonString(s.LocationElem)
+	//s.LocationElem.Description = description
+	//s.LocationElem.Longitude = longitude
+	//s.LocationElem.Latitude = latitude
+	//s.Content = utils.StructToJsonString(s.LocationElem)
+	s.LocationElem = &sdk_struct.LocationElem{
+		Description: description,
+		Longitude:   longitude,
+		Latitude:    latitude,
+	}
 	return &s, nil
 
 }
@@ -95,10 +114,15 @@ func (c *Conversation) CreateCustomMessage(ctx context.Context, data, extension 
 	if err != nil {
 		return nil, err
 	}
-	s.CustomElem.Data = data
-	s.CustomElem.Extension = extension
-	s.CustomElem.Description = description
-	s.Content = utils.StructToJsonString(s.CustomElem)
+	//s.CustomElem.Data = data
+	//s.CustomElem.Extension = extension
+	//s.CustomElem.Description = description
+	//s.Content = utils.StructToJsonString(s.CustomElem)
+	s.CustomElem = &sdk_struct.CustomElem{
+		Data:        data,
+		Extension:   extension,
+		Description: description,
+	}
 	return &s, nil
 
 }
@@ -110,12 +134,17 @@ func (c *Conversation) CreateQuoteMessage(ctx context.Context, text string, qs *
 	}
 	//Avoid nested references
 	if qs.ContentType == constant.Quote {
-		qs.Content = qs.QuoteElem.Text
+		//qs.Content = qs.QuoteElem.Text
 		qs.ContentType = constant.Text
+		qs.TextElem = &sdk_struct.TextElem{Content: qs.QuoteElem.Text}
 	}
-	s.QuoteElem.Text = text
-	s.QuoteElem.QuoteMessage = qs
-	s.Content = utils.StructToJsonString(s.QuoteElem)
+	//s.QuoteElem.Text = text
+	//s.QuoteElem.QuoteMessage = qs
+	//s.Content = utils.StructToJsonString(s.QuoteElem)
+	qs.QuoteElem = &sdk_struct.QuoteElem{
+		Text:         text,
+		QuoteMessage: qs,
+	}
 	return &s, nil
 
 }
@@ -127,23 +156,29 @@ func (c *Conversation) CreateAdvancedQuoteMessage(ctx context.Context, text stri
 	}
 	//Avoid nested references
 	if qs.ContentType == constant.Quote {
-		qs.Content = qs.QuoteElem.Text
+		//qs.Content = qs.QuoteElem.Text
 		qs.ContentType = constant.Text
+		qs.TextElem = &sdk_struct.TextElem{Content: qs.QuoteElem.Text}
 	}
-	s.QuoteElem.Text = text
-	s.QuoteElem.MessageEntityList = messageEntities
-	s.QuoteElem.QuoteMessage = qs
-	s.Content = utils.StructToJsonString(s.QuoteElem)
+	//s.QuoteElem.Text = text
+	//s.QuoteElem.MessageEntityList = messageEntities
+	//s.QuoteElem.QuoteMessage = qs
+	//s.Content = utils.StructToJsonString(s.QuoteElem)
+	s.QuoteElem = &sdk_struct.QuoteElem{
+		Text:              text,
+		QuoteMessage:      qs,
+		MessageEntityList: messageEntities,
+	}
 	return &s, nil
-
 }
+
 func (c *Conversation) CreateCardMessage(ctx context.Context, cardInfo string) (*sdk_struct.MsgStruct, error) {
 	s := sdk_struct.MsgStruct{}
 	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Card)
 	if err != nil {
 		return nil, err
 	}
-	s.Content = cardInfo
+	s.CardElem = &sdk_struct.CardElem{Content: cardInfo}
 	return &s, nil
 
 }
@@ -168,9 +203,14 @@ func (c *Conversation) CreateVideoMessageFromFullPath(ctx context.Context, video
 	if err != nil {
 		return nil, err
 	}
-	s.VideoElem.VideoPath = videoFullPath
-	s.VideoElem.VideoType = videoType
-	s.VideoElem.Duration = duration
+	//s.VideoElem.VideoPath = videoFullPath
+	//s.VideoElem.VideoType = videoType
+	//s.VideoElem.Duration = duration
+	s.VideoElem = &sdk_struct.VideoElem{
+		VideoPath: videoFullPath,
+		VideoType: videoType,
+		Duration:  duration,
+	}
 	if snapshotFullPath == "" {
 		s.VideoElem.SnapshotPath = ""
 	} else {
@@ -192,7 +232,7 @@ func (c *Conversation) CreateVideoMessageFromFullPath(ctx context.Context, video
 		s.VideoElem.SnapshotWidth = imageInfo.Width
 		s.VideoElem.SnapshotSize = imageInfo.Size
 	}
-	s.Content = utils.StructToJsonString(s.VideoElem)
+	//s.Content = utils.StructToJsonString(s.VideoElem)
 	return &s, nil
 
 }
@@ -210,15 +250,19 @@ func (c *Conversation) CreateFileMessageFromFullPath(ctx context.Context, fileFu
 	if err != nil {
 		return nil, err
 	}
-	s.FileElem.FilePath = fileFullPath
 	fi, err := os.Stat(fileFullPath)
 	if err != nil {
 		//log.Error("internal", "get file Attributes error", err.Error())
 		return nil, err
 	}
-	s.FileElem.FileSize = fi.Size()
-	s.FileElem.FileName = fileName
-	s.Content = utils.StructToJsonString(s.FileElem)
+	s.FileElem = &sdk_struct.FileElem{
+		FilePath: fileFullPath,
+		FileName: fileName,
+		FileSize: fi.Size(),
+	}
+	//s.FileElem.FileSize = fi.Size()
+	//s.FileElem.FileName = fileName
+	//s.Content = utils.StructToJsonString(s.FileElem)
 	return &s, nil
 }
 func (c *Conversation) CreateImageMessageFromFullPath(ctx context.Context, imageFullPath string) (*sdk_struct.MsgStruct, error) {
@@ -234,18 +278,26 @@ func (c *Conversation) CreateImageMessageFromFullPath(ctx context.Context, image
 	if err != nil {
 		return nil, err
 	}
-	s.PictureElem.SourcePath = imageFullPath
+	//s.PictureElem.SourcePath = imageFullPath
 	//log.Info(operationID, "ImageMessage  path:", s.PictureElem.SourcePath)
-	imageInfo, err := getImageInfo(s.PictureElem.SourcePath)
+	imageInfo, err := getImageInfo(imageFullPath)
 	if err != nil {
 		//log.Error(operationID, "getImageInfo err:", err.Error())
 		return nil, err
 	}
-	s.PictureElem.SourcePicture.Width = imageInfo.Width
-	s.PictureElem.SourcePicture.Height = imageInfo.Height
-	s.PictureElem.SourcePicture.Type = imageInfo.Type
-	s.PictureElem.SourcePicture.Size = imageInfo.Size
-	s.Content = utils.StructToJsonString(s.PictureElem)
+	//s.PictureElem.SourcePicture.Width = imageInfo.Width
+	//s.PictureElem.SourcePicture.Height = imageInfo.Height
+	//s.PictureElem.SourcePicture.Type = imageInfo.Type
+	//s.PictureElem.SourcePicture.Size = imageInfo.Size
+	//s.Content = utils.StructToJsonString(s.PictureElem)
+	s.PictureElem = &sdk_struct.PictureElem{
+		SourcePath: imageFullPath,
+		SourcePicture: &sdk_struct.PictureBaseInfo{
+			Width:  imageInfo.Width,
+			Height: imageInfo.Height,
+			Type:   imageInfo.Type,
+		},
+	}
 	return &s, nil
 }
 func (c *Conversation) CreateSoundMessageFromFullPath(ctx context.Context, soundPath string, duration int64) (*sdk_struct.MsgStruct, error) {
@@ -262,15 +314,20 @@ func (c *Conversation) CreateSoundMessageFromFullPath(ctx context.Context, sound
 	if err != nil {
 		return nil, err
 	}
-	s.SoundElem.SoundPath = soundPath
-	s.SoundElem.Duration = duration
-	fi, err := os.Stat(s.SoundElem.SoundPath)
+	//s.SoundElem.SoundPath = soundPath
+	//s.SoundElem.Duration = duration
+	fi, err := os.Stat(soundPath)
 	if err != nil {
 		//log.Error("internal", "getSoundInfo err:", err.Error(), s.SoundElem.SoundPath)
 		return nil, err
 	}
-	s.SoundElem.DataSize = fi.Size()
-	s.Content = utils.StructToJsonString(s.SoundElem)
+	s.SoundElem = &sdk_struct.SoundElem{
+		SoundPath: soundPath,
+		Duration:  duration,
+		DataSize:  fi.Size(),
+	}
+	//s.SoundElem.DataSize = fi.Size()
+	//s.Content = utils.StructToJsonString(s.SoundElem)
 	return &s, nil
 }
 func (c *Conversation) CreateImageMessage(ctx context.Context, imagePath string) (*sdk_struct.MsgStruct, error) {
@@ -279,41 +336,63 @@ func (c *Conversation) CreateImageMessage(ctx context.Context, imagePath string)
 	if err != nil {
 		return nil, err
 	}
-	s.PictureElem.SourcePath = c.DataDir + imagePath
+	path := c.DataDir + imagePath
+	//s.PictureElem.SourcePath = c.DataDir + imagePath
 	//log.Debug("internal", "ImageMessage  path:", s.PictureElem.SourcePath)
-	imageInfo, err := getImageInfo(s.PictureElem.SourcePath)
+	imageInfo, err := getImageInfo(path)
 	if err != nil {
 		//log.Error("internal", "get imageInfo err", err.Error())
 		return nil, err
 	}
-	s.PictureElem.SourcePicture.Width = imageInfo.Width
-	s.PictureElem.SourcePicture.Height = imageInfo.Height
-	s.PictureElem.SourcePicture.Type = imageInfo.Type
-	s.PictureElem.SourcePicture.Size = imageInfo.Size
-	s.Content = utils.StructToJsonString(s.PictureElem)
+	//s.PictureElem.SourcePicture.Width = imageInfo.Width
+	//s.PictureElem.SourcePicture.Height = imageInfo.Height
+	//s.PictureElem.SourcePicture.Type = imageInfo.Type
+	//s.PictureElem.SourcePicture.Size = imageInfo.Size
+	//s.Content = utils.StructToJsonString(s.PictureElem)
+	s.PictureElem = &sdk_struct.PictureElem{
+		SourcePath: path,
+		SourcePicture: &sdk_struct.PictureBaseInfo{
+			Width:  imageInfo.Width,
+			Height: imageInfo.Height,
+			Type:   imageInfo.Type,
+		},
+	}
 	return &s, nil
 
 }
 func (c *Conversation) CreateImageMessageByURL(ctx context.Context, sourcePicture, bigPicture, snapshotPicture sdk_struct.PictureBaseInfo) (*sdk_struct.MsgStruct, error) {
 	s := sdk_struct.MsgStruct{}
-	s.PictureElem.SourcePicture = sourcePicture
-	s.PictureElem.BigPicture = bigPicture
-	s.PictureElem.SnapshotPicture = snapshotPicture
+	//s.PictureElem.SourcePicture = sourcePicture
+	//s.PictureElem.BigPicture = bigPicture
+	//s.PictureElem.SnapshotPicture = snapshotPicture
 	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Picture)
 	if err != nil {
 		return nil, err
 	}
-	s.Content = utils.StructToJsonString(s.PictureElem)
+	//s.Content = utils.StructToJsonString(s.PictureElem)
+	s.PictureElem = &sdk_struct.PictureElem{
+		SourcePicture:   &sourcePicture,
+		BigPicture:      &bigPicture,
+		SnapshotPicture: &snapshotPicture,
+	}
 	return &s, nil
 }
-func (c *Conversation) CreateSoundMessageByURL(ctx context.Context, soundElem sdk_struct.SoundBaseInfo) (*sdk_struct.MsgStruct, error) {
+func (c *Conversation) CreateSoundMessageByURL(ctx context.Context, soundElem *sdk_struct.SoundBaseInfo) (*sdk_struct.MsgStruct, error) {
 	s := sdk_struct.MsgStruct{}
-	s.SoundElem = soundElem
+	//s.SoundElem = soundElem
 	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Voice)
 	if err != nil {
 		return nil, err
 	}
-	s.Content = utils.StructToJsonString(s.SoundElem)
+	s.SoundElem = &sdk_struct.SoundElem{
+		UUID:      soundElem.UUID,
+		SoundPath: soundElem.SoundPath,
+		SourceURL: soundElem.SourceURL,
+		DataSize:  soundElem.DataSize,
+		Duration:  soundElem.Duration,
+		SoundType: soundElem.SoundType,
+	}
+	//s.Content = utils.StructToJsonString(s.SoundElem)
 	return &s, nil
 }
 func (c *Conversation) CreateSoundMessage(ctx context.Context, soundPath string, duration int64) (*sdk_struct.MsgStruct, error) {
@@ -322,25 +401,46 @@ func (c *Conversation) CreateSoundMessage(ctx context.Context, soundPath string,
 	if err != nil {
 		return nil, err
 	}
-	s.SoundElem.SoundPath = c.DataDir + soundPath
-	s.SoundElem.Duration = duration
-	fi, err := os.Stat(s.SoundElem.SoundPath)
+	path := c.DataDir + soundPath
+	//s.SoundElem.SoundPath = c.DataDir + soundPath
+	//s.SoundElem.Duration = duration
+	fi, err := os.Stat(path)
 	if err != nil {
 		//log.Error("internal", "get sound info err", err.Error())
 		return nil, err
 	}
-	s.SoundElem.DataSize = fi.Size()
-	s.Content = utils.StructToJsonString(s.SoundElem)
+	//s.SoundElem.DataSize = fi.Size()
+	//s.Content = utils.StructToJsonString(s.SoundElem)
+	s.SoundElem = &sdk_struct.SoundElem{
+		SoundPath: path,
+		Duration:  duration,
+		DataSize:  fi.Size(),
+	}
 	return &s, nil
 }
 func (c *Conversation) CreateVideoMessageByURL(ctx context.Context, videoElem sdk_struct.VideoBaseInfo) (*sdk_struct.MsgStruct, error) {
 	s := sdk_struct.MsgStruct{}
-	s.VideoElem = videoElem
+	//s.VideoElem = videoElem
 	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Video)
 	if err != nil {
 		return nil, err
 	}
-	s.Content = utils.StructToJsonString(s.VideoElem)
+	//s.Content = utils.StructToJsonString(s.VideoElem)
+	s.VideoElem = &sdk_struct.VideoElem{
+		VideoPath:      videoElem.VideoPath,
+		VideoUUID:      videoElem.VideoUUID,
+		VideoURL:       videoElem.VideoURL,
+		VideoType:      videoElem.VideoType,
+		VideoSize:      videoElem.VideoSize,
+		Duration:       videoElem.Duration,
+		SnapshotPath:   videoElem.SnapshotPath,
+		SnapshotUUID:   videoElem.SnapshotUUID,
+		SnapshotSize:   videoElem.SnapshotSize,
+		SnapshotURL:    videoElem.SnapshotURL,
+		SnapshotWidth:  videoElem.SnapshotWidth,
+		SnapshotHeight: videoElem.SnapshotHeight,
+		SnapshotType:   videoElem.SnapshotType,
+	}
 	return &s, nil
 }
 func (c *Conversation) CreateVideoMessage(ctx context.Context, videoPath string, videoType string, duration int64, snapshotPath string) (*sdk_struct.MsgStruct, error) {
@@ -349,6 +449,7 @@ func (c *Conversation) CreateVideoMessage(ctx context.Context, videoPath string,
 	if err != nil {
 		return nil, err
 	}
+	s.VideoElem = &sdk_struct.VideoElem{}
 	s.VideoElem.VideoPath = c.DataDir + videoPath
 	s.VideoElem.VideoType = videoType
 	s.VideoElem.Duration = duration
@@ -373,21 +474,29 @@ func (c *Conversation) CreateVideoMessage(ctx context.Context, videoPath string,
 		s.VideoElem.SnapshotWidth = imageInfo.Width
 		s.VideoElem.SnapshotSize = imageInfo.Size
 	}
-	s.Content = utils.StructToJsonString(s.VideoElem)
+	//s.Content = utils.StructToJsonString(s.VideoElem)
 	return &s, nil
 }
 func (c *Conversation) CreateFileMessageByURL(ctx context.Context, fileElem sdk_struct.FileBaseInfo) (*sdk_struct.MsgStruct, error) {
 	s := sdk_struct.MsgStruct{}
-	s.FileElem = fileElem
+	//s.FileElem = fileElem
 	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.File)
 	if err != nil {
 		return nil, err
 	}
-	s.Content = utils.StructToJsonString(s.FileElem)
+	//s.Content = utils.StructToJsonString(s.FileElem)
+	s.FileElem = &sdk_struct.FileElem{
+		FilePath:  fileElem.FilePath,
+		UUID:      fileElem.UUID,
+		SourceURL: fileElem.SourceURL,
+		FileName:  fileElem.FileName,
+		FileSize:  fileElem.FileSize,
+		FileType:  fileElem.FileType,
+	}
 	return &s, nil
 }
 func (c *Conversation) CreateFileMessage(ctx context.Context, filePath string, fileName string) (*sdk_struct.MsgStruct, error) {
-	s := sdk_struct.MsgStruct{}
+	s := sdk_struct.MsgStruct{FileElem: &sdk_struct.FileElem{}}
 	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.File)
 	if err != nil {
 		return nil, err
@@ -404,7 +513,7 @@ func (c *Conversation) CreateFileMessage(ctx context.Context, filePath string, f
 	return &s, nil
 }
 func (c *Conversation) CreateMergerMessage(ctx context.Context, messages []*sdk_struct.MsgStruct, title string, summaries []string) (*sdk_struct.MsgStruct, error) {
-	s := sdk_struct.MsgStruct{}
+	s := sdk_struct.MsgStruct{MergeElem: &sdk_struct.MergeElem{}}
 	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Merger)
 	if err != nil {
 		return nil, err
@@ -416,7 +525,7 @@ func (c *Conversation) CreateMergerMessage(ctx context.Context, messages []*sdk_
 	return &s, nil
 }
 func (c *Conversation) CreateFaceMessage(ctx context.Context, index int, data string) (*sdk_struct.MsgStruct, error) {
-	s := sdk_struct.MsgStruct{}
+	s := sdk_struct.MsgStruct{FaceElem: &sdk_struct.FaceElem{}}
 	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Face)
 	if err != nil {
 		return nil, err
@@ -427,17 +536,17 @@ func (c *Conversation) CreateFaceMessage(ctx context.Context, index int, data st
 	return &s, nil
 
 }
-func (c *Conversation) CreateForwardMessage(ctx context.Context, s sdk_struct.MsgStruct) (*sdk_struct.MsgStruct, error) {
+func (c *Conversation) CreateForwardMessage(ctx context.Context, s *sdk_struct.MsgStruct) (*sdk_struct.MsgStruct, error) {
 	if s.Status != constant.MsgStatusSendSuccess {
 		log.Error("internal", "only send success message can be Forward")
 		return nil, errors.New("only send success message can be Forward")
 	}
-	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, s.ContentType)
+	err := c.initBasicInfo(ctx, s, constant.UserMsgType, s.ContentType)
 	if err != nil {
 		return nil, err
 	}
 	//Forward message seq is set to 0
 	s.Seq = 0
 	s.Status = constant.MsgStatusSendSuccess
-	return &s, nil
+	return s, nil
 }
