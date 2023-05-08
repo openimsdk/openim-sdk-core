@@ -274,7 +274,7 @@ func (i IndexDB) InitDB(userID string, dataDir string) error {
 }
 
 func NewDataBase(loginUserID string, dbDir string, operationID string) (*IndexDB, error) {
-	return &IndexDB{
+	i := &IndexDB{
 		LocalUsers:                      indexdb.NewLocalUsers(),
 		LocalConversations:              indexdb.NewLocalConversations(),
 		LocalChatLogs:                   indexdb.NewLocalChatLogs(loginUserID),
@@ -290,7 +290,12 @@ func NewDataBase(loginUserID string, dbDir string, operationID string) (*IndexDB
 		LocalGroupRequest:               indexdb.NewLocalGroupRequest(),
 		LocalChatLogReactionExtensions:  indexdb.NewLocalChatLogReactionExtensions(),
 		loginUserID:                     loginUserID,
-	}, nil
+	}
+	err := i.InitDB(loginUserID, dbDir)
+	if err != nil {
+		return nil, err
+	}
+	return i, nil
 }
 func (i IndexDB) BatchInsertMessageListController(MessageList []*model_struct.LocalChatLog) error {
 	if len(MessageList) == 0 {
