@@ -41,8 +41,6 @@ type LongConn interface {
 	// SetReadLimit sets the maximum size for a message read from the peer.bytes
 	SetReadLimit(limit int64)
 	SetPongHandler(handler PongHandler)
-	// CheckSendConnDiffNow Check the connection of the current and when it was sent are the same
-	CheckSendConnDiffNow() bool
 	// LocalAddr returns the local network address.
 	LocalAddr() string
 }

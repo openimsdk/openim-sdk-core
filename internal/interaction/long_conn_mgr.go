@@ -225,10 +225,10 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 						Data:          nil,
 					}
 					if code, ok := err.(errs.CodeError); ok {
-                       resp.ErrCode = code.Code()
-					   resp.ErrMsg = code.Msg()
+						resp.ErrCode = code.Code()
+						resp.ErrMsg = code.Msg()
 					} else {
-						log.ZError(c.ctx, "writeBinaryMsgAndRetry failed", err, "wsReq", message.Message
+						log.ZError(c.ctx, "writeBinaryMsgAndRetry failed", err, "wsReq", message.Message)
 					}
 
 				}
@@ -238,56 +238,16 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 				}
 
 			}()
-
-			tempChan, err := c.writeBinaryMsgAndRetry(&message.Message)
-			if err != nil {
-
-				resp := GeneralWsResp{
-					ReqIdentifier: message.Message.ReqIdentifier,
-					ErrCode:       1,
-					ErrMsg:        "",
-					OperationID:   message.Message.OperationID,
-					Data:          nil,
-				}
-				err := c.Syncer.notifyCh(message.Resp, resp, 1)
-				if err != nil {
-					//log.Warn(wsResp.OperationID, "TriggerCmdNewMsgCome failed ", err.Error(), ch, wsResp.ReqIdentifier, wsResp.MsgIncr)
-					log.ZError(c.ctx, "TriggerCmdNewMsgCome failed", err, "wsResp", resp)
-				}
-			} else {
-				go func() {
-					select {
-					case resp := <-tempChan:
-						log.ZInfo(c.ctx, "receive response", "local address", c.conn.LocalAddr(), "message", message.Message, "response", resp)
-						err := c.Syncer.notifyCh(message.Resp, resp, 1)
-						if err != nil {
-							//log.Warn(wsResp.OperationID, "TriggerCmdNewMsgCome failed ", err.Error(), ch, wsResp.ReqIdentifier, wsResp.MsgIncr)
-							log.ZError(c.ctx, "TriggerCmdNewMsgCome failed", err, "wsResp", resp)
-						}
-						log.ZInfo(c.ctx, "receive response", "local address", c.conn.LocalAddr(), "message", message.Message, "response", resp)
-						//_ = c.close()
-					case <-time.After(time.Second * 3):
-						resp := GeneralWsResp{
-							ReqIdentifier: message.Message.ReqIdentifier,
-							ErrCode:       0,
-							ErrMsg:        "",
-							OperationID:   message.Message.OperationID,
-							Data:          nil,
-						}
-						err := c.Syncer.notifyCh(message.Resp, resp, 1)
-						if err != nil {
-							//log.Warn(wsResp.OperationID, "TriggerCmdNewMsgCome failed ", err.Error(), ch, wsResp.ReqIdentifier, wsResp.MsgIncr)
-							log.ZError(c.ctx, "TriggerCmdNewMsgCome failed", err, "wsResp", resp)
-						}
-					}
-					c.Syncer.DelCh(message.Message.MsgIncr)
-
-				}()
-
-			}
-
 		case <-ticker.C:
 			_ = c.conn.SetWriteDeadline(writeWait)
+			req := &GeneralWsReq{
+				ReqIdentifier: constant.GetNewestSeq,
+				SendID:        "",
+				OperationID:   "",
+				MsgIncr:       "",
+				Data:          nil,
+			}
+			resp, err := c.sendAndWaitResp()
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
