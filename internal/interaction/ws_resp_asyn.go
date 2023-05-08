@@ -17,7 +17,6 @@ package interaction
 import (
 	"context"
 	"errors"
-	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 	"sync"
 	"time"
@@ -44,24 +43,24 @@ type GeneralWsReq struct {
 }
 
 type WsRespAsyn struct {
-	wsNotification map[string]chan GeneralWsResp
+	wsNotification map[string]chan *GeneralWsResp
 	wsMutex        sync.RWMutex
 }
 
 func NewWsRespAsyn() *WsRespAsyn {
-	return &WsRespAsyn{wsNotification: make(map[string]chan GeneralWsResp, 1000)}
+	return &WsRespAsyn{wsNotification: make(map[string]chan *GeneralWsResp, 10)}
 }
 
 func GenMsgIncr(userID string) string {
 	return userID + "_" + utils.OperationIDGenerator()
 }
 
-func (u *WsRespAsyn) AddCh(userID string) (string, chan GeneralWsResp) {
+func (u *WsRespAsyn) AddCh(userID string) (string, chan *GeneralWsResp) {
 	u.wsMutex.Lock()
 	defer u.wsMutex.Unlock()
 	msgIncr := GenMsgIncr(userID)
 
-	ch := make(chan GeneralWsResp, 1)
+	ch := make(chan *GeneralWsResp, 1)
 	_, ok := u.wsNotification[msgIncr]
 	if ok {
 	}
@@ -69,10 +68,10 @@ func (u *WsRespAsyn) AddCh(userID string) (string, chan GeneralWsResp) {
 	return msgIncr, ch
 }
 
-func (u *WsRespAsyn) AddChByIncr(msgIncr string) chan GeneralWsResp {
+func (u *WsRespAsyn) AddChByIncr(msgIncr string) chan *GeneralWsResp {
 	u.wsMutex.Lock()
 	defer u.wsMutex.Unlock()
-	ch := make(chan GeneralWsResp, 1)
+	ch := make(chan *GeneralWsResp, 1)
 	_, ok := u.wsNotification[msgIncr]
 	if ok {
 		log.Error("Repeat failed ", msgIncr)
@@ -81,7 +80,7 @@ func (u *WsRespAsyn) AddChByIncr(msgIncr string) chan GeneralWsResp {
 	return ch
 }
 
-func (u *WsRespAsyn) GetCh(msgIncr string) chan GeneralWsResp {
+func (u *WsRespAsyn) GetCh(msgIncr string) chan *GeneralWsResp {
 	ch, ok := u.wsNotification[msgIncr]
 	if ok {
 		return ch
@@ -124,7 +123,7 @@ func (u *WsRespAsyn) NotifyResp(ctx context.Context, wsResp GeneralWsResp) error
 		return utils.Wrap(errors.New("no ch"), "GetCh failed "+wsResp.MsgIncr)
 	}
 	for {
-		err := u.notifyCh(ch, wsResp, 1)
+		err := u.notifyCh(ch, &wsResp, 1)
 		if err != nil {
 			log.ZWarn(ctx, "TriggerCmdNewMsgCome failed ", err, "ch", ch, "wsResp", wsResp)
 			continue
@@ -143,13 +142,13 @@ func (u *WsRespAsyn) WaitResp(ctx context.Context, ch chan GeneralWsResp, timeou
 		//log.Debug(operationID, "ws ch recvMsg success, code ", r.ErrCode)
 		if r.ErrCode != 0 {
 			//log.Error(operationID, "ws ch recvMsg failed, code, err msg: ", r.ErrCode, r.ErrMsg)
-			switch r.ErrCode {
-			case int(constant.ErrInBlackList.ErrCode):
-				return nil, &constant.ErrInBlackList
-			case int(constant.ErrNotFriend.ErrCode):
-				return nil, &constant.ErrNotFriend
-			}
-			return nil, errors.New(utils.IntToString(r.ErrCode) + ":" + r.ErrMsg)
+			//switch r.ErrCode {
+			//case int(constant.ErrInBlackList.ErrCode):
+			//	return nil, &constant.ErrInBlackList
+			//case int(constant.ErrNotFriend.ErrCode):
+			//	return nil, &constant.ErrNotFriend
+			//}
+			//return nil, errors.New(utils.IntToString(r.ErrCode) + ":" + r.ErrMsg)
 		} else {
 			return &r, nil
 		}
@@ -165,4 +164,5 @@ func (u *WsRespAsyn) WaitResp(ctx context.Context, ch chan GeneralWsResp, timeou
 		//	return nil, constant.WsRecvConnSame
 		//}
 	}
+	return nil, nil
 }

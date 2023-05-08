@@ -30,6 +30,8 @@ import (
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/sdkerrs"
+	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 	"sync"
 	"time"
 )
@@ -240,16 +242,43 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 			}()
 		case <-ticker.C:
 			_ = c.conn.SetWriteDeadline(writeWait)
+			var m sdkws.GetMaxSeqReq
+			m.UserID = ccontext.Info(ctx).UserID()
+			opID := utils.OperationIDGenerator()
+			sCtx := ccontext.WithOperationID(c.ctx, opID)
+			log.ZInfo(sCtx, "ping and getMaxSeq start")
+			data, err := proto.Marshal(&m)
+			if err != nil {
+				log.ZError(sCtx, "proto.Marshal", err)
+				break
+			}
 			req := &GeneralWsReq{
 				ReqIdentifier: constant.GetNewestSeq,
-				SendID:        "",
-				OperationID:   "",
-				MsgIncr:       "",
-				Data:          nil,
+				SendID:        m.UserID,
+				OperationID:   opID,
+				Data:          data,
 			}
-			resp, err := c.sendAndWaitResp()
-			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				return
+			resp, err := c.sendAndWaitResp(req)
+			if err != nil {
+				log.ZError(sCtx, "sendAndWaitResp", err)
+				_ = c.close()
+				time.Sleep(time.Second * 1)
+				break
+			} else {
+				if resp.ErrCode != 0 {
+					log.ZError(sCtx, "getMaxSeq failed", nil, "errCode:", resp.ErrCode, "errMsg:", resp.ErrMsg)
+				}
+				var wsSeqResp sdkws.GetMaxSeqResp
+				err = proto.Unmarshal(resp.Data, &wsSeqResp)
+				if err != nil {
+					log.ZError(sCtx, "proto.Unmarshal", err)
+				}
+				var cmd sdk_struct.CmdMaxSeqToMsgSync
+				cmd.ConversationMaxSeqOnSvr = wsSeqResp.MaxSeqs
+				err := common.TriggerCmdMaxSeq(sCtx, cmd, c.pushMsgAndMaxSeqCh)
+				if err != nil {
+					log.ZError(sCtx, "TriggerCmdMaxSeq failed", err)
+				}
 			}
 		}
 	}
@@ -262,7 +291,7 @@ func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error)
 	} else {
 		select {
 		case resp := <-tempChan:
-			return &resp, nil
+			return resp, nil
 		case <-time.After(time.Second * 3):
 			return nil, sdkerrs.ErrNetworkTimeOut.WithDetail(err.Error()).Wrap()
 		}
@@ -270,7 +299,7 @@ func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error)
 	}
 }
 
-func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan GeneralWsResp, error) {
+func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan *GeneralWsResp, error) {
 	msgIncr, tempChan := c.Syncer.AddCh(msg.SendID)
 	msg.MsgIncr = msgIncr
 	for i := 0; i < 3; i++ {

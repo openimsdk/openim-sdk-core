@@ -248,6 +248,13 @@ type AttachedInfoElem struct {
 	IsEncryption              bool             `json:"isEncryption"`
 	InEncryptStatus           bool             `json:"inEncryptStatus"`
 	//MessageReactionElem       []*ReactionElem  `json:"messageReactionElem,omitempty"`
+	Progress *UploadProgress `json:"uploadProgress,omitempty"`
+}
+
+type UploadProgress struct {
+	Total   int64 `json:"total"`
+	Save    int64 `json:"save"`
+	Current int64 `json:"current"`
 }
 
 type ReactionElem struct {

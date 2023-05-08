@@ -457,11 +457,12 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				delFile = append(delFile, sourcePath)
 			}
 			log.Info("", "file", sourcePath, delFile)
+
 			res, err := c.file.PutFile(ctx, &file.PutArgs{
 				PutID:    s.ClientMsgID,
 				Filepath: sourcePath,
 				Name:     c.fileName("picture", s.ClientMsgID),
-			}, nil)
+			}, NewFileCallback(callback.OnProgress, s))
 			if err != nil {
 				return nil, err
 			}
@@ -537,14 +538,23 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			s.SoundElem.SourceURL = res.URL
 			s.Content = utils.StructToJsonString(s.FileElem)
 		case constant.Text:
+			s.Content = utils.StructToJsonString(s.TextElem)
 		case constant.AtText:
+			s.Content = utils.StructToJsonString(s.AtElem)
 		case constant.Location:
+			s.Content = utils.StructToJsonString(s.LocationElem)
 		case constant.Custom:
+			s.Content = utils.StructToJsonString(s.CustomElem)
 		case constant.Merger:
+			s.Content = utils.StructToJsonString(s.MergeElem)
 		case constant.Quote:
+			s.Content = utils.StructToJsonString(s.QuoteElem)
 		case constant.Card:
+			s.Content = utils.StructToJsonString(s.CardElem)
 		case constant.Face:
+			s.Content = utils.StructToJsonString(s.FaceElem)
 		case constant.AdvancedText:
+			s.Content = utils.StructToJsonString(s.MessageEntityElem)
 		default:
 			return nil, errors.New("contentType not currently supported" + utils.Int32ToString(s.ContentType))
 		}
@@ -562,12 +572,25 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				return nil, err
 			}
 		}
+		s.TextElem = nil
+		s.CardElem = nil
+		s.PictureElem = nil
+		s.SoundElem = nil
+		s.VideoElem = nil
+		s.FileElem = nil
+		s.MergeElem = nil
+		s.AtElem = nil
+		s.FaceElem = nil
+		s.LocationElem = nil
+		s.CustomElem = nil
+		s.QuoteElem = nil
+		s.NotificationElem = nil
+		s.MessageEntityElem = nil
 	}
 	return c.sendMessageToServer(ctx, s, lc, callback, delFile, p, options)
 
 }
 func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo) (*sdk_struct.MsgStruct, error) {
-
 	s.SendID = c.loginUserID
 	s.SenderPlatformID = c.platformID
 	if recvID == "" && groupID == "" {
