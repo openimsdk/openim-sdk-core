@@ -97,6 +97,99 @@ type FileBaseInfo struct {
 	FileType  string `json:"fileType,omitempty"`
 }
 
+type TextElem struct {
+	Content string `json:"content"`
+}
+
+type PictureElem struct {
+	SourcePath      string          `json:"sourcePath,omitempty"`
+	SourcePicture   PictureBaseInfo `json:"sourcePicture,omitempty"`
+	BigPicture      PictureBaseInfo `json:"bigPicture,omitempty"`
+	SnapshotPicture PictureBaseInfo `json:"snapshotPicture,omitempty"`
+}
+
+type SoundElem struct {
+	UUID      string `json:"uuid,omitempty"`
+	SoundPath string `json:"soundPath,omitempty"`
+	SourceURL string `json:"sourceUrl,omitempty"`
+	DataSize  int64  `json:"dataSize"`
+	Duration  int64  `json:"duration"`
+	SoundType string `json:"soundType,omitempty"`
+}
+
+type VideoElem struct {
+	VideoPath      string `json:"videoPath,omitempty"`
+	VideoUUID      string `json:"videoUUID,omitempty"`
+	VideoURL       string `json:"videoUrl,omitempty"`
+	VideoType      string `json:"videoType,omitempty"`
+	VideoSize      int64  `json:"videoSize"`
+	Duration       int64  `json:"duration"`
+	SnapshotPath   string `json:"snapshotPath,omitempty"`
+	SnapshotUUID   string `json:"snapshotUUID,omitempty"`
+	SnapshotSize   int64  `json:"snapshotSize"`
+	SnapshotURL    string `json:"snapshotUrl,omitempty"`
+	SnapshotWidth  int32  `json:"snapshotWidth"`
+	SnapshotHeight int32  `json:"snapshotHeight"`
+	SnapshotType   string `json:"snapshotType,omitempty"`
+}
+
+type FileElem struct {
+	FilePath  string `json:"filePath,omitempty"`
+	UUID      string `json:"uuid,omitempty"`
+	SourceURL string `json:"sourceUrl,omitempty"`
+	FileName  string `json:"fileName,omitempty"`
+	FileSize  int64  `json:"fileSize"`
+	FileType  string `json:"fileType,omitempty"`
+}
+
+type MergeElem struct {
+	Title             string           `json:"title,omitempty"`
+	AbstractList      []string         `json:"abstractList,omitempty"`
+	MultiMessage      []*MsgStruct     `json:"multiMessage,omitempty"`
+	MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
+}
+
+type AtElem struct {
+	Text         string     `json:"text,omitempty"`
+	AtUserList   []string   `json:"atUserList,omitempty"`
+	AtUsersInfo  []*AtInfo  `json:"atUsersInfo,omitempty"`
+	QuoteMessage *MsgStruct `json:"quoteMessage,omitempty"`
+	IsAtSelf     bool       `json:"isAtSelf"`
+}
+
+type FaceElem struct {
+	Index int    `json:"index"`
+	Data  string `json:"data,omitempty"`
+}
+
+type LocationElem struct {
+	Description string  `json:"description,omitempty"`
+	Longitude   float64 `json:"longitude"`
+	Latitude    float64 `json:"latitude"`
+}
+
+type CustomElem struct {
+	Data        string `json:"data,omitempty"`
+	Description string `json:"description,omitempty"`
+	Extension   string `json:"extension,omitempty"`
+}
+
+type QuoteElem struct {
+	Text              string           `json:"text,omitempty"`
+	QuoteMessage      *MsgStruct       `json:"quoteMessage,omitempty"`
+	MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
+}
+
+type NotificationElem struct {
+	Detail      string `json:"detail,omitempty"`
+	DefaultTips string `json:"defaultTips,omitempty"`
+}
+
+type MessageEntityElem struct {
+	Text              string           `json:"text,omitempty"`
+	MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
+}
+
 type MsgStruct struct {
 	ClientMsgID          string                `json:"clientMsgID,omitempty"`
 	ServerMsgID          string                `json:"serverMsgID,omitempty"`
@@ -120,84 +213,19 @@ type MsgStruct struct {
 	OfflinePush          sdkws.OfflinePushInfo `json:"offlinePush,omitempty"`
 	AttachedInfo         string                `json:"attachedInfo,omitempty"`
 	Ex                   string                `json:"ex,omitempty"`
-	PictureElem          struct {
-		SourcePath      string          `json:"sourcePath,omitempty"`
-		SourcePicture   PictureBaseInfo `json:"sourcePicture,omitempty"`
-		BigPicture      PictureBaseInfo `json:"bigPicture,omitempty"`
-		SnapshotPicture PictureBaseInfo `json:"snapshotPicture,omitempty"`
-	} `json:"pictureElem,omitempty"`
-	SoundElem struct {
-		UUID      string `json:"uuid,omitempty"`
-		SoundPath string `json:"soundPath,omitempty"`
-		SourceURL string `json:"sourceUrl,omitempty"`
-		DataSize  int64  `json:"dataSize"`
-		Duration  int64  `json:"duration"`
-		SoundType string `json:"soundType,omitempty"`
-	} `json:"soundElem,omitempty"`
-	VideoElem struct {
-		VideoPath      string `json:"videoPath,omitempty"`
-		VideoUUID      string `json:"videoUUID,omitempty"`
-		VideoURL       string `json:"videoUrl,omitempty"`
-		VideoType      string `json:"videoType,omitempty"`
-		VideoSize      int64  `json:"videoSize"`
-		Duration       int64  `json:"duration"`
-		SnapshotPath   string `json:"snapshotPath,omitempty"`
-		SnapshotUUID   string `json:"snapshotUUID,omitempty"`
-		SnapshotSize   int64  `json:"snapshotSize"`
-		SnapshotURL    string `json:"snapshotUrl,omitempty"`
-		SnapshotWidth  int32  `json:"snapshotWidth"`
-		SnapshotHeight int32  `json:"snapshotHeight"`
-		SnapshotType   string `json:"snapshotType,omitempty"`
-	} `json:"videoElem,omitempty"`
-	FileElem struct {
-		FilePath  string `json:"filePath,omitempty"`
-		UUID      string `json:"uuid,omitempty"`
-		SourceURL string `json:"sourceUrl,omitempty"`
-		FileName  string `json:"fileName,omitempty"`
-		FileSize  int64  `json:"fileSize"`
-		FileType  string `json:"fileType,omitempty"`
-	} `json:"fileElem,omitempty"`
-	MergeElem struct {
-		Title             string           `json:"title,omitempty"`
-		AbstractList      []string         `json:"abstractList,omitempty"`
-		MultiMessage      []*MsgStruct     `json:"multiMessage,omitempty"`
-		MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
-	} `json:"mergeElem,omitempty"`
-	AtElem struct {
-		Text         string     `json:"text,omitempty"`
-		AtUserList   []string   `json:"atUserList,omitempty"`
-		AtUsersInfo  []*AtInfo  `json:"atUsersInfo,omitempty"`
-		QuoteMessage *MsgStruct `json:"quoteMessage,omitempty"`
-		IsAtSelf     bool       `json:"isAtSelf"`
-	} `json:"atElem,omitempty"`
-	FaceElem struct {
-		Index int    `json:"index"`
-		Data  string `json:"data,omitempty"`
-	} `json:"faceElem,omitempty"`
-	LocationElem struct {
-		Description string  `json:"description,omitempty"`
-		Longitude   float64 `json:"longitude"`
-		Latitude    float64 `json:"latitude"`
-	} `json:"locationElem,omitempty"`
-	CustomElem struct {
-		Data        string `json:"data,omitempty"`
-		Description string `json:"description,omitempty"`
-		Extension   string `json:"extension,omitempty"`
-	} `json:"customElem,omitempty"`
-	QuoteElem struct {
-		Text              string           `json:"text,omitempty"`
-		QuoteMessage      *MsgStruct       `json:"quoteMessage,omitempty"`
-		MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
-	} `json:"quoteElem,omitempty"`
-	NotificationElem struct {
-		Detail      string `json:"detail,omitempty"`
-		DefaultTips string `json:"defaultTips,omitempty"`
-	} `json:"notificationElem,omitempty"`
-	MessageEntityElem struct {
-		Text              string           `json:"text,omitempty"`
-		MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
-	} `json:"messageEntityElem,omitempty"`
-	AttachedInfoElem AttachedInfoElem `json:"attachedInfoElem,omitempty"`
+	PictureElem          *PictureElem          `json:"pictureElem,omitempty"`
+	SoundElem            *SoundElem            `json:"soundElem,omitempty"`
+	VideoElem            *VideoElem            `json:"videoElem,omitempty"`
+	FileElem             *FileElem             `json:"fileElem,omitempty"`
+	MergeElem            *MergeElem            `json:"mergeElem,omitempty"`
+	AtElem               *AtElem               `json:"atElem,omitempty"`
+	FaceElem             *FaceElem             `json:"faceElem,omitempty"`
+	LocationElem         *LocationElem         `json:"locationElem,omitempty"`
+	CustomElem           *CustomElem           `json:"customElem,omitempty"`
+	QuoteElem            *QuoteElem            `json:"quoteElem,omitempty"`
+	NotificationElem     *NotificationElem     `json:"notificationElem,omitempty"`
+	MessageEntityElem    *MessageEntityElem    `json:"messageEntityElem,omitempty"`
+	AttachedInfoElem     *AttachedInfoElem     `json:"attachedInfoElem,omitempty"`
 }
 
 type AtInfo struct {
