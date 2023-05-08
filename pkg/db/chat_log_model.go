@@ -19,6 +19,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"open_im_sdk/pkg/constant"
@@ -408,6 +409,25 @@ func (d *DataBase) UpdateMessageTimeAndStatusController(ctx context.Context, msg
 		return d.SuperGroupUpdateMessageTimeAndStatus(ctx, msg)
 	default:
 		return d.UpdateMessageTimeAndStatus(ctx, msg.ClientMsgID, msg.ServerMsgID, msg.SendTime, msg.Status)
+	}
+}
+
+func (d *DataBase) UpdateMessageAttachedInfo(ctx context.Context, msg *sdk_struct.MsgStruct) error {
+	info, err := json.Marshal(msg.AttachedInfoElem)
+	if err != nil {
+		return err
+	}
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	switch msg.SessionType {
+	case constant.SuperGroupChatType:
+		t := d.conn.WithContext(ctx).Table(utils.GetSuperGroupTableName(msg.GroupID)).Where("client_msg_id=?", msg.ClientMsgID).Updates(map[string]any{"attached_info": string(info)})
+		if t.RowsAffected == 0 {
+			return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+		}
+		return utils.Wrap(t.Error, "SuperGroupUpdateMessageTimeAndStatus failed")
+	default:
+		return utils.Wrap(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Where("client_msg_id=?", msg.ClientMsgID).Updates(map[string]any{"attached_info": string(info)}).Error, "")
 	}
 }
 
