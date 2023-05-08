@@ -18,7 +18,9 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"image"
+	"open_im_sdk/internal/file"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -344,8 +346,12 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(ctx context.Context
 	lc.LatestMsgSendTime = sendTime
 	log.Info("", "2 send message come here", *lc)
 	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
-
 }
+
+func (c *Conversation) fileName(ftype string, id string) string {
+	return fmt.Sprintf("%s_%s_%s", c.loginUserID, ftype, id)
+}
+
 func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo) (*sdk_struct.MsgStruct, error) {
 	s.SendID = c.loginUserID
 	s.SenderPlatformID = c.platformID
@@ -451,16 +457,15 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				delFile = append(delFile, sourcePath)
 			}
 			log.Info("", "file", sourcePath, delFile)
-			//sourceUrl, uuid, err := c.UploadImage(sourcePath, callback.OnProgress)
-			//if err != nil {
-			//	c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-			//	return nil, err
-			//}
-			//s.PictureElem.SourcePicture.Url = sourceUrl
-			//s.PictureElem.SourcePicture.UUID = uuid
-			//s.PictureElem.SnapshotPicture.Url = sourceUrl + "?imageView2/2/w/" + constant.ZoomScale + "/h/" + constant.ZoomScale
-			//s.PictureElem.SnapshotPicture.Width = int32(utils.StringToInt(constant.ZoomScale))
-			//s.PictureElem.SnapshotPicture.Height = int32(utils.StringToInt(constant.ZoomScale))
+			res, err := c.file.PutFile(ctx, &file.PutArgs{
+				PutID:    s.ClientMsgID,
+				Filepath: sourcePath,
+				Name:     c.fileName("picture", s.ClientMsgID),
+			}, nil)
+			if err != nil {
+				return nil, err
+			}
+			s.PictureElem.SourcePicture.Url = res.URL
 			s.Content = utils.StructToJsonString(s.PictureElem)
 
 		case constant.Voice:
@@ -473,16 +478,17 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				delFile = append(delFile, sourcePath)
 			}
 			log.Info("", "file", sourcePath, delFile)
-			// todo: upload sound
-			//soundURL, uuid, err := c.UploadSound(sourcePath, callback.OnProgress)
-			//if err != nil {
-			//	c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-			//	return nil, err
-			//}
-			//s.SoundElem.SourceURL = soundURL
-			//s.SoundElem.UUID = uuid
-			s.Content = utils.StructToJsonString(s.SoundElem)
 
+			res, err := c.file.PutFile(ctx, &file.PutArgs{
+				PutID:    s.ClientMsgID,
+				Filepath: sourcePath,
+				Name:     c.fileName("voice", s.ClientMsgID),
+			}, nil)
+			if err != nil {
+				return nil, err
+			}
+			s.SoundElem.SourceURL = res.URL
+			s.Content = utils.StructToJsonString(s.SoundElem)
 		case constant.Video:
 			var videoPath string
 			var snapPath string
@@ -498,24 +504,37 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				delFile = append(delFile, snapPath)
 			}
 			log.ZDebug(ctx, "file", "videoPath", videoPath, "snapPath", snapPath, "delFile", delFile)
-			//snapshotURL, snapshotUUID, videoURL, videoUUID, err := c.UploadVideo(videoPath, snapPath, callback.OnProgress)
-			//if err != nil {
-			//	c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-			//	return nil, err
-			//}
-			//s.VideoElem.VideoURL = videoURL
-			//s.VideoElem.SnapshotUUID = snapshotUUID
-			//s.VideoElem.SnapshotURL = snapshotURL
-			//s.VideoElem.VideoUUID = videoUUID
+
+			snapRes, err := c.file.PutFile(ctx, &file.PutArgs{
+				PutID:    s.ClientMsgID,
+				Filepath: snapPath,
+				Name:     c.fileName("videoSnapshot", s.ClientMsgID),
+			}, nil)
+			if err != nil {
+				return nil, err
+			}
+
+			res, err := c.file.PutFile(ctx, &file.PutArgs{
+				PutID:    s.ClientMsgID,
+				Filepath: videoPath,
+				Name:     c.fileName("video", s.ClientMsgID),
+			}, nil)
+			if err != nil {
+				return nil, err
+			}
+			s.VideoElem.SnapshotURL = snapRes.URL
+			s.SoundElem.SourceURL = res.URL
 			s.Content = utils.StructToJsonString(s.VideoElem)
 		case constant.File:
-			//fileURL, fileUUID, err := c.UploadFile(s.FileElem.FilePath, callback.OnProgress)
-			//if err != nil {
-			//	c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-			//	return nil, err
-			//}
-			//s.FileElem.SourceURL = fileURL
-			//s.FileElem.UUID = fileUUID
+			res, err := c.file.PutFile(ctx, &file.PutArgs{
+				PutID:    s.ClientMsgID,
+				Filepath: s.FileElem.FilePath,
+				Name:     c.fileName("file", s.ClientMsgID),
+			}, nil)
+			if err != nil {
+				return nil, err
+			}
+			s.SoundElem.SourceURL = res.URL
 			s.Content = utils.StructToJsonString(s.FileElem)
 		case constant.Text:
 		case constant.AtText:

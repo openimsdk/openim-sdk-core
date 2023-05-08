@@ -22,3 +22,17 @@ type PutFileCallback interface {
 	PutProgress(save int64, current, total int64)
 	PutComplete(total int64, putType int)
 }
+
+type emptyCallback struct{}
+
+func (e emptyCallback) Open(size int64) {}
+
+func (e emptyCallback) HashProgress(current, total int64) {}
+
+func (e emptyCallback) HashComplete(hash string, total int64) {}
+
+func (e emptyCallback) PutStart(current, total int64) {}
+
+func (e emptyCallback) PutProgress(save int64, current, total int64) {}
+
+func (e emptyCallback) PutComplete(total int64, putType int) {}

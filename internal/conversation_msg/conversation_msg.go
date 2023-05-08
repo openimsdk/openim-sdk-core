@@ -21,6 +21,7 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/internal/business"
 	"open_im_sdk/internal/cache"
+	"open_im_sdk/internal/file"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/group"
@@ -64,6 +65,7 @@ type Conversation struct {
 	friend      *friend.Friend
 	group       *group.Group
 	user        *user.User
+	file        *file.File
 	signaling   *signaling.LiveSignaling
 	workMoments *workMoments.WorkMoments
 	business    *business.Business

@@ -44,13 +44,13 @@ type PutResp struct {
 }
 
 func NewFile(dataBase db_interface.DataBase, loginUserID string) *File {
-	return &File{loginUserID: loginUserID, lock: new(sync.Mutex), updating: make(map[string]func())}
+	return &File{loginUserID: loginUserID, lock: new(sync.Mutex), uploading: make(map[string]func())}
 }
 
 type File struct {
 	loginUserID string
 	lock        sync.Locker
-	updating    map[string]func()
+	uploading   map[string]func()
 }
 
 func (f *File) apiApplyPut(ctx context.Context, req *third.ApplyPutReq) (*third.ApplyPutResp, error) {
@@ -205,20 +205,23 @@ func (f *File) PutFile(ctx context.Context, req *PutArgs, cb PutFileCallback) (*
 	if req.PutID == "" {
 		return nil, fmt.Errorf("put id is empty")
 	}
+	if cb == nil {
+		cb = emptyCallback{}
+	}
 	f.lock.Lock()
-	if _, ok := f.updating[req.PutID]; ok {
+	if _, ok := f.uploading[req.PutID]; ok {
 		f.lock.Unlock()
 		return nil, fmt.Errorf("put id is uploading")
 	}
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	f.updating[req.PutID] = cancel
+	f.uploading[req.PutID] = cancel
 	f.lock.Unlock()
 	go func(putID string) {
 		if done := ctx.Done(); done != nil {
 			<-done
 			f.lock.Lock()
-			delete(f.updating, putID)
+			delete(f.uploading, putID)
 			f.lock.Unlock()
 		}
 	}(req.PutID)
@@ -228,9 +231,9 @@ func (f *File) PutFile(ctx context.Context, req *PutArgs, cb PutFileCallback) (*
 func (f *File) Cancel(ctx context.Context, putID string) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
-	cancel, ok := f.updating[putID]
+	cancel, ok := f.uploading[putID]
 	if ok {
-		delete(f.updating, putID)
+		delete(f.uploading, putID)
 		cancel()
 	}
 }
