@@ -24,6 +24,7 @@ import (
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/group"
+	"open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/signaling"
 	"open_im_sdk/internal/user"
 	workMoments "open_im_sdk/internal/work_moments"
@@ -50,6 +51,7 @@ import (
 var SearchContentType = []int{constant.Text, constant.AtText, constant.File}
 
 type Conversation struct {
+	*interaction.LongConnMgr
 	conversationSyncer   *syncer.Syncer[*model_struct.LocalConversation, string]
 	db                   db_interface.DataBase
 	ConversationListener open_im_sdk_callback.OnConversationListener
@@ -101,7 +103,7 @@ func (c *Conversation) SetBatchMsgListener(batchMsgListener open_im_sdk_callback
 	c.batchMsgListener = batchMsgListener
 }
 
-func NewConversation(ctx context.Context, db db_interface.DataBase,
+func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, db db_interface.DataBase,
 	ch chan common.Cmd2Value,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	conversationListener open_im_sdk_callback.OnConversationListener,
@@ -109,6 +111,7 @@ func NewConversation(ctx context.Context, db db_interface.DataBase,
 	workMoments *workMoments.WorkMoments, business *business.Business, cache *cache.Cache, full *full.Full, id2MinSeq map[string]int64) *Conversation {
 	info := ccontext.Info(ctx)
 	n := &Conversation{db: db,
+		LongConnMgr:          longConnMgr,
 		recvCH:               ch,
 		loginUserID:          info.UserID(),
 		platformID:           info.Platform(),

@@ -101,23 +101,22 @@ func (c *Conversation) messageBlocksBetweenContinuityCheck(lastMinSeq, maxSeq in
 func (c *Conversation) messageBlocksEndContinuityCheck(ctx context.Context, minSeq int64, sourceID string, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
 	var minSeqServer int64
 	var maxSeqServer int64
-	resp, err := c.SendReqWaitResp(context.Background(), &server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.WSGetNewestSeq, 1, 1, c.loginUserID)
+	var wsSeqResp sdkws.GetMaxSeqResp
+	err := c.SendReqWaitResp(ctx, &server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{sourceID}}, constant.GetNewestSeq, &wsSeqResp)
 	if err != nil {
 		// log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, 1, c.loginUserID)
 	} else {
-		var wsSeqResp sdkws.GetMaxAndMinSeqResp
-		err = proto.Unmarshal(resp.Data, &wsSeqResp)
-		if err != nil {
-			// log.Error(operationID, "Unmarshal failed", err.Error())
-		} else {
-			if value, ok := wsSeqResp.GroupMaxAndMinSeq[sourceID]; ok {
-				minSeqServer = value.MinSeq
-				if value.MinSeq == 0 {
-					minSeqServer = 1
-				}
-				maxSeqServer = value.MaxSeq
+
+		if value, ok := wsSeqResp.MinSeqs[sourceID]; ok {
+			minSeqServer = value
+			if value == 0 {
+				minSeqServer = 1
 			}
 		}
+		if value, ok := wsSeqResp.MinSeqs[sourceID]; ok {
+			maxSeqServer = value
+		}
+
 	}
 	// log.Error(operationID, "from server min seq is", minSeqServer, maxSeqServer)
 	//seq, err := c.db.SuperGroupGetNormalMinSeq(sourceID)
@@ -200,32 +199,27 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, s
 		// log.Debug(operationID, "do not pull message")
 		return
 	}
+	var pullMsgResp sdkws.PullMessageBySeqsResp
 	var pullMsgReq sdkws.PullMessageBySeqsReq
 	pullMsgReq.UserID = c.loginUserID
-	pullMsgReq.GroupSeqs = make(map[string]*sdkws.Seqs, 0)
-	pullMsgReq.GroupSeqs[sourceID] = &sdkws.Seqs{Seqs: newSeqList}
+	//pullMsgReq.GroupSeqs = make(map[string]*sdkws.Seqs, 0)
+	//pullMsgReq.GroupSeqs[sourceID] = &sdkws.Seqs{Seqs: newSeqList}
 	operationID := mcontext.GetOperationID(ctx)
 	log.Debug(operationID, "read diffusion group pull message, req: ", pullMsgReq)
-	resp, err := c.SendReqWaitResp(ctx, &pullMsgReq, constant.WSPullMsgBySeqList, 2, 1, c.loginUserID)
+	err = c.SendReqWaitResp(ctx, &pullMsgReq, constant.PullMsgBySeqList, &pullMsgResp)
 	if err != nil {
 		errHandle(newSeqList, list, err, messageListCallback)
-		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSPullMsgBySeqList, 1, 2, c.loginUserID)
+		log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.PullMsgBySeqList, 1, 2, c.loginUserID)
 	} else {
-		var pullMsgResp server_api_params.PullMessageBySeqListResp
-		err = proto.Unmarshal(resp.Data, &pullMsgResp)
-		if err != nil {
-			errHandle(newSeqList, list, err, messageListCallback)
-			log.Error(operationID, "pullMsgResp Unmarshal failed ", err.Error())
+
+		log.Debug(operationID, "syncMsgFromServerSplit pull msg ", pullMsgReq.String(), pullMsgResp.String())
+		if v, ok := pullMsgResp.Msgs[sourceID]; ok {
+			c.pullMessageIntoTable(ctx, v.Msgs, operationID)
+		}
+		if notStartTime {
+			*list, err = c.db.GetMessageListNoTimeController(ctx, sourceID, sessionType, count, isReverse)
 		} else {
-			log.Debug(operationID, "syncMsgFromServerSplit pull msg ", pullMsgReq.String(), pullMsgResp.String())
-			if v, ok := pullMsgResp.GroupMsgDataList[sourceID]; ok {
-				c.pullMessageIntoTable(ctx, v.MsgDataList, operationID)
-			}
-			if notStartTime {
-				*list, err = c.db.GetMessageListNoTimeController(ctx, sourceID, sessionType, count, isReverse)
-			} else {
-				*list, err = c.db.GetMessageListController(ctx, sourceID, sessionType, count, startTime, isReverse)
-			}
+			*list, err = c.db.GetMessageListController(ctx, sourceID, sessionType, count, startTime, isReverse)
 		}
 
 	}
@@ -247,7 +241,7 @@ func errHandle(seqList []int64, list *[]*model_struct.LocalChatLog, err error, m
 	}
 	*list = result
 }
-func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData []*server_api_params.MsgData, operationID string) {
+func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData []*sdkws.MsgData, operationID string) {
 
 	var insertMsg, specialUpdateMsg []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
