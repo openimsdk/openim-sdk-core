@@ -27,6 +27,7 @@ import (
 )
 
 const (
+	connectPullNums = 1
 	defaultPullNums = 10
 )
 
@@ -130,13 +131,13 @@ func (m *MsgSyncer) handlePushMsgAndEvent(cmd common.Cmd2Value) {
 	case constant.CmdConnSuccesss:
 		m.doConnected()
 	case constant.CmdMaxSeq:
-		m.compareSeqsAndBatchSync(cmd.Value.(*sdk_struct.CmdMaxSeqToMsgSync).ConversationMaxSeqOnSvr)
+		m.compareSeqsAndBatchSync(cmd.Value.(*sdk_struct.CmdMaxSeqToMsgSync).ConversationMaxSeqOnSvr, defaultPullNums)
 	case constant.CmdPushMsg:
 		m.doPushMsg(cmd.Ctx, cmd.Value.(*sdkws.PushMessages))
 	}
 }
 
-func (m *MsgSyncer) compareSeqsAndBatchSync(maxSeqToSync map[string]int64) {
+func (m *MsgSyncer) compareSeqsAndBatchSync(maxSeqToSync map[string]int64, pullNums int64) {
 	needSyncSeqMap := make(map[string][2]int64)
 	for conversationID, maxSeq := range maxSeqToSync {
 		if syncedMaxSeq, ok := m.syncedMaxSeqs[conversationID]; ok {
@@ -147,17 +148,17 @@ func (m *MsgSyncer) compareSeqsAndBatchSync(maxSeqToSync map[string]int64) {
 			needSyncSeqMap[conversationID] = [2]int64{0, maxSeq}
 		}
 	}
-	_ = m.syncAndTriggerMsgs(m.ctx, needSyncSeqMap)
+	_ = m.syncAndTriggerMsgs(m.ctx, needSyncSeqMap, pullNums)
 }
 
 func (m *MsgSyncer) compareSeqsAndSync(maxSeqToSync map[string]int64) {
 	for conversationID, maxSeq := range maxSeqToSync {
 		if syncedMaxSeq, ok := m.syncedMaxSeqs[conversationID]; ok {
 			if maxSeq > syncedMaxSeq {
-				_ = m.syncAndTriggerMsgs(m.ctx, map[string][2]int64{conversationID: [2]int64{syncedMaxSeq, maxSeq}})
+				_ = m.syncAndTriggerMsgs(m.ctx, map[string][2]int64{conversationID: [2]int64{syncedMaxSeq, maxSeq}}, defaultPullNums)
 			}
 		} else {
-			_ = m.syncAndTriggerMsgs(m.ctx, map[string][2]int64{conversationID: [2]int64{syncedMaxSeq, maxSeq}})
+			_ = m.syncAndTriggerMsgs(m.ctx, map[string][2]int64{conversationID: [2]int64{syncedMaxSeq, maxSeq}}, defaultPullNums)
 		}
 	}
 }
@@ -174,20 +175,20 @@ func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pullMsgs map[string]
 	for conversationID, msgs := range pullMsgs {
 		for _, msg := range msgs.Msgs {
 			if msg.Seq == 0 {
-				_ = triggerFunc(m.ctx, map[string]*sdkws.PullMsgs{conversationID: &sdkws.PullMsgs{Msgs: []*sdkws.MsgData{msg}}})
+				_ = triggerFunc(ctx, map[string]*sdkws.PullMsgs{conversationID: &sdkws.PullMsgs{Msgs: []*sdkws.MsgData{msg}}})
 				continue
 			}
 			lastSeq = msg.Seq
 			storageMsgs = append(storageMsgs, msg)
 		}
-		if lastSeq == m.syncedMaxSeqs[conversationID]+int64(len(storageMsgs)) {
-			_ = triggerFunc(m.ctx, map[string]*sdkws.PullMsgs{conversationID: &sdkws.PullMsgs{Msgs: storageMsgs}})
+		if lastSeq == m.syncedMaxSeqs[conversationID]+int64(len(storageMsgs)) && lastSeq != 0 {
+			_ = triggerFunc(ctx, map[string]*sdkws.PullMsgs{conversationID: &sdkws.PullMsgs{Msgs: storageMsgs}})
 			m.syncedMaxSeqs[conversationID] = lastSeq
 		} else {
 			needSyncSeqMap[conversationID] = [2]int64{m.syncedMaxSeqs[conversationID], lastSeq}
 		}
 	}
-	m.syncAndTriggerMsgs(ctx, needSyncSeqMap)
+	m.syncAndTriggerMsgs(ctx, needSyncSeqMap, defaultPullNums)
 }
 
 // Called after successful reconnection to synchronize the latest message
@@ -198,14 +199,14 @@ func (m *MsgSyncer) doConnected() {
 		log.ZError(m.ctx, "get max seq error", err)
 		return
 	}
-	m.compareSeqsAndSync(resp.MaxSeqs)
+	m.compareSeqsAndBatchSync(resp.MaxSeqs, connectPullNums)
 	common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.MsgSyncEnd}, m.conversationCh)
 }
 
 // Fragment synchronization message, seq refresh after successful trigger
-func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2]int64) error {
+func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2]int64, syncMsgNum int64) error {
 	if len(seqMap) > 0 {
-		resp, err := m.pullMsgBySeqRange(ctx, seqMap)
+		resp, err := m.pullMsgBySeqRange(ctx, seqMap, syncMsgNum)
 		if err != nil {
 			log.ZError(ctx, "syncMsgFromSvr err", err, "seqMap", seqMap)
 			return err
@@ -235,7 +236,7 @@ func (m *MsgSyncer) splitSeqs(split int, seqsNeedSync []int64) (splitSeqs [][]in
 	return
 }
 
-func (m *MsgSyncer) pullMsgBySeqRange(ctx context.Context, seqMap map[string][2]int64) (resp *sdkws.PullMessageBySeqsResp, err error) {
+func (m *MsgSyncer) pullMsgBySeqRange(ctx context.Context, seqMap map[string][2]int64, syncMsgNum int64) (resp *sdkws.PullMessageBySeqsResp, err error) {
 	var req sdkws.PullMessageBySeqsReq
 	for conversationID, seqs := range seqMap {
 		var pullNums int64 = defaultPullNums
@@ -246,7 +247,7 @@ func (m *MsgSyncer) pullMsgBySeqRange(ctx context.Context, seqMap map[string][2]
 			ConversationID: conversationID,
 			Begin:          seqs[0],
 			End:            seqs[1],
-			Num:            pullNums,
+			Num:            syncMsgNum,
 		})
 	}
 	resp = &sdkws.PullMessageBySeqsResp{}
