@@ -165,7 +165,7 @@ func (m *MsgSyncer) compareSeqsAndSync(maxSeqToSync map[string]int64) {
 
 func (m *MsgSyncer) doPushMsg(ctx context.Context, push *sdkws.PushMessages) {
 	m.pushTriggerAndSync(ctx, push.Msgs, m.triggerConversation)
-	m.pushTriggerAndSync(ctx, push.NotificationMsgs, m.triggerConversation)
+	m.pushTriggerAndSync(ctx, push.NotificationMsgs, m.triggerNotification)
 }
 
 func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pullMsgs map[string]*sdkws.PullMsgs, triggerFunc func(ctx context.Context, msgs map[string]*sdkws.PullMsgs) error) {
