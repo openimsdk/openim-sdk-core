@@ -47,9 +47,11 @@ func (w *JSWebSocket) WriteMessage(messageType int, message []byte) error {
 	w.setSendConn(w.conn)
 	return w.conn.Write(context.Background(), websocket.MessageType(messageType), message)
 }
+
 func (w *JSWebSocket) setSendConn(sendConn *websocket.Conn) {
 	w.sendConn = sendConn
 }
+
 func (w *JSWebSocket) ReadMessage() (int, []byte, error) {
 	messageType, b, err := w.conn.Read(context.Background())
 	return int(messageType), b, err

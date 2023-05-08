@@ -129,7 +129,7 @@ func (c *Conversation) SyncConversations(ctx context.Context) error {
 	}
 	log.ZDebug(ctx, "get server cost time", "cost time", time.Since(ccTime), "conversation on server", conversationsOnServer)
 
-	conversationsOnLocal, err := c.db.GetAllConversationListToSync(ctx)
+	conversationsOnLocal, err := c.db.GetAllConversations(ctx)
 	if err != nil {
 		return err
 	}
@@ -146,7 +146,7 @@ func (c *Conversation) SyncConversations(ctx context.Context) error {
 	}, true); err != nil {
 		return err
 	}
-	conversationsOnLocal, err = c.db.GetAllConversationListToSync(ctx)
+	conversationsOnLocal, err = c.db.GetAllConversations(ctx)
 	if err != nil {
 		return err
 	}

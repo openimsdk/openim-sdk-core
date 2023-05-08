@@ -17,9 +17,8 @@
 
 package indexdb
 
-import "context"
-
 import (
+	"context"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/wasm/indexdb/temp_struct"
@@ -92,7 +91,7 @@ func (i *LocalConversations) GetHiddenConversationList(ctx context.Context) (res
 		}
 	}
 }
-func (i *LocalConversations) GetAllConversationListToSync(ctx context.Context) (result []*model_struct.LocalConversation, err error) {
+func (i *LocalConversations) GetAllConversations(ctx context.Context) (result []*model_struct.LocalConversation, err error) {
 	cList, err := Exec()
 	if err != nil {
 		return nil, err

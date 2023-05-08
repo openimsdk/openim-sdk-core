@@ -35,12 +35,12 @@ func TriggerCmdJoinedSuperGroup(cmd sdk_struct.CmdJoinedSuperGroup, joinedSuperG
 	return sendCmd(joinedSuperGroupCh, c2v, 100)
 }
 
-func TriggerCmdNewMsgCome(msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
+func TriggerCmdNewMsgCome(ctx context.Context, msg sdk_struct.CmdNewMsgComeToConversation, conversationCh chan Cmd2Value) error {
 	if conversationCh == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
 
-	c2v := Cmd2Value{Cmd: constant.CmdNewMsgCome, Value: msg}
+	c2v := Cmd2Value{Cmd: constant.CmdNewMsgCome, Value: msg, Ctx: ctx}
 	return sendCmd(conversationCh, c2v, 100)
 }
 

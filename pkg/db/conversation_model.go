@@ -60,15 +60,10 @@ func (d *DataBase) GetHiddenConversationList(ctx context.Context) ([]*model_stru
 	return transfer, err
 }
 
-func (d *DataBase) GetAllConversationListToSync(ctx context.Context) ([]*model_struct.LocalConversation, error) {
-	var conversationList []model_struct.LocalConversation
-	err := utils.Wrap(d.conn.WithContext(ctx).Find(&conversationList).Error, "GetAllConversationListToSync failed")
-	var transfer []*model_struct.LocalConversation
-	for _, v := range conversationList {
-		v1 := v
-		transfer = append(transfer, &v1)
-	}
-	return transfer, err
+func (d *DataBase) GetAllConversations(ctx context.Context) ([]*model_struct.LocalConversation, error) {
+	var conversationList []*model_struct.LocalConversation
+	err := utils.Wrap(d.conn.WithContext(ctx).Find(&conversationList).Error, "GetAllConversations failed")
+	return conversationList, err
 }
 
 func (d *DataBase) GetConversationListSplitDB(ctx context.Context, offset, count int) ([]*model_struct.LocalConversation, error) {
