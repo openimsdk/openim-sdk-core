@@ -135,7 +135,7 @@ const (
 	BusinessNotification      = 2001
 	BusinessNotificationEnd   = 2099
 
-	NotificationEnd = 2200
+	NotificationEnd = 5000
 
 	////////////////////////////////////////
 

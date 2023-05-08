@@ -33,14 +33,14 @@ import (
 	"strings"
 )
 
-func (c *Conversation) NotificationCmd(c2v common.Cmd2Value) {
+func (c *Conversation) Work(c2v common.Cmd2Value) {
 	log.ZDebug(c2v.Ctx, "NotificationCmd start", "cmd", c2v.Cmd, "value", c2v.Value)
 	defer log.ZDebug(c2v.Ctx, "NotificationCmd end", "cmd", c2v.Cmd, "value", c2v.Value)
 	switch c2v.Cmd {
 	case constant.CmdDeleteConversation:
 		c.doDeleteConversation(c2v)
 	case constant.CmdNewMsgCome:
-		c.doNotificationNew(c2v)
+		c.doMsgNew(c2v)
 	case constant.CmdSuperGroupMsgCome:
 		c.doSuperGroupMsgNew(c2v)
 	case constant.CmdUpdateConversation:
@@ -49,6 +49,8 @@ func (c *Conversation) NotificationCmd(c2v common.Cmd2Value) {
 		c.doUpdateMessage(c2v)
 	case constant.CmSyncReactionExtensions:
 		c.doSyncReactionExtensions(c2v)
+	case constant.CmdNotification:
+		c.doNotificationNew(c2v)
 	}
 }
 
@@ -585,68 +587,77 @@ func (c *Conversation) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 
 func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 	ctx := c2v.Ctx
-	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).MsgList
+	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).Msgs
 	syncFlag := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).SyncFlag
-	if c.msgListener == nil || c.ConversationListener == nil {
-		for _, v := range allMsg {
-			if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
-				c.signaling.DoNotification(ctx, v, c.GetCh())
-			}
-		}
-		return
-	}
+	//if c.msgListener == nil || c.ConversationListener == nil {
+	//	for _, v := range allMsg {
+	//		if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
+	//			c.signaling.DoNotification(ctx, v, c.GetCh())
+	//		}
+	//	}
+	//	return
+	//}
 	switch syncFlag {
 	case constant.MsgSyncBegin:
 		c.ConversationListener.OnSyncServerStart()
+		err := c.SyncConversations(ctx)
+		if err != nil {
+			log.ZError(ctx, "SyncConversations err", err)
+		}
 	case constant.MsgSyncFailed:
 		c.ConversationListener.OnSyncServerFailed()
 	case constant.MsgSyncEnd:
 		defer c.ConversationListener.OnSyncServerFinish()
 	}
-	for _, v := range allMsg {
-		switch {
-		case v.ContentType == constant.ConversationChangeNotification || v.ContentType == constant.ConversationPrivateChatNotification:
-			c.DoNotification(ctx, v)
-		case v.ContentType == constant.MsgDeleteNotification:
-			c.full.SuperGroup.DoNotification(ctx, v, c.GetCh())
-		case v.ContentType == constant.SuperGroupUpdateNotification:
-			c.full.SuperGroup.DoNotification(ctx, v, c.GetCh())
-			continue
-		case v.ContentType == constant.ConversationUnreadNotification:
-			var unreadArgs sdkws.ConversationUpdateTips
-			_ = json.Unmarshal(v.Content, &unreadArgs)
-			for _, v := range unreadArgs.ConversationIDList {
-				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: v, Action: constant.UnreadCountSetZero}})
-				c.db.DeleteConversationUnreadMessageList(ctx, v, unreadArgs.UpdateUnreadCountTime)
-			}
-			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: unreadArgs.ConversationIDList}})
-			continue
-		case v.ContentType == constant.BusinessNotification:
-			c.business.DoNotification(ctx, string(v.Content))
-			continue
-		}
+	for _, msgs := range allMsg {
 
-		switch v.SessionType {
-		case constant.SingleChatType:
-			if v.ContentType > constant.FriendNotificationBegin && v.ContentType < constant.FriendNotificationEnd {
-				c.friend.DoNotification(ctx, v)
-			} else if v.ContentType > constant.UserNotificationBegin && v.ContentType < constant.UserNotificationEnd {
-				c.user.DoNotification(ctx, v)
-			} else if utils2.Contain(v.ContentType, constant.GroupApplicationRejectedNotification, constant.GroupApplicationAcceptedNotification, constant.JoinGroupApplicationNotification) {
-				c.group.DoNotification(ctx, v)
-			} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
-				c.signaling.DoNotification(ctx, v, c.GetCh())
+		for _, v := range msgs.Msgs {
+			switch {
+			case v.ContentType == constant.ConversationChangeNotification || v.ContentType == constant.ConversationPrivateChatNotification:
+				c.DoNotification(ctx, v)
+			case v.ContentType == constant.MsgDeleteNotification:
+
+				c.full.SuperGroup.DoNotification(ctx, v, c.GetCh())
+			case v.ContentType == constant.SuperGroupUpdateNotification:
+				c.full.SuperGroup.DoNotification(ctx, v, c.GetCh())
 				continue
-			} else if v.ContentType == constant.WorkMomentNotification {
-				c.workMoments.DoNotification(ctx, string(v.Content))
+			case v.ContentType == constant.ConversationUnreadNotification:
+				var unreadArgs sdkws.ConversationUpdateTips
+				_ = json.Unmarshal(v.Content, &unreadArgs)
+				for _, v := range unreadArgs.ConversationIDList {
+					c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: v, Action: constant.UnreadCountSetZero}})
+					c.db.DeleteConversationUnreadMessageList(ctx, v, unreadArgs.UpdateUnreadCountTime)
+				}
+				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: unreadArgs.ConversationIDList}})
+				continue
+			case v.ContentType == constant.BusinessNotification:
+				c.business.DoNotification(ctx, string(v.Content))
+				continue
 			}
-		case constant.GroupChatType, constant.SuperGroupChatType:
-			if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
-				c.group.DoNotification(ctx, v)
-			} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
-				c.signaling.DoNotification(ctx, v, c.GetCh())
-				continue
+
+			switch v.SessionType {
+			case constant.SingleChatType:
+				if v.ContentType > constant.FriendNotificationBegin && v.ContentType < constant.FriendNotificationEnd {
+					c.friend.DoNotification(ctx, v)
+				} else if v.ContentType > constant.UserNotificationBegin && v.ContentType < constant.UserNotificationEnd {
+					c.user.DoNotification(ctx, v)
+				} else if utils2.Contain(v.ContentType, constant.GroupApplicationRejectedNotification, constant.GroupApplicationAcceptedNotification, constant.JoinGroupApplicationNotification) {
+					c.group.DoNotification(ctx, v)
+				} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
+					c.signaling.DoNotification(ctx, v, c.GetCh())
+					continue
+				} else if v.ContentType == constant.WorkMomentNotification {
+					c.workMoments.DoNotification(ctx, string(v.Content))
+				}
+			case constant.GroupChatType, constant.SuperGroupChatType:
+				if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
+					c.group.DoNotification(ctx, v)
+				} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
+					c.signaling.DoNotification(ctx, v, c.GetCh())
+					continue
+				}
 			}
 		}
 	}
+
 }

@@ -319,7 +319,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	//default:
 	//	objStorage = comm2.NewCOS(u.postApi)
 	//}
-	u.conversation = conv.NewConversation(ctx, u.db, u.conversationCh,
+	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
 		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq)
 	//var wg sync.WaitGroup
 	//wg.Add(1)
