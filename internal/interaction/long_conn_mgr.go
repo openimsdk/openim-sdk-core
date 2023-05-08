@@ -291,7 +291,7 @@ func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error)
 	} else {
 		select {
 		case resp := <-tempChan:
-			return &resp, nil
+			return resp, nil
 		case <-time.After(time.Second * 3):
 			return nil, sdkerrs.ErrNetworkTimeOut.WithDetail(err.Error()).Wrap()
 		}
@@ -299,7 +299,7 @@ func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error)
 	}
 }
 
-func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan GeneralWsResp, error) {
+func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan *GeneralWsResp, error) {
 	msgIncr, tempChan := c.Syncer.AddCh(msg.SendID)
 	msg.MsgIncr = msgIncr
 	for i := 0; i < 3; i++ {
