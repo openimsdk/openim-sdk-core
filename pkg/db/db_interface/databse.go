@@ -69,6 +69,7 @@ type DataBase interface {
 	UpdateMessageStatusBySourceIDController(ctx context.Context, sourceID string, status, sessionType int32) error
 	UpdateMessageTimeAndStatus(ctx context.Context, clientMsgID string, serverMsgID string, sendTime int64, status int32) error
 	UpdateMessageTimeAndStatusController(ctx context.Context, msg *sdk_struct.MsgStruct) error
+	UpdateMessageAttachedInfo(ctx context.Context, msg *sdk_struct.MsgStruct) error
 	GetMessageList(ctx context.Context, sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error)
 	GetMessageListController(ctx context.Context, sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error)
 	GetMessageListNoTime(ctx context.Context, sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error)

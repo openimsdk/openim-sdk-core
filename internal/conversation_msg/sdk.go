@@ -462,7 +462,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				PutID:    s.ClientMsgID,
 				Filepath: sourcePath,
 				Name:     c.fileName("picture", s.ClientMsgID),
-			}, NewFileCallback(callback.OnProgress, s))
+			}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
 			if err != nil {
 				return nil, err
 			}
@@ -484,7 +484,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				PutID:    s.ClientMsgID,
 				Filepath: sourcePath,
 				Name:     c.fileName("voice", s.ClientMsgID),
-			}, nil)
+			}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
 			if err != nil {
 				return nil, err
 			}
@@ -510,7 +510,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				PutID:    s.ClientMsgID,
 				Filepath: snapPath,
 				Name:     c.fileName("videoSnapshot", s.ClientMsgID),
-			}, nil)
+			}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
 			if err != nil {
 				return nil, err
 			}
@@ -519,7 +519,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				PutID:    s.ClientMsgID,
 				Filepath: videoPath,
 				Name:     c.fileName("video", s.ClientMsgID),
-			}, nil)
+			}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
 			if err != nil {
 				return nil, err
 			}
@@ -531,7 +531,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				PutID:    s.ClientMsgID,
 				Filepath: s.FileElem.FilePath,
 				Name:     c.fileName("file", s.ClientMsgID),
-			}, nil)
+			}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
 			if err != nil {
 				return nil, err
 			}

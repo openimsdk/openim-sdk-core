@@ -1,20 +1,25 @@
 package conversation_msg
 
 import (
+	"context"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"open_im_sdk/internal/file"
+	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/sdk_struct"
 )
 
-func NewFileCallback(progress func(progress int), p *sdk_struct.MsgStruct) file.PutFileCallback {
-	if p.AttachedInfoElem.Progress == nil {
-		p.AttachedInfoElem.Progress = &sdk_struct.UploadProgress{}
+func NewFileCallback(ctx context.Context, progress func(progress int), msg *sdk_struct.MsgStruct, db db_interface.DataBase) file.PutFileCallback {
+	if msg.AttachedInfoElem.Progress == nil {
+		msg.AttachedInfoElem.Progress = &sdk_struct.UploadProgress{}
 	}
-	return &FileCallback{progress: progress, up: p.AttachedInfoElem.Progress}
+	return &FileCallback{progress: progress, msg: msg, db: db}
 }
 
 type FileCallback struct {
+	ctx      context.Context
+	db       db_interface.DataBase
+	msg      *sdk_struct.MsgStruct
 	progress func(progress int)
-	up       *sdk_struct.UploadProgress
 }
 
 func (c *FileCallback) Open(size int64) {}
@@ -26,9 +31,9 @@ func (c *FileCallback) HashComplete(hash string, total int64) {}
 func (c *FileCallback) PutStart(current, total int64) {}
 
 func (c *FileCallback) PutProgress(save int64, current, total int64) {
-	c.up.Save = save
-	c.up.Total = total
-	c.up.Current = current
+	if err := c.db.UpdateMessageAttachedInfo(c.ctx, c.msg); err != nil {
+		log.ZError(c.ctx, "update message attached info failed", err)
+	}
 	c.progress(int(float64(current) / float64(total)))
 }
 
