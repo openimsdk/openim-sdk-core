@@ -616,10 +616,10 @@ func (d *DataBase) GetLostMsgSeqList(ctx context.Context, minSeqInSvr int64) ([]
 	return utils.DifferenceSubset(lostSeqList, utils.Intersect(lostSeqList, abnormalSeqList)), nil
 
 }
-func (d *DataBase) GetSuperGroupNormalMsgSeq(ctx context.Context, groupID string) (int64, error) {
+func (d *DataBase) GetConversationNormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
 	var seq int64
-	err := d.conn.WithContext(ctx).Table(utils.GetSuperGroupTableName(groupID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
-	return seq, utils.Wrap(err, "GetSuperGroupNormalMsgSeq")
+	err := d.conn.WithContext(ctx).Table(utils.GetSuperGroupTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
+	return seq, utils.Wrap(err, "GetConversationNormalMsgSeq")
 }
 
 func (d *DataBase) GetTestMessage(ctx context.Context, seq uint32) (*model_struct.LocalChatLog, error) {

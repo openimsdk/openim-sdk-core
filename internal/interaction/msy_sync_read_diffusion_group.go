@@ -31,7 +31,7 @@ import (
 
 type ReadDiffusionGroupMsgSync struct {
 	db_interface.DataBase
-	longConnMgr *LongConnMgr
+	longConnMgr              *LongConnMgr
 	loginUserID              string
 	conversationCh           chan common.Cmd2Value
 	superGroupMtx            sync.Mutex
@@ -95,7 +95,7 @@ func (m *ReadDiffusionGroupMsgSync) compareSeq(operationID string) {
 
 	defer m.superGroupMtx.Unlock()
 	for _, v := range m.SuperGroupIDList {
-		n, err := m.GetSuperGroupNormalMsgSeq(nil, v)
+		n, err := m.GetConversationNormalMsgSeq(nil, v)
 		if err != nil {
 			// log.Error(operationID, "GetSuperGroupNormalMsgSeq failed ", err.Error(), v)
 		}

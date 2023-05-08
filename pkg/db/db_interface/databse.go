@@ -82,7 +82,7 @@ type DataBase interface {
 	GetMultipleMessageController(ctx context.Context, msgIDList []string, groupID string, sessionType int32) (result []*model_struct.LocalChatLog, err error)
 	GetNormalMsgSeq(ctx context.Context) (int64, error)
 	GetLostMsgSeqList(ctx context.Context, minSeqInSvr int64) ([]int64, error)
-	GetSuperGroupNormalMsgSeq(ctx context.Context, groupID string) (int64, error)
+	GetConversationNormalMsgSeq(ctx context.Context, conversationID string) (int64, error)
 	GetTestMessage(ctx context.Context, seq uint32) (*model_struct.LocalChatLog, error)
 	UpdateMsgSenderNickname(ctx context.Context, sendID, nickname string, sType int) error
 	UpdateMsgSenderFaceURL(ctx context.Context, sendID, faceURL string, sType int) error
@@ -100,8 +100,9 @@ type DataBase interface {
 	GetConversationByUserID(ctx context.Context, userID string) (*model_struct.LocalConversation, error)
 	GetAllConversationListDB(ctx context.Context) ([]*model_struct.LocalConversation, error)
 	GetHiddenConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error)
-	GetAllConversationListToSync(ctx context.Context) ([]*model_struct.LocalConversation, error)
+	GetAllConversations(ctx context.Context) ([]*model_struct.LocalConversation, error)
 	GetConversationListSplitDB(ctx context.Context, offset, count int) ([]*model_struct.LocalConversation, error)
+	GetConversationIDs(ctx context.Context) ([]string, error)
 	BatchInsertConversationList(ctx context.Context, conversationList []*model_struct.LocalConversation) error
 	InsertConversation(ctx context.Context, conversationList *model_struct.LocalConversation) error
 	DeleteConversation(ctx context.Context, conversationID string) error

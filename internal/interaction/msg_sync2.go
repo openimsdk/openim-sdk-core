@@ -23,13 +23,11 @@ import (
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	"github.com/golang/protobuf/proto"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
 )
 
 const (
-	timeout         = 60
-	retryTimes      = 2
-	defaultPullNums = 1
+	defaultPullNums = 10
 )
 
 type Seq struct {
@@ -49,7 +47,7 @@ type MsgSyncer struct {
 	longConnMgr        *LongConnMgr          // long connection manager
 	PushMsgAndMaxSeqCh chan common.Cmd2Value // channel for receiving push messages and the maximum SEQ number
 	conversationCh     chan common.Cmd2Value // storage and session triggering
-	syncedMaxSeqs      map[string]SyncedSeq  // map of the maximum synced SEQ numbers for all group IDs
+	syncedMaxSeqs      map[string]int64      // map of the maximum synced SEQ numbers for all group IDs
 	db                 db_interface.DataBase // data store
 	syncTimes          int                   // times of sync
 	ctx                context.Context       // context
@@ -65,44 +63,40 @@ func NewMsgSyncer(ctx context.Context, conversationCh, PushMsgAndMaxSeqCh, recvS
 		PushMsgAndMaxSeqCh: PushMsgAndMaxSeqCh,
 		conversationCh:     conversationCh,
 		ctx:                ctx,
-		syncedMaxSeqs:      make(map[string]SyncedSeq),
+		syncedMaxSeqs:      make(map[string]int64),
 		db:                 db,
 		syncTimes:          syncTimes,
 	}
 	err := m.loadSeq(ctx)
-	go m.DoListener()
 	return m, err
 }
 
 // seq The db reads the data to the memory,set syncedMaxSeqs
 func (m *MsgSyncer) loadSeq(ctx context.Context) error {
-	m.syncedMaxSeqs = make(map[string]SyncedSeq)
-	groupIDs, err := m.db.GetReadDiffusionGroupIDList(ctx)
+	conversations, err := m.db.GetAllConversations(ctx)
 	if err != nil {
-		log.ZError(ctx, "get group id list failed", err)
+		log.ZError(ctx, "get conversation id list failed", err)
 		return err
 	}
-	for _, groupID := range groupIDs {
-		nMaxSeq, err := m.db.GetSuperGroupNormalMsgSeq(ctx, groupID)
+	for _, conversation := range conversations {
+		maxSyncedSeq, err := m.db.GetConversationNormalMsgSeq(ctx, conversation.ConversationID)
 		if err != nil {
-			log.ZError(ctx, "get group normal seq failed", err, "groupID", groupID)
+			log.ZError(ctx, "get group normal seq failed", err, "conversationID", conversation.ConversationID)
 			return err
 		}
-		aMaxSeq, err := m.db.GetSuperGroupAbnormalMsgSeq(ctx, groupID)
+		m.syncedMaxSeqs[conversation.ConversationID] = maxSyncedSeq
+		var notificationConversationID string
+		if conversation.ConversationType == constant.SuperGroupChatType {
+			notificationConversationID = utils.GetConversationIDBySessionType(constant.SuperGroupChatType, conversation.GroupID)
+		} else {
+			notificationConversationID = utils.GetConversationIDBySessionType(constant.SingleChatType, conversation.UserID, m.loginUserID)
+		}
+		maxSyncedSeq, err = m.db.GetConversationNormalMsgSeq(ctx, notificationConversationID)
 		if err != nil {
-			log.ZError(ctx, "get group abnormal seq failed", err, "groupID", groupID)
+			log.ZError(ctx, "get group normal seq failed", err, "conversationID", notificationConversationID)
 			return err
 		}
-		maxSeqSynced := nMaxSeq
-		if aMaxSeq > nMaxSeq {
-			maxSeqSynced = aMaxSeq
-		}
-
-		// the information is stored in the map
-		m.syncedMaxSeqs[groupID] = SyncedSeq{
-			maxSeqSynced: maxSeqSynced,
-			sessionType:  constant.SuperGroupChatType,
-		}
+		m.syncedMaxSeqs[notificationConversationID] = maxSyncedSeq
 	}
 	return nil
 }
@@ -121,45 +115,6 @@ func (m *MsgSyncer) DoListener() {
 	}
 }
 
-// init, reconnect, sync by heartbeat
-// func (m *MsgSyncer) compareSeqsAndTrigger(ctx context.Context, newSeqMap map[string]Seq, cmd string) {
-func (m *MsgSyncer) compareSeqsAndTrigger(cmd common.Cmd2Value) {
-	ctx := cmd.Ctx
-	newSeqMap := cmd.Value.(map[string]Seq)
-	// sync callback to conversation
-	switch cmd.Cmd {
-	case constant.CmdInit:
-		m.triggerSync()
-		defer m.triggerSyncFinished()
-	case constant.CmdReconnect:
-		m.triggerReconnect()
-		defer m.triggerReconnectFinished()
-	}
-	for sourceID, newSeq := range newSeqMap {
-		if syncedSeq, ok := m.syncedMaxSeqs[sourceID]; ok {
-			if newSeq.maxSeq > syncedSeq.maxSeqSynced {
-				_ = m.sync(ctx, sourceID, newSeq.sessionType, syncedSeq.maxSeqSynced, newSeq.maxSeq)
-			}
-		} else {
-			// new conversation
-			_ = m.sync(ctx, sourceID, newSeq.sessionType, 0, newSeq.maxSeq)
-		}
-	}
-	m.syncTimes++
-}
-
-func (m *MsgSyncer) sync(ctx context.Context, sourceID string, sessionType int32, syncedMaxSeq, maxSeq int64) (err error) {
-	if err = m.syncAndTriggerMsgs(ctx, sourceID, sessionType, syncedMaxSeq, maxSeq); err != nil {
-		log.ZError(ctx, "sync msgs failed", err, "sourceID", sourceID)
-		return err
-	}
-	m.syncedMaxSeqs[sourceID] = SyncedSeq{
-		maxSeqSynced: maxSeq,
-		sessionType:  sessionType,
-	}
-	return nil
-}
-
 // get seqs need sync interval
 func (m *MsgSyncer) getSeqsNeedSync(syncedMaxSeq, maxSeq int64) []int64 {
 	var seqs []int64
@@ -171,96 +126,98 @@ func (m *MsgSyncer) getSeqsNeedSync(syncedMaxSeq, maxSeq int64) []int64 {
 
 // recv msg from
 func (m *MsgSyncer) handlePushMsgAndEvent(cmd common.Cmd2Value) {
-	// ctx := cmd.Ctx
-	// msg := cmd.Value.(*sdkws.MsgData)
-	// parsing cmd
-	// if cmd.Cmd == constant.CmdMaxSeq {
-	// 	m.compareSeqsAndTrigger(cmd)
-	// }
 	switch cmd.Cmd {
 	case constant.CmdConnSuccesss:
 		m.doConnected()
 	case constant.CmdMaxSeq:
-		m.doMaxSeq(cmd.Value.(*sdk_struct.CmdMaxSeqToMsgSync))
+		m.compareSeqsAndBatchSync(cmd.Value.(*sdk_struct.CmdMaxSeqToMsgSync).ConversationMaxSeqOnSvr)
 	case constant.CmdPushMsg:
-		m.doPushMsg(cmd.Value.(*sdkws.PushMessages))
+		m.doPushMsg(cmd.Ctx, cmd.Value.(*sdkws.PushMessages))
 	}
-	// // online msg
-	// if msg.Seq == 0 {
-	// 	_ = m.triggerConversation(ctx, []*sdkws.MsgData{msg})
-	// 	return
-	// }
-	// // seq is triggered directly and refreshed continuously
-	// if msg.Seq == m.syncedMaxSeqs[msg.GroupID].maxSeqSynced+1 {
-	// 	_ = m.triggerConversation(ctx, []*sdkws.MsgData{msg})
-	// 	oldSeq := m.syncedMaxSeqs[msg.GroupID]
-	// 	oldSeq.maxSeqSynced = msg.Seq
-	// 	m.syncedMaxSeqs[msg.GroupID] = oldSeq
-	// } else {
-	// 	m.sync(ctx, msg.GroupID, msg.SessionType, m.syncedMaxSeqs[msg.GroupID].maxSeqSynced, msg.Seq)
-	// }
 }
 
-func (m *MsgSyncer) doMaxSeq(seq *sdk_struct.CmdMaxSeqToMsgSync) error {
-	req := m.GenReqForMaxSeq(seq)
-	m.pullMsg(req)
+func (m *MsgSyncer) compareSeqsAndBatchSync(maxSeqToSync map[string]int64) {
+	needSyncSeqMap := make(map[string][2]int64)
+	for conversationID, maxSeq := range maxSeqToSync {
+		if syncedMaxSeq, ok := m.syncedMaxSeqs[conversationID]; ok {
+			if maxSeq > syncedMaxSeq {
+				needSyncSeqMap[conversationID] = [2]int64{syncedMaxSeq, maxSeq}
+			}
+		} else {
+			needSyncSeqMap[conversationID] = [2]int64{0, maxSeq}
+		}
+	}
+	_ = m.syncAndTriggerMsgs(m.ctx, needSyncSeqMap)
 }
 
-func (m *MsgSyncer) GenReqForMaxSeq(seq *sdk_struct.CmdMaxSeqToMsgSync) *sdkws.PullMessageBySeqsReq {
-	return nil
+func (m *MsgSyncer) compareSeqsAndSync(maxSeqToSync map[string]int64) {
+	for conversationID, maxSeq := range maxSeqToSync {
+		if syncedMaxSeq, ok := m.syncedMaxSeqs[conversationID]; ok {
+			if maxSeq > syncedMaxSeq {
+				_ = m.syncAndTriggerMsgs(m.ctx, map[string][2]int64{conversationID: [2]int64{syncedMaxSeq, maxSeq}})
+			}
+		} else {
+			_ = m.syncAndTriggerMsgs(m.ctx, map[string][2]int64{conversationID: [2]int64{syncedMaxSeq, maxSeq}})
+		}
+	}
 }
 
-// finishes a synchronization.
-func (m *MsgSyncer) connected() error {
-	req := m.GenReqForConnected()
-	m.pullMsg(req)
+func (m *MsgSyncer) doPushMsg(ctx context.Context, push *sdkws.PushMessages) {
+	m.pushTriggerAndSync(ctx, push.Msgs, m.triggerConversation)
+	m.pushTriggerAndSync(ctx, push.NotificationMsgs, m.triggerConversation)
 }
 
-func (m *MsgSyncer) doPushMsg(push *sdkws.PushMessages) error {
-	req := m.GenReqForPushMsg(push)
-	m.pullMsg(req)
+func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pullMsgs map[string]*sdkws.PullMsgs, triggerFunc func(ctx context.Context, msgs map[string]*sdkws.PullMsgs) error) {
+	needSyncSeqMap := make(map[string][2]int64)
+	var lastSeq int64
+	var storageMsgs []*sdkws.MsgData
+	for conversationID, msgs := range pullMsgs {
+		for _, msg := range msgs.Msgs {
+			if msg.Seq == 0 {
+				_ = triggerFunc(m.ctx, map[string]*sdkws.PullMsgs{conversationID: &sdkws.PullMsgs{Msgs: []*sdkws.MsgData{msg}}})
+				continue
+			}
+			lastSeq = msg.Seq
+			storageMsgs = append(storageMsgs, msg)
+		}
+		if lastSeq == m.syncedMaxSeqs[conversationID]+int64(len(storageMsgs)) {
+			_ = triggerFunc(m.ctx, map[string]*sdkws.PullMsgs{conversationID: &sdkws.PullMsgs{Msgs: storageMsgs}})
+			m.syncedMaxSeqs[conversationID] = lastSeq
+		} else {
+			needSyncSeqMap[conversationID] = [2]int64{m.syncedMaxSeqs[conversationID], lastSeq}
+		}
+	}
+	m.syncAndTriggerMsgs(ctx, needSyncSeqMap)
 }
 
 // Called after successful reconnection to synchronize the latest message
 func (m *MsgSyncer) doConnected() {
-	//同步开始
 	common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.MsgSyncBegin}, m.conversationCh)
-	//同步
-	req := m.GenReqForConnected()
-	m.pullMsg(req)
-	//同步结束
+	var resp sdkws.GetMaxSeqResp
+	if err := m.longConnMgr.SendReqWaitResp(m.ctx, &sdkws.GetMaxSeqReq{UserID: m.loginUserID}, constant.GetNewestSeq, &resp); err != nil {
+		log.ZError(m.ctx, "get max seq error", err)
+		return
+	}
+	m.compareSeqsAndSync(resp.MaxSeqs)
 	common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.MsgSyncEnd}, m.conversationCh)
 }
 
-func (m *MsgSyncer) GenReqForConnected() *sdkws.PullMessageBySeqsReq {
-	return nil
-}
-
-// 1 拉取消息  2 丢给conversation ch
-func (m *MsgSyncer) pullMsg(req *sdkws.PullMessageBySeqsReq) error {
-	resp := sdkws.PullMessageBySeqsResp
-	m.longConnMgr.SendReqWaitResp(m.ctx, req, constant.PullMsgBySeqList, &resp)
-
-	//通知->ch
-	common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.SyncOrderStartLatest}, m.conversationCh)
-	//消息->ch
-	common.TriggerCmdNewMsgCome(sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.}, m.conversationCh)
-	return nil
-}
-
-func (m *MsgSyncer) GenReqForPushMsg(push *sdkws.PushMessages) *sdkws.PullMessageBySeqsReq {
-	return nil
-}
-
 // Fragment synchronization message, seq refresh after successful trigger
-func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, sourceID string, sessionType int32, syncedMaxSeq, maxSeq int64) error {
-	msgs, err := m.syncMsgBySeqsInterval(ctx, sourceID, sessionType, syncedMaxSeq, maxSeq)
-	if err != nil {
-		log.ZError(ctx, "syncMsgFromSvr err", err, "sourceID", sourceID, "sessionType", sessionType, "syncedMaxSeq", syncedMaxSeq, "maxSeq", maxSeq)
+func (m *MsgSyncer) syncAndTriggerMsgs(ctx context.Context, seqMap map[string][2]int64) error {
+	if len(seqMap) > 0 {
+		resp, err := m.pullMsgBySeqRange(ctx, seqMap)
+		if err != nil {
+			log.ZError(ctx, "syncMsgFromSvr err", err, "seqMap", seqMap)
+			return err
+		}
+		_ = m.triggerConversation(ctx, resp.Msgs)
+		_ = m.triggerNotification(ctx, resp.NotificationMsgs)
+		for conversationID, seqs := range seqMap {
+			m.syncedMaxSeqs[conversationID] = seqs[1]
+		}
 		return err
 	}
-	_ = m.triggerConversation(ctx, msgs)
-	return err
+	return nil
 }
 
 func (m *MsgSyncer) splitSeqs(split int, seqsNeedSync []int64) (splitSeqs [][]int64) {
@@ -278,85 +235,59 @@ func (m *MsgSyncer) splitSeqs(split int, seqsNeedSync []int64) (splitSeqs [][]in
 	return
 }
 
-// cached的不拉取
-func (m *MsgSyncer) syncMsgBySeqsInterval(ctx context.Context, sourceID string, sesstionType int32, syncedMaxSeq, syncedMinSeq int64) (partMsgs []*sdkws.MsgData, err error) {
-	return partMsgs, nil
+func (m *MsgSyncer) pullMsgBySeqRange(ctx context.Context, seqMap map[string][2]int64) (resp *sdkws.PullMessageBySeqsResp, err error) {
+	var req sdkws.PullMessageBySeqsReq
+	for conversationID, seqs := range seqMap {
+		var pullNums int64 = defaultPullNums
+		if pullNums < seqs[1]-seqs[0] {
+			pullNums = seqs[1] - seqs[0]
+		}
+		req.SeqRanges = append(req.SeqRanges, &sdkws.SeqRange{
+			ConversationID: conversationID,
+			Begin:          seqs[0],
+			End:            seqs[1],
+			Num:            pullNums,
+		})
+	}
+	resp = &sdkws.PullMessageBySeqsResp{}
+	if err := m.longConnMgr.SendReqWaitResp(ctx, &req, constant.PullMsgBySeqList, resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
 }
 
 // synchronizes messages by SEQs.
-func (m *MsgSyncer) syncMsgBySeqs(ctx context.Context, sourceID string, sessionType int32, seqsNeedSync []int64) (allMsgs []*sdkws.MsgData, err error) {
+func (m *MsgSyncer) syncMsgBySeqs(ctx context.Context, conversationID string, seqsNeedSync []int64) (allMsgs []*sdkws.MsgData, err error) {
 	pullMsgReq := sdkws.PullMessageBySeqsReq{}
 	pullMsgReq.UserID = m.loginUserID
-
 	split := constant.SplitPullMsgNum
 	seqsList := m.splitSeqs(split, seqsNeedSync)
 	for i := 0; i < len(seqsList); {
-		resp, err := m.longConnMgr.SendReqWaitResp(ctx, &pullMsgReq, constant.WSPullMsgBySeqList, retryTimes, m.loginUserID)
+		var pullMsgResp sdkws.PullMessageBySeqsResp
+		err := m.longConnMgr.SendReqWaitResp(ctx, &pullMsgReq, constant.PullMsgBySeqList, &pullMsgResp)
 		if err != nil {
 			log.ZError(ctx, "syncMsgFromSvrSplit err", err, "pullMsgReq", pullMsgReq)
 			continue
 		}
 		i++
-		var pullMsgResp sdkws.PullMessageBySeqsResp
-		err = proto.Unmarshal(resp.Data, &pullMsgResp)
-		if err != nil {
-			log.ZError(ctx, "Unmarshal failed", err, "resp", resp)
-			continue
-		}
-		allMsgs = append(allMsgs, pullMsgResp.List...)
+		allMsgs = append(allMsgs, pullMsgResp.Msgs[conversationID].Msgs...)
 	}
 	return allMsgs, nil
 }
 
 // triggers a conversation with a new message.
-func (m *MsgSyncer) triggerConversation(ctx context.Context, msgs []*sdkws.MsgData) error {
-	err := common.TriggerCmdNewMsgCome(sdk_struct.CmdNewMsgComeToConversation{Ctx: ctx, MsgList: msgs}, m.conversationCh)
+func (m *MsgSyncer) triggerConversation(ctx context.Context, msgs map[string]*sdkws.PullMsgs) error {
+	err := common.TriggerCmdNewMsgCome(ctx, sdk_struct.CmdNewMsgComeToConversation{Msgs: msgs}, m.conversationCh)
 	if err != nil {
 		log.ZError(ctx, "triggerCmdNewMsgCome err", err, "msgs", msgs)
 	}
 	return err
 }
 
-// triggers a reconnection.
-func (m *MsgSyncer) triggerReconnect() {
-	for groupID, syncedSeq := range m.syncedMaxSeqs {
-		if syncedSeq.maxSeqSynced == 0 {
-			continue
-		}
-		err := m.sync(m.ctx, groupID, syncedSeq.sessionType, 0, syncedSeq.maxSeqSynced)
-		if err != nil {
-			log.ZError(m.ctx, "sync failed", err, "groupID", groupID)
-		}
+func (m *MsgSyncer) triggerNotification(ctx context.Context, msgs map[string]*sdkws.PullMsgs) error {
+	err := common.TriggerCmdNotification(ctx, sdk_struct.CmdNewMsgComeToConversation{Msgs: msgs}, m.conversationCh)
+	if err != nil {
+		log.ZError(ctx, "triggerCmdNewMsgCome err", err, "msgs", msgs)
 	}
-}
-
-// finishes a reconnection.
-func (m *MsgSyncer) triggerReconnectFinished() {
-	for groupID, syncedSeq := range m.syncedMaxSeqs {
-		if syncedSeq.maxSeqSynced == 0 {
-			continue
-		}
-		err := m.sync(m.ctx, groupID, syncedSeq.sessionType, 0, syncedSeq.maxSeqSynced)
-		if err != nil {
-			log.ZError(m.ctx, "sync failed", err, "groupID", groupID)
-		}
-	}
-}
-
-// triggers a synchronization.
-func (m *MsgSyncer) triggerSync() {
-	for groupID, syncedSeq := range m.syncedMaxSeqs {
-		if syncedSeq.maxSeqSynced == 0 {
-			continue
-		}
-		err := m.sync(m.ctx, groupID, syncedSeq.sessionType, syncedSeq.maxSeqSynced, syncedSeq.maxSeqSynced+defaultPullNums)
-		if err != nil {
-			log.ZError(m.ctx, "sync failed", err, "groupID", groupID)
-		}
-	}
-}
-
-// finishes a synchronization.
-func (m *MsgSyncer) triggerSyncFinished() {
-	log.Info("Synchronization complete")
+	return err
 }

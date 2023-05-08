@@ -17,9 +17,8 @@
 
 package indexdb
 
-import "context"
-
 import (
+	"context"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
@@ -32,7 +31,7 @@ func NewLocalSuperGroupChatLogs() *LocalSuperGroupChatLogs {
 	return &LocalSuperGroupChatLogs{}
 }
 
-func (i *LocalSuperGroupChatLogs) GetSuperGroupNormalMsgSeq(ctx context.Context, groupID string) (uint32, error) {
+func (i *LocalSuperGroupChatLogs) GetConversationNormalMsgSeq(ctx context.Context, groupID string) (uint32, error) {
 	seq, err := Exec(groupID)
 	if err != nil {
 		return 0, err
