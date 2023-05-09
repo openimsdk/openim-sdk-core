@@ -171,6 +171,8 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 			//}
 			//break
 			//c.closedErr = err
+			log.ZError(c.ctx, "readMessage err", err)
+			_ = c.close()
 
 		}
 		switch messageType {
