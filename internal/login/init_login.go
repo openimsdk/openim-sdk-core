@@ -323,7 +323,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	return nil
 }
 
-func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_callback.OnConnListener, operationID string) bool {
+func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_callback.OnConnListener) bool {
 	if listener == nil {
 		return false
 	}
@@ -342,6 +342,10 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_call
 	ctx := ccontext.WithInfo(context.Background(), u.info)
 	u.ctx, u.cancel = context.WithCancel(ctx)
 	return true
+}
+
+func (u *LoginMgr) Context() context.Context {
+	return u.ctx
 }
 
 func (u *LoginMgr) logout(ctx context.Context) error {

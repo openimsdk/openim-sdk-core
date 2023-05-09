@@ -461,7 +461,7 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 
 	sdk_struct.SvrConf = cf
 	allLoginMgr[index].mgr = lg
-	lg.InitSDK(sdk_struct.SvrConf, &testinit, operationID)
+	lg.InitSDK(sdk_struct.SvrConf, &testinit)
 
 	log.Info(operationID, "InitSDK ", sdk_struct.SvrConf)
 
@@ -512,7 +512,7 @@ func PressInitAndLogin(index int, uid, tk, ws, api string) {
 
 	sdk_struct.SvrConf = cf
 	allLoginMgr[index].mgr = lg
-	lg.InitSDK(sdk_struct.SvrConf, &testinit, operationID)
+	lg.InitSDK(sdk_struct.SvrConf, &testinit)
 
 	log.Info(operationID, "InitSDK ", sdk_struct.SvrConf)
 

@@ -41,7 +41,7 @@ func init() {
 	if !isInit {
 		panic("init sdk failed")
 	}
-	ctx := mcontext.NewCtx("testInitLogin")
+	ctx := open_im_sdk.UserForSDK.Context()
 	token := GetResValue(GetUserToken(ctx, UserID))
 	if err := open_im_sdk.UserForSDK.Login(ctx, UserID, token); err != nil {
 		panic(err)
@@ -57,7 +57,8 @@ func GetUserToken(ctx context.Context, userID string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, APIADDR+"/auth/user_token", bytes.NewReader(jsonReqData))
+	path := APIADDR + "/auth/user_token"
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path, bytes.NewReader(jsonReqData))
 	if err != nil {
 		return "", err
 	}
