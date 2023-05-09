@@ -93,7 +93,7 @@ func Test_CreateImageMessageByURL(t *testing.T) {
 }
 
 func Test_CreateSoundMessageByURL(t *testing.T) {
-	message, err := open_im_sdk.UserForSDK.Conversation().CreateSoundMessageByURL(ctx, sdk_struct.SoundBaseInfo{})
+	message, err := open_im_sdk.UserForSDK.Conversation().CreateSoundMessageByURL(ctx, &sdk_struct.SoundBaseInfo{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -173,7 +173,7 @@ func Test_CreateFaceMessage(t *testing.T) {
 }
 
 func Test_CreateForwardMessage(t *testing.T) {
-	message, err := open_im_sdk.UserForSDK.Conversation().CreateForwardMessage(ctx, sdk_struct.MsgStruct{})
+	message, err := open_im_sdk.UserForSDK.Conversation().CreateForwardMessage(ctx, &sdk_struct.MsgStruct{})
 	if err != nil {
 		t.Error(err)
 	}

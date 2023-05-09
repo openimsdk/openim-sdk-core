@@ -22,7 +22,6 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
-	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk"
 	"time"
 
@@ -38,18 +37,15 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 	listner := &OnConnListener{}
 	config := getConf(APIADDR, WSADDR)
-	util.BaseURL = APIADDR
 	isInit := open_im_sdk.InitSDK(listner, "test", string(GetResValue(json.Marshal(config))))
 	if !isInit {
 		panic("init sdk failed")
 	}
 	ctx := mcontext.NewCtx("testInitLogin")
 	token := GetResValue(GetUserToken(ctx, UserID))
-	util.Token = token
 	if err := open_im_sdk.UserForSDK.Login(ctx, UserID, token); err != nil {
 		panic(err)
 	}
-	fmt.Println(util.Token)
 }
 
 func GetUserToken(ctx context.Context, userID string) (string, error) {
