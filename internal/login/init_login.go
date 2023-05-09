@@ -304,6 +304,9 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	// u.forcedSynchronization(ctx)
 	//}()
 	//wg.Wait()
+
+	go u.forcedSynchronization(ctx)
+
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	u.signaling = signaling.NewLiveSignaling(u.longConnMgr, u.loginUserID, u.info.Platform, u.db)
 	if u.signalingListener != nil {
