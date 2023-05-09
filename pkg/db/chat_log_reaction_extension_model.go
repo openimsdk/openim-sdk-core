@@ -97,7 +97,7 @@ func (d *DataBase) DeleteAndUpdateMessageReactionExtension(ctx context.Context, 
 	} else {
 		oldKeyValue := make(map[string]*server_api_params.KeyValue)
 		_ = json.Unmarshal(temp.LocalReactionExtensions, &oldKeyValue)
-		for k, _ := range m {
+		for k := range m {
 			if _, ok := oldKeyValue[k]; ok {
 				delete(oldKeyValue, k)
 			}

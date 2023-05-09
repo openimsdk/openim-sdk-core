@@ -17,12 +17,13 @@ package open_im_sdk
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdkerrs"
 	"reflect"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 )
 
 func isNumeric(kind reflect.Kind) bool {
