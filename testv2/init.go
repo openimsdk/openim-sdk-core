@@ -23,14 +23,12 @@ import (
 	"math/rand"
 	"net/http"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/ccontext"
 	"time"
-
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
 )
 
 var (
-	ctx = mcontext.NewCtx(utils.GetFuncName(2) + ":test")
+	ctx context.Context
 )
 
 func init() {
@@ -41,7 +39,8 @@ func init() {
 	if !isInit {
 		panic("init sdk failed")
 	}
-	ctx := open_im_sdk.UserForSDK.Context()
+	ctx = open_im_sdk.UserForSDK.Context()
+	ctx = ccontext.WithOperationID(ctx, "initOperationID")
 	token := GetResValue(GetUserToken(ctx, UserID))
 	if err := open_im_sdk.UserForSDK.Login(ctx, UserID, token); err != nil {
 		panic(err)
