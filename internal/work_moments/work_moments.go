@@ -19,8 +19,9 @@ import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 )
 
 type WorkMoments struct {
@@ -41,11 +42,11 @@ func (w *WorkMoments) DoNotification(ctx context.Context, jsonDetail string) {
 	}
 	//ctx := mcontext.NewCtx(operationID)
 	if err := w.db.InsertWorkMomentsNotification(ctx, jsonDetail); err != nil {
-		log.NewError(operationID, utils.GetSelfFuncName(), "InsertWorkMomentsNotification failed", err.Error())
+		log.ZError(ctx, "InsertWorkMomentsNotification failed", err, "jsonDetail", jsonDetail)
 		return
 	}
 	if err := w.db.IncrWorkMomentsNotificationUnreadCount(ctx); err != nil {
-		log.NewError(operationID, utils.GetSelfFuncName(), "IncrWorkMomentsNotificationUnreadCount failed", err.Error())
+		log.ZError(ctx, "IncrWorkMomentsNotificationUnreadCount failed", err)
 		return
 	}
 	w.listener.OnRecvNewNotification()
@@ -63,7 +64,7 @@ func (w *WorkMoments) getWorkMomentsNotification(ctx context.Context, offset, co
 	for i, v := range workMomentsNotifications {
 		workMomentNotificationMsg := model_struct.WorkMomentNotificationMsg{}
 		if err := utils.JsonStringToStruct(v.JsonDetail, &workMomentNotificationMsg); err != nil {
-			// log.NewError(operationID, utils.GetSelfFuncName(), "JsonStringToStruct failed", err.Error())
+			log.ZError(ctx, "invalid data", err, "jsonDetail", v.JsonDetail)
 			continue
 		}
 		msgs[i] = &workMomentNotificationMsg

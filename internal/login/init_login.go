@@ -24,9 +24,9 @@ import (
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/group"
 	"open_im_sdk/internal/interaction"
-	comm2 "open_im_sdk/internal/obj_storage"
 	"open_im_sdk/internal/signaling"
 	"open_im_sdk/internal/super_group"
+	"open_im_sdk/internal/third"
 	"open_im_sdk/internal/user"
 	workMoments "open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
@@ -61,7 +61,7 @@ type LoginMgr struct {
 	full         *full.Full
 	db           db_interface.DataBase
 	longConnMgr  *interaction.LongConnMgr
-	push         *comm2.Push
+	push         *third.Push
 	cache        *cache.Cache
 	token        string
 	loginUserID  string
@@ -105,7 +105,7 @@ func (u *LoginMgr) GetToken() string {
 	return u.token
 }
 
-func (u *LoginMgr) Push() *comm2.Push {
+func (u *LoginMgr) Push() *third.Push {
 	return u.push
 }
 
@@ -292,7 +292,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	if u.businessListener != nil {
 		u.business.SetListener(u.businessListener)
 	}
-	u.push = comm2.NewPush(u.info.Platform, u.loginUserID)
+	u.push = third.NewPush(u.info.Platform, u.loginUserID)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	u.longConnMgr = interaction.NewLongConnMgr(ctx, u.connListener, u.pushMsgAndMaxSeqCh, u.conversationCh)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,

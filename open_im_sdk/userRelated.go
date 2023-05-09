@@ -18,13 +18,15 @@ import (
 	"errors"
 	"open_im_sdk/internal/login"
 	"open_im_sdk/open_im_sdk_callback"
-	"open_im_sdk/pkg/constant"
+
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"reflect"
 	"runtime"
 	"sync"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/constant"
 )
 
 // Caller is an interface that defines the SDK's basic and message sending caller.

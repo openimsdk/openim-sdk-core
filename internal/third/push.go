@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package obj_storage
+package third
 
 import (
 	"open_im_sdk/open_im_sdk_callback"
