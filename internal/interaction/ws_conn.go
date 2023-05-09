@@ -183,6 +183,7 @@ func (u *WsConn) ReConn(operationID string) (error, bool, bool) {
 		if err != nil {
 			log.NewWarn(operationID, "close old conn", u.conn.LocalAddr(), err.Error())
 		}
+		u.conn.SetConnNil()
 	}
 
 	if u.loginStatus == constant.TokenFailedKickedOffline {
