@@ -102,7 +102,6 @@ type DataBase interface {
 	GetHiddenConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error)
 	GetAllConversations(ctx context.Context) ([]*model_struct.LocalConversation, error)
 	GetConversationListSplitDB(ctx context.Context, offset, count int) ([]*model_struct.LocalConversation, error)
-	GetConversationIDs(ctx context.Context) ([]string, error)
 	BatchInsertConversationList(ctx context.Context, conversationList []*model_struct.LocalConversation) error
 	InsertConversation(ctx context.Context, conversationList *model_struct.LocalConversation) error
 	DeleteConversation(ctx context.Context, conversationID string) error
@@ -160,7 +159,7 @@ type DataBase interface {
 	GetAbnormalMsgSeqList(ctx context.Context) ([]int64, error)
 	BatchInsertExceptionMsg(ctx context.Context, MessageList []*model_struct.LocalErrChatLog) error
 	BatchInsertExceptionMsgController(ctx context.Context, MessageList []*model_struct.LocalErrChatLog) error
-	GetSuperGroupAbnormalMsgSeq(ctx context.Context, groupID string) (int64, error)
+	GetConversationAbnormalMsgSeq(ctx context.Context, groupID string) (int64, error)
 	BatchInsertTempCacheMessageList(ctx context.Context, MessageList []*model_struct.TempCacheLocalChatLog) error
 	InsertTempCacheMessage(ctx context.Context, Message *model_struct.TempCacheLocalChatLog) error
 	GetLoginUser(ctx context.Context, userID string) (*model_struct.LocalUser, error)
