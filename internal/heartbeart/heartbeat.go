@@ -16,7 +16,6 @@ package heartbeart
 
 import (
 	"open_im_sdk/internal/full"
-	"open_im_sdk/internal/interaction"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -29,16 +28,12 @@ import (
 )
 
 type Heartbeat struct {
-	//	*Ws
-	*interaction.MsgSync
-	cmdCh             chan common.Cmd2Value //waiting logout cmd , wake up cmd
-	heartbeatInterval int
-	token             string
-	listener          open_im_sdk_callback.OnConnListener
-	//ExpireTimeSeconds uint32
-	id2MinSeq map[string]int64
-	full      *full.Full
-	//WsForTest          *interaction.Ws
+	cmdCh              chan common.Cmd2Value //waiting logout cmd , wake up cmd
+	heartbeatInterval  int
+	token              string
+	listener           open_im_sdk_callback.OnConnListener
+	id2MinSeq          map[string]int64
+	full               *full.Full
 	LoginUserIDForTest string
 }
 
@@ -46,12 +41,11 @@ func (u *Heartbeat) SetHeartbeatInterval(heartbeatInterval int) {
 	u.heartbeatInterval = heartbeatInterval
 }
 
-func NewHeartbeat(msgSync *interaction.MsgSync, cmcCh chan common.Cmd2Value, listener open_im_sdk_callback.OnConnListener, token string, id2MinSeq map[string]int64, full *full.Full) *Heartbeat {
-	p := Heartbeat{MsgSync: msgSync, cmdCh: cmcCh, full: full}
+func NewHeartbeat(cmcCh chan common.Cmd2Value, listener open_im_sdk_callback.OnConnListener, token string, id2MinSeq map[string]int64, full *full.Full) *Heartbeat {
+	p := Heartbeat{cmdCh: cmcCh, full: full}
 	p.heartbeatInterval = constant.HeartbeatInterval
 	p.listener = listener
 	p.token = token
-	//p.ExpireTimeSeconds = expireTimeSeconds
 	p.id2MinSeq = id2MinSeq
 	go p.Run()
 	return &p
@@ -64,18 +58,6 @@ type ParseToken struct {
 	Nbf      int    `json:"nbf"`
 	Iat      int    `json:"iat"`
 }
-
-//func (u *Heartbeat) IsTokenExp(operationID string) bool {
-//	if u.ExpireTimeSeconds == 0 {
-//		return false
-//	}
-//	log.Debug(operationID, "ExpireTimeSeconds ", u.ExpireTimeSeconds, "now ", uint32(time.Now().Unix()))
-//	if u.ExpireTimeSeconds < uint32(time.Now().Unix()) {
-//		return true
-//	} else {
-//		return false
-//	}
-//}
 
 func (u *Heartbeat) Run() {
 	defaultTimeout := 5

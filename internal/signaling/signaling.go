@@ -65,14 +65,11 @@ func (s *LiveSignaling) waitPush(ctx context.Context, req *sdkws.SignalReq, busy
 	var listenerList []open_im_sdk_callback.OnSignalingListener
 	if s.listener != nil {
 		listenerList = append(listenerList, s.listener)
-		// log.Info(operationID, "listenerList ", listenerList, "listener ", s.listener)
 	}
 	if s.listenerForService != nil {
 		listenerList = append(listenerList, s.listenerForService)
-		// log.Info(operationID, "listenerList ", listenerList, "listenerForService ", s.listenerForService)
 	}
 	if len(listenerList) == 0 {
-		// log.Error(operationID, "len (listenerList) == 0 ")
 		return
 	}
 	var inviteeUserIDList []string

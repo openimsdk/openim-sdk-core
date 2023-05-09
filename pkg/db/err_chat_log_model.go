@@ -67,3 +67,11 @@ func (d *DataBase) BatchInsertExceptionMsgController(ctx context.Context, messag
 		return d.BatchInsertExceptionMsg(ctx, messageList)
 	}
 }
+func (d *DataBase) GetConversationAbnormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
+	var seq int64
+	if !d.conn.WithContext(ctx).Migrator().HasTable(utils.GetErrSuperGroupTableName(conversationID)) {
+		return 0, nil
+	}
+	err := d.conn.WithContext(ctx).Table(utils.GetErrSuperGroupTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
+	return seq, utils.Wrap(err, "GetConversationNormalMsgSeq")
+}
