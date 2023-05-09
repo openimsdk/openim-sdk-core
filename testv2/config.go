@@ -17,13 +17,13 @@ package testv2
 import "open_im_sdk/sdk_struct"
 
 const (
-	//APIADDR = "http://43.154.157.177:10002"
-	//WSADDR  = "ws://43.154.157.177:10001"
-	//UserID  = "kernaltestuid2"
+	APIADDR = "http://43.154.157.177:10002"
+	WSADDR  = "ws://43.154.157.177:10001"
+	UserID  = "kernaltestuid2"
 
-	APIADDR = "http://203.56.175.233:10002"
-	WSADDR  = "ws://203.56.175.233:10001"
-	UserID  = "10000"
+	// APIADDR = "http://203.56.175.233:10002"
+	// WSADDR  = "ws://203.56.175.233:10001"
+	// UserID  = "10000"
 )
 
 func getConf(APIADDR, WSADDR string) sdk_struct.IMConfig {

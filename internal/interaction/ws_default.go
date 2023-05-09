@@ -18,14 +18,16 @@
 package interaction
 
 import (
-	"github.com/gorilla/websocket"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 type Default struct {
-	ConnType int
-	conn     *websocket.Conn
+	ConnType  int
+	conn      *websocket.Conn
+	isSetConf bool
 }
 
 func (d *Default) SetReadDeadline(timeout time.Duration) error {
@@ -37,11 +39,17 @@ func (d *Default) SetWriteDeadline(timeout time.Duration) error {
 }
 
 func (d *Default) SetReadLimit(limit int64) {
-	d.conn.SetReadLimit(limit)
+	if !d.isSetConf {
+		d.conn.SetReadLimit(limit)
+	}
+
 }
 
 func (d *Default) SetPongHandler(handler PongHandler) {
-	d.conn.SetPongHandler(handler)
+	if !d.isSetConf {
+		d.conn.SetPongHandler(handler)
+		d.isSetConf = true
+	}
 }
 
 func (d *Default) LocalAddr() string {
