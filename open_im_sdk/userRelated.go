@@ -18,8 +18,8 @@ import (
 	"errors"
 	"open_im_sdk/internal/login"
 	"open_im_sdk/open_im_sdk_callback"
-	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"reflect"
@@ -98,18 +98,18 @@ var ErrNotSetFunc = errors.New("not set func to call")
 func BaseCaller(funcName interface{}, callback open_im_sdk_callback.Base, args ...interface{}) {
 	var operationID string
 	if len(args) <= 0 {
-		callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
+		callback.OnError(int32(sdkerrs.ErrArgs.Code()), sdkerrs.ErrArgs.Msg())
 		return
 	}
 	if v, ok := args[len(args)-1].(string); ok {
 		operationID = v
 	} else {
-		callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
+		callback.OnError(int32(sdkerrs.ErrArgs.Code()), sdkerrs.ErrArgs.Msg())
 		return
 	}
 	if err := CheckResourceLoad(UserForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		callback.OnError(sdkerrs.ResourceLoadNotCompleteError, "ErrResourceLoadNotComplete")
 		return
 	}
 	defer func() {
@@ -126,7 +126,7 @@ func BaseCaller(funcName interface{}, callback open_im_sdk_callback.Base, args .
 			default:
 				temp = errors.New("unknown panic").Error()
 			}
-			callback.OnError(constant.ErrArgs.ErrCode, temp)
+			callback.OnError(int32(sdkerrs.ErrArgs.Code()), temp)
 		}
 	}()
 	if funcName == nil {
@@ -153,18 +153,18 @@ func BaseCaller(funcName interface{}, callback open_im_sdk_callback.Base, args .
 func SendMessageCaller(funcName interface{}, callback open_im_sdk_callback.SendMsgCallBack, args ...interface{}) {
 	var operationID string
 	if len(args) <= 0 {
-		callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
+		callback.OnError(int32(sdkerrs.ErrArgs.Code()), sdkerrs.ErrArgs.Msg())
 		return
 	}
 	if v, ok := args[len(args)-1].(string); ok {
 		operationID = v
 	} else {
-		callback.OnError(constant.ErrArgs.ErrCode, constant.ErrArgs.ErrMsg)
+		callback.OnError(int32(sdkerrs.ErrArgs.Code()), sdkerrs.ErrArgs.Msg())
 		return
 	}
 	if err := CheckResourceLoad(UserForSDK); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
-		callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+		callback.OnError(sdkerrs.ResourceLoadNotCompleteError, "ErrResourceLoadNotComplete")
 		return
 	}
 	defer func() {
