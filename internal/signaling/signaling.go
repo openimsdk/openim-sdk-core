@@ -293,10 +293,8 @@ func (s *LiveSignaling) SendSignalingReqWaitResp(ctx context.Context, req *sdkws
 }
 func (s *LiveSignaling) SignalingWaitPush(ctx context.Context, inviterUserID, inviteeUserID, roomID string, timeout int32) (*sdkws.SignalReq, error) {
 	msgIncr := inviterUserID + inviteeUserID + roomID
-	//log.Info(operationID, "add msgIncr: ", msgIncr)
 	ch := s.LongConnMgr.Syncer.AddChByIncr(msgIncr)
 	defer s.LongConnMgr.Syncer.DelCh(msgIncr)
-
 	resp, err := s.LongConnMgr.Syncer.WaitResp(ctx, ch, int(timeout))
 	if err != nil {
 		return nil, utils.Wrap(err, "")

@@ -132,7 +132,7 @@ func (u *WsRespAsyn) NotifyResp(ctx context.Context, wsResp GeneralWsResp) error
 		return nil
 	}
 }
-func (u *WsRespAsyn) WaitResp(ctx context.Context, ch chan GeneralWsResp, timeout int) (*GeneralWsResp, error) {
+func (u *WsRespAsyn) WaitResp(ctx context.Context, ch chan *GeneralWsResp, timeout int) (*GeneralWsResp, error) {
 	select {
 	case r, ok := <-ch:
 		if !ok { //ch has been closed
@@ -150,7 +150,7 @@ func (u *WsRespAsyn) WaitResp(ctx context.Context, ch chan GeneralWsResp, timeou
 			//}
 			//return nil, errors.New(utils.IntToString(r.ErrCode) + ":" + r.ErrMsg)
 		} else {
-			return &r, nil
+			return r, nil
 		}
 
 	case <-time.After(time.Second * time.Duration(timeout)):
