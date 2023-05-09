@@ -25,7 +25,7 @@ func NewWebSocket(connType int) *JSWebSocket {
 }
 
 func (w *JSWebSocket) Close() error {
-	return w.conn.Close(websocket.StatusGoingAway, "Actively close the conn have old conn")
+	return w.conn.Close(websocket.StatusNormalClosure, "Actively close the conn have old conn")
 }
 
 func (w *JSWebSocket) WriteMessage(messageType int, message []byte) error {
