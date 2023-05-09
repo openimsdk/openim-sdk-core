@@ -15,10 +15,9 @@
 package testv2
 
 import (
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/open_im_sdk"
 	"testing"
-
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
 func Test_GetSelfUserInfo(t *testing.T) {

@@ -154,8 +154,6 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		//c.hub.unregister <- c
 		c.conn.Close()
 	}()
-	c.conn.SetReadLimit(maxMessageSize)
-	_ = c.conn.SetReadDeadline(pongWait)
 	//c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		err := c.reConn(ctx)
@@ -164,6 +162,8 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 			time.Sleep(time.Second * 1)
 			continue
 		}
+		c.conn.SetReadLimit(maxMessageSize)
+		_ = c.conn.SetReadDeadline(pongWait)
 		messageType, message, err := c.conn.ReadMessage()
 		if err != nil {
 			//if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
