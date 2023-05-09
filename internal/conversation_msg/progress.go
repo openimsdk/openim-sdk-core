@@ -12,7 +12,7 @@ func NewFileCallback(ctx context.Context, progress func(progress int), msg *sdk_
 	if msg.AttachedInfoElem.Progress == nil {
 		msg.AttachedInfoElem.Progress = &sdk_struct.UploadProgress{}
 	}
-	return &FileCallback{progress: progress, msg: msg, db: db}
+	return &FileCallback{ctx: ctx, progress: progress, msg: msg, db: db}
 }
 
 type FileCallback struct {
@@ -31,10 +31,18 @@ func (c *FileCallback) HashComplete(hash string, total int64) {}
 func (c *FileCallback) PutStart(current, total int64) {}
 
 func (c *FileCallback) PutProgress(save int64, current, total int64) {
+	c.msg.AttachedInfoElem.Progress.Save = save
+	c.msg.AttachedInfoElem.Progress.Current = current
+	c.msg.AttachedInfoElem.Progress.Total = total
 	if err := c.db.UpdateMessageAttachedInfo(c.ctx, c.msg); err != nil {
-		log.ZError(c.ctx, "update message attached info failed", err)
+		log.ZError(c.ctx, "update PutProgress message attached info failed", err)
 	}
 	c.progress(int(float64(current) / float64(total)))
 }
 
-func (c *FileCallback) PutComplete(total int64, putType int) {}
+func (c *FileCallback) PutComplete(total int64, putType int) {
+	c.msg.AttachedInfoElem.Progress = nil
+	if err := c.db.UpdateMessageAttachedInfo(c.ctx, c.msg); err != nil {
+		log.ZError(c.ctx, "update PutComplete message attached info failed", err)
+	}
+}
