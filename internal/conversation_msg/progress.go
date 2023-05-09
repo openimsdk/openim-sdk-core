@@ -2,6 +2,7 @@ package conversation_msg
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"open_im_sdk/internal/file"
 	"open_im_sdk/pkg/db/db_interface"
@@ -34,7 +35,11 @@ func (c *FileCallback) PutProgress(save int64, current, total int64) {
 	c.msg.AttachedInfoElem.Progress.Save = save
 	c.msg.AttachedInfoElem.Progress.Current = current
 	c.msg.AttachedInfoElem.Progress.Total = total
-	if err := c.db.UpdateMessageAttachedInfo(c.ctx, c.msg); err != nil {
+	data, err := json.Marshal(c.msg.AttachedInfoElem)
+	if err != nil {
+		panic(err)
+	}
+	if err := c.db.UpdateMessageByClientMsgID(c.ctx, c.msg.ClientMsgID, map[string]any{"attached_info": string(data)}); err != nil {
 		log.ZError(c.ctx, "update PutProgress message attached info failed", err)
 	}
 	c.progress(int(float64(current) / float64(total)))
@@ -42,7 +47,11 @@ func (c *FileCallback) PutProgress(save int64, current, total int64) {
 
 func (c *FileCallback) PutComplete(total int64, putType int) {
 	c.msg.AttachedInfoElem.Progress = nil
-	if err := c.db.UpdateMessageAttachedInfo(c.ctx, c.msg); err != nil {
+	data, err := json.Marshal(c.msg.AttachedInfoElem)
+	if err != nil {
+		panic(err)
+	}
+	if err := c.db.UpdateMessageByClientMsgID(c.ctx, c.msg.ClientMsgID, map[string]any{"attached_info": string(data)}); err != nil {
 		log.ZError(c.ctx, "update PutComplete message attached info failed", err)
 	}
 }
