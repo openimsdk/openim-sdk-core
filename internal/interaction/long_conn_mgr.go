@@ -18,12 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	"github.com/golang/protobuf/proto"
-	"github.com/gorilla/websocket"
 	"net/http"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/ccontext"
@@ -34,6 +28,13 @@ import (
 	"open_im_sdk/sdk_struct"
 	"sync"
 	"time"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/golang/protobuf/proto"
+	"github.com/gorilla/websocket"
 )
 
 const (
@@ -171,7 +172,6 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 			//}
 			//break
 			//c.closedErr = err
-
 		}
 		switch messageType {
 		case MessageBinary:
