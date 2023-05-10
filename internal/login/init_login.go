@@ -297,6 +297,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	u.longConnMgr = interaction.NewLongConnMgr(ctx, u.connListener, u.pushMsgAndMaxSeqCh, u.conversationCh)
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
+
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
 		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq)
 	//var wg sync.WaitGroup
@@ -307,7 +308,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	//}()
 	//wg.Wait()
 
-	go u.forcedSynchronization(ctx)
+	//go u.forcedSynchronization(ctx)
 
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	u.signaling = signaling.NewLiveSignaling(u.longConnMgr, u.loginUserID, u.info.Platform, u.db)

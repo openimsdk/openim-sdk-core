@@ -220,6 +220,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 				c.closedErr = ErrChanClosed
 				return
 			}
+			log.ZDebug(c.ctx, "writePump recv message", "message", message.Message)
 			go func() {
 				resp, err := c.sendAndWaitResp(&message.Message)
 				if err != nil {

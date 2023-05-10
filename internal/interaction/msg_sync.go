@@ -43,6 +43,16 @@ type MsgSyncer struct {
 	ctx                context.Context       // context
 }
 
+func (m *MsgSyncer) Work(cmd common.Cmd2Value) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m *MsgSyncer) GetCh() chan common.Cmd2Value {
+	//TODO implement me
+	panic("implement me")
+}
+
 // NewMsgSyncer creates a new instance of the message synchronizer.
 func NewMsgSyncer(ctx context.Context, conversationCh, PushMsgAndMaxSeqCh chan common.Cmd2Value,
 	loginUserID string, longConnMgr *LongConnMgr, db db_interface.DataBase, syncTimes int) (*MsgSyncer, error) {
@@ -57,6 +67,7 @@ func NewMsgSyncer(ctx context.Context, conversationCh, PushMsgAndMaxSeqCh chan c
 		syncTimes:          syncTimes,
 	}
 	err := m.loadSeq(ctx)
+	go m.DoListener()
 	return m, err
 }
 
