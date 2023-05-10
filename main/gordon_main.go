@@ -98,8 +98,8 @@ func main() {
 	tokenx := gRunGetToken(uid)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(uid, tokenx, WSADDR, APIADDR)
-	test.DoTestGetAdvancedHistoryMessageList()
-	test.DoTestGetSelfUserInfo()
+	//test.DoTestGetAdvancedHistoryMessageList()
+	//test.DoTestGetSelfUserInfo()
 	//test.DoTestSendMsg2GroupWithMessage(uid, "1623878302774460418", "2")
 	//test.DoTestAddMessageReactionExtensions(1,"special handle")
 	//time.Sleep(time.Second*5)
@@ -165,7 +165,7 @@ func main() {
 		//if i == 100 {
 		//	break
 		//}
-		log.Warn("", "10 * time.Millisecond ###################waiting... msg: ", i)
+		//log.Warn("", "10 * time.Millisecond ###################waiting... msg: ", i)
 	}
 	//
 	//log.Warn("", "cost time: ", utils.GetCurrentTimestampBySecond()-b)
