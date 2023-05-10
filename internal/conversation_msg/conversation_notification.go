@@ -604,6 +604,7 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 		if err != nil {
 			log.ZError(ctx, "SyncConversations err", err)
 		}
+		//go u.forcedSynchronization(ctx)
 	case constant.MsgSyncFailed:
 		c.ConversationListener.OnSyncServerFailed()
 	case constant.MsgSyncEnd:
@@ -661,3 +662,110 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 	}
 
 }
+
+func (c *Conversation) forcedSynchronization(ctx context.Context) {
+	log.ZInfo(ctx, "sync all info begin")
+
+}
+
+//func (u *LoginMgr) forcedSynchronization(ctx context.Context) {
+//	log.ZInfo(ctx, "sync all info begin")
+//	var wg sync.WaitGroup
+//	var errCh = make(chan error, 12)
+//	wg.Add(12)
+//	go func() {
+//		defer wg.Done()
+//		if err := u.user.SyncLoginUserInfo(ctx); err != nil {
+//			errCh <- err
+//		}
+//	}()
+//	go func() {
+//		defer wg.Done()
+//		if err := u.friend.SyncFriendList(ctx); err != nil {
+//			errCh <- err
+//		}
+//	}()
+//
+//	go func() {
+//		defer wg.Done()
+//		if err := u.friend.SyncBlackList(ctx); err != nil {
+//			errCh <- err
+//		}
+//	}()
+//
+//	go func() {
+//		defer wg.Done()
+//		if err := u.friend.SyncFriendApplication(ctx); err != nil {
+//			errCh <- err
+//		}
+//	}()
+//
+//	go func() {
+//		defer wg.Done()
+//		if err := u.friend.SyncSelfFriendApplication(ctx); err != nil {
+//			errCh <- err
+//		}
+//	}()
+//
+//	go func() {
+//		defer wg.Done()
+//		if err := u.group.SyncJoinedGroup(ctx); err != nil {
+//			errCh <- err
+//		}
+//	}()
+//
+//	go func() {
+//		defer wg.Done()
+//		if err := u.group.SyncAdminGroupApplication(ctx); err != nil {
+//			errCh <- err
+//		}
+//	}()
+//
+//	go func() {
+//		defer wg.Done()
+//		if err := u.group.SyncSelfGroupApplication(ctx); err != nil {
+//			errCh <- err
+//		}
+//	}()
+//
+//	go func() {
+//		defer wg.Done()
+//		if err := u.group.SyncJoinedGroupMemberForFirstLogin(ctx); err != nil {
+//			errCh <- err
+//		}
+//	}()
+//	go func() {
+//		defer wg.Done()
+//		if err := u.superGroup.SyncJoinedGroupList(ctx); err != nil {
+//			errCh <- err
+//		}
+//	}()
+//	go func() {
+//		defer wg.Done()
+//		if err := u.conversation.SyncConversations(ctx); err != nil {
+//			errCh <- err
+//		}
+//	}()
+//	go func() {
+//		defer wg.Done()
+//		if err := u.conversation.SyncConversationUnreadCount(ctx); err != nil {
+//			errCh <- err
+//		}
+//	}()
+//
+//	go func() {
+//		wg.Wait()
+//		close(errCh)
+//	}()
+//	for err := range errCh {
+//		if err != nil {
+//			log.ZError(ctx, "sync info failed", err)
+//		}
+//	}
+//	u.loginTime = utils.GetCurrentTimestampByMill()
+//	u.user.SetLoginTime(u.loginTime)
+//	u.friend.SetLoginTime(u.loginTime)
+//	u.group.SetLoginTime(u.loginTime)
+//	u.superGroup.SetLoginTime(u.loginTime)
+//	log.ZInfo(ctx, "login init sync finished")
+//}

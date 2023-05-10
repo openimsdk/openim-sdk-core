@@ -199,6 +199,8 @@ func (m *MsgSyncer) doConnected(ctx context.Context) {
 	if err := m.longConnMgr.SendReqWaitResp(m.ctx, &sdkws.GetMaxSeqReq{UserID: m.loginUserID}, constant.GetNewestSeq, &resp); err != nil {
 		log.ZError(m.ctx, "get max seq error", err)
 		return
+	} else {
+		log.ZDebug(m.ctx, "get max seq success", "resp", resp)
 	}
 	m.compareSeqsAndBatchSync(ctx, resp.MaxSeqs, connectPullNums)
 	common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.MsgSyncEnd}, m.conversationCh)
