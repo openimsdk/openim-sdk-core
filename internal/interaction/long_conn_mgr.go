@@ -172,6 +172,9 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 			//}
 			//break
 			//c.closedErr = err
+			log.ZError(c.ctx, "readMessage err", err)
+			_ = c.close()
+
 		}
 		switch messageType {
 		case MessageBinary:
@@ -246,6 +249,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 			m.UserID = ccontext.Info(ctx).UserID()
 			opID := utils.OperationIDGenerator()
 			sCtx := ccontext.WithOperationID(c.ctx, opID)
+			fmt.Println("send ping message")
 			log.ZInfo(sCtx, "ping and getMaxSeq start")
 			data, err := proto.Marshal(&m)
 			if err != nil {
@@ -356,7 +360,7 @@ func (c *LongConnMgr) handleMessage(message []byte) {
 		return
 	}
 	ctx := context.WithValue(c.ctx, "operationID", wsResp.OperationID)
-	log.ZInfo(ctx, "recv msg", "code", wsResp.ErrCode, "reqIdentifier", wsResp.ReqIdentifier)
+	log.ZInfo(ctx, "recv msg", "wsResp", wsResp)
 	switch wsResp.ReqIdentifier {
 	case constant.PushMsg:
 		if err = c.doPushMsg(ctx, wsResp); err != nil {

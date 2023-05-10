@@ -17,6 +17,7 @@ package test
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
@@ -822,7 +823,7 @@ func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string)
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
 	testSendMsg.sendTime = utils.GetCurrentTimestampByMill()
-	o := server_api_params.OfflinePushInfo{}
+	o := sdkws.OfflinePushInfo{}
 	o.Title = "title"
 	o.Desc = "desc"
 	testSendMsg.sendID = sendId

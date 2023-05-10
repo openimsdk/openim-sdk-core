@@ -459,11 +459,10 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	lg := new(login.LoginMgr)
 	log.Info(operationID, "new login ", lg)
 
-	sdk_struct.SvrConf = cf
 	allLoginMgr[index].mgr = lg
-	lg.InitSDK(sdk_struct.SvrConf, &testinit)
+	lg.InitSDK(cf, &testinit)
 
-	log.Info(operationID, "InitSDK ", sdk_struct.SvrConf)
+	log.Info(operationID, "InitSDK ", cf)
 
 	var testConversation conversationCallBack
 	lg.SetConversationListener(&testConversation)
@@ -510,11 +509,10 @@ func PressInitAndLogin(index int, uid, tk, ws, api string) {
 	lg := new(login.LoginMgr)
 	log.Info(operationID, "new login ", lg)
 
-	sdk_struct.SvrConf = cf
 	allLoginMgr[index].mgr = lg
-	lg.InitSDK(sdk_struct.SvrConf, &testinit)
+	lg.InitSDK(cf, &testinit)
 
-	log.Info(operationID, "InitSDK ", sdk_struct.SvrConf)
+	log.Info(operationID, "InitSDK ", cf)
 
 	var testConversation conversationCallBack
 	lg.SetConversationListener(&testConversation)
