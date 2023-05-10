@@ -75,9 +75,9 @@ func (u *WsRespAsyn) GetCh(msgIncr string) chan GeneralWsResp {
 func (u *WsRespAsyn) DelCh(msgIncr string) {
 	u.wsMutex.Lock()
 	defer u.wsMutex.Unlock()
-	_, ok := u.wsNotification[msgIncr]
+	ch, ok := u.wsNotification[msgIncr]
 	if ok {
-		//close(ch)
+		close(ch)
 		delete(u.wsNotification, msgIncr)
 	}
 }
