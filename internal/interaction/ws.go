@@ -335,8 +335,8 @@ func (w *Ws) doWsMsg(message []byte) {
 
 func (w *Ws) Logout(operationID string) {
 	w.SetLoginStatus(constant.Logout)
+	log.Warn(operationID, "TriggerCmdLogout ws...", "closeConn")
 	w.CloseConn(operationID)
-	log.Warn(operationID, "TriggerCmdLogout ws...", w.conn)
 	err := common.TriggerCmdLogout(w.cmdCh)
 	if err != nil {
 		log.Error(operationID, "TriggerCmdLogout failed ", err.Error())
