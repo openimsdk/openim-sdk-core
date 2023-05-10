@@ -30,7 +30,12 @@ import (
 	"time"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/golang/protobuf/proto"
+	"github.com/gorilla/websocket"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"github.com/golang/protobuf/proto"
@@ -118,10 +123,8 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 	msg := Message{
 		Message: GeneralWsReq{
 			ReqIdentifier: reqIdentifier,
-			Token:         "",
-			SendID:        mcontext.GetOpUserID(ctx),
-			OperationID:   mcontext.GetOperationID(ctx),
-			MsgIncr:       "",
+			SendID:        ccontext.Info(ctx).UserID(),
+			OperationID:   ccontext.Info(ctx).OperationID(),
 			Data:          data,
 		},
 		Resp: make(chan *GeneralWsResp, 1),
@@ -155,8 +158,12 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		//c.hub.unregister <- c
 		c.conn.Close()
 	}()
+	connNum := 0
 	//c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
+		connNum++
+		ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
+		log.ZDebug(ctx, "conn start", "connNum", connNum)
 		err := c.reConn(ctx)
 		if err != nil {
 			log.ZError(c.ctx, "reConn", err)
@@ -221,6 +228,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 				c.closedErr = ErrChanClosed
 				return
 			}
+			log.ZDebug(c.ctx, "writePump recv message", "message", message.Message)
 			go func() {
 				resp, err := c.sendAndWaitResp(&message.Message)
 				if err != nil {
@@ -249,7 +257,6 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 			m.UserID = ccontext.Info(ctx).UserID()
 			opID := utils.OperationIDGenerator()
 			sCtx := ccontext.WithOperationID(c.ctx, opID)
-			fmt.Println("send ping message")
 			log.ZInfo(sCtx, "ping and getMaxSeq start")
 			data, err := proto.Marshal(&m)
 			if err != nil {
@@ -279,7 +286,8 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 				}
 				var cmd sdk_struct.CmdMaxSeqToMsgSync
 				cmd.ConversationMaxSeqOnSvr = wsSeqResp.MaxSeqs
-				err := common.TriggerCmdMaxSeq(sCtx, cmd, c.pushMsgAndMaxSeqCh)
+
+				err := common.TriggerCmdMaxSeq(sCtx, &cmd, c.pushMsgAndMaxSeqCh)
 				if err != nil {
 					log.ZError(sCtx, "TriggerCmdMaxSeq failed", err)
 				}
@@ -297,7 +305,7 @@ func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error)
 		case resp := <-tempChan:
 			return resp, nil
 		case <-time.After(time.Second * 3):
-			return nil, sdkerrs.ErrNetworkTimeOut.WithDetail(err.Error()).Wrap()
+			return nil, sdkerrs.ErrNetworkTimeOut.Wrap()
 		}
 
 	}
@@ -483,6 +491,7 @@ func (c *LongConnMgr) reConn(ctx context.Context) error {
 	c.w.Lock()
 	c.connStatus = Connected
 	c.w.Unlock()
+	log.ZInfo(c.ctx, "long conn establish success", "localAddr", c.conn.LocalAddr())
 	_ = common.TriggerCmdConnected(ctx, c.pushMsgAndMaxSeqCh)
 	return nil
 }

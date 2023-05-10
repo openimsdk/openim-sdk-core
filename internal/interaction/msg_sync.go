@@ -43,8 +43,18 @@ type MsgSyncer struct {
 	ctx                context.Context       // context
 }
 
+func (m *MsgSyncer) Work(cmd common.Cmd2Value) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m *MsgSyncer) GetCh() chan common.Cmd2Value {
+	//TODO implement me
+	panic("implement me")
+}
+
 // NewMsgSyncer creates a new instance of the message synchronizer.
-func NewMsgSyncer(ctx context.Context, conversationCh, PushMsgAndMaxSeqCh, recvSeqch chan common.Cmd2Value,
+func NewMsgSyncer(ctx context.Context, conversationCh, PushMsgAndMaxSeqCh chan common.Cmd2Value,
 	loginUserID string, longConnMgr *LongConnMgr, db db_interface.DataBase, syncTimes int) (*MsgSyncer, error) {
 	m := &MsgSyncer{
 		loginUserID:        loginUserID,
@@ -57,6 +67,7 @@ func NewMsgSyncer(ctx context.Context, conversationCh, PushMsgAndMaxSeqCh, recvS
 		syncTimes:          syncTimes,
 	}
 	err := m.loadSeq(ctx)
+	go m.DoListener()
 	return m, err
 }
 
@@ -117,15 +128,17 @@ func (m *MsgSyncer) getSeqsNeedSync(syncedMaxSeq, maxSeq int64) []int64 {
 func (m *MsgSyncer) handlePushMsgAndEvent(cmd common.Cmd2Value) {
 	switch cmd.Cmd {
 	case constant.CmdConnSuccesss:
-		m.doConnected()
+		log.ZInfo(cmd.Ctx, "recv long conn mgr connected", "cmd", cmd)
+		m.doConnected(cmd.Ctx)
 	case constant.CmdMaxSeq:
-		m.compareSeqsAndBatchSync(cmd.Value.(*sdk_struct.CmdMaxSeqToMsgSync).ConversationMaxSeqOnSvr, defaultPullNums)
+		log.ZInfo(cmd.Ctx, "recv max seqs from long conn mgr, start sync msgs", "cmd", cmd)
+		m.compareSeqsAndBatchSync(cmd.Ctx, cmd.Value.(*sdk_struct.CmdMaxSeqToMsgSync).ConversationMaxSeqOnSvr, defaultPullNums)
 	case constant.CmdPushMsg:
 		m.doPushMsg(cmd.Ctx, cmd.Value.(*sdkws.PushMessages))
 	}
 }
 
-func (m *MsgSyncer) compareSeqsAndBatchSync(maxSeqToSync map[string]int64, pullNums int64) {
+func (m *MsgSyncer) compareSeqsAndBatchSync(ctx context.Context, maxSeqToSync map[string]int64, pullNums int64) {
 	needSyncSeqMap := make(map[string][2]int64)
 	for conversationID, maxSeq := range maxSeqToSync {
 		if syncedMaxSeq, ok := m.syncedMaxSeqs[conversationID]; ok {
@@ -180,14 +193,16 @@ func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pullMsgs map[string]
 }
 
 // Called after successful reconnection to synchronize the latest message
-func (m *MsgSyncer) doConnected() {
+func (m *MsgSyncer) doConnected(ctx context.Context) {
 	common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.MsgSyncBegin}, m.conversationCh)
 	var resp sdkws.GetMaxSeqResp
 	if err := m.longConnMgr.SendReqWaitResp(m.ctx, &sdkws.GetMaxSeqReq{UserID: m.loginUserID}, constant.GetNewestSeq, &resp); err != nil {
 		log.ZError(m.ctx, "get max seq error", err)
 		return
+	} else {
+		log.ZDebug(m.ctx, "get max seq success", "resp", resp)
 	}
-	m.compareSeqsAndBatchSync(resp.MaxSeqs, connectPullNums)
+	m.compareSeqsAndBatchSync(ctx, resp.MaxSeqs, connectPullNums)
 	common.TriggerCmdNotification(m.ctx, sdk_struct.CmdNewMsgComeToConversation{SyncFlag: constant.MsgSyncEnd}, m.conversationCh)
 }
 
