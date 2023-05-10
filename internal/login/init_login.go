@@ -61,6 +61,7 @@ type LoginMgr struct {
 	full         *full.Full
 	db           db_interface.DataBase
 	longConnMgr  *interaction.LongConnMgr
+	msgSyncer    *interaction.MsgSyncer
 	push         *third.Push
 	cache        *cache.Cache
 	token        string
@@ -295,6 +296,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.push = third.NewPush(u.info.Platform, u.loginUserID)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	u.longConnMgr = interaction.NewLongConnMgr(ctx, u.connListener, u.pushMsgAndMaxSeqCh, u.conversationCh)
+	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
 		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq)
 	//var wg sync.WaitGroup

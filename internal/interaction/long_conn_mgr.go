@@ -248,7 +248,6 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 			m.UserID = ccontext.Info(ctx).UserID()
 			opID := utils.OperationIDGenerator()
 			sCtx := ccontext.WithOperationID(c.ctx, opID)
-			fmt.Println("send ping message")
 			log.ZInfo(sCtx, "ping and getMaxSeq start")
 			data, err := proto.Marshal(&m)
 			if err != nil {
@@ -278,6 +277,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 				}
 				var cmd sdk_struct.CmdMaxSeqToMsgSync
 				cmd.ConversationMaxSeqOnSvr = wsSeqResp.MaxSeqs
+
 				err := common.TriggerCmdMaxSeq(sCtx, cmd, c.pushMsgAndMaxSeqCh)
 				if err != nil {
 					log.ZError(sCtx, "TriggerCmdMaxSeq failed", err)
@@ -482,6 +482,7 @@ func (c *LongConnMgr) reConn(ctx context.Context) error {
 	c.w.Lock()
 	c.connStatus = Connected
 	c.w.Unlock()
+	log.ZInfo(c.ctx, "long conn establish success", "localAddr", c.conn.LocalAddr())
 	_ = common.TriggerCmdConnected(ctx, c.pushMsgAndMaxSeqCh)
 	return nil
 }
