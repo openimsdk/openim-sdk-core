@@ -17,8 +17,6 @@ package conversation_msg
 import (
 	"context"
 	"encoding/json"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/internal/business"
 	"open_im_sdk/internal/cache"
 	"open_im_sdk/internal/file"
@@ -38,6 +36,9 @@ import (
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/syncer"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"

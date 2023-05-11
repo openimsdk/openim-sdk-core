@@ -17,20 +17,22 @@ package conversation_msg
 import (
 	"context"
 	"encoding/json"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	utils2 "github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
-	"github.com/google/go-cmp/cmp"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
+	"open_im_sdk/pkg/syncer"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"strings"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	utils2 "github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
+	"github.com/google/go-cmp/cmp"
 )
 
 func (c *Conversation) Work(c2v common.Cmd2Value) {
@@ -602,9 +604,15 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 		c.ConversationListener.OnSyncServerStart()
 		err := c.SyncConversations(ctx)
 		if err != nil {
-			log.ZError(ctx, "SyncConversations err", err)
+			log.ZError(ctx, "syncConversations err", err)
 		}
-		//go u.forcedSynchronization(ctx)
+		for _, syncFunc := range []func(c context.Context) error{
+			c.user.SyncLoginUserInfo,
+			c.friend.SyncBlackList, c.friend.SyncFriendList, c.friend.SyncFriendApplication, c.friend.SyncSelfFriendApplication,
+			c.group.SyncJoinedGroup, c.group.SyncAdminGroupApplication, c.group.SyncSelfGroupApplication, c.group.SyncJoinedGroupMember,
+		} {
+			_ = syncer.SyncAll(ctx, syncFunc)
+		}
 	case constant.MsgSyncFailed:
 		c.ConversationListener.OnSyncServerFailed()
 	case constant.MsgSyncEnd:
@@ -662,110 +670,3 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 	}
 
 }
-
-func (c *Conversation) forcedSynchronization(ctx context.Context) {
-	log.ZInfo(ctx, "sync all info begin")
-
-}
-
-//func (u *LoginMgr) forcedSynchronization(ctx context.Context) {
-//	log.ZInfo(ctx, "sync all info begin")
-//	var wg sync.WaitGroup
-//	var errCh = make(chan error, 12)
-//	wg.Add(12)
-//	go func() {
-//		defer wg.Done()
-//		if err := u.user.SyncLoginUserInfo(ctx); err != nil {
-//			errCh <- err
-//		}
-//	}()
-//	go func() {
-//		defer wg.Done()
-//		if err := u.friend.SyncFriendList(ctx); err != nil {
-//			errCh <- err
-//		}
-//	}()
-//
-//	go func() {
-//		defer wg.Done()
-//		if err := u.friend.SyncBlackList(ctx); err != nil {
-//			errCh <- err
-//		}
-//	}()
-//
-//	go func() {
-//		defer wg.Done()
-//		if err := u.friend.SyncFriendApplication(ctx); err != nil {
-//			errCh <- err
-//		}
-//	}()
-//
-//	go func() {
-//		defer wg.Done()
-//		if err := u.friend.SyncSelfFriendApplication(ctx); err != nil {
-//			errCh <- err
-//		}
-//	}()
-//
-//	go func() {
-//		defer wg.Done()
-//		if err := u.group.SyncJoinedGroup(ctx); err != nil {
-//			errCh <- err
-//		}
-//	}()
-//
-//	go func() {
-//		defer wg.Done()
-//		if err := u.group.SyncAdminGroupApplication(ctx); err != nil {
-//			errCh <- err
-//		}
-//	}()
-//
-//	go func() {
-//		defer wg.Done()
-//		if err := u.group.SyncSelfGroupApplication(ctx); err != nil {
-//			errCh <- err
-//		}
-//	}()
-//
-//	go func() {
-//		defer wg.Done()
-//		if err := u.group.SyncJoinedGroupMemberForFirstLogin(ctx); err != nil {
-//			errCh <- err
-//		}
-//	}()
-//	go func() {
-//		defer wg.Done()
-//		if err := u.superGroup.SyncJoinedGroupList(ctx); err != nil {
-//			errCh <- err
-//		}
-//	}()
-//	go func() {
-//		defer wg.Done()
-//		if err := u.conversation.SyncConversations(ctx); err != nil {
-//			errCh <- err
-//		}
-//	}()
-//	go func() {
-//		defer wg.Done()
-//		if err := u.conversation.SyncConversationUnreadCount(ctx); err != nil {
-//			errCh <- err
-//		}
-//	}()
-//
-//	go func() {
-//		wg.Wait()
-//		close(errCh)
-//	}()
-//	for err := range errCh {
-//		if err != nil {
-//			log.ZError(ctx, "sync info failed", err)
-//		}
-//	}
-//	u.loginTime = utils.GetCurrentTimestampByMill()
-//	u.user.SetLoginTime(u.loginTime)
-//	u.friend.SetLoginTime(u.loginTime)
-//	u.group.SetLoginTime(u.loginTime)
-//	u.superGroup.SetLoginTime(u.loginTime)
-//	log.ZInfo(ctx, "login init sync finished")
-//}

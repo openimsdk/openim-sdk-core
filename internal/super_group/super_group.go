@@ -33,8 +33,8 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-func NewSuperGroup(loginUserID string, db db_interface.DataBase, joinedSuperGroupCh chan common.Cmd2Value, heartbeatCmdCh chan common.Cmd2Value) *SuperGroup {
-	s := &SuperGroup{loginUserID: loginUserID, db: db, joinedSuperGroupCh: joinedSuperGroupCh, heartbeatCmdCh: heartbeatCmdCh}
+func NewSuperGroup(loginUserID string, db db_interface.DataBase, heartbeatCmdCh chan common.Cmd2Value) *SuperGroup {
+	s := &SuperGroup{loginUserID: loginUserID, db: db, heartbeatCmdCh: heartbeatCmdCh}
 	s.initSyncer()
 	return s
 }

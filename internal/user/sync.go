@@ -26,9 +26,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// SyncLoginUserInfo synchronizes the user's information from the server.
 func (u *User) SyncLoginUserInfo(ctx context.Context) error {
-	log.NewInfo(utils.GetSelfFuncName(), "args: ")
 	remoteUser, err := u.GetSingleUserFromSvr(ctx, u.loginUserID)
 	if err != nil {
 		return err
@@ -42,23 +40,17 @@ func (u *User) SyncLoginUserInfo(ctx context.Context) error {
 		remoteUsers = []*model_struct.LocalUser{localUser}
 	}
 	log.ZDebug(ctx, "SyncLoginUserInfo", "remoteUser", remoteUser, "localUser", localUser)
-
 	err = u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, remoteUsers, nil)
 	if err != nil {
 		return err
 	}
 	callbackData := sdk.SelfInfoUpdatedCallback(*remoteUser)
 	if u.listener == nil {
-		log.Error("u.listener == nil")
-		return nil
+		return err
 	}
 	u.listener.OnSelfInfoUpdated(utils.StructToJsonString(callbackData))
-	log.Info("OnSelfInfoUpdated", utils.StructToJsonString(callbackData))
 	if localUser.Nickname == remoteUser.Nickname && localUser.FaceURL == remoteUser.FaceURL {
-		log.NewInfo("OnSelfInfoUpdated nickname faceURL unchanged", callbackData)
-		return nil
+		return err
 	}
-	//_ = common.TriggerCmdUpdateMessage(common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: callbackData.UserID, FaceURL: callbackData.FaceURL, Nickname: callbackData.Nickname}}, u.conversationCh)
-
 	return nil
 }

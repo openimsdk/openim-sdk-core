@@ -39,7 +39,6 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
-	"sync"
 	"time"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
@@ -87,11 +86,11 @@ type LoginMgr struct {
 	cmdWsCh            chan common.Cmd2Value
 	heartbeatCmdCh     chan common.Cmd2Value
 	pushMsgAndMaxSeqCh chan common.Cmd2Value
-	joinedSuperGroupCh chan common.Cmd2Value
-	ctx                context.Context
-	cancel             context.CancelFunc
-	info               *ccontext.GlobalConfig
-	id2MinSeq          map[string]int64
+
+	ctx       context.Context
+	cancel    context.CancelFunc
+	info      *ccontext.GlobalConfig
+	id2MinSeq map[string]int64
 }
 
 func (u *LoginMgr) BaseCtx() context.Context {
@@ -271,7 +270,6 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.cmdWsCh = make(chan common.Cmd2Value, 10)
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
-	u.joinedSuperGroupCh = make(chan common.Cmd2Value, 10)
 
 	u.id2MinSeq = make(map[string]int64, 100)
 	u.user = user.NewUser(u.db, u.loginUserID, u.conversationCh)
@@ -280,9 +278,9 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.friend = friend.NewFriend(u.loginUserID, u.db, u.user, u.conversationCh)
 	u.friend.SetFriendListener(u.friendListener)
 
-	u.group = group.NewGroup(u.loginUserID, u.db, u.joinedSuperGroupCh, u.heartbeatCmdCh, u.conversationCh)
+	u.group = group.NewGroup(u.loginUserID, u.db, u.heartbeatCmdCh, u.conversationCh)
 	u.group.SetGroupListener(u.groupListener)
-	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db, u.joinedSuperGroupCh, u.heartbeatCmdCh)
+	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db, u.heartbeatCmdCh)
 	u.cache = cache.NewCache(u.user, u.friend)
 	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache, u.db, u.superGroup)
 	u.workMoments = workMoments.NewWorkMoments(u.loginUserID, u.db)
@@ -297,20 +295,10 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	u.longConnMgr = interaction.NewLongConnMgr(ctx, u.connListener, u.pushMsgAndMaxSeqCh, u.conversationCh)
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
-
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
-		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq)
-	//var wg sync.WaitGroup
-	//wg.Add(1)
-	//go func() {
-	//	defer wg.Done()
-	// u.forcedSynchronization(ctx)
-	//}()
-	//wg.Wait()
+		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq,
+	)
 
-	//go u.forcedSynchronization(ctx)
-
-	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	u.signaling = signaling.NewLiveSignaling(u.longConnMgr, u.loginUserID, u.info.Platform, u.db)
 	if u.signalingListener != nil {
 		u.signaling.SetListener(u.signalingListener)
@@ -318,7 +306,6 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	if u.signalingListenerFroService != nil {
 		u.signaling.SetListenerForService(u.signalingListenerFroService)
 	}
-
 	if u.batchMsgListener != nil {
 		u.conversation.SetBatchMsgListener(u.batchMsgListener)
 		log.ZDebug(ctx, "SetBatchMsgListener", "batchMsgListener", u.batchMsgListener)
@@ -375,108 +362,6 @@ func (u *LoginMgr) GetLoginUser() string {
 
 func (u *LoginMgr) GetLoginStatus() int {
 	return u.longConnMgr.GetConnectionStatus()
-}
-
-func (u *LoginMgr) forcedSynchronization(ctx context.Context) {
-	log.ZInfo(ctx, "sync all info begin")
-	var wg sync.WaitGroup
-	var errCh = make(chan error, 12)
-	wg.Add(12)
-	go func() {
-		defer wg.Done()
-		if err := u.user.SyncLoginUserInfo(ctx); err != nil {
-			errCh <- err
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		if err := u.friend.SyncFriendList(ctx); err != nil {
-			errCh <- err
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		if err := u.friend.SyncBlackList(ctx); err != nil {
-			errCh <- err
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		if err := u.friend.SyncFriendApplication(ctx); err != nil {
-			errCh <- err
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		if err := u.friend.SyncSelfFriendApplication(ctx); err != nil {
-			errCh <- err
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		if err := u.group.SyncJoinedGroup(ctx); err != nil {
-			errCh <- err
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		if err := u.group.SyncAdminGroupApplication(ctx); err != nil {
-			errCh <- err
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		if err := u.group.SyncSelfGroupApplication(ctx); err != nil {
-			errCh <- err
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		if err := u.group.SyncJoinedGroupMemberForFirstLogin(ctx); err != nil {
-			errCh <- err
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		if err := u.superGroup.SyncJoinedGroupList(ctx); err != nil {
-			errCh <- err
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		if err := u.conversation.SyncConversations(ctx); err != nil {
-			errCh <- err
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		if err := u.conversation.SyncConversationUnreadCount(ctx); err != nil {
-			errCh <- err
-		}
-	}()
-
-	go func() {
-		wg.Wait()
-		close(errCh)
-	}()
-	for err := range errCh {
-		if err != nil {
-			log.ZError(ctx, "sync info failed", err)
-		}
-	}
-	u.loginTime = utils.GetCurrentTimestampByMill()
-	u.user.SetLoginTime(u.loginTime)
-	u.friend.SetLoginTime(u.loginTime)
-	u.group.SetLoginTime(u.loginTime)
-	u.superGroup.SetLoginTime(u.loginTime)
-	log.ZInfo(ctx, "login init sync finished")
 }
 
 func CheckToken(userID, token string, operationID string) (int64, error) {
