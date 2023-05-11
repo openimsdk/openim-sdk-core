@@ -17,6 +17,7 @@ package conversation_msg
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
@@ -34,6 +35,7 @@ import (
 )
 
 func (c *Conversation) Work(c2v common.Cmd2Value) {
+	fmt.Println("conversation_msg.Work", c2v)
 	log.ZDebug(c2v.Ctx, "NotificationCmd start", "cmd", c2v.Cmd, "value", c2v.Value)
 	defer log.ZDebug(c2v.Ctx, "NotificationCmd end", "cmd", c2v.Cmd, "value", c2v.Value)
 	switch c2v.Cmd {

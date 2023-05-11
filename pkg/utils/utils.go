@@ -19,6 +19,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/sdk_struct"
+	"sort"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
@@ -322,6 +324,21 @@ func GetConversationIDBySessionType(sourceID string, sessionType int) string {
 		return "super_group_" + sourceID
 	case constant.NotificationChatType:
 		return "notification_" + sourceID
+	}
+	return ""
+}
+func GetConversationIDByMsg(msg *sdk_struct.MsgStruct) string {
+	switch msg.SessionType {
+	case constant.SingleChatType:
+		l := []string{msg.SendID, msg.RecvID}
+		sort.Strings(l)
+		return "si_" + strings.Join(l, "_") // single chat
+	case constant.GroupChatType:
+		return "g_" + msg.GroupID // group chat
+	case constant.SuperGroupChatType:
+		return "sg_" + msg.GroupID // super group chat
+	case constant.NotificationChatType:
+		return "sn_" + msg.SendID + "_" + msg.RecvID // server notification chat
 	}
 	return ""
 }

@@ -111,7 +111,7 @@ func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnLis
 func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqIdentifier int, resp proto.Message) error {
 	data, err := proto.Marshal(m)
 	if err != nil {
-		return err
+		return sdkerrs.ErrArgs
 	}
 	msg := Message{
 		Message: GeneralWsReq{
@@ -126,7 +126,7 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 	log.ZDebug(ctx, "send message to send channel success", "msg", m, "reqIdentifier", reqIdentifier)
 	select {
 	case <-ctx.Done():
-		return errors.New("wait response timeout")
+		return sdkerrs.ErrCtxDeadline
 	case v, ok := <-msg.Resp:
 		if !ok {
 			return errors.New("response channel closed")
@@ -135,7 +135,7 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 			return errs.NewCodeError(v.ErrCode, v.ErrMsg)
 		}
 		if err := proto.Unmarshal(v.Data, resp); err != nil {
-			return err
+			return sdkerrs.ErrArgs
 		}
 		return nil
 	}
@@ -154,10 +154,8 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 	connNum := 0
 	//c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
-		connNum++
 		ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
-		log.ZDebug(ctx, "conn start", "connNum", connNum)
-		err := c.reConn(ctx)
+		err := c.reConn(ctx, &connNum)
 		if err != nil {
 			log.ZError(c.ctx, "reConn", err)
 			time.Sleep(time.Second * 1)
@@ -298,7 +296,7 @@ func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error)
 		case resp := <-tempChan:
 			return resp, nil
 		case <-time.After(time.Second * 3):
-			return nil, sdkerrs.ErrNetworkTimeOut.Wrap()
+			return nil, sdkerrs.ErrNetworkTimeOut
 		}
 
 	}
@@ -404,7 +402,7 @@ func (c *LongConnMgr) GetConnectionStatus() int {
 	defer c.w.Unlock()
 	return c.connStatus
 }
-func (c *LongConnMgr) reConn(ctx context.Context) error {
+func (c *LongConnMgr) reConn(ctx context.Context, num *int) error {
 	if c.IsConnected() {
 		return nil
 	}
@@ -484,7 +482,9 @@ func (c *LongConnMgr) reConn(ctx context.Context) error {
 	c.w.Lock()
 	c.connStatus = Connected
 	c.w.Unlock()
-	log.ZInfo(c.ctx, "long conn establish success", "localAddr", c.conn.LocalAddr())
+	log.ZDebug(ctx, "conn start")
+	*num++
+	log.ZInfo(c.ctx, "long conn establish success", "localAddr", c.conn.LocalAddr(), "connNum", *num)
 	_ = common.TriggerCmdConnected(ctx, c.pushMsgAndMaxSeqCh)
 	return nil
 }

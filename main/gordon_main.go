@@ -98,6 +98,8 @@ func main() {
 	tokenx := gRunGetToken(uid)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(uid, tokenx, WSADDR, APIADDR)
+	time.Sleep(time.Second * 30)
+	test.DoTestSendMsg2("7788", "7789")
 	//test.DoTestGetAdvancedHistoryMessageList()
 	//test.DoTestGetSelfUserInfo()
 	//test.DoTestSendMsg2GroupWithMessage(uid, "1623878302774460418", "2")

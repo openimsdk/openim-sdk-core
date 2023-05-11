@@ -17,6 +17,11 @@ package ccontext
 import (
 	"context"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
+	"open_im_sdk/open_im_sdk_callback"
+)
+
+const (
+	Callback = "callback"
 )
 
 type GlobalConfig struct {
@@ -60,6 +65,9 @@ func WithInfo(ctx context.Context, conf *GlobalConfig) context.Context {
 
 func WithOperationID(ctx context.Context, operationID string) context.Context {
 	return mcontext.SetOperationID(ctx, operationID)
+}
+func WithSendMessageCallback(ctx context.Context, callback open_im_sdk_callback.SendMsgCallBack) context.Context {
+	return context.WithValue(ctx, Callback, callback)
 }
 
 type globalConfigKey struct{}
