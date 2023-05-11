@@ -29,8 +29,8 @@ var (
 	//WSADDR  = "ws://43.155.69.205:10001"
 	//APIADDR = "https://chat-api-dev.opencord.so"
 	//WSADDR  = "wss://chat-ws-dev.opencord.so"
-	APIADDR = "http://125.124.195.201:10002"
-	WSADDR  = "ws://125.124.195.201:10001"
+	APIADDR = "http://59.36.173.89:10002"
+	WSADDR  = "ws://59.36.173.89:10001"
 	//APIADDR      = "http://113.108.8.93:10002"
 	//WSADDR       = "ws://113.108.8.93:10001"
 	REGISTERADDR = APIADDR + "/user_register"
@@ -89,7 +89,7 @@ func gRunGetToken(strMyUid string) string {
 	return token
 }
 func main() {
-	uid := "7788"
+	uid := "kernaltestuid9"
 	//Gordon
 	//uid:="1554321956297519104"
 	//Gordon2
