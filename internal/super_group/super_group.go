@@ -73,7 +73,7 @@ func (s *SuperGroup) DoNotification(ctx context.Context, msg *sdkws.MsgData, ch 
 	}
 	switch msg.ContentType {
 	case constant.SuperGroupUpdateNotification:
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.SyncConversation, Args: operationID}, ch)
+		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.SyncConversation, Args: operationID}, ch)
 		if err := s.SyncJoinedGroupList(ctx); err != nil {
 			// todo log
 		}

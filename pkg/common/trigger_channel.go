@@ -100,10 +100,11 @@ func TriggerCmdSyncReactionExtensions(node SyncReactionExtensionsNode, conversat
 	return sendCmd(conversationCh, c2v, 100)
 }
 
-func TriggerCmdUpdateConversation(node UpdateConNode, conversationCh chan<- Cmd2Value) error {
+func TriggerCmdUpdateConversation(ctx context.Context, node UpdateConNode, conversationCh chan<- Cmd2Value) error {
 	c2v := Cmd2Value{
 		Cmd:   constant.CmdUpdateConversation,
 		Value: node,
+		Ctx:   ctx,
 	}
 
 	return sendCmd(conversationCh, c2v, 100)

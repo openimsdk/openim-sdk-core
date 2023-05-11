@@ -866,7 +866,7 @@ func (c *Conversation) revokeOneMessage(ctx context.Context, req *sdk_struct.Msg
 	lc.LatestMsg = utils.StructToJsonString(req)
 	lc.LatestMsgSendTime = req.SendTime
 	lc.ConversationID = conversationID
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.GetCh())
 	return nil
 }
 func (c *Conversation) newRevokeOneMessage(ctx context.Context, req *sdk_struct.MsgStruct) error {
@@ -977,7 +977,7 @@ func (c *Conversation) newRevokeOneMessage(ctx context.Context, req *sdk_struct.
 	s.GroupID = groupID
 	s.RecvID = recvID
 	c.newRevokeMessage(ctx, []*sdk_struct.MsgStruct{&s})
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.GetCh())
 	return nil
 }
 
@@ -1061,7 +1061,7 @@ func (c *Conversation) markC2CMessageAsRead(ctx context.Context, msgIDList []str
 			continue
 		}
 	}
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.GetCh())
 	return nil
 	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 }
@@ -1072,8 +1072,8 @@ func (c *Conversation) markGroupMessageAsRead(ctx context.Context, msgIDList []s
 	}
 	if len(msgIDList) == 0 {
 		_ = c.setOneConversationUnread(ctx, conversationID, 0)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
+		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 		return nil
 	}
 	var localMessage model_struct.LocalChatLog
@@ -1200,7 +1200,7 @@ func (c *Conversation) clearGroupHistoryMessage(ctx context.Context, groupID str
 	if err != nil {
 		return err
 	}
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 	return nil
 
 }
@@ -1215,7 +1215,7 @@ func (c *Conversation) clearC2CHistoryMessage(ctx context.Context, userID string
 	if err != nil {
 		return err
 	}
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 	return nil
 }
 
@@ -1324,7 +1324,7 @@ func (c *Conversation) deleteMessageFromLocalStorage(ctx context.Context, s *sdk
 		if err != nil {
 			log.Error("internal", "updateConversationLatestMsgModel err: ", err)
 		} else {
-			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+			_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 		}
 	}
 	return nil
@@ -1611,7 +1611,7 @@ func (c *Conversation) deleteAllMsgFromLocal(ctx context.Context) error {
 	for _, conversation := range conversationList {
 		cidList = append(cidList, conversation.ConversationID)
 	}
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: cidList}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: cidList}, c.GetCh())
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 	return nil
 
