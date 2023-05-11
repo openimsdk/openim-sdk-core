@@ -509,8 +509,10 @@ func (i *LocalChatLogs) GetSuperGroupAbnormalMsgSeq(groupID string) (uint32, err
 	if err != nil {
 		return 0, err
 	} else {
-		if v, ok := isExist.(uint32); ok {
-			return v, nil
+		if v, ok := isExist.(float64); ok {
+			var result uint32
+			result = uint32(v)
+			return result, nil
 		} else {
 			return 0, ErrType
 		}
