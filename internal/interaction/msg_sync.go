@@ -243,7 +243,7 @@ func (m *MsgSyncer) pullMsgBySeqRange(ctx context.Context, seqMap map[string][2]
 	var req sdkws.PullMessageBySeqsReq
 	for conversationID, seqs := range seqMap {
 		var pullNums int64 = syncMsgNum
-		if pullNums < seqs[1]-seqs[0] {
+		if pullNums > seqs[1]-seqs[0] {
 			pullNums = seqs[1] - seqs[0]
 		}
 		req.SeqRanges = append(req.SeqRanges, &sdkws.SeqRange{
