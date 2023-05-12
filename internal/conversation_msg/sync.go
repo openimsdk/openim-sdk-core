@@ -29,7 +29,7 @@ func (c *Conversation) SyncConversations(ctx context.Context) error {
 	log.ZDebug(ctx, "get local cost time", "cost time", time.Since(ccTime), "conversation on local", conversationsOnLocal)
 	if err = c.conversationSyncer.Sync(ctx, conversationsOnServer, conversationsOnLocal, func(ctx context.Context, state int, conversation *model_struct.LocalConversation) error {
 		if state == syncer.Update {
-			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.ConChange, Args: ""}})
+			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.ConChange, Args: []string{conversation.ConversationID}}})
 		}
 		return nil
 	}, true); err != nil {
