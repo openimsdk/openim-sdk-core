@@ -58,7 +58,7 @@ func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) error {
 		}
 	}
 	if len(conversationChangedList) > 0 {
-		if err := common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedList}, c.GetCh()); err != nil {
+		if err := common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedList}, c.GetCh()); err != nil {
 			return err
 		}
 	}
