@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
-	"github.com/gorilla/websocket"
 	"net/http"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -15,6 +14,8 @@ import (
 	"open_im_sdk/sdk_struct"
 	"strings"
 	"sync"
+
+	"github.com/gorilla/websocket"
 )
 
 const writeTimeoutSeconds = 30
@@ -196,6 +197,7 @@ func (u *WsConn) ReConn(operationID string) (error, bool, bool) {
 	var header http.Header
 	if u.IsCompression {
 		header = http.Header{"compression": []string{"gzip"}}
+		url += fmt.Sprintf("&compression=%s", "gzip")
 	}
 	//conn, httpResp, err := u.websocket.DefaultDialer.Dial(url, header)
 	httpResp, err := u.conn.Dial(url, header)
