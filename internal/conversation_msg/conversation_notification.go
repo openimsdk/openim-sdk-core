@@ -44,7 +44,7 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 	case constant.CmdNewMsgCome:
 		c.doMsgNew(c2v)
 	case constant.CmdSuperGroupMsgCome:
-		c.doSuperGroupMsgNew(c2v)
+		//c.doSuperGroupMsgNew(c2v)
 	case constant.CmdUpdateConversation:
 		c.doUpdateConversation(c2v)
 	case constant.CmdUpdateMessage:

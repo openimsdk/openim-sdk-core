@@ -960,7 +960,7 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	}
 	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
-	wsMsgData.AtUserIDList = s.AtElem.AtUserList
+	//wsMsgData.AtUserIDList = s.AtElem.AtUserList
 	wsMsgData.OfflinePushInfo = offlinePushInfo
 	//timeout := 300
 	//retryTimes := 60
