@@ -107,7 +107,6 @@ func InOutlllogin(uid, tk string) {
 			time.Sleep(100 * time.Millisecond)
 		} else {
 			time.Sleep(100 * time.Millisecond)
-			log.Info(operationID, "waiting login ")
 		}
 	}
 }

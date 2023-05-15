@@ -485,10 +485,7 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 
 	for {
 		if callback.errCode == 1 && testConversation.SyncFlag == 1 {
-			log.Warn(operationID, "login ok, and sync finished ", uid)
 			return
-		} else {
-			log.Warn(operationID, "waiting login...", uid, callback.errCode, testConversation.SyncFlag)
 		}
 	}
 

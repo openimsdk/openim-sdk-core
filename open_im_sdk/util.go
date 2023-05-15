@@ -15,11 +15,12 @@
 package open_im_sdk
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/ccontext"
-	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdkerrs"
 	"reflect"
 	"runtime/debug"
@@ -176,7 +177,7 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 
 func call(callback open_im_sdk_callback.Base, operationID string, fn any, args ...any) {
 	if callback == nil {
-		log.Error("callback is nil")
+		log.ZWarn(context.Background(), "callback is nil", nil)
 		return
 	}
 	go func() {
@@ -314,7 +315,7 @@ func syncCall(operationID string, fn any, args ...any) string {
 }
 func messageCall(callback open_im_sdk_callback.SendMsgCallBack, operationID string, fn any, args ...any) {
 	if callback == nil {
-		log.Error("callback is nil")
+		log.ZWarn(context.Background(), "callback is nil", nil)
 		return
 	}
 	go messageCall_(callback, operationID, fn, args...)
