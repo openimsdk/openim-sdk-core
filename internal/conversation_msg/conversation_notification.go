@@ -23,7 +23,6 @@ import (
 	"open_im_sdk/pkg/db/model_struct"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
-	"open_im_sdk/pkg/syncer"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"strings"
@@ -611,7 +610,9 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 			c.friend.SyncBlackList, c.friend.SyncFriendList, c.friend.SyncFriendApplication, c.friend.SyncSelfFriendApplication,
 			c.group.SyncJoinedGroup, c.group.SyncAdminGroupApplication, c.group.SyncSelfGroupApplication, c.group.SyncJoinedGroupMember,
 		} {
-			_ = syncer.SyncAll(ctx, syncFunc)
+			go func(syncFunc func(c context.Context) error) {
+				_ = syncFunc(ctx)
+			}(syncFunc)
 		}
 	case constant.MsgSyncFailed:
 		c.ConversationListener.OnSyncServerFailed()

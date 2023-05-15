@@ -61,7 +61,6 @@ func (c *Conversation) CreateAdvancedTextMessage(ctx context.Context, text strin
 //	}
 //	return &s, nil
 //}
-// test
 
 func (c *Conversation) CreateTextAtMessage(ctx context.Context, text string, userIDList []string, usersInfo []*sdk_struct.AtInfo, qs *sdk_struct.MsgStruct) (*sdk_struct.MsgStruct, error) {
 	if text == "" {

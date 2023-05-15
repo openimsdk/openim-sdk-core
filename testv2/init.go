@@ -19,6 +19,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"io"
 	"math/rand"
 	"net/http"
@@ -35,16 +36,25 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 	listner := &OnConnListener{}
 	config := getConf(APIADDR, WSADDR)
-	isInit := open_im_sdk.InitSDK(listner, "test", string(GetResValue(json.Marshal(config))))
+	configData, err := json.Marshal(config)
+	if err != nil {
+		panic(err)
+	}
+	isInit := open_im_sdk.InitSDK(listner, "test", string(configData))
 	if !isInit {
 		panic("init sdk failed")
 	}
 	ctx = open_im_sdk.UserForSDK.Context()
 	ctx = ccontext.WithOperationID(ctx, "initOperationID")
-	token := GetResValue(GetUserToken(ctx, UserID))
+	token, err := GetUserToken(ctx, UserID)
+	if err != nil {
+		panic(err)
+	}
 	if err := open_im_sdk.UserForSDK.Login(ctx, UserID, token); err != nil {
 		panic(err)
 	}
+	open_im_sdk.UserForSDK.SetListenerForService(&onListenerForService{ctx: ctx})
+	open_im_sdk.UserForSDK.SetConversationListener(&onConversationListener{ctx: ctx})
 }
 
 func GetUserToken(ctx context.Context, userID string) (string, error) {
@@ -91,13 +101,54 @@ func GetUserToken(ctx context.Context, userID string) (string, error) {
 	return result.Data.Token, nil
 }
 
-func CheckErr(err error) {
-	if err != nil {
-		panic(err)
-	}
+type onListenerForService struct {
+	ctx context.Context
 }
 
-func GetResValue[T any](value T, err error) T {
-	CheckErr(err)
-	return value
+func (o *onListenerForService) OnGroupApplicationAdded(groupApplication string) {
+	log.ZInfo(o.ctx, "OnGroupApplicationAdded", "groupApplication", groupApplication)
+}
+
+func (o *onListenerForService) OnGroupApplicationAccepted(groupApplication string) {
+	log.ZInfo(o.ctx, "OnGroupApplicationAccepted", "groupApplication", groupApplication)
+}
+
+func (o *onListenerForService) OnFriendApplicationAdded(friendApplication string) {
+	log.ZInfo(o.ctx, "OnFriendApplicationAdded", "friendApplication", friendApplication)
+}
+
+func (o *onListenerForService) OnFriendApplicationAccepted(groupApplication string) {
+	log.ZInfo(o.ctx, "OnFriendApplicationAccepted", "groupApplication", groupApplication)
+}
+
+func (o *onListenerForService) OnRecvNewMessage(message string) {
+	log.ZInfo(o.ctx, "OnRecvNewMessage", "message", message)
+}
+
+type onConversationListener struct {
+	ctx context.Context
+}
+
+func (o *onConversationListener) OnSyncServerStart() {
+	log.ZInfo(o.ctx, "OnSyncServerStart")
+}
+
+func (o *onConversationListener) OnSyncServerFinish() {
+	log.ZInfo(o.ctx, "OnSyncServerFinish")
+}
+
+func (o *onConversationListener) OnSyncServerFailed() {
+	log.ZInfo(o.ctx, "OnSyncServerFailed")
+}
+
+func (o *onConversationListener) OnNewConversation(conversationList string) {
+	log.ZInfo(o.ctx, "OnNewConversation", "conversationList", conversationList)
+}
+
+func (o *onConversationListener) OnConversationChanged(conversationList string) {
+	log.ZInfo(o.ctx, "OnConversationChanged", "conversationList", conversationList)
+}
+
+func (o *onConversationListener) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
+	log.ZInfo(o.ctx, "OnTotalUnreadMessageCountChanged", "totalUnreadCount", totalUnreadCount)
 }
