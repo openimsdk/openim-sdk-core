@@ -23,7 +23,7 @@ import (
 )
 
 func (f *Friend) SyncSelfFriendApplication(ctx context.Context) error {
-	req := &friend.GetPaginationFriendsApplyFromReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{PageNumber: 0, ShowNumber: 30}}
+	req := &friend.GetPaginationFriendsApplyFromReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
 	fn := func(resp *friend.GetPaginationFriendsApplyFromResp) []*sdkws.FriendRequest {
 		return resp.FriendRequests
 	}
@@ -40,7 +40,7 @@ func (f *Friend) SyncSelfFriendApplication(ctx context.Context) error {
 
 // recv
 func (f *Friend) SyncFriendApplication(ctx context.Context) error {
-	req := &friend.GetPaginationFriendsApplyToReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{PageNumber: 0, ShowNumber: 30}}
+	req := &friend.GetPaginationFriendsApplyToReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
 	fn := func(resp *friend.GetPaginationFriendsApplyToResp) []*sdkws.FriendRequest { return resp.FriendRequests }
 	requests, err := util.GetPageAll(ctx, constant.GetFriendApplicationListRouter, req, fn)
 	if err != nil {
@@ -54,7 +54,7 @@ func (f *Friend) SyncFriendApplication(ctx context.Context) error {
 }
 
 func (f *Friend) SyncFriendList(ctx context.Context) error {
-	req := &friend.GetPaginationFriendsReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{PageNumber: 0, ShowNumber: 30}}
+	req := &friend.GetPaginationFriendsReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
 	fn := func(resp *friend.GetPaginationFriendsResp) []*sdkws.FriendInfo { return resp.FriendsInfo }
 	friends, err := util.GetPageAll(ctx, constant.GetFriendListRouter, req, fn)
 	if err != nil {
@@ -68,7 +68,7 @@ func (f *Friend) SyncFriendList(ctx context.Context) error {
 }
 
 func (f *Friend) SyncBlackList(ctx context.Context) error {
-	req := &friend.GetPaginationBlacksReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{PageNumber: 0, ShowNumber: 30}}
+	req := &friend.GetPaginationBlacksReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
 	fn := func(resp *friend.GetPaginationBlacksResp) []*sdkws.BlackInfo { return resp.Blacks }
 	blacks, err := util.GetPageAll(ctx, constant.GetBlackListRouter, req, fn)
 	if err != nil {
