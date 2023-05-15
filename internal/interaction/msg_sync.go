@@ -165,6 +165,7 @@ func (m *MsgSyncer) compareSeqsAndSync(maxSeqToSync map[string]int64) {
 }
 
 func (m *MsgSyncer) doPushMsg(ctx context.Context, push *sdkws.PushMessages) {
+	log.ZDebug(ctx, "push msgs", "push", push)
 	m.pushTriggerAndSync(ctx, push.Msgs, m.triggerConversation)
 	m.pushTriggerAndSync(ctx, push.NotificationMsgs, m.triggerNotification)
 }
@@ -240,6 +241,7 @@ func (m *MsgSyncer) splitSeqs(split int, seqsNeedSync []int64) (splitSeqs [][]in
 }
 
 func (m *MsgSyncer) pullMsgBySeqRange(ctx context.Context, seqMap map[string][2]int64, syncMsgNum int64) (resp *sdkws.PullMessageBySeqsResp, err error) {
+	log.ZDebug(ctx, "pullMsgBySeqRange", "seqMap", seqMap, "syncMsgNum", syncMsgNum)
 	var req sdkws.PullMessageBySeqsReq
 	for conversationID, seqs := range seqMap {
 		var pullNums int64 = syncMsgNum
