@@ -29,8 +29,8 @@ var (
 	//WSADDR  = "ws://43.155.69.205:10001"
 	//APIADDR = "https://chat-api-dev.opencord.so"
 	//WSADDR  = "wss://chat-ws-dev.opencord.so"
-	APIADDR = "http://125.124.195.201:10002"
-	WSADDR  = "ws://125.124.195.201:10001"
+	APIADDR = "http://59.36.173.89:10002"
+	WSADDR  = "ws://59.36.173.89:10001"
 	//APIADDR      = "http://113.108.8.93:10002"
 	//WSADDR       = "ws://113.108.8.93:10001"
 	REGISTERADDR = APIADDR + "/user_register"
@@ -89,7 +89,7 @@ func gRunGetToken(strMyUid string) string {
 	return token
 }
 func main() {
-	uid := "7788"
+	uid := "kernaltestuid9"
 	//Gordon
 	//uid:="1554321956297519104"
 	//Gordon2
@@ -98,8 +98,10 @@ func main() {
 	tokenx := gRunGetToken(uid)
 	//tokenx := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiI3MDcwMDgxNTMiLCJQbGF0Zm9ybSI6IkFuZHJvaWQiLCJleHAiOjE5NjY0MTJ1XjJZGWj5fB3mqC7p6ytxSarvxZfsABwIjoxNjUxMDU1MDU2fQ.aWvmJ_sQxXmT5nKwiM5QsF9-tfkldzOYZtRD3nrUuko"
 	test.InOutDoTest(uid, tokenx, WSADDR, APIADDR)
-	test.DoTestGetAdvancedHistoryMessageList()
-	test.DoTestGetSelfUserInfo()
+	time.Sleep(time.Second * 30)
+	test.DoTestSendMsg2("7788", "7789")
+	//test.DoTestGetAdvancedHistoryMessageList()
+	//test.DoTestGetSelfUserInfo()
 	//test.DoTestSendMsg2GroupWithMessage(uid, "1623878302774460418", "2")
 	//test.DoTestAddMessageReactionExtensions(1,"special handle")
 	//time.Sleep(time.Second*5)
@@ -165,7 +167,7 @@ func main() {
 		//if i == 100 {
 		//	break
 		//}
-		log.Warn("", "10 * time.Millisecond ###################waiting... msg: ", i)
+		//log.Warn("", "10 * time.Millisecond ###################waiting... msg: ", i)
 	}
 	//
 	//log.Warn("", "cost time: ", utils.GetCurrentTimestampBySecond()-b)

@@ -143,3 +143,11 @@ func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, 
 	}
 	return nil
 }
+
+func SyncAll(ctx context.Context, f func(ctx context.Context) error) chan error {
+	ch := make(chan error)
+	go func(ch chan error) {
+		ch <- f(ctx)
+	}(ch)
+	return ch
+}

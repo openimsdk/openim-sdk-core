@@ -17,25 +17,25 @@ package conversation_msg
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	utils2 "github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
-	"github.com/google/go-cmp/cmp"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
+	"open_im_sdk/pkg/syncer"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"strings"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	utils2 "github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
+	"github.com/google/go-cmp/cmp"
 )
 
 func (c *Conversation) Work(c2v common.Cmd2Value) {
-	fmt.Println("Conversation Work", c2v)
 	log.ZDebug(c2v.Ctx, "NotificationCmd start", "cmd", c2v.Cmd, "value", c2v.Value)
 	defer log.ZDebug(c2v.Ctx, "NotificationCmd end", "cmd", c2v.Cmd, "value", c2v.Value)
 	switch c2v.Cmd {
@@ -44,7 +44,7 @@ func (c *Conversation) Work(c2v common.Cmd2Value) {
 	case constant.CmdNewMsgCome:
 		c.doMsgNew(c2v)
 	case constant.CmdSuperGroupMsgCome:
-		c.doSuperGroupMsgNew(c2v)
+		//c.doSuperGroupMsgNew(c2v)
 	case constant.CmdUpdateConversation:
 		c.doUpdateConversation(c2v)
 	case constant.CmdUpdateMessage:
@@ -604,7 +604,14 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 		c.ConversationListener.OnSyncServerStart()
 		err := c.SyncConversations(ctx)
 		if err != nil {
-			log.ZError(ctx, "SyncConversations err", err)
+			log.ZError(ctx, "syncConversations err", err)
+		}
+		for _, syncFunc := range []func(c context.Context) error{
+			c.user.SyncLoginUserInfo,
+			c.friend.SyncBlackList, c.friend.SyncFriendList, c.friend.SyncFriendApplication, c.friend.SyncSelfFriendApplication,
+			c.group.SyncJoinedGroup, c.group.SyncAdminGroupApplication, c.group.SyncSelfGroupApplication, c.group.SyncJoinedGroupMember,
+		} {
+			_ = syncer.SyncAll(ctx, syncFunc)
 		}
 	case constant.MsgSyncFailed:
 		c.ConversationListener.OnSyncServerFailed()

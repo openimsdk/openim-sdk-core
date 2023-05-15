@@ -33,8 +33,8 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-func NewSuperGroup(loginUserID string, db db_interface.DataBase, joinedSuperGroupCh chan common.Cmd2Value, heartbeatCmdCh chan common.Cmd2Value) *SuperGroup {
-	s := &SuperGroup{loginUserID: loginUserID, db: db, joinedSuperGroupCh: joinedSuperGroupCh, heartbeatCmdCh: heartbeatCmdCh}
+func NewSuperGroup(loginUserID string, db db_interface.DataBase, heartbeatCmdCh chan common.Cmd2Value) *SuperGroup {
+	s := &SuperGroup{loginUserID: loginUserID, db: db, heartbeatCmdCh: heartbeatCmdCh}
 	s.initSyncer()
 	return s
 }
@@ -73,7 +73,7 @@ func (s *SuperGroup) DoNotification(ctx context.Context, msg *sdkws.MsgData, ch 
 	}
 	switch msg.ContentType {
 	case constant.SuperGroupUpdateNotification:
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.SyncConversation, Args: operationID}, ch)
+		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.SyncConversation, Args: operationID}, ch)
 		if err := s.SyncJoinedGroupList(ctx); err != nil {
 			// todo log
 		}

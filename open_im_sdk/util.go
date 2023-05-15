@@ -22,6 +22,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdkerrs"
 	"reflect"
+	"runtime/debug"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 )
@@ -321,6 +322,7 @@ func messageCall(callback open_im_sdk_callback.SendMsgCallBack, operationID stri
 func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID string, fn any, args ...any) {
 	defer func() {
 		if r := recover(); r != nil {
+			fmt.Println(" panic err:", r, string(debug.Stack()))
 			callback.OnError(sdkerrs.SdkInternalError, fmt.Sprintf("recover: %+v", r))
 			return
 		}
@@ -340,18 +342,18 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 	}
 	fnt := fnv.Type()
 	numIn := fnt.NumIn()
-	if len(args) != numIn+1 {
+	fmt.Println("fn args num is", numIn, len(args))
+	if len(args)+1 != numIn {
 		callback.OnError(sdkerrs.SdkInternalError, "go code error: fn in args num is not match")
 		return
 	}
 	ins := make([]reflect.Value, 0, numIn)
-	//ctx := context.Background()
-	//ctx = context.WithValue(ctx, "operationID", operationID)
-	//ctx = context.WithValue(ctx, "callback", callback)
 	ctx := ccontext.WithOperationID(UserForSDK.BaseCtx(), operationID)
+	ctx = ccontext.WithSendMessageCallback(ctx, callback)
+
 	ins = append(ins, reflect.ValueOf(ctx))
-	for i := 2; i < len(args); i++ { // callback open_im_sdk_callback.Base, operationID string, ...
-		tag := fnt.In(i - 1) // ctx context.Context, ...
+	for i := 0; i < len(args); i++ { // callback open_im_sdk_callback.Base, operationID string, ...
+		tag := fnt.In(i + 1) // ctx context.Context, ...
 		arg := reflect.TypeOf(args[i])
 		if arg.String() == tag.String() || tag.Kind() == reflect.Interface {
 			ins = append(ins, reflect.ValueOf(args[i]))
@@ -359,7 +361,7 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 		}
 		if arg.Kind() == reflect.String { // json
 			switch tag.Kind() {
-			case reflect.Struct, reflect.Slice, reflect.Array, reflect.Map:
+			case reflect.Struct, reflect.Slice, reflect.Array, reflect.Map, reflect.Ptr:
 				v := reflect.New(tag)
 				if err := json.Unmarshal([]byte(args[i].(string)), v.Interface()); err != nil {
 					callback.OnError(sdkerrs.ArgsError, err.Error())
@@ -380,7 +382,7 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 	}
 	var lastErr bool
 	if numOut := fnt.NumOut(); numOut > 0 {
-		lastErr = fnt.Out(numOut - 1).Implements(reflect.TypeOf(error(nil)).Elem())
+		lastErr = fnt.Out(numOut - 1).Implements(reflect.ValueOf(new(error)).Elem().Type())
 	}
 	//fmt.Println("fnv:", fnv.Interface(), "ins:", ins)
 	outs := fnv.Call(ins)

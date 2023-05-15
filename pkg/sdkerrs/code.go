@@ -5,6 +5,7 @@ const (
 	NetworkError                 = 10000
 	NetworkTimeoutError          = 10001
 	ArgsError                    = 11001 //输入参数错误
+	CtxDeadlineExceededError     = 11002 //上下文超时
 	DuplicateKeyError            = 11003
 	RecordNotFoundError          = 11004 //记录不存在
 	ResourceLoadNotCompleteError = 11005 //资源初始化未完成

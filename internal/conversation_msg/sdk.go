@@ -212,7 +212,7 @@ func (c *Conversation) SetConversationDraft(ctx context.Context, conversationID,
 			return err
 		}
 	}
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 	return nil
 
 }
@@ -313,6 +313,11 @@ func (c *Conversation) SetConversationListener(listener open_im_sdk_callback.OnC
 
 func msgStructToLocalChatLog(dst *model_struct.LocalChatLog, src *sdk_struct.MsgStruct) {
 	copier.Copy(dst, src)
+	switch src.ContentType {
+	case constant.Text:
+		dst.Content = utils.StructToJsonString(src.TextElem)
+
+	}
 	if src.SessionType == constant.GroupChatType || src.SessionType == constant.SuperGroupChatType {
 		dst.RecvID = src.GroupID
 	}
@@ -345,7 +350,7 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(ctx context.Context
 	lc.LatestMsg = utils.StructToJsonString(s)
 	lc.LatestMsgSendTime = sendTime
 	log.Info("", "2 send message come here", *lc)
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
 }
 
 func (c *Conversation) fileName(ftype string, id string) string {
@@ -399,7 +404,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		//log.Debug(operationID, "send msg single chat come here")
 		s.SessionType = constant.SingleChatType
 		s.RecvID = recvID
-		conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
+		conversationID = utils.GetConversationIDByMsg(s)
 		lc.UserID = recvID
 		lc.ConversationType = constant.SingleChatType
 		//faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(recvID, operationID)
@@ -422,10 +427,8 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		}
 
 	}
-	t := time.Now()
-	log.Debug("", "before insert  message is ", *s)
+	log.ZDebug(ctx, "before insert message is", "message", *s)
 	oldMessage, err := c.db.GetMessageController(ctx, s)
-	log.Debug("", "GetMessageController cost time:", time.Since(t), err)
 	if err != nil {
 		msgStructToLocalChatLog(&localMessage, s)
 		err := c.db.InsertMessageController(ctx, &localMessage)
@@ -441,8 +444,8 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 	}
 	lc.ConversationID = conversationID
 	lc.LatestMsg = utils.StructToJsonString(s)
-	log.Info("", "send message come here", *lc)
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
+	log.ZDebug(ctx, "send messaeg come here", *lc)
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
 	var delFile []string
 	//media file handle
 	if s.Status != constant.MsgStatusSendSuccess { //filter forward message
@@ -784,7 +787,7 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 	lc.ConversationID = conversationID
 	lc.LatestMsg = utils.StructToJsonString(s)
 	log.Info("", "send message come here", *lc)
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
 	var delFile []string
 	//media file handle
 	if s.Status != constant.MsgStatusSendSuccess { //filter forward message
@@ -957,7 +960,7 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	}
 	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
-	wsMsgData.AtUserIDList = s.AtElem.AtUserList
+	//wsMsgData.AtUserIDList = s.AtElem.AtUserList
 	wsMsgData.OfflinePushInfo = offlinePushInfo
 	//timeout := 300
 	//retryTimes := 60
@@ -973,6 +976,13 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	//	c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
 	//}
 	var sendMsgResp server_api_params.UserSendMsgResp
+
+	err := c.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
+	if err != nil {
+		log.ZError(ctx, "send msg to server failed", err, "message", s)
+		c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
+		return nil, err
+	}
 	//_ = proto.Unmarshal(resp.Data, &sendMsgResp)
 	s.SendTime = sendMsgResp.SendTime
 	s.Status = constant.MsgStatusSendSuccess
@@ -1109,8 +1119,8 @@ func (c *Conversation) MarkC2CMessageAsRead(ctx context.Context, userID string, 
 	if len(msgIDList) == 0 {
 		conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
 		_ = c.setOneConversationUnread(ctx, conversationID, 0)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
+		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 		return nil
 	}
 	return c.markC2CMessageAsRead(ctx, msgIDList, userID)
@@ -1119,8 +1129,8 @@ func (c *Conversation) MarkC2CMessageAsRead(ctx context.Context, userID string, 
 func (c *Conversation) MarkMessageAsReadByConID(ctx context.Context, conversationID string, msgIDList []string) error {
 	if len(msgIDList) == 0 {
 		_ = c.setOneConversationUnread(ctx, conversationID, 0)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
+		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 		return nil
 	}
 	return nil
@@ -1131,8 +1141,8 @@ func (c *Conversation) MarkMessageAsReadByConID(ctx context.Context, conversatio
 func (c *Conversation) MarkGroupMessageHasRead(ctx context.Context, groupID string) {
 	conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
 	_ = c.setOneConversationUnread(ctx, conversationID, 0)
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 
 }
 func (c *Conversation) MarkGroupMessageAsRead(ctx context.Context, groupID string, msgIDList []string) error {
@@ -1220,7 +1230,7 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(ctx context.Context, s 
 	if err != nil {
 		return nil, err
 	}
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.GetCh())
 	return s, nil
 
 }
@@ -1262,7 +1272,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(ctx context.Context, s *
 	if err != nil {
 		return nil, err
 	}
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.AddConOrUpLatMsg, Args: conversation}, c.GetCh())
 	return s, nil
 
 }

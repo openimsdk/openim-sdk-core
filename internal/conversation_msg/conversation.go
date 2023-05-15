@@ -18,7 +18,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
@@ -27,7 +26,6 @@ import (
 	"open_im_sdk/pkg/db/model_struct"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
-	"open_im_sdk/pkg/syncer"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sort"
@@ -121,61 +119,6 @@ func (c *Conversation) getServerConversationList(ctx context.Context) ([]*model_
 	return util.Batch(ServerConversationToLocal, resp.Conversations), nil
 }
 
-func (c *Conversation) SyncConversations(ctx context.Context) error {
-	ccTime := time.Now()
-	conversationsOnServer, err := c.getServerConversationList(ctx)
-	if err != nil {
-		return err
-	}
-	log.ZDebug(ctx, "get server cost time", "cost time", time.Since(ccTime), "conversation on server", conversationsOnServer)
-
-	conversationsOnLocal, err := c.db.GetAllConversations(ctx)
-	if err != nil {
-		return err
-	}
-	log.ZDebug(ctx, "get local cost time", "cost time", time.Since(ccTime), "conversation on local", conversationsOnLocal)
-	for _, v := range conversationsOnServer {
-		c.addFaceURLAndName(ctx, v)
-	}
-	log.ZDebug(ctx, "get local cost time", "cost time", time.Since(ccTime), "conversation on local", conversationsOnLocal)
-	if err = c.conversationSyncer.Sync(ctx, conversationsOnServer, conversationsOnLocal, func(ctx context.Context, state int, conversation *model_struct.LocalConversation) error {
-		if state == syncer.Update {
-			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversation.ConversationID, Action: constant.ConChange, Args: ""}})
-		}
-		return nil
-	}, true); err != nil {
-		return err
-	}
-	conversationsOnLocal, err = c.db.GetAllConversations(ctx)
-	if err != nil {
-		return err
-	}
-	c.cache.UpdateConversations(conversationsOnLocal)
-	return nil
-}
-func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) error {
-	var conversationChangedList []string
-	fmt.Println("test", c.cache)
-	allConversations := c.cache.GetAllHasUnreadMessageConversations()
-	allConversations = c.cache.GetAllHasUnreadMessageConversations()
-	log.ZDebug(ctx, "get unread message length", "len", len(allConversations))
-	for _, conversation := range allConversations {
-		if deleteRows := c.db.DeleteConversationUnreadMessageList(ctx, conversation.ConversationID, conversation.UpdateUnreadCountTime); deleteRows > 0 {
-			log.ZDebug(ctx, "DeleteConversationUnreadMessageList", conversation.ConversationID, conversation.UpdateUnreadCountTime, "delete rows:", deleteRows)
-			if err := c.db.DecrConversationUnreadCount(ctx, conversation.ConversationID, deleteRows); err != nil {
-				log.ZDebug(ctx, "DecrConversationUnreadCount", conversation.ConversationID, conversation.UpdateUnreadCountTime, "decr unread count err:", err.Error())
-			} else {
-				conversationChangedList = append(conversationChangedList, conversation.ConversationID)
-			}
-		}
-	}
-	if len(conversationChangedList) > 0 {
-		if err := common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: conversationChangedList}, c.GetCh()); err != nil {
-			return err
-		}
-	}
-	return nil
-}
 func (c *Conversation) FixVersionData(ctx context.Context) {
 	switch constant.SdkVersion + constant.BigVersion + constant.UpdateVersion {
 	case "v2.0.0":
@@ -923,7 +866,7 @@ func (c *Conversation) revokeOneMessage(ctx context.Context, req *sdk_struct.Msg
 	lc.LatestMsg = utils.StructToJsonString(req)
 	lc.LatestMsgSendTime = req.SendTime
 	lc.ConversationID = conversationID
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.GetCh())
 	return nil
 }
 func (c *Conversation) newRevokeOneMessage(ctx context.Context, req *sdk_struct.MsgStruct) error {
@@ -1034,7 +977,7 @@ func (c *Conversation) newRevokeOneMessage(ctx context.Context, req *sdk_struct.
 	s.GroupID = groupID
 	s.RecvID = recvID
 	c.newRevokeMessage(ctx, []*sdk_struct.MsgStruct{&s})
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: lc}, c.GetCh())
 	return nil
 }
 
@@ -1118,7 +1061,7 @@ func (c *Conversation) markC2CMessageAsRead(ctx context.Context, msgIDList []str
 			continue
 		}
 	}
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.GetCh())
 	return nil
 	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 }
@@ -1129,8 +1072,8 @@ func (c *Conversation) markGroupMessageAsRead(ctx context.Context, msgIDList []s
 	}
 	if len(msgIDList) == 0 {
 		_ = c.setOneConversationUnread(ctx, conversationID, 0)
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
-		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
+		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 		return nil
 	}
 	var localMessage model_struct.LocalChatLog
@@ -1257,7 +1200,7 @@ func (c *Conversation) clearGroupHistoryMessage(ctx context.Context, groupID str
 	if err != nil {
 		return err
 	}
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 	return nil
 
 }
@@ -1272,7 +1215,7 @@ func (c *Conversation) clearC2CHistoryMessage(ctx context.Context, userID string
 	if err != nil {
 		return err
 	}
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 	return nil
 }
 
@@ -1381,7 +1324,7 @@ func (c *Conversation) deleteMessageFromLocalStorage(ctx context.Context, s *sdk
 		if err != nil {
 			log.Error("internal", "updateConversationLatestMsgModel err: ", err)
 		} else {
-			_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+			_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 		}
 	}
 	return nil
@@ -1668,7 +1611,7 @@ func (c *Conversation) deleteAllMsgFromLocal(ctx context.Context) error {
 	for _, conversation := range conversationList {
 		cidList = append(cidList, conversation.ConversationID)
 	}
-	_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{Action: constant.ConChange, Args: cidList}, c.GetCh())
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: cidList}, c.GetCh())
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
 	return nil
 

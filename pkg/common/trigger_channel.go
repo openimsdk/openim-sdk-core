@@ -20,10 +20,8 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
-	"runtime"
 	"time"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
@@ -102,10 +100,11 @@ func TriggerCmdSyncReactionExtensions(node SyncReactionExtensionsNode, conversat
 	return sendCmd(conversationCh, c2v, 100)
 }
 
-func TriggerCmdUpdateConversation(node UpdateConNode, conversationCh chan<- Cmd2Value) error {
+func TriggerCmdUpdateConversation(ctx context.Context, node UpdateConNode, conversationCh chan<- Cmd2Value) error {
 	c2v := Cmd2Value{
 		Cmd:   constant.CmdUpdateConversation,
 		Value: node,
+		Ctx:   ctx,
 	}
 
 	return sendCmd(conversationCh, c2v, 100)
@@ -131,7 +130,7 @@ func TriggerCmdPushMsg(ctx context.Context, msg *sdkws.PushMessages, ch chan Cmd
 }
 
 // seq trigger
-func TriggerCmdMaxSeq(ctx context.Context, seq sdk_struct.CmdMaxSeqToMsgSync, ch chan Cmd2Value) error {
+func TriggerCmdMaxSeq(ctx context.Context, seq *sdk_struct.CmdMaxSeqToMsgSync, ch chan Cmd2Value) error {
 	if ch == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
@@ -198,17 +197,17 @@ func UnInitAll(conversationCh chan Cmd2Value) error {
 type goroutine interface {
 	Work(cmd Cmd2Value)
 	GetCh() chan Cmd2Value
+	//GetContext() context.Context
 }
 
 func DoListener(Li goroutine) {
 	for {
 		select {
 		case cmd := <-Li.GetCh():
-			if cmd.Cmd == constant.CmdUnInit {
-				log.ZWarn(context.Background(), "close doListener channel ", nil, "ch", Li.GetCh())
-				runtime.Goexit()
-			}
 			Li.Work(cmd)
+			//case <-Li.GetContext().Done():
+			//	log.ZInfo(Li.GetContext(), "ctx deadline, sdk logout.....","module",)
+			//	return
 		}
 	}
 }

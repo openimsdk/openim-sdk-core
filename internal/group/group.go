@@ -32,14 +32,13 @@ import (
 )
 
 func NewGroup(loginUserID string, db db_interface.DataBase,
-	joinedSuperGroupCh chan common.Cmd2Value, heartbeatCmdCh chan common.Cmd2Value,
+	heartbeatCmdCh chan common.Cmd2Value,
 	conversationCh chan common.Cmd2Value) *Group {
 	g := &Group{
-		loginUserID:        loginUserID,
-		db:                 db,
-		joinedSuperGroupCh: joinedSuperGroupCh,
-		heartbeatCmdCh:     heartbeatCmdCh,
-		conversationCh:     conversationCh,
+		loginUserID:    loginUserID,
+		db:             db,
+		heartbeatCmdCh: heartbeatCmdCh,
+		conversationCh: conversationCh,
 	}
 	g.initSyncer()
 	return g
@@ -179,7 +178,7 @@ func (g *Group) GetJoinedDiffusionGroupIDListFromSvr(ctx context.Context) ([]str
 	return groupIDs, nil
 }
 
-func (g *Group) SyncJoinedGroupMemberForFirstLogin(ctx context.Context) error {
+func (g *Group) SyncJoinedGroupMember(ctx context.Context) error {
 	groups, err := g.syncJoinedGroup(ctx)
 	if err != nil {
 		return err
