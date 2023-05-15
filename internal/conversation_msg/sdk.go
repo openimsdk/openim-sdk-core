@@ -26,6 +26,7 @@ import (
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/sdkerrs"
 
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
@@ -356,17 +357,19 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(ctx context.Context
 func (c *Conversation) fileName(ftype string, id string) string {
 	return fmt.Sprintf("%s_%s_%s", c.loginUserID, ftype, id)
 }
-
+func (c *Conversation) checkID(recvID, groupID string) error {
+	if recvID == "" && groupID == "" {
+		return sdkerrs.ErrArgs
+	}
+	return nil
+}
 func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo) (*sdk_struct.MsgStruct, error) {
 	s.SendID = c.loginUserID
 	s.SenderPlatformID = c.platformID
-	if recvID == "" && groupID == "" {
-		return nil, errors.New("recvID && groupID not both null")
+	if err := c.checkID(recvID, groupID); err != nil {
+		return nil, err
 	}
-	callback, ok := ctx.Value("callback").(open_im_sdk_callback.SendMsgCallBack)
-	if !ok {
-		return nil, errors.New("callback not found")
-	}
+	callback, _ := ctx.Value("callback").(open_im_sdk_callback.SendMsgCallBack)
 	var localMessage model_struct.LocalChatLog
 	var conversationID string
 	options := make(map[string]bool, 2)
@@ -596,13 +599,10 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo) (*sdk_struct.MsgStruct, error) {
 	s.SendID = c.loginUserID
 	s.SenderPlatformID = c.platformID
-	if recvID == "" && groupID == "" {
-		return nil, errors.New("recvID && groupID not both null")
+	if err := c.checkID(recvID, groupID); err != nil {
+		return nil, err
 	}
-	callback, ok := ctx.Value("callback").(open_im_sdk_callback.SendMsgCallBack)
-	if !ok {
-		return nil, errors.New("callback not found")
-	}
+	callback, _ := ctx.Value("callback").(open_im_sdk_callback.SendMsgCallBack)
 	var localMessage model_struct.LocalChatLog
 	var conversationID string
 	options := make(map[string]bool, 2)
@@ -700,13 +700,10 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 	p *sdkws.OfflinePushInfo, buffer1, buffer2 *bytes.Buffer) (*sdk_struct.MsgStruct, error) {
 	s.SendID = c.loginUserID
 	s.SenderPlatformID = c.platformID
-	if recvID == "" && groupID == "" {
-		return nil, errors.New("recvID && groupID not both null")
+	if err := c.checkID(recvID, groupID); err != nil {
+		return nil, err
 	}
-	callback, ok := ctx.Value("callback").(open_im_sdk_callback.SendMsgCallBack)
-	if !ok {
-		return nil, errors.New("callback not found")
-	}
+	callback, _ := ctx.Value("callback").(open_im_sdk_callback.SendMsgCallBack)
 	var localMessage model_struct.LocalChatLog
 	var conversationID string
 	options := make(map[string]bool, 2)
