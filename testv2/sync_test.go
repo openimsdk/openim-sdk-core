@@ -32,21 +32,21 @@ func Test_SyncSelfGroupApplication(t *testing.T) {
 	}
 }
 
-func Test_SyncAdminGroupApplication(t *testing.T) { // todo failed
+func Test_SyncAdminGroupApplication(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Group().SyncAdminGroupApplication(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-func Test_SyncSelfFriendApplication(t *testing.T) { // todo
+func Test_SyncSelfFriendApplication(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Friend().SyncSelfFriendApplication(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-func Test_SyncFriendApplication(t *testing.T) { // todo
+func Test_SyncFriendApplication(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Friend().SyncFriendApplication(ctx)
 	if err != nil {
 		t.Fatal(err)
