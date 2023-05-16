@@ -632,13 +632,12 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 				c.full.SuperGroup.DoNotification(ctx, v, c.GetCh())
 				continue
 			case v.ContentType == constant.ConversationUnreadNotification:
-				var unreadArgs sdkws.ConversationUpdateTips
-				_ = json.Unmarshal(v.Content, &unreadArgs)
-				for _, v := range unreadArgs.ConversationIDList {
-					c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: v, Action: constant.UnreadCountSetZero}})
-					c.db.DeleteConversationUnreadMessageList(ctx, v, unreadArgs.UpdateUnreadCountTime)
-				}
-				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: unreadArgs.ConversationIDList}})
+				var tips sdkws.ConversationHasReadTips
+				_ = json.Unmarshal(v.Content, &tips)
+				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: tips.ConversationID, Action: constant.UnreadCountSetZero}})
+				c.db.DeleteConversationUnreadMessageList(ctx, tips.ConversationID, tips.UnreadCountTime)
+
+				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: []string{tips.ConversationID}}})
 				continue
 			case v.ContentType == constant.BusinessNotification:
 				c.business.DoNotification(ctx, string(v.Content))
