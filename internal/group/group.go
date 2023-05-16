@@ -16,6 +16,7 @@ package group
 
 import (
 	"context"
+	"encoding/json"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -72,7 +73,22 @@ func (g *Group) initSyncer() {
 		return g.db.UpdateGroup(ctx, server)
 	}, func(value *model_struct.LocalGroup) string {
 		return value.GroupID
-	}, nil, nil)
+	}, nil, func(ctx context.Context, state int, value *model_struct.LocalGroup) error {
+		data, err := json.Marshal(value)
+		if err != nil {
+			return err
+		}
+		switch state {
+		case syncer.Insert:
+			g.listener.OnJoinedGroupAdded(string(data))
+		case syncer.Delete:
+			g.listener.OnJoinedGroupDeleted(string(data))
+		case syncer.Update:
+			g.listener.OnGroupInfoChanged(string(data))
+		}
+		//common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: value.GroupID, SessionType: constant.GroupChatType}}, g.conversationCh)
+		return nil
+	})
 
 	g.groupMemberSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalGroupMember) error {
 		return g.db.InsertGroupMember(ctx, value)
@@ -82,7 +98,21 @@ func (g *Group) initSyncer() {
 		return g.db.UpdateGroupMember(ctx, server)
 	}, func(value *model_struct.LocalGroupMember) [2]string {
 		return [...]string{value.GroupID, value.UserID}
-	}, nil, nil)
+	}, nil, func(ctx context.Context, state int, value *model_struct.LocalGroupMember) error {
+		data, err := json.Marshal(value)
+		if err != nil {
+			return err
+		}
+		switch state {
+		case syncer.Insert:
+			g.listener.OnGroupMemberAdded(string(data))
+		case syncer.Delete:
+			g.listener.OnGroupMemberDeleted(string(data))
+		case syncer.Update:
+			g.listener.OnGroupMemberInfoChanged(string(data))
+		}
+		return nil
+	})
 
 	g.groupRequestSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalGroupRequest) error {
 		return g.db.InsertGroupRequest(ctx, value)
@@ -92,7 +122,21 @@ func (g *Group) initSyncer() {
 		return g.db.UpdateGroupRequest(ctx, server)
 	}, func(value *model_struct.LocalGroupRequest) [2]string {
 		return [...]string{value.GroupID, value.UserID}
-	}, nil, nil)
+	}, nil, func(ctx context.Context, state int, value *model_struct.LocalGroupRequest) error {
+		//data, err := json.Marshal(value)
+		//if err != nil {
+		//	return err
+		//}
+		//switch state {
+		//case syncer.Insert:
+		//	g.listener.OnGroupMemberAdded(string(data))
+		//case syncer.Delete:
+		//	g.listener.OnGroupMemberDeleted(string(data))
+		//case syncer.Update:
+		//	g.listener.OnGroupMemberInfoChanged(string(data))
+		//}
+		return nil
+	})
 
 	g.groupAdminRequestSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalAdminGroupRequest) error {
 		return g.db.InsertAdminGroupRequest(ctx, value)
@@ -102,7 +146,10 @@ func (g *Group) initSyncer() {
 		return g.db.UpdateAdminGroupRequest(ctx, server)
 	}, func(value *model_struct.LocalAdminGroupRequest) [2]string {
 		return [...]string{value.GroupID, value.UserID}
-	}, nil, nil)
+	}, nil, func(ctx context.Context, state int, value *model_struct.LocalAdminGroupRequest) error {
+
+		return nil
+	})
 
 }
 
