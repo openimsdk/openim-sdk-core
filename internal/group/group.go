@@ -74,6 +74,9 @@ func (g *Group) initSyncer() {
 	}, func(value *model_struct.LocalGroup) string {
 		return value.GroupID
 	}, nil, func(ctx context.Context, state int, value *model_struct.LocalGroup) error {
+		if g.listener == nil {
+			return nil
+		}
 		data, err := json.Marshal(value)
 		if err != nil {
 			return err
@@ -99,6 +102,9 @@ func (g *Group) initSyncer() {
 	}, func(value *model_struct.LocalGroupMember) [2]string {
 		return [...]string{value.GroupID, value.UserID}
 	}, nil, func(ctx context.Context, state int, value *model_struct.LocalGroupMember) error {
+		if g.listener == nil {
+			return nil
+		}
 		data, err := json.Marshal(value)
 		if err != nil {
 			return err
