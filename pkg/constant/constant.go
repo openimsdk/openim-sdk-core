@@ -215,7 +215,7 @@ const (
 	WorkingGroup                      = 2
 	SuperGroupTableName               = "local_super_groups"
 	SuperGroupErrChatLogsTableNamePre = "local_sg_err_chat_logs_"
-	SuperGroupChatLogsTableNamePre    = "local_sg_chat_logs_"
+	ChatLogsTableNamePre              = "chat_logs_"
 )
 
 const (

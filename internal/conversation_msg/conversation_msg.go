@@ -161,7 +161,6 @@ func (c *Conversation) GetCh() chan common.Cmd2Value {
 }
 
 func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
-	//operationID := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).OperationID
 	allMsg := c2v.Value.(sdk_struct.CmdNewMsgComeToConversation).Msgs
 	ctx := c2v.Ctx
 	var isTriggerUnReadCount bool
@@ -188,6 +187,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			msg := new(sdk_struct.MsgStruct)
 			copier.Copy(msg, v)
 			msg.Content = string(v.Content)
+
 			//When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
 			if msg.Status == constant.MsgStatusHasDeleted {
 				insertMsg = append(insertMsg, c.msgStructToLocalChatLog(msg))
@@ -534,17 +534,17 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 //					}
 //					switch v.SessionType {
 //					case constant.SingleChatType:
-//						lc.ConversationID = utils.GetConversationIDBySessionType(v.RecvID, constant.SingleChatType)
+//						lc.ConversationID = c.getConversationIDBySessionType(v.RecvID, constant.SingleChatType)
 //						lc.UserID = v.RecvID
 //						//localUserInfo,_ := c.user.GetLoginUser()
 //						//c.FaceURL = localUserInfo.FaceUrl
 //						//c.ShowName = localUserInfo.Nickname
 //					case constant.GroupChatType:
 //						lc.GroupID = v.GroupID
-//						lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
+//						lc.ConversationID = c.getConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
 //					case constant.SuperGroupChatType:
 //						lc.GroupID = v.GroupID
-//						lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.SuperGroupChatType)
+//						lc.ConversationID = c.getConversationIDBySessionType(lc.GroupID, constant.SuperGroupChatType)
 //						//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
 //						//if err != nil {
 //						//	utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
@@ -591,16 +591,16 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 //					}
 //					switch v.SessionType {
 //					case constant.SingleChatType:
-//						lc.ConversationID = utils.GetConversationIDBySessionType(v.SendID, constant.SingleChatType)
+//						lc.ConversationID = c.getConversationIDBySessionType(v.SendID, constant.SingleChatType)
 //						lc.UserID = v.SendID
 //						lc.ShowName = msg.SenderNickname
 //						lc.FaceURL = msg.SenderFaceURL
 //					case constant.GroupChatType:
 //						lc.GroupID = v.GroupID
-//						lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
+//						lc.ConversationID = c.getConversationIDBySessionType(lc.GroupID, constant.GroupChatType)
 //					case constant.SuperGroupChatType:
 //						lc.GroupID = v.GroupID
-//						lc.ConversationID = utils.GetConversationIDBySessionType(lc.GroupID, constant.SuperGroupChatType)
+//						lc.ConversationID = c.getConversationIDBySessionType(lc.GroupID, constant.SuperGroupChatType)
 //						//faceUrl, name, err := u.getGroupNameAndFaceUrlByUid(c.GroupID)
 //						//if err != nil {
 //						//	utils.sdkLog("getGroupNameAndFaceUrlByUid err:", err)
@@ -609,7 +609,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 //						//	c.FaceURL = faceUrl
 //						//}
 //					case constant.NotificationChatType:
-//						lc.ConversationID = utils.GetConversationIDBySessionType(v.SendID, constant.NotificationChatType)
+//						lc.ConversationID = c.getConversationIDBySessionType(v.SendID, constant.NotificationChatType)
 //						lc.UserID = v.SendID
 //					}
 //					if isUnreadCount {
@@ -1298,9 +1298,9 @@ func (c *Conversation) doMsgReadState(ctx context.Context, msgReadList []*sdk_st
 			messageReceiptResp = append(messageReceiptResp, msgRt)
 		}
 		if rd.SendID == c.loginUserID {
-			conversationID = utils.GetConversationIDBySessionType(rd.RecvID, constant.SingleChatType)
+			conversationID = c.getConversationIDBySessionType(rd.RecvID, constant.SingleChatType)
 		} else {
-			conversationID = utils.GetConversationIDBySessionType(rd.SendID, constant.SingleChatType)
+			conversationID = c.getConversationIDBySessionType(rd.SendID, constant.SingleChatType)
 		}
 		if v, ok := chrsList[conversationID]; ok {
 			chrsList[conversationID] = append(v, msgIdListStatusOK...)

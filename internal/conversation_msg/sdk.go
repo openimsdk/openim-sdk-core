@@ -27,6 +27,8 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/sdkerrs"
+	"sort"
+	"strings"
 
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
@@ -114,7 +116,7 @@ func (c *Conversation) GetConversationRecvMessageOpt(ctx context.Context, conver
 
 }
 func (c *Conversation) GetOneConversation(ctx context.Context, sessionType int32, sourceID string) (*model_struct.LocalConversation, error) {
-	conversationID := utils.GetConversationIDBySessionType(sourceID, int(sessionType))
+	conversationID := c.getConversationIDBySessionType(sourceID, int(sessionType))
 	lc, err := c.db.GetConversation(ctx, conversationID)
 	if err == nil {
 		return lc, nil
@@ -363,6 +365,21 @@ func (c *Conversation) checkID(recvID, groupID string) error {
 	}
 	return nil
 }
+func (c *Conversation) getConversationIDBySessionType(sourceID string, sessionType int) string {
+	switch sessionType {
+	case constant.SingleChatType:
+		l := []string{c.loginUserID, sourceID}
+		sort.Strings(l)
+		return "si_" + strings.Join(l, "_") // single chat
+	case constant.GroupChatType:
+		return "g_" + sourceID // group chat
+	case constant.SuperGroupChatType:
+		return "sg_" + sourceID // super group chat
+	case constant.NotificationChatType:
+		return "sn_" + sourceID // server notification chat
+	}
+	return ""
+}
 func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *sdkws.OfflinePushInfo) (*sdk_struct.MsgStruct, error) {
 	s.SendID = c.loginUserID
 	s.SenderPlatformID = c.platformID
@@ -386,17 +403,16 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		case constant.NormalGroup:
 			s.SessionType = constant.GroupChatType
 			lc.ConversationType = constant.GroupChatType
-			conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+			conversationID = c.getConversationIDBySessionType(groupID, constant.GroupChatType)
 		case constant.SuperGroup, constant.WorkingGroup:
 			s.SessionType = constant.SuperGroupChatType
-			conversationID = utils.GetConversationIDBySessionType(groupID, constant.SuperGroupChatType)
+			conversationID = c.getConversationIDBySessionType(groupID, constant.SuperGroupChatType)
 			lc.ConversationType = constant.SuperGroupChatType
 		}
 		s.GroupID = groupID
 		lc.GroupID = groupID
 		gm, err := c.db.GetGroupMemberInfoByGroupIDUserID(ctx, groupID, c.loginUserID)
 		if err == nil && gm != nil {
-			//log.Debug(operationID, "group chat test", *gm)
 			if gm.Nickname != "" {
 				s.SenderNickname = gm.Nickname
 			}
@@ -404,13 +420,11 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		s.AttachedInfoElem.GroupHasReadInfo.GroupMemberCount = g.MemberCount
 		s.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 	} else {
-		//log.Debug(operationID, "send msg single chat come here")
 		s.SessionType = constant.SingleChatType
 		s.RecvID = recvID
 		conversationID = utils.GetConversationIDByMsg(s)
 		lc.UserID = recvID
 		lc.ConversationType = constant.SingleChatType
-		//faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(recvID, operationID)
 		oldLc, err := c.db.GetConversation(ctx, conversationID)
 		if err == nil && oldLc.IsPrivateChat {
 			options[constant.IsNotPrivate] = false
@@ -421,7 +435,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		if err != nil {
 			t := time.Now()
 			faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, recvID)
-			log.Debug("", "GetUserNameAndFaceURL cost time:", time.Since(t))
+			log.ZDebug(ctx, "GetUserNameAndFaceURL", "cost time", time.Since(t))
 			if err != nil {
 				return nil, err
 			}
@@ -619,10 +633,10 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 		case constant.NormalGroup:
 			s.SessionType = constant.GroupChatType
 			lc.ConversationType = constant.GroupChatType
-			conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+			conversationID = c.getConversationIDBySessionType(groupID, constant.GroupChatType)
 		case constant.SuperGroup, constant.WorkingGroup:
 			s.SessionType = constant.SuperGroupChatType
-			conversationID = utils.GetConversationIDBySessionType(groupID, constant.SuperGroupChatType)
+			conversationID = c.getConversationIDBySessionType(groupID, constant.SuperGroupChatType)
 			lc.ConversationType = constant.SuperGroupChatType
 		}
 		s.GroupID = groupID
@@ -644,7 +658,7 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 	} else {
 		s.SessionType = constant.SingleChatType
 		s.RecvID = recvID
-		conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
+		conversationID = c.getConversationIDBySessionType(recvID, constant.SingleChatType)
 		lc.UserID = recvID
 		lc.ConversationType = constant.SingleChatType
 		//faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(recvID, operationID)
@@ -720,10 +734,10 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 		case constant.NormalGroup:
 			s.SessionType = constant.GroupChatType
 			lc.ConversationType = constant.GroupChatType
-			conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+			conversationID = c.getConversationIDBySessionType(groupID, constant.GroupChatType)
 		case constant.SuperGroup, constant.WorkingGroup:
 			s.SessionType = constant.SuperGroupChatType
-			conversationID = utils.GetConversationIDBySessionType(groupID, constant.SuperGroupChatType)
+			conversationID = c.getConversationIDBySessionType(groupID, constant.SuperGroupChatType)
 			lc.ConversationType = constant.SuperGroupChatType
 		}
 		s.GroupID = groupID
@@ -742,7 +756,7 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 		log.Debug("", "send msg single chat come here")
 		s.SessionType = constant.SingleChatType
 		s.RecvID = recvID
-		conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
+		conversationID = c.getConversationIDBySessionType(recvID, constant.SingleChatType)
 		lc.UserID = recvID
 		lc.ConversationType = constant.SingleChatType
 		//faceUrl, name, err := c.friend.GetUserNameAndFaceUrlByUid(recvID, operationID)
@@ -1114,7 +1128,7 @@ func (c *Conversation) TypingStatusUpdate(ctx context.Context, recvID, msgTip st
 
 func (c *Conversation) MarkC2CMessageAsRead(ctx context.Context, userID string, msgIDList []string) error {
 	if len(msgIDList) == 0 {
-		conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
+		conversationID := c.getConversationIDBySessionType(userID, constant.SingleChatType)
 		_ = c.setOneConversationUnread(ctx, conversationID, 0)
 		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
 		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
@@ -1136,7 +1150,7 @@ func (c *Conversation) MarkMessageAsReadByConID(ctx context.Context, conversatio
 
 // deprecated
 func (c *Conversation) MarkGroupMessageHasRead(ctx context.Context, groupID string) {
-	conversationID := utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+	conversationID := c.getConversationIDBySessionType(groupID, constant.GroupChatType)
 	_ = c.setOneConversationUnread(ctx, conversationID, 0)
 	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
 	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
@@ -1159,7 +1173,7 @@ func (c *Conversation) ClearGroupHistoryMessage(ctx context.Context, groupID str
 
 }
 func (c *Conversation) ClearC2CHistoryMessageFromLocalAndSvr(ctx context.Context, userID string) error {
-	conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
+	conversationID := c.getConversationIDBySessionType(userID, constant.SingleChatType)
 	err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
 	if err != nil {
 		return err
@@ -1196,11 +1210,11 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(ctx context.Context, s 
 		conversation.FaceURL = faceUrl
 		conversation.ShowName = name
 		conversation.UserID = sendID
-		conversation.ConversationID = utils.GetConversationIDBySessionType(sendID, constant.SingleChatType)
+		conversation.ConversationID = c.getConversationIDBySessionType(sendID, constant.SingleChatType)
 
 	} else {
 		conversation.UserID = recvID
-		conversation.ConversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
+		conversation.ConversationID = c.getConversationIDBySessionType(recvID, constant.SingleChatType)
 		_, err := c.db.GetConversation(ctx, conversation.ConversationID)
 		if err != nil {
 			faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, recvID)
@@ -1243,7 +1257,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(ctx context.Context, s *
 		return nil, err
 	}
 
-	conversation.ConversationID = utils.GetConversationIDBySessionType(groupID, int(conversation.ConversationType))
+	conversation.ConversationID = c.getConversationIDBySessionType(groupID, int(conversation.ConversationType))
 	if sendID != c.loginUserID {
 		faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, sendID)
 		if err != nil {
@@ -1369,9 +1383,9 @@ func (c *Conversation) getConversationTypeByGroupID(ctx context.Context, groupID
 	}
 	switch g.GroupType {
 	case constant.NormalGroup:
-		return utils.GetConversationIDBySessionType(groupID, constant.GroupChatType), constant.GroupChatType, nil
+		return c.getConversationIDBySessionType(groupID, constant.GroupChatType), constant.GroupChatType, nil
 	case constant.SuperGroup, constant.WorkingGroup:
-		return utils.GetConversationIDBySessionType(groupID, constant.SuperGroupChatType), constant.SuperGroupChatType, nil
+		return c.getConversationIDBySessionType(groupID, constant.SuperGroupChatType), constant.SuperGroupChatType, nil
 	default:
 		return "", 0, utils.Wrap(errors.New("err groupType"), "group type err")
 	}

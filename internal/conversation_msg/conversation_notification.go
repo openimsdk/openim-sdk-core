@@ -151,7 +151,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		switch st.SessionType {
 		case constant.SingleChatType:
 			lc.UserID = st.SourceID
-			lc.ConversationID = utils.GetConversationIDBySessionType(st.SourceID, constant.SingleChatType)
+			lc.ConversationID = c.getConversationIDBySessionType(st.SourceID, constant.SingleChatType)
 			lc.ConversationType = constant.SingleChatType
 		case constant.GroupChatType:
 			conversationID, conversationType, err := c.getConversationTypeByGroupID(ctx, st.SourceID)
