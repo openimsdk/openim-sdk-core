@@ -256,7 +256,7 @@ func (u *LoginMgr) wakeUp(ctx context.Context) error {
 func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.info.UserID = userID
 	u.info.Token = token
-	log.ZInfo(ctx, "login start... ", "userID", userID, "token", token)
+	log.ZInfo(ctx, "login start... ", "userID", userID, "token", token, "isCompression", u.info.IsCompression)
 	t1 := time.Now()
 	u.token = token
 	u.loginUserID = userID
