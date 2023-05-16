@@ -104,10 +104,6 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 		return nil, sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("go code error: fn in args num is not match"))
 	}
 	ctx := ccontext.WithOperationID(UserForSDK.BaseCtx(), operationID)
-	//ctx := context.Background()
-	//ctx = context.WithValue(ctx, "operationID", operationID)
-	//ctx = context.WithValue(ctx, "token", UserForSDK.GetToken())
-	//ctx = context.WithValue(ctx, "apiHost", UserForSDK.GetConfig().ApiAddr)
 	ins := make([]reflect.Value, 0, nin)
 	ins = append(ins, reflect.ValueOf(ctx))
 	for i := 0; i < len(args); i++ {
@@ -156,17 +152,28 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 	}
 	if fnt.Out(len(outs) - 1).Implements(reflect.ValueOf(new(error)).Elem().Type()) {
 		if errValueOf := outs[len(outs)-1]; !errValueOf.IsNil() {
-			if err := errValueOf.Interface().(error); err != nil {
-				return nil, err
-			}
+			return nil, errValueOf.Interface().(error)
 		}
-		switch len(outs) {
-		case 1:
+		if len(outs) == 1 {
 			return "", nil
-		case 2:
-			return outs[0].Interface(), nil
 		}
 		outs = outs[:len(outs)-1]
+	}
+	for i := 0; i < len(outs); i++ {
+		out := outs[i]
+		switch out.Kind() {
+		case reflect.Map:
+			if out.IsNil() {
+				outs[i] = reflect.MakeMap(out.Type())
+			}
+		case reflect.Slice:
+			if out.IsNil() {
+				outs[i] = reflect.MakeSlice(out.Type(), 0, 0)
+			}
+		}
+	}
+	if len(outs) == 1 {
+		return outs[0].Interface(), nil
 	}
 	val := make([]any, 0, len(outs))
 	for i := range outs {
