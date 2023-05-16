@@ -16,6 +16,7 @@ package friend
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"open_im_sdk/internal/user"
@@ -60,7 +61,26 @@ func (f *Friend) initSyncer() {
 		return f.db.UpdateFriend(ctx, server)
 	}, func(value *model_struct.LocalFriend) [2]string {
 		return [...]string{value.OwnerUserID, value.FriendUserID}
-	}, nil, nil)
+	}, nil, func(ctx context.Context, state int, value *model_struct.LocalFriend) error {
+		if f.friendListener == nil {
+			return nil
+		}
+		data, err := json.Marshal(value)
+		if err != nil {
+			return err
+		}
+		switch state {
+		case syncer.Insert:
+			f.friendListener.OnFriendAdded(string(data))
+		case syncer.Delete:
+			f.friendListener.OnFriendDeleted(string(data))
+		case syncer.Update:
+			f.friendListener.OnFriendInfoChanged(string(data))
+			_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: value.FriendUserID, SessionType: constant.SingleChatType}}, f.conversationCh)
+			_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: value.FriendUserID, FaceURL: value.FaceURL, Nickname: value.Nickname}}, f.conversationCh)
+		}
+		return nil
+	})
 
 	f.blockSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalBlack) error {
 		return f.db.InsertBlack(ctx, value)
@@ -70,7 +90,22 @@ func (f *Friend) initSyncer() {
 		return f.db.UpdateBlack(ctx, server)
 	}, func(value *model_struct.LocalBlack) [2]string {
 		return [...]string{value.OwnerUserID, value.BlockUserID}
-	}, nil, nil)
+	}, nil, func(ctx context.Context, state int, value *model_struct.LocalBlack) error {
+		if f.friendListener == nil {
+			return nil
+		}
+		data, err := json.Marshal(value)
+		if err != nil {
+			return err
+		}
+		switch state {
+		case syncer.Insert:
+			f.friendListener.OnBlackAdded(string(data))
+		case syncer.Delete:
+			f.friendListener.OnBlackDeleted(string(data))
+		}
+		return nil
+	})
 
 	f.requestRecvSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
 		return f.db.InsertFriendRequest(ctx, value)
@@ -80,7 +115,29 @@ func (f *Friend) initSyncer() {
 		return f.db.UpdateFriendRequest(ctx, server)
 	}, func(value *model_struct.LocalFriendRequest) [2]string {
 		return [...]string{value.FromUserID, value.ToUserID}
-	}, nil, nil)
+	}, nil, func(ctx context.Context, state int, value *model_struct.LocalFriendRequest) error {
+		if f.friendListener == nil {
+			return nil
+		}
+		data, err := json.Marshal(value)
+		if err != nil {
+			return err
+		}
+		switch state {
+		case syncer.Insert:
+			f.friendListener.OnFriendApplicationAdded(string(data))
+		case syncer.Delete:
+			f.friendListener.OnFriendApplicationDeleted(string(data))
+		case syncer.Update:
+			switch value.HandleResult {
+			case constant.FriendResponseAgree:
+				f.friendListener.OnFriendApplicationAccepted(string(data))
+			case constant.FriendResponseRefuse:
+				f.friendListener.OnFriendApplicationRejected(string(data))
+			}
+		}
+		return nil
+	})
 
 	f.requestSendSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
 		return f.db.InsertFriendRequest(ctx, value)
@@ -90,7 +147,29 @@ func (f *Friend) initSyncer() {
 		return f.db.UpdateFriendRequest(ctx, server)
 	}, func(value *model_struct.LocalFriendRequest) [2]string {
 		return [...]string{value.FromUserID, value.ToUserID}
-	}, nil, nil)
+	}, nil, func(ctx context.Context, state int, value *model_struct.LocalFriendRequest) error {
+		if f.friendListener == nil {
+			return nil
+		}
+		data, err := json.Marshal(value)
+		if err != nil {
+			return err
+		}
+		switch state {
+		case syncer.Insert:
+			f.friendListener.OnFriendApplicationAdded(string(data))
+		case syncer.Delete:
+			f.friendListener.OnFriendApplicationDeleted(string(data))
+		case syncer.Update:
+			switch value.HandleResult {
+			case constant.FriendResponseAgree:
+				f.friendListener.OnFriendApplicationAccepted(string(data))
+			case constant.FriendResponseRefuse:
+				f.friendListener.OnFriendApplicationRejected(string(data))
+			}
+		}
+		return nil
+	})
 
 }
 

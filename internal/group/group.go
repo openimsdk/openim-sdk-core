@@ -89,7 +89,7 @@ func (g *Group) initSyncer() {
 		case syncer.Update:
 			g.listener.OnGroupInfoChanged(string(data))
 		}
-		//common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: value.GroupID, SessionType: constant.GroupChatType}}, g.conversationCh)
+		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: value.GroupID, SessionType: constant.GroupChatType}}, g.conversationCh)
 		return nil
 	})
 
