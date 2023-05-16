@@ -147,7 +147,18 @@ func (u *User) GetSingleUserFromSvr(ctx context.Context, userID string) (*model_
 
 // getSelfUserInfo retrieves the user's information.
 func (u *User) getSelfUserInfo(ctx context.Context) (*model_struct.LocalUser, error) {
-	return u.GetLoginUser(ctx, u.loginUserID)
+	userInfo, errLocal := u.GetLoginUser(ctx, u.loginUserID)
+	if errLocal != nil {
+		srvUserInfo, errServer := u.GetServerUserInfo(ctx, []string{u.loginUserID})
+		if errServer != nil {
+			return nil, errServer
+		}
+		if len(srvUserInfo) == 0 {
+			return nil, sdkerrs.ErrRecordNotFound
+		}
+		userInfo = ServerUserToLocalUser(srvUserInfo[0])
+	}
+	return userInfo, nil
 }
 
 // updateSelfUserInfo updates the user's information.
