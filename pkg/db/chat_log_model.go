@@ -30,38 +30,40 @@ import (
 	"gorm.io/gorm"
 )
 
-func (d *DataBase) BatchInsertMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error {
-	if MessageList == nil {
-		return nil
-	}
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.WithContext(ctx).Create(MessageList).Error, "BatchInsertMessageList failed")
-}
-func (d *DataBase) BatchInsertMessageListController(ctx context.Context, MessageList []*model_struct.LocalChatLog) error {
-	if len(MessageList) == 0 {
-		return nil
-	}
-	switch MessageList[len(MessageList)-1].SessionType {
-	case constant.SuperGroupChatType:
-		return d.SuperGroupBatchInsertMessageList(ctx, MessageList, MessageList[len(MessageList)-1].RecvID)
-	default:
-		return d.BatchInsertMessageList(ctx, MessageList)
-	}
-}
-func (d *DataBase) InsertMessage(ctx context.Context, Message *model_struct.LocalChatLog) error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.WithContext(ctx).Create(Message).Error, "InsertMessage failed")
-}
-func (d *DataBase) InsertMessageController(ctx context.Context, message *model_struct.LocalChatLog) error {
-	switch message.SessionType {
-	case constant.SuperGroupChatType:
-		return d.SuperGroupInsertMessage(ctx, message, message.RecvID)
-	default:
-		return d.InsertMessage(ctx, message)
-	}
-}
+//	func (d *DataBase) BatchInsertMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error {
+//		if MessageList == nil {
+//			return nil
+//		}
+//		d.mRWMutex.Lock()
+//		defer d.mRWMutex.Unlock()
+//		return utils.Wrap(d.conn.WithContext(ctx).Create(MessageList).Error, "BatchInsertMessageList failed")
+//	}
+//func (d *DataBase) BatchInsertMessageListController(ctx context.Context, MessageList []*model_struct.LocalChatLog) error {
+//	if len(MessageList) == 0 {
+//		return nil
+//	}
+//	switch MessageList[len(MessageList)-1].SessionType {
+//	case constant.SuperGroupChatType:
+//		return d.SuperGroupBatchInsertMessageList(ctx, MessageList, MessageList[len(MessageList)-1].RecvID)
+//	default:
+//		return d.BatchInsertMessageList(ctx, MessageList)
+//	}
+//}
+
+//	func (d *DataBase) InsertMessage(ctx context.Context, Message *model_struct.LocalChatLog) error {
+//		d.mRWMutex.Lock()
+//		defer d.mRWMutex.Unlock()
+//		return utils.Wrap(d.conn.WithContext(ctx).Create(Message).Error, "InsertMessage failed")
+//	}
+//
+//	func (d *DataBase) InsertMessageController(ctx context.Context, message *model_struct.LocalChatLog) error {
+//		switch message.SessionType {
+//		case constant.SuperGroupChatType:
+//			return d.SuperGroupInsertMessage(ctx, message, message.RecvID)
+//		default:
+//			return d.InsertMessage(ctx, message)
+//		}
+//	}
 func (d *DataBase) SearchMessageByKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error) {
 	var messageList []model_struct.LocalChatLog
 	var condition string
@@ -219,60 +221,61 @@ func (d *DataBase) SearchMessageByContentTypeAndKeywordController(ctx context.Co
 	}
 	return list, nil
 }
-func (d *DataBase) BatchUpdateMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error {
-	if MessageList == nil {
-		return nil
-	}
 
-	for _, v := range MessageList {
-		v1 := new(model_struct.LocalChatLog)
-		v1.ClientMsgID = v.ClientMsgID
-		v1.Seq = v.Seq
-		v1.Status = v.Status
-		v1.RecvID = v.RecvID
-		v1.SessionType = v.SessionType
-		v1.ServerMsgID = v.ServerMsgID
-		err := d.UpdateMessageController(ctx, v1)
-		if err != nil {
-			return utils.Wrap(err, "BatchUpdateMessageList failed")
-		}
+//func (d *DataBase) BatchUpdateMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error {
+//	if MessageList == nil {
+//		return nil
+//	}
+//
+//	for _, v := range MessageList {
+//		v1 := new(model_struct.LocalChatLog)
+//		v1.ClientMsgID = v.ClientMsgID
+//		v1.Seq = v.Seq
+//		v1.Status = v.Status
+//		v1.RecvID = v.RecvID
+//		v1.SessionType = v.SessionType
+//		v1.ServerMsgID = v.ServerMsgID
+//		err := d.UpdateMessageController(ctx, v1)
+//		if err != nil {
+//			return utils.Wrap(err, "BatchUpdateMessageList failed")
+//		}
+//
+//	}
+//	return nil
+//}
 
-	}
-	return nil
-}
-
-func (d *DataBase) BatchSpecialUpdateMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error {
-	if MessageList == nil {
-		return nil
-	}
-
-	for _, v := range MessageList {
-		v1 := new(model_struct.LocalChatLog)
-		v1.ClientMsgID = v.ClientMsgID
-		v1.ServerMsgID = v.ServerMsgID
-		v1.SendID = v.SendID
-		v1.RecvID = v.RecvID
-		v1.SenderPlatformID = v.SenderPlatformID
-		v1.SenderNickname = v.SenderNickname
-		v1.SenderFaceURL = v.SenderFaceURL
-		v1.SessionType = v.SessionType
-		v1.MsgFrom = v.MsgFrom
-		v1.ContentType = v.ContentType
-		v1.Content = v.Content
-		v1.Seq = v.Seq
-		v1.SendTime = v.SendTime
-		v1.CreateTime = v.CreateTime
-		v1.AttachedInfo = v.AttachedInfo
-		v1.Ex = v.Ex
-		err := d.UpdateMessageController(ctx, v1)
-		if err != nil {
-			log.Error("", "update single message failed", *v)
-			return utils.Wrap(err, "BatchUpdateMessageList failed")
-		}
-
-	}
-	return nil
-}
+//func (d *DataBase) BatchSpecialUpdateMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error {
+//	if MessageList == nil {
+//		return nil
+//	}
+//
+//	for _, v := range MessageList {
+//		v1 := new(model_struct.LocalChatLog)
+//		v1.ClientMsgID = v.ClientMsgID
+//		v1.ServerMsgID = v.ServerMsgID
+//		v1.SendID = v.SendID
+//		v1.RecvID = v.RecvID
+//		v1.SenderPlatformID = v.SenderPlatformID
+//		v1.SenderNickname = v.SenderNickname
+//		v1.SenderFaceURL = v.SenderFaceURL
+//		v1.SessionType = v.SessionType
+//		v1.MsgFrom = v.MsgFrom
+//		v1.ContentType = v.ContentType
+//		v1.Content = v.Content
+//		v1.Seq = v.Seq
+//		v1.SendTime = v.SendTime
+//		v1.CreateTime = v.CreateTime
+//		v1.AttachedInfo = v.AttachedInfo
+//		v1.Ex = v.Ex
+//		err := d.UpdateMessageController(ctx, v1)
+//		if err != nil {
+//			log.Error("", "update single message failed", *v)
+//			return utils.Wrap(err, "BatchUpdateMessageList failed")
+//		}
+//
+//	}
+//	return nil
+//}
 
 func (d *DataBase) MessageIfExists(ctx context.Context, ClientMsgID string) (bool, error) {
 	d.mRWMutex.Lock()
@@ -308,19 +311,19 @@ func (d *DataBase) MessageIfExistsBySeq(ctx context.Context, seq int64) (bool, e
 	}
 }
 
-func (d *DataBase) GetMessage(ctx context.Context, ClientMsgID string) (*model_struct.LocalChatLog, error) {
-	var c model_struct.LocalChatLog
-	return &c, utils.Wrap(d.conn.WithContext(ctx).Where("client_msg_id = ?",
-		ClientMsgID).Take(&c).Error, "GetMessage failed")
-}
-func (d *DataBase) GetMessageController(ctx context.Context, msg *sdk_struct.MsgStruct) (*model_struct.LocalChatLog, error) {
-	switch msg.SessionType {
-	case constant.SuperGroupChatType:
-		return d.SuperGroupGetMessage(ctx, msg)
-	default:
-		return d.GetMessage(ctx, msg.ClientMsgID)
-	}
-}
+//	func (d *DataBase) GetMessage(ctx context.Context, ClientMsgID string) (*model_struct.LocalChatLog, error) {
+//		var c model_struct.LocalChatLog
+//		return &c, utils.Wrap(d.conn.WithContext(ctx).Where("client_msg_id = ?",
+//			ClientMsgID).Take(&c).Error, "GetMessage failed")
+//	}
+//func (d *DataBase) GetMessageController(ctx context.Context, msg *sdk_struct.MsgStruct) (*model_struct.LocalChatLog, error) {
+//	switch msg.SessionType {
+//	case constant.SuperGroupChatType:
+//		return d.SuperGroupGetMessage(ctx, msg)
+//	default:
+//		return d.GetMessage(ctx, msg.ClientMsgID)
+//	}
+//}
 
 func (d *DataBase) GetAllUnDeleteMessageSeqList(ctx context.Context) ([]uint32, error) {
 	var seqList []uint32
@@ -352,21 +355,22 @@ func (d *DataBase) UpdateColumnsMessageController(ctx context.Context, ClientMsg
 		return utils.Wrap(d.UpdateColumnsMessage(ctx, ClientMsgID, args), "")
 	}
 }
-func (d *DataBase) UpdateMessage(ctx context.Context, c *model_struct.LocalChatLog) error {
-	t := d.conn.WithContext(ctx).Updates(c)
-	if t.RowsAffected == 0 {
-		return utils.Wrap(errors.New("RowsAffected == 0"), "no update ")
-	}
-	return utils.Wrap(t.Error, "UpdateMessage failed")
-}
-func (d *DataBase) UpdateMessageController(ctx context.Context, c *model_struct.LocalChatLog) error {
-	switch c.SessionType {
-	case constant.SuperGroupChatType:
-		return utils.Wrap(d.SuperGroupUpdateMessage(ctx, c), "")
-	default:
-		return utils.Wrap(d.UpdateMessage(ctx, c), "")
-	}
-}
+
+//	func (d *DataBase) UpdateMessage(ctx context.Context, c *model_struct.LocalChatLog) error {
+//		t := d.conn.WithContext(ctx).Updates(c)
+//		if t.RowsAffected == 0 {
+//			return utils.Wrap(errors.New("RowsAffected == 0"), "no update ")
+//		}
+//		return utils.Wrap(t.Error, "UpdateMessage failed")
+//	}
+//func (d *DataBase) UpdateMessageController(ctx context.Context, c *model_struct.LocalChatLog) error {
+//	switch c.SessionType {
+//	case constant.SuperGroupChatType:
+//		return utils.Wrap(d.SuperGroupUpdateMessage(ctx, c), "")
+//	default:
+//		return utils.Wrap(d.UpdateMessage(ctx, c), "")
+//	}
+//}
 
 func (d *DataBase) DeleteAllMessage(ctx context.Context) error {
 	m := model_struct.LocalChatLog{Status: constant.MsgStatusHasDeleted, Content: ""}
@@ -396,20 +400,22 @@ func (d *DataBase) UpdateMessageStatusBySourceIDController(ctx context.Context, 
 		return d.UpdateMessageStatusBySourceID(ctx, sourceID, status, sessionType)
 	}
 }
-func (d *DataBase) UpdateMessageTimeAndStatus(ctx context.Context, clientMsgID string, serverMsgID string, sendTime int64, status int32) error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Where("client_msg_id=? And seq=?", clientMsgID, 0).Updates(model_struct.LocalChatLog{Status: status, SendTime: sendTime, ServerMsgID: serverMsgID}).Error, "UpdateMessageStatusBySourceID failed")
 
-}
-func (d *DataBase) UpdateMessageTimeAndStatusController(ctx context.Context, msg *sdk_struct.MsgStruct) error {
-	switch msg.SessionType {
-	case constant.SuperGroupChatType:
-		return d.SuperGroupUpdateMessageTimeAndStatus(ctx, msg)
-	default:
-		return d.UpdateMessageTimeAndStatus(ctx, msg.ClientMsgID, msg.ServerMsgID, msg.SendTime, msg.Status)
-	}
-}
+//	func (d *DataBase) UpdateMessageTimeAndStatus(ctx context.Context, clientMsgID string, serverMsgID string, sendTime int64, status int32) error {
+//		d.mRWMutex.Lock()
+//		defer d.mRWMutex.Unlock()
+//		return utils.Wrap(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Where("client_msg_id=? And seq=?", clientMsgID, 0).
+//			Updates(model_struct.LocalChatLog{Status: status, SendTime: sendTime, ServerMsgID: serverMsgID}).Error, "UpdateMessageStatusBySourceID failed")
+//
+// }
+//func (d *DataBase) UpdateMessageTimeAndStatusController(ctx context.Context, msg *sdk_struct.MsgStruct) error {
+//	switch msg.SessionType {
+//	case constant.SuperGroupChatType:
+//		return d.SuperGroupUpdateMessageTimeAndStatus(ctx, msg)
+//	default:
+//		return d.UpdateMessageTimeAndStatus(ctx, msg.ClientMsgID, msg.ServerMsgID, msg.SendTime, msg.Status)
+//	}
+//}
 
 //func (d *DataBase) UpdateMessageAttachedInfo(ctx context.Context, msg *sdk_struct.MsgStruct) error {
 //	info, err := json.Marshal(msg.AttachedInfoElem)
@@ -437,31 +443,31 @@ func (d *DataBase) UpdateMessageByClientMsgID(ctx context.Context, clientMsgID s
 }
 
 // group ,index_recv_id and index_send_time only one can be used,when index_recv_id be used,temp B tree use for order by,Query speed decrease
-func (d *DataBase) GetMessageList(ctx context.Context, sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	var messageList []model_struct.LocalChatLog
-	var condition, timeOrder, timeSymbol string
-	if isReverse {
-		timeOrder = "send_time ASC"
-		timeSymbol = ">"
-	} else {
-		timeOrder = "send_time DESC"
-		timeSymbol = "<"
-	}
-	if sessionType == constant.SingleChatType && sourceID == d.loginUserID {
-		condition = "send_id = ? And recv_id = ? AND status <=? And session_type = ? And send_time " + timeSymbol + " ?"
-	} else {
-		condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? And send_time " + timeSymbol + " ?"
-	}
-	err = utils.Wrap(d.conn.WithContext(ctx).Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
-		Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
-	for _, v := range messageList {
-		v1 := v
-		result = append(result, &v1)
-	}
-	return result, err
-}
+//func (d *DataBase) GetMessageList(ctx context.Context, sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+//	d.mRWMutex.Lock()
+//	defer d.mRWMutex.Unlock()
+//	var messageList []model_struct.LocalChatLog
+//	var condition, timeOrder, timeSymbol string
+//	if isReverse {
+//		timeOrder = "send_time ASC"
+//		timeSymbol = ">"
+//	} else {
+//		timeOrder = "send_time DESC"
+//		timeSymbol = "<"
+//	}
+//	if sessionType == constant.SingleChatType && sourceID == d.loginUserID {
+//		condition = "send_id = ? And recv_id = ? AND status <=? And session_type = ? And send_time " + timeSymbol + " ?"
+//	} else {
+//		condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? And send_time " + timeSymbol + " ?"
+//	}
+//	err = utils.Wrap(d.conn.WithContext(ctx).Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType, startTime).
+//		Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
+//	for _, v := range messageList {
+//		v1 := v
+//		result = append(result, &v1)
+//	}
+//	return result, err
+//}
 
 func (d *DataBase) GetAllMessageForTest(ctx context.Context) (result []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.Lock()
@@ -476,58 +482,59 @@ func (d *DataBase) GetAllMessageForTest(ctx context.Context) (result []*model_st
 	return result, err
 }
 
-func (d *DataBase) GetMessageListController(ctx context.Context, sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	switch sessionType {
-	case constant.SuperGroupChatType:
-		return d.SuperGroupGetMessageList(ctx, sourceID, sessionType, count, startTime, isReverse)
-	default:
-		return d.GetMessageList(ctx, sourceID, sessionType, count, startTime, isReverse)
-	}
-}
-func (d *DataBase) GetMessageListNoTime(ctx context.Context, sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	var messageList []model_struct.LocalChatLog
-	var condition, timeOrder string
-	if isReverse {
-		timeOrder = "send_time ASC"
-	} else {
-		timeOrder = "send_time DESC"
-	}
-	switch sessionType {
-	case constant.SingleChatType:
-		if sourceID == d.loginUserID {
-			condition = "send_id = ? And recv_id = ? AND status <=? And session_type = ?"
-		} else {
-			condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? "
-		}
-		err = utils.Wrap(d.conn.WithContext(ctx).Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType).
-			Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
-	case constant.GroupChatType:
-		condition = " recv_id = ? AND status <=? And session_type = ? "
-		err = utils.Wrap(d.conn.WithContext(ctx).Where(condition, sourceID, constant.MsgStatusSendFailed, sessionType).
-			Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
-	default:
-		condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? "
-		err = utils.Wrap(d.conn.WithContext(ctx).Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType).
-			Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
-	}
+//func (d *DataBase) GetMessageListController(ctx context.Context, sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+//	switch sessionType {
+//	case constant.SuperGroupChatType:
+//		return d.SuperGroupGetMessageList(ctx, sourceID, sessionType, count, startTime, isReverse)
+//	default:
+//		return d.GetMessageList(ctx, sourceID, sessionType, count, startTime, isReverse)
+//	}
+//}
 
-	for _, v := range messageList {
-		v1 := v
-		result = append(result, &v1)
-	}
-	return result, err
-}
+//func (d *DataBase) GetMessageListNoTime(ctx context.Context, sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+//	d.mRWMutex.Lock()
+//	defer d.mRWMutex.Unlock()
+//	var messageList []model_struct.LocalChatLog
+//	var condition, timeOrder string
+//	if isReverse {
+//		timeOrder = "send_time ASC"
+//	} else {
+//		timeOrder = "send_time DESC"
+//	}
+//	switch sessionType {
+//	case constant.SingleChatType:
+//		if sourceID == d.loginUserID {
+//			condition = "send_id = ? And recv_id = ? AND status <=? And session_type = ?"
+//		} else {
+//			condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? "
+//		}
+//		err = utils.Wrap(d.conn.WithContext(ctx).Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType).
+//			Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
+//	case constant.GroupChatType:
+//		condition = " recv_id = ? AND status <=? And session_type = ? "
+//		err = utils.Wrap(d.conn.WithContext(ctx).Where(condition, sourceID, constant.MsgStatusSendFailed, sessionType).
+//			Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
+//	default:
+//		condition = "(send_id = ? OR recv_id = ?) AND status <=? And session_type = ? "
+//		err = utils.Wrap(d.conn.WithContext(ctx).Where(condition, sourceID, sourceID, constant.MsgStatusSendFailed, sessionType).
+//			Order(timeOrder).Offset(0).Limit(count).Find(&messageList).Error, "GetMessageList failed")
+//	}
+//
+//	for _, v := range messageList {
+//		v1 := v
+//		result = append(result, &v1)
+//	}
+//	return result, err
+//}
 
-func (d *DataBase) GetMessageListNoTimeController(ctx context.Context, sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	switch sessionType {
-	case constant.SuperGroupChatType:
-		return d.SuperGroupGetMessageListNoTime(ctx, sourceID, sessionType, count, isReverse)
-	default:
-		return d.GetMessageListNoTime(ctx, sourceID, sessionType, count, isReverse)
-	}
-}
+//func (d *DataBase) GetMessageListNoTimeController(ctx context.Context, sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+//	switch sessionType {
+//	case constant.SuperGroupChatType:
+//		return d.SuperGroupGetMessageListNoTime(ctx, sourceID, sessionType, count, isReverse)
+//	default:
+//		return d.GetMessageListNoTime(ctx, sourceID, sessionType, count, isReverse)
+//	}
+//}
 
 func (d *DataBase) GetSendingMessageList(ctx context.Context) (result []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.Lock()

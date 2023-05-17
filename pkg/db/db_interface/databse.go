@@ -41,9 +41,9 @@ type DataBase interface {
 	DeleteAdminGroupRequest(ctx context.Context, groupID, userID string) error
 	UpdateAdminGroupRequest(ctx context.Context, groupRequest *model_struct.LocalAdminGroupRequest) error
 	GetAdminGroupApplication(ctx context.Context) ([]*model_struct.LocalAdminGroupRequest, error)
-	BatchInsertMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error
+	BatchInsertMessageList(ctx context.Context, conversationID string, MessageList []*model_struct.LocalChatLog) error
 	BatchInsertMessageListController(ctx context.Context, MessageList []*model_struct.LocalChatLog) error
-	InsertMessage(ctx context.Context, Message *model_struct.LocalChatLog) error
+	InsertMessage(ctx context.Context, conversationID string, Message *model_struct.LocalChatLog) error
 	InsertMessageController(ctx context.Context, message *model_struct.LocalChatLog) error
 	SearchMessageByKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
 	SearchMessageByKeywordController(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
@@ -56,24 +56,24 @@ type DataBase interface {
 	MessageIfExists(ctx context.Context, ClientMsgID string) (bool, error)
 	IsExistsInErrChatLogBySeq(ctx context.Context, seq int64) bool
 	MessageIfExistsBySeq(ctx context.Context, seq int64) (bool, error)
-	GetMessage(ctx context.Context, ClientMsgID string) (*model_struct.LocalChatLog, error)
-	GetMessageController(ctx context.Context, msg *sdk_struct.MsgStruct) (*model_struct.LocalChatLog, error)
+	GetMessage(ctx context.Context, conversationID, clientMsgID string) (*model_struct.LocalChatLog, error)
+	//GetMessageController(ctx context.Context, conversationID, clientMsgID string) (*model_struct.LocalChatLog, error)
 	GetAllUnDeleteMessageSeqList(ctx context.Context) ([]uint32, error)
 	UpdateColumnsMessageList(ctx context.Context, clientMsgIDList []string, args map[string]interface{}) error
 	UpdateColumnsMessage(ctx context.Context, ClientMsgID string, args map[string]interface{}) error
 	UpdateColumnsMessageController(ctx context.Context, ClientMsgID string, groupID string, sessionType int32, args map[string]interface{}) error
-	UpdateMessage(ctx context.Context, c *model_struct.LocalChatLog) error
-	UpdateMessageController(ctx context.Context, c *model_struct.LocalChatLog) error
+	UpdateMessage(ctx context.Context, conversationID string, c *model_struct.LocalChatLog) error
+	//UpdateMessageController(ctx context.Context, c *model_struct.LocalChatLog) error
 	DeleteAllMessage(ctx context.Context) error
 	UpdateMessageStatusBySourceID(ctx context.Context, sourceID string, status, sessionType int32) error
 	UpdateMessageStatusBySourceIDController(ctx context.Context, sourceID string, status, sessionType int32) error
-	UpdateMessageTimeAndStatus(ctx context.Context, clientMsgID string, serverMsgID string, sendTime int64, status int32) error
+	UpdateMessageTimeAndStatus(ctx context.Context, conversationID, clientMsgID string, serverMsgID string, sendTime int64, status int32) error
 	UpdateMessageTimeAndStatusController(ctx context.Context, msg *sdk_struct.MsgStruct) error
 	UpdateMessageByClientMsgID(ctx context.Context, clientMsgID string, data map[string]any) error
-	GetMessageList(ctx context.Context, sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error)
+	GetMessageList(ctx context.Context, conversationID string, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error)
 	GetMessageListController(ctx context.Context, sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error)
-	GetMessageListNoTime(ctx context.Context, sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error)
-	GetMessageListNoTimeController(ctx context.Context, sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error)
+	GetMessageListNoTime(ctx context.Context, conversationID string, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error)
+	//GetMessageListNoTimeController(ctx context.Context, sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error)
 	GetSendingMessageList(ctx context.Context) (result []*model_struct.LocalChatLog, err error)
 	UpdateSingleMessageHasRead(ctx context.Context, sendID string, msgIDList []string) error
 	UpdateGroupMessageHasRead(ctx context.Context, msgIDList []string, sessionType int32) error

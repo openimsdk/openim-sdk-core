@@ -471,7 +471,8 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 		var reqList []server_api_params.OperateMessageListReactionExtensionsReq
 		var temp server_api_params.OperateMessageListReactionExtensionsReq
 		for _, v := range messageList {
-			message, err := c.db.GetMessageController(ctx, v)
+			//todo syncMessage must sync
+			message, err := c.db.GetMessage(ctx, "", v.ClientMsgID)
 			if err != nil {
 				log.Error(node.OperationID, "GetMessageController err:", err.Error(), *v)
 				continue

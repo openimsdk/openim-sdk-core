@@ -345,6 +345,9 @@ func GetConversationIDByMsg(msg *sdk_struct.MsgStruct) string {
 func GetSuperGroupTableName(groupID string) string {
 	return constant.ChatLogsTableNamePre + groupID
 }
+func GetTableName(conversationID string) string {
+	return constant.ChatLogsTableNamePre + conversationID
+}
 func GetErrSuperGroupTableName(groupID string) string {
 	return constant.SuperGroupErrChatLogsTableNamePre + groupID
 }
