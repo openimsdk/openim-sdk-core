@@ -6,7 +6,7 @@
 </h1>
 
 <p align=center>
-<a href="https://goreportcard.com/report/github.com/OpenIMSDK/Open-IM-SDK-Core"><img src="https://goreportcard.com/badge/github.com/OpenIMSDK/Open-IM-SDK-Core>" alt="A+"></a>
+<a href="https://goreportcard.com/report/github.com/OpenIMSDK/Open-IM-SDK-Core"><img src="https://goreportcard.com/badge/github.com/OpenIMSDK/Open-IM-SDK-Core" alt="A+"></a>
 <a href="https://github.com/issues?q=org%3AOpenIMSDK+is%3Aissue+label%3A%22good+first+issue%22+no%3Aassignee"><img src="https://img.shields.io/github/issues/OpenIMSDK/Open-IM-SDK-Core/good%20first%20issue?logo=%22github%22" alt="good first"></a>
 <a href="https://github.com/OpenIMSDK/Open-IM-SDK-Core"><img src="https://img.shields.io/github/stars/OpenIMSDK/Open-IM-SDK-Core.svg?style=flat&logo=github&colorB=deeppink&label=stars"></a>
 <a href="https://join.slack.com/t/openimsdk/shared_invite/zt-1tmoj26uf-_FDy3dowVHBiGvLk9e5Xkg"><img src="https://img.shields.io/badge/Slack-100%2B-blueviolet?logo=slack&amp;logoColor=white"></a>
