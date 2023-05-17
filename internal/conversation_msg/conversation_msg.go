@@ -886,7 +886,8 @@ func (c *Conversation) newRevokeMessage(ctx context.Context, msgRevokeList []*sd
 			failedRevokeMessageList = append(failedRevokeMessageList, w)
 			switch msg.SessionType {
 			case constant.SuperGroupChatType:
-				err := c.db.InsertMessageController(ctx, t)
+				//todo
+				err := c.db.InsertMessage(ctx, "", t)
 				if err != nil {
 					log.Error("internal", "InsertMessageController preDefine Message err:", err.Error(), "msg", *t)
 				}
