@@ -190,17 +190,13 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
 			isNotPrivate = utils.GetSwitchFromOptions(v.Options, constant.IsNotPrivate)
 			isSenderConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsSenderConversationUpdate)
-			msg := &sdk_struct.MsgStruct{
-				AttachedInfoElem: &sdk_struct.AttachedInfoElem{},
-			}
+			msg := &sdk_struct.MsgStruct{}
 			copier.Copy(msg, v)
 			msg.Content = string(v.Content)
+			var attachedInfo sdk_struct.AttachedInfoElem
+			_ = utils.JsonStringToStruct(v.AttachedInfo, &attachedInfo)
+			msg.AttachedInfoElem = &attachedInfo
 
-			//When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
-			if msg.Status == constant.MsgStatusHasDeleted {
-				insertMessage = append(insertMessage, c.msgStructToLocalChatLog(msg))
-				continue
-			}
 			msg.Status = constant.MsgStatusSendSuccess
 			msg.IsRead = false
 			//De-analyze data
@@ -209,9 +205,13 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				log.ZError(ctx, "Parsing data error:", err, "type: ", msg.ContentType)
 				continue
 			}
+			//When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
+			if msg.Status == constant.MsgStatusHasDeleted {
+				insertMessage = append(insertMessage, c.msgStructToLocalChatLog(msg))
+				continue
+			}
 			if !isNotPrivate {
 				msg.AttachedInfoElem.IsPrivateChat = true
-				msg.AttachedInfo = utils.StructToJsonString(msg.AttachedInfoElem)
 			}
 			if msg.ClientMsgID == "" {
 				exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
@@ -807,14 +807,16 @@ func (c *Conversation) genConversationGroupAtType(lc *model_struct.LocalConversa
 	}
 
 }
-func (c *Conversation) msgStructToLocalChatLog(m *sdk_struct.MsgStruct) *model_struct.LocalChatLog {
-	var lc model_struct.LocalChatLog
-	copier.Copy(&lc, m)
-	if m.SessionType == constant.GroupChatType || m.SessionType == constant.SuperGroupChatType {
-		lc.RecvID = m.GroupID
-	}
-	return &lc
-}
+
+//	func (c *Conversation) msgStructToLocalChatLog(m *sdk_struct.MsgStruct) *model_struct.LocalChatLog {
+//		var lc model_struct.LocalChatLog
+//		copier.Copy(&lc, m)
+//		if m.SessionType == constant.GroupChatType || m.SessionType == constant.SuperGroupChatType {
+//			lc.RecvID = m.GroupID
+//		}
+//		lc.AttachedInfo = utils.StructToJsonString(m.AttachedInfoElem)
+//		return &lc
+//	}
 func (c *Conversation) msgStructToLocalErrChatLog(m *sdk_struct.MsgStruct) *model_struct.LocalErrChatLog {
 	var lc model_struct.LocalErrChatLog
 	copier.Copy(&lc, m)
@@ -1333,7 +1335,6 @@ func (c *Conversation) msgConvert(msg *sdk_struct.MsgStruct) (err error) {
 }
 
 func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err error) {
-	_ = utils.JsonStringToStruct(msg.AttachedInfo, &msg.AttachedInfoElem)
 	if msg.ContentType >= constant.NotificationBegin && msg.ContentType <= constant.NotificationEnd {
 		t := sdk_struct.NotificationElem{}
 		t.Detail = msg.Content

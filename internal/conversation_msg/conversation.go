@@ -265,7 +265,9 @@ func (c *Conversation) getHistoryMessageList(ctx context.Context, req sdk.GetHis
 		temp.Seq = v.Seq
 		temp.IsRead = v.IsRead
 		temp.Status = v.Status
-		temp.AttachedInfo = v.AttachedInfo
+		var attachedInfo sdk_struct.AttachedInfoElem
+		_ = utils.JsonStringToStruct(v.AttachedInfo, &attachedInfo)
+		temp.AttachedInfoElem = &attachedInfo
 		temp.Ex = v.Ex
 		temp.IsReact = v.IsReact
 		temp.IsExternalExtensions = v.IsExternalExtensions
@@ -555,7 +557,9 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 		temp.Seq = v.Seq
 		temp.IsRead = v.IsRead
 		temp.Status = v.Status
-		temp.AttachedInfo = v.AttachedInfo
+		var attachedInfo sdk_struct.AttachedInfoElem
+		_ = utils.JsonStringToStruct(v.AttachedInfo, &attachedInfo)
+		temp.AttachedInfoElem = &attachedInfo
 		temp.Ex = v.Ex
 		temp.IsReact = v.IsReact
 		temp.IsExternalExtensions = v.IsExternalExtensions
@@ -769,7 +773,9 @@ func (c *Conversation) getAdvancedHistoryMessageList2(callback open_im_sdk_callb
 		temp.Seq = v.Seq
 		temp.IsRead = v.IsRead
 		temp.Status = v.Status
-		temp.AttachedInfo = v.AttachedInfo
+		var attachedInfo sdk_struct.AttachedInfoElem
+		_ = utils.JsonStringToStruct(v.AttachedInfo, &attachedInfo)
+		temp.AttachedInfoElem = &attachedInfo
 		temp.Ex = v.Ex
 		err := c.msgHandleByContentType(&temp)
 		if err != nil {
@@ -995,7 +1001,6 @@ func (c *Conversation) typingStatusUpdate(ctx context.Context, recvID, msgTip st
 }
 
 func (c *Conversation) markC2CMessageAsRead(ctx context.Context, msgIDList []string, userID string) error {
-	var localMessage model_struct.LocalChatLog
 	var newMessageIDList []string
 	messages, err := c.db.GetMultipleMessage(ctx, msgIDList)
 	if err != nil {
@@ -1029,7 +1034,8 @@ func (c *Conversation) markC2CMessageAsRead(ctx context.Context, msgIDList []str
 	s.ServerMsgID = resp.ServerMsgID
 	s.SendTime = resp.SendTime
 	s.Status = constant.MsgStatusFiltered
-	msgStructToLocalChatLog(&localMessage, &s)
+	_ = c.msgStructToLocalChatLog(&s)
+	//msgStructToLocalChatLog(&localMessage, &s)
 	//err = c.db.InsertMessage(ctx, &localMessage)
 	//if err != nil {
 	//	log.Error("", "inset into chat log err", localMessage, s, err.Error())
@@ -1069,7 +1075,6 @@ func (c *Conversation) markGroupMessageAsRead(ctx context.Context, msgIDList []s
 		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 		return nil
 	}
-	var localMessage model_struct.LocalChatLog
 	allUserMessage := make(map[string][]string, 3)
 	messages, err := c.db.GetMultipleMessageController(ctx, msgIDList, groupID, conversationType)
 	if err != nil {
@@ -1111,8 +1116,8 @@ func (c *Conversation) markGroupMessageAsRead(ctx context.Context, msgIDList []s
 		s.ServerMsgID = resp.ServerMsgID
 		s.SendTime = resp.SendTime
 		s.Status = constant.MsgStatusFiltered
-		msgStructToLocalChatLog(&localMessage, &s)
-		err = c.db.InsertMessage(ctx, conversationID, &localMessage)
+		localMessage := c.msgStructToLocalChatLog(&s)
+		err = c.db.InsertMessage(ctx, conversationID, localMessage)
 		if err != nil {
 			log.Error(
 				"", "inset into chat log err", localMessage, s, err.Error())
@@ -1433,7 +1438,9 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 		temp.Seq = v.Seq
 		temp.IsRead = v.IsRead
 		temp.Status = v.Status
-		temp.AttachedInfo = v.AttachedInfo
+		var attachedInfo sdk_struct.AttachedInfoElem
+		_ = utils.JsonStringToStruct(v.AttachedInfo, &attachedInfo)
+		temp.AttachedInfoElem = &attachedInfo
 		temp.Ex = v.Ex
 		err := c.msgHandleByContentType(&temp)
 		if err != nil {
