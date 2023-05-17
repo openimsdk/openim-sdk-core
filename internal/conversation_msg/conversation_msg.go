@@ -176,13 +176,15 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	conversationSet := make(map[string]*model_struct.LocalConversation)
 	phConversationChangedSet := make(map[string]*model_struct.LocalConversation)
 	phNewConversationSet := make(map[string]*model_struct.LocalConversation)
-	log.ZDebug(ctx, "do Msg come here", "len", len(allMsg), "ch len", len(c.GetCh()))
+	log.ZDebug(ctx, "message come here conversation ch", "conversation length", len(allMsg))
 	b := time.Now()
 	for conversationID, msgs := range allMsg {
+		log.ZDebug(ctx, "parse message in one conversation", "conversationID",
+			conversationID, "message length", len(msgs.Msgs))
 		var insertMessage []*model_struct.LocalChatLog
 		var updateMessage []*model_struct.LocalChatLog
 		for _, v := range msgs.Msgs {
-			log.ZDebug(ctx, "do Msg come here", "conversationID", conversationID, "msg", v)
+			log.ZDebug(ctx, "parse message ", "conversationID", conversationID, "msg", v)
 			isHistory = utils.GetSwitchFromOptions(v.Options, constant.IsHistory)
 			isUnreadCount = utils.GetSwitchFromOptions(v.Options, constant.IsUnreadCount)
 			isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
@@ -248,7 +250,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 					}
 					if isConversationUpdate {
 						if isSenderConversationUpdate {
-							log.ZDebug(ctx, "updateConversation msg", v, lc)
+							log.ZDebug(ctx, "updateConversation msg", "message", v, "conversation", lc)
 							c.updateConversation(&lc, conversationSet)
 						}
 						newMessages = append(newMessages, msg)
