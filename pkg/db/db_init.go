@@ -121,7 +121,8 @@ func (d *DataBase) setChatLogFailedStatus(ctx context.Context) {
 	}
 	for _, v := range msgList {
 		v.Status = constant.MsgStatusSendFailed
-		err := d.UpdateMessage(ctx, v)
+		//todo
+		err := d.UpdateMessage(ctx, "", v)
 		if err != nil {
 			log.ZError(ctx, "UpdateMessage failed", err, "msg", v)
 			continue
