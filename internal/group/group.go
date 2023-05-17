@@ -68,6 +68,9 @@ func (g *Group) initSyncer() {
 	g.groupSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalGroup) error {
 		return g.db.InsertGroup(ctx, value)
 	}, func(ctx context.Context, value *model_struct.LocalGroup) error {
+		if err := g.db.DeleteGroupAllMembers(ctx, value.GroupID); err != nil {
+			return err
+		}
 		return g.db.DeleteGroup(ctx, value.GroupID)
 	}, func(ctx context.Context, server, local *model_struct.LocalGroup) error {
 		return g.db.UpdateGroup(ctx, server)

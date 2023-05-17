@@ -173,7 +173,7 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 			//c.closedErr = err
 			log.ZError(c.ctx, "readMessage err", err)
 			_ = c.close()
-
+			continue
 		}
 		switch messageType {
 		case MessageBinary:

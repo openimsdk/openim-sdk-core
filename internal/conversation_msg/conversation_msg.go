@@ -185,7 +185,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 			isConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
 			isNotPrivate = utils.GetSwitchFromOptions(v.Options, constant.IsNotPrivate)
 			isSenderConversationUpdate = utils.GetSwitchFromOptions(v.Options, constant.IsSenderConversationUpdate)
-			msg := new(sdk_struct.MsgStruct)
+			msg := &sdk_struct.MsgStruct{
+				AttachedInfoElem: &sdk_struct.AttachedInfoElem{},
+			}
 			copier.Copy(msg, v)
 			msg.Content = string(v.Content)
 			//When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
@@ -1339,6 +1341,9 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 	if msg.ContentType >= constant.NotificationBegin && msg.ContentType <= constant.NotificationEnd {
 		var tips sdkws.TipsComm
 		err = utils.JsonStringToStruct(msg.Content, &tips)
+		if msg.NotificationElem == nil {
+			msg.NotificationElem = &sdk_struct.NotificationElem{}
+		}
 		msg.NotificationElem.Detail = tips.JsonDetail
 		msg.NotificationElem.DefaultTips = tips.DefaultTips
 	} else {
