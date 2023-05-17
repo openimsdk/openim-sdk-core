@@ -387,8 +387,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	if isTriggerUnReadCount {
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged, Args: ""}})
 	}
-
-	log.ZDebug(ctx, "insert msg, total cost time: ", time.Since(b), "len:  ", len(allMsg))
+	log.ZDebug(ctx, "insert msg", "cost time", time.Since(b), "len", len(allMsg))
 }
 
 //func (c *Conversation) doSuperGroupMsgNew(c2v common.Cmd2Value) {
