@@ -171,6 +171,9 @@ func (m *MsgSyncer) doPushMsg(ctx context.Context, push *sdkws.PushMessages) {
 }
 
 func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pullMsgs map[string]*sdkws.PullMsgs, triggerFunc func(ctx context.Context, msgs map[string]*sdkws.PullMsgs) error) {
+	if len(pullMsgs) == 0 {
+		return
+	}
 	needSyncSeqMap := make(map[string][2]int64)
 	var lastSeq int64
 	var storageMsgs []*sdkws.MsgData
