@@ -97,7 +97,7 @@ Please leave your use cases in the comments [here](https://github.com/OpenIMSDK/
 
 Sealer is licensed under the Apache License, Version 2.0. See [LICENSE](https://github.com/OpenIMSDK/Open-IM-SDK-Core/LICENSE) for the full license text.
 
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fsealerio%2Fsealer.svg?type=large>)](https://app.fossa.com/projects/git%2Bgithub.com%2FOpenIMSDK%2FOpen-IM-SDK-Core?ref=badge_large>)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fsealerio%2Fsealer.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FOpenIMSDK%2FOpen-IM-SDK-Core?ref=badge_large)
 
 ## Thanks to our contributors!
 
