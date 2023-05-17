@@ -622,7 +622,7 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 	oldMessage, err := c.db.GetMessage(ctx, lc.ConversationID, s.ClientMsgID)
 	if err != nil {
 		msgStructToLocalChatLog(&localMessage, s)
-		err := c.db.InsertMessageController(ctx, &localMessage)
+		err := c.db.InsertMessage(ctx, lc.ConversationID, &localMessage)
 		if err != nil {
 			return nil, err
 		}
@@ -664,7 +664,7 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 	log.Debug("", "GetMessageController cost time:", time.Since(t), err)
 	if err != nil {
 		msgStructToLocalChatLog(&localMessage, s)
-		err := c.db.InsertMessageController(ctx, &localMessage)
+		err := c.db.InsertMessage(ctx, lc.ConversationID, &localMessage)
 		if err != nil {
 			return nil, err
 		}
@@ -1116,7 +1116,7 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(ctx context.Context, s 
 	conversation.LatestMsg = utils.StructToJsonString(s)
 	conversation.ConversationType = constant.SingleChatType
 	conversation.LatestMsgSendTime = s.SendTime
-	err := c.insertMessageToLocalStorage(ctx, &localMessage)
+	err := c.insertMessageToLocalStorage(ctx, conversation.ConversationID, &localMessage)
 	if err != nil {
 		return nil, err
 	}
@@ -1158,7 +1158,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(ctx context.Context, s *
 	conversation.LatestMsgSendTime = s.SendTime
 	conversation.FaceURL = s.SenderFaceURL
 	conversation.ShowName = s.SenderNickname
-	err = c.insertMessageToLocalStorage(ctx, &localMessage)
+	err = c.insertMessageToLocalStorage(ctx, conversation.ConversationID, &localMessage)
 	if err != nil {
 		return nil, err
 	}

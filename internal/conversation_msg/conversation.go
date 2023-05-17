@@ -1112,7 +1112,7 @@ func (c *Conversation) markGroupMessageAsRead(ctx context.Context, msgIDList []s
 		s.SendTime = resp.SendTime
 		s.Status = constant.MsgStatusFiltered
 		msgStructToLocalChatLog(&localMessage, &s)
-		err = c.db.InsertMessageController(ctx, &localMessage)
+		err = c.db.InsertMessage(ctx, conversationID, &localMessage)
 		if err != nil {
 			log.Error(
 				"", "inset into chat log err", localMessage, s, err.Error())
@@ -1165,8 +1165,8 @@ func (c *Conversation) markGroupMessageAsRead(ctx context.Context, msgIDList []s
 //		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.ch)
 //		//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 //	}
-func (c *Conversation) insertMessageToLocalStorage(ctx context.Context, s *model_struct.LocalChatLog) error {
-	return c.db.InsertMessageController(ctx, s)
+func (c *Conversation) insertMessageToLocalStorage(ctx context.Context, conversationID string, s *model_struct.LocalChatLog) error {
+	return c.db.InsertMessage(ctx, conversationID, s)
 
 }
 
