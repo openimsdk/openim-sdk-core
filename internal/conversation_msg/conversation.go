@@ -428,7 +428,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 						}(seq)
 						log.Debug("", "pull seqList is ", seqList, len(seqList))
 						if len(seqList) > 0 {
-							c.pullMessageAndReGetHistoryMessages(ctx, sourceID, seqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
+							c.pullMessageAndReGetHistoryMessages(ctx, conversationID, seqList, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
 						}
 					}
 				} else {
