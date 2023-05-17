@@ -15,4 +15,7 @@ const (
 	UserIDNotFoundError  = 11101 //UserID不存在 或未注册
 	GroupIDNotFoundError = 11201 //GroupID不存在
 	TokenInvalidError    = 11502
+
+	//消息相关
+	MsgContentEmptyError = 12001 //消息内容为空
 )

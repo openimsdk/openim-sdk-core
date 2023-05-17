@@ -214,7 +214,7 @@ func (c *Conversation) getHistoryMessageList(ctx context.Context, req sdk.GetHis
 			msg.SessionType = newSessionType
 		} else {
 			sourceID = req.UserID
-			conversationID = utils.GetConversationIDBySessionType(sourceID, constant.SingleChatType)
+			conversationID = c.getConversationIDBySessionType(sourceID, constant.SingleChatType)
 			sessionType = constant.SingleChatType
 		}
 		if req.StartClientMsgID == "" {
@@ -349,7 +349,7 @@ func (c *Conversation) getAdvancedHistoryMessageList(ctx context.Context, req sd
 			msg.SessionType = newSessionType
 		} else {
 			sourceID = req.UserID
-			conversationID = utils.GetConversationIDBySessionType(sourceID, constant.SingleChatType)
+			conversationID = c.getConversationIDBySessionType(sourceID, constant.SingleChatType)
 			sessionType = constant.SingleChatType
 		}
 		if req.StartClientMsgID == "" {
@@ -646,7 +646,7 @@ func (c *Conversation) getAdvancedHistoryMessageList2(callback open_im_sdk_callb
 			msg.SessionType = newSessionType
 		} else {
 			sourceID = req.UserID
-			conversationID = utils.GetConversationIDBySessionType(sourceID, constant.SingleChatType)
+			conversationID = c.getConversationIDBySessionType(sourceID, constant.SingleChatType)
 			sessionType = constant.SingleChatType
 		}
 		if req.StartClientMsgID == "" {
@@ -829,13 +829,13 @@ func (c *Conversation) revokeOneMessage(ctx context.Context, req *sdk_struct.Msg
 	switch req.SessionType {
 	case constant.SingleChatType:
 		recvID = req.RecvID
-		conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
+		conversationID = c.getConversationIDBySessionType(recvID, constant.SingleChatType)
 	case constant.GroupChatType:
 		groupID = req.GroupID
-		conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+		conversationID = c.getConversationIDBySessionType(groupID, constant.GroupChatType)
 	case constant.SuperGroupChatType:
 		groupID = req.GroupID
-		conversationID = utils.GetConversationIDBySessionType(groupID, constant.SuperGroupChatType)
+		conversationID = c.getConversationIDBySessionType(groupID, constant.SuperGroupChatType)
 	default:
 		return errors.New("SessionType err")
 	}
@@ -904,7 +904,7 @@ func (c *Conversation) newRevokeOneMessage(ctx context.Context, req *sdk_struct.
 			return errors.New("only you send message can be revoked")
 		}
 		recvID = message.RecvID
-		conversationID = utils.GetConversationIDBySessionType(recvID, constant.SingleChatType)
+		conversationID = c.getConversationIDBySessionType(recvID, constant.SingleChatType)
 	case constant.GroupChatType:
 		if message.SendID != c.loginUserID {
 			ownerID, adminIDList, err := c.group.GetGroupOwnerIDAndAdminIDList(ctx, message.RecvID)
@@ -925,7 +925,7 @@ func (c *Conversation) newRevokeOneMessage(ctx context.Context, req *sdk_struct.
 			}
 		}
 		groupID = message.RecvID
-		conversationID = utils.GetConversationIDBySessionType(groupID, constant.GroupChatType)
+		conversationID = c.getConversationIDBySessionType(groupID, constant.GroupChatType)
 	case constant.SuperGroupChatType:
 		if message.SendID != c.loginUserID {
 			ownerID, adminIDList, err := c.group.GetGroupOwnerIDAndAdminIDList(ctx, message.RecvID)
@@ -946,7 +946,7 @@ func (c *Conversation) newRevokeOneMessage(ctx context.Context, req *sdk_struct.
 			}
 		}
 		groupID = message.RecvID
-		conversationID = utils.GetConversationIDBySessionType(groupID, constant.SuperGroupChatType)
+		conversationID = c.getConversationIDBySessionType(groupID, constant.SuperGroupChatType)
 	default:
 		return errors.New("SessionType err")
 	}
@@ -1016,7 +1016,7 @@ func (c *Conversation) markC2CMessageAsRead(ctx context.Context, msgIDList []str
 	if len(newMessageIDList) == 0 {
 		return errors.New("message has been marked read or sender is yourself or notification message not support")
 	}
-	conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
+	conversationID := c.getConversationIDBySessionType(userID, constant.SingleChatType)
 	s := sdk_struct.MsgStruct{}
 	err = c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.HasReadReceipt)
 	if err != nil {
@@ -1146,7 +1146,7 @@ func (c *Conversation) markGroupMessageAsRead(ctx context.Context, msgIDList []s
 //		if len(newMessageIDList) == 0 {
 //			common.CheckAnyErrCallback(callback, 201, errors.New("message has been marked read or sender is yourself"), operationID)
 //		}
-//		conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
+//		conversationID := c.getConversationIDBySessionType(userID, constant.SingleChatType)
 //		s := sdk_struct.MsgStruct{}
 //		c.initBasicInfo(&s, constant.UserMsgType, constant.HasReadReceipt, operationID)
 //		s.Content = utils.StructToJsonString(newMessageIDList)
@@ -1182,7 +1182,7 @@ func (c *Conversation) clearGroupHistoryMessage(ctx context.Context, groupID str
 	if err != nil {
 		return err
 	}
-	conversationID := utils.GetConversationIDBySessionType(groupID, int(sessionType))
+	conversationID := c.getConversationIDBySessionType(groupID, int(sessionType))
 	switch sessionType {
 	case constant.SuperGroupChatType:
 		err = c.db.SuperGroupDeleteAllMessage(ctx, groupID)
@@ -1206,7 +1206,7 @@ func (c *Conversation) clearGroupHistoryMessage(ctx context.Context, groupID str
 }
 
 func (c *Conversation) clearC2CHistoryMessage(ctx context.Context, userID string) error {
-	conversationID := utils.GetConversationIDBySessionType(userID, constant.SingleChatType)
+	conversationID := c.getConversationIDBySessionType(userID, constant.SingleChatType)
 	err := c.db.UpdateMessageStatusBySourceID(ctx, userID, constant.MsgStatusHasDeleted, constant.SingleChatType)
 	if err != nil {
 		return err
@@ -1274,18 +1274,18 @@ func (c *Conversation) deleteMessageFromLocalStorage(ctx context.Context, s *sdk
 
 	switch s.SessionType {
 	case constant.GroupChatType:
-		conversationID = utils.GetConversationIDBySessionType(s.GroupID, constant.GroupChatType)
+		conversationID = c.getConversationIDBySessionType(s.GroupID, constant.GroupChatType)
 		sourceID = s.GroupID
 	case constant.SingleChatType:
 		if s.SendID != c.loginUserID {
-			conversationID = utils.GetConversationIDBySessionType(s.SendID, constant.SingleChatType)
+			conversationID = c.getConversationIDBySessionType(s.SendID, constant.SingleChatType)
 			sourceID = s.SendID
 		} else {
-			conversationID = utils.GetConversationIDBySessionType(s.RecvID, constant.SingleChatType)
+			conversationID = c.getConversationIDBySessionType(s.RecvID, constant.SingleChatType)
 			sourceID = s.RecvID
 		}
 	case constant.SuperGroupChatType:
-		conversationID = utils.GetConversationIDBySessionType(s.GroupID, constant.SuperGroupChatType)
+		conversationID = c.getConversationIDBySessionType(s.GroupID, constant.SuperGroupChatType)
 		sourceID = s.GroupID
 		chatLog.RecvID = s.GroupID
 	}
@@ -1456,18 +1456,18 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 		switch temp.SessionType {
 		case constant.SingleChatType:
 			if temp.SendID == c.loginUserID {
-				conversationID = utils.GetConversationIDBySessionType(temp.RecvID, constant.SingleChatType)
+				conversationID = c.getConversationIDBySessionType(temp.RecvID, constant.SingleChatType)
 			} else {
-				conversationID = utils.GetConversationIDBySessionType(temp.SendID, constant.SingleChatType)
+				conversationID = c.getConversationIDBySessionType(temp.SendID, constant.SingleChatType)
 			}
 		case constant.GroupChatType:
 			temp.GroupID = temp.RecvID
 			temp.RecvID = c.loginUserID
-			conversationID = utils.GetConversationIDBySessionType(temp.GroupID, constant.GroupChatType)
+			conversationID = c.getConversationIDBySessionType(temp.GroupID, constant.GroupChatType)
 		case constant.SuperGroupChatType:
 			temp.GroupID = temp.RecvID
 			temp.RecvID = c.loginUserID
-			conversationID = utils.GetConversationIDBySessionType(temp.GroupID, constant.SuperGroupChatType)
+			conversationID = c.getConversationIDBySessionType(temp.GroupID, constant.SuperGroupChatType)
 		}
 		if oldItem, ok := conversationMap[conversationID]; !ok {
 			searchResultItem := sdk.SearchByConversationResult{}
