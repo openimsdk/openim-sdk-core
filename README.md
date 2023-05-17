@@ -101,7 +101,8 @@ Sealer is licensed under the Apache License, Version 2.0. See [LICENSE](https://
 
 ## Thanks to our contributors!
 
-<a href="https://github.com/OpenIMSDK/Open-IM-SDK-Core/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=OpenIMSDK/Open-IM-SDK-Core" />
+<a href="https://github.com/OpenIMSDK/openim-sdk-core/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=OpenIMSDK/openim-sdk-core" />
 </a>
+
 
