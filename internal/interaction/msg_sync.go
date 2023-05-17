@@ -171,6 +171,9 @@ func (m *MsgSyncer) doPushMsg(ctx context.Context, push *sdkws.PushMessages) {
 }
 
 func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pullMsgs map[string]*sdkws.PullMsgs, triggerFunc func(ctx context.Context, msgs map[string]*sdkws.PullMsgs) error) {
+	if len(pullMsgs) == 0 {
+		return
+	}
 	needSyncSeqMap := make(map[string][2]int64)
 	var lastSeq int64
 	var storageMsgs []*sdkws.MsgData
@@ -186,7 +189,7 @@ func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pullMsgs map[string]
 		if lastSeq == m.syncedMaxSeqs[conversationID]+int64(len(storageMsgs)) && lastSeq != 0 {
 			_ = triggerFunc(ctx, map[string]*sdkws.PullMsgs{conversationID: {Msgs: storageMsgs}})
 			m.syncedMaxSeqs[conversationID] = lastSeq
-		} else {
+		} else if lastSeq != 0 { //为0就是全是通知
 			needSyncSeqMap[conversationID] = [2]int64{m.syncedMaxSeqs[conversationID], lastSeq}
 		}
 	}
