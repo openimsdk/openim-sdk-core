@@ -46,7 +46,7 @@ type OnGroupListener interface {
 type OnFriendshipListener interface {
 	OnFriendApplicationAdded(friendApplication string)
 	OnFriendApplicationDeleted(friendApplication string)
-	OnFriendApplicationAccepted(groupApplication string)
+	OnFriendApplicationAccepted(friendApplication string)
 	OnFriendApplicationRejected(friendApplication string)
 	OnFriendAdded(friendInfo string)
 	OnFriendDeleted(friendInfo string)
@@ -97,4 +97,39 @@ type OnCustomBusinessListener interface {
 }
 type OnMessageKvInfoListener interface {
 	OnMessageKvInfoChanged(messageChangedList string)
+}
+
+type OnListenerForService interface {
+	//有人申请进群
+	OnGroupApplicationAdded(groupApplication string)
+	//进群申请被同意
+	OnGroupApplicationAccepted(groupApplication string)
+	//有人申请添加你为好友
+	OnFriendApplicationAdded(friendApplication string)
+	//好友申请被同意
+	OnFriendApplicationAccepted(groupApplication string)
+	//收到新消息
+	OnRecvNewMessage(message string)
+}
+
+type OnSignalingListener interface {
+	OnReceiveNewInvitation(receiveNewInvitationCallback string)
+
+	OnInviteeAccepted(inviteeAcceptedCallback string)
+
+	OnInviteeAcceptedByOtherDevice(inviteeAcceptedCallback string)
+
+	OnInviteeRejected(inviteeRejectedCallback string)
+
+	OnInviteeRejectedByOtherDevice(inviteeRejectedCallback string)
+	//
+	OnInvitationCancelled(invitationCancelledCallback string)
+	//
+	OnInvitationTimeout(invitationTimeoutCallback string)
+	//
+	OnHangUp(hangUpCallback string)
+
+	OnRoomParticipantConnected(onRoomParticipantConnectedCallback string)
+
+	OnRoomParticipantDisconnected(onRoomParticipantDisconnectedCallback string)
 }
