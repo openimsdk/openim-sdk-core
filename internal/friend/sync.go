@@ -16,12 +16,14 @@ package friend
 
 import (
 	"context"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/friend"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/friend"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
+// send
 func (f *Friend) SyncSelfFriendApplication(ctx context.Context) error {
 	req := &friend.GetPaginationFriendsApplyFromReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
 	fn := func(resp *friend.GetPaginationFriendsApplyFromResp) []*sdkws.FriendRequest {

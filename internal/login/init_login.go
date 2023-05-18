@@ -186,7 +186,7 @@ func (u *LoginMgr) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnB
 
 func (u *LoginMgr) SetFriendListener(friendListener open_im_sdk_callback.OnFriendshipListener) {
 	if u.friend != nil {
-		u.friend.SetFriendListener(friendListener)
+		u.friend.SetListener(friendListener)
 	} else {
 		u.friendListener = friendListener
 	}
@@ -270,14 +270,14 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.cmdWsCh = make(chan common.Cmd2Value, 10)
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
-
+	u.loginTime = time.Now().UnixNano() / 1e6
 	u.id2MinSeq = make(map[string]int64, 100)
 	u.user = user.NewUser(u.db, u.loginUserID, u.conversationCh)
 	u.user.SetListener(u.userListener)
 	u.file = file.NewFile(u.db, u.loginUserID)
 	u.friend = friend.NewFriend(u.loginUserID, u.db, u.user, u.conversationCh)
-	u.friend.SetFriendListener(u.friendListener)
-
+	u.friend.SetListener(u.friendListener)
+	u.friend.SetLoginTime(u.loginTime)
 	u.group = group.NewGroup(u.loginUserID, u.db, u.heartbeatCmdCh, u.conversationCh)
 	u.group.SetGroupListener(u.groupListener)
 	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db, u.heartbeatCmdCh)
