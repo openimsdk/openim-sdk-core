@@ -221,6 +221,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				log.ZError(ctx, "conversationID is empty", errors.New("conversationID is empty"), "msg", msg)
 				continue
 			}
+			log.ZDebug(ctx, "decode message", "msg", msg)
 			if v.SendID == c.loginUserID { //seq
 				// Messages sent by myself  //if  sent through  this terminal
 				m, err := c.db.GetMessage(ctx, conversationID, msg.ClientMsgID)
@@ -315,7 +316,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	}
 	m := make(map[string]*model_struct.LocalConversation)
 	listToMap(list, m)
-	log.ZDebug(ctx, "listToMap: ", list, conversationSet)
+	log.ZDebug(ctx, "listToMap: ", "local conversation", list, "generated c map", conversationSet)
 	c.diff(ctx, m, conversationSet, conversationChangedSet, newConversationSet)
 	log.ZInfo(ctx, "trigger map is :", "newConversations", newConversationSet, "changedConversations", conversationChangedSet)
 
@@ -1393,8 +1394,8 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 		case constant.CustomMsgOnlineOnly:
 			err = utils.JsonStringToStruct(msg.Content, &msg.CustomElem)
 		}
-		msg.Content = ""
 	}
+	msg.Content = ""
 
 	return utils.Wrap(err, "")
 }

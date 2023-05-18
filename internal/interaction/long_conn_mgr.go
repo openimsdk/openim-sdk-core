@@ -407,6 +407,7 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) error {
 	if c.IsConnected() {
 		return nil
 	}
+	log.ZDebug(ctx, "conn start")
 	c.listener.OnConnecting()
 	c.w.Lock()
 	c.connStatus = Connecting
@@ -483,7 +484,6 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) error {
 	c.w.Lock()
 	c.connStatus = Connected
 	c.w.Unlock()
-	log.ZDebug(ctx, "conn start")
 	*num++
 	log.ZInfo(c.ctx, "long conn establish success", "localAddr", c.conn.LocalAddr(), "connNum", *num)
 	_ = common.TriggerCmdConnected(ctx, c.pushMsgAndMaxSeqCh)

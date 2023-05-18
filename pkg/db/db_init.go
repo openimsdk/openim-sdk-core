@@ -196,8 +196,6 @@ func (d *DataBase) initDB(ctx context.Context) error {
 		&model_struct.LocalUser{},
 		&model_struct.LocalBlack{},
 		&model_struct.LocalConversationUnreadMessage{},
-		//&model_struct.LocalSeqData{},
-		//&model_struct.LocalSeq{},
 		&model_struct.LocalConversation{},
 		&model_struct.LocalChatLog{},
 		&model_struct.LocalAdminGroupRequest{},
@@ -207,33 +205,28 @@ func (d *DataBase) initDB(ctx context.Context) error {
 		&model_struct.LocalChatLogReactionExtensions{},
 	)
 	db.Table(constant.SuperGroupTableName).AutoMigrate(superGroup)
-	groupIDList, err := d.GetJoinedSuperGroupIDList(ctx)
+	conversationIDs, err := d.FindAllConversationConversationID(ctx)
 	if err != nil {
-		log.ZError(ctx, "auto migrate super db err:", err)
+		log.ZError(ctx, "FindAllConversationConversationID err", err)
 	}
-	wkGroupIDList, err := d.GetJoinedWorkingGroupIDList(ctx)
-	if err != nil {
-		log.ZError(ctx, "auto migrate working group  db err:", err)
-	}
-	groupIDList = append(groupIDList, wkGroupIDList...)
-	for _, v := range groupIDList {
-		d.conn.WithContext(ctx).Table(utils.GetSuperGroupTableName(v)).AutoMigrate(&model_struct.LocalChatLog{})
+	for _, v := range conversationIDs {
+		d.conn.WithContext(ctx).Table(utils.GetTableName(v)).AutoMigrate(&model_struct.LocalChatLog{})
 		var count int64
 		_ = db.Raw(fmt.Sprintf("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'index' AND name ='%s' AND tbl_name = '%s'",
-			"index_seq_"+v, utils.GetSuperGroupTableName(v))).Row().Scan(&count)
+			"index_seq_"+v, utils.GetTableName(v))).Row().Scan(&count)
 		if count == 0 {
-			result := db.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (seq)", "index_seq_"+v, utils.GetSuperGroupTableName(v)))
+			result := db.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (seq)", "index_seq_"+v, utils.GetTableName(v)))
 			if result.Error != nil {
-				log.Error("create super group index failed:", result.Error.Error(), v)
+				log.ZError(ctx, "create table seq index failed", result.Error, "conversationID", v)
 			}
 		}
 		var count2 int64
 		_ = db.Raw(fmt.Sprintf("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'index' AND name ='%s' AND tbl_name = '%s'",
-			"index_send_time_"+v, utils.GetSuperGroupTableName(v))).Row().Scan(&count)
+			"index_send_time_"+v, utils.GetTableName(v))).Row().Scan(&count)
 		if count2 == 0 {
-			result := db.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (send_time)", "index_send_time_"+v, utils.GetSuperGroupTableName(v)))
+			result := db.Exec(fmt.Sprintf("CREATE INDEX %s ON %s (send_time)", "index_send_time_"+v, utils.GetTableName(v)))
 			if result.Error != nil {
-				log.Error("create super group index failed:", result.Error.Error(), v)
+				log.ZError(ctx, "create table send_time index failed", result.Error, "conversationID", v)
 			}
 		}
 

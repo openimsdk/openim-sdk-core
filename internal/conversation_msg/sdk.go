@@ -316,7 +316,7 @@ func (c *Conversation) SetConversationListener(listener open_im_sdk_callback.OnC
 
 func (c *Conversation) msgStructToLocalChatLog(src *sdk_struct.MsgStruct) *model_struct.LocalChatLog {
 	var lc model_struct.LocalChatLog
-	copier.Copy(lc, src)
+	copier.Copy(&lc, src)
 	switch src.ContentType {
 	case constant.Text:
 		lc.Content = utils.StructToJsonString(src.TextElem)
@@ -480,7 +480,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		}
 	}
 	lc.LatestMsg = utils.StructToJsonString(s)
-	log.ZDebug(ctx, "send messaeg come here", *lc)
+	log.ZDebug(ctx, "send message come here", "conversion", *lc)
 	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
 	var delFile []string
 	//media file handle

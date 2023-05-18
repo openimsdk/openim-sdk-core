@@ -7,9 +7,9 @@ import (
 	"open_im_sdk/pkg/utils"
 )
 
-func (d *DataBase) initChatLog(conversationID string) {
+func (d *DataBase) initChatLog(ctx context.Context, conversationID string) {
 	if !d.conn.Migrator().HasTable(utils.GetTableName(conversationID)) {
-		d.conn.Table(utils.GetTableName(conversationID)).AutoMigrate(&model_struct.LocalChatLog{})
+		d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).AutoMigrate(&model_struct.LocalChatLog{})
 	}
 }
 func (d *DataBase) UpdateMessage(ctx context.Context, conversationID string, c *model_struct.LocalChatLog) error {
@@ -34,7 +34,7 @@ func (d *DataBase) InsertMessage(ctx context.Context, conversationID string, Mes
 	return utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Create(Message).Error, "InsertMessage failed")
 }
 func (d *DataBase) GetMessage(ctx context.Context, conversationID string, clientMsgID string) (*model_struct.LocalChatLog, error) {
-	d.initChatLog(conversationID)
+	d.initChatLog(ctx, conversationID)
 	var c model_struct.LocalChatLog
 	return &c, utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("client_msg_id = ?",
 		clientMsgID).Take(&c).Error, "GetMessage failed")
@@ -47,7 +47,7 @@ func (d *DataBase) UpdateMessageTimeAndStatus(ctx context.Context, conversationI
 }
 func (d *DataBase) GetMessageListNoTime(ctx context.Context, conversationID string,
 	count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	d.initChatLog(conversationID)
+	d.initChatLog(ctx, conversationID)
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	var timeOrder string

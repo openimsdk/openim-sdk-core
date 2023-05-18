@@ -36,15 +36,16 @@ func (d *DataBase) GetConversationByUserID(ctx context.Context, userID string) (
 func (d *DataBase) GetAllConversationListDB(ctx context.Context) ([]*model_struct.LocalConversation, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	var conversationList []model_struct.LocalConversation
+	var conversationList []*model_struct.LocalConversation
 	err := utils.Wrap(d.conn.WithContext(ctx).Where("latest_msg_send_time > ?", 0).Order("case when is_pinned=1 then 0 else 1 end,max(latest_msg_send_time,draft_text_time) DESC").Find(&conversationList).Error,
 		"GetAllConversationList failed")
-	var transfer []*model_struct.LocalConversation
-	for _, v := range conversationList {
-		v1 := v
-		transfer = append(transfer, &v1)
+	if err != nil {
+		return nil, err
 	}
-	return transfer, err
+	return conversationList, err
+}
+func (d *DataBase) FindAllConversationConversationID(ctx context.Context) (conversationIDs []string, err error) {
+	return conversationIDs, utils.Wrap(d.conn.WithContext(ctx).Where("latest_msg_send_time > ?", 0).Pluck("conversation_id", &conversationIDs).Error, "")
 }
 func (d *DataBase) GetHiddenConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error) {
 	d.mRWMutex.Lock()
