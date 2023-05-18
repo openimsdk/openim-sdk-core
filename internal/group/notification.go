@@ -16,12 +16,12 @@ package group
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/utils"
 )
 
 func (g *Group) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
@@ -39,7 +39,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 	switch msg.ContentType {
 	case constant.GroupCreatedNotification:
 		var detail sdkws.GroupCreatedTips
-		if err := json.Unmarshal(msg.Content, &detail); err != nil {
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		if err := g.SyncJoinedGroup(ctx); err != nil {
@@ -48,13 +48,13 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
 	case constant.GroupInfoSetNotification:
 		var detail sdkws.GroupInfoSetTips
-		if err := json.Unmarshal(msg.Content, &detail); err != nil {
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.SyncJoinedGroup(ctx)
 	case constant.JoinGroupApplicationNotification:
 		var detail sdkws.JoinGroupApplicationTips
-		if err := json.Unmarshal(msg.Content, &detail); err != nil {
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		if detail.Applicant.UserID == g.loginUserID {
@@ -64,7 +64,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 	case constant.MemberQuitNotification:
 		var detail sdkws.MemberQuitTips
-		if err := json.Unmarshal(msg.Content, &detail); err != nil {
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		if detail.QuitUser.UserID == g.loginUserID {
@@ -77,7 +77,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 	case constant.GroupApplicationAcceptedNotification:
 		var detail sdkws.GroupApplicationAcceptedTips
-		if err := json.Unmarshal(msg.Content, &detail); err != nil {
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		if detail.OpUser.UserID == g.loginUserID {
@@ -89,7 +89,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		return g.SyncJoinedGroup(ctx)
 	case constant.GroupApplicationRejectedNotification:
 		var detail sdkws.GroupApplicationRejectedTips
-		if err := json.Unmarshal(msg.Content, &detail); err != nil {
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		if detail.OpUser.UserID == g.loginUserID {
@@ -101,7 +101,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		return g.SyncSelfGroupApplication(ctx)
 	case constant.GroupOwnerTransferredNotification:
 		var detail sdkws.GroupOwnerTransferredTips
-		if err := json.Unmarshal(msg.Content, &detail); err != nil {
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		if err := g.SyncJoinedGroup(ctx); err != nil {
@@ -140,13 +140,13 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
 	case constant.GroupMemberMutedNotification:
 		var detail sdkws.GroupMemberMutedTips
-		if err := json.Unmarshal(msg.Content, &detail); err != nil {
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
 	case constant.GroupMemberCancelMutedNotification:
 		var detail sdkws.GroupMemberCancelMutedTips
-		if err := json.Unmarshal(msg.Content, &detail); err != nil {
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
@@ -156,19 +156,19 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		return g.SyncJoinedGroup(ctx)
 	case constant.GroupMemberInfoSetNotification:
 		var detail sdkws.GroupMemberInfoSetTips
-		if err := json.Unmarshal(msg.Content, &detail); err != nil {
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
 	case constant.GroupMemberSetToAdminNotification:
 		var detail sdkws.GroupMemberInfoSetTips
-		if err := json.Unmarshal(msg.Content, &detail); err != nil {
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
 	case constant.GroupMemberSetToOrdinaryUserNotification:
 		var detail sdkws.GroupMemberInfoSetTips
-		if err := json.Unmarshal(msg.Content, &detail); err != nil {
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
