@@ -64,3 +64,19 @@ func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) error {
 	}
 	return nil
 }
+
+func (c *Conversation) SyncConversationHashReadSeqs(ctx context.Context) error {
+	seqs, err := c.getServerHasReadAndMaxSeqs(ctx)
+	if err != nil {
+		return err
+	}
+	var conversations []*model_struct.LocalConversation
+	for conversationID, v := range seqs {
+		c.maxSeqRecorder.Set(conversationID, v.MaxSeq)
+		conversations = append(conversations, &model_struct.LocalConversation{
+			ConversationID: conversationID,
+			HasReadSeq:     v.HasReadSeq,
+		})
+	}
+	return c.db.UpdateOrCreateConversations(ctx, conversations)
+}

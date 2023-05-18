@@ -79,6 +79,7 @@ type Conversation struct {
 	encryptionKey     string
 
 	id2MinSeq            map[string]int64
+	maxSeqRecorder       MaxSeqRecorder
 	IsExternalExtensions bool
 
 	listenerForService open_im_sdk_callback.OnListenerForService
@@ -130,6 +131,7 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		business:             business,
 		messageController:    NewMessageController(db),
 		IsExternalExtensions: info.IsExternalExtensions(),
+		maxSeqRecorder:       NewMaxSeqRecorder(),
 	}
 	n.SetMsgListener(msgListener)
 	n.SetConversationListener(conversationListener)

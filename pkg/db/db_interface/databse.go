@@ -103,6 +103,7 @@ type DataBase interface {
 	GetAllConversations(ctx context.Context) ([]*model_struct.LocalConversation, error)
 	GetConversationListSplitDB(ctx context.Context, offset, count int) ([]*model_struct.LocalConversation, error)
 	BatchInsertConversationList(ctx context.Context, conversationList []*model_struct.LocalConversation) error
+	UpdateOrCreateConversations(ctx context.Context, conversationList []*model_struct.LocalConversation) error
 	InsertConversation(ctx context.Context, conversationList *model_struct.LocalConversation) error
 	DeleteConversation(ctx context.Context, conversationID string) error
 	GetConversation(ctx context.Context, conversationID string) (*model_struct.LocalConversation, error)
