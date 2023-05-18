@@ -25,11 +25,10 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
-	api "open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/syncer"
 
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	"github.com/golang/protobuf/proto"
 )
 
 func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, conversationCh chan common.Cmd2Value) *Friend {
@@ -39,7 +38,7 @@ func NewFriend(loginUserID string, db db_interface.DataBase, user *user.User, co
 }
 
 type Friend struct {
-	friendListener     open_im_sdk_callback.OnFriendshipListener
+	friendListener     open_im_sdk_callback.OnFriendshipListenerSdk
 	loginUserID        string
 	db                 db_interface.DataBase
 	user               *user.User
@@ -65,23 +64,18 @@ func (f *Friend) initSyncer() {
 		if f.friendListener == nil {
 			return nil
 		}
-		data, err := json.Marshal(value)
-		if err != nil {
-			return err
-		}
 		switch state {
 		case syncer.Insert:
-			f.friendListener.OnFriendAdded(string(data))
+			f.friendListener.OnFriendAdded(*value)
 		case syncer.Delete:
-			f.friendListener.OnFriendDeleted(string(data))
+			f.friendListener.OnFriendDeleted(*value)
 		case syncer.Update:
-			f.friendListener.OnFriendInfoChanged(string(data))
+			f.friendListener.OnFriendInfoChanged(*value)
 			_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: value.FriendUserID, SessionType: constant.SingleChatType}}, f.conversationCh)
 			_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: value.FriendUserID, FaceURL: value.FaceURL, Nickname: value.Nickname}}, f.conversationCh)
 		}
 		return nil
 	})
-
 	f.blockSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalBlack) error {
 		return f.db.InsertBlack(ctx, value)
 	}, func(ctx context.Context, value *model_struct.LocalBlack) error {
@@ -94,19 +88,14 @@ func (f *Friend) initSyncer() {
 		if f.friendListener == nil {
 			return nil
 		}
-		data, err := json.Marshal(value)
-		if err != nil {
-			return err
-		}
 		switch state {
 		case syncer.Insert:
-			f.friendListener.OnBlackAdded(string(data))
+			f.friendListener.OnBlackAdded(*value)
 		case syncer.Delete:
-			f.friendListener.OnBlackDeleted(string(data))
+			f.friendListener.OnBlackDeleted(*value)
 		}
 		return nil
 	})
-
 	f.requestRecvSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
 		return f.db.InsertFriendRequest(ctx, value)
 	}, func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
@@ -119,26 +108,21 @@ func (f *Friend) initSyncer() {
 		if f.friendListener == nil {
 			return nil
 		}
-		data, err := json.Marshal(value)
-		if err != nil {
-			return err
-		}
 		switch state {
 		case syncer.Insert:
-			f.friendListener.OnFriendApplicationAdded(string(data))
+			f.friendListener.OnFriendApplicationAdded(*value)
 		case syncer.Delete:
-			f.friendListener.OnFriendApplicationDeleted(string(data))
+			f.friendListener.OnFriendApplicationDeleted(*value)
 		case syncer.Update:
 			switch value.HandleResult {
 			case constant.FriendResponseAgree:
-				f.friendListener.OnFriendApplicationAccepted(string(data))
+				f.friendListener.OnFriendApplicationAccepted(*value)
 			case constant.FriendResponseRefuse:
-				f.friendListener.OnFriendApplicationRejected(string(data))
+				f.friendListener.OnFriendApplicationRejected(*value)
 			}
 		}
 		return nil
 	})
-
 	f.requestSendSyncer = syncer.New(func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
 		return f.db.InsertFriendRequest(ctx, value)
 	}, func(ctx context.Context, value *model_struct.LocalFriendRequest) error {
@@ -151,26 +135,21 @@ func (f *Friend) initSyncer() {
 		if f.friendListener == nil {
 			return nil
 		}
-		data, err := json.Marshal(value)
-		if err != nil {
-			return err
-		}
 		switch state {
 		case syncer.Insert:
-			f.friendListener.OnFriendApplicationAdded(string(data))
+			f.friendListener.OnFriendApplicationAdded(*value)
 		case syncer.Delete:
-			f.friendListener.OnFriendApplicationDeleted(string(data))
+			f.friendListener.OnFriendApplicationDeleted(*value)
 		case syncer.Update:
 			switch value.HandleResult {
 			case constant.FriendResponseAgree:
-				f.friendListener.OnFriendApplicationAccepted(string(data))
+				f.friendListener.OnFriendApplicationAccepted(*value)
 			case constant.FriendResponseRefuse:
-				f.friendListener.OnFriendApplicationRejected(string(data))
+				f.friendListener.OnFriendApplicationRejected(*value)
 			}
 		}
 		return nil
 	})
-
 }
 
 func (f *Friend) LoginTime() int64 {
@@ -181,19 +160,12 @@ func (f *Friend) SetLoginTime(loginTime int64) {
 	f.loginTime = loginTime
 }
 
-func (f *Friend) SetFriendListener(listener open_im_sdk_callback.OnFriendshipListener) {
-	if listener == nil {
-		return
-	}
-	f.friendListener = listener
-}
-
 func (f *Friend) Db() db_interface.DataBase {
 	return f.db
 }
 
 func (f *Friend) SetListener(listener open_im_sdk_callback.OnFriendshipListener) {
-	f.friendListener = listener
+	f.friendListener = open_im_sdk_callback.NewOnFriendshipListenerSdk(listener)
 }
 
 func (f *Friend) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
@@ -203,9 +175,19 @@ func (f *Friend) SetListenerForService(listener open_im_sdk_callback.OnListenerF
 func (f *Friend) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	go func() {
 		if err := f.doNotification(ctx, msg); err != nil {
-			// todo log
+			log.ZError(ctx, "doNotification error", err, "msg", msg)
 		}
 	}()
+}
+
+func (f *Friend) syncApplication(ctx context.Context, from *sdkws.FromToUserID) error {
+	if from.FromUserID == f.loginUserID {
+		return f.SyncSelfFriendApplication(ctx)
+		// send to me
+	} else if from.ToUserID == f.loginUserID {
+		return f.SyncFriendApplication(ctx)
+	}
+	return fmt.Errorf("friend application notification error, fromUserID: %s, toUserID: %s", from.FromUserID, from.ToUserID)
 }
 
 func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
@@ -215,92 +197,66 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 	if msg.SendTime < f.loginTime || f.loginTime == 0 {
 		return errors.New("ignore notification")
 	}
-	var tips api.TipsComm
-	if err := proto.Unmarshal(msg.Content, &tips); err != nil {
-		return err
-	}
 	switch msg.ContentType {
 	case constant.FriendApplicationNotification:
-		var detail api.FriendApplicationTips
-		if err := proto.Unmarshal(tips.Detail, &detail); err != nil {
+		tips := sdkws.FriendApplicationTips{}
+		if err := json.Unmarshal(msg.Content, &tips); err != nil {
 			return err
 		}
-		if detail.FromToUserID.FromUserID == f.loginUserID {
-			return f.SyncSelfFriendApplication(ctx)
-		} else if detail.FromToUserID.ToUserID == f.loginUserID {
-			return f.SyncFriendApplication(ctx)
-		} else {
-			return fmt.Errorf("friend application notification error, fromUserID: %s, toUserID: %s", detail.FromToUserID.FromUserID, detail.FromToUserID.ToUserID)
-		}
+		// i send
+		return f.syncApplication(ctx, tips.FromToUserID)
 	case constant.FriendApplicationApprovedNotification:
-		var detail api.FriendApplicationApprovedTips
-		if err := proto.Unmarshal(tips.Detail, &detail); err != nil {
+		var tips sdkws.FriendApplicationApprovedTips
+		if err := json.Unmarshal(msg.Content, &tips); err != nil {
 			return err
 		}
-		if detail.FromToUserID.FromUserID == f.loginUserID {
-			return f.SyncFriendApplication(ctx)
-		} else if detail.FromToUserID.ToUserID == f.loginUserID {
-			return f.SyncSelfFriendApplication(ctx)
-		} else {
-			return fmt.Errorf("friend application notification error, fromUserID: %s, toUserID: %s", detail.FromToUserID.FromUserID, detail.FromToUserID.ToUserID)
+		if err := f.SyncFriendList(ctx); err != nil {
+			return err
 		}
+		return f.syncApplication(ctx, tips.FromToUserID)
 	case constant.FriendApplicationRejectedNotification:
-		var detail api.FriendApplicationRejectedTips
-		if err := proto.Unmarshal(tips.Detail, &detail); err != nil {
+		var tips sdkws.FriendApplicationRejectedTips
+		if err := json.Unmarshal(msg.Content, &tips); err != nil {
 			return err
 		}
-		if detail.FromToUserID.FromUserID == f.loginUserID {
-			return f.SyncFriendApplication(ctx)
-		} else if detail.FromToUserID.ToUserID == f.loginUserID {
-			return f.SyncSelfFriendApplication(ctx)
-		} else {
-			return fmt.Errorf("friend application notification error, fromUserID: %s, toUserID: %s", detail.FromToUserID.FromUserID, detail.FromToUserID.ToUserID)
-		}
+		return f.syncApplication(ctx, tips.FromToUserID)
 	case constant.FriendAddedNotification:
-		//var detail api.FriendAddedTips
-		//if err := proto.Unmarshal(tips.Detail, &detail); err != nil {
-		//	return err
-		//}
 		return f.SyncFriendList(ctx)
 	case constant.FriendDeletedNotification:
-		var detail api.FriendDeletedTips
-		if err := proto.Unmarshal(tips.Detail, &detail); err != nil {
+		var tips sdkws.FriendDeletedTips
+		if err := json.Unmarshal(msg.Content, &tips); err != nil {
 			return err
 		}
-		if detail.FromToUserID.FromUserID == f.loginUserID {
+		if tips.FromToUserID.FromUserID == f.loginUserID {
 			return f.SyncFriendList(ctx)
 		}
 		return nil
 	case constant.FriendRemarkSetNotification:
-		var detail api.FriendInfoChangedTips
-		if err := proto.Unmarshal(tips.Detail, &detail); err != nil {
+		var tips sdkws.FriendInfoChangedTips
+		if err := json.Unmarshal(msg.Content, &tips); err != nil {
 			return err
 		}
-		if detail.FromToUserID.FromUserID == f.loginUserID {
+		if tips.FromToUserID.FromUserID == f.loginUserID {
 			return f.SyncFriendList(ctx)
 		}
 		return nil
 	case constant.FriendInfoUpdatedNotification:
-		//var detail api.UserInfoUpdatedTips
-		//if err := proto.Unmarshal(tips.Detail, &detail); err != nil {
-		//	return err
-		//}
 		return f.SyncFriendList(ctx)
 	case constant.BlackAddedNotification:
-		var detail api.BlackAddedTips
-		if err := proto.Unmarshal(tips.Detail, &detail); err != nil {
+		var tips sdkws.BlackAddedTips
+		if err := json.Unmarshal(msg.Content, &tips); err != nil {
 			return err
 		}
-		if detail.FromToUserID.FromUserID == f.loginUserID {
+		if tips.FromToUserID.FromUserID == f.loginUserID {
 			return f.SyncBlackList(ctx)
 		}
 		return nil
 	case constant.BlackDeletedNotification:
-		var detail api.BlackDeletedTips
-		if err := proto.Unmarshal(tips.Detail, &detail); err != nil {
+		var tips sdkws.BlackDeletedTips
+		if err := json.Unmarshal(msg.Content, &tips); err != nil {
 			return err
 		}
-		if detail.FromToUserID.FromUserID == f.loginUserID {
+		if tips.FromToUserID.FromUserID == f.loginUserID {
 			return f.SyncBlackList(ctx)
 		}
 		return nil
