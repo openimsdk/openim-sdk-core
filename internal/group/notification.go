@@ -16,20 +16,18 @@ package group
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	comm "open_im_sdk/internal/common"
-	"open_im_sdk/pkg/constant"
-	api "open_im_sdk/pkg/server_api_params"
-
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	"github.com/golang/protobuf/proto"
+	"open_im_sdk/pkg/constant"
 )
 
 func (g *Group) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	go func() {
 		if err := g.doNotification(ctx, msg); err != nil {
-			// todo log
+			log.ZError(ctx, "DoGroupNotification failed", err)
 		}
 	}()
 }
@@ -38,17 +36,10 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 	if g.listener == nil {
 		return errors.New("listener is nil")
 	}
-	if msg.SendTime < g.loginTime || g.loginTime == 0 {
-		return errors.New("ignore notification")
-	}
-	var tips api.TipsComm
-	if err := proto.Unmarshal(msg.Content, &tips); err != nil {
-		return err
-	}
 	switch msg.ContentType {
 	case constant.GroupCreatedNotification:
-		var detail api.GroupCreatedTips
-		if err := proto.Unmarshal(tips.Detail, &detail); err != nil {
+		var detail sdkws.GroupCreatedTips
+		if err := json.Unmarshal(msg.Content, &detail); err != nil {
 			return err
 		}
 		if err := g.SyncJoinedGroup(ctx); err != nil {
@@ -56,14 +47,14 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
 	case constant.GroupInfoSetNotification:
-		var detail api.GroupInfoSetTips
-		if err := proto.Unmarshal(tips.Detail, &detail); err != nil {
+		var detail sdkws.GroupInfoSetTips
+		if err := json.Unmarshal(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.SyncJoinedGroup(ctx)
 	case constant.JoinGroupApplicationNotification:
-		var detail api.JoinGroupApplicationTips
-		if err := proto.Unmarshal(tips.Detail, &detail); err != nil {
+		var detail sdkws.JoinGroupApplicationTips
+		if err := json.Unmarshal(msg.Content, &detail); err != nil {
 			return err
 		}
 		if detail.Applicant.UserID == g.loginUserID {
@@ -72,8 +63,8 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return g.SyncAdminGroupApplication(ctx)
 		}
 	case constant.MemberQuitNotification:
-		var detail api.MemberQuitTips
-		if err := proto.Unmarshal(tips.Detail, &detail); err != nil {
+		var detail sdkws.MemberQuitTips
+		if err := json.Unmarshal(msg.Content, &detail); err != nil {
 			return err
 		}
 		if detail.QuitUser.UserID == g.loginUserID {
@@ -85,8 +76,8 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return g.SyncGroupMember(ctx, detail.Group.GroupID)
 		}
 	case constant.GroupApplicationAcceptedNotification:
-		var detail api.GroupApplicationAcceptedTips
-		if err := proto.Unmarshal(tips.Detail, &detail); err != nil {
+		var detail sdkws.GroupApplicationAcceptedTips
+		if err := json.Unmarshal(msg.Content, &detail); err != nil {
 			return err
 		}
 		if detail.OpUser.UserID == g.loginUserID {
@@ -97,8 +88,8 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 		return g.SyncJoinedGroup(ctx)
 	case constant.GroupApplicationRejectedNotification:
-		var detail api.GroupApplicationRejectedTips
-		if err := proto.Unmarshal(tips.Detail, &detail); err != nil {
+		var detail sdkws.GroupApplicationRejectedTips
+		if err := json.Unmarshal(msg.Content, &detail); err != nil {
 			return err
 		}
 		if detail.OpUser.UserID == g.loginUserID {
@@ -109,8 +100,8 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 		return g.SyncSelfGroupApplication(ctx)
 	case constant.GroupOwnerTransferredNotification:
-		var detail api.GroupOwnerTransferredTips
-		if err := proto.Unmarshal(tips.Detail, &detail); err != nil {
+		var detail sdkws.GroupOwnerTransferredTips
+		if err := json.Unmarshal(msg.Content, &detail); err != nil {
 			return err
 		}
 		if err := g.SyncJoinedGroup(ctx); err != nil {
@@ -118,13 +109,13 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
 	case constant.MemberKickedNotification:
-		var detail api.MemberKickedTips
+		var detail sdkws.MemberKickedTips
 		if err := g.SyncJoinedGroup(ctx); err != nil {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
 	case constant.MemberInvitedNotification:
-		var detail api.MemberInvitedTips
+		var detail sdkws.MemberInvitedTips
 		if err := g.SyncJoinedGroup(ctx); err != nil {
 			return err
 		}
@@ -133,7 +124,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
 	case constant.MemberEnterNotification:
-		var detail api.MemberEnterTips
+		var detail sdkws.MemberEnterTips
 		if err := g.SyncJoinedGroup(ctx); err != nil {
 			return err
 		}
@@ -142,20 +133,20 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
 	case constant.GroupDismissedNotification:
-		var detail api.GroupDismissedTips
+		var detail sdkws.GroupDismissedTips
 		if err := g.SyncJoinedGroup(ctx); err != nil {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
 	case constant.GroupMemberMutedNotification:
-		var detail api.GroupMemberMutedTips
-		if err := comm.UnmarshalTips(msg, &detail); err != nil {
+		var detail sdkws.GroupMemberMutedTips
+		if err := json.Unmarshal(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
 	case constant.GroupMemberCancelMutedNotification:
-		var detail api.GroupMemberCancelMutedTips
-		if err := comm.UnmarshalTips(msg, &detail); err != nil {
+		var detail sdkws.GroupMemberCancelMutedTips
+		if err := json.Unmarshal(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
@@ -164,20 +155,20 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 	case constant.GroupCancelMutedNotification:
 		return g.SyncJoinedGroup(ctx)
 	case constant.GroupMemberInfoSetNotification:
-		var detail api.GroupMemberInfoSetTips
-		if err := comm.UnmarshalTips(msg, &detail); err != nil {
+		var detail sdkws.GroupMemberInfoSetTips
+		if err := json.Unmarshal(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
 	case constant.GroupMemberSetToAdminNotification:
-		var detail api.GroupMemberInfoSetTips
-		if err := comm.UnmarshalTips(msg, &detail); err != nil {
+		var detail sdkws.GroupMemberInfoSetTips
+		if err := json.Unmarshal(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
 	case constant.GroupMemberSetToOrdinaryUserNotification:
-		var detail api.GroupMemberInfoSetTips
-		if err := comm.UnmarshalTips(msg, &detail); err != nil {
+		var detail sdkws.GroupMemberInfoSetTips
+		if err := json.Unmarshal(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)

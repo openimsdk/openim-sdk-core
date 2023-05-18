@@ -55,6 +55,7 @@ func init() {
 	}
 	open_im_sdk.UserForSDK.SetListenerForService(&onListenerForService{ctx: ctx})
 	open_im_sdk.UserForSDK.SetConversationListener(&onConversationListener{ctx: ctx})
+	open_im_sdk.UserForSDK.SetGroupListener(&onGroupListener{ctx: ctx})
 }
 
 func GetUserToken(ctx context.Context, userID string) (string, error) {
@@ -151,4 +152,48 @@ func (o *onConversationListener) OnConversationChanged(conversationList string) 
 
 func (o *onConversationListener) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {
 	log.ZInfo(o.ctx, "OnTotalUnreadMessageCountChanged", "totalUnreadCount", totalUnreadCount)
+}
+
+type onGroupListener struct {
+	ctx context.Context
+}
+
+func (o *onGroupListener) OnJoinedGroupAdded(groupInfo string) {
+	log.ZInfo(o.ctx, "OnJoinedGroupAdded", "groupInfo", groupInfo)
+}
+
+func (o *onGroupListener) OnJoinedGroupDeleted(groupInfo string) {
+	log.ZInfo(o.ctx, "OnJoinedGroupDeleted", "groupInfo", groupInfo)
+}
+
+func (o *onGroupListener) OnGroupMemberAdded(groupMemberInfo string) {
+	log.ZInfo(o.ctx, "OnGroupMemberAdded", "groupMemberInfo", groupMemberInfo)
+}
+
+func (o *onGroupListener) OnGroupMemberDeleted(groupMemberInfo string) {
+	log.ZInfo(o.ctx, "OnGroupMemberDeleted", "groupMemberInfo", groupMemberInfo)
+}
+
+func (o *onGroupListener) OnGroupApplicationAdded(groupApplication string) {
+	log.ZInfo(o.ctx, "OnGroupApplicationAdded", "groupApplication", groupApplication)
+}
+
+func (o *onGroupListener) OnGroupApplicationDeleted(groupApplication string) {
+	log.ZInfo(o.ctx, "OnGroupApplicationDeleted", "groupApplication", groupApplication)
+}
+
+func (o *onGroupListener) OnGroupInfoChanged(groupInfo string) {
+	log.ZInfo(o.ctx, "OnGroupInfoChanged", "groupInfo", groupInfo)
+}
+
+func (o *onGroupListener) OnGroupMemberInfoChanged(groupMemberInfo string) {
+	log.ZInfo(o.ctx, "OnGroupMemberInfoChanged", "groupMemberInfo", groupMemberInfo)
+}
+
+func (o *onGroupListener) OnGroupApplicationAccepted(groupApplication string) {
+	log.ZInfo(o.ctx, "OnGroupApplicationAccepted", "groupApplication", groupApplication)
+}
+
+func (o *onGroupListener) OnGroupApplicationRejected(groupApplication string) {
+	log.ZInfo(o.ctx, "OnGroupApplicationRejected", "groupApplication", groupApplication)
 }
