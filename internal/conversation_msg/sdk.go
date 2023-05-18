@@ -576,8 +576,26 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			}
 			s.SoundElem.SourceURL = res.URL
 			s.Content = utils.StructToJsonString(s.FileElem)
+		case constant.Text:
+			s.Content = utils.StructToJsonString(s.TextElem)
+		case constant.AtText:
+			s.Content = utils.StructToJsonString(s.AtElem)
+		case constant.Location:
+			s.Content = utils.StructToJsonString(s.LocationElem)
+		case constant.Custom:
+			s.Content = utils.StructToJsonString(s.CustomElem)
+		case constant.Merger:
+			s.Content = utils.StructToJsonString(s.MergeElem)
+		case constant.Quote:
+			s.Content = utils.StructToJsonString(s.QuoteElem)
+		case constant.Card:
+			s.Content = utils.StructToJsonString(s.CardElem)
+		case constant.Face:
+			s.Content = utils.StructToJsonString(s.FaceElem)
+		case constant.AdvancedText:
+			s.Content = utils.StructToJsonString(s.MessageEntityElem)
 		default:
-			//return nil, errors.New("contentType not currently supported" + utils.Int32ToString(s.ContentType))
+			return nil, errors.New("contentType not currently supported" + utils.Int32ToString(s.ContentType))
 		}
 		oldMessage, err := c.db.GetMessage(ctx, lc.ConversationID, s.ClientMsgID)
 		if err != nil {
