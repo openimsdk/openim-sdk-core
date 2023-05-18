@@ -1338,7 +1338,7 @@ func (c *Conversation) msgConvert(msg *sdk_struct.MsgStruct) (err error) {
 func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err error) {
 	if msg.ContentType >= constant.NotificationBegin && msg.ContentType <= constant.NotificationEnd {
 		t := sdk_struct.NotificationElem{}
-		t.Detail = msg.Content
+		utils.JsonStringToStruct(msg.Content, &t)
 		msg.NotificationElem = &t
 	} else {
 		switch msg.ContentType {

@@ -16,7 +16,6 @@ package friend
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"open_im_sdk/internal/user"
@@ -26,6 +25,7 @@ import (
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/syncer"
+	"open_im_sdk/pkg/utils"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
@@ -200,14 +200,13 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 	switch msg.ContentType {
 	case constant.FriendApplicationNotification:
 		tips := sdkws.FriendApplicationTips{}
-		if err := json.Unmarshal(msg.Content, &tips); err != nil {
+		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
-		// i send
 		return f.syncApplication(ctx, tips.FromToUserID)
 	case constant.FriendApplicationApprovedNotification:
 		var tips sdkws.FriendApplicationApprovedTips
-		if err := json.Unmarshal(msg.Content, &tips); err != nil {
+		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
 		if err := f.SyncFriendList(ctx); err != nil {
@@ -216,7 +215,7 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		return f.syncApplication(ctx, tips.FromToUserID)
 	case constant.FriendApplicationRejectedNotification:
 		var tips sdkws.FriendApplicationRejectedTips
-		if err := json.Unmarshal(msg.Content, &tips); err != nil {
+		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
 		return f.syncApplication(ctx, tips.FromToUserID)
@@ -224,7 +223,7 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		return f.SyncFriendList(ctx)
 	case constant.FriendDeletedNotification:
 		var tips sdkws.FriendDeletedTips
-		if err := json.Unmarshal(msg.Content, &tips); err != nil {
+		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
 		if tips.FromToUserID.FromUserID == f.loginUserID {
@@ -233,7 +232,7 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		return nil
 	case constant.FriendRemarkSetNotification:
 		var tips sdkws.FriendInfoChangedTips
-		if err := json.Unmarshal(msg.Content, &tips); err != nil {
+		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
 		if tips.FromToUserID.FromUserID == f.loginUserID {
@@ -244,7 +243,7 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		return f.SyncFriendList(ctx)
 	case constant.BlackAddedNotification:
 		var tips sdkws.BlackAddedTips
-		if err := json.Unmarshal(msg.Content, &tips); err != nil {
+		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
 		if tips.FromToUserID.FromUserID == f.loginUserID {
@@ -253,7 +252,7 @@ func (f *Friend) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		return nil
 	case constant.BlackDeletedNotification:
 		var tips sdkws.BlackDeletedTips
-		if err := json.Unmarshal(msg.Content, &tips); err != nil {
+		if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 			return err
 		}
 		if tips.FromToUserID.FromUserID == f.loginUserID {

@@ -521,3 +521,8 @@ func Uint32ListConvert(list []uint32) []int64 {
 	}
 	return result
 }
+
+func UnmarshalNotificationElem(bytes []byte, t interface{}) error {
+	e := sdk_struct.NotificationElem{Detail: t}
+	return json.Unmarshal(bytes, &e)
+}

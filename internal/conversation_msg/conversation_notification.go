@@ -621,13 +621,11 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 		defer c.ConversationListener.OnSyncServerFinish()
 	}
 	for _, msgs := range allMsg {
-
 		for _, v := range msgs.Msgs {
 			switch {
 			case v.ContentType == constant.ConversationChangeNotification || v.ContentType == constant.ConversationPrivateChatNotification:
 				c.DoNotification(ctx, v)
 			case v.ContentType == constant.MsgDeleteNotification:
-
 				c.full.SuperGroup.DoNotification(ctx, v, c.GetCh())
 			case v.ContentType == constant.SuperGroupUpdateNotification:
 				c.full.SuperGroup.DoNotification(ctx, v, c.GetCh())
