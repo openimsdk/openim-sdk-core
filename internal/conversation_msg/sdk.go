@@ -336,6 +336,8 @@ func (c *Conversation) msgStructToLocalChatLog(src *sdk_struct.MsgStruct) *model
 		lc.Content = utils.StructToJsonString(src.FaceElem)
 	case constant.AdvancedText:
 		lc.Content = utils.StructToJsonString(src.MessageEntityElem)
+	default:
+		lc.Content = utils.StructToJsonString(src.NotificationElem)
 	}
 	if src.SessionType == constant.GroupChatType || src.SessionType == constant.SuperGroupChatType {
 		lc.RecvID = src.GroupID
