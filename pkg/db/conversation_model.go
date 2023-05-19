@@ -86,8 +86,36 @@ func (d *DataBase) BatchInsertConversationList(ctx context.Context, conversation
 	}
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
+
 	return utils.Wrap(d.conn.WithContext(ctx).Create(conversationList).Error, "BatchInsertConversationList failed")
 }
+
+func (d *DataBase) UpdateOrCreateConversations(ctx context.Context, conversationList []*model_struct.LocalConversation) error {
+	var conversationIDs []string
+	if err := d.conn.WithContext(ctx).Where("latest_msg_send_time > ?", 0).Pluck("conversation_id", &conversationIDs).Error; err != nil {
+		return err
+	}
+	var notExistConversations []*model_struct.LocalConversation
+	var existConversations []*model_struct.LocalConversation
+	for i, v := range conversationList {
+		if utils.IsContain(v.ConversationID, conversationIDs) {
+			existConversations = append(existConversations, v)
+			continue
+		} else {
+			notExistConversations = append(notExistConversations, conversationList[i])
+		}
+	}
+	if err := d.conn.WithContext(ctx).Create(notExistConversations).Error; err != nil {
+		return err
+	}
+	for _, v := range existConversations {
+		if err := d.conn.WithContext(ctx).Model(&model_struct.LocalConversation{}).Where("conversation_id = ?", v.ConversationID).Updates(v).Error; err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (d *DataBase) InsertConversation(ctx context.Context, conversationList *model_struct.LocalConversation) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()

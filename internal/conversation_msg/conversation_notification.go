@@ -602,12 +602,12 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 	switch syncFlag {
 	case constant.MsgSyncBegin:
 		c.ConversationListener.OnSyncServerStart()
-		err := c.SyncConversations(ctx)
-		if err != nil {
-			log.ZError(ctx, "syncConversations err", err)
+		if err := c.SyncConversationHashReadSeqs(ctx); err != nil {
+			log.ZError(ctx, "SyncConversationHashReadSeqs err", err)
 		}
+
 		for _, syncFunc := range []func(c context.Context) error{
-			c.user.SyncLoginUserInfo,
+			c.user.SyncLoginUserInfo, c.SyncConversations,
 			c.friend.SyncBlackList, c.friend.SyncFriendList, c.friend.SyncFriendApplication, c.friend.SyncSelfFriendApplication,
 			c.group.SyncJoinedGroup, c.group.SyncAdminGroupApplication, c.group.SyncSelfGroupApplication, c.group.SyncJoinedGroupMember,
 		} {

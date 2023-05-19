@@ -46,7 +46,7 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		fmt.Println(operationID, "Unmarshal failed ", err.Error(), config)
 		return false
 	}
-	if err := log.InitFromConfig("", int(configArgs.LogLevel), true, true, "", 0); err != nil {
+	if err := log.InitFromConfig("", int(configArgs.LogLevel), true, false, "", 0); err != nil {
 		fmt.Println(operationID, "log init failed ", err.Error())
 		return false
 	}
