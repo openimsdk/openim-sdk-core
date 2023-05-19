@@ -92,7 +92,7 @@ func (d *DataBase) BatchInsertConversationList(ctx context.Context, conversation
 
 func (d *DataBase) UpdateOrCreateConversations(ctx context.Context, conversationList []*model_struct.LocalConversation) error {
 	var conversationIDs []string
-	if err := d.conn.WithContext(ctx).Where("latest_msg_send_time > ?", 0).Pluck("conversation_id", &conversationIDs).Error; err != nil {
+	if err := d.conn.WithContext(ctx).Model(&model_struct.LocalConversation{}).Pluck("conversation_id", &conversationIDs).Error; err != nil {
 		return err
 	}
 	var notExistConversations []*model_struct.LocalConversation
@@ -109,7 +109,7 @@ func (d *DataBase) UpdateOrCreateConversations(ctx context.Context, conversation
 		return err
 	}
 	for _, v := range existConversations {
-		if err := d.conn.WithContext(ctx).Model(&model_struct.LocalConversation{}).Where("conversation_id = ?", v.ConversationID).Updates(v).Error; err != nil {
+		if err := d.conn.WithContext(ctx).Model(&model_struct.LocalConversation{}).Where("conversation_id = ?", v.ConversationID).Updates(map[string]interface{}{"unread_count": v.UnreadCount}).Error; err != nil {
 			return err
 		}
 	}

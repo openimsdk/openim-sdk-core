@@ -72,10 +72,16 @@ func (c *Conversation) SyncConversationHashReadSeqs(ctx context.Context) error {
 	}
 	var conversations []*model_struct.LocalConversation
 	for conversationID, v := range seqs {
+		var unreadCount int32
 		c.maxSeqRecorder.Set(conversationID, v.MaxSeq)
+		if v.MaxSeq-v.HasReadSeq < 0 {
+			unreadCount = 0
+		} else {
+			unreadCount = int32(v.MaxSeq - v.HasReadSeq)
+		}
 		conversations = append(conversations, &model_struct.LocalConversation{
 			ConversationID: conversationID,
-			HasReadSeq:     v.HasReadSeq,
+			UnreadCount:    unreadCount,
 		})
 	}
 	return c.db.UpdateOrCreateConversations(ctx, conversations)

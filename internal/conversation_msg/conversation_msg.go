@@ -167,7 +167,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	insertMsg := make(map[string][]*model_struct.LocalChatLog, 10)
 	updateMsg := make(map[string][]*model_struct.LocalChatLog, 10)
 	var exceptionMsg []*model_struct.LocalErrChatLog
-	var unreadMessages []*model_struct.LocalConversationUnreadMessage
+	//var unreadMessages []*model_struct.LocalConversationUnreadMessage
 	var newMessages, msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList, reactionMsgModifierList, reactionMsgDeleterList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate bool
 	conversationChangedSet := make(map[string]*model_struct.LocalConversation)
@@ -278,12 +278,10 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 						lc.UserID = v.SendID
 					}
 					if isUnreadCount {
-						cacheConversation := c.cache.GetConversation(lc.ConversationID)
-						if msg.SendTime > cacheConversation.UpdateUnreadCountTime {
+						//cacheConversation := c.cache.GetConversation(lc.ConversationID)
+						if c.maxSeqRecorder.IsNewMsg(conversationID, msg.Seq) {
 							isTriggerUnReadCount = true
 							lc.UnreadCount = 1
-							tempUnreadMessages := model_struct.LocalConversationUnreadMessage{ConversationID: lc.ConversationID, ClientMsgID: msg.ClientMsgID, SendTime: msg.SendTime}
-							unreadMessages = append(unreadMessages, &tempUnreadMessages)
 						}
 					}
 					if isConversationUpdate {
@@ -358,10 +356,6 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 
 	if err := c.db.BatchInsertConversationList(ctx, mapConversationToList(phNewConversationSet)); err != nil {
 		log.ZError(ctx, "insert new conversation err:", err)
-	}
-
-	if err := c.db.BatchInsertConversationUnreadMessageList(ctx, unreadMessages); err != nil {
-		log.ZError(ctx, "insert BatchInsertConversationUnreadMessageList err:", err)
 	}
 	c.doMsgReadState(ctx, msgReadList)
 

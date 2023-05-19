@@ -195,7 +195,6 @@ func (d *DataBase) initDB(ctx context.Context) error {
 		&model_struct.LocalErrChatLog{},
 		&model_struct.LocalUser{},
 		&model_struct.LocalBlack{},
-		&model_struct.LocalConversationUnreadMessage{},
 		&model_struct.LocalConversation{},
 		&model_struct.LocalChatLog{},
 		&model_struct.LocalAdminGroupRequest{},
