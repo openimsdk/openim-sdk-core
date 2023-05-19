@@ -62,6 +62,16 @@ func (d *DataBase) GetAllFriendList(ctx context.Context) ([]*model_struct.LocalF
 	}
 	return transfer, err
 }
+
+func (d *DataBase) GetPageFriendList(ctx context.Context, offset, count int) ([]*model_struct.LocalFriend, error) {
+	d.friendMtx.Lock()
+	defer d.friendMtx.Unlock()
+	var friendList []*model_struct.LocalFriend
+	err := utils.Wrap(d.conn.WithContext(ctx).Where("owner_user_id = ?", d.loginUserID).Offset(offset).Limit(count).Order("name").Find(&friendList).Error,
+		"GetFriendList failed")
+	return friendList, err
+}
+
 func (d *DataBase) SearchFriendList(ctx context.Context, keyword string, isSearchUserID, isSearchNickname, isSearchRemark bool) ([]*model_struct.LocalFriend, error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()

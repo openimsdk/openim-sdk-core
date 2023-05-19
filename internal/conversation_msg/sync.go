@@ -70,6 +70,9 @@ func (c *Conversation) SyncConversationHashReadSeqs(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	if len(seqs) == 0 {
+		return nil
+	}
 	var conversations []*model_struct.LocalConversation
 	for conversationID, v := range seqs {
 		var unreadCount int32

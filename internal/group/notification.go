@@ -37,7 +37,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		return errors.New("listener is nil")
 	}
 	switch msg.ContentType {
-	case constant.GroupCreatedNotification:
+	case constant.GroupCreatedNotification: // 1501
 		var detail sdkws.GroupCreatedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
@@ -46,13 +46,13 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
-	case constant.GroupInfoSetNotification:
+	case constant.GroupInfoSetNotification: // 1502
 		var detail sdkws.GroupInfoSetTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.SyncJoinedGroup(ctx)
-	case constant.JoinGroupApplicationNotification:
+	case constant.JoinGroupApplicationNotification: // 1503
 		var detail sdkws.JoinGroupApplicationTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
@@ -62,7 +62,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		} else {
 			return g.SyncAdminGroupApplication(ctx)
 		}
-	case constant.MemberQuitNotification:
+	case constant.MemberQuitNotification: // 1504
 		var detail sdkws.MemberQuitTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
@@ -75,7 +75,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		} else {
 			return g.SyncGroupMember(ctx, detail.Group.GroupID)
 		}
-	case constant.GroupApplicationAcceptedNotification:
+	case constant.GroupApplicationAcceptedNotification: // 1505
 		var detail sdkws.GroupApplicationAcceptedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
@@ -87,7 +87,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return g.SyncAdminGroupApplication(ctx)
 		}
 		return g.SyncJoinedGroup(ctx)
-	case constant.GroupApplicationRejectedNotification:
+	case constant.GroupApplicationRejectedNotification: // 1506
 		var detail sdkws.GroupApplicationRejectedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
@@ -99,7 +99,7 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return g.SyncAdminGroupApplication(ctx)
 		}
 		return g.SyncSelfGroupApplication(ctx)
-	case constant.GroupOwnerTransferredNotification:
+	case constant.GroupOwnerTransferredNotification: // 1507
 		var detail sdkws.GroupOwnerTransferredTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
@@ -107,14 +107,20 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		if err := g.SyncJoinedGroup(ctx); err != nil {
 			return err
 		}
+		if detail.Group == nil {
+			return errors.New(fmt.Sprintf("group is nil, groupID: %s", detail.Group.GroupID))
+		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
-	case constant.MemberKickedNotification:
+	case constant.MemberKickedNotification: // 1508
 		var detail sdkws.MemberKickedTips
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
+			return err
+		}
 		if err := g.SyncJoinedGroup(ctx); err != nil {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
-	case constant.MemberInvitedNotification:
+	case constant.MemberInvitedNotification: // 1509
 		var detail sdkws.MemberInvitedTips
 		if err := g.SyncJoinedGroup(ctx); err != nil {
 			return err
@@ -123,8 +129,11 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
-	case constant.MemberEnterNotification:
+	case constant.MemberEnterNotification: // 1510
 		var detail sdkws.MemberEnterTips
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
+			return err
+		}
 		if err := g.SyncJoinedGroup(ctx); err != nil {
 			return err
 		}
@@ -132,41 +141,41 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
-	case constant.GroupDismissedNotification:
+	case constant.GroupDismissedNotification: // 1511
 		var detail sdkws.GroupDismissedTips
 		if err := g.SyncJoinedGroup(ctx); err != nil {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
-	case constant.GroupMemberMutedNotification:
+	case constant.GroupMemberMutedNotification: // 1512
 		var detail sdkws.GroupMemberMutedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
-	case constant.GroupMemberCancelMutedNotification:
+	case constant.GroupMemberCancelMutedNotification: // 1513
 		var detail sdkws.GroupMemberCancelMutedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
-	case constant.GroupMutedNotification:
+	case constant.GroupMutedNotification: // 1514
 		return g.SyncJoinedGroup(ctx)
-	case constant.GroupCancelMutedNotification:
+	case constant.GroupCancelMutedNotification: // 1515
 		return g.SyncJoinedGroup(ctx)
-	case constant.GroupMemberInfoSetNotification:
+	case constant.GroupMemberInfoSetNotification: // 1516
 		var detail sdkws.GroupMemberInfoSetTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
-	case constant.GroupMemberSetToAdminNotification:
+	case constant.GroupMemberSetToAdminNotification: // 1517
 		var detail sdkws.GroupMemberInfoSetTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
-	case constant.GroupMemberSetToOrdinaryUserNotification:
+	case constant.GroupMemberSetToOrdinaryUserNotification: // 1518
 		var detail sdkws.GroupMemberInfoSetTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err

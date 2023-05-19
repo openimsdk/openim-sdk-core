@@ -45,7 +45,7 @@ func (d *DataBase) GetAllConversationListDB(ctx context.Context) ([]*model_struc
 	return conversationList, err
 }
 func (d *DataBase) FindAllConversationConversationID(ctx context.Context) (conversationIDs []string, err error) {
-	return conversationIDs, utils.Wrap(d.conn.WithContext(ctx).Where("latest_msg_send_time > ?", 0).Pluck("conversation_id", &conversationIDs).Error, "")
+	return conversationIDs, utils.Wrap(d.conn.WithContext(ctx).Model(&model_struct.LocalConversation{}).Where("latest_msg_send_time > ?", 0).Pluck("conversation_id", &conversationIDs).Error, "")
 }
 func (d *DataBase) GetHiddenConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error) {
 	d.mRWMutex.Lock()
@@ -105,8 +105,10 @@ func (d *DataBase) UpdateOrCreateConversations(ctx context.Context, conversation
 			notExistConversations = append(notExistConversations, conversationList[i])
 		}
 	}
-	if err := d.conn.WithContext(ctx).Create(notExistConversations).Error; err != nil {
-		return err
+	if len(notExistConversations) > 0 {
+		if err := d.conn.WithContext(ctx).Create(notExistConversations).Error; err != nil {
+			return err
+		}
 	}
 	for _, v := range existConversations {
 		if err := d.conn.WithContext(ctx).Model(&model_struct.LocalConversation{}).Where("conversation_id = ?", v.ConversationID).Updates(map[string]interface{}{"unread_count": v.UnreadCount}).Error; err != nil {
