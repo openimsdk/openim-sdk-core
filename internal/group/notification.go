@@ -107,9 +107,15 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		if err := g.SyncJoinedGroup(ctx); err != nil {
 			return err
 		}
+		if detail.Group == nil {
+			return errors.New(fmt.Sprintf("group is nil, groupID: %s", detail.Group.GroupID))
+		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
 	case constant.MemberKickedNotification: // 1508
 		var detail sdkws.MemberKickedTips
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
+			return err
+		}
 		if err := g.SyncJoinedGroup(ctx); err != nil {
 			return err
 		}
@@ -125,6 +131,9 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
 	case constant.MemberEnterNotification: // 1510
 		var detail sdkws.MemberEnterTips
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
+			return err
+		}
 		if err := g.SyncJoinedGroup(ctx); err != nil {
 			return err
 		}
