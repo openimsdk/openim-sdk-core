@@ -67,7 +67,7 @@ func (d *DataBase) GetPageFriendList(ctx context.Context, offset, count int) ([]
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()
 	var friendList []*model_struct.LocalFriend
-	err := utils.Wrap(d.conn.WithContext(ctx).Where("owner_user_id = ?", d.loginUserID).Offset(offset).Limit(count).Find(&friendList).Error,
+	err := utils.Wrap(d.conn.WithContext(ctx).Where("owner_user_id = ?", d.loginUserID).Offset(offset).Limit(count).Order("name").Find(&friendList).Error,
 		"GetFriendList failed")
 	return friendList, err
 }
