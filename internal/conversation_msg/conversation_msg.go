@@ -63,22 +63,20 @@ type Conversation struct {
 	recvCH               chan common.Cmd2Value
 	loginUserID          string
 
-	platformID        int32
-	DataDir           string
-	friend            *friend.Friend
-	group             *group.Group
-	user              *user.User
-	file              *file.File
-	signaling         *signaling.LiveSignaling
-	workMoments       *workMoments.WorkMoments
-	business          *business.Business
-	messageController *MessageController
-	cache             *cache.Cache
-	full              *full.Full
-	tempMessageMap    sync.Map
-	encryptionKey     string
-
-	id2MinSeq            map[string]int64
+	platformID           int32
+	DataDir              string
+	friend               *friend.Friend
+	group                *group.Group
+	user                 *user.User
+	file                 *file.File
+	signaling            *signaling.LiveSignaling
+	workMoments          *workMoments.WorkMoments
+	business             *business.Business
+	messageController    *MessageController
+	cache                *cache.Cache
+	full                 *full.Full
+	tempMessageMap       sync.Map
+	encryptionKey        string
 	maxSeqRecorder       MaxSeqRecorder
 	IsExternalExtensions bool
 
@@ -126,7 +124,6 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		signaling:            signaling,
 		workMoments:          workMoments,
 		full:                 full,
-		id2MinSeq:            id2MinSeq,
 		encryptionKey:        info.EncryptionKey(),
 		business:             business,
 		messageController:    NewMessageController(db),
