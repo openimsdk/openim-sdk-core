@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/sdk_struct"
+	"open_im_sdk/ws_wrapper/utils"
 	"sort"
 
 	"github.com/golang/protobuf/jsonpb"
@@ -523,6 +524,14 @@ func Uint32ListConvert(list []uint32) []int64 {
 }
 
 func UnmarshalNotificationElem(bytes []byte, t interface{}) error {
-	e := sdk_struct.NotificationElem{Detail: t}
-	return json.Unmarshal(bytes, &e)
+	var n sdk_struct.NotificationElem
+	err := utils.JsonStringToStruct(string(bytes), &n)
+	if err != nil {
+		return err
+	}
+	err = utils.JsonStringToStruct(n.Detail, t)
+	if err != nil {
+		return err
+	}
+	return nil
 }
