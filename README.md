@@ -139,7 +139,7 @@ Contains some common parts of the OpenIM community.
 
 ## Used By
 
-OpenIM is used by the following companies ,let's write it down in [ADOPTER](https://github.com/OpenIMSDK/community/blob/main/ADOPTERS.md)S.
+OpenIM is used by the following companies ,let's write it down in [ADOPTER](https://github.com/OpenIMSDK/community/blob/main/ADOPTERS.md).
 
 Please leave your use cases in the comments [here](https://github.com/OpenIMSDK/Open-IM-Server/issues/379).
 
