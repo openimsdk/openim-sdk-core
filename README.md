@@ -2,12 +2,14 @@
     <b>
         <a href="https://doc.rentsoft.cn/">openim-sdk-core</a><br>
     </b>
-    ⭐️  Used in IOS, Android, PC and other platforms  ⭐️ <br>
 </h1>
+<h3 align="center" style="border-bottom: none">
+      ⭐️  Used in IOS, Android, PC and other platforms  ⭐️ <br>
+<h3>
 
 <p align=center>
 <a href="https://goreportcard.com/report/github.com/OpenIMSDK/openim-sdk-core"><img src="https://goreportcard.com/badge/github.com/OpenIMSDK/openim-sdk-core" alt="A+"></a>
-<a href="https://github.com/issues?q=org%3AOpenIMSDK+is%3Aissue+label%3A%22good+first+issue%22+no%3Aassignee"><img src="https://img.shields.io/github/issues/OpenIMSDK/openim-sdk-core/good%20first%20issue?logo=%22github%22" alt="good first"></a>
+<a href="https://github.com/OpenIMSDK/openim-sdk-core/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3A%22good+first+issue%22"><img src="https://img.shields.io/github/issues/OpenIMSDK/Open-IM-Server/good%20first%20issue?logo=%22github%22" alt="good first"></a>
 <a href="https://github.com/OpenIMSDK/openim-sdk-core"><img src="https://img.shields.io/github/stars/OpenIMSDK/openim-sdk-core.svg?style=flat&logo=github&colorB=deeppink&label=stars"></a>
 <a href="https://join.slack.com/t/openimsdk/shared_invite/zt-1tmoj26uf-_FDy3dowVHBiGvLk9e5Xkg"><img src="https://img.shields.io/badge/Slack-100%2B-blueviolet?logo=slack&amp;logoColor=white"></a>
 <a href="https://github.com/OpenIMSDK/openim-sdk-core/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-green"></a>
@@ -18,7 +20,7 @@
 
 <p align="center">
     <a href="./README.md"><b>English</b></a> •
-    <a href="./README_zh.md"><b>中文</b></a>
+    <a href="./README_zh-CN.md"><b>中文</b></a>
 </p>
 
 </p>
@@ -33,15 +35,63 @@ We appreciate your support and trust, as well as your patience and understanding
 
 We anticipate that this work will be completed soon, and we will do our utmost to minimize any impact on you. Once again, we express our heartfelt thanks and apologies to you.
 
-Thank you!
+----
 
-## Awesome features
+## 🧩 Awesome features
 
-+ …
+OpenIM-SDK-core is a core SDK of OpenIM. 
+
+1. Manage WebSocket long connections, responsible for creating, closing and reconnecting connections. 
+2. Encoding and decoding. Encode and decode messages in binary format to achieve cross-language compatibility.
+3. Implement basic protocols of OpenIM, such as login, push, etc. 
+4. Provide an event handling mechanism to convert received messages into corresponding events and pass them to upper layer applications for processing.
+5. Cache management. Manage user, group, blacklists, and other cache information. 
+6. Provide basic IM function APIs such as sending messages, creating groups, etc. Hide the underlying implementation details from the upper layer application.
+
 
 ## Quickstart
 
 > **Note**: You can get started quickly with openim-sdk-core.
+
+<details>
+  <summary>Work with Makefile</summary>
+
+```bash
+❯ make help    # show help
+❯ make build   # build binary
+```
+
+</details>
+<details>
+  <summary>Work with actions</summary>
+
+Actions provide handling of PR and issue.
+We used the bot @kubbot, It can detect issues in Chinese and translate them to English, and you can interact with it using the command `/comment`.
+
+Comment in an issue:
+
+```bash
+❯ /intive
+```
+
+</details>
+<details>
+  <summary>Work with Tools</summary>
+
+```bash
+❯ make tools
+```
+
+</details>
+<details>
+  <summary>Work with Docker</summary>
+
+```bash
+$ make deploy
+```
+
+</details>
+
 
 ## Contributing & Development
 
