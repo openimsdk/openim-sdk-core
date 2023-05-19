@@ -185,7 +185,7 @@ type QuoteElem struct {
 }
 
 type NotificationElem struct {
-	Detail interface{} `json:"detail,omitempty"`
+	Detail string `json:"detail,omitempty"`
 }
 
 type MessageEntityElem struct {

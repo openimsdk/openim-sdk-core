@@ -1336,64 +1336,62 @@ func (c *Conversation) msgConvert(msg *sdk_struct.MsgStruct) (err error) {
 }
 
 func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err error) {
-	if msg.ContentType >= constant.NotificationBegin && msg.ContentType <= constant.NotificationEnd {
-		t := sdk_struct.NotificationElem{}
-		utils.JsonStringToStruct(msg.Content, &t)
-		msg.NotificationElem = &t
-	} else {
-		switch msg.ContentType {
-		case constant.Text:
-			//if msg.AttachedInfoElem.IsEncryption && c.encryptionKey != "" && msg.AttachedInfoElem.InEncryptStatus {
-			//	var newContent []byte
-			//	log.NewDebug("", utils.GetSelfFuncName(), "org content, key", msg.Content, c.encryptionKey, []byte(msg.Content), msg.CreateTime, msg.AttachedInfoElem, msg.AttachedInfo)
-			//	newContent, err = utils.AesDecrypt([]byte(msg.Content), []byte(c.encryptionKey))
-			//	msg.Content = string(newContent)
-			//	msg.AttachedInfoElem.InEncryptStatus = false
-			//	msg.AttachedInfo = utils.StructToJsonString(msg.AttachedInfoElem)
-			//}
-			t := sdk_struct.TextElem{}
-			err = utils.JsonStringToStruct(msg.Content, &t)
-			msg.TextElem = &t
-		case constant.Picture:
-			t := sdk_struct.PictureElem{}
-			err = utils.JsonStringToStruct(msg.Content, &t)
-			msg.PictureElem = &t
-		case constant.Voice:
-			t := sdk_struct.SoundElem{}
-			err = utils.JsonStringToStruct(msg.Content, &t)
-			msg.SoundElem = &t
-		case constant.Video:
-			t := sdk_struct.VideoElem{}
-			err = utils.JsonStringToStruct(msg.Content, &t)
-			msg.VideoElem = &t
-		case constant.File:
-			t := sdk_struct.FileElem{}
-			err = utils.JsonStringToStruct(msg.Content, &t)
-			msg.FileElem = &t
-		case constant.AdvancedText:
-			err = utils.JsonStringToStruct(msg.Content, &msg.MessageEntityElem)
-		case constant.AtText:
-			err = utils.JsonStringToStruct(msg.Content, &msg.AtElem)
-			if err == nil {
-				if utils.IsContain(c.loginUserID, msg.AtElem.AtUserList) {
-					msg.AtElem.IsAtSelf = true
-				}
+	switch msg.ContentType {
+	case constant.Text:
+		//if msg.AttachedInfoElem.IsEncryption && c.encryptionKey != "" && msg.AttachedInfoElem.InEncryptStatus {
+		//	var newContent []byte
+		//	log.NewDebug("", utils.GetSelfFuncName(), "org content, key", msg.Content, c.encryptionKey, []byte(msg.Content), msg.CreateTime, msg.AttachedInfoElem, msg.AttachedInfo)
+		//	newContent, err = utils.AesDecrypt([]byte(msg.Content), []byte(c.encryptionKey))
+		//	msg.Content = string(newContent)
+		//	msg.AttachedInfoElem.InEncryptStatus = false
+		//	msg.AttachedInfo = utils.StructToJsonString(msg.AttachedInfoElem)
+		//}
+		t := sdk_struct.TextElem{}
+		err = utils.JsonStringToStruct(msg.Content, &t)
+		msg.TextElem = &t
+	case constant.Picture:
+		t := sdk_struct.PictureElem{}
+		err = utils.JsonStringToStruct(msg.Content, &t)
+		msg.PictureElem = &t
+	case constant.Voice:
+		t := sdk_struct.SoundElem{}
+		err = utils.JsonStringToStruct(msg.Content, &t)
+		msg.SoundElem = &t
+	case constant.Video:
+		t := sdk_struct.VideoElem{}
+		err = utils.JsonStringToStruct(msg.Content, &t)
+		msg.VideoElem = &t
+	case constant.File:
+		t := sdk_struct.FileElem{}
+		err = utils.JsonStringToStruct(msg.Content, &t)
+		msg.FileElem = &t
+	case constant.AdvancedText:
+		err = utils.JsonStringToStruct(msg.Content, &msg.MessageEntityElem)
+	case constant.AtText:
+		err = utils.JsonStringToStruct(msg.Content, &msg.AtElem)
+		if err == nil {
+			if utils.IsContain(c.loginUserID, msg.AtElem.AtUserList) {
+				msg.AtElem.IsAtSelf = true
 			}
-		case constant.Location:
-			err = utils.JsonStringToStruct(msg.Content, &msg.LocationElem)
-		case constant.Custom:
-			err = utils.JsonStringToStruct(msg.Content, &msg.CustomElem)
-		case constant.Quote:
-			err = utils.JsonStringToStruct(msg.Content, &msg.QuoteElem)
-		case constant.Merger:
-			err = utils.JsonStringToStruct(msg.Content, &msg.MergeElem)
-		case constant.Face:
-			err = utils.JsonStringToStruct(msg.Content, &msg.FaceElem)
-		case constant.CustomMsgNotTriggerConversation:
-			err = utils.JsonStringToStruct(msg.Content, &msg.CustomElem)
-		case constant.CustomMsgOnlineOnly:
-			err = utils.JsonStringToStruct(msg.Content, &msg.CustomElem)
 		}
+	case constant.Location:
+		err = utils.JsonStringToStruct(msg.Content, &msg.LocationElem)
+	case constant.Custom:
+		err = utils.JsonStringToStruct(msg.Content, &msg.CustomElem)
+	case constant.Quote:
+		err = utils.JsonStringToStruct(msg.Content, &msg.QuoteElem)
+	case constant.Merger:
+		err = utils.JsonStringToStruct(msg.Content, &msg.MergeElem)
+	case constant.Face:
+		err = utils.JsonStringToStruct(msg.Content, &msg.FaceElem)
+	case constant.CustomMsgNotTriggerConversation:
+		err = utils.JsonStringToStruct(msg.Content, &msg.CustomElem)
+	case constant.CustomMsgOnlineOnly:
+		err = utils.JsonStringToStruct(msg.Content, &msg.CustomElem)
+	default:
+		t := sdk_struct.NotificationElem{}
+		err = utils.JsonStringToStruct(msg.Content, &t)
+		msg.NotificationElem = &t
 	}
 	msg.Content = ""
 
