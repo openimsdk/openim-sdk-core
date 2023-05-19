@@ -141,11 +141,11 @@ Contains some common parts of the OpenIM community.
 
 OpenIM is used by the following companies ,let's write it down in [ADOPTER](https://github.com/OpenIMSDK/community/blob/main/ADOPTERS.md)S.
 
-Please leave your use cases in the comments [here](https://github.com/OpenIMSDK/openim-sdk-core/issues/379).
+Please leave your use cases in the comments [here](https://github.com/OpenIMSDK/Open-IM-Server/issues/379).
 
 ## License
 
-Sealer is licensed under the Apache License, Version 2.0. See [LICENSE](https://github.com/OpenIMSDK/openim-sdk-core/LICENSE) for the full license text.
+Sealer is licensed under the Apache License, Version 2.0. See [LICENSE](https://github.com/OpenIMSDK/openim-sdk-core/tree/main/LICENSE) for the full license text.
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fsealerio%2Fsealer.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FOpenIMSDK%2Fopenim-sdk-core?ref=badge_large)
 

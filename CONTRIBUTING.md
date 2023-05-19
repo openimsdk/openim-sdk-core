@@ -355,7 +355,7 @@ Try your best to keep every function has been tested, it keeps the function beha
 **The documentation for OpenIM includes:**
 
 + [README.md](https://github.com/OpenIMSDK/openim-sdk-core/blob/main/README.md): This file includes the basic information and instructions for getting started with OpenIM.
-+ [README_zh.md](https://github.com/OpenIMSDK/openim-sdk-core/blob/main/README_zh.md): This file includes the basic information and instructions for getting started with OpenIM in Chinese.
++ [README_zh-CN.md](https://github.com/OpenIMSDK/openim-sdk-core/blob/main/README_zh-CN.md): This file includes the basic information and instructions for getting started with OpenIM in Chinese.
 + [CONTRIBUTING.md](https://github.com/OpenIMSDK/openim-sdk-core/blob/main/CONTRIBUTING.md): This file contains guidelines for contributing to OpenIM's codebase, such as how to submit issues, pull requests, and code reviews.
 + [Official Documentation](https://doc.rentsoft.cn): This is the official documentation for OpenIM, which includes comprehensive information on all of its features, configuration options, and troubleshooting tips.
 
