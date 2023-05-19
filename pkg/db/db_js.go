@@ -180,8 +180,21 @@ func (i IndexDB) SuperGroupUpdateGroupMessageFields(msgIDList []string, groupID 
 }
 
 func (i IndexDB) SuperGroupGetAlreadyExistSeqList(groupID string, lostSeqList []uint32) (seqList []uint32, err error) {
-	//TODO implement me
-	panic("implement me")
+	sList, err := indexdb.Exec(groupID, utils.StructToJsonString(lostSeqList))
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := sList.(string); ok {
+			var result []uint32
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
+			}
+			return result, nil
+		} else {
+			return nil, ErrType
+		}
+	}
 }
 
 func (i IndexDB) InsertWorkMomentsNotification(jsonDetail string) error {
