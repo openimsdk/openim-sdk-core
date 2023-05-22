@@ -74,7 +74,7 @@ func (c *Conversation) doDeleteConversation(c2v common.Cmd2Value) {
 
 func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 	if c.ConversationListener == nil {
-		log.Error("internal", "not set conversationListener")
+		// log.Error("internal", "not set conversationListener")
 		return
 	}
 	ctx := c2v.Ctx
@@ -85,11 +85,11 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		lc := node.Args.(model_struct.LocalConversation)
 		oc, err := c.db.GetConversation(ctx, lc.ConversationID)
 		if err == nil {
-			log.Info("this is old conversation", *oc)
+			// log.Info("this is old conversation", *oc)
 			if lc.LatestMsgSendTime >= oc.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
 				err := c.db.UpdateColumnsConversation(nil, node.ConID, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
 				if err != nil {
-					log.Error("internal", "updateConversationLatestMsgModel err: ", err)
+					// log.Error("internal", "updateConversationLatestMsgModel err: ", err)
 				} else {
 					oc.LatestMsgSendTime = lc.LatestMsgSendTime
 					oc.LatestMsg = lc.LatestMsg
@@ -98,10 +98,10 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 				}
 			}
 		} else {
-			log.Info("this is new conversation", lc)
+			// log.Info("this is new conversation", lc)
 			err4 := c.db.InsertConversation(ctx, &lc)
 			if err4 != nil {
-				log.Error("internal", "insert new conversation err:", err4.Error())
+				// log.Error("internal", "insert new conversation err:", err4.Error())
 			} else {
 				list = append(list, &lc)
 				c.ConversationListener.OnNewConversation(utils.StructToJsonString(list))
@@ -110,13 +110,13 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 
 	case constant.UnreadCountSetZero:
 		if err := c.db.UpdateColumnsConversation(ctx, node.ConID, map[string]interface{}{"unread_count": 0}); err != nil {
-			log.Error("internal", "UpdateColumnsConversation err", err.Error(), node.ConID)
+			// log.Error("internal", "UpdateColumnsConversation err", err.Error(), node.ConID)
 		} else {
 			totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB(ctx)
 			if err == nil {
 				c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
 			} else {
-				log.Error("internal", "getTotalUnreadMsgCountModel err", err.Error(), node.ConID)
+				// log.Error("internal", "getTotalUnreadMsgCountModel err", err.Error(), node.ConID)
 			}
 
 		}
@@ -135,13 +135,13 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 	case constant.IncrUnread:
 		err := c.db.IncrConversationUnreadCount(ctx, node.ConID)
 		if err != nil {
-			log.Error("internal", "incrConversationUnreadCount database err:", err.Error())
+			// log.Error("internal", "incrConversationUnreadCount database err:", err.Error())
 			return
 		}
 	case constant.TotalUnreadMessageChanged:
 		totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB(ctx)
 		if err != nil {
-			log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
+			// log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
 		} else {
 			c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
 		}
@@ -156,7 +156,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		case constant.GroupChatType:
 			conversationID, conversationType, err := c.getConversationTypeByGroupID(ctx, st.SourceID)
 			if err != nil {
-				log.Error("internal", "getConversationTypeByGroupID database err:", err.Error())
+				// log.Error("internal", "getConversationTypeByGroupID database err:", err.Error())
 				return
 			}
 			lc.GroupID = st.SourceID
@@ -166,7 +166,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		c.addFaceURLAndName(ctx, &lc)
 		err := c.db.UpdateConversation(ctx, &lc)
 		if err != nil {
-			log.Error("internal", "setConversationFaceUrlAndNickName database err:", err.Error())
+			// log.Error("internal", "setConversationFaceUrlAndNickName database err:", err.Error())
 			return
 		}
 		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: lc.ConversationID, Action: constant.ConChange, Args: []string{lc.ConversationID}}})
@@ -176,17 +176,17 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		var latestMsg sdk_struct.MsgStruct
 		l, err := c.db.GetConversation(ctx, conversationID)
 		if err != nil {
-			log.Error("internal", "getConversationLatestMsgModel err", err.Error())
+			// log.Error("internal", "getConversationLatestMsgModel err", err.Error())
 		} else {
 			err := json.Unmarshal([]byte(l.LatestMsg), &latestMsg)
 			if err != nil {
-				log.Error("internal", "latestMsg,Unmarshal err :", err.Error())
+				// log.Error("internal", "latestMsg,Unmarshal err :", err.Error())
 			} else {
 				latestMsg.IsRead = true
 				newLatestMessage := utils.StructToJsonString(latestMsg)
 				err = c.db.UpdateColumnsConversation(nil, node.ConID, map[string]interface{}{"latest_msg_send_time": latestMsg.SendTime, "latest_msg": newLatestMessage})
 				if err != nil {
-					log.Error("internal", "updateConversationLatestMsgModel err :", err.Error())
+					// log.Error("internal", "updateConversationLatestMsgModel err :", err.Error())
 				}
 			}
 		}
@@ -194,7 +194,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		cidList := node.Args.([]string)
 		cLists, err := c.db.GetMultipleConversationDB(ctx, cidList)
 		if err != nil {
-			log.Error("internal", "getMultipleConversationModel err :", err.Error())
+			// log.Error("internal", "getMultipleConversationModel err :", err.Error())
 		} else {
 			var newCList []*model_struct.LocalConversation
 			for _, v := range cLists {
@@ -202,7 +202,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 					newCList = append(newCList, v)
 				}
 			}
-			log.Info("internal", "getMultipleConversationModel success :", newCList)
+			// log.Info("internal", "getMultipleConversationModel success :", newCList)
 
 			c.ConversationListener.OnConversationChanged(utils.StructToJsonStringDefault(newCList))
 		}
@@ -210,10 +210,10 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		cidList := node.Args.([]string)
 		cLists, err := c.db.GetMultipleConversationDB(ctx, cidList)
 		if err != nil {
-			log.Error("internal", "getMultipleConversationModel err :", err.Error())
+			// log.Error("internal", "getMultipleConversationModel err :", err.Error())
 		} else {
 			if cLists != nil {
-				log.Info("internal", "getMultipleConversationModel success :", cLists)
+				// log.Info("internal", "getMultipleConversationModel success :", cLists)
 				c.ConversationListener.OnNewConversation(utils.StructToJsonString(cLists))
 			}
 		}
@@ -223,7 +223,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 
 	case constant.NewConDirect:
 		cidList := node.Args.(string)
-		log.Debug("internal", "NewConversation", cidList)
+		// log.Debug("internal", "NewConversation", cidList)
 		c.ConversationListener.OnNewConversation(cidList)
 
 	case constant.ConversationLatestMsgHasRead:
@@ -234,12 +234,12 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		for conversationID, msgIDList := range hasReadMsgList {
 			LocalConversation, err := c.db.GetConversation(ctx, conversationID)
 			if err != nil {
-				log.Error("internal", "get conversation err", err.Error(), conversationID)
+				// log.Error("internal", "get conversation err", err.Error(), conversationID)
 				continue
 			}
 			err = utils.JsonStringToStruct(LocalConversation.LatestMsg, &latestMsg)
 			if err != nil {
-				log.Error("internal", "JsonStringToStruct err", err.Error(), conversationID)
+				// log.Error("internal", "JsonStringToStruct err", err.Error(), conversationID)
 				continue
 			}
 			if utils.IsContain(latestMsg.ClientMsgID, msgIDList) {
@@ -249,7 +249,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 				LocalConversation.LatestMsg = utils.StructToJsonString(latestMsg)
 				err := c.db.UpdateConversation(ctx, &lc)
 				if err != nil {
-					log.Error("internal", "UpdateConversation database err:", err.Error())
+					// log.Error("internal", "UpdateConversation database err:", err.Error())
 					continue
 				} else {
 					result = append(result, LocalConversation)
@@ -257,20 +257,20 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			}
 		}
 		if result != nil {
-			log.Info("internal", "getMultipleConversationModel success :", result)
+			// log.Info("internal", "getMultipleConversationModel success :", result)
 			c.ConversationListener.OnNewConversation(utils.StructToJsonString(result))
 		}
 	case constant.SyncConversation:
-		operationID := node.Args.(string)
-		log.Debug(operationID, "reconn sync conversation start")
+		// operationID := node.Args.(string)
+		// log.Debug(operationID, "reconn sync conversation start")
 		c.SyncConversations(ctx)
 		err := c.SyncConversationUnreadCount(ctx)
 		if err != nil {
-			log.Error(operationID, "reconn sync conversation unread count err", err.Error())
+			// log.Error(operationID, "reconn sync conversation unread count err", err.Error())
 		}
 		totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB(ctx)
 		if err != nil {
-			log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
+			// log.Error("internal", "TotalUnreadMessageChanged database err:", err.Error())
 		} else {
 			c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
 		}
@@ -280,7 +280,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 
 func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 	if c.ConversationListener == nil {
-		log.Error("internal", "not set conversationListener")
+		// log.Error("internal", "not set conversationListener")
 		return
 	}
 
@@ -296,13 +296,13 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 			var err error
 			_, conversationType, err = c.getConversationTypeByGroupID(ctx, args.GroupID)
 			if err != nil {
-				log.Error("internal", "getConversationTypeByGroupID database err:", err.Error())
+				// log.Error("internal", "getConversationTypeByGroupID database err:", err.Error())
 				return
 			}
 		}
 		err := c.db.UpdateMsgSenderFaceURLAndSenderNicknameController(ctx, args.UserID, args.FaceURL, args.Nickname, int(conversationType), args.GroupID)
 		if err != nil {
-			log.Error("internal", "UpdateMsgSenderFaceURLAndSenderNickname err:", err.Error())
+			// log.Error("internal", "UpdateMsgSenderFaceURLAndSenderNickname err:", err.Error())
 		}
 
 	}
@@ -311,7 +311,7 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 
 func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 	if c.ConversationListener == nil {
-		log.Error("internal", "not set conversationListener")
+		// log.Error("internal", "not set conversationListener")
 		return
 	}
 	node := c2v.Value.(common.SyncReactionExtensionsNode)
@@ -319,7 +319,7 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 	switch node.Action {
 	case constant.SyncMessageListReactionExtensions:
 		args := node.Args.(syncReactionExtensionParams)
-		log.Error(node.OperationID, "come SyncMessageListReactionExtensions", args)
+		// log.Error(node.OperationID, "come SyncMessageListReactionExtensions", args)
 		var reqList []server_api_params.OperateMessageListReactionExtensionsReq
 		for _, v := range args.MessageList {
 			var temp server_api_params.OperateMessageListReactionExtensionsReq
@@ -336,7 +336,7 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 		apiReq.OperationID = node.OperationID
 		apiResp, err := util.CallApi[server_api_params.GetMessageListReactionExtensionsResp](ctx, constant.GetMessageListReactionExtensionsRouter, &apiReq)
 		if err != nil {
-			log.NewError(node.OperationID, utils.GetSelfFuncName(), "getMessageListReactionExtensions err:", err.Error())
+			// log.NewError(node.OperationID, utils.GetSelfFuncName(), "getMessageListReactionExtensions err:", err.Error())
 			return
 		}
 		// for _, result := range apiResp {
@@ -370,12 +370,12 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 		}
 		aInBNot, _, sameA, _ := common.CheckReactionExtensionsDiff(onServer, onLocal)
 		for _, v := range aInBNot {
-			log.Error(node.OperationID, "come InsertMessageReactionExtension", args, v.ClientMsgID)
+			// log.Error(node.OperationID, "come InsertMessageReactionExtension", args, v.ClientMsgID)
 			if len(v.ReactionExtensionList) > 0 {
 				temp := model_struct.LocalChatLogReactionExtensions{ClientMsgID: v.ClientMsgID, LocalReactionExtensions: []byte(utils.StructToJsonString(v.ReactionExtensionList))}
 				err := c.db.InsertMessageReactionExtension(ctx, &temp)
 				if err != nil {
-					log.Error(node.OperationID, "InsertMessageReactionExtension err:", err.Error())
+					// log.Error(node.OperationID, "InsertMessageReactionExtension err:", err.Error())
 					continue
 				}
 			}
@@ -391,7 +391,7 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 		// log.ZWarn(ctx, "result", result.ReactionExtensionList, result.ClientMsgID)
 		// }
 		for _, v := range sameA {
-			log.Error(node.OperationID, "come sameA", v.ClientMsgID, v.ReactionExtensionList)
+			// log.Error(node.OperationID, "come sameA", v.ClientMsgID, v.ReactionExtensionList)
 			tempMap := make(map[string]*sdkws.KeyValue)
 			for _, extensions := range args.ExtendMessageList {
 				if v.ClientMsgID == extensions.ClientMsgID {
@@ -402,7 +402,7 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 			if len(v.ReactionExtensionList) == 0 {
 				err := c.db.DeleteMessageReactionExtension(ctx, v.ClientMsgID)
 				if err != nil {
-					log.Error(node.OperationID, "DeleteMessageReactionExtension err:", err.Error())
+					// log.Error(node.OperationID, "DeleteMessageReactionExtension err:", err.Error())
 					continue
 				}
 				var deleteKeyList []string
@@ -441,7 +441,7 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 				extendMsg := model_struct.LocalChatLogReactionExtensions{ClientMsgID: v.ClientMsgID, LocalReactionExtensions: []byte(utils.StructToJsonString(v.ReactionExtensionList))}
 				err = c.db.UpdateMessageReactionExtension(ctx, &extendMsg)
 				if err != nil {
-					log.Error(node.OperationID, "UpdateMessageReactionExtension err:", err.Error())
+					// log.Error(node.OperationID, "UpdateMessageReactionExtension err:", err.Error())
 					continue
 				}
 				if len(deleteKeyList) > 0 {
@@ -474,7 +474,7 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 			//todo syncMessage must sync
 			message, err := c.db.GetMessage(ctx, "", v.ClientMsgID)
 			if err != nil {
-				log.Error(node.OperationID, "GetMessageController err:", err.Error(), *v)
+				// log.Error(node.OperationID, "GetMessageController err:", err.Error(), *v)
 				continue
 			}
 			temp.ClientMsgID = message.ClientMsgID
@@ -499,7 +499,7 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 
 		apiResp, err := util.CallApi[server_api_params.GetMessageListReactionExtensionsResp](ctx, constant.GetMessageListReactionExtensionsRouter, &apiReq)
 		if err != nil {
-			log.Error(node.OperationID, "GetMessageListReactionExtensions from server err:", err.Error(), apiReq)
+			// log.Error(node.OperationID, "GetMessageListReactionExtensions from server err:", err.Error(), apiReq)
 			return
 		}
 		var messageChangedList []*messageKvList
@@ -576,10 +576,10 @@ func (c *Conversation) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 		log.ZWarn(ctx, "ignore notification", nil, "clientMsgID", msg.ClientMsgID, "serverMsgID", msg.ServerMsgID, "seq", msg.Seq, "contentType", msg.ContentType)
 		return
 	}
-	operationID := utils.OperationIDGenerator()
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg)
+	// operationID := utils.OperationIDGenerator()
+	// log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg)
 	if c.msgListener == nil {
-		log.Error(operationID, utils.GetSelfFuncName(), "listener == nil")
+		// log.Error(operationID, utils.GetSelfFuncName(), "listener == nil")
 		return
 	}
 	go func() {
@@ -635,12 +635,13 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 				_ = json.Unmarshal(v.Content, &tips)
 				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: tips.ConversationID, Action: constant.UnreadCountSetZero}})
 				c.db.DeleteConversationUnreadMessageList(ctx, tips.ConversationID, tips.UnreadCountTime)
-
 				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: []string{tips.ConversationID}}})
 				continue
 			case v.ContentType == constant.BusinessNotification:
 				c.business.DoNotification(ctx, string(v.Content))
 				continue
+			case v.ContentType == constant.RevokeNotification:
+				c.revokeMessage(ctx, v)
 			}
 
 			switch v.SessionType {

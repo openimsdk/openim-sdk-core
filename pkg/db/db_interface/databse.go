@@ -57,12 +57,14 @@ type DataBase interface {
 	IsExistsInErrChatLogBySeq(ctx context.Context, seq int64) bool
 	MessageIfExistsBySeq(ctx context.Context, seq int64) (bool, error)
 	GetMessage(ctx context.Context, conversationID, clientMsgID string) (*model_struct.LocalChatLog, error)
+	GetMessageBySeq(ctx context.Context, conversationID string, seq int64) (*model_struct.LocalChatLog, error)
 	//GetMessageController(ctx context.Context, conversationID, clientMsgID string) (*model_struct.LocalChatLog, error)
 	GetAllUnDeleteMessageSeqList(ctx context.Context) ([]uint32, error)
 	UpdateColumnsMessageList(ctx context.Context, clientMsgIDList []string, args map[string]interface{}) error
 	UpdateColumnsMessage(ctx context.Context, ClientMsgID string, args map[string]interface{}) error
 	UpdateColumnsMessageController(ctx context.Context, ClientMsgID string, groupID string, sessionType int32, args map[string]interface{}) error
 	UpdateMessage(ctx context.Context, conversationID string, c *model_struct.LocalChatLog) error
+	UpdateMessageBySeq(ctx context.Context, conversationID string, c *model_struct.LocalChatLog) error
 	//UpdateMessageController(ctx context.Context, c *model_struct.LocalChatLog) error
 	DeleteAllMessage(ctx context.Context) error
 	UpdateMessageStatusBySourceID(ctx context.Context, sourceID string, status, sessionType int32) error

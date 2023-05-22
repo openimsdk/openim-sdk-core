@@ -102,7 +102,6 @@ func SetAppBackgroundStatus(callback open_im_sdk_callback.Base, operationID stri
 
 func GetLoginStatus() int {
 	if UserForSDK == nil {
-		log.Error("", "UserForSDK == nil")
 		return -1
 	}
 	return UserForSDK.GetLoginStatus()
@@ -110,7 +109,6 @@ func GetLoginStatus() int {
 
 func GetLoginUser() string {
 	if UserForSDK == nil {
-		log.Error("", "UserForSDK == nil")
 		return ""
 	}
 	return UserForSDK.GetLoginUser()

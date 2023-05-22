@@ -35,12 +35,9 @@ func NewWorkMoments(loginUserID string, db db_interface.DataBase) *WorkMoments {
 }
 
 func (w *WorkMoments) DoNotification(ctx context.Context, jsonDetail string) {
-	var operationID string
 	if w.listener == nil {
-		log.NewDebug(operationID, "WorkMoments listener is null", jsonDetail)
 		return
 	}
-	//ctx := mcontext.NewCtx(operationID)
 	if err := w.db.InsertWorkMomentsNotification(ctx, jsonDetail); err != nil {
 		log.ZError(ctx, "InsertWorkMomentsNotification failed", err, "jsonDetail", jsonDetail)
 		return

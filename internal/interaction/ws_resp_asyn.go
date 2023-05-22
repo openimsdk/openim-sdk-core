@@ -74,7 +74,7 @@ func (u *WsRespAsyn) AddChByIncr(msgIncr string) chan *GeneralWsResp {
 	ch := make(chan *GeneralWsResp, 1)
 	_, ok := u.wsNotification[msgIncr]
 	if ok {
-		log.Error("Repeat failed ", msgIncr)
+		log.ZError(context.Background(), "Repeat failed", nil, msgIncr)
 	}
 	u.wsNotification[msgIncr] = ch
 	return ch

@@ -385,7 +385,7 @@ func (c *LongConnMgr) handleMessage(message []byte) {
 			log.ZError(ctx, "notifyResp failed", err, "wsResp", wsResp)
 		}
 	default:
-		log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
+		// log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
 		return
 	}
 }

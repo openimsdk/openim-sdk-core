@@ -16,13 +16,14 @@ package conversation_msg
 
 import (
 	"context"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"github.com/jinzhu/copier"
@@ -34,7 +35,7 @@ func (c *Conversation) messageBlocksInternalContinuityCheck(sourceID string, not
 	operationID string) (max, min int64, length int) {
 	var lostSeqListLength int
 	maxSeq, minSeq, haveSeqList := c.getMaxAndMinHaveSeqList(*list)
-	log.Debug(operationID, utils.GetSelfFuncName(), "getMaxAndMinHaveSeqList is:", maxSeq, minSeq, haveSeqList)
+	// log.Debug(operationID, utils.GetSelfFuncName(), "getMaxAndMinHaveSeqList is:", maxSeq, minSeq, haveSeqList)
 	if maxSeq != 0 && minSeq != 0 {
 		successiveSeqList := func(max, min int64) (seqList []int64) {
 			for i := min; i <= max; i++ {
@@ -44,7 +45,7 @@ func (c *Conversation) messageBlocksInternalContinuityCheck(sourceID string, not
 		}(maxSeq, minSeq)
 		lostSeqList := utils.DifferenceSubset(successiveSeqList, haveSeqList)
 		lostSeqListLength = len(lostSeqList)
-		log.Debug(operationID, "get lost seqList is :", maxSeq, minSeq, lostSeqList, "length:", lostSeqListLength)
+		// log.Debug(operationID, "get lost seqList is :", maxSeq, minSeq, lostSeqList, "length:", lostSeqListLength)
 		if lostSeqListLength > 0 {
 			var pullSeqList []int64
 			if lostSeqListLength <= constant.PullMsgNumForReadDiffusion {
@@ -62,7 +63,7 @@ func (c *Conversation) messageBlocksInternalContinuityCheck(sourceID string, not
 // 检测消息块之间的连续性，如果不连续，则向前补齐,返回块之间是否连续，bool
 func (c *Conversation) messageBlocksBetweenContinuityCheck(lastMinSeq, maxSeq int64, sourceID string, notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback, operationID string) bool {
 	if lastMinSeq != 0 {
-		log.Debug(operationID, "get lost LastMinSeq is :", lastMinSeq, "thisMaxSeq is :", maxSeq)
+		// log.Debug(operationID, "get lost LastMinSeq is :", lastMinSeq, "thisMaxSeq is :", maxSeq)
 		if maxSeq != 0 {
 			if maxSeq+1 != lastMinSeq {
 				startSeq := int64(lastMinSeq) - constant.PullMsgNumForReadDiffusion
@@ -75,7 +76,7 @@ func (c *Conversation) messageBlocksBetweenContinuityCheck(lastMinSeq, maxSeq in
 					}
 					return seqList
 				}(lastMinSeq-1, startSeq)
-				log.Debug(operationID, "get lost successiveSeqList is :", successiveSeqList, len(successiveSeqList))
+				// log.Debug(operationID, "get lost successiveSeqList is :", successiveSeqList, len(successiveSeqList))
 				if len(successiveSeqList) > 0 {
 					c.pullMessageAndReGetHistoryMessages(context.Background(), sourceID, successiveSeqList, notStartTime, isReverse, count, sessionType, startTime, list, messageListCallback)
 				}
@@ -246,7 +247,7 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData []*
 	var insertMessage []*model_struct.LocalChatLog
 	var updateMessage []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
-	var msgReadList, groupMsgReadList, msgRevokeList, newMsgRevokeList sdk_struct.NewMsgList
+	var msgReadList, groupMsgReadList, msgRevokeList sdk_struct.NewMsgList
 	log.ZDebug(ctx, "do Msg come here, len: ", "msg length", len(pullMsgData))
 	//b := utils.GetCurrentTimestampByMill()
 	for _, v := range pullMsgData {
@@ -286,14 +287,13 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData []*
 				log.ZInfo(ctx, "sync message", "msg", msg)
 				insertMessage = append(insertMessage, c.msgStructToLocalChatLog(msg))
 				switch msg.ContentType {
-				case constant.Revoke:
+				case constant.RevokeNotification:
 					msgRevokeList = append(msgRevokeList, msg)
-				case constant.HasReadReceipt:
+				case constant.HasReadReceiptNotification:
 					msgReadList = append(msgReadList, msg)
-				case constant.GroupHasReadReceipt:
+				case constant.GroupHasReadReceiptNotification:
 					groupMsgReadList = append(groupMsgReadList, msg)
-				case constant.AdvancedRevoke:
-					newMsgRevokeList = append(newMsgRevokeList, msg)
+
 				default:
 				}
 			}
@@ -301,15 +301,12 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData []*
 			if oldMessage, err := c.db.GetMessage(ctx, conversationID, msg.ClientMsgID); err != nil { //Deduplication operation
 				insertMessage = append(insertMessage, c.msgStructToLocalChatLog(msg))
 				switch msg.ContentType {
-				case constant.Revoke:
+				case constant.RevokeNotification:
 					msgRevokeList = append(msgRevokeList, msg)
-				case constant.HasReadReceipt:
+				case constant.HasReadReceiptNotification:
 					msgReadList = append(msgReadList, msg)
-				case constant.GroupHasReadReceipt:
+				case constant.GroupHasReadReceiptNotification:
 					groupMsgReadList = append(groupMsgReadList, msg)
-				case constant.AdvancedRevoke:
-					newMsgRevokeList = append(newMsgRevokeList, msg)
-
 				default:
 				}
 
@@ -345,8 +342,7 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData []*
 		//b9 := utils.GetCurrentTimestampByMill()
 		//log.Debug(operationID, "DoGroupMsgReadState  cost time : ", b9-b8, "len: ", len(groupMsgReadList))
 
-		c.revokeMessage(context.Background(), msgRevokeList)
-		c.newRevokeMessage(context.Background(), newMsgRevokeList)
+		// c.revokeMessage(context.Background(), newMsgRevokeList)
 		//b10 := utils.GetCurrentTimestampByMill()
 		//log.Debug(operationID, "revokeMessage  cost time : ", b10-b9)
 		//log.Info(operationID, "insert msg, total cost time: ", utils.GetCurrentTimestampByMill()-b, "len:  ", len(pullMsgData))
