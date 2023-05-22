@@ -77,7 +77,7 @@ func DoTestInviteInGroup() {
 	req := &sdkws.SignalInviteInGroupReq{}
 	req.Invitation = SetTestInviteInfo()
 	s := utils.StructToJsonString(req)
-	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
+	// log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
 	open_im_sdk.SignalingInviteInGroup(t, t.OperationID, s)
 }
 
@@ -114,7 +114,7 @@ func DoTestAccept() {
 	req.Invitation = SetTestInviteInfo()
 	req.Invitation.InviterUserID = "18666662412"
 	s := utils.StructToJsonString(req)
-	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s, req.String())
+	// log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s, req.String())
 	open_im_sdk.SignalingAccept(t, t.OperationID, s)
 }
 
@@ -124,7 +124,7 @@ func DoTestReject() {
 	req.Invitation = SetTestInviteInfo()
 	req.Invitation.InviterUserID = "18666662412"
 	s := utils.StructToJsonString(req)
-	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
+	// log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
 	open_im_sdk.SignalingReject(t, t.OperationID, s)
 }
 
@@ -139,7 +139,7 @@ func DoTestCancel() {
 	req.Invitation.InviterUserID = "18666662412"
 	req.OpUserID = "18666662412"
 	s := utils.StructToJsonString(req)
-	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
+	// log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
 	open_im_sdk.SignalingCancel(t, t.OperationID, s)
 }
 
@@ -148,7 +148,7 @@ func DoTestHungUp() {
 	req := &sdkws.SignalHungUpReq{Invitation: &sdkws.InvitationInfo{}}
 	req.Invitation = SetTestInviteInfo()
 	s := utils.StructToJsonString(req)
-	log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
+	// log.Info(t.OperationID, utils.GetSelfFuncName(), "input: ", s)
 	open_im_sdk.SignalingHungUp(t, t.OperationID, s)
 }
 
