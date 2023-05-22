@@ -37,7 +37,6 @@ import (
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/syncer"
-	"strings"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
@@ -832,14 +831,12 @@ func (c *Conversation) tempCacheChatLog(ctx context.Context, messageList []*sdk_
 
 func (c *Conversation) revokeMessage(ctx context.Context, msg *sdkws.MsgData) {
 	type RevokeMsgTip struct {
-		RevokerUserID   string `protobuf:"bytes,1,opt,name=revokerUserID,proto3" json:"revokerUserID"`
-		ClientMsgID     string `protobuf:"bytes,2,opt,name=clientMsgID,proto3" json:"clientMsgID"`
-		RevokerNickName string `protobuf:"bytes,3,opt,name=revokerNickName,proto3" json:"revokerNickName"`
-		RevokeTime      int64  `protobuf:"varint,4,opt,name=revokeTime,proto3" json:"revokeTime"`
-		SesstionType    int64  `protobuf:"varint,5,opt,name=sesstionType,proto3" json:"sesstionType"`
-		Seq             int64  `protobuf:"varint,6,opt,name=seq,proto3" json:"seq"`
-		ConversationID  string `protobuf:"bytes,7,opt,name=conversationID,proto3" json:"conversationID"`
-		Ex              string `protobuf:"bytes,8,opt,name=ex,proto3" json:"ex"`
+		RevokerUserID  string `protobuf:"bytes,1,opt,name=revokerUserID,proto3" json:"revokerUserID"`
+		ClientMsgID    string `protobuf:"bytes,2,opt,name=clientMsgID,proto3" json:"clientMsgID"`
+		RevokeTime     int64  `protobuf:"varint,3,opt,name=revokeTime,proto3" json:"revokeTime"`
+		SesstionType   int64  `protobuf:"varint,5,opt,name=sesstionType,proto3" json:"sesstionType"`
+		Seq            int64  `protobuf:"varint,6,opt,name=seq,proto3" json:"seq"`
+		ConversationID string `protobuf:"bytes,7,opt,name=conversationID,proto3" json:"conversationID"`
 	}
 	tips := RevokeMsgTip{}
 	if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
@@ -858,27 +855,30 @@ func (c *Conversation) revokeMessage(ctx context.Context, msg *sdkws.MsgData) {
 	}
 	var revokerRole int32
 	var revokerNickname string
-	var sesstionType int32 = constant.SingleChatType
-	if strings.HasPrefix(tips.ConversationID, "sg_") {
+	if tips.SesstionType == constant.SuperGroupChatType {
 		groupMember, err := c.db.GetGroupMemberInfoByGroupIDUserID(ctx, msg.GroupID, tips.RevokerUserID)
 		if err != nil {
 			log.ZError(ctx, "GetGroupMemberInfoByGroupIDUserID failed", err, "tips", tips)
-			return
 		}
 		revokerRole = groupMember.RoleLevel
 		revokerNickname = groupMember.Nickname
-		sesstionType = constant.SuperGroupChatType
+	} else {
+		_, userName, err := c.cache.GetUserNameAndFaceURL(ctx, tips.RevokerUserID)
+		if err != nil {
+			log.ZError(ctx, "GetUserNameAndFaceURL failed", err, "tips", tips)
+		}
+		revokerNickname = userName
 	}
 	m := sdk_struct.MessageRevoked{
 		RevokerID:                   tips.RevokerUserID,
 		RevokerRole:                 revokerRole,
 		ClientMsgID:                 revokedMsg.ClientMsgID,
 		RevokerNickname:             revokerNickname,
-		RevokeTime:                  msg.SendTime,
+		RevokeTime:                  tips.RevokeTime,
 		SourceMessageSendTime:       revokedMsg.SendTime,
 		SourceMessageSendID:         revokedMsg.SendID,
 		SourceMessageSenderNickname: revokedMsg.SenderNickname,
-		SessionType:                 sesstionType,
+		SessionType:                 int32(tips.SesstionType),
 		Seq:                         tips.Seq,
 		Ex:                          revokedMsg.Ex,
 	}
