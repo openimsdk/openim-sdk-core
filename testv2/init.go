@@ -158,6 +158,10 @@ type onGroupListener struct {
 	ctx context.Context
 }
 
+func (o *onGroupListener) OnGroupDismissed(groupInfo string) {
+	log.ZInfo(o.ctx, "OnGroupDismissed", "groupInfo", groupInfo)
+}
+
 func (o *onGroupListener) OnJoinedGroupAdded(groupInfo string) {
 	log.ZInfo(o.ctx, "OnJoinedGroupAdded", "groupInfo", groupInfo)
 }
