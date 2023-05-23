@@ -33,7 +33,7 @@ func Test_CreateGroupV2(t *testing.T) {
 			GroupName: "test-gro2up",
 		},
 	}
-	info, err := open_im_sdk.UserForSDK.Group().CreateGroupV2(ctx, req)
+	info, err := open_im_sdk.UserForSDK.Group().CreateGroup(ctx, req)
 	if err != nil {
 		t.Fatal(err)
 	}

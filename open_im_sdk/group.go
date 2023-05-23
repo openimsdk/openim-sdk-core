@@ -16,12 +16,12 @@ package open_im_sdk
 
 import "open_im_sdk/open_im_sdk_callback"
 
-func CreateGroup(callback open_im_sdk_callback.Base, operationID string, groupBaseInfo string, memberList string) {
-	call(callback, operationID, UserForSDK.Group().CreateGroup, groupBaseInfo, memberList)
-}
+//func CreateGroup(callback open_im_sdk_callback.Base, operationID string, groupBaseInfo string, memberList string) {
+//	call(callback, operationID, UserForSDK.Group().CreateGroup, groupBaseInfo, memberList)
+//}
 
-func CreateGroupV2(callback open_im_sdk_callback.Base, operationID string, group string) {
-	call(callback, operationID, UserForSDK.Group().CreateGroupV2, group)
+func CreateGroup(callback open_im_sdk_callback.Base, operationID string, group string) {
+	call(callback, operationID, UserForSDK.Group().CreateGroup, group)
 }
 
 func JoinGroup(callback open_im_sdk_callback.Base, operationID string, groupID string, reqMsg string, joinSource int32) {
@@ -64,12 +64,12 @@ func SearchGroups(callback open_im_sdk_callback.Base, operationID string, search
 	call(callback, operationID, UserForSDK.Group().SearchGroups, searchParam)
 }
 
+//func SetGroupInfo(callback open_im_sdk_callback.Base, operationID string, groupID string, groupInfo string) {
+//	call(callback, operationID, UserForSDK.Group().SetGroupInfo, groupID, groupInfo)
+//}
+
 func SetGroupInfo(callback open_im_sdk_callback.Base, operationID string, groupID string, groupInfo string) {
 	call(callback, operationID, UserForSDK.Group().SetGroupInfo, groupID, groupInfo)
-}
-
-func SetGroupInfoV2(callback open_im_sdk_callback.Base, operationID string, groupID string, groupInfo string) {
-	call(callback, operationID, UserForSDK.Group().SetGroupInfoV2, groupID, groupInfo)
 }
 
 func SetGroupVerification(callback open_im_sdk_callback.Base, operationID string, groupID string, verification int32) {

@@ -841,7 +841,6 @@ func (c *Conversation) revokeMessage(ctx context.Context, msgRevokeList []*sdk_s
 			log.Error("internal", "set msgListener is err:")
 		}
 	}
-
 }
 
 func (c *Conversation) tempCacheChatLog(ctx context.Context, messageList []*sdk_struct.MsgStruct) {

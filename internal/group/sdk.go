@@ -16,7 +16,6 @@ package group
 
 import (
 	"context"
-	"fmt"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
@@ -30,37 +29,37 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
 )
 
-// deprecated use CreateGroupV2
-func (g *Group) CreateGroup(ctx context.Context, groupBaseInfo sdk_params_callback.CreateGroupBaseInfoParam, memberList sdk_params_callback.CreateGroupMemberRoleParam) (*sdkws.GroupInfo, error) {
-	req := &group.CreateGroupReq{
-		GroupInfo: &sdkws.GroupInfo{
-			GroupName:    groupBaseInfo.GroupName,
-			Notification: groupBaseInfo.Notification,
-			Introduction: groupBaseInfo.Introduction,
-			FaceURL:      groupBaseInfo.FaceURL,
-			Ex:           groupBaseInfo.Ex,
-			GroupType:    groupBaseInfo.GroupType,
-		},
-	}
-	if groupBaseInfo.NeedVerification != nil {
-		req.GroupInfo.NeedVerification = *groupBaseInfo.NeedVerification
-	}
-	for _, info := range memberList {
-		switch info.RoleLevel {
-		case constant.GroupOrdinaryUsers:
-			req.InitMembers = append(req.InitMembers, info.UserID)
-		case constant.GroupOwner:
-			req.OwnerUserID = info.UserID
-		case constant.GroupAdmin:
-			req.AdminUserIDs = append(req.AdminUserIDs, info.UserID)
-		default:
-			return nil, sdkerrs.ErrArgs.Wrap(fmt.Sprintf("CreateGroupV2: invalid role level %d", info.RoleLevel))
-		}
-	}
-	return g.CreateGroupV2(ctx, req)
-}
+//// deprecated use CreateGroup
+//func (g *Group) CreateGroup(ctx context.Context, groupBaseInfo sdk_params_callback.CreateGroupBaseInfoParam, memberList sdk_params_callback.CreateGroupMemberRoleParam) (*sdkws.GroupInfo, error) {
+//	req := &group.CreateGroupReq{
+//		GroupInfo: &sdkws.GroupInfo{
+//			GroupName:    groupBaseInfo.GroupName,
+//			Notification: groupBaseInfo.Notification,
+//			Introduction: groupBaseInfo.Introduction,
+//			FaceURL:      groupBaseInfo.FaceURL,
+//			Ex:           groupBaseInfo.Ex,
+//			GroupType:    groupBaseInfo.GroupType,
+//		},
+//	}
+//	if groupBaseInfo.NeedVerification != nil {
+//		req.GroupInfo.NeedVerification = *groupBaseInfo.NeedVerification
+//	}
+//	for _, info := range memberList {
+//		switch info.RoleLevel {
+//		case constant.GroupOrdinaryUsers:
+//			req.InitMembers = append(req.InitMembers, info.UserID)
+//		case constant.GroupOwner:
+//			req.OwnerUserID = info.UserID
+//		case constant.GroupAdmin:
+//			req.AdminUserIDs = append(req.AdminUserIDs, info.UserID)
+//		default:
+//			return nil, sdkerrs.ErrArgs.Wrap(fmt.Sprintf("CreateGroup: invalid role level %d", info.RoleLevel))
+//		}
+//	}
+//	return g.CreateGroup(ctx, req)
+//}
 
-func (g *Group) CreateGroupV2(ctx context.Context, req *group.CreateGroupReq) (*sdkws.GroupInfo, error) {
+func (g *Group) CreateGroup(ctx context.Context, req *group.CreateGroupReq) (*sdkws.GroupInfo, error) {
 	resp, err := util.CallApi[group.CreateGroupResp](ctx, constant.CreateGroupRouter, req)
 	if err != nil {
 		return nil, err
@@ -198,31 +197,32 @@ func (g *Group) SearchGroups(ctx context.Context, param sdk_params_callback.Sear
 	}
 	return groups, nil
 }
-func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdk_params_callback.SetGroupInfoParam, groupID string) error {
-	return g.SetGroupInfoV2(ctx, &sdkws.GroupInfoForSet{
-		GroupID:          groupID,
-		GroupName:        groupInfo.GroupName,
-		Notification:     groupInfo.Notification,
-		Introduction:     groupInfo.Introduction,
-		FaceURL:          groupInfo.FaceURL,
-		Ex:               groupInfo.Ex,
-		NeedVerification: wrapperspb.Int32Ptr(groupInfo.NeedVerification),
-	})
-}
+
+//func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdk_params_callback.SetGroupInfoParam, groupID string) error {
+//	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{
+//		GroupID:          groupID,
+//		GroupName:        groupInfo.GroupName,
+//		Notification:     groupInfo.Notification,
+//		Introduction:     groupInfo.Introduction,
+//		FaceURL:          groupInfo.FaceURL,
+//		Ex:               groupInfo.Ex,
+//		NeedVerification: wrapperspb.Int32Ptr(groupInfo.NeedVerification),
+//	})
+//}
 
 func (g *Group) SetGroupVerification(ctx context.Context, verification int32, groupID string) error {
-	return g.SetGroupInfoV2(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, NeedVerification: wrapperspb.Int32(verification)})
+	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, NeedVerification: wrapperspb.Int32(verification)})
 }
 
 func (g *Group) SetGroupLookMemberInfo(ctx context.Context, rule int32, groupID string) error {
-	return g.SetGroupInfoV2(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, LookMemberInfo: wrapperspb.Int32(rule)})
+	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, LookMemberInfo: wrapperspb.Int32(rule)})
 }
 
 func (g *Group) SetGroupApplyMemberFriend(ctx context.Context, rule int32, groupID string) error {
-	return g.SetGroupInfoV2(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, ApplyMemberFriend: wrapperspb.Int32(rule)})
+	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, ApplyMemberFriend: wrapperspb.Int32(rule)})
 }
 
-func (g *Group) SetGroupInfoV2(ctx context.Context, groupInfo *sdkws.GroupInfoForSet) error {
+func (g *Group) SetGroupInfo(ctx context.Context, groupInfo *sdkws.GroupInfoForSet) error {
 	if err := util.ApiPost(ctx, constant.SetGroupInfoRouter, &group.SetGroupInfoReq{GroupInfoForSet: groupInfo}, nil); err != nil {
 		return err
 	}
