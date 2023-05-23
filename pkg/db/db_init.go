@@ -76,18 +76,17 @@ func (d *DataBase) Close(ctx context.Context) error {
 	UserDBLock.Lock()
 	dbConn, err := d.conn.WithContext(ctx).DB()
 	if err != nil {
-		log.Error("", "get db conn failed ", err.Error())
+		// log.Error("", "get db conn failed ", err.Error())
 	} else {
 		if dbConn != nil {
-			log.Info("", "close db finished")
+			// log.Info("", "close db finished")
 			err := dbConn.Close()
 			if err != nil {
-				log.Error("", "close db failed ", err.Error())
+				// log.Error("", "close db failed ", err.Error())
 			}
 		}
 	}
-
-	log.NewInfo("", "CloseDB ok, delete db map ", d.loginUserID)
+	// log.NewInfo("", "CloseDB ok, delete db map ", d.loginUserID)
 	delete(UserDBMap, d.loginUserID)
 	UserDBLock.Unlock()
 	return nil

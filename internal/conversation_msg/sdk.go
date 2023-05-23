@@ -308,7 +308,7 @@ func (c *Conversation) GetTotalUnreadMsgCount(ctx context.Context) (totalUnreadC
 
 func (c *Conversation) SetConversationListener(listener open_im_sdk_callback.OnConversationListener) {
 	if c.ConversationListener != nil {
-		log.Error("internal", "just only set on listener")
+		// log.Error("internal", "just only set on listener")
 		return
 	}
 	c.ConversationListener = listener
@@ -368,11 +368,11 @@ func (c *Conversation) updateMsgStatusAndTriggerConversation(ctx context.Context
 	s.ServerMsgID = serverMsgID
 	err := c.db.UpdateMessageTimeAndStatus(ctx, lc.ConversationID, clientMsgID, serverMsgID, sendTime, status)
 	if err != nil {
-		log.Error("", "send message update message status error", sendTime, status, clientMsgID, serverMsgID, err.Error())
+		// log.Error("", "send message update message status error", sendTime, status, clientMsgID, serverMsgID, err.Error())
 	}
 	lc.LatestMsg = utils.StructToJsonString(s)
 	lc.LatestMsgSendTime = sendTime
-	log.Info("", "2 send message come here", *lc)
+	// log.Info("", "2 send message come here", *lc)
 	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
 }
 
@@ -497,7 +497,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				sourcePath = utils.FileTmpPath(s.PictureElem.SourcePath, c.DataDir)
 				delFile = append(delFile, sourcePath)
 			}
-			log.Info("", "file", sourcePath, delFile)
+			// log.Info("", "file", sourcePath, delFile)
 
 			res, err := c.file.PutFile(ctx, &file.PutArgs{
 				PutID:    s.ClientMsgID,
@@ -519,7 +519,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				sourcePath = utils.FileTmpPath(s.SoundElem.SoundPath, c.DataDir)
 				delFile = append(delFile, sourcePath)
 			}
-			log.Info("", "file", sourcePath, delFile)
+			// log.Info("", "file", sourcePath, delFile)
 
 			res, err := c.file.PutFile(ctx, &file.PutArgs{
 				PutID:    s.ClientMsgID,
@@ -599,11 +599,11 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		default:
 			return nil, errors.New("contentType not currently supported" + utils.Int32ToString(s.ContentType))
 		}
-		oldMessage, err := c.db.GetMessage(ctx, lc.ConversationID, s.ClientMsgID)
+		// oldMessage, err := c.db.GetMessage(ctx, lc.ConversationID, s.ClientMsgID)
 		if err != nil {
 			log.ZWarn(ctx, "get message err", err)
 		} else {
-			log.Debug("", "before update database message is ", *oldMessage)
+			// log.Debug("", "before update database message is ", *oldMessage)
 		}
 		if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Voice, constant.Video, constant.File}) {
 			localMessage := c.msgStructToLocalChatLog(s)
@@ -663,10 +663,10 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 		return nil, err
 	}
 	callback, _ := ctx.Value("callback").(open_im_sdk_callback.SendMsgCallBack)
-	t := time.Now()
-	log.Debug("", "before insert  message is ", s)
+	// t := time.Now()
+	// log.Debug("", "before insert  message is ", s)
 	oldMessage, err := c.db.GetMessage(ctx, lc.ConversationID, s.ClientMsgID)
-	log.Debug("", "GetMessageController cost time:", time.Since(t), err)
+	// log.Debug("", "GetMessageController cost time:", time.Since(t), err)
 	if err != nil {
 		localMessage := c.msgStructToLocalChatLog(s)
 		err := c.db.InsertMessage(ctx, lc.ConversationID, localMessage)
@@ -681,7 +681,7 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 		}
 	}
 	lc.LatestMsg = utils.StructToJsonString(s)
-	log.Info("", "send message come here", *lc)
+	// log.Info("", "send message come here", *lc)
 	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
 	var delFile []string
 	//media file handle
@@ -744,12 +744,12 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 		default:
 			return nil, errors.New("contentType not currently supported" + utils.Int32ToString(s.ContentType))
 		}
-		oldMessage, err := c.db.GetMessage(ctx, lc.ConversationID, s.ClientMsgID)
-		if err != nil {
-			log.ZWarn(ctx, "get message err", err)
-		} else {
-			log.Debug("", "before update database message is ", *oldMessage)
-		}
+		// oldMessage, err := c.db.GetMessage(ctx, lc.ConversationID, s.ClientMsgID)
+		// if err != nil {
+		// 	log.ZWarn(ctx, "get message err", err)
+		// } else {
+		// 	log.Debug("", "before update database message is ", *oldMessage)
+		// }
 		if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Voice, constant.Video, constant.File}) {
 			localMessage := c.msgStructToLocalChatLog(s)
 			log.ZWarn(ctx, "update message is ", nil, s, localMessage)
@@ -835,7 +835,7 @@ func (c *Conversation) InternalSendMessage(ctx context.Context, s *sdk_struct.Ms
 
 func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation, callback open_im_sdk_callback.SendMsgCallBack,
 	delFile []string, offlinePushInfo *sdkws.OfflinePushInfo, options map[string]bool) (*sdk_struct.MsgStruct, error) {
-	log.Debug("", "sendMessageToServer ", s.ServerMsgID, " ", s.ClientMsgID)
+	// log.Debug("", "sendMessageToServer ", s.ServerMsgID, " ", s.ClientMsgID)
 	//Protocol conversion
 	var wsMsgData sdkws.MsgData
 	copier.Copy(&wsMsgData, s)
@@ -889,9 +889,9 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 		for _, v := range delFile {
 			err := os.Remove(v)
 			if err != nil {
-				log.Error("", "remove failed,", err.Error(), v)
+				// log.Error("", "remove failed,", err.Error(), v)
 			}
-			log.Debug("", "remove file: ", v)
+			// log.Debug("", "remove file: ", v)
 		}
 		c.updateMsgStatusAndTriggerConversation(ctx, sendMsgResp.ClientMsgID, sendMsgResp.ServerMsgID, sendMsgResp.SendTime, constant.MsgStatusSendSuccess, s, lc)
 	}()
@@ -1000,13 +1000,11 @@ func (c *Conversation) GetAdvancedHistoryMessageListReverse(ctx context.Context,
 func (c *Conversation) GetHistoryMessageListReverse(ctx context.Context, req sdk_params_callback.GetHistoryMessageListParams) ([]*sdk_struct.MsgStruct, error) {
 	return c.getHistoryMessageList(ctx, req, true)
 }
+
 func (c *Conversation) RevokeMessage(ctx context.Context, req *sdk_struct.MsgStruct) error {
 	return c.revokeOneMessage(ctx, req)
 }
-func (c *Conversation) NewRevokeMessage(ctx context.Context, req *sdk_struct.MsgStruct) error {
-	return c.newRevokeOneMessage(ctx, req)
 
-}
 func (c *Conversation) TypingStatusUpdate(ctx context.Context, recvID, msgTip string) error {
 	return c.typingStatusUpdate(ctx, recvID, msgTip)
 }
@@ -1145,7 +1143,7 @@ func (c *Conversation) InsertGroupMessageToLocalStorage(ctx context.Context, s *
 	if sendID != c.loginUserID {
 		faceUrl, name, err := c.cache.GetUserNameAndFaceURL(ctx, sendID)
 		if err != nil {
-			log.Error("", "getUserNameAndFaceUrlByUid err", err.Error(), sendID)
+			// log.Error("", "getUserNameAndFaceUrlByUid err", err.Error(), sendID)
 		}
 		s.SenderFaceURL = faceUrl
 		s.SenderNickname = name

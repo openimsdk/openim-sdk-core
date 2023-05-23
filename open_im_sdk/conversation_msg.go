@@ -188,10 +188,6 @@ func RevokeMessage(callback open_im_sdk_callback.Base, operationID string, messa
 	call(callback, operationID, UserForSDK.Conversation().RevokeMessage, message)
 }
 
-func NewRevokeMessage(callback open_im_sdk_callback.Base, operationID string, message string) {
-	call(callback, operationID, UserForSDK.Conversation().NewRevokeMessage, message)
-}
-
 func TypingStatusUpdate(callback open_im_sdk_callback.Base, operationID string, recvID string, msgTip string) {
 	call(callback, operationID, UserForSDK.Conversation().TypingStatusUpdate, recvID, msgTip)
 }

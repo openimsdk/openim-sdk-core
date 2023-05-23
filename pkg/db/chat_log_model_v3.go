@@ -19,6 +19,13 @@ func (d *DataBase) UpdateMessage(ctx context.Context, conversationID string, c *
 	}
 	return utils.Wrap(t.Error, "UpdateMessage failed")
 }
+
+func (d *DataBase) UpdateMessageBySeq(ctx context.Context, conversationID string, c *model_struct.LocalChatLog) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("seq=?", c.Seq).Updates(c).Error, "UpdateMessage failed")
+}
+
 func (d *DataBase) BatchInsertMessageList(ctx context.Context, conversationID string, MessageList []*model_struct.LocalChatLog) error {
 	if MessageList == nil {
 		return nil
@@ -39,6 +46,14 @@ func (d *DataBase) GetMessage(ctx context.Context, conversationID string, client
 	return &c, utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("client_msg_id = ?",
 		clientMsgID).Take(&c).Error, "GetMessage failed")
 }
+
+func (d *DataBase) GetMessageBySeq(ctx context.Context, conversationID string, seq int64) (*model_struct.LocalChatLog, error) {
+	d.initChatLog(ctx, conversationID)
+	var c model_struct.LocalChatLog
+	return &c, utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("seq = ?",
+		seq).Take(&c).Error, "GetMessage failed")
+}
+
 func (d *DataBase) UpdateMessageTimeAndStatus(ctx context.Context, conversationID, clientMsgID string, serverMsgID string, sendTime int64, status int32) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()

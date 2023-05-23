@@ -39,6 +39,7 @@ type OnGroupListener interface {
 	OnGroupApplicationAdded(groupApplication string)
 	OnGroupApplicationDeleted(groupApplication string)
 	OnGroupInfoChanged(groupInfo string)
+	OnGroupDismissed(groupInfo string)
 	OnGroupMemberInfoChanged(groupMemberInfo string)
 	OnGroupApplicationAccepted(groupApplication string)
 	OnGroupApplicationRejected(groupApplication string)

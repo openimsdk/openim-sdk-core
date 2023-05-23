@@ -89,9 +89,9 @@ func (u *User) initSyncer() {
 // DoNotification handles incoming notifications for the user.
 func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	operationID := utils.OperationIDGenerator()
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg)
+	// log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg)
 	if u.listener == nil {
-		log.Error(operationID, "listener == nil")
+		// log.Error(operationID, "listener == nil")
 		return
 	}
 	if msg.SendTime < u.loginTime {
@@ -103,24 +103,24 @@ func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 		case constant.UserInfoUpdatedNotification:
 			u.userInfoUpdatedNotification(msg, operationID)
 		default:
-			log.Error(operationID, "type failed ", msg.ClientMsgID, msg.ServerMsgID, msg.ContentType)
+			// log.Error(operationID, "type failed ", msg.ClientMsgID, msg.ServerMsgID, msg.ContentType)
 		}
 	}()
 }
 
 // userInfoUpdatedNotification handles notifications about updated user information.
 func (u *User) userInfoUpdatedNotification(msg *sdkws.MsgData, operationID string) {
-	log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
+	// log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
 	var detail sdkws.UserInfoUpdatedTips
 	if err := comm.UnmarshalTips(msg, &detail); err != nil {
-		log.Error(operationID, "comm.UnmarshalTips failed ", err.Error(), msg.Content)
+		// log.Error(operationID, "comm.UnmarshalTips failed ", err.Error(), msg.Content)
 		return
 	}
 	if detail.UserID == u.loginUserID {
-		log.Info(operationID, "detail.UserID == u.loginUserID, SyncLoginUserInfo", detail.UserID)
+		// log.Info(operationID, "detail.UserID == u.loginUserID, SyncLoginUserInfo", detail.UserID)
 		u.SyncLoginUserInfo(context.Background())
 	} else {
-		log.Debug(operationID, "detail.UserID != u.loginUserID, do nothing", detail.UserID, u.loginUserID)
+		// log.Debug(operationID, "detail.UserID != u.loginUserID, do nothing", detail.UserID, u.loginUserID)
 	}
 }
 

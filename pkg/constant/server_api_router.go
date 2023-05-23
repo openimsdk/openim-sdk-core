@@ -41,6 +41,7 @@ const (
 	//msg
 	DeleteMsgRouter                    = RouterMsg + "/del_msg"
 	ClearMsgRouter                     = RouterMsg + "/clear_msg"
+	RevokeMsgRouter                    = RouterMsg + "/revoke_msg"
 	DeleteSuperGroupMsgRouter          = RouterMsg + "/del_super_group_msg"
 	SetMessageReactionExtensionsRouter = RouterMsg + "/set_message_reaction_extensions"
 	AddMessageReactionExtensionsRouter = RouterMsg + "/add_message_reaction_extensions"

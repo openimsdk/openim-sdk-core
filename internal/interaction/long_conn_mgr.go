@@ -150,7 +150,8 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 func (c *LongConnMgr) readPump(ctx context.Context) {
 	defer func() {
 		//c.hub.unregister <- c
-		c.conn.Close()
+		//c.conn.Close()
+		log.ZWarn(c.ctx, "writePump closed", c.closedErr)
 	}()
 	connNum := 0
 	//c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
@@ -158,7 +159,7 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
 		err := c.reConn(ctx, &connNum)
 		if err != nil {
-			log.ZError(c.ctx, "reConn", err)
+			log.ZWarn(c.ctx, "reConn", err)
 			time.Sleep(time.Second * 1)
 			continue
 		}
@@ -201,7 +202,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
-		c.conn.Close()
+		c.close()
 		close(c.send)
 	}()
 	for {
@@ -340,6 +341,7 @@ func (c *LongConnMgr) close() error {
 	c.w.Lock()
 	defer c.w.Unlock()
 	c.connStatus = Closed
+	log.ZWarn(c.ctx, "conn closed", c.closedErr)
 	return c.conn.Close()
 
 }
@@ -385,7 +387,7 @@ func (c *LongConnMgr) handleMessage(message []byte) {
 			log.ZError(ctx, "notifyResp failed", err, "wsResp", wsResp)
 		}
 	default:
-		log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
+		// log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
 		return
 	}
 }
