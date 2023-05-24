@@ -343,14 +343,14 @@ func GetConversationIDByMsg(msg *sdk_struct.MsgStruct) string {
 	}
 	return ""
 }
-func GetSuperGroupTableName(groupID string) string {
-	return constant.ChatLogsTableNamePre + groupID
+func GetConversationTableName(conversationID string) string {
+	return constant.ChatLogsTableNamePre + conversationID
 }
 func GetTableName(conversationID string) string {
 	return constant.ChatLogsTableNamePre + conversationID
 }
-func GetErrSuperGroupTableName(groupID string) string {
-	return constant.SuperGroupErrChatLogsTableNamePre + groupID
+func GetErrTableName(conversationID string) string {
+	return constant.SuperGroupErrChatLogsTableNamePre + conversationID
 }
 func RemoveRepeatedStringInList(slc []string) []string {
 	var result []string

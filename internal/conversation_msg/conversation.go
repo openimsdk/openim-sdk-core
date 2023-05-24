@@ -55,6 +55,11 @@ func (c *Conversation) setConversation(ctx context.Context, apiReq *pbConversati
 	return nil
 }
 
+func (c *Conversation) newSetConversation(ctx context.Context, apiReq *pbConversation.SetConversationsReq) error {
+	apiReq.UserIDs = []string{c.loginUserID}
+	return util.ApiPost(ctx, constant.SetConversationsRouter, apiReq, nil)
+}
+
 func (c *Conversation) setOneConversationUnread(ctx context.Context, conversationID string, unreadCount int) error {
 	apiReq := &pbConversation.ModifyConversationFieldReq{}
 	localConversation, err := c.db.GetConversation(ctx, conversationID)
@@ -858,6 +863,7 @@ func (c *Conversation) revokeOneMessage(ctx context.Context, req *sdk_struct.Msg
 	if err := util.ApiPost(ctx, constant.RevokeMsgRouter, pbMsg.RevokeMsgReq{ConversationID: conversationID, Seq: message.Seq}, &pbMsg.RevokeMsgResp{}); err != nil {
 		return err
 	}
+	c.revokeMessage(ctx, nil)
 	return nil
 }
 
@@ -879,136 +885,6 @@ func (c *Conversation) typingStatusUpdate(ctx context.Context, recvID, msgTip st
 	_, err = c.InternalSendMessage(ctx, &s, recvID, "", &server_api_params.OfflinePushInfo{}, true, options)
 	return err
 
-}
-
-func (c *Conversation) markC2CMessageAsRead(ctx context.Context, msgIDList []string, userID string) error {
-	var newMessageIDList []string
-	messages, err := c.db.GetMultipleMessage(ctx, msgIDList)
-	if err != nil {
-		return err
-	}
-	for _, v := range messages {
-		if v.IsRead == false && v.ContentType < constant.NotificationBegin && v.SendID != c.loginUserID {
-			newMessageIDList = append(newMessageIDList, v.ClientMsgID)
-		}
-	}
-	if len(newMessageIDList) == 0 {
-		return errors.New("message has been marked read or sender is yourself or notification message not support")
-	}
-	conversationID := c.getConversationIDBySessionType(userID, constant.SingleChatType)
-	s := sdk_struct.MsgStruct{}
-	err = c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.HasReadReceiptNotification)
-	if err != nil {
-		return err
-	}
-	s.Content = utils.StructToJsonString(newMessageIDList)
-	options := make(map[string]bool, 5)
-	utils.SetSwitchFromOptions(options, constant.IsConversationUpdate, false)
-	utils.SetSwitchFromOptions(options, constant.IsSenderConversationUpdate, false)
-	utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
-	utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
-	//If there is an error, the coroutine ends, so judgment is not  required
-	resp, err := c.InternalSendMessage(ctx, &s, userID, "", &server_api_params.OfflinePushInfo{}, false, options)
-	if err != nil {
-		return err
-	}
-	s.ServerMsgID = resp.ServerMsgID
-	s.SendTime = resp.SendTime
-	s.Status = constant.MsgStatusFiltered
-	_ = c.msgStructToLocalChatLog(&s)
-	//msgStructToLocalChatLog(&localMessage, &s)
-	//err = c.db.InsertMessage(ctx, &localMessage)
-	//if err != nil {
-	//	log.Error("", "inset into chat log err", localMessage, s, err.Error())
-	//}
-
-	err2 := c.db.UpdateSingleMessageHasRead(ctx, userID, newMessageIDList)
-	if err2 != nil {
-		// log.Error("", "update message has read error", newMessageIDList, userID, err2.Error())
-	}
-	newMessages, err3 := c.db.GetMultipleMessage(ctx, newMessageIDList)
-	if err3 != nil {
-		// log.Error("", "get messages error", newMessageIDList, userID, err3.Error())
-	}
-	for _, v := range newMessages {
-		attachInfo := sdk_struct.AttachedInfoElem{}
-		_ = utils.JsonStringToStruct(v.AttachedInfo, &attachInfo)
-		attachInfo.HasReadTime = s.SendTime
-		v.AttachedInfo = utils.StructToJsonString(attachInfo)
-		//err = c.db.UpdateMessage(ctx, v)
-		//if err != nil {
-		//	log.Error("internal", "setMessageHasReadByMsgID err:", err, "ClientMsgID", v)
-		//	continue
-		//}
-	}
-	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.GetCh())
-	return nil
-	//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
-}
-func (c *Conversation) markGroupMessageAsRead(ctx context.Context, msgIDList []string, groupID string) error {
-	conversationID, conversationType, err := c.getConversationTypeByGroupID(ctx, groupID)
-	if err != nil {
-		return err
-	}
-	if len(msgIDList) == 0 {
-		_ = c.setOneConversationUnread(ctx, conversationID, 0)
-		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
-		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
-		return nil
-	}
-	allUserMessage := make(map[string][]string, 3)
-	messages, err := c.db.GetMultipleMessageController(ctx, msgIDList, groupID, conversationType)
-	if err != nil {
-		return err
-	}
-	for _, v := range messages {
-		// log.Debug("", "get group info is test2", v.ClientMsgID, v.SessionType)
-		if v.IsRead == false && v.ContentType < constant.NotificationBegin && v.SendID != c.loginUserID {
-			if msgIDList, ok := allUserMessage[v.SendID]; ok {
-				msgIDList = append(msgIDList, v.ClientMsgID)
-				allUserMessage[v.SendID] = msgIDList
-			} else {
-				allUserMessage[v.SendID] = []string{v.ClientMsgID}
-			}
-		}
-	}
-	if len(allUserMessage) == 0 {
-		return errors.New("message has been marked read or sender is yourself or notification message not support")
-	}
-
-	for userID, list := range allUserMessage {
-		s := sdk_struct.MsgStruct{}
-		s.GroupID = groupID
-		err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.GroupHasReadReceiptNotification)
-		if err != nil {
-			return err
-		}
-		s.Content = utils.StructToJsonString(list)
-		options := make(map[string]bool, 5)
-		utils.SetSwitchFromOptions(options, constant.IsConversationUpdate, false)
-		utils.SetSwitchFromOptions(options, constant.IsSenderConversationUpdate, false)
-		utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
-		utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
-		//If there is an error, the coroutine ends, so judgment is not  required
-		resp, err := c.InternalSendMessage(ctx, &s, userID, "", &server_api_params.OfflinePushInfo{}, false, options)
-		if err != nil {
-			return err
-		}
-		s.ServerMsgID = resp.ServerMsgID
-		s.SendTime = resp.SendTime
-		s.Status = constant.MsgStatusFiltered
-		localMessage := c.msgStructToLocalChatLog(&s)
-		err = c.db.InsertMessage(ctx, conversationID, localMessage)
-		if err != nil {
-			// log.Error("", "inset into chat log err", localMessage, s, err.Error())
-		}
-		// log.Debug("", "get group info is test3", list, conversationType)
-		err2 := c.db.UpdateGroupMessageHasReadController(ctx, list, groupID, conversationType)
-		if err2 != nil {
-			// log.Error("", "update message has read err", list, userID, err2.Error())
-		}
-	}
-	return nil
 }
 
 //	func (c *Conversation) markMessageAsReadByConID(callback open_im_sdk_callback.Base, msgIDList sdk.MarkMessageAsReadByConIDParams, conversationID, operationID string) {
@@ -1050,9 +926,9 @@ func (c *Conversation) markGroupMessageAsRead(ctx context.Context, msgIDList []s
 //		_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.ch)
 //		//_ = common.TriggerCmdUpdateConversation(common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.ch)
 //	}
+
 func (c *Conversation) insertMessageToLocalStorage(ctx context.Context, conversationID string, s *model_struct.LocalChatLog) error {
 	return c.db.InsertMessage(ctx, conversationID, s)
-
 }
 
 func (c *Conversation) clearGroupHistoryMessage(ctx context.Context, groupID string) error {
@@ -1741,11 +1617,11 @@ type syncReactionExtensionParams struct {
 	TypeKeyList         []string
 }
 
-func (c *Conversation) getMessageListReactionExtensions(ctx context.Context, messageList []*sdk_struct.MsgStruct) ([]*server_api_params.SingleMessageExtensionResult, error) {
+func (c *Conversation) getMessageListReactionExtensions(ctx context.Context, conversationID string, messageList []*sdk_struct.MsgStruct) ([]*server_api_params.SingleMessageExtensionResult, error) {
 	if len(messageList) == 0 {
 		return nil, errors.New("message list is null")
 	}
-	var msgIDList []string
+	var msgIDs []string
 	var sourceID string
 	var sessionType int32
 	var isExternalExtension bool
@@ -1763,10 +1639,10 @@ func (c *Conversation) getMessageListReactionExtensions(ctx context.Context, mes
 			sourceID = msgStruct.GroupID
 		}
 		sessionType = msgStruct.SessionType
-		msgIDList = append(msgIDList, msgStruct.ClientMsgID)
+		msgIDs = append(msgIDs, msgStruct.ClientMsgID)
 	}
 	isExternalExtension = c.IsExternalExtensions
-	localMessageList, err := c.db.GetMultipleMessageController(ctx, msgIDList, sourceID, sessionType)
+	localMessageList, err := c.db.GetMessagesByClientMsgIDs(ctx, conversationID, msgIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -1776,7 +1652,7 @@ func (c *Conversation) getMessageListReactionExtensions(ctx context.Context, mes
 		}
 	}
 	var result server_api_params.GetMessageListReactionExtensionsResp
-	extendMessage, _ := c.db.GetMultipleMessageReactionExtension(ctx, msgIDList)
+	extendMessage, _ := c.db.GetMultipleMessageReactionExtension(ctx, msgIDs)
 	for _, v := range extendMessage {
 		var singleResult server_api_params.SingleMessageExtensionResult
 		temp := make(map[string]*sdkws.KeyValue)

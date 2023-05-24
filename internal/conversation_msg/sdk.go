@@ -908,17 +908,17 @@ func (c *Conversation) FindMessageList(ctx context.Context, req []*sdk_params_ca
 	var s []*tempConversationAndMessageList
 	for _, conversationsArgs := range req {
 		localConversation, err := c.db.GetConversation(ctx, conversationsArgs.ConversationID)
-		if err == nil {
+		if err != nil {
+			log.ZError(ctx, "GetConversation err", err, "conversationsArgs", conversationsArgs)
+		} else {
 			t := new(tempConversationAndMessageList)
 			t.conversation = localConversation
 			t.msgIDList = conversationsArgs.ClientMsgIDList
 			s = append(s, t)
-		} else {
-			//log.Error(operationID, "GetConversation err:", err.Error(), conversationsArgs.ConversationID)
 		}
 	}
 	for _, v := range s {
-		messages, err := c.db.GetMultipleMessageController(ctx, v.msgIDList, v.conversation.GroupID, v.conversation.ConversationType)
+		messages, err := c.db.GetMessagesByClientMsgIDs(ctx, v.conversation.ConversationID, v.msgIDList)
 		if err == nil {
 			var tempMessageList []*sdk_struct.MsgStruct
 			for _, message := range messages {
@@ -943,7 +943,7 @@ func (c *Conversation) FindMessageList(ctx context.Context, req []*sdk_params_ca
 				temp.Ex = message.Ex
 				err := c.msgHandleByContentType(&temp)
 				if err != nil {
-					//log.Error(operationID, "Parsing data error:", err.Error(), temp)
+					log.ZError(ctx, "msgHandleByContentType err", err, "message", temp)
 					continue
 				}
 				switch message.SessionType {
@@ -965,7 +965,7 @@ func (c *Conversation) FindMessageList(ctx context.Context, req []*sdk_params_ca
 			r.FindResultItems = append(r.FindResultItems, &findResultItem)
 			r.TotalCount += findResultItem.MessageCount
 		} else {
-			//log.Error(operationID, "GetMultipleMessageController err:", err.Error(), v)
+			log.ZError(ctx, "GetMessagesByClientMsgIDs err", err, "conversationID", v.conversation.ConversationID, "msgIDList", v.msgIDList)
 		}
 	}
 	return &r, nil
@@ -1009,17 +1009,6 @@ func (c *Conversation) TypingStatusUpdate(ctx context.Context, recvID, msgTip st
 	return c.typingStatusUpdate(ctx, recvID, msgTip)
 }
 
-func (c *Conversation) MarkC2CMessageAsRead(ctx context.Context, userID string, msgIDList []string) error {
-	if len(msgIDList) == 0 {
-		conversationID := c.getConversationIDBySessionType(userID, constant.SingleChatType)
-		_ = c.setOneConversationUnread(ctx, conversationID, 0)
-		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
-		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
-		return nil
-	}
-	return c.markC2CMessageAsRead(ctx, msgIDList, userID)
-}
-
 func (c *Conversation) MarkMessageAsReadByConID(ctx context.Context, conversationID string, msgIDList []string) error {
 	if len(msgIDList) == 0 {
 		_ = c.setOneConversationUnread(ctx, conversationID, 0)
@@ -1039,13 +1028,17 @@ func (c *Conversation) MarkGroupMessageHasRead(ctx context.Context, groupID stri
 	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 
 }
-func (c *Conversation) MarkGroupMessageAsRead(ctx context.Context, groupID string, msgIDList []string) error {
-	return c.markGroupMessageAsRead(ctx, msgIDList, groupID)
 
+func (c *Conversation) MarkConversationMessageAsRead(ctx context.Context, conversationID string, conversationType int32) error {
+	return c.markConversationMessageAsRead(ctx, conversationID, conversationType)
 }
+
+func (c *Conversation) MarkConversationMessageAsReadBySeqs(ctx context.Context, conversationID string, conversationType int32, clientMsgIDs []string) error {
+	return c.markConversationMessageAsReadBySeqs(ctx, conversationID, conversationType, clientMsgIDs)
+}
+
 func (c *Conversation) DeleteMessageFromLocalStorage(ctx context.Context, message *sdk_struct.MsgStruct) error {
 	return c.deleteMessageFromLocalStorage(ctx, message)
-
 }
 
 func (c *Conversation) ClearC2CHistoryMessage(ctx context.Context, userID string) error {
@@ -1286,8 +1279,8 @@ func (c *Conversation) DeleteMessageReactionExtensions(ctx context.Context, s *s
 	return c.deleteMessageReactionExtensions(ctx, s, reactionExtensionKeyList)
 }
 
-func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, messageList []*sdk_struct.MsgStruct) ([]*server_api_params.SingleMessageExtensionResult, error) {
-	return c.getMessageListReactionExtensions(ctx, messageList)
+func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, conversationID string, messageList []*sdk_struct.MsgStruct) ([]*server_api_params.SingleMessageExtensionResult, error) {
+	return c.getMessageListReactionExtensions(ctx, conversationID, messageList)
 
 }
 

@@ -338,7 +338,7 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData []*
 		//
 		//}
 		//b8 := utils.GetCurrentTimestampByMill()
-		c.DoGroupMsgReadState(context.Background(), groupMsgReadList)
+		// c.DoGroupMsgReadState(context.Background(), groupMsgReadList)
 		//b9 := utils.GetCurrentTimestampByMill()
 		//log.Debug(operationID, "DoGroupMsgReadState  cost time : ", b9-b8, "len: ", len(groupMsgReadList))
 

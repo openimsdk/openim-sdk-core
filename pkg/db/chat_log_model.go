@@ -547,91 +547,64 @@ func (d *DataBase) GetSendingMessageList(ctx context.Context) (result []*model_s
 	}
 	return result, err
 }
-func (d *DataBase) UpdateSingleMessageHasRead(ctx context.Context, sendID string, msgIDList []string) error {
+
+func (d *DataBase) GetUnreadMessage(ctx context.Context, conversationID string) (msgs []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Where("send_id=?  AND session_type=? AND client_msg_id in ?", sendID, constant.SingleChatType, msgIDList).Update("is_read", constant.HasRead)
+	err = utils.Wrap(d.conn.WithContext(ctx).Where("is_read = ? AND send_id != ?", false, d.loginUserID).Find(&msgs).Error, "GetMessageList failed")
+	return msgs, err
+}
+
+func (d *DataBase) MarkConversationMessageAsReadBySeqs(ctx context.Context, conversationID string, seqs []int64) (rowsAffected int64, err error) {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	t := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("seq in ? AND send_id != ?", seqs, d.loginUserID).Update("is_read", constant.HasRead)
 	if t.RowsAffected == 0 {
-		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+		return 0, utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
-	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
+	return t.RowsAffected, utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
 }
-func (d *DataBase) UpdateGroupMessageHasRead(ctx context.Context, msgIDList []string, sessionType int32) error {
+
+func (d *DataBase) MarkConversationMessageAsRead(ctx context.Context, conversationID string, msgIDs []string) (rowsAffected int64, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Where("session_type=? AND client_msg_id in ?", sessionType, msgIDList).Update("is_read", constant.HasRead)
+	t := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("client_msg_id in ? AND send_id != ?", msgIDs, d.loginUserID).Update("is_read", constant.HasRead)
 	if t.RowsAffected == 0 {
-		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+		return 0, utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
-	return utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
-}
-func (d *DataBase) UpdateGroupMessageHasReadController(ctx context.Context, msgIDList []string, groupID string, sessionType int32) error {
-	switch sessionType {
-	case constant.SuperGroupChatType:
-		return d.SuperGroupUpdateGroupMessageHasRead(ctx, msgIDList, groupID)
-	default:
-		return d.UpdateGroupMessageHasRead(ctx, msgIDList, sessionType)
-	}
-}
-func (d *DataBase) GetMultipleMessage(ctx context.Context, msgIDList []string) (result []*model_struct.LocalChatLog, err error) {
-	var messageList []model_struct.LocalChatLog
-	err = utils.Wrap(d.conn.WithContext(ctx).Where("client_msg_id IN ?", msgIDList).Order("send_time DESC").Find(&messageList).Error, "GetMultipleMessage failed")
-	for _, v := range messageList {
-		v1 := v
-		result = append(result, &v1)
-	}
-	return result, err
-}
-func (d *DataBase) GetMultipleMessageController(ctx context.Context, msgIDList []string, groupID string, sessionType int32) (result []*model_struct.LocalChatLog, err error) {
-	switch sessionType {
-	case constant.SuperGroupChatType:
-		return d.SuperGroupGetMultipleMessage(ctx, msgIDList, groupID)
-	default:
-		return d.GetMultipleMessage(ctx, msgIDList)
-	}
+	return t.RowsAffected, utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
 }
 
-func (d *DataBase) GetNormalMsgSeq(ctx context.Context) (int64, error) {
+func (d *DataBase) MarkConversationAllMessageAsRead(ctx context.Context, conversationID string) (rowsAffected int64, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	var seq int64
-	err := d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Select("IFNULL(max(seq),0)").Find(&seq).Error
-	return seq, utils.Wrap(err, "GetNormalMsgSeq")
+	t := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("send_id != ? AND is_read == ?", d.loginUserID, false).Update("is_read", constant.HasRead)
+	if t.RowsAffected == 0 {
+		return 0, utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	}
+	return t.RowsAffected, utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
 }
-func (d *DataBase) GetLostMsgSeqList(ctx context.Context, minSeqInSvr int64) ([]int64, error) {
-	var hasSeqList []int64
-	err := d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Select("seq").Order("seq ASC").Find(&hasSeqList).Error
-	if err != nil {
-		return nil, err
-	}
-	seqLength := len(hasSeqList)
-	if seqLength == 0 {
-		return nil, nil
-	}
-	var normalSeqList []int64
 
-	var i int64
-	for i = 1; i <= hasSeqList[seqLength-1]; i++ {
-		normalSeqList = append(normalSeqList, i)
-	}
-	lostSeqList := utils.DifferenceSubset(normalSeqList, hasSeqList)
-	if len(lostSeqList) == 0 {
-		return nil, nil
-	}
-	abnormalSeqList, err := d.GetAbnormalMsgSeqList(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if len(abnormalSeqList) == 0 {
-		return lostSeqList, nil
-	}
-	return utils.DifferenceSubset(lostSeqList, utils.Intersect(lostSeqList, abnormalSeqList)), nil
-
+func (d *DataBase) GetMessagesByClientMsgIDs(ctx context.Context, conversationID string, msgIDs []string) (msgs []*model_struct.LocalChatLog, err error) {
+	err = utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("client_msg_id IN ?", msgIDs).Order("send_time DESC").Find(&msgs).Error, "GetMessagesByClientMsgIDs error")
+	return msgs, err
 }
+
+func (d *DataBase) GetMessagesBySeqs(ctx context.Context, conversationID string, seqs []int64) (msgs []*model_struct.LocalChatLog, err error) {
+	err = utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("seq IN ?", seqs).Order("send_time DESC").Find(&msgs).Error, "GetMessagesBySeqs error")
+	return msgs, err
+}
+
 func (d *DataBase) GetConversationNormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
 	var seq int64
-	err := d.conn.WithContext(ctx).Table(utils.GetSuperGroupTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
+	err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
 	return seq, utils.Wrap(err, "GetConversationNormalMsgSeq")
+}
+
+func (d *DataBase) GetConversationPeerNormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
+	var seq int64
+	err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Where("send_id != ?", d.loginUserID).Find(&seq).Error
+	return seq, utils.Wrap(err, "GetConversationPeerNormalMsgSeq")
 }
 
 func (d *DataBase) GetTestMessage(ctx context.Context, seq uint32) (*model_struct.LocalChatLog, error) {

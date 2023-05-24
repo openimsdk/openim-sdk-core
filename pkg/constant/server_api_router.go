@@ -90,6 +90,7 @@ const (
 	BatchSetConversationRouter             = ConversationGroup + "/batch_set_conversation"
 	ModifyConversationFieldRouter          = ConversationGroup + "/modify_conversation_field"
 	GetConversationsHasReadAndMaxSeqRouter = ConversationGroup + "/get_conversations_has_read_and_max_seq"
+	SetConversationsRouter                 = ConversationGroup + "/set_conversations"
 
 	//organization
 	GetSubDepartmentRouter    = RouterOrganization + "/get_sub_department"

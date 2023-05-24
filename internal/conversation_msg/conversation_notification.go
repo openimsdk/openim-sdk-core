@@ -110,13 +110,13 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 
 	case constant.UnreadCountSetZero:
 		if err := c.db.UpdateColumnsConversation(ctx, node.ConID, map[string]interface{}{"unread_count": 0}); err != nil {
-			// log.Error("internal", "UpdateColumnsConversation err", err.Error(), node.ConID)
+			log.ZError(ctx, "updateConversationUnreadCountModel err", err, "conversationID", node.ConID)
 		} else {
 			totalUnreadCount, err := c.db.GetTotalUnreadMsgCountDB(ctx)
 			if err == nil {
 				c.ConversationListener.OnTotalUnreadMessageCountChanged(totalUnreadCount)
 			} else {
-				// log.Error("internal", "getTotalUnreadMsgCountModel err", err.Error(), node.ConID)
+				log.ZError(ctx, "getTotalUnreadMsgCountDB err", err)
 			}
 
 		}
@@ -176,34 +176,32 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		var latestMsg sdk_struct.MsgStruct
 		l, err := c.db.GetConversation(ctx, conversationID)
 		if err != nil {
-			// log.Error("internal", "getConversationLatestMsgModel err", err.Error())
+			log.ZError(ctx, "getConversationLatestMsgModel err", err, "conversationID", conversationID)
 		} else {
 			err := json.Unmarshal([]byte(l.LatestMsg), &latestMsg)
 			if err != nil {
-				// log.Error("internal", "latestMsg,Unmarshal err :", err.Error())
+				log.ZError(ctx, "latestMsg,Unmarshal err", err)
 			} else {
 				latestMsg.IsRead = true
 				newLatestMessage := utils.StructToJsonString(latestMsg)
-				err = c.db.UpdateColumnsConversation(nil, node.ConID, map[string]interface{}{"latest_msg_send_time": latestMsg.SendTime, "latest_msg": newLatestMessage})
+				err = c.db.UpdateColumnsConversation(ctx, node.ConID, map[string]interface{}{"latest_msg_send_time": latestMsg.SendTime, "latest_msg": newLatestMessage})
 				if err != nil {
-					// log.Error("internal", "updateConversationLatestMsgModel err :", err.Error())
+					log.ZError(ctx, "updateConversationLatestMsgModel err", err)
 				}
 			}
 		}
 	case constant.ConChange:
-		cidList := node.Args.([]string)
-		cLists, err := c.db.GetMultipleConversationDB(ctx, cidList)
+		conversationIDs := node.Args.([]string)
+		conversations, err := c.db.GetMultipleConversationDB(ctx, conversationIDs)
 		if err != nil {
-			// log.Error("internal", "getMultipleConversationModel err :", err.Error())
+			log.ZError(ctx, "getMultipleConversationModel err", err)
 		} else {
 			var newCList []*model_struct.LocalConversation
-			for _, v := range cLists {
+			for _, v := range conversations {
 				if v.LatestMsgSendTime != 0 {
 					newCList = append(newCList, v)
 				}
 			}
-			// log.Info("internal", "getMultipleConversationModel success :", newCList)
-
 			c.ConversationListener.OnConversationChanged(utils.StructToJsonStringDefault(newCList))
 		}
 	case constant.NewCon:

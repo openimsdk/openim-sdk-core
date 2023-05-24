@@ -25,8 +25,8 @@ import (
 )
 
 func (d *DataBase) initSuperLocalErrChatLog(ctx context.Context, groupID string) {
-	if !d.conn.WithContext(ctx).Migrator().HasTable(utils.GetErrSuperGroupTableName(groupID)) {
-		d.conn.WithContext(ctx).Table(utils.GetErrSuperGroupTableName(groupID)).AutoMigrate(&model_struct.LocalErrChatLog{})
+	if !d.conn.WithContext(ctx).Migrator().HasTable(utils.GetErrTableName(groupID)) {
+		d.conn.WithContext(ctx).Table(utils.GetErrTableName(groupID)).AutoMigrate(&model_struct.LocalErrChatLog{})
 	}
 }
 func (d *DataBase) SuperBatchInsertExceptionMsg(ctx context.Context, MessageList []*model_struct.LocalErrChatLog, groupID string) error {
@@ -34,7 +34,7 @@ func (d *DataBase) SuperBatchInsertExceptionMsg(ctx context.Context, MessageList
 		return nil
 	}
 	d.initSuperLocalErrChatLog(ctx, groupID)
-	return utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetSuperGroupTableName(groupID)).Create(MessageList).Error, "BatchInsertMessageList failed")
+	return utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(groupID)).Create(MessageList).Error, "BatchInsertMessageList failed")
 }
 func (d *DataBase) GetAbnormalMsgSeq(ctx context.Context) (int64, error) {
 	d.mRWMutex.Lock()
@@ -69,9 +69,9 @@ func (d *DataBase) BatchInsertExceptionMsgController(ctx context.Context, messag
 }
 func (d *DataBase) GetConversationAbnormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
 	var seq int64
-	if !d.conn.WithContext(ctx).Migrator().HasTable(utils.GetErrSuperGroupTableName(conversationID)) {
+	if !d.conn.WithContext(ctx).Migrator().HasTable(utils.GetErrTableName(conversationID)) {
 		return 0, nil
 	}
-	err := d.conn.WithContext(ctx).Table(utils.GetErrSuperGroupTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
+	err := d.conn.WithContext(ctx).Table(utils.GetErrTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
 	return seq, utils.Wrap(err, "GetConversationNormalMsgSeq")
 }

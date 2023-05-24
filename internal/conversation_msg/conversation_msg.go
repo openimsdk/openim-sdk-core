@@ -37,6 +37,7 @@ import (
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/syncer"
+	"sync"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
@@ -44,7 +45,6 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sort"
-	"sync"
 	"time"
 
 	"github.com/jinzhu/copier"
@@ -62,7 +62,6 @@ type Conversation struct {
 	batchMsgListener     open_im_sdk_callback.OnBatchMsgListener
 	recvCH               chan common.Cmd2Value
 	loginUserID          string
-
 	platformID           int32
 	DataDir              string
 	friend               *friend.Friend
@@ -75,12 +74,11 @@ type Conversation struct {
 	messageController    *MessageController
 	cache                *cache.Cache
 	full                 *full.Full
-	tempMessageMap       sync.Map
 	encryptionKey        string
 	maxSeqRecorder       MaxSeqRecorder
 	IsExternalExtensions bool
-
-	listenerForService open_im_sdk_callback.OnListenerForService
+	listenerForService   open_im_sdk_callback.OnListenerForService
+	markAsReadLock       sync.Mutex
 }
 
 func (c *Conversation) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
@@ -98,9 +96,11 @@ func (c *Conversation) SetSignaling(signaling *signaling.LiveSignaling) {
 func (c *Conversation) SetMsgListener(msgListener open_im_sdk_callback.OnAdvancedMsgListener) {
 	c.msgListener = msgListener
 }
+
 func (c *Conversation) SetMsgKvListener(msgKvListener open_im_sdk_callback.OnMessageKvInfoListener) {
 	c.msgKvListener = msgKvListener
 }
+
 func (c *Conversation) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnBatchMsgListener) {
 	c.batchMsgListener = batchMsgListener
 }
@@ -168,7 +168,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	updateMsg := make(map[string][]*model_struct.LocalChatLog, 10)
 	var exceptionMsg []*model_struct.LocalErrChatLog
 	//var unreadMessages []*model_struct.LocalConversationUnreadMessage
-	var newMessages, msgReadList, groupMsgReadList, reactionMsgModifierList, reactionMsgDeleterList sdk_struct.NewMsgList
+	var newMessages, msgReadList, reactionMsgModifierList, reactionMsgDeleterList sdk_struct.NewMsgList
 	var isUnreadCount, isConversationUpdate, isHistory, isNotPrivate, isSenderConversationUpdate bool
 	conversationChangedSet := make(map[string]*model_struct.LocalConversation)
 	newConversationSet := make(map[string]*model_struct.LocalConversation)
@@ -359,7 +359,7 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 	}
 	c.doMsgReadState(ctx, msgReadList)
 
-	c.DoGroupMsgReadState(ctx, groupMsgReadList)
+	// c.DoGroupMsgReadState(ctx, groupMsgReadList)
 	if c.batchMsgListener != nil {
 		c.batchNewMessages(ctx, newMessages)
 	} else {
@@ -1076,98 +1076,6 @@ func isContainRevokedList(target string, List []*sdk_struct.MessageRevoked) (boo
 	return false, nil
 }
 
-func (c *Conversation) DoGroupMsgReadState(ctx context.Context, groupMsgReadList []*sdk_struct.MsgStruct) {
-	var groupMessageReceiptResp []*sdk_struct.MessageReceipt
-	var failedMessageList []*sdk_struct.MsgStruct
-	userMsgMap := make(map[string]map[string][]string)
-	//var temp []*sdk_struct.MessageReceipt
-	for _, rd := range groupMsgReadList {
-		var list []string
-		err := json.Unmarshal([]byte(rd.Content), &list)
-		if err != nil {
-			// log.Error("internal", "unmarshal failed, err : ", err.Error(), rd)
-			continue
-		}
-		if groupMap, ok := userMsgMap[rd.SendID]; ok {
-			if oldMsgIDList, ok := groupMap[rd.GroupID]; ok {
-				oldMsgIDList = append(oldMsgIDList, list...)
-				groupMap[rd.GroupID] = oldMsgIDList
-			} else {
-				groupMap[rd.GroupID] = list
-			}
-		} else {
-			g := make(map[string][]string)
-			g[rd.GroupID] = list
-			userMsgMap[rd.SendID] = g
-		}
-
-	}
-	for userID, m := range userMsgMap {
-		for groupID, msgIDList := range m {
-			var successMsgIDlist []string
-			var failedMsgIDList []string
-			newMsgID := utils.RemoveRepeatedStringInList(msgIDList)
-			_, sessionType, err := c.getConversationTypeByGroupID(ctx, groupID)
-			if err != nil {
-				// log.Error("internal", "GetGroupInfoByGroupID err:", err.Error(), "groupID", groupID)
-				continue
-			}
-			messages, err := c.db.GetMultipleMessageController(ctx, newMsgID, groupID, sessionType)
-			if err != nil {
-				// log.Error("internal", "GetMessage err:", err.Error(), "ClientMsgID", newMsgID)
-				continue
-			}
-			msgRt := new(sdk_struct.MessageReceipt)
-			msgRt.UserID = userID
-			msgRt.GroupID = groupID
-			msgRt.SessionType = sessionType
-			// msgRt.ContentType = constant.GroupHasReadReceipt
-
-			for _, message := range messages {
-				t := new(model_struct.LocalChatLog)
-				if userID != c.loginUserID {
-					attachInfo := sdk_struct.AttachedInfoElem{}
-					_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
-					attachInfo.GroupHasReadInfo.HasReadUserIDList = utils.RemoveRepeatedStringInList(append(attachInfo.GroupHasReadInfo.HasReadUserIDList, userID))
-					attachInfo.GroupHasReadInfo.HasReadCount = int32(len(attachInfo.GroupHasReadInfo.HasReadUserIDList))
-					t.AttachedInfo = utils.StructToJsonString(attachInfo)
-				}
-				t.ClientMsgID = message.ClientMsgID
-				t.IsRead = true
-				t.SessionType = message.SessionType
-				t.RecvID = message.RecvID
-				//todo
-				if err := c.db.UpdateMessage(ctx, "", t); err != nil {
-					// log.Error("internal", "setGroupMessageHasReadByMsgID err:", err, "ClientMsgID", t, message)
-					continue
-				}
-				successMsgIDlist = append(successMsgIDlist, message.ClientMsgID)
-			}
-			failedMsgIDList = utils.DifferenceSubsetString(newMsgID, successMsgIDlist)
-			if len(successMsgIDlist) != 0 {
-				msgRt.MsgIDList = successMsgIDlist
-				groupMessageReceiptResp = append(groupMessageReceiptResp, msgRt)
-			}
-			if len(failedMsgIDList) != 0 {
-				m := new(sdk_struct.MsgStruct)
-				m.ClientMsgID = utils.GetMsgID(userID)
-				m.SendID = userID
-				m.GroupID = groupID
-				// m.ContentType = constant.GroupHasReadReceipt
-				m.Content = utils.StructToJsonString(failedMsgIDList)
-				m.Status = constant.MsgStatusFiltered
-				failedMessageList = append(failedMessageList, m)
-			}
-		}
-	}
-	if len(groupMessageReceiptResp) > 0 {
-		// log.Info("internal", "OnRecvGroupReadReceipt: ", utils.StructToJsonString(groupMessageReceiptResp))
-		c.msgListener.OnRecvGroupReadReceipt(utils.StructToJsonString(groupMessageReceiptResp))
-	}
-	if len(failedMessageList) > 0 {
-		//c.tempCacheChatLog(failedMessageList)
-	}
-}
 func (c *Conversation) newMessage(newMessagesList sdk_struct.NewMsgList) {
 	sort.Sort(newMessagesList)
 	for _, w := range newMessagesList {

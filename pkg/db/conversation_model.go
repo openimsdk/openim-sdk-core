@@ -24,6 +24,7 @@ import (
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"gorm.io/gorm"
 )
 
@@ -353,6 +354,7 @@ func (d *DataBase) DecrConversationUnreadCount(ctx context.Context, conversation
 		return utils.Wrap(errors.New("get conversation err"), "")
 	}
 	if c.UnreadCount < 0 {
+		log.ZError(ctx, "decr unread count < 0", nil, "conversationID", conversationID, "count", count)
 		tx.Rollback()
 		return utils.Wrap(errors.New("decr unread count < 0"), "")
 	}

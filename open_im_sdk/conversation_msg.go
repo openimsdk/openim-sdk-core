@@ -192,20 +192,12 @@ func TypingStatusUpdate(callback open_im_sdk_callback.Base, operationID string, 
 	call(callback, operationID, UserForSDK.Conversation().TypingStatusUpdate, recvID, msgTip)
 }
 
-func MarkC2CMessageAsRead(callback open_im_sdk_callback.Base, operationID string, userID string, msgIDList string) {
-	call(callback, operationID, UserForSDK.Conversation().MarkC2CMessageAsRead, userID, msgIDList)
+func MarkConversationMessageAsRead(callback open_im_sdk_callback.Base, operationID string, conversationID string, conversationType int32) {
+	call(callback, operationID, UserForSDK.Conversation().MarkConversationMessageAsRead, conversationID, conversationType)
 }
 
-func MarkMessageAsReadByConID(callback open_im_sdk_callback.Base, operationID string, conversationID string, msgIDList string) {
-	call(callback, operationID, UserForSDK.Conversation().MarkMessageAsReadByConID, conversationID, msgIDList)
-}
-
-func MarkGroupMessageHasRead(callback open_im_sdk_callback.Base, operationID string, groupID string) {
-	call(callback, operationID, UserForSDK.Conversation().MarkGroupMessageHasRead, groupID)
-}
-
-func MarkGroupMessageAsRead(callback open_im_sdk_callback.Base, operationID string, groupID string, msgIDList string) {
-	call(callback, operationID, UserForSDK.Conversation().MarkGroupMessageAsRead, groupID, msgIDList)
+func MarkConversationMessageAsReadBySeq(callback open_im_sdk_callback.Base, operationID string, conversationID string, conversationType int32, clientMsgIDs []int64) {
+	call(callback, operationID, UserForSDK.Conversation().MarkConversationMessageAsReadBySeqs, conversationID, conversationType, clientMsgIDs)
 }
 
 func DeleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, operationID string, message string) {
