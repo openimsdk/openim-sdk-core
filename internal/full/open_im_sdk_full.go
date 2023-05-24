@@ -16,7 +16,6 @@ package full
 
 import (
 	"context"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/pkg/db/model_struct"
 	api "open_im_sdk/pkg/server_api_params"
 )
@@ -42,9 +41,15 @@ func (u *Full) GetUsersInfo(ctx context.Context, userIDList []string) ([]*api.Fu
 	for i, b := range blackList {
 		blackMap[b.BlockUserID] = blackList[i]
 	}
-	userMap := make(map[string]*sdkws.UserInfo)
-	for i, info := range users {
-		userMap[info.UserID] = users[i]
+	userMap := make(map[string]*api.PublicUser)
+	for _, info := range users {
+		userMap[info.UserID] = &api.PublicUser{
+			UserID:     info.UserID,
+			Nickname:   info.Nickname,
+			FaceURL:    info.FaceURL,
+			Ex:         info.Ex,
+			CreateTime: info.CreateTime,
+		}
 	}
 	res := make([]*api.FullUserInfo, 0, len(users))
 	for _, userID := range userIDList {

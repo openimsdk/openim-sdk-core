@@ -60,6 +60,9 @@ import (
 //}
 
 func (g *Group) CreateGroup(ctx context.Context, req *group.CreateGroupReq) (*sdkws.GroupInfo, error) {
+	if req.OwnerUserID == "" {
+		req.OwnerUserID = g.loginUserID
+	}
 	resp, err := util.CallApi[group.CreateGroupResp](ctx, constant.CreateGroupRouter, req)
 	if err != nil {
 		return nil, err
