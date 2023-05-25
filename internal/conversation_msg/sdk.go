@@ -50,9 +50,11 @@ import (
 func (c *Conversation) GetAllConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error) {
 	return c.db.GetAllConversationListDB(ctx)
 }
+
 func (c *Conversation) GetConversationListSplit(ctx context.Context, offset, count int) ([]*model_struct.LocalConversation, error) {
 	return c.db.GetConversationListSplitDB(ctx, offset, count)
 }
+
 func (c *Conversation) SetConversationRecvMessageOpt(ctx context.Context, conversationIDList []string, opt int) error {
 	var conversations []*pbConversation.Conversation
 	for _, conversationID := range conversationIDList {
@@ -88,14 +90,15 @@ func (c *Conversation) SetConversationRecvMessageOpt(ctx context.Context, conver
 	c.SyncConversations(ctx)
 	return nil
 }
+
 func (c *Conversation) SetGlobalRecvMessageOpt(ctx context.Context, opt int) error {
 	if err := util.ApiPost(ctx, constant.SetGlobalRecvMessageOptRouter, &pbUser.SetGlobalRecvMessageOptReq{UserID: c.loginUserID, GlobalRecvMsgOpt: int32(opt)}, nil); err != nil {
 		return err
 	}
 	c.user.SyncLoginUserInfo(ctx)
 	return nil
-
 }
+
 func (c *Conversation) HideConversation(ctx context.Context, conversationID string) error {
 	return c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"latest_msg_send_time": 0})
 }
@@ -113,8 +116,9 @@ func (c *Conversation) GetConversationRecvMessageOpt(ctx context.Context, conver
 		})
 	}
 	return resp, nil
-
 }
+
+// Method to set global message receiving options
 func (c *Conversation) GetOneConversation(ctx context.Context, sessionType int32, sourceID string) (*model_struct.LocalConversation, error) {
 	conversationID := c.getConversationIDBySessionType(sourceID, int(sessionType))
 	lc, err := c.db.GetConversation(ctx, conversationID)
@@ -152,8 +156,8 @@ func (c *Conversation) GetOneConversation(ctx context.Context, sessionType int32
 		}
 		return &newConversation, nil
 	}
-
 }
+
 func (c *Conversation) GetMultipleConversation(ctx context.Context, conversationIDList []string) ([]*model_struct.LocalConversation, error) {
 	conversations, err := c.db.GetMultipleConversationDB(ctx, conversationIDList)
 	if err != nil {
@@ -162,6 +166,7 @@ func (c *Conversation) GetMultipleConversation(ctx context.Context, conversation
 	return conversations, nil
 
 }
+
 func (c *Conversation) DeleteConversation(ctx context.Context, conversationID string) error {
 	lc, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
@@ -193,16 +198,16 @@ func (c *Conversation) DeleteConversation(ctx context.Context, conversationID st
 	}
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: "", Action: constant.TotalUnreadMessageChanged, Args: ""}})
 	return nil
-
 }
+
 func (c *Conversation) DeleteAllConversationFromLocal(ctx context.Context) error {
 	err := c.db.ResetAllConversation(ctx)
 	if err != nil {
 		return err
 	}
 	return nil
-
 }
+
 func (c *Conversation) SetConversationDraft(ctx context.Context, conversationID, draftText string) error {
 	if draftText != "" {
 		err := c.db.SetConversationDraftDB(ctx, conversationID, draftText)
@@ -217,8 +222,8 @@ func (c *Conversation) SetConversationDraft(ctx context.Context, conversationID,
 	}
 	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 	return nil
-
 }
+
 func (c *Conversation) ResetConversationGroupAtType(ctx context.Context, conversationID string) error {
 	lc, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
@@ -236,8 +241,8 @@ func (c *Conversation) ResetConversationGroupAtType(ctx context.Context, convers
 	}
 	c.SyncConversations(ctx)
 	return nil
-
 }
+
 func (c *Conversation) PinConversation(ctx context.Context, conversationID string, isPinned bool) error {
 	lc, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
@@ -345,6 +350,7 @@ func (c *Conversation) msgStructToLocalChatLog(src *sdk_struct.MsgStruct) *model
 	lc.AttachedInfo = utils.StructToJsonString(src.AttachedInfoElem)
 	return &lc
 }
+
 func localChatLogToMsgStruct(dst *sdk_struct.NewMsgList, src []*model_struct.LocalChatLog) {
 	copier.Copy(dst, &src)
 
@@ -653,8 +659,8 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 		}
 	}
 	return c.sendMessageToServer(ctx, s, lc, callback, delFile, p, options)
-
 }
+
 func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string,
 	p *sdkws.OfflinePushInfo, buffer1, buffer2 *bytes.Buffer) (*sdk_struct.MsgStruct, error) {
 	options := make(map[string]bool, 2)
@@ -1221,13 +1227,16 @@ func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.Ms
 	return nil
 }
 
+// 删除本地和服务器
+// 删除本地的话不用改
+// 删除服务器的话，需要把本地的消息状态改成删除
 func (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
+	// Use conversationID to remove conversations and messages from the server first
 	err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
 	if err != nil {
 		return err
 	}
 	return c.deleteConversation(ctx, conversationID)
-
 }
 
 func (c *Conversation) DeleteMessageFromLocalAndSvr(ctx context.Context, s *sdk_struct.MsgStruct) error {
@@ -1238,18 +1247,20 @@ func (c *Conversation) DeleteMessageFromLocalAndSvr(ctx context.Context, s *sdk_
 	return c.deleteMessageFromLocalStorage(ctx, s)
 }
 
+// Delete all messages from the server and local
 func (c *Conversation) DeleteAllMsgFromLocalAndSvr(ctx context.Context) error {
 	err := c.clearMessageFromSvr(ctx)
 	if err != nil {
 		return err
 	}
-	return c.deleteAllMsgFromLocal(ctx)
+	return c.DeleteAllMsgFromLocalAndSvr(ctx)
 }
 
+// Just delete the local, the server does not need to change
 func (c *Conversation) DeleteAllMsgFromLocal(ctx context.Context) error {
 	return c.deleteAllMsgFromLocal(ctx)
-
 }
+
 func (c *Conversation) getConversationTypeByGroupID(ctx context.Context, groupID string) (conversationID string, conversationType int32, err error) {
 	g, err := c.full.GetGroupInfoByGroupID(ctx, groupID)
 	if err != nil {

@@ -1012,9 +1012,8 @@ func (c *Conversation) clearMessageFromSvr(ctx context.Context) error {
 		superGroupApiReq.GroupID = v
 		err := util.ApiPost(ctx, constant.DeleteSuperGroupMsgRouter, &superGroupApiReq, nil)
 		if err != nil {
-			//log.
+			return err
 		}
-
 	}
 	return nil
 }
@@ -1297,6 +1296,7 @@ func (c *Conversation) delMsgBySeqSplit(seqList []uint32) error {
 //	common.CheckArgsErrCallback(callback, err, operationID)
 //}
 
+
 func (c *Conversation) deleteConversationAndMsgFromSvr(ctx context.Context, conversationID string) error {
 	local, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
@@ -1315,11 +1315,19 @@ func (c *Conversation) deleteConversationAndMsgFromSvr(ctx context.Context, conv
 		if err != nil {
 			return err
 		}
+		//先拿到 seqList: 这是一个 []uint32
+		//constant.GroupChatType 表示群聊
 	case constant.GroupChatType:
+		var apiReq pbMsg.DelMsgsReq
+		apiReq.UserID = c.loginUserID
+		apiReq.Seqs = utils.Uint32ListConvert(seqList)
 		groupID := local.GroupID
 		seqList, err = c.db.GetMsgSeqListByGroupID(ctx, groupID)
 		log.ZDebug(ctx, utils.GetSelfFuncName(), "seqList: ", seqList)
 		if err != nil {
+			return err
+		}
+		if err := util.ApiPost(ctx, constant.DeleteSuperGroupMsgRouter, &apiReq, nil); err != nil {
 			return err
 		}
 	case constant.SuperGroupChatType:
@@ -1335,7 +1343,6 @@ func (c *Conversation) deleteConversationAndMsgFromSvr(ctx context.Context, conv
 	// apiReq.UserID = c.loginUserID
 	// apiReq.Seqs = utils.Uint32ListConvert(seqList)
 	return util.ApiPost(ctx, constant.DeleteMsgRouter, &apiReq, nil)
-
 }
 
 func (c *Conversation) deleteAllMsgFromLocal(ctx context.Context) error {
@@ -1381,6 +1388,7 @@ func isContainMessageReaction(reactionType int, list []*sdk_struct.ReactionElem)
 	}
 	return false, nil
 }
+
 func isContainUserReactionElem(useID string, list []*sdk_struct.UserReactionElem) (bool, *sdk_struct.UserReactionElem) {
 	for _, v := range list {
 		if v.UserID == useID {
@@ -1400,6 +1408,7 @@ func DeleteUserReactionElem(a []*sdk_struct.UserReactionElem, userID string) []*
 	}
 	return a[:j]
 }
+
 func (c *Conversation) setMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, req sdk.SetMessageReactionExtensionsParams) ([]*server_api_params.ExtensionResult, error) {
 	return nil, nil
 	//message, err := c.db.GetMessageController(ctx, s)
