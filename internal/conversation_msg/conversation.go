@@ -35,6 +35,7 @@ import (
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/jinzhu/copier"
+	"go.starlark.net/lib/proto"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
@@ -1271,7 +1272,7 @@ func (c *Conversation) delMsgBySeqSplit(seqList []uint32) error {
 	req.OpUserID = c.loginUserID
 	req.UserID = c.loginUserID
 	operationID := req.OperationID
-	
+
 	err := c.SendReqWaitResp(context.Background(), &req, constant.WsDelMsg, 30, c.loginUserID)
 	if err != nil {
 		return utils.Wrap(err, "SendReqWaitResp failed")
@@ -1553,70 +1554,69 @@ func (c *Conversation) addMessageReactionExtensions(ctx context.Context, s *sdk_
 }
 
 func (c *Conversation) deleteMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, req sdk.DeleteMessageReactionExtensionsParams) ([]*server_api_params.ExtensionResult, error) {
-	return nil, nil
-	//message, err := c.db.GetMessageController(ctx, s)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//if message.Status != constant.MsgStatusSendSuccess {
-	//	return nil, errors.New("only send success message can modify reaction extensions")
-	//}
-	//if message.SessionType != constant.SuperGroupChatType {
-	//	return nil, errors.New("currently only support super group message")
-	//
-	//}
-	//extendMsg, _ := c.db.GetMessageReactionExtension(ctx, message.ClientMsgID)
-	//temp := make(map[string]*server_api_params.KeyValue)
-	//_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
-	//var reqTemp []*server_api_params.KeyValue
-	//for _, v := range req {
-	//	if value, ok := temp[v]; ok {
-	//		var tt server_api_params.KeyValue
-	//		tt.LatestUpdateTime = value.LatestUpdateTime
-	//		tt.TypeKey = v
-	//		reqTemp = append(reqTemp, &tt)
-	//	}
-	//}
-	//var sourceID string
-	//switch message.SessionType {
-	//case constant.SingleChatType:
-	//	if message.SendID == c.loginUserID {
-	//		sourceID = message.RecvID
-	//	} else {
-	//		sourceID = message.SendID
-	//	}
-	//case constant.NotificationChatType:
-	//	sourceID = message.RecvID
-	//case constant.GroupChatType, constant.SuperGroupChatType:
-	//	sourceID = message.RecvID
-	//}
-	//var apiReq server_api_params.DeleteMessageReactionExtensionsReq
-	//apiReq.ClientMsgID = message.ClientMsgID
-	//apiReq.SourceID = sourceID
-	//apiReq.SessionType = message.SessionType
-	//apiReq.ReactionExtensionList = reqTemp
-	//apiReq.OperationID = ""
-	//apiReq.IsExternalExtensions = message.IsExternalExtensions
-	//apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
-	//resp, err := util.CallApi[server_api_params.ApiResult](ctx, constant.AddMessageReactionExtensionsRouter, &apiReq)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//var msg model_struct.LocalChatLogReactionExtensions
-	//msg.ClientMsgID = message.ClientMsgID
-	//resultKeyMap := make(map[string]*sdkws.KeyValue)
-	//for _, v := range resp.Result {
-	//	if v.ErrCode == 0 {
-	//		temp := new(sdkws.KeyValue)
-	//		temp.TypeKey = v.TypeKey
-	//		resultKeyMap[v.TypeKey] = temp
-	//	}
-	//}
-	//err = c.db.DeleteAndUpdateMessageReactionExtension(ctx, message.ClientMsgID, resultKeyMap)
-	//if err != nil {
-	//	log.Error("", "GetAndUpdateMessageReactionExtension err:", err.Error())
-	//}
-	//return resp.Result, nil
+	message, err := c.GetMessageController(ctx, s)
+	if err != nil {
+		return nil, err
+	}
+	if message.Status != constant.MsgStatusSendSuccess {
+		return nil, errors.New("only send success message can modify reaction extensions")
+	}
+	if message.SessionType != constant.SuperGroupChatType {
+		return nil, errors.New("currently only support super group message")
+
+	}
+	extendMsg, _ := c.db.GetMessageReactionExtension(ctx, message.ClientMsgID)
+	temp := make(map[string]*server_api_params.KeyValue)
+	_ = json.Unmarshal(extendMsg.LocalReactionExtensions, &temp)
+	var reqTemp []*server_api_params.KeyValue
+	for _, v := range req {
+		if value, ok := temp[v]; ok {
+			var tt server_api_params.KeyValue
+			tt.LatestUpdateTime = value.LatestUpdateTime
+			tt.TypeKey = v
+			reqTemp = append(reqTemp, &tt)
+		}
+	}
+	var sourceID string
+	switch message.SessionType {
+	case constant.SingleChatType:
+		if message.SendID == c.loginUserID {
+			sourceID = message.RecvID
+		} else {
+			sourceID = message.SendID
+		}
+	case constant.NotificationChatType:
+		sourceID = message.RecvID
+	case constant.GroupChatType, constant.SuperGroupChatType:
+		sourceID = message.RecvID
+	}
+	var apiReq server_api_params.DeleteMessageReactionExtensionsReq
+	apiReq.ClientMsgID = message.ClientMsgID
+	apiReq.SourceID = sourceID
+	apiReq.SessionType = message.SessionType
+	apiReq.ReactionExtensionList = reqTemp
+	apiReq.OperationID = ""
+	apiReq.IsExternalExtensions = message.IsExternalExtensions
+	apiReq.MsgFirstModifyTime = message.MsgFirstModifyTime
+	resp, err := util.CallApi[server_api_params.ApiResult](ctx, constant.AddMessageReactionExtensionsRouter, &apiReq)
+	if err != nil {
+		return nil, err
+	}
+	var msg model_struct.LocalChatLogReactionExtensions
+	msg.ClientMsgID = message.ClientMsgID
+	resultKeyMap := make(map[string]*sdkws.KeyValue)
+	for _, v := range resp.Result {
+		if v.ErrCode == 0 {
+			temp := new(sdkws.KeyValue)
+			temp.TypeKey = v.TypeKey
+			resultKeyMap[v.TypeKey] = temp
+		}
+	}
+	err = c.db.DeleteAndUpdateMessageReactionExtension(ctx, message.ClientMsgID, resultKeyMap)
+	if err != nil {
+		log.Error("", "GetAndUpdateMessageReactionExtension err:", err.Error())
+	}
+	return resp.Result, nil
 }
 
 type syncReactionExtensionParams struct {
