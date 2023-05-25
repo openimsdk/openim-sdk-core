@@ -34,6 +34,7 @@ import (
 	utils2 "github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/jinzhu/copier"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
@@ -1019,69 +1020,70 @@ func (c *Conversation) clearMessageFromSvr(ctx context.Context) error {
 }
 
 func (c *Conversation) deleteMessageFromLocalStorage(ctx context.Context, s *sdk_struct.MsgStruct) error {
-	//var conversation model_struct.LocalConversation
-	//var latestMsg sdk_struct.MsgStruct
-	//var conversationID string
-	//var sourceID string
-	//chatLog := model_struct.LocalChatLog{ClientMsgID: s.ClientMsgID, Status: constant.MsgStatusHasDeleted, SessionType: s.SessionType}
-	//
-	//switch s.SessionType {
-	//case constant.GroupChatType:
-	//	conversationID = c.getConversationIDBySessionType(s.GroupID, constant.GroupChatType)
-	//	sourceID = s.GroupID
-	//case constant.SingleChatType:
-	//	if s.SendID != c.loginUserID {
-	//		conversationID = c.getConversationIDBySessionType(s.SendID, constant.SingleChatType)
-	//		sourceID = s.SendID
-	//	} else {
-	//		conversationID = c.getConversationIDBySessionType(s.RecvID, constant.SingleChatType)
-	//		sourceID = s.RecvID
-	//	}
-	//case constant.SuperGroupChatType:
-	//	conversationID = c.getConversationIDBySessionType(s.GroupID, constant.SuperGroupChatType)
-	//	sourceID = s.GroupID
-	//	chatLog.RecvID = s.GroupID
-	//}
-	//err := c.db.UpdateMessageController(ctx, &chatLog)
-	//if err != nil {
-	//	return err
-	//}
-	//LocalConversation, err := c.db.GetConversation(ctx, conversationID)
-	//if err != nil {
-	//	return err
-	//}
-	//err = utils.JsonStringToStruct(LocalConversation.LatestMsg, &latestMsg)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//if s.ClientMsgID == latestMsg.ClientMsgID { //If the deleted message is the latest message of the conversation, update the latest message of the conversation
-	//	list, err := c.db.GetMessageListNoTimeController(ctx, sourceID, int(s.SessionType), 1, false)
-	//	if err != nil {
-	//		return err
-	//	}
-	//	conversation.ConversationID = conversationID
-	//	if list == nil {
-	//		conversation.LatestMsg = ""
-	//		conversation.LatestMsgSendTime = s.SendTime
-	//	} else {
-	//		copier.Copy(&latestMsg, list[0])
-	//		err := c.msgConvert(&latestMsg)
-	//		if err != nil {
-	//			log.Error("", "Parsing data error:", err.Error(), latestMsg)
-	//		}
-	//		conversation.LatestMsg = utils.StructToJsonString(latestMsg)
-	//		conversation.LatestMsgSendTime = latestMsg.SendTime
-	//	}
-	//	err = c.db.UpdateColumnsConversation(ctx, conversation.ConversationID, map[string]interface{}{"latest_msg_send_time": conversation.LatestMsgSendTime, "latest_msg": conversation.LatestMsg})
-	//	if err != nil {
-	//		log.Error("internal", "updateConversationLatestMsgModel err: ", err)
-	//	} else {
-	//		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
-	//	}
-	//}
+	var conversation model_struct.LocalConversation
+	var latestMsg sdk_struct.MsgStruct
+	var conversationID string
+	var sourceID string
+	chatLog := model_struct.LocalChatLog{ClientMsgID: s.ClientMsgID, Status: constant.MsgStatusHasDeleted, SessionType: s.SessionType}
+
+	switch s.SessionType {
+	case constant.GroupChatType:
+		conversationID = c.getConversationIDBySessionType(s.GroupID, constant.GroupChatType)
+		sourceID = s.GroupID
+	case constant.SingleChatType:
+		if s.SendID != c.loginUserID {
+			conversationID = c.getConversationIDBySessionType(s.SendID, constant.SingleChatType)
+			sourceID = s.SendID
+		} else {
+			conversationID = c.getConversationIDBySessionType(s.RecvID, constant.SingleChatType)
+			sourceID = s.RecvID
+		}
+	case constant.SuperGroupChatType:
+		conversationID = c.getConversationIDBySessionType(s.GroupID, constant.SuperGroupChatType)
+		sourceID = s.GroupID
+		chatLog.RecvID = s.GroupID
+	}
+	err := c.db.UpdateMessageController(ctx, &chatLog)
+	if err != nil {
+		return err
+	}
+	LocalConversation, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	err = utils.JsonStringToStruct(LocalConversation.LatestMsg, &latestMsg)
+	if err != nil {
+		return err
+	}
+
+	if s.ClientMsgID == latestMsg.ClientMsgID { //If the deleted message is the latest message of the conversation, update the latest message of the conversation
+		list, err := c.db.GetMessageListNoTimeController(ctx, sourceID, int(s.SessionType), 1, false)
+		if err != nil {
+			return err
+		}
+		conversation.ConversationID = conversationID
+		if list == nil {
+			conversation.LatestMsg = ""
+			conversation.LatestMsgSendTime = s.SendTime
+		} else {
+			copier.Copy(&latestMsg, list[0])
+			err := c.msgConvert(&latestMsg)
+			if err != nil {
+				log.Error("", "Parsing data error:", err.Error(), latestMsg)
+			}
+			conversation.LatestMsg = utils.StructToJsonString(latestMsg)
+			conversation.LatestMsgSendTime = latestMsg.SendTime
+		}
+		err = c.db.UpdateColumnsConversation(ctx, conversation.ConversationID, map[string]interface{}{"latest_msg_send_time": conversation.LatestMsgSendTime, "latest_msg": conversation.LatestMsg})
+		if err != nil {
+			log.Error("internal", "updateConversationLatestMsgModel err: ", err)
+		} else {
+			_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+		}
+	}
 	return nil
 }
+
 func (c *Conversation) judgeMultipleSubString(keywordList []string, main string, keywordListMatchType int) bool {
 	if len(keywordList) == 0 {
 		return true
@@ -1263,23 +1265,23 @@ func (c *Conversation) delMsgBySeq(seqList []uint32) error {
 }
 
 func (c *Conversation) delMsgBySeqSplit(seqList []uint32) error {
-	//var req server_api_params.DelMsgListReq
-	//req.SeqList = seqList
-	//req.OperationID = utils.OperationIDGenerator()
-	//req.OpUserID = c.loginUserID
-	//req.UserID = c.loginUserID
-	//operationID := req.OperationID
-	//
-	//resp, err := c.Ws.SendReqWaitResp(context.Background(), &req, constant.WsDelMsg, 30, 5, c.loginUserID)
-	//if err != nil {
-	//	return utils.Wrap(err, "SendReqWaitResp failed")
-	//}
-	//var delResp server_api_params.DelMsgListResp
-	//err = proto.Unmarshal(resp.Data, &delResp)
-	//if err != nil {
-	//	log.Error(operationID, "Unmarshal failed ", err.Error())
-	//	return utils.Wrap(err, "Unmarshal failed")
-	//}
+	var req server_api_params.DelMsgListReq
+	req.SeqList = seqList
+	req.OperationID = utils.OperationIDGenerator()
+	req.OpUserID = c.loginUserID
+	req.UserID = c.loginUserID
+	operationID := req.OperationID
+	
+	err := c.SendReqWaitResp(context.Background(), &req, constant.WsDelMsg, 30, c.loginUserID)
+	if err != nil {
+		return utils.Wrap(err, "SendReqWaitResp failed")
+	}
+	var delResp server_api_params.DelMsgListResp
+	err = proto.Unmarshal(resp.Data, &delResp)
+	if err != nil {
+		log.Error(operationID, "Unmarshal failed ", err.Error())
+		return utils.Wrap(err, "Unmarshal failed")
+	}
 	return nil
 }
 
@@ -1295,7 +1297,6 @@ func (c *Conversation) delMsgBySeqSplit(seqList []uint32) error {
 //	err = c.delMsgBySeq(seqList)
 //	common.CheckArgsErrCallback(callback, err, operationID)
 //}
-
 
 func (c *Conversation) deleteConversationAndMsgFromSvr(ctx context.Context, conversationID string) error {
 	local, err := c.db.GetConversation(ctx, conversationID)
@@ -1485,6 +1486,7 @@ func (c *Conversation) setMessageReactionExtensions(ctx context.Context, s *sdk_
 	//}
 	//return resp.Result, nil
 }
+
 func (c *Conversation) addMessageReactionExtensions(ctx context.Context, s *sdk_struct.MsgStruct, req sdk.AddMessageReactionExtensionsParams) ([]*server_api_params.ExtensionResult, error) {
 	return nil, nil
 	//message, err := c.db.GetMessageController(ctx, s)

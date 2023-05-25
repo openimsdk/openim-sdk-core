@@ -977,9 +977,11 @@ func (c *Conversation) FindMessageList(ctx context.Context, req []*sdk_params_ca
 	return &r, nil
 
 }
+
 func (c *Conversation) GetHistoryMessageList(ctx context.Context, req sdk_params_callback.GetHistoryMessageListParams) ([]*sdk_struct.MsgStruct, error) {
 	return c.getHistoryMessageList(ctx, req, false)
 }
+
 func (c *Conversation) GetAdvancedHistoryMessageList(ctx context.Context, req sdk_params_callback.GetAdvancedHistoryMessageListParams) (*sdk_params_callback.GetAdvancedHistoryMessageListCallback, error) {
 	result, err := c.getAdvancedHistoryMessageList(ctx, req, false)
 	if err != nil {
@@ -991,6 +993,7 @@ func (c *Conversation) GetAdvancedHistoryMessageList(ctx context.Context, req sd
 	}
 	return result, nil
 }
+
 func (c *Conversation) GetAdvancedHistoryMessageListReverse(ctx context.Context, req sdk_params_callback.GetAdvancedHistoryMessageListParams) (*sdk_params_callback.GetAdvancedHistoryMessageListCallback, error) {
 	result, err := c.getAdvancedHistoryMessageList(ctx, req, true)
 	if err != nil {
@@ -1228,7 +1231,7 @@ func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.Ms
 }
 
 // 删除本地和服务器
-// 删除本地的话不用改
+// 删除本地的话不用改服务器的数据
 // 删除服务器的话，需要把本地的消息状态改成删除
 func (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
 	// Use conversationID to remove conversations and messages from the server first
