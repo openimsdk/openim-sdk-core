@@ -32,10 +32,10 @@ import (
 	"strings"
 
 	utils2 "github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/jinzhu/copier"
-	"go.starlark.net/lib/proto"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
