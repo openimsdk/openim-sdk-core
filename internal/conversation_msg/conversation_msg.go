@@ -830,27 +830,19 @@ func (c *Conversation) tempCacheChatLog(ctx context.Context, messageList []*sdk_
 }
 
 func (c *Conversation) revokeMessage(ctx context.Context, msg *sdkws.MsgData) {
-	type RevokeMsgTip struct {
-		RevokerUserID  string `protobuf:"bytes,1,opt,name=revokerUserID,proto3" json:"revokerUserID"`
-		ClientMsgID    string `protobuf:"bytes,2,opt,name=clientMsgID,proto3" json:"clientMsgID"`
-		RevokeTime     int64  `protobuf:"varint,3,opt,name=revokeTime,proto3" json:"revokeTime"`
-		SesstionType   int64  `protobuf:"varint,5,opt,name=sesstionType,proto3" json:"sesstionType"`
-		Seq            int64  `protobuf:"varint,6,opt,name=seq,proto3" json:"seq"`
-		ConversationID string `protobuf:"bytes,7,opt,name=conversationID,proto3" json:"conversationID"`
-	}
-	tips := RevokeMsgTip{}
+	var tips sdkws.RevokeMsgTips
 	if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 		log.ZError(ctx, "unmarshal failed", err, "msg", msg)
 		return
 	}
-	log.ZDebug(ctx, "revokeMessage", "tips", tips)
+	log.ZDebug(ctx, "revokeMessage", "tips", &tips)
 	if err := c.db.UpdateMessageBySeq(ctx, tips.ConversationID, &model_struct.LocalChatLog{Seq: tips.Seq, Status: constant.MsgStatusRevoked, Content: string(msg.Content)}); err != nil {
-		log.ZError(ctx, "UpdateMessageBySeq failed", err, "tips", tips)
+		log.ZError(ctx, "UpdateMessageBySeq failed", err, "tips", &tips)
 		return
 	}
 	revokedMsg, err := c.db.GetMessageBySeq(ctx, tips.ConversationID, tips.Seq)
 	if err != nil {
-		log.ZError(ctx, "GetMessageBySeq failed", err, "tips", tips)
+		log.ZError(ctx, "GetMessageBySeq failed", err, "tips", &tips)
 		return
 	}
 	var revokerRole int32
@@ -858,14 +850,14 @@ func (c *Conversation) revokeMessage(ctx context.Context, msg *sdkws.MsgData) {
 	if tips.SesstionType == constant.SuperGroupChatType {
 		groupMember, err := c.db.GetGroupMemberInfoByGroupIDUserID(ctx, msg.GroupID, tips.RevokerUserID)
 		if err != nil {
-			log.ZError(ctx, "GetGroupMemberInfoByGroupIDUserID failed", err, "tips", tips)
+			log.ZError(ctx, "GetGroupMemberInfoByGroupIDUserID failed", err, "tips", &tips)
 		}
 		revokerRole = groupMember.RoleLevel
 		revokerNickname = groupMember.Nickname
 	} else {
 		_, userName, err := c.cache.GetUserNameAndFaceURL(ctx, tips.RevokerUserID)
 		if err != nil {
-			log.ZError(ctx, "GetUserNameAndFaceURL failed", err, "tips", tips)
+			log.ZError(ctx, "GetUserNameAndFaceURL failed", err, "tips", &tips)
 		}
 		revokerNickname = userName
 	}
@@ -885,7 +877,7 @@ func (c *Conversation) revokeMessage(ctx context.Context, msg *sdkws.MsgData) {
 	c.msgListener.OnNewRecvMessageRevoked(utils.StructToJsonString(m))
 	msgList, err := c.db.SearchAllMessageByContentType(ctx, constant.Quote)
 	if err != nil {
-		log.ZError(ctx, "SearchAllMessageByContentType failed", err, "tips", tips)
+		log.ZError(ctx, "SearchAllMessageByContentType failed", err, "tips", &tips)
 		return
 	}
 	for _, v := range msgList {

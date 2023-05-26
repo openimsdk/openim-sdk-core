@@ -860,7 +860,7 @@ func (c *Conversation) revokeOneMessage(ctx context.Context, req *sdk_struct.Msg
 			}
 		}
 	}
-	if err := util.ApiPost(ctx, constant.RevokeMsgRouter, pbMsg.RevokeMsgReq{ConversationID: conversationID, Seq: message.Seq}, &pbMsg.RevokeMsgResp{}); err != nil {
+	if err := util.ApiPost(ctx, constant.RevokeMsgRouter, pbMsg.RevokeMsgReq{ConversationID: conversationID, Seq: message.Seq, UserID: c.loginUserID}, &pbMsg.RevokeMsgResp{}); err != nil {
 		return err
 	}
 	c.revokeMessage(ctx, nil)

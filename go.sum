@@ -4,6 +4,8 @@ github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230516022510-67ad00ab040a h1:cFAB
 github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230516022510-67ad00ab040a/go.mod h1:4wwjMTVkE0vGfwvYmg2rH8fn+evo2gdNRPRFGSdKHXA=
 github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230522071506-416bf4921cd2 h1:4UYWZwoxWSDvaa/0rbk6xVOPbEFvA2yVLn0+ZSwfEmA=
 github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230522071506-416bf4921cd2/go.mod h1:8CCt5UNB0rr30inIS7mNQ5PMmy6R048bRILT7VtYRO0=
+github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230526114757-8b31f676c276 h1:73Ij3sF8ov1BHHs3t2w8gzZVhT/hERhY9m2SzU73QVs=
+github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230526114757-8b31f676c276/go.mod h1:Kjq/TM7HgYn38Wmo1NaYNdojWzxzmsGSRVZZOSLv6go=
 github.com/antonfisher/nested-logrus-formatter v1.3.1 h1:NFJIr+pzwv5QLHTPyKz9UMEoHck02Q9L0FP13b/xSbQ=
 github.com/antonfisher/nested-logrus-formatter v1.3.1/go.mod h1:6WTfyWFkBc9+zyBaKIqRrg/KwMqBbodBjgbHjDz7zjA=
 github.com/aws/aws-sdk-go v1.38.3/go.mod h1:hcU610XS61/+aQV88ixoOzUoG7v3b31pl2zKMmprdro=

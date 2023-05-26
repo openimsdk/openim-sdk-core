@@ -56,6 +56,7 @@ func init() {
 	open_im_sdk.UserForSDK.SetListenerForService(&onListenerForService{ctx: ctx})
 	open_im_sdk.UserForSDK.SetConversationListener(&onConversationListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetGroupListener(&onGroupListener{ctx: ctx})
+	open_im_sdk.UserForSDK.SetAdvancedMsgListener(&onAdvancedMsgListener{ctx: ctx})
 }
 
 func GetUserToken(ctx context.Context, userID string) (string, error) {
@@ -200,4 +201,40 @@ func (o *onGroupListener) OnGroupApplicationAccepted(groupApplication string) {
 
 func (o *onGroupListener) OnGroupApplicationRejected(groupApplication string) {
 	log.ZInfo(o.ctx, "OnGroupApplicationRejected", "groupApplication", groupApplication)
+}
+
+type onAdvancedMsgListener struct {
+	ctx context.Context
+}
+
+func (o *onAdvancedMsgListener) OnRecvNewMessage(message string) {
+	log.ZInfo(o.ctx, "OnRecvNewMessage", "message", message)
+}
+
+func (o *onAdvancedMsgListener) OnRecvC2CReadReceipt(msgReceiptList string) {
+	log.ZInfo(o.ctx, "OnRecvC2CReadReceipt", "msgReceiptList", msgReceiptList)
+}
+
+func (o *onAdvancedMsgListener) OnRecvGroupReadReceipt(groupMsgReceiptList string) {
+	log.ZInfo(o.ctx, "OnRecvGroupReadReceipt", "groupMsgReceiptList", groupMsgReceiptList)
+}
+
+func (o *onAdvancedMsgListener) OnRecvMessageRevoked(msgID string) {
+	log.ZInfo(o.ctx, "OnRecvMessageRevoked", "msgID", msgID)
+}
+
+func (o *onAdvancedMsgListener) OnNewRecvMessageRevoked(messageRevoked string) {
+	log.ZInfo(o.ctx, "OnNewRecvMessageRevoked", "messageRevoked", messageRevoked)
+}
+
+func (o *onAdvancedMsgListener) OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string) {
+	log.ZInfo(o.ctx, "OnRecvMessageExtensionsChanged", "msgID", msgID, "reactionExtensionList", reactionExtensionList)
+}
+
+func (o *onAdvancedMsgListener) OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string) {
+	log.ZInfo(o.ctx, "OnRecvMessageExtensionsDeleted", "msgID", msgID, "reactionExtensionKeyList", reactionExtensionKeyList)
+}
+
+func (o *onAdvancedMsgListener) OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string) {
+	log.ZInfo(o.ctx, "OnRecvMessageExtensionsAdded", "msgID", msgID, "reactionExtensionList", reactionExtensionList)
 }
