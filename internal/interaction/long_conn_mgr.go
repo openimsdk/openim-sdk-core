@@ -149,8 +149,6 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 // reads from this goroutine.
 func (c *LongConnMgr) readPump(ctx context.Context) {
 	defer func() {
-		//c.hub.unregister <- c
-		//c.conn.Close()
 		log.ZWarn(c.ctx, "writePump closed", c.closedErr)
 	}()
 	connNum := 0
@@ -178,7 +176,11 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 		}
 		switch messageType {
 		case MessageBinary:
-			c.handleMessage(message)
+			err := c.handleMessage(message)
+			if err != nil {
+				c.closedErr = err
+				return
+			}
 		case MessageText:
 			c.closedErr = ErrNotSupportMessageProtocol
 			return
@@ -190,6 +192,7 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 			return
 		default:
 		}
+
 	}
 }
 
@@ -346,20 +349,20 @@ func (c *LongConnMgr) close() error {
 
 }
 
-func (c *LongConnMgr) handleMessage(message []byte) {
+func (c *LongConnMgr) handleMessage(message []byte) error {
 	if c.IsCompression {
 		var decompressErr error
 		message, decompressErr = c.compressor.DeCompress(message)
 		if decompressErr != nil {
 			log.ZError(c.ctx, "DeCompress failed", decompressErr, message)
-			return
+			return sdkerrs.ErrMsgDeCompression
 		}
 	}
 	var wsResp GeneralWsResp
 	err := c.encoder.Decode(message, &wsResp)
 	if err != nil {
 		log.ZError(c.ctx, "decodeBinaryWs err", err, "message", message)
-		return
+		return sdkerrs.ErrMsgDecodeBinaryWs
 	}
 	ctx := context.WithValue(c.ctx, "operationID", wsResp.OperationID)
 	log.ZInfo(ctx, "recv msg", "wsResp", wsResp)
@@ -368,6 +371,11 @@ func (c *LongConnMgr) handleMessage(message []byte) {
 		if err = c.doPushMsg(ctx, wsResp); err != nil {
 			log.ZError(ctx, "doWSPushMsg failed", err, "wsResp", wsResp)
 		}
+	case constant.LogoutMsg:
+		if err := c.Syncer.NotifyResp(ctx, wsResp); err != nil {
+			log.ZError(ctx, "notifyResp failed", err, "wsResp", wsResp)
+		}
+		return sdkerrs.ErrLoginOut
 	case constant.KickOnlineMsg:
 		//log.Warn(wsResp.OperationID, "kick...  logout")
 		//w.kickOnline(wsResp)
@@ -378,8 +386,6 @@ func (c *LongConnMgr) handleMessage(message []byte) {
 		fallthrough
 	case constant.SendMsg:
 		fallthrough
-	case constant.LogoutMsg:
-		fallthrough
 	case constant.SendSignalMsg:
 		fallthrough
 	case constant.SetBackgroundStatus:
@@ -388,8 +394,9 @@ func (c *LongConnMgr) handleMessage(message []byte) {
 		}
 	default:
 		// log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
-		return
+		return sdkerrs.ErrMsgTypeNotSupport
 	}
+	return nil
 }
 func (c *LongConnMgr) IsConnected() bool {
 	c.w.Lock()

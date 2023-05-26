@@ -17,5 +17,10 @@ const (
 	TokenInvalidError    = 11502
 
 	//消息相关
-	MsgContentEmptyError = 12001 //消息内容为空
+	MsgContentEmptyError   = 12001 //消息内容为空
+	MsgDeCompressionError  = 12002 //消息解压失败
+	MsgDecodeBinaryWsError = 12003 //消息解码失败
+	MsgTypeNotSupportError = 12004 //消息类型不支持
+
+	LoginOutError = 13001 //用户已经退出登录
 )

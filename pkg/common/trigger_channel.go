@@ -17,6 +17,7 @@ package common
 import (
 	"context"
 	"errors"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
@@ -201,16 +202,17 @@ type goroutine interface {
 	//GetContext() context.Context
 }
 
-func DoListener(Li goroutine) {
+func DoListener(Li goroutine, ctx context.Context) {
 	for {
 		select {
 		case cmd := <-Li.GetCh():
 			Li.Work(cmd)
-			//case <-Li.GetContext().Done():
-			//	log.ZInfo(Li.GetContext(), "ctx deadline, sdk logout.....","module",)
-			//	return
+		case <-ctx.Done():
+			log.ZInfo(ctx, "conversation done sdk logout.....")
+			return
 		}
 	}
+
 }
 
 func sendCmd(ch chan<- Cmd2Value, value Cmd2Value, timeout int64) error {

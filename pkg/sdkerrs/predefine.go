@@ -14,4 +14,10 @@ var (
 	ErrUserIDNotFound  = errs.NewCodeError(UserIDNotFoundError, "UserIDNotFoundError")
 
 	ErrRecordNotFound = errs.NewCodeError(RecordNotFoundError, "RecordNotFoundError")
+
+	ErrMsgDecodeBinaryWs = errs.NewCodeError(MsgDecodeBinaryWsError, "MsgDecodeBinaryWsError")
+	ErrMsgDeCompression  = errs.NewCodeError(MsgDeCompressionError, "MsgDeCompressionError")
+	ErrMsgTypeNotSupport = errs.NewCodeError(MsgTypeNotSupportError, "MsgTypeNotSupportError")
+
+	ErrLoginOut = errs.NewCodeError(LoginOutError, "MsgLoginOutError")
 )
