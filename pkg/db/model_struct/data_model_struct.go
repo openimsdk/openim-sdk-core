@@ -459,3 +459,12 @@ type LocalWorkMomentsNotificationUnreadCount struct {
 func (LocalWorkMomentsNotificationUnreadCount) TableName() string {
 	return "local_work_moments_notification_unread_count"
 }
+
+type NotificationSeqsModel struct {
+	ConversationID string `gorm:"column:conversation_id;primary_key;type:char(128)" json:"conversationID"`
+	Seq            int64  `gorm:"column:seq" json:"seq"`
+}
+
+func (NotificationSeqsModel) TableName() string {
+	return "local_notification_seqs"
+}

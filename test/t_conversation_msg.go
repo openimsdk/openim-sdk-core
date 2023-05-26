@@ -17,7 +17,6 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
@@ -27,6 +26,8 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"sync"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 )
@@ -799,15 +800,6 @@ func (t TestMarkGroupMessageAsRead) OnError(errCode int32, errMsg string) {
 
 func (t TestMarkGroupMessageAsRead) OnSuccess(data string) {
 	log.Info(t.OperationID, "TestMarkGroupMessageAsRead , OnSuccess %v \n", data)
-}
-func DoTestMarkGroupMessageAsRead() {
-	groupID := "769129589"
-	msgIDList := []string{"b4602c5a9f261c3832f6513a21cf55d6"}
-	operationID := utils.OperationIDGenerator()
-	var testMarkGroupMessageAsRead TestMarkGroupMessageAsRead
-	testMarkGroupMessageAsRead.OperationID = operationID
-	open_im_sdk.MarkGroupMessageAsRead(&testMarkGroupMessageAsRead, operationID, groupID, utils.StructToJsonString(msgIDList))
-
 }
 
 func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string) {

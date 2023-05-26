@@ -180,6 +180,9 @@ type MessageDatabase interface {
 	SetChatLogFailedStatus(ctx context.Context)
 	BatchInsertConversationUnreadMessageList(ctx context.Context, messageList []*model_struct.LocalConversationUnreadMessage) error
 	DeleteConversationUnreadMessageList(ctx context.Context, conversationID string, sendTime int64) int64
+
+	SetNotificationSeq(ctx context.Context, conversationID string, seq int64) error
+	GetNotificationAllSeqs(ctx context.Context) ([]*model_struct.NotificationSeqsModel, error)
 }
 
 type ConversationDatabase interface {

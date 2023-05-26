@@ -91,6 +91,11 @@ func (testGroupListener) OnGroupApplicationRejected(callbackInfo string) {
 
 }
 
+func (testGroupListener) OnGroupDismissed(callbackInfo string) {
+	log.Info(utils.OperationIDGenerator(), utils.GetSelfFuncName(), callbackInfo)
+
+}
+
 type testOrganizationListener struct {
 }
 
@@ -143,7 +148,7 @@ func DoTestCreateGroup() {
 	g2 := utils.StructToJsonString(memberlist)
 
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ", g1, g2)
-	open_im_sdk.CreateGroup(test, test.OperationID, g1, g2)
+	// open_im_sdk.CreateGroup(test, test.OperationID, g1, g2)
 }
 
 type testSetGroupInfo struct {
