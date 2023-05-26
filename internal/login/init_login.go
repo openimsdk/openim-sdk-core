@@ -311,7 +311,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 		u.conversation.SetBatchMsgListener(u.batchMsgListener)
 		log.ZDebug(ctx, "SetBatchMsgListener", "batchMsgListener", u.batchMsgListener)
 	}
-	go common.DoListener(u.conversation)
+	go common.DoListener(u.conversation, u.ctx)
 	go u.conversation.FixVersionData(ctx)
 	log.ZInfo(ctx, "login success...", "login cost time: ", time.Since(t1))
 	return nil
@@ -348,6 +348,7 @@ func (u *LoginMgr) logout(ctx context.Context) error {
 		return err
 	}
 	u.Exit()
+	_ = u.db.Close(u.ctx)
 	log.ZDebug(ctx, "TriggerCmdLogout success...")
 	return nil
 }
