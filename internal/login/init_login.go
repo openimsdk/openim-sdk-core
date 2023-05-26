@@ -343,7 +343,7 @@ func (u *LoginMgr) Context() context.Context {
 }
 
 func (u *LoginMgr) logout(ctx context.Context) error {
-	err := u.longConnMgr.SendReqWaitResp(ctx, &push.DelUserPushTokenReq{UserID: u.info.UserID, PlatformID: u.info.Platform}, constant.LogoutMsg, nil)
+	err := u.longConnMgr.SendReqWaitResp(ctx, &push.DelUserPushTokenReq{UserID: u.info.UserID, PlatformID: u.info.Platform}, constant.LogoutMsg, &push.DelUserPushTokenResp{})
 	if err != nil {
 		return err
 	}
