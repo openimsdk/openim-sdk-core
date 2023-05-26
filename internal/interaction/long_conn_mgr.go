@@ -190,6 +190,12 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 			return
 		default:
 		}
+		select {
+		case <-ctx.Done():
+			c.closedErr = ctx.Err()
+			return
+		default:
+		}
 	}
 }
 

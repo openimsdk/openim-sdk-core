@@ -16,6 +16,7 @@ package login
 
 import (
 	"context"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/push"
 	"open_im_sdk/internal/business"
 	"open_im_sdk/internal/cache"
 	conv "open_im_sdk/internal/conversation_msg"
@@ -342,7 +343,7 @@ func (u *LoginMgr) Context() context.Context {
 }
 
 func (u *LoginMgr) logout(ctx context.Context) error {
-	err := u.longConnMgr.SendReqWaitResp(ctx, &server_api_params.GetMaxAndMinSeqReq{}, constant.LogoutMsg, nil)
+	err := u.longConnMgr.SendReqWaitResp(ctx, &push.DelUserPushTokenReq{UserID: u.info.UserID, PlatformID: u.info.Platform}, constant.LogoutMsg, nil)
 	if err != nil {
 		return err
 	}
