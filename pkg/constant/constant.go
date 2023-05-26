@@ -312,50 +312,51 @@ const (
 	NotPrivateChat = false
 )
 
-const SuccessCallbackDefault = ""
+const SuccessCallbackDefault = "" // Default value for success callback
 
 const (
-	AppOrdinaryUsers = 1
-	AppAdmin         = 2
+	AppOrdinaryUsers = 1 // Application user type: ordinary user
+	AppAdmin         = 2 // Application user type: administrator
 
-	GroupOrdinaryUsers         = 1
-	GroupOwner                 = 2
-	GroupAdmin                 = 3
-	GroupAdminAndOrdinaryUsers = 4
-	GroupResponseAgree         = 1
-	GroupResponseRefuse        = -1
+	GroupOrdinaryUsers         = 1  // Group member type: ordinary user
+	GroupOwner                 = 2  // Group member type: owner
+	GroupAdmin                 = 3  // Group member type: administrator
+	GroupAdminAndOrdinaryUsers = 4  // Group member type: administrator and ordinary user
+	GroupResponseAgree         = 1  // Response to group application: agree
+	GroupResponseRefuse        = -1 // Response to group application: refuse
 
-	FriendResponseAgree  = 1
-	FriendResponseRefuse = -1
+	FriendResponseAgree  = 1  // Response to friend request: agree
+	FriendResponseRefuse = -1 // Response to friend request: refuse
 
-	Male   = 1
-	Female = 2
+	Male   = 1 // Gender: male
+	Female = 2 // Gender: female
 )
 const (
-	AtAllString = "AtAllTag"
-	AtNormal    = 0
-	AtMe        = 1
-	AtAll       = 2
-	AtAllAtMe   = 3
+	AtAllString = "AtAllTag" // String for 'all people' mention tag
+	AtNormal    = 0          // Mention mode: normal
+	AtMe        = 1          // Mention mode: mention sender only
+	AtAll       = 2          // Mention mode: mention all people
+	AtAllAtMe   = 3          // Mention mode: mention all people and sender
+
 )
 const (
-	FieldRecvMsgOpt    = 1
-	FieldIsPinned      = 2
-	FieldAttachedInfo  = 3
-	FieldIsPrivateChat = 4
-	FieldGroupAtType   = 5
-	FieldIsNotInGroup  = 6
-	FieldEx            = 7
-	FieldUnread        = 8
-	FieldBurnDuration  = 9
+	FieldRecvMsgOpt    = 1 // Field type: message receiving options
+	FieldIsPinned      = 2 // Field type: whether a message is pinned
+	FieldAttachedInfo  = 3 // Field type: attached information
+	FieldIsPrivateChat = 4 // Field type: whether a message is from a private chat
+	FieldGroupAtType   = 5 // Field type: group mention mode
+	FieldIsNotInGroup  = 6 // Field type: whether a message is not in a group
+	FieldEx            = 7 // Field type: extension field
+	FieldUnread        = 8 // Field type: whether a message is unread
+	FieldBurnDuration  = 9 // Field type: message burn duration
 )
 const (
-	SetMessageExtensions = 1
-	AddMessageExtensions = 2
+	SetMessageExtensions = 1 // Message extension operation type: set extension
+	AddMessageExtensions = 2 // Message extension operation type: add extension
 )
 const (
-	KeywordMatchOr  = 0
-	KeywordMatchAnd = 1
+	KeywordMatchOr  = 0 // Keyword match mode: match any keyword
+	KeywordMatchAnd = 1 // Keyword match mode: match all keywords
 )
 
 const BigVersion = "v2"
