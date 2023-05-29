@@ -44,6 +44,7 @@ type OnGroupListener interface {
 	OnGroupApplicationAccepted(groupApplication string)
 	OnGroupApplicationRejected(groupApplication string)
 }
+
 type OnFriendshipListener interface {
 	OnFriendApplicationAdded(friendApplication string)
 	OnFriendApplicationDeleted(friendApplication string)

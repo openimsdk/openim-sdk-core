@@ -12,23 +12,36 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 )
 
-type DeleteMessage interface {
-	DeleteConversation
 
-	// DeleteMessageFromRemote deletes the specified message from the remote server.
-	DeleteMessageFromRemote(ctx context.Context, s *sdk_struct.MsgStruct) error
-	// DeleteMessageFromLocal deletes the specified message from the local storage.
-	DeleteMessageFromLocal(ctx context.Context, s *sdk_struct.MsgStruct) error
-	// DeleteMessageFromRemoteAndLocal deletes the specified message from both the remote server and local storage.
-	DeleteMessageFromRemoteAndLocal(ctx context.Context, s *sdk_struct.MsgStruct) error
+/* 
+first:
++ delele server message
++ delete local message
+*/
+
+type DeleteInterface interface {
+    // DeleteMessageFromLocal deletes a message from local storage.
+    DeleteMessageFromLocal(ctx context.Context, s *sdk_struct.MsgStruct) error
+    // DeleteConversationFromLocalAndSvr deletes a conversation from both local and server storage.
+    DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error
+    // DeleteMessageFromLocalAndSvr deletes a message from both local and server storage.
+    DeleteMessageFromLocalAndSvr(ctx context.Context, s *sdk_struct.MsgStruct) error
+    // DeleteAllMsgFromLocalAndSvr deletes all messages from both local and server storage.
+    DeleteAllMsgFromLocalAndSvr(ctx context.Context) error
+    // DeleteAllMsgFromLocal deletes all messages from local storage.
+    DeleteAllMsgFromLocal(ctx context.Context) error
+    // DeleteMessageFromLocalStorage deletes a message from local storage.
+    DeleteMessageFromLocalStorage(ctx context.Context, message *sdk_struct.MsgStruct) error
+    // ClearC2CHistoryMessage clears all messages in a C2C conversation.
+    ClearC2CHistoryMessage(ctx context.Context, userID string) error
+    // ClearGroupHistoryMessage clears all messages in a group conversation.
+    ClearGroupHistoryMessage(ctx context.Context, groupID string) error
+    // ClearC2CHistoryMessageFromLocalAndSvr clears all messages in a C2C conversation from both local and server storage.
+    ClearC2CHistoryMessageFromLocalAndSvr(ctx context.Context, userID string) error
+    // ClearGroupHistoryMessageFromLocalAndSvr clears all messages in a group conversation from both local and server storage.
+    ClearGroupHistoryMessageFromLocalAndSvr(ctx context.Context, groupID string) error
 }
 
-type DeleteConversation interface {
-	// ClearC2CHistoryMessageFromLocalAndSvr clears the local and server-side history messages of a single chat with a specific user.
-	ClearC2CHistoryMessageFromLocalAndSvr(ctx context.Context, userID string) error
-	// ClearGroupHistoryMessageFromLocalAndSvr clears the local and server-side history messages of a group chat with a specific group.
-	ClearGroupHistoryMessageFromLocalAndSvr(ctx context.Context, groupID string) error
-}
 
 // 删除所有消息
 func (c *Conversation) DeleteAllMessage(ctx context.Context) error {
@@ -77,7 +90,7 @@ func (c *Conversation) DeleteMessageFromLocalStorage(ctx context.Context, messag
 }
 
 // 删除本地和服务器上的会话
-func (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
+func (c *Conversation)  DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
     err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
     if err != nil {
         return err
@@ -470,6 +483,8 @@ func (c *Conversation) deleteMessageFromSvr(callback open_im_sdk_callback.Base, 
 	common.CheckArgsErrCallback(callback, err, operationID)
 }
 
+// To delete session information, delete the server first, and then invoke the interface. 
+// The client receives a callback to delete all local information.
 func (c *Conversation) deleteConversationAndMsgFromSvr(ctx context.Context, conversationID string) error {
 	local, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
