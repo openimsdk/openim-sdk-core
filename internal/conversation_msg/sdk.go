@@ -1102,6 +1102,7 @@ func (c *Conversation) SearchLocalMessages(ctx context.Context, searchParam *sdk
 	return c.searchLocalMessages(ctx, searchParam)
 
 }
+
 func getImageInfo(filePath string) (*sdk_struct.ImageInfo, error) {
 	file, err := os.Open(filePath)
 	if err != nil {

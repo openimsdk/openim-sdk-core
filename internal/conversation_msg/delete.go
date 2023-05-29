@@ -4,133 +4,136 @@ import (
 	"context"
 	"errors"
 	"open_im_sdk/internal/util"
+	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/jinzhu/copier"
+	"go.starlark.net/lib/proto"
 )
 
-
-/* 
+/*
 first:
 + delele server message
 + delete local message
 */
 
 type DeleteInterface interface {
-    // DeleteMessageFromLocal deletes a message from local storage.
-    DeleteMessageFromLocal(ctx context.Context, s *sdk_struct.MsgStruct) error
-    // DeleteConversationFromLocalAndSvr deletes a conversation from both local and server storage.
-    DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error
-    // DeleteMessageFromLocalAndSvr deletes a message from both local and server storage.
-    DeleteMessageFromLocalAndSvr(ctx context.Context, s *sdk_struct.MsgStruct) error
-    // DeleteAllMsgFromLocalAndSvr deletes all messages from both local and server storage.
-    DeleteAllMsgFromLocalAndSvr(ctx context.Context) error
-    // DeleteAllMsgFromLocal deletes all messages from local storage.
-    DeleteAllMsgFromLocal(ctx context.Context) error
-    // DeleteMessageFromLocalStorage deletes a message from local storage.
-    DeleteMessageFromLocalStorage(ctx context.Context, message *sdk_struct.MsgStruct) error
-    // ClearC2CHistoryMessage clears all messages in a C2C conversation.
-    ClearC2CHistoryMessage(ctx context.Context, userID string) error
-    // ClearGroupHistoryMessage clears all messages in a group conversation.
-    ClearGroupHistoryMessage(ctx context.Context, groupID string) error
-    // ClearC2CHistoryMessageFromLocalAndSvr clears all messages in a C2C conversation from both local and server storage.
-    ClearC2CHistoryMessageFromLocalAndSvr(ctx context.Context, userID string) error
-    // ClearGroupHistoryMessageFromLocalAndSvr clears all messages in a group conversation from both local and server storage.
-    ClearGroupHistoryMessageFromLocalAndSvr(ctx context.Context, groupID string) error
+	// DeleteMessageFromLocal deletes a message from local storage.
+	DeleteMessageFromLocal(ctx context.Context, s *sdk_struct.MsgStruct) error
+	// DeleteConversationFromLocalAndSvr deletes a conversation from both local and server storage.
+	DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error
+	// DeleteMessageFromLocalAndSvr deletes a message from both local and server storage.
+	DeleteMessageFromLocalAndSvr(ctx context.Context, s *sdk_struct.MsgStruct) error
+	// DeleteAllMsgFromLocalAndSvr deletes all messages from both local and server storage.
+	DeleteAllMsgFromLocalAndSvr(ctx context.Context) error
+	// DeleteAllMsgFromLocal deletes all messages from local storage.
+	DeleteAllMsgFromLocal(ctx context.Context) error
+	// DeleteMessageFromLocalStorage deletes a message from local storage.
+	DeleteMessageFromLocalStorage(ctx context.Context, message *sdk_struct.MsgStruct) error
+	// ClearC2CHistoryMessage clears all messages in a C2C conversation.
+	ClearC2CHistoryMessage(ctx context.Context, userID string) error
+	// ClearGroupHistoryMessage clears all messages in a group conversation.
+	ClearGroupHistoryMessage(ctx context.Context, groupID string) error
+	// ClearC2CHistoryMessageFromLocalAndSvr clears all messages in a C2C conversation from both local and server storage.
+	ClearC2CHistoryMessageFromLocalAndSvr(ctx context.Context, userID string) error
+	// ClearGroupHistoryMessageFromLocalAndSvr clears all messages in a group conversation from both local and server storage.
+	ClearGroupHistoryMessageFromLocalAndSvr(ctx context.Context, groupID string) error
 }
-
 
 // 删除所有消息
 func (c *Conversation) DeleteAllMessage(ctx context.Context) error {
-    err := c.deleteAllMsgFromLocal(ctx)
-    if err != nil {
-        return err
-    }
-    return nil
+	err := c.deleteAllMsgFromLocal(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // 删除单条消息
 func (c *Conversation) DeleteMessageFromLocal(ctx context.Context, s *sdk_struct.MsgStruct) error {
-    if s.ClientMsgID == "" {
-        return errors.New("clientMsgID is empty")
-    }
-    err := c.deleteMessageFromLocalStorage(ctx, s)
-    if err != nil {
-        return err
-    }
-    return nil
+	if s.ClientMsgID == "" {
+		return errors.New("clientMsgID is empty")
+	}
+	err := c.deleteMessageFromLocalStorage(ctx, s)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // 删除单条消息，同时删除服务器上的消息
 // 需要注意的是：如果是最新的一条消息，那么需要拆分出来，然后更新会话的最新消息
 func (c *Conversation) DeleteMessageFromLocalAndSvr(ctx context.Context, s *sdk_struct.MsgStruct) error {
-    err := c.deleteMessageFromSvr(ctx, s)
-    if err != nil {
-        return err
-    }
-    return c.deleteMessageFromLocalStorage(ctx, s)
+	err := c.deleteMessageFromSvr(ctx, s)
+	if err != nil {
+		return err
+	}
+	return c.deleteMessageFromLocalStorage(ctx, s)
 }
 
 // 删除所有消息，同时删除服务器上的消息
 func (c *Conversation) DeleteAllMsgFromLocalAndSvr(ctx context.Context) error {
-    return c.DeleteAllMsgFromLocalAndSvr(ctx)
+	return c.DeleteAllMsgFromLocalAndSvr(ctx)
 }
 
 // 删除所有本地消息
 func (c *Conversation) DeleteAllMsgFromLocal(ctx context.Context) error {
-    return c.deleteAllMsgFromLocal(ctx)
+	return c.deleteAllMsgFromLocal(ctx)
 }
 
 // 删除本地的单条消息
 func (c *Conversation) DeleteMessageFromLocalStorage(ctx context.Context, message *sdk_struct.MsgStruct) error {
-    return c.deleteMessageFromLocalStorage(ctx, message)
+	return c.deleteMessageFromLocalStorage(ctx, message)
 }
 
 // 删除本地和服务器上的会话
-func (c *Conversation)  DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
-    err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
-    if err != nil {
-        return err
-    }
-    return c.deleteConversation(ctx, conversationID)
+func (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
+	err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	return c.deleteConversation(ctx, conversationID)
 }
 
 // 清除单个好友的历史消息记录
 func (c *Conversation) ClearC2CHistoryMessage(ctx context.Context, userID string) error {
-    return c.clearC2CHistoryMessage(ctx, userID)
+	return c.clearC2CHistoryMessage(ctx, userID)
 }
 
 // 清除单个群组的历史消息记录
 func (c *Conversation) ClearGroupHistoryMessage(ctx context.Context, groupID string) error {
-    return c.clearGroupHistoryMessage(ctx, groupID)
+	return c.clearGroupHistoryMessage(ctx, groupID)
 
 }
 
 // 清除单个好友的历史消息记录，同时删除服务器上的消息
 func (c *Conversation) ClearC2CHistoryMessageFromLocalAndSvr(ctx context.Context, userID string) error {
-    conversationID := c.getConversationIDBySessionType(userID, constant.SingleChatType)
-    err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
-    if err != nil {
-        return err
-    }
-    return c.clearC2CHistoryMessage(ctx, userID)
+	conversationID := c.getConversationIDBySessionType(userID, constant.SingleChatType)
+	err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	return c.clearC2CHistoryMessage(ctx, userID)
 
 }
 
 // 清除单个群组的历史消息记录，同时删除服务器上的消息
 func (c *Conversation) ClearGroupHistoryMessageFromLocalAndSvr(ctx context.Context, groupID string) error {
-    conversationID, _, err := c.getConversationTypeByGroupID(ctx, groupID)
-    if err != nil {
-        return err
-    }
-    err = c.deleteConversationAndMsgFromSvr(ctx, conversationID)
-    if err != nil {
-        return err
-    }
-    return c.clearGroupHistoryMessage(ctx, groupID)
+	conversationID, _, err := c.getConversationTypeByGroupID(ctx, groupID)
+	if err != nil {
+		return err
+	}
+	err = c.deleteConversationAndMsgFromSvr(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	return c.clearGroupHistoryMessage(ctx, groupID)
 }
 
 // 删除单个会话
@@ -313,8 +316,6 @@ func (c *Conversation) clearGroupHistoryMessage(ctx context.Context, groupID str
 
 }
 
-
-
 func (c *Conversation) clearC2CHistoryMessage(ctx context.Context, userID string) error {
 	conversationID := c.getConversationIDBySessionType(userID, constant.SingleChatType)
 	err := c.db.UpdateMessageStatusBySourceID(ctx, userID, constant.MsgStatusHasDeleted, constant.SingleChatType)
@@ -329,6 +330,7 @@ func (c *Conversation) clearC2CHistoryMessage(ctx context.Context, userID string
 	return nil
 }
 
+// 删除服务器的话，先删除服务器信息，并且需要把本地的消息状态改成删除
 func (c *Conversation) deleteMessageFromSvr(ctx context.Context, s *sdk_struct.MsgStruct) error {
 	seq, err := c.db.GetMsgSeqByClientMsgIDController(ctx, s)
 	if err != nil {
@@ -483,7 +485,7 @@ func (c *Conversation) deleteMessageFromSvr(callback open_im_sdk_callback.Base, 
 	common.CheckArgsErrCallback(callback, err, operationID)
 }
 
-// To delete session information, delete the server first, and then invoke the interface. 
+// To delete session information, delete the server first, and then invoke the interface.
 // The client receives a callback to delete all local information.
 func (c *Conversation) deleteConversationAndMsgFromSvr(ctx context.Context, conversationID string) error {
 	local, err := c.db.GetConversation(ctx, conversationID)
