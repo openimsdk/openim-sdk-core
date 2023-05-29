@@ -50,7 +50,7 @@ type DeleteInterface interface {
 	ClearGroupHistoryMessageFromLocalAndSvr(ctx context.Context, groupID string) error
 }
 
-// 删除所有消息
+// Delete all messages
 func (c *Conversation) DeleteAllMessage(ctx context.Context) error {
 	err := c.deleteAllMsgFromLocal(ctx)
 	if err != nil {
@@ -65,14 +65,35 @@ func (c *Conversation) DeleteAllMessage(ctx context.Context) error {
 
 // 删除单条消息
 func (c *Conversation) DeleteMessageFromLocal(ctx context.Context, s *sdk_struct.MsgStruct) error {
-	if s.ClientMsgID == "" {
-		return errors.New("clientMsgID is empty")
-	}
-	err := c.deleteMessageFromLocalStorage(ctx, s)
+	// 先获取到会话
+	Conversation, err:= c.db.GetAllConversations(ctx)
 	if err != nil {
 		return err
 	}
+
+	// 拿到数据库的表信息
+	for _, v := range Conversation {
+		if v.ConversationID == s.ClientMsgID {
+			// 然后删除
+			err := c.db.DeleteConversation(ctx, v.ConversationID)
+			if err != nil {
+				return err
+			}
+		}
+	}
 	return nil
+}
+
+// Delete the local and server
+// Delete the local, do not change the server data
+// To delete the server, you need to change the local message status to delete
+func (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
+	// Use conversationID to remove conversations and messages from the server first
+	err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	return c.deleteConversation(ctx, conversationID)
 }
 
 // 删除单条消息，同时删除服务器上的消息
@@ -98,15 +119,6 @@ func (c *Conversation) DeleteAllMsgFromLocal(ctx context.Context) error {
 // 删除本地的单条消息
 func (c *Conversation) DeleteMessageFromLocalStorage(ctx context.Context, message *sdk_struct.MsgStruct) error {
 	return c.deleteMessageFromLocalStorage(ctx, message)
-}
-
-// 删除本地和服务器上的会话
-func (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
-	err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
-	if err != nil {
-		return err
-	}
-	return c.deleteConversation(ctx, conversationID)
 }
 
 // 清除单个好友的历史消息记录
@@ -226,18 +238,6 @@ func (c *Conversation) DeleteMessageFromLocal(ctx context.Context, s *sdk_struct
 		return err
 	}
 	return nil
-}
-
-// 删除本地和服务器
-// 删除本地的话不用改服务器的数据
-// 删除服务器的话，需要把本地的消息状态改成删除
-func (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
-	// Use conversationID to remove conversations and messages from the server first
-	err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
-	if err != nil {
-		return err
-	}
-	return c.deleteConversation(ctx, conversationID)
 }
 
 func (c *Conversation) DeleteMessageFromLocalAndSvr(ctx context.Context, s *sdk_struct.MsgStruct) error {
@@ -384,6 +384,7 @@ func (c *Conversation) clearMessageFromSvr(ctx context.Context) error {
 	return nil
 }
 
+// 判断删除的是否是最新的一条消息
 func (c *Conversation) deleteMessageFromLocalStorage(ctx context.Context, s *sdk_struct.MsgStruct) error {
 	var conversation model_struct.LocalConversation
 	var latestMsg sdk_struct.MsgStruct
