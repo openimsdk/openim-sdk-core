@@ -123,10 +123,10 @@ func (m *MsgSyncer) getSeqsNeedSync(syncedMaxSeq, maxSeq int64) []int64 {
 func (m *MsgSyncer) handlePushMsgAndEvent(cmd common.Cmd2Value) {
 	switch cmd.Cmd {
 	case constant.CmdConnSuccesss:
-		log.ZInfo(cmd.Ctx, "recv long conn mgr connected", "cmd", cmd)
+		log.ZInfo(cmd.Ctx, "recv long conn mgr connected", "cmd", cmd.Cmd, "value", cmd.Value)
 		m.doConnected(cmd.Ctx)
 	case constant.CmdMaxSeq:
-		log.ZInfo(cmd.Ctx, "recv max seqs from long conn mgr, start sync msgs", "cmd", cmd)
+		log.ZInfo(cmd.Ctx, "recv max seqs from long conn mgr, start sync msgs", "cmd", cmd.Cmd, "value", cmd.Value)
 		m.compareSeqsAndBatchSync(cmd.Ctx, cmd.Value.(*sdk_struct.CmdMaxSeqToMsgSync).ConversationMaxSeqOnSvr, defaultPullNums)
 	case constant.CmdPushMsg:
 		m.doPushMsg(cmd.Ctx, cmd.Value.(*sdkws.PushMessages))
