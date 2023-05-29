@@ -23,7 +23,6 @@ import (
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
 )
 
 const (
@@ -85,18 +84,14 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 			return err
 		}
 		m.syncedMaxSeqs[conversation.ConversationID] = maxSyncedSeq
-		var notificationConversationID string
-		if conversation.ConversationType == constant.SuperGroupChatType {
-			notificationConversationID = utils.GetConversationIDBySessionType(constant.SuperGroupChatType, conversation.GroupID)
-		} else {
-			notificationConversationID = utils.GetConversationIDBySessionType(constant.SingleChatType, conversation.UserID, m.loginUserID)
-		}
-		maxSyncedSeq, err = m.db.GetConversationNormalMsgSeq(ctx, notificationConversationID)
-		if err != nil {
-			log.ZError(ctx, "get group normal seq failed", err, "conversationID", notificationConversationID)
-			return err
-		}
-		m.syncedMaxSeqs[notificationConversationID] = maxSyncedSeq
+	}
+	notificationSeqs, err := m.db.GetNotificationAllSeqs(ctx)
+	if err != nil {
+		log.ZError(ctx, "get notification seq failed", err)
+		return err
+	}
+	for _, notificationSeq := range notificationSeqs {
+		m.syncedMaxSeqs[notificationSeq.ConversationID] = notificationSeq.Seq
 	}
 	return nil
 }

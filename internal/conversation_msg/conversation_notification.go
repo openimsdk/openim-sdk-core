@@ -618,7 +618,15 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 	case constant.MsgSyncEnd:
 		defer c.ConversationListener.OnSyncServerFinish()
 	}
-	for _, msgs := range allMsg {
+
+	for conversationID, msgs := range allMsg {
+		if len(msgs.Msgs) != 0 {
+			lastMsg := msgs.Msgs[len(msgs.Msgs)-1]
+			log.ZDebug(ctx, "SetNotificationSeq", "conversationID", conversationID, "seq", lastMsg.Seq)
+			if err := c.db.SetNotificationSeq(ctx, conversationID, lastMsg.Seq); err != nil {
+				log.ZError(ctx, "SetNotificationSeq err", err, "conversationID", conversationID, "lastMsg", lastMsg)
+			}
+		}
 		for _, v := range msgs.Msgs {
 			switch {
 			case v.ContentType == constant.ConversationChangeNotification || v.ContentType == constant.ConversationPrivateChatNotification:

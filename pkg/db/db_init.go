@@ -51,7 +51,6 @@ type DataBase struct {
 	mRWMutex      sync.RWMutex
 	groupMtx      sync.RWMutex
 	friendMtx     sync.RWMutex
-	departmentMtx sync.RWMutex
 	userMtx       sync.RWMutex
 	superGroupMtx sync.RWMutex
 }
@@ -95,7 +94,6 @@ func (d *DataBase) Close(ctx context.Context) error {
 func NewDataBase(ctx context.Context, loginUserID string, dbDir string) (*DataBase, error) {
 	UserDBLock.Lock()
 	defer UserDBLock.Unlock()
-
 	dataBase, ok := UserDBMap[loginUserID]
 	if !ok {
 		dataBase = &DataBase{loginUserID: loginUserID, dbDir: dbDir}
@@ -105,8 +103,6 @@ func NewDataBase(ctx context.Context, loginUserID string, dbDir string) (*DataBa
 		}
 		UserDBMap[loginUserID] = dataBase
 		//log.Info(operationID, "open db", loginUserID)
-	} else {
-		//log.Info(operationID, "db in map", loginUserID)
 	}
 	dataBase.setChatLogFailedStatus(ctx)
 	return dataBase, nil
@@ -195,6 +191,7 @@ func (d *DataBase) initDB(ctx context.Context) error {
 		&model_struct.LocalUser{},
 		&model_struct.LocalBlack{},
 		&model_struct.LocalConversation{},
+		&model_struct.NotificationSeqsModel{},
 		&model_struct.LocalChatLog{},
 		&model_struct.LocalAdminGroupRequest{},
 		&model_struct.LocalWorkMomentsNotification{},

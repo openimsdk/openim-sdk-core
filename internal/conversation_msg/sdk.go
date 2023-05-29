@@ -1252,10 +1252,10 @@ func (c *Conversation) DeleteMessageFromLocalAndSvr(ctx context.Context, s *sdk_
 
 // Delete all messages from the server and local
 func (c *Conversation) DeleteAllMsgFromLocalAndSvr(ctx context.Context) error {
-	err := c.clearMessageFromSvr(ctx)
-	if err != nil {
-		return err
-	}
+	// err := c.clearMessageFromSvr(ctx)
+	// if err != nil {
+	// 	return err
+	// }
 	return c.DeleteAllMsgFromLocalAndSvr(ctx)
 }
 
