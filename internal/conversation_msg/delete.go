@@ -15,6 +15,10 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/jinzhu/copier"
 	"go.starlark.net/lib/proto"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+
+	"github.com/jinzhu/copier"
 )
 
 /*
@@ -49,6 +53,10 @@ type DeleteInterface interface {
 // 删除所有消息
 func (c *Conversation) DeleteAllMessage(ctx context.Context) error {
 	err := c.deleteAllMsgFromLocal(ctx)
+	if err != nil {
+		return err
+	}
+	err = c.clearMessageFromSvr(ctx)
 	if err != nil {
 		return err
 	}
