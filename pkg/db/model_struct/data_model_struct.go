@@ -295,19 +295,6 @@ type LocalSeq struct {
 //		  PRIMARY KEY (client_msg_id)
 //		)`
 
-// 删除会话，可能会话没有
-// 确认删除，告诉会话 ID
-// 清空聊天记录的发，会话有，但是聊天记录没有
-// DeleteMlessageFromlocalAndSvr
-// db
-
-// 不同的会话本地有一个单独的表，其中单聊的话也是这样，有一个单聊的表
-
-// 删除的话，先删除表，在删除本地的 seq ，最后清楚这个表。
-// 删除所有的消息的话，全部都是服务器来做，调用接口，然后客户端收到回调，然后删除本地的所有的信息。
-// 删除一条信息，删除最新的话，会话上有一条最新的消息，删除这条消息，会话上就没有消息了，此时显示的是第二条。
-// 和微信一样，我们 Go get error 分支，然后调用最新的 APi
-
 type LocalChatLog struct {
 	ClientMsgID          string `gorm:"column:client_msg_id;primary_key;type:char(64)" json:"clientMsgID"`
 	ServerMsgID          string `gorm:"column:server_msg_id;type:char(64)" json:"serverMsgID"`

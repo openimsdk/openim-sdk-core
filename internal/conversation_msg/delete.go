@@ -1,1 +1,553 @@
 package conversation_msg
+
+import (
+	"context"
+	"errors"
+	"open_im_sdk/internal/util"
+	"open_im_sdk/pkg/common"
+	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+)
+
+type DeleteMessage interface {
+	DeleteConversation
+
+	// DeleteMessageFromRemote deletes the specified message from the remote server.
+	DeleteMessageFromRemote(ctx context.Context, s *sdk_struct.MsgStruct) error
+	// DeleteMessageFromLocal deletes the specified message from the local storage.
+	DeleteMessageFromLocal(ctx context.Context, s *sdk_struct.MsgStruct) error
+	// DeleteMessageFromRemoteAndLocal deletes the specified message from both the remote server and local storage.
+	DeleteMessageFromRemoteAndLocal(ctx context.Context, s *sdk_struct.MsgStruct) error
+}
+
+type DeleteConversation interface {
+	// ClearC2CHistoryMessageFromLocalAndSvr clears the local and server-side history messages of a single chat with a specific user.
+	ClearC2CHistoryMessageFromLocalAndSvr(ctx context.Context, userID string) error
+	// ClearGroupHistoryMessageFromLocalAndSvr clears the local and server-side history messages of a group chat with a specific group.
+	ClearGroupHistoryMessageFromLocalAndSvr(ctx context.Context, groupID string) error
+}
+
+// 删除所有消息
+func (c *Conversation) DeleteAllMessage(ctx context.Context) error {
+    err := c.deleteAllMsgFromLocal(ctx)
+    if err != nil {
+        return err
+    }
+    return nil
+}
+
+// 删除单条消息
+func (c *Conversation) DeleteMessageFromLocal(ctx context.Context, s *sdk_struct.MsgStruct) error {
+    if s.ClientMsgID == "" {
+        return errors.New("clientMsgID is empty")
+    }
+    err := c.deleteMessageFromLocalStorage(ctx, s)
+    if err != nil {
+        return err
+    }
+    return nil
+}
+
+// 删除单条消息，同时删除服务器上的消息
+// 需要注意的是：如果是最新的一条消息，那么需要拆分出来，然后更新会话的最新消息
+func (c *Conversation) DeleteMessageFromLocalAndSvr(ctx context.Context, s *sdk_struct.MsgStruct) error {
+    err := c.deleteMessageFromSvr(ctx, s)
+    if err != nil {
+        return err
+    }
+    return c.deleteMessageFromLocalStorage(ctx, s)
+}
+
+// 删除所有消息，同时删除服务器上的消息
+func (c *Conversation) DeleteAllMsgFromLocalAndSvr(ctx context.Context) error {
+    return c.DeleteAllMsgFromLocalAndSvr(ctx)
+}
+
+// 删除所有本地消息
+func (c *Conversation) DeleteAllMsgFromLocal(ctx context.Context) error {
+    return c.deleteAllMsgFromLocal(ctx)
+}
+
+// 删除本地的单条消息
+func (c *Conversation) DeleteMessageFromLocalStorage(ctx context.Context, message *sdk_struct.MsgStruct) error {
+    return c.deleteMessageFromLocalStorage(ctx, message)
+}
+
+// 删除本地和服务器上的会话
+func (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
+    err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
+    if err != nil {
+        return err
+    }
+    return c.deleteConversation(ctx, conversationID)
+}
+
+// 清除单个好友的历史消息记录
+func (c *Conversation) ClearC2CHistoryMessage(ctx context.Context, userID string) error {
+    return c.clearC2CHistoryMessage(ctx, userID)
+}
+
+// 清除单个群组的历史消息记录
+func (c *Conversation) ClearGroupHistoryMessage(ctx context.Context, groupID string) error {
+    return c.clearGroupHistoryMessage(ctx, groupID)
+
+}
+
+// 清除单个好友的历史消息记录，同时删除服务器上的消息
+func (c *Conversation) ClearC2CHistoryMessageFromLocalAndSvr(ctx context.Context, userID string) error {
+    conversationID := c.getConversationIDBySessionType(userID, constant.SingleChatType)
+    err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
+    if err != nil {
+        return err
+    }
+    return c.clearC2CHistoryMessage(ctx, userID)
+
+}
+
+// 清除单个群组的历史消息记录，同时删除服务器上的消息
+func (c *Conversation) ClearGroupHistoryMessageFromLocalAndSvr(ctx context.Context, groupID string) error {
+    conversationID, _, err := c.getConversationTypeByGroupID(ctx, groupID)
+    if err != nil {
+        return err
+    }
+    err = c.deleteConversationAndMsgFromSvr(ctx, conversationID)
+    if err != nil {
+        return err
+    }
+    return c.clearGroupHistoryMessage(ctx, groupID)
+}
+
+// 删除单个会话
+func (c *Conversation) DeleteConversation(ctx context.Context, conversationID string) error {
+	lc, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	var sourceID string
+	switch lc.ConversationType {
+	case constant.SingleChatType, constant.NotificationChatType:
+		sourceID = lc.UserID
+	case constant.GroupChatType, constant.SuperGroupChatType:
+		sourceID = lc.GroupID
+	}
+	if lc.ConversationType == constant.SuperGroupChatType {
+		err = c.db.SuperGroupDeleteAllMessage(ctx, lc.GroupID)
+		if err != nil {
+			return err
+		}
+	} else {
+		//Mark messages related to this conversation for deletion
+		err = c.db.UpdateMessageStatusBySourceIDController(ctx, sourceID, constant.MsgStatusHasDeleted, lc.ConversationType)
+		if err != nil {
+			return err
+		}
+	}
+	//Reset the conversation information, empty conversation
+	err = c.db.ResetConversation(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: "", Action: constant.TotalUnreadMessageChanged, Args: ""}})
+	return nil
+}
+
+func (c *Conversation) DeleteAllConversationFromLocal(ctx context.Context) error {
+	err := c.db.ResetAllConversation(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Only remote information is deleted
+func (c *Conversation) DeleteMessageFromRemote(ctx context.Context, s *sdk_struct.MsgStruct) error {
+	// if s.ClientMsgID == "" {
+	// 	return errors.New("clientMsgID is empty")
+	// }
+	// err := c.deleteMessageFromSvr(ctx, s)
+	// if err != nil {
+	// 	return err
+	// }
+	return nil
+
+}
+
+// To delete all messages, the server does it all, calls the interface,
+// and the client receives a callback and deletes all messages locally.
+func (c *Conversation) DeleteAllMessage(ctx context.Context) error {
+	// err := c.clearMessageFromSvr(ctx)
+	// if err != nil {
+	// 	return err
+	// }
+	err := c.deleteAllMsgFromLocal(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Only the local information is deleted
+// Local operation: Obtain all session ids, then obtain the table, and then clear the table
+// Delete a message. If you delete the latest message, there is a latest message on the session.
+// If you delete this message, there is no message on the session and the second message is displayed.
+func (c *Conversation) DeleteMessageFromLocal(ctx context.Context, s *sdk_struct.MsgStruct) error {
+	if s.ClientMsgID == "" {
+		return errors.New("clientMsgID is empty")
+	}
+	err := c.deleteMessageFromLocalStorage(ctx, s)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// 删除本地和服务器
+// 删除本地的话不用改服务器的数据
+// 删除服务器的话，需要把本地的消息状态改成删除
+func (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
+	// Use conversationID to remove conversations and messages from the server first
+	err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	return c.deleteConversation(ctx, conversationID)
+}
+
+func (c *Conversation) DeleteMessageFromLocalAndSvr(ctx context.Context, s *sdk_struct.MsgStruct) error {
+	err := c.deleteMessageFromSvr(ctx, s)
+	if err != nil {
+		return err
+	}
+	return c.deleteMessageFromLocalStorage(ctx, s)
+}
+
+// Delete all messages from the server and local
+func (c *Conversation) DeleteAllMsgFromLocalAndSvr(ctx context.Context) error {
+	// err := c.clearMessageFromSvr(ctx)
+	// if err != nil {
+	// 	return err
+	// }
+	return c.DeleteAllMsgFromLocalAndSvr(ctx)
+}
+
+// Just delete the local, the server does not need to change
+func (c *Conversation) DeleteAllMsgFromLocal(ctx context.Context) error {
+	return c.deleteAllMsgFromLocal(ctx)
+}
+
+func (c *Conversation) DeleteMessageFromLocalStorage(ctx context.Context, message *sdk_struct.MsgStruct) error {
+	return c.deleteMessageFromLocalStorage(ctx, message)
+}
+
+func (c *Conversation) ClearC2CHistoryMessage(ctx context.Context, userID string) error {
+	return c.clearC2CHistoryMessage(ctx, userID)
+}
+func (c *Conversation) ClearGroupHistoryMessage(ctx context.Context, groupID string) error {
+	return c.clearGroupHistoryMessage(ctx, groupID)
+
+}
+func (c *Conversation) ClearC2CHistoryMessageFromLocalAndSvr(ctx context.Context, userID string) error {
+	conversationID := c.getConversationIDBySessionType(userID, constant.SingleChatType)
+	err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	return c.clearC2CHistoryMessage(ctx, userID)
+
+}
+
+// fixme
+func (c *Conversation) ClearGroupHistoryMessageFromLocalAndSvr(ctx context.Context, groupID string) error {
+	conversationID, _, err := c.getConversationTypeByGroupID(ctx, groupID)
+	if err != nil {
+		return err
+	}
+	err = c.deleteConversationAndMsgFromSvr(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	return c.clearGroupHistoryMessage(ctx, groupID)
+}
+
+func (c *Conversation) clearGroupHistoryMessage(ctx context.Context, groupID string) error {
+	_, sessionType, err := c.getConversationTypeByGroupID(ctx, groupID)
+	if err != nil {
+		return err
+	}
+	conversationID := c.getConversationIDBySessionType(groupID, int(sessionType))
+	switch sessionType {
+	case constant.SuperGroupChatType:
+		err = c.db.SuperGroupDeleteAllMessage(ctx, groupID)
+		if err != nil {
+			return err
+		}
+	default:
+		err = c.db.UpdateMessageStatusBySourceIDController(ctx, groupID, constant.MsgStatusHasDeleted, sessionType)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = c.db.ClearConversation(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+	return nil
+
+}
+
+
+
+func (c *Conversation) clearC2CHistoryMessage(ctx context.Context, userID string) error {
+	conversationID := c.getConversationIDBySessionType(userID, constant.SingleChatType)
+	err := c.db.UpdateMessageStatusBySourceID(ctx, userID, constant.MsgStatusHasDeleted, constant.SingleChatType)
+	if err != nil {
+		return err
+	}
+	err = c.db.ClearConversation(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+	return nil
+}
+
+func (c *Conversation) deleteMessageFromSvr(ctx context.Context, s *sdk_struct.MsgStruct) error {
+	seq, err := c.db.GetMsgSeqByClientMsgIDController(ctx, s)
+	if err != nil {
+		return err
+	}
+	switch s.SessionType {
+	case constant.SingleChatType, constant.GroupChatType:
+		var apiReq pbMsg.DelMsgsReq
+		// apiReq.Seqs = utils.Uint32ListConvert([]uint32{seq})
+		// apiReq.UserID = c.loginUserID
+		return util.ApiPost(ctx, constant.DeleteMsgRouter, &apiReq, nil)
+	case constant.SuperGroupChatType:
+		var apiReq pbMsg.DelSuperGroupMsgReq
+		apiReq.UserID = c.loginUserID
+		apiReq.GroupID = s.GroupID
+		return util.ApiPost(ctx, constant.DeleteSuperGroupMsgRouter, &apiReq, nil)
+
+	}
+	return errors.New("session type error")
+
+}
+
+func (c *Conversation) clearMessageFromSvr(ctx context.Context) error {
+	var apiReq pbMsg.ClearMsgReq
+	apiReq.UserID = c.loginUserID
+	err := util.ApiPost(ctx, constant.ClearMsgRouter, &apiReq, nil)
+	if err != nil {
+		return err
+	}
+	groupIDList, err := c.full.GetReadDiffusionGroupIDList(ctx)
+	if err != nil {
+		return err
+	}
+	var superGroupApiReq pbMsg.DelSuperGroupMsgReq
+	superGroupApiReq.UserID = c.loginUserID
+	for _, v := range groupIDList {
+		superGroupApiReq.GroupID = v
+		err := util.ApiPost(ctx, constant.DeleteSuperGroupMsgRouter, &superGroupApiReq, nil)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Conversation) deleteMessageFromLocalStorage(ctx context.Context, s *sdk_struct.MsgStruct) error {
+	var conversation model_struct.LocalConversation
+	var latestMsg sdk_struct.MsgStruct
+	var conversationID string
+	var sourceID string
+	chatLog := model_struct.LocalChatLog{ClientMsgID: s.ClientMsgID, Status: constant.MsgStatusHasDeleted, SessionType: s.SessionType}
+
+	switch s.SessionType {
+	case constant.GroupChatType:
+		conversationID = c.getConversationIDBySessionType(s.GroupID, constant.GroupChatType)
+		sourceID = s.GroupID
+	case constant.SingleChatType:
+		if s.SendID != c.loginUserID {
+			conversationID = c.getConversationIDBySessionType(s.SendID, constant.SingleChatType)
+			sourceID = s.SendID
+		} else {
+			conversationID = c.getConversationIDBySessionType(s.RecvID, constant.SingleChatType)
+			sourceID = s.RecvID
+		}
+	case constant.SuperGroupChatType:
+		conversationID = c.getConversationIDBySessionType(s.GroupID, constant.SuperGroupChatType)
+		sourceID = s.GroupID
+		chatLog.RecvID = s.GroupID
+	}
+	err := c.db.UpdateMessageController(ctx, &chatLog)
+	if err != nil {
+		return err
+	}
+	LocalConversation, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	err = utils.JsonStringToStruct(LocalConversation.LatestMsg, &latestMsg)
+	if err != nil {
+		return err
+	}
+
+	if s.ClientMsgID == latestMsg.ClientMsgID { //If the deleted message is the latest message of the conversation, update the latest message of the conversation
+		list, err := c.db.GetMessageListNoTimeController(ctx, sourceID, int(s.SessionType), 1, false)
+		if err != nil {
+			return err
+		}
+		conversation.ConversationID = conversationID
+		if list == nil {
+			conversation.LatestMsg = ""
+			conversation.LatestMsgSendTime = s.SendTime
+		} else {
+			copier.Copy(&latestMsg, list[0])
+			err := c.msgConvert(&latestMsg)
+			if err != nil {
+				log.Error("", "Parsing data error:", err.Error(), latestMsg)
+			}
+			conversation.LatestMsg = utils.StructToJsonString(latestMsg)
+			conversation.LatestMsgSendTime = latestMsg.SendTime
+		}
+		err = c.db.UpdateColumnsConversation(ctx, conversation.ConversationID, map[string]interface{}{"latest_msg_send_time": conversation.LatestMsgSendTime, "latest_msg": conversation.LatestMsg})
+		if err != nil {
+			log.Error("internal", "updateConversationLatestMsgModel err: ", err)
+		} else {
+			_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+		}
+	}
+	return nil
+}
+
+func (c *Conversation) delMsgBySeq(seqList []uint32) error {
+	var SPLIT = 1000
+	for i := 0; i < len(seqList)/SPLIT; i++ {
+		if err := c.delMsgBySeqSplit(seqList[i*SPLIT : (i+1)*SPLIT]); err != nil {
+			return utils.Wrap(err, "")
+		}
+	}
+	return nil
+}
+
+func (c *Conversation) delMsgBySeqSplit(seqList []uint32) error {
+	var req server_api_params.DelMsgListReq
+	req.SeqList = seqList
+	req.OperationID = utils.OperationIDGenerator()
+	req.OpUserID = c.loginUserID
+	req.UserID = c.loginUserID
+	operationID := req.OperationID
+
+	err := c.SendReqWaitResp(context.Background(), &req, constant.WsDelMsg, 30, c.loginUserID)
+	if err != nil {
+		return utils.Wrap(err, "SendReqWaitResp failed")
+	}
+	var delResp server_api_params.DelMsgListResp
+	err = proto.Unmarshal(resp.Data, &delResp)
+	if err != nil {
+		log.Error(operationID, "Unmarshal failed ", err.Error())
+		return utils.Wrap(err, "Unmarshal failed")
+	}
+	return nil
+}
+
+// old WS method
+func (c *Conversation) deleteMessageFromSvr(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
+	seq, err := c.db.GetMsgSeqByClientMsgID(s.ClientMsgID)
+	common.CheckDBErrCallback(callback, err, operationID)
+	if seq == 0 {
+		err = errors.New("seq == 0 ")
+		common.CheckArgsErrCallback(callback, err, operationID)
+	}
+	seqList := []uint32{seq}
+	err = c.delMsgBySeq(seqList)
+	common.CheckArgsErrCallback(callback, err, operationID)
+}
+
+func (c *Conversation) deleteConversationAndMsgFromSvr(ctx context.Context, conversationID string) error {
+	local, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	var seqList []uint32
+	switch local.ConversationType {
+	case constant.SingleChatType, constant.NotificationChatType:
+		peerUserID := local.UserID
+		if peerUserID != c.loginUserID {
+			seqList, err = c.db.GetMsgSeqListByPeerUserID(ctx, peerUserID)
+		} else {
+			seqList, err = c.db.GetMsgSeqListBySelfUserID(ctx, c.loginUserID)
+		}
+		log.ZDebug(ctx, utils.GetSelfFuncName(), "seqList: ", seqList)
+		if err != nil {
+			return err
+		}
+		//先拿到 seqList: 这是一个 []uint32
+		//constant.GroupChatType 表示群聊
+	case constant.GroupChatType:
+		// var apiReq pbMsg.DelMsgsReq
+		// apiReq.UserID = c.loginUserID
+		// apiReq.Seqs = utils.Uint32ListConvert(seqList)
+		// groupID := local.GroupID
+		// seqList, err = c.db.GetMsgSeqListByGroupID(ctx, groupID)
+		// log.ZDebug(ctx, utils.GetSelfFuncName(), "seqList: ", seqList)
+		// if err != nil {
+		// 	return err
+		// }
+		// if err := util.ApiPost(ctx, constant.DeleteSuperGroupMsgRouter, &apiReq, nil); err != nil {
+		// 	return err
+		// }
+	case constant.SuperGroupChatType:
+		// var apiReq pbMsg.DelSuperGroupMsgReq
+		// apiReq.UserID = c.loginUserID
+		// apiReq.GroupID = local.GroupID
+		// if err := util.ApiPost(ctx, constant.DeleteSuperGroupMsgRouter, &apiReq, nil); err != nil {
+		// 	return err
+		// }
+
+	}
+	var apiReq pbMsg.DelMsgsReq
+	// apiReq.UserID = c.loginUserID
+	// apiReq.Seqs = utils.Uint32ListConvert(seqList)
+	return util.ApiPost(ctx, constant.DeleteMsgRouter, &apiReq, nil)
+}
+
+func (c *Conversation) deleteAllMsgFromLocal(ctx context.Context) error {
+	//log.NewInfo(operationID, utils.GetSelfFuncName())
+	err := c.db.DeleteAllMessage(ctx)
+	if err != nil {
+		return err
+	}
+	groupIDList, err := c.full.GetReadDiffusionGroupIDList(ctx)
+	if err != nil {
+		return err
+	}
+	for _, v := range groupIDList {
+		err = c.db.SuperGroupDeleteAllMessage(ctx, v)
+		if err != nil {
+			//log.Error(operationID, "SuperGroupDeleteAllMessage err", err.Error())
+			continue
+		}
+	}
+	err = c.db.ClearAllConversation(ctx)
+	if err != nil {
+		return err
+	}
+	conversationList, err := c.db.GetAllConversationListDB(ctx)
+	if err != nil {
+		return err
+	}
+	var cidList []string
+	for _, conversation := range conversationList {
+		cidList = append(cidList, conversation.ConversationID)
+	}
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: cidList}, c.GetCh())
+	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
+	return nil
+}

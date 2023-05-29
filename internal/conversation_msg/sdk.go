@@ -167,47 +167,6 @@ func (c *Conversation) GetMultipleConversation(ctx context.Context, conversation
 
 }
 
-func (c *Conversation) DeleteConversation(ctx context.Context, conversationID string) error {
-	lc, err := c.db.GetConversation(ctx, conversationID)
-	if err != nil {
-		return err
-	}
-	var sourceID string
-	switch lc.ConversationType {
-	case constant.SingleChatType, constant.NotificationChatType:
-		sourceID = lc.UserID
-	case constant.GroupChatType, constant.SuperGroupChatType:
-		sourceID = lc.GroupID
-	}
-	if lc.ConversationType == constant.SuperGroupChatType {
-		err = c.db.SuperGroupDeleteAllMessage(ctx, lc.GroupID)
-		if err != nil {
-			return err
-		}
-	} else {
-		//Mark messages related to this conversation for deletion
-		err = c.db.UpdateMessageStatusBySourceIDController(ctx, sourceID, constant.MsgStatusHasDeleted, lc.ConversationType)
-		if err != nil {
-			return err
-		}
-	}
-	//Reset the conversation information, empty conversation
-	err = c.db.ResetConversation(ctx, conversationID)
-	if err != nil {
-		return err
-	}
-	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: "", Action: constant.TotalUnreadMessageChanged, Args: ""}})
-	return nil
-}
-
-func (c *Conversation) DeleteAllConversationFromLocal(ctx context.Context) error {
-	err := c.db.ResetAllConversation(ctx)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (c *Conversation) SetConversationDraft(ctx context.Context, conversationID, draftText string) error {
 	if draftText != "" {
 		err := c.db.SetConversationDraftDB(ctx, conversationID, draftText)
@@ -1046,40 +1005,6 @@ func (c *Conversation) MarkConversationMessageAsReadBySeqs(ctx context.Context, 
 	return c.markConversationMessageAsReadBySeqs(ctx, conversationID, conversationType, clientMsgIDs)
 }
 
-func (c *Conversation) DeleteMessageFromLocalStorage(ctx context.Context, message *sdk_struct.MsgStruct) error {
-	return c.deleteMessageFromLocalStorage(ctx, message)
-}
-
-func (c *Conversation) ClearC2CHistoryMessage(ctx context.Context, userID string) error {
-	return c.clearC2CHistoryMessage(ctx, userID)
-}
-func (c *Conversation) ClearGroupHistoryMessage(ctx context.Context, groupID string) error {
-	return c.clearGroupHistoryMessage(ctx, groupID)
-
-}
-func (c *Conversation) ClearC2CHistoryMessageFromLocalAndSvr(ctx context.Context, userID string) error {
-	conversationID := c.getConversationIDBySessionType(userID, constant.SingleChatType)
-	err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
-	if err != nil {
-		return err
-	}
-	return c.clearC2CHistoryMessage(ctx, userID)
-
-}
-
-// fixme
-func (c *Conversation) ClearGroupHistoryMessageFromLocalAndSvr(ctx context.Context, groupID string) error {
-	conversationID, _, err := c.getConversationTypeByGroupID(ctx, groupID)
-	if err != nil {
-		return err
-	}
-	err = c.deleteConversationAndMsgFromSvr(ctx, conversationID)
-	if err != nil {
-		return err
-	}
-	return c.clearGroupHistoryMessage(ctx, groupID)
-}
-
 func (c *Conversation) InsertSingleMessageToLocalStorage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, sendID string) (*sdk_struct.MsgStruct, error) {
 	if recvID == "" || sendID == "" {
 		return nil, errors.New("recvID or sendID is null")
@@ -1228,40 +1153,6 @@ func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.Ms
 	message.SenderPlatformID = c.platformID
 	message.IsExternalExtensions = c.IsExternalExtensions
 	return nil
-}
-
-// 删除本地和服务器
-// 删除本地的话不用改服务器的数据
-// 删除服务器的话，需要把本地的消息状态改成删除
-func (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
-	// Use conversationID to remove conversations and messages from the server first
-	err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
-	if err != nil {
-		return err
-	}
-	return c.deleteConversation(ctx, conversationID)
-}
-
-func (c *Conversation) DeleteMessageFromLocalAndSvr(ctx context.Context, s *sdk_struct.MsgStruct) error {
-	err := c.deleteMessageFromSvr(ctx, s)
-	if err != nil {
-		return err
-	}
-	return c.deleteMessageFromLocalStorage(ctx, s)
-}
-
-// Delete all messages from the server and local
-func (c *Conversation) DeleteAllMsgFromLocalAndSvr(ctx context.Context) error {
-	// err := c.clearMessageFromSvr(ctx)
-	// if err != nil {
-	// 	return err
-	// }
-	return c.DeleteAllMsgFromLocalAndSvr(ctx)
-}
-
-// Just delete the local, the server does not need to change
-func (c *Conversation) DeleteAllMsgFromLocal(ctx context.Context) error {
-	return c.deleteAllMsgFromLocal(ctx)
 }
 
 func (c *Conversation) getConversationTypeByGroupID(ctx context.Context, groupID string) (conversationID string, conversationType int32, err error) {
