@@ -28,7 +28,7 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 )
 
-func SdkVersion() string {
+func GetSdkVersion() string {
 	return constant.GetSdkVersion()
 }
 
@@ -62,7 +62,7 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		return false
 	}
 
-	log.ZInfo(ctx, "InitSDK info", "config", configArgs, "sdkVersion", SdkVersion())
+	log.ZInfo(ctx, "InitSDK info", "config", configArgs, "sdkVersion", GetSdkVersion())
 	if listener == nil || config == "" {
 		log.ZError(ctx, "listener or config is nil", nil)
 		return false
@@ -75,21 +75,8 @@ func Login(callback open_im_sdk_callback.Base, operationID string, userID, token
 	call(callback, operationID, UserForSDK.Login, userID, token)
 }
 
-func WakeUp(callback open_im_sdk_callback.Base, operationID string) {
+func NetworkChanged(callback open_im_sdk_callback.Base, operationID string, changed int) {
 	call(callback, operationID, UserForSDK.WakeUp)
-}
-
-func NetworkChanged(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, UserForSDK.WakeUp)
-}
-
-func UploadImage(callback open_im_sdk_callback.Base, operationID string, filePath string, token, obj string) string {
-	//return UserForSDK.UploadImage(callback, filePath, token, obj, operationID)
-	return ""
-}
-
-func UploadFile(callback open_im_sdk_callback.SendMsgCallBack, operationID string, filePath string) {
-	//UserForSDK.UploadFile(callback, filePath, operationID)
 }
 
 func Logout(callback open_im_sdk_callback.Base, operationID string) {
@@ -102,14 +89,14 @@ func SetAppBackgroundStatus(callback open_im_sdk_callback.Base, operationID stri
 
 func GetLoginStatus() int {
 	if UserForSDK == nil {
-		return -1
+		return constant.Uninitialized
 	}
 	return UserForSDK.GetLoginStatus()
 }
 
-func GetLoginUser() string {
+func GetLoginUserID() string {
 	if UserForSDK == nil {
 		return ""
 	}
-	return UserForSDK.GetLoginUser()
+	return UserForSDK.GetLoginUserID()
 }
