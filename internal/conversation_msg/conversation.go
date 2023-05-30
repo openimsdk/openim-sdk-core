@@ -678,26 +678,28 @@ func (c *Conversation) getAdvancedHistoryMessageList2(ctx context.Context, req s
 	} else {
 		list, err = c.db.GetMessageList(ctx, conversationID, req.Count, startTime, isReverse)
 	}
-	rawMessageLength := len(list)
 	log.ZDebug(ctx, "db get messageList", "cost time", time.Since(t), "len", len(list), "err", err, "conversationID", conversationID)
-	t = time.Now()
+
 	if err != nil {
 		return nil, err
 	}
-
+	rawMessageLength := len(list)
+	t = time.Now()
 	if rawMessageLength < req.Count {
 		maxSeq, minSeq, lostSeqListLength := c.messageBlocksInternalContinuityCheck(ctx, conversationID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
 		_ = c.messageBlocksBetweenContinuityCheck(ctx, req.LastMinSeq, maxSeq, conversationID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
 		if minSeq == 1 && lostSeqListLength == 0 {
 			messageListCallback.IsEnd = true
 		} else {
-			c.messageBlocksEndContinuityCheck(ctx, minSeq, sourceID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
+			c.messageBlocksEndContinuityCheck(ctx, minSeq, conversationID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
 		}
 	} else {
-		maxSeq, _, _ := c.messageBlocksInternalContinuityCheck(ctx, sourceID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
-		c.messageBlocksBetweenContinuityCheck(ctx, req.LastMinSeq, maxSeq, sourceID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
+		maxSeq, _, _ := c.messageBlocksInternalContinuityCheck(ctx, conversationID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
+		c.messageBlocksBetweenContinuityCheck(ctx, req.LastMinSeq, maxSeq, conversationID, notStartTime, isReverse, req.Count, sessionType, startTime, &list, &messageListCallback)
 
 	}
+	log.ZDebug(ctx, "pull message", "pull cost time", time.Since(t))
+	t = time.Now()
 	var thisMinSeq int64
 	for _, v := range list {
 		if v.Seq != 0 && thisMinSeq == 0 {
@@ -707,7 +709,6 @@ func (c *Conversation) getAdvancedHistoryMessageList2(ctx context.Context, req s
 			thisMinSeq = v.Seq
 		}
 		temp := sdk_struct.MsgStruct{}
-		// tt := time.Now()
 		temp.ClientMsgID = v.ClientMsgID
 		temp.ServerMsgID = v.ServerMsgID
 		temp.CreateTime = v.CreateTime
@@ -730,11 +731,9 @@ func (c *Conversation) getAdvancedHistoryMessageList2(ctx context.Context, req s
 		temp.Ex = v.Ex
 		err := c.msgHandleByContentType(&temp)
 		if err != nil {
-			// log.Error(operationID, "Parsing data error:", err.Error(), temp)
+			log.ZError(ctx, "Parsing data error", err, "temp", temp)
 			continue
 		}
-		// log.Debug(operationID, "internal unmarshal cost time", time.Since(tt))
-
 		switch sessionType {
 		case constant.GroupChatType:
 			fallthrough
@@ -744,12 +743,12 @@ func (c *Conversation) getAdvancedHistoryMessageList2(ctx context.Context, req s
 		}
 		messageList = append(messageList, &temp)
 	}
-	// log.Debug(operationID, "unmarshal cost time", time.Since(t))
-	// t = time.Now()
+	log.ZDebug(ctx, "message convert and unmarshal", "unmarshal cost time", time.Since(t))
+	t = time.Now()
 	if !isReverse {
 		sort.Sort(messageList)
 	}
-	// log.Debug(operationID, "sort cost time", time.Since(t))
+	log.ZDebug(ctx, "sort", "sort cost time", time.Since(t))
 	messageListCallback.MessageList = messageList
 	if thisMinSeq == 0 {
 		thisMinSeq = req.LastMinSeq
