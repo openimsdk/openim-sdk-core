@@ -27,7 +27,6 @@ import (
 	"open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/signaling"
 	"open_im_sdk/internal/user"
-	workMoments "open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/common"
@@ -69,7 +68,6 @@ type Conversation struct {
 	user                 *user.User
 	file                 *file.File
 	signaling            *signaling.LiveSignaling
-	workMoments          *workMoments.WorkMoments
 	business             *business.Business
 	messageController    *MessageController
 	cache                *cache.Cache
@@ -108,8 +106,7 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 	ch chan common.Cmd2Value,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	conversationListener open_im_sdk_callback.OnConversationListener,
-	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling *signaling.LiveSignaling,
-	workMoments *workMoments.WorkMoments, business *business.Business, cache *cache.Cache, full *full.Full, id2MinSeq map[string]int64) *Conversation {
+	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling *signaling.LiveSignaling, business *business.Business, cache *cache.Cache, full *full.Full) *Conversation {
 	info := ccontext.Info(ctx)
 	n := &Conversation{db: db,
 		LongConnMgr:          longConnMgr,
@@ -121,7 +118,6 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		group:                group,
 		user:                 user,
 		signaling:            signaling,
-		workMoments:          workMoments,
 		full:                 full,
 		business:             business,
 		messageController:    NewMessageController(db),

@@ -29,7 +29,6 @@ import (
 	"open_im_sdk/internal/super_group"
 	"open_im_sdk/internal/third"
 	"open_im_sdk/internal/user"
-	workMoments "open_im_sdk/internal/work_moments"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/common"
@@ -55,7 +54,6 @@ type LoginMgr struct {
 	user         *user.User
 	file         *file.File
 	signaling    *signaling.LiveSignaling
-	workMoments  *workMoments.WorkMoments
 	business     *business.Business
 
 	full         *full.Full
@@ -80,7 +78,6 @@ type LoginMgr struct {
 	userListener                open_im_sdk_callback.OnUserListener
 	signalingListener           open_im_sdk_callback.OnSignalingListener
 	signalingListenerFroService open_im_sdk_callback.OnSignalingListener
-	workMomentsListener         open_im_sdk_callback.OnWorkMomentsListener
 	businessListener            open_im_sdk_callback.OnCustomBusinessListener
 
 	conversationCh     chan common.Cmd2Value
@@ -147,10 +144,6 @@ func (u *LoginMgr) Friend() *friend.Friend {
 
 func (u *LoginMgr) Signaling() *signaling.LiveSignaling {
 	return u.signaling
-}
-
-func (u *LoginMgr) WorkMoments() *workMoments.WorkMoments {
-	return u.workMoments
 }
 
 func (u *LoginMgr) SetConversationListener(conversationListener open_im_sdk_callback.OnConversationListener) {
@@ -232,14 +225,6 @@ func (u *LoginMgr) SetListenerForService(listener open_im_sdk_callback.OnListene
 	u.conversation.SetListenerForService(listener)
 }
 
-func (u *LoginMgr) SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMomentsListener) {
-	if u.workMoments != nil {
-		u.workMoments.SetListener(listener)
-	} else {
-		u.workMomentsListener = listener
-	}
-}
-
 func (u *LoginMgr) SetBusinessListener(listener open_im_sdk_callback.OnCustomBusinessListener) {
 	if u.business != nil {
 		u.business.SetListener(listener)
@@ -270,7 +255,6 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
 	u.loginTime = time.Now().UnixNano() / 1e6
-	u.id2MinSeq = make(map[string]int64, 100)
 	u.user = user.NewUser(u.db, u.loginUserID, u.conversationCh)
 	u.user.SetListener(u.userListener)
 	u.file = file.NewFile(u.db, u.loginUserID)
@@ -282,10 +266,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db, u.heartbeatCmdCh)
 	u.cache = cache.NewCache(u.user, u.friend)
 	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache, u.db, u.superGroup)
-	u.workMoments = workMoments.NewWorkMoments(u.loginUserID, u.db)
-	if u.workMomentsListener != nil {
-		u.workMoments.SetListener(u.workMomentsListener)
-	}
+
 	u.business = business.NewBusiness(u.db)
 	if u.businessListener != nil {
 		u.business.SetListener(u.businessListener)
@@ -295,8 +276,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.longConnMgr = interaction.NewLongConnMgr(ctx, u.connListener, u.pushMsgAndMaxSeqCh, u.conversationCh)
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
-		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq,
-	)
+		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.signaling, u.business, u.cache, u.full)
 
 	u.signaling = signaling.NewLiveSignaling(u.longConnMgr, u.loginUserID, u.info.PlatformID, u.db)
 	if u.signalingListener != nil {
