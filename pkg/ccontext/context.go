@@ -18,6 +18,7 @@ import (
 	"context"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 	"open_im_sdk/open_im_sdk_callback"
+	"open_im_sdk/sdk_struct"
 )
 
 const (
@@ -25,29 +26,21 @@ const (
 )
 
 type GlobalConfig struct {
-	UserID               string
-	Token                string
-	Platform             int32
-	ApiAddr              string
-	WsAddr               string
-	DataDir              string
-	LogLevel             uint32
-	EncryptionKey        string
-	IsCompression        bool
-	IsExternalExtensions bool
+	UserID string
+	Token  string
+
+	sdk_struct.IMConfig
 }
 
 type ContextInfo interface {
 	UserID() string
 	Token() string
-	Platform() int32
+	PlatformID() int32
 	ApiAddr() string
 	WsAddr() string
 	DataDir() string
 	LogLevel() uint32
-	EncryptionKey() string
 	OperationID() string
-	IsCompression() bool
 	IsExternalExtensions() bool
 }
 
@@ -85,8 +78,8 @@ func (i *info) Token() string {
 	return i.conf.Token
 }
 
-func (i *info) Platform() int32 {
-	return i.conf.Platform
+func (i *info) PlatformID() int32 {
+	return i.conf.PlatformID
 }
 
 func (i *info) ApiAddr() string {
@@ -105,16 +98,8 @@ func (i *info) LogLevel() uint32 {
 	return i.conf.LogLevel
 }
 
-func (i *info) EncryptionKey() string {
-	return i.conf.EncryptionKey
-}
-
 func (i *info) OperationID() string {
 	return mcontext.GetOperationID(i.ctx)
-}
-
-func (i *info) IsCompression() bool {
-	return i.conf.IsCompression
 }
 
 func (i *info) IsExternalExtensions() bool {

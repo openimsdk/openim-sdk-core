@@ -112,13 +112,11 @@ func (u *LoginMgr) Push() *third.Push {
 
 func (u *LoginMgr) ImConfig() sdk_struct.IMConfig {
 	return sdk_struct.IMConfig{
-		Platform:             u.info.Platform,
+		PlatformID:           u.info.PlatformID,
 		ApiAddr:              u.info.ApiAddr,
 		WsAddr:               u.info.WsAddr,
 		DataDir:              u.info.DataDir,
 		LogLevel:             u.info.LogLevel,
-		EncryptionKey:        u.info.EncryptionKey,
-		IsCompression:        u.info.IsCompression,
 		IsExternalExtensions: u.info.IsExternalExtensions,
 	}
 }
@@ -257,7 +255,7 @@ func (u *LoginMgr) wakeUp(ctx context.Context) error {
 func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.info.UserID = userID
 	u.info.Token = token
-	log.ZInfo(ctx, "login start... ", "userID", userID, "token", token, "isCompression", u.info.IsCompression)
+	log.ZInfo(ctx, "login start... ", "userID", userID, "token", token)
 	t1 := time.Now()
 	u.token = token
 	u.loginUserID = userID
@@ -292,7 +290,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	if u.businessListener != nil {
 		u.business.SetListener(u.businessListener)
 	}
-	u.push = third.NewPush(u.info.Platform, u.loginUserID)
+	u.push = third.NewPush(u.info.PlatformID, u.loginUserID)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
 	u.longConnMgr = interaction.NewLongConnMgr(ctx, u.connListener, u.pushMsgAndMaxSeqCh, u.conversationCh)
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
@@ -300,7 +298,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.signaling, u.workMoments, u.business, u.cache, u.full, u.id2MinSeq,
 	)
 
-	u.signaling = signaling.NewLiveSignaling(u.longConnMgr, u.loginUserID, u.info.Platform, u.db)
+	u.signaling = signaling.NewLiveSignaling(u.longConnMgr, u.loginUserID, u.info.PlatformID, u.db)
 	if u.signalingListener != nil {
 		u.signaling.SetListener(u.signalingListener)
 	}
@@ -321,17 +319,8 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_call
 	if listener == nil {
 		return false
 	}
-	u.info = &ccontext.GlobalConfig{
-		Platform: config.Platform,
-		ApiAddr:  config.ApiAddr,
-		WsAddr:   config.WsAddr,
-		DataDir:  config.DataDir,
-		LogLevel: config.LogLevel,
-		//ObjectStorage:        config.ObjectStorage,
-		EncryptionKey:        config.EncryptionKey,
-		IsCompression:        config.IsCompression,
-		IsExternalExtensions: config.IsExternalExtensions,
-	}
+	u.info = &ccontext.GlobalConfig{}
+	u.info.IMConfig = config
 	u.connListener = listener
 	ctx := ccontext.WithInfo(context.Background(), u.info)
 	u.ctx, u.cancel = context.WithCancel(ctx)
@@ -343,7 +332,7 @@ func (u *LoginMgr) Context() context.Context {
 }
 
 func (u *LoginMgr) logout(ctx context.Context) error {
-	err := u.longConnMgr.SendReqWaitResp(ctx, &push.DelUserPushTokenReq{UserID: u.info.UserID, PlatformID: u.info.Platform}, constant.LogoutMsg, &push.DelUserPushTokenResp{})
+	err := u.longConnMgr.SendReqWaitResp(ctx, &push.DelUserPushTokenReq{UserID: u.info.UserID, PlatformID: u.info.PlatformID}, constant.LogoutMsg, &push.DelUserPushTokenResp{})
 	if err != nil {
 		return err
 	}
