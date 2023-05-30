@@ -100,7 +100,7 @@ type Message struct {
 
 func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, pushMsgAndMaxSeqCh, conversationCh chan common.Cmd2Value) *LongConnMgr {
 	l := &LongConnMgr{listener: listener, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh,
-		conversationCh: conversationCh, IsCompression: ccontext.Info(ctx).IsCompression(),
+		conversationCh: conversationCh, IsCompression: true,
 		Syncer: NewWsRespAsyn(), encoder: NewGobEncoder(), compressor: NewGzipCompressor()}
 	l.send = make(chan Message, 10)
 	l.conn = NewWebSocket(WebSocket)
@@ -422,7 +422,7 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) error {
 	c.connStatus = Connecting
 	c.w.Unlock()
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s", ccontext.Info(ctx).WsAddr(),
-		ccontext.Info(ctx).UserID(), ccontext.Info(ctx).Token(), ccontext.Info(ctx).Platform(), ccontext.Info(ctx).OperationID())
+		ccontext.Info(ctx).UserID(), ccontext.Info(ctx).Token(), ccontext.Info(ctx).PlatformID(), ccontext.Info(ctx).OperationID())
 	var header http.Header
 	if c.IsCompression {
 		header = http.Header{"compression": []string{"gzip"}}
