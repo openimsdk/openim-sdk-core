@@ -114,7 +114,7 @@ func (c *Conversation) DeleteAllMessageFromSvr(ctx context.Context) error {
 }
 
 // Delete a message from the local
-func (c *Conversation) deleteMessage(ctx context.Context, s *sdk_struct.MsgStruct) error {
+func (c *Conversation) deleteMessageFormLocalo(ctx context.Context, s *sdk_struct.MsgStruct) error {
 	var conversation model_struct.LocalConversation
 	var latestMsg sdk_struct.MsgStruct
 	conversationID := utils.GetConversationIDByMsg(s)
