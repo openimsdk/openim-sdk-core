@@ -359,10 +359,14 @@ const (
 	KeywordMatchAnd = 1 // Keyword match mode: match all keywords
 )
 
-const BigVersion = "v2"
+const BigVersion = "v3"
 const UpdateVersion = ".0.0"
-const SdkVersion = "Open-IM-SDK-Core-"
+const SdkVersion = "openim-sdk-core-"
 const LogFileName = "sdk"
+
+func GetSdkVersion() string {
+	return SdkVersion + BigVersion + UpdateVersion
+}
 
 var HeartbeatInterval = 5
 
@@ -391,5 +395,3 @@ const (
 
 const SplitGetGroupMemberNum = 1000
 const UseHashGroupMemberNum = 1000
-
-var KEY = "openIMtest123456789"

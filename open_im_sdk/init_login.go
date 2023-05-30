@@ -29,7 +29,7 @@ import (
 )
 
 func SdkVersion() string {
-	return constant.SdkVersion + constant.BigVersion + constant.UpdateVersion
+	return constant.GetSdkVersion()
 }
 
 func SetHeartbeatInterval(heartbeatInterval int) {

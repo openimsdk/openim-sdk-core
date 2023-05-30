@@ -301,18 +301,14 @@ func (n NewMsgList) Swap(i, j int) {
 }
 
 type IMConfig struct {
-	Platform             int32  `json:"platform"`
+	PlatformID           int32  `json:"platform_id"`
 	ApiAddr              string `json:"api_addr"`
 	WsAddr               string `json:"ws_addr"`
 	DataDir              string `json:"data_dir"`
 	LogLevel             uint32 `json:"log_level"`
-	ObjectStorage        string `json:"object_storage"` //"cos"(default)  "oss"
-	EncryptionKey        string `json:"encryption_key"`
-	IsCompression        bool   `json:"is_compression"`
+	IsLogStandardOutput  bool   `json:"is_log_standard_output"`
 	IsExternalExtensions bool   `json:"is_external_extensions"`
 }
-
-//var SvrConf IMConfig
 
 type CmdNewMsgComeToConversation struct {
 	Msgs     map[string]*sdkws.PullMsgs

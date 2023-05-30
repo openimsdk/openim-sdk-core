@@ -74,7 +74,6 @@ type Conversation struct {
 	messageController    *MessageController
 	cache                *cache.Cache
 	full                 *full.Full
-	encryptionKey        string
 	maxSeqRecorder       MaxSeqRecorder
 	IsExternalExtensions bool
 	listenerForService   open_im_sdk_callback.OnListenerForService
@@ -116,7 +115,7 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		LongConnMgr:          longConnMgr,
 		recvCH:               ch,
 		loginUserID:          info.UserID(),
-		platformID:           info.Platform(),
+		platformID:           info.PlatformID(),
 		DataDir:              info.DataDir(),
 		friend:               friend,
 		group:                group,
@@ -124,7 +123,6 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		signaling:            signaling,
 		workMoments:          workMoments,
 		full:                 full,
-		encryptionKey:        info.EncryptionKey(),
 		business:             business,
 		messageController:    NewMessageController(db),
 		IsExternalExtensions: info.IsExternalExtensions(),
