@@ -47,7 +47,7 @@ func (c *Conversation) DeleteAllMessage(ctx context.Context) error {
 	}
 
 	// Delete the server first (high error rate), then delete it.
-	err = c.deleteMessageFromSvr(ctx)
+	err = c.DeleteAllMessageFromSvr(ctx)
 	if err != nil {
 		return err
 	}
@@ -100,12 +100,8 @@ func (c *Conversation) deleteAllMsgFromLocal(ctx context.Context) error {
 func (c *Conversation) deleteMessageFromSvr(ctx context.Context) error {
 	var apiReq pbMsg.DeleteMsgsReq
 	// GetAllConversations
-
-	if err != nil {
-		return err
-	}
 	apiReq.UserID = c.loginUserID
-	err = util.ApiPost(ctx, constant.ClearMsgRouter, &apiReq, nil)
+	err := util.ApiPost(ctx, constant.ClearMsgRouter, &apiReq, nil)
 	if err != nil {
 		return err
 	}
@@ -124,6 +120,19 @@ func (c *Conversation) deleteMessageFromSvr(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+
+// Delete all server messages
+func (c *Conversation) DeleteAllMessageFromSvr(ctx context.Context) error {
+	var apiReq pbMsg.UserClearAllMsgReq
+	apiReq.UserID = c.loginUserID
+	err := util.ApiPost(ctx, constant.ClearMsgRouter, &apiReq, nil)
+	if err != nil {
+		return err
 	}
 	return nil
 }
