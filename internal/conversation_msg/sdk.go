@@ -845,38 +845,12 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	//Protocol conversion
 	var wsMsgData sdkws.MsgData
 	copier.Copy(&wsMsgData, s)
-	if wsMsgData.ContentType == constant.Text && c.encryptionKey != "" {
-		ciphertext, err := utils.AesEncrypt([]byte(s.Content), []byte(c.encryptionKey))
-		if err != nil {
-			return nil, err
-		}
-		attachInfo := sdk_struct.AttachedInfoElem{}
-		_ = utils.JsonStringToStruct(s.AttachedInfo, &attachInfo)
-		attachInfo.IsEncryption = true
-		attachInfo.InEncryptStatus = true
-		wsMsgData.Content = ciphertext
-		wsMsgData.AttachedInfo = utils.StructToJsonString(attachInfo)
-	} else {
-		wsMsgData.Content = []byte(s.Content)
-	}
+	wsMsgData.Content = []byte(s.Content)
 	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
 	//wsMsgData.AtUserIDList = s.AtElem.AtUserList
 	wsMsgData.OfflinePushInfo = offlinePushInfo
 	s.Content = ""
-	//timeout := 300
-	//retryTimes := 60
-	//resp, err := c.SendReqWaitResp(ctx, &wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID)
-	//if err != nil {
-	//	c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-	//	return nil, err
-	//}
-	//switch e := err.(type) {
-	//case *constant.ErrInfo:
-	//	c.checkErrAndUpdateMessage(callback, e.ErrCode, e, s, lc, operationID)
-	//default:
-	//	c.checkErrAndUpdateMessage(callback, 302, err, s, lc, operationID)
-	//}
 	var sendMsgResp server_api_params.UserSendMsgResp
 
 	err := c.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
