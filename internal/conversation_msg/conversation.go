@@ -909,27 +909,27 @@ func (c *Conversation) clearC2CHistoryMessage(ctx context.Context, userID string
 	return nil
 }
 
-func (c *Conversation) deleteMessageFromSvr(ctx context.Context, s *sdk_struct.MsgStruct) error {
-	// seq, err := c.db.GetMsgSeqByClientMsgIDController(ctx, s)
-	// if err != nil {
-	// 	return err
-	// }
-	// switch s.SessionType {
-	// case constant.SingleChatType, constant.GroupChatType:
-	// 	var apiReq pbMsg.DelMsgsReq
-	// 	// apiReq.Seqs = utils.Uint32ListConvert([]uint32{seq})
-	// 	// apiReq.UserID = c.loginUserID
-	// 	return util.ApiPost(ctx, constant.DeleteMsgRouter, &apiReq, nil)
-	// case constant.SuperGroupChatType:
-	// 	var apiReq pbMsg.DelSuperGroupMsgReq
-	// 	apiReq.UserID = c.loginUserID
-	// 	apiReq.GroupID = s.GroupID
-	// 	return util.ApiPost(ctx, constant.DeleteSuperGroupMsgRouter, &apiReq, nil)
+// func (c *Conversation) deleteMessageFromSvr(ctx context.Context, s *sdk_struct.MsgStruct) error {
+// 	// seq, err := c.db.GetMsgSeqByClientMsgIDController(ctx, s)
+// 	// if err != nil {
+// 	// 	return err
+// 	// }
+// 	// switch s.SessionType {
+// 	// case constant.SingleChatType, constant.GroupChatType:
+// 	// 	var apiReq pbMsg.DelMsgsReq
+// 	// 	// apiReq.Seqs = utils.Uint32ListConvert([]uint32{seq})
+// 	// 	// apiReq.UserID = c.loginUserID
+// 	// 	return util.ApiPost(ctx, constant.DeleteMsgRouter, &apiReq, nil)
+// 	// case constant.SuperGroupChatType:
+// 	// 	var apiReq pbMsg.DelSuperGroupMsgReq
+// 	// 	apiReq.UserID = c.loginUserID
+// 	// 	apiReq.GroupID = s.GroupID
+// 	// 	return util.ApiPost(ctx, constant.DeleteSuperGroupMsgRouter, &apiReq, nil)
 
-	// }
-	return errors.New("session type error")
+// 	// }
+// 	return errors.New("session type error")
 
-}
+// }
 
 // func (c *Conversation) clearMessageFromSvr(ctx context.Context) error {
 // 	var apiReq pbMsg.ClearMsgReq
@@ -1232,89 +1232,6 @@ func (c *Conversation) delMsgBySeqSplit(seqList []uint32) error {
 //	err = c.delMsgBySeq(seqList)
 //	common.CheckArgsErrCallback(callback, err, operationID)
 //}
-
-func (c *Conversation) deleteConversationAndMsgFromSvr(ctx context.Context, conversationID string) error {
-	local, err := c.db.GetConversation(ctx, conversationID)
-	if err != nil {
-		return err
-	}
-	var seqList []uint32
-	switch local.ConversationType {
-	case constant.SingleChatType, constant.NotificationChatType:
-		peerUserID := local.UserID
-		if peerUserID != c.loginUserID {
-			seqList, err = c.db.GetMsgSeqListByPeerUserID(ctx, peerUserID)
-		} else {
-			seqList, err = c.db.GetMsgSeqListBySelfUserID(ctx, c.loginUserID)
-		}
-		log.ZDebug(ctx, utils.GetSelfFuncName(), "seqList: ", seqList)
-		if err != nil {
-			return err
-		}
-		//先拿到 seqList: 这是一个 []uint32
-		//constant.GroupChatType 表示群聊
-	case constant.GroupChatType:
-		// var apiReq pbMsg.DelMsgsReq
-		// apiReq.UserID = c.loginUserID
-		// apiReq.Seqs = utils.Uint32ListConvert(seqList)
-		// groupID := local.GroupID
-		// seqList, err = c.db.GetMsgSeqListByGroupID(ctx, groupID)
-		// log.ZDebug(ctx, utils.GetSelfFuncName(), "seqList: ", seqList)
-		// if err != nil {
-		// 	return err
-		// }
-		// if err := util.ApiPost(ctx, constant.DeleteSuperGroupMsgRouter, &apiReq, nil); err != nil {
-		// 	return err
-		// }
-	case constant.SuperGroupChatType:
-		// var apiReq pbMsg.DelSuperGroupMsgReq
-		// apiReq.UserID = c.loginUserID
-		// apiReq.GroupID = local.GroupID
-		// if err := util.ApiPost(ctx, constant.DeleteSuperGroupMsgRouter, &apiReq, nil); err != nil {
-		// 	return err
-		// }
-
-	}
-	var apiReq pbMsg.DelMsgsReq
-	// apiReq.UserID = c.loginUserID
-	// apiReq.Seqs = utils.Uint32ListConvert(seqList)
-	return util.ApiPost(ctx, constant.DeleteMsgRouter, &apiReq, nil)
-}
-
-func (c *Conversation) deleteAllMsgFromLocal(ctx context.Context) error {
-	//log.NewInfo(operationID, utils.GetSelfFuncName())
-	err := c.db.DeleteAllMessage(ctx)
-	if err != nil {
-		return err
-	}
-	groupIDList, err := c.full.GetReadDiffusionGroupIDList(ctx)
-	if err != nil {
-		return err
-	}
-	for _, v := range groupIDList {
-		err = c.db.SuperGroupDeleteAllMessage(ctx, v)
-		if err != nil {
-			//log.Error(operationID, "SuperGroupDeleteAllMessage err", err.Error())
-			continue
-		}
-	}
-	err = c.db.ClearAllConversation(ctx)
-	if err != nil {
-		return err
-	}
-	conversationList, err := c.db.GetAllConversationListDB(ctx)
-	if err != nil {
-		return err
-	}
-	var cidList []string
-	for _, conversation := range conversationList {
-		cidList = append(cidList, conversation.ConversationID)
-	}
-	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: cidList}, c.GetCh())
-	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{"", constant.TotalUnreadMessageChanged, ""}})
-	return nil
-
-}
 
 func isContainMessageReaction(reactionType int, list []*sdk_struct.ReactionElem) (bool, *sdk_struct.ReactionElem) {
 	for _, v := range list {

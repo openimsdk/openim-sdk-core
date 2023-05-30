@@ -39,6 +39,10 @@ const (
 	NewestSeqRouter        = "/chat/newest_seq"
 
 	//msg
+	ClearConversationMsgRouter = RouterMsg + "/clear_conversation_msg" // Clear the message of the specified conversation
+	ClearAllMsgRouter          = RouterMsg + "/user_clear_all_msg"     // Clear all messages of the current user
+	DeleteMsgsRouter           = RouterMsg + "/delete_msgs"            // Delete the specified message
+
 	DeleteMsgRouter                    = RouterMsg + "/del_msg"
 	ClearMsgRouter                     = RouterMsg + "/clear_msg"
 	RevokeMsgRouter                    = RouterMsg + "/revoke_msg"
