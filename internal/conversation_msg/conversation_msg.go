@@ -794,7 +794,6 @@ func (c *Conversation) genConversationGroupAtType(lc *model_struct.LocalConversa
 			lc.GroupAtType = constant.AtMe
 		}
 	}
-
 }
 
 //	func (c *Conversation) msgStructToLocalChatLog(m *sdk_struct.MsgStruct) *model_struct.LocalChatLog {
