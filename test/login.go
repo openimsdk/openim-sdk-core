@@ -52,8 +52,6 @@ func InOutDoTest(uid, tk, ws, api string) {
 	cf.WsAddr = ws
 	cf.DataDir = "./"
 	cf.LogLevel = LogLevel
-	cf.ObjectStorage = "minio"
-	cf.IsCompression = true
 	cf.IsExternalExtensions = true
 
 	b, _ := json.Marshal(cf)
@@ -87,9 +85,6 @@ func InOutDoTest(uid, tk, ws, api string) {
 
 	var signalingListener testSignalingListener
 	open_im_sdk.SetSignalingListener(&signalingListener)
-
-	var workMomentsListener testWorkMomentsListener
-	open_im_sdk.SetWorkMomentsListener(workMomentsListener)
 
 	InOutlllogin(uid, tk)
 }
