@@ -365,7 +365,8 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 		return sdkerrs.ErrMsgDecodeBinaryWs
 	}
 	ctx := context.WithValue(c.ctx, "operationID", wsResp.OperationID)
-	log.ZInfo(ctx, "recv msg", "wsResp", wsResp)
+	log.ZInfo(ctx, "recv msg", "errCode", wsResp.ErrCode, "errMsg", wsResp.ErrMsg,
+		"reqIdentifier", wsResp.ReqIdentifier)
 	switch wsResp.ReqIdentifier {
 	case constant.PushMsg:
 		if err = c.doPushMsg(ctx, wsResp); err != nil {
