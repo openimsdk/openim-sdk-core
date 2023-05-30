@@ -102,7 +102,10 @@ type TextElem struct {
 }
 
 type CardElem struct {
-	Content string `json:"content"`
+	UserID   string `json:"userID"`
+	Nickname string `json:"nickname"`
+	FaceURL  string `json:"faceURL"`
+	Ex       string `json:"ex"`
 }
 
 type PictureElem struct {
