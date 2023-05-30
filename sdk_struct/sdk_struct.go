@@ -273,7 +273,7 @@ type MessageEntity struct {
 	Offset int32  `json:"offset"`
 	Length int32  `json:"length"`
 	Url    string `json:"url,omitempty"`
-	Info   string `json:"info,omitempty"`
+	Ex     string `json:"ex,omitempty"`
 }
 type GroupHasReadInfo struct {
 	HasReadUserIDList []string `json:"hasReadUserIDList,omitempty"`
