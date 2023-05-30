@@ -327,7 +327,7 @@ func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool
 
 }
 
-func (u *LoginMgr) GetLoginUser() string {
+func (u *LoginMgr) GetLoginUserID() string {
 	return u.loginUserID
 }
 
