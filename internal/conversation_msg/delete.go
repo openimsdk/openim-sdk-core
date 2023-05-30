@@ -5,8 +5,13 @@ import (
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
+	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 
 	pbMsg "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/msg"
+	"github.com/jinzhu/copier"
 )
 
 // Delete the local and server
@@ -97,6 +102,84 @@ func (c *Conversation) deleteAllMsgFromLocal(ctx context.Context) error {
 
 }
 
+// Delete all server messages
+func (c *Conversation) DeleteAllMessageFromSvr(ctx context.Context) error {
+	var apiReq pbMsg.UserClearAllMsgReq
+	apiReq.UserID = c.loginUserID
+	err := util.ApiPost(ctx, constant.ClearMsgRouter, &apiReq, nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Delete a message from the local
+func (c *Conversation) deleteMessage(ctx context.Context, s *sdk_struct.MsgStruct) error {
+	var conversation model_struct.LocalConversation
+	var latestMsg sdk_struct.MsgStruct
+	var conversationID string
+	var sourceID string
+	chatLog := model_struct.LocalChatLog{ClientMsgID: s.ClientMsgID, Status: constant.MsgStatusHasDeleted, SessionType: s.SessionType}
+
+	switch s.SessionType {
+	case constant.GroupChatType:
+		conversationID = c.getConversationIDBySessionType(s.GroupID, constant.GroupChatType)
+		sourceID = s.GroupID
+	case constant.SingleChatType:
+		if s.SendID != c.loginUserID {
+			conversationID = c.getConversationIDBySessionType(s.SendID, constant.SingleChatType)
+			sourceID = s.SendID
+		} else {
+			conversationID = c.getConversationIDBySessionType(s.RecvID, constant.SingleChatType)
+			sourceID = s.RecvID
+		}
+	case constant.SuperGroupChatType:
+		conversationID = c.getConversationIDBySessionType(s.GroupID, constant.SuperGroupChatType)
+		sourceID = s.GroupID
+		chatLog.RecvID = s.GroupID
+	}
+	err := c.db.UpdateMessageController(ctx, &chatLog)
+	if err != nil {
+		return err
+	}
+	LocalConversation, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	err = utils.JsonStringToStruct(LocalConversation.LatestMsg, &latestMsg)
+	if err != nil {
+		return err
+	}
+
+	if s.ClientMsgID == latestMsg.ClientMsgID { //If the deleted message is the latest message of the conversation, update the latest message of the conversation
+		list, err := c.db.GetMessageListNoTimeController(ctx, sourceID, int(s.SessionType), 1, false)
+		if err != nil {
+			return err
+		}
+		conversation.ConversationID = conversationID
+		if list == nil {
+			conversation.LatestMsg = ""
+			conversation.LatestMsgSendTime = s.SendTime
+		} else {
+			copier.Copy(&latestMsg, list[0])
+			err := c.msgConvert(&latestMsg)
+			if err != nil {
+				log.Error("", "Parsing data error:", err.Error(), latestMsg)
+			}
+			conversation.LatestMsg = utils.StructToJsonString(latestMsg)
+			conversation.LatestMsgSendTime = latestMsg.SendTime
+		}
+		err = c.db.UpdateColumnsConversation(ctx, conversation.ConversationID, map[string]interface{}{"latest_msg_send_time": conversation.LatestMsgSendTime, "latest_msg": conversation.LatestMsg})
+		if err != nil {
+			log.Error("internal", "updateConversationLatestMsgModel err: ", err)
+		} else {
+			_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+		}
+	}
+	return nil
+}
+
+// The user deletes part of the message from the server
 func (c *Conversation) deleteMessageFromSvr(ctx context.Context) error {
 	var apiReq pbMsg.DeleteMsgsReq
 	// GetAllConversations
@@ -125,14 +208,25 @@ func (c *Conversation) deleteMessageFromSvr(ctx context.Context) error {
 	return nil
 }
 
-
-// Delete all server messages
-func (c *Conversation) DeleteAllMessageFromSvr(ctx context.Context) error {
-	var apiReq pbMsg.UserClearAllMsgReq
-	apiReq.UserID = c.loginUserID
-	err := util.ApiPost(ctx, constant.ClearMsgRouter, &apiReq, nil)
+// Delete messages from local
+func (c *Conversation) deleteMessageFromLocal(ctx context.Context, s *sdk_struct.MsgStruct) error {
+	var conversationID string
+	switch s.SessionType {
+	case constant.GroupChatType:
+		conversationID = c.getConversationIDBySessionType(s.GroupID, constant.GroupChatType)
+	case constant.SingleChatType:
+		if s.SendID != c.loginUserID {
+			conversationID = c.getConversationIDBySessionType(s.SendID, constant.SingleChatType)
+		} else {
+			conversationID = c.getConversationIDBySessionType(s.RecvID, constant.SingleChatType)
+		}
+	case constant.SuperGroupChatType:
+		conversationID = c.getConversationIDBySessionType(s.GroupID, constant.SuperGroupChatType)
+	}
+	err := c.db.ClearConversation(ctx, conversationID)
 	if err != nil {
 		return err
 	}
+	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
 	return nil
 }
