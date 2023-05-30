@@ -3,6 +3,7 @@ package conversation_msg
 import (
 	"context"
 	"errors"
+	pbMsg "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/msg"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/common"
@@ -15,10 +16,6 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/jinzhu/copier"
 	"go.starlark.net/lib/proto"
-
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-
-	"github.com/jinzhu/copier"
 )
 
 /*
@@ -66,7 +63,7 @@ func (c *Conversation) DeleteAllMessage(ctx context.Context) error {
 // 删除单条消息
 func (c *Conversation) DeleteMessageFromLocal(ctx context.Context, s *sdk_struct.MsgStruct) error {
 	// 先获取到会话
-	Conversation, err:= c.db.GetAllConversations(ctx)
+	Conversation, err := c.db.GetAllConversations(ctx)
 	if err != nil {
 		return err
 	}
@@ -497,51 +494,16 @@ func (c *Conversation) deleteMessageFromSvr(callback open_im_sdk_callback.Base, 
 // To delete session information, delete the server first, and then invoke the interface.
 // The client receives a callback to delete all local information.
 func (c *Conversation) deleteConversationAndMsgFromSvr(ctx context.Context, conversationID string) error {
-	local, err := c.db.GetConversation(ctx, conversationID)
+	//校验这个会话是否存在，防止客户端删除不存在的会话
+	_, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
 	}
-	var seqList []uint32
-	switch local.ConversationType {
-	case constant.SingleChatType, constant.NotificationChatType:
-		peerUserID := local.UserID
-		if peerUserID != c.loginUserID {
-			seqList, err = c.db.GetMsgSeqListByPeerUserID(ctx, peerUserID)
-		} else {
-			seqList, err = c.db.GetMsgSeqListBySelfUserID(ctx, c.loginUserID)
-		}
-		log.ZDebug(ctx, utils.GetSelfFuncName(), "seqList: ", seqList)
-		if err != nil {
-			return err
-		}
-		//先拿到 seqList: 这是一个 []uint32
-		//constant.GroupChatType 表示群聊
-	case constant.GroupChatType:
-		// var apiReq pbMsg.DelMsgsReq
-		// apiReq.UserID = c.loginUserID
-		// apiReq.Seqs = utils.Uint32ListConvert(seqList)
-		// groupID := local.GroupID
-		// seqList, err = c.db.GetMsgSeqListByGroupID(ctx, groupID)
-		// log.ZDebug(ctx, utils.GetSelfFuncName(), "seqList: ", seqList)
-		// if err != nil {
-		// 	return err
-		// }
-		// if err := util.ApiPost(ctx, constant.DeleteSuperGroupMsgRouter, &apiReq, nil); err != nil {
-		// 	return err
-		// }
-	case constant.SuperGroupChatType:
-		// var apiReq pbMsg.DelSuperGroupMsgReq
-		// apiReq.UserID = c.loginUserID
-		// apiReq.GroupID = local.GroupID
-		// if err := util.ApiPost(ctx, constant.DeleteSuperGroupMsgRouter, &apiReq, nil); err != nil {
-		// 	return err
-		// }
-
-	}
-	var apiReq pbMsg.DelMsgsReq
-	// apiReq.UserID = c.loginUserID
-	// apiReq.Seqs = utils.Uint32ListConvert(seqList)
-	return util.ApiPost(ctx, constant.DeleteMsgRouter, &apiReq, nil)
+	//由于它是删除一个会话，所以是该会话全量消息的删除，所以这里不需要传递seqList
+	var apiReq pbMsg.ClearConversationsMsgReq
+	apiReq.UserID = c.loginUserID
+	apiReq.ConversationIDs = []string{conversationID}
+	return util.ApiPost(ctx, constant.DeleteConversationMsgRouter, &apiReq, nil)
 }
 
 func (c *Conversation) deleteAllMsgFromLocal(ctx context.Context) error {
