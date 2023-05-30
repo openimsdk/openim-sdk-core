@@ -65,13 +65,6 @@ func SetFriendListener(listener open_im_sdk_callback.OnFriendshipListener) {
 	UserForSDK.SetFriendListener(listener)
 }
 
-func SetWorkMomentsListener(listener open_im_sdk_callback.OnWorkMomentsListener) {
-	if listener == nil || UserForSDK == nil {
-		log.Error("callback or UserForSDK is nil")
-		return
-	}
-	UserForSDK.SetWorkMomentsListener(listener)
-}
 func SetCustomBusinessListener(listener open_im_sdk_callback.OnCustomBusinessListener) {
 	if listener == nil || UserForSDK == nil {
 		log.Error("callback or UserForSDK is nil")
@@ -79,6 +72,7 @@ func SetCustomBusinessListener(listener open_im_sdk_callback.OnCustomBusinessLis
 	}
 	UserForSDK.SetBusinessListener(listener)
 }
+
 func SetMessageKvInfoListener(listener open_im_sdk_callback.OnMessageKvInfoListener) {
 	if listener == nil || UserForSDK == nil {
 		log.Error("callback or UserForSDK is nil")

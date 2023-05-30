@@ -68,12 +68,12 @@ type OnAdvancedMsgListener interface {
 	OnRecvNewMessage(message string)
 	OnRecvC2CReadReceipt(msgReceiptList string)
 	OnRecvGroupReadReceipt(groupMsgReceiptList string)
-	//deprecated
-	OnRecvMessageRevoked(msgID string)
+
 	OnNewRecvMessageRevoked(messageRevoked string)
 	OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string)
 	OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string)
 	OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string)
+	OnRecvOfflineNewMessages(messageList string)
 }
 
 type OnBatchMsgListener interface {
@@ -83,14 +83,6 @@ type OnBatchMsgListener interface {
 
 type OnUserListener interface {
 	OnSelfInfoUpdated(userInfo string)
-}
-
-type OnOrganizationListener interface {
-	OnOrganizationUpdated()
-}
-
-type OnWorkMomentsListener interface {
-	OnRecvNewNotification()
 }
 
 type OnCustomBusinessListener interface {
