@@ -957,7 +957,7 @@ func (c *Conversation) GetHistoryMessageList(ctx context.Context, req sdk_params
 }
 
 func (c *Conversation) GetAdvancedHistoryMessageList(ctx context.Context, req sdk_params_callback.GetAdvancedHistoryMessageListParams) (*sdk_params_callback.GetAdvancedHistoryMessageListCallback, error) {
-	result, err := c.getAdvancedHistoryMessageList(ctx, req, false)
+	result, err := c.getAdvancedHistoryMessageList2(ctx, req, false)
 	if err != nil {
 		return nil, err
 	}

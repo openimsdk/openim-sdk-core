@@ -19,7 +19,6 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
-	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 
@@ -95,66 +94,31 @@ func (c *Conversation) messageBlocksBetweenContinuityCheck(ctx context.Context, 
 	return false
 }
 
-// 检测其内部连续性，如果不连续，则向前补齐,获取这一组消息的最大最小seq，以及需要补齐的seq列表长度
+// 根据最小seq向前补齐消息，由服务器告诉拉取消息结果是否到底，如果网络，则向前补齐,获取这一组消息的最大最小seq，以及需要补齐的seq列表长度
 func (c *Conversation) messageBlocksEndContinuityCheck(ctx context.Context, minSeq int64, conversationID string, notStartTime,
 	isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
-	var minSeqServer int64
-	var maxSeqServer int64
-	var wsSeqResp sdkws.GetMaxSeqResp
-	err := c.SendReqWaitResp(ctx, &server_api_params.GetMaxAndMinSeqReq{UserID: c.loginUserID, GroupIDList: []string{conversationID}}, constant.GetNewestSeq, &wsSeqResp)
-	if err != nil {
-		// log.Error(operationID, "SendReqWaitResp failed ", err.Error(), constant.WSGetNewestSeq, 1, c.loginUserID)
-	} else {
-
-		if value, ok := wsSeqResp.MinSeqs[conversationID]; ok {
-			minSeqServer = value
-			if value == 0 {
-				minSeqServer = 1
-			}
-		}
-		if value, ok := wsSeqResp.MinSeqs[conversationID]; ok {
-			maxSeqServer = value
-		}
-
-	}
-	// log.Error(operationID, "from server min seq is", minSeqServer, maxSeqServer)
-	//seq, err := c.db.SuperGroupGetNormalMinSeq(sourceID)
-	//if err != nil {
-	//	log.Error(operationID, "SuperGroupGetNormalMinSeq err:", err.Error())
-	//}
-	//log.Error(operationID, sourceID+":table min seq is ", seq)
 	if minSeq != 0 {
-		if minSeq <= minSeqServer {
-			messageListCallback.IsEnd = true
-		} else {
-			seqList := func(seq int64) (seqList []int64) {
-				startSeq := int64(seq) - constant.PullMsgNumForReadDiffusion
-				if startSeq <= int64(minSeqServer) {
-					if minSeqServer == 0 {
-						startSeq = 1
-					} else {
-						startSeq = int64(minSeqServer)
-					}
-				}
-				// log.Debug(operationID, "pull start is ", startSeq)
-				for i := startSeq; i < int64(seq); i++ {
-					seqList = append(seqList, i)
-				}
-				// log.Debug(operationID, "pull seqList is ", seqList)
-				return seqList
-			}(minSeq)
-			// log.Debug(operationID, "pull seqList is ", seqList, len(seqList))
-			if len(seqList) > 0 {
-				c.pullMessageAndReGetHistoryMessages(context.Background(), conversationID, seqList, notStartTime, isReverse, count, sessionType, startTime, list, messageListCallback)
+		seqList := func(seq int64) (seqList []int64) {
+			startSeq := seq - constant.PullMsgNumForReadDiffusion
+			if startSeq <= 0 {
+				startSeq = 1
 			}
+			log.ZDebug(ctx, "pull start is ", "start seq", startSeq)
+			for i := startSeq; i < seq; i++ {
+				seqList = append(seqList, i)
+			}
+			return seqList
+		}(minSeq)
+		log.ZDebug(ctx, "pull seqList is ", "seqList", seqList, "len", len(seqList))
+
+		if len(seqList) > 0 {
+			c.pullMessageAndReGetHistoryMessages(ctx, conversationID, seqList, notStartTime, isReverse, count, sessionType, startTime, list, messageListCallback)
 		}
+
 	} else {
 		//local don't have messages,本地无消息，但是服务器最大消息不为0
-		if int64(maxSeqServer)-int64(minSeqServer) >= 0 {
-			messageListCallback.IsEnd = false
-		} else {
-			messageListCallback.IsEnd = true
-		}
+		seqList := []int64{0, 0}
+		c.pullMessageAndReGetHistoryMessages(ctx, conversationID, seqList, notStartTime, isReverse, count, sessionType, startTime, list, messageListCallback)
 
 	}
 
@@ -208,6 +172,9 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, c
 	seqRange.Num = int64(len(newSeqList))
 	pullMsgReq.SeqRanges = append(pullMsgReq.SeqRanges, &seqRange)
 	log.ZDebug(ctx, "read diffusion group pull message,  ", "req", pullMsgReq)
+	if notStartTime && !c.LongConnMgr.IsConnected() {
+		return
+	}
 	err = c.SendReqWaitResp(ctx, &pullMsgReq, constant.PullMsgBySeqList, &pullMsgResp)
 	if err != nil {
 		errHandle(newSeqList, list, err, messageListCallback)
@@ -216,6 +183,7 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, c
 		log.ZDebug(ctx, "syncMsgFromServerSplit pull msg", "resp", pullMsgResp)
 		if v, ok := pullMsgResp.Msgs[conversationID]; ok {
 			c.pullMessageIntoTable(ctx, v.Msgs, conversationID)
+			messageListCallback.IsEnd = v.IsEnd
 		}
 		if notStartTime {
 			*list, err = c.db.GetMessageListNoTime(ctx, conversationID, count, isReverse)
