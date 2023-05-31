@@ -16,7 +16,7 @@ package open_im_sdk
 
 import "open_im_sdk/open_im_sdk_callback"
 
-func GetDesignatedFriendsInfo(callback open_im_sdk_callback.Base, operationID string, userIDList string) {
+func GetSpecifiedFriendsInfo(callback open_im_sdk_callback.Base, operationID string, userIDList string) {
 	call(callback, operationID, UserForSDK.Friend().GetDesignatedFriendsInfo, userIDList)
 }
 
@@ -48,12 +48,12 @@ func DeleteFriend(callback open_im_sdk_callback.Base, operationID string, friend
 	call(callback, operationID, UserForSDK.Friend().DeleteFriend, friendUserID)
 }
 
-func GetRecvFriendApplicationList(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, UserForSDK.Friend().GetRecvFriendApplicationList)
+func GetFriendApplicationListAsRecipient(callback open_im_sdk_callback.Base, operationID string) {
+	call(callback, operationID, UserForSDK.Friend().GetFriendApplicationListAsRecipient)
 }
 
-func GetSendFriendApplicationList(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, UserForSDK.Friend().GetSendFriendApplicationList)
+func GetFriendApplicationListAsApplicant(callback open_im_sdk_callback.Base, operationID string) {
+	call(callback, operationID, UserForSDK.Friend().GetFriendApplicationListAsApplicant)
 }
 
 func AcceptFriendApplication(callback open_im_sdk_callback.Base, operationID string, userIDHandleMsg string) {
