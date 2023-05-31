@@ -227,19 +227,6 @@ func (d *DataBase) ClearConversation(ctx context.Context, conversationID string)
 	return utils.Wrap(t.Error, "ClearConversation failed")
 }
 
-// Clear All conversation, which is used to delete the conversation history message and clear the conversation at the same time.
-// The GetAllConversation or GetConversationListSplit interface can still be obtained,
-// but there is no latest message.
-func (d *DataBase) ClearAllConversation(ctx context.Context) error {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	c := model_struct.LocalConversation{UnreadCount: 0, LatestMsg: "", DraftText: "", DraftTextTime: 0}
-	t := d.conn.WithContext(ctx).Session(&gorm.Session{AllowGlobalUpdate: true}).Select("unread_count", "latest_msg", "draft_text", "draft_text_time").Updates(c)
-	if t.RowsAffected == 0 {
-		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
-	}
-	return utils.Wrap(t.Error, "ClearConversation failed")
-}
 func (d *DataBase) SetConversationDraftDB(ctx context.Context, conversationID, draftText string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()

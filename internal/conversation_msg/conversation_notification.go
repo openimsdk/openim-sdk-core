@@ -648,6 +648,10 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 				continue
 			case v.ContentType == constant.RevokeNotification:
 				c.revokeMessage(ctx, v)
+			case v.ContentType == constant.ClearConversationNotification:
+				c.doClearConversations(ctx, v)
+			case v.ContentType == constant.DeleteMsgsNotification:
+				c.doDeleteMsgs(ctx, v)
 			}
 
 			switch v.SessionType {

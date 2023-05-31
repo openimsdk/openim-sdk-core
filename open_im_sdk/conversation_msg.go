@@ -204,36 +204,24 @@ func DeleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, operation
 	call(callback, operationID, UserForSDK.Conversation().DeleteMessageFromLocalStorage, message)
 }
 
-func DeleteMessageFromLocalAndSvr(callback open_im_sdk_callback.Base, operationID string, message string) {
-	call(callback, operationID, UserForSDK.Conversation().DeleteMessageFromLocalAndSvr, message)
+func DeleteMessage(callback open_im_sdk_callback.Base, operationID string, message string) {
+	call(callback, operationID, UserForSDK.Conversation().DeleteMessage, message)
 }
 
-func DeleteConversationFromLocalAndSvr(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
-	call(callback, operationID, UserForSDK.Conversation().DeleteConversationFromLocalAndSvr, conversationID)
+func DeleteConversationFromLocal(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
+	call(callback, operationID, UserForSDK.Conversation().DeleteAllConversationFromLocal)
 }
 
 func DeleteAllMsgFromLocalAndSvr(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, UserForSDK.Conversation().DeleteAllMsgFromLocalAndSvr)
+	call(callback, operationID, UserForSDK.Conversation().DeleteAllMessage)
 }
 
 func DeleteAllMsgFromLocal(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, UserForSDK.Conversation().DeleteAllMsgFromLocal)
+	call(callback, operationID, UserForSDK.Conversation().DeleteAllMessageFromLocalStorage)
 }
 
-func ClearC2CHistoryMessage(callback open_im_sdk_callback.Base, operationID string, userID string) {
-	call(callback, operationID, UserForSDK.Conversation().ClearC2CHistoryMessage, userID)
-}
-
-func ClearC2CHistoryMessageFromLocalAndSvr(callback open_im_sdk_callback.Base, operationID string, userID string) {
-	call(callback, operationID, UserForSDK.Conversation().ClearC2CHistoryMessageFromLocalAndSvr, userID)
-}
-
-func ClearGroupHistoryMessage(callback open_im_sdk_callback.Base, operationID string, groupID string) {
-	call(callback, operationID, UserForSDK.Conversation().ClearGroupHistoryMessage, groupID)
-}
-
-func ClearGroupHistoryMessageFromLocalAndSvr(callback open_im_sdk_callback.Base, operationID string, groupID string) {
-	call(callback, operationID, UserForSDK.Conversation().ClearGroupHistoryMessageFromLocalAndSvr, groupID)
+func clearConversationAndDeleteAllMsg(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
+	call(callback, operationID, UserForSDK.Conversation().ClearConversationAndDeleteAllMsg, conversationID)
 }
 
 func InsertSingleMessageToLocalStorage(callback open_im_sdk_callback.Base, operationID string, message string, recvID string, sendID string) {

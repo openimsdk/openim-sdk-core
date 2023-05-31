@@ -97,3 +97,21 @@ func (d *DataBase) GetMessageList(ctx context.Context, conversationID string, co
 	}
 	return result, err
 }
+
+func (d *DataBase) DeleteConversationAllMessages(ctx context.Context, conversationID string) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Delete(model_struct.LocalChatLog{}).Error, "DeleteConversationAllMessages failed")
+}
+
+func (d *DataBase) DeleteConversationMsgs(ctx context.Context, conversationID string, msgIDs []string) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("client_msg_id IN ?", msgIDs).Delete(model_struct.LocalChatLog{}).Error, "DeleteConversationMsgs failed")
+}
+
+func (d *DataBase) DeleteConversationMsgsBySeqs(ctx context.Context, conversationID string, seqs []int64) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("seq IN ?", seqs).Delete(model_struct.LocalChatLog{}).Error, "DeleteConversationMsgs failed")
+}

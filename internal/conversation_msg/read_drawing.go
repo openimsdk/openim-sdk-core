@@ -21,9 +21,13 @@ func (c *Conversation) setHasReadSeq(ctx context.Context, conversationID string,
 }
 
 // mark a conversation's all message as read
-func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conversationID string, conversationType int32) error {
+func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conversationID string) error {
 	c.markAsReadLock.Lock()
 	defer c.markAsReadLock.Unlock()
+	conversation, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		return err
+	}
 	peerUserMaxSeq, err := c.db.GetConversationPeerNormalMsgSeq(ctx, conversationID)
 	if err != nil {
 		return err
@@ -37,7 +41,7 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 		return err
 	}
 	msgIDs, asReadMsgMap := c.getAsReadMsgMapAndList(ctx, msgs)
-	if err := c.setHasReadSeq(ctx, conversationID, conversationType, peerUserMaxSeq, asReadMsgMap); err != nil {
+	if err := c.setHasReadSeq(ctx, conversationID, conversation.ConversationType, peerUserMaxSeq, asReadMsgMap); err != nil {
 		return err
 	}
 	_, err = c.db.MarkConversationMessageAsRead(ctx, conversationID, msgIDs)
@@ -52,9 +56,13 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 }
 
 // mark a conversation's message as read by seqs
-func (c *Conversation) markConversationMessageAsReadBySeqs(ctx context.Context, conversationID string, conversationType int32, msgIDs []string) error {
+func (c *Conversation) markConversationMessageAsReadBySeqs(ctx context.Context, conversationID string, msgIDs []string) error {
 	c.markAsReadLock.Lock()
 	defer c.markAsReadLock.Unlock()
+	conversation, err := c.db.GetConversation(ctx, conversationID)
+	if err != nil {
+		return err
+	}
 	msgs, err := c.db.GetMessagesByClientMsgIDs(ctx, conversationID, msgIDs)
 	if err != nil {
 		return err
@@ -68,7 +76,7 @@ func (c *Conversation) markConversationMessageAsReadBySeqs(ctx context.Context, 
 	if err != nil {
 		return err
 	}
-	if err := c.setHasReadSeq(ctx, conversationID, conversationType, hasReadSeq, asReadMsgMap); err != nil {
+	if err := c.setHasReadSeq(ctx, conversationID, conversation.ConversationType, hasReadSeq, asReadMsgMap); err != nil {
 		return err
 	}
 

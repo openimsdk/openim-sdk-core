@@ -1004,56 +1004,44 @@ func (c *Conversation) MarkMessageAsReadByConID(ctx context.Context, conversatio
 }
 
 // deprecated
-func (c *Conversation) MarkGroupMessageHasRead(ctx context.Context, groupID string) {
-	conversationID := c.getConversationIDBySessionType(groupID, constant.GroupChatType)
-	_ = c.setOneConversationUnread(ctx, conversationID, 0)
-	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
-	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+// func (c *Conversation) MarkGroupMessageHasRead(ctx context.Context, groupID string) {
+// 	conversationID := c.getConversationIDBySessionType(groupID, constant.GroupChatType)
+// 	_ = c.setOneConversationUnread(ctx, conversationID, 0)
+// 	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
+// 	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+// }
 
+// read draw
+func (c *Conversation) MarkConversationMessageAsRead(ctx context.Context, conversationID string) error {
+	return c.markConversationMessageAsRead(ctx, conversationID)
 }
 
-func (c *Conversation) MarkConversationMessageAsRead(ctx context.Context, conversationID string, conversationType int32) error {
-	return c.markConversationMessageAsRead(ctx, conversationID, conversationType)
+func (c *Conversation) MarkConversationMessageAsReadBySeqs(ctx context.Context, conversationID string, clientMsgIDs []string) error {
+	return c.markConversationMessageAsReadBySeqs(ctx, conversationID, clientMsgIDs)
 }
 
-func (c *Conversation) MarkConversationMessageAsReadBySeqs(ctx context.Context, conversationID string, conversationType int32, clientMsgIDs []string) error {
-	return c.markConversationMessageAsReadBySeqs(ctx, conversationID, conversationType, clientMsgIDs)
-}
-
+// delete
 func (c *Conversation) DeleteMessageFromLocalStorage(ctx context.Context, message *sdk_struct.MsgStruct) error {
-	return c.deleteMessageFromLocalStorage(ctx, message)
+	return c.deleteMessageFromLocal(ctx, message)
 }
 
-func (c *Conversation) ClearC2CHistoryMessage(ctx context.Context, userID string) error {
-	return c.clearC2CHistoryMessage(ctx, userID)
-}
-func (c *Conversation) ClearGroupHistoryMessage(ctx context.Context, groupID string) error {
-	return c.clearGroupHistoryMessage(ctx, groupID)
-
-}
-func (c *Conversation) ClearC2CHistoryMessageFromLocalAndSvr(ctx context.Context, userID string) error {
-	conversationID := c.getConversationIDBySessionType(userID, constant.SingleChatType)
-	err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
-	if err != nil {
-		return err
-	}
-	return c.clearC2CHistoryMessage(ctx, userID)
-
+func (c *Conversation) DeleteMessage(ctx context.Context, message *sdk_struct.MsgStruct) error {
+	return c.deleteMessage(ctx, message)
 }
 
-// fixme
-func (c *Conversation) ClearGroupHistoryMessageFromLocalAndSvr(ctx context.Context, groupID string) error {
-	conversationID, _, err := c.getConversationTypeByGroupID(ctx, groupID)
-	if err != nil {
-		return err
-	}
-	err = c.deleteConversationAndMsgFromSvr(ctx, conversationID)
-	if err != nil {
-		return err
-	}
-	return c.clearGroupHistoryMessage(ctx, groupID)
+func (c *Conversation) DeleteAllMessage(ctx context.Context) error {
+	return c.deleteAllMessage(ctx)
 }
 
+func (c *Conversation) DeleteAllMessageFromLocalStorage(ctx context.Context) error {
+	return c.deleteAllMsgFromLocal(ctx)
+}
+
+func (c *Conversation) ClearConversationAndDeleteAllMsg(ctx context.Context, conversationID string) error {
+	return c.clearConversationFromLocalAndSvr(ctx, conversationID)
+}
+
+// insert
 func (c *Conversation) InsertSingleMessageToLocalStorage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, sendID string) (*sdk_struct.MsgStruct, error) {
 	if recvID == "" || sendID == "" {
 		return nil, errors.New("recvID or sendID is null")
@@ -1209,34 +1197,12 @@ func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.Ms
 //// 删除服务器的话，需要把本地的消息状态改成删除
 //func (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
 //	// Use conversationID to remove conversations and messages from the server first
-//	err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
+//	err := c.clearConversationFromSvr(ctx, conversationID)
 //	if err != nil {
 //		return err
 //	}
 //	return c.deleteConversation(ctx, conversationID)
 //}
-
-func (c *Conversation) DeleteMessageFromLocalAndSvr(ctx context.Context, s *sdk_struct.MsgStruct) error {
-	err := c.deleteMessageFromSvr(ctx, s)
-	if err != nil {
-		return err
-	}
-	return c.deleteMessageFromLocalStorage(ctx, s)
-}
-
-// Delete all messages from the server and local
-func (c *Conversation) DeleteAllMsgFromLocalAndSvr(ctx context.Context) error {
-	// err := c.clearMessageFromSvr(ctx)
-	// if err != nil {
-	// 	return err
-	// }
-	return c.DeleteAllMsgFromLocalAndSvr(ctx)
-}
-
-// Just delete the local, the server does not need to change
-func (c *Conversation) DeleteAllMsgFromLocal(ctx context.Context) error {
-	return c.deleteAllMsgFromLocal(ctx)
-}
 
 func (c *Conversation) getConversationTypeByGroupID(ctx context.Context, groupID string) (conversationID string, conversationType int32, err error) {
 	g, err := c.full.GetGroupInfoByGroupID(ctx, groupID)

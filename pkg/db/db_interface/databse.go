@@ -143,6 +143,7 @@ type MessageDatabase interface {
 	SuperGroupBatchInsertMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog, groupID string) error
 	SuperGroupInsertMessage(ctx context.Context, Message *model_struct.LocalChatLog, groupID string) error
 	SuperGroupDeleteAllMessage(ctx context.Context, groupID string) error
+	DeleteConversationAllMessages(ctx context.Context, conversationID string) error
 	SuperGroupSearchMessageByKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
 	SuperGroupSearchMessageByContentType(ctx context.Context, contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
 	SuperGroupSearchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64, groupID string) (result []*model_struct.LocalChatLog, err error)
@@ -180,7 +181,8 @@ type MessageDatabase interface {
 	SetChatLogFailedStatus(ctx context.Context)
 	BatchInsertConversationUnreadMessageList(ctx context.Context, messageList []*model_struct.LocalConversationUnreadMessage) error
 	DeleteConversationUnreadMessageList(ctx context.Context, conversationID string, sendTime int64) int64
-
+	DeleteConversationMsgs(ctx context.Context, conversationID string, msgIDs []string) error
+	DeleteConversationMsgsBySeqs(ctx context.Context, conversationID string, seqs []int64) error
 	SetNotificationSeq(ctx context.Context, conversationID string, seq int64) error
 	GetNotificationAllSeqs(ctx context.Context) ([]*model_struct.NotificationSeqsModel, error)
 }
@@ -203,7 +205,6 @@ type ConversationDatabase interface {
 	ResetConversation(ctx context.Context, conversationID string) error
 	ResetAllConversation(ctx context.Context) error
 	ClearConversation(ctx context.Context, conversationID string) error
-	ClearAllConversation(ctx context.Context) error
 	SetConversationDraftDB(ctx context.Context, conversationID, draftText string) error
 	RemoveConversationDraft(ctx context.Context, conversationID, draftText string) error
 	UnPinConversation(ctx context.Context, conversationID string, isPinned int) error

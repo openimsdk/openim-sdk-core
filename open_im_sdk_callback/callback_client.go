@@ -74,6 +74,7 @@ type OnAdvancedMsgListener interface {
 	OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string)
 	OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string)
 	OnRecvOfflineNewMessages(messageList string)
+	OnMsgDeleted(message string)
 }
 
 type OnBatchMsgListener interface {
