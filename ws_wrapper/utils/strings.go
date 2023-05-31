@@ -25,7 +25,7 @@ func StringToInt64(i string) int64 {
 	return j
 }
 
-//judge a string whether in the  string list
+// judge a string whether in the  string list
 func IsContain(target string, List []string) bool {
 
 	for _, element := range List {
@@ -49,7 +49,7 @@ func StructToJsonString(param interface{}) string {
 	return dataString
 }
 
-//The incoming parameter must be a pointer
+// The incoming parameter must be a pointer
 func JsonStringToStruct(s string, args interface{}) error {
 	err := json.Unmarshal([]byte(s), args)
 	return err
@@ -57,7 +57,7 @@ func JsonStringToStruct(s string, args interface{}) error {
 
 var ServerIP = ""
 
-func init() {
+func Init() {
 	//fixme In the configuration file, ip takes precedence, if not, get the valid network card ip of the machine
 	//if config.Config.ServerIP != "" {
 	//	ServerIP = config.Config.ServerIP
