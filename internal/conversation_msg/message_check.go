@@ -16,16 +16,13 @@ package conversation_msg
 
 import (
 	"context"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
-	"open_im_sdk/sdk_struct"
-
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	"github.com/jinzhu/copier"
 )
 
 // 检测其内部连续性，如果不连续，则向前补齐,获取这一组消息的最大最小seq，以及需要补齐的seq列表长度
@@ -182,13 +179,14 @@ func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, c
 	} else {
 		log.ZDebug(ctx, "syncMsgFromServerSplit pull msg", "resp", pullMsgResp)
 		if v, ok := pullMsgResp.Msgs[conversationID]; ok {
-			c.pullMessageIntoTable(ctx, v.Msgs, conversationID)
+			c.pullMessageIntoTable(ctx, pullMsgResp.Msgs, conversationID)
 			messageListCallback.IsEnd = v.IsEnd
-		}
-		if notStartTime {
-			*list, err = c.db.GetMessageListNoTime(ctx, conversationID, count, isReverse)
-		} else {
-			*list, err = c.db.GetMessageList(ctx, conversationID, count, startTime, isReverse)
+
+			if notStartTime {
+				*list, err = c.db.GetMessageListNoTime(ctx, conversationID, count, isReverse)
+			} else {
+				*list, err = c.db.GetMessageList(ctx, conversationID, count, startTime, isReverse)
+			}
 		}
 
 	}
@@ -210,84 +208,61 @@ func errHandle(seqList []int64, list *[]*model_struct.LocalChatLog, err error, m
 	}
 	*list = result
 }
-func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData []*sdkws.MsgData, conversationID string) {
+func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map[string]*sdkws.PullMsgs, conversationID string) {
 	insertMsg := make(map[string][]*model_struct.LocalChatLog, 20)
-	specialUpdateMsg := make(map[string][]*model_struct.LocalChatLog, 30)
+	updateMsg := make(map[string][]*model_struct.LocalChatLog, 30)
 	var insertMessage []*model_struct.LocalChatLog
 	var updateMessage []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
-	var msgReadList, groupMsgReadList, msgRevokeList sdk_struct.NewMsgList
+
 	log.ZDebug(ctx, "do Msg come here, len: ", "msg length", len(pullMsgData))
-	//b := utils.GetCurrentTimestampByMill()
-	for _, v := range pullMsgData {
-		isConversationUpdate := utils.GetSwitchFromOptions(v.Options, constant.IsConversationUpdate)
-		log.ZDebug(ctx, "msg detail", "msg", v, "conversationID", conversationID)
-		msg := new(sdk_struct.MsgStruct)
-		copier.Copy(msg, v)
-		msg.Content = string(v.Content)
-		//When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
-		if msg.Status == constant.MsgStatusHasDeleted {
-			insertMessage = append(insertMessage, c.msgStructToLocalChatLog(msg))
-			continue
-		}
-		msg.Status = constant.MsgStatusSendSuccess
-		if !isConversationUpdate {
-			msg.Status = constant.MsgStatusFiltered
-		}
-		msg.IsRead = false
-		//		log.Info(operationID, "new msg, seq, ServerMsgID, ClientMsgID", msg.Seq, msg.ServerMsgID, msg.ClientMsgID)
-		//De-analyze data
-		if msg.ClientMsgID == "" {
-			exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
-			continue
-		}
-		if v.SendID == c.loginUserID { //seq
-			// Messages sent by myself  //if  sent through  this terminal
-			m, err := c.db.GetMessage(ctx, conversationID, msg.ClientMsgID)
-			if err == nil {
-				log.ZInfo(ctx, "have message", "msg", msg)
-				if m.Seq == 0 {
-					updateMessage = append(updateMessage, c.msgStructToLocalChatLog(msg))
+	for conversationID, msgs := range pullMsgData {
+		for _, v := range msgs.Msgs {
+			log.ZDebug(ctx, "msg detail", "msg", v, "conversationID", conversationID)
+			msg := c.msgDataToLocalChatLog(v)
+			//When the message has been marked and deleted by the cloud, it is directly inserted locally without any conversation and message update.
+			if msg.Status == constant.MsgStatusHasDeleted {
+				insertMessage = append(insertMessage, msg)
+				continue
+			}
+			msg.Status = constant.MsgStatusSendSuccess
+			//		log.Info(operationID, "new msg, seq, ServerMsgID, ClientMsgID", msg.Seq, msg.ServerMsgID, msg.ClientMsgID)
+			//De-analyze data
+			if msg.ClientMsgID == "" {
+				exceptionMsg = append(exceptionMsg, c.msgDataToLocalErrChatLog(msg))
+				continue
+			}
+			if v.SendID == c.loginUserID { //seq
+				// Messages sent by myself  //if  sent through  this terminal
+				m, err := c.db.GetMessage(ctx, conversationID, msg.ClientMsgID)
+				if err == nil {
+					log.ZInfo(ctx, "have message", "msg", msg)
+					if m.Seq == 0 {
+						updateMessage = append(updateMessage, msg)
+
+					} else {
+						exceptionMsg = append(exceptionMsg, c.msgDataToLocalErrChatLog(msg))
+					}
+				} else { //      send through  other terminal
+					log.ZInfo(ctx, "sync message", "msg", msg)
+					insertMessage = append(insertMessage, msg)
+				}
+			} else { //Sent by others
+				if oldMessage, err := c.db.GetMessage(ctx, conversationID, msg.ClientMsgID); err != nil { //Deduplication operation
+					insertMessage = append(insertMessage, msg)
 
 				} else {
-					exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
-				}
-			} else { //      send through  other terminal
-				log.ZInfo(ctx, "sync message", "msg", msg)
-				insertMessage = append(insertMessage, c.msgStructToLocalChatLog(msg))
-				switch msg.ContentType {
-				case constant.RevokeNotification:
-					msgRevokeList = append(msgRevokeList, msg)
-				case constant.HasReadReceiptNotification:
-					msgReadList = append(msgReadList, msg)
-				case constant.GroupHasReadReceiptNotification:
-					groupMsgReadList = append(groupMsgReadList, msg)
-
-				default:
+					if oldMessage.Seq == 0 {
+						updateMessage = append(updateMessage, msg)
+					}
 				}
 			}
-		} else { //Sent by others
-			if oldMessage, err := c.db.GetMessage(ctx, conversationID, msg.ClientMsgID); err != nil { //Deduplication operation
-				insertMessage = append(insertMessage, c.msgStructToLocalChatLog(msg))
-				switch msg.ContentType {
-				case constant.RevokeNotification:
-					msgRevokeList = append(msgRevokeList, msg)
-				case constant.HasReadReceiptNotification:
-					msgReadList = append(msgReadList, msg)
-				case constant.GroupHasReadReceiptNotification:
-					groupMsgReadList = append(groupMsgReadList, msg)
-				default:
-				}
-
-			} else {
-				if oldMessage.Seq == 0 {
-					updateMessage = append(updateMessage, c.msgStructToLocalChatLog(msg))
-				}
-			}
+			insertMsg[conversationID] = insertMessage
+			updateMsg[conversationID] = updateMessage
 		}
 
 		//update message
-		if err6 := c.messageController.BatchUpdateMessageList(ctx, specialUpdateMsg); err6 != nil {
+		if err6 := c.messageController.BatchUpdateMessageList(ctx, updateMsg); err6 != nil {
 			log.ZError(ctx, "sync seq normal message err  :", err6)
 		}
 		b3 := utils.GetCurrentTimestampByMill()
@@ -301,20 +276,6 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData []*
 			log.ZWarn(ctx, "exceptionMsg show: ", nil, "msg", *v)
 		}
 
-		//err2 := c.db.BatchInsertExceptionMsgController(ctx, exceptionMsg)
-		//if err2 != nil {
-		//	log.Error(operationID, "BatchInsertExceptionMsgController err message err  :", err2.Error())
-		//
-		//}
-		//b8 := utils.GetCurrentTimestampByMill()
-		// c.DoGroupMsgReadState(context.Background(), groupMsgReadList)
-		//b9 := utils.GetCurrentTimestampByMill()
-		//log.Debug(operationID, "DoGroupMsgReadState  cost time : ", b9-b8, "len: ", len(groupMsgReadList))
-
-		// c.revokeMessage(context.Background(), newMsgRevokeList)
-		//b10 := utils.GetCurrentTimestampByMill()
-		//log.Debug(operationID, "revokeMessage  cost time : ", b10-b9)
-		//log.Info(operationID, "insert msg, total cost time: ", utils.GetCurrentTimestampByMill()-b, "len:  ", len(pullMsgData))
 	}
 }
 
