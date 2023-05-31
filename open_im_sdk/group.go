@@ -20,8 +20,8 @@ import "open_im_sdk/open_im_sdk_callback"
 //	call(callback, operationID, UserForSDK.Group().CreateGroup, groupBaseInfo, memberList)
 //}
 
-func CreateGroup(callback open_im_sdk_callback.Base, operationID string, group string) {
-	call(callback, operationID, UserForSDK.Group().CreateGroup, group)
+func CreateGroup(callback open_im_sdk_callback.Base, operationID string, groupReqInfo string) {
+	call(callback, operationID, UserForSDK.Group().CreateGroup, groupReqInfo)
 }
 
 func JoinGroup(callback open_im_sdk_callback.Base, operationID string, groupID string, reqMsg string, joinSource int32) {
