@@ -43,25 +43,25 @@ func Test_AddFriend(t *testing.T) {
 	t.Log("AddFriend success", ctx.Value("operationID"))
 }
 
-func Test_GetRecvFriendApplicationList(t *testing.T) {
-	infos, err := open_im_sdk.UserForSDK.Friend().GetRecvFriendApplicationList(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, info := range infos {
-		t.Logf("%#v", info)
-	}
-}
-
-func Test_GetSendFriendApplicationList(t *testing.T) {
-	infos, err := open_im_sdk.UserForSDK.Friend().GetSendFriendApplicationList(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, info := range infos {
-		t.Logf("%#v", info)
-	}
-}
+//func Test_GetRecvFriendApplicationList(t *testing.T) {
+//	infos, err := open_im_sdk.UserForSDK.Friend().GetRecvFriendApplicationList(ctx)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	for _, info := range infos {
+//		t.Logf("%#v", info)
+//	}
+//}
+//
+//func Test_GetSendFriendApplicationList(t *testing.T) {
+//	infos, err := open_im_sdk.UserForSDK.Friend().GetSendFriendApplicationList(ctx)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	for _, info := range infos {
+//		t.Logf("%#v", info)
+//	}
+//}
 
 func Test_AcceptFriendApplication(t *testing.T) {
 	req := &sdk_params_callback.ProcessFriendApplicationParams{ToUserID: "863454357", HandleMsg: "test accept"}

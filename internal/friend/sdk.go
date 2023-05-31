@@ -63,11 +63,11 @@ func (f *Friend) AddFriend(ctx context.Context, userIDReqMsg *friend.ApplyToAddF
 	return f.SyncFriendApplication(ctx)
 }
 
-func (f *Friend) GetRecvFriendApplicationList(ctx context.Context) ([]*model_struct.LocalFriendRequest, error) {
+func (f *Friend) GetFriendApplicationListAsRecipient(ctx context.Context) ([]*model_struct.LocalFriendRequest, error) {
 	return f.db.GetRecvFriendApplication(ctx)
 }
 
-func (f *Friend) GetSendFriendApplicationList(ctx context.Context) ([]*model_struct.LocalFriendRequest, error) {
+func (f *Friend) GetFriendApplicationListAsApplicant(ctx context.Context) ([]*model_struct.LocalFriendRequest, error) {
 	return f.db.GetSendFriendApplication(ctx)
 }
 

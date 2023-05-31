@@ -350,6 +350,23 @@ func (c *Conversation) msgStructToLocalChatLog(src *sdk_struct.MsgStruct) *model
 	lc.AttachedInfo = utils.StructToJsonString(src.AttachedInfoElem)
 	return &lc
 }
+func (c *Conversation) msgDataToLocalChatLog(src *sdkws.MsgData) *model_struct.LocalChatLog {
+	var lc model_struct.LocalChatLog
+	copier.Copy(&lc, src)
+	lc.Content = string(src.Content)
+	if src.SessionType == constant.GroupChatType || src.SessionType == constant.SuperGroupChatType {
+		lc.RecvID = src.GroupID
+
+	}
+	return &lc
+
+}
+func (c *Conversation) msgDataToLocalErrChatLog(src *model_struct.LocalChatLog) *model_struct.LocalErrChatLog {
+	var lc model_struct.LocalErrChatLog
+	copier.Copy(&lc, src)
+	return &lc
+
+}
 
 func localChatLogToMsgStruct(dst *sdk_struct.NewMsgList, src []*model_struct.LocalChatLog) {
 	copier.Copy(dst, &src)

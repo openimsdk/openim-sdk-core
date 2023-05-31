@@ -207,6 +207,10 @@ type onAdvancedMsgListener struct {
 	ctx context.Context
 }
 
+func (o *onAdvancedMsgListener) OnRecvOfflineNewMessages(messageList string) {
+	log.ZInfo(o.ctx, "OnRecvOfflineNewMessages", "messageList", messageList)
+}
+
 func (o *onAdvancedMsgListener) OnRecvNewMessage(message string) {
 	log.ZInfo(o.ctx, "OnRecvNewMessage", "message", message)
 }
