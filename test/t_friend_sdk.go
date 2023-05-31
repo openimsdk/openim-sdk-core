@@ -448,7 +448,7 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
 	cf.WsAddr = ws
-	cf.Platform = 1
+	cf.PlatformID = 1
 	cf.DataDir = "./"
 	cf.LogLevel = uint32(LogLevel)
 	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
@@ -495,7 +495,7 @@ func PressInitAndLogin(index int, uid, tk, ws, api string) {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api
 	cf.WsAddr = ws
-	cf.Platform = 1
+	cf.PlatformID = 1
 	cf.DataDir = "./"
 	cf.LogLevel = uint32(LogLevel)
 	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
@@ -536,7 +536,7 @@ func DoTest(uid, tk, ws, api string) {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = api // "http://120.24.45.199:10000"
 	cf.WsAddr = ws   //"ws://120.24.45.199:17778"
-	cf.Platform = 1
+	cf.PlatformID = 1
 	cf.DataDir = "./"
 
 	var s string

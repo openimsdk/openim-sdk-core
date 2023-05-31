@@ -661,8 +661,6 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 				} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
 					c.signaling.DoNotification(ctx, v, c.GetCh())
 					continue
-				} else if v.ContentType == constant.WorkMomentNotification {
-					c.workMoments.DoNotification(ctx, string(v.Content))
 				}
 			case constant.GroupChatType, constant.SuperGroupChatType:
 				if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {

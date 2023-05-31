@@ -178,9 +178,9 @@ func DoTestGetAdvancedHistoryMessageList() {
 	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
 	var params sdk_params_callback.GetAdvancedHistoryMessageListParams
 	params.UserID = ""
-	params.ConversationID = "super_group_1420026997"
+	params.ConversationID = "si_7788_7789"
 	//params.StartClientMsgID = "83ca933d559d0374258550dd656a661c"
-	params.Count = 3
+	params.Count = 20
 	//params.LastMinSeq = seq
 	open_im_sdk.GetAdvancedHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
 }
@@ -552,6 +552,11 @@ func (g SearchLocalMessagesCallBack) OnSuccess(data string) {
 type MsgListenerCallBak struct {
 }
 
+func (m *MsgListenerCallBak) OnRecvOfflineNewMessages(messageList string) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m *MsgListenerCallBak) OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string) {
 	fmt.Printf("OnRecvMessageExtensionsAdded", msgID, reactionExtensionList)
 	log.Info("internal", "OnRecvMessageExtensionsAdded ", msgID, reactionExtensionList)
@@ -867,11 +872,11 @@ func DoTestSendImageMsg(recvID string) {
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
 }
 
-func DotestUploadFile() {
-	operationID := utils.OperationIDGenerator()
-	var testSendMsg TestSendMsgCallBack
-	open_im_sdk.UploadFile(&testSendMsg, operationID, "C:\\Users\\Administrator\\Desktop\\video_test.mp4")
-}
+//func DotestUploadFile() {
+//	operationID := utils.OperationIDGenerator()
+//	var testSendMsg TestSendMsgCallBack
+//	open_im_sdk.UploadFile(&testSendMsg, operationID, "C:\\Users\\Administrator\\Desktop\\video_test.mp4")
+//}
 
 func DoTestSendOtherMsg(sendId, recvID string) {
 	operationID := utils.OperationIDGenerator()
