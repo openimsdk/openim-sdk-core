@@ -69,7 +69,11 @@ func Test_CreateVideoMessageFromFullPath(t *testing.T) {
 }
 
 func Test_CreateCardMessage(t *testing.T) {
-	message, err := open_im_sdk.UserForSDK.Conversation().CreateCardMessage(ctx, "")
+	message, err := open_im_sdk.UserForSDK.Conversation().CreateCardMessage(ctx, &sdk_struct.CardElem{
+		UserID:   "123456",
+		Nickname: "testname",
+		FaceURL:  "",
+	})
 	if err != nil {
 		t.Error(err)
 	}
