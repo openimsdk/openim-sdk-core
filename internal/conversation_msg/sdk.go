@@ -1204,17 +1204,17 @@ func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.Ms
 	return nil
 }
 
-// 删除本地和服务器
-// 删除本地的话不用改服务器的数据
-// 删除服务器的话，需要把本地的消息状态改成删除
-func (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
-	// Use conversationID to remove conversations and messages from the server first
-	err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
-	if err != nil {
-		return err
-	}
-	return c.deleteConversation(ctx, conversationID)
-}
+//// 删除本地和服务器
+//// 删除本地的话不用改服务器的数据
+//// 删除服务器的话，需要把本地的消息状态改成删除
+//func (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
+//	// Use conversationID to remove conversations and messages from the server first
+//	err := c.deleteConversationAndMsgFromSvr(ctx, conversationID)
+//	if err != nil {
+//		return err
+//	}
+//	return c.deleteConversation(ctx, conversationID)
+//}
 
 func (c *Conversation) DeleteMessageFromLocalAndSvr(ctx context.Context, s *sdk_struct.MsgStruct) error {
 	err := c.deleteMessageFromSvr(ctx, s)

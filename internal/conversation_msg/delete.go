@@ -117,28 +117,10 @@ func (c *Conversation) DeleteAllMessageFromSvr(ctx context.Context) error {
 func (c *Conversation) deleteMessage(ctx context.Context, s *sdk_struct.MsgStruct) error {
 	var conversation model_struct.LocalConversation
 	var latestMsg sdk_struct.MsgStruct
-	var conversationID string
-	var sourceID string
+	conversationID := utils.GetConversationIDByMsg(s)
 	chatLog := model_struct.LocalChatLog{ClientMsgID: s.ClientMsgID, Status: constant.MsgStatusHasDeleted, SessionType: s.SessionType}
+	err := c.db.UpdateMessage(ctx, conversationID, &chatLog)
 
-	switch s.SessionType {
-	case constant.GroupChatType:
-		conversationID = c.getConversationIDBySessionType(s.GroupID, constant.GroupChatType)
-		sourceID = s.GroupID
-	case constant.SingleChatType:
-		if s.SendID != c.loginUserID {
-			conversationID = c.getConversationIDBySessionType(s.SendID, constant.SingleChatType)
-			sourceID = s.SendID
-		} else {
-			conversationID = c.getConversationIDBySessionType(s.RecvID, constant.SingleChatType)
-			sourceID = s.RecvID
-		}
-	case constant.SuperGroupChatType:
-		conversationID = c.getConversationIDBySessionType(s.GroupID, constant.SuperGroupChatType)
-		sourceID = s.GroupID
-		chatLog.RecvID = s.GroupID
-	}
-	err := c.db.UpdateMessageController(ctx, &chatLog)
 	if err != nil {
 		return err
 	}
@@ -152,7 +134,7 @@ func (c *Conversation) deleteMessage(ctx context.Context, s *sdk_struct.MsgStruc
 	}
 
 	if s.ClientMsgID == latestMsg.ClientMsgID { //If the deleted message is the latest message of the conversation, update the latest message of the conversation
-		list, err := c.db.GetMessageListNoTimeController(ctx, sourceID, int(s.SessionType), 1, false)
+		list, err := c.db.GetMessageListNoTime(ctx, conversationID, 1, false)
 		if err != nil {
 			return err
 		}
@@ -180,32 +162,18 @@ func (c *Conversation) deleteMessage(ctx context.Context, s *sdk_struct.MsgStruc
 }
 
 // The user deletes part of the message from the server
-func (c *Conversation) deleteMessageFromSvr(ctx context.Context) error {
+func (c *Conversation) deleteMessageFromSvr(ctx context.Context, s *sdk_struct.MsgStruct) error {
+	conversationID := utils.GetConversationIDByMsg(s)
+	localMessage, err := c.db.GetMessage(ctx, conversationID, s.ClientMsgID)
+	if err != nil {
+		return err
+	}
 	var apiReq pbMsg.DeleteMsgsReq
-	// GetAllConversations
 	apiReq.UserID = c.loginUserID
-	err := util.ApiPost(ctx, constant.ClearMsgRouter, &apiReq, nil)
-	if err != nil {
-		return err
-	}
+	apiReq.Seqs = []int64{localMessage.Seq}
+	apiReq.ConversationID = conversationID
+	return util.ApiPost(ctx, constant.DeleteMsgsRouter, &apiReq, nil)
 
-	// getReadDiffusionGroupIDList Is to get the list of group ids that have been read to roam
-	groupIDList, err := c.full.GetReadDiffusionGroupIDList(ctx)
-	if err != nil {
-		return err
-	}
-	// Delete the roaming message of the group
-	var superGroupApiReq pbMsg.DelSuperGroupMsgReq
-	superGroupApiReq.UserID = c.loginUserID
-	for _, v := range groupIDList {
-		superGroupApiReq.GroupID = v
-		err := util.ApiPost(ctx, constant.DeleteSuperGroupMsgRouter, &superGroupApiReq, nil)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 // Delete messages from local
