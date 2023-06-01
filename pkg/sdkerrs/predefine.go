@@ -15,9 +15,21 @@ var (
 
 	ErrRecordNotFound = errs.NewCodeError(RecordNotFoundError, "RecordNotFoundError")
 
-	ErrMsgDecodeBinaryWs = errs.NewCodeError(MsgDecodeBinaryWsError, "MsgDecodeBinaryWsError")
-	ErrMsgDeCompression  = errs.NewCodeError(MsgDeCompressionError, "MsgDeCompressionError")
-	ErrMsgTypeNotSupport = errs.NewCodeError(MsgTypeNotSupportError, "MsgTypeNotSupportError")
+	//消息相关
+	ErrMsgDecodeBinaryWs        = errs.NewCodeError(MsgDecodeBinaryWsError, "MsgDecodeBinaryWsError")
+	ErrMsgDeCompression         = errs.NewCodeError(MsgDeCompressionError, "MsgDeCompressionError")
+	ErrMsgTypeNotSupport        = errs.NewCodeError(MsgTypeNotSupportError, "MsgTypeNotSupportError")
+	ErrMsgRepeated              = errs.NewCodeError(MsgRepeatError, "only failed message can be repeatedly send")
+	ErrMsgContentTypeNotSupport = errs.NewCodeError(MsgContentTypeNotSupportError, "contentType not support currently") // msg
+
+	//会话相关
+	ErrNotSupportOpt       = errs.NewCodeError(NotSupportOptError, "super group not support this opt")
+	ErrNotResetGroupAtType = errs.NewCodeError(NotResetGroupAtTypeError, "conversation don't need to reset")
+
+	//群组相关
+
+	ErrNotInGroup = errs.NewCodeError(NotInGroupError, "you not exist in this group")
+	ErrGroupType  = errs.NewCodeError(GroupTypeErr, "group type error")
 
 	ErrLoginOut = errs.NewCodeError(LoginOutError, "MsgLoginOutError")
 )
