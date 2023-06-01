@@ -220,7 +220,7 @@ func DeleteAllMsgFromLocal(callback open_im_sdk_callback.Base, operationID strin
 	call(callback, operationID, UserForSDK.Conversation().DeleteAllMessageFromLocalStorage)
 }
 
-func clearConversationAndDeleteAllMsg(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
+func ClearConversationAndDeleteAllMsg(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
 	call(callback, operationID, UserForSDK.Conversation().ClearConversationAndDeleteAllMsg, conversationID)
 }
 

@@ -10,6 +10,9 @@ import (
 )
 
 func NewFileCallback(ctx context.Context, progress func(progress int), msg *sdk_struct.MsgStruct, db db_interface.DataBase) file.PutFileCallback {
+	if msg.AttachedInfoElem == nil {
+		msg.AttachedInfoElem = &sdk_struct.AttachedInfoElem{}
+	}
 	if msg.AttachedInfoElem.Progress == nil {
 		msg.AttachedInfoElem.Progress = &sdk_struct.UploadProgress{}
 	}
