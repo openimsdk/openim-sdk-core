@@ -15,10 +15,12 @@
 package testv2
 
 import (
-	friend2 "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/friend"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"testing"
+	"time"
+
+	friend2 "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/friend"
 )
 
 func Test_GetDesignatedFriendsInfo(t *testing.T) {
@@ -64,21 +66,23 @@ func Test_AddFriend(t *testing.T) {
 //}
 
 func Test_AcceptFriendApplication(t *testing.T) {
-	req := &sdk_params_callback.ProcessFriendApplicationParams{ToUserID: "863454357", HandleMsg: "test accept"}
+	req := &sdk_params_callback.ProcessFriendApplicationParams{ToUserID: "6754269405", HandleMsg: "test accept"}
 	err := open_im_sdk.UserForSDK.Friend().AcceptFriendApplication(ctx, req)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("AcceptFriendApplication success", ctx.Value("operationID"))
+	time.Sleep(time.Second * 30)
 }
 
 func Test_RefuseFriendApplication(t *testing.T) {
-	req := &sdk_params_callback.ProcessFriendApplicationParams{ToUserID: "863454357", HandleMsg: "test refuse"}
+	req := &sdk_params_callback.ProcessFriendApplicationParams{ToUserID: "6754269405", HandleMsg: "test refuse"}
 	err := open_im_sdk.UserForSDK.Friend().RefuseFriendApplication(ctx, req)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("RefuseFriendApplication success", ctx.Value("operationID"))
+	time.Sleep(time.Second * 30)
 }
 
 func Test_CheckFriend(t *testing.T) {
