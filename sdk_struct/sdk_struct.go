@@ -156,7 +156,7 @@ type MergeElem struct {
 	MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
 }
 
-type AtElem struct {
+type AtTextElem struct {
 	Text         string     `json:"text,omitempty"`
 	AtUserList   []string   `json:"atUserList,omitempty"`
 	AtUsersInfo  []*AtInfo  `json:"atUsersInfo,omitempty"`
@@ -191,9 +191,12 @@ type NotificationElem struct {
 	Detail string `json:"detail,omitempty"`
 }
 
-type MessageEntityElem struct {
+type AdvancedTextElem struct {
 	Text              string           `json:"text,omitempty"`
 	MessageEntityList []*MessageEntity `json:"messageEntityList,omitempty"`
+}
+type TypingElem struct {
+	MsgTips string `json:"msgTips,omitempty"`
 }
 
 type MsgStruct struct {
@@ -226,13 +229,14 @@ type MsgStruct struct {
 	VideoElem            *VideoElem             `json:"videoElem,omitempty"`
 	FileElem             *FileElem              `json:"fileElem,omitempty"`
 	MergeElem            *MergeElem             `json:"mergeElem,omitempty"`
-	AtElem               *AtElem                `json:"atElem,omitempty"`
+	AtTextElem           *AtTextElem            `json:"atTextElem,omitempty"`
 	FaceElem             *FaceElem              `json:"faceElem,omitempty"`
 	LocationElem         *LocationElem          `json:"locationElem,omitempty"`
 	CustomElem           *CustomElem            `json:"customElem,omitempty"`
 	QuoteElem            *QuoteElem             `json:"quoteElem,omitempty"`
 	NotificationElem     *NotificationElem      `json:"notificationElem,omitempty"`
-	MessageEntityElem    *MessageEntityElem     `json:"messageEntityElem,omitempty"`
+	AdvancedTextElem     *AdvancedTextElem      `json:"advancedTextElem,omitempty"`
+	TypingElem           *TypingElem            `json:"typingElem,omitempty"`
 	AttachedInfoElem     *AttachedInfoElem      `json:"attachedInfoElem,omitempty"`
 }
 
