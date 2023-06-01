@@ -210,9 +210,17 @@ type onAdvancedMsgListener struct {
 	ctx context.Context
 }
 
-func (o *onAdvancedMsgListener) OnMsgDeleted(messageList string) {
-	log.ZInfo(o.ctx, "OnRecvOfflineNewMessages", "messageList", messageList)
+func (o *onAdvancedMsgListener) OnMsgDeleted(message string) {
+	log.ZInfo(o.ctx, "OnMsgDeleted", "message", message)
 }
+
+//func (o *onAdvancedMsgListener) OnMsgDeleted(messageList string) {
+//	log.ZInfo(o.ctx, "OnRecvOfflineNewMessages", "messageList", messageList)
+//}
+//
+//func (o *onAdvancedMsgListener) OnMsgDeleted(message string) {
+//	log.ZInfo(o.ctx, "OnMsgDeleted", "message", message)
+//}
 
 func (o *onAdvancedMsgListener) OnRecvOfflineNewMessages(messageList string) {
 	log.ZInfo(o.ctx, "OnRecvOfflineNewMessages", "messageList", messageList)
