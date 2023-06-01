@@ -283,8 +283,8 @@ func Test_DeleteAllMessageFromLocalStorage(t *testing.T) {
 	}
 }
 
-func ClearConversationAndDeleteAllMsg(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().ClearConversationAndDeleteAllMsg(ctx, "3411008330")
+func Test_ClearConversationAndDeleteAllMsg(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Conversation().ClearConversationAndDeleteAllMsg(ctx, "si_kernaltestuid8_kernaltestuid9")
 	if err != nil {
 		t.Fatal(err)
 	}

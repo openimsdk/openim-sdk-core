@@ -1051,7 +1051,7 @@ func (c *Conversation) DeleteAllMessage(ctx context.Context) error {
 }
 
 func (c *Conversation) DeleteAllMessageFromLocalStorage(ctx context.Context) error {
-	return c.deleteAllMsgFromLocal(ctx)
+	return c.deleteAllMsgFromLocal(ctx, true)
 }
 
 func (c *Conversation) ClearConversationAndDeleteAllMsg(ctx context.Context, conversationID string) error {

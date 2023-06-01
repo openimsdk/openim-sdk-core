@@ -144,6 +144,7 @@ type MessageDatabase interface {
 	SuperGroupInsertMessage(ctx context.Context, Message *model_struct.LocalChatLog, groupID string) error
 	SuperGroupDeleteAllMessage(ctx context.Context, groupID string) error
 	DeleteConversationAllMessages(ctx context.Context, conversationID string) error
+	MarkDeleteConversationAllMessages(ctx context.Context, conversationID string) error
 	SuperGroupSearchMessageByKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
 	SuperGroupSearchMessageByContentType(ctx context.Context, contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
 	SuperGroupSearchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64, groupID string) (result []*model_struct.LocalChatLog, err error)

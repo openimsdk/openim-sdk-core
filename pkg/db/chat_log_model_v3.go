@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"errors"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 )
@@ -101,7 +102,13 @@ func (d *DataBase) GetMessageList(ctx context.Context, conversationID string, co
 func (d *DataBase) DeleteConversationAllMessages(ctx context.Context, conversationID string) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	return utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Delete(model_struct.LocalChatLog{}).Error, "DeleteConversationAllMessages failed")
+	return utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("1 = 1").Delete(model_struct.LocalChatLog{}).Error, "DeleteConversationAllMessages failed")
+}
+
+func (d *DataBase) MarkDeleteConversationAllMessages(ctx context.Context, conversationID string) error {
+	d.mRWMutex.Lock()
+	defer d.mRWMutex.Unlock()
+	return utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("1 = 1").Updates(model_struct.LocalChatLog{Status: constant.MsgStatusHasDeleted}).Error, "DeleteConversationAllMessages failed")
 }
 
 func (d *DataBase) DeleteConversationMsgs(ctx context.Context, conversationID string, msgIDs []string) error {
