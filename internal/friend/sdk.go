@@ -72,11 +72,11 @@ func (f *Friend) GetFriendApplicationListAsApplicant(ctx context.Context) ([]*mo
 }
 
 func (f *Friend) AcceptFriendApplication(ctx context.Context, userIDHandleMsg *sdk.ProcessFriendApplicationParams) error {
-	return f.RespondFriendApply(ctx, &friend.RespondFriendApplyReq{FromUserID: f.loginUserID, ToUserID: userIDHandleMsg.ToUserID, HandleResult: constant.FriendResponseAgree, HandleMsg: userIDHandleMsg.HandleMsg})
+	return f.RespondFriendApply(ctx, &friend.RespondFriendApplyReq{FromUserID: userIDHandleMsg.ToUserID, ToUserID: f.loginUserID, HandleResult: constant.FriendResponseAgree, HandleMsg: userIDHandleMsg.HandleMsg})
 }
 
 func (f *Friend) RefuseFriendApplication(ctx context.Context, userIDHandleMsg *sdk.ProcessFriendApplicationParams) error {
-	return f.RespondFriendApply(ctx, &friend.RespondFriendApplyReq{FromUserID: f.loginUserID, ToUserID: userIDHandleMsg.ToUserID, HandleResult: constant.FriendResponseRefuse, HandleMsg: userIDHandleMsg.HandleMsg})
+	return f.RespondFriendApply(ctx, &friend.RespondFriendApplyReq{FromUserID: userIDHandleMsg.ToUserID, ToUserID: f.loginUserID, HandleResult: constant.FriendResponseRefuse, HandleMsg: userIDHandleMsg.HandleMsg})
 }
 
 func (f *Friend) RespondFriendApply(ctx context.Context, req *friend.RespondFriendApplyReq) error {
