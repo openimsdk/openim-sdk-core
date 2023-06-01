@@ -414,8 +414,8 @@ func (c *Conversation) diff(ctx context.Context, local, generated, cc, nc map[st
 }
 func (c *Conversation) genConversationGroupAtType(lc *model_struct.LocalConversation, s *sdk_struct.MsgStruct) {
 	if s.ContentType == constant.AtText {
-		tagMe := utils.IsContain(c.loginUserID, s.AtElem.AtUserList)
-		tagAll := utils.IsContain(constant.AtAllString, s.AtElem.AtUserList)
+		tagMe := utils.IsContain(c.loginUserID, s.AtTextElem.AtUserList)
+		tagAll := utils.IsContain(constant.AtAllString, s.AtTextElem.AtUserList)
 		if tagAll {
 			if tagMe {
 				lc.GroupAtType = constant.AtAllAtMe
@@ -768,28 +768,45 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 		err = utils.JsonStringToStruct(msg.Content, &t)
 		msg.FileElem = &t
 	case constant.AdvancedText:
-		err = utils.JsonStringToStruct(msg.Content, &msg.MessageEntityElem)
+		t := sdk_struct.AdvancedTextElem{}
+		err = utils.JsonStringToStruct(msg.Content, &t)
 	case constant.AtText:
-		err = utils.JsonStringToStruct(msg.Content, &msg.AtElem)
+		t := sdk_struct.AtTextElem{}
+		err = utils.JsonStringToStruct(msg.Content, &t)
+		msg.AtTextElem = &t
 		if err == nil {
-			if utils.IsContain(c.loginUserID, msg.AtElem.AtUserList) {
-				msg.AtElem.IsAtSelf = true
+			if utils.IsContain(c.loginUserID, msg.AtTextElem.AtUserList) {
+				msg.AtTextElem.IsAtSelf = true
 			}
 		}
 	case constant.Location:
-		err = utils.JsonStringToStruct(msg.Content, &msg.LocationElem)
+		t := sdk_struct.LocationElem{}
+		err = utils.JsonStringToStruct(msg.Content, &t)
+		msg.LocationElem = &t
 	case constant.Custom:
-		err = utils.JsonStringToStruct(msg.Content, &msg.CustomElem)
-	case constant.Quote:
-		err = utils.JsonStringToStruct(msg.Content, &msg.QuoteElem)
-	case constant.Merger:
-		err = utils.JsonStringToStruct(msg.Content, &msg.MergeElem)
-	case constant.Face:
-		err = utils.JsonStringToStruct(msg.Content, &msg.FaceElem)
+		fallthrough
 	case constant.CustomMsgNotTriggerConversation:
-		err = utils.JsonStringToStruct(msg.Content, &msg.CustomElem)
+		fallthrough
 	case constant.CustomMsgOnlineOnly:
-		err = utils.JsonStringToStruct(msg.Content, &msg.CustomElem)
+		t := sdk_struct.CustomElem{}
+		err = utils.JsonStringToStruct(msg.Content, &t)
+		msg.CustomElem = &t
+	case constant.Typing:
+		t := sdk_struct.TypingElem{}
+		err = utils.JsonStringToStruct(msg.Content, &t)
+		msg.TypingElem = &t
+	case constant.Quote:
+		t := sdk_struct.QuoteElem{}
+		err = utils.JsonStringToStruct(msg.Content, &t)
+		msg.QuoteElem = &t
+	case constant.Merger:
+		t := sdk_struct.MergeElem{}
+		err = utils.JsonStringToStruct(msg.Content, &t)
+		msg.MergeElem = &t
+	case constant.Face:
+		t := sdk_struct.FaceElem{}
+		err = utils.JsonStringToStruct(msg.Content, &t)
+		msg.FaceElem = &t
 	default:
 		t := sdk_struct.NotificationElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)

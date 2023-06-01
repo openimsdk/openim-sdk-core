@@ -728,7 +728,9 @@ func (c *Conversation) typingStatusUpdate(ctx context.Context, recvID, msgTip st
 	if err != nil {
 		return err
 	}
-	s.Content = msgTip
+	typingElem := sdk_struct.TypingElem{}
+	typingElem.MsgTips = msgTip
+	s.Content = utils.StructToJsonString(typingElem)
 	options := make(map[string]bool, 6)
 	utils.SetSwitchFromOptions(options, constant.IsHistory, false)
 	utils.SetSwitchFromOptions(options, constant.IsPersistent, false)
@@ -909,7 +911,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 		if temp.ContentType == constant.File && !c.judgeMultipleSubString(searchParam.KeywordList, temp.FileElem.FileName, searchParam.KeywordListMatchType) {
 			continue
 		}
-		if temp.ContentType == constant.AtText && !c.judgeMultipleSubString(searchParam.KeywordList, temp.AtElem.Text, searchParam.KeywordListMatchType) {
+		if temp.ContentType == constant.AtText && !c.judgeMultipleSubString(searchParam.KeywordList, temp.AtTextElem.Text, searchParam.KeywordListMatchType) {
 			continue
 		}
 		switch temp.SessionType {

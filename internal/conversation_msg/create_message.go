@@ -39,7 +39,7 @@ func (c *Conversation) CreateAdvancedTextMessage(ctx context.Context, text strin
 	if err != nil {
 		return nil, err
 	}
-	s.MessageEntityElem = &sdk_struct.MessageEntityElem{
+	s.AdvancedTextElem = &sdk_struct.AdvancedTextElem{
 		Text:              text,
 		MessageEntityList: messageEntities,
 	}
@@ -82,7 +82,7 @@ func (c *Conversation) CreateTextAtMessage(ctx context.Context, text string, use
 	//s.AtElem.AtUsersInfo = usersInfo
 	//s.AtElem.QuoteMessage = qs
 	//s.Content = utils.StructToJsonString(s.AtElem)
-	s.AtElem = &sdk_struct.AtElem{
+	s.AtTextElem = &sdk_struct.AtTextElem{
 		Text:         text,
 		AtUserList:   userIDList,
 		AtUsersInfo:  usersInfo,
