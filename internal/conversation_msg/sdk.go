@@ -326,7 +326,7 @@ func (c *Conversation) msgStructToLocalChatLog(src *sdk_struct.MsgStruct) *model
 	case constant.Text:
 		lc.Content = utils.StructToJsonString(src.TextElem)
 	case constant.AtText:
-		lc.Content = utils.StructToJsonString(src.AtElem)
+		lc.Content = utils.StructToJsonString(src.AtTextElem)
 	case constant.Location:
 		lc.Content = utils.StructToJsonString(src.LocationElem)
 	case constant.Custom:
@@ -340,7 +340,7 @@ func (c *Conversation) msgStructToLocalChatLog(src *sdk_struct.MsgStruct) *model
 	case constant.Face:
 		lc.Content = utils.StructToJsonString(src.FaceElem)
 	case constant.AdvancedText:
-		lc.Content = utils.StructToJsonString(src.MessageEntityElem)
+		lc.Content = utils.StructToJsonString(src.AdvancedTextElem)
 	default:
 		lc.Content = utils.StructToJsonString(src.NotificationElem)
 	}
@@ -604,7 +604,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		case constant.Text:
 			s.Content = utils.StructToJsonString(s.TextElem)
 		case constant.AtText:
-			s.Content = utils.StructToJsonString(s.AtElem)
+			s.Content = utils.StructToJsonString(s.AtTextElem)
 		case constant.Location:
 			s.Content = utils.StructToJsonString(s.LocationElem)
 		case constant.Custom:
@@ -618,7 +618,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		case constant.Face:
 			s.Content = utils.StructToJsonString(s.FaceElem)
 		case constant.AdvancedText:
-			s.Content = utils.StructToJsonString(s.MessageEntityElem)
+			s.Content = utils.StructToJsonString(s.AdvancedTextElem)
 		default:
 			return nil, errors.New("contentType not currently supported" + utils.Int32ToString(s.ContentType))
 		}
