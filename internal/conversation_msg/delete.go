@@ -84,18 +84,19 @@ func (c *Conversation) deleteAllMessageFromSvr(ctx context.Context) error {
 
 // Delete all messages from the local
 func (c *Conversation) deleteAllMsgFromLocal(ctx context.Context) error {
-	conversationList, err := c.db.GetAllConversationListDB(ctx)
+	conversations, err := c.db.GetAllConversationListDB(ctx)
 	if err != nil {
 		return err
 	}
-	var cidList []string
-	for _, conversation := range conversationList {
-		cidList = append(cidList, conversation.ConversationID)
+	var successCids []string
+	for _, v := range conversations {
+		if err := c.clearConversationAndDeleteAllMsg(ctx, v.ConversationID); err != nil {
+			log.ZError(ctx, "clearConversation err", err, "conversationID", v.ConversationID)
+			continue
+		}
+		successCids = append(successCids, v.ConversationID)
 	}
-	for _, v := range conversationList {
-		c.clearConversationAndDeleteAllMsg(ctx, v.ConversationID)
-	}
-	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: cidList}})
+	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: successCids}})
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}})
 	return nil
 

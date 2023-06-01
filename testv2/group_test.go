@@ -26,9 +26,9 @@ import (
 
 func Test_CreateGroupV2(t *testing.T) {
 	req := &group.CreateGroupReq{
-		InitMembers:  []string{},
-		AdminUserIDs: []string{},
-		OwnerUserID:  UserID,
+		MemberUserIDs: []string{},
+		AdminUserIDs:  []string{},
+		OwnerUserID:   UserID,
 		GroupInfo: &sdkws.GroupInfo{
 			GroupName: "test-gro2up",
 		},

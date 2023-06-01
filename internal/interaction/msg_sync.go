@@ -240,7 +240,7 @@ func (m *MsgSyncer) splitSeqs(split int, seqsNeedSync []int64) (splitSeqs [][]in
 
 func (m *MsgSyncer) pullMsgBySeqRange(ctx context.Context, seqMap map[string][2]int64, syncMsgNum int64) (resp *sdkws.PullMessageBySeqsResp, err error) {
 	log.ZDebug(ctx, "pullMsgBySeqRange", "seqMap", seqMap, "syncMsgNum", syncMsgNum)
-	var req sdkws.PullMessageBySeqsReq
+	req := sdkws.PullMessageBySeqsReq{UserID: m.loginUserID}
 	for conversationID, seqs := range seqMap {
 		var pullNums int64 = syncMsgNum
 		if pullNums > seqs[1]-seqs[0] {

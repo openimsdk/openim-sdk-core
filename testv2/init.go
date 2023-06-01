@@ -19,13 +19,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"io"
 	"math/rand"
 	"net/http"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/ccontext"
 	"time"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 )
 
 var (
@@ -57,6 +58,8 @@ func init() {
 	open_im_sdk.UserForSDK.SetConversationListener(&onConversationListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetGroupListener(&onGroupListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetAdvancedMsgListener(&onAdvancedMsgListener{ctx: ctx})
+	open_im_sdk.UserForSDK.SetFriendListener(&onFriendListener{ctx: ctx})
+	time.Sleep(time.Second * 10)
 }
 
 func GetUserToken(ctx context.Context, userID string) (string, error) {
@@ -207,6 +210,10 @@ type onAdvancedMsgListener struct {
 	ctx context.Context
 }
 
+func (o *onAdvancedMsgListener) OnMsgDeleted(messageList string) {
+	log.ZInfo(o.ctx, "OnRecvOfflineNewMessages", "messageList", messageList)
+}
+
 func (o *onAdvancedMsgListener) OnRecvOfflineNewMessages(messageList string) {
 	log.ZInfo(o.ctx, "OnRecvOfflineNewMessages", "messageList", messageList)
 }
@@ -241,4 +248,44 @@ func (o *onAdvancedMsgListener) OnRecvMessageExtensionsDeleted(msgID string, rea
 
 func (o *onAdvancedMsgListener) OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string) {
 	log.ZInfo(o.ctx, "OnRecvMessageExtensionsAdded", "msgID", msgID, "reactionExtensionList", reactionExtensionList)
+}
+
+type onFriendListener struct {
+	ctx context.Context
+}
+
+func (o *onFriendListener) OnFriendApplicationAdded(friendApplication string) {
+	log.ZDebug(context.Background(), "OnFriendApplicationAdded", "friendApplication", friendApplication)
+}
+
+func (o *onFriendListener) OnFriendApplicationDeleted(friendApplication string) {
+	log.ZDebug(context.Background(), "OnFriendApplicationDeleted", "friendApplication", friendApplication)
+}
+
+func (o *onFriendListener) OnFriendApplicationAccepted(friendApplication string) {
+	log.ZDebug(context.Background(), "OnFriendApplicationAccepted", "friendApplication", friendApplication)
+}
+
+func (o *onFriendListener) OnFriendApplicationRejected(friendApplication string) {
+	log.ZDebug(context.Background(), "OnFriendApplicationRejected", "friendApplication", friendApplication)
+}
+
+func (o *onFriendListener) OnFriendAdded(friendInfo string) {
+	log.ZDebug(context.Background(), "OnFriendAdded", "friendInfo", friendInfo)
+}
+
+func (o *onFriendListener) OnFriendDeleted(friendInfo string) {
+	log.ZDebug(context.Background(), "OnFriendDeleted", "friendInfo", friendInfo)
+}
+
+func (o *onFriendListener) OnFriendInfoChanged(friendInfo string) {
+	log.ZDebug(context.Background(), "OnFriendInfoChanged", "friendInfo", friendInfo)
+}
+
+func (o *onFriendListener) OnBlackAdded(blackInfo string) {
+	log.ZDebug(context.Background(), "OnBlackAdded", "blackInfo", blackInfo)
+}
+
+func (o *onFriendListener) OnBlackDeleted(blackInfo string) {
+	log.ZDebug(context.Background(), "OnBlackDeleted", "blackInfo", blackInfo)
 }
