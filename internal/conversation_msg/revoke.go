@@ -82,7 +82,7 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 	var latestMsg sdk_struct.MsgStruct
 	utils.JsonStringToStruct(conversation.LatestMsg, &latestMsg)
 	log.ZDebug(ctx, "latestMsg", "latestMsg", &latestMsg, "seq", tips.Seq)
-	if latestMsg.Seq == tips.Seq {
+	if latestMsg.Seq <= tips.Seq {
 		var newLatesetMsg sdk_struct.MsgStruct
 		msgs, err := c.db.GetMessageListNoTime(ctx, tips.ConversationID, 1, false)
 		if err != nil || len(msgs) == 0 {
