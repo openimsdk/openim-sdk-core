@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"open_im_sdk/open_im_sdk"
-	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
@@ -246,39 +245,10 @@ func (d DeleteMessageCallBack) GetMessage() string {
 	return d.Msg
 }
 
-func DoTestDeleteMessageFromLocalAndSvr(callback open_im_sdk_callback.Base, message string) {
-	cb := &DeleteMessageCallBack{}
-	msg := server_api_params.MsgData{
-		SendID:           "",
-		RecvID:           "",
-		GroupID:          "",
-		ClientMsgID:      "",
-		ServerMsgID:      "",
-		SenderPlatformID: 0,
-		SenderNickname:   "",
-		SenderFaceURL:    "",
-		SessionType:      0,
-		MsgFrom:          0,
-		ContentType:      0,
-		Content:          nil,
-		Seq:              0,
-		SendTime:         0,
-		CreateTime:       0,
-		Status:           0,
-		Options:          nil,
-		OfflinePushInfo:  nil,
-		//XXX_NoUnkeyedLiteral: struct{}{},
-		//XXX_unrecognized:     nil,
-		//XXX_sizecache:        0,
-	}
-	operationID := utils.OperationIDGenerator()
-	open_im_sdk.DeleteMessageFromLocalAndSvr(cb, operationID, utils.StructToJsonString(msg))
-}
-
 func DoTestDeleteConversationMsgFromLocalAndSvr(conversationID string) {
-	cb := &DeleteMessageCallBack{}
-	operationID := utils.OperationIDGenerator()
-	open_im_sdk.DeleteConversationFromLocalAndSvr(cb, operationID, conversationID)
+	// cb := &DeleteMessageCallBack{}
+	// operationID := utils.OperationIDGenerator()
+	// open_im_sdk.DeleteConversationFromLocalAndSvr(cb, operationID, conversationID)
 }
 
 type TestGetAllConversationListCallBack struct {
@@ -551,6 +521,8 @@ func (g SearchLocalMessagesCallBack) OnSuccess(data string) {
 
 type MsgListenerCallBak struct {
 }
+
+func (m *MsgListenerCallBak) OnMsgDeleted(s string) {}
 
 func (m *MsgListenerCallBak) OnRecvOfflineNewMessages(messageList string) {
 	//TODO implement me

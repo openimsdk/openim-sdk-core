@@ -647,7 +647,7 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 				c.business.DoNotification(ctx, string(v.Content))
 				continue
 			case v.ContentType == constant.RevokeNotification:
-				c.revokeMessage(ctx, v)
+				c.doRevokeMsg(ctx, v)
 			case v.ContentType == constant.ClearConversationNotification:
 				c.doClearConversations(ctx, v)
 			case v.ContentType == constant.DeleteMsgsNotification:
