@@ -209,7 +209,7 @@ type MsgStruct struct {
 	RecvID               string                 `json:"recvID,omitempty"`
 	MsgFrom              int32                  `json:"msgFrom"`
 	ContentType          int32                  `json:"contentType"`
-	SenderPlatformID     int32                  `json:"platformID"`
+	SenderPlatformID     int32                  `json:"senderPlatformID"`
 	SenderNickname       string                 `json:"senderNickname,omitempty"`
 	SenderFaceURL        string                 `json:"senderFaceUrl,omitempty"`
 	GroupID              string                 `json:"groupID,omitempty"`

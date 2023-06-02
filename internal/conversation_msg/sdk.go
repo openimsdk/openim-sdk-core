@@ -17,7 +17,6 @@ package conversation_msg
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"image"
 	"open_im_sdk/internal/file"
@@ -64,7 +63,7 @@ func (c *Conversation) SetConversationRecvMessageOpt(ctx context.Context, conver
 			continue
 		}
 		if localConversation.ConversationType == constant.SuperGroupChatType && opt == constant.NotReceiveMessage {
-			return errors.New("super group not support this opt")
+			return sdkerrs.ErrNotSupportOpt
 		}
 		conversations = append(conversations, &pbConversation.Conversation{
 			OwnerUserID:      c.loginUserID,
@@ -230,7 +229,7 @@ func (c *Conversation) ResetConversationGroupAtType(ctx context.Context, convers
 		return err
 	}
 	if lc.GroupAtType == constant.AtNormal || lc.ConversationType != constant.GroupChatType {
-		return errors.New("conversation don't need to reset")
+		return sdkerrs.ErrNotResetGroupAtType
 	}
 	apiReq := &pbConversation.ModifyConversationFieldReq{}
 	apiReq.Conversation.GroupAtType = constant.AtNormal
@@ -499,7 +498,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		}
 	} else {
 		if oldMessage.Status != constant.MsgStatusSendFailed {
-			return nil, errors.New("only failed message can be repeatedly send")
+			return nil, sdkerrs.ErrMsgRepeated
 		} else {
 			s.Status = constant.MsgStatusSending
 		}
@@ -620,13 +619,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		case constant.AdvancedText:
 			s.Content = utils.StructToJsonString(s.AdvancedTextElem)
 		default:
-			return nil, errors.New("contentType not currently supported" + utils.Int32ToString(s.ContentType))
-		}
-		// oldMessage, err := c.db.GetMessage(ctx, lc.ConversationID, s.ClientMsgID)
-		if err != nil {
-			log.ZWarn(ctx, "get message err", err)
-		} else {
-			// log.Debug("", "before update database message is ", *oldMessage)
+			return nil, sdkerrs.ErrMsgContentTypeNotSupport
 		}
 		if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Voice, constant.Video, constant.File}) {
 			localMessage := c.msgStructToLocalChatLog(s)
@@ -657,7 +650,7 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 		}
 	} else {
 		if oldMessage.Status != constant.MsgStatusSendFailed {
-			return nil, errors.New("only failed message can be repeatedly send")
+			return nil, sdkerrs.ErrMsgRepeated
 		} else {
 			s.Status = constant.MsgStatusSending
 		}
@@ -698,7 +691,7 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 		}
 	} else {
 		if oldMessage.Status != constant.MsgStatusSendFailed {
-			return nil, errors.New("only failed message can be repeatedly send")
+			return nil, sdkerrs.ErrMsgRepeated
 		} else {
 			s.Status = constant.MsgStatusSending
 		}
@@ -765,7 +758,7 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 		case constant.Face:
 		case constant.AdvancedText:
 		default:
-			return nil, errors.New("contentType not currently supported" + utils.Int32ToString(s.ContentType))
+			return nil, sdkerrs.ErrMsgContentTypeNotSupport
 		}
 		// oldMessage, err := c.db.GetMessage(ctx, lc.ConversationID, s.ClientMsgID)
 		// if err != nil {
@@ -788,7 +781,7 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 
 func (c *Conversation) InternalSendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *server_api_params.OfflinePushInfo, onlineUserOnly bool, options map[string]bool) (*sdkws.UserSendMsgResp, error) {
 	if recvID == "" && groupID == "" {
-		return nil, errors.New("recvID && groupID not both null")
+		return nil, sdkerrs.ErrArgs.Wrap()
 	}
 	if recvID == "" {
 		g, err := c.full.GetGroupInfoByGroupID(ctx, groupID)
@@ -803,7 +796,7 @@ func (c *Conversation) InternalSendMessage(ctx context.Context, s *sdk_struct.Ms
 				return nil, err
 			}
 			if !utils.IsContain(s.SendID, groupMemberUidList) {
-				return nil, errors.New("you not exist in this group")
+				return nil, sdkerrs.ErrNotInGroup
 			}
 
 		case constant.SuperGroup:
@@ -815,7 +808,7 @@ func (c *Conversation) InternalSendMessage(ctx context.Context, s *sdk_struct.Ms
 				return nil, err
 			}
 			if !utils.IsContain(s.SendID, groupMemberUidList) {
-				return nil, errors.New("you not exist in this group")
+				return nil, sdkerrs.ErrNotInGroup
 			}
 		}
 		s.GroupID = groupID
@@ -1061,7 +1054,7 @@ func (c *Conversation) ClearConversationAndDeleteAllMsg(ctx context.Context, con
 // insert
 func (c *Conversation) InsertSingleMessageToLocalStorage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, sendID string) (*sdk_struct.MsgStruct, error) {
 	if recvID == "" || sendID == "" {
-		return nil, errors.New("recvID or sendID is null")
+		return nil, sdkerrs.ErrArgs
 	}
 	var conversation model_struct.LocalConversation
 	if sendID != c.loginUserID {
@@ -1111,7 +1104,7 @@ func (c *Conversation) InsertSingleMessageToLocalStorage(ctx context.Context, s 
 
 func (c *Conversation) InsertGroupMessageToLocalStorage(ctx context.Context, s *sdk_struct.MsgStruct, groupID, sendID string) (*sdk_struct.MsgStruct, error) {
 	if groupID == "" || sendID == "" {
-		return nil, errors.New("groupID or sendID is null")
+		return nil, sdkerrs.ErrArgs
 	}
 	var conversation model_struct.LocalConversation
 	var err error
@@ -1232,7 +1225,7 @@ func (c *Conversation) getConversationTypeByGroupID(ctx context.Context, groupID
 	case constant.SuperGroup, constant.WorkingGroup:
 		return c.getConversationIDBySessionType(groupID, constant.SuperGroupChatType), constant.SuperGroupChatType, nil
 	default:
-		return "", 0, utils.Wrap(errors.New("err groupType"), "group type err")
+		return "", 0, sdkerrs.ErrGroupType
 	}
 }
 

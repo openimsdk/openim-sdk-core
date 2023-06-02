@@ -63,6 +63,10 @@ func (g *Group) CreateGroup(ctx context.Context, req *group.CreateGroupReq) (*sd
 	if req.OwnerUserID == "" {
 		req.OwnerUserID = g.loginUserID
 	}
+	if req.GroupInfo.GroupType != constant.WorkingGroup {
+		return nil, sdkerrs.ErrGroupType
+	}
+	req.GroupInfo.CreatorUserID = g.loginUserID
 	resp, err := util.CallApi[group.CreateGroupResp](ctx, constant.CreateGroupRouter, req)
 	if err != nil {
 		return nil, err
@@ -133,11 +137,11 @@ func (g *Group) ChangeGroupMute(ctx context.Context, groupID string, isMute bool
 	return nil
 }
 
-func (g *Group) ChangeGroupMemberMute(ctx context.Context, groupID, userID string, mutedSeconds uint32) (err error) {
+func (g *Group) ChangeGroupMemberMute(ctx context.Context, groupID, userID string, mutedSeconds int) (err error) {
 	if mutedSeconds == 0 {
 		err = util.ApiPost(ctx, constant.CancelMuteGroupMemberRouter, &group.CancelMuteGroupMemberReq{GroupID: groupID, UserID: userID}, nil)
 	} else {
-		err = util.ApiPost(ctx, constant.MuteGroupMemberRouter, &group.MuteGroupMemberReq{GroupID: groupID, UserID: userID, MutedSeconds: mutedSeconds}, nil)
+		err = util.ApiPost(ctx, constant.MuteGroupMemberRouter, &group.MuteGroupMemberReq{GroupID: groupID, UserID: userID, MutedSeconds: uint32(mutedSeconds)}, nil)
 	}
 	if err != nil {
 		return err

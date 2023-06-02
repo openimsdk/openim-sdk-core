@@ -155,7 +155,8 @@ const (
 	NotificationChatType = 4
 
 	//MsgStatus
-	MsgStatusDefault     = 0
+	MsgStatusDefault = 0
+
 	MsgStatusSending     = 1
 	MsgStatusSendSuccess = 2
 	MsgStatusSendFailed  = 3

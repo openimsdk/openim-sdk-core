@@ -31,7 +31,30 @@ func (g *Group) SyncGroupMember(ctx context.Context, groupID string) error {
 	if err != nil {
 		return err
 	}
-	return g.groupMemberSyncer.Sync(ctx, util.Batch(ServerGroupMemberToLocalGroupMember, members), localData, nil)
+	err = g.groupMemberSyncer.Sync(ctx, util.Batch(ServerGroupMemberToLocalGroupMember, members), localData, nil)
+	if err != nil {
+		return err
+	}
+	if len(members) != len(localData) {
+		gs, err := g.GetGroupsInfo(ctx, []string{groupID})
+		if err != nil {
+			return err
+		}
+		if len(gs) > 0 {
+			v := gs[0]
+			v.MemberCount = int32(len(members))
+			if v.GroupType == constant.SuperGroupChatType {
+				if err := g.db.UpdateSuperGroup(ctx, v); err != nil {
+					return err
+				}
+			} else {
+				if err := g.db.UpdateGroup(ctx, v); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func (g *Group) SyncJoinedGroup(ctx context.Context) error {

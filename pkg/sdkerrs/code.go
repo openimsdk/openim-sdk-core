@@ -17,10 +17,22 @@ const (
 	TokenInvalidError    = 11502
 
 	//消息相关
-	MsgContentEmptyError   = 12001 //消息内容为空
-	MsgDeCompressionError  = 12002 //消息解压失败
-	MsgDecodeBinaryWsError = 12003 //消息解码失败
-	MsgTypeNotSupportError = 12004 //消息类型不支持
+	MsgContentEmptyError          = 12001 //消息内容为空
+	MsgDeCompressionError         = 12002 //消息解压失败
+	MsgDecodeBinaryWsError        = 12003 //消息解码失败
+	MsgTypeNotSupportError        = 12004 //消息类型不支持
+	MsgRepeatError                = 12005 //消息重复发送
+	MsgContentTypeNotSupportError = 12006 //消息类型不支持
+	MsgNotFoundError              = 12007 //消息发送不成功
+
+	//会话相关
+	NotSupportOptError       = 13001 //不支持的操作
+	NotResetGroupAtTypeError = 13002 //不需要重置会话
+	NotFoundConversation     = 13003 //会话不存在
+
+	//群组相关
+	NotInGroupError = 14001 //不在群组中
+	GroupTypeErr    = 14002 //群组类型错误
 
 	LoginOutError = 13001 //用户已经退出登录
 )
