@@ -73,6 +73,7 @@ func (g *Group) initSyncer() {
 		}
 		return g.db.DeleteGroup(ctx, value.GroupID)
 	}, func(ctx context.Context, server, local *model_struct.LocalGroup) error {
+		log.ZInfo(ctx, "groupSyncer trigger update func", "groupID", server.GroupID, "server", server, "local", local)
 		return g.db.UpdateGroup(ctx, server)
 	}, func(value *model_struct.LocalGroup) string {
 		return value.GroupID
@@ -90,6 +91,7 @@ func (g *Group) initSyncer() {
 		case syncer.Delete:
 			g.listener.OnJoinedGroupDeleted(string(data))
 		case syncer.Update:
+			log.ZInfo(ctx, "groupSyncer trigger update", "groupID", value.GroupID, "data", string(data), "isDismissed", value.Status == constant.GroupStatusDismissed)
 			if value.Status == constant.GroupStatusDismissed {
 				g.listener.OnGroupDismissed(string(data))
 			} else {
