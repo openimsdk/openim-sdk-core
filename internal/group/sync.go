@@ -16,6 +16,7 @@ package group
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/internal/util"
@@ -52,6 +53,11 @@ func (g *Group) SyncGroupMember(ctx context.Context, groupID string) error {
 					return err
 				}
 			}
+			data, err := json.Marshal(v)
+			if err != nil {
+				return err
+			}
+			g.listener.OnGroupInfoChanged(string(data))
 		}
 	}
 	return nil
