@@ -127,7 +127,7 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 			case reflect.Struct, reflect.Slice, reflect.Array, reflect.Map:
 				v := reflect.New(inFnField)
 				if err := json.Unmarshal([]byte(args[i].(string)), v.Interface()); err != nil {
-					return nil, sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("go call json.Unmarshal error: %w", err))
+					return nil, sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("go call json.Unmarshal error: %s", err))
 				}
 				if ptr == 0 {
 					v = v.Elem()
