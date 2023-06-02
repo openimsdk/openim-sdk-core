@@ -263,7 +263,7 @@ func (d *DataBase) UpdateColumnsConversation(ctx context.Context, conversationID
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	c := model_struct.LocalConversation{ConversationID: conversationID}
-	t := d.conn.WithContext(ctx).Model(&c).Updates(args)
+	t := d.conn.Debug().WithContext(ctx).Model(&c).Where("conversation_id = ?", conversationID).Updates(args)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}

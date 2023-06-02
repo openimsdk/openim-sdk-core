@@ -21,6 +21,7 @@ import (
 	"open_im_sdk/sdk_struct"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
@@ -288,4 +289,13 @@ func Test_ClearConversationAndDeleteAllMsg(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func Test_RevokeMessage(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Conversation().RevokeMessage(ctx, &sdk_struct.MsgStruct{SessionType: 1, ContentType: 101,
+		ClientMsgID: "3d5f9f186984c1827deac1dec2abc120", Seq: 55, SendID: "9169012630", RecvID: "2456093263"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(time.Second * 10)
 }

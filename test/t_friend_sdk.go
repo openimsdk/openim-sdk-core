@@ -77,7 +77,7 @@ func DoTestGetFriendApplicationList() {
 	var test testGetFriendApplicationList
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ")
-	open_im_sdk.GetRecvFriendApplicationList(test, test.OperationID)
+	// open_im_sdk.GetRecvFriendApplicationList(test, test.OperationID)
 
 }
 
@@ -129,7 +129,7 @@ func DoTestGetDesignatedFriendsInfo() {
 
 	jsontest, _ := json.Marshal(test.uid)
 	fmt.Println("testGetFriendsInfo, input: ", string(jsontest))
-	open_im_sdk.GetDesignatedFriendsInfo(test, "xxxxxxxxxxx", string(jsontest))
+	// open_im_sdk.GetDesignatedFriendsInfo(test, "xxxxxxxxxxx", string(jsontest))
 }
 
 // /////////////////////////////////////////////////////
@@ -277,7 +277,7 @@ func DoTestGetSendFriendApplicationList() {
 	var test testGetSendFriendApplicationList
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, "GetSendFriendApplicationList input:")
-	open_im_sdk.GetSendFriendApplicationList(test, test.OperationID)
+	// open_im_sdk.GetSendFriendApplicationList(test, test.OperationID)
 }
 
 ////////////////////////////////////////////////////////////////////

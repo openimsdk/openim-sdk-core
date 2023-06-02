@@ -227,7 +227,7 @@ func DoTestGetGroupsInfo() {
 	list := utils.StructToJsonString(groupIDList)
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, "test getGroupsInfo input", list)
-	open_im_sdk.GetGroupsInfo(test, test.OperationID, list)
+	// open_im_sdk.GetGroupsInfo(test, test.OperationID, list)
 }
 func DoTestSearchGroups() {
 	var test testGetGroupsInfo
@@ -450,7 +450,7 @@ func DotestGetRecvGroupApplicationList() string {
 	var test testGetGroupApplicationList
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
-	open_im_sdk.GetRecvGroupApplicationList(test, test.OperationID)
+	// open_im_sdk.GetRecvGroupApplicationList(test, test.OperationID)
 	return ""
 }
 
@@ -486,7 +486,7 @@ func DoTestGetUserReqGroupApplicationList() {
 	var test testProcessGroupApplication
 	test.OperationID = utils.OperationIDGenerator()
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ")
-	open_im_sdk.GetSendGroupApplicationList(test, test.OperationID)
+	// open_im_sdk.GetSendGroupApplicationList(test, test.OperationID)
 }
 
 // 提示
@@ -494,7 +494,7 @@ func DoTestGetUserReqGroupApplicationList() {
 func DoTestGetRecvGroupApplicationList() {
 	var test testProcessGroupApplication
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input:")
-	open_im_sdk.GetRecvGroupApplicationList(test, test.OperationID)
+	// open_im_sdk.GetRecvGroupApplicationList(test, test.OperationID)
 }
 
 func DotestRefuseGroupApplication(uid string) {

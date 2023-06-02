@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"open_im_sdk/internal/util"
+	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
@@ -13,15 +14,21 @@ import (
 	pbMsg "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/msg"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	utils2 "github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
+	"github.com/jinzhu/copier"
 )
 
-func (c *Conversation) revokeMessage(ctx context.Context, msg *sdkws.MsgData) {
+func (c *Conversation) doRevokeMsg(ctx context.Context, msg *sdkws.MsgData) {
 	var tips sdkws.RevokeMsgTips
 	if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
 		log.ZError(ctx, "unmarshal failed", err, "msg", msg)
 		return
 	}
 	log.ZDebug(ctx, "revokeMessage", "tips", &tips)
+	c.revokeMessage(ctx, &tips)
+}
+
+func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgTips) {
+	log.ZDebug(ctx, "recv revoke message", "tips", tips)
 	revokedMsg, err := c.db.GetMessageBySeq(ctx, tips.ConversationID, tips.Seq)
 	if err != nil {
 		log.ZError(ctx, "GetMessageBySeq failed", err, "tips", &tips)
@@ -30,7 +37,11 @@ func (c *Conversation) revokeMessage(ctx context.Context, msg *sdkws.MsgData) {
 	var revokerRole int32
 	var revokerNickname string
 	if tips.SesstionType == constant.SuperGroupChatType {
-		groupMember, err := c.db.GetGroupMemberInfoByGroupIDUserID(ctx, msg.GroupID, tips.RevokerUserID)
+		conversation, err := c.db.GetConversation(ctx, tips.ConversationID)
+		if err != nil {
+			log.ZError(ctx, "GetConversation failed", err, "conversationID", tips.ConversationID)
+		}
+		groupMember, err := c.db.GetGroupMemberInfoByGroupIDUserID(ctx, conversation.GroupID, tips.RevokerUserID)
 		if err != nil {
 			log.ZError(ctx, "GetGroupMemberInfoByGroupIDUserID failed", err, "tips", &tips)
 		}
@@ -62,6 +73,36 @@ func (c *Conversation) revokeMessage(ctx context.Context, msg *sdkws.MsgData) {
 		Status: constant.MsgStatusRevoked, Content: utils.StructToJsonString(n), ContentType: constant.RevokeNotification}); err != nil {
 		log.ZError(ctx, "UpdateMessageBySeq failed", err, "tips", &tips)
 		return
+	}
+	conversation, err := c.db.GetConversation(ctx, tips.ConversationID)
+	if err != nil {
+		log.ZError(ctx, "GetConversation failed", err, "tips", &tips)
+		return
+	}
+	var latestMsg sdk_struct.MsgStruct
+	utils.JsonStringToStruct(conversation.LatestMsg, &latestMsg)
+	log.ZDebug(ctx, "latestMsg", "latestMsg", &latestMsg, "seq", tips.Seq)
+	if latestMsg.Seq == tips.Seq {
+		var newLatesetMsg sdk_struct.MsgStruct
+		msgs, err := c.db.GetMessageListNoTime(ctx, tips.ConversationID, 1, false)
+		if err != nil || len(msgs) == 0 {
+			log.ZError(ctx, "GetMessageListNoTime failed", err, "tips", &tips)
+			return
+		}
+		log.ZDebug(ctx, "latestMsg is revoked", "seq", tips.Seq, "msg", msgs[0])
+		copier.Copy(&newLatesetMsg, msgs[0])
+		err = c.msgConvert(&newLatesetMsg)
+		if err != nil {
+			log.ZError(ctx, "parsing data error", err, latestMsg)
+		} else {
+			log.ZDebug(ctx, "revoke update conversatoin", "msg", utils.StructToJsonString(newLatesetMsg))
+			if err := c.db.UpdateColumnsConversation(ctx, tips.ConversationID, map[string]interface{}{"latest_msg": utils.StructToJsonString(newLatesetMsg),
+				"latest_msg_send_time": newLatesetMsg.SendTime}); err != nil {
+				log.ZError(ctx, "UpdateColumnsConversation failed", err, "newLatesetMsg", newLatesetMsg)
+			} else {
+				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: []string{tips.ConversationID}}})
+			}
+		}
 	}
 	c.msgListener.OnNewRecvMessageRevoked(utils.StructToJsonString(m))
 	msgList, err := c.db.SearchAllMessageByContentType(ctx, constant.Quote)
@@ -130,9 +171,16 @@ func (c *Conversation) revokeOneMessage(ctx context.Context, req *sdk_struct.Msg
 			}
 		}
 	}
-	if err := util.ApiPost(ctx, constant.RevokeMsgRouter, pbMsg.RevokeMsgReq{ConversationID: conversationID, Seq: message.Seq, UserID: c.loginUserID}, &pbMsg.RevokeMsgResp{}); err != nil {
+	if err := util.ApiPost(ctx, constant.RevokeMsgRouter, pbMsg.RevokeMsgReq{ConversationID: conversationID, Seq: message.Seq, UserID: c.loginUserID}, nil); err != nil {
 		return err
 	}
-	c.revokeMessage(ctx, nil)
+	c.revokeMessage(ctx, &sdkws.RevokeMsgTips{
+		ConversationID: conversationID,
+		Seq:            message.Seq,
+		RevokerUserID:  c.loginUserID,
+		RevokeTime:     utils2.GetCurrentTimestampBySecond(),
+		SesstionType:   int32(req.SessionType),
+		ClientMsgID:    req.ClientMsgID,
+	})
 	return nil
 }
