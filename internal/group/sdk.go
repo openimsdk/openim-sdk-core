@@ -63,6 +63,10 @@ func (g *Group) CreateGroup(ctx context.Context, req *group.CreateGroupReq) (*sd
 	if req.OwnerUserID == "" {
 		req.OwnerUserID = g.loginUserID
 	}
+	if req.GroupInfo.GroupType != constant.WorkingGroup {
+		return nil, sdkerrs.ErrGroupType
+	}
+	req.GroupInfo.CreatorUserID = g.loginUserID
 	resp, err := util.CallApi[group.CreateGroupResp](ctx, constant.CreateGroupRouter, req)
 	if err != nil {
 		return nil, err
