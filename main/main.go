@@ -39,6 +39,8 @@ func main() {
 	tokenx := test.RunGetToken(strMyUidx)
 	fmt.Println(tokenx)
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+	test.DoTestRevoke()
+
 	for {
 		time.Sleep(10000 * time.Millisecond)
 	}

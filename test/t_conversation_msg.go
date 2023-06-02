@@ -301,6 +301,12 @@ func DoTestSetConversationRecvMessageOpt(conversationIDs []string, opt int) {
 	open_im_sdk.SetConversationRecvMessageOpt(callback, callback.OperationID, s, opt)
 }
 
+func DoTestRevoke() {
+	var callback testProcessGroupApplication
+	open_im_sdk.RevokeMessage(callback, "si_4222679462_9169012630", utils.StructToJsonString(&sdk_struct.MsgStruct{SessionType: 1, ContentType: 101,
+		ClientMsgID: "1c2080ec921bb5c5f7c67be02be1f312", Seq: 10, SendID: "9169012630", RecvID: "4222679462"}))
+}
+
 func DoTestSetConversationPinned(conversationID string, pin bool) {
 	var test TestSetConversationPinnedCallback
 	test.OperationID = utils.OperationIDGenerator()
