@@ -293,7 +293,7 @@ func Test_ClearConversationAndDeleteAllMsg(t *testing.T) {
 
 func Test_RevokeMessage(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Conversation().RevokeMessage(ctx, &sdk_struct.MsgStruct{SessionType: 1, ContentType: 101,
-		ClientMsgID: "3d5f9f186984c1827deac1dec2abc120", Seq: 55, SendID: "9169012630", RecvID: "2456093263"})
+		ClientMsgID: "380e2eb1709875340d769880982ebb21", Seq: 57, SendID: "9169012630", RecvID: "2456093263"})
 	if err != nil {
 		t.Fatal(err)
 	}
