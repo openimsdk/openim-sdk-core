@@ -23,10 +23,12 @@ const (
 	MsgTypeNotSupportError        = 12004 //消息类型不支持
 	MsgRepeatError                = 12005 //消息重复发送
 	MsgContentTypeNotSupportError = 12006 //消息类型不支持
+	MsgNotFoundError              = 12007 //消息发送不成功
 
 	//会话相关
 	NotSupportOptError       = 13001 //不支持的操作
 	NotResetGroupAtTypeError = 13002 //不需要重置会话
+	NotFoundConversation     = 13003 //会话不存在
 
 	//群组相关
 	NotInGroupError = 14001 //不在群组中

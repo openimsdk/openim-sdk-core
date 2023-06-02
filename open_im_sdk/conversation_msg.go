@@ -27,7 +27,7 @@ func GetConversationListSplit(callback open_im_sdk_callback.Base, operationID st
 	call(callback, operationID, UserForSDK.Conversation().GetConversationListSplit, offset, count)
 }
 
-func GetOneConversation(callback open_im_sdk_callback.Base, operationID string, sessionType int, sourceID string) {
+func GetOneConversation(callback open_im_sdk_callback.Base, operationID string, sessionType int32, sourceID string) {
 	call(callback, operationID, UserForSDK.Conversation().GetOneConversation, sessionType, sourceID)
 }
 
@@ -168,9 +168,9 @@ func FindMessageList(callback open_im_sdk_callback.Base, operationID string, fin
 	call(callback, operationID, UserForSDK.Conversation().FindMessageList, findMessageOptions)
 }
 
-//func GetHistoryMessageList(callback open_im_sdk_callback.Base, operationID string, getMessageOptions string) {
-//	call(callback, operationID, UserForSDK.Conversation().GetHistoryMessageList, getMessageOptions)
-//}
+func GetHistoryMessageList(callback open_im_sdk_callback.Base, operationID string, getMessageOptions string) {
+	call(callback, operationID, UserForSDK.Conversation().GetHistoryMessageList, getMessageOptions)
+}
 
 func GetAdvancedHistoryMessageList(callback open_im_sdk_callback.Base, operationID string, getMessageOptions string) {
 	call(callback, operationID, UserForSDK.Conversation().GetAdvancedHistoryMessageList, getMessageOptions)
