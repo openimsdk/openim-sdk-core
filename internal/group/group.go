@@ -90,7 +90,11 @@ func (g *Group) initSyncer() {
 		case syncer.Delete:
 			g.listener.OnJoinedGroupDeleted(string(data))
 		case syncer.Update:
-			g.listener.OnGroupInfoChanged(string(data))
+			if value.Status == constant.GroupStatusDismissed {
+				g.listener.OnGroupDismissed(string(data))
+			} else {
+				g.listener.OnGroupInfoChanged(string(data))
+			}
 		}
 		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: value.GroupID, SessionType: constant.GroupChatType}}, g.conversationCh)
 		return nil
