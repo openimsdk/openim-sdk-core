@@ -40,7 +40,7 @@ func ChangeGroupMute(callback open_im_sdk_callback.Base, operationID string, gro
 	call(callback, operationID, UserForSDK.Group().ChangeGroupMute, groupID, isMute)
 }
 
-func ChangeGroupMemberMute(callback open_im_sdk_callback.Base, operationID string, groupID string, userID string, mutedSeconds uint32) {
+func ChangeGroupMemberMute(callback open_im_sdk_callback.Base, operationID string, groupID string, userID string, mutedSeconds int) {
 	call(callback, operationID, UserForSDK.Group().ChangeGroupMemberMute, groupID, userID, mutedSeconds)
 }
 
