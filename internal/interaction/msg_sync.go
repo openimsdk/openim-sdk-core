@@ -160,7 +160,7 @@ func (m *MsgSyncer) compareSeqsAndSync(maxSeqToSync map[string]int64) {
 }
 
 func (m *MsgSyncer) doPushMsg(ctx context.Context, push *sdkws.PushMessages) {
-	log.ZDebug(ctx, "push msgs", "push", push)
+	log.ZDebug(ctx, "push msgs", "push", push, "syncedMaxSeqs", m.syncedMaxSeqs)
 	m.pushTriggerAndSync(ctx, push.Msgs, m.triggerConversation)
 	m.pushTriggerAndSync(ctx, push.NotificationMsgs, m.triggerNotification)
 }
@@ -182,6 +182,7 @@ func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pullMsgs map[string]
 			storageMsgs = append(storageMsgs, msg)
 		}
 		if lastSeq == m.syncedMaxSeqs[conversationID]+int64(len(storageMsgs)) && lastSeq != 0 {
+			log.ZDebug(ctx, "trigger msgs", storageMsgs)
 			_ = triggerFunc(ctx, map[string]*sdkws.PullMsgs{conversationID: {Msgs: storageMsgs}})
 			m.syncedMaxSeqs[conversationID] = lastSeq
 		} else if lastSeq != 0 { //为0就是全是通知
@@ -286,6 +287,7 @@ func (m *MsgSyncer) triggerConversation(ctx context.Context, msgs map[string]*sd
 	if err != nil {
 		log.ZError(ctx, "triggerCmdNewMsgCome err", err, "msgs", msgs)
 	}
+	log.ZDebug(ctx, "triggerConversation", "msgs", msgs)
 	return err
 }
 

@@ -33,20 +33,18 @@ import (
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 
 	pbConversation "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
 )
 
-func (c *Conversation) setConversation(ctx context.Context, apiReq *pbConversation.ModifyConversationFieldReq, localConversation *model_struct.LocalConversation) error {
-	apiReq.Conversation.OwnerUserID = c.loginUserID
+func (c *Conversation) setConversation(ctx context.Context, apiReq *pbConversation.SetConversationsReq, localConversation *model_struct.LocalConversation) error {
 	apiReq.Conversation.ConversationID = localConversation.ConversationID
 	apiReq.Conversation.ConversationType = localConversation.ConversationType
 	apiReq.Conversation.UserID = localConversation.UserID
 	apiReq.Conversation.GroupID = localConversation.GroupID
-	apiReq.UserIDList = []string{c.loginUserID}
-	if err := util.ApiPost(ctx, constant.ModifyConversationFieldRouter, apiReq, nil); err != nil {
+	apiReq.UserIDs = []string{c.loginUserID}
+	if err := util.ApiPost(ctx, constant.SetConversationsRouter, apiReq, nil); err != nil {
 		return err
 	}
 	return nil
@@ -57,39 +55,39 @@ func (c *Conversation) newSetConversation(ctx context.Context, apiReq *pbConvers
 	return util.ApiPost(ctx, constant.SetConversationsRouter, apiReq, nil)
 }
 
-func (c *Conversation) setOneConversationUnread(ctx context.Context, conversationID string, unreadCount int) error {
-	apiReq := &pbConversation.ModifyConversationFieldReq{}
-	localConversation, err := c.db.GetConversation(ctx, conversationID)
-	if err != nil {
-		return err
-	}
-	if localConversation.UnreadCount == 0 {
-		return nil
-	}
-	apiReq.Conversation.UpdateUnreadCountTime = localConversation.LatestMsgSendTime
-	apiReq.Conversation.UnreadCount = int32(unreadCount)
-	apiReq.FieldType = constant.FieldUnread
-	err = c.setConversation(ctx, apiReq, localConversation)
-	if err != nil {
-		return err
-	}
-	deleteRows := c.db.DeleteConversationUnreadMessageList(ctx, localConversation.ConversationID, localConversation.LatestMsgSendTime)
-	if deleteRows == 0 {
-		log.ZError(ctx, "DeleteConversationUnreadMessageList err", nil, "conversationID", localConversation.ConversationID, "latestMsgSendTime", localConversation.LatestMsgSendTime)
-	}
-	return nil
-}
+// func (c *Conversation) setOneConversationUnread(ctx context.Context, conversationID string, unreadCount int) error {
+// 	apiReq := &pbConversation.ModifyConversationFieldReq{}
+// 	localConversation, err := c.db.GetConversation(ctx, conversationID)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	if localConversation.UnreadCount == 0 {
+// 		return nil
+// 	}
+// 	apiReq.Conversation.UpdateUnreadCountTime = localConversation.LatestMsgSendTime
+// 	apiReq.Conversation.UnreadCount = int32(unreadCount)
+// 	apiReq.FieldType = constant.FieldUnread
+// 	err = c.setConversation(ctx, apiReq, localConversation)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	deleteRows := c.db.DeleteConversationUnreadMessageList(ctx, localConversation.ConversationID, localConversation.LatestMsgSendTime)
+// 	if deleteRows == 0 {
+// 		log.ZError(ctx, "DeleteConversationUnreadMessageList err", nil, "conversationID", localConversation.ConversationID, "latestMsgSendTime", localConversation.LatestMsgSendTime)
+// 	}
+// 	return nil
+// }
 
 func (c *Conversation) getServerConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error) {
-	resp, err := util.CallApi[conversation.GetAllConversationsResp](ctx, constant.GetAllConversationsRouter, conversation.GetAllConversationsReq{OwnerUserID: c.loginUserID})
+	resp, err := util.CallApi[pbConversation.GetAllConversationsResp](ctx, constant.GetAllConversationsRouter, pbConversation.GetAllConversationsReq{OwnerUserID: c.loginUserID})
 	if err != nil {
 		return nil, err
 	}
 	return util.Batch(ServerConversationToLocal, resp.Conversations), nil
 }
 
-func (c *Conversation) getServerHasReadAndMaxSeqs(ctx context.Context) (map[string]*conversation.Seqs, error) {
-	resp, err := util.CallApi[conversation.GetConversationsHasReadAndMaxSeqResp](ctx, constant.GetConversationsHasReadAndMaxSeqRouter, conversation.GetConversationsHasReadAndMaxSeqReq{UserID: c.loginUserID})
+func (c *Conversation) getServerHasReadAndMaxSeqs(ctx context.Context) (map[string]*pbConversation.Seqs, error) {
+	resp, err := util.CallApi[pbConversation.GetConversationsHasReadAndMaxSeqResp](ctx, constant.GetConversationsHasReadAndMaxSeqRouter, pbConversation.GetConversationsHasReadAndMaxSeqReq{UserID: c.loginUserID})
 	if err != nil {
 		log.ZError(ctx, "getServerHasReadAndMaxSeqs err", err)
 		return nil, err
@@ -120,7 +118,7 @@ func (c *Conversation) FixVersionData(ctx context.Context) {
 			}
 			var reactionMsgIDList []string
 			for _, value := range msgList {
-				var n server_api_params.ReactionMessageModifierNotification
+				var n sdkws.ReactionMessageModifierNotification
 				err := json.Unmarshal([]byte(value.Content), &n)
 				if err != nil {
 					// log.Error("internal", "unmarshal failed err:", err.Error(), *value)

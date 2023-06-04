@@ -41,6 +41,7 @@ import (
 	pbConversation "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	pbUser "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/user"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/wrapperspb"
 
 	"github.com/jinzhu/copier"
 	imgtype "github.com/shamsher31/goimgtype"
@@ -223,87 +224,38 @@ func (c *Conversation) SetConversationDraft(ctx context.Context, conversationID,
 	return nil
 }
 
-func (c *Conversation) ResetConversationGroupAtType(ctx context.Context, conversationID string) error {
+func (c *Conversation) setConversationAndSync(ctx context.Context, conversationID string, req *pbConversation.ConversationReq) error {
 	lc, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
 	}
-	if lc.GroupAtType == constant.AtNormal || lc.ConversationType != constant.GroupChatType {
-		return sdkerrs.ErrNotResetGroupAtType
-	}
-	apiReq := &pbConversation.ModifyConversationFieldReq{}
-	apiReq.Conversation.GroupAtType = constant.AtNormal
-	apiReq.FieldType = constant.FieldGroupAtType
+	apiReq := &pbConversation.SetConversationsReq{Conversation: req}
 	err = c.setConversation(ctx, apiReq, lc)
 	if err != nil {
 		return err
 	}
 	c.SyncConversations(ctx)
 	return nil
+}
+
+func (c *Conversation) ResetConversationGroupAtType(ctx context.Context, conversationID string) error {
+	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{GroupAtType: &wrapperspb.Int32Value{Value: 0}})
 }
 
 func (c *Conversation) PinConversation(ctx context.Context, conversationID string, isPinned bool) error {
-	lc, err := c.db.GetConversation(ctx, conversationID)
-	if err != nil {
-		return err
-	}
-	apiReq := &pbConversation.ModifyConversationFieldReq{Conversation: &pbConversation.Conversation{ConversationID: conversationID}}
-	apiReq.Conversation.IsPinned = isPinned
-	apiReq.FieldType = constant.FieldIsPinned
-	err = c.setConversation(ctx, apiReq, lc)
-	if err != nil {
-		return err
-	}
-	c.SyncConversations(ctx)
-	return nil
+	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{IsPinned: &wrapperspb.BoolValue{Value: isPinned}})
 }
 
 func (c *Conversation) SetOneConversationPrivateChat(ctx context.Context, conversationID string, isPrivate bool) error {
-	lc, err := c.db.GetConversation(ctx, conversationID)
-	if err != nil {
-		return err
-	}
-	apiReq := &pbConversation.ModifyConversationFieldReq{Conversation: &pbConversation.Conversation{ConversationID: conversationID}}
-	apiReq.Conversation.IsPrivateChat = isPrivate
-	apiReq.FieldType = constant.FieldIsPrivateChat
-	err = c.setConversation(ctx, apiReq, lc)
-	if err != nil {
-		return err
-	}
-	c.SyncConversations(ctx)
-	return nil
+	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{IsPrivateChat: &wrapperspb.BoolValue{Value: isPrivate}})
 }
 
 func (c *Conversation) SetOneConversationBurnDuration(ctx context.Context, conversationID string, burnDuration int32) error {
-	lc, err := c.db.GetConversation(ctx, conversationID)
-	if err != nil {
-		return err
-	}
-	apiReq := &pbConversation.ModifyConversationFieldReq{Conversation: &pbConversation.Conversation{ConversationID: conversationID}}
-	apiReq.Conversation.BurnDuration = burnDuration
-	apiReq.FieldType = constant.FieldBurnDuration
-	err = c.setConversation(ctx, apiReq, lc)
-	if err != nil {
-		return err
-	}
-	c.SyncConversations(ctx)
-	return nil
+	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{BurnDuration: &wrapperspb.Int32Value{Value: burnDuration}})
 }
 
 func (c *Conversation) SetOneConversationRecvMessageOpt(ctx context.Context, conversationID string, opt int) error {
-	lc, err := c.db.GetConversation(ctx, conversationID)
-	if err != nil {
-		return err
-	}
-	apiReq := &pbConversation.ModifyConversationFieldReq{Conversation: &pbConversation.Conversation{ConversationID: conversationID}}
-	apiReq.Conversation.RecvMsgOpt = int32(opt)
-	apiReq.FieldType = constant.FieldRecvMsgOpt
-	err = c.setConversation(ctx, apiReq, lc)
-	if err != nil {
-		return err
-	}
-	c.SyncConversations(ctx)
-	return nil
+	return c.setConversationAndSync(ctx, conversationID, &pbConversation.ConversationReq{RecvMsgOpt: &wrapperspb.Int32Value{Value: int32(opt)}})
 }
 
 func (c *Conversation) GetTotalUnreadMsgCount(ctx context.Context) (totalUnreadCount int32, err error) {
@@ -312,7 +264,6 @@ func (c *Conversation) GetTotalUnreadMsgCount(ctx context.Context) (totalUnreadC
 
 func (c *Conversation) SetConversationListener(listener open_im_sdk_callback.OnConversationListener) {
 	if c.ConversationListener != nil {
-		// log.Error("internal", "just only set on listener")
 		return
 	}
 	c.ConversationListener = listener
@@ -372,17 +323,6 @@ func localChatLogToMsgStruct(dst *sdk_struct.NewMsgList, src []*model_struct.Loc
 
 }
 
-//	func (c *Conversation) checkErrAndUpdateMessage(callback open_im_sdk_callback.SendMsgCallBack, errCode int32, err error, s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation, operationID string) {
-//		if err != nil {
-//			if callback != nil {
-//				c.updateMsgStatusAndTriggerConversation(s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc, operationID)
-//				errInfo := "operationID[" + operationID + "], " + "info[" + err.Error() + "]" + s.ClientMsgID + " " + s.ServerMsgID
-//				log.NewError(operationID, "checkErr ", errInfo)
-//				callback.OnError(errCode, errInfo)
-//				runtime.Goexit()
-//			}
-//		}
-//	}
 func (c *Conversation) updateMsgStatusAndTriggerConversation(ctx context.Context, clientMsgID, serverMsgID string, sendTime int64, status int32, s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation) {
 	//log.NewDebug(operationID, "this is test send message ", sendTime, status, clientMsgID, serverMsgID)
 	s.SendTime = sendTime
@@ -1002,16 +942,16 @@ func (c *Conversation) TypingStatusUpdate(ctx context.Context, recvID, msgTip st
 	return c.typingStatusUpdate(ctx, recvID, msgTip)
 }
 
-func (c *Conversation) MarkMessageAsReadByConID(ctx context.Context, conversationID string, msgIDList []string) error {
-	if len(msgIDList) == 0 {
-		_ = c.setOneConversationUnread(ctx, conversationID, 0)
-		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
-		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
-		return nil
-	}
-	return nil
+// func (c *Conversation) MarkMessageAsReadByConID(ctx context.Context, conversationID string, msgIDList []string) error {
+// 	if len(msgIDList) == 0 {
+// 		_ = c.setOneConversationUnread(ctx, conversationID, 0)
+// 		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
+// 		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
+// 		return nil
+// 	}
+// 	return nil
 
-}
+// }
 
 // deprecated
 // func (c *Conversation) MarkGroupMessageHasRead(ctx context.Context, groupID string) {

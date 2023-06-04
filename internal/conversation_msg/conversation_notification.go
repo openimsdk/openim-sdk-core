@@ -570,14 +570,14 @@ func (c *Conversation) doSyncReactionExtensions(c2v common.Cmd2Value) {
 }
 
 func (c *Conversation) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
-	if msg.SendTime < c.full.Group().LoginTime() || c.full.Group().LoginTime() == 0 {
-		log.ZWarn(ctx, "ignore notification", nil, "clientMsgID", msg.ClientMsgID, "serverMsgID", msg.ServerMsgID, "seq", msg.Seq, "contentType", msg.ContentType)
+	if msg.SendTime < c.LoginTime() || c.LoginTime() == 0 {
+		log.ZWarn(ctx, "ignore notification", nil, "clientMsgID", msg.ClientMsgID, "serverMsgID",
+			msg.ServerMsgID, "seq", msg.Seq, "contentType", msg.ContentType,
+			"sendTime", msg.SendTime, "loginTime", c.full.Group().LoginTime())
 		return
 	}
-	// operationID := utils.OperationIDGenerator()
-	// log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg)
 	if c.msgListener == nil {
-		// log.Error(operationID, utils.GetSelfFuncName(), "listener == nil")
+		log.ZError(ctx, "msgListner is nil", nil)
 		return
 	}
 	go func() {

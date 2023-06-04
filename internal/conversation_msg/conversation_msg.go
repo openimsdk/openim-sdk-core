@@ -76,6 +76,7 @@ type Conversation struct {
 	IsExternalExtensions bool
 	listenerForService   open_im_sdk_callback.OnListenerForService
 	markAsReadLock       sync.Mutex
+	loginTime            int64
 }
 
 func (c *Conversation) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {
@@ -100,6 +101,14 @@ func (c *Conversation) SetMsgKvListener(msgKvListener open_im_sdk_callback.OnMes
 
 func (c *Conversation) SetBatchMsgListener(batchMsgListener open_im_sdk_callback.OnBatchMsgListener) {
 	c.batchMsgListener = batchMsgListener
+}
+
+func (c *Conversation) SetLoginTime() {
+	c.loginTime = utils.GetCurrentTimestampByMill()
+}
+
+func (c *Conversation) LoginTime() int64 {
+	return c.loginTime
 }
 
 func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, db db_interface.DataBase,

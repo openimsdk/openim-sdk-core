@@ -39,7 +39,9 @@ func main() {
 	tokenx := test.RunGetToken(strMyUidx)
 	fmt.Println(tokenx)
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
-	test.DoTestRevoke()
+	// test.DoTestRevoke()
+	time.Sleep(time.Second * 5)
+	// test.DoTestSetConversationPinned("si_2456093263_9169012630", false)
 
 	for {
 		time.Sleep(10000 * time.Millisecond)
