@@ -16,7 +16,6 @@ package login
 
 import (
 	"context"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/push"
 	"open_im_sdk/internal/business"
 	"open_im_sdk/internal/cache"
 	conv "open_im_sdk/internal/conversation_msg"
@@ -40,6 +39,8 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"time"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/push"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 
@@ -277,7 +278,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
 		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.signaling, u.business, u.cache, u.full)
-
+	u.conversation.SetLoginTime()
 	u.signaling = signaling.NewLiveSignaling(u.longConnMgr, u.loginUserID, u.info.PlatformID, u.db)
 	if u.signalingListener != nil {
 		u.signaling.SetListener(u.signalingListener)

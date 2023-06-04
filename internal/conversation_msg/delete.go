@@ -46,7 +46,8 @@ func (c *Conversation) clearConversationAndDeleteAllMsg(ctx context.Context, con
 	if err != nil {
 		return err
 	}
-	err = c.db.ResetConversation(ctx, conversationID)
+	log.ZDebug(ctx, "reset conversation", "conversationID", conversationID)
+	err = c.db.ClearConversation(ctx, conversationID)
 	if err != nil {
 		return err
 	}

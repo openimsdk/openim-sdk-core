@@ -33,20 +33,18 @@ import (
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 
 	pbConversation "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
 )
 
-func (c *Conversation) setConversation(ctx context.Context, apiReq *pbConversation.ModifyConversationFieldReq, localConversation *model_struct.LocalConversation) error {
-	apiReq.Conversation.OwnerUserID = c.loginUserID
+func (c *Conversation) setConversation(ctx context.Context, apiReq *pbConversation.SetConversationsReq, localConversation *model_struct.LocalConversation) error {
 	apiReq.Conversation.ConversationID = localConversation.ConversationID
 	apiReq.Conversation.ConversationType = localConversation.ConversationType
 	apiReq.Conversation.UserID = localConversation.UserID
 	apiReq.Conversation.GroupID = localConversation.GroupID
-	apiReq.UserIDList = []string{c.loginUserID}
-	if err := util.ApiPost(ctx, constant.ModifyConversationFieldRouter, apiReq, nil); err != nil {
+	apiReq.UserIDs = []string{c.loginUserID}
+	if err := util.ApiPost(ctx, constant.SetConversationsRouter, apiReq, nil); err != nil {
 		return err
 	}
 	return nil
@@ -57,39 +55,39 @@ func (c *Conversation) newSetConversation(ctx context.Context, apiReq *pbConvers
 	return util.ApiPost(ctx, constant.SetConversationsRouter, apiReq, nil)
 }
 
-func (c *Conversation) setOneConversationUnread(ctx context.Context, conversationID string, unreadCount int) error {
-	apiReq := &pbConversation.ModifyConversationFieldReq{}
-	localConversation, err := c.db.GetConversation(ctx, conversationID)
-	if err != nil {
-		return err
-	}
-	if localConversation.UnreadCount == 0 {
-		return nil
-	}
-	apiReq.Conversation.UpdateUnreadCountTime = localConversation.LatestMsgSendTime
-	apiReq.Conversation.UnreadCount = int32(unreadCount)
-	apiReq.FieldType = constant.FieldUnread
-	err = c.setConversation(ctx, apiReq, localConversation)
-	if err != nil {
-		return err
-	}
-	deleteRows := c.db.DeleteConversationUnreadMessageList(ctx, localConversation.ConversationID, localConversation.LatestMsgSendTime)
-	if deleteRows == 0 {
-		log.ZError(ctx, "DeleteConversationUnreadMessageList err", nil, "conversationID", localConversation.ConversationID, "latestMsgSendTime", localConversation.LatestMsgSendTime)
-	}
-	return nil
-}
+// func (c *Conversation) setOneConversationUnread(ctx context.Context, conversationID string, unreadCount int) error {
+// 	apiReq := &pbConversation.ModifyConversationFieldReq{}
+// 	localConversation, err := c.db.GetConversation(ctx, conversationID)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	if localConversation.UnreadCount == 0 {
+// 		return nil
+// 	}
+// 	apiReq.Conversation.UpdateUnreadCountTime = localConversation.LatestMsgSendTime
+// 	apiReq.Conversation.UnreadCount = int32(unreadCount)
+// 	apiReq.FieldType = constant.FieldUnread
+// 	err = c.setConversation(ctx, apiReq, localConversation)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	deleteRows := c.db.DeleteConversationUnreadMessageList(ctx, localConversation.ConversationID, localConversation.LatestMsgSendTime)
+// 	if deleteRows == 0 {
+// 		log.ZError(ctx, "DeleteConversationUnreadMessageList err", nil, "conversationID", localConversation.ConversationID, "latestMsgSendTime", localConversation.LatestMsgSendTime)
+// 	}
+// 	return nil
+// }
 
 func (c *Conversation) getServerConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error) {
-	resp, err := util.CallApi[conversation.GetAllConversationsResp](ctx, constant.GetAllConversationsRouter, conversation.GetAllConversationsReq{OwnerUserID: c.loginUserID})
+	resp, err := util.CallApi[pbConversation.GetAllConversationsResp](ctx, constant.GetAllConversationsRouter, pbConversation.GetAllConversationsReq{OwnerUserID: c.loginUserID})
 	if err != nil {
 		return nil, err
 	}
 	return util.Batch(ServerConversationToLocal, resp.Conversations), nil
 }
 
-func (c *Conversation) getServerHasReadAndMaxSeqs(ctx context.Context) (map[string]*conversation.Seqs, error) {
-	resp, err := util.CallApi[conversation.GetConversationsHasReadAndMaxSeqResp](ctx, constant.GetConversationsHasReadAndMaxSeqRouter, conversation.GetConversationsHasReadAndMaxSeqReq{UserID: c.loginUserID})
+func (c *Conversation) getServerHasReadAndMaxSeqs(ctx context.Context) (map[string]*pbConversation.Seqs, error) {
+	resp, err := util.CallApi[pbConversation.GetConversationsHasReadAndMaxSeqResp](ctx, constant.GetConversationsHasReadAndMaxSeqRouter, pbConversation.GetConversationsHasReadAndMaxSeqReq{UserID: c.loginUserID})
 	if err != nil {
 		log.ZError(ctx, "getServerHasReadAndMaxSeqs err", err)
 		return nil, err
@@ -120,7 +118,7 @@ func (c *Conversation) FixVersionData(ctx context.Context) {
 			}
 			var reactionMsgIDList []string
 			for _, value := range msgList {
-				var n server_api_params.ReactionMessageModifierNotification
+				var n sdkws.ReactionMessageModifierNotification
 				err := json.Unmarshal([]byte(value.Content), &n)
 				if err != nil {
 					// log.Error("internal", "unmarshal failed err:", err.Error(), *value)
@@ -811,12 +809,11 @@ func (c *Conversation) judgeMultipleSubString(keywordList []string, main string,
 
 func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk.SearchLocalMessagesParams) (*sdk.SearchLocalMessagesCallback, error) {
 	var r sdk.SearchLocalMessagesCallback
-	var conversationID, sourceID string
 	var startTime, endTime int64
 	var list []*model_struct.LocalChatLog
 	conversationMap := make(map[string]*sdk.SearchByConversationResult, 10)
 	var err error
-
+	var conversationID string
 	if searchParam.SearchTimePosition == 0 {
 		endTime = utils.GetCurrentTimestampBySecond()
 	} else {
@@ -835,20 +832,12 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 			return nil, errors.New("page or count is null")
 		}
 		offset := (searchParam.PageIndex - 1) * searchParam.Count
-		localConversation, err := c.db.GetConversation(ctx, searchParam.ConversationID)
+		_, err := c.db.GetConversation(ctx, searchParam.ConversationID)
 		if err != nil {
 			return nil, err
 		}
-		switch localConversation.ConversationType {
-		case constant.SingleChatType:
-			sourceID = localConversation.UserID
-		case constant.GroupChatType:
-			sourceID = localConversation.GroupID
-		case constant.SuperGroupChatType:
-			sourceID = localConversation.GroupID
-		}
 		if len(searchParam.MessageTypeList) != 0 && len(searchParam.KeywordList) == 0 {
-			list, err = c.db.SearchMessageByContentTypeController(ctx, searchParam.MessageTypeList, sourceID, startTime, endTime, int(localConversation.ConversationType), offset, searchParam.Count)
+			list, err = c.db.SearchMessageByContentType(ctx, searchParam.MessageTypeList, searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
 		} else {
 			newContentTypeList := func(list []int) (result []int) {
 				for _, v := range list {
@@ -861,14 +850,15 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 			if len(newContentTypeList) == 0 {
 				newContentTypeList = SearchContentType
 			}
-			list, err = c.db.SearchMessageByKeywordController(ctx, newContentTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, sourceID, startTime, endTime, int(localConversation.ConversationType), offset, searchParam.Count)
+			list, err = c.db.SearchMessageByKeyword(ctx, newContentTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType,
+				searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
 		}
 	} else {
 		//Comprehensive search, search all
 		if len(searchParam.MessageTypeList) == 0 {
 			searchParam.MessageTypeList = SearchContentType
 		}
-		list, err = c.db.SearchMessageByContentTypeAndKeywordController(ctx, searchParam.MessageTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
+		list, err = c.messageController.SearchMessageByContentTypeAndKeyword(ctx, searchParam.MessageTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
 	}
 	if err != nil {
 		return nil, err

@@ -67,6 +67,13 @@ func (d *DataBase) GetAllConversations(ctx context.Context) ([]*model_struct.Loc
 	err := utils.Wrap(d.conn.WithContext(ctx).Find(&conversationList).Error, "GetAllConversations failed")
 	return conversationList, err
 }
+func (d *DataBase) GetAllConversationIDList(ctx context.Context) (result []string, err error) {
+	d.groupMtx.Lock()
+	defer d.groupMtx.Unlock()
+	var c model_struct.LocalConversation
+	err = d.conn.WithContext(ctx).Model(&c).Pluck("conversation_id", &result).Error
+	return result, utils.Wrap(err, "GetAllConversationIDList failed ")
+}
 
 func (d *DataBase) GetConversationListSplitDB(ctx context.Context, offset, count int) ([]*model_struct.LocalConversation, error) {
 	d.mRWMutex.Lock()
@@ -262,8 +269,7 @@ func (d *DataBase) UnPinConversation(ctx context.Context, conversationID string,
 func (d *DataBase) UpdateColumnsConversation(ctx context.Context, conversationID string, args map[string]interface{}) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	c := model_struct.LocalConversation{ConversationID: conversationID}
-	t := d.conn.Debug().WithContext(ctx).Model(&c).Where("conversation_id = ?", conversationID).Updates(args)
+	t := d.conn.Debug().WithContext(ctx).Model(model_struct.LocalConversation{ConversationID: conversationID}).Updates(args)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
