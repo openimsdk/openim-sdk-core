@@ -149,12 +149,35 @@ func (c *Conversation) initSyncer() {
 			return c.db.DeleteConversation(ctx, value.ConversationID)
 		},
 		func(ctx context.Context, serverConversation, localConversation *model_struct.LocalConversation) error {
-			return c.db.UpdateConversation(ctx, serverConversation)
+			return c.db.UpdateColumnsConversation(ctx, serverConversation.ConversationID,
+				map[string]interface{}{"recv_msg_opt": serverConversation.RecvMsgOpt,
+					"is_pinned": serverConversation.IsPinned, "is_private_chat": serverConversation.IsPrivateChat, "burn_duration": serverConversation.BurnDuration,
+					"is_not_in_group": serverConversation.IsNotInGroup, "group_at_type": serverConversation.GroupAtType,
+					"update_unread_count_time": serverConversation.UpdateUnreadCountTime,
+					"attached_info":            serverConversation.AttachedInfo, "ex": serverConversation.Ex,
+					"max_seq": serverConversation.MaxSeq, "min_seq": serverConversation.MinSeq, "has_read_seq": serverConversation.HasReadSeq})
 		},
 		func(value *model_struct.LocalConversation) string {
 			return value.ConversationID
 		},
-		nil,
+		func(server, local *model_struct.LocalConversation) bool {
+			if server.RecvMsgOpt != local.RecvMsgOpt ||
+				server.IsPinned != local.IsPinned ||
+				server.IsPrivateChat != local.IsPrivateChat ||
+				server.BurnDuration != local.BurnDuration ||
+				server.IsNotInGroup != local.IsNotInGroup ||
+				server.GroupAtType != local.GroupAtType ||
+				server.UpdateUnreadCountTime != local.UpdateUnreadCountTime ||
+				server.AttachedInfo != local.AttachedInfo ||
+				server.Ex != local.Ex ||
+				server.MaxSeq != local.MaxSeq ||
+				server.MinSeq != local.MinSeq ||
+				server.HasReadSeq != local.HasReadSeq {
+				log.ZDebug(context.Background(), "not same", "conversationID", server.ConversationID, "server", server.RecvMsgOpt, "local", local.RecvMsgOpt)
+				return false
+			}
+			return true
+		},
 		nil,
 	)
 }

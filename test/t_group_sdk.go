@@ -174,7 +174,7 @@ func DoSetGroupInfo() {
 	n = 1
 	input.NeedVerification = &n
 	setInfo := utils.StructToJsonString(input)
-	open_im_sdk.SetGroupInfo(test, test.OperationID, TestgroupID, setInfo)
+	// open_im_sdk.SetGroupInfo(test, test.OperationID, TestgroupID, setInfo)
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input: ", setInfo)
 
 }

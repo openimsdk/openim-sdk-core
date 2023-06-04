@@ -269,8 +269,7 @@ func (d *DataBase) UnPinConversation(ctx context.Context, conversationID string,
 func (d *DataBase) UpdateColumnsConversation(ctx context.Context, conversationID string, args map[string]interface{}) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	c := model_struct.LocalConversation{ConversationID: conversationID}
-	t := d.conn.Debug().WithContext(ctx).Model(&c).Where("conversation_id = ?", conversationID).Updates(args)
+	t := d.conn.Debug().WithContext(ctx).Model(model_struct.LocalConversation{ConversationID: conversationID}).Updates(args)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}

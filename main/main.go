@@ -41,8 +41,8 @@ func main() {
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	// test.DoTestRevoke()
 	time.Sleep(time.Second * 5)
-	// test.DoTestSetConversationPinned("si_2456093263_9169012630", false)
-
+	// test.DoTestSetConversationPinned("si_2456093263_9169012630", true)
+	test.DoTestSetOneConversationRecvMessageOpt("si_2456093263_9169012630", 2)
 	for {
 		time.Sleep(10000 * time.Millisecond)
 	}

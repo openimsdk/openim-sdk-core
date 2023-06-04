@@ -35,12 +35,12 @@ func (u *User) SyncLoginUserInfo(ctx context.Context) error {
 	if err != nil && errs.Unwrap(err) != gorm.ErrRecordNotFound {
 		return err
 	}
-	var remoteUsers []*model_struct.LocalUser
+	var localUsers []*model_struct.LocalUser
 	if err == nil {
-		remoteUsers = []*model_struct.LocalUser{localUser}
+		localUsers = []*model_struct.LocalUser{localUser}
 	}
 	log.ZDebug(ctx, "SyncLoginUserInfo", "remoteUser", remoteUser, "localUser", localUser)
-	err = u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, remoteUsers, nil)
+	err = u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, localUsers, nil)
 	if err != nil {
 		return err
 	}

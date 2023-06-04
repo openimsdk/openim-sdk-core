@@ -415,7 +415,7 @@ type LocalConversation struct {
 
 	MaxSeq     int64 `gorm:"column:max_seq" json:"maxSeq"`
 	MinSeq     int64 `gorm:"column:min_seq" json:"minSeq"`
-	HasReadSeq int64 `gorm:"column:is_read_seq" json:"hasReadSeq"`
+	HasReadSeq int64 `gorm:"column:has_read_seq" json:"hasReadSeq"`
 }
 type LocalConversationUnreadMessage struct {
 	ConversationID string `gorm:"column:conversation_id;primary_key;type:char(128)" json:"conversationID"`
