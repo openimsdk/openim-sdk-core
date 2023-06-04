@@ -160,7 +160,24 @@ func (c *Conversation) initSyncer() {
 		func(value *model_struct.LocalConversation) string {
 			return value.ConversationID
 		},
-		nil,
+		func(server, local *model_struct.LocalConversation) bool {
+			if server.RecvMsgOpt != local.RecvMsgOpt ||
+				server.IsPinned != local.IsPinned ||
+				server.IsPrivateChat != local.IsPrivateChat ||
+				server.BurnDuration != local.BurnDuration ||
+				server.IsNotInGroup != local.IsNotInGroup ||
+				server.GroupAtType != local.GroupAtType ||
+				server.UpdateUnreadCountTime != local.UpdateUnreadCountTime ||
+				server.AttachedInfo != local.AttachedInfo ||
+				server.Ex != local.Ex ||
+				server.MaxSeq != local.MaxSeq ||
+				server.MinSeq != local.MinSeq ||
+				server.HasReadSeq != local.HasReadSeq {
+				log.ZDebug(context.Background(), "not same", "conversationID", server.ConversationID, "server", server.RecvMsgOpt, "local", local.RecvMsgOpt)
+				return false
+			}
+			return true
+		},
 		nil,
 	)
 }
