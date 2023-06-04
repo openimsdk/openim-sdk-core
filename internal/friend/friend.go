@@ -119,6 +119,8 @@ func (f *Friend) initSyncer() {
 				f.friendListener.OnFriendApplicationAccepted(*value)
 			case constant.FriendResponseRefuse:
 				f.friendListener.OnFriendApplicationRejected(*value)
+			case constant.FriendResponseDefault:
+				f.friendListener.OnFriendApplicationAdded(*value)
 			}
 		}
 		return nil
