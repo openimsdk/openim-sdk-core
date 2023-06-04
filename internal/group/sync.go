@@ -50,11 +50,12 @@ func (g *Group) SyncGroupMember(ctx context.Context, groupID string) error {
 			v.MemberCount = int32(len(members))
 			if v.GroupType == constant.SuperGroupChatType {
 				if err := g.db.UpdateSuperGroup(ctx, v); err != nil {
-					return err
+					//return err
+					log.ZError(ctx, "SyncGroupMember UpdateSuperGroup", err, "groupID", groupID, "info", v)
 				}
 			} else {
 				if err := g.db.UpdateGroup(ctx, v); err != nil {
-					return err
+					log.ZError(ctx, "SyncGroupMember UpdateGroup", err, "groupID", groupID, "info", v)
 				}
 			}
 			data, err := json.Marshal(v)

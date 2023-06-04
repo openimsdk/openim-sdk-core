@@ -25,6 +25,7 @@ import (
 	"reflect"
 	"runtime"
 	"runtime/debug"
+	"time"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 )
@@ -107,7 +108,8 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 		return nil, sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("go code error: fn in args num is not match"))
 	}
 	ctx := ccontext.WithOperationID(UserForSDK.BaseCtx(), operationID)
-	log.ZInfo(ctx, "input req", "fn name", funcName, "args", args)
+	t := time.Now()
+	log.ZInfo(ctx, "input req", "func name", funcName, "args", args)
 	ins := make([]reflect.Value, 0, nin)
 	ins = append(ins, reflect.ValueOf(ctx))
 	for i := 0; i < len(args); i++ {
@@ -156,7 +158,7 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 	}
 	if fnt.Out(len(outs) - 1).Implements(reflect.ValueOf(new(error)).Elem().Type()) {
 		if errValueOf := outs[len(outs)-1]; !errValueOf.IsNil() {
-			log.ZError(ctx, "fn call error", errValueOf.Interface().(error), "fn name", funcName)
+			log.ZError(ctx, "fn call error", errValueOf.Interface().(error), "func name", funcName, "cost time", time.Since(t))
 			return nil, errValueOf.Interface().(error)
 		}
 		if len(outs) == 1 {
@@ -178,14 +180,14 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 		}
 	}
 	if len(outs) == 1 {
-		log.ZInfo(ctx, "output resp", "fn name", funcName, "resp", outs[0].Interface())
+		log.ZInfo(ctx, "output resp", "func name", funcName, "resp", outs[0].Interface(), "cost time", time.Since(t))
 		return outs[0].Interface(), nil
 	}
 	val := make([]any, 0, len(outs))
 	for i := range outs {
 		val = append(val, outs[i].Interface())
 	}
-	log.ZInfo(ctx, "output resp", "fn name", funcName, "resp", val)
+	log.ZInfo(ctx, "output resp", "func name", funcName, "resp", val, "cost time", time.Since(t))
 	return val, nil
 }
 
