@@ -217,11 +217,11 @@ func (g *Group) SearchGroups(ctx context.Context, param sdk_params_callback.Sear
 //	})
 //}
 
-func (g *Group) SetGroupVerification(ctx context.Context, verification int32, groupID string) error {
+func (g *Group) SetGroupVerification(ctx context.Context, groupID string, verification int32) error {
 	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, NeedVerification: wrapperspb.Int32(verification)})
 }
 
-func (g *Group) SetGroupLookMemberInfo(ctx context.Context, rule int32, groupID string) error {
+func (g *Group) SetGroupLookMemberInfo(ctx context.Context, groupID string, rule int32) error {
 	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, LookMemberInfo: wrapperspb.Int32(rule)})
 }
 
