@@ -16,6 +16,7 @@ package group
 
 import (
 	"context"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
@@ -188,7 +189,17 @@ func (g *Group) GetGroupsInfo(ctx context.Context, groupIDs []string) ([]*model_
 	res := make([]*model_struct.LocalGroup, 0, len(groupIDs))
 	for i, v := range groups {
 		if _, ok := groupIDMap[v.GroupID]; ok {
+			delete(groupIDMap, v.GroupID)
 			res = append(res, groups[i])
+		}
+	}
+	if len(groupIDMap) > 0 {
+		groups, err := util.CallApi[group.GetGroupsInfoResp](ctx, constant.GetGroupsInfoRouter, &group.GetGroupsInfoReq{GroupIDs: utils.Keys(groupIDMap)})
+		if err != nil {
+			log.ZError(ctx, "Call GetGroupsInfoRouter", err)
+		}
+		if groups != nil && len(groups.GroupInfos) > 0 {
+			res = append(res, util.Batch(ServerGroupToLocalGroup, groups.GroupInfos)...)
 		}
 	}
 	return res, nil
