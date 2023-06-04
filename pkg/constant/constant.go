@@ -329,8 +329,9 @@ const (
 	GroupResponseAgree         = 1  // Response to group application: agree
 	GroupResponseRefuse        = -1 // Response to group application: refuse
 
-	FriendResponseAgree  = 1  // Response to friend request: agree
-	FriendResponseRefuse = -1 // Response to friend request: refuse
+	FriendResponseAgree   = 1  // Response to friend request: agree
+	FriendResponseRefuse  = -1 // Response to friend request: refuse
+	FriendResponseDefault = 0
 
 	Male   = 1 // Gender: male
 	Female = 2 // Gender: female

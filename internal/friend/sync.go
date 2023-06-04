@@ -19,6 +19,7 @@ import (
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
 
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/friend"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
@@ -72,13 +73,15 @@ func (f *Friend) SyncFriendList(ctx context.Context) error {
 func (f *Friend) SyncBlackList(ctx context.Context) error {
 	req := &friend.GetPaginationBlacksReq{UserID: f.loginUserID, Pagination: &sdkws.RequestPagination{}}
 	fn := func(resp *friend.GetPaginationBlacksResp) []*sdkws.BlackInfo { return resp.Blacks }
-	blacks, err := util.GetPageAll(ctx, constant.GetBlackListRouter, req, fn)
+	serverData, err := util.GetPageAll(ctx, constant.GetBlackListRouter, req, fn)
 	if err != nil {
 		return err
 	}
+	log.ZDebug(ctx, "black from server", "data", serverData)
 	localData, err := f.db.GetBlackListDB(ctx)
 	if err != nil {
 		return err
 	}
-	return f.blockSyncer.Sync(ctx, util.Batch(ServerBlackToLocalBlack, blacks), localData, nil)
+	log.ZDebug(ctx, "black from local", "data", localData)
+	return f.blockSyncer.Sync(ctx, util.Batch(ServerBlackToLocalBlack, serverData), localData, nil)
 }

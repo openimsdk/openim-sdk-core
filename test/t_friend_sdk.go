@@ -145,11 +145,10 @@ func (t testAddToBlackList) OnError(code int32, msg string) {
 	log.Info(t.OperationID, "testAddToBlackList, OnError, ", code, msg)
 }
 
-func DoTestAddToBlackList() {
+func DoTestAddToBlackList(userID string) {
 	var test testAddToBlackList
 	test.OperationID = utils.OperationIDGenerator()
-	fmt.Println("AddToBlackList, input: ", Friend_uid)
-	open_im_sdk.AddBlack(test, test.OperationID, Friend_uid)
+	open_im_sdk.AddBlack(test, test.OperationID, userID)
 }
 
 // /////////////////////////////////////////////////////
@@ -157,11 +156,10 @@ type testDeleteFromBlackList struct {
 	baseCallback
 }
 
-func DoTestDeleteFromBlackList() {
+func DoTestDeleteFromBlackList(userID string) {
 	var test testDeleteFromBlackList
 	test.OperationID = utils.OperationIDGenerator()
-	fmt.Println("DeleteFromBlackList, input: ")
-	open_im_sdk.RemoveBlack(test, test.OperationID, Friend_uid)
+	open_im_sdk.RemoveBlack(test, test.OperationID, userID)
 }
 
 // ////////////////////////////////////////////////////
@@ -226,12 +224,10 @@ type testDeleteFriend struct {
 	baseCallback
 }
 
-func DotestDeleteFriend() {
+func DotestDeleteFriend(userID string) {
 	var test testDeleteFriend
 	test.OperationID = utils.OperationIDGenerator()
-
-	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ")
-	open_im_sdk.DeleteFriend(test, test.OperationID, Friend_uid)
+	open_im_sdk.DeleteFriend(test, test.OperationID, userID)
 }
 
 // /////////////////////////////////////////////////////
