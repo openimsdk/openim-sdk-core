@@ -67,6 +67,13 @@ func (d *DataBase) GetAllConversations(ctx context.Context) ([]*model_struct.Loc
 	err := utils.Wrap(d.conn.WithContext(ctx).Find(&conversationList).Error, "GetAllConversations failed")
 	return conversationList, err
 }
+func (d *DataBase) GetAllConversationIDList(ctx context.Context) (result []string, err error) {
+	d.groupMtx.Lock()
+	defer d.groupMtx.Unlock()
+	var c model_struct.LocalConversation
+	err = d.conn.WithContext(ctx).Model(&c).Pluck("conversation_id", &result).Error
+	return result, utils.Wrap(err, "GetAllConversationIDList failed ")
+}
 
 func (d *DataBase) GetConversationListSplitDB(ctx context.Context, offset, count int) ([]*model_struct.LocalConversation, error) {
 	d.mRWMutex.Lock()

@@ -3,8 +3,10 @@ package db
 import (
 	"context"
 	"errors"
+	"fmt"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 )
 
@@ -121,4 +123,74 @@ func (d *DataBase) DeleteConversationMsgsBySeqs(ctx context.Context, conversatio
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("seq IN ?", seqs).Delete(model_struct.LocalChatLog{}).Error, "DeleteConversationMsgs failed")
+}
+func (d *DataBase) SearchMessageByContentType(ctx context.Context, contentType []int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
+	condition := fmt.Sprintf("send_time between %d and %d AND status <=%d And content_type IN ?", startTime, endTime, constant.MsgStatusSendFailed)
+	err = utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&result).Error, "SearchMessage failed")
+	return result, err
+}
+func (d *DataBase) SearchMessageByKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
+	var condition string
+	var subCondition string
+	if keywordListMatchType == constant.KeywordMatchOr {
+		for i := 0; i < len(keywordList); i++ {
+			if i == 0 {
+				subCondition += "And ("
+			}
+			if i+1 >= len(keywordList) {
+				subCondition += "content like " + "'%" + keywordList[i] + "%') "
+			} else {
+				subCondition += "content like " + "'%" + keywordList[i] + "%' " + "or "
+
+			}
+		}
+	} else {
+		for i := 0; i < len(keywordList); i++ {
+			if i == 0 {
+				subCondition += "And ("
+			}
+			if i+1 >= len(keywordList) {
+				subCondition += "content like " + "'%" + keywordList[i] + "%') "
+			} else {
+				subCondition += "content like " + "'%" + keywordList[i] + "%' " + "and "
+			}
+		}
+	}
+	condition = fmt.Sprintf(" send_time  between %d and %d AND status <=%d  And content_type IN ? ", startTime, endTime, constant.MsgStatusSendFailed)
+	condition += subCondition
+	err = utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&result).Error, "InsertMessage failed")
+	return result, err
+}
+func (d *DataBase) SearchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, conversationID string, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
+	var condition string
+	var subCondition string
+	if keywordListMatchType == constant.KeywordMatchOr {
+		for i := 0; i < len(keywordList); i++ {
+			if i == 0 {
+				subCondition += "And ("
+			}
+			if i+1 >= len(keywordList) {
+				subCondition += "content like " + "'%" + keywordList[i] + "%') "
+			} else {
+				subCondition += "content like " + "'%" + keywordList[i] + "%' " + "or "
+
+			}
+		}
+	} else {
+		for i := 0; i < len(keywordList); i++ {
+			if i == 0 {
+				subCondition += "And ("
+			}
+			if i+1 >= len(keywordList) {
+				subCondition += "content like " + "'%" + keywordList[i] + "%') "
+			} else {
+				subCondition += "content like " + "'%" + keywordList[i] + "%' " + "and "
+			}
+		}
+	}
+	condition = fmt.Sprintf("send_time between %d and %d AND status <=%d  And content_type IN ? ", startTime, endTime, constant.MsgStatusSendFailed)
+	condition += subCondition
+	log.Info("key owrd", condition)
+	err = utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, contentType).Order("send_time DESC").Find(&result).Error, "SearchMessage failed")
+	return result, err
 }
