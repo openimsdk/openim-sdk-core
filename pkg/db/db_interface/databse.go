@@ -78,12 +78,12 @@ type MessageDatabase interface {
 	//BatchInsertMessageListController(ctx context.Context, MessageList []*model_struct.LocalChatLog) error
 	InsertMessage(ctx context.Context, conversationID string, Message *model_struct.LocalChatLog) error
 	//InsertMessageController(ctx context.Context, message *model_struct.LocalChatLog) error
-	SearchMessageByKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
-	SearchMessageByKeywordController(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
-	SearchMessageByContentType(ctx context.Context, contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
-	SearchMessageByContentTypeController(ctx context.Context, contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
-	SearchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error)
-	SearchMessageByContentTypeAndKeywordController(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error)
+	SearchMessageByKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, converstaionID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error)
+	//SearchMessageByKeywordController(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
+	SearchMessageByContentType(ctx context.Context, contentType []int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error)
+	//SearchMessageByContentTypeController(ctx context.Context, contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
+	SearchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, conversationID string, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error)
+	//SearchMessageByContentTypeAndKeywordController(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error)
 	//BatchUpdateMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error
 	//BatchSpecialUpdateMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error
 	MessageIfExists(ctx context.Context, ClientMsgID string) (bool, error)
@@ -193,6 +193,7 @@ type ConversationDatabase interface {
 	GetAllConversationListDB(ctx context.Context) ([]*model_struct.LocalConversation, error)
 	GetHiddenConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error)
 	GetAllConversations(ctx context.Context) ([]*model_struct.LocalConversation, error)
+	GetAllConversationIDList(ctx context.Context) (result []string, err error)
 	GetConversationListSplitDB(ctx context.Context, offset, count int) ([]*model_struct.LocalConversation, error)
 	BatchInsertConversationList(ctx context.Context, conversationList []*model_struct.LocalConversation) error
 	UpdateOrCreateConversations(ctx context.Context, conversationList []*model_struct.LocalConversation) error

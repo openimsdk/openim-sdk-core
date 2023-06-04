@@ -64,3 +64,18 @@ func (m *MessageController) BatchInsertMessageList(ctx context.Context, insertMs
 func (c *Conversation) PullMessageBySeqs(ctx context.Context, seqs []*sdkws.SeqRange) (*sdkws.PullMessageBySeqsResp, error) {
 	return util.CallApi[sdkws.PullMessageBySeqsResp](ctx, constant.PullUserMsgBySeqRouter, sdkws.PullMessageBySeqsReq{UserID: c.loginUserID, SeqRanges: seqs})
 }
+func (m *MessageController) SearchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, keywordList []string,
+	keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
+	var list []*model_struct.LocalChatLog
+	conversationIDList, err := m.db.GetAllConversationIDList(ctx)
+	for _, v := range conversationIDList {
+		sList, err := m.db.SearchMessageByContentTypeAndKeyword(ctx, contentType, v, keywordList, keywordListMatchType, startTime, endTime)
+		if err != nil {
+			// TODO: log.Error(operationID, "search message in group err", err.Error(), v)
+			continue
+		}
+		list = append(list, sList...)
+	}
+
+	return list, nil
+}

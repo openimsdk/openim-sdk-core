@@ -811,12 +811,11 @@ func (c *Conversation) judgeMultipleSubString(keywordList []string, main string,
 
 func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk.SearchLocalMessagesParams) (*sdk.SearchLocalMessagesCallback, error) {
 	var r sdk.SearchLocalMessagesCallback
-	var conversationID, sourceID string
 	var startTime, endTime int64
 	var list []*model_struct.LocalChatLog
 	conversationMap := make(map[string]*sdk.SearchByConversationResult, 10)
 	var err error
-
+	var conversationID string
 	if searchParam.SearchTimePosition == 0 {
 		endTime = utils.GetCurrentTimestampBySecond()
 	} else {
@@ -835,20 +834,12 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 			return nil, errors.New("page or count is null")
 		}
 		offset := (searchParam.PageIndex - 1) * searchParam.Count
-		localConversation, err := c.db.GetConversation(ctx, searchParam.ConversationID)
+		_, err := c.db.GetConversation(ctx, searchParam.ConversationID)
 		if err != nil {
 			return nil, err
 		}
-		switch localConversation.ConversationType {
-		case constant.SingleChatType:
-			sourceID = localConversation.UserID
-		case constant.GroupChatType:
-			sourceID = localConversation.GroupID
-		case constant.SuperGroupChatType:
-			sourceID = localConversation.GroupID
-		}
 		if len(searchParam.MessageTypeList) != 0 && len(searchParam.KeywordList) == 0 {
-			list, err = c.db.SearchMessageByContentTypeController(ctx, searchParam.MessageTypeList, sourceID, startTime, endTime, int(localConversation.ConversationType), offset, searchParam.Count)
+			list, err = c.db.SearchMessageByContentType(ctx, searchParam.MessageTypeList, searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
 		} else {
 			newContentTypeList := func(list []int) (result []int) {
 				for _, v := range list {
@@ -861,14 +852,15 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 			if len(newContentTypeList) == 0 {
 				newContentTypeList = SearchContentType
 			}
-			list, err = c.db.SearchMessageByKeywordController(ctx, newContentTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, sourceID, startTime, endTime, int(localConversation.ConversationType), offset, searchParam.Count)
+			list, err = c.db.SearchMessageByKeyword(ctx, newContentTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType,
+				searchParam.ConversationID, startTime, endTime, offset, searchParam.Count)
 		}
 	} else {
 		//Comprehensive search, search all
 		if len(searchParam.MessageTypeList) == 0 {
 			searchParam.MessageTypeList = SearchContentType
 		}
-		list, err = c.db.SearchMessageByContentTypeAndKeywordController(ctx, searchParam.MessageTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
+		list, err = c.messageController.SearchMessageByContentTypeAndKeyword(ctx, searchParam.MessageTypeList, searchParam.KeywordList, searchParam.KeywordListMatchType, startTime, endTime)
 	}
 	if err != nil {
 		return nil, err
