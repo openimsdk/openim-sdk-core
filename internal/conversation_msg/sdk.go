@@ -853,6 +853,15 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	delFile []string, offlinePushInfo *sdkws.OfflinePushInfo, options map[string]bool) (*sdk_struct.MsgStruct, error) {
 	// log.Debug("", "sendMessageToServer ", s.ServerMsgID, " ", s.ClientMsgID)
 	//Protocol conversion
+	if s.SessionType == constant.SuperGroupChatType || s.SessionType == constant.GroupChatType {
+		group, err := c.db.GetGroupInfoByGroupID(ctx, s.GroupID)
+		if err != nil {
+			return nil, err
+		}
+		if group.Status == constant.GroupStatusDismissed {
+			return nil, sdkerrs.ErrArgs.Wrap("group is dismissed")
+		}
+	}
 	var wsMsgData sdkws.MsgData
 	copier.Copy(&wsMsgData, s)
 	wsMsgData.Content = []byte(s.Content)
