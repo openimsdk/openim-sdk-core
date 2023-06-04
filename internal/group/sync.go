@@ -17,6 +17,7 @@ package group
 import (
 	"context"
 	"encoding/json"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/internal/util"
@@ -32,15 +33,18 @@ func (g *Group) SyncGroupMember(ctx context.Context, groupID string) error {
 	if err != nil {
 		return err
 	}
+	log.ZInfo(ctx, "SyncGroupMember Info", "groupID", groupID, "members", len(members), "localData", len(localData))
 	err = g.groupMemberSyncer.Sync(ctx, util.Batch(ServerGroupMemberToLocalGroupMember, members), localData, nil)
 	if err != nil {
 		return err
 	}
 	if len(members) != len(localData) {
+		log.ZInfo(ctx, "SyncGroupMember Sync Group Member Count", "groupID", groupID, "members", len(members), "localData", len(localData))
 		gs, err := g.GetGroupsInfo(ctx, []string{groupID})
 		if err != nil {
 			return err
 		}
+		log.ZInfo(ctx, "SyncGroupMember GetGroupsInfo", "groupID", groupID, "len", len(gs), "gs", gs)
 		if len(gs) > 0 {
 			v := gs[0]
 			v.MemberCount = int32(len(members))
@@ -57,6 +61,7 @@ func (g *Group) SyncGroupMember(ctx context.Context, groupID string) error {
 			if err != nil {
 				return err
 			}
+			log.ZInfo(ctx, "SyncGroupMember OnGroupInfoChanged", "groupID", groupID, "data", string(data))
 			g.listener.OnGroupInfoChanged(string(data))
 		}
 	}

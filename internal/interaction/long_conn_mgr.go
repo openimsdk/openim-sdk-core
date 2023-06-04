@@ -149,7 +149,7 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 // reads from this goroutine.
 func (c *LongConnMgr) readPump(ctx context.Context) {
 	defer func() {
-		log.ZWarn(c.ctx, "writePump closed", c.closedErr)
+		log.ZWarn(c.ctx, "readPump closed", c.closedErr)
 	}()
 	connNum := 0
 	//c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
