@@ -307,10 +307,21 @@ func DoTestRevoke() {
 		ClientMsgID: "1c2080ec921bb5c5f7c67be02be1f312", Seq: 10, SendID: "9169012630", RecvID: "4222679462"}))
 }
 
+func DoTestClearOneConversation() {
+	var callback testProcessGroupApplication
+	open_im_sdk.ClearConversationAndDeleteAllMsg(callback, "df", "si_2456093263_9169012630")
+}
+
 func DoTestSetConversationPinned(conversationID string, pin bool) {
 	var test TestSetConversationPinnedCallback
-	test.OperationID = utils.OperationIDGenerator()
+	test.OperationID = "testping"
 	open_im_sdk.PinConversation(test, test.OperationID, conversationID, pin)
+}
+
+func DoTestSetOneConversationRecvMessageOpt(conversationID string, opt int) {
+	var test TestSetConversationPinnedCallback
+	test.OperationID = utils.OperationIDGenerator()
+	open_im_sdk.SetOneConversationRecvMessageOpt(test, test.OperationID, conversationID, opt)
 }
 
 func DoTestSetOneConversationPrivateChat(conversationID string, privateChat bool) {
@@ -323,12 +334,6 @@ func DoTestSetBurnDuration(conversationID string) {
 	var test TestSetConversationPinnedCallback
 	test.OperationID = utils.OperationIDGenerator()
 	open_im_sdk.SetOneConversationBurnDuration(test, test.OperationID, conversationID, 180)
-}
-
-func DoTestSetOneConversationRecvMessageOpt(conversationID string, opt int) {
-	var test TestSetConversationPinnedCallback
-	test.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.SetOneConversationRecvMessageOpt(test, test.OperationID, conversationID, opt)
 }
 
 type TestGetConversationListSplitCallBack struct {

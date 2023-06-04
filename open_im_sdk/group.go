@@ -64,8 +64,8 @@ func SearchGroups(callback open_im_sdk_callback.Base, operationID string, search
 	call(callback, operationID, UserForSDK.Group().SearchGroups, searchParam)
 }
 
-func SetGroupInfo(callback open_im_sdk_callback.Base, operationID string, groupID string, groupInfo string) {
-	call(callback, operationID, UserForSDK.Group().SetGroupInfo, groupID, groupInfo)
+func SetGroupInfo(callback open_im_sdk_callback.Base, operationID string, groupInfo string) {
+	call(callback, operationID, UserForSDK.Group().SetGroupInfo, groupInfo)
 }
 
 func SetGroupVerification(callback open_im_sdk_callback.Base, operationID string, groupID string, verification int32) {

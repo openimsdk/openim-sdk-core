@@ -93,6 +93,9 @@ func (g *Group) initSyncer() {
 		case syncer.Update:
 			log.ZInfo(ctx, "groupSyncer trigger update", "groupID", value.GroupID, "data", string(data), "isDismissed", value.Status == constant.GroupStatusDismissed)
 			if value.Status == constant.GroupStatusDismissed {
+				if err := g.db.DeleteGroupAllMembers(ctx, value.GroupID); err != nil {
+					log.ZError(ctx, "delete group all members failed", err)
+				}
 				g.listener.OnGroupDismissed(string(data))
 			} else {
 				g.listener.OnGroupInfoChanged(string(data))
