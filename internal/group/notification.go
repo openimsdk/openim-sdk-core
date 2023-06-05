@@ -71,7 +71,8 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			if err := g.SyncJoinedGroup(ctx); err != nil {
 				return err
 			}
-			return g.SyncGroupMember(ctx, detail.Group.GroupID)
+			//return g.SyncGroupMember(ctx, detail.Group.GroupID)
+			return g.db.DeleteGroupAllMembers(ctx, detail.Group.GroupID)
 		} else {
 			return g.SyncGroupMember(ctx, detail.Group.GroupID)
 		}
