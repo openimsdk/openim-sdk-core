@@ -38,15 +38,17 @@ func (g *Group) SyncGroupMember(ctx context.Context, groupID string) error {
 	if err != nil {
 		return err
 	}
-	if len(members) != len(localData) {
-		log.ZInfo(ctx, "SyncGroupMember Sync Group Member Count", "groupID", groupID, "members", len(members), "localData", len(localData))
-		gs, err := g.GetGroupsInfo(ctx, []string{groupID})
-		if err != nil {
-			return err
-		}
-		log.ZInfo(ctx, "SyncGroupMember GetGroupsInfo", "groupID", groupID, "len", len(gs), "gs", gs)
-		if len(gs) > 0 {
-			v := gs[0]
+	//if len(members) != len(localData) {
+	log.ZInfo(ctx, "SyncGroupMember Sync Group Member Count", "groupID", groupID, "members", len(members), "localData", len(localData))
+	gs, err := g.GetGroupsInfo(ctx, []string{groupID})
+	if err != nil {
+		return err
+	}
+	log.ZInfo(ctx, "SyncGroupMember GetGroupsInfo", "groupID", groupID, "len", len(gs), "gs", gs)
+	if len(gs) > 0 {
+		v := gs[0]
+		count := int32(len(members))
+		if v.MemberCount != count {
 			v.MemberCount = int32(len(members))
 			if v.GroupType == constant.SuperGroupChatType {
 				if err := g.db.UpdateSuperGroup(ctx, v); err != nil {
@@ -66,6 +68,7 @@ func (g *Group) SyncGroupMember(ctx context.Context, groupID string) error {
 			g.listener.OnGroupInfoChanged(string(data))
 		}
 	}
+	//}
 	return nil
 }
 

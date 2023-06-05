@@ -18,6 +18,7 @@ import (
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"testing"
+	"time"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/group"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
@@ -236,4 +237,24 @@ func Test_InviteUserToGroup(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log("InviteUserToGroup success", ctx.Value("operationID"))
+}
+
+func Test_SyncGroup(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Group().SyncGroupMember(ctx, "3179997540")
+	if err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(time.Second * 100000)
+}
+
+func Test_GetGroup(t *testing.T) {
+	t.Log("--------------------------")
+	infos, err := open_im_sdk.UserForSDK.Group().GetGroupsInfo(ctx, []string{"3179997540"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, info := range infos {
+		t.Logf("%d: %#v", i, info)
+	}
+	//time.Sleep(time.Second * 100000)
 }

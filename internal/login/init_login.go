@@ -319,6 +319,9 @@ func (u *LoginMgr) logout(ctx context.Context) error {
 	}
 	u.Exit()
 	_ = u.db.Close(u.ctx)
+	//reset global context
+	resetContext := ccontext.WithInfo(context.Background(), u.info)
+	u.ctx, u.cancel = context.WithCancel(resetContext)
 	log.ZDebug(ctx, "TriggerCmdLogout success...")
 	return nil
 }

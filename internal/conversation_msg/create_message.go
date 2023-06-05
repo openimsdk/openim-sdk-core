@@ -107,7 +107,7 @@ func (c *Conversation) CreateQuoteMessage(ctx context.Context, text string, qs *
 		qs.ContentType = constant.Text
 		qs.TextElem = &sdk_struct.TextElem{Content: qs.QuoteElem.Text}
 	}
-	qs.QuoteElem = &sdk_struct.QuoteElem{
+	s.QuoteElem = &sdk_struct.QuoteElem{
 		Text:         text,
 		QuoteMessage: qs,
 	}

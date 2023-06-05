@@ -69,11 +69,6 @@ var (
 	ErrPanic                     = errors.New("panic error")
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-}
-
 type LongConnMgr struct {
 	//conn status mutex
 	w          sync.Mutex
