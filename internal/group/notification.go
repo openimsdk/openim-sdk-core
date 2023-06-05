@@ -68,11 +68,10 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return err
 		}
 		if detail.QuitUser.UserID == g.loginUserID {
-			if err := g.SyncJoinedGroup(ctx); err != nil {
+			if err := g.db.DeleteGroupAllMembers(ctx, detail.Group.GroupID); err != nil {
 				return err
 			}
-			//return g.SyncGroupMember(ctx, detail.Group.GroupID)
-			return g.db.DeleteGroupAllMembers(ctx, detail.Group.GroupID)
+			return g.SyncJoinedGroup(ctx)
 		} else {
 			return g.SyncGroupMember(ctx, detail.Group.GroupID)
 		}
