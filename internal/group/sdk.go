@@ -335,3 +335,25 @@ func (g *Group) HandlerGroupApplication(ctx context.Context, req *group.GroupApp
 func (g *Group) SearchGroupMembers(ctx context.Context, searchParam *sdk_params_callback.SearchGroupMembersParam) ([]*model_struct.LocalGroupMember, error) {
 	return g.db.SearchGroupMembersDB(ctx, searchParam.KeywordList[0], searchParam.GroupID, searchParam.IsSearchMemberNickname, searchParam.IsSearchUserID, searchParam.Offset, searchParam.Count)
 }
+
+func (g *Group) IsJoinGroup(ctx context.Context, groupID string) (bool, error) {
+	groupList, err := g.db.GetJoinedGroupListDB(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, localGroup := range groupList {
+		if localGroup.GroupID == groupID {
+			return true, nil
+		}
+	}
+	superGroupList, err := g.db.GetJoinedSuperGroupList(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, localGroup := range superGroupList {
+		if localGroup.GroupID == groupID {
+			return true, nil
+		}
+	}
+	return false, nil
+}

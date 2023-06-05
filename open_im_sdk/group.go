@@ -131,3 +131,7 @@ func SetGroupMemberNickname(callback open_im_sdk_callback.Base, operationID stri
 func SearchGroupMembers(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
 	call(callback, operationID, UserForSDK.Group().SearchGroupMembers, searchParam)
 }
+
+func IsJoinGroup(callback open_im_sdk_callback.Base, operationID string, groupID string) {
+	call(callback, operationID, UserForSDK.Group().IsJoinGroup, groupID)
+}
