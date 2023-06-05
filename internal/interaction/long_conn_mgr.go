@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/common"
@@ -419,11 +418,10 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) error {
 	c.w.Unlock()
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s", ccontext.Info(ctx).WsAddr(),
 		ccontext.Info(ctx).UserID(), ccontext.Info(ctx).Token(), ccontext.Info(ctx).PlatformID(), ccontext.Info(ctx).OperationID())
-	var header http.Header
 	if c.IsCompression {
-		header = http.Header{"compression": []string{"gzip"}}
+		url += fmt.Sprintf("&compression=%s", "gzip")
 	}
-	_, err := c.conn.Dial(url, header)
+	_, err := c.conn.Dial(url, nil)
 	if err != nil {
 		//if httpResp != nil {
 		//	errMsg := httpResp.Header.Get("ws_err_msg") + " operationID " + ctx.Value("operationID").(string) + err.Error()
