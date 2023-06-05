@@ -101,12 +101,15 @@ func (g *Group) QuitGroup(ctx context.Context, groupID string) error {
 	if err := util.ApiPost(ctx, constant.QuitGroupRouter, &group.QuitGroupReq{GroupID: groupID}, nil); err != nil {
 		return err
 	}
+	if err := g.db.DeleteGroupAllMembers(ctx, groupID); err != nil {
+		return err
+	}
 	if err := g.SyncJoinedGroup(ctx); err != nil {
 		return err
 	}
-	if err := g.SyncGroupMember(ctx, groupID); err != nil {
-		return err
-	}
+	//if err := g.SyncGroupMember(ctx, groupID); err != nil {
+	//	return err
+	//}
 	return nil
 }
 
@@ -200,13 +203,13 @@ func (g *Group) GetGroupsInfo(ctx context.Context, groupIDs []string) ([]*model_
 		}
 		if groups != nil && len(groups.GroupInfos) > 0 {
 			infos := util.Batch(ServerGroupToLocalGroup, groups.GroupInfos)
-			for i, info := range infos {
-				count, err := g.db.GetGroupMemberCount(ctx, info.GroupID)
-				if err != nil {
-					return nil, err
-				}
-				infos[i].MemberCount = int32(count)
-			}
+			//for i, info := range infos {
+			//	count, err := g.db.GetGroupMemberCount(ctx, info.GroupID)
+			//	if err != nil {
+			//		return nil, err
+			//	}
+			//	infos[i].MemberCount = int32(count)
+			//}
 
 			res = append(res, infos...)
 		}
