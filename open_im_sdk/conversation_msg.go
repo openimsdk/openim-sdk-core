@@ -35,9 +35,9 @@ func GetMultipleConversation(callback open_im_sdk_callback.Base, operationID str
 	call(callback, operationID, UserForSDK.Conversation().GetMultipleConversation, conversationIDList)
 }
 
-func SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, conversationIDList string, opt int) {
-	call(callback, operationID, UserForSDK.Conversation().SetConversationRecvMessageOpt, conversationIDList, opt)
-}
+// func SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, conversationIDList string, opt int) {
+// 	call(callback, operationID, UserForSDK.Conversation().SetConversationRecvMessageOpt, conversationIDList, opt)
+// }
 
 func SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, opt int) {
 	call(callback, operationID, UserForSDK.Conversation().SetGlobalRecvMessageOpt, opt)
@@ -67,15 +67,15 @@ func PinConversation(callback open_im_sdk_callback.Base, operationID string, con
 	call(callback, operationID, UserForSDK.Conversation().PinConversation, conversationID, isPinned)
 }
 
-func SetOneConversationPrivateChat(callback open_im_sdk_callback.Base, operationID string, conversationID string, isPrivate bool) {
+func SetConversationPrivateChat(callback open_im_sdk_callback.Base, operationID string, conversationID string, isPrivate bool) {
 	call(callback, operationID, UserForSDK.Conversation().SetOneConversationPrivateChat, conversationID, isPrivate)
 }
 
-func SetOneConversationBurnDuration(callback open_im_sdk_callback.Base, operationID string, conversationID string, duration int) {
+func SetConversationBurnDuration(callback open_im_sdk_callback.Base, operationID string, conversationID string, duration int) {
 	call(callback, operationID, UserForSDK.Conversation().SetOneConversationBurnDuration, conversationID, duration)
 }
 
-func SetOneConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, conversationID string, opt int) {
+func SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, conversationID string, opt int) {
 	call(callback, operationID, UserForSDK.Conversation().SetOneConversationRecvMessageOpt, conversationID, opt)
 }
 
