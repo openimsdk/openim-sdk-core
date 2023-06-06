@@ -292,6 +292,32 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	}
 	go common.DoListener(u.conversation, u.ctx)
 	go u.conversation.FixVersionData(ctx)
+	go func() {
+		memberGroupIDs, err := u.db.GetGroupMemberAllGroupIDs(ctx)
+		if err != nil {
+			log.ZError(ctx, "GetGroupMemberAllGroupIDs failed", err)
+			return
+		}
+		if len(memberGroupIDs) > 0 {
+			groups, err := u.db.GetJoinedGroupListDB(ctx)
+			if err != nil {
+				log.ZError(ctx, "GetJoinedGroupListDB failed", err)
+				return
+			}
+			memberGroupIDMap := make(map[string]struct{})
+			for _, groupID := range memberGroupIDs {
+				memberGroupIDMap[groupID] = struct{}{}
+			}
+			for _, info := range groups {
+				delete(memberGroupIDMap, info.GroupID)
+			}
+			for groupID := range memberGroupIDMap {
+				if err := u.db.DeleteGroupAllMembers(ctx, groupID); err != nil {
+					log.ZError(ctx, "DeleteGroupAllMembers failed", err, "groupID", groupID)
+				}
+			}
+		}
+	}()
 	log.ZInfo(ctx, "login success...", "login cost time: ", time.Since(t1))
 	return nil
 }
