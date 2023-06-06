@@ -63,6 +63,7 @@ type GroupDatabase interface {
 	GetGroupMemberListSplitByJoinTimeFilter(ctx context.Context, groupID string, offset, count int, joinTimeBegin, joinTimeEnd int64, userIDList []string) ([]*model_struct.LocalGroupMember, error)
 	GetGroupOwnerAndAdminByGroupID(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error)
 	GetGroupMemberUIDListByGroupID(ctx context.Context, groupID string) (result []string, err error)
+	GetGroupMemberAllGroupIDs(ctx context.Context) ([]string, error)
 	InsertGroupMember(ctx context.Context, groupMember *model_struct.LocalGroupMember) error
 	BatchInsertGroupMember(ctx context.Context, groupMemberList []*model_struct.LocalGroupMember) error
 	DeleteGroupMember(ctx context.Context, groupID, userID string) error
