@@ -128,16 +128,10 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		if err := g.SyncJoinedGroup(ctx); err != nil {
 			return err
 		}
-		if err := g.SyncJoinedGroup(ctx); err != nil {
-			return err
-		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
 	case constant.MemberEnterNotification: // 1510
 		var detail sdkws.MemberEnterTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
-			return err
-		}
-		if err := g.SyncJoinedGroup(ctx); err != nil {
 			return err
 		}
 		if err := g.SyncJoinedGroup(ctx); err != nil {

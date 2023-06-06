@@ -31,16 +31,16 @@ import (
 )
 
 type PutArgs struct {
-	PutID       string
-	Filepath    string
-	Name        string
-	Hash        string
-	ContentType string
-	ValidTime   int64
+	PutID       string `json:"putID"`
+	Filepath    string `json:"filepath"`
+	Name        string `json:"name"`
+	Hash        string `json:"hash"`
+	ContentType string `json:"contentType"`
+	ValidTime   int64  `json:"validTime"`
 }
 
 type PutResp struct {
-	URL string
+	URL string `json:"url"`
 }
 
 func NewFile(dataBase db_interface.DataBase, loginUserID string) *File {
