@@ -148,14 +148,14 @@ func (g *Group) initSyncer() {
 		switch state {
 		case syncer.Insert:
 			g.listener.OnGroupApplicationAdded(string(data))
-		case syncer.Delete:
-			g.listener.OnGroupMemberDeleted(string(data))
 		case syncer.Update:
 			switch value.HandleResult {
 			case constant.FriendResponseAgree:
 				g.listener.OnGroupApplicationAccepted(string(data))
 			case constant.FriendResponseRefuse:
 				g.listener.OnGroupApplicationRejected(string(data))
+			default:
+				g.listener.OnGroupApplicationAdded(string(data))
 			}
 		}
 		return nil
@@ -177,14 +177,14 @@ func (g *Group) initSyncer() {
 		switch state {
 		case syncer.Insert:
 			g.listener.OnGroupApplicationAdded(string(data))
-		case syncer.Delete:
-			g.listener.OnGroupMemberDeleted(string(data))
 		case syncer.Update:
 			switch value.HandleResult {
 			case constant.FriendResponseAgree:
 				g.listener.OnGroupApplicationAccepted(string(data))
 			case constant.FriendResponseRefuse:
 				g.listener.OnGroupApplicationRejected(string(data))
+			default:
+				g.listener.OnGroupApplicationAdded(string(data))
 			}
 		}
 		return nil
