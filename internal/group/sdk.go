@@ -202,16 +202,10 @@ func (g *Group) GetGroupsInfo(ctx context.Context, groupIDs []string) ([]*model_
 			log.ZError(ctx, "Call GetGroupsInfoRouter", err)
 		}
 		if groups != nil && len(groups.GroupInfos) > 0 {
-			infos := util.Batch(ServerGroupToLocalGroup, groups.GroupInfos)
-			//for i, info := range infos {
-			//	count, err := g.db.GetGroupMemberCount(ctx, info.GroupID)
-			//	if err != nil {
-			//		return nil, err
-			//	}
-			//	infos[i].MemberCount = int32(count)
-			//}
-
-			res = append(res, infos...)
+			for i := range groups.GroupInfos {
+				groups.GroupInfos[i].MemberCount = 0
+			}
+			res = append(res, util.Batch(ServerGroupToLocalGroup, groups.GroupInfos)...)
 		}
 	}
 	return res, nil
