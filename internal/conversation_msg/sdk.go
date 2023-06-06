@@ -103,6 +103,10 @@ func (c *Conversation) HideConversation(ctx context.Context, conversationID stri
 	return c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"latest_msg_send_time": 0})
 }
 
+func (c *Conversation) GetAtAllTag(_ context.Context) string {
+	return constant.AtAllString
+}
+
 // deprecated
 func (c *Conversation) GetConversationRecvMessageOpt(ctx context.Context, conversationIDList []string) (resp []*server_api_params.GetConversationRecvMessageOptResp, err error) {
 	conversations, err := c.db.GetMultipleConversationDB(ctx, conversationIDList)

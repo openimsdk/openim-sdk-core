@@ -43,6 +43,9 @@ func SetGlobalRecvMessageOpt(callback open_im_sdk_callback.Base, operationID str
 	call(callback, operationID, UserForSDK.Conversation().SetGlobalRecvMessageOpt, opt)
 }
 
+func HideConversation(callback open_im_sdk_callback.Base, operationID, conversationID string) {
+	call(callback, operationID, UserForSDK.Conversation().HideConversation, conversationID)
+}
 func GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operationID string, conversationIDList string) {
 	call(callback, operationID, UserForSDK.Conversation().GetConversationRecvMessageOpt, conversationIDList)
 }
@@ -81,6 +84,10 @@ func SetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operation
 
 func GetTotalUnreadMsgCount(callback open_im_sdk_callback.Base, operationID string) {
 	call(callback, operationID, UserForSDK.Conversation().GetTotalUnreadMsgCount)
+}
+func GetAtAllTag(operationID string) string {
+	return syncCall(operationID, UserForSDK.Conversation().GetAtAllTag)
+
 }
 func CreateAdvancedTextMessage(operationID string, text, messageEntityList string) string {
 	return syncCall(operationID, UserForSDK.Conversation().CreateAdvancedTextMessage, text, messageEntityList)
