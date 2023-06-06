@@ -227,7 +227,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 						OperationID:   message.Message.OperationID,
 						Data:          nil,
 					}
-					if code, ok := err.(errs.CodeError); ok {
+					if code, ok := errs.Unwrap(err).(errs.CodeError); ok {
 						resp.ErrCode = code.Code()
 						resp.ErrMsg = code.Msg()
 					} else {
@@ -304,10 +304,11 @@ func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error)
 func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan *GeneralWsResp, error) {
 	msgIncr, tempChan := c.Syncer.AddCh(msg.SendID)
 	msg.MsgIncr = msgIncr
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 60; i++ {
 		err := c.writeBinaryMsg(*msg)
 		if err != nil {
 			log.ZError(c.ctx, "send binary message error", err, "local address", c.conn.LocalAddr(), "message", msg)
+			c.closedErr = err
 			_ = c.close()
 			time.Sleep(time.Second * 1)
 			continue
