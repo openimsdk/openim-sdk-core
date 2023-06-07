@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 )
@@ -63,19 +62,6 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return g.SyncSelfGroupApplication(ctx)
 		} else {
 			return g.SyncAdminGroupApplication(ctx)
-		}
-	case constant.MemberQuitNotification: // 1504
-		var detail sdkws.MemberQuitTips
-		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
-			return err
-		}
-		if detail.QuitUser.UserID == g.loginUserID {
-			if err := g.db.DeleteGroupAllMembers(ctx, detail.Group.GroupID); err != nil {
-				return err
-			}
-			return g.SyncJoinedGroup(ctx)
-		} else {
-			return g.SyncGroupMember(ctx, detail.Group.GroupID)
 		}
 	case constant.GroupApplicationAcceptedNotification: // 1505
 		var detail sdkws.GroupApplicationAcceptedTips
@@ -126,17 +112,103 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			}
 		}
 		if self {
+			members, err := g.db.GetGroupMemberListSplit(ctx, detail.Group.GroupID, 0, 0, 999999)
+			if err != nil {
+				return err
+			}
 			if err := g.db.DeleteGroupAllMembers(ctx, detail.Group.GroupID); err != nil {
 				return err
 			}
-			for _, member := range util.Batch(ServerGroupMemberToLocalGroupMember, detail.KickedUserList) {
+			for _, member := range members {
 				data, err := json.Marshal(member)
 				if err != nil {
 					return err
 				}
 				g.listener.OnGroupMemberDeleted(string(data))
 			}
-			return g.SyncJoinedGroup(ctx)
+			//for _, member := range util.Batch(ServerGroupMemberToLocalGroupMember, detail.KickedUserList) {
+			//	data, err := json.Marshal(member)
+			//	if err != nil {
+			//		return err
+			//	}
+			//	g.listener.OnGroupMemberDeleted(string(data))
+			//}
+			group, err := g.db.GetGroupInfoByGroupID(ctx, detail.Group.GroupID)
+			if err != nil {
+				return err
+			}
+			group.MemberCount = 0
+			data, err := json.Marshal(group)
+			if err != nil {
+				return err
+			}
+			if err := g.db.DeleteGroup(ctx, detail.Group.GroupID); err != nil {
+				return err
+			}
+			g.listener.OnGroupInfoChanged(string(data))
+			return nil
+		} else {
+			return g.SyncGroupMember(ctx, detail.Group.GroupID)
+		}
+	case constant.MemberQuitNotification: // 1504
+		var detail sdkws.MemberQuitTips
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
+			return err
+		}
+		if detail.QuitUser.UserID == g.loginUserID {
+			//if err := g.db.DeleteGroupAllMembers(ctx, detail.Group.GroupID); err != nil {
+			//	return err
+			//}
+			//return g.SyncJoinedGroup(ctx)
+			//group, err := g.db.GetGroupInfoByGroupID(ctx, detail.Group.GroupID)
+			//if err != nil {
+			//	return err
+			//}
+			//group.MemberCount = 0
+			//data, err := json.Marshal(group)
+			//if err != nil {
+			//	return err
+			//}
+			//if err := g.db.DeleteGroup(ctx, detail.Group.GroupID); err != nil {
+			//	return err
+			//}
+			//g.listener.OnGroupInfoChanged(string(data))
+			//return nil
+			members, err := g.db.GetGroupMemberListSplit(ctx, detail.Group.GroupID, 0, 0, 999999)
+			if err != nil {
+				return err
+			}
+			if err := g.db.DeleteGroupAllMembers(ctx, detail.Group.GroupID); err != nil {
+				return err
+			}
+			for _, member := range members {
+				data, err := json.Marshal(member)
+				if err != nil {
+					return err
+				}
+				g.listener.OnGroupMemberDeleted(string(data))
+			}
+			//for _, member := range util.Batch(ServerGroupMemberToLocalGroupMember, detail.KickedUserList) {
+			//	data, err := json.Marshal(member)
+			//	if err != nil {
+			//		return err
+			//	}
+			//	g.listener.OnGroupMemberDeleted(string(data))
+			//}
+			group, err := g.db.GetGroupInfoByGroupID(ctx, detail.Group.GroupID)
+			if err != nil {
+				return err
+			}
+			group.MemberCount = 0
+			data, err := json.Marshal(group)
+			if err != nil {
+				return err
+			}
+			if err := g.db.DeleteGroup(ctx, detail.Group.GroupID); err != nil {
+				return err
+			}
+			g.listener.OnGroupInfoChanged(string(data))
+			return nil
 		} else {
 			return g.SyncGroupMember(ctx, detail.Group.GroupID)
 		}
