@@ -140,7 +140,7 @@ func Test_GetJoinedGroupList(t *testing.T) {
 }
 
 func Test_GetGroupsInfo(t *testing.T) {
-	info, err := open_im_sdk.UserForSDK.Group().GetGroupsInfo(ctx, []string{"4052971067"})
+	info, err := open_im_sdk.UserForSDK.Group().GetGroupsInfo(ctx, []string{"2344707053"})
 	if err != nil {
 		t.Fatal(err)
 	}

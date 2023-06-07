@@ -50,11 +50,6 @@ func (c *Conversation) setConversation(ctx context.Context, apiReq *pbConversati
 	return nil
 }
 
-func (c *Conversation) newSetConversation(ctx context.Context, apiReq *pbConversation.SetConversationsReq) error {
-	apiReq.UserIDs = []string{c.loginUserID}
-	return util.ApiPost(ctx, constant.SetConversationsRouter, apiReq, nil)
-}
-
 // func (c *Conversation) setOneConversationUnread(ctx context.Context, conversationID string, unreadCount int) error {
 // 	apiReq := &pbConversation.ModifyConversationFieldReq{}
 // 	localConversation, err := c.db.GetConversation(ctx, conversationID)
@@ -86,13 +81,14 @@ func (c *Conversation) getServerConversationList(ctx context.Context) ([]*model_
 	return util.Batch(ServerConversationToLocal, resp.Conversations), nil
 }
 
-func (c *Conversation) getServerHasReadAndMaxSeqs(ctx context.Context) (map[string]*pbConversation.Seqs, error) {
-	resp, err := util.CallApi[pbConversation.GetConversationsHasReadAndMaxSeqResp](ctx, constant.GetConversationsHasReadAndMaxSeqRouter, pbConversation.GetConversationsHasReadAndMaxSeqReq{UserID: c.loginUserID})
-	if err != nil {
-		log.ZError(ctx, "getServerHasReadAndMaxSeqs err", err)
-		return nil, err
-	}
-	return resp.Seqs, nil
+func (c *Conversation) getServerHasReadAndMaxSeqs(ctx context.Context) (map[string][2]int64, error) {
+	//resp, err := util.CallApi[pbConversation.GetConversationsHasReadAndMaxSeqResp](ctx, constant.GetConversationsHasReadAndMaxSeqRouter, pbConversation.GetConversationsHasReadAndMaxSeqReq{UserID: c.loginUserID})
+	//if err != nil {
+	//	log.ZError(ctx, "getServerHasReadAndMaxSeqs err", err)
+	//	return nil, err
+	//}
+	//return resp.Seqs, nil
+	return nil, nil
 }
 
 func (c *Conversation) FixVersionData(ctx context.Context) {

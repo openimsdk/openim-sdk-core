@@ -199,13 +199,16 @@ func TypingStatusUpdate(callback open_im_sdk_callback.Base, operationID string, 
 	call(callback, operationID, UserForSDK.Conversation().TypingStatusUpdate, recvID, msgTip)
 }
 
-func MarkConversationMessageAsRead(callback open_im_sdk_callback.Base, operationID string, conversationID string, conversationType int32) {
-	call(callback, operationID, UserForSDK.Conversation().MarkConversationMessageAsRead, conversationID, conversationType)
+// mark as read
+func MarkConversationMessageAsRead(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
+	call(callback, operationID, UserForSDK.Conversation().MarkConversationMessageAsRead, conversationID)
 }
 
-func MarkConversationMessageAsReadBySeq(callback open_im_sdk_callback.Base, operationID string, conversationID string, conversationType int32, clientMsgIDs []int64) {
-	call(callback, operationID, UserForSDK.Conversation().MarkConversationMessageAsReadBySeqs, conversationID, conversationType, clientMsgIDs)
+func MarkConversationMessageAsReadBySeq(callback open_im_sdk_callback.Base, operationID string, conversationID string, clientMsgIDs []int64) {
+	call(callback, operationID, UserForSDK.Conversation().MarkConversationMessageAsReadBySeqs, conversationID, clientMsgIDs)
 }
+
+//
 
 func DeleteMessageFromLocalStorage(callback open_im_sdk_callback.Base, operationID string, message string) {
 	call(callback, operationID, UserForSDK.Conversation().DeleteMessageFromLocalStorage, message)

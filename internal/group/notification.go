@@ -16,10 +16,12 @@ package group
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 )
@@ -116,10 +118,28 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
-		if err := g.SyncJoinedGroup(ctx); err != nil {
-			return err
+		var self bool
+		for _, info := range detail.KickedUserList {
+			if info.UserID == g.loginUserID {
+				self = true
+				break
+			}
 		}
-		return g.SyncGroupMember(ctx, detail.Group.GroupID)
+		if self {
+			if err := g.db.DeleteGroupAllMembers(ctx, detail.Group.GroupID); err != nil {
+				return err
+			}
+			for _, member := range util.Batch(ServerGroupMemberToLocalGroupMember, detail.KickedUserList) {
+				data, err := json.Marshal(member)
+				if err != nil {
+					return err
+				}
+				g.listener.OnGroupMemberDeleted(string(data))
+			}
+			return g.SyncJoinedGroup(ctx)
+		} else {
+			return g.SyncGroupMember(ctx, detail.Group.GroupID)
+		}
 	case constant.MemberInvitedNotification: // 1509
 		var detail sdkws.MemberInvitedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
@@ -184,6 +204,18 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
+	case 1519: // 1519  constant.GroupInfoSetAnnouncementNotification
+		var detail sdkws.GroupInfoSetTips // sdkws.GroupInfoSetAnnouncementTips
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
+			return err
+		}
+		return g.SyncJoinedGroup(ctx)
+	case 1520: // 1520  constant.GroupInfoSetNameNotification
+		var detail sdkws.GroupInfoSetTips // sdkws.GroupInfoSetNameTips
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
+			return err
+		}
+		return g.SyncJoinedGroup(ctx)
 	default:
 		return fmt.Errorf("unknown tips type: %d", msg.ContentType)
 	}

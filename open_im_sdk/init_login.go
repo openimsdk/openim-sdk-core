@@ -20,7 +20,6 @@ import (
 	"open_im_sdk/internal/login"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
-	localLog "open_im_sdk/pkg/log"
 	"open_im_sdk/sdk_struct"
 	"strings"
 
@@ -53,8 +52,8 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 		fmt.Println(operationID, "log init failed ", err.Error())
 		return false
 	}
-
-	localLog.NewPrivateLog("", configArgs.LogLevel)
+	fmt.Println("init log success")
+	// localLog.NewPrivateLog("", configArgs.LogLevel)
 	ctx := mcontext.NewCtx(operationID)
 	if !strings.Contains(configArgs.ApiAddr, "http") {
 		log.ZError(ctx, "api is http protocol, api format is invalid", nil)

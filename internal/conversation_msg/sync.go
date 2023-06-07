@@ -65,26 +65,27 @@ func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) error {
 }
 
 func (c *Conversation) SyncConversationHashReadSeqs(ctx context.Context) error {
-	seqs, err := c.getServerHasReadAndMaxSeqs(ctx)
-	if err != nil {
-		return err
-	}
-	if len(seqs) == 0 {
-		return nil
-	}
-	var conversations []*model_struct.LocalConversation
-	for conversationID, v := range seqs {
-		var unreadCount int32
-		c.maxSeqRecorder.Set(conversationID, v.MaxSeq)
-		if v.MaxSeq-v.HasReadSeq < 0 {
-			unreadCount = 0
-		} else {
-			unreadCount = int32(v.MaxSeq - v.HasReadSeq)
-		}
-		conversations = append(conversations, &model_struct.LocalConversation{
-			ConversationID: conversationID,
-			UnreadCount:    unreadCount,
-		})
-	}
-	return c.db.UpdateOrCreateConversations(ctx, conversations)
+	//seqs, err := c.getServerHasReadAndMaxSeqs(ctx)
+	//if err != nil {
+	//	return err
+	//}
+	//if len(seqs) == 0 {
+	//	return nil
+	//}
+	//var conversations []*model_struct.LocalConversation
+	//for conversationID, v := range seqs {
+	//	var unreadCount int32
+	//	c.maxSeqRecorder.Set(conversationID, v.MaxSeq)
+	//	if v.MaxSeq-v.HasReadSeq < 0 {
+	//		unreadCount = 0
+	//	} else {
+	//		unreadCount = int32(v.MaxSeq - v.HasReadSeq)
+	//	}
+	//	conversations = append(conversations, &model_struct.LocalConversation{
+	//		ConversationID: conversationID,
+	//		UnreadCount:    unreadCount,
+	//	})
+	//}
+	//return c.db.UpdateOrCreateConversations(ctx, conversations)
+	return nil
 }
