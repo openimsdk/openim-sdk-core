@@ -204,6 +204,18 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 			return err
 		}
 		return g.SyncGroupMember(ctx, detail.Group.GroupID)
+	case 1519: // 1519  constant.GroupInfoSetAnnouncementNotification
+		var detail sdkws.GroupInfoSetTips // sdkws.GroupInfoSetAnnouncementTips
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
+			return err
+		}
+		return g.SyncJoinedGroup(ctx)
+	case 1520: // 1520  constant.GroupInfoSetNameNotification
+		var detail sdkws.GroupInfoSetTips // sdkws.GroupInfoSetNameTips
+		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
+			return err
+		}
+		return g.SyncJoinedGroup(ctx)
 	default:
 		return fmt.Errorf("unknown tips type: %d", msg.ContentType)
 	}

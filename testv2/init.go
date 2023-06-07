@@ -35,7 +35,6 @@ var (
 
 func init() {
 	fmt.Println("------------------------>>>>>>>>>>>>>>>>>>> test v2 init func <<<<<<<<<<<<<<<<<<<------------------------")
-	log.ZInfo(context.Background(), "------------------------>>>>>>>>>>>>>>>>>>> test v2 init func <<<<<<<<<<<<<<<<<<<------------------------")
 	rand.Seed(time.Now().UnixNano())
 	listner := &OnConnListener{}
 	config := getConf(APIADDR, WSADDR)

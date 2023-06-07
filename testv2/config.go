@@ -23,7 +23,7 @@ const (
 
 	APIADDR = "http://203.56.175.233:10002"
 	WSADDR  = "ws://203.56.175.233:10001"
-	UserID  = "3281432310"
+	UserID  = "3511024895"
 
 	// APIADDR = "http://192.168.44.128:10002"
 	// WSADDR  = "ws://192.168.44.128:10001"
@@ -41,5 +41,6 @@ func getConf(APIADDR, WSADDR string) sdk_struct.IMConfig {
 	cf.DataDir = ".\\"
 	cf.LogLevel = 6
 	cf.IsExternalExtensions = true
+	cf.PlatformID = 1
 	return cf
 }

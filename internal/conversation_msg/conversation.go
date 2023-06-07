@@ -81,13 +81,14 @@ func (c *Conversation) getServerConversationList(ctx context.Context) ([]*model_
 	return util.Batch(ServerConversationToLocal, resp.Conversations), nil
 }
 
-func (c *Conversation) getServerHasReadAndMaxSeqs(ctx context.Context) (map[string]*pbConversation.Seqs, error) {
-	resp, err := util.CallApi[pbConversation.GetConversationsHasReadAndMaxSeqResp](ctx, constant.GetConversationsHasReadAndMaxSeqRouter, pbConversation.GetConversationsHasReadAndMaxSeqReq{UserID: c.loginUserID})
-	if err != nil {
-		log.ZError(ctx, "getServerHasReadAndMaxSeqs err", err)
-		return nil, err
-	}
-	return resp.Seqs, nil
+func (c *Conversation) getServerHasReadAndMaxSeqs(ctx context.Context) (map[string][2]int64, error) {
+	//resp, err := util.CallApi[pbConversation.GetConversationsHasReadAndMaxSeqResp](ctx, constant.GetConversationsHasReadAndMaxSeqRouter, pbConversation.GetConversationsHasReadAndMaxSeqReq{UserID: c.loginUserID})
+	//if err != nil {
+	//	log.ZError(ctx, "getServerHasReadAndMaxSeqs err", err)
+	//	return nil, err
+	//}
+	//return resp.Seqs, nil
+	return nil, nil
 }
 
 func (c *Conversation) FixVersionData(ctx context.Context) {
