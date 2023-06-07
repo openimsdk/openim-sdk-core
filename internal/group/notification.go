@@ -16,10 +16,12 @@ package group
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/utils"
 )
@@ -126,6 +128,13 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		if self {
 			if err := g.db.DeleteGroupAllMembers(ctx, detail.Group.GroupID); err != nil {
 				return err
+			}
+			for _, member := range util.Batch(ServerGroupMemberToLocalGroupMember, detail.KickedUserList) {
+				data, err := json.Marshal(member)
+				if err != nil {
+					return err
+				}
+				g.listener.OnGroupMemberDeleted(string(data))
 			}
 			return g.SyncJoinedGroup(ctx)
 		} else {
