@@ -22,13 +22,8 @@ type ApiUserInfo struct {
 	UserID           string `json:"userID" binding:"required,min=1,max=64"`
 	Nickname         string `json:"nickname" binding:"omitempty,min=1,max=64"`
 	FaceURL          string `json:"faceURL" binding:"omitempty,max=1024"`
-	Gender           int32  `json:"gender" binding:"omitempty,oneof=0 1 2"`
-	PhoneNumber      string `json:"phoneNumber" binding:"omitempty,max=32"`
-	Birth            uint32 `json:"birth" binding:"omitempty"`
-	Email            string `json:"email" binding:"omitempty,max=64"`
 	GlobalRecvMsgOpt int32  `json:"globalRecvMsgOpt" binding:"omitempty,oneof=0 1 2"`
 	Ex               string `json:"ex" binding:"omitempty,max=1024"`
-	BirthStr         string `json:"birthStr" binding:"omitempty"`
 }
 
 type GroupAddMemberInfo struct {
@@ -37,11 +32,11 @@ type GroupAddMemberInfo struct {
 }
 
 type PublicUser struct {
-	UserID     string `json:"user_id"`
+	UserID     string `json:"userID"`
 	Nickname   string `json:"nickname"`
-	FaceURL    string `json:"face_url"`
+	FaceURL    string `json:"faceURL"`
 	Ex         string `json:"ex"`
-	CreateTime int64  `json:"create_time"`
+	CreateTime int64  `json:"createTime"`
 }
 
 type FullUserInfo struct {

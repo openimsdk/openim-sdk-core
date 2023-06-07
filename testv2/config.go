@@ -21,10 +21,10 @@ const (
 	//WSADDR  = "ws://43.154.157.177:10001"
 	//UserID  = "kernaltestuid2"
 
-	APIADDR = "http://203.56.175.233:10002"
-	WSADDR  = "ws://203.56.175.233:10001"
-	UserID  = "3511024895"
-
+	APIADDR      = "http://203.56.175.233:10002"
+	WSADDR       = "ws://203.56.175.233:10001"
+	UserID       = "6754269405"
+	friendUserID = "3281432310"
 	// APIADDR = "http://192.168.44.128:10002"
 	// WSADDR  = "ws://192.168.44.128:10001"
 	// UserID  = "100"

@@ -291,7 +291,6 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 		log.ZDebug(ctx, "SetBatchMsgListener", "batchMsgListener", u.batchMsgListener)
 	}
 	go common.DoListener(u.conversation, u.ctx)
-	go u.conversation.FixVersionData(ctx)
 	go func() {
 		memberGroupIDs, err := u.db.GetGroupMemberAllGroupIDs(ctx)
 		if err != nil {

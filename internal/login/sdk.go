@@ -33,3 +33,6 @@ func (u *LoginMgr) Logout(ctx context.Context) error {
 func (u *LoginMgr) SetAppBackgroundStatus(ctx context.Context, isBackground bool) error {
 	return u.setAppBackgroundStatus(ctx, isBackground)
 }
+func (u *LoginMgr) NetworkStatusChanged(ctx context.Context) {
+	u.longConnMgr.Close(ctx)
+}
