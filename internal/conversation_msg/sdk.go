@@ -103,6 +103,10 @@ func (c *Conversation) HideConversation(ctx context.Context, conversationID stri
 	return c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"latest_msg_send_time": 0})
 }
 
+func (c *Conversation) GetAtAllTag(_ context.Context) string {
+	return constant.AtAllString
+}
+
 // deprecated
 func (c *Conversation) GetConversationRecvMessageOpt(ctx context.Context, conversationIDList []string) (resp []*server_api_params.GetConversationRecvMessageOptResp, err error) {
 	conversations, err := c.db.GetMultipleConversationDB(ctx, conversationIDList)
@@ -791,17 +795,7 @@ func (c *Conversation) InternalSendMessage(ctx context.Context, s *sdk_struct.Ms
 
 func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation, callback open_im_sdk_callback.SendMsgCallBack,
 	delFile []string, offlinePushInfo *sdkws.OfflinePushInfo, options map[string]bool) (*sdk_struct.MsgStruct, error) {
-	// log.Debug("", "sendMessageToServer ", s.ServerMsgID, " ", s.ClientMsgID)
 	//Protocol conversion
-	if s.SessionType == constant.SuperGroupChatType || s.SessionType == constant.GroupChatType {
-		group, err := c.db.GetGroupInfoByGroupID(ctx, s.GroupID)
-		if err != nil {
-			return nil, err
-		}
-		if group.Status == constant.GroupStatusDismissed {
-			return nil, sdkerrs.ErrArgs.Wrap("group is dismissed")
-		}
-	}
 	var wsMsgData sdkws.MsgData
 	copier.Copy(&wsMsgData, s)
 	wsMsgData.Content = []byte(s.Content)

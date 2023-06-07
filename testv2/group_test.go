@@ -258,3 +258,12 @@ func Test_GetGroup(t *testing.T) {
 	}
 	//time.Sleep(time.Second * 100000)
 }
+
+func Test_IsJoinGroup(t *testing.T) {
+	t.Log("--------------------------")
+	join, err := open_im_sdk.UserForSDK.Group().IsJoinGroup(ctx, "1875806101")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("join:", join)
+}

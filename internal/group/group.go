@@ -141,18 +141,23 @@ func (g *Group) initSyncer() {
 	}, func(value *model_struct.LocalGroupRequest) [2]string {
 		return [...]string{value.GroupID, value.UserID}
 	}, nil, func(ctx context.Context, state int, value *model_struct.LocalGroupRequest) error {
-		//data, err := json.Marshal(value)
-		//if err != nil {
-		//	return err
-		//}
-		//switch state {
-		//case syncer.Insert:
-		//	g.listener.OnGroupMemberAdded(string(data))
-		//case syncer.Delete:
-		//	g.listener.OnGroupMemberDeleted(string(data))
-		//case syncer.Update:
-		//	g.listener.OnGroupMemberInfoChanged(string(data))
-		//}
+		data, err := json.Marshal(value)
+		if err != nil {
+			return err
+		}
+		switch state {
+		case syncer.Insert:
+			g.listener.OnGroupApplicationAdded(string(data))
+		case syncer.Update:
+			switch value.HandleResult {
+			case constant.FriendResponseAgree:
+				g.listener.OnGroupApplicationAccepted(string(data))
+			case constant.FriendResponseRefuse:
+				g.listener.OnGroupApplicationRejected(string(data))
+			default:
+				g.listener.OnGroupApplicationAdded(string(data))
+			}
+		}
 		return nil
 	})
 
@@ -165,7 +170,23 @@ func (g *Group) initSyncer() {
 	}, func(value *model_struct.LocalAdminGroupRequest) [2]string {
 		return [...]string{value.GroupID, value.UserID}
 	}, nil, func(ctx context.Context, state int, value *model_struct.LocalAdminGroupRequest) error {
-
+		data, err := json.Marshal(value)
+		if err != nil {
+			return err
+		}
+		switch state {
+		case syncer.Insert:
+			g.listener.OnGroupApplicationAdded(string(data))
+		case syncer.Update:
+			switch value.HandleResult {
+			case constant.FriendResponseAgree:
+				g.listener.OnGroupApplicationAccepted(string(data))
+			case constant.FriendResponseRefuse:
+				g.listener.OnGroupApplicationRejected(string(data))
+			default:
+				g.listener.OnGroupApplicationAdded(string(data))
+			}
+		}
 		return nil
 	})
 

@@ -88,12 +88,12 @@ func (g *Group) JoinGroup(ctx context.Context, groupID, reqMsg string, joinSourc
 	if err := g.SyncSelfGroupApplication(ctx); err != nil {
 		return err
 	}
-	if err := g.SyncJoinedGroup(ctx); err != nil {
-		return err
-	}
-	if err := g.SyncGroupMember(ctx, groupID); err != nil {
-		return err
-	}
+	//if err := g.SyncJoinedGroup(ctx); err != nil {
+	//	return err
+	//}
+	//if err := g.SyncGroupMember(ctx, groupID); err != nil {
+	//	return err
+	//}
 	return nil
 }
 
@@ -101,12 +101,15 @@ func (g *Group) QuitGroup(ctx context.Context, groupID string) error {
 	if err := util.ApiPost(ctx, constant.QuitGroupRouter, &group.QuitGroupReq{GroupID: groupID}, nil); err != nil {
 		return err
 	}
+	if err := g.db.DeleteGroupAllMembers(ctx, groupID); err != nil {
+		return err
+	}
 	if err := g.SyncJoinedGroup(ctx); err != nil {
 		return err
 	}
-	if err := g.SyncGroupMember(ctx, groupID); err != nil {
-		return err
-	}
+	//if err := g.SyncGroupMember(ctx, groupID); err != nil {
+	//	return err
+	//}
 	return nil
 }
 
@@ -199,16 +202,10 @@ func (g *Group) GetGroupsInfo(ctx context.Context, groupIDs []string) ([]*model_
 			log.ZError(ctx, "Call GetGroupsInfoRouter", err)
 		}
 		if groups != nil && len(groups.GroupInfos) > 0 {
-			infos := util.Batch(ServerGroupToLocalGroup, groups.GroupInfos)
-			for i, info := range infos {
-				count, err := g.db.GetGroupMemberCount(ctx, info.GroupID)
-				if err != nil {
-					return nil, err
-				}
-				infos[i].MemberCount = int32(count)
+			for i := range groups.GroupInfos {
+				groups.GroupInfos[i].MemberCount = 0
 			}
-
-			res = append(res, infos...)
+			res = append(res, util.Batch(ServerGroupToLocalGroup, groups.GroupInfos)...)
 		}
 	}
 	return res, nil
@@ -334,4 +331,26 @@ func (g *Group) HandlerGroupApplication(ctx context.Context, req *group.GroupApp
 
 func (g *Group) SearchGroupMembers(ctx context.Context, searchParam *sdk_params_callback.SearchGroupMembersParam) ([]*model_struct.LocalGroupMember, error) {
 	return g.db.SearchGroupMembersDB(ctx, searchParam.KeywordList[0], searchParam.GroupID, searchParam.IsSearchMemberNickname, searchParam.IsSearchUserID, searchParam.Offset, searchParam.Count)
+}
+
+func (g *Group) IsJoinGroup(ctx context.Context, groupID string) (bool, error) {
+	groupList, err := g.db.GetJoinedGroupListDB(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, localGroup := range groupList {
+		if localGroup.GroupID == groupID {
+			return true, nil
+		}
+	}
+	superGroupList, err := g.db.GetJoinedSuperGroupList(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, localGroup := range superGroupList {
+		if localGroup.GroupID == groupID {
+			return true, nil
+		}
+	}
+	return false, nil
 }

@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/common"
@@ -228,7 +227,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 						OperationID:   message.Message.OperationID,
 						Data:          nil,
 					}
-					if code, ok := err.(errs.CodeError); ok {
+					if code, ok := errs.Unwrap(err).(errs.CodeError); ok {
 						resp.ErrCode = code.Code()
 						resp.ErrMsg = code.Msg()
 					} else {
@@ -305,10 +304,11 @@ func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error)
 func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan *GeneralWsResp, error) {
 	msgIncr, tempChan := c.Syncer.AddCh(msg.SendID)
 	msg.MsgIncr = msgIncr
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 60; i++ {
 		err := c.writeBinaryMsg(*msg)
 		if err != nil {
 			log.ZError(c.ctx, "send binary message error", err, "local address", c.conn.LocalAddr(), "message", msg)
+			c.closedErr = err
 			_ = c.close()
 			time.Sleep(time.Second * 1)
 			continue
@@ -419,11 +419,10 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) error {
 	c.w.Unlock()
 	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s", ccontext.Info(ctx).WsAddr(),
 		ccontext.Info(ctx).UserID(), ccontext.Info(ctx).Token(), ccontext.Info(ctx).PlatformID(), ccontext.Info(ctx).OperationID())
-	var header http.Header
 	if c.IsCompression {
-		header = http.Header{"compression": []string{"gzip"}}
+		url += fmt.Sprintf("&compression=%s", "gzip")
 	}
-	_, err := c.conn.Dial(url, header)
+	_, err := c.conn.Dial(url, nil)
 	if err != nil {
 		//if httpResp != nil {
 		//	errMsg := httpResp.Header.Get("ws_err_msg") + " operationID " + ctx.Value("operationID").(string) + err.Error()

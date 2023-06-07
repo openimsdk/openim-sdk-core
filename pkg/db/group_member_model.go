@@ -284,3 +284,15 @@ func (d *DataBase) SearchGroupMembersDB(ctx context.Context, keyword string, gro
 	}
 	return result, err
 }
+
+func (d *DataBase) GetGroupMemberAllGroupIDs(ctx context.Context) ([]string, error) {
+	d.groupMtx.Lock()
+	defer d.groupMtx.Unlock()
+	// SELECT DISTINCT group_id FROM local_group_members;
+	var groupIDs []string
+	err := d.conn.WithContext(ctx).Select("DISTINCT group_id").Model(&model_struct.LocalGroupMember{}).Pluck("group_id", &groupIDs).Error
+	if err != nil {
+		return nil, err
+	}
+	return groupIDs, nil
+}
