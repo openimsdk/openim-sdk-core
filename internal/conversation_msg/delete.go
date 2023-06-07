@@ -18,7 +18,7 @@ import (
 // Delete the local and server
 // Delete the local, do not change the server data
 // To delete the server, you need to change the local message status to delete
-func (c *Conversation) clearConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
+func (c *Conversation) clearConversationFromLocalAndSvr(ctx context.Context, conversationID string, f func(ctx context.Context, conversationID string) error) error {
 	_, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
@@ -28,7 +28,7 @@ func (c *Conversation) clearConversationFromLocalAndSvr(ctx context.Context, con
 	if err != nil {
 		return err
 	}
-	if err := c.clearConversationAndDeleteAllMsg(ctx, conversationID, false); err != nil {
+	if err := c.clearConversationAndDeleteAllMsg(ctx, conversationID, false, f); err != nil {
 		return err
 	}
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}})
@@ -36,7 +36,7 @@ func (c *Conversation) clearConversationFromLocalAndSvr(ctx context.Context, con
 	return nil
 }
 
-func (c *Conversation) clearConversationAndDeleteAllMsg(ctx context.Context, conversationID string, markDelete bool) error {
+func (c *Conversation) clearConversationAndDeleteAllMsg(ctx context.Context, conversationID string, markDelete bool, f func(ctx context.Context, conversationID string) error) error {
 	var err error
 	if markDelete {
 		err = c.db.MarkDeleteConversationAllMessages(ctx, conversationID)
@@ -97,7 +97,7 @@ func (c *Conversation) deleteAllMsgFromLocal(ctx context.Context, markDelete boo
 	var successCids []string
 	log.ZDebug(ctx, "deleteAllMsgFromLocal", "conversations", conversations, "markDelete", markDelete)
 	for _, v := range conversations {
-		if err := c.clearConversationAndDeleteAllMsg(ctx, v.ConversationID, markDelete); err != nil {
+		if err := c.clearConversationAndDeleteAllMsg(ctx, v.ConversationID, markDelete, c.db.ClearConversation); err != nil {
 			log.ZError(ctx, "clearConversation err", err, "conversationID", v.ConversationID)
 			continue
 		}
@@ -195,7 +195,7 @@ func (c *Conversation) doClearConversations(ctx context.Context, msg *sdkws.MsgD
 	utils.UnmarshalNotificationElem(msg.Content, &tips)
 	log.ZDebug(ctx, "doClearConversations", "tips", tips)
 	for _, v := range tips.ConversationIDs {
-		if err := c.clearConversationAndDeleteAllMsg(ctx, v, false); err != nil {
+		if err := c.clearConversationAndDeleteAllMsg(ctx, v, false, c.db.ClearConversation); err != nil {
 			log.ZError(ctx, "clearConversation err", err, "conversationID", v)
 		}
 	}
