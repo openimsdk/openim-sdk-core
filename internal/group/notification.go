@@ -116,10 +116,21 @@ func (g *Group) doNotification(ctx context.Context, msg *sdkws.MsgData) error {
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
 			return err
 		}
-		if err := g.SyncJoinedGroup(ctx); err != nil {
-			return err
+		var self bool
+		for _, info := range detail.KickedUserList {
+			if info.UserID == g.loginUserID {
+				self = true
+				break
+			}
 		}
-		return g.SyncGroupMember(ctx, detail.Group.GroupID)
+		if self {
+			if err := g.db.DeleteGroupAllMembers(ctx, detail.Group.GroupID); err != nil {
+				return err
+			}
+			return g.SyncJoinedGroup(ctx)
+		} else {
+			return g.SyncGroupMember(ctx, detail.Group.GroupID)
+		}
 	case constant.MemberInvitedNotification: // 1509
 		var detail sdkws.MemberInvitedTips
 		if err := utils.UnmarshalNotificationElem(msg.Content, &detail); err != nil {
