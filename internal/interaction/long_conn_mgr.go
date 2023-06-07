@@ -100,6 +100,7 @@ func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnLis
 	l.conn = NewWebSocket(WebSocket)
 	go l.readPump(ctx)
 	go l.writePump(ctx)
+	go l.heartbeat(ctx)
 	return l
 }
 
@@ -196,9 +197,7 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
 func (c *LongConnMgr) writePump(ctx context.Context) {
-	ticker := time.NewTicker(pingPeriod)
 	defer func() {
-		ticker.Stop()
 		c.close()
 		close(c.send)
 	}()
@@ -219,28 +218,38 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 				return
 			}
 			log.ZDebug(c.ctx, "writePump recv message", "message", message.Message)
-			go func() {
-				resp, err := c.sendAndWaitResp(&message.Message)
-				if err != nil {
-					resp = &GeneralWsResp{
-						ReqIdentifier: message.Message.ReqIdentifier,
-						OperationID:   message.Message.OperationID,
-						Data:          nil,
-					}
-					if code, ok := errs.Unwrap(err).(errs.CodeError); ok {
-						resp.ErrCode = code.Code()
-						resp.ErrMsg = code.Msg()
-					} else {
-						log.ZError(c.ctx, "writeBinaryMsgAndRetry failed", err, "wsReq", message.Message)
-					}
-
+			resp, err := c.sendAndWaitResp(&message.Message)
+			if err != nil {
+				resp = &GeneralWsResp{
+					ReqIdentifier: message.Message.ReqIdentifier,
+					OperationID:   message.Message.OperationID,
+					Data:          nil,
 				}
-				nErr := c.Syncer.notifyCh(message.Resp, resp, 1)
-				if nErr != nil {
-					log.ZError(c.ctx, "TriggerCmdNewMsgCome failed", nErr, "wsResp", resp)
+				if code, ok := errs.Unwrap(err).(errs.CodeError); ok {
+					resp.ErrCode = code.Code()
+					resp.ErrMsg = code.Msg()
+				} else {
+					log.ZError(c.ctx, "writeBinaryMsgAndRetry failed", err, "wsReq", message.Message)
 				}
 
-			}()
+			}
+			nErr := c.Syncer.notifyCh(message.Resp, resp, 1)
+			if nErr != nil {
+				log.ZError(c.ctx, "TriggerCmdNewMsgCome failed", nErr, "wsResp", resp)
+			}
+		}
+	}
+}
+func (c *LongConnMgr) heartbeat(ctx context.Context) {
+	ticker := time.NewTicker(pingPeriod)
+	defer func() {
+		ticker.Stop()
+	}()
+	for {
+		select {
+		case <-ctx.Done():
+			log.ZInfo(ctx, "heartbeat done sdk logout.....")
+			return
 		case <-ticker.C:
 			_ = c.conn.SetWriteDeadline(writeWait)
 			var m sdkws.GetMaxSeqReq
@@ -284,6 +293,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 			}
 		}
 	}
+
 }
 func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error) {
 	tempChan, err := c.writeBinaryMsgAndRetry(msg)
