@@ -249,7 +249,3 @@ func InsertGroupMessageToLocalStorage(callback open_im_sdk_callback.Base, operat
 func SearchLocalMessages(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
 	call(callback, operationID, UserForSDK.Conversation().SearchLocalMessages, searchParam)
 }
-
-//func NetworkStatusChanged(callback open_im_sdk_callback.Base, operationID string, status int32) {
-//	call(callback, operationID, UserForSDK.Conversation().NetworkStatusChanged, status)
-//}
