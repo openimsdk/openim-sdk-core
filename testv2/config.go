@@ -24,7 +24,7 @@ const (
 	APIADDR      = "http://203.56.175.233:10002"
 	WSADDR       = "ws://203.56.175.233:10001"
 	UserID       = "6754269405"
-	friendUserID = "9201822547"
+	friendUserID = "3281432310"
 	// APIADDR = "http://192.168.44.128:10002"
 	// WSADDR  = "ws://192.168.44.128:10001"
 	// UserID  = "100"
