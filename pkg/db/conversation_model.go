@@ -269,7 +269,7 @@ func (d *DataBase) UnPinConversation(ctx context.Context, conversationID string,
 func (d *DataBase) UpdateColumnsConversation(ctx context.Context, conversationID string, args map[string]interface{}) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.Debug().WithContext(ctx).Model(model_struct.LocalConversation{ConversationID: conversationID}).Updates(args)
+	t := d.conn.WithContext(ctx).Model(model_struct.LocalConversation{ConversationID: conversationID}).Updates(args)
 	if t.RowsAffected == 0 {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}
@@ -337,7 +337,7 @@ func (d *DataBase) DecrConversationUnreadCount(ctx context.Context, conversation
 	defer d.mRWMutex.Unlock()
 	tx := d.conn.WithContext(ctx).Begin()
 	c := model_struct.LocalConversation{ConversationID: conversationID}
-	t := tx.Debug().Model(&c).Update("unread_count", gorm.Expr("unread_count-?", count))
+	t := tx.Model(&c).Update("unread_count", gorm.Expr("unread_count-?", count))
 	if t.Error != nil {
 		return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
 	}

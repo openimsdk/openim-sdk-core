@@ -50,11 +50,6 @@ func (c *Conversation) setConversation(ctx context.Context, apiReq *pbConversati
 	return nil
 }
 
-func (c *Conversation) newSetConversation(ctx context.Context, apiReq *pbConversation.SetConversationsReq) error {
-	apiReq.UserIDs = []string{c.loginUserID}
-	return util.ApiPost(ctx, constant.SetConversationsRouter, apiReq, nil)
-}
-
 // func (c *Conversation) setOneConversationUnread(ctx context.Context, conversationID string, unreadCount int) error {
 // 	apiReq := &pbConversation.ModifyConversationFieldReq{}
 // 	localConversation, err := c.db.GetConversation(ctx, conversationID)

@@ -321,19 +321,19 @@ func DoTestSetConversationPinned(conversationID string, pin bool) {
 func DoTestSetOneConversationRecvMessageOpt(conversationID string, opt int) {
 	var test TestSetConversationPinnedCallback
 	test.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.SetOneConversationRecvMessageOpt(test, test.OperationID, conversationID, opt)
+	open_im_sdk.SetConversationRecvMessageOpt(test, test.OperationID, conversationID, opt)
 }
 
 func DoTestSetOneConversationPrivateChat(conversationID string, privateChat bool) {
 	var test TestSetConversationPinnedCallback
 	test.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.SetOneConversationPrivateChat(test, test.OperationID, conversationID, privateChat)
+	open_im_sdk.SetConversationPrivateChat(test, test.OperationID, conversationID, privateChat)
 }
 
 func DoTestSetBurnDuration(conversationID string) {
 	var test TestSetConversationPinnedCallback
 	test.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.SetOneConversationBurnDuration(test, test.OperationID, conversationID, 180)
+	open_im_sdk.SetConversationBurnDuration(test, test.OperationID, conversationID, 180)
 }
 
 type TestGetConversationListSplitCallBack struct {
