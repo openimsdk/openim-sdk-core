@@ -276,7 +276,7 @@ func (g *Group) KickGroupMember(ctx context.Context, groupID string, reason stri
 	if err := util.ApiPost(ctx, constant.KickGroupMemberRouter, &group.KickGroupMemberReq{GroupID: groupID, KickedUserIDs: userIDList, Reason: reason}, nil); err != nil {
 		return err
 	}
-	return g.SyncGroupMember(ctx, groupID)
+	return g.db.DeleteGroupAllMembers(ctx, groupID)
 }
 
 func (g *Group) TransferGroupOwner(ctx context.Context, groupID, newOwnerUserID string) error {
