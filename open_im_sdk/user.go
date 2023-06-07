@@ -16,9 +16,13 @@ package open_im_sdk
 
 import "open_im_sdk/open_im_sdk_callback"
 
+func GetUsersInfo(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
+	call(callback, operationID, UserForSDK.Full().GetUsersInfo, userIDs)
+}
+
 // GetUsersInfo obtains the information about multiple users.
-func GetUsersInfo(callback open_im_sdk_callback.Base, operationID string, userIDList string) {
-	call(callback, operationID, UserForSDK.User().GetUsersInfo, userIDList)
+func GetUsersInfoFromSrv(callback open_im_sdk_callback.Base, operationID string, userIDs string) {
+	call(callback, operationID, UserForSDK.User().GetUsersInfo, userIDs)
 }
 
 // SetSelfInfo sets the user's own information.

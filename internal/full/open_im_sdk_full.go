@@ -20,16 +20,16 @@ import (
 	api "open_im_sdk/pkg/server_api_params"
 )
 
-func (u *Full) GetUsersInfo(ctx context.Context, userIDList []string) ([]*api.FullUserInfo, error) {
-	friendList, err := u.db.GetFriendInfoList(ctx, userIDList)
+func (u *Full) GetUsersInfo(ctx context.Context, userIDs []string) ([]*api.FullUserInfo, error) {
+	friendList, err := u.db.GetFriendInfoList(ctx, userIDs)
 	if err != nil {
 		return nil, err
 	}
-	blackList, err := u.db.GetBlackInfoList(ctx, userIDList)
+	blackList, err := u.db.GetBlackInfoList(ctx, userIDs)
 	if err != nil {
 		return nil, err
 	}
-	users, err := u.user.GetServerUserInfo(ctx, userIDList)
+	users, err := u.user.GetServerUserInfo(ctx, userIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (u *Full) GetUsersInfo(ctx context.Context, userIDList []string) ([]*api.Fu
 		}
 	}
 	res := make([]*api.FullUserInfo, 0, len(users))
-	for _, userID := range userIDList {
+	for _, userID := range userIDs {
 		info, ok := userMap[userID]
 		if !ok {
 			continue
