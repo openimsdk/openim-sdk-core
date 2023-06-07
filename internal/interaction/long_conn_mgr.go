@@ -512,3 +512,12 @@ func (c *LongConnMgr) doPushMsg(ctx context.Context, wsResp GeneralWsResp) error
 	}
 	return common.TriggerCmdPushMsg(ctx, &msg, c.pushMsgAndMaxSeqCh)
 }
+func (c *LongConnMgr) Close(ctx context.Context) {
+	if c.GetConnectionStatus() != Closed {
+		log.ZInfo(ctx, "network change conn close")
+		_ = c.close()
+	} else {
+		log.ZInfo(ctx, "conn already closed")
+	}
+
+}

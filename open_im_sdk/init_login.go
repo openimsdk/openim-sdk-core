@@ -88,6 +88,9 @@ func Logout(callback open_im_sdk_callback.Base, operationID string) {
 func SetAppBackgroundStatus(callback open_im_sdk_callback.Base, operationID string, isBackground bool) {
 	BaseCaller(UserForSDK.SetAppBackgroundStatus, callback, isBackground, operationID)
 }
+func NetworkStatusChanged(callback open_im_sdk_callback.Base, operationID string) {
+	call(callback, operationID, UserForSDK.NetworkStatusChanged)
+}
 
 func GetLoginStatus() int {
 	if UserForSDK == nil {
