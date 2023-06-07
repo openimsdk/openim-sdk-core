@@ -15,9 +15,10 @@
 package testv2
 
 import (
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/open_im_sdk"
 	"testing"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
 func Test_GetSelfUserInfo(t *testing.T) {
@@ -30,11 +31,19 @@ func Test_GetSelfUserInfo(t *testing.T) {
 }
 
 func Test_GetUsersInfo(t *testing.T) {
-	userInfo, err := open_im_sdk.UserForSDK.User().GetUsersInfo(ctx, []string{UserID})
+	userInfo, err := open_im_sdk.UserForSDK.Full().GetUsersInfo(ctx, []string{friendUserID})
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(userInfo[0])
+	if userInfo[0].BlackInfo != nil {
+		t.Log(userInfo[0].BlackInfo)
+	}
+	if userInfo[0].FriendInfo != nil {
+		t.Log(userInfo[0].FriendInfo)
+	}
+	if userInfo[0].PublicInfo != nil {
+		t.Log(userInfo[0].PublicInfo)
+	}
 }
 
 func Test_SetSelfInfo(t *testing.T) {
