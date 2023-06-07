@@ -31,7 +31,7 @@ func Test_GetSelfUserInfo(t *testing.T) {
 }
 
 func Test_GetUsersInfo(t *testing.T) {
-	userInfo, err := open_im_sdk.UserForSDK.Full().GetUsersInfo(ctx, []string{friendUserID})
+	userInfo, err := open_im_sdk.UserForSDK.Full().GetUsersInfo(ctx, []string{"friendUserID"})
 	if err != nil {
 		t.Error(err)
 	}

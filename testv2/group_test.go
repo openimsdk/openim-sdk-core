@@ -16,6 +16,7 @@ package testv2
 
 import (
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"testing"
 	"time"
@@ -266,4 +267,24 @@ func Test_IsJoinGroup(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log("join:", join)
+}
+
+func Test_GetGroupMemberList(t *testing.T) {
+	t.Log("--------------------------")
+	m := map[int32]string{
+		constant.GroupOwner:         "群主",
+		constant.GroupAdmin:         "管理员",
+		constant.GroupOrdinaryUsers: "成员",
+	}
+
+	members, err := open_im_sdk.UserForSDK.Group().GetGroupMemberList(ctx, "2246086342", 0, 0, 9999999)
+	if err != nil {
+		panic(err)
+	}
+	for i, member := range members {
+		name := m[member.RoleLevel]
+		t.Log(i, member.UserID, member.Nickname, name)
+	}
+
+	t.Log("--------------------------")
 }
