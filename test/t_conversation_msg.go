@@ -246,9 +246,9 @@ func (d DeleteMessageCallBack) GetMessage() string {
 }
 
 func DoTestDeleteConversationMsgFromLocalAndSvr(conversationID string) {
-	// cb := &DeleteMessageCallBack{}
-	// operationID := utils.OperationIDGenerator()
-	// open_im_sdk.DeleteConversationFromLocalAndSvr(cb, operationID, conversationID)
+	cb := &DeleteMessageCallBack{}
+	operationID := utils.OperationIDGenerator()
+	open_im_sdk.DeleteConversationAndDeleteAllMsg(cb, operationID, conversationID)
 }
 
 type TestGetAllConversationListCallBack struct {
