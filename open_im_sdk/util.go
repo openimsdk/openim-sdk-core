@@ -264,11 +264,14 @@ func syncCall(operationID string, fn any, args ...any) string {
 			switch tag.Kind() {
 			case reflect.Struct, reflect.Slice, reflect.Array, reflect.Map, reflect.Ptr:
 				v := reflect.New(tag)
-				if err := json.Unmarshal([]byte(args[i].(string)), v.Interface()); err != nil {
-					log.ZWarn(ctx, "json.Unmarshal error", err, "func name", funcName, "arg", args[i], "v", v.Interface())
-					//callback.OnError(constant.ErrArgs.ErrCode, err.Error())
-					return ""
+				if args[i].(string) != "" {
+					if err := json.Unmarshal([]byte(args[i].(string)), v.Interface()); err != nil {
+						log.ZWarn(ctx, "json.Unmarshal error", err, "func name", funcName, "arg", args[i], "v", v.Interface())
+						//callback.OnError(constant.ErrArgs.ErrCode, err.Error())
+						return ""
+					}
 				}
+
 				ins = append(ins, v.Elem())
 				continue
 			}
@@ -415,7 +418,11 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 	}
 	if lastErr {
 		if last := outVals[len(outVals)-1]; last != nil {
-			callback.OnError(10000, last.(error).Error())
+			if code, ok := last.(error).(errs.CodeError); ok {
+				callback.OnError(int32(code.Code()), code.Error())
+			} else {
+				callback.OnError(sdkerrs.UnknownCode, fmt.Sprintf("error %T not implement CodeError: %s", last.(error), last.(error).Error()))
+			}
 			return
 		}
 
