@@ -265,7 +265,7 @@ func syncCall(operationID string, fn any, args ...any) string {
 			case reflect.Struct, reflect.Slice, reflect.Array, reflect.Map, reflect.Ptr:
 				v := reflect.New(tag)
 				if err := json.Unmarshal([]byte(args[i].(string)), v.Interface()); err != nil {
-					log.ZWarn(ctx, "json.Unmarshal error", err, "func name", funcName, "args", args)
+					log.ZWarn(ctx, "json.Unmarshal error", err, "func name", funcName, "arg", args[i], "v", v.Interface())
 					//callback.OnError(constant.ErrArgs.ErrCode, err.Error())
 					return ""
 				}
