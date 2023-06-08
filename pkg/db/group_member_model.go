@@ -93,11 +93,11 @@ func (d *DataBase) GetGroupMemberListSplit(ctx context.Context, groupID string, 
 	var groupMemberList []model_struct.LocalGroupMember
 	var err error
 	if filter == 0 {
-		err = d.conn.WithContext(ctx).Where("group_id = ? And role_level > ?", groupID, filter).Order("role_level ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		err = d.conn.WithContext(ctx).Where("group_id = ?", groupID).Order("role_level ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	} else if filter == constant.GroupOrdinaryUsers || filter == constant.GroupOwner || filter == constant.GroupAdmin {
 		err = d.conn.WithContext(ctx).Where("group_id = ? And role_level = ?", groupID, filter).Order("join_time ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	} else if filter == constant.GroupAdminAndOrdinaryUsers {
-		err = d.conn.WithContext(ctx).Where("group_id = ? And role_level > 1 ", groupID).Order("role_level ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		err = d.conn.WithContext(ctx).Where("group_id = ? And (role_level = ? or role_level = ?)", groupID, constant.GroupAdmin, constant.GroupOrdinaryUsers).Order("role_level ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	} else {
 		return nil, errors.New("filter args failed")
 	}
