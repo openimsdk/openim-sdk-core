@@ -34,7 +34,7 @@ func main() {
 	test.SENDINTERVAL = SENDINTERVAL
 	test.WSADDR = WSADDR
 	test.ACCOUNTCHECK = ACCOUNTCHECK
-	strMyUidx := "8176142191"
+	strMyUidx := "8216275538"
 
 	tokenx := test.RunGetToken(strMyUidx)
 	fmt.Println(tokenx)
@@ -47,6 +47,7 @@ func main() {
 	// test.DoTestSetConversationPinned("si_2456093263_9169012630", true)
 	// test.DoTestSetOneConversationRecvMessageOpt("si_2456093263_9169012630", 2)
 	// test.DoTestGetConversationRecvMessageOpt("si_2456093263_9169012630")
+	test.DoTestDeleteConversationMsgFromLocalAndSvr("sg_537415520")
 	for {
 		time.Sleep(10000 * time.Millisecond)
 	}
