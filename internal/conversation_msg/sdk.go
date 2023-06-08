@@ -922,7 +922,7 @@ func (c *Conversation) GetAdvancedHistoryMessageList(ctx context.Context, req sd
 }
 
 func (c *Conversation) GetAdvancedHistoryMessageListReverse(ctx context.Context, req sdk_params_callback.GetAdvancedHistoryMessageListParams) (*sdk_params_callback.GetAdvancedHistoryMessageListCallback, error) {
-	result, err := c.getAdvancedHistoryMessageList(ctx, req, true)
+	result, err := c.getAdvancedHistoryMessageList2(ctx, req, true)
 	if err != nil {
 		return nil, err
 	}
