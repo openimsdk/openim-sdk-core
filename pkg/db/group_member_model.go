@@ -92,16 +92,20 @@ func (d *DataBase) GetGroupMemberListSplit(ctx context.Context, groupID string, 
 	defer d.groupMtx.Unlock()
 	var groupMemberList []model_struct.LocalGroupMember
 	var err error
-	if filter == 0 {
+	switch filter {
+	case constant.GroupFilterAll:
 		err = d.conn.WithContext(ctx).Where("group_id = ?", groupID).Order("role_level ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
-	} else if filter == constant.GroupOrdinaryUsers || filter == constant.GroupOwner || filter == constant.GroupAdmin {
-		err = d.conn.WithContext(ctx).Where("group_id = ? And role_level = ?", groupID, filter).Order("join_time ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
-	} else if filter == constant.GroupAdminAndOrdinaryUsers {
+	case constant.GroupFilterOwner:
+		err = d.conn.WithContext(ctx).Where("group_id = ? And role_level = ?", groupID, constant.GroupOwner).Order("join_time ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+	case constant.GroupFilterAdmin:
+		err = d.conn.WithContext(ctx).Where("group_id = ? And role_level = ?", groupID, constant.GroupAdmin).Order("join_time ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+	case constant.GroupFilterOrdinaryUsers:
+		err = d.conn.WithContext(ctx).Where("group_id = ? And role_level = ?", groupID, constant.GroupFilterOrdinaryUsers).Order("join_time ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+	case constant.GroupFilterAdminAndOrdinaryUsers:
 		err = d.conn.WithContext(ctx).Where("group_id = ? And (role_level = ? or role_level = ?)", groupID, constant.GroupAdmin, constant.GroupOrdinaryUsers).Order("role_level ASC").Offset(offset).Limit(count).Find(&groupMemberList).Error
-	} else {
-		return nil, errors.New("filter args failed")
+	default:
+		return nil, fmt.Errorf("filter args failed %d", filter)
 	}
-
 	var transfer []*model_struct.LocalGroupMember
 	for _, v := range groupMemberList {
 		v1 := v
@@ -114,7 +118,7 @@ func (d *DataBase) GetGroupMemberOwnerAndAdmin(ctx context.Context, groupID stri
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var groupMemberList []model_struct.LocalGroupMember
-	err := d.conn.WithContext(ctx).Where("group_id = ? And role_level > ?", groupID, constant.GroupOrdinaryUsers).Order("join_time DESC").Find(&groupMemberList).Error
+	err := d.conn.WithContext(ctx).Where("group_id = ? And (role_level = ? OR role_level = ?)", groupID, constant.GroupOwner, constant.GroupAdmin).Order("join_time DESC").Find(&groupMemberList).Error
 	var transfer []*model_struct.LocalGroupMember
 	for _, v := range groupMemberList {
 		v1 := v
@@ -153,7 +157,7 @@ func (d *DataBase) GetGroupOwnerAndAdminByGroupID(ctx context.Context, groupID s
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var groupMemberList []model_struct.LocalGroupMember
-	err := d.conn.WithContext(ctx).Where("group_id = ?  AND role_level > ?", groupID, constant.GroupOrdinaryUsers).Find(&groupMemberList).Error
+	err := d.conn.WithContext(ctx).Where("group_id = ?  AND (role_level = ? Or role_level = ?)", groupID, constant.GroupOwner, constant.GroupAdmin).Find(&groupMemberList).Error
 	var transfer []*model_struct.LocalGroupMember
 	for _, v := range groupMemberList {
 		v1 := v

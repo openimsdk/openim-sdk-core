@@ -322,10 +322,15 @@ const (
 	AppOrdinaryUsers = 1 // Application user type: ordinary user
 	AppAdmin         = 2 // Application user type: administrator
 
-	GroupOwner                 = 1 // Group member type: owner
-	GroupAdmin                 = 2 // Group member type: administrator
-	GroupOrdinaryUsers         = 3 // Group member type: ordinary user
-	GroupAdminAndOrdinaryUsers = 4 // Group member type: administrator and ordinary user
+	GroupOwner         = 100 // Group member type: owner
+	GroupAdmin         = 60  // Group member type: administrator
+	GroupOrdinaryUsers = 20  // Group member type: ordinary user
+
+	GroupFilterAll                   = 0
+	GroupFilterOwner                 = 1
+	GroupFilterAdmin                 = 2
+	GroupFilterOrdinaryUsers         = 3
+	GroupFilterAdminAndOrdinaryUsers = 4
 
 	GroupResponseAgree  = 1  // Response to group application: agree
 	GroupResponseRefuse = -1 // Response to group application: refuse
