@@ -991,7 +991,11 @@ func (c *Conversation) DeleteAllMessageFromLocalStorage(ctx context.Context) err
 }
 
 func (c *Conversation) ClearConversationAndDeleteAllMsg(ctx context.Context, conversationID string) error {
-	return c.clearConversationFromLocalAndSvr(ctx, conversationID)
+	return c.clearConversationFromLocalAndSvr(ctx, conversationID, c.db.ClearConversation)
+}
+
+func (c *Conversation) DeleteConversationAndDeleteAllMsg(ctx context.Context, conversationID string) error {
+	return c.clearConversationFromLocalAndSvr(ctx, conversationID, c.db.ResetConversation)
 }
 
 // insert

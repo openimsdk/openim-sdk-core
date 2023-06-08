@@ -10,7 +10,7 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
-func (c *Conversation) markAsRead2Svr(ctx context.Context, conversationID string, hasReadSeq int64, msgIDs []string, seqs []int64) error {
+func (c *Conversation) markAsRead2Svr(ctx context.Context, conversationID string, seqs []int64) error {
 	return nil
 }
 
@@ -35,7 +35,7 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 		return err
 	}
 	msgIDs, seqs := c.getAsReadMsgMapAndList(ctx, msgs)
-	if err := c.markAsRead2Svr(ctx, conversationID, maxSeq, msgIDs, seqs); err != nil {
+	if err := c.markAsRead2Svr(ctx, conversationID, seqs); err != nil {
 		return err
 	}
 	_, err = c.db.MarkConversationMessageAsRead(ctx, conversationID, msgIDs)
@@ -70,7 +70,7 @@ func (c *Conversation) markConversationMessageAsReadBySeqs(ctx context.Context, 
 		return err
 	}
 	markAsReadMsgIDs, seqs := c.getAsReadMsgMapAndList(ctx, msgs)
-	if err := c.markAsRead2Svr(ctx, conversationID, hasReadSeq, markAsReadMsgIDs, seqs); err != nil {
+	if err := c.markAsRead2Svr(ctx, conversationID, seqs); err != nil {
 		return err
 	}
 	decrCount, err := c.db.MarkConversationMessageAsRead(ctx, conversationID, markAsReadMsgIDs)
