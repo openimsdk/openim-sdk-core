@@ -235,6 +235,8 @@ func syncCall(operationID string, fn any, args ...any) string {
 		//callback.OnError(10000, "go code error: fn is not func")
 		return ""
 	}
+	funcPtr := reflect.ValueOf(fn).Pointer()
+	funcName := runtime.FuncForPC(funcPtr).Name()
 	fnt := fnv.Type()
 	numIn := fnt.NumIn()
 	if len(args)+1 != numIn {
@@ -248,7 +250,8 @@ func syncCall(operationID string, fn any, args ...any) string {
 	//ctx = context.WithValue(ctx, "apiHost", UserForSDK.GetConfig().ApiAddr)
 
 	ctx := ccontext.WithOperationID(UserForSDK.BaseCtx(), operationID)
-
+	t := time.Now()
+	log.ZInfo(ctx, "input req", "func name", funcName, "args", args)
 	ins = append(ins, reflect.ValueOf(ctx))
 	for i := 0; i < len(args); i++ {
 		tag := fnt.In(i + 1)
@@ -262,6 +265,7 @@ func syncCall(operationID string, fn any, args ...any) string {
 			case reflect.Struct, reflect.Slice, reflect.Array, reflect.Map, reflect.Ptr:
 				v := reflect.New(tag)
 				if err := json.Unmarshal([]byte(args[i].(string)), v.Interface()); err != nil {
+					log.ZWarn(ctx, "json.Unmarshal error", err, "func name", funcName, "args", args)
 					//callback.OnError(constant.ErrArgs.ErrCode, err.Error())
 					return ""
 				}
@@ -327,6 +331,7 @@ func syncCall(operationID string, fn any, args ...any) string {
 		//callback.OnError(constant.ErrArgs.ErrCode, err.Error())
 		return ""
 	}
+	log.ZInfo(ctx, "output resp", "func name", funcName, "resp", jsonVal, "cost time", time.Since(t))
 	return string(jsonData)
 }
 func messageCall(callback open_im_sdk_callback.SendMsgCallBack, operationID string, fn any, args ...any) {
