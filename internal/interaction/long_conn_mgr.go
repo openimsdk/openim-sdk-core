@@ -85,6 +85,8 @@ type LongConnMgr struct {
 	Syncer             *WsRespAsyn
 	encoder            Encoder
 	compressor         Compressor
+	// write conn lock
+	connWrite *sync.Mutex
 }
 
 type Message struct {
@@ -98,6 +100,7 @@ func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnLis
 		Syncer: NewWsRespAsyn(), encoder: NewGobEncoder(), compressor: NewGzipCompressor()}
 	l.send = make(chan Message, 10)
 	l.conn = NewWebSocket(WebSocket)
+	l.connWrite = new(sync.Mutex)
 	go l.readPump(ctx)
 	go l.writePump(ctx)
 	go l.heartbeat(ctx)
@@ -330,6 +333,8 @@ func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan *GeneralWs
 }
 
 func (c *LongConnMgr) writeBinaryMsg(req GeneralWsReq) error {
+	c.connWrite.Lock()
+	defer c.connWrite.Unlock()
 	encodeBuf, err := c.encoder.Encode(req)
 	if err != nil {
 		return err
