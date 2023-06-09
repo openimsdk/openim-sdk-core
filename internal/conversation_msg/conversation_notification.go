@@ -153,7 +153,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			lc.UserID = st.SourceID
 			lc.ConversationID = c.getConversationIDBySessionType(st.SourceID, constant.SingleChatType)
 			lc.ConversationType = constant.SingleChatType
-		case constant.GroupChatType:
+		case constant.SuperGroupChatType:
 			conversationID, conversationType, err := c.getConversationTypeByGroupID(ctx, st.SourceID)
 			if err != nil {
 				// log.Error("internal", "getConversationTypeByGroupID database err:", err.Error())
@@ -162,6 +162,9 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			lc.GroupID = st.SourceID
 			lc.ConversationID = conversationID
 			lc.ConversationType = conversationType
+		default:
+			log.ZError(ctx, "not support sessionType", nil, "sessionType", st.SessionType)
+			return
 		}
 		c.addFaceURLAndName(ctx, &lc)
 		err := c.db.UpdateConversation(ctx, &lc)
@@ -287,20 +290,36 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 	switch node.Action {
 	case constant.UpdateMsgFaceUrlAndNickName:
 		args := node.Args.(common.UpdateMessageInfo)
-		var conversationType int32
 		if args.GroupID == "" {
-			conversationType = constant.SingleChatType
-		} else {
-			var err error
-			_, conversationType, err = c.getConversationTypeByGroupID(ctx, args.GroupID)
-			if err != nil {
-				// log.Error("internal", "getConversationTypeByGroupID database err:", err.Error())
-				return
+			if args.UserID == c.loginUserID {
+				conversationIDList, err := c.db.GetAllSingleConversationIDList(ctx)
+				if err != nil {
+					log.ZError(ctx, "GetAllSingleConversationIDList err", err)
+					return
+				} else {
+					for _, conversationID := range conversationIDList {
+						err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(ctx, conversationID, args.UserID, args.FaceURL, args.Nickname)
+						if err != nil {
+							log.ZError(ctx, "UpdateMsgSenderFaceURLAndSenderNickname err", err)
+							continue
+						}
+					}
+
+				}
+			} else {
+				conversationID := c.getConversationIDBySessionType(args.UserID, constant.SingleChatType)
+				err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(ctx, conversationID, args.UserID, args.FaceURL, args.Nickname)
+				if err != nil {
+					log.ZError(ctx, "UpdateMsgSenderFaceURLAndSenderNickname err", err)
+				}
+
 			}
-		}
-		err := c.db.UpdateMsgSenderFaceURLAndSenderNicknameController(ctx, args.UserID, args.FaceURL, args.Nickname, int(conversationType), args.GroupID)
-		if err != nil {
-			// log.Error("internal", "UpdateMsgSenderFaceURLAndSenderNickname err:", err.Error())
+		} else {
+			conversationID := c.getConversationIDBySessionType(args.GroupID, constant.SuperGroupChatType)
+			err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(ctx, conversationID, args.UserID, args.FaceURL, args.Nickname)
+			if err != nil {
+				log.ZError(ctx, "UpdateMsgSenderFaceURLAndSenderNickname err", err)
+			}
 		}
 
 	}

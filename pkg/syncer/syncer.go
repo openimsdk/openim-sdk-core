@@ -27,7 +27,7 @@ func New[T any, V comparable](
 	update func(ctx context.Context, server T, local T) error,
 	uuid func(value T) V,
 	equal func(a T, b T) bool,
-	notice func(ctx context.Context, state int, value T) error,
+	notice func(ctx context.Context, state int, server, local T) error,
 ) *Syncer[T, V] {
 	if insert == nil || update == nil || delete == nil || uuid == nil {
 		panic("invalid params")
@@ -49,10 +49,10 @@ func New[T any, V comparable](
 }
 
 type Syncer[T any, V comparable] struct {
-	insert func(ctx context.Context, value T) error
+	insert func(ctx context.Context, server T) error
 	update func(ctx context.Context, server T, local T) error
-	delete func(ctx context.Context, value T) error
-	notice func(ctx context.Context, state int, value T) error
+	delete func(ctx context.Context, local T) error
+	notice func(ctx context.Context, state int, server, local T) error
 	equal  func(server T, local T) bool
 	uuid   func(value T) V
 	ts     string
@@ -65,21 +65,21 @@ func (s *Syncer[T, V]) eq(server T, local T) bool {
 	return reflect.DeepEqual(server, local)
 }
 
-func (s *Syncer[T, V]) onNotice(ctx context.Context, state int, value T, fn func(ctx context.Context, state int, value T) error) error {
+func (s *Syncer[T, V]) onNotice(ctx context.Context, state int, server, local T, fn func(ctx context.Context, state int, server, local T) error) error {
 	if s.notice != nil {
-		if err := s.notice(ctx, state, value); err != nil {
+		if err := s.notice(ctx, state, server, local); err != nil {
 			return err
 		}
 	}
 	if fn != nil {
-		if err := fn(ctx, state, value); err != nil {
+		if err := fn(ctx, state, server, local); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, notice func(ctx context.Context, state int, value T) error, noDel ...bool) (err error) {
+func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, notice func(ctx context.Context, state int, server, local T) error, noDel ...bool) (err error) {
 	defer func() {
 		if err == nil {
 			log.ZDebug(ctx, "sync success", "type", s.ts)
@@ -104,7 +104,7 @@ func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, 
 				log.ZError(ctx, "sync insert failed", err, "type", s.ts, "server", server, "local", local)
 				return err
 			}
-			if err := s.onNotice(ctx, Insert, server, notice); err != nil {
+			if err := s.onNotice(ctx, Insert, server, local, notice); err != nil {
 				log.ZError(ctx, "sync notice insert failed", err, "type", s.ts, "server", server, "local", local)
 				return err
 			}
@@ -112,7 +112,7 @@ func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, 
 		}
 		delete(localMap, id)
 		if s.eq(server, local) {
-			if err := s.onNotice(ctx, Unchanged, server, notice); err != nil {
+			if err := s.onNotice(ctx, Unchanged, local, server, notice); err != nil {
 				log.ZError(ctx, "sync notice unchanged failed", err, "type", s.ts, "server", server, "local", local)
 				return err
 			}
@@ -122,7 +122,7 @@ func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, 
 			log.ZError(ctx, "sync update failed", err, "type", s.ts, "server", server, "local", local)
 			return err
 		}
-		if err := s.onNotice(ctx, Update, server, notice); err != nil {
+		if err := s.onNotice(ctx, Update, server, local, notice); err != nil {
 			log.ZError(ctx, "sync notice update failed", err, "type", s.ts, "server", server, "local", local)
 			return err
 		}
@@ -136,7 +136,8 @@ func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, 
 			log.ZError(ctx, "sync delete failed", err, "type", s.ts, "local", local)
 			return err
 		}
-		if err := s.onNotice(ctx, Delete, local, notice); err != nil {
+		var server T
+		if err := s.onNotice(ctx, Delete, server, local, notice); err != nil {
 			log.ZError(ctx, "sync notice delete failed", err, "type", s.ts, "local", local)
 			return err
 		}

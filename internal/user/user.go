@@ -82,7 +82,20 @@ func (u *User) initSyncer() {
 			return user.UserID
 		},
 		nil,
-		nil,
+		func(ctx context.Context, state int, server, local *model_struct.LocalUser) error {
+			if u.listener == nil {
+				return nil
+			}
+			switch state {
+			case syncer.Update:
+				u.listener.OnSelfInfoUpdated(utils.StructToJsonString(server))
+				if server.Nickname != local.Nickname || server.FaceURL != local.FaceURL {
+					_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
+						Args: common.UpdateMessageInfo{UserID: server.UserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, u.conversationCh)
+				}
+			}
+			return nil
+		},
 	)
 }
 

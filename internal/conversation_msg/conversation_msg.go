@@ -831,6 +831,10 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 		t := sdk_struct.FaceElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
 		msg.FaceElem = &t
+	case constant.Card:
+		t := sdk_struct.CardElem{}
+		err = utils.JsonStringToStruct(msg.Content, &t)
+		msg.CardElem = &t
 	default:
 		t := sdk_struct.NotificationElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)

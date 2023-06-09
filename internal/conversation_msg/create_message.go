@@ -56,9 +56,11 @@ func (c *Conversation) CreateTextAtMessage(ctx context.Context, text string, use
 		return nil, err
 	}
 	//Avoid nested references
-	if qs.ContentType == constant.Quote {
-		qs.ContentType = constant.Text
-		qs.TextElem = &sdk_struct.TextElem{Content: qs.QuoteElem.Text}
+	if qs != nil {
+		if qs.ContentType == constant.Quote {
+			qs.ContentType = constant.Text
+			qs.TextElem = &sdk_struct.TextElem{Content: qs.QuoteElem.Text}
+		}
 	}
 	s.AtTextElem = &sdk_struct.AtTextElem{
 		Text:         text,

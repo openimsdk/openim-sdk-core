@@ -60,19 +60,28 @@ func (f *Friend) initSyncer() {
 		return f.db.UpdateFriend(ctx, server)
 	}, func(value *model_struct.LocalFriend) [2]string {
 		return [...]string{value.OwnerUserID, value.FriendUserID}
-	}, nil, func(ctx context.Context, state int, value *model_struct.LocalFriend) error {
+	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalFriend) error {
 		if f.friendListener == nil {
 			return nil
 		}
 		switch state {
 		case syncer.Insert:
-			f.friendListener.OnFriendAdded(*value)
+			f.friendListener.OnFriendAdded(*server)
 		case syncer.Delete:
-			f.friendListener.OnFriendDeleted(*value)
+			f.friendListener.OnFriendDeleted(*server)
 		case syncer.Update:
-			f.friendListener.OnFriendInfoChanged(*value)
-			_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: value.FriendUserID, SessionType: constant.SingleChatType}}, f.conversationCh)
-			_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: value.FriendUserID, FaceURL: value.FaceURL, Nickname: value.Nickname}}, f.conversationCh)
+			f.friendListener.OnFriendInfoChanged(*server)
+
+			if local.Nickname != server.Nickname || local.FaceURL != server.FaceURL || local.Remark == server.Remark {
+				if server.Remark != "" {
+					server.Nickname = server.Remark
+				}
+				_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName,
+					Args: common.SourceIDAndSessionType{SourceID: server.FriendUserID, SessionType: constant.SingleChatType}}, f.conversationCh)
+				_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName,
+					Args: common.UpdateMessageInfo{UserID: server.FriendUserID, FaceURL: server.FaceURL, Nickname: server.Nickname}}, f.conversationCh)
+			}
+
 		}
 		return nil
 	})
@@ -84,15 +93,15 @@ func (f *Friend) initSyncer() {
 		return f.db.UpdateBlack(ctx, server)
 	}, func(value *model_struct.LocalBlack) [2]string {
 		return [...]string{value.OwnerUserID, value.BlockUserID}
-	}, nil, func(ctx context.Context, state int, value *model_struct.LocalBlack) error {
+	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalBlack) error {
 		if f.friendListener == nil {
 			return nil
 		}
 		switch state {
 		case syncer.Insert:
-			f.friendListener.OnBlackAdded(*value)
+			f.friendListener.OnBlackAdded(*server)
 		case syncer.Delete:
-			f.friendListener.OnBlackDeleted(*value)
+			f.friendListener.OnBlackDeleted(*server)
 		}
 		return nil
 	})
@@ -104,23 +113,23 @@ func (f *Friend) initSyncer() {
 		return f.db.UpdateFriendRequest(ctx, server)
 	}, func(value *model_struct.LocalFriendRequest) [2]string {
 		return [...]string{value.FromUserID, value.ToUserID}
-	}, nil, func(ctx context.Context, state int, value *model_struct.LocalFriendRequest) error {
+	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalFriendRequest) error {
 		if f.friendListener == nil {
 			return nil
 		}
 		switch state {
 		case syncer.Insert:
-			f.friendListener.OnFriendApplicationAdded(*value)
+			f.friendListener.OnFriendApplicationAdded(*server)
 		case syncer.Delete:
-			f.friendListener.OnFriendApplicationDeleted(*value)
+			f.friendListener.OnFriendApplicationDeleted(*server)
 		case syncer.Update:
-			switch value.HandleResult {
+			switch server.HandleResult {
 			case constant.FriendResponseAgree:
-				f.friendListener.OnFriendApplicationAccepted(*value)
+				f.friendListener.OnFriendApplicationAccepted(*server)
 			case constant.FriendResponseRefuse:
-				f.friendListener.OnFriendApplicationRejected(*value)
+				f.friendListener.OnFriendApplicationRejected(*server)
 			case constant.FriendResponseDefault:
-				f.friendListener.OnFriendApplicationAdded(*value)
+				f.friendListener.OnFriendApplicationAdded(*server)
 			}
 		}
 		return nil
@@ -133,21 +142,21 @@ func (f *Friend) initSyncer() {
 		return f.db.UpdateFriendRequest(ctx, server)
 	}, func(value *model_struct.LocalFriendRequest) [2]string {
 		return [...]string{value.FromUserID, value.ToUserID}
-	}, nil, func(ctx context.Context, state int, value *model_struct.LocalFriendRequest) error {
+	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalFriendRequest) error {
 		if f.friendListener == nil {
 			return nil
 		}
 		switch state {
 		case syncer.Insert:
-			f.friendListener.OnFriendApplicationAdded(*value)
+			f.friendListener.OnFriendApplicationAdded(*server)
 		case syncer.Delete:
-			f.friendListener.OnFriendApplicationDeleted(*value)
+			f.friendListener.OnFriendApplicationDeleted(*server)
 		case syncer.Update:
-			switch value.HandleResult {
+			switch server.HandleResult {
 			case constant.FriendResponseAgree:
-				f.friendListener.OnFriendApplicationAccepted(*value)
+				f.friendListener.OnFriendApplicationAccepted(*server)
 			case constant.FriendResponseRefuse:
-				f.friendListener.OnFriendApplicationRejected(*value)
+				f.friendListener.OnFriendApplicationRejected(*server)
 			}
 		}
 		return nil

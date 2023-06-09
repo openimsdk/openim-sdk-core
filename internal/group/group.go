@@ -77,11 +77,11 @@ func (g *Group) initSyncer() {
 		return g.db.UpdateGroup(ctx, server)
 	}, func(value *model_struct.LocalGroup) string {
 		return value.GroupID
-	}, nil, func(ctx context.Context, state int, value *model_struct.LocalGroup) error {
+	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalGroup) error {
 		if g.listener == nil {
 			return nil
 		}
-		data, err := json.Marshal(value)
+		data, err := json.Marshal(server)
 		if err != nil {
 			return err
 		}
@@ -91,17 +91,20 @@ func (g *Group) initSyncer() {
 		case syncer.Delete:
 			g.listener.OnJoinedGroupDeleted(string(data))
 		case syncer.Update:
-			log.ZInfo(ctx, "groupSyncer trigger update", "groupID", value.GroupID, "data", string(data), "isDismissed", value.Status == constant.GroupStatusDismissed)
-			if value.Status == constant.GroupStatusDismissed {
-				if err := g.db.DeleteGroupAllMembers(ctx, value.GroupID); err != nil {
+			log.ZInfo(ctx, "groupSyncer trigger update", "groupID", server.GroupID, "data", string(data), "isDismissed", server.Status == constant.GroupStatusDismissed)
+			if server.Status == constant.GroupStatusDismissed {
+				if err := g.db.DeleteGroupAllMembers(ctx, server.GroupID); err != nil {
 					log.ZError(ctx, "delete group all members failed", err)
 				}
 				g.listener.OnGroupDismissed(string(data))
 			} else {
 				g.listener.OnGroupInfoChanged(string(data))
+				if server.GroupName != local.GroupName || local.FaceURL != server.FaceURL {
+					_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: server.GroupID, SessionType: constant.SuperGroupChatType}}, g.conversationCh)
+				}
 			}
 		}
-		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: value.GroupID, SessionType: constant.GroupChatType}}, g.conversationCh)
+
 		return nil
 	})
 
@@ -113,11 +116,11 @@ func (g *Group) initSyncer() {
 		return g.db.UpdateGroupMember(ctx, server)
 	}, func(value *model_struct.LocalGroupMember) [2]string {
 		return [...]string{value.GroupID, value.UserID}
-	}, nil, func(ctx context.Context, state int, value *model_struct.LocalGroupMember) error {
+	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalGroupMember) error {
 		if g.listener == nil {
 			return nil
 		}
-		data, err := json.Marshal(value)
+		data, err := json.Marshal(server)
 		if err != nil {
 			return err
 		}
@@ -128,6 +131,10 @@ func (g *Group) initSyncer() {
 			g.listener.OnGroupMemberDeleted(string(data))
 		case syncer.Update:
 			g.listener.OnGroupMemberInfoChanged(string(data))
+			if server.Nickname != local.Nickname || server.FaceURL != local.FaceURL {
+				_ = common.TriggerCmdUpdateMessage(ctx, common.UpdateMessageNode{Action: constant.UpdateMsgFaceUrlAndNickName, Args: common.UpdateMessageInfo{UserID: server.UserID, FaceURL: server.FaceURL,
+					Nickname: server.Nickname, GroupID: server.GroupID}}, g.conversationCh)
+			}
 		}
 		return nil
 	})
@@ -140,8 +147,8 @@ func (g *Group) initSyncer() {
 		return g.db.UpdateGroupRequest(ctx, server)
 	}, func(value *model_struct.LocalGroupRequest) [2]string {
 		return [...]string{value.GroupID, value.UserID}
-	}, nil, func(ctx context.Context, state int, value *model_struct.LocalGroupRequest) error {
-		data, err := json.Marshal(value)
+	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalGroupRequest) error {
+		data, err := json.Marshal(server)
 		if err != nil {
 			return err
 		}
@@ -149,7 +156,7 @@ func (g *Group) initSyncer() {
 		case syncer.Insert:
 			g.listener.OnGroupApplicationAdded(string(data))
 		case syncer.Update:
-			switch value.HandleResult {
+			switch server.HandleResult {
 			case constant.FriendResponseAgree:
 				g.listener.OnGroupApplicationAccepted(string(data))
 			case constant.FriendResponseRefuse:
@@ -169,8 +176,8 @@ func (g *Group) initSyncer() {
 		return g.db.UpdateAdminGroupRequest(ctx, server)
 	}, func(value *model_struct.LocalAdminGroupRequest) [2]string {
 		return [...]string{value.GroupID, value.UserID}
-	}, nil, func(ctx context.Context, state int, value *model_struct.LocalAdminGroupRequest) error {
-		data, err := json.Marshal(value)
+	}, nil, func(ctx context.Context, state int, server, local *model_struct.LocalAdminGroupRequest) error {
+		data, err := json.Marshal(server)
 		if err != nil {
 			return err
 		}
@@ -178,7 +185,7 @@ func (g *Group) initSyncer() {
 		case syncer.Insert:
 			g.listener.OnGroupApplicationAdded(string(data))
 		case syncer.Update:
-			switch value.HandleResult {
+			switch server.HandleResult {
 			case constant.FriendResponseAgree:
 				g.listener.OnGroupApplicationAccepted(string(data))
 			case constant.FriendResponseRefuse:
