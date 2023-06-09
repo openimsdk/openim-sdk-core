@@ -331,6 +331,7 @@ const (
 	GroupFilterAdmin                 = 2
 	GroupFilterOrdinaryUsers         = 3
 	GroupFilterAdminAndOrdinaryUsers = 4
+	GroupFilterOwnerAndAdmin         = 5
 
 	GroupResponseAgree  = 1  // Response to group application: agree
 	GroupResponseRefuse = -1 // Response to group application: refuse
