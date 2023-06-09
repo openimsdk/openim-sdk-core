@@ -280,6 +280,7 @@ func (c *Conversation) CreateImageMessage(ctx context.Context, imagePath string)
 		return nil, err
 	}
 	path := c.DataDir + imagePath
+	//path := imagePath
 	imageInfo, err := getImageInfo(path)
 	if err != nil {
 		//log.Error("internal", "get imageInfo err", err.Error())
