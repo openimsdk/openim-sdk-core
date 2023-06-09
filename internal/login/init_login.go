@@ -277,7 +277,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.longConnMgr = interaction.NewLongConnMgr(ctx, u.connListener, u.pushMsgAndMaxSeqCh, u.conversationCh)
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
-		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.signaling, u.business, u.cache, u.full)
+		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.signaling, u.business, u.cache, u.full, u.file)
 	u.conversation.SetLoginTime()
 	u.signaling = signaling.NewLiveSignaling(u.longConnMgr, u.loginUserID, u.info.PlatformID, u.db)
 	if u.signalingListener != nil {
