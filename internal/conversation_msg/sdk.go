@@ -442,6 +442,11 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				return nil, err
 			}
 			s.PictureElem.SourcePicture.Url = res.URL
+			s.PictureElem.SnapshotPicture = &sdk_struct.PictureBaseInfo{
+				Width:  int32(utils.StringToInt(constant.ZoomScale)),
+				Height: int32(utils.StringToInt(constant.ZoomScale)),
+				Url:    res.URL + "/w/" + constant.ZoomScale + "/h/" + constant.ZoomScale,
+			}
 			s.Content = utils.StructToJsonString(s.PictureElem)
 
 		case constant.Voice:
