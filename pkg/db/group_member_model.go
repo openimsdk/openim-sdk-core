@@ -100,7 +100,7 @@ func (d *DataBase) GetGroupMemberListSplit(ctx context.Context, groupID string, 
 	case constant.GroupFilterAdmin:
 		err = d.conn.WithContext(ctx).Where("group_id = ? And role_level = ?", groupID, constant.GroupAdmin).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	case constant.GroupFilterOrdinaryUsers:
-		err = d.conn.WithContext(ctx).Where("group_id = ? And role_level = ?", groupID, constant.GroupFilterOrdinaryUsers).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
+		err = d.conn.WithContext(ctx).Where("group_id = ? And role_level = ?", groupID, constant.GroupOrdinaryUsers).Order("join_time DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	case constant.GroupFilterAdminAndOrdinaryUsers:
 		err = d.conn.WithContext(ctx).Where("group_id = ? And (role_level = ? or role_level = ?)", groupID, constant.GroupAdmin, constant.GroupOrdinaryUsers).Order("role_level DESC").Offset(offset).Limit(count).Find(&groupMemberList).Error
 	case constant.GroupFilterOwnerAndAdmin:

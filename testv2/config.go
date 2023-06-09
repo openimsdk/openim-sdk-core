@@ -42,5 +42,7 @@ func getConf(APIADDR, WSADDR string) sdk_struct.IMConfig {
 	cf.LogLevel = 6
 	cf.IsExternalExtensions = true
 	cf.PlatformID = 1
+	cf.LogFilePath = ".\\"
+	cf.IsLogStandardOutput = true
 	return cf
 }

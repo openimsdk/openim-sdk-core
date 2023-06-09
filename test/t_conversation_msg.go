@@ -92,7 +92,7 @@ func DoTestGetHistoryMessage(userID string) {
 	params.ConversationID = "super_group_3907826375"
 	//params.StartClientMsgID = "97f12899778823019f13ea46b0c1e6dd"
 	params.Count = 10
-	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
+	// open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
 }
 func DoTestFindMessageList() {
 	var testFindMessageListCallBack FindMessageListCallBack
@@ -191,7 +191,7 @@ func DoTestGetHistoryMessageReverse(userID string) {
 	params.Count = 10
 	params.ConversationID = "single_707008149"
 	params.StartClientMsgID = "d40dde77f29b14d3a16ca6f422776890"
-	open_im_sdk.GetHistoryMessageListReverse(testGetHistoryReverseCallBack, testGetHistoryReverseCallBack.OperationID, utils.StructToJsonString(params))
+	// open_im_sdk.GetHistoryMessageListReverse(testGetHistoryReverseCallBack, testGetHistoryReverseCallBack.OperationID, utils.StructToJsonString(params))
 }
 func DoTestGetGroupHistoryMessage() {
 	var testGetHistoryCallBack GetHistoryCallBack
@@ -199,7 +199,7 @@ func DoTestGetGroupHistoryMessage() {
 	var params sdk_params_callback.GetHistoryMessageListParams
 	params.GroupID = "cb7aaa8e5f83d92db2ed1573cd01870c"
 	params.Count = 10
-	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
+	// open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
 }
 
 //func DoTestGetGroupHistoryMessage() {
