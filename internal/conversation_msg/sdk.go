@@ -171,39 +171,6 @@ func (c *Conversation) GetMultipleConversation(ctx context.Context, conversation
 
 }
 
-func (c *Conversation) DeleteConversation(ctx context.Context, conversationID string) error {
-	lc, err := c.db.GetConversation(ctx, conversationID)
-	if err != nil {
-		return err
-	}
-	var sourceID string
-	switch lc.ConversationType {
-	case constant.SingleChatType, constant.NotificationChatType:
-		sourceID = lc.UserID
-	case constant.GroupChatType, constant.SuperGroupChatType:
-		sourceID = lc.GroupID
-	}
-	if lc.ConversationType == constant.SuperGroupChatType {
-		err = c.db.SuperGroupDeleteAllMessage(ctx, lc.GroupID)
-		if err != nil {
-			return err
-		}
-	} else {
-		//Mark messages related to this conversation for deletion
-		err = c.db.UpdateMessageStatusBySourceIDController(ctx, sourceID, constant.MsgStatusHasDeleted, lc.ConversationType)
-		if err != nil {
-			return err
-		}
-	}
-	//Reset the conversation information, empty conversation
-	err = c.db.ResetConversation(ctx, conversationID)
-	if err != nil {
-		return err
-	}
-	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: "", Action: constant.TotalUnreadMessageChanged, Args: ""}})
-	return nil
-}
-
 func (c *Conversation) DeleteAllConversationFromLocal(ctx context.Context) error {
 	err := c.db.ResetAllConversation(ctx)
 	if err != nil {

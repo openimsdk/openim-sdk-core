@@ -50,10 +50,6 @@ func GetConversationRecvMessageOpt(callback open_im_sdk_callback.Base, operation
 	call(callback, operationID, UserForSDK.Conversation().GetConversationRecvMessageOpt, conversationIDList)
 }
 
-func DeleteConversation(callback open_im_sdk_callback.Base, operationID string, conversationID string) {
-	call(callback, operationID, UserForSDK.Conversation().DeleteConversation, conversationID)
-}
-
 func DeleteAllConversationFromLocal(callback open_im_sdk_callback.Base, operationID string) {
 	call(callback, operationID, UserForSDK.Conversation().DeleteAllConversationFromLocal)
 }
