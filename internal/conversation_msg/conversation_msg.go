@@ -780,7 +780,7 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 		t := sdk_struct.PictureElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
 		msg.PictureElem = &t
-	case constant.Voice:
+	case constant.Sound:
 		t := sdk_struct.SoundElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
 		msg.SoundElem = &t

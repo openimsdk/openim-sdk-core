@@ -246,18 +246,26 @@ func (c *Conversation) msgStructToLocalChatLog(src *sdk_struct.MsgStruct) *model
 	switch src.ContentType {
 	case constant.Text:
 		lc.Content = utils.StructToJsonString(src.TextElem)
+	case constant.Picture:
+		lc.Content = utils.StructToJsonString(src.PictureElem)
+	case constant.Sound:
+		lc.Content = utils.StructToJsonString(src.SoundElem)
+	case constant.Video:
+		lc.Content = utils.StructToJsonString(src.VideoElem)
+	case constant.File:
+		lc.Content = utils.StructToJsonString(src.FileElem)
 	case constant.AtText:
 		lc.Content = utils.StructToJsonString(src.AtTextElem)
+	case constant.Merger:
+		lc.Content = utils.StructToJsonString(src.MergeElem)
+	case constant.Card:
+		lc.Content = utils.StructToJsonString(src.CardElem)
 	case constant.Location:
 		lc.Content = utils.StructToJsonString(src.LocationElem)
 	case constant.Custom:
 		lc.Content = utils.StructToJsonString(src.CustomElem)
-	case constant.Merger:
-		lc.Content = utils.StructToJsonString(src.MergeElem)
 	case constant.Quote:
 		lc.Content = utils.StructToJsonString(src.QuoteElem)
-	case constant.Card:
-		lc.Content = utils.StructToJsonString(src.CardElem)
 	case constant.Face:
 		lc.Content = utils.StructToJsonString(src.FaceElem)
 	case constant.AdvancedText:
@@ -449,7 +457,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			}
 			s.Content = utils.StructToJsonString(s.PictureElem)
 
-		case constant.Voice:
+		case constant.Sound:
 			var sourcePath string
 			if utils.FileExist(s.SoundElem.SoundPath) {
 				sourcePath = s.SoundElem.SoundPath
@@ -538,9 +546,9 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		default:
 			return nil, sdkerrs.ErrMsgContentTypeNotSupport
 		}
-		if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Voice, constant.Video, constant.File}) {
+		if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Sound, constant.Video, constant.File}) {
 			localMessage := c.msgStructToLocalChatLog(s)
-			log.ZDebug(ctx, "update message is ", s, localMessage)
+			log.ZDebug(ctx, "update message is ", "localMessage", localMessage)
 			err = c.db.UpdateMessage(ctx, lc.ConversationID, localMessage)
 			if err != nil {
 				return nil, err
@@ -578,7 +586,7 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, []string{conversationID}}})
 	//_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 	var delFile []string
-	if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Voice, constant.Video, constant.File}) {
+	if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Sound, constant.Video, constant.File}) {
 		localMessage := c.msgStructToLocalChatLog(s)
 		err = c.db.UpdateMessage(ctx, lc.ConversationID, localMessage)
 		if err != nil {
@@ -633,7 +641,7 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 			//s.PictureElem.SnapshotPicture.Height = int32(utils.StringToInt(constant.ZoomScale))
 			s.Content = utils.StructToJsonString(s.PictureElem)
 
-		case constant.Voice:
+		case constant.Sound:
 			//soundURL, uuid, err := c.UploadSoundByBuffer(buffer1, s.SoundElem.DataSize, s.SoundElem.SoundType, callback.OnProgress)
 			//if err != nil {
 			//	c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
@@ -683,7 +691,7 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 		// } else {
 		// 	log.Debug("", "before update database message is ", *oldMessage)
 		// }
-		if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Voice, constant.Video, constant.File}) {
+		if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Sound, constant.Video, constant.File}) {
 			localMessage := c.msgStructToLocalChatLog(s)
 			log.ZWarn(ctx, "update message is ", nil, s, localMessage)
 			err = c.db.UpdateMessage(ctx, lc.ConversationID, localMessage)
