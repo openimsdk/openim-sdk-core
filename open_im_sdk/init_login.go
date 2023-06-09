@@ -50,7 +50,6 @@ func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, c
 	}
 	if err := log.InitFromConfig("open-im-sdk-core", "", int(configArgs.LogLevel), configArgs.IsLogStandardOutput, false, configArgs.LogFilePath, 0); err != nil {
 		fmt.Println(operationID, "log init failed ", err.Error())
-		return false
 	}
 	fmt.Println("init log success")
 	// localLog.NewPrivateLog("", configArgs.LogLevel)
