@@ -31,7 +31,7 @@ func (c *Conversation) messageBlocksInternalContinuityCheck(ctx context.Context,
 	sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) (max, min int64, length int) {
 	var lostSeqListLength int
 	maxSeq, minSeq, haveSeqList := c.getMaxAndMinHaveSeqList(*list)
-	// log.Debug(operationID, utils.GetSelfFuncName(), "getMaxAndMinHaveSeqList is:", maxSeq, minSeq, haveSeqList)
+	log.ZDebug(ctx, "getMaxAndMinHaveSeqList is:", "maxSeq", maxSeq, "minSeq", minSeq, "haveSeqList", haveSeqList)
 	if maxSeq != 0 && minSeq != 0 {
 		successiveSeqList := func(max, min int64) (seqList []int64) {
 			for i := min; i <= max; i++ {
@@ -41,7 +41,7 @@ func (c *Conversation) messageBlocksInternalContinuityCheck(ctx context.Context,
 		}(maxSeq, minSeq)
 		lostSeqList := utils.DifferenceSubset(successiveSeqList, haveSeqList)
 		lostSeqListLength = len(lostSeqList)
-		// log.Debug(operationID, "get lost seqList is :", maxSeq, minSeq, lostSeqList, "length:", lostSeqListLength)
+		log.ZDebug(ctx, "get lost seqList is :", "maxSeq", maxSeq, "minSeq", minSeq, "lostSeqList", lostSeqList, "length:", lostSeqListLength)
 		if lostSeqListLength > 0 {
 			var pullSeqList []int64
 			if lostSeqListLength <= constant.PullMsgNumForReadDiffusion {
@@ -60,7 +60,7 @@ func (c *Conversation) messageBlocksInternalContinuityCheck(ctx context.Context,
 func (c *Conversation) messageBlocksBetweenContinuityCheck(ctx context.Context, lastMinSeq, maxSeq int64, conversationID string,
 	notStartTime, isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) bool {
 	if lastMinSeq != 0 {
-		// log.Debug(operationID, "get lost LastMinSeq is :", lastMinSeq, "thisMaxSeq is :", maxSeq)
+		log.ZDebug(ctx, "get lost LastMinSeq is :", "lastMinSeq", lastMinSeq, "thisMaxSeq", maxSeq)
 		if maxSeq != 0 {
 			if maxSeq+1 != lastMinSeq {
 				startSeq := int64(lastMinSeq) - constant.PullMsgNumForReadDiffusion
@@ -73,7 +73,7 @@ func (c *Conversation) messageBlocksBetweenContinuityCheck(ctx context.Context, 
 					}
 					return seqList
 				}(lastMinSeq-1, startSeq)
-				// log.Debug(operationID, "get lost successiveSeqList is :", successiveSeqList, len(successiveSeqList))
+				log.ZDebug(ctx, "get lost successiveSeqList is :", "successiveSeqList", successiveSeqList, "length:", len(successiveSeqList))
 				if len(successiveSeqList) > 0 {
 					c.pullMessageAndReGetHistoryMessages(ctx, conversationID, successiveSeqList, notStartTime, isReverse, count, sessionType, startTime, list, messageListCallback)
 				}
