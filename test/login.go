@@ -54,7 +54,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	cf.LogLevel = LogLevel
 	cf.IsExternalExtensions = true
 	cf.IsLogStandardOutput = false
-	cf.LogFilePath = ".\\"
+	cf.LogFilePath = ""
 
 	b, _ := json.Marshal(cf)
 	s := string(b)
