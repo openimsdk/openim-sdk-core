@@ -124,8 +124,8 @@ type MessageDatabase interface {
 	GetTestMessage(ctx context.Context, seq uint32) (*model_struct.LocalChatLog, error)
 	UpdateMsgSenderNickname(ctx context.Context, sendID, nickname string, sType int) error
 	UpdateMsgSenderFaceURL(ctx context.Context, sendID, faceURL string, sType int) error
-	UpdateMsgSenderFaceURLAndSenderNickname(ctx context.Context, sendID, faceURL, nickname string, sessionType int) error
-	UpdateMsgSenderFaceURLAndSenderNicknameController(ctx context.Context, sendID, faceURL, nickname string, sessionType int, groupID string) error
+	//UpdateMsgSenderFaceURLAndSenderNicknameController(ctx context.Context, sendID, faceURL, nickname string, sessionType int) error
+	UpdateMsgSenderFaceURLAndSenderNickname(ctx context.Context, conversationID, sendID, faceURL, nickname string) error
 	GetMsgSeqByClientMsgID(ctx context.Context, clientMsgID string) (uint32, error)
 	GetMsgSeqByClientMsgIDController(ctx context.Context, m *sdk_struct.MsgStruct) (uint32, error)
 	GetMsgSeqListByGroupID(ctx context.Context, groupID string) ([]uint32, error)
@@ -194,6 +194,7 @@ type ConversationDatabase interface {
 	GetAllConversationListDB(ctx context.Context) ([]*model_struct.LocalConversation, error)
 	GetHiddenConversationList(ctx context.Context) ([]*model_struct.LocalConversation, error)
 	GetAllConversations(ctx context.Context) ([]*model_struct.LocalConversation, error)
+	GetAllSingleConversationIDList(ctx context.Context) (result []string, err error)
 	GetAllConversationIDList(ctx context.Context) (result []string, err error)
 	GetConversationListSplitDB(ctx context.Context, offset, count int) ([]*model_struct.LocalConversation, error)
 	BatchInsertConversationList(ctx context.Context, conversationList []*model_struct.LocalConversation) error

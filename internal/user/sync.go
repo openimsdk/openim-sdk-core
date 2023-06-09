@@ -16,14 +16,10 @@ package user
 
 import (
 	"context"
-	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/utils"
-
-	sdk "open_im_sdk/pkg/sdk_params_callback"
-
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"gorm.io/gorm"
+	"open_im_sdk/pkg/db/model_struct"
 )
 
 func (u *User) SyncLoginUserInfo(ctx context.Context) error {
@@ -40,17 +36,5 @@ func (u *User) SyncLoginUserInfo(ctx context.Context) error {
 		localUsers = []*model_struct.LocalUser{localUser}
 	}
 	log.ZDebug(ctx, "SyncLoginUserInfo", "remoteUser", remoteUser, "localUser", localUser)
-	err = u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, localUsers, nil)
-	if err != nil {
-		return err
-	}
-	callbackData := sdk.SelfInfoUpdatedCallback(*remoteUser)
-	if u.listener == nil {
-		return err
-	}
-	u.listener.OnSelfInfoUpdated(utils.StructToJsonString(callbackData))
-	if localUser.Nickname == remoteUser.Nickname && localUser.FaceURL == remoteUser.FaceURL {
-		return err
-	}
-	return nil
+	return u.userSyncer.Sync(ctx, []*model_struct.LocalUser{remoteUser}, localUsers, nil)
 }
