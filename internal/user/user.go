@@ -17,7 +17,6 @@ package user
 import (
 	"context"
 	"fmt"
-	comm "open_im_sdk/internal/common"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/db/db_interface"
 	"open_im_sdk/pkg/db/model_struct"
@@ -101,8 +100,7 @@ func (u *User) initSyncer() {
 
 // DoNotification handles incoming notifications for the user.
 func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
-	operationID := utils.OperationIDGenerator()
-	// log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg)
+	log.ZDebug(ctx, "user notification", "msg", *msg)
 	if u.listener == nil {
 		// log.Error(operationID, "listener == nil")
 		return
@@ -114,7 +112,7 @@ func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	go func() {
 		switch msg.ContentType {
 		case constant.UserInfoUpdatedNotification:
-			u.userInfoUpdatedNotification(msg, operationID)
+			u.userInfoUpdatedNotification(ctx, msg)
 		default:
 			// log.Error(operationID, "type failed ", msg.ClientMsgID, msg.ServerMsgID, msg.ContentType)
 		}
@@ -122,18 +120,18 @@ func (u *User) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 }
 
 // userInfoUpdatedNotification handles notifications about updated user information.
-func (u *User) userInfoUpdatedNotification(msg *sdkws.MsgData, operationID string) {
-	// log.NewInfo(operationID, utils.GetSelfFuncName(), "args: ", msg.ClientMsgID, msg.ServerMsgID)
-	var detail sdkws.UserInfoUpdatedTips
-	if err := comm.UnmarshalTips(msg, &detail); err != nil {
-		// log.Error(operationID, "comm.UnmarshalTips failed ", err.Error(), msg.Content)
+func (u *User) userInfoUpdatedNotification(ctx context.Context, msg *sdkws.MsgData) {
+	log.ZDebug(ctx, "userInfoUpdatedNotification", "msg", *msg)
+	tips := sdkws.UserInfoUpdatedTips{}
+	if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
+		log.ZError(ctx, "comm.UnmarshalTips failed", err, "msg", msg.Content)
 		return
 	}
-	if detail.UserID == u.loginUserID {
-		// log.Info(operationID, "detail.UserID == u.loginUserID, SyncLoginUserInfo", detail.UserID)
-		u.SyncLoginUserInfo(context.Background())
+
+	if tips.UserID == u.loginUserID {
+		u.SyncLoginUserInfo(ctx)
 	} else {
-		// log.Debug(operationID, "detail.UserID != u.loginUserID, do nothing", detail.UserID, u.loginUserID)
+		log.ZDebug(ctx, "detail.UserID != u.loginUserID, do nothing", "detail.UserID", tips.UserID, "u.loginUserID", u.loginUserID)
 	}
 }
 

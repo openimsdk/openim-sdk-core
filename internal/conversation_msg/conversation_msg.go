@@ -115,7 +115,7 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 	ch chan common.Cmd2Value,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	conversationListener open_im_sdk_callback.OnConversationListener,
-	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling *signaling.LiveSignaling, business *business.Business, cache *cache.Cache, full *full.Full) *Conversation {
+	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling *signaling.LiveSignaling, business *business.Business, cache *cache.Cache, full *full.Full, file *file.File) *Conversation {
 	info := ccontext.Info(ctx)
 	n := &Conversation{db: db,
 		LongConnMgr:          longConnMgr,
