@@ -45,7 +45,7 @@ func (c *FileCallback) PutProgress(save int64, current, total int64) {
 	if err := c.db.UpdateMessageByClientMsgID(c.ctx, c.msg.ClientMsgID, map[string]any{"attached_info": string(data)}); err != nil {
 		log.ZError(c.ctx, "update PutProgress message attached info failed", err)
 	}
-	c.progress(int(float64(current) / float64(total)))
+	c.progress(int(float64(current) / float64(total) * 100))
 }
 
 func (c *FileCallback) PutComplete(total int64, putType int) {
