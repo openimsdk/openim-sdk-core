@@ -307,7 +307,7 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 
 				}
 			} else {
-				conversationID := utils.GetConversationIDBySessionType(args.UserID, constant.SingleChatType)
+				conversationID := c.getConversationIDBySessionType(args.UserID, constant.SingleChatType)
 				err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(ctx, conversationID, args.UserID, args.FaceURL, args.Nickname)
 				if err != nil {
 					log.ZError(ctx, "UpdateMsgSenderFaceURLAndSenderNickname err", err)
@@ -315,7 +315,7 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 
 			}
 		} else {
-			conversationID := utils.GetConversationIDBySessionType(args.GroupID, constant.SuperGroupChatType)
+			conversationID := c.getConversationIDBySessionType(args.GroupID, constant.SuperGroupChatType)
 			err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(ctx, conversationID, args.UserID, args.FaceURL, args.Nickname)
 			if err != nil {
 				log.ZError(ctx, "UpdateMsgSenderFaceURLAndSenderNickname err", err)
