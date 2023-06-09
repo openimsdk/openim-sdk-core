@@ -23,6 +23,7 @@ import (
 	"open_im_sdk/pkg/utils"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	utils2 "github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
 )
 
 // 检测其内部连续性，如果不连续，则向前补齐,获取这一组消息的最大最小seq，以及需要补齐的seq列表长度
@@ -211,7 +212,7 @@ func errHandle(seqList []int64, list *[]*model_struct.LocalChatLog, err error, m
 func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map[string]*sdkws.PullMsgs, conversationID string) {
 	insertMsg := make(map[string][]*model_struct.LocalChatLog, 20)
 	updateMsg := make(map[string][]*model_struct.LocalChatLog, 30)
-	var insertMessage []*model_struct.LocalChatLog
+	var insertMessage, selfInsertMessage, othersInsertMessage []*model_struct.LocalChatLog
 	var updateMessage []*model_struct.LocalChatLog
 	var exceptionMsg []*model_struct.LocalErrChatLog
 
@@ -245,11 +246,11 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 					}
 				} else { //      send through  other terminal
 					log.ZInfo(ctx, "sync message", "msg", msg)
-					insertMessage = append(insertMessage, msg)
+					selfInsertMessage = append(selfInsertMessage, msg)
 				}
 			} else { //Sent by others
 				if oldMessage, err := c.db.GetMessage(ctx, conversationID, msg.ClientMsgID); err != nil { //Deduplication operation
-					insertMessage = append(insertMessage, msg)
+					othersInsertMessage = append(othersInsertMessage, msg)
 
 				} else {
 					if oldMessage.Seq == 0 {
@@ -257,7 +258,8 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 					}
 				}
 			}
-			insertMsg[conversationID] = insertMessage
+
+			insertMsg[conversationID] = append(insertMessage, c.faceURLAndNicknameHandle(ctx, selfInsertMessage, othersInsertMessage, conversationID)...)
 			updateMsg[conversationID] = updateMessage
 		}
 
@@ -279,6 +281,50 @@ func (c *Conversation) pullMessageIntoTable(ctx context.Context, pullMsgData map
 	}
 }
 
-//拉取的消息都需要经过块内部连续性检测以及块和上一块之间的连续性检测不连续则补，补齐的过程中如果出现任何异常只给seq从大到小到断层
-//拉取消息不满量，获取服务器中该群最大seq以及用户对于此群最小seq，本地该群的最小seq，如果本地的不为0并且小于等于服务器最小的，说明已经到底部
-//如果本地的为0，可以理解为初始化的时候，数据还未同步，或者异常情况，如果服务器最大seq-服务器最小seq>=0说明还未到底部，否则到底部
+// 拉取的消息都需要经过块内部连续性检测以及块和上一块之间的连续性检测不连续则补，补齐的过程中如果出现任何异常只给seq从大到小到断层
+// 拉取消息不满量，获取服务器中该群最大seq以及用户对于此群最小seq，本地该群的最小seq，如果本地的不为0并且小于等于服务器最小的，说明已经到底部
+// 如果本地的为0，可以理解为初始化的时候，数据还未同步，或者异常情况，如果服务器最大seq-服务器最小seq>=0说明还未到底部，否则到底部
+
+func (c *Conversation) faceURLAndNicknameHandle(ctx context.Context, self, others []*model_struct.LocalChatLog, conversationID string) []*model_struct.LocalChatLog {
+	lc, _ := c.db.GetConversation(ctx, conversationID)
+	switch lc.ConversationType {
+	case constant.SingleChatType:
+		c.singleHandle(ctx, self, others, lc)
+	case constant.SuperGroupChatType:
+		c.groupHandle(ctx, self, others, lc)
+	}
+	return append(self, others...)
+}
+func (c *Conversation) singleHandle(ctx context.Context, self, others []*model_struct.LocalChatLog, lc *model_struct.LocalConversation) {
+	userInfo, err := c.db.GetLoginUser(ctx, c.loginUserID)
+	if err == nil {
+		for _, chatLog := range self {
+			chatLog.SenderFaceURL = userInfo.FaceURL
+			chatLog.SenderNickname = userInfo.Nickname
+		}
+	}
+	for _, chatLog := range others {
+		chatLog.SenderFaceURL = lc.FaceURL
+		chatLog.SenderNickname = lc.ShowName
+	}
+
+}
+func (c *Conversation) groupHandle(ctx context.Context, self, others []*model_struct.LocalChatLog, lc *model_struct.LocalConversation) {
+	allMessage := append(self, others...)
+	localGroupMemberInfo, err := c.group.GetGroupMembersInfo(ctx, lc.GroupID, utils2.Slice(allMessage, func(e *model_struct.LocalChatLog) string {
+		return e.SendID
+	}))
+	if err != nil {
+		log.ZError(ctx, "get group member info err", err)
+		return
+	}
+	groupMap := utils2.SliceToMap(localGroupMemberInfo, func(e *model_struct.LocalGroupMember) string {
+		return e.UserID
+	})
+	for _, chatLog := range allMessage {
+		if g, ok := groupMap[chatLog.SendID]; ok {
+			chatLog.SenderFaceURL = g.FaceURL
+			chatLog.SenderNickname = g.Nickname
+		}
+	}
+}

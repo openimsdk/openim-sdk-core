@@ -315,19 +315,20 @@ func StructToMap(user interface{}) map[string]interface{} {
 	json.Unmarshal(data, &m)
 	return m
 }
-func GetConversationIDBySessionType(sourceID string, sessionType int) string {
-	switch sessionType {
-	case constant.SingleChatType:
-		return "single_" + sourceID
-	case constant.GroupChatType:
-		return "group_" + sourceID
-	case constant.SuperGroupChatType:
-		return "super_group_" + sourceID
-	case constant.NotificationChatType:
-		return "notification_" + sourceID
-	}
-	return ""
-}
+
+//	func GetConversationIDBySessionType(sourceID string, sessionType int) string {
+//		switch sessionType {
+//		case constant.SingleChatType:
+//			return "single_" + sourceID
+//		case constant.GroupChatType:
+//			return "group_" + sourceID
+//		case constant.SuperGroupChatType:
+//			return "super_group_" + sourceID
+//		case constant.NotificationChatType:
+//			return "notification_" + sourceID
+//		}
+//		return ""
+//	}
 func GetConversationIDByMsg(msg *sdk_struct.MsgStruct) string {
 	switch msg.SessionType {
 	case constant.SingleChatType:

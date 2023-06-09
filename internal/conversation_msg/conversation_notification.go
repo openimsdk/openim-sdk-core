@@ -297,6 +297,7 @@ func (c *Conversation) doUpdateMessage(c2v common.Cmd2Value) {
 					log.ZError(ctx, "GetAllSingleConversationIDList err", err)
 					return
 				} else {
+					log.ZDebug(ctx, "get single conversationID list", "conversationIDList", conversationIDList)
 					for _, conversationID := range conversationIDList {
 						err := c.db.UpdateMsgSenderFaceURLAndSenderNickname(ctx, conversationID, args.UserID, args.FaceURL, args.Nickname)
 						if err != nil {
