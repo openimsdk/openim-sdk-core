@@ -25,6 +25,7 @@ import (
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/syncer"
+	"open_im_sdk/pkg/utils"
 	"sync"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
@@ -128,7 +129,7 @@ func (g *Group) initSyncer() {
 		case syncer.Insert:
 			g.listener.OnGroupMemberAdded(string(data))
 		case syncer.Delete:
-			g.listener.OnGroupMemberDeleted(string(data))
+			g.listener.OnGroupMemberDeleted(utils.StructToJsonString(local))
 		case syncer.Update:
 			g.listener.OnGroupMemberInfoChanged(string(data))
 			if server.Nickname != local.Nickname || server.FaceURL != local.FaceURL {
