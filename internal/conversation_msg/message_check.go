@@ -130,7 +130,7 @@ func (c *Conversation) getMaxAndMinHaveSeqList(messages []*model_struct.LocalCha
 			min = messages[i].Seq
 			max = messages[i].Seq
 		}
-		if messages[i].Seq < min {
+		if messages[i].Seq < min && messages[i].Seq != 0 {
 			min = messages[i].Seq
 		}
 		if messages[i].Seq > max {
