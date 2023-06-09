@@ -431,6 +431,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 				delFile = append(delFile, sourcePath)
 			}
 			// log.Info("", "file", sourcePath, delFile)
+			log.ZDebug(ctx, "send picture", "path", sourcePath)
 
 			res, err := c.file.PutFile(ctx, &file.PutArgs{
 				PutID:    s.ClientMsgID,
