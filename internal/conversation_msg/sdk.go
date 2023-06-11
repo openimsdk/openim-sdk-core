@@ -451,6 +451,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			Name:     c.fileName("picture", s.ClientMsgID) + filepath.Ext(sourcePath),
 		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
 		if err != nil {
+			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
 			return nil, err
 		}
 		s.PictureElem.SourcePicture.Url = res.URL
@@ -487,6 +488,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			Name:     c.fileName("voice", s.ClientMsgID) + filepath.Ext(sourcePath),
 		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
 		if err != nil {
+			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
 			return nil, err
 		}
 		s.SoundElem.SourceURL = res.URL
@@ -517,6 +519,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			Name:     c.fileName("videoSnapshot", s.ClientMsgID) + filepath.Ext(snapPath),
 		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
 		if err != nil {
+			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
 			return nil, err
 		}
 
@@ -526,6 +529,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			Name:     c.fileName("video", s.ClientMsgID) + filepath.Ext(videoPath),
 		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
 		if err != nil {
+			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
 			return nil, err
 		}
 		s.VideoElem.SnapshotURL = snapRes.URL
@@ -542,6 +546,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			Name:     c.fileName("file", s.ClientMsgID) + filepath.Ext(s.FileElem.FilePath),
 		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
 		if err != nil {
+			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
 			return nil, err
 		}
 		s.SoundElem.SourceURL = res.URL
@@ -814,7 +819,6 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 		c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
 		return nil, err
 	}
-	//_ = proto.Unmarshal(resp.Data, &sendMsgResp)
 	s.SendTime = sendMsgResp.SendTime
 	s.Status = constant.MsgStatusSendSuccess
 	s.ServerMsgID = sendMsgResp.ServerMsgID
