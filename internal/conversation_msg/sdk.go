@@ -533,7 +533,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			return nil, err
 		}
 		s.VideoElem.SnapshotURL = snapRes.URL
-		s.SoundElem.SourceURL = res.URL
+		s.VideoElem.VideoURL = res.URL
 		s.Content = utils.StructToJsonString(s.VideoElem)
 	case constant.File:
 		if s.Status != constant.MsgStatusSendSuccess {
@@ -549,7 +549,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
 			return nil, err
 		}
-		s.SoundElem.SourceURL = res.URL
+		s.FileElem.SourceURL = res.URL
 		s.Content = utils.StructToJsonString(s.FileElem)
 	case constant.Text:
 		s.Content = utils.StructToJsonString(s.TextElem)
