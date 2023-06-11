@@ -86,10 +86,13 @@ func (c *Conversation) SyncConversationHashReadSeqs(ctx context.Context) error {
 			ConversationID: conversationID,
 			UnreadCount:    unreadCount,
 		})
+		conversationIDs = append(conversationIDs, conversationID)
 	}
 	if err := c.db.UpdateOrCreateConversations(ctx, conversations); err != nil {
 		return err
 	}
-	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConversationLatestMsgHasRead, Args: conversationIDs}})
+	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConversationChangeNotification, Args: conversationIDs}})
+	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged, Args: conversationIDs}})
+
 	return nil
 }

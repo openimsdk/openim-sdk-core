@@ -20,7 +20,7 @@ import (
 )
 
 var LogLevel uint32 = 6
-var PlatformID = int32(1)
+var PlatformID = int32(2)
 var LogName = ""
 
 var ReliabilityUserA = 1234567

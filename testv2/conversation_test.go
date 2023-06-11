@@ -284,7 +284,7 @@ func Test_DeleteAllMessageFromLocalStorage(t *testing.T) {
 }
 
 func Test_ClearConversationAndDeleteAllMsg(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().ClearConversationAndDeleteAllMsg(ctx, "si_kernaltestuid8_kernaltestuid9")
+	err := open_im_sdk.UserForSDK.Conversation().ClearConversationAndDeleteAllMsg(ctx, "si_3271407977_7152307910")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -300,7 +300,7 @@ func Test_RevokeMessage(t *testing.T) {
 }
 
 func Test_MarkConversationMessageAsRead(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().MarkConversationMessageAsRead(ctx, "si_kernaltestuid8_kernaltestuid9")
+	err := open_im_sdk.UserForSDK.Conversation().MarkConversationMessageAsRead(ctx, "sg_1671620726")
 	if err != nil {
 		t.Fatal(err)
 	}
