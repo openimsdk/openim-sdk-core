@@ -234,10 +234,6 @@ func (u *LoginMgr) SetBusinessListener(listener open_im_sdk_callback.OnCustomBus
 	}
 }
 
-func (u *LoginMgr) wakeUp(ctx context.Context) error {
-	return common.TriggerCmdWakeUp(u.heartbeatCmdCh)
-}
-
 func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.info.UserID = userID
 	u.info.Token = token
@@ -252,7 +248,6 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	}
 	log.ZDebug(ctx, "NewDataBase ok", "userID", userID, "dataDir", u.info.DataDir, "login cost time", time.Since(t1))
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
-	u.cmdWsCh = make(chan common.Cmd2Value, 10)
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
 	u.loginTime = time.Now().UnixNano() / 1e6
@@ -262,9 +257,9 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.friend = friend.NewFriend(u.loginUserID, u.db, u.user, u.conversationCh)
 	u.friend.SetListener(u.friendListener)
 	u.friend.SetLoginTime(u.loginTime)
-	u.group = group.NewGroup(u.loginUserID, u.db, u.heartbeatCmdCh, u.conversationCh)
+	u.group = group.NewGroup(u.loginUserID, u.db, u.conversationCh)
 	u.group.SetGroupListener(u.groupListener)
-	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db, u.heartbeatCmdCh)
+	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db)
 	u.cache = cache.NewCache(u.user, u.friend)
 	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache, u.db, u.superGroup)
 
@@ -274,7 +269,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	}
 	u.push = third.NewPush(u.info.PlatformID, u.loginUserID)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
-	u.longConnMgr = interaction.NewLongConnMgr(ctx, u.connListener, u.pushMsgAndMaxSeqCh, u.conversationCh)
+	u.longConnMgr = interaction.NewLongConnMgr(ctx, u.connListener, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.conversationCh)
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
 		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.signaling, u.business, u.cache, u.full, u.file)
@@ -352,7 +347,16 @@ func (u *LoginMgr) logout(ctx context.Context) error {
 }
 
 func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool) error {
-	return u.longConnMgr.SendReqWaitResp(ctx, &server_api_params.SetAppBackgroundStatusReq{UserID: u.loginUserID, IsBackground: isBackground}, constant.SetBackgroundStatus, nil)
+	err := u.longConnMgr.SendReqWaitResp(ctx, &server_api_params.SetAppBackgroundStatusReq{UserID: u.loginUserID, IsBackground: isBackground}, constant.SetBackgroundStatus, nil)
+	if err != nil {
+		return err
+	} else {
+		u.longConnMgr.SetBackground(isBackground)
+		if isBackground == false {
+			_ = common.TriggerCmdWakeUp(u.heartbeatCmdCh)
+		}
+		return nil
+	}
 
 }
 

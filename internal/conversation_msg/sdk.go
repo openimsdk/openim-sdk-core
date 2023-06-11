@@ -26,6 +26,7 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/sdkerrs"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -246,18 +247,26 @@ func (c *Conversation) msgStructToLocalChatLog(src *sdk_struct.MsgStruct) *model
 	switch src.ContentType {
 	case constant.Text:
 		lc.Content = utils.StructToJsonString(src.TextElem)
+	case constant.Picture:
+		lc.Content = utils.StructToJsonString(src.PictureElem)
+	case constant.Sound:
+		lc.Content = utils.StructToJsonString(src.SoundElem)
+	case constant.Video:
+		lc.Content = utils.StructToJsonString(src.VideoElem)
+	case constant.File:
+		lc.Content = utils.StructToJsonString(src.FileElem)
 	case constant.AtText:
 		lc.Content = utils.StructToJsonString(src.AtTextElem)
+	case constant.Merger:
+		lc.Content = utils.StructToJsonString(src.MergeElem)
+	case constant.Card:
+		lc.Content = utils.StructToJsonString(src.CardElem)
 	case constant.Location:
 		lc.Content = utils.StructToJsonString(src.LocationElem)
 	case constant.Custom:
 		lc.Content = utils.StructToJsonString(src.CustomElem)
-	case constant.Merger:
-		lc.Content = utils.StructToJsonString(src.MergeElem)
 	case constant.Quote:
 		lc.Content = utils.StructToJsonString(src.QuoteElem)
-	case constant.Card:
-		lc.Content = utils.StructToJsonString(src.CardElem)
 	case constant.Face:
 		lc.Content = utils.StructToJsonString(src.FaceElem)
 	case constant.AdvancedText:
@@ -419,128 +428,154 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: lc.ConversationID, Action: constant.AddConOrUpLatMsg, Args: *lc}, c.GetCh())
 	var delFile []string
 	//media file handle
-	if s.Status != constant.MsgStatusSendSuccess { //filter forward message
-		switch s.ContentType {
-		case constant.Picture:
-			var sourcePath string
-			if utils.FileExist(s.PictureElem.SourcePath) {
-				sourcePath = s.PictureElem.SourcePath
-				delFile = append(delFile, utils.FileTmpPath(s.PictureElem.SourcePath, c.DataDir))
-			} else {
-				sourcePath = utils.FileTmpPath(s.PictureElem.SourcePath, c.DataDir)
-				delFile = append(delFile, sourcePath)
-			}
-			// log.Info("", "file", sourcePath, delFile)
-
-			res, err := c.file.PutFile(ctx, &file.PutArgs{
-				PutID:    s.ClientMsgID,
-				Filepath: sourcePath,
-				Name:     c.fileName("picture", s.ClientMsgID),
-			}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
-			if err != nil {
-				return nil, err
-			}
-			s.PictureElem.SourcePicture.Url = res.URL
+	switch s.ContentType {
+	case constant.Picture:
+		if s.Status == constant.MsgStatusSendSuccess {
 			s.Content = utils.StructToJsonString(s.PictureElem)
-
-		case constant.Voice:
-			var sourcePath string
-			if utils.FileExist(s.SoundElem.SoundPath) {
-				sourcePath = s.SoundElem.SoundPath
-				delFile = append(delFile, utils.FileTmpPath(s.SoundElem.SoundPath, c.DataDir))
-			} else {
-				sourcePath = utils.FileTmpPath(s.SoundElem.SoundPath, c.DataDir)
-				delFile = append(delFile, sourcePath)
-			}
-			// log.Info("", "file", sourcePath, delFile)
-
-			res, err := c.file.PutFile(ctx, &file.PutArgs{
-				PutID:    s.ClientMsgID,
-				Filepath: sourcePath,
-				Name:     c.fileName("voice", s.ClientMsgID),
-			}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
-			if err != nil {
-				return nil, err
-			}
-			s.SoundElem.SourceURL = res.URL
-			s.Content = utils.StructToJsonString(s.SoundElem)
-		case constant.Video:
-			var videoPath string
-			var snapPath string
-			if utils.FileExist(s.VideoElem.VideoPath) {
-				videoPath = s.VideoElem.VideoPath
-				snapPath = s.VideoElem.SnapshotPath
-				delFile = append(delFile, utils.FileTmpPath(s.VideoElem.VideoPath, c.DataDir))
-				delFile = append(delFile, utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DataDir))
-			} else {
-				videoPath = utils.FileTmpPath(s.VideoElem.VideoPath, c.DataDir)
-				snapPath = utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DataDir)
-				delFile = append(delFile, videoPath)
-				delFile = append(delFile, snapPath)
-			}
-			log.ZDebug(ctx, "file", "videoPath", videoPath, "snapPath", snapPath, "delFile", delFile)
-
-			snapRes, err := c.file.PutFile(ctx, &file.PutArgs{
-				PutID:    s.ClientMsgID,
-				Filepath: snapPath,
-				Name:     c.fileName("videoSnapshot", s.ClientMsgID),
-			}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
-			if err != nil {
-				return nil, err
-			}
-
-			res, err := c.file.PutFile(ctx, &file.PutArgs{
-				PutID:    s.ClientMsgID,
-				Filepath: videoPath,
-				Name:     c.fileName("video", s.ClientMsgID),
-			}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
-			if err != nil {
-				return nil, err
-			}
-			s.VideoElem.SnapshotURL = snapRes.URL
-			s.SoundElem.SourceURL = res.URL
-			s.Content = utils.StructToJsonString(s.VideoElem)
-		case constant.File:
-			res, err := c.file.PutFile(ctx, &file.PutArgs{
-				PutID:    s.ClientMsgID,
-				Filepath: s.FileElem.FilePath,
-				Name:     c.fileName("file", s.ClientMsgID),
-			}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
-			if err != nil {
-				return nil, err
-			}
-			s.SoundElem.SourceURL = res.URL
-			s.Content = utils.StructToJsonString(s.FileElem)
-		case constant.Text:
-			s.Content = utils.StructToJsonString(s.TextElem)
-		case constant.AtText:
-			s.Content = utils.StructToJsonString(s.AtTextElem)
-		case constant.Location:
-			s.Content = utils.StructToJsonString(s.LocationElem)
-		case constant.Custom:
-			s.Content = utils.StructToJsonString(s.CustomElem)
-		case constant.Merger:
-			s.Content = utils.StructToJsonString(s.MergeElem)
-		case constant.Quote:
-			s.Content = utils.StructToJsonString(s.QuoteElem)
-		case constant.Card:
-			s.Content = utils.StructToJsonString(s.CardElem)
-		case constant.Face:
-			s.Content = utils.StructToJsonString(s.FaceElem)
-		case constant.AdvancedText:
-			s.Content = utils.StructToJsonString(s.AdvancedTextElem)
-		default:
-			return nil, sdkerrs.ErrMsgContentTypeNotSupport
+			break
 		}
-		if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Voice, constant.Video, constant.File}) {
-			localMessage := c.msgStructToLocalChatLog(s)
-			log.ZDebug(ctx, "update message is ", s, localMessage)
-			err = c.db.UpdateMessage(ctx, lc.ConversationID, localMessage)
-			if err != nil {
-				return nil, err
-			}
+		var sourcePath string
+		if utils.FileExist(s.PictureElem.SourcePath) {
+			sourcePath = s.PictureElem.SourcePath
+			delFile = append(delFile, utils.FileTmpPath(s.PictureElem.SourcePath, c.DataDir))
+		} else {
+			sourcePath = utils.FileTmpPath(s.PictureElem.SourcePath, c.DataDir)
+			delFile = append(delFile, sourcePath)
+		}
+		// log.Info("", "file", sourcePath, delFile)
+		log.ZDebug(ctx, "send picture", "path", sourcePath)
+
+		res, err := c.file.PutFile(ctx, &file.PutArgs{
+			PutID:    s.ClientMsgID,
+			Filepath: sourcePath,
+			Name:     c.fileName("picture", s.ClientMsgID) + filepath.Ext(sourcePath),
+		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
+		if err != nil {
+			return nil, err
+		}
+		s.PictureElem.SourcePicture.Url = res.URL
+		//s.PictureElem.SnapshotPicture = &sdk_struct.PictureBaseInfo{
+		//	Width:  int32(utils.StringToInt(constant.ZoomScale)),
+		//	Height: int32(utils.StringToInt(constant.ZoomScale)),
+		//	Url:    res.URL + "/w/" + constant.ZoomScale + "/h/" + constant.ZoomScale,
+		//}
+		s.PictureElem.SnapshotPicture = &sdk_struct.PictureBaseInfo{
+			Width:  s.PictureElem.SourcePicture.Width,
+			Height: s.PictureElem.SourcePicture.Height,
+			Url:    res.URL,
+		}
+		s.Content = utils.StructToJsonString(s.PictureElem)
+
+	case constant.Sound:
+		if s.Status == constant.MsgStatusSendSuccess {
+			s.Content = utils.StructToJsonString(s.SoundElem)
+			break
+		}
+		var sourcePath string
+		if utils.FileExist(s.SoundElem.SoundPath) {
+			sourcePath = s.SoundElem.SoundPath
+			delFile = append(delFile, utils.FileTmpPath(s.SoundElem.SoundPath, c.DataDir))
+		} else {
+			sourcePath = utils.FileTmpPath(s.SoundElem.SoundPath, c.DataDir)
+			delFile = append(delFile, sourcePath)
+		}
+		// log.Info("", "file", sourcePath, delFile)
+
+		res, err := c.file.PutFile(ctx, &file.PutArgs{
+			PutID:    s.ClientMsgID,
+			Filepath: sourcePath,
+			Name:     c.fileName("voice", s.ClientMsgID) + filepath.Ext(sourcePath),
+		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
+		if err != nil {
+			return nil, err
+		}
+		s.SoundElem.SourceURL = res.URL
+		s.Content = utils.StructToJsonString(s.SoundElem)
+	case constant.Video:
+		if s.Status == constant.MsgStatusSendSuccess {
+			s.Content = utils.StructToJsonString(s.VideoElem)
+			break
+		}
+		var videoPath string
+		var snapPath string
+		if utils.FileExist(s.VideoElem.VideoPath) {
+			videoPath = s.VideoElem.VideoPath
+			snapPath = s.VideoElem.SnapshotPath
+			delFile = append(delFile, utils.FileTmpPath(s.VideoElem.VideoPath, c.DataDir))
+			delFile = append(delFile, utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DataDir))
+		} else {
+			videoPath = utils.FileTmpPath(s.VideoElem.VideoPath, c.DataDir)
+			snapPath = utils.FileTmpPath(s.VideoElem.SnapshotPath, c.DataDir)
+			delFile = append(delFile, videoPath)
+			delFile = append(delFile, snapPath)
+		}
+		log.ZDebug(ctx, "file", "videoPath", videoPath, "snapPath", snapPath, "delFile", delFile)
+
+		snapRes, err := c.file.PutFile(ctx, &file.PutArgs{
+			PutID:    s.ClientMsgID,
+			Filepath: snapPath,
+			Name:     c.fileName("videoSnapshot", s.ClientMsgID) + filepath.Ext(snapPath),
+		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
+		if err != nil {
+			return nil, err
+		}
+
+		res, err := c.file.PutFile(ctx, &file.PutArgs{
+			PutID:    s.ClientMsgID,
+			Filepath: videoPath,
+			Name:     c.fileName("video", s.ClientMsgID) + filepath.Ext(videoPath),
+		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
+		if err != nil {
+			return nil, err
+		}
+		s.VideoElem.SnapshotURL = snapRes.URL
+		s.SoundElem.SourceURL = res.URL
+		s.Content = utils.StructToJsonString(s.VideoElem)
+	case constant.File:
+		if s.Status != constant.MsgStatusSendSuccess {
+			s.Content = utils.StructToJsonString(s.FileElem)
+			break
+		}
+		res, err := c.file.PutFile(ctx, &file.PutArgs{
+			PutID:    s.ClientMsgID,
+			Filepath: s.FileElem.FilePath,
+			Name:     c.fileName("file", s.ClientMsgID) + filepath.Ext(s.FileElem.FilePath),
+		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
+		if err != nil {
+			return nil, err
+		}
+		s.SoundElem.SourceURL = res.URL
+		s.Content = utils.StructToJsonString(s.FileElem)
+	case constant.Text:
+		s.Content = utils.StructToJsonString(s.TextElem)
+	case constant.AtText:
+		s.Content = utils.StructToJsonString(s.AtTextElem)
+	case constant.Location:
+		s.Content = utils.StructToJsonString(s.LocationElem)
+	case constant.Custom:
+		s.Content = utils.StructToJsonString(s.CustomElem)
+	case constant.Merger:
+		s.Content = utils.StructToJsonString(s.MergeElem)
+	case constant.Quote:
+		s.Content = utils.StructToJsonString(s.QuoteElem)
+	case constant.Card:
+		s.Content = utils.StructToJsonString(s.CardElem)
+	case constant.Face:
+		s.Content = utils.StructToJsonString(s.FaceElem)
+	case constant.AdvancedText:
+		s.Content = utils.StructToJsonString(s.AdvancedTextElem)
+	default:
+		return nil, sdkerrs.ErrMsgContentTypeNotSupport
+	}
+	if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Sound, constant.Video, constant.File}) {
+		localMessage := c.msgStructToLocalChatLog(s)
+		log.ZDebug(ctx, "update message is ", "localMessage", localMessage)
+		err = c.db.UpdateMessage(ctx, lc.ConversationID, localMessage)
+		if err != nil {
+			return nil, err
 		}
 	}
+
 	return c.sendMessageToServer(ctx, s, lc, callback, delFile, p, options)
 
 }
@@ -572,7 +607,7 @@ func (c *Conversation) SendMessageNotOss(ctx context.Context, s *sdk_struct.MsgS
 	//u.doUpdateConversation(cmd2Value{Value: updateConNode{"", ConChange, []string{conversationID}}})
 	//_ = u.triggerCmdUpdateConversation(updateConNode{conversationID, ConChange, ""})
 	var delFile []string
-	if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Voice, constant.Video, constant.File}) {
+	if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Sound, constant.Video, constant.File}) {
 		localMessage := c.msgStructToLocalChatLog(s)
 		err = c.db.UpdateMessage(ctx, lc.ConversationID, localMessage)
 		if err != nil {
@@ -627,7 +662,7 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 			//s.PictureElem.SnapshotPicture.Height = int32(utils.StringToInt(constant.ZoomScale))
 			s.Content = utils.StructToJsonString(s.PictureElem)
 
-		case constant.Voice:
+		case constant.Sound:
 			//soundURL, uuid, err := c.UploadSoundByBuffer(buffer1, s.SoundElem.DataSize, s.SoundElem.SoundType, callback.OnProgress)
 			//if err != nil {
 			//	c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
@@ -677,7 +712,7 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 		// } else {
 		// 	log.Debug("", "before update database message is ", *oldMessage)
 		// }
-		if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Voice, constant.Video, constant.File}) {
+		if utils.IsContainInt(int(s.ContentType), []int{constant.Picture, constant.Sound, constant.Video, constant.File}) {
 			localMessage := c.msgStructToLocalChatLog(s)
 			log.ZWarn(ctx, "update message is ", nil, s, localMessage)
 			err = c.db.UpdateMessage(ctx, lc.ConversationID, localMessage)

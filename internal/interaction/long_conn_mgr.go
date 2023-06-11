@@ -16,8 +16,10 @@ package interaction
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/common"
@@ -85,6 +87,9 @@ type LongConnMgr struct {
 	Syncer             *WsRespAsyn
 	encoder            Encoder
 	compressor         Compressor
+	IsBackground       bool
+	// write conn lock
+	connWrite *sync.Mutex
 }
 
 type Message struct {
@@ -92,15 +97,16 @@ type Message struct {
 	Resp    chan *GeneralWsResp
 }
 
-func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, pushMsgAndMaxSeqCh, conversationCh chan common.Cmd2Value) *LongConnMgr {
+func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, heartbeatCmdCh, pushMsgAndMaxSeqCh, conversationCh chan common.Cmd2Value) *LongConnMgr {
 	l := &LongConnMgr{listener: listener, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh,
 		conversationCh: conversationCh, IsCompression: true,
 		Syncer: NewWsRespAsyn(), encoder: NewGobEncoder(), compressor: NewGzipCompressor()}
 	l.send = make(chan Message, 10)
 	l.conn = NewWebSocket(WebSocket)
+	l.connWrite = new(sync.Mutex)
 	go l.readPump(ctx)
 	go l.writePump(ctx)
-	go l.heartbeat(ctx)
+	go l.heartbeat(ctx, heartbeatCmdCh)
 	return l
 }
 
@@ -240,7 +246,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 		}
 	}
 }
-func (c *LongConnMgr) heartbeat(ctx context.Context) {
+func (c *LongConnMgr) heartbeat(ctx context.Context, heartbeatCmdCh chan common.Cmd2Value) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -250,50 +256,55 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 		case <-ctx.Done():
 			log.ZInfo(ctx, "heartbeat done sdk logout.....")
 			return
+		case <-heartbeatCmdCh:
+			c.sendPingToServer(ctx)
 		case <-ticker.C:
-			_ = c.conn.SetWriteDeadline(writeWait)
-			var m sdkws.GetMaxSeqReq
-			m.UserID = ccontext.Info(ctx).UserID()
-			opID := utils.OperationIDGenerator()
-			sCtx := ccontext.WithOperationID(c.ctx, opID)
-			log.ZInfo(sCtx, "ping and getMaxSeq start")
-			data, err := proto.Marshal(&m)
-			if err != nil {
-				log.ZError(sCtx, "proto.Marshal", err)
-				break
-			}
-			req := &GeneralWsReq{
-				ReqIdentifier: constant.GetNewestSeq,
-				SendID:        m.UserID,
-				OperationID:   opID,
-				Data:          data,
-			}
-			resp, err := c.sendAndWaitResp(req)
-			if err != nil {
-				log.ZError(sCtx, "sendAndWaitResp", err)
-				_ = c.close()
-				time.Sleep(time.Second * 1)
-				break
-			} else {
-				if resp.ErrCode != 0 {
-					log.ZError(sCtx, "getMaxSeq failed", nil, "errCode:", resp.ErrCode, "errMsg:", resp.ErrMsg)
-				}
-				var wsSeqResp sdkws.GetMaxSeqResp
-				err = proto.Unmarshal(resp.Data, &wsSeqResp)
-				if err != nil {
-					log.ZError(sCtx, "proto.Unmarshal", err)
-				}
-				var cmd sdk_struct.CmdMaxSeqToMsgSync
-				cmd.ConversationMaxSeqOnSvr = wsSeqResp.MaxSeqs
-
-				err := common.TriggerCmdMaxSeq(sCtx, &cmd, c.pushMsgAndMaxSeqCh)
-				if err != nil {
-					log.ZError(sCtx, "TriggerCmdMaxSeq failed", err)
-				}
-			}
+			c.sendPingToServer(ctx)
 		}
 	}
 
+}
+func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
+	_ = c.conn.SetWriteDeadline(writeWait)
+	var m sdkws.GetMaxSeqReq
+	m.UserID = ccontext.Info(ctx).UserID()
+	opID := utils.OperationIDGenerator()
+	sCtx := ccontext.WithOperationID(c.ctx, opID)
+	log.ZInfo(sCtx, "ping and getMaxSeq start")
+	data, err := proto.Marshal(&m)
+	if err != nil {
+		log.ZError(sCtx, "proto.Marshal", err)
+		return
+	}
+	req := &GeneralWsReq{
+		ReqIdentifier: constant.GetNewestSeq,
+		SendID:        m.UserID,
+		OperationID:   opID,
+		Data:          data,
+	}
+	resp, err := c.sendAndWaitResp(req)
+	if err != nil {
+		log.ZError(sCtx, "sendAndWaitResp", err)
+		_ = c.close()
+		time.Sleep(time.Second * 1)
+		return
+	} else {
+		if resp.ErrCode != 0 {
+			log.ZError(sCtx, "getMaxSeq failed", nil, "errCode:", resp.ErrCode, "errMsg:", resp.ErrMsg)
+		}
+		var wsSeqResp sdkws.GetMaxSeqResp
+		err = proto.Unmarshal(resp.Data, &wsSeqResp)
+		if err != nil {
+			log.ZError(sCtx, "proto.Unmarshal", err)
+		}
+		var cmd sdk_struct.CmdMaxSeqToMsgSync
+		cmd.ConversationMaxSeqOnSvr = wsSeqResp.MaxSeqs
+
+		err := common.TriggerCmdMaxSeq(sCtx, &cmd, c.pushMsgAndMaxSeqCh)
+		if err != nil {
+			log.ZError(sCtx, "TriggerCmdMaxSeq failed", err)
+		}
+	}
 }
 func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error) {
 	tempChan, err := c.writeBinaryMsgAndRetry(msg)
@@ -330,6 +341,8 @@ func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan *GeneralWs
 }
 
 func (c *LongConnMgr) writeBinaryMsg(req GeneralWsReq) error {
+	c.connWrite.Lock()
+	defer c.connWrite.Unlock()
 	encodeBuf, err := c.encoder.Encode(req)
 	if err != nil {
 		return err
@@ -427,69 +440,34 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) error {
 	c.w.Lock()
 	c.connStatus = Connecting
 	c.w.Unlock()
-	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s", ccontext.Info(ctx).WsAddr(),
-		ccontext.Info(ctx).UserID(), ccontext.Info(ctx).Token(), ccontext.Info(ctx).PlatformID(), ccontext.Info(ctx).OperationID())
+	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s&isBackground=%t", ccontext.Info(ctx).WsAddr(),
+		ccontext.Info(ctx).UserID(), ccontext.Info(ctx).Token(), ccontext.Info(ctx).PlatformID(), ccontext.Info(ctx).OperationID(), c.IsBackground)
 	if c.IsCompression {
 		url += fmt.Sprintf("&compression=%s", "gzip")
 	}
-	_, err := c.conn.Dial(url, nil)
+	resp, err := c.conn.Dial(url, nil)
 	if err != nil {
-		//if httpResp != nil {
-		//	errMsg := httpResp.Header.Get("ws_err_msg") + " operationID " + ctx.Value("operationID").(string) + err.Error()
-		//	//log.Error(operationID, "websocket.DefaultDialer.Dial failed ", errMsg, httpResp.StatusCode)
-		//	u.listener.OnConnectFailed(int32(httpResp.StatusCode), errMsg)
-		//	switch int32(httpResp.StatusCode) {
-		//	case constant.ErrTokenExpired.ErrCode:
-		//		u.listener.OnUserTokenExpired()
-		//		u.tokenErrCode = constant.ErrTokenExpired.ErrCode
-		//		return false, false, utils.Wrap(err, errMsg)
-		//	case constant.ErrTokenInvalid.ErrCode:
-		//		u.tokenErrCode = constant.ErrTokenInvalid.ErrCode
-		//		return false, false, utils.Wrap(err, errMsg)
-		//	case constant.ErrTokenMalformed.ErrCode:
-		//		u.tokenErrCode = constant.ErrTokenMalformed.ErrCode
-		//		return false, false, utils.Wrap(err, errMsg)
-		//	case constant.ErrTokenNotValidYet.ErrCode:
-		//		u.tokenErrCode = constant.ErrTokenNotValidYet.ErrCode
-		//		return false, false, utils.Wrap(err, errMsg)
-		//	case constant.ErrTokenUnknown.ErrCode:
-		//		u.tokenErrCode = constant.ErrTokenUnknown.ErrCode
-		//		return false, false, utils.Wrap(err, errMsg)
-		//	case constant.ErrTokenDifferentPlatformID.ErrCode:
-		//		u.tokenErrCode = constant.ErrTokenDifferentPlatformID.ErrCode
-		//		return false, false, utils.Wrap(err, errMsg)
-		//	case constant.ErrTokenDifferentUserID.ErrCode:
-		//		u.tokenErrCode = constant.ErrTokenDifferentUserID.ErrCode
-		//		return false, false, utils.Wrap(err, errMsg)
-		//	case constant.ErrTokenKicked.ErrCode:
-		//		u.tokenErrCode = constant.ErrTokenKicked.ErrCode
-		//		//if u.loginStatus != constant.Logout {
-		//		//	u.listener.OnKickedOffline()
-		//		//	u.SetLoginStatus(constant.Logout)
-		//		//}
-		//
-		//		return false, true, utils.Wrap(err, errMsg)
-		//	default:
-		//		//errMsg = err.Error() + " operationID " + operationID
-		//		errMsg = err.Error() + " operationID " + ctx.Value("operationID").(string)
-		//		u.listener.OnConnectFailed(1001, errMsg)
-		//		return true, false, utils.Wrap(err, errMsg)
-		//	}
-		//} else {
-		//	errMsg := err.Error() + " operationID " + ctx.Value("operationID").(string)
-		//	u.listener.OnConnectFailed(1001, errMsg)
-		//	if u.ConversationCh != nil {
-		//		common.TriggerCmdSuperGroupMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: nil, OperationID: ctx.Value("operationID").(string), SyncFlag: constant.MsgSyncBegin}, u.ConversationCh)
-		//		common.TriggerCmdSuperGroupMsgCome(sdk_struct.CmdNewMsgComeToConversation{MsgList: nil, OperationID: ctx.Value("operationID").(string), SyncFlag: constant.MsgSyncFailed}, u.ConversationCh)
-		//	}
-		//
-		//	//log.Error(operationID, "websocket.DefaultDialer.Dial failed ", errMsg, "url ", url)
-		//	return true, false, utils.Wrap(err, errMsg)
-		//}
-		c.listener.OnConnectFailed(1001, err.Error())
 		c.w.Lock()
 		c.connStatus = Closed
 		c.w.Unlock()
+		if resp != nil {
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return err
+			}
+			log.ZInfo(ctx, "reConn resp", "body", string(body))
+			var apiResp struct {
+				ErrCode int    `json:"errCode"`
+				ErrMsg  string `json:"errMsg"`
+				ErrDlt  string `json:"errDlt"`
+			}
+			if err := json.Unmarshal(body, &apiResp); err != nil {
+				return err
+			}
+			c.listener.OnConnectFailed(int32(apiResp.ErrCode), err.Error())
+			return errs.NewCodeError(apiResp.ErrCode, apiResp.ErrMsg).WithDetail(apiResp.ErrDlt).Wrap()
+		}
+		c.listener.OnConnectFailed(sdkerrs.NetworkError, err.Error())
 		return err
 	}
 	c.listener.OnConnectSuccess()
@@ -521,4 +499,7 @@ func (c *LongConnMgr) Close(ctx context.Context) {
 		log.ZInfo(ctx, "conn already closed")
 	}
 
+}
+func (c *LongConnMgr) SetBackground(isBackground bool) {
+	c.IsBackground = isBackground
 }

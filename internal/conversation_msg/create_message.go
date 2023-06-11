@@ -257,7 +257,7 @@ func (c *Conversation) CreateSoundMessageFromFullPath(ctx context.Context, sound
 	}
 
 	s := sdk_struct.MsgStruct{}
-	err = c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Voice)
+	err = c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Sound)
 	if err != nil {
 		return nil, err
 	}
@@ -280,6 +280,7 @@ func (c *Conversation) CreateImageMessage(ctx context.Context, imagePath string)
 		return nil, err
 	}
 	path := c.DataDir + imagePath
+	//path := imagePath
 	imageInfo, err := getImageInfo(path)
 	if err != nil {
 		//log.Error("internal", "get imageInfo err", err.Error())
@@ -311,7 +312,7 @@ func (c *Conversation) CreateImageMessageByURL(ctx context.Context, sourcePictur
 }
 func (c *Conversation) CreateSoundMessageByURL(ctx context.Context, soundElem *sdk_struct.SoundBaseInfo) (*sdk_struct.MsgStruct, error) {
 	s := sdk_struct.MsgStruct{}
-	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Voice)
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Sound)
 	if err != nil {
 		return nil, err
 	}
@@ -327,7 +328,7 @@ func (c *Conversation) CreateSoundMessageByURL(ctx context.Context, soundElem *s
 }
 func (c *Conversation) CreateSoundMessage(ctx context.Context, soundPath string, duration int64) (*sdk_struct.MsgStruct, error) {
 	s := sdk_struct.MsgStruct{}
-	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Voice)
+	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Sound)
 	if err != nil {
 		return nil, err
 	}

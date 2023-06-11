@@ -129,6 +129,7 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		signaling:            signaling,
 		full:                 full,
 		business:             business,
+		file:                 file,
 		messageController:    NewMessageController(db),
 		IsExternalExtensions: info.IsExternalExtensions(),
 		maxSeqRecorder:       NewMaxSeqRecorder(),
@@ -780,7 +781,7 @@ func (c *Conversation) msgHandleByContentType(msg *sdk_struct.MsgStruct) (err er
 		t := sdk_struct.PictureElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
 		msg.PictureElem = &t
-	case constant.Voice:
+	case constant.Sound:
 		t := sdk_struct.SoundElem{}
 		err = utils.JsonStringToStruct(msg.Content, &t)
 		msg.SoundElem = &t

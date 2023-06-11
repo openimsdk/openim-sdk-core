@@ -94,6 +94,15 @@ func Test_GetGetMultipleConversation(t *testing.T) {
 	}
 }
 
+//func Test_DeleteConversation(t *testing.T) {
+//	err := open_im_sdk.UserForSDK.Conversation().DeleteConversation(ctx, "group_17729585012")
+//	if err != nil {
+//		if !strings.Contains(err.Error(), "no update") {
+//			t.Fatal(err)
+//		}
+//	}
+//}
+
 func Test_DeleteAllConversationFromLocal(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Conversation().DeleteAllConversationFromLocal(ctx)
 	if err != nil {
@@ -295,4 +304,17 @@ func Test_MarkConversationMessageAsRead(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func Test_SendImgMsg(t *testing.T) {
+	ctx = context.WithValue(ctx, "callback", TestSendMsg{})
+	msg, err := open_im_sdk.UserForSDK.Conversation().CreateImageMessage(ctx, "C:\\Users\\Admin\\Desktop\\test.png")
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := open_im_sdk.UserForSDK.Conversation().SendMessage(ctx, msg, "1919501984", "", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("send smg => %+v\n", res)
 }

@@ -182,7 +182,7 @@ func (m *MsgSyncer) pushTriggerAndSync(ctx context.Context, pullMsgs map[string]
 			storageMsgs = append(storageMsgs, msg)
 		}
 		if lastSeq == m.syncedMaxSeqs[conversationID]+int64(len(storageMsgs)) && lastSeq != 0 {
-			log.ZDebug(ctx, "trigger msgs", storageMsgs)
+			log.ZDebug(ctx, "trigger msgs", "msgs", storageMsgs)
 			_ = triggerFunc(ctx, map[string]*sdkws.PullMsgs{conversationID: {Msgs: storageMsgs}})
 			m.syncedMaxSeqs[conversationID] = lastSeq
 		} else if lastSeq != 0 { //为0就是全是通知
