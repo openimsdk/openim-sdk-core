@@ -33,6 +33,7 @@ import (
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/msg"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 
 	pbConversation "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/conversation"
@@ -81,58 +82,14 @@ func (c *Conversation) getServerConversationList(ctx context.Context) ([]*model_
 	return util.Batch(ServerConversationToLocal, resp.Conversations), nil
 }
 
-func (c *Conversation) getServerHasReadAndMaxSeqs(ctx context.Context) (map[string][2]int64, error) {
-	//resp, err := util.CallApi[pbConversation.GetConversationsHasReadAndMaxSeqResp](ctx, constant.GetConversationsHasReadAndMaxSeqRouter, pbConversation.GetConversationsHasReadAndMaxSeqReq{UserID: c.loginUserID})
-	//if err != nil {
-	//	log.ZError(ctx, "getServerHasReadAndMaxSeqs err", err)
-	//	return nil, err
-	//}
-	//return resp.Seqs, nil
-	return nil, nil
-}
-
-func (c *Conversation) FixVersionData(ctx context.Context) {
-	switch constant.SdkVersion + constant.BigVersion + constant.UpdateVersion {
-	case "v2.0.0":
-		// t := time.Now()
-		groupIDList, err := c.db.GetReadDiffusionGroupIDList(ctx)
-		if err != nil {
-			// log.Error("", "GetReadDiffusionGroupIDList failed ", err.Error())
-			return
-		}
-		// log.Info("", "fix version data start", groupIDList)
-		for _, v := range groupIDList {
-			err := c.db.SuperGroupUpdateSpecificContentTypeMessage(ctx, constant.ReactionMessageModifier, v, map[string]interface{}{"status": constant.MsgStatusFiltered})
-			if err != nil {
-				// log.Error("", "SuperGroupUpdateSpecificContentTypeMessage failed ", err.Error())
-				continue
-			}
-			msgList, err := c.db.SuperGroupSearchAllMessageByContentType(ctx, v, constant.ReactionMessageModifier)
-			if err != nil {
-				// log.NewError("internal", "SuperGroupSearchMessageByContentTypeNotOffset failed", v, err.Error())
-				continue
-			}
-			var reactionMsgIDList []string
-			for _, value := range msgList {
-				var n sdkws.ReactionMessageModifierNotification
-				err := json.Unmarshal([]byte(value.Content), &n)
-				if err != nil {
-					// log.Error("internal", "unmarshal failed err:", err.Error(), *value)
-					continue
-				}
-				reactionMsgIDList = append(reactionMsgIDList, n.ClientMsgID)
-			}
-			if len(reactionMsgIDList) > 0 {
-				err := c.db.SuperGroupUpdateGroupMessageFields(ctx, reactionMsgIDList, v, map[string]interface{}{"is_react": true})
-				if err != nil {
-					// log.Error("internal", "unmarshal failed err:", err.Error(), reactionMsgIDList, v)
-					continue
-				}
-			}
-
-		}
-		// log.Info("", "fix version data end", groupIDList, "cost time:", time.Since(t))
+func (c *Conversation) getServerHasReadAndMaxSeqs(ctx context.Context) (map[string]*msg.Seqs, error) {
+	resp := &msg.GetConversationsHasReadAndMaxSeqResp{}
+	err := util.ApiPost(ctx, constant.GetConversationsHasReadAndMaxSeqRouter, msg.GetConversationsHasReadAndMaxSeqReq{UserID: c.loginUserID}, resp)
+	if err != nil {
+		log.ZError(ctx, "getServerHasReadAndMaxSeqs err", err)
+		return nil, err
 	}
+	return resp.Seqs, nil
 }
 
 func (c *Conversation) getHistoryMessageList(ctx context.Context, req sdk.GetHistoryMessageListParams, isReverse bool) ([]*sdk_struct.MsgStruct, error) {

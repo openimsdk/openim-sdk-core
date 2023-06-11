@@ -2,16 +2,21 @@ package conversation_msg
 
 import (
 	"context"
+	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	pbMsg "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/msg"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
 func (c *Conversation) markAsRead2Svr(ctx context.Context, conversationID string, seqs []int64) error {
-	return nil
+	req := &pbMsg.MarkMsgsAsReadReq{UserID: c.loginUserID, ConversationID: conversationID, Seqs: seqs}
+	return util.ApiPost(ctx, constant.SetConversationsRouter, req, nil)
 }
 
 // mark a conversation's all message as read
@@ -50,7 +55,7 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 }
 
 // mark a conversation's message as read by seqs
-func (c *Conversation) markConversationMessageAsReadBySeqs(ctx context.Context, conversationID string, msgIDs []string) error {
+func (c *Conversation) markConversationMessageAsReadByMsgID(ctx context.Context, conversationID string, msgIDs []string) error {
 	c.markAsReadLock.Lock()
 	defer c.markAsReadLock.Unlock()
 	_, err := c.db.GetConversation(ctx, conversationID)
@@ -134,37 +139,56 @@ func (c *Conversation) doUnreadCount(ctx context.Context, conversationID string,
 }
 
 func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) {
-	// c.msgListener.OnRecvGroupReadReceipt(utils.StructToJsonString(groupMessageReceiptResp))
-	// c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"has_read_seq": hasReadSeq})
-	// messages, err := c.db.GetMultipleMessageController(newMsgID, groupID, sessionType)
-	// if err != nil {
-	// 	log.Error("internal", "GetMessage err:", err.Error(), "ClientMsgID", newMsgID)
-	// 	continue
-	// }
-	// msgRt := new(sdk_struct.MessageReceipt)
-	// msgRt.UserID = userID
-	// msgRt.GroupID = groupID
-	// msgRt.SessionType = sessionType
-	// msgRt.ContentType = constant.GroupHasReadReceipt
-
-	// for _, message := range messages {
-	// 	t := new(model_struct.LocalChatLog)
-	// 	if userID != c.loginUserID {
-	// 		attachInfo := sdk_struct.AttachedInfoElem{}
-	// 		_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
-	// 		attachInfo.GroupHasReadInfo.HasReadUserIDList = utils.RemoveRepeatedStringInList(append(attachInfo.GroupHasReadInfo.HasReadUserIDList, userID))
-	// 		attachInfo.GroupHasReadInfo.HasReadCount = int32(len(attachInfo.GroupHasReadInfo.HasReadUserIDList))
-	// 		t.AttachedInfo = utils.StructToJsonString(attachInfo)
-	// 	}
-	// 	t.ClientMsgID = message.ClientMsgID
-	// 	t.IsRead = true
-	// 	t.SessionType = message.SessionType
-	// 	t.RecvID = message.RecvID
-	// 	err1 := c.db.UpdateMessageController(t)
-	// 	if err1 != nil {
-	// 		log.Error("internal", "setGroupMessageHasReadByMsgID err:", err1, "ClientMsgID", t, message)
-	// 		continue
-	// 	}
-	// 	successMsgIDlist = append(successMsgIDlist, message.ClientMsgID)
-	// }
+	tips := &sdkws.MarkAsReadTips{}
+	utils.UnmarshalNotificationElem(msg.Content, tips)
+	if tips.MarkAsReadUserID != c.loginUserID {
+		conversation, err := c.db.GetConversation(ctx, tips.ConversationID)
+		if err != nil {
+			log.ZError(ctx, "GetConversation err", err, "conversationID", tips.ConversationID)
+			return
+		}
+		messages, err := c.db.GetMessagesBySeqs(ctx, tips.ConversationID, tips.Seqs)
+		if err != nil {
+			log.ZError(ctx, "GetMessagesBySeqs err", err, "conversationID", tips.ConversationID, "seqs", tips.Seqs)
+			return
+		}
+		if conversation.ConversationType == constant.SingleChatType {
+			var successMsgIDs []string
+			for _, message := range messages {
+				attachInfo := sdk_struct.AttachedInfoElem{}
+				_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
+				attachInfo.HasReadTime = msg.SendTime
+				message.AttachedInfo = utils.StructToJsonString(attachInfo)
+				message.IsRead = true
+				if err = c.db.UpdateMessage(ctx, tips.ConversationID, message); err != nil {
+					log.ZError(ctx, "UpdateMessage err", err, "conversationID", tips.ConversationID, "message", message)
+				} else {
+					successMsgIDs = append(successMsgIDs, message.ClientMsgID)
+				}
+			}
+			var messageReceiptResp = []*sdk_struct.MessageReceipt{{UserID: tips.MarkAsReadUserID, MsgIDList: successMsgIDs,
+				SessionType: conversation.ConversationType, ReadTime: msg.SendTime}}
+			c.msgListener.OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
+		} else if conversation.ConversationType == constant.SuperGroupChatType {
+			var successMsgIDs []string
+			for _, message := range messages {
+				attachInfo := sdk_struct.AttachedInfoElem{}
+				_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
+				attachInfo.HasReadTime = msg.SendTime
+				attachInfo.GroupHasReadInfo.HasReadUserIDList = utils.RemoveRepeatedStringInList(append(attachInfo.GroupHasReadInfo.HasReadUserIDList, tips.MarkAsReadUserID))
+				attachInfo.GroupHasReadInfo.HasReadCount = int32(len(attachInfo.GroupHasReadInfo.HasReadUserIDList))
+				message.AttachedInfo = utils.StructToJsonString(attachInfo)
+				if err = c.db.UpdateMessage(ctx, tips.ConversationID, message); err != nil {
+					log.ZError(ctx, "UpdateMessage err", err, "conversationID", tips.ConversationID, "message", message)
+				} else {
+					successMsgIDs = append(successMsgIDs, message.ClientMsgID)
+				}
+			}
+			var messageReceiptResp = []*sdk_struct.MessageReceipt{{GroupID: conversation.GroupID, MsgIDList: successMsgIDs,
+				SessionType: conversation.ConversationType, ReadTime: msg.SendTime}}
+			c.msgListener.OnRecvGroupReadReceipt(utils.StructToJsonString(messageReceiptResp))
+		}
+	} else {
+		c.doUnreadCount(ctx, tips.ConversationID, tips.HasReadSeq)
+	}
 }

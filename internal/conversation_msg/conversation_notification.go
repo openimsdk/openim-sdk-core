@@ -87,7 +87,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 		if err == nil {
 			// log.Info("this is old conversation", *oc)
 			if lc.LatestMsgSendTime >= oc.LatestMsgSendTime { //The session update of asynchronous messages is subject to the latest sending time
-				err := c.db.UpdateColumnsConversation(nil, node.ConID, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
+				err := c.db.UpdateColumnsConversation(ctx, node.ConID, map[string]interface{}{"latest_msg_send_time": lc.LatestMsgSendTime, "latest_msg": lc.LatestMsg})
 				if err != nil {
 					// log.Error("internal", "updateConversationLatestMsgModel err: ", err)
 				} else {
@@ -672,6 +672,8 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 				c.doClearConversations(ctx, v)
 			case v.ContentType == constant.DeleteMsgsNotification:
 				c.doDeleteMsgs(ctx, v)
+			case v.ContentType == constant.HasReadReceipt:
+				c.doReadDrawing(ctx, v)
 			}
 
 			switch v.SessionType {

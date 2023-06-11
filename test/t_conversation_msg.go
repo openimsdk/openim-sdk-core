@@ -621,13 +621,7 @@ func (t TestDeleteConversation) OnError(errCode int32, errMsg string) {
 func (t TestDeleteConversation) OnSuccess(data string) {
 	log.Info(t.OperationID, "TestDeleteConversation , OnSuccess %v\n", data)
 }
-func DoTestDeleteConversation() {
-	var t TestDeleteConversation
-	operationID := utils.OperationIDGenerator()
-	t.OperationID = operationID
-	conversationID := "single_17396220460"
-	open_im_sdk.DeleteConversation(t, operationID, conversationID)
-}
+
 func (m MsgListenerCallBak) OnRecvC2CReadReceipt(data string) {
 	fmt.Println("OnRecvC2CReadReceipt , ", data)
 }

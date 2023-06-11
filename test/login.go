@@ -53,7 +53,7 @@ func InOutDoTest(uid, tk, ws, api string) {
 	cf.DataDir = "./"
 	cf.LogLevel = LogLevel
 	cf.IsExternalExtensions = true
-	cf.IsLogStandardOutput = false
+	cf.IsLogStandardOutput = true
 	cf.LogFilePath = ""
 
 	b, _ := json.Marshal(cf)

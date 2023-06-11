@@ -19,7 +19,6 @@ import (
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/sdk_struct"
-	"strings"
 	"testing"
 	"time"
 
@@ -92,15 +91,6 @@ func Test_GetGetMultipleConversation(t *testing.T) {
 	}
 	for _, v := range conversations {
 		t.Log(v)
-	}
-}
-
-func Test_DeleteConversation(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().DeleteConversation(ctx, "group_17729585012")
-	if err != nil {
-		if !strings.Contains(err.Error(), "no update") {
-			t.Fatal(err)
-		}
 	}
 }
 
@@ -298,4 +288,11 @@ func Test_RevokeMessage(t *testing.T) {
 		t.Fatal(err)
 	}
 	time.Sleep(time.Second * 10)
+}
+
+func Test_MarkConversationMessageAsRead(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Conversation().MarkConversationMessageAsRead(ctx, "si_kernaltestuid8_kernaltestuid9")
+	if err != nil {
+		t.Fatal(err)
+	}
 }

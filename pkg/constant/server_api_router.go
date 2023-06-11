@@ -39,15 +39,17 @@ const (
 	NewestSeqRouter        = "/chat/newest_seq"
 
 	//msg
-	ClearConversationMsgRouter         = RouterMsg + "/clear_conversation_msg" // Clear the message of the specified conversation
-	ClearAllMsgRouter                  = RouterMsg + "/user_clear_all_msg"     // Clear all messages of the current user
-	DeleteMsgsRouter                   = RouterMsg + "/delete_msgs"            // Delete the specified message
-	RevokeMsgRouter                    = RouterMsg + "/revoke_msg"
-	SetMessageReactionExtensionsRouter = RouterMsg + "/set_message_reaction_extensions"
-	AddMessageReactionExtensionsRouter = RouterMsg + "/add_message_reaction_extensions"
+	ClearConversationMsgRouter             = RouterMsg + "/clear_conversation_msg" // Clear the message of the specified conversation
+	ClearAllMsgRouter                      = RouterMsg + "/user_clear_all_msg"     // Clear all messages of the current user
+	DeleteMsgsRouter                       = RouterMsg + "/delete_msgs"            // Delete the specified message
+	RevokeMsgRouter                        = RouterMsg + "/revoke_msg"
+	SetMessageReactionExtensionsRouter     = RouterMsg + "/set_message_reaction_extensions"
+	AddMessageReactionExtensionsRouter     = RouterMsg + "/add_message_reaction_extensions"
+	MarkMsgsAsReadRouter                   = RouterMsg + "/mark_msgs_as_read"
+	GetConversationsHasReadAndMaxSeqRouter = RouterMsg + "/get_conversations_has_read_and_max_seq"
 
 	GetMessageListReactionExtensionsRouter = RouterMsg + "/get_message_list_reaction_extensions"
-	DeleteMessageReactionExtensionsRouter  = RouterMsg + "//delete_message_reaction_extensions"
+	DeleteMessageReactionExtensionsRouter  = RouterMsg + "/delete_message_reaction_extensions"
 
 	TencentCloudStorageCredentialRouter = "/third/tencent_cloud_storage_credential"
 	AliOSSCredentialRouter              = "/third/ali_oss_credential"
@@ -80,17 +82,16 @@ const (
 	SetGroupMemberInfoRouter          = RouterGroup + "/set_group_member_info"
 	GetGroupAbstractInfoRouter        = RouterGroup + "/get_group_abstract_info"
 
-	SetReceiveMessageOptRouter             = "/conversation/set_receive_message_opt"
-	GetReceiveMessageOptRouter             = "/conversation/get_receive_message_opt"
-	GetAllConversationMessageOptRouter     = "/conversation/get_all_conversation_message_opt"
-	SetConversationOptRouter               = ConversationGroup + "/set_conversation"
-	GetConversationsRouter                 = ConversationGroup + "/get_conversations"
-	GetAllConversationsRouter              = ConversationGroup + "/get_all_conversations"
-	GetConversationRouter                  = ConversationGroup + "/get_conversation"
-	BatchSetConversationRouter             = ConversationGroup + "/batch_set_conversation"
-	ModifyConversationFieldRouter          = ConversationGroup + "/modify_conversation_field"
-	GetConversationsHasReadAndMaxSeqRouter = ConversationGroup + "/get_conversations_has_read_and_max_seq"
-	SetConversationsRouter                 = ConversationGroup + "/set_conversations"
+	SetReceiveMessageOptRouter         = "/conversation/set_receive_message_opt"
+	GetReceiveMessageOptRouter         = "/conversation/get_receive_message_opt"
+	GetAllConversationMessageOptRouter = "/conversation/get_all_conversation_message_opt"
+	SetConversationOptRouter           = ConversationGroup + "/set_conversation"
+	GetConversationsRouter             = ConversationGroup + "/get_conversations"
+	GetAllConversationsRouter          = ConversationGroup + "/get_all_conversations"
+	GetConversationRouter              = ConversationGroup + "/get_conversation"
+	BatchSetConversationRouter         = ConversationGroup + "/batch_set_conversation"
+	ModifyConversationFieldRouter      = ConversationGroup + "/modify_conversation_field"
+	SetConversationsRouter             = ConversationGroup + "/set_conversations"
 
 	//organization
 	GetSubDepartmentRouter    = RouterOrganization + "/get_sub_department"
