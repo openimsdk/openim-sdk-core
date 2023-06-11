@@ -351,6 +351,7 @@ func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool
 	if err != nil {
 		return err
 	} else {
+		u.longConnMgr.SetBackground(isBackground)
 		if isBackground == false {
 			_ = common.TriggerCmdWakeUp(u.heartbeatCmdCh)
 		}

@@ -85,6 +85,7 @@ type LongConnMgr struct {
 	Syncer             *WsRespAsyn
 	encoder            Encoder
 	compressor         Compressor
+	IsBackground       bool
 	// write conn lock
 	connWrite *sync.Mutex
 }
@@ -437,8 +438,8 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) error {
 	c.w.Lock()
 	c.connStatus = Connecting
 	c.w.Unlock()
-	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s", ccontext.Info(ctx).WsAddr(),
-		ccontext.Info(ctx).UserID(), ccontext.Info(ctx).Token(), ccontext.Info(ctx).PlatformID(), ccontext.Info(ctx).OperationID())
+	url := fmt.Sprintf("%s?sendID=%s&token=%s&platformID=%d&operationID=%s&isBackground=%t", ccontext.Info(ctx).WsAddr(),
+		ccontext.Info(ctx).UserID(), ccontext.Info(ctx).Token(), ccontext.Info(ctx).PlatformID(), ccontext.Info(ctx).OperationID(), c.IsBackground)
 	if c.IsCompression {
 		url += fmt.Sprintf("&compression=%s", "gzip")
 	}
@@ -531,4 +532,7 @@ func (c *LongConnMgr) Close(ctx context.Context) {
 		log.ZInfo(ctx, "conn already closed")
 	}
 
+}
+func (c *LongConnMgr) SetBackground(isBackground bool) {
+	c.IsBackground = isBackground
 }
