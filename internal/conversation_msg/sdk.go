@@ -430,7 +430,8 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 	//media file handle
 	switch s.ContentType {
 	case constant.Picture:
-		if s.Status != constant.MsgStatusSendSuccess {
+		if s.Status == constant.MsgStatusSendSuccess {
+			s.Content = utils.StructToJsonString(s.PictureElem)
 			break
 		}
 		var sourcePath string
@@ -461,7 +462,8 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		s.Content = utils.StructToJsonString(s.PictureElem)
 
 	case constant.Sound:
-		if s.Status != constant.MsgStatusSendSuccess {
+		if s.Status == constant.MsgStatusSendSuccess {
+			s.Content = utils.StructToJsonString(s.SoundElem)
 			break
 		}
 		var sourcePath string
@@ -485,7 +487,8 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		s.SoundElem.SourceURL = res.URL
 		s.Content = utils.StructToJsonString(s.SoundElem)
 	case constant.Video:
-		if s.Status != constant.MsgStatusSendSuccess {
+		if s.Status == constant.MsgStatusSendSuccess {
+			s.Content = utils.StructToJsonString(s.VideoElem)
 			break
 		}
 		var videoPath string
@@ -525,6 +528,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		s.Content = utils.StructToJsonString(s.VideoElem)
 	case constant.File:
 		if s.Status != constant.MsgStatusSendSuccess {
+			s.Content = utils.StructToJsonString(s.FileElem)
 			break
 		}
 		res, err := c.file.PutFile(ctx, &file.PutArgs{
