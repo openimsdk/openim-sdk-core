@@ -514,7 +514,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		log.ZDebug(ctx, "file", "videoPath", videoPath, "snapPath", snapPath, "delFile", delFile)
 
 		snapRes, err := c.file.PutFile(ctx, &file.PutArgs{
-			PutID:    s.ClientMsgID,
+			PutID:    s.ClientMsgID + "snap",
 			Filepath: snapPath,
 			Name:     c.fileName("videoSnapshot", s.ClientMsgID) + filepath.Ext(snapPath),
 		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
