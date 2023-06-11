@@ -33,12 +33,10 @@ import (
 )
 
 func NewGroup(loginUserID string, db db_interface.DataBase,
-	heartbeatCmdCh chan common.Cmd2Value,
 	conversationCh chan common.Cmd2Value) *Group {
 	g := &Group{
 		loginUserID:    loginUserID,
 		db:             db,
-		heartbeatCmdCh: heartbeatCmdCh,
 		conversationCh: conversationCh,
 	}
 	g.initSyncer()

@@ -33,8 +33,8 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-func NewSuperGroup(loginUserID string, db db_interface.DataBase, heartbeatCmdCh chan common.Cmd2Value) *SuperGroup {
-	s := &SuperGroup{loginUserID: loginUserID, db: db, heartbeatCmdCh: heartbeatCmdCh}
+func NewSuperGroup(loginUserID string, db db_interface.DataBase) *SuperGroup {
+	s := &SuperGroup{loginUserID: loginUserID, db: db}
 	s.initSyncer()
 	return s
 }
@@ -44,7 +44,6 @@ type SuperGroup struct {
 	db                 db_interface.DataBase
 	loginTime          int64
 	joinedSuperGroupCh chan common.Cmd2Value
-	heartbeatCmdCh     chan common.Cmd2Value
 	syncerGroup        *syncer.Syncer[*model_struct.LocalGroup, string]
 }
 
@@ -83,10 +82,10 @@ func (s *SuperGroup) DoNotification(ctx context.Context, msg *sdkws.MsgData, ch 
 			log.Error(operationID, "TriggerCmdJoinedSuperGroup failed ", err.Error(), cmd)
 			return
 		}
-		err = common.TriggerCmdWakeUp(s.heartbeatCmdCh)
-		if err != nil {
-			log.Error(operationID, "TriggerCmdWakeUp failed ", err.Error())
-		}
+		//err = common.TriggerCmdWakeUp(s.heartbeatCmdCh)
+		//if err != nil {
+		//	log.Error(operationID, "TriggerCmdWakeUp failed ", err.Error())
+		//}
 
 		log.Info(operationID, "constant.SuperGroupUpdateNotification", msg.String())
 

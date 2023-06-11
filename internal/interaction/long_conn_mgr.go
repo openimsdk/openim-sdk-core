@@ -94,7 +94,7 @@ type Message struct {
 	Resp    chan *GeneralWsResp
 }
 
-func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, pushMsgAndMaxSeqCh, conversationCh chan common.Cmd2Value) *LongConnMgr {
+func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, heartbeatCmdCh, pushMsgAndMaxSeqCh, conversationCh chan common.Cmd2Value) *LongConnMgr {
 	l := &LongConnMgr{listener: listener, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh,
 		conversationCh: conversationCh, IsCompression: true,
 		Syncer: NewWsRespAsyn(), encoder: NewGobEncoder(), compressor: NewGzipCompressor()}
@@ -103,7 +103,7 @@ func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnLis
 	l.connWrite = new(sync.Mutex)
 	go l.readPump(ctx)
 	go l.writePump(ctx)
-	go l.heartbeat(ctx)
+	go l.heartbeat(ctx, heartbeatCmdCh)
 	return l
 }
 
@@ -243,7 +243,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 		}
 	}
 }
-func (c *LongConnMgr) heartbeat(ctx context.Context) {
+func (c *LongConnMgr) heartbeat(ctx context.Context, heartbeatCmdCh chan common.Cmd2Value) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -253,50 +253,55 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 		case <-ctx.Done():
 			log.ZInfo(ctx, "heartbeat done sdk logout.....")
 			return
+		case <-heartbeatCmdCh:
+			c.sendPingToServer(ctx)
 		case <-ticker.C:
-			_ = c.conn.SetWriteDeadline(writeWait)
-			var m sdkws.GetMaxSeqReq
-			m.UserID = ccontext.Info(ctx).UserID()
-			opID := utils.OperationIDGenerator()
-			sCtx := ccontext.WithOperationID(c.ctx, opID)
-			log.ZInfo(sCtx, "ping and getMaxSeq start")
-			data, err := proto.Marshal(&m)
-			if err != nil {
-				log.ZError(sCtx, "proto.Marshal", err)
-				break
-			}
-			req := &GeneralWsReq{
-				ReqIdentifier: constant.GetNewestSeq,
-				SendID:        m.UserID,
-				OperationID:   opID,
-				Data:          data,
-			}
-			resp, err := c.sendAndWaitResp(req)
-			if err != nil {
-				log.ZError(sCtx, "sendAndWaitResp", err)
-				_ = c.close()
-				time.Sleep(time.Second * 1)
-				break
-			} else {
-				if resp.ErrCode != 0 {
-					log.ZError(sCtx, "getMaxSeq failed", nil, "errCode:", resp.ErrCode, "errMsg:", resp.ErrMsg)
-				}
-				var wsSeqResp sdkws.GetMaxSeqResp
-				err = proto.Unmarshal(resp.Data, &wsSeqResp)
-				if err != nil {
-					log.ZError(sCtx, "proto.Unmarshal", err)
-				}
-				var cmd sdk_struct.CmdMaxSeqToMsgSync
-				cmd.ConversationMaxSeqOnSvr = wsSeqResp.MaxSeqs
-
-				err := common.TriggerCmdMaxSeq(sCtx, &cmd, c.pushMsgAndMaxSeqCh)
-				if err != nil {
-					log.ZError(sCtx, "TriggerCmdMaxSeq failed", err)
-				}
-			}
+			c.sendPingToServer(ctx)
 		}
 	}
 
+}
+func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
+	_ = c.conn.SetWriteDeadline(writeWait)
+	var m sdkws.GetMaxSeqReq
+	m.UserID = ccontext.Info(ctx).UserID()
+	opID := utils.OperationIDGenerator()
+	sCtx := ccontext.WithOperationID(c.ctx, opID)
+	log.ZInfo(sCtx, "ping and getMaxSeq start")
+	data, err := proto.Marshal(&m)
+	if err != nil {
+		log.ZError(sCtx, "proto.Marshal", err)
+		return
+	}
+	req := &GeneralWsReq{
+		ReqIdentifier: constant.GetNewestSeq,
+		SendID:        m.UserID,
+		OperationID:   opID,
+		Data:          data,
+	}
+	resp, err := c.sendAndWaitResp(req)
+	if err != nil {
+		log.ZError(sCtx, "sendAndWaitResp", err)
+		_ = c.close()
+		time.Sleep(time.Second * 1)
+		return
+	} else {
+		if resp.ErrCode != 0 {
+			log.ZError(sCtx, "getMaxSeq failed", nil, "errCode:", resp.ErrCode, "errMsg:", resp.ErrMsg)
+		}
+		var wsSeqResp sdkws.GetMaxSeqResp
+		err = proto.Unmarshal(resp.Data, &wsSeqResp)
+		if err != nil {
+			log.ZError(sCtx, "proto.Unmarshal", err)
+		}
+		var cmd sdk_struct.CmdMaxSeqToMsgSync
+		cmd.ConversationMaxSeqOnSvr = wsSeqResp.MaxSeqs
+
+		err := common.TriggerCmdMaxSeq(sCtx, &cmd, c.pushMsgAndMaxSeqCh)
+		if err != nil {
+			log.ZError(sCtx, "TriggerCmdMaxSeq failed", err)
+		}
+	}
 }
 func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error) {
 	tempChan, err := c.writeBinaryMsgAndRetry(msg)

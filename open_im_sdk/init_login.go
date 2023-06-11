@@ -76,16 +76,12 @@ func Login(callback open_im_sdk_callback.Base, operationID string, userID, token
 	call(callback, operationID, UserForSDK.Login, userID, token)
 }
 
-func NetworkChanged(callback open_im_sdk_callback.Base, operationID string, changed int) {
-	call(callback, operationID, UserForSDK.WakeUp)
-}
-
 func Logout(callback open_im_sdk_callback.Base, operationID string) {
 	call(callback, operationID, UserForSDK.Logout)
 }
 
 func SetAppBackgroundStatus(callback open_im_sdk_callback.Base, operationID string, isBackground bool) {
-	BaseCaller(UserForSDK.SetAppBackgroundStatus, callback, isBackground, operationID)
+	call(callback, operationID, UserForSDK.SetAppBackgroundStatus, isBackground)
 }
 func NetworkStatusChanged(callback open_im_sdk_callback.Base, operationID string) {
 	call(callback, operationID, UserForSDK.NetworkStatusChanged)
