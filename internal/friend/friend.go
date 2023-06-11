@@ -68,7 +68,7 @@ func (f *Friend) initSyncer() {
 		case syncer.Insert:
 			f.friendListener.OnFriendAdded(*server)
 		case syncer.Delete:
-			f.friendListener.OnFriendDeleted(*server)
+			f.friendListener.OnFriendDeleted(*local)
 		case syncer.Update:
 			f.friendListener.OnFriendInfoChanged(*server)
 
@@ -101,7 +101,7 @@ func (f *Friend) initSyncer() {
 		case syncer.Insert:
 			f.friendListener.OnBlackAdded(*server)
 		case syncer.Delete:
-			f.friendListener.OnBlackDeleted(*server)
+			f.friendListener.OnBlackDeleted(*local)
 		}
 		return nil
 	})
@@ -121,7 +121,7 @@ func (f *Friend) initSyncer() {
 		case syncer.Insert:
 			f.friendListener.OnFriendApplicationAdded(*server)
 		case syncer.Delete:
-			f.friendListener.OnFriendApplicationDeleted(*server)
+			f.friendListener.OnFriendApplicationDeleted(*local)
 		case syncer.Update:
 			switch server.HandleResult {
 			case constant.FriendResponseAgree:
@@ -150,7 +150,7 @@ func (f *Friend) initSyncer() {
 		case syncer.Insert:
 			f.friendListener.OnFriendApplicationAdded(*server)
 		case syncer.Delete:
-			f.friendListener.OnFriendApplicationDeleted(*server)
+			f.friendListener.OnFriendApplicationDeleted(*local)
 		case syncer.Update:
 			switch server.HandleResult {
 			case constant.FriendResponseAgree:
