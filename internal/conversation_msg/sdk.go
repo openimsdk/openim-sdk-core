@@ -26,6 +26,7 @@ import (
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/sdkerrs"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -446,7 +447,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		res, err := c.file.PutFile(ctx, &file.PutArgs{
 			PutID:    s.ClientMsgID,
 			Filepath: sourcePath,
-			Name:     c.fileName("picture", s.ClientMsgID),
+			Name:     c.fileName("picture", s.ClientMsgID) + filepath.Ext(sourcePath),
 		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
 		if err != nil {
 			return nil, err
@@ -476,7 +477,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		res, err := c.file.PutFile(ctx, &file.PutArgs{
 			PutID:    s.ClientMsgID,
 			Filepath: sourcePath,
-			Name:     c.fileName("voice", s.ClientMsgID),
+			Name:     c.fileName("voice", s.ClientMsgID) + filepath.Ext(sourcePath),
 		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
 		if err != nil {
 			return nil, err
@@ -505,7 +506,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		snapRes, err := c.file.PutFile(ctx, &file.PutArgs{
 			PutID:    s.ClientMsgID,
 			Filepath: snapPath,
-			Name:     c.fileName("videoSnapshot", s.ClientMsgID),
+			Name:     c.fileName("videoSnapshot", s.ClientMsgID) + filepath.Ext(snapPath),
 		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
 		if err != nil {
 			return nil, err
@@ -514,7 +515,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		res, err := c.file.PutFile(ctx, &file.PutArgs{
 			PutID:    s.ClientMsgID,
 			Filepath: videoPath,
-			Name:     c.fileName("video", s.ClientMsgID),
+			Name:     c.fileName("video", s.ClientMsgID) + filepath.Ext(videoPath),
 		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
 		if err != nil {
 			return nil, err
@@ -529,7 +530,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		res, err := c.file.PutFile(ctx, &file.PutArgs{
 			PutID:    s.ClientMsgID,
 			Filepath: s.FileElem.FilePath,
-			Name:     c.fileName("file", s.ClientMsgID),
+			Name:     c.fileName("file", s.ClientMsgID) + filepath.Ext(s.FileElem.FilePath),
 		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
 		if err != nil {
 			return nil, err
