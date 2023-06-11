@@ -467,7 +467,7 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) error {
 			c.listener.OnConnectFailed(int32(apiResp.ErrCode), err.Error())
 			return errs.NewCodeError(apiResp.ErrCode, apiResp.ErrMsg).WithDetail(apiResp.ErrDlt).Wrap()
 		}
-		c.listener.OnConnectFailed(1001, err.Error())
+		c.listener.OnConnectFailed(sdkerrs.NetworkError, err.Error())
 		return err
 	}
 	c.listener.OnConnectSuccess()
