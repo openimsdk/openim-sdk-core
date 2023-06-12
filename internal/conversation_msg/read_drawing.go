@@ -14,15 +14,18 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
 
-func (c *Conversation) markAsRead2Svr(ctx context.Context, conversationID string, seqs []int64) error {
+func (c *Conversation) markMsgAsRead2Svr(ctx context.Context, conversationID string, seqs []int64) error {
 	req := &pbMsg.MarkMsgsAsReadReq{UserID: c.loginUserID, ConversationID: conversationID, Seqs: seqs}
-	return util.ApiPost(ctx, constant.SetConversationsRouter, req, nil)
+	return util.ApiPost(ctx, constant.MarkMsgsAsReadRouter, req, nil)
+}
+
+func (c *Conversation) markConversationAsReadSvr(ctx context.Context, conversationID string, hasReadSeq int64) error {
+	req := &pbMsg.MarkConversationAsReadReq{UserID: c.loginUserID, ConversationID: conversationID, HasReadSeq: hasReadSeq}
+	return util.ApiPost(ctx, constant.MarkConversationAsRead, req, nil)
 }
 
 // mark a conversation's all message as read
 func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conversationID string) error {
-	c.markAsReadLock.Lock()
-	defer c.markAsReadLock.Unlock()
 	_, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
@@ -39,8 +42,8 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 	if err != nil {
 		return err
 	}
-	msgIDs, seqs := c.getAsReadMsgMapAndList(ctx, msgs)
-	if err := c.markAsRead2Svr(ctx, conversationID, seqs); err != nil {
+	msgIDs, _ := c.getAsReadMsgMapAndList(ctx, msgs)
+	if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq); err != nil {
 		return err
 	}
 	_, err = c.db.MarkConversationMessageAsRead(ctx, conversationID, msgIDs)
@@ -56,8 +59,6 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 
 // mark a conversation's message as read by seqs
 func (c *Conversation) markConversationMessageAsReadByMsgID(ctx context.Context, conversationID string, msgIDs []string) error {
-	c.markAsReadLock.Lock()
-	defer c.markAsReadLock.Unlock()
 	_, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
@@ -75,7 +76,7 @@ func (c *Conversation) markConversationMessageAsReadByMsgID(ctx context.Context,
 		return err
 	}
 	markAsReadMsgIDs, seqs := c.getAsReadMsgMapAndList(ctx, msgs)
-	if err := c.markAsRead2Svr(ctx, conversationID, seqs); err != nil {
+	if err := c.markMsgAsRead2Svr(ctx, conversationID, seqs); err != nil {
 		return err
 	}
 	decrCount, err := c.db.MarkConversationMessageAsRead(ctx, conversationID, markAsReadMsgIDs)
@@ -110,8 +111,6 @@ func (c *Conversation) unreadChangeTrigger(ctx context.Context, conversationID s
 }
 
 func (c *Conversation) doUnreadCount(ctx context.Context, conversationID string, hasReadSeq int64) {
-	c.markAsReadLock.Lock()
-	defer c.markAsReadLock.Unlock()
 	conversation, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		log.ZError(ctx, "GetConversation err", err, "conversationID", conversationID)
@@ -122,13 +121,13 @@ func (c *Conversation) doUnreadCount(ctx context.Context, conversationID string,
 		for i := conversation.HasReadSeq + 1; i <= hasReadSeq; i++ {
 			seqs = append(seqs, i)
 		}
-		decrCount, err := c.db.MarkConversationMessageAsReadBySeqs(ctx, conversationID, seqs)
+		_, err := c.db.MarkConversationMessageAsReadBySeqs(ctx, conversationID, seqs)
 		if err != nil {
 			log.ZError(ctx, "MarkConversationMessageAsReadBySeqs err", err, "conversationID", conversationID, "seqs", seqs)
 			return
 		}
-		if err := c.db.DecrConversationUnreadCount(ctx, conversationID, decrCount); err != nil {
-			log.ZError(ctx, "decrConversationUnreadCount err", err, "conversationID", conversationID, "decrCount", decrCount)
+		if err := c.db.DecrConversationUnreadCount(ctx, conversationID, int64(len(seqs))); err != nil {
+			log.ZError(ctx, "decrConversationUnreadCount err", err, "conversationID", conversationID, "decrCount", int64(len(seqs)))
 		}
 		if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"has_read_seq": hasReadSeq}); err != nil {
 			log.ZError(ctx, "UpdateColumnsConversation err", err, "conversationID", conversationID)
@@ -142,6 +141,7 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) {
 	tips := &sdkws.MarkAsReadTips{}
 	utils.UnmarshalNotificationElem(msg.Content, tips)
 	if tips.MarkAsReadUserID != c.loginUserID {
+		log.ZDebug(ctx, "do readDrawing", "tips", tips)
 		conversation, err := c.db.GetConversation(ctx, tips.ConversationID)
 		if err != nil {
 			log.ZError(ctx, "GetConversation err", err, "conversationID", tips.ConversationID)
@@ -189,6 +189,7 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) {
 			c.msgListener.OnRecvGroupReadReceipt(utils.StructToJsonString(messageReceiptResp))
 		}
 	} else {
+		log.ZDebug(ctx, "do unread count", "tips", tips)
 		c.doUnreadCount(ctx, tips.ConversationID, tips.HasReadSeq)
 	}
 }

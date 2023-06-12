@@ -148,7 +148,7 @@ func (d *DataBase) DeleteConversation(ctx context.Context, conversationID string
 func (d *DataBase) GetConversation(ctx context.Context, conversationID string) (*model_struct.LocalConversation, error) {
 	var c model_struct.LocalConversation
 	return &c, utils.Wrap(d.conn.WithContext(ctx).Where("conversation_id = ?",
-		conversationID).Take(&c).Error, "GetConversation failed")
+		conversationID).Take(&c).Error, "GetConversation failed, conversationID: "+conversationID)
 }
 
 func (d *DataBase) UpdateConversation(ctx context.Context, c *model_struct.LocalConversation) error {

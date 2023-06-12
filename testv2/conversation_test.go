@@ -300,7 +300,7 @@ func Test_RevokeMessage(t *testing.T) {
 }
 
 func Test_MarkConversationMessageAsRead(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().MarkConversationMessageAsRead(ctx, "sg_1671620726")
+	err := open_im_sdk.UserForSDK.Conversation().MarkConversationMessageAsRead(ctx, "sg_3946631447")
 	if err != nil {
 		t.Fatal(err)
 	}
