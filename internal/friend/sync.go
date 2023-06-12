@@ -67,6 +67,7 @@ func (f *Friend) SyncFriendList(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	log.ZDebug(ctx, "sync friend", "data from server", friends, "data from local", localData)
 	return f.friendSyncer.Sync(ctx, util.Batch(ServerFriendToLocalFriend, friends), localData, nil)
 }
 

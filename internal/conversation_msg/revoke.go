@@ -23,12 +23,11 @@ func (c *Conversation) doRevokeMsg(ctx context.Context, msg *sdkws.MsgData) {
 		log.ZError(ctx, "unmarshal failed", err, "msg", msg)
 		return
 	}
-	log.ZDebug(ctx, "revokeMessage", "tips", &tips)
+	log.ZDebug(ctx, "do revokeMessage", "tips", &tips)
 	c.revokeMessage(ctx, &tips)
 }
 
 func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgTips) {
-	log.ZDebug(ctx, "recv revoke message", "tips", tips)
 	revokedMsg, err := c.db.GetMessageBySeq(ctx, tips.ConversationID, tips.Seq)
 	if err != nil {
 		log.ZError(ctx, "GetMessageBySeq failed", err, "tips", &tips)

@@ -68,6 +68,7 @@ func (f *Friend) initSyncer() {
 		case syncer.Insert:
 			f.friendListener.OnFriendAdded(*server)
 		case syncer.Delete:
+			log.ZDebug(ctx, "syncer OnFriendDeleted", "local", local)
 			f.friendListener.OnFriendDeleted(*local)
 		case syncer.Update:
 			f.friendListener.OnFriendInfoChanged(*server)

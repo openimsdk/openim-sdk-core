@@ -817,7 +817,7 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	if err != nil {
 		log.ZError(ctx, "send msg to server failed", err, "message", s)
 		c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-		return nil, err
+		return s, err
 	}
 	s.SendTime = sendMsgResp.SendTime
 	s.Status = constant.MsgStatusSendSuccess

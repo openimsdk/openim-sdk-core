@@ -21,8 +21,8 @@ import (
 )
 
 func main() {
-	APIADDR := "http://203.56.175.233:10002"
-	WSADDR := "ws://203.56.175.233:10001"
+	APIADDR := "http://59.36.173.89:10002"
+	WSADDR := "ws://59.36.173.89:10001"
 	REGISTERADDR := APIADDR + "/user_register"
 	ACCOUNTCHECK := APIADDR + "/manager/account_check"
 	TOKENADDR := APIADDR + "/auth/user_token"
@@ -34,11 +34,13 @@ func main() {
 	test.SENDINTERVAL = SENDINTERVAL
 	test.WSADDR = WSADDR
 	test.ACCOUNTCHECK = ACCOUNTCHECK
-	strMyUidx := "3271407977"
+	strMyUidx := "2688118337"
 
 	tokenx := test.RunGetToken(strMyUidx)
 	fmt.Println(tokenx)
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
+	time.Sleep(time.Second * 2)
+	test.DotestDeleteFriend("8303492153")
 	// test.DoTestRevoke()
 	// time.Sleep(time.Second * 5)
 	// test.DoTestAddToBlackList("9169012630")
