@@ -42,16 +42,6 @@ type MsgSyncer struct {
 	ctx                context.Context       // context
 }
 
-func (m *MsgSyncer) Work(cmd common.Cmd2Value) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (m *MsgSyncer) GetCh() chan common.Cmd2Value {
-	//TODO implement me
-	panic("implement me")
-}
-
 // NewMsgSyncer creates a new instance of the message synchronizer.
 func NewMsgSyncer(ctx context.Context, conversationCh, PushMsgAndMaxSeqCh chan common.Cmd2Value,
 	loginUserID string, longConnMgr *LongConnMgr, db db_interface.DataBase, syncTimes int) (*MsgSyncer, error) {
@@ -65,9 +55,12 @@ func NewMsgSyncer(ctx context.Context, conversationCh, PushMsgAndMaxSeqCh chan c
 		db:                 db,
 		syncTimes:          syncTimes,
 	}
-	err := m.loadSeq(ctx)
+	if err := m.loadSeq(ctx); err != nil {
+		log.ZError(ctx, "loadSeq err", err)
+		return nil, err
+	}
 	go m.DoListener()
-	return m, err
+	return m, nil
 }
 
 // seq The db reads the data to the memory,set syncedMaxSeqs
@@ -81,9 +74,9 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 		maxSyncedSeq, err := m.db.GetConversationNormalMsgSeq(ctx, conversation.ConversationID)
 		if err != nil {
 			log.ZError(ctx, "get group normal seq failed", err, "conversationID", conversation.ConversationID)
-			return err
+		} else {
+			m.syncedMaxSeqs[conversation.ConversationID] = maxSyncedSeq
 		}
-		m.syncedMaxSeqs[conversation.ConversationID] = maxSyncedSeq
 	}
 	notificationSeqs, err := m.db.GetNotificationAllSeqs(ctx)
 	if err != nil {
@@ -93,6 +86,7 @@ func (m *MsgSyncer) loadSeq(ctx context.Context) error {
 	for _, notificationSeq := range notificationSeqs {
 		m.syncedMaxSeqs[notificationSeq.ConversationID] = notificationSeq.Seq
 	}
+	log.ZDebug(ctx, "loadSeq", "syncedMaxSeqs", m.syncedMaxSeqs)
 	return nil
 }
 

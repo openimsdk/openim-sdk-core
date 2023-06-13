@@ -354,9 +354,11 @@ func (d *DataBase) DecrConversationUnreadCount(ctx context.Context, conversation
 		return utils.Wrap(errors.New("get conversation err"), "")
 	}
 	if c.UnreadCount < 0 {
-		log.ZError(ctx, "decr unread count < 0", nil, "conversationID", conversationID, "count", count)
-		tx.Rollback()
-		return utils.Wrap(errors.New("decr unread count < 0"), "")
+		log.ZWarn(ctx, "decr unread count < 0", nil, "conversationID", conversationID, "count", count)
+		if t = tx.Model(&c).Update("unread_count", 0); t.Error != nil {
+			tx.Rollback()
+			return utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+		}
 	}
 	tx.Commit()
 	return nil

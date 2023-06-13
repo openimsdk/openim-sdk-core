@@ -65,6 +65,7 @@ func (c *Conversation) SyncConversationUnreadCount(ctx context.Context) error {
 }
 
 func (c *Conversation) SyncConversationHashReadSeqs(ctx context.Context) error {
+	log.ZDebug(ctx, "start SyncConversationHashReadSeqs")
 	seqs, err := c.getServerHasReadAndMaxSeqs(ctx)
 	if err != nil {
 		return err
@@ -82,15 +83,13 @@ func (c *Conversation) SyncConversationHashReadSeqs(ctx context.Context) error {
 		} else {
 			unreadCount = int32(v.MaxSeq - v.HasReadSeq)
 		}
-		conversations = append(conversations, &model_struct.LocalConversation{
-			ConversationID: conversationID,
-			UnreadCount:    unreadCount,
-		})
+		if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"unread_count": unreadCount}); err != nil {
+			log.ZError(ctx, "UpdateColumnsConversation err", err, "conversationID", conversationID)
+		}
 		conversationIDs = append(conversationIDs, conversationID)
 	}
-	if err := c.db.UpdateOrCreateConversations(ctx, conversations); err != nil {
-		return err
-	}
+	log.ZDebug(ctx, "update conversations", "conversations", conversations)
+
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConversationChangeNotification, Args: conversationIDs}})
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged, Args: conversationIDs}})
 

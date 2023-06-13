@@ -38,11 +38,11 @@ func getConf(APIADDR, WSADDR string) sdk_struct.IMConfig {
 	var cf sdk_struct.IMConfig
 	cf.ApiAddr = APIADDR
 	cf.WsAddr = WSADDR
-	cf.DataDir = ".\\"
+	cf.DataDir = "../"
 	cf.LogLevel = 6
 	cf.IsExternalExtensions = true
 	cf.PlatformID = 1
-	cf.LogFilePath = ".\\"
+	cf.LogFilePath = ""
 	cf.IsLogStandardOutput = true
 	return cf
 }

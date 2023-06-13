@@ -980,12 +980,12 @@ func (c *Conversation) MarkConversationMessageAsReadByMsgID(ctx context.Context,
 }
 
 // delete
-func (c *Conversation) DeleteMessageFromLocalStorage(ctx context.Context, message *sdk_struct.MsgStruct) error {
-	return c.deleteMessageFromLocal(ctx, message)
+func (c *Conversation) DeleteMessageFromLocalStorage(ctx context.Context, conversationID string, clientMsgID string) error {
+	return c.deleteMessageFromLocal(ctx, conversationID, clientMsgID)
 }
 
-func (c *Conversation) DeleteMessage(ctx context.Context, message *sdk_struct.MsgStruct) error {
-	return c.deleteMessage(ctx, message)
+func (c *Conversation) DeleteMessage(ctx context.Context, conversationID string, clientMsgID string) error {
+	return c.deleteMessage(ctx, conversationID, clientMsgID)
 }
 
 func (c *Conversation) DeleteAllMessage(ctx context.Context) error {
