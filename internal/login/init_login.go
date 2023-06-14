@@ -85,6 +85,7 @@ type LoginMgr struct {
 	cmdWsCh            chan common.Cmd2Value
 	heartbeatCmdCh     chan common.Cmd2Value
 	pushMsgAndMaxSeqCh chan common.Cmd2Value
+	loginMgrCh         chan common.Cmd2Value
 
 	ctx       context.Context
 	cancel    context.CancelFunc
@@ -233,6 +234,18 @@ func (u *LoginMgr) SetBusinessListener(listener open_im_sdk_callback.OnCustomBus
 		u.businessListener = listener
 	}
 }
+func (u *LoginMgr) logoutListener(ctx context.Context) {
+	for {
+		select {
+		case <-u.loginMgrCh:
+			err := u.logout(ctx)
+			if err != nil {
+				log.ZError(ctx, "logout error", err)
+			}
+		}
+	}
+
+}
 
 func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.info.UserID = userID
@@ -250,6 +263,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.conversationCh = make(chan common.Cmd2Value, 1000)
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
+	u.loginMgrCh = make(chan common.Cmd2Value)
 	u.loginTime = time.Now().UnixNano() / 1e6
 	u.user = user.NewUser(u.db, u.loginUserID, u.conversationCh)
 	u.user.SetListener(u.userListener)
@@ -269,7 +283,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	}
 	u.push = third.NewPush(u.info.PlatformID, u.loginUserID)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
-	u.longConnMgr = interaction.NewLongConnMgr(ctx, u.connListener, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.conversationCh)
+	u.longConnMgr = interaction.NewLongConnMgr(ctx, u.connListener, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.conversationCh, u.loginMgrCh)
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
 		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.signaling, u.business, u.cache, u.full, u.file)
@@ -312,6 +326,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 			}
 		}
 	}()
+	go u.logoutListener(ctx)
 	log.ZInfo(ctx, "login success...", "login cost time: ", time.Since(t1))
 	return nil
 }

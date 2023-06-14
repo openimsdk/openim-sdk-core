@@ -140,6 +140,14 @@ func TriggerCmdMaxSeq(ctx context.Context, seq *sdk_struct.CmdMaxSeqToMsgSync, c
 	return sendCmd(ch, c2v, 100)
 }
 
+func TriggerCmdLoginOut(ctx context.Context, ch chan Cmd2Value) error {
+	if ch == nil {
+		return utils.Wrap(errors.New("ch == nil"), "")
+	}
+	c2v := Cmd2Value{Cmd: constant.CmdLoginOut, Ctx: ctx}
+	return sendCmd(ch, c2v, 100)
+}
+
 // Connection success trigger
 func TriggerCmdConnected(ctx context.Context, ch chan Cmd2Value) error {
 	if ch == nil {
