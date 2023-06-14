@@ -114,7 +114,7 @@ func (c *Conversation) markMessagesAsReadByMsgID(ctx context.Context, conversati
 
 func (c *Conversation) getAsReadMsgMapAndList(ctx context.Context, msgs []*model_struct.LocalChatLog) (asReadMsgIDs []string, seqs []int64) {
 	for _, msg := range msgs {
-		if !msg.IsRead && msg.ContentType < constant.NotificationBegin && msg.SendID != c.loginUserID {
+		if !msg.IsRead && msg.SendID != c.loginUserID {
 			asReadMsgIDs = append(asReadMsgIDs, msg.ClientMsgID)
 			seqs = append(seqs, msg.Seq)
 		} else {
