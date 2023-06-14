@@ -975,8 +975,8 @@ func (c *Conversation) MarkConversationMessageAsRead(ctx context.Context, conver
 	return c.markConversationMessageAsRead(ctx, conversationID)
 }
 
-func (c *Conversation) MarkConversationMessageAsReadByMsgID(ctx context.Context, conversationID string, clientMsgIDs []string) error {
-	return c.markConversationMessageAsReadByMsgID(ctx, conversationID, clientMsgIDs)
+func (c *Conversation) MarkMessagesAsReadByMsgID(ctx context.Context, conversationID string, clientMsgIDs []string) error {
+	return c.markMessagesAsReadByMsgID(ctx, conversationID, clientMsgIDs)
 }
 
 // delete

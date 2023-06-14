@@ -61,7 +61,7 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 }
 
 // mark a conversation's message as read by seqs
-func (c *Conversation) markConversationMessageAsReadByMsgID(ctx context.Context, conversationID string, msgIDs []string) error {
+func (c *Conversation) markMessagesAsReadByMsgID(ctx context.Context, conversationID string, msgIDs []string) error {
 	_, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
