@@ -200,7 +200,7 @@ func MarkConversationMessageAsRead(callback open_im_sdk_callback.Base, operation
 	call(callback, operationID, UserForSDK.Conversation().MarkConversationMessageAsRead, conversationID)
 }
 
-func MarkMessagesAsReadByMsgID(callback open_im_sdk_callback.Base, operationID string, conversationID string, clientMsgIDs []string) {
+func MarkMessagesAsReadByMsgID(callback open_im_sdk_callback.Base, operationID string, conversationID string, clientMsgIDs string) {
 	call(callback, operationID, UserForSDK.Conversation().MarkMessagesAsReadByMsgID, conversationID, clientMsgIDs)
 }
 
