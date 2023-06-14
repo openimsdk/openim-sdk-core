@@ -31,6 +31,9 @@ func (c *Conversation) clearConversationFromLocalAndSvr(ctx context.Context, con
 	if err := c.clearConversationAndDeleteAllMsg(ctx, conversationID, false, f); err != nil {
 		return err
 	}
+	if err := c.getConversationMaxSeqAndSetHasRead(ctx, conversationID); err != nil {
+		return err
+	}
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}})
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}})
 	return nil
@@ -74,6 +77,7 @@ func (c *Conversation) deleteAllMessage(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}})
 	return nil
 }
 

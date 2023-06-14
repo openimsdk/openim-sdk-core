@@ -24,6 +24,25 @@ func (c *Conversation) markConversationAsReadSvr(ctx context.Context, conversati
 	return util.ApiPost(ctx, constant.MarkConversationAsRead, req, nil)
 }
 
+func (c *Conversation) setConversationHasReadSeq(ctx context.Context, conversationID string, hasReadSeq int64) error {
+	req := &pbMsg.SetConversationHasReadSeqReq{UserID: c.loginUserID, ConversationID: conversationID, HasReadSeq: hasReadSeq}
+	return util.ApiPost(ctx, constant.SetConversationHasReadSeq, req, nil)
+}
+
+func (c *Conversation) getConversationMaxSeqAndSetHasRead(ctx context.Context, conversationID string) error {
+	maxSeq, err := c.db.GetConversationNormalMsgSeq(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	if err := c.setConversationHasReadSeq(ctx, conversationID, maxSeq); err != nil {
+		return err
+	}
+	if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"has_read_seq": maxSeq}); err != nil {
+		return err
+	}
+	return nil
+}
+
 // mark a conversation's all message as read
 func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conversationID string) error {
 	_, err := c.db.GetConversation(ctx, conversationID)
