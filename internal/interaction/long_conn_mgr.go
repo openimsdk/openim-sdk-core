@@ -214,9 +214,9 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 			c.closedErr = ctx.Err()
 			return
 		case message, ok := <-c.send:
-			_ = c.conn.SetWriteDeadline(writeWait)
 			if !ok {
 				// The hub closed the channel.
+				_ = c.conn.SetWriteDeadline(writeWait)
 				err := c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				if err != nil {
 					log.ZError(c.ctx, "send close message error", err)
@@ -269,7 +269,6 @@ func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
 	if c.conn == nil {
 		return
 	}
-	_ = c.conn.SetWriteDeadline(writeWait)
 	var m sdkws.GetMaxSeqReq
 	m.UserID = ccontext.Info(ctx).UserID()
 	opID := utils.OperationIDGenerator()
@@ -439,6 +438,8 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) error {
 	if c.IsConnected() {
 		return nil
 	}
+	c.connWrite.Lock()
+	defer c.connWrite.Unlock()
 	log.ZDebug(ctx, "conn start")
 	c.listener.OnConnecting()
 	c.w.Lock()
