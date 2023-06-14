@@ -31,16 +31,16 @@ func (c *Conversation) clearConversationFromLocalAndSvr(ctx context.Context, con
 	if err := c.clearConversationAndDeleteAllMsg(ctx, conversationID, false, f); err != nil {
 		return err
 	}
-	if err := c.getConversationMaxSeqAndSetHasRead(ctx, conversationID); err != nil {
-		return err
-	}
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: []string{conversationID}}})
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}})
 	return nil
 }
 
 func (c *Conversation) clearConversationAndDeleteAllMsg(ctx context.Context, conversationID string, markDelete bool, f func(ctx context.Context, conversationID string) error) error {
-	var err error
+	err := c.getConversationMaxSeqAndSetHasRead(ctx, conversationID)
+	if err != nil {
+		return err
+	}
 	if markDelete {
 		err = c.db.MarkDeleteConversationAllMessages(ctx, conversationID)
 	} else {
@@ -146,6 +146,13 @@ func (c *Conversation) deleteMessageFromLocal(ctx context.Context, conversationI
 	}
 	if err := c.db.DeleteConversationMsgs(ctx, conversationID, []string{clientMsgID}); err != nil {
 		return err
+	}
+	if !s.IsRead && s.SendID != c.loginUserID {
+		if err := c.db.DecrConversationUnreadCount(ctx, conversationID, 1); err != nil {
+			return err
+		}
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}})
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}})
 	}
 	conversation, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
