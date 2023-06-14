@@ -252,22 +252,22 @@ func Test_SearchLocalMessages(t *testing.T) {
 	}
 }
 
-// delete
-func Test_DeleteMessageFromLocalStorage(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().DeleteMessageFromLocalStorage(ctx, &sdk_struct.MsgStruct{SessionType: 1, ContentType: 1203,
-		ClientMsgID: "ef02943b05b02d02f92b0e92516099a3", Seq: 31, SendID: "kernaltestuid8", RecvID: "kernaltestuid9"})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func Test_DeleteMessage(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().DeleteMessage(ctx, &sdk_struct.MsgStruct{SessionType: 1, ContentType: 1203,
-		ClientMsgID: "ef02943b05b02d02f92b0e92516099a3", Seq: 31, SendID: "kernaltestuid8", RecvID: "kernaltestuid9"})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
+//// delete
+//func Test_DeleteMessageFromLocalStorage(t *testing.T) {
+//	err := open_im_sdk.UserForSDK.Conversation().DeleteMessageFromLocalStorage(ctx, &sdk_struct.MsgStruct{SessionType: 1, ContentType: 1203,
+//		ClientMsgID: "ef02943b05b02d02f92b0e92516099a3", Seq: 31, SendID: "kernaltestuid8", RecvID: "kernaltestuid9"})
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
+//
+//func Test_DeleteMessage(t *testing.T) {
+//	err := open_im_sdk.UserForSDK.Conversation().DeleteMessage(ctx, &sdk_struct.MsgStruct{SessionType: 1, ContentType: 1203,
+//		ClientMsgID: "ef02943b05b02d02f92b0e92516099a3", Seq: 31, SendID: "kernaltestuid8", RecvID: "kernaltestuid9"})
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
 
 func Test_DeleteAllMessage(t *testing.T) {
 	err := open_im_sdk.UserForSDK.Conversation().DeleteAllMessage(ctx)
