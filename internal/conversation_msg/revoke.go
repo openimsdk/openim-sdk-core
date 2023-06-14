@@ -17,6 +17,7 @@ import (
 	"github.com/jinzhu/copier"
 )
 
+// doRevokeMsg is called when receiving a message revocation notification
 func (c *Conversation) doRevokeMsg(ctx context.Context, msg *sdkws.MsgData) {
 	var tips sdkws.RevokeMsgTips
 	if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
@@ -81,6 +82,8 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 	var latestMsg sdk_struct.MsgStruct
 	utils.JsonStringToStruct(conversation.LatestMsg, &latestMsg)
 	log.ZDebug(ctx, "latestMsg", "latestMsg", &latestMsg, "seq", tips.Seq)
+	
+	// Make sure that the withdrawn message is indeed the most recent message in the session
 	if latestMsg.Seq <= tips.Seq {
 		var newLatesetMsg sdk_struct.MsgStruct
 		msgs, err := c.db.GetMessageListNoTime(ctx, tips.ConversationID, 1, false)

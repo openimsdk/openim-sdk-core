@@ -63,6 +63,7 @@ func (d *DataBase) UpdateMessageTimeAndStatus(ctx context.Context, conversationI
 	return utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Model(model_struct.LocalChatLog{}).Where("client_msg_id=? And seq=?", clientMsgID, 0).
 		Updates(model_struct.LocalChatLog{Status: status, SendTime: sendTime, ServerMsgID: serverMsgID}).Error, "UpdateMessageStatusBySourceID failed")
 }
+
 func (d *DataBase) GetMessageListNoTime(ctx context.Context, conversationID string,
 	count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	d.initChatLog(ctx, conversationID)
@@ -80,6 +81,7 @@ func (d *DataBase) GetMessageListNoTime(ctx context.Context, conversationID stri
 	}
 	return result, err
 }
+
 func (d *DataBase) GetMessageList(ctx context.Context, conversationID string, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
