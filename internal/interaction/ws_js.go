@@ -81,10 +81,3 @@ func (w *JSWebSocket) IsNil() bool {
 	}
 	return true
 }
-
-func (w *JSWebSocket) SetConnNil() {
-	w.conn = nil
-}
-func (w *JSWebSocket) CheckSendConnDiffNow() bool {
-	return w.sendConn == w.conn
-}

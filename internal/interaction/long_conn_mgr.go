@@ -265,6 +265,9 @@ func (c *LongConnMgr) heartbeat(ctx context.Context, heartbeatCmdCh chan common.
 
 }
 func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
+	if c.conn == nil {
+		return
+	}
 	_ = c.conn.SetWriteDeadline(writeWait)
 	var m sdkws.GetMaxSeqReq
 	m.UserID = ccontext.Info(ctx).UserID()
@@ -464,7 +467,8 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) error {
 			if err := json.Unmarshal(body, &apiResp); err != nil {
 				return err
 			}
-			c.listener.OnConnectFailed(int32(apiResp.ErrCode), err.Error())
+			c.listener.OnConnectFailed(int32(apiResp.ErrCode), apiResp.ErrMsg)
+			log.ZWarn(ctx, "long conn establish failed", sdkerrs.New(apiResp.ErrCode, apiResp.ErrMsg, apiResp.ErrDlt))
 			return errs.NewCodeError(apiResp.ErrCode, apiResp.ErrMsg).WithDetail(apiResp.ErrDlt).Wrap()
 		}
 		c.listener.OnConnectFailed(sdkerrs.NetworkError, err.Error())
