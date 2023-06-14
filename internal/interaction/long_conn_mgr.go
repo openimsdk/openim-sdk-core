@@ -265,6 +265,9 @@ func (c *LongConnMgr) heartbeat(ctx context.Context, heartbeatCmdCh chan common.
 
 }
 func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
+	if c.conn == nil {
+		return
+	}
 	_ = c.conn.SetWriteDeadline(writeWait)
 	var m sdkws.GetMaxSeqReq
 	m.UserID = ccontext.Info(ctx).UserID()
