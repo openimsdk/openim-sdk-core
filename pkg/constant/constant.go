@@ -42,8 +42,8 @@ const (
 	CmdMaxSeq       = "maxSeq"
 	CmdPushMsg      = "pushMsg"
 	CmdConnSuccesss = "connSuccess"
-	CmdLogout       = "Logout"
 	CmdWakeUp       = "wakeUp"
+	CmdLogOut       = "loginOut"
 )
 
 const (

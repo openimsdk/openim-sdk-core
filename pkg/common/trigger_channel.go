@@ -61,14 +61,6 @@ func TriggerCmdNotification(ctx context.Context, msg sdk_struct.CmdNewMsgComeToC
 	return sendCmd(conversationCh, c2v, 100)
 }
 
-func TriggerCmdLogout(ch chan Cmd2Value) error {
-	if ch == nil {
-		return utils.Wrap(errors.New("ch == nil"), "")
-	}
-	c2v := Cmd2Value{Cmd: constant.CmdLogout, Value: nil}
-	return sendCmd(ch, c2v, 100)
-}
-
 func TriggerCmdWakeUp(ch chan Cmd2Value) error {
 	if ch == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
@@ -140,11 +132,11 @@ func TriggerCmdMaxSeq(ctx context.Context, seq *sdk_struct.CmdMaxSeqToMsgSync, c
 	return sendCmd(ch, c2v, 100)
 }
 
-func TriggerCmdLoginOut(ctx context.Context, ch chan Cmd2Value) error {
+func TriggerCmdLogOut(ctx context.Context, ch chan Cmd2Value) error {
 	if ch == nil {
 		return utils.Wrap(errors.New("ch == nil"), "")
 	}
-	c2v := Cmd2Value{Cmd: constant.CmdLoginOut, Ctx: ctx}
+	c2v := Cmd2Value{Cmd: constant.CmdLogOut, Ctx: ctx}
 	return sendCmd(ch, c2v, 100)
 }
 

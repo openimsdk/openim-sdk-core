@@ -402,7 +402,7 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 	case constant.KickOnlineMsg:
 		log.ZDebug(ctx, "client kicked offline")
 		c.listener.OnKickedOffline()
-		_ = common.TriggerCmdLoginOut(ctx, c.loginMgrCh)
+		_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
 	case constant.GetNewestSeq:
 		fallthrough
 	case constant.PullMsgBySeqList:
