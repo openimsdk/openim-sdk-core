@@ -464,7 +464,7 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) error {
 			if err := json.Unmarshal(body, &apiResp); err != nil {
 				return err
 			}
-			c.listener.OnConnectFailed(int32(apiResp.ErrCode), err.Error())
+			c.listener.OnConnectFailed(int32(apiResp.ErrCode), apiResp.ErrMsg)
 			return errs.NewCodeError(apiResp.ErrCode, apiResp.ErrMsg).WithDetail(apiResp.ErrDlt).Wrap()
 		}
 		c.listener.OnConnectFailed(sdkerrs.NetworkError, err.Error())
