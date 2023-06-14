@@ -96,6 +96,8 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 	//if err := CheckResourceLoad(UserForSDK); err != nil {
 	//	return nil, err
 	//}
+	ctx := ccontext.WithOperationID(UserForSDK.BaseCtx(), operationID)
+	log.ZInfo(ctx, "call func", "in sdk args", args)
 	funcPtr := reflect.ValueOf(fn).Pointer()
 	funcName := runtime.FuncForPC(funcPtr).Name()
 	fnv := reflect.ValueOf(fn)
@@ -107,7 +109,6 @@ func call_(operationID string, fn any, args ...any) (res any, err error) {
 	if len(args)+1 != nin {
 		return nil, sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("go code error: fn in args num is not match"))
 	}
-	ctx := ccontext.WithOperationID(UserForSDK.BaseCtx(), operationID)
 	t := time.Now()
 	log.ZInfo(ctx, "input req", "func name", funcName, "args", args)
 	ins := make([]reflect.Value, 0, nin)
