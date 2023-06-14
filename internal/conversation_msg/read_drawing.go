@@ -42,23 +42,26 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 	if err != nil {
 		return err
 	}
-	msgIDs, _ := c.getAsReadMsgMapAndList(ctx, msgs)
+	log.ZDebug(ctx, "get unread message", "msgs", len(msgs))
+	msgIDs, seqs := c.getAsReadMsgMapAndList(ctx, msgs)
+	log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "seqs", seqs, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
 	if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq); err != nil {
 		return err
 	}
 	_, err = c.db.MarkConversationMessageAsRead(ctx, conversationID, msgIDs)
 	if err != nil {
-		return err
+		log.ZWarn(ctx, "MarkConversationMessageAsRead err", err, "conversationID", conversationID, "msgIDs", msgIDs)
 	}
 	if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"unread_count": 0}); err != nil {
 		log.ZError(ctx, "UpdateColumnsConversation err", err, "conversationID", conversationID)
 	}
+	log.ZDebug(ctx, "update columns sucess")
 	c.unreadChangeTrigger(ctx, conversationID, peerUserMaxSeq == maxSeq)
 	return nil
 }
 
 // mark a conversation's message as read by seqs
-func (c *Conversation) markConversationMessageAsReadByMsgID(ctx context.Context, conversationID string, msgIDs []string) error {
+func (c *Conversation) markMessagesAsReadByMsgID(ctx context.Context, conversationID string, msgIDs []string) error {
 	_, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		return err
@@ -123,8 +126,7 @@ func (c *Conversation) doUnreadCount(ctx context.Context, conversationID string,
 		}
 		_, err := c.db.MarkConversationMessageAsReadBySeqs(ctx, conversationID, seqs)
 		if err != nil {
-			log.ZError(ctx, "MarkConversationMessageAsReadBySeqs err", err, "conversationID", conversationID, "seqs", seqs)
-			return
+			log.ZWarn(ctx, "MarkConversationMessageAsReadBySeqs err", err, "conversationID", conversationID, "seqs", seqs)
 		}
 		if err := c.db.DecrConversationUnreadCount(ctx, conversationID, int64(len(seqs))); err != nil {
 			log.ZError(ctx, "decrConversationUnreadCount err", err, "conversationID", conversationID, "decrCount", int64(len(seqs)))

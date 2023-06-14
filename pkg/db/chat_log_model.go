@@ -518,7 +518,7 @@ func (d *DataBase) GetSendingMessageList(ctx context.Context) (result []*model_s
 func (d *DataBase) GetUnreadMessage(ctx context.Context, conversationID string) (msgs []*model_struct.LocalChatLog, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	err = utils.Wrap(d.conn.WithContext(ctx).Where("is_read = ? AND send_id != ?", false, d.loginUserID).Find(&msgs).Error, "GetMessageList failed")
+	err = utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Debug().Where("send_id != ? AND is_read = ?", d.loginUserID, 0).Find(&msgs).Error, "GetMessageList failed")
 	return msgs, err
 }
 

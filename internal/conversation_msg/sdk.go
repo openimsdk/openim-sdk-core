@@ -975,17 +975,17 @@ func (c *Conversation) MarkConversationMessageAsRead(ctx context.Context, conver
 	return c.markConversationMessageAsRead(ctx, conversationID)
 }
 
-func (c *Conversation) MarkConversationMessageAsReadByMsgID(ctx context.Context, conversationID string, clientMsgIDs []string) error {
-	return c.markConversationMessageAsReadByMsgID(ctx, conversationID, clientMsgIDs)
+func (c *Conversation) MarkMessagesAsReadByMsgID(ctx context.Context, conversationID string, clientMsgIDs []string) error {
+	return c.markMessagesAsReadByMsgID(ctx, conversationID, clientMsgIDs)
 }
 
 // delete
-func (c *Conversation) DeleteMessageFromLocalStorage(ctx context.Context, message *sdk_struct.MsgStruct) error {
-	return c.deleteMessageFromLocal(ctx, message)
+func (c *Conversation) DeleteMessageFromLocalStorage(ctx context.Context, conversationID string, clientMsgID string) error {
+	return c.deleteMessageFromLocal(ctx, conversationID, clientMsgID)
 }
 
-func (c *Conversation) DeleteMessage(ctx context.Context, message *sdk_struct.MsgStruct) error {
-	return c.deleteMessage(ctx, message)
+func (c *Conversation) DeleteMessage(ctx context.Context, conversationID string, clientMsgID string) error {
+	return c.deleteMessage(ctx, conversationID, clientMsgID)
 }
 
 func (c *Conversation) DeleteAllMessage(ctx context.Context) error {

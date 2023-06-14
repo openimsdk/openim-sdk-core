@@ -300,7 +300,16 @@ func Test_RevokeMessage(t *testing.T) {
 }
 
 func Test_MarkConversationMessageAsRead(t *testing.T) {
-	err := open_im_sdk.UserForSDK.Conversation().MarkConversationMessageAsRead(ctx, "sg_3946631447")
+	err := open_im_sdk.UserForSDK.Conversation().MarkConversationMessageAsRead(ctx, "si_2688118337_7249315132")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_MarkMsgsAsRead(t *testing.T) {
+	err := open_im_sdk.UserForSDK.Conversation().MarkMessagesAsReadByMsgID(ctx, "si_2688118337_7249315132",
+		[]string{"fb56ed151b675e0837ed3af79dbf66b1",
+			"635715c539be2e7812a0fc802f0cdc54", "1aba3fae3dc3f61c17e8eb09519cf8e1"})
 	if err != nil {
 		t.Fatal(err)
 	}

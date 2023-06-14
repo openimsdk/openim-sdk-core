@@ -110,17 +110,20 @@ func (c *Conversation) deleteAllMsgFromLocal(ctx context.Context, markDelete boo
 }
 
 // Delete a message from the local
-func (c *Conversation) deleteMessage(ctx context.Context, s *sdk_struct.MsgStruct) error {
-	if err := c.deleteMessageFromSvr(ctx, s); err != nil {
+func (c *Conversation) deleteMessage(ctx context.Context, conversationID string, clientMsgID string) error {
+	if err := c.deleteMessageFromSvr(ctx, conversationID, clientMsgID); err != nil {
 		return err
 	}
-	return c.deleteMessageFromLocal(ctx, s)
+	return c.deleteMessageFromLocal(ctx, conversationID, clientMsgID)
 }
 
 // The user deletes part of the message from the server
-func (c *Conversation) deleteMessageFromSvr(ctx context.Context, s *sdk_struct.MsgStruct) error {
-	conversationID := utils.GetConversationIDByMsg(s)
-	localMessage, err := c.db.GetMessage(ctx, conversationID, s.ClientMsgID)
+func (c *Conversation) deleteMessageFromSvr(ctx context.Context, conversationID string, clientMsgID string) error {
+	_, err := c.db.GetMessage(ctx, conversationID, clientMsgID)
+	if err != nil {
+		return err
+	}
+	localMessage, err := c.db.GetMessage(ctx, conversationID, clientMsgID)
 	if err != nil {
 		return err
 	}
@@ -132,9 +135,12 @@ func (c *Conversation) deleteMessageFromSvr(ctx context.Context, s *sdk_struct.M
 }
 
 // Delete messages from local
-func (c *Conversation) deleteMessageFromLocal(ctx context.Context, s *sdk_struct.MsgStruct) error {
-	conversationID := utils.GetConversationIDByMsg(s)
-	if err := c.db.DeleteConversationMsgs(ctx, conversationID, []string{s.ClientMsgID}); err != nil {
+func (c *Conversation) deleteMessageFromLocal(ctx context.Context, conversationID string, clientMsgID string) error {
+	s, err := c.db.GetMessage(ctx, conversationID, clientMsgID)
+	if err != nil {
+		return err
+	}
+	if err := c.db.DeleteConversationMsgs(ctx, conversationID, []string{clientMsgID}); err != nil {
 		return err
 	}
 	conversation, err := c.db.GetConversation(ctx, conversationID)
@@ -143,7 +149,7 @@ func (c *Conversation) deleteMessageFromLocal(ctx context.Context, s *sdk_struct
 	}
 	var latestMsg sdk_struct.MsgStruct
 	utils.JsonStringToStruct(conversation.LatestMsg, &latestMsg)
-	if latestMsg.ClientMsgID == s.ClientMsgID {
+	if latestMsg.ClientMsgID == clientMsgID {
 		log.ZDebug(ctx, "latesetMsg deleted", "seq", latestMsg.Seq, "clientMsgID", latestMsg.ClientMsgID)
 		msgs, err := c.db.GetMessageListNoTime(ctx, conversationID, 1, false)
 		if err != nil {
@@ -184,7 +190,7 @@ func (c *Conversation) doDeleteMsgs(ctx context.Context, msg *sdkws.MsgData) {
 		if err != nil {
 			log.ZError(ctx, "parsing data error", err, "msg", msg)
 		}
-		if err := c.deleteMessageFromLocal(ctx, &s); err != nil {
+		if err := c.deleteMessageFromLocal(ctx, tips.ConversationID, msg.ClientMsgID); err != nil {
 			log.ZError(ctx, "deleteMessageFromLocal err", err, "conversationID", tips.ConversationID, "seq", v)
 		}
 	}
