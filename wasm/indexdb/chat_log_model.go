@@ -580,10 +580,19 @@ func (i *LocalChatLogs) GetMessagesBySeqs(ctx context.Context, conversationID st
 }
 
 func (i *LocalChatLogs) GetConversationNormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
-	//TODO implement me
-	panic("implement me")
+	seq, err := Exec(conversationID)
+	if err != nil {
+		return 0, err
+	} else {
+		if v, ok := seq.(float64); ok {
+			var result int64
+			result = int64(v)
+			return result, err
+		} else {
+			return 0, ErrType
+		}
+	}
 }
-
 func (i *LocalChatLogs) GetConversationPeerNormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
 	//TODO implement me
 	panic("implement me")
