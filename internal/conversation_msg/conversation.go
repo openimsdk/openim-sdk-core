@@ -303,8 +303,12 @@ func (c *Conversation) getAdvancedHistoryMessageList2(ctx context.Context, req s
 		if v.Seq != 0 && thisMinSeq == 0 {
 			thisMinSeq = v.Seq
 		}
-		if v.Seq < thisMinSeq {
+		if v.Seq < thisMinSeq && v.Seq != 0 {
 			thisMinSeq = v.Seq
+		}
+		if v.Status >= constant.MsgStatusHasDeleted {
+			log.ZDebug(ctx, "this message has been deleted or exception message", "msg", v)
+			continue
 		}
 		temp := sdk_struct.MsgStruct{}
 		temp.ClientMsgID = v.ClientMsgID
