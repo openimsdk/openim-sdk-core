@@ -174,7 +174,7 @@ func (c *Conversation) revokeOneMessage(ctx context.Context, req *sdk_struct.Msg
 		}
 	}
 	if err := util.ApiPost(ctx, constant.RevokeMsgRouter, pbMsg.RevokeMsgReq{ConversationID: conversationID, Seq: message.Seq, UserID: c.loginUserID}, nil); err != nil {
-		return err
+		return err 
 	}
 	c.revokeMessage(ctx, &sdkws.RevokeMsgTips{
 		ConversationID: conversationID,
