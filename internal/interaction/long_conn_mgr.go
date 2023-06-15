@@ -410,6 +410,8 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 		fallthrough
 	case constant.SendSignalMsg:
 		fallthrough
+	case constant.HasReadMsg:
+		fallthrough
 	case constant.SetBackgroundStatus:
 		if err := c.Syncer.NotifyResp(ctx, wsResp); err != nil {
 			log.ZError(ctx, "notifyResp failed", err, "wsResp", wsResp)
@@ -420,6 +422,7 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 	}
 	return nil
 }
+
 func (c *LongConnMgr) IsConnected() bool {
 	c.w.Lock()
 	defer c.w.Unlock()
@@ -427,8 +430,8 @@ func (c *LongConnMgr) IsConnected() bool {
 		return true
 	}
 	return false
-
 }
+
 func (c *LongConnMgr) GetConnectionStatus() int {
 	c.w.Lock()
 	defer c.w.Unlock()

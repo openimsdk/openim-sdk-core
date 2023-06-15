@@ -191,6 +191,7 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) {
 					successMsgIDs = append(successMsgIDs, message.ClientMsgID)
 				}
 			}
+			// Constructs a read receipt message
 			var messageReceiptResp = []*sdk_struct.MessageReceipt{{UserID: tips.MarkAsReadUserID, MsgIDList: successMsgIDs,
 				SessionType: conversation.ConversationType, ReadTime: msg.SendTime}}
 			c.msgListener.OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
