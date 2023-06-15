@@ -21,7 +21,6 @@ import "context"
 
 import (
 	"errors"
-	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"runtime"
@@ -145,38 +144,6 @@ func Exec(args ...interface{}) (output interface{}, err error) {
 	return data.Data, err
 }
 
-func (i IndexDB) InsertWorkMomentsNotification(ctx context.Context, jsonDetail string) error {
-	panic("implement me")
-}
-
-func (i IndexDB) GetWorkMomentsNotification(ctx context.Context, offset, count int) (WorkMomentsNotifications []*model_struct.LocalWorkMomentsNotification, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetWorkMomentsNotificationLimit(ctx context.Context, pageNumber, showNumber int) (WorkMomentsNotifications []*model_struct.LocalWorkMomentsNotification, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) InitWorkMomentsNotificationUnreadCount(ctx context.Context) error {
-	panic("implement me")
-}
-
-func (i IndexDB) IncrWorkMomentsNotificationUnreadCount(ctx context.Context) error {
-	panic("implement me")
-}
-
-func (i IndexDB) MarkAllWorkMomentsNotificationAsRead(ctx context.Context) (err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) GetWorkMomentsUnReadCount(ctx context.Context) (workMomentsNotificationUnReadCount model_struct.LocalWorkMomentsNotificationUnreadCount, err error) {
-	panic("implement me")
-}
-
-func (i IndexDB) ClearWorkMomentsNotification(ctx context.Context) (err error) {
-	panic("implement me")
-}
-
 func (i IndexDB) Close(ctx context.Context) error {
 	_, err := Exec()
 	return err
@@ -215,15 +182,15 @@ func (i IndexDB) InitDB(ctx context.Context, userID string, dataDir string) erro
 //	panic("implement me")
 //}
 
-func NewIndexDB(loginUserID string) *IndexDB {
-	return &IndexDB{
-		LocalChatLogs: NewLocalChatLogs(loginUserID),
-		FriendRequest: NewFriendRequest(loginUserID),
-		Black:         NewBlack(loginUserID),
-		Friend:        NewFriend(loginUserID),
-		loginUserID:   loginUserID,
-	}
-}
+//func NewIndexDB(loginUserID string) *IndexDB {
+//	return &IndexDB{
+//		LocalChatLogs: NewLocalChatLogs(loginUserID),
+//		FriendRequest: NewFriendRequest(loginUserID),
+//		Black:         NewBlack(loginUserID),
+//		Friend:        NewFriend(loginUserID),
+//		loginUserID:   loginUserID,
+//	}
+//}
 
 func (i IndexDB) SetChatLogFailedStatus(ctx context.Context) {
 	//msgList, err := i.GetSendingMessageList()

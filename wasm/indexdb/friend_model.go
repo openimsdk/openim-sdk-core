@@ -33,17 +33,17 @@ func NewFriend(loginUserID string) *Friend {
 	return &Friend{loginUserID: loginUserID}
 }
 
-func (i Friend) InsertFriend(ctx context.Context, friend *model_struct.LocalFriend) error {
+func (i *Friend) InsertFriend(ctx context.Context, friend *model_struct.LocalFriend) error {
 	_, err := Exec(utils.StructToJsonString(friend))
 	return err
 }
 
-func (i Friend) DeleteFriendDB(ctx context.Context, friendUserID string) error {
+func (i *Friend) DeleteFriendDB(ctx context.Context, friendUserID string) error {
 	_, err := Exec(friendUserID, i.loginUserID)
 	return err
 }
 
-func (i Friend) UpdateFriend(ctx context.Context, friend *model_struct.LocalFriend) error {
+func (i *Friend) UpdateFriend(ctx context.Context, friend *model_struct.LocalFriend) error {
 	tempLocalFriend := temp_struct.LocalFriend{
 		OwnerUserID:    friend.OwnerUserID,
 		FriendUserID:   friend.FriendUserID,
@@ -60,7 +60,7 @@ func (i Friend) UpdateFriend(ctx context.Context, friend *model_struct.LocalFrie
 	return err
 }
 
-func (i Friend) GetAllFriendList(ctx context.Context) (result []*model_struct.LocalFriend, err error) {
+func (i *Friend) GetAllFriendList(ctx context.Context) (result []*model_struct.LocalFriend, err error) {
 	gList, err := Exec(i.loginUserID)
 	if err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func (i Friend) GetAllFriendList(ctx context.Context) (result []*model_struct.Lo
 	}
 }
 
-func (i Friend) SearchFriendList(ctx context.Context, keyword string, isSearchUserID, isSearchNickname, isSearchRemark bool) (result []*model_struct.LocalFriend, err error) {
+func (i *Friend) SearchFriendList(ctx context.Context, keyword string, isSearchUserID, isSearchNickname, isSearchRemark bool) (result []*model_struct.LocalFriend, err error) {
 	gList, err := Exec(keyword, isSearchUserID, isSearchNickname, isSearchRemark)
 	if err != nil {
 		return nil, err
@@ -104,7 +104,7 @@ func (i Friend) SearchFriendList(ctx context.Context, keyword string, isSearchUs
 	}
 }
 
-func (i Friend) GetFriendInfoByFriendUserID(ctx context.Context, FriendUserID string) (*model_struct.LocalFriend, error) {
+func (i *Friend) GetFriendInfoByFriendUserID(ctx context.Context, FriendUserID string) (*model_struct.LocalFriend, error) {
 	c, err := Exec(FriendUserID, i.loginUserID)
 	if err != nil {
 		return nil, err
@@ -122,7 +122,7 @@ func (i Friend) GetFriendInfoByFriendUserID(ctx context.Context, FriendUserID st
 	}
 }
 
-func (i Friend) GetFriendInfoList(ctx context.Context, friendUserIDList []string) (result []*model_struct.LocalFriend, err error) {
+func (i *Friend) GetFriendInfoList(ctx context.Context, friendUserIDList []string) (result []*model_struct.LocalFriend, err error) {
 	gList, err := Exec(utils.StructToJsonString(friendUserIDList))
 	if err != nil {
 		return nil, err
@@ -143,7 +143,7 @@ func (i Friend) GetFriendInfoList(ctx context.Context, friendUserIDList []string
 		}
 	}
 }
-func (i IndexDB) GetPageFriendList(ctx context.Context, offset, count int) ([]*model_struct.LocalFriend, error) {
+func (i *Friend) GetPageFriendList(ctx context.Context, offset, count int) ([]*model_struct.LocalFriend, error) {
 	//TODO implement me
 	panic("implement me")
 }

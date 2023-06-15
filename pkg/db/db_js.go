@@ -38,6 +38,7 @@ type IndexDB struct {
 	*indexdb.Friend
 	*indexdb.LocalGroupRequest
 	*indexdb.LocalChatLogReactionExtensions
+	*indexdb.NotificationSeqs
 	loginUserID string
 }
 
@@ -66,6 +67,7 @@ func NewDataBase(loginUserID string, dbDir string, operationID string) (*IndexDB
 		Friend:                          indexdb.NewFriend(loginUserID),
 		LocalGroupRequest:               indexdb.NewLocalGroupRequest(),
 		LocalChatLogReactionExtensions:  indexdb.NewLocalChatLogReactionExtensions(),
+		NotificationSeqs:                indexdb.NewNotificationSeqs(),
 		loginUserID:                     loginUserID,
 	}, nil
 }
