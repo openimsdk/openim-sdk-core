@@ -189,6 +189,8 @@ type UpdateMessageInfo struct {
 type SourceIDAndSessionType struct {
 	SourceID    string
 	SessionType int
+	FaceURL     string
+	Nickname    string
 }
 
 func UnInitAll(conversationCh chan Cmd2Value) error {
