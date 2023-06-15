@@ -81,6 +81,7 @@ type LongConnMgr struct {
 	send               chan Message
 	pushMsgAndMaxSeqCh chan common.Cmd2Value
 	conversationCh     chan common.Cmd2Value
+	loginMgrCh         chan common.Cmd2Value
 	closedErr          error
 	ctx                context.Context
 	IsCompression      bool
@@ -97,9 +98,9 @@ type Message struct {
 	Resp    chan *GeneralWsResp
 }
 
-func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, heartbeatCmdCh, pushMsgAndMaxSeqCh, conversationCh chan common.Cmd2Value) *LongConnMgr {
+func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, heartbeatCmdCh, pushMsgAndMaxSeqCh, conversationCh, loginMgrCh chan common.Cmd2Value) *LongConnMgr {
 	l := &LongConnMgr{listener: listener, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh,
-		conversationCh: conversationCh, IsCompression: true,
+		conversationCh: conversationCh, loginMgrCh: loginMgrCh, IsCompression: true,
 		Syncer: NewWsRespAsyn(), encoder: NewGobEncoder(), compressor: NewGzipCompressor()}
 	l.send = make(chan Message, 10)
 	l.conn = NewWebSocket(WebSocket)
@@ -213,9 +214,9 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 			c.closedErr = ctx.Err()
 			return
 		case message, ok := <-c.send:
-			_ = c.conn.SetWriteDeadline(writeWait)
 			if !ok {
 				// The hub closed the channel.
+				_ = c.conn.SetWriteDeadline(writeWait)
 				err := c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				if err != nil {
 					log.ZError(c.ctx, "send close message error", err)
@@ -268,7 +269,6 @@ func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
 	if c.conn == nil {
 		return
 	}
-	_ = c.conn.SetWriteDeadline(writeWait)
 	var m sdkws.GetMaxSeqReq
 	m.UserID = ccontext.Info(ctx).UserID()
 	opID := utils.OperationIDGenerator()
@@ -399,9 +399,9 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 		}
 		return sdkerrs.ErrLoginOut
 	case constant.KickOnlineMsg:
-		//log.Warn(wsResp.OperationID, "kick...  logout")
-		//w.kickOnline(wsResp)
-		//w.Logout(ctx)
+		log.ZDebug(ctx, "client kicked offline")
+		c.listener.OnKickedOffline()
+		_ = common.TriggerCmdLogOut(ctx, c.loginMgrCh)
 	case constant.GetNewestSeq:
 		fallthrough
 	case constant.PullMsgBySeqList:
@@ -438,6 +438,8 @@ func (c *LongConnMgr) reConn(ctx context.Context, num *int) error {
 	if c.IsConnected() {
 		return nil
 	}
+	c.connWrite.Lock()
+	defer c.connWrite.Unlock()
 	log.ZDebug(ctx, "conn start")
 	c.listener.OnConnecting()
 	c.w.Lock()

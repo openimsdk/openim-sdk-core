@@ -17,7 +17,7 @@ package open_im_sdk
 import "open_im_sdk/open_im_sdk_callback"
 
 func GetSpecifiedFriendsInfo(callback open_im_sdk_callback.Base, operationID string, userIDList string) {
-	call(callback, operationID, UserForSDK.Friend().GetDesignatedFriendsInfo, userIDList)
+	call(callback, operationID, UserForSDK.Friend().GetSpecifiedFriendsInfo, userIDList)
 }
 
 func GetFriendList(callback open_im_sdk_callback.Base, operationID string) {

@@ -146,7 +146,7 @@ func (c *Conversation) getMaxAndMinHaveSeqList(messages []*model_struct.LocalCha
 // 3、块之间连续性检测
 func (c *Conversation) pullMessageAndReGetHistoryMessages(ctx context.Context, conversationID string, seqList []int64, notStartTime,
 	isReverse bool, count, sessionType int, startTime int64, list *[]*model_struct.LocalChatLog, messageListCallback *sdk.GetAdvancedHistoryMessageListCallback) {
-	existedSeqList, err := c.db.SuperGroupGetAlreadyExistSeqList(ctx, conversationID, seqList)
+	existedSeqList, err := c.db.GetAlreadyExistSeqList(ctx, conversationID, seqList)
 	if err != nil {
 		// log.Error(operationID, "SuperGroupGetAlreadyExistSeqList err", err.Error(), sourceID, seqList)
 		return
@@ -311,7 +311,7 @@ func (c *Conversation) singleHandle(ctx context.Context, self, others []*model_s
 }
 func (c *Conversation) groupHandle(ctx context.Context, self, others []*model_struct.LocalChatLog, lc *model_struct.LocalConversation) {
 	allMessage := append(self, others...)
-	localGroupMemberInfo, err := c.group.GetGroupMembersInfo(ctx, lc.GroupID, utils2.Slice(allMessage, func(e *model_struct.LocalChatLog) string {
+	localGroupMemberInfo, err := c.group.GetSpecifiedGroupMembersInfo(ctx, lc.GroupID, utils2.Slice(allMessage, func(e *model_struct.LocalChatLog) string {
 		return e.SendID
 	}))
 	if err != nil {

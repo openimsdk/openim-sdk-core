@@ -72,8 +72,7 @@ func (f *Friend) initSyncer() {
 			f.friendListener.OnFriendDeleted(*local)
 		case syncer.Update:
 			f.friendListener.OnFriendInfoChanged(*server)
-
-			if local.Nickname != server.Nickname || local.FaceURL != server.FaceURL || local.Remark == server.Remark {
+			if local.Nickname != server.Nickname || local.FaceURL != server.FaceURL || local.Remark != server.Remark {
 				if server.Remark != "" {
 					server.Nickname = server.Remark
 				}

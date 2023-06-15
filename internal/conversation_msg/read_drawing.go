@@ -24,6 +24,25 @@ func (c *Conversation) markConversationAsReadSvr(ctx context.Context, conversati
 	return util.ApiPost(ctx, constant.MarkConversationAsRead, req, nil)
 }
 
+func (c *Conversation) setConversationHasReadSeq(ctx context.Context, conversationID string, hasReadSeq int64) error {
+	req := &pbMsg.SetConversationHasReadSeqReq{UserID: c.loginUserID, ConversationID: conversationID, HasReadSeq: hasReadSeq}
+	return util.ApiPost(ctx, constant.SetConversationHasReadSeq, req, nil)
+}
+
+func (c *Conversation) getConversationMaxSeqAndSetHasRead(ctx context.Context, conversationID string) error {
+	maxSeq, err := c.db.GetConversationNormalMsgSeq(ctx, conversationID)
+	if err != nil {
+		return err
+	}
+	if err := c.setConversationHasReadSeq(ctx, conversationID, maxSeq); err != nil {
+		return err
+	}
+	if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"has_read_seq": maxSeq}); err != nil {
+		return err
+	}
+	return nil
+}
+
 // mark a conversation's all message as read
 func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conversationID string) error {
 	_, err := c.db.GetConversation(ctx, conversationID)
@@ -95,7 +114,7 @@ func (c *Conversation) markMessagesAsReadByMsgID(ctx context.Context, conversati
 
 func (c *Conversation) getAsReadMsgMapAndList(ctx context.Context, msgs []*model_struct.LocalChatLog) (asReadMsgIDs []string, seqs []int64) {
 	for _, msg := range msgs {
-		if !msg.IsRead && msg.ContentType < constant.NotificationBegin && msg.SendID != c.loginUserID {
+		if !msg.IsRead && msg.SendID != c.loginUserID {
 			asReadMsgIDs = append(asReadMsgIDs, msg.ClientMsgID)
 			seqs = append(seqs, msg.Seq)
 		} else {
@@ -107,10 +126,10 @@ func (c *Conversation) getAsReadMsgMapAndList(ctx context.Context, msgs []*model
 
 func (c *Conversation) unreadChangeTrigger(ctx context.Context, conversationID string, latestMsgIsRead bool) {
 	if latestMsgIsRead {
-		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange}, c.GetCh())
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange, Args: []string{conversationID}}, Ctx: ctx})
 	}
-	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, c.GetCh())
-	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.TotalUnreadMessageChanged}, c.GetCh())
+	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, Ctx: ctx})
+	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}, Ctx: ctx})
 }
 
 func (c *Conversation) doUnreadCount(ctx context.Context, conversationID string, hasReadSeq int64) {
@@ -134,6 +153,8 @@ func (c *Conversation) doUnreadCount(ctx context.Context, conversationID string,
 		if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"has_read_seq": hasReadSeq}); err != nil {
 			log.ZError(ctx, "UpdateColumnsConversation err", err, "conversationID", conversationID)
 		}
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}})
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}})
 	} else {
 		log.ZWarn(ctx, "hasReadSeq <= conversation.HasReadSeq", nil, "hasReadSeq", hasReadSeq, "conversation.HasReadSeq", conversation.HasReadSeq)
 	}

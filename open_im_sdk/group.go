@@ -57,7 +57,7 @@ func GetJoinedGroupList(callback open_im_sdk_callback.Base, operationID string) 
 }
 
 func GetSpecifiedGroupsInfo(callback open_im_sdk_callback.Base, operationID string, groupIDList string) {
-	call(callback, operationID, UserForSDK.Group().GetGroupsInfo, groupIDList)
+	call(callback, operationID, UserForSDK.Group().GetSpecifiedGroupsInfo, groupIDList)
 }
 
 func SearchGroups(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
@@ -93,7 +93,7 @@ func GetGroupMemberListByJoinTimeFilter(callback open_im_sdk_callback.Base, oper
 }
 
 func GetSpecifiedGroupMembersInfo(callback open_im_sdk_callback.Base, operationID string, groupID string, userIDList string) {
-	call(callback, operationID, UserForSDK.Group().GetGroupMembersInfo, groupID, userIDList)
+	call(callback, operationID, UserForSDK.Group().GetSpecifiedGroupMembersInfo, groupID, userIDList)
 }
 
 func KickGroupMember(callback open_im_sdk_callback.Base, operationID string, groupID string, reason string, userIDList string) {
@@ -109,11 +109,11 @@ func InviteUserToGroup(callback open_im_sdk_callback.Base, operationID string, g
 }
 
 func GetGroupApplicationListAsRecipient(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, UserForSDK.Group().GetRecvGroupApplicationList)
+	call(callback, operationID, UserForSDK.Group().GetGroupApplicationListAsRecipient)
 }
 
 func GetGroupApplicationListAsApplicant(callback open_im_sdk_callback.Base, operationID string) {
-	call(callback, operationID, UserForSDK.Group().GetSendGroupApplicationList)
+	call(callback, operationID, UserForSDK.Group().GetGroupApplicationListAsApplicant)
 }
 
 func AcceptGroupApplication(callback open_im_sdk_callback.Base, operationID string, groupID string, fromUserID string, handleMsg string) {

@@ -157,6 +157,9 @@ func CreateFaceMessage(operationID string, index int, data string) string {
 func CreateForwardMessage(operationID string, m string) string {
 	return syncCall(operationID, UserForSDK.Conversation().CreateForwardMessage, m)
 }
+func GetConversationIDBySessionType(operationID string, sourceID string, sessionType int) string {
+	return syncCall(operationID, UserForSDK.Conversation().GetConversationIDBySessionType, sourceID, sessionType)
+}
 func SendMessage(callback open_im_sdk_callback.SendMsgCallBack, operationID, message, recvID, groupID, offlinePushInfo string) {
 	messageCall(callback, operationID, UserForSDK.Conversation().SendMessage, message, recvID, groupID, offlinePushInfo)
 }

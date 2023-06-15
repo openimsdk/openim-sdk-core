@@ -36,8 +36,6 @@ type LongConn interface {
 	Dial(urlStr string, requestHeader http.Header) (*http.Response, error)
 	// IsNil Whether the connection of the current long connection is nil
 	IsNil() bool
-	// SetConnNil Set the connection of the current long connection to nil
-	SetConnNil()
 	// SetReadLimit sets the maximum size for a message read from the peer.bytes
 	SetReadLimit(limit int64)
 	SetPongHandler(handler PongHandler)

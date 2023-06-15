@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build !js
-// +build !js
 
 package interaction
 
@@ -85,8 +84,4 @@ func (d *Default) IsNil() bool {
 		return false
 	}
 	return true
-}
-
-func (d *Default) SetConnNil() {
-	d.conn = nil
 }

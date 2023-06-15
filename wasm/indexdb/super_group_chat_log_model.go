@@ -31,20 +31,6 @@ func NewLocalSuperGroupChatLogs() *LocalSuperGroupChatLogs {
 	return &LocalSuperGroupChatLogs{}
 }
 
-func (i *LocalSuperGroupChatLogs) GetConversationNormalMsgSeq(ctx context.Context, groupID string) (uint32, error) {
-	seq, err := Exec(groupID)
-	if err != nil {
-		return 0, err
-	} else {
-		if v, ok := seq.(float64); ok {
-			var result uint32
-			result = uint32(v)
-			return result, err
-		} else {
-			return 0, ErrType
-		}
-	}
-}
 func (i *LocalSuperGroupChatLogs) SuperGroupGetNormalMinSeq(ctx context.Context, groupID string) (uint32, error) {
 	seq, err := Exec(groupID)
 	if err != nil {
