@@ -2,7 +2,7 @@ package conversation_msg
 
 import (
 	"context"
-	"open_im_sdk/internal/util"
+	"encoding/json"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
@@ -12,21 +12,43 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	pbMsg "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/msg"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	"github.com/gorilla/websocket"
 )
 
 func (c *Conversation) markMsgAsRead2Svr(ctx context.Context, conversationID string, seqs []int64) error {
 	req := &pbMsg.MarkMsgsAsReadReq{UserID: c.loginUserID, ConversationID: conversationID, Seqs: seqs}
-	return util.ApiPost(ctx, constant.MarkMsgsAsReadRouter, req, nil)
+	reqBytes, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+	if err := c.conn.WriteMessage(websocket.TextMessage, reqBytes); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Conversation) markConversationAsReadSvr(ctx context.Context, conversationID string, hasReadSeq int64) error {
 	req := &pbMsg.MarkConversationAsReadReq{UserID: c.loginUserID, ConversationID: conversationID, HasReadSeq: hasReadSeq}
-	return util.ApiPost(ctx, constant.MarkConversationAsRead, req, nil)
+	reqBytes, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+	if err := c.conn.WriteMessage(websocket.TextMessage, reqBytes); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Conversation) setConversationHasReadSeq(ctx context.Context, conversationID string, hasReadSeq int64) error {
 	req := &pbMsg.SetConversationHasReadSeqReq{UserID: c.loginUserID, ConversationID: conversationID, HasReadSeq: hasReadSeq}
-	return util.ApiPost(ctx, constant.SetConversationHasReadSeq, req, nil)
+	reqBytes, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+	if err := c.conn.WriteMessage(websocket.TextMessage, reqBytes); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Conversation) getConversationMaxSeqAndSetHasRead(ctx context.Context, conversationID string) error {
@@ -132,7 +154,7 @@ func (c *Conversation) unreadChangeTrigger(ctx context.Context, conversationID s
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}, Ctx: ctx})
 }
 
-// Updates the number of unread messages in the specified session as the difference 
+// Updates the number of unread messages in the specified session as the difference
 // between the current read message sequence number and the read message sequence number in the database
 func (c *Conversation) doUnreadCount(ctx context.Context, conversationID string, hasReadSeq int64) {
 	conversation, err := c.db.GetConversation(ctx, conversationID)

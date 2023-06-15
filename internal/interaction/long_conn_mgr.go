@@ -263,8 +263,8 @@ func (c *LongConnMgr) heartbeat(ctx context.Context, heartbeatCmdCh chan common.
 			c.sendPingToServer(ctx)
 		}
 	}
-
 }
+
 func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
 	if c.conn == nil {
 		return
@@ -309,6 +309,7 @@ func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
 		}
 	}
 }
+
 func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error) {
 	tempChan, err := c.writeBinaryMsgAndRetry(msg)
 	defer c.Syncer.DelCh(msg.MsgIncr)
