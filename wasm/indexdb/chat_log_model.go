@@ -32,8 +32,8 @@ func NewLocalChatLogs(loginUserID string) *LocalChatLogs {
 	return &LocalChatLogs{loginUserID: loginUserID}
 }
 
-func (i *LocalChatLogs) GetMessage(ctx context.Context, clientMsgID string) (*model_struct.LocalChatLog, error) {
-	msg, err := Exec(clientMsgID)
+func (i *LocalChatLogs) GetMessage(ctx context.Context, conversationID, clientMsgID string) (*model_struct.LocalChatLog, error) {
+	msg, err := Exec(conversationID, clientMsgID)
 	if err != nil {
 		return nil, err
 	} else {
@@ -70,7 +70,7 @@ func (i *LocalChatLogs) GetSendingMessageList(ctx context.Context) (result []*mo
 		}
 	}
 }
-func (i *LocalChatLogs) UpdateMessage(ctx context.Context, c *model_struct.LocalChatLog) error {
+func (i *LocalChatLogs) UpdateMessage(ctx context.Context, conversationID string, c *model_struct.LocalChatLog) error {
 	if c.ClientMsgID == "" {
 		return PrimaryKeyNull
 	}
@@ -96,7 +96,7 @@ func (i *LocalChatLogs) UpdateMessage(ctx context.Context, c *model_struct.Local
 		IsExternalExtensions: c.IsExternalExtensions,
 		MsgFirstModifyTime:   c.MsgFirstModifyTime,
 	}
-	_, err := Exec(c.ClientMsgID, utils.StructToJsonString(tempLocalChatLog))
+	_, err := Exec(conversationID, c.ClientMsgID, utils.StructToJsonString(tempLocalChatLog))
 	return err
 }
 func (i *LocalChatLogs) GetNormalMsgSeq(ctx context.Context) (uint32, error) {
@@ -113,12 +113,12 @@ func (i *LocalChatLogs) GetNormalMsgSeq(ctx context.Context) (uint32, error) {
 		}
 	}
 }
-func (i *LocalChatLogs) BatchInsertMessageList(ctx context.Context, messageList []*model_struct.LocalChatLog) error {
-	_, err := Exec(utils.StructToJsonString(messageList))
+func (i *LocalChatLogs) BatchInsertMessageList(ctx context.Context, conversationID string, messageList []*model_struct.LocalChatLog) error {
+	_, err := Exec(conversationID, utils.StructToJsonString(messageList))
 	return err
 }
-func (i *LocalChatLogs) InsertMessage(ctx context.Context, message *model_struct.LocalChatLog) error {
-	_, err := Exec(utils.StructToJsonString(message))
+func (i *LocalChatLogs) InsertMessage(ctx context.Context, conversationID string, message *model_struct.LocalChatLog) error {
+	_, err := Exec(conversationID, utils.StructToJsonString(message))
 	return err
 }
 func (i *LocalChatLogs) GetAllUnDeleteMessageSeqList(ctx context.Context) (result []uint32, err error) {
@@ -497,8 +497,8 @@ func (i *LocalChatLogs) UpdateGroupMessageHasRead(ctx context.Context, msgIDList
 	return err
 }
 
-func (i *LocalChatLogs) SearchMessageByKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (messages []*model_struct.LocalChatLog, err error) {
-	msgList, err := Exec(utils.StructToJsonString(contentType), utils.StructToJsonString(keywordList), keywordListMatchType, sourceID, startTime, endTime, sessionType, offset, count)
+func (i *LocalChatLogs) SearchMessageByKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
+	msgList, err := Exec(utils.StructToJsonString(contentType), utils.StructToJsonString(keywordList), keywordListMatchType, conversationID, startTime, endTime, offset, count)
 	if err != nil {
 		return nil, err
 	} else {
@@ -510,9 +510,9 @@ func (i *LocalChatLogs) SearchMessageByKeyword(ctx context.Context, contentType 
 			}
 			for _, v := range temp {
 				v1 := v
-				messages = append(messages, &v1)
+				result = append(result, &v1)
 			}
-			return messages, err
+			return result, err
 		} else {
 			return nil, ErrType
 		}
@@ -530,4 +530,141 @@ func (i *LocalChatLogs) GetSuperGroupAbnormalMsgSeq(ctx context.Context, groupID
 			return 0, ErrType
 		}
 	}
+}
+func (i *LocalChatLogs) GetAlreadyExistSeqList(ctx context.Context, conversationID string, lostSeqList []int64) (seqList []int64, err error) {
+	return nil, nil
+}
+func (i IndexDB) GetMessageBySeq(ctx context.Context, conversationID string, seq int64) (*model_struct.LocalChatLog, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) SearchMessageByContentType(ctx context.Context, contentType []int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) SearchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, conversationID string, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) UpdateMessageBySeq(ctx context.Context, conversationID string, c *model_struct.LocalChatLog) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) UpdateMessageTimeAndStatus(ctx context.Context, conversationID, clientMsgID string, serverMsgID string, sendTime int64, status int32) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) UpdateMessageByClientMsgID(ctx context.Context, clientMsgID string, data map[string]any) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) GetMessageList(ctx context.Context, conversationID string, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) GetMessageListNoTime(ctx context.Context, conversationID string, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) MarkConversationMessageAsRead(ctx context.Context, conversationID string, msgIDs []string) (rowsAffected int64, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) MarkConversationMessageAsReadBySeqs(ctx context.Context, conversationID string, seqs []int64) (rowsAffected int64, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) GetUnreadMessage(ctx context.Context, conversationID string) (result []*model_struct.LocalChatLog, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) MarkConversationAllMessageAsRead(ctx context.Context, conversationID string) (rowsAffected int64, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) GetMessagesByClientMsgIDs(ctx context.Context, conversationID string, msgIDs []string) (result []*model_struct.LocalChatLog, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) GetMessagesBySeqs(ctx context.Context, conversationID string, seqs []int64) (result []*model_struct.LocalChatLog, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) GetConversationNormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) GetConversationPeerNormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) UpdateMsgSenderFaceURLAndSenderNickname(ctx context.Context, conversationID, sendID, faceURL, nickname string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) GetAbnormalMsgSeq(ctx context.Context) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) GetAbnormalMsgSeqList(ctx context.Context) ([]int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) GetConversationAbnormalMsgSeq(ctx context.Context, groupID string) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) DeleteConversationAllMessages(ctx context.Context, conversationID string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) MarkDeleteConversationAllMessages(ctx context.Context, conversationID string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupGetNormalMsgSeq(ctx context.Context) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupGetNormalMinSeq(ctx context.Context, groupID string) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) SuperGroupGetTestMessage(ctx context.Context, seq int64) (*model_struct.LocalChatLog, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) DeleteConversationMsgs(ctx context.Context, conversationID string, msgIDs []string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i IndexDB) DeleteConversationMsgsBySeqs(ctx context.Context, conversationID string, seqs []int64) error {
+	//TODO implement me
+	panic("implement me")
 }

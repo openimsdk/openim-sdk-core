@@ -53,10 +53,6 @@ func (i Friend) UpdateFriend(ctx context.Context, friend *model_struct.LocalFrie
 		OperatorUserID: friend.OperatorUserID,
 		Nickname:       friend.Nickname,
 		FaceURL:        friend.FaceURL,
-		Gender:         friend.Gender,
-		PhoneNumber:    friend.PhoneNumber,
-		Birth:          friend.Birth,
-		Email:          friend.Email,
 		Ex:             friend.Ex,
 		AttachedInfo:   friend.AttachedInfo,
 	}
@@ -146,4 +142,8 @@ func (i Friend) GetFriendInfoList(ctx context.Context, friendUserIDList []string
 			return nil, ErrType
 		}
 	}
+}
+func (i IndexDB) GetPageFriendList(ctx context.Context, offset, count int) ([]*model_struct.LocalFriend, error) {
+	//TODO implement me
+	panic("implement me")
 }

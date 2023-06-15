@@ -318,3 +318,19 @@ func (i *LocalGroupMember) SearchGroupMembersDB(ctx context.Context, keyword str
 		}
 	}
 }
+func (i IndexDB) GetGroupMemberAllGroupIDs(ctx context.Context) (result []string, err error) {
+	groupIDList, err := Exec()
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := groupIDList.(string); ok {
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
+}
