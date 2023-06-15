@@ -536,7 +536,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		s.VideoElem.VideoURL = res.URL
 		s.Content = utils.StructToJsonString(s.VideoElem)
 	case constant.File:
-		if s.Status != constant.MsgStatusSendSuccess {
+		if s.Status == constant.MsgStatusSendSuccess {
 			s.Content = utils.StructToJsonString(s.FileElem)
 			break
 		}
