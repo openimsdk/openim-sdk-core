@@ -132,6 +132,8 @@ func (c *Conversation) unreadChangeTrigger(ctx context.Context, conversationID s
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}, Ctx: ctx})
 }
 
+// Updates the number of unread messages in the specified session as the difference 
+// between the current read message sequence number and the read message sequence number in the database
 func (c *Conversation) doUnreadCount(ctx context.Context, conversationID string, hasReadSeq int64) {
 	conversation, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
