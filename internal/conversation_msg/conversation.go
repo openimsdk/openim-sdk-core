@@ -18,12 +18,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/jinzhu/copier"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	sdk "open_im_sdk/pkg/sdk_params_callback"
+	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
@@ -361,6 +363,9 @@ func (c *Conversation) getAdvancedHistoryMessageList2(ctx context.Context, req s
 }
 
 func (c *Conversation) typingStatusUpdate(ctx context.Context, recvID, msgTip string) error {
+	if recvID == "" {
+		return sdkerrs.ErrArgs
+	}
 	s := sdk_struct.MsgStruct{}
 	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Typing)
 	if err != nil {
@@ -377,8 +382,19 @@ func (c *Conversation) typingStatusUpdate(ctx context.Context, recvID, msgTip st
 	utils.SetSwitchFromOptions(options, constant.IsSenderConversationUpdate, false)
 	utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
 	utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
-	_, err = c.InternalSendMessage(ctx, &s, recvID, "", &server_api_params.OfflinePushInfo{}, true, options)
-	return err
+
+	var wsMsgData server_api_params.MsgData
+	copier.Copy(&wsMsgData, s)
+	wsMsgData.Content = []byte(s.Content)
+	wsMsgData.CreateTime = s.CreateTime
+	wsMsgData.Options = options
+	var sendMsgResp server_api_params.UserSendMsgResp
+	err = c.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
+	if err != nil {
+		log.ZError(ctx, "send msg to server failed", err, "message", s)
+		return err
+	}
+	return nil
 
 }
 
