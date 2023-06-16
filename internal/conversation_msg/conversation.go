@@ -371,6 +371,8 @@ func (c *Conversation) typingStatusUpdate(ctx context.Context, recvID, msgTip st
 	if err != nil {
 		return err
 	}
+	s.RecvID = recvID
+	s.SessionType = constant.SingleChatType
 	typingElem := sdk_struct.TypingElem{}
 	typingElem.MsgTips = msgTip
 	s.Content = utils.StructToJsonString(typingElem)
