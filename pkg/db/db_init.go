@@ -164,7 +164,7 @@ func (d *DataBase) initDB(ctx context.Context) error {
 	log.ZInfo(ctx, "sqlite", "path", dbFileName)
 	// slowThreshold := 500
 	// sqlLogger := log.NewSqlLogger(logger.LogLevel(sdk_struct.SvrConf.LogLevel), true, time.Duration(slowThreshold)*time.Millisecond)
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{Logger: log.NewSqlLogger(logger.LogLevel(logger.Info), false, time.Millisecond*200)})
 	if err != nil {
 		return utils.Wrap(err, "open db failed "+dbFileName)
 	}
