@@ -30,9 +30,24 @@ type JSWebSocket struct {
 	sendConn *websocket.Conn
 }
 
+func (w *JSWebSocket) SetReadDeadline(timeout time.Duration) error {
+	return nil
+}
+
+func (w *JSWebSocket) SetWriteDeadline(timeout time.Duration) error {
+	return nil
+}
+
+func (w *JSWebSocket) SetReadLimit(limit int64) {
+	w.conn.SetReadLimit(limit)
+}
+
+func (w *JSWebSocket) SetPongHandler(handler PongHandler) {
+
+}
+
 func (w *JSWebSocket) LocalAddr() string {
-	//TODO implement me
-	panic("implement me")
+	return ""
 }
 
 func NewWebSocket(connType int) *JSWebSocket {
@@ -44,12 +59,7 @@ func (w *JSWebSocket) Close() error {
 }
 
 func (w *JSWebSocket) WriteMessage(messageType int, message []byte) error {
-	w.setSendConn(w.conn)
 	return w.conn.Write(context.Background(), websocket.MessageType(messageType), message)
-}
-
-func (w *JSWebSocket) setSendConn(sendConn *websocket.Conn) {
-	w.sendConn = sendConn
 }
 
 func (w *JSWebSocket) ReadMessage() (int, []byte, error) {
@@ -57,15 +67,7 @@ func (w *JSWebSocket) ReadMessage() (int, []byte, error) {
 	return int(messageType), b, err
 }
 
-func (w *JSWebSocket) SetReadTimeout(timeout int) error {
-	return nil
-}
-
-func (w *JSWebSocket) SetWriteTimeout(timeout int) error {
-	return nil
-}
-
-func (w *JSWebSocket) Dial(urlStr string, requestHeader http.Header) (*http.Response, error) {
+func (w *JSWebSocket) Dial(urlStr string, _ http.Header) (*http.Response, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	conn, httpResp, err := websocket.Dial(ctx, urlStr, nil)

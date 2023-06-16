@@ -24,7 +24,7 @@ import (
 	"syscall/js"
 )
 
-//------------------------------------group---------------------------
+// ------------------------------------group---------------------------
 type WrapperFriend struct {
 	*WrapperCommon
 }
@@ -33,9 +33,9 @@ func NewWrapperFriend(wrapperCommon *WrapperCommon) *WrapperFriend {
 	return &WrapperFriend{WrapperCommon: wrapperCommon}
 }
 
-func (w *WrapperFriend) GetDesignatedFriendsInfo(_ js.Value, args []js.Value) interface{} {
+func (w *WrapperFriend) GetSpecifiedFriendsInfo(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.GetDesignatedFriendsInfo, callback, &args).AsyncCallWithCallback()
+	return event_listener.NewCaller(open_im_sdk.GetSpecifiedFriendsInfo, callback, &args).AsyncCallWithCallback()
 }
 
 func (w *WrapperFriend) GetFriendList(_ js.Value, args []js.Value) interface{} {
@@ -68,14 +68,14 @@ func (w *WrapperFriend) DeleteFriend(_ js.Value, args []js.Value) interface{} {
 	return event_listener.NewCaller(open_im_sdk.DeleteFriend, callback, &args).AsyncCallWithCallback()
 }
 
-func (w *WrapperFriend) GetRecvFriendApplicationList(_ js.Value, args []js.Value) interface{} {
+func (w *WrapperFriend) GetFriendApplicationListAsRecipient(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.GetRecvFriendApplicationList, callback, &args).AsyncCallWithCallback()
+	return event_listener.NewCaller(open_im_sdk.GetFriendApplicationListAsRecipient, callback, &args).AsyncCallWithCallback()
 }
 
-func (w *WrapperFriend) GetSendFriendApplicationList(_ js.Value, args []js.Value) interface{} {
+func (w *WrapperFriend) GetFriendApplicationListAsApplicant(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
-	return event_listener.NewCaller(open_im_sdk.GetSendFriendApplicationList, callback, &args).AsyncCallWithCallback()
+	return event_listener.NewCaller(open_im_sdk.GetFriendApplicationListAsApplicant, callback, &args).AsyncCallWithCallback()
 }
 
 func (w *WrapperFriend) AcceptFriendApplication(_ js.Value, args []js.Value) interface{} {

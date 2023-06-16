@@ -221,7 +221,7 @@ func (i *LocalConversations) UpdateConversationForSync(ctx context.Context, c *m
 
 func (i *LocalConversations) BatchUpdateConversationList(ctx context.Context, conversationList []*model_struct.LocalConversation) error {
 	for _, v := range conversationList {
-		err := i.UpdateConversation(v)
+		err := i.UpdateConversation(ctx, v)
 		if err != nil {
 			return utils.Wrap(err, "BatchUpdateConversationList failed")
 		}
@@ -331,4 +331,19 @@ func (i *LocalConversations) GetMultipleConversationDB(ctx context.Context, conv
 			return nil, ErrType
 		}
 	}
+}
+
+func (i *LocalConversations) GetAllSingleConversationIDList(ctx context.Context) (result []string, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i *LocalConversations) GetAllConversationIDList(ctx context.Context) (result []string, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i *LocalConversations) UpdateOrCreateConversations(ctx context.Context, conversationList []*model_struct.LocalConversation) error {
+	//TODO implement me
+	panic("implement me")
 }

@@ -126,10 +126,10 @@ func (c *Conversation) getAsReadMsgMapAndList(ctx context.Context, msgs []*model
 
 func (c *Conversation) unreadChangeTrigger(ctx context.Context, conversationID string, latestMsgIsRead bool) {
 	if latestMsgIsRead {
-		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange, Args: []string{conversationID}}})
+		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversationID, Action: constant.UpdateLatestMessageChange, Args: []string{conversationID}}, Ctx: ctx})
 	}
-	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}})
-	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}})
+	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}, Ctx: ctx})
+	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}, Ctx: ctx})
 }
 
 func (c *Conversation) doUnreadCount(ctx context.Context, conversationID string, hasReadSeq int64) {

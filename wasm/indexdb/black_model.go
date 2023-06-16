@@ -121,7 +121,6 @@ func (i Black) UpdateBlack(ctx context.Context, black *model_struct.LocalBlack) 
 	tempLocalBlack := temp_struct.LocalBlack{
 		Nickname:       black.Nickname,
 		FaceURL:        black.FaceURL,
-		Gender:         black.Gender,
 		CreateTime:     black.CreateTime,
 		AddSource:      black.AddSource,
 		OperatorUserID: black.OperatorUserID,

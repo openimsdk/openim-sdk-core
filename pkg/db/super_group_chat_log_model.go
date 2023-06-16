@@ -423,12 +423,3 @@ func (d *DataBase) SuperGroupGetMsgSeqListBySelfUserID(ctx context.Context, user
 	err := utils.Wrap(d.conn.WithContext(ctx).Model(model_struct.LocalChatLog{}).Select("seq").Where("recv_id=? and send_id=?", userID, userID).Find(&seqList).Error, utils.GetSelfFuncName()+" failed")
 	return seqList, err
 }
-func (d *DataBase) SuperGroupGetAlreadyExistSeqList(ctx context.Context, groupID string, lostSeqList []int64) (seqList []int64, err error) {
-	d.mRWMutex.Lock()
-	defer d.mRWMutex.Unlock()
-	err = utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(groupID)).Where("seq IN ?", lostSeqList).Pluck("seq", &seqList).Error, utils.GetSelfFuncName()+" failed")
-	if err != nil {
-		return nil, err
-	}
-	return seqList, nil
-}

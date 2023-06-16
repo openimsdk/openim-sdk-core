@@ -191,7 +191,7 @@ func (d *DataBase) initDB(ctx context.Context) error {
 		&model_struct.LocalUser{},
 		&model_struct.LocalBlack{},
 		&model_struct.LocalConversation{},
-		&model_struct.NotificationSeqsModel{},
+		&model_struct.NotificationSeqs{},
 		&model_struct.LocalChatLog{},
 		&model_struct.LocalAdminGroupRequest{},
 		&model_struct.LocalWorkMomentsNotification{},

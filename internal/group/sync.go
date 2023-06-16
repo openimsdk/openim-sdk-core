@@ -40,7 +40,7 @@ func (g *Group) SyncGroupMember(ctx context.Context, groupID string) error {
 	}
 	//if len(members) != len(localData) {
 	log.ZInfo(ctx, "SyncGroupMember Sync Group Member Count", "groupID", groupID, "members", len(members), "localData", len(localData))
-	gs, err := g.GetGroupsInfo(ctx, []string{groupID})
+	gs, err := g.GetSpecifiedGroupsInfo(ctx, []string{groupID})
 	if err != nil {
 		return err
 	}

@@ -139,6 +139,13 @@ func (a AdvancedMsgCallback) OnRecvMessageExtensionsAdded(clientMsgID string, re
 	m["reactionExtensionList"] = reactionExtensionList
 	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(utils.StructToJsonString(m)).SendMessage()
 }
+func (a AdvancedMsgCallback) OnRecvOfflineNewMessages(messageList string) {
+	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(messageList).SendMessage()
+}
+
+func (a AdvancedMsgCallback) OnMsgDeleted(message string) {
+	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(message).SendMessage()
+}
 
 type BaseCallback struct {
 	CallbackWriter
@@ -276,6 +283,9 @@ func (f *GroupCallback) OnGroupApplicationAccepted(groupApplication string) {
 }
 func (f *GroupCallback) OnGroupApplicationRejected(groupApplication string) {
 	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(groupApplication).SendMessage()
+}
+func (f *GroupCallback) OnGroupDismissed(groupInfo string) {
+	f.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(groupInfo).SendMessage()
 }
 
 type UserCallback struct {
