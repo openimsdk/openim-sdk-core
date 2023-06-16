@@ -91,7 +91,6 @@ type MessageDatabase interface {
 	GetMessage(ctx context.Context, conversationID, clientMsgID string) (*model_struct.LocalChatLog, error)
 	GetMessageBySeq(ctx context.Context, conversationID string, seq int64) (*model_struct.LocalChatLog, error)
 	//GetMessageController(ctx context.Context, conversationID, clientMsgID string) (*model_struct.LocalChatLog, error)
-	GetAllUnDeleteMessageSeqList(ctx context.Context) ([]uint32, error)
 	UpdateColumnsMessageList(ctx context.Context, clientMsgIDList []string, args map[string]interface{}) error
 	UpdateColumnsMessage(ctx context.Context, ClientMsgID string, args map[string]interface{}) error
 	//UpdateColumnsMessageController(ctx context.Context, ClientMsgID string, groupID string, sessionType int32, args map[string]interface{}) error
@@ -144,7 +143,7 @@ type MessageDatabase interface {
 	DeleteConversationAllMessages(ctx context.Context, conversationID string) error
 	MarkDeleteConversationAllMessages(ctx context.Context, conversationID string) error
 	SuperGroupSearchMessageByKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
-	SuperGroupSearchMessageByContentType(ctx context.Context, contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
+	//SuperGroupSearchMessageByContentType(ctx context.Context, contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
 	SuperGroupSearchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, startTime, endTime int64, groupID string) (result []*model_struct.LocalChatLog, err error)
 
 	SuperGroupBatchUpdateMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error
