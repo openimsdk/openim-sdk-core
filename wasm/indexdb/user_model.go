@@ -52,20 +52,11 @@ func (l *LocalUsers) GetLoginUser(ctx context.Context, userID string) (*model_st
 			result.UserID = temp.UserID
 			result.Nickname = temp.Nickname
 			result.FaceURL = temp.FaceURL
-			result.Gender = temp.Gender
-			result.PhoneNumber = temp.PhoneNumber
-			result.Birth = temp.Birth
-			result.Email = temp.Email
 			result.CreateTime = temp.CreateTime
 			result.AppMangerLevel = temp.AppMangerLevel
 			result.Ex = temp.Ex
 			result.AttachedInfo = temp.Ex
 			result.GlobalRecvMsgOpt = temp.GlobalRecvMsgOpt
-			time, err := utils.TimeStringToTime(temp.BirthTime)
-			if err != nil {
-				return nil, err
-			}
-			result.BirthTime = time
 			return &result, err
 		} else {
 			return nil, ErrType
@@ -95,17 +86,11 @@ func (l *LocalUsers) InsertLoginUser(ctx context.Context, user *model_struct.Loc
 	temp.UserID = user.UserID
 	temp.Nickname = user.Nickname
 	temp.FaceURL = user.FaceURL
-	temp.Gender = user.Gender
-	temp.PhoneNumber = user.PhoneNumber
-	temp.Birth = user.Birth
-	temp.Email = user.Email
 	temp.CreateTime = user.CreateTime
 	temp.AppMangerLevel = user.AppMangerLevel
 	temp.Ex = user.Ex
 	temp.AttachedInfo = user.Ex
 	temp.GlobalRecvMsgOpt = user.GlobalRecvMsgOpt
-	t := utils.TimeToString(user.BirthTime)
-	temp.BirthTime = t
 	_, err := Exec(utils.StructToJsonString(temp))
 	return err
 }

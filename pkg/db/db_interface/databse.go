@@ -43,13 +43,11 @@ type GroupDatabase interface {
 	UpdateGroupRequest(ctx context.Context, groupRequest *model_struct.LocalGroupRequest) error
 	GetSendGroupApplication(ctx context.Context) ([]*model_struct.LocalGroupRequest, error)
 	GetJoinedSuperGroupList(ctx context.Context) ([]*model_struct.LocalGroup, error)
-	GetJoinedSuperGroupIDList(ctx context.Context) ([]string, error)
 	InsertSuperGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error
 	DeleteAllSuperGroup(ctx context.Context) error
 	GetSuperGroupInfoByGroupID(ctx context.Context, groupID string) (*model_struct.LocalGroup, error)
 	UpdateSuperGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error
 	DeleteSuperGroup(ctx context.Context, groupID string) error
-	GetReadDiffusionGroupIDList(ctx context.Context) ([]string, error)
 	GetGroupMemberInfoByGroupIDUserID(ctx context.Context, groupID, userID string) (*model_struct.LocalGroupMember, error)
 	GetAllGroupMemberList(ctx context.Context) ([]model_struct.LocalGroupMember, error)
 	GetAllGroupMemberUserIDList(ctx context.Context) ([]model_struct.LocalGroupMember, error)
@@ -79,7 +77,7 @@ type MessageDatabase interface {
 	//BatchInsertMessageListController(ctx context.Context, MessageList []*model_struct.LocalChatLog) error
 	InsertMessage(ctx context.Context, conversationID string, Message *model_struct.LocalChatLog) error
 	//InsertMessageController(ctx context.Context, message *model_struct.LocalChatLog) error
-	SearchMessageByKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, converstaionID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error)
+	SearchMessageByKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error)
 	//SearchMessageByKeywordController(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
 	SearchMessageByContentType(ctx context.Context, contentType []int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error)
 	//SearchMessageByContentTypeController(ctx context.Context, contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (result []*model_struct.LocalChatLog, err error)
@@ -96,13 +94,13 @@ type MessageDatabase interface {
 	GetAllUnDeleteMessageSeqList(ctx context.Context) ([]uint32, error)
 	UpdateColumnsMessageList(ctx context.Context, clientMsgIDList []string, args map[string]interface{}) error
 	UpdateColumnsMessage(ctx context.Context, ClientMsgID string, args map[string]interface{}) error
-	UpdateColumnsMessageController(ctx context.Context, ClientMsgID string, groupID string, sessionType int32, args map[string]interface{}) error
+	//UpdateColumnsMessageController(ctx context.Context, ClientMsgID string, groupID string, sessionType int32, args map[string]interface{}) error
 	UpdateMessage(ctx context.Context, conversationID string, c *model_struct.LocalChatLog) error
 	UpdateMessageBySeq(ctx context.Context, conversationID string, c *model_struct.LocalChatLog) error
 	//UpdateMessageController(ctx context.Context, c *model_struct.LocalChatLog) error
 	DeleteAllMessage(ctx context.Context) error
 	UpdateMessageStatusBySourceID(ctx context.Context, sourceID string, status, sessionType int32) error
-	UpdateMessageStatusBySourceIDController(ctx context.Context, sourceID string, status, sessionType int32) error
+	//UpdateMessageStatusBySourceIDController(ctx context.Context, sourceID string, status, sessionType int32) error
 	UpdateMessageTimeAndStatus(ctx context.Context, conversationID, clientMsgID string, serverMsgID string, sendTime int64, status int32) error
 	//UpdateMessageTimeAndStatusController(ctx context.Context, msg *sdk_struct.MsgStruct) error
 	UpdateMessageByClientMsgID(ctx context.Context, clientMsgID string, data map[string]any) error
@@ -127,7 +125,7 @@ type MessageDatabase interface {
 	//UpdateMsgSenderFaceURLAndSenderNicknameController(ctx context.Context, sendID, faceURL, nickname string, sessionType int) error
 	UpdateMsgSenderFaceURLAndSenderNickname(ctx context.Context, conversationID, sendID, faceURL, nickname string) error
 	GetMsgSeqByClientMsgID(ctx context.Context, clientMsgID string) (uint32, error)
-	GetMsgSeqByClientMsgIDController(ctx context.Context, m *sdk_struct.MsgStruct) (uint32, error)
+	//GetMsgSeqByClientMsgIDController(ctx context.Context, m *sdk_struct.MsgStruct) (uint32, error)
 	GetMsgSeqListByGroupID(ctx context.Context, groupID string) ([]uint32, error)
 	GetMsgSeqListByPeerUserID(ctx context.Context, userID string) ([]uint32, error)
 	GetMsgSeqListBySelfUserID(ctx context.Context, userID string) ([]uint32, error)
@@ -136,7 +134,6 @@ type MessageDatabase interface {
 	GetAbnormalMsgSeq(ctx context.Context) (int64, error)
 	GetAbnormalMsgSeqList(ctx context.Context) ([]int64, error)
 	BatchInsertExceptionMsg(ctx context.Context, MessageList []*model_struct.LocalErrChatLog) error
-	BatchInsertExceptionMsgController(ctx context.Context, MessageList []*model_struct.LocalErrChatLog) error
 	GetConversationAbnormalMsgSeq(ctx context.Context, groupID string) (int64, error)
 	BatchInsertTempCacheMessageList(ctx context.Context, MessageList []*model_struct.TempCacheLocalChatLog) error
 	InsertTempCacheMessage(ctx context.Context, Message *model_struct.TempCacheLocalChatLog) error
@@ -158,18 +155,17 @@ type MessageDatabase interface {
 	SuperGroupGetAllUnDeleteMessageSeqList(ctx context.Context) ([]uint32, error)
 	SuperGroupUpdateColumnsMessage(ctx context.Context, ClientMsgID, groupID string, args map[string]interface{}) error
 	SuperGroupUpdateMessage(ctx context.Context, c *model_struct.LocalChatLog) error
-	SuperGroupUpdateSpecificContentTypeMessage(ctx context.Context, contentType int, groupID string, args map[string]interface{}) error
 	SuperGroupUpdateMessageStatusBySourceID(ctx context.Context, sourceID string, status, sessionType int32) error
 	SuperGroupUpdateMessageTimeAndStatus(ctx context.Context, msg *sdk_struct.MsgStruct) error
 	SuperGroupGetMessageList(ctx context.Context, sourceID string, sessionType, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error)
 	SuperGroupGetMessageListNoTime(ctx context.Context, sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error)
 	SuperGroupGetSendingMessageList(ctx context.Context, groupID string) (result []*model_struct.LocalChatLog, err error)
 	SuperGroupUpdateGroupMessageHasRead(ctx context.Context, msgIDList []string, groupID string) error
-	SuperGroupUpdateGroupMessageFields(ctx context.Context, msgIDList []string, groupID string, args map[string]interface{}) error
-	SuperGroupGetNormalMsgSeq(ctx context.Context) (int64, error)
+	//SuperGroupUpdateGroupMessageFields(ctx context.Context, msgIDList []string, groupID string, args map[string]interface{}) error
+	//SuperGroupGetNormalMsgSeq(ctx context.Context) (int64, error)
 
-	SuperGroupGetNormalMinSeq(ctx context.Context, groupID string) (int64, error)
-	SuperGroupGetTestMessage(ctx context.Context, seq int64) (*model_struct.LocalChatLog, error)
+	//SuperGroupGetNormalMinSeq(ctx context.Context, groupID string) (int64, error)
+	//SuperGroupGetTestMessage(ctx context.Context, seq int64) (*model_struct.LocalChatLog, error)
 	SuperGroupUpdateMsgSenderNickname(ctx context.Context, sendID, nickname string, sType int) error
 	SuperGroupUpdateMsgSenderFaceURL(ctx context.Context, sendID, faceURL string, sType int) error
 	SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(ctx context.Context, sendID, faceURL, nickname string, sessionType int, groupID string) error
@@ -177,16 +173,14 @@ type MessageDatabase interface {
 	SuperGroupGetMsgSeqListByGroupID(ctx context.Context, groupID string) ([]uint32, error)
 	SuperGroupGetMsgSeqListByPeerUserID(ctx context.Context, userID string) ([]uint32, error)
 	SuperGroupGetMsgSeqListBySelfUserID(ctx context.Context, userID string) ([]uint32, error)
-	SuperGroupGetAlreadyExistSeqList(ctx context.Context, groupID string, lostSeqList []int64) (seqList []int64, err error)
-	InsertWorkMomentsNotification(ctx context.Context, jsonDetail string) error
+	GetAlreadyExistSeqList(ctx context.Context, conversationID string, lostSeqList []int64) (seqList []int64, err error)
 
-	SetChatLogFailedStatus(ctx context.Context)
 	BatchInsertConversationUnreadMessageList(ctx context.Context, messageList []*model_struct.LocalConversationUnreadMessage) error
 	DeleteConversationUnreadMessageList(ctx context.Context, conversationID string, sendTime int64) int64
 	DeleteConversationMsgs(ctx context.Context, conversationID string, msgIDs []string) error
 	DeleteConversationMsgsBySeqs(ctx context.Context, conversationID string, seqs []int64) error
 	SetNotificationSeq(ctx context.Context, conversationID string, seq int64) error
-	GetNotificationAllSeqs(ctx context.Context) ([]*model_struct.NotificationSeqsModel, error)
+	GetNotificationAllSeqs(ctx context.Context) ([]*model_struct.NotificationSeqs, error)
 }
 
 type ConversationDatabase interface {
@@ -254,16 +248,6 @@ type FriendDatabase interface {
 	DeleteBlack(ctx context.Context, blockUserID string) error
 }
 
-type WorkMomentsDatabase interface {
-	GetWorkMomentsNotification(ctx context.Context, offset, count int) (WorkMomentsNotifications []*model_struct.LocalWorkMomentsNotification, err error)
-	GetWorkMomentsNotificationLimit(ctx context.Context, pageNumber, showNumber int) (WorkMomentsNotifications []*model_struct.LocalWorkMomentsNotification, err error)
-	InitWorkMomentsNotificationUnreadCount(ctx context.Context) error
-	IncrWorkMomentsNotificationUnreadCount(ctx context.Context) error
-	MarkAllWorkMomentsNotificationAsRead(ctx context.Context) (err error)
-	GetWorkMomentsUnReadCount(ctx context.Context) (workMomentsNotificationUnReadCount model_struct.LocalWorkMomentsNotificationUnreadCount, err error)
-	ClearWorkMomentsNotification(ctx context.Context) (err error)
-}
-
 type ReactionDatabase interface {
 	GetMessageReactionExtension(ctx context.Context, msgID string) (result *model_struct.LocalChatLogReactionExtensions, err error)
 	InsertMessageReactionExtension(ctx context.Context, messageReactionExtension *model_struct.LocalChatLogReactionExtensions) error
@@ -282,6 +266,5 @@ type DataBase interface {
 	ConversationDatabase
 	UserDatabase
 	FriendDatabase
-	WorkMomentsDatabase
 	ReactionDatabase
 }

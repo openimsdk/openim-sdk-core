@@ -84,7 +84,7 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 	var n sdk_struct.NotificationElem
 	n.Detail = utils.StructToJsonString(m)
 	if err := c.db.UpdateMessageBySeq(ctx, tips.ConversationID, &model_struct.LocalChatLog{Seq: tips.Seq,
-		Status: constant.MsgStatusRevoked, Content: utils.StructToJsonString(n), ContentType: constant.RevokeNotification}); err != nil {
+		Content: utils.StructToJsonString(n), ContentType: constant.RevokeNotification}); err != nil {
 		log.ZError(ctx, "UpdateMessageBySeq failed", err, "tips", &tips)
 		return
 	}

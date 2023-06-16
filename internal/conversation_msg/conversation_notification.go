@@ -148,6 +148,7 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 	case constant.UpdateConFaceUrlAndNickName:
 		var lc model_struct.LocalConversation
 		st := node.Args.(common.SourceIDAndSessionType)
+		log.ZInfo(ctx, "UpdateConFaceUrlAndNickName", "st", st)
 		switch st.SessionType {
 		case constant.SingleChatType:
 			lc.UserID = st.SourceID
@@ -166,7 +167,8 @@ func (c *Conversation) doUpdateConversation(c2v common.Cmd2Value) {
 			log.ZError(ctx, "not support sessionType", nil, "sessionType", st.SessionType)
 			return
 		}
-		c.addFaceURLAndName(ctx, &lc)
+		lc.ShowName = st.Nickname
+		lc.FaceURL = st.FaceURL
 		err := c.db.UpdateConversation(ctx, &lc)
 		if err != nil {
 			// log.Error("internal", "setConversationFaceUrlAndNickName database err:", err.Error())

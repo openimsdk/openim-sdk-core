@@ -94,7 +94,8 @@ func (g *Group) initSyncer() {
 			} else {
 				g.listener.OnGroupInfoChanged(utils.StructToJsonString(server))
 				if server.GroupName != local.GroupName || local.FaceURL != server.FaceURL {
-					_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: server.GroupID, SessionType: constant.SuperGroupChatType}}, g.conversationCh)
+					_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.UpdateConFaceUrlAndNickName, Args: common.SourceIDAndSessionType{SourceID: server.GroupID,
+						SessionType: constant.SuperGroupChatType, FaceURL: server.FaceURL, Nickname: server.GroupName}}, g.conversationCh)
 				}
 			}
 		}

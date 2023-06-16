@@ -178,7 +178,7 @@ func (g *Group) GetJoinedGroupList(ctx context.Context) ([]*model_struct.LocalGr
 	return g.db.GetJoinedGroupListDB(ctx)
 }
 
-func (g *Group) GetGroupsInfo(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
+func (g *Group) GetSpecifiedGroupsInfo(ctx context.Context, groupIDs []string) ([]*model_struct.LocalGroup, error) {
 	groupList, err := g.db.GetJoinedGroupListDB(ctx)
 	if err != nil {
 		return nil, err
@@ -268,7 +268,7 @@ func (g *Group) GetGroupMemberListByJoinTimeFilter(ctx context.Context, groupID 
 	return g.db.GetGroupMemberListSplitByJoinTimeFilter(ctx, groupID, int(offset), int(count), joinTimeBegin, joinTimeEnd, userIDs)
 }
 
-func (g *Group) GetGroupMembersInfo(ctx context.Context, groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
+func (g *Group) GetSpecifiedGroupMembersInfo(ctx context.Context, groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error) {
 	return g.db.GetGroupSomeMemberInfo(ctx, groupID, userIDList)
 }
 
@@ -305,11 +305,11 @@ func (g *Group) InviteUserToGroup(ctx context.Context, groupID, reason string, u
 	return nil
 }
 
-func (g *Group) GetRecvGroupApplicationList(ctx context.Context) ([]*model_struct.LocalAdminGroupRequest, error) {
+func (g *Group) GetGroupApplicationListAsRecipient(ctx context.Context) ([]*model_struct.LocalAdminGroupRequest, error) {
 	return g.db.GetAdminGroupApplication(ctx)
 }
 
-func (g *Group) GetSendGroupApplicationList(ctx context.Context) ([]*model_struct.LocalGroupRequest, error) {
+func (g *Group) GetGroupApplicationListAsApplicant(ctx context.Context) ([]*model_struct.LocalGroupRequest, error) {
 	return g.db.GetSendGroupApplication(ctx)
 }
 

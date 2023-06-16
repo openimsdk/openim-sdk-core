@@ -26,19 +26,19 @@ import (
 func (d *DataBase) SetNotificationSeq(ctx context.Context, conversationID string, seq int64) error {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	cursor := d.conn.WithContext(ctx).Model(&model_struct.NotificationSeqsModel{}).Where("conversation_id = ?", conversationID).Updates(map[string]interface{}{"seq": seq})
+	cursor := d.conn.WithContext(ctx).Model(&model_struct.NotificationSeqs{}).Where("conversation_id = ?", conversationID).Updates(map[string]interface{}{"seq": seq})
 	if cursor.Error != nil {
 		return utils.Wrap(cursor.Error, "Updates failed")
 	}
 	if cursor.RowsAffected == 0 {
-		return utils.Wrap(d.conn.WithContext(ctx).Create(&model_struct.NotificationSeqsModel{ConversationID: conversationID, Seq: seq}).Error, "Create failed")
+		return utils.Wrap(d.conn.WithContext(ctx).Create(&model_struct.NotificationSeqs{ConversationID: conversationID, Seq: seq}).Error, "Create failed")
 	}
 	return nil
 }
 
-func (d *DataBase) GetNotificationAllSeqs(ctx context.Context) ([]*model_struct.NotificationSeqsModel, error) {
+func (d *DataBase) GetNotificationAllSeqs(ctx context.Context) ([]*model_struct.NotificationSeqs, error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	var seqs []*model_struct.NotificationSeqsModel
+	var seqs []*model_struct.NotificationSeqs
 	return seqs, utils.Wrap(d.conn.WithContext(ctx).Where("1=1").Find(&seqs).Error, "GetNotificationAllSeqs failed")
 }

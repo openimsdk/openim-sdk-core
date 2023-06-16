@@ -329,6 +329,9 @@ func (c *Conversation) doMsgNew(c2v common.Cmd2Value) {
 				} else {
 					exceptionMsg = append(exceptionMsg, c.msgStructToLocalErrChatLog(msg))
 					log.ZWarn(ctx, "Deduplication operation ", nil, "msg", *c.msgStructToLocalErrChatLog(msg))
+					msg.Status = constant.MsgStatusFiltered
+					msg.ClientMsgID = msg.ClientMsgID + utils.Int64ToString(utils.GetCurrentTimestampByNano())
+					insertMessage = append(insertMessage, c.msgStructToLocalChatLog(msg))
 				}
 			}
 		}

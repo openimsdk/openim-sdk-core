@@ -27,7 +27,7 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/friend"
 )
 
-func (f *Friend) GetDesignatedFriendsInfo(ctx context.Context, friendUserIDList []string) ([]*server_api_params.FullUserInfo, error) {
+func (f *Friend) GetSpecifiedFriendsInfo(ctx context.Context, friendUserIDList []string) ([]*server_api_params.FullUserInfo, error) {
 	localFriendList, err := f.db.GetFriendInfoList(ctx, friendUserIDList)
 	if err != nil {
 		return nil, err
