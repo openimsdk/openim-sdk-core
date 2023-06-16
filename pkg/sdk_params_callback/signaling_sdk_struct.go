@@ -14,20 +14,20 @@
 
 package sdk_params_callback
 
-import "open_im_sdk/pkg/server_api_params"
+import "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 
-type InviteCallback *server_api_params.SignalInviteReply
+type InviteCallback *sdkws.SignalInviteReply
 
-type InviteInGroupCallback *server_api_params.SignalInviteInGroupReply
+type InviteInGroupCallback *sdkws.SignalInviteInGroupReply
 
-type CancelCallback *server_api_params.SignalCancelReply
+type CancelCallback *sdkws.SignalCancelReply
 
-type RejectCallback *server_api_params.SignalRejectReply
+type RejectCallback *sdkws.SignalRejectReply
 
-type AcceptCallback *server_api_params.SignalAcceptReply
+type AcceptCallback *sdkws.SignalAcceptReply
 
-type HungUpCallback *server_api_params.SignalHungUpReply
+type HungUpCallback *sdkws.SignalHungUpReply
 
-type GetRoomByGroupIDCallback *server_api_params.SignalGetRoomByGroupIDReply
+type GetRoomByGroupIDCallback *sdkws.SignalGetRoomByGroupIDReply
 
-type GetTokenByRoomID *server_api_params.SignalGetTokenByRoomIDReply
+type GetTokenByRoomID *sdkws.SignalGetTokenByRoomIDReply
