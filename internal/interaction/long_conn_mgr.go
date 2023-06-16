@@ -105,6 +105,7 @@ func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnLis
 	l.send = make(chan Message, 10)
 	l.conn = NewWebSocket(WebSocket)
 	l.connWrite = new(sync.Mutex)
+	l.ctx = ctx
 	go l.readPump(ctx)
 	go l.writePump(ctx)
 	go l.heartbeat(ctx, heartbeatCmdCh)
