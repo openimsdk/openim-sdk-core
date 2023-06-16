@@ -385,12 +385,12 @@ func (c *Conversation) typingStatusUpdate(ctx context.Context, recvID, msgTip st
 	utils.SetSwitchFromOptions(options, constant.IsUnreadCount, false)
 	utils.SetSwitchFromOptions(options, constant.IsOfflinePush, false)
 
-	var wsMsgData server_api_params.MsgData
+	var wsMsgData sdkws.MsgData
 	copier.Copy(&wsMsgData, s)
 	wsMsgData.Content = []byte(s.Content)
 	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
-	var sendMsgResp server_api_params.UserSendMsgResp
+	var sendMsgResp sdkws.UserSendMsgResp
 	err = c.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
 	if err != nil {
 		log.ZError(ctx, "send msg to server failed", err, "message", s)

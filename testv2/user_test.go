@@ -17,6 +17,7 @@ package testv2
 import (
 	"open_im_sdk/open_im_sdk"
 	"testing"
+	"time"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 )
@@ -48,11 +49,13 @@ func Test_GetUsersInfo(t *testing.T) {
 
 func Test_SetSelfInfo(t *testing.T) {
 	newNickName := "test"
-	newFaceURL := "http://test.com"
+	//newFaceURL := "http://test.com"
 	err := open_im_sdk.UserForSDK.User().SetSelfInfo(ctx, &sdkws.UserInfo{
 		Nickname: newNickName,
-		FaceURL:  newFaceURL,
+		//FaceURL:  newFaceURL,
 	})
+	newFaceURL := "http://test.com"
+
 	if err != nil {
 		t.Error(err)
 	}
@@ -64,6 +67,7 @@ func Test_SetSelfInfo(t *testing.T) {
 		t.Error("user id not match")
 	}
 	t.Log(userInfo)
+	time.Sleep(time.Second * 10)
 }
 
 func Test_UpdateMsgSenderInfo(t *testing.T) {

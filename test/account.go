@@ -16,6 +16,7 @@ package test
 
 import (
 	"encoding/json"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"net"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/log"
@@ -232,7 +233,7 @@ func GetGroupMemberNum(groupID string) uint32 {
 	req.OperationID = utils.OperationIDGenerator()
 	req.GroupIDList = []string{groupID}
 
-	var groupInfoList []*server_api_params.GroupInfo
+	var groupInfoList []*sdkws.GroupInfo
 
 	r, err := network.Post2Api(GETGROUPSINFOROUTER, req, AdminToken)
 	if err != nil {
