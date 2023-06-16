@@ -247,6 +247,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 		}
 	}
 }
+
 func (c *LongConnMgr) heartbeat(ctx context.Context, heartbeatCmdCh chan common.Cmd2Value) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {

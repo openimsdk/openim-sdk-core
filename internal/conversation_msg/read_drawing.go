@@ -16,7 +16,6 @@ package conversation_msg
 
 import (
 	"context"
-	"encoding/json"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
@@ -24,42 +23,46 @@ import (
 	"open_im_sdk/sdk_struct"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	pbMsg "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/msg"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	"github.com/gorilla/websocket"
 )
 
+// Marks a set of messages in a specified session as read and sends a request for the mark to the server.
 func (c *Conversation) markMsgAsRead2Svr(ctx context.Context, conversationID string, seqs []int64) error {
-	req := &pbMsg.MarkMsgsAsReadReq{UserID: c.loginUserID, ConversationID: conversationID, Seqs: seqs}
-	reqBytes, err := json.Marshal(req)
+	var req sdkws.MarkMsgsAsReadReq
+	req.UserID = c.loginUserID
+	req.ConversationID = conversationID
+	req.Seqs = seqs
+	err := c.SendReqWaitResp(ctx, req, constant.HasReadMsg, nil)
 	if err != nil {
-		return err
-	}
-	if err := c.conn.WriteMessage(websocket.TextMessage, reqBytes); err != nil {
 		return err
 	}
 	return nil
 }
 
+// Marks the specified session as read and sends the mark request to the server.
 func (c *Conversation) markConversationAsReadSvr(ctx context.Context, conversationID string, hasReadSeq int64) error {
-	req := &pbMsg.MarkConversationAsReadReq{UserID: c.loginUserID, ConversationID: conversationID, HasReadSeq: hasReadSeq}
-	reqBytes, err := json.Marshal(req)
+	var markReadReq sdkws.MarkReadReq
+	markReadReq.UserID = c.loginUserID
+	markReadReq.ConversationID = conversationID
+	markReadReq.HasReadSeq = hasReadSeq
+	err := c.SendReqWaitResp(ctx, &markReadReq, constant.HasReadMsg, nil)
 	if err != nil {
-		return err
-	}
-	if err := c.conn.WriteMessage(websocket.TextMessage, reqBytes); err != nil {
+		log.ZError(ctx, "markConversationAsReadSvr failed", err, "req", markReadReq)
 		return err
 	}
 	return nil
 }
 
+// Sets the read sequence number for a given session to the specified value and stores that value in the database.
 func (c *Conversation) setConversationHasReadSeq(ctx context.Context, conversationID string, hasReadSeq int64) error {
-	req := &pbMsg.SetConversationHasReadSeqReq{UserID: c.loginUserID, ConversationID: conversationID, HasReadSeq: hasReadSeq}
-	reqBytes, err := json.Marshal(req)
+	// req := &pbMsg.SetConversationHasReadSeqReq{UserID: c.loginUserID, ConversationID: conversationID, HasReadSeq: hasReadSeq}
+	var req sdkws.SetConversationHasReadSeqReq
+	req.UserID = c.loginUserID
+	req.ConversationID = conversationID
+	req.HasReadSeq = hasReadSeq
+	err := c.LongConnMgr.SendReqWaitResp(ctx, req, constant.SetConversationHasReadSeq, nil)
 	if err != nil {
-		return err
-	}
-	if err := c.conn.WriteMessage(websocket.TextMessage, reqBytes); err != nil {
+		log.ZError(ctx, "setConversationHasReadSeq failed", err, "conversationID", conversationID, "hasReadSeq", hasReadSeq)
 		return err
 	}
 	return nil
@@ -201,57 +204,58 @@ func (c *Conversation) doUnreadCount(ctx context.Context, conversationID string,
 func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) {
 	tips := &sdkws.MarkAsReadTips{}
 	utils.UnmarshalNotificationElem(msg.Content, tips)
-	if tips.MarkAsReadUserID != c.loginUserID {
-		log.ZDebug(ctx, "do readDrawing", "tips", tips)
-		conversation, err := c.db.GetConversation(ctx, tips.ConversationID)
-		if err != nil {
-			log.ZError(ctx, "GetConversation err", err, "conversationID", tips.ConversationID)
-			return
-		}
-		messages, err := c.db.GetMessagesBySeqs(ctx, tips.ConversationID, tips.Seqs)
-		if err != nil {
-			log.ZError(ctx, "GetMessagesBySeqs err", err, "conversationID", tips.ConversationID, "seqs", tips.Seqs)
-			return
-		}
-		if conversation.ConversationType == constant.SingleChatType {
-			var successMsgIDs []string
-			for _, message := range messages {
-				attachInfo := sdk_struct.AttachedInfoElem{}
-				_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
-				attachInfo.HasReadTime = msg.SendTime
-				message.AttachedInfo = utils.StructToJsonString(attachInfo)
-				message.IsRead = true
-				if err = c.db.UpdateMessage(ctx, tips.ConversationID, message); err != nil {
-					log.ZError(ctx, "UpdateMessage err", err, "conversationID", tips.ConversationID, "message", message)
-				} else {
-					successMsgIDs = append(successMsgIDs, message.ClientMsgID)
-				}
-			}
-			// Constructs a read receipt message
-			var messageReceiptResp = []*sdk_struct.MessageReceipt{{UserID: tips.MarkAsReadUserID, MsgIDList: successMsgIDs,
-				SessionType: conversation.ConversationType, ReadTime: msg.SendTime}}
-			c.msgListener.OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
-		} else if conversation.ConversationType == constant.SuperGroupChatType {
-			var successMsgIDs []string
-			for _, message := range messages {
-				attachInfo := sdk_struct.AttachedInfoElem{}
-				_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
-				attachInfo.HasReadTime = msg.SendTime
-				attachInfo.GroupHasReadInfo.HasReadUserIDList = utils.RemoveRepeatedStringInList(append(attachInfo.GroupHasReadInfo.HasReadUserIDList, tips.MarkAsReadUserID))
-				attachInfo.GroupHasReadInfo.HasReadCount = int32(len(attachInfo.GroupHasReadInfo.HasReadUserIDList))
-				message.AttachedInfo = utils.StructToJsonString(attachInfo)
-				if err = c.db.UpdateMessage(ctx, tips.ConversationID, message); err != nil {
-					log.ZError(ctx, "UpdateMessage err", err, "conversationID", tips.ConversationID, "message", message)
-				} else {
-					successMsgIDs = append(successMsgIDs, message.ClientMsgID)
-				}
-			}
-			var messageReceiptResp = []*sdk_struct.MessageReceipt{{GroupID: conversation.GroupID, MsgIDList: successMsgIDs,
-				SessionType: conversation.ConversationType, ReadTime: msg.SendTime}}
-			c.msgListener.OnRecvGroupReadReceipt(utils.StructToJsonString(messageReceiptResp))
-		}
-	} else {
+
+	if tips.MarkAsReadUserID == c.loginUserID {
 		log.ZDebug(ctx, "do unread count", "tips", tips)
 		c.doUnreadCount(ctx, tips.ConversationID, tips.HasReadSeq)
+		return
+	}
+
+	log.ZDebug(ctx, "do readDrawing", "tips", tips)
+
+	conversation, err := c.db.GetConversation(ctx, tips.ConversationID)
+	if err != nil {
+		log.ZError(ctx, "GetConversation err", err, "conversationID", tips.ConversationID)
+		return
+	}
+
+	messages, err := c.db.GetMessagesBySeqs(ctx, tips.ConversationID, tips.Seqs)
+	if err != nil {
+		log.ZError(ctx, "GetMessagesBySeqs err", err, "conversationID", tips.ConversationID, "seqs", tips.Seqs)
+		return
+	}
+
+	var successMsgIDs []string
+
+	for _, message := range messages {
+		attachInfo := sdk_struct.AttachedInfoElem{}
+		_ = utils.JsonStringToStruct(message.AttachedInfo, &attachInfo)
+
+		attachInfo.HasReadTime = msg.SendTime
+
+		if conversation.ConversationType == constant.SingleChatType {
+			message.IsRead = true
+		} else if conversation.ConversationType == constant.SuperGroupChatType {
+			attachInfo.GroupHasReadInfo.HasReadUserIDList = utils.RemoveRepeatedStringInList(append(attachInfo.GroupHasReadInfo.HasReadUserIDList, tips.MarkAsReadUserID))
+			attachInfo.GroupHasReadInfo.HasReadCount = int32(len(attachInfo.GroupHasReadInfo.HasReadUserIDList))
+		}
+
+		message.AttachedInfo = utils.StructToJsonString(attachInfo)
+
+		if err = c.db.UpdateMessage(ctx, tips.ConversationID, message); err != nil {
+			log.ZError(ctx, "UpdateMessage err", err, "conversationID", tips.ConversationID, "message", message)
+		} else {
+			successMsgIDs = append(successMsgIDs, message.ClientMsgID)
+		}
+	}
+
+	var messageReceiptResp []*sdk_struct.MessageReceipt
+
+	if conversation.ConversationType == constant.SingleChatType {
+		messageReceiptResp = []*sdk_struct.MessageReceipt{{UserID: tips.MarkAsReadUserID, MsgIDList: successMsgIDs, SessionType: conversation.ConversationType, ReadTime: msg.SendTime}}
+		c.msgListener.OnRecvC2CReadReceipt(utils.StructToJsonString(messageReceiptResp))
+	} else if conversation.ConversationType == constant.SuperGroupChatType {
+		messageReceiptResp = []*sdk_struct.MessageReceipt{{GroupID: conversation.GroupID, MsgIDList: successMsgIDs, SessionType: conversation.ConversationType, ReadTime: msg.SendTime}}
+		c.msgListener.OnRecvGroupReadReceipt(utils.StructToJsonString(messageReceiptResp))
 	}
 }
