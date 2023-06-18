@@ -101,6 +101,10 @@ github.com/shamsher31/goimgext v1.0.0 h1:wFKf9GeeE0Xr6UQtliaPgYYgTju2izobM7XpCEg
 github.com/shamsher31/goimgext v1.0.0/go.mod h1:rYLKgXuTGBIaH49z+jUVSWz7gUWIZmqvYUsdvJbNNOc=
 github.com/shamsher31/goimgtype v1.0.0 h1:7nmPz5GEb01sjFUojCbZJcBI68A8tmLXoCFbb5I34u4=
 github.com/shamsher31/goimgtype v1.0.0/go.mod h1:OZm3NZQDbK0ezlk9IV5oq3cWQwjF1oVSxKNx19bkf64=
+github.com/shurcooL/go v0.0.0-20200502201357-93f07166e636 h1:aSISeOcal5irEhJd1M+IrApc0PdcN7e7Aj4yuEnOrfQ=
+github.com/shurcooL/go v0.0.0-20200502201357-93f07166e636/go.mod h1:TDJrrUr11Vxrven61rcy3hJMUqaf/CLWYhHNPmT14Lk=
+github.com/shurcooL/go-goon v1.0.0 h1:BCQPvxGkHHJ4WpBO4m/9FXbITVIsvAm/T66cCcCGI7E=
+github.com/shurcooL/go-goon v1.0.0/go.mod h1:2wTHMsGo7qnpmqA8ADYZtP4I1DD94JpXGQ3Dxq2YQ5w=
 github.com/sirupsen/logrus v1.9.0 h1:trlNQbNUG3OdDrDil03MCb1H2o9nJ1x4/5LYw7byDE0=
 github.com/sirupsen/logrus v1.9.0/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
