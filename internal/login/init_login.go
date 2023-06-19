@@ -260,10 +260,6 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 		return sdkerrs.ErrSdkInternal.Wrap("init database " + err.Error())
 	}
 	log.ZDebug(ctx, "NewDataBase ok", "userID", userID, "dataDir", u.info.DataDir, "login cost time", time.Since(t1))
-	u.conversationCh = make(chan common.Cmd2Value, 1000)
-	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
-	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
-	u.loginMgrCh = make(chan common.Cmd2Value)
 	u.loginTime = time.Now().UnixNano() / 1e6
 	u.user = user.NewUser(u.db, u.loginUserID, u.conversationCh)
 	u.user.SetListener(u.userListener)
@@ -276,14 +272,14 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db)
 	u.cache = cache.NewCache(u.user, u.friend)
 	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache, u.db, u.superGroup)
-
 	u.business = business.NewBusiness(u.db)
 	if u.businessListener != nil {
 		u.business.SetListener(u.businessListener)
 	}
 	u.push = third.NewPush(u.info.PlatformID, u.loginUserID)
 	log.ZDebug(ctx, "forcedSynchronization success...", "login cost time: ", time.Since(t1))
-	u.longConnMgr = interaction.NewLongConnMgr(ctx, u.connListener, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.conversationCh, u.loginMgrCh)
+
+	u.longConnMgr.Run(ctx)
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
 		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.signaling, u.business, u.cache, u.full, u.file)
@@ -340,6 +336,11 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_call
 	u.connListener = listener
 	ctx := ccontext.WithInfo(context.Background(), u.info)
 	u.ctx, u.cancel = context.WithCancel(ctx)
+	u.conversationCh = make(chan common.Cmd2Value, 1000)
+	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
+	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
+	u.loginMgrCh = make(chan common.Cmd2Value)
+	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
 	return true
 }
 
@@ -362,6 +363,10 @@ func (u *LoginMgr) logout(ctx context.Context) error {
 }
 
 func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool) error {
+	if u.longConnMgr.GetConnectionStatus() == 0 {
+		u.longConnMgr.SetBackground(isBackground)
+		return nil
+	}
 	err := u.longConnMgr.SendReqWaitResp(ctx, &sdkws.SetAppBackgroundStatusReq{UserID: u.loginUserID, IsBackground: isBackground}, constant.SetBackgroundStatus, nil)
 	if err != nil {
 		return err
