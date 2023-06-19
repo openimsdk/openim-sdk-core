@@ -367,7 +367,8 @@ func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool
 		u.longConnMgr.SetBackground(isBackground)
 		return nil
 	}
-	err := u.longConnMgr.SendReqWaitResp(ctx, &sdkws.SetAppBackgroundStatusReq{UserID: u.loginUserID, IsBackground: isBackground}, constant.SetBackgroundStatus, nil)
+	var resp sdkws.SetAppBackgroundStatusResp
+	err := u.longConnMgr.SendReqWaitResp(ctx, &sdkws.SetAppBackgroundStatusReq{UserID: u.loginUserID, IsBackground: isBackground}, constant.SetBackgroundStatus, &resp)
 	if err != nil {
 		return err
 	} else {
