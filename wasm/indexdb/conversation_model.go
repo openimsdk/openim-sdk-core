@@ -52,6 +52,7 @@ func (i *LocalConversations) GetAllConversationListDB(ctx context.Context) (resu
 		}
 	}
 }
+
 func (i *LocalConversations) GetConversation(ctx context.Context, conversationID string) (*model_struct.LocalConversation, error) {
 	c, err := Exec(conversationID)
 	if err != nil {
