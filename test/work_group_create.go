@@ -16,6 +16,7 @@ package test
 
 import (
 	"encoding/json"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/network"
@@ -88,7 +89,7 @@ func CreateWorkGroup(number int) string {
 		} else {
 			type CreateGroupResp struct {
 				server_api_params.CommResp
-				GroupInfo server_api_params.GroupInfo `json:"data"`
+				GroupInfo sdkws.GroupInfo `json:"data"`
 			}
 
 			var result CreateGroupResp

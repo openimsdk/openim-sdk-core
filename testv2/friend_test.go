@@ -23,8 +23,8 @@ import (
 	friend2 "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/friend"
 )
 
-func Test_GetDesignatedFriendsInfo(t *testing.T) {
-	info, err := open_im_sdk.UserForSDK.Friend().GetDesignatedFriendsInfo(ctx, []string{"45644221123"})
+func Test_GetSpecifiedFriendsInfo(t *testing.T) {
+	info, err := open_im_sdk.UserForSDK.Friend().GetSpecifiedFriendsInfo(ctx, []string{"45644221123"})
 	if err != nil {
 		t.Fatal(err)
 	}

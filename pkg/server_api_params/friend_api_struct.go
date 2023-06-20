@@ -14,6 +14,8 @@
 
 package server_api_params
 
+import "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+
 type ParamsCommFriend struct {
 	OperationID string `json:"operationID" binding:"required"`
 	ToUserID    string `json:"toUserID" binding:"required"`
@@ -71,7 +73,7 @@ type GetBlackListReq struct {
 }
 type GetBlackListResp struct {
 	CommResp
-	BlackUserInfoList []*PublicUserInfo
+	BlackUserInfoList []*sdkws.PublicUserInfo
 	Data              []map[string]interface{} `json:"data"`
 }
 
@@ -113,7 +115,7 @@ type GetFriendsInfoReq struct {
 }
 type GetFriendsInfoResp struct {
 	CommResp
-	FriendInfoList []*FriendInfo
+	FriendInfoList []*sdkws.FriendInfo
 	Data           []map[string]interface{} `json:"data"`
 }
 
@@ -123,7 +125,7 @@ type GetFriendListReq struct {
 }
 type GetFriendListResp struct {
 	CommResp
-	FriendInfoList []*FriendInfo
+	FriendInfoList []*sdkws.FriendInfo
 	Data           []map[string]interface{} `json:"data"`
 }
 
@@ -133,7 +135,7 @@ type GetFriendApplyListReq struct {
 }
 type GetFriendApplyListResp struct {
 	CommResp
-	FriendRequestList []*FriendRequest
+	FriendRequestList []*sdkws.FriendRequest
 	Data              []map[string]interface{} `json:"data"`
 }
 
@@ -143,6 +145,6 @@ type GetSelfFriendApplyListReq struct {
 }
 type GetSelfFriendApplyListResp struct {
 	CommResp
-	FriendRequestList []*FriendRequest
+	FriendRequestList []*sdkws.FriendRequest
 	Data              []map[string]interface{} `json:"data"`
 }

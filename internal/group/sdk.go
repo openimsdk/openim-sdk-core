@@ -242,7 +242,7 @@ func (g *Group) SetGroupLookMemberInfo(ctx context.Context, groupID string, rule
 	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, LookMemberInfo: wrapperspb.Int32(rule)})
 }
 
-func (g *Group) SetGroupApplyMemberFriend(ctx context.Context, rule int32, groupID string) error {
+func (g *Group) SetGroupApplyMemberFriend(ctx context.Context, groupID string, rule int32) error {
 	return g.SetGroupInfo(ctx, &sdkws.GroupInfoForSet{GroupID: groupID, ApplyMemberFriend: wrapperspb.Int32(rule)})
 }
 

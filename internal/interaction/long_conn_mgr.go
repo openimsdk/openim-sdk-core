@@ -48,7 +48,7 @@ const (
 	pingPeriod = (pongWait * 9) / 10
 
 	// Maximum message size allowed from peer.
-	maxMessageSize = 51200
+	maxMessageSize = 1024 * 1024
 )
 
 const (
@@ -82,6 +82,7 @@ type LongConnMgr struct {
 	pushMsgAndMaxSeqCh chan common.Cmd2Value
 	conversationCh     chan common.Cmd2Value
 	loginMgrCh         chan common.Cmd2Value
+	heartbeatCh        chan common.Cmd2Value
 	closedErr          error
 	ctx                context.Context
 	IsCompression      bool
@@ -98,17 +99,21 @@ type Message struct {
 	Resp    chan *GeneralWsResp
 }
 
-func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, heartbeatCmdCh, pushMsgAndMaxSeqCh, conversationCh, loginMgrCh chan common.Cmd2Value) *LongConnMgr {
+func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnListener, heartbeatCmdCh, pushMsgAndMaxSeqCh, loginMgrCh chan common.Cmd2Value) *LongConnMgr {
 	l := &LongConnMgr{listener: listener, pushMsgAndMaxSeqCh: pushMsgAndMaxSeqCh,
-		conversationCh: conversationCh, loginMgrCh: loginMgrCh, IsCompression: true,
+		loginMgrCh: loginMgrCh, IsCompression: true,
 		Syncer: NewWsRespAsyn(), encoder: NewGobEncoder(), compressor: NewGzipCompressor()}
 	l.send = make(chan Message, 10)
 	l.conn = NewWebSocket(WebSocket)
 	l.connWrite = new(sync.Mutex)
-	go l.readPump(ctx)
-	go l.writePump(ctx)
-	go l.heartbeat(ctx, heartbeatCmdCh)
+	l.ctx = ctx
+	l.heartbeatCh = heartbeatCmdCh
 	return l
+}
+func (c *LongConnMgr) Run(ctx context.Context) {
+	go c.readPump(ctx)
+	go c.writePump(ctx)
+	go c.heartbeat(ctx)
 }
 
 func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqIdentifier int, resp proto.Message) error {
@@ -248,6 +253,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 	}
 }
 
+// DOTO: ...
 func (c *LongConnMgr) heartbeat(ctx context.Context, heartbeatCmdCh chan common.Cmd2Value) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
@@ -258,7 +264,7 @@ func (c *LongConnMgr) heartbeat(ctx context.Context, heartbeatCmdCh chan common.
 		case <-ctx.Done():
 			log.ZInfo(ctx, "heartbeat done sdk logout.....")
 			return
-		case <-heartbeatCmdCh:
+		case <-c.heartbeatCh:
 			c.sendPingToServer(ctx)
 		case <-ticker.C:
 			c.sendPingToServer(ctx)

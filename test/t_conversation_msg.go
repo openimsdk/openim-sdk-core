@@ -84,16 +84,16 @@ func DoTestSearchLocalMessages() {
 	open_im_sdk.SearchLocalMessages(testSearchLocalMessagesCallBack, testSearchLocalMessagesCallBack.OperationID, utils.StructToJsonString(params))
 }
 
-func DoTestGetHistoryMessage(userID string) {
-	var testGetHistoryCallBack GetHistoryCallBack
-	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
-	var params sdk_params_callback.GetHistoryMessageListParams
-	params.UserID = userID
-	params.ConversationID = "super_group_3907826375"
-	//params.StartClientMsgID = "97f12899778823019f13ea46b0c1e6dd"
-	params.Count = 10
-	// open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
-}
+//	func DoTestGetHistoryMessage(userID string) {
+//		var testGetHistoryCallBack GetHistoryCallBack
+//		testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
+//		var params sdk_params_callback.GetHistoryMessageListParams
+//		params.UserID = userID
+//		params.ConversationID = "super_group_3907826375"
+//		//params.StartClientMsgID = "97f12899778823019f13ea46b0c1e6dd"
+//		params.Count = 10
+//		open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
+//	}
 func DoTestFindMessageList() {
 	var testFindMessageListCallBack FindMessageListCallBack
 	testFindMessageListCallBack.OperationID = utils.OperationIDGenerator()
@@ -183,24 +183,25 @@ func DoTestGetAdvancedHistoryMessageList() {
 	//params.LastMinSeq = seq
 	open_im_sdk.GetAdvancedHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
 }
-func DoTestGetHistoryMessageReverse(userID string) {
-	var testGetHistoryReverseCallBack GetHistoryReverseCallBack
-	testGetHistoryReverseCallBack.OperationID = utils.OperationIDGenerator()
-	var params sdk_params_callback.GetHistoryMessageListParams
-	params.UserID = userID
-	params.Count = 10
-	params.ConversationID = "single_707008149"
-	params.StartClientMsgID = "d40dde77f29b14d3a16ca6f422776890"
-	// open_im_sdk.GetHistoryMessageListReverse(testGetHistoryReverseCallBack, testGetHistoryReverseCallBack.OperationID, utils.StructToJsonString(params))
-}
-func DoTestGetGroupHistoryMessage() {
-	var testGetHistoryCallBack GetHistoryCallBack
-	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
-	var params sdk_params_callback.GetHistoryMessageListParams
-	params.GroupID = "cb7aaa8e5f83d92db2ed1573cd01870c"
-	params.Count = 10
-	// open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
-}
+
+//func DoTestGetHistoryMessageReverse(userID string) {
+//	var testGetHistoryReverseCallBack GetHistoryReverseCallBack
+//	testGetHistoryReverseCallBack.OperationID = utils.OperationIDGenerator()
+//	var params sdk_params_callback.GetHistoryMessageListParams
+//	params.UserID = userID
+//	params.Count = 10
+//	params.ConversationID = "single_707008149"
+//	params.StartClientMsgID = "d40dde77f29b14d3a16ca6f422776890"
+//	open_im_sdk.GetHistoryMessageListReverse(testGetHistoryReverseCallBack, testGetHistoryReverseCallBack.OperationID, utils.StructToJsonString(params))
+//}
+//func DoTestGetGroupHistoryMessage() {
+//	var testGetHistoryCallBack GetHistoryCallBack
+//	testGetHistoryCallBack.OperationID = utils.OperationIDGenerator()
+//	var params sdk_params_callback.GetHistoryMessageListParams
+//	params.GroupID = "cb7aaa8e5f83d92db2ed1573cd01870c"
+//	params.Count = 10
+//	open_im_sdk.GetHistoryMessageList(testGetHistoryCallBack, testGetHistoryCallBack.OperationID, utils.StructToJsonString(params))
+//}
 
 //func DoTestGetGroupHistoryMessage() {
 //	var testGetHistoryCallBack GetHistoryCallBack
@@ -725,7 +726,7 @@ func DoTestSendMsg2(sendId, recvID string) {
 	log.NewInfo(operationID, "send msg:", s)
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
-	o := server_api_params.OfflinePushInfo{}
+	o := sdkws.OfflinePushInfo{}
 	o.Title = "121313"
 	o.Desc = "45464"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
@@ -739,7 +740,7 @@ func DoTestSendMsg2Group(sendId, groupID string, index int) {
 	log.NewInfo(operationID, "send msg:", s)
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
-	o := server_api_params.OfflinePushInfo{}
+	o := sdkws.OfflinePushInfo{}
 	o.Title = "Title"
 	o.Desc = "Desc"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, "", groupID, utils.StructToJsonString(o))
@@ -751,7 +752,7 @@ func DoTestSendMsg2GroupWithMessage(sendId, groupID string, message string) {
 	log.NewInfo(operationID, "send msg:", s)
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
-	o := server_api_params.OfflinePushInfo{}
+	o := sdkws.OfflinePushInfo{}
 	o.Title = "Title"
 	o.Desc = "Desc"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, "", groupID, utils.StructToJsonString(o))
@@ -765,7 +766,7 @@ func DoTestSendMsg2c2c(sendId, recvID string, index int) {
 	log.NewInfo(operationID, "send msg:", s)
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
-	o := server_api_params.OfflinePushInfo{}
+	o := sdkws.OfflinePushInfo{}
 	o.Title = "Title"
 	o.Desc = "Desc"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
@@ -843,7 +844,7 @@ func DoTestSendImageMsg(recvID string) {
 	s := DoTestCreateImageMessageFromFullPath()
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
-	o := server_api_params.OfflinePushInfo{}
+	o := sdkws.OfflinePushInfo{}
 	o.Title = "121313"
 	o.Desc = "45464"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
@@ -860,7 +861,7 @@ func DoTestSendOtherMsg(sendId, recvID string) {
 	s := DoTestCreateOtherMessageFromFullPath()
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
-	o := server_api_params.OfflinePushInfo{}
+	o := sdkws.OfflinePushInfo{}
 	o.Title = "121313"
 	o.Desc = "45464"
 	open_im_sdk.SendMessage(&testSendMsg, operationID, s, recvID, "", utils.StructToJsonString(o))
@@ -871,7 +872,7 @@ func DoTestSendVideo(sendId, recvID string) {
 	s := DoTestCreateVideoMessageFromFullPath()
 	var testSendMsg TestSendMsgCallBack
 	testSendMsg.OperationID = operationID
-	o := server_api_params.OfflinePushInfo{}
+	o := sdkws.OfflinePushInfo{}
 	o.Title = "121313"
 	o.Desc = "45464"
 	log.NewInfo(operationID, s)

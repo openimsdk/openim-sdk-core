@@ -33,6 +33,7 @@ func Test_CreateGroupV2(t *testing.T) {
 		OwnerUserID:   UserID,
 		GroupInfo: &sdkws.GroupInfo{
 			GroupName: "test-gro2up",
+			GroupType: 2,
 		},
 	}
 	info, err := open_im_sdk.UserForSDK.Group().CreateGroup(ctx, req)
@@ -140,8 +141,8 @@ func Test_GetJoinedGroupList(t *testing.T) {
 	}
 }
 
-func Test_GetGroupsInfo(t *testing.T) {
-	info, err := open_im_sdk.UserForSDK.Group().GetGroupsInfo(ctx, []string{"2344707053"})
+func Test_GetSpecifiedGroupsInfo(t *testing.T) {
+	info, err := open_im_sdk.UserForSDK.Group().GetSpecifiedGroupsInfo(ctx, []string{"2344707053"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -151,8 +152,8 @@ func Test_GetGroupsInfo(t *testing.T) {
 	}
 }
 
-func Test_GetRecvGroupApplicationList(t *testing.T) {
-	info, err := open_im_sdk.UserForSDK.Group().GetRecvGroupApplicationList(ctx)
+func Test_GetGroupApplicationListAsRecipient(t *testing.T) {
+	info, err := open_im_sdk.UserForSDK.Group().GetGroupApplicationListAsRecipient(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -162,8 +163,8 @@ func Test_GetRecvGroupApplicationList(t *testing.T) {
 	}
 }
 
-func Test_GetSendGroupApplicationList(t *testing.T) {
-	info, err := open_im_sdk.UserForSDK.Group().GetSendGroupApplicationList(ctx)
+func Test_GetGroupApplicationListAsApplicant(t *testing.T) {
+	info, err := open_im_sdk.UserForSDK.Group().GetGroupApplicationListAsApplicant(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -250,7 +251,7 @@ func Test_SyncGroup(t *testing.T) {
 
 func Test_GetGroup(t *testing.T) {
 	t.Log("--------------------------")
-	infos, err := open_im_sdk.UserForSDK.Group().GetGroupsInfo(ctx, []string{"3179997540"})
+	infos, err := open_im_sdk.UserForSDK.Group().GetSpecifiedGroupsInfo(ctx, []string{"3179997540"})
 	if err != nil {
 		t.Fatal(err)
 	}
