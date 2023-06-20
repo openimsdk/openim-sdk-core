@@ -334,13 +334,7 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_call
 	u.info = &ccontext.GlobalConfig{}
 	u.info.IMConfig = config
 	u.connListener = listener
-	ctx := ccontext.WithInfo(context.Background(), u.info)
-	u.ctx, u.cancel = context.WithCancel(ctx)
-	u.conversationCh = make(chan common.Cmd2Value, 1000)
-	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
-	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
-	u.loginMgrCh = make(chan common.Cmd2Value)
-	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
+	u.initResources()
 	return true
 }
 
@@ -348,12 +342,14 @@ func (u *LoginMgr) Context() context.Context {
 	return u.ctx
 }
 
-// user object must be rest  when user logout
-func (u *LoginMgr) reset() {
-	//reset global context
-	resetContext := ccontext.WithInfo(context.Background(), u.info)
-	u.ctx, u.cancel = context.WithCancel(resetContext)
-	u.longConnMgr.Reset()
+func (u *LoginMgr) initResources() {
+	ctx := ccontext.WithInfo(context.Background(), u.info)
+	u.ctx, u.cancel = context.WithCancel(ctx)
+	u.conversationCh = make(chan common.Cmd2Value, 1000)
+	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
+	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
+	u.loginMgrCh = make(chan common.Cmd2Value)
+	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
 }
 
 func (u *LoginMgr) logout(ctx context.Context) error {
@@ -363,7 +359,8 @@ func (u *LoginMgr) logout(ctx context.Context) error {
 	}
 	u.Exit()
 	_ = u.db.Close(u.ctx)
-	u.reset()
+	// user object must be rest  when user logout
+	u.initResources()
 	log.ZDebug(ctx, "TriggerCmdLogout success...")
 	return nil
 }
