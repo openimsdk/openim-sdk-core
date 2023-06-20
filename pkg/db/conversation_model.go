@@ -67,6 +67,7 @@ func (d *DataBase) GetAllConversations(ctx context.Context) ([]*model_struct.Loc
 	err := utils.Wrap(d.conn.WithContext(ctx).Find(&conversationList).Error, "GetAllConversations failed")
 	return conversationList, err
 }
+
 func (d *DataBase) GetAllConversationIDList(ctx context.Context) (result []string, err error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
@@ -74,6 +75,7 @@ func (d *DataBase) GetAllConversationIDList(ctx context.Context) (result []strin
 	err = d.conn.WithContext(ctx).Model(&c).Pluck("conversation_id", &result).Error
 	return result, utils.Wrap(err, "GetAllConversationIDList failed ")
 }
+
 func (d *DataBase) GetAllSingleConversationIDList(ctx context.Context) (result []string, err error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()

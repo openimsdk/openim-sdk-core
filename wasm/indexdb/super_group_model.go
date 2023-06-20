@@ -50,6 +50,7 @@ func (i *LocalSuperGroup) GetJoinedSuperGroupList(ctx context.Context) (result [
 		}
 	}
 }
+
 func (i *LocalSuperGroup) InsertSuperGroup(ctx context.Context, groupInfo *model_struct.LocalGroup) error {
 	_, err := Exec(utils.StructToJsonString(groupInfo))
 	return err
