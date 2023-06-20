@@ -110,6 +110,10 @@ func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnLis
 	l.heartbeatCh = heartbeatCmdCh
 	return l
 }
+func (c *LongConnMgr) Reset() {
+	c.closedErr = nil
+	c.send = make(chan Message, 10)
+}
 func (c *LongConnMgr) Run(ctx context.Context) {
 	go c.readPump(ctx)
 	go c.writePump(ctx)

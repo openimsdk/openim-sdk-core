@@ -348,6 +348,14 @@ func (u *LoginMgr) Context() context.Context {
 	return u.ctx
 }
 
+// user object must be rest  when user logout
+func (u *LoginMgr) reset() {
+	//reset global context
+	resetContext := ccontext.WithInfo(context.Background(), u.info)
+	u.ctx, u.cancel = context.WithCancel(resetContext)
+	u.longConnMgr.Reset()
+}
+
 func (u *LoginMgr) logout(ctx context.Context) error {
 	err := u.longConnMgr.SendReqWaitResp(ctx, &push.DelUserPushTokenReq{UserID: u.info.UserID, PlatformID: u.info.PlatformID}, constant.LogoutMsg, &push.DelUserPushTokenResp{})
 	if err != nil {
@@ -355,9 +363,7 @@ func (u *LoginMgr) logout(ctx context.Context) error {
 	}
 	u.Exit()
 	_ = u.db.Close(u.ctx)
-	//reset global context
-	resetContext := ccontext.WithInfo(context.Background(), u.info)
-	u.ctx, u.cancel = context.WithCancel(resetContext)
+	u.reset()
 	log.ZDebug(ctx, "TriggerCmdLogout success...")
 	return nil
 }
