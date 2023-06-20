@@ -608,3 +608,7 @@ func (i *LocalChatLogs) DeleteConversationMsgsBySeqs(ctx context.Context, conver
 	//TODO implement me
 	panic("implement me")
 }
+
+func (i *LocalChatLogs) SetMessageLocalEx(ctx context.Context, conversationID, clientMsgID, localEx string) error {
+	return nil
+}
