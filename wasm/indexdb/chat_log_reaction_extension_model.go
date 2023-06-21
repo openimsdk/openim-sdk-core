@@ -26,10 +26,6 @@ import (
 )
 
 type LocalChatLogReactionExtensions struct {
-	ExtKey string `json:"ext_key"`
-	ExtVal string `json:"ext_val"`
-	ExtKey2 string `json:"ext_key2"`
-	ExtVal2 string `json:"ext_val2"`
 }
 
 func NewLocalChatLogReactionExtensions() *LocalChatLogReactionExtensions {

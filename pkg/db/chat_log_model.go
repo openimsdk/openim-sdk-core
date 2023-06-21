@@ -552,7 +552,7 @@ func (d *DataBase) MarkConversationAllMessageAsRead(ctx context.Context, convers
 	return t.RowsAffected, utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
 }
 
-func (d *DataBase) GetMessaGetConversationPeerNormalMsgSeqgesByClientMsgIDs(ctx context.Context, conversationID string, msgIDs []string) (msgs []*model_struct.LocalChatLog, err error) {
+func (d *DataBase) GetMessagesByClientMsgIDs(ctx context.Context, conversationID string, msgIDs []string) (msgs []*model_struct.LocalChatLog, err error) {
 	err = utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("client_msg_id IN ?", msgIDs).Order("send_time DESC").Find(&msgs).Error, "GetMessagesByClientMsgIDs error")
 	return msgs, err
 }

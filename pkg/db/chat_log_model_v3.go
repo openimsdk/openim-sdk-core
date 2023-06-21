@@ -143,7 +143,6 @@ func (d *DataBase) DeleteConversationMsgsBySeqs(ctx context.Context, conversatio
 	defer d.mRWMutex.Unlock()
 	return utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where("seq IN ?", seqs).Delete(model_struct.LocalChatLog{}).Error, "DeleteConversationMsgs failed")
 }
-
 func (d *DataBase) SearchMessageByContentType(ctx context.Context, contentType []int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
 	condition := fmt.Sprintf("send_time between %d and %d AND status <=%d And content_type IN ?", startTime, endTime, constant.MsgStatusSendFailed)
 	err = utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, contentType).Order("send_time DESC").Offset(offset).Limit(count).Find(&result).Error, "SearchMessage failed")
@@ -220,7 +219,6 @@ func (d *DataBase) UpdateMsgSenderFaceURLAndSenderNickname(ctx context.Context, 
 		"send_id = ?", sendID).Updates(
 		map[string]interface{}{"sender_face_url": faceURL, "sender_nick_name": nickname}).Error, utils.GetSelfFuncName()+" failed")
 }
-
 func (d *DataBase) GetAlreadyExistSeqList(ctx context.Context, conversationID string, lostSeqList []int64) (seqList []int64, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
