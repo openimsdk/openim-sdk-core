@@ -99,20 +99,7 @@ func (i *LocalChatLogs) UpdateMessage(ctx context.Context, conversationID string
 	_, err := Exec(conversationID, c.ClientMsgID, utils.StructToJsonString(tempLocalChatLog))
 	return err
 }
-func (i *LocalChatLogs) GetNormalMsgSeq(ctx context.Context) (uint32, error) {
-	seq, err := Exec()
-	if err != nil {
-		return 0, err
-	} else {
-		if v, ok := seq.(float64); ok {
-			var result uint32
-			result = uint32(v)
-			return result, err
-		} else {
-			return 0, ErrType
-		}
-	}
-}
+
 func (i *LocalChatLogs) BatchInsertMessageList(ctx context.Context, conversationID string, messageList []*model_struct.LocalChatLog) error {
 	_, err := Exec(conversationID, utils.StructToJsonString(messageList))
 	return err
@@ -120,22 +107,6 @@ func (i *LocalChatLogs) BatchInsertMessageList(ctx context.Context, conversation
 func (i *LocalChatLogs) InsertMessage(ctx context.Context, conversationID string, message *model_struct.LocalChatLog) error {
 	_, err := Exec(conversationID, utils.StructToJsonString(message))
 	return err
-}
-func (i *LocalChatLogs) GetAllUnDeleteMessageSeqList(ctx context.Context) (result []uint32, err error) {
-	l, err := Exec()
-	if err != nil {
-		return nil, err
-	} else {
-		if v, ok := l.(string); ok {
-			err := utils.JsonStringToStruct(v, &result)
-			if err != nil {
-				return nil, err
-			}
-			return result, err
-		} else {
-			return nil, ErrType
-		}
-	}
 }
 func (i *LocalChatLogs) UpdateColumnsMessageList(ctx context.Context, clientMsgIDList []string, args map[string]interface{}) error {
 	_, err := Exec(utils.StructToJsonString(clientMsgIDList), args)
@@ -154,7 +125,7 @@ func (i *LocalChatLogs) UpdateMessageStatusBySourceID(ctx context.Context, sourc
 	return err
 }
 func (i *LocalChatLogs) UpdateMessageTimeAndStatus(ctx context.Context, conversationID, clientMsgID string, serverMsgID string, sendTime int64, status int32) error {
-	_, err := Exec(clientMsgID, serverMsgID, sendTime, status)
+	_, err := Exec(conversationID, clientMsgID, serverMsgID, sendTime, status)
 	return err
 }
 func (i *LocalChatLogs) GetMessageList(ctx context.Context, conversationID string, count int, startTime int64, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
@@ -226,27 +197,27 @@ func (i *LocalChatLogs) SearchMessageByContentType(ctx context.Context, contentT
 	}
 }
 
-func (i *LocalChatLogs) SuperGroupSearchMessageByContentType(ctx context.Context, contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (messages []*model_struct.LocalChatLog, err error) {
-	msgList, err := Exec(utils.StructToJsonString(contentType), sourceID, startTime, endTime, sessionType, offset, count)
-	if err != nil {
-		return nil, err
-	} else {
-		if v, ok := msgList.(string); ok {
-			var temp []model_struct.LocalChatLog
-			err := utils.JsonStringToStruct(v, &temp)
-			if err != nil {
-				return nil, err
-			}
-			for _, v := range temp {
-				v1 := v
-				messages = append(messages, &v1)
-			}
-			return messages, err
-		} else {
-			return nil, ErrType
-		}
-	}
-}
+//func (i *LocalChatLogs) SuperGroupSearchMessageByContentType(ctx context.Context, contentType []int, sourceID string, startTime, endTime int64, sessionType, offset, count int) (messages []*model_struct.LocalChatLog, err error) {
+//	msgList, err := Exec(utils.StructToJsonString(contentType), sourceID, startTime, endTime, sessionType, offset, count)
+//	if err != nil {
+//		return nil, err
+//	} else {
+//		if v, ok := msgList.(string); ok {
+//			var temp []model_struct.LocalChatLog
+//			err := utils.JsonStringToStruct(v, &temp)
+//			if err != nil {
+//				return nil, err
+//			}
+//			for _, v := range temp {
+//				v1 := v
+//				messages = append(messages, &v1)
+//			}
+//			return messages, err
+//		} else {
+//			return nil, ErrType
+//		}
+//	}
+//}
 
 func (i *LocalChatLogs) SearchMessageByContentTypeAndKeyword(ctx context.Context, contentType []int, conversationID string, keywordList []string, keywordListMatchType int, startTime, endTime int64) (result []*model_struct.LocalChatLog, err error) {
 	msgList, err := Exec(conversationID, utils.StructToJsonString(contentType), utils.StructToJsonString(keywordList), keywordListMatchType, startTime, endTime)
@@ -498,7 +469,7 @@ func (i *LocalChatLogs) UpdateGroupMessageHasRead(ctx context.Context, msgIDList
 }
 
 func (i *LocalChatLogs) SearchMessageByKeyword(ctx context.Context, contentType []int, keywordList []string, keywordListMatchType int, conversationID string, startTime, endTime int64, offset, count int) (result []*model_struct.LocalChatLog, err error) {
-	msgList, err := Exec(utils.StructToJsonString(contentType), utils.StructToJsonString(keywordList), keywordListMatchType, conversationID, startTime, endTime, offset, count)
+	msgList, err := Exec(conversationID, utils.StructToJsonString(contentType), utils.StructToJsonString(keywordList), keywordListMatchType, startTime, endTime, offset, count)
 	if err != nil {
 		return nil, err
 	} else {
@@ -636,4 +607,8 @@ func (i *LocalChatLogs) DeleteConversationMsgs(ctx context.Context, conversation
 func (i *LocalChatLogs) DeleteConversationMsgsBySeqs(ctx context.Context, conversationID string, seqs []int64) error {
 	//TODO implement me
 	panic("implement me")
+}
+
+func (i *LocalChatLogs) SetMessageLocalEx(ctx context.Context, conversationID, clientMsgID, localEx string) error {
+	return nil
 }

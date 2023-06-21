@@ -154,44 +154,6 @@ func (i IndexDB) InitDB(ctx context.Context, userID string, dataDir string) erro
 	return err
 }
 
-//func (i IndexDB) GetBlackList(ctx context.Context, ) ([]*model_struct.LocalBlack, error) {
-//	panic("implement me")
-//}
-//
-//func (i IndexDB) GetBlackListUserID(ctx context.Context, ) (blackListUid []string, err error) {
-//	panic("implement me")
-//}
-//
-//func (i IndexDB) GetBlackInfoByBlockUserID(ctx context.Context, blockUserID string) (*model_struct.LocalBlack, error) {
-//	panic("implement me")
-//}
-//
-//func (i IndexDB) GetBlackInfoList(ctx context.Context, blockUserIDList []string) ([]*model_struct.LocalBlack, error) {
-//	panic("implement me")
-//}
-//
-//func (i IndexDB) InsertBlack(ctx context.Context, black *model_struct.LocalBlack) error {
-//	panic("implement me")
-//}
-//
-//func (i IndexDB) UpdateBlack(ctx context.Context, black *model_struct.LocalBlack) error {
-//	panic("implement me")
-//}
-//
-//func (i IndexDB) DeleteBlack(ctx context.Context, blockUserID string) error {
-//	panic("implement me")
-//}
-
-//func NewIndexDB(loginUserID string) *IndexDB {
-//	return &IndexDB{
-//		LocalChatLogs: NewLocalChatLogs(loginUserID),
-//		FriendRequest: NewFriendRequest(loginUserID),
-//		Black:         NewBlack(loginUserID),
-//		Friend:        NewFriend(loginUserID),
-//		loginUserID:   loginUserID,
-//	}
-//}
-
 func (i IndexDB) SetChatLogFailedStatus(ctx context.Context) {
 	//msgList, err := i.GetSendingMessageList()
 	//if err != nil {

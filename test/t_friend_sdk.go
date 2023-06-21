@@ -17,10 +17,9 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	"open_im_sdk/internal/login"
-	"open_im_sdk/pkg/server_api_params"
-
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	X "log"
+	"open_im_sdk/internal/login"
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
@@ -61,7 +60,7 @@ func TestLog(v ...interface{}) {
 	X.Println(a, b, c, d)
 }
 
-var Friend_uid = "13911112222"
+var Friend_uid = "3126758667"
 
 func SetTestFriendID(friendUserID string) {
 	Friend_uid = friendUserID
@@ -89,7 +88,7 @@ type testSetSelfInfo struct {
 func DoTestSetSelfInfo() {
 	var test testSetSelfInfo
 	test.OperationID = utils.OperationIDGenerator()
-	userInfo := server_api_params.UserInfo{}
+	userInfo := sdkws.UserInfo{}
 	userInfo.Nickname = "new 4444444444444 Gordon001"
 	jsonString := utils.StructToJsonStringDefault(userInfo)
 	fmt.Println("SetSelfInfo, input: ")
@@ -211,7 +210,7 @@ func DotestSetFriendRemark() {
 
 	var param sdk_params_callback.SetFriendRemarkParams
 	param.ToUserID = Friend_uid
-	param.Remark = "ttttttttttttttttt "
+	param.Remark = "4444 "
 	jsontest := utils.StructToJsonString(param)
 	log.Info(test.OperationID, utils.GetSelfFuncName(), "input ", jsontest)
 	open_im_sdk.SetFriendRemark(test, test.OperationID, jsontest)
@@ -413,7 +412,7 @@ func SetListenerAndLogin(uid, tk string) {
 	//var workMomentsListener testWorkMomentsListener
 	//open_im_sdk.SetWorkMomentsListener(workMomentsListener)
 
-	InOutlllogin(uid, tk)
+	//InOutlllogin(uid, tk)
 
 	log.Warn("", "SetListenerAndLogin fin")
 }

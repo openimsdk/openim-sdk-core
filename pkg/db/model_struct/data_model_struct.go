@@ -327,6 +327,7 @@ type LocalChatLog struct {
 	CreateTime           int64  `gorm:"column:create_time" json:"createTime"`
 	AttachedInfo         string `gorm:"column:attached_info;type:varchar(1024)" json:"attachedInfo"`
 	Ex                   string `gorm:"column:ex;type:varchar(1024)" json:"ex"`
+	LocalEx              string `gorm:"column:local_ex;type:varchar(1024)" json:"localEx"`
 	IsReact              bool   `gorm:"column:is_react" json:"isReact"`
 	IsExternalExtensions bool   `gorm:"column:is_external_extensions" json:"isExternalExtensions"`
 	MsgFirstModifyTime   int64  `gorm:"column:msg_first_modify_time" json:"msgFirstModifyTime"`

@@ -15,9 +15,9 @@
 package test
 
 import (
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
-	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	//	"open_im_sdk/internal/interaction"
 	"open_im_sdk/internal/login"
@@ -107,7 +107,7 @@ func sendPressMsg(index int, sendId, recvID string, groupID string, idx string) 
 	return SendTextMessageOnlyForPress(idx, sendId, recvID, groupID, utils.OperationIDGenerator())
 }
 func SendTextMessageOnlyForPress(text, senderID, recvID, groupID, operationID string) bool {
-	var wsMsgData server_api_params.MsgData
+	var wsMsgData sdkws.MsgData
 	options := make(map[string]bool, 2)
 	wsMsgData.SendID = senderID
 	if groupID == "" {

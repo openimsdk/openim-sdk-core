@@ -14,6 +14,8 @@
 
 package server_api_params
 
+import "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+
 type CommResp struct {
 	ErrCode int32  `json:"errCode"`
 	ErrMsg  string `json:"errMsg"`
@@ -45,8 +47,8 @@ type GetGroupMembersInfoReq struct {
 }
 type GetGroupMembersInfoResp struct {
 	CommResp
-	MemberList []*GroupMemberFullInfo   `json:"-"`
-	Data       []map[string]interface{} `json:"data"`
+	MemberList []*sdkws.GroupMemberFullInfo `json:"-"`
+	Data       []map[string]interface{}     `json:"data"`
 }
 
 type InviteUserToGroupReq struct {
@@ -66,7 +68,7 @@ type GetJoinedGroupListReq struct {
 }
 type GetJoinedGroupListResp struct {
 	CommResp
-	GroupInfoList []*GroupInfo
+	GroupInfoList []*sdkws.GroupInfo
 	Data          []map[string]interface{} `json:"data"`
 }
 
@@ -79,7 +81,7 @@ type GetGroupMemberListReq struct {
 type GetGroupMemberListResp struct {
 	CommResp
 	NextSeq    int32 `json:"nextSeq"`
-	MemberList []*GroupMemberFullInfo
+	MemberList []*sdkws.GroupMemberFullInfo
 	Data       []map[string]interface{} `json:"data"`
 }
 
@@ -91,8 +93,8 @@ type GetGroupAllMemberReq struct {
 }
 type GetGroupAllMemberResp struct {
 	CommResp
-	MemberList []*GroupMemberFullInfo   `json:"-"`
-	Data       []map[string]interface{} `json:"data"`
+	MemberList []*sdkws.GroupMemberFullInfo `json:"-"`
+	Data       []map[string]interface{}     `json:"data"`
 }
 
 type CreateGroupReq struct {
@@ -109,7 +111,7 @@ type CreateGroupReq struct {
 
 type CreateGroupResp struct {
 	CommResp
-	GroupInfo GroupInfo
+	GroupInfo sdkws.GroupInfo
 	Data      map[string]interface{} `json:"data"`
 }
 
@@ -119,7 +121,7 @@ type GetGroupApplicationListReq struct {
 }
 type GetGroupApplicationListResp struct {
 	CommResp
-	GroupRequestList []*GroupRequest
+	GroupRequestList []*sdkws.GroupRequest
 	Data             []map[string]interface{} `json:"data"`
 }
 
@@ -130,7 +132,7 @@ type GetUserReqGroupApplicationListReq struct {
 
 type GetUserRespGroupApplicationResp struct {
 	CommResp
-	GroupRequestList []*GroupRequest `json:"-"`
+	GroupRequestList []*sdkws.GroupRequest `json:"-"`
 }
 
 type GetGroupInfoReq struct {
@@ -139,7 +141,7 @@ type GetGroupInfoReq struct {
 }
 type GetGroupInfoResp struct {
 	CommResp
-	GroupInfoList []*GroupInfo             `json:"-"`
+	GroupInfoList []*sdkws.GroupInfo       `json:"-"`
 	Data          []map[string]interface{} `json:"data"`
 }
 

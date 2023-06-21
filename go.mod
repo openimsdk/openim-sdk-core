@@ -6,7 +6,6 @@ go 1.18
 require (
 	github.com/antonfisher/nested-logrus-formatter v1.3.1
 	github.com/golang/protobuf v1.5.3
-	github.com/google/go-cmp v0.5.9
 	github.com/gorilla/websocket v1.4.2
 	github.com/jinzhu/copier v0.3.5
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
@@ -16,7 +15,7 @@ require (
 	github.com/shamsher31/goimgtype v1.0.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/tencentyun/qcloud-cos-sts-sdk v0.0.0-20220106031843-2efeb10ca2f6
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/protobuf v1.30.0 // indirect
 	gorm.io/driver/sqlite v1.3.6
 	gorm.io/gorm v1.23.8
 	nhooyr.io/websocket v1.8.7
@@ -24,7 +23,7 @@ require (
 
 require golang.org/x/net v0.9.0
 
-require github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230615062005-e8427ee33e78
+require github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230616034533-9818cc08f44f
 
 require (
 	github.com/bwmarrin/snowflake v0.3.0 // indirect

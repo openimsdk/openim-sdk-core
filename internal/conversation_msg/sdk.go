@@ -733,76 +733,6 @@ func (c *Conversation) SendMessageByBuffer(ctx context.Context, s *sdk_struct.Ms
 
 }
 
-func (c *Conversation) InternalSendMessage(ctx context.Context, s *sdk_struct.MsgStruct, recvID, groupID string, p *server_api_params.OfflinePushInfo, onlineUserOnly bool, options map[string]bool) (*sdkws.UserSendMsgResp, error) {
-	if recvID == "" && groupID == "" {
-		return nil, sdkerrs.ErrArgs.Wrap()
-	}
-	if recvID == "" {
-		g, err := c.full.GetGroupInfoByGroupID(ctx, groupID)
-		if err != nil {
-			return nil, err
-		}
-		switch g.GroupType {
-		case constant.NormalGroup:
-			s.SessionType = constant.GroupChatType
-			groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(ctx, groupID)
-			if err != nil {
-				return nil, err
-			}
-			if !utils.IsContain(s.SendID, groupMemberUidList) {
-				return nil, sdkerrs.ErrNotInGroup
-			}
-
-		case constant.SuperGroup:
-			s.SessionType = constant.SuperGroupChatType
-		case constant.WorkingGroup:
-			s.SessionType = constant.SuperGroupChatType
-			groupMemberUidList, err := c.db.GetGroupMemberUIDListByGroupID(ctx, groupID)
-			if err != nil {
-				return nil, err
-			}
-			if !utils.IsContain(s.SendID, groupMemberUidList) {
-				return nil, sdkerrs.ErrNotInGroup
-			}
-		}
-		s.GroupID = groupID
-
-	} else {
-		s.SessionType = constant.SingleChatType
-		s.RecvID = recvID
-	}
-
-	if onlineUserOnly {
-		options[constant.IsHistory] = false
-		options[constant.IsPersistent] = false
-		options[constant.IsOfflinePush] = false
-		options[constant.IsSenderSync] = false
-	}
-
-	var wsMsgData server_api_params.MsgData
-	copier.Copy(&wsMsgData, s)
-	wsMsgData.Content = []byte(s.Content)
-	wsMsgData.CreateTime = s.CreateTime
-	wsMsgData.Options = options
-	wsMsgData.OfflinePushInfo = p
-	//timeout := 10
-	//retryTimes := 0
-	//g, err := c.SendReqWaitResp(ctx, &wsMsgData, constant.WSSendMsg, timeout, retryTimes, c.loginUserID)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//switch e := err.(type) {
-	//case *constant.ErrInfo:
-	//	common.CheckAnyErrCallback(callback, e.ErrCode, e, operationID)
-	//default:
-	//	common.CheckAnyErrCallback(callback, 301, err, operationID)
-	//}
-	var sendMsgResp sdkws.UserSendMsgResp
-	//_ = proto.Unmarshal(g.Data, &sendMsgResp)
-	return &sendMsgResp, nil
-
-}
-
 func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation, callback open_im_sdk_callback.SendMsgCallBack,
 	delFile []string, offlinePushInfo *sdkws.OfflinePushInfo, options map[string]bool) (*sdk_struct.MsgStruct, error) {
 	//Protocol conversion
@@ -814,7 +744,7 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	//wsMsgData.AtUserIDList = s.AtElem.AtUserList
 	wsMsgData.OfflinePushInfo = offlinePushInfo
 	s.Content = ""
-	var sendMsgResp server_api_params.UserSendMsgResp
+	var sendMsgResp sdkws.UserSendMsgResp
 
 	err := c.LongConnMgr.SendReqWaitResp(ctx, &wsMsgData, constant.SendMsg, &sendMsgResp)
 	if err != nil {
@@ -1104,6 +1034,9 @@ func (c *Conversation) SearchLocalMessages(ctx context.Context, searchParam *sdk
 	searchParam.KeywordList = utils.TrimStringList(searchParam.KeywordList)
 	return c.searchLocalMessages(ctx, searchParam)
 
+}
+func (c *Conversation) SetMessageLocalEx(ctx context.Context, conversationID string, clientMsgID string, localEx string) error {
+	return c.db.SetMessageLocalEx(ctx, conversationID, clientMsgID, localEx)
 }
 func getImageInfo(filePath string) (*sdk_struct.ImageInfo, error) {
 	file, err := os.Open(filePath)

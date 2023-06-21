@@ -90,7 +90,7 @@ func (s *SuperGroup) DoNotification(ctx context.Context, msg *sdkws.MsgData, ch 
 		log.Info(operationID, "constant.SuperGroupUpdateNotification", msg.String())
 
 	case constant.MsgDeleteNotification:
-		var tips api.TipsComm
+		var tips sdkws.TipsComm
 		var elem api.MsgDeleteNotificationElem
 		_ = proto.Unmarshal(msg.Content, &tips)
 		_ = utils.JsonStringToStruct(tips.JsonDetail, &elem)

@@ -82,8 +82,8 @@ func (c *Conversation) CreateLocationMessage(ctx context.Context, description st
 		Latitude:    latitude,
 	}
 	return &s, nil
-
 }
+
 func (c *Conversation) CreateCustomMessage(ctx context.Context, data, extension string, description string) (*sdk_struct.MsgStruct, error) {
 	s := sdk_struct.MsgStruct{}
 	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.Custom)

@@ -14,13 +14,17 @@
 
 package server_api_params
 
+import (
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+)
+
 type GetUsersInfoReq struct {
 	OperationID string   `json:"operationID" binding:"required"`
 	UserIDList  []string `json:"userIDList" binding:"required"`
 }
 type GetUsersInfoResp struct {
 	CommResp
-	UserInfoList []*PublicUserInfo
+	UserInfoList []*sdkws.PublicUserInfo
 	Data         []map[string]interface{} `json:"data"`
 }
 
@@ -45,6 +49,6 @@ type GetSelfUserInfoReq struct {
 }
 type GetSelfUserInfoResp struct {
 	CommResp
-	UserInfo *UserInfo              `json:"-"`
+	UserInfo *sdkws.UserInfo        `json:"-"`
 	Data     map[string]interface{} `json:"data"`
 }

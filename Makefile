@@ -85,7 +85,7 @@ all: build
 ## build: Compile the binary
 .PHONY: build
 build:
-	CGO_ENABLED=1 GOOS=${OS} GOARCH=${ARCH} go build -o ${BINARY_NAME}  ${GO_FILE}
+	CGO_ENABLED=1 GOOS=${OS} GOARCH=${ARCH} go build -o ${BINARY_NAME} ${GO_FILE}
 
 ## install: Install the binary to the BIN_DIR
 .PHONY: install
