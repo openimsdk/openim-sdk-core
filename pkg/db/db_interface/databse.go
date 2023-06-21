@@ -161,10 +161,7 @@ type MessageDatabase interface {
 	SuperGroupGetSendingMessageList(ctx context.Context, groupID string) (result []*model_struct.LocalChatLog, err error)
 	SuperGroupUpdateGroupMessageHasRead(ctx context.Context, msgIDList []string, groupID string) error
 	//SuperGroupUpdateGroupMessageFields(ctx context.Context, msgIDList []string, groupID string, args map[string]interface{}) error
-	//SuperGroupGetNormalMsgSeq(ctx context.Context) (int64, error)
 
-	//SuperGroupGetNormalMinSeq(ctx context.Context, groupID string) (int64, error)
-	//SuperGroupGetTestMessage(ctx context.Context, seq int64) (*model_struct.LocalChatLog, error)
 	SuperGroupUpdateMsgSenderNickname(ctx context.Context, sendID, nickname string, sType int) error
 	SuperGroupUpdateMsgSenderFaceURL(ctx context.Context, sendID, faceURL string, sType int) error
 	SuperGroupUpdateMsgSenderFaceURLAndSenderNickname(ctx context.Context, sendID, faceURL, nickname string, sessionType int, groupID string) error

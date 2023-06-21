@@ -286,6 +286,7 @@ const (
 	AcceptGroupTip   = "%s join the group"
 )
 
+// websocket
 const (
 	GetNewestSeq        = 1001
 	PullMsgBySeqList    = 1002
@@ -296,6 +297,7 @@ const (
 	KickOnlineMsg       = 2002
 	LogoutMsg           = 2003
 	SetBackgroundStatus = 2004
+	HasReadMsg          = 2005
 
 	WSDataError = 3001
 )

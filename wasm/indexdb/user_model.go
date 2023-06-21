@@ -81,6 +81,7 @@ func (l *LocalUsers) UpdateLoginUserByMap(ctx context.Context, user *model_struc
 	_, err := Exec(user.UserID, args)
 	return err
 }
+
 func (l *LocalUsers) InsertLoginUser(ctx context.Context, user *model_struct.LocalUser) error {
 	temp := temp_struct.LocalUser{}
 	temp.UserID = user.UserID
