@@ -351,6 +351,9 @@ func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan *GeneralWs
 func (c *LongConnMgr) writeBinaryMsg(req GeneralWsReq) error {
 	c.connWrite.Lock()
 	defer c.connWrite.Unlock()
+	if c.GetConnectionStatus() == Closed {
+		return sdkerrs.ErrNetwork.Wrap("connection closed,conning...")
+	}
 	encodeBuf, err := c.encoder.Encode(req)
 	if err != nil {
 		return err
