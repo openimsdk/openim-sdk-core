@@ -6,7 +6,6 @@ go 1.18
 require (
 	github.com/antonfisher/nested-logrus-formatter v1.3.1
 	github.com/golang/protobuf v1.5.3
-	github.com/google/go-cmp v0.5.9
 	github.com/gorilla/websocket v1.4.2
 	github.com/jinzhu/copier v0.3.5
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
@@ -16,7 +15,7 @@ require (
 	github.com/shamsher31/goimgtype v1.0.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/tencentyun/qcloud-cos-sts-sdk v0.0.0-20220106031843-2efeb10ca2f6
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/protobuf v1.30.0 // indirect
 	gorm.io/driver/sqlite v1.3.6
 	gorm.io/gorm v1.23.8
 	nhooyr.io/websocket v1.8.7
@@ -38,8 +37,6 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.12 // indirect
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
 	github.com/shamsher31/goimgext v1.0.0 // indirect
-	github.com/shurcooL/go v0.0.0-20200502201357-93f07166e636 // indirect
-	github.com/shurcooL/go-goon v1.0.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.0.2 // indirect
 	github.com/xdg-go/stringprep v1.0.2 // indirect
