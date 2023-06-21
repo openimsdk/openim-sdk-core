@@ -372,6 +372,9 @@ func (c *LongConnMgr) writeBinaryMsg(req GeneralWsReq) error {
 func (c *LongConnMgr) close() error {
 	c.w.Lock()
 	defer c.w.Unlock()
+	if c.connStatus == Closed || c.connStatus == Connecting {
+		return nil
+	}
 	c.connStatus = Closed
 	log.ZWarn(c.ctx, "conn closed", c.closedErr)
 	return c.conn.Close()
