@@ -25,7 +25,6 @@ import (
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/group"
 	"open_im_sdk/internal/interaction"
-	"open_im_sdk/internal/signaling"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/ccontext"
@@ -67,7 +66,6 @@ type Conversation struct {
 	group                *group.Group
 	user                 *user.User
 	file                 *file.File
-	signaling            *signaling.LiveSignaling
 	business             *business.Business
 	messageController    *MessageController
 	cache                *cache.Cache
@@ -85,10 +83,6 @@ func (c *Conversation) SetListenerForService(listener open_im_sdk_callback.OnLis
 
 func (c *Conversation) MsgListener() open_im_sdk_callback.OnAdvancedMsgListener {
 	return c.msgListener
-}
-
-func (c *Conversation) SetSignaling(signaling *signaling.LiveSignaling) {
-	c.signaling = signaling
 }
 
 func (c *Conversation) SetMsgListener(msgListener open_im_sdk_callback.OnAdvancedMsgListener) {
@@ -115,7 +109,7 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 	ch chan common.Cmd2Value,
 	friend *friend.Friend, group *group.Group, user *user.User,
 	conversationListener open_im_sdk_callback.OnConversationListener,
-	msgListener open_im_sdk_callback.OnAdvancedMsgListener, signaling *signaling.LiveSignaling, business *business.Business, cache *cache.Cache, full *full.Full, file *file.File) *Conversation {
+	msgListener open_im_sdk_callback.OnAdvancedMsgListener, business *business.Business, cache *cache.Cache, full *full.Full, file *file.File) *Conversation {
 	info := ccontext.Info(ctx)
 	n := &Conversation{db: db,
 		LongConnMgr:          longConnMgr,
@@ -126,7 +120,6 @@ func NewConversation(ctx context.Context, longConnMgr *interaction.LongConnMgr, 
 		friend:               friend,
 		group:                group,
 		user:                 user,
-		signaling:            signaling,
 		full:                 full,
 		business:             business,
 		file:                 file,

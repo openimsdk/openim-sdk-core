@@ -25,7 +25,6 @@ import (
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/group"
 	"open_im_sdk/internal/interaction"
-	"open_im_sdk/internal/signaling"
 	"open_im_sdk/internal/super_group"
 	"open_im_sdk/internal/third"
 	"open_im_sdk/internal/user"
@@ -54,7 +53,6 @@ type LoginMgr struct {
 	conversation *conv.Conversation
 	user         *user.User
 	file         *file.File
-	signaling    *signaling.LiveSignaling
 	business     *business.Business
 
 	full         *full.Full
@@ -144,10 +142,6 @@ func (u *LoginMgr) Friend() *friend.Friend {
 	return u.friend
 }
 
-func (u *LoginMgr) Signaling() *signaling.LiveSignaling {
-	return u.signaling
-}
-
 func (u *LoginMgr) SetConversationListener(conversationListener open_im_sdk_callback.OnConversationListener) {
 	if u.conversation != nil {
 		u.conversation.SetConversationListener(conversationListener)
@@ -199,22 +193,6 @@ func (u *LoginMgr) SetUserListener(userListener open_im_sdk_callback.OnUserListe
 		u.user.SetListener(userListener)
 	} else {
 		u.userListener = userListener
-	}
-}
-
-func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalingListener) {
-	if u.signaling != nil {
-		u.signaling.SetListener(listener)
-	} else {
-		u.signalingListener = listener
-	}
-}
-
-func (u *LoginMgr) SetSignalingListenerForService(listener open_im_sdk_callback.OnSignalingListener) {
-	if u.signaling != nil {
-		u.signaling.SetListenerForService(listener)
-	} else {
-		u.signalingListenerFroService = listener
 	}
 }
 
@@ -282,15 +260,8 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.longConnMgr.Run(ctx)
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
-		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.signaling, u.business, u.cache, u.full, u.file)
+		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.business, u.cache, u.full, u.file)
 	u.conversation.SetLoginTime()
-	u.signaling = signaling.NewLiveSignaling(u.longConnMgr, u.loginUserID, u.info.PlatformID, u.db)
-	if u.signalingListener != nil {
-		u.signaling.SetListener(u.signalingListener)
-	}
-	if u.signalingListenerFroService != nil {
-		u.signaling.SetListenerForService(u.signalingListenerFroService)
-	}
 	if u.batchMsgListener != nil {
 		u.conversation.SetBatchMsgListener(u.batchMsgListener)
 		log.ZDebug(ctx, "SetBatchMsgListener", "batchMsgListener", u.batchMsgListener)

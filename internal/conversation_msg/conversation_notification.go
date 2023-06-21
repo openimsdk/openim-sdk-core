@@ -680,14 +680,13 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 				} else if utils2.Contain(v.ContentType, constant.GroupApplicationRejectedNotification, constant.GroupApplicationAcceptedNotification, constant.JoinGroupApplicationNotification) {
 					c.group.DoNotification(ctx, v)
 				} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
-					c.signaling.DoNotification(ctx, v, c.GetCh())
+
 					continue
 				}
 			case constant.GroupChatType, constant.SuperGroupChatType:
 				if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
 					c.group.DoNotification(ctx, v)
 				} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
-					c.signaling.DoNotification(ctx, v, c.GetCh())
 					continue
 				}
 			}
