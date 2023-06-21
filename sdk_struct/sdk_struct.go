@@ -288,7 +288,6 @@ type GroupHasReadInfo struct {
 	HasReadCount      int32    `json:"hasReadCount"`
 	GroupMemberCount  int32    `json:"groupMemberCount"`
 }
-
 type NewMsgList []*MsgStruct
 
 // Implement the sort.Interface interface to get the number of elements method

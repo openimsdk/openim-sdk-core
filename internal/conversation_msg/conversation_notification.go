@@ -634,7 +634,6 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 		defer c.ConversationListener.OnSyncServerFinish()
 	}
 
-	// Iterate over all incoming messages, handling each message differently depending on the message type
 	for conversationID, msgs := range allMsg {
 		if len(msgs.Msgs) != 0 {
 			lastMsg := msgs.Msgs[len(msgs.Msgs)-1]
@@ -662,14 +661,12 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 			case v.ContentType == constant.BusinessNotification:
 				c.business.DoNotification(ctx, string(v.Content))
 				continue
-			// If the message is withdrawn notification type
 			case v.ContentType == constant.RevokeNotification:
 				c.doRevokeMsg(ctx, v)
 			case v.ContentType == constant.ClearConversationNotification:
 				c.doClearConversations(ctx, v)
 			case v.ContentType == constant.DeleteMsgsNotification:
 				c.doDeleteMsgs(ctx, v)
-			// If it is a read receipt notification type
 			case v.ContentType == constant.HasReadReceipt:
 				c.doReadDrawing(ctx, v)
 			}
