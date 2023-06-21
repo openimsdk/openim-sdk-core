@@ -253,8 +253,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 	}
 }
 
-// DOTO: ...
-func (c *LongConnMgr) heartbeat(ctx context.Context, heartbeatCmdCh chan common.Cmd2Value) {
+func (c *LongConnMgr) heartbeat(ctx context.Context) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
