@@ -246,3 +246,6 @@ func InsertGroupMessageToLocalStorage(callback open_im_sdk_callback.Base, operat
 func SearchLocalMessages(callback open_im_sdk_callback.Base, operationID string, searchParam string) {
 	call(callback, operationID, UserForSDK.Conversation().SearchLocalMessages, searchParam)
 }
+func SetMessageLocalEx(callback open_im_sdk_callback.Base, operationID string, conversationID, clientMsgID, localEx string) {
+	call(callback, operationID, UserForSDK.Conversation().SetMessageLocalEx, conversationID, clientMsgID, localEx)
+}

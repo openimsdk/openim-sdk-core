@@ -214,3 +214,9 @@ func (d *DataBase) GetAlreadyExistSeqList(ctx context.Context, conversationID st
 	}
 	return seqList, nil
 }
+
+func (d *DataBase) SetMessageLocalEx(ctx context.Context, conversationID, clientMsgID, localEx string) error {
+	return utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Model(model_struct.LocalChatLog{}).Where("client_msg_id=? ", clientMsgID).Updates(
+		map[string]interface{}{"local_ex": localEx}).Error, utils.GetSelfFuncName()+" failed")
+
+}

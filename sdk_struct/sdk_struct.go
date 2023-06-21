@@ -222,6 +222,7 @@ type MsgStruct struct {
 	OfflinePush          *sdkws.OfflinePushInfo `json:"offlinePush,omitempty"`
 	AttachedInfo         string                 `json:"attachedInfo,omitempty"`
 	Ex                   string                 `json:"ex,omitempty"`
+	LocalEx              string                 `json:"localEx,omitempty"`
 	TextElem             *TextElem              `json:"textElem,omitempty"`
 	CardElem             *CardElem              `json:"cardElem,omitempty"`
 	PictureElem          *PictureElem           `json:"pictureElem,omitempty"`

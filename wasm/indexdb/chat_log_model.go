@@ -745,3 +745,7 @@ func (i *LocalChatLogs) DeleteConversationMsgsBySeqs(ctx context.Context, conver
 		return nil
 	}
 }
+
+func (i *LocalChatLogs) SetMessageLocalEx(ctx context.Context, conversationID, clientMsgID, localEx string) error {
+	return nil
+}
