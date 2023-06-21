@@ -40,6 +40,7 @@ func (d *DataBase) GetBlackListDB(ctx context.Context) ([]*model_struct.LocalBla
 	}
 	return transfer, err
 }
+
 func (d *DataBase) GetBlackListUserID(ctx context.Context) (blackListUid []string, err error) {
 	d.friendMtx.Lock()
 	defer d.friendMtx.Unlock()

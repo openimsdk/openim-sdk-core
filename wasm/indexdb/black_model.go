@@ -17,9 +17,8 @@
 
 package indexdb
 
-import "context"
-
 import (
+	"context"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/wasm/indexdb/temp_struct"
@@ -33,6 +32,7 @@ func NewBlack(loginUserID string) *Black {
 	return &Black{loginUserID: loginUserID}
 }
 
+// GetBlackListDB gets the blacklist list from the database
 func (i Black) GetBlackListDB(ctx context.Context) (result []*model_struct.LocalBlack, err error) {
 	gList, err := Exec()
 	if err != nil {
@@ -55,6 +55,7 @@ func (i Black) GetBlackListDB(ctx context.Context) (result []*model_struct.Local
 	}
 }
 
+// GetBlackListUserID gets the list of blocked user IDs
 func (i Black) GetBlackListUserID(ctx context.Context) (result []string, err error) {
 	gList, err := Exec()
 	if err != nil {
@@ -72,6 +73,7 @@ func (i Black) GetBlackListUserID(ctx context.Context) (result []string, err err
 	}
 }
 
+// GetBlackInfoByBlockUserID gets the information of a blocked user by their user ID
 func (i Black) GetBlackInfoByBlockUserID(ctx context.Context, blockUserID string) (result *model_struct.LocalBlack, err error) {
 	gList, err := Exec(blockUserID, i.loginUserID)
 	if err != nil {
@@ -90,6 +92,7 @@ func (i Black) GetBlackInfoByBlockUserID(ctx context.Context, blockUserID string
 	}
 }
 
+// GetBlackInfoList gets the information of multiple blocked users by their user IDs
 func (i Black) GetBlackInfoList(ctx context.Context, blockUserIDList []string) (result []*model_struct.LocalBlack, err error) {
 	gList, err := Exec(utils.StructToJsonString(blockUserIDList))
 	if err != nil {
@@ -112,11 +115,13 @@ func (i Black) GetBlackInfoList(ctx context.Context, blockUserIDList []string) (
 	}
 }
 
+// InsertBlack inserts a new blocked user into the database
 func (i Black) InsertBlack(ctx context.Context, black *model_struct.LocalBlack) error {
 	_, err := Exec(utils.StructToJsonString(black))
 	return err
 }
 
+// UpdateBlack updates the information of a blocked user in the database
 func (i Black) UpdateBlack(ctx context.Context, black *model_struct.LocalBlack) error {
 	tempLocalBlack := temp_struct.LocalBlack{
 		Nickname:       black.Nickname,
@@ -131,6 +136,7 @@ func (i Black) UpdateBlack(ctx context.Context, black *model_struct.LocalBlack) 
 	return err
 }
 
+// DeleteBlack removes a blocked user from the database
 func (i Black) DeleteBlack(ctx context.Context, blockUserID string) error {
 	_, err := Exec(blockUserID, i.loginUserID)
 	return err
