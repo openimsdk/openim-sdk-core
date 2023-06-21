@@ -252,10 +252,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 		}
 	}
 }
-<<<<<<< HEAD
 
-=======
->>>>>>> parent of 4a7a61ac (style: style adjustments (#80))
 func (c *LongConnMgr) heartbeat(ctx context.Context) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
