@@ -28,7 +28,7 @@ type LongConn interface {
 	// ReadMessage Read message from connection.
 	ReadMessage() (int, []byte, error)
 	// SetReadDeadline sets the read deadline on the underlying network connection,
-	//after a read has timed out, will return an error.
+	//after a read has timed out, w ill return an error.
 	SetReadDeadline(timeout time.Duration) error
 	// SetWriteDeadline sets to write deadline when send message,when read has timed out,will return error.
 	SetWriteDeadline(timeout time.Duration) error
