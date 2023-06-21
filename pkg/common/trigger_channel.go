@@ -175,7 +175,6 @@ type Cmd2Value struct {
 	Value interface{}
 	Ctx   context.Context
 }
-
 type UpdateConInfo struct {
 	UserID  string
 	GroupID string

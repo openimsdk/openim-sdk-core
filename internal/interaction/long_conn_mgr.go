@@ -252,7 +252,10 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 		}
 	}
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> parent of 4a7a61ac (style: style adjustments (#80))
 func (c *LongConnMgr) heartbeat(ctx context.Context) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
@@ -269,8 +272,8 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 			c.sendPingToServer(ctx)
 		}
 	}
-}
 
+}
 func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
 	if c.conn == nil {
 		return
@@ -315,7 +318,6 @@ func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
 		}
 	}
 }
-
 func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error) {
 	tempChan, err := c.writeBinaryMsgAndRetry(msg)
 	defer c.Syncer.DelCh(msg.MsgIncr)
@@ -423,8 +425,6 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 		fallthrough
 	case constant.SendSignalMsg:
 		fallthrough
-	case constant.HasReadMsg:
-		fallthrough
 	case constant.SetBackgroundStatus:
 		if err := c.Syncer.NotifyResp(ctx, wsResp); err != nil {
 			log.ZError(ctx, "notifyResp failed", err, "wsResp", wsResp)
@@ -435,7 +435,6 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 	}
 	return nil
 }
-
 func (c *LongConnMgr) IsConnected() bool {
 	c.w.Lock()
 	defer c.w.Unlock()
@@ -443,8 +442,8 @@ func (c *LongConnMgr) IsConnected() bool {
 		return true
 	}
 	return false
-}
 
+}
 func (c *LongConnMgr) GetConnectionStatus() int {
 	c.w.Lock()
 	defer c.w.Unlock()
@@ -512,7 +511,6 @@ func (c *LongConnMgr) doPushMsg(ctx context.Context, wsResp GeneralWsResp) error
 	}
 	return common.TriggerCmdPushMsg(ctx, &msg, c.pushMsgAndMaxSeqCh)
 }
-
 func (c *LongConnMgr) Close(ctx context.Context) {
 	if c.GetConnectionStatus() != Closed {
 		log.ZInfo(ctx, "network change conn close")
