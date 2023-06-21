@@ -77,7 +77,6 @@ type Conversation struct {
 	listenerForService   open_im_sdk_callback.OnListenerForService
 	markAsReadLock       sync.Mutex
 	loginTime            int64
-	conn                 interaction.LongConn
 }
 
 func (c *Conversation) SetListenerForService(listener open_im_sdk_callback.OnListenerForService) {

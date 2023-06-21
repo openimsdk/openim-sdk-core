@@ -1,17 +1,3 @@
-// Copyright © 2023 OpenIM SDK. All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package conversation_msg
 
 import (
@@ -31,7 +17,6 @@ import (
 	"github.com/jinzhu/copier"
 )
 
-// doRevokeMsg is called when receiving a message revocation notification
 func (c *Conversation) doRevokeMsg(ctx context.Context, msg *sdkws.MsgData) {
 	var tips sdkws.RevokeMsgTips
 	if err := utils.UnmarshalNotificationElem(msg.Content, &tips); err != nil {
@@ -96,8 +81,6 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 	var latestMsg sdk_struct.MsgStruct
 	utils.JsonStringToStruct(conversation.LatestMsg, &latestMsg)
 	log.ZDebug(ctx, "latestMsg", "latestMsg", &latestMsg, "seq", tips.Seq)
-	
-	// Make sure that the withdrawn message is indeed the most recent message in the session
 	if latestMsg.Seq <= tips.Seq {
 		var newLatesetMsg sdk_struct.MsgStruct
 		msgs, err := c.db.GetMessageListNoTime(ctx, tips.ConversationID, 1, false)
@@ -188,7 +171,7 @@ func (c *Conversation) revokeOneMessage(ctx context.Context, req *sdk_struct.Msg
 		}
 	}
 	if err := util.ApiPost(ctx, constant.RevokeMsgRouter, pbMsg.RevokeMsgReq{ConversationID: conversationID, Seq: message.Seq, UserID: c.loginUserID}, nil); err != nil {
-		return err 
+		return err
 	}
 	c.revokeMessage(ctx, &sdkws.RevokeMsgTips{
 		ConversationID: conversationID,

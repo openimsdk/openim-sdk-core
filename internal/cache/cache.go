@@ -77,7 +77,6 @@ func (c *Cache) GetConversation(conversationID string) model_struct.LocalConvers
 	return result
 }
 
-// Gets the avatar and nickname of the specified user
 func (c *Cache) GetUserNameAndFaceURL(ctx context.Context, userID string) (faceURL, name string, err error) {
 	//find in cache
 	if value, ok := c.userMap.Load(userID); ok {

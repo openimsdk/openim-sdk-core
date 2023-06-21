@@ -283,7 +283,6 @@ func (s *LiveSignaling) DoNotification(ctx context.Context, msg *sdkws.MsgData, 
 		log.ZError(ctx, "resp payload type failed", nil, "payload", payload)
 	}
 }
-
 func (s *LiveSignaling) SendSignalingReqWaitResp(ctx context.Context, req *sdkws.SignalReq) (*sdkws.SignalResp, error) {
 	var signalResp sdkws.SignalResp
 	err := s.LongConnMgr.SendReqWaitResp(ctx, req, constant.SendSignalMsg, &signalResp)
