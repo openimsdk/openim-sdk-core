@@ -553,15 +553,15 @@ func (i *LocalChatLogs) GetSuperGroupAbnormalMsgSeq(ctx context.Context, groupID
 }
 
 // GetAlreadyExistSeqList get already exist seq list
-func (i *LocalChatLogs) GetAlreadyExistSeqList(ctx context.Context, conversationID string, lostSeqList []int64) ([]int64, error) {
+func (i *LocalChatLogs) GetAlreadyExistSeqList(ctx context.Context, conversationID string, lostSeqList []int64) (result []int64, err error) {
 	seqList, err := Exec(conversationID, lostSeqList)
 	if err != nil {
 		return nil, err
 	} else {
-		if v, ok := seqList.([]int64); ok {
-			result := make([]int64, len(v))
-			for i, value := range v {
-				result[i] = value.(int64)
+		if v, ok := seqList.(string); ok {
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
 			}
 			return result, nil
 		} else {
@@ -709,43 +709,28 @@ func (i *LocalChatLogs) GetConversationAbnormalMsgSeq(ctx context.Context, group
 // DeleteConversationAllMessages deletes all messages of the session
 func (i *LocalChatLogs) DeleteConversationAllMessages(ctx context.Context, conversationID string) error {
 	_, err := Exec(conversationID)
-	if err != nil {
-		return err
-	} else {
-		return nil
-	}
+	return err
 }
 
 // MarkDeleteConversationAllMessages marks all messages of the session as deleted
 func (i *LocalChatLogs) MarkDeleteConversationAllMessages(ctx context.Context, conversationID string) error {
 	_, err := Exec(conversationID)
-	if err != nil {
-		return err
-	} else {
-		return nil
-	}
+	return err
 }
 
 // DeleteConversationMsgs deletes messages of the session
 func (i *LocalChatLogs) DeleteConversationMsgs(ctx context.Context, conversationID string, msgIDs []string) error {
 	_, err := Exec(conversationID, msgIDs)
-	if err != nil {
-		return err
-	} else {
-		return nil
-	}
+	return err
 }
 
 // DeleteConversationMsgsBySeqs deletes messages of the session
 func (i *LocalChatLogs) DeleteConversationMsgsBySeqs(ctx context.Context, conversationID string, seqs []int64) error {
 	_, err := Exec(conversationID, seqs)
-	if err != nil {
-		return err
-	} else {
-		return nil
-	}
+	return err
 }
 
 func (i *LocalChatLogs) SetMessageLocalEx(ctx context.Context, conversationID, clientMsgID, localEx string) error {
-	return nil
+	_, err := Exec(conversationID, clientMsgID, localEx)
+	return err
 }

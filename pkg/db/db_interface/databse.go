@@ -51,7 +51,7 @@ type GroupDatabase interface {
 	GetGroupMemberInfoByGroupIDUserID(ctx context.Context, groupID, userID string) (*model_struct.LocalGroupMember, error)
 	GetAllGroupMemberList(ctx context.Context) ([]model_struct.LocalGroupMember, error)
 	GetAllGroupMemberUserIDList(ctx context.Context) ([]model_struct.LocalGroupMember, error)
-	GetGroupMemberCount(ctx context.Context, groupID string) (uint32, error)
+	GetGroupMemberCount(ctx context.Context, groupID string) (int32, error)
 	GetGroupSomeMemberInfo(ctx context.Context, groupID string, userIDList []string) ([]*model_struct.LocalGroupMember, error)
 	GetGroupAdminID(ctx context.Context, groupID string) ([]string, error)
 	GetGroupMemberListByGroupID(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error)
