@@ -551,7 +551,8 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		wg.Wait()
 		if err := putErrs[0]; err != nil {
 			return nil, err
-		} else if err := putErrs[1]; err != nil {
+		}
+		if err := putErrs[1]; err != nil {
 			return nil, err
 		}
 		s.Content = utils.StructToJsonString(s.VideoElem)
