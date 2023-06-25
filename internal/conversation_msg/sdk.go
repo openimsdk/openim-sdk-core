@@ -29,6 +29,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
@@ -516,27 +517,43 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 		}
 		log.ZDebug(ctx, "file", "videoPath", videoPath, "snapPath", snapPath, "delFile", delFile)
 
-		snapRes, err := c.file.PutFile(ctx, &file.PutArgs{
-			PutID:    s.ClientMsgID + "snap",
-			Filepath: snapPath,
-			Name:     c.fileName("videoSnapshot", s.ClientMsgID) + filepath.Ext(snapPath),
-		}, nil)
-		if err != nil {
-			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
-			return nil, err
-		}
+		var wg sync.WaitGroup
+		wg.Add(2)
+		var putErrs [2]error
+		go func() {
+			defer wg.Done()
+			snapRes, err := c.file.PutFile(ctx, &file.PutArgs{
+				PutID:    s.ClientMsgID + "snap",
+				Filepath: snapPath,
+				Name:     c.fileName("videoSnapshot", s.ClientMsgID) + filepath.Ext(snapPath),
+			}, nil)
+			if err != nil {
+				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
+				putErrs[0] = err
+				return
+			}
+			s.VideoElem.SnapshotURL = snapRes.URL
+		}()
 
-		res, err := c.file.PutFile(ctx, &file.PutArgs{
-			PutID:    s.ClientMsgID,
-			Filepath: videoPath,
-			Name:     c.fileName("video", s.ClientMsgID) + filepath.Ext(videoPath),
-		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
-		if err != nil {
-			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
+		go func() {
+			defer wg.Done()
+			res, err := c.file.PutFile(ctx, &file.PutArgs{
+				PutID:    s.ClientMsgID,
+				Filepath: videoPath,
+				Name:     c.fileName("video", s.ClientMsgID) + filepath.Ext(videoPath),
+			}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
+			if err != nil {
+				c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
+				putErrs[1] = err
+			}
+			s.VideoElem.VideoURL = res.URL
+		}()
+		wg.Wait()
+		if err := putErrs[0]; err != nil {
+			return nil, err
+		} else if err := putErrs[1]; err != nil {
 			return nil, err
 		}
-		s.VideoElem.SnapshotURL = snapRes.URL
-		s.VideoElem.VideoURL = res.URL
 		s.Content = utils.StructToJsonString(s.VideoElem)
 	case constant.File:
 		if s.Status == constant.MsgStatusSendSuccess {
