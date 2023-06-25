@@ -659,7 +659,7 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: []string{tips.ConversationID}}})
 				continue
 			case v.ContentType == constant.BusinessNotification:
-				c.business.DoNotification(ctx, string(v.Content))
+				c.business.DoNotification(ctx, v)
 				continue
 			case v.ContentType == constant.RevokeNotification:
 				c.doRevokeMsg(ctx, v)

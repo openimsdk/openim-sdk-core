@@ -16,8 +16,11 @@ package business
 
 import (
 	"context"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/db/db_interface"
+	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 )
@@ -33,10 +36,17 @@ func NewBusiness(db db_interface.DataBase) *Business {
 	}
 }
 
-func (b *Business) DoNotification(ctx context.Context, jsonDetailStr string) {
+func (b *Business) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
 	if b.listener == nil {
-		log.ZWarn(ctx, "listener is nil", nil)
+		log.ZWarn(ctx, "listener is nil", nil, "msg", msg)
 		return
 	}
-	b.listener.OnRecvCustomBusinessMessage(jsonDetailStr)
+	var n sdk_struct.NotificationElem
+	err := utils.JsonStringToStruct(string(msg.Content), &n)
+	if err != nil {
+		log.ZError(ctx, "unmarshal failed", err, "msg", msg)
+		return
+
+	}
+	b.listener.OnRecvCustomBusinessMessage(n.Detail)
 }
