@@ -126,8 +126,8 @@ func (i *LocalChatLogs) UpdateColumnsMessageList(ctx context.Context, clientMsgI
 }
 
 // UpdateColumnsMessage updates a column of a message in the local chat log.
-func (i *LocalChatLogs) UpdateColumnsMessage(ctx context.Context, clientMsgID string, args map[string]interface{}) error {
-	_, err := Exec(clientMsgID, utils.StructToJsonString(args))
+func (i *LocalChatLogs) UpdateColumnsMessage(ctx context.Context, conversationID, clientMsgID string, args map[string]interface{}) error {
+	_, err := Exec(conversationID, clientMsgID, utils.StructToJsonString(args))
 	return err
 }
 
@@ -174,7 +174,7 @@ func (i *LocalChatLogs) GetMessageList(ctx context.Context, conversationID strin
 
 // GetMessageListNoTime retrieves a list of messages from the local chat log without specifying a start time.
 func (i *LocalChatLogs) GetMessageListNoTime(ctx context.Context, conversationID string, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error) {
-	msgList, err := Exec(conversationID, count, isReverse, i.loginUserID)
+	msgList, err := Exec(conversationID, count, isReverse)
 	if err != nil {
 		return nil, err
 	} else {
@@ -397,8 +397,8 @@ func (i *LocalChatLogs) GetMsgSeqByClientMsgID(ctx context.Context, clientMsgID 
 }
 
 // Search all messages by content type
-func (i *LocalChatLogs) SearchAllMessageByContentType(ctx context.Context, contentType int) (result []*model_struct.LocalChatLog, err error) {
-	msgList, err := Exec(contentType)
+func (i *LocalChatLogs) SearchAllMessageByContentType(ctx context.Context, conversationID string, contentType int) (result []*model_struct.LocalChatLog, err error) {
+	msgList, err := Exec(conversationID, contentType)
 	if err != nil {
 		return nil, err
 	} else {
@@ -554,7 +554,7 @@ func (i *LocalChatLogs) GetSuperGroupAbnormalMsgSeq(ctx context.Context, groupID
 
 // GetAlreadyExistSeqList get already exist seq list
 func (i *LocalChatLogs) GetAlreadyExistSeqList(ctx context.Context, conversationID string, lostSeqList []int64) (result []int64, err error) {
-	seqList, err := Exec(conversationID, lostSeqList)
+	seqList, err := Exec(conversationID, utils.StructToJsonString(lostSeqList))
 	if err != nil {
 		return nil, err
 	} else {
@@ -599,29 +599,63 @@ func (i *LocalChatLogs) UpdateMessageBySeq(ctx context.Context, conversationID s
 	return err
 }
 
-func (i *LocalChatLogs) UpdateMessageByClientMsgID(ctx context.Context, clientMsgID string, data map[string]any) error {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (i *LocalChatLogs) MarkConversationMessageAsRead(ctx context.Context, conversationID string, msgIDs []string) (rowsAffected int64, err error) {
-	//TODO implement me
-	panic("implement me")
+	rows, err := Exec(conversationID, utils.StructToJsonString(msgIDs), i.loginUserID)
+	if err != nil {
+		return 0, err
+	} else {
+		if v, ok := rows.(float64); ok {
+			rowsAffected = int64(v)
+			return rowsAffected, err
+		} else {
+			return 0, ErrType
+		}
+	}
 }
 
 func (i *LocalChatLogs) MarkConversationMessageAsReadBySeqs(ctx context.Context, conversationID string, seqs []int64) (rowsAffected int64, err error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (i *LocalChatLogs) GetUnreadMessage(ctx context.Context, conversationID string) (result []*model_struct.LocalChatLog, err error) {
-	//TODO implement me
-	panic("implement me")
+	rows, err := Exec(conversationID, utils.StructToJsonString(seqs), i.loginUserID)
+	if err != nil {
+		return 0, err
+	} else {
+		if v, ok := rows.(float64); ok {
+			rowsAffected = int64(v)
+			return rowsAffected, err
+		} else {
+			return 0, ErrType
+		}
+	}
 }
 
 func (i *LocalChatLogs) MarkConversationAllMessageAsRead(ctx context.Context, conversationID string) (rowsAffected int64, err error) {
-	//TODO implement me
-	panic("implement me")
+	rows, err := Exec(conversationID, i.loginUserID)
+	if err != nil {
+		return 0, err
+	} else {
+		if v, ok := rows.(float64); ok {
+			rowsAffected = int64(v)
+			return rowsAffected, err
+		} else {
+			return 0, ErrType
+		}
+	}
+}
+
+func (i *LocalChatLogs) GetUnreadMessage(ctx context.Context, conversationID string) (result []*model_struct.LocalChatLog, err error) {
+	msgs, err := Exec(conversationID, i.loginUserID)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := msgs.(string); ok {
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
 }
 
 func (i *LocalChatLogs) GetMessagesByClientMsgIDs(ctx context.Context, conversationID string, msgIDs []string) ([]*model_struct.LocalChatLog, error) {
@@ -649,7 +683,7 @@ func (i *LocalChatLogs) GetMessagesByClientMsgIDs(ctx context.Context, conversat
 
 // GetMessagesBySeqs gets messages by seqs
 func (i *LocalChatLogs) GetMessagesBySeqs(ctx context.Context, conversationID string, seqs []int64) (result []*model_struct.LocalChatLog, err error) {
-	msgs, err := Exec(conversationID, seqs)
+	msgs, err := Exec(conversationID, utils.StructToJsonString(seqs))
 	if err != nil {
 		return nil, err
 	} else {
@@ -692,8 +726,10 @@ func (i *LocalChatLogs) GetConversationPeerNormalMsgSeq(ctx context.Context, con
 	if err != nil {
 		return 0, err
 	} else {
-		if v, ok := seq.(int64); ok {
-			return v, nil
+		if v, ok := seq.(float64); ok {
+			var result int64
+			result = int64(v)
+			return result, nil
 		} else {
 			return 0, ErrType
 		}
@@ -720,13 +756,13 @@ func (i *LocalChatLogs) MarkDeleteConversationAllMessages(ctx context.Context, c
 
 // DeleteConversationMsgs deletes messages of the session
 func (i *LocalChatLogs) DeleteConversationMsgs(ctx context.Context, conversationID string, msgIDs []string) error {
-	_, err := Exec(conversationID, msgIDs)
+	_, err := Exec(conversationID, utils.StructToJsonString(msgIDs))
 	return err
 }
 
 // DeleteConversationMsgsBySeqs deletes messages of the session
 func (i *LocalChatLogs) DeleteConversationMsgsBySeqs(ctx context.Context, conversationID string, seqs []int64) error {
-	_, err := Exec(conversationID, seqs)
+	_, err := Exec(conversationID, utils.StructToJsonString(seqs))
 	return err
 }
 
