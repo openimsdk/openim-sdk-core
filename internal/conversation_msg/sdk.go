@@ -520,7 +520,7 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			PutID:    s.ClientMsgID + "snap",
 			Filepath: snapPath,
 			Name:     c.fileName("videoSnapshot", s.ClientMsgID) + filepath.Ext(snapPath),
-		}, NewFileCallback(ctx, callback.OnProgress, s, c.db))
+		}, nil)
 		if err != nil {
 			c.updateMsgStatusAndTriggerConversation(ctx, s.ClientMsgID, "", s.CreateTime, constant.MsgStatusSendFailed, s, lc)
 			return nil, err

@@ -23,6 +23,7 @@ type FileCallback struct {
 	ctx      context.Context
 	db       db_interface.DataBase
 	msg      *sdk_struct.MsgStruct
+	value    int
 	progress func(progress int)
 }
 
@@ -45,7 +46,11 @@ func (c *FileCallback) PutProgress(save int64, current, total int64) {
 	if err := c.db.UpdateMessageByClientMsgID(c.ctx, c.msg.ClientMsgID, map[string]any{"attached_info": string(data)}); err != nil {
 		log.ZError(c.ctx, "update PutProgress message attached info failed", err)
 	}
-	c.progress(int(float64(current) / float64(total) * 100))
+	value := int(float64(current) / float64(total) * 100)
+	if c.value < value {
+		c.value = value
+		c.progress(value)
+	}
 }
 
 func (c *FileCallback) PutComplete(total int64, putType int) {
