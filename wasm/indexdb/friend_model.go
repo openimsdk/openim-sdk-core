@@ -144,7 +144,7 @@ func (i *Friend) GetFriendInfoList(ctx context.Context, friendUserIDList []strin
 	}
 }
 func (i *Friend) GetPageFriendList(ctx context.Context, offset, count int) ([]*model_struct.LocalFriend, error) {
-	gList, err := Exec(offset, count)
+	gList, err := Exec(i.loginUserID, offset, count)
 	if err != nil {
 		return nil, err
 	} else {
