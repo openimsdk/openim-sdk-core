@@ -27,6 +27,7 @@ import (
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/sdkerrs"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 
@@ -420,8 +421,15 @@ func (c *Conversation) SendMessage(ctx context.Context, s *sdk_struct.MsgStruct,
 			return nil, err
 		}
 	} else {
-		if oldMessage.Status != constant.MsgStatusSendFailed {
-			return nil, sdkerrs.ErrMsgRepeated
+		//if oldMessage.Status != constant.MsgStatusSendFailed {
+		//	return nil, sdkerrs.ErrMsgRepeated
+		//} else {
+		//	s.Status = constant.MsgStatusSending
+		//}
+		//opy from v2.3.0,May need to be modified
+		if oldMessage.Status == constant.MsgStatusSendSuccess {
+			callback.OnSuccess(utils.StructToJsonString(oldMessage))
+			runtime.Goexit()
 		} else {
 			s.Status = constant.MsgStatusSending
 		}
