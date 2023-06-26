@@ -388,8 +388,9 @@ func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSle
 	//	time.Sleep(time.Duration(beforeLoginSleep) * time.Second)
 	strMyUid := allLoginMgr[index].userID
 	token := allLoginMgr[index].token
+	log.Info("", "login ok client num: ", len(allLoginMgr), "userID ", strMyUid, "token: ", token)
 	ReliabilityInitAndLogin(index, strMyUid, token, WSADDR, APIADDR)
-	log.Info("", "login ok client num: ", len(allLoginMgr))
+
 	log.Warn("start One", index, beforeLoginSleep, isSendMsg, strMyUid, token, WSADDR, APIADDR)
 
 	msgnum := msgNumInOneClient
