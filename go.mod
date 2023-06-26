@@ -2,11 +2,10 @@ module open_im_sdk
 
 go 1.18
 
-// go get -u github.com/OpenIMSDK/Open-IM-Server@errcode
+// go get -u github.com/OpenIMSDK/Open-IM-Server@ver3
 require (
 	github.com/antonfisher/nested-logrus-formatter v1.3.1
 	github.com/golang/protobuf v1.5.3
-	github.com/google/go-cmp v0.5.9
 	github.com/gorilla/websocket v1.4.2
 	github.com/jinzhu/copier v0.3.5
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
@@ -16,15 +15,15 @@ require (
 	github.com/shamsher31/goimgtype v1.0.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/tencentyun/qcloud-cos-sts-sdk v0.0.0-20220106031843-2efeb10ca2f6
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/protobuf v1.30.0 // indirect
 	gorm.io/driver/sqlite v1.3.6
 	gorm.io/gorm v1.23.8
 	nhooyr.io/websocket v1.8.7
 )
 
-require golang.org/x/net v0.9.0
+require golang.org/x/net v0.10.0
 
-require github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230616034533-9818cc08f44f
+require github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230626033133-e87875a4bf1b
 
 require (
 	github.com/bwmarrin/snowflake v0.3.0 // indirect
@@ -46,7 +45,7 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/crypto v0.5.0 // indirect
+	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/image v0.3.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect

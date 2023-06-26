@@ -43,7 +43,7 @@ type AccountCheckReq struct {
 }
 type AccountCheckResp struct {
 	CommResp
-	ResultList []*AccountCheckResp_SingleUserStatus `json:"data"`
+	Results []*AccountCheckResp_SingleUserStatus `json:"data"`
 }
 type AccountCheckResp_SingleUserStatus struct {
 	UserID        string `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`

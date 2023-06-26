@@ -9,21 +9,23 @@ import (
 	"open_im_sdk/sdk_struct"
 )
 
-func NewFileCallback(ctx context.Context, progress func(progress int), msg *sdk_struct.MsgStruct, db db_interface.DataBase) file.PutFileCallback {
+func NewFileCallback(ctx context.Context, progress func(progress int), msg *sdk_struct.MsgStruct, conversationID string, db db_interface.DataBase) file.PutFileCallback {
 	if msg.AttachedInfoElem == nil {
 		msg.AttachedInfoElem = &sdk_struct.AttachedInfoElem{}
 	}
 	if msg.AttachedInfoElem.Progress == nil {
 		msg.AttachedInfoElem.Progress = &sdk_struct.UploadProgress{}
 	}
-	return &FileCallback{ctx: ctx, progress: progress, msg: msg, db: db}
+	return &FileCallback{ctx: ctx, progress: progress, msg: msg, db: db, conversationID: conversationID}
 }
 
 type FileCallback struct {
-	ctx      context.Context
-	db       db_interface.DataBase
-	msg      *sdk_struct.MsgStruct
-	progress func(progress int)
+	ctx            context.Context
+	db             db_interface.DataBase
+	msg            *sdk_struct.MsgStruct
+	conversationID string
+	value          int
+	progress       func(progress int)
 }
 
 func (c *FileCallback) Open(size int64) {}
@@ -42,10 +44,14 @@ func (c *FileCallback) PutProgress(save int64, current, total int64) {
 	if err != nil {
 		panic(err)
 	}
-	if err := c.db.UpdateMessageByClientMsgID(c.ctx, c.msg.ClientMsgID, map[string]any{"attached_info": string(data)}); err != nil {
+	if err := c.db.UpdateColumnsMessage(c.ctx, c.conversationID, c.msg.ClientMsgID, map[string]any{"attached_info": string(data)}); err != nil {
 		log.ZError(c.ctx, "update PutProgress message attached info failed", err)
 	}
-	c.progress(int(float64(current) / float64(total) * 100))
+	value := int(float64(current) / float64(total) * 100)
+	if c.value < value {
+		c.value = value
+		c.progress(value)
+	}
 }
 
 func (c *FileCallback) PutComplete(total int64, putType int) {
@@ -54,7 +60,7 @@ func (c *FileCallback) PutComplete(total int64, putType int) {
 	if err != nil {
 		panic(err)
 	}
-	if err := c.db.UpdateMessageByClientMsgID(c.ctx, c.msg.ClientMsgID, map[string]any{"attached_info": string(data)}); err != nil {
+	if err := c.db.UpdateColumnsMessage(c.ctx, c.conversationID, c.msg.ClientMsgID, map[string]any{"attached_info": string(data)}); err != nil {
 		log.ZError(c.ctx, "update PutComplete message attached info failed", err)
 	}
 }

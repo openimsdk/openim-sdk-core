@@ -22,11 +22,14 @@ import (
 var LogLevel uint32 = 6
 var PlatformID = int32(2)
 var LogName = ""
+var IsLogStandardOutput = false
+var LogFilePath = ""
 
 var ReliabilityUserA = 1234567
 var ReliabilityUserB = 1234567
 var (
-	TESTIP = "121.5.182.23"
+	//TESTIP = "121.5.182.23"
+	TESTIP = "203.56.175.233"
 	//TESTIP              = "121.37.25.71"
 
 	//TESTIP  = "open-im-test.rentsoft.cn"
@@ -65,3 +68,8 @@ var msgNumInOneClient = 0
 var sendMsgClient = 0
 
 var MaxNumGoroutine = 100000
+
+// 常量
+var (
+	RELIABILITY = "reliability_"
+)

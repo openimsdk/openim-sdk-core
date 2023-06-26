@@ -19,6 +19,7 @@ import "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 type CommResp struct {
 	ErrCode int32  `json:"errCode"`
 	ErrMsg  string `json:"errMsg"`
+	ErrDlt  string `json:"errDlt"`
 }
 type CommDataResp struct {
 	CommResp

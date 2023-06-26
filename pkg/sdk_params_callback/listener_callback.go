@@ -15,7 +15,6 @@
 package sdk_params_callback
 
 import (
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/pkg/db/model_struct"
 )
 
@@ -58,12 +57,12 @@ type InvitationInfo struct {
 	GroupID           string
 }
 
-type ReceiveNewInvitationCallback sdkws.SignalInviteReq
-
-type InviteeAcceptedCallback sdkws.SignalAcceptReq
-
-type InviteeRejectedCallback sdkws.SignalRejectReq
-
-type InvitationCancelledCallback sdkws.SignalCancelReq
-
-type InvitationTimeoutCallback sdkws.SignalInviteReq
+//type ReceiveNewInvitationCallback sdkws.SignalInviteReq
+//
+//type InviteeAcceptedCallback sdkws.SignalAcceptReq
+//
+//type InviteeRejectedCallback sdkws.SignalRejectReq
+//
+//type InvitationCancelledCallback sdkws.SignalCancelReq
+//
+//type InvitationTimeoutCallback sdkws.SignalInviteReq

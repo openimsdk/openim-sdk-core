@@ -45,7 +45,7 @@ type ContextInfo interface {
 }
 
 func Info(ctx context.Context) ContextInfo {
-	conf := ctx.Value(globalConfigKey{}).(*GlobalConfig)
+	conf := ctx.Value(GlobalConfigKey{}).(*GlobalConfig)
 	return &info{
 		conf: conf,
 		ctx:  ctx,
@@ -53,7 +53,7 @@ func Info(ctx context.Context) ContextInfo {
 }
 
 func WithInfo(ctx context.Context, conf *GlobalConfig) context.Context {
-	return context.WithValue(ctx, globalConfigKey{}, conf)
+	return context.WithValue(ctx, GlobalConfigKey{}, conf)
 }
 
 func WithOperationID(ctx context.Context, operationID string) context.Context {
@@ -63,7 +63,7 @@ func WithSendMessageCallback(ctx context.Context, callback open_im_sdk_callback.
 	return context.WithValue(ctx, Callback, callback)
 }
 
-type globalConfigKey struct{}
+type GlobalConfigKey struct{}
 
 type info struct {
 	conf *GlobalConfig

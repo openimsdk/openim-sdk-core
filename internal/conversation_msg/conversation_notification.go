@@ -659,7 +659,7 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 				c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConChange, Args: []string{tips.ConversationID}}})
 				continue
 			case v.ContentType == constant.BusinessNotification:
-				c.business.DoNotification(ctx, string(v.Content))
+				c.business.DoNotification(ctx, v)
 				continue
 			case v.ContentType == constant.RevokeNotification:
 				c.doRevokeMsg(ctx, v)
@@ -680,14 +680,13 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 				} else if utils2.Contain(v.ContentType, constant.GroupApplicationRejectedNotification, constant.GroupApplicationAcceptedNotification, constant.JoinGroupApplicationNotification) {
 					c.group.DoNotification(ctx, v)
 				} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
-					c.signaling.DoNotification(ctx, v, c.GetCh())
+
 					continue
 				}
 			case constant.GroupChatType, constant.SuperGroupChatType:
 				if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
 					c.group.DoNotification(ctx, v)
 				} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
-					c.signaling.DoNotification(ctx, v, c.GetCh())
 					continue
 				}
 			}

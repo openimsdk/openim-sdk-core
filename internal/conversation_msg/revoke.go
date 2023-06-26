@@ -104,7 +104,7 @@ func (c *Conversation) revokeMessage(ctx context.Context, tips *sdkws.RevokeMsgT
 		}
 	}
 	c.msgListener.OnNewRecvMessageRevoked(utils.StructToJsonString(m))
-	msgList, err := c.db.SearchAllMessageByContentType(ctx, constant.Quote)
+	msgList, err := c.db.SearchAllMessageByContentType(ctx, conversation.ConversationID, constant.Quote)
 	if err != nil {
 		log.ZError(ctx, "SearchAllMessageByContentType failed", err, "tips", &tips)
 		return

@@ -17,9 +17,8 @@
 
 package indexdb
 
-import "context"
-
 import (
+	"context"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 )
@@ -85,13 +84,13 @@ func (i *LocalGroupMember) GetAllGroupMemberUserIDList(ctx context.Context) ([]m
 	}
 }
 
-func (i *LocalGroupMember) GetGroupMemberCount(ctx context.Context, groupID string) (uint32, error) {
+func (i *LocalGroupMember) GetGroupMemberCount(ctx context.Context, groupID string) (int32, error) {
 	count, err := Exec(groupID)
 	if err != nil {
 		return 0, err
 	}
 	if v, ok := count.(float64); ok {
-		return uint32(v), nil
+		return int32(v), nil
 	}
 	return 0, ErrType
 }

@@ -144,6 +144,23 @@ func (i *Friend) GetFriendInfoList(ctx context.Context, friendUserIDList []strin
 	}
 }
 func (i *Friend) GetPageFriendList(ctx context.Context, offset, count int) ([]*model_struct.LocalFriend, error) {
-	//TODO implement me
-	panic("implement me")
+	gList, err := Exec(offset, count, i.loginUserID)
+	if err != nil {
+		return nil, err
+	} else {
+		if v, ok := gList.(string); ok {
+			var temp []model_struct.LocalFriend
+			err := utils.JsonStringToStruct(v, &temp)
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range temp {
+				v1 := v
+				result = append(result, &v1)
+			}
+			return result, err
+		} else {
+			return nil, ErrType
+		}
+	}
 }
