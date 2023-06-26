@@ -15,14 +15,22 @@
 package test
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	imLog "github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	authPB "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/auth"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	userPB "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/user"
 	"net"
+	"open_im_sdk/internal/util"
+	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/network"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
 	"os"
 	"strconv"
 	"sync"
@@ -81,64 +89,68 @@ var AdminToken = ""
 
 func init() {
 	AdminToken = getToken("openIM123456")
+	if err := imLog.InitFromConfig("open-im-sdk-core", "", int(LogLevel), IsLogStandardOutput, false, LogFilePath, 0); err != nil {
+		fmt.Println("123456", "log init failed ", err.Error())
+	}
 }
+
+var ctx context.Context
+var cctx context.Context
+
 func register(uid string) error {
+	ctx = ccontext.WithInfo(context.Background(), &ccontext.GlobalConfig{
+		UserID: uid,
+		Token:  AdminToken,
+		IMConfig: sdk_struct.IMConfig{
+			PlatformID: PlatformID,
+			ApiAddr:    APIADDR,
+			WsAddr:     WSADDR,
+			LogLevel:   LogLevel,
+		},
+	})
+	ctx = ccontext.WithOperationID(ctx, "123456")
+
 	//ACCOUNTCHECK
-	var req server_api_params.AccountCheckReq
-	req.OperationID = utils.OperationIDGenerator()
-	req.CheckUserIDList = []string{uid}
-
-	var getSelfUserInfoReq server_api_params.GetSelfUserInfoReq
-	getSelfUserInfoReq.OperationID = req.OperationID
-	getSelfUserInfoReq.UserID = uid
-
-	var getSelfUserInfoResp server_api_params.AccountCheckResp
+	var getAccountCheckReq userPB.AccountCheckReq
+	var getAccountCheckResp userPB.AccountCheckResp
+	getAccountCheckReq.CheckUserIDs = []string{uid}
 
 	for {
-		r, err := network.Post2Api(ACCOUNTCHECK, req, AdminToken)
+		err := util.ApiPost(ctx, "/user/account_check", &getAccountCheckReq, &getAccountCheckResp)
 		if err != nil {
-			log.Error(req.OperationID, "post failed, continue ", err.Error(), REGISTERADDR, req)
-			continue
+			return err
 		}
-		err = json.Unmarshal(r, &getSelfUserInfoResp)
-		if err != nil {
-			log.Error(req.OperationID, "Unmarshal failed ", err.Error())
-		}
-		if getSelfUserInfoResp.ErrCode == 0 && len(getSelfUserInfoResp.ResultList) == 1 && getSelfUserInfoResp.ResultList[0].AccountStatus == "registered" {
-			log.Warn(req.OperationID, "Already registered ", uid, getSelfUserInfoResp)
+		if len(getAccountCheckResp.Results) == 1 &&
+			getAccountCheckResp.Results[0].AccountStatus == "registered" {
+			log.Warn(getAccountCheckReq.CheckUserIDs[0], "Already registered ", uid, getAccountCheckResp)
 			userLock.Lock()
 			allUserID = append(allUserID, uid)
 			userLock.Unlock()
 			return nil
-		} else if getSelfUserInfoResp.ErrCode == 0 && len(getSelfUserInfoResp.ResultList) == 1 && getSelfUserInfoResp.ResultList[0].AccountStatus == "unregistered" {
-			log.Info(req.OperationID, "not registered ", uid, getSelfUserInfoResp.ErrCode)
+		} else if len(getAccountCheckResp.Results) == 1 &&
+			getAccountCheckResp.Results[0].AccountStatus == "unregistered" {
+			log.Info(getAccountCheckReq.CheckUserIDs[0], "not registered ", uid, getAccountCheckResp)
 			break
 		} else {
-			log.Error(req.OperationID, " failed, continue ", err, REGISTERADDR, req)
+			log.Error(getAccountCheckReq.CheckUserIDs[0], " failed, continue ", err, REGISTERADDR, getAccountCheckReq)
 			continue
 		}
 	}
 
+	var rreq userPB.UserRegisterReq
+	//var rresp userPB.UserRegisterResp
+	rreq.Users = []*sdkws.UserInfo{{UserID: uid}}
+
 	for {
-		var rreq server_api_params.UserRegisterReq
-		rreq.UserID = uid
-		rreq.Secret = SECRET
-		rreq.UserID = uid
-		rreq.Platform = 1
-		rreq.OperationID = req.OperationID
-		rreq.OperationID = req.OperationID
-		_, err := network.Post2Api(REGISTERADDR, rreq, "")
-		//if err != nil && !strings.Contains(err.Error(), "status code failed") {
-		//	log.Error(req.OperationID, "post failed ,continue ", err.Error(), REGISTERADDR, req)
-		//	time.Sleep(100 * time.Millisecond)
-		//	continue
-		//}
+		//var rreq server_api_params.UserRegisterReq
+		//_, err := network.Post2Api(REGISTERADDR, rreq, "")
+		err := util.ApiPost(ctx, "/auth/user_register", &rreq, nil)
 		if err != nil {
-			log.Error(req.OperationID, "post failed ,continue ", err.Error(), REGISTERADDR, req)
+			log.Error("post failed ,continue ", err.Error(), REGISTERADDR, getAccountCheckReq)
 			time.Sleep(100 * time.Millisecond)
 			continue
 		} else {
-			log.Info(req.OperationID, "register ok ", REGISTERADDR, req)
+			log.Info("register ok ", REGISTERADDR, getAccountCheckReq)
 			userLock.Lock()
 			allUserID = append(allUserID, uid)
 			userLock.Unlock()
@@ -148,6 +160,34 @@ func register(uid string) error {
 }
 
 func getToken(uid string) string {
+	ctx = ccontext.WithInfo(context.Background(), &ccontext.GlobalConfig{
+		UserID: uid,
+		Token:  "",
+		IMConfig: sdk_struct.IMConfig{
+			PlatformID: PlatformID,
+			ApiAddr:    APIADDR,
+			WsAddr:     WSADDR,
+			LogLevel:   LogLevel,
+		},
+	})
+	ctx = ccontext.WithOperationID(ctx, "123456")
+	url := TOKENADDR
+	req := authPB.UserTokenReq{
+		PlatformID: PlatformID,
+		UserID:     uid,
+	}
+	resp := authPB.UserTokenResp{}
+	err := util.ApiPost(ctx, "/auth/user_token", &req, &resp)
+	if err != nil {
+		log.Error(req.UserID, "Post2Api failed ", err.Error(), url, req)
+		return ""
+	}
+
+	log.Info(req.UserID, "get token: ", resp.Token)
+	return resp.Token
+}
+
+func getToken2(uid string) string {
 	url := TOKENADDR
 	var req server_api_params.UserTokenReq
 	req.Platform = PlatformID
@@ -201,7 +241,7 @@ func getMyIP() string {
 }
 
 func RegisterReliabilityUser(id int, timeStamp string) {
-	userID := GenUid(id, "reliability_"+timeStamp+"_")
+	userID := GenUid(id, "reliability_"+timeStamp)
 	register(userID)
 	token := RunGetToken(userID)
 	coreMgrLock.Lock()
