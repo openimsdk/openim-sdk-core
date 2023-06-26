@@ -95,11 +95,12 @@ func ApiPost(ctx context.Context, api string, req, resp any) (err error) {
 		log.ZError(ctx, "ApiResponse", err, "type", "api code error", "msg", baseApi.ErrMsg, "dlt", baseApi.ErrDlt)
 		return err
 	}
-	if resp != nil {
-		if err := json.Unmarshal(baseApi.Data, resp); err != nil {
-			log.ZError(ctx, "ApiResponse", err, "type", "api data parse", "data", string(baseApi.Data), "bind", fmt.Sprintf("%T", resp))
-			return sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("json.Unmarshal(%q, %T) failed %s", string(baseApi.Data), resp, err.Error()))
-		}
+	if resp == nil || len(baseApi.Data) == 0 || string(baseApi.Data) == "null" {
+		return nil
+	}
+	if err := json.Unmarshal(baseApi.Data, resp); err != nil {
+		log.ZError(ctx, "ApiResponse", err, "type", "api data parse", "data", string(baseApi.Data), "bind", fmt.Sprintf("%T", resp))
+		return sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("json.Unmarshal(%q, %T) failed %s", string(baseApi.Data), resp, err.Error()))
 	}
 	return nil
 }

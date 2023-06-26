@@ -2,6 +2,8 @@ github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230621024926-37aab966dff2 h1:hcys
 github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230621024926-37aab966dff2/go.mod h1:GBrMkMbTcw7fq9HddKKHLtbui9J7bVx6eCCur41z+5U=
 github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230621033912-41023a440474 h1:Zn+c9mwlMY6ca84eW0jKyvnUTbmCv3lehoyBqVjsGPs=
 github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230621033912-41023a440474/go.mod h1:GBrMkMbTcw7fq9HddKKHLtbui9J7bVx6eCCur41z+5U=
+github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230626033133-e87875a4bf1b h1:Glf6yxWd+qxIvSNDQouOpVpox9SD+AeN329kNGymgDo=
+github.com/OpenIMSDK/Open-IM-Server v1.0.8-0.20230626033133-e87875a4bf1b/go.mod h1:GBrMkMbTcw7fq9HddKKHLtbui9J7bVx6eCCur41z+5U=
 github.com/antonfisher/nested-logrus-formatter v1.3.1 h1:NFJIr+pzwv5QLHTPyKz9UMEoHck02Q9L0FP13b/xSbQ=
 github.com/antonfisher/nested-logrus-formatter v1.3.1/go.mod h1:6WTfyWFkBc9+zyBaKIqRrg/KwMqBbodBjgbHjDz7zjA=
 github.com/benbjohnson/clock v1.1.0 h1:Q92kusRqC1XV2MjkWETPvjJVqKetz1OzxZB7mHJLju8=
