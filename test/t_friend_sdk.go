@@ -446,6 +446,7 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 	cf.WsAddr = ws
 	cf.PlatformID = 1
 	cf.DataDir = "./"
+	cf.IsLogStandardOutput = true
 	cf.LogLevel = uint32(LogLevel)
 
 	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
