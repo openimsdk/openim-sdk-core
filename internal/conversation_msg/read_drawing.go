@@ -98,6 +98,7 @@ func (c *Conversation) markMessagesAsReadByMsgID(ctx context.Context, conversati
 		return err
 	}
 	markAsReadMsgIDs, seqs := c.getAsReadMsgMapAndList(ctx, msgs)
+	log.ZDebug(ctx, "msgs len", "markAsReadMsgIDs", len(markAsReadMsgIDs), "seqs", seqs)
 	if err := c.markMsgAsRead2Svr(ctx, conversationID, seqs); err != nil {
 		return err
 	}
@@ -132,32 +133,28 @@ func (c *Conversation) unreadChangeTrigger(ctx context.Context, conversationID s
 	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}, Ctx: ctx})
 }
 
-func (c *Conversation) doUnreadCount(ctx context.Context, conversationID string, hasReadSeq int64) {
+func (c *Conversation) doUnreadCount(ctx context.Context, conversationID string, hasReadSeq int64, seqs []int64) {
 	conversation, err := c.db.GetConversation(ctx, conversationID)
 	if err != nil {
 		log.ZError(ctx, "GetConversation err", err, "conversationID", conversationID)
 		return
 	}
-	var seqs []int64
+	_, err = c.db.MarkConversationMessageAsReadBySeqs(ctx, conversationID, seqs)
+	if err != nil {
+		log.ZWarn(ctx, "MarkConversationMessageAsReadBySeqs err", err, "conversationID", conversationID, "seqs", seqs)
+	}
 	if hasReadSeq > conversation.HasReadSeq {
-		for i := conversation.HasReadSeq + 1; i <= hasReadSeq; i++ {
-			seqs = append(seqs, i)
-		}
-		_, err := c.db.MarkConversationMessageAsReadBySeqs(ctx, conversationID, seqs)
-		if err != nil {
-			log.ZWarn(ctx, "MarkConversationMessageAsReadBySeqs err", err, "conversationID", conversationID, "seqs", seqs)
-		}
-		if err := c.db.DecrConversationUnreadCount(ctx, conversationID, int64(len(seqs))); err != nil {
-			log.ZError(ctx, "decrConversationUnreadCount err", err, "conversationID", conversationID, "decrCount", int64(len(seqs)))
+		decrUnreadCount := hasReadSeq - conversation.HasReadSeq
+		if err := c.db.DecrConversationUnreadCount(ctx, conversationID, decrUnreadCount); err != nil {
+			log.ZError(ctx, "DecrConversationUnreadCount err", err, "conversationID", conversationID, "decrUnreadCount", decrUnreadCount)
 		}
 		if err := c.db.UpdateColumnsConversation(ctx, conversationID, map[string]interface{}{"has_read_seq": hasReadSeq}); err != nil {
 			log.ZError(ctx, "UpdateColumnsConversation err", err, "conversationID", conversationID)
 		}
-		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}})
-		c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}})
-	} else {
-		log.ZWarn(ctx, "hasReadSeq <= conversation.HasReadSeq", nil, "hasReadSeq", hasReadSeq, "conversation.HasReadSeq", conversation.HasReadSeq)
 	}
+	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: conversationID, Action: constant.ConChange, Args: []string{conversationID}}})
+	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged}})
+
 }
 
 func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) {
@@ -213,6 +210,6 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) {
 		}
 	} else {
 		log.ZDebug(ctx, "do unread count", "tips", tips)
-		c.doUnreadCount(ctx, tips.ConversationID, tips.HasReadSeq)
+		c.doUnreadCount(ctx, tips.ConversationID, tips.HasReadSeq, tips.Seqs)
 	}
 }
