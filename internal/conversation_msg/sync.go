@@ -27,7 +27,7 @@ func (c *Conversation) SyncConversations(ctx context.Context) error {
 		c.addFaceURLAndName(ctx, v)
 	}
 	if err = c.conversationSyncer.Sync(ctx, conversationsOnServer, conversationsOnLocal, func(ctx context.Context, state int, server, local *model_struct.LocalConversation) error {
-		if state == syncer.Update {
+		if state == syncer.Update || state == syncer.Insert {
 			c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{ConID: server.ConversationID, Action: constant.ConChange, Args: []string{server.ConversationID}}})
 		}
 		return nil

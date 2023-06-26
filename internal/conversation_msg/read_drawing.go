@@ -19,8 +19,8 @@ func (c *Conversation) markMsgAsRead2Svr(ctx context.Context, conversationID str
 	return util.ApiPost(ctx, constant.MarkMsgsAsReadRouter, req, nil)
 }
 
-func (c *Conversation) markConversationAsReadSvr(ctx context.Context, conversationID string, hasReadSeq int64) error {
-	req := &pbMsg.MarkConversationAsReadReq{UserID: c.loginUserID, ConversationID: conversationID, HasReadSeq: hasReadSeq}
+func (c *Conversation) markConversationAsReadSvr(ctx context.Context, conversationID string, hasReadSeq int64, seqs []int64) error {
+	req := &pbMsg.MarkConversationAsReadReq{UserID: c.loginUserID, ConversationID: conversationID, HasReadSeq: hasReadSeq, Seqs: seqs}
 	return util.ApiPost(ctx, constant.MarkConversationAsRead, req, nil)
 }
 
@@ -64,7 +64,7 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 	log.ZDebug(ctx, "get unread message", "msgs", len(msgs))
 	msgIDs, seqs := c.getAsReadMsgMapAndList(ctx, msgs)
 	log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "seqs", seqs, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
-	if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq); err != nil {
+	if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, seqs); err != nil {
 		return err
 	}
 	_, err = c.db.MarkConversationMessageAsRead(ctx, conversationID, msgIDs)
