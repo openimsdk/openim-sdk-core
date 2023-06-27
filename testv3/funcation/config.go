@@ -28,7 +28,7 @@ var (
 	rotateCount         = uint(0)
 	LogLevel            = uint32(6)
 	PlatformID          = int32(2)
-	IsLogStandardOutput = false
+	IsLogStandardOutput = true
 	isLogJson           = false
 	LogName             = ""
 	LogFilePath         = ""

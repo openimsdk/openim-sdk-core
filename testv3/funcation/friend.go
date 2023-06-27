@@ -57,11 +57,12 @@ func (t *testInitLister) OnError(code int32, msg string) {
 
 func ReliabilityInitAndLogin(index int, uid, token string) {
 	cf := sdk_struct.IMConfig{
-		ApiAddr:    APIADDR,
-		WsAddr:     WSADDR,
-		PlatformID: PlatformID,
-		DataDir:    "./../",
-		LogLevel:   LogLevel,
+		ApiAddr:             APIADDR,
+		WsAddr:              WSADDR,
+		PlatformID:          PlatformID,
+		DataDir:             "./../",
+		LogLevel:            LogLevel,
+		IsLogStandardOutput: true,
 	}
 
 	log.Info("", "DoReliabilityTest", uid, token, WSADDR, APIADDR)
@@ -69,9 +70,11 @@ func ReliabilityInitAndLogin(index int, uid, token string) {
 	var testinit testInitLister
 
 	lg := new(login.LoginMgr)
+
 	lg.InitSDK(cf, &testinit)
 	log.Info(uid, "new login ", lg)
 	allLoginMgr[index].mgr = lg
-	log.Info(uid, "InitSDK ", cf)
+	log.Info(uid, "InitSDK ", cf, "index mgr", index, lg)
 	lg.Login(ctx, uid, token)
+	lg.User().GetSelfUserInfo(ctx)
 }
