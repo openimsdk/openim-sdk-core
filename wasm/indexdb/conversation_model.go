@@ -372,41 +372,42 @@ func (i *LocalConversations) GetAllConversationIDList(ctx context.Context) ([]st
 }
 
 func (i *LocalConversations) UpdateOrCreateConversations(ctx context.Context, conversationList []*model_struct.LocalConversation) error {
-	conversationIDs, err := Exec(ctx)
-	if err != nil {
-		return err
-	} else {
-		if v, ok := conversationIDs.(string); ok {
-			var conversationIDs []string
-			err := utils.JsonStringToStruct(v, &conversationIDs)
-			if err != nil {
-				return err
-			}
-			var notExistConversations []*model_struct.LocalConversation
-			var existConversations []*model_struct.LocalConversation
-			for i, v := range conversationList {
-				if utils.IsContain(v.ConversationID, conversationIDs) {
-					existConversations = append(existConversations, v)
-					continue
-				} else {
-					notExistConversations = append(notExistConversations, conversationList[i])
-				}
-			}
-			if len(notExistConversations) > 0 {
-				err := Exec(ctx, notExistConversations)
-				if err != nil {
-					return err
-				}
-			}
-			for _, v := range existConversations {
-				err := Exec(ctx, v)
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		} else {
-			return ErrType
-		}
-	}
+	//conversationIDs, err := Exec(ctx)
+	return nil
+	//if err != nil {
+	//	return err
+	//} else {
+	//	if v, ok := conversationIDs.(string); ok {
+	//		var conversationIDs []string
+	//		err := utils.JsonStringToStruct(v, &conversationIDs)
+	//		if err != nil {
+	//			return err
+	//		}
+	//		var notExistConversations []*model_struct.LocalConversation
+	//		var existConversations []*model_struct.LocalConversation
+	//		for i, v := range conversationList {
+	//			if utils.IsContain(v.ConversationID, conversationIDs) {
+	//				existConversations = append(existConversations, v)
+	//				continue
+	//			} else {
+	//				notExistConversations = append(notExistConversations, conversationList[i])
+	//			}
+	//		}
+	//		if len(notExistConversations) > 0 {
+	//			err := Exec(ctx, notExistConversations)
+	//			if err != nil {
+	//				return err
+	//			}
+	//		}
+	//		for _, v := range existConversations {
+	//			err := Exec(ctx, v)
+	//			if err != nil {
+	//				return err
+	//			}
+	//		}
+	//		return nil
+	//	} else {
+	//		return ErrType
+	//	}
+	//}
 }
