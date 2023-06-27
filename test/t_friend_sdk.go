@@ -21,6 +21,7 @@ import (
 	X "log"
 	"open_im_sdk/internal/login"
 	"open_im_sdk/open_im_sdk"
+	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/utils"
@@ -340,15 +341,15 @@ type testRefuseFriendApplication struct {
 	ui2AcceptFriend
 }
 
-funcation (testRefuseFriendApplication) OnSuccess(info string) {
+func (testRefuseFriendApplication) OnSuccess(info string) {
 	fmt.Println("RefuseFriendApplication OnSuccess", info)
 }
-funcation (testRefuseFriendApplication) OnError(code int, msg string) {
+func (testRefuseFriendApplication) OnError(code int, msg string) {
 	fmt.Println("RefuseFriendApplication, OnError, ", code, msg)
 }
 */
 /*
-funcation DoTestRefuseFriendApplication() {
+func DoTestRefuseFriendApplication() {
 
 	var test testRefuseFriendApplication
 	test.UID = Friend_uid
@@ -367,13 +368,13 @@ funcation DoTestRefuseFriendApplication() {
 //	open_im_sdk.ui2AcceptFriend
 //}
 //
-//funcation (testRefuseFriendApplication) OnSuccess(info string) {
+//func (testRefuseFriendApplication) OnSuccess(info string) {
 //	fmt.Println("testRefuseFriendApplication OnSuccess", info)
 //}
-//funcation (testRefuseFriendApplication) OnError(code int32, msg string) {
+//func (testRefuseFriendApplication) OnError(code int32, msg string) {
 //	fmt.Println("testRefuseFriendApplication, OnError, ", code, msg)
 //}
-//funcation DoTestRefuseFriendApplication() {
+//func DoTestRefuseFriendApplication() {
 //	var testRefuseFriendApplication testRefuseFriendApplication
 //	testRefuseFriendApplication.ui2AcceptFriend = Friend_uid
 //
@@ -440,17 +441,17 @@ func lllogin(uid, tk string) bool {
 }
 
 func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
-	cf := sdk_struct.IMConfig{
-		ApiAddr:    api,
-		WsAddr:     ws,
-		PlatformID: 1,
-		DataDir:    "./",
-		LogLevel:   uint32(LogLevel),
-	}
+	var cf sdk_struct.IMConfig
+	cf.ApiAddr = api
+	cf.WsAddr = ws
+	cf.PlatformID = 1
+	cf.DataDir = "./"
+	cf.IsLogStandardOutput = true
+	cf.LogLevel = uint32(LogLevel)
 
 	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
-
 	operationID := utils.OperationIDGenerator()
+
 	ctx := mcontext.NewCtx(operationID)
 	var testinit testInitLister
 	lg := new(login.LoginMgr)
@@ -458,6 +459,8 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 
 	allLoginMgr[index].mgr = lg
 	lg.InitSDK(cf, &testinit)
+
+	ctx = ccontext.WithOperationID(lg.Context(), operationID)
 
 	log.Info(operationID, "InitSDK ", cf)
 
@@ -649,11 +652,11 @@ func InOutDoTestSendMsg(sendId, receiverID string) {
 	//s := CreateTextMessage(m)
 	var testSendMsg TestSendMsgCallBack
 	//	testSendMsg.msg = SendMessage(&testSendMsg, s, receiverID, "", false)
-	fmt.Println("funcation send ", m, testSendMsg.msg)
+	fmt.Println("func send ", m, testSendMsg.msg)
 	fmt.Println("test to recv : ", receiverID)
 }
 
-//funcation DoTestGetAllConversationList() {
+//func DoTestGetAllConversationList() {
 //	var test TestGetAllConversationListCallBack
 //	open_im_sdk.GetAllConversationList(test)
 //}

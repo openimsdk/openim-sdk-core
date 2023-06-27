@@ -22,7 +22,7 @@ import (
 var LogLevel uint32 = 6
 var PlatformID = int32(2)
 var LogName = ""
-var IsLogStandardOutput = false
+var IsLogStandardOutput = true
 var LogFilePath = ""
 
 var ReliabilityUserA = 1234567
