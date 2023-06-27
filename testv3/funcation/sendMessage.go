@@ -16,7 +16,6 @@ package funcation
 
 import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	//	"open_im_sdk/internal/interaction"
@@ -56,47 +55,6 @@ type SendRecvTime struct {
 }
 
 var SendSuccAllMsg map[string]*SendRecvTime //msgid->send+recv:
-
-func addSendSuccess() {
-	sendSuccessLock.Lock()
-	defer sendSuccessLock.Unlock()
-	sendSuccessCount++
-}
-func addSendFailed() {
-	sendFailedLock.Lock()
-	defer sendFailedLock.Unlock()
-	sendFailedCount++
-}
-
-func sendPressMsg(index int, sendId, recvID string, groupID string, idx string) bool {
-
-	return SendTextMessageOnlyForPress(idx, sendId, recvID, groupID, utils.OperationIDGenerator())
-}
-func SendTextMessageOnlyForPress(text, senderID, recvID, groupID, operationID string) bool {
-	var wsMsgData sdkws.MsgData
-	options := make(map[string]bool, 2)
-	wsMsgData.SendID = senderID
-	if groupID == "" {
-		wsMsgData.RecvID = recvID
-		wsMsgData.SessionType = constant.SingleChatType
-	} else {
-		wsMsgData.GroupID = groupID
-		wsMsgData.SessionType = constant.SuperGroupChatType
-	}
-
-	wsMsgData.ClientMsgID = utils.GetMsgID(senderID)
-	wsMsgData.SenderPlatformID = 1
-
-	wsMsgData.MsgFrom = constant.UserMsgType
-	wsMsgData.ContentType = constant.Text
-	wsMsgData.Content = []byte(text)
-	wsMsgData.CreateTime = utils.GetCurrentTimestampByMill()
-	wsMsgData.Options = options
-	wsMsgData.OfflinePushInfo = nil
-	//timeout := 300
-	log.Info(operationID, "SendReqTest begin ", wsMsgData)
-	return true
-}
 
 func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string) {
 	m := "test msg " + sendId + ":" + recvID + ":" + idx
