@@ -599,7 +599,7 @@ func (i *LocalChatLogs) UpdateMessageBySeq(ctx context.Context, conversationID s
 	return err
 }
 
-func (i *LocalChatLogs) MarkConversationMessageAsRead(ctx context.Context, conversationID string, msgIDs []string) (rowsAffected int64, err error) {
+func (i *LocalChatLogs) MarkConversationMessageAsReadDB(ctx context.Context, conversationID string, msgIDs []string) (rowsAffected int64, err error) {
 	rows, err := Exec(conversationID, utils.StructToJsonString(msgIDs), i.loginUserID)
 	if err != nil {
 		return 0, err

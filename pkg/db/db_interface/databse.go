@@ -108,7 +108,7 @@ type MessageDatabase interface {
 	//GetMessageListNoTimeController(ctx context.Context, sourceID string, sessionType, count int, isReverse bool) (result []*model_struct.LocalChatLog, err error)
 	GetSendingMessageList(ctx context.Context) (result []*model_struct.LocalChatLog, err error)
 	SetMessageLocalEx(ctx context.Context, conversationID, clientMsgID, localEx string) error
-	MarkConversationMessageAsRead(ctx context.Context, conversationID string, msgIDs []string) (rowsAffected int64, err error)
+	MarkConversationMessageAsReadDB(ctx context.Context, conversationID string, msgIDs []string) (rowsAffected int64, err error)
 	MarkConversationMessageAsReadBySeqs(ctx context.Context, conversationID string, seqs []int64) (rowsAffected int64, err error)
 	GetUnreadMessage(ctx context.Context, conversationID string) (result []*model_struct.LocalChatLog, err error)
 	MarkConversationAllMessageAsRead(ctx context.Context, conversationID string) (rowsAffected int64, err error)
