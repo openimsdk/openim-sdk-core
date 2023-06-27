@@ -767,7 +767,9 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	wsMsgData.Content = []byte(s.Content)
 	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
-	//wsMsgData.AtUserIDList = s.AtElem.AtUserList
+	if wsMsgData.ContentType == constant.AtText {
+		wsMsgData.AtUserIDList = s.AtTextElem.AtUserList
+	}
 	wsMsgData.OfflinePushInfo = offlinePushInfo
 	s.Content = ""
 	var sendMsgResp sdkws.UserSendMsgResp
