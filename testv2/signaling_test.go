@@ -14,20 +14,20 @@
 
 package testv2
 
-//func Test_SignalingInviteInGroup(t *testing.T) {
-//	resp, err := open_im_sdk.UserForSDK.Signaling().SignalingInviteInGroup(ctx, &sdkws.SignalInviteInGroupReq{
-//		Invitation: &sdkws.InvitationInfo{
-//			InviterUserID:     UserID,
-//			InviteeUserIDList: []string{"targetUser"},
-//			CustomData:        "",
-//			GroupID:           "testgroup",
-//			RoomID:            "testgroup",
-//			Timeout:           30,
-//			MediaType:         "video",
-//			PlatformID:        1,
-//			SessionType:       3,
-//		},
-//	})
+// func Test_SignalingInviteInGroup(t *testing.T) {
+// 	resp, err := open_im_sdk.UserForSDK.Signaling().SignalingInviteInGroup(ctx, &sdkws.SignalInviteInGroupReq{
+// 		Invitation: &sdkws.InvitationInfo{
+// 			InviterUserID:     UserID,
+// 			InviteeUserIDList: []string{"targetUser"},
+// 			CustomData:        "",
+// 			GroupID:           "testgroup",
+// 			RoomID:            "testgroup",
+// 			Timeout:           30,
+// 			MediaType:         "video",
+// 			PlatformID:        1,
+// 			SessionType:       3,
+// 		},
+// 	})
 //	if err != nil {
 //		t.Error(err)
 //	}

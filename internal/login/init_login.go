@@ -16,7 +16,6 @@ package login
 
 import (
 	"context"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"open_im_sdk/internal/business"
 	"open_im_sdk/internal/cache"
 	conv "open_im_sdk/internal/conversation_msg"
@@ -25,6 +24,7 @@ import (
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/group"
 	"open_im_sdk/internal/interaction"
+	"open_im_sdk/internal/signaling"
 	"open_im_sdk/internal/super_group"
 	"open_im_sdk/internal/third"
 	"open_im_sdk/internal/user"
@@ -38,6 +38,8 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"time"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/push"
 
@@ -54,7 +56,7 @@ type LoginMgr struct {
 	user         *user.User
 	file         *file.File
 	business     *business.Business
-
+	signaling    *signaling.LiveSignaling
 	full         *full.Full
 	db           db_interface.DataBase
 	longConnMgr  *interaction.LongConnMgr
@@ -142,6 +144,10 @@ func (u *LoginMgr) Friend() *friend.Friend {
 	return u.friend
 }
 
+func (u *LoginMgr) Signaling() *signaling.LiveSignaling {
+	return u.signaling
+}
+
 func (u *LoginMgr) SetConversationListener(conversationListener open_im_sdk_callback.OnConversationListener) {
 	if u.conversation != nil {
 		u.conversation.SetConversationListener(conversationListener)
@@ -193,6 +199,22 @@ func (u *LoginMgr) SetUserListener(userListener open_im_sdk_callback.OnUserListe
 		u.user.SetListener(userListener)
 	} else {
 		u.userListener = userListener
+	}
+}
+
+func (u *LoginMgr) SetSignalingListener(listener open_im_sdk_callback.OnSignalingListener) {
+	if u.signaling != nil {
+		u.signaling.SetListener(listener)
+	} else {
+		u.signalingListener = listener
+	}
+}
+
+func (u *LoginMgr) SetSignalingListenerForService(listener open_im_sdk_callback.OnSignalingListener) {
+	if u.signaling != nil {
+		u.signaling.SetListenerForService(listener)
+	} else {
+		u.signalingListenerFroService = listener
 	}
 }
 
@@ -266,7 +288,7 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.longConnMgr.Run(ctx)
 	u.msgSyncer, _ = interaction.NewMsgSyncer(ctx, u.conversationCh, u.pushMsgAndMaxSeqCh, u.loginUserID, u.longConnMgr, u.db, 0)
 	u.conversation = conv.NewConversation(ctx, u.longConnMgr, u.db, u.conversationCh,
-		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.business, u.cache, u.full, u.file)
+		u.friend, u.group, u.user, u.conversationListener, u.advancedMsgListener, u.signaling, u.business, u.cache, u.full, u.file)
 	u.conversation.SetLoginTime()
 	if u.batchMsgListener != nil {
 		u.conversation.SetBatchMsgListener(u.batchMsgListener)

@@ -127,3 +127,20 @@ const (
 	FileGetHashRouter    = "/third/get_hash"
 	FileGetURLRouter     = "/third/object"
 )
+
+const (
+	signalGroup                  = "/signal"
+	SignalGetRoomByGroupIDRouter = signalGroup + "/signal_get_room_by_group_id"
+	// SignalGetTokenByRoomIDRouter          = signalGroup + "/signal_get_token_by_room_id"
+	SignalGetRoomsRouter                  = signalGroup + "/signal_get_rooms"
+	GetSignalInvitationInfoRouter         = signalGroup + "/get_signal_invitation_info"
+	GetSignalInvitationInfoStartAppRouter = signalGroup + "/get_signal_invitation_info_start_app"
+	// metting
+	SignalCreateMeetingRouter     = signalGroup + "/signal_create_meeting"
+	SignalJoinMeetingRouter       = signalGroup + "/signal_join_meeting"
+	SignalUpdateMeetingInfoRouter = signalGroup + "/signal_update_meeting_info"
+	SignalCloseRoomRouter         = signalGroup + "/signal_close_room"
+	SignalGetMeetingsRouter       = signalGroup + "/signal_get_meetings"
+	SignalOperateStreamRouter     = signalGroup + "/signal_operate_stream"
+	SignalSendCustomSignalRouter  = signalGroup + "/signal_send_custom_signal"
+)
