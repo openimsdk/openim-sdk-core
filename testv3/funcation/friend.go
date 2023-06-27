@@ -17,6 +17,7 @@ package funcation
 import (
 	"fmt"
 	"open_im_sdk/internal/login"
+	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
@@ -96,15 +97,19 @@ func ReliabilityInitAndLogin(index int, uid, token string) {
 	var callback BaseSuccessFailed
 	callback.funcName = utils.GetSelfFuncName()
 
-	lg.Login(ctx, uid, token)
-	lg.User().GetSelfUserInfo(ctx)
+	operationID := utils.OperationIDGenerator()
 
+	//ctx := mcontext.NewCtx(operationID)
+	ctx := ccontext.WithOperationID(lg.Context(), operationID)
+
+	lg.Login(ctx, uid, token)
+	u, err := lg.User().GetSelfUserInfo(ctx)
 	for {
-		if callback.errCode == 1 && testConversation.SyncFlag == 1 {
+		if testConversation.SyncFlag == 1 {
+			log.Info("", "testConversation.SyncFlag == 1", u.UserID, err)
 			return
 		}
 	}
-
 }
 
 type BaseSuccessFailed struct {
