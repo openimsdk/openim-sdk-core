@@ -14,7 +14,7 @@ func Test_Delay(t *testing.T) {
 
 	senderNum = flag.Int("sn", 2, "sender num")
 	singleSenderMsgNum = flag.Int("mn", 10, "single sender msg num")
-	intervalTime = flag.Int("t", 1000, "interval time mill second")
+	intervalTime = flag.Int("t", 1, "interval time mill second")
 
 	flag.Parse()
 	log.NewPrivateLog(funcation.LogName, funcation.LogLevel)
