@@ -460,7 +460,7 @@ func (c *Conversation) genConversationGroupAtType(lc *model_struct.LocalConversa
 	}
 }
 
-//	func (c *Conversation) msgStructToLocalChatLog(m *sdk_struct.MsgStruct) *model_struct.LocalChatLog {
+//	funcation (c *Conversation) msgStructToLocalChatLog(m *sdk_struct.MsgStruct) *model_struct.LocalChatLog {
 //		var lc model_struct.LocalChatLog
 //		copier.Copy(&lc, m)
 //		if m.SessionType == constant.GroupChatType || m.SessionType == constant.SuperGroupChatType {

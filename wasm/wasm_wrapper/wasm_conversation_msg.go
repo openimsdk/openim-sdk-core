@@ -113,12 +113,12 @@ func (w *WrapperConMsg) CreateSoundMessage(_ js.Value, args []js.Value) interfac
 	return event_listener.NewCaller(open_im_sdk.CreateSoundMessage, nil, &args).AsyncCallWithOutCallback()
 }
 
-//	func (w *WrapperConMsg) MarkC2CMessageAsRead(_ js.Value, args []js.Value) interface{} {
+//	funcation (w *WrapperConMsg) MarkC2CMessageAsRead(_ js.Value, args []js.Value) interface{} {
 //		callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //		return event_listener.NewCaller(open_im_sdk.MarkC2CMessageAsRead, callback, &args).AsyncCallWithCallback()
 //	}
 //
-//	func (w *WrapperConMsg) MarkMessageAsReadByConID(_ js.Value, args []js.Value) interface{} {
+//	funcation (w *WrapperConMsg) MarkMessageAsReadByConID(_ js.Value, args []js.Value) interface{} {
 //		callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //		return event_listener.NewCaller(open_im_sdk.MarkMessageAsReadByConID, callback, &args).AsyncCallWithCallback()
 //	}
@@ -143,24 +143,24 @@ func (w *WrapperConMsg) SendMessageByBuffer(_ js.Value, args []js.Value) interfa
 	return event_listener.NewCaller(open_im_sdk.SendMessageByBuffer, callback, &args).AsyncCallWithCallback()
 }
 
-//func (w *WrapperConMsg) SetMessageReactionExtensions(_ js.Value, args []js.Value) interface{} {
+//funcation (w *WrapperConMsg) SetMessageReactionExtensions(_ js.Value, args []js.Value) interface{} {
 //	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //	return event_listener.NewCaller(open_im_sdk.SetMessageReactionExtensions, callback, &args).AsyncCallWithCallback()
 //}
-//func (w *WrapperConMsg) AddMessageReactionExtensions(_ js.Value, args []js.Value) interface{} {
+//funcation (w *WrapperConMsg) AddMessageReactionExtensions(_ js.Value, args []js.Value) interface{} {
 //	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //	return event_listener.NewCaller(open_im_sdk.AddMessageReactionExtensions, callback, &args).AsyncCallWithCallback()
 //}
 //
-//func (w *WrapperConMsg) DeleteMessageReactionExtensions(_ js.Value, args []js.Value) interface{} {
+//funcation (w *WrapperConMsg) DeleteMessageReactionExtensions(_ js.Value, args []js.Value) interface{} {
 //	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //	return event_listener.NewCaller(open_im_sdk.DeleteMessageReactionExtensions, callback, &args).AsyncCallWithCallback()
 //}
-//func (w *WrapperConMsg) GetMessageListReactionExtensions(_ js.Value, args []js.Value) interface{} {
+//funcation (w *WrapperConMsg) GetMessageListReactionExtensions(_ js.Value, args []js.Value) interface{} {
 //	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //	return event_listener.NewCaller(open_im_sdk.GetMessageListReactionExtensions, callback, &args).AsyncCallWithCallback()
 //}
-//func (w *WrapperConMsg) GetMessageListSomeReactionExtensions(_ js.Value, args []js.Value) interface{} {
+//funcation (w *WrapperConMsg) GetMessageListSomeReactionExtensions(_ js.Value, args []js.Value) interface{} {
 //	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //	return event_listener.NewCaller(open_im_sdk.GetMessageListSomeReactionExtensions, callback, &args).AsyncCallWithCallback()
 //}
@@ -192,7 +192,7 @@ func (w *WrapperConMsg) GetAdvancedHistoryMessageListReverse(_ js.Value, args []
 	return event_listener.NewCaller(open_im_sdk.GetAdvancedHistoryMessageListReverse, callback, &args).AsyncCallWithCallback()
 }
 
-//func (w *WrapperConMsg) GetHistoryMessageList(_ js.Value, args []js.Value) interface{} {
+//funcation (w *WrapperConMsg) GetHistoryMessageList(_ js.Value, args []js.Value) interface{} {
 //	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //	return event_listener.NewCaller(open_im_sdk.GetHistoryMessageList, callback, &args).AsyncCallWithCallback()
 //}
@@ -222,7 +222,7 @@ func (w *WrapperConMsg) FindMessageList(_ js.Value, args []js.Value) interface{}
 	return event_listener.NewCaller(open_im_sdk.FindMessageList, callback, &args).AsyncCallWithCallback()
 }
 
-//	func (w *WrapperConMsg) GetHistoryMessageListReverse(_ js.Value, args []js.Value) interface{} {
+//	funcation (w *WrapperConMsg) GetHistoryMessageListReverse(_ js.Value, args []js.Value) interface{} {
 //		callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //		return event_listener.NewCaller(open_im_sdk.GetHistoryMessageListReverse, callback, &args).AsyncCallWithCallback()
 //	}
@@ -237,7 +237,7 @@ func (w *WrapperConMsg) TypingStatusUpdate(_ js.Value, args []js.Value) interfac
 	return event_listener.NewCaller(open_im_sdk.TypingStatusUpdate, callback, &args).AsyncCallWithCallback()
 }
 
-//func (w *WrapperConMsg) MarkGroupMessageAsRead(_ js.Value, args []js.Value) interface{} {
+//funcation (w *WrapperConMsg) MarkGroupMessageAsRead(_ js.Value, args []js.Value) interface{} {
 //	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //	return event_listener.NewCaller(open_im_sdk.MarkGroupMessageAsRead, callback, &args).AsyncCallWithCallback()
 //}
@@ -267,17 +267,17 @@ func (w *WrapperConMsg) ClearConversationAndDeleteAllMsg(_ js.Value, args []js.V
 	return event_listener.NewCaller(open_im_sdk.ClearConversationAndDeleteAllMsg, callback, &args).AsyncCallWithCallback()
 }
 
-//func (w *WrapperConMsg) ClearC2CHistoryMessageFromLocalAndSvr(_ js.Value, args []js.Value) interface{} {
+//funcation (w *WrapperConMsg) ClearC2CHistoryMessageFromLocalAndSvr(_ js.Value, args []js.Value) interface{} {
 //	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //	return event_listener.NewCaller(open_im_sdk.ClearC2CHistoryMessageFromLocalAndSvr, callback, &args).AsyncCallWithCallback()
 //}
 //
-//func (w *WrapperConMsg) ClearGroupHistoryMessage(_ js.Value, args []js.Value) interface{} {
+//funcation (w *WrapperConMsg) ClearGroupHistoryMessage(_ js.Value, args []js.Value) interface{} {
 //	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //	return event_listener.NewCaller(open_im_sdk.ClearGroupHistoryMessage, callback, &args).AsyncCallWithCallback()
 //}
 //
-//func (w *WrapperConMsg) ClearGroupHistoryMessageFromLocalAndSvr(_ js.Value, args []js.Value) interface{} {
+//funcation (w *WrapperConMsg) ClearGroupHistoryMessageFromLocalAndSvr(_ js.Value, args []js.Value) interface{} {
 //	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //	return event_listener.NewCaller(open_im_sdk.ClearGroupHistoryMessageFromLocalAndSvr, callback, &args).AsyncCallWithCallback()
 //}

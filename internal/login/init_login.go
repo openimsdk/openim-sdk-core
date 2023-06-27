@@ -225,6 +225,12 @@ func (u *LoginMgr) logoutListener(ctx context.Context) {
 
 }
 
+func NewLoginMgr() *LoginMgr {
+	return &LoginMgr{
+		info: &ccontext.GlobalConfig{}, // 分配内存空间
+	}
+}
+
 func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.info.UserID = userID
 	u.info.Token = token

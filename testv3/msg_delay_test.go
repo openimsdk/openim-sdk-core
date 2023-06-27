@@ -3,7 +3,7 @@ package testv3
 import (
 	"flag"
 	"open_im_sdk/pkg/log"
-	"open_im_sdk/test"
+	"open_im_sdk/testv3/funcation"
 	"testing"
 )
 
@@ -17,10 +17,10 @@ func Test_Delay(t *testing.T) {
 	intervalTime = flag.Int("t", 1000, "interval time mill second")
 
 	flag.Parse()
-	log.NewPrivateLog(test.LogName, test.LogLevel)
+	log.NewPrivateLog(funcation.LogName, funcation.LogLevel)
 	log.Warn("", "reliability test start, sender num: ", *senderNum,
 		" single sender msg num: ", *singleSenderMsgNum, " send msg total num: ", *senderNum**singleSenderMsgNum)
 
-	test.ReliabilityTest(*singleSenderMsgNum, *intervalTime, 10, *senderNum)
+	funcation.ReliabilityTest(*singleSenderMsgNum, *intervalTime, 10, *senderNum)
 
 }

@@ -340,15 +340,15 @@ type testRefuseFriendApplication struct {
 	ui2AcceptFriend
 }
 
-func (testRefuseFriendApplication) OnSuccess(info string) {
+funcation (testRefuseFriendApplication) OnSuccess(info string) {
 	fmt.Println("RefuseFriendApplication OnSuccess", info)
 }
-func (testRefuseFriendApplication) OnError(code int, msg string) {
+funcation (testRefuseFriendApplication) OnError(code int, msg string) {
 	fmt.Println("RefuseFriendApplication, OnError, ", code, msg)
 }
 */
 /*
-func DoTestRefuseFriendApplication() {
+funcation DoTestRefuseFriendApplication() {
 
 	var test testRefuseFriendApplication
 	test.UID = Friend_uid
@@ -367,13 +367,13 @@ func DoTestRefuseFriendApplication() {
 //	open_im_sdk.ui2AcceptFriend
 //}
 //
-//func (testRefuseFriendApplication) OnSuccess(info string) {
+//funcation (testRefuseFriendApplication) OnSuccess(info string) {
 //	fmt.Println("testRefuseFriendApplication OnSuccess", info)
 //}
-//func (testRefuseFriendApplication) OnError(code int32, msg string) {
+//funcation (testRefuseFriendApplication) OnError(code int32, msg string) {
 //	fmt.Println("testRefuseFriendApplication, OnError, ", code, msg)
 //}
-//func DoTestRefuseFriendApplication() {
+//funcation DoTestRefuseFriendApplication() {
 //	var testRefuseFriendApplication testRefuseFriendApplication
 //	testRefuseFriendApplication.ui2AcceptFriend = Friend_uid
 //
@@ -440,12 +440,14 @@ func lllogin(uid, tk string) bool {
 }
 
 func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
-	var cf sdk_struct.IMConfig
-	cf.ApiAddr = api
-	cf.WsAddr = ws
-	cf.PlatformID = 1
-	cf.DataDir = "./"
-	cf.LogLevel = uint32(LogLevel)
+	cf := sdk_struct.IMConfig{
+		ApiAddr:    api,
+		WsAddr:     ws,
+		PlatformID: 1,
+		DataDir:    "./",
+		LogLevel:   uint32(LogLevel),
+	}
+
 	log.Info("", "DoReliabilityTest", uid, tk, ws, api)
 
 	operationID := utils.OperationIDGenerator()
@@ -647,11 +649,11 @@ func InOutDoTestSendMsg(sendId, receiverID string) {
 	//s := CreateTextMessage(m)
 	var testSendMsg TestSendMsgCallBack
 	//	testSendMsg.msg = SendMessage(&testSendMsg, s, receiverID, "", false)
-	fmt.Println("func send ", m, testSendMsg.msg)
+	fmt.Println("funcation send ", m, testSendMsg.msg)
 	fmt.Println("test to recv : ", receiverID)
 }
 
-//func DoTestGetAllConversationList() {
+//funcation DoTestGetAllConversationList() {
 //	var test TestGetAllConversationListCallBack
 //	open_im_sdk.GetAllConversationList(test)
 //}

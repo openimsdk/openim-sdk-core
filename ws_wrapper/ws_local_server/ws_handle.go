@@ -42,7 +42,7 @@ type BaseSuccessFailed struct {
 	uid         string
 }
 
-//e.g open_im_sdk/open_im_sdk.Login ->Login
+// e.g open_im_sdk/open_im_sdk.Login ->Login
 func cleanUpfuncName(funcName string) string {
 	end := strings.LastIndex(funcName, ".")
 	if end == -1 {
@@ -77,7 +77,7 @@ func int64ToString(i int64) string {
 	return strconv.FormatInt(i, 10)
 }
 
-//uid->funcname->func
+//uid->funcname->funcation
 
 type WsFuncRouter struct {
 	uId string
@@ -164,7 +164,7 @@ func (wsRouter *WsFuncRouter) GlobalSendMessage(data interface{}) {
 	SendOneUserMessage(data, wsRouter.uId)
 }
 
-//listener
+// listener
 func SendOneUserMessage(data interface{}, uid string) {
 	var chMsg ChanMsg
 	chMsg.data, _ = json.Marshal(data)

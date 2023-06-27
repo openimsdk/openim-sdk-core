@@ -29,7 +29,7 @@ import (
 const COMMONEVENTFUNC = "commonEventFunc"
 
 var ErrArgsLength = errors.New("from javascript args length err")
-var ErrFunNameNotSet = errors.New("reflect func not to set")
+var ErrFunNameNotSet = errors.New("reflect funcation not to set")
 
 type SetListener struct {
 	*WrapperCommon

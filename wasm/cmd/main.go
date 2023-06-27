@@ -39,10 +39,10 @@ func main() {
 }
 
 func registerFunc() {
-	//register global listener func
+	//register global listener funcation
 	globalFuc := wasm_wrapper.NewWrapperCommon()
 	js.Global().Set(wasm_wrapper.COMMONEVENTFUNC, js.FuncOf(globalFuc.CommonEventFunc))
-	//register init login func
+	//register init login funcation
 	wrapperInitLogin := wasm_wrapper.NewWrapperInitLogin(globalFuc)
 	js.Global().Set("initSDK", js.FuncOf(wrapperInitLogin.InitSDK))
 	js.Global().Set("login", js.FuncOf(wrapperInitLogin.Login))
@@ -50,7 +50,7 @@ func registerFunc() {
 	js.Global().Set("getLoginStatus", js.FuncOf(wrapperInitLogin.GetLoginStatus))
 	js.Global().Set("setAppBackgroundStatus", js.FuncOf(wrapperInitLogin.SetAppBackgroundStatus))
 	js.Global().Set("networkStatusChanged", js.FuncOf(wrapperInitLogin.NetworkStatusChanged))
-	//register conversation and message func
+	//register conversation and message funcation
 	wrapperConMsg := wasm_wrapper.NewWrapperConMsg(globalFuc)
 	js.Global().Set("createTextMessage", js.FuncOf(wrapperConMsg.CreateTextMessage))
 	js.Global().Set("createImageMessage", js.FuncOf(wrapperConMsg.CreateImageMessage))
@@ -120,7 +120,7 @@ func registerFunc() {
 	js.Global().Set("insertGroupMessageToLocalStorage", js.FuncOf(wrapperConMsg.InsertGroupMessageToLocalStorage))
 	js.Global().Set("searchLocalMessages", js.FuncOf(wrapperConMsg.SearchLocalMessages))
 
-	//register group func
+	//register group funcation
 	wrapperGroup := wasm_wrapper.NewWrapperGroup(globalFuc)
 	js.Global().Set("createGroup", js.FuncOf(wrapperGroup.CreateGroup))
 	js.Global().Set("getSpecifiedGroupsInfo", js.FuncOf(wrapperGroup.GetSpecifiedGroupsInfo))

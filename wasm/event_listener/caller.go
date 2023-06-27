@@ -47,7 +47,7 @@ func extractArrayBuffer(arrayBuffer js.Value) []byte {
 type FuncLogic func()
 
 var ErrNotSetCallback = errors.New("not set callback to call")
-var ErrNotSetFunc = errors.New("not set func to call")
+var ErrNotSetFunc = errors.New("not set funcation to call")
 
 type ReflectCall struct {
 	funcName  interface{}

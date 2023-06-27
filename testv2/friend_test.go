@@ -45,7 +45,7 @@ func Test_AddFriend(t *testing.T) {
 	t.Log("AddFriend success", ctx.Value("operationID"))
 }
 
-//func Test_GetRecvFriendApplicationList(t *testing.T) {
+//funcation Test_GetRecvFriendApplicationList(t *testing.T) {
 //	infos, err := open_im_sdk.UserForSDK.Friend().GetRecvFriendApplicationList(ctx)
 //	if err != nil {
 //		t.Fatal(err)
@@ -55,7 +55,7 @@ func Test_AddFriend(t *testing.T) {
 //	}
 //}
 //
-//func Test_GetSendFriendApplicationList(t *testing.T) {
+//funcation Test_GetSendFriendApplicationList(t *testing.T) {
 //	infos, err := open_im_sdk.UserForSDK.Friend().GetSendFriendApplicationList(ctx)
 //	if err != nil {
 //		t.Fatal(err)

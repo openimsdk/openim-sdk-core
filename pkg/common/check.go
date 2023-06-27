@@ -28,7 +28,7 @@ import (
 
 //var validate *validator.Validate
 
-//func init() {
+//funcation init() {
 //	validate = validator.New()
 //}
 
@@ -80,7 +80,7 @@ func CheckErrAndRespCallbackPenetrate(callback open_im_sdk_callback.Base, err er
 }
 
 //
-//func CheckErrAndResp2(err error, resp []byte, output interface{}) error {
+//funcation CheckErrAndResp2(err error, resp []byte, output interface{}) error {
 //	if err != nil {
 //		return utils.Wrap(err, "api resp failed")
 //	}

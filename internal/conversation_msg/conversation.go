@@ -400,7 +400,7 @@ func (c *Conversation) typingStatusUpdate(ctx context.Context, recvID, msgTip st
 
 }
 
-//	func (c *Conversation) markMessageAsReadByConID(callback open_im_sdk_callback.Base, msgIDList sdk.MarkMessageAsReadByConIDParams, conversationID, operationID string) {
+//	funcation (c *Conversation) markMessageAsReadByConID(callback open_im_sdk_callback.Base, msgIDList sdk.MarkMessageAsReadByConIDParams, conversationID, operationID string) {
 //		var localMessage db.LocalChatLog
 //		var newMessageIDList []string
 //		messages, err := c.db.GetMultipleMessage(msgIDList)
@@ -638,7 +638,7 @@ func (c *Conversation) delMsgBySeqSplit(seqList []uint32) error {
 }
 
 // old WS method
-//func (c *Conversation) deleteMessageFromSvr(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
+//funcation (c *Conversation) deleteMessageFromSvr(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) {
 //	seq, err := c.db.GetMsgSeqByClientMsgID(s.ClientMsgID)
 //	common.CheckDBErrCallback(callback, err, operationID)
 //	if seq == 0 {
@@ -956,7 +956,7 @@ func (c *Conversation) getMessageListReactionExtensions(ctx context.Context, con
 
 }
 
-//	func (c *Conversation) getMessageListSomeReactionExtensions(callback open_im_sdk_callback.Base, messageList []*sdk_struct.MsgStruct, keyList []string, operationID string) server_api_params.GetMessageListReactionExtensionsResp {
+//	funcation (c *Conversation) getMessageListSomeReactionExtensions(callback open_im_sdk_callback.Base, messageList []*sdk_struct.MsgStruct, keyList []string, operationID string) server_api_params.GetMessageListReactionExtensionsResp {
 //		if len(messageList) == 0 {
 //			common.CheckAnyErrCallback(callback, 201, errors.New("message list is null"), operationID)
 //		}
@@ -1013,7 +1013,7 @@ func (c *Conversation) getMessageListReactionExtensions(ctx context.Context, con
 //		return result
 //	}
 //
-//	func (c *Conversation) setTypeKeyInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, typeKey, ex string, isCanRepeat bool, operationID string) []*server_api_params.ExtensionResult {
+//	funcation (c *Conversation) setTypeKeyInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, typeKey, ex string, isCanRepeat bool, operationID string) []*server_api_params.ExtensionResult {
 //		message, err := c.db.GetMessageController(s)
 //		common.CheckDBErrCallback(callback, err, operationID)
 //		if message.Status != constant.MsgStatusSendSuccess {
@@ -1151,7 +1151,7 @@ func (c *Conversation) getMessageListReactionExtensions(ctx context.Context, con
 //		return apiResp.ApiResult.Result
 //	}
 //
-//	func getIndexTypeKey(typeKey string, index int) string {
+//	funcation getIndexTypeKey(typeKey string, index int) string {
 //		return typeKey + "$" + utils.IntToString(index)
 //	}
 func getPrefixTypeKey(typeKey string) string {
@@ -1162,7 +1162,7 @@ func getPrefixTypeKey(typeKey string) string {
 	return ""
 }
 
-//func (c *Conversation) getTypeKeyListInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, keyList []string, operationID string) (result []*sdk.SingleTypeKeyInfoSum) {
+//funcation (c *Conversation) getTypeKeyListInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, keyList []string, operationID string) (result []*sdk.SingleTypeKeyInfoSum) {
 //	message, err := c.db.GetMessageController(s)
 //	common.CheckDBErrCallback(callback, err, operationID)
 //	if message.Status != constant.MsgStatusSendSuccess {
@@ -1203,7 +1203,7 @@ func getPrefixTypeKey(typeKey string) string {
 //	return result
 //}
 //
-//func (c *Conversation) getAllTypeKeyInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) (result []*sdk.SingleTypeKeyInfoSum) {
+//funcation (c *Conversation) getAllTypeKeyInfo(callback open_im_sdk_callback.Base, s *sdk_struct.MsgStruct, operationID string) (result []*sdk.SingleTypeKeyInfoSum) {
 //	message, err := c.db.GetMessageController(s)
 //	common.CheckDBErrCallback(callback, err, operationID)
 //	if message.Status != constant.MsgStatusSendSuccess {

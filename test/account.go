@@ -16,7 +16,6 @@ package test
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	imLog "github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	authPB "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/auth"
@@ -138,12 +137,9 @@ func register(uid string) error {
 	}
 
 	var rreq userPB.UserRegisterReq
-	//var rresp userPB.UserRegisterResp
 	rreq.Users = []*sdkws.UserInfo{{UserID: uid}}
 
 	for {
-		//var rreq server_api_params.UserRegisterReq
-		//_, err := network.Post2Api(REGISTERADDR, rreq, "")
 		err := util.ApiPost(ctx, "/auth/user_register", &rreq, nil)
 		if err != nil {
 			log.Error("post failed ,continue ", err.Error(), REGISTERADDR, getAccountCheckReq)
@@ -170,7 +166,7 @@ func getToken(uid string) string {
 			LogLevel:   LogLevel,
 		},
 	})
-	ctx = ccontext.WithOperationID(ctx, "123456")
+	ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
 	url := TOKENADDR
 	req := authPB.UserTokenReq{
 		PlatformID: PlatformID,
@@ -185,28 +181,6 @@ func getToken(uid string) string {
 
 	log.Info(req.UserID, "get token: ", resp.Token)
 	return resp.Token
-}
-
-func getToken2(uid string) string {
-	url := TOKENADDR
-	var req server_api_params.UserTokenReq
-	req.Platform = PlatformID
-	req.UserID = uid
-	req.Secret = SECRET
-	req.OperationID = utils.OperationIDGenerator()
-	r, err := network.Post2Api(url, req, "a")
-	if err != nil {
-		log.Error(req.OperationID, "Post2Api failed ", err.Error(), url, req)
-		return ""
-	}
-	var stcResp ResToken
-	err = json.Unmarshal(r, &stcResp)
-	if stcResp.ErrCode != 0 {
-		log.Error(req.OperationID, "ErrCode failed ", stcResp.ErrCode, stcResp.ErrMsg, url, req)
-		return ""
-	}
-	log.Info(req.OperationID, "get token: ", stcResp.Data.Token)
-	return stcResp.Data.Token
 }
 
 func RunGetToken(strMyUid string) string {

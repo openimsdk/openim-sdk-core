@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package test
+package funcation
 
 import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
@@ -28,11 +28,6 @@ func init() {
 	allLoginMgr = make(map[int]*CoreNode)
 }
 
-//funcation InitMgr(num int) {
-//	log.Warn("", "allLoginMgr cap:  ", num)
-//	allLoginMgr = make(map[int]*CoreNode, num)
-//}
-
 type CoreNode struct {
 	token             string
 	userID            string
@@ -41,6 +36,26 @@ type CoreNode struct {
 	sendMsgFailedNum  uint32
 	idx               int
 }
+
+type TestSendMsgCallBack struct {
+	msg         string
+	OperationID string
+	sendID      string
+	recvID      string
+	msgID       string
+	sendTime    int64
+	recvTime    int64
+	groupID     string
+}
+
+type SendRecvTime struct {
+	SendTime             int64
+	SendSeccCallbackTime int64
+	RecvTime             int64
+	SendIDRecvID         string
+}
+
+var SendSuccAllMsg map[string]*SendRecvTime //msgid->send+recv:
 
 func addSendSuccess() {
 	sendSuccessLock.Lock()
@@ -52,55 +67,6 @@ func addSendFailed() {
 	defer sendFailedLock.Unlock()
 	sendFailedCount++
 }
-
-//
-//funcation TestSendCostTime() {
-//	GenWsConn(0)
-//	sendID := allUserID[0]
-//	recvID := allUserID[0]
-//	for {
-//		operationID := utils.OperationIDGenerator()
-//		b := SendTextMessage("test", sendID, recvID, operationID, allWs[0])
-//		if b {
-//			log.Debug(operationID, sendID, recvID, "SendTextMessage success")
-//		} else {
-//			log.Error(operationID, sendID, recvID, "SendTextMessage failed")
-//		}
-//		time.Sleep(time.Duration(5) * time.Second)
-//		log.Debug(operationID, "//////////////////////////////////")
-//	}
-//
-//}
-//funcation TestSend(idx int, text string, uidNum, intervalSleep int) {
-//	for {
-//		operationID := utils.OperationIDGenerator()
-//		sendID := allUserID[idx]
-//		recvID := allUserID[rand.Intn(uidNum)]
-//		b := SendTextMessage(text, sendID, recvID, operationID, allWs[idx])
-//		if b {
-//			log.Debug(operationID, sendID, recvID, "SendTextMessage success")
-//		} else {
-//			log.Error(operationID, sendID, recvID, "SendTextMessage failed")
-//		}
-//		time.Sleep(time.Duration(rand.Intn(intervalSleep)) * time.Millisecond)
-//	}
-//}
-//
-
-//funcation sendPressMsg(idx int, text string, uidNum, intervalSleep int) {
-//	for {
-//		operationID := utils.OperationIDGenerator()
-//		sendID := allUserID[idx]
-//		recvID := allUserID[rand.Intn(uidNum)]
-//		b := SendTextMessageOnlyForPress(text, sendID, recvID, operationID, allLoginMgr[idx].mgr.Ws())
-//		if b {
-//			log.Debug(operationID, sendID, recvID, "SendTextMessage success")
-//		} else {
-//			log.Error(operationID, sendID, recvID, "SendTextMessage failed ")
-//		}
-//		time.Sleep(time.Duration(rand.Intn(intervalSleep)) * time.Second)
-//	}
-//}
 
 func sendPressMsg(index int, sendId, recvID string, groupID string, idx string) bool {
 
@@ -129,10 +95,33 @@ func SendTextMessageOnlyForPress(text, senderID, recvID, groupID, operationID st
 	wsMsgData.OfflinePushInfo = nil
 	//timeout := 300
 	log.Info(operationID, "SendReqTest begin ", wsMsgData)
-	//flag := ws.SendReqTest(&wsMsgData, constant.WSSendMsg, timeout, senderID, operationID)
-	//
-	//if flag != true {
-	//	log.Warn(operationID, "SendReqTest failed ", wsMsgData)
-	//}
 	return true
+}
+
+func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string) {
+	m := "test msg " + sendId + ":" + recvID + ":" + idx
+	operationID := utils.OperationIDGenerator()
+	s, err := allLoginMgr[index].mgr.Conversation().CreateTextMessage(ctx, m)
+	if err != nil {
+		log.Error(operationID, "CreateTextMessage", err)
+		return
+	}
+
+	testSendMsg := TestSendMsgCallBack{
+		OperationID: operationID,
+		sendTime:    utils.GetCurrentTimestampByMill(),
+		sendID:      sendId,
+		recvID:      recvID,
+		groupID:     groupID,
+		msgID:       s.ClientMsgID,
+	}
+	o := sdkws.OfflinePushInfo{Title: "title", Desc: "desc"}
+
+	log.Info(operationID, "SendMessage", sendId, recvID, groupID, testSendMsg.msgID, index)
+	// 如果 recvID 为空 代表发送群聊消息，反之
+	allLoginMgr[index].mgr.Conversation().SendMessage(ctx, s, recvID, groupID, &o)
+	SendMsgMapLock.Lock()
+	defer SendMsgMapLock.Unlock()
+	x := SendRecvTime{SendTime: utils.GetCurrentTimestampByMill()}
+	SendSuccAllMsg[testSendMsg.msgID] = &x
 }
