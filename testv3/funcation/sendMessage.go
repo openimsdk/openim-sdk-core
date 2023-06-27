@@ -59,6 +59,7 @@ var SendSuccAllMsg map[string]*SendRecvTime //msgid->send+recv:
 func DoTestSendMsg(index int, sendId, recvID string, groupID string, idx string) {
 	m := "test msg " + sendId + ":" + recvID + ":" + idx
 	operationID := utils.OperationIDGenerator()
+	log.Info(operationID, "CreateTextMessage  conv: ", allLoginMgr[index].mgr.Conversation(), "index: ", index)
 	s, err := allLoginMgr[index].mgr.Conversation().CreateTextMessage(ctx, m)
 	if err != nil {
 		log.Error(operationID, "CreateTextMessage", err)

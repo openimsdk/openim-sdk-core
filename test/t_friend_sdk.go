@@ -481,10 +481,10 @@ func ReliabilityInitAndLogin(index int, uid, tk, ws, api string) {
 
 	var callback BaseSuccessFailed
 	callback.funcName = utils.GetSelfFuncName()
-	lg.Login(ctx, uid, tk)
 
 	for {
 		if callback.errCode == 1 && testConversation.SyncFlag == 1 {
+			lg.User().GetSelfUserInfo(ctx)
 			return
 		}
 	}
