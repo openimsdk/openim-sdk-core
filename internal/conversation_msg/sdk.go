@@ -904,8 +904,8 @@ func (c *Conversation) GetHistoryMessageListReverse(ctx context.Context, req sdk
 	return c.getHistoryMessageList(ctx, req, true)
 }
 
-func (c *Conversation) RevokeMessage(ctx context.Context, req *sdk_struct.MsgStruct) error {
-	return c.revokeOneMessage(ctx, req)
+func (c *Conversation) RevokeMessage(ctx context.Context, conversationID, clientMsgID string) error {
+	return c.revokeOneMessage(ctx, conversationID, clientMsgID)
 }
 
 func (c *Conversation) TypingStatusUpdate(ctx context.Context, recvID, msgTip string) error {
