@@ -334,7 +334,7 @@ func (c *LongConnMgr) sendAndWaitResp(msg *GeneralWsReq) (*GeneralWsResp, error)
 func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan *GeneralWsResp, error) {
 	msgIncr, tempChan := c.Syncer.AddCh(msg.SendID)
 	msg.MsgIncr = msgIncr
-	if c.GetConnectionStatus() == Closed && msg.ReqIdentifier == constant.GetNewestSeq {
+	if c.GetConnectionStatus() != Connected && msg.ReqIdentifier == constant.GetNewestSeq {
 		return tempChan, sdkerrs.ErrNetwork.Wrap("connection closed,conning...")
 	}
 	for i := 0; i < 60; i++ {
@@ -358,6 +358,9 @@ func (c *LongConnMgr) writeBinaryMsg(req GeneralWsReq) error {
 	encodeBuf, err := c.encoder.Encode(req)
 	if err != nil {
 		return err
+	}
+	if c.GetConnectionStatus() == Closed {
+		return sdkerrs.ErrNetwork.Wrap("connection closed,re conning...")
 	}
 	_ = c.conn.SetWriteDeadline(writeWait)
 	if c.IsCompression {
