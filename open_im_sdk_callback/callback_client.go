@@ -126,6 +126,10 @@ type OnSignalingListener interface {
 	OnRoomParticipantConnected(onRoomParticipantConnectedCallback string)
 
 	OnRoomParticipantDisconnected(onRoomParticipantDisconnectedCallback string)
+
+	OnStreamChange(OnStreamChangeCallback string)
+
+	OnReceiveCustomSignal(CustomSignalCallback string)
 }
 
 type PutFileCallback interface {

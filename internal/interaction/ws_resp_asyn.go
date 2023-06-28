@@ -17,6 +17,7 @@ package interaction
 import (
 	"context"
 	"errors"
+	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/utils"
 	"sync"
 	"time"
@@ -135,11 +136,10 @@ func (u *WsRespAsyn) NotifyResp(ctx context.Context, wsResp GeneralWsResp) error
 func (u *WsRespAsyn) WaitResp(ctx context.Context, ch chan *GeneralWsResp, timeout int) (*GeneralWsResp, error) {
 	select {
 	case r, ok := <-ch:
-		if !ok { //ch has been closed
-			//log.Debug(operationID, "ws network has been changed ")
+		if !ok {
+			log.ZError(ctx, "ws ch recvMsg failed, ch is closed", nil, "ch", ch)
 			return nil, nil
 		}
-		//log.Debug(operationID, "ws ch recvMsg success, code ", r.ErrCode)
 		if r.ErrCode != 0 {
 			//log.Error(operationID, "ws ch recvMsg failed, code, err msg: ", r.ErrCode, r.ErrMsg)
 			//switch r.ErrCode {
@@ -154,15 +154,7 @@ func (u *WsRespAsyn) WaitResp(ctx context.Context, ch chan *GeneralWsResp, timeo
 		}
 
 	case <-time.After(time.Second * time.Duration(timeout)):
-		//log.Error(operationID, "ws ch recvMsg err, timeout")
-		//if w.conn.IsNil() {
-		//	return nil, errors.New("ws ch recvMsg err, timeout,conn is nil")
-		//}
-		//if w.conn.CheckSendConnDiffNow() {
-		//	return nil, constant.WsRecvConnDiff
-		//} else {
-		//	return nil, constant.WsRecvConnSame
-		//}
+		return nil, sdkerrs.ErrNetworkTimeOut
 	}
 	return nil, nil
 }

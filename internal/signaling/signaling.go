@@ -20,11 +20,12 @@ import (
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/db_interface"
+	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
-	"strings"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
@@ -70,6 +71,7 @@ func (s *LiveSignaling) waitPush(ctx context.Context, req *server_api_params.Sig
 		listenerList = append(listenerList, s.listenerForService)
 	}
 	if len(listenerList) == 0 {
+		log.ZError(ctx, "no listner", nil)
 		return
 	}
 	var inviteeUserIDList []string
@@ -82,31 +84,28 @@ func (s *LiveSignaling) waitPush(ctx context.Context, req *server_api_params.Sig
 		go func(invitee string) {
 			push, err := s.SignalingWaitPush(ctx, invt.InviterUserID, invitee, invt.RoomID, invt.Timeout)
 			if err != nil {
-				if strings.Contains(err.Error(), "timeout") {
-					// log.Error(operationID, "wait push timeout ", err.Error(), invt.InviterUserID, v, invt.RoomID, invt.Timeout)
+				if errs.Unwrap(err) == sdkerrs.ErrNetworkTimeOut {
+					log.ZError(ctx, "timeout", err, "invitee", invitee, "roomID", invt.RoomID, "timeout", invt.Timeout)
 					switch payload := req.Payload.(type) {
 					case *server_api_params.SignalReq_Invite:
 						if !s.isCanceled {
 							for _, listener := range listenerList {
 								listener.OnInvitationTimeout(utils.StructToJsonString(payload.Invite))
-								// log.Info(operationID, "OnInvitationTimeout ", utils.StructToJsonString(payload.Invite), listener)
 							}
 						}
 					case *server_api_params.SignalReq_InviteInGroup:
 						if !s.isCanceled {
 							for _, listener := range listenerList {
 								listener.OnInvitationTimeout(utils.StructToJsonString(payload.InviteInGroup))
-								// log.Info(operationID, "OnInvitationTimeout ", utils.StructToJsonString(payload.InviteInGroup), listener)
 							}
 						}
 					}
-
 				} else {
-					// log.Error(operationID, "other failed ", err.Error(), invt.InviterUserID, v, invt.RoomID, invt.Timeout)
+					log.ZError(ctx, "wait push failed", err, "inviterUserID", invt.InviterUserID, "invitee", invitee, "roomID", invt.RoomID, "timeout", invt.Timeout)
 				}
 				return
 			}
-			// log.Info(operationID, "SignalingWaitPush ", push.String(), invt.InviterUserID, v, invt.RoomID, invt.Timeout)
+			log.ZInfo(ctx, "signalingWaitPush ", "push", push.String(), "inviterUserID", invt.InviterUserID, "invitee", invitee, "roomID", invt.RoomID, "timeout", invt.Timeout)
 			s.doSignalPush(ctx, push)
 		}(v)
 	}
@@ -115,32 +114,27 @@ func (s *LiveSignaling) doSignalPush(ctx context.Context, req *server_api_params
 	var listenerList []open_im_sdk_callback.OnSignalingListener
 	if s.listener != nil {
 		listenerList = append(listenerList, s.listener)
-		// log.Info(operationID, "listenerList ", listenerList, "listener ", s.listener)
 	}
 	if s.listenerForService != nil {
 		listenerList = append(listenerList, s.listenerForService)
-		// log.Info(operationID, "listenerList ", listenerList, "listenerForService ", s.listenerForService)
 	}
 	if len(listenerList) == 0 {
-		// log.Error(operationID, "len (listenerList) == 0 ")
+		log.ZError(ctx, "no listner", nil)
 		return
 	}
+	log.ZDebug(ctx, "doSignalPush", "req", req)
 	switch payload := req.Payload.(type) {
 	case *server_api_params.SignalReq_Accept:
-		// log.Info(operationID, "recv signal push Accept ", payload.Accept.String())
 		for _, listener := range listenerList {
 			listener.OnInviteeAccepted(utils.StructToJsonString(payload.Accept))
-			// log.Info(operationID, "OnInviteeAccepted ", utils.StructToJsonString(payload.Accept), listener)
 		}
 
 	case *server_api_params.SignalReq_Reject:
-		// log.Info(operationID, "recv signal push Reject ", payload.Reject.String())
 		for _, listener := range listenerList {
 			listener.OnInviteeRejected(utils.StructToJsonString(payload.Reject))
-			// log.Info(operationID, "OnInviteeRejected ", utils.StructToJsonString(payload.Reject), listener)
 		}
 	default:
-		// log.Error(operationID, "payload type failed ", payload)
+		log.ZError(ctx, "resp payload type failed", nil, "req", req)
 	}
 }
 
@@ -175,13 +169,6 @@ func (s *LiveSignaling) getSelfParticipant(ctx context.Context, groupID string) 
 }
 
 func (s *LiveSignaling) DoNotification(ctx context.Context, msg *sdkws.MsgData) {
-	log.ZInfo(ctx, utils.GetSelfFuncName(), "args ", msg.String())
-	var resp server_api_params.SignalReq
-	err := proto.Unmarshal(msg.Content, &resp)
-	if err != nil {
-		log.ZError(ctx, "Unmarshal failed", err, "msg", msg)
-		return
-	}
 	var listenerList []open_im_sdk_callback.OnSignalingListener
 	if s.listener != nil {
 		listenerList = append(listenerList, s.listener)
@@ -190,98 +177,137 @@ func (s *LiveSignaling) DoNotification(ctx context.Context, msg *sdkws.MsgData) 
 		listenerList = append(listenerList, s.listenerForService)
 	}
 	if len(listenerList) == 0 {
-		log.ZError(ctx, "len (listenerList) == 0", nil)
+		log.ZError(ctx, "no listner", nil)
 		return
 	}
-	switch payload := resp.Payload.(type) {
-	case *server_api_params.SignalReq_Accept:
-		if payload.Accept.Invitation.InviterUserID == s.loginUserID && payload.Accept.Invitation.PlatformID == s.platformID {
-			var wsResp interaction.GeneralWsResp
-			wsResp.ReqIdentifier = constant.SendSignalMsg
-			wsResp.Data = msg.Content
-			wsResp.MsgIncr = s.loginUserID + payload.Accept.UserID + payload.Accept.Invitation.RoomID
-			log.ZDebug(ctx, "search msgIncr", wsResp.MsgIncr)
-			//s.DoWSSignal(wsResp)
-			if err := s.LongConnMgr.Syncer.NotifyResp(ctx, wsResp); err != nil {
-				log.ZError(ctx, "notifyResp failed", err, "wsResp", wsResp)
-			}
+	switch msg.ContentType {
+	case constant.SignalingNotification:
+		log.ZInfo(ctx, utils.GetSelfFuncName(), "args ", msg.String())
+		var resp server_api_params.SignalReq
+		err := proto.Unmarshal(msg.Content, &resp)
+		if err != nil {
+			log.ZError(ctx, "Unmarshal failed", err, "msg", msg)
 			return
 		}
-		if payload.Accept.OpUserPlatformID != s.platformID && payload.Accept.UserID == s.loginUserID {
-			for _, listener := range listenerList {
-				listener.OnInviteeAcceptedByOtherDevice(utils.StructToJsonString(payload.Accept))
-				log.ZDebug(ctx, "OnInviteeAcceptedByOtherDevice", "accept", utils.StructToJsonString(payload.Accept))
+		switch payload := resp.Payload.(type) {
+		case *server_api_params.SignalReq_Accept:
+			if payload.Accept.Invitation.InviterUserID == s.loginUserID && payload.Accept.Invitation.PlatformID == s.platformID {
+				var wsResp interaction.GeneralWsResp
+				wsResp.ReqIdentifier = constant.SendSignalMsg
+				wsResp.Data = msg.Content
+				wsResp.MsgIncr = s.loginUserID + payload.Accept.UserID + payload.Accept.Invitation.RoomID
+				log.ZDebug(ctx, "search msgIncr", wsResp.MsgIncr)
+				if err := s.LongConnMgr.Syncer.NotifyResp(ctx, wsResp); err != nil {
+					log.ZError(ctx, "notifyResp failed", err, "wsResp", wsResp)
+				}
+				return
 			}
-			return
-		}
-	case *server_api_params.SignalReq_Reject:
-		if payload.Reject.Invitation.InviterUserID == s.loginUserID && payload.Reject.Invitation.PlatformID == s.platformID {
-			var wsResp interaction.GeneralWsResp
-			wsResp.ReqIdentifier = constant.SendSignalMsg
-			wsResp.Data = msg.Content
-			wsResp.MsgIncr = s.loginUserID + payload.Reject.UserID + payload.Reject.Invitation.RoomID
-			log.ZDebug(ctx, "search msgIncr: ", wsResp.MsgIncr)
-			//s.DoWSSignal(wsResp)
-			if err := s.LongConnMgr.Syncer.NotifyResp(ctx, wsResp); err != nil {
-				log.ZError(ctx, "notifyResp failed", err, "wsResp", wsResp)
+			if payload.Accept.OpUserPlatformID != s.platformID && payload.Accept.UserID == s.loginUserID {
+				for _, listener := range listenerList {
+					listener.OnInviteeAcceptedByOtherDevice(utils.StructToJsonString(payload.Accept))
+					log.ZDebug(ctx, "OnInviteeAcceptedByOtherDevice", "accept", utils.StructToJsonString(payload.Accept))
+				}
+				return
 			}
-			return
-		}
-		if payload.Reject.OpUserPlatformID != s.platformID && payload.Reject.UserID == s.loginUserID {
-			for _, listener := range listenerList {
-				listener.OnInviteeRejectedByOtherDevice(utils.StructToJsonString(payload.Reject))
-				log.ZDebug(ctx, "OnInviteeRejectedByOtherDevice", "reject", utils.StructToJsonString(payload.Reject))
+		case *server_api_params.SignalReq_Reject:
+			if payload.Reject.Invitation.InviterUserID == s.loginUserID && payload.Reject.Invitation.PlatformID == s.platformID {
+				var wsResp interaction.GeneralWsResp
+				wsResp.ReqIdentifier = constant.SendSignalMsg
+				wsResp.Data = msg.Content
+				wsResp.MsgIncr = s.loginUserID + payload.Reject.UserID + payload.Reject.Invitation.RoomID
+				log.ZDebug(ctx, "search msgIncr: ", wsResp.MsgIncr)
+				if err := s.LongConnMgr.Syncer.NotifyResp(ctx, wsResp); err != nil {
+					log.ZError(ctx, "notifyResp failed", err, "wsResp", wsResp)
+				}
+				return
 			}
-			return
-		}
+			if payload.Reject.OpUserPlatformID != s.platformID && payload.Reject.UserID == s.loginUserID {
+				for _, listener := range listenerList {
+					listener.OnInviteeRejectedByOtherDevice(utils.StructToJsonString(payload.Reject))
+					log.ZDebug(ctx, "OnInviteeRejectedByOtherDevice", "reject", utils.StructToJsonString(payload.Reject))
+				}
+				return
+			}
 
-	case *server_api_params.SignalReq_HungUp:
-		if s.loginUserID != payload.HungUp.UserID {
-			for _, listener := range listenerList {
-				listener.OnHangUp(utils.StructToJsonString(payload.HungUp))
-				log.ZDebug(ctx, "OnHangUp", "hungUp", utils.StructToJsonString(payload.HungUp))
-			}
-		}
-	case *server_api_params.SignalReq_Cancel:
-		if utils.IsContain(s.loginUserID, payload.Cancel.Invitation.InviteeUserIDList) {
-			for _, listener := range listenerList {
-				listener.OnInvitationCancelled(utils.StructToJsonString(payload.Cancel))
-				log.ZDebug(ctx, "OnInvitationCancelled", "cancel", utils.StructToJsonString(payload.Cancel))
-			}
-		}
-	case *server_api_params.SignalReq_Invite:
-		if utils.IsContain(s.loginUserID, payload.Invite.Invitation.InviteeUserIDList) {
-			for _, listener := range listenerList {
-				if !utils.IsContain(s.loginUserID, payload.Invite.Invitation.BusyLineUserIDList) {
-					listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.Invite))
-					log.ZDebug(ctx, "OnReceiveNewInvitation", "invite", utils.StructToJsonString(payload.Invite))
+		case *server_api_params.SignalReq_HungUp:
+			if s.loginUserID != payload.HungUp.UserID {
+				for _, listener := range listenerList {
+					listener.OnHangUp(utils.StructToJsonString(payload.HungUp))
+					log.ZDebug(ctx, "OnHangUp", "hungUp", utils.StructToJsonString(payload.HungUp))
 				}
 			}
-		}
-
-	case *server_api_params.SignalReq_InviteInGroup:
-		if utils.IsContain(s.loginUserID, payload.InviteInGroup.Invitation.InviteeUserIDList) {
-			for _, listener := range listenerList {
-				if !utils.IsContain(s.loginUserID, payload.InviteInGroup.Invitation.BusyLineUserIDList) {
-					listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.InviteInGroup))
-					log.ZDebug(ctx, "OnReceiveNewInvitation", "inviteInGroup", utils.StructToJsonString(payload.InviteInGroup))
+		case *server_api_params.SignalReq_Cancel:
+			if utils.IsContain(s.loginUserID, payload.Cancel.Invitation.InviteeUserIDList) {
+				for _, listener := range listenerList {
+					listener.OnInvitationCancelled(utils.StructToJsonString(payload.Cancel))
+					log.ZDebug(ctx, "OnInvitationCancelled", "cancel", utils.StructToJsonString(payload.Cancel))
 				}
 			}
-		}
-	// case *sdkws.SignalReq_OnRoomParticipantConnectedReq:
-	// 	for _, listener := range listenerList {
-	// 		listener.OnRoomParticipantConnected(utils.StructToJsonString(payload.OnRoomParticipantConnectedReq))
-	// 		log.ZDebug(ctx, "SignalOnRoomParticipantConnectedReq", "onRoomParticipantConnectedReq", utils.StructToJsonString(payload.OnRoomParticipantConnectedReq))
-	// 	}
-	// case *sdkws.SignalReq_OnRoomParticipantDisconnectedReq:
-	// 	for _, listener := range listenerList {
-	// 		listener.OnRoomParticipantDisconnected(utils.StructToJsonString(payload.OnRoomParticipantDisconnectedReq))
-	// 		log.ZDebug(ctx, "SignalOnRoomParticipantDisconnectedReq", "onRoomParticipantDisconnectedReq", utils.StructToJsonString(payload.OnRoomParticipantDisconnectedReq))
-	// 	}
+		case *server_api_params.SignalReq_Invite:
+			if utils.IsContain(s.loginUserID, payload.Invite.Invitation.InviteeUserIDList) {
+				for _, listener := range listenerList {
+					if !utils.IsContain(s.loginUserID, payload.Invite.Invitation.BusyLineUserIDList) {
+						listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.Invite))
+						log.ZDebug(ctx, "OnReceiveNewInvitation", "invite", utils.StructToJsonString(payload.Invite))
+					}
+				}
+			}
 
-	default:
-		log.ZError(ctx, "resp payload type failed", nil, "payload", payload)
+		case *server_api_params.SignalReq_InviteInGroup:
+			if utils.IsContain(s.loginUserID, payload.InviteInGroup.Invitation.InviteeUserIDList) {
+				for _, listener := range listenerList {
+					if !utils.IsContain(s.loginUserID, payload.InviteInGroup.Invitation.BusyLineUserIDList) {
+						listener.OnReceiveNewInvitation(utils.StructToJsonString(payload.InviteInGroup))
+						log.ZDebug(ctx, "OnReceiveNewInvitation", "inviteInGroup", utils.StructToJsonString(payload.InviteInGroup))
+					}
+				}
+			}
+		default:
+			log.ZError(ctx, "resp payload type failed", nil, "msg", msg)
+		}
+	case constant.CustomSignalNotification:
+		var callback server_api_params.SignalSendCustomSignalReq
+		if err := proto.Unmarshal(msg.Content, &callback); err != nil {
+			log.ZError(ctx, "proto.Unmarshal failed", err, "msg", msg)
+			return
+		}
+		for _, listener := range listenerList {
+			listener.OnReceiveCustomSignal(utils.StructToJsonString(&callback))
+			log.ZDebug(ctx, "SignalSendCustomSignalReq", "onReceiveCustomSignal", &callback)
+		}
+	case constant.StreamChangedNotification:
+		var callback server_api_params.SignalOnStreamChangeReq
+		if err := proto.Unmarshal(msg.Content, &callback); err != nil {
+			log.ZError(ctx, "proto.Unmarshal failed", err, "msg", msg)
+			return
+		}
+		for _, listener := range listenerList {
+			listener.OnStreamChange(utils.StructToJsonString(&callback))
+			log.ZDebug(ctx, "SignalOnStreamChangeReq", "onStreamChangeReq", &callback)
+		}
+
+	case constant.RoomParticipantsConnectedNotification:
+		var callback server_api_params.SignalOnRoomParticipantConnectedReq
+		if err := proto.Unmarshal(msg.Content, &callback); err != nil {
+			log.ZError(ctx, "proto.Unmarshal failed", err, "msg", msg)
+			return
+		}
+		for _, listener := range listenerList {
+			listener.OnRoomParticipantConnected(utils.StructToJsonString(&callback))
+			log.ZDebug(ctx, "SignalOnRoomParticipantConnectedReq", "onRoomParticipantConnectedReq", &callback)
+		}
+	case constant.RoomParticipantsDisconnectedNotification:
+		var callback server_api_params.SignalOnRoomParticipantDisconnectedReq
+		if err := proto.Unmarshal(msg.Content, &callback); err != nil {
+			log.ZError(ctx, "proto.Unmarshal failed", err, "msg", msg)
+			return
+		}
+		for _, listener := range listenerList {
+			listener.OnRoomParticipantDisconnected(utils.StructToJsonString(&callback))
+			log.ZDebug(ctx, "SignalOnRoomParticipantDisconnectedReq", "onRoomParticipantDisconnectedReq", &callback)
+		}
 	}
+
 }
 func (s *LiveSignaling) SendSignalingReqWaitResp(ctx context.Context, req *server_api_params.SignalReq) (*server_api_params.SignalResp, error) {
 	var signalResp server_api_params.SignalResp
