@@ -81,7 +81,7 @@ func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecon
 	wg.Add(clientNum)
 	for i := 0; i < clientNum; i++ {
 		rdSleep := rand.Intn(randSleepMaxSecond) + 1
-		isSend := 0
+		isSend := 0 // 消息是否成功发送控制量
 		if isSend == 0 {
 			go func(idx int) {
 				log.Warn("", " send msg flag true ", idx)
@@ -388,7 +388,7 @@ func ReliabilityOne(index int, beforeLoginSleep int, isSendMsg bool, intervalSle
 	//	time.Sleep(time.Duration(beforeLoginSleep) * time.Second)
 	strMyUid := allLoginMgr[index].userID
 	token := allLoginMgr[index].token
-	log.Info("", "login ok client num: ", len(allLoginMgr), "userID ", strMyUid, "token: ", token)
+	log.Info("", "login ok client num: ", len(allLoginMgr), "userID ", strMyUid, "token: ", token, " index: ", index)
 	ReliabilityInitAndLogin(index, strMyUid, token, WSADDR, APIADDR)
 
 	log.Warn("start One", index, beforeLoginSleep, isSendMsg, strMyUid, token, WSADDR, APIADDR)
@@ -529,7 +529,7 @@ func WorkGroupMsgDelayOne(index int, beforeLoginSleep int, isSendMsg bool, inter
 }
 
 //
-//func WorkGroupMsgDelayOne(sendID1 string, beforeLoginSleep int, isSendMsg bool, intervalSleepMS int, groupID string) {
+//funcation WorkGroupMsgDelayOne(sendID1 string, beforeLoginSleep int, isSendMsg bool, intervalSleepMS int, groupID string) {
 //	//	time.Sleep(time.Duration(beforeLoginSleep) * time.Second)
 //	strMyUid := allLoginMgr[index].userID
 //	token := allLoginMgr[index].token

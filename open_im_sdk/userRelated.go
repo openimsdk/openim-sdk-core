@@ -88,7 +88,7 @@ type name struct {
 }
 
 var ErrNotSetCallback = errors.New("not set callback to call")
-var ErrNotSetFunc = errors.New("not set func to call")
+var ErrNotSetFunc = errors.New("not set funcation to call")
 
 // BaseCaller calls the SDK's basic caller by checking the arguments and verifying the callback.
 // First, it checks that the number of arguments is correct and gets the operation ID.

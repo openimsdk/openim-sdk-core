@@ -19,6 +19,7 @@ import (
 	"errors"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/log"
+	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"os"
@@ -49,6 +50,9 @@ func (c *Conversation) CreateAdvancedTextMessage(ctx context.Context, text strin
 func (c *Conversation) CreateTextAtMessage(ctx context.Context, text string, userIDList []string, usersInfo []*sdk_struct.AtInfo, qs *sdk_struct.MsgStruct) (*sdk_struct.MsgStruct, error) {
 	if text == "" {
 		return nil, errors.New("text can not be empty")
+	}
+	if len(userIDList) > 10 {
+		return nil, sdkerrs.ErrArgs
 	}
 	s := sdk_struct.MsgStruct{}
 	err := c.initBasicInfo(ctx, &s, constant.UserMsgType, constant.AtText)

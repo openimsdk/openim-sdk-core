@@ -251,7 +251,7 @@ func (d *DataBase) MarkConversationMessageAsReadBySeqs(ctx context.Context, conv
 	return t.RowsAffected, utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
 }
 
-func (d *DataBase) MarkConversationMessageAsRead(ctx context.Context, conversationID string, msgIDs []string) (rowsAffected int64, err error) {
+func (d *DataBase) MarkConversationMessageAsReadDB(ctx context.Context, conversationID string, msgIDs []string) (rowsAffected int64, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
 	t := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("client_msg_id in ? AND send_id != ?", msgIDs, d.loginUserID).Update("is_read", constant.HasRead)

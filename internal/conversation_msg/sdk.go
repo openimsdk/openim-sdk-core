@@ -767,7 +767,9 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	wsMsgData.Content = []byte(s.Content)
 	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
-	//wsMsgData.AtUserIDList = s.AtElem.AtUserList
+	if wsMsgData.ContentType == constant.AtText {
+		wsMsgData.AtUserIDList = s.AtTextElem.AtUserList
+	}
 	wsMsgData.OfflinePushInfo = offlinePushInfo
 	s.Content = ""
 	var sendMsgResp sdkws.UserSendMsgResp
@@ -910,7 +912,7 @@ func (c *Conversation) TypingStatusUpdate(ctx context.Context, recvID, msgTip st
 	return c.typingStatusUpdate(ctx, recvID, msgTip)
 }
 
-// func (c *Conversation) MarkMessageAsReadByConID(ctx context.Context, conversationID string, msgIDList []string) error {
+// funcation (c *Conversation) MarkMessageAsReadByConID(ctx context.Context, conversationID string, msgIDList []string) error {
 // 	if len(msgIDList) == 0 {
 // 		_ = c.setOneConversationUnread(ctx, conversationID, 0)
 // 		_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
@@ -922,7 +924,7 @@ func (c *Conversation) TypingStatusUpdate(ctx context.Context, recvID, msgTip st
 // }
 
 // deprecated
-// func (c *Conversation) MarkGroupMessageHasRead(ctx context.Context, groupID string) {
+// funcation (c *Conversation) MarkGroupMessageHasRead(ctx context.Context, groupID string) {
 // 	conversationID := c.getConversationIDBySessionType(groupID, constant.GroupChatType)
 // 	_ = c.setOneConversationUnread(ctx, conversationID, 0)
 // 	_ = common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{ConID: conversationID, Action: constant.UnreadCountSetZero}, c.GetCh())
@@ -1120,7 +1122,7 @@ func (c *Conversation) initBasicInfo(ctx context.Context, message *sdk_struct.Ms
 //// 删除本地和服务器
 //// 删除本地的话不用改服务器的数据
 //// 删除服务器的话，需要把本地的消息状态改成删除
-//func (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
+//funcation (c *Conversation) DeleteConversationFromLocalAndSvr(ctx context.Context, conversationID string) error {
 //	// Use conversationID to remove conversations and messages from the server first
 //	err := c.clearConversationFromSvr(ctx, conversationID)
 //	if err != nil {
@@ -1166,7 +1168,7 @@ func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, con
 /**
 **Get some reaction extensions in reactionExtensionKeyList of message list
  */
-//func (c *Conversation) GetMessageListSomeReactionExtensions(ctx context.Context, messageList, reactionExtensionKeyList, operationID string) {
+//funcation (c *Conversation) GetMessageListSomeReactionExtensions(ctx context.Context, messageList, reactionExtensionKeyList, operationID string) {
 //	var messagelist []*sdk_struct.MsgStruct
 //	common.JsonUnmarshalAndArgsValidate(messageList, &messagelist, callback, operationID)
 //	var list []string
@@ -1175,14 +1177,14 @@ func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, con
 //	callback.OnSuccess(utils.StructToJsonString(result))
 //	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
 //}
-//func (c *Conversation) SetTypeKeyInfo(ctx context.Context, message, typeKey, ex string, isCanRepeat bool, operationID string) {
+//funcation (c *Conversation) SetTypeKeyInfo(ctx context.Context, message, typeKey, ex string, isCanRepeat bool, operationID string) {
 //	s := sdk_struct.MsgStruct{}
 //	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 //	result := c.setTypeKeyInfo(callback, &s, typeKey, ex, isCanRepeat, operationID)
 //	callback.OnSuccess(utils.StructToJsonString(result))
 //	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
 //}
-//func (c *Conversation) GetTypeKeyListInfo(ctx context.Context, message, typeKeyList, operationID string) {
+//funcation (c *Conversation) GetTypeKeyListInfo(ctx context.Context, message, typeKeyList, operationID string) {
 //	s := sdk_struct.MsgStruct{}
 //	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 //	var list []string
@@ -1191,7 +1193,7 @@ func (c *Conversation) GetMessageListReactionExtensions(ctx context.Context, con
 //	callback.OnSuccess(utils.StructToJsonString(result))
 //	log.NewInfo(operationID, utils.GetSelfFuncName(), "callback: ", utils.StructToJsonString(result))
 //}
-//func (c *Conversation) GetAllTypeKeyInfo(ctx context.Context, message, operationID string) {
+//funcation (c *Conversation) GetAllTypeKeyInfo(ctx context.Context, message, operationID string) {
 //	s := sdk_struct.MsgStruct{}
 //	common.JsonUnmarshalAndArgsValidate(message, &s, callback, operationID)
 //	result := c.getAllTypeKeyInfo(callback, &s, operationID)

@@ -121,7 +121,7 @@ func CreateWorkGroup(number int) string {
 	//var wg sync.WaitGroup
 	//for _, v := range allUserID {
 	//	wg.Add(1)
-	//	go func(uID, gID string) {
+	//	go funcation(uID, gID string) {
 	//		InviteToGroup(uID, gID)
 	//		wg.Done()
 	//	}(v, groupID)

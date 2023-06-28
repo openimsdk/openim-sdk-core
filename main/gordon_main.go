@@ -196,7 +196,7 @@ func main() {
 }
 
 //
-//func main() {
+//funcation main() {
 //	testClientNum := 100
 //	intervalSleep := 2
 //	imIP := "43.128.5.63"
@@ -222,7 +222,7 @@ func main() {
 //
 //}
 
-//func printCallerNameAndLine() string {
+//funcation printCallerNameAndLine() string {
 //	pc, _, line, _ := runtime.Caller(2)
 //	return runtime.FuncForPC(pc).Name() + "()@" + strconv.Itoa(line) + ": "
 //}

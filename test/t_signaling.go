@@ -69,7 +69,7 @@ func (s *testSignalingListener) OnRoomParticipantDisconnected(onRoomChangeCallba
 //	baseCallback
 //}
 //
-//func DoTestInviteInGroup() {
+//funcation DoTestInviteInGroup() {
 //	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
 //	req := &sdkws.SignalInviteInGroupReq{}
 //	req.Invitation = SetTestInviteInfo()
@@ -78,7 +78,7 @@ func (s *testSignalingListener) OnRoomParticipantDisconnected(onRoomChangeCallba
 //	open_im_sdk.SignalingInviteInGroup(t, t.OperationID, s)
 //}
 //
-//func SetTestInviteInfo() *sdkws.InvitationInfo {
+//funcation SetTestInviteInfo() *sdkws.InvitationInfo {
 //	req := &sdkws.InvitationInfo{}
 //	req.Timeout = 1000
 //	req.InviteeUserIDList = []string{"3495023045"}
@@ -89,7 +89,7 @@ func (s *testSignalingListener) OnRoomParticipantDisconnected(onRoomChangeCallba
 //	return req
 //}
 //
-//func DoTestInvite(userID string) {
+//funcation DoTestInvite(userID string) {
 //	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
 //	req := &sdkws.SignalInviteReq{}
 //	req.OpUserID = userID
@@ -105,7 +105,7 @@ func (s *testSignalingListener) OnRoomParticipantDisconnected(onRoomChangeCallba
 //	open_im_sdk.SignalingInvite(t, t.OperationID, s)
 //}
 //
-//func DoTestAccept() {
+//funcation DoTestAccept() {
 //	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
 //	req := &sdkws.SignalAcceptReq{Invitation: &sdkws.InvitationInfo{}, OpUserID: "18349115126"}
 //	req.Invitation = SetTestInviteInfo()
@@ -115,7 +115,7 @@ func (s *testSignalingListener) OnRoomParticipantDisconnected(onRoomChangeCallba
 //	open_im_sdk.SignalingAccept(t, t.OperationID, s)
 //}
 //
-//func DoTestReject() {
+//funcation DoTestReject() {
 //	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
 //	req := &sdkws.SignalRejectReq{Invitation: &sdkws.InvitationInfo{}, OpUserID: "18349115126"}
 //	req.Invitation = SetTestInviteInfo()
@@ -125,7 +125,7 @@ func (s *testSignalingListener) OnRoomParticipantDisconnected(onRoomChangeCallba
 //	open_im_sdk.SignalingReject(t, t.OperationID, s)
 //}
 //
-//func DoTestCancel() {
+//funcation DoTestCancel() {
 //	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
 //	req := &sdkws.SignalCancelReq{Invitation: &sdkws.InvitationInfo{}}
 //	req.Invitation = SetTestInviteInfo()
@@ -140,7 +140,7 @@ func (s *testSignalingListener) OnRoomParticipantDisconnected(onRoomChangeCallba
 //	open_im_sdk.SignalingCancel(t, t.OperationID, s)
 //}
 //
-//func DoTestHungUp() {
+//funcation DoTestHungUp() {
 //	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
 //	req := &sdkws.SignalHungUpReq{Invitation: &sdkws.InvitationInfo{}}
 //	req.Invitation = SetTestInviteInfo()
@@ -149,12 +149,12 @@ func (s *testSignalingListener) OnRoomParticipantDisconnected(onRoomChangeCallba
 //	open_im_sdk.SignalingHungUp(t, t.OperationID, s)
 //}
 //
-//func DoTestSignalGetRoomByGroupID(groupID string) {
+//funcation DoTestSignalGetRoomByGroupID(groupID string) {
 //	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
 //	open_im_sdk.SignalingGetRoomByGroupID(t, t.OperationID, groupID)
 //}
 //
-//func DoTestSignalGetTokenByRoomID(roomID string) {
+//funcation DoTestSignalGetTokenByRoomID(roomID string) {
 //	t := testSingaling{baseCallback{OperationID: utils.OperationIDGenerator(), callName: utils.GetSelfFuncName()}}
 //	open_im_sdk.SignalingGetTokenByRoomID(t, t.OperationID, roomID)
 //}

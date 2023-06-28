@@ -140,7 +140,7 @@ func LogBegin(v ...interface{}) {
 	//fname := runtime.FuncForPC(pc).Name()
 	//i := strings.LastIndex(b, "/")
 	//if i != -1 {
-	//	sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "call func begin, args: ", v)
+	//	sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "call funcation begin, args: ", v)
 	//}
 }
 
@@ -156,7 +156,7 @@ func LogEnd(v ...interface{}) {
 	//fname := runtime.FuncForPC(pc).Name()
 	//i := strings.LastIndex(b, "/")
 	//if i != -1 {
-	//	sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "call func end, args: ", v)
+	//	sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "call funcation end, args: ", v)
 	//}
 }
 
@@ -172,7 +172,7 @@ func LogStart(v ...interface{}) {
 	//fname := runtime.FuncForPC(pc).Name()
 	//i := strings.LastIndex(b, "/")
 	//if i != -1 {
-	//	sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "func start, args: ", v)
+	//	sLog.Println(" [", b[i+1:len(b)], ":", c, "]", cleanUpfuncName(fname), "funcation start, args: ", v)
 	//}
 }
 
@@ -316,7 +316,7 @@ func StructToMap(user interface{}) map[string]interface{} {
 	return m
 }
 
-//	func GetConversationIDBySessionType(sourceID string, sessionType int) string {
+//	funcation GetConversationIDBySessionType(sourceID string, sessionType int) string {
 //		switch sessionType {
 //		case constant.SingleChatType:
 //			return "single_" + sourceID

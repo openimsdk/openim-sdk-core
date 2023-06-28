@@ -212,7 +212,7 @@
 					// function. A goroutine can switch to a new stack if the current stack is too small (see morestack function).
 					// This changes the SP, thus we have to update the SP used by the imported function.
 
-					// func wasmExit(code int32)
+					// funcation wasmExit(code int32)
 					"runtime.wasmExit": (sp) => {
 						sp >>>= 0;
 						const code = this.mem.getInt32(sp + 8, true);
@@ -225,7 +225,7 @@
 						this.exit(code);
 					},
 
-					// func wasmWrite(fd uintptr, p unsafe.Pointer, n int32)
+					// funcation wasmWrite(fd uintptr, p unsafe.Pointer, n int32)
 					"runtime.wasmWrite": (sp) => {
 						sp >>>= 0;
 						const fd = getInt64(sp + 8);
@@ -234,19 +234,19 @@
 						fs.writeSync(fd, new Uint8Array(this._inst.exports.mem.buffer, p, n));
 					},
 
-					// func resetMemoryDataView()
+					// funcation resetMemoryDataView()
 					"runtime.resetMemoryDataView": (sp) => {
 						sp >>>= 0;
 						this.mem = new DataView(this._inst.exports.mem.buffer);
 					},
 
-					// func nanotime1() int64
+					// funcation nanotime1() int64
 					"runtime.nanotime1": (sp) => {
 						sp >>>= 0;
 						setInt64(sp + 8, (timeOrigin + performance.now()) * 1000000);
 					},
 
-					// func walltime() (sec int64, nsec int32)
+					// funcation walltime() (sec int64, nsec int32)
 					"runtime.walltime": (sp) => {
 						sp >>>= 0;
 						const msec = (new Date).getTime();
@@ -254,7 +254,7 @@
 						this.mem.setInt32(sp + 16, (msec % 1000) * 1000000, true);
 					},
 
-					// func scheduleTimeoutEvent(delay int64) int32
+					// funcation scheduleTimeoutEvent(delay int64) int32
 					"runtime.scheduleTimeoutEvent": (sp) => {
 						sp >>>= 0;
 						const id = this._nextCallbackTimeoutID;
@@ -274,7 +274,7 @@
 						this.mem.setInt32(sp + 16, id, true);
 					},
 
-					// func clearTimeoutEvent(id int32)
+					// funcation clearTimeoutEvent(id int32)
 					"runtime.clearTimeoutEvent": (sp) => {
 						sp >>>= 0;
 						const id = this.mem.getInt32(sp + 8, true);
@@ -282,13 +282,13 @@
 						this._scheduledTimeouts.delete(id);
 					},
 
-					// func getRandomData(r []byte)
+					// funcation getRandomData(r []byte)
 					"runtime.getRandomData": (sp) => {
 						sp >>>= 0;
 						crypto.getRandomValues(loadSlice(sp + 8));
 					},
 
-					// func finalizeRef(v ref)
+					// funcation finalizeRef(v ref)
 					"syscall/js.finalizeRef": (sp) => {
 						sp >>>= 0;
 						const id = this.mem.getUint32(sp + 8, true);
@@ -301,13 +301,13 @@
 						}
 					},
 
-					// func stringVal(value string) ref
+					// funcation stringVal(value string) ref
 					"syscall/js.stringVal": (sp) => {
 						sp >>>= 0;
 						storeValue(sp + 24, loadString(sp + 8));
 					},
 
-					// func valueGet(v ref, p string) ref
+					// funcation valueGet(v ref, p string) ref
 					"syscall/js.valueGet": (sp) => {
 						sp >>>= 0;
 						const result = Reflect.get(loadValue(sp + 8), loadString(sp + 16));
@@ -315,19 +315,19 @@
 						storeValue(sp + 32, result);
 					},
 
-					// func valueSet(v ref, p string, x ref)
+					// funcation valueSet(v ref, p string, x ref)
 					"syscall/js.valueSet": (sp) => {
 						sp >>>= 0;
 						Reflect.set(loadValue(sp + 8), loadString(sp + 16), loadValue(sp + 32));
 					},
 
-					// func valueDelete(v ref, p string)
+					// funcation valueDelete(v ref, p string)
 					"syscall/js.valueDelete": (sp) => {
 						sp >>>= 0;
 						Reflect.deleteProperty(loadValue(sp + 8), loadString(sp + 16));
 					},
 
-					// func valueIndex(v ref, i int) ref
+					// funcation valueIndex(v ref, i int) ref
 					"syscall/js.valueIndex": (sp) => {
 						sp >>>= 0;
 						storeValue(sp + 24, Reflect.get(loadValue(sp + 8), getInt64(sp + 16)));
@@ -339,7 +339,7 @@
 						Reflect.set(loadValue(sp + 8), getInt64(sp + 16), loadValue(sp + 24));
 					},
 
-					// func valueCall(v ref, m string, args []ref) (ref, bool)
+					// funcation valueCall(v ref, m string, args []ref) (ref, bool)
 					"syscall/js.valueCall": (sp) => {
 						sp >>>= 0;
 						try {
@@ -357,7 +357,7 @@
 						}
 					},
 
-					// func valueInvoke(v ref, args []ref) (ref, bool)
+					// funcation valueInvoke(v ref, args []ref) (ref, bool)
 					"syscall/js.valueInvoke": (sp) => {
 						sp >>>= 0;
 						try {
@@ -374,7 +374,7 @@
 						}
 					},
 
-					// func valueNew(v ref, args []ref) (ref, bool)
+					// funcation valueNew(v ref, args []ref) (ref, bool)
 					"syscall/js.valueNew": (sp) => {
 						sp >>>= 0;
 						try {
@@ -391,7 +391,7 @@
 						}
 					},
 
-					// func valueLength(v ref) int
+					// funcation valueLength(v ref) int
 					"syscall/js.valueLength": (sp) => {
 						sp >>>= 0;
 						setInt64(sp + 16, parseInt(loadValue(sp + 8).length));
@@ -412,13 +412,13 @@
 						loadSlice(sp + 16).set(str);
 					},
 
-					// func valueInstanceOf(v ref, t ref) bool
+					// funcation valueInstanceOf(v ref, t ref) bool
 					"syscall/js.valueInstanceOf": (sp) => {
 						sp >>>= 0;
 						this.mem.setUint8(sp + 24, (loadValue(sp + 8) instanceof loadValue(sp + 16)) ? 1 : 0);
 					},
 
-					// func copyBytesToGo(dst []byte, src ref) (int, bool)
+					// funcation copyBytesToGo(dst []byte, src ref) (int, bool)
 					"syscall/js.copyBytesToGo": (sp) => {
 						sp >>>= 0;
 						const dst = loadSlice(sp + 8);
@@ -433,7 +433,7 @@
 						this.mem.setUint8(sp + 48, 1);
 					},
 
-					// func copyBytesToJS(dst ref, src []byte) (int, bool)
+					// funcation copyBytesToJS(dst ref, src []byte) (int, bool)
 					"syscall/js.copyBytesToJS": (sp) => {
 						sp >>>= 0;
 						const dst = loadValue(sp + 8);

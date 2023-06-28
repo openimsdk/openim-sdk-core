@@ -19,7 +19,7 @@ package testv2
 //	"testing"
 //)
 //
-//func Test_GetWorkMomentsUnReadCount(t *testing.T) {
+//funcation Test_GetWorkMomentsUnReadCount(t *testing.T) {
 //	unreadCount, err := open_im_sdk.UserForSDK.WorkMoments().GetWorkMomentsUnReadCount(ctx)
 //	if err != nil {
 //		t.Error(err)
@@ -27,7 +27,7 @@ package testv2
 //	t.Log(unreadCount)
 //}
 //
-//func Test_GetWorkMomentsNotification(t *testing.T) {
+//funcation Test_GetWorkMomentsNotification(t *testing.T) {
 //	notifications, err := open_im_sdk.UserForSDK.WorkMoments().GetWorkMomentsNotification(ctx, 0, 10)
 //	if err != nil {
 //		t.Error(err)
@@ -35,7 +35,7 @@ package testv2
 //	t.Log(notifications)
 //}
 //
-//func Test_ClearWorkMomentsNotification(t *testing.T) {
+//funcation Test_ClearWorkMomentsNotification(t *testing.T) {
 //	err := open_im_sdk.UserForSDK.WorkMoments().ClearWorkMomentsNotification(ctx)
 //	if err != nil {
 //		t.Error(err)

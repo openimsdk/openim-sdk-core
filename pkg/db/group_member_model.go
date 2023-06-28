@@ -183,7 +183,7 @@ func (d *DataBase) InsertGroupMember(ctx context.Context, groupMember *model_str
 	return utils.Wrap(d.conn.WithContext(ctx).Create(groupMember).Error, "")
 }
 
-//func (d *DataBase) BatchInsertMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error {
+//funcation (d *DataBase) BatchInsertMessageList(ctx context.Context, MessageList []*model_struct.LocalChatLog) error {
 //	if MessageList == nil {
 //		return nil
 //	}

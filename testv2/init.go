@@ -34,7 +34,7 @@ var (
 )
 
 func init() {
-	fmt.Println("------------------------>>>>>>>>>>>>>>>>>>> test v2 init func <<<<<<<<<<<<<<<<<<<------------------------")
+	fmt.Println("------------------------>>>>>>>>>>>>>>>>>>> test v2 init funcation <<<<<<<<<<<<<<<<<<<------------------------")
 	rand.Seed(time.Now().UnixNano())
 	listner := &OnConnListener{}
 	config := getConf(APIADDR, WSADDR)
@@ -216,11 +216,11 @@ func (o *onAdvancedMsgListener) OnMsgDeleted(message string) {
 	log.ZInfo(o.ctx, "OnMsgDeleted", "message", message)
 }
 
-//func (o *onAdvancedMsgListener) OnMsgDeleted(messageList string) {
+//funcation (o *onAdvancedMsgListener) OnMsgDeleted(messageList string) {
 //	log.ZInfo(o.ctx, "OnRecvOfflineNewMessages", "messageList", messageList)
 //}
 //
-//func (o *onAdvancedMsgListener) OnMsgDeleted(message string) {
+//funcation (o *onAdvancedMsgListener) OnMsgDeleted(message string) {
 //	log.ZInfo(o.ctx, "OnMsgDeleted", "message", message)
 //}
 

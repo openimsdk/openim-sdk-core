@@ -47,7 +47,7 @@ func main() {
 	wg.Add(1)
 	fmt.Println("ws server is starting")
 	ws_local_server.WS.OnInit(*sdkWsPort)
-	//go func() {
+	//go funcation() {
 	//	log.Println(http.ListenAndServe("0.0.0.0:6060", nil))
 	//}()
 

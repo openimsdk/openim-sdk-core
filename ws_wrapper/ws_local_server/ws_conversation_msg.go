@@ -160,7 +160,7 @@ type ConversationCallback struct {
 	uid string
 }
 
-//func (c *ConversationCallback) OnSyncServerProgress(progress int) {
+//funcation (c *ConversationCallback) OnSyncServerProgress(progress int) {
 //	var ed EventData
 //	ed.Event = cleanUpfuncName(runFuncName())
 //	ed.ErrCode = 0
@@ -732,7 +732,7 @@ func (wsRouter *WsFuncRouter) InsertGroupMessageToLocalStorage(input string, ope
 	userWorker.Conversation().InsertGroupMessageToLocalStorage(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, m["message"].(string), m["groupID"].(string), m["sendID"].(string), operationID)
 }
 
-//func (wsRouter *WsFuncRouter) FindMessages(messageIDList string, operationID string) {
+//funcation (wsRouter *WsFuncRouter) FindMessages(messageIDList string, operationID string) {
 //	userWorker := open_im_sdk.GetUserWorker(wsRouter.uId)
 //	userWorker.Conversation().FindMessages(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, messageIDList)
 //}
@@ -887,7 +887,7 @@ func (wsRouter *WsFuncRouter) ClearGroupHistoryMessageFromLocalAndSvr(input stri
 	userWorker.Conversation().ClearGroupHistoryMessageFromLocalAndSvr(&BaseSuccessFailed{runFuncName(), operationID, wsRouter.uId}, input, operationID)
 }
 
-//	func (wsRouter *WsFuncRouter) SetSdkLog(input string, operationID string) {
+//	funcation (wsRouter *WsFuncRouter) SetSdkLog(input string, operationID string) {
 //		m := make(map[string]interface{})
 //		if err := json.Unmarshal([]byte(input), &m); err != nil {
 //			log.Info("unmarshal failed")
