@@ -34,12 +34,13 @@ func main() {
 	test.SENDINTERVAL = SENDINTERVAL
 	test.WSADDR = WSADDR
 	test.ACCOUNTCHECK = ACCOUNTCHECK
-	strMyUidx := "8344522852"
+	strMyUidx := "8650796072"
 
 	tokenx := test.RunGetToken(strMyUidx)
 	fmt.Println(tokenx)
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	time.Sleep(time.Second * 2)
+	// test.DoTestRevoke()
 	// test.DotestDeleteFriend("8303492153")
 	// test.TestMarkGroupMessageAsRead()
 	// test.DoTestRevoke()

@@ -190,8 +190,8 @@ func GetAdvancedHistoryMessageListReverse(callback open_im_sdk_callback.Base, op
 //	call(callback, operationID, UserForSDK.Conversation().GetHistoryMessageListReverse, getMessageOptions)
 //}
 
-func RevokeMessage(callback open_im_sdk_callback.Base, operationID string, message string) {
-	call(callback, operationID, UserForSDK.Conversation().RevokeMessage, message)
+func RevokeMessage(callback open_im_sdk_callback.Base, operationID string, conversationID, clientMsgID string) {
+	call(callback, operationID, UserForSDK.Conversation().RevokeMessage, conversationID, clientMsgID)
 }
 
 func TypingStatusUpdate(callback open_im_sdk_callback.Base, operationID string, recvID string, msgTip string) {
