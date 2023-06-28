@@ -24,10 +24,16 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"time"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 )
 
 func (s *LiveSignaling) SignalingInviteInGroup(ctx context.Context, signalInviteInGroupReq *server_api_params.SignalInviteInGroupReq) (*server_api_params.SignalInviteInGroupResp, error) {
+	if err := s.checkInvitation(signalInviteInGroupReq.Invitation); err != nil {
+		return nil, err
+	}
 	s.setDefaultReq(signalInviteInGroupReq.Invitation)
+	log.ZDebug(ctx, "x", "invitation", signalInviteInGroupReq.Invitation.InviterUserID, "login", s.loginUserID)
 	signalInviteInGroupReq.Invitation.InviterUserID = s.loginUserID
 	signalInviteInGroupReq.UserID = s.loginUserID
 	signalInviteInGroupReq.Invitation.InitiateTime = utils.GetCurrentTimestampBySecond()
@@ -48,6 +54,9 @@ func (s *LiveSignaling) SignalingInviteInGroup(ctx context.Context, signalInvite
 }
 
 func (s *LiveSignaling) SignalingInvite(ctx context.Context, signalInviteReq *server_api_params.SignalInviteReq) (*server_api_params.SignalInviteResp, error) {
+	if err := s.checkInvitation(signalInviteReq.Invitation); err != nil {
+		return nil, err
+	}
 	s.setDefaultReq(signalInviteReq.Invitation)
 	signalInviteReq.Invitation.InviterUserID = s.loginUserID
 	signalInviteReq.UserID = s.loginUserID
@@ -69,6 +78,9 @@ func (s *LiveSignaling) SignalingInvite(ctx context.Context, signalInviteReq *se
 }
 
 func (s *LiveSignaling) SignalingAccept(ctx context.Context, signalAcceptReq *server_api_params.SignalAcceptReq) (*server_api_params.SignalAcceptResp, error) {
+	if err := s.checkInvitation(signalAcceptReq.Invitation); err != nil {
+		return nil, err
+	}
 	s.setDefaultReq(signalAcceptReq.Invitation)
 	signalAcceptReq.UserID = s.loginUserID
 	signalAcceptReq.Invitation.InitiateTime = utils.GetCurrentTimestampBySecond()
@@ -87,6 +99,9 @@ func (s *LiveSignaling) SignalingAccept(ctx context.Context, signalAcceptReq *se
 }
 
 func (s *LiveSignaling) SignalingReject(ctx context.Context, signalRejectReq *server_api_params.SignalRejectReq) error {
+	if err := s.checkInvitation(signalRejectReq.Invitation); err != nil {
+		return err
+	}
 	s.setDefaultReq(signalRejectReq.Invitation)
 	signalRejectReq.UserID = s.loginUserID
 	signalRejectReq.Invitation.InitiateTime = utils.GetCurrentTimestampBySecond()
@@ -102,6 +117,9 @@ func (s *LiveSignaling) SignalingReject(ctx context.Context, signalRejectReq *se
 }
 
 func (s *LiveSignaling) SignalingCancel(ctx context.Context, signalCancelReq *server_api_params.SignalCancelReq) error {
+	if err := s.checkInvitation(signalCancelReq.Invitation); err != nil {
+		return err
+	}
 	s.setDefaultReq(signalCancelReq.Invitation)
 	signalCancelReq.UserID = s.loginUserID
 	signalCancelReq.Invitation.InitiateTime = utils.GetCurrentTimestampBySecond()
@@ -120,6 +138,9 @@ func (s *LiveSignaling) SignalingCancel(ctx context.Context, signalCancelReq *se
 }
 
 func (s *LiveSignaling) SignalingHungUp(ctx context.Context, signalHungUpReq *server_api_params.SignalHungUpReq) error {
+	if err := s.checkInvitation(signalHungUpReq.Invitation); err != nil {
+		return err
+	}
 	s.setDefaultReq(signalHungUpReq.Invitation)
 	signalHungUpReq.UserID = s.loginUserID
 	signalHungUpReq.Invitation.InitiateTime = utils.GetCurrentTimestampBySecond()

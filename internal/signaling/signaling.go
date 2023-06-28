@@ -55,6 +55,13 @@ func (s *LiveSignaling) setDefaultReq(req *server_api_params.InvitationInfo) {
 	}
 }
 
+func (s *LiveSignaling) checkInvitation(invitation *server_api_params.InvitationInfo) error {
+	if invitation == nil {
+		return sdkerrs.ErrArgs.Wrap("invitation is nil")
+	}
+	return nil
+}
+
 func (s *LiveSignaling) waitPush(ctx context.Context, req *server_api_params.SignalReq, busyLineUserList []string) {
 	var invt *server_api_params.InvitationInfo
 	switch payload := req.Payload.(type) {
