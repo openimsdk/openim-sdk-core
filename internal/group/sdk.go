@@ -258,7 +258,7 @@ func (g *Group) GetGroupMemberList(ctx context.Context, groupID string, filter, 
 }
 
 func (g *Group) GetGroupMemberOwnerAndAdmin(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error) {
-	return g.db.GetGroupMemberOwnerAndAdmin(ctx, groupID)
+	return g.db.GetGroupMemberOwnerAndAdminDB(ctx, groupID)
 }
 
 func (g *Group) GetGroupMemberListByJoinTimeFilter(ctx context.Context, groupID string, offset, count int32, joinTimeBegin, joinTimeEnd int64, userIDs []string) ([]*model_struct.LocalGroupMember, error) {

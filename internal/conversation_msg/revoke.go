@@ -154,7 +154,7 @@ func (c *Conversation) revokeOneMessage(ctx context.Context, req *sdk_struct.Msg
 		}
 	case constant.SuperGroupChatType:
 		if message.SendID != c.loginUserID {
-			groupAdmins, err := c.db.GetGroupMemberOwnerAndAdmin(ctx, req.GroupID)
+			groupAdmins, err := c.db.GetGroupMemberOwnerAndAdminDB(ctx, req.GroupID)
 			if err != nil {
 				return err
 			}

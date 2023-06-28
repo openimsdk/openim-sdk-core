@@ -116,7 +116,7 @@ func (d *DataBase) GetGroupMemberListSplit(ctx context.Context, groupID string, 
 	return transfer, utils.Wrap(err, "GetGroupMemberListSplit failed ")
 }
 
-func (d *DataBase) GetGroupMemberOwnerAndAdmin(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error) {
+func (d *DataBase) GetGroupMemberOwnerAndAdminDB(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error) {
 	d.groupMtx.Lock()
 	defer d.groupMtx.Unlock()
 	var groupMemberList []model_struct.LocalGroupMember
