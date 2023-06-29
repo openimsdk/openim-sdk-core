@@ -12,8 +12,8 @@ func Test_Delay(t *testing.T) {
 	var singleSenderMsgNum *int // 单用户消息发送数量
 	var intervalTime *int       // 消息发送间隔时间，ms
 
-	senderNum = flag.Int("sn", 2, "sender num")
-	singleSenderMsgNum = flag.Int("mn", 10, "single sender msg num")
+	senderNum = flag.Int("sn", 100, "sender num")
+	singleSenderMsgNum = flag.Int("mn", 100, "single sender msg num")
 	intervalTime = flag.Int("t", 1, "interval time mill second")
 
 	flag.Parse()

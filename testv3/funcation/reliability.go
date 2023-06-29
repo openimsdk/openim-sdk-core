@@ -59,7 +59,7 @@ func ReliabilityTest(msgNumOneClient int, intervalSleepMS int, randSleepMaxSecon
 	}
 	wg.Wait()
 	log.Warn("send msg finish,  CheckReliabilityResult")
-
+	time.Sleep(time.Duration(3000) * time.Second)
 	//for {
 	//	// 消息异步落库可能出现延迟，每隔五秒再检查一次
 	//	if CheckReliabilityResult(msgNumOneClient, clientNum) {
