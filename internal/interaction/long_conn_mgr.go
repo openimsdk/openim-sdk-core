@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 	"io"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/ccontext"
@@ -27,6 +28,7 @@ import (
 	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -111,6 +113,7 @@ func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnLis
 	return l
 }
 func (c *LongConnMgr) Run(ctx context.Context) {
+	fmt.Println(mcontext.GetOperationID(ctx), "login run", string(debug.Stack()))
 	go c.readPump(ctx)
 	go c.writePump(ctx)
 	go c.heartbeat(ctx)
@@ -154,7 +157,9 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 // The application runs readPump in a per-connection goroutine. The application
 // ensures that there is at most one reader on a connection by executing all
 // reads from this goroutine.
+
 func (c *LongConnMgr) readPump(ctx context.Context) {
+	log.ZDebug(ctx, "readPump start")
 	defer func() {
 		log.ZWarn(c.ctx, "readPump closed", c.closedErr)
 	}()
@@ -209,6 +214,8 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
 func (c *LongConnMgr) writePump(ctx context.Context) {
+	log.ZDebug(ctx, "writePump start")
+
 	defer func() {
 		c.close()
 		close(c.send)
@@ -254,9 +261,11 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 }
 
 func (c *LongConnMgr) heartbeat(ctx context.Context) {
+	log.ZDebug(ctx, "heartbeat start")
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
+		log.ZWarn(c.ctx, "heartbeat closed", nil, "heartbeat done sdk logout.....")
 	}()
 	for {
 		select {
