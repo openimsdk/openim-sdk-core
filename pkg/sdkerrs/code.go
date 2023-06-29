@@ -34,5 +34,6 @@ const (
 	NotInGroupError = 14001 //不在群组中
 	GroupTypeErr    = 14002 //群组类型错误
 
-	LoginOutError = 13001 //用户已经退出登录
+	LoginOutError    = 13001 //用户已经退出登录
+	LoginRepeatError = 13002 //用户重复登录
 )
