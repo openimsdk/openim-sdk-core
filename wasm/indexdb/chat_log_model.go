@@ -659,7 +659,7 @@ func (i *LocalChatLogs) GetUnreadMessage(ctx context.Context, conversationID str
 }
 
 func (i *LocalChatLogs) GetMessagesByClientMsgIDs(ctx context.Context, conversationID string, msgIDs []string) ([]*model_struct.LocalChatLog, error) {
-	msgs, err := Exec(conversationID, msgIDs)
+	msgs, err := Exec(conversationID, utils.StructToJsonString(msgIDs))
 	if err != nil {
 		return nil, err
 	} else {
