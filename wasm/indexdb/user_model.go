@@ -66,7 +66,7 @@ func (l *LocalUsers) GetLoginUser(ctx context.Context, userID string) (*model_st
 }
 
 func (l *LocalUsers) UpdateLoginUser(ctx context.Context, user *model_struct.LocalUser) error {
-	_, err := Exec(user)
+	_, err := Exec(utils.StructToJsonString(user))
 	return err
 
 }

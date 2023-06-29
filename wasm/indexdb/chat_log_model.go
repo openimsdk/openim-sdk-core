@@ -765,8 +765,3 @@ func (i *LocalChatLogs) DeleteConversationMsgsBySeqs(ctx context.Context, conver
 	_, err := Exec(conversationID, utils.StructToJsonString(seqs))
 	return err
 }
-
-func (i *LocalChatLogs) SetMessageLocalEx(ctx context.Context, conversationID, clientMsgID, localEx string) error {
-	_, err := Exec(conversationID, clientMsgID, localEx)
-	return err
-}

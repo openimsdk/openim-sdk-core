@@ -1064,7 +1064,7 @@ func (c *Conversation) SearchLocalMessages(ctx context.Context, searchParam *sdk
 
 }
 func (c *Conversation) SetMessageLocalEx(ctx context.Context, conversationID string, clientMsgID string, localEx string) error {
-	return c.db.SetMessageLocalEx(ctx, conversationID, clientMsgID, localEx)
+	return c.db.UpdateColumnsMessage(ctx, conversationID, clientMsgID, map[string]interface{}{"local_ex": localEx})
 }
 func getImageInfo(filePath string) (*sdk_struct.ImageInfo, error) {
 	file, err := os.Open(filePath)
