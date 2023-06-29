@@ -32,5 +32,6 @@ var (
 	ErrNotInGroup = errs.NewCodeError(NotInGroupError, "you not exist in this group")
 	ErrGroupType  = errs.NewCodeError(GroupTypeErr, "group type error")
 
-	ErrLoginOut = errs.NewCodeError(LoginOutError, "MsgLoginOutError")
+	ErrLoginOut    = errs.NewCodeError(LoginOutError, "MsgLoginOutError")
+	ErrLoginRepeat = errs.NewCodeError(LoginRepeatError, "MsgLoginRepeatError")
 )
