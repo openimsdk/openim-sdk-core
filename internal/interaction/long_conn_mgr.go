@@ -28,7 +28,10 @@ import (
 	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"runtime"
 	"runtime/debug"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -159,7 +162,7 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 // reads from this goroutine.
 
 func (c *LongConnMgr) readPump(ctx context.Context) {
-	log.ZDebug(ctx, "readPump start")
+	log.ZDebug(ctx, "readPump start", "goroutine ID:", getGoroutineID())
 	defer func() {
 		log.ZWarn(c.ctx, "readPump closed", c.closedErr)
 	}()
@@ -182,7 +185,7 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 			//}
 			//break
 			//c.closedErr = err
-			log.ZError(c.ctx, "readMessage err", err)
+			log.ZError(c.ctx, "readMessage err", err, "goroutine ID:", getGoroutineID())
 			_ = c.close()
 			continue
 		}
@@ -214,7 +217,7 @@ func (c *LongConnMgr) readPump(ctx context.Context) {
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
 func (c *LongConnMgr) writePump(ctx context.Context) {
-	log.ZDebug(ctx, "writePump start")
+	log.ZDebug(ctx, "writePump start", "goroutine ID:", getGoroutineID())
 
 	defer func() {
 		c.close()
@@ -261,7 +264,7 @@ func (c *LongConnMgr) writePump(ctx context.Context) {
 }
 
 func (c *LongConnMgr) heartbeat(ctx context.Context) {
-	log.ZDebug(ctx, "heartbeat start")
+	log.ZDebug(ctx, "heartbeat start", "goroutine ID:", getGoroutineID())
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -280,6 +283,16 @@ func (c *LongConnMgr) heartbeat(ctx context.Context) {
 	}
 
 }
+func getGoroutineID() int64 {
+	buf := make([]byte, 64)
+	buf = buf[:runtime.Stack(buf, false)]
+	idField := strings.Fields(strings.TrimPrefix(string(buf), "goroutine "))[0]
+	id, err := strconv.ParseInt(idField, 10, 64)
+	if err != nil {
+		panic(fmt.Sprintf("cannot get goroutine id: %v", err))
+	}
+	return id
+}
 func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
 	if c.conn == nil {
 		return
@@ -288,7 +301,7 @@ func (c *LongConnMgr) sendPingToServer(ctx context.Context) {
 	m.UserID = ccontext.Info(ctx).UserID()
 	opID := utils.OperationIDGenerator()
 	sCtx := ccontext.WithOperationID(c.ctx, opID)
-	log.ZInfo(sCtx, "ping and getMaxSeq start")
+	log.ZInfo(sCtx, "ping and getMaxSeq start", "goroutine ID:", getGoroutineID())
 	data, err := proto.Marshal(&m)
 	if err != nil {
 		log.ZError(sCtx, "proto.Marshal", err)
