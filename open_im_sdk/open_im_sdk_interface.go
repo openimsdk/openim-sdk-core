@@ -42,6 +42,14 @@ func SetHeartbeatInterval(heartbeatInterval int) {
 	constant.HeartbeatInterval = heartbeatInterval
 }
 
+func UnInitSDK() {
+	sdk_struct.SvrConf = sdk_struct.IMConfig{}
+	if userForSDK != nil {
+		userForSDK.UnInitSDK()
+	}
+	userForSDK = nil
+
+}
 func InitSDK(listener open_im_sdk_callback.OnConnListener, operationID string, config string) bool {
 	if userForSDK != nil {
 		fmt.Println(operationID, "Initialize multiple times, use the existing ", userForSDK, " Previous configuration ", userForSDK.ImConfig(), " now configuration: ", config)

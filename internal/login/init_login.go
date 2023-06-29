@@ -381,6 +381,9 @@ func (u *LoginMgr) InitSDK(config sdk_struct.IMConfig, listener open_im_sdk_call
 	u.connListener = listener
 	return true
 }
+func (u *LoginMgr) UnInitSDK() {
+	u.imConfig = sdk_struct.IMConfig{}
+}
 
 func (u *LoginMgr) logout(callback open_im_sdk_callback.Base, operationID string) {
 	log.Info(operationID, "TriggerCmdLogout ws...")
