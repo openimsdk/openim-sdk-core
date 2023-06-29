@@ -21,6 +21,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"os"
 	"time"
 )
 
@@ -43,7 +44,8 @@ func (t *testInitLister) OnConnectFailed(ErrCode int32, ErrMsg string) {
 }
 
 func (t *testInitLister) OnKickedOffline() {
-	log.Info("", utils.GetSelfFuncName())
+	log.Error("", utils.GetSelfFuncName(), "kick!!!!!!!!!!!!!!!!!!!!")
+	os.Exit(-1)
 }
 
 func (t *testInitLister) OnSelfInfoUpdated(info string) {
@@ -103,10 +105,10 @@ func ReliabilityInitAndLogin(index int, uid, token string) {
 	ctx := ccontext.WithOperationID(lg.Context(), operationID)
 
 	lg.Login(ctx, uid, token)
-	u, err := lg.User().GetSelfUserInfo(ctx)
+	lg.User().GetSelfUserInfo(ctx)
 	for {
 		if testConversation.SyncFlag == 1 {
-			log.Info("", "testConversation.SyncFlag == 1", u.UserID, err)
+			log.Info("", "testConversation.SyncFlag == 1")
 			return
 		}
 	}
