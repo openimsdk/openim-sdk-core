@@ -333,6 +333,7 @@ func (c *Conversation) getAdvancedHistoryMessageList2(ctx context.Context, req s
 		_ = utils.JsonStringToStruct(v.AttachedInfo, &attachedInfo)
 		temp.AttachedInfoElem = &attachedInfo
 		temp.Ex = v.Ex
+		temp.LocalEx = v.LocalEx
 		err := c.msgHandleByContentType(&temp)
 		if err != nil {
 			log.ZError(ctx, "Parsing data error", err, "temp", temp)

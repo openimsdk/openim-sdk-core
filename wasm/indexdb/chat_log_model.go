@@ -659,7 +659,7 @@ func (i *LocalChatLogs) GetUnreadMessage(ctx context.Context, conversationID str
 }
 
 func (i *LocalChatLogs) GetMessagesByClientMsgIDs(ctx context.Context, conversationID string, msgIDs []string) ([]*model_struct.LocalChatLog, error) {
-	msgs, err := Exec(conversationID, msgIDs)
+	msgs, err := Exec(conversationID, utils.StructToJsonString(msgIDs))
 	if err != nil {
 		return nil, err
 	} else {
@@ -763,10 +763,5 @@ func (i *LocalChatLogs) DeleteConversationMsgs(ctx context.Context, conversation
 // DeleteConversationMsgsBySeqs deletes messages of the session
 func (i *LocalChatLogs) DeleteConversationMsgsBySeqs(ctx context.Context, conversationID string, seqs []int64) error {
 	_, err := Exec(conversationID, utils.StructToJsonString(seqs))
-	return err
-}
-
-func (i *LocalChatLogs) SetMessageLocalEx(ctx context.Context, conversationID, clientMsgID, localEx string) error {
-	_, err := Exec(conversationID, clientMsgID, localEx)
 	return err
 }
