@@ -534,7 +534,7 @@ func (c *LongConnMgr) doPushMsg(ctx context.Context, wsResp GeneralWsResp) error
 	return common.TriggerCmdPushMsg(ctx, &msg, c.pushMsgAndMaxSeqCh)
 }
 func (c *LongConnMgr) Close(ctx context.Context) {
-	if c.GetConnectionStatus() != Closed {
+	if c.GetConnectionStatus() == Connected {
 		log.ZInfo(ctx, "network change conn close")
 		c.closedErr = errors.New("closed by client network change")
 		_ = c.close()
