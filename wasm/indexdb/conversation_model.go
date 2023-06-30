@@ -334,17 +334,15 @@ func (i *LocalConversations) GetMultipleConversationDB(ctx context.Context, conv
 	}
 }
 
-func (i *LocalConversations) GetAllSingleConversationIDList(ctx context.Context) ([]string, error) {
+func (i *LocalConversations) GetAllSingleConversationIDList(ctx context.Context) (result []string, err error) {
 	conversationIDs, err := Exec()
 	if err != nil {
 		return nil, err
 	} else {
-		if v, ok := conversationIDs.([]interface{}); ok {
-			var result []string
-			for _, id := range v {
-				if s, ok := id.(string); ok {
-					result = append(result, s)
-				}
+		if v, ok := conversationIDs.(string); ok {
+			err := utils.JsonStringToStruct(v, &result)
+			if err != nil {
+				return nil, err
 			}
 			return result, nil
 		} else {
