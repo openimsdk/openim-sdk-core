@@ -113,6 +113,10 @@ func (w *WrapperConMsg) CreateSoundMessage(_ js.Value, args []js.Value) interfac
 	return event_listener.NewCaller(open_im_sdk.CreateSoundMessage, nil, &args).AsyncCallWithOutCallback()
 }
 
+func (w *WrapperConMsg) GetAtAllTag(_ js.Value, args []js.Value) interface{} {
+	return event_listener.NewCaller(open_im_sdk.GetAtAllTag, nil, &args).AsyncCallWithOutCallback()
+}
+
 //	funcation (w *WrapperConMsg) MarkC2CMessageAsRead(_ js.Value, args []js.Value) interface{} {
 //		callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //		return event_listener.NewCaller(open_im_sdk.MarkC2CMessageAsRead, callback, &args).AsyncCallWithCallback()
