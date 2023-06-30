@@ -385,7 +385,6 @@ func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool
 		}
 		return nil
 	}
-
 }
 
 func (u *LoginMgr) GetLoginUserID() string {
