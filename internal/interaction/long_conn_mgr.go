@@ -362,7 +362,7 @@ func (c *LongConnMgr) writeBinaryMsgAndRetry(msg *GeneralWsReq) (chan *GeneralWs
 	for i := 0; i < 60; i++ {
 		err := c.writeBinaryMsg(*msg)
 		if err != nil {
-			log.ZError(c.ctx, "send binary message error", err, "local address", c.conn.LocalAddr(), "message", msg)
+			log.ZError(c.ctx, "send binary message error", err, "message", msg)
 			c.closedErr = err
 			_ = c.close()
 			time.Sleep(time.Second * 1)

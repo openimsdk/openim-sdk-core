@@ -46,6 +46,9 @@ func (m *MessageController) BatchInsertMessageList(ctx context.Context, insertMs
 		return nil
 	}
 	for conversationID, messages := range insertMsg {
+		if len(messages) == 0 {
+			continue
+		}
 		err := m.db.BatchInsertMessageList(ctx, conversationID, messages)
 		if err != nil {
 			log.ZError(ctx, "insert GetMessage detail err:", err, "conversationID", conversationID, "messages", messages)
