@@ -90,8 +90,7 @@ func (c *Conversation) SyncConversationHashReadSeqs(ctx context.Context) error {
 	}
 	log.ZDebug(ctx, "update conversations", "conversations", conversations)
 
-	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.ConversationChangeNotification, Args: conversationIDs}})
-	c.doUpdateConversation(common.Cmd2Value{Value: common.UpdateConNode{Action: constant.TotalUnreadMessageChanged, Args: conversationIDs}})
-
+	common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.ConChange, Args: conversationIDs}, c.GetCh())
+	common.TriggerCmdUpdateConversation(ctx, common.UpdateConNode{Action: constant.TotalUnreadMessageChanged, Args: conversationIDs}, c.GetCh())
 	return nil
 }
