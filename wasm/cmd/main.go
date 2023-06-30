@@ -100,7 +100,6 @@ func registerFunc() {
 	js.Global().Set("getMultipleConversation", js.FuncOf(wrapperConMsg.GetMultipleConversation))
 	js.Global().Set("setConversationPrivateChat", js.FuncOf(wrapperConMsg.SetConversationPrivateChat))
 	js.Global().Set("setConversationRecvMessageOpt", js.FuncOf(wrapperConMsg.SetConversationRecvMessageOpt))
-	js.Global().Set("setConversationRecvMessageOpt", js.FuncOf(wrapperConMsg.SetConversationRecvMessageOpt))
 	js.Global().Set("setGlobalRecvMessageOpt", js.FuncOf(wrapperConMsg.SetGlobalRecvMessageOpt))
 	js.Global().Set("deleteAllConversationFromLocal", js.FuncOf(wrapperConMsg.DeleteAllConversationFromLocal))
 	js.Global().Set("hideConversation", js.FuncOf(wrapperConMsg.HideConversation))
