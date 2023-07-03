@@ -14,6 +14,7 @@ var (
 	ErrUserIDNotFound  = errs.NewCodeError(UserIDNotFoundError, "UserIDNotFoundError")
 
 	ErrRecordNotFound = errs.NewCodeError(RecordNotFoundError, "RecordNotFoundError")
+	ErrResourceLoad   = errs.NewCodeError(ResourceLoadNotCompleteError, "ResourceLoadNotCompleteError")
 
 	//消息相关
 	ErrMsgDecodeBinaryWs        = errs.NewCodeError(MsgDecodeBinaryWsError, "MsgDecodeBinaryWsError")
