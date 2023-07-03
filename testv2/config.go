@@ -27,7 +27,7 @@ const (
 	WSADDR = "ws://59.36.173.89:10001"
 	//UserID       = "2688118337"
 	//UserID       = "7204255074"
-	UserID       = "5035571337"
+	UserID       = "openIM123456"
 	friendUserID = "1225441072"
 	// APIADDR = "http://192.168.44.128:10002"
 	// WSADDR  = "ws://192.168.44.128:10001"

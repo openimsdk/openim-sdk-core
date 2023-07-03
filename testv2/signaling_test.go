@@ -40,7 +40,7 @@ func Test_SignalingInviteInGroup(t *testing.T) {
 	t.Log(resp)
 }
 
-func Test_SignalingInite(t *testing.T) {
+func Test_SignalingInvite(t *testing.T) {
 	resp, err := open_im_sdk.UserForSDK.Signaling().SignalingInvite(ctx, &server_api_params.SignalInviteReq{
 		Invitation: &server_api_params.InvitationInfo{
 			InviterUserID:     UserID,
@@ -138,7 +138,7 @@ func Test_SignalingHungUp(t *testing.T) {
 }
 
 func Test_SignalingGetRoomByGroupID(t *testing.T) {
-	resp, err := open_im_sdk.UserForSDK.Signaling().SignalingGetRoomByGroupID(ctx, "testgroupID")
+	resp, err := open_im_sdk.UserForSDK.Signaling().SignalingGetRoomByGroupID(ctx, "829406008")
 	if err != nil {
 		t.Error(err)
 	}
@@ -151,4 +151,10 @@ func Test_SignalingGetTokenByRoomID(t *testing.T) {
 		t.Error(err)
 	}
 	t.Log(resp)
+}
+
+func Test_SignalingCloseRoom(t *testing.T) {
+	if err := open_im_sdk.UserForSDK.Signaling().SignalingCloseRoom(ctx, "testroomID"); err != nil {
+		t.Error(err)
+	}
 }

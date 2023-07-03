@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 	"io"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/ccontext"
@@ -35,11 +34,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
+
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	"github.com/golang/protobuf/proto"
+
+	// "github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -149,7 +152,7 @@ func (c *LongConnMgr) SendReqWaitResp(ctx context.Context, m proto.Message, reqI
 			return errs.NewCodeError(v.ErrCode, v.ErrMsg)
 		}
 		if err := proto.Unmarshal(v.Data, resp); err != nil {
-			return sdkerrs.ErrArgs
+			return sdkerrs.ErrArgs.Wrap(err.Error())
 		}
 		return nil
 	}

@@ -73,6 +73,7 @@ func (s *LiveSignaling) SignalingInvite(ctx context.Context, signalInviteReq *se
 	}
 	s.isCanceled = false
 	reply := resp.Payload.(*server_api_params.SignalResp_Invite).Invite
+	log.ZDebug(ctx, "signalInviteReply", "reply", reply)
 	go s.waitPush(ctx, req, reply.BusyLineUserIDList)
 	return reply, nil
 }

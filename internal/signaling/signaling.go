@@ -317,12 +317,12 @@ func (s *LiveSignaling) DoNotification(ctx context.Context, msg *sdkws.MsgData) 
 
 }
 func (s *LiveSignaling) SendSignalingReqWaitResp(ctx context.Context, req *server_api_params.SignalReq) (*server_api_params.SignalResp, error) {
-	var signalResp server_api_params.SignalResp
-	err := s.LongConnMgr.SendReqWaitResp(ctx, req, constant.SendSignalMsg, &signalResp)
+	var signalMessageAssembleResp server_api_params.SignalMessageAssembleResp
+	err := s.LongConnMgr.SendReqWaitResp(ctx, req, constant.SendSignalMsg, &signalMessageAssembleResp)
 	if err != nil {
 		return nil, err
 	}
-	return &signalResp, nil
+	return signalMessageAssembleResp.SignalResp, nil
 }
 func (s *LiveSignaling) SignalingWaitPush(ctx context.Context, inviterUserID, inviteeUserID, roomID string, timeout int32) (*server_api_params.SignalReq, error) {
 	msgIncr := inviterUserID + inviteeUserID + roomID
