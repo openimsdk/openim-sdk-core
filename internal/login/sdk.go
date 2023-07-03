@@ -32,3 +32,6 @@ func (u *LoginMgr) SetAppBackgroundStatus(ctx context.Context, isBackground bool
 func (u *LoginMgr) NetworkStatusChanged(ctx context.Context) {
 	u.longConnMgr.Close(ctx)
 }
+func (u *LoginMgr) GetLoginStatus(ctx context.Context) int {
+	return u.getLoginStatus(ctx)
+}

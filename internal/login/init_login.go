@@ -262,7 +262,7 @@ func NewLoginMgr() *LoginMgr {
 		info: &ccontext.GlobalConfig{}, // 分配内存空间
 	}
 }
-func (u *LoginMgr) getLoginStatus() int {
+func (u *LoginMgr) getLoginStatus(_ context.Context) int {
 	u.w.Lock()
 	defer u.w.Unlock()
 	return u.loginStatus
@@ -274,7 +274,7 @@ func (u *LoginMgr) setLoginStatus(status int) {
 }
 
 func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
-	if u.getLoginStatus() == Logged {
+	if u.getLoginStatus(ctx) == Logged {
 		return sdkerrs.ErrLoginRepeat
 	}
 	u.setLoginStatus(Logging)
@@ -378,7 +378,7 @@ func (u *LoginMgr) initResources() {
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
 	u.loginMgrCh = make(chan common.Cmd2Value)
-	u.setLoginStatus(Logged)
+	u.setLoginStatus(Logout)
 	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
 }
 
@@ -415,10 +415,6 @@ func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool
 
 func (u *LoginMgr) GetLoginUserID() string {
 	return u.loginUserID
-}
-
-func (u *LoginMgr) GetLoginStatus() int {
-	return u.getLoginStatus()
 }
 
 func CheckToken(userID, token string, operationID string) (int64, error) {

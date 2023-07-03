@@ -188,6 +188,8 @@ func (r *ReflectCall) asyncCallWithOutCallback() {
 					result = append(result, v.Bool())
 				case reflect.Int32:
 					result = append(result, v.Int())
+				case reflect.Int:
+					result = append(result, v.Int())
 				default:
 					panic("not support type")
 				}
