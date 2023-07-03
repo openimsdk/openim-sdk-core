@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
 	"io"
 	"open_im_sdk/open_im_sdk_callback"
 	"open_im_sdk/pkg/ccontext"
@@ -29,7 +28,6 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"runtime"
-	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -116,7 +114,7 @@ func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnLis
 	return l
 }
 func (c *LongConnMgr) Run(ctx context.Context) {
-	fmt.Println(mcontext.GetOperationID(ctx), "login run", string(debug.Stack()))
+	//fmt.Println(mcontext.GetOperationID(ctx), "login run", string(debug.Stack()))
 	go c.readPump(ctx)
 	go c.writePump(ctx)
 	go c.heartbeat(ctx)
