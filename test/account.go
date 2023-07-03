@@ -17,10 +17,6 @@ package test
 import (
 	"context"
 	"fmt"
-	imLog "github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	authPB "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/auth"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	userPB "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/user"
 	"net"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/ccontext"
@@ -34,6 +30,11 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	imLog "github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	authPB "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/auth"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	userPB "github.com/OpenIMSDK/Open-IM-Server/pkg/proto/user"
 )
 
 func GenUid(uid int, prefix string) string {
@@ -171,6 +172,7 @@ func getToken(uid string) string {
 	req := authPB.UserTokenReq{
 		PlatformID: PlatformID,
 		UserID:     uid,
+		Secret:     "tuoyun",
 	}
 	resp := authPB.UserTokenResp{}
 	err := util.ApiPost(ctx, "/auth/user_token", &req, &resp)
