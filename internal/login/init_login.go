@@ -352,6 +352,7 @@ func (u *LoginMgr) initResources() {
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
 	u.loginMgrCh = make(chan common.Cmd2Value)
+	u.setLoginStatus(Logged)
 	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
 }
 
@@ -364,7 +365,6 @@ func (u *LoginMgr) logout(ctx context.Context) error {
 	_ = u.db.Close(u.ctx)
 	// user object must be rest  when user logout
 	u.initResources()
-	u.setLoginStatus(Logout)
 	log.ZDebug(ctx, "TriggerCmdLogout success...")
 	return nil
 }
