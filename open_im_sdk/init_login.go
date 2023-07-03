@@ -15,10 +15,12 @@
 package open_im_sdk
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"open_im_sdk/internal/login"
 	"open_im_sdk/open_im_sdk_callback"
+	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/sdk_struct"
 	"strings"
@@ -87,11 +89,11 @@ func NetworkStatusChanged(callback open_im_sdk_callback.Base, operationID string
 	call(callback, operationID, UserForSDK.NetworkStatusChanged)
 }
 
-func GetLoginStatus() int {
+func GetLoginStatus(operationID string) int {
 	if UserForSDK == nil {
 		return constant.Uninitialized
 	}
-	return UserForSDK.GetLoginStatus()
+	return UserForSDK.GetLoginStatus(ccontext.WithOperationID(context.Background(), operationID))
 }
 
 func GetLoginUserID() string {
