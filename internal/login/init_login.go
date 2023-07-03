@@ -392,7 +392,7 @@ func (u *LoginMgr) GetLoginUserID() string {
 }
 
 func (u *LoginMgr) GetLoginStatus() int {
-	return u.longConnMgr.GetConnectionStatus()
+	return u.getLoginStatus()
 }
 
 func CheckToken(userID, token string, operationID string) (int64, error) {
