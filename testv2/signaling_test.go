@@ -44,7 +44,7 @@ func Test_SignalingInite(t *testing.T) {
 	resp, err := open_im_sdk.UserForSDK.Signaling().SignalingInvite(ctx, &server_api_params.SignalInviteReq{
 		Invitation: &server_api_params.InvitationInfo{
 			InviterUserID:     UserID,
-			InviteeUserIDList: []string{"targetUser"},
+			InviteeUserIDList: []string{"openIM654321"},
 			CustomData:        "",
 			GroupID:           "",
 			RoomID:            "testroomID",
