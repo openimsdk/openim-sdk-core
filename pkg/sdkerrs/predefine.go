@@ -14,6 +14,7 @@ var (
 	ErrUserIDNotFound  = errs.NewCodeError(UserIDNotFoundError, "UserIDNotFoundError")
 
 	ErrRecordNotFound = errs.NewCodeError(RecordNotFoundError, "RecordNotFoundError")
+	ErrResourceLoad   = errs.NewCodeError(ResourceLoadNotCompleteError, "ResourceLoadNotCompleteError")
 
 	//消息相关
 	ErrMsgDecodeBinaryWs        = errs.NewCodeError(MsgDecodeBinaryWsError, "MsgDecodeBinaryWsError")
@@ -32,5 +33,6 @@ var (
 	ErrNotInGroup = errs.NewCodeError(NotInGroupError, "you not exist in this group")
 	ErrGroupType  = errs.NewCodeError(GroupTypeErr, "group type error")
 
-	ErrLoginOut = errs.NewCodeError(LoginOutError, "MsgLoginOutError")
+	ErrLoginOut    = errs.NewCodeError(LoginOutError, "LoginOutError")
+	ErrLoginRepeat = errs.NewCodeError(LoginRepeatError, "LoginRepeatError")
 )

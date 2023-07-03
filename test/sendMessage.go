@@ -26,6 +26,7 @@ import (
 func init() {
 	//sdk_struct.SvrConf = sdk_struct.IMConfig{Platform: 1, ApiAddr: APIADDR, WsAddr: WSADDR, DataDir: "./", LogLevel: 6, ObjectStorage: "cos"}
 	allLoginMgr = make(map[int]*CoreNode)
+
 }
 
 //funcation InitMgr(num int) {

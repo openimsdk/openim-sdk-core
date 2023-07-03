@@ -67,7 +67,7 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 	if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, seqs); err != nil {
 		return err
 	}
-	_, err = c.db.MarkConversationMessageAsRead(ctx, conversationID, msgIDs)
+	_, err = c.db.MarkConversationMessageAsReadDB(ctx, conversationID, msgIDs)
 	if err != nil {
 		log.ZWarn(ctx, "MarkConversationMessageAsRead err", err, "conversationID", conversationID, "msgIDs", msgIDs)
 	}
@@ -102,7 +102,7 @@ func (c *Conversation) markMessagesAsReadByMsgID(ctx context.Context, conversati
 	if err := c.markMsgAsRead2Svr(ctx, conversationID, seqs); err != nil {
 		return err
 	}
-	decrCount, err := c.db.MarkConversationMessageAsRead(ctx, conversationID, markAsReadMsgIDs)
+	decrCount, err := c.db.MarkConversationMessageAsReadDB(ctx, conversationID, markAsReadMsgIDs)
 	if err != nil {
 		return err
 	}

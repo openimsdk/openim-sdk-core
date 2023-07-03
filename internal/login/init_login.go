@@ -37,6 +37,7 @@ import (
 	"open_im_sdk/pkg/sdkerrs"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"sync"
 	"time"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
@@ -46,6 +47,12 @@ import (
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
+)
+
+const (
+	Logout = iota + 1
+	Logging
+	Logged
 )
 
 type LoginMgr struct {
@@ -70,6 +77,9 @@ type LoginMgr struct {
 	loginTime int64
 
 	justOnceFlag bool
+
+	w           sync.Mutex
+	loginStatus int
 
 	groupListener               open_im_sdk_callback.OnGroupListener
 	friendListener              open_im_sdk_callback.OnFriendshipListener
@@ -252,8 +262,22 @@ func NewLoginMgr() *LoginMgr {
 		info: &ccontext.GlobalConfig{}, // 分配内存空间
 	}
 }
+func (u *LoginMgr) getLoginStatus() int {
+	u.w.Lock()
+	defer u.w.Unlock()
+	return u.loginStatus
+}
+func (u *LoginMgr) setLoginStatus(status int) {
+	u.w.Lock()
+	defer u.w.Unlock()
+	u.loginStatus = status
+}
 
 func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
+	if u.getLoginStatus() == Logged {
+		return sdkerrs.ErrLoginRepeat
+	}
+	u.setLoginStatus(Logging)
 	u.info.UserID = userID
 	u.info.Token = token
 	log.ZInfo(ctx, "login start... ", "userID", userID, "token", token)
@@ -325,7 +349,9 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 			}
 		}
 	}()
+
 	go u.logoutListener(ctx)
+	u.setLoginStatus(Logged)
 	log.ZInfo(ctx, "login success...", "login cost time: ", time.Since(t1))
 	return nil
 }
@@ -352,6 +378,7 @@ func (u *LoginMgr) initResources() {
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
 	u.loginMgrCh = make(chan common.Cmd2Value)
+	u.setLoginStatus(Logged)
 	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
 }
 
@@ -384,7 +411,6 @@ func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool
 		}
 		return nil
 	}
-
 }
 
 func (u *LoginMgr) GetLoginUserID() string {
@@ -392,7 +418,7 @@ func (u *LoginMgr) GetLoginUserID() string {
 }
 
 func (u *LoginMgr) GetLoginStatus() int {
-	return u.longConnMgr.GetConnectionStatus()
+	return u.getLoginStatus()
 }
 
 func CheckToken(userID, token string, operationID string) (int64, error) {

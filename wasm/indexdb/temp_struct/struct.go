@@ -162,7 +162,7 @@ type LocalUser struct {
 	Nickname         string `json:"nickname,omitempty"`
 	FaceURL          string `json:"faceURL,omitempty"`
 	CreateTime       int64  `json:"createTime,omitempty"`
-	AppMangerLevel   int32  `json:"-,omitempty"`
+	AppMangerLevel   int32  `json:"-"`
 	Ex               string `json:"ex,omitempty"`
 	AttachedInfo     string `json:"attachedInfo,omitempty"`
 	GlobalRecvMsgOpt int32  `json:"globalRecvMsgOpt,omitempty"`

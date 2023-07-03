@@ -73,7 +73,7 @@ type OnAdvancedMsgListener interface {
 	OnRecvMessageExtensionsChanged(msgID string, reactionExtensionList string)
 	OnRecvMessageExtensionsDeleted(msgID string, reactionExtensionKeyList string)
 	OnRecvMessageExtensionsAdded(msgID string, reactionExtensionList string)
-	OnRecvOfflineNewMessages(messageList string)
+	OnRecvOfflineNewMessage(message string)
 	OnMsgDeleted(message string)
 }
 

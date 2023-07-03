@@ -6,6 +6,7 @@ package indexdb
 import (
 	"context"
 	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/utils"
 )
 
 type NotificationSeqs struct {

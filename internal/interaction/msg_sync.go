@@ -65,17 +65,17 @@ func NewMsgSyncer(ctx context.Context, conversationCh, PushMsgAndMaxSeqCh chan c
 
 // seq The db reads the data to the memory,set syncedMaxSeqs
 func (m *MsgSyncer) loadSeq(ctx context.Context) error {
-	conversations, err := m.db.GetAllConversations(ctx)
+	conversationIDList, err := m.db.GetAllConversationIDList(ctx)
 	if err != nil {
 		log.ZError(ctx, "get conversation id list failed", err)
 		return err
 	}
-	for _, conversation := range conversations {
-		maxSyncedSeq, err := m.db.GetConversationNormalMsgSeq(ctx, conversation.ConversationID)
+	for _, v := range conversationIDList {
+		maxSyncedSeq, err := m.db.GetConversationNormalMsgSeq(ctx, v)
 		if err != nil {
-			log.ZError(ctx, "get group normal seq failed", err, "conversationID", conversation.ConversationID)
+			log.ZError(ctx, "get group normal seq failed", err, "conversationID", v)
 		} else {
-			m.syncedMaxSeqs[conversation.ConversationID] = maxSyncedSeq
+			m.syncedMaxSeqs[v] = maxSyncedSeq
 		}
 	}
 	notificationSeqs, err := m.db.GetNotificationAllSeqs(ctx)

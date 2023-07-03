@@ -17,10 +17,11 @@ package funcation
 import (
 	"context"
 	"fmt"
-	imLog "github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/utils"
 	"sync"
+
+	imLog "github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 )
 
 // log and token
@@ -54,7 +55,7 @@ func init() {
 
 // system
 var (
-	TESTIP       = "203.56.175.233"
+	TESTIP       = "59.36.173.89"
 	APIADDR      = "http://" + TESTIP + ":10002"
 	WSADDR       = "ws://" + TESTIP + ":10001"
 	REGISTERADDR = APIADDR + "/auth/user_register"

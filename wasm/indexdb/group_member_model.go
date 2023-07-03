@@ -165,7 +165,7 @@ func (i *LocalGroupMember) GetGroupMemberListSplit(ctx context.Context, groupID 
 	}
 }
 
-func (i *LocalGroupMember) GetGroupMemberOwnerAndAdmin(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error) {
+func (i *LocalGroupMember) GetGroupMemberOwnerAndAdminDB(ctx context.Context, groupID string) ([]*model_struct.LocalGroupMember, error) {
 	member, err := Exec(groupID)
 	if err != nil {
 		return nil, err
