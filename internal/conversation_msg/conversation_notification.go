@@ -646,11 +646,6 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 			switch {
 			case v.ContentType == constant.ConversationChangeNotification || v.ContentType == constant.ConversationPrivateChatNotification:
 				c.DoNotification(ctx, v)
-			case v.ContentType == constant.MsgDeleteNotification:
-				c.full.SuperGroup.DoNotification(ctx, v, c.GetCh())
-			case v.ContentType == constant.SuperGroupUpdateNotification:
-				c.full.SuperGroup.DoNotification(ctx, v, c.GetCh())
-				continue
 			case v.ContentType == constant.ConversationUnreadNotification:
 				var tips sdkws.ConversationHasReadTips
 				_ = json.Unmarshal(v.Content, &tips)
