@@ -44,9 +44,9 @@ func CheckConfigErrCallback(callback open_im_sdk_callback.Base, err error, opera
 	CheckAnyErrCallback(callback, sdkerrs.ArgsError, err, operationID)
 }
 
-func CheckTokenErrCallback(callback open_im_sdk_callback.Base, err error, operationID string) {
-	CheckAnyErrCallback(callback, sdkerrs.TokenInvalidError, err, operationID)
-}
+//func CheckTokenErrCallback(callback open_im_sdk_callback.Base, err error, operationID string) {
+//	CheckAnyErrCallback(callback, sdkerrs.TokenInvalidError, err, operationID)
+//}
 
 func CheckDBErrCallback(callback open_im_sdk_callback.Base, err error, operationID string) {
 	CheckAnyErrCallback(callback, sdkerrs.SdkInternalError, err, operationID)
