@@ -203,7 +203,7 @@ func (s *LiveSignaling) DoNotification(ctx context.Context, msg *sdkws.MsgData) 
 				wsResp.ReqIdentifier = constant.SendSignalMsg
 				wsResp.Data = msg.Content
 				wsResp.MsgIncr = s.loginUserID + payload.Accept.UserID + payload.Accept.Invitation.RoomID
-				log.ZDebug(ctx, "search msgIncr", wsResp.MsgIncr)
+				log.ZDebug(ctx, "search msgIncr", "MsgIncr", wsResp.MsgIncr)
 				if err := s.LongConnMgr.Syncer.NotifyResp(ctx, wsResp); err != nil {
 					log.ZError(ctx, "notifyResp failed", err, "wsResp", wsResp)
 				}

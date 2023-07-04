@@ -73,7 +73,6 @@ func (s *LiveSignaling) SignalingInvite(ctx context.Context, signalInviteReq *se
 	}
 	s.isCanceled = false
 	reply := resp.Payload.(*server_api_params.SignalResp_Invite).Invite
-	log.ZDebug(ctx, "signalInviteReply", "reply", reply)
 	go s.waitPush(ctx, req, reply.BusyLineUserIDList)
 	return reply, nil
 }
@@ -85,6 +84,7 @@ func (s *LiveSignaling) SignalingAccept(ctx context.Context, signalAcceptReq *se
 	s.setDefaultReq(signalAcceptReq.Invitation)
 	signalAcceptReq.UserID = s.loginUserID
 	signalAcceptReq.Invitation.InitiateTime = utils.GetCurrentTimestampBySecond()
+	signalAcceptReq.OpUserPlatformID = s.platformID
 	participants, err := s.getSelfParticipant(ctx, signalAcceptReq.Invitation.GroupID)
 	if err != nil {
 		return nil, err
