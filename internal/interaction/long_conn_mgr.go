@@ -451,7 +451,7 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 		}
 	default:
 		// log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
-		return sdkerrs.ErrMsgTypeNotSupport
+		return sdkerrs.ErrMsgBinaryTypeNotSupport
 	}
 	return nil
 }

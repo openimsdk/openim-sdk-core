@@ -69,7 +69,7 @@ func (f *File) rePutFilePath(ctx context.Context, req *PutArgs, cb PutFileCallba
 	file, err := os.Open(req.Filepath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, sdkerrs.ErrRecordNotFound.WithDetail(err.Error()).Wrap()
+			return nil, sdkerrs.ErrFileNotFound.WithDetail(err.Error()).Wrap()
 		}
 		return nil, sdkerrs.ErrSdkInternal.WithDetail(err.Error()).Wrap()
 	}
