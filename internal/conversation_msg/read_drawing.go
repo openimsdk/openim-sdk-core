@@ -167,6 +167,9 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) {
 			log.ZError(ctx, "GetConversation err", err, "conversationID", tips.ConversationID)
 			return
 		}
+		if len(tips.Seqs) == 0 {
+			return
+		}
 		messages, err := c.db.GetMessagesBySeqs(ctx, tips.ConversationID, tips.Seqs)
 		if err != nil {
 			log.ZError(ctx, "GetMessagesBySeqs err", err, "conversationID", tips.ConversationID, "seqs", tips.Seqs)
