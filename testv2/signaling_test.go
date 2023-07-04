@@ -18,6 +18,7 @@ import (
 	"open_im_sdk/open_im_sdk"
 	"open_im_sdk/pkg/server_api_params"
 	"testing"
+	"time"
 )
 
 func Test_SignalingInviteInGroup(t *testing.T) {
@@ -57,6 +58,7 @@ func Test_SignalingInvite(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	time.Sleep(time.Second * 50)
 	t.Log(resp)
 }
 
@@ -146,7 +148,7 @@ func Test_SignalingGetRoomByGroupID(t *testing.T) {
 }
 
 func Test_SignalingGetTokenByRoomID(t *testing.T) {
-	resp, err := open_im_sdk.UserForSDK.Signaling().SignalingGetTokenByRoomID(ctx, "testroomID")
+	resp, err := open_im_sdk.UserForSDK.Signaling().SignalingGetTokenByRoomID(ctx, "829406008")
 	if err != nil {
 		t.Error(err)
 	}

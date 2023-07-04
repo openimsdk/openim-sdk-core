@@ -58,8 +58,9 @@ func init() {
 	open_im_sdk.UserForSDK.SetListenerForService(&onListenerForService{ctx: ctx})
 	open_im_sdk.UserForSDK.SetConversationListener(&onConversationListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetGroupListener(&onGroupListener{ctx: ctx})
-	// open_im_sdk.UserForSDK.SetAdvancedMsgListener(&onAdvancedMsgListener{ctx: ctx})
+	open_im_sdk.UserForSDK.SetAdvancedMsgListener(&onAdvancedMsgListener{ctx: ctx})
 	open_im_sdk.UserForSDK.SetFriendListener(&onFriendListener{ctx: ctx})
+	open_im_sdk.UserForSDK.SetSignalingListener(&OnSignalingListener{})
 	time.Sleep(time.Second * 10)
 }
 
@@ -224,7 +225,7 @@ func (o *onAdvancedMsgListener) OnMsgDeleted(message string) {
 //	log.ZInfo(o.ctx, "OnMsgDeleted", "message", message)
 //}
 
-func (o *onAdvancedMsgListener) OnRecvOfflineNewMessages(messageList string) {
+func (o *onAdvancedMsgListener) OnRecvOfflineNewMessage(messageList string) {
 	log.ZInfo(o.ctx, "OnRecvOfflineNewMessages", "messageList", messageList)
 }
 
@@ -298,4 +299,55 @@ func (o *onFriendListener) OnBlackAdded(blackInfo string) {
 
 func (o *onFriendListener) OnBlackDeleted(blackInfo string) {
 	log.ZDebug(context.Background(), "OnBlackDeleted", "blackInfo", blackInfo)
+}
+
+type OnSignalingListener struct {
+}
+
+func (o *OnSignalingListener) OnReceiveNewInvitation(receiveNewInvitationCallback string) {
+	log.ZInfo(context.Background(), "OnReceiveNewInvitation", "receiveNewInvitationCallback", receiveNewInvitationCallback)
+}
+
+func (o *OnSignalingListener) OnInviteeAccepted(inviteeAcceptedCallback string) {
+	log.ZInfo(context.Background(), "OnInviteeAccepted", "inviteeAcceptedCallback", inviteeAcceptedCallback)
+}
+
+func (o *OnSignalingListener) OnInviteeAcceptedByOtherDevice(inviteeAcceptedCallback string) {
+	log.ZInfo(context.Background(), "OnInviteeAcceptedByOtherDevice", "inviteeAcceptedCallback", inviteeAcceptedCallback)
+}
+
+func (o *OnSignalingListener) OnInviteeRejected(inviteeRejectedCallback string) {
+	log.ZInfo(context.Background(), "OnInviteeRejected", "inviteeRejectedCallback", inviteeRejectedCallback)
+}
+
+func (o *OnSignalingListener) OnInviteeRejectedByOtherDevice(inviteeRejectedCallback string) {
+	log.ZInfo(context.Background(), "OnInviteeRejectedByOtherDevice", "inviteeRejectedCallback", inviteeRejectedCallback)
+}
+
+func (o *OnSignalingListener) OnInvitationCancelled(invitationCancelledCallback string) {
+	log.ZInfo(context.Background(), "OnInvitationCancelled", "invitationCancelledCallback", invitationCancelledCallback)
+}
+
+func (o *OnSignalingListener) OnInvitationTimeout(invitationTimeoutCallback string) {
+	log.ZInfo(context.Background(), "OnInvitationTimeout", "invitationTimeoutCallback", invitationTimeoutCallback)
+}
+
+func (o *OnSignalingListener) OnHangUp(hangUpCallback string) {
+	log.ZInfo(context.Background(), "OnHangUp", "hangUpCallback", hangUpCallback)
+}
+
+func (o *OnSignalingListener) OnRoomParticipantConnected(onRoomParticipantConnectedCallback string) {
+	log.ZInfo(context.Background(), "OnRoomParticipantConnected", "onRoomParticipantConnectedCallback", onRoomParticipantConnectedCallback)
+}
+
+func (o *OnSignalingListener) OnRoomParticipantDisconnected(onRoomParticipantDisconnectedCallback string) {
+	log.ZInfo(context.Background(), "OnRoomParticipantDisconnected", "onRoomParticipantDisconnectedCallback", onRoomParticipantDisconnectedCallback)
+}
+
+func (o *OnSignalingListener) OnStreamChange(OnStreamChangeCallback string) {
+	log.ZInfo(context.Background(), "OnStreamChange", "OnStreamChangeCallback", OnStreamChangeCallback)
+}
+
+func (o *OnSignalingListener) OnReceiveCustomSignal(CustomSignalCallback string) {
+	log.ZInfo(context.Background(), "OnReceiveCustomSignal", "CustomSignalCallback", CustomSignalCallback)
 }

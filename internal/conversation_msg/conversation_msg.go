@@ -36,7 +36,6 @@ import (
 	sdk "open_im_sdk/pkg/sdk_params_callback"
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/syncer"
-	"sync"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
@@ -75,7 +74,6 @@ type Conversation struct {
 	maxSeqRecorder       MaxSeqRecorder
 	IsExternalExtensions bool
 	listenerForService   open_im_sdk_callback.OnListenerForService
-	markAsReadLock       sync.Mutex
 	loginTime            int64
 }
 

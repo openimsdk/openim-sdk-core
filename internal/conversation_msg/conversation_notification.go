@@ -670,6 +670,8 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 				c.doDeleteMsgs(ctx, v)
 			case v.ContentType == constant.HasReadReceipt:
 				c.doReadDrawing(ctx, v)
+			case v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd:
+				c.signal.DoNotification(ctx, v)
 			}
 
 			switch v.SessionType {
@@ -680,21 +682,13 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 					c.user.DoNotification(ctx, v)
 				} else if utils2.Contain(v.ContentType, constant.GroupApplicationRejectedNotification, constant.GroupApplicationAcceptedNotification, constant.JoinGroupApplicationNotification) {
 					c.group.DoNotification(ctx, v)
-				} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
-
-					continue
 				}
 			case constant.GroupChatType, constant.SuperGroupChatType:
 				if v.ContentType > constant.GroupNotificationBegin && v.ContentType < constant.GroupNotificationEnd {
 					c.group.DoNotification(ctx, v)
-				} else if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
-					continue
 				}
 			}
 
-			if v.ContentType > constant.SignalingNotificationBegin && v.ContentType < constant.SignalingNotificationEnd {
-				c.signal.DoNotification(ctx, v)
-			}
 		}
 	}
 
