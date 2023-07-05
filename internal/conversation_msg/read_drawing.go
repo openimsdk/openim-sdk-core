@@ -99,6 +99,10 @@ func (c *Conversation) markMessagesAsReadByMsgID(ctx context.Context, conversati
 	}
 	markAsReadMsgIDs, seqs := c.getAsReadMsgMapAndList(ctx, msgs)
 	log.ZDebug(ctx, "msgs len", "markAsReadMsgIDs", len(markAsReadMsgIDs), "seqs", seqs)
+	if len(seqs) == 0 {
+		log.ZWarn(ctx, "seqs is empty", nil, "conversationID", conversationID)
+		return nil
+	}
 	if err := c.markMsgAsRead2Svr(ctx, conversationID, seqs); err != nil {
 		return err
 	}
