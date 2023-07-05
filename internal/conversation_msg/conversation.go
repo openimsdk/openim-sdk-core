@@ -18,7 +18,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/jinzhu/copier"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/common"
@@ -32,6 +31,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/jinzhu/copier"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 
@@ -345,6 +346,9 @@ func (c *Conversation) getAdvancedHistoryMessageList2(ctx context.Context, req s
 		case constant.SuperGroupChatType:
 			temp.GroupID = temp.RecvID
 			temp.RecvID = c.loginUserID
+		}
+		if attachedInfo.IsPrivateChat && temp.SendTime+int64(attachedInfo.BurnDuration) < time.Now().Unix() {
+			continue
 		}
 		messageList = append(messageList, &temp)
 	}

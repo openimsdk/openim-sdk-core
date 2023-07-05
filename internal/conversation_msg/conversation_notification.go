@@ -17,14 +17,15 @@ package conversation_msg
 import (
 	"context"
 	"encoding/json"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
-	utils2 "github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"
+	utils2 "github.com/OpenIMSDK/Open-IM-Server/pkg/utils"
 )
 
 func (c *Conversation) Work(c2v common.Cmd2Value) {
@@ -638,8 +639,10 @@ func (c *Conversation) doNotificationNew(c2v common.Cmd2Value) {
 		if len(msgs.Msgs) != 0 {
 			lastMsg := msgs.Msgs[len(msgs.Msgs)-1]
 			log.ZDebug(ctx, "SetNotificationSeq", "conversationID", conversationID, "seq", lastMsg.Seq)
-			if err := c.db.SetNotificationSeq(ctx, conversationID, lastMsg.Seq); err != nil {
-				log.ZError(ctx, "SetNotificationSeq err", err, "conversationID", conversationID, "lastMsg", lastMsg)
+			if lastMsg.Seq != 0 {
+				if err := c.db.SetNotificationSeq(ctx, conversationID, lastMsg.Seq); err != nil {
+					log.ZError(ctx, "SetNotificationSeq err", err, "conversationID", conversationID, "lastMsg", lastMsg)
+				}
 			}
 		}
 		for _, v := range msgs.Msgs {
