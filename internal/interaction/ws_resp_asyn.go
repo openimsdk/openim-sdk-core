@@ -137,8 +137,8 @@ func (u *WsRespAsyn) WaitResp(ctx context.Context, ch chan *GeneralWsResp, timeo
 	select {
 	case r, ok := <-ch:
 		if !ok {
-			log.ZError(ctx, "ws ch recvMsg failed, ch is closed", nil, "ch", ch)
-			return nil, nil
+			log.ZError(ctx, "ws ch recvMsg failed, ch is closed", nil, "r", r)
+			return r, nil
 		}
 		if r.ErrCode != 0 {
 			//log.Error(operationID, "ws ch recvMsg failed, code, err msg: ", r.ErrCode, r.ErrMsg)

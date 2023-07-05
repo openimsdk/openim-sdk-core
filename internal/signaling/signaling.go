@@ -332,10 +332,14 @@ func (s *LiveSignaling) SignalingWaitPush(ctx context.Context, inviterUserID, in
 	if err != nil {
 		return nil, utils.Wrap(err, "")
 	}
-	var signalReq server_api_params.SignalReq
-	err = proto.Unmarshal(resp.Data, &signalReq)
-	if err != nil {
-		return nil, utils.Wrap(err, "")
+	if resp != nil {
+		var signalReq server_api_params.SignalReq
+		err = proto.Unmarshal(resp.Data, &signalReq)
+		if err != nil {
+			return nil, utils.Wrap(err, "")
+		}
+		return &signalReq, nil
 	}
-	return &signalReq, nil
+	log.ZWarn(ctx, "waitPush failed", nil, "msgIncr", msgIncr, "timeout", timeout, "inviterUserID", inviterUserID, "inviteeUserID", inviteeUserID, "roomID", roomID)
+	return nil, sdkerrs.ErrArgs.Wrap("waitPush failed")
 }

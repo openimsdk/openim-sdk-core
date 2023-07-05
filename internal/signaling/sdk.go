@@ -24,8 +24,6 @@ import (
 	"open_im_sdk/pkg/server_api_params"
 	"open_im_sdk/pkg/utils"
 	"time"
-
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 )
 
 func (s *LiveSignaling) SignalingInviteInGroup(ctx context.Context, signalInviteInGroupReq *server_api_params.SignalInviteInGroupReq) (*server_api_params.SignalInviteInGroupResp, error) {
@@ -33,7 +31,6 @@ func (s *LiveSignaling) SignalingInviteInGroup(ctx context.Context, signalInvite
 		return nil, err
 	}
 	s.setDefaultReq(signalInviteInGroupReq.Invitation)
-	log.ZDebug(ctx, "x", "invitation", signalInviteInGroupReq.Invitation.InviterUserID, "login", s.loginUserID)
 	signalInviteInGroupReq.Invitation.InviterUserID = s.loginUserID
 	signalInviteInGroupReq.UserID = s.loginUserID
 	signalInviteInGroupReq.Invitation.InitiateTime = utils.GetCurrentTimestampBySecond()
