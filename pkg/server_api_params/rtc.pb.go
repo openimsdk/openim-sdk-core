@@ -2618,8 +2618,8 @@ type SignalUpdateMeetingInfoReq struct {
 	MeetingName                       *wrapperspb.StringValue `protobuf:"bytes,2,opt,name=meetingName,proto3" json:"meetingName"`
 	Ex                                *wrapperspb.StringValue `protobuf:"bytes,3,opt,name=ex,proto3" json:"ex"`
 	InviteeUserIDList                 []string                `protobuf:"bytes,4,rep,name=inviteeUserIDList,proto3" json:"inviteeUserIDList"`
-	StartTime                         *wrapperspb.Int32Value  `protobuf:"bytes,5,opt,name=startTime,proto3" json:"startTime"`
-	EndTime                           *wrapperspb.Int32Value  `protobuf:"bytes,6,opt,name=endTime,proto3" json:"endTime"`
+	StartTime                         *wrapperspb.Int64Value  `protobuf:"bytes,5,opt,name=startTime,proto3" json:"startTime"`
+	EndTime                           *wrapperspb.Int64Value  `protobuf:"bytes,6,opt,name=endTime,proto3" json:"endTime"`
 	ParticipantCanUnmuteSelf          *wrapperspb.BoolValue   `protobuf:"bytes,7,opt,name=participantCanUnmuteSelf,proto3" json:"participantCanUnmuteSelf"`
 	ParticipantCanEnableVideo         *wrapperspb.BoolValue   `protobuf:"bytes,8,opt,name=participantCanEnableVideo,proto3" json:"participantCanEnableVideo"`
 	OnlyHostInviteUser                *wrapperspb.BoolValue   `protobuf:"bytes,9,opt,name=onlyHostInviteUser,proto3" json:"onlyHostInviteUser"`
@@ -2705,14 +2705,14 @@ func (x *SignalUpdateMeetingInfoReq) GetInviteeUserIDList() []string {
 	return nil
 }
 
-func (x *SignalUpdateMeetingInfoReq) GetStartTime() *wrapperspb.Int32Value {
+func (x *SignalUpdateMeetingInfoReq) GetStartTime() *wrapperspb.Int64Value {
 	if x != nil {
 		return x.StartTime
 	}
 	return nil
 }
 
-func (x *SignalUpdateMeetingInfoReq) GetEndTime() *wrapperspb.Int32Value {
+func (x *SignalUpdateMeetingInfoReq) GetEndTime() *wrapperspb.Int64Value {
 	if x != nil {
 		return x.EndTime
 	}
@@ -3851,11 +3851,11 @@ var file_rtc_rtc_proto_rawDesc = []byte{
 	0x73, 0x65, 0x72, 0x49, 0x44, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x3f, 0x0a, 0x09, 0x73, 0x74, 0x61,
 	0x72, 0x74, 0x54, 0x69, 0x6d, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x21, 0x2e, 0x4f,
 	0x70, 0x65, 0x6e, 0x49, 0x4d, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2e, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x62, 0x75, 0x66, 0x2e, 0x49, 0x6e, 0x74, 0x33, 0x32, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52,
+	0x6f, 0x62, 0x75, 0x66, 0x2e, 0x49, 0x6e, 0x74, 0x36, 0x34, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52,
 	0x09, 0x73, 0x74, 0x61, 0x72, 0x74, 0x54, 0x69, 0x6d, 0x65, 0x12, 0x3b, 0x0a, 0x07, 0x65, 0x6e,
 	0x64, 0x54, 0x69, 0x6d, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x21, 0x2e, 0x4f, 0x70,
 	0x65, 0x6e, 0x49, 0x4d, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x62, 0x75, 0x66, 0x2e, 0x49, 0x6e, 0x74, 0x33, 0x32, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x07,
+	0x62, 0x75, 0x66, 0x2e, 0x49, 0x6e, 0x74, 0x36, 0x34, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x07,
 	0x65, 0x6e, 0x64, 0x54, 0x69, 0x6d, 0x65, 0x12, 0x5c, 0x0a, 0x18, 0x70, 0x61, 0x72, 0x74, 0x69,
 	0x63, 0x69, 0x70, 0x61, 0x6e, 0x74, 0x43, 0x61, 0x6e, 0x55, 0x6e, 0x6d, 0x75, 0x74, 0x65, 0x53,
 	0x65, 0x6c, 0x66, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x4f, 0x70, 0x65, 0x6e,
@@ -4177,7 +4177,7 @@ var file_rtc_rtc_proto_goTypes = []interface{}{
 	(*sdkws.PublicUserInfo)(nil),                   // 50: OpenIMServer.sdkws.PublicUserInfo
 	(*sdkws.OfflinePushInfo)(nil),                  // 51: OpenIMServer.sdkws.OfflinePushInfo
 	(*wrapperspb.StringValue)(nil),                 // 52: OpenIMServer.protobuf.StringValue
-	(*wrapperspb.Int32Value)(nil),                  // 53: OpenIMServer.protobuf.Int32Value
+	(*wrapperspb.Int64Value)(nil),                  // 53: OpenIMServer.protobuf.Int64Value
 	(*wrapperspb.BoolValue)(nil),                   // 54: OpenIMServer.protobuf.BoolValue
 }
 var file_rtc_rtc_proto_depIdxs = []int32{
@@ -4228,8 +4228,8 @@ var file_rtc_rtc_proto_depIdxs = []int32{
 	0,  // 44: OpenIMServer.rtc.SignalGetTokenByRoomIDReq.participant:type_name -> OpenIMServer.rtc.ParticipantMetaData
 	52, // 45: OpenIMServer.rtc.SignalUpdateMeetingInfoReq.meetingName:type_name -> OpenIMServer.protobuf.StringValue
 	52, // 46: OpenIMServer.rtc.SignalUpdateMeetingInfoReq.ex:type_name -> OpenIMServer.protobuf.StringValue
-	53, // 47: OpenIMServer.rtc.SignalUpdateMeetingInfoReq.startTime:type_name -> OpenIMServer.protobuf.Int32Value
-	53, // 48: OpenIMServer.rtc.SignalUpdateMeetingInfoReq.endTime:type_name -> OpenIMServer.protobuf.Int32Value
+	53, // 47: OpenIMServer.rtc.SignalUpdateMeetingInfoReq.startTime:type_name -> OpenIMServer.protobuf.Int64Value
+	53, // 48: OpenIMServer.rtc.SignalUpdateMeetingInfoReq.endTime:type_name -> OpenIMServer.protobuf.Int64Value
 	54, // 49: OpenIMServer.rtc.SignalUpdateMeetingInfoReq.participantCanUnmuteSelf:type_name -> OpenIMServer.protobuf.BoolValue
 	54, // 50: OpenIMServer.rtc.SignalUpdateMeetingInfoReq.participantCanEnableVideo:type_name -> OpenIMServer.protobuf.BoolValue
 	54, // 51: OpenIMServer.rtc.SignalUpdateMeetingInfoReq.onlyHostInviteUser:type_name -> OpenIMServer.protobuf.BoolValue

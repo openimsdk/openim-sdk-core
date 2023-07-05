@@ -75,7 +75,7 @@ func SignalingGetMeetings(callback open_im_sdk_callback.Base, operationID string
 }
 
 func SignalingOperateStream(callback open_im_sdk_callback.Base, operationID string, streamType, roomID, userID string, mute, muteAll bool) {
-	call(callback, operationID, UserForSDK.Signaling().SignalingOperateStream)
+	call(callback, operationID, UserForSDK.Signaling().SignalingOperateStream, streamType, roomID, userID, mute, muteAll)
 }
 
 func SignalingSendCustomSignal(callback open_im_sdk_callback.Base, operationID string, customInfo, roomID string) {

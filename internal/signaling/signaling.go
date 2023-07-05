@@ -92,7 +92,7 @@ func (s *LiveSignaling) waitPush(ctx context.Context, req *server_api_params.Sig
 			push, err := s.SignalingWaitPush(ctx, invt.InviterUserID, invitee, invt.RoomID, invt.Timeout)
 			if err != nil {
 				if errs.Unwrap(err) == sdkerrs.ErrNetworkTimeOut {
-					log.ZError(ctx, "timeout", err, "invitee", invitee, "roomID", invt.RoomID, "timeout", invt.Timeout)
+					log.ZWarn(ctx, "timeout", err, "invitee", invitee, "roomID", invt.RoomID, "timeout", invt.Timeout)
 					switch payload := req.Payload.(type) {
 					case *server_api_params.SignalReq_Invite:
 						if !s.isCanceled {
