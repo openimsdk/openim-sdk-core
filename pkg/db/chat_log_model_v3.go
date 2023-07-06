@@ -277,6 +277,7 @@ func (d *DataBase) GetMessagesBySeqs(ctx context.Context, conversationID string,
 }
 
 func (d *DataBase) GetConversationNormalMsgSeq(ctx context.Context, conversationID string) (int64, error) {
+	d.initChatLog(ctx, conversationID)
 	var seq int64
 	err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Select("IFNULL(max(seq),0)").Find(&seq).Error
 	return seq, utils.Wrap(err, "GetConversationNormalMsgSeq")

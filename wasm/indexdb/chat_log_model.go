@@ -658,21 +658,15 @@ func (i *LocalChatLogs) GetUnreadMessage(ctx context.Context, conversationID str
 	}
 }
 
-func (i *LocalChatLogs) GetMessagesByClientMsgIDs(ctx context.Context, conversationID string, msgIDs []string) ([]*model_struct.LocalChatLog, error) {
+func (i *LocalChatLogs) GetMessagesByClientMsgIDs(ctx context.Context, conversationID string, msgIDs []string) (result []*model_struct.LocalChatLog, err error) {
 	msgs, err := Exec(conversationID, utils.StructToJsonString(msgIDs))
 	if err != nil {
 		return nil, err
 	} else {
 		if v, ok := msgs.(string); ok {
-			var temp []model_struct.LocalChatLog
-			err := utils.JsonStringToStruct(v, &temp)
+			err := utils.JsonStringToStruct(v, &result)
 			if err != nil {
 				return nil, err
-			}
-			result := make([]*model_struct.LocalChatLog, len(temp))
-			for i, v := range temp {
-				v1 := v
-				result[i] = &v1
 			}
 			return result, err
 		} else {
