@@ -153,6 +153,7 @@ func (c *Conversation) GetOneConversation(ctx context.Context, sessionType int32
 			newConversation.ShowName = g.GroupName
 			newConversation.FaceURL = g.FaceURL
 		}
+		time.Sleep(time.Millisecond * 500)
 		lc, errTemp := c.db.GetConversation(ctx, conversationID)
 		if errTemp == nil {
 			return lc, nil
@@ -764,6 +765,7 @@ func (c *Conversation) sendMessageToServer(ctx context.Context, s *sdk_struct.Ms
 	//Protocol conversion
 	var wsMsgData sdkws.MsgData
 	copier.Copy(&wsMsgData, s)
+	wsMsgData.AttachedInfo = utils.StructToJsonString(s.AttachedInfoElem)
 	wsMsgData.Content = []byte(s.Content)
 	wsMsgData.CreateTime = s.CreateTime
 	wsMsgData.Options = options
