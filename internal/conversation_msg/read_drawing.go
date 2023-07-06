@@ -63,6 +63,10 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 	}
 	log.ZDebug(ctx, "get unread message", "msgs", len(msgs))
 	msgIDs, seqs := c.getAsReadMsgMapAndList(ctx, msgs)
+	if len(seqs) == 0 {
+		log.ZWarn(ctx, "seqs is empty", nil, "conversationID", conversationID)
+		return nil
+	}
 	log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "seqs", seqs, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
 	if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, seqs); err != nil {
 		return err
