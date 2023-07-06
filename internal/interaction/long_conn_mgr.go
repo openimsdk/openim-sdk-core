@@ -28,7 +28,6 @@ import (
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
 	"runtime"
-	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -119,7 +118,7 @@ func NewLongConnMgr(ctx context.Context, listener open_im_sdk_callback.OnConnLis
 	return l
 }
 func (c *LongConnMgr) Run(ctx context.Context) {
-	fmt.Println(mcontext.GetOperationID(ctx), "login run", string(debug.Stack()))
+	//fmt.Println(mcontext.GetOperationID(ctx), "login run", string(debug.Stack()))
 	go c.readPump(ctx)
 	go c.writePump(ctx)
 	go c.heartbeat(ctx)
@@ -456,7 +455,7 @@ func (c *LongConnMgr) handleMessage(message []byte) error {
 		}
 	default:
 		// log.Error(wsResp.OperationID, "type failed, ", wsResp.ReqIdentifier)
-		return sdkerrs.ErrMsgTypeNotSupport
+		return sdkerrs.ErrMsgBinaryTypeNotSupport
 	}
 	return nil
 }

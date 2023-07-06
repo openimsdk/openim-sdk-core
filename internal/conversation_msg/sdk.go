@@ -306,7 +306,7 @@ func localChatLogToMsgStruct(dst *sdk_struct.NewMsgList, src []*model_struct.Loc
 }
 
 func (c *Conversation) updateMsgStatusAndTriggerConversation(ctx context.Context, clientMsgID, serverMsgID string, sendTime int64, status int32, s *sdk_struct.MsgStruct, lc *model_struct.LocalConversation) {
-	//log.NewDebug(operationID, "this is test send message ", sendTime, status, clientMsgID, serverMsgID)
+	log.ZDebug(ctx, "this is test send message ", "sendTime", sendTime, "status", status, "clientMsgID", clientMsgID, "serverMsgID", serverMsgID)
 	s.SendTime = sendTime
 	s.Status = status
 	s.ServerMsgID = serverMsgID

@@ -170,6 +170,7 @@ func getToken(uid string) string {
 	ctx = ccontext.WithOperationID(ctx, utils.OperationIDGenerator())
 	url := TOKENADDR
 	req := authPB.UserTokenReq{
+		Secret:     SECRET,
 		PlatformID: PlatformID,
 		UserID:     uid,
 		Secret:     "tuoyun",

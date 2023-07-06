@@ -334,7 +334,7 @@ func DoTestSetOneConversationPrivateChat(conversationID string, privateChat bool
 func DoTestSetBurnDuration(conversationID string) {
 	var test TestSetConversationPinnedCallback
 	test.OperationID = utils.OperationIDGenerator()
-	open_im_sdk.SetConversationBurnDuration(test, test.OperationID, conversationID, 180)
+	open_im_sdk.SetConversationBurnDuration(test, test.OperationID, conversationID, 300)
 }
 
 type TestGetConversationListSplitCallBack struct {

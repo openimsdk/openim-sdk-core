@@ -70,7 +70,7 @@ func SetConversationPrivateChat(callback open_im_sdk_callback.Base, operationID 
 	call(callback, operationID, UserForSDK.Conversation().SetOneConversationPrivateChat, conversationID, isPrivate)
 }
 
-func SetConversationBurnDuration(callback open_im_sdk_callback.Base, operationID string, conversationID string, duration int) {
+func SetConversationBurnDuration(callback open_im_sdk_callback.Base, operationID string, conversationID string, duration int32) {
 	call(callback, operationID, UserForSDK.Conversation().SetOneConversationBurnDuration, conversationID, duration)
 }
 
