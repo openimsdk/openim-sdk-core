@@ -33,8 +33,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/mcontext"
-
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/errs"
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/proto/sdkws"

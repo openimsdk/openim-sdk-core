@@ -197,7 +197,7 @@ func (s *LiveSignaling) SignalingJoinMeeting(ctx context.Context, req *server_ap
 
 func (s *LiveSignaling) SignalingUpdateMeetingInfo(ctx context.Context, req *server_api_params.SignalUpdateMeetingInfoReq) error {
 	if req.RoomID == "" {
-		return sdkerrs.ErrRecordNotFound.Wrap("roomID is empty")
+		return sdkerrs.ErrArgs.Wrap("roomID is empty")
 	}
 	return util.ApiPost(ctx, constant.SignalUpdateMeetingInfoRouter, req, nil)
 }
