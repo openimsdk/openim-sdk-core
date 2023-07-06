@@ -153,6 +153,7 @@ func (c *Conversation) GetOneConversation(ctx context.Context, sessionType int32
 			newConversation.ShowName = g.GroupName
 			newConversation.FaceURL = g.FaceURL
 		}
+		time.Sleep(time.Millisecond * 500)
 		lc, errTemp := c.db.GetConversation(ctx, conversationID)
 		if errTemp == nil {
 			return lc, nil
