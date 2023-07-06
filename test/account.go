@@ -173,6 +173,7 @@ func getToken(uid string) string {
 		Secret:     SECRET,
 		PlatformID: PlatformID,
 		UserID:     uid,
+		Secret:     "tuoyun",
 	}
 	resp := authPB.UserTokenResp{}
 	err := util.ApiPost(ctx, "/auth/user_token", &req, &resp)

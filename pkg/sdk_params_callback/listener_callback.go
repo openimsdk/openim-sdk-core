@@ -16,6 +16,7 @@ package sdk_params_callback
 
 import (
 	"open_im_sdk/pkg/db/model_struct"
+	"open_im_sdk/pkg/server_api_params"
 )
 
 // //////////////////////////////friend////////////////////////////////////
@@ -57,12 +58,12 @@ type InvitationInfo struct {
 	GroupID           string
 }
 
-//type ReceiveNewInvitationCallback sdkws.SignalInviteReq
-//
-//type InviteeAcceptedCallback sdkws.SignalAcceptReq
-//
-//type InviteeRejectedCallback sdkws.SignalRejectReq
-//
-//type InvitationCancelledCallback sdkws.SignalCancelReq
-//
-//type InvitationTimeoutCallback sdkws.SignalInviteReq
+type ReceiveNewInvitationCallback server_api_params.SignalInviteReq
+
+type InviteeAcceptedCallback server_api_params.SignalAcceptReq
+
+type InviteeRejectedCallback server_api_params.SignalRejectReq
+
+type InvitationCancelledCallback server_api_params.SignalCancelReq
+
+type InvitationTimeoutCallback server_api_params.SignalInviteReq

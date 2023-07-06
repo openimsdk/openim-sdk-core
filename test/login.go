@@ -85,6 +85,9 @@ func InOutDoTest(uid, tk, ws, api string) {
 	var groupListener testGroupListener
 	open_im_sdk.SetGroupListener(groupListener)
 
+	var testSignalingListener testSignalingListener
+	open_im_sdk.SetSignalingListener(&testSignalingListener)
+
 	InOutlllogin(uid, tk)
 }
 
