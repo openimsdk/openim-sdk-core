@@ -147,10 +147,15 @@ func (c *Conversation) doUnreadCount(ctx context.Context, conversationID string,
 		log.ZError(ctx, "GetConversation err", err, "conversationID", conversationID)
 		return
 	}
-	_, err = c.db.MarkConversationMessageAsReadBySeqs(ctx, conversationID, seqs)
-	if err != nil {
-		log.ZWarn(ctx, "MarkConversationMessageAsReadBySeqs err", err, "conversationID", conversationID, "seqs", seqs)
+	if len(seqs) != 0 {
+		_, err = c.db.MarkConversationMessageAsReadBySeqs(ctx, conversationID, seqs)
+		if err != nil {
+			log.ZWarn(ctx, "MarkConversationMessageAsReadBySeqs err", err, "conversationID", conversationID, "seqs", seqs)
+		}
+	} else {
+		log.ZWarn(ctx, "seqs is empty", nil, "conversationID", conversationID, "hasReadSeq", hasReadSeq)
 	}
+
 	if hasReadSeq > conversation.HasReadSeq {
 		decrUnreadCount := hasReadSeq - conversation.HasReadSeq
 		if err := c.db.DecrConversationUnreadCount(ctx, conversationID, decrUnreadCount); err != nil {
