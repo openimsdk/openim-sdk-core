@@ -9,8 +9,10 @@ import (
 	"fmt"
 	"open_im_sdk/pkg/constant"
 	"open_im_sdk/pkg/db/model_struct"
-	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
+	"open_im_sdk/sdk_struct"
+
+	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 )
 
 func (d *DataBase) initChatLog(ctx context.Context, conversationID string) {
@@ -194,7 +196,6 @@ func (d *DataBase) SearchMessageByContentTypeAndKeyword(ctx context.Context, con
 	}
 	condition = fmt.Sprintf("send_time between %d and %d AND status <=%d  And content_type IN ? ", startTime, endTime, constant.MsgStatusSendFailed)
 	condition += subCondition
-	log.Info("key owrd", condition)
 	err = utils.Wrap(d.conn.WithContext(ctx).Table(utils.GetTableName(conversationID)).Where(condition, contentType).Order("send_time DESC").Find(&result).Error, "SearchMessage failed")
 	return result, err
 }
@@ -249,11 +250,27 @@ func (d *DataBase) MarkConversationMessageAsReadBySeqs(ctx context.Context, conv
 func (d *DataBase) MarkConversationMessageAsReadDB(ctx context.Context, conversationID string, msgIDs []string) (rowsAffected int64, err error) {
 	d.mRWMutex.Lock()
 	defer d.mRWMutex.Unlock()
-	t := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("client_msg_id in ? AND send_id != ?", msgIDs, d.loginUserID).Update("is_read", constant.HasRead)
-	if t.RowsAffected == 0 {
-		return 0, utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	var msgs []*model_struct.LocalChatLog
+	if err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("client_msg_id in ? AND send_id != ?", msgIDs, d.loginUserID).Find(&msgs).Error; err != nil {
+		return 0, utils.Wrap(err, "MarkConversationMessageAsReadDB failed")
 	}
-	return t.RowsAffected, utils.Wrap(t.Error, "UpdateMessageStatusBySourceID failed")
+	for _, msg := range msgs {
+		var attachedInfo sdk_struct.AttachedInfoElem
+		utils.JsonStringToStruct(msg.AttachedInfo, &attachedInfo)
+		attachedInfo.HasReadTime = utils.GetCurrentTimestampByMill()
+		msg.IsRead = true
+		msg.AttachedInfo = utils.StructToJsonString(attachedInfo)
+		if err := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("client_msg_id = ?", msg.ClientMsgID).Updates(msg).Error; err != nil {
+			log.ZError(ctx, "MarkConversationMessageAsReadDB failed", err, "msg", msg)
+		} else {
+			rowsAffected++
+		}
+	}
+	// t := d.conn.WithContext(ctx).Table(utils.GetConversationTableName(conversationID)).Where("client_msg_id in ? AND send_id != ?", msgIDs, d.loginUserID).Update("is_read", constant.HasRead)
+	// if t.RowsAffected == 0 {
+	// 	return 0, utils.Wrap(errors.New("RowsAffected == 0"), "no update")
+	// }
+	return rowsAffected, nil
 }
 
 func (d *DataBase) MarkConversationAllMessageAsRead(ctx context.Context, conversationID string) (rowsAffected int64, err error) {
