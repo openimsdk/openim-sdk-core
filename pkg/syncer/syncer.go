@@ -123,7 +123,7 @@ func (s *Syncer[T, V]) Sync(ctx context.Context, serverData []T, localData []T, 
 			return err
 		}
 		if s.ts == "model_struct.LocalUser" {
-			log.ZDebug(ctx, "model_struct.LocalUser", "type", s.ts, "server", server, "local", local, s.eq(server, local))
+			log.ZDebug(ctx, "model_struct.LocalUser", "type", s.ts, "server", server, "local", local, "isEq", s.eq(server, local))
 		}
 		if err := s.onNotice(ctx, Update, server, local, notice); err != nil {
 			log.ZError(ctx, "sync notice update failed", err, "type", s.ts, "server", server, "local", local)
