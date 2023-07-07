@@ -19,7 +19,6 @@ package indexdb
 
 import (
 	"context"
-	"encoding/json"
 	"open_im_sdk/pkg/db/model_struct"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/wasm/indexdb/temp_struct"
@@ -591,11 +590,32 @@ func (i *LocalChatLogs) GetMessageBySeq(ctx context.Context, conversationID stri
 
 // UpdateMessageBySeq update message
 func (i *LocalChatLogs) UpdateMessageBySeq(ctx context.Context, conversationID string, c *model_struct.LocalChatLog) error {
-	data, err := json.Marshal(c)
-	if err != nil {
-		return err
+	if c.Seq == 0 {
+		return PrimaryKeyNull
 	}
-	_, err = Exec(conversationID, c.Seq, string(data))
+	tempLocalChatLog := temp_struct.LocalChatLog{
+		ServerMsgID:          c.ServerMsgID,
+		SendID:               c.SendID,
+		RecvID:               c.RecvID,
+		SenderPlatformID:     c.SenderPlatformID,
+		SenderNickname:       c.SenderNickname,
+		SenderFaceURL:        c.SenderFaceURL,
+		SessionType:          c.SessionType,
+		MsgFrom:              c.MsgFrom,
+		ContentType:          c.ContentType,
+		Content:              c.Content,
+		IsRead:               c.IsRead,
+		Status:               c.Status,
+		Seq:                  c.Seq,
+		SendTime:             c.SendTime,
+		CreateTime:           c.CreateTime,
+		AttachedInfo:         c.AttachedInfo,
+		Ex:                   c.Ex,
+		IsReact:              c.IsReact,
+		IsExternalExtensions: c.IsExternalExtensions,
+		MsgFirstModifyTime:   c.MsgFirstModifyTime,
+	}
+	_, err := Exec(conversationID, c.Seq, utils.StructToJsonString(tempLocalChatLog))
 	return err
 }
 
