@@ -15,7 +15,7 @@ import (
 
 func RegisterReliabilityUser(id int, timeStamp string) {
 	userID := GenUid(id, "reliability_"+timeStamp)
-	register(userID)
+	//Register(userID)
 	token, _ := RunGetToken(userID)
 	coreMgrLock.Lock()
 	defer coreMgrLock.Unlock()
