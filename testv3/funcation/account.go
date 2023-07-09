@@ -9,7 +9,7 @@ import (
 )
 
 func register(uid string) error {
-	initContext(uid)
+	InitContext(uid)
 	//ACCOUNTCHECK
 	var getAccountCheckReq userPB.AccountCheckReq
 	var getAccountCheckResp userPB.AccountCheckResp

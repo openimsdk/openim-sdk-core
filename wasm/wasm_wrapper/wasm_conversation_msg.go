@@ -113,6 +113,10 @@ func (w *WrapperConMsg) CreateSoundMessage(_ js.Value, args []js.Value) interfac
 	return event_listener.NewCaller(open_im_sdk.CreateSoundMessage, nil, &args).AsyncCallWithOutCallback()
 }
 
+func (w *WrapperConMsg) GetAtAllTag(_ js.Value, args []js.Value) interface{} {
+	return event_listener.NewCaller(open_im_sdk.GetAtAllTag, nil, &args).AsyncCallWithOutCallback()
+}
+
 //	funcation (w *WrapperConMsg) MarkC2CMessageAsRead(_ js.Value, args []js.Value) interface{} {
 //		callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 //		return event_listener.NewCaller(open_im_sdk.MarkC2CMessageAsRead, callback, &args).AsyncCallWithCallback()
@@ -296,6 +300,10 @@ func (w *WrapperConMsg) SearchLocalMessages(_ js.Value, args []js.Value) interfa
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.SearchLocalMessages, callback, &args).AsyncCallWithCallback()
 }
+func (w *WrapperConMsg) SetMessageLocalEx(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.SetMessageLocalEx, callback, &args).AsyncCallWithCallback()
+}
 
 func (w *WrapperConMsg) DeleteConversationAndDeleteAllMsg(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
@@ -307,6 +315,10 @@ func (w *WrapperConMsg) DeleteAllConversationFromLocal(_ js.Value, args []js.Val
 	return event_listener.NewCaller(open_im_sdk.DeleteAllConversationFromLocal, callback, &args).AsyncCallWithCallback()
 }
 
+func (w *WrapperConMsg) HideConversation(_ js.Value, args []js.Value) interface{} {
+	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
+	return event_listener.NewCaller(open_im_sdk.HideConversation, callback, &args).AsyncCallWithCallback()
+}
 func (w *WrapperConMsg) SetConversationDraft(_ js.Value, args []js.Value) interface{} {
 	callback := event_listener.NewBaseCallback(utils.FirstLower(utils.GetSelfFuncName()), w.commonFunc)
 	return event_listener.NewCaller(open_im_sdk.SetConversationDraft, callback, &args).AsyncCallWithCallback()

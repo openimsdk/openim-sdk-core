@@ -69,8 +69,8 @@ func (s *SetListener) setUserListener() {
 }
 
 func (s *SetListener) setSignalingListener() {
-	callback := event_listener.NewSignalingCallback(s.commonFunc)
-	open_im_sdk.SetSignalingListener(callback)
+	//callback := event_listener.NewSignalingCallback(s.commonFunc)
+	//open_im_sdk.SetSignalingListener(callback)
 }
 
 func (s *SetListener) SetAllListener() {

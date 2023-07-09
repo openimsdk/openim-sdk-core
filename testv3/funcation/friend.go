@@ -21,6 +21,7 @@ import (
 	"open_im_sdk/pkg/log"
 	"open_im_sdk/pkg/utils"
 	"open_im_sdk/sdk_struct"
+	"os"
 	"time"
 )
 
@@ -43,7 +44,8 @@ func (t *testInitLister) OnConnectFailed(ErrCode int32, ErrMsg string) {
 }
 
 func (t *testInitLister) OnKickedOffline() {
-	log.Info("", utils.GetSelfFuncName())
+	log.Error("", utils.GetSelfFuncName(), "kick!!!!!!!!!!!!!!!!!!!!")
+	os.Exit(-1)
 }
 
 func (t *testInitLister) OnSelfInfoUpdated(info string) {
@@ -79,7 +81,6 @@ func ReliabilityInitAndLogin(index int, uid, token string) {
 	allLoginMgr[index].mgr = lg
 	log.Info(uid, "InitSDK ", cf, "index mgr", index, lg)
 
-	var testConversation conversationCallBack
 	lg.SetConversationListener(&testConversation)
 
 	var testUser userCallback
@@ -103,10 +104,10 @@ func ReliabilityInitAndLogin(index int, uid, token string) {
 	ctx := ccontext.WithOperationID(lg.Context(), operationID)
 
 	lg.Login(ctx, uid, token)
-	u, err := lg.User().GetSelfUserInfo(ctx)
+	lg.User().GetSelfUserInfo(ctx)
 	for {
 		if testConversation.SyncFlag == 1 {
-			log.Info("", "testConversation.SyncFlag == 1", u.UserID, err)
+			log.Info("", "testConversation.SyncFlag == 1")
 			return
 		}
 	}
@@ -135,6 +136,24 @@ func (b *BaseSuccessFailed) OnSuccess(data string) {
 
 type conversationCallBack struct {
 	SyncFlag int
+}
+
+func (c *conversationCallBack) OnError(errCode int32, errMsg string) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *conversationCallBack) OnSuccess(data string) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *conversationCallBack) OnNewConversation(conversationList string) {
+	log.Info("", "OnNewConversation returnList is ", conversationList)
+}
+
+func (c *conversationCallBack) OnConversationChanged(conversationList string) {
+	log.Info("", "OnConversationChanged returnList is", conversationList)
 }
 
 type userCallback struct {
@@ -308,14 +327,6 @@ func (c *conversationCallBack) OnSyncServerFinish() {
 
 func (c *conversationCallBack) OnSyncServerFailed() {
 	log.Info("", utils.GetSelfFuncName())
-}
-
-func (c *conversationCallBack) OnNewConversation(conversationList string) {
-	log.Info("", "OnNewConversation returnList is ", conversationList)
-}
-
-func (c *conversationCallBack) OnConversationChanged(conversationList string) {
-	log.Info("", "OnConversationChanged returnList is", conversationList)
 }
 
 func (c *conversationCallBack) OnTotalUnreadMessageCountChanged(totalUnreadCount int32) {

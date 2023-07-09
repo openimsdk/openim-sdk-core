@@ -52,7 +52,7 @@ func (i IndexDB) InitDB(ctx context.Context, userID string, dataDir string) erro
 }
 
 func NewDataBase(ctx context.Context, loginUserID string, dbDir string) (*IndexDB, error) {
-	return &IndexDB{
+	i := &IndexDB{
 		LocalUsers:                      indexdb.NewLocalUsers(),
 		LocalConversations:              indexdb.NewLocalConversations(),
 		LocalChatLogs:                   indexdb.NewLocalChatLogs(loginUserID),
@@ -69,5 +69,10 @@ func NewDataBase(ctx context.Context, loginUserID string, dbDir string) (*IndexD
 		LocalChatLogReactionExtensions:  indexdb.NewLocalChatLogReactionExtensions(),
 		NotificationSeqs:                indexdb.NewNotificationSeqs(),
 		loginUserID:                     loginUserID,
-	}, nil
+	}
+	err := i.InitDB(ctx, loginUserID, dbDir)
+	if err != nil {
+		return nil, err
+	}
+	return i, nil
 }

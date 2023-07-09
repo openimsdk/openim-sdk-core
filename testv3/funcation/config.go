@@ -17,17 +17,19 @@ package funcation
 import (
 	"context"
 	"fmt"
-	imLog "github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 	"open_im_sdk/pkg/ccontext"
 	"open_im_sdk/pkg/utils"
 	"sync"
+
+	imLog "github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 )
 
 // log and token
 var (
 	rotateCount         = uint(0)
 	LogLevel            = uint32(6)
-	PlatformID          = int32(2)
+	PlatformID          = int32(1)
+	Secret              = "tuoyun"
 	IsLogStandardOutput = true
 	isLogJson           = false
 	LogName             = ""
@@ -54,7 +56,7 @@ func init() {
 
 // system
 var (
-	TESTIP       = "203.56.175.233"
+	TESTIP       = "59.36.173.89"
 	APIADDR      = "http://" + TESTIP + ":10002"
 	WSADDR       = "ws://" + TESTIP + ":10001"
 	REGISTERADDR = APIADDR + "/auth/user_register"
@@ -77,3 +79,8 @@ var MaxNumGoroutine = 100000
 
 // var Msgwg sync.WaitGroup
 var sendMsgClient = 0
+
+// Listener
+var (
+	testConversation conversationCallBack
+)

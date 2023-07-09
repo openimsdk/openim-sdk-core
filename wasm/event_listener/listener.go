@@ -139,8 +139,8 @@ func (a AdvancedMsgCallback) OnRecvMessageExtensionsAdded(clientMsgID string, re
 	m["reactionExtensionList"] = reactionExtensionList
 	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(utils.StructToJsonString(m)).SendMessage()
 }
-func (a AdvancedMsgCallback) OnRecvOfflineNewMessages(messageList string) {
-	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(messageList).SendMessage()
+func (a AdvancedMsgCallback) OnRecvOfflineNewMessage(message string) {
+	a.CallbackWriter.SetEvent(utils.GetSelfFuncName()).SetData(message).SendMessage()
 }
 
 func (a AdvancedMsgCallback) OnMsgDeleted(message string) {

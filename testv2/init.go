@@ -67,7 +67,7 @@ func GetUserToken(ctx context.Context, userID string) (string, error) {
 	jsonReqData, err := json.Marshal(map[string]any{
 		"userID":     userID,
 		"platformID": 1,
-		//"secret":     "openIM123",
+		"secret":     "openIM123",
 		//"secret": "111111",
 	})
 	if err != nil {
