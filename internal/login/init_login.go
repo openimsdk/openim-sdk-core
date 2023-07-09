@@ -25,7 +25,6 @@ import (
 	"open_im_sdk/internal/full"
 	"open_im_sdk/internal/group"
 	"open_im_sdk/internal/interaction"
-	"open_im_sdk/internal/super_group"
 	"open_im_sdk/internal/third"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/open_im_sdk_callback"
@@ -56,7 +55,6 @@ const (
 type LoginMgr struct {
 	friend       *friend.Friend
 	group        *group.Group
-	superGroup   *super_group.SuperGroup
 	conversation *conv.Conversation
 	user         *user.User
 	file         *file.File
@@ -240,7 +238,7 @@ func NewLoginMgr() *LoginMgr {
 		info: &ccontext.GlobalConfig{}, // 分配内存空间
 	}
 }
-func (u *LoginMgr) getLoginStatus() int {
+func (u *LoginMgr) getLoginStatus(_ context.Context) int {
 	u.w.Lock()
 	defer u.w.Unlock()
 	return u.loginStatus
@@ -252,7 +250,7 @@ func (u *LoginMgr) setLoginStatus(status int) {
 }
 
 func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
-	if u.getLoginStatus() == Logged {
+	if u.getLoginStatus(ctx) == Logged {
 		return sdkerrs.ErrLoginRepeat
 	}
 	u.setLoginStatus(Logging)
@@ -277,9 +275,8 @@ func (u *LoginMgr) login(ctx context.Context, userID, token string) error {
 	u.friend.SetLoginTime(u.loginTime)
 	u.group = group.NewGroup(u.loginUserID, u.db, u.conversationCh)
 	u.group.SetGroupListener(u.groupListener)
-	u.superGroup = super_group.NewSuperGroup(u.loginUserID, u.db)
 	u.cache = cache.NewCache(u.user, u.friend)
-	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache, u.db, u.superGroup)
+	u.full = full.NewFull(u.user, u.friend, u.group, u.conversationCh, u.cache, u.db)
 	u.business = business.NewBusiness(u.db)
 	if u.businessListener != nil {
 		u.business.SetListener(u.businessListener)
@@ -352,6 +349,7 @@ func (u *LoginMgr) initResources() {
 	u.heartbeatCmdCh = make(chan common.Cmd2Value, 10)
 	u.pushMsgAndMaxSeqCh = make(chan common.Cmd2Value, 1000)
 	u.loginMgrCh = make(chan common.Cmd2Value)
+	u.setLoginStatus(Logout)
 	u.longConnMgr = interaction.NewLongConnMgr(u.ctx, u.connListener, u.heartbeatCmdCh, u.pushMsgAndMaxSeqCh, u.loginMgrCh)
 }
 
@@ -364,7 +362,6 @@ func (u *LoginMgr) logout(ctx context.Context) error {
 	_ = u.db.Close(u.ctx)
 	// user object must be rest  when user logout
 	u.initResources()
-	u.setLoginStatus(Logout)
 	log.ZDebug(ctx, "TriggerCmdLogout success...")
 	return nil
 }
@@ -389,10 +386,6 @@ func (u *LoginMgr) setAppBackgroundStatus(ctx context.Context, isBackground bool
 
 func (u *LoginMgr) GetLoginUserID() string {
 	return u.loginUserID
-}
-
-func (u *LoginMgr) GetLoginStatus() int {
-	return u.longConnMgr.GetConnectionStatus()
 }
 
 func CheckToken(userID, token string, operationID string) (int64, error) {

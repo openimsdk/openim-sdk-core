@@ -63,6 +63,10 @@ func (c *Conversation) markConversationMessageAsRead(ctx context.Context, conver
 	}
 	log.ZDebug(ctx, "get unread message", "msgs", len(msgs))
 	msgIDs, seqs := c.getAsReadMsgMapAndList(ctx, msgs)
+	if len(seqs) == 0 {
+		log.ZWarn(ctx, "seqs is empty", nil, "conversationID", conversationID)
+		return nil
+	}
 	log.ZDebug(ctx, "markConversationMessageAsRead", "conversationID", conversationID, "seqs", seqs, "peerUserMaxSeq", peerUserMaxSeq, "maxSeq", maxSeq)
 	if err := c.markConversationAsReadSvr(ctx, conversationID, maxSeq, seqs); err != nil {
 		return err
@@ -99,6 +103,10 @@ func (c *Conversation) markMessagesAsReadByMsgID(ctx context.Context, conversati
 	}
 	markAsReadMsgIDs, seqs := c.getAsReadMsgMapAndList(ctx, msgs)
 	log.ZDebug(ctx, "msgs len", "markAsReadMsgIDs", len(markAsReadMsgIDs), "seqs", seqs)
+	if len(seqs) == 0 {
+		log.ZWarn(ctx, "seqs is empty", nil, "conversationID", conversationID)
+		return nil
+	}
 	if err := c.markMsgAsRead2Svr(ctx, conversationID, seqs); err != nil {
 		return err
 	}
@@ -139,10 +147,15 @@ func (c *Conversation) doUnreadCount(ctx context.Context, conversationID string,
 		log.ZError(ctx, "GetConversation err", err, "conversationID", conversationID)
 		return
 	}
-	_, err = c.db.MarkConversationMessageAsReadBySeqs(ctx, conversationID, seqs)
-	if err != nil {
-		log.ZWarn(ctx, "MarkConversationMessageAsReadBySeqs err", err, "conversationID", conversationID, "seqs", seqs)
+	if len(seqs) != 0 {
+		_, err = c.db.MarkConversationMessageAsReadBySeqs(ctx, conversationID, seqs)
+		if err != nil {
+			log.ZWarn(ctx, "MarkConversationMessageAsReadBySeqs err", err, "conversationID", conversationID, "seqs", seqs)
+		}
+	} else {
+		log.ZWarn(ctx, "seqs is empty", nil, "conversationID", conversationID, "hasReadSeq", hasReadSeq)
 	}
+
 	if hasReadSeq > conversation.HasReadSeq {
 		decrUnreadCount := hasReadSeq - conversation.HasReadSeq
 		if err := c.db.DecrConversationUnreadCount(ctx, conversationID, decrUnreadCount); err != nil {
@@ -165,6 +178,9 @@ func (c *Conversation) doReadDrawing(ctx context.Context, msg *sdkws.MsgData) {
 		conversation, err := c.db.GetConversation(ctx, tips.ConversationID)
 		if err != nil {
 			log.ZError(ctx, "GetConversation err", err, "conversationID", tips.ConversationID)
+			return
+		}
+		if len(tips.Seqs) == 0 {
 			return
 		}
 		messages, err := c.db.GetMessagesBySeqs(ctx, tips.ConversationID, tips.Seqs)

@@ -24,6 +24,7 @@ import (
 	"open_im_sdk/sdk_struct"
 	"reflect"
 	"runtime"
+	"strings"
 	"sync"
 )
 
@@ -73,9 +74,16 @@ func CheckToken(userID, token string, operationID string) error {
 }
 
 // CheckResourceLoad checks the SDK is resource load status.
-func CheckResourceLoad(uSDK *login.LoginMgr) error {
+func CheckResourceLoad(uSDK *login.LoginMgr, funcName string) error {
 	if uSDK == nil {
 		return utils.Wrap(errors.New("CheckResourceLoad failed uSDK == nil "), "")
+	}
+	if funcName == "" {
+		return nil
+	}
+	parts := strings.Split(funcName, ".")
+	if parts[len(parts)-1] == "Login-fm" {
+		return nil
 	}
 	if uSDK.Friend() == nil || uSDK.User() == nil || uSDK.Group() == nil || uSDK.Conversation() == nil ||
 		uSDK.Full() == nil {
@@ -107,7 +115,7 @@ func BaseCaller(funcName interface{}, callback open_im_sdk_callback.Base, args .
 		callback.OnError(int32(sdkerrs.ErrArgs.Code()), sdkerrs.ErrArgs.Msg())
 		return
 	}
-	if err := CheckResourceLoad(UserForSDK); err != nil {
+	if err := CheckResourceLoad(UserForSDK, ""); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
 		callback.OnError(sdkerrs.ResourceLoadNotCompleteError, "ErrResourceLoadNotComplete")
 		return
@@ -162,7 +170,7 @@ func SendMessageCaller(funcName interface{}, callback open_im_sdk_callback.SendM
 		callback.OnError(int32(sdkerrs.ErrArgs.Code()), sdkerrs.ErrArgs.Msg())
 		return
 	}
-	if err := CheckResourceLoad(UserForSDK); err != nil {
+	if err := CheckResourceLoad(UserForSDK, ""); err != nil {
 		log.Error(operationID, "resource loading is not completed ", err.Error())
 		callback.OnError(sdkerrs.ResourceLoadNotCompleteError, "ErrResourceLoadNotComplete")
 		return

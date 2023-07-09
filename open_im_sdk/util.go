@@ -85,21 +85,22 @@ func setNumeric(in interface{}, out interface{}) {
 }
 
 func call_(operationID string, fn any, args ...any) (res any, err error) {
-	//defer function() {
-	//	if r := recover(); r != nil {
-	//		err = fmt.Errorf("call panic: %+v", r)
-	//	}
-	//}()
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("call panic: %+v", r)
+		}
+	}()
+	funcPtr := reflect.ValueOf(fn).Pointer()
+	funcName := runtime.FuncForPC(funcPtr).Name()
 	if operationID == "" {
 		return nil, sdkerrs.ErrArgs.Wrap("call function operationID is empty")
 	}
-	//if err := CheckResourceLoad(UserForSDK); err != nil {
-	//	return nil, err
-	//}
+	if err := CheckResourceLoad(UserForSDK, funcName); err != nil {
+		return nil, sdkerrs.ErrResourceLoad.Wrap("not load resource")
+	}
 	ctx := ccontext.WithOperationID(UserForSDK.BaseCtx(), operationID)
 	log.ZInfo(ctx, "call function", "in sdk args", args)
-	funcPtr := reflect.ValueOf(fn).Pointer()
-	funcName := runtime.FuncForPC(funcPtr).Name()
+
 	fnv := reflect.ValueOf(fn)
 	if fnv.Kind() != reflect.Func {
 		return nil, sdkerrs.ErrSdkInternal.Wrap(fmt.Sprintf("call function fn is not function, is %T", fn))
@@ -217,18 +218,11 @@ func call(callback open_im_sdk_callback.Base, operationID string, fn any, args .
 }
 
 func syncCall(operationID string, fn any, args ...any) string {
-	//defer function() {
-	//	if r := recover(); r != nil {
-	//		//callback.OnError(10001, fmt.Sprintf("%+v", r))
-	//		return
-	//	}
-	//}()
 	if operationID == "" {
 		//callback.OnError(constant.ErrArgs.ErrCode, errs.ErrArgs.Wrap("operationID is empty").Error())
 		return ""
 	}
-	if err := CheckResourceLoad(UserForSDK); err != nil {
-		//callback.OnError(constant.ErrResourceLoadNotComplete.ErrCode, constant.ErrResourceLoadNotComplete.ErrMsg)
+	if err := CheckResourceLoad(UserForSDK, ""); err != nil {
 		return ""
 	}
 	fnv := reflect.ValueOf(fn)
@@ -245,10 +239,6 @@ func syncCall(operationID string, fn any, args ...any) string {
 		return ""
 	}
 	ins := make([]reflect.Value, 0, numIn)
-	//ctx := context.Background()
-	//ctx = context.WithValue(ctx, "operationID", operationID)
-	//ctx = context.WithValue(ctx, "token", UserForSDK.GetToken())
-	//ctx = context.WithValue(ctx, "apiHost", UserForSDK.GetConfig().ApiAddr)
 
 	ctx := ccontext.WithOperationID(UserForSDK.BaseCtx(), operationID)
 	t := time.Now()
@@ -357,7 +347,7 @@ func messageCall_(callback open_im_sdk_callback.SendMsgCallBack, operationID str
 		callback.OnError(sdkerrs.ArgsError, sdkerrs.ErrArgs.Wrap("operationID is empty").Error())
 		return
 	}
-	if err := CheckResourceLoad(UserForSDK); err != nil {
+	if err := CheckResourceLoad(UserForSDK, ""); err != nil {
 		callback.OnError(sdkerrs.ResourceLoadNotCompleteError, "resource load error: "+err.Error())
 		return
 	}

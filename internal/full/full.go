@@ -20,7 +20,6 @@ import (
 	"open_im_sdk/internal/cache"
 	"open_im_sdk/internal/friend"
 	"open_im_sdk/internal/group"
-	"open_im_sdk/internal/super_group"
 	"open_im_sdk/internal/user"
 	"open_im_sdk/pkg/common"
 	"open_im_sdk/pkg/constant"
@@ -29,21 +28,20 @@ import (
 )
 
 type Full struct {
-	user       *user.User
-	friend     *friend.Friend
-	group      *group.Group
-	ch         chan common.Cmd2Value
-	userCache  *cache.Cache
-	db         db_interface.DataBase
-	SuperGroup *super_group.SuperGroup
+	user      *user.User
+	friend    *friend.Friend
+	group     *group.Group
+	ch        chan common.Cmd2Value
+	userCache *cache.Cache
+	db        db_interface.DataBase
 }
 
 func (u *Full) Group() *group.Group {
 	return u.group
 }
 
-func NewFull(user *user.User, friend *friend.Friend, group *group.Group, ch chan common.Cmd2Value, userCache *cache.Cache, db db_interface.DataBase, superGroup *super_group.SuperGroup) *Full {
-	return &Full{user: user, friend: friend, group: group, ch: ch, userCache: userCache, db: db, SuperGroup: superGroup}
+func NewFull(user *user.User, friend *friend.Friend, group *group.Group, ch chan common.Cmd2Value, userCache *cache.Cache, db db_interface.DataBase) *Full {
+	return &Full{user: user, friend: friend, group: group, ch: ch, userCache: userCache, db: db}
 }
 
 func (u *Full) GetGroupInfoFromLocal2Svr(ctx context.Context, groupID string, sessionType int32) (*model_struct.LocalGroup, error) {
@@ -57,21 +55,9 @@ func (u *Full) GetGroupInfoFromLocal2Svr(ctx context.Context, groupID string, se
 	}
 }
 func (u *Full) GetReadDiffusionGroupIDList(ctx context.Context) ([]string, error) {
-	g1, err1 := u.group.GetJoinedDiffusionGroupIDListFromSvr(ctx)
-	g2, err2 := u.SuperGroup.GetJoinedGroupIDListFromSvr(ctx)
-	var groupIDList []string
-	if err1 == nil {
-		groupIDList = append(groupIDList, g1...)
+	g, err := u.group.GetJoinedDiffusionGroupIDListFromSvr(ctx)
+	if err != nil {
+		return nil, err
 	}
-	if err2 == nil {
-		groupIDList = append(groupIDList, g2...)
-	}
-	var err error
-	if err1 != nil {
-		err = err1
-	}
-	if err2 != nil {
-		err = err2
-	}
-	return groupIDList, err
+	return g, err
 }

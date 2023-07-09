@@ -26,7 +26,7 @@ func main() {
 	REGISTERADDR := APIADDR + "/user_register"
 	ACCOUNTCHECK := APIADDR + "/manager/account_check"
 	TOKENADDR := APIADDR + "/auth/user_token"
-	SECRET := "openIM123"
+	SECRET := "tuoyun"
 	SENDINTERVAL := 20
 	test.REGISTERADDR = REGISTERADDR
 	test.TOKENADDR = TOKENADDR
@@ -34,12 +34,13 @@ func main() {
 	test.SENDINTERVAL = SENDINTERVAL
 	test.WSADDR = WSADDR
 	test.ACCOUNTCHECK = ACCOUNTCHECK
-	strMyUidx := "8650796072"
+	strMyUidx := "9184785285"
 
 	tokenx := test.RunGetToken(strMyUidx)
 	fmt.Println(tokenx)
 	test.InOutDoTest(strMyUidx, tokenx, WSADDR, APIADDR)
 	time.Sleep(time.Second * 2)
+	test.DoTestSetBurnDuration("si_9032643662_9184785285")
 	// test.DoTestRevoke()
 	// test.DotestDeleteFriend("8303492153")
 	// test.TestMarkGroupMessageAsRead()

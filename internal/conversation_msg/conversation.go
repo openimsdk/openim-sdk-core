@@ -18,7 +18,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/jinzhu/copier"
 	_ "open_im_sdk/internal/common"
 	"open_im_sdk/internal/util"
 	"open_im_sdk/pkg/common"
@@ -32,6 +31,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/jinzhu/copier"
 
 	"github.com/OpenIMSDK/Open-IM-Server/pkg/common/log"
 
@@ -346,6 +347,9 @@ func (c *Conversation) getAdvancedHistoryMessageList2(ctx context.Context, req s
 			temp.GroupID = temp.RecvID
 			temp.RecvID = c.loginUserID
 		}
+		if attachedInfo.IsPrivateChat && temp.SendTime+int64(attachedInfo.BurnDuration) < time.Now().Unix() {
+			continue
+		}
 		messageList = append(messageList, &temp)
 	}
 	log.ZDebug(ctx, "message convert and unmarshal", "unmarshal cost time", time.Since(t))
@@ -530,6 +534,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","F3434"))
 	//log.Debug("hahh",utils.KMP("SSSsdf3434","SDF3"))
 	// log.Debug("", "get raw data length is", len(list))
+	log.ZDebug(ctx, "get raw data length is", len(list))
 	for _, v := range list {
 		temp := sdk_struct.MsgStruct{}
 		temp.ClientMsgID = v.ClientMsgID
@@ -555,6 +560,7 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 		err := c.msgHandleByContentType(&temp)
 		if err != nil {
 			// log.Error("", "Parsing data error:", err.Error(), temp)
+			log.ZError(ctx, "Parsing data error:", err, "msg", temp)
 			continue
 		}
 		if temp.ContentType == constant.File && !c.judgeMultipleSubString(searchParam.KeywordList, temp.FileElem.FileName, searchParam.KeywordListMatchType) {
@@ -563,6 +569,10 @@ func (c *Conversation) searchLocalMessages(ctx context.Context, searchParam *sdk
 		if temp.ContentType == constant.AtText && !c.judgeMultipleSubString(searchParam.KeywordList, temp.AtTextElem.Text, searchParam.KeywordListMatchType) {
 			continue
 		}
+		if temp.ContentType == constant.Text && !c.judgeMultipleSubString(searchParam.KeywordList, temp.TextElem.Content, searchParam.KeywordListMatchType) {
+			continue
+		}
+
 		switch temp.SessionType {
 		case constant.SingleChatType:
 			if temp.SendID == c.loginUserID {
