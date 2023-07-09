@@ -28,7 +28,8 @@ import (
 var (
 	rotateCount         = uint(0)
 	LogLevel            = uint32(6)
-	PlatformID          = int32(2)
+	PlatformID          = int32(1)
+	Secret              = "tuoyun"
 	IsLogStandardOutput = true
 	isLogJson           = false
 	LogName             = ""
@@ -78,3 +79,8 @@ var MaxNumGoroutine = 100000
 
 // var Msgwg sync.WaitGroup
 var sendMsgClient = 0
+
+// Listener
+var (
+	testConversation conversationCallBack
+)
