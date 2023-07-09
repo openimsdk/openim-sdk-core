@@ -212,6 +212,11 @@ type onAdvancedMsgListener struct {
 	ctx context.Context
 }
 
+func (o *onAdvancedMsgListener) OnRecvOfflineNewMessage(message string) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (o *onAdvancedMsgListener) OnMsgDeleted(message string) {
 	log.ZInfo(o.ctx, "OnMsgDeleted", "message", message)
 }

@@ -162,6 +162,11 @@ type userCallback struct {
 type MsgListenerCallBak struct {
 }
 
+func (m *MsgListenerCallBak) OnRecvOfflineNewMessage(message string) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m *MsgListenerCallBak) OnRecvNewMessage(message string) {
 	//TODO implement me
 	panic("implement me")
